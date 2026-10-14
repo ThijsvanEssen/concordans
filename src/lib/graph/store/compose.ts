@@ -7,6 +7,7 @@ import type { GraphContext } from './context';
 import type { GraphStore } from './types';
 import { lawIdOf } from '../types';
 import { neighbours } from '../adjacency';
+import { nodeId } from '$lib/vocabulary';
 
 /**
  * The canvas of a netwerk: the chosen bronnen that are on, what ties them, and
@@ -133,4 +134,4 @@ export function createCompose(
 }
 
 const nodeIdOf = (response: Schema<'NodeGraphResponse'>) =>
-	`${response.node.collection}/${response.node.key}`;
+	nodeId(response.node.collection, response.node.key);

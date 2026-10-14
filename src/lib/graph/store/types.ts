@@ -4,8 +4,7 @@ import type { Collection, Relation } from '$lib/vocabulary';
 import type { GraphNode, GraphEdge } from '../types';
 import type { ContainerGroup, ContainerKind, Period } from '../container-membership';
 
-/** A chosen bron of a netwerk that is on, with its node response. */
-/** The API's defaults for a neighbourhood: three steps, at most 200 bronnen. */
+/** The API's default depth of a neighbourhood: three steps. */
 export const NEIGHBORHOOD_DEPTH = 3;
 /**
  * The most bronnen one neighbourhood brings (Thijs, 9 Oct: "diepte houden, max omlaag"). At 150
@@ -102,10 +101,6 @@ export type GraphStore = {
 	) => Promise<GraphNode | null>;
 	/** Draws the bron alone from its light node, before its neighbours; null when unknown. */
 	peekNode: (collection: Collection, key: string) => Promise<GraphNode | null>;
-	/**
-	 * Every node and edge within `depth` hops of a node, in one request; it replaces the
-	 * canvas's context. Narrowed to `relations` (and `nodeTypes`), it only adds.
-	 */
 	/** How far the last neighbourhood reached, and whether the API cut it off at its cap. */
 	neighborhood: Readable<NeighborhoodReach | null>;
 	/**
@@ -119,6 +114,10 @@ export type GraphStore = {
 		soort: Collection,
 		opts?: { grens?: number; signal?: AbortSignal }
 	) => Promise<number>;
+	/**
+	 * Every node and edge within `depth` hops of a node, in one request; it replaces the
+	 * canvas's context. Narrowed to `relations` (and `nodeTypes`), it only adds.
+	 */
 	expandNeighborhood: (
 		collection: Collection,
 		key: string,

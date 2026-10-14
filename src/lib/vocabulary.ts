@@ -109,7 +109,12 @@ export const isRelation = (value: string | null | undefined): value is Relation 
 /** A node id: `collection/key`. */
 export type NodeId = `${Collection}/${string}`;
 
-export const nodeId = (collection: Collection, key: string): NodeId => `${collection}/${key}`;
+/** The id of a node; of a known collection it is a NodeId. */
+export function nodeId(collection: Collection, key: string): NodeId;
+export function nodeId(collection: string, key: string): string;
+export function nodeId(collection: string, key: string): string {
+	return `${collection}/${key}`;
+}
 
 export function parseNodeId(id: string): { collection: Collection; key: string } | null {
 	const slash = id.indexOf('/');
@@ -254,11 +259,5 @@ export const OLD_TIER: Record<string, { tier: Tier; courtKind?: CourtKind }> = {
 export const statusLabel = (status: string | null | undefined) =>
 	status === 'voorgesteld' ? 'voorgesteld' : 'vastgesteld';
 
-/** The three ways to look at the material, in the order of the keys 1, 2 and 3. */
-export const MODES = [
-	{ id: 'read', label: 'Lezen' },
-	{ id: 'graph', label: 'Netwerk' },
-	{ id: 'index', label: 'Bronnen' }
-] as const;
-
-export type Mode = (typeof MODES)[number]['id'];
+/** The three ways to look at the material: Lezen, Netwerk and Bronnen. */
+export type Mode = 'read' | 'graph' | 'index';

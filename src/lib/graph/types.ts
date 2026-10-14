@@ -237,7 +237,6 @@ export function stukLabel(props: Record<string, unknown>): string | null {
 export const lawIdOf = (props: Record<string, unknown> | null | undefined): string | null =>
 	textOf(props?.bwb_id) ?? textOf(props?.celex);
 
-/** What `/api/articles/{law}/{number}` wants for an article. */
 /**
  * The law and the address of an article in the article routes: its number, or for an
  * article without one (the Algemene bepaling of the Grondwet) `stam_{stam_id}`, with its
@@ -344,7 +343,7 @@ export function nodeToGraphNode(node: BaseNode): GraphNode | null {
 	return isCollection(node.collection) ? buildGraphNode(node, node.collection) : null;
 }
 
-/** The relation of an API edge, or null when it is not one of the 18. */
+/** The relation of an API edge, or null when it is not one of RELATIONS. */
 export const relationOf = (name: string | null | undefined): Relation | null =>
 	isRelation(name) ? name : null;
 

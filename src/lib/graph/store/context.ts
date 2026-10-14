@@ -12,7 +12,13 @@ import {
 	type ContainerKind,
 	type Period
 } from '../container-membership';
-import { isAmendingRelation, isCollection, type Collection, type Relation } from '$lib/vocabulary';
+import {
+	isAmendingRelation,
+	isCollection,
+	nodeId,
+	type Collection,
+	type Relation
+} from '$lib/vocabulary';
 import { COLLECTION_ROLE } from '../collection-role';
 import { get, writable } from 'svelte/store';
 import {
@@ -335,12 +341,12 @@ export function createGraphContext() {
 		touchNode(center.id, center);
 
 		for (const neighbor of neighborsOf(response).slice(0, draw)) {
-			if (keep && !keep(`${neighbor.collection}/${neighbor.key}`)) continue;
+			if (keep && !keep(nodeId(neighbor.collection, neighbor.key))) continue;
 			const relation = relationOf(neighbor.relation);
 			const other = relation && drawable(neighbor);
 
 			const neighborContainerKind = relation && containerKindOf(neighbor.collection);
-			if (relation && neighborContainerKind && joins?.(`${neighbor.collection}/${neighbor.key}`)) {
+			if (relation && neighborContainerKind && joins?.(nodeId(neighbor.collection, neighbor.key))) {
 				const point = anchorContainer(neighbor);
 				if (point) {
 					const [source, target] =

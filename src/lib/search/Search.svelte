@@ -23,7 +23,7 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { besteTreffer, bySection, groupLabel, presentHit, sectionOf, vakken } from './present';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
-	import { bronLabel, type Collection } from '$lib/vocabulary';
+	import { bronLabel, nodeId, type Collection } from '$lib/vocabulary';
 	import {
 		bareArticle,
 		keuzesOf,
@@ -674,7 +674,7 @@
 						onpointermove={(e) => onpointermove(e, i)}
 					>
 						<span class="row-title"
-							>{keuze.label ?? naamVanId(`${keuze.ref.collection}/${keuze.ref.key}`)}</span
+							>{keuze.label ?? naamVanId(nodeId(keuze.ref.collection, keuze.ref.key))}</span
 						>
 						{#if active === i}<span class="kbd" aria-hidden="true">↵</span>{/if}
 					</a>

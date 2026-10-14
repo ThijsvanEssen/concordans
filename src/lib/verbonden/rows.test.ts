@@ -243,3 +243,15 @@ describe('activityLine (UX-toets 0.79.47, #59)', () => {
 		expect(op('2027-06-03', 'Geannuleerd')).toBe('Commissiedebat, geannuleerd');
 	});
 });
+
+describe('periodLabel', () => {
+	it('writes a seat as years, with a role other than plain membership', () => {
+		expect(periodLabel({ from: '2017-11-14', to: '2021-04-06', role: null })).toBe('2017–2021');
+		expect(periodLabel({ from: '2025-11-12', to: null, role: 'Lid' })).toBe('sinds 2025');
+		expect(periodLabel({ from: '2023-12-06', to: '2026-02-09', role: 'Fractievoorzitter' })).toBe(
+			'fractievoorzitter, 2023–2026'
+		);
+		// The end date is the last day of the seat (TotEnMet).
+		expect(periodLabel({ from: null, to: '2026-06-09', role: null })).toBe('tot en met 2026');
+	});
+});

@@ -11,6 +11,7 @@
 	import { get } from 'svelte/store';
 	import { meldNetwerk } from '$lib/stores/netwerk-melding';
 	import {
+		DEFAULT_FILTERS,
 		NEIGHBORHOOD_CAP,
 		NEIGHBORHOOD_CAP_PHONE,
 		type NeighborhoodReach
@@ -714,11 +715,13 @@
 			// A wet, fractie, commissie or dossier is a hull, not a scattered handful of
 			// dots: its own children are its point, so they are not capped like an
 			// ordinary bron's neighbours are.
-			const neighborLimit = containerKindOf(target.collection) ? Number.POSITIVE_INFINITY : 30;
+			const neighborLimit = containerKindOf(target.collection)
+				? Number.POSITIVE_INFINITY
+				: DEFAULT_FILTERS.neighborLimit;
 			// The bron itself first, from its light node: the reader and the panels start while
 			// the node the canvas draws is on its way, asked at the same time: a container's
 			// hull (`getNodeHull`: a wet's articles, a dossier's whole node), an ordinary bron's
-			// 30 per bucket (`getNodeCanvas`).
+			// first per bucket (`getNodeCanvas`, CANVAS_BUCKET).
 			const canvasNode = Number.isFinite(neighborLimit)
 				? getNodeCanvas(target.collection, target.key)
 				: getNodeHull(target.collection, target.key);

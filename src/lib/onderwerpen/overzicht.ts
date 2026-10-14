@@ -1,5 +1,6 @@
 // The overview of a topic: the decisions of the Kamers on moties, amendementen and bills with
-// its words in their title, counted by kind, outcome and year, and for one fractie by its vote.
+// its words in their title, as the API counts them by kind, outcome and year, and for one
+// fractie by its vote.
 import { csvText, type CsvCell } from '$lib/text/csv';
 import { buildBronHref } from '$lib/bron/href';
 import type { Schema } from '$lib/api/types';
@@ -16,23 +17,7 @@ export const uitkomstVan = (d: Pick<Besluit, 'passed'>): Uitkomst =>
 /** The kind as the Kamer records it (`Motie`, `Amendement`, `Wetgeving`). */
 export const soortVan = (d: Pick<Besluit, 'kind'>) => d.kind?.trim() || NO_DECISION_KIND;
 
-export const jaarVan = (d: Pick<Besluit, 'date'>) => (d.date ?? '').slice(0, 4);
-
 export type Filter = { soort?: string; uitkomst?: Uitkomst; jaar?: string; stem?: Stem };
-
-export function filter(
-	lijst: readonly Besluit[],
-	f: Filter,
-	stemmen: ReadonlyMap<string, Stem>
-): Besluit[] {
-	return lijst.filter(
-		(d) =>
-			(!f.soort || soortVan(d) === f.soort) &&
-			(!f.uitkomst || uitkomstVan(d) === f.uitkomst) &&
-			(!f.jaar || jaarVan(d) === f.jaar) &&
-			(!f.stem || stemmen.get(d.key) === f.stem)
-	);
-}
 
 export type Telling = Record<Uitkomst, number> & { totaal: number; voor: number; tegen: number };
 
@@ -44,51 +29,6 @@ const leeg = (): Telling => ({
 	voor: 0,
 	tegen: 0
 });
-
-function tel(t: Telling, d: Besluit, stemmen: ReadonlyMap<string, Stem>) {
-	t.totaal++;
-	t[uitkomstVan(d)]++;
-	const s = stemmen.get(d.key);
-	if (s) t[s]++;
-}
-
-export const totaal = (lijst: readonly Besluit[], stemmen: ReadonlyMap<string, Stem>) => {
-	const t = leeg();
-	for (const d of lijst) tel(t, d, stemmen);
-	return t;
-};
-
-function bij(m: Map<string, Telling>, k: string): Telling {
-	let t = m.get(k);
-	if (!t) m.set(k, (t = leeg()));
-	return t;
-}
-
-/** Per kind, the most first. */
-export function perSoort(lijst: readonly Besluit[], stemmen: ReadonlyMap<string, Stem>) {
-	const m = new Map<string, Telling>();
-	for (const d of lijst) tel(bij(m, soortVan(d)), d, stemmen);
-	return [...m].sort((a, b) => b[1].totaal - a[1].totaal || a[0].localeCompare(b[0]));
-}
-
-/** Per year, the newest first, a year without decisions between two others included. */
-export function perJaar(lijst: readonly Besluit[], stemmen: ReadonlyMap<string, Stem>) {
-	const m = new Map<string, Telling>();
-	for (const d of lijst) {
-		const j = jaarVan(d);
-		if (j) tel(bij(m, j), d, stemmen);
-	}
-	const jaren = [...m.keys()].map(Number);
-	if (!jaren.length) return [];
-	const rij: [string, Telling][] = [];
-	for (let j = Math.max(...jaren); j >= Math.min(...jaren); j--)
-		rij.push([String(j), m.get(String(j)) ?? leeg()]);
-	return rij;
-}
-
-// ── Counted by the API (0.79.30) ───────────────────────────────────────────
-// With repeated q, facets.kind and facets.years and party_votes the API counts what the page
-// counted itself: every decision, no cap of the newest 1,000, the word rule applied there.
 
 export type Facets = Schema<'DecisionFacets'>;
 export type Getelden = { alles: Telling; soorten: [string, Telling][]; jaren: [string, Telling][] };

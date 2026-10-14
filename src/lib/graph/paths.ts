@@ -2,17 +2,19 @@
 // article is no bron on the canvas: a stuk that EXPLAINS a version of art. 3:7 explains
 // art. 3:7, and the hop through the version (VERSION_OF) folds onto the article.
 
+import { nodeId, parseNodeId } from '$lib/vocabulary';
+
 type PathNode = { collection: string; key: string };
 type PathEdge = { id: string; source: string; target: string; relation: string | null };
 
-const idOf = (n: PathNode) => `${n.collection}/${n.key}`;
+const idOf = (n: PathNode) => nodeId(n.collection, n.key);
 
 /** The nodes and edges of a path set with every article version folded onto its article. */
 export function foldVersions<N extends PathNode, E extends PathEdge>(
 	nodes: N[],
 	edges: E[]
 ): { nodes: N[]; edges: E[] } {
-	const isVersion = (id: string) => id.startsWith('article_versions/');
+	const isVersion = (id: string) => parseNodeId(id)?.collection === 'article_versions';
 	// Each version to the article it is a version of, as the path's VERSION_OF says.
 	const articleOf = new Map<string, string>();
 	for (const e of edges) {
