@@ -12,6 +12,7 @@
 	import Search from '$lib/search/Search.svelte';
 	import { laatstOpen, opzij } from '$lib/stores/zwevend';
 	import { FOLD, isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
+	import { GROUP_LABEL } from '$lib/graph/collection-role';
 	import { get } from 'svelte/store';
 	import type { NetwerkEntry } from './netwerk';
 	import { formatCount } from '$lib/text/getal';
@@ -102,14 +103,6 @@
 				: c === 'cabinets'
 					? 'bewindspersonen'
 					: 'leden';
-
-	/** A grouping by its name in the legend. */
-	const GROEP = {
-		instrument: 'Wet',
-		faction: 'Fractie',
-		committee: 'Commissie',
-		dossier: 'Dossier'
-	} as const;
 </script>
 
 {#if start}
@@ -174,7 +167,7 @@
 						title={e.missing
 							? 'Niet gevonden'
 							: e.verborgenMet
-								? `Aan met ${GROEP[e.verborgenMet]}`
+								? `Aan met ${GROUP_LABEL[e.verborgenMet]}`
 								: e.on
 									? `${e.titel ?? e.label}: verbergen`
 									: `${e.titel ?? e.label}: tonen`}

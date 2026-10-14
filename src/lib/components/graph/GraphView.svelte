@@ -23,6 +23,7 @@
 	import type { GraphStore, GraphFilters } from '$lib/graph/graph-store';
 	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
 	import { isVersionCollection, kindOfCollection, kort } from '$lib/graph/types';
+	import { isDrawn } from '$lib/graph/collection-role';
 	import {
 		clusterLabel,
 		clustersOf,
@@ -667,7 +668,7 @@
 		const keep = new Set<string>([...pinnedIds, ...(coreIds ?? [])]);
 		for (const group of containerGroups.values()) for (const id of group.members) keep.add(id);
 		const canvasNodes = rawNodes.filter(isCanvasNode);
-		const edges = rawEdges.filter((e) => e.relation !== 'VERSION_OF');
+		const edges = rawEdges.filter((e) => isDrawn(e.relation));
 		// Between the chosen bronnen of a netwerk: what ties the same ones, as one.
 		const chosen = new Set<string>(pinnedIds);
 		if (focus) chosen.add(focus);
@@ -1135,10 +1136,7 @@
 	}
 
 	function drawEdges(allEdges: GraphEdge[]) {
-		// VERSION_OF links an article's own versions across time: real, but not a
-		// network relation — the reader's own version nav uses it directly, not this
-		// canvas, so it never becomes an edge here.
-		const es = allEdges.filter((e) => e.relation !== 'VERSION_OF');
+		const es = allEdges.filter((e) => isDrawn(e.relation));
 		let changed = false;
 		const keep = new Set(es.map((e) => e.id));
 		g.edges()

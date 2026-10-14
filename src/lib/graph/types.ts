@@ -6,6 +6,7 @@ import { dossierName, dossierUitProps } from '$lib/bron/dossier-naam';
 import { articleName } from '$lib/text/bw';
 import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
 import { maandJaar } from '$lib/text/datum';
+import { COLLECTION_ROLE } from './collection-role';
 import {
 	isCollection,
 	isRelation,
@@ -30,28 +31,8 @@ export type GraphNodeKind =
 	| 'faction'
 	| 'other';
 
-const KIND_OF_COLLECTION: Record<Collection, GraphNodeKind> = {
-	instruments: 'instrument',
-	instrument_versions: 'other',
-	articles: 'article',
-	article_versions: 'other',
-	annexes: 'other',
-	judgments: 'judgment',
-	dossiers: 'dossier',
-	cases: 'activity',
-	documents: 'document',
-	activities: 'activity',
-	decisions: 'activity',
-	commitments: 'activity',
-	members: 'member',
-	factions: 'faction',
-	committees: 'committee',
-	// A cabinet is drawn as a body of people, as a committee is.
-	cabinets: 'committee'
-};
-
 export const kindOfCollection = (collection: Collection): GraphNodeKind =>
-	KIND_OF_COLLECTION[collection];
+	COLLECTION_ROLE[collection].kind;
 
 // A version is kept so an article or instrument can be read as it stood at a past
 // moment, referring to the matching past version of whatever it cites (VERSION_OF).

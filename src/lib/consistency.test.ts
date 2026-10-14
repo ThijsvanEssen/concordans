@@ -1598,4 +1598,16 @@ describe('one top layer, one fold, one role per collection (code-eenvoud F63–F
 		// The cards over the canvas are kept as every heading is, in dicht.svelte.ts.
 		expect(offenders((t) => /'concordans:(?:legenda|netwerkpaneel)'/.test(t))).toEqual([]);
 	});
+
+	it('reads the role of a collection on the canvas from COLLECTION_ROLE (F65)', () => {
+		const own = [
+			/filter\(\(e\) => e\.relation !== 'VERSION_OF'\)/,
+			/instrument: 'Wet',\s*faction: 'Fractie'/,
+			/cabinets: 'committee'/,
+			/c !== 'cases'|collection === 'cases'\) return null/
+		];
+		expect(offenders((t) => own.some((r) => r.test(t)), ['lib/graph/collection-role.ts'])).toEqual(
+			[]
+		);
+	});
 });

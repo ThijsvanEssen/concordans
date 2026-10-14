@@ -9,6 +9,7 @@
 import { instrumentContainerId } from '$lib/api/instrument-cache';
 import { isCollection, nodeId, type Relation } from '$lib/vocabulary';
 import { writable, type Readable } from 'svelte/store';
+import { COLLECTION_ROLE } from './collection-role';
 
 export type ContainerKind = 'instrument' | 'faction' | 'committee' | 'dossier';
 
@@ -24,20 +25,9 @@ export function isContainerKind(kind: string): kind is ContainerKind {
 	return CONTAINER_KINDS.has(kind);
 }
 
-// A node's `collection` comes off the API as a plain string, so this looks it up
-// by string rather than by the stricter `Collection` type `nodeToGraphNode` uses.
-const KIND_OF_COLLECTION: Partial<Record<string, ContainerKind>> = {
-	instruments: 'instrument',
-	factions: 'faction',
-	committees: 'committee',
-	// A cabinet holds its bewindspersonen as a commissie holds its leden (SERVED_IN).
-	cabinets: 'committee',
-	dossiers: 'dossier'
-};
-
 /** The container kind a collection is drawn as a hull for, or null for an ordinary bron. */
 export function containerKindOf(collection: string): ContainerKind | null {
-	return KIND_OF_COLLECTION[collection] ?? null;
+	return isCollection(collection) ? COLLECTION_ROLE[collection].hull : null;
 }
 
 /**

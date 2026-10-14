@@ -32,6 +32,7 @@
 	} from './nodeSprites';
 	import { EDGE_WEIGHT } from '$lib/graph/types';
 	import { kindOfCollection } from '$lib/graph/types';
+	import { GROUP_LABEL, inLegend } from '$lib/graph/collection-role';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { BRON_LABEL, isCollection } from '$lib/vocabulary';
 	import { formatCount } from '$lib/text/getal';
@@ -124,28 +125,13 @@
 	);
 	const uitsnedeTotaal = $derived(uitsnede.reduce((n, b) => n + b.total, 0));
 	const NO_SELECTION_REASON = 'Kies eerst een bron in het netwerk.';
-	// Never drawn as an edge on the canvas, so not a togglable line here either.
-	// PART_OF, MEMBER_OF and LED_BY always point at a container (a wet, fractie,
-	// commissie or dossier) — a hull groups them now, not a line. VERSION_OF links
-	// an article's own versions across time; the reader's version nav uses it
-	// directly, never the canvas. ABOUT, AMENDS and REPEALS only sometimes point at
-	// a container (a document can amend an article, not just a wet) and stay
-	// listed, even though the canvas silently folds the container case of those
-	// into a hull rather than drawing it — an open gap, not a fix.
-	const NEVER_DRAWN_RELATIONS = new Set<Relation>(['PART_OF', 'MEMBER_OF', 'LED_BY', 'VERSION_OF']);
 	const relations = $derived(
 		selectionCollection
-			? relationCounts(verbonden.groups, selectionCollection).filter(
-					(r) => !NEVER_DRAWN_RELATIONS.has(r.relation as Relation)
+			? relationCounts(verbonden.groups, selectionCollection).filter((r) =>
+					inLegend(r.relation as Relation)
 				)
 			: []
 	);
-	const CONTAINER_KIND_LABEL: Record<ContainerKind, string> = {
-		instrument: 'Wet',
-		faction: 'Fractie',
-		committee: 'Commissie',
-		dossier: 'Dossier'
-	};
 	const CONTAINER_KIND_HINT: Record<ContainerKind, string> = {
 		instrument: 'een omtrek om de artikelen van een wet',
 		faction: 'een omtrek om de leden van een fractie',
@@ -238,7 +224,7 @@
 				<FilterOptie
 					label={kindLabel(k)}
 					title={groepen
-						? `Aan met ${groepen.map((g) => CONTAINER_KIND_LABEL[g]).join(' en ')}`
+						? `Aan met ${groepen.map((g) => GROUP_LABEL[g]).join(' en ')}`
 						: kindTitle(k)}
 					wrap
 					on={isOn(k)}
@@ -296,11 +282,11 @@
 
 		<section class="block">
 			<h3 class="block__title">Groepering</h3>
-			{#each Object.keys(CONTAINER_KIND_LABEL) as ck (ck)}
+			{#each Object.keys(GROUP_LABEL) as ck (ck)}
 				{@const kind = ck as ContainerKind}
 				<FilterOptie
-					label={CONTAINER_KIND_LABEL[kind]}
-					title={`${CONTAINER_KIND_LABEL[kind]}: ${CONTAINER_KIND_HINT[kind]}${kind === 'instrument' ? '; uit verbergt ook de artikelen' : ''}`}
+					label={GROUP_LABEL[kind]}
+					title={`${GROUP_LABEL[kind]}: ${CONTAINER_KIND_HINT[kind]}${kind === 'instrument' ? '; uit verbergt ook de artikelen' : ''}`}
 					on={kind === 'instrument' ? isOn('artikelen') : !hiddenGroups.has(kind)}
 					count={kind === 'instrument' && !counting ? (totals.artikelen ?? 0) : null}
 					bezig={kind === 'instrument' && counting}
