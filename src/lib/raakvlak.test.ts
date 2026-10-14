@@ -1,5 +1,5 @@
 // A finger's target (UX-toets 14 Oct, #60): the small text controls carry the shared target of
-// AppShell (.raakvlak, at least 24 px high on a touch screen), and a place's number its own.
+// lib/styles/basis.css (.raakvlak, at least 24 px high on a touch screen), and a place's number its own.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -15,9 +15,9 @@ describe('the touch target', () => {
 	});
 
 	it("is around a place's number, before it, on a touch screen", () => {
-		const shell = read('lib/components/layout/AppShell.svelte');
-		const coarse = shell.slice(shell.indexOf('@media (pointer: coarse)'));
-		expect(coarse).toContain(':global(.plaats-marker::before)');
+		const basis = read('lib/styles/basis.css');
+		const coarse = basis.slice(basis.indexOf('@media (pointer: coarse)'));
+		expect(coarse).toContain('.plaats-marker::before');
 	});
 
 	it("is on Gemarkeerd's own small buttons", () => {

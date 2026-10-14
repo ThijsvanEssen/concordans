@@ -1,6 +1,6 @@
 # Text hierarchy
 
-The order in which a page reads, from the page down to a count. This is the typography, not the place of a bron, which is in [`hierarchie.md`](hierarchie.md). Every rung uses the tokens in `AppShell.svelte`; there is no size of its own.
+The order in which a page reads, from the page down to a count. This is the typography, not the place of a bron, which is in [`hierarchie.md`](hierarchie.md). Every rung uses the tokens in `src/lib/styles/tokens.css`; there is no size of its own.
 
 All text is in the serif (Newsreader) in three weights, 400, 600 and 800; the sans (Schibsted Grotesk, `--font-ui`) is only for controls: buttons, choice rows, fields, keys, menus and the navigation (Thijs, 10 October 2026: "typografie is goed (houd wel bestaande structuren aan)"; the study in `~/Development/ux-voorstel/typografie/`).
 

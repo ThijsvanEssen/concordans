@@ -101,10 +101,9 @@
 	};
 	let standen = $state<Record<string, Stand>>({});
 	let uitgeklapt = $state<Record<string, boolean>>({});
-	const sleutel = sleutelVan;
 	// A shared topic asks another window than an own one with the same words.
 	const vak = (o: Pick<Onderwerp, 'termen' | 'wet'>) =>
-		(gedeeld.length ? 'gedeeld:' : '') + sleutel(o);
+		(gedeeld.length ? 'gedeeld:' : '') + sleutelVan(o);
 	/** What the feed is asked for a topic: its words, or its law and article. */
 	const vraagVan = (o: Onderwerp) =>
 		o.wet
@@ -270,13 +269,13 @@
 		voegTermenToe(o.termen[0], splitsTermen(erbij));
 		eigen = lees();
 		erbij = '';
-		bewerkt = sleutel(eigen.find((x) => x.termen[0] === o.termen[0]) ?? o);
+		bewerkt = sleutelVan(eigen.find((x) => x.termen[0] === o.termen[0]) ?? o);
 	}
 	function haalWeg(o: Onderwerp, term: string) {
 		haalTermWeg(term);
 		eigen = lees();
 		const blijft = o.termen.find((t) => t !== term);
-		bewerkt = sleutel(eigen.find((x) => blijft && x.termen.includes(blijft)) ?? o);
+		bewerkt = sleutelVan(eigen.find((x) => blijft && x.termen.includes(blijft)) ?? o);
 	}
 	function verwijder(o: Onderwerp) {
 		ontvolgOnderwerp(o);
@@ -289,7 +288,7 @@
 		eigen = lees();
 	}
 	const alGevolgd = $derived(
-		gedeeld.length > 0 && gedeeld.every((t) => eigen.some((o) => sleutel(o) === sleutel(t)))
+		gedeeld.length > 0 && gedeeld.every((t) => eigen.some((o) => sleutelVan(o) === sleutelVan(t)))
 	);
 
 	let gekopieerd = $state(false);
@@ -348,7 +347,7 @@
 		{#if lijst.length > 1}
 			<h2 class="opzij__kop">Gevolgd</h2>
 			<ul>
-				{#each lijst as o, n (sleutel(o))}
+				{#each lijst as o, n (sleutelVan(o))}
 					<li><a href="#onderwerp-{n}">{naamVan(o)}</a></li>
 				{/each}
 			</ul>
@@ -360,7 +359,7 @@
 			<p class="status stil">Nog geen onderwerpen.</p>
 		{/if}
 
-		{#each lijst as o, n (sleutel(o))}
+		{#each lijst as o, n (sleutelVan(o))}
 			{@const s = standen[vak(o)]}
 			<!-- A topic as a group of the page (Sectie): the ink rule, its words as the heading that
 			     opens and closes it, remembered per topic in this browser (Thijs, 10 Oct), its
@@ -370,7 +369,7 @@
 				id="onderwerp-{n}"
 				niveau={2}
 				aantal={telling(s)}
-				sleutel="onderwerp:{sleutel(o)}"
+				sleutel="onderwerp:{sleutelVan(o)}"
 				standaardOpen
 			>
 				{#snippet naast()}
@@ -378,8 +377,8 @@
 						{#if !gedeeld.length}
 							{#if !o.wet}
 								<TekstLink
-									aria-expanded={bewerkt === sleutel(o)}
-									onclick={() => (bewerkt = bewerkt === sleutel(o) ? null : sleutel(o))}
+									aria-expanded={bewerkt === sleutelVan(o)}
+									onclick={() => (bewerkt = bewerkt === sleutelVan(o) ? null : sleutelVan(o))}
 									>Woorden</TekstLink
 								>
 							{/if}
@@ -389,7 +388,7 @@
 					</span>
 				{/snippet}
 				<p class="sinds">{telRegel(o, s)}</p>
-				{#if bewerkt === sleutel(o) && !gedeeld.length}
+				{#if bewerkt === sleutelVan(o) && !gedeeld.length}
 					<div class="woorden">
 						<ul>
 							{#each o.termen as term (term)}
@@ -475,7 +474,7 @@
 <style>
 	/* The column's width, not its content's: without a paragraph under the title the page
 	   would shrink to the field and stand off-centre. */
-	/* The frame and grid of Bladeren (AppShell): the heading and the choose-line over both
+	/* The frame and grid of Bladeren (lib/styles/frame.css): the heading and the choose-line over both
 	   columns. */
 	.regel {
 		grid-column: 1 / -1;
@@ -488,7 +487,6 @@
 	}
 	.opzij__kop {
 		margin: 0 0 var(--s-2);
-		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		font-weight: 600;
 		color: var(--ink);
@@ -497,7 +495,6 @@
 		margin: 0;
 		padding: 0;
 		list-style: none;
-		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	.opzij li {
@@ -549,10 +546,10 @@
 		font-size: var(--t-meta);
 	}
 	.acties {
-		display: flex;
+		display: inline-flex;
 		flex-wrap: wrap;
 		align-items: baseline;
-		gap: var(--s-4);
+		gap: var(--s-1) var(--s-4);
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
@@ -565,12 +562,6 @@
 	/* The topics as groups of the page; the first on the top line of the facet column. */
 	.inhoud > :global(.sectie + .sectie) {
 		margin-top: var(--s-7);
-	}
-	.acties {
-		display: inline-flex;
-		flex-wrap: wrap;
-		gap: var(--s-1) var(--s-4);
-		font-size: var(--t-meta);
 	}
 	.naar-overzicht {
 		color: var(--ink-2);
@@ -597,7 +588,6 @@
 		padding: var(--s-1) var(--s-3);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);
-		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	.weg-knop {
@@ -619,7 +609,6 @@
 	.sinds {
 		margin: 0;
 		color: var(--ink-3);
-		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	.status,

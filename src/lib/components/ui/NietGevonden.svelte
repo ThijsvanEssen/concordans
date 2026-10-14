@@ -69,7 +69,6 @@
 		color: var(--ink-3);
 	}
 	h1 {
-		font-family: var(--font-serif);
 		font-weight: 600;
 		font-size: var(--t-h1);
 		line-height: var(--lh-tight);

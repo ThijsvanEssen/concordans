@@ -520,7 +520,7 @@
 	function labelWidth(text: string): number {
 		labelMeasure ??= document.createElement('canvas').getContext('2d');
 		if (!labelMeasure) return 0;
-		labelMeasure.font = `600 11.5px ${tokens().fontSans}`;
+		labelMeasure.font = `600 11.5px ${tokens().fontLabel}`;
 		return labelMeasure.measureText(text).width + 18;
 	}
 
@@ -1211,7 +1211,7 @@
 			labelWeight: '400',
 			labelColor: { color: t.ink2 },
 			edgeLabelColor: { color: t.ink },
-			edgeLabelFont: t.fontSans,
+			edgeLabelFont: t.fontLabel,
 			edgeLabelSize: 11.5,
 			labelDensity: 1.4,
 			labelGridCellSize: 60,

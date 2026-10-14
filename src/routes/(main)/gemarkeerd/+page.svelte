@@ -120,7 +120,7 @@
 <RouteKop pad="/gemarkeerd" />
 
 {#snippet rij(i: MapItem, m: Map | null)}
-	{@const k = (m?.id ?? 'gedeeld') + ':' + sleutelVan(i)}
+	{@const k = rijSleutel(m, i)}
 	{@const collection = parseNodeId(i.id)?.collection}
 	<IndexRow title={i.kort} href={itemHref(i)} open={geopend.has(k)} onToggle={() => wisselOpen(k)}>
 		{#snippet lead()}
@@ -437,14 +437,13 @@
 </div>
 
 <style>
-	/* The frame and grid of Bladeren (AppShell), as Gevolgd: the heading over both columns. */
+	/* The frame and grid of Bladeren (lib/styles/frame.css), as Gevolgd: the heading over both columns. */
 	/* The column's first heading on the line of the first group's heading, as on Gevolgd. */
 	.opzij {
 		padding-top: calc(var(--s-3) + 2px);
 	}
 	.opzij__kop {
 		margin: 0 0 var(--s-2);
-		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		font-weight: 600;
 		color: var(--ink);
@@ -453,7 +452,6 @@
 		margin: 0;
 		padding: 0;
 		list-style: none;
-		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	.opzij li {
@@ -507,7 +505,6 @@
 		align-items: baseline;
 		gap: var(--s-1) var(--s-4);
 		margin: 0;
-		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}
@@ -560,10 +557,6 @@
 		text-decoration: underline;
 		text-decoration-color: var(--rule-strong);
 		text-underline-offset: 3px;
-	}
-	.groep-knop:focus-visible {
-		outline: 2px solid var(--focus);
-		outline-offset: 2px;
 	}
 	.wet-open {
 		display: flex;

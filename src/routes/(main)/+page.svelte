@@ -253,7 +253,7 @@
 			min-height: 274px;
 		}
 	}
-	/* The frame and grid of Bladeren (AppShell). */
+	/* The frame and grid of Bladeren (lib/styles/frame.css). */
 	.side {
 		display: flex;
 		flex-direction: column;
@@ -261,13 +261,11 @@
 	}
 	.side h1 {
 		margin: 0;
-		font-family: var(--font-serif);
 		font-size: var(--t-h1);
 		font-weight: 600;
 	}
 	.what {
 		margin: calc(-1 * var(--s-3)) 0 0;
-		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		line-height: var(--lh-snug);
 		color: var(--ink-2);
@@ -301,7 +299,6 @@
 	}
 	.actueel h2 {
 		margin: 0;
-		font-family: var(--font-serif);
 		font-size: var(--t-h2);
 		font-weight: 800;
 	}

@@ -2,7 +2,7 @@
 	// Going somewhere, in the text's own letter: Alle 244 uitspraken, Wis alle filters, Vorige
 	// (docs/bediening.md). Ink, underlined; red only on hover and focus; the size of the text
 	// around it. A link where it leads to an address, a button where it acts on the page. On a
-	// touch screen it has the shared target of AppShell (.raakvlak).
+	// touch screen it has the shared target (.raakvlak, lib/styles/basis.css).
 	import type { Snippet } from 'svelte';
 
 	let {

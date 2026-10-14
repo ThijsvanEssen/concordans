@@ -2,6 +2,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vitest/config';
 import type { Plugin } from 'vite';
 import { readFileSync } from 'node:fs';
+import { apiDocs } from './src/lib/api/docs';
 
 // The pages of the app with their title and description ($lib/seo/routes.ts), next to
 // index.html in the build: the server reads it for a page's head, and to tell a page from
@@ -19,8 +20,24 @@ const spaRoutes: Plugin = {
 	}
 };
 
+// The routes of the API for /api, from the OpenAPI schema: the page carries these, not the
+// whole schema.
+const API_DOCS = 'virtual:api-docs';
+const OPENAPI = 'src/lib/api/openapi.json';
+const apiDocsModule: Plugin = {
+	name: 'api-docs',
+	resolveId(id) {
+		if (id === API_DOCS) return `\0${API_DOCS}`;
+	},
+	load(id) {
+		if (id !== `\0${API_DOCS}`) return;
+		this.addWatchFile(OPENAPI);
+		return `export default ${JSON.stringify(apiDocs(JSON.parse(readFileSync(OPENAPI, 'utf8'))))};`;
+	}
+};
+
 export default defineConfig({
-	plugins: [sveltekit(), spaRoutes],
+	plugins: [sveltekit(), spaRoutes, apiDocsModule],
 	// Safari can aggressively cache ESM modules in dev; force fresh loads.
 	server: {
 		headers: {

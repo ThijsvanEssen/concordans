@@ -14,9 +14,14 @@ function files(dir: string): string[] {
 	});
 }
 
+// A stylesheet reads as a component's style block, so the rules below see it too.
+const read = (path: string) => {
+	const text = readFileSync(path, 'utf8');
+	return path.endsWith('.css') ? `<style>${text}</style>` : text;
+};
 const sources = files(ROOT)
 	.filter((path) => !path.includes(`${join('lib', 'api', 'generated')}`))
-	.map((path) => ({ path: relative(ROOT, path), text: readFileSync(path, 'utf8') }));
+	.map((path) => ({ path: relative(ROOT, path), text: read(path) }));
 
 const offenders = (test: (text: string) => boolean, allowed: string[] = []) =>
 	sources.filter(({ path, text }) => !allowed.includes(path) && test(text)).map((s) => s.path);
@@ -177,8 +182,8 @@ describe('one form for each thing', () => {
 	});
 
 	it('reads what is hidden without taking room: no margin on .sr-only, the live region fixed (#35)', () => {
-		const shell = sources.find((s) => s.path === 'lib/components/layout/AppShell.svelte')!.text;
-		expect(shell).toMatch(/:global\(\.sr-only\) \{[^}]*margin: 0;/);
+		const basis = sources.find((s) => s.path === 'lib/styles/basis.css')!.text;
+		expect(basis).toMatch(/\n\.sr-only \{[^}]*margin: 0;/);
 		const layout = sources.find((s) => s.path === 'routes/+layout.svelte')!.text;
 		expect(layout).toMatch(/class="sr-only aankondiging"/);
 		expect(layout).toMatch(/\.aankondiging \{\s*position: fixed;/);
@@ -328,7 +333,7 @@ describe('one form for each thing', () => {
 	});
 
 	it('lays a full-width page in the frame of Bladeren, with no width of its own (docs/bediening.md, Layout)', () => {
-		// A page-wide max-width (600 px or more) only in AppShell's .blad and the footer.
+		// A page-wide max-width (600 px or more) only in the frame's .blad and the footer.
 		const breed = /(?<!@media \(|@container [\w ]*\()max-width:\s*(\d{3,4})px/g;
 		const eigen = sources
 			.filter(
@@ -347,7 +352,7 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
-	it('heads every page in the frame with the one head, spaced only by AppShell', () => {
+	it('heads every page in the frame with the one head, spaced only by the frame', () => {
 		// Thijs, 10 Oct: "een andere verticale uitlijning na de titel". The menu pages and the
 		// text pages use .blad__kop and .blad__titel; none styles its h1, its title or its head.
 		const menu = [
@@ -373,7 +378,7 @@ describe('one form for each thing', () => {
 				rules(t).some((r) =>
 					/(^|[\s,>])(h1|\.blad__kop|\.blad__titel|\.kop|\.titel|\.title)$/.test(r.selector.trim())
 				),
-			['lib/components/layout/AppShell.svelte']
+			['lib/styles/frame.css']
 		);
 		expect(eigen).toEqual([]);
 	});
@@ -431,7 +436,7 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
-	it('styles the parts of a text page once, in AppShell (.blad--tekst)', () => {
+	it('styles the parts of a text page once, in the frame (.blad--tekst)', () => {
 		const delen =
 			/^\.(stub-eyebrow|stub-lede|section|section-title|cite|meta-row|meta-link|updated)(:hover)?$/;
 		expect(
@@ -477,9 +482,27 @@ describe('one form for each thing', () => {
 		expect(offenders((t) => t.includes('var(--font-sans)'))).toEqual([]);
 		// The sans only where a control is styled.
 		expect(
-			offenders(
-				(t) => rules(t).some((r) => r.body.includes('var(--font-ui)') && !isControl(r.selector)),
-				['lib/components/layout/AppShell.svelte']
+			offenders((t) =>
+				rules(t).some((r) => r.body.includes('var(--font-ui)') && !isControl(r.selector))
+			)
+		).toEqual([]);
+		// The serif is the page's: a paragraph, a heading, a list or a table, which no control
+		// holds, has it without saying so.
+		const flow = /(^|[\s>+~])(p|h[1-6]|ul|ol|li|dl|table)(?=$|[.:[\s#])/;
+		expect(
+			offenders((t) =>
+				rules(t).some(
+					(r) =>
+						/font-family:\s*var\(--font-serif\)/.test(r.body) &&
+						r.selector.split(',').every((part) =>
+							flow.test(
+								part
+									.trim()
+									.split(/\s*[>+~]\s*|\s+/)
+									.at(-1) ?? ''
+							)
+						)
+				)
 			)
 		).toEqual([]);
 		// Text in three weights: 400, 600, 800. The wordmark is a logo, not a rung.
@@ -564,13 +587,13 @@ describe('one form for each thing', () => {
 		// "De kleur mag alleen blijven zolang het een doel dient": red says no. A hover, the
 		// focus ring and a wash are ink or neutral.
 		const eigen: Uitzonderingen = {
-			'lib/components/layout/AppShell.svelte': 'the tokens: --accent and --uitkomst-nee',
+			'lib/styles/tokens.css': 'the tokens: --accent and --uitkomst-nee',
 			'lib/components/layout/Wordmark.svelte': 'the § of the name',
 			'routes/(main)/actueel/+page.svelte': 'an error'
 		};
 		expect(offenders((t) => /var\(--accent\)|--accent-soft/.test(t), buiten(eigen))).toEqual([]);
-		const shell = sources.find((s) => s.path === 'lib/components/layout/AppShell.svelte')!.text;
-		expect(shell.match(/var\(--accent\)/g)).toHaveLength(1);
+		const tokens = sources.find((s) => s.path === 'lib/styles/tokens.css')!.text;
+		expect(tokens.match(/var\(--accent\)/g)).toHaveLength(1);
 	});
 
 	it('keeps red off a menu button that has the focus back after a choice', () => {
@@ -635,13 +658,13 @@ describe('one form for each thing', () => {
 		).toBe(true);
 	});
 
-	it('takes every colour in a style from the tokens in AppShell', () => {
+	it('takes every colour in a style from the tokens (lib/styles/tokens.css)', () => {
 		// A hex or rgb() value in a component is a colour beside the palette. A mask's `black`
 		// is not a colour; the canvas and the fracties' own colours live in TypeScript.
 		const css = (t: string) =>
 			(/<style>([\s\S]*?)<\/style>/.exec(t)?.[1] ?? '').replace(/\/\*[\s\S]*?\*\//g, '');
 		const eigen: Uitzonderingen = {
-			'lib/components/layout/AppShell.svelte': 'the tokens themselves'
+			'lib/styles/tokens.css': 'the tokens themselves'
 		};
 		expect(
 			offenders((t) => /#[0-9a-fA-F]{3,8}\b|\b(rgba?|hsla?)\(/.test(css(t)), buiten(eigen))
@@ -668,15 +691,15 @@ describe('one form for each thing', () => {
 							(m) => !/^var\(--font-(serif|ui)\)$/.test(m[1].trim())
 						)
 					),
-				// The wordmark is a logo in its own face.
-				['lib/components/layout/AppShell.svelte', 'lib/components/layout/Wordmark.svelte']
+				// The faces themselves, and the wordmark: a logo in its own face.
+				['lib/styles/fonts.css', 'lib/components/layout/Wordmark.svelte']
 			)
 		).toEqual([]);
 	});
 
 	it('hides text for a screen reader with the one .sr-only', () => {
 		const eigen: Uitzonderingen = {
-			'lib/components/layout/AppShell.svelte': 'the one rule'
+			'lib/styles/basis.css': 'the one rule'
 		};
 		expect(
 			offenders((t) => rules(t).some((r) => /clip:\s*rect\(0/.test(r.body)), buiten(eigen))
@@ -769,13 +792,13 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 
 	it('frames a button only as the Knop (.btn, is-groot) or the IconKnop', () => {
 		// A frame in the control's face, or a frame and a pointer, is a button (a field aside);
-		// its one form is in AppShell and IconKnop.
+		// its one form is in lib/styles/basis.css and IconKnop.
 		const knop = (r: { selector: string; body: string }) =>
 			/border:\s*1px solid/.test(r.body) &&
 			/var\(--font-ui\)|cursor:\s*pointer/.test(r.body) &&
 			!/(input|textarea|select|kbd)\b[^,]*$/.test(r.selector);
 		const eigen: Uitzonderingen = {
-			'lib/components/layout/AppShell.svelte': 'the Knop itself',
+			'lib/styles/basis.css': 'the Knop itself',
 			'lib/components/ui/IconKnop.svelte': 'the one icon button',
 			'lib/components/layout/TopBar.svelte': 'the search in the bar looks as the field it opens',
 			'lib/netwerk/NetwerkPanel.svelte': 'the example in an empty netwerk is a card, not a button'
@@ -794,7 +817,7 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 		expect(offenders((t) => rules(t).some(item), buiten(eigen))).toEqual([]);
 	});
 
-	it('styles Verfijnen once, in AppShell', () => {
+	it('styles Verfijnen once, in lib/styles/basis.css', () => {
 		expect(
 			offenders(
 				(t) =>
@@ -802,7 +825,7 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 						(r) =>
 							/\.verfijnen-knop\b/.test(r.selector) && /font-family|text-decoration/.test(r.body)
 					),
-				['lib/components/layout/AppShell.svelte']
+				['lib/styles/basis.css']
 			)
 		).toEqual([]);
 	});
@@ -893,7 +916,7 @@ describe('canvas cards and halls', () => {
 
 	it('keeps red out of the network: its colours are --netwerk-* tokens (Thijs, 10 Oct)', () => {
 		// Red in the network would only say no; the kinds, the focus and a chosen verbinding
-		// take the tokens in AppShell.
+		// take the tokens.
 		const netwerk = (path: string) =>
 			/^lib\/(components\/graph|netwerk|graph)\//.test(path) && !/\.test\.ts$/.test(path);
 		expect(
@@ -1243,7 +1266,7 @@ describe('canvas cards and halls', () => {
 
 describe('the keyboard', () => {
 	it('lets no focus pass without a mark: every outline taken away is named (audit 3)', () => {
-		// The ink ring stands on every focus (AppShell, :focus-visible). A rule that takes the
+		// The ink ring stands on every focus (lib/styles/basis.css, :focus-visible). A rule that takes the
 		// outline away gives the focus another mark that is as plain, and says so here.
 		const eigen: Record<string, string> = {
 			'lib/search/Search.svelte input': 'its field carries the ring (.field:focus-within)',
@@ -1257,7 +1280,7 @@ describe('the keyboard', () => {
 				'a cell of the grid: an inset line in ink',
 			'lib/onderwerpen/Kruiswoord.svelte .knop:hover, .knop:focus-visible':
 				'a total of the grid: an inset line in ink, as a cell',
-			"lib/components/layout/AppShell.svelte :global([tabindex='-1']:focus:not(:focus-visible))":
+			"lib/styles/basis.css [tabindex='-1']:focus:not(:focus-visible)":
 				'a list reached by its skip link (focus by a click or a script): :focus-visible keeps the ring'
 		};
 		const zonder = sources.flatMap(({ path, text }) =>
@@ -1375,7 +1398,7 @@ describe('errors that are not swallowed', () => {
 		expect(new Set(panels)).toEqual(new Set(['De tekst', 'Verbonden', 'Het netwerk']));
 	});
 
-	it('defines the quiet line once, in AppShell: no component styles its own .stil', () => {
+	it('defines the quiet line once, in the frame: no component styles its own .stil', () => {
 		// Code-eenvoud F30: the open rows had a smaller one of their own.
 		const own = (text: string) =>
 			rules(text).some((r) => r.selector.split(',').some((s) => s.trim() === '.stil'));

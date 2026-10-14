@@ -1,4 +1,9 @@
 <script lang="ts">
+	// The site's own stylesheets, before any component's: fonts, tokens, the base and the frame.
+	import '$lib/styles/fonts.css';
+	import '$lib/styles/tokens.css';
+	import '$lib/styles/basis.css';
+	import '$lib/styles/frame.css';
 	import AppShell from '$lib/components/layout/AppShell.svelte';
 	import { report } from '$lib/api/errors';
 	import type { Snippet } from 'svelte';

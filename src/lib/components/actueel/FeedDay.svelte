@@ -375,7 +375,7 @@
 		color: var(--ink);
 		text-decoration: underline;
 	}
-	/* The links in a line's meta a finger can hit: the shared target of AppShell (.raakvlak),
+	/* The links in a line's meta a finger can hit: the shared target (.raakvlak, lib/styles/basis.css),
 	   on a touch screen only. */
 	@media (pointer: coarse) {
 		.meta :global(a) {

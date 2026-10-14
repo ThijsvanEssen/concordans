@@ -1,6 +1,6 @@
-// The type scale and the spacing scale live in AppShell's tokens. This test holds the
-// components to them: no font size in pixels, and no more off-scale spacing than there
-// was when the scale was brought in (a ratchet: lower OFF_SCALE_MAX as values move).
+// The type scale and the spacing scale live in the tokens (lib/styles/tokens.css). This test
+// holds the components to them: no font size in pixels, and no more off-scale spacing than
+// there was when the scale was brought in (a ratchet: lower OFF_SCALE_MAX as values move).
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -42,7 +42,6 @@ describe('the type and spacing scale', () => {
 		const literal = sources.flatMap(({ path, text }) =>
 			[...text.matchAll(/font-size:\s*[\d.]+px/g)].map((m) => `${path}: ${m[0]}`)
 		);
-		// AppShell defines the tokens themselves with custom properties, not font-size.
 		expect(literal).toEqual([]);
 	});
 

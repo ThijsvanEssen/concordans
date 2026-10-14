@@ -60,7 +60,6 @@
 
 <style>
 	p {
-		font-family: var(--font-serif);
 		font-size: var(--t-body);
 		line-height: var(--lh-body);
 		color: var(--ink);

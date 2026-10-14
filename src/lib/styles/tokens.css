@@ -1,0 +1,140 @@
+/* The design tokens, by kind: colour, type, space, size, motion, layer. Every component reads
+   these. The canvas reads them too, once, through nodeSprites.ts (tokens()), so a change here
+   reaches the network after a reload. */
+:root {
+	/* ─── Colour ─── */
+	/* Paper and rules */
+	--paper: #faf8f3;
+	--paper-2: #ece7dc; /* hover, selected row, sheets */
+	--rule: #b9b1a0;
+	--rule-strong: #6f6859;
+
+	/* Ink */
+	--ink: #161513;
+	--ink-2: #3b3834;
+	--ink-3: #5d5951; /* captions; 6.6:1 on paper */
+
+	/* The accent says no: an outcome that says no (--uitkomst-nee), an error, and the § of
+	   the name. Nothing else is red (Thijs, 10 Oct: "de kleur mag alleen blijven zolang het
+	   een doel dient"): a hover and the focus are ink. */
+	--accent: #8c2f28;
+	/* The focus ring: ink, 2 px, 2 px off the element, so it stands on paper, on paper-2
+	   (14.8:1) and around an ink button with the paper between them. */
+	--focus: var(--ink);
+	/* Selected text, a passage found, a place landed on: a neutral wash. */
+	--wassing: color-mix(in srgb, var(--rule) 45%, var(--paper));
+
+	/* Text an amendment inserted, in a comparison of versions. Deleted text is struck
+	   through in ink, so the two differ by more than colour. */
+	--mark-ins: #ece2bd;
+	--mark-ins-rule: #b39a4e;
+
+	/* The colours of the material */
+	--indigo: #2f3e5e; /* judgments */
+	--moss: #456247; /* structural edges, references between articles */
+	--plum: #5e3a55; /* toelichting */
+	--slate: #4b5563; /* citations by judgments */
+
+	/* An outcome, always with its shape or word beside it: passed, done, yes; rejected,
+	   withdrawn, no. Dashed is open or expected and needs no colour. */
+	--uitkomst-ja: var(--moss);
+	--uitkomst-nee: var(--accent);
+
+	/* The groups in the network (a hull around their members), each told apart by hue,
+	   by a step of 10 in lightness (L* 30, 40, 50, 59) and by its line: apart also with
+	   deuteranopia, protanopia and in grey. Against the paper 8.9, 6.1, 4.2 and 3.1:1. */
+	--groep-wet: #00487c; /* solid */
+	--groep-fractie: #944078; /* dotted */
+	--groep-commissie: #438365; /* dash and dot */
+	--groep-dossier: #d3762d; /* dashed */
+
+	/* The network's own colours. No red: in the network red only says no, and nothing
+	   there says no yet (Thijs, 10 Oct: "de kleur mag alleen blijven zolang het een doel
+	   dient"). A stuk and its dossier in the dossier's hue, a change to a wet in the wet's,
+	   the focus and a chosen verbinding in ink. */
+	--netwerk-stuk: var(--groep-dossier);
+	--netwerk-dossier: var(--groep-dossier);
+	--netwerk-wijziging: var(--groep-wet);
+	--netwerk-focus: var(--ink);
+	/* A verbinding at rest: its weight (0.6 to 1) times this, in pixels at the default zoom
+	   (1.8 to 3 px; dimmed at least 1.4); its arrowhead this many thicknesses long, 0.8 of that
+	   wide. Below the bronnen in weight; a hover 1.8 and a choice 2.4 times as thick. */
+	--netwerk-lijn: 3;
+	--netwerk-pijl: 3.2;
+
+	/* Shadows, almost none */
+	--shadow-pop: 0 1px 0 rgba(28, 27, 25, 0.04), 0 8px 24px -12px rgba(28, 27, 25, 0.18);
+	--shadow-modal: 0 6px 24px rgba(28, 27, 25, 0.1);
+	/* The page behind a modal or a sheet. */
+	--scherm: rgba(28, 27, 25, 0.18);
+
+	/* ─── Type ─── */
+	/* One text face, one interface face. */
+	--font-serif: 'Newsreader', Georgia, serif;
+	/* One serif for all text, in 400, 600 and 800; the sans only for controls: buttons,
+	   choice rows, fields, keys and menus (Thijs, 10 Oct: "typografie is goed").
+	   docs/typografie.md. */
+	--font-ui: 'Schibsted Grotesk', system-ui, sans-serif;
+
+	--t-h1: 30px; /* page titles, weight 500 */
+	--t-h2: 24px;
+	--t-h3: 20px;
+	--t-body: 17.5px; /* reading text, line-height 1.6 */
+	--t-body-2: 16px; /* titles of bronnen in lists and rows */
+	--t-meta: 14px; /* a group, meta: one pixel over the sans, for the serif's x-height */
+	--t-micro: 13px; /* captions and counts, in --ink-3 */
+	--t-ui: 13px; /* a control's text, in the sans */
+	--t-ui-micro: 12px; /* a small control's text */
+	--t-label: 11px; /* labels over a group: the sans at 500, as written, without spacing */
+	--t-glyph: 10px; /* a mark inside a box: a tick, a caret, a badge */
+	--t-input: 16px; /* text fields: below 16px a phone zooms in on focus */
+
+	--lh-tight: 1.15;
+	--lh-snug: 1.35;
+	--lh-body: 1.6;
+
+	/* ─── Space: the 4px grid ─── */
+	--s-1: 4px;
+	--s-2: 8px;
+	--s-3: 12px;
+	--s-4: 16px;
+	--s-5: 24px;
+	--s-6: 32px;
+	--s-7: 48px;
+	--s-8: 64px;
+
+	/* ─── Size ─── */
+	/* The frame: the top bar, a page at most this wide, the text of a text page this wide. */
+	--topbar-h: 60px;
+	--blad-max: 1440px;
+	--blad-tekst: 720px;
+	--measure: 66ch;
+	/* The lead column of a list row (IndexRow), where the titles of every list start. */
+	--row-lead: 140px;
+	/* A lane of a chart over time: a cabinet, a post (KabinettenStrook, CabinetOccupancy). */
+	--lane: var(--s-5);
+	/* The height of a control: a field, a select, a choice of buttons. In a bar, the
+	   smaller one. */
+	--veld-h: 32px;
+	--veld-h-klein: 24px;
+	/* The cards over the network (Netwerk, Legenda, a cluster's card): one width, one right
+	   edge (Thijs, 10 Oct). */
+	--paneel-breed: 280px;
+	--paneel-rand: var(--s-3);
+
+	/* Radii */
+	--r-1: 3px; /* buttons, inputs */
+	--r-2: 4px; /* menus, cards */
+	--r-rond: 999px; /* a pill or a dot: a count badge, a chip */
+
+	/* ─── Motion ─── */
+	--ease: cubic-bezier(0.2, 0.6, 0.2, 1);
+	--dur-1: 120ms;
+	--dur-2: 220ms;
+
+	/* ─── Layer ─── */
+	--z-raised: 10;
+	--z-topbar: 20;
+	--z-float: 40;
+	--z-modal: 50;
+}

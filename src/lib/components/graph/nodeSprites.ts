@@ -3,7 +3,7 @@ import { VORMEN, type Vorm } from '$lib/bron/vormen';
 //
 // Sigma draws in WebGL and cannot read CSS variables, so the tokens are read once
 // from `getComputedStyle` (`tokens()`) and every colour on the canvas comes from
-// them: change a token in AppShell.svelte and the canvas follows after a reload.
+// them: change a token in $lib/styles/tokens.css and the canvas follows after a reload.
 // Shapes are generated once as SVG sprites (data URLs) for sigma's NodeImageProgram.
 // This module is the one place that defines colour and shape per kind and colour
 // and line style per relation; the legend and KindGlyph read it too.
@@ -35,11 +35,11 @@ export type Tokens = {
 	groepCommissie: string;
 	groepDossier: string;
 	fontSerif: string;
-	fontSans: string;
+	fontLabel: string;
 };
 
-// The values of AppShell.svelte, for the server and for a page without the tokens.
-const FALLBACK: Tokens = {
+// The values of $lib/styles/tokens.css, for a page without them and for the tests (tokens.test).
+export const FALLBACK: Tokens = {
 	paper: '#faf8f3',
 	paper2: '#ece7dc',
 	rule: '#b9b1a0',
@@ -62,10 +62,10 @@ const FALLBACK: Tokens = {
 	groepCommissie: '#438365',
 	groepDossier: '#d3762d',
 	fontSerif: "'Newsreader', Georgia, serif",
-	fontSans: "'Newsreader', Georgia, serif"
+	fontLabel: "'Newsreader', Georgia, serif"
 };
 
-const NAMES: Record<keyof Tokens, string> = {
+export const TOKEN_NAMES: Record<keyof Tokens, string> = {
 	paper: '--paper',
 	paper2: '--paper-2',
 	rule: '--rule',
@@ -88,9 +88,9 @@ const NAMES: Record<keyof Tokens, string> = {
 	groepCommissie: '--groep-commissie',
 	groepDossier: '--groep-dossier',
 	fontSerif: '--font-serif',
-	// The labels on the canvas are text: the serif too, since the sans is for controls only
-	// (docs/typografie.md). The key keeps its name for the places that read it.
-	fontSans: '--font-serif'
+	// The labels on the canvas are text: the serif, since the sans is for controls only
+	// (docs/typografie.md).
+	fontLabel: '--font-serif'
 };
 
 let cached: Tokens | null = null;
@@ -102,8 +102,8 @@ export function tokens(): Tokens {
 	const style = getComputedStyle(document.documentElement);
 	const read = (name: string, fallback: string) => style.getPropertyValue(name).trim() || fallback;
 	const t = {} as Tokens;
-	for (const key of Object.keys(NAMES) as (keyof Tokens)[])
-		t[key] = read(NAMES[key], FALLBACK[key]);
+	for (const key of Object.keys(TOKEN_NAMES) as (keyof Tokens)[])
+		t[key] = read(TOKEN_NAMES[key], FALLBACK[key]);
 	// A page still without the stylesheet keeps the fallback and reads again later.
 	if (!style.getPropertyValue('--paper').trim()) return FALLBACK;
 	cached = t;

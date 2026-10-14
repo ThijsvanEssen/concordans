@@ -467,7 +467,6 @@
 		margin: 0 0 var(--s-1);
 		padding-bottom: var(--s-1);
 		border-bottom: 1px solid var(--rule);
-		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-weight: 600;
 		color: var(--ink);
@@ -483,7 +482,6 @@
 		align-items: center;
 		gap: var(--s-2);
 		padding: 2px 0;
-		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 	}
