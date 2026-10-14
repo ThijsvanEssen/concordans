@@ -414,8 +414,13 @@ describe('the line of a reference', () => {
 				celex: null,
 				display_name: 'Cyberbeveiligingsbesluit',
 				citation_title: 'Cyberbeveiligingsbesluit',
+				direction:
+					inbound_count && outbound_count ? 'both' : inbound_count ? 'inbound' : 'outbound',
 				inbound_count,
-				outbound_count
+				inbound_cited_count: inbound_count,
+				outbound_count,
+				outbound_cited_count: outbound_count,
+				based_on: false
 			});
 			const h = hoeVan(r, 'instruments');
 			return { r, regel: [h?.werkwoord, h?.rest].join(' ') };

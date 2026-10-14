@@ -12,7 +12,8 @@ const item = (key: string, scope: Item['scope'], section_anchor: string | null):
 			is_explanatory: true,
 			title: 'Verklaring dat er grond bestaat een voorstel in overweging te nemen',
 			kind: 'Memorie van toelichting',
-			dossier_number: '33989'
+			dossier_number: '33989',
+			path: null
 		},
 		target: 'article_version',
 		target_id: 'article_versions/bwbr0001840_av_2990163_28852472',
