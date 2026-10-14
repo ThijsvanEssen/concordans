@@ -56,7 +56,8 @@ describe('atArticles', () => {
 		text: 'tekst',
 		text_preview: 'tekst',
 		valid_from: '2011-02-23',
-		valid_until: '2018-05-01'
+		valid_until: '2018-05-01',
+		parts: []
 	});
 	it('places an article as it stood that day, and links it to the article of today', () => {
 		const [a] = atArticles([at('1:1', 'Hoofdstuk 1')], current);
@@ -70,7 +71,7 @@ describe('atArticles', () => {
 		expect(a.breadcrumb[0].label).toBe('Hoofdstuk 4');
 		expect(a.id).toBe('v_4:3a');
 	});
-	it('keeps the parts of the text, and none from an API without them', () => {
+	it('keeps the parts of the text, and none for a text without parts', () => {
 		const parts = [{ id: 'onder-_1', kind: 'onderdeel', number: '–', start: 2, end: 7 }];
 		expect(atArticles([{ ...at('1:1', 'Hoofdstuk 1'), parts }], current)[0].parts).toEqual(parts);
 		expect(atArticles([at('1:1', 'Hoofdstuk 1')], current)[0].parts).toBeNull();

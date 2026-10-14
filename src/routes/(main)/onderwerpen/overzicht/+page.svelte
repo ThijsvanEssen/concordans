@@ -35,6 +35,7 @@
 	import { getDecisionDocument } from '$lib/api/records';
 	import { besluiten, geteld, telling } from '$lib/api/decisions';
 	import { getAmendementen } from '$lib/components/parliamentary/amendementen';
+	import { feedStand, normalizeItem, type FeedItem } from '$lib/components/actueel/feed';
 	import {
 		LAAG_LABEL,
 		STREKKINGEN,
@@ -225,18 +226,10 @@
 	// comes. Where the pages run out first, the months before the last event counted are not
 	// counted, and the page says so. The feed's own fractie (what its members signed) is not
 	// the fractie's vote: these columns stay unfiltered by fractie.
-	type FeedItem = {
-		id: string;
-		kind: string;
-		date: string;
-		title: string;
-		node: string | null;
-		dossier: { key: string; number: string | null; title: string | null } | null;
-		path: string | null;
-		/** Of a paper: whether its text is in the data (openHref). */
-		has_text: boolean | null;
-	};
 	let feed = $state<FeedItem[]>([]);
+	/** The newest day of the Kamers' papers the feed reads: the grid's last month. */
+	const newestDay = (dataAsOf: Parameters<typeof feedStand>[0]) =>
+		feedStand(dataAsOf)?.newest.slice(0, 10) ?? null;
 	/**
 	 * Moties, brieven and toezeggingen counted per period by /api/feed/periods (#444), in one
 	 * call, and the amendments once per chain (`amendment_chains`, #451); null where it has no
@@ -253,27 +246,6 @@
 	let feedGrens = $state<string | null>(null);
 	let dataTot = $state<string | null>(null);
 	const KINDS = Object.values(FEED_KOLOM).join(',');
-	const naarItem = (i: {
-		id: string;
-		kind: string;
-		date: string;
-		title?: string | null;
-		node?: { collection: string; key: string } | null;
-		dossier?: { key: string; number?: string | null; title?: string | null } | null;
-		path?: string | null;
-		has_text?: boolean | null;
-	}): FeedItem => ({
-		id: i.id,
-		kind: i.kind,
-		date: i.date,
-		title: i.title ?? '',
-		node: i.node ? `${i.node.collection}/${i.node.key}` : null,
-		dossier: i.dossier
-			? { key: i.dossier.key, number: i.dossier.number ?? null, title: i.dossier.title ?? null }
-			: null,
-		path: i.path ?? null,
-		has_text: i.has_text ?? null
-	});
 	$effect(() => {
 		const woorden = termenSleutel ? termenSleutel.split('|') : [];
 		const k = kamer;
@@ -327,11 +299,7 @@
 							: [])
 					]);
 					ketensGeteld = ketens;
-					dataTot =
-						Object.values(r.data_as_of ?? {})
-							.map((x) => x.newest?.slice(0, 10) ?? '')
-							.sort()
-							.at(-1) || null;
+					dataTot = newestDay(r.data_as_of);
 				}
 			}
 			// Everything counted: the feed waits for a cell of the amendments (below).
@@ -352,13 +320,8 @@
 						signal: ac.signal
 					})
 				);
-				feed = [...feed, ...r.items.map(naarItem)];
-				// The newest day of the sources the feed reads: the grid's last month.
-				dataTot ??=
-					Object.values(r.data_as_of ?? {})
-						.map((x) => x.newest?.slice(0, 10) ?? '')
-						.sort()
-						.at(-1) || null;
+				feed = [...feed, ...r.items.map(normalizeItem)];
+				dataTot ??= newestDay(r.data_as_of);
 				cursor = r.next_cursor ?? undefined;
 				if (!cursor) return;
 			}
@@ -410,7 +373,7 @@
 						signal: ac.signal
 					})
 				);
-				feed = [...feed, ...r.items.map(naarItem)];
+				feed = [...feed, ...r.items.map(normalizeItem)];
 				cursor = r.next_cursor ?? undefined;
 				if (!cursor) return;
 			}
@@ -438,8 +401,8 @@
 	let ketenDossiers = $state<{ gedaan: number; totaal: number }>({ gedaan: 0, totaal: 0 });
 	$effect(() => {
 		if (feedLaden) return;
-		const papieren = feed.filter((i) => i.kind === FEED_KOLOM.amendementen && i.node);
-		const ids = new Set(papieren.map((i) => i.node!));
+		const papieren = feed.filter((i) => i.kind === FEED_KOLOM.amendementen);
+		const ids = new Set(papieren.map((i) => `${i.node.collection}/${i.node.key}`));
 		const dossiers = [
 			...new Map(papieren.flatMap((i) => (i.dossier ? [[i.dossier.key, i.dossier]] : []))).values()
 		];
@@ -895,7 +858,7 @@
 		if (!query) return;
 		unwrap(api.GET('/api/feed', { params: { query }, signal: ac.signal }))
 			.then((r) => {
-				feedLijst = r.items.map(naarItem);
+				feedLijst = r.items.map(normalizeItem);
 				feedCursor = r.next_cursor ?? null;
 			})
 			.catch(lijstMislukt)
@@ -915,7 +878,7 @@
 			const r = await unwrap(
 				api.GET('/api/feed', { params: { query: { ...feedVraag, cursor: feedCursor } } })
 			);
-			feedLijst = [...feedLijst, ...r.items.map(naarItem)];
+			feedLijst = [...feedLijst, ...r.items.map(normalizeItem)];
 			feedCursor = r.next_cursor ?? null;
 		} catch (e) {
 			lijstMislukt(e);
@@ -1159,13 +1122,8 @@
 		d.tally?.Voor != null && d.tally?.Tegen != null
 			? `${d.tally.Voor} voor, ${d.tally.Tegen} tegen`
 			: null;
-	const feedHref = (i: FeedItem) => {
-		if (i.path) return i.path;
-		const [collection, key] = (i.node ?? '').split('/');
-		return collection && key
-			? buildOpenHref(null, `${collection}/${key}`, { hasText: i.has_text })
-			: '#';
-	};
+	const feedHref = (i: FeedItem) =>
+		i.path ?? buildOpenHref(null, `${i.node.collection}/${i.node.key}`, { hasText: i.has_text });
 </script>
 
 <RouteKop

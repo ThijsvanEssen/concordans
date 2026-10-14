@@ -14,7 +14,7 @@
 	import { getBuckets, type NodeGraph } from '$lib/api/nodes';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronHref } from '$lib/bron/href';
-	import { formatCount } from '$lib/verbonden/filter';
+	import { formatCount } from '$lib/text/getal';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { behoort, heeftIets, laagVan, type Groep, type Laag } from './behoort';
 

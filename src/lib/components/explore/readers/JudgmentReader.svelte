@@ -241,7 +241,7 @@
 				bron: deeplink ? { label: sourceName(deeplink) ?? 'Officiële tekst', href: deeplink } : null
 			}}
 		>
-			{#snippet status()}
+			{#snippet statusLine()}
 				{#if statusWoorden.length || conclusies.length || eigenStrekking || echr}
 					<p>
 						{#if statusWoorden.length || eigenStrekking}{[...statusWoorden, eigenStrekking]

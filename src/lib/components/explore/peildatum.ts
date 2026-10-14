@@ -17,9 +17,8 @@ type AtItem = Pick<
 	| 'text_preview'
 	| 'valid_from'
 	| 'valid_until'
-> &
-	// An API before 0.79.52 gives no parts.
-	Partial<Pick<Schema<'InstrumentArticleVersionDTO'>, 'parts'>>;
+	| 'parts'
+>;
 
 type Period = { from: string | null | undefined; until: string | null | undefined };
 
@@ -90,7 +89,7 @@ export function atArticles(items: AtItem[], current: Current[]): AtArticle[] {
 		label: i.label ?? null,
 		breadcrumb: i.breadcrumb ?? [],
 		text: i.text ?? null,
-		parts: i.parts?.length ? i.parts : null,
+		parts: i.parts.length ? i.parts : null,
 		text_preview: i.text_preview ?? null
 	}));
 }

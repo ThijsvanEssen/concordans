@@ -17,6 +17,8 @@ import { atArticles } from './peildatum';
 // comes with its page (the list of the day); one the page lacks is asked for alone.
 export const PREVIEW_CHARS = 600;
 export const PAGE_SIZE = 100;
+/** Pages asked at the same time when paging on to a place further in the law. */
+const PAGES_AT_ONCE = 2;
 
 type Part = Schema<'ArticlePartSpanDTO'>;
 type Division = Schema<'InstrumentDivisionDTO'>;
@@ -280,8 +282,8 @@ export function createLawList(onChange: (list: LawList) => void, today: string) 
 	}
 
 	/**
-	 * The next page, or every page up to the `upTo`th article of the law, two requests at a
-	 * time; after a division the list of the whole law reads on.
+	 * The next page, or every page up to the `upTo`th article of the law, PAGES_AT_ONCE
+	 * requests at a time; after a division the list of the whole law reads on.
 	 */
 	const loadMore = (upTo = 0) =>
 		turn(
@@ -291,10 +293,10 @@ export function createLawList(onChange: (list: LawList) => void, today: string) 
 				const from = list.start + list.articles.length;
 				const offsets = volgendeBladzijden(from, upTo, list.total, PAGE_SIZE);
 				const pages: Row[][] = [];
-				for (let i = 0; i < offsets.length; i += 2) {
+				for (let i = 0; i < offsets.length; i += PAGES_AT_ONCE) {
 					const batch = await Promise.all(
 						offsets
-							.slice(i, i + 2)
+							.slice(i, i + PAGES_AT_ONCE)
 							.map((o) => loadPage(bwb, day, today, o, signal).then((r) => r.items))
 					);
 					pages.push(...batch);

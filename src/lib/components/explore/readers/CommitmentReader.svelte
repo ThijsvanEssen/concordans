@@ -72,7 +72,7 @@
 			>
 				<!-- Where it was made and where it was kept, in the Kamer's words (toezegging.ts):
 				     the activity by its kind and day, the letters by their number. -->
-				{#snippet status()}
+				{#snippet statusLine()}
 					{@const gedaan = toegezegdIn(c.activity)}
 					{@const nagekomen = nagekomenIn(c.fulfilled_by)}
 					{#if gedaan || nagekomen}

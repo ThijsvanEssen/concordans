@@ -142,4 +142,10 @@ describe('onderwerpen', () => {
 			{ bwb: 'BWBR0005289', titel: 'BWBR0005289', artikel: '6:162' }
 		]);
 	});
+
+	it('follows a treaty as a law: its BWB id is a BWBV', () => {
+		expect(wettenUitParams(new URLSearchParams('wet=bwbv0001000'))).toEqual([
+			{ bwb: 'BWBV0001000', titel: 'BWBV0001000', artikel: null }
+		]);
+	});
 });

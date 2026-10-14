@@ -369,5 +369,3 @@ export function hiddenByKind(
 		.map((kind) => ({ kind, count: Math.max(totals[kind] ?? 0, counted.get(kind) ?? 0) }))
 		.filter((h) => h.count > 0);
 }
-
-export { formatCount };

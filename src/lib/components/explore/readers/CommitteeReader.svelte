@@ -60,7 +60,7 @@
 					kind
 				]) && `, ${joinParts([chamberName(chamber), kind])}`}
 			{/snippet}
-			{#snippet status()}
+			{#snippet statusLine()}
 				{#if abbreviation && abbreviation !== name}<span class="afk">{abbreviation}</span>{/if}
 			{/snippet}
 		</ReaderHead>

@@ -1,8 +1,8 @@
 <script lang="ts">
+	// A small legend in the style of Concordans: per fractie a dot in the colour of the hall,
+	// its name and its seats, by size, in columns; under it the numbered places on one line.
+	// The same for both Kamers.
 	import { fractieNaam } from '$lib/bron/menselijk';
-	// Een kleine legenda in de stijl van Concordans. Per
-	// fractie een stip in de kleur van de zaal, de naam en de zetels, op grootte, in kolommen;
-	// daaronder de genummerde plaatsen op één regel. Gelijk voor beide Kamers.
 	import type { Schema } from '$lib/api/types';
 	import { achtergrondVan } from './partijkleuren.svelte';
 	import ZaalPlaatsen from './ZaalPlaatsen.svelte';
@@ -20,7 +20,7 @@
 	}: {
 		data: Seats;
 		plaatsen: string[];
-		/** De peildatum, klein onderaan. */
+		/** The peildatum, small at the foot. */
 		peil?: string | null;
 		bron?: { label: string; href: string } | null;
 		/** Beside the hall two columns, under it three. */
@@ -36,7 +36,6 @@
 		coalitie?: { naam: string; href: string; fracties: string[] } | null;
 	} = $props();
 	const fracties = $derived([...data.factions].sort((a, b) => b.seats - a.seats));
-	const naam = (f: Seats['factions'][number]) => fractieNaam(f);
 </script>
 
 <div class="leg">
@@ -46,10 +45,11 @@
 		style:grid-template-rows="repeat({Math.max(rijen, Math.ceil(fracties.length / kolommen))}, auto)"
 		style:grid-template-columns="repeat({kolommen}, minmax(0, 1fr))"
 	>
-		{#each fracties as f (naam(f))}
+		{#each fracties as f (fractieNaam(f))}
 			<li>
-				<span class="stip" style:background={achtergrondVan(naam(f), f.color ?? null)}></span>
-				<span class="n">{naam(f)}</span><span class="z">{f.seats}</span>
+				<span class="stip" style:background={achtergrondVan(fractieNaam(f), f.color ?? null)}
+				></span>
+				<span class="n">{fractieNaam(f)}</span><span class="z">{f.seats}</span>
 			</li>
 		{/each}
 	</ol>

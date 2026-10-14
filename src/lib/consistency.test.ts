@@ -1009,7 +1009,7 @@ describe('canvas cards and halls', () => {
 		const lezer = sources.find(
 			(s) => s.path === 'lib/components/explore/readers/DocumentReader.svelte'
 		)!.text;
-		const status = /\{#snippet status\(\)\}([\s\S]*?)\{\/snippet\}/.exec(lezer)?.[1] ?? '';
+		const status = /\{#snippet statusLine\(\)\}([\s\S]*?)\{\/snippet\}/.exec(lezer)?.[1] ?? '';
 		expect(status).toMatch(/<Vervanging zinnen=\{vervanging\(doc\)\} \/>/);
 		expect(lezer.match(/<Vervanging\b/g)).toHaveLength(1);
 		expect(
@@ -1044,6 +1044,21 @@ describe('canvas cards and halls', () => {
 		expect(
 			offenders((t) => /export function (woordIn|markeer)\b/.test(t), ['lib/text/treffer.ts'])
 		).toEqual([]);
+	});
+
+	it('wires the feed of Actueel and Gevolgd once (code-eenvoud F53)', () => {
+		// A ministry by its name from ministries.svelte.ts, a fractie's colour in FeedDay, the Atom link
+		// from feed.ts and "Doorzocht vanaf" from Doorzocht.svelte: no page keeps its own copy.
+		expect(
+			offenders((t) => /ministries\.find\(/.test(t)).filter((p) => p.startsWith('routes/'))
+		).toEqual([]);
+		expect(
+			offenders((t) => /\/api\/feed\.atom/.test(t), ['lib/components/actueel/feed.ts'])
+		).toEqual([]);
+		expect(
+			offenders((t) => /Doorzocht vanaf \{/.test(t), ['lib/components/actueel/Doorzocht.svelte'])
+		).toEqual([]);
+		expect(offenders((t) => /<FeedDay\b[^>]*\b(colorOf|ministryName)=?/.test(t))).toEqual([]);
 	});
 
 	it('gives a page with a list a second skip link, through AppShell, and one main', () => {

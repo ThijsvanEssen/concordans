@@ -11,7 +11,7 @@
 	import type { CiteItem } from '$lib/components/ui/cite';
 	import { kaart } from '$lib/map/map.svelte';
 	import type { MapItem } from '$lib/map/map';
-	import { formatCount } from '$lib/verbonden/filter';
+	import { formatCount } from '$lib/text/getal';
 
 	let {
 		anker,

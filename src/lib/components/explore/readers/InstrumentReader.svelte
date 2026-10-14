@@ -34,7 +34,7 @@
 				naam: titel
 			}}
 		>
-			{#snippet status()}
+			{#snippet statusLine()}
 				{#if textOf(p.date_signed)}<span>Ondertekend {langeDatum(textOf(p.date_signed))}.</span
 					>{/if}
 				{#if textOf(p.date_published)}<span

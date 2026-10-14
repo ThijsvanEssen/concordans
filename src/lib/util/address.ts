@@ -2,8 +2,8 @@
 // a node id's slash and a list's comma as they are: /explore?focus=articles/bwbr1_2&fase=a,b.
 import { goto } from '$app/navigation';
 
-/** Params to set; `null`, `undefined` or `''` removes the param. */
-export type ParamPatch = Record<string, string | null | undefined>;
+/** Params to set; `null`, `undefined`, `''` or `[]` removes the param, a list repeats it. */
+export type ParamPatch = Record<string, string | readonly string[] | null | undefined>;
 
 /** The query as the address bar shows it: `/` and `,` unescaped, the rest escaped. */
 export const readableQuery = (params: URLSearchParams) =>
@@ -25,8 +25,9 @@ export function patchParams(
 	const next = new URLSearchParams(params);
 	for (const name of clear) next.delete(name);
 	for (const [name, value] of Object.entries(patch)) {
-		if (value === null || value === undefined || value === '') next.delete(name);
-		else next.set(name, value);
+		next.delete(name);
+		for (const v of typeof value === 'string' ? [value] : (value ?? []))
+			if (v) next.append(name, v);
 	}
 	return next;
 }

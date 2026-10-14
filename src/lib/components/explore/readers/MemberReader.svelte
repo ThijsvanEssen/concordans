@@ -227,7 +227,7 @@
 								: currentTitle(career, sitting)}</SoortLink
 						>
 					{/snippet}
-					{#snippet status()}
+					{#snippet statusLine()}
 						{#if m.party}
 							<NameLink collection="factions" name={m.party} class="fractie-woord" />
 						{:else if ek?.faction && ek.abbreviation}

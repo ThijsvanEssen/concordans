@@ -12,10 +12,10 @@
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
 	import { unwrap, zoekApi } from '$lib/api/client';
-	import { API_BASE_URL } from '$lib/api/base-url';
 	import FeedDay from '$lib/components/actueel/FeedDay.svelte';
-	import { partyColor } from '$lib/utils/party-color.svelte';
+	import Doorzocht from '$lib/components/actueel/Doorzocht.svelte';
 	import {
+		atomHref,
 		daysOf,
 		doorzochtVanaf,
 		feedStand,
@@ -46,7 +46,6 @@
 	} from '$lib/onderwerpen/onderwerpen';
 	import { getInstrumentDetail } from '$lib/api/instrument-cache';
 	import { addDays, korteDatum, vandaag } from '$lib/text/datum';
-	import { getMinistries } from '$lib/components/explore/index/government';
 
 	/** Lines per topic, as the feed gives at most in one page. */
 	const PER_ONDERWERP = 100;
@@ -204,17 +203,6 @@
 	/** The row opened in place, as on Actueel. */
 	let openId = $state<string | null>(null);
 
-	// The ministry of a row by its name, as Actueel shows it (UX-toets 10 Oct: "venw", "fin").
-	// One request for both pages (getMinistries is asked once).
-	let ministries = $state<{ key: string; name?: string | null }[]>([]);
-	$effect(() => {
-		getMinistries()
-			.then((m) => (ministries = m))
-			.catch((e) => report('Gevolgd ministeries', e));
-	});
-	const ministryName = (key: string | null | undefined) =>
-		(key && ministries.find((m) => m.key === key)?.name) || key || '';
-
 	let verderBezig = $state<string | null>(null);
 	async function verderTerug(o: Onderwerp) {
 		const s = standen[vak(o)];
@@ -253,15 +241,6 @@
 		return `${periode}; ${nieuw}${minNieuw} nieuw sinds ${korteDatum(o.vorige)}`;
 	}
 
-	/** The topic as an Atom feed: every word as a q of its own, any of them counts; a law. */
-	const atomHref = (o: Onderwerp) => {
-		const p = new URLSearchParams();
-		if (o.wet) {
-			p.set('instrument', o.wet.bwb);
-			if (o.wet.artikel) p.set('article', o.wet.artikel);
-		} else for (const t of o.termen) p.append('q', t);
-		return `${API_BASE_URL}/api/feed.atom?${p}`;
-	};
 	/** The law (and article) in Actueel. */
 	const actueelWetHref = (o: Onderwerp) =>
 		`/actueel?${new URLSearchParams({ wet: o.wet!.bwb, ...(o.wet!.artikel ? { artikel: o.wet!.artikel } : {}) })}`;
@@ -453,8 +432,6 @@
 								{today}
 								{openId}
 								onToggle={(id) => (openId = openId === id ? null : id)}
-								colorOf={(short) => (short ? partyColor(short) : 'var(--rule-strong)')}
-								{ministryName}
 								filterHref={(patch) => `/actueel?${new URLSearchParams(patch)}`}
 								nieuwSinds={o.vorige}
 								termen={o.wet ? [] : o.termen}
@@ -473,12 +450,11 @@
 					{/if}
 				{/if}
 				{#if s?.status === 'klaar' && s.doorzocht}
-					<p class="status stil">
-						Doorzocht vanaf {korteDatum(s.doorzocht)}.
-						<TekstLink disabled={verderBezig === vak(o)} onclick={() => verderTerug(o)}
-							>{verderBezig === vak(o) ? 'Laden…' : 'Zoek verder terug'}</TekstLink
-						>
-					</p>
+					<Doorzocht
+						vanaf={s.doorzocht}
+						laden={verderBezig === vak(o)}
+						onVerder={() => verderTerug(o)}
+					/>
 				{/if}
 				<p class="verder">
 					{#if o.wet}
@@ -489,7 +465,7 @@
 						{/each}
 					{/if}
 					<!-- The topic as a feed of its own, all its words in one (API 0.79.30). -->
-					<a href={atomHref(o)} rel="alternate" type="application/atom+xml">Atom-feed</a>
+					<a href={atomHref(vraagVan(o))} rel="alternate" type="application/atom+xml">Atom-feed</a>
 				</p>
 			</Sectie>
 		{/each}

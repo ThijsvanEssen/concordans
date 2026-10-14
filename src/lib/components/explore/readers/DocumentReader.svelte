@@ -327,7 +327,7 @@
 				{/snippet}
 				<!-- The stuk as it is cited, the chain of an amended amendment or motion (from the
 				     document's replaces and replaced_by, the direct step only) and its bijlagen. -->
-				{#snippet status()}
+				{#snippet statusLine()}
 					{#if cite}<span>{cite}.</span>{/if}
 					<Vervanging zinnen={vervanging(doc)} />
 					{#if bijlagen > 0}<Bijlagen

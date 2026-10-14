@@ -48,6 +48,8 @@
 	} from './verband';
 	import { markeer } from '$lib/text/treffer';
 	import Markering from '$lib/components/ui/Markering.svelte';
+	import { ministryName } from '$lib/components/explore/index/ministries.svelte';
+	import { partyColor } from '$lib/utils/party-color.svelte';
 
 	/** Medeindieners named in a line; the rest are counted. */
 	const SUBMITTERS_SHOWN = 2;
@@ -59,8 +61,6 @@
 		today,
 		openId,
 		onToggle,
-		colorOf,
-		ministryName,
 		filterHref,
 		summary,
 		nieuwSinds = null,
@@ -72,8 +72,6 @@
 		today: string;
 		openId: string | null;
 		onToggle: (id: string) => void;
-		colorOf: (short: string | null | undefined) => string;
-		ministryName: (key: string | null | undefined) => string;
 		/** Actueel with one more filter: `{ dossier: '36832' }`. */
 		filterHref: (patch: Record<string, string>) => string;
 		/** The day as `/api/feed/summary` counts it, under the same filters. */
@@ -87,6 +85,10 @@
 		/** Under the day, in the text column: the next days, on the last day loaded. */
 		meer?: import('svelte').Snippet;
 	} = $props();
+
+	/** A person's fractie colour; a person without a fractie in a quiet rule. */
+	const colorOf = (short: string | null | undefined) =>
+		short ? partyColor(short) : 'var(--rule-strong)';
 
 	const counts = $derived(summary ? summaryCounts(summary) : day.counts);
 

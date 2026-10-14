@@ -13,7 +13,7 @@
 	import { laatstOpen, opzij } from '$lib/stores/zwevend';
 	import { get } from 'svelte/store';
 	import type { NetwerkEntry } from './netwerk';
-	import { formatCount } from '$lib/verbonden/filter';
+	import { formatCount } from '$lib/text/getal';
 
 	let {
 		entries,

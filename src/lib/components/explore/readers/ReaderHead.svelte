@@ -22,7 +22,7 @@
 		nav,
 		soort,
 		onderTitel,
-		status,
+		statusLine,
 		later,
 		laterPlek = false,
 		acties,
@@ -45,7 +45,7 @@
 		/** What stands under the title: the official title, the indieners, what a bill amends. */
 		onderTitel?: Snippet;
 		/** The words of the status line: `Geldend recht, tekst sinds 1 maart 2019`. */
-		status?: Snippet;
+		statusLine?: Snippet;
 		/** A phrase that comes after the text (the bills that touch an article, from
 		 * Verbonden): on a line of its own under the status. */
 		later?: Snippet;
@@ -93,7 +93,7 @@
 	     so a phrase that comes late (the memorie, the bill) does not push the actions or wrap
 	     beside them (Thijs, 10 Oct, approved suggestion 5). On every reader in this place. -->
 	<div class="reader-status">
-		<div class="reader-status__woorden">{@render status?.()}</div>
+		<div class="reader-status__woorden">{@render statusLine?.()}</div>
 		{#if later || laterPlek}<div class="reader-status__later">{@render later?.()}</div>{/if}
 		<span class="reader-status__acties">
 			{@render extra?.()}

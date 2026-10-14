@@ -5,7 +5,7 @@
 	// label (a glyph, a line), the label, and its count at the right edge. Every option of
 	// every filter stands on the same columns, so boxes, labels and counts line up.
 	import type { Snippet } from 'svelte';
-	import { formatCount } from '$lib/verbonden/filter';
+	import { formatCount } from '$lib/text/getal';
 
 	let {
 		label,

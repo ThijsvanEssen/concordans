@@ -7,10 +7,9 @@
 	import { MediaQuery } from 'svelte/reactivity';
 	import Search from '$lib/search/Search.svelte';
 	import { api, unwrap } from '$lib/api/client';
-	import { API_BASE_URL } from '$lib/api/base-url';
 	import { bronHref } from '$lib/bron/href';
 	import type { Collection } from '$lib/vocabulary';
-	import { dayLabel, CLOSE_VOTE } from '$lib/components/actueel/feed';
+	import { atomHref, dayLabel, CLOSE_VOTE } from '$lib/components/actueel/feed';
 	import {
 		FEW_VOTES,
 		tekenVan,
@@ -174,12 +173,7 @@
 {/snippet}
 
 <svelte:head>
-	<link
-		rel="alternate"
-		type="application/atom+xml"
-		title="Actueel"
-		href="{API_BASE_URL}/api/feed.atom"
-	/>
+	<link rel="alternate" type="application/atom+xml" title="Actueel" href={atomHref({})} />
 </svelte:head>
 
 <div class="home blad blad__indeling">

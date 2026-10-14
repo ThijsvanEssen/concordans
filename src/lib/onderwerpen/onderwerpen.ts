@@ -2,6 +2,7 @@
 import { textOf } from '$lib/text/words';
 import { isDay } from '$lib/text/datum';
 import { normaal, woordIn } from '$lib/text/treffer';
+import { isFeedLaw } from '$lib/components/actueel/filters';
 export { normaal, woordIn };
 
 // A topic followed: the words of the user, looked for in the titles of Actueel. The source has
@@ -52,7 +53,7 @@ export const wetIndex = (lijst: Onderwerp[], w: GevolgdeWet) =>
 const leesWet = (v: unknown): GevolgdeWet | null => {
 	if (!v || typeof v !== 'object') return null;
 	const { bwb, titel, artikel } = v as Record<string, unknown>;
-	if (typeof bwb !== 'string' || !/^BWBR\d+$/i.test(bwb)) return null;
+	if (typeof bwb !== 'string' || !isFeedLaw(bwb)) return null;
 	return {
 		bwb: bwb.toUpperCase(),
 		titel: textOf(titel) ?? bwb.toUpperCase(),

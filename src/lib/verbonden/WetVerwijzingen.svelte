@@ -6,7 +6,7 @@
 	import { getLawReferences } from '$lib/api/articles';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import { formatCount } from './filter';
+	import { formatCount } from '$lib/text/getal';
 	import { richtingKop, verwijzingenPerRichting, type Richting } from './wet-verwijzingen';
 
 	let {
