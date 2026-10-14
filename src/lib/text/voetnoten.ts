@@ -87,7 +87,8 @@ export function stukNoten(
 	const voeg = <T>(m: Map<number, T[]>, i: number, x: T) => m.set(i, [...(m.get(i) ?? []), x]);
 	for (const f of footnotes ?? []) {
 		if (!f.text?.trim()) continue;
-		const label = f.label?.trim() || f.id.replace(/^fn-/, '');
+		const a = parseAnchor(f.id);
+		const label = f.label?.trim() || (a?.kind === 'note' ? a.label : f.id);
 		noten.set(f.id, { id: f.id, label, text: f.text, citations: [] });
 		if (f.at != null) {
 			const i = regelVan(regels, f.at);

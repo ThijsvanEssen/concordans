@@ -41,6 +41,7 @@
 	import { getNodeGraph, neighborsOf } from '$lib/api/nodes';
 	import { getNodeFirst, once } from '$lib/api/records';
 	import { conclusieVan, type Laag } from '$lib/bron/behoort';
+	import { paragraphNumber } from '$lib/text/anchor';
 	import { korteDatum } from '$lib/text/datum';
 	import { samenhangVan, type Samenhang } from './samenhang';
 	import Voetnoten from '$lib/components/articles/Voetnoten.svelte';
@@ -240,7 +241,7 @@
 		{@const kop = j.ecli
 			? judgmentCite(j.ecli, textProp(j.props?.date), textProp(j.props?.court), author)
 			: null}
-		{@const ro = anchor?.startsWith('rov-') ? anchor.slice(4) : null}
+		{@const ro = paragraphNumber(anchor)}
 		{@const naamKort = kop?.short ?? j.display_name ?? 'Uitspraak'}
 		<ReaderHead
 			collection="judgments"

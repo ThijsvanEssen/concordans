@@ -3,7 +3,7 @@
 // in which a lid is a line that starts with `1. ` and an onderdeel one that starts
 // with `a. `, `1°. ` or a dash (`– `, the definitions of Cbw 1).
 // TODO(backend B6): `parseArticleParts` goes when every article carries `parts`.
-import { parentAnchor } from './anchor';
+import { lidAnchor, onderdeelAnchor, parentAnchor } from './anchor';
 
 export type ArticlePartKind = 'aanhef' | 'lid' | 'onderdeel' | 'tekst';
 
@@ -98,7 +98,7 @@ export function parseArticleParts(text: string | null | undefined): ArticlePart[
 		const lidMatch = LID.exec(line.text);
 		if (lidMatch && isNextLid(lidMatch[1], lastLid)) {
 			lastLid = lidMatch[1];
-			lid = leaf('lid', `lid-${slug(lastLid)}`, lastLid, line, lidMatch[0].length);
+			lid = leaf('lid', lidAnchor(slug(lastLid)), lastLid, line, lidMatch[0].length);
 			onderdeel = null;
 			listStyle = -1;
 			parts.push(lid);
@@ -109,13 +109,12 @@ export function parseArticleParts(text: string | null | undefined): ArticlePart[
 		if (m) {
 			const style = m.slice(1).findIndex((g) => g !== undefined);
 			const number = m[1] ?? (m[2] ? `${m[2]}°` : (m[3] ?? m[4]));
-			const base = lid ? `${lid.id}-onder` : 'onder';
 			const nested = onderdeel !== null && listStyle !== -1 && style !== listStyle;
 			if (nested && onderdeel) {
 				// `onder-_39-onder-a`, as the API names an onderdeel inside an onderdeel.
 				const child = leaf(
 					'onderdeel',
-					`${onderdeel.id}-onder-${slugIn(number, onderdeel.children)}`,
+					onderdeelAnchor(onderdeel.id, slugIn(number, onderdeel.children)),
 					number,
 					line,
 					m[0].length
@@ -130,7 +129,7 @@ export function parseArticleParts(text: string | null | undefined): ArticlePart[
 			const siblings = lid ? lid.children : parts;
 			onderdeel = leaf(
 				'onderdeel',
-				`${base}-${slugIn(number, siblings)}`,
+				onderdeelAnchor(lid?.id ?? null, slugIn(number, siblings)),
 				number,
 				line,
 				m[0].length

@@ -2,6 +2,7 @@
 // party block, table of contents and sub-numbering embedded in flat text, so
 // the reader restructures them here. Pure functions, no Svelte.
 
+import { paragraphAnchor } from '$lib/text/anchor';
 import type { Schema } from '$lib/api/types';
 import { citationsWithin } from '$lib/components/articles/citations';
 import type { NootMarker } from '$lib/text/voetnoten';
@@ -949,7 +950,7 @@ export function bodyItems(
 					body: seg.body,
 					citations: seg.citations,
 					...(seg.noten ? { noten: seg.noten } : {}),
-					id: (i === 0 && paraId) || `rov-${num}`
+					id: (i === 0 && paraId) || paragraphAnchor(num)
 				});
 				within = true;
 				return;

@@ -3,7 +3,7 @@
 // the canvas all read it here, so they say the same of one verbinding.
 import { parseQualifier } from '$lib/text/qualifier';
 import { paragraphCite } from '$lib/text/judgment-cite';
-import { formatAnchor } from '$lib/text/anchor';
+import { paragraphAnchor } from '$lib/text/anchor';
 import {
 	metVoetnoot,
 	nootAnker,
@@ -30,8 +30,6 @@ export function lidOfMatch(match: string | null | undefined): string | null {
 	const q = parseQualifier(match);
 	return q?.lid ?? null;
 }
-
-const paragraphAnchor = (number: string) => formatAnchor({ kind: 'paragraph', number });
 
 const POSITION_PREFIX = /^(r\.o\.|onder|§)\s*/;
 

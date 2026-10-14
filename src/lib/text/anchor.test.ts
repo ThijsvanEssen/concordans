@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { anchorLabel, formatAnchor, parentAnchor, parseAnchor } from './anchor';
+import {
+	anchorLabel,
+	formatAnchor,
+	lidAnchor,
+	lidNumber,
+	onderdeelAnchor,
+	paragraphAnchor,
+	paragraphNumber,
+	parentAnchor,
+	parseAnchor
+} from './anchor';
 
 describe('the anchors the API gives', () => {
 	it.each([
@@ -69,5 +79,25 @@ describe('anchorLabel', () => {
 		expect(anchorLabel('deel-hoofdstuk-3')).toBeNull();
 		expect(anchorLabel('onder-_39')).toBeNull();
 		expect(anchorLabel('onder-_39-onder-a')).toBe('onder a');
+	});
+});
+
+describe('the anchors a reader builds', () => {
+	it('names an overweging by its number, and the number by the anchor', () => {
+		expect(paragraphAnchor('5.7.1')).toBe('rov-5.7.1');
+		expect(paragraphNumber('rov-5.7.1')).toBe('5.7.1');
+		for (const id of ['p-3f2a9c1e', 'lid-2', 'fn-35', '', null, undefined])
+			expect(paragraphNumber(id)).toBeNull();
+	});
+
+	it('names a lid, and an onderdeel in what it stands in', () => {
+		expect(lidAnchor('2')).toBe('lid-2');
+		expect(lidNumber('lid-4')).toBe('4');
+		for (const id of ['lid-2-onder-a', 'lid-3-aanhef', 'onder-a', 'tekst-6', 'rov-4', '', null])
+			expect(lidNumber(id)).toBeNull();
+		expect(onderdeelAnchor(null, 'a')).toBe('onder-a');
+		expect(onderdeelAnchor('lid-2', 'a')).toBe('lid-2-onder-a');
+		expect(onderdeelAnchor('onder-_39', 'a')).toBe('onder-_39-onder-a');
+		expect(onderdeelAnchor('lid-1-onder-d', 'i')).toBe('lid-1-onder-d-onder-i');
 	});
 });

@@ -37,7 +37,7 @@ import { uitspraakVolgorde, wetUitspraakJaar, wetUitspraakVolgorde } from './vol
 import { paragraphCite } from '$lib/text/judgment-cite';
 import { articleName, bookNumber, withBook } from '$lib/text/bw';
 import { korteDatum } from '$lib/text/datum';
-import { anchorLabel, parseAnchor } from '$lib/text/anchor';
+import { anchorLabel, lidAnchor, paragraphAnchor, parseAnchor } from '$lib/text/anchor';
 import { anchorOf, parseQualifier } from '$lib/text/qualifier';
 import {
 	aardOf,
@@ -646,7 +646,8 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 						const j = item.judgment;
 						if (isInternational({ key: j.key, props: {} })) continue;
 						const at =
-							item.paragraph_id || (item.paragraph_number ? `rov-${item.paragraph_number}` : null);
+							item.paragraph_id ||
+							(item.paragraph_number ? paragraphAnchor(item.paragraph_number) : null);
 						const of = mentions.get(j.key) ?? new Map<string, Row>();
 						mentions.set(j.key, of);
 						if (of.has(at ?? '')) continue;
@@ -955,7 +956,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		for (const n of cited) {
 			const stub = n.props?.stub ? lidOfStub(n.key, n.props) : null;
 			const key = stub ? stub.key : n.key;
-			const at = stub ? `lid-${stub.lid}` : fromSpans.get(n.key);
+			const at = stub ? lidAnchor(stub.lid) : fromSpans.get(n.key);
 			const row = rowOfNeighbor(n);
 			if (!row) continue;
 			if (n.props?.stub) {

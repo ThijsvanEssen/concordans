@@ -5,6 +5,7 @@
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
+	import { lidAnchor } from '$lib/text/anchor';
 	import { onderdeelMark } from '$lib/text/article-parts';
 	// Reader for articles: the place of the article, its title, one line with the version
 	// picker, the wetsvoorstellen that touch it and Citeer, then the leden with the number
@@ -436,7 +437,7 @@
 			if (!latest || latest.since.index === 0) continue;
 			notes.set(unit.number, {
 				label: `${latest.kind === 'added' ? 'ingevoegd' : 'gewijzigd'} ${latest.since.from?.slice(0, 4) ?? ''}`,
-				href: withParams(page.url, { versies: `lid-${unit.number}` })
+				href: withParams(page.url, { versies: lidAnchor(unit.number) })
 			});
 		}
 		return notes;
