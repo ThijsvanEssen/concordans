@@ -12,6 +12,7 @@
 	import { count } from '$lib/text/words';
 	import { untrack } from 'svelte';
 	import { getNodeFirst } from '$lib/api/records';
+	import { report } from '$lib/api/errors';
 	import { getBuckets, type NodeGraph } from '$lib/api/nodes';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronHref } from '$lib/bron/href';
@@ -28,7 +29,10 @@
 	const { collection, key } = untrack(() => node);
 	getNodeFirst(collection, key)
 		.then((r) => (lichtHier = { r }))
-		.catch(() => (lichtHier = { r: null }));
+		.catch((e) => {
+			report('Behoort bij', e);
+			lichtHier = { r: null };
+		});
 
 	// The props of the light node under those of the reader's node: a head built from the
 	// bron's detail lacks some (an article's breadcrumb).
@@ -45,6 +49,9 @@
 
 	// A line that needs more than the light node: its full form once it has come.
 	let vol = $state<Record<string, Laag[]>>({});
+	// A line whose `laad` failed: it stands as the light node gives it, marked incomplete, so a
+	// procesgang cut short by a time-out does not pass for a whole one.
+	let onvolledig = $state<Record<string, boolean>>({});
 	$effect(() => {
 		// Asked once the light node is in: a line built before it (no Kamer from its label yet)
 		// would stand for a moment with an answer the band then replaces.
@@ -56,9 +63,11 @@
 				.then((lagen) => {
 					vol = { ...vol, [r.id]: lagen };
 				})
-				.catch(() => {
-					// Failed: the line as the light node gives it.
-					if (!controller.signal.aborted) vol = { ...vol, [r.id]: r.lagen };
+				.catch((e) => {
+					if (controller.signal.aborted) return;
+					report('Behoort bij', e);
+					vol = { ...vol, [r.id]: r.lagen };
+					onvolledig = { ...onvolledig, [r.id]: true };
 				});
 		}
 		return () => controller.abort();
@@ -175,6 +184,10 @@
 									{/if}
 								{/each}
 							</ol>
+							{#if onvolledig[r.id]}<span
+									class="onvolledig"
+									title="Niet alles van deze regel kon worden geladen">onvolledig</span
+								>{/if}
 							{#if i === 0}{@render meer()}{/if}
 						</dd>
 					</div>
@@ -319,6 +332,11 @@
 	}
 	.lagen.los li + li::before {
 		content: none;
+	}
+	.onvolledig {
+		white-space: nowrap;
+		font-style: italic;
+		color: var(--ink-3);
 	}
 	/* The outcome is the source's word, upright beside "deze uitspraak" too. */
 	.lagen .uitkomst {

@@ -1743,7 +1743,7 @@
 		color: var(--ink-3);
 		text-align: center;
 	}
-	@media (max-width: 767px) {
+	@media (max-width: 768px) {
 		.regel {
 			margin-bottom: var(--s-3);
 		}

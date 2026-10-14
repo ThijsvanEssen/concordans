@@ -59,7 +59,6 @@ describe('typography', () => {
 			'lib/components/graph/GraphSidebar.svelte',
 			'lib/onderwerpen/Kruiswoord.svelte',
 			'routes/(main)/api/+page.svelte',
-			'routes/(main)/(prose)/bronnen/+page.svelte',
 			'lib/components/explore/index/IndexOverzicht.svelte'
 		].map((pad) => plek(pad, 'a column of figures'));
 		expect(overtreders((t) => /tabular-nums/.test(t), columns)).toEqual([]);

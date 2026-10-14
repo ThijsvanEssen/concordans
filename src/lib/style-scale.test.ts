@@ -7,15 +7,16 @@ import { describe, expect, it } from 'vitest';
 
 const ROOT = join(process.cwd(), 'src');
 
-function files(dir: string): string[] {
+function files(dir: string, pattern = /\.(svelte|css)$/): string[] {
 	return readdirSync(dir).flatMap((name) => {
 		const path = join(dir, name);
-		if (statSync(path).isDirectory()) return files(path);
-		return /\.(svelte|css)$/.test(name) ? [path] : [];
+		if (statSync(path).isDirectory()) return files(path, pattern);
+		return pattern.test(name) ? [path] : [];
 	});
 }
 
-const sources = files(ROOT).map((path) => ({ path, text: readFileSync(path, 'utf8') }));
+const read = (path: string) => ({ path, text: readFileSync(path, 'utf8') });
+const sources = files(ROOT).map(read);
 
 /** Off-scale pixel values in padding, margin and gap, outside calc(). */
 function offScale(text: string): string[] {
@@ -49,5 +50,48 @@ describe('the type and spacing scale', () => {
 	it('does not add spacing off the 4px scale', () => {
 		const count = sources.reduce((n, { text }) => n + offScale(text).length, 0);
 		expect(count).toBeLessThanOrEqual(OFF_SCALE_MAX);
+	});
+});
+
+// The phone is one width, 768 px and narrower (Thijs, 14 Oct, decision 5): `max-width: 768px`
+// for the phone, `min-width: 769px` above it, in the stylesheets and in `$lib/utils/breakpoints`
+// alike. Before this, 767 and 768 stood side by side, and at exactly 768 px (an upright iPad)
+// the list folded to one column while "Verfijnen" stayed hidden.
+const WIDTHS = [520, 560, 620, 640, 768, 769, 780, 900, 1024, 1100, 1101, 1439, 1440, 1600];
+
+// The scripts too: a `matchMedia` names the same widths.
+const scripts = files(ROOT, /(?<!\.test)\.(ts|html)$/).map(read);
+
+// The widths of the window, not of a container (`@container` keeps its own).
+const mediaWidths = [...sources, ...scripts].flatMap(({ path, text }) =>
+	text
+		.split('\n')
+		.filter((line) => !line.includes('@container'))
+		.flatMap((line) =>
+			[...line.matchAll(/\((max|min)-width:\s*(\d+)px\)/g)].map((m) => ({
+				path,
+				bound: m[1],
+				px: Number(m[2])
+			}))
+		)
+);
+
+describe('the breakpoints', () => {
+	it('writes the phone as 768 px and narrower, everywhere', () => {
+		const off = mediaWidths.filter(
+			({ bound, px }) => (bound === 'max' && px === 767) || (bound === 'min' && px === 768)
+		);
+		expect(off.map((w) => `${w.path}: ${w.bound}-width ${w.px}px`)).toEqual([]);
+	});
+
+	it('uses no width outside the known breakpoints', () => {
+		const off = mediaWidths.filter(({ px }) => !WIDTHS.includes(px));
+		expect(off.map((w) => `${w.path}: ${w.bound}-width ${w.px}px`)).toEqual([]);
+	});
+
+	it('keeps the sticky facet column under the top bar', () => {
+		const frame = readFileSync(join(ROOT, 'lib/styles/frame.css'), 'utf8');
+		const facets = frame.match(/\.blad__facetten\s*\{[^}]*\}/)?.[0] ?? '';
+		expect(facets).toMatch(/top:\s*calc\(var\(--topbar-h\)/);
 	});
 });

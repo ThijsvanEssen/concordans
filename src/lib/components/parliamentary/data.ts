@@ -23,11 +23,6 @@ export const getDossierKey = (number: string) =>
 		return exact?.key ?? (await getDossier(number)).key;
 	});
 
-export const getDossierDocuments = (number: string) =>
-	once(`documents/${number}`, () =>
-		unwrap(api.GET('/api/dossiers/{number}/documents', { params: { path: { number } } }))
-	);
-
 export const getDossierMutations = (number: string) =>
 	once(`mutations/${number}`, () =>
 		unwrap(api.GET('/api/dossiers/{number}/mutations', { params: { path: { number } } }))

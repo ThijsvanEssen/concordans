@@ -12,7 +12,7 @@
 }
 .blad__indeling {
 	display: grid;
-	grid-template-columns: 240px minmax(0, 1fr);
+	grid-template-columns: var(--facet-w) minmax(0, 1fr);
 	column-gap: 40px;
 	align-items: start;
 }
@@ -123,12 +123,13 @@
 	font-size: var(--t-micro);
 	color: var(--ink-3);
 }
-/* The facet column of such a page, as Bladeren's: it stays in view, scrolls on its own
-   with a quiet bar that keeps clear of the counts, and leaves room for a focus ring. */
+/* The facet column of such a page, as Bladeren's: it stays in view under the sticky top
+   bar, where it stood before the page scrolled, scrolls on its own with a quiet bar that
+   keeps clear of the counts, and leaves room for a focus ring. */
 .blad__facetten {
 	position: sticky;
-	top: var(--s-6);
-	max-height: calc(100vh - var(--s-6));
+	top: calc(var(--topbar-h) + var(--s-6));
+	max-height: calc(100vh - var(--topbar-h) - var(--s-6));
 	overflow-y: auto;
 	scrollbar-gutter: stable;
 	scrollbar-width: thin;

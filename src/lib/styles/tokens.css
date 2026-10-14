@@ -104,10 +104,12 @@
 	--s-8: 64px;
 
 	/* ─── Size ─── */
-	/* The frame: the top bar, a page at most this wide, the text of a text page this wide. */
+	/* The frame: the top bar, a page at most this wide, the text of a text page this wide, the
+	   facet column of a list page. */
 	--topbar-h: 60px;
 	--blad-max: 1440px;
 	--blad-tekst: 720px;
+	--facet-w: 240px;
 	--measure: 66ch;
 	/* The lead column of a list row (IndexRow), where the titles of every list start. */
 	--row-lead: 140px;

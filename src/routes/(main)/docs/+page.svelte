@@ -1,4 +1,6 @@
 <script lang="ts">
+	import KeyList from '$lib/components/ui/KeyList.svelte';
+	import KeyRow from '$lib/components/ui/KeyRow.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import { getStats } from '$lib/api/stats';
 	import { load } from '$lib/util/load.svelte';
@@ -71,68 +73,30 @@
 				nummer staat eerst.
 			</p>
 			<p>Een nummer, citaat of wetsnaam opent de bron direct:</p>
-			<div class="list">
-				<div class="list-row">
-					<span class="list-k">ECLI</span><span>ECLI:NL:HR:2019:1278</span>
-				</div>
-				<div class="list-row">
-					<span class="list-k">artikelcitaat</span><span>artikel 287 Sr, art. 7:658 BW</span>
-				</div>
-				<div class="list-row">
-					<span class="list-k">dossier</span><span>36264, 37020-XV</span>
-				</div>
-				<div class="list-row">
-					<span class="list-k">Kamerstuk</span><span
-						>37020-XV-3, Kamerstukken II 2020/21, 36327, nr. 3</span
-					>
-				</div>
-				<div class="list-row">
-					<span class="list-k">BWB-id of CELEX-nummer</span><span>BWBR0001854, 32013L0036</span>
-				</div>
-				<div class="list-row">
-					<span class="list-k">wetsnaam</span><span
-						>Awb, Algemene verordening gegevensbescherming</span
-					>
-				</div>
-			</div>
+			<KeyList>
+				<KeyRow key="ECLI">ECLI:NL:HR:2019:1278</KeyRow>
+				<KeyRow key="artikelcitaat">artikel 287 Sr, art. 7:658 BW</KeyRow>
+				<KeyRow key="dossier">36264, 37020-XV</KeyRow>
+				<KeyRow key="Kamerstuk">37020-XV-3, Kamerstukken II 2020/21, 36327, nr. 3</KeyRow>
+				<KeyRow key="BWB-id of CELEX-nummer">BWBR0001854, 32013L0036</KeyRow>
+				<KeyRow key="wetsnaam">Awb, Algemene verordening gegevensbescherming</KeyRow>
+			</KeyList>
 			<p>
 				Een bron heeft een eigen adres: op haar officiële nummer, en voor personen en organen op
 				naam.
 			</p>
-			<div class="list">
-				<div class="list-row">
-					<span class="list-k">uitspraak</span><span>/uitspraken/ECLI:NL:HR:2019:2006</span>
-				</div>
-				<div class="list-row">
-					<span class="list-k">artikel</span><span>/wetten/BWBR0005289/artikel/6:162</span>
-				</div>
-				<div class="list-row">
-					<span class="list-k">dossier</span><span>/dossiers/36600-VIII</span>
-				</div>
-				<div class="list-row">
-					<span class="list-k">Kamerstuk</span><span
-						>/kamerstukken/36799/31, /kamerstukken/36600-VIII/AB</span
-					>
-				</div>
-				<div class="list-row">
-					<span class="list-k">publicatie</span><span>/stb/2026/94, /stcrt/…, /trb/…</span>
-				</div>
-				<div class="list-row">
-					<span class="list-k">lid</span><span>/leden/rob-jetten</span>
-				</div>
-				<div class="list-row">
-					<span class="list-k">kabinet</span><span>/kabinetten/rutte_iv</span>
-				</div>
-				<div class="list-row">
-					<span class="list-k">fractie</span><span>/fracties/d66</span>
-				</div>
-				<div class="list-row">
-					<span class="list-k">commissie</span><span>/commissies/szw</span>
-				</div>
-				<div class="list-row">
-					<span class="list-k">toezegging</span><span>/toezeggingen/TZ202609-124</span>
-				</div>
-			</div>
+			<KeyList>
+				<KeyRow key="uitspraak">/uitspraken/ECLI:NL:HR:2019:2006</KeyRow>
+				<KeyRow key="artikel">/wetten/BWBR0005289/artikel/6:162</KeyRow>
+				<KeyRow key="dossier">/dossiers/36600-VIII</KeyRow>
+				<KeyRow key="Kamerstuk">/kamerstukken/36799/31, /kamerstukken/36600-VIII/AB</KeyRow>
+				<KeyRow key="publicatie">/stb/2026/94, /stcrt/…, /trb/…</KeyRow>
+				<KeyRow key="lid">/leden/rob-jetten</KeyRow>
+				<KeyRow key="kabinet">/kabinetten/rutte_iv</KeyRow>
+				<KeyRow key="fractie">/fracties/d66</KeyRow>
+				<KeyRow key="commissie">/commissies/szw</KeyRow>
+				<KeyRow key="toezegging">/toezeggingen/TZ202609-124</KeyRow>
+			</KeyList>
 		</div>
 
 		<div class="section" id="terugvinden">
@@ -167,13 +131,11 @@
 			<p>De soorten verbindingen:</p>
 			<LoadState state={stats.state} what="De soorten verbindingen" retry={stats.retry}>
 				{#snippet children(s)}
-					<div class="list list--two-col">
+					<KeyList columns={2}>
 						{#each RELATIONS.filter((r) => (s.edges.by_relation[r] ?? 0) > 0) as relation (relation)}
-							<div class="list-row">
-								<span>{relationLabel(relation)}</span>
-							</div>
+							<KeyRow>{relationLabel(relation)}</KeyRow>
 						{/each}
-					</div>
+					</KeyList>
 				{/snippet}
 			</LoadState>
 		</div>
@@ -299,61 +261,5 @@
 		border: 1px solid var(--rule);
 		border-radius: var(--r-1);
 		padding: 0 var(--s-1);
-	}
-
-	.list {
-		border: 1px solid var(--rule);
-		border-radius: var(--r-2);
-		overflow: hidden;
-		margin-bottom: var(--s-3);
-	}
-
-	.list-row {
-		display: flex;
-		gap: var(--s-4);
-		padding: var(--s-2) var(--s-4);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink);
-		border-top: 1px solid var(--rule);
-	}
-
-	.list-row:first-child {
-		border-top: 0;
-	}
-
-	.list-k {
-		flex: none;
-		width: 11em;
-		color: var(--ink-3);
-	}
-
-	.list--two-col {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-	}
-
-	.list--two-col .list-row:nth-child(2n) {
-		border-left: 1px solid var(--rule);
-	}
-
-	.list--two-col .list-row:nth-child(1),
-	.list--two-col .list-row:nth-child(2) {
-		border-top: 0;
-	}
-
-	@media (max-width: 560px) {
-		.list--two-col {
-			grid-template-columns: 1fr;
-		}
-		.list--two-col .list-row:nth-child(2n) {
-			border-left: 0;
-		}
-		.list--two-col .list-row:nth-child(n) {
-			border-top: 1px solid var(--rule);
-		}
-		.list--two-col .list-row:first-child {
-			border-top: 0;
-		}
 	}
 </style>

@@ -71,7 +71,7 @@
 		margin-left: auto;
 	}
 	/* On a phone the pair starts at the text's edge, on a line of its own. */
-	@media (max-width: 767px) {
+	@media (max-width: 768px) {
 		.kop-acties {
 			margin-left: 0;
 			flex-basis: 100%;
