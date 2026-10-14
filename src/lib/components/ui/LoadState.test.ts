@@ -37,6 +37,18 @@ describe('LoadState', () => {
 		expect(html(error, { retry: () => {} })).toContain('Opnieuw');
 	});
 
+	it('says what failed in the singular, or in the plural where the subject is', () => {
+		const error = { status: 'error', error: new ApiError(500, '/api/x') } as const;
+		expect(html(error)).toContain('De fractie kon niet worden geladen.');
+		const many = html(error, { what: 'De tekstversies', plural: true });
+		expect(many).toContain('De tekstversies konden niet worden geladen.');
+		const slow = html(
+			{ status: 'error', error: new ApiError(504, '/api/x') },
+			{ what: 'De tekstversies', plural: true }
+		);
+		expect(slow).toContain('De tekstversies konden niet op tijd worden geladen.');
+	});
+
 	it('says a slow answer apart from a broken one', () => {
 		const slow = html({ status: 'error', error: new ApiError(504, '/api/x') });
 		expect(slow).toContain('De fractie kon niet op tijd worden geladen.');

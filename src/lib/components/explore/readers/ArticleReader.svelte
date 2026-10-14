@@ -557,7 +557,7 @@
 						{/if}
 					</span>
 				{:else if versionState?.status === 'error'}
-					<LoadState state={versionState} what="De tekstversies" retry={article.retry} />
+					<LoadState state={versionState} what="De tekstversies" plural retry={article.retry} />
 				{/if}
 				<!-- Its toelichting, as the last phrase of the status: it comes
 				     after the text and fill in without moving it (Orchestrator, 10 Oct). -->

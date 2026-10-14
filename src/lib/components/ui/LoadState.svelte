@@ -1,9 +1,16 @@
 <script lang="ts" module>
 	import { isSlow } from '$lib/api/errors';
 
-	/** The one sentence for a failure of `what` ("De inhoudsopgave"), slow or broken. */
-	export const failureText = (what: string, error: unknown) =>
-		isSlow(error) ? `${what} kon niet op tijd worden geladen.` : `${what} kon niet worden geladen.`;
+	/**
+	 * The one sentence for a failure of `what` ("De inhoudsopgave", or with `plural` "De
+	 * tekstversies"), slow or broken.
+	 */
+	export function failureText(what: string, error: unknown, plural = false) {
+		const verb = plural ? 'konden' : 'kon';
+		return isSlow(error)
+			? `${what} ${verb} niet op tijd worden geladen.`
+			: `${what} ${verb} niet worden geladen.`;
+	}
 
 	/** Nothing to show: no answer, or an empty list. */
 	const isEmpty = (data: unknown) => data == null || (Array.isArray(data) && data.length === 0);
@@ -20,6 +27,7 @@
 	let {
 		state,
 		what,
+		plural = false,
 		retry,
 		form = 'line',
 		empty,
@@ -28,6 +36,8 @@
 		state: LoadState<T>;
 		/** What fails, as the subject of the sentence: "De inhoudsopgave", "Het lid". */
 		what: string;
+		/** `what` is plural ("De tekstversies"): they konden niet worden geladen. */
+		plural?: boolean;
 		retry?: () => void;
 		form?: 'line' | 'block';
 		empty?: Snippet;
@@ -47,7 +57,7 @@
 	{/if}
 {:else if state.status === 'error'}
 	<p class="stil failure" class:failure--block={form === 'block'} role="alert">
-		{failureText(what, state.error)}
+		{failureText(what, state.error, plural)}
 		{#if retry}
 			<button type="button" class="btn is-text" onclick={retry}>Opnieuw</button>
 		{/if}
