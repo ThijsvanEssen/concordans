@@ -38,10 +38,10 @@ const getList = <P extends FacetedPath>(
 ): Promise<ListPage<P>> =>
 	// One call for five paths: openapi-fetch types a call per path, not per union of them.
 	unwrap(
-		(api.GET as (p: P, init: object) => Promise<{ data?: ListPage<P>; response: Response }>)(
-			path,
-			{ params: { query }, signal }
-		)
+		(api.GET as (p: P, init: object) => Promise<{ data?: ListPage<P>; response: Response }>)(path, {
+			params: { query },
+			signal
+		})
 	);
 
 /**

@@ -118,10 +118,17 @@ describe('a faceted list', () => {
 
 	it('fails the load when the rows fail', async () => {
 		fakeApi({
-			'/api/documents': ({ params }: FakeRequest) => (params.query?.facets ? answer([], 'facets') : fail(500))
+			'/api/documents': ({ params }: FakeRequest) =>
+				params.query?.facets ? answer([], 'facets') : fail(500)
 		});
 		const l = list();
-		const load = faceted('/api/documents', { limit: 100 }, l.apart, () => {}, () => {});
+		const load = faceted(
+			'/api/documents',
+			{ limit: 100 },
+			l.apart,
+			() => {},
+			() => {}
+		);
 		await expect(load(0, new AbortController().signal)).rejects.toThrow('answered 500');
 	});
 });
