@@ -6,9 +6,9 @@ import { isRauw, menselijkeNaam, naamVanId } from '$lib/bron/menselijk';
 import { keyEcli } from '$lib/bron/leesbaar';
 import { korteDatum, langeDatum, vandaag } from '$lib/text/datum';
 import { refOf, type BronRef } from '$lib/bron/href';
-import { anchorLabel, parseQualifier } from '$lib/text/qualifier';
+import { anchorLabel } from '$lib/text/qualifier';
 import { articleTitle, bookNumber } from '$lib/text/bw';
-import { authorCite, paragraphCite } from '$lib/text/judgment-cite';
+import { authorCite } from '$lib/text/judgment-cite';
 import { isCollection, type Relation } from '$lib/vocabulary';
 import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
 import {
@@ -22,14 +22,9 @@ import { kindName } from '$lib/components/explore/law-head';
 import { withoutKamerstuk } from '$lib/components/parliamentary/kamerstuk';
 import { seatWord } from '$lib/components/parliamentary/career';
 import { bronKindOf, confidenceWord, type BronKind } from './filter';
+import { isDerived, positionsLabel, readEdge, text } from './edge-meta';
 import { woordenVan } from './hoe';
-import {
-	metVoetnoot,
-	nootAnker,
-	stukPlaats,
-	voetnootWoord,
-	type Bereik
-} from '$lib/text/voetnoten';
+import type { Bereik } from '$lib/text/voetnoten';
 
 export type { Neighbor } from '$lib/api/nodes';
 import type { Neighbor } from '$lib/api/nodes';
@@ -101,9 +96,6 @@ export function dossierVanRij(row: Row): DossierNaamBron | null {
 	const d = dossierUitProps(row.props, row.ref.number);
 	return d.title || row.title === UNNAMED ? d : { ...d, title: row.title };
 }
-
-const text = (value: unknown): string | null =>
-	typeof value === 'string' && value.trim() ? value.trim() : null;
 
 const join = (...parts: (string | null | undefined)[]) => parts.filter(Boolean).join(', ') || null;
 
@@ -317,17 +309,6 @@ export function describe(
 	}
 }
 
-/**
- * The lid a verbinding names, read from the phrase the source used
- * ("artikel 300, tweede lid"). Null when it names none.
- * TODO(backend B7, B8, B12): a lookup once the edge meta carries `lid`.
- */
-export function lidOfMatch(match: string | null | undefined): string | null {
-	if (!match) return null;
-	const q = parseQualifier(match);
-	return q?.lid ?? null;
-}
-
 /** The aard of a reference as a word: the API's `semantic_type` codes in Dutch. */
 const AARD: Record<string, string> = {
 	cross_reference: 'verwijzing',
@@ -374,35 +355,29 @@ export function rowOfNeighbor(n: Neighbor): Row | null {
 	if (!isCollection(n.collection)) return null;
 	const props = n.props ?? {};
 	const meta = (n.meta ?? {}) as Record<string, unknown>;
-	const match = text(meta.raw_match) ?? text(meta.qualifier);
-	const lid =
-		(Array.isArray(meta.leden) && text(meta.leden[0])) ||
-		text(meta.lid) ||
-		(n.direction === 'inbound' ? lidOfMatch(match) : null);
-	// The overwegingen of a judgment where it cites (API: `paragraphs` on the edge).
-	const paragraphs = Array.isArray(meta.paragraphs)
-		? meta.paragraphs.filter((x): x is string => typeof x === 'string' && !!x)
-		: [];
-	// They are the row's own where it is the citing judgment; else the selected one's (`r.o.`).
-	const ecli = n.collection === 'judgments' ? (text(props.ecli) ?? keyEcli(n.key)) : null;
-	const plaats = plaatsVanEdge(meta, n.direction === 'inbound' ? ecli : null);
+	const inbound = n.direction === 'inbound';
+	// The paragraphs and the passage are the row's own where it is the citing judgment; else
+	// the selected one's, whose ECLI the row does not know (`r.o.`).
+	const ecli =
+		inbound && n.collection === 'judgments' ? (text(props.ecli) ?? keyEcli(n.key)) : null;
+	const edge = readEdge(meta, { direction: inbound ? 'inbound' : 'outbound', citingEcli: ecli });
 	return {
 		ref: refOf(n.collection, n.key, props),
 		...describe(n.collection, n.key, n.display_name, props),
-		...(paragraphs.length
-			? { position: positionsLabel(paragraphs.map((nr) => paragraphCite(ecli, nr))) }
-			: {}),
-		...plaats,
+		...(edge.position ? { position: edge.position } : {}),
+		...(edge.passageAt ? { passageAt: edge.passageAt } : {}),
+		...(edge.noot ? { noot: edge.noot } : {}),
+		...(edge.bereik ? { bereik: edge.bereik } : {}),
 		kind: bronKindOf(n.collection, n.key, props, n.relation),
-		lid,
-		derived: n.confidence != null && n.confidence < 1,
+		lid: edge.lid,
+		derived: isDerived(n.confidence),
 		proposed: n.status === 'voorgesteld' || undefined,
 		relation: (n.relation as Relation | null) ?? undefined,
 		direction: n.direction === 'inbound' ? 'inbound' : 'outbound',
 		edgeId: n.edge_id ?? null,
 		confidence: n.confidence ?? null,
-		snippet: plaats.snippet ?? text(meta.snippet),
-		match: plaats.match ?? match,
+		snippet: edge.snippet,
+		match: edge.match,
 		period: periodOf(meta),
 		function: text(meta.function),
 		// An appeal link names its remedy: `Cassatie`, `Hoger beroep`.
@@ -411,68 +386,6 @@ export function rowOfNeighbor(n: Neighbor): Row | null {
 		props,
 		edge: meta
 	};
-}
-
-/** A place an edge keeps of a judgment's citation, with `edge_meta=passages` (API 0.79.55). */
-type EdgePassage = {
-	paragraph_id?: unknown;
-	paragraph_number?: unknown;
-	footnote?: unknown;
-	snippet?: unknown;
-	text?: unknown;
-	start?: unknown;
-	end?: unknown;
-};
-
-/**
- * Where an edge stands in the text that cites, from its meta: the first passage a judgment's
- * edge keeps (`passages`, asked where a row shows it), with its note (`r.o. 5.7.6 (voetnoot
- * 35)`); a Kamerstuk's place (`place`): its note, or its section, with the words' offsets.
- * `ecli` is the citing judgment's, where it is known: its r.o. is cited as it cites.
- */
-export function plaatsVanEdge(
-	meta: Record<string, unknown>,
-	ecli: string | null
-): Partial<Pick<Row, 'snippet' | 'match' | 'passageAt' | 'noot' | 'bereik' | 'position'>> {
-	const passages = Array.isArray(meta.passages) ? (meta.passages as EdgePassage[]) : [];
-	const p = passages[0];
-	if (p && typeof p.snippet === 'string' && p.snippet) {
-		const nr = text(p.paragraph_number);
-		const label = text(p.footnote);
-		const start = typeof p.start === 'number' ? p.start : null;
-		const end = typeof p.end === 'number' ? p.end : null;
-		const words = start != null && end != null && end > start ? p.snippet.slice(start, end) : null;
-		const own = positionsLabel(
-			passages
-				.map((q) => text(q.paragraph_number))
-				.filter((x): x is string => !!x)
-				.filter((x, i, all) => all.indexOf(x) === i)
-				.map((x) => paragraphCite(ecli, x))
-		);
-		return {
-			snippet: p.snippet,
-			match: words ?? text(p.text),
-			passageAt: nr ? `rov-${nr}` : text(p.paragraph_id),
-			noot: label ? { id: nootAnker(label), label } : null,
-			// The note goes with the place it is in: the first passage's, the others after it.
-			...(label && nr
-				? { position: metVoetnoot(paragraphCite(ecli, nr), label) }
-				: own
-					? { position: own }
-					: label
-						? { position: voetnootWoord(label) }
-						: {})
-		};
-	}
-	const place = stukPlaats(meta);
-	if (place?.part === 'footnote')
-		return {
-			noot: { id: place.at, label: place.label },
-			bereik: place.bereik,
-			...(place.label ? { position: voetnootWoord(place.label) } : {})
-		};
-	if (place?.part === 'text') return { passageAt: place.at, bereik: place.bereik };
-	return {};
 }
 
 /**
@@ -528,21 +441,6 @@ export function periodLabel(period: NonNullable<Row['period']>): string {
 /** `voorzitter`, `minister van Justitie en Veiligheid`: the names in a function keep their capitals. */
 const firstLower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
-const POSITION_PREFIX = /^(r\.o\.|onder|§)\s*/;
-
-/**
- * `r.o. 2.2.2`, `r.o. 2.2.2 en 2.4.1`, `r.o. 2.2.2, 2.4.1 en 19 meer`; `onder` in a
- * conclusion, `§` in a judgment of the EHRM (`paragraphCite`).
- */
-export function positionsLabel(positions: string[]): string | null {
-	const numbers = positions.map((p) => p.replace(POSITION_PREFIX, ''));
-	if (numbers.length === 0) return null;
-	const prefix = POSITION_PREFIX.exec(positions[0])?.[0] ?? '';
-	if (numbers.length === 1) return prefix + numbers[0];
-	if (numbers.length === 2) return `${prefix}${numbers[0]} en ${numbers[1]}`;
-	return `${prefix}${numbers[0]}, ${numbers[1]} en ${numbers.length - 2} meer`;
-}
-
 /**
  * The mentions of one bron as one row: the first place it names the selected bron,
  * every place in the meta line, the highest confidence.
@@ -558,7 +456,7 @@ export function bundleMentions(mentions: Row[]): Row {
 		lid: mentions.find((m) => m.lid)?.lid ?? null,
 		position: positionsLabel(positions),
 		confidence,
-		derived: confidence != null ? confidence < 1 : first.derived,
+		derived: confidence != null ? isDerived(confidence) : first.derived,
 		mentions
 	};
 }

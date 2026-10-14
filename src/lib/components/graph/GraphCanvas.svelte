@@ -6,7 +6,9 @@
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import type SigmaType from 'sigma';
 	import type Graph from 'graphology';
-	import { plaatsVanMeta } from '$lib/verbonden/verbinding';
+	import { readEdge } from '$lib/verbonden/edge-meta';
+	import { keyEcli } from '$lib/bron/leesbaar';
+	import { parseNodeId } from '$lib/vocabulary';
 	import type { GraphFilters } from '$lib/graph/graph-store';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import { EDGE_WEIGHT, type GraphNodeKind } from '$lib/graph/types';
@@ -1071,12 +1073,12 @@
 		// In the words of hoe.ts, read from the source: a member `diende in` or `ondertekende
 		// als minister-president`; a bijlage is `bijlage bij` its letter.
 		const parts = [relationLabel(relation, sourceCollection, targetCollection, meta)];
-		const lid =
-			(Array.isArray(meta.leden) && typeof meta.leden[0] === 'string' && meta.leden[0]) ||
-			(typeof meta.lid === 'string' && meta.lid) ||
-			null;
+		// The source cites: the line says what the card and the row of its target say.
+		const { lid, position } = readEdge(meta, {
+			direction: 'inbound',
+			citingEcli: sourceCollection === 'judgments' ? keyEcli(parseNodeId(source)?.key ?? '') : null
+		});
 		if (lid) parts.push(`lid ${lid}`);
-		const { position } = plaatsVanMeta(meta, source);
 		if (position) parts.push(position);
 		if (data.status === 'voorgesteld') parts.push('voorgesteld');
 		return parts.join(', ');

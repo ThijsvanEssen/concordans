@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { rijen } from '$lib/actions/rijen';
 	import { hoeVan, kleineLetter } from './hoe';
+	import { text } from './edge-meta';
 	import Aanhaling from './Aanhaling.svelte';
 	import { zetMarkering } from '$lib/bron/markering.svelte';
 	import { itemVanRij } from '$lib/map/rij';
@@ -436,7 +437,6 @@
 	const opentTerPlekke = (row: Row) =>
 		(row.ref.collection === 'documents' || !!wetVerband(row)) && !row.missing;
 	/** A motie's dictum, an amendement's explanation, from the row's props: no request. */
-	const tekstVan = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
 	let openRij = $state<string | null>(null);
 	const wisselRij = (row: Row) => (openRij = openRij === rowId(row) ? null : rowId(row));
 
@@ -835,8 +835,8 @@
 											<RijInhoud
 												item={{
 													node: row.ref,
-													dictum: tekstVan(row.props?.dictum),
-													explanation: tekstVan(row.props?.explanation)
+													dictum: text(row.props?.dictum),
+													explanation: text(row.props?.explanation)
 												}}
 												als="kern"
 											/>
