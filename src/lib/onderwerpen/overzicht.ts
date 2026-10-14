@@ -14,6 +14,10 @@ export type Stem = 'voor' | 'tegen';
 export const uitkomstVan = (d: Pick<Besluit, 'passed'>): Uitkomst =>
 	d.passed === true ? 'aangenomen' : d.passed === false ? 'verworpen' : 'overig';
 
+/** The shape of an outcome's mark (Uitkomst.svelte): passed, rejected, or open. */
+export const outcomeShape = (u: string | null): 'ja' | 'nee' | 'open' =>
+	u === 'aangenomen' ? 'ja' : u === 'verworpen' ? 'nee' : 'open';
+
 /** The kind as the Kamer records it (`Motie`, `Amendement`, `Wetgeving`). */
 export const soortVan = (d: Pick<Besluit, 'kind'>) => d.kind?.trim() || NO_DECISION_KIND;
 

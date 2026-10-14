@@ -48,10 +48,15 @@ const naamVan = (hit: Hit): string =>
 		props: (hit.extra ?? {}) as Record<string, unknown>
 	});
 
-const extra = (hit: Hit, name: string): string => {
+/** A string the API gives beside the hit (`extra`), or ''. */
+export const extra = (hit: Hit, name: string): string => {
 	const value = hit.extra?.[name];
 	return typeof value === 'string' ? value : '';
 };
+
+/** What a link to the hit names: its node id, and a dossier's number (`37020-XV`). */
+export const hitName = (hit: Hit): string =>
+	hit.collection === 'dossiers' ? `dossiers/${extra(hit, 'number')}` : hit.id;
 
 const extras = (hit: Hit, name: string): string[] => {
 	const value = hit.extra?.[name];

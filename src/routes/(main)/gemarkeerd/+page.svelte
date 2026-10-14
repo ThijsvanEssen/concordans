@@ -22,7 +22,7 @@
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import { buildBronHref } from '$lib/bron/href';
 	import { isEscape } from '$lib/actions/keys';
-	import { download } from '$lib/verbonden/export';
+	import { download, safeFileName } from '$lib/verbonden/export';
 	import { korteDatum, vandaag } from '$lib/text/datum';
 	import { bronLabel, parseNodeId } from '$lib/vocabulary';
 	import {
@@ -66,7 +66,7 @@
 		url.search = mapParams(m).toString();
 		return url.toString();
 	};
-	const bestand = (m: Map) => m.naam.replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'Gemarkeerd';
+	const bestand = (m: Map) => safeFileName(m.naam) || 'Gemarkeerd';
 	const tel = (n: number) => `${formatCount(n)} ${plural(n, 'bron', 'bronnen')}`;
 	const dag = (iso: string) => korteDatum(vandaag(new Date(iso)));
 	const anker = (m: Map) => `map-${m.id}`;

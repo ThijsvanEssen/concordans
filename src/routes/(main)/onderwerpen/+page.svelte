@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { twoAtATime } from '$lib/util/two-at-a-time';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { report } from '$lib/api/errors';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
@@ -121,60 +122,57 @@
 	) {
 		// One question per topic with all its words (repeated q, API 0.79.30): the API finds
 		// a line that holds any of them, once, and says where (`matched`). A law by its id.
-		const taken = [...onderwerpen];
-		const werk = async () => {
-			for (let o = taken.shift(); o && !signal.aborted; o = taken.shift()) {
-				const k = vak(o);
-				const items = new Map((verder?.items ?? []).map((i) => [i.id, i]));
-				let meer = false;
-				let doorzocht: string | null = null;
-				let eerder = false;
-				let gelukt = true;
-				const vraag = (query: Record<string, unknown>) =>
-					unwrap(
-						slowApi.GET('/api/feed', {
-							params: { query: { ...vraagVan(o), ...query, facets: false } },
-							signal
-						})
-					);
-				try {
-					let r = await vraag({
-						since: vanaf(o),
-						...(verder ? { until: verder.tot } : {}),
-						limit: PER_ONDERWERP
-					});
-					if (!verder) {
-						const stand = feedStand(r.data_as_of);
-						if (stand && !gedeeld.length) zetGezien(o, stand.newest);
-					}
-					// Nothing in the period: the last lines before it, as the API has them.
-					if (!verder && !r.items.length && !doorzochtVanaf(r)) {
-						r = await vraag({ until: addDays(vanaf(o), -1), limit: EERST });
-						eerder = r.items.length > 0;
-					}
-					for (const raw of r.items) {
-						const i = normalizeItem(raw);
-						items.set(i.id, i);
-					}
-					// Searched only from a day on: the rest is a question further back.
-					doorzocht = eerder ? null : doorzochtVanaf(r);
-					meer = !eerder && !doorzocht && !!r.next_cursor;
-				} catch {
-					if (signal.aborted) return;
-					gelukt = false;
+		await twoAtATime(onderwerpen, async (o) => {
+			if (signal.aborted) return;
+			const k = vak(o);
+			const items = new Map((verder?.items ?? []).map((i) => [i.id, i]));
+			let meer = false;
+			let doorzocht: string | null = null;
+			let eerder = false;
+			let gelukt = true;
+			const vraag = (query: Record<string, unknown>) =>
+				unwrap(
+					slowApi.GET('/api/feed', {
+						params: { query: { ...vraagVan(o), ...query, facets: false } },
+						signal
+					})
+				);
+			try {
+				let r = await vraag({
+					since: vanaf(o),
+					...(verder ? { until: verder.tot } : {}),
+					limit: PER_ONDERWERP
+				});
+				if (!verder) {
+					const stand = feedStand(r.data_as_of);
+					if (stand && !gedeeld.length) zetGezien(o, stand.newest);
 				}
-				standen[k] = {
-					status: !gelukt && !items.size ? 'fout' : 'klaar',
-					items: [...items.values()].sort(
-						(a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id)
-					),
-					meer,
-					doorzocht,
-					eerder
-				};
+				// Nothing in the period: the last lines before it, as the API has them.
+				if (!verder && !r.items.length && !doorzochtVanaf(r)) {
+					r = await vraag({ until: addDays(vanaf(o), -1), limit: EERST });
+					eerder = r.items.length > 0;
+				}
+				for (const raw of r.items) {
+					const i = normalizeItem(raw);
+					items.set(i.id, i);
+				}
+				// Searched only from a day on: the rest is a question further back.
+				doorzocht = eerder ? null : doorzochtVanaf(r);
+				meer = !eerder && !doorzocht && !!r.next_cursor;
+			} catch {
+				if (signal.aborted) return;
+				gelukt = false;
 			}
-		};
-		await Promise.all([werk(), werk()]);
+			standen[k] = {
+				status: !gelukt && !items.size ? 'fout' : 'klaar',
+				items: [...items.values()].sort(
+					(a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id)
+				),
+				meer,
+				doorzocht,
+				eerder
+			};
+		});
 	}
 
 	// Only a topic not loaded yet: following or dropping one leaves the others standing.

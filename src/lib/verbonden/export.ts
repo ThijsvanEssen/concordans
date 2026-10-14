@@ -91,18 +91,20 @@ export function rowsToCsv(rows: Row[], selection: Collection, origin: string): s
 	);
 }
 
-/** The name of the file: the verbindingen of the bron by its title, in characters every
- *  file system accepts; the key when the title leaves nothing. */
+/** `text` in characters every file system accepts, `max` at most; '' where nothing is left. */
+export const safeFileName = (text: string, max = 120): string =>
+	text
+		// eslint-disable-next-line no-control-regex
+		.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, ' ')
+		.replace(/\s+/g, ' ')
+		.replace(/^[.\s]+|[.\s]+$/g, '')
+		.slice(0, max)
+		.trim();
+
+/** The name of the file: the verbindingen of the bron by its title; the key when the title
+ *  leaves nothing. */
 export function csvName(title: string | null | undefined, key: string): string {
-	const safe = (s: string) =>
-		s
-			// eslint-disable-next-line no-control-regex
-			.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, ' ')
-			.replace(/\s+/g, ' ')
-			.replace(/^[.\s]+|[.\s]+$/g, '')
-			.slice(0, 120)
-			.trim();
-	return `Verbindingen van ${safe(title ?? '') || safe(key) || 'bron'}.csv`;
+	return `Verbindingen van ${safeFileName(title ?? '') || safeFileName(key) || 'bron'}.csv`;
 }
 
 /** Hands the browser a file to save. */
