@@ -64,16 +64,7 @@
 	import { netwerkMelding } from '$lib/stores/netwerk-melding';
 	import { kaart } from '$lib/map/map.svelte';
 	import { gemerkt, notitiesPerBron } from '$lib/map/notities';
-
-	// ── Camera persistence across mounts ──────────────────────────────────────
-	// GraphView is unmounted when the mode leaves Netwerk and mounted again on
-	// return; the camera is kept here so the view does not re-fit. The canvas is
-	// narrower beside a reader (`compact`), so each width keeps its own camera.
-	const _cam: Record<string, { x: number; y: number; ratio: number } | null> = {
-		full: null,
-		compact: null
-	};
-	const _camNodeIds: Record<string, Set<string>> = { full: new Set(), compact: new Set() };
+	import { keepsCamera, saveCamera, savedCamera } from './camera';
 
 	let {
 		store,
@@ -834,22 +825,8 @@
 	}
 
 	function drawNodes(nodes: GraphNode[]) {
-		const camKey = compact ? 'compact' : 'full';
 		const newIds = new Set(nodes.map((n) => n.id));
-		const prev = _camNodeIds[camKey];
-		const sameGraph =
-			prev.size > 0 && newIds.size === prev.size && [...newIds].every((id) => prev.has(id));
-		const additive =
-			prev.size > 0 && newIds.size >= prev.size && [...prev].every((id) => newIds.has(id));
-		if (sameGraph && _cam[camKey]) {
-			skipNextFit = true;
-		} else if (additive) {
-			skipNextFit = true;
-		} else {
-			_cam[camKey] = null;
-			skipNextFit = false;
-		}
-		_camNodeIds[camKey] = newIds;
+		skipNextFit = keepsCamera(compact ? 'compact' : 'full', newIds);
 
 		let changed = false;
 		const addedThisSync = new Set<string>();
@@ -1695,16 +1672,16 @@
 					onReady={(api) => {
 						canvas = api;
 						canvas.refresh();
-						const camKey = compact ? 'compact' : 'full';
-						if (skipNextFit && _cam[camKey]) {
-							canvas.restoreCamera(_cam[camKey]!);
+						const camera = skipNextFit && savedCamera(compact ? 'compact' : 'full');
+						if (camera) {
+							canvas.restoreCamera(camera);
 							skipNextFit = false;
 						} else {
 							canvas.fit();
 						}
 					}}
 					onCameraChange={(state) => {
-						_cam[compact ? 'compact' : 'full'] = state;
+						saveCamera(compact ? 'compact' : 'full', state);
 					}}
 				/>
 
