@@ -49,7 +49,8 @@
 	import KindReader from '$lib/components/explore/KindReader.svelte';
 	import ReaderFrame from '$lib/components/explore/readers/ReaderFrame.svelte';
 	import NietGevonden from '$lib/components/ui/NietGevonden.svelte';
-	import { LADEN_TITEL, serverKop } from '$lib/seo/kop.svelte';
+	import { LADEN_TITEL, serverKop, siteTitle } from '$lib/seo/kop.svelte';
+	import { routeKop } from '$lib/seo/routes';
 	import DocumentReader from '$lib/components/explore/readers/DocumentReader.svelte';
 	import JudgmentReader from '$lib/components/explore/readers/JudgmentReader.svelte';
 	import { keyEcli } from '$lib/bron/leesbaar';
@@ -1099,8 +1100,8 @@
 	);
 
 	const pageTitle = $derived.by(() => {
-		if (mode === 'index') return 'Bronnen, Concordans';
-		if (nietGevonden) return 'Niet gevonden, Concordans';
+		if (mode === 'index') return siteTitle('Bronnen');
+		if (nietGevonden) return siteTitle('Niet gevonden');
 		// While the next bron is on its way the reader still holds the previous one: its name
 		// would be the new page's (a screen reader announces the title after each step).
 		if (wachtOp || (pad && !focus && !padMissing)) return LADEN_TITEL;
@@ -1108,9 +1109,9 @@
 		// here until its node is in. Cut at a word for the tab only.
 		const api = selectedNode ? titelVan(selectedNode.id) : null;
 		const name = api ? cut(api) : selectedNode ? tabTitle(selectedNode) : null;
-		if (name) return `${name}, Concordans`;
-		if (netwerkActive) return 'Netwerk, Concordans';
-		return 'Samenhang, Concordans';
+		if (name) return siteTitle(name);
+		if (netwerkActive) return siteTitle('Netwerk');
+		return routeKop('/explore').title;
 	});
 
 	// The ← of the network goes back inside Concordans; a bron opened from a link

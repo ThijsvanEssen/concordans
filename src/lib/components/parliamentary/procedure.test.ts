@@ -300,3 +300,78 @@ describe('procedure: the votes of a day', () => {
 		expect(tk.regels.find((r) => r.zin.startsWith('Stemmingen'))?.actie).toBeTypeOf('function');
 	});
 });
+
+describe('procedure: what can still follow in the Tweede Kamer', () => {
+	type Detail = Parameters<typeof procedure>[0];
+	const nog = (current_phase: string | null) => {
+		const d = { number: '36500', kind: 'Wetgeving', current_phase, phases: [] };
+		const tk = procedure(d as unknown as Detail, [], false).groepen.find((g) => g.id === 'tk')!;
+		return tk.regels.find((r) => r.id === 'tk-nog')?.zin;
+	};
+
+	it.each([
+		[
+			null,
+			'Kan nog volgen: verslag, nota naar aanleiding van het verslag, nota van wijziging, plenaire behandeling en stemming.'
+		],
+		[
+			'Voorstel van wet',
+			'Kan nog volgen: verslag, nota naar aanleiding van het verslag, nota van wijziging, plenaire behandeling en stemming.'
+		],
+		[
+			'Advies Raad van State',
+			'Kan nog volgen: verslag, nota naar aanleiding van het verslag, nota van wijziging, plenaire behandeling en stemming.'
+		],
+		[
+			'Verslag',
+			'Kan nog volgen: nota naar aanleiding van het verslag, nota van wijziging, plenaire behandeling en stemming.'
+		],
+		[
+			'Nota n.a.v. het verslag',
+			'Kan nog volgen: nota van wijziging, plenaire behandeling en stemming.'
+		],
+		[
+			'Nota van wijziging / Amendement',
+			'Kan nog volgen: nog een nota van wijziging, plenaire behandeling en stemming.'
+		],
+		// Votes on amendementen or moties, not yet on the bill: its vote can still follow.
+		['Stemmingen', 'Kan nog volgen: stemming.']
+	])('after %s', (phase, zin) => {
+		expect(nog(phase)).toBe(zin);
+	});
+});
+
+describe('procedure: how a vote on the bill was taken', () => {
+	type Detail = Parameters<typeof procedure>[0];
+	type Entry = Parameters<typeof procedure>[1][number];
+	const vote = (body: object, kind = 'Wetgeving', title = 'Wetgeving') =>
+		({
+			node_id: 'decisions/w',
+			node_type: 'decision',
+			date: '2024-04-25',
+			kind,
+			title,
+			body: { chamber: 'TK', passed: true, ...body }
+		}) as unknown as Entry;
+	const zin = (e: Entry, over: object = {}) => {
+		const d = { number: '36496', kind: 'Wetgeving', phases: [], ...over } as unknown as Detail;
+		const tk = procedure(d, [e], true).groepen.find((g) => g.id === 'tk')!;
+		return tk.regels.find((r) => r.id === 'decisions/w')?.zin;
+	};
+
+	it('names a hamerstuk, sitting and standing, and a decision without a vote', () => {
+		expect(zin(vote({ method: 'Hamerstuk' }))).toBe('Aangenomen als hamerstuk');
+		expect(zin(vote({ method: 'Stemming bij zitten en opstaan, aangenomen' }))).toBe(
+			'Aangenomen bij zitten en opstaan'
+		);
+		expect(zin(vote({}, 'Wetgeving', 'Wetsvoorstel aangenomen zonder stemming'))).toBe(
+			'Aangenomen zonder stemming'
+		);
+		expect(zin(vote({}))).toBe('Aangenomen');
+	});
+
+	it('takes the way from the Tweede Kamer’s decision on the bill', () => {
+		const d = { tk_decision: { kind: 'Stemmen - zonder stemming aannemen', date: '2024-04-25' } };
+		expect(zin(vote({}), d)).toBe('Aangenomen zonder stemming');
+	});
+});

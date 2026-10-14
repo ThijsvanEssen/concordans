@@ -1,12 +1,14 @@
-import { lowerFirst } from '$lib/text/words';
+import { capitalize } from '$lib/text/words';
 import { korteDatum } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
+import { methodPhrase, phasePlace, voteMethod, type PhaseName } from './stages';
 
 // Where a bill stands, per body that handles it, Raad van
 // State, Tweede Kamer, Eerste Kamer, and one sentence that says it with a date. Derived from
 // the list item only; no field of our own.
 
 type Dossier = Schema<'DossierSummaryDTO'>;
+type Detail = Schema<'DossierDetailResponse'>;
 
 /** `unknown`: the source gives no mark, which is not the same as not done. */
 export type BodyState = 'done' | 'now' | 'open' | 'none' | 'unknown';
@@ -18,33 +20,21 @@ export type Stand = {
 	/** One sentence, concrete: who, what, when. */
 	zin: string;
 	group: StandGroup;
+	/** The phase at the Tweede Kamer as the sentence names it (`verslag`); null outside it. */
+	phase: string | null;
+	/** The day the sentence names (ISO); null for none. */
+	date: string | null;
 };
 
-const TK_PHASES = [
-	'Verslag',
-	'Nota n.a.v. het verslag',
-	'Nota van wijziging / Amendement',
-	'Stemmingen'
-];
-const SUBMITTED = ['Voorstel van wet', 'Memorie van toelichting', 'Advies Raad van State'];
-
-/** `28 sep. 2026`; see `$lib/text/datum`. */
-
-/** A phase as a sentence names it. */
-const PHASE_ZIN: Record<string, string> = {
-	Verslag: 'verslag',
-	'Nota n.a.v. het verslag': 'nota naar aanleiding van het verslag',
-	'Nota van wijziging / Amendement': 'nota van wijziging',
-	Stemmingen: 'stemmingen'
-};
+const phaseOf = (d: Dossier, name: PhaseName) => d.phases?.find((p) => p.name === name);
+const dateOf = (d: Dossier, name: PhaseName) => phaseOf(d, name)?.date ?? null;
+/** `als hamerstuk` after a word in a sentence, nothing for a vote. */
+const spaced = (phrase: string | null) => (phrase ? ` ${phrase}` : '');
 
 export function stand(d: Dossier): Stand | null {
-	const phases = d.phases ?? [];
 	// A phase is done where the source marks it so, and only there: a later phase does not
 	// stand in for an earlier one (Thijs, BE-27). A phase without a mark is not in the data.
-	const done = (name: string) => !!phases.find((p) => p.name === name)?.done;
-	const dateOf = (name: string | null | undefined) =>
-		phases.find((p) => p.name === name)?.date ?? null;
+	const done = (name: PhaseName) => !!phaseOf(d, name)?.done;
 	if (!d.current_phase && !d.tk_decision && !d.ek_outcome) return null;
 
 	const rvs: BodyState = done('Advies Raad van State') ? 'done' : 'unknown';
@@ -68,35 +58,105 @@ export function stand(d: Dossier): Stand | null {
 		{ name: 'Tweede Kamer', short: 'TK', state: tk },
 		{ name: 'Eerste Kamer', short: 'EK', state: ek }
 	];
+	const on = (date: string | null, before: string) => (date ? `${before}${korteDatum(date)}` : '');
+	const place = phasePlace(d.current_phase);
 
-	let zin: string;
-	let group: StandGroup;
 	if (d.ek_outcome) {
-		const how = d.ek_outcome.method === 'Hamerstuk' ? ' als hamerstuk' : '';
-		zin = `${d.ek_outcome.outcome} door de Eerste Kamer${how}, ${korteDatum(d.ek_outcome.date)}.`;
-		group = 'afgehandeld';
-	} else if (rejected) {
-		zin = `Verworpen door de Tweede Kamer${d.closed_on ? `, ${korteDatum(d.closed_on)}` : ''}.`;
-		group = 'afgehandeld';
-	} else if (d.closed) {
-		zin = `Afgehandeld${d.closed_on ? ` ${korteDatum(d.closed_on)}` : ''}.`;
-		group = 'afgehandeld';
-	} else if (tkDone) {
-		const when = d.tk_decision?.date ?? dateOf('Eindtekst');
-		const how = d.tk_decision?.kind?.includes('zonder stemming') ? ' zonder stemming' : '';
-		zin = `Door de Tweede Kamer${how} aangenomen${when ? ` op ${korteDatum(when)}` : ''}; bij de Eerste Kamer.`;
-		group = 'ek';
-	} else if (d.current_phase && TK_PHASES.includes(d.current_phase)) {
-		const when = dateOf(d.current_phase);
-		zin = `Bij de Tweede Kamer: ${PHASE_ZIN[d.current_phase] ?? lowerFirst(d.current_phase)}${when ? `, ${korteDatum(when)}` : ''}.`;
-		group = 'tk';
-	} else if (d.current_phase && SUBMITTED.includes(d.current_phase)) {
-		const when = dateOf('Voorstel van wet') ?? d.opened_on;
-		zin = `Ingediend bij de Tweede Kamer${when ? ` op ${korteDatum(when)}` : ''}${rvs === 'done' ? ', met advies van de Raad van State' : ''}.`;
-		group = 'ingediend';
-	} else {
-		zin = d.current_phase ?? '';
-		group = 'geen';
+		const { outcome, date, method } = d.ek_outcome;
+		const zin = `${outcome} door de Eerste Kamer${spaced(methodPhrase(method))}, ${korteDatum(date)}.`;
+		return { bodies, zin, group: 'afgehandeld', phase: null, date: date ?? null };
 	}
-	return { bodies, zin, group };
+	if (rejected || d.closed) {
+		const date = d.closed_on ?? null;
+		const zin = rejected
+			? `Verworpen door de Tweede Kamer${on(date, ', ')}.`
+			: `Afgehandeld${on(date, ' ')}.`;
+		return { bodies, zin, group: 'afgehandeld', phase: null, date };
+	}
+	if (tkDone) {
+		const date = d.tk_decision?.date ?? dateOf(d, 'Eindtekst');
+		const how = spaced(methodPhrase(null, d.tk_decision?.kind));
+		const zin = `Door de Tweede Kamer${how} aangenomen${on(date, ' op ')}; bij de Eerste Kamer.`;
+		return { bodies, zin, group: 'ek', phase: null, date };
+	}
+	if (place?.stage === 'tk') {
+		const date = dateOf(d, d.current_phase as PhaseName);
+		const zin = `Bij de Tweede Kamer: ${place.phrase}${on(date, ', ')}.`;
+		return { bodies, zin, group: 'tk', phase: place.phrase, date };
+	}
+	if (place?.stage === 'submitted') {
+		const date = dateOf(d, 'Voorstel van wet') ?? d.opened_on ?? null;
+		const advice = rvs === 'done' ? ', met advies van de Raad van State' : '';
+		const zin = `Ingediend bij de Tweede Kamer${on(date, ' op ')}${advice}.`;
+		return { bodies, zin, group: 'ingediend', phase: null, date };
+	}
+	return { bodies, zin: d.current_phase ?? '', group: 'geen', phase: null, date: null };
+}
+
+/** The mark of a box, as Uitkomst draws it. */
+export type Mark = 'ja' | 'nee' | 'nu' | 'open' | 'klaar';
+/** A box of the bar: the body, its mark and word, and a line with the day under it. */
+export type Box = { body: string; mark: Mark; word: string; line: string };
+
+const box = (body: string, mark: Mark, word: string, ...line: (string | null)[]): Box => ({
+	body,
+	mark,
+	word,
+	line: line.filter(Boolean).join(', ')
+});
+
+/**
+ * The stand of a bill as three boxes, in the order of the procedure; none without a stand.
+ * Works on a list item and on the detail, whose Eerste Kamer says where the bill is.
+ */
+export function boxesOf(d: Dossier | Detail): Box[] {
+	const st = stand(d);
+	if (!st) return [];
+	const [rvs, tk, ek] = st.bodies;
+
+	const advice =
+		rvs.state === 'done'
+			? box(
+					rvs.name,
+					'klaar',
+					'Advies',
+					'Uitgebracht',
+					korteDatum(dateOf(d, 'Advies Raad van State'))
+				)
+			: // No mark in the source: not in the data, which is not "not yet".
+				box(rvs.name, 'open', 'Advies', 'Niet in de gegevens');
+
+	const tweede = d.tk_decision
+		? box(
+				tk.name,
+				'ja',
+				'Aangenomen',
+				korteDatum(d.tk_decision.date),
+				voteMethod(null, d.tk_decision.kind)
+			)
+		: d.outcome === 'verworpen'
+			? box(tk.name, 'nee', 'Verworpen', korteDatum(d.closed_on))
+			: tk.state === 'done'
+				? box(tk.name, 'ja', 'Aangenomen', korteDatum(dateOf(d, 'Eindtekst')))
+				: st.group === 'ingediend'
+					? box(tk.name, 'nu', 'Ingediend', korteDatum(st.date))
+					: box(tk.name, 'nu', 'In behandeling', capitalize(st.phase ?? ''), korteDatum(st.date));
+
+	let eerste: Box;
+	if (d.ek_outcome) {
+		const { outcome, date, method } = d.ek_outcome;
+		const mark = outcome === 'Verworpen' ? 'nee' : 'ja';
+		eerste = box(ek.name, mark, outcome, korteDatum(date), voteMethod(method));
+	} else if (ek.state === 'now') {
+		// Where the bill is, as eerstekamer.nl heads its list (API 0.76); else its step.
+		const senate = 'senate' in d ? d.senate : null;
+		const step = senate?.progress?.find((s) => s.state === 'geblokt')?.phase;
+		const where = senate?.status ?? step ?? 'Sinds aanneming door de Tweede Kamer';
+		eerste = box(ek.name, 'nu', 'In behandeling', where);
+	} else if (ek.state === 'none') {
+		eerste = box(ek.name, 'open', 'Niet aan de orde', 'Verworpen door de Tweede Kamer');
+	} else {
+		eerste = box(ek.name, 'open', 'Nog niet', 'Na de Tweede Kamer');
+	}
+	return [advice, tweede, eerste];
 }

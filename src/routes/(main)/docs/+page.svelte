@@ -10,7 +10,7 @@
 	const stats = load(() => 'stats', getStats, 'Documentatie');
 </script>
 
-<RouteKop pad="/docs" />
+<RouteKop />
 
 <div class="page-wrap">
 	<div class="container blad blad--tekst">

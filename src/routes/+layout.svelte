@@ -30,8 +30,7 @@
 	}
 	// Without a head from the server (the plain index.html, when the API is down) the fixed
 	// description of app.html gives way to the page's own.
-	if (browser && !serverKop.actief)
-		for (const el of document.head.querySelectorAll('[data-seo]')) el.remove();
+	if (browser && !serverKop.actief) serverKop.clear();
 
 	// The server's head stays for the page it was made for: that is what a search engine
 	// reads, rendered or not. At the first step to another address it is stale, and the
@@ -43,10 +42,7 @@
 		if (dev && naar) meldZijscroll(naar.pathname + naar.search);
 		afterTick(stilAnnouncer);
 		if (!van || !naar || canonical(van) === canonical(naar)) return;
-		if (serverKop.actief) {
-			for (const el of document.head.querySelectorAll('[data-seo]')) el.remove();
-			serverKop.actief = false;
-		}
+		if (serverKop.actief) serverKop.clear();
 		// An English judgment of the EHRM is served as lang="en"; the next page is Dutch.
 		document.documentElement.lang = 'nl';
 		kondigAan().catch((e) => report('Aankondiging', e));

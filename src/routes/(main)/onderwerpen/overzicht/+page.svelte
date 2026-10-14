@@ -3,6 +3,7 @@
 	import { fractieNaam } from '$lib/bron/menselijk';
 	import { formatCount } from '$lib/text/getal';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
+	import { siteTitle } from '$lib/seo/kop.svelte';
 	// Overzicht of a topic: its events in the Kruiswoord (concept ux-voorstel/1f, ronde 6), the
 	// months as rows and the columns under Stukken, Stemmingen and a chosen fractie, and under it
 	// the list of a chosen number. The stemmingen are counted by /api/decisions per day
@@ -1133,10 +1134,7 @@
 		i.path ?? buildOpenHref(null, `${i.node.collection}/${i.node.key}`, { hasText: i.has_text });
 </script>
 
-<RouteKop
-	pad="/onderwerpen/overzicht"
-	title={naam ? `${naam}, overzicht, Concordans` : undefined}
-/>
+<RouteKop title={naam ? siteTitle(`${naam}, overzicht`) : undefined} />
 
 <div class="overzicht blad">
 	<p class="terug"><a href="/onderwerpen">Gevolgd</a></p>

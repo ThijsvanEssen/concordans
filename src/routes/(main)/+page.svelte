@@ -165,7 +165,7 @@
 	);
 </script>
 
-<RouteKop pad="/" />
+<RouteKop />
 
 {#snippet inhoud(id: string)}
 	{@const item = lines.find((l) => l.id === id)?.item}
