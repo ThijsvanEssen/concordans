@@ -40,3 +40,4 @@ Conventions:
 - Comments say why, not what.
 - The interface is Dutch; code and these files are English. The interface calls a node a bron and an edge a verbinding.
 - Styles take their sizes from the tokens in `src/lib/styles/tokens.css` (`--t-*` for type, `--s-1` to `--s-8` for space). `src/lib/style-scale.test.ts` fails on a font size in pixels and on more spacing off the 4px scale than `OFF_SCALE_MAX`; a rule that is changed moves to the tokens, and `OFF_SCALE_MAX` goes down to the new count.
+- A rule that holds across the code (one form, one place, one name) is a guard in `src/lib/guards/`, one file per theme; a new guard is a new file. Guards read the sources through `src/lib/test/bronnen.ts`: `bron(path)` fails on a missing file, `overtreders` and `regelOvertreders` give the files or lines that break a rule, and an exception is an `Uitzondering` with its reason that fails the guard once it excepts nothing.

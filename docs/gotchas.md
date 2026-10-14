@@ -35,4 +35,4 @@ The API sends `max-age=60` with an ETag that changes after every migration ([`ap
 
 Nothing scrolls sideways on a phone. A flex or grid child that holds text gets `min-width: 0`. A long word gets `overflow-wrap: anywhere`, and an ECLI may break after a colon (`<wbr>`). Text also must not run past its box: a label that overflows its cell still makes the column wider than the screen.
 
-In development, `src/lib/dev/zijscroll.ts` checks each page after navigation at 640 px or less and warns in the console about what scrolls sideways. An area that pans on purpose, such as the categories of Bladeren, the cabinets in time or the line of tekstversies, carries `data-zijscroll`. `consistency.test.ts` requires the mark wherever a file sets `overflow-x: auto` or `scroll`.
+In development, `src/lib/dev/zijscroll.ts` checks each page after navigation at 640 px or less and warns in the console about what scrolls sideways. An area that pans on purpose, such as the categories of Bladeren, the cabinets in time or the line of tekstversies, carries `data-zijscroll`. `src/lib/guards/pagina.test.ts` requires the mark wherever a file sets `overflow-x: auto` or `scroll`.

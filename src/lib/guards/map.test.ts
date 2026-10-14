@@ -1,0 +1,97 @@
+// A place in a map: kept, cited and annotated alike from a row, a reader and the map itself.
+import { describe, expect, it } from 'vitest';
+import { BRONNEN, bron, overtreders, plek } from '$lib/test/bronnen';
+
+describe('the map', () => {
+	it('keeps a bron for the map through bewaarItem, its group from the bron ($lib/map/map.ts)', () => {
+		// A stuk kept from a row and from its reader is one group (F13): no item built by hand.
+		const metDeHand = (t: string) =>
+			/\bat: ''/.test(t) || /\{[^{}]*\bkort\b[^{}]*\bgroep:[^{}]*\}/.test(t);
+		expect(overtreders(metDeHand, [plek('lib/map/map.ts')])).toEqual([]);
+	});
+
+	it('cites a kept vote as a vote, from its reader, a row of Bronnen and Verbonden (#54)', () => {
+		const kept = BRONNEN.filter(({ text }) => /\bvoteCitation\(/.test(text)).map((s) => s.path);
+		expect(kept).toEqual(
+			expect.arrayContaining([
+				'lib/components/explore/readers/DecisionReader.svelte',
+				'lib/components/explore/IndexView.svelte',
+				'lib/map/rij.ts'
+			])
+		);
+	});
+
+	it('offers a place in a map the reader’s own menu, from the reader’s citation (Thijs, 12 Oct)', () => {
+		const lezer = bron('lib/components/explore/readers/ArticleReader.svelte');
+		const kaart = bron('lib/map/MapInhoud.svelte');
+		const uitspraak = bron('lib/components/explore/readers/JudgmentReader.svelte');
+		// An article: one citation (articleCitation), the law's names recorded alike, and
+		// ArticleText given the same citation props as in the reader.
+		// The reader records the law's names where it loads the article (readers/article.ts).
+		const laden = bron('lib/components/explore/readers/article.ts');
+		for (const [t, names] of [
+			[lezer, laden],
+			[kaart, kaart]
+		]) {
+			expect(t).toContain('articleCitation(');
+			expect(names).toContain('recordArticleLaw(');
+			const tekst = /<ArticleText\b[\s\S]*?\/>/.exec(t)![0];
+			expect(tekst).toMatch(/\{citation\}/);
+			expect(tekst).toMatch(
+				/bewaar=\{[^}]*citation\s*\?\s*\{\s*id: [\w.]+, groep: citation\.citationTitle, wet: [\w.]+ \}/
+			);
+		}
+		// An overweging: one citation and one Bewaar (overwegingCitaat), in the reader's menu; a
+		// map's item shows it with the one Overweging, with its menu (bewaar).
+		const overweging = bron('lib/bron/Overweging.svelte');
+		expect(kaart).toMatch(/<Overweging[\s\S]*?bewaar=\{\{ id: item\.id/);
+		for (const t of [uitspraak, overweging]) {
+			expect(t).toContain('overwegingCitaat(');
+			expect(t).toContain('<PlaatsMenu');
+			expect(t).toMatch(/cite=\{citeItems\(forms, forms\.link\)\}/);
+		}
+		// A place in an article is read with the article's parts (placeCitation), so a
+		// definition without a letter is named by its term alike in the reader, its head's
+		// Bewaar and a map; no page reads the anchor alone.
+		const tekst = bron('lib/components/articles/ArticleText.svelte');
+		for (const t of [tekst, lezer]) expect(t).toContain('placeCitation(');
+		expect(overtreders((t) => /\bpartOfAnchor\(/.test(t), [plek('lib/text/cite.ts')])).toEqual([]);
+	});
+
+	it('shows a note of the reader in one form, an item’s, a group’s and the map’s (Thijs, 12 Oct)', () => {
+		// Aantekening sets the reader's own words apart from the law: the page draws no note
+		// of its own, no italic and no field beside it.
+		const pagina = bron('routes/(main)/gemarkeerd/+page.svelte');
+		for (const tekst of [
+			'tekst={i.notitie}',
+			'tekst={bij}',
+			'tekst={m.notitie}',
+			'tekst={gedeeld.notitie}'
+		])
+			expect(pagina).toContain(tekst);
+		expect(pagina).not.toMatch(
+			/<textarea\b|class="[^"]*\b(?:map-)?notitie(?:-veld)?(?=["\s])|font-style:\s*italic/
+		);
+		expect(bron('lib/map/Aantekening.svelte')).not.toMatch(/font-style:\s*italic|var\(--accent/);
+		// The network's card shows the same notes in the same form, read only (Thijs, 12 Oct).
+		const kaart = bron('lib/components/graph/GraphCitePanel.svelte');
+		expect(kaart).toMatch(/\{#each notities as n\b[^}]*\}\s*<Aantekening\b[^>]*tekst=\{n\.tekst\}/);
+		expect(kaart).not.toMatch(/<Aantekening\b[^>]*onBewaar/);
+		expect(kaart).not.toMatch(/class="[^"]*\bnotitie\b|\.notitie\b|\{n\.tekst\}<\/|\.waar\s*\{/);
+		// Every note of the reader renders through Aantekening: no markup prints one itself.
+		for (const s of BRONNEN.filter((s) => s.path.endsWith('.svelte')))
+			expect(s.text, s.path).not.toMatch(/>\s*\{[\w.?]*\b(?:notitie|n\.tekst)\}/);
+	});
+
+	it('names where a map’s way on goes: here, or in the reader (Thijs, 12 Oct)', () => {
+		const inhoud = bron('lib/map/MapInhoud.svelte');
+		expect(inhoud).toContain("'Heel artikel hier'");
+		expect(inhoud).toContain("'Heel artikel in de lezer'");
+		expect(inhoud).not.toMatch(/>\s*Heel artikel\s*</);
+		// The row's own way to the reader, in sight and not on hover: outside .knoppen.
+		const aside = /\{#snippet aside\(\)\}([\s\S]*?)\{\/snippet\}/.exec(
+			bron('routes/(main)/gemarkeerd/+page.svelte')
+		)![1];
+		expect(aside.slice(aside.lastIndexOf('</span>'))).toContain('>In de lezer</TekstLink');
+	});
+});
