@@ -154,7 +154,6 @@
 	}
 	h2 {
 		margin: 0 0 var(--s-3);
-		font-family: var(--font-serif);
 		font-size: var(--t-h3);
 		font-weight: 800;
 		line-height: var(--lh-snug);

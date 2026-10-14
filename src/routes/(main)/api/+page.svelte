@@ -12,10 +12,6 @@
 	function toggleOp(opId: string) {
 		openOps = { ...openOps, [opId]: !openOps[opId] };
 	}
-
-	function methodClass(method: string): string {
-		return `method-${method.toLowerCase()}`;
-	}
 </script>
 
 <RouteKop pad="/api" />
@@ -87,7 +83,7 @@
 									aria-expanded={opOpen}
 									onclick={() => toggleOp(ep.operationId)}
 								>
-									<span class="api-method {methodClass(ep.method)}">{ep.method}</span>
+									<span class="api-method">{ep.method}</span>
 									<code class="api-path">{ep.path}</code>
 									{#if ep.summary}
 										<span class="api-summary">{ep.summary}</span>
@@ -146,11 +142,7 @@
 													<tbody>
 														{#each ep.responses as r, i (i)}
 															<tr>
-																<td
-																	><code class="api-status api-status-{r.status[0]}xx"
-																		>{r.status}</code
-																	></td
-																>
+																<td><code class="api-status">{r.status}</code></td>
 																<td
 																	>{#if r.schema}<code>{r.schema}</code>{:else}-{/if}</td
 																>
@@ -199,12 +191,12 @@
 </div>
 
 <style>
-	/* The frame and grid of Bladeren (AppShell): the contents in the facet column. */
+	/* The frame and grid of Bladeren (lib/styles/frame.css): the contents in the facet column. */
 	.container {
 		row-gap: var(--s-7);
 	}
 
-	/* Under the one head at its own distance (AppShell), not the grid's row gap. */
+	/* Under the one head at its own distance (lib/styles/frame.css), not the grid's row gap. */
 	.page-header {
 		grid-column: 1 / -1;
 		grid-row: 2;
@@ -216,7 +208,6 @@
 		border-bottom: 1px solid var(--rule);
 	}
 	.page-lede {
-		font-family: var(--font-serif);
 		font-size: var(--t-body);
 		line-height: var(--lh-body);
 		color: var(--ink);
@@ -230,7 +221,6 @@
 		row-gap: var(--s-1);
 		margin: var(--s-2) 0 0;
 		max-width: 72ch;
-		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		line-height: 1.55;
 	}
@@ -318,20 +308,17 @@
 	}
 	.api-tag-head {
 		display: flex;
-		justify-content: space-between;
 		align-items: baseline;
 		border-bottom: 1px solid var(--rule);
 		padding-bottom: var(--s-2);
 	}
 	.api-tag-title {
-		font-family: var(--font-serif);
 		font-size: var(--t-h2);
 		font-weight: 800;
 		color: var(--ink);
 		margin: 0;
 	}
 	.api-tag-desc {
-		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		line-height: 1.55;
 		color: var(--ink-3);
@@ -397,7 +384,7 @@
 	.api-chev {
 		color: var(--ink-3);
 		font-size: var(--t-micro);
-		transition: transform 120ms;
+		transition: transform var(--dur-1);
 		margin-right: var(--s-1);
 	}
 	.api-chev.open {
@@ -411,9 +398,8 @@
 		gap: var(--s-4);
 	}
 	.api-desc {
-		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-		line-height: 1.6;
+		line-height: var(--lh-body);
 		color: var(--ink-2);
 		margin: 0;
 		max-width: 60ch;
@@ -433,7 +419,6 @@
 	table.api-params,
 	table.api-responses {
 		border-collapse: collapse;
-		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		width: 100%;
 	}

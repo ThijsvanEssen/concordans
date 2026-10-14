@@ -1,0 +1,151 @@
+/* The one frame of a full-width page (docs/bediening.md, Layout; Thijs, 10 Oct 2026): the
+   width, gutters, facet column and grid of Bladeren. A list or overview page is .blad with
+   .blad__indeling (facets left, the rest right); a text page keeps a reading width inside
+   it, on the same left edge (.blad--tekst: each child at most --blad-tekst). The panels of
+   the Verkenner have their own. */
+.blad {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: var(--blad-max);
+	margin: 0 auto;
+	padding: var(--s-6) var(--s-6) var(--s-8);
+}
+.blad__indeling {
+	display: grid;
+	grid-template-columns: 240px minmax(0, 1fr);
+	column-gap: 40px;
+	align-items: start;
+}
+.blad--tekst > * {
+	max-width: var(--blad-tekst);
+}
+/* The head of every page in the frame: its title and, at its right, the page's actions.
+   What follows starts one step under it, on every page the same; no page spaces its title
+   or what comes after it itself (Thijs, 10 Oct: "een andere verticale uitlijning na de
+   titel"). */
+.blad__kop {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: space-between;
+	/* Actions that wrap under the title (a phone) stand where the next row would. */
+	gap: var(--s-4) var(--s-3);
+	margin: 0 0 var(--s-4);
+}
+.blad__indeling > .blad__kop {
+	grid-column: 1 / -1;
+}
+/* A state where content would be: loading, nothing, could not. One quiet line everywhere
+   (round 2 of the consistency pass: italic in the readers, roman on the pages); a row's
+   own line keeps its smaller size. */
+.stil {
+	margin: 0;
+	font-family: var(--font-serif);
+	font-size: var(--t-meta);
+	font-style: normal;
+	line-height: var(--lh-snug);
+	color: var(--ink-3);
+}
+.blad__titel {
+	margin: 0;
+	font-family: var(--font-serif);
+	font-size: var(--t-h1);
+	font-weight: 600;
+	line-height: var(--lh-snug);
+	color: var(--ink);
+	overflow-wrap: anywhere;
+}
+/* The parts of a text page (/over, /bronnen, /privacy, /voorwaarden, /docs and its pages):
+   the line over the title, the title, the lede, a section with its heading, a citation,
+   and the line of links or the date at its foot. */
+/* The page a subpage belongs to, as a reader's band names its place (ReaderFrame
+   .kop-rij): one line over the title, its rule under it, the parent a link in ink
+   (Thijs, 10 Oct: "als kruimel, zoals de band van een lezer"). */
+.blad--tekst .stub-eyebrow {
+	margin: 0 0 var(--s-4);
+	padding-bottom: var(--s-2);
+	border-bottom: 1px solid var(--rule);
+	font-family: var(--font-serif);
+	font-size: var(--t-micro);
+	color: var(--ink-3);
+}
+.blad--tekst .stub-eyebrow a {
+	color: var(--ink);
+	text-decoration: none;
+}
+.blad--tekst .stub-eyebrow a:hover {
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+.blad--tekst .stub-lede {
+	margin-bottom: var(--s-7);
+	font-family: var(--font-serif);
+	font-size: var(--t-body);
+	line-height: var(--lh-body);
+	color: var(--ink-2);
+}
+.blad--tekst .section {
+	margin-bottom: var(--s-6);
+}
+.blad--tekst .section-title {
+	margin: 0 0 var(--s-3);
+	font-family: var(--font-serif);
+	font-size: var(--t-h3);
+	font-weight: 800;
+	color: var(--ink);
+}
+.blad--tekst .cite {
+	text-decoration: underline;
+	text-decoration-color: var(--rule-strong);
+}
+.blad--tekst .meta-row,
+.blad--tekst .updated {
+	margin-top: var(--s-7);
+	padding-top: var(--s-5);
+	border-top: 1px solid var(--rule);
+}
+.blad--tekst .meta-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-5);
+}
+.blad--tekst .meta-link {
+	font-family: var(--font-serif);
+	font-size: var(--t-meta);
+	color: var(--ink-3);
+	text-decoration: none;
+}
+.blad--tekst .meta-link:hover {
+	color: var(--ink);
+}
+.blad--tekst .updated {
+	font-family: var(--font-serif);
+	font-size: var(--t-micro);
+	color: var(--ink-3);
+}
+/* The facet column of such a page, as Bladeren's: it stays in view, scrolls on its own
+   with a quiet bar that keeps clear of the counts, and leaves room for a focus ring. */
+.blad__facetten {
+	position: sticky;
+	top: var(--s-6);
+	max-height: calc(100vh - var(--s-6));
+	overflow-y: auto;
+	scrollbar-gutter: stable;
+	scrollbar-width: thin;
+	scrollbar-color: var(--rule) transparent;
+	margin: 0 calc(-1 * var(--s-2));
+	padding: var(--s-1) var(--s-2) var(--s-5);
+}
+@media (max-width: 768px) {
+	.blad__facetten {
+		position: static;
+		max-height: none;
+		overflow: visible;
+	}
+	.blad {
+		padding: var(--s-4) var(--s-4) var(--s-8);
+	}
+	.blad__indeling {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}

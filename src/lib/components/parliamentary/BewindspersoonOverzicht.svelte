@@ -184,7 +184,6 @@
 		gap: var(--s-1);
 		padding: var(--s-2) 0;
 		border-bottom: 1px solid var(--rule);
-		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		line-height: var(--lh-snug);
 	}

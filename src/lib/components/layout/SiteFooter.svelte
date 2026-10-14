@@ -130,7 +130,6 @@
 
 	.foot-blurb p {
 		margin: 0;
-		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		line-height: 1.55;
 		color: var(--ink-3);
@@ -139,7 +138,6 @@
 
 	.foot-col h4 {
 		margin: 0 0 var(--s-4);
-		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-weight: 600;
 		color: var(--ink-3);

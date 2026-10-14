@@ -129,7 +129,7 @@
 
 <style>
 	/* The links in a row's lines (indieners, a dossier) a finger can hit: the shared target of
-	   AppShell (.raakvlak), on a touch screen only. */
+	   lib/styles/basis.css (.raakvlak), on a touch screen only. */
 	@media (pointer: coarse) {
 		.row-body :global(a:not(.row-title)) {
 			position: relative;

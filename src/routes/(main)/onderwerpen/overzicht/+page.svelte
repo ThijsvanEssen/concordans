@@ -1496,10 +1496,9 @@
 <style>
 	/* Rungs of docs/typografie.md: the topic at 1, a section at 2, a row's title at 4, the
 	   meta lines at 5 and the labels beside a heading at 6. */
-	/* The frame and grid of Bladeren (AppShell): .blad, and .blad__indeling below. */
+	/* The frame and grid of Bladeren (lib/styles/frame.css): .blad, and .blad__indeling below. */
 	.terug {
 		margin: 0 0 var(--s-2);
-		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	.terug a {
@@ -1510,7 +1509,6 @@
 	.sectie h2,
 	.lijst h2 {
 		margin: 0 0 var(--s-2);
-		font-family: var(--font-serif);
 		font-size: var(--t-h3);
 		font-weight: 800;
 		color: var(--ink);
@@ -1523,7 +1521,6 @@
 		justify-content: space-between;
 		gap: var(--s-1) var(--s-4);
 		margin: 0 0 var(--s-2);
-		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -1568,7 +1565,6 @@
 		flex-wrap: wrap;
 		gap: var(--s-1) var(--s-3);
 		margin: 0 0 var(--s-2);
-		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
@@ -1681,7 +1677,6 @@
 		margin: var(--s-1) 0 0;
 		padding-left: var(--s-3);
 		border-left: 2px solid var(--rule);
-		font-family: var(--font-serif);
 		font-style: italic;
 		font-size: var(--t-meta);
 		color: var(--ink-2);
@@ -1727,7 +1722,6 @@
 	}
 	.facet__kop {
 		margin: 0 0 var(--s-2);
-		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		font-weight: 600;
 		color: var(--ink);
@@ -1748,7 +1742,6 @@
 	}
 	.volgende {
 		margin: var(--s-4) 0 0;
-		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 		text-align: center;

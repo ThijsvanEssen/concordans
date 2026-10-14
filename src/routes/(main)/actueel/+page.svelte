@@ -680,13 +680,12 @@
 </div>
 
 <style>
-	/* The frame and grid of Bladeren (AppShell). */
+	/* The frame and grid of Bladeren (lib/styles/frame.css). */
 	.regel {
 		grid-column: 1 / -1;
 	}
 	.stand {
 		margin: var(--s-1) 0 0;
-		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -714,7 +713,6 @@
 	}
 	.count {
 		margin: 0;
-		font-family: var(--font-serif);
 		font-size: var(--t-h2);
 		font-weight: 800;
 	}

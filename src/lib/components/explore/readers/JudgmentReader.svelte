@@ -529,7 +529,6 @@
 	}
 	.samenhang-zin p {
 		margin: 0;
-		font-family: var(--font-serif);
 		font-style: italic;
 		font-size: var(--t-meta);
 		color: var(--ink-2);

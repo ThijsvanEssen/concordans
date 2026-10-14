@@ -213,7 +213,6 @@
 		padding: 0;
 		list-style: none;
 		max-width: 68ch;
-		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		color: var(--ink);
 	}

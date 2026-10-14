@@ -27,7 +27,7 @@
 		     app sets a page, so the step to the app is barely seen: the paper, the serif, the
 		     sizes of a reader, a bar where the top bar comes, the frame of .blad. The app's
 		     stylesheet arrives with its scripts, so the tokens it needs are here, with the
-		     values of AppShell (a test keeps them equal). -->
+		     values of lib/styles (a test keeps them equal). -->
 		<link
 			rel="preload"
 			href="%sveltekit.assets%/fonts/Newsreader-Variable.woff2"
@@ -57,12 +57,16 @@
 				--t-h3: 20px;
 				--t-body: 17.5px;
 				--t-meta: 14px;
+				--lh-tight: 1.15;
 				--lh-body: 1.6;
 				--s-2: 8px;
 				--s-4: 16px;
 				--s-5: 24px;
 				--s-6: 32px;
 				--s-8: 64px;
+				--topbar-h: 60px;
+				--blad-max: 1440px;
+				--blad-tekst: 720px;
 				background: var(--paper);
 			}
 			body:has(#seo) {
@@ -78,7 +82,7 @@
 			body:has(#seo)::before {
 				content: '';
 				display: block;
-				height: 60px;
+				height: var(--topbar-h);
 				border-bottom: 1px solid var(--rule);
 			}
 			.js #seo {
@@ -87,7 +91,7 @@
 			/* .blad with a reading width (.blad--tekst). */
 			#seo {
 				box-sizing: border-box;
-				max-width: 1440px;
+				max-width: var(--blad-max);
 				margin: 0 auto;
 				padding: var(--s-6) var(--s-6) var(--s-8);
 				font-size: var(--t-body);
@@ -95,19 +99,19 @@
 				overflow-wrap: anywhere;
 			}
 			#seo > * {
-				max-width: 720px;
+				max-width: var(--blad-tekst);
 			}
 			#seo h1 {
 				margin: 0 0 var(--s-2);
 				font-size: var(--t-h1);
 				font-weight: 600;
-				line-height: 1.15;
+				line-height: var(--lh-tight);
 			}
 			#seo h2 {
 				margin: var(--s-5) 0 var(--s-2);
 				font-size: var(--t-h3);
 				font-weight: 600;
-				line-height: 1.15;
+				line-height: var(--lh-tight);
 			}
 			#seo p {
 				margin: 0 0 var(--s-2);

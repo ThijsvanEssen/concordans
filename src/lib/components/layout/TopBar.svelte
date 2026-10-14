@@ -237,7 +237,7 @@
 		position: sticky;
 		top: 0;
 		z-index: var(--z-topbar);
-		height: 60px;
+		height: var(--topbar-h);
 		background: var(--paper);
 		border-bottom: 1px solid var(--rule);
 		display: flex;
@@ -343,7 +343,7 @@
 
 	.mobile-nav {
 		position: fixed;
-		top: 60px;
+		top: var(--topbar-h);
 		left: 0;
 		right: 0;
 		background: var(--paper);

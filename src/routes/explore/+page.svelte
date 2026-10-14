@@ -1599,7 +1599,7 @@
 		{:else if nietGevonden}
 			<NietGevonden titel="Bron niet gevonden" kop={false}>
 				<p>{padMissing ?? focusError}</p>
-				<p><a href="/bronnen#dekking" class="link">Bronnen en dekking</a></p>
+				<p><a href="/bronnen#dekking">Bronnen en dekking</a></p>
 			</NietGevonden>
 		{:else if padMissing && !selectedNode && !netwerkActive}
 			<p class="explore-empty stil">{padMissing}</p>
@@ -1920,7 +1920,6 @@
 		margin: 0;
 		padding: var(--s-2) var(--s-4);
 		border-bottom: 1px solid var(--rule);
-		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
@@ -2258,9 +2257,6 @@
 			grid-row: 2;
 			grid-column: 1;
 		}
-		.explore-read .col--panel {
-			border-left: 0;
-		}
 		.explore-read .toc-column,
 		.explore-read .resize-handle,
 		.explore-read .mobile-hidden {
@@ -2361,9 +2357,6 @@
 		.col {
 			grid-row: 2;
 			grid-column: 1;
-		}
-		.col--panel {
-			border-left: 0;
 		}
 		.resize-handle,
 		.mobile-hidden {

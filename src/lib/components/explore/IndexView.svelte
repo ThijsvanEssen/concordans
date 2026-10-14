@@ -3185,8 +3185,8 @@
 		container-type: size;
 	}
 	/* The filters in a column beside the list, on a narrow screen above it: the frame and
-	   its grid are the shared .blad and .blad__indeling (AppShell). */
-	/* The shared .blad__facetten (AppShell), as high as this scrolling box rather than the
+	   its grid are the shared .blad and .blad__indeling (lib/styles/frame.css). */
+	/* The shared .blad__facetten (lib/styles/frame.css), as high as this scrolling box rather than the
 	   window, so its last filter can be reached. */
 	.facet-col {
 		max-height: calc(100cqh - var(--s-6));

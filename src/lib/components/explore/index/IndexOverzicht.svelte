@@ -70,7 +70,6 @@
 		margin: 0;
 		padding: 0;
 		list-style: none;
-		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	.opzij li {

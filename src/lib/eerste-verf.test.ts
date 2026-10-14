@@ -20,13 +20,26 @@ const tokens = (css: string) =>
 	new Map([...css.matchAll(/(--[\w-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
 
 describe('the server HTML before the app', () => {
-	it('uses the values of the app tokens (app.html against AppShell)', () => {
-		const html = read('app.html');
-		const shell = read('lib/components/layout/AppShell.svelte');
-		const vooraf = tokens(/:root:has\(#seo\)\s*\{([^}]*)\}/.exec(html)?.[1] ?? '');
-		const app = tokens(/:global\(:root\)\s*\{([\s\S]*?)\n\t\}/.exec(shell)?.[1] ?? '');
-		expect(vooraf.size).toBeGreaterThan(0);
-		for (const [name, value] of vooraf) expect([name, app.get(name)]).toEqual([name, value]);
+	const style = /<style>([\s\S]*?)<\/style>/.exec(read('app.html'))?.[1] ?? '';
+	const vooraf = /:root:has\(#seo\)\s*\{([^}]*)\}/.exec(style)?.[1] ?? '';
+
+	it('uses the values of the app tokens (app.html against tokens.css)', () => {
+		const app = tokens(/:root\s*\{([\s\S]*?)\n\}/.exec(read('lib/styles/tokens.css'))?.[1] ?? '');
+		expect(tokens(vooraf).size).toBeGreaterThan(0);
+		for (const [name, value] of tokens(vooraf))
+			expect([name, app.get(name)]).toEqual([name, value]);
+	});
+
+	it('takes the frame from the tokens: the top bar, the width of a page and of its text', () => {
+		for (const name of ['--topbar-h', '--blad-max', '--blad-tekst'])
+			expect(style.replace(vooraf, '')).toContain(`var(${name})`);
+		expect(style.replace(vooraf, '')).not.toMatch(/\b(60|720|1440)px\b/);
+	});
+
+	it('declares its font as the app does (app.html against fonts.css)', () => {
+		const face = (css: string) => /@font-face\s*\{[^}]*\}/.exec(css)?.[0].replace(/\s+/g, ' ');
+		expect(face(style)).toBeTruthy();
+		expect(face(style)).toEqual(face(read('lib/styles/fonts.css')));
 	});
 
 	it('stays hidden while the app comes, and shows when it does not', () => {
