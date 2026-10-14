@@ -3,15 +3,16 @@
 // the API gives: a stuk its dossier, its indieners with their fractie and, for a motie or
 // amendement, the vote on its zaak; a judgment the first sentence of its summary, or at an
 // r.o. that overweging; an article its first lid, or the part the reference names.
+import { motionOrAmendment, shortKind } from '$lib/text/document-kind';
 import { langeDatum } from '$lib/text/datum';
-import { separatorBefore, textOf, truncate, withoutGroup } from '$lib/text/words';
+import { separatorBefore, textOf, truncate } from '$lib/text/words';
 import { getDossier } from '$lib/components/parliamentary/data';
 import { getNodeFirst, once } from '$lib/api/records';
 import { ifExists } from '$lib/api/errors';
 import { getNodeGraph } from '$lib/api/nodes';
 import { getArticleDetail } from '$lib/api/articles';
 import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
-import { parseArticleParts, partText } from '$lib/text/article-parts';
+import { partsOf, partText } from '$lib/text/article-parts';
 import { articleTitle } from '$lib/text/bw';
 import { courtName } from '$lib/text/court';
 import { votesSentence } from '$lib/components/parliamentary/stemming';
@@ -156,7 +157,7 @@ export function previewFromNode(
 			};
 		}
 		case 'documents': {
-			const soort = withoutGroup(textOf(props.kind) ?? kind);
+			const soort = shortKind(textOf(props.kind) ?? kind);
 			const number =
 				textOf(props.number) ?? (props.sequence != null ? String(props.sequence) : null);
 			const nr = number ? (/^\d/.test(number) ? `nr. ${number}` : number) : null;
@@ -261,7 +262,7 @@ async function fetchPreview(id: string, at: string | null): Promise<Preview | nu
 	if (collection === 'documents') {
 		// The vote on a motie or amendement is a decision on its zaak, the one whose primary
 		// case it is; the last of them where it was voted on more than once.
-		if (!/motie|amendement/i.test(textOf(props.kind) ?? '')) return preview;
+		if (!motionOrAmendment(props.kind)) return preview;
 		const zaak = data.neighbors?.buckets?.find((b) => b.collection === 'cases')?.items?.[0];
 		const caseId = Array.isArray(props.case_ids) ? textOf(props.case_ids[0]) : null;
 		if (!zaak?.key || !caseId) return preview;
@@ -292,7 +293,7 @@ async function fetchPreview(id: string, at: string | null): Promise<Preview | nu
 	if (!bwb || !number) return preview;
 	const { article } = await getArticleDetail(bwb, number);
 	const whole = article.text ?? '';
-	const parts = parseArticleParts(whole);
+	const parts = partsOf(whole, article.parts);
 	// Without a position, the first lid: the article as it opens.
 	const part = partText(whole, parts, at ?? 'lid-1');
 	return {

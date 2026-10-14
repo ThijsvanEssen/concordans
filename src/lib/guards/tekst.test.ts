@@ -34,7 +34,7 @@ describe('dates, figures and words', () => {
 		const words = [plek('lib/text/words.ts')];
 		const rules: [string, RegExp, typeof words][] = [
 			['a capital or a small first letter', /\.charAt\(0\)\.to(?:Upper|Lower)Case\(\)/, words],
-			['a kind without its group', /\\s\*\\\(\.\*\\\)\\s\*\$/, words],
+			['a kind without its group', /\\s\*\\\(\.\*\\\)\\s\*\$/, [plek('lib/text/document-kind.ts')]],
 			[
 				'a node prop as text',
 				/typeof (\w+) === 'string' &&\s+\1\.trim\(\)\s+\?\s+\1\.trim\(\) : null/,

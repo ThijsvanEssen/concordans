@@ -146,3 +146,27 @@ describe('loadPreview', () => {
 		expect(await loadPreview('commitments/c2')).toBeNull();
 	});
 });
+
+describe('the card of an article', () => {
+	it('shows the part the API numbers, not what the text seems to hold', async () => {
+		const text = 'Bij algemene maatregel van bestuur.\nDeze regels gelden voor elk orgaan.';
+		fakeApi({
+			'/api/nodes/{collection}/{key}': {
+				node: {
+					collection: 'articles',
+					key: 'a1',
+					display_name: 'Artikel 3',
+					props: { bwb_id: 'BWBR0000001', article_number: '3' }
+				},
+				neighbors: { total: 0, buckets: [] }
+			},
+			'/api/articles/{bwb_id}/{article_number}': {
+				article: {
+					text,
+					parts: [{ id: 'lid-1', kind: 'lid', number: null, start: 36, end: text.length }]
+				}
+			}
+		});
+		expect((await loadPreview('articles/a1'))?.lines).toBe('Deze regels gelden voor elk orgaan.');
+	});
+});

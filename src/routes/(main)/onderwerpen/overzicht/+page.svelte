@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { motionOrAmendment } from '$lib/text/document-kind';
 	import { untrack } from 'svelte';
 	import { votesSentence } from '$lib/components/parliamentary/stemming';
 	import { fractieNaam } from '$lib/bron/menselijk';
@@ -466,7 +467,7 @@
 	let codering = $state<Codering>(leesCodering());
 	const onderwerp = $derived(onderwerpSleutel(termen));
 	const mijn = $derived(codering[onderwerp] ?? {});
-	const isMotie = (d: Besluit) => /^motie/i.test(soortVan(d));
+	const isMotie = (d: Besluit) => motionOrAmendment(soortVan(d)) === 'motie';
 	function kiesStrekking(d: Besluit, r: Strekking | null) {
 		codering = coderingMet(codering, onderwerp, d.key, r);
 		schrijfCodering(codering);
@@ -480,7 +481,7 @@
 	const motieSoorten = $derived(
 		(getelden?.soorten ?? [])
 			.map(([k]) => k)
-			.filter((k) => /^motie/i.test(k))
+			.filter((k) => motionOrAmendment(k) === 'motie')
 			.join('|')
 	);
 	/** Every decision of one question, page after page, CSV_MAX at most. */

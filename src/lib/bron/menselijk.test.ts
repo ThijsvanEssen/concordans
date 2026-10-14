@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BRON_LABEL } from '$lib/vocabulary';
-import { eigenSoort, fractieNaam, isRauw, menselijkeNaam } from './menselijk';
+import { fractieNaam, isRauw, menselijkeNaam } from './menselijk';
 
 describe('the name of a bron for a reader', () => {
 	it('knows a key, an id and a slug when it sees one', () => {
@@ -136,21 +136,5 @@ describe('fractieNaam', () => {
 			})
 		).toBe('Nieuw Sociaal Contract');
 		expect(fractieNaam({ key: 'nieuw_sociaal_contract' })).not.toContain('nieuw_sociaal_contract');
-	});
-});
-
-describe('a kind as a reader writes it (#31, #58)', () => {
-	it('leaves out the group of kinds the source files it under', () => {
-		expect(eigenSoort('Amendement (gewijzigd/nader/vervangend)')).toBe('Amendement');
-		expect(eigenSoort('Motie (gewijzigd/nader)')).toBe('Motie');
-		expect(eigenSoort('Brief van lid/fractie/commissie')).toBeNull();
-	});
-	it('keeps any other kind as the source gives it', () => {
-		expect(eigenSoort('Nota van wijziging (initiatiefvoorstel)')).toBe(
-			'Nota van wijziging (initiatiefvoorstel)'
-		);
-		expect(eigenSoort('Amendement')).toBe('Amendement');
-		expect(eigenSoort('')).toBeNull();
-		expect(eigenSoort(null)).toBeNull();
 	});
 });

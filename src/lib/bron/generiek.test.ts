@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { draagtWetstitel, isGeneriek } from './generiek';
+import { isGeneriek } from './generiek';
 
 describe('isGeneriek', () => {
 	it('takes a title that only names the kind as generic', () => {
@@ -29,26 +29,5 @@ describe('isGeneriek', () => {
 		);
 		expect(isGeneriek('Toekomst mentale gezondheid en ggz', 'Brief regering')).toBe(false);
 		expect(isGeneriek('Procedures en brieven', 'Procedurevergadering')).toBe(false);
-	});
-});
-
-describe('draagtWetstitel', () => {
-	it('knows the papers of a bill that carry its title', () => {
-		for (const soort of [
-			'Voorstel van wet',
-			'Memorie van toelichting',
-			'Nadere memorie van antwoord',
-			'Nota van wijziging',
-			'Nota n.a.v. het (nader/tweede nader/enz.) verslag',
-			'Verslag',
-			'Advies Afdeling advisering Raad van State en Nader rapport',
-			'Eindtekst'
-		])
-			expect(draagtWetstitel(soort)).toBe(true);
-	});
-
-	it('leaves a paper with a subject of its own', () => {
-		for (const soort of ['Brief regering', 'Motie', 'Amendement', 'Brief', null])
-			expect(draagtWetstitel(soort)).toBe(false);
 	});
 });

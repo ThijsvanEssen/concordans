@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Row } from '$lib/verbonden/rows';
 import { fakeApi, slow } from '$lib/test/fakeApi';
-import { isBijWetsvoorstel, naastHetStuk, stukkenInDezelfdeZaak, wetsvoorstelVan } from './zaak';
+import { naastHetStuk, stukkenInDezelfdeZaak, wetsvoorstelVan } from './zaak';
 
 const rij = (key: string, kind: string): Row =>
 	({
@@ -21,7 +21,6 @@ describe('naastHetStuk', () => {
 	};
 
 	it('laat het wetsvoorstel weg naast een stuk dat er bij hoort: dat staat al als kernregel', () => {
-		expect(isBijWetsvoorstel('Memorie van toelichting (initiatiefvoorstel)')).toBe(true);
 		expect(wetsvoorstelVan(zaak.rows)).toBe(voorstel);
 		expect(naastHetStuk('Memorie van toelichting', zaak)).toEqual({
 			rows: [brief],

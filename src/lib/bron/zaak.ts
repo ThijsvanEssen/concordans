@@ -6,6 +6,7 @@ import { getBuckets } from '$lib/api/nodes';
 import { abortable, once } from '$lib/api/records';
 import type { Neighbor } from '$lib/api/nodes';
 import { rowOfNeighbor, type Row } from '$lib/verbonden/rows';
+import { belongsToBill, isBill, isCoverLetter, isLetter } from '$lib/text/document-kind';
 
 /** The zaken of a stuk asked for their papers: one is the rule, a few at most. */
 export const ZAKEN_MAX = 3;
@@ -18,39 +19,26 @@ const NAAR_ZAAK = { relation: 'PART_OF', direction: 'outbound', collection: 'cas
  * brief last.
  */
 export function zaakRang(row: Pick<Row, 'props'>): number {
-	const soort = String(row.props?.kind ?? '').toLowerCase();
-	if (/geleidende brief|aanbiedingsbrief/.test(soort)) return 2;
-	if (/^brief/.test(soort)) return 1;
+	const kind = row.props?.kind;
+	if (isCoverLetter(kind)) return 2;
+	if (isLetter(kind)) return 1;
 	return 0;
 }
 
-/**
- * A paper that changes or explains a bill (nota van wijziging, memorie van toelichting,
- * nader rapport, nota naar aanleiding van het verslag): its voorstel van wet is a kern line,
- * Bij wetsvoorstel, and so not one of the papers listed beside it.
- */
-export const isBijWetsvoorstel = (kind: unknown) =>
-	/nota van wijziging|memorie van toelichting|nader rapport|naar aanleiding van het verslag/i.test(
-		typeof kind === 'string' ? kind : ''
-	);
-
-const isWetsvoorstel = (r: Pick<Row, 'props'>) =>
-	/^voorstel van wet/i.test(String(r.props?.kind ?? ''));
-
 /** The voorstel van wet of the zaak, the one Bij wetsvoorstel names; null without one. */
-export const wetsvoorstelVan = (rows: Row[]): Row | null => rows.find(isWetsvoorstel) ?? null;
-
-/** A letter that offers a paper (geleidende brief, aanbiedingsbrief): it says nothing without it. */
-export const isAanbieding = (kind: unknown) =>
-	/geleidende brief|aanbiedingsbrief/i.test(typeof kind === 'string' ? kind : '');
+export const wetsvoorstelVan = (rows: Row[]): Row | null =>
+	rows.find((r) => isBill(r.props?.kind)) ?? null;
 
 /** The papers a letter offers: the substance of its zaak (zaakRang 0), its kern line Biedt aan. */
 export const aangebodenVan = (rows: Row[]): Row[] => rows.filter((r) => zaakRang(r) === 0);
 
-/** What a stuk's kern lines name of its zaak: the voorstel of a paper of a bill, the offered papers of a letter. */
-export function kernVanZaak(kind: unknown, rows: Row[]): Row[] {
-	if (isBijWetsvoorstel(kind)) return [wetsvoorstelVan(rows)].flatMap((r) => (r ? [r] : []));
-	if (isAanbieding(kind)) return aangebodenVan(rows);
+/**
+ * What a stuk's kern lines name of its zaak: the voorstel of a paper of a bill (Bij
+ * wetsvoorstel), the offered papers of a letter (Biedt aan).
+ */
+function kernVanZaak(kind: unknown, rows: Row[]): Row[] {
+	if (belongsToBill(kind)) return [wetsvoorstelVan(rows)].flatMap((r) => (r ? [r] : []));
+	if (isCoverLetter(kind)) return aangebodenVan(rows);
 	return [];
 }
 

@@ -2,8 +2,9 @@
 // groepen (Raad van State, Tweede Kamer, Eerste Kamer). Alleen wat gebeurd is; wat nog kan
 // volgen staat als één gestippelde regel die zegt dat het kan volgen. Moties, amendementen,
 // brieven en procedurevergaderingen worden geteld en staan achter één knop.
+import { carriesBillTitle, motionOrAmendment, shortKind } from '$lib/text/document-kind';
 import { forAgainst } from './stemming';
-import { capitalize, count, joinAnd, lowerFirst, withoutGroup } from '$lib/text/words';
+import { capitalize, count, joinAnd, lowerFirst } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import { bronHref } from '$lib/bron/href';
 import { parseNodeId } from '$lib/vocabulary';
@@ -18,7 +19,7 @@ import {
 	type TijdRegel
 } from '$lib/components/tijdlijn/tijdlijn';
 import type { MetInhoud } from '$lib/components/open/rij-inhoud';
-import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
+import { isGeneriek } from '$lib/bron/generiek';
 import { kamerstukName, withoutKamerstuk } from './kamerstuk';
 
 type Detail = Schema<'DossierDetailResponse'>;
@@ -115,7 +116,7 @@ const opening = (e: Entry): ProcedureInhoud => ({
 });
 
 function eigenStuk(e: Entry, groep: 'rvs' | 'tk' | 'ek', dossier: string): TijdRegel {
-	const kind = withoutGroup(e.kind ?? '');
+	const kind = shortKind(e.kind ?? '');
 	const title = e.title ? withoutKamerstuk(e.title).trim() : '';
 	const eigen = title && !isGeneriek(title, e.kind) ? title : null;
 	const nr = nrOf(e);
@@ -153,7 +154,7 @@ function stemdagen(decisions: Entry[]): TijdRegel[] {
 		soort: 'decisions',
 		label: null,
 		zin: `Stemmingen: ${count(besluiten.length, 'besluit', 'besluiten')}`,
-		actie: besluiten.some((e) => /^amendement/i.test(e.kind ?? ''))
+		actie: besluiten.some((e) => motionOrAmendment(e.kind) === 'amendement')
 			? naarAmendementen
 			: naarStemmingen
 	}));
@@ -172,7 +173,7 @@ function regelsVan(
 	// number tell them apart. Any other paper (a brief, a motie) on a line of its own, by its title.
 	const docs = asc.filter((e) => e.node_type === 'document');
 	const byDay = Map.groupBy(
-		docs.filter((e) => draagtWetstitel(e.kind)),
+		docs.filter((e) => carriesBillTitle(e.kind)),
 		(e) => e.date?.slice(0, 10) ?? ''
 	);
 	for (const e of asc) {
@@ -283,7 +284,7 @@ function regelsVan(
 		});
 	}
 	// After the bill's papers, so on one day the bill comes first (the sort keeps the order).
-	for (const e of docs.filter((e) => !draagtWetstitel(e.kind))) {
+	for (const e of docs.filter((e) => !carriesBillTitle(e.kind))) {
 		out.push(eigenStuk(e, groep, dossier));
 		inhoud.set(e.node_id, opening(e));
 	}

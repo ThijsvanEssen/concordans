@@ -1,8 +1,9 @@
 <script lang="ts">
+	import { shortKind } from '$lib/text/document-kind';
 	import { CHOICE, forAgainst } from '$lib/components/parliamentary/stemming';
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { langeDatum } from '$lib/text/datum';
-	import { joinParts, withoutGroup } from '$lib/text/words';
+	import { joinParts } from '$lib/text/words';
 	import { kamerstukName } from '$lib/components/parliamentary/kamerstuk';
 	import { bewaarItem } from '$lib/map/map';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
@@ -52,7 +53,7 @@
 	/** What was voted on, by its kind and number: `Motie, Kamerstuk 36764, nr. 31`. */
 	const stukNaam = (p: Schema<'DecisionPaperDTO'>) =>
 		joinParts([
-			p.kind ? withoutGroup(p.kind) : 'Kamerstuk',
+			p.kind ? shortKind(p.kind) : 'Kamerstuk',
 			kamerstukName({ ...p, chamber: loaded?.chamber })
 		]);
 

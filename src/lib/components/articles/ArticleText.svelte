@@ -10,14 +10,7 @@
 	import { page } from '$app/state';
 	import { permalink } from '$lib/bron/anchor';
 	import type { Schema } from '$lib/api/types';
-	import {
-		markerOf,
-		parseArticleParts,
-		partsFromApi,
-		placeOf,
-		walkParts,
-		type ArticlePart
-	} from '$lib/text/article-parts';
+	import { markerOf, partsOf, placeOf, walkParts, type ArticlePart } from '$lib/text/article-parts';
 	import { citeArticle, placeCitation, type ArticleCitation } from '$lib/text/cite';
 	import type { ProposedText } from '$lib/verbonden/proposed-text';
 	import CitedText from './CitedText.svelte';
@@ -89,9 +82,7 @@
 
 	const source = $derived(text ?? '');
 	const perRef = $derived(definitiesOp(definities));
-	const parts = $derived(
-		apiParts?.length ? partsFromApi(apiParts, source) : parseArticleParts(source)
-	);
+	const parts = $derived(partsOf(source, apiParts));
 	const marker = (number: string) => markerOf(number, mark);
 	/** Every part, for the place a citation names: a definition by its term. */
 	const allParts = $derived([...walkParts(parts)]);

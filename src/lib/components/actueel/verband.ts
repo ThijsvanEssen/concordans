@@ -6,6 +6,7 @@
 // (`via`). Each a line of words with its bronnen as links, so each opens in place.
 import { capitalize, count, joinAnd, separatorBefore } from '$lib/text/words';
 import { korteDatum } from '$lib/text/datum';
+import { isLetter, motionOrAmendment } from '$lib/text/document-kind';
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
 import { changeAround, changeVerb } from '$lib/verbonden/hoe';
@@ -129,13 +130,8 @@ export function inwerkingVerbanden(c: FeedItem['commencement']): Verband[] {
 export function stukNaam(l: Link, eigenDossier?: string | null): string {
 	const kind = (l.kind ?? '').trim();
 	if (kind === 'toezegging') return `toezegging${l.number ? ` ${l.number}` : ''}`;
-	const soort = /^motie/i.test(kind)
-		? 'motie'
-		: /^amendement/i.test(kind)
-			? 'amendement'
-			: /^brief/i.test(kind)
-				? 'brief'
-				: kind.toLowerCase() || 'stuk';
+	const soort =
+		motionOrAmendment(kind) ?? (isLetter(kind) ? 'brief' : kind.toLowerCase() || 'stuk');
 	const wie = soort !== 'brief' && l.surname ? `-${headSurname(l.surname)}` : '';
 	const nr = l.number ? `nr. ${l.number}` : '';
 	const plek =

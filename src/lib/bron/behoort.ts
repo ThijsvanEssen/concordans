@@ -4,6 +4,7 @@
 // docs/hierarchie.md ("Kern of context"); a layer the data lacks is left out without a word.
 // Thijs, 9 Oct: "maak het consistent en klikbaar", and the conclusie and eerdere aanleg of an
 // arrest are "vrij cruciale info", not extra data.
+import { belongsToBill, isCoverLetter, motionOrAmendment } from '$lib/text/document-kind';
 import { capitalize, textOf } from '$lib/text/words';
 import { naamVan } from '$lib/bron/menselijk';
 import type { Bucket, NodeGraph, Neighbor } from '$lib/api/nodes';
@@ -18,13 +19,7 @@ import { kindName } from '$lib/components/explore/law-head';
 import { lawShortName } from '$lib/text/bw';
 import { fractiePeriodes } from './fractie-periode';
 import { describe, type Row } from '$lib/verbonden/rows';
-import {
-	aangebodenVan,
-	isAanbieding,
-	isBijWetsvoorstel,
-	stukkenInDezelfdeZaak,
-	wetsvoorstelVan
-} from './zaak';
+import { aangebodenVan, stukkenInDezelfdeZaak, wetsvoorstelVan } from './zaak';
 import type { Collection, Relation } from '$lib/vocabulary';
 
 /**
@@ -238,7 +233,7 @@ export function behoort(
 	const bijWetsvoorstel = (): Regel[] => {
 		const key = light?.node.key;
 		const soort = textOf(props.kind) ?? '';
-		if (!key || !(bak('PART_OF', 'outbound', 'cases')?.total ?? 0) || !isBijWetsvoorstel(soort))
+		if (!key || !(bak('PART_OF', 'outbound', 'cases')?.total ?? 0) || !belongsToBill(soort))
 			return [];
 		return [
 			{
@@ -260,7 +255,7 @@ export function behoort(
 	 */
 	const biedtAan = (): Regel[] => {
 		const key = light?.node.key;
-		if (!key || !(bak('PART_OF', 'outbound', 'cases')?.total ?? 0) || !isAanbieding(props.kind))
+		if (!key || !(bak('PART_OF', 'outbound', 'cases')?.total ?? 0) || !isCoverLetter(props.kind))
 			return [];
 		return [
 			{
@@ -277,7 +272,7 @@ export function behoort(
 	};
 	const kamer = (): Laag[] => {
 		// The Kamer in props, else in the bron's label (a dossier node: `TK`), a source value.
-		const label = light?.node.labels.find((l) => l === 'TK' || l === 'EK');
+		const label = light?.node.labels.find((l) => chamberFromParam(l));
 		const chamber = chamberFromParam(textOf(props.chamber) ?? label);
 		return chamber ? [{ soort: 'Kamer', naam: CHAMBER_NAME[chamber] }] : [];
 	};
@@ -455,7 +450,7 @@ export function behoort(
 			// them (#351: MADE_IN, ACCOMPANIES). A stuk at a bill stands in one chain with it,
 			// "Dossier: 34372 … › Voorstel van wet, nr. 2" (concept 21, Thijs 10 Oct); its own
 			// bijlagen are in the reader's status line, not in the band.
-			const ingediend = /motie|amendement/i.test(textOf(props.kind) ?? '');
+			const ingediend = !!motionOrAmendment(props.kind);
 			const dossier = eerste('PART_OF', 'outbound', 'dossiers', 'Dossier');
 			const wetsvoorstel = bijWetsvoorstel()[0];
 			const label = ingediend ? 'Ingediend bij' : 'Dossier';

@@ -1,5 +1,5 @@
-// An article's aanhef, leden and onderdelen. API 0.5 delivers them as `parts`
-// (`partsFromApi` nests them by id); before that they are read from the flat text,
+// An article's aanhef, leden and onderdelen (`partsOf`). The API delivers them as `parts`
+// (`partsFromApi` nests them by id); where it gives none they are read from the flat text,
 // in which a lid is a line that starts with `1. ` and an onderdeel one that starts
 // with `a. `, `1°. ` or a dash (`– `, the definitions of Cbw 1).
 // TODO(backend B6): `parseArticleParts` goes when every article carries `parts`.
@@ -189,7 +189,7 @@ function lineStart(text: string | undefined, start: number): number {
 }
 
 /** The parts the API delivers, nested: `lid-2-onder-a` is a child of `lid-2`. */
-export function partsFromApi(parts: ApiPart[], text?: string): ArticlePart[] {
+export function partsFromApi(parts: readonly ApiPart[], text?: string): ArticlePart[] {
 	const roots: ArticlePart[] = [];
 	const byId = new Map<string, ArticlePart>();
 	for (const p of [...parts].sort((a, b) => a.start - b.start)) {
@@ -222,6 +222,14 @@ export function partsFromApi(parts: ApiPart[], text?: string): ArticlePart[] {
 		part.textStart += part.number.length + 2;
 	}
 	return roots;
+}
+
+/** An article's parts: those the API numbers, else those read from its text. */
+export function partsOf(
+	text: string | null | undefined,
+	apiParts: readonly ApiPart[] | null | undefined
+): ArticlePart[] {
+	return apiParts?.length ? partsFromApi(apiParts, text ?? '') : parseArticleParts(text);
 }
 
 /** Every part, depth first. */

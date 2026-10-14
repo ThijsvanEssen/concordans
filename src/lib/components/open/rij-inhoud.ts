@@ -2,6 +2,7 @@
 // the row does not open: its title goes to the reader. Actueel and Gevolgd by the feed's kind;
 // a Kamerstuk in Verbonden, Bronnen and Gemarkeerd by its own (kernSoort): one core text for
 // one stuk wherever its row opens.
+import { motionOrAmendment } from '$lib/text/document-kind';
 import { hasVotes } from '$lib/components/parliamentary/stemming';
 import type { FeedItem } from '$lib/components/actueel/feed';
 import { dictumUit } from '$lib/onderwerpen/strekking';
@@ -122,10 +123,8 @@ export function toelichtingVan(
 /** What a stuk opens on by its own kind (`Motie (gewijzigd/nader)`, `Amendement`, `Brief
  *  regering`): a motie its dictum, an amendement its toelichting, another its opening. */
 export function kernSoort(kind: string | null | undefined): 'dictum' | 'toelichting' | 'opening' {
-	const k = (kind ?? '').trim();
-	if (/^motie\b/i.test(k)) return 'dictum';
-	if (/^amendement\b/i.test(k)) return 'toelichting';
-	return 'opening';
+	const own = motionOrAmendment(kind);
+	return own === 'motie' ? 'dictum' : own === 'amendement' ? 'toelichting' : 'opening';
 }
 
 /** A stuk as its detail gives it, for its core text. */

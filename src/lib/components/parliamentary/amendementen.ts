@@ -5,6 +5,7 @@
 // those cases (ABOUT), and the papers that revise others (REVISES). Every value is a source
 // value: the vote of an amendment is the decision whose `primary_case_id` is the case of
 // its paper, the chain is the REVISES edges; nothing is read from a title.
+import { motionOrAmendment } from '$lib/text/document-kind';
 import { getNodeNeighborhood } from '$lib/api/nodes';
 import { once } from '$lib/api/records';
 import { votesShort } from './stemming';
@@ -250,7 +251,7 @@ export const getAmendementen = (key: string) =>
 /** How many amendments a dossier has by its own counts per kind, without a request. */
 export const aantalAmendementen = (perSoort: Record<string, number> | null | undefined) =>
 	Object.entries(perSoort ?? {})
-		.filter(([k]) => /^amendement/i.test(k))
+		.filter(([k]) => motionOrAmendment(k) === 'amendement')
 		.reduce((n, [, v]) => n + v, 0);
 
 /** One step of an amendment's route: what happened on a day, and the papers of it. */

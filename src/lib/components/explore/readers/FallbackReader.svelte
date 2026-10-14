@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ownKind } from '$lib/text/document-kind';
 	import { textOf } from '$lib/text/words';
 	import { langeDatum } from '$lib/text/datum';
 	import { report } from '$lib/api/errors';
@@ -8,7 +9,7 @@
 	// bron is, when, and where the source keeps it. Its verbindingen are in the panel.
 	import ReaderFrame from './ReaderFrame.svelte';
 	import type { GraphNode } from '$lib/graph/types';
-	import { eigenSoort, menselijkeNaam } from '$lib/bron/menselijk';
+	import { menselijkeNaam } from '$lib/bron/menselijk';
 	import { getInstrumentDetail } from '$lib/api/instrument-cache';
 
 	let { node }: { node: GraphNode } = $props();
@@ -41,7 +42,7 @@
 		)
 	);
 	// A group of kinds says nothing of this one beyond its title (#31, #58).
-	const soort = $derived(eigenSoort(p.kind));
+	const soort = $derived(ownKind(p.kind));
 	const facts = $derived(
 		[
 			soort,

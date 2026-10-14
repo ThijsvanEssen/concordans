@@ -9,8 +9,7 @@ import {
 	plural,
 	separatorBefore,
 	textOf,
-	truncate,
-	withoutGroup
+	truncate
 } from './words';
 
 describe('textOf', () => {
@@ -90,15 +89,6 @@ describe('separatorBefore', () => {
 		expect([0, 1, 2].map((i) => separatorBefore(i, 3))).toEqual(['', ', ', ' en ']);
 		expect([0, 1].map((i) => separatorBefore(i, 2, true))).toEqual(['', ', ']);
 	});
-});
-
-describe('withoutGroup', () => {
-	it.each([
-		['Motie (gewijzigd/nader)', 'Motie'],
-		['Brief regering (Kamerbrief)  ', 'Brief regering'],
-		['Amendement', 'Amendement'],
-		['Wet (a) en (b)', 'Wet']
-	])('%j gives %j', (kind, expected) => expect(withoutGroup(kind)).toBe(expected));
 });
 
 describe('truncate', () => {
