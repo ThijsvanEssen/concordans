@@ -3,7 +3,9 @@
 // where the pipeline read it, the proposed text in its meta.
 // TODO(backend): no field of the API names the proposed text; the keys below are read
 // where they occur, and the lid is the one the edge names.
-import { api, unwrap } from '$lib/api/client';
+import { ifExists } from '$lib/api/errors';
+import { abortable } from '$lib/api/records';
+import { getDossierMutations } from '$lib/components/parliamentary/data';
 import { dossierNumbersOf, type Row } from './rows';
 import { readEdge } from './edge-meta';
 
@@ -29,9 +31,8 @@ export async function proposedTextOf(
 
 	const numbers = dossierNumbersOf(row.props);
 	for (const number of numbers) {
-		const mutations = await unwrap(
-			api.GET('/api/dossiers/{number}/mutations', { params: { path: { number } }, signal })
-		).catch(() => null);
+		// The same request as the dossier's hub (dossier-hub.ts): asked once.
+		const mutations = await ifExists(abortable(getDossierMutations(number), signal));
 		for (const e of mutations?.edges ?? []) {
 			if (e.to_id !== articleId) continue;
 			const meta = (e.meta ?? null) as Record<string, unknown> | null;

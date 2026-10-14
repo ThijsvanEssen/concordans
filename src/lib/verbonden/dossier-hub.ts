@@ -4,7 +4,8 @@
 // activities' raw `committee_id`), its mutations and the list of committees.
 // TODO(backend B1, B3): the join goes when every dossier carries the fields.
 import { naamVan } from '$lib/bron/menselijk';
-import { api, unwrap } from '$lib/api/client';
+import { ifExists } from '$lib/api/errors';
+import { getCommittees } from '$lib/api/verbonden';
 import { instrumentMetaStore } from '$lib/api/instrument-cache';
 import type { Schema } from '$lib/api/types';
 import {
@@ -17,7 +18,6 @@ import { chamberOf, isExplanatory } from './chamber';
 import { bronKindOf } from './filter';
 import { describe, type Neighbor, type Row } from './rows';
 import { kindName } from '$lib/components/explore/law-head';
-import { onForget } from '$lib/util/forget';
 
 export type DossierHub = {
 	laws: Row[];
@@ -174,15 +174,6 @@ export function buildDossierHub(
 	};
 }
 
-// The list of committees changes rarely: one request per session.
-let committeeList: Promise<Committees> | null = null;
-export const getCommittees = () =>
-	(committeeList ??= unwrap(api.GET('/api/committees')).catch((err) => {
-		committeeList = null;
-		throw err;
-	}));
-onForget(() => (committeeList = null));
-
 /**
  * `number` is the dossier's number (`37020-XV`, the node's `label`); `buren` gives the
  * dossier's laws and activities, asked only where the dossier's detail lacks them.
@@ -192,13 +183,13 @@ export async function loadDossierHub(
 	buren: () => Promise<Neighbor[]>,
 	bekend: readonly Neighbor[] = []
 ): Promise<DossierHub> {
-	const detail = await getDossier(number).catch(() => null);
+	const detail = await ifExists(getDossier(number));
 	const joined = !detail?.instruments;
 	const [documents, mutations, committees, neighbors] = await Promise.all([
-		getDossierDocuments(number).catch(() => null),
-		joined ? getDossierMutations(number).catch(() => null) : null,
-		joined ? getCommittees().catch(() => []) : [],
-		joined || !detail?.committees ? buren().catch(() => []) : []
+		ifExists(getDossierDocuments(number)),
+		joined ? ifExists(getDossierMutations(number)) : null,
+		joined ? getCommittees() : [],
+		joined || !detail?.committees ? buren() : []
 	]);
 	const names = get(instrumentMetaStore);
 	return buildDossierHub(

@@ -30,7 +30,8 @@ export const kindOfGroup = (g: Group): BronKind | null => g.rows[0]?.kind ?? nul
 
 /**
  * The groups with the rows that pass the filter; a group without rows is left out, unless
- * its loader is still under way (`wachtend`, and no filter that cuts rows): it keeps its place.
+ * its loader is still under way (`wachtend`) or failed, and no filter cuts rows: it keeps
+ * its place.
  */
 export function filterGroups(
 	groups: Group[],
@@ -61,7 +62,7 @@ export function filterGroups(
 					(!f.bronnen || f.bronnen.has(g.noun as BronKind))
 			};
 		})
-		.filter((g) => g.rows.length > 0 || g.laden);
+		.filter((g) => g.rows.length > 0 || g.laden || (g.failed && !cut));
 }
 
 export const allRows = (groups: Group[]): Row[] => groups.flatMap((g) => g.rows);

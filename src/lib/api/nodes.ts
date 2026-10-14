@@ -54,7 +54,10 @@ export type Bucket = {
 	collection: Collection | Collection[];
 };
 
-/** The rows of these buckets of a bron, up to 200 each, one request per bucket. */
+/**
+ * The rows of these buckets of a bron, up to 200 each, one request per bucket; one that
+ * fails fails them all, so no group stands with part of its rows as if whole.
+ */
 export const getBuckets = (
 	collection: Collection,
 	key: string,
@@ -62,7 +65,7 @@ export const getBuckets = (
 	signal?: AbortSignal,
 	edgeMeta?: 'passages'
 ): Promise<Neighbor[]> =>
-	Promise.allSettled(
+	Promise.all(
 		buckets.map((b) =>
 			getNodeGraph(collection, key, {
 				limit: 200,
@@ -76,9 +79,7 @@ export const getBuckets = (
 				edgeMeta
 			})
 		)
-	).then((results) =>
-		results.flatMap((r) => (r.status === 'fulfilled' ? neighborsOf(r.value) : []))
-	);
+	).then((results) => results.flatMap(neighborsOf));
 
 /** The neighbours of a node response, whatever bucket they are in. An API before 0.5 lists them flat. */
 export const neighborsOf = (response: NodeGraph): Neighbor[] =>
