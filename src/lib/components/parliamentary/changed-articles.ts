@@ -7,7 +7,8 @@ import { ifExists } from '$lib/api/errors';
 import type { Schema } from '$lib/api/types';
 import { bookNumber } from '$lib/text/bw';
 import { langeDatum } from '$lib/text/datum';
-import { CHANGE_HEAD, changeRelation } from '$lib/verbonden/hoe';
+import { CHANGE_HEAD } from '$lib/verbonden/hoe';
+import { changeRelation } from '$lib/vocabulary';
 
 export type ChangedArticle = Schema<'ChangedArticleRef'>;
 export type ChangeSource = Schema<'ChangeSource'>;

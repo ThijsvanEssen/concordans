@@ -8,14 +8,19 @@ import type { Schema } from '$lib/api/types';
 import { isExplanatory } from './chamber';
 import { describe, type Neighbor, type Row } from './rows';
 import { isDerived, readEdge } from './edge-meta';
+import type { Relation } from '$lib/vocabulary';
 
 /**
  * The relations by which a document is tied to the article's text. A toelichting that
  * only names the article (REFERS_TO) explains another law and is left out.
  */
-const BINDING = new Set(['EXPLAINS', 'AMENDS', 'INTRODUCES']);
+export const EXPLANATORY_RELATIONS = [
+	'EXPLAINS',
+	'AMENDS',
+	'INTRODUCES'
+] as const satisfies readonly Relation[];
 
-type Found = { row: Row; date: string; binding: boolean };
+type Found = { row: Row; date: string };
 
 export function mergeExplanatory(neighbors: Neighbor[]): Row[] {
 	const found = new Map<string, Found>();
@@ -30,13 +35,16 @@ export function mergeExplanatory(neighbors: Neighbor[]): Row[] {
 			})
 		)
 			continue;
-		if (!BINDING.has(n.relation ?? '') || found.has(n.key)) continue;
+		if (
+			!(EXPLANATORY_RELATIONS as readonly string[]).includes(n.relation ?? '') ||
+			found.has(n.key)
+		)
+			continue;
 		const edge = readEdge(n.meta, {
 			direction: 'inbound',
 			citingEcli: null
 		});
 		found.set(n.key, {
-			binding: true,
 			date: typeof props.date === 'string' ? props.date : '',
 			row: {
 				ref: { collection: 'documents', key: n.key },
@@ -58,10 +66,7 @@ export function mergeExplanatory(neighbors: Neighbor[]): Row[] {
 	// Documents bound to the article, newest first. A dossier's other toelichting is not
 	// read at all: without a confirmed edge to this article it would only ever be a
 	// guess that it was named, and the panel shows it named or not at all.
-	return [...found.values()]
-		.filter((f) => f.binding)
-		.sort((a, b) => b.date.localeCompare(a.date))
-		.map((f) => f.row);
+	return [...found.values()].sort((a, b) => b.date.localeCompare(a.date)).map((f) => f.row);
 }
 
 /** The rows of `explained-by` that name the article itself, not its law at dossier level. */

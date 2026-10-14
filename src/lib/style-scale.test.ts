@@ -34,8 +34,8 @@ function offScale(text: string): string[] {
 // 91 after the cleanup of 10 October; 80 after the readers and the explore page; 78 on 11 October;
 // 75 after the one Tijdlijn, 11 October; 71 after the Kruiswoord of ronde 6, 12 October; 69 after
 // the one Tijdas, 12 October; 68 after Gemarkeerd's maps, 14 October (the rest: hairlines of 1
-// to 3 px and alignments with a line of text).
-const OFF_SCALE_MAX = 68;
+// to 3 px and alignments with a line of text); 67 after Verbonden's one ConfidenceDot, 14 October.
+const OFF_SCALE_MAX = 67;
 
 describe('the type and spacing scale', () => {
 	it('gives no font size in pixels outside the tokens', () => {

@@ -16,6 +16,7 @@
 	} from './verbinding';
 	import { passageOf } from './rows';
 	import Aanhaling from './Aanhaling.svelte';
+	import ConfidenceDot from './ConfidenceDot.svelte';
 	import { zetMarkering } from '$lib/bron/markering.svelte';
 
 	let {
@@ -113,7 +114,7 @@
 	<dl class="kv">
 		<dt>Betrouwbaarheid</dt>
 		<dd>
-			<span class="conf conf--{trust.word}" aria-hidden="true"></span>
+			<ConfidenceDot word={trust.word} />
 			{trust.word}: {trust.why}
 		</dd>
 		{#if toontStatus(v)}
@@ -240,26 +241,6 @@
 	}
 	.kv dd {
 		margin: 0;
-	}
-	.kv dd.is-proposed {
-		color: var(--ink);
-		/* In ink, as everything at rest but "nee" (Thijs, 10 Oct); the weight keeps it seen. */
-		font-weight: 600;
-	}
-	.conf {
-		display: inline-block;
-		width: 7px;
-		height: 7px;
-		margin-right: var(--s-1);
-		border: 1.3px solid var(--ink-3);
-		border-radius: 50%;
-		vertical-align: 0;
-	}
-	.conf--hoog {
-		background: var(--ink-3);
-	}
-	.conf--matig {
-		background: linear-gradient(90deg, var(--ink-3) 50%, transparent 50%);
 	}
 	.actions {
 		display: flex;

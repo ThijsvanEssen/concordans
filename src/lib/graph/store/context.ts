@@ -12,7 +12,7 @@ import {
 	type ContainerKind,
 	type Period
 } from '../container-membership';
-import { isCollection, type Collection, type Relation } from '$lib/vocabulary';
+import { isAmendingRelation, isCollection, type Collection, type Relation } from '$lib/vocabulary';
 import { COLLECTION_ROLE } from '../collection-role';
 import { get, writable } from 'svelte/store';
 import {
@@ -265,12 +265,9 @@ export function createGraphContext() {
 		return from || to ? { from, to } : null;
 	};
 
-	/** The relations by which a stuk changes a wet; the wet is then drawn as an anchor. */
-	const CHANGES = new Set<Relation>(['AMENDS', 'INTRODUCES', 'REPEALS']);
-
-	/** The anchor of a wet that a drawn bron changes: a member of the wet's own hull. */
+	/** The anchor of a wet that a drawn bron changes (AMENDING_RELATIONS): a member of the wet's own hull. */
 	const lawAnchor = (node: BaseNode, relation: Relation): GraphNode | null => {
-		if (node.collection !== 'instruments' || !CHANGES.has(relation)) return null;
+		if (node.collection !== 'instruments' || !isAmendingRelation(relation)) return null;
 		const anchor = nodeToGraphNode(node);
 		if (!anchor) return null;
 		anchor.anchor = true;

@@ -16,6 +16,7 @@ import {
 import { get } from 'svelte/store';
 import { chamberOf, isExplanatory } from './chamber';
 import { bronKindOf } from './filter';
+import { changeRelationOf, isChangeRelation } from '$lib/vocabulary';
 import { describe, type Neighbor, type Row } from './rows';
 import { kindName } from '$lib/components/explore/law-head';
 
@@ -31,22 +32,12 @@ type Committees = Schema<'CommitteeDTO'>[];
 type Documents = Schema<'DossierDocumentsResponse'>;
 type Mutations = Schema<'DossierMutationsResponse'>;
 
-const CHANGES = new Set(['ESTABLISHES', 'AMENDS', 'INTRODUCES', 'REPEALS']);
-
 // A mutation node carries no props: the law is read from the article key
 // (`bwbr0001854_287`, `32004l0017_6`).
 const lawOfArticleKey = (key: string): string | null =>
 	/^(bwb[rvw]\d{7}|[0-9ce]\d{4}[a-z]{1,2}\d{4})_/i.exec(key)?.[1].toUpperCase() ?? null;
 
 type Detail = Schema<'DossierDetailResponse'>;
-
-const RELATION_OF: Record<string, Row['relation']> = {
-	legislated_in: 'LEGISLATED_IN',
-	establishes: 'ESTABLISHES',
-	amends: 'AMENDS',
-	introduces: 'INTRODUCES',
-	repeals: 'REPEALS'
-};
 
 export function buildDossierHub(
 	neighbors: Neighbor[],
@@ -73,7 +64,7 @@ export function buildDossierHub(
 			kind: bronKindOf('instruments', i.key, { bwb_id: i.bwb_id, celex: i.celex }),
 			identifier: soort ? null : (i.bwb_id ?? i.celex ?? null),
 			proposed: i.status === 'voorgesteld' || undefined,
-			relation: RELATION_OF[i.relation] ?? 'LEGISLATED_IN',
+			relation: changeRelationOf(i.relation) ?? 'LEGISLATED_IN',
 			direction: i.relation === 'legislated_in' ? 'inbound' : 'outbound'
 		});
 	}
@@ -91,7 +82,7 @@ export function buildDossierHub(
 	// no enacted change of the same law is known.
 	const nodes = new Map((mutations?.nodes ?? []).map((n) => [n.id, n]));
 	for (const e of detail?.instruments ? [] : (mutations?.edges ?? [])) {
-		if (!CHANGES.has(e.relation ?? '')) continue;
+		if (!isChangeRelation(e.relation)) continue;
 		const target = e.to_id ? nodes.get(e.to_id) : undefined;
 		const bwb = target?.collection === 'articles' ? lawOfArticleKey(target.key) : null;
 		if (!bwb) continue;

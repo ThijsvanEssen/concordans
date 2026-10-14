@@ -90,7 +90,7 @@ export const getNodeHull = (collection: Collection, key: string) =>
 	collection === 'instruments'
 		? once(`nodes/${collection}/${key.toLowerCase()}/hull`, () =>
 				getNodeGraph(collection, key, {
-					limit: 200,
+					limit: NODE_BUCKET,
 					relations: 'PART_OF',
 					nodeTypes: 'article',
 					direction: 'inbound'

@@ -10,7 +10,7 @@ import { groupCount, type Group } from './groups';
 import type { Row } from './rows';
 
 /** Whether the filter has a criterion that cuts inside a group, so its total no longer holds. */
-export const cutsRows = (f: VerbondenFilter) =>
+const cutsRows = (f: VerbondenFilter) =>
 	f.lid !== null ||
 	f.rechter !== null ||
 	f.van !== null ||
@@ -22,7 +22,7 @@ export const cutsRows = (f: VerbondenFilter) =>
 	f.zoek !== '';
 
 /** The kind a group counts for: that of its rows. */
-export const kindOfGroup = (g: Group): BronKind | null => g.rows[0]?.kind ?? null;
+const kindOfGroup = (g: Group): BronKind | null => g.rows[0]?.kind ?? null;
 
 /**
  * The groups with the rows that pass the filter; a group without rows is left out, unless
@@ -308,8 +308,14 @@ export function regroup(groups: Group[], by: Grouping, selection: Collection): G
 	}));
 }
 
-/** Judgments per year, the last twelve years, for the bar chart of a group. */
-export function yearHistogram(rows: Row[], years = 12): { year: number; count: number }[] {
+/** The years a group's chart of judgments shows: the last twelve. */
+export const YEARS_IN_CHART = 12;
+
+/** Judgments per year, the last YEARS_IN_CHART years, for the bar chart of a group. */
+export function yearHistogram(
+	rows: Row[],
+	years = YEARS_IN_CHART
+): { year: number; count: number }[] {
 	const counts = new Map<number, number>();
 	let last = 0;
 	for (const r of rows) {

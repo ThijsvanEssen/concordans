@@ -30,6 +30,7 @@ import {
 } from './groups';
 import { DEFAULT_LOADER_OPTIONS, LOADERS, type Loaded, type LoaderOptions } from './loaders';
 import { isInhoudGroep, isKernGroep } from '$lib/bron/behoort';
+import type { LoadState } from '$lib/util/load.svelte';
 
 /**
  * Whether Verbonden of a bron can start from five per bucket: a group's rows are asked when
@@ -100,6 +101,9 @@ export type VerbondenSource = Readable<VerbondenState> & {
 };
 
 const EMPTY = { id: null, groups: [], loading: false, failed: false };
+
+/** A failed load of the verbindingen, for LoadState to say in the panel and the table. */
+export const LOAD_FAILED = { status: 'error', error: null } as const satisfies LoadState<never>;
 
 export function createVerbondenSource(store: GraphStore): VerbondenSource {
 	let options = DEFAULT_LOADER_OPTIONS;

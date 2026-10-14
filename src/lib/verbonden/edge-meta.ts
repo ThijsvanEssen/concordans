@@ -13,8 +13,6 @@ import {
 	type Bereik
 } from '$lib/text/voetnoten';
 
-/** A string with its words, or null: what an API field carries where it carries anything. */
-
 /** One edge of the canvas, by its ends and relation: how a row and a line are matched. */
 export const edgeKey = (source: string, target: string, relation: string) =>
 	`${source}>${relation}>${target}`;

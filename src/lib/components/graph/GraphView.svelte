@@ -875,7 +875,7 @@
 					n.collection === 'judgments'
 						? rechterOf({
 								identifier: typeof n.raw?.props?.ecli === 'string' ? n.raw.props.ecli : null,
-								court: typeof n.raw?.props?.court === 'string' ? n.raw.props.court : null,
+								props: n.raw?.props ?? undefined,
 								ref: { collection: 'judgments', key: n.key }
 							})
 						: null,

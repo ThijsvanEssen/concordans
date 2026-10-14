@@ -8,7 +8,8 @@ import type { Schema } from '$lib/api/types';
 import { chamberOf, isExplanatory } from './chamber';
 import { buildDossierHub } from './dossier-hub';
 import { mergeExplanatory } from './explanatory-documents';
-import { buildGroups, countLabel, GROUPS, isInternational, withUnresolvedAppeals } from './groups';
+import { buildGroups, countLabel, GROUPS, withUnresolvedAppeals } from './groups';
+import { isInternational } from './filter';
 import {
 	aardOf,
 	bundleMentions,

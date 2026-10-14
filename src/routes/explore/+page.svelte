@@ -87,7 +87,7 @@
 		type ContainerKind
 	} from '$lib/graph/container-membership';
 	import { parseOverlay, DEFAULT_HEAT_MONTHS, type Overlay } from '$lib/stores/overlay';
-	import { parseNodeId, type Mode } from '$lib/vocabulary';
+	import { AMENDING_RELATIONS, parseNodeId, type Mode } from '$lib/vocabulary';
 	import type { Schema } from '$lib/api/types';
 	import { articleOf, kort, lawIdOf, nodeToGraphNode } from '$lib/graph/types';
 	import { bronNaam } from '$lib/bron/naam';
@@ -582,7 +582,7 @@
 			await store.expandNeighborhood(node.collection, node.key, {
 				depth: 2,
 				cap: omgevingGrens,
-				relations: ['PART_OF', 'AMENDS', 'INTRODUCES', 'REPEALS'],
+				relations: ['PART_OF', ...AMENDING_RELATIONS],
 				nodeTypes: ['document', 'instrument', 'dossier']
 			});
 			if (epoch !== focusEpoch) return;

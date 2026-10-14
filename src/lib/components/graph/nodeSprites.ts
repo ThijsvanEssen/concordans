@@ -10,7 +10,7 @@ import { VORMEN, type Vorm } from '$lib/bron/vormen';
 
 import type { ContainerKind } from '$lib/graph/container-membership';
 import type { GraphNodeKind } from '$lib/graph/types';
-import type { Relation } from '$lib/vocabulary';
+import { isAmendingRelation, type Relation } from '$lib/vocabulary';
 
 export type Tokens = {
 	paper: string;
@@ -277,11 +277,7 @@ export type EdgeStyle = 'solid' | 'dashed' | 'dotted';
 export function edgeStyleFor(relation: Relation, status: string | null | undefined): EdgeStyle {
 	if (relation === 'PART_OF' || relation === 'LED_BY') return 'dotted';
 	if (relation === 'VOTED') return 'dashed';
-	if (
-		(relation === 'AMENDS' || relation === 'INTRODUCES' || relation === 'REPEALS') &&
-		status === 'voorgesteld'
-	)
-		return 'dashed';
+	if (isAmendingRelation(relation) && status === 'voorgesteld') return 'dashed';
 	return 'solid';
 }
 

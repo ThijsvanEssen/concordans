@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { RELATIONS, type Collection, type Relation } from '$lib/vocabulary';
+import {
+	CHANGE_RELATIONS,
+	RELATIONS,
+	changeRelation,
+	type Collection,
+	type Relation
+} from '$lib/vocabulary';
 import { capitalize } from '$lib/text/words';
 import {
 	CHANGE_HEAD,
-	CHANGE_RELATIONS,
 	changeAround,
-	changeRelation,
 	changeVerb,
 	hoeVan,
 	kleineLetter,
