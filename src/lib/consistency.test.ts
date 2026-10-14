@@ -86,6 +86,11 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
+	it('sets how long a request waits only in $lib/api/client.ts (api or zoekApi)', () => {
+		// A caller's own timeout can only shorten the client's: 30 s on top of `api` gave up after 10.
+		expect(offenders((t) => /AbortSignal\.timeout\(/.test(t), ['lib/api/client.ts'])).toEqual([]);
+	});
+
 	it('formats a date only in $lib/text/datum.ts', () => {
 		const dateFormat = /toLocaleDateString|Intl\.DateTimeFormat|\btoLocaleTimeString\b/;
 		const monthNames = /['"](januari|jan\.)['"]/;
