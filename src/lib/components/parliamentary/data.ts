@@ -1,5 +1,5 @@
 import { textOf } from '$lib/text/words';
-import { api, unwrap, zoekApi } from '$lib/api/client';
+import { api, unwrap, slowApi } from '$lib/api/client';
 import { once } from '$lib/api/records';
 import type { GraphNode } from '$lib/graph/types';
 
@@ -39,7 +39,7 @@ export const getDossierMutations = (number: string) =>
 export const getMemberVotes = (key: string) =>
 	once(`votes/${key}`, () =>
 		unwrap(
-			zoekApi.GET('/api/members/{key}/votes', { params: { path: { key }, query: { limit: 50 } } })
+			slowApi.GET('/api/members/{key}/votes', { params: { path: { key }, query: { limit: 50 } } })
 		)
 	);
 
@@ -51,7 +51,7 @@ export const getMemberVotes = (key: string) =>
 export const getMemberVotesInOffice = (key: string, offset = 0) =>
 	once(`votes/${key}/in-office/${offset}`, () =>
 		unwrap(
-			zoekApi.GET('/api/members/{key}/votes', {
+			slowApi.GET('/api/members/{key}/votes', {
 				params: { path: { key }, query: { limit: 200, offset, in_office: true } }
 			})
 		)

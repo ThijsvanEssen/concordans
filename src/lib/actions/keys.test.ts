@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isEscape } from './keys';
+import { hasModifier, isEscape, isTyping } from './keys';
 
 const key = (over: Partial<Parameters<typeof isEscape>[0]> = {}) => ({
 	key: 'Escape',
@@ -24,5 +24,25 @@ describe('isEscape', () => {
 			closest: (s: string) => (s.includes('input') ? {} : null)
 		} as unknown as EventTarget;
 		expect(isEscape(key({ target: input }))).toBe(false);
+	});
+});
+
+describe('isTyping', () => {
+	const at = (typing: boolean) =>
+		({
+			closest: (s: string) => (typing && s.includes('textarea') ? {} : null)
+		}) as unknown as EventTarget;
+	it('tells a field from the page', () => {
+		expect(isTyping(at(true))).toBe(true);
+		expect(isTyping(at(false))).toBe(false);
+		expect(isTyping(null)).toBe(false);
+	});
+});
+
+describe('hasModifier', () => {
+	it('sees each of the four modifiers', () => {
+		expect(hasModifier(key())).toBe(false);
+		for (const m of ['metaKey', 'ctrlKey', 'altKey', 'shiftKey'] as const)
+			expect(hasModifier(key({ [m]: true }))).toBe(true);
 	});
 });

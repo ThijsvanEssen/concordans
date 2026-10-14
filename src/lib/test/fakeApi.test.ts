@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ApiError, api, isTimeout, unwrap, zoekApi } from '$lib/api/client';
+import { ApiError, api, isTimeout, unwrap, slowApi } from '$lib/api/client';
 import { aborted, fail, fakeApi, slow } from './fakeApi';
 
 const member = (key: string) =>
@@ -17,10 +17,10 @@ describe('fakeApi', () => {
 
 	it('answers the slow client too, and keeps what was asked of which', async () => {
 		const fake = fakeApi({ '/api/search': { items: [] } });
-		await zoekApi.GET('/api/search', { params: { query: { q: 'huur' } } });
+		await slowApi.GET('/api/search', { params: { query: { q: 'huur' } } });
 		await api.GET('/api/search', { params: { query: { q: 'pacht' } } });
 		expect(fake.requests.map((r) => [r.client, r.path])).toEqual([
-			['zoekApi', '/api/search'],
+			['slowApi', '/api/search'],
 			['api', '/api/search']
 		]);
 		expect(fake.asked('/api/search')).toEqual([
@@ -76,6 +76,6 @@ describe('fakeApi', () => {
 
 	it('is gone in the next test: the clients ask the network again', () => {
 		expect(vi.isMockFunction(api.GET)).toBe(false);
-		expect(vi.isMockFunction(zoekApi.GET)).toBe(false);
+		expect(vi.isMockFunction(slowApi.GET)).toBe(false);
 	});
 });

@@ -106,7 +106,7 @@ describe('the regulations under a law (#65)', () => {
 		const api = fakeApi({ '/api/instruments/{bwb_id}/delegated': { items: [], total: 0 } });
 		await LOADERS['instrument-delegated'](ctx(LAW));
 		const asked = api.requests.filter((r) => r.path === '/api/instruments/{bwb_id}/delegated');
-		expect(asked.map((r) => r.client)).toEqual(['zoekApi']);
+		expect(asked.map((r) => r.client)).toEqual(['slowApi']);
 	});
 });
 

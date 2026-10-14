@@ -1,4 +1,4 @@
-import { api, unwrap, zoekApi } from './client';
+import { api, unwrap, slowApi } from './client';
 import { ifExists } from './errors';
 import { once } from './records';
 import { onForget } from '$lib/util/forget';
@@ -70,7 +70,7 @@ export const getLawDelegated = (bwbId: string) =>
 	once(`instruments/${bwbId}/delegated`, () =>
 		ifExists(
 			unwrap(
-				zoekApi.GET('/api/instruments/{bwb_id}/delegated', { params: { path: { bwb_id: bwbId } } })
+				slowApi.GET('/api/instruments/{bwb_id}/delegated', { params: { path: { bwb_id: bwbId } } })
 			)
 		)
 	);

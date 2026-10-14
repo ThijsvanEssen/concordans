@@ -4,7 +4,7 @@ Two overlays paint counts on the network: **Open dossiers** (open proposed chang
 
 ## URL
 
-`?overlay=` holds the overlay. Parsing and serialising are in `src/lib/stores/overlay.ts` (`parseOverlay`, `serializeOverlay`, type `Overlay` with kinds `none`, `open`, `dossier`, `heat`).
+`?overlay=` holds the overlay. Parsing and serialising are in `src/lib/netwerk/overlay.ts` (`parseOverlay`, `serializeOverlay`, type `Overlay` with kinds `none`, `open`, `dossier`, `heat`).
 
 | Value              | Overlay                                                                                                   |
 | ------------------ | --------------------------------------------------------------------------------------------------------- |

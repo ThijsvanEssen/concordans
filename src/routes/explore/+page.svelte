@@ -87,7 +87,12 @@
 		isContainerKind,
 		type ContainerKind
 	} from '$lib/graph/container-membership';
-	import { parseOverlay, DEFAULT_HEAT_MONTHS, type Overlay } from '$lib/stores/overlay';
+	import {
+		parseOverlay,
+		overlayParam,
+		DEFAULT_HEAT_MONTHS,
+		type Overlay
+	} from '$lib/netwerk/overlay';
 	import { AMENDING_RELATIONS, parseNodeId, type Mode } from '$lib/vocabulary';
 	import type { Schema } from '$lib/api/types';
 	import { articleOf, kort, lawIdOf, nodeToGraphNode } from '$lib/graph/types';
@@ -1180,8 +1185,7 @@
 	const readHref = $derived(withParams(page.url, { tabel: null }));
 
 	// ── Overlay (open dossiers or citations per month, never both) ────────────
-	const overlayParam = $derived(param('overlay'));
-	const overlay = $derived<Overlay>(parseOverlay(overlayParam));
+	const overlay = $derived<Overlay>(parseOverlay(param('overlay')));
 
 	let graphView = $state<GraphView | null>(null);
 	// The canvas and the lists of Bronnen are chunks of their own, asked at once beside the
@@ -1265,11 +1269,16 @@
 			});
 	});
 
+	const setOverlay = (o: Overlay) => setUrl({ overlay: overlayParam(o) });
 	const toggleHeat = () =>
-		setUrl({ overlay: overlay.kind === 'heat' ? null : `heat:${DEFAULT_HEAT_MONTHS}` });
-	const setHeatPeriod = (months: number) => setUrl({ overlay: `heat:${months}` });
+		setOverlay(
+			overlay.kind === 'heat' ? { kind: 'none' } : { kind: 'heat', months: DEFAULT_HEAT_MONTHS }
+		);
+	const setHeatPeriod = (months: number) => setOverlay({ kind: 'heat', months });
 	const toggleMutatie = () =>
-		setUrl({ overlay: overlay.kind === 'open' || overlay.kind === 'dossier' ? null : 'open' });
+		setOverlay(
+			overlay.kind === 'open' || overlay.kind === 'dossier' ? { kind: 'none' } : { kind: 'open' }
+		);
 
 	// ── Share ────────────────────────────────────────────────────────────────
 	const shareCopier = createCopier();

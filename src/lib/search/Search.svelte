@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { gewoneKlik } from '$lib/actions/klik';
 	import { plural } from '$lib/text/words';
 	import { naamVanId } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
@@ -9,7 +10,7 @@
 	// Netwerk, where a result is picked instead of opened.
 	import { onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { isTimeout, unwrap, zoekApi } from '$lib/api/client';
+	import { isTimeout, unwrap, slowApi } from '$lib/api/client';
 	import { report } from '$lib/api/errors';
 	import {
 		DEBOUNCE_MS,
@@ -129,7 +130,7 @@
 	let traag = $state(false);
 	/** Per lane: what it last answered (it stays while the next query runs), and how it stands. */
 	let laanHits = $state<Record<string, Partial<Record<Kind, Hit[]>>>>({});
-	/** `traag`: it gave up on its own time (`zoekApi`, 30 s), not on an error of the API. */
+	/** `traag`: it gave up on its own time (`slowApi`, 30 s), not on an error of the API. */
 	let laanStand = $state<Record<string, 'klaar' | 'laden' | 'mislukt' | 'traag'>>({});
 	/** Per lane, the query whose answer in the live mode left more out (`partial`). */
 	let laanMeer = $state<Record<string, string>>({});
@@ -325,7 +326,7 @@
 				// The search client waits as long as the API may (30 s): a cold path took longer
 				// than the 10 s of the others, and the first try failed (Thijs, 10 Oct).
 				unwrap(
-					zoekApi.GET('/api/search', {
+					slowApi.GET('/api/search', {
 						params: {
 							query: zoekVraag(term, snel, true)
 						},
@@ -386,7 +387,7 @@
 		laanStand[laan.id] = 'laden';
 		const geldt = () => term === laatste;
 		unwrap(
-			zoekApi.GET('/api/search', {
+			slowApi.GET('/api/search', {
 				params: { query: zoekVraag(term, types, eerste) },
 				signal: stopt.signal
 			})
@@ -667,7 +668,7 @@
 						aria-selected={active === i}
 						href={bronHref(keuze.ref, { at: keuze.at, keepNetwerk: false })}
 						onclick={(e) => {
-							if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+							if (!gewoneKlik(e)) return;
 							e.preventDefault();
 							openBare(keuze);
 						}}
@@ -721,7 +722,7 @@
 				aria-selected={active === 0}
 				href={bronHref(bare.ref, { at: bare.at, keepNetwerk: false })}
 				onclick={(e) => {
-					if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+					if (!gewoneKlik(e)) return;
 					e.preventDefault();
 					openBare(bare);
 				}}

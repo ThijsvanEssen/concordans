@@ -24,7 +24,7 @@
 // readable address once the bron is known.
 import { textOf } from '$lib/text/words';
 import { SvelteMap } from 'svelte/reactivity';
-import { api, leesAntwoorden, unwrap } from '$lib/api/client';
+import { api, onAnswer, unwrap } from '$lib/api/client';
 import { ifExists, ignore } from '$lib/api/errors';
 import { onthoudTitel } from './titels.svelte';
 import { getArticleDetail, getArticleHistory, onthoudArtikel } from '$lib/api/articles';
@@ -238,7 +238,7 @@ export function onthoudPaden(data: unknown, diepte = 0) {
 		if (value && typeof value === 'object') onthoudPaden(value, diepte + 1);
 	}
 }
-leesAntwoorden((data) => {
+onAnswer((data) => {
 	onthoudPaden(data);
 	onthoudTitel(data);
 });

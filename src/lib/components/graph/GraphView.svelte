@@ -8,7 +8,7 @@
 	import type { NeighborhoodReach } from '$lib/graph/store/types';
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';
-	import { isEscape } from '$lib/actions/keys';
+	import { hasModifier, isEscape, isTyping } from '$lib/actions/keys';
 	import { get } from 'svelte/store';
 	import Graph from 'graphology';
 	import type FA2LayoutType from 'graphology-layout-forceatlas2/worker';
@@ -53,8 +53,8 @@
 	import { metGroepVerborgen } from '$lib/graph/met-groep';
 	import { kolomPlekken } from '$lib/netwerk/kolommen';
 	import type { NodeCounts } from '$lib/api/overlays';
-	import type { Overlay } from '$lib/stores/overlay';
-	import { DEFAULT_HEAT_MONTHS } from '$lib/stores/overlay';
+	import type { Overlay } from '$lib/netwerk/overlay';
+	import { DEFAULT_HEAT_MONTHS } from '$lib/netwerk/overlay';
 	import type { Relation } from '$lib/vocabulary';
 	import {
 		BRON_KINDS,
@@ -1286,9 +1286,7 @@
 	let canvasWrap = $state<HTMLDivElement | null>(null);
 
 	function handleKeydown(e: KeyboardEvent) {
-		if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
-		const el = e.target as HTMLElement | null;
-		if (el?.closest?.('input, select, textarea, [contenteditable]')) return;
+		if (e.defaultPrevented || hasModifier(e) || isTyping(e.target)) return;
 		if (e.key === 'Escape' && clusterCard) {
 			clusterCard = null;
 			return;

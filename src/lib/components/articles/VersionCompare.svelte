@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { capitalize } from '$lib/text/words';
+	import { hasModifier, isTyping } from '$lib/actions/keys';
 	import { lidAnchor, lidNumber } from '$lib/text/anchor';
 	import { DAY_MS, korteDatum, langeDatum } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
@@ -99,9 +100,7 @@
 
 	// ← and → step through the changes, unless a field has the keys.
 	function onKey(e: KeyboardEvent) {
-		if (lidParam || e.altKey || e.ctrlKey || e.metaKey) return;
-		const el = e.target as HTMLElement | null;
-		if (el?.closest?.('input, select, textarea, [contenteditable]')) return;
+		if (lidParam || hasModifier(e) || isTyping(e.target)) return;
 		if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
 		// The keys are the comparison's while it is open, also at its first or last change:
 		// the network beside it would otherwise go back to the previous bron.

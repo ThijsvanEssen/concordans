@@ -9,7 +9,7 @@
 // others. A caller that leaves ignores the answer instead.
 import { api, unwrap } from './client';
 import { ifExists } from './errors';
-import { getNodeGraph, neighborsOf } from './nodes';
+import { getNodeGraph, neighborsOf, NODE_BUCKET } from './nodes';
 import type { Collection } from '$lib/vocabulary';
 import { onForget } from '$lib/util/forget';
 
@@ -66,7 +66,7 @@ export const getNode = (collection: Collection, key: string) =>
  */
 export const getNodeFirst = (collection: Collection, key: string) =>
 	once(`nodes/${collection}/${key.toLowerCase()}/first`, () =>
-		getNodeGraph(collection, key, { limit: 1 })
+		getNodeGraph(collection, key, { limit: 1, wait: 'short' })
 	);
 
 /**
@@ -109,9 +109,6 @@ export const getNodeVerbonden = (collection: Collection, key: string) =>
 		getNodeGraph(collection, key, { limit: VERBONDEN_BUCKET })
 	);
 
-/** The most the API gives per bucket of a node (API 0.5). */
-export const NODE_BUCKET = 200;
-
 /** How many records are kept. */
 export const RECORDS_KEPT = MAX;
 
@@ -120,13 +117,14 @@ export const getMember = (key: string) =>
 		unwrap(api.GET('/api/members/{key}', { params: { path: { key } } }))
 	);
 
-/** The stukken a lid signed, as the neighbours of the lid. */
-/** The stukken a lid signed: the AUTHORED bucket of the lid's own node, asked once. */
-// Only the bucket it reads (what the person signed), not the whole node (150 kB gzip).
+/**
+ * The stukken a lid signed: the AUTHORED bucket of the lid's own node, asked once; only the
+ * bucket it reads, not the whole node (150 kB gzip).
+ */
 export const getMemberAuthored = (key: string) =>
 	once(`nodes/members/${key.toLowerCase()}/authored`, () =>
 		getNodeGraph('members', key, { limit: NODE_BUCKET, relations: 'AUTHORED' })
-	).then((node) => neighborsOf(node).filter((n) => n.relation === 'AUTHORED'));
+	).then(neighborsOf);
 
 export const getCommitment = (key: string) =>
 	once(`commitments/${key}`, () =>

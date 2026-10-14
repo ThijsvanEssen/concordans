@@ -97,7 +97,7 @@ describe('a faceted list', () => {
 		expect(l.facets).toEqual([{ tag: 'facets' }]);
 	});
 
-	it('asks the facets with the time of a search (zoekApi, 30 s), the rows as any list (#80)', async () => {
+	it('asks the facets with the time of a search (slowApi, 30 s), the rows as any list (#80)', async () => {
 		const api = fakeApi({
 			'/api/judgments': ({ params }: FakeRequest) =>
 				params.query?.facets ? answer([], 'facets') : answer([{ id: 'a' }], 'rows')
@@ -111,7 +111,7 @@ describe('a faceted list', () => {
 			() => {}
 		)(0, new AbortController().signal);
 		expect(api.requests.map((r) => [r.client, r.params.query?.facets])).toEqual([
-			['zoekApi', true],
+			['slowApi', true],
 			['api', false]
 		]);
 	});

@@ -24,7 +24,7 @@
 	import { isEscape } from '$lib/actions/keys';
 	import { page } from '$app/state';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
-	import { ApiError, api, isTimeout, unwrap, zoekApi } from '$lib/api/client';
+	import { ApiError, api, isTimeout, unwrap, slowApi } from '$lib/api/client';
 	import { report } from '$lib/api/errors';
 	import { untrack } from 'svelte';
 	import type { Schema } from '$lib/api/types';
@@ -208,7 +208,7 @@
 			cursor = null;
 		}
 		unwrap(
-			zoekApi.GET('/api/feed', {
+			slowApi.GET('/api/feed', {
 				params: { query: { ...q, facets: false } },
 				signal: ac.signal
 			})
@@ -278,7 +278,7 @@
 		error = null;
 		try {
 			const r = await unwrap(
-				zoekApi.GET('/api/feed', {
+				slowApi.GET('/api/feed', {
 					params: { query: { ...query, until: addDays(doorzocht, -1), facets: false } }
 				})
 			);
@@ -299,7 +299,7 @@
 		error = null;
 		try {
 			const r = await unwrap(
-				zoekApi.GET('/api/feed', { params: { query: { ...query, cursor, facets: false } } })
+				slowApi.GET('/api/feed', { params: { query: { ...query, cursor, facets: false } } })
 			);
 			items = uniqueBy([...items, ...r.items.map(normalizeItem)], (i) => i.id);
 			cursor = r.next_cursor ?? null;

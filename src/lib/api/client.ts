@@ -4,7 +4,7 @@ import type { paths } from './generated/openapi-types';
 
 export const TIMEOUT_MS = 10_000;
 /** A search of the slow kinds (judgments, articles and stukken): the API's own deadline. */
-export const SEARCH_TIMEOUT_MS = 30_000;
+export const SLOW_TIMEOUT_MS = 30_000;
 
 /**
  * While developing: more than `max` requests in `ms` is a loop, not a reader. The next one
@@ -42,9 +42,9 @@ export const api = createClient<paths>({ baseUrl: API_BASE_URL, fetch: timedFetc
  * The same API for what waits as long as the API does: the slow search lanes ("huur" took
  * the judgments 13.8 s on prod, past the 10 s of `api`) and a full node (`getNodeGraph`).
  */
-export const zoekApi = createClient<paths>({
+export const slowApi = createClient<paths>({
 	baseUrl: API_BASE_URL,
-	fetch: timedFetch(SEARCH_TIMEOUT_MS)
+	fetch: timedFetch(SLOW_TIMEOUT_MS)
 });
 
 /** Whether a request gave up on its own time, not on the caller's abort. */
@@ -59,15 +59,21 @@ export class ApiError extends Error {
 	}
 }
 
-let gelezen: ((data: unknown) => void) | null = null;
+const readers = new Set<(data: unknown) => void>();
 
-/** Who reads every answer as it arrives: the readable addresses in it (`$lib/bron/leesbaar`). */
-export const leesAntwoorden = (fn: (data: unknown) => void) => (gelezen = fn);
+/**
+ * Reads every answer as it arrives (the readable addresses in it, `$lib/bron/leesbaar`);
+ * returns how to stop reading.
+ */
+export function onAnswer(read: (data: unknown) => void): () => void {
+	readers.add(read);
+	return () => readers.delete(read);
+}
 
 /** The body of a successful call; any other status throws an ApiError. */
 export async function unwrap<T>(call: Promise<{ data?: T; response: Response }>): Promise<T> {
 	const { data, response } = await call;
 	if (!response.ok) throw new ApiError(response.status, response.url);
-	gelezen?.(data);
+	for (const read of readers) read(data);
 	return data as T;
 }

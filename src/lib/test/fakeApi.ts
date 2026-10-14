@@ -1,16 +1,16 @@
-// A fake of the API for tests: `api.GET` and `zoekApi.GET` answered per path template, as
+// A fake of the API for tests: `api.GET` and `slowApi.GET` answered per path template, as
 // the callers name it ('/api/members/{key}'), through the real `unwrap`. An answer can also
 // fail as the network does: a status (`fail`), the client's own time-out (`slow`) or the
 // caller's abort (`aborted`). Gone again before the next test (src/lib/test/setup.ts).
 import { vi, type MockInstance } from 'vitest';
-import { api, zoekApi } from '$lib/api/client';
+import { api, slowApi } from '$lib/api/client';
 import type { paths } from '$lib/api/generated/openapi-types';
 import { onForget } from '$lib/util/forget';
 
 export type ApiPath = keyof paths;
 
 export type FakeRequest = {
-	client: 'api' | 'zoekApi';
+	client: 'api' | 'slowApi';
 	path: ApiPath;
 	params: { path?: Record<string, unknown>; query?: Record<string, unknown> };
 	signal?: AbortSignal;
@@ -62,7 +62,7 @@ export function fakeApi(routes: Partial<Record<ApiPath, FakeAnswer>>) {
 		};
 	spies.push(
 		vi.spyOn(api, 'GET').mockImplementation(get('api') as never),
-		vi.spyOn(zoekApi, 'GET').mockImplementation(get('zoekApi') as never)
+		vi.spyOn(slowApi, 'GET').mockImplementation(get('slowApi') as never)
 	);
 	return {
 		requests,

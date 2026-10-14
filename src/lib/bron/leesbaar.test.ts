@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fail, fakeApi } from '$lib/test/fakeApi';
+import { getExplanations } from '$lib/api/records';
 import {
 	ecliKey,
 	focusIn,
@@ -210,6 +211,16 @@ describe('the address of a focus', () => {
 		expect(padOfFocus('documents/9f8e')).toBe('/kamerstukken/36600-VIII/12');
 		// A dossier is named by its number; its key is not a focus.
 		expect(padOfFocus('dossiers/k1')).toBeNull();
+	});
+
+	it('reads the addresses in an answer of a record getter, such as an article’s explanations', async () => {
+		fakeApi({
+			'/api/articles/{bwb_id}/{article_number}/explanations': {
+				explanations: [{ id: 'documents/f80e1', path: '/kamerstukken/36801/3' }]
+			}
+		});
+		await getExplanations('BWBR0005537', '3:80');
+		expect(focusOfPad(parsePad('/kamerstukken/36801/3')!)).toBe('documents/f80e1');
 	});
 
 	it("takes a feed item's address: Actueel links to the paper, not /explore?focus (#523)", () => {

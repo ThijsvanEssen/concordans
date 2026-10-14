@@ -11,7 +11,7 @@
 	// that came in before it, as the API finds them (`huur`: nothing since September).
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
-	import { unwrap, zoekApi } from '$lib/api/client';
+	import { unwrap, slowApi } from '$lib/api/client';
 	import FeedDay from '$lib/components/actueel/FeedDay.svelte';
 	import Doorzocht from '$lib/components/actueel/Doorzocht.svelte';
 	import {
@@ -132,7 +132,7 @@
 				let gelukt = true;
 				const vraag = (query: Record<string, unknown>) =>
 					unwrap(
-						zoekApi.GET('/api/feed', {
+						slowApi.GET('/api/feed', {
 							params: { query: { ...vraagVan(o), ...query, facets: false } },
 							signal
 						})
