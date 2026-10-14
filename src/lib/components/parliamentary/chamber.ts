@@ -36,3 +36,14 @@ export const EK_SOURCE = {
 	site: 'www.eerstekamer.nl',
 	url: 'https://www.eerstekamer.nl'
 } as const;
+
+/**
+ * The source under a list of the Eerste Kamer: the dates and the name its rows carry, and the
+ * site itself, not the page of the first row (#82).
+ */
+export const ekListSource = <S extends { url?: string | null }>(
+	row: S
+): Omit<S, 'url'> & { url: string } => ({
+	...row,
+	url: EK_SOURCE.url
+});

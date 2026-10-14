@@ -2,6 +2,8 @@
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { count, plural } from '$lib/text/words';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
+	import ToezeggingInhoud from '$lib/components/open/ToezeggingInhoud.svelte';
+	import { inhoudVan, stemmingInhoud } from '$lib/components/open/rij-inhoud';
 	import StukUitslag from '$lib/components/parliamentary/StukUitslag.svelte';
 	import { stukUitslag } from '$lib/components/parliamentary/stuk-uitslag';
 	import { lijstDoel } from '$lib/stores/sprong';
@@ -84,6 +86,7 @@
 	import {
 		CHAMBER_OPTIONS,
 		EK_SOURCE,
+		ekListSource,
 		chamberFromParam,
 		type Chamber
 	} from '$lib/components/parliamentary/chamber';
@@ -480,8 +483,12 @@
 	let echrTotal = $state<number | null>(null);
 	/** The facets of the list asked apart from its first page, still on their way. */
 	let facettenLaden = $state(false);
-	/** Why they did not come: the filters say so instead of standing empty. */
+	/**
+	 * Why they did not come: the filters say so, without the counts of the filters before
+	 * (#80), and ask again.
+	 */
 	let facettenFout = $state<unknown>(null);
+	let facettenOpnieuw = $state<() => void>(() => {});
 	/**
 	 * The facets of a first page asked on their own, beside it (one row, the same filters):
 	 * counting them can take seconds, and the list does not wait for it (Thijs, 10 Oct: lazy).
@@ -489,6 +496,7 @@
 	const facettenApart: FacetsApart = (vraag, zet, signal) => {
 		facettenLaden = true;
 		facettenFout = null;
+		facettenOpnieuw = () => facettenApart(vraag, zet, signal);
 		vraag()
 			.then((r) => {
 				if (!signal.aborted) zet(r);
@@ -1125,7 +1133,8 @@
 	});
 
 	// The Eerste Kamer's composition as read from its site: the day of the composition shown,
-	// and the first read, before which nothing is known. Each row carries the same source.
+	// and the first read, before which nothing is known. Each row carries the same source,
+	// with the page of that row; the list links the site (ekListSource).
 	const composition = $derived.by(() => {
 		if (!ekComposition) return null;
 		const source =
@@ -1134,7 +1143,7 @@
 				: category === 'committees'
 					? committeesShown?.[0]?.source
 					: membersShown?.[0]?.ek?.source;
-		return source ?? null;
+		return source ? ekListSource(source) : null;
 	});
 
 	const totalSeats = $derived(factionsShown?.reduce((sum, f) => sum + (f.seats ?? 0), 0) ?? 0);
@@ -2190,9 +2199,15 @@
 						<IndexFacets
 							groups={facetten}
 							pending={(!pages[category] && !error) || facettenLaden}
+							stale={facettenFout !== null}
 						/>
 						{#if facettenFout}
-							<LoadState state={{ status: 'error', error: facettenFout }} what="De verfijning" />
+							<LoadState
+								state={{ status: 'error', error: facettenFout }}
+								what="De tellingen"
+								plural
+								retry={facettenOpnieuw}
+							/>
 						{/if}
 						{#if chips.length}
 							<p class="wis"><TekstLink onclick={clearFilters}>Wis alle filters</TekstLink></p>
@@ -2238,8 +2253,8 @@
 									bron={seats.chamber === 'EK'
 										? composition
 											? {
-													label: composition.attribution ?? 'eerstekamer.nl',
-													href: composition.url ?? ''
+													label: composition.attribution,
+													href: composition.url
 												}
 											: null
 										: seats.seating_plan
@@ -2716,13 +2731,15 @@
 												<!-- The Eerste Kamer's decisions carry no kind yet: their dossier leads. -->
 												{@const kindLabel =
 													s.kind ?? (s.chamber === 'EK' ? null : NO_DECISION_KIND)}
+												{@const inhoud = stemmingInhoud(s.key, s.tally)}
 												<IndexRow
 													{bron}
 													dossier={s.dossiers?.[0]?.number ?? s.dossier_numbers?.[0]}
 													title={stemmingNaam(s.subject, s.dossiers?.[0] ?? s.dossier_numbers?.[0])}
 													cite={voteCitation(s)}
 													href={hrefOf(bron)}
-													acties
+													open={openId === bron}
+													onToggle={inhoudVan(inhoud) ? () => toggleOpen(bron) : undefined}
 												>
 													{#snippet lead()}
 														{#if !day.date || kindLabel}
@@ -2780,6 +2797,9 @@
 																{decisionOutcome(s)}
 															</span>
 														{/if}
+													{/snippet}
+													{#snippet detail()}
+														<RijInhoud item={inhoud} />
 													{/snippet}
 												</IndexRow>
 											{/each}
@@ -2917,7 +2937,8 @@
 												{bron}
 												title={t.text ?? 'Toezegging zonder tekst'}
 												href={hrefOf(bron)}
-												acties
+												open={openId === bron}
+												onToggle={() => toggleOpen(bron)}
 											>
 												{#snippet lead()}
 													<span class="row-id-main"><Waarde value={korteDatum(t.date)} /></span>
@@ -2946,6 +2967,9 @@
 															{korteDatum(t.expected_resolution)}</span
 														>
 													{/if}
+												{/snippet}
+												{#snippet detail()}
+													<ToezeggingInhoud toezegging={t} />
 												{/snippet}
 											</IndexRow>
 										{/each}

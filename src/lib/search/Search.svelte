@@ -35,6 +35,7 @@
 		type Citation,
 		type Resolved
 	} from './resolve-query';
+	import { EarlyEnter } from './enter.svelte';
 
 	type Hit = Schema<'SearchResultItem'>;
 
@@ -163,6 +164,8 @@
 		new Set(lanenBezig.filter((l) => l.stand === 'laden' && l.laden).flatMap((l) => l.kinds))
 	);
 	let resolving = $state(false);
+	/** The query whose bare article ("6:162 BW") the API is still asked to confirm. */
+	let confirming = $state('');
 	/** A citation the API did not confirm: its row is gone and the results stay. */
 	let unresolved = $state('');
 	/** "55 Gw" typed without "art.", which the API confirmed as an article. */
@@ -209,7 +212,10 @@
 	);
 	/** Every answer to this query is in: the first request and every lane. */
 	const allesBinnen = $derived(
-		answered === q && !loading && lanen.every((l) => laanStand[l.id] !== 'laden')
+		answered === q &&
+			!loading &&
+			confirming !== q &&
+			lanen.every((l) => laanStand[l.id] !== 'laden')
 	);
 	/**
 	 * The one hit above the groups (besteTreffer), out of its own group. Only once every answer
@@ -302,11 +308,15 @@
 			// Beside the words, the article they may cite: shown only once the API has it.
 			if (written) {
 				// A failure leaves the row out: the words are searched all the same.
+				confirming = term;
 				resolveQuery(written)
 					.then((target) => {
 						if (!controller.signal.aborted && target) confirmed = { term, target };
 					})
-					.catch((e) => report('Zoeken', e));
+					.catch((e) => report('Zoeken', e))
+					.finally(() => {
+						if (confirming === term) confirming = '';
+					});
 			}
 			// The hits and what the query cites (BE-16), with the fast kinds: "AVG" has its law
 			// the moment its hits are there, so Enter cannot open a hit before the law is known.
@@ -496,22 +506,36 @@
 		open(hitName(hit));
 	}
 
+	/** What Enter opens now, the active row; false where there is nothing to open yet. */
+	function enter(): boolean {
+		if (active < keuzes.length) openBare(keuzes[active]);
+		else if (citation && active === 0) openCitation().catch((e) => report('Zoeken', e));
+		else if (bare && active === 0) openBare(bare);
+		// A hit opens only when the list answers what is typed.
+		else if (answered === q && hits[active - offset]) openHit(hits[active - offset]);
+		else return false;
+		return true;
+	}
+
+	// An Enter before the answer waits for it (#79): the article the moment the API confirms
+	// it, else the first row once every answer is in and the Beste treffer stands above.
+	const earlyEnter = new EarlyEnter(enter);
+	$effect(() => earlyEnter.answer(q, bare !== null || allesBinnen));
+
 	function onkeydown(e: KeyboardEvent) {
 		if (e.key === 'ArrowDown' && rowCount > 0) {
 			e.preventDefault();
+			earlyEnter.forget();
 			active = moved ? Math.min(active + 1, rowCount - 1) : active;
 			moved = true;
 		} else if (e.key === 'ArrowUp' && rowCount > 0) {
 			e.preventDefault();
+			earlyEnter.forget();
 			active = Math.max(active - 1, 0);
 			moved = true;
 		} else if (e.key === 'Enter') {
 			e.preventDefault();
-			if (active < keuzes.length) openBare(keuzes[active]);
-			else if (citation && active === 0) openCitation().catch((e) => report('Zoeken', e));
-			else if (bare && active === 0) openBare(bare);
-			// A hit opens only when the list answers what is typed.
-			else if (answered === q && hits[active - offset]) openHit(hits[active - offset]);
+			earlyEnter.press(q);
 		} else if (e.key === 'Escape' && !overlay && query) {
 			query = '';
 		}

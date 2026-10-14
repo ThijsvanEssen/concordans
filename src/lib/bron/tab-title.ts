@@ -9,16 +9,40 @@ import { langeDatum } from '$lib/text/datum';
 import { menselijkeNaam } from './menselijk';
 import { dossierName, dossierUitProps } from './dossier-naam';
 import { chamberName } from '$lib/components/parliamentary/chamber';
+import { kamerstukLabel } from '$lib/components/parliamentary/kamerstuk';
 
 const MAX = 80;
 
 /** A name cut at a word within `MAX` characters. */
 export const cut = (name: string): string => truncate(name, MAX, { atWord: true });
 
-export function tabTitle(
-	node: Pick<GraphNode, 'collection' | 'label'> & { raw?: Pick<BaseNode, 'display_name' | 'props'> }
-): string {
+type TitledNode = Pick<GraphNode, 'collection' | 'label'> & {
+	raw?: Pick<BaseNode, 'display_name' | 'props'>;
+};
+
+/**
+ * A Kamerstuk by its kind, title and place as a citation writes it: `Brief regering:
+ * Werkprogramma AWTI 2025 (36600 VIII, nr. 5)`, not the data's `36600-VIII-5` (#84). Null for
+ * a paper that is no Kamerstuk.
+ */
+export function documentTitle(node: TitledNode): string | null {
+	if (node.collection !== 'documents') return null;
 	const props = node.raw?.props ?? {};
+	const place = kamerstukLabel({
+		chamber: textOf(props.chamber),
+		dossier_number: textOf(props.dossier_number),
+		dossier_suffix: textOf(props.dossier_suffix),
+		number: textOf(props.sequence != null ? String(props.sequence) : props.number)
+	});
+	if (!place) return null;
+	const name = [textOf(props.kind), textOf(props.title)].filter(Boolean).join(': ');
+	return cut(name ? `${name} (${place})` : place);
+}
+
+export function tabTitle(node: TitledNode): string {
+	const props = node.raw?.props ?? {};
+	const document = documentTitle(node);
+	if (document) return document;
 	if (node.collection === 'judgments') {
 		const names = Array.isArray(props.names)
 			? props.names.filter((n) => typeof n === 'string')

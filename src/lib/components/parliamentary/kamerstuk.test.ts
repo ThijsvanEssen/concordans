@@ -73,6 +73,20 @@ describe('kamerstukName', () => {
 		);
 	});
 
+	it('writes a suffix the data joins with a hyphen as a citation does (#84)', () => {
+		expect(kamerstukName({ dossier_number: '36600-VIII', number: 183 })).toBe(
+			'Kamerstuk 36600 VIII, nr. 183'
+		);
+		expect(kamerstukName({ chamber: 'EK', dossier_number: '36600-VIII', number: 'AC' })).toBe(
+			'Kamerstuk I 36600 VIII, AC'
+		);
+		expect(kamerstukLabel({ dossier_number: '23908-(R1519)', number: 2 })).toBe(
+			'23908 (R1519), nr. 2'
+		);
+		// A dossier numbered with a digit after its hyphen is cited so.
+		expect(kamerstukLabel({ dossier_number: '21501-20', number: 2120 })).toBe('21501-20, nr. 2120');
+	});
+
 	it('names the dossier alone without a number, and nothing without a dossier', () => {
 		expect(kamerstukName({ dossier_number: '36764', number: null })).toBe('Kamerstuk 36764');
 		expect(kamerstukName({ chamber: 'EK', dossier_number: '36764' })).toBe('Kamerstuk I 36764');

@@ -1,7 +1,8 @@
 // A list whose facets are counted apart from its rows: the first page asks the facets in a
 // request of its own (one row, the same filters), beside the rows, which never wait for them
-// (Thijs, 10 Oct: lazy). A later page asks only the rows.
-import { api, unwrap } from '$lib/api/client';
+// (Thijs, 10 Oct: lazy). A later page asks only the rows. Counting takes the time of a search
+// (zoekApi, 30 s): cold, a period took 20 s (#80).
+import { api, unwrap, zoekApi } from '$lib/api/client';
 import type { paths } from '$lib/api/generated/openapi-types';
 
 /** The lists that count their facets on request (`facets=true`). */
@@ -38,7 +39,12 @@ const getList = <P extends FacetedPath>(
 ): Promise<ListPage<P>> =>
 	// One call for five paths: openapi-fetch types a call per path, not per union of them.
 	unwrap(
-		(api.GET as (p: P, init: object) => Promise<{ data?: ListPage<P>; response: Response }>)(path, {
+		(
+			(query.facets ? zoekApi : api).GET as (
+				p: P,
+				init: object
+			) => Promise<{ data?: ListPage<P>; response: Response }>
+		)(path, {
 			params: { query },
 			signal
 		})

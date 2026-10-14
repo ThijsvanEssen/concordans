@@ -127,13 +127,19 @@ function documentName(
 	const shortKind = kind ? withoutGroup(kind) : null;
 	const title = textOf(props.title) ? withoutKamerstuk(textOf(props.title)!) : null;
 	const dossier = dossierNumberOf(props);
-	const sequence = textOf(props.sequence != null ? String(props.sequence) : null);
-	// The Eerste Kamer numbers its papers with a letter (`C`, `AB`), without `nr.`.
-	const letter = sequence ? null : textOf(props.number);
+	const given = textOf(props.sequence != null ? String(props.sequence) : null);
+	// The Eerste Kamer numbers its papers with a letter (`C`, `AB`), without `nr.`; the data
+	// gives it as the number, or as the sequence.
+	const sequence = given && /^\d/.test(given) ? given : null;
+	const letter = sequence ? null : (given ?? textOf(props.number));
 	const chamber = props.chamber === 'EK' || letter ? 'EK' : 'TK';
 	const stuk =
-		kamerstukName({ chamber, dossier_number: dossier, number: sequence ?? letter }) ??
-		(sequence ? `nr. ${sequence}` : letter);
+		kamerstukName({
+			chamber,
+			dossier_number: dossier,
+			dossier_suffix: textOf(props.dossier_suffix),
+			number: sequence ?? letter
+		}) ?? (sequence ? `nr. ${sequence}` : letter);
 	if (!kind && !title) return { title: name, context: null };
 	// The dossier's name on the line under it (API 0.79.30), where the title does not carry
 	// it already: the number in the title is how a Kamerstuk is cited.

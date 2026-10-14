@@ -31,7 +31,7 @@
 	import { daysBetween, isDay, korteDatum, langeDatum, maandNaam, vandaag } from '$lib/text/datum';
 	import { download } from '$lib/verbonden/export';
 	import { lees, uitParams, vindIndex } from '$lib/onderwerpen/onderwerpen';
-	import { dossierName } from '$lib/bron/dossier-naam';
+	import { dossierLabel, dossierName } from '$lib/bron/dossier-naam';
 	import { getDecisionDocument } from '$lib/api/records';
 	import { besluiten, geteld, telling } from '$lib/api/decisions';
 	import { getAmendementen } from '$lib/components/parliamentary/amendementen';
@@ -1445,7 +1445,7 @@
 										<div class="rij__tekst">
 											<span class="rij__soort"
 												>{SOORT_LABEL[i.kind] ?? i.kind}{i.dossier?.number
-													? `, ${i.dossier.number}${i.dossier.title ? ` ${i.dossier.title}` : ''}`
+													? `, ${dossierLabel(i.dossier)}`
 													: ''}</span
 											>
 											<a class="rij__titel" href={feedHref(i)}>{i.title}</a>

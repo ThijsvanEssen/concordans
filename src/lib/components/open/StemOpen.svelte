@@ -4,7 +4,7 @@
 	// #20). The reader stays one step further: Lees verder.
 	import { getDecision } from '$lib/api/records';
 	import RijInhoud from './RijInhoud.svelte';
-	import type { MetInhoud } from './rij-inhoud';
+	import { stemmingInhoud, type MetInhoud } from './rij-inhoud';
 
 	let { decisionKey }: { decisionKey: string } = $props();
 
@@ -18,12 +18,7 @@
 		getDecision(key)
 			.then((d) => {
 				if (stale) return;
-				item = {
-					kind: 'stemming',
-					node: { collection: 'decisions', key },
-					summary: null,
-					vote: { tally: d.tally ?? {} }
-				} as MetInhoud;
+				item = stemmingInhoud(key, d.tally);
 			})
 			.catch(() => {
 				if (!stale) mislukt = true;
