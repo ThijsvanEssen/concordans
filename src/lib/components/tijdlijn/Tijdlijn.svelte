@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bewaarItem } from '$lib/map/map';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import CoalitieRegel from '$lib/components/parliamentary/CoalitieRegel.svelte';
 	// De gedeelde tijdlijn, het ene patroon voor een reeks met datums. Datum links in een vaste
@@ -19,7 +20,7 @@
 	import { openHref } from '$lib/bron/href';
 	import { terPlekke } from '$lib/actions/klik';
 	import { onControl } from '$lib/actions/outside';
-	import { bronLabel, parseNodeId } from '$lib/vocabulary';
+	import { parseNodeId } from '$lib/vocabulary';
 	// Het teken op de lijn is het bronteken zelf, uit dezelfde tabel als KindGlyph en het
 	// canvas (vormen.ts); de uitkomst zit in vulling en kleur. Geen teken van zichzelf.
 	const vormVan = (r: TijdRegel) =>
@@ -81,9 +82,7 @@
 	const bewaarVan = (r: TijdRegel) => {
 		const id = r.bron ?? (typeof r.ref === 'string' ? r.ref : null);
 		const doel = id ? parseNodeId(id) : null;
-		return id && doel
-			? { id, at: '', kort: r.zin, voluit: r.zin, groep: bronLabel(doel.collection) }
-			: null;
+		return id && doel ? bewaarItem(id, { kort: r.zin, voluit: r.zin }) : null;
 	};
 	const bronVan = (r: TijdRegel) =>
 		r.href ?? (r.ref ? openHref(r.ref, { hasText: r.heeftTekst }) : null);

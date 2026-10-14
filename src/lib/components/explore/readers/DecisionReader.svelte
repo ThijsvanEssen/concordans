@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bewaarItem } from '$lib/map/map';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import { getDecision, getDecisionDocument, getParliamentSeats } from '$lib/api/records';
 	import { coalitieRegel, coalitieVan } from '$lib/components/parliamentary/coalitie';
@@ -173,13 +174,14 @@
 				collection="decisions"
 				title={d.subject ?? doc?.title ?? 'Onderwerp niet in de gegevens'}
 				acties={{
-					bewaar: {
-						id: node.id,
-						at: '',
-						kort: `Stemming${d.date ? ` ${formatLongDate(d.date)}` : ''}: ${onderwerp}`,
-						voluit: `Stemming ${chamberName(chamber)}${d.date ? `, ${formatLongDate(d.date)}` : ''}: ${onderwerp}`,
-						groep: eigen[0] ? `Kamerstukken ${eigen[0].number}` : 'Stemmingen'
-					}
+					bewaar: bewaarItem(
+						node.id,
+						{
+							kort: `Stemming${d.date ? ` ${formatLongDate(d.date)}` : ''}: ${onderwerp}`,
+							voluit: `Stemming ${chamberName(chamber)}${d.date ? `, ${formatLongDate(d.date)}` : ''}: ${onderwerp}`
+						},
+						{ dossier: eigen[0]?.number }
+					)
 				}}
 			>
 				{#snippet soort()}

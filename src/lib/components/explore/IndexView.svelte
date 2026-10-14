@@ -2552,6 +2552,7 @@
 											{@const bron = `instruments/${w.key}`}
 											<IndexRow
 												{bron}
+												wet={w.bwb_id ?? w.celex}
 												title={w.citation_title ??
 													w.short_title ??
 													w.title ??
@@ -2852,6 +2853,7 @@
 													s.kind ?? (s.chamber === 'EK' ? null : NO_DECISION_KIND)}
 												<IndexRow
 													{bron}
+													dossier={s.dossiers?.[0]?.number ?? s.dossier_numbers?.[0]}
 													title={stemmingNaam(s.subject, s.dossiers?.[0] ?? s.dossier_numbers?.[0])}
 													href={hrefOf(bron)}
 													acties
@@ -2991,6 +2993,7 @@
 											     Actueel, Verbonden and Gemarkeerd; the stuk one step further. -->
 											<IndexRow
 												{bron}
+												dossier={doc.dossier_numbers?.[0]}
 												title={doc.title ?? doc.kind ?? naamVan('documents', doc)}
 												href={hrefOf(bron)}
 												open={openId === bron}

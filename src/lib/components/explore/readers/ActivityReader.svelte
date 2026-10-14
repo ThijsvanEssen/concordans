@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bewaarItem } from '$lib/map/map';
 	import { opsomming } from '$lib/text/opsomming';
 	import ReaderHead from './ReaderHead.svelte';
 	// Reader for an activity: a debate, a wetgevingsoverleg, a procedurevergadering. The head
@@ -77,13 +78,14 @@
 			collection="activities"
 			title={titel}
 			acties={{
-				bewaar: {
-					id: node.id,
-					at: '',
-					kort: titel,
-					voluit: [kind, date ? formatLongDate(date) : null, titel].filter(Boolean).join(', '),
-					groep: kind ?? bronLabel('activities')
-				}
+				bewaar: bewaarItem(
+					node.id,
+					{
+						kort: titel,
+						voluit: [kind, date ? formatLongDate(date) : null, titel].filter(Boolean).join(', ')
+					},
+					{ groep: kind }
+				)
 			}}
 		>
 			{#snippet soort()}

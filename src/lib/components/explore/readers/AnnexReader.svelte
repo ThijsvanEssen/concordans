@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
 	import { page } from '$app/state';
 	import { permalink } from '$lib/bron/anchor';
@@ -86,13 +87,11 @@
 				collection="annexes"
 				title={titel}
 				acties={{
-					bewaar: {
-						id: node.id,
-						at: '',
-						kort,
-						voluit: a.title ? `${kort}: ${a.title}` : kort,
-						groep: a.bwb_id ? lawName(a.bwb_id) : kort
-					},
+					bewaar: bewaarItem(
+						node.id,
+						{ kort, voluit: a.title ? `${kort}: ${a.title}` : kort },
+						{ groep: a.bwb_id ? lawName(a.bwb_id) : kort }
+					),
 					cite: citeItems(
 						{ kort, voluit: a.title ? `${kort}: ${a.title}` : kort },
 						permalink(page.url, '')

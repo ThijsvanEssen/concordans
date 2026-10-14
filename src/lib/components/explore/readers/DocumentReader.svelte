@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bewaarItem } from '$lib/map/map';
 	import { eigenSoort, naamVan } from '$lib/bron/menselijk';
 	import { getDocument } from '$lib/api/records';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
@@ -34,7 +35,6 @@
 	import { getNodeFirst } from '$lib/api/records';
 	import type { NodeGraph } from '$lib/api/nodes';
 	import { kamerstukCitation } from '$lib/components/parliamentary/kamerstuk';
-	import { dossierLabel } from '$lib/bron/dossier-naam';
 	import { ensureInstrumentName, instrumentMetaStore } from '$lib/api/instrument-cache';
 
 	let {
@@ -318,15 +318,11 @@
 				collection="documents"
 				title={doc.title ?? naamVan('documents', doc)}
 				acties={{
-					bewaar: {
-						id: `documents/${doc.key}`,
-						at: '',
-						kort: naam,
-						voluit: cite && kind ? `${cite} (${kind})` : naam,
-						groep: doc.dossier_numbers?.[0]
-							? dossierLabel({ number: doc.dossier_numbers[0] })
-							: naam
-					},
+					bewaar: bewaarItem(
+						`documents/${doc.key}`,
+						{ kort: naam, voluit: cite && kind ? `${cite} (${kind})` : naam },
+						doc.dossier_numbers?.[0] ? { dossier: doc.dossier_numbers[0] } : { groep: naam }
+					),
 					cite: cite
 						? citeItems(
 								{ kort: cite, voluit: doc.title ? `${cite}, ${doc.title}` : cite },

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
 	// De kop van een bewindspersoon. Wie en wat in één
 	// zin; dan drie ingangen met aantallen, zodat duidelijk is waar te beginnen.
@@ -47,15 +48,12 @@
 	collection="members"
 	title={m.name ?? naamVan('members', m)}
 	acties={{
-		bewaar: {
-			id,
-			at: '',
+		bewaar: bewaarItem(id, {
 			kort: m.name ?? naamVan('members', m),
 			voluit: partij
 				? `${m.name ?? naamVan('members', m)} (${partij})`
-				: (m.name ?? naamVan('members', m)),
-			groep: 'Bewindspersonen'
-		}
+				: (m.name ?? naamVan('members', m))
+		})
 	}}
 >
 	{#snippet soort()}

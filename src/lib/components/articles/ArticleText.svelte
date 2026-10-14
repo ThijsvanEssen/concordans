@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bewaarItem } from '$lib/map/map';
 	// The text of an article as its aanhef, leden and onderdelen. Every part has an
 	// anchor, so a reference can point at it and the address can be shared. Nothing stands
 	// beside the text: a place's own marker ("1.", "a.") is its menu (PlaatsMenu), and so is
@@ -74,7 +75,7 @@
 		/** The mark after an onderdeel's letter or number: `a.` in Dutch law, `a)` in EU law. */
 		mark?: '.' | ')';
 		/** The article as Gemarkeerd keeps it: its id and its law; each lid then has Bewaar. */
-		bewaar?: { id: string; groep: string } | null;
+		bewaar?: { id: string; groep: string; wet: string | null } | null;
 		/** A place marked as kept, whatever the active map (Gemarkeerd shows its own items). */
 		gemarkeerd?: string | null;
 		/** Only the lid or onderdeel at this anchor, and what it holds; all where none matches. */
@@ -306,13 +307,11 @@
 			: []}
 		tekst={() => fullText(p)}
 		bewaar={bewaar && forms
-			? {
-					id: bewaar.id,
-					at: p?.id ?? '',
-					kort: forms.kort,
-					voluit: forms.voluit,
-					groep: bewaar.groep
-				}
+			? bewaarItem(
+					bewaar.id,
+					{ at: p?.id, kort: forms.kort, voluit: forms.voluit },
+					{ groep: bewaar.groep, wet: bewaar.wet }
+				)
 			: null}
 		verbindingen={lid && count != null && lidHref
 			? { n: count, href: lidHref(lid) }

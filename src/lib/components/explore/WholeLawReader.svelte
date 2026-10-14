@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bewaarItem } from '$lib/map/map';
 	import { naamVanId } from '$lib/bron/menselijk';
 	import { vandaag } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
@@ -617,13 +618,11 @@
 			collection="instruments"
 			title={naam}
 			acties={{
-				bewaar: {
-					id: `instruments/${(bwbId ?? naam).toLowerCase()}`,
-					at: '',
-					kort: naam,
-					voluit: fullTitle ?? naam,
-					groep: naam
-				},
+				bewaar: bewaarItem(
+					`instruments/${(bwbId ?? naam).toLowerCase()}`,
+					{ kort: naam, voluit: fullTitle ?? naam },
+					{ groep: naam, wet: bwbId }
+				),
 				cite: citeItems({ kort: naam, voluit: fullTitle ?? lawName }, permalink(page.url, '')),
 				naam,
 				bron: officialUrl
