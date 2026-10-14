@@ -12,6 +12,7 @@ import {
 	onderdeelMark,
 	parseArticleParts,
 	partsFromApi,
+	partsOf,
 	partText,
 	walkParts
 } from './article-parts';
@@ -168,6 +169,36 @@ describe('partsFromApi with the text', () => {
 		expect(text.slice(dash.textStart, dash.textEnd).trim()).toBe('netwerk:');
 		// The term the dash defines comes with it; its a. and b. define none.
 		expect([dash.term, ...dash.children.map((p) => p.term)]).toEqual(['netwerk', null, null]);
+	});
+});
+
+describe('partsOf with the parts of the API', () => {
+	// BW 6:177 as the API gives it: each part starts after its number ("1. ", "b. ").
+	const text =
+		'1. De exploitant is aansprakelijk door:\na. uitstroming;\nb. beweging van de bodem.';
+	const at = (s: string) => text.indexOf(s);
+	const parts = partsOf(text, [
+		{ id: 'lid-1', kind: 'lid', number: '1', start: 3, end: text.length },
+		{ id: 'lid-1-aanhef', kind: 'aanhef', number: null, start: 3, end: at('\na.') },
+		{
+			id: 'lid-1-onder-a',
+			kind: 'onderdeel',
+			number: 'a',
+			start: at('uitstroming'),
+			end: at('\nb.')
+		},
+		{ id: 'lid-1-onder-b', kind: 'onderdeel', number: 'b', start: at('beweging'), end: text.length }
+	]);
+
+	it('cites a part with its number in front, as the source prints it', () => {
+		expect(partText(text, parts, 'lid-1-onder-b')).toBe('b. beweging van de bodem.');
+		expect(partText(text, parts, 'lid-1')).toBe(text);
+		expect(partText(text, parts, 'lid-1-aanhef')).toBe('De exploitant is aansprakelijk door:');
+	});
+
+	it('keeps the own text of a part after its number', () => {
+		const b = parts[0].children[2];
+		expect(text.slice(b.textStart, b.textEnd)).toBe('beweging van de bodem.');
 	});
 });
 
