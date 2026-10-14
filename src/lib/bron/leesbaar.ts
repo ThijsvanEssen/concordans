@@ -69,8 +69,8 @@ const BWB = /^BWBR\d{7}$/i;
 const CELEX = /^3\d{4}[CDFLR]\d+$/i;
 /** A key or slug as the API gives it: `rutte_iv`, `ek_democraten_1966`, `buhaos-2021`. */
 const SLEUTEL = /^[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
-/** The number of a toezegging: `TZ202609-124`. */
-const TOEZEGGING = /^TZ\d+-\d+$/i;
+/** The number of a toezegging: `TZ202609-124` (COMMITMENT_NUMBER in the API). */
+const TOEZEGGING = /^TZ\d{6}-\d{1,5}$/i;
 /** The number of a zaak: `2025Z15468`. */
 const ZAAK = /^\d{4}Z\d+$/i;
 /** The number of an activiteit of the Tweede Kamer: `2026A01323`. */
@@ -161,10 +161,20 @@ export function padHref(pad: Pad): string {
 	}
 }
 
-/** A judgment's node key from its ECLI, and back: `ecli_nl_hr_2019_2006`. */
-const ecliKey = (ecli: string) => ecli.toLowerCase().replaceAll(':', '_');
+/**
+ * A judgment's node key from its ECLI, as the API makes it (`make_node_key`): every run of
+ * other characters one underscore, `ecli_nl_hr_2019_2006`, and the dot too:
+ * `ECLI:BE:CASS:2019:ARR.20190101.1` is `ecli_be_cass_2019_arr_20190101_1`.
+ */
+const ecliKey = (ecli: string) =>
+	ecli
+		.toLowerCase()
+		.replace(/[^a-z0-9_]+/g, '_')
+		.replace(/_{2,}/g, '_')
+		.replace(/^_+|_+$/g, '');
+/** The ECLI back from a key; null where a dot made the key ambiguous (the props have it). */
 export const keyEcli = (key: string) =>
-	/^ecli_[a-z]{2}_[a-z0-9]+_\d{4}_[a-z0-9.]+$/.test(key)
+	/^ecli_[a-z]{2}_[a-z0-9]+_\d{4}_[a-z0-9]+$/.test(key)
 		? key.toUpperCase().replaceAll('_', ':')
 		: null;
 
