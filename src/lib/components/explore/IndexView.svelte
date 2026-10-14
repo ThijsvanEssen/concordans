@@ -589,7 +589,9 @@
 								? (f.facets?.source?.find((x) => x.value === 'echr')?.count ?? 0)
 								: null;
 					},
-					(r, offset) => (pages.judgments = toPage(pages.judgments, r.items, offset, r.total))
+					(r, offset) => {
+						pages.judgments = toPage(pages.judgments, r.items, offset, r.total);
+					}
 				);
 			}
 			case 'dossiers': {
@@ -617,7 +619,9 @@
 					query,
 					facettenApart,
 					(f) => (dossierFacets = f.facets ?? null),
-					(r, offset) => (pages.dossiers = toPage(pages.dossiers, r.items, offset, r.total))
+					(r, offset) => {
+						pages.dossiers = toPage(pages.dossiers, r.items, offset, r.total);
+					}
 				);
 			}
 			case 'committees': {
@@ -763,8 +767,9 @@
 					query,
 					facettenApart,
 					(f) => (documentKinds = facetMap(f.facets?.kind)),
-					(r, offset) =>
-						(pages.documents = toPage(pages.documents, r.items, offset, r.total ?? undefined))
+					(r, offset) => {
+						pages.documents = toPage(pages.documents, r.items, offset, r.total ?? undefined);
+					}
 				);
 			}
 			case 'commitments': {
@@ -794,7 +799,9 @@
 								x.value ? [[x.value, x.count] as const] : []
 							)
 						)),
-					(r, offset) => (pages.commitments = toPage(pages.commitments, r.items, offset, r.total))
+					(r, offset) => {
+						pages.commitments = toPage(pages.commitments, r.items, offset, r.total);
+					}
 				);
 			}
 		}
