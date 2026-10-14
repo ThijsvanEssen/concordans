@@ -4,6 +4,7 @@
 // source value: Concordans keeps the coding, counts it and exports it, and shows the dictum as
 // the sentence it rests on. Stored in this browser only (no account, no server), and as a file
 // to share.
+import { truncate } from '$lib/text/words';
 
 export type Strekking = 'bevorderend' | 'beperkend' | 'neutraal';
 export const STREKKINGEN: readonly Strekking[] = ['bevorderend', 'beperkend', 'neutraal'];
@@ -86,7 +87,7 @@ export function dictumUit(tekst: string | null | undefined): string | null {
 	const rest = t.slice(begin.index);
 	const eind = /,?\s*en gaat over tot de orde van de dag/i.exec(rest);
 	const zin = (eind ? rest.slice(0, eind.index) : rest).trim().replace(/[,;]$/, '');
-	return zin ? (zin.length > 600 ? `${zin.slice(0, 597).trimEnd()}…` : zin) : null;
+	return zin ? truncate(zin, 600) : null;
 }
 
 const veld = (v: string) => (/[",;\n]/.test(v) ? `"${v.replaceAll('"', '""')}"` : v);

@@ -1,9 +1,10 @@
 <script lang="ts">
+	import { separatorBefore } from '$lib/text/words';
 	// The chain of an amended amendment or motion in the status line of its reader, in the
 	// source's own words: "Vervangt nr. 10.", "Vervangen door nr. 47." Each number is a BronLink,
 	// so it opens in place (vervanging.ts).
 	import BronLink from '$lib/bron/BronLink.svelte';
-	import { nrWoord, tussen, type Zin } from './vervanging';
+	import { nrWoord, type Zin } from './vervanging';
 
 	let { zinnen }: { zinnen: Zin[] } = $props();
 </script>
@@ -11,7 +12,7 @@
 {#each zinnen as z (z.woord)}<span class="vervanging"
 		>{z.woord}
 		{nrWoord(z.nrs)}
-		{#each z.nrs as n, i (n.key)}{tussen(i, z.nrs.length)}<BronLink
+		{#each z.nrs as n, i (n.key)}{separatorBefore(i, z.nrs.length)}<BronLink
 				ref={{ collection: 'documents', key: n.key }}>{n.nummer}</BronLink
 			>{/each}.</span
 	>

@@ -7,7 +7,6 @@ import {
 	filterParams,
 	hiddenByKind,
 	kindCount,
-	seatCount,
 	parseFilter,
 	rechterOf,
 	rowPasses,
@@ -256,12 +255,10 @@ describe('the panel under the filter', () => {
 	});
 });
 
-describe('kindCount and seatCount', () => {
+describe('kindCount', () => {
 	it('put the noun in the number of the count', () => {
 		expect(kindCount(1, 'wetten')).toBe('1 wet');
 		expect(kindCount(3, 'artikelen')).toBe('3 artikelen');
 		expect(kindCount(1_064, 'uitspraken')).toBe('1.064 uitspraken');
-		expect(seatCount(1)).toBe('1 zetel');
-		expect(seatCount(22)).toBe('22 zetels');
 	});
 });

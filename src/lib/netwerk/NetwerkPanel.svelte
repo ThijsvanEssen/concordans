@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { count } from '$lib/text/words';
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import CanvasKaart from '$lib/components/graph/CanvasKaart.svelte';
@@ -161,7 +162,7 @@
 	<CanvasKaart titel="Netwerk" klasse="netwerk" {open} onToggle={() => zetOpen(!open)}>
 		{#snippet samenvatting()}
 			{#if loading}<span class="laden">laden</span>{:else if !open && entries.length > 0}<span
-					class="aantal">{entries.length} {entries.length === 1 ? 'bron' : 'bronnen'}</span
+					class="aantal">{count(entries.length, 'bron', 'bronnen')}</span
 				>{/if}
 		{/snippet}
 		{#snippet actie()}
@@ -282,7 +283,7 @@
 					on={tussen}
 					onToggle={onTussen}
 					label={tussen
-						? `${joiningCount} ${joiningCount === 1 ? 'bron' : 'bronnen'} ertussen`
+						? `${count(joiningCount, 'bron', 'bronnen')} ertussen`
 						: 'Toon de bronnen ertussen'}
 				/>
 			</p>

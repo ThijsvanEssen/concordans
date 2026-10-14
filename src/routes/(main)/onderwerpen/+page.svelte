@@ -17,11 +17,9 @@
 	import { partyColor } from '$lib/utils/party-color.svelte';
 	import {
 		daysOf,
-		dagVoor,
 		doorzochtVanaf,
 		feedStand,
 		normalizeItem,
-		shortDate,
 		type FeedItem
 	} from '$lib/components/actueel/feed';
 	import {
@@ -47,7 +45,7 @@
 		type Onderwerp
 	} from '$lib/onderwerpen/onderwerpen';
 	import { getInstrumentDetail } from '$lib/api/instrument-cache';
-	import { vandaag } from '$lib/text/datum';
+	import { addDays, korteDatum, vandaag } from '$lib/text/datum';
 	import { getMinistries } from '$lib/components/explore/index/government';
 
 	/** Lines per topic, as the feed gives at most in one page. */
@@ -56,8 +54,6 @@
 	const EERST = 10;
 
 	const today = vandaag();
-	const dagenTerug = (n: number) =>
-		new Date(Date.parse(today) - n * 86_400_000).toISOString().slice(0, 10);
 
 	const gedeeld = $derived<Onderwerp[]>([
 		...uitParams(page.url.searchParams).map((termen) => ({ termen, vorige: null, gezien: null })),
@@ -113,7 +109,7 @@
 		o.wet
 			? { instrument: o.wet.bwb, ...(o.wet.artikel ? { article: o.wet.artikel } : {}) }
 			: { q: o.termen };
-	const recent = dagenTerug(RECENT_DAGEN);
+	const recent = addDays(today, -RECENT_DAGEN);
 	const vanaf = (o: Onderwerp) => vensterVan(o.vorige, recent);
 
 	/** One request per word, at most two at a time (the API's limit per address). */
@@ -153,7 +149,7 @@
 					}
 					// Nothing in the period: the last lines before it, as the API has them.
 					if (!verder && !r.items.length && !doorzochtVanaf(r)) {
-						r = await vraag({ until: dagVoor(vanaf(o)), limit: EERST });
+						r = await vraag({ until: addDays(vanaf(o), -1), limit: EERST });
 						eerder = r.items.length > 0;
 					}
 					for (const raw of r.items) {
@@ -223,14 +219,14 @@
 		if (!s?.doorzocht || verderBezig) return;
 		verderBezig = vak(o);
 		try {
-			await laadAlles([o], ac.signal, { tot: dagVoor(s.doorzocht), items: s.items });
+			await laadAlles([o], ac.signal, { tot: addDays(s.doorzocht, -1), items: s.items });
 		} finally {
 			verderBezig = null;
 		}
 	}
 
 	const periodeVan = (o: Onderwerp) =>
-		vanaf(o) === recent ? `Afgelopen ${RECENT_DAGEN} dagen` : `Sinds ${shortDate(vanaf(o))}`;
+		vanaf(o) === recent ? `Afgelopen ${RECENT_DAGEN} dagen` : `Sinds ${korteDatum(vanaf(o))}`;
 	/** The count beside the topic's heading: `25`, or `25+` where the search stopped short. */
 	function telling(s: Stand | undefined): string | null {
 		if (s?.status !== 'klaar' || s.eerder) return null;
@@ -245,14 +241,14 @@
 		if (s?.eerder)
 			return vanaf(o) === recent
 				? `Eerder dan de afgelopen ${RECENT_DAGEN} dagen`
-				: `Vóór ${shortDate(vanaf(o))}`;
-		if (o.vorige && vanaf(o) === o.vorige) return `Nieuw sinds ${shortDate(o.vorige)}`;
+				: `Vóór ${korteDatum(vanaf(o))}`;
+		if (o.vorige && vanaf(o) === o.vorige) return `Nieuw sinds ${korteDatum(o.vorige)}`;
 		const periode = periodeVan(o);
 		if (s?.status !== 'klaar' || !o.vorige) return periode;
 		const nieuw = s.items.filter((i) => isNieuw(i.date, o.vorige)).length;
 		// Searched only from after the visit before: what is new may be more too.
 		const minNieuw = s.doorzocht && s.doorzocht > o.vorige ? '+' : '';
-		return `${periode}; ${nieuw}${minNieuw} nieuw sinds ${shortDate(o.vorige)}`;
+		return `${periode}; ${nieuw}${minNieuw} nieuw sinds ${korteDatum(o.vorige)}`;
 	}
 
 	/** The topic as an Atom feed: every word as a q of its own, any of them counts; a law. */
@@ -474,7 +470,7 @@
 				{/if}
 				{#if s?.status === 'klaar' && s.doorzocht}
 					<p class="status stil">
-						Doorzocht vanaf {shortDate(s.doorzocht)}.
+						Doorzocht vanaf {korteDatum(s.doorzocht)}.
 						<TekstLink disabled={verderBezig === vak(o)} onclick={() => verderTerug(o)}
 							>{verderBezig === vak(o) ? 'Laden…' : 'Zoek verder terug'}</TekstLink
 						>

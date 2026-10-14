@@ -1,12 +1,12 @@
 // A judgment as a lawyer cites it: the court in its usual short form, the date in full,
 // then the ECLI. HR 19 juli 2019, ECLI:NL:HR:2019:1278; Rb. Den Haag 6 juli 2026, …;
 // Hof Amsterdam 22 september 2026, ….
+import { textOf } from './words';
 import { langeDatum } from './datum';
 import { courtName as nameOfCourt } from './court';
 import { bewaarItem, type MapItem } from '$lib/map/map';
 
 /** `2019-07-19` as `19 juli 2019`; null for anything else. */
-const longDate = (day: string | null | undefined): string | null => langeDatum(day) || null;
 
 /** The place of a rechtbank or gerechtshof from its name: `Rechtbank Den Haag` → `Den Haag`. */
 const placeOf = (name: string | null | undefined, kind: 'Rechtbank' | 'Gerechtshof') =>
@@ -79,7 +79,7 @@ export function conclusieNaam(c: {
 		/procureur-generaal/i.test(c.role ?? '') ? ['procureur-generaal'] : []
 	);
 	if (!wie) return c.ecli.trim().toUpperCase();
-	const wanneer = longDate(c.date);
+	const wanneer = langeDatum(c.date);
 	return wanneer ? `${wie}, ${wanneer}` : wie;
 }
 
@@ -93,7 +93,7 @@ export function judgmentCite(
 	courtName?: string | null,
 	author?: string | null
 ): { short: string; full: string } {
-	const when = longDate(date);
+	const when = langeDatum(date);
 	const who = author ? `${courtCite(ecli, courtName)} ${author}` : courtCite(ecli, courtName);
 	const short = when ? `${who} ${when}` : who;
 	return { short, full: `${short}, ${ecli.trim().toUpperCase()}` };
@@ -136,8 +136,6 @@ export type UitspraakVoorCitaat = {
 	path?: string | null;
 };
 
-const tekstVan = (v: unknown) => (typeof v === 'string' && v ? v : null);
-
 /** The judgment as its heading cites it (HR 19 juli 2019, …), or null without an ECLI. */
 export function uitspraakKop(j: UitspraakVoorCitaat): { short: string; full: string } | null {
 	if (!j.ecli) return null;
@@ -146,7 +144,7 @@ export function uitspraakKop(j: UitspraakVoorCitaat): { short: string; full: str
 		...(j.paragraphs ?? []).filter((p) => p.kind === 'signature').map((p) => p.text),
 		...(j.advocate_general_role ? [j.advocate_general_role] : [])
 	]);
-	return judgmentCite(j.ecli, tekstVan(j.props?.date), tekstVan(j.props?.court), author);
+	return judgmentCite(j.ecli, textOf(j.props?.date), textOf(j.props?.court), author);
 }
 
 /** A judgment as Gemarkeerd groups under it: as its heading cites it, with its names. */

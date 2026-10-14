@@ -4,7 +4,6 @@ import {
 	artikelenGewijzigd,
 	errorPlace,
 	normalizeItem,
-	dagVoor,
 	doorzochtVanaf,
 	countLine,
 	dayLabel,
@@ -222,7 +221,6 @@ describe('doorzochtVanaf', () => {
 		expect(doorzochtVanaf({ partial: true, searched_from: null })).toBeNull();
 		expect(doorzochtVanaf({ partial: false })).toBeNull();
 		expect(doorzochtVanaf({})).toBeNull();
-		expect(dagVoor('2026-03-01')).toBe('2026-02-28');
 	});
 });
 

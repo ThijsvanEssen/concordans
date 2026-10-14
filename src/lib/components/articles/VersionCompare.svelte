@@ -1,6 +1,7 @@
 <script lang="ts">
+	import { capitalize } from '$lib/text/words';
 	import { lidAnchor, lidNumber } from '$lib/text/anchor';
-	import { korteDatum } from '$lib/text/datum';
+	import { DAY_MS, korteDatum, langeDatum } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
@@ -15,7 +16,6 @@
 	// formulations instead.
 	import type { Schema } from '$lib/api/types';
 	import { citeArticle, type Citation } from '$lib/text/cite';
-	import { longDate } from '$lib/verbonden/rows';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import IconKnop from '$lib/components/ui/IconKnop.svelte';
@@ -119,9 +119,8 @@
 
 	// ── Wording ──────────────────────────────────────────────────────────────────
 
-	const date = (iso: string | null | undefined) => longDate(iso ?? null) ?? 'niet in de gegevens';
+	const date = (iso: string | null | undefined) => langeDatum(iso) || 'niet in de gegevens';
 	const year = (iso: string | null | undefined) => (iso ? iso.slice(0, 4) : '');
-	const capital = (s: string) => s[0].toUpperCase() + s.slice(1);
 
 	const period = (w: { from: string | null; until: string | null }) =>
 		w.until ? `${date(w.from)} tot ${date(w.until)}` : `sinds ${date(w.from)}`;
@@ -131,8 +130,8 @@
 
 	const signedAndPublished = (p: Schema<'PublicationDTO'> | null | undefined) =>
 		[
-			p?.signed ? `vastgesteld ${longDate(p.signed)}` : null,
-			p?.published ? `uitgegeven ${longDate(p.published)}` : null
+			p?.signed ? `vastgesteld ${langeDatum(p.signed)}` : null,
+			p?.published ? `uitgegeven ${langeDatum(p.published)}` : null
 		]
 			.filter(Boolean)
 			.join(', ') || undefined;
@@ -149,7 +148,7 @@
 	const today = Date.now();
 	/** A period's share of the line: its years, so a long-lived text takes more room. */
 	const years = (w: VersionWording) =>
-		Math.max(0.1, ((w.until ? time(w.until) : today) - time(w.from)) / (365.25 * 864e5));
+		Math.max(0.1, ((w.until ? time(w.until) : today) - time(w.from)) / (365.25 * DAY_MS));
 
 	/** The changes between A and B, oldest first, whichever way round they are held. */
 	const between = $derived(wordings.slice(older.index + 1, newer.index + 1));
@@ -240,7 +239,7 @@
 		citation ? citeArticle({ ...citation, lid }).kort : lid ? `lid ${lid}` : 'artikel';
 
 	const comparisonText = $derived(
-		`${capital(cite(null))}, tekst sinds ${date(from.from)} vergeleken met tekst sinds ${date(to.from)}.\n` +
+		`${capitalize(cite(null))}, tekst sinds ${date(from.from)} vergeleken met tekst sinds ${date(to.from)}.\n` +
 			`[-geschrapt-] [+ingevoegd+]\n\n${plainDiff(rows)}`
 	);
 
@@ -335,7 +334,7 @@
 					<li class="formulation">
 						<div class="formulation__head">
 							<span class="formulation__when"
-								>{capital(period({ from: f.since.from, until: f.through.until }))}</span
+								>{capitalize(period({ from: f.since.from, until: f.through.until }))}</span
 							>
 							{#if f.kind === 'first' && f.since.index === 0}
 								<span>Oudste tekst in de gegevens</span>
@@ -395,7 +394,7 @@
 								class="line__label"
 								class:is-on={adjacent && w.index === newer.index}
 								disabled={w.index === 0}
-								title="{capital(period(w))}: {w.index === 0
+								title="{capitalize(period(w))}: {w.index === 0
 									? 'oudste tekst in de gegevens'
 									: w.summary}"
 								onclick={() => showChange(w.index)}
@@ -453,7 +452,7 @@
 							datum: w.from,
 							teken: 'stuk' as const,
 							vorm: 'regel' as const,
-							zin: capital(w.summary),
+							zin: capitalize(w.summary),
 							onder: bron,
 							datumKnop: adjacent
 								? null
@@ -612,7 +611,7 @@
 					{@const w = wordingOf(wordings, v.valid_from ?? v.key)}
 					<tr class:is-quiet={!changed}>
 						<td class="table__when"
-							>{capital(
+							>{capitalize(
 								period({
 									from: v.valid_from ?? null,
 									until: v === versions.at(-1) && !v.valid_until ? null : (v.valid_until ?? null)
@@ -625,7 +624,7 @@
 									>Geen tekstwijziging</span
 								>
 							{:else if w}
-								{capital(w.summary)}
+								{capitalize(w.summary)}
 							{/if}
 						</td>
 						<td class="table__source">

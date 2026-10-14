@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { capitalize } from '$lib/text/words';
 	import NavKolom from './NavKolom.svelte';
 	// The table of contents of the law in Lezen: the name of the law, the title of the
 	// current section under it, and the articles, the active one marked.
@@ -7,7 +8,7 @@
 	import { artikelAnker, deelIds, layersOf } from '$lib/text/division';
 	import { scrollInReader } from '$lib/bron/anchor';
 	import { page } from '$app/state';
-	import { instrumentMetaStore } from '$lib/api/instrument-cache';
+	import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 	import { lawIdOf, type GraphNode } from '$lib/graph/types';
 	import { bronHref } from '$lib/bron/href';
 	import Caret from '$lib/components/ui/Caret.svelte';
@@ -38,16 +39,13 @@
 		return null;
 	});
 
-	// The name comes from the shared cache: citation title, else title, else the id.
-	const lawName = $derived.by(() => {
+	const lawTitle = $derived.by(() => {
 		if (!currentBwb) return null;
-		const meta = $instrumentMetaStore.get(currentBwb);
-		return meta?.citationTitle ?? meta?.title ?? meta?.shortTitle ?? currentBwb;
+		return lawName($instrumentMetaStore.get(currentBwb), currentBwb);
 	});
 
-	const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 	const groupLabel = (g: Group) => {
-		const label = g.label.trim() || (g.type && g.type !== 'sectie' ? capitalise(g.type) : '');
+		const label = g.label.trim() || (g.type && g.type !== 'sectie' ? capitalize(g.type) : '');
 		return g.title ? `${label} ${g.title}` : label;
 	};
 
@@ -120,7 +118,7 @@
 	// name of the law may come after the articles, so this follows it.
 	const shaped = $derived(
 		items.map((it): Item => {
-			const layers = layersOf(it.breadcrumb, lawName);
+			const layers = layersOf(it.breadcrumb, lawTitle);
 			const ids = deelIds(it.breadcrumb).slice(it.breadcrumb.length - layers.length);
 			return { ...it, breadcrumb: layers, ids };
 		})
@@ -247,7 +245,7 @@
 	     above its title. -->
 	<NavKolom
 		label="Overzicht"
-		titel={lawName}
+		titel={lawTitle}
 		titelHref={lawHref}
 		onder={selection?.collection !== 'articles' && items.length > 0
 			? `${items.length} artikelen`

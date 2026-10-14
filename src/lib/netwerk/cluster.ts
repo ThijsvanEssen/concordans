@@ -2,6 +2,7 @@
 // drawn as hundreds of signs: past CLUSTER_MIN, the bronnen of a kind that hang on the
 // focus alone stand on the canvas as one cluster bron, "250 uitspraken". One click on it
 // opens a card that shows them all, or the group in Verbonden; shown, they fold back.
+import { joinAnd, lowerFirst, plural } from '$lib/text/words';
 import { formatCount } from '$lib/text/getal';
 import { bronPlural, type Collection } from '$lib/vocabulary';
 
@@ -189,18 +190,18 @@ export function clusterZinnen(
 	if (c.ends)
 		return [
 			namen.length > 0
-				? `Elk alleen verbonden met ${namen.slice(0, -1).join(', ')} en ${namen.at(-1)}.`
+				? `Elk alleen verbonden met ${joinAnd(namen)}.`
 				: 'Elk alleen verbonden met dezelfde gekozen bronnen.'
 		];
 	const zinnen = ['Alleen met deze bron verbonden.'];
 	const loose = c.neighbours - c.members.length;
 	if (loose > 0)
 		zinnen.push(
-			`${n(loose)} ${loose === 1 ? 'andere staat' : 'andere staan'} los: ook met een andere bron verbonden.`
+			`${n(loose)} ${plural(loose, 'andere staat', 'andere staan')} los: ook met een andere bron verbonden.`
 		);
 	if (group?.total && group.total > c.neighbours)
 		zinnen.push(
-			`In het netwerk: ${n(c.neighbours)} van de ${n(group.total)} ${group.label.charAt(0).toLowerCase()}${group.label.slice(1)}.`
+			`In het netwerk: ${n(c.neighbours)} van de ${n(group.total)} ${lowerFirst(group.label)}.`
 		);
 	return zinnen;
 }

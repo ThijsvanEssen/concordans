@@ -3,6 +3,8 @@
 // and the functions they signed stukken in (AUTHORED meta.function, when not as
 // Kamerlid). A function known only from stukken has no term, only the dates of the
 // stukken signed in it; one that falls in a post is counted with that post.
+import { daysBetween } from '$lib/text/datum';
+import { capitalize } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import { fractieNaam } from '$lib/bron/menselijk';
 
@@ -40,8 +42,6 @@ const GAP_DAYS = 31;
  * fractievoorzitter is often a plain Lid for some weeks after an election.
  */
 const ROLE_GAP_DAYS = 90;
-const days = (a: string, b: string) => (Date.parse(b) - Date.parse(a)) / 86_400_000;
-
 /** Whether a signed function names this post: `minister-president` in `minister-president van Nederland`. */
 const names = (post: GovernmentFunction, fn: string) =>
 	!!post.function?.toLowerCase().startsWith(fn.toLowerCase());
@@ -64,7 +64,7 @@ export function careerOf(
 		const joins =
 			last &&
 			last.factionKey === m.faction_key &&
-			(last.to === null || !m.from_date || days(last.to, m.from_date) <= GAP_DAYS);
+			(last.to === null || !m.from_date || daysBetween(last.to, m.from_date) <= GAP_DAYS);
 		const seat = joins
 			? last
 			: {
@@ -85,7 +85,7 @@ export function careerOf(
 				role.role === m.role &&
 				role.to &&
 				m.from_date &&
-				days(role.to, m.from_date) <= ROLE_GAP_DAYS
+				daysBetween(role.to, m.from_date) <= ROLE_GAP_DAYS
 			)
 				role.to = m.to_date && m.to_date < role.to ? role.to : (m.to_date ?? null);
 			else seat.roles.push({ role: m.role, from: m.from_date ?? null, to: m.to_date ?? null });
@@ -171,20 +171,19 @@ export function foldPremier(entries: CareerEntry[]): CareerEntry[] {
  * their latest signature when it is later than their last seat; else Oud-Kamerlid.
  */
 export function currentTitle(career: CareerEntry[], sitting: boolean): string {
-	const capital = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 	const fns = career.filter(
 		(e): e is Extract<CareerEntry, { kind: 'function' }> => e.kind === 'function'
 	);
 	// A post held now names the person, before a seat.
 	const held = fns.find((e) => e.cabinet && e.to === null);
-	if (held) return capital(held.function);
+	if (held) return capitalize(held.function);
 	if (sitting) return 'Kamerlid';
 	const lastSeat = career
 		.filter((e) => e.kind === 'seat')
 		.reduce<string | null>((max, e) => (e.to && (!max || e.to > max) ? e.to : max), null);
 	const end = (e: (typeof fns)[number]) => e.to ?? '9999';
 	const latest = [...fns].sort((a, b) => end(b).localeCompare(end(a)))[0];
-	if (latest && (!lastSeat || end(latest) > lastSeat)) return capital(latest.function);
+	if (latest && (!lastSeat || end(latest) > lastSeat)) return capitalize(latest.function);
 	return career.some((e) => e.kind === 'seat') ? 'Oud-Kamerlid' : 'Persoon';
 }
 

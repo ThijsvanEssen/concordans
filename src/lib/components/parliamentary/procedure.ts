@@ -2,6 +2,7 @@
 // groepen (Raad van State, Tweede Kamer, Eerste Kamer). Alleen wat gebeurd is; wat nog kan
 // volgen staat als één gestippelde regel die zegt dat het kan volgen. Moties, amendementen,
 // brieven en procedurevergaderingen worden geteld en staan achter één knop.
+import { capitalize, count, joinAnd, lowerFirst, withoutGroup } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import { bronHref } from '$lib/bron/href';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
@@ -14,7 +15,7 @@ import {
 } from '$lib/components/tijdlijn/tijdlijn';
 import type { MetInhoud } from '$lib/components/open/rij-inhoud';
 import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
-import { withoutKamerstuk } from './kamerstuk';
+import { kamerstukName, withoutKamerstuk } from './kamerstuk';
 
 type Detail = Schema<'DossierDetailResponse'>;
 import { naarAmendementen, naarStemmingen } from './naar';
@@ -40,7 +41,6 @@ export type ProcedureInhoud =
 	| { soort: 'stukken'; stukken: { ref: string; zin: string }[] };
 type Inhouden = Map<string, ProcedureInhoud>;
 
-const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 const bodyOf = (e: Entry) => (e.body ?? {}) as Body;
 /**
  * The number of a paper in its dossier: the Eerste Kamer's letter (`number`, API 0.73,
@@ -82,9 +82,7 @@ const NAAM: Record<string, string> = {
 	'Advies Afdeling advisering Raad van State en Nader rapport': 'advies en nader rapport',
 	'Advies Afdeling advisering Raad van State': 'advies'
 };
-const naam = (kind: string) => NAAM[kind] ?? lower(kind);
-const reeks = (namen: string[]) =>
-	namen.length < 2 ? namen.join('') : `${namen.slice(0, -1).join(', ')} en ${namen.at(-1)}`;
+const naam = (kind: string) => NAAM[kind] ?? lowerFirst(kind);
 const nrs = (n: string[]) =>
 	n.length === 0 ? '' : n.length === 1 ? `nr. ${n[0]}` : `nrs. ${n[0]}–${n.at(-1)}`;
 
@@ -94,7 +92,7 @@ function activiteitZin(e: Entry, b: Body): string {
 	const kind = e.kind ?? '';
 	if (agenda && !isGeneriek(agenda, kind)) return agenda;
 	const zin = agenda || kind;
-	return zin.charAt(0).toUpperCase() + zin.slice(1);
+	return capitalize(zin);
 }
 
 /**
@@ -113,7 +111,7 @@ const opening = (e: Entry): ProcedureInhoud => ({
 });
 
 function eigenStuk(e: Entry, groep: 'rvs' | 'tk' | 'ek', dossier: string): TijdRegel {
-	const kind = (e.kind ?? '').replace(/\s*\(.*\)\s*$/, '');
+	const kind = withoutGroup(e.kind ?? '');
 	const title = e.title ? withoutKamerstuk(e.title).trim() : '';
 	const eigen = title && !isGeneriek(title, e.kind) ? title : null;
 	const nr = nrOf(e);
@@ -125,7 +123,11 @@ function eigenStuk(e: Entry, groep: 'rvs' | 'tk' | 'ek', dossier: string): TijdR
 		label: eigen ? kind || null : null,
 		zin: eigen ?? (kind || title || 'Stuk'),
 		meta: nr
-			? `${kamerstukNummer(dossier, groep === 'ek' ? 'EK' : null)}, ${groep === 'ek' ? nr : `nr. ${nr}`}`
+			? kamerstukName({
+					chamber: groep === 'ek' ? 'EK' : 'TK',
+					dossier_number: dossier,
+					number: nr
+				})
 			: null,
 		href: bronHref(e.node_id, { keepMode: false, mode: 'read' }),
 		ref: e.node_id
@@ -145,7 +147,7 @@ function stemdagen(decisions: Entry[]): TijdRegel[] {
 		teken: 'activiteit',
 		soort: 'decisions',
 		label: null,
-		zin: `Stemmingen: ${besluiten.length} ${besluiten.length === 1 ? 'besluit' : 'besluiten'}`,
+		zin: `Stemmingen: ${count(besluiten.length, 'besluit', 'besluiten')}`,
 		actie: besluiten.some((e) => /^amendement/i.test(e.kind ?? ''))
 			? naarAmendementen
 			: naarStemmingen
@@ -242,7 +244,7 @@ function regelsVan(
 			(a, b) => Number(a) - Number(b) || a.localeCompare(b)
 		);
 		const first = docs.find((d) => nrOf(d)) ?? docs[0];
-		const zin = reeks(kinds.map(naam));
+		const zin = joinAnd(kinds.map(naam));
 		const id = `d-${groep}-${day}`;
 		// One paper opens its text; several open as a list, each by its kind and number.
 		const eigen = docs
@@ -262,7 +264,7 @@ function regelsVan(
 							const k = naam(d.kind ?? '');
 							return {
 								ref: d.node_id,
-								zin: `${k.charAt(0).toUpperCase()}${k.slice(1)}${nr ? `, ${groep === 'ek' ? nr : `nr. ${nr}`}` : ''}`
+								zin: `${capitalize(k)}${nr ? `, ${groep === 'ek' ? nr : `nr. ${nr}`}` : ''}`
 							};
 						})
 					}
@@ -273,7 +275,7 @@ function regelsVan(
 			teken: 'stuk',
 			soort: 'documents',
 			label: null,
-			zin: zin.charAt(0).toUpperCase() + zin.slice(1),
+			zin: capitalize(zin),
 			meta: nummers.length
 				? `${kamerstukNummer(dossier, groep === 'ek' ? 'EK' : null)}, ${groep === 'ek' ? nummers.join(', ') : nrs(nummers)}`
 				: null,
@@ -298,7 +300,7 @@ const STAP: Record<string, string> = {
 	Plenair: 'plenaire behandeling',
 	Afkondiging: 'afkondiging'
 };
-const stapNaam = (s: EkStep) => (s.phase ? (STAP[s.phase] ?? lower(s.phase)) : '');
+const stapNaam = (s: EkStep) => (s.phase ? (STAP[s.phase] ?? lowerFirst(s.phase)) : '');
 
 /**
  * De voortgang zoals de pagina van het wetsvoorstel op eerstekamer.nl hem toont (API 0.76):
@@ -325,8 +327,10 @@ function ekVoortgang(d: Detail, ek: TijdRegel[]): TijdRegel[] | null {
 				teken: 'stuk',
 				soort: 'documents',
 				label: null,
-				zin: kind.charAt(0).toUpperCase() + kind.slice(1),
-				meta: letter ? `${kamerstukNummer(d.number, 'EK')}, ${letter}` : null,
+				zin: capitalize(kind),
+				meta: letter
+					? kamerstukName({ chamber: 'EK', dossier_number: d.number, number: letter })
+					: null,
 				href: p.url ?? null
 			});
 		}
@@ -338,7 +342,7 @@ function ekVoortgang(d: Detail, ek: TijdRegel[]): TijdRegel[] | null {
 			datum: null,
 			teken: 'verwacht',
 			soort: 'activities',
-			zin: [nu ? `Nu: ${stapNaam(nu)}.` : '', nog.length ? `Kan nog volgen: ${reeks(nog)}.` : '']
+			zin: [nu ? `Nu: ${stapNaam(nu)}.` : '', nog.length ? `Kan nog volgen: ${joinAnd(nog)}.` : '']
 				.filter(Boolean)
 				.join(' ')
 		});
@@ -431,7 +435,7 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 			datum: null,
 			teken: 'verwacht',
 			soort: 'activities',
-			zin: `Kan nog volgen: ${reeks(nog)}.`
+			zin: `Kan nog volgen: ${joinAnd(nog)}.`
 		});
 	}
 	groepen.push({

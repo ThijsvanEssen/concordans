@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { capitalize, escapeRegExp } from '$lib/text/words';
 	// Bewindspersonen side by side: the ministers per post across cabinets. A row per post of
 	// a minister, a column per cabinet, the column heads as in the Kruiswoord and the rows as
 	// IndexRow. Who stayed on from the cabinet before is grey, who came new is in ink. Under
@@ -15,7 +16,7 @@
 	import { postNotes } from './occupancy';
 	import { smalScherm } from '$lib/utils/smal.svelte';
 	import { partyColor } from '$lib/utils/party-color.svelte';
-	import { vandaag } from '$lib/text/datum';
+	import { DAY_MS, vandaag } from '$lib/text/datum';
 	import type { Schema } from '$lib/api/types';
 	import Strookje from '$lib/components/tijdlijn/Strookje.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -94,9 +95,7 @@
 	type Cel = { posts: Post[]; van: string; tot: string; later: Set<Post> };
 	type Rij = { seat: string; titel: string; mp: boolean; cellen: (Cel | null)[] };
 
-	const zoekt = $derived(
-		zoek.trim() ? new RegExp(zoek.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') : null
-	);
+	const zoekt = $derived(zoek.trim() ? new RegExp(escapeRegExp(zoek.trim()), 'i') : null);
 	const rijen = $derived.by(() => {
 		const m = new Map<string, Rij>();
 		kabinetten.forEach((k, i) => {
@@ -126,7 +125,7 @@
 		return [...m.values()].sort((a, b) => rang(a.seat) - rang(b.seat));
 	});
 
-	const dag = (iso: string) => Date.parse(`${iso.slice(0, 10)}T00:00:00Z`) / 864e5;
+	const dag = (iso: string) => Date.parse(`${iso.slice(0, 10)}T00:00:00Z`) / DAY_MS;
 	const plek = (c: Cel, p: Post) => {
 		const span = Math.max(1, dag(c.tot) - dag(c.van));
 		const van = (dag(p.from_date ?? c.van) - dag(c.van)) / span;
@@ -231,11 +230,7 @@
 {/snippet}
 
 {#each mislukt as k (k.key)}
-	<LoadState
-		state={details[k.key]!}
-		what={k.name.charAt(0).toUpperCase() + k.name.slice(1)}
-		retry={() => ask(k.key)}
-	/>
+	<LoadState state={details[k.key]!} what={capitalize(k.name)} retry={() => ask(k.key)} />
 {/each}
 
 {#if scherm.smal}

@@ -1,3 +1,4 @@
+import { lowerFirst } from '$lib/text/words';
 import { korteDatum } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 
@@ -28,9 +29,7 @@ const TK_PHASES = [
 const SUBMITTED = ['Voorstel van wet', 'Memorie van toelichting', 'Advies Raad van State'];
 
 /** `28 sep. 2026`; see `$lib/text/datum`. */
-export const datum = korteDatum;
 
-const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 /** A phase as a sentence names it. */
 const PHASE_ZIN: Record<string, string> = {
 	Verslag: 'verslag',
@@ -74,26 +73,26 @@ export function stand(d: Dossier): Stand | null {
 	let group: StandGroup;
 	if (d.ek_outcome) {
 		const how = d.ek_outcome.method === 'Hamerstuk' ? ' als hamerstuk' : '';
-		zin = `${d.ek_outcome.outcome} door de Eerste Kamer${how}, ${datum(d.ek_outcome.date)}.`;
+		zin = `${d.ek_outcome.outcome} door de Eerste Kamer${how}, ${korteDatum(d.ek_outcome.date)}.`;
 		group = 'afgehandeld';
 	} else if (rejected) {
-		zin = `Verworpen door de Tweede Kamer${d.closed_on ? `, ${datum(d.closed_on)}` : ''}.`;
+		zin = `Verworpen door de Tweede Kamer${d.closed_on ? `, ${korteDatum(d.closed_on)}` : ''}.`;
 		group = 'afgehandeld';
 	} else if (d.closed) {
-		zin = `Afgehandeld${d.closed_on ? ` ${datum(d.closed_on)}` : ''}.`;
+		zin = `Afgehandeld${d.closed_on ? ` ${korteDatum(d.closed_on)}` : ''}.`;
 		group = 'afgehandeld';
 	} else if (tkDone) {
 		const when = d.tk_decision?.date ?? dateOf('Eindtekst');
 		const how = d.tk_decision?.kind?.includes('zonder stemming') ? ' zonder stemming' : '';
-		zin = `Door de Tweede Kamer${how} aangenomen${when ? ` op ${datum(when)}` : ''}; bij de Eerste Kamer.`;
+		zin = `Door de Tweede Kamer${how} aangenomen${when ? ` op ${korteDatum(when)}` : ''}; bij de Eerste Kamer.`;
 		group = 'ek';
 	} else if (d.current_phase && TK_PHASES.includes(d.current_phase)) {
 		const when = dateOf(d.current_phase);
-		zin = `Bij de Tweede Kamer: ${PHASE_ZIN[d.current_phase] ?? lower(d.current_phase)}${when ? `, ${datum(when)}` : ''}.`;
+		zin = `Bij de Tweede Kamer: ${PHASE_ZIN[d.current_phase] ?? lowerFirst(d.current_phase)}${when ? `, ${korteDatum(when)}` : ''}.`;
 		group = 'tk';
 	} else if (d.current_phase && SUBMITTED.includes(d.current_phase)) {
 		const when = dateOf('Voorstel van wet') ?? d.opened_on;
-		zin = `Ingediend bij de Tweede Kamer${when ? ` op ${datum(when)}` : ''}${rvs === 'done' ? ', met advies van de Raad van State' : ''}.`;
+		zin = `Ingediend bij de Tweede Kamer${when ? ` op ${korteDatum(when)}` : ''}${rvs === 'done' ? ', met advies van de Raad van State' : ''}.`;
 		group = 'ingediend';
 	} else {
 		zin = d.current_phase ?? '';

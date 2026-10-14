@@ -28,7 +28,7 @@
 	import Kruiswoord, { type KolomKop } from '$lib/onderwerpen/Kruiswoord.svelte';
 	import StrekkingTeken from '$lib/onderwerpen/StrekkingTeken.svelte';
 	import { buildOpenHref } from '$lib/bron/href';
-	import { korteDatum, langeDatum, maandNaam, vandaag } from '$lib/text/datum';
+	import { daysBetween, isDay, korteDatum, langeDatum, maandNaam, vandaag } from '$lib/text/datum';
 	import { download } from '$lib/verbonden/export';
 	import { lees, uitParams, vindIndex } from '$lib/onderwerpen/onderwerpen';
 	import { dossierName } from '$lib/bron/dossier-naam';
@@ -105,7 +105,7 @@
 	const termen = $derived(termenSleutel ? termenSleutel.split('|') : []);
 	const kamer = $derived(((v) => (v === 'TK' || v === 'EK' ? v : ''))(params.get('kamer')));
 	// The period, as everywhere (Periode.svelte): days in the URL and to the API.
-	const dag = (v: string | null) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : '');
+	const dag = (v: string | null) => (isDay(v) ? v : '');
 	const van = $derived(dag(params.get('van')));
 	const tot = $derived(dag(params.get('tot')));
 	/** The bounds of the period as /api/decisions takes them. */
@@ -295,7 +295,7 @@
 			...(t ? { until: t } : {})
 		};
 		// Per day for weeks, which the API allows over at most 400 days from a first day.
-		const dagen400 = !!v && (Date.parse(t || vandaag()) - Date.parse(v)) / 864e5 <= 400;
+		const dagen400 = !!v && daysBetween(v, t || vandaag()) <= 400;
 		const per = perWeek ? (dagen400 ? 'day' : null) : 'month';
 		(async () => {
 			if (per) {

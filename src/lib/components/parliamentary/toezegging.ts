@@ -2,6 +2,7 @@
 // in het wetgevingsoverleg van 23 maart 2026", "Nagekomen in brief nr. 33". One wording for the
 // reader of a toezegging and its line opened in a list (ToezeggingInhoud). The activity is
 // named by its kind and day, never by its number.
+import { withoutGroup } from '$lib/text/words';
 import { langeDatum } from '$lib/text/datum';
 
 /** `het` or `de` before the kind of an activity: het debat, het overleg, de procedurevergadering. */
@@ -14,11 +15,7 @@ function lidwoord(soort: string): 'het' | 'de' {
 }
 
 /** The kind of an activity in a sentence: `Plenair debat (wetgeving)` is `plenair debat`. */
-const soortInZin = (kind: string) =>
-	kind
-		.replace(/\s*\(.*\)\s*$/, '')
-		.trim()
-		.toLowerCase();
+const soortInZin = (kind: string) => withoutGroup(kind).trim().toLowerCase();
 
 /**
  * "Toegezegd in het wetgevingsoverleg van 23 maart 2026", in two parts: the words before the
@@ -53,7 +50,7 @@ export function nagekomenIn(brieven: readonly Brief[] | null | undefined): {
 		voor: `Nagekomen in ${bs.length > 1 ? 'brieven' : 'brief'}${genummerd ? (bs.length > 1 ? ' nrs.' : ' nr.') : ' van'}`,
 		brieven: bs.map((b) => ({
 			key: b.key,
-			naam: genummerd ? String(b.sequence) : langeDatum(b.date ?? null) || 'onbekende datum'
+			naam: genummerd ? String(b.sequence) : langeDatum(b.date) || 'onbekende datum'
 		}))
 	};
 }

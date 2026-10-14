@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { textOf } from '$lib/text/words';
+	import { langeDatum } from '$lib/text/datum';
 	import { report } from '$lib/api/errors';
 	import { bewaarItem } from '$lib/map/map';
 	import ReaderHead from './ReaderHead.svelte';
@@ -6,7 +8,6 @@
 	// bron is, when, and where the source keeps it. Its verbindingen are in the panel.
 	import ReaderFrame from './ReaderFrame.svelte';
 	import type { GraphNode } from '$lib/graph/types';
-	import { formatLongDate, textProp } from './_shared';
 	import { eigenSoort, menselijkeNaam } from '$lib/bron/menselijk';
 	import { getInstrumentDetail } from '$lib/api/instrument-cache';
 
@@ -14,7 +15,7 @@
 
 	const p = $derived(node.raw?.props ?? {});
 	// A version of a law is named by its law, asked by its BWB id (the cached head of the law).
-	const bwb = $derived(textProp(p.bwb_id));
+	const bwb = $derived(textOf(p.bwb_id));
 	let wet = $state<{ bwb: string; naam: string | null } | null>(null);
 	$effect(() => {
 		const b = bwb;
@@ -33,7 +34,7 @@
 			{
 				collection: node.collection,
 				key: node.key,
-				display_name: textProp(p.title) ?? node.raw?.display_name,
+				display_name: textOf(p.title) ?? node.raw?.display_name,
 				props: p
 			},
 			(b) => (wet?.bwb === b ? wet.naam : null)
@@ -44,13 +45,13 @@
 	const facts = $derived(
 		[
 			soort,
-			textProp(p.number) ?? textProp(p.activity_number),
-			formatLongDate(textProp(p.date) ?? textProp(p.made_on)),
-			textProp(p.minister_role),
-			textProp(p.status)
+			textOf(p.number) ?? textOf(p.activity_number),
+			langeDatum(textOf(p.date) ?? textOf(p.made_on)),
+			textOf(p.minister_role),
+			textOf(p.status)
 		].filter(Boolean)
 	);
-	const source = $derived(textProp(p.tk_url));
+	const source = $derived(textOf(p.tk_url));
 </script>
 
 <ReaderFrame>
@@ -66,8 +67,8 @@
 				{#if facts.length > 0}<span>{facts.join(', ')}</span>{/if}
 			{/snippet}
 		</ReaderHead>
-		{#if textProp(p.text)}
-			<p class="text">{textProp(p.text)}</p>
+		{#if textOf(p.text)}
+			<p class="text">{textOf(p.text)}</p>
 		{/if}
 		{#if source}
 			<a class="source" href={source} target="_blank" rel="noopener noreferrer">tweedekamer.nl ↗</a>

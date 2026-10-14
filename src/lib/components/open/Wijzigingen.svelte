@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { count, separatorBefore } from '$lib/text/words';
 	// What a publication or an inwerkingtreding opens on in Actueel and Gevolgd (RijInhoud):
 	// a publication its changes per law, `Wijzigt Telecommunicatiewet, art. 11a.3 en 11a.4`;
 	// an inwerkingtreding the publication that brought it, `Stcrt. 2026, 35238, wijzigt 1
@@ -20,8 +21,6 @@
 	);
 
 	const isWet = (r: WetRegel | Brenger): r is WetRegel => 'werkwoord' in r;
-	const tussen = (i: number, n: number, meer: number) =>
-		i === 0 ? '' : i === n - 1 && !meer ? ' en ' : ', ';
 </script>
 
 <LoadState
@@ -43,12 +42,12 @@
 					{#if isWet(r)}
 						<span class="werkwoord">{r.werkwoord}</span>
 						<BronLink ref={`instruments/${r.wet.key}`}>{r.wet.titel}</BronLink
-						>{#if r.artikelen.length}, art. {#each r.artikelen as a, i (a.key)}{tussen(
+						>{#if r.artikelen.length}, art. {#each r.artikelen as a, i (a.key)}{separatorBefore(
 									i,
 									r.artikelen.length,
-									r.meer
+									r.meer > 0
 								)}<BronLink ref={`articles/${a.key}`}>{a.nummer}</BronLink
-								>{/each}{#if r.meer}{` en ${r.meer} ${r.meer === 1 ? 'ander' : 'andere'}`}{/if}{/if}
+								>{/each}{#if r.meer}{` en ${count(r.meer, 'ander', 'andere')}`}{/if}{/if}
 					{:else}
 						<BronLink ref={`instruments/${r.key}`}>{r.naam}</BronLink>{#if r.wat}, {r.wat}{/if}
 					{/if}

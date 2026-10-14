@@ -11,8 +11,7 @@
 	import { indelingMarkering } from '../zaaltegenover';
 	import ZaalPlaatsen from '../ZaalPlaatsen.svelte';
 	import { achtergrondVan, kleurVan } from '../partijkleuren.svelte';
-	import { korteDatum, vandaag } from '$lib/text/datum';
-	import { formatLongDate } from './_shared';
+	import { DAY_MS, korteDatum, langeDatum, vandaag } from '$lib/text/datum';
 	import { hallOfDay, vacantZonderFractie, wijzigingenVan, zetelHoogte } from './zetels';
 	import { load } from '$lib/util/load.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -168,7 +167,7 @@
 	const W = 600;
 	const H = 72;
 	const PAD = 0;
-	const dagNr = (d: string) => Date.parse(`${d}T00:00:00Z`) / 864e5;
+	const dagNr = (d: string) => Date.parse(`${d}T00:00:00Z`) / DAY_MS;
 	// The Kamer's whole scale, none to all its seats: the majority at its true height.
 	const schaal = (n: number) => zetelHoogte(n, zetelsVanKamer, H, PAD);
 	const stappen = $derived.by(() => {
@@ -198,7 +197,7 @@
 	const as = $derived(
 		van
 			? {
-					periode: { van: ms(van), tot: ms(eind) + 864e5, lopend: eind === vandaag() },
+					periode: { van: ms(van), tot: ms(eind) + DAY_MS, lopend: eind === vandaag() },
 					begin: korteDatum(van),
 					eind: eind === vandaag() ? 'nu' : korteDatum(eind)
 				}
@@ -279,13 +278,11 @@
 								class="doel"
 								role="button"
 								tabindex="0"
-								aria-label="{k.s.coalition} zetels, {formatLongDate(k.s.from_date)}{onzekerWoord(
-									k.s
-								)}"
+								aria-label="{k.s.coalition} zetels, {langeDatum(k.s.from_date)}{onzekerWoord(k.s)}"
 								onclick={() => onKies(k.s)}
 								onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && onKies(k.s)}
 								><title
-									>{k.s.coalition} zetels vanaf {formatLongDate(k.s.from_date)}{onzekerWoord(
+									>{k.s.coalition} zetels vanaf {langeDatum(k.s.from_date)}{onzekerWoord(
 										k.s
 									)}</title
 								></rect
@@ -317,7 +314,7 @@
 		{:else if !zaal}
 			<p class="onderschrift">
 				{stukken.length
-					? `Geen samenstelling in de gegevens op ${formatLongDate(dag)}.`
+					? `Geen samenstelling in de gegevens op ${langeDatum(dag)}.`
 					: `Geen samenstelling van de ${kamer === 'TK' ? 'Tweede' : 'Eerste'} Kamer voor dit kabinet in de gegevens.`}
 			</p>
 		{:else}
@@ -326,7 +323,7 @@
 			{@const markering = indelingMarkering(zaal)}
 			<figure class="kamer">
 				<p class="onderschrift">
-					Samenstelling op {formatLongDate(zaal.as_of ?? dag)}.{markering ? ` ${markering}.` : ''}
+					Samenstelling op {langeDatum(zaal.as_of ?? dag)}.{markering ? ` ${markering}.` : ''}
 				</p>
 				<div class="zaal">
 					{#if kamer === 'TK'}

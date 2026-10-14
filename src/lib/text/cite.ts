@@ -69,8 +69,6 @@ export function articleCitation(
 	};
 }
 
-const longDate = (d: Date) => langeDatum(vandaag(d));
-
 /** A book of the Burgerlijk Wetboek is cited as the code with the book before the article: `art. 7:3 BW`. */
 function bookOf(c: Citation): Pick<Citation, 'articleNumber' | 'citationTitle' | 'shortTitle'> {
 	const code = bwCode(c.bwbId);
@@ -127,7 +125,7 @@ export function citeArticle(c: Citation): CitationForms {
 	const voluit = parts.length > 1 ? `${parts.join(', ')}, ${of}` : `${parts[0]} ${of}`;
 
 	// Lower case like the short form: a citation is pasted into a sentence.
-	const dated = `${kort} (tekst geldend op ${longDate(c.date ?? new Date())})`;
+	const dated = `${kort} (tekst geldend op ${langeDatum(vandaag(c.date ?? new Date()))})`;
 	return { kort, voluit, metDatum: dated };
 }
 

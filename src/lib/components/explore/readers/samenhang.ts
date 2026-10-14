@@ -1,6 +1,7 @@
 // The connected cases of a judgment (API 0.78, `related_to`): those its inhoudsindicatie
 // names and those whose inhoudsindicatie names it. The node response carries the sentence
 // that says so on each RELATED_TO edge (`meta.text`), as the judge wrote it.
+import { textOf } from '$lib/text/words';
 import { keyEcli } from '$lib/bron/leesbaar';
 import type { Neighbor } from '$lib/api/nodes';
 
@@ -18,8 +19,6 @@ export type Samenhang = {
 	datum: string | null;
 	zinnen: Zin[];
 };
-
-const text = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v.trim() : null);
 
 /** One row per connected case, in the order of the edges, with every sentence that ties it. */
 export function samenhangVan(
@@ -50,11 +49,11 @@ export function samenhangVan(
 		};
 		row.titel = names.length
 			? names.join(', ')
-			: (text(props.ecli) ?? (row.titel || keyEcli(n.key) || 'Uitspraak'));
-		row.instantie = text(props.court) ?? row.instantie;
-		row.datum = text(props.date) ?? row.datum;
+			: (textOf(props.ecli) ?? (row.titel || keyEcli(n.key) || 'Uitspraak'));
+		row.instantie = textOf(props.court) ?? row.instantie;
+		row.datum = textOf(props.date) ?? row.datum;
 		const meta = (n.meta ?? {}) as Record<string, unknown>;
-		const zin = text(meta.text);
+		const zin = textOf(meta.text);
 		if (zin && !row.zinnen.some((z) => z.text === zin))
 			row.zinnen.push({ text: zin, van: n.direction === 'inbound' ? 'die' : 'deze' });
 		rows.set(n.key, row);

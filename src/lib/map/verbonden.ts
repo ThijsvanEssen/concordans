@@ -6,6 +6,7 @@
 // The rows are Verbonden's own (regelingRow, wetRegelingRow): the same names, kinds and
 // articles in both places. A law under which nothing is issued lists the laws its articles
 // and theirs refer to (`related-instruments`). Asked when the item opens, once.
+import { textOf } from '$lib/text/words';
 import { api, unwrap } from '$lib/api/client';
 import { getDelegated } from '$lib/api/articles';
 import { getInstrumentDetail } from '$lib/api/instrument-cache';
@@ -36,8 +37,6 @@ export type Regelingen = { titel: string; regelingen: Regeling[] };
 /** How many a law's list of connected laws shows: the closest, by the references between them. */
 export const WETTEN = 6;
 
-const tekst = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
-
 /** The line of a row of Verbonden, as one string: `AMvB op grond van art. 16 lid 1 en 7`. */
 export function regelVanRij(r: Row, op: 'instruments' | 'articles'): string | null {
 	const h = hoeVan(r, op);
@@ -47,7 +46,7 @@ export function regelVanRij(r: Row, op: 'instruments' | 'articles'): string | nu
 /** A row of Verbonden as a map lists it, under a law or an article. */
 export const regelingVanRij = (r: Row, op: 'instruments' | 'articles'): Regeling => ({
 	id: `instruments/${r.ref.key}`,
-	ident: tekst(r.props?.bwb_id) ?? tekst(r.props?.celex),
+	ident: textOf(r.props?.bwb_id) ?? textOf(r.props?.celex),
 	naam: r.title,
 	soort: r.context,
 	datum: r.date ?? null,

@@ -1,11 +1,11 @@
 <script lang="ts">
+	import { langeDatum } from '$lib/text/datum';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	// Bronnen en hergebruik: the one place for where the data comes from, how far it goes, and
 	// what may be done with it. Elsewhere one sentence links here.
 	import { getCoverage, getStats, type Coverage, type Stats } from '$lib/api/stats';
 	import { load } from '$lib/util/load.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
-	import { longDate } from '$lib/verbonden/rows';
 	import { formatCount } from '$lib/verbonden/filter';
 	import { TIERS, TIER_LABEL } from '$lib/vocabulary';
 
@@ -189,7 +189,7 @@
 											>{formatCount(t.count)}{#if t.first_date && t.last_date}, {t.first_date.slice(
 													0,
 													4
-												)} tot {longDate(t.last_date)}{/if}</span
+												)} tot {langeDatum(t.last_date)}{/if}</span
 										>
 									</div>
 								{/each}
@@ -206,7 +206,7 @@
 							{#each asOf as a (a.source)}
 								<div class="list-row">
 									<span class="list-k">{a.source}</span><span
-										>{a.newest ? `tot en met ${longDate(a.newest)}, ` : ''}opgehaald op {longDate(
+										>{a.newest ? `tot en met ${langeDatum(a.newest)}, ` : ''}opgehaald op {langeDatum(
 											a.fetched
 										)}</span
 									>

@@ -1,11 +1,12 @@
 // The groups of the panel Verbonden that no edge of the selected bron fills. One
 // function per `Loader` of the group table; each returns rows, and a total where
 // the API gives one.
+import { textOf } from '$lib/text/words';
 import { naamVan, naamVanId } from '$lib/bron/menselijk';
 import { ifExists, report } from '$lib/api/errors';
 import { geteld } from '$lib/api/decisions';
 import type { Schema } from '$lib/api/types';
-import { getCommittee, str } from '$lib/components/parliamentary/data';
+import { getCommittee } from '$lib/components/parliamentary/data';
 import { numberOf } from '$lib/components/parliamentary/dossier-number';
 import { parseNodeId } from '$lib/vocabulary';
 import { refOf } from '$lib/bron/href';
@@ -39,7 +40,7 @@ import {
 import { lawArticleList } from '$lib/api/law-articles';
 import { buildGroups, ditVan, EUROPEAN, type Loader, type Match } from './groups';
 import { bronKindOf, isInternational } from './filter';
-import { instrumentMetaStore } from '$lib/api/instrument-cache';
+import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 import { getJudgmentDetail } from '$lib/api/judgments';
 import { aanhalingIn } from './passage';
 import { legUit, overwegingVanNoot, type Uitspraak } from '$lib/bron/overweging';
@@ -165,7 +166,7 @@ async function echrJudgments(bwb: string, articleKey: string, signal: AbortSigna
 // The four dossier groups read one hub, one request; a failed or broken-off one is asked
 // again (Opnieuw).
 const hubOf = ({ node, buren, neighbors, signal }: LoaderContext): Promise<DossierHub> => {
-	const number = str(node.props?.label) ?? '';
+	const number = textOf(node.props?.label) ?? '';
 	return abortable(
 		once(`dossier-hub/${number}`, () =>
 			loadDossierHub(
@@ -191,7 +192,7 @@ const bwbOf = (node: Schema<'BaseNodeDTO'>) =>
  */
 function lidOfStub(key: string, props: Record<string, unknown> | null | undefined) {
 	const law = lawIdOf(props);
-	const number = str(props?.article_number);
+	const number = textOf(props?.article_number);
 	if (!law || !number) return null;
 	const own = `${law}_${number}`.toLowerCase().replace(/[:.\s-]/g, '_');
 	const lid = key.toLowerCase().startsWith(`${own}_`) ? key.slice(own.length + 1) : null;
@@ -489,7 +490,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// first; its count per kind gives the total (Thijs, 10 Oct: "everything other then
 	// amendments can stay, if it is only amendments: remove").
 	'dossier-decisions-tk': async ({ node, signal }) => {
-		const label = str(node.props?.label);
+		const label = textOf(node.props?.label);
 		if (!label) return { rows: [] };
 		// Its total is the count per kind: the counted answer (API 0.79.41, decisions.ts).
 		const page = await geteld({ dossier: label, chamber: 'TK', limit: 100 }, signal);
@@ -535,7 +536,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		),
 
 	'dossier-same-number': async ({ node, signal }) => {
-		const label = str(node.props?.label);
+		const label = textOf(node.props?.label);
 		if (!label || !node.props?.same_number_count) return { rows: [] };
 		const found = await abortable(getDossiersOfNumber(numberOf(label)), signal);
 		return {
@@ -921,11 +922,9 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				const real = stub ? cited.find((c) => c.key === key) : n;
 				const lawId = lawIdOf(n.props);
 				const law = lawId ? names.get(lawId) : null;
-				const number = str(n.props.article_number) || key.slice(key.indexOf('_') + 1);
+				const number = textOf(n.props.article_number) || key.slice(key.indexOf('_') + 1);
 				row.ref = { collection: 'articles', key };
-				row.title =
-					real?.display_name ??
-					`Artikel ${number}${law ? ` ${law.citationTitle ?? law.title ?? ''}` : ''}`.trim();
+				row.title = real?.display_name ?? `Artikel ${number} ${lawName(law, '')}`.trim();
 				row.derived = false;
 			}
 			if (at) {

@@ -1,10 +1,10 @@
 <script lang="ts">
+	import { count, plural } from '$lib/text/words';
+	import { langeDatum } from '$lib/text/datum';
 	import { RIJEN_150, RIJEN_75, deelStoelen, stemVanStoel } from './stoel';
 	import { fractieNaam } from '$lib/bron/menselijk';
 	import type { Schema } from '$lib/api/types';
 	import { bronHref } from '$lib/bron/href';
-	import { seatCount } from '$lib/verbonden/filter';
-	import { formatLongDate } from './readers/_shared';
 	import { chamberName } from '$lib/components/parliamentary/chamber';
 	import FractiePatronen from './FractiePatronen.svelte';
 	import { patroonId, patroonVan } from './partijkleuren.svelte';
@@ -174,7 +174,7 @@
 			<!-- A fractie is a bron: its sector is a link, as its name is everywhere else. -->
 			<a
 				href={sec.faction.key ? hrefOf(sec.faction.key) : undefined}
-				aria-label={`${naamVan(sec.faction)}, ${sec.faction.name ?? ''}, ${seatCount(sec.faction.seats)}`}
+				aria-label={`${naamVan(sec.faction)}, ${sec.faction.name ?? ''}, ${count(sec.faction.seats, 'zetel', 'zetels')}`}
 				data-sveltekit-noscroll
 				onmouseenter={() => (hovered = sec.faction)}
 				onmouseleave={() => (hovered = null)}
@@ -230,7 +230,7 @@
 				</text>
 				<text x={CX} y={MID + 10} text-anchor="middle" class="center-lbl">
 					{hovered.seats}
-					{hovered.seats === 1 ? 'zetel' : 'zetels'}
+					{plural(hovered.seats, 'zetel', 'zetels')}
 				</text>
 			{:else if voteTotals && telling}
 				<text x={CX} y={MID - 6} text-anchor="middle" class="center-num">
@@ -269,7 +269,7 @@
 	{#if !meubels}
 		<figcaption class="hemicycle-caption">
 			<!-- The count stands in the middle; only seats not yet assigned are worth a word. -->
-			{kamer}, {data.chamber === 'EK' ? 'samenstelling' : 'stand'} op {formatLongDate(
+			{kamer}, {data.chamber === 'EK' ? 'samenstelling' : 'stand'} op {langeDatum(
 				data.as_of ?? null
 			)}{data.assigned_seats < data.total_seats
 				? `, ${data.assigned_seats} van ${data.total_seats} zetels toegewezen`

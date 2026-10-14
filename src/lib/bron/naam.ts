@@ -1,5 +1,6 @@
 // Één naam per bron, op het canvas en in het
 // netwerkpaneel gelijk, en gelijk aan de titel in Verbonden. Een artikel draagt de korte titel van zijn wet ("Art. 3:4 Awb").
+import { textOf } from '$lib/text/words';
 import type { InstrumentMeta } from '$lib/api/instrument-cache';
 import { lawIdOf, type GraphNode } from '$lib/graph/types';
 import { describe, UNNAMED } from '$lib/verbonden/rows';
@@ -9,8 +10,6 @@ import { chamberName } from '$lib/components/parliamentary/chamber';
 import { langeDatum } from '$lib/text/datum';
 import { bwCode } from '$lib/text/bw';
 import { dossierName, dossierUitProps, kamerstukNummer } from './dossier-naam';
-
-const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
 
 export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
 	const p = n.raw?.props ?? undefined;
@@ -43,7 +42,7 @@ export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): strin
 	if (shortTitle) return `${n.label} ${shortTitle}`;
 	// Until its law's short title is in, the abbreviation or citation title the article itself
 	// carries: never "Art. 419" without its law (UX test 10 Oct, #23).
-	const wet = text(p?.['instrument_abbreviation']) ?? text(p?.['instrument_citation_title']);
+	const wet = textOf(p?.['instrument_abbreviation']) ?? textOf(p?.['instrument_citation_title']);
 	return wet && !n.label.includes(wet) ? `${n.label} ${wet}` : n.label;
 }
 
@@ -56,15 +55,15 @@ export function stemmingNaam(n: Pick<GraphNode, 'id' | 'label' | 'raw'>): string
 	const p = n.raw?.props ?? {};
 	const kamer = isEkDecision(n.id) || p['chamber'] === 'EK' ? 'Eerste Kamer' : 'Tweede Kamer';
 	const uitslag = decisionOutcome({
-		kind: text(p['kind']),
-		decision_kind: text(p['decision_kind']),
+		kind: textOf(p['kind']),
+		decision_kind: textOf(p['decision_kind']),
 		passed: typeof p['passed'] === 'boolean' ? p['passed'] : null
 	});
-	const datum = text(p['date']);
+	const datum = textOf(p['date']);
 	const kop = [`Stemming ${kamer}`, uitslag?.toLowerCase(), datum ? langeDatum(datum) : null]
 		.filter(Boolean)
 		.join(', ');
-	const over = text(p['subject']) ?? text(p['title']);
+	const over = textOf(p['subject']) ?? textOf(p['title']);
 	return over ? `${kop}: ${over}` : kop;
 }
 

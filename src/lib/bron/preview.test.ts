@@ -73,7 +73,8 @@ describe('previewFromNode', () => {
 			'Artikel 6:162 BW'
 		);
 		const long = previewFromNode('judgments', 'x', { summary: 'a'.repeat(PREVIEW_CHARS + 50) });
-		expect(long.lines!.length).toBe(PREVIEW_CHARS + 1);
+		expect(long.lines!.length).toBe(PREVIEW_CHARS);
+		expect(long.lines!.endsWith('…')).toBe(true);
 	});
 
 	it('places a stuk by its dossier and its indieners', () => {

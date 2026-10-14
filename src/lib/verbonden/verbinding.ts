@@ -1,13 +1,14 @@
 // One verbinding as an object: the two bronnen with the relation between them, the
 // passage with the citation, betrouwbaarheid as a word with its reason, the status and
 // the source of the edge. Built from a row of the panel or from an edge of the canvas.
+import { textOf } from '$lib/text/words';
 import { refId, refOf, type BronRef } from '$lib/bron/href';
 import type { GraphEdge, GraphNode } from '$lib/graph/types';
 import { statusLabel, type Collection, type Relation } from '$lib/vocabulary';
 import { HERKOMST_REDEN, kleineLetter, relationLabel, soortVan } from './hoe';
 import { confidenceWord } from './filter';
 import { describe, type Row } from './rows';
-import { edgeKey, isDerived, plaatsVanEdge, readEdge, text } from './edge-meta';
+import { edgeKey, isDerived, plaatsVanEdge, readEdge } from './edge-meta';
 import type { Bereik } from '$lib/text/voetnoten';
 import { getNodeGraph, neighborsOf, type Neighbor } from '$lib/api/nodes';
 import { NODE_TYPES } from '$lib/vocabulary';
@@ -141,7 +142,7 @@ export function verbindingOfRow(row: Row, selection: GraphNode): Verbinding | nu
 		derived: !!row.derived,
 		status: row.proposed ? 'voorgesteld' : 'vastgesteld',
 		// Why the edge exists is the edge's (`row.edge`), not the bron's props.
-		reason: text(row.edge?.reason),
+		reason: textOf(row.edge?.reason),
 		edgeId: row.edgeId ?? null
 	};
 }
@@ -171,7 +172,7 @@ export function verbindingOfEdge(
 		derived: isDerived(edge.confidence),
 		status: statusLabel(edge.status) as 'vastgesteld' | 'voorgesteld',
 		reason: read.reason,
-		edgeId: edge.id.startsWith('synth:') ? null : text(meta.edge_id)
+		edgeId: edge.id.startsWith('synth:') ? null : textOf(meta.edge_id)
 	};
 }
 
@@ -275,8 +276,8 @@ export async function kaartMetPassages(
  *  the passages of the judgment's court only, so its row is on the first page. */
 async function withCitedBy(v: Verbinding, source: GraphNode, target: GraphNode) {
 	const props = target.raw?.props ?? {};
-	const bwb = text(props.bwb_id);
-	const number = text(props.article_number);
+	const bwb = textOf(props.bwb_id);
+	const number = textOf(props.article_number);
 	const court = keyEcli(source.key)?.split(':')[2];
 	if (!bwb || !number) return v;
 	const data = await ifExists(getCitedBy(bwb, number, { limit: CITED_BY_PAGE, court }));

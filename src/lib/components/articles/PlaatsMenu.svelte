@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { plural } from '$lib/text/words';
 	// The menu of a place in a text (a lid, an onderdeel, a sub), opened from its own marker
 	// ("1.", "a.") or a click on its text (concept 21, variant B; Thijs, 10 Oct: "nummer of lid
 	// of onder-markering als menu"). Nothing stands beside the text at rest. The menu names
@@ -179,7 +180,7 @@
 					data-sveltekit-noscroll
 					onclick={() => sluit(false)}
 					>{formatCount(verbindingen.n)}
-					{verbindingen.n === 1 ? 'verbinding' : 'verbindingen'}</a
+					{plural(verbindingen.n, 'verbinding', 'verbindingen')}</a
 				>
 			{/if}
 			{#if geschiedenis}

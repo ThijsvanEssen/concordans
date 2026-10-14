@@ -2,16 +2,15 @@
 // article over the same span ("art. 2 en 8 EVRM", 224–240, to art. 2 and to art. 8). Read
 // as one link it opened art. 2 only (UX-toets 10 Oct, #27). Split on the numbers in the
 // text: "art. 2" to the first, "8" to the second; the words between and after stay text.
+import { escapeRegExp } from './words';
 
 type Doel = { article_number?: string | null };
 
 export type Deel<T> = { van: number; tot: number; span: T | null };
 
-const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
 /** A number as the text writes it, a BW book before it or not ("162" in "6:162"). */
 const patroon = (nummer: string) =>
-	new RegExp(`(?<![\\w:.])(?:\\d+[a-z]?:)?${escape(nummer)}(?![\\w:])`, 'i');
+	new RegExp(`(?<![\\w:.])(?:\\d+[a-z]?:)?${escapeRegExp(nummer)}(?![\\w:])`, 'i');
 
 /**
  * The parts of a span cited by several articles, offsets relative to the span's text; null

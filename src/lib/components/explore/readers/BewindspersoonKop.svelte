@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { lowerFirst, plural } from '$lib/text/words';
+	import { korteDatum } from '$lib/text/datum';
 	import { report } from '$lib/api/errors';
 	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
@@ -8,7 +10,6 @@
 	import { getMemberCommitments, getMemberDossiers } from '$lib/api/records';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import ReaderHead from './ReaderHead.svelte';
-	import { datum } from '$lib/components/parliamentary/stand';
 
 	let { m, id }: { m: Schema<'MemberDetailDTO'>; id: string } = $props();
 	const fns = $derived(
@@ -64,11 +65,10 @@
 		{#if laatst}
 			<p class="zin">
 				{#if nu.length}
-					{nu.map((f) => f.function).join(' en ')} sinds {datum(nu[0].from_date)}, {nu[0].cabinet}.
+					{nu.map((f) => f.function).join(' en ')} sinds {korteDatum(nu[0].from_date)}, {nu[0]
+						.cabinet}.
 				{:else}
-					Laatst {laatst.function?.charAt(0).toLowerCase()}{laatst.function?.slice(1)}, tot {datum(
-						laatst.to_date
-					)} ({laatst.cabinet}).
+					Laatst {lowerFirst(laatst.function ?? '')}, tot {korteDatum(laatst.to_date)} ({laatst.cabinet}).
 				{/if}
 			</p>
 		{/if}
@@ -84,11 +84,11 @@
 			<!-- Named as the section it leads to (UX-toets 10 Oct, #17: no sentence under it). -->
 			<a href="#dossiers"
 				><b>{dossiers ?? '…'}</b>
-				{dossiers === 1 ? 'dossier' : 'dossiers'} met ondertekende stukken</a
+				{plural(dossiers ?? 0, 'dossier', 'dossiers')} met ondertekende stukken</a
 			>
 		</li>
 		<li>
-			<a href="#loopbaan"><b>{fns.length}</b> {fns.length === 1 ? 'post' : 'posten'}</a>
+			<a href="#loopbaan"><b>{fns.length}</b> {plural(fns.length, 'post', 'posten')}</a>
 			<span class="s"
 				>{kabinetten.length === 1 ? kabinetten[0] : `${kabinetten.length} kabinetten`}</span
 			>

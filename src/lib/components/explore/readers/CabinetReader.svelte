@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { textOf } from '$lib/text/words';
+	import { langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import ReaderHead from './ReaderHead.svelte';
 	import { getCabinet } from '$lib/api/records';
@@ -14,7 +16,6 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import { indexHref } from '$lib/bron/href';
 	import { achtergrondVan } from '../partijkleuren.svelte';
-	import { formatLongDate, textProp } from './_shared';
 	import { formatCount } from '$lib/text/getal';
 	import { load } from '$lib/util/load.svelte';
 
@@ -31,15 +32,15 @@
 
 	/** A date as precise as the source knows it: a year stays a year. */
 	// Since API 0.26 every cabinet is dated to the day.
-	const when = (date: string | null | undefined) => (date ? formatLongDate(date) : null);
+	const when = (date: string | null | undefined) => (date ? langeDatum(date) : null);
 
 	// The head, the period and the seats from the light node at once; the rest when the
 	// cabinet's record comes (/api/cabinets/{key} takes seconds cold: Rutte IV 2 s, live
 	// 10 Oct, where the light node takes 0.2 s).
 	const p = $derived(node.raw?.props ?? {});
-	const naam = $derived(record?.name ?? textProp(p.name) ?? node.label);
-	const van = $derived(record ? record.from_date : textProp(p.from_date));
-	const tot = $derived(record ? record.to_date : textProp(p.to_date));
+	const naam = $derived(record?.name ?? textOf(p.name) ?? node.label);
+	const van = $derived(record ? record.from_date : textOf(p.from_date));
+	const tot = $derived(record ? record.to_date : textOf(p.to_date));
 
 	const listHref = (kind: 'ministers' | 'commitments', key: string) =>
 		indexHref(kind, { cabinet: key });

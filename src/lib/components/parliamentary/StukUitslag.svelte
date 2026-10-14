@@ -1,10 +1,11 @@
 <script lang="ts">
+	import { separatorBefore } from '$lib/text/words';
 	// The outcome of a motie or amendement on its row, the same on every list of Kamerstukken
 	// (Verbonden, Bronnen, Gemarkeerd): "aangenomen 150–0 op 31 mrt. 2026", a link to the
 	// stemming; "vervangen door nr. 31", a link to that stuk. Only "verworpen" in red, as every
 	// "nee" at rest (Thijs, 10 Oct). Words from stuk-uitslag.ts.
 	import BronLink from '$lib/bron/BronLink.svelte';
-	import { nrWoord, tussen } from './vervanging';
+	import { nrWoord } from './vervanging';
 	import { uitslagTekst, type StukUitslag } from './stuk-uitslag';
 
 	let { uitslag: u }: { uitslag: StukUitslag } = $props();
@@ -14,7 +15,7 @@
 
 <span class="uitslag" class:uitslag--nee={u.uitkomst === 'verworpen'}
 	>{#if u.uitkomst === 'vervangen' && u.vervangers.length}vervangen door {nrWoord(u.vervangers)}
-		{#each u.vervangers as v, i (v.key)}{tussen(i, u.vervangers.length)}<BronLink
+		{#each u.vervangers as v, i (v.key)}{separatorBefore(i, u.vervangers.length)}<BronLink
 				ref={{ collection: 'documents', key: v.key }}>{v.nummer}</BronLink
 			>{/each}{:else if u.besluit}<BronLink ref={{ collection: 'decisions', key: u.besluit }}
 			>{woorden}</BronLink

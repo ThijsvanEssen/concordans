@@ -2,8 +2,7 @@
 // with (lawgraph `_words.word_pattern`): from the start of a word, in any case; a word of up
 // to four characters whole (`AI` in `AI-verordening`, not in `universitaire`). One rule for
 // Gevolgd, Actueel's `q` and the mark that shows where a row was found.
-
-const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+import { escapeRegExp } from './words';
 
 /** Up to this length a word is an abbreviation (`AI`, `PFAS`): it has to stand whole. */
 const KORT = 4;
@@ -19,7 +18,7 @@ function patroon(term: string): RegExp | null {
 	if (!woord) return null;
 	const begin = /^[\p{L}\p{N}]/u.test(woord) ? `(?<!${LETTER})` : '';
 	const eind = woord.length <= KORT && /[\p{L}\p{N}]$/u.test(woord) ? `(?!${LETTER})` : '';
-	return new RegExp(`${begin}${escape(woord)}${eind}`, 'giu');
+	return new RegExp(`${begin}${escapeRegExp(woord)}${eind}`, 'giu');
 }
 
 /**

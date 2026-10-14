@@ -2,6 +2,7 @@
 // stukken that change a law, the articles they change and the judgments on the most
 // changed one. Chosen by a rule, not by hand: the newest passed bill that changes articles.
 // Its links are made as from outside the Verkenner, where the band stands.
+import { count } from '$lib/text/words';
 import { naamVanId } from '$lib/bron/menselijk';
 import { formatCount } from '$lib/text/getal';
 import { api, unwrap } from '$lib/api/client';
@@ -141,7 +142,7 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 		stukLijst.push({
 			id: AMEND,
 			vorm: 'stuk',
-			label: `${amendementen.size} ${amendementen.size === 1 ? 'amendement' : 'amendementen'}`,
+			label: count(amendementen.size, 'amendement', 'amendementen'),
 			href: dossier.href,
 			groep: true
 		});
@@ -167,7 +168,7 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 		artikelen.push({
 			id: OVERIG,
 			vorm: 'regel-o',
-			label: `${rest} ${rest === 1 ? 'ander artikel' : 'andere artikelen'}`,
+			label: count(rest, 'ander artikel', 'andere artikelen'),
 			href: dossier.href,
 			groep: true
 		});
@@ -196,7 +197,7 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 				? {
 						id: 'groep/wetten',
 						vorm: 'regel',
-						label: `en ${andereWetten} ${andereWetten === 1 ? 'andere wet' : 'andere wetten'}`,
+						label: `en ${count(andereWetten, 'andere wet', 'andere wetten')}`,
 						href: dossier.href,
 						groep: true
 					}

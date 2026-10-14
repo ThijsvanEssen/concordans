@@ -4,6 +4,7 @@
 // the source values of its kind (a version by its law and day, a toezegging by its number);
 // else the kind's name and its date. One helper for every place that shows a bron: the
 // canvas (buildNodeLabel), Verbonden and the band (describe), the search, the readers.
+import { textOf } from '$lib/text/words';
 import { BRON_LABEL, isCollection } from '$lib/vocabulary';
 import { langeDatum } from '$lib/text/datum';
 import { articleName } from '$lib/text/bw';
@@ -23,9 +24,8 @@ export const RAUW: readonly RegExp[] = [
 /** Whether a text shows a key, id or slug. */
 export const isRauw = (s: string) => RAUW.some((re) => re.test(s));
 
-const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
 const naam = (v: unknown) => {
-	const t = text(v);
+	const t = textOf(v);
 	return t && !isRauw(t) ? t : null;
 };
 
@@ -43,7 +43,7 @@ export type Bron = {
 export function menselijkeNaam(b: Bron, wet?: (bwb: string) => string | null | undefined): string {
 	const p = b.props ?? {};
 	const wetNaam = () => {
-		const bwb = text(p.bwb_id);
+		const bwb = textOf(p.bwb_id);
 		return (
 			naam(p.instrument_citation_title) ??
 			naam(p.citation_title) ??
@@ -52,7 +52,7 @@ export function menselijkeNaam(b: Bron, wet?: (bwb: string) => string | null | u
 		);
 	};
 	const soort = isCollection(b.collection) ? BRON_LABEL[b.collection][0] : 'Bron';
-	const dag = (v: unknown) => (text(v) ? langeDatum(text(v)) : null);
+	const dag = (v: unknown) => (textOf(v) ? langeDatum(textOf(v)) : null);
 
 	switch (b.collection) {
 		case 'instrument_versions': {
@@ -76,7 +76,7 @@ export function menselijkeNaam(b: Bron, wet?: (bwb: string) => string | null | u
 		}
 		case 'article_versions': {
 			const artikel =
-				articleName(text(p.bwb_id), text(p.article_number), naam(p.label)) ?? 'Artikel';
+				articleName(textOf(p.bwb_id), textOf(p.article_number), naam(p.label)) ?? 'Artikel';
 			const w = wetNaam();
 			const van = dag(p.valid_from);
 			return [w ? `${artikel} ${w}` : artikel, van ? `versie van ${van}` : null]
@@ -109,7 +109,7 @@ export function menselijkeNaam(b: Bron, wet?: (bwb: string) => string | null | u
 				naam(p.citation_title) ??
 				naam(p.short_title) ??
 				naam(p.title) ??
-				(text(p.bwb_id) ? naam(wet?.(text(p.bwb_id)!)) : null) ??
+				(textOf(p.bwb_id) ? naam(wet?.(textOf(p.bwb_id)!)) : null) ??
 				withDay(soort, p, 'date_published')
 			);
 		}
@@ -127,7 +127,7 @@ export function menselijkeNaam(b: Bron, wet?: (bwb: string) => string | null | u
 
 /** The kind's name with its date where it has one: "Zaak, 2 april 2024". */
 function withDay(soort: string, p: Record<string, unknown>, veld = 'date'): string {
-	const d = text(p[veld]) ?? text(p.date) ?? text(p.valid_from);
+	const d = textOf(p[veld]) ?? textOf(p.date) ?? textOf(p.valid_from);
 	return d ? `${soort}, ${langeDatum(d)}` : soort;
 }
 
@@ -154,7 +154,7 @@ export const fractieNaam = (
 		name?: string | null;
 		display_name?: string | null;
 	} & object
-): string => text(f.abbreviation) ?? text(f.name) ?? naamVan('factions', f);
+): string => textOf(f.abbreviation) ?? textOf(f.name) ?? naamVan('factions', f);
 
 /**
  * A kind as a reader writes it (UX-toets #31, #58): a group of kinds the source files it under
@@ -163,7 +163,7 @@ export const fractieNaam = (
  * null, its title says what it is). Any other kind stands as the source gives it.
  */
 export function eigenSoort(kind: unknown): string | null {
-	const k = text(kind)?.replace(/\s*\([^()]*\/[^()]*\)\s*$/, '');
+	const k = textOf(kind)?.replace(/\s*\([^()]*\/[^()]*\)\s*$/, '');
 	return k && !k.includes('/') ? k : null;
 }
 

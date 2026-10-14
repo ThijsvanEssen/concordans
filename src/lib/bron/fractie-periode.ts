@@ -2,6 +2,7 @@
 // (Thijs, 9 Oct). From the lid's own `faction_memberships`, one record per role and term as
 // the source gives them; records that follow on from each other (a new role the next day) are
 // one period. The years only: the days are in the reader.
+import { DAY_MS } from '$lib/text/datum';
 import { naamVan } from '$lib/bron/menselijk';
 
 export type Lidmaatschap = {
@@ -21,12 +22,11 @@ export type FractiePeriode = {
 	tot: string | null;
 };
 
-const DAG = 24 * 60 * 60 * 1000;
 const jaar = (d: string) => d.slice(0, 4);
 
 /** Whether `next` starts the day after `prev` ends, or before. */
 const sluitAan = (prevTo: string | null, nextFrom: string | null) =>
-	prevTo === null || nextFrom === null || Date.parse(nextFrom) - Date.parse(prevTo) <= DAG;
+	prevTo === null || nextFrom === null || Date.parse(nextFrom) - Date.parse(prevTo) <= DAY_MS;
 
 /** Each fractie once, the latest first, with its periods. */
 export function fractiePeriodes(list: unknown): FractiePeriode[] {

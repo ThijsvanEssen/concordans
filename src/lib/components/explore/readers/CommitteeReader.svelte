@@ -1,30 +1,30 @@
 <script lang="ts">
+	import { capitalize, joinParts, textOf } from '$lib/text/words';
+	import { langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
-	import { opsomming } from '$lib/text/opsomming';
 	import ReaderHead from './ReaderHead.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronLabel } from '$lib/vocabulary';
-	import { committeeSlug, getCommittee, str } from '$lib/components/parliamentary/data';
+	import { committeeSlug, getCommittee } from '$lib/components/parliamentary/data';
 	import { OUTCOME_LABEL, type Outcome } from '$lib/components/parliamentary/stages';
 	import { chamberName } from '$lib/components/parliamentary/chamber';
 	import { seatWord } from '$lib/components/parliamentary/career';
-	import { formatLongDate } from './_shared';
 	import { load } from '$lib/util/load.svelte';
 
 	let { node }: { node: GraphNode } = $props();
 
 	const p = $derived(node.raw?.props ?? {});
-	const name = $derived(str(p.name) ?? node.raw?.display_name ?? node.label);
-	const abbreviation = $derived(str(p.abbreviation));
-	const kind = $derived(str(p.kind));
+	const name = $derived(textOf(p.name) ?? node.raw?.display_name ?? node.label);
+	const abbreviation = $derived(textOf(p.abbreviation));
+	const kind = $derived(textOf(p.kind));
 
 	/** A seat's role as a label: `PlvLid` and `Plv. lid` alike "Plaatsvervangend lid". */
 	const zetelVan = (role: string | null | undefined) => {
 		const w = seatWord(role) ?? 'lid';
-		return w.charAt(0).toUpperCase() + w.slice(1);
+		return capitalize(w);
 	};
 	const RANG: Record<string, number> = { Voorzitter: 0, Ondervoorzitter: 1, Lid: 2 };
 	const rang = (zetel: string) => RANG[zetel] ?? 3;
@@ -35,7 +35,7 @@
 		'Commissie'
 	);
 	const chamber = $derived(
-		str(p.chamber) ??
+		textOf(p.chamber) ??
 			(committee.state.status === 'ready' ? (committee.state.data.chamber ?? null) : null)
 	);
 </script>
@@ -54,11 +54,11 @@
 			}}
 		>
 			{#snippet soort()}
-				<SoortLink collection="committees">{bronLabel('committees')}</SoortLink>{opsomming([
+				<SoortLink collection="committees">{bronLabel('committees')}</SoortLink>{joinParts([
 					'',
 					chamberName(chamber),
 					kind
-				]) && `, ${opsomming([chamberName(chamber), kind])}`}
+				]) && `, ${joinParts([chamberName(chamber), kind])}`}
 			{/snippet}
 			{#snippet status()}
 				{#if abbreviation && abbreviation !== name}<span class="afk">{abbreviation}</span>{/if}
@@ -119,7 +119,7 @@
 
 			{#if ek && source}
 				<p class="source">
-					{`Samenstelling op ${formatLongDate(source.composition_date ?? null)}, gegevens sinds ${formatLongDate(source.data_since ?? null)}. `}Bron:
+					{`Samenstelling op ${langeDatum(source.composition_date)}, gegevens sinds ${langeDatum(source.data_since)}. `}Bron:
 					<a href={source.url} rel="external">{source.attribution}</a>.
 				</p>
 			{/if}

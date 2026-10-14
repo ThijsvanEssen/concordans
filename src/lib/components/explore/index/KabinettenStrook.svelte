@@ -12,7 +12,7 @@
 	import { pannable } from './pannable';
 	import { inOffice, type Cabinet } from './government';
 	import { bronHref, indexHref } from '$lib/bron/href';
-	import { korteDatum, vandaag } from '$lib/text/datum';
+	import { DAY_MS, korteDatum, vandaag } from '$lib/text/datum';
 	import Tijdas from '$lib/components/tijdlijn/Tijdas.svelte';
 	import { ms, periodeZin } from '$lib/components/tijdlijn/tijdas';
 
@@ -30,7 +30,7 @@
 		onToggle: (key: string) => void;
 	} = $props();
 
-	const JAAR = 365.25 * 86_400_000;
+	const JAAR = 365.25 * DAY_MS;
 	const YEAR_WIDTHS = [10, 16, 28, 48, 80];
 	let yearWidth = $state(28);
 	let scroller = $state<HTMLElement | null>(null);

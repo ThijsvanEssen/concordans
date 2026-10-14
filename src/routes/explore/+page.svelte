@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { kamerstukName } from '$lib/components/parliamentary/kamerstuk';
 	import type { Collection } from '$lib/vocabulary';
 	import { sprongDoel } from '$lib/stores/sprong';
 	import { naamVanId } from '$lib/bron/menselijk';
-	import { kamerstukNummer } from '$lib/bron/dossier-naam';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import IconKnop from '$lib/components/ui/IconKnop.svelte';
 	import { useSearchOpener } from '$lib/stores/search-trigger';
@@ -100,7 +100,7 @@
 		verkennerUrl,
 		type Pad
 	} from '$lib/bron/leesbaar';
-	import { instrumentMetaStore } from '$lib/api/instrument-cache';
+	import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 	import NetwerkPanel from '$lib/netwerk/NetwerkPanel.svelte';
 	import { focusStap } from '$lib/graph/focus-stap';
 	import {
@@ -159,7 +159,11 @@
 		p.soort === 'artikel'
 			? `Artikel ${p.nummer} van ${p.wet}`
 			: p.soort === 'kamerstuk'
-				? `${kamerstukNummer(p.dossier)}, ${/^\d/.test(p.nummer) ? 'nr. ' : ''}${p.nummer}`
+				? kamerstukName({
+						chamber: /^\d/.test(p.nummer) ? 'TK' : 'EK',
+						dossier_number: p.dossier,
+						number: p.nummer
+					})
 				: p.soort === 'publicatie'
 					? `${REEKS_NAAM[p.reeks]} ${p.jaar}, ${p.nummer}`
 					: p.soort === 'lid'
@@ -526,12 +530,11 @@
 			navItems = [];
 			return;
 		}
-		const meta = $instrumentMetaStore.get(bwb);
-		const lawName = meta?.citationTitle ?? meta?.title ?? meta?.shortTitle ?? bwb;
+		const name = lawName($instrumentMetaStore.get(bwb), bwb);
 		let current = true;
 		lawArticles(bwb)
 			.then((list) => {
-				if (current) navItems = lawNav(list, lawName);
+				if (current) navItems = lawNav(list, name);
 			})
 			.catch(() => {
 				if (current) navItems = [];

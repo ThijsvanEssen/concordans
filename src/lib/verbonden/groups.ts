@@ -4,6 +4,7 @@
 //
 // A group is filled from the node response of the selected bron (`match`: relation,
 // direction, collection) or, where no edge says it, by a named loader (`load`).
+import { capitalize, joinAnd } from '$lib/text/words';
 import { langeDatum } from '$lib/text/datum';
 import { kindName, lawKind } from '$lib/components/explore/law-head';
 import { bucketKey, type Bucket } from '$lib/api/nodes';
@@ -115,10 +116,12 @@ function functionList(rows: Row[]): string {
 	for (const r of rows) if (r.function) counts.set(r.function, (counts.get(r.function) ?? 0) + 1);
 	const names = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([name]) => name);
 	if (names.length > 3)
-		return `${names.slice(0, 2).join(', ')} en ${names.length - 2} andere functies`;
-	return names.length > 1
-		? `${names.slice(0, -1).join(', ')} en ${names.at(-1)}`
-		: (names[0] ?? '');
+		return joinAnd(names.slice(0, 2), {
+			n: names.length - 2,
+			one: 'andere functie',
+			many: 'andere functies'
+		});
+	return joinAnd(names);
 }
 
 const authored = (
@@ -906,8 +909,6 @@ const matches = (m: Match, n: Neighbor) =>
 	(!m.direction || m.direction === n.direction) &&
 	(!m.where || m.where(n));
 
-const longDay = (day: string) => langeDatum(day) || day;
-
 /**
  * The decision a judgment says it appeals from, where the dataset lacks it
  * (`unresolved_appeal_targets`): a line under Uitspraak in eerdere aanleg, without a link.
@@ -924,7 +925,7 @@ export function withUnresolvedAppeals(groups: Group[], props: Record<string, unk
 		const number = typeof t.case_number === 'string' ? t.case_number : '';
 		return {
 			ref: { collection: 'judgments', key: `unresolved:${court}:${day}:${number}` },
-			title: [court.charAt(0).toUpperCase() + court.slice(1), day && longDay(day), number]
+			title: [capitalize(court), day && (langeDatum(day) || day), number]
 				.filter(Boolean)
 				.join(', '),
 			context: null,

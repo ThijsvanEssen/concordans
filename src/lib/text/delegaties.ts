@@ -3,6 +3,7 @@
 // a formula the AMvB's on that grondslag, or that there are none yet). The API marks each
 // formula (`delegations`) and names per formula the regulations that fill it
 // (`.../delegated`, `clauses`); nothing is read from the text here.
+import { joinAnd } from './words';
 import type { Schema } from '$lib/api/types';
 import { kindName } from '$lib/components/explore/law-head';
 import { langeDatum } from '$lib/text/datum';
@@ -62,16 +63,12 @@ export const artikelKort = (a: Schema<'DelegatedArticleDTO'>): string =>
 /** A regulation issued under a law, with the articles of the law its `Gelet op` names. */
 export type WetRegeling = Schema<'InstrumentDelegatedItem'>;
 
-/** `1 en 7`, `1, 2 en 3`: numbers as a list is read. */
-const opsomming = (xs: readonly string[]) =>
-	xs.length > 1 ? `${xs.slice(0, -1).join(', ')} en ${xs.at(-1)}` : (xs[0] ?? '');
-
 /** The leden a Gelet op names, `lid 1 en 7`; null where it names the article whole. */
 export function ledenTekst(leden: unknown): string | null {
 	const xs = Array.isArray(leden)
 		? leden.filter((l): l is string => typeof l === 'string' && !!l.trim())
 		: [];
-	return xs.length ? `lid ${opsomming(xs)}` : null;
+	return xs.length ? `lid ${joinAnd(xs)}` : null;
 }
 
 /** An article a preamble or a reference names, with the leden and onderdelen it names. */
@@ -100,7 +97,7 @@ export function artikelDelen(articles: readonly Deel[], bwb?: string | null): st
 	}
 	return [...per].map(([nr, d]) => {
 		const leden = d.heel ? null : ledenTekst([...d.leden]);
-		const onder = !d.heel && d.onderdelen.size ? `onder ${opsomming([...d.onderdelen])}` : null;
+		const onder = !d.heel && d.onderdelen.size ? `onder ${joinAnd([...d.onderdelen])}` : null;
 		return [bookNumber(bwb, nr), leden, onder].filter(Boolean).join(' ');
 	});
 }
@@ -186,7 +183,7 @@ export function uitgewerktIn(referring: unknown, bwb?: string | null): string | 
 	if (!xs.length) return null;
 	const genoemd = xs.slice(0, UITGEWERKT_GENOEMD);
 	const meer = xs.length - genoemd.length;
-	return `uitgewerkt in art. ${meer ? `${genoemd.join(', ')} en ${meer} andere` : opsomming(genoemd)}`;
+	return `uitgewerkt in art. ${joinAnd(genoemd, { n: meer, one: 'andere', many: 'andere' })}`;
 }
 
 /** One sentence of the head of a regulation: `Op grond van` and the laws. */
@@ -224,5 +221,5 @@ export function medeOpGrondVan(
 	>[]
 ): string | null {
 	const namen = wetten.map((w) => w.citation_title ?? naamVan('instruments', w));
-	return namen.length ? `mede ${grondslagWerkwoord(null).toLowerCase()} ${opsomming(namen)}` : null;
+	return namen.length ? `mede ${grondslagWerkwoord(null).toLowerCase()} ${joinAnd(namen)}` : null;
 }

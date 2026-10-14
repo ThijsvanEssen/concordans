@@ -1,3 +1,4 @@
+import { capitalize, textOf, truncate, withoutGroup } from '$lib/text/words';
 import { eersteIndiener } from '$lib/bron/submitters';
 import type { Schema } from '$lib/api/types';
 import { menselijkeNaam } from '$lib/bron/menselijk';
@@ -212,19 +213,11 @@ export function shortDossierTitle(title: string | null): string | null {
 	const t = title.trim();
 	const m = t.match(/\(([^()]+)\)\s*$/);
 	if (m && m[1].trim().length > 0) return m[1].trim();
-	return t.length > 60 ? t.slice(0, 57).trimEnd() + '…' : t;
+	return truncate(t, 60);
 }
-
-const text = (value: unknown): string | null =>
-	typeof value === 'string' && value.trim() ? value.trim() : null;
 
 /** A name the canvas can carry: at most `max` characters, cut at a word, with "…". */
-export function kort(name: string, max = 40): string {
-	if (name.length <= max) return name;
-	const cut = name.slice(0, max - 1);
-	const space = cut.lastIndexOf(' ');
-	return `${(space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s,.:;(–-]+$/, '')}…`;
-}
+export const kort = (name: string, max = 40): string => truncate(name, max, { atWord: true });
 
 /**
  * A Kamerstuk on the canvas, short and by what tells it apart in its dossier (API 0.79.6
@@ -234,26 +227,24 @@ export function kort(name: string, max = 40): string {
  * Without a number, the month. The full name is in the panel and the card.
  */
 export function stukLabel(props: Record<string, unknown>): string | null {
-	const kind = text(props.kind);
-	const shortKind = kind?.replace(/\s*\(.*\)\s*$/, '') ?? null;
+	const kind = textOf(props.kind);
+	const shortKind = kind ? withoutGroup(kind) : null;
 	const number =
-		text(props.number) ?? (props.sequence != null ? text(String(props.sequence)) : null);
+		textOf(props.number) ?? (props.sequence != null ? textOf(String(props.sequence)) : null);
 	const nr = number ? (/^\d/.test(number) ? `nr. ${number}` : number) : null;
-	const title = text(props.title);
+	const title = textOf(props.title);
 	const motie = kind ? /amendement|motie/i.exec(kind) : null;
 	const lead = motie ? leadSignatory(props.actors) : null;
 	const indiener = lead
 		? `${lead.name.replace(/^(\p{Lu}[\p{L}]?\.\s*)+/u, '')}${lead.faction ? ` (${lead.faction})` : ''}`
 		: null;
 	const naam = motie
-		? [`${motie[0][0].toUpperCase()}${motie[0].slice(1).toLowerCase()}`, indiener]
-				.filter(Boolean)
-				.join(' ')
+		? [capitalize(motie[0].toLowerCase()), indiener].filter(Boolean).join(' ')
 		: !draagtWetstitel(kind) && title && !isGeneriek(title, kind)
 			? kort(title, 36)
 			: (shortKind ?? title);
 	if (!naam) return null;
-	const waar = nr ?? (text(props.date) ? maandJaar(text(props.date)) : null);
+	const waar = nr ?? (textOf(props.date) ? maandJaar(textOf(props.date)) : null);
 	return waar ? `${naam}, ${waar}` : naam;
 }
 
@@ -262,7 +253,7 @@ export function stukLabel(props: Record<string, unknown>): string | null {
  * Every article carries it since API 0.9, each boek of the Burgerlijk Wetboek its own.
  */
 export const lawIdOf = (props: Record<string, unknown> | null | undefined): string | null =>
-	text(props?.bwb_id) ?? text(props?.celex);
+	textOf(props?.bwb_id) ?? textOf(props?.celex);
 
 /** What `/api/articles/{law}/{number}` wants for an article. */
 /**
@@ -274,11 +265,11 @@ export function articleOf(
 	props: Record<string, unknown> | null | undefined
 ): { lawId: string; articleNumber: string; heading: string | null } | null {
 	const lawId = lawIdOf(props);
-	const number = text(props?.article_number);
-	const stam = text(props?.stam_id);
+	const number = textOf(props?.article_number);
+	const stam = textOf(props?.stam_id);
 	const articleNumber = number ?? (stam ? `stam_${stam}` : null);
 	return lawId && articleNumber
-		? { lawId, articleNumber, heading: number ? null : text(props?.label) }
+		? { lawId, articleNumber, heading: number ? null : textOf(props?.label) }
 		: null;
 }
 
@@ -286,8 +277,8 @@ export function articleOf(
 function leadSignatory(actors: unknown): { name: string; faction: string | null } | null {
 	if (!Array.isArray(actors)) return null;
 	const lead = eersteIndiener(actors as Record<string, unknown>[]);
-	const name = text(lead?.name);
-	return name ? { name, faction: text(lead?.faction) } : null;
+	const name = textOf(lead?.name);
+	return name ? { name, faction: textOf(lead?.faction) } : null;
 }
 
 export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {
@@ -303,22 +294,26 @@ export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {
 	switch (kind) {
 		case 'dossier': {
 			// By the short title its props carry (API 0.79.54), else its title, cut.
-			const number = text(props.label) ?? text(props.number) ?? mens();
+			const number = textOf(props.label) ?? textOf(props.number) ?? mens();
 			const naam = dossierName(dossierUitProps(props, number));
 			return naam === number ? number : `${number}, ${naam}`;
 		}
 		case 'committee':
 		case 'faction':
-			return text(props.abbreviation) ?? text(props.name) ?? mens();
+			return textOf(props.abbreviation) ?? textOf(props.name) ?? mens();
 		case 'member': {
-			const name = text(props.name) ?? mens();
-			const party = text(props.party);
+			const name = textOf(props.name) ?? mens();
+			const party = textOf(props.party);
 			return party ? `${name} (${party})` : name;
 		}
 		case 'article': {
 			// "Art. 6:162"; an article of a bijlage by its label, an article without a number by
 			// its heading: "Algemene bepaling".
-			const name = articleName(text(props.bwb_id), text(props.article_number), text(props.label));
+			const name = articleName(
+				textOf(props.bwb_id),
+				textOf(props.article_number),
+				textOf(props.label)
+			);
 			return name?.replace(/^Artikel /, 'Art. ') ?? mens();
 		}
 		case 'document': {
@@ -327,7 +322,7 @@ export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {
 			break;
 		}
 		case 'activity': {
-			const documentKind = text(props.kind);
+			const documentKind = textOf(props.kind);
 			// An activity of the Eerste Kamer has no kind: its agenda title and day.
 			if (!documentKind) return mens();
 			const firstWord = documentKind.split(/[\s(]/)[0];
@@ -338,11 +333,11 @@ export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {
 					? `${firstWord}-${lastName} (${lead.faction})`
 					: `${firstWord}-${lastName}`;
 			}
-			const yearMonth = text(props.date)?.slice(0, 7);
+			const yearMonth = textOf(props.date)?.slice(0, 7);
 			return yearMonth ? `${yearMonth}, ${firstWord}` : firstWord;
 		}
 		case 'judgment': {
-			const ecli = text(props.ecli) ?? node.display_name;
+			const ecli = textOf(props.ecli) ?? node.display_name;
 			return ecli ? formatEcliLabel(ecli) : mens();
 		}
 	}

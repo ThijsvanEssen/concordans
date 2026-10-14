@@ -1,6 +1,6 @@
 import { api, unwrap } from '$lib/api/client';
 import type { Schema } from '$lib/api/types';
-import { vandaag } from '$lib/text/datum';
+import { daysBetween, vandaag } from '$lib/text/datum';
 import { onForget } from '$lib/util/forget';
 
 // The words for the government's side of the index: the posts in a cabinet, the state of a
@@ -96,8 +96,7 @@ export function period(
 export function laterPosts<
 	T extends { member: { key: string }; from_date?: string | null; to_date?: string | null }
 >(rows: readonly T[], today = vandaag()): Set<T> {
-	const days = (r: T) =>
-		(Date.parse(r.to_date ?? today) - Date.parse(r.from_date ?? r.to_date ?? today)) / 86_400_000;
+	const days = (r: T) => daysBetween(r.from_date ?? r.to_date ?? today, r.to_date ?? today);
 	const longest = new Map<string, T>();
 	for (const row of rows) {
 		const best = longest.get(row.member.key);

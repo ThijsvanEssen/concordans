@@ -2,6 +2,7 @@
 // only by number, so a lid inserted before them does not make every later lid look
 // rewritten. A pair whose wording changed in a few words gets those words marked; a
 // pair that changed for the most part is shown as the old text and the new.
+import { joinAnd } from './words';
 import type { Schema } from '$lib/api/types';
 import { parseArticleParts, partsFromApi } from './article-parts';
 
@@ -242,7 +243,7 @@ const lidName = (r: CompareRow) => (r.new ?? r.old)?.number ?? null;
 export function namedLeden(numbers: string[]): string | null {
 	if (numbers.length === 0) return null;
 	if (numbers.length === 1) return `lid ${numbers[0]}`;
-	return `leden ${numbers.slice(0, -1).join(', ')} en ${numbers[numbers.length - 1]}`;
+	return `leden ${joinAnd(numbers)}`;
 }
 
 /** What changed between two versions, in one short phrase: "lid 4 gewijzigd". */

@@ -22,7 +22,7 @@
 	import type { Collection, Relation } from '$lib/vocabulary';
 	import { relationLabel } from '$lib/verbonden/hoe';
 	import type { BronKind, Rechter } from '$lib/verbonden/filter';
-	import { getInstrumentMeta } from '$lib/api/instrument-cache';
+	import { getInstrumentMeta, lawName } from '$lib/api/instrument-cache';
 	import { isDrawnGroup, type ContainerGroup, type Period } from '$lib/graph/container-membership';
 	import { korteDatum, vandaag } from '$lib/text/datum';
 	import { metGroepVerborgen } from '$lib/graph/met-groep';
@@ -573,7 +573,7 @@
 			// The full name while the hull, or a bron in it, is under the pointer.
 			const inHover =
 				hoveredHullId === group.id || (hoveredId !== null && group.members.has(hoveredId));
-			const full = meta ? (meta.citationTitle ?? meta.title) : group.fullLabel;
+			const full = lawName(meta, group.fullLabel);
 			// In a netwerk, a hull of only bronnen between the chosen ones names itself on a
 			// hover or zoomed in; zoomed out its name would cover the chosen bronnen' (6e).
 			const stil =

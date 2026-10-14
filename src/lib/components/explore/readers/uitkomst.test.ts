@@ -83,7 +83,7 @@ describe('what was made in an activity', () => {
 
 	it('cites a paper by its dossier and number', () => {
 		expect(stukNummer({ dossier_number: '36600', dossier_suffix: 'VIII', sequence: 5 })).toBe(
-			'Kamerstuk 36600-VIII, nr. 5'
+			'Kamerstuk 36600 VIII, nr. 5'
 		);
 		expect(stukNummer({ dossier_number: null, sequence: null })).toBeNull();
 	});

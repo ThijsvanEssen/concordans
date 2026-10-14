@@ -1,4 +1,5 @@
-import { korteDatum, weekdag } from '$lib/text/datum';
+import { count } from '$lib/text/words';
+import { DAY_MS, korteDatum, weekdag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 import { isGeneriek } from '$lib/bron/generiek';
 import { padHref, parsePad, remember } from '$lib/bron/leesbaar';
@@ -194,8 +195,8 @@ export function foldTitle(f: Fold, votes?: VoteCount[]): string {
 		const amendementen = moties ? sum((v) => v.subkind === AMENDEMENT) : 0;
 		const other = all - lead - amendementen;
 		const also = [
-			amendementen ? `${amendementen} ${amendementen === 1 ? 'amendement' : 'amendementen'}` : '',
-			other ? `${other} ${other === 1 ? 'ander voorstel' : 'andere voorstellen'}` : ''
+			amendementen ? count(amendementen, 'amendement', 'amendementen') : '',
+			other ? count(other, 'ander voorstel', 'andere voorstellen') : ''
 		]
 			.filter(Boolean)
 			.join(' en ');
@@ -295,7 +296,7 @@ export const countLine = (counts: Day['counts']) =>
 export function dayLabel(iso: string, today: string): string {
 	const d = new Date(`${iso}T00:00:00Z`);
 	const t = new Date(`${today}T00:00:00Z`);
-	const diff = Math.round((t.getTime() - d.getTime()) / 86_400_000);
+	const diff = Math.round((t.getTime() - d.getTime()) / DAY_MS);
 	if (diff === 0) return 'Vandaag';
 	if (diff === 1) return 'Gisteren';
 	if (diff === -1) return 'Morgen';
@@ -322,13 +323,12 @@ export function feedStand(
 /** `Stukken van de Kamers tot en met 24 sep. 2026, opgehaald op 24 sep. 2026` */
 export function standLine(stand: NonNullable<ReturnType<typeof feedStand>>): string {
 	const fetched = stand.retrievedAt
-		? `, opgehaald op ${shortDate(stand.retrievedAt.slice(0, 10))}`
+		? `, opgehaald op ${korteDatum(stand.retrievedAt.slice(0, 10))}`
 		: '';
-	return `Stukken van de Kamers tot en met ${shortDate(stand.newest)}${fetched}`;
+	return `Stukken van de Kamers tot en met ${korteDatum(stand.newest)}${fetched}`;
 }
 
 /** `24 sep. 2026`, for a date in a line of text. */
-export const shortDate = (iso: string | null | undefined): string => korteDatum(iso);
 
 /**
  * The articles a version changed, of all the law has: `8 van 11 artikelen gewijzigd`; where
@@ -374,10 +374,6 @@ export function doorzochtVanaf(r: object): string | null {
 	};
 	return partial && typeof vanaf === 'string' && vanaf ? vanaf.slice(0, 10) : null;
 }
-
-/** The day before: where a search goes on further back. */
-export const dagVoor = (iso: string) =>
-	new Date(Date.parse(`${iso.slice(0, 10)}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
 
 /**
  * Where a failure of the feed is said: in place of the list it left empty, or under the list

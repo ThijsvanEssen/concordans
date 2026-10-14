@@ -1,4 +1,5 @@
-import { vandaag } from '$lib/text/datum';
+import { lowerFirst } from '$lib/text/words';
+import { DAY_MS, vandaag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 
 // Who held which post in a cabinet, laid out on the cabinet's term: per ministry its seats,
@@ -10,7 +11,6 @@ export type Seat = Schema<'CabinetSeatDTO'>;
 export type SeatPost = Schema<'CabinetPostDTO'>;
 export type Phase = Schema<'CabinetPhaseDTO'>;
 
-const DAY = 86_400_000;
 const parse = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
 
 export type Term = { start: number; end: number; open: boolean };
@@ -60,7 +60,7 @@ export function lanesOf(seat: Seat, term: Term): Block[][] {
 		.sort((a, b) => a.from - b.from || a.to - b.to);
 	const lanes: Block[][] = [];
 	// A day's slack: one holder often ends on the day the next begins.
-	const slack = DAY / (term.end - term.start);
+	const slack = DAY_MS / (term.end - term.start);
 	for (const block of blocks) {
 		const lane = lanes.find((l) => l[l.length - 1].to <= block.from + slack);
 		if (lane) lane.push(block);
@@ -100,8 +100,6 @@ export function bandsOf(
 		.filter((b) => b.to > b.from);
 }
 
-const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
-
 /**
  * Why a post was held ad interim, in words for the reader: beside which other post, or in
  * the words of Rijksoverheid. A sentence, with its one full stop.
@@ -112,14 +110,14 @@ export function actingReason(
 	if (post.acting_reason === 'held_other_seat') {
 		const other = post.acting_other_seat?.function;
 		return other
-			? `Naast de post ${lower(other)}, tot de opvolger aantrad.`
+			? `Naast de post ${lowerFirst(other)}, tot de opvolger aantrad.`
 			: 'Naast een andere post, tot de opvolger aantrad.';
 	}
 	if (post.acting_reason === 'source') {
 		const text = post.acting_basis?.trim();
 		if (!text || /^a\.i\.?$/i.test(text)) return 'Ad interim, volgens Rijksoverheid.';
 		// One full stop at the end, whether the source gave one or not.
-		return `Volgens Rijksoverheid: ${lower(text).replace(/\.?$/, '.')}`;
+		return `Volgens Rijksoverheid: ${lowerFirst(text).replace(/\.?$/, '.')}`;
 	}
 	return null;
 }

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { opsomming } from '$lib/text/opsomming';
+	import { joinParts } from '$lib/text/words';
 	// The head of every reader, one form (Thijs, 10 Oct: "gelijke experience op gelijke
 	// pagina's"): the line of the kind or the place of the bron, the title, what stands under
 	// the title, and the status line with the actions at its right, in that order and with the
@@ -78,7 +78,7 @@
 			<div class="reader-kind">
 				<!-- One run of words: the kind as a link, the jurisdiction after its comma. -->
 				<SoortLink {collection}><span>{kind ?? bronLabel(collection)}</span></SoortLink
-				>{#if opsomming([juris])}<span class="reader-juris">, {opsomming([juris])}</span>{/if}
+				>{#if joinParts([juris])}<span class="reader-juris">, {joinParts([juris])}</span>{/if}
 			</div>
 		{/if}
 		{@render nav?.()}

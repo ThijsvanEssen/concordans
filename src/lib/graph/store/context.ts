@@ -1,3 +1,4 @@
+import { textOf } from '$lib/text/words';
 import { primeInstrumentNames, recordInstrument } from '$lib/api/instrument-cache';
 import { neighborsOf } from '$lib/api/nodes';
 import type { Schema } from '$lib/api/types';
@@ -197,15 +198,14 @@ export function createGraphContext() {
 		} else {
 			// Short on the hull, in full on hover: a dossier by its number, a commissie or
 			// fractie by its abbreviation.
-			const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
-			const name = text(p.name) ?? text(node.display_name);
+			const name = textOf(p.name) ?? textOf(node.display_name);
 			const short =
 				containerKind === 'dossier'
-					? text(p.label)
-					: (text(p.abbreviation) ??
+					? textOf(p.label)
+					: (textOf(p.abbreviation) ??
 						buildNodeLabel(node, kindOfCollection(node.collection as Collection)));
 			const full =
-				containerKind === 'dossier' ? [short, text(p.title)].filter(Boolean).join(', ') : name;
+				containerKind === 'dossier' ? [short, textOf(p.title)].filter(Boolean).join(', ') : name;
 			containers.recordMeta(containerKind, containerIdFor(node), short ?? '', full ?? '');
 		}
 	};

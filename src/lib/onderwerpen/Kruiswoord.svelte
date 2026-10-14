@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { joinAnd, plural } from '$lib/text/words';
 	// The Kruiswoord of a topic (concept ux-voorstel/1f, ronde 6): the months (or weeks) as
 	// rows, a year folded under its totals; the columns under their heading (Stukken,
 	// Stemmingen, a fractie), the column's total at the top. Every number with a count is a
@@ -95,9 +96,7 @@
 			.filter((c) => failed.has(c.k) && !uit.has(c.k))
 			.map((c, i) => (i ? c.label.toLowerCase() : c.label));
 		if (!labels.length) return null;
-		const list =
-			labels.length === 1 ? labels[0] : `${labels.slice(0, -1).join(', ')} en ${labels.at(-1)}`;
-		return `${list} ${labels.length === 1 ? 'kon' : 'konden'} niet worden geteld.`;
+		return `${joinAnd(labels)} ${plural(labels.length, 'kon', 'konden')} niet worden geteld.`;
 	});
 </script>
 

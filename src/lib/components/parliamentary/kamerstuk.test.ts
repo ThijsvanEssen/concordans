@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { kamerstukCitation, kamerstukLabel, sessionYear, withoutKamerstuk } from './kamerstuk';
+import {
+	kamerstukCitation,
+	kamerstukLabel,
+	kamerstukName,
+	sessionYear,
+	withoutKamerstuk
+} from './kamerstuk';
 
 describe('kamerstukCitation', () => {
 	it('cites a paper of either Kamer with its vergaderjaar', () => {
@@ -31,6 +37,29 @@ describe('kamerstukCitation', () => {
 		expect(kamerstukLabel({ chamber: 'EK', dossier_number: '36791', number: 'C' })).toBe(
 			'36791, C'
 		);
+	});
+});
+
+describe('kamerstukName', () => {
+	it('names a paper by its place: suffix, Eerste Kamer and a letter number', () => {
+		expect(kamerstukName({ dossier_number: '36600', dossier_suffix: 'VIII', number: 5 })).toBe(
+			'Kamerstuk 36600 VIII, nr. 5'
+		);
+		expect(kamerstukName({ chamber: 'TK', dossier_number: '36764', number: '31' })).toBe(
+			'Kamerstuk 36764, nr. 31'
+		);
+		expect(kamerstukName({ chamber: 'EK', dossier_number: '36791', number: 'C' })).toBe(
+			'Kamerstuk I 36791, C'
+		);
+		expect(kamerstukLabel({ chamber: 'TK', dossier_number: '36764', number: 0 })).toBe(
+			'36764, nr. 0'
+		);
+	});
+
+	it('names the dossier alone without a number, and nothing without a dossier', () => {
+		expect(kamerstukName({ dossier_number: '36764', number: null })).toBe('Kamerstuk 36764');
+		expect(kamerstukName({ chamber: 'EK', dossier_number: '36764' })).toBe('Kamerstuk I 36764');
+		expect(kamerstukName({ dossier_number: null, number: '5' })).toBeNull();
 	});
 });
 

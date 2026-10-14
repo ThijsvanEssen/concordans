@@ -1,15 +1,15 @@
+import { escapeRegExp } from '$lib/text/words';
 import { judgmentCite } from '$lib/text/judgment-cite';
 import { menselijkeNaam } from '$lib/bron/menselijk';
 // How a search result reads: a title that tells it from its neighbours, the context a
 // lawyer checks it by, and where the API gives one, a line of the text with the words
 // searched for marked. Stukken of one dossier stand under that dossier.
 import type { Schema } from '$lib/api/types';
-import { formatLongDate } from '$lib/components/explore/readers/_shared';
 import { kindName } from '$lib/components/explore/law-head';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { articleName } from '$lib/text/bw';
-import { korteDatum } from '$lib/text/datum';
+import { korteDatum, langeDatum } from '$lib/text/datum';
 import { bronPlural, type Collection } from '$lib/vocabulary';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
 
@@ -57,14 +57,12 @@ const extras = (hit: Hit, name: string): string[] => {
 	return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
 };
 
-const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
 /** `text` in pieces, the words of `query` (three letters or more) marked. */
 export function marked(text: string, query: string): Segment[] {
 	const words = query
 		.split(/\s+/)
 		.filter((w) => w.length >= 3)
-		.map(escape);
+		.map(escapeRegExp);
 	if (words.length === 0) return [{ text, mark: false }];
 	// Split with a capture group: the odd pieces are the matches.
 	return text
@@ -78,7 +76,7 @@ export function around(text: string, query: string, lead = 40): string {
 	const words = query
 		.split(/\s+/)
 		.filter((w) => w.length >= 3)
-		.map(escape);
+		.map(escapeRegExp);
 	const at = words.length ? text.search(new RegExp(words.join('|'), 'i')) : -1;
 	if (at <= lead) return text;
 	const start = text.lastIndexOf(' ', at - lead);
@@ -176,7 +174,7 @@ export function presentHit(hit: Hit, query: string, neighbours: readonly Hit[] =
 					? `${cited} ${year}`
 					: cited
 				: date
-					? `${court}, ${formatLongDate(date)}`
+					? `${court}, ${langeDatum(date)}`
 					: court;
 			// The court publishes a translation under its own ECLI and the same date; the name
 			// it gives says so ("(Engels)", "(English translation)"), and the title too.

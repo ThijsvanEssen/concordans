@@ -22,6 +22,7 @@
 // the API ids stay as they are. The rest of the view stays in the query: ?lezen=1,
 // ?netwerk=…, the bronfilter. `/explore?focus=…` keeps working and is replaced by the
 // readable address once the bron is known.
+import { textOf } from '$lib/text/words';
 import { SvelteMap } from 'svelte/reactivity';
 import { api, leesAntwoorden, unwrap } from '$lib/api/client';
 import { ifExists, ignore } from '$lib/api/errors';
@@ -397,9 +398,6 @@ export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | n
 	return focus;
 }
 
-const text = (value: unknown): string | null =>
-	typeof value === 'string' && value.trim() ? value.trim() : null;
-
 /**
  * The readable address of a focus, from its key or from the props of its node; null
  * where it has none (a stemming: still /explore).
@@ -411,7 +409,7 @@ export function padOfFocus(focus: string, props?: Record<string, unknown> | null
 	if (!target) return null;
 	switch (target.collection) {
 		case 'judgments': {
-			const ecli = text(props?.ecli) ?? keyEcli(target.key);
+			const ecli = textOf(props?.ecli) ?? keyEcli(target.key);
 			return ecli && ECLI.test(ecli)
 				? padHref({ soort: 'uitspraak', ecli: ecli.toUpperCase() })
 				: null;
@@ -421,18 +419,18 @@ export function padOfFocus(focus: string, props?: Record<string, unknown> | null
 			// it; a node key is that number made a key (36600_viii), which only the label
 			// (`number` on the dossier DTOs) gives back (Back-end #2, readable-paths.json); a DTO
 			// that gives the suffix apart (`number` 36600, `suffix` VIII) is joined.
-			const deel = text(props?.number);
-			const achter = text(props?.suffix);
+			const deel = textOf(props?.number);
+			const achter = textOf(props?.suffix);
 			const nummer = [
 				target.key,
-				text(props?.label),
+				textOf(props?.label),
 				deel && achter ? `${deel}-${achter}` : deel
 			].find((n): n is string => !!n && DOSSIER.test(n));
 			return nummer ? padHref({ soort: 'dossier', nummer: nummer.toUpperCase() }) : null;
 		}
 		case 'articles': {
-			const wet = text(props?.bwb_id) ?? text(props?.celex);
-			const nummer = text(props?.article_number);
+			const wet = textOf(props?.bwb_id) ?? textOf(props?.celex);
+			const nummer = textOf(props?.article_number);
 			// A number with a space ("bijlage 2 artikel 6") has no address of its own.
 			if (!wet || !nummer || /\s/.test(nummer)) return null;
 			return padHref({ soort: 'artikel', wet, nummer: bookNumber(wet, nummer) });
@@ -441,10 +439,10 @@ export function padOfFocus(focus: string, props?: Record<string, unknown> | null
 			// A law of the BWB by its id (/wetten/BWBR0005290).
 			if (BWB.test(target.key)) return padHref({ soort: 'wet', wet: target.key.toUpperCase() });
 			// An EU act by its CELEX number (/wetten/32022L2555).
-			const celex = [text(props?.celex), target.key].find((c) => !!c && CELEX.test(c));
+			const celex = [textOf(props?.celex), target.key].find((c) => !!c && CELEX.test(c));
 			if (celex) return padHref({ soort: 'wet', wet: celex.toUpperCase() });
 			// A publication by its id at officielebekendmakingen.nl (stb-2026-94), or its key.
-			const id = text(props?.official_id) ?? target.key.replaceAll('_', '-');
+			const id = textOf(props?.official_id) ?? target.key.replaceAll('_', '-');
 			const m = /^(stb|stcrt|trb)-(\d{4})-(\d+)$/.exec(id.toLowerCase());
 			return m
 				? padHref({ soort: 'publicatie', reeks: m[1] as Reeks, jaar: m[2], nummer: m[3] })
@@ -452,7 +450,7 @@ export function padOfFocus(focus: string, props?: Record<string, unknown> | null
 		}
 		case 'members': {
 			// A lid by the slug the API gives (API 0.75); without one it keeps /explore.
-			const slug = text(props?.slug);
+			const slug = textOf(props?.slug);
 			return slug && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)
 				? padHref({ soort: 'lid', slug })
 				: null;
@@ -465,32 +463,32 @@ export function padOfFocus(focus: string, props?: Record<string, unknown> | null
 			return SLEUTEL.test(target.key) ? padHref({ soort: 'fractie', key: target.key }) : null;
 		case 'committees': {
 			// A commissie's key is a uuid; its slug (szw) is what a reader types.
-			const slug = text(props?.slug);
+			const slug = textOf(props?.slug);
 			return slug && SLEUTEL.test(slug) ? padHref({ soort: 'commissie', slug }) : null;
 		}
 		case 'activities': {
 			// An activiteit of the Eerste Kamer has no number; it keeps /explore.
-			const nummer = text(props?.number);
+			const nummer = textOf(props?.number);
 			return nummer && ACTIVITEIT.test(nummer)
 				? padHref({ soort: 'activiteit', nummer: nummer.toUpperCase() })
 				: null;
 		}
 		case 'commitments': {
-			const nummer = text(props?.number);
+			const nummer = textOf(props?.number);
 			return nummer && TOEZEGGING.test(nummer)
 				? padHref({ soort: 'toezegging', nummer: nummer.toUpperCase() })
 				: null;
 		}
 		case 'cases': {
-			const nummer = text(props?.number);
+			const nummer = textOf(props?.number);
 			return nummer && ZAAK.test(nummer)
 				? padHref({ soort: 'zaak', nummer: nummer.toUpperCase() })
 				: null;
 		}
 		case 'annexes': {
 			// A bijlage without a label has no address of its own.
-			const wet = text(props?.bwb_id);
-			const label = text(props?.label);
+			const wet = textOf(props?.bwb_id);
+			const label = textOf(props?.label);
 			return wet && BWB.test(wet) && label && BIJLAGE.test(label)
 				? padHref({ soort: 'bijlage', wet: wet.toUpperCase(), label: label.toUpperCase() })
 				: null;
@@ -498,11 +496,11 @@ export function padOfFocus(focus: string, props?: Record<string, unknown> | null
 		case 'documents': {
 			// Dossier and number as the stuk is cited: 36600-VIII, and 31 in the Tweede
 			// Kamer or AB in the Eerste (`number`, the letter).
-			const number = text(props?.dossier_number);
-			const suffix = text(props?.dossier_suffix);
+			const number = textOf(props?.dossier_number);
+			const suffix = textOf(props?.dossier_suffix);
 			const dossier = number && suffix ? `${number}-${suffix}` : number;
 			const nummer =
-				typeof props?.sequence === 'number' ? String(props.sequence) : text(props?.number);
+				typeof props?.sequence === 'number' ? String(props.sequence) : textOf(props?.number);
 			if (!dossier || !nummer || !STUK.test(nummer)) return null;
 			return padHref({ soort: 'kamerstuk', dossier, nummer: nummer.toUpperCase() });
 		}

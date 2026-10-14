@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { plural } from '$lib/text/words';
 	import { naamVanId } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import Periode from '$lib/components/ui/Periode.svelte';
@@ -657,7 +658,7 @@
 				{#if keuzesMeer > 0}
 					<p class="state state--group stil">
 						en {keuzesMeer}
-						{keuzesMeer === 1 ? 'ander artikel' : 'andere artikelen'}
+						{plural(keuzesMeer, 'ander artikel', 'andere artikelen')}
 					</p>
 				{/if}
 			</div>

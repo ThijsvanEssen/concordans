@@ -1,3 +1,4 @@
+import { textOf } from '$lib/text/words';
 import { api, unwrap, zoekApi } from '$lib/api/client';
 import { once } from '$lib/api/records';
 import type { GraphNode } from '$lib/graph/types';
@@ -58,13 +59,8 @@ export const getMemberVotesInOffice = (key: string, offset = 0) =>
 		)
 	);
 
-/** Node props are untyped in the schema; this is a string prop, or null. */
-export const str = (value: unknown): string | null => (typeof value === 'string' ? value : null);
-
 /** A committee is addressed by slug in `/api/committees/{slug}`; the node key is a GUID. */
-export const committeeSlug = (node: GraphNode): string | null => {
-	return str(node.raw?.props?.slug) || null;
-};
+export const committeeSlug = (node: GraphNode): string | null => textOf(node.raw?.props?.slug);
 
 export const getCommittee = (slug: string) =>
 	shared(`committees/${slug}`, () =>

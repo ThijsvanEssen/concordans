@@ -1,10 +1,11 @@
 <script lang="ts">
+	import { capitalize, count, joinAnd, textOf } from '$lib/text/words';
 	import { meldNetwerk } from '$lib/stores/netwerk-melding';
 	import { report } from '$lib/api/errors';
 	import { goto } from '$app/navigation';
 	import { rijen } from '$lib/actions/rijen';
 	import { hoeVan, kleineLetter } from './hoe';
-	import { text } from './edge-meta';
+
 	import Aanhaling from './Aanhaling.svelte';
 	import { zetMarkering } from '$lib/bron/markering.svelte';
 	import { itemVanRij } from '$lib/map/rij';
@@ -129,11 +130,7 @@
 	 * two lines and its meta (112).
 	 */
 	/** "Toelichtingen en wijzigingen", the first word with a capital. */
-	const zin = (woorden: string[]) => {
-		const z =
-			woorden.length > 1 ? `${woorden.slice(0, -1).join(', ')} en ${woorden.at(-1)}` : woorden[0];
-		return `${z.charAt(0).toUpperCase()}${z.slice(1)}`;
-	};
+	const zin = (woorden: string[]) => capitalize(joinAnd(woorden));
 	// The kind of a waiting row, for its height: what a row of that group holds on this page.
 	const wachtSoort = (noun?: string) => {
 		const wet = selection.collection === 'articles' || selection.collection === 'instruments';
@@ -329,7 +326,7 @@
 	const MELDING_MS = 8000;
 
 	/** `31 bronnen`, `1 bron`: the kind of a row is not always the noun of its group. */
-	const telling = (rows: Row[]) => (rows.length === 1 ? '1 bron' : `${rows.length} bronnen`);
+	const telling = (rows: Row[]) => count(rows.length, 'bron', 'bronnen');
 
 	// Another bron: its groups have their own notes, none yet.
 	$effect(() => {
@@ -609,7 +606,7 @@
 								&nbsp;
 							</p>{/if}
 						<p class="sr-only">
-							{g.noun ? `${g.noun.charAt(0).toUpperCase()}${g.noun.slice(1)} laden…` : 'Laden…'}
+							{g.noun ? `${capitalize(g.noun)} laden…` : 'Laden…'}
 						</p>
 					{/if}
 					{#if g.failed && g.rows.length === 0}
@@ -845,8 +842,8 @@
 											<RijInhoud
 												item={{
 													node: row.ref,
-													dictum: text(row.props?.dictum),
-													explanation: text(row.props?.explanation)
+													dictum: textOf(row.props?.dictum),
+													explanation: textOf(row.props?.explanation)
 												}}
 												als="kern"
 											/>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { capitalize } from '$lib/text/words';
 	import { naamVan } from '$lib/bron/menselijk';
 	import NavKolom from './NavKolom.svelte';
 	import { replaceState } from '$app/navigation';
@@ -54,11 +55,7 @@
 </script>
 
 {#if key}
-	<NavKolom
-		label="Inhoud"
-		titel={title}
-		onder={kind ? kind.charAt(0).toUpperCase() + kind.slice(1) : null}
-	>
+	<NavKolom label="Inhoud" titel={title} onder={kind ? capitalize(kind) : null}>
 		{#if loading && sections.length === 0}
 			<p class="nav-kolom__note">Laden…</p>
 		{:else if error}

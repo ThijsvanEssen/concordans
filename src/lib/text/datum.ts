@@ -8,6 +8,8 @@
 //   langeDatum   28 september 2026   in a sentence or a citation
 //   weekdag      Dinsdag 28 september 2026, as a heading over a day
 
+import { capitalize } from './words';
+
 const MAAND = [
 	'januari',
 	'februari',
@@ -84,8 +86,23 @@ export const weekdag = (iso: string | null | undefined): string => {
 	const t = dagVan(iso);
 	if (!t) return '';
 	const w = WEEKDAG[new Date(Date.UTC(t.j, t.m - 1, t.d)).getUTCDay()];
-	return `${w.charAt(0).toUpperCase()}${w.slice(1)} ${langeDatum(iso)}`;
+	return `${capitalize(w)} ${langeDatum(iso)}`;
 };
+
+/** A day as the URL and the API write it, `2015-01-01`, and one the calendar has. */
+export const isDay = (s: string | null | undefined): s is string =>
+	!!s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s));
+
+/** The milliseconds of a day. */
+export const DAY_MS = 86_400_000;
+
+/** The days from `a` to `b`, ISO dates or moments; negative when `b` comes first. */
+export const daysBetween = (a: string, b: string): number =>
+	(Date.parse(b) - Date.parse(a)) / DAY_MS;
+
+/** The ISO day `n` days after `iso` (before it for a negative `n`). */
+export const addDays = (iso: string, n: number): string =>
+	new Date(Date.parse(`${iso.slice(0, 10)}T00:00:00Z`) + n * DAY_MS).toISOString().slice(0, 10);
 
 /** Today as an ISO day, in the reader's own time zone. */
 export const vandaag = (now = new Date()): string =>

@@ -2,6 +2,7 @@
 // label) at the place in the text that refers to the note, and the note under its
 // overweging or paragraph, in the margin where there is room (Voetnoten.svelte). Pure
 // functions, no Svelte.
+import { textOf } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import { formatAnchor, parseAnchor } from './anchor';
 
@@ -128,7 +129,6 @@ export type StukPlaats =
 	| { part: 'title'; at: null; bereik: null };
 
 const getal = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
-const woord = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
 
 export function stukPlaats(meta: Record<string, unknown> | null | undefined): StukPlaats | null {
 	const p = meta?.place;
@@ -139,10 +139,10 @@ export function stukPlaats(meta: Record<string, unknown> | null | undefined): St
 			? { start: place.start, end: place.end }
 			: null;
 	if (place.part === 'footnote') {
-		const id = woord(place.footnote_id);
-		return id ? { part: 'footnote', at: id, label: woord(place.footnote), bereik } : null;
+		const id = textOf(place.footnote_id);
+		return id ? { part: 'footnote', at: id, label: textOf(place.footnote), bereik } : null;
 	}
-	if (place.part === 'text') return { part: 'text', at: woord(place.section_id), bereik };
+	if (place.part === 'text') return { part: 'text', at: textOf(place.section_id), bereik };
 	if (place.part === 'title') return { part: 'title', at: null, bereik: null };
 	return null;
 }

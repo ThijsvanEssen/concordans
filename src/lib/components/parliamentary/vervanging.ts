@@ -3,6 +3,7 @@
 // (`replaces`, `replaced_by`, from REVISES with the rule `vervanging`). Only the direct step:
 // a stuk replaced twice over names the one that replaced it, not the end of the chain. Nothing
 // is read from a title.
+import { separatorBefore } from '$lib/text/words';
 
 type Ref = { id: string; key: string; sequence?: number | null };
 type Keten = { replaces?: readonly Ref[] | null; replaced_by?: readonly Ref[] | null };
@@ -33,12 +34,9 @@ export function vervanging(doc: Keten): Zin[] {
 /** "nr." before one number, "nrs." before more. */
 export const nrWoord = (nrs: readonly Nr[]) => (nrs.length > 1 ? 'nrs.' : 'nr.');
 
-/** What stands before the i-th number of n: nothing, a comma, or "en" before the last. */
-export const tussen = (i: number, n: number) => (i === 0 ? '' : i === n - 1 ? ' en ' : ', ');
-
 /** A phrase as plain words: "Vervangt nrs. 26, 30 en 38". */
 export const alsTekst = (z: Zin) =>
-	`${z.woord} ${nrWoord(z.nrs)} ${z.nrs.map((n, i) => tussen(i, z.nrs.length) + n.nummer).join('')}`;
+	`${z.woord} ${nrWoord(z.nrs)} ${z.nrs.map((n, i) => separatorBefore(i, z.nrs.length) + n.nummer).join('')}`;
 
 /** A replaced stuk was not voted on as itself: its vote, if any, is that of what replaced it. */
 export const eigenUitslag = (doc: Keten) => !(doc.replaced_by ?? []).length;

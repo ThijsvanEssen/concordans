@@ -1,14 +1,16 @@
 // A row of Verbonden as Gemarkeerd keeps it: its citation as its reader gives it, its group per
 // law or dossier (an article under its law, a Kamerstuk under its dossier, a judgment as its
 // own group, so its overwegingen join it, a vote under its dossier), the rest under its kind.
+import { langeDatum } from '$lib/text/datum';
+import { textOf } from '$lib/text/words';
 import { get } from 'svelte/store';
 import { focusOf } from '$lib/bron/href';
 import { voteCitation } from '$lib/bron/naam';
-import { instrumentMetaStore } from '$lib/api/instrument-cache';
+import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 import { lawIdOf } from '$lib/graph/types';
 import { kamerstukCitation } from '$lib/components/parliamentary/kamerstuk';
-import { text } from '$lib/verbonden/edge-meta';
-import { dossierNumberOf, longDate, type Row } from '$lib/verbonden/rows';
+
+import { dossierNumberOf, type Row } from '$lib/verbonden/rows';
 import { BRON_KIND_LABEL } from '$lib/verbonden/filter';
 import { dossierLabel } from '$lib/bron/dossier-naam';
 import { keyEcli } from '$lib/bron/leesbaar';
@@ -27,13 +29,13 @@ const dossierOf = (r: Row) =>
 function judgmentHead(r: Row): { short: string; full: string } | null {
 	if (r.ref.collection !== 'judgments') return null;
 	const p = propsOf(r);
-	const ecli = text(p.ecli) ?? keyEcli(r.ref.key);
+	const ecli = textOf(p.ecli) ?? keyEcli(r.ref.key);
 	return ecli
 		? uitspraakKop({
 				ecli,
 				props: p,
-				advocate_general: text(p.advocate_general),
-				advocate_general_role: text(p.advocate_general_role)
+				advocate_general: textOf(p.advocate_general),
+				advocate_general_role: textOf(p.advocate_general_role)
 			})
 		: null;
 }
@@ -45,12 +47,12 @@ function groepVanRij(r: Row): string {
 			const m = bwb ? get(instrumentMetaStore).get(bwb) : null;
 			// Where the law is not loaded yet, its name as the row's title carries it.
 			const uitTitel = /^(?:artikel|art\.)\s+\S+\s+(.+)$/i.exec(r.title)?.[1];
-			return m?.citationTitle ?? m?.shortTitle ?? uitTitel ?? bwb ?? BRON_KIND_LABEL[r.kind];
+			return lawName(m, uitTitel ?? bwb ?? BRON_KIND_LABEL[r.kind]);
 		}
 		case 'documents':
 		case 'decisions': {
 			const nr = dossierOf(r);
-			const kort = text(propsOf(r).dossier_short_title);
+			const kort = textOf(propsOf(r).dossier_short_title);
 			return nr ? dossierLabel({ number: nr, short_title: kort }) : BRON_KIND_LABEL[r.kind];
 		}
 		case 'judgments': {
@@ -78,17 +80,17 @@ function readerCitation(r: Row): { kort: string; voluit?: string } | null {
 	const p = propsOf(r);
 	if (r.ref.collection === 'decisions')
 		return voteCitation({
-			date: text(p.date) ?? r.date,
-			chamber: text(p.chamber),
-			subject: text(p.subject) ?? text(p.title) ?? r.title
+			date: textOf(p.date) ?? r.date,
+			chamber: textOf(p.chamber),
+			subject: textOf(p.subject) ?? textOf(p.title) ?? r.title
 		});
 	if (r.ref.collection !== 'documents') return null;
 	const kort = kamerstukCitation({
-		chamber: text(p.chamber),
-		session_year: text(p.session_year),
+		chamber: textOf(p.chamber),
+		session_year: textOf(p.session_year),
 		dossier_number: dossierNumberOf(p),
-		dossier_suffix: text(p.dossier_suffix),
-		number: p.sequence != null ? String(p.sequence) : text(p.number)
+		dossier_suffix: textOf(p.dossier_suffix),
+		number: p.sequence != null ? String(p.sequence) : textOf(p.number)
 	});
 	return kort ? { kort } : null;
 }
@@ -100,9 +102,7 @@ function readerCitation(r: Row): { kort: string; voluit?: string } | null {
 function citationOf(r: Row): { kort: string; voluit?: string | null } {
 	const own = readerCitation(r);
 	const place = (s: string) =>
-		[s, r.position, own ? null : (r.identifier ?? longDate(r.date ?? null))]
-			.filter(Boolean)
-			.join(', ');
+		[s, r.position, own ? null : (r.identifier ?? langeDatum(r.date))].filter(Boolean).join(', ');
 	return { kort: place(own?.kort ?? r.title), voluit: own?.voluit ? place(own.voluit) : null };
 }
 

@@ -1,6 +1,7 @@
 // The period of a list: one filter for every list with dates (Thijs, 9 Oct: "een
 // tijdsfilter systematisch in alle filterpanes"). Days as the URL and the API hold them
 // (YYYY-MM-DD), a few periods back from today to choose at once, and a van and tot.
+import { isDay } from './datum';
 
 export type Voorkeuze = { id: string; label: string; titel: string; maanden: number };
 
@@ -32,7 +33,7 @@ export function gekozen(van: string, tot: string, vandaag: string): string | nul
  */
 export function alsDag(v: string | null | undefined, eind: boolean): string | null {
 	const s = (v ?? '').trim();
-	if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+	if (isDay(s)) return s;
 	if (/^\d{4}$/.test(s)) return `${s}-${eind ? '12-31' : '01-01'}`;
 	return null;
 }

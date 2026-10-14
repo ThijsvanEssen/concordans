@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { plural } from '$lib/text/words';
+	import { langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { getDossierPapers, getExplainedBy, getExplanations } from '$lib/api/records';
@@ -28,11 +30,11 @@
 	import { articleName } from '$lib/text/bw';
 	import { placeOf, type Division } from '$lib/text/division';
 	import { lidHistory, unitsOf, wordingsOf } from '$lib/text/version-diff';
+	import { inForceOn } from '../peildatum';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { filterParams, formatCount, type VerbondenFilter } from '$lib/verbonden/filter';
 	import { proposedTextOf, type ProposedText } from '$lib/verbonden/proposed-text';
 	import type { Row } from '$lib/verbonden/rows';
-	import { longDate } from '$lib/verbonden/rows';
 	import { untrack } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';
 	import ReaderFrame from './ReaderFrame.svelte';
@@ -275,7 +277,7 @@
 	$effect(() => {
 		const day = peildatum;
 		if (!day || wordings.length === 0) return;
-		const w = wordings.find((x) => (x.from ?? '') <= day && (!x.until || day < x.until));
+		const w = inForceOn(wordings, day, (x) => x);
 		untrack(() => {
 			shownIndex = w && w !== current && w !== lapse ? w.index : null;
 		});
@@ -299,21 +301,21 @@
 		if (!stub && !empty) return null;
 		const cited = Number(d.metadata?.judgment_count ?? 0);
 		return cited > 0
-			? `Niet in de gegevens. Genoemd in ${formatCount(cited)} ${cited === 1 ? 'uitspraak' : 'uitspraken'}.`
+			? `Niet in de gegevens. Genoemd in ${formatCount(cited)} ${plural(cited, 'uitspraak', 'uitspraken')}.`
 			: 'Niet in de gegevens.';
 	});
 
 	const versionLabel = $derived.by(() => {
 		if (stubLabel) return stubLabel;
 		if (shown) {
-			const from = longDate(shown.from);
-			const until = longDate(shown.until);
-			return `Eerdere tekst, ${from ?? '?'}${until ? ` tot ${until}` : ''}`;
+			const from = langeDatum(shown.from);
+			const until = langeDatum(shown.until);
+			return `Eerdere tekst, ${from || '?'}${until ? ` tot ${until}` : ''}`;
 		}
-		const from = longDate(validFrom);
+		const from = langeDatum(validFrom);
 		// A repealed article has no geldende tekst: its last version only records the repeal.
 		if (loaded?.article.repealed) {
-			const date = longDate(lapse?.from ?? null);
+			const date = langeDatum(lapse?.from);
 			return date ? `Vervallen per ${date}` : 'Vervallen';
 		}
 		return from ? `Geldend recht, tekst sinds ${from}` : 'Geldend recht';
@@ -537,8 +539,8 @@
 													go({ versies: null, weergave: null, peildatum: null });
 											}}
 											>{w.lapsed
-												? `Vervallen per ${longDate(w.from)}`
-												: `${w === current ? 'Geldend, sinds ' : ''}${longDate(w.from)}${w.until ? ` tot ${longDate(w.until)}` : ''}`}</button
+												? `Vervallen per ${langeDatum(w.from)}`
+												: `${w === current ? 'Geldend, sinds ' : ''}${langeDatum(w.from)}${w.until ? ` tot ${langeDatum(w.until)}` : ''}`}</button
 										>
 										{#if w.index > 0}
 											<a
@@ -588,7 +590,7 @@
 				{#if billCount > 0}
 					<a class="head__pending" href={billsHref} data-sveltekit-noscroll
 						><KindGlyph vorm="voorstel" size={12} />{billCount}
-						{billCount === 1 ? 'wetsvoorstel raakt' : 'wetsvoorstellen raken'} dit artikel</a
+						{plural(billCount, 'wetsvoorstel raakt', 'wetsvoorstellen raken')} dit artikel</a
 					>
 				{/if}
 			{/snippet}
@@ -635,8 +637,8 @@
 		{#if shown && !comparing}
 			<p class="note note--old">
 				Niet de geldende tekst. Deze tekst gold {shown.until
-					? `van ${longDate(shown.from)} tot ${longDate(shown.until)}`
-					: `sinds ${longDate(shown.from)}`}.
+					? `van ${langeDatum(shown.from)} tot ${langeDatum(shown.until)}`
+					: `sinds ${langeDatum(shown.from)}`}.
 				{#if current}
 					<a class="link" href={compareHref(shown.index, current.index)} data-sveltekit-noscroll
 						>Vergelijk met de geldende tekst</a

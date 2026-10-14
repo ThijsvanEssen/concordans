@@ -1,4 +1,6 @@
 // The API's word rule, and the mark that shows where a row was found: $lib/text/treffer.
+import { textOf } from '$lib/text/words';
+import { isDay } from '$lib/text/datum';
 import { normaal, woordIn } from '$lib/text/treffer';
 export { normaal, woordIn };
 
@@ -53,8 +55,8 @@ const leesWet = (v: unknown): GevolgdeWet | null => {
 	if (typeof bwb !== 'string' || !/^BWBR\d+$/i.test(bwb)) return null;
 	return {
 		bwb: bwb.toUpperCase(),
-		titel: typeof titel === 'string' && titel.trim() ? titel.trim() : bwb.toUpperCase(),
-		artikel: typeof artikel === 'string' && artikel.trim() ? artikel.trim() : null
+		titel: textOf(titel) ?? bwb.toUpperCase(),
+		artikel: textOf(artikel)
 	};
 };
 
@@ -63,8 +65,7 @@ export function lees(): Onderwerp[] {
 		const raw = JSON.parse(localStorage.getItem(SLEUTEL) ?? '[]');
 		if (!Array.isArray(raw)) return [];
 		return raw.flatMap((o) => {
-			const dag = (v: unknown) =>
-				typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
+			const dag = (v: unknown) => (typeof v === 'string' && isDay(v) ? v : null);
 			const wet = leesWet(o?.wet);
 			if (wet)
 				return [{ termen: [wetNaam(wet)], wet, vorige: dag(o.vorige), gezien: dag(o.gezien) }];

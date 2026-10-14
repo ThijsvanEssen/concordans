@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { textOf } from '$lib/text/words';
 	// What an item of a map shows when its row opens: the place it keeps, read in place, so a
 	// map is read without going back and forth (Thijs, 12 Oct). An article its lid in the
 	// reader's own text (ArticleText: its references and defined terms as there), Heel artikel
@@ -69,8 +70,6 @@
 	/** The article around its lid, the overwegingen around one. */
 	let ruim = $state(false);
 
-	const tekstVan = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
-
 	async function artikel(key: string): Promise<Artikel | null> {
 		const bekend = getArticleDetailByKey(key);
 		if (bekend) {
@@ -82,13 +81,13 @@
 			string,
 			unknown
 		>;
-		const bwb = tekstVan(props.bwb_id) ?? tekstVan(props.celex);
-		const nummer = tekstVan(props.article_number);
+		const bwb = textOf(props.bwb_id) ?? textOf(props.celex);
+		const nummer = textOf(props.article_number);
 		return bwb && nummer
 			? {
 					...(await getArticleDetail(bwb, nummer)),
 					bwb,
-					eigen: tekstVan(props.instrument_citation_title)
+					eigen: textOf(props.instrument_citation_title)
 				}
 			: null;
 	}
@@ -104,9 +103,7 @@
 		}
 		if (doel.collection === 'judgments') {
 			const u = await laadUitspraak(doel.key);
-			return u
-				? { soort: 'uitspraak', u, samenvatting: tekstVan(u.j.summary) }
-				: { soort: 'niets' };
+			return u ? { soort: 'uitspraak', u, samenvatting: textOf(u.j.summary) } : { soort: 'niets' };
 		}
 		if (doel.collection === 'instruments') {
 			const d = await getInstrumentDetail(doel.key.toUpperCase());

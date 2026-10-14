@@ -5,6 +5,7 @@
 // toezeggingen are the feed's events. With a strekking chosen, every number counts the moties
 // so read, from the decisions themselves. A cell is new where it holds a day after the visit
 // before this one (Onderwerpen volgen).
+import { DAY_MS } from '$lib/text/datum';
 import { uitkomstVan, type Besluit, type Stem } from './overzicht';
 
 export type Kolom =
@@ -58,7 +59,7 @@ export function weekVan(dag: string): Vak {
 	const d = new Date(`${dag.slice(0, 10)}T00:00:00Z`);
 	d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7) + 3);
 	const jaar = d.getUTCFullYear();
-	const nr = Math.ceil(((d.getTime() - Date.UTC(jaar, 0, 1)) / 86400000 + 1) / 7);
+	const nr = Math.ceil(((d.getTime() - Date.UTC(jaar, 0, 1)) / DAY_MS + 1) / 7);
 	return `${jaar}-W${String(nr).padStart(2, '0')}`;
 }
 
