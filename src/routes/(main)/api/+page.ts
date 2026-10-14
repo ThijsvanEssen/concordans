@@ -1,51 +1,7 @@
 import type { PageLoad } from './$types';
-import openapi from '$lib/api/openapi.json';
+import apiDocs from 'virtual:api-docs';
+import type { EndpointDoc } from '$lib/api/docs';
 import { bronPlural } from '$lib/vocabulary';
-
-interface SchemaNode {
-	$ref?: string;
-	type?: string;
-	items?: SchemaNode;
-}
-
-interface OpenApiParam {
-	name: string;
-	in: string;
-	required?: boolean;
-	description?: string;
-	schema?: {
-		type?: string;
-		items?: { type?: string };
-		description?: string;
-		default?: unknown;
-		enum?: unknown[];
-		minimum?: number;
-		maximum?: number;
-		anyOf?: Array<{ type?: string }>;
-	};
-}
-
-interface OpenApiOperation {
-	tags?: string[];
-	summary?: string;
-	description?: string;
-	operationId?: string;
-	parameters?: OpenApiParam[];
-	responses?: Record<
-		string,
-		{ description?: string; content?: Record<string, { schema?: SchemaNode }> }
-	>;
-}
-
-export interface EndpointDoc {
-	method: string;
-	path: string;
-	summary: string;
-	description: string;
-	parameters: OpenApiParam[];
-	responses: Array<{ status: string; description: string; schema: string | null }>;
-	operationId: string;
-}
 
 // Tag order and Dutch text, a collection by its plural. A tag missing here still renders, after
 // these, under its own name.
@@ -140,40 +96,9 @@ const TAGS: Record<string, { label: string; description: string }> = {
 };
 const TAG_ORDER = Object.keys(TAGS);
 
-function schemaName(s?: SchemaNode): string | null {
-	if (!s) return null;
-	if (s.$ref) return s.$ref.split('/').pop() ?? null;
-	if (s.type === 'array') return `${schemaName(s.items) ?? 'any'}[]`;
-	return s.type ?? null;
-}
-
 export const load: PageLoad = () => {
-	const spec = openapi as unknown as {
-		info: { version: string };
-		paths: Record<string, Record<string, OpenApiOperation>>;
-	};
 	const byTag = new Map<string, EndpointDoc[]>();
-
-	for (const [path, ops] of Object.entries(spec.paths)) {
-		for (const [method, op] of Object.entries(ops)) {
-			if (method !== 'get') continue;
-			const tag = op.tags?.[0] ?? 'root';
-			const doc: EndpointDoc = {
-				method: method.toUpperCase(),
-				path,
-				summary: op.summary ?? '',
-				description: op.description ?? '',
-				parameters: op.parameters ?? [],
-				responses: Object.entries(op.responses ?? {}).map(([status, r]) => ({
-					status,
-					description: r.description ?? '',
-					schema: schemaName(r.content?.['application/json']?.schema)
-				})),
-				operationId: op.operationId ?? `${method}-${path}`
-			};
-			byTag.set(tag, [...(byTag.get(tag) ?? []), doc]);
-		}
-	}
+	for (const doc of apiDocs.endpoints) byTag.set(doc.tag, [...(byTag.get(doc.tag) ?? []), doc]);
 
 	const rank = (tag: string) => {
 		const i = TAG_ORDER.indexOf(tag);
@@ -185,14 +110,12 @@ export const load: PageLoad = () => {
 			tag,
 			label: TAGS[tag]?.label ?? tag,
 			description: TAGS[tag]?.description ?? '',
-			endpoints: endpoints.sort(
-				(a, b) => a.path.localeCompare(b.path) || a.method.localeCompare(b.method)
-			)
+			endpoints
 		}));
 
 	return {
-		version: spec.info.version,
+		version: apiDocs.version,
 		tags,
-		totalEndpoints: tags.reduce((sum, t) => sum + t.endpoints.length, 0)
+		totalEndpoints: apiDocs.endpoints.length
 	};
 };

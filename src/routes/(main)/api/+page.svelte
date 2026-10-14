@@ -1,7 +1,6 @@
 <script lang="ts">
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import type { PageData } from './$types';
-	import type { EndpointDoc } from './+page';
 	import { RELATIONS } from '$lib/vocabulary';
 	import { relationLabel } from '$lib/verbonden/hoe';
 
@@ -16,14 +15,6 @@
 
 	function methodClass(method: string): string {
 		return `method-${method.toLowerCase()}`;
-	}
-
-	function paramTypeLabel(p: EndpointDoc['parameters'][number]): string {
-		const schema = p.schema;
-		if (schema?.type === 'array') return `${schema.items?.type ?? 'any'}[]`;
-		if (schema?.type) return schema.type;
-		const types = schema?.anyOf?.map((a) => a.type).filter((t) => t && t !== 'null') ?? [];
-		return types.join(' | ') || 'any';
 	}
 </script>
 
@@ -128,13 +119,13 @@
 															<tr>
 																<td><code>{p.name}</code></td>
 																<td><span class="api-in">{p.in}</span></td>
-																<td><code>{paramTypeLabel(p)}</code></td>
+																<td><code>{p.type}</code></td>
 																<td>{p.required ? 'ja' : 'nee'}</td>
 																<td>
-																	{p.description ?? p.schema?.description ?? ''}
-																	{#if p.schema?.default !== undefined}
+																	{p.description}
+																	{#if p.default !== null}
 																		<span class="api-default"
-																			>standaard <code>{String(p.schema.default)}</code></span
+																			>standaard <code>{p.default}</code></span
 																		>
 																	{/if}
 																</td>
