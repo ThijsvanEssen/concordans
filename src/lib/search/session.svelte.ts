@@ -73,6 +73,8 @@ type Run = {
 	controller?: AbortController;
 	busy: boolean;
 	next: (() => void) | null;
+	/** The request asked last: only its answer brings the lane in. */
+	asked: number;
 };
 
 export class SearchSession {
@@ -88,6 +90,8 @@ export class SearchSession {
 	active = $state(0);
 
 	lanes = $state(Object.fromEntries(LANES.map((l) => [l.id, idle()])) as Record<LaneId, LaneState>);
+	/** The lanes asked for the query and not yet in: from the ask on, the pause included (#118). */
+	waiting = $state(Object.fromEntries(LANES.map((l) => [l.id, false])) as Record<LaneId, boolean>);
 	/** The query the resolving lane answered; '' before the first answer. */
 	answered = $state('');
 	/** A citation being opened. */
@@ -136,7 +140,7 @@ export class SearchSession {
 	readonly allIn = $derived(
 		this.answered === this.q &&
 			this.confirming !== this.q &&
-			LANES.every((l) => this.lanes[l.id].status !== 'loading')
+			LANES.every((l) => !this.waiting[l.id])
 	);
 	readonly bestComing = $derived(!this.best && !this.allIn && this.groups.length > 0);
 	/** The kinds whose group says "laden…" while their lane waits. */
@@ -235,7 +239,7 @@ export class SearchSession {
 
 	readonly #open: (ref: BronRef | string, at: string | null) => void;
 	readonly #runs = Object.fromEntries(
-		LANES.map((l) => [l.id, { busy: false, next: null }])
+		LANES.map((l) => [l.id, { busy: false, next: null, asked: 0 }])
 	) as Record<LaneId, Run>;
 	/** Aborted when the search goes: the requests that wait their turn. */
 	readonly #stopped = new AbortController();
@@ -330,8 +334,9 @@ export class SearchSession {
 		if (active < choices.length) this.#open(choices[active].ref, choices[active].at);
 		else if (citation && active === 0) this.openCitation().catch((e) => report('Zoeken', e));
 		else if (bare && active === 0) this.#open(bare.ref, bare.at);
-		// A hit opens only when the list answers what is typed.
-		else if (this.answered === this.q && this.hits[active - offset])
+		// A hit opens only when the list answers what is typed: the first row once every answer
+		// is in (#118), a row the reader chose at once.
+		else if (this.answered === this.q && (this.allIn || this.#moved) && this.hits[active - offset])
 			this.#open(hitName(this.hits[active - offset]), null);
 		else return false;
 		return true;
@@ -416,8 +421,11 @@ export class SearchSession {
 		const types = lane.kinds.filter((k) => kinds.includes(k));
 		if (types.length === 0 || term.length < lane.minChars) {
 			this.lanes[lane.id] = idle();
+			this.waiting[lane.id] = false;
 			return;
 		}
+		const asked = ++run.asked;
+		this.waiting[lane.id] = true;
 		const resolves = LANES.find((l) => l.kinds.some((k) => kinds.includes(k)))?.id === lane.id;
 		const query = {
 			q: term,
@@ -428,13 +436,17 @@ export class SearchSession {
 			from: from || undefined,
 			to: to || undefined
 		};
-		run.timer = setTimeout(() => this.#request(lane, query), DEBOUNCE_MS);
+		run.timer = setTimeout(() => this.#request(lane, query, asked), DEBOUNCE_MS);
 	}
 
-	#request(lane: Lane, query: { q: string; types: SearchKind[]; resolve?: boolean }) {
+	#request(
+		lane: Lane,
+		query: { q: string; types: SearchKind[]; resolve?: boolean },
+		asked: number
+	) {
 		const run = this.#runs[lane.id];
 		if (!lane.abortsOnRetype && run.busy) {
-			run.next = () => this.#request(lane, query);
+			run.next = () => this.#request(lane, query, asked);
 			return;
 		}
 		const { signal } = lane.abortsOnRetype
@@ -443,6 +455,10 @@ export class SearchSession {
 		const term = query.q;
 		// An answer to an older query is not shown; the hits before it stay.
 		const current = () => !signal.aborted && term === this.q;
+		// The lane is in once the request asked last answers, not an older one before it.
+		const settled = () => {
+			if (asked === run.asked) this.waiting[lane.id] = false;
+		};
 		run.busy = true;
 		this.lanes[lane.id].status = 'loading';
 		// The search client waits as long as the API may (30 s): a cold path took longer than
@@ -454,12 +470,14 @@ export class SearchSession {
 				// The live mode names the kinds it cut off at its time: more on "Meer …".
 				const cut = query.types.filter((k) => r.partial?.[k]);
 				this.lanes[lane.id] = { hits, status: 'done', partial: { term, kinds: cut } };
+				settled();
 				this.#askInFullIfNothing(term, cut, hits);
 				if (query.resolve) this.#resolved(term, r.resolved, lane.namesLaws);
 			})
 			.catch((e) => {
 				if (!current()) return;
 				this.lanes[lane.id] = { ...idle(), status: isTimeout(e) ? 'slow' : 'failed' };
+				settled();
 				if (query.resolve) this.answered = term;
 			})
 			.finally(() => {

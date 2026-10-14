@@ -226,6 +226,67 @@ describe('the lanes of a search', () => {
 		stop();
 	});
 
+	it('names the Beste treffer once, after the answers in full, where it asks in full by itself (#118)', async () => {
+		const { of } = api();
+		const { s, opened, stop } = session();
+		const named: (string | undefined)[] = [];
+		const watch = $effect.root(() => {
+			$effect(() => {
+				if (s.best) named.push(s.best.hit.id);
+			});
+		});
+		await type(s, 'huur');
+		of('articles').answer(answer({ articles: [hit('articles', 'live', 1)] }));
+		of('judgments').answer(answer({ judgments: [] }));
+		await settle();
+		of('instruments').answer(
+			answer({ instruments: [] }, { resolved: null, partial: { instruments: true } })
+		);
+		await settle();
+		expect(s.fullFor).toBe('huur');
+		// Asked again, in full: the lanes are not in until that answer is, also while it waits.
+		expect(s.allIn).toBe(false);
+		expect(s.best).toBe(null);
+		s.pressEnter();
+		await settle();
+		expect(opened).toEqual([]);
+		await vi.advanceTimersByTimeAsync(150);
+		flushSync();
+		expect(s.allIn).toBe(false);
+		of('instruments').answer(
+			answer({ instruments: [hit('instruments', 'huurwet', 2)] }, { resolved: null })
+		);
+		of('articles').answer(answer({ articles: [hit('articles', 'live', 1)] }));
+		await settle();
+		expect(s.best).toBe(null);
+		expect(opened).toEqual([]);
+		of('judgments').answer(answer({ judgments: [] }));
+		await settle();
+		expect(named).toEqual(['instruments/huurwet']);
+		expect(opened).toEqual(['instruments/huurwet']);
+		watch();
+		stop();
+	});
+
+	it('opens no hit for an Enter while a lane is still on its way', async () => {
+		const { of } = api();
+		const { s, opened, stop } = session();
+		await type(s, 'huur');
+		of('instruments').answer(
+			answer({ instruments: [hit('instruments', 'huurwet')] }, { resolved: null })
+		);
+		of('articles').answer(answer({ articles: [] }));
+		await settle();
+		s.pressEnter();
+		await settle();
+		expect(opened).toEqual([]);
+		of('judgments').answer(answer({ judgments: [hit('judgments', 'arrest', 3)] }));
+		await settle();
+		expect(s.best?.hit.id).toBe('instruments/huurwet');
+		expect(opened).toEqual(['instruments/huurwet']);
+		stop();
+	});
+
 	it('lets the first lane in scope say what the query cites, where the fast kinds are not searched', async () => {
 		const { asked, of } = api();
 		const { s, stop } = session(['judgments']);
