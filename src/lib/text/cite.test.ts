@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { articleCitation, citeArticle, ordinalWord, partOfAnchor, placeCitation } from './cite';
+import { articleCitation, citeArticle, partOfAnchor, placeCitation } from './cite';
+import { ordinalWord } from './getal';
 
 describe('citeArticle', () => {
 	const base = { articleNumber: '300', shortTitle: 'Sr', citationTitle: 'Wetboek van Strafrecht' };
@@ -33,6 +34,7 @@ describe('citeArticle', () => {
 
 	it('puts the book of the Burgerlijk Wetboek before the article', () => {
 		const bw7 = {
+			bwbId: 'BWBR0005290',
 			articleNumber: '3',
 			shortTitle: 'BW',
 			citationTitle: 'Burgerlijk Wetboek Boek 7'
@@ -44,11 +46,28 @@ describe('citeArticle', () => {
 		// The API names the book itself `BW6`; the citation names the code.
 		expect(
 			citeArticle({
+				bwbId: 'BWBR0005289',
 				articleNumber: '162',
 				shortTitle: 'BW6',
 				citationTitle: 'Burgerlijk Wetboek Boek 6'
 			}).kort
 		).toBe('art. 6:162 BW');
+		const bw7a = {
+			bwbId: 'BWBR0006000',
+			articleNumber: '1576',
+			shortTitle: 'BW7A',
+			citationTitle: 'Burgerlijk Wetboek Boek 7A'
+		};
+		expect(citeArticle(bw7a).kort).toBe('art. 7A:1576 BW');
+		expect(citeArticle(bw7a).voluit).toBe('artikel 7A:1576 van het Burgerlijk Wetboek');
+	});
+
+	it('reads the law of an article from its BWB id', () => {
+		const citation = articleCitation(
+			{ bwb_id: 'BWBR0006000', article_number: '1576' },
+			{ own: 'Burgerlijk Wetboek Boek 7A' }
+		);
+		expect(citation && citeArticle(citation).kort).toBe('art. 7A:1576 BW');
 	});
 
 	it('keeps a lid it cannot name in words', () => {
@@ -95,6 +114,7 @@ describe('articleCitation', () => {
 		expect(
 			articleCitation({ article_number: '3:4' }, { own: 'Awb-titel', meta, displayName: 'x' })
 		).toEqual({
+			bwbId: null,
 			articleNumber: '3:4',
 			heading: null,
 			shortTitle: 'Awb',
@@ -111,6 +131,7 @@ describe('articleCitation', () => {
 				{ displayName: 'Grondwet' }
 			)
 		).toEqual({
+			bwbId: null,
 			articleNumber: 'stam_1',
 			heading: 'Algemene bepaling',
 			shortTitle: null,

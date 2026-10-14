@@ -2,6 +2,8 @@
 // gives it in `breadcrumb`. Each layer is shown once; a layer that is the law itself
 // (Boek 6 in Burgerlijk Wetboek Boek 6) is not a layer.
 
+import { formatAnchor, parseAnchor } from './anchor';
+
 export type Division = {
 	type?: string | null;
 	/** As the law prints it: `Hoofdstuk 3`, `Titel 3.2`, `Eerste Boek`. */
@@ -54,12 +56,12 @@ export function deelIds(crumbs: Division[]): string[] {
 	const path: string[] = [];
 	return crumbs.map((c) => {
 		path.push(slug(c.label ?? c.title ?? ''));
-		return `deel-${path.filter(Boolean).join('-')}`;
+		return formatAnchor({ kind: 'division', path: path.filter(Boolean).join('-') });
 	});
 }
 
 /** The anchor of an article in the whole law, by its number as the BWB has it: `artikel-658`. */
-export const artikelAnker = (number: string) => `artikel-${number}`;
+export const artikelAnker = (number: string) => formatAnchor({ kind: 'article', number });
 
 /** An article of the list of a law, as far as an anchor in the whole law names it. */
 type Plek = {
@@ -73,11 +75,10 @@ type Plek = {
  * (`artikel-658`), or the first article of the division (`deel-hoofdstuk-3`). -1 for none.
  */
 export function plekVan(items: Plek[], anker: string): number {
-	if (anker.startsWith('artikel-')) {
-		const nummer = anker.slice('artikel-'.length);
-		return items.findIndex((a) => (a.article_number ?? a.address) === nummer);
-	}
-	if (anker.startsWith('deel-'))
-		return items.findIndex((a) => deelIds(a.breadcrumb ?? []).includes(anker));
+	const a = parseAnchor(anker);
+	if (a?.kind === 'article')
+		return items.findIndex((item) => (item.article_number ?? item.address) === a.number);
+	if (a?.kind === 'division')
+		return items.findIndex((item) => deelIds(item.breadcrumb ?? []).includes(anker));
 	return -1;
 }

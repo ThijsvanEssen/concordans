@@ -20,6 +20,10 @@ const BOOK_OF: Record<string, string> = Object.fromEntries(
 	Object.entries(BW_BOOKS).map(([book, id]) => [id, book.toUpperCase()])
 );
 
+/** The book of the Burgerlijk Wetboek a law is, by its BWB id: `6`, `7A`; null for another law. */
+export const bwBookOf = (bwbId: string | null | undefined): string | null =>
+	(bwbId && BOOK_OF[bwbId.toUpperCase()]) || null;
+
 /** The number an article is cited by: `6:162` for article 162 of Boek 6, else as it is. */
 export function bookNumber(bwbId: string | null | undefined, number: string): string;
 export function bookNumber(

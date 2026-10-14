@@ -104,12 +104,22 @@ export function judgmentCite(
  * (`ecli_nl_phr_2020_453`).
  */
 export function paragraphCite(ecli: string | null | undefined, number: string): string {
-	const parts = (ecli ?? '').trim().toUpperCase().split(/[:_/]/);
-	const at = parts.indexOf('ECLI');
-	const [country = '', code = ''] = at < 0 ? [] : parts.slice(at + 1);
+	const { country, code } = courtOf(ecli);
 	if (country === 'CE' || country === 'EU') return `§ ${number}`;
 	return code === 'PHR' ? `onder ${number}` : `r.o. ${number}`;
 }
+
+/** The country and court code of an ECLI, its key (`ecli_nl_phr_2020_453`) or its node id. */
+function courtOf(ecli: string | null | undefined): { country: string; code: string } {
+	const parts = (ecli ?? '').trim().toUpperCase().split(/[:_/]/);
+	const at = parts.indexOf('ECLI');
+	const [country = '', code = ''] = at < 0 ? [] : parts.slice(at + 1);
+	return { country, code };
+}
+
+/** Whether a judgment is a conclusion of the Parket bij de Hoge Raad, by its ECLI or key. */
+export const isConclusion = (ecli: string | null | undefined): boolean =>
+	courtOf(ecli).code === 'PHR';
 
 /** What a judgment's detail gives to cite it and its overwegingen. */
 export type UitspraakVoorCitaat = {

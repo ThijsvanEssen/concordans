@@ -3,6 +3,7 @@
 // overweging or paragraph, in the margin where there is room (Voetnoten.svelte). Pure
 // functions, no Svelte.
 import type { Schema } from '$lib/api/types';
+import { formatAnchor, parseAnchor } from './anchor';
 
 type Span = Schema<'ArticleCitationSpan'>;
 
@@ -22,11 +23,11 @@ export type NootMarker = { id: string; label: string; at: number | null };
 export type Bereik = { start: number; end: number };
 
 /** The anchor of a judgment's note by its label: `fn-35`; a second note with a label `fn-35-2`. */
-export const nootAnker = (label: string) => `fn-${label}`;
+export const nootAnker = (label: string) => formatAnchor({ kind: 'note', label });
 
 /** Whether an anchor names a note: `fn-35`, `fn-3-2`. */
 export const isNootAnker = (at: string | null | undefined): at is string =>
-	!!at && /^fn-./.test(at);
+	!!at && parseAnchor(at)?.kind === 'note';
 
 /**
  * The notes of a judgment (API 0.79.55): each by its anchor, and per paragraph the markers

@@ -8,10 +8,11 @@
 	// opens a kept one (Overweging), from the detail the reader shares.
 	import { tick } from 'svelte';
 	import type { Action } from 'svelte/action';
-	import { paragraphCite, uitspraakKop } from '$lib/text/judgment-cite';
+	import { anchorLabel } from '$lib/text/anchor';
+	import { isConclusion, uitspraakKop } from '$lib/text/judgment-cite';
 	import Overweging from './Overweging.svelte';
 	import { zetMarkering, type Markering } from './markering.svelte';
-	import { heeftOverweging, laadUitspraak, nummerVan, type Uitspraak } from './overweging';
+	import { heeftOverweging, laadUitspraak, type Uitspraak } from './overweging';
 
 	let {
 		judgment,
@@ -58,10 +59,8 @@
 		return () => (stale = true);
 	});
 
-	const nummer = $derived(nummerVan(at));
-	const plaats = $derived(
-		paragraphCite(u && u !== 'laden' ? u.j.ecli : judgment.replaceAll('_', ':'), nummer)
-	);
+	// The key carries the ECLI: `r.o. 5`, `onder 5` in a conclusion, `§ 5` in Strasbourg.
+	const plaats = $derived(anchorLabel(at, judgment) ?? at);
 	const kop = $derived(u && u !== 'laden' ? (uitspraakKop(u.j)?.short ?? null) : null);
 
 	/** Below the link, or above it where the screen ends below; never past a side. */
@@ -138,7 +137,7 @@
 	{/if}
 	<p class="verder">
 		<a {href} data-sveltekit-noscroll onclick={() => markering && zetMarkering(markering)}
-			>{plaats.startsWith('onder ')
+			>{isConclusion(judgment)
 				? `Open de conclusie ${plaats}`
 				: `Open de uitspraak bij ${plaats}`}</a
 		>

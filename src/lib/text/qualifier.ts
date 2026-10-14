@@ -2,31 +2,12 @@
 // source writes ("tweede lid", "lid 2 onder a") is read from the text of the span and
 // from what follows it. When the API delivers `lid` and `onderdeel`, this is a lookup.
 
+import { formatAnchor } from './anchor';
+import { ORDINAL_WORDS, ordinalNumber } from './getal';
+
 export type Qualifier = { lid?: string; onderdeel?: string; aanhef?: boolean };
 
-const ORDINALS = [
-	'eerste',
-	'tweede',
-	'derde',
-	'vierde',
-	'vijfde',
-	'zesde',
-	'zevende',
-	'achtste',
-	'negende',
-	'tiende',
-	'elfde',
-	'twaalfde',
-	'dertiende',
-	'veertiende',
-	'vijftiende',
-	'zestiende',
-	'zeventiende',
-	'achttiende',
-	'negentiende',
-	'twintigste'
-];
-const ORDINAL = `(${ORDINALS.join('|')})`;
+const ORDINAL = `(${ORDINAL_WORDS.join('|')})`;
 
 // "tweede lid", "eerste en tweede lid" (the first counts), "lid 2", "leden 1 en 2".
 const LID_ORDINAL = new RegExp(
@@ -45,7 +26,7 @@ function read(text: string): Qualifier {
 	const q: Qualifier = {};
 	const ordinal = LID_ORDINAL.exec(text);
 	const numbered = LID_NUMBER.exec(text);
-	if (ordinal) q.lid = String(ORDINALS.indexOf(ordinal[1].toLowerCase()) + 1);
+	if (ordinal) q.lid = ordinalNumber(ordinal[1]) ?? undefined;
 	else if (numbered) q.lid = numbered[1].toLowerCase();
 	const onderdeel = ONDERDEEL.exec(text);
 	if (onderdeel) q.onderdeel = (onderdeel[1] ?? onderdeel[2] ?? onderdeel[3]).toLowerCase();
@@ -90,15 +71,13 @@ export function qualifierOfSpan(span: {
 /** The fragment of the part a qualifier names: `lid-2`, `lid-2-onder-a`, `onder-a`, `aanhef`. */
 export function anchorOf(q: Qualifier | null): string | null {
 	if (!q) return null;
-	const onder = q.onderdeel ? `onder-${q.onderdeel}` : null;
-	if (q.lid) return onder ? `lid-${q.lid}-${onder}` : `lid-${q.lid}`;
-	return onder ?? (q.aanhef ? 'aanhef' : null);
+	if (q.lid || q.onderdeel)
+		return formatAnchor({
+			kind: 'part',
+			lid: q.lid ?? null,
+			text: null,
+			onderdelen: q.onderdeel ? [q.onderdeel] : [],
+			aanhef: false
+		});
+	return q.aanhef ? 'aanhef' : null;
 }
-
-/** A fragment as the reader prints it: `lid-2-onder-a` is "lid 2, onder a". */
-export const anchorLabel = (anchor: string): string =>
-	anchor
-		.replace(/^rov-/, 'r.o. ')
-		.replace(/^lid-(\w+)/, 'lid $1')
-		.replace(/-?onder-(\w+)/, (_, o, i) => `${i > 0 ? ', ' : ''}onder ${o}`)
-		.replace(/-(\w+)$/, ' $1');

@@ -1,39 +1,15 @@
+import { parentAnchor, parseAnchor, printedOnderdeel } from './anchor';
+import { bookNumber, bwBookOf } from './bw';
 import { langeDatum, vandaag } from './datum';
+import { ordinalWord } from './getal';
 // The three forms in which an article, a lid or an onderdeel is cited.
 // TODO(backend): the API gives no citation formats per article; the short and long
 // forms are built from the instrument's `short_title` and `citation_title`, the lid
 // and the onderdeel appended here.
 
-const ORDINAL_WORDS = [
-	'eerste',
-	'tweede',
-	'derde',
-	'vierde',
-	'vijfde',
-	'zesde',
-	'zevende',
-	'achtste',
-	'negende',
-	'tiende',
-	'elfde',
-	'twaalfde',
-	'dertiende',
-	'veertiende',
-	'vijftiende',
-	'zestiende',
-	'zeventiende',
-	'achttiende',
-	'negentiende',
-	'twintigste'
-];
-
-/** `2` is `tweede`; a lid beyond twenty, or `2a`, keeps its number: `lid 2a`. */
-export const ordinalWord = (lid: string): string | null => {
-	const n = /^\d+$/.test(lid) ? Number(lid) : NaN;
-	return n >= 1 && n <= ORDINAL_WORDS.length ? ORDINAL_WORDS[n - 1] : null;
-};
-
 export type Citation = {
+	/** The law's BWB id: an article of a book of the Burgerlijk Wetboek is cited with its book. */
+	bwbId?: string | null;
 	articleNumber: string;
 	/** The heading of an article without a number ("Algemene bepaling"), cited in its place. */
 	heading?: string | null;
@@ -67,7 +43,12 @@ export type ArticleCitation = Omit<
  * name its detail carries. The reader and a map's item (MapInhoud) cite it alike.
  */
 export function articleCitation(
-	article: { article_number?: string | null; address?: string | null; label?: string | null },
+	article: {
+		bwb_id?: string | null;
+		article_number?: string | null;
+		address?: string | null;
+		label?: string | null;
+	},
 	law: {
 		own?: string | null;
 		meta?: { citationTitle: string | null; title: string | null; shortTitle: string | null } | null;
@@ -79,6 +60,7 @@ export function articleCitation(
 	const title = law.own ?? law.meta?.citationTitle ?? law.meta?.title ?? law.displayName ?? null;
 	if (!title) return null;
 	return {
+		bwbId: article.bwb_id ?? null,
 		articleNumber: address,
 		// An article without a number is cited by its heading: "Algemene bepaling Gw".
 		heading: article.article_number ? null : (article.label ?? null),
@@ -91,13 +73,13 @@ const longDate = (d: Date) => langeDatum(vandaag(d));
 
 /** A book of the Burgerlijk Wetboek is cited as the code with the book before the article: `art. 7:3 BW`. */
 function bookOf(c: Citation): Pick<Citation, 'articleNumber' | 'citationTitle' | 'shortTitle'> {
-	const book = /^Burgerlijk Wetboek Boek (\d+)$/i.exec(c.citationTitle)?.[1];
-	if (!book) return c;
-	const articleNumber = c.articleNumber.includes(':')
-		? c.articleNumber
-		: `${book}:${c.articleNumber}`;
+	if (!bwBookOf(c.bwbId)) return c;
 	// The book is in the number, so the code is cited as a whole: `BW`, never `BW6`.
-	return { articleNumber, citationTitle: 'Burgerlijk Wetboek', shortTitle: 'BW' };
+	return {
+		articleNumber: bookNumber(c.bwbId, c.articleNumber),
+		citationTitle: 'Burgerlijk Wetboek',
+		shortTitle: 'BW'
+	};
 }
 
 /** The name of a law with its article: `het Wetboek van Strafrecht`, `de Algemene wet
@@ -148,26 +130,30 @@ export function citeArticle(c: Citation): CitationForms {
 	return { kort, voluit, metDatum: dated };
 }
 
-/** The lid, onderdelen and aanhef an anchor names: `lid-1-onder-d-onder-i`, `lid-3-aanhef`. */
-export function partOfAnchor(anchor: string | null): {
-	lid: string | null;
-	onderdelen: string[];
-	aanhef: boolean;
-} {
-	if (!anchor) return { lid: null, onderdelen: [], aanhef: false };
-	// An anchor tells two parts of the same number apart (`onder-q_2`, the second onderdeel q
-	// of Wft 1:1); the citation names them as the law prints them: `onder q`.
-	const gedrukt = (x: string) => x.replace(/_\d+$/, '');
-	const lid = /^lid-([^-]+)/.exec(anchor)?.[1] ?? null;
-	const onderdelen = [...anchor.matchAll(/onder-([^-]+)/g)].map((m) => gedrukt(m[1]));
-	// A dash has no number to cite it by (`onder-_39`, Cbw 1): from there the article is cited.
-	if (onderdelen.some((o) => !o)) return { lid: null, onderdelen: [], aanhef: false };
+type PartPlace = { lid: string | null; onderdelen: string[]; aanhef: boolean };
+
+const NO_PART: PartPlace = { lid: null, onderdelen: [], aanhef: false };
+
+/**
+ * The lid, onderdelen and aanhef an anchor names, as the law prints them: `onder-q_2` (the
+ * second onderdeel q of Wft 1:1) is `onder q`. A dash (`onder-_39`) has no number: it is
+ * skipped where a definition names it, else the article is cited from there.
+ */
+function readPart(anchor: string, dashes: 'skip' | 'cite-article'): PartPlace | null {
+	const a = parseAnchor(anchor);
+	if (a?.kind !== 'part') return null;
+	const onderdelen = a.onderdelen.map(printedOnderdeel);
+	if (dashes === 'cite-article' && onderdelen.some((o) => !o)) return NO_PART;
 	return {
-		lid: lid === null ? null : gedrukt(lid),
-		onderdelen,
-		aanhef: /(^|-)aanhef$/.test(anchor)
+		lid: a.lid === null ? null : printedOnderdeel(a.lid),
+		onderdelen: onderdelen.filter(Boolean),
+		aanhef: a.aanhef
 	};
 }
+
+/** The lid, onderdelen and aanhef an anchor names: `lid-1-onder-d-onder-i`, `lid-3-aanhef`. */
+export const partOfAnchor = (anchor: string | null): PartPlace =>
+	(anchor ? readPart(anchor, 'cite-article') : null) ?? NO_PART;
 
 /**
  * The place an anchor names, read with the article's parts: where the place is, or stands in,
@@ -180,28 +166,15 @@ export function placeCitation(
 	anchor: string | null,
 	parts: Iterable<{ id: string | null; term?: string | null }>
 ): Pick<Citation, 'lid' | 'onderdelen' | 'aanhef' | 'definitie'> {
-	if (!anchor) return { ...partOfAnchor(anchor), definitie: null };
+	if (!anchor) return { ...NO_PART, definitie: null };
 	const terms = new Map<string, string>();
 	for (const p of parts) if (p.id && p.term) terms.set(p.id, p.term);
 	// The nearest of the place and the parts around it that defines a term: `lid-2-onder-a`
 	// stands in `lid-2`, `tekst-6-onder-a` in `tekst-6`.
-	let at = anchor;
-	while (!terms.has(at)) {
-		const up = at.replace(/-(?:onder-[^-]+|aanhef)$/, '');
-		if (up === at) return { ...partOfAnchor(anchor), definitie: null };
-		at = up;
-	}
-	const gedrukt = (x: string) => x.replace(/_\d+$/, '');
-	const lid = /^lid-([^-]+)/.exec(anchor)?.[1] ?? null;
+	let at: string | null = anchor;
+	while (at !== null && !terms.has(at)) at = parentAnchor(at);
+	if (at === null) return { ...partOfAnchor(anchor), definitie: null };
 	// The definition itself (`onder-_39`, `tekst-6`) has no number to cite it by: its term
 	// names it, and only the onderdelen with a number are cited.
-	const onderdelen = [...anchor.matchAll(/onder-([^-]+)/g)]
-		.map((m) => gedrukt(m[1]))
-		.filter(Boolean);
-	return {
-		lid: lid === null ? null : gedrukt(lid),
-		onderdelen,
-		aanhef: /(^|-)aanhef$/.test(anchor),
-		definitie: terms.get(at)!
-	};
+	return { ...(readPart(anchor, 'skip') ?? NO_PART), definitie: terms.get(at)! };
 }

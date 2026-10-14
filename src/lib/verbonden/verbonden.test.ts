@@ -438,9 +438,10 @@ describe('a row opened under itself', () => {
 	});
 
 	it('says where opening it goes', () => {
-		expect(openLabelOf({ position: 'r.o. 6.16', at: 'rov-6.16' })).toBe('Lees bij r.o. 6.16');
-		expect(openLabelOf({ position: null, at: null })).toBe('Lees');
-		expect(openLabelOf({ position: null, at: null }, true)).toBe('Lees naast het artikel');
+		const ref = { collection: 'judgments', key: 'ecli_nl_hr_2019_2006' } as const;
+		expect(openLabelOf({ ref, position: 'r.o. 6.16', at: 'rov-6.16' })).toBe('Lees bij r.o. 6.16');
+		expect(openLabelOf({ ref, position: null, at: null })).toBe('Lees');
+		expect(openLabelOf({ ref, position: null, at: null }, true)).toBe('Lees naast het artikel');
 	});
 });
 

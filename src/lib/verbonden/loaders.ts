@@ -37,7 +37,8 @@ import { uitspraakVolgorde, wetUitspraakJaar, wetUitspraakVolgorde } from './vol
 import { paragraphCite } from '$lib/text/judgment-cite';
 import { articleName, bookNumber, withBook } from '$lib/text/bw';
 import { korteDatum } from '$lib/text/datum';
-import { anchorLabel, anchorOf, parseQualifier } from '$lib/text/qualifier';
+import { anchorLabel, parseAnchor } from '$lib/text/anchor';
+import { anchorOf, parseQualifier } from '$lib/text/qualifier';
 import {
 	aardOf,
 	bundleMentions,
@@ -974,8 +975,8 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				row.position = anchorLabel(at);
 				// rowOfNeighbor only reads the lid for an inbound relation; this one is
 				// outbound (judgment → article), so the anchor is the only source of it.
-				const lid = /^lid-(\w+)/.exec(at);
-				if (lid) row.lid = lid[1];
+				const place = parseAnchor(at);
+				if (place?.kind === 'part' && place.lid) row.lid = place.lid;
 				if (!stub) row.derived = true;
 			}
 			const ro = overwegingen.get(n.key);

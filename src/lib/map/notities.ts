@@ -2,7 +2,7 @@
 // Its items' own notes, each with its place (`lid 3`, `r.o. 5.7.1`); the note on its group
 // (a law, a dossier) under the group's name; the map's own note under the map's name. All
 // from this browser, so a hover costs no request.
-import { anchorLabel } from '$lib/text/qualifier';
+import { anchorLabel } from '$lib/text/anchor';
 import type { Map } from './map';
 
 export type NodeNotitie = {
@@ -24,7 +24,7 @@ export function notitiesPerBron(
 		const lijst: NodeNotitie[] = items.flatMap((i) => {
 			const tekst = i.notitie?.trim();
 			return tekst
-				? [{ waar: i.at ? anchorLabel(i.at) : null, tekst, soort: 'item' as const }]
+				? [{ waar: i.at ? anchorLabel(i.at, i.id) : null, tekst, soort: 'item' as const }]
 				: [];
 		});
 		const gezien = new Set<string>();
