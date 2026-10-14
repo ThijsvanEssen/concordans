@@ -3,15 +3,12 @@
 // "Kamerstuk 36496" is what tells a dossier from the wet of the same name (Thijs, 13 Oct: "een
 // duidelijk onderscheid tussen wet en gelijknamig dossier"). The name follows from official
 // data only (Thijs, 9 Oct: "dossiernummers zijn prima, maar ik heb liever ook human-readable
-// namen"). Where a response carries only the number, or no short title, the name comes later
-// and on its own: asked per number, once, two at a time, never on the way to a first paint.
-import { api, unwrap } from '$lib/api/client';
-import { once } from '$lib/api/records';
+// namen"). The responses carry the short title (API 0.79.54); without one the title, cut.
 
 export type DossierNaamBron = {
 	number: string;
 	title?: string | null;
-	/** Null: the API knows none. Left out: the response does not carry it (it is asked). */
+	/** Null or left out: the API knows none. */
 	short_title?: string | null;
 	short_title_basis?: 'title' | 'citation' | 'case' | 'amended_law' | null;
 };
@@ -22,9 +19,6 @@ export type DossierNaamBron = {
  */
 export const kamerstukNummer = (number: string, kamer?: 'EK' | 'TK' | null) =>
 	`Kamerstuk${kamer === 'EK' ? ' I' : ''} ${number}`;
-
-/** Whether the data on hand says what the short title is (also where it says there is none). */
-export const kentKorteNaam = (d: DossierNaamBron) => d.short_title !== undefined;
 
 /**
  * A dossier from the props of a node or a row: its number (`label`, else `number`), its title
@@ -73,46 +67,4 @@ export function dossierLabel(d: DossierNaamBron): string {
 	const name = dossierName(d);
 	const nummer = kamerstukNummer(d.number);
 	return name === d.number ? nummer : `${nummer} ${name}`;
-}
-
-// ── Only a number ───────────────────────────────────────────────────────────
-
-const PARALLEL = 2;
-let bezig = 0;
-const wacht: (() => void)[] = [];
-const beurt = () =>
-	new Promise<void>((klaar) => {
-		if (bezig < PARALLEL) {
-			bezig++;
-			klaar();
-		} else wacht.push(klaar);
-	});
-const klaar = () => {
-	const volgende = wacht.shift();
-	if (volgende) volgende();
-	else bezig--;
-};
-
-/**
- * The name of a dossier known only by its number, null where the data has none. One request
- * per number for the whole visit, two at a time (the API's limit per visitor).
- */
-export function naamVanNummer(number: string): Promise<string | null> {
-	const nr = number.trim();
-	return once(`dossier-naam/${nr.toLowerCase()}`, async () => {
-		await beurt();
-		try {
-			const r = await unwrap(
-				api.GET('/api/dossiers', { params: { query: { number: nr, status: 'all', limit: 5 } } })
-			);
-			const d = r.items.find((x) => x.number?.toLowerCase() === nr.toLowerCase());
-			if (!d) return null;
-			const naam = dossierName({ ...d, number: nr });
-			return naam === nr ? null : naam;
-		} catch {
-			return null;
-		} finally {
-			klaar();
-		}
-	});
 }

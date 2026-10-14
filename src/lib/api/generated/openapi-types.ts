@@ -273,7 +273,7 @@ export interface paths {
         };
         /**
          * All articles of an instrument
-         * @description The articles in force of this instrument (BWB id or CELEX number), in the order of the document: an article with only a heading (the Algemene bepaling of the Grondwet) where it stands, an annex after the regulation. `include_repealed` adds the repealed identities (last). The text is a short preview; /api/articles/{bwb_id}/{address} has the full content.
+         * @description The articles in force of this instrument (BWB id or CELEX number), in the order of the document: an article with only a heading (the Algemene bepaling of the Grondwet) where it stands, an annex after the regulation. `include_repealed` adds the repealed identities (last). The text is a short preview; /api/articles/{bwb_id}/{address} has the full content. ``division`` cuts the list to the articles of one division (``total`` and the pages count those), with the division itself in ``division``; 404 when no article stands in it.
          */
         get: operations["list_articles_api_instruments__bwb_id__articles_get"];
         put?: never;
@@ -413,7 +413,7 @@ export interface paths {
         };
         /**
          * Articles as they stood on a given date
-         * @description The articles of a BWB instrument as they applied on ``at_date`` (YYYY-MM-DD), read from the article versions, in the order of that day's toestand, each with the divisions it stood in that day (``breadcrumb``). Empty before the first toestand of the law (``first_version_from``) and when no version covers that date. ``text_preview`` is the start of the text; with ``text_preview_chars`` the whole ``text`` is left out unless ``include_text=true``; with the text come its ``parts`` (spans, nested by id). ``limit`` and ``offset`` page, ``total`` counts every article.
+         * @description The articles of a BWB instrument as they applied on ``at_date`` (YYYY-MM-DD), read from the article versions, in the order of that day's toestand, each with the divisions it stood in that day (``breadcrumb``). Empty before the first toestand of the law (``first_version_from``) and when no version covers that date. ``text_preview`` is the start of the text; with ``text_preview_chars`` the whole ``text`` is left out unless ``include_text=true``; with the text come its ``parts`` (spans, nested by id). ``limit`` and ``offset`` page, ``total`` counts every article. ``division`` cuts the list to the articles that stood in one division that day, with the division itself in ``division``; 404 when none did.
          */
         get: operations["list_articles_at_api_instruments__bwb_id__articles_at__at_date__get"];
         put?: never;
@@ -6787,7 +6787,7 @@ export interface components {
             at_date: string;
             /**
              * Total
-             * @description Every article in force on ``at_date``, independent of ``limit`` and ``offset``.
+             * @description Every article in force on ``at_date`` (of the division, with ``division``), independent of ``limit`` and ``offset``.
              */
             total: number;
             /**
@@ -6795,6 +6795,8 @@ export interface components {
              * @description The start of the first toestand of the law the source gives (the oldest ``valid_from`` of its versions). Before it the source gives no law: the route is empty, also where an article's own ``valid_from`` is older.
              */
             first_version_from?: string | null;
+            /** @description With ``division``: the division the list is cut to, its heading and its place in the whole list; else null. */
+            division?: components["schemas"]["InstrumentDivisionDTO"] | null;
             /** Items */
             items: components["schemas"]["InstrumentArticleVersionDTO"][];
         };
@@ -6813,6 +6815,8 @@ export interface components {
              * @description Absolute count of articles matching the request, independent of ``limit`` — use to render a '+N more' badge.
              */
             total: number;
+            /** @description With ``division``: the division the list is cut to, its heading and its place in the whole list; else null. */
+            division?: components["schemas"]["InstrumentDivisionDTO"] | null;
             /** Items */
             items: components["schemas"]["InstrumentArticleNodeDTO"][];
         };
@@ -7002,6 +7006,42 @@ export interface components {
             readonly path: string | null;
         };
         /**
+         * InstrumentDivisionDTO
+         * @description The division a list of articles is cut to (``division``).
+         */
+        InstrumentDivisionDTO: {
+            /**
+             * Anchor
+             * @description Its anchor, the path of labels down to it: `deel-hoofdstuk-10-titel-10.2-afdeling-10.2.2`.
+             */
+            anchor: string;
+            /**
+             * Type
+             * @description Its element: `afdeling`.
+             */
+            type?: string | null;
+            /**
+             * Label
+             * @description As printed: `Afdeling 10.2.2`.
+             */
+            label?: string | null;
+            /**
+             * Title
+             * @description Its heading: `Vernietiging`.
+             */
+            title?: string | null;
+            /**
+             * Breadcrumb
+             * @description The divisions from the outermost down to this one, itself last.
+             */
+            breadcrumb: components["schemas"]["InstrumentArticleBreadcrumbDTO"][];
+            /**
+             * Offset
+             * @description The place of its first article in the whole list (the same request without ``division``): an ``offset`` to read on from there.
+             */
+            offset: number;
+        };
+        /**
          * InstrumentDossierItem
          * @description One parliamentary dossier touching this instrument.
          */
@@ -7017,6 +7057,11 @@ export interface components {
             dossier_number: string;
             /** Title */
             title?: string | null;
+            /**
+             * Short Title
+             * @description The name the dossier goes by (``Cyberbeveiligingswet``), as ``/api/dossiers`` gives it; null without one.
+             */
+            short_title?: string | null;
             /** Display Name */
             display_name?: string | null;
             /**
@@ -7560,6 +7605,23 @@ export interface components {
              * @description The text around the strongest mention.
              */
             snippet?: string | null;
+            /**
+             * Snippet Paragraph Id
+             * @description The paragraph the snippet is from (for a citation in a footnote, the paragraph that refers to the footnote; the snippet is then of the footnote).
+             */
+            snippet_paragraph_id?: string | null;
+            /**
+             * Text
+             * @description The citation as written in the strongest mention: `artikel 12 van de CBW`.
+             */
+            text?: string | null;
+            /**
+             * Start
+             * @description Offset of `text` in `snippet`: `snippet[start:end]` is `text`, where the linker found it. Null when the judgment was normalized again since it was linked.
+             */
+            start?: number | null;
+            /** End */
+            end?: number | null;
             /**
              * Confidence
              * @description The confidence of the strongest mention.
@@ -8142,6 +8204,11 @@ export interface components {
             dossier_number: string;
             /** Dossier Title */
             dossier_title?: string | null;
+            /**
+             * Dossier Short Title
+             * @description The name the dossier goes by (``Cyberbeveiligingswet``), as ``/api/dossiers`` gives it; null without one.
+             */
+            dossier_short_title?: string | null;
             /**
              * Date
              * @description Of the bill, or the publication date of the publication.
@@ -11077,6 +11144,8 @@ export interface operations {
                 text_preview_chars?: number;
                 limit?: number;
                 offset?: number;
+                /** @description One division alone, by its anchor: the path of its labels (`deel-hoofdstuk-10-titel-10.2-afdeling-10.2.2`; `deel-` may be left out). */
+                division?: string | null;
             };
             header?: never;
             path: {
@@ -11314,6 +11383,8 @@ export interface operations {
                 include_text?: boolean | null;
                 limit?: number;
                 offset?: number;
+                /** @description One division alone, by its anchor: the path of its labels (`deel-hoofdstuk-10-titel-10.2-afdeling-10.2.2`; `deel-` may be left out). */
+                division?: string | null;
             };
             header?: never;
             path: {

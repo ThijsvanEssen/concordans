@@ -969,10 +969,10 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				ref: { collection: 'dossiers', key: d.key, number: d.dossier_number },
 				...describe('dossiers', d.key, d.display_name, {
 					title: d.title,
-					label: d.dossier_number
+					label: d.dossier_number,
+					short_title: d.short_title ?? null
 				}),
-				// No short title in this answer: the row asks it by number (DossierNaam).
-				dossier: { number: d.dossier_number, title: d.title },
+				dossier: { number: d.dossier_number, title: d.title, short_title: d.short_title ?? null },
 				kind: 'dossiers' as const,
 				relation: 'LEGISLATED_IN',
 				direction: 'outbound',

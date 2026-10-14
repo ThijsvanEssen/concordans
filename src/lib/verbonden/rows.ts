@@ -698,6 +698,20 @@ const CHANGE: Record<string, Relation> = {
 	repeals: 'REPEALS'
 };
 
+/** The dossier of a change, by the name the API gives it (`dossier_short_title`). */
+const dossierVan = (e: {
+	dossier_number?: string | null;
+	dossier_title?: string | null;
+	dossier_short_title?: string | null;
+}): DossierNaamBron | null =>
+	e.dossier_number
+		? {
+				number: e.dossier_number,
+				title: e.dossier_title,
+				short_title: e.dossier_short_title ?? null
+			}
+		: null;
+
 /**
  * One change of an article as a row: the publication that made it or the bill that
  * proposes it, titled by its dossier, with the verb of the change and the date.
@@ -705,6 +719,7 @@ const CHANGE: Record<string, Relation> = {
 export function historyRow(e: {
 	dossier_number?: string | null;
 	dossier_title?: string | null;
+	dossier_short_title?: string | null;
 	date?: string | null;
 	change?: string | null;
 	status?: string | null;
@@ -726,11 +741,9 @@ export function historyRow(e: {
 	return {
 		ref,
 		title: e.dossier_number
-			? ((n) => (n === e.dossier_number ? kamerstukNummer(n) : n))(
-					dossierName({ number: e.dossier_number, title: e.dossier_title })
-				)
+			? ((n) => (n === e.dossier_number ? kamerstukNummer(n) : n))(dossierName(dossierVan(e)!))
 			: (e.summary ?? naamVanId(`${ref.collection}/${ref.key}`)),
-		dossier: e.dossier_number ? { number: e.dossier_number, title: e.dossier_title } : null,
+		dossier: dossierVan(e),
 		identifier: e.summary ?? null,
 		context:
 			[

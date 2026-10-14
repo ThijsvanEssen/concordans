@@ -36,37 +36,6 @@ export function uitsnede(p: Passage): Passage {
 	return { before: before.replace(/^\s+/, ''), mark: p.mark, after: after.replace(/\s+$/, '') };
 }
 
-const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-/**
- * Where a text cites an article: `artikel 3:2 van de Awb`, `art. 6:162 BW`, `artikel 12`. Only
- * for a text without the API's spans (a snippet on its own): a paragraph's spans say it exactly.
- * The law's names (`Awb`, `Algemene wet bestuursrecht`) are part of the marked words where
- * they follow; a citation that names one of them comes first, so an `artikel 12` of
- * another law is not taken for it. Null where the text names the article in other words.
- */
-export function citeerplaats(
-	text: string,
-	number: string,
-	laws: readonly string[] = []
-): { start: number; end: number } | null {
-	const nr = escape(number.trim());
-	if (!nr) return null;
-	const names = laws.filter((l) => l && l.trim()).map((l) => escape(l.trim()));
-	const head = `\\b(?:[Aa]rtikel(?:en)?|[Aa]rt\\.)\\s*${nr}(?![\\w:]|\\.\\d)`;
-	// A lid or onderdeel between the number and the law: `, eerste lid, van de Awb`.
-	const tussen = `(?:,?\\s+(?:[^\\s,.;]+\\s+){0,4}?(?:lid|onder\\s+\\w+)\\b,?)?`;
-	const law = names.length
-		? `\\s+(?:van\\s+(?:de|het)\\s+)?(?:${names.join('|')})(?![\\w-])`
-		: null;
-	if (law) {
-		const m = new RegExp(head + tussen + law).exec(text);
-		if (m) return { start: m.index, end: m.index + m[0].length };
-	}
-	const m = new RegExp(head).exec(text);
-	return m ? { start: m.index, end: m.index + m[0].length } : null;
-}
-
 /** A citation the API found in a paragraph: its offsets in the paragraph's text, its target. */
 type Span = { start?: number | null; end?: number | null; target: { key: string } };
 
@@ -80,19 +49,11 @@ type Alinea = {
 
 /** What the detail of a judgment says of one article it cites. */
 type Aangehaald = {
-	article: {
-		key: string;
-		article_number?: string | null;
-		instrument?: {
-			abbreviation?: string | null;
-			short_title?: string | null;
-			citation_title?: string | null;
-			title?: string | null;
-		} | null;
-	};
+	article: { key: string };
 	paragraph_ids?: string[];
+	/** The text around the strongest mention; `text` stands in it at `start`..`end`. */
 	snippet?: string | null;
-	// The strongest mention's own place (API 0.79.54): read only where the API gives it.
+	/** The paragraph the snippet is from (of a footnote: the paragraph that refers to it). */
 	snippet_paragraph_id?: string | null;
 	start?: number | null;
 	end?: number | null;
@@ -103,10 +64,23 @@ export type Aanhaling = { snippet: string; match: string | null; at: string | nu
 
 const getal = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
-/** The words of a span in its paragraph, where its offsets hold them. */
-function woordenVan(p: Alinea, c: Span): string | null {
-	if (!getal(c.start) || !getal(c.end) || c.end <= c.start || c.end > p.text.length) return null;
-	return p.text.slice(c.start, c.end);
+/** The words at `start`..`end` of a text, where the offsets hold them. */
+function woordenIn(text: string, start: unknown, end: unknown): string | null {
+	if (!getal(start) || !getal(end) || start < 0 || end <= start || end > text.length) return null;
+	return text.slice(start, end);
+}
+
+/**
+ * The strongest mention as the API places it: its snippet with the words at its offsets, or
+ * its `text` where the judgment was normalized again since it was linked (no offsets).
+ */
+function sterkste(cited: Aangehaald): { snippet: string; match: string | null } | null {
+	const snippet = cited.snippet;
+	if (!snippet?.trim()) return null;
+	const words = cited.text?.trim() || null;
+	const match =
+		woordenIn(snippet, cited.start, cited.end) ?? (words && snippet.includes(words) ? words : null);
+	return { snippet, match };
 }
 
 /**
@@ -132,7 +106,7 @@ export function aanhalingIn(
 		if (!p) return null;
 		for (const c of p.citations ?? []) {
 			if (!doelen.has(c.target.key)) continue;
-			const match = woordenVan(p, c);
+			const match = woordenIn(p.text, c.start, c.end);
 			if (match) return { snippet: p.text, match, at: id };
 		}
 		return null;
@@ -141,28 +115,23 @@ export function aanhalingIn(
 		const a = inSpan(id);
 		if (a) return a;
 	}
-	// The strongest mention as the API places it (0.79.54), where it gives the place.
-	const eigen = cited.snippet_paragraph_id ? byId.get(cited.snippet_paragraph_id) : null;
-	const woorden = eigen
-		? woordenVan(eigen, { start: cited.start, end: cited.end, target: cited.article })
-		: null;
-	if (eigen && woorden) return { snippet: eigen.text, match: woorden, at: eigen.paragraph_id };
+	// The strongest mention in its paragraph, where the API names it: the whole paragraph
+	// where the snippet is part of it, else the snippet (of a footnote) with the paragraph.
+	const eigen = sterkste(cited);
+	const alinea = cited.snippet_paragraph_id ? byId.get(cited.snippet_paragraph_id) : null;
+	if (eigen?.match && alinea) {
+		const heel = alinea.text.includes(eigen.snippet.trim());
+		return {
+			snippet: heel ? alinea.text : eigen.snippet,
+			match: eigen.match,
+			at: alinea.paragraph_id
+		};
+	}
 	for (const id of ids.filter((i) => !i.startsWith('rov-'))) {
 		const a = inSpan(id);
 		if (a) return a;
 	}
-	// Without a paragraph: the API's snippet, the words read from it as a citation names them.
-	const snippet = cited.snippet?.trim();
-	if (!snippet) return null;
-	const number = cited.article.article_number;
-	const i = cited.article.instrument;
-	const laws = [i?.abbreviation, i?.short_title, i?.citation_title, i?.title].filter(
-		(l): l is string => !!l
-	);
-	const at = number ? citeerplaats(snippet, number, laws) : null;
-	return {
-		snippet,
-		match: cited.text?.trim() || (at ? snippet.slice(at.start, at.end) : null),
-		at: cited.snippet_paragraph_id ?? ids[0] ?? null
-	};
+	// Without a paragraph: the API's snippet with its words.
+	if (!eigen) return null;
+	return { ...eigen, at: cited.snippet_paragraph_id ?? ids[0] ?? null };
 }

@@ -1,6 +1,7 @@
 import { eersteIndiener } from '$lib/bron/submitters';
 import type { Schema } from '$lib/api/types';
 import { menselijkeNaam } from '$lib/bron/menselijk';
+import { dossierName, dossierUitProps } from '$lib/bron/dossier-naam';
 import { articleName } from '$lib/text/bw';
 import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
 import { maandJaar } from '$lib/text/datum';
@@ -299,9 +300,10 @@ export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {
 		});
 	switch (kind) {
 		case 'dossier': {
+			// By the short title its props carry (API 0.79.54), else its title, cut.
 			const number = text(props.label) ?? text(props.number) ?? mens();
-			const title = shortDossierTitle(text(props.title));
-			return title ? `${number}, ${title}` : number;
+			const naam = dossierName(dossierUitProps(props, number));
+			return naam === number ? number : `${number}, ${naam}`;
 		}
 		case 'committee':
 		case 'faction':

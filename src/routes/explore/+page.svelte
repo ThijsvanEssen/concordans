@@ -1666,7 +1666,7 @@
 									{telefoon}
 									onPick={addIdToNetwerk}
 									omgeving={selectedNode && !selectedNode.stub
-										? bronNaam(selectedNode, $instrumentMetaStore, true)
+										? bronNaam(selectedNode, $instrumentMetaStore)
 										: null}
 									onOmgeving={() => selectedNode && handleNodeReplace(selectedNode)}
 									onVoorbeeld={() => {
@@ -1679,7 +1679,7 @@
 										);
 									}}
 									selection={selectedNode && selectedLinkId && !netwerk.ids.includes(selectedLinkId)
-										? { label: bronNaam(selectedNode, $instrumentMetaStore, true) }
+										? { label: bronNaam(selectedNode, $instrumentMetaStore) }
 										: null}
 									tussen={netwerk.tussen}
 									onGroepAan={(kind) => {
