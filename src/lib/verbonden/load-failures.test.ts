@@ -89,6 +89,27 @@ describe('a group whose loader fails', () => {
 	});
 });
 
+describe('a request broken off while the reader stays (#65)', () => {
+	it('is no failure: the group is not marked failed and nothing is reported', async () => {
+		dossierApi(aborted());
+		const source = loadDossier();
+		await settled(source);
+		expect(group(source, 'documents-tk')?.failed).toBeFalsy();
+		expect(get(source).failed).toBe(false);
+		expect(warn).not.toHaveBeenCalled();
+		source.destroy();
+	});
+});
+
+describe('the regulations under a law (#65)', () => {
+	it('are asked with the deadline of the slow lanes: the API takes 20 s for the Grondwet', async () => {
+		const api = fakeApi({ '/api/instruments/{bwb_id}/delegated': { items: [], total: 0 } });
+		await LOADERS['instrument-delegated'](ctx(LAW));
+		const asked = api.requests.filter((r) => r.path === '/api/instruments/{bwb_id}/delegated');
+		expect(asked.map((r) => r.client)).toEqual(['zoekApi']);
+	});
+});
+
 describe('the dossier hub', () => {
 	it('is asked again after a failure (Opnieuw)', async () => {
 		let calls = 0;

@@ -5,7 +5,7 @@ import type { GraphStore } from '$lib/graph/graph-store';
 import type { GraphNode } from '$lib/graph/types';
 import { get, writable, type Readable } from 'svelte/store';
 import { getNodeFirst, getNodeVerbonden } from '$lib/api/records';
-import { report } from '$lib/api/errors';
+import { isAborted, report } from '$lib/api/errors';
 import {
 	bucketKey,
 	bucketTotals,
@@ -333,7 +333,8 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 							});
 						})
 						.catch((e) => {
-							if (ac.signal.aborted) return;
+							// Broken off is no failure: the group then has no rows, not "kon niet laden".
+							if (ac.signal.aborted || isAborted(e)) return;
 							// It keeps its place, with "kon niet laden" and Opnieuw.
 							report(`Verbonden ${load}`, e);
 							groups = groups.map((g) => (g.id === def.id ? { ...g, failed: true } : g));
@@ -346,9 +347,10 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 						});
 				}
 			})
-			.catch(() => {
+			.catch((e) => {
+				// Broken off by another than this reader: nothing to show, but no failure either.
 				if (!ac.signal.aborted)
-					state.set({ id: selection.id, groups: [], loading: false, failed: true });
+					state.set({ id: selection.id, groups: [], loading: false, failed: !isAborted(e) });
 			});
 	};
 

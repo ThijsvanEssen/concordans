@@ -1,19 +1,20 @@
 // Guard: one verbinding says the same words in the row's card, the table, the CSV, the legend
 // and on the canvas (hoe.ts), and the card reads where the verbinding comes from from the edge.
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { GraphEdge, GraphNode } from '$lib/graph/types';
 import type { Group } from './groups';
 import { rowsToCsv } from './export';
 import { relationLabel } from './hoe';
 import type { Row } from './rows';
 import { relationCounts, rowLabel } from './view';
-import { fakeApi } from '$lib/test/fakeApi';
+import { fail, fakeApi } from '$lib/test/fakeApi';
 import { rowsOfCitedBy } from './cited-by';
 import { edgeKey } from './edge-meta';
 import {
 	betrouwbaarheid,
 	edgeLids,
 	kaartMetPassages,
+	kaartVanEdge,
 	toontStatus,
 	verbindingOfEdge,
 	verbindingOfRow
@@ -183,6 +184,20 @@ describe('the card and line of a judgment that cites an article (#49)', () => {
 		expect(row.lid).toBe('1');
 		expect(v.lid).toBe(row.lid);
 		expect(v.to.sub).toBe('lid 1');
+	});
+
+	it('opens the card once with its lid, not first without it (#69)', async () => {
+		fakeApi({ '/api/articles/{bwb_id}/{article_number}/cited-by': citedBy });
+		expect((await kaartVanEdge(edge, rb, art)).lid).toBe('1');
+	});
+
+	it('opens the card as the edge has it where its place cannot be asked', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		fakeApi({ '/api/articles/{bwb_id}/{article_number}/cited-by': fail(500) });
+		const v = await kaartVanEdge(edge, rb, art);
+		expect(v).toEqual(verbindingOfEdge(edge, rb, art));
+		expect(warn).toHaveBeenCalled();
+		warn.mockRestore();
 	});
 
 	it('gives the line the lid of the row or of the card', () => {

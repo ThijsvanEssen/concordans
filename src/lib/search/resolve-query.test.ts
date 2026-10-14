@@ -374,6 +374,20 @@ describe('the API behind resolveQuery', () => {
 		await expect(apiDeps.exists(ecli)).rejects.toBeInstanceOf(ApiError);
 	});
 
+	it('opens the dossier of a paper whose number the data lacks as a dossier (#64)', async () => {
+		fakeApi({
+			'/api/lookup': ({ params }) =>
+				params.query?.kind === 'dossier' && params.query.number === '36327'
+					? { id: 'dossiers/36327', key: '36327', collection: 'dossiers', kind: 'dossier' }
+					: fail(404),
+			'/api/resolve': fail(404)
+		});
+		expect(await resolveQuery('36327-999', apiDeps)).toEqual({
+			ref: { collection: 'dossiers', key: '36327', number: '36327' },
+			at: null
+		});
+	});
+
 	it('resolves nothing for a 404, and rejects on a failure', async () => {
 		fakeApi({ '/api/resolve': fail(404) });
 		expect(await apiDeps.resolve('art. 6:162 BW')).toBeNull();

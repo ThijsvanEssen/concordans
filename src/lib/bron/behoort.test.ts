@@ -96,6 +96,30 @@ describe('behoort', () => {
 		expect(wet[2].ref).toEqual({ collection: 'instruments', key: 'bwbr0005537' });
 	});
 
+	it('names a book of the BW in the band as lawyers do, not BW7A (#68)', () => {
+		const b = behoort(
+			'articles',
+			{ instrument_citation_title: 'Burgerlijk Wetboek Boek 7A', article_number: '1576' },
+			light([
+				{
+					relation: 'PART_OF',
+					direction: 'outbound',
+					collection: 'instruments',
+					total: 1,
+					items: [
+						{
+							key: 'bwbr0006000',
+							collection: 'instruments',
+							display_name: 'Burgerlijk Wetboek Boek 7A',
+							props: { bwb_id: 'BWBR0006000', abbreviation: 'BW7A' }
+						}
+					]
+				}
+			])
+		);
+		expect(b.regels[0].lagen[0].kort).toBe('Boek 7A BW');
+	});
+
 	it('gives a judgment its procesgang as kern, more appeals as a group', () => {
 		const b = behoort(
 			'judgments',

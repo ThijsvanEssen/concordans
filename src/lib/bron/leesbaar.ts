@@ -341,6 +341,12 @@ export function focusUitPagina(pad: Pad): string | null {
 	return focus;
 }
 
+/** An article's address as the API numbers it (162 for BW 6:162); null for another bron. */
+const apiArticle = (pad: Pad) =>
+	pad.soort === 'artikel'
+		? { wet: pad.wet.toUpperCase(), nummer: apiNumber(pad.wet, pad.nummer) }
+		: null;
+
 /**
  * The focus of an address that needs the API, by /api/lookup: exact or nothing. A
  * Kamerstuk that is not in the data does not open its dossier instead. Null when the
@@ -355,10 +361,7 @@ export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | n
 	// Volgend, its explanations the line of the memorie: asked with it, so the head does not
 	// grow over the text when they come. By the API's own number (162 for BW 6:162), as the
 	// reader asks them.
-	const artikel =
-		pad.soort === 'artikel'
-			? { wet: pad.wet.toUpperCase(), nummer: apiNumber(pad.wet, pad.nummer) }
-			: null;
+	const artikel = apiArticle(pad);
 	if (artikel) {
 		getArticleDetail(artikel.wet, artikel.nummer)
 			.then((d) => {
@@ -384,6 +387,15 @@ export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | n
 		if (artikel && target) onthoudArtikel(target.key, artikel.wet, artikel.nummer);
 		return known;
 	}
+	return lookUpInData(pad, signal);
+}
+
+/**
+ * The focus of an address as the data has it, always by /api/lookup: also where
+ * `focusOfPad` would name it unasked (a dossier), for whoever must know it exists.
+ */
+export async function lookUpInData(pad: Pad, signal?: AbortSignal): Promise<string | null> {
+	const artikel = apiArticle(pad);
 	const data = await ifExists(
 		unwrap(api.GET('/api/lookup', { params: { query: lookupQuery(pad) }, signal }))
 	);

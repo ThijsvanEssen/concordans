@@ -17,9 +17,27 @@ export function sessionYear(value: string | null | undefined): string | null {
 	return m ? `${m[1]}/${m[2].slice(-2)}` : null;
 }
 
+/**
+ * The vergaderjaar of a day (`2016-12-12` → `2016-2017`), as the source writes it: it opens
+ * on Prinsjesdag, the third Tuesday of September (art. 65 Gw). Null for no day.
+ */
+export function sessionYearOn(date: string | null | undefined): string | null {
+	const m = date?.match(/^(\d{4})-(\d{2})-(\d{2})/);
+	if (!m) return null;
+	const year = Number(m[1]);
+	const firstOfSeptember = new Date(Date.UTC(year, 8, 1)).getUTCDay();
+	const prinsjesdag = 1 + ((2 - firstOfSeptember + 7) % 7) + 14;
+	const month = Number(m[2]);
+	const opened = month > 9 || (month === 9 && Number(m[3]) >= prinsjesdag);
+	const from = opened ? year : year - 1;
+	return `${from}-${from + 1}`;
+}
+
 type Paper = {
 	chamber?: string | null;
 	session_year?: string | null;
+	/** Its date: its vergaderjaar where the API does not name it (`explained-by`). */
+	date?: string | null;
 	dossier_number?: string | null;
 	dossier_suffix?: string | null;
 	/** `5` in the Tweede Kamer, a letter (`C`) in the Eerste Kamer. */
@@ -54,7 +72,7 @@ export function kamerstukName(p: Paper): string | null {
 export function kamerstukCitation(p: Paper): string | null {
 	const label = kamerstukLabel(p);
 	if (!label) return null;
-	const year = sessionYear(p.session_year);
+	const year = sessionYear(p.session_year ?? sessionYearOn(p.date));
 	return `Kamerstukken ${p.chamber === 'EK' ? 'I' : 'II'}${year ? ` ${year}` : ''}, ${label}`;
 }
 

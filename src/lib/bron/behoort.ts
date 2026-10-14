@@ -14,6 +14,7 @@ import { dossierName, dossierUitProps, kamerstukNummer } from './dossier-naam';
 import { artikelAnker, deelIds, layersOf } from '$lib/text/division';
 import { langeDatum } from '$lib/text/datum';
 import { kindName } from '$lib/components/explore/law-head';
+import { lawShortName } from '$lib/text/bw';
 import { fractiePeriodes } from './fractie-periode';
 import { describe, type Row } from '$lib/verbonden/rows';
 import {
@@ -295,6 +296,12 @@ export function behoort(
 	const soortVanWet = () =>
 		kindName(textOf(bak('PART_OF', 'outbound', 'instruments')?.items?.[0]?.props?.kind)) ?? 'Wet';
 
+	/** The short name of the law an article or bijlage belongs to: `Awb`, `Boek 7A BW`. */
+	const wetAfkorting = () => {
+		const props = bak('PART_OF', 'outbound', 'instruments')?.items?.[0]?.props;
+		return lawShortName(textOf(props?.bwb_id), textOf(props?.abbreviation));
+	};
+
 	/** A line where it names something. */
 	const regel = (id: string, label: string, lagen: Laag[]): Regel[] =>
 		lagen.length > 0 ? [{ id, label, lagen }] : [];
@@ -303,9 +310,7 @@ export function behoort(
 		case 'articles': {
 			// Wet › hoofdstuk › titel › afdeling: the law as a bron, the division by name
 			// (in props, `breadcrumb`); a layer that is the law itself is no layer.
-			const afk = textOf(
-				bak('PART_OF', 'outbound', 'instruments')?.items?.[0]?.props?.abbreviation
-			);
+			const afk = wetAfkorting();
 			// The law opens with this article in view (WholeLawReader, `#artikel-658`).
 			const nummer = textOf(props.article_number);
 			const soort = soortVanWet();
@@ -333,9 +338,7 @@ export function behoort(
 		}
 		case 'annexes': {
 			// A bijlage belongs to its law, as an article does (UX-toets 0.79.43, #30).
-			const afk = textOf(
-				bak('PART_OF', 'outbound', 'instruments')?.items?.[0]?.props?.abbreviation
-			);
+			const afk = wetAfkorting();
 			const soort = soortVanWet();
 			const wet = eerste('PART_OF', 'outbound', 'instruments', soort).map((l) =>
 				afk ? { ...l, kort: afk } : l

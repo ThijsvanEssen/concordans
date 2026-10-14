@@ -11,7 +11,7 @@
 	// scrolls in its own box, the names standing.
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { inView } from '$lib/actions/in-view';
-	import { report } from '$lib/api/errors';
+	import { isAborted, report } from '$lib/api/errors';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Uitkomst from './Uitkomst.svelte';
 	import { maandNaam } from '$lib/text/datum';
@@ -42,7 +42,7 @@
 			})
 			.catch((e) => {
 				report('Amendementen', e);
-				if (!weg) fout = true;
+				if (!weg && !isAborted(e)) fout = true;
 			});
 		return () => {
 			weg = true;

@@ -13,7 +13,7 @@ import type { Bereik } from '$lib/text/voetnoten';
 import { getNodeGraph, neighborsOf, type Neighbor } from '$lib/api/nodes';
 import { NODE_TYPES } from '$lib/vocabulary';
 import { keyEcli } from '$lib/bron/leesbaar';
-import { ifExists } from '$lib/api/errors';
+import { ifExists, report } from '$lib/api/errors';
 import { getCitedBy } from '$lib/api/verbonden';
 import { CITED_BY_PAGE, rowsOfCitedBy } from './cited-by';
 
@@ -270,6 +270,19 @@ export async function kaartMetPassages(
 	});
 	const n = neighborsOf(r).find((x) => x.key === target.key && x.relation === v.relation);
 	return n ? metPassages(v, source, n) : v;
+}
+
+/**
+ * The card of a canvas edge as it opens: with the place the judgment cites where it can be
+ * asked, so the card does not grow after it opens (UX-toets #69); as the edge has it where
+ * that fails, reported.
+ */
+export function kaartVanEdge(edge: GraphEdge, source: GraphNode, target: GraphNode) {
+	const v = verbindingOfEdge(edge, source, target);
+	return kaartMetPassages(v, source, target).catch((e) => {
+		report('Verbinding passages', e);
+		return v;
+	});
 }
 
 /** The card of a judgment that cites an article, from its row of the article's `cited-by`:

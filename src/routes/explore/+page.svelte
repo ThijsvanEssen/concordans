@@ -70,7 +70,7 @@
 	import { edgeKey } from '$lib/verbonden/edge-meta';
 	import {
 		edgeLids,
-		kaartMetPassages,
+		kaartVanEdge,
 		rowOfEdge,
 		verbindingOfEdge,
 		verbindingOfRow,
@@ -445,11 +445,15 @@
 	let card = $state<{ verbinding: Verbinding; edgeId: string | null; row: Row | null } | null>(
 		null
 	);
+	/** The edge whose card is on its way: a later click or another card wins. */
+	let cardAsked: string | null = null;
 	$effect(() => {
 		void selectedNode?.id;
 		card = null;
+		cardAsked = null;
 	});
 	function openRowCard(row: Row) {
+		cardAsked = null;
 		if (!selectedNode) return;
 		const v = verbindingOfRow(row, selectedNode);
 		if (v) card = { verbinding: v, edgeId: null, row };
@@ -461,19 +465,24 @@
 		// What the row of the selected bron says of this edge, where the panel has it: the card
 		// names the lid and the place the row names.
 		const row = selectedNode ? rowOfEdge(allRows(verbonden.groups), selectedNode.id, edge) : null;
-		const ofEdge = verbindingOfEdge(edge, from, to);
 		if (row && selectedNode) {
-			card = { verbinding: withRow(ofEdge, row, selectedNode), edgeId: edge.id, row: null };
+			cardAsked = null;
+			card = {
+				verbinding: withRow(verbindingOfEdge(edge, from, to), row, selectedNode),
+				edgeId: edge.id,
+				row: null
+			};
 			return;
 		}
-		const verbinding = ofEdge;
-		card = { verbinding, edgeId: edge.id, row: null };
-		// The passage, which the canvas does not load: asked once the card shows it.
-		kaartMetPassages(verbinding, from, to)
-			.then((v) => {
-				if (v !== verbinding && card?.edgeId === edge.id) card = { ...card, verbinding: v };
+		// The passage, which the canvas does not load: the card opens with it, once.
+		const asked = (cardAsked = edge.id);
+		const node = selectedNode;
+		kaartVanEdge(edge, from, to)
+			.then((verbinding) => {
+				if (cardAsked === asked && selectedNode === node)
+					card = { verbinding, edgeId: edge.id, row: null };
 			})
-			.catch((e) => report('Verbinding passages', e));
+			.catch((e) => report('Verbinding', e));
 	}
 	// The lid each line names, as its row or its card names it: the canvas has the edge's light
 	// meta only, which names no lid where the judgment cites several places (UX-toets #49).

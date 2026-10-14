@@ -45,10 +45,10 @@ describe('a row of Verbonden kept in the map', () => {
 		expect(item.groep).toBe('Kamerstuk 34372');
 	});
 
-	it('cites a Kamerstuk row as a Kamerstuk, never with an ISO date (#48)', () => {
+	it('cites a Kamerstuk row as its reader does, with its vergaderjaar (#48, #67)', () => {
 		const [row] = rowsOfExplanations([amendement]);
 		const { kort } = itemVanRij(row)!;
-		expect(kort).toBe('Kamerstukken II, 34372, nr. 14, § Toelichting');
+		expect(kort).toBe('Kamerstukken II 2016/17, 34372, nr. 14, § Toelichting');
 		expect(kort).not.toMatch(/\d{4}-\d{2}-\d{2}/);
 	});
 

@@ -17,3 +17,14 @@ describe('lawName', () => {
 		expect(lawName(getInstrumentMeta('BWBR0099992'), 'BWBR0099992')).toBe('Kort');
 	});
 });
+
+describe('a book of the BW in the cache', () => {
+	it('keeps its short name as lawyers write it, for the hull and the band (#68)', () => {
+		recordInstrument({
+			bwb_id: 'BWBR0006000',
+			title: 'Burgerlijk Wetboek Boek 7A',
+			short_title: 'BW7A'
+		});
+		expect(getInstrumentMeta('BWBR0006000')?.shortTitle).toBe('Boek 7A BW');
+	});
+});

@@ -51,7 +51,9 @@ function keyIn(list: List, name: string | null | undefined): string | null {
 	if (!requested.has(list) && typeof window !== 'undefined') {
 		requested.add(list);
 		LOAD[list]()
-			.then((items) => (lists[list] = items))
+			.then((items) => {
+				lists[list] = items;
+			})
 			.catch((e) => {
 				requested.delete(list);
 				report(`Namen (${list})`, e);
