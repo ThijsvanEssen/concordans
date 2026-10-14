@@ -1049,9 +1049,7 @@ describe('canvas cards and halls', () => {
 	it('wires the feed of Actueel and Gevolgd once (code-eenvoud F53)', () => {
 		// A ministry by its name from ministries.svelte.ts, a fractie's colour in FeedDay, the Atom link
 		// from feed.ts and "Doorzocht vanaf" from Doorzocht.svelte: no page keeps its own copy.
-		expect(
-			offenders((t) => /ministries\.find\(/.test(t)).filter((p) => p.startsWith('routes/'))
-		).toEqual([]);
+		expect(offenders((t) => /ministries\.find\(/.test(t))).toEqual([]);
 		expect(
 			offenders((t) => /\/api\/feed\.atom/.test(t), ['lib/components/actueel/feed.ts'])
 		).toEqual([]);
@@ -1485,5 +1483,31 @@ describe('the explorer’s small things said once (code-eenvoud F48–F50)', () 
 				['lib/components/ui/RijActies.svelte']
 			)
 		).toEqual([]);
+	});
+});
+
+describe('the generated types as the contract (code-eenvoud F54)', () => {
+	it('reads what the API gives without a cast past its types', () => {
+		// `partial`, `expanded`, `next_offset`, `membership_edge_ids`, `alternatives_total`,
+		// `passed`, the query of /api/paths and a Kamer are all in openapi-types.ts.
+		const pastTheTypes =
+			/as \{ (?:partial|expanded|ids|membership_edge_ids|next_offset|alternatives_total|passed|rejected|labels)\??:|as 'TK' \| 'EK'|as unknown as (?:BaseNode|Schema<'MemberDTO'>)|\} as object\)|collection as never|split\('\/'\)\[0\] as Collection/;
+		expect(offenders((t) => pastTheTypes.test(t))).toEqual([]);
+	});
+
+	it('reads the meta of a neighbour as the API types it, without a cast', () => {
+		// The canvas keeps its attributes in graphology, which does not type them.
+		const untyped = ['lib/components/graph/GraphCanvas.svelte'];
+		expect(offenders((t) => /meta as Record<string, unknown>/.test(t), untyped)).toEqual([]);
+	});
+});
+
+describe('the names said once (code-eenvoud F55)', () => {
+	it('names a Kamer from $lib/components/parliamentary/chamber', () => {
+		const ownName =
+			/\{\s*TK: 'Tweede Kamer'|label: 'Tweede Kamer'|=== 'EK' \? 'Eerste Kamer' : 'Tweede Kamer'/;
+		expect(offenders((t) => ownName.test(t), ['lib/components/parliamentary/chamber.ts'])).toEqual(
+			[]
+		);
 	});
 });

@@ -82,8 +82,7 @@
 		decisionOutcome
 	} from './index/decision-kind';
 	import {
-		CHAMBERS,
-		CHAMBER_NAME,
+		CHAMBER_OPTIONS,
 		EK_SOURCE,
 		chamberFromParam,
 		type Chamber
@@ -104,6 +103,7 @@
 		type Cabinet,
 		type Ministry
 	} from './index/government';
+	import { ministryName } from './index/ministries.svelte';
 	import { COURT_GROUPS, MIXED_TIERS } from './index/courts';
 	import CabinetOccupancy from './index/CabinetOccupancy.svelte';
 	import KabinettenStrook from './index/KabinettenStrook.svelte';
@@ -1055,8 +1055,6 @@
 				.then((m) => (ministries = m))
 				.catch((e) => report('Ministeries', e));
 	});
-	const ministryName = (key: string | null | undefined) =>
-		(key && ministries.find((m) => m.key === key)?.name) || key || '';
 
 	/** Parties in a coalition, with the number of cabinets they were in. */
 	const coalitionParties = $derived(
@@ -2172,7 +2170,7 @@
 						kamer={CHAMBER_CATEGORIES.includes(category)
 							? {
 									waarde: kamer,
-									opties: CHAMBERS.map((c) => ({ waarde: c, label: CHAMBER_NAME[c] })),
+									opties: CHAMBER_OPTIONS,
 									onKies: (c) => kiesKamer(c as Chamber)
 								}
 							: null}

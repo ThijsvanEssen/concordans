@@ -11,6 +11,15 @@ export const CHAMBER_NAME: Record<Chamber, string> = {
 	EK: 'Eerste Kamer'
 };
 
+/** Each Kamer as the choice of a filter, by its name. */
+export const CHAMBER_OPTIONS = CHAMBERS.map((c) => ({ waarde: c, label: CHAMBER_NAME[c] }));
+
+/** The choice of a filter on both Kamers: no Kamer chosen. */
+export const BOTH_CHAMBERS = 'beide';
+
+/** Both Kamers, then each, as Actueel and Overzicht offer them. */
+export const CHAMBER_CHOICES = [{ waarde: BOTH_CHAMBERS, label: 'Beide' }, ...CHAMBER_OPTIONS];
+
 /** A Kamer from the URL (`?kamer=EK`), in either case; anything else is none. */
 export function chamberFromParam(value: string | null | undefined): Chamber | undefined {
 	const v = value?.toUpperCase();

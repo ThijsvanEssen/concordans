@@ -1,5 +1,6 @@
 import type { PageLoad } from './$types';
 import openapi from '$lib/api/openapi.json';
+import { bronPlural } from '$lib/vocabulary';
 
 interface SchemaNode {
 	$ref?: string;
@@ -46,7 +47,8 @@ export interface EndpointDoc {
 	operationId: string;
 }
 
-// Tag order and Dutch text. A tag missing here still renders, after these, under its own name.
+// Tag order and Dutch text, a collection by its plural. A tag missing here still renders, after
+// these, under its own name.
 const TAGS: Record<string, { label: string; description: string }> = {
 	instruments: {
 		label: 'Instrumenten',
@@ -54,29 +56,29 @@ const TAGS: Record<string, { label: string; description: string }> = {
 			'Regelingen, verdragen en Europese instrumenten, met artikelen, tekst op een datum en wijzigingen.'
 	},
 	articles: {
-		label: 'Artikelen',
+		label: bronPlural('articles'),
 		description:
 			'Een artikel met tekst, versies, wetsgeschiedenis, verwijzingen en aanhangige wijzigingen.'
 	},
 	annexes: {
-		label: 'Bijlagen',
+		label: bronPlural('annexes'),
 		description: 'Een bijlage bij een instrument en de artikelen waarvan zij de reikwijdte bepaalt.'
 	},
 	judgments: {
-		label: 'Uitspraken',
+		label: bronPlural('judgments'),
 		description: 'Uitspraken per ECLI, met de artikelen waarnaar ze verwijzen.'
 	},
 	dossiers: {
-		label: 'Dossiers',
+		label: bronPlural('dossiers'),
 		description: 'Kamerdossiers: stand, tijdlijn, stukken en voorgestelde wijzigingen.'
 	},
 	documents: {
-		label: 'Stukken',
+		label: bronPlural('documents'),
 		description:
 			'Kamerstukken van beide Kamers en publicaties in Staatsblad en Staatscourant, met tekst.'
 	},
 	decisions: {
-		label: 'Stemmingen',
+		label: bronPlural('decisions'),
 		description: 'Besluiten van beide Kamers, met de stemmen.'
 	},
 	members: {
@@ -84,17 +86,17 @@ const TAGS: Record<string, { label: string; description: string }> = {
 		description: 'Kamerleden en bewindspersonen van beide Kamers, met stemmen en dossiers.'
 	},
 	factions: {
-		label: 'Fracties',
+		label: bronPlural('factions'),
 		description: 'Fracties van beide Kamers, met zetels, stemmen en dossiers.'
 	},
 	committees: {
-		label: 'Commissies',
+		label: bronPlural('committees'),
 		description: 'Commissies van beide Kamers, met leden, dossiers en activiteiten.'
 	},
 	parliament: { label: 'Parlement', description: 'Zetelverdeling per Kamer.' },
 	parties: { label: 'Partijen', description: 'Kleur per partij.' },
 	cabinets: {
-		label: 'Kabinetten',
+		label: bronPlural('cabinets'),
 		description: 'Kabinetten met periode, coalitie en bewindspersonen per ministerie.'
 	},
 	ministries: {
@@ -103,7 +105,7 @@ const TAGS: Record<string, { label: string; description: string }> = {
 			'De ministeries in protocolvolgorde; een voormalig ministerie staat bij zijn opvolger.'
 	},
 	commitments: {
-		label: 'Toezeggingen',
+		label: bronPlural('commitments'),
 		description: 'Toezeggingen van bewindspersonen, met hun stand.'
 	},
 	feed: {

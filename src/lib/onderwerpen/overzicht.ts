@@ -116,8 +116,8 @@ export function uitFacets(f: Facets, fractie: string | null): Getelden {
 			k.value?.trim() || NO_DECISION_KIND,
 			telling(
 				k.count,
-				(k as { passed?: number }).passed ?? 0,
-				(k as { rejected?: number }).rejected ?? 0,
+				k.passed ?? 0,
+				k.rejected ?? 0,
 				pv?.kind?.find((x) => (x.value ?? null) === (k.value ?? null))
 			)
 		])

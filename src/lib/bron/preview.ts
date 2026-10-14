@@ -115,7 +115,7 @@ export function previewFromNode(
 	// A judgment and a stemming are named as their heading and tab name them, not by the
 	// display name with its ISO date ("Hoge Raad 2026-08-25 / 24/01299").
 	const asHeading = () =>
-		tabTitle({ collection, label: name, raw: { display_name: displayName, props } as never });
+		tabTitle({ collection, label: name, raw: { display_name: displayName, props } });
 	switch (collection) {
 		case 'judgments': {
 			const court = courtName(textOf(props.court) ?? textOf(props.court_code));

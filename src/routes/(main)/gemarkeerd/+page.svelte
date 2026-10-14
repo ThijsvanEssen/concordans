@@ -24,7 +24,7 @@
 	import { isEscape } from '$lib/actions/keys';
 	import { download } from '$lib/verbonden/export';
 	import { korteDatum, vandaag } from '$lib/text/datum';
-	import { bronLabel, type Collection } from '$lib/vocabulary';
+	import { bronLabel, parseNodeId } from '$lib/vocabulary';
 	import {
 		citaten,
 		csv,
@@ -60,7 +60,6 @@
 
 	const reeksen = (lijst: MapItem[], v: Map['volgorde']) =>
 		v === 'eigen' ? [{ groep: '', sleutel: '', items: [...lijst] }] : groepen(lijst);
-	const collectieVan = (i: MapItem) => i.id.split('/')[0] as Collection;
 
 	const link = (m: Map) => {
 		const url = new URL('/gemarkeerd', page.url.origin);
@@ -122,11 +121,12 @@
 
 {#snippet rij(i: MapItem, m: Map | null)}
 	{@const k = (m?.id ?? 'gedeeld') + ':' + sleutelVan(i)}
+	{@const collection = parseNodeId(i.id)?.collection}
 	<IndexRow title={i.kort} href={itemHref(i)} open={geopend.has(k)} onToggle={() => wisselOpen(k)}>
 		{#snippet lead()}
-			<span class="row-id-main"
-				><KindGlyph collection={collectieVan(i)} size={12} />{bronLabel(collectieVan(i))}</span
-			>
+			{#if collection}<span class="row-id-main"
+					><KindGlyph {collection} size={12} />{bronLabel(collection)}</span
+				>{/if}
 		{/snippet}
 		{#snippet body()}
 			{#if i.voluit && i.voluit !== i.kort}<span class="row-sub">{i.voluit}</span>{/if}

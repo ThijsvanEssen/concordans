@@ -13,8 +13,7 @@ import { memberToGraphNode, syntheticNode, type GraphNode } from '$lib/graph/typ
 import type { Collection } from '$lib/vocabulary';
 import { keyEcli } from './leesbaar';
 
-export const kopVanLid = (m: Schema<'MemberDetailDTO'>): GraphNode =>
-	memberToGraphNode(m as unknown as Schema<'MemberDTO'>);
+export const kopVanLid = (m: Schema<'MemberDetailDTO'>): GraphNode => memberToGraphNode(m);
 
 export const kopVanUitspraak = (j: Schema<'JudgmentDTO'>): GraphNode =>
 	syntheticNode('judgments', j.key, j.display_name, { ...(j.props ?? {}), ecli: j.ecli });

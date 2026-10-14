@@ -873,24 +873,23 @@
 	const EXPAND_CAP = 200;
 
 	async function pathsBetween(ids: string[]): Promise<Schema<'PathsResponse'> | null> {
-		// A group ties through its children too (API 0.79.23, #341): VVD and Sr meet through
-		// a lid's MEMBER_OF and an article's PART_OF (Thijs, 9 Oct). An API without
-		// `expand` ignores it.
-		const query = { ids: ids.join(','), max_depth: 4, expand: 'members', expand_cap: EXPAND_CAP };
-		// Without them the canvas draws the shared neighbours only.
-		return unwrap(
-			api.GET('/api/paths', { params: { query: query as { ids: string; max_depth: number } } })
-		).catch((e) => (report('Paden tussen bronnen', e), null));
+		// A group ties through its children too: VVD and Sr meet through a lid's MEMBER_OF and
+		// an article's PART_OF (Thijs, 9 Oct). Without the paths the canvas draws the shared
+		// neighbours only.
+		const query = {
+			ids: ids.join(','),
+			max_depth: 4,
+			expand: 'members',
+			expand_cap: EXPAND_CAP
+		} as const;
+		return unwrap(api.GET('/api/paths', { params: { query } })).catch(
+			(e) => (report('Paden tussen bronnen', e), null)
+		);
 	}
 
 	/** Per group the API widened, how many of its members it took: "via 200 van 846 leden". */
 	const uitgebreidOf = (route: Schema<'PathsResponse'> | null) =>
-		new Map(
-			Object.entries(
-				(route as { expanded?: Record<string, { used: number; total: number }> } | null)
-					?.expanded ?? {}
-			)
-		);
+		new Map(Object.entries(route?.expanded ?? {}));
 
 	type Settled = PromiseSettledResult<Schema<'NodeGraphResponse'>>;
 	const nodeIdOf = (r: Schema<'NodeGraphResponse'>) => `${r.node.collection}/${r.node.key}`;
@@ -929,7 +928,7 @@
 		// further than one shared neighbour. Without the route, the shared neighbours only.
 		const onPaths = route ? await store.mergePaths(route) : { onPath: [], tied: [] };
 		if (epoch !== composeEpoch) return;
-		padenDeels = !!(route as { partial?: boolean } | null)?.partial;
+		padenDeels = !!route?.partial;
 		draw(n, results, onPaths, uitgebreidOf(route));
 		netwerkLoading = false;
 		graphView?.fitWhenSettled();

@@ -17,10 +17,9 @@
 		OPEN_STATUS,
 		POST_LABEL,
 		getCabinets,
-		getMinistries,
-		type Cabinet,
-		type Ministry
+		type Cabinet
 	} from '$lib/components/explore/index/government';
+	import { ministryName } from '$lib/components/explore/index/ministries.svelte';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
 	import { nagekomenIn, toegezegdIn } from '$lib/components/parliamentary/toezegging';
@@ -37,18 +36,12 @@
 		'Toezegging'
 	);
 
-	let ministries = $state<Ministry[]>([]);
 	let cabinets = $state<Cabinet[]>([]);
 	$effect(() => {
-		getMinistries()
-			.then((m) => (ministries = m))
-			.catch((e) => report('Ministeries', e));
 		getCabinets()
 			.then((c) => (cabinets = c))
 			.catch((e) => report('Kabinetten', e));
 	});
-	const ministryName = (key: string | null | undefined) =>
-		(key && ministries.find((m) => m.key === key)?.name) || null;
 	const cabinetName = (key: string) => cabinets.find((c) => c.key === key)?.name ?? key;
 
 	const today = vandaag();

@@ -35,6 +35,13 @@
 	import { getDecisionDocument } from '$lib/api/records';
 	import { besluiten, geteld, telling } from '$lib/api/decisions';
 	import { getAmendementen } from '$lib/components/parliamentary/amendementen';
+	import {
+		BOTH_CHAMBERS,
+		CHAMBER_CHOICES,
+		chamberFromParam,
+		chamberName,
+		type Chamber
+	} from '$lib/components/parliamentary/chamber';
 	import { feedStand, normalizeItem, type FeedItem } from '$lib/components/actueel/feed';
 	import {
 		LAAG_LABEL,
@@ -104,7 +111,7 @@
 	// everything again.
 	const termenSleutel = $derived((uitParams(params)[0] ?? []).join('|'));
 	const termen = $derived(termenSleutel ? termenSleutel.split('|') : []);
-	const kamer = $derived(((v) => (v === 'TK' || v === 'EK' ? v : ''))(params.get('kamer')));
+	const kamer: Chamber | '' = $derived(chamberFromParam(params.get('kamer')) ?? '');
 	// The period, as everywhere (Periode.svelte): days in the URL and to the API.
 	const dag = (v: string | null) => (isDay(v) ? v : '');
 	const van = $derived(dag(params.get('van')));
@@ -262,7 +269,7 @@
 		if (!woorden.length) return;
 		const filters = {
 			q: woorden,
-			...(k ? { chamber: k as 'TK' | 'EK' } : {}),
+			...(k ? { chamber: k } : {}),
 			...(v ? { since: v } : {}),
 			...(t ? { until: t } : {})
 		};
@@ -361,7 +368,7 @@
 						params: {
 							query: {
 								q: woorden,
-								...(k ? { chamber: k as 'TK' | 'EK' } : {}),
+								...(k ? { chamber: k } : {}),
 								...(sinds ? { since: sinds } : {}),
 								...(totEnMet ? { until: totEnMet } : {}),
 								kind: FEED_KOLOM.amendementen,
@@ -842,7 +849,7 @@
 					kind: FEED_KOLOM[keuze.kolom]!,
 					limit: STAP,
 					facets: false,
-					...(kamer ? { chamber: kamer as 'TK' | 'EK' } : {}),
+					...(kamer ? { chamber: kamer } : {}),
 					...(celPeriode.v ? { since: celPeriode.v } : {}),
 					...(celPeriode.t ? { until: celPeriode.t } : {})
 				}
@@ -1166,13 +1173,9 @@
 					onChange: (v, t) => zet({ van: v || null, tot: t || null, cel: null })
 				}}
 				kamer={{
-					waarde: kamer || 'beide',
-					opties: [
-						{ waarde: 'beide', label: 'Beide' },
-						{ waarde: 'TK', label: 'Tweede Kamer' },
-						{ waarde: 'EK', label: 'Eerste Kamer' }
-					],
-					onKies: (v) => zet({ kamer: v === 'beide' ? null : v, cel: null })
+					waarde: kamer || BOTH_CHAMBERS,
+					opties: CHAMBER_CHOICES,
+					onKies: (v) => zet({ kamer: v === BOTH_CHAMBERS ? null : v, cel: null })
 				}}
 			/>
 		</div>
@@ -1353,9 +1356,7 @@
 									<li class="rij">
 										<span class="rij__datum">{korteDatum(d.date)}</span>
 										<div class="rij__tekst">
-											<span class="rij__soort"
-												>{soortVan(d)}, {d.chamber === 'EK' ? 'Eerste Kamer' : 'Tweede Kamer'}</span
-											>
+											<span class="rij__soort">{soortVan(d)}, {chamberName(d.chamber)}</span>
 											<a
 												class="rij__titel"
 												href={buildOpenHref(null, { collection: 'decisions', key: d.key })}

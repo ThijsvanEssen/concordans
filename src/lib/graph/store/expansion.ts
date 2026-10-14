@@ -15,7 +15,7 @@ import { foldVersions } from '../paths';
 import { withoutLawHops } from '../neighborhood';
 import { NODE_TYPES, nodeId, type Collection } from '$lib/vocabulary';
 import { get, writable } from 'svelte/store';
-import { isVersionCollection, nodeToGraphNode, relationOf, type BaseNode } from '../types';
+import { isVersionCollection, nodeToGraphNode, relationOf } from '../types';
 import type { GraphContext } from './context';
 import {
 	NEIGHBORHOOD_CAP,
@@ -210,11 +210,7 @@ export function createExpansion(
 			// with it what only it brought.
 			// Unless the API widened the wet to its articles (`expand=members`): then the
 			// article's PART_OF is how the wet is reached, and the path is wanted.
-			const membership = new Set(
-				response.paths.flatMap(
-					(p) => (p as { membership_edge_ids?: string[] }).membership_edge_ids ?? []
-				)
-			);
+			const membership = new Set(response.paths.flatMap((p) => p.membership_edge_ids ?? []));
 			const throughLaw = new Set(
 				response.edges
 					.filter(
@@ -252,7 +248,7 @@ export function createExpansion(
 							)
 						: undefined;
 					if (!dossier) return;
-					recordContainerFor(dossier as unknown as BaseNode, 'dossier');
+					recordContainerFor(dossier, 'dossier');
 					const container = containerIdFor(dossier);
 					containers.recordMember('dossier', container, id, 'PART_OF');
 					containers.markLone(container);
@@ -297,7 +293,7 @@ export function createExpansion(
 						: r
 				);
 				const volgende = (response.neighbors.buckets ?? [])
-					.map((b) => (b as { next_offset?: number | null }).next_offset)
+					.map((b) => b.next_offset)
 					.filter((n): n is number => typeof n === 'number');
 				if (!volgende.length || ids.size >= grens) break;
 				offset = Math.min(...volgende);
