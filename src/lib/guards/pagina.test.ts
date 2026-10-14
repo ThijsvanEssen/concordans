@@ -1,0 +1,102 @@
+// A page in the frame of Bladeren: one width, one head, one way of scrolling (docs/bediening.md,
+// Layout).
+import { describe, expect, it } from 'vitest';
+import { BRONNEN, bron, overtreders, plek, regels } from '$lib/test/bronnen';
+
+describe('the frame of a page', () => {
+	it('scrolls sideways only where it says so: data-zijscroll (lib/dev/zijscroll.ts)', () => {
+		// On a phone nothing scrolls sideways; an area that pans on purpose is marked, so the
+		// check in development passes it by.
+		const pans = /overflow-x:\s*(auto|scroll)/;
+		expect(overtreders((t) => pans.test(t) && !t.includes('data-zijscroll'))).toEqual([]);
+	});
+
+	it('gives every tab of Bladeren the same width', () => {
+		expect(overtreders((t) => /page--wide/.test(t))).toEqual([]);
+	});
+
+	it('lays a full-width page in the frame of Bladeren, with no width of its own (docs/bediening.md, Layout)', () => {
+		// A page-wide max-width (600 px or more) only in the frame's .blad and the footer.
+		const breed = /(?<!@media \(|@container [\w ]*\()max-width:\s*(\d{3,4})px/g;
+		const eigen = BRONNEN.filter(
+			({ path }) => path.startsWith('routes/(main)') || path.endsWith('IndexOverzicht.svelte')
+		).flatMap(({ path, text }) =>
+			[...text.matchAll(breed)].filter((m) => Number(m[1]) >= 600).map(() => path)
+		);
+		expect(eigen).toEqual([]);
+		const paginas = BRONNEN.filter(
+			({ path }) =>
+				/^routes\/\(main\)\/.*\+page\.svelte$/.test(path) || path.endsWith('IndexView.svelte')
+		);
+		expect(
+			paginas.filter(({ text }) => !/class="[^"]*\bblad\b/.test(text)).map((p) => p.path)
+		).toEqual([]);
+	});
+
+	it('heads every page in the frame with the one head, spaced only by the frame', () => {
+		// Thijs, 10 Oct: "een andere verticale uitlijning na de titel". The menu pages and the
+		// text pages use .blad__kop and .blad__titel; none styles its h1, its title or its head.
+		const menu = [
+			'routes/(main)/actueel/+page.svelte',
+			'routes/(main)/onderwerpen/+page.svelte',
+			'routes/(main)/gemarkeerd/+page.svelte',
+			'lib/components/explore/index/IndexOverzicht.svelte'
+		];
+		expect(
+			menu.filter((path) => !/class="blad__kop"[\s\S]*?class="blad__titel"/.test(bron(path)))
+		).toEqual([]);
+		// Every h1 of a page is the one title (the home page's is the name of the site).
+		const anders = overtreders(
+			(t) => [...t.matchAll(/<h1\b[^>]*>/g)].some((m) => !/class="blad__titel"/.test(m[0])),
+			[plek('routes/(main)/+page.svelte', 'the name of the site')]
+		).filter((p) => /^(routes\/|uitzondering )/.test(p));
+		expect(anders).toEqual([]);
+		const eigen = overtreders(
+			(t) =>
+				t.includes('blad__kop') &&
+				regels(t).some((r) =>
+					/(^|[\s,>])(h1|\.blad__kop|\.blad__titel|\.kop|\.titel|\.title)$/.test(r.selector.trim())
+				),
+			[plek('lib/styles/frame.css', 'the head itself')]
+		);
+		expect(eigen).toEqual([]);
+	});
+
+	it('keeps the footer under the fold and a late band in its place (no layout shift)', () => {
+		// Live, 10 Oct: the footer jumped into view on every page when the server's page gave
+		// way to the app (0.22 to 0.37 of layout shift), and Actueel dropped under the
+		// Wetsnetwerk band on the home page (0.16).
+		expect(bron('routes/(main)/+layout.svelte')).toMatch(
+			/class="blad-hoogte"[\s\S]*min-height: 100dvh/
+		);
+		expect(bron('routes/(main)/+page.svelte')).toMatch(/\{:else if wetsnetwerkLaden\}/);
+	});
+
+	it('names the page a subpage belongs to as a crumb: one link, as a reader’s band', () => {
+		const kruimels = BRONNEN.flatMap(({ path, text }) =>
+			[...text.matchAll(/<(\w+) class="stub-eyebrow"[^>]*>([\s\S]*?)<\/\1>/g)].map((m) => ({
+				path,
+				tag: m[1],
+				inhoud: m[2]
+			}))
+		);
+		expect(kruimels.length).toBeGreaterThan(0);
+		expect(
+			kruimels
+				.filter((k) => k.tag !== 'nav' || !/^<a href="[^"]+">[^<]+<\/a>$/.test(k.inhoud.trim()))
+				.map((k) => k.path)
+		).toEqual([]);
+	});
+
+	it('styles the parts of a text page once, in the frame (.blad--tekst)', () => {
+		const delen =
+			/^\.(stub-eyebrow|stub-lede|section|section-title|cite|meta-row|meta-link|updated)(:hover)?$/;
+		expect(
+			BRONNEN.filter(({ path }) => path.startsWith('routes/(main)'))
+				.filter(({ text }) =>
+					regels(text).some((r) => r.selector.split(',').some((s) => delen.test(s.trim())))
+				)
+				.map((s) => s.path)
+		).toEqual([]);
+	});
+});
