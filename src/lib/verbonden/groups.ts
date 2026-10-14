@@ -5,7 +5,7 @@
 // A group is filled from the node response of the selected bron (`match`: relation,
 // direction, collection) or, where no edge says it, by a named loader (`load`).
 import { langeDatum } from '$lib/text/datum';
-import { lawKind } from '$lib/components/explore/law-head';
+import { kindName, lawKind } from '$lib/components/explore/law-head';
 import { bucketKey, type Bucket } from '$lib/api/nodes';
 import { isRelation, type Collection, type Relation } from '$lib/vocabulary';
 import { formatCount, isInternational } from './filter';
@@ -39,6 +39,7 @@ export type Loader =
 	| 'instrument-dossiers'
 	| 'instrument-related'
 	| 'instrument-delegated'
+	| 'instrument-basis'
 	| 'instrument-aard'
 	| 'instrument-amended-by'
 	| 'instrument-articles'
@@ -133,7 +134,8 @@ const authored = (
 	labelOf
 });
 
-const CHANGES: Relation[] = ['AMENDS', 'INTRODUCES', 'REPEALS'];
+// A publication that enacted a regulation sets its articles (ESTABLISHES); others change them.
+const CHANGES: Relation[] = ['ESTABLISHES', 'AMENDS', 'INTRODUCES', 'REPEALS'];
 
 export const EUROPEAN: GroupDef = {
 	id: 'international',
@@ -285,6 +287,14 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Artikelen van deze wet',
 			noun: 'artikelen',
 			load: 'instrument-articles'
+		},
+		{
+			// The laws whose articles the preamble of this regulation names (Gelet op), as their
+			// grondslag (`/basis`): on an AMvB "Grondslag van dit besluit".
+			id: 'basis',
+			label: 'Grondslag van deze wet',
+			noun: 'wetten',
+			load: 'instrument-basis'
 		},
 		{
 			// The AMvB's and regelingen whose Gelet op names an article of the law (Thijs, 13 Oct).
@@ -972,20 +982,38 @@ const DIT: Record<string, string> = {
 	kaderbesluit: 'dit kaderbesluit'
 };
 
+/** Of the BWB's kinds, those a lawyer calls a besluit or a regeling: an AMvB is a besluit. */
+const DIT_SOORT: Record<string, string> = {
+	AMvB: 'dit besluit',
+	'Ministeriële regeling': 'deze regeling'
+};
+
 /**
- * The groups of an instrument named by its kind, as its head names it (`lawKind`): a
- * richtlijn has "Artikelen van deze richtlijn", not "van deze wet". A wet or another
- * regeling keeps "deze wet".
+ * The instrument by its kind, as "deze wet" names it in a label or a line: "dit besluit" for
+ * an AMvB, "deze regeling" for a ministerial regulation, "deze richtlijn"; null for a wet or
+ * another regeling, which keeps "deze wet".
+ */
+export function ditVan(props: Record<string, unknown> | null | undefined): string | null {
+	const p = (props ?? {}) as Record<string, unknown>;
+	const eigen = DIT_SOORT[kindName(typeof p.kind === 'string' ? p.kind : null) ?? ''];
+	if (eigen) return eigen;
+	const soort = lawKind(p as never)
+		.toLowerCase()
+		.split(' ')
+		.at(-1)!;
+	return DIT[soort] ?? null;
+}
+
+/**
+ * The groups of an instrument named by its kind, as its head names it (`ditVan`): a
+ * richtlijn has "Artikelen van deze richtlijn", an AMvB "Grondslag van dit besluit", not
+ * "van deze wet". A wet or another regeling keeps "deze wet".
  */
 export function naarSoort<G extends { label: string }>(
 	groups: G[],
 	props: Record<string, unknown> | null | undefined
 ): G[] {
-	const soort = lawKind((props ?? {}) as never)
-		.toLowerCase()
-		.split(' ')
-		.at(-1)!;
-	const dit = DIT[soort];
+	const dit = ditVan(props);
 	if (!dit) return groups;
 	return groups.map((g) => ({ ...g, label: g.label.replace(/\bdeze wet\b/, dit) }));
 }

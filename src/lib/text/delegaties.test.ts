@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+	grondslagKopregel,
+	grondslagWerkwoord,
+	uitgewerktIn,
 	artikelKort,
 	delegatiesWithin,
 	grondslagKop,
@@ -114,5 +117,51 @@ describe('delegation formulas', () => {
 			direction: 'inbound'
 		});
 		expect(regelingRow(besluit).lid).toBeNull();
+	});
+});
+
+describe('the grondslag of a regulation', () => {
+	const wet = (key: string, title: string, basis_kind: 'delegates' | 'mentioned' | null) => ({
+		instrument: {
+			id: `instruments/${key}`,
+			key,
+			bwb_id: key.toUpperCase(),
+			title,
+			citation_title: title,
+			display_name: title,
+			article_count: 1,
+			inbound_citation_count: 0,
+			path: null
+		},
+		basis_kind
+	});
+
+	it('says in the head under which laws it is made, then those it only names', () => {
+		expect(
+			grondslagKopregel([
+				wet('bwbr0052872', 'Cyberbeveiligingswet', 'delegates'),
+				wet('bwbr0026338', 'Drinkwaterwet', null),
+				wet('bwbr0005537', 'Algemene wet bestuursrecht', 'mentioned')
+			]).map((d) => [d.werkwoord, d.wetten.map((w) => w.naam)])
+		).toEqual([
+			['Op grond van', ['Cyberbeveiligingswet', 'Drinkwaterwet']],
+			['Noemt in de aanhef', ['Algemene wet bestuursrecht']]
+		]);
+		expect(grondslagKopregel([])).toEqual([]);
+	});
+
+	it('names the kind of what is issued, and a preamble that only names the article', () => {
+		expect(grondslagWerkwoord('amvb')).toBe('AMvB op grond van');
+		expect(grondslagWerkwoord('beleidsregel', 'mentioned')).toBe('Beleidsregel noemt in de aanhef');
+		expect(grondslagWerkwoord(null)).toBe('Op grond van');
+	});
+
+	it('names the articles that work it out, the rest counted', () => {
+		const a = (n: string) => ({ article_number: n });
+		expect(uitgewerktIn([a('2'), a('3')])).toBe('uitgewerkt in art. 2 en 3');
+		expect(uitgewerktIn(['1', '2', '3', '4', '5', '6', '7', '8'].map(a))).toBe(
+			'uitgewerkt in art. 1, 2, 3, 4, 5, 6 en 2 andere'
+		);
+		expect(uitgewerktIn([])).toBeNull();
 	});
 });

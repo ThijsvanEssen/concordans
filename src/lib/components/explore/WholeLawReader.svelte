@@ -5,7 +5,8 @@
 	import { onderdeelMark } from '$lib/text/article-parts';
 	import { ApiError, api, unwrap } from '$lib/api/client';
 	import { tick, untrack } from 'svelte';
-	import { getArticleDetail } from '$lib/api/articles';
+	import { getArticleDetail, getLawBasis } from '$lib/api/articles';
+	import { grondslagKopregel, type KopDeel } from '$lib/text/delegaties';
 	import {
 		getInstrumentDetail,
 		instrumentMetaStore,
@@ -31,7 +32,7 @@
 	import { goto } from '$app/navigation';
 	import { atArticles, isDay, versionOn, versionsByYear } from './peildatum';
 	import { nog, verderLabel, volgendeBladzijden, vorigeBladzijde, type Richting } from './bladeren';
-	import { lawFullTitle, lawHeadLine, lawKind, sourceName, treatyLink } from './law-head';
+	import { kindName, lawFullTitle, lawHeadLine, lawKind, sourceName, treatyLink } from './law-head';
 
 	let { bwbId }: { bwbId: string | null } = $props();
 
@@ -215,6 +216,20 @@
 				? `, versie van ${formatLongDate(v.valid_from)}${v.valid_until ? ` tot ${formatLongDate(v.valid_until)}` : ''}`
 				: '';
 		return `Tekst zoals geldend op ${formatLongDate(peildatum)}${of}.`;
+	});
+
+	// A regulation's grondslag, under its head: the laws its Gelet op names (`/basis`), asked
+	// once its detail says it is no wet (a wet has no Gelet op); the articles stand in its
+	// group Grondslag in Verbonden, from the same answer.
+	let grondslag = $state<KopDeel[]>([]);
+	$effect(() => {
+		grondslag = [];
+		const bwb = bwbId;
+		const soort = kindName(lawDetail?.kind);
+		if (!bwb || !/^BWBR/i.test(bwb) || !soort || /wet$/i.test(soort)) return;
+		getLawBasis(bwb).then((b) => {
+			if (bwb === bwbId) grondslag = grondslagKopregel(b?.items ?? []);
+		});
 	});
 
 	const headLine = $derived(
@@ -623,6 +638,17 @@
 			<!-- What is on screen and which text: the count, a treaty, the peildatum. -->
 			{#snippet status()}
 				<span>{headLine}</span>
+				{#each grondslag as deel (deel.werkwoord)}
+					<p class="whole-count">
+						{deel.werkwoord}
+						{#each deel.wetten as w, i (w.key)}{#if i > 0}{i === deel.wetten.length - 1
+									? ' en '
+									: ', '}{/if}<a
+								href={bronHref({ collection: 'instruments', key: w.key })}
+								data-sveltekit-noscroll>{w.naam}</a
+							>{/each}.
+					</p>
+				{/each}
 				{#if treaty}
 					<p class="whole-count">
 						{#if treaty.target.kind === 'bron'}

@@ -27,6 +27,7 @@ export type Collection = keyof typeof NODE_TYPES;
 export const RELATIONS = [
 	'PART_OF',
 	'VERSION_OF',
+	'ESTABLISHES',
 	'AMENDS',
 	'INTRODUCES',
 	'REPEALS',

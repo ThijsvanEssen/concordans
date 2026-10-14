@@ -16,6 +16,7 @@
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
+	import WetVerwijzingen from './WetVerwijzingen.svelte';
 	import { terPlekke } from '$lib/actions/klik';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
@@ -419,7 +420,19 @@
 	// A Kamerstuk opens in place under its row: its core text (a motie its dictum, an
 	// amendement its toelichting, another its opening), as in Actueel, Bronnen and Gemarkeerd
 	// (RijInhoud). The stuk is one step further: Lees verder, or the title with a modifier.
-	const opentTerPlekke = (row: Row) => row.ref.collection === 'documents' && !row.missing;
+	// A connected law opens on the references between the two laws' articles (Thijs, 14 Oct).
+	const wetVerband = (row: Row) => {
+		const van = row.edge?.van;
+		const naar = row.props?.bwb_id;
+		return row.ref.collection === 'instruments' &&
+			row.relation === 'REFERS_TO' &&
+			typeof van === 'string' &&
+			typeof naar === 'string'
+			? { van, naar, dit: typeof row.edge?.dit === 'string' ? row.edge.dit : undefined }
+			: null;
+	};
+	const opentTerPlekke = (row: Row) =>
+		(row.ref.collection === 'documents' || !!wetVerband(row)) && !row.missing;
 	let openRij = $state<string | null>(null);
 	const wisselRij = (row: Row) => (openRij = openRij === rowId(row) ? null : rowId(row));
 
@@ -707,7 +720,7 @@
 							{@const hoe = hoeVan(row, selection.collection)}
 							{@const href = rowHref(g, row)}
 							{@const dossier = dossierVanRij(row)}
-							<li class="row">
+							<li class="row" class:row--onder={!!row.onder}>
 								<!-- The row is the way to its bron: a click anywhere on it opens the bron in
 								     Netwerk, as its title does. -->
 								<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
@@ -798,8 +811,13 @@
 									/>
 								</div>
 								{#if openRij === rowId(row)}
+									{@const verband = wetVerband(row)}
 									<div class="row__inhoud">
-										<RijInhoud item={{ node: row.ref }} als="kern" />
+										{#if verband}
+											<WetVerwijzingen {...verband} />
+										{:else}
+											<RijInhoud item={{ node: row.ref }} als="kern" />
+										{/if}
 									</div>
 								{/if}
 							</li>
@@ -1149,6 +1167,12 @@
 		font-style: italic;
 	}
 	/* A Kamerstuk opened under its row: its core text, in from the row's title. */
+	/* A regulation issued under the regulation above it: in from that one, on its rule. */
+	.row--onder .row__main {
+		margin-left: calc(var(--s-4) + 4px);
+		padding-left: var(--s-3);
+		border-left: 1px solid var(--rule);
+	}
 	.row__inhoud {
 		padding: 0 var(--s-4) var(--s-3) calc(var(--s-4) + 11px + var(--s-3));
 		background: var(--paper-2);

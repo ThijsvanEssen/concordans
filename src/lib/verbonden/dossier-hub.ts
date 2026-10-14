@@ -30,7 +30,7 @@ type Committees = Schema<'CommitteeDTO'>[];
 type Documents = Schema<'DossierDocumentsResponse'>;
 type Mutations = Schema<'DossierMutationsResponse'>;
 
-const CHANGES = new Set(['AMENDS', 'INTRODUCES', 'REPEALS']);
+const CHANGES = new Set(['ESTABLISHES', 'AMENDS', 'INTRODUCES', 'REPEALS']);
 
 // A mutation node carries no props: the law is read from the article key
 // (`bwbr0001854_287`, `32004l0017_6`).
@@ -41,6 +41,7 @@ type Detail = Schema<'DossierDetailResponse'>;
 
 const RELATION_OF: Record<string, Row['relation']> = {
 	legislated_in: 'LEGISLATED_IN',
+	establishes: 'ESTABLISHES',
 	amends: 'AMENDS',
 	introduces: 'INTRODUCES',
 	repeals: 'REPEALS'

@@ -1144,4 +1144,20 @@ describe('names, not keys', () => {
 			);
 		expect(zonder).toEqual([]);
 	});
+
+	it('says a grondslag in one place ($lib/text/delegaties)', () => {
+		// "AMvB op grond van", "Op grond van", "mede op grond van": the row of Verbonden, a map, a
+		// regulation under a regulation and the head of a regulation read them from there. The
+		// words of the relation itself are hoe.ts's (BASED_ON).
+		const zonder = sources
+			.filter(({ path }) => path !== 'lib/text/delegaties.ts')
+			.flatMap(({ path, text }) =>
+				text
+					.split('\n')
+					.filter((l) => !/^\s*(\/\/|\*|\/\*\*)/.test(l))
+					.filter((l) => /['`"][^'`"]*\bop grond van\b/i.test(l))
+					.map((l) => `${path}: ${l.trim()}`)
+			);
+		expect(zonder).toEqual([]);
+	});
 });

@@ -1,6 +1,6 @@
 // What a publication or an inwerkingtreding in Actueel opens on (RijInhoud): the changes, in
 // the words of a verbinding ($lib/verbonden/hoe, woordenVan). A publication its articles per
-// law and verb, from its own AMENDS, INTRODUCES and REPEALS; an inwerkingtreding the
+// law and verb, from its own ESTABLISHES, AMENDS, INTRODUCES and REPEALS; an inwerkingtreding the
 // publication that brought the version, from the law's `/amended-by`. The feed gives neither
 // verb nor article (onderzoek samenhang, GGN 3.2 and 3.3: back-end B2, B3).
 import type { Schema } from '$lib/api/types';
@@ -9,7 +9,7 @@ import { woordenVan } from '$lib/verbonden/hoe';
 import { naamVanId } from '$lib/bron/menselijk';
 
 /** The relations of a change, in the order a line names them. */
-export const WIJZIGINGEN: Relation[] = ['AMENDS', 'INTRODUCES', 'REPEALS'];
+export const WIJZIGINGEN: Relation[] = ['ESTABLISHES', 'AMENDS', 'INTRODUCES', 'REPEALS'];
 
 /** A neighbour as the node response gives it: the part a change reads. */
 type Buur = {
@@ -85,7 +85,7 @@ export function wijzigingenVan(
 		}
 	}
 	const orde = (w: string) => {
-		const i = ['Wijzigt', 'Voegt in', 'Doet vervallen', 'Trekt in'].indexOf(w);
+		const i = ['Stelt vast', 'Wijzigt', 'Voegt in', 'Doet vervallen', 'Trekt in'].indexOf(w);
 		return i < 0 ? 9 : i;
 	};
 	const wetOrde = [...new Set([...regels.values()].map((r) => r.wet.key))];
@@ -112,7 +112,7 @@ type Wijzigend = Schema<'AmendingInstrumentDTO'>;
 /** A publication that brought a version: its key, its citation, what it did to the law. */
 export type Brenger = { key: string; naam: string; wat: string | null };
 
-/** `wijzigt 1 artikel`, `voegt 7 artikelen in`, `doet 2 artikelen vervallen`. */
+/** `stelt 111 artikelen vast`, `wijzigt 1 artikel`, `voegt 7 artikelen in`, `doet 2 artikelen vervallen`. */
 function telling(relation: Relation, n: number): string | null {
 	if (!n) return null;
 	const [eerste, ...rest] = woordenVan(relation, 'instruments', 'articles').actief.split(' ');
@@ -122,8 +122,8 @@ function telling(relation: Relation, n: number): string | null {
 
 /**
  * The publications that brought the version of a law in force on `datum`, from its
- * `/amended-by`: those whose first change takes effect that day. Empty where the data names
- * none (a new law: the publication that enacts it is not among those that amend it).
+ * `/amended-by`: those whose first change takes effect that day, the publication that enacted
+ * the law among them (`establishes`). Empty where the data names none.
  */
 export function brengersVan(items: readonly Wijzigend[], datum: string): Brenger[] {
 	return items
@@ -133,6 +133,7 @@ export function brengersVan(items: readonly Wijzigend[], datum: string): Brenger
 			naam: d.display_name ?? d.identifier ?? naamVanId(d.id),
 			wat:
 				[
+					telling('ESTABLISHES', d.establishes ?? 0),
 					telling('AMENDS', d.amends ?? 0),
 					telling('INTRODUCES', d.introduces ?? 0),
 					telling('REPEALS', d.repeals ?? 0)
