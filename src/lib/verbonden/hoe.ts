@@ -9,7 +9,7 @@
 // collections at its two ends and what its meta says. The row, the line on the canvas, the
 // line between two hulls, the legend, the table, the CSV and the card Verbinding all read
 // them, so one verbinding is never called two things (onderzoek samenhang, 14 Oct).
-import { capitalize, lowerFirst, textOf } from '$lib/text/words';
+import { capitalize, count, lowerFirst, plural, textOf } from '$lib/text/words';
 import { paragraphNumber } from '$lib/text/anchor';
 import type { Collection, Relation } from '$lib/vocabulary';
 import { langeDatum } from '$lib/text/datum';
@@ -470,10 +470,7 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 				: null;
 			return regel(
 				'Door de Kamer verbonden',
-				erbij(
-					': ',
-					join(zaken ? `${zaken} ${zaken === 1 ? 'zaak' : 'zaken'}` : null, soorten?.toLowerCase())
-				),
+				erbij(': ', join(zaken ? count(zaken, 'zaak', 'zaken') : null, soorten?.toLowerCase())),
 				'Tweede Kamer, zaak gerelateerd aan zaak'
 			);
 		}
@@ -593,8 +590,8 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 					return regel(g.werkwoord, g.rest, null);
 				}
 				const dit = textOf(edge.dit) ?? 'deze wet';
-				const artikelen = (n: number) => `${n} ${n === 1 ? 'artikel' : 'artikelen'}`;
-				const verwijzen = (n: number) => (n === 1 ? 'verwijst' : 'verwijzen');
+				const artikelen = (n: number) => count(n, 'artikel', 'artikelen');
+				const verwijzen = (n: number) => plural(n, 'verwijst', 'verwijzen');
 				const hierheen = naar ? `${artikelen(naar)} ${verwijzen(naar)} naar ${dit}` : null;
 				const daarheen = vanuit
 					? `${artikelen(vanuit)} van ${dit} ${naar ? 'ernaar' : `${verwijzen(vanuit)} ernaar`}`
@@ -647,7 +644,7 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 			const zetels = num(edge.seats);
 			return regel(
 				capitalize(keuze.toLowerCase()),
-				zetels ? `, ${zetels} ${zetels === 1 ? 'zetel' : 'zetels'}` : null,
+				zetels ? `, ${count(zetels, 'zetel', 'zetels')}` : null,
 				null
 			);
 		}

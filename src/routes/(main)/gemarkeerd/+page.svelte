@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { plural } from '$lib/text/words';
 	// Gemarkeerd: the reader's own collections, built as Gevolgd is (Thijs, 10 Oct: "past nu nog
 	// totaal niet bij de rest"). The heading over both columns; the maps in the facet column, the
 	// active one (where Bewaar keeps) in weight; in the list column each map a group of the page
@@ -67,7 +68,7 @@
 		return url.toString();
 	};
 	const bestand = (m: Map) => m.naam.replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'Gemarkeerd';
-	const tel = (n: number) => `${formatCount(n)} ${n === 1 ? 'bron' : 'bronnen'}`;
+	const tel = (n: number) => `${formatCount(n)} ${plural(n, 'bron', 'bronnen')}`;
 	const dag = (iso: string) => korteDatum(vandaag(new Date(iso)));
 	const anker = (m: Map) => `map-${m.id}`;
 

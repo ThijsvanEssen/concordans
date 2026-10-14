@@ -3,9 +3,9 @@
 // with the day (`decided_on`) and the seats voor and tegen of that vote (`tally`), a link to
 // the stemming (`decision`). A stuk another replaced names the one that did (`replaced_by`).
 // Source values only: nothing is read from a title, and a stuk without an outcome shows none.
-import { textOf } from '$lib/text/words';
+import { separatorBefore, textOf } from '$lib/text/words';
 import { korteDatum } from '$lib/text/datum';
-import { nrWoord, tussen } from './vervanging';
+import { nrWoord } from './vervanging';
 
 export type Uitkomst =
 	| 'aangenomen'
@@ -70,6 +70,6 @@ export function stukUitslag(p: Record<string, unknown> | null | undefined): Stuk
 /** The outcome as plain words, for the table and the export: `aangenomen 139–11 op 15 apr. 2026`. */
 export function uitslagTekst(u: StukUitslag): string {
 	if (u.uitkomst === 'vervangen' && u.vervangers.length)
-		return `vervangen door ${nrWoord(u.vervangers)} ${u.vervangers.map((v, i) => tussen(i, u.vervangers.length) + v.nummer).join('')}`;
+		return `vervangen door ${nrWoord(u.vervangers)} ${u.vervangers.map((v, i) => separatorBefore(i, u.vervangers.length) + v.nummer).join('')}`;
 	return [u.uitkomst, u.telling].filter(Boolean).join(' ') + (u.datum ? ` op ${u.datum}` : '');
 }

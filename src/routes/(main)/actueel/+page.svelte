@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { plural } from '$lib/text/words';
 	import { lijstDoel } from '$lib/stores/sprong';
 	import { fractieNaam } from '$lib/bron/menselijk';
 	import { korteDatum, vandaag } from '$lib/text/datum';
@@ -700,7 +701,7 @@
 			{#if total !== null}
 				<p class="count">
 					{formatCount(total)}
-					<span class="noun">{total === 1 ? 'gebeurtenis' : 'gebeurtenissen'}</span>
+					<span class="noun">{plural(total, 'gebeurtenis', 'gebeurtenissen')}</span>
 				</p>
 			{:else if tellen}
 				<p class="count"><span class="noun">tellen…</span></p>

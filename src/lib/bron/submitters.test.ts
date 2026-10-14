@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fromDocument, fromFeed, groupSubmitters, joinerOf, eigenFractie } from './submitters';
+import { fromDocument, fromFeed, groupSubmitters, eigenFractie } from './submitters';
 
 describe('submitters', () => {
 	it('reads a document’s submitters and groups them by role, in order', () => {
@@ -29,11 +29,6 @@ describe('submitters', () => {
 			{ name: 'Mohandis', memberKey: 'm', faction: 'PRO', factionKey: 'pro', role: 'indiener' }
 		]);
 		expect(fromFeed(undefined)).toEqual([]);
-	});
-
-	it('joins names with commas and a last en, or all commas when a count follows', () => {
-		expect([0, 1, 2].map((i) => joinerOf(i, 3))).toEqual(['', ', ', ' en ']);
-		expect([0, 1].map((i) => joinerOf(i, 2, true))).toEqual(['', ', ']);
 	});
 });
 

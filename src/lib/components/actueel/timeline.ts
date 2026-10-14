@@ -1,4 +1,4 @@
-import { capitalize } from '$lib/text/words';
+import { capitalize, joinAnd } from '$lib/text/words';
 import { bewindspersoonVan, eersteIndiener } from '$lib/bron/submitters';
 import type { BronRef } from '$lib/bron/href';
 import type { Vorm } from '$lib/bron/vormen';
@@ -93,10 +93,7 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 /** `A, B en C`; past `max`, `A, B en 4 andere`. */
 function listLine(names: string[], max: number, other: [string, string] = ['ander', 'andere']) {
 	const shown = names.slice(0, max);
-	const rest = names.length - shown.length;
-	if (rest > 0) return `${shown.join(', ')} en ${rest} ${rest === 1 ? other[0] : other[1]}`;
-	if (shown.length < 2) return shown[0] ?? '';
-	return `${shown.slice(0, -1).join(', ')} en ${shown.at(-1)}`;
+	return joinAnd(shown, { n: names.length - shown.length, one: other[0], many: other[1] });
 }
 
 // ── Names ───────────────────────────────────────────────────────────────

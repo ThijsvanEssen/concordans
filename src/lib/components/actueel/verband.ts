@@ -4,7 +4,7 @@
 // the letters that answer it, an amendment the articles it changes, a changed paper the one
 // it replaces, a judgment the articles it cites; of a followed law, how the row is tied to it
 // (`via`). Each a line of words with its bronnen as links, so each opens in place.
-import { capitalize } from '$lib/text/words';
+import { capitalize, count, joinAnd, separatorBefore } from '$lib/text/words';
 import { korteDatum } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
@@ -30,14 +30,14 @@ function opsomming(lijst: Schakel[][], max = GENOEMD): Schakel[] {
 	const rest = lijst.length - getoond.length;
 	const uit: Schakel[] = [];
 	getoond.forEach((stuk, i) => {
-		if (i > 0) uit.push({ tekst: i === getoond.length - 1 && !rest ? ' en ' : ', ' });
+		if (i > 0) uit.push({ tekst: separatorBefore(i, getoond.length, rest > 0) });
 		uit.push(...stuk);
 	});
-	if (rest > 0) uit.push({ tekst: ` en ${rest} ${rest === 1 ? 'ander' : 'andere'}` });
+	if (rest > 0) uit.push({ tekst: ` en ${count(rest, 'ander', 'andere')}` });
 	return uit;
 }
 
-const artikelen = (n: number) => `${n} ${n === 1 ? 'artikel' : 'artikelen'}`;
+const artikelen = (n: number) => count(n, 'artikel', 'artikelen');
 
 // ── A publication ───────────────────────────────────────────────────────
 
@@ -82,10 +82,7 @@ export function publicatieVerbanden(p: FeedItem['publication']): Verband[] {
 const ARTIKELEN_GENOEMD = 4;
 
 /** `art. 10 en 19bis`. */
-const artNummers = (nummers: readonly string[]) => {
-	const n = [...nummers];
-	return `art. ${n.length < 2 ? (n[0] ?? '') : `${n.slice(0, -1).join(', ')} en ${n.at(-1)}`}`;
-};
+const artNummers = (nummers: readonly string[]) => `art. ${joinAnd(nummers)}`;
 
 /**
  * What a new version of a law is: `Art. 2 gewijzigd bij Stcrt. 2026, 17140`, `111 artikelen,

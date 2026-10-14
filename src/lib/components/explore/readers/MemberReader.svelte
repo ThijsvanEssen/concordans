@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { capitalize, textOf } from '$lib/text/words';
+	import { capitalize, count, textOf } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
 	import { fractieNaam, naamVan } from '$lib/bron/menselijk';
 	import ReaderHead from './ReaderHead.svelte';
@@ -277,7 +277,7 @@
 						{#if step.cabinet}<NameLink
 								collection="cabinets"
 								name={step.cabinet}
-							/>{/if}{#if step.count > 0}{`${step.cabinet ? ', ' : ''}${step.count} ${step.count === 1 ? 'stuk' : 'stukken'} ondertekend`}{/if}
+							/>{/if}{#if step.count > 0}{`${step.cabinet ? ', ' : ''}${count(step.count, 'stuk', 'stukken')} ondertekend`}{/if}
 					{/if}
 				{/snippet}
 				<Sectie titel="Loopbaan" id="loopbaan">

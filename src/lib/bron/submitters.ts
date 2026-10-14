@@ -52,13 +52,6 @@ export const fromFeed = (list: Schema<'FeedPersonDTO'>[] | null | undefined): Su
 			: []
 	);
 
-/**
- * What stands before the `i`th of `n` names: nothing, `, ` or ` en `. When `more` follows
- * the list (`en 3 anderen`), the last name is joined with a comma.
- */
-export const joinerOf = (i: number, n: number, more = false) =>
-	i === 0 ? '' : i === n - 1 && !more ? ' en ' : ', ';
-
 /** The first signatories and the others, each in the order of the source. */
 export function groupSubmitters(list: readonly Submitter[]): {
 	by: Submitter[];

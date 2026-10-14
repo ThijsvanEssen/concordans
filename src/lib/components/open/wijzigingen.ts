@@ -3,7 +3,7 @@
 // law and verb, from its own ESTABLISHES, AMENDS, INTRODUCES and REPEALS; an inwerkingtreding the
 // publication that brought the version, from the law's `/amended-by`. The feed gives neither
 // verb nor article (onderzoek samenhang, GGN 3.2 and 3.3: back-end B2, B3).
-import { capitalize, textOf } from '$lib/text/words';
+import { capitalize, count, textOf } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import type { Collection, Relation } from '$lib/vocabulary';
 import { woordenVan } from '$lib/verbonden/hoe';
@@ -116,7 +116,7 @@ export type Brenger = { key: string; naam: string; wat: string | null };
 function telling(relation: Relation, n: number): string | null {
 	if (!n) return null;
 	const [eerste, ...rest] = woordenVan(relation, 'instruments', 'articles').actief.split(' ');
-	const lijdend = `${n} ${n === 1 ? 'artikel' : 'artikelen'}`;
+	const lijdend = count(n, 'artikel', 'artikelen');
 	return [eerste, lijdend, ...rest].join(' ');
 }
 

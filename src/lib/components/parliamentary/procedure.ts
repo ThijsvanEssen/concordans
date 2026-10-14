@@ -2,7 +2,7 @@
 // groepen (Raad van State, Tweede Kamer, Eerste Kamer). Alleen wat gebeurd is; wat nog kan
 // volgen staat als één gestippelde regel die zegt dat het kan volgen. Moties, amendementen,
 // brieven en procedurevergaderingen worden geteld en staan achter één knop.
-import { capitalize, lowerFirst } from '$lib/text/words';
+import { capitalize, count, joinAnd, lowerFirst } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import { bronHref } from '$lib/bron/href';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
@@ -83,8 +83,6 @@ const NAAM: Record<string, string> = {
 	'Advies Afdeling advisering Raad van State': 'advies'
 };
 const naam = (kind: string) => NAAM[kind] ?? lowerFirst(kind);
-const reeks = (namen: string[]) =>
-	namen.length < 2 ? namen.join('') : `${namen.slice(0, -1).join(', ')} en ${namen.at(-1)}`;
 const nrs = (n: string[]) =>
 	n.length === 0 ? '' : n.length === 1 ? `nr. ${n[0]}` : `nrs. ${n[0]}–${n.at(-1)}`;
 
@@ -149,7 +147,7 @@ function stemdagen(decisions: Entry[]): TijdRegel[] {
 		teken: 'activiteit',
 		soort: 'decisions',
 		label: null,
-		zin: `Stemmingen: ${besluiten.length} ${besluiten.length === 1 ? 'besluit' : 'besluiten'}`,
+		zin: `Stemmingen: ${count(besluiten.length, 'besluit', 'besluiten')}`,
 		actie: besluiten.some((e) => /^amendement/i.test(e.kind ?? ''))
 			? naarAmendementen
 			: naarStemmingen
@@ -246,7 +244,7 @@ function regelsVan(
 			(a, b) => Number(a) - Number(b) || a.localeCompare(b)
 		);
 		const first = docs.find((d) => nrOf(d)) ?? docs[0];
-		const zin = reeks(kinds.map(naam));
+		const zin = joinAnd(kinds.map(naam));
 		const id = `d-${groep}-${day}`;
 		// One paper opens its text; several open as a list, each by its kind and number.
 		const eigen = docs
@@ -344,7 +342,7 @@ function ekVoortgang(d: Detail, ek: TijdRegel[]): TijdRegel[] | null {
 			datum: null,
 			teken: 'verwacht',
 			soort: 'activities',
-			zin: [nu ? `Nu: ${stapNaam(nu)}.` : '', nog.length ? `Kan nog volgen: ${reeks(nog)}.` : '']
+			zin: [nu ? `Nu: ${stapNaam(nu)}.` : '', nog.length ? `Kan nog volgen: ${joinAnd(nog)}.` : '']
 				.filter(Boolean)
 				.join(' ')
 		});
@@ -437,7 +435,7 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 			datum: null,
 			teken: 'verwacht',
 			soort: 'activities',
-			zin: `Kan nog volgen: ${reeks(nog)}.`
+			zin: `Kan nog volgen: ${joinAnd(nog)}.`
 		});
 	}
 	groepen.push({

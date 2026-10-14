@@ -75,9 +75,6 @@ const BRON_KIND_ONE: Record<BronKind, string> = {
 export const kindCount = (n: number, kind: BronKind) =>
 	`${formatCount(n)} ${n === 1 ? BRON_KIND_ONE[kind] : BRON_KIND_LABEL[kind].toLowerCase()}`;
 
-/** `1 zetel`, `22 zetels`. */
-export const seatCount = (n: number) => `${n} ${n === 1 ? 'zetel' : 'zetels'}`;
-
 export const RECHTERS = [
 	{ id: 'hr', label: 'Hoge Raad' },
 	{ id: 'hof', label: 'Gerechtshoven' },

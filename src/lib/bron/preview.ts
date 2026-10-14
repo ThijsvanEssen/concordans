@@ -4,7 +4,7 @@
 // amendement, the vote on its zaak; a judgment the first sentence of its summary, or at an
 // r.o. that overweging; an article its first lid, or the part the reference names.
 import { langeDatum } from '$lib/text/datum';
-import { textOf } from '$lib/text/words';
+import { separatorBefore, textOf } from '$lib/text/words';
 import { getDossier } from '$lib/components/parliamentary/data';
 import { getNodeFirst, once } from '$lib/api/records';
 import { ifExists } from '$lib/api/errors';
@@ -22,7 +22,7 @@ import {
 	dossierVolledigeTitel,
 	kamerstukNummer
 } from './dossier-naam';
-import { eersteIndiener, isEersteIndiener, joinerOf } from './submitters';
+import { eersteIndiener, isEersteIndiener } from './submitters';
 import { bronLabel, isCollection, type Collection } from '$lib/vocabulary';
 import { focusOf, type BronRef } from './href';
 import { tabTitle } from './tab-title';
@@ -86,7 +86,7 @@ export function indieners(actors: unknown): string | null {
 		.filter((a) => a !== lead && !isEersteIndiener(a.role))
 		.map(persoon)
 		.filter((x): x is string => !!x);
-	const namens = mede.map((m, i) => `${joinerOf(i, mede.length)}${m}`).join('');
+	const namens = mede.map((m, i) => `${separatorBefore(i, mede.length)}${m}`).join('');
 	return mede.length ? `Ingediend door ${door}, mede namens ${namens}` : `Ingediend door ${door}`;
 }
 

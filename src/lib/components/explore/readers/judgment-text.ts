@@ -2,6 +2,7 @@
 // party block, table of contents and sub-numbering embedded in flat text, so
 // the reader restructures them here. Pure functions, no Svelte.
 
+import { joinAnd } from '$lib/text/words';
 import { paragraphAnchor } from '$lib/text/anchor';
 import type { Schema } from '$lib/api/types';
 import { citationsWithin } from '$lib/components/articles/citations';
@@ -808,9 +809,10 @@ export function forParties(party: string): string {
 		.filter(Boolean);
 	const anonymous = parts.filter(isPlaceholder).length;
 	if (anonymous < 2) return party;
-	const named = parts.filter((p) => !isPlaceholder(p));
-	const count = `${anonymous} geanonimiseerde partijen`;
-	return named.length ? `${named.join(', ')} en ${count}` : count;
+	return joinAnd(
+		parts.filter((p) => !isPlaceholder(p)),
+		{ n: anonymous, one: 'geanonimiseerde partij', many: 'geanonimiseerde partijen' }
+	);
 }
 
 // The lines a conclusion of the Parket ends with, under the text: `De Procureur-Generaal

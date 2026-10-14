@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { plural } from '$lib/text/words';
 	import Periode from '$lib/components/ui/Periode.svelte';
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
@@ -328,7 +329,7 @@
 				onclick={() => {
 					onApply(draft);
 					onClose();
-				}}>Toon {formatCount(count)} {count === 1 ? 'verbinding' : 'verbindingen'}</button
+				}}>Toon {formatCount(count)} {plural(count, 'verbinding', 'verbindingen')}</button
 			>
 		</div>
 	</div>

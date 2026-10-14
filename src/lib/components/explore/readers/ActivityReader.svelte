@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { joinParts } from '$lib/text/words';
 	import { langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
-	import { opsomming } from '$lib/text/opsomming';
 	import ReaderHead from './ReaderHead.svelte';
 	// Reader for an activity: a debate, a wetgevingsoverleg, a procedurevergadering. The head
 	// from the node's props at once, then from `/api/activities/{key}` (cheap; the band names
@@ -93,7 +93,7 @@
 			{#snippet soort()}
 				<KindGlyph collection="activities" />
 				<!-- One still to come says so, as its row in Verbonden does (#59). -->
-				{opsomming([
+				{joinParts([
 					activityLine({
 						kind: kind ?? bronLabel('activities'),
 						status,

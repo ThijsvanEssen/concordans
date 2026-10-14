@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { count } from '$lib/text/words';
 	// The band "Behoort bij" above every reader (docs/hierarchie.md, "Kern of context"): the
 	// kern as lines, a legal term and the bronnen it names as links (Procesgang, Ingediend bij,
 	// Wet); under them the groups of the context with their counts, each listed when it is
@@ -149,7 +150,7 @@
 			? groepen[0].label
 			: regels.length > 1
 				? 'Meer'
-				: `${groepen.length} ${groepen.length === 1 ? 'groep' : 'groepen'}`
+				: count(groepen.length, 'groep', 'groepen')
 	);
 </script>
 

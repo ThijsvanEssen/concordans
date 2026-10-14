@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { capitalize, textOf } from '$lib/text/words';
+	import { capitalize, joinParts, textOf } from '$lib/text/words';
 	import { langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
-	import { opsomming } from '$lib/text/opsomming';
 	import ReaderHead from './ReaderHead.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -55,11 +54,11 @@
 			}}
 		>
 			{#snippet soort()}
-				<SoortLink collection="committees">{bronLabel('committees')}</SoortLink>{opsomming([
+				<SoortLink collection="committees">{bronLabel('committees')}</SoortLink>{joinParts([
 					'',
 					chamberName(chamber),
 					kind
-				]) && `, ${opsomming([chamberName(chamber), kind])}`}
+				]) && `, ${joinParts([chamberName(chamber), kind])}`}
 			{/snippet}
 			{#snippet status()}
 				{#if abbreviation && abbreviation !== name}<span class="afk">{abbreviation}</span>{/if}

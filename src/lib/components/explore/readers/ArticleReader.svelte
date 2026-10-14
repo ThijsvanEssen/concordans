@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { plural } from '$lib/text/words';
 	import { langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -300,7 +301,7 @@
 		if (!stub && !empty) return null;
 		const cited = Number(d.metadata?.judgment_count ?? 0);
 		return cited > 0
-			? `Niet in de gegevens. Genoemd in ${formatCount(cited)} ${cited === 1 ? 'uitspraak' : 'uitspraken'}.`
+			? `Niet in de gegevens. Genoemd in ${formatCount(cited)} ${plural(cited, 'uitspraak', 'uitspraken')}.`
 			: 'Niet in de gegevens.';
 	});
 
@@ -589,7 +590,7 @@
 				{#if billCount > 0}
 					<a class="head__pending" href={billsHref} data-sveltekit-noscroll
 						><KindGlyph vorm="voorstel" size={12} />{billCount}
-						{billCount === 1 ? 'wetsvoorstel raakt' : 'wetsvoorstellen raken'} dit artikel</a
+						{plural(billCount, 'wetsvoorstel raakt', 'wetsvoorstellen raken')} dit artikel</a
 					>
 				{/if}
 			{/snippet}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { count } from '$lib/text/words';
 	import { fractieNaam } from '$lib/bron/menselijk';
 	// De vergaderzaal van de Eerste Kamer. Twee blokken
 	// banken tegenover elkaar, elk vier plaatsen breed en tien rijen diep; de regering aan de
@@ -125,7 +126,7 @@
 				{@const v = side(name)}
 				<a
 					href={f?.key ? hrefOf(f.key) : undefined}
-					aria-label="{name}, {seatsOf(name)} {seatsOf(name) === 1 ? 'zetel' : 'zetels'}"
+					aria-label="{name}, {count(seatsOf(name), 'zetel', 'zetels')}"
 					onmouseenter={() => (hovered = name)}
 					onmouseleave={() => (hovered = null)}
 					onfocus={() => (hovered = name)}
@@ -176,7 +177,7 @@
 					y={rowY(1) + 22}
 					text-anchor="middle"
 					class="hover-zetels"
-					aria-hidden="true">{seatsOf(hovered)} {seatsOf(hovered) === 1 ? 'zetel' : 'zetels'}</text
+					aria-hidden="true">{count(seatsOf(hovered), 'zetel', 'zetels')}</text
 				>
 			{/if}
 			<!-- At the foot: the Voorzitter (a member, in the fractie's colour) between two places

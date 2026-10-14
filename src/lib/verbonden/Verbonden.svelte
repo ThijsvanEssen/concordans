@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { capitalize, textOf } from '$lib/text/words';
+	import { capitalize, count, joinAnd, textOf } from '$lib/text/words';
 	import { meldNetwerk } from '$lib/stores/netwerk-melding';
 	import { report } from '$lib/api/errors';
 	import { goto } from '$app/navigation';
@@ -130,11 +130,7 @@
 	 * two lines and its meta (112).
 	 */
 	/** "Toelichtingen en wijzigingen", the first word with a capital. */
-	const zin = (woorden: string[]) => {
-		const z =
-			woorden.length > 1 ? `${woorden.slice(0, -1).join(', ')} en ${woorden.at(-1)}` : woorden[0];
-		return `${capitalize(z)}`;
-	};
+	const zin = (woorden: string[]) => capitalize(joinAnd(woorden));
 	// The kind of a waiting row, for its height: what a row of that group holds on this page.
 	const wachtSoort = (noun?: string) => {
 		const wet = selection.collection === 'articles' || selection.collection === 'instruments';
@@ -330,7 +326,7 @@
 	const MELDING_MS = 8000;
 
 	/** `31 bronnen`, `1 bron`: the kind of a row is not always the noun of its group. */
-	const telling = (rows: Row[]) => (rows.length === 1 ? '1 bron' : `${rows.length} bronnen`);
+	const telling = (rows: Row[]) => count(rows.length, 'bron', 'bronnen');
 
 	// Another bron: its groups have their own notes, none yet.
 	$effect(() => {

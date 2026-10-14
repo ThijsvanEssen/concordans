@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { plural, separatorBefore } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
 	import ReaderHead from './ReaderHead.svelte';
@@ -23,7 +24,6 @@
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
 	import { nagekomenIn, toegezegdIn } from '$lib/components/parliamentary/toezegging';
-	import { tussen } from '$lib/components/parliamentary/vervanging';
 	import { load } from '$lib/util/load.svelte';
 	import { report } from '$lib/api/errors';
 
@@ -83,7 +83,7 @@
 								>{/if}
 							{#if nagekomen}<span
 									>{nagekomen.voor}
-									{#each nagekomen.brieven as b, i (b.key)}{tussen(
+									{#each nagekomen.brieven as b, i (b.key)}{separatorBefore(
 											i,
 											nagekomen.brieven.length
 										)}<BronLink ref={`documents/${b.key}`}>{b.naam}</BronLink>{/each}.</span
@@ -119,7 +119,7 @@
 				<Veld label="Verwacht" value={c.expected_resolution} nodig>
 					<span class="nums">{langeDatum(c.expected_resolution)}</span>
 				</Veld>
-				<Veld label={c.dossiers?.length === 1 ? 'Dossier' : 'Dossiers'} value={c.dossiers}>
+				<Veld label={plural(c.dossiers?.length ?? 0, 'Dossier', 'Dossiers')} value={c.dossiers}>
 					<span class="dossiers">
 						{#each uniqueBy(c.dossiers ?? [], (d) => d.key) as d (d.key)}
 							<BronLink ref={{ collection: 'dossiers', key: d.key, number: d.number ?? d.key }}

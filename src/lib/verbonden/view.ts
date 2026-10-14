@@ -1,6 +1,6 @@
 // What the panel, the table and the legend derive from the groups and the filter:
 // the rows that pass, the counts, the groupings and the years of the judgments.
-import { capitalize } from '$lib/text/words';
+import { capitalize, plural } from '$lib/text/words';
 import type { Collection } from '$lib/vocabulary';
 import { relationLabel } from './hoe';
 import { sumLidCounts } from '$lib/api/nodes';
@@ -124,7 +124,7 @@ export function countLine(
 ): string {
 	const total = totalCount(groups);
 	const shown = shownCount(groups, f, wachtend);
-	const noun = total === 1 ? 'verbinding' : 'verbindingen';
+	const noun = plural(total, 'verbinding', 'verbindingen');
 	const heel = `${formatCount(total)}${minstens(groups)}`;
 	return shown === total
 		? `${heel} ${noun}`

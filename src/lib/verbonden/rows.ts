@@ -2,7 +2,7 @@
 // title and one meta line: the lid it names, the position in the source, the
 // identifier or the date, and the betrouwbaarheid when it is not hoog. The passage
 // of the source (`snippet`, with `match` marked) appears when the row is opened.
-import { lowerFirst, textOf } from '$lib/text/words';
+import { count, joinAnd, lowerFirst, textOf } from '$lib/text/words';
 import { isRauw, menselijkeNaam, naamVanId } from '$lib/bron/menselijk';
 import { keyEcli } from '$lib/bron/leesbaar';
 import { korteDatum, langeDatum, vandaag } from '$lib/text/datum';
@@ -583,7 +583,7 @@ export function citedLine(
 	if (!numbers.length) return null;
 	const shown = numbers.slice(0, 2).join(', ');
 	const rest = numbers.length - 2;
-	return `art. ${shown}${rest > 0 ? ` en ${rest} ${rest === 1 ? 'ander' : 'andere'}` : ''}`;
+	return `art. ${shown}${rest > 0 ? ` en ${count(rest, 'ander', 'andere')}` : ''}`;
 }
 
 /**
@@ -611,9 +611,7 @@ export function activityLine(
 	const numbers = a.dossiers?.length
 		? a.dossiers.map((d) => dossierLabel(d))
 		: (a.dossier_numbers ?? []).map((n) => kamerstukNummer(n));
-	const over = numbers.length
-		? `over ${numbers.length > 1 ? `${numbers.slice(0, -1).join(', ')} en ${numbers.at(-1)}` : numbers[0]}`
-		: null;
+	const over = numbers.length ? `over ${joinAnd(numbers)}` : null;
 	return [a.kind, status, over].filter(Boolean).join(', ') || null;
 }
 
@@ -636,7 +634,7 @@ export function rolesLine(d: {
 	const fn = (d.functions ?? []).find((f) => !/^tweede kamerlid$/i.test(f.trim()));
 	const n = d.document_count ?? 0;
 	return (
-		[role, fn ? `als ${fn}` : null, n ? `${n} ${n === 1 ? 'stuk' : 'stukken'}` : null]
+		[role, fn ? `als ${fn}` : null, n ? count(n, 'stuk', 'stukken') : null]
 			.filter(Boolean)
 			.join(', ') || null
 	);

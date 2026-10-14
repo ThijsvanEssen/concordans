@@ -1,3 +1,4 @@
+import { count } from '$lib/text/words';
 import { korteDatum, weekdag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 import { isGeneriek } from '$lib/bron/generiek';
@@ -194,8 +195,8 @@ export function foldTitle(f: Fold, votes?: VoteCount[]): string {
 		const amendementen = moties ? sum((v) => v.subkind === AMENDEMENT) : 0;
 		const other = all - lead - amendementen;
 		const also = [
-			amendementen ? `${amendementen} ${amendementen === 1 ? 'amendement' : 'amendementen'}` : '',
-			other ? `${other} ${other === 1 ? 'ander voorstel' : 'andere voorstellen'}` : ''
+			amendementen ? count(amendementen, 'amendement', 'amendementen') : '',
+			other ? count(other, 'ander voorstel', 'andere voorstellen') : ''
 		]
 			.filter(Boolean)
 			.join(' en ');

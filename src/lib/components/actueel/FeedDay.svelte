@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { capitalize } from '$lib/text/words';
+	import { capitalize, count } from '$lib/text/words';
 	import { korteDatum } from '$lib/text/datum';
 	// One day of Actueel in the shared timeline, as on the homepage: the day as the heading
 	// (rung 2, the timeline is the page), its kinds counted beside it; each line the kind above
@@ -354,7 +354,7 @@
 	{#if i.persons.length > 2 || i.persons.some((p) => p.role === 'medeindiener')}
 		{@const rest =
 			i.persons.length - Math.min(2, i.persons.filter((p) => p.role !== 'medeindiener').length)}
-		{#if rest > 0}<span class="faction">en {rest} {rest === 1 ? 'ander' : 'anderen'}</span>{/if}
+		{#if rest > 0}<span class="faction">en {count(rest, 'ander', 'anderen')}</span>{/if}
 	{/if}
 {/snippet}
 

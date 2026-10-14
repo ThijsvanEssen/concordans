@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { textOf } from '$lib/text/words';
+	import { plural, textOf } from '$lib/text/words';
 	import { korteDatum, langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
@@ -109,7 +109,7 @@
 						<p class="woorden">
 							<span class="zetels"
 								>{seats}
-								{seats === 1 ? 'zetel' : 'zetels'}{ek && read
+								{plural(seats, 'zetel', 'zetels')}{ek && read
 									? ` op ${langeDatum(read)}`
 									: ''}</span
 							>{#if sinds && !ek}, <span class="sinds">fractie sinds {langeDatum(sinds)}</span>{/if}

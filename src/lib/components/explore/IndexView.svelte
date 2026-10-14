@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { count, plural } from '$lib/text/words';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
 	import StukUitslag from '$lib/components/parliamentary/StukUitslag.svelte';
 	import { stukUitslag } from '$lib/components/parliamentary/stuk-uitslag';
@@ -2472,7 +2473,7 @@
 									name={shownCabinet.prime_minister.name}
 									key={shownCabinet.prime_minister.key}
 								/>{/if}, {shownCabinet.members}
-							{shownCabinet.members === 1 ? 'bewindspersoon' : 'bewindspersonen'}
+							{plural(shownCabinet.members, 'bewindspersoon', 'bewindspersonen')}
 						</p>
 						{#if !ministersShown?.length && !loading}
 							{@render empty('bewindspersonen')}
@@ -2600,7 +2601,7 @@
 													{#if j.inbound_citation_count}
 														<span class="num-strong"
 															>{j.inbound_citation_count}<span class="num-lbl"
-																>{j.inbound_citation_count === 1 ? 'citatie' : 'citaties'}</span
+																>{plural(j.inbound_citation_count, 'citatie', 'citaties')}</span
 															></span
 														>
 													{/if}
@@ -2698,7 +2699,7 @@
 													{#if c.chamber !== 'EK'}
 														<span class="row-sub">
 															{count > 0
-																? `${count === 1 ? 'lopend dossier' : 'lopende dossiers'}`
+																? plural(count, 'lopend dossier', 'lopende dossiers')
 																: 'Geen lopende dossiers'}
 														</span>
 													{/if}
@@ -2779,9 +2780,7 @@
 																f.seats != null && totalSeats > 0
 																	? `${formatDecimal((f.seats / totalSeats) * 100)}% van de zetels`
 																	: null,
-																f.member_count
-																	? `${f.member_count} ${f.member_count === 1 ? 'lid' : 'leden'}`
-																	: null
+																f.member_count ? count(f.member_count, 'lid', 'leden') : null
 															]
 																.filter(Boolean)
 																.join(', ')}</span
@@ -2792,7 +2791,7 @@
 													{#if f.seats != null}
 														<span class="num-strong"
 															>{f.seats}<span class="num-lbl"
-																>{f.seats === 1 ? 'zetel' : 'zetels'}</span
+																>{plural(f.seats, 'zetel', 'zetels')}</span
 															></span
 														>
 													{/if}
@@ -2812,7 +2811,7 @@
 												<h3 class="day-title">{fmtDay(day.date)}</h3>
 												<span class="day-meta"
 													>{day.count}
-													{day.count === 1 ? 'stemming' : 'stemmingen'}: {day.passed} aangenomen,
+													{plural(day.count, 'stemming', 'stemmingen')}: {day.passed} aangenomen,
 													{failed}
 													verworpen</span
 												>
