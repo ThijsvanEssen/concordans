@@ -328,7 +328,12 @@
 					<LoadState state={detail.state} what="De gegevens van de wet" retry={detail.retry} />
 				{/if}
 				{#if versionList.state.status === 'error'}
-					<LoadState state={versionList.state} what="De tekstversies" retry={versionList.retry} />
+					<LoadState
+						state={versionList.state}
+						what="De tekstversies"
+						plural
+						retry={versionList.retry}
+					/>
 				{/if}
 				{#each grondslag as deel (deel.werkwoord)}
 					<p class="whole-count">
