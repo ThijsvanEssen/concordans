@@ -569,11 +569,11 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 			const effect = textOf(edge.effect);
 			// The publication that enacted a law, among those that change it (`/amended-by`,
 			// `establishes`): `Stelt vast`, its day in the meta line.
-			const vastgesteld = woorden?.actief === 'stelt vast';
-			if (vastgesteld && num(edge.establishes)) return regel('Stelt vast', null, null);
+			const vastgesteld = changeByEffect(row.relation, edge) === 'ESTABLISHES';
+			const werkwoord = changeVerb(row.relation, inbound ? selected : other, edge);
+			if (vastgesteld && num(edge.establishes)) return regel(werkwoord, null, null);
 			// A row from the legislative history carries its change in its own meta line.
 			if (!effect && !textOf(edge.effective_date) && !textOf(edge.source_publication)) return null;
-			const werkwoord = changeVerb(row.relation, inbound ? selected : other, edge);
 			const datum = textOf(edge.effective_date);
 			const pub = publicatie(textOf(edge.source_publication));
 			const wat = join(

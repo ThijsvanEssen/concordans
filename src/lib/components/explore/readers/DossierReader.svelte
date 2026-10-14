@@ -1,6 +1,7 @@
 <script lang="ts">
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { textOf } from '$lib/text/words';
+	import { changeVerb } from '$lib/verbonden/hoe';
 	import { langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
@@ -130,7 +131,7 @@
 				     it amends and the EU acts it implements (`legal_effect`), as links. -->
 					{#if (d.legal_effect?.amends ?? []).length || (d.legal_effect?.implements ?? []).length}
 						<p class="effect">
-							{#each [['Wijzigt', d.legal_effect?.amends ?? []], ['Implementeert', d.legal_effect?.implements ?? []]] as const as [term, wetten], i (term)}
+							{#each [[changeVerb('AMENDS', 'instruments'), d.legal_effect?.amends ?? []], ['Implementeert', d.legal_effect?.implements ?? []]] as const as [term, wetten], i (term)}
 								{#if wetten.length}<span class="effect__regel"
 										>{i > 0 && (d.legal_effect?.amends ?? []).length ? '; ' : ''}<span
 											class="effect__term"
