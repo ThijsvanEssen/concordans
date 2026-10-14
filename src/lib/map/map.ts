@@ -62,6 +62,9 @@ const dossierSleutel = (nr: string) =>
 		.replace(/[\s_]+/, '-')
 		.toUpperCase()}`;
 
+/** What is its own group where no law or dossier holds it: never keyed by a name. */
+const OWN_GROUP = new Set(['judgments', 'documents', 'decisions']);
+
 /**
  * What a bron belongs to, as the reader knows it from the API: the law of an article (its BWB
  * id or CELEX), the dossier of a Kamerstuk or a vote, and the group's name where it has one.
@@ -72,8 +75,8 @@ export type BewaarContext = { groep?: string | null; dossier?: string | null; we
  * A bron as the map keeps it: its citations as the reader gives them, its group from the
  * bron, never from a name. Its group's key, so a note stays with its law when the law's name
  * loads later: an article or a law by its law (`wet:bwbr0052872`), a Kamerstuk, a vote or a
- * dossier by its dossier (`dossier:36764`), a judgment by itself; the rest by its group's name,
- * a person under Kamerlid.
+ * dossier by its dossier (`dossier:36764`), a judgment, and a Kamerstuk or vote without a
+ * dossier, by itself; the rest by its group's name, a person under Kamerlid.
  */
 export function bewaarItem(
 	id: string,
@@ -91,7 +94,7 @@ export function bewaarItem(
 		? `wet:${wet}`
 		: dossier
 			? dossierSleutel(dossier)
-			: collectie === 'judgments'
+			: collectie && OWN_GROUP.has(collectie)
 				? id
 				: `groep:${groep}`;
 	return {

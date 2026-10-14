@@ -32,7 +32,8 @@
 		detail,
 		bewaar = true,
 		dossier = null,
-		wet = null
+		wet = null,
+		cite = null
 	}: {
 		title: string;
 		/** Without a link the title is text, and the whole row is the toggle. */
@@ -61,6 +62,9 @@
 		dossier?: string | null;
 		/** The law the row stands for (BWB id or CELEX), for its group in a map. */
 		wet?: string | null;
+		/** How the map cites the bron, where its reader cites it otherwise than by the title: a
+		 *  vote as a vote, not as what was voted on. */
+		cite?: { kort: string; voluit: string } | null;
 	} = $props();
 
 	const uid = $props.id();
@@ -72,7 +76,7 @@
 	const item = $derived.by(() => {
 		const doel = bron ? parseNodeId(bron) : null;
 		return bewaar && bron && doel
-			? bewaarItem(bron, { kort: title, voluit: title }, { dossier, wet })
+			? bewaarItem(bron, cite ?? { kort: title, voluit: title }, { dossier, wet })
 			: null;
 	});
 

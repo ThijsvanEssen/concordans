@@ -448,6 +448,17 @@ describe('one form for each thing', () => {
 		expect(offenders(metDeHand, ['lib/map/map.ts'])).toEqual([]);
 	});
 
+	it('cites a kept vote as a vote, from its reader, a row of Bronnen and Verbonden (#54)', () => {
+		const kept = sources.filter(({ text }) => /\bvoteCitation\(/.test(text)).map((s) => s.path);
+		expect(kept).toEqual(
+			expect.arrayContaining([
+				'lib/components/explore/readers/DecisionReader.svelte',
+				'lib/components/explore/IndexView.svelte',
+				'lib/map/rij.ts'
+			])
+		);
+	});
+
 	it('heads every reader with ReaderHead, Bewaar in its place (Thijs, 10 Oct: gelijke pagina’s)', () => {
 		// The head of a reader is one form: kind or place, title, status, and the actions at its
 		// right (KopActies through ReaderHead, Bewaar always). No reader lays out actions itself.

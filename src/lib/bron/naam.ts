@@ -5,6 +5,7 @@ import { lawIdOf, type GraphNode } from '$lib/graph/types';
 import { describe, UNNAMED } from '$lib/verbonden/rows';
 import { decisionOutcome } from '$lib/components/explore/index/decision-kind';
 import { isEkDecision } from '$lib/components/parliamentary/timeline-kind';
+import { chamberName } from '$lib/components/parliamentary/chamber';
 import { langeDatum } from '$lib/text/datum';
 import { dossierName, dossierUitProps, kamerstukNummer } from './dossier-naam';
 
@@ -63,4 +64,22 @@ export function stemmingNaam(n: Pick<GraphNode, 'id' | 'label' | 'raw'>): string
 		.join(', ');
 	const over = text(p['subject']) ?? text(p['title']);
 	return over ? `${kop}: ${over}` : kop;
+}
+
+/**
+ * A vote as the map cites it, from its reader and from a row alike: "Stemming 20 december
+ * 2016: Amendement …", in full with its Kamer. Never the citation of what was voted on.
+ */
+export function voteCitation(d: {
+	date?: string | null;
+	chamber?: string | null;
+	subject?: string | null;
+}): { kort: string; voluit: string } {
+	const datum = d.date ? langeDatum(d.date) : '';
+	const over = d.subject?.trim() ?? '';
+	const tail = over ? `: ${over}` : '';
+	return {
+		kort: `Stemming${datum ? ` ${datum}` : ''}${tail}`,
+		voluit: `Stemming ${chamberName(d.chamber)}${datum ? `, ${datum}` : ''}${tail}`
+	};
 }

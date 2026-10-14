@@ -22,6 +22,7 @@
 	import { decisionMethod, decisionOutcome } from '$lib/components/explore/index/decision-kind';
 	import { EK_SOURCE, chamberName } from '$lib/components/parliamentary/chamber';
 	import { kamerstukNummer } from '$lib/bron/dossier-naam';
+	import { voteCitation } from '$lib/bron/naam';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -131,14 +132,9 @@
 				collection="decisions"
 				title={d.subject ?? doc?.title ?? 'Onderwerp niet in de gegevens'}
 				acties={{
-					bewaar: bewaarItem(
-						node.id,
-						{
-							kort: `Stemming${d.date ? ` ${formatLongDate(d.date)}` : ''}: ${onderwerp}`,
-							voluit: `Stemming ${chamberName(chamber)}${d.date ? `, ${formatLongDate(d.date)}` : ''}: ${onderwerp}`
-						},
-						{ dossier: eigen[0]?.number }
-					)
+					bewaar: bewaarItem(node.id, voteCitation({ date: d.date, chamber, subject: onderwerp }), {
+						dossier: eigen[0]?.number
+					})
 				}}
 			>
 				{#snippet soort()}

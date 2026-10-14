@@ -4,6 +4,7 @@
 	import { stukUitslag } from '$lib/components/parliamentary/stuk-uitslag';
 	import { lijstDoel } from '$lib/stores/sprong';
 	import { fractieNaam, naamVan } from '$lib/bron/menselijk';
+	import { voteCitation } from '$lib/bron/naam';
 	import { vandaag } from '$lib/text/datum';
 	import { formatDecimal } from '$lib/text/getal';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
@@ -2857,6 +2858,7 @@
 													{bron}
 													dossier={s.dossiers?.[0]?.number ?? s.dossier_numbers?.[0]}
 													title={stemmingNaam(s.subject, s.dossiers?.[0] ?? s.dossier_numbers?.[0])}
+													cite={voteCitation(s)}
 													href={hrefOf(bron)}
 													acties
 												>
