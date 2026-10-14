@@ -23,6 +23,7 @@
 
 	import { bronHref } from '$lib/bron/href';
 	import { keepInPlace, scrollInReader } from '$lib/bron/anchor';
+	import { parseAnchor } from '$lib/text/anchor';
 	import { deelIds, layersOf, plekVan } from '$lib/text/division';
 	import { lawArticleList } from '$lib/api/law-articles';
 	import { articleName } from '$lib/text/bw';
@@ -433,6 +434,9 @@
 			});
 	}
 
+	/** Whether an anchor names a division of the law: `deel-hoofdstuk-3`. */
+	const isDeel = (anker: string) => parseAnchor(anker)?.kind === 'division';
+
 	$effect(() => {
 		detailByNumber.clear();
 		pending.clear();
@@ -446,7 +450,7 @@
 		primeInstrumentNames();
 		// The division the link names opens alone; a later anchor is the effect below.
 		const hash = untrack(() => decodeURIComponent(page.url.hash.slice(1)));
-		untrack(() => open(bwb, day, hash.startsWith('deel-') ? hash : null));
+		untrack(() => open(bwb, day, isDeel(hash) ? hash : null));
 		return () => controller?.abort();
 	});
 
@@ -456,21 +460,25 @@
 	let doelGezien = '';
 	$effect(() => {
 		const hash = decodeURIComponent(page.url.hash.slice(1));
-		if (!/^(deel|artikel)-/.test(hash)) doelGezien = '';
-		if (!/^(deel|artikel)-/.test(hash) || status !== 'ready' || doelGezien === hash) return;
+		const doel = parseAnchor(hash);
+		if (doel?.kind !== 'division' && doel?.kind !== 'article') {
+			doelGezien = '';
+			return;
+		}
+		if (status !== 'ready' || doelGezien === hash) return;
 		void articles.length;
 		// Not an id: on a fresh load the browser would scroll the document itself to it.
 		const el = document.querySelector<HTMLElement>(
-			hash.startsWith('deel-')
+			doel.kind === 'division'
 				? `[data-deel="${CSS.escape(hash)}"]`
-				: `[data-artikel="${CSS.escape(hash.slice('artikel-'.length))}"]`
+				: `[data-artikel="${CSS.escape(doel.number)}"]`
 		);
 		if (el) {
 			doelGezien = hash;
 			landOp(el);
 		} else if (
 			bwbId &&
-			hash.startsWith('deel-') &&
+			doel.kind === 'division' &&
 			!zonderDeel.has(`${bwbId}/${peildatum}/${hash}`) &&
 			geopend !== `${bwbId}/${peildatum}/${hash}`
 		) {
@@ -500,7 +508,7 @@
 	async function reach(hash: string) {
 		const bwb = bwbId;
 		if (!bwb) return;
-		if (start > 0 && (peildatum || hash.startsWith('deel-'))) {
+		if (start > 0 && (peildatum || isDeel(hash))) {
 			// The division opened but names no heading here: from the start, page by page.
 			zonderDeel.add(`${bwb}/${peildatum}/${hash}`);
 			return open(bwb, peildatum, null);

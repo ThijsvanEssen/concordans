@@ -20,6 +20,7 @@
 	import { instrumentMetaStore, recordArticleLaw } from '$lib/api/instrument-cache';
 	import { page } from '$app/state';
 	import { permalink } from '$lib/bron/anchor';
+	import { anchorLabel } from '$lib/text/anchor';
 	import { articleCitation } from '$lib/text/cite';
 	import { getDocument, getNodeFirst } from '$lib/api/records';
 	import { loadPreview } from '$lib/bron/preview';
@@ -149,8 +150,10 @@
 	});
 
 	const citaat = $derived(citaatUit(item.notitie));
-	const plaats = $derived(item.at.startsWith('lid-') ? `lid ${item.at.slice(4)}` : null);
-	const ro = $derived(item.at.startsWith('rov-') ? `r.o. ${item.at.slice(4)}` : null);
+	/** The place kept, as the reader prints it: `lid 2, onder a`; `r.o. 5.1` as its judgment cites it. */
+	const plaats = $derived(
+		anchorLabel(item.at, inhoud.soort === 'uitspraak' ? inhoud.u.j.ecli : null)
+	);
 
 	/** The link Citeer copies: the place in the bron's reader at its own address (its detail's
 	 *  `path`, as the reader's page has it), not in the map. */
@@ -222,7 +225,7 @@
 		<p class="verder">
 			{#if deel}
 				<TekstLink onclick={() => (ruim = !ruim)} aria-pressed={ruim}
-					>{ruim ? `Alleen ${ro ?? 'de overweging'}` : 'Overwegingen eromheen'}</TekstLink
+					>{ruim ? `Alleen ${plaats ?? 'de overweging'}` : 'Overwegingen eromheen'}</TekstLink
 				>
 			{/if}
 			<TekstLink {href}>Lees verder</TekstLink>

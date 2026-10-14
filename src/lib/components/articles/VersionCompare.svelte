@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { lidAnchor, lidNumber } from '$lib/text/anchor';
 	import { korteDatum } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
@@ -69,7 +70,7 @@
 
 	// ── What the URL asks for ────────────────────────────────────────────────────
 
-	const lidParam = $derived(/^lid-(.+)$/.exec(param)?.[1] ?? null);
+	const lidParam = $derived(lidNumber(param));
 	const pair = $derived.by(() => {
 		const [a, b] = param.split('..');
 		const from = a ? wordingOf(wordings, a) : null;
@@ -318,7 +319,7 @@
 			<nav class="leden" aria-label="Leden">
 				{#each allLeden as n (n)}
 					<a
-						href={link({ versies: `lid-${n}` })}
+						href={link({ versies: lidAnchor(n) })}
 						data-sveltekit-noscroll
 						aria-current={n === lidParam ? 'page' : undefined}>{n}</a
 					>
@@ -520,7 +521,7 @@
 						<span class="row__no">
 							{#if n && allLeden.includes(n)}
 								<a
-									href={link({ versies: `lid-${n}` })}
+									href={link({ versies: lidAnchor(n) })}
 									data-sveltekit-noscroll
 									title="Geschiedenis van lid {n}">{n}</a
 								>

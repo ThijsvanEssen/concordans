@@ -6,7 +6,7 @@ import { isRauw, menselijkeNaam, naamVanId } from '$lib/bron/menselijk';
 import { keyEcli } from '$lib/bron/leesbaar';
 import { korteDatum, langeDatum, vandaag } from '$lib/text/datum';
 import { refOf, type BronRef } from '$lib/bron/href';
-import { anchorLabel } from '$lib/text/anchor';
+import { anchorLabel, paragraphAnchor } from '$lib/text/anchor';
 import { parseQualifier } from '$lib/text/qualifier';
 import { articleTitle, bookNumber } from '$lib/text/bw';
 import { authorCite, paragraphCite } from '$lib/text/judgment-cite';
@@ -453,7 +453,7 @@ export function plaatsVanEdge(
 		return {
 			snippet: p.snippet,
 			match: words ?? text(p.text),
-			passageAt: nr ? `rov-${nr}` : text(p.paragraph_id),
+			passageAt: nr ? paragraphAnchor(nr) : text(p.paragraph_id),
 			noot: label ? { id: nootAnker(label), label } : null,
 			// The note goes with the place it is in: the first passage's, the others after it.
 			...(label && nr

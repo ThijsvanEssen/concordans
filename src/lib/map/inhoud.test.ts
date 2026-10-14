@@ -70,5 +70,12 @@ describe('the content of a kept item', () => {
 		]);
 		expect([...ruim.eigen]).toEqual([2, 3, 4, 5]);
 		expect(overwegingVan(items, 'rov-9')).toBeNull();
+		// By the paragraph's own anchor too, where the API gives one.
+		const eigenId: BodyItem[] = [
+			{ kind: 'rov', num: '6', subTitle: null, body: 'r.o. 6', id: 'p-3f2a9c1e' },
+			rov('7')
+		];
+		expect(overwegingVan(eigenId, 'p-3f2a9c1e')?.items).toHaveLength(1);
+		expect(overwegingVan(eigenId, 'rov-6')?.items).toHaveLength(1);
 	});
 });

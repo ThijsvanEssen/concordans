@@ -1,6 +1,7 @@
 // The passage of a citing text a row of Verbonden shows under its line: the words that cite
 // the bron marked, a few words before them and the rest of the sentence after (Thijs, 13 Oct:
 // "de geciteerde tekst hier zien zodat ik niet heel hard moet zoeken").
+import { paragraphNumber } from '$lib/text/anchor';
 
 export type Passage = { before: string; mark: string; after: string };
 
@@ -119,7 +120,7 @@ export function aanhalingIn(
 		}
 		return null;
 	};
-	for (const id of ids.filter((i) => i.startsWith('rov-'))) {
+	for (const id of ids.filter((i) => paragraphNumber(i) !== null)) {
 		const a = inSpan(id);
 		if (a) return a;
 	}
@@ -137,7 +138,7 @@ export function aanhalingIn(
 			noot
 		};
 	}
-	for (const id of ids.filter((i) => !i.startsWith('rov-'))) {
+	for (const id of ids.filter((i) => paragraphNumber(i) === null)) {
 		const a = inSpan(id);
 		if (a) return a;
 	}

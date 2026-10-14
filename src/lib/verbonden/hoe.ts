@@ -9,6 +9,7 @@
 // collections at its two ends and what its meta says. The row, the line on the canvas, the
 // line between two hulls, the legend, the table, the CSV and the card Verbinding all read
 // them, so one verbinding is never called two things (onderzoek samenhang, 14 Oct).
+import { paragraphNumber } from '$lib/text/anchor';
 import type { Collection, Relation } from '$lib/vocabulary';
 import { langeDatum } from '$lib/text/datum';
 import {
@@ -339,7 +340,8 @@ export function plaatsIn(
 	const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 	// The note the citation stands in goes with the place: `r.o. 5.7.6 (voetnoot 35)`.
 	const inNoot = noot?.label ? `(?:\\s*\\(voetnoot ${esc(noot.label)}\\))?` : '';
-	if (!at?.startsWith('rov-')) {
+	const nummer = paragraphNumber(at);
+	if (!at || nummer === null) {
 		// A note of a Kamerstuk, without an r.o.: `voetnoot 71`.
 		if (!noot?.label) return null;
 		const m = new RegExp(`voetnoot ${esc(noot.label)}(?![\\w.])`).exec(rest);
@@ -347,7 +349,7 @@ export function plaatsIn(
 		const anker = noot.id;
 		return m ? { text: m[0], at: anker, noot: anker } : null;
 	}
-	const n = esc(at.slice(4));
+	const n = esc(nummer);
 	const m =
 		new RegExp(`(?:r\\.o\\.|onder|§)\\s*${n}(?![\\w.])${inNoot}`).exec(rest) ??
 		new RegExp(`(?<=\\s)${n}(?![\\w.])${inNoot}`).exec(rest);

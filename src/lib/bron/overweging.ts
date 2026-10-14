@@ -11,7 +11,7 @@ import {
 } from '$lib/components/explore/readers/judgment-text';
 import { overwegingVan } from '$lib/map/inhoud';
 import { uitspraakNoten, type Noot } from '$lib/text/voetnoten';
-import { parseAnchor } from '$lib/text/anchor';
+import { paragraphAnchor, paragraphNumber } from '$lib/text/anchor';
 import { keyEcli } from './leesbaar';
 import { onForget } from '$lib/util/forget';
 
@@ -52,7 +52,7 @@ export function laadUitspraak(keyOfEcli: string): Promise<Uitspraak> | null {
 
 /** Whether an anchor names an overweging: `rov-5.1`. */
 export const isOverwegingAnker = (at: string | null | undefined): at is string =>
-	!!at && parseAnchor(at)?.kind === 'paragraph';
+	paragraphNumber(at) !== null;
 
 /** Whether a reference is to a judgment at an overweging: its card is the overweging. */
 export const isOverwegingRef = (ref: string | null, at: string | null | undefined) =>
@@ -92,7 +92,7 @@ export function overwegingVanNoot(
 	if (k < 0) return null;
 	for (let i = k; i >= 0; i--) {
 		const item = u.items[i];
-		if (item.kind === 'rov') return { at: `rov-${item.num}`, num: item.num, id };
+		if (item.kind === 'rov') return { at: paragraphAnchor(item.num), num: item.num, id };
 		if (item.kind !== 'prose' || !item.within) break;
 	}
 	const own = u.items[k];

@@ -1,6 +1,7 @@
 // One verbinding as an object: the two bronnen with the relation between them, the
 // passage with the citation, betrouwbaarheid as a word with its reason, the status and
 // the source of the edge. Built from a row of the panel or from an edge of the canvas.
+import { paragraphAnchor } from '$lib/text/anchor';
 import { refOf, type BronRef } from '$lib/bron/href';
 import type { GraphEdge, GraphNode } from '$lib/graph/types';
 import { statusLabel, type Collection, type Relation } from '$lib/vocabulary';
@@ -159,7 +160,7 @@ export function plaatsVanMeta(
 	const id = typeof m.paragraph_id === 'string' && m.paragraph_id ? m.paragraph_id : null;
 	return {
 		position: positionsLabel(alle.map((nr) => paragraphCite(sourceKey, nr))),
-		at: id ?? (alle[0] ? `rov-${alle[0]}` : null)
+		at: id ?? (alle[0] ? paragraphAnchor(alle[0]) : null)
 	};
 }
 

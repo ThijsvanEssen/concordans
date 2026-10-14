@@ -80,6 +80,39 @@ export function formatAnchor(a: Anchor): string {
 	}
 }
 
+/** The anchor of an overweging by its number: `rov-5.7.1`. */
+export const paragraphAnchor = (number: string): string =>
+	formatAnchor({ kind: 'paragraph', number });
+
+/** The number of the overweging an anchor names: `5.7.1` for `rov-5.7.1`; else null. */
+export function paragraphNumber(id: string | null | undefined): string | null {
+	const a = id ? parseAnchor(id) : null;
+	return a?.kind === 'paragraph' ? a.number : null;
+}
+
+/** The anchor of a lid by its number: `lid-2`. */
+export const lidAnchor = (lid: string): string =>
+	formatAnchor({ kind: 'part', lid, text: null, onderdelen: [], aanhef: false });
+
+/** The lid a lid anchor names: `2` for `lid-2`; null for any other anchor. */
+export function lidNumber(id: string | null | undefined): string | null {
+	const a = id ? parseAnchor(id) : null;
+	return a?.kind === 'part' && !a.onderdelen.length && !a.aanhef ? a.lid : null;
+}
+
+/** The anchor of an onderdeel in the part it stands in, or in the article: `lid-2-onder-a`. */
+export function onderdeelAnchor(within: string | null, onderdeel: string): string {
+	const a = within ? parseAnchor(within) : null;
+	const part = a?.kind === 'part' ? a : { lid: null, text: null, onderdelen: [] };
+	return formatAnchor({
+		kind: 'part',
+		lid: part.lid,
+		text: part.text,
+		onderdelen: [...part.onderdelen, onderdeel],
+		aanhef: false
+	});
+}
+
 /** The part a part stands in: `lid-3` for `lid-3-onder-a` and `lid-3-aanhef`; else null. */
 export function parentAnchor(id: string): string | null {
 	const a = parseAnchor(id);

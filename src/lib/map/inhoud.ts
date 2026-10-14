@@ -2,6 +2,7 @@
 // An article its lid, the article around it a click further; a judgment its overweging, the
 // overwegingen around it a click further; a Kamerstuk the words its note quotes, in the text
 // around them, else the opening of its text.
+import { paragraphAnchor } from '$lib/text/anchor';
 import type { BodyItem } from '$lib/components/explore/readers/judgment-text';
 
 /** The words a note quotes ("…", “…”), where it quotes at least a few words. */
@@ -48,7 +49,9 @@ export function overwegingVan(
 	at: string,
 	rond = false
 ): { items: BodyItem[]; eigen: Set<number> } | null {
-	const begin = items.findIndex((i) => i.kind === 'rov' && (i.id === at || `rov-${i.num}` === at));
+	const begin = items.findIndex(
+		(i) => i.kind === 'rov' && (i.id === at || paragraphAnchor(i.num) === at)
+	);
 	if (begin < 0) return null;
 	const num = (items[begin] as { num: string }).num;
 	let eind = begin + 1;

@@ -3,6 +3,7 @@
 	// The table of contents of the law in Lezen: the name of the law, the title of the
 	// current section under it, and the articles, the active one marked.
 	import { lawArticles, type LawArticle } from '$lib/api/law-articles';
+	import { parseAnchor } from '$lib/text/anchor';
 	import { artikelAnker, deelIds, layersOf } from '$lib/text/division';
 	import { scrollInReader } from '$lib/bron/anchor';
 	import { page } from '$app/state';
@@ -176,9 +177,10 @@
 	// On the law itself, the place its anchor names (#deel-hoofdstuk-3, #artikel-658) is
 	// marked and its groups open, as an article is from its own page.
 	const anker = $derived(onLaw ? decodeURIComponent(page.url.hash.slice(1)) : '');
-	const ankerArtikel = $derived(
-		anker.startsWith('artikel-') ? anker.slice('artikel-'.length) : null
-	);
+	const ankerArtikel = $derived.by(() => {
+		const a = parseAnchor(anker);
+		return a?.kind === 'article' ? a.number : null;
+	});
 	const isHier = (it: LawArticle) =>
 		it.key === selectedKey || (ankerArtikel !== null && it.articleNumber === ankerArtikel);
 	const inDeel = (g: Group) => !!g.id && (anker === g.id || anker.startsWith(`${g.id}-`));
