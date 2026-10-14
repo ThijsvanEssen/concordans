@@ -1,65 +1,96 @@
 // What the coalition did on a vote of the Tweede Kamer (API 0.79.34, #397, `coalition` on a
 // decision; Thijs, 10 Oct: "Coalitie verdeeld"). The block gives the seats of the coalition
-// and the opposition per side and its pattern; which fractie is of the coalition comes from
-// the hall of that day (`coalition` per fractie on /api/parliament/seats). Source values,
-// put in words; no reading of them.
+// and the opposition per side and its pattern; the fracties of the coalition come with it in
+// the feed (`coalition_factions`), and for a decision from the hall of that day. Source
+// values, put in words; no reading of them.
 
+import type { Schema } from '$lib/api/types';
+import { naamVanId } from '$lib/bron/menselijk';
 import { CHOICE } from './stemming';
 
-/** The block on a decision, as the API gives it. */
-export type CoalitieStem = {
-	cabinet: string;
-	coalition_for: number;
-	coalition_against: number;
-	opposition_for: number;
-	opposition_against: number;
-	pattern: 'together' | 'split' | 'wissel';
-	carried?: boolean;
-	decisive?: boolean;
+type CoalitionVote = Schema<'CoalitionVoteDTO'>;
+type CoalitionFaction = Schema<'CoalitionFactionDTO'>;
+type Choice = NonNullable<CoalitionFaction['choice']>;
+
+/** A side the coalition took: the choice, its outcome box, its fracties by name, its seats. */
+export type CoalitionSide = {
+	choice: Choice;
+	outcome: 'ja' | 'nee';
+	names: string[];
+	seats: number;
 };
 
-/** The block from a decision of an API that has it; null on one without, or without a cabinet. */
-export const coalitieVan = (d: unknown): CoalitieStem | null => {
-	const c = (d as { coalition?: CoalitieStem | null } | null)?.coalition;
-	return c && typeof c.coalition_for === 'number' ? c : null;
+/** The line under a vote: "Coalitie tegen", or "Coalitie verdeeld" with its sides. */
+export type CoalitionLine = {
+	/** The side of a coalition that voted as one; null where it split. */
+	together: CoalitionSide | null;
+	/** Where it split: each side with its fracties, or with its seats where none are known. */
+	sides: CoalitionSide[];
+	/** The fracties whose seats went both ways (a roll call). */
+	splitFactions: string[];
+	/** `wisselmeerderheid`, `doorslaggevend`, in the source's own words. */
+	labels: string[];
 };
 
-export type Kiezer = { id: string; name: string; choice: string; seats: number | null };
+const nameOf = (f: CoalitionFaction) => f.short ?? naamVanId(`factions/${f.key}`);
 
-export type CoalitieRegel = {
-	/** `eensgezind` or `verdeeld`. */
-	stand: 'eensgezind' | 'verdeeld';
-	/** For a coalition as one: the side it took. */
-	kant: 'voor' | 'tegen' | null;
-	/** The coalition's seats per side. */
-	voor: number;
-	tegen: number;
-	/** The coalition's fracties per side, by name with their seats; empty without the hall. */
-	fractiesVoor: Kiezer[];
-	fractiesTegen: Kiezer[];
-};
+/** The coalition line of a vote; null where the coalition cast no seat. */
+export function coalitionLine(
+	c: CoalitionVote,
+	factions: readonly CoalitionFaction[]
+): CoalitionLine | null {
+	if (c.coalition_for + c.coalition_against === 0) return null;
+	const side = (choice: Choice): CoalitionSide => ({
+		choice,
+		outcome: choice === CHOICE.for ? 'ja' : 'nee',
+		names: factions.filter((f) => f.choice === choice).map(nameOf),
+		seats: choice === CHOICE.for ? c.coalition_for : c.coalition_against
+	});
+	const both = [side(CHOICE.for), side(CHOICE.against)];
+	const known = factions.length > 0;
+	return {
+		together:
+			c.pattern === 'together'
+				? side(c.coalition_for >= c.coalition_against ? CHOICE.for : CHOICE.against)
+				: null,
+		sides:
+			c.pattern === 'together'
+				? []
+				: both.filter((s) => (known ? s.names.length > 0 : s.seats > 0)),
+		splitFactions: factions.filter((f) => f.choice == null).map(nameOf),
+		labels: [
+			c.pattern === 'wissel' ? 'wisselmeerderheid' : null,
+			c.decisive ? 'doorslaggevend' : null
+		].filter((l): l is string => !!l)
+	};
+}
+
+/** A fractie as a decision's votes give it. */
+type Voter = { id: string; name: string; choice: string; seats: number | null };
 
 /**
- * The line under a vote. `inCoalitie` says per voter key whether it is of the coalition (the
- * hall of that day); without it the line has the seats and no names.
+ * The fracties of the coalition on a decision, from its votes and the hall of that day
+ * (`coalition` per fractie key); none without the hall or in a vote by member.
  */
-export function coalitieRegel(
-	c: CoalitieStem,
-	kiezers: readonly Kiezer[],
-	inCoalitie: ((key: string) => boolean | null) | null
-): CoalitieRegel {
-	const sleutel = (id: string) => id.split('/').at(-1) ?? id;
-	const van = (keuze: string) =>
-		inCoalitie
-			? kiezers.filter((k) => k.choice === keuze && inCoalitie(sleutel(k.id)) === true)
-			: [];
-	const eensgezind = c.pattern === 'together';
-	return {
-		stand: eensgezind ? 'eensgezind' : 'verdeeld',
-		kant: eensgezind ? (c.coalition_against > 0 ? 'tegen' : 'voor') : null,
-		voor: c.coalition_for,
-		tegen: c.coalition_against,
-		fractiesVoor: van(CHOICE.for),
-		fractiesTegen: van(CHOICE.against)
-	};
+export function coalitionFactionsOf(
+	voters: readonly Voter[],
+	inCoalition: ReadonlyMap<string, boolean | null> | null
+): CoalitionFaction[] {
+	if (!inCoalition) return [];
+	return voters.flatMap((v) => {
+		const key = v.id.startsWith('factions/') ? v.id.slice('factions/'.length) : null;
+		if (!key || inCoalition.get(key) !== true) return [];
+		const choice = v.choice === CHOICE.for || v.choice === CHOICE.against ? v.choice : null;
+		if (!choice) return [];
+		const seats = v.seats ?? 0;
+		return [
+			{
+				key,
+				short: v.name,
+				choice,
+				seats_for: choice === CHOICE.for ? seats : 0,
+				seats_against: choice === CHOICE.against ? seats : 0
+			}
+		];
+	});
 }

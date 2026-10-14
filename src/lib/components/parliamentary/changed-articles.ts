@@ -7,6 +7,7 @@ import { ifExists } from '$lib/api/errors';
 import type { Schema } from '$lib/api/types';
 import { bookNumber } from '$lib/text/bw';
 import { langeDatum } from '$lib/text/datum';
+import { CHANGE_HEAD, changeRelation } from '$lib/verbonden/hoe';
 
 export type ChangedArticle = Schema<'ChangedArticleRef'>;
 export type ChangeSource = Schema<'ChangeSource'>;
@@ -41,12 +42,8 @@ export const getChangedArticles = (number: string): Promise<ChangedArticles | nu
 		)
 	);
 
-/** What a change does to the article, as the first word of its line. */
-export const RELATION_WORD: Record<DossierChange['relation'], string> = {
-	amends: 'Wijziging',
-	introduces: 'Nieuw artikel',
-	repeals: 'Vervalt'
-};
+/** What a change does to the article, as the first word of its line: `Wijziging`, `Vervalt`. */
+export const changeHead = (c: DossierChange) => CHANGE_HEAD[changeRelation(c.relation)];
 
 /** One article of a law with its changes, in the order the API gives (that of the law). */
 export type ArticleChanges = { article: ChangedArticle; changes: DossierChange[] };

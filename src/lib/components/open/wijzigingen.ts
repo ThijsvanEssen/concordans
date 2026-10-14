@@ -3,14 +3,17 @@
 // law and verb, from its own ESTABLISHES, AMENDS, INTRODUCES and REPEALS; an inwerkingtreding the
 // publication that brought the version, from the law's `/amended-by`. The feed gives neither
 // verb nor article (onderzoek samenhang, GGN 3.2 and 3.3: back-end B2, B3).
-import { capitalize, count, textOf } from '$lib/text/words';
+import { count, textOf } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
-import type { Collection, Relation } from '$lib/vocabulary';
-import { woordenVan } from '$lib/verbonden/hoe';
+import type { Relation } from '$lib/vocabulary';
+import {
+	CHANGE_RELATIONS,
+	changeAround,
+	changeByEffect,
+	changeVerb,
+	type ChangeRelation
+} from '$lib/verbonden/hoe';
 import { naamVanId } from '$lib/bron/menselijk';
-
-/** The relations of a change, in the order a line names them. */
-export const WIJZIGINGEN: Relation[] = ['ESTABLISHES', 'AMENDS', 'INTRODUCES', 'REPEALS'];
 
 /** A neighbour as the node response gives it: the part a change reads. */
 type Buur = {
@@ -26,8 +29,9 @@ type Buur = {
 /** An article a line names: its key, its number. */
 export type Artikel = { key: string; nummer: string };
 
-/** One line: the verb, the law, the articles of it (none where the law as a whole). */
+/** One line: the change and its verb, the law, the articles of it (none where the law as a whole). */
 export type WetRegel = {
+	relation: Relation;
 	werkwoord: string;
 	wet: { key: string; titel: string };
 	artikelen: Artikel[];
@@ -37,16 +41,6 @@ export type WetRegel = {
 
 /** Articles named on one line; the rest counted. */
 export const ARTIKELEN_GENOEMD = 12;
-
-/** The verb of a change, as the row of Verbonden says it: `Wijzigt`, `Voegt in`, `Doet vervallen`. */
-function werkwoordVan(b: Buur): string {
-	const meta = b.meta ?? {};
-	if (textOf(meta.effect) === 'vernummering') return 'Vernummert';
-	const naar = b.collection === 'instruments' ? 'instruments' : 'articles';
-	return capitalize(
-		woordenVan(b.relation as Relation, 'instruments', naar as Collection, meta).actief
-	);
-}
 
 /**
  * The changes of a publication per law and verb: `Wijzigt Telecommunicatiewet, art. 11a.3 en
@@ -61,12 +55,15 @@ export function wijzigingenVan(
 	const titels = new Map(wetten.map((w) => [w.key.toLowerCase(), w.title ?? null]));
 	const regels = new Map<string, WetRegel & { plek: (Artikel & { positie: number })[] }>();
 	for (const b of buren) {
-		if (!WIJZIGINGEN.includes(b.relation as Relation) || b.direction !== 'outbound') continue;
+		const relation = b.relation as ChangeRelation;
+		if (!CHANGE_RELATIONS.includes(relation) || b.direction !== 'outbound') continue;
 		const p = b.props ?? {};
+		const meta = b.meta ?? {};
 		const isWet = b.collection === 'instruments';
 		const wetKey = (isWet ? b.key : (textOf(p.bwb_id) ?? '')).toLowerCase();
 		if (!wetKey) continue;
-		const werkwoord = werkwoordVan(b);
+		// The verb as the row of Verbonden says it: `Wijzigt`, `Voegt in`, `Doet vervallen`.
+		const werkwoord = changeVerb(relation, isWet ? 'instruments' : 'articles', meta);
 		const sleutel = `${werkwoord}/${wetKey}`;
 		let regel = regels.get(sleutel);
 		if (!regel) {
@@ -75,7 +72,14 @@ export function wijzigingenVan(
 				textOf(p.instrument_citation_title) ??
 				(isWet ? textOf(b.display_name) : null) ??
 				naamVanId(`instruments/${wetKey}`);
-			regel = { werkwoord, wet: { key: wetKey, titel }, artikelen: [], meer: 0, plek: [] };
+			regel = {
+				relation: changeByEffect(relation, meta),
+				werkwoord,
+				wet: { key: wetKey, titel },
+				artikelen: [],
+				meer: 0,
+				plek: []
+			};
 			regels.set(sleutel, regel);
 		}
 		const nummer = textOf(p.article_number);
@@ -84,16 +88,13 @@ export function wijzigingenVan(
 			regel.plek.push({ key: b.key, nummer, positie });
 		}
 	}
-	const orde = (w: string) => {
-		const i = ['Stelt vast', 'Wijzigt', 'Voegt in', 'Doet vervallen', 'Trekt in'].indexOf(w);
-		return i < 0 ? 9 : i;
-	};
+	const orde = (r: Relation) => (CHANGE_RELATIONS as Relation[]).indexOf(r);
 	const wetOrde = [...new Set([...regels.values()].map((r) => r.wet.key))];
 	return [...regels.values()]
 		.sort(
 			(a, b) =>
 				wetOrde.indexOf(a.wet.key) - wetOrde.indexOf(b.wet.key) ||
-				orde(a.werkwoord) - orde(b.werkwoord)
+				orde(a.relation) - orde(b.relation)
 		)
 		.map(({ plek, ...r }) => {
 			const alle = plek.sort(
@@ -113,11 +114,8 @@ type Wijzigend = Schema<'AmendingInstrumentDTO'>;
 export type Brenger = { key: string; naam: string; wat: string | null };
 
 /** `stelt 111 artikelen vast`, `wijzigt 1 artikel`, `voegt 7 artikelen in`, `doet 2 artikelen vervallen`. */
-function telling(relation: Relation, n: number): string | null {
-	if (!n) return null;
-	const [eerste, ...rest] = woordenVan(relation, 'instruments', 'articles').actief.split(' ');
-	const lijdend = count(n, 'artikel', 'artikelen');
-	return [eerste, lijdend, ...rest].join(' ');
+function telling(relation: ChangeRelation, n: number): string | null {
+	return n ? changeAround(relation, 'articles', count(n, 'artikel', 'artikelen')) : null;
 }
 
 /**

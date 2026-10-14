@@ -23,6 +23,7 @@ import {
 import { passageOf, type Row } from './rows';
 import { uitsnede, type Passage } from './passage';
 import { confidenceWord } from './filter';
+import { votesSentence } from '$lib/components/parliamentary/stemming';
 
 /** The words of one verbinding, by its relation, its two ends and its meta. */
 export type Woorden = {
@@ -243,18 +244,60 @@ export function woordenVan(
 	meta?: Record<string, unknown> | null
 ): Woorden {
 	const m = meta ?? {};
-	// A change of an article by its effect: an AMENDS whose effect is `vervallen` repeals.
-	const effect = EFFECT[textOf(m.effect) ?? ''];
-	const r =
-		effect &&
-		(relation === 'ESTABLISHES' ||
-			relation === 'AMENDS' ||
-			relation === 'INTRODUCES' ||
-			relation === 'REPEALS')
-			? effect
-			: relation;
-	const [actief, terug, soort] = WOORDEN[r]({ van: van ?? null, naar: naar ?? null, meta: m });
+	const [actief, terug, soort] = WOORDEN[changeByEffect(relation, m)]({
+		van: van ?? null,
+		naar: naar ?? null,
+		meta: m
+	});
 	return { actief, terug, soort };
+}
+
+/**
+ * The relations of a change, in the order a line names them (`Stelt vast`, `Wijzigt`, `Voegt
+ * in`, `Doet vervallen`), each with the word that heads an article's line under Gewijzigde
+ * artikelen; a bill does not enact an article on its own.
+ */
+export const CHANGE_HEAD = {
+	ESTABLISHES: null,
+	AMENDS: 'Wijziging',
+	INTRODUCES: 'Nieuw artikel',
+	REPEALS: 'Vervalt'
+} as const satisfies Partial<Record<Relation, string | null>>;
+
+export type ChangeRelation = keyof typeof CHANGE_HEAD;
+
+export const CHANGE_RELATIONS = Object.keys(CHANGE_HEAD) as ChangeRelation[];
+
+const isChange = (relation: Relation): relation is ChangeRelation =>
+	(CHANGE_RELATIONS as Relation[]).includes(relation);
+
+/** A change as the API writes it, `amends`, as its relation. */
+export const changeRelation = <E extends Lowercase<ChangeRelation>>(effect: E) =>
+	effect.toUpperCase() as Uppercase<E>;
+
+/** A change by its effect on wetten.overheid.nl, where the edge gives one: an AMENDS whose effect is `vervallen` repeals. */
+export function changeByEffect(relation: Relation, meta: Record<string, unknown>): Relation {
+	const effect = EFFECT[textOf(meta.effect) ?? ''];
+	return effect && isChange(relation) ? effect : relation;
+}
+
+/**
+ * The verb at the head of a change's line, read from the publication: `Wijzigt`, `Doet
+ * vervallen`, of a law `Trekt in`; a renumbering `Vernummert`.
+ */
+export function changeVerb(
+	relation: Relation,
+	naar: Collection | null = 'articles',
+	meta: Record<string, unknown> = {}
+): string {
+	if (textOf(meta.effect) === 'vernummering') return 'Vernummert';
+	return capitalize(woordenVan(relation, 'instruments', naar, meta).actief);
+}
+
+/** A change's verb around what it changes: `stelt 111 artikelen vast`, `trekt de wet in`. */
+export function changeAround(relation: ChangeRelation, naar: Collection, object: string): string {
+	const [verb, ...particle] = woordenVan(relation, 'instruments', naar).actief.split(' ');
+	return [verb, object, ...particle].join(' ');
 }
 
 /**
@@ -526,11 +569,11 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 			const effect = textOf(edge.effect);
 			// The publication that enacted a law, among those that change it (`/amended-by`,
 			// `establishes`): `Stelt vast`, its day in the meta line.
-			const vastgesteld = woorden?.actief === 'stelt vast';
-			if (vastgesteld && num(edge.establishes)) return regel('Stelt vast', null, null);
+			const vastgesteld = changeByEffect(row.relation, edge) === 'ESTABLISHES';
+			const werkwoord = changeVerb(row.relation, inbound ? selected : other, edge);
+			if (vastgesteld && num(edge.establishes)) return regel(werkwoord, null, null);
 			// A row from the legislative history carries its change in its own meta line.
 			if (!effect && !textOf(edge.effective_date) && !textOf(edge.source_publication)) return null;
-			const werkwoord = effect === 'vernummering' ? 'Vernummert' : capitalize(woorden!.actief);
 			const datum = textOf(edge.effective_date);
 			const pub = publicatie(textOf(edge.source_publication));
 			const wat = join(
@@ -659,14 +702,8 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 				textOf(props.decision_text)?.replace(/\.$/, '') ??
 				(props.passed === true ? 'Aangenomen' : props.passed === false ? 'Verworpen' : null);
 			if (!besluit) break;
-			const tally = (props.tally ?? {}) as Record<string, unknown>;
-			const voor = num(tally.Voor);
-			const tegen = num(tally.Tegen);
-			return regel(
-				besluit,
-				voor != null && tegen != null ? `, ${voor} voor en ${tegen} tegen` : null,
-				'Besluit van de Kamer'
-			);
+			const stemmen = votesSentence(props.tally, ' en ');
+			return regel(besluit, stemmen && `, ${stemmen}`, 'Besluit van de Kamer');
 		}
 	}
 	// The group's label names it (a Kamerstuk in its dossier, a lid in a fractie): only

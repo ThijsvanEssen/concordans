@@ -8,6 +8,7 @@ import { capitalize, count, joinAnd, separatorBefore } from '$lib/text/words';
 import { korteDatum } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
+import { changeAround, changeRelation, changeVerb } from '$lib/verbonden/hoe';
 import { headSurname } from './timeline';
 import { artikelenGewijzigd, publicationCite, type FeedItem } from './feed';
 
@@ -41,14 +42,6 @@ const artikelen = (n: number) => count(n, 'artikel', 'artikelen');
 
 // ── A publication ───────────────────────────────────────────────────────
 
-/** What a publication does to a law, as the verb of its line. */
-export const WERKWOORD: Record<Wet['effect'], string> = {
-	establishes: 'Stelt vast',
-	amends: 'Wijzigt',
-	introduces: 'Voegt in',
-	repeals: 'Doet vervallen'
-};
-
 /**
  * `Stelt vast: Cyberbeveiligingswet`, `Wijzigt: Telecommunicatiewet (5 artikelen), …`: the
  * laws of a publication per effect, in the order the feed gives them; a law it enacts
@@ -64,7 +57,7 @@ export function publicatieVerbanden(p: FeedItem['publication']): Verband[] {
 		perEffect.set(w.effect, [...(perEffect.get(w.effect) ?? []), w]);
 	}
 	return [...perEffect].map(([effect, wetten]) => ({
-		label: WERKWOORD[effect],
+		label: changeVerb(changeRelation(effect)),
 		delen: opsomming(
 			wetten.map((w) => [
 				{ tekst: w.title ?? naamVanId(`instruments/${w.key}`), ref: `instruments/${w.key}` },
@@ -190,12 +183,6 @@ function artikelLijst(lijst: readonly Artikel[]): Schakel[] {
 	return opsomming(delen, GENOEMD);
 }
 
-const EFFECT_ARTIKEL: Record<NonNullable<Artikel['effect']>, string> = {
-	amends: 'Wijzigt',
-	introduces: 'Voegt in',
-	repeals: 'Doet vervallen'
-};
-
 /**
  * The papers and articles a row is tied to, per kind: a letter `Gaat in op motie-Kathmann
  * (36764, nr. 31)`, a commitment `Beantwoord in brief van 7 okt. 2026`, an amendment
@@ -215,7 +202,7 @@ export function relatieVerbanden(i: FeedItem): Verband[] {
 	if (i.amends_articles?.length) {
 		const perEffect = new Map<string, Artikel[]>();
 		for (const a of i.amends_articles) {
-			const w = EFFECT_ARTIKEL[a.effect ?? 'amends'];
+			const w = changeVerb(changeRelation(a.effect ?? 'amends'));
 			perEffect.set(w, [...(perEffect.get(w) ?? []), a]);
 		}
 		for (const [label, as] of perEffect) uit.push({ label, delen: artikelLijst(as) });
@@ -247,13 +234,19 @@ export function viaTekst(via: FeedItem['via'], wet?: string | null): string | nu
 	if (via.dossier) return `In dossier ${via.dossier}`;
 	switch (via.relation) {
 		case 'establishes':
-			return `Stelt ${naam} vast`;
+			return capitalize(changeAround('ESTABLISHES', 'instruments', naam));
 		case 'amends':
-			return `Wijzigt ${doel}`;
+			return capitalize(changeAround('AMENDS', 'articles', doel));
 		case 'introduces':
-			return via.article ? `Voegt ${doel} in` : `Voegt artikelen in ${naam} in`;
+			return capitalize(
+				changeAround('INTRODUCES', 'articles', via.article ? doel : `artikelen in ${naam}`)
+			);
 		case 'repeals':
-			return via.article ? `Doet ${doel} vervallen` : `Trekt ${naam} in`;
+			return capitalize(
+				via.article
+					? changeAround('REPEALS', 'articles', doel)
+					: changeAround('REPEALS', 'instruments', naam)
+			);
 		case 'proposes':
 			return `Stelt wijziging van ${doel} voor`;
 		case 'version_of':

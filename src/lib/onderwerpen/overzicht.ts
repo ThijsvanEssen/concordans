@@ -2,6 +2,7 @@
 // its words in their title, counted by kind, outcome and year, and for one fractie by its vote.
 import { buildBronHref } from '$lib/bron/href';
 import type { Schema } from '$lib/api/types';
+import { CHOICE } from '$lib/components/parliamentary/stemming';
 import { NO_DECISION_KIND } from '$lib/components/explore/index/decision-kind';
 
 export type Besluit = Schema<'DecisionSummaryDTO'>;
@@ -243,8 +244,8 @@ export function csvTabel(
 		(d.dossier_numbers ?? []).flatMap((n) => namen.get(n) ?? []).join('; '),
 		UITKOMST[uitkomstVan(d)],
 		d.decision_kind,
-		d.tally?.Voor,
-		d.tally?.Tegen,
+		d.tally?.[CHOICE.for],
+		d.tally?.[CHOICE.against],
 		...(fractie ? [stemmen.get(d.key) ?? ''] : []),
 		...(motie
 			? [

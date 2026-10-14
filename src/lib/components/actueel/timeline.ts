@@ -1,4 +1,4 @@
-import { forAgainst } from '$lib/components/parliamentary/stemming';
+import { votesSentence } from '$lib/components/parliamentary/stemming';
 import { capitalize, joinAnd, truncate } from '$lib/text/words';
 import { bewindspersoonVan, eersteIndiener } from '$lib/bron/submitters';
 import type { BronRef } from '$lib/bron/href';
@@ -117,9 +117,6 @@ const subjectOf = (i: FeedItem) => {
 	return subject ? cut(subject, SUBJECT_MAX) : null;
 };
 
-const tallyOf = (i: FeedItem) => forAgainst(i.vote?.tally);
-
-/** `141 voor, 7 tegen. ChristenUnie, dossier 21501-30` */
 /**
  * How a vote was decided where no tally says it (API 0.73, BE-24): the Eerste Kamer's own
  * words without the outcome ("Bij zitten en opstaan", "Hamerstuk"), the Tweede Kamer's
@@ -131,11 +128,11 @@ export function voteHow(i: Pick<FeedItem, 'vote'>): string | null {
 	return i.vote?.decision_kind === 'Stemmen - zonder stemming aannemen' ? 'Hamerstuk' : null;
 }
 
+/** `141 voor, 7 tegen. ChristenUnie, dossier 21501-30` */
 function voteContext(i: FeedItem): string {
-	const { voor, tegen } = tallyOf(i);
 	const faction = eersteIndiener(i.persons)?.faction?.short;
 	const where = [faction, i.dossier ? dossierLabel(i.dossier) : null].filter(Boolean);
-	return [voor + tegen ? `${voor} voor, ${tegen} tegen` : voteHow(i), where.join(', ') || null]
+	return [votesSentence(i.vote?.tally) ?? voteHow(i), where.join(', ') || null]
 		.filter(Boolean)
 		.join('. ');
 }

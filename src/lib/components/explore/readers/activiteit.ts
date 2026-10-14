@@ -8,7 +8,7 @@ import type { Schema } from '$lib/api/types';
 import type { TijdGroep, TijdRegel } from '$lib/components/tijdlijn/tijdlijn';
 import type { Inhoud, MetInhoud } from '$lib/components/open/rij-inhoud';
 import { kamerstukName, withoutKamerstuk } from '$lib/components/parliamentary/kamerstuk';
-import { telling } from '$lib/components/parliamentary/stuk-uitslag';
+import { votesShort } from '$lib/components/parliamentary/stemming';
 
 type Records = Schema<'ActivityRecordsResponse'>;
 type Stuk = Schema<'ActivityPaperDTO'>;
@@ -47,7 +47,7 @@ export function activiteitGroepen(r: Records): {
 	};
 
 	const besluiten = (r.decisions ?? []).map((d): TijdRegel => {
-		const t = telling(d.tally);
+		const t = votesShort(d.tally);
 		if (t)
 			inhoud.set(d.id, {
 				item: {

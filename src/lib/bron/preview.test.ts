@@ -118,6 +118,10 @@ describe('preview helpers', () => {
 		expect(uitslagVan({ decision_text: 'Aangenomen.', tally: { Voor: 137, Tegen: 13 } })).toBe(
 			'Aangenomen, 137 voor en 13 tegen'
 		);
+		expect(uitslagVan({ passed: true, tally: { Voor: 150 } })).toBe(
+			'Aangenomen, 150 voor en 0 tegen'
+		);
+		expect(uitslagVan({ passed: true, tally: { Voor: 0, Tegen: 0 } })).toBe('Aangenomen');
 		expect(uitslagVan({ passed: false })).toBe('Verworpen');
 		expect(uitslagVan({})).toBeNull();
 	});

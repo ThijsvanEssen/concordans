@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import { votesSentence } from '$lib/components/parliamentary/stemming';
 	import { fractieNaam } from '$lib/bron/menselijk';
 	import { formatCount } from '$lib/text/getal';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
@@ -1126,10 +1127,7 @@
 		schrijfCodering(codering);
 	}
 
-	const tally = (d: Besluit) =>
-		d.tally?.Voor != null && d.tally?.Tegen != null
-			? `${d.tally.Voor} voor, ${d.tally.Tegen} tegen`
-			: null;
+	const tally = (d: Besluit) => votesSentence(d.tally);
 	const feedHref = (i: FeedItem) =>
 		i.path ?? buildOpenHref(null, `${i.node.collection}/${i.node.key}`, { hasText: i.has_text });
 </script>

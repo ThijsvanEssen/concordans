@@ -14,6 +14,7 @@ import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { parseArticleParts, partText } from '$lib/text/article-parts';
 import { articleTitle } from '$lib/text/bw';
 import { courtName } from '$lib/text/court';
+import { votesSentence } from '$lib/components/parliamentary/stemming';
 import { kindName } from '$lib/components/explore/law-head';
 import {
 	dossierLabel,
@@ -96,10 +97,8 @@ export function uitslagVan(props: Record<string, unknown>): string | null {
 		textOf(props.decision_text)?.replace(/\.$/, '') ??
 		(props.passed === true ? 'Aangenomen' : props.passed === false ? 'Verworpen' : null);
 	if (!besluit) return null;
-	const tally = (props.tally ?? {}) as Record<string, unknown>;
-	const voor = typeof tally.Voor === 'number' ? tally.Voor : null;
-	const tegen = typeof tally.Tegen === 'number' ? tally.Tegen : null;
-	return voor != null && tegen != null ? `${besluit}, ${voor} voor en ${tegen} tegen` : besluit;
+	const stemmen = votesSentence(props.tally, ' en ');
+	return stemmen ? `${besluit}, ${stemmen}` : besluit;
 }
 
 const clip = (s: string | null) => s && truncate(s, PREVIEW_CHARS);

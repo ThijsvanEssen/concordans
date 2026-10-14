@@ -81,7 +81,11 @@ describe('dienstregeling van de amendementen', () => {
 
 	it('de uitslag is het besluit op de zaak van het laatste stuk, niets uit de titel', () => {
 		const r = d.rijen.find((x) => x.stuk.nummer === '40')!;
-		expect(r.uitslag).toMatchObject({ aangenomen: true, voor: 92, tegen: 58, datum: '2024-04-25' });
+		expect(r.uitslag).toMatchObject({
+			aangenomen: true,
+			telling: '92–58',
+			datum: '2024-04-25'
+		});
 		expect(d.rijen.find((x) => x.stuk.nummer === '60')!.uitslag).toBeNull();
 	});
 

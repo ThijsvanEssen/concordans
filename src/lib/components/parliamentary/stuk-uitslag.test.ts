@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { stukUitslag, telling, uitslagTekst } from './stuk-uitslag';
+import { stukUitslag, uitslagTekst } from './stuk-uitslag';
 import { nagekomenIn, toegezegdIn } from './toezegging';
 
 describe('the outcome of a motie or amendement', () => {
@@ -40,8 +40,9 @@ describe('the outcome of a motie or amendement', () => {
 		expect(stukUitslag({ outcome: null })).toBeNull();
 		expect(stukUitslag({ outcome: 'onbekend' })).toBeNull();
 		expect(stukUitslag(null)).toBeNull();
-		expect(telling({})).toBeNull();
-		expect(telling(null)).toBeNull();
+		expect(
+			stukUitslag({ outcome: 'aangenomen', tally: { Voor: 0, Tegen: 0 } })!.telling
+		).toBeNull();
 		expect(stukUitslag({ outcome: 'aangehouden', decided_on: '2026-04-07' })!.telling).toBeNull();
 	});
 
