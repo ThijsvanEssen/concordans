@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { GraphNode } from '$lib/graph/types';
-import { documentTitle, tabTitle } from './tab-title';
+import { documentTitle, pageName, tabTitle } from './tab-title';
 
 const node = (collection: string, label: string, display_name: string | null, props = {}) =>
 	({ collection, label, raw: { display_name, props } }) as unknown as GraphNode;
@@ -117,5 +117,27 @@ describe('tabTitle', () => {
 		expect(title.length).toBeLessThanOrEqual(81);
 		expect(title.endsWith('…')).toBe(true);
 		expect(title).not.toMatch(/\s…$/);
+	});
+});
+
+describe('pageName', () => {
+	const props = {
+		label: '36600-VIII',
+		number: '36600',
+		suffix: 'VIII',
+		title: 'Begroting OCW 2025'
+	};
+	const dossier = node('dossiers', '36600-VIII', null, props);
+
+	it('names a dossier by its number in official notation, not by the API title (#94)', () => {
+		const name = pageName(dossier, '36600-VIII Begroting OCW 2025');
+		expect(name).toBe(tabTitle(dossier));
+		expect(name).toMatch(/^36600 VIII\b/);
+	});
+
+	it('takes the API title for any other bron, cut at a word', () => {
+		const wet = node('instruments', 'x', 'Wet', {});
+		expect(pageName(wet, 'Burgerlijk Wetboek Boek 6')).toBe('Burgerlijk Wetboek Boek 6');
+		expect(pageName(wet, null)).toBe('Wet');
 	});
 });

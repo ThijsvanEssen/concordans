@@ -94,3 +94,14 @@ export function tabTitle(node: TitledNode): string {
 	}
 	return cut(name ?? node.label);
 }
+
+/**
+ * The name of a bron in the tab, one source per kind: a Kamerstuk by its place and a dossier by
+ * its number as a citation writes them (`36600 VIII`, not the API's `36600-VIII`, #84, #94);
+ * anything else by the title the API gives it, as the server's page has it (#529), and by the
+ * name made here until that is in.
+ */
+export function pageName(node: TitledNode, apiTitle: string | null): string {
+	if (node.collection === 'dossiers') return tabTitle(node);
+	return documentTitle(node) ?? (apiTitle ? cut(apiTitle) : tabTitle(node));
+}

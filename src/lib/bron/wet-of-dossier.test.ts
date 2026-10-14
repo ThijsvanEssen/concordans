@@ -20,6 +20,7 @@ import { tabTitle } from './tab-title';
 import { laagVan } from './behoort';
 import { paarZin } from '$lib/verbonden/hoe';
 import { buildNodeLabel } from '$lib/graph/types';
+import { containerNames } from '$lib/graph/store/context';
 import { kamerstukName } from '$lib/components/parliamentary/kamerstuk';
 import type { Neighbor } from '$lib/api/nodes';
 
@@ -141,6 +142,10 @@ describe('a dossier number in its official notation', () => {
 			previewFromNode('dossiers', null, props).kicker,
 			tabTitle({ collection: 'dossiers', label: '36600-VIII', raw: { display_name: null, props } }),
 			buildNodeLabel({ collection: 'dossiers', key: '36600-VIII', props } as never, 'dossier'),
+			// The hull on the canvas, short and on hover (#95).
+			...Object.values(
+				containerNames({ collection: 'dossiers', key: '36600-VIII', props } as never, 'dossier')
+			),
 			laagVan(
 				{ collection: 'dossiers', key: '36600-VIII', props } as unknown as Neighbor,
 				'Dossier'

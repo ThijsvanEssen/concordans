@@ -68,7 +68,7 @@
 			class="tekstmenu__lijst"
 			role="menu"
 			aria-label={label}
-			use:topLayer={{ anchor: button, align: rechts ? 'right' : 'left' }}
+			use:topLayer={{ anchor: button, close: sluit, align: rechts ? 'right' : 'left' }}
 		>
 			{#if inhoud}
 				{@render inhoud(sluit)}

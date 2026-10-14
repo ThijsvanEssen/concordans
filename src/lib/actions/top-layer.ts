@@ -2,11 +2,14 @@
 // own cuts it off: fixed by its anchor, below it, or above it where the window ends below and
 // there is more room above, at the anchor's left edge or (`align: 'right'`) its right, and
 // never past a side of the window. It follows a scroll and a resize, and is placed again when
-// it grows (a card whose text comes). Its height is capped at the room it has, as `--room`: a
+// it grows (a card whose text comes). It closes once its anchor scrolls out of what shows of
+// the column it scrolls in (or of the window): followed there it would lie over the TopBar
+// (#96). Its height is capped at the room it has, as `--room`: a
 // style reads `max-height: var(--room)`, or less where it wants less.
 //
 // `clickOutside` is the one way such a thing closes on a click or tap elsewhere: in the
-// capture phase, so it closes before what was hit reacts, and the click is only watched.
+// capture phase, so it closes before what was hit reacts; that click only closes, it opens
+// nothing under it (#98). It watches while the box is open only.
 import type { Action } from 'svelte/action';
 
 /** Between the anchor and the box. */
@@ -49,18 +52,43 @@ export function placement(
 export const topOf = (anchor: Edges, up: boolean, height: number): number =>
 	up ? anchor.top - GAP - height : anchor.bottom + GAP;
 
+/**
+ * Whether an anchor is out of what shows of the boxes that clip it (its scrolling columns and
+ * the window): its middle past an edge of one of them. Half under an edge still shows it.
+ */
+export function outOfView(anchor: Edges, views: Edges[]): boolean {
+	const y = (anchor.top + anchor.bottom) / 2;
+	const x = (anchor.left + anchor.right) / 2;
+	return views.some((v) => y < v.top || y > v.bottom || x < v.left || x > v.right);
+}
+
+const CLIPS = /auto|scroll|hidden|clip/;
+
+/** The elements around `el` that clip what overflows them: the columns it scrolls in. */
+function clippers(el: HTMLElement): HTMLElement[] {
+	const found: HTMLElement[] = [];
+	for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+		const { overflowX, overflowY } = getComputedStyle(p);
+		if (CLIPS.test(overflowX) || CLIPS.test(overflowY)) found.push(p);
+	}
+	return found;
+}
+
 const popover = (el: HTMLElement) => typeof el.showPopover === 'function';
 
 export type TopLayer = {
 	/** What the box hangs from. */
 	anchor: HTMLElement;
+	/** Closes the box: its anchor has scrolled out of view. */
+	close: () => void;
 	align?: Align;
 	/** Moved to the end of the body first: out of a text whose style it would inherit. */
 	detach?: boolean;
 };
 
 export const topLayer: Action<HTMLElement, TopLayer> = (el, params) => {
-	let { anchor, align = 'left' } = params;
+	let { anchor, close, align = 'left' } = params;
+	let around = clippers(anchor);
 	if (params.detach) document.body.appendChild(el);
 	if (popover(el)) {
 		if (!el.hasAttribute('popover')) el.setAttribute('popover', 'manual');
@@ -69,9 +97,11 @@ export const topLayer: Action<HTMLElement, TopLayer> = (el, params) => {
 
 	const place = () => {
 		const a = anchor.getBoundingClientRect();
+		const view = { width: innerWidth, height: innerHeight };
+		const shown = { top: 0, left: 0, bottom: view.height, right: view.width };
+		if (outOfView(a, [shown, ...around.map((c) => c.getBoundingClientRect())])) return close();
 		// Its whole height, borders too, however much of it its cap now shows.
 		const height = el.scrollHeight + el.offsetHeight - el.clientHeight;
-		const view = { width: innerWidth, height: innerHeight };
 		const { up, room, left } = placement(a, { width: el.offsetWidth, height }, view, align);
 		el.style.setProperty('--room', `${Math.round(room)}px`);
 		el.style.top = `${Math.round(topOf(a, up, el.offsetHeight))}px`;
@@ -91,7 +121,8 @@ export const topLayer: Action<HTMLElement, TopLayer> = (el, params) => {
 
 	return {
 		update(next) {
-			({ anchor, align = 'left' } = next);
+			({ anchor, close, align = 'left' } = next);
+			around = clippers(anchor);
 			place();
 		},
 		destroy() {
@@ -107,7 +138,7 @@ export const topLayer: Action<HTMLElement, TopLayer> = (el, params) => {
 
 /**
  * Calls `onOutside` on a click or tap outside everything `inside` gives (the box, its anchor),
- * in the capture phase. Returns the function that stops watching.
+ * in the capture phase; that click goes no further. Returns the function that stops watching.
  */
 export function clickOutside(
 	inside: () => (Node | null | undefined)[],
@@ -116,6 +147,8 @@ export function clickOutside(
 	const watch = (e: Event) => {
 		const t = e.target;
 		if (!(t instanceof Node) || inside().some((n) => n?.contains(t))) return;
+		e.stopPropagation();
+		e.preventDefault();
 		onOutside();
 	};
 	document.addEventListener('click', watch, true);

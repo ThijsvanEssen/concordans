@@ -125,7 +125,7 @@
 		aria-label={grondslagKop(formule)}
 		tabindex="-1"
 		bind:this={kaart}
-		use:topLayer={{ anchor: knop }}
+		use:topLayer={{ anchor: knop, close: sluit }}
 		onpointerenter={binnen}
 		onpointerleave={buiten}
 		onclick={(e) => e.stopPropagation()}

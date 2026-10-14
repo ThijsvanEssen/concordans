@@ -58,7 +58,7 @@
 	role="menu"
 	aria-label={titel}
 	tabindex="-1"
-	use:topLayer={{ anchor: anker }}
+	use:topLayer={{ anchor: anker, close: onClose }}
 	use:menu={{ open: true, close: onClose, trigger: anker }}
 >
 	<p class="kop">{titel}</p>
