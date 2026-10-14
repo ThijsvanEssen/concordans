@@ -145,15 +145,18 @@ async function echrJudgments(bwb: string, articleKey: string, signal: AbortSigna
 
 // The four dossier groups read one hub.
 let hub: { key: string; request: Promise<DossierHub> } | null = null;
-const hubOf = ({ node, buren }: LoaderContext) => {
+const hubOf = ({ node, buren, neighbors }: LoaderContext) => {
 	if (hub?.key !== node.key)
 		hub = {
 			key: node.key,
-			request: loadDossierHub(str(node.props?.label) ?? '', () =>
-				buren([
-					{ relation: 'LEGISLATED_IN', direction: 'inbound', collection: 'instruments' },
-					{ relation: 'ABOUT', direction: 'inbound', collection: 'activities' }
-				])
+			request: loadDossierHub(
+				str(node.props?.label) ?? '',
+				() =>
+					buren([
+						{ relation: 'LEGISLATED_IN', direction: 'inbound', collection: 'instruments' },
+						{ relation: 'ABOUT', direction: 'inbound', collection: 'activities' }
+					]),
+				neighbors
 			)
 		};
 	return hub.request;
