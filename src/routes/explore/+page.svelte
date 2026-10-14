@@ -70,7 +70,7 @@
 		type Verbinding
 	} from '$lib/verbonden/verbinding';
 	import { allRows, filterGroups, lidCounts, lidTellingenOnder } from '$lib/verbonden/view';
-	import { perfStart } from '$lib/util/perf';
+	import { perfStart } from '$lib/dev/perf';
 	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
 	import {
 		containerKindOf,
