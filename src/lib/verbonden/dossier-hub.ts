@@ -8,11 +8,8 @@ import { ifExists } from '$lib/api/errors';
 import { getCommittees } from '$lib/api/verbonden';
 import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 import type { Schema } from '$lib/api/types';
-import {
-	getDossier,
-	getDossierDocuments,
-	getDossierMutations
-} from '$lib/components/parliamentary/data';
+import { getDossierDocuments } from '$lib/api/records';
+import { getDossier, getDossierMutations } from '$lib/components/parliamentary/data';
 import { get } from 'svelte/store';
 import { chamberOf, isExplanatory } from './chamber';
 import { bronKindOf } from './filter';
@@ -177,7 +174,7 @@ export async function loadDossierHub(
 	const detail = await ifExists(getDossier(number));
 	const joined = !detail?.instruments;
 	const [documents, mutations, committees, neighbors] = await Promise.all([
-		ifExists(getDossierDocuments(number)),
+		getDossierDocuments(number),
 		joined ? ifExists(getDossierMutations(number)) : null,
 		joined ? getCommittees() : [],
 		joined || !detail?.committees ? buren() : []

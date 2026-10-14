@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fail, fakeApi } from '$lib/test/fakeApi';
 import { ApiError } from './client';
+import { loadDossierHub } from '$lib/verbonden/dossier-hub';
 import {
 	getDecisionDocument,
-	getDossierPapers,
+	getDossierDocuments,
 	getExplainedBy,
 	getExplanations,
 	once,
@@ -62,9 +63,9 @@ describe('getters that say "geen" only for a 404', () => {
 			get: () => getExplainedBy('BWBR0005537', '3:2')
 		},
 		{
-			name: 'getDossierPapers',
+			name: 'getDossierDocuments',
 			path: '/api/dossiers/{number}/documents',
-			get: () => getDossierPapers('36327')
+			get: () => getDossierDocuments('36327')
 		}
 	] as const;
 
@@ -81,5 +82,16 @@ describe('getters that say "geen" only for a 404', () => {
 			expect(await get()).toEqual({ total: 0, items: [] });
 			expect(fake.asked(path)).toHaveLength(2);
 		});
+	});
+});
+
+describe('the documents of a dossier', () => {
+	it('are asked once for the reader and the panel Verbonden', async () => {
+		const fake = fakeApi({
+			'/api/dossiers/{number}': { key: '36001', number: '36001', instruments: [], committees: [] },
+			'/api/dossiers/{number}/documents': { items: [], total: 0 }
+		});
+		await Promise.all([getDossierDocuments('36001'), loadDossierHub('36001', async () => [])]);
+		expect(fake.asked('/api/dossiers/{number}/documents')).toHaveLength(1);
 	});
 });

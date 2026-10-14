@@ -245,11 +245,11 @@ export const getExplanations = (bwb: string, number: string) =>
 	);
 
 /**
- * The first hundred papers of a dossier, once: where an article's memorie is found when no
- * EXPLAINS edge names it (the dossier of the wet that gave its text). Null for a dossier the
- * data lacks, said as such.
+ * The first hundred documents of a dossier, once: the panel Verbonden lists them per chamber,
+ * and an article's reader finds its memorie there when no EXPLAINS edge names it (the dossier
+ * of the wet that gave its text). Null for a dossier the data lacks, said as such.
  */
-export const getDossierPapers = (number: string) =>
+export const getDossierDocuments = (number: string) =>
 	once(`dossiers/${number}/documents?limit=100`, () =>
 		ifExists(
 			unwrap(

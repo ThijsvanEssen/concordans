@@ -29,7 +29,7 @@ import { ifExists, ignore } from '$lib/api/errors';
 import { onthoudTitel } from './titels.svelte';
 import { getArticleDetail, getArticleHistory, onthoudArtikel } from '$lib/api/articles';
 import { lawArticleList } from '$lib/api/law-articles';
-import { getDocument, getDossierPapers, getExplainedBy } from '$lib/api/records';
+import { getDocument, getDossierDocuments, getExplainedBy } from '$lib/api/records';
 import { wordingsOf } from '$lib/text/version-diff';
 import { apiNumber, bookNumber } from '$lib/text/bw';
 import { readableQuery } from '$lib/util/address';
@@ -370,7 +370,7 @@ function askArticleAhead(pad: Pad, artikel: { wet: string; nummer: string }) {
 		.then((h) => {
 			const w = wordingsOf(h.versions ?? []).at(-1);
 			const dossier = w && w.until === null ? w.first.amended_by?.dossiers?.[0]?.number : null;
-			if (dossier) getDossierPapers(dossier).catch(ignore('leesbaar'));
+			if (dossier) getDossierDocuments(dossier).catch(ignore('leesbaar'));
 		})
 		.catch(ignore('leesbaar'));
 	lawArticleList(artikel.wet).catch(ignore('leesbaar'));

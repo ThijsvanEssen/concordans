@@ -3,7 +3,7 @@
 	import { langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { getDossierPapers, getExplainedBy, getExplanations } from '$lib/api/records';
+	import { getDossierDocuments, getExplainedBy, getExplanations } from '$lib/api/records';
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
@@ -171,7 +171,7 @@
 				return;
 			}
 			if (!dossier) return;
-			const papers = await getDossierPapers(dossier);
+			const papers = await getDossierDocuments(dossier);
 			if (ac.signal.aborted) return;
 			if (!papers) {
 				missingDossiers = new Set([...missingDossiers, dossier]);
