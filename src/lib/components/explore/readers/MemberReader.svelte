@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { choiceRank } from '$lib/components/parliamentary/stemming';
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { capitalize, count, textOf } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
@@ -54,7 +55,6 @@
 	type Vote = Schema<'MemberVoteDTO'>;
 
 	const VOTES_PREVIEW = 20;
-	const CHOICE_ORDER = ['Voor', 'Tegen'];
 
 	/** What the person signed stukken as, and when (AUTHORED meta). */
 	let signatures = $state<Signature[]>([]);
@@ -159,10 +159,6 @@
 	function groupVotes(votes: Vote[], alle: Vote[] = votes, ambtMeer = false): PartyGroup[] {
 		const tel = Map.groupBy(alle, groepSleutel);
 		const byParty = Map.groupBy(votes, groepSleutel);
-		const rank = (choice: string) => {
-			const i = CHOICE_ORDER.indexOf(choice);
-			return i === -1 ? CHOICE_ORDER.length : i;
-		};
 		return [...byParty]
 			.map(([sleutel, rows]) => ({
 				party: rows[0].party ?? null,
@@ -170,7 +166,7 @@
 				total: tel.get(sleutel)?.length ?? rows.length,
 				meer: ambtMeer && !!ambtVan(rows[0]),
 				byChoice: [...Map.groupBy(rows, (v) => v.choice)].sort(
-					([a], [b]) => rank(a) - rank(b) || a.localeCompare(b)
+					([a], [b]) => choiceRank(a) - choiceRank(b) || a.localeCompare(b)
 				)
 			}))
 			.sort((a, b) => b.total - a.total);

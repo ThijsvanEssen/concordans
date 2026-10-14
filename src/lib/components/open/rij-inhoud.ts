@@ -2,6 +2,7 @@
 // the row does not open: its title goes to the reader. Actueel and Gevolgd by the feed's kind;
 // a Kamerstuk in Verbonden, Bronnen and Gemarkeerd by its own (kernSoort): one core text for
 // one stuk wherever its row opens.
+import { forAgainst } from '$lib/components/parliamentary/stemming';
 import type { FeedItem } from '$lib/components/actueel/feed';
 import { dictumUit } from '$lib/onderwerpen/strekking';
 
@@ -27,8 +28,8 @@ export type Inhoud =
 	| null;
 
 const telt = (i: MetInhoud) => {
-	const t = (i.vote?.tally ?? {}) as Record<string, number>;
-	return (t['Voor'] ?? 0) + (t['Tegen'] ?? 0) > 0;
+	const { voor, tegen } = forAgainst(i.vote?.tally);
+	return voor + tegen > 0;
 };
 
 /**

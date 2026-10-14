@@ -1,3 +1,4 @@
+import { forAgainst } from '$lib/components/parliamentary/stemming';
 import { capitalize, joinAnd, truncate } from '$lib/text/words';
 import { bewindspersoonVan, eersteIndiener } from '$lib/bron/submitters';
 import type { BronRef } from '$lib/bron/href';
@@ -116,10 +117,7 @@ const subjectOf = (i: FeedItem) => {
 	return subject ? cut(subject, SUBJECT_MAX) : null;
 };
 
-const tallyOf = (i: FeedItem) => {
-	const t = (i.vote?.tally ?? {}) as Record<string, number>;
-	return { voor: t['Voor'] ?? 0, tegen: t['Tegen'] ?? 0 };
-};
+const tallyOf = (i: FeedItem) => forAgainst(i.vote?.tally);
 
 /** `141 voor, 7 tegen. ChristenUnie, dossier 21501-30` */
 /**

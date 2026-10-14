@@ -4,6 +4,8 @@
 // the hall of that day (`coalition` per fractie on /api/parliament/seats). Source values,
 // put in words; no reading of them.
 
+import { CHOICE } from './stemming';
+
 /** The block on a decision, as the API gives it. */
 export type CoalitieStem = {
 	cabinet: string;
@@ -57,7 +59,7 @@ export function coalitieRegel(
 		kant: eensgezind ? (c.coalition_against > 0 ? 'tegen' : 'voor') : null,
 		voor: c.coalition_for,
 		tegen: c.coalition_against,
-		fractiesVoor: van('Voor'),
-		fractiesTegen: van('Tegen')
+		fractiesVoor: van(CHOICE.for),
+		fractiesTegen: van(CHOICE.against)
 	};
 }

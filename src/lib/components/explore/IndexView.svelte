@@ -109,7 +109,7 @@
 	import NaastPosten from './index/NaastPosten.svelte';
 	import IndexRow from './index/IndexRow.svelte';
 	import Waarde from '$lib/components/ui/Waarde.svelte';
-	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
+	import { forAgainst, stemmingNaam } from '$lib/components/parliamentary/stemming';
 	import { dossierLabel, dossierName } from '$lib/bron/dossier-naam';
 	import {
 		INDEX_CATEGORIES,
@@ -2824,8 +2824,8 @@
 										<ul class="list">
 											{#each day.rows as s (s.id)}
 												{@const bron = `decisions/${s.key}`}
-												{@const inFavour = s.tally?.['Voor'] ?? 0}
-												{@const against = s.tally?.['Tegen'] ?? 0}
+												{@const { voor: inFavour, tegen: against } = forAgainst(s.tally)}
+												{@const voters = forAgainst(s.voters)}
 												{@const inFavourPct = (inFavour / (inFavour + against)) * 100}
 												<!-- The Eerste Kamer's decisions carry no kind yet: their dossier leads. -->
 												{@const kindLabel =
@@ -2863,9 +2863,10 @@
 														{#if inFavour + against > 0}
 															<span
 																class="stem-mini"
-																title="Zetelverdeling: {s.voters?.['Voor'] ?? 0} voor, {s.voters?.[
-																	'Tegen'
-																] ?? 0} tegen ({s.vote_kind === 'member' ? 'leden' : 'fracties'})"
+																title="Zetelverdeling: {voters.voor} voor, {voters.tegen} tegen ({s.vote_kind ===
+																'member'
+																	? 'leden'
+																	: 'fracties'})"
 															>
 																<span class="stem-mini__v">{inFavour}</span>
 																<span class="stem-mini__bar">

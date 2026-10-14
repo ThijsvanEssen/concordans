@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { CHOICE } from '$lib/components/parliamentary/stemming';
 	// What the coalition did on a vote of the Tweede Kamer, as a line under its row (concept 24,
 	// variant A; Thijs, 10 Oct): "Coalitie tegen" where it voted as one, "Coalitie verdeeld" with
 	// its fracties per side where it did not, and the source's own words for a wisselmeerderheid
@@ -22,8 +23,8 @@
 	const zijden = $derived(
 		(
 			[
-				['ja', 'Voor'],
-				['nee', 'Tegen']
+				['ja', CHOICE.for],
+				['nee', CHOICE.against]
 			] as const
 		)
 			.map(([soort, keuze]) => ({

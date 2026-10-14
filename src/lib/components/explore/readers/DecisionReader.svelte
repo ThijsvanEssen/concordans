@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { CHOICE, forAgainst } from '$lib/components/parliamentary/stemming';
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { langeDatum } from '$lib/text/datum';
 	import { joinParts, withoutGroup } from '$lib/text/words';
@@ -90,7 +91,7 @@
 	};
 
 	const side = (choice: string) =>
-		choice === 'Voor' ? 'for' : choice === 'Tegen' ? 'against' : 'other';
+		choice === CHOICE.for ? 'for' : choice === CHOICE.against ? 'against' : 'other';
 
 	/** A voter id is `factions/vvd` or `members/…`; the key alone does not say which. */
 	const voterHref = (id: string) => (id.includes('/') ? bronHref(id) : null);
@@ -101,12 +102,11 @@
 <ReaderFrame state={decision.state} what="Stemming" retry={decision.retry}>
 	{#snippet children(d)}
 		{@const tally = d.tally ?? {}}
-		{@const inFavour = tally['Voor'] ?? 0}
-		{@const against = tally['Tegen'] ?? 0}
+		{@const { voor: inFavour, tegen: against } = forAgainst(tally)}
 		{@const inFavourPct =
 			inFavour + against > 0 ? Math.round((inFavour / (inFavour + against)) * 100) : 50}
 		{@const others = Object.entries(tally).filter(
-			([choice]) => choice !== 'Voor' && choice !== 'Tegen'
+			([choice]) => choice !== CHOICE.for && choice !== CHOICE.against
 		)}
 		<!-- The dossiers by number and name (API 0.79.30); the node's numbers before it. -->
 		{@const dossiers = d.dossiers?.length

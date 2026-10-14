@@ -1420,4 +1420,16 @@ describe('the explorer’s small things said once (code-eenvoud F48–F50)', () 
 			)
 		).toEqual([]);
 	});
+
+	it('counts and orders the choices of a stemming in $lib/components/parliamentary/stemming (F50)', () => {
+		expect(
+			offenders(
+				(t) =>
+					/\[['"](Voor|Tegen)['"]\]|['"]Voor['"],\s*['"]Tegen['"]|[!=]== ?['"](Voor|Tegen)['"]/.test(
+						t
+					),
+				['lib/components/parliamentary/stemming.ts']
+			)
+		).toEqual([]);
+	});
 });
