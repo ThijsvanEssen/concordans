@@ -5,6 +5,7 @@
 import { netwerkParams } from '$lib/netwerk/netwerk';
 import { dossierLabel } from '$lib/bron/dossier-naam';
 import { bronLabel, parseNodeId } from '$lib/vocabulary';
+import { queryHref } from '$lib/util/address';
 
 /** One thing kept: a bron, or a place in it (`lid-2`, `rov-5.7.1`), with how it is cited. */
 export type MapItem = {
@@ -221,11 +222,9 @@ export function netwerkHref(items: readonly MapItem[]): string | null {
 	const ids = netwerkIds(items);
 	if (!ids.length) return null;
 	const params = netwerkParams({ ids, uit: new Set(), tussen: false });
-	const query = Object.entries(params)
-		.filter(([, v]) => v !== null)
-		.map(([k, v]) => `${k}=${encodeURIComponent(v!).replaceAll('%2F', '/').replaceAll('%2C', ',')}`)
-		.join('&');
-	return `/explore?${query}`;
+	const query = new URLSearchParams();
+	for (const [name, value] of Object.entries(params)) if (value !== null) query.set(name, value);
+	return queryHref('/explore', query);
 }
 
 /** The items of `b` that `a` does not hold yet, after `a`'s. */

@@ -22,6 +22,7 @@ import {
 	type FeedItem,
 	type FeedKind
 } from './feed';
+import { queryHref } from '$lib/util/address';
 
 export { dossierName };
 
@@ -152,7 +153,7 @@ export function actueelDayHref(date: string, kinds: FeedKind[], dossier?: string
 	const p = new URLSearchParams({ van: date, tot: date });
 	if (kinds.length) p.set('soort', kinds.join(','));
 	if (dossier) p.set('dossier', dossier);
-	return `/actueel?${p.toString().replaceAll('%2C', ',')}`;
+	return queryHref('/actueel', p);
 }
 
 export const hrefOf = (i: FeedItem): BronRef =>

@@ -30,10 +30,10 @@
 	import ReaderHead from './readers/ReaderHead.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	import { permalink } from '$lib/bron/anchor';
-	import { goto } from '$app/navigation';
 	import { atArticles, isDay, versionOn, versionsByYear } from './peildatum';
 	import { nog, verderLabel, volgendeBladzijden, vorigeBladzijde, type Richting } from './bladeren';
 	import { kindName, lawFullTitle, lawHeadLine, lawKind, sourceName, treatyLink } from './law-head';
+	import { navigate, withParams } from '$lib/util/address';
 
 	let { bwbId }: { bwbId: string | null } = $props();
 
@@ -71,19 +71,7 @@
 		const day = page.url.searchParams.get('peildatum');
 		return isDay(day) ? day : null;
 	});
-	const withParams = (params: Record<string, string | null>) => {
-		const url = new URL(page.url);
-		for (const [k, v] of Object.entries(params))
-			if (v === null) url.searchParams.delete(k);
-			else url.searchParams.set(k, v);
-		return `${url.pathname}?${url.searchParams.toString().replaceAll('%2F', '/').replaceAll('%2C', ',')}`;
-	};
-	const choose = (day: string) =>
-		goto(withParams({ peildatum: day || null }), {
-			replaceState: true,
-			noScroll: true,
-			keepFocus: true
-		});
+	const choose = (day: string) => navigate(withParams(page.url, { peildatum: day }));
 
 	let articles = $state<Row[]>([]);
 	/** The place in the whole list of the first article shown: a division opens there. */
@@ -709,7 +697,7 @@
 			{#if peildatum && !(versionsLoaded && versions.length === 0)}
 				<p class="whole-hist">
 					{histLine}
-					<a href={withParams({ peildatum: null })} data-sveltekit-noscroll
+					<a href={withParams(page.url, { peildatum: null })} data-sveltekit-noscroll
 						>Naar de geldende tekst</a
 					>
 				</p>
@@ -723,7 +711,7 @@
 				<!-- Before the first toestand: the BWB holds no text of that day. -->
 				<p class="whole-before">
 					De BWB heeft geen tekst van vóór {formatLongDate(firstVersionFrom)}.
-					<a href={withParams({ peildatum: firstVersionFrom })} data-sveltekit-noscroll
+					<a href={withParams(page.url, { peildatum: firstVersionFrom })} data-sveltekit-noscroll
 						>Naar de eerste versie</a
 					>
 				</p>
@@ -731,7 +719,7 @@
 				<!-- An act of the EU: the dataset holds its text in force only. -->
 				<p class="whole-before">
 					Van deze regeling staat alleen de geldende tekst in de gegevens.
-					<a href={withParams({ peildatum: null })} data-sveltekit-noscroll
+					<a href={withParams(page.url, { peildatum: null })} data-sveltekit-noscroll
 						>Naar de geldende tekst</a
 					>
 				</p>
@@ -776,9 +764,10 @@
 					{#if a.key}
 						<a
 							class="whole-article-jump"
-							href={peildatum
-								? `${bronHref({ collection: 'articles', key: a.key })}&peildatum=${peildatum}`
-								: bronHref({ collection: 'articles', key: a.key })}
+							href={bronHref(
+								{ collection: 'articles', key: a.key },
+								{ params: peildatum ? { peildatum } : {} }
+							)}
 							data-sveltekit-noscroll><span class="whole-art-num">{name}</span></a
 						>
 					{:else}

@@ -7,7 +7,7 @@
 	// stands at the top as a group of its own until it is kept or put aside.
 	import { formatCount } from '$lib/text/getal';
 	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
+	import { navigate } from '$lib/util/address';
 	import { tick } from 'svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
@@ -52,7 +52,7 @@
 	function gedeeldKlaar(hoe: 'map' | 'erbij' | 'niet') {
 		if (gedeeld && hoe === 'map') kaart.bewaarAlsMap(gedeeld);
 		else if (gedeeld && hoe === 'erbij') kaart.voegToe(gedeeld);
-		void goto('/gemarkeerd', { replaceState: true, noScroll: true, keepFocus: true });
+		void navigate('/gemarkeerd');
 	}
 
 	const reeksen = (lijst: MapItem[], v: Map['volgorde']) =>

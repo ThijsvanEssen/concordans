@@ -30,6 +30,7 @@ import { lawArticleList } from '$lib/api/law-articles';
 import { getDocument, getDossierPapers, getExplainedBy } from '$lib/api/records';
 import { wordingsOf } from '$lib/text/version-diff';
 import { apiNumber, bookNumber } from '$lib/text/bw';
+import { readableQuery } from '$lib/util/address';
 import { parseNodeId } from '$lib/vocabulary';
 import { onForget } from '$lib/util/forget';
 
@@ -541,7 +542,6 @@ export function verkennerHref(
 	const path = focus ? padOfFocus(focus, props) : null;
 	const rest = new URLSearchParams(params);
 	if (path) rest.delete('focus');
-	// A node id is safe in a query string as it is; the escaped slash only hurts legibility.
-	const query = rest.toString().replaceAll('%2F', '/').replaceAll('%2C', ',');
+	const query = readableQuery(rest);
 	return `${path ?? '/explore'}${query ? `?${query}` : ''}${hash}`;
 }

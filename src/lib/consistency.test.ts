@@ -91,6 +91,12 @@ describe('one form for each thing', () => {
 		expect(offenders((t) => /AbortSignal\.timeout\(/.test(t), ['lib/api/client.ts'])).toEqual([]);
 	});
 
+	it('builds a readable query and patches the address only in $lib/util/address.ts', () => {
+		// A copy of its own forgot the comma once: %2C in the address bar of Bladeren.
+		expect(offenders((t) => /%2F|%2C/.test(t), ['lib/util/address.ts'])).toEqual([]);
+		expect(offenders((t) => /new URL\(page\.url\)/.test(t))).toEqual([]);
+	});
+
 	it('formats a date only in $lib/text/datum.ts', () => {
 		const dateFormat = /toLocaleDateString|Intl\.DateTimeFormat|\btoLocaleTimeString\b/;
 		const monthNames = /['"](januari|jan\.)['"]/;

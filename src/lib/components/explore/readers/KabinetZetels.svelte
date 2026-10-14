@@ -7,7 +7,7 @@
 	// cabinet from before 30 November 2006 has no seats per day: no sections. The phases
 	// (demissionair and after) stand over the steps, as over the posts.
 	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
+	import { navigate, withParams } from '$lib/util/address';
 	import KamerZetels from './KamerZetels.svelte';
 	import { getCabinetSeats } from '$lib/api/records';
 	import { vandaag } from '$lib/text/datum';
@@ -50,12 +50,10 @@
 	});
 
 	/** The halls on the first day of a stretch; the last stretch is the halls without ?zetels. */
-	function kies(s: Stuk) {
-		const u = new URL(page.url);
-		if (!s.to_date || s.to_date >= eind) u.searchParams.delete('zetels');
-		else u.searchParams.set('zetels', s.from_date);
-		void goto(u, { replaceState: true, noScroll: true, keepFocus: true });
-	}
+	const kies = (s: Stuk) =>
+		void navigate(
+			withParams(page.url, { zetels: !s.to_date || s.to_date >= eind ? null : s.from_date })
+		);
 </script>
 
 {#if zetels?.tk?.length}

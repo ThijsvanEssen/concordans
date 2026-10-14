@@ -25,7 +25,7 @@
 	// on the rows loaded so far.
 	import { tick, untrack } from 'svelte';
 	import { page } from '$app/state';
-	import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
+	import { afterNavigate, beforeNavigate } from '$app/navigation';
 	import { bronHref, openHref } from '$lib/bron/href';
 	import { useSearchOpener } from '$lib/stores/search-trigger';
 	import { api, unwrap } from '$lib/api/client';
@@ -116,6 +116,7 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { heeftParameter } from '$lib/api/heeft';
 	import { formatCount } from '$lib/verbonden/filter';
+	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
 
 	let { category }: { category: IndexCategory } = $props();
 
@@ -265,15 +266,8 @@
 	];
 
 	/** A filter is a step in the history; the search text and the open row replace it. */
-	function patchUrl(patch: Record<string, string | null>, replaceState = false) {
-		const url = new URL(page.url);
-		for (const [k, v] of Object.entries(patch)) {
-			if (v === null || v === '') url.searchParams.delete(k);
-			else url.searchParams.set(k, v);
-		}
-		const search = url.search.replaceAll('%2F', '/');
-		goto(url.pathname + search, { replaceState, keepFocus: true, noScroll: true });
-	}
+	const patchUrl = (patch: ParamPatch, replaceState = false) =>
+		navigate(withParams(page.url, patch), { step: !replaceState });
 
 	// A link from before API 0.30 may name a tier that is now a court within a wider tier:
 	// it opens that court. A tier the API does not know is left out, as the list would be.
@@ -288,13 +282,12 @@
 		patchUrl({ [name]: current === value ? null : value });
 
 	// A tab drops the filters and the open row, so a stage filter of dossiers does not leak into decisions.
-	function tabHref(k: IndexCategory): string {
-		const url = new URL(page.url);
-		for (const p of [...FILTER_PARAMS, 'open']) url.searchParams.delete(p);
-		url.searchParams.set('mode', 'index');
-		url.searchParams.set('kind', k);
-		return url.pathname + url.search;
-	}
+	const tabHref = (k: IndexCategory, filters: ParamPatch = {}) =>
+		withParams(
+			page.url,
+			{ mode: 'index', kind: k, ...filters },
+			{ clear: [...FILTER_PARAMS, 'open'] }
+		);
 
 	// ── Search text ─────────────────────────────────────────────────────────
 	// What is typed goes into the URL when the typing pauses, in place of the last
@@ -2474,7 +2467,7 @@
 								onToggle={toggleOpen}
 								zoek={q}
 								commitmentsHref={(key) =>
-									tabHref('commitments') + `&member=${key}&status=${OPEN_STATUS}`}
+									tabHref('commitments', { member: key, status: OPEN_STATUS })}
 							/>
 						{/if}
 					{:else if category === 'ministers' && shownCabinet && occupancyCabinet}
@@ -2503,7 +2496,7 @@
 								{openId}
 								onToggle={toggleOpen}
 								commitmentsHref={(key) =>
-									tabHref('commitments') + `&member=${key}&status=${OPEN_STATUS}`}
+									tabHref('commitments', { member: key, status: OPEN_STATUS })}
 							/>
 						{/if}
 					{/if}
