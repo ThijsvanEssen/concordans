@@ -53,7 +53,7 @@
 	type View =
 		| { kind: 'empty' }
 		| { kind: 'loading' }
-		| { kind: 'error'; message: string }
+		| { kind: 'error' }
 		| { kind: 'loaded'; data: Schema<'JudgmentDetailResponse'> };
 
 	let view = $state<View>({ kind: 'empty' });
@@ -118,7 +118,7 @@
 				if (!stale) view = { kind: 'loaded', data };
 			})
 			.catch(() => {
-				if (!stale) view = { kind: 'error', message: 'Uitspraak kon niet worden geladen.' };
+				if (!stale) view = { kind: 'error' };
 			});
 		return () => (stale = true);
 	});
@@ -174,7 +174,7 @@
 <ReaderFrame
 	onRetry={() => attempt++}
 	status={view.kind === 'loaded' ? 'ready' : view.kind}
-	message={view.kind === 'error' ? view.message : ''}
+	what="Uitspraak"
 >
 	{#if view.kind === 'loaded'}
 		{@const j = view.data.judgment}

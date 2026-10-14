@@ -1,0 +1,53 @@
+import { createRawSnippet } from 'svelte';
+import { render } from 'svelte/server';
+import { describe, expect, it } from 'vitest';
+import { ApiError } from '$lib/api/client';
+import type { LoadState as State } from '$lib/util/load.svelte';
+import LoadState from './LoadState.svelte';
+
+const empty = createRawSnippet(() => ({ render: () => '<p class="stil">Geen leden.</p>' }));
+const children = createRawSnippet((names: () => string[]) => ({
+	render: () =>
+		`<ul>${names()
+			.map((n) => `<li>${n}</li>`)
+			.join('')}</ul>`
+}));
+
+const html = (state: State<string[]>, extra: Record<string, unknown> = {}) =>
+	render(LoadState<string[]>, {
+		props: { state, what: 'De fractie', empty, children, ...extra }
+	}).body;
+
+describe('LoadState', () => {
+	it('says Laden… in a quiet line, or holds the place with a skeleton', () => {
+		expect(html({ status: 'loading' })).toMatch(/<p class="stil[^"]*">Laden…<\/p>/);
+		const block = html({ status: 'loading' }, { form: 'block' });
+		expect(block).toContain('skeleton');
+		expect(block).not.toContain('Laden…');
+		expect(block).not.toContain('role="alert"');
+	});
+
+	it('names what failed, as an alert, with Opnieuw only where it can ask again', () => {
+		const error = { status: 'error', error: new ApiError(500, '/api/x') } as const;
+		const plain = html(error);
+		expect(plain).toContain('role="alert"');
+		expect(plain).toContain('De fractie kon niet worden geladen.');
+		expect(plain).not.toContain('Opnieuw');
+		expect(plain).not.toContain('Geen leden.');
+		expect(html(error, { retry: () => {} })).toContain('Opnieuw');
+	});
+
+	it('says a slow answer apart from a broken one', () => {
+		const slow = html({ status: 'error', error: new ApiError(504, '/api/x') });
+		expect(slow).toContain('De fractie kon niet op tijd worden geladen.');
+	});
+
+	it('shows empty only from ready with nothing in it', () => {
+		const leeg = html({ status: 'ready', data: [] });
+		expect(leeg).toContain('Geen leden.');
+		expect(leeg).not.toContain('role="alert"');
+		const vol = html({ status: 'ready', data: ['Jansen'] });
+		expect(vol).toContain('<li>Jansen</li>');
+		expect(vol).not.toContain('Geen leden.');
+	});
+});

@@ -64,7 +64,7 @@
 	type View =
 		| { kind: 'empty' }
 		| { kind: 'loading' }
-		| { kind: 'error'; message: string }
+		| { kind: 'error' }
 		| { kind: 'loaded'; data: Schema<'ArticleDetailResponse'> };
 
 	let view = $state<View>({ kind: 'empty' });
@@ -122,7 +122,7 @@
 			return;
 		}
 		if (!bwbId || !articleNumber) {
-			view = { kind: 'error', message: 'Artikel kon niet worden geladen.' };
+			view = { kind: 'error' };
 			return;
 		}
 
@@ -143,7 +143,7 @@
 				view = { kind: 'loaded', data };
 			})
 			.catch(() => {
-				if (!stale) view = { kind: 'error', message: 'Artikel kon niet worden geladen.' };
+				if (!stale) view = { kind: 'error' };
 			});
 		return () => {
 			stale = true;
@@ -502,7 +502,7 @@
 <ReaderFrame
 	onRetry={() => attempt++}
 	status={view.kind === 'loaded' ? 'ready' : view.kind}
-	message={view.kind === 'error' ? view.message : ''}
+	what="Artikel"
 >
 	{#if view.kind === 'loaded'}
 		{@const d = view.data}

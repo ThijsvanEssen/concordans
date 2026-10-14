@@ -11,15 +11,17 @@
 	import { BEHOORT_KEY } from '$lib/bron/behoort';
 	import WeergaveSchakelaar from '../WeergaveSchakelaar.svelte';
 	import { WEERGAVE_KEY, type Weergave } from '../weergave';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 
 	let {
 		status = 'ready',
-		message = '',
+		what = 'De bron',
 		onRetry,
 		children
 	}: {
 		status?: 'empty' | 'loading' | 'error' | 'ready';
-		message?: string;
+		/** What fails, as the subject of the sentence: "Artikel", "Uitspraak". */
+		what?: string;
 		/** Load again after an error: the API may have been out of reach for a moment. */
 		onRetry?: () => void;
 		children?: Snippet;
@@ -51,18 +53,9 @@
 		{#if status === 'empty'}
 			<!-- No bron yet: an empty column, no instruction (the UI shows itself, Thijs 9 Oct). -->
 		{:else if status === 'loading'}
-			<div class="reader-loading">
-				<div class="skeleton-h"></div>
-				<div class="skeleton-body"></div>
-				<div class="skeleton-body skeleton-body--short"></div>
-			</div>
+			<LoadState state={{ status: 'loading' }} {what} form="block" />
 		{:else if status === 'error'}
-			<div class="reader-error" role="alert">
-				<p>{message || 'De bron kon niet worden geladen.'}</p>
-				{#if onRetry}
-					<button type="button" class="btn is-text" onclick={onRetry}>Opnieuw</button>
-				{/if}
-			</div>
+			<LoadState state={{ status: 'error', error: null }} {what} retry={onRetry} form="block" />
 		{:else}
 			{@render children?.()}
 		{/if}
@@ -139,51 +132,6 @@
 	@media (max-width: 768px) {
 		.weergave {
 			display: none;
-		}
-	}
-
-	/* Where the text would begin: the frame's own margins, no more. */
-	.reader-error {
-		padding: var(--s-5) 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-	}
-
-	.reader-loading {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-4);
-		padding: var(--s-5) 0;
-	}
-
-	.skeleton-h,
-	.skeleton-body {
-		border-radius: var(--r-1);
-		background: linear-gradient(90deg, var(--paper-2) 25%, var(--rule) 50%, var(--paper-2) 75%);
-		background-size: 200% 100%;
-		animation: shimmer 1.4s infinite;
-	}
-
-	.skeleton-h {
-		height: 32px;
-		width: 60%;
-	}
-
-	.skeleton-body {
-		height: 14px;
-	}
-
-	.skeleton-body--short {
-		width: 70%;
-	}
-
-	@keyframes shimmer {
-		0% {
-			background-position: 200% 0;
-		}
-		100% {
-			background-position: -200% 0;
 		}
 	}
 </style>
