@@ -53,7 +53,8 @@ export function activiteitGroepen(r: Records): {
 				item: {
 					node: { collection: 'decisions', key: d.key },
 					kind: 'stemming',
-					vote: { tally: d.tally } as MetInhoud['vote']
+					// An activity is the Tweede Kamer's.
+					vote: { chamber: 'TK', tally: d.tally }
 				},
 				als: 'stemming'
 			});

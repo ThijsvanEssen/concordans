@@ -59,7 +59,7 @@
 					signal
 				})
 			);
-			return [...(r as Lid[])].sort((a, b) =>
+			return [...r].sort((a, b) =>
 				(a.family_name ?? a.name ?? '').localeCompare(b.family_name ?? b.name ?? '', 'nl')
 			);
 		},
