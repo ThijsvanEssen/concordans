@@ -44,6 +44,7 @@
 	import { kindName, lawFullTitle, lawHeadLine, lawKind, sourceName, treatyLink } from './law-head';
 	import { navigate, withParams } from '$lib/util/address';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { load } from '$lib/util/load.svelte';
 
 	let { bwbId }: { bwbId: string } = $props();
 
@@ -55,12 +56,11 @@
 	const choose = (day: string) => navigate(withParams(page.url, { peildatum: day }));
 
 	type Detail = Schema<'ArticleDetailResponse'>;
-	type Version = Schema<'InstrumentVersionDTO'>;
 
 	const today = vandaag();
 	let list = $state.raw<LawList>(EMPTY_LIST);
 	const lawList = createLawList((l) => (list = l), today);
-	const { articles, start, total, firstVersionFrom, status, failure } = $derived(list);
+	const { articles, start, total, firstVersionFrom, status, failure, pageFailure } = $derived(list);
 	/** The reader's text, for keeping the article in view when a page goes in above it. */
 	let lawEl = $state<HTMLElement | null>(null);
 	// A plain `Map` (even inside `$state()`) does not give `.set()`/`.get()` reactivity
@@ -75,8 +75,9 @@
 		try {
 			const detail = await getArticleDetail(bwb, articleNumber);
 			if (bwb === bwbId) detailByNumber.set(articleNumber, detail);
-		} catch {
-			// The preview stays; scrolling back into view retries.
+		} catch (e) {
+			// The preview stays.
+			report('Artikeltekst', e);
 		} finally {
 			pending.delete(articleNumber);
 		}
@@ -123,44 +124,26 @@
 	// The head of the law: its kind, official title, dates and citations, from its own detail.
 	// Its dates are those of the law itself (Awb: in force 1 January 1994); the text in force
 	// is dated by version_date_in_force (Awb: 15 August 2026).
-	let lawDetail = $state<Schema<'InstrumentDetailDTO'> | null>(null);
-	$effect(() => {
-		lawDetail = null;
-		const bwb = bwbId;
-		getInstrumentDetail(bwb)
-			.then((d) => {
-				if (bwb === bwbId) lawDetail = d;
-			})
-			.catch(() => {});
-	});
+	// A failure is a line in the head; the list stands on its own call.
+	const detail = load(() => bwbId, getInstrumentDetail, 'Wet, gegevens');
+	const lawDetail = $derived(detail.state.status === 'ready' ? detail.state.data : null);
 	const kindLabel = $derived(lawKind(lawDetail));
 	const fullTitle = $derived(lawFullTitle(lawDetail, lawName));
 	// A treaty: its record in the Verdragenbank, or from there its text in the BWB.
 	const treaty = $derived(treatyLink(lawDetail, lawDetail?.same_treaty ?? []));
 	// The versions of the law, for the peildatum; the current one dates the text in force
 	// where the law gives no version_date_in_force.
-	let versions = $state<Version[]>([]);
+	const versionList = load(
+		() => bwbId,
+		(bwb, signal) =>
+			unwrap(
+				api.GET('/api/instruments/{bwb_id}/versions', { params: { path: { bwb_id: bwb } }, signal })
+			).then((r) => uniqueBy(r.items, (v) => v.valid_from ?? v.key)),
+		'Tekstversies'
+	);
+	const versions = $derived(versionList.state.status === 'ready' ? versionList.state.data : []);
 	/** The list of versions has come in: an empty one means the dataset keeps none. */
-	let versionsLoaded = $state(false);
-	$effect(() => {
-		versions = [];
-		versionsLoaded = false;
-		const bwb = bwbId;
-		const ac = new AbortController();
-		unwrap(
-			api.GET('/api/instruments/{bwb_id}/versions', {
-				params: { path: { bwb_id: bwb } },
-				signal: ac.signal
-			})
-		)
-			.then((r) => {
-				if (bwb !== bwbId) return;
-				versions = uniqueBy(r.items, (v) => v.valid_from ?? v.key);
-				versionsLoaded = true;
-			})
-			.catch(() => {});
-		return () => ac.abort();
-	});
+	const versionsLoaded = $derived(versionList.state.status === 'ready');
 	const currentVersion = $derived(versions.find((v) => v.current) ?? null);
 	const shownVersion = $derived(peildatum ? versionOn(versions, peildatum) : currentVersion);
 	const oldest = $derived(
@@ -288,8 +271,12 @@
 
 <!-- Paging on through the law, both ways: one control, the same label and count. -->
 {#snippet verder(richting: Richting)}
-	<p class="whole-verder whole-verder--{richting}">
-		{#if status === (richting === 'vorige' ? 'loading-before' : 'loading-more')}Laden…{:else}<TekstLink
+	<div class="whole-verder whole-verder--{richting}">
+		{#if pageFailure?.richting === richting}<LoadState
+				state={{ status: 'error', error: pageFailure.error }}
+				what={richting === 'vorige' ? 'Wat eraan voorafgaat' : 'Het vervolg van de wet'}
+				retry={lawList.retry}
+			/>{:else if status === (richting === 'vorige' ? 'loading-before' : 'loading-more')}Laden…{:else}<TekstLink
 				onclick={() => (richting === 'vorige' ? previous() : lawList.loadMore())}
 				disabled={status !== 'ready'}
 				>{verderLabel(
@@ -297,7 +284,7 @@
 					formatCount(nog(richting, start, articles.length, total))
 				)}</TekstLink
 			>{/if}
-	</p>
+	</div>
 {/snippet}
 
 <!-- The head stands on the law's own detail, the cheapest call; the list of its articles
@@ -337,6 +324,12 @@
 			<!-- What is on screen and which text: the count, a treaty, the peildatum. -->
 			{#snippet status()}
 				<span>{headLine}</span>
+				{#if detail.state.status === 'error'}
+					<LoadState state={detail.state} what="De gegevens van de wet" retry={detail.retry} />
+				{/if}
+				{#if versionList.state.status === 'error'}
+					<LoadState state={versionList.state} what="De tekstversies" retry={versionList.retry} />
+				{/if}
 				{#each grondslag as deel (deel.werkwoord)}
 					<p class="whole-count">
 						{deel.werkwoord}

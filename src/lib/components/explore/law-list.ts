@@ -8,7 +8,6 @@ import { lawArticleList } from '$lib/api/law-articles';
 import type { Schema } from '$lib/api/types';
 import { parseAnchor } from '$lib/text/anchor';
 import { plekVan } from '$lib/text/division';
-import { onForget } from '$lib/util/forget';
 import { uniqueBy } from '$lib/util/unique';
 import { volgendeBladzijden, vorigeBladzijde, type Richting } from './bladeren';
 import { atArticles } from './peildatum';
@@ -97,7 +96,8 @@ async function loadPage(
 ): Promise<Page> {
 	if (day) {
 		// The whole text of each old version comes with the list (include_text): there is no
-		// call per article for a version. Today's list says which article to link to.
+		// call per article for a version. Today's list, the one of the table of contents, says
+		// which article to link to.
 		const [at, now] = await Promise.all([
 			unwrap(
 				api.GET('/api/instruments/{bwb_id}/articles/at/{at_date}', {
@@ -114,7 +114,7 @@ async function loadPage(
 					signal
 				})
 			),
-			articlesNow(bwb)
+			lawArticleList(bwb).then((r) => r.items)
 		]);
 		return {
 			total: at.total,
@@ -153,7 +153,11 @@ async function loadPage(
 						])
 					)
 			)
-			.catch(() => new Map<string, { text: string | null; parts: Part[] | null }>())
+			.catch((e) => {
+				// Without them each article asks its text alone once it scrolls into view.
+				report('Teksten van vandaag', e);
+				return new Map<string, { text: string | null; parts: Part[] | null }>();
+			})
 	]);
 	return {
 		total: r.total,
@@ -175,23 +179,6 @@ async function loadPage(
 			};
 		})
 	};
-}
-
-// The articles of today, for an earlier day only which article to link to, once per law.
-const todayList = new Map<string, Promise<Schema<'InstrumentArticleNodeDTO'>[]>>();
-onForget(() => todayList.clear());
-function articlesNow(bwb: string) {
-	let list = todayList.get(bwb);
-	if (!list) {
-		list = unwrap(
-			api.GET('/api/instruments/{bwb_id}/articles', {
-				params: { path: { bwb_id: bwb }, query: { text_preview_chars: 0, limit: 2000 } }
-			})
-		).then((r) => r.items);
-		list.catch(() => todayList.delete(bwb));
-		todayList.set(bwb, list);
-	}
-	return list;
 }
 
 /** Every article of the law, where the list starts at a division: the count it pages to. */
@@ -227,8 +214,8 @@ export function createLawList(onChange: (list: LawList) => void, today: string) 
 	 */
 	function open(bwb: string, day: string | null, anchor: string | null) {
 		current?.controller.abort();
-		const asked = (current = { bwb, day, controller: new AbortController() });
-		const { signal } = asked.controller;
+		current = { bwb, day, controller: new AbortController() };
+		const { signal } = current.controller;
 		set({ ...EMPTY_LIST, firstVersionFrom: list.firstVersionFrom, total: list.total });
 		const division =
 			anchor && !withoutDivision.has(divisionKey(bwb, day, anchor)) ? anchor : undefined;
@@ -264,77 +251,88 @@ export function createLawList(onChange: (list: LawList) => void, today: string) 
 			});
 	}
 
+	/** What asks the page that failed again. */
+	let retryPage: (() => void) | null = null;
+
+	/**
+	 * Pages on to one side with the signal of the list open now: a page that comes after
+	 * another list opened changes nothing, and a page that fails leaves the articles shown
+	 * and says so at its control, with what asks it again.
+	 */
+	async function turn(
+		richting: Richting,
+		again: () => void,
+		work: (asked: { bwb: string; day: string | null }, signal: AbortSignal) => Promise<void>
+	) {
+		if (list.status !== 'ready' || !current) return;
+		const asked = current;
+		const { signal } = asked.controller;
+		set({ status: richting === 'vorige' ? 'loading-before' : 'loading-more', pageFailure: null });
+		try {
+			await work(asked, signal);
+			if (!signal.aborted) set({ status: 'ready' });
+		} catch (e) {
+			if (signal.aborted) return;
+			report('Bladeren in de wet', e);
+			retryPage = again;
+			set({ status: 'ready', pageFailure: { richting, error: e } });
+		}
+	}
+
 	/**
 	 * The next page, or every page up to the `upTo`th article of the law, two requests at a
 	 * time; after a division the list of the whole law reads on.
 	 */
-	async function loadMore(upTo = 0) {
-		if (list.status !== 'ready' || !current) return;
-		const asked = current;
-		const offsets = volgendeBladzijden(
-			list.start + list.articles.length,
-			upTo,
-			list.total,
-			PAGE_SIZE
-		);
-		set({ status: 'loading-more' });
-		try {
-			const pages: Row[][] = [];
-			for (let i = 0; i < offsets.length; i += 2) {
-				const batch = await Promise.all(
-					offsets
-						.slice(i, i + 2)
-						.map((o) => loadPage(asked.bwb, asked.day, today, o).then((r) => r.items))
-				);
-				pages.push(...batch);
+	const loadMore = (upTo = 0) =>
+		turn(
+			'volgende',
+			() => void loadMore(upTo),
+			async ({ bwb, day }, signal) => {
+				const from = list.start + list.articles.length;
+				const offsets = volgendeBladzijden(from, upTo, list.total, PAGE_SIZE);
+				const pages: Row[][] = [];
+				for (let i = 0; i < offsets.length; i += 2) {
+					const batch = await Promise.all(
+						offsets
+							.slice(i, i + 2)
+							.map((o) => loadPage(bwb, day, today, o, signal).then((r) => r.items))
+					);
+					pages.push(...batch);
+				}
+				if (!signal.aborted)
+					set({ articles: uniqueBy([...list.articles, ...pages.flat()], (a) => a.id) });
 			}
-			if (asked === current)
-				set({ articles: uniqueBy([...list.articles, ...pages.flat()], (a) => a.id) });
-		} catch {
-			// The articles already shown stay; the button remains for another attempt.
-		}
-		set({ status: 'ready' });
-	}
+		);
 
 	/**
 	 * The page before the first article shown, above it. `keep` is called right before it
 	 * goes in and gives what puts the article the reader looks at back in place after.
 	 */
-	async function loadPrevious(keep?: () => () => void) {
-		if (list.status !== 'ready' || list.start <= 0 || !current) return;
-		const asked = current;
-		const { offset, limit } = vorigeBladzijde(list.start, PAGE_SIZE);
-		set({ status: 'loading-before' });
-		try {
-			const before = await loadPage(
-				asked.bwb,
-				asked.day,
-				today,
-				offset,
-				undefined,
-				undefined,
-				limit
-			);
-			if (asked === current) {
-				const back = keep?.();
-				set({
-					articles: uniqueBy([...before.items, ...list.articles], (a) => a.id),
-					start: offset
-				});
-				await tick();
-				back?.();
-			}
-		} catch {
-			// The articles already shown stay; the button remains for another attempt.
-		}
-		set({ status: 'ready' });
-	}
+	const loadPrevious = (keep?: () => () => void): Promise<void> =>
+		list.start <= 0
+			? Promise.resolve()
+			: turn(
+					'vorige',
+					() => void loadPrevious(keep),
+					async ({ bwb, day }, signal) => {
+						const { offset, limit } = vorigeBladzijde(list.start, PAGE_SIZE);
+						const before = await loadPage(bwb, day, today, offset, signal, undefined, limit);
+						if (signal.aborted) return;
+						const back = keep?.();
+						set({
+							articles: uniqueBy([...before.items, ...list.articles], (a) => a.id),
+							start: offset
+						});
+						await tick();
+						back?.();
+					}
+				);
 
 	/**
 	 * Loads the pages up to a place. Today's list of the law says on which page it stands, so
 	 * those pages come at once; for an earlier day the next page, until the place is there. A
 	 * place before the first article shown reads the list from its start again. False where
-	 * the law has no such place.
+	 * the law has no such place; a list that did not come is a failed page, not that.
 	 */
 	async function reach(anchor: string): Promise<boolean> {
 		if (!current) return false;
@@ -350,9 +348,16 @@ export function createLawList(onChange: (list: LawList) => void, today: string) 
 			await loadMore();
 			return true;
 		}
-		const index = await lawArticleList(bwb)
-			.then((r) => plekVan(r.items, anchor))
-			.catch(() => -1);
+		let index: number;
+		try {
+			index = plekVan((await lawArticleList(bwb)).items, anchor);
+		} catch (e) {
+			if (asked !== current) return true;
+			report('Plek in de wet', e);
+			retryPage = () => void reach(anchor);
+			set({ pageFailure: { richting: 'volgende', error: e } });
+			return true;
+		}
 		if (asked !== current) return true;
 		if (index < 0) return false;
 		if (index < list.start) open(bwb, null, null);
@@ -371,8 +376,8 @@ export function createLawList(onChange: (list: LawList) => void, today: string) 
 			opened !== divisionKey(bwb, day, anchor),
 		/** Asks again what failed: the list itself, or the page that did not come. */
 		retry() {
-			if (!current) return;
-			if (list.status === 'error') open(current.bwb, current.day, null);
+			if (list.status === 'error' && current) open(current.bwb, current.day, null);
+			else if (list.pageFailure) retryPage?.();
 		},
 		stop() {
 			current?.controller.abort();
