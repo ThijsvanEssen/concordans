@@ -1166,3 +1166,108 @@ describe('names, not keys', () => {
 		expect(zonder).toEqual([]);
 	});
 });
+
+// A failure is handled where its cause is known, or passed on: never swallowed into an
+// empty state ($lib/api/errors.ts, $lib/util/load.svelte.ts, LoadState). Code-eenvoud F01.
+describe('errors that are not swallowed', () => {
+	const QUIET = String.raw`(?:\s*(?:\/\/[^\n]*|\/\*[\s\S]*?\*\/))*\s*`;
+	const FALLBACK = String.raw`(?:null|undefined|false|true|-?\d+|''|\[\](?:\s+as\s+[\w.<>[\]]+)?|\(\{\s*\}\)|\{${QUIET}\})`;
+	/** `.catch(() => null | [] | {} | …)` and a `catch {}` with nothing but a comment in it. */
+	const SWALLOWED = new RegExp(
+		String.raw`\.catch\(\s*(?:\(\s*\w*\s*\)|\w+)\s*=>\s*${FALLBACK}\s*\)|\bcatch\s*(?:\(\s*\w*\s*\))?\s*\{${QUIET}\}`,
+		'g'
+	);
+	const swallowed = (text: string) => (text.match(SWALLOWED) ?? []).length;
+
+	it('finds what it guards against, and not a handled failure', () => {
+		const found = [
+			'get().catch(() => null)',
+			'get().catch(() => [])',
+			'get().catch(() => {})',
+			'get().catch((e) => [] as Lid[])',
+			'get().catch(() => {\n\t// stil\n})',
+			'try { a(); } catch {}',
+			'try { a(); } catch (e) { /* stil */ }'
+		];
+		for (const code of found) expect(swallowed(code), code).toBe(1);
+		const handled = [
+			"get().catch(ignore('leesbaar'))",
+			"get().catch((e) => report('Verbonden', e))",
+			'get().catch((e) => { request = null; throw e; })',
+			'try { a(); } catch (e) { if (!isNotFound(e)) throw e; }'
+		];
+		for (const code of handled) expect(swallowed(code), code).toBe(0);
+	});
+
+	it('swallows a failure nowhere but in the named places, whose counts only go down', () => {
+		// Each count is what the file has now: a package that handles one lowers it, and an
+		// entry at 0 comes out. A new file is never added.
+		const places: Record<string, number> = {
+			// A request whose failure becomes an empty state, a 0 or "niet in de gegevens": the
+			// area packages turn each into ifExists, report, ignore or load with LoadState.
+			'lib/api/articles.ts': 3,
+			'lib/api/instrument-cache.ts': 2,
+			'lib/bron/behoort.ts': 5,
+			'lib/bron/leesbaar.ts': 7,
+			'lib/bron/names.svelte.ts': 2,
+			'lib/bron/preview.ts': 5,
+			'lib/components/actueel/wetsnetwerk.ts': 2,
+			'lib/components/explore/IndexView.svelte': 8,
+			'lib/components/explore/WholeLawReader.svelte': 7,
+			'lib/components/explore/index/IndexOverzicht.svelte': 1,
+			'lib/components/explore/partijkleuren.svelte.ts': 1,
+			'lib/components/explore/readers/ActivityReader.svelte': 2,
+			'lib/components/explore/readers/ArticleReader.svelte': 4,
+			'lib/components/explore/readers/BewindspersoonKop.svelte': 2,
+			'lib/components/explore/readers/CommitmentReader.svelte': 2,
+			'lib/components/explore/readers/DecisionReader.svelte': 2,
+			'lib/components/explore/readers/DocumentReader.svelte': 1,
+			'lib/components/explore/readers/DossierReader.svelte': 2,
+			'lib/components/explore/readers/FactionReader.svelte': 1,
+			'lib/components/explore/readers/FallbackReader.svelte': 1,
+			'lib/components/explore/readers/JudgmentReader.svelte': 2,
+			'lib/components/explore/readers/KabinetZetels.svelte': 1,
+			'lib/components/explore/readers/KamerZetels.svelte': 1,
+			'lib/components/explore/readers/MemberReader.svelte': 2,
+			'lib/components/graph/GraphCitePanel.svelte': 1,
+			'lib/components/layout/SiteFooter.svelte': 1,
+			'lib/components/open/PostOpen.svelte': 2,
+			'lib/components/parliamentary/BewindspersoonOverzicht.svelte': 3,
+			'lib/components/parliamentary/StemmingUitslag.svelte': 1,
+			'lib/components/parliamentary/data.ts': 1,
+			'lib/graph/store/expansion.ts': 1,
+			'lib/map/MapRegelingen.svelte': 2,
+			'lib/search/Search.svelte': 1,
+			'lib/search/resolve-query.ts': 5,
+			'lib/verbonden/dossier-hub.ts': 5,
+			'lib/verbonden/explanatory-documents.ts': 1,
+			'lib/verbonden/loaders.ts': 9,
+			'lib/verbonden/proposed-text.ts': 1,
+			'lib/verbonden/source.ts': 3,
+			'routes/(main)/+page.svelte': 1,
+			'routes/(main)/actueel/+page.svelte': 4,
+			'routes/(main)/onderwerpen/+page.svelte': 3,
+			'routes/(main)/onderwerpen/overzicht/+page.svelte': 11,
+			'routes/+error.svelte': 1,
+			'routes/explore/+page.svelte': 14,
+			// A throw that is no failure: a popover already in that state, a pointer capture
+			// refused, graphology on an edge or node already there or gone, storage that refuses
+			// (one storage helper, F32). Each gets a handler that says so.
+			'lib/bron/BronLink.svelte': 2,
+			'lib/bron/OverwegingKaart.svelte': 2,
+			'lib/components/articles/GrondslagFormule.svelte': 2,
+			'lib/components/explore/index/pannable.ts': 1,
+			'lib/components/graph/GraphCanvas.svelte': 4,
+			'lib/components/graph/GraphView.svelte': 5,
+			'lib/components/ui/dicht.svelte.ts': 1,
+			'lib/map/map.svelte.ts': 1,
+			'lib/netwerk/NetwerkPanel.svelte': 1,
+			'lib/onderwerpen/onderwerpen.ts': 1,
+			'lib/onderwerpen/strekking.ts': 1
+		};
+		const found = Object.fromEntries(
+			sources.map(({ path, text }) => [path, swallowed(text)]).filter(([, n]) => n)
+		);
+		expect(found).toEqual(places);
+	});
+});
