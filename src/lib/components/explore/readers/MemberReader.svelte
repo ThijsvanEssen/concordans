@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { bewaarItem } from '$lib/map/map';
 	import { fractieNaam, naamVan } from '$lib/bron/menselijk';
-	import { bronLabel } from '$lib/vocabulary';
 	import ReaderHead from './ReaderHead.svelte';
 	import { formatCount } from '$lib/text/getal';
 	import { vandaag } from '$lib/text/datum';
@@ -243,13 +243,10 @@
 					collection="members"
 					title={titel}
 					acties={{
-						bewaar: {
-							id: node.id,
-							at: '',
+						bewaar: bewaarItem(node.id, {
 							kort: titel,
-							voluit: m.party ? `${titel} (${m.party})` : titel,
-							groep: bronLabel('members')
-						}
+							voluit: m.party ? `${titel} (${m.party})` : titel
+						})
 					}}
 				>
 					{#snippet soort()}

@@ -8,22 +8,31 @@ const lid3: MapItem = {
 	at: 'lid-3',
 	kort: 'art. 21 lid 3 Cbw',
 	groep: cbw,
+	groupKey: 'wet:bwbr0052872',
 	notitie: 'De kern.'
 };
 const lid1: MapItem = { ...lid3, at: 'lid-1', kort: 'art. 21 lid 1 Cbw', notitie: 'Begin.' };
-const art22: MapItem = { id: 'articles/bwbr0052872_22', at: '', kort: 'art. 22 Cbw', groep: cbw };
+const art22: MapItem = {
+	id: 'articles/bwbr0052872_22',
+	at: '',
+	kort: 'art. 22 Cbw',
+	groep: cbw,
+	groupKey: 'wet:bwbr0052872'
+};
 const ro: MapItem = {
 	id: 'judgments/ecli_nl_hr_2019_2006',
 	at: 'rov-5.7.1',
 	kort: 'HR 2019:2006, r.o. 5.7.1',
 	groep: 'HR 20 december 2019 (Urgenda)',
+	groupKey: 'judgments/ecli_nl_hr_2019_2006',
 	notitie: 'Zorgplicht.'
 };
 const stuk: MapItem = {
 	id: 'documents/x',
 	at: '',
 	kort: 'Kamerstukken II 36764, 3',
-	groep: 'Dossier 36764'
+	groep: 'Dossier 36764',
+	groupKey: 'dossier:36764'
 };
 
 const map = (items: MapItem[], extra: object = {}) => ({

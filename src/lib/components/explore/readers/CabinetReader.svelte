@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bewaarItem } from '$lib/map/map';
 	import ReaderHead from './ReaderHead.svelte';
 	import { getCabinet } from '$lib/api/records';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -13,7 +14,6 @@
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import { indexHref } from '$lib/bron/href';
-	import { bronLabel } from '$lib/vocabulary';
 	import { achtergrondVan } from '../partijkleuren.svelte';
 	import { formatLongDate, textProp } from './_shared';
 	import { formatCount } from '$lib/text/getal';
@@ -74,13 +74,7 @@
 			collection="cabinets"
 			title={naam}
 			acties={{
-				bewaar: {
-					id: node.id,
-					at: '',
-					kort: naam,
-					voluit: naam,
-					groep: bronLabel('cabinets')
-				}
+				bewaar: bewaarItem(node.id, { kort: naam, voluit: naam })
 			}}
 		/>
 		{#if view.kind === 'loading'}

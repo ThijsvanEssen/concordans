@@ -2,6 +2,7 @@
 // then the ECLI. HR 19 juli 2019, ECLI:NL:HR:2019:1278; Rb. Den Haag 6 juli 2026, …;
 // Hof Amsterdam 22 september 2026, ….
 import { langeDatum } from './datum';
+import { bewaarItem, type MapItem } from '$lib/map/map';
 
 /** `2019-07-19` as `19 juli 2019`; null for anything else. */
 const longDate = (day: string | null | undefined): string | null => langeDatum(day) || null;
@@ -153,7 +154,7 @@ export function overwegingCitaat(
 	kort: string;
 	voluit: string;
 	link: string;
-	bewaar: { id: string; at: string; kort: string; voluit: string; groep: string } | null;
+	bewaar: MapItem | null;
 } | null {
 	const kop = uitspraakKop(j);
 	if (!kop || !j.ecli) return null;
@@ -165,7 +166,7 @@ export function overwegingCitaat(
 		voluit,
 		link,
 		bewaar: bronId
-			? { id: bronId, at: anker, kort, voluit, groep: zaakNaam(kop.short, j.names) }
+			? bewaarItem(bronId, { at: anker, kort, voluit }, { groep: zaakNaam(kop.short, j.names) })
 			: null
 	};
 }

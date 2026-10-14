@@ -430,6 +430,13 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
+	it('keeps a bron for the map through bewaarItem, its group from the bron ($lib/map/map.ts)', () => {
+		// A stuk kept from a row and from its reader is one group (F13): no item built by hand.
+		const metDeHand = (t: string) =>
+			/\bat: ''/.test(t) || /\{[^{}]*\bkort\b[^{}]*\bgroep:[^{}]*\}/.test(t);
+		expect(offenders(metDeHand, ['lib/map/map.ts'])).toEqual([]);
+	});
+
 	it('heads every reader with ReaderHead, Bewaar in its place (Thijs, 10 Oct: gelijke pagina’s)', () => {
 		// The head of a reader is one form: kind or place, title, status, and the actions at its
 		// right (KopActies through ReaderHead, Bewaar always). No reader lays out actions itself.
@@ -1023,7 +1030,7 @@ describe('canvas cards and halls', () => {
 			const tekst = /<ArticleText\b[\s\S]*?\/>/.exec(t)![0];
 			expect(tekst).toMatch(/\{citation\}/);
 			expect(tekst).toMatch(
-				/bewaar=\{[^}]*citation\s*\?\s*\{\s*id: [\w.]+, groep: citation\.citationTitle \}/
+				/bewaar=\{[^}]*citation\s*\?\s*\{\s*id: [\w.]+, groep: citation\.citationTitle, wet: [\w.]+ \}/
 			);
 		}
 		// An overweging: one citation and one Bewaar (overwegingCitaat), in the reader's menu; a

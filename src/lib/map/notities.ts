@@ -3,7 +3,7 @@
 // (a law, a dossier) under the group's name; the map's own note under the map's name. All
 // from this browser, so a hover costs no request.
 import { anchorLabel } from '$lib/text/qualifier';
-import { groepSleutel, type Map } from './map';
+import type { Map } from './map';
 
 export type NodeNotitie = {
 	/** Where it belongs: a place in the bron, a group, the map; null for the whole bron. */
@@ -29,7 +29,7 @@ export function notitiesPerBron(
 		});
 		const gezien = new Set<string>();
 		for (const i of items) {
-			const sleutel = groepSleutel(i);
+			const sleutel = i.groupKey;
 			const tekst = m.groepNotities?.[sleutel]?.trim();
 			if (!tekst || gezien.has(sleutel)) continue;
 			gezien.add(sleutel);

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bewaarItem } from '$lib/map/map';
 	import { terPlekke } from '$lib/actions/klik';
 	import { onControl } from '$lib/actions/outside';
 	// One row of the index. A click anywhere in the row, the title too, opens its detail
@@ -14,7 +15,7 @@
 	import type { Snippet } from 'svelte';
 	import { goto } from '$app/navigation';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
-	import { bronLabel, parseNodeId } from '$lib/vocabulary';
+	import { parseNodeId } from '$lib/vocabulary';
 
 	let {
 		title,
@@ -29,7 +30,9 @@
 		body,
 		aside,
 		detail,
-		bewaar = true
+		bewaar = true,
+		dossier = null,
+		wet = null
 	}: {
 		title: string;
 		/** Without a link the title is text, and the whole row is the toggle. */
@@ -54,6 +57,10 @@
 		detail?: Snippet;
 		/** Bewaar on the row (RijActies, as in Verbonden); not where the list is the map itself. */
 		bewaar?: boolean;
+		/** The dossier the row's Kamerstuk or vote is in, for its group in a map. */
+		dossier?: string | null;
+		/** The law the row stands for (BWB id or CELEX), for its group in a map. */
+		wet?: string | null;
 	} = $props();
 
 	const uid = $props.id();
@@ -61,11 +68,11 @@
 	// Without a toggle the row has nothing to open: a click on it goes to the bron.
 	const direct = $derived((acties || !onToggle) && !!href);
 
-	// The row's Bewaar: the bron it stands for, by its title, under its kind.
+	// The row's Bewaar: the bron it stands for, by its title, in its group (map.ts).
 	const item = $derived.by(() => {
 		const doel = bron ? parseNodeId(bron) : null;
 		return bewaar && bron && doel
-			? { id: bron, at: '', kort: title, voluit: title, groep: bronLabel(doel.collection) }
+			? bewaarItem(bron, { kort: title, voluit: title }, { dossier, wet })
 			: null;
 	});
 

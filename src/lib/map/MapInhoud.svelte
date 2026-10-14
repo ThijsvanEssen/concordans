@@ -187,7 +187,7 @@
 				alleen={ruim ? null : item.at || null}
 				ankers={false}
 				{citation}
-				bewaar={citation ? { id: item.id, groep: citation.citationTitle } : null}
+				bewaar={citation ? { id: item.id, groep: citation.citationTitle, wet: inhoud.d.bwb } : null}
 				adres={a.path || href}
 			/>
 		</div>

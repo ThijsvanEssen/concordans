@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
@@ -135,14 +136,15 @@
 				collection="dossiers"
 				title={d.short_title ?? d.title ?? d.number}
 				acties={{
-					bewaar: {
-						id: node.id,
-						at: '',
-						kort: `Kamerstukken ${d.number}`,
-						voluit: `Kamerstukken ${d.number}${d.title ? ` (${d.short_title ?? d.title})` : ''}`,
-						// One group per dossier in a map, as a Kamerstuk of it is grouped (map.ts).
-						groep: dossierLabel(d)
-					}
+					// One group per dossier in a map, as a Kamerstuk of it is grouped (map.ts).
+					bewaar: bewaarItem(
+						node.id,
+						{
+							kort: `Kamerstukken ${d.number}`,
+							voluit: `Kamerstukken ${d.number}${d.title ? ` (${d.short_title ?? d.title})` : ''}`
+						},
+						{ groep: dossierLabel(d), dossier: d.number }
+					)
 				}}
 			>
 				{#snippet soort()}
