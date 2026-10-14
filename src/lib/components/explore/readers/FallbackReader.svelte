@@ -1,10 +1,10 @@
 <script lang="ts">
+	import { bewaarItem } from '$lib/map/map';
 	import ReaderHead from './ReaderHead.svelte';
 	// Reader for the kinds without a text of their own (toezegging, zaak, ...): what the
 	// bron is, when, and where the source keeps it. Its verbindingen are in the panel.
 	import ReaderFrame from './ReaderFrame.svelte';
 	import type { GraphNode } from '$lib/graph/types';
-	import { bronLabel } from '$lib/vocabulary';
 	import { formatLongDate, textProp } from './_shared';
 	import { eigenSoort, menselijkeNaam } from '$lib/bron/menselijk';
 	import { getInstrumentDetail } from '$lib/api/instrument-cache';
@@ -58,13 +58,7 @@
 			collection={node.collection}
 			{title}
 			acties={{
-				bewaar: {
-					id: node.id,
-					at: '',
-					kort: title,
-					voluit: title,
-					groep: bronLabel(node.collection)
-				}
+				bewaar: bewaarItem(node.id, { kort: title, voluit: title })
 			}}
 		>
 			{#snippet status()}

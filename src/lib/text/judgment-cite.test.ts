@@ -111,7 +111,8 @@ describe('overwegingCitaat', () => {
 				at: 'rov-5.7.1',
 				kort: 'HR 20 december 2019, r.o. 5.7.1',
 				voluit: 'HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1',
-				groep: 'HR 20 december 2019 (Urgenda)'
+				groep: 'HR 20 december 2019 (Urgenda)',
+				groupKey: 'judgments/k'
 			}
 		});
 	});

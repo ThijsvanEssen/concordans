@@ -3,7 +3,8 @@
 // in this browser; a link (?map=) carries it to someone else, a list of citations to a memo,
 // a CSV to a spreadsheet. It replaces Verbonden's Verzamel.
 import { netwerkParams } from '$lib/netwerk/netwerk';
-import { parseNodeId } from '$lib/vocabulary';
+import { dossierLabel } from '$lib/bron/dossier-naam';
+import { bronLabel, parseNodeId } from '$lib/vocabulary';
 
 /** One thing kept: a bron, or a place in it (`lid-2`, `rov-5.7.1`), with how it is cited. */
 export type MapItem = {
@@ -17,6 +18,8 @@ export type MapItem = {
 	voluit?: string | null;
 	/** What it belongs to, for its group: a law, a dossier, a judgment's case. */
 	groep: string;
+	/** Its group's key, from the bron (`bewaarItem`): `wet:bwbr0005289`, `dossier:36889`. */
+	groupKey: string;
 	/** The reader's own note, shown in italics under the citation (step 2). */
 	notitie?: string | null;
 };
@@ -36,7 +39,7 @@ export type Map = {
 	groepNotities?: GroepNotities;
 };
 
-/** Notes per group, by `groepSleutel`. */
+/** Notes per group, by the group's key. */
 export type GroepNotities = Record<string, string>;
 
 /** A map from a link: its name, items, order and note as the link gives them. */
@@ -51,24 +54,53 @@ export type Gedeeld = {
 /** An item's key: the bron and its place. */
 export const sleutelVan = (i: Pick<MapItem, 'id' | 'at'>) => (i.at ? `${i.id}#${i.at}` : i.id);
 
+/** A dossier's number as a key: `36600-XV` for `36600 XV`, `36600_xv` or `36600-XV`. */
+const dossierSleutel = (nr: string) =>
+	`dossier:${nr
+		.trim()
+		.replace(/[\s_]+/, '-')
+		.toUpperCase()}`;
+
 /**
- * A group's key, from its bron rather than its name, so a note stays with its law when the
- * law's name loads later: an article by its law (`wet:bwbr0052872`), a Kamerstuk by its
- * dossier (`dossier:36764`), a judgment by itself; the rest by the group's name.
+ * What a bron belongs to, as the reader knows it from the API: the law of an article (its BWB
+ * id or CELEX), the dossier of a Kamerstuk or a vote, and the group's name where it has one.
  */
-export function groepSleutel(i: Pick<MapItem, 'id' | 'groep'>): string {
-	const [collectie, key = ''] = i.id.split('/');
-	if (collectie === 'articles' && /^bwbr\d+_/i.test(key))
-		return `wet:${key.slice(0, key.indexOf('_')).toLowerCase()}`;
-	if (collectie === 'judgments') return i.id;
-	// A dossier by its number, kept whole or by one of its Kamerstukken: one group.
-	if (collectie === 'dossiers') {
-		const nr = /^(\d{5}(?:[-_][a-z0-9]+)?)/i.exec(key)?.[1];
-		if (nr) return `dossier:${nr.replace('_', '-').toUpperCase()}`;
-	}
-	const dossier = /\b(\d{5}(?:-[A-Z0-9]+)?)\b/.exec(i.groep)?.[1];
-	if (collectie === 'documents' && dossier) return `dossier:${dossier}`;
-	return `groep:${i.groep}`;
+export type BewaarContext = { groep?: string | null; dossier?: string | null; wet?: string | null };
+
+/**
+ * A bron as the map keeps it: its citations as the reader gives them, its group from the
+ * bron, never from a name. Its group's key, so a note stays with its law when the law's name
+ * loads later: an article or a law by its law (`wet:bwbr0052872`), a Kamerstuk, a vote or a
+ * dossier by its dossier (`dossier:36764`), a judgment by itself; the rest by its group's name,
+ * a person under Kamerlid.
+ */
+export function bewaarItem(
+	id: string,
+	cite: { kort: string; voluit?: string | null; at?: string | null },
+	context: BewaarContext = {}
+): MapItem {
+	const collectie = parseNodeId(id)?.collection;
+	const wet = context.wet?.trim().toLowerCase() || null;
+	const dossier = context.dossier?.trim() || null;
+	const groep =
+		(collectie === 'members' ? bronLabel('members') : context.groep?.trim()) ||
+		(dossier ? dossierLabel({ number: dossier }) : null) ||
+		(collectie ? bronLabel(collectie) : cite.kort);
+	const groupKey = wet
+		? `wet:${wet}`
+		: dossier
+			? dossierSleutel(dossier)
+			: collectie === 'judgments'
+				? id
+				: `groep:${groep}`;
+	return {
+		id,
+		at: cite.at ?? '',
+		kort: cite.kort,
+		...(cite.voluit ? { voluit: cite.voluit } : {}),
+		groep,
+		groupKey
+	};
 }
 
 /** The groups in the order their first item was kept, each with its items in that order. */
@@ -79,10 +111,7 @@ export function groepen(
 	// was kept ("Kamerstuk 36764", "Kamerstuk 36764 Cyberbeveiligingswet"); its name the one
 	// that says the most.
 	const m = new Map<string, MapItem[]>();
-	for (const i of items) {
-		const k = groepSleutel(i);
-		m.set(k, [...(m.get(k) ?? []), i]);
-	}
+	for (const i of items) m.set(i.groupKey, [...(m.get(i.groupKey) ?? []), i]);
 	return [...m].map(([sleutel, items]) => ({
 		groep: items.map((i) => i.groep).reduce((a, b) => (b.length > a.length ? b : a)),
 		sleutel,
@@ -91,9 +120,10 @@ export function groepen(
 }
 
 // ── The link ────────────────────────────────────────────────────────────────
-// `?map=` holds the items one after another, each its five fields: the bron, its place,
-// its short citation, its group and its note, so a map opens elsewhere without asking the
-// API. Its name goes beside it (`mapnaam=`).
+// `?map=` holds the items one after another, each its six fields: the bron, its place, its
+// short citation, its group, its note (empty where none) and its group's key, so a map opens
+// elsewhere without asking the API; an item without its six fields is left out, with a
+// warning. Its name goes beside it (`mapnaam=`).
 // Fields are separated by `~`, items by `;`; only those two and `%` are escaped here, the
 // address encodes the rest once.
 const veld = (s: string) => s.replaceAll('%', '%25').replaceAll('~', '%7E').replaceAll(';', '%3B');
@@ -102,7 +132,7 @@ const terug = (s: string) => s.replaceAll('%7E', '~').replaceAll('%3B', ';').rep
 export function naarParam(items: readonly MapItem[]): string {
 	return items
 		.map((i) => {
-			const velden = [i.id, i.at, i.kort, i.groep, ...(i.notitie ? [i.notitie] : [])];
+			const velden = [i.id, i.at, i.kort, i.groep, i.notitie ?? '', i.groupKey];
 			return velden.map(veld).join('~');
 		})
 		.join(';');
@@ -110,12 +140,21 @@ export function naarParam(items: readonly MapItem[]): string {
 
 export function uitParam(v: string | null): MapItem[] {
 	if (!v) return [];
-	return v.split(';').flatMap((deel) => {
-		const [id, at, kort, groep, notitie] = deel.split('~').map((x) => terug(x ?? ''));
-		return id && /^[a-z_]+\/[\w.:-]+$/i.test(id) && kort
-			? [{ id, at: at ?? '', kort, groep: groep || kort, ...(notitie ? { notitie } : {}) }]
+	const delen = v.split(';');
+	const items = delen.flatMap((deel) => {
+		const [id, at, kort, groep, notitie, groupKey] = deel.split('~').map(terug);
+		return id && /^[a-z_]+\/[\w.:-]+$/i.test(id) && kort && groep && groupKey
+			? [{ id, at: at ?? '', kort, groep, ...(notitie ? { notitie } : {}), groupKey }]
 			: [];
 	});
+	weggelaten('de link', delen.length - items.length);
+	return items;
+}
+
+/** Items a link or this browser holds in an older or broken form are left out, and said. */
+export function weggelaten(waar: string, n: number) {
+	if (n > 0)
+		console.warn(`Gemarkeerd: ${n} item(s) uit ${waar} overgeslagen (oude of onvolledige vorm).`);
 }
 
 /** The address params of a map: its items, its name, its order where its own, its note. */
@@ -135,7 +174,7 @@ export function naarGroepParam(
 	notities: GroepNotities | null | undefined,
 	items: readonly MapItem[]
 ): string {
-	const houdt = new Set(items.map(groepSleutel));
+	const houdt = new Set(items.map((i) => i.groupKey));
 	return Object.entries(notities ?? {})
 		.filter(([k, v]) => houdt.has(k) && v.trim())
 		.map(([k, v]) => `${veld(k)}~${veld(v.trim())}`)
@@ -255,10 +294,10 @@ export function verschuif(
 ): MapItem[] {
 	const i = items.findIndex((x) => sleutelVan(x) === sleutel);
 	if (i < 0) return [...items];
-	const groep = items[i].groep;
+	const groep = items[i].groupKey;
 	let j = i + richting;
 	if (volgorde === 'groep')
-		while (j >= 0 && j < items.length && items[j].groep !== groep) j += richting;
+		while (j >= 0 && j < items.length && items[j].groupKey !== groep) j += richting;
 	if (j < 0 || j >= items.length) return [...items];
 	const uit = [...items];
 	[uit[i], uit[j]] = [uit[j], uit[i]];

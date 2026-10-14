@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bewaarItem } from '$lib/map/map';
 	import { bevindingen, hoofdletter, strekking } from './uitkomst';
 	import { keyEcli } from '$lib/bron/leesbaar';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
@@ -250,16 +251,18 @@
 			acties={{
 				// Bewaar follows the overweging chosen (#rov-5.7.1), else the whole judgment.
 				bewaar: selection
-					? {
-							id: selection.id,
-							at: ro && kop && j.ecli ? anchor! : '',
-							kort: ro && kop && j.ecli ? `${kop.short}, ${paragraphCite(j.ecli, ro)}` : naamKort,
-							voluit:
-								ro && kop && j.ecli
-									? `${kop.full}, ${paragraphCite(j.ecli, ro)}`
-									: (kop?.full ?? naamKort),
-							groep: zaakNaam(naamKort, j.names)
-						}
+					? bewaarItem(
+							selection.id,
+							{
+								at: ro && kop && j.ecli ? anchor! : '',
+								kort: ro && kop && j.ecli ? `${kop.short}, ${paragraphCite(j.ecli, ro)}` : naamKort,
+								voluit:
+									ro && kop && j.ecli
+										? `${kop.full}, ${paragraphCite(j.ecli, ro)}`
+										: (kop?.full ?? naamKort)
+							},
+							{ groep: zaakNaam(naamKort, j.names) }
+						)
 					: null,
 				wat: ro && kop ? `r.o. ${ro}` : '',
 				cite: kop ? citeItems({ kort: kop.short, voluit: kop.full }, permalink(page.url, '')) : [],

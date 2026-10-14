@@ -107,13 +107,10 @@ export async function aangevuld(r: Regeling): Promise<Regeling> {
 }
 
 /**
- * The law a group of a map stands for, as its BWB id: the law of its articles, or the law
- * kept whole. Null for a group of a dossier, a judgment or an act of the EU.
+ * The law a group of a map stands for, as its BWB id, from the group's key. Null for a group
+ * of a dossier, a judgment or an act of the EU.
  */
-export function wetVanGroep(items: readonly Pick<MapItem, 'id'>[]): string | null {
-	for (const i of items) {
-		const m = /^(?:articles\/(bwbr\d+)_|instruments\/(bwbr\d+)$)/i.exec(i.id);
-		if (m) return (m[1] ?? m[2]).toUpperCase();
-	}
-	return null;
+export function wetVanGroep(items: readonly Pick<MapItem, 'groupKey'>[]): string | null {
+	const wet = items.map((i) => i.groupKey).find((k) => k.startsWith('wet:bwbr'));
+	return wet ? wet.slice('wet:'.length).toUpperCase() : null;
 }

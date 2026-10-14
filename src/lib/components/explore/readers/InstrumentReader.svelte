@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bewaarItem } from '$lib/map/map';
 	// Reader for instruments: the articles of the whole regulation in natural order. A
 	// publication in the Staatsblad or Staatscourant has no articles of its own: it is
 	// shown by its dates, and the articles it changes are in the panel Verbonden.
@@ -27,7 +28,7 @@
 			title={titel}
 			place={[publicationName(publication)]}
 			acties={{
-				bewaar: { id: node.id, at: '', kort: titel, voluit: titel, groep: titel },
+				bewaar: bewaarItem(node.id, { kort: titel, voluit: titel }, { groep: titel }),
 				cite: citeItems({ kort: titel, voluit: titel }, permalink(page.url, '')),
 				naam: titel
 			}}

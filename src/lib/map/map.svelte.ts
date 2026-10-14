@@ -5,6 +5,7 @@ import {
 	samen,
 	sleutelVan,
 	verschuif,
+	weggelaten,
 	type Gedeeld,
 	type GroepNotities,
 	type Map,
@@ -40,7 +41,17 @@ const isItem = (i: unknown): i is MapItem =>
 	!!i &&
 	typeof (i as MapItem).id === 'string' &&
 	typeof (i as MapItem).kort === 'string' &&
-	typeof (i as MapItem).groep === 'string';
+	typeof (i as MapItem).groep === 'string' &&
+	typeof (i as MapItem).groupKey === 'string' &&
+	!!(i as MapItem).groupKey;
+
+/** The items kept in this browser that are whole; the rest left out, and said. */
+function heleItems(v: unknown): MapItem[] {
+	if (!Array.isArray(v)) return [];
+	const items = v.filter(isItem);
+	weggelaten('deze browser', v.length - items.length);
+	return items;
+}
 
 function lees(): Stand {
 	try {
@@ -49,7 +60,7 @@ function lees(): Stand {
 			const mappen: Map[] = raw.mappen.map((m: Map) => ({
 				id: String(m.id),
 				naam: String(m.naam || EERSTE),
-				items: Array.isArray(m.items) ? m.items.filter(isItem) : [],
+				items: heleItems(m.items),
 				volgorde: m.volgorde === 'eigen' ? 'eigen' : 'groep',
 				gewijzigd: String(m.gewijzigd || nu()),
 				notitie: typeof m.notitie === 'string' && m.notitie.trim() ? m.notitie : null,
@@ -60,7 +71,7 @@ function lees(): Stand {
 		}
 		// Step 1 kept one map: it is the first, with all it holds.
 		const oud = JSON.parse(localStorage.getItem(OUD) ?? '[]');
-		const eerste = { ...leeg(EERSTE), items: Array.isArray(oud) ? oud.filter(isItem) : [] };
+		const eerste = { ...leeg(EERSTE), items: heleItems(oud) };
 		return { mappen: [eerste], actief: eerste.id };
 	} catch {
 		const eerste = leeg(EERSTE);

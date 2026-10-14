@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bewaarItem } from '$lib/map/map';
 	import { opsomming } from '$lib/text/opsomming';
 	import ReaderHead from './ReaderHead.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
@@ -64,13 +65,10 @@
 			collection="committees"
 			title={name}
 			acties={{
-				bewaar: {
-					id: node.id,
-					at: '',
+				bewaar: bewaarItem(node.id, {
 					kort: abbreviation ?? name,
-					voluit: `${name}, ${chamberName(chamber)}`,
-					groep: bronLabel('committees')
-				}
+					voluit: `${name}, ${chamberName(chamber)}`
+				})
 			}}
 		>
 			{#snippet soort()}

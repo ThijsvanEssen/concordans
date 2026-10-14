@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bewaarItem } from '$lib/map/map';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { getDossierPapers, getExplainedBy, getExplanations } from '$lib/api/records';
 	import { uniqueBy } from '$lib/util/unique';
@@ -400,13 +401,11 @@
 		const plaats = deel && (deel.lid || deel.onderdelen?.length || deel.definitie) ? anchor! : '';
 		const f = plaats ? citeArticle({ ...citation, ...deel }) : forms;
 		return {
-			item: {
-				id: selection.id,
-				at: plaats,
-				kort: f.kort,
-				voluit: f.voluit,
-				groep: citation.citationTitle
-			},
+			item: bewaarItem(
+				selection.id,
+				{ at: plaats, kort: f.kort, voluit: f.voluit },
+				{ groep: citation.citationTitle, wet: bwbId }
+			),
 			wat: deel?.lid ? `lid ${deel.lid}` : ''
 		};
 	});
@@ -705,7 +704,7 @@
 					{lidHref}
 					{citation}
 					bewaar={selection && citation
-						? { id: selection.id, groep: citation.citationTitle }
+						? { id: selection.id, groep: citation.citationTitle, wet: bwbId }
 						: null}
 					{proposed}
 					{onCloseProposed}

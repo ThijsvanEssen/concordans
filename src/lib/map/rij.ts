@@ -1,6 +1,6 @@
 // A row of Verbonden as Gemarkeerd keeps it: its citation as Verzamel wrote it, its group per
 // law or dossier (an article under its law, a Kamerstuk under its dossier, a judgment as its
-// own group, so its overwegingen join it), the rest under its kind.
+// own group, so its overwegingen join it, a vote under its dossier), the rest under its kind.
 import { get } from 'svelte/store';
 import { focusOf } from '$lib/bron/href';
 import { instrumentMetaStore } from '$lib/api/instrument-cache';
@@ -9,7 +9,7 @@ import { rowsToText } from '$lib/verbonden/export';
 import { dossierNumbersOf, type Row } from '$lib/verbonden/rows';
 import { BRON_KIND_LABEL } from '$lib/verbonden/filter';
 import { dossierLabel } from '$lib/bron/dossier-naam';
-import type { MapItem } from './map';
+import { bewaarItem, type MapItem } from './map';
 
 export function groepVanRij(r: Row): string {
 	switch (r.ref.collection) {
@@ -20,7 +20,8 @@ export function groepVanRij(r: Row): string {
 			const uitTitel = /^(?:artikel|art\.)\s+\S+\s+(.+)$/i.exec(r.title)?.[1];
 			return m?.citationTitle ?? m?.shortTitle ?? uitTitel ?? bwb ?? BRON_KIND_LABEL[r.kind];
 		}
-		case 'documents': {
+		case 'documents':
+		case 'decisions': {
 			const nr = dossierNumbersOf(r.props)[0];
 			const p = (r.props ?? {}) as Record<string, unknown>;
 			const kort = typeof p.dossier_short_title === 'string' ? p.dossier_short_title : null;
@@ -37,5 +38,12 @@ export function groepVanRij(r: Row): string {
 export function itemVanRij(r: Row): MapItem | null {
 	const id = focusOf(r.ref);
 	if (!id || r.missing) return null;
-	return { id, at: r.at ?? '', kort: rowsToText([r]), groep: groepVanRij(r) };
+	const c = r.ref.collection;
+	const dossier = c === 'documents' || c === 'decisions' ? dossierNumbersOf(r.props)[0] : null;
+	const wet = c === 'articles' || c === 'instruments' ? lawIdOf(r.props) : null;
+	return bewaarItem(
+		id,
+		{ kort: rowsToText([r]), at: r.at },
+		{ groep: groepVanRij(r), dossier, wet }
+	);
 }

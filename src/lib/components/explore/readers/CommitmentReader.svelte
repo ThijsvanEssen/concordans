@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
 	import ReaderHead from './ReaderHead.svelte';
 	import { vandaag } from '$lib/text/datum';
@@ -12,7 +13,6 @@
 	import { indexHref } from '$lib/bron/href';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
-	import { bronLabel } from '$lib/vocabulary';
 	import {
 		OPEN_STATUS,
 		POST_LABEL,
@@ -93,13 +93,10 @@
 				collection="commitments"
 				title={tekst}
 				acties={{
-					bewaar: {
-						id: node.id,
-						at: '',
+					bewaar: bewaarItem(node.id, {
 						kort: c.number ? `Toezegging ${c.number}` : tekst,
-						voluit: c.number ? `Toezegging ${c.number}: ${tekst}` : tekst,
-						groep: bronLabel('commitments')
-					}
+						voluit: c.number ? `Toezegging ${c.number}: ${tekst}` : tekst
+					})
 				}}
 			>
 				<!-- Where it was made and where it was kept, in the Kamer's words (toezegging.ts):
