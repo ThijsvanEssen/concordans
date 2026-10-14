@@ -60,7 +60,7 @@ describe('an r.o. read in place', () => {
 			{ kind: 'prose', body: 'Daarom wordt het besluit vernietigd.', within: true },
 			{ kind: 'rov', num: '6', subTitle: null, body: 'Volgende.', id: 'rov-6' }
 		];
-		const u = { j: {} as Uitspraak['j'], items };
+		const u = { j: {} as Uitspraak['j'], items, noten: new Map() };
 		expect(tekstVanOverweging(u, 'rov-5')).toBe(
 			'Het beroep is gegrond. Daarom wordt het besluit vernietigd.'
 		);

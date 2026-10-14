@@ -7,7 +7,16 @@
 	// source of the edge, and the actions open at position, show in network, citeer.
 	import { bronHref } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { betrouwbaarheid, citeVerbinding, toontStatus, type Verbinding } from './verbinding';
+	import {
+		betrouwbaarheid,
+		citeVerbinding,
+		markeringVan,
+		toontStatus,
+		type Verbinding
+	} from './verbinding';
+	import { passageOf } from './rows';
+	import Aanhaling from './Aanhaling.svelte';
+	import { zetMarkering } from '$lib/bron/markering.svelte';
 
 	let {
 		verbinding,
@@ -28,16 +37,7 @@
 	const v = $derived(verbinding);
 	const trust = $derived(betrouwbaarheid(v.confidence, v.derived, v.reason));
 
-	const passage = $derived.by(() => {
-		if (!v.snippet) return null;
-		const i = v.match ? v.snippet.indexOf(v.match) : -1;
-		if (i < 0) return { before: v.snippet, mark: '', after: '' };
-		return {
-			before: v.snippet.slice(0, i),
-			mark: v.match!,
-			after: v.snippet.slice(i + v.match!.length)
-		};
-	});
+	const passage = $derived(passageOf(v));
 
 	const SOURCE_OF_EDGE: Partial<Record<string, string>> = {
 		judgments: 'tekst van de uitspraak',
@@ -107,9 +107,7 @@
 	</div>
 
 	{#if passage}
-		<p class="passage">
-			{passage.before}{#if passage.mark}<mark>{passage.mark}</mark>{/if}{passage.after}
-		</p>
+		<p class="passage"><Aanhaling {passage} /></p>
 	{/if}
 
 	<dl class="kv">
@@ -127,7 +125,12 @@
 	</dl>
 
 	<div class="actions">
-		<a class="btn is-primary" href={openHref} data-sveltekit-noscroll>{openLabel}</a>
+		<a
+			class="btn is-primary"
+			href={openHref}
+			data-sveltekit-noscroll
+			onclick={() => zetMarkering(markeringVan(v))}>{openLabel}</a
+		>
 		{#if onShowInNetwork}
 			<button type="button" class="btn" onclick={onShowInNetwork}>In netwerk</button>
 		{/if}
@@ -225,10 +228,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		line-height: 1.5;
-	}
-	.passage mark {
-		background: var(--wassing);
-		color: inherit;
 	}
 	.kv {
 		display: grid;

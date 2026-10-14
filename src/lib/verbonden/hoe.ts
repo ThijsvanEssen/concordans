@@ -276,7 +276,7 @@ export type Hoe = {
 	 * The words in `rest` that name the paragraph the passage is in (`r.o. 3.4`), and its
 	 * anchor: a link that opens the citing judgment there.
 	 */
-	plaats: { text: string; at: string } | null;
+	plaats: { text: string; at: string; noot: string | null } | null;
 	/** Where the verbinding comes from, for hover and focus. */
 	herkomst: string | null;
 };
@@ -306,15 +306,26 @@ export const HERKOMST_REDEN: Record<string, string> = {
  */
 export function plaatsIn(
 	rest: string | null,
-	at: string | null | undefined
-): { text: string; at: string } | null {
-	if (!rest || !at?.startsWith('rov-')) return null;
-	const nr = at.slice(4);
-	const n = nr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	at: string | null | undefined,
+	noot: { id: string; label: string | null } | null = null
+): { text: string; at: string; noot: string | null } | null {
+	if (!rest) return null;
+	const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	// The note the citation stands in goes with the place: `r.o. 5.7.6 (voetnoot 35)`.
+	const inNoot = noot?.label ? `(?:\\s*\\(voetnoot ${esc(noot.label)}\\))?` : '';
+	if (!at?.startsWith('rov-')) {
+		// A note of a Kamerstuk, without an r.o.: `voetnoot 71`.
+		if (!noot?.label) return null;
+		const m = new RegExp(`voetnoot ${esc(noot.label)}(?![\\w.])`).exec(rest);
+		// The stuk opens at the note itself: its anchor.
+		const anker = noot.id;
+		return m ? { text: m[0], at: anker, noot: anker } : null;
+	}
+	const n = esc(at.slice(4));
 	const m =
-		new RegExp(`(?:r\\.o\\.|onder|§)\\s*${n}(?![\\w.])`).exec(rest) ??
-		new RegExp(`(?<=\\s)${n}(?![\\w.])`).exec(rest);
-	return m ? { text: m[0], at } : null;
+		new RegExp(`(?:r\\.o\\.|onder|§)\\s*${n}(?![\\w.])${inNoot}`).exec(rest) ??
+		new RegExp(`(?<=\\s)${n}(?![\\w.])${inNoot}`).exec(rest);
+	return m ? { text: m[0], at, noot: noot && m[0].includes('voetnoot') ? noot.id : null } : null;
 }
 
 /** Where an edge comes from by its `basis`, where it has no `reason`. */
@@ -358,7 +369,7 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 			rest,
 			afgeleid,
 			citaat,
-			plaats: citaat ? plaatsIn(rest, row.passageAt) : null,
+			plaats: citaat ? plaatsIn(rest, row.passageAt, row.noot ?? null) : null,
 			herkomst
 		}) satisfies Hoe;
 	// The words of the relation, read from its source: the row's where it points here.

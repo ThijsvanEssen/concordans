@@ -14,7 +14,15 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import { csvName, download, rowsToCsv } from './export';
 	import { formatCount, type VerbondenFilter } from './filter';
-	import { dossierVanRij, mentionRows, openLabelOf, rowKey, shortDate, type Row } from './rows';
+	import {
+		ankerVanRij,
+		dossierVanRij,
+		mentionRows,
+		openLabelOf,
+		rowKey,
+		shortDate,
+		type Row
+	} from './rows';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import RowOpen from './RowOpen.svelte';
 	import { isEscape } from '$lib/actions/keys';
@@ -336,7 +344,7 @@
 								<td colspan={visibleColumns.length}>
 									<RowOpen
 										row={r}
-										openHref={bronHref(r.ref, { at: r.at })}
+										openHref={bronHref(r.ref, { at: ankerVanRij(r) })}
 										openLabel={openLabelOf(r)}
 										networkHref={bronHref(r.ref, { keepMode: false, mode: 'graph' })}
 										onVerbinding={onRow}

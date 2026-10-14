@@ -7,7 +7,11 @@ import { statusLabel, type Collection, type Relation } from '$lib/vocabulary';
 import { HERKOMST_REDEN, kleineLetter, relationLabel, soortVan } from './hoe';
 import { paragraphCite } from '$lib/text/judgment-cite';
 import { confidenceWord } from './filter';
-import { describe, positionsLabel, type Row } from './rows';
+import { describe, plaatsVanEdge, positionsLabel, type Row } from './rows';
+import type { Bereik } from '$lib/text/voetnoten';
+import { getNodeGraph, neighborsOf, type Neighbor } from '$lib/api/nodes';
+import { NODE_TYPES } from '$lib/vocabulary';
+import { keyEcli } from '$lib/bron/leesbaar';
 
 export type End = {
 	ref: BronRef;
@@ -30,6 +34,10 @@ export type Verbinding = {
 	at: string | null;
 	snippet: string | null;
 	match: string | null;
+	/** The note of `from` the citation stands in: `at` is its anchor then. */
+	noot: { id: string; label: string | null } | null;
+	/** The words of the citation by their offsets, where the edge keeps them (a Kamerstuk). */
+	bereik: Bereik | null;
 	confidence: number | null;
 	derived: boolean;
 	status: 'vastgesteld' | 'voorgesteld';
@@ -116,10 +124,12 @@ export function verbindingOfRow(row: Row, selection: GraphNode): Verbinding | nu
 		kind: kindOfVerbinding(row.relation, sourceCollection, targetCollection, row.edge),
 		lid: row.lid ?? null,
 		position: row.position ?? null,
-		// The place in the citing text: the row's own, or where the selected bron cites it.
-		at: row.passageAt ?? (inbound ? (row.at ?? null) : null),
+		// The place in the citing text: its note, the row's own, or where the selected bron cites it.
+		at: row.noot?.id ?? row.passageAt ?? (inbound ? (row.at ?? null) : null),
 		snippet: row.snippet ?? null,
 		match: row.match ?? null,
+		noot: row.noot ?? null,
+		bereik: row.bereik ?? null,
 		confidence: row.confidence ?? null,
 		derived: !!row.derived,
 		status: row.proposed ? 'voorgesteld' : 'vastgesteld',
@@ -161,6 +171,7 @@ export function verbindingOfEdge(
 	const meta = (edge.meta ?? {}) as Record<string, unknown>;
 	const text = (v: unknown) => (typeof v === 'string' && v ? v : null);
 	const lid = (Array.isArray(meta.leden) && text(meta.leden[0])) || text(meta.lid) || null;
+	const plaats = plaatsVanEdge(meta, ecliVan(source));
 	return {
 		from: endOfNode(source),
 		to: endOfNode(target),
@@ -169,13 +180,77 @@ export function verbindingOfEdge(
 		kind: kindOfVerbinding(edge.relation, source.collection, target.collection, meta),
 		lid,
 		...plaatsVanMeta(meta, source.key),
-		snippet: text(meta.snippet),
-		match: text(meta.raw_match),
+		...(plaats.position ? { position: plaats.position } : {}),
+		...(plaats.noot || plaats.passageAt ? { at: plaats.noot?.id ?? plaats.passageAt ?? null } : {}),
+		snippet: plaats.snippet ?? text(meta.snippet),
+		match: plaats.match ?? text(meta.raw_match),
+		noot: plaats.noot ?? null,
+		bereik: plaats.bereik ?? null,
 		confidence: edge.confidence ?? null,
 		derived: edge.confidence != null && edge.confidence < 1,
 		status: statusLabel(edge.status) as 'vastgesteld' | 'voorgesteld',
 		reason: text(meta.reason),
 		edgeId: edge.id.startsWith('synth:') ? null : (text(meta.edge_id) ?? null)
+	};
+}
+
+const ecliVan = (node: GraphNode) =>
+	node.collection === 'judgments'
+		? ((typeof node.raw?.props?.ecli === 'string' ? node.raw.props.ecli : null) ??
+			keyEcli(node.key))
+		: null;
+
+/**
+ * The card of a canvas edge with the place a judgment cites, which the canvas does not load
+ * (`edge_meta=passages`, asked when the card opens): the neighbour the citing judgment's
+ * bucket gives for the edge's other end.
+ */
+export function metPassages(v: Verbinding, source: GraphNode, n: Neighbor): Verbinding {
+	const meta = (n.meta ?? {}) as Record<string, unknown>;
+	const p = plaatsVanEdge(meta, ecliVan(source));
+	if (!p.snippet) return v;
+	return {
+		...v,
+		position: p.position ?? v.position,
+		at: p.noot?.id ?? p.passageAt ?? v.at,
+		snippet: p.snippet,
+		match: p.match ?? v.match,
+		noot: p.noot ?? null
+	};
+}
+
+/**
+ * The card of a canvas edge where a judgment cites, with its passage: the citing judgment's
+ * bucket of that relation asked with `edge_meta=passages`. The card as it was otherwise.
+ */
+export async function kaartMetPassages(
+	v: Verbinding,
+	source: GraphNode,
+	target: GraphNode,
+	signal?: AbortSignal
+): Promise<Verbinding> {
+	if (source.collection !== 'judgments' || v.relation !== 'REFERS_TO' || v.snippet) return v;
+	const r = await getNodeGraph(source.collection, source.key, {
+		limit: 200,
+		relations: v.relation,
+		nodeTypes: NODE_TYPES[target.collection],
+		direction: 'outbound',
+		edgeMeta: 'passages',
+		signal
+	});
+	const n = neighborsOf(r).find((x) => x.key === target.key && x.relation === v.relation);
+	return n ? metPassages(v, source, n) : v;
+}
+
+/** What the reader marks where the card's Lees opens `from`: the note, the citation in it. */
+export function markeringVan(v: Verbinding) {
+	if (!v.at) return null;
+	const cited = v.to.ref.collection;
+	return {
+		bron: `${v.from.ref.collection}/${v.from.ref.key}`,
+		at: v.at,
+		doel: cited === 'articles' || cited === 'judgments' ? v.to.ref.key : null,
+		bereik: v.bereik
 	};
 }
 

@@ -47,9 +47,9 @@ type Alinea = {
 	citations?: readonly Span[] | null;
 };
 
-/** What the detail of a judgment says of one article it cites. */
+/** What the detail of a judgment says of one article or judgment it cites. */
 type Aangehaald = {
-	article: { key: string };
+	article?: { key: string };
 	paragraph_ids?: string[];
 	/** The text around the strongest mention; `text` stands in it at `start`..`end`. */
 	snippet?: string | null;
@@ -58,9 +58,17 @@ type Aangehaald = {
 	start?: number | null;
 	end?: number | null;
 	text?: string | null;
+	/** The label of the note the strongest mention stands in (API 0.79.55). */
+	footnote?: string | null;
 };
 
-export type Aanhaling = { snippet: string; match: string | null; at: string | null };
+export type Aanhaling = {
+	snippet: string;
+	match: string | null;
+	at: string | null;
+	/** The label of the note the words stand in; null in the paragraph itself. */
+	noot: string | null;
+};
 
 const getal = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
@@ -94,7 +102,7 @@ function sterkste(cited: Aangehaald): { snippet: string; match: string | null } 
 export function aanhalingIn(
 	cited: Aangehaald,
 	paragraphs: readonly Alinea[],
-	keys: readonly string[] = [cited.article.key]
+	keys: readonly string[] = cited.article ? [cited.article.key] : []
 ): Aanhaling | null {
 	const doelen = new Set(keys);
 	const byId = new Map(paragraphs.map((p) => [p.paragraph_id, p]));
@@ -107,7 +115,7 @@ export function aanhalingIn(
 		for (const c of p.citations ?? []) {
 			if (!doelen.has(c.target.key)) continue;
 			const match = woordenIn(p.text, c.start, c.end);
-			if (match) return { snippet: p.text, match, at: id };
+			if (match) return { snippet: p.text, match, at: id, noot: null };
 		}
 		return null;
 	};
@@ -118,13 +126,15 @@ export function aanhalingIn(
 	// The strongest mention in its paragraph, where the API names it: the whole paragraph
 	// where the snippet is part of it, else the snippet (of a footnote) with the paragraph.
 	const eigen = sterkste(cited);
+	const noot = cited.footnote?.trim() || null;
 	const alinea = cited.snippet_paragraph_id ? byId.get(cited.snippet_paragraph_id) : null;
 	if (eigen?.match && alinea) {
-		const heel = alinea.text.includes(eigen.snippet.trim());
+		const heel = !noot && alinea.text.includes(eigen.snippet.trim());
 		return {
 			snippet: heel ? alinea.text : eigen.snippet,
 			match: eigen.match,
-			at: alinea.paragraph_id
+			at: alinea.paragraph_id,
+			noot
 		};
 	}
 	for (const id of ids.filter((i) => !i.startsWith('rov-'))) {
@@ -133,5 +143,5 @@ export function aanhalingIn(
 	}
 	// Without a paragraph: the API's snippet with its words.
 	if (!eigen) return null;
-	return { ...eigen, at: cited.snippet_paragraph_id ?? ids[0] ?? null };
+	return { ...eigen, at: cited.snippet_paragraph_id ?? ids[0] ?? null, noot };
 }

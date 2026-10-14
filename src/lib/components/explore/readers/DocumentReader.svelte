@@ -12,7 +12,13 @@
 	import GlossaryPill from './GlossaryPill.svelte';
 	import { termOfKind } from '$lib/glossary';
 	import { page } from '$app/state';
-	import { landOn, permalink } from '$lib/bron/anchor';
+	import { anchorOfHash, landOn, permalink } from '$lib/bron/anchor';
+	import CitedText from '$lib/components/articles/CitedText.svelte';
+	import Voetnoten from '$lib/components/articles/Voetnoten.svelte';
+	import { kantlijn } from '$lib/actions/kantlijn';
+	import { isNootAnker, regelVan, stukNoten, type Bereik } from '$lib/text/voetnoten';
+	import { zetNootStand } from '$lib/text/voetnoten.svelte';
+	import { markeringVoor } from '$lib/bron/markering.svelte';
 	import { findPassage } from '$lib/text/find-passage';
 	import { tick } from 'svelte';
 	import { formatDate } from './_shared';
@@ -117,9 +123,11 @@
 	const paragraphs = $derived.by(() => {
 		if (view.kind !== 'loaded' || !view.document.text) return [];
 		const text = view.document.text;
-		const out: { start: number; text: string }[] = [];
+		const out: { start: number; text: string; i: number }[] = [];
 		for (const m of text.matchAll(/[^\n]+/g)) {
-			if (m[0].trim()) out.push({ start: m.index, text: m[0].trim() });
+			const t = m[0].trim();
+			// Where the words start, so an offset of the API (a note's marker) falls in them.
+			if (t) out.push({ start: m.index + m[0].indexOf(t), text: t, i: out.length });
 		}
 		return out;
 	});
@@ -135,7 +143,29 @@
 
 	type Entry =
 		| { type: 'heading'; start: number; section: Section }
-		| { type: 'para'; start: number; para: { start: number; text: string } };
+		| { type: 'para'; start: number; para: { start: number; text: string; i: number } };
+
+	// The footnotes (API 0.79.55): a marker in the paragraph that refers to a note, the note
+	// under it or in the margin; one without a marker at the end of its section, else of the stuk.
+	const voetnoten = $derived(
+		stukNoten(view.kind === 'loaded' ? view.document.footnotes : [], paragraphs, sections)
+	);
+	const noten = zetNootStand();
+	const nootLijst = (ids: readonly string[] | undefined) =>
+		(ids ?? []).flatMap((id) => voetnoten.noten.get(id) ?? []);
+
+	// An anchor in the address: a section, a note (`#fn-71`) opened, with the words a row or a
+	// card came for marked; in the text, the paragraph that holds them.
+	const anchor = $derived(anchorOfHash(page.url.hash));
+	const markering = $derived(markeringVoor(`documents/${bronKey}`, anchor));
+	const tekstBereik = $derived.by<{ i: number; bereik: Bereik } | null>(() => {
+		const b = markering?.bereik;
+		if (!b || isNootAnker(anchor)) return null;
+		const i = regelVan(paragraphs, b.start);
+		if (i < 0) return null;
+		const p = paragraphs[i];
+		return { i, bereik: { start: b.start - p.start, end: b.end - p.start } };
+	});
 	const entries = $derived.by<Entry[]>(() => {
 		const out: Entry[] = sections.map((section) => ({
 			type: 'heading',
@@ -245,6 +275,13 @@
 		const container = root;
 		void tick().then(() => landOn(container, 'passage'));
 	});
+	$effect(() => {
+		if (view.kind !== 'loaded' || article || !anchor || !root) return;
+		const container = root;
+		if (isNootAnker(anchor)) noten.toon(anchor, { bereik: markering?.bereik });
+		const doelwit = tekstBereik ? 'markering' : anchor;
+		void tick().then(() => landOn(container, doelwit));
+	});
 
 	// The kind is the source's own wording; where a glossary term exists the kicker links to it.
 	const glossaryTerm = termOfKind;
@@ -347,7 +384,7 @@
 			<StemmingUitslag decisions={eigenUitslag(doc) ? (doc.decisions ?? []) : []} />
 
 			{#if doc.text}
-				<div class="body" bind:this={root}>
+				<div class="body" bind:this={root} use:kantlijn>
 					{#each entries as entry, i (entry.type === 'heading' ? entry.section.id : `p${entry.para.start}`)}
 						{#if entry.type === 'heading'}
 							{@const s = entry.section}
@@ -371,22 +408,38 @@
 									buttonClass="heading__link"
 								/>
 							</div>
-						{:else if passageEntries.has(i)}
-							<p
-								class="body-para body-para--passage in-passage"
-								class:in-passage--cont={i > passageFirst}
-								id={i === passageEntryIndex ? 'passage' : undefined}
+						{:else}
+							{@const p = entry.para}
+							{@const markers = voetnoten.markers.get(p.i)}
+							{@const sluit = voetnoten.naSectie.get(p.i)}
+							{@const bereik = tekstBereik?.i === p.i ? tekstBereik.bereik : null}
+							<!-- A paragraph with notes or marked words: its words set as a judgment's are. -->
+							{#snippet woorden()}{#if markers || bereik}<CitedText
+										text={p.text}
+										noten={markers ?? []}
+										{bereik}
+									/>{:else}{p.text}{/if}{/snippet}
+							<div
+								class="body-para"
+								class:body-para--noten={!!markers || !!sluit}
+								class:body-para--passage={passageEntries.has(i)}
+								class:in-passage={passageEntries.has(i)}
+								class:in-passage--cont={passageEntries.has(i) && i > passageFirst}
+								id={i === passageEntryIndex ? 'passage' : bereik ? 'markering' : undefined}
 								title={i === passageEntryIndex ? (passage?.why ?? undefined) : undefined}
 							>
-								{entry.para.text}{#if i === passageEntryIndex && passage?.possible}<span
-										class="derived"
-										title={passage.why ?? undefined}>mogelijk verband</span
-									>{/if}
-							</p>
-						{:else}
-							<p class="body-para">{entry.para.text}</p>
+								<p>
+									{@render woorden()}{#if i === passageEntryIndex && passage?.possible}<span
+											class="derived"
+											title={passage.why ?? undefined}>mogelijk verband</span
+										>{/if}
+								</p>
+								<Voetnoten noten={nootLijst(markers?.map((m) => m.id))} />
+								<Voetnoten noten={nootLijst(sluit)} marge={false} />
+							</div>
 						{/if}
 					{/each}
+					<Voetnoten noten={nootLijst(voetnoten.los)} marge={false} kop="Voetnoten" />
 				</div>
 			{:else}
 				<p class="empty">Tekst niet in de gegevens.</p>
@@ -567,6 +620,16 @@
 
 	.body-para {
 		margin: 0;
+	}
+	.body-para > p {
+		margin: 0;
+	}
+	/* Its notes under it, or in the margin beside it. */
+	.body-para--noten {
+		position: relative;
+	}
+	.body-para:global(.is-landed) {
+		background: var(--wassing);
 	}
 	.body-para + .body-para {
 		margin-top: var(--s-3);

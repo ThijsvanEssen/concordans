@@ -21,6 +21,8 @@ import { bronKindOf, isInternational } from './filter';
 import { instrumentMetaStore } from '$lib/api/instrument-cache';
 import { getJudgmentDetail } from '$lib/api/judgments';
 import { aanhalingIn } from './passage';
+import { legUit, overwegingVanNoot, type Uitspraak } from '$lib/bron/overweging';
+import { metVoetnoot } from '$lib/text/voetnoten';
 import { bucketKey, getBuckets } from '$lib/api/nodes';
 import { lawIdOf } from '$lib/graph/types';
 import { get } from 'svelte/store';
@@ -790,6 +792,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			buren([{ relation: 'REFERS_TO', direction: 'outbound', collection: 'articles' }])
 		]);
 		const fromSpans = new Map<string, string>();
+		let uitspraak: Uitspraak | null = null;
 		// Where the judgment cites each article: its overwegingen, from the detail asked anyway
 		// (Thijs, 10 Oct: the r.o. in the row). The edge's `paragraphs` take over once the API
 		// gives them.
@@ -852,6 +855,17 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				row.snippet = passage.snippet;
 				row.match = passage.match;
 				row.passageAt = passage.at;
+				if (passage.noot && detail) {
+					// In a note: the overweging that refers to it, and the note with it (`r.o. 5.7.6
+					// (voetnoot 35)`), so the line, its card and Lees open the note.
+					uitspraak ??= legUit(detail.judgment);
+					const r = overwegingVanNoot(uitspraak, passage.noot);
+					if (r) {
+						row.passageAt = r.at;
+						row.noot = { id: r.id, label: passage.noot };
+						row.position = metVoetnoot(r.num ? paragraphCite(ecli, r.num) : null, passage.noot);
+					}
+				}
 			}
 			const id = `${key}#${at ?? ''}`;
 			if (!rows.has(id)) rows.set(id, row);
