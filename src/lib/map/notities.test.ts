@@ -35,6 +35,11 @@ const map = (items: MapItem[], extra: object = {}) => ({
 });
 
 describe('the notes of a map per bron', () => {
+	it('places a note on a conclusion onder its paragraph', () => {
+		const conclusie = { ...ro, id: 'judgments/ecli_nl_phr_2020_453', at: 'rov-5' };
+		expect(notitiesPerBron(map([conclusie])).get(conclusie.id)?.[0].waar).toBe('onder 5');
+	});
+
 	it('lists each lid of one article with its place, in the map order', () => {
 		const per = notitiesPerBron(map([lid3, art22, lid1]));
 		expect(per.get('articles/bwbr0052872_21')).toEqual([

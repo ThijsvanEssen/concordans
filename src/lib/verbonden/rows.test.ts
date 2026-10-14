@@ -3,6 +3,7 @@ import {
 	activityLine,
 	describe as describeBron,
 	historyRow,
+	openLabelOf,
 	periodLabel,
 	rowKey,
 	rowOfNeighbor,
@@ -35,6 +36,15 @@ describe('rowKey', () => {
 			})!;
 		expect(rowKey(change('amends'))).not.toBe(rowKey(change('repeals')));
 		expect(uniqueRows([change('amends'), change('repeals'), change('amends')])).toHaveLength(2);
+	});
+});
+
+describe('openLabelOf', () => {
+	it('opens a conclusion onder its paragraph, a judgment at its r.o.', () => {
+		const at = (key: string) =>
+			openLabelOf({ ref: { collection: 'judgments', key }, at: 'rov-5', position: null });
+		expect(at('ecli_nl_phr_2020_453')).toBe('Lees bij onder 5');
+		expect(at('ecli_nl_hr_2019_2006')).toBe('Lees bij r.o. 5');
 	});
 });
 

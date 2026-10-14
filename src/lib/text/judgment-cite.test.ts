@@ -3,6 +3,7 @@ import {
 	authorCite,
 	conclusieNaam,
 	courtCite,
+	isConclusion,
 	judgmentCite,
 	overwegingCitaat,
 	paragraphCite
@@ -39,6 +40,15 @@ describe('courtCite', () => {
 	});
 	it('falls back on the court without a place in its name', () => {
 		expect(courtCite('ECLI:NL:RBMNE:2026:4501', null)).toBe('Rb.');
+	});
+});
+
+describe('isConclusion', () => {
+	it('knows a conclusion of the Parket by its ECLI or its key', () => {
+		expect(isConclusion('ECLI:NL:PHR:2020:453')).toBe(true);
+		expect(isConclusion('ecli_nl_phr_2020_453')).toBe(true);
+		expect(isConclusion('ECLI:NL:HR:2020:453')).toBe(false);
+		expect(isConclusion(null)).toBe(false);
 	});
 });
 
