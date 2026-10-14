@@ -1230,6 +1230,27 @@ describe('errors that are not swallowed', () => {
 		for (const code of handled) expect(swallowed(code), code).toBe(0);
 	});
 
+	it('has one catch-all, at the outer boundary, and one boundary per panel of the Verkenner', () => {
+		// hooks.client.ts reports what nobody handled; a panel that fails to draw says so in its
+		// place (PanelBoundary), the other panels stay. Code-eenvoud F06.
+		expect(offenders((t) => /addEventListener\(\s*'unhandledrejection'/.test(t))).toEqual([
+			'hooks.client.ts'
+		]);
+		expect(offenders((t) => /<svelte:boundary\b/.test(t))).toEqual([
+			'lib/components/ui/PanelBoundary.svelte'
+		]);
+		const explore = sources.find((s) => s.path === 'routes/explore/+page.svelte')!.text;
+		const panels = [...explore.matchAll(/<PanelBoundary what="([^"]+)"/g)].map((m) => m[1]);
+		expect(new Set(panels)).toEqual(new Set(['De tekst', 'Verbonden', 'Het netwerk']));
+	});
+
+	it('defines the quiet line once, in AppShell: no component styles its own .stil', () => {
+		// Code-eenvoud F30: the open rows had a smaller one of their own.
+		const own = (text: string) =>
+			rules(text).some((r) => r.selector.split(',').some((s) => s.trim() === '.stil'));
+		expect(offenders(own).filter((p) => p.startsWith('lib/components/'))).toEqual([]);
+	});
+
 	it('reads every answer of the API through unwrap, so a failure is an ApiError', () => {
 		// `data ?? null` or `response.ok` made a 500 into "geen" (F05); a 404 that means "geen"
 		// goes through ifExists ($lib/api/errors.ts).

@@ -2,6 +2,7 @@ import { padOfFocus } from '$lib/bron/leesbaar';
 import { describe, expect, it } from 'vitest';
 import {
 	artikelenGewijzigd,
+	errorPlace,
 	normalizeItem,
 	dagVoor,
 	doorzochtVanaf,
@@ -287,5 +288,14 @@ describe('the articles a version changed', () => {
 		);
 		expect(artikelenGewijzigd({ changed_articles: 3, article_count: null } as never)).toBeNull();
 		expect(artikelenGewijzigd(null)).toBeNull();
+	});
+});
+
+describe('where a failure of the feed is said', () => {
+	it('under the list it could not lengthen, or in place of a list it left empty', () => {
+		expect(errorPlace('De volgende dagen konden niet worden geladen.', 40)).toBe('below');
+		expect(errorPlace('Actueel kon niet worden geladen.', 0)).toBe('instead');
+		expect(errorPlace(null, 40)).toBe('none');
+		expect(errorPlace(null, 0)).toBe('none');
 	});
 });
