@@ -8,6 +8,7 @@ import { bronLabel, parseNodeId } from '$lib/vocabulary';
 import { queryHref } from '$lib/util/address';
 import { buildBronHref } from '$lib/bron/href';
 import { padOfFocus } from '$lib/bron/leesbaar';
+import { anchorLabel } from '$lib/text/anchor';
 
 /** One thing kept: a bron, or a place in it (`lid-2`, `rov-5.7.1`), with how it is cited. */
 export type MapItem = {
@@ -55,6 +56,8 @@ export type Gedeeld = {
 	volgorde: Map['volgorde'];
 	notitie: string | null;
 	groepNotities: GroepNotities;
+	/** Items of the link in an older or broken form, left out: the page names how many. */
+	skipped: number;
 };
 
 /** An item's key: the bron and its place. */
@@ -140,8 +143,8 @@ export function groepen(
 // `?map=` holds the items one after another, each its six fields: the bron, its place, its
 // short citation, its group, its note (empty where none) and its group's key, and a seventh,
 // its readable address, where it was known; so a map opens
-// elsewhere without asking the API; an item without its six fields is left out, with a
-// warning. Its name goes beside it (`mapnaam=`).
+// elsewhere without asking the API; an item without its six fields is left out, and the
+// page names how many. Its name goes beside it (`mapnaam=`).
 // Fields are separated by `~`, items by `;`; only those two and `%` are escaped here, the
 // address encodes the rest once.
 const veld = (s: string) => s.replaceAll('%', '%25').replaceAll('~', '%7E').replaceAll(';', '%3B');
@@ -157,8 +160,9 @@ export function naarParam(items: readonly MapItem[]): string {
 		.join(';');
 }
 
-export function uitParam(v: string | null): MapItem[] {
-	if (!v) return [];
+/** The items of a link, and how many it holds in an older or broken form (left out). */
+function readParam(v: string | null): { items: MapItem[]; skipped: number } {
+	if (!v) return { items: [], skipped: 0 };
 	const delen = v.split(';');
 	const items = delen.flatMap((deel) => {
 		const [id, at, kort, groep, notitie, groupKey, pad] = deel.split('~').map(terug);
@@ -176,15 +180,10 @@ export function uitParam(v: string | null): MapItem[] {
 				]
 			: [];
 	});
-	weggelaten('de link', delen.length - items.length);
-	return items;
+	return { items, skipped: delen.length - items.length };
 }
 
-/** Items a link or this browser holds in an older or broken form are left out, and said. */
-export function weggelaten(waar: string, n: number) {
-	if (n > 0)
-		console.warn(`Gemarkeerd: ${n} item(s) uit ${waar} overgeslagen (oude of onvolledige vorm).`);
-}
+export const uitParam = (v: string | null): MapItem[] => readParam(v).items;
 
 /** The address params of a map: its items, its name, its order where its own, its note. */
 export function mapParams(
@@ -219,16 +218,20 @@ export function uitGroepParam(v: string | null): GroepNotities {
 	return uit;
 }
 
-/** A map from an address; null where it holds no item. A link without a note reads as before. */
+/**
+ * A map from an address; null where it holds nothing, read or left out. A link without a note
+ * reads as before.
+ */
 export function uitParams(p: URLSearchParams): Gedeeld | null {
-	const items = uitParam(p.get('map'));
-	if (!items.length) return null;
+	const { items, skipped } = readParam(p.get('map'));
+	if (!items.length && !skipped) return null;
 	return {
 		naam: p.get('mapnaam'),
 		items,
 		volgorde: p.get('mapvolgorde') === 'eigen' ? 'eigen' : 'groep',
 		notitie: p.get('mapnotitie')?.trim() || null,
-		groepNotities: uitGroepParam(p.get('mapgroepen'))
+		groepNotities: uitGroepParam(p.get('mapgroepen')),
+		skipped
 	};
 }
 
@@ -293,20 +296,30 @@ export function citaten(
 
 const cel = (v: string) => (/[";\r\n]/.test(v) ? `"${v.replaceAll('"', '""')}"` : v);
 
-/** As Verbonden's CSV: semicolons and a byte order mark, as Excel with Dutch settings reads it. */
-export function csv(items: readonly MapItem[], adres: (i: MapItem) => string): string {
+/**
+ * As Verbonden's CSV: semicolons and a byte order mark, as Excel with Dutch settings reads it.
+ * Its rows as the map shows them: per group in the order of the groups, or in the reader's own
+ * order; each under its group's name, its place as the reader prints it.
+ */
+export function csv(
+	items: readonly MapItem[],
+	adres: (i: MapItem) => string,
+	volgorde: Map['volgorde'] = 'groep'
+): string {
+	const reeks = groepen(items);
+	const naamVan = new Map(reeks.map((g) => [g.sleutel, g.groep]));
 	const rijen = [
 		['volgorde', 'groep', 'citaat', 'vindplaats', 'aantekening', 'adres'],
-		...items.map((i, n) => [
+		...(volgorde === 'eigen' ? items : reeks.flatMap((g) => g.items)).map((i, n) => [
 			String(n + 1),
-			i.groep,
+			naamVan.get(i.groupKey) ?? i.groep,
 			i.voluit || i.kort,
-			i.at,
+			(i.at && anchorLabel(i.at, i.id)) || '',
 			i.notitie ?? '',
 			adres(i)
 		])
 	];
-	return '﻿' + rijen.map((r) => r.map(cel).join(';')).join('\r\n');
+	return '\ufeff' + rijen.map((r) => r.map(cel).join(';')).join('\r\n');
 }
 
 /**

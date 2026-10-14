@@ -588,17 +588,24 @@
 	}
 	/* A finger's target around a small control or a link in a line of text (UX-toets 10 Oct:
 	   "Verfijnen" 55 × 16, the band's "…" 13 × 19, names in a row 13 high): an invisible
-	   border of the target, at least 24 px high, that moves nothing. On a touch screen only. */
+	   border of the target, at least 24 px high, that moves nothing. On a touch screen only.
+	   A place's number (.plaats-marker, 9 px wide in a conclusion, UX-toets 14 Oct #60) shows
+	   its ▾ after it, so its border goes before it, as wide as it is high. */
 	@media (pointer: coarse) {
 		:global(.verfijnen-knop),
-		:global(.raakvlak) {
+		:global(.raakvlak),
+		:global(.plaats-marker) {
 			position: relative;
 		}
 		:global(.verfijnen-knop::after),
-		:global(.raakvlak::after) {
+		:global(.raakvlak::after),
+		:global(.plaats-marker::before) {
 			content: '';
 			position: absolute;
 			inset: calc(-1 * var(--s-2)) calc(-1 * var(--s-1));
+		}
+		:global(.plaats-marker::before) {
+			inset: calc(-1 * var(--s-2));
 		}
 	}
 	/* Text for a screen reader only: a live region, a full name behind a short one. */

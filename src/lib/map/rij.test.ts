@@ -91,3 +91,36 @@ describe('a vote kept in the map (#54)', () => {
 		expect(item.groupKey).toBe('dossier:34372');
 	});
 });
+
+describe('a judgment kept from a row of Verbonden (#55)', () => {
+	const row = {
+		ref: { collection: 'judgments', key: 'ecli_nl_rbdha_2013_19764' },
+		title: 'Rechtbank Den Haag, 1 januari 2013',
+		context: null,
+		kind: 'uitspraken',
+		lid: '1',
+		position: 'r.o. 3',
+		at: 'rov-3',
+		identifier: 'ECLI:NL:RBDHA:2013:19764',
+		date: '2013-01-01',
+		props: { ecli: 'ECLI:NL:RBDHA:2013:19764', date: '2013-01-01', court: 'Rechtbank Den Haag' }
+	} as unknown as Row;
+
+	it('is cited at its r.o., never with the lid of the article it cites', () => {
+		const item = itemVanRij(row)!;
+		expect(item.kort).toBe('Rb. Den Haag 1 januari 2013, r.o. 3');
+		expect(item.voluit).toBe('Rb. Den Haag 1 januari 2013, ECLI:NL:RBDHA:2013:19764, r.o. 3');
+		expect(item.kort).not.toContain('lid');
+	});
+
+	it('stands under the name its reader groups it by', () => {
+		expect(itemVanRij(row)!.groep).toBe('Rb. Den Haag 1 januari 2013');
+		const metNaam = { ...row, props: { ...row.props, names: ['Urgenda'] } } as Row;
+		expect(itemVanRij(metNaam)!.groep).toBe('Rb. Den Haag 1 januari 2013 (Urgenda)');
+	});
+
+	it('is cited whole without a place', () => {
+		const heel = { ...row, position: null, at: null } as Row;
+		expect(itemVanRij(heel)!.kort).toBe('Rb. Den Haag 1 januari 2013');
+	});
+});

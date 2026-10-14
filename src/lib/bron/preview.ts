@@ -12,7 +12,7 @@ import { formatLongDate } from '$lib/components/explore/readers/_shared';
 import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { parseArticleParts, partText } from '$lib/text/article-parts';
 import { articleTitle } from '$lib/text/bw';
-import { courtName } from '$lib/verbonden/rows';
+import { courtName } from '$lib/text/court';
 import { kindName } from '$lib/components/explore/law-head';
 import {
 	dossierLabel,

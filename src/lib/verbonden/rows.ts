@@ -9,6 +9,7 @@ import { refOf, type BronRef } from '$lib/bron/href';
 import { anchorLabel } from '$lib/text/anchor';
 import { articleTitle, bookNumber } from '$lib/text/bw';
 import { authorCite } from '$lib/text/judgment-cite';
+import { courtName } from '$lib/text/court';
 import { isCollection, type Relation } from '$lib/vocabulary';
 import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
 import {
@@ -113,35 +114,6 @@ export function dossierNumbersOf(props: Record<string, unknown> | null | undefin
  *  (`explained-by`, a light node), else the first of `dossier_numbers`. */
 export const dossierNumberOf = (props: Record<string, unknown> | null | undefined): string | null =>
 	text(props?.dossier_number) ?? dossierNumbersOf(props)[0] ?? null;
-
-/** The name of a court the API gives as a code (`GHAMS`). */
-const COURTS: Record<string, string> = {
-	HR: 'Hoge Raad',
-	PHR: 'Parket bij de Hoge Raad',
-	// A judgment of the EHRM has no court name, only its code.
-	ECHR: 'Europees Hof voor de Rechten van de Mens',
-	RVS: 'Raad van State',
-	CRVB: 'Centrale Raad van Beroep',
-	CBB: 'College van Beroep voor het bedrijfsleven',
-	GHAMS: 'Gerechtshof Amsterdam',
-	GHARL: 'Gerechtshof Arnhem-Leeuwarden',
-	GHDHA: 'Gerechtshof Den Haag',
-	GHSHE: "Gerechtshof 's-Hertogenbosch",
-	RBAMS: 'Rechtbank Amsterdam',
-	RBDHA: 'Rechtbank Den Haag',
-	RBGEL: 'Rechtbank Gelderland',
-	RBLIM: 'Rechtbank Limburg',
-	RBMNE: 'Rechtbank Midden-Nederland',
-	RBNHO: 'Rechtbank Noord-Holland',
-	RBNNE: 'Rechtbank Noord-Nederland',
-	RBOBR: 'Rechtbank Oost-Brabant',
-	RBOVE: 'Rechtbank Overijssel',
-	RBROT: 'Rechtbank Rotterdam',
-	RBZWB: 'Rechtbank Zeeland-West-Brabant'
-};
-
-export const courtName = (court: string | null): string | null =>
-	court ? (COURTS[court.toUpperCase()] ?? court) : null;
 
 /**
  * The name and the line under it of a Kamerstuk, by what tells it apart: its own title where
