@@ -36,7 +36,7 @@ export const aangebodenVan = (rows: Row[]): Row[] => rows.filter((r) => zaakRang
  * What a stuk's kern lines name of its zaak: the voorstel of a paper of a bill (Bij
  * wetsvoorstel), the offered papers of a letter (Biedt aan).
  */
-function kernVanZaak(kind: unknown, rows: Row[]): Row[] {
+export function kernVanZaak(kind: unknown, rows: Row[]): Row[] {
 	if (belongsToBill(kind)) return [wetsvoorstelVan(rows)].flatMap((r) => (r ? [r] : []));
 	if (isCoverLetter(kind)) return aangebodenVan(rows);
 	return [];

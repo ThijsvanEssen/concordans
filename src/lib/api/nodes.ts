@@ -91,6 +91,15 @@ export const getBuckets = (
 		)
 	).then((results) => results.flatMap(neighborsOf));
 
+/** The bucket of one relation, direction and collection in a node response, where it has one. */
+export const findBucket = (
+	response: NodeGraph | null | undefined,
+	b: { relation: string; direction: string; collection: string }
+) =>
+	response?.neighbors.buckets?.find(
+		(x) => x.relation === b.relation && x.direction === b.direction && x.collection === b.collection
+	);
+
 /** The neighbours of a node response, whatever bucket they are in. */
 export const neighborsOf = (response: NodeGraph): Neighbor[] =>
 	response.neighbors.buckets?.flatMap((b) => b.items) ?? [];

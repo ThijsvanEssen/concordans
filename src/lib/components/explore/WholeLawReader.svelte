@@ -1,9 +1,7 @@
 <script lang="ts">
 	import { bewaarItem } from '$lib/map/map';
-	import { naamVanId } from '$lib/bron/menselijk';
 	import { langeDatum, vandaag } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
-	import { onderdeelMark } from '$lib/text/article-parts';
 	import { api, unwrap } from '$lib/api/client';
 	import { report } from '$lib/api/errors';
 	import { untrack } from 'svelte';
@@ -17,8 +15,6 @@
 	} from '$lib/api/instrument-cache';
 	import { formatCount } from '$lib/text/getal';
 	import type { Schema } from '$lib/api/types';
-	import ArticleText from '$lib/components/articles/ArticleText.svelte';
-	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { SvelteMap } from 'svelte/reactivity';
 
@@ -26,26 +22,20 @@
 	import { keepInPlace, scrollInReader } from '$lib/bron/anchor';
 	import { parseAnchor } from '$lib/text/anchor';
 	import { deelIds, layersOf } from '$lib/text/division';
-	import { articleName } from '$lib/text/bw';
 	import { page } from '$app/state';
 	import ReaderHead from './readers/ReaderHead.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	import { permalink } from '$lib/bron/anchor';
-	import { versionOn, versionsByYear } from './peildatum';
+	import { versionOn } from './peildatum';
 	import { isDay } from '$lib/text/datum';
 	import { nog, verderLabel, type Richting } from './bladeren';
-	import {
-		EMPTY_LIST,
-		PREVIEW_CHARS,
-		createLawList,
-		isDivisionAnchor,
-		type LawList,
-		type Row
-	} from './law-list';
+	import { EMPTY_LIST, createLawList, isDivisionAnchor, type LawList, type Row } from './law-list';
 	import { kindName, lawFullTitle, lawHeadLine, lawKind, sourceName, treatyLink } from './law-head';
 	import { navigate, withParams } from '$lib/util/address';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';
+	import WholeLawReaderArticle from './WholeLawReaderArticle.svelte';
+	import WholeLawReaderPeildatum from './WholeLawReaderPeildatum.svelte';
 
 	let { bwbId }: { bwbId: string } = $props();
 
@@ -82,26 +72,6 @@
 		} finally {
 			pending.delete(articleNumber);
 		}
-	}
-
-	/** How far below the viewport an article's full text is asked already. */
-	const PRELOAD_MARGIN = '600px 0px';
-
-	/** Fetches an article's full text once its preview scrolls near the viewport. */
-	function lazyLoad(el: HTMLElement, articleNumber: string | null) {
-		const bwb = bwbId;
-		if (!articleNumber) return {};
-		const observer = new IntersectionObserver(
-			(entries) => {
-				if (entries.some((e) => e.isIntersecting)) {
-					observer.disconnect();
-					ensureDetail(bwb, articleNumber).catch((e) => report('Artikeltekst', e));
-				}
-			},
-			{ rootMargin: PRELOAD_MARGIN }
-		);
-		observer.observe(el);
-		return { destroy: () => observer.disconnect() };
 	}
 
 	// The law's names for Citeer, as the article reader builds them.
@@ -142,12 +112,6 @@
 	const versionsLoaded = $derived(versionList.state.status === 'ready');
 	const currentVersion = $derived(versions.find((v) => v.current) ?? null);
 	const shownVersion = $derived(peildatum ? versionOn(versions, peildatum) : currentVersion);
-	const oldest = $derived(
-		versions
-			.map((v) => v.valid_from ?? '')
-			.filter(Boolean)
-			.sort()[0]
-	);
 
 	// Tekst zoals geldend op 1 januari 2015, versie van 1 januari 2015 tot 1 april 2015.
 	const histLine = $derived.by(() => {
@@ -357,44 +321,7 @@
 					</p>
 				{/if}
 				{#if versions.length > 0}
-					<!-- The peildatum: the versions of the law by year, the text of today first. -->
-					<div class="whole-peil">
-						<span>Tekst geldend op</span>
-						<TekstMenu label="Tekst geldend op" tekst={langeDatum(peildatum ?? today)}>
-							{#snippet inhoud(sluit)}
-								<div class="peil-lijst">
-									<span class="peil-noot"
-										>{formatCount(versions.length)} versies sinds {langeDatum(oldest ?? null)}</span
-									>
-									<button
-										type="button"
-										role="menuitemradio"
-										class="tekstmenu__item peil-menuitem"
-										aria-checked={!peildatum}
-										onclick={() => {
-											sluit();
-											choose('');
-										}}>{langeDatum(today)}, vandaag</button
-									>
-									{#each versionsByYear(versions) as [year, list] (year)}
-										<span class="peil-jaar" aria-hidden="true">{year}</span>
-										{#each list as v (v.valid_from)}
-											<button
-												type="button"
-												role="menuitemradio"
-												class="tekstmenu__item peil-menuitem"
-												aria-checked={peildatum === v.valid_from}
-												onclick={() => {
-													sluit();
-													choose(v.valid_from ?? '');
-												}}>{langeDatum(v.valid_from)}{v.current ? ', geldend' : ''}</button
-											>
-										{/each}
-									{/each}
-								</div>
-							{/snippet}
-						</TekstMenu>
-					</div>
+					<WholeLawReaderPeildatum {versions} {peildatum} {today} {choose} />
 				{/if}
 			{/snippet}
 			{#if peildatum && !(versionsLoaded && versions.length === 0)}
@@ -453,57 +380,14 @@
 				</h2>
 			{/each}
 
-			{@const address = a.address}
-			{@const detail = address && !peildatum ? detailByNumber.get(address) : undefined}
-			{@const name = articleName(bwbId, a.article_number, a.label) ?? naamVanId(a.id)}
-			<section
-				class="whole-article"
-				data-artikel={address}
-				use:lazyLoad={peildatum || a.textToday ? null : address}
-			>
-				<div class="whole-article-head">
-					<!-- The anchor of reading: Artikel 3:4, a BW article with its book (6:162). -->
-					{#if a.key}
-						<a
-							class="whole-article-jump"
-							href={bronHref(
-								{ collection: 'articles', key: a.key },
-								{ params: peildatum ? { peildatum } : {} }
-							)}
-							data-sveltekit-noscroll><span class="whole-art-num">{name}</span></a
-						>
-					{:else}
-						<span class="whole-art-num">{name}</span>
-						<span class="whole-art-note">niet meer in de geldende tekst</span>
-					{/if}
-				</div>
-
-				{#if a.text}
-					<ArticleText text={a.text} parts={a.parts} citation={null} mark={onderdeelMark(bwbId)} />
-				{:else if a.textToday}
-					<ArticleText
-						text={a.textToday}
-						parts={a.partsToday}
-						citation={citationOf(address, a.article_number ? null : (a.label ?? null))}
-						mark={onderdeelMark(bwbId)}
-					/>
-				{:else if detail}
-					<ArticleText
-						text={detail.article.text}
-						parts={detail.article.parts}
-						citation={citationOf(address, a.article_number ? null : (a.label ?? null))}
-						mark={onderdeelMark(bwbId)}
-					/>
-				{:else if a.text_preview}
-					<p class="whole-text">
-						{a.text_preview}{a.text_preview.length >= PREVIEW_CHARS ? '…' : ''}
-					</p>
-				{:else}
-					<p class="whole-text">
-						<span class="whole-empty-text stil">Tekst niet in de gegevens.</span>
-					</p>
-				{/if}
-			</section>
+			<WholeLawReaderArticle
+				row={a}
+				{bwbId}
+				{peildatum}
+				detail={a.address ? detailByNumber.get(a.address)?.article : undefined}
+				{citationOf}
+				onNear={(n) => void ensureDetail(bwbId, n)}
+			/>
 		{/each}
 
 		{#if status !== 'loading' && start + articles.length < total}
@@ -543,37 +427,6 @@
 		text-underline-offset: 3px;
 	}
 
-	/* The peildatum: a list that reads as a line of the head. */
-	.whole-peil {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		gap: var(--s-1) var(--s-2);
-		margin-top: var(--s-3);
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		color: var(--ink-2);
-	}
-	.peil-lijst {
-		display: flex;
-		flex-direction: column;
-		max-height: 60vh;
-		overflow-y: auto;
-	}
-	.peil-noot,
-	.peil-jaar {
-		padding: var(--s-1) var(--s-3);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	.peil-jaar {
-		padding-top: var(--s-2);
-		font-weight: 600;
-	}
-	.peil-menuitem {
-		white-space: nowrap;
-	}
 	/* A text of an earlier day says so, with the way back. */
 	.whole-hist {
 		margin: var(--s-3) 0 0;
@@ -596,13 +449,6 @@
 	.whole-before a {
 		color: var(--ink);
 	}
-	.whole-art-note {
-		margin-left: var(--s-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-
 	.whole-section {
 		display: flex;
 		flex-direction: column;
@@ -656,51 +502,6 @@
 		font-weight: 400;
 		font-style: italic;
 		color: var(--ink-2);
-	}
-
-	.whole-article {
-		margin: var(--s-6) 0 0;
-	}
-
-	.whole-article-head {
-		margin-bottom: var(--s-1);
-	}
-	/* The article a link landed on (#artikel-658): its number washed until the next click. */
-	.whole-article:global(.is-landed) .whole-art-num {
-		background: var(--wassing);
-		box-shadow: 0 0 0 var(--s-1) var(--wassing);
-	}
-
-	.whole-article-jump {
-		background: none;
-		border: 0;
-		padding: 0;
-		cursor: pointer;
-		display: inline-flex;
-		align-items: baseline;
-		gap: var(--s-2);
-		text-align: left;
-	}
-
-	.whole-art-num {
-		font-family: var(--font-serif);
-		font-size: var(--t-body);
-		font-weight: 600;
-		color: var(--ink);
-	}
-
-	.whole-article-jump:hover .whole-art-num {
-		color: var(--ink);
-		text-decoration: underline;
-	}
-
-	.whole-text {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-body);
-		line-height: var(--lh-body);
-		color: var(--ink);
-		white-space: pre-line;
 	}
 
 	.whole-verder {
