@@ -83,6 +83,8 @@ export type Row = {
 	props?: Record<string, unknown>;
 	/** The meta of the edge, as the API gives it: what the row's line reads (`hoe.ts`). */
 	edge?: Record<string, unknown>;
+	/** The key of the row this one stands under: a regulation issued under that regulation. */
+	onder?: string | null;
 	/** One row per place the bron names the selected one, when there are several. */
 	mentions?: Row[];
 	/** The dossier the title names, where the row is not one by its props: a change of an article. */
@@ -773,6 +775,7 @@ export function rolesLine(d: {
 
 /** A change of the legislative history by its relation; its verb is the one of hoe.ts. */
 const CHANGE: Record<string, Relation> = {
+	establishes: 'ESTABLISHES',
 	amends: 'AMENDS',
 	introduces: 'INTRODUCES',
 	repeals: 'REPEALS'

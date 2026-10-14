@@ -26,7 +26,7 @@ vi.mock('$lib/api/client', async (original) => ({
 }));
 
 const { onderWet, regelVanRij } = await import('./verbonden');
-const { LOADERS, regelingRow, wetRegelingRow } = await import('$lib/verbonden/loaders');
+const { LOADERS, basisRow, regelingRow, wetRegelingRow } = await import('$lib/verbonden/loaders');
 const { hoeVan } = await import('$lib/verbonden/hoe');
 const { metaParts } = await import('$lib/verbonden/rows');
 const { grondslagArtikelen } = await import('$lib/text/delegaties');
@@ -99,8 +99,8 @@ describe('Gebaseerd op deze wet', () => {
 		expect(grondslagArtikelen(cbw.items![0].articles)).toBe('art. 16 lid 1 en 7, 21 lid 5, 24');
 		// A BW article with its book.
 		expect(grondslagArtikelen([artikel('719', ['2'])], 'BWBR0005290')).toBe('art. 7:719 lid 2');
-		// Never its own number as a lid.
-		expect(grondslagArtikelen([artikel('673e', ['673', '1', '4'])], 'BWBR0005290')).toBe(
+		// The leden as the API gives them (0.79.55: never the article's own number).
+		expect(grondslagArtikelen([artikel('673e', ['1', '4'])], 'BWBR0005290')).toBe(
 			'art. 7:673e lid 1 en 4'
 		);
 		expect(grondslagArtikelen([])).toBeNull();
@@ -138,9 +138,15 @@ describe('Gebaseerd op deze wet', () => {
 		]);
 		expect(metaParts(row, true).map((p) => p.text)).toEqual(['in werking 15 aug. 2026']);
 		// On the article: the same verb, its leden.
-		const opArtikel = hoeVan(regelingRow({ ...cbw.items![0], leden: ['1', '7'] }), 'articles');
+		const opArtikel = hoeVan(
+			regelingRow({ ...cbw.items![0], leden: ['1', '7'], articles: [] }),
+			'articles'
+		);
 		expect([opArtikel?.werkwoord, opArtikel?.rest]).toEqual(['AMvB op grond van', 'lid 1 en 7']);
-		const zonderLid = hoeVan(regelingRow({ ...cbw.items![0], leden: [] }), 'articles');
+		const zonderLid = hoeVan(
+			regelingRow({ ...cbw.items![0], leden: [], articles: [] }),
+			'articles'
+		);
 		expect([zonderLid?.werkwoord, zonderLid?.rest]).toEqual(['AMvB op grond van', 'dit artikel']);
 	});
 
@@ -150,5 +156,98 @@ describe('Gebaseerd op deze wet', () => {
 		expect(kaart.titel).toBe('Wetten die met deze wet verbonden zijn');
 		expect(related).toHaveBeenCalledWith('/api/instruments/{bwb_id}/related-instruments');
 		expect((await verbonden()).rows).toEqual([]);
+	});
+});
+
+describe('Gebaseerd op deze wet, under the AMvB and beside it', () => {
+	const besluit = cbw.items![0];
+	const verwijzend = (n: string) => ({
+		id: `articles/bwbr0052875_${n}`,
+		key: `bwbr0052875_${n}`,
+		article_number: n,
+		display_name: `Artikel ${n} Cyberbeveiligingsbesluit`,
+		leden: [],
+		onderdelen: [],
+		aanhef: false
+	});
+	const met = {
+		...besluit,
+		articles: [
+			{ ...artikel('16', ['1', '7']), referring: [verwijzend('3'), verwijzend('2')] },
+			{ ...artikel('17', ['1']), referring: [verwijzend('2')] }
+		],
+		also_based_on: [
+			{
+				instrument: instrument('bwbr0026338', 'Drinkwaterwet'),
+				kind: 'wet',
+				articles: [artikel('54a')]
+			},
+			{
+				instrument: instrument('bwbr0009950', 'Telecommunicatiewet'),
+				kind: 'wet',
+				articles: [artikel('11a.1')]
+			}
+		],
+		sub_delegated: [
+			{
+				instrument: instrument('bwbr0052878', 'Cyberbeveiligingsregeling IenW'),
+				kind: 'ministeriele-regeling',
+				date_in_force: '2026-08-15',
+				articles: [artikel('19'), artikel('23'), artikel('28')]
+			}
+		]
+	};
+
+	it('lists a regulation issued under the AMvB right under it, with its grondslag', async () => {
+		answer.current = { ...cbw, items: [met, cbw.items![1]] };
+		const groep = await verbonden();
+		expect(groep.rows.map((r) => [r.title, r.onder ?? null])).toEqual([
+			['Cyberbeveiligingsbesluit', null],
+			['Cyberbeveiligingsregeling IenW', 'bwbr0052875'],
+			['Cyberbeveiligingsregeling voor de zorg', null]
+		]);
+		expect(groep.total).toBe(3);
+		const onder = hoeVan(groep.rows[1], 'instruments');
+		expect([onder?.werkwoord, onder?.rest]).toEqual([
+			'Ministeriële regeling op grond van',
+			'art. 19, 23, 28 Cyberbeveiligingsbesluit'
+		]);
+	});
+
+	it('says which articles work the grondslag out and what else it rests on', () => {
+		const row = wetRegelingRow(met);
+		const h = hoeVan(row, 'instruments');
+		expect([h?.werkwoord, h?.rest]).toEqual([
+			'AMvB op grond van',
+			'art. 16 lid 1 en 7, 17 lid 1, uitgewerkt in art. 2 en 3'
+		]);
+		expect(metaParts(row, true).map((p) => p.text)).toEqual([
+			'mede op grond van Drinkwaterwet en Telecommunicatiewet',
+			'in werking 15 aug. 2026'
+		]);
+	});
+
+	it('gives a regulation its own grondslag, by the law its preamble names', () => {
+		const row = basisRow({
+			instrument: instrument('bwbr0052872', 'Cyberbeveiligingswet'),
+			kind: 'wet',
+			basis_kind: 'delegates',
+			articles: [{ ...artikel('16', ['1', '7']), referring: [verwijzend('2')] }]
+		});
+		const h = hoeVan(row, 'instruments');
+		expect([h?.werkwoord, h?.rest]).toEqual([
+			'Op grond van',
+			'art. 16 lid 1 en 7, uitgewerkt in art. 2'
+		]);
+		expect(row).toMatchObject({ direction: 'outbound', context: 'Wet' });
+	});
+
+	it('asks no grondslag where the node counts none', async () => {
+		const leeg = await LOADERS['instrument-basis']({
+			node,
+			totals: new Map([['BASED_ON/articles/outbound', 0]]),
+			signal: new AbortController().signal
+		} as unknown as Parameters<(typeof LOADERS)['instrument-basis']>[0]);
+		expect(leeg.rows).toEqual([]);
 	});
 });

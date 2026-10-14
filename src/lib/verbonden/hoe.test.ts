@@ -216,6 +216,7 @@ const CATALOGUS: Record<Relation, [Collection[], Collection[]]> = {
 		['instrument_versions', 'article_versions'],
 		['instruments', 'articles']
 	],
+	ESTABLISHES: [['instruments'], ['articles']],
 	AMENDS: [
 		['instruments', 'documents'],
 		['instruments', 'articles']
@@ -405,33 +406,157 @@ describe('the line of a reference', () => {
 		expect([h?.werkwoord, h?.rest]).toEqual(['Verwijst naar', 'art. 6:214 BW, als voorwaarde']);
 	});
 
-	it('says which way two laws refer, never "Aangehaald" and never the BWB id', () => {
-		const wet = (inbound_count: number, outbound_count: number) => {
-			const r = wetRijVanRelated({
-				id: 'instruments/bwbr0052875',
-				key: 'bwbr0052875',
-				bwb_id: 'BWBR0052875',
-				celex: null,
-				display_name: 'Cyberbeveiligingsbesluit',
-				citation_title: 'Cyberbeveiligingsbesluit',
-				direction:
-					inbound_count && outbound_count ? 'both' : inbound_count ? 'inbound' : 'outbound',
-				inbound_count,
-				inbound_cited_count: inbound_count,
-				outbound_count,
-				outbound_cited_count: outbound_count,
-				based_on: false
-			});
+	it('says how many articles of two laws refer which way, never "Aangehaald" or the BWB id', () => {
+		const wet = (inbound_count: number, outbound_count: number, dit?: string) => {
+			const r = wetRijVanRelated(
+				{
+					id: 'instruments/bwbr0052875',
+					key: 'bwbr0052875',
+					bwb_id: 'BWBR0052875',
+					celex: null,
+					display_name: 'Cyberbeveiligingsbesluit',
+					citation_title: 'Cyberbeveiligingsbesluit',
+					kind: 'amvb',
+					direction:
+						inbound_count && outbound_count ? 'both' : inbound_count ? 'inbound' : 'outbound',
+					inbound_count,
+					inbound_cited_count: inbound_count,
+					outbound_count,
+					outbound_cited_count: outbound_count,
+					based_on: false
+				},
+				'BWBR0052872',
+				dit
+			);
 			const h = hoeVan(r, 'instruments');
-			return { r, regel: [h?.werkwoord, h?.rest].join(' ') };
+			return { r, regel: [h?.werkwoord, h?.rest].filter(Boolean).join(' ') };
 		};
-		expect(wet(23, 0).regel).toBe('Verwijst 23 keer naar deze wet');
-		expect(wet(23, 0).r).toMatchObject({ direction: 'inbound', identifier: null });
-		expect(wet(0, 4).regel).toBe('Deze wet verwijst er 4 keer naar');
+		expect(wet(17, 0).regel).toBe('17 artikelen verwijzen naar deze wet');
+		expect(wet(17, 0).r).toMatchObject({ direction: 'inbound', context: 'AMvB' });
+		expect(wet(17, 0).r.identifier ?? '').not.toMatch(/BWBR/);
+		expect(wet(1, 0).regel).toBe('1 artikel verwijst naar deze wet');
+		expect(wet(0, 4).regel).toBe('4 artikelen van deze wet verwijzen ernaar');
 		expect(wet(0, 4).r.direction).toBe('outbound');
+		expect(wet(0, 1, 'dit besluit').regel).toBe('1 artikel van dit besluit verwijst ernaar');
 		expect(wet(12, 73).regel).toBe(
-			'Verwijzen over en weer : 12 keer naar deze wet, 73 keer vanuit deze wet'
+			'12 artikelen verwijzen naar deze wet, 73 artikelen van deze wet ernaar'
 		);
+	});
+
+	it('says the grondslag between two laws by its direction, one function for all', () => {
+		const instrument = (key: string, title: string) => ({
+			id: `instruments/${key}`,
+			key,
+			bwb_id: key.toUpperCase(),
+			title,
+			citation_title: title,
+			display_name: title,
+			article_count: 1,
+			inbound_citation_count: 0,
+			path: null
+		});
+		const art = (n: string, leden: string[] = []) => ({
+			id: `articles/x_${n}`,
+			key: `x_${n}`,
+			article_number: n,
+			display_name: `Artikel ${n}`,
+			text: n,
+			leden,
+			onderdelen: [],
+			aanhef: false
+		});
+		const wet = (
+			kind: string,
+			basis: NonNullable<Parameters<typeof wetRijVanRelated>[0]['basis']>
+		) => {
+			const r = wetRijVanRelated(
+				{
+					id: 'instruments/bwbr0052900',
+					key: 'bwbr0052900',
+					bwb_id: 'BWBR0052900',
+					celex: null,
+					display_name: 'Regeling',
+					citation_title: 'Regeling',
+					kind,
+					direction: 'inbound',
+					inbound_count: 21,
+					inbound_cited_count: 3,
+					outbound_count: 0,
+					outbound_cited_count: 0,
+					based_on: true,
+					basis
+				},
+				'BWBR0052872'
+			);
+			const h = hoeVan(r, 'instruments');
+			return [h?.werkwoord, h?.rest];
+		};
+		expect(
+			wet('amvb', { direction: 'inbound', articles: [art('3'), art('16', ['1', '7'])] })
+		).toEqual(['AMvB op grond van', 'art. 3, 16 lid 1 en 7']);
+		expect(wet('wet', { direction: 'outbound', articles: [art('7')] })).toEqual([
+			'Op grond van',
+			'art. 7'
+		]);
+		expect(
+			wet('ministeriele-regeling', {
+				direction: 'via',
+				via: instrument('bwbr0052875', 'Cyberbeveiligingsbesluit'),
+				articles: [art('19'), art('23'), art('28')]
+			})
+		).toEqual(['Ministeriële regeling op grond van', 'art. 19, 23, 28 Cyberbeveiligingsbesluit']);
+	});
+
+	it('names the publication that enacted a law and the articles it set', () => {
+		expect(relationLabel('ESTABLISHES', 'instruments', 'articles')).toBe('stelt vast');
+		expect(woordenVan('ESTABLISHES', 'instruments', 'articles').terug).toBe('vastgesteld bij');
+		expect(soortVan('ESTABLISHES', 'instruments', 'articles')).toBe('vaststelling van een artikel');
+		expect(relationLabel('AMENDS', 'instruments', 'articles', { effect: 'nieuwe-regeling' })).toBe(
+			'stelt vast'
+		);
+		const publicatie = hoeVan(
+			row({
+				ref: { collection: 'instruments', key: 'stb_2026_189' },
+				relation: 'ESTABLISHES',
+				direction: 'inbound',
+				edge: { establishes: 111 }
+			}),
+			'instruments'
+		);
+		expect([publicatie?.werkwoord, publicatie?.rest]).toEqual(['Stelt vast', null]);
+		const artikel = hoeVan(
+			row({
+				ref: { collection: 'instruments', key: 'stb_2026_189' },
+				relation: 'ESTABLISHES',
+				direction: 'inbound',
+				edge: { effect: 'nieuwe-regeling', effective_date: '2026-08-15' }
+			}),
+			'articles'
+		);
+		expect([artikel?.werkwoord, artikel?.rest]).toEqual([
+			'Stelt vast',
+			', in werking 15 augustus 2026'
+		]);
+	});
+
+	it('says a preamble that only names an article names it, not that the regulation rests on it', () => {
+		expect(relationLabel('BASED_ON', 'instruments', 'articles', { basis_kind: 'mentioned' })).toBe(
+			'noemt in de aanhef'
+		);
+		expect(
+			woordenVan('BASED_ON', 'instruments', 'articles', { basis_kind: 'mentioned' }).terug
+		).toBe('genoemd in de aanhef van');
+		const h = hoeVan(
+			row({
+				ref: { collection: 'instruments', key: 'bwbr0009999' },
+				relation: 'BASED_ON',
+				direction: 'inbound',
+				props: { kind: 'beleidsregel' },
+				edge: { leden: [], basis_kind: 'mentioned', referring: [] }
+			}),
+			'articles'
+		);
+		expect([h?.werkwoord, h?.rest]).toEqual(['Beleidsregel noemt in de aanhef', 'dit artikel']);
 	});
 
 	it('sets a change of the row apart from its day with a comma', () => {

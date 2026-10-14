@@ -79,7 +79,8 @@ export async function onderWet(bwb: string): Promise<Regelingen> {
 
 /**
  * The laws most connected to a law, by the references between their articles, each with the
- * line of its row in Verbonden (`Verwijst 23 keer naar deze wet`, wetRijVanRelated).
+ * line of its row in Verbonden (`17 artikelen verwijzen naar deze wet`, its grondslag where one
+ * is issued under the other; wetRijVanRelated).
  */
 export async function bijWet(bwb: string): Promise<Regeling[]> {
 	const found = await unwrap(
@@ -88,7 +89,7 @@ export async function bijWet(bwb: string): Promise<Regeling[]> {
 		})
 	);
 	return found.items.map((i) => ({
-		...regelingVanRij(wetRijVanRelated(i), 'instruments'),
+		...regelingVanRij(wetRijVanRelated(i, bwb), 'instruments'),
 		ident: i.bwb_id ?? i.celex ?? null
 	}));
 }

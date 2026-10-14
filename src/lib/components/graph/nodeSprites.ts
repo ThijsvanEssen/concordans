@@ -181,6 +181,7 @@ export function edgeColorFor(relation: Relation, sourceKind: GraphNodeKind): str
 		case 'EXPLAINS':
 		case 'AUTHORED':
 			return t.plum;
+		case 'ESTABLISHES':
 		case 'AMENDS':
 		case 'INTRODUCES':
 		case 'REPEALS':

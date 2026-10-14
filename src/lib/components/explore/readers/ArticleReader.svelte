@@ -340,9 +340,11 @@
 			? ''
 			: onScreen.index > 0
 				? 'Gewijzigd bij'
-				: onScreen.first.change === 'introduces'
-					? 'Ingevoerd bij'
-					: 'Tekst uit'
+				: onScreen.first.change === 'establishes'
+					? 'Vastgesteld bij'
+					: onScreen.first.change === 'introduces'
+						? 'Ingevoerd bij'
+						: 'Tekst uit'
 	);
 
 	// The law's names for the citation forms.

@@ -11,7 +11,13 @@
 // them, so one verbinding is never called two things (onderzoek samenhang, 14 Oct).
 import type { Collection, Relation } from '$lib/vocabulary';
 import { langeDatum } from '$lib/text/datum';
-import { grondslagWerkwoord, ledenTekst } from '$lib/text/delegaties';
+import {
+	grondslagRegel,
+	grondslagWerkwoord,
+	ledenTekst,
+	uitgewerktIn,
+	type Grondslag
+} from '$lib/text/delegaties';
 import { passageOf, type Row } from './rows';
 import { uitsnede, type Passage } from './passage';
 import { confidenceWord } from './filter';
@@ -37,6 +43,7 @@ const tekstVan = (v: unknown): string | null =>
 
 /** The kind of a change by its effect on wetten.overheid.nl, where the edge gives one. */
 const EFFECT: Record<string, Relation> = {
+	'nieuwe-regeling': 'ESTABLISHES',
 	wijziging: 'AMENDS',
 	nieuw: 'INTRODUCES',
 	vervallen: 'REPEALS'
@@ -78,6 +85,8 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 								? ['artikel van', 'wet van', 'artikel van een wet']
 								: ['onderdeel van', 'omvat', 'onderdeel'],
 	VERSION_OF: () => ['versie van', 'versie', 'versie'],
+	// The publication that enacted a new regulation set its articles (BWB `nieuwe-regeling`).
+	ESTABLISHES: ({ naar }) => ['stelt vast', 'vastgesteld bij', `vaststelling ${vanEen(naar)}`],
 	AMENDS: ({ naar }) => ['wijzigt', 'wijzigt', `wijziging ${vanEen(naar)}`],
 	INTRODUCES: ({ naar }) => ['voegt in', 'voegt in', `invoeging ${vanEen(naar)}`],
 	// An article vervalt; a law is ingetrokken (Aanwijzingen voor de regelgeving).
@@ -85,7 +94,16 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 		naar === 'instruments'
 			? ['trekt in', 'trekt in', 'intrekking van een wet']
 			: ['doet vervallen', 'doet vervallen', 'vervallen van een artikel'],
-	BASED_ON: () => ['gebaseerd op', 'gebaseerd op', 'grondslag in de aanhef van een regeling'],
+	// A preamble that names an article without the power the regulation is made under in it
+	// (`basis_kind` mentioned, Awb 3:2 and 3:4) only names it.
+	BASED_ON: ({ meta }) =>
+		tekstVan(meta.basis_kind) === 'mentioned'
+			? [
+					'noemt in de aanhef',
+					'genoemd in de aanhef van',
+					'vermelding in de aanhef van een regeling'
+				]
+			: ['gebaseerd op', 'gebaseerd op', 'grondslag in de aanhef van een regeling'],
 	IMPLEMENTS: () => ['implementeert', 'implementeert', 'implementatie van EU-recht'],
 	LEGISLATED_IN: () => ['tot stand gekomen in', 'tot stand gekomen in', 'wetsvoorstel van een wet'],
 	PUBLISHED_IN: () => ['gepubliceerd in', 'gepubliceerd in', 'publicatie in het Tractatenblad'],
@@ -225,7 +243,11 @@ export function woordenVan(
 	// A change of an article by its effect: an AMENDS whose effect is `vervallen` repeals.
 	const effect = EFFECT[tekstVan(m.effect) ?? ''];
 	const r =
-		effect && (relation === 'AMENDS' || relation === 'INTRODUCES' || relation === 'REPEALS')
+		effect &&
+		(relation === 'ESTABLISHES' ||
+			relation === 'AMENDS' ||
+			relation === 'INTRODUCES' ||
+			relation === 'REPEALS')
 			? effect
 			: relation;
 	const [actief, terug, soort] = WOORDEN[r]({ van: van ?? null, naar: naar ?? null, meta: m });
@@ -401,25 +423,39 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 		}
 		case 'BASED_ON': {
 			// A regulation under a law or an article, by its kind: `AMvB op grond van art. 3, 16
-			// lid 1 en 7` on the law, `AMvB op grond van lid 1 en 7` on the article (delegaties.ts).
-			if (!inbound) break;
-			const plek =
-				selected === 'instruments'
-					? (row.position ?? null)
-					: selected === 'articles'
-						? (ledenTekst(edge.leden) ?? 'dit artikel')
-						: null;
-			if (!plek) break;
-			return regel(grondslagWerkwoord(text(props.kind)), plek, uit(reden));
+			// lid 1 en 7` on the law, `AMvB op grond van lid 1 en 7` on the article; one under a
+			// regulation under the law, `Ministeriële regeling op grond van art. 19, 23, 28
+			// Cyberbeveiligingsbesluit` (delegaties.ts). Then the articles that work it out.
+			const basis = text(edge.basis_kind);
+			const grondslag = edge.grondslag as Grondslag | undefined;
+			if (!inbound && !grondslag) break;
+			const lijn = grondslag
+				? grondslagRegel(grondslag)
+				: {
+						werkwoord: grondslagWerkwoord(text(props.kind), basis),
+						rest:
+							selected === 'instruments'
+								? (row.position ?? null)
+								: selected === 'articles'
+									? (ledenTekst(edge.leden) ?? 'dit artikel')
+									: null
+					};
+			if (!lijn.rest) break;
+			return regel(lijn.werkwoord, join(lijn.rest, uitgewerktIn(edge.referring)), uit(reden));
 		}
 		case 'ADVISES_ON':
 			return inbound
 				? regel('Conclusie bij', 'deze uitspraak', formeel)
 				: regel('Uitspraak op', 'deze conclusie', formeel);
+		case 'ESTABLISHES':
 		case 'AMENDS':
 		case 'INTRODUCES':
 		case 'REPEALS': {
 			const effect = text(edge.effect);
+			// The publication that enacted a law, among those that change it (`/amended-by`,
+			// `establishes`): `Stelt vast`, its day in the meta line.
+			const vastgesteld = woorden?.actief === 'stelt vast';
+			if (vastgesteld && num(edge.establishes)) return regel('Stelt vast', null, null);
 			// A row from the legislative history carries its change in its own meta line.
 			if (!effect && !text(edge.effective_date) && !text(edge.source_publication)) return null;
 			const werkwoord = effect === 'vernummering' ? 'Vernummert' : groot(woorden!.actief);
@@ -432,8 +468,9 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 			return regel(
 				werkwoord,
 				// The article it changes, where it is the selected one: `Wijzigt dit artikel, in
-				// werking …`; else the row names it, and the rest follows a comma.
-				inbound
+				// werking …`; else the row names it, and the rest follows a comma. A separable verb
+				// takes no object after it: `Stelt vast, in werking …`.
+				inbound && !vastgesteld
 					? join(`dit ${selected === 'articles' ? 'artikel' : 'onderdeel'}`, wat)
 					: erbij(', ', wat),
 				pub ? `Wetten.overheid.nl, ${pub}` : row.proposed ? 'Voorstel van wet' : null
@@ -460,20 +497,25 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 			if (other !== 'documents' || selected !== 'documents') break;
 		// falls through
 		case 'REFERS_TO': {
-			// Two laws, by the references between their articles (`related-instruments`): which
-			// way they run, counted.
+			// Two laws, by the references between their articles (`related-instruments`): the
+			// grondslag where one is issued under the other, else the articles in force that refer,
+			// which way: `17 artikelen verwijzen naar deze wet`.
 			const naar = num(edge.inbound_count);
 			const vanuit = num(edge.outbound_count);
 			if (naar != null || vanuit != null) {
-				if (naar && vanuit)
-					return regel(
-						'Verwijzen over en weer',
-						`: ${naar} keer naar deze wet, ${vanuit} keer vanuit deze wet`,
-						null
-					);
-				return naar
-					? regel('Verwijst', `${naar} keer naar deze wet`, null)
-					: regel('Deze wet verwijst', `er ${vanuit ?? 0} keer naar`, null);
+				const grondslag = edge.grondslag as Grondslag | undefined;
+				if (grondslag) {
+					const g = grondslagRegel(grondslag);
+					return regel(g.werkwoord, g.rest, null);
+				}
+				const dit = text(edge.dit) ?? 'deze wet';
+				const artikelen = (n: number) => `${n} ${n === 1 ? 'artikel' : 'artikelen'}`;
+				const verwijzen = (n: number) => (n === 1 ? 'verwijst' : 'verwijzen');
+				const hierheen = naar ? `${artikelen(naar)} ${verwijzen(naar)} naar ${dit}` : null;
+				const daarheen = vanuit
+					? `${artikelen(vanuit)} van ${dit} ${naar ? 'ernaar' : `${verwijzen(vanuit)} ernaar`}`
+					: null;
+				return regel(null, join(hierheen, daarheen), null);
 			}
 			// The aard where it says more than that it refers: `als voorwaarde`, not `als verwijzing`.
 			const aard =

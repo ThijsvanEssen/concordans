@@ -100,6 +100,7 @@ export interface GraphEdge {
 const CATEGORY_OF_RELATION: Record<Relation, EdgeCategory> = {
 	PART_OF: 'structural',
 	VERSION_OF: 'structural',
+	ESTABLISHES: 'mutation',
 	AMENDS: 'mutation',
 	INTRODUCES: 'mutation',
 	REPEALS: 'mutation',
@@ -133,6 +134,7 @@ const CATEGORY_OF_RELATION: Record<Relation, EdgeCategory> = {
 export const EDGE_WEIGHT: Record<Relation, number> = {
 	PART_OF: 0.6,
 	VERSION_OF: 0.6,
+	ESTABLISHES: 1.0,
 	AMENDS: 1.0,
 	INTRODUCES: 1.0,
 	REPEALS: 1.0,

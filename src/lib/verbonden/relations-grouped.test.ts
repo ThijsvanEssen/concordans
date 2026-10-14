@@ -18,6 +18,7 @@ const ENDS: Record<Relation, Ends | Ends[]> = {
 		['instrument_versions', 'article_versions'],
 		['instruments', 'articles']
 	],
+	ESTABLISHES: [['instruments'], ['articles']],
 	AMENDS: [
 		['instruments', 'documents'],
 		['instruments', 'articles']

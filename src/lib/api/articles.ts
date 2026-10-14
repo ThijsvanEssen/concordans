@@ -68,3 +68,29 @@ export const getLawDelegated = (bwbId: string) =>
 			.then(({ data }) => data ?? null)
 			.catch(() => null)
 	);
+
+/**
+ * The grondslag of a regulation: per law its `Gelet op` names, those articles; once per law,
+ * for the head of the regulation and its group in Verbonden. Null where the API does not
+ * answer it.
+ */
+export const getLawBasis = (bwbId: string) =>
+	once(`instruments/${bwbId}/basis`, () =>
+		api
+			.GET('/api/instruments/{bwb_id}/basis', { params: { path: { bwb_id: bwbId } } })
+			.then(({ data }) => data ?? null)
+			.catch(() => null)
+	);
+
+/**
+ * The references between the articles of two laws, both ways (`.../references/{other}`); once
+ * per pair, asked when a row of Wetten die met deze wet verbonden zijn opens.
+ */
+export const getLawReferences = (bwbId: string, other: string) =>
+	once(`instruments/${bwbId}/references/${other}`, () =>
+		unwrap(
+			api.GET('/api/instruments/{bwb_id}/references/{other}', {
+				params: { path: { bwb_id: bwbId, other } }
+			})
+		)
+	);

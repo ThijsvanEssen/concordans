@@ -102,6 +102,13 @@ describe('the publication that brought a version', () => {
 		expect(
 			brengersVan([{ ...pub, amends: 0, introduces: 0, repeals: 2 } as never], '2026-10-06')[0].wat
 		).toBe('doet 2 artikelen vervallen');
+		// The publication that enacted the law (ESTABLISHES, API 0.79.55).
+		expect(
+			brengersVan(
+				[{ ...pub, amends: 0, introduces: 0, establishes: 111 } as never],
+				'2026-10-06'
+			)[0].wat
+		).toBe('stelt 111 artikelen vast');
 	});
 
 	it('is none on another day, or for a new law the data does not link', () => {

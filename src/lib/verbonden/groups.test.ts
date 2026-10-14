@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { naarSoort } from './groups';
+import { ditVan, naarSoort } from './groups';
 
 describe('naarSoort', () => {
 	const groups = [
@@ -15,6 +15,13 @@ describe('naarSoort', () => {
 		expect(naarSoort(groups, { kind: 'multilateraalverdrag' })[0].label).toBe(
 			'Artikelen van dit verdrag'
 		);
+	});
+	it('names an AMvB a besluit and a ministerial regulation a regeling', () => {
+		expect(naarSoort([{ label: 'Grondslag van deze wet' }], { kind: 'AMvB' })[0].label).toBe(
+			'Grondslag van dit besluit'
+		);
+		expect(ditVan({ kind: 'ministeriele-regeling' })).toBe('deze regeling');
+		expect(ditVan({ kind: 'wet' })).toBeNull();
 	});
 	it('keeps a wet and a regeling as they are', () => {
 		expect(naarSoort(groups, { kind: 'wet' })).toEqual(groups);
