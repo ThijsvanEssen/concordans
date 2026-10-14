@@ -72,7 +72,6 @@
 		});
 	});
 	const aantalBanen = $derived(Math.max(1, ...geplaatst.map((g) => g.baan + 1)));
-	const baanHoogte = 24;
 
 	function zoom(step: number) {
 		const i = YEAR_WIDTHS.indexOf(yearWidth) + step;
@@ -124,8 +123,8 @@
 			role="region"
 			aria-label="Kabinetten in de tijd"
 		>
-			<div class="canvas" style:width="{breedte}px" style:--lijnen="{aantalBanen * baanHoogte}px">
-				<div class="banen" style:height="{aantalBanen * baanHoogte}px">
+			<div class="canvas" style:width="{breedte}px" style:--lanes={aantalBanen}>
+				<div class="banen">
 					{#each geplaatst as g (g.c.key)}
 						<button
 							type="button"
@@ -134,7 +133,7 @@
 							class:cab--onbekend={onbekend(g.c)}
 							class:cab--past={g.past}
 							style:left="{g.van}px"
-							style:top="{g.baan * baanHoogte}px"
+							style:top="calc({g.baan} * var(--lane))"
 							style:--w="{Math.max(g.tot - g.van, 2)}px"
 							aria-expanded={openKey === g.c.key}
 							aria-label={zin(g.c)}
@@ -191,6 +190,8 @@
 		pointer-events: none;
 	}
 	.canvas {
+		/* The height of the lanes, for the lines of the years under them (Tijdas). */
+		--lijnen: calc(var(--lanes) * var(--lane));
 		position: relative;
 		min-width: 100%;
 	}
@@ -198,12 +199,13 @@
 	.banen {
 		position: relative;
 		z-index: 1;
+		height: var(--lijnen);
 	}
 	/* A cabinet: the block of the posts, in rest `paper-2`, opened in ink. */
 	.cab {
 		position: absolute;
 		display: flex;
-		height: calc(24px - var(--s-1));
+		height: calc(var(--lane) - var(--s-1));
 		margin: 0;
 		padding: 0;
 		border: 0;

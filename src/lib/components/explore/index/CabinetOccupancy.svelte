@@ -273,7 +273,6 @@
 <style>
 	.occ {
 		--label: 240px;
-		--lane: 24px;
 		margin: 0 0 var(--s-5);
 		font-family: var(--font-serif);
 	}

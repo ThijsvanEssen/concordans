@@ -240,6 +240,10 @@
 		/* Layout */
 		--measure: 66ch;
 		--gutter: var(--s-7);
+		/* The lead column of a list row (IndexRow), where the titles of every list start. */
+		--row-lead: 140px;
+		/* A lane of a chart over time: a cabinet, a post (KabinettenStrook, CabinetOccupancy). */
+		--lane: var(--s-5);
 
 		/* Radii */
 		--r-0: 0px;

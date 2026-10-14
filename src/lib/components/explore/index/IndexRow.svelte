@@ -150,7 +150,7 @@
 	.row {
 		position: relative;
 		display: grid;
-		grid-template-columns: var(--row-lead, 120px) minmax(0, 1fr) var(--row-aside, 190px);
+		grid-template-columns: var(--row-lead) minmax(0, 1fr) var(--row-aside);
 		gap: var(--s-5);
 		padding: var(--s-3) var(--s-2);
 		border-bottom: 1px solid var(--rule);
@@ -236,7 +236,7 @@
 	.detail {
 		background: var(--paper-2);
 		border-bottom: 1px solid var(--rule);
-		padding: 0 var(--s-2) 0 calc(var(--row-lead, 120px) + var(--s-5) + var(--s-2));
+		padding: 0 var(--s-2) 0 calc(var(--row-lead) + var(--s-5) + var(--s-2));
 	}
 
 	/* Dossiers under one number: the rows of the opened number stand indented beneath it. */

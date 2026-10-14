@@ -541,7 +541,6 @@
 	}
 	/* Actueel's rows, with Actueel's (and Bladeren's) columns. */
 	.dagen {
-		--row-lead: 140px;
 		--row-aside: 150px;
 	}
 	.nieuw {

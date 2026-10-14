@@ -2127,12 +2127,12 @@
 	});
 
 	// ── Columns ─────────────────────────────────────────────────────────────
-	// The heads over the three columns of a row, and their widths.
+	// The heads over the three columns of a row, and the width of the aside (the lead's is
+	// --row-lead).
 	type Columns = {
 		lead: string;
 		body: string;
 		aside: string | string[];
-		leadW: number;
 		asideW: number;
 	};
 	const COLUMNS: Record<IndexCategory, Columns> = {
@@ -2140,37 +2140,33 @@
 			lead: 'BWB of CELEX',
 			body: 'Wet',
 			aside: 'Rechtsorde',
-			leadW: 140,
 			asideW: 110
 		},
-		judgments: { lead: 'Datum', body: 'Uitspraak', aside: 'Aangehaald', leadW: 140, asideW: 110 },
-		dossiers: { lead: 'Nummer', body: 'Titel', aside: 'Fase', leadW: 140, asideW: 150 },
-		decisions: { lead: 'Soort', body: 'Onderwerp', aside: 'Uitslag', leadW: 140, asideW: 180 },
-		members: { lead: 'Fractie', body: 'Naam', aside: '', leadW: 140, asideW: 60 },
-		factions: { lead: 'Fractie', body: 'Naam', aside: 'Zetels', leadW: 140, asideW: 110 },
+		judgments: { lead: 'Datum', body: 'Uitspraak', aside: 'Aangehaald', asideW: 110 },
+		dossiers: { lead: 'Nummer', body: 'Titel', aside: 'Fase', asideW: 150 },
+		decisions: { lead: 'Soort', body: 'Onderwerp', aside: 'Uitslag', asideW: 180 },
+		members: { lead: 'Fractie', body: 'Naam', aside: '', asideW: 60 },
+		factions: { lead: 'Fractie', body: 'Naam', aside: 'Zetels', asideW: 110 },
 		committees: {
 			lead: 'Afkorting',
 			body: 'Commissie',
 			aside: 'Lopende dossiers',
-			leadW: 140,
 			asideW: 130
 		},
 		cabinets: {
 			lead: 'Periode',
 			body: 'Kabinet',
 			aside: 'Bewindspersonen',
-			leadW: 140,
 			asideW: 130
 		},
 		ministers: {
 			lead: 'Functie',
 			body: 'Bewindspersoon',
 			aside: ['Dossiers', 'Wetsvoorstellen', 'Open toezeggingen'],
-			leadW: 140,
 			asideW: 300
 		},
-		commitments: { lead: 'Gedaan', body: 'Toezegging', aside: 'Verwacht', leadW: 140, asideW: 130 },
-		documents: { lead: 'Kamerstuk', body: 'Stuk', aside: 'Datum', leadW: 140, asideW: 110 }
+		commitments: { lead: 'Gedaan', body: 'Toezegging', aside: 'Verwacht', asideW: 130 },
+		documents: { lead: 'Kamerstuk', body: 'Stuk', aside: 'Datum', asideW: 110 }
 	};
 	// The Kamer is a choice, not a filter: the first group of the filters, always one of the
 	// two, and no chip above the list (chips come from facetGroupsAll).
@@ -2317,7 +2313,6 @@
 					use:lijstDoel
 					use:rijen={'a.row-title'}
 					aria-busy={loading}
-					style:--row-lead="{columns.leadW}px"
 					style:--row-aside="{columns.asideW}px"
 				>
 					{#if category === 'factions' && hall.state.status === 'error'}
@@ -3398,7 +3393,7 @@
 	/* The heads of the columns, over the rows in the same grid. */
 	.list-head {
 		display: grid;
-		grid-template-columns: var(--row-lead, 120px) minmax(0, 1fr) var(--row-aside, 190px);
+		grid-template-columns: var(--row-lead) minmax(0, 1fr) var(--row-aside);
 		gap: var(--s-5);
 		padding: 0 var(--s-2) var(--s-1);
 		border-bottom: 1px solid var(--rule-strong);
