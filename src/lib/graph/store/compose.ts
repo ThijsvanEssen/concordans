@@ -6,6 +6,7 @@ import { get, writable } from 'svelte/store';
 import type { GraphContext } from './context';
 import type { GraphStore } from './types';
 import { lawIdOf } from '../types';
+import { neighbours } from '../adjacency';
 
 /**
  * The canvas of a netwerk: the chosen bronnen that are on, what ties them, and
@@ -20,35 +21,21 @@ export function createCompose(
 		edges,
 		pinned,
 		pinnedStore,
-		insertedAt,
 		selectionStore,
 		mergeInto,
 		anchorContainer,
 		trimToCap,
 		pruneToIds,
+		removeNodes,
 		emit
 	} = ctx;
 
 	/** The chosen bronnen and what ties them; null while no netwerk is composed. */
 	const coreStore = writable<ReadonlySet<string> | null>(null);
 
-	const drop = (ids: Iterable<string>) => {
-		for (const id of ids) {
-			nodes.delete(id);
-			insertedAt.delete(id);
-		}
-		for (const [id, e] of [...edges]) {
-			if (!nodes.has(e.source) || !nodes.has(e.target)) edges.delete(id);
-		}
-	};
-
 	/** Every bron an edge path reaches from `start`. */
 	const reachable = (start: Iterable<string>) => {
-		const adjacent = new Map<string, string[]>();
-		for (const e of edges.values()) {
-			(adjacent.get(e.source) ?? adjacent.set(e.source, []).get(e.source)!).push(e.target);
-			(adjacent.get(e.target) ?? adjacent.set(e.target, []).get(e.target)!).push(e.source);
-		}
+		const adjacent = neighbours(edges.values());
 		const seen = new Set<string>();
 		const queue = [...start].filter((id) => nodes.has(id));
 		for (const id of queue) seen.add(id);
@@ -97,7 +84,7 @@ export function createCompose(
 		// What the last composition drew and this one does not: a bron switched off or
 		// removed, and what only tied it.
 		const before = get(coreStore) ?? new Set<string>();
-		drop([...before].filter((id) => !wanted.has(id) && id !== selectedId));
+		removeNodes([...before].filter((id) => !wanted.has(id) && id !== selectedId));
 
 		participants.forEach((p, i) => {
 			const kept = result.keep.get(on[i])!;

@@ -154,6 +154,17 @@ export function createGraphContext() {
 		emit();
 	};
 
+	/** Takes nodes off the canvas, and every edge that loses an end with them. Does not emit. */
+	const removeNodes = (ids: Iterable<string>) => {
+		for (const id of ids) {
+			nodes.delete(id);
+			insertedAt.delete(id);
+		}
+		for (const [id, e] of [...edges]) {
+			if (!nodes.has(e.source) || !nodes.has(e.target)) edges.delete(id);
+		}
+	};
+
 	/** Adds a node, or replaces it and keeps its place in the trim order. */
 	const touchNode = (id: string, node: GraphNode) => {
 		if (!nodes.has(id)) insertedAt.set(id, ++state.seq);
@@ -185,14 +196,8 @@ export function createGraphContext() {
 			.filter((id) => !protect.has(id))
 			.sort((a, b) => (insertedAt.get(a) ?? 0) - (insertedAt.get(b) ?? 0))
 			.slice(0, drop);
-		for (const id of oldest) {
-			nodes.delete(id);
-			insertedAt.delete(id);
-		}
+		removeNodes(oldest);
 		trimmedCountStore.update((n) => n + oldest.length);
-		for (const [id, e] of [...edges]) {
-			if (!nodes.has(e.source) || !nodes.has(e.target)) edges.delete(id);
-		}
 	};
 
 	// ── Nodes and edges from API responses ────────────────────────────────────
@@ -266,16 +271,10 @@ export function createGraphContext() {
 	};
 
 	/** The anchor of a wet that a drawn bron changes (AMENDING_RELATIONS): a member of the wet's own hull. */
-	const lawAnchor = (node: BaseNode, relation: Relation): GraphNode | null => {
-		if (node.collection !== 'instruments' || !isAmendingRelation(relation)) return null;
-		const anchor = nodeToGraphNode(node);
-		if (!anchor) return null;
-		anchor.anchor = true;
-		recordContainerFor(node, 'instrument');
-		containers.recordMember('instrument', containerIdFor(node), anchor.id);
-		touchNode(anchor.id, anchor);
-		return anchor;
-	};
+	const lawAnchor = (node: BaseNode, relation: Relation): GraphNode | null =>
+		node.collection === 'instruments' && isAmendingRelation(relation)
+			? anchorContainer(node)
+			: null;
 
 	/** Whether an edge passes the semantic threshold; only semantic edges carry a confidence worth checking. */
 	const passesThreshold = (
@@ -424,23 +423,14 @@ export function createGraphContext() {
 	};
 
 	/** Drops every node not in `keepIds`, and the edges that touched it. Does not emit. */
-	const pruneToIds = (keepIds: Set<string>) => {
-		for (const id of [...nodes.keys()]) {
-			if (keepIds.has(id)) continue;
-			nodes.delete(id);
-			insertedAt.delete(id);
-		}
-		for (const [id, e] of [...edges]) {
-			if (!keepIds.has(e.source) || !keepIds.has(e.target)) edges.delete(id);
-		}
-	};
+	const pruneToIds = (keepIds: ReadonlySet<string>) =>
+		removeNodes([...nodes.keys()].filter((id) => !keepIds.has(id)));
 
 	return {
 		nodes,
 		edges,
 		cache,
 		pinned,
-		insertedAt,
 		containers,
 		nodesStore,
 		edgesStore,
@@ -448,7 +438,6 @@ export function createGraphContext() {
 		pinnedStore,
 		filtersStore,
 		trimmedCountStore,
-		state,
 		signal,
 		supersede,
 		emit,
@@ -462,6 +451,7 @@ export function createGraphContext() {
 		anchorContainer,
 		trimToCap,
 		pruneToIds,
+		removeNodes,
 		touchNode,
 		reset,
 		focusInternal
