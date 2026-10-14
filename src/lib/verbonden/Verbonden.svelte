@@ -25,7 +25,7 @@
 	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { page } from '$app/state';
-	import { tick } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';
 	import { bronHref, openHref, refId } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -56,16 +56,9 @@
 	import { dossierName } from '$lib/bron/dossier-naam';
 	import type { VerbondenState } from './source';
 	import { groupRequest } from './open-group';
-	import {
-		uitspraakVolgorde,
-		wetUitspraakJaar,
-		wetUitspraakVolgorde,
-		type UitspraakVolgorde,
-		type WetVolgorde
-	} from './volgorde';
+	import type { LoaderOptions } from './loaders';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import { isInhoudGroep, isKernGroep, lazeKernIds } from '$lib/bron/behoort';
-	import { get } from 'svelte/store';
 	import {
 		GROUPINGS,
 		countLine,
@@ -93,6 +86,7 @@
 		onProposedText,
 		tableHref,
 		onRetry,
+		onReloadGroup,
 		onMeer,
 		onAlles
 	}: {
@@ -115,6 +109,8 @@
 		tableHref: string;
 		/** Loads the verbindingen again after a failed load; without it no Opnieuw is offered. */
 		onRetry?: () => void;
+		/** Another order or year for a group: its loader asks again, the rest stays. */
+		onReloadGroup?: (groupId: string, options: Partial<LoaderOptions>) => void;
 		/** A group is opened: its rows beyond the first few are asked now. */
 		onMeer?: (groupId: string) => void | Promise<void>;
 		/** Every row, before a copy or an export. */
@@ -172,10 +168,9 @@
 	// The year of the bronfilter, for a wet asked of the API itself (BE-51): its judgments
 	// of that year are loaded, not filtered out of the first page.
 	$effect(() => {
-		const jaar = selection.collection === 'instruments' ? filter.jaar : null;
-		if (jaar === get(wetUitspraakJaar)) return;
-		wetUitspraakJaar.set(jaar);
-		onRetry?.();
+		const year = selection.collection === 'instruments' ? (filter.jaar ?? null) : null;
+		if (year === untrack(() => verbonden.options.year)) return;
+		onReloadGroup?.('judgments', { year });
 	});
 
 	// A new bron starts closed; the same bron with more rows (a group opened) stays as it is.
@@ -516,7 +511,7 @@
 							<span class="group__count">{p.count != null ? formatCount(p.count) : '…'}</span>
 						</div>
 						{#if p.count && isOpen(`verbonden:${p.id}`, true)}
-							{#if p.noun === 'uitspraken' && (p.count > 5 || (p.id === 'judgments' && onRetry && (selection.collection === 'articles' || selection.collection === 'instruments')))}
+							{#if p.noun === 'uitspraken' && (p.count > 5 || p.ordered)}
 								<!-- The line of the judgments' order and years, as it will stand. -->
 								<div class="group__regel regel--wacht" aria-hidden="true"></div>
 							{/if}
@@ -629,48 +624,19 @@
 							{/if}
 						</p>
 					{/if}
-					{@const volgorde =
-						g.id === 'judgments' && onRetry
-							? selection.collection === 'articles'
-								? 'artikel'
-								: selection.collection === 'instruments'
-									? 'wet'
-									: null
-							: null}
-					{#if volgorde || bars.length > 0}
+					{#if g.orders || bars.length > 0}
 						<!-- One line of controls under the heading (docs/bediening.md): the order of the
 						     judgments, and the year and the court behind one text menu. -->
 						<div class="group__regel">
-							{#if volgorde === 'artikel'}
+							{#if g.orders}
 								<!-- Newest first, or the most cited first: the standard judgments on top (UX-15). -->
 								<Keuze
 									label="Volgorde"
 									klein
-									opties={[
-										{ waarde: 'date_desc' as UitspraakVolgorde, label: 'Datum' },
-										{ waarde: 'citation_count' as UitspraakVolgorde, label: 'Meest aangehaald' }
-									]}
-									waarde={$uitspraakVolgorde}
-									onKies={(w) => {
-										if (w === $uitspraakVolgorde) return;
-										uitspraakVolgorde.set(w);
-										onRetry?.();
-									}}
-								/>
-							{:else if volgorde === 'wet'}
-								<!-- Newest first, or by the number of the law's articles they cite (BE-47). -->
-								<Keuze
-									label="Volgorde"
-									klein
-									opties={[
-										{ waarde: 'date' as WetVolgorde, label: 'Datum' },
-										{ waarde: 'cited' as WetVolgorde, label: 'Meeste artikelen' }
-									]}
-									waarde={$wetUitspraakVolgorde}
-									onKies={(w) => {
-										if (w === $wetUitspraakVolgorde) return;
-										wetUitspraakVolgorde.set(w);
-										onRetry?.();
+									opties={g.orders.map((o) => ({ waarde: o.value, label: o.label }))}
+									waarde={verbonden.options.order}
+									onKies={(order) => {
+										if (order !== verbonden.options.order) onReloadGroup?.(g.id, { order });
 									}}
 								/>
 							{/if}

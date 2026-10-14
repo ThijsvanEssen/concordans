@@ -25,9 +25,10 @@ import {
 	naarSoort,
 	withUnresolvedAppeals,
 	type Group,
+	type Loader,
 	type Match
 } from './groups';
-import { LOADERS, type Loaded } from './loaders';
+import { DEFAULT_LOADER_OPTIONS, LOADERS, type Loaded, type LoaderOptions } from './loaders';
 import { isInhoudGroep, isKernGroep } from '$lib/bron/behoort';
 
 /**
@@ -61,6 +62,8 @@ export type VerbondenState = {
 		/** The kind of its rows (a judgment's row is taller) and its section head, as drawn. */
 		noun?: string;
 		section?: string;
+		/** Its order can be chosen: the line of that choice holds its place. */
+		ordered?: boolean;
 	}[];
 	/** The verbindingen per lid of an article, as the API counts them (`lid_counts`). */
 	lidTellingen?: Map<string, number> | null;
@@ -76,12 +79,16 @@ export type VerbondenState = {
 	wachtend?: string[];
 	/** Per waiting group, the rows the light node counts in its buckets: its place's height. */
 	verwacht?: Record<string, number>;
+	/** What the reader chose for the loaders: kept from bron to bron. */
+	options: LoaderOptions;
 };
 
 export type VerbondenSource = Readable<VerbondenState> & {
 	load: (selection: GraphNode | null) => void;
 	/** Load the same bron again, after a failed request. */
 	reload: () => void;
+	/** Choose another order or year for a group's loader: only that group is asked again. */
+	reloadGroup: (id: string, options: Partial<LoaderOptions>) => void;
 	/**
 	 * The rows of one group, when it is opened or drawn: its own buckets, up to 200 each.
 	 * Settles once they are in the groups.
@@ -92,10 +99,14 @@ export type VerbondenSource = Readable<VerbondenState> & {
 	destroy: () => void;
 };
 
-const EMPTY: VerbondenState = { id: null, groups: [], loading: false, failed: false };
+const EMPTY = { id: null, groups: [], loading: false, failed: false };
 
 export function createVerbondenSource(store: GraphStore): VerbondenSource {
-	const state = writable<VerbondenState>(EMPTY);
+	let options = DEFAULT_LOADER_OPTIONS;
+	const state = writable<VerbondenState>({ ...EMPTY, options });
+	const put = (st: Omit<VerbondenState, 'options'>) => state.set({ ...st, options });
+	/** Runs the loader of a group of the current bron again; null before its groups stand. */
+	let rerun: ((id: string) => void) | null = null;
 	let controller: AbortController | null = null;
 	let current: string | null = null;
 	let last: GraphNode | null = null;
@@ -122,12 +133,12 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		vervolg.delete(id);
 		const b = basis;
 		return meer()
-			.then(({ rows, total, mentions, order, years, capped }) => {
+			.then(({ rows, total, mentions, years, capped }) => {
 				if (b !== basis) return;
 				groups = groups.map((g) =>
-					g.id === id ? { ...g, rows, total, mentions, order, years, capped: !!capped } : g
+					g.id === id ? { ...g, rows, total, mentions, years, capped: !!capped } : g
 				);
-				state.set({ ...get(state), groups });
+				put({ ...get(state), groups });
 			})
 			.catch((e) => {
 				report(`Verbonden ${id}, de rest`, e);
@@ -148,7 +159,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		if (!basis) return;
 		groups = bouw(basis);
 		const st = get(state);
-		state.set({ ...st, groups, volledig: basis.volledig });
+		put({ ...st, groups, volledig: basis.volledig });
 	};
 
 	const load = (selection: GraphNode | null) => {
@@ -157,12 +168,12 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		controller?.abort();
 		current = selection?.id ?? null;
 		if (!selection) {
-			state.set(EMPTY);
+			put(EMPTY);
 			return;
 		}
 		const ac = new AbortController();
 		controller = ac;
-		state.set({ id: selection.id, groups: [], loading: true, failed: false });
+		put({ id: selection.id, groups: [], loading: true, failed: false });
 		const { collection, key } = selection;
 		let perBak: Map<string, Map<string, number>> | null = null;
 		const first = getNodeFirst(collection, key);
@@ -183,6 +194,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 						label: g.label,
 						noun: g.noun,
 						section: g.section,
+						ordered: !!g.orders,
 						onvoorspelbaar: !!g.load && !g.bakken && !g.section,
 						count: g.load
 							? g.bakken
@@ -201,7 +213,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 						return !g || (!isKernGroep(collection, g) && !isInhoudGroep(collection, g, eigen));
 					})
 					.map(({ onvoorspelbaar: _, ...p }) => p);
-				state.set({
+				put({
 					id: selection.id,
 					groups: [],
 					loading: true,
@@ -214,6 +226,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 			// The groups come without their heads first; the full load says whether it failed.
 			.catch((e) => report('Verbonden, lichte knoop', e));
 		basis = null;
+		rerun = null;
 		wilVolledig = false;
 		groups = [];
 		vervolg.clear();
@@ -275,7 +288,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 					})
 				);
 				const zet = () =>
-					state.set({
+					put({
 						id: selection.id,
 						groups,
 						loading: pending.size > 0,
@@ -307,16 +320,18 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 						lui ? getBuckets(collection, key, match, ac.signal) : Promise.resolve(neighbors),
 					signal: ac.signal
 				};
-				for (const def of groups) {
-					if (!def.load) continue;
-					const load = def.load;
-					LOADERS[load](ctx)
-						.then(({ rows, total, mentions, order, years, judgmentsOf, meer, capped }) => {
-							if (ac.signal.aborted) return;
-							if (meer) vervolg.set(def.id, meer);
+				// The latest run of each group: an answer to an earlier choice is dropped.
+				const runs = new Map<string, number>();
+				const run = (id: string, load: Loader) => {
+					const n = (runs.get(id) ?? 0) + 1;
+					runs.set(id, n);
+					const stale = () => ac.signal.aborted || runs.get(id) !== n;
+					void LOADERS[load]({ ...ctx, options })
+						.then(({ rows, total, mentions, years, judgmentsOf, meer, capped }) => {
+							if (stale()) return;
+							if (meer) vervolg.set(id, meer);
 							groups = groups.map((g) => {
-								if (g.id === def.id)
-									return { ...g, rows, total, mentions, order, years, capped: !!capped };
+								if (g.id === id) return { ...g, rows, total, mentions, years, capped: !!capped };
 								const judgments = judgmentsOf?.[g.id];
 								if (judgments == null) return g;
 								// Its other bronnen as counted, and the judgments as the API counts them.
@@ -334,23 +349,34 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 						})
 						.catch((e) => {
 							// Broken off is no failure: the group then has no rows, not "kon niet laden".
-							if (ac.signal.aborted || isAborted(e)) return;
+							if (stale() || isAborted(e)) return;
 							// It keeps its place, with "kon niet laden" and Opnieuw.
 							report(`Verbonden ${load}`, e);
-							groups = groups.map((g) => (g.id === def.id ? { ...g, failed: true } : g));
+							groups = groups.map((g) => (g.id === id ? { ...g, failed: true } : g));
 						})
 						.finally(() => {
-							if (ac.signal.aborted) return;
-							pending.delete(def.id);
+							if (stale()) return;
+							pending.delete(id);
 							zet();
 							alsGevraagd();
 						});
-				}
+				};
+				for (const def of groups) if (def.load) run(def.id, def.load);
+				// Another order or year: the group waits in its place for its new rows.
+				rerun = (id) => {
+					const load = groups.find((g) => g.id === id)?.load;
+					if (!load) return;
+					vervolg.delete(id);
+					pending.add(id);
+					groups = groups.map((g) => (g.id === id ? { ...g, rows: [], failed: false } : g));
+					zet();
+					run(id, load);
+				};
 			})
 			.catch((e) => {
 				// Broken off by another than this reader: nothing to show, but no failure either.
 				if (!ac.signal.aborted)
-					state.set({ id: selection.id, groups: [], loading: false, failed: !isAborted(e) });
+					put({ id: selection.id, groups: [], loading: false, failed: !isAborted(e) });
 			});
 	};
 
@@ -382,6 +408,11 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		reload: () => {
 			current = null;
 			load(last);
+		},
+		reloadGroup: (id, chosen) => {
+			options = { ...options, ...chosen };
+			state.update((st) => ({ ...st, options }));
+			rerun?.(id);
 		},
 		groep,
 		volledig,

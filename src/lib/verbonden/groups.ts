@@ -12,6 +12,7 @@ import { isRelation, type Collection, type Relation } from '$lib/vocabulary';
 import { isInternational } from './filter';
 import { formatCount } from '$lib/text/getal';
 import { rowOfNeighbor, type Neighbor, type Row } from './rows';
+import type { JudgmentOrder } from './loaders';
 import { chamberOf } from './chamber';
 import { CHAMBER_NAME, type Chamber } from '$lib/components/parliamentary/chamber';
 
@@ -80,6 +81,8 @@ export type GroupDef = {
 	labelOf?: (rows: Row[]) => string;
 	/** The order of its rows, where the API's is not the one to read them in. */
 	rowOrder?: (a: Neighbor, b: Neighbor) => number;
+	/** The orders the reader can choose, asked of the API by its loader (`LoaderOptions`). */
+	orders?: readonly { value: JudgmentOrder; label: string }[];
 };
 
 export type Group = GroupDef & {
@@ -361,7 +364,11 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			id: 'judgments',
 			label: 'Uitspraken die deze wet aanhalen',
 			noun: 'uitspraken',
-			load: 'instrument-judgments'
+			load: 'instrument-judgments',
+			orders: [
+				{ value: 'date', label: 'Datum' },
+				{ value: 'cited', label: 'Meeste artikelen' }
+			]
 		},
 		// A treaty and the Tractatenbladen the Verdragenbank lists for it: its text, its
 		// approval, its entry into force.
@@ -384,6 +391,10 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Uitspraken die dit artikel aanhalen',
 			noun: 'uitspraken',
 			load: 'article-judgments',
+			orders: [
+				{ value: 'date', label: 'Datum' },
+				{ value: 'cited', label: 'Meest aangehaald' }
+			],
 			// Read beside the article, at the r.o. that cites it, as the Toelichting is.
 			inPlace: true,
 			bakken: [{ relation: 'REFERS_TO', direction: 'inbound', collection: 'judgments' }]

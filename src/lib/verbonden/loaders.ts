@@ -48,7 +48,6 @@ import { metVoetnoot } from '$lib/text/voetnoten';
 import { bucketKey, getBuckets } from '$lib/api/nodes';
 import { lawIdOf } from '$lib/graph/types';
 import { get } from 'svelte/store';
-import { uitspraakVolgorde, wetUitspraakJaar, wetUitspraakVolgorde } from './volgorde';
 import { paragraphCite } from '$lib/text/judgment-cite';
 import { articleName, bookNumber, withBook } from '$lib/text/bw';
 import { korteDatum } from '$lib/text/datum';
@@ -110,6 +109,18 @@ export function implementationLine(
 	);
 }
 
+/**
+ * The judgments that cite an article or a law: newest first, or the most cited first (an
+ * article: by the judgments citing them, API 0.73 BE-42; a law: by its articles they cite,
+ * API 0.74 BE-47), so that the standard judgments stand on top (UX-15).
+ */
+export type JudgmentOrder = 'date' | 'cited';
+
+/** What the reader chose for a loader: the order of the judgments, and of a law one year (BE-51). */
+export type LoaderOptions = { order: JudgmentOrder; year: number | null };
+
+export const DEFAULT_LOADER_OPTIONS: LoaderOptions = { order: 'date', year: null };
+
 export type LoaderContext = {
 	node: Schema<'BaseNodeDTO'>;
 	neighbors: Neighbor[];
@@ -121,6 +132,7 @@ export type LoaderContext = {
 	 */
 	buren: (match: Match[]) => Promise<Neighbor[]>;
 	signal: AbortSignal;
+	options: LoaderOptions;
 };
 
 export type Loaded = {
@@ -130,8 +142,6 @@ export type Loaded = {
 	mentions?: number;
 	/** Judgments another group shows, by its id: the ECHR's that cite an article (API 0.73). */
 	judgmentsOf?: Record<string, { rows: Row[]; total: number }>;
-	/** The order of the rows where it is not the date. */
-	order?: string;
 	/** The years of all of a group's bronnen, where the API counts them (not only the rows). */
 	years?: { year: number; count: number }[];
 	/** The rest of the rows, asked when the group is opened, the table or an export. */
@@ -616,12 +626,12 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// `cited-by`), counted as the API counts them: passages and judgments (`judgment_total`, 0.62).
 	// Before that: the citing judgments from the node, without a position.
 	// TODO(backend B8): the fallback goes when every article answers on `cited-by`.
-	'article-judgments': async ({ node, buren, totals, signal }) => {
+	'article-judgments': async ({ node, buren, totals, signal, options }) => {
 		const bwb = bwbOf(node);
 		const number =
 			typeof node.props?.article_number === 'string' ? node.props.article_number : null;
 		if (bwb && number) {
-			const sort = get(uitspraakVolgorde);
+			const sort = options.order === 'cited' ? 'citation_count' : 'date_desc';
 			const page = (offset: number) =>
 				abortable(getCitedBy(bwb, number, { limit: CITED_BY_PAGE, offset, sort }), signal);
 			const data = await ifExists(page(0));
@@ -1257,7 +1267,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 
 	// The judgments that cite this law, each with the articles it cites; the total is the
 	// API's, where the node response stops at 30. Without the route: the node's own bucket.
-	'instrument-judgments': async ({ node, buren, totals, signal }) => {
+	'instrument-judgments': async ({ node, buren, totals, signal, options }) => {
 		const bwb = bwbOf(node);
 		const fromNode = async () => ({
 			total: totals.get(bucketKey('REFERS_TO', 'judgments', 'inbound')),
@@ -1275,16 +1285,14 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				.filter((r) => r !== null)
 		});
 		if (!bwb) return fromNode();
-		const sort = get(wetUitspraakVolgorde);
 		// One year of them where the bronfilter chooses one (BE-51): all of that year, not
 		// the year's share of the first page.
-		const jaar = get(wetUitspraakJaar);
 		const found = await ifExists(
 			abortable(
 				getInstrumentJudgments(bwb, {
 					limit: JUDGMENTS_SHOWN,
-					sort,
-					year: jaar ? String(jaar) : undefined
+					sort: options.order,
+					year: options.year ? String(options.year) : undefined
 				}),
 				signal
 			)

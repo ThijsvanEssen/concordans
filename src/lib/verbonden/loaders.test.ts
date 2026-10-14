@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { fail, fakeApi } from '$lib/test/fakeApi';
-import { basesLine, implementationLine, LOADERS, type LoaderContext } from './loaders';
+import {
+	basesLine,
+	DEFAULT_LOADER_OPTIONS,
+	implementationLine,
+	LOADERS,
+	type LoaderContext
+} from './loaders';
 import type { Neighbor } from './rows';
 
 describe('basesLine', () => {
@@ -65,7 +71,8 @@ describe('the articles a conclusion cites (#51)', () => {
 			neighbors: [article],
 			totals: new Map(),
 			buren: async () => [article],
-			signal: new AbortController().signal
+			signal: new AbortController().signal,
+			options: DEFAULT_LOADER_OPTIONS
 		});
 		expect(rows[0].position).toBe('onder 3');
 	});

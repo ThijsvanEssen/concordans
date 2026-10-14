@@ -7,7 +7,7 @@ import { aborted, fail, fakeApi, type FakeAnswer, type ApiPath } from '$lib/test
 import type { GraphStore } from '$lib/graph/graph-store';
 import type { GraphNode } from '$lib/graph/types';
 import { createVerbondenSource } from './source';
-import { LOADERS, type LoaderContext } from './loaders';
+import { DEFAULT_LOADER_OPTIONS, LOADERS, type LoaderContext } from './loaders';
 import { loadDossierHub } from './dossier-hub';
 import { proposedTextOf } from './proposed-text';
 import type { Loader } from './groups';
@@ -148,7 +148,8 @@ const ctx = (props: Record<string, unknown>, neighbors: Neighbor[] = []): Loader
 	neighbors,
 	totals: new Map(),
 	buren: async () => neighbors,
-	signal: new AbortController().signal
+	signal: new AbortController().signal,
+	options: DEFAULT_LOADER_OPTIONS
 });
 
 const ARTICLE = { bwb_id: 'BWBR0005537', article_number: '3:4', key: 'bwbr0005537_3_4' };
