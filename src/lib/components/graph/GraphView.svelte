@@ -35,7 +35,7 @@
 	} from '$lib/netwerk/cluster';
 	import { openGroup } from '$lib/verbonden/open-group';
 	import { bronPlural } from '$lib/vocabulary';
-	import { spriteForVorm, IMAGE_SIZE_BUMP, tokens, fillFor, strokeFor } from './nodeSprites';
+	import { spriteForVorm, IMAGE_SIZE_BUMP } from './nodeSprites';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { bronNaam } from '$lib/bron/naam';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -488,11 +488,8 @@
 	let hideTimer: ReturnType<typeof setTimeout> | null = null;
 	let showTimer: ReturnType<typeof setTimeout> | null = null;
 
-	// A stub (referenced, not loaded yet) has a paper fill and keeps the ring of its kind.
-	function nodeColors(n: GraphNode): { color: string; borderColor: string } {
-		const borderColor = strokeFor(n.kind);
-		return { color: n.stub || n.kind === 'other' ? tokens().paper : fillFor(n.kind), borderColor };
-	}
+	/** Every node is drawn by sigma's image program: its sprite on a background of this. */
+	const TRANSPARENT = 'rgba(0,0,0,0)';
 
 	// Elk teken even groot; de vorm zegt wat een bron is, niet de maat. Een groep
 	// (dossier, fractie, commissie) een stap groter.
@@ -854,18 +851,13 @@
 		for (const n of nodes) {
 			lookup.set(n.id, n);
 			if (!isCanvasNode(n)) continue;
-			const { color, borderColor } = nodeColors(n);
-			// Elke bron als teken uit vormen.ts.
+			// Elke bron als teken uit vormen.ts, op een doorzichtige ondergrond.
 			const vorm = vormVanBron(n.collection, n.raw?.props, n.key);
-			const useImage = true;
-			const stub = !!n.stub;
-			const rawSize = nodeSize(n.id);
 			const attrs: Record<string, unknown> = {
 				label: nodeLabel(n),
 				cluster: isClusterId(n.id),
 				forceLabel: isClusterId(n.id),
-				color: useImage ? 'rgba(0,0,0,0)' : color,
-				borderColor,
+				color: TRANSPARENT,
 				kind: n.kind,
 				vorm,
 				collection: n.collection,
@@ -879,18 +871,16 @@
 								ref: { collection: 'judgments', key: n.key }
 							})
 						: null,
-				stub,
+				stub: !!n.stub,
 				date: typeof n.raw?.props?.date === 'string' ? n.raw.props.date.slice(0, 10) : null,
-				size: useImage ? rawSize * IMAGE_SIZE_BUMP : rawSize,
-				type: useImage ? 'image' : 'border'
+				size: nodeSize(n.id) * IMAGE_SIZE_BUMP,
+				image: spriteForVorm(vorm, !!n.stub, false)
 			};
-			if (useImage) attrs.image = spriteForVorm(vorm, stub, false);
-			// A wet's anchor is a point its hull and the lines of a change end at, not a dot.
+			// A wet's anchor is a point its hull and the lines of a change end at: no sprite.
 			if (n.anchor)
 				Object.assign(attrs, {
 					anchor: true,
-					type: 'circle',
-					color: 'rgba(0,0,0,0)',
+					image: undefined,
 					size: 2,
 					label: '',
 					// Its hull's name where the law's meta has none (a law that only joins a netwerk).

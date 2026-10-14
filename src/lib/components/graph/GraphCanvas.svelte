@@ -28,9 +28,7 @@
 	import { metGroepVerborgen } from '$lib/graph/met-groep';
 	import { centroid, exitPoint, hullOutline, type Point } from '$lib/graph/hull';
 	import {
-		spriteFor,
 		spriteForVorm,
-		shapeFor,
 		badgeAxisOffset,
 		edgeColorFor,
 		edgeStyleFor,
@@ -871,8 +869,7 @@
 				if (count <= 0) return;
 				const baseR = ((attrs.size as number) ?? 5) / sizeDivisor;
 				const vp = renderer!.graphToViewport({ x: attrs.x as number, y: attrs.y as number });
-				const kindAttr = attrs.kind as GraphNodeKind | undefined;
-				const offset = baseR * (kindAttr ? badgeAxisOffset(kindAttr) : 0.707);
+				const offset = baseR * badgeAxisOffset(attrs.vorm as Vorm);
 				badges.push({ id, vx: vp.x + offset, vy: vp.y - offset, count });
 			});
 			mutatieBadges = badges;
@@ -888,9 +885,8 @@
 				if (attrs.hidden || isHiddenNode(id, attrs)) continue;
 				const baseR = ((attrs.size as number) ?? 5) / sizeDivisor;
 				const vp = renderer.graphToViewport({ x: attrs.x as number, y: attrs.y as number });
-				const kindAttr = attrs.kind as GraphNodeKind | undefined;
 				// Above the bron at its left, where the badge of a change (right) does not stand.
-				const offset = baseR * (kindAttr ? badgeAxisOffset(kindAttr) : 0.707) + 2;
+				const offset = baseR * badgeAxisOffset(attrs.vorm as Vorm) + 2;
 				merken.push({
 					id,
 					vx: vp.x - offset,
@@ -1116,15 +1112,11 @@
 		const [
 			{ default: Sigma },
 			{ createEdgeArrowProgram },
-			{ createNodeBorderProgram },
-			{ NodeSquareProgram },
 			{ createNodeImageProgram },
 			{ stippelProgrammas }
 		] = await Promise.all([
 			import('sigma'),
 			import('sigma/rendering'),
-			import('@sigma/node-border'),
-			import('@sigma/node-square'),
 			import('@sigma/node-image'),
 			import('./DashedEdgeProgram')
 		]);
@@ -1166,27 +1158,11 @@
 			padding: 0
 		});
 
-		const NodeBorderProgram = createNodeBorderProgram({
-			borders: [
-				{
-					color: { attribute: 'selectionColor', defaultValue: 'rgba(0,0,0,0)' },
-					size: { value: 2.5, mode: 'pixels' }
-				},
-				{
-					color: { attribute: 'borderColor', defaultValue: t.ink },
-					size: { value: 1.4, mode: 'pixels' }
-				},
-				{ color: { attribute: 'color', defaultValue: t.paper }, size: { fill: true } }
-			]
-		});
-
 		const stippel = stippelProgrammas(pijlLengte());
 		renderer = new Sigma(graph, wrap, {
-			nodeProgramClasses: {
-				border: NodeBorderProgram,
-				square: NodeSquareProgram,
-				image: NodeImageProgram
-			},
+			// Every node is its vorm, a sprite (nodeSprites): the image program alone, which reads
+			// `color` as the ground behind the sprite.
+			nodeProgramClasses: { image: NodeImageProgram },
 			edgeProgramClasses: {
 				arrow: metLijnLabel(
 					createEdgeArrowProgram({
@@ -1200,7 +1176,7 @@
 			defaultDrawEdgeLabel: tekenLijnLabel as never,
 			// The thinnest a line gets, dimmed or zoomed out: its arrowhead stays 4.5 px long.
 			minEdgeThickness: 1.4,
-			defaultNodeType: 'border',
+			defaultNodeType: 'image',
 			defaultEdgeType: 'arrow',
 			zIndex: true,
 
@@ -1321,10 +1297,7 @@
 						label: zelf ? `${data.label as string}, tot ${korteDatum(gewezen)}` : '',
 						forceLabel: zelf,
 						color: t.paper2,
-						borderColor: dimColor(0.38),
-						image:
-							data.type === 'image' ? spriteForVorm(data.vorm as Vorm, true, false) : data.image,
-						selectionColor: 'rgba(0,0,0,0)'
+						image: spriteForVorm(data.vorm as Vorm, true, false)
 					};
 				}
 				if (inHover && !inFocusGroup) {
@@ -1332,9 +1305,7 @@
 						...data,
 						hidden: false,
 						label: '',
-						color: t.paper2,
-						borderColor: dimColor(0.55),
-						selectionColor: 'rgba(0,0,0,0)'
+						color: t.paper2
 					};
 				}
 
@@ -1344,11 +1315,8 @@
 						hidden: false,
 						label: '',
 						color: t.paper2,
-						borderColor: dimColor(0.38),
-						// A shape is a sprite, which the colours above do not reach: its outline instead.
-						image:
-							data.type === 'image' ? spriteForVorm(data.vorm as Vorm, true, false) : data.image,
-						selectionColor: 'rgba(0,0,0,0)'
+						// The colour above is the ground behind the sprite: the vorm steps back as its outline.
+						image: spriteForVorm(data.vorm as Vorm, true, false)
 					};
 				}
 
@@ -1372,28 +1340,13 @@
 						zIndex: 1
 					};
 				if (id !== focusedId) return { ...data, hidden: false, label, forceLabel };
-				const focusKind = data.kind as GraphNodeKind;
-				const focusBoost = ((data.size as number) ?? 4) * 1.6;
-				if (data.type !== 'image' && shapeFor(focusKind) === 'circle') {
-					return {
-						...data,
-						hidden: false,
-						label,
-						forceLabel,
-						selectionColor: t.focus,
-						size: focusBoost,
-						zIndex: 2
-					};
-				}
 				return {
 					...data,
 					hidden: false,
 					label,
 					forceLabel,
-					image: data.vorm
-						? spriteForVorm(data.vorm as Vorm, !!data.stub, true)
-						: spriteFor(focusKind, !!data.stub, true),
-					size: focusBoost,
+					image: spriteForVorm(data.vorm as Vorm, !!data.stub, true),
+					size: ((data.size as number) ?? 4) * 1.6,
 					zIndex: 2
 				};
 			},

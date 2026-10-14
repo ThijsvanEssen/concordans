@@ -1,13 +1,13 @@
-import { VORMEN, type Vorm } from '$lib/bron/vormen';
 // The colours and shapes of the canvas, read from the design tokens.
 //
 // Sigma draws in WebGL and cannot read CSS variables, so the tokens are read once
 // from `getComputedStyle` (`tokens()`) and every colour on the canvas comes from
 // them: change a token in $lib/styles/tokens.css and the canvas follows after a reload.
-// Shapes are generated once as SVG sprites (data URLs) for sigma's NodeImageProgram.
-// This module is the one place that defines colour and shape per kind and colour
-// and line style per relation; the legend and KindGlyph read it too.
+// Each bron is drawn as its vorm (vormen.ts), a sprite for sigma's NodeImageProgram.
+// This module is the one place that defines the colour and line style per relation and the
+// colour of a hull; the legend reads it too.
 
+import { VORMEN, type Vorm } from '$lib/bron/vormen';
 import type { ContainerKind } from '$lib/graph/container-membership';
 import type { GraphNodeKind } from '$lib/graph/types';
 import { isAmendingRelation, type Relation } from '$lib/vocabulary';
@@ -108,57 +108,6 @@ export function tokens(): Tokens {
 	if (!style.getPropertyValue('--paper').trim()) return FALLBACK;
 	cached = t;
 	return t;
-}
-
-export type NodeShape = 'circle' | 'diamond' | 'roundedRect' | 'hexagon';
-
-// Articles: open ink circle. Judgments: indigo disc. Documents: a hexagon in the dossier hue.
-// Instruments: ink diamond. Dossiers: open diamond in the same hue. Committees and
-// activities: grey. Factions and members: plum, in a badge shape for members.
-export function fillFor(kind: GraphNodeKind): string {
-	const t = tokens();
-	switch (kind) {
-		case 'article':
-		case 'dossier':
-		case 'other':
-			return t.paper;
-		case 'instrument':
-			return t.ink;
-		case 'judgment':
-			return t.indigo;
-		case 'document':
-			return t.stuk;
-		case 'committee':
-		case 'activity':
-			return t.ink3;
-		case 'faction':
-		case 'member':
-			return t.plum;
-	}
-}
-
-export function strokeFor(kind: GraphNodeKind): string {
-	const t = tokens();
-	switch (kind) {
-		case 'article':
-		case 'instrument':
-			return t.ink;
-		case 'judgment':
-			return t.indigo;
-		case 'dossier':
-			return t.dossier;
-		// The dossier hue is 3.1:1 against the paper and 2.9:1 in a dossier's wash: the edge
-		// in ink-3 keeps the stuk apart from both (6:1).
-		case 'document':
-			return t.ink3;
-		case 'committee':
-		case 'activity':
-		case 'other':
-			return t.ink3;
-		case 'faction':
-		case 'member':
-			return t.plum;
-	}
 }
 
 /**
@@ -281,90 +230,15 @@ export function edgeStyleFor(relation: Relation, status: string | null | undefin
 	return 'solid';
 }
 
-export const KIND_SHAPE: Record<GraphNodeKind, NodeShape> = {
-	article: 'circle',
-	instrument: 'diamond',
-	judgment: 'circle',
-	dossier: 'diamond',
-	document: 'hexagon',
-	committee: 'hexagon',
-	activity: 'diamond',
-	faction: 'hexagon',
-	member: 'roundedRect',
-	other: 'circle'
-};
-
-export const shapeFor = (kind: GraphNodeKind): NodeShape => KIND_SHAPE[kind];
-
-// A sprite is drawn in a 32×32 box, the shape centred at (16,16) with "radius" 14,
-// onto a canvas of SPRITE_PX and handed over as a PNG. Not as an SVG: sigma's image
-// program draws its atlas once, as soon as an image has loaded, and Chrome may not
-// have rasterized an SVG by then, so the atlas holds a blank and the bron never shows.
+// A sprite is drawn in a 32×32 box onto a canvas of SPRITE_PX and handed over as a PNG. Not
+// as an SVG: sigma's image program draws its atlas once, as soon as an image has loaded, and
+// Chrome may not have rasterized an SVG by then, so the atlas holds a blank and the bron never
+// shows. The image program fits the box to the node's circle: half the box is its radius.
 const VB = 32;
-const C = 16;
-const R = 14;
 const SPRITE_PX = 128;
-
-function tracePath(ctx: CanvasRenderingContext2D, shape: NodeShape): void {
-	ctx.beginPath();
-	switch (shape) {
-		case 'circle':
-			ctx.arc(C, C, R, 0, Math.PI * 2);
-			break;
-		case 'diamond':
-			ctx.moveTo(C, C - R);
-			ctx.lineTo(C + R, C);
-			ctx.lineTo(C, C + R);
-			ctx.lineTo(C - R, C);
-			break;
-		case 'hexagon': {
-			const dy = R * 0.866;
-			const hx = R * 0.5;
-			ctx.moveTo(C - R, C);
-			ctx.lineTo(C - hx, C - dy);
-			ctx.lineTo(C + hx, C - dy);
-			ctx.lineTo(C + R, C);
-			ctx.lineTo(C + hx, C + dy);
-			ctx.lineTo(C - hx, C + dy);
-			break;
-		}
-		case 'roundedRect': {
-			const size = R * 1.7;
-			ctx.roundRect(C - size / 2, C - size / 2, size, size, size * 0.22);
-			break;
-		}
-	}
-	ctx.closePath();
-}
-
-function drawSprite(shape: NodeShape, fill: string, stroke: string, strokeWidth: number): string {
-	const canvas = document.createElement('canvas');
-	canvas.width = canvas.height = SPRITE_PX;
-	const ctx = canvas.getContext('2d');
-	if (!ctx) return '';
-	ctx.scale(SPRITE_PX / VB, SPRITE_PX / VB);
-	tracePath(ctx, shape);
-	ctx.fillStyle = fill;
-	ctx.fill();
-	ctx.strokeStyle = stroke;
-	ctx.lineWidth = strokeWidth;
-	ctx.stroke();
-	return canvas.toDataURL('image/png');
-}
-
-type Variant = 'normal' | 'focused' | 'stub';
-const cache: Map<string, string> = new Map();
-
-function buildSprite(kind: GraphNodeKind, variant: Variant): string {
-	const shape = shapeFor(kind);
-	const t = tokens();
-	// A stub (referenced, not loaded yet) keeps a paper fill and the stroke of its kind.
-	if (variant === 'stub') return drawSprite(shape, t.paper, strokeFor(kind), 1.5);
-	// The focused bron takes an outer stroke in ink.
-	if (variant === 'focused') return drawSprite(shape, fillFor(kind), t.focus, 2.8);
-	const isOpen = fillFor(kind) === t.paper;
-	return drawSprite(shape, fillFor(kind), strokeFor(kind), isOpen ? 2.4 : 1);
-}
+/** The 16-box of vormen.ts in the 32-box: moved in by 4 and scaled by 1.5, room for a halo. */
+const VORM_INSET = 4;
+const VORM_SCALE = 1.5;
 
 // Een sprite per vorm (vormen.ts), in inkt. Een bron buiten de gegevens is de
 // omtrek van zijn vorm; de gekozen bron krijgt een rand in inkt en een papieren halo.
@@ -378,10 +252,9 @@ export function spriteForVorm(vorm: Vorm, stub: boolean, focused: boolean): stri
 	canvas.width = canvas.height = SPRITE_PX;
 	const ctx = canvas.getContext('2d');
 	if (!ctx) return '';
-	// The 16-box of vormen.ts, centred in the 32-box with room for a halo.
 	ctx.scale(SPRITE_PX / VB, SPRITE_PX / VB);
-	ctx.translate(4, 4);
-	ctx.scale(1.5, 1.5);
+	ctx.translate(VORM_INSET, VORM_INSET);
+	ctx.scale(VORM_SCALE, VORM_SCALE);
 	const v = VORMEN[vorm];
 	const path = new Path2D(v.d);
 	if (focused) {
@@ -408,27 +281,30 @@ export function spriteForVorm(vorm: Vorm, stub: boolean, focused: boolean): stri
 	return url;
 }
 
-export function spriteFor(kind: GraphNodeKind, stub: boolean, focused: boolean): string {
-	const variant: Variant = stub ? 'stub' : focused ? 'focused' : 'normal';
-	const k = `${kind}:${variant}`;
-	let url = cache.get(k);
-	if (!url) {
-		url = buildSprite(kind, variant);
-		cache.set(k, url);
-	}
-	return url;
-}
-
 export const IMAGE_SIZE_BUMP = 1.35;
 
-// Per-axis badge offset at 45° (top-right), in units of node radius.
-const BADGE_AXIS_OFFSET: Record<NodeShape, number> = {
-	circle: 0.707,
-	diamond: 0.44,
-	hexagon: 0.55,
-	roundedRect: 0.62
+/**
+ * Where a ray from the centre (8, 8) towards the top right leaves each vorm, per axis, in the
+ * 16-box of vormen.ts: the edge the badge of Open dossiers and the mark of a note stand on. A
+ * vorm drawn as a line counts the outer half of its stroke.
+ */
+export const EDGE_AT_45: Record<Vorm, number> = {
+	regel: 6,
+	'regel-int': 6,
+	'regel-o': 5.7,
+	uitspraak: 4.6,
+	stuk: 4.5,
+	voorstel: 4.5,
+	dossier: 3,
+	besluit: 2.3,
+	activiteit: 2.4,
+	toezegging: 6,
+	persoon: 3.2,
+	orgaan: 4.4,
+	'orgaan-o': 4.3,
+	kabinet: 4.4,
+	overig: 3.5
 };
 
-export function badgeAxisOffset(kind: GraphNodeKind): number {
-	return BADGE_AXIS_OFFSET[shapeFor(kind)];
-}
+/** The per-axis offset of a vorm's edge at 45° (top right), in units of the node's radius. */
+export const badgeAxisOffset = (vorm: Vorm): number => (EDGE_AT_45[vorm] * VORM_SCALE) / (VB / 2);

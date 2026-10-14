@@ -33,7 +33,7 @@ All three return `NodeCounts`, a map from node id to count; `getDossierInFlux` c
 
 **Halo (Verwijzingen per maand).** The radius grows with the rate `count / months`. `HEAT_SATURATION_RATE` (5 per month) is the rate at which it stops growing. The rate is per month, so that a different window changes the halo for the same bron.
 
-**Badge (Open dossiers).** A dot at the top right of the bron, with the count when it is above 1. It sits at the edge of the drawn node, offset by `badgeAxisOffset(kind)` (`nodeSprites.ts`), which depends on the shape of the kind.
+**Badge (Open dossiers).** A dot at the top right of the bron, with the count when it is above 1. It sits on the edge of the drawn vorm, offset by `badgeAxisOffset(vorm)` (`nodeSprites.ts`): where a ray at 45° leaves the vorm's path. The mark of a note stands at the same edge, top left.
 
 Both need the drawn radius of a node, which is not the `size` attribute. See [`gotchas.md`](gotchas.md#node-size-on-screen).
 
