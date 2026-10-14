@@ -23,6 +23,7 @@ import {
 import { passageOf, type Row } from './rows';
 import { uitsnede, type Passage } from './passage';
 import { confidenceWord } from './filter';
+import { votesSentence } from '$lib/components/parliamentary/stemming';
 
 /** The words of one verbinding, by its relation, its two ends and its meta. */
 export type Woorden = {
@@ -701,14 +702,8 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 				textOf(props.decision_text)?.replace(/\.$/, '') ??
 				(props.passed === true ? 'Aangenomen' : props.passed === false ? 'Verworpen' : null);
 			if (!besluit) break;
-			const tally = (props.tally ?? {}) as Record<string, unknown>;
-			const voor = num(tally.Voor);
-			const tegen = num(tally.Tegen);
-			return regel(
-				besluit,
-				voor != null && tegen != null ? `, ${voor} voor en ${tegen} tegen` : null,
-				'Besluit van de Kamer'
-			);
+			const stemmen = votesSentence(props.tally, ' en ');
+			return regel(besluit, stemmen && `, ${stemmen}`, 'Besluit van de Kamer');
 		}
 	}
 	// The group's label names it (a Kamerstuk in its dossier, a lid in a fractie): only

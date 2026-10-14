@@ -6,6 +6,7 @@
 import { separatorBefore, textOf } from '$lib/text/words';
 import { korteDatum } from '$lib/text/datum';
 import { nrWoord } from './vervanging';
+import { votesShort } from './stemming';
 
 export type Uitkomst =
 	| 'aangenomen'
@@ -36,17 +37,6 @@ export type StukUitslag = {
 	vervangers: { key: string; nummer: string }[];
 };
 
-const getal = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
-
-/** The seats voor and tegen of a tally, `150–0`; null for a tally without seats. */
-export function telling(tally: unknown): string | null {
-	if (!tally || typeof tally !== 'object') return null;
-	const t = tally as Record<string, unknown>;
-	const voor = getal(t.Voor) ?? 0;
-	const tegen = getal(t.Tegen) ?? 0;
-	return voor + tegen > 0 ? `${voor}–${tegen}` : null;
-}
-
 /** The outcome of a stuk from its props or its list item; null while nothing was decided. */
 export function stukUitslag(p: Record<string, unknown> | null | undefined): StukUitslag | null {
 	const uitkomst = textOf(p?.outcome);
@@ -60,7 +50,7 @@ export function stukUitslag(p: Record<string, unknown> | null | undefined): Stuk
 		.map((r) => ({ key: r.key, nummer: String(r.sequence) }));
 	return {
 		uitkomst: uitkomst as Uitkomst,
-		telling: telling(p.tally),
+		telling: votesShort(p.tally),
 		datum: korteDatum(textOf(p.decided_on)) || null,
 		besluit: textOf(p.decision),
 		vervangers

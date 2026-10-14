@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { forAgainst } from '$lib/components/parliamentary/stemming';
+	import { forAgainst, votesSentence } from '$lib/components/parliamentary/stemming';
 	// What a row shows when it opens (Actueel, Gevolgd; a Kamerstuk in Verbonden, Bronnen and
 	// Gemarkeerd): the bron's own content, read in place, not a panel of actions (Thijs, 10 Oct: "doet niet zoveel behalve een extra klik
 	// toevoegen"). Nothing the row says already comes back. A motie its dictum, an amendement
@@ -51,17 +51,13 @@
 	);
 
 	const tally = $derived(forAgainst(item.vote?.tally));
+	const tallySentence = $derived(votesSentence(item.vote?.tally));
 </script>
 
 <div class="inhoud">
 	{#if soort === 'stemming'}
 		<!-- The tally is in the row; here its picture: the share voor. -->
-		<div
-			class="balk"
-			role="img"
-			aria-label="{tally.voor} voor, {tally.tegen} tegen"
-			title="{tally.voor} voor, {tally.tegen} tegen"
-		>
+		<div class="balk" role="img" aria-label={tallySentence} title={tallySentence}>
 			<div class="voor" style:width="{(tally.voor / (tally.voor + tally.tegen)) * 100}%"></div>
 		</div>
 	{:else if soort === 'samenvatting'}

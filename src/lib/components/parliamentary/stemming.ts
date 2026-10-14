@@ -23,10 +23,31 @@ export const choiceRank = (choice: string): number => {
 	return i < 0 ? CHOICE_ORDER.length : i;
 };
 
-/** The seats (or members) for and against in a tally; a choice not in it counts none. */
-export const forAgainst = (
-	tally: Record<string, number> | null | undefined
-): { voor: number; tegen: number } => ({
-	voor: tally?.[CHOICE.for] ?? 0,
-	tegen: tally?.[CHOICE.against] ?? 0
-});
+const seats = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+
+/**
+ * The seats (or members) for and against in a tally, as the API gives it or as a node's
+ * props carry it; a choice not in it counts none.
+ */
+export const forAgainst = (tally: unknown): { voor: number; tegen: number } => {
+	const t = (tally && typeof tally === 'object' ? tally : {}) as Record<string, unknown>;
+	return { voor: seats(t[CHOICE.for]), tegen: seats(t[CHOICE.against]) };
+};
+
+/** Whether a tally counts a seat for or against; seats of 0 are unknown, not a tally. */
+export const hasVotes = (tally: unknown): boolean => {
+	const { voor, tegen } = forAgainst(tally);
+	return voor + tegen > 0;
+};
+
+/** `141 voor, 7 tegen` (or with `en` between them); null for a tally without seats. */
+export function votesSentence(tally: unknown, between: ', ' | ' en ' = ', '): string | null {
+	const { voor, tegen } = forAgainst(tally);
+	return voor + tegen > 0 ? `${voor} voor${between}${tegen} tegen` : null;
+}
+
+/** `139–11`; null for a tally without seats. */
+export function votesShort(tally: unknown): string | null {
+	const { voor, tegen } = forAgainst(tally);
+	return voor + tegen > 0 ? `${voor}–${tegen}` : null;
+}

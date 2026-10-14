@@ -7,6 +7,7 @@
 // its paper, the chain is the REVISES edges; nothing is read from a title.
 import { getNodeNeighborhood } from '$lib/api/nodes';
 import { once } from '$lib/api/records';
+import { votesShort } from './stemming';
 
 type Props = Record<string, unknown>;
 export type GraphNode = { id: string; key: string; props?: Props | null };
@@ -29,8 +30,8 @@ export type Uitslag = {
 	/** The day of the vote. */
 	datum: string;
 	aangenomen: boolean | null;
-	voor: number | null;
-	tegen: number | null;
+	/** `92–58`; null for a decision without seats. */
+	telling: string | null;
 	/** Without a vote: what the Kamer decided instead, from its BesluitSoort (`ingetrokken`). */
 	soort: string | null;
 };
@@ -64,7 +65,6 @@ export type Dienstregeling = {
 export const CAP = 1000;
 
 const str = (v: unknown) => (typeof v === 'string' ? v : v == null ? '' : String(v));
-const num = (v: unknown) => (typeof v === 'number' ? v : null);
 const lijst = (v: unknown) => (Array.isArray(v) ? (v as unknown[]) : []);
 
 const isAmendement = (n: GraphNode) =>
@@ -162,15 +162,13 @@ export function dienstregeling(g: Graph, cap = CAP): Dienstregeling {
 		for (const c of lijst(n.props?.case_ids)) {
 			const b = kiesBesluit(besluiten.get(str(c)) ?? []);
 			if (!b) continue;
-			const tally = (b.props?.tally ?? {}) as Props;
 			const passed = b.props?.passed;
 			const aangenomen = typeof passed === 'boolean' ? passed : null;
 			return {
 				id: b.id,
 				datum: str(b.props?.date),
 				aangenomen,
-				voor: num(tally.Voor),
-				tegen: num(tally.Tegen),
+				telling: votesShort(b.props?.tally),
 				soort: aangenomen === null ? besluitSoort(b.props?.decision_kind) : null
 			};
 		}

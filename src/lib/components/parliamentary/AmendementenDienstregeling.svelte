@@ -180,9 +180,7 @@
 												soort={u.soort}
 												woord={u.woord}
 												titel={u.titel}
-											/>{#if r.uitslag.voor != null && r.uitslag.tegen != null}<span
-													>{r.uitslag.voor}–{r.uitslag.tegen}</span
-												>{/if}</BronLink
+											/>{#if r.uitslag.telling}<span>{r.uitslag.telling}</span>{/if}</BronLink
 										>
 									{:else if regeling.metVervanging || r.nogNiet}
 										<!-- Not replaced and never voted: withdrawn or still open. Without the
