@@ -188,6 +188,15 @@ function lineStart(text: string | undefined, start: number): number {
 	return nl >= 0 && /^\s*\S{1,4}\s*$/.test(text.slice(nl + 1, start)) ? nl : start;
 }
 
+/** Where a numbered part's line begins: the API starts the part after its printed number
+ *  (`b. `), the part as cited (`partText`) carries it. */
+function numberStart(text: string | undefined, start: number, number: string | null): number {
+	if (!text || !number) return start;
+	const from = text.lastIndexOf('\n', start - 1) + 1;
+	const label = text.slice(from, start).trim();
+	return label && label.startsWith(number) && label.length <= number.length + 1 ? from : start;
+}
+
 /** The parts the API delivers, nested: `lid-2-onder-a` is a child of `lid-2`. */
 export function partsFromApi(parts: readonly ApiPart[], text?: string): ArticlePart[] {
 	const roots: ArticlePart[] = [];
@@ -198,7 +207,7 @@ export function partsFromApi(parts: readonly ApiPart[], text?: string): ArticleP
 			kind: KINDS.has(p.kind) ? (p.kind as ArticlePartKind) : 'tekst',
 			number: p.number ?? null,
 			term: p.term ?? null,
-			start: p.start,
+			start: numberStart(text, p.start, p.number ?? null),
 			end: p.end,
 			textStart: p.start,
 			textEnd: p.end,

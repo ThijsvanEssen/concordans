@@ -2,6 +2,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vitest/config';
 import type { Plugin } from 'vite';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { apiDocs } from './src/lib/api/docs';
 
 // The pages of the app with their title and description ($lib/seo/routes.ts), next to
@@ -23,7 +24,7 @@ const spaRoutes: Plugin = {
 // The routes of the API for /api, from the OpenAPI schema: the page carries these, not the
 // whole schema.
 const API_DOCS = 'virtual:api-docs';
-const OPENAPI = 'src/lib/api/openapi.json';
+const OPENAPI = fileURLToPath(new URL('./src/lib/api/openapi.json', import.meta.url));
 const apiDocsModule: Plugin = {
 	name: 'api-docs',
 	resolveId(id) {
