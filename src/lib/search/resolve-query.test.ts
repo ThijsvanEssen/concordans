@@ -12,6 +12,7 @@ import {
 	keuzesOf,
 	resolvedOf
 } from './resolve-query';
+import type { Pad } from '$lib/bron/leesbaar';
 
 describe('parseCitation', () => {
 	it.each([
@@ -69,22 +70,35 @@ describe('parseCitation', () => {
 });
 
 describe('resolveQuery', () => {
+	// The data behind /api/lookup: an article by its law and number, a dossier by its number.
+	const lookUp = async (pad: Pad): Promise<string | null> => {
+		if (pad.soort === 'artikel')
+			return `articles/${pad.wet.toLowerCase()}_${pad.nummer.split(':').pop()}`;
+		if (pad.soort === 'dossier') return `dossiers/${pad.nummer.toLowerCase().replace('-', '_')}`;
+		if (pad.soort === 'kamerstuk') return 'documents/a572870e';
+		return null;
+	};
 	const deps = (over: Partial<ResolveDeps> = {}): ResolveDeps => ({
 		resolve: vi.fn(async () => null),
 		lawId: vi.fn(async () => 'BWBR0001854'),
-		articleKey: vi.fn(async (bwb, n) => `${bwb.toLowerCase()}_${n.replace(':', '_')}`),
-		documentKey: vi.fn(async () => 'a572870e'),
-		dossier: vi.fn(async (number) => ({ key: number.toLowerCase().replace('-', '_'), number })),
 		exists: vi.fn(async () => true),
-		lookUp: vi.fn(async () => null),
+		lookUp: vi.fn(lookUp),
 		...over
 	});
+	/** Only the dossier `number` is in the data. */
+	const onlyDossier = (number: string, key: string) => async (pad: Pad) =>
+		pad.soort === 'dossier' && pad.nummer === number ? `dossiers/${key}` : null;
 
 	it('resolves a BW article through the boek, without asking for the law', async () => {
 		const d = deps();
 		expect(await resolveQuery('art. 6:162 BW', d)).toEqual({
 			ref: { collection: 'articles', key: 'bwbr0005289_162' },
 			at: null
+		});
+		expect(d.lookUp).toHaveBeenCalledWith({
+			soort: 'artikel',
+			wet: 'BWBR0005289',
+			nummer: '6:162'
 		});
 		expect(d.lawId).not.toHaveBeenCalled();
 	});
@@ -106,26 +120,22 @@ describe('resolveQuery', () => {
 		});
 	});
 
-	it('takes the node key and label of a dossier from the API', async () => {
-		const d = deps({ dossier: async () => ({ key: '37020_xv', number: '37020-XV' }) });
-		expect((await resolveQuery('37020-XV', d))?.ref).toEqual({
+	it('looks up a dossier by its number', async () => {
+		expect((await resolveQuery('37020-XV', deps()))?.ref).toEqual({
 			collection: 'dossiers',
 			key: '37020_xv',
 			number: '37020-XV'
 		});
-		expect(await resolveQuery('37020-Q', deps({ dossier: async () => null }))).toBeNull();
+		expect(await resolveQuery('37020-Q', deps({ lookUp: async () => null }))).toBeNull();
 	});
 
 	it('opens a dossier whose suffix is a number before a paper of that number', async () => {
-		const d = deps({
-			dossier: async (n) => (n === '21501-31' ? { key: '21501_31', number: '21501-31' } : null)
-		});
+		const d = deps({ lookUp: onlyDossier('21501-31', '21501_31') });
 		expect((await resolveQuery('21501-31', d))?.ref).toEqual({
 			collection: 'dossiers',
 			key: '21501_31',
 			number: '21501-31'
 		});
-		expect(d.documentKey).not.toHaveBeenCalled();
 	});
 
 	it('opens a Kamerstuk and a publication by lookup, the stuk itself', async () => {
@@ -152,6 +162,7 @@ describe('resolveQuery', () => {
 
 	it('opens the stuk a full Kamerstuk citation names, as the API resolves it', async () => {
 		const d = deps({
+			lookUp: vi.fn(async () => null),
 			resolve: vi.fn(async () => ({
 				ref: { collection: 'documents' as const, key: '1501fbca' },
 				at: null
@@ -160,19 +171,12 @@ describe('resolveQuery', () => {
 		const q = 'Kamerstukken II 2025/26, 36799, nr. 31';
 		expect((await resolveQuery(q, d))?.ref).toEqual({ collection: 'documents', key: '1501fbca' });
 		expect(d.resolve).toHaveBeenCalledWith(q);
-		expect(d.dossier).not.toHaveBeenCalled();
+		expect(d.lookUp).not.toHaveBeenCalledWith(expect.objectContaining({ soort: 'dossier' }));
 	});
 
-	it('opens the document of a dossier, and the dossier when it has no such document', async () => {
-		const paper = deps({
-			dossier: async (n) => (n === '36327' ? { key: '36327', number: '36327' } : null)
-		});
-		expect((await resolveQuery('36327-3', paper))?.ref.collection).toBe('documents');
-		const none = deps({
-			documentKey: async () => null,
-			dossier: async (n) => (n === '36327' ? { key: '36327', number: '36327' } : null)
-		});
-		expect((await resolveQuery('36327-999', none))?.ref).toEqual({
+	it('opens the dossier of a paper the data does not have', async () => {
+		const d = deps({ lookUp: onlyDossier('36327', '36327') });
+		expect((await resolveQuery('36327-999', d))?.ref).toEqual({
 			collection: 'dossiers',
 			key: '36327',
 			number: '36327'
@@ -190,15 +194,36 @@ describe('resolveQuery', () => {
 			ref: { collection: 'articles', key: 'bwbr0001854_287' },
 			at: 'lid-2'
 		});
-		expect(d.articleKey).not.toHaveBeenCalled();
+		expect(d.lookUp).not.toHaveBeenCalled();
 	});
 
 	it('gives nothing when the API does not know the target', async () => {
 		expect(await resolveQuery('ECLI:NL:HR:2099:1', deps({ exists: async () => false }))).toBeNull();
-		expect(
-			await resolveQuery('artikel 9999 Sr', deps({ articleKey: async () => null }))
-		).toBeNull();
+		expect(await resolveQuery('artikel 9999 Sr', deps({ lookUp: async () => null }))).toBeNull();
+		expect(await resolveQuery('artikel 9999 Xyz', deps({ lawId: async () => null }))).toBeNull();
 		expect(await resolveQuery('doodslag', deps())).toBeNull();
+	});
+
+	it('rejects when the API fails, instead of saying the target is not there', async () => {
+		const down = async () => {
+			throw new ApiError(500, 'Internal Server Error');
+		};
+		await expect(resolveQuery('art. 6:162 BW', deps({ resolve: down }))).rejects.toBeInstanceOf(
+			ApiError
+		);
+		await expect(resolveQuery('art. 6:162 BW', deps({ lookUp: down }))).rejects.toBeInstanceOf(
+			ApiError
+		);
+		await expect(resolveQuery('artikel 287 Sr', deps({ lawId: down }))).rejects.toBeInstanceOf(
+			ApiError
+		);
+		await expect(resolveQuery('36327-3', deps({ lookUp: down }))).rejects.toBeInstanceOf(ApiError);
+		await expect(resolveQuery('Stb. 2026, 94', deps({ lookUp: down }))).rejects.toBeInstanceOf(
+			ApiError
+		);
+		await expect(
+			resolveQuery('ECLI:NL:HR:2024:1769', deps({ exists: down }))
+		).rejects.toBeInstanceOf(ApiError);
 	});
 });
 

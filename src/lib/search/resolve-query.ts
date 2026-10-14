@@ -1,9 +1,7 @@
 // `GET /api/resolve` (API 0.5) turns a citation into one bron. `resolveQuery` asks it
 // first and, where it is absent or finds nothing, parses the notation itself.
-// TODO(backend B11): the parser and the lookups below go when every notation resolves.
-import { BW_BOOKS, withBook } from '$lib/text/bw';
-import { getArticleDetail } from '$lib/api/articles';
-import { getDossier, getDossierDocuments } from '$lib/components/parliamentary/data';
+// TODO(backend B11): the parser goes when every notation resolves.
+import { BW_BOOKS, bookNumber, withBook } from '$lib/text/bw';
 import { api, unwrap } from '$lib/api/client';
 import { ifExists } from '$lib/api/errors';
 import type { Schema } from '$lib/api/types';
@@ -137,16 +135,10 @@ export function parseCitation(query: string): Citation | null {
 }
 
 export type ResolveDeps = {
-	/** `GET /api/resolve`; null when the API has no such route or no match. */
+	/** `GET /api/resolve`; null when the API has no match. */
 	resolve: (query: string) => Promise<Resolved | null>;
 	/** bwb_id of the law an abbreviation or name stands for, as the API's search reads it. */
 	lawId: (law: string, articleNumber: string) => Promise<string | null>;
-	/** Node key of an article, or null when the law has no such article. */
-	articleKey: (bwbId: string, articleNumber: string) => Promise<string | null>;
-	/** Node key of document `nr` of a dossier. */
-	documentKey: (dossier: string, nr: string) => Promise<string | null>;
-	/** Node key and label of the dossier a number names, or null when there is none. */
-	dossier: (number: string) => Promise<{ key: string; number: string } | null>;
 	exists: (ref: BronRef) => Promise<boolean>;
 	/** The bron a readable address names, by /api/lookup (API 0.73): exact or null. */
 	lookUp: (pad: Pad) => Promise<string | null>;
@@ -176,22 +168,6 @@ export const apiDeps: ResolveDeps = {
 		const bwb = found.results.articles?.[0]?.extra?.bwb_id;
 		return typeof bwb === 'string' ? bwb : null;
 	},
-	articleKey: (bwbId, articleNumber) =>
-		getArticleDetail(bwbId, articleNumber)
-			.then((d) => d.article.key ?? null)
-			.catch(() => null),
-	documentKey: async (dossier, nr) => {
-		const data = await getDossierDocuments(dossier).catch(() => null);
-		const wanted = nr.toLowerCase();
-		const hit = data?.items.find(
-			(d) => String(d.sequence ?? '') === wanted || d.key.toLowerCase().endsWith(`_${wanted}`)
-		);
-		return hit?.key ?? null;
-	},
-	dossier: (number) =>
-		getDossier(number)
-			.then((d) => ({ key: d.key, number: d.number }))
-			.catch(() => null),
 	lookUp: (pad) => lookUp(pad),
 	exists: async ({ collection, key }) =>
 		(await ifExists(
@@ -247,9 +223,16 @@ export function keuzesOf(data: Schema<'ResolveResponse'> | null | undefined): {
 
 const nodeKey = (id: string) => id.toLowerCase().replace(/[^a-z0-9]+/g, '_');
 
+/** The node a readable address names, or null where the data has none. */
+async function lookedUp(deps: ResolveDeps, pad: Pad) {
+	const found = await deps.lookUp(pad);
+	return found ? parseNodeId(found) : null;
+}
+
 /**
  * The bron a citation points at, or null: then the query is searched as words.
- * A target is returned only after the API confirmed it exists.
+ * A target is returned only after the API confirmed it exists; a failure of the API
+ * rejects, so it is never taken for a citation the data does not have.
  */
 export async function resolveQuery(
 	query: string,
@@ -257,49 +240,38 @@ export async function resolveQuery(
 ): Promise<Resolved | null> {
 	const c = parseCitation(query);
 	if (!c) return null;
-	try {
-		// A Kamerstuk with its number, a publication: the stuk itself, by lookup, exact.
-		const pad: Pad | null =
-			c.kind === 'publication'
-				? { soort: 'publicatie', reeks: c.series, jaar: c.year, nummer: c.number }
-				: c.kind === 'dossier' && c.document
-					? { soort: 'kamerstuk', dossier: c.number, nummer: c.document }
-					: null;
-		const found = pad ? await deps.lookUp(pad).catch(() => null) : null;
-		const target = found ? parseNodeId(found) : null;
-		// A stuk or a publication; a dossier (a Kamerstuk without number) goes the way below.
-		if (target && target.collection !== 'dossiers')
-			return { ref: { collection: target.collection, key: target.key } as BronRef, at: null };
-		if (c.kind === 'publication') return null;
-		const resolved = await deps.resolve(query).catch(() => null);
-		if (resolved) return resolved;
-		if (c.kind === 'article') {
-			const bwb = c.book ? BW_BOOKS[c.book] : await deps.lawId(c.law, c.number);
-			const key = bwb ? await deps.articleKey(bwb, c.number) : null;
-			return key ? { ref: { collection: 'articles', key }, at: c.at } : null;
-		}
-		if (c.kind === 'dossier') {
-			// `21501-31` is a dossier of its own; `36327-3` is paper 3 of dossier 36327.
-			const labelled = c.document && (await deps.dossier(`${c.number}-${c.document}`));
-			if (labelled) {
-				return {
-					ref: { collection: 'dossiers', key: labelled.key, number: labelled.number },
-					at: null
-				};
-			}
-			const key = c.document && (await deps.documentKey(c.number, c.document));
-			if (key) return { ref: { collection: 'documents', key }, at: null };
-			const dossier = await deps.dossier(c.number);
-			return dossier
-				? { ref: { collection: 'dossiers', key: dossier.key, number: dossier.number }, at: null }
+	// A Kamerstuk with its number, a publication: the stuk itself, by lookup, exact.
+	const pad: Pad | null =
+		c.kind === 'publication'
+			? { soort: 'publicatie', reeks: c.series, jaar: c.year, nummer: c.number }
+			: c.kind === 'dossier' && c.document
+				? { soort: 'kamerstuk', dossier: c.number, nummer: c.document }
 				: null;
+	const stuk = pad ? await lookedUp(deps, pad) : null;
+	// A stuk or a publication; a dossier (a Kamerstuk without number) goes the way below.
+	if (stuk && stuk.collection !== 'dossiers') return { ref: stuk as BronRef, at: null };
+	if (c.kind === 'publication') return null;
+	const resolved = await deps.resolve(query);
+	if (resolved) return resolved;
+	if (c.kind === 'article') {
+		const bwb = c.book ? BW_BOOKS[c.book] : await deps.lawId(c.law, c.number);
+		const nummer = bwb ? bookNumber(bwb, c.number) : null;
+		const article =
+			bwb && nummer ? await lookedUp(deps, { soort: 'artikel', wet: bwb, nummer }) : null;
+		return article ? { ref: { collection: 'articles', key: article.key }, at: c.at } : null;
+	}
+	if (c.kind === 'dossier') {
+		// `21501-31` is a dossier of its own; `36327-999`, a paper the data lacks, its dossier.
+		const numbers = c.document ? [`${c.number}-${c.document}`, c.number] : [c.number];
+		for (const number of numbers) {
+			const dossier = await lookedUp(deps, { soort: 'dossier', nummer: number });
+			if (dossier) return { ref: { collection: 'dossiers', key: dossier.key, number }, at: null };
 		}
-		const ref: BronRef =
-			c.kind === 'ecli'
-				? { collection: 'judgments', key: nodeKey(c.ecli) }
-				: { collection: 'instruments', key: nodeKey(c.id) };
-		return (await deps.exists(ref)) ? { ref, at: null } : null;
-	} catch {
 		return null;
 	}
+	const ref: BronRef =
+		c.kind === 'ecli'
+			? { collection: 'judgments', key: nodeKey(c.ecli) }
+			: { collection: 'instruments', key: nodeKey(c.id) };
+	return (await deps.exists(ref)) ? { ref, at: null } : null;
 }

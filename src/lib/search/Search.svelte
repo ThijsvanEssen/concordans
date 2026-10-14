@@ -10,6 +10,7 @@
 	import { onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { isTimeout, unwrap, zoekApi } from '$lib/api/client';
+	import { report } from '$lib/api/errors';
 	import { DEBOUNCE_MS, LANEN as ALLE_LANEN, LIVE, type Laan as LaanDef } from './lanen';
 	import type { Schema } from '$lib/api/types';
 	import { bronHref, focusOf, type BronRef } from '$lib/bron/href';
@@ -305,13 +306,12 @@
 			loading = true;
 			// Beside the words, the article they may cite: shown only once the API has it.
 			if (written) {
+				// A failure leaves the row out: the words are searched all the same.
 				resolveQuery(written)
 					.then((target) => {
 						if (!controller.signal.aborted && target) confirmed = { term, target };
 					})
-					.catch(() => {
-						// The words are searched all the same.
-					});
+					.catch((e) => report('Zoeken', e));
 			}
 			// The hits and what the query cites (BE-16), with the fast kinds: "AVG" has its law
 			// the moment its hits are there, so Enter cannot open a hit before the law is known.
@@ -486,12 +486,17 @@
 		resolving = true;
 		// The answer that came with the hits, where it names the bron; else the full way.
 		const known = resolvedWith?.term === term ? resolvedWith.target : null;
-		const target = known ?? (await resolveQuery(term));
-		resolving = false;
-		if (target) {
-			open(target.ref, target.at);
-		} else {
-			unresolved = term;
+		try {
+			const target = known ?? (await resolveQuery(term));
+			if (target) open(target.ref, target.at);
+			else unresolved = term;
+		} catch (e) {
+			// The API failed: not "niet in de gegevens", but the failure, to try again.
+			report('Zoeken', e);
+			failed = true;
+			traag = isTimeout(e);
+		} finally {
+			resolving = false;
 		}
 	}
 
