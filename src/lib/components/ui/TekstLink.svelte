@@ -1,7 +1,8 @@
 <script lang="ts">
 	// Going somewhere, in the text's own letter: Alle 244 uitspraken, Wis alle filters, Vorige
 	// (docs/bediening.md). Ink, underlined; red only on hover and focus; the size of the text
-	// around it. A link where it leads to an address, a button where it acts on the page.
+	// around it. A link where it leads to an address, a button where it acts on the page. On a
+	// touch screen it has the shared target of AppShell (.raakvlak).
 	import type { Snippet } from 'svelte';
 
 	let {
@@ -21,11 +22,11 @@
 </script>
 
 {#if href}
-	<a class="tekstlink {className}" {href} data-sveltekit-noscroll {onclick} {...rest}
+	<a class="tekstlink raakvlak {className}" {href} data-sveltekit-noscroll {onclick} {...rest}
 		>{@render children()}</a
 	>
 {:else}
-	<button type="button" class="tekstlink {className}" {onclick} {...rest}
+	<button type="button" class="tekstlink raakvlak {className}" {onclick} {...rest}
 		>{@render children()}</button
 	>
 {/if}

@@ -5,7 +5,6 @@ import {
 	samen,
 	sleutelVan,
 	verschuif,
-	weggelaten,
 	type Gedeeld,
 	type GroepNotities,
 	type Map,
@@ -49,7 +48,11 @@ const isItem = (i: unknown): i is MapItem =>
 function heleItems(v: unknown): MapItem[] {
 	if (!Array.isArray(v)) return [];
 	const items = v.filter(isItem);
-	weggelaten('deze browser', v.length - items.length);
+	const skipped = v.length - items.length;
+	if (skipped > 0)
+		console.warn(
+			`Gemarkeerd: ${skipped} item(s) in deze browser overgeslagen (oude of onvolledige vorm).`
+		);
 	return items;
 }
 

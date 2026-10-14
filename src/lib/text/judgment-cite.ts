@@ -2,6 +2,7 @@
 // then the ECLI. HR 19 juli 2019, ECLI:NL:HR:2019:1278; Rb. Den Haag 6 juli 2026, …;
 // Hof Amsterdam 22 september 2026, ….
 import { langeDatum } from './datum';
+import { courtName as nameOfCourt } from './court';
 import { bewaarItem, type MapItem } from '$lib/map/map';
 
 /** `2019-07-19` as `19 juli 2019`; null for anything else. */
@@ -13,7 +14,7 @@ const placeOf = (name: string | null | undefined, kind: 'Rechtbank' | 'Gerechtsh
 
 /**
  * The court as it is cited, from the court code of the ECLI and, for a rechtbank or hof,
- * its place from the name: HR, Conclusie (the Parket), ABRvS, CRvB, CBb, Hof Amsterdam,
+ * its place from the name (given, or that of the code): HR, Conclusie (the Parket), ABRvS, CRvB, CBb, Hof Amsterdam,
  * Rb. Den Haag, HvJ EU, EHRM.
  */
 export function courtCite(ecli: string, courtName?: string | null): string {
@@ -32,15 +33,16 @@ export function courtCite(ecli: string, courtName?: string | null): string {
 		case 'CBB':
 			return 'CBb';
 	}
+	const name = nameOfCourt(courtName) ?? nameOfCourt(code);
 	if (code.startsWith('GH')) {
-		const place = placeOf(courtName, 'Gerechtshof');
+		const place = placeOf(name, 'Gerechtshof');
 		return place ? `Hof ${place}` : 'Hof';
 	}
 	if (code.startsWith('RB')) {
-		const place = placeOf(courtName, 'Rechtbank');
+		const place = placeOf(name, 'Rechtbank');
 		return place ? `Rb. ${place}` : 'Rb.';
 	}
-	return courtName?.trim() || code;
+	return name ?? code;
 }
 
 /**
@@ -126,6 +128,8 @@ export type UitspraakVoorCitaat = {
 	ecli?: string | null;
 	props?: Record<string, unknown> | null;
 	advocate_general?: string | null;
+	/** Procureur-Generaal where the A-G signed as one (API 0.74). */
+	advocate_general_role?: string | null;
 	paragraphs?: { kind?: string | null; text: string }[] | null;
 	names?: string[] | null;
 	/** Its reader's address, for the link to an overweging. */
@@ -138,10 +142,10 @@ const tekstVan = (v: unknown) => (typeof v === 'string' && v ? v : null);
 export function uitspraakKop(j: UitspraakVoorCitaat): { short: string; full: string } | null {
 	if (!j.ecli) return null;
 	// The A-G of a conclusion, as it is cited: Conclusie A-G Hartlief 8 mei 2020.
-	const author = authorCite(
-		j.advocate_general,
-		(j.paragraphs ?? []).filter((p) => p.kind === 'signature').map((p) => p.text)
-	);
+	const author = authorCite(j.advocate_general, [
+		...(j.paragraphs ?? []).filter((p) => p.kind === 'signature').map((p) => p.text),
+		...(j.advocate_general_role ? [j.advocate_general_role] : [])
+	]);
 	return judgmentCite(j.ecli, tekstVan(j.props?.date), tekstVan(j.props?.court), author);
 }
 

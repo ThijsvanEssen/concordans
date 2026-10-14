@@ -38,8 +38,13 @@ describe('courtCite', () => {
 		expect(courtCite('ECLI:CE:ECHR:2026:0908JUD000748123')).toBe('EHRM');
 		expect(courtCite('ECLI:EU:C:2020:12')).toBe('HvJ EU');
 	});
-	it('falls back on the court without a place in its name', () => {
-		expect(courtCite('ECLI:NL:RBMNE:2026:4501', null)).toBe('Rb.');
+	it('names a court by the code of its ECLI where no name is given, also one abolished (#62)', () => {
+		expect(courtCite('ECLI:NL:RBMNE:2026:4501', null)).toBe('Rb. Midden-Nederland');
+		expect(courtCite('ECLI:NL:RBUTR:2008:BF2034', 'RBUTR')).toBe('Rb. Utrecht');
+		expect(courtCite('ECLI:NL:GHSGR:2010:BN1234', null)).toBe("Hof 's-Gravenhage");
+	});
+	it('falls back on the court without a place it knows', () => {
+		expect(courtCite('ECLI:NL:RBXYZ:2026:1', null)).toBe('Rb.');
 	});
 });
 

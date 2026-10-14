@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { parseNetwerk } from '$lib/netwerk/netwerk';
 import {
 	bewaarItem,
@@ -96,6 +96,33 @@ describe('the map', () => {
 		expect(t).toContain('"HR 20 december 2019 (Urgenda); a~b"');
 	});
 
+	it('writes the CSV per group, in the order of the groups, its places as printed (#56)', () => {
+		const lid3a = {
+			...lid2,
+			at: 'lid-3-onder-a',
+			kort: 'art. 6:162 lid 3 BW',
+			voluit: null,
+			groep: 'BW'
+		};
+		const regels = (t: string) => t.slice(1).split('\r\n').slice(1);
+		const adres = () => '';
+		expect(regels(csv([lid2, ro, lid3a], adres))).toEqual([
+			'1;Burgerlijk Wetboek Boek 6;artikel 6:162 lid 2 Burgerlijk Wetboek;lid 2;;',
+			'2;Burgerlijk Wetboek Boek 6;art. 6:162 lid 3 BW;lid 3, onder a;;',
+			'3;"HR 20 december 2019 (Urgenda); a~b";HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1;r.o. 5.7.1;;'
+		]);
+		// In the reader's own order: that order, each under its group's name.
+		expect(regels(csv([lid2, ro, lid3a], adres, 'eigen')).map((r) => r.split(';')[1])).toEqual([
+			'Burgerlijk Wetboek Boek 6',
+			'"HR 20 december 2019 (Urgenda)',
+			'Burgerlijk Wetboek Boek 6'
+		]);
+		// A place the reader cannot print stays out.
+		expect(regels(csv([{ ...lid2, at: 'p-54bd15c1' }], adres))[0]).toBe(
+			'1;Burgerlijk Wetboek Boek 6;artikel 6:162 lid 2 Burgerlijk Wetboek;;;'
+		);
+	});
+
 	it('carries a note in the link, the citations and the CSV', () => {
 		const met = { ...lid2, notitie: 'Drie categorieën; ~ en ; erin' };
 		expect(uitParam(naarParam([met]))[0].notitie).toBe(met.notitie);
@@ -138,7 +165,8 @@ describe('the map', () => {
 			items: uitParam(naarParam(m.items)),
 			volgorde: 'eigen',
 			notitie: m.notitie,
-			groepNotities: {}
+			groepNotities: {},
+			skipped: 0
 		});
 		// A link of before: no note, no order.
 		const oud = new URLSearchParams({ map: naarParam([lid2]), mapnaam: 'Oud' });
@@ -147,7 +175,8 @@ describe('the map', () => {
 			items: uitParam(naarParam([lid2])),
 			volgorde: 'groep',
 			notitie: null,
-			groepNotities: {}
+			groepNotities: {},
+			skipped: 0
 		});
 		expect(mapParams({ ...m, volgorde: 'groep', notitie: '  ' }).has('mapnotitie')).toBe(false);
 		expect(uitParams(new URLSearchParams('mapnotitie=x'))).toBeNull();
@@ -319,15 +348,22 @@ describe('keeping a bron', () => {
 		expect(itemHref(lid2)).not.toContain('#lid-2#');
 	});
 
-	it('leaves out an item of an old or broken link or store, and says so', () => {
-		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+	it('leaves out an item of an old or broken link, and counts it for the page (#53)', () => {
 		// A link of before 14 Oct: five fields, no group key.
-		expect(uitParam(`${stuk}~~MvT~Kamerstukken 36889~een notitie`)).toEqual([]);
-		expect(uitParams(new URLSearchParams({ map: `${stuk}~~MvT~Kamerstukken 36889` }))).toBeNull();
+		const oud = `${stuk}~~MvT~Kamerstukken 36889~een notitie`;
+		expect(uitParam(oud)).toEqual([]);
+		expect(uitParams(new URLSearchParams({ map: `${oud};${oud}`, mapnaam: 'Oud' }))).toEqual({
+			naam: 'Oud',
+			items: [],
+			volgorde: 'groep',
+			notitie: null,
+			groepNotities: {},
+			skipped: 2
+		});
 		const heel = naarParam([lid2]);
-		expect(uitParam(`${heel};${stuk}~~MvT`)).toEqual([{ ...lid2, voluit: undefined }]);
-		expect(warn).toHaveBeenCalledTimes(3);
-		warn.mockRestore();
+		const gemengd = uitParams(new URLSearchParams({ map: `${heel};${stuk}~~MvT` }))!;
+		expect(gemengd.items).toEqual([{ ...lid2, voluit: undefined }]);
+		expect(gemengd.skipped).toBe(1);
 	});
 
 	it('moves an item among the items of its group by key, whatever its name', () => {

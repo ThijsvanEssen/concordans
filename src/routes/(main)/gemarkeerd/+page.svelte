@@ -139,7 +139,7 @@
 			{#if m}
 				<span class="knoppen">
 					{#if !i.notitie && notitieVan !== k}
-						<button type="button" class="notitie-knop" onclick={() => (notitieVan = k)}
+						<button type="button" class="notitie-knop raakvlak" onclick={() => (notitieVan = k)}
 							>Aantekening</button
 						>
 					{/if}
@@ -189,7 +189,7 @@
 						>{:else}{g.groep}{/if}<span class="aantal">{g.items.length}</span>
 				</h3>
 				{#if m && !bij && groepNotitieVan !== k}
-					<button type="button" class="notitie-knop" onclick={() => (groepNotitieVan = k)}
+					<button type="button" class="notitie-knop raakvlak" onclick={() => (groepNotitieVan = k)}
 						>Aantekening</button
 					>
 				{/if}
@@ -230,6 +230,7 @@
 				<li>
 					<button
 						type="button"
+						class="raakvlak"
 						class:actief={m.id === kaart.actief.id}
 						aria-current={m.id === kaart.actief.id ? 'true' : undefined}
 						title="{tel(m.items.length)}, gewijzigd {dag(m.gewijzigd)}"
@@ -246,18 +247,23 @@
 			<Sectie titel="Gedeelde map: {gedeeld.naam ?? 'zonder naam'}" niveau={2} inklapbaar={false}>
 				{#snippet naast()}
 					<span class="acties">
-						<TekstLink href={netwerkHref(gedeeld.items) ?? undefined}>Netwerk</TekstLink>
-						<TekstLink onclick={() => gedeeldKlaar('map')}>Bewaar als map</TekstLink>
-						<TekstLink onclick={() => gedeeldKlaar('erbij')}
-							>Voeg toe aan {kaart.actief.naam}</TekstLink
-						>
+						{#if gedeeld.items.length}
+							<TekstLink href={netwerkHref(gedeeld.items) ?? undefined}>Netwerk</TekstLink>
+							<TekstLink onclick={() => gedeeldKlaar('map')}>Bewaar als map</TekstLink>
+							<TekstLink onclick={() => gedeeldKlaar('erbij')}
+								>Voeg toe aan {kaart.actief.naam}</TekstLink
+							>
+						{/if}
 						<TekstLink onclick={() => gedeeldKlaar('niet')}>Niet bewaren</TekstLink>
 					</span>
 				{/snippet}
 				<Aantekening tekst={gedeeld.notitie} bij={gedeeld.naam ?? 'de map'} />
 				<p class="meta">
-					<span>{tel(gedeeld.items.length)}</span>
-					{@render alles(null, gedeeld.items)}
+					<span
+						>{tel(gedeeld.items.length)}{#if gedeeld.skipped}, {formatCount(gedeeld.skipped)} uit de link
+							niet te lezen{/if}</span
+					>
+					{#if gedeeld.items.length}{@render alles(null, gedeeld.items)}{/if}
 				</p>
 				{@render lijst(gedeeld.items, gedeeld.volgorde, null, gedeeld.groepNotities)}
 			</Sectie>
@@ -286,7 +292,11 @@
 								onclick={() =>
 									download(
 										`${bestand(m)}.csv`,
-										csv(m.items, (i) => new URL(itemHref(i), page.url.origin).toString())
+										csv(
+											m.items,
+											(i) => new URL(itemHref(i), page.url.origin).toString(),
+											m.volgorde
+										)
 									)}>CSV</TekstLink
 							>
 						{/if}
@@ -413,7 +423,7 @@
 						<ConfirmButton
 							label="Wis de map"
 							confirmLabel="Ja, alles uit {m.naam} halen"
-							buttonClass="wis"
+							buttonClass="wis raakvlak"
 							onConfirm={() => op(m, () => kaart.wis())}
 						/>
 					</p>
@@ -449,7 +459,7 @@
 		align-items: baseline;
 		justify-content: space-between;
 		gap: var(--s-2);
-		padding: 2px 0;
+		padding: var(--s-1) 0;
 	}
 	.opzij li button {
 		padding: 0;
@@ -574,9 +584,23 @@
 	.rijen {
 		--row-lead: 140px;
 		--row-aside: 280px;
+		container-type: inline-size;
 		margin: 0;
 		padding: 0;
 		list-style: none;
+	}
+	/* Where the list is too narrow for the citation beside the ways on (802 px, UX-toets 14 Oct
+	   #61: one word per line), the ways on go under the citation; on a phone the row stacks. */
+	@media (min-width: 769px) {
+		@container (max-width: 760px) {
+			.rijen :global(.row) {
+				grid-template-columns: var(--row-lead) minmax(0, 1fr);
+			}
+			.rijen :global(.row-aside) {
+				grid-column: 2;
+				justify-content: flex-start;
+			}
+		}
 	}
 	.row-id-main {
 		display: inline-flex;
