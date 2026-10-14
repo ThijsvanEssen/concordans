@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { capitalize } from '$lib/text/words';
+import { woordenVan } from '$lib/verbonden/hoe';
+import type { Relation } from '$lib/vocabulary';
 import { normalizeItem, type FeedItem } from './feed';
 import {
 	inwerkingVerbanden,
@@ -211,6 +214,47 @@ describe('how a row is tied to a followed law', () => {
 		expect(viaTekst({ relation: 'establishes' })).toBe('Stelt de wet vast');
 		expect(viaTekst({ relation: 'proposes', dossier: '36764' })).toBe('In dossier 36764');
 		expect(viaTekst(null)).toBeNull();
+	});
+
+	it('puts the verb of a change around what it changes', () => {
+		const wet = 'Cyberbeveiligingswet';
+		expect(viaTekst({ relation: 'introduces', article: '5' }, wet)).toBe(
+			'Voegt art. 5 Cyberbeveiligingswet in'
+		);
+		expect(viaTekst({ relation: 'introduces' }, wet)).toBe(
+			'Voegt artikelen in Cyberbeveiligingswet in'
+		);
+		expect(viaTekst({ relation: 'repeals', article: '5' }, wet)).toBe(
+			'Doet art. 5 Cyberbeveiligingswet vervallen'
+		);
+		expect(viaTekst({ relation: 'repeals' }, wet)).toBe('Trekt Cyberbeveiligingswet in');
+	});
+});
+
+describe('the verbs of a change', () => {
+	it('are those of a verbinding, for a publication’s laws and an amendment’s articles', () => {
+		const effecten = ['establishes', 'amends', 'introduces', 'repeals'] as const;
+		const v = publicatieVerbanden({
+			series: 'stb',
+			year: 2026,
+			number: '1',
+			instruments: effecten.map((effect, n) => ({ key: `bwbr${n}`, title: `Wet ${n}`, effect }))
+		});
+		expect(v.map((r) => r.label)).toEqual(
+			effecten.map((e) =>
+				capitalize(woordenVan(e.toUpperCase() as Relation, 'instruments', 'articles').actief)
+			)
+		);
+		const a = relatieVerbanden(
+			item({
+				amends_articles: (['amends', 'introduces', 'repeals'] as const).map((effect, n) => ({
+					key: `bwbr0005537_${n}`,
+					number: String(n),
+					effect
+				}))
+			})
+		);
+		expect(a.map((r) => r.label)).toEqual(['Wijzigt', 'Voegt in', 'Doet vervallen']);
 	});
 });
 

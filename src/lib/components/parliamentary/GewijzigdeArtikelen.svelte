@@ -13,9 +13,9 @@
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import {
-		RELATION_WORD,
 		articleLabel,
 		byArticle,
+		changeHead,
 		sharedEnactment,
 		stageLead,
 		zonderArtikelen,
@@ -84,10 +84,8 @@
 							</span>
 							{#each a.changes as c, j (j)}
 								<span class="wijziging">
-									{#if gedeeld}{RELATION_WORD[c.relation]}{:else}{RELATION_WORD[c.relation]}, {stageLead(
-											c
-										)}<BronLink ref={c.source.id}
-											>{naamVanId(c.source.id, c.source.display_name)}</BronLink
+									{#if gedeeld}{changeHead(c)}{:else}{changeHead(c)}, {stageLead(c)}<BronLink
+											ref={c.source.id}>{naamVanId(c.source.id, c.source.display_name)}</BronLink
 										>{/if}
 								</span>
 							{/each}

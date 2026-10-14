@@ -7,13 +7,8 @@ import { getNodeGraph, neighborsOf } from '$lib/api/nodes';
 import { abortable, getAmendedBy, getDocument } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
 import { kernSoort, kernVan, type Inhoud, type MetInhoud } from './rij-inhoud';
-import {
-	brengersVan,
-	wijzigingenVan,
-	WIJZIGINGEN,
-	type Brenger,
-	type WetRegel
-} from './wijzigingen';
+import { CHANGE_RELATIONS } from '$lib/verbonden/hoe';
+import { brengersVan, wijzigingenVan, type Brenger, type WetRegel } from './wijzigingen';
 
 /** The text a row opens on, and what it is (a stuk of kind `kern` says its own). */
 export type RowText = { text: string | null; as: Inhoud };
@@ -39,7 +34,7 @@ export async function changesOf(
 	if (soort === 'wijzigingen') {
 		const g = await getNodeGraph('instruments', item.node.key, {
 			limit: 200,
-			relations: WIJZIGINGEN.join(','),
+			relations: CHANGE_RELATIONS.join(','),
 			direction: 'outbound',
 			signal
 		});

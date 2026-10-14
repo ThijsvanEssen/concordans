@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { RELATIONS, type Collection, type Relation } from '$lib/vocabulary';
+import { capitalize } from '$lib/text/words';
 import {
+	CHANGE_HEAD,
+	CHANGE_RELATIONS,
+	changeAround,
+	changeRelation,
+	changeVerb,
 	hoeVan,
 	kleineLetter,
 	publicatie,
@@ -706,5 +712,35 @@ describe('the line of a vote', () => {
 			'decisions'
 		);
 		expect([h?.werkwoord, h?.rest]).toEqual(['Tegen', ', 7 zetels']);
+	});
+});
+
+describe('the words of a change', () => {
+	it('names the four relations of a change in the order of a line, with the head of an article’s line', () => {
+		expect(CHANGE_RELATIONS).toEqual(['ESTABLISHES', 'AMENDS', 'INTRODUCES', 'REPEALS']);
+		expect(CHANGE_RELATIONS.map((r) => CHANGE_HEAD[r])).toEqual([
+			null,
+			'Wijziging',
+			'Nieuw artikel',
+			'Vervalt'
+		]);
+		expect(changeRelation('repeals')).toBe('REPEALS');
+	});
+
+	it('gives the verb of a verbinding, by the effect where the edge has one', () => {
+		expect(CHANGE_RELATIONS.map((r) => changeVerb(r))).toEqual(
+			CHANGE_RELATIONS.map((r) => capitalize(woordenVan(r, 'instruments', 'articles').actief))
+		);
+		expect(changeVerb('AMENDS', 'articles', { effect: 'vervallen' })).toBe('Doet vervallen');
+		expect(changeVerb('AMENDS', 'articles', { effect: 'vernummering' })).toBe('Vernummert');
+		expect(changeVerb('REPEALS', 'instruments')).toBe('Trekt in');
+	});
+
+	it('puts a separable verb around what it changes', () => {
+		expect(changeAround('ESTABLISHES', 'articles', '111 artikelen')).toBe(
+			'stelt 111 artikelen vast'
+		);
+		expect(changeAround('AMENDS', 'articles', '1 artikel')).toBe('wijzigt 1 artikel');
+		expect(changeAround('REPEALS', 'instruments', 'de wet')).toBe('trekt de wet in');
 	});
 });

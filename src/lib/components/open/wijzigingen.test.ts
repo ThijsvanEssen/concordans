@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { CHANGE_RELATIONS } from '$lib/verbonden/hoe';
 import { brengersVan, wijzigingenVan } from './wijzigingen';
 
 const artikel = (
@@ -53,6 +54,27 @@ describe('what a publication changes, per law and verb', () => {
 	it('reads the verb from the effect, as the row of Verbonden does', () => {
 		const [r] = wijzigingenVan([artikel('t_5', '5', 'AMENDS', 'nieuw', 5)]);
 		expect(r.werkwoord).toBe('Voegt in');
+	});
+
+	it('orders the lines of a law by the relation: Stelt vast, Wijzigt, Voegt in, Doet vervallen', () => {
+		const regels = wijzigingenVan([
+			artikel('t_4', '4', 'REPEALS', 'vervallen', 4),
+			artikel('t_3', '3', 'AMENDS', 'nieuw', 3),
+			artikel('t_2', '2', 'AMENDS', 'wijziging', 2),
+			artikel('t_1', '1', 'ESTABLISHES', 'nieuwe-regeling', 1)
+		]);
+		expect(regels.map((r) => r.werkwoord)).toEqual([
+			'Stelt vast',
+			'Wijzigt',
+			'Voegt in',
+			'Doet vervallen'
+		]);
+		expect(regels.map((r) => r.relation)).toEqual(CHANGE_RELATIONS);
+	});
+
+	it('says Vernummert for a renumbering', () => {
+		const [r] = wijzigingenVan([artikel('t_6', '6', 'AMENDS', 'vernummering', 6)]);
+		expect(r.werkwoord).toBe('Vernummert');
 	});
 
 	it('names a few articles and counts the rest', () => {
