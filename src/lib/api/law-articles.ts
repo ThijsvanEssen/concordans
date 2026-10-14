@@ -26,7 +26,8 @@ onForget(() => lists.clear());
 
 /**
  * The list of a law as the API gives it, asked once per law: the table of contents, the
- * place line and the group in Verbonden share it. A failed request is asked again next time.
+ * place line, the group in Verbonden and the whole-law reader share it. A failed request is
+ * asked again next time.
  */
 export function lawArticleList(bwb: string): Promise<Schema<'InstrumentArticlesResponse'>> {
 	let request = lists.get(bwb);

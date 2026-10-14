@@ -1288,7 +1288,6 @@ describe('errors that are not swallowed', () => {
 			'lib/bron/behoort.ts': 5,
 			'lib/components/actueel/wetsnetwerk.ts': 2,
 			'lib/components/explore/IndexView.svelte': 1,
-			'lib/components/explore/WholeLawReader.svelte': 6,
 			'lib/components/graph/GraphCitePanel.svelte': 1,
 			'lib/components/layout/SiteFooter.svelte': 1,
 			'lib/components/open/PostOpen.svelte': 2,
