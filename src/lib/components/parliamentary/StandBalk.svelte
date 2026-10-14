@@ -1,111 +1,17 @@
 <script lang="ts">
-	import { capitalize } from '$lib/text/words';
-	import { korteDatum } from '$lib/text/datum';
 	// De stand van een wetsvoorstel als balk in drie
 	// gelijke vakken, in de volgorde van de procedure. Afgerond met een uitkomst: mos met een
 	// gevuld vakje. Afgerond zonder uitkomst: inkt 2. Nu: inkt, vet, met een vlak. Nog niet:
 	// gestippeld. Onder elk vak één zin met de datum. Werkt op een lijstitem en op het detail.
 	import type { Schema } from '$lib/api/types';
-	import { stand } from './stand';
+	import { boxesOf, stand } from './stand';
 	import Uitkomst from './Uitkomst.svelte';
 
 	type Item = Schema<'DossierSummaryDTO'> | Schema<'DossierDetailResponse'>;
 	let { d, kop = true }: { d: Item; kop?: boolean } = $props();
 
-	type Vak = {
-		naam: string;
-		soort: 'ja' | 'nee' | 'nu' | 'open' | 'klaar';
-		woord: string;
-		zin: string;
-	};
 	const st = $derived(stand(d));
-	const dateOf = (name: string) => d.phases?.find((p) => p.name === name)?.date ?? null;
-
-	const vakken = $derived.by<Vak[]>(() => {
-		if (!st) return [];
-		const [rvs, tk, ek] = st.bodies;
-		const a = dateOf('Advies Raad van State');
-		const v1: Vak =
-			rvs.state === 'done'
-				? {
-						naam: 'Raad van State',
-						soort: 'klaar',
-						woord: 'Advies',
-						zin: a ? `Uitgebracht, ${korteDatum(a)}` : 'Uitgebracht'
-					}
-				: {
-						// No mark in the source: not in the data, which is not "not yet".
-						naam: 'Raad van State',
-						soort: 'open',
-						woord: 'Advies',
-						zin: 'Niet in de gegevens'
-					};
-		let v2: Vak;
-		if (d.tk_decision) {
-			const how = d.tk_decision.kind?.includes('zonder stemming') ? ', zonder stemming' : '';
-			v2 = {
-				naam: 'Tweede Kamer',
-				soort: 'ja',
-				woord: 'Aangenomen',
-				zin: `${korteDatum(d.tk_decision.date)}${how}`
-			};
-		} else if (d.outcome === 'verworpen') {
-			v2 = { naam: 'Tweede Kamer', soort: 'nee', woord: 'Verworpen', zin: korteDatum(d.closed_on) };
-		} else if (tk.state === 'done') {
-			v2 = {
-				naam: 'Tweede Kamer',
-				soort: 'ja',
-				woord: 'Aangenomen',
-				zin: korteDatum(dateOf('Eindtekst'))
-			};
-		} else {
-			const fase = (st.zin.match(/: (.*?)(,|\.)/)?.[1] ?? '').trim();
-			const when = st.zin.match(/(\d+ \w+\.? \d{4})/)?.[1] ?? '';
-			v2 = {
-				naam: 'Tweede Kamer',
-				soort: 'nu',
-				woord: st.group === 'ingediend' ? 'Ingediend' : 'In behandeling',
-				zin: st.group === 'ingediend' ? when : `${capitalize(fase)}${when ? `, ${when}` : ''}`
-			};
-		}
-		let v3: Vak;
-		if (d.ek_outcome) {
-			const m = d.ek_outcome.method ?? '';
-			const how =
-				m === 'Hamerstuk'
-					? ', hamerstuk'
-					: m.startsWith('Stemming bij zitten')
-						? ', zitten en opstaan'
-						: '';
-			const ja = d.ek_outcome.outcome !== 'Verworpen';
-			v3 = {
-				naam: 'Eerste Kamer',
-				soort: ja ? 'ja' : 'nee',
-				woord: d.ek_outcome.outcome,
-				zin: `${korteDatum(d.ek_outcome.date)}${how}`
-			};
-		} else if (ek.state === 'now') {
-			// Where the bill is, as eerstekamer.nl heads its list (API 0.76); else its step.
-			const senate = 'senate' in d ? d.senate : null;
-			const step = senate?.progress?.find((s) => s.state === 'geblokt')?.phase;
-			v3 = {
-				naam: 'Eerste Kamer',
-				soort: 'nu',
-				woord: 'In behandeling',
-				zin: senate?.status ?? step ?? 'Sinds aanneming door de Tweede Kamer'
-			};
-		} else if (ek.state === 'none') {
-			v3 = {
-				naam: 'Eerste Kamer',
-				soort: 'open',
-				woord: 'Niet aan de orde',
-				zin: 'Verworpen door de Tweede Kamer'
-			};
-		} else {
-			v3 = { naam: 'Eerste Kamer', soort: 'open', woord: 'Nog niet', zin: 'Na de Tweede Kamer' };
-		}
-		return [v1, v2, v3];
-	});
+	const boxes = $derived(boxesOf(d));
 </script>
 
 {#if d.source === 'eerstekamer'}
@@ -118,12 +24,12 @@
 	<section class="stand" aria-label="Stand van zaken">
 		{#if kop}<p class="zin">{st.zin}</p>{/if}
 		<ol class="balk">
-			{#each vakken as v (v.naam)}
-				<li class="vak vak--{v.soort}">
-					<span class="naam">{v.naam}</span>
+			{#each boxes as box (box.body)}
+				<li class="vak vak--{box.mark}">
+					<span class="naam">{box.body}</span>
 					<span class="streep" aria-hidden="true"></span>
-					<Uitkomst soort={v.soort} woord={v.woord} />
-					<span class="wanneer">{v.zin}</span>
+					<Uitkomst soort={box.mark} woord={box.word} />
+					<span class="wanneer">{box.line}</span>
 				</li>
 			{/each}
 		</ol>

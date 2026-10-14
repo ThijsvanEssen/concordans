@@ -8,6 +8,7 @@ import type { Schema } from '$lib/api/types';
 import { bronHref } from '$lib/bron/href';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import { stand } from './stand';
+import { methodPhrase, stepsToCome } from './stages';
 import {
 	enigJaar,
 	sorteer,
@@ -192,16 +193,8 @@ function regelsVan(
 						vote: { chamber: groep === 'ek' ? 'EK' : 'TK', passed: uitslag, tally }
 					}
 				});
-			const method = typeof b.method === 'string' ? b.method : '';
-			const how =
-				method === 'Hamerstuk'
-					? ' als hamerstuk'
-					: method.startsWith('Stemming bij zitten')
-						? ' bij zitten en opstaan'
-						: (e.kind ?? '').includes('zonder stemming') ||
-							  (e.title ?? '').includes('zonder stemming')
-							? ' zonder stemming'
-							: '';
+			const method = typeof b.method === 'string' ? b.method : null;
+			const how = methodPhrase(method, `${e.kind ?? ''} ${e.title ?? ''}`);
 			out.push({
 				id: e.node_id,
 				datum: e.date,
@@ -211,7 +204,7 @@ function regelsVan(
 				zin:
 					uitslag === null
 						? 'Geen uitslag in de gegevens'
-						: `${uitslag ? 'Aangenomen' : 'Verworpen'}${how}`,
+						: [uitslag ? 'Aangenomen' : 'Verworpen', how].filter(Boolean).join(' '),
 				href: bronHref(e.node_id, { keepMode: false, mode: 'read' }),
 				ref: e.node_id,
 				groot: true,
@@ -351,23 +344,6 @@ function ekVoortgang(d: Detail, ek: TijdRegel[]): TijdRegel[] | null {
 	return out;
 }
 
-const TK_NOG = [
-	'verslag',
-	'nota naar aanleiding van het verslag',
-	'nota van wijziging',
-	'plenaire behandeling',
-	'stemming'
-];
-/** De fase waar het voorstel is, als plaats in TK_NOG; wat erna komt kan nog volgen. */
-const FASE_PLAATS: Record<string, number> = {
-	'Voorstel van wet': -1,
-	'Memorie van toelichting': -1,
-	'Advies Raad van State': -1,
-	Verslag: 0,
-	'Nota n.a.v. het verslag': 1,
-	'Nota van wijziging / Amendement': 2,
-	Stemmingen: 4
-};
 /**
  * The outcome of a vote as the source gives it: aangenomen (true), verworpen (false), or
  * none (null) for a vote that was postponed or has no result yet. The Tweede Kamer gives
@@ -421,25 +397,17 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 		});
 
 	const tk = regelsVan(per.get('tk') ?? [], 'tk', d.number, inhoud);
-	// De wijze staat in tk_decision, niet in het besluit zelf.
-	if (d.tk_decision?.kind?.includes('zonder stemming'))
-		for (const r of tk)
-			if (r.teken === 'ja' && r.zin === 'Aangenomen') r.zin = 'Aangenomen zonder stemming';
-	if (state[1] === 'now') {
-		const i = FASE_PLAATS[d.current_phase ?? ''] ?? -1;
-		// Een nota van wijziging kan steeds opnieuw komen; ze blijft in de lijst.
-		const nog = TK_NOG.slice(i + 1)
-			.concat(i === 2 ? [] : [])
-			.filter((x, k, a) => a.indexOf(x) === k);
-		if (i === 2) nog.unshift('nog een nota van wijziging');
+	// The way is in tk_decision, not in the decision itself.
+	const how = methodPhrase(null, d.tk_decision?.kind);
+	if (how) for (const r of tk) if (r.teken === 'ja' && r.zin === 'Aangenomen') r.zin += ` ${how}`;
+	if (state[1] === 'now')
 		tk.push({
 			id: 'tk-nog',
 			datum: null,
 			teken: 'verwacht',
 			soort: 'activities',
-			zin: `Kan nog volgen: ${joinAnd(nog)}.`
+			zin: `Kan nog volgen: ${joinAnd(stepsToCome(d.current_phase))}.`
 		});
-	}
 	groepen.push({
 		id: 'tk',
 		titel: 'Tweede Kamer',
