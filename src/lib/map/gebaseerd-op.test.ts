@@ -1,35 +1,19 @@
 // Guard: a law's regulations read alike under a kept law in a map (MapRegelingen) and in its
 // group Gebaseerd op deze wet in Verbonden: one request, one row per regulation, the same
 // name, kind, day and articles (equal pages, equal experience).
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import type { Schema } from '$lib/api/types';
+import { fakeApi } from '$lib/test/fakeApi';
+import { onderWet, regelVanRij } from './verbonden';
+import { LOADERS, basisRow, regelingRow, wetRegelingRow } from '$lib/verbonden/loaders';
+import { hoeVan } from '$lib/verbonden/hoe';
+import { metaParts } from '$lib/verbonden/rows';
+import { grondslagArtikelen } from '$lib/text/delegaties';
 
 const answer: { current: Schema<'InstrumentDelegatedResponse'> | null } = { current: null };
-const asked = vi.fn();
-vi.mock('$lib/api/articles', async (original) => ({
-	...(await original<typeof import('$lib/api/articles')>()),
-	getLawDelegated: (bwb: string) => {
-		asked(bwb);
-		return Promise.resolve(answer.current);
-	}
-}));
-const related = vi.fn();
-vi.mock('$lib/api/client', async (original) => ({
-	...(await original<typeof import('$lib/api/client')>()),
-	api: {
-		GET: (path: string) => {
-			related(path);
-			return Promise.resolve({ data: { items: [], total: 0 } });
-		}
-	},
-	unwrap: async (p: Promise<{ data: unknown }>) => (await p).data
-}));
-
-const { onderWet, regelVanRij } = await import('./verbonden');
-const { LOADERS, basisRow, regelingRow, wetRegelingRow } = await import('$lib/verbonden/loaders');
-const { hoeVan } = await import('$lib/verbonden/hoe');
-const { metaParts } = await import('$lib/verbonden/rows');
-const { grondslagArtikelen } = await import('$lib/text/delegaties');
+let fake: ReturnType<typeof fakeApi>;
+/** The paths asked, in order. */
+const paths = () => fake.requests.map((r) => r.path);
 
 const instrument = (key: string, title: string): Schema<'InstrumentSummaryDTO'> => ({
 	id: `instruments/${key}`,
@@ -90,8 +74,10 @@ const verbonden = () =>
 
 beforeEach(() => {
 	answer.current = cbw;
-	asked.mockClear();
-	related.mockClear();
+	fake = fakeApi({
+		'/api/instruments/{bwb_id}/delegated': () => answer.current,
+		'/api/instruments/{bwb_id}/related-instruments': { items: [], total: 0 }
+	});
 });
 
 describe('Gebaseerd op deze wet', () => {
@@ -108,7 +94,9 @@ describe('Gebaseerd op deze wet', () => {
 
 	it('lists the same regulations in a map as in Verbonden', async () => {
 		const [kaart, groep] = await Promise.all([onderWet('BWBR0052872'), verbonden()]);
-		expect(asked).toHaveBeenCalledWith('BWBR0052872');
+		expect(fake.asked('/api/instruments/{bwb_id}/delegated')).toContainEqual({
+			path: { bwb_id: 'BWBR0052872' }
+		});
 		expect(kaart.titel).toBe('Gebaseerd op deze wet');
 		expect(groep.total).toBe(2);
 		expect(kaart.regelingen.map((r) => [r.id, r.naam, r.soort, r.datum, r.artikelen])).toEqual(
@@ -126,7 +114,7 @@ describe('Gebaseerd op deze wet', () => {
 			datum: '2026-08-15',
 			artikelen: 'AMvB op grond van art. 16 lid 1 en 7, 21 lid 5, 24'
 		});
-		expect(related).not.toHaveBeenCalled();
+		expect(paths()).toEqual(['/api/instruments/{bwb_id}/delegated']);
 	});
 
 	it('says in Verbonden what the regulation rests on, then its kind and day', () => {
@@ -154,7 +142,7 @@ describe('Gebaseerd op deze wet', () => {
 		answer.current = { bwb_id: 'BWBR0001854', total: 0, items: [] };
 		const kaart = await onderWet('BWBR0001854');
 		expect(kaart.titel).toBe('Wetten die met deze wet verbonden zijn');
-		expect(related).toHaveBeenCalledWith('/api/instruments/{bwb_id}/related-instruments');
+		expect(paths()).toContain('/api/instruments/{bwb_id}/related-instruments');
 		expect((await verbonden()).rows).toEqual([]);
 	});
 });

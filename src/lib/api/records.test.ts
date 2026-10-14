@@ -1,9 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { forgetRecords, once, RECORDS_KEPT } from './records';
+import { describe, expect, it, vi } from 'vitest';
+import { once, RECORDS_KEPT } from './records';
 
 describe('once', () => {
-	beforeEach(() => forgetRecords());
-
 	it('asks for a record once, also after its answer came', async () => {
 		const load = vi.fn(async () => 'dossier 36799');
 		expect(await once('dossiers/36799', load)).toBe('dossier 36799');

@@ -7,6 +7,7 @@ import { api, unwrap } from './client';
 import type { Schema } from './types';
 import { articleName } from '$lib/text/bw';
 import { layersOf, type Division } from '$lib/text/division';
+import { onForget } from '$lib/util/forget';
 
 export type LawArticle = {
 	/** The number, or the address of an article without one (`stam_16464063`). */
@@ -21,6 +22,7 @@ export type LawArticle = {
 export type LawNavItem = { key: string; label: string; breadcrumb: Division[] };
 
 const lists = new Map<string, Promise<Schema<'InstrumentArticlesResponse'>>>();
+onForget(() => lists.clear());
 
 /**
  * The list of a law as the API gives it, asked once per law: the table of contents, the

@@ -5,6 +5,7 @@
 import { writable, type Readable } from 'svelte/store';
 import { api, unwrap } from './client';
 import type { Schema } from './types';
+import { onForget } from '$lib/util/forget';
 
 export type InstrumentMeta = {
 	/** BWB id, or the key of an instrument without one (EU). */
@@ -117,6 +118,12 @@ export function primeInstrumentNames(): void {
 }
 
 const details = new Map<string, Promise<Schema<'InstrumentDetailDTO'>>>();
+onForget(() => {
+	cache.clear();
+	store.set(new Map());
+	details.clear();
+	primed = false;
+});
 
 /**
  * One instrument in full (`/api/instruments/{identifier}`): its names, dates, article count

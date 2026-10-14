@@ -10,10 +10,12 @@
 import { api, unwrap } from './client';
 import { getNodeGraph, neighborsOf } from './nodes';
 import type { Collection } from '$lib/vocabulary';
+import { onForget } from '$lib/util/forget';
 
 // An article read through a law is a record too: room for a few hundred.
 const MAX = 400;
 const kept = new Map<string, Promise<unknown>>();
+onForget(() => kept.clear());
 
 /** The answer of `load` for `id`, asked once while it is kept. */
 export function once<T>(id: string, load: () => Promise<T>): Promise<T> {
@@ -108,9 +110,6 @@ export const getNodeVerbonden = (collection: Collection, key: string) =>
 
 /** The most the API gives per bucket of a node (API 0.5). */
 export const NODE_BUCKET = 200;
-
-/** For tests: forget every kept record. */
-export const forgetRecords = () => kept.clear();
 
 /** How many records are kept. */
 export const RECORDS_KEPT = MAX;

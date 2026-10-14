@@ -1,5 +1,6 @@
 import { api, unwrap } from './client';
 import type { Schema } from './types';
+import { onForget } from '$lib/util/forget';
 
 export type Stats = Schema<'StatsResponse'>;
 
@@ -27,3 +28,8 @@ export function getCoverage(): Promise<Coverage> {
 	});
 	return coverageRequest;
 }
+
+onForget(() => {
+	request = null;
+	coverageRequest = null;
+});

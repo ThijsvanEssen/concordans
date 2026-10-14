@@ -12,6 +12,7 @@ import {
 import { overwegingVan } from '$lib/map/inhoud';
 import { uitspraakNoten, type Noot } from '$lib/text/voetnoten';
 import { keyEcli } from './leesbaar';
+import { onForget } from '$lib/util/forget';
 
 export type Uitspraak = {
 	j: Schema<'JudgmentDetailResponse'>['judgment'];
@@ -33,6 +34,7 @@ export function legUit(j: Schema<'JudgmentDetailResponse'>['judgment']): Uitspra
 }
 
 const gelegd = new Map<string, Promise<Uitspraak>>();
+onForget(() => gelegd.clear());
 
 /** The judgment of a key (`ecli_nl_hr_2019_2006`) or an ECLI, laid out once. */
 export function laadUitspraak(keyOfEcli: string): Promise<Uitspraak> | null {

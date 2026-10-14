@@ -9,7 +9,7 @@ type Query = NonNullable<operations['list_decisions_api_decisions_get']['paramet
 type Antwoord = Awaited<ReturnType<typeof besluiten>>;
 
 /** The waits before each new question: a big set can take many seconds to count. */
-const WACHTEN = [1500, 3000, 6000, 12000];
+export const WACHTEN = [1500, 3000, 6000, 12000];
 
 export const besluiten = (query: Query, signal?: AbortSignal) =>
 	unwrap(api.GET('/api/decisions', { params: { query }, signal }));
