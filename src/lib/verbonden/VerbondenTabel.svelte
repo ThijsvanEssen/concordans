@@ -1,12 +1,11 @@
 <script lang="ts">
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import Vinkje from '$lib/components/ui/Vinkje.svelte';
-	import { terPlekke } from '$lib/actions/klik';
+	import { rowClick, terPlekke } from '$lib/actions/klik';
 	// All verbindingen of the selected bron as a table, under the same bronfilter:
 	// bron, verbinding, plaats in de bron, plaats in dit artikel, aard, status,
 	// betrouwbaarheid, datum. Fifty rows per page.
 	import { menu } from '$lib/actions/menu';
-	import { onControl } from '$lib/actions/outside';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { page } from '$app/state';
 	import { bronHref } from '$lib/bron/href';
@@ -238,9 +237,7 @@
 						     Verbinding is the button under the title. -->
 						<tr
 							class:is-open={open}
-							onclick={(e) => {
-								if (!onControl(e)) openRow = open ? null : id;
-							}}
+							onclick={(e) => rowClick(e, () => (openRow = open ? null : id))}
 						>
 							{#each visibleColumns as c (c.id)}
 								{#if c.id === 'bron'}

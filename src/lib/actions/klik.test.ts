@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
-import { gewoneKlik, terPlekke } from './klik';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { gewoneKlik, rowClick, terPlekke } from './klik';
 
 const click = (init: Partial<MouseEvent> = {}) =>
 	({
@@ -35,5 +35,40 @@ describe('klik', () => {
 			expect(e.preventDefault).not.toHaveBeenCalled();
 			expect(gewoneKlik(e)).toBe(false);
 		}
+	});
+});
+
+describe('rowClick', () => {
+	class FakeElement {
+		constructor(private control: boolean) {}
+		closest = () => (this.control ? this : null);
+	}
+	const selected = (text: string) =>
+		vi.stubGlobal('window', { getSelection: () => ({ toString: () => text }) });
+	const on = (target: unknown) => ({ target, currentTarget: {} }) as unknown as MouseEvent;
+	afterEach(() => vi.unstubAllGlobals());
+
+	it('opens the row on a click on the row itself', () => {
+		vi.stubGlobal('Element', FakeElement);
+		selected('');
+		const open = vi.fn();
+		rowClick(on(new FakeElement(false)), open);
+		expect(open).toHaveBeenCalledOnce();
+	});
+
+	it('leaves a click on a link or button in the row to that control', () => {
+		vi.stubGlobal('Element', FakeElement);
+		selected('');
+		const open = vi.fn();
+		rowClick(on(new FakeElement(true)), open);
+		expect(open).not.toHaveBeenCalled();
+	});
+
+	it('selects, and does not open, when the click ends a text selection', () => {
+		vi.stubGlobal('Element', FakeElement);
+		selected('Motie van het lid');
+		const open = vi.fn();
+		rowClick(on(new FakeElement(false)), open);
+		expect(open).not.toHaveBeenCalled();
 	});
 });

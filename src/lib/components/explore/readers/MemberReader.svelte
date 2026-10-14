@@ -40,8 +40,7 @@
 	import { ambtZin } from '$lib/components/parliamentary/ambt';
 	import StemOpen from '$lib/components/open/StemOpen.svelte';
 	import { bronHref } from '$lib/bron/href';
-	import { terPlekke } from '$lib/actions/klik';
-	import { onControl } from '$lib/actions/outside';
+	import { rowClick, terPlekke } from '$lib/actions/klik';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
 	import { load } from '$lib/util/load.svelte';
@@ -406,10 +405,7 @@
 											<div
 												class="vote-link"
 												data-rij
-												onclick={(e) => {
-													if (onControl(e) || window.getSelection()?.toString()) return;
-													toggleStem(v.decision_key);
-												}}
+												onclick={(e) => rowClick(e, () => toggleStem(v.decision_key))}
 											>
 												<button
 													type="button"

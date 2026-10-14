@@ -1438,4 +1438,14 @@ describe('the explorer’s small things said once (code-eenvoud F48–F50)', () 
 			offenders((t) => /['"]Openstaand['"]/.test(t), ['lib/components/explore/index/government.ts'])
 		).toEqual([]);
 	});
+
+	it('opens a clickable row by one rule, rowClick in $lib/actions/klik (F50)', () => {
+		// A row is marked data-rij; RijActies only looks for its row.
+		expect(
+			offenders(
+				(t) => /\sdata-rij[\s>]/.test(t) && !t.includes('rowClick('),
+				['lib/components/ui/RijActies.svelte']
+			)
+		).toEqual([]);
+	});
 });
