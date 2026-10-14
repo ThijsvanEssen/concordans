@@ -41,6 +41,29 @@ export function scrollInReader(target: HTMLElement, block: 'start' | 'center' = 
 	scroller.scrollTo({ top: scroller.scrollTop + at.top - box.top - Math.max(offset, 0) });
 }
 
+/**
+ * Keeps what the reader looks at in place while text goes in above it: the first of
+ * `selector` in `root` still in view is measured now; the function returned, called once the
+ * new text stands, scrolls by as far as it moved.
+ */
+export function keepInPlace(root: HTMLElement, selector: string): () => void {
+	const top = scrollerOf(root)?.getBoundingClientRect().top ?? 0;
+	const anchor = [...root.querySelectorAll<HTMLElement>(selector)].find(
+		(el) => el.getBoundingClientRect().bottom > top
+	);
+	if (!anchor) return () => {};
+	const before = anchor.getBoundingClientRect().top;
+	return () => {
+		if (!anchor.isConnected) return;
+		const moved = anchor.getBoundingClientRect().top - before;
+		if (!moved) return;
+		// The reader may only scroll now that the text above made it longer.
+		const scroller = scrollerOf(anchor);
+		if (scroller) scroller.scrollTop += moved;
+		else window.scrollBy(0, moved);
+	};
+}
+
 /** The element a reader scrolls in: the nearest ancestor that scrolls. */
 function scrollerOf(el: HTMLElement): HTMLElement | null {
 	for (let p = el.parentElement; p; p = p.parentElement) {
