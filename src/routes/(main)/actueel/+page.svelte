@@ -15,7 +15,7 @@
 	import { isEscape } from '$lib/actions/keys';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
-	import { ApiError, api, unwrap } from '$lib/api/client';
+	import { ApiError, api, isTimeout, unwrap, zoekApi } from '$lib/api/client';
 	import { untrack } from 'svelte';
 	import { API_BASE_URL } from '$lib/api/base-url';
 	import type { Schema } from '$lib/api/types';
@@ -219,8 +219,6 @@
 	let error = $state<string | null>(null);
 	/** The API gave up on the words searched (30 s): a shorter period is quick. */
 	let teLang = $state(false);
-	/** As long as the API waits on a slow query. */
-	const WACHT = 35_000;
 	const dagenTerug = (n: number) =>
 		new Date(Date.parse(today) - n * 86_400_000).toISOString().slice(0, 10);
 	/** A shorter period to offer, when the one asked is longer. */
@@ -249,9 +247,9 @@
 			cursor = null;
 		}
 		unwrap(
-			api.GET('/api/feed', {
+			zoekApi.GET('/api/feed', {
 				params: { query: { ...q, facets: false } },
-				signal: AbortSignal.any([ac.signal, AbortSignal.timeout(WACHT)])
+				signal: ac.signal
 			})
 		)
 			.then((r) => {
@@ -265,9 +263,7 @@
 				// No list under filters it does not answer.
 				items = [];
 				cursor = null;
-				teLang =
-					(e instanceof ApiError && (e.status === 503 || e.status === 504)) ||
-					(e instanceof DOMException && e.name === 'TimeoutError');
+				teLang = (e instanceof ApiError && (e.status === 503 || e.status === 504)) || isTimeout(e);
 				error = teLang ? 'Zoeken duurt te lang.' : 'Actueel kon niet worden geladen.';
 			})
 			.finally(() => {
@@ -316,9 +312,8 @@
 		verderLaden = true;
 		try {
 			const r = await unwrap(
-				api.GET('/api/feed', {
-					params: { query: { ...query, until: dagVoor(doorzocht), facets: false } },
-					signal: AbortSignal.timeout(WACHT)
+				zoekApi.GET('/api/feed', {
+					params: { query: { ...query, until: dagVoor(doorzocht), facets: false } }
 				})
 			);
 			items = uniqueBy([...items, ...r.items.map(normalizeItem)], (i) => i.id);
@@ -336,7 +331,7 @@
 		loadingMore = true;
 		try {
 			const r = await unwrap(
-				api.GET('/api/feed', { params: { query: { ...query, cursor, facets: false } } })
+				zoekApi.GET('/api/feed', { params: { query: { ...query, cursor, facets: false } } })
 			);
 			items = uniqueBy([...items, ...r.items.map(normalizeItem)], (i) => i.id);
 			cursor = r.next_cursor ?? null;

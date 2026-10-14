@@ -10,7 +10,7 @@
 	// that came in before it, as the API finds them (`huur`: nothing since September).
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
-	import { api, unwrap } from '$lib/api/client';
+	import { unwrap, zoekApi } from '$lib/api/client';
 	import { API_BASE_URL } from '$lib/api/base-url';
 	import FeedDay from '$lib/components/actueel/FeedDay.svelte';
 	import { partyColor } from '$lib/utils/party-color.svelte';
@@ -53,8 +53,6 @@
 	const PER_ONDERWERP = 100;
 	/** Lines shown of a topic before `Alle … tonen`. */
 	const EERST = 10;
-	/** The API's own limit on a slow query. */
-	const WACHT = 30_000;
 
 	const today = vandaag();
 	const dagenTerug = (n: number) =>
@@ -136,9 +134,9 @@
 				let gelukt = true;
 				const vraag = (query: Record<string, unknown>) =>
 					unwrap(
-						api.GET('/api/feed', {
+						zoekApi.GET('/api/feed', {
 							params: { query: { ...vraagVan(o), ...query, facets: false } },
-							signal: AbortSignal.any([signal, AbortSignal.timeout(WACHT)])
+							signal
 						})
 					);
 				try {
