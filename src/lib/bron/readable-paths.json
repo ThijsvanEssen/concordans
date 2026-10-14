@@ -19,6 +19,18 @@
       "path": "/wetten/BWBR0005289"
     },
     {
+      "focus": "instruments/32022l2555",
+      "props": {
+        "celex": "32022L2555"
+      },
+      "path": "/wetten/32022L2555"
+    },
+    {
+      "focus": "instruments/32016r0679",
+      "props": {},
+      "path": "/wetten/32016R0679"
+    },
+    {
       "focus": "articles/bwbr0005289_162",
       "props": {
         "bwb_id": "BWBR0005289",
@@ -41,6 +53,14 @@
         "article_number": "7:658"
       },
       "path": "/wetten/BWBR0005290/artikel/7:658"
+    },
+    {
+      "focus": "articles/32022l2555_21",
+      "props": {
+        "celex": "32022L2555",
+        "article_number": "21"
+      },
+      "path": "/wetten/32022L2555/artikel/21"
     },
     {
       "focus": "dossiers/36496",
@@ -148,6 +168,13 @@
         "number": "2025Z15468"
       },
       "path": "/zaken/2025Z15468"
+    },
+    {
+      "focus": "activities/18f47274_7437_422c_8100_68f1982311fb",
+      "props": {
+        "number": "2026A01323"
+      },
+      "path": "/activiteiten/2026A01323"
     }
   ],
   "none": [
@@ -189,6 +216,12 @@
     {
       "focus": "cases/c2",
       "props": {}
+    },
+    {
+      "focus": "activities/ek_20260310_jenv",
+      "props": {
+        "number": ""
+      }
     }
   ],
   "parse": [
@@ -207,6 +240,14 @@
         "a": "BWBR0005289"
       },
       "canonical": "/wetten/BWBR0005289"
+    },
+    {
+      "path": "/wetten/32022l2555",
+      "pad": {
+        "soort": "wet",
+        "a": "32022L2555"
+      },
+      "canonical": "/wetten/32022L2555"
     },
     {
       "path": "/wetten/BWBR0005289/artikel/6%3A162",
@@ -260,6 +301,14 @@
         "a": "2025Z15468"
       },
       "canonical": "/zaken/2025Z15468"
+    },
+    {
+      "path": "/activiteiten/2026a01323",
+      "pad": {
+        "soort": "activiteit",
+        "a": "2026A01323"
+      },
+      "canonical": "/activiteiten/2026A01323"
     }
   ],
   "invalid": [
@@ -267,6 +316,9 @@
     "/explore",
     "/actueel",
     "/wetten/xyz",
+    "/wetten/22022L2555",
+    "/wetten/32022X2555",
+    "/wetten/32022L2555/bijlage/I",
     "/wetten/BWBR0005289/hoofdstuk/1",
     "/uitspraken/geen-ecli",
     "/dossiers/12",
@@ -281,6 +333,8 @@
     "/wetten/BWBR0002741/bijlage/a b",
     "/wetten/xyz/bijlage/II",
     "/zaken/15468",
-    "/zaken/2025Z15468/x"
+    "/zaken/2025Z15468/x",
+    "/activiteiten/01323",
+    "/activiteiten/2026A01323/x"
   ]
 }

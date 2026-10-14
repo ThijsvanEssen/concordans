@@ -2,6 +2,7 @@
 //
 //   /uitspraken/ECLI:NL:HR:2019:2006     a judgment, by its ECLI (as rechtspraak.nl)
 //   /wetten/BWBR0005289                  a law, by its BWB id
+//   /wetten/32022L2555                   an EU act, by its CELEX number
 //   /wetten/BWBR0005289/artikel/6:162    an article, by its law and number
 //   /dossiers/36600-VIII                 a dossier, by its number
 //   /kamerstukken/36799/31               a Kamerstuk, by its dossier and number
@@ -14,6 +15,7 @@
 //   /toezeggingen/TZ202609-124           a toezegging, by its number
 //   /stemmingen/decision_154df5db_…      a stemming (a besluit), by its key
 //   /zaken/2025Z15468                    a zaak, by its number (API 0.79.43, #502)
+//   /activiteiten/2026A01323             an activiteit of the Tweede Kamer, by its number
 //   /wetten/BWBR0002741/bijlage/II       a bijlage of a law, by its label
 //
 // Each is a second address of the Verkenner (`reroute` in src/hooks.ts serves /explore);
@@ -44,6 +46,7 @@ export type Pad =
 	| { soort: 'toezegging'; nummer: string }
 	| { soort: 'stemming'; key: string }
 	| { soort: 'zaak'; nummer: string }
+	| { soort: 'activiteit'; nummer: string }
 	| { soort: 'bijlage'; wet: string; label: string };
 
 /** The series of officielebekendmakingen.nl a publication appears in. */
@@ -62,12 +65,16 @@ const ECLI = /^ECLI:[A-Z]{2}:[A-Z0-9]+:\d{4}:[A-Z0-9.]+$/i;
 const DOSSIER = /^\d{4,6}(-[A-Z0-9()]+)*$/i;
 /** A law in the BWB by its id, which is its node key too: BWBR0005290. */
 const BWB = /^BWBR\d{7}$/i;
+/** An EU act by its CELEX number, its node key too: sector 3, year, kind, number (32022L2555). */
+const CELEX = /^3\d{4}[CDFLR]\d+$/i;
 /** A key or slug as the API gives it: `rutte_iv`, `ek_democraten_1966`, `buhaos-2021`. */
 const SLEUTEL = /^[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
 /** The number of a toezegging: `TZ202609-124`. */
 const TOEZEGGING = /^TZ\d+-\d+$/i;
 /** The number of a zaak: `2025Z15468`. */
 const ZAAK = /^\d{4}Z\d+$/i;
+/** The number of an activiteit of the Tweede Kamer: `2026A01323`. */
+const ACTIVITEIT = /^\d{4}A\d+$/i;
 /** The label of a bijlage: `II`, `1`, `2.A`, `B-1`. */
 const BIJLAGE = /^[A-Z0-9]+(?:[.-][A-Z0-9]+)*$/i;
 /** The number of a stuk: a figure in the Tweede Kamer, letters in the Eerste (`A`, `AB`). */
@@ -80,12 +87,14 @@ export function parsePad(pathname: string): Pad | null {
 	const [first, a, b, c] = parts as string[];
 	if (first === 'uitspraken' && parts.length === 2 && ECLI.test(a))
 		return { soort: 'uitspraak', ecli: a.toUpperCase() };
-	if (first === 'wetten' && parts.length === 2 && BWB.test(a))
+	if (first === 'wetten' && parts.length === 2 && (BWB.test(a) || CELEX.test(a)))
 		return { soort: 'wet', wet: a.toUpperCase() };
 	if (first === 'wetten' && parts.length === 4 && b === 'bijlage' && BWB.test(a) && BIJLAGE.test(c))
 		return { soort: 'bijlage', wet: a.toUpperCase(), label: c.toUpperCase() };
 	if (first === 'zaken' && parts.length === 2 && ZAAK.test(a))
 		return { soort: 'zaak', nummer: a.toUpperCase() };
+	if (first === 'activiteiten' && parts.length === 2 && ACTIVITEIT.test(a))
+		return { soort: 'activiteit', nummer: a.toUpperCase() };
 	if (first === 'wetten' && parts.length === 4 && b === 'artikel' && a && c)
 		return { soort: 'artikel', wet: a.toUpperCase(), nummer: c };
 	if (first === 'dossiers' && parts.length === 2 && DOSSIER.test(a))
@@ -145,6 +154,8 @@ export function padHref(pad: Pad): string {
 			return `/stemmingen/${pad.key}`;
 		case 'zaak':
 			return `/zaken/${pad.nummer}`;
+		case 'activiteit':
+			return `/activiteiten/${pad.nummer}`;
 		case 'bijlage':
 			return `/wetten/${e(pad.wet)}/bijlage/${e(pad.label)}`;
 	}
@@ -264,6 +275,8 @@ function lookupQuery(pad: Pad) {
 			return { kind: 'commitment', number: pad.nummer } as const;
 		case 'zaak':
 			return { kind: 'case', number: pad.nummer } as const;
+		case 'activiteit':
+			return { kind: 'activity', number: pad.nummer } as const;
 		case 'bijlage':
 			return { kind: 'annex', law: pad.wet, label: pad.label } as const;
 		case 'stemming':
@@ -411,6 +424,9 @@ export function padOfFocus(focus: string, props?: Record<string, unknown> | null
 		case 'instruments': {
 			// A law of the BWB by its id (/wetten/BWBR0005290).
 			if (BWB.test(target.key)) return padHref({ soort: 'wet', wet: target.key.toUpperCase() });
+			// An EU act by its CELEX number (/wetten/32022L2555).
+			const celex = [text(props?.celex), target.key].find((c) => !!c && CELEX.test(c));
+			if (celex) return padHref({ soort: 'wet', wet: celex.toUpperCase() });
 			// A publication by its id at officielebekendmakingen.nl (stb-2026-94), or its key.
 			const id = text(props?.official_id) ?? target.key.replaceAll('_', '-');
 			const m = /^(stb|stcrt|trb)-(\d{4})-(\d+)$/.exec(id.toLowerCase());
@@ -435,6 +451,13 @@ export function padOfFocus(focus: string, props?: Record<string, unknown> | null
 			// A commissie's key is a uuid; its slug (szw) is what a reader types.
 			const slug = text(props?.slug);
 			return slug && SLEUTEL.test(slug) ? padHref({ soort: 'commissie', slug }) : null;
+		}
+		case 'activities': {
+			// An activiteit of the Eerste Kamer has no number; it keeps /explore.
+			const nummer = text(props?.number);
+			return nummer && ACTIVITEIT.test(nummer)
+				? padHref({ soort: 'activiteit', nummer: nummer.toUpperCase() })
+				: null;
 		}
 		case 'commitments': {
 			const nummer = text(props?.number);

@@ -30,6 +30,17 @@ describe('a readable address', () => {
 		});
 	});
 
+	it('opens an EU act by its CELEX number in the Verkenner, on its node', () => {
+		expect(parsePad('/wetten/32022L2555')).toEqual({ soort: 'wet', wet: '32022L2555' });
+		expect(isVerkenner('/wetten/32022L2555')).toBe(true);
+		expect(focusIn(new URL('https://concordans.nl/wetten/32022L2555'))).toBe(
+			'instruments/32022l2555'
+		);
+		expect(padOfFocus('instruments/32022l2555')).toBe('/wetten/32022L2555');
+		// A bijlage is of a BWB law only.
+		expect(parsePad('/wetten/32022L2555/bijlage/I')).toBeNull();
+	});
+
 	it('reads a cabinet, a fractie, a commissie and a toezegging, and gives them back', () => {
 		expect(parsePad('/kabinetten/rutte_iv')).toEqual({ soort: 'kabinet', key: 'rutte_iv' });
 		expect(parsePad('/fracties/ek_democraten_1966')).toEqual({
