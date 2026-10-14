@@ -39,6 +39,8 @@ const apiDocsModule: Plugin = {
 
 /** The tests of a `.svelte.ts` module whose runes must react. */
 const RUNES = 'src/**/*.svelte.test.ts';
+/** The tests of a component in a page: clicks, focus and keys (src/lib/test/dom-setup.ts). */
+const DOM = 'src/**/*.dom.test.ts';
 
 export default defineConfig({
 	plugins: [sveltekit(), spaRoutes, apiDocsModule],
@@ -51,7 +53,10 @@ export default defineConfig({
 	test: {
 		setupFiles: ['src/lib/test/setup.ts'],
 		projects: [
-			{ extends: true, test: { name: 'unit', include: ['src/**/*.test.ts'], exclude: [RUNES] } },
+			{
+				extends: true,
+				test: { name: 'unit', include: ['src/**/*.test.ts'], exclude: [RUNES, DOM] }
+			},
 			// Runes that react: Svelte compiled as for the browser (src/lib/test/client-environment.ts).
 			{
 				extends: true,
@@ -60,6 +65,17 @@ export default defineConfig({
 					name: 'runes',
 					include: [RUNES],
 					environment: './src/lib/test/client-environment.ts'
+				}
+			},
+			// Components in a page (jsdom), compiled as for the browser.
+			{
+				extends: true,
+				resolve: { conditions: ['browser'] },
+				test: {
+					name: 'dom',
+					include: [DOM],
+					environment: 'jsdom',
+					setupFiles: ['src/lib/test/dom-setup.ts']
 				}
 			}
 		]
