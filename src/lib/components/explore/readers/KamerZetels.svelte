@@ -11,10 +11,11 @@
 	import { indelingMarkering } from '../zaaltegenover';
 	import ZaalPlaatsen from '../ZaalPlaatsen.svelte';
 	import { achtergrondVan, kleurVan } from '../partijkleuren.svelte';
-	import { getParliamentSeats } from '$lib/api/records';
 	import { korteDatum, vandaag } from '$lib/text/datum';
 	import { formatLongDate } from './_shared';
-	import { vacantZonderFractie, wijzigingenVan, zaalMetPlan, zetelHoogte } from './zetels';
+	import { hallOfDay, vacantZonderFractie, wijzigingenVan, zetelHoogte } from './zetels';
+	import { load } from '$lib/util/load.svelte';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { Schema } from '$lib/api/types';
 	import Tijdas from '$lib/components/tijdlijn/Tijdas.svelte';
 	import Fasen from '$lib/components/tijdlijn/Fasen.svelte';
@@ -67,8 +68,6 @@
 		EK: ['Voorzitter', 'Griffie', 'Regering', 'Verslag en redactie']
 	};
 
-	/** The hall of the day; `geen` where the data has none for it. */
-	let zaal = $state<Zaal | 'laden' | 'geen'>('laden');
 	/**
 	 * The day the hall is asked for: the day shown, within the stretch it falls in (a past
 	 * cabinet's last day is its successor's first). Always with a date: only then does the
@@ -81,28 +80,13 @@
 		const tot = s.to_date ?? eind;
 		return dag < s.from_date ? s.from_date : dag > tot ? tot : dag;
 	});
-	$effect(() => {
-		const k = kamer;
-		const d = zaalDag;
-		const metStukken = stukken.length > 0;
-		const sleutel = kabinet;
-		let weg = false;
-		zaal = 'laden';
-		// With stretches the hall of the day chosen; without, the hall of today, when it is
-		// this cabinet's. The Eerste Kamer's seating only comes without a date: today takes it.
-		const nu = k === 'EK' && d === vandaag() ? getParliamentSeats(k).catch(() => null) : null;
-		Promise.all([getParliamentSeats(k, d), nu])
-			.then(([z, plan]) => {
-				if (weg) return;
-				zaal = metStukken || z.cabinet?.key === sleutel ? zaalMetPlan(z, plan) : 'geen';
-			})
-			.catch(() => {
-				if (!weg) zaal = 'geen';
-			});
-		return () => {
-			weg = true;
-		};
-	});
+	const hall = load(
+		() => ({ day: zaalDag, withStretches: stukken.length > 0, chamber: kamer, cabinet: kabinet }),
+		(k) => hallOfDay(k.chamber, k.day, k.cabinet, k.withStretches),
+		'Zaal van het kabinet'
+	);
+	/** The hall of the day, once it is in; null where the data has none for it. */
+	const zaal = $derived(hall.state.status === 'ready' ? hall.state.data : null);
 
 	const gekozen = $derived(
 		stukken.find((s) => dag >= s.from_date && dag <= (s.to_date ?? eind)) ?? stukken.at(-1) ?? null
@@ -176,8 +160,7 @@
 	const kop = $derived.by(() => {
 		if (gekozen)
 			return { ja: gekozen.coalition, totaal: zetelsVanKamer, vacant: coalitieVacant(gekozen) };
-		if (typeof zaal === 'object')
-			return { ja: zijden(zaal, null).jaZetels, totaal: zetelsVanKamer, vacant: 0 };
+		if (zaal) return { ja: zijden(zaal, null).jaZetels, totaal: zetelsVanKamer, vacant: 0 };
 		return null;
 	});
 
@@ -329,9 +312,9 @@
 			</div>
 		{/if}
 
-		{#if zaal === 'laden'}
-			<p class="onderschrift">Laden…</p>
-		{:else if zaal === 'geen'}
+		{#if hall.state.status !== 'ready'}
+			<LoadState state={hall.state} what="De zaal" retry={hall.retry} />
+		{:else if !zaal}
 			<p class="onderschrift">
 				{stukken.length
 					? `Geen samenstelling in de gegevens op ${formatLongDate(dag)}.`

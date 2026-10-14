@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { report } from '$lib/api/errors';
 	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
 	// De kop van een bewindspersoon. Wie en wat in één
@@ -34,10 +35,10 @@
 					open: r.facets?.status?.find((s) => s.value === 'Openstaand')?.count ?? 0
 				};
 			})
-			.catch(() => {});
+			.catch((e) => report('Toezeggingen van de bewindspersoon', e));
 		getMemberDossiers(key, 3)
 			.then((r) => !ac.signal.aborted && (dossiers = r.total))
-			.catch(() => {});
+			.catch((e) => report('Dossiers van de bewindspersoon', e));
 		return () => ac.abort();
 	});
 </script>

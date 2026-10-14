@@ -13,6 +13,8 @@
 	import { formatDate, formatLongDate } from './_shared';
 	import { ekVoteLine } from './voters';
 	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
+	import { load } from '$lib/util/load.svelte';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 
 	/** A member of the fractie's board, as the Eerste Kamer lists it (API 0.65). */
 	type BoardSeat = { function?: string; name?: string; member?: string | null; since?: string };
@@ -21,84 +23,47 @@
 
 	let { node }: { node: GraphNode } = $props();
 
-	type State =
-		| { kind: 'loading' }
-		| { kind: 'error'; message: string }
-		| { kind: 'loaded'; faction: Schema<'FactionDetailDTO'> };
-
-	let view = $state<State>({ kind: 'loading' });
-
-	// Raised by Opnieuw, to load the bron again after an error.
-	let attempt = $state(0);
 	// The key, not the node: a new node of the same bron (its light node, then the full one)
 	// does not load it again and empty the reader for a moment (UX-toets 0.79.43, #33).
-	const bronKey = $derived(node.key);
-
-	$effect(() => {
-		void attempt;
-		const key = bronKey;
-		const ac = new AbortController();
-		view = { kind: 'loading' };
-		unwrap(api.GET('/api/factions/{key}', { params: { path: { key } }, signal: ac.signal }))
-			.then((faction) => {
-				if (!ac.signal.aborted) view = { kind: 'loaded', faction };
-			})
-			.catch(() => {
-				if (!ac.signal.aborted)
-					view = { kind: 'error', message: 'Fractie kon niet worden geladen.' };
-			});
-		return () => ac.abort();
-	});
+	const faction = load(
+		() => node.key,
+		(key, signal) => unwrap(api.GET('/api/factions/{key}', { params: { path: { key } }, signal })),
+		'Fractie'
+	);
+	const loaded = $derived(faction.state.status === 'ready' ? faction.state.data : null);
+	const isEk = $derived(str(loaded?.props?.chamber) === 'EK');
 
 	// How an Eerste Kamer fractie voted on the bills (API 0.68); the Tweede Kamer's are
 	// with its members.
-	let votes = $state<Schema<'EkFactionVotesResponse'> | null>(null);
-	$effect(() => {
-		const f = view.kind === 'loaded' ? view.faction : null;
-		votes = null;
-		if (!f || str(f.props?.chamber) !== 'EK') return;
-		const ac = new AbortController();
-		unwrap(
-			api.GET('/api/factions/{key}/votes', { params: { path: { key: f.key } }, signal: ac.signal })
-		)
-			.then((r) => {
-				if (!ac.signal.aborted) votes = r;
-			})
-			.catch(() => {});
-		return () => ac.abort();
-	});
+	const votes = load(
+		() => (loaded && isEk ? loaded.key : null),
+		(key, signal) =>
+			key
+				? unwrap(api.GET('/api/factions/{key}/votes', { params: { path: { key } }, signal }))
+				: Promise.resolve(null),
+		'Stemgedrag van de fractie'
+	);
 
 	// The members of a Tweede Kamer fractie, in a request of their own after the head: the
 	// chair as the source names a membership (`Fractievoorzitter`), the members by name. A phone
 	// shows the reader alone; without this it held the name and the seats only (Thijs, 9 Oct).
 	type Lid = Schema<'MemberDTO'>;
-	let leden = $state<{ staat: 'laden' | 'klaar' | 'fout'; lijst: Lid[] }>({
-		staat: 'laden',
-		lijst: []
-	});
-	$effect(() => {
-		const f = view.kind === 'loaded' ? view.faction : null;
-		leden = { staat: 'laden', lijst: [] };
-		if (!f || str(f.props?.chamber) === 'EK') return;
-		const ac = new AbortController();
-		unwrap(
-			api.GET('/api/members', {
-				params: { query: { party: f.key, active: true, limit: 200 } },
-				signal: ac.signal
-			})
-		)
-			.then((r) => {
-				if (ac.signal.aborted) return;
-				const lijst = [...(r as Lid[])].sort((a, b) =>
-					(a.family_name ?? a.name ?? '').localeCompare(b.family_name ?? b.name ?? '', 'nl')
-				);
-				leden = { staat: 'klaar', lijst };
-			})
-			.catch(() => {
-				if (!ac.signal.aborted) leden = { staat: 'fout', lijst: [] };
-			});
-		return () => ac.abort();
-	});
+	const leden = load(
+		() => (loaded && !isEk ? loaded.key : null),
+		async (key, signal): Promise<Lid[]> => {
+			if (!key) return [];
+			const r = await unwrap(
+				api.GET('/api/members', {
+					params: { query: { party: key, active: true, limit: 200 } },
+					signal
+				})
+			);
+			return [...(r as Lid[])].sort((a, b) =>
+				(a.family_name ?? a.name ?? '').localeCompare(b.family_name ?? b.name ?? '', 'nl')
+			);
+		},
+		'Leden van de fractie'
+	);
 	/** Its current membership of this fractie names the chair (`Fractievoorzitter`). */
 	const isVoorzitter = (m: Lid, key: string) =>
 		(m.faction_memberships ?? []).some(
@@ -112,30 +77,22 @@
 	};
 </script>
 
-<ReaderFrame>
-	<div class="r-faction">
-		{#if view.kind === 'loading'}
-			<p class="loading stil">Laden…</p>
-		{:else if view.kind === 'error'}
-			<p class="error">
-				{view.message}
-				<button type="button" class="btn is-text" onclick={() => attempt++}>Opnieuw</button>
-			</p>
-		{:else}
-			{@const f = view.faction}
-			{@const name = str(f.props?.name)}
-			{@const abbreviation = str(f.props?.abbreviation)}
-			{@const seats = f.props?.seats}
-			{@const chamber = str(f.props?.chamber)}
-			{@const ek = chamber === 'EK'}
-			{@const read = str(f.props?.retrieved_on)}
-			{@const since = str(f.props?.data_since)}
-			{@const board = boardOf(f.props)}
-			{@const sinds = str(f.props?.active_from)}
-			{@const composed = read
-				? `Samenstelling op ${formatLongDate(read)}${since ? `, gegevens sinds ${formatLongDate(since)}` : ''}. `
-				: ''}
-			{@const titel = abbreviation ?? name ?? naamVan('factions', f)}
+<ReaderFrame state={faction.state} what="Fractie" retry={faction.retry}>
+	{#snippet children(f)}
+		{@const name = str(f.props?.name)}
+		{@const abbreviation = str(f.props?.abbreviation)}
+		{@const seats = f.props?.seats}
+		{@const chamber = str(f.props?.chamber)}
+		{@const ek = chamber === 'EK'}
+		{@const read = str(f.props?.retrieved_on)}
+		{@const since = str(f.props?.data_since)}
+		{@const board = boardOf(f.props)}
+		{@const sinds = str(f.props?.active_from)}
+		{@const composed = read
+			? `Samenstelling op ${formatLongDate(read)}${since ? `, gegevens sinds ${formatLongDate(since)}` : ''}. `
+			: ''}
+		{@const titel = abbreviation ?? name ?? naamVan('factions', f)}
+		<div class="r-faction">
 			<!-- The Kamer stands in the band (Kamer: Tweede Kamer), not again here (Thijs, 10 Oct). -->
 			<ReaderHead
 				collection="factions"
@@ -179,7 +136,8 @@
 			{/if}
 
 			{#if !ek}
-				{@const voorzitters = leden.lijst.filter((m) => isVoorzitter(m, f.key))}
+				{@const lijst = leden.state.status === 'ready' ? leden.state.data : []}
+				{@const voorzitters = lijst.filter((m) => isVoorzitter(m, f.key))}
 				{#if voorzitters.length > 0}
 					<dl class="board">
 						{#each voorzitters as m (m.key)}
@@ -191,29 +149,31 @@
 				<Sectie
 					titel="Leden"
 					soort="members"
-					aantal={leden.staat === 'klaar' ? leden.lijst.length : null}
+					aantal={leden.state.status === 'ready' ? lijst.length : null}
 				>
-					{#if leden.staat === 'laden'}
-						<p class="loading stil">Laden…</p>
-					{:else if leden.staat === 'fout'}
-						<p class="error">Leden konden niet worden geladen.</p>
-					{:else if leden.lijst.length === 0}
-						<p class="loading stil">Geen leden in de gegevens.</p>
-					{:else}
-						<ul class="leden">
-							{#each leden.lijst as m (m.key)}
-								<li><BronLink ref={`members/${m.key}`}>{m.name}</BronLink></li>
-							{/each}
-						</ul>
-					{/if}
+					<LoadState state={leden.state} what="De ledenlijst" retry={leden.retry}>
+						{#snippet empty()}<p class="stil">Geen leden in de gegevens.</p>{/snippet}
+						{#snippet children(lijst)}
+							<ul class="leden">
+								{#each lijst as m (m.key)}
+									<li><BronLink ref={`members/${m.key}`}>{m.name}</BronLink></li>
+								{/each}
+							</ul>
+						{/snippet}
+					</LoadState>
 				</Sectie>
 			{/if}
 
-			{#if votes && votes.total > 0}
+			{#if votes.state.status === 'error'}
 				<Sectie titel="Stemgedrag in de Eerste Kamer" soort="decisions">
-					<p class="vote-line">{ekVoteLine(votes.counts, votes.total)}.</p>
+					<LoadState state={votes.state} what="Het stemgedrag" retry={votes.retry} />
+				</Sectie>
+			{:else if votes.state.status === 'ready' && votes.state.data && votes.state.data.total > 0}
+				{@const stemmen = votes.state.data}
+				<Sectie titel="Stemgedrag in de Eerste Kamer" soort="decisions">
+					<p class="vote-line">{ekVoteLine(stemmen.counts, stemmen.total)}.</p>
 					<ul class="votes">
-						{#each votes.items as v (v.decision_key)}
+						{#each stemmen.items as v (v.decision_key)}
 							<li class="vote">
 								<span class="vote-choice vote-choice--{v.choice.split(' ')[0]}"
 									>{CHOICE[v.choice] ?? v.choice}</span
@@ -240,8 +200,8 @@
 					>.
 				</p>
 			{/if}
-		{/if}
-	</div>
+		</div>
+	{/snippet}
 </ReaderFrame>
 
 <style>
@@ -253,11 +213,6 @@
 		gap: var(--lezer-stap);
 		color: var(--ink-2);
 	}
-	.loading,
-	.error {
-		margin: 0;
-	}
-
 	.head {
 		display: flex;
 		flex-direction: column;

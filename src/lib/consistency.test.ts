@@ -887,6 +887,42 @@ describe('canvas cards and halls', () => {
 		);
 	});
 
+	it('loads every reader one way: load() into ReaderFrame, which says loading and failure', () => {
+		// Code-eenvoud F10: each reader had its own state machine, attempt counter and error
+		// line, and CommitteeReader showed nothing at all when its request failed.
+		const lezers = sources.filter(({ path }) =>
+			/^lib\/components\/explore\/(readers\/\w+\.svelte|WholeLawReader\.svelte)$/.test(path)
+		);
+		const own = lezers
+			.filter(({ text }) =>
+				/let attempt = \$state|class="(?:error|spinner|whole-error|whole-empty)"|class="loading/.test(
+					text
+				)
+			)
+			.map((s) => s.path);
+		expect(own).toEqual([]);
+		const laders = [
+			'Annex',
+			'Article',
+			'Cabinet',
+			'Commitment',
+			'Committee',
+			'Decision',
+			'Document',
+			'Dossier',
+			'Faction',
+			'Judgment',
+			'Member'
+		].map((n) => `lib/components/explore/readers/${n}Reader.svelte`);
+		const zonder = laders.filter(
+			(path) =>
+				!/<ReaderFrame\b[^>]*\bstate=\{[^}]*\}[^>]*\bretry=/.test(
+					sources.find((s) => s.path === path)!.text
+				)
+		);
+		expect(zonder).toEqual([]);
+	});
+
 	it('puts the actions of a reader on a row of their own, and keeps the line of a late phrase', () => {
 		// Thijs, 10 Oct (approved suggestion 5): the status words have the column's width; a
 		// phrase that comes after the text (the bills of an article) stands on a line kept from
@@ -1014,7 +1050,10 @@ describe('canvas cards and halls', () => {
 		expect(t.split("' (onzeker)'").length - 1).toBe(1);
 		expect(t).not.toContain('de zetels zijn onzeker');
 		// The Eerste Kamer's hall always with its seats: today's plan, else the day's by fractie.
-		expect(t).toContain('zaalMetPlan(');
+		expect(t).toContain('hallOfDay(');
+		expect(
+			sources.find((s) => s.path === 'lib/components/explore/readers/zetels.ts')!.text
+		).toMatch(/export async function hallOfDay[\s\S]*?zaalMetPlan\(/);
 		expect(t).toContain('<ZaalTegenover data={zaal}');
 		const zaal = sources.find(
 			(s) => s.path === 'lib/components/explore/ZaalTegenover.svelte'
@@ -1248,22 +1287,8 @@ describe('errors that are not swallowed', () => {
 			'lib/api/instrument-cache.ts': 2,
 			'lib/bron/behoort.ts': 5,
 			'lib/components/actueel/wetsnetwerk.ts': 2,
-			'lib/components/explore/IndexView.svelte': 8,
-			'lib/components/explore/WholeLawReader.svelte': 7,
-			'lib/components/explore/index/IndexOverzicht.svelte': 1,
-			'lib/components/explore/readers/ActivityReader.svelte': 2,
-			'lib/components/explore/readers/ArticleReader.svelte': 4,
-			'lib/components/explore/readers/BewindspersoonKop.svelte': 2,
-			'lib/components/explore/readers/CommitmentReader.svelte': 2,
-			'lib/components/explore/readers/DecisionReader.svelte': 2,
-			'lib/components/explore/readers/DocumentReader.svelte': 1,
-			'lib/components/explore/readers/DossierReader.svelte': 2,
-			'lib/components/explore/readers/FactionReader.svelte': 1,
-			'lib/components/explore/readers/FallbackReader.svelte': 1,
-			'lib/components/explore/readers/JudgmentReader.svelte': 2,
-			'lib/components/explore/readers/KabinetZetels.svelte': 1,
-			'lib/components/explore/readers/KamerZetels.svelte': 1,
-			'lib/components/explore/readers/MemberReader.svelte': 2,
+			'lib/components/explore/IndexView.svelte': 1,
+			'lib/components/explore/WholeLawReader.svelte': 6,
 			'lib/components/graph/GraphCitePanel.svelte': 1,
 			'lib/components/layout/SiteFooter.svelte': 1,
 			'lib/components/open/PostOpen.svelte': 2,
@@ -1297,5 +1322,7 @@ describe('errors that are not swallowed', () => {
 			sources.map(({ path, text }) => [path, swallowed(text)]).filter(([, n]) => n)
 		);
 		expect(found).toEqual(places);
+		// No reader swallows one: a secondary part says it failed (code-eenvoud F11).
+		expect(Object.keys(found).filter((p) => p.includes('/explore/readers/'))).toEqual([]);
 	});
 });

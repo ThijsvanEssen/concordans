@@ -37,9 +37,12 @@
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
+	import { load, type LoadState as State } from '$lib/util/load.svelte';
+	import { report } from '$lib/api/errors';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 
 	let {
-		selection,
+		node,
 		prevHref,
 		nextHref,
 		place = [],
@@ -50,7 +53,7 @@
 		proposedRow = null,
 		onCloseProposed
 	}: {
-		selection: GraphNode | null;
+		node: GraphNode;
 		prevHref?: string;
 		nextHref?: string;
 		place?: Division[];
@@ -63,14 +66,6 @@
 		onCloseProposed?: () => void;
 	} = $props();
 
-	type View =
-		| { kind: 'empty' }
-		| { kind: 'loading' }
-		| { kind: 'error' }
-		| { kind: 'loaded'; data: Schema<'ArticleDetailResponse'> };
-
-	let view = $state<View>({ kind: 'empty' });
-	let versions = $state<Schema<'ArticleVersionDTO'>[]>([]);
 	/** The tekstversie on screen, when it is not geldend recht. */
 	let shownIndex = $state<number | null>(null);
 	let versionMenu = $state(false);
@@ -97,59 +92,53 @@
 	// The title every verklaringswet (art. 137 lid 1 Gw) opens with.
 	const FIRST_READING = /^(wijziging van de wet houdende )?verklaring dat er grond bestaat/i;
 
-	// Primitives, so that a new selection object for the same article does not reload it.
-	const selected = $derived(selection !== null);
-	const identity = $derived(selection ? articleOf(selection.raw?.props) : null);
+	// Primitives, so that a new node object for the same article does not reload it.
+	const identity = $derived(articleOf(node.raw?.props));
 	const bwbId = $derived(identity?.lawId ?? '');
 	const articleNumber = $derived(identity?.articleNumber ?? '');
+
+	type Version = Schema<'ArticleVersionDTO'>;
+	// The text and its tekstversies come together, both asked by the address at once: the
+	// status line ("tekst sinds …") stands with the text instead of growing over it after.
+	// Without versions the picker shows the current text alone, and says why.
+	const articleKey = $derived(bwbId && articleNumber ? `${bwbId}/${articleNumber}` : null);
+	const article = load(
+		() => articleKey,
+		async (key) => {
+			if (!key) throw new Error('Artikel zonder wet of nummer');
+			const [law, number] = [bwbId, articleNumber];
+			const versions = getArticleHistory(law, number).then(
+				(r): State<Version[]> => ({ status: 'ready', data: r.versions ?? [] }),
+				(error): State<Version[]> => {
+					report('Tekstversies', error);
+					return { status: 'error', error };
+				}
+			);
+			const [detail, versionState] = await Promise.all([getArticleDetail(law, number), versions]);
+			// The citation panel and the citation forms read the law's names from this cache.
+			recordArticleLaw(law, detail.instrument);
+			return { detail, versions: versionState };
+		},
+		'Artikel'
+	);
+	const loaded = $derived(article.state.status === 'ready' ? article.state.data.detail : null);
+	const versionState = $derived(
+		article.state.status === 'ready' ? article.state.data.versions : null
+	);
+	const versions = $derived(versionState?.status === 'ready' ? versionState.data : []);
+	// A new article opens at its geldende tekst.
+	$effect(() => {
+		void articleKey;
+		untrack(() => (shownIndex = null));
+	});
 
 	// The position in the URL, once the text is on the page and again when it changes.
 	let root = $state<HTMLElement | null>(null);
 	const anchor = $derived(anchorOfHash(page.url.hash));
 	$effect(() => {
-		if (view.kind !== 'loaded' || !anchor || !root) return;
+		if (!loaded || !anchor || !root) return;
 		const container = root;
 		void tick().then(() => landOn(container, anchor));
-	});
-
-	// Raised by Opnieuw, to load the bron again after an error.
-	let attempt = $state(0);
-
-	$effect(() => {
-		void attempt;
-		versions = [];
-		shownIndex = null;
-		if (!selected) {
-			view = { kind: 'empty' };
-			return;
-		}
-		if (!bwbId || !articleNumber) {
-			view = { kind: 'error' };
-			return;
-		}
-
-		let stale = false;
-		view = { kind: 'loading' };
-		// The text and its tekstversies come together, both asked by the address at once: the
-		// status line ("tekst sinds …") stands with the text instead of growing over it after.
-		// Without versions the picker shows the current text alone.
-		const versies = getArticleHistory(bwbId, articleNumber)
-			.then((r) => r.versions ?? [])
-			.catch(() => []);
-		Promise.all([getArticleDetail(bwbId, articleNumber), versies])
-			.then(([data, vs]) => {
-				if (stale) return;
-				// The citation panel and the citation forms read the law's names from this cache.
-				recordArticleLaw(bwbId, data.instrument);
-				versions = vs;
-				view = { kind: 'loaded', data };
-			})
-			.catch(() => {
-				if (!stale) view = { kind: 'error' };
-			});
-		return () => {
-			stale = true;
-		};
 	});
 
 	// Whether a toelichting explains this article, for the header. Only the existence
@@ -217,13 +206,18 @@
 				firstReading: FIRST_READING.test(mvt.title ?? '')
 			};
 		};
+		// No button without a confirmed toelichting.
 		find()
 			.then(() => passage(ac.signal))
-			.catch(() => {
-				// No button without a confirmed toelichting.
-			});
+			.catch((e) => report('Toelichting', e));
 		return () => ac.abort();
 	});
+
+	/** A failure the passage goes on without: reported, then no answer. */
+	const orNone = (where: string) => (e: unknown) => {
+		report(where, e);
+		return null;
+	};
 
 	/** The memorie's passage on this article, where the data has one: the place it opens at
 	 *  (Thijs, 10 Oct: the memorie reader is the place, scrolled to the passage). */
@@ -232,7 +226,7 @@
 		if (!e || e.at || !bwbId || !articleNumber) return;
 		// The article's own explanations first (one request for every paper); a paper they
 		// do not list is asked on its own.
-		const uitleg = await getExplanations(bwbId, articleNumber).catch(() => null);
+		const uitleg = await getExplanations(bwbId, articleNumber).catch(orNone('Toelichtingen'));
 		const hier = uitleg?.items.find((i) => i.document.key === e.key)?.passages[0]?.section_id;
 		if (signal.aborted || explanatory?.key !== e.key) return;
 		if (hier) {
@@ -245,7 +239,7 @@
 				params: { path: { key: e.key }, query: { bwb_id: bwbId, article: articleNumber } },
 				signal
 			})
-		).catch(() => null);
+		).catch(orNone('Passage van de toelichting'));
 		const eerste = r?.items[0]?.section_id;
 		if (eerste && !signal.aborted && explanatory?.key === e.key)
 			explanatory = { ...explanatory, at: eerste };
@@ -292,16 +286,14 @@
 	const validFrom = $derived(
 		shown?.from ??
 			current?.from ??
-			(typeof selection?.raw?.props?.valid_from === 'string'
-				? selection.raw.props.valid_from
-				: null)
+			(typeof node.raw?.props?.valid_from === 'string' ? node.raw.props.valid_from : null)
 	);
 	// A stub is known only from what cites it: no text, no law. Claiming it as geldend
 	// recht would state what the dataset does not hold.
 	const stubLabel = $derived.by(() => {
-		if (view.kind !== 'loaded') return null;
-		const d = view.data;
-		const stub = selection?.raw?.props?.stub === true;
+		const d = loaded;
+		if (!d) return null;
+		const stub = node.raw?.props?.stub === true;
 		const empty = !d.instrument && !d.article.text && (d.article.parts?.length ?? 0) === 0;
 		if (!stub && !empty) return null;
 		const cited = Number(d.metadata?.judgment_count ?? 0);
@@ -319,7 +311,7 @@
 		}
 		const from = longDate(validFrom);
 		// A repealed article has no geldende tekst: its last version only records the repeal.
-		if (view.kind === 'loaded' && view.data.article.repealed) {
+		if (loaded?.article.repealed) {
 			const date = longDate(lapse?.from ?? null);
 			return date ? `Vervallen per ${date}` : 'Vervallen';
 		}
@@ -351,16 +343,16 @@
 	// The name the article itself gives its law: for an EU act the citation title
 	// (Verordening 2022/868/EU), where the instrument carries only its full title in capitals.
 	const ownCitationTitle = $derived(
-		typeof selection?.raw?.props?.instrument_citation_title === 'string'
-			? selection.raw.props.instrument_citation_title
+		typeof node.raw?.props?.instrument_citation_title === 'string'
+			? node.raw.props.instrument_citation_title
 			: null
 	);
 	const citation = $derived(
-		view.kind === 'loaded'
-			? articleCitation(view.data.article, {
+		loaded
+			? articleCitation(loaded.article, {
 					own: ownCitationTitle,
 					meta: law,
-					displayName: view.data.instrument?.display_name
+					displayName: loaded.instrument?.display_name
 				})
 			: null
 	);
@@ -372,9 +364,7 @@
 	// The official text of the version on screen: wetten.overheid.nl, EUR-Lex or the
 	// Verdragenbank, as the API names it.
 	const officialUrl = $derived(
-		view.kind === 'loaded'
-			? (shownVersion?.official_url ?? view.data.article.official_url ?? null)
-			: null
+		loaded ? (shownVersion?.official_url ?? loaded.article.official_url ?? null) : null
 	);
 	const officialName = $derived(
 		officialUrl ? new URL(officialUrl).hostname.replace(/^www\./, '') : null
@@ -389,16 +379,15 @@
 
 	// Bewaar in the head follows the place chosen (#lid-3): that lid, else the whole article.
 	const bewaarHier = $derived.by(() => {
-		if (!selection || !citation || !forms) return null;
+		if (!citation || !forms) return null;
 		// A definition without a letter is a place too, named by its term (Cbw 1).
-		const parts =
-			shownVersion?.parts ?? (view.kind === 'loaded' ? view.data.article.parts : null) ?? [];
+		const parts = shownVersion?.parts ?? loaded?.article.parts ?? [];
 		const deel = anchor ? placeCitation(anchor, parts) : null;
 		const plaats = deel && (deel.lid || deel.onderdelen?.length || deel.definitie) ? anchor! : '';
 		const f = plaats ? citeArticle({ ...citation, ...deel }) : forms;
 		return {
 			item: bewaarItem(
-				selection.id,
+				node.id,
 				{ at: plaats, kort: f.kort, voluit: f.voluit },
 				{ groep: citation.citationTitle, wet: bwbId }
 			),
@@ -450,9 +439,9 @@
 		proposed = null;
 		proposedMissing = false;
 		const row = proposedRow;
-		if (!row || view.kind !== 'loaded') return;
+		if (!row || !loaded) return;
 		const ac = new AbortController();
-		proposedTextOf(row, view.data.article.id, ac.signal)
+		proposedTextOf(row, loaded.article.id, ac.signal)
 			.then((p) => {
 				if (ac.signal.aborted) return;
 				proposed = p;
@@ -485,13 +474,8 @@
 	{/if}
 {/snippet}
 
-<ReaderFrame
-	onRetry={() => attempt++}
-	status={view.kind === 'loaded' ? 'ready' : view.kind}
-	what="Artikel"
->
-	{#if view.kind === 'loaded'}
-		{@const d = view.data}
+<ReaderFrame state={article.state} what="Artikel" retry={article.retry}>
+	{#snippet children({ detail: d })}
 		{@const a = d.article}
 		{@const placeLine = placeOf(place, d.instrument?.display_name ?? law?.citationTitle)}
 		<!-- Wet › hoofdstuk › afdeling stands in the band Behoort bij; the head keeps the heading
@@ -572,6 +556,8 @@
 							</div>
 						{/if}
 					</span>
+				{:else if versionState?.status === 'error'}
+					<LoadState state={versionState} what="De tekstversies" retry={article.retry} />
 				{/if}
 				<!-- Its toelichting, as the last phrase of the status: it comes
 				     after the text and fill in without moving it (Orchestrator, 10 Oct). -->
@@ -690,9 +676,7 @@
 					tellend={!shown && lidTellend}
 					{lidHref}
 					{citation}
-					bewaar={selection && citation
-						? { id: selection.id, groep: citation.citationTitle, wet: bwbId }
-						: null}
+					bewaar={citation ? { id: node.id, groep: citation.citationTitle, wet: bwbId } : null}
 					{proposed}
 					{onCloseProposed}
 					{lidNotes}
@@ -704,7 +688,7 @@
 		{#if prevHref || nextHref}
 			<nav class="reader-nav-footer" aria-label="Artikelen">{@render steps(' artikel')}</nav>
 		{/if}
-	{/if}
+	{/snippet}
 </ReaderFrame>
 
 <style>

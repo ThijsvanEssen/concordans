@@ -6,13 +6,13 @@
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import type { GraphNode } from '$lib/graph/types';
-	import type { Schema } from '$lib/api/types';
 	import { bronLabel } from '$lib/vocabulary';
 	import { committeeSlug, getCommittee, str } from '$lib/components/parliamentary/data';
 	import { OUTCOME_LABEL, type Outcome } from '$lib/components/parliamentary/stages';
 	import { chamberName } from '$lib/components/parliamentary/chamber';
 	import { seatWord } from '$lib/components/parliamentary/career';
 	import { formatLongDate } from './_shared';
+	import { load } from '$lib/util/load.svelte';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -29,37 +29,19 @@
 	const RANG: Record<string, number> = { Voorzitter: 0, Ondervoorzitter: 1, Lid: 2 };
 	const rang = (zetel: string) => RANG[zetel] ?? 3;
 
-	type State =
-		| { kind: 'loading' }
-		| { kind: 'error' }
-		| { kind: 'loaded'; committee: Schema<'CommitteeDetailDTO'> };
-
-	let view = $state<State>({ kind: 'loading' });
-	const chamber = $derived(
-		str(p.chamber) ?? (view.kind === 'loaded' ? (view.committee.chamber ?? null) : null)
+	const committee = load(
+		() => committeeSlug(node),
+		(slug) => (slug ? getCommittee(slug) : Promise.reject(new Error('Commissie zonder slug'))),
+		'Commissie'
 	);
-
-	$effect(() => {
-		const slug = committeeSlug(node);
-		let stale = false;
-		view = { kind: 'loading' };
-		if (!slug) {
-			view = { kind: 'error' };
-			return;
-		}
-		getCommittee(slug)
-			.then((committee) => {
-				if (!stale) view = { kind: 'loaded', committee };
-			})
-			.catch(() => {
-				if (!stale) view = { kind: 'error' };
-			});
-		return () => (stale = true);
-	});
+	const chamber = $derived(
+		str(p.chamber) ??
+			(committee.state.status === 'ready' ? (committee.state.data.chamber ?? null) : null)
+	);
 </script>
 
-<ReaderFrame>
-	<div class="r-committee">
+<ReaderFrame state={committee.state} what="Commissie" retry={committee.retry}>
+	{#snippet head()}
 		<!-- The header comes from the node, so a failed detail request costs the counts only. -->
 		<ReaderHead
 			collection="committees"
@@ -82,23 +64,20 @@
 				{#if abbreviation && abbreviation !== name}<span class="afk">{abbreviation}</span>{/if}
 			{/snippet}
 		</ReaderHead>
-
-		{#if view.kind === 'loading'}
-			<p class="loading stil">Laden…</p>
-		{:else if view.kind === 'loaded'}
-			{@const c = view.committee}
-			{@const dossiers = c.dossiers ?? []}
-			{@const openDossiers = dossiers.filter((d) => !d.closed)}
-			{@const outcomes = Object.keys(OUTCOME_LABEL) as Outcome[]}
-			{@const ek = c.chamber === 'EK'}
-			<!-- The members with a role, in the word of a member's page (seatWord): the
+	{/snippet}
+	{#snippet children(c)}
+		{@const dossiers = c.dossiers ?? []}
+		{@const openDossiers = dossiers.filter((d) => !d.closed)}
+		{@const outcomes = Object.keys(OUTCOME_LABEL) as Outcome[]}
+		{@const ek = c.chamber === 'EK'}
+		<!-- The members with a role, in the word of a member's page (seatWord): the
 			     voorzitter first, then the ondervoorzitter, the leden and the plaatsvervangers. -->
-			{@const officers = (c.members ?? [])
-				.filter((m) => m.role)
-				.map((m) => ({ ...m, zetel: zetelVan(m.role) }))
-				.sort((a, b) => rang(a.zetel) - rang(b.zetel))}
-			{@const source = c.source}
-
+		{@const officers = (c.members ?? [])
+			.filter((m) => m.role)
+			.map((m) => ({ ...m, zetel: zetelVan(m.role) }))
+			.sort((a, b) => rang(a.zetel) - rang(b.zetel))}
+		{@const source = c.source}
+		<div class="r-committee">
 			<ul class="stats">
 				<li>
 					<span class="stat-num">{(c.members ?? []).length}</span><span class="stat-label"
@@ -144,8 +123,8 @@
 					<a href={source.url} rel="external">{source.attribution}</a>.
 				</p>
 			{/if}
-		{/if}
-	</div>
+		</div>
+	{/snippet}
 </ReaderFrame>
 
 <style>
@@ -156,11 +135,6 @@
 		--lezer-stap: var(--s-4);
 		gap: var(--lezer-stap);
 		color: var(--ink-2);
-	}
-	.loading {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
 	}
 	/* A comma against the word before it: the kicker's gap only after it. */
 	.officers {

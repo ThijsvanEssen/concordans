@@ -13,6 +13,9 @@
 	import { bronHref } from '$lib/bron/href';
 	import { getDossierTimeline } from '$lib/api/records';
 	import type { Schema } from '$lib/api/types';
+	import { load } from '$lib/util/load.svelte';
+	import { report } from '$lib/api/errors';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronLabel } from '$lib/vocabulary';
 	import { getDossier, str } from '$lib/components/parliamentary/data';
@@ -33,23 +36,38 @@
 
 	let { node }: { node: GraphNode } = $props();
 
-	type State =
-		| { kind: 'loading' }
-		| { kind: 'error'; message: string }
-		| {
-				kind: 'loaded';
-				dossier: Schema<'DossierDetailResponse'>;
-		  };
-
 	const TIMELINE_LIMIT = 200;
 
-	let view = $state<State>({ kind: 'loading' });
+	// The API addresses a dossier by its number (`37020-XV`), the node's `label`. The
+	// number, not the node: the node is drawn anew once its neighbourhood loads.
+	const dossierNumber = $derived(str(node.raw?.props?.label));
+	const dossier = load(
+		() => dossierNumber,
+		(number) => (number ? getDossier(number) : Promise.reject(new Error('Dossier zonder nummer'))),
+		'Dossier'
+	);
 	// The procedure and the changed articles come after the dossier: the reader stands on the
-	// dossier alone (Thijs, 9 Oct: "alles zo lazy mogelijk"). Null when the API has none.
-	let timeline = $state<Schema<'DossierTimelineResponse'> | null>(null);
-	let timelineLaden = $state(true);
+	// dossier alone (Thijs, 9 Oct: "alles zo lazy mogelijk").
+	const timeline = load(
+		() => dossierNumber,
+		(number) => (number ? getDossierTimeline(number, TIMELINE_LIMIT) : Promise.resolve(null)),
+		'Procedure van het dossier'
+	);
 	/** The articles the bill changes; null without them or on an older API. */
 	let changed = $state<ChangedArticles | null>(null);
+	$effect(() => {
+		const number = dossierNumber;
+		changed = null;
+		if (!number) return;
+		let stale = false;
+		// A dossier without changed articles has no section.
+		getChangedArticles(number)
+			.then((c) => {
+				if (!stale) changed = c;
+			})
+			.catch((e) => report('Gewijzigde artikelen', e));
+		return () => (stale = true);
+	});
 
 	type Reading = Schema<'DossierRelationDTO'>['dossier'];
 	/**
@@ -57,56 +75,12 @@
 	 * toelichting is in the dossier of the first reading; the second only refers to it.
 	 */
 	const readings = $derived.by(() => {
-		const relations = view.kind === 'loaded' ? (view.dossier.relations ?? []) : [];
+		const relations = dossier.state.status === 'ready' ? (dossier.state.data.relations ?? []) : [];
 		const of = (direction: 'outgoing' | 'incoming'): Reading[] =>
 			relations
 				.filter((r) => r.relation === 'second_reading_of' && r.direction === direction)
 				.map((r) => r.dossier);
 		return { first: of('outgoing'), second: of('incoming') };
-	});
-
-	// Raised by Opnieuw, to load the bron again after an error.
-	let attempt = $state(0);
-
-	// The API addresses a dossier by its number (`37020-XV`), the node's `label`. The
-	// number, not the node: the node is drawn anew once its neighbourhood loads.
-	const dossierNumber = $derived(str(node.raw?.props?.label));
-
-	$effect(() => {
-		void attempt;
-		const number = dossierNumber;
-		if (!number) {
-			view = { kind: 'error', message: 'Dossier kon niet worden geladen.' };
-			return;
-		}
-		const ac = new AbortController();
-		view = { kind: 'loading' };
-		timeline = null;
-		timelineLaden = true;
-		changed = null;
-		getDossier(number)
-			.then((dossier) => {
-				if (!ac.signal.aborted) view = { kind: 'loaded', dossier };
-			})
-			.catch(() => {
-				if (!ac.signal.aborted)
-					view = { kind: 'error', message: 'Dossier kon niet worden geladen.' };
-			});
-		// The timeline is optional: when it fails its section is left out.
-		getDossierTimeline(number, TIMELINE_LIMIT)
-			.catch(() => null)
-			.then((t) => {
-				if (ac.signal.aborted) return;
-				timeline = t;
-				timelineLaden = false;
-			});
-		// Optional too: a dossier without changed articles has no section.
-		getChangedArticles(number)
-			.then((c) => {
-				if (!ac.signal.aborted) changed = c;
-			})
-			.catch(() => {});
-		return () => ac.abort();
 	});
 </script>
 
@@ -120,18 +94,9 @@
 		>{/each}
 {/snippet}
 
-<ReaderFrame>
-	<div class="r-dossier">
-		{#if view.kind === 'loading'}
-			<p class="loading stil">Laden…</p>
-		{:else if view.kind === 'error'}
-			<p class="error">
-				{view.message}
-				<button type="button" class="btn is-text" onclick={() => attempt++}>Opnieuw</button>
-			</p>
-		{:else}
-			{@const d = view.dossier}
-
+<ReaderFrame state={dossier.state} what="Dossier" retry={dossier.retry}>
+	{#snippet children(d)}
+		<div class="r-dossier">
 			<ReaderHead
 				collection="dossiers"
 				title={d.short_title ?? d.title ?? d.number}
@@ -223,10 +188,12 @@
 				{/if}
 			</ReaderHead>
 
-			{#if timelineLaden}
+			{#if timeline.state.status === 'loading'}
 				<p class="laden">Procedure laden…</p>
-			{:else if timeline}
-				{@const p = procedure(d, timeline.entries, metOverig)}
+			{:else if timeline.state.status === 'error'}
+				<LoadState state={timeline.state} what="De procedure" retry={timeline.retry} />
+			{:else if timeline.state.data}
+				{@const p = procedure(d, timeline.state.data.entries, metOverig)}
 				<!-- A paper opens its text in place, the vote on the bill its bar, a day's papers of
 				     the bill their list; the bron is one step further (Thijs, 11 Oct). -->
 				{#snippet inhoud(id: string)}
@@ -260,16 +227,15 @@
 			{/if}
 
 			<!-- The amendments as a timetable, asked once in view; only where the dossier counts any. -->
-			{@const amendementen = aantalAmendementen(d.documents_by_kind)}
-			{#if amendementen > 0}
+			{#if aantalAmendementen(d.documents_by_kind) > 0}
 				<AmendementenDienstregeling dossierKey={node.key} />
 			{/if}
 
 			{#if changed && changed.total > 0}
 				<GewijzigdeArtikelen data={changed} wijzigt={d.legal_effect?.amends ?? []} />
 			{/if}
-		{/if}
-	</div>
+		</div>
+	{/snippet}
 </ReaderFrame>
 
 <style>
@@ -309,11 +275,6 @@
 		gap: var(--lezer-stap);
 		color: var(--ink-2);
 	}
-	.loading,
-	.error {
-		margin: 0;
-	}
-
 	/* What the bill amends and implements: one line under the title, the laws as links. */
 	.effect {
 		margin: 0;

@@ -1,7 +1,10 @@
-<script lang="ts">
+<script lang="ts" generics="T">
 	// The one frame of every reader: the scroll container, the margins, the width of the
-	// column and the load, empty and error states. A reader never sets its own padding,
-	// width or scroll; the column it stands in sets them for all readers alike, through
+	// column and the load and error states (LoadState). A reader hands it what it loads,
+	// what that is ("Kabinet") and how to ask again; the frame draws the skeleton or the
+	// failure, and the reader's own body once the data is there. A head from the light
+	// node (`head`) stands above all three, a part that loads on its own (`foot`) below. A reader never sets its own padding, width or
+	// scroll; the column it stands in sets them for all readers alike, through
 	// --reader-pad-top, --reader-pad-left, --reader-pad-right and --reader-max
 	// (explore/+page.svelte). So the text keeps its place and width whatever opens
 	// beside it, and the scrollbar keeps its gutter whether or not the text scrolls.
@@ -12,19 +15,30 @@
 	import WeergaveSchakelaar from '../WeergaveSchakelaar.svelte';
 	import { WEERGAVE_KEY, type Weergave } from '../weergave';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import type { LoadState as State } from '$lib/util/load.svelte';
 
 	let {
-		status = 'ready',
+		state = { status: 'ready', data: undefined as T },
 		what = 'De bron',
-		onRetry,
-		children
+		retry,
+		head,
+		loading,
+		foot,
+		children: body
 	}: {
-		status?: 'empty' | 'loading' | 'error' | 'ready';
+		/** What the reader loads; without it the body stands at once. */
+		state?: State<T>;
 		/** What fails, as the subject of the sentence: "Artikel", "Uitspraak". */
 		what?: string;
 		/** Load again after an error: the API may have been out of reach for a moment. */
-		onRetry?: () => void;
-		children?: Snippet;
+		retry?: () => void;
+		/** What stands before the load is in (the head from the light node), in every state. */
+		head?: Snippet;
+		/** In place of the skeleton: the reader's own rows, with their labels, while it loads. */
+		loading?: Snippet;
+		/** What stands after the body in every state (a part with a load of its own). */
+		foot?: Snippet;
+		children?: Snippet<[T]>;
 	} = $props();
 
 	// Where the bron stands, above its text and before it loads (docs/hierarchie.md).
@@ -40,7 +54,7 @@
 	<div class="reader-frame__col">
 		<!-- The band and Netwerk/Tekst on one row, one rule under both over the full width
 		     (Thijs, 10 Oct: the rule stopped short of the toggle). -->
-		{#if (w || bron) && status !== 'empty'}
+		{#if w || bron}
 			<div class="kop-rij">
 				{#if bron}<div class="kop-rij__band"><BehoortBij node={bron()} /></div>{/if}
 				{#if w}
@@ -50,15 +64,15 @@
 				{/if}
 			</div>
 		{/if}
-		{#if status === 'empty'}
-			<!-- No bron yet: an empty column, no instruction (the UI shows itself, Thijs 9 Oct). -->
-		{:else if status === 'loading'}
-			<LoadState state={{ status: 'loading' }} {what} form="block" />
-		{:else if status === 'error'}
-			<LoadState state={{ status: 'error', error: null }} {what} retry={onRetry} form="block" />
+		{@render head?.()}
+		{#if state.status === 'loading' && loading}
+			{@render loading()}
 		{:else}
-			{@render children?.()}
+			<LoadState {state} {what} {retry} form="block">
+				{#snippet children(data)}{@render body?.(data)}{/snippet}
+			</LoadState>
 		{/if}
+		{@render foot?.()}
 	</div>
 </div>
 

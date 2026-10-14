@@ -4,6 +4,9 @@
 // fracties. No direction: the source gives none, the number beside it shows what happened.
 import { fractieNaam } from '$lib/bron/menselijk';
 import type { Schema } from '$lib/api/types';
+import { getParliamentSeats } from '$lib/api/records';
+import { report } from '$lib/api/errors';
+import { vandaag } from '$lib/text/datum';
 
 type Stuk = Schema<'SeatStretchDTO'>;
 type Gebeurtenis = Schema<'SeatEventDTO'>;
@@ -29,6 +32,29 @@ export function zaalMetPlan(opDag: Zaal, nu: Zaal | null): Zaal {
 	return opDag.hall?.seats?.length || !nu?.hall?.seats?.length
 		? opDag
 		: { ...opDag, hall: nu.hall };
+}
+
+/**
+ * The hall of a cabinet's Kamer on `day`: null where the data has none for this cabinet (no
+ * stretches, and the hall of the day is another cabinet's). A failure throws: it is never
+ * "niet in de gegevens". The Eerste Kamer's seating only comes without a date: today takes it.
+ */
+export async function hallOfDay(
+	chamber: 'TK' | 'EK',
+	day: string,
+	cabinet: string,
+	withStretches: boolean
+): Promise<Zaal | null> {
+	const plan =
+		chamber === 'EK' && day === vandaag()
+			? getParliamentSeats(chamber).catch((e) => {
+					// The seats are placed by fractie without it (indelingMarkering).
+					report('Zaalplan', e);
+					return null;
+				})
+			: null;
+	const [hall, today] = await Promise.all([getParliamentSeats(chamber, day), plan]);
+	return withStretches || hall.cabinet?.key === cabinet ? zaalMetPlan(hall, today) : null;
 }
 
 /** The Kamer's own words as a clause: no space before a stop, no stop of their own. */

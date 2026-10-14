@@ -11,7 +11,6 @@
 	import ReaderFrame from './ReaderFrame.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import { indexHref } from '$lib/bron/href';
-	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import {
 		OPEN_STATUS,
@@ -26,47 +25,28 @@
 	import Veld from '$lib/components/ui/Veld.svelte';
 	import { nagekomenIn, toegezegdIn } from '$lib/components/parliamentary/toezegging';
 	import { tussen } from '$lib/components/parliamentary/vervanging';
+	import { load } from '$lib/util/load.svelte';
+	import { report } from '$lib/api/errors';
 
 	let { node }: { node: GraphNode } = $props();
 
-	type State =
-		| { kind: 'loading' }
-		| { kind: 'error'; message: string }
-		| { kind: 'loaded'; commitment: Schema<'CommitmentDTO'> };
-
-	let view = $state<State>({ kind: 'loading' });
-	// Raised by Opnieuw, to load the bron again after an error.
-	let attempt = $state(0);
-
 	// The key, not the node: the node is drawn anew with the same key once its
 	// neighbourhood loads, and the record is not asked again for that.
-	const bronKey = $derived(node.key);
-
-	$effect(() => {
-		void attempt;
-		const key = bronKey;
-		const ac = new AbortController();
-		view = { kind: 'loading' };
-		getCommitment(key)
-			.then((commitment) => {
-				if (!ac.signal.aborted) view = { kind: 'loaded', commitment };
-			})
-			.catch(() => {
-				if (!ac.signal.aborted)
-					view = { kind: 'error', message: 'Toezegging kon niet worden geladen.' };
-			});
-		return () => ac.abort();
-	});
+	const commitment = load(
+		() => node.key,
+		(key) => getCommitment(key),
+		'Toezegging'
+	);
 
 	let ministries = $state<Ministry[]>([]);
 	let cabinets = $state<Cabinet[]>([]);
 	$effect(() => {
 		getMinistries()
 			.then((m) => (ministries = m))
-			.catch(() => {});
+			.catch((e) => report('Ministeries', e));
 		getCabinets()
 			.then((c) => (cabinets = c))
-			.catch(() => {});
+			.catch((e) => report('Kabinetten', e));
 	});
 	const ministryName = (key: string | null | undefined) =>
 		(key && ministries.find((m) => m.key === key)?.name) || null;
@@ -75,20 +55,12 @@
 	const today = vandaag();
 </script>
 
-<ReaderFrame>
-	<div class="r-commitment">
-		{#if view.kind === 'loading'}
-			<p class="loading stil">Laden…</p>
-		{:else if view.kind === 'error'}
-			<p class="error">
-				{view.message}
-				<button type="button" class="btn is-text" onclick={() => attempt++}>Opnieuw</button>
-			</p>
-		{:else}
-			{@const c = view.commitment}
-			{@const late =
-				c.status === OPEN_STATUS && !!c.expected_resolution && c.expected_resolution < today}
-			{@const tekst = c.text ?? 'Toezegging zonder tekst'}
+<ReaderFrame state={commitment.state} what="Toezegging" retry={commitment.retry}>
+	{#snippet children(c)}
+		{@const late =
+			c.status === OPEN_STATUS && !!c.expected_resolution && c.expected_resolution < today}
+		{@const tekst = c.text ?? 'Toezegging zonder tekst'}
+		<div class="r-commitment">
 			<ReaderHead
 				collection="commitments"
 				title={tekst}
@@ -166,8 +138,8 @@
 					>
 				</p>
 			{/if}
-		{/if}
-	</div>
+		</div>
+	{/snippet}
 </ReaderFrame>
 
 <style>
@@ -178,10 +150,6 @@
 		--lezer-stap: var(--s-5);
 		gap: var(--lezer-stap);
 		color: var(--ink-2);
-	}
-	.loading,
-	.error {
-		margin: 0;
 	}
 	.late {
 		color: var(--ink) !important;

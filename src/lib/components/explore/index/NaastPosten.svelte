@@ -18,6 +18,10 @@
 	import { vandaag } from '$lib/text/datum';
 	import type { Schema } from '$lib/api/types';
 	import Strookje from '$lib/components/tijdlijn/Strookje.svelte';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import type { LoadState as State } from '$lib/util/load.svelte';
+	import { report } from '$lib/api/errors';
+	import { untrack } from 'svelte';
 
 	type Detail = Schema<'CabinetDetailDTO'>;
 	type Seat = NonNullable<Detail['ministries']>[number]['seats'][number];
@@ -42,18 +46,32 @@
 
 	const scherm = smalScherm();
 
-	let details = $state<Record<string, Detail | 'fout'>>({});
+	/** Each column's cabinet; a failed one says so above the matrix, with Opnieuw. */
+	let details = $state<Record<string, State<Detail>>>({});
+	const ask = (key: string) => {
+		details = { ...details, [key]: { status: 'loading' } };
+		getCabinet(key).then(
+			(data) => (details = { ...details, [key]: { status: 'ready', data } }),
+			(error) => {
+				report('Kabinet naast de andere', error);
+				details = { ...details, [key]: { status: 'error', error } };
+			}
+		);
+	};
 	$effect(() => {
 		// The newest first: the one asked most, and in the cache from the list of one cabinet.
-		for (const k of [...kabinetten].reverse())
-			if (!details[k.key])
-				getCabinet(k.key)
-					.then((d) => (details = { ...details, [k.key]: d }))
-					.catch(() => (details = { ...details, [k.key]: 'fout' }));
+		const nieuw = [...kabinetten].reverse().filter((k) => !untrack(() => details[k.key]));
+		untrack(() => nieuw.forEach((k) => ask(k.key)));
 	});
+	const ready = (key: string) => {
+		const d = details[key];
+		return d?.status === 'ready' ? d.data : null;
+	};
 
+	const waiting = (key: string) => (details[key]?.status ?? 'loading') === 'loading';
 	/** Every column is in (or failed): an empty matrix is then the search, not the wait. */
-	const binnen = $derived(kabinetten.every((k) => details[k.key]));
+	const binnen = $derived(kabinetten.every((k) => !waiting(k.key)));
+	const mislukt = $derived(kabinetten.filter((k) => details[k.key]?.status === 'error'));
 	const NU = vandaag();
 	const VOLGORDE = ['az', 'bz', 'jenv', 'bzk', 'ocw', 'fin', 'def', 'ienw', 'ezk', 'kgg', 'lnv'];
 	const VERDER = ['szw', 'vws', 'vro', 'aenm'];
@@ -82,8 +100,8 @@
 	const rijen = $derived.by(() => {
 		const m = new Map<string, Rij>();
 		kabinetten.forEach((k, i) => {
-			const d = details[k.key];
-			if (!d || d === 'fout') return;
+			const d = ready(k.key);
+			if (!d) return;
 			const alle = (d.ministries ?? []).flatMap((x) => x.seats.flatMap((s) => s.posts));
 			const later = laterPosts(alle);
 			for (const min of d.ministries ?? [])
@@ -212,6 +230,14 @@
 	{#if g}{@render postOpen(g.p, g.c)}{/if}
 {/snippet}
 
+{#each mislukt as k (k.key)}
+	<LoadState
+		state={details[k.key]!}
+		what={k.name.charAt(0).toUpperCase() + k.name.slice(1)}
+		retry={() => ask(k.key)}
+	/>
+{/each}
+
 {#if scherm.smal}
 	<Tijdlijn
 		{groepen}
@@ -265,7 +291,7 @@
 									/>
 								</button>
 							{/each}
-						{:else if !details[kabinetten[i].key]}
+						{:else if waiting(kabinetten[i].key)}
 							<span class="wacht" aria-hidden="true"></span>
 						{/if}
 					</span>

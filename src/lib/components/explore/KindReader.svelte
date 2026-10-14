@@ -20,7 +20,8 @@
 	import InstrumentReader from './readers/InstrumentReader.svelte';
 	import AnnexReader from './readers/AnnexReader.svelte';
 	import FallbackReader from './readers/FallbackReader.svelte';
-	import { setContext } from 'svelte';
+	import { setContext, type Component } from 'svelte';
+	import type { Collection } from '$lib/vocabulary';
 	import { BEHOORT_KEY } from '$lib/bron/behoort';
 
 	let {
@@ -53,11 +54,28 @@
 
 	// Every reader's frame shows where this bron stands, from the same place (BehoortBij).
 	setContext(BEHOORT_KEY, () => selection);
+
+	/** The reader of each collection but the article's, which takes the place in its law too. */
+	const READERS: Partial<Record<Collection, Component<{ node: GraphNode }>>> = {
+		judgments: JudgmentReader,
+		documents: DocumentReader,
+		dossiers: DossierReader,
+		committees: CommitteeReader,
+		members: MemberReader,
+		factions: FactionReader,
+		decisions: DecisionReader,
+		activities: ActivityReader,
+		cabinets: CabinetReader,
+		commitments: CommitmentReader,
+		instruments: InstrumentReader,
+		annexes: AnnexReader
+	};
+	const Reader = $derived(READERS[selection.collection] ?? FallbackReader);
 </script>
 
 {#if selection.collection === 'articles'}
 	<ArticleReader
-		{selection}
+		node={selection}
 		{prevHref}
 		{nextHref}
 		{place}
@@ -68,30 +86,6 @@
 		{proposedRow}
 		{onCloseProposed}
 	/>
-{:else if selection.collection === 'judgments'}
-	<JudgmentReader {selection} />
-{:else if selection.collection === 'documents'}
-	<DocumentReader node={selection} />
-{:else if selection.collection === 'dossiers'}
-	<DossierReader node={selection} />
-{:else if selection.collection === 'committees'}
-	<CommitteeReader node={selection} />
-{:else if selection.collection === 'members'}
-	<MemberReader node={selection} />
-{:else if selection.collection === 'factions'}
-	<FactionReader node={selection} />
-{:else if selection.collection === 'decisions'}
-	<DecisionReader node={selection} />
-{:else if selection.collection === 'activities'}
-	<ActivityReader node={selection} />
-{:else if selection.collection === 'cabinets'}
-	<CabinetReader node={selection} />
-{:else if selection.collection === 'commitments'}
-	<CommitmentReader node={selection} />
-{:else if selection.collection === 'instruments'}
-	<InstrumentReader node={selection} />
-{:else if selection.collection === 'annexes'}
-	<AnnexReader node={selection} />
 {:else}
-	<FallbackReader node={selection} />
+	<Reader node={selection} />
 {/if}

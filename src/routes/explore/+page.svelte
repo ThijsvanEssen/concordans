@@ -1414,7 +1414,7 @@
 
 {#snippet reader()}
 	{#if wachtOp}
-		<ReaderFrame status="loading" />
+		<ReaderFrame state={{ status: 'loading' }} />
 	{:else if selectedNode}
 		<div class="reader" class:reader--pair={!!beside}>
 			<div class="reader__main">
@@ -1440,7 +1440,7 @@
 						aria-label="Sluiten">×</a
 					>
 					{#if besideJudgment}
-						<JudgmentReader selection={besideJudgment} />
+						<JudgmentReader node={besideJudgment} />
 					{:else}
 						<DocumentReader node={beside} article={besideArticle} />
 					{/if}
