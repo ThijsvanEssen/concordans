@@ -45,6 +45,29 @@ describe('bronNaam', () => {
 		expect(bronNaam(art, meta)).toBe('Art. 419 Wetboek van Burgerlijke Rechtsvordering');
 	});
 
+	it('names an article of a book of the BW with the code, as it is cited: never "BW7A" (#52)', () => {
+		const art = node({
+			collection: 'articles',
+			kind: 'article',
+			label: 'Art. 7A:1576',
+			raw: {
+				props: {
+					bwb_id: 'BWBR0006000',
+					instrument_abbreviation: 'BW7A',
+					instrument_citation_title: 'Burgerlijk Wetboek Boek 7A'
+				}
+			} as unknown as GraphNode['raw']
+		});
+		expect(bronNaam(art, meta)).toBe('Art. 7A:1576 BW');
+		const boek7a = {
+			bwbId: 'BWBR0006000',
+			title: 'Burgerlijk Wetboek Boek 7A',
+			shortTitle: 'BW7A',
+			citationTitle: 'Burgerlijk Wetboek Boek 7A'
+		};
+		expect(bronNaam(art, new Map([[boek7a.bwbId, boek7a]]))).toBe('Art. 7A:1576 BW');
+	});
+
 	it('names a bijlage as the reader does: chip, canvas and list (#30)', () => {
 		const bijlage = node({
 			collection: 'annexes',

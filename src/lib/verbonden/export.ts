@@ -121,14 +121,3 @@ export function download(name: string, text: string, type = 'text/csv') {
 	a.click();
 	setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-
-/** The rows as lines of text, for the clipboard. */
-export function rowsToText(rows: Row[]): string {
-	return rows
-		.map((r) =>
-			[r.title, r.lid ? `lid ${r.lid}` : null, r.position, r.identifier ?? r.date]
-				.filter(Boolean)
-				.join(', ')
-		)
-		.join('\n');
-}

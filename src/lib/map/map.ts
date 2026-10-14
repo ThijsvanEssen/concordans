@@ -6,6 +6,8 @@ import { netwerkParams } from '$lib/netwerk/netwerk';
 import { dossierLabel } from '$lib/bron/dossier-naam';
 import { bronLabel, parseNodeId } from '$lib/vocabulary';
 import { queryHref } from '$lib/util/address';
+import { buildBronHref } from '$lib/bron/href';
+import { padOfFocus } from '$lib/bron/leesbaar';
 
 /** One thing kept: a bron, or a place in it (`lid-2`, `rov-5.7.1`), with how it is cited. */
 export type MapItem = {
@@ -23,6 +25,9 @@ export type MapItem = {
 	groupKey: string;
 	/** The reader's own note, shown in italics under the citation (step 2). */
 	notitie?: string | null;
+	/** Its readable address where it was known when kept (`/kamerstukken/34372/14`): its link
+	 *  in Gemarkeerd and the CSV goes there, not through a redirect. */
+	pad?: string;
 };
 
 /** A map with a name: the items of one piece of research (step 2). */
@@ -62,6 +67,9 @@ const dossierSleutel = (nr: string) =>
 		.replace(/[\s_]+/, '-')
 		.toUpperCase()}`;
 
+/** What is its own group where no law or dossier holds it: never keyed by a name. */
+const OWN_GROUP = new Set(['judgments', 'documents', 'decisions']);
+
 /**
  * What a bron belongs to, as the reader knows it from the API: the law of an article (its BWB
  * id or CELEX), the dossier of a Kamerstuk or a vote, and the group's name where it has one.
@@ -72,8 +80,8 @@ export type BewaarContext = { groep?: string | null; dossier?: string | null; we
  * A bron as the map keeps it: its citations as the reader gives them, its group from the
  * bron, never from a name. Its group's key, so a note stays with its law when the law's name
  * loads later: an article or a law by its law (`wet:bwbr0052872`), a Kamerstuk, a vote or a
- * dossier by its dossier (`dossier:36764`), a judgment by itself; the rest by its group's name,
- * a person under Kamerlid.
+ * dossier by its dossier (`dossier:36764`), a judgment, and a Kamerstuk or vote without a
+ * dossier, by itself; the rest by its group's name, a person under Kamerlid.
  */
 export function bewaarItem(
 	id: string,
@@ -91,17 +99,25 @@ export function bewaarItem(
 		? `wet:${wet}`
 		: dossier
 			? dossierSleutel(dossier)
-			: collectie === 'judgments'
+			: collectie && OWN_GROUP.has(collectie)
 				? id
 				: `groep:${groep}`;
+	const pad = padOfFocus(id);
 	return {
 		id,
 		at: cite.at ?? '',
 		kort: cite.kort,
 		...(cite.voluit ? { voluit: cite.voluit } : {}),
 		groep,
-		groupKey
+		groupKey,
+		...(pad ? { pad } : {})
 	};
+}
+
+/** The place an item opens: its readable address, else the bron in Samenhang; at its place. */
+export function itemHref(i: Pick<MapItem, 'id' | 'at' | 'pad'>): string {
+	const href = i.pad ?? buildBronHref(null, i.id);
+	return i.at ? `${href.split('#')[0]}#${encodeURIComponent(i.at)}` : href;
 }
 
 /** The groups in the order their first item was kept, each with its items in that order. */
@@ -122,7 +138,8 @@ export function groepen(
 
 // ── The link ────────────────────────────────────────────────────────────────
 // `?map=` holds the items one after another, each its six fields: the bron, its place, its
-// short citation, its group, its note (empty where none) and its group's key, so a map opens
+// short citation, its group, its note (empty where none) and its group's key, and a seventh,
+// its readable address, where it was known; so a map opens
 // elsewhere without asking the API; an item without its six fields is left out, with a
 // warning. Its name goes beside it (`mapnaam=`).
 // Fields are separated by `~`, items by `;`; only those two and `%` are escaped here, the
@@ -134,6 +151,7 @@ export function naarParam(items: readonly MapItem[]): string {
 	return items
 		.map((i) => {
 			const velden = [i.id, i.at, i.kort, i.groep, i.notitie ?? '', i.groupKey];
+			if (i.pad) velden.push(i.pad);
 			return velden.map(veld).join('~');
 		})
 		.join(';');
@@ -143,9 +161,19 @@ export function uitParam(v: string | null): MapItem[] {
 	if (!v) return [];
 	const delen = v.split(';');
 	const items = delen.flatMap((deel) => {
-		const [id, at, kort, groep, notitie, groupKey] = deel.split('~').map(terug);
+		const [id, at, kort, groep, notitie, groupKey, pad] = deel.split('~').map(terug);
 		return id && /^[a-z_]+\/[\w.:-]+$/i.test(id) && kort && groep && groupKey
-			? [{ id, at: at ?? '', kort, groep, ...(notitie ? { notitie } : {}), groupKey }]
+			? [
+					{
+						id,
+						at: at ?? '',
+						kort,
+						groep,
+						...(notitie ? { notitie } : {}),
+						groupKey,
+						...(pad?.startsWith('/') ? { pad } : {})
+					}
+				]
 			: [];
 	});
 	weggelaten('de link', delen.length - items.length);

@@ -24,6 +24,11 @@ const BOOK_OF: Record<string, string> = Object.fromEntries(
 export const bwBookOf = (bwbId: string | null | undefined): string | null =>
 	(bwbId && BOOK_OF[bwbId.toUpperCase()]) || null;
 
+/** The code a book of the Burgerlijk Wetboek is cited by, `BW` (never `BW6`, `BW7A`); null
+ *  for another law. */
+export const bwCode = (bwbId: string | null | undefined): 'BW' | null =>
+	bwBookOf(bwbId) ? 'BW' : null;
+
 /** The number an article is cited by: `6:162` for article 162 of Boek 6, else as it is. */
 export function bookNumber(bwbId: string | null | undefined, number: string): string;
 export function bookNumber(

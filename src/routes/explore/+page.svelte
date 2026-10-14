@@ -64,10 +64,14 @@
 	import { filterParams, parseFilter, type VerbondenFilter } from '$lib/verbonden/filter';
 	import type { Row } from '$lib/verbonden/rows';
 	import { createVerbondenSource, type VerbondenState } from '$lib/verbonden/source';
+	import { edgeKey } from '$lib/verbonden/edge-meta';
 	import {
+		edgeLids,
 		kaartMetPassages,
+		rowOfEdge,
 		verbindingOfEdge,
 		verbindingOfRow,
+		withRow,
 		type Verbinding
 	} from '$lib/verbonden/verbinding';
 	import { allRows, filterGroups, lidCounts, lidTellingenOnder } from '$lib/verbonden/view';
@@ -446,7 +450,15 @@
 		const from = store.getNodeById(edge.source);
 		const to = store.getNodeById(edge.target);
 		if (!from || !to) return;
-		const verbinding = verbindingOfEdge(edge, from, to);
+		// What the row of the selected bron says of this edge, where the panel has it: the card
+		// names the lid and the place the row names.
+		const row = selectedNode ? rowOfEdge(allRows(verbonden.groups), selectedNode.id, edge) : null;
+		const ofEdge = verbindingOfEdge(edge, from, to);
+		if (row && selectedNode) {
+			card = { verbinding: withRow(ofEdge, row, selectedNode), edgeId: edge.id, row: null };
+			return;
+		}
+		const verbinding = ofEdge;
 		card = { verbinding, edgeId: edge.id, row: null };
 		// The passage, which the canvas does not load: asked once the card shows it.
 		kaartMetPassages(verbinding, from, to)
@@ -455,6 +467,17 @@
 			})
 			.catch(() => {});
 	}
+	// The lid each line names, as its row or its card names it: the canvas has the edge's light
+	// meta only, which names no lid where the judgment cites several places (UX-toets #49).
+	const lineLids = $derived.by(() => {
+		const lids = selectedNode
+			? edgeLids(allRows(verbonden.groups), selectedNode.id)
+			: new Map<string, string>();
+		const edge = card?.edgeId ? store.getEdgeById(card.edgeId) : null;
+		if (edge && card?.verbinding.lid)
+			lids.set(edgeKey(edge.source, edge.target, edge.relation), card.verbinding.lid);
+		return lids;
+	});
 	function showInNetwork(row: Row) {
 		if (selectedNode && row.relation && row.direction) {
 			if (!store.showRows(selectedNode.id, [row as CanvasRow])) {
@@ -1604,6 +1627,7 @@
 							{depth}
 							{reach}
 							selectedEdgeId={card?.edgeId ?? null}
+							{lineLids}
 							{inFluxMap}
 							{heatMap}
 							{overlay}

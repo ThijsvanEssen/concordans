@@ -97,6 +97,20 @@ describe('one form for each thing', () => {
 		expect(offenders((t) => /new URL\(page\.url\)/.test(t))).toEqual([]);
 	});
 
+	it('makes a filter a step in the history on every page of filters, typing not (#50)', () => {
+		// Actueel and Bladeren step on a filter and replace on typing; the overview of a topic
+		// has filters only, so every patch it makes is a step.
+		const text = (path: string) => sources.find((s) => s.path === path)?.text ?? '';
+		for (const path of [
+			'routes/(main)/actueel/+page.svelte',
+			'lib/components/explore/IndexView.svelte'
+		])
+			expect(text(path), path).toMatch(/navigate\([^;]*\{ step: !replaceState \}\)/);
+		expect(text('routes/(main)/onderwerpen/overzicht/+page.svelte')).toMatch(
+			/const zet = [^;]*navigate\([^;]*\{ step: true \}\)/
+		);
+	});
+
 	it('formats a date only in $lib/text/datum.ts', () => {
 		const dateFormat = /toLocaleDateString|Intl\.DateTimeFormat|\btoLocaleTimeString\b/;
 		const monthNames = /['"](januari|jan\.)['"]/;
@@ -446,6 +460,17 @@ describe('one form for each thing', () => {
 		const metDeHand = (t: string) =>
 			/\bat: ''/.test(t) || /\{[^{}]*\bkort\b[^{}]*\bgroep:[^{}]*\}/.test(t);
 		expect(offenders(metDeHand, ['lib/map/map.ts'])).toEqual([]);
+	});
+
+	it('cites a kept vote as a vote, from its reader, a row of Bronnen and Verbonden (#54)', () => {
+		const kept = sources.filter(({ text }) => /\bvoteCitation\(/.test(text)).map((s) => s.path);
+		expect(kept).toEqual(
+			expect.arrayContaining([
+				'lib/components/explore/readers/DecisionReader.svelte',
+				'lib/components/explore/IndexView.svelte',
+				'lib/map/rij.ts'
+			])
+		);
 	});
 
 	it('heads every reader with ReaderHead, Bewaar in its place (Thijs, 10 Oct: gelijke pagina’s)', () => {

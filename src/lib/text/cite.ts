@@ -1,5 +1,5 @@
 import { parentAnchor, parseAnchor, printedOnderdeel } from './anchor';
-import { bookNumber, bwBookOf } from './bw';
+import { bookNumber, bwCode } from './bw';
 import { langeDatum, vandaag } from './datum';
 import { ordinalWord } from './getal';
 // The three forms in which an article, a lid or an onderdeel is cited.
@@ -73,12 +73,13 @@ const longDate = (d: Date) => langeDatum(vandaag(d));
 
 /** A book of the Burgerlijk Wetboek is cited as the code with the book before the article: `art. 7:3 BW`. */
 function bookOf(c: Citation): Pick<Citation, 'articleNumber' | 'citationTitle' | 'shortTitle'> {
-	if (!bwBookOf(c.bwbId)) return c;
+	const code = bwCode(c.bwbId);
+	if (!code) return c;
 	// The book is in the number, so the code is cited as a whole: `BW`, never `BW6`.
 	return {
 		articleNumber: bookNumber(c.bwbId, c.articleNumber),
 		citationTitle: 'Burgerlijk Wetboek',
-		shortTitle: 'BW'
+		shortTitle: code
 	};
 }
 

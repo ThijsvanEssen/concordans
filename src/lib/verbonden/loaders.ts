@@ -12,6 +12,7 @@ import { refOf } from '$lib/bron/href';
 import { naastHetStuk, stukkenInDezelfdeZaak } from '$lib/bron/zaak';
 import { loadDossierHub, type DossierHub } from './dossier-hub';
 import { explanatoryDocuments } from './explanatory-documents';
+import { CITED_BY_PAGE, rowsOfCitedBy } from './cited-by';
 import { getArticleDetail, getDelegated, getLawBasis, getLawDelegated } from '$lib/api/articles';
 import {
 	grondslagArtikelen,
@@ -50,11 +51,10 @@ import { uitspraakVolgorde, wetUitspraakJaar, wetUitspraakVolgorde } from './vol
 import { paragraphCite } from '$lib/text/judgment-cite';
 import { articleName, bookNumber, withBook } from '$lib/text/bw';
 import { korteDatum } from '$lib/text/datum';
-import { anchorLabel, lidAnchor, paragraphAnchor, parseAnchor } from '$lib/text/anchor';
+import { anchorLabel, lidAnchor, parseAnchor } from '$lib/text/anchor';
 import { anchorOf, parseQualifier } from '$lib/text/qualifier';
 import {
 	aardOf,
-	bundleMentions,
 	activityLine,
 	historyRow,
 	uniqueRows,
@@ -66,7 +66,7 @@ import {
 	type Neighbor,
 	type Row
 } from './rows';
-import { isDerived, lidOfMatch, positionsLabel } from './edge-meta';
+import { isDerived, lidOfMatch, plaatsVanMeta, positionsLabel } from './edge-meta';
 
 /** What an implementation rests on (API 0.67), in words: EUR-Lex, the considerans, or both. */
 const BASIS: Record<string, string> = {
@@ -201,8 +201,7 @@ function lidOfStub(key: string, props: Record<string, unknown> | null | undefine
 /** The dossiers of a lid or fractie read at once: about 0.7 KB each. */
 const DOSSIERS_SHOWN = 100;
 
-/** The passages of the judgments that cite an article: 200 a page, at most five pages. */
-const CITED_BY_PAGE = 200;
+/** The pages of `cited-by` read at most (CITED_BY_PAGE passages each). */
 const CITED_BY_PAGES = 5;
 
 /** The activities of a committee read at once: about 0.2 KB each. */
@@ -640,43 +639,13 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 								}
 							}
 						: undefined;
-				const loaded = (items: typeof data.items): Loaded => {
-					// One row per judgment; each overweging that cites the article is a mention.
-					const mentions = new Map<string, Map<string, Row>>();
-					for (const item of items) {
-						const j = item.judgment;
-						if (isInternational({ key: j.key, props: {} })) continue;
-						const at =
-							item.paragraph_id ||
-							(item.paragraph_number ? paragraphAnchor(item.paragraph_number) : null);
-						const of = mentions.get(j.key) ?? new Map<string, Row>();
-						mentions.set(j.key, of);
-						if (of.has(at ?? '')) continue;
-						of.set(at ?? '', {
-							ref: { collection: 'judgments', key: j.key },
-							...describe('judgments', j.key, j.display_name, { ...j }),
-							kind: 'uitspraken',
-							at,
-							lid: item.leden?.[0] ?? lidOfMatch(item.qualifier ?? item.text),
-							position: item.paragraph_number ? paragraphCite(j.key, item.paragraph_number) : null,
-							derived: isDerived(item.confidence),
-							confidence: item.confidence,
-							snippet: item.snippet || null,
-							match: item.text || null,
-							passageAt: at,
-							relation: 'REFERS_TO',
-							direction: 'inbound',
-							props: { ...j }
-						});
-					}
-					const rows = [...mentions.values()].map((of) => bundleMentions([...of.values()]));
-					return {
-						rows,
-						total: data.judgment_total,
-						mentions: data.total,
-						judgmentsOf
-					};
-				};
+				// One row per judgment; each overweging that cites the article is a mention.
+				const loaded = (items: typeof data.items): Loaded => ({
+					rows: rowsOfCitedBy(items),
+					total: data.judgment_total,
+					mentions: data.total,
+					judgmentsOf
+				});
 				const first = [...data.items];
 				const judgments = (items: typeof first) =>
 					new Set(items.map((item) => item.judgment.key)).size;
@@ -968,9 +937,13 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				if (place?.kind === 'part' && place.lid) row.lid = place.lid;
 				if (!stub) row.derived = true;
 			}
-			const ro = overwegingen.get(n.key);
-			if (ro?.length && !row.edge?.paragraphs)
-				row.position = positionsLabel(ro.map((nr) => paragraphCite(ecli, nr)));
+			// Its places as this judgment cites them (`onder 3` in a conclusion): the edge's
+			// paragraphs, else the overwegingen of the detail.
+			const ro = plaatsVanMeta(n.meta as Record<string, unknown> | null, ecli).position;
+			const uitDetail = overwegingen.get(n.key);
+			if (ro) row.position = ro;
+			else if (uitDetail?.length)
+				row.position = positionsLabel(uitDetail.map((nr) => paragraphCite(ecli, nr)));
 			// The passage that cites it, from the citations the API found in the paragraphs the reader
 			// has loaded (Thijs, 13 Oct): the words of the span, so `art. 3:305a BW` for `305a`.
 			const aangehaald = detail?.cited_articles?.find(

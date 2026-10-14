@@ -5,7 +5,9 @@ import { lawIdOf, type GraphNode } from '$lib/graph/types';
 import { describe, UNNAMED } from '$lib/verbonden/rows';
 import { decisionOutcome } from '$lib/components/explore/index/decision-kind';
 import { isEkDecision } from '$lib/components/parliamentary/timeline-kind';
+import { chamberName } from '$lib/components/parliamentary/chamber';
 import { langeDatum } from '$lib/text/datum';
+import { bwCode } from '$lib/text/bw';
 import { dossierName, dossierUitProps, kamerstukNummer } from './dossier-naam';
 
 const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
@@ -36,7 +38,8 @@ export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): strin
 		return title && title !== UNNAMED ? title : n.label;
 	}
 	const bwb = lawIdOf(p);
-	const shortTitle = bwb ? meta.get(bwb)?.shortTitle : null;
+	// A book of the BW by the code, as the article is cited: "Art. 7A:1576 BW" (F21).
+	const shortTitle = bwCode(bwb) ?? (bwb ? meta.get(bwb)?.shortTitle : null);
 	if (shortTitle) return `${n.label} ${shortTitle}`;
 	// Until its law's short title is in, the abbreviation or citation title the article itself
 	// carries: never "Art. 419" without its law (UX test 10 Oct, #23).
@@ -63,4 +66,22 @@ export function stemmingNaam(n: Pick<GraphNode, 'id' | 'label' | 'raw'>): string
 		.join(', ');
 	const over = text(p['subject']) ?? text(p['title']);
 	return over ? `${kop}: ${over}` : kop;
+}
+
+/**
+ * A vote as the map cites it, from its reader and from a row alike: "Stemming 20 december
+ * 2016: Amendement …", in full with its Kamer. Never the citation of what was voted on.
+ */
+export function voteCitation(d: {
+	date?: string | null;
+	chamber?: string | null;
+	subject?: string | null;
+}): { kort: string; voluit: string } {
+	const datum = d.date ? langeDatum(d.date) : '';
+	const over = d.subject?.trim() ?? '';
+	const tail = over ? `: ${over}` : '';
+	return {
+		kort: `Stemming${datum ? ` ${datum}` : ''}${tail}`,
+		voluit: `Stemming ${chamberName(d.chamber)}${datum ? `, ${datum}` : ''}${tail}`
+	};
 }

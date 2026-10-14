@@ -27,6 +27,7 @@
 		citaten,
 		csv,
 		groepen,
+		itemHref,
 		mapParams,
 		netwerkHref,
 		sleutelVan,
@@ -59,11 +60,6 @@
 		v === 'eigen' ? [{ groep: '', sleutel: '', items: [...lijst] }] : groepen(lijst);
 	const collectieVan = (i: MapItem) => i.id.split('/')[0] as Collection;
 
-	/** The place an item opens: the bron in Samenhang, at its lid or overweging. */
-	const adres = (i: MapItem) => {
-		const href = buildBronHref(null, i.id);
-		return i.at ? `${href.split('#')[0]}#${encodeURIComponent(i.at)}` : href;
-	};
 	const link = (m: Map) => {
 		const url = new URL('/gemarkeerd', page.url.origin);
 		url.search = mapParams(m).toString();
@@ -124,7 +120,7 @@
 
 {#snippet rij(i: MapItem, m: Map | null)}
 	{@const k = (m?.id ?? 'gedeeld') + ':' + sleutelVan(i)}
-	<IndexRow title={i.kort} href={adres(i)} open={geopend.has(k)} onToggle={() => wisselOpen(k)}>
+	<IndexRow title={i.kort} href={itemHref(i)} open={geopend.has(k)} onToggle={() => wisselOpen(k)}>
 		{#snippet lead()}
 			<span class="row-id-main"
 				><KindGlyph collection={collectieVan(i)} size={12} />{bronLabel(collectieVan(i))}</span
@@ -160,12 +156,12 @@
 					>
 				</span>
 			{/if}
-			<TekstLink href={adres(i)} class="naar-lezer" aria-label="{i.kort} in de lezer"
+			<TekstLink href={itemHref(i)} class="naar-lezer" aria-label="{i.kort} in de lezer"
 				>In de lezer</TekstLink
 			>
 		{/snippet}
 		{#snippet detail()}
-			<MapInhoud item={i} href={adres(i)} />
+			<MapInhoud item={i} href={itemHref(i)} />
 		{/snippet}
 	</IndexRow>
 {/snippet}
@@ -290,7 +286,7 @@
 								onclick={() =>
 									download(
 										`${bestand(m)}.csv`,
-										csv(m.items, (i) => new URL(adres(i), page.url.origin).toString())
+										csv(m.items, (i) => new URL(itemHref(i), page.url.origin).toString())
 									)}>CSV</TekstLink
 							>
 						{/if}

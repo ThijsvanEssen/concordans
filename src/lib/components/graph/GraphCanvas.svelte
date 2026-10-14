@@ -6,7 +6,7 @@
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import type SigmaType from 'sigma';
 	import type Graph from 'graphology';
-	import { readEdge } from '$lib/verbonden/edge-meta';
+	import { edgeKey, readEdge } from '$lib/verbonden/edge-meta';
 	import { keyEcli } from '$lib/bron/leesbaar';
 	import { parseNodeId } from '$lib/vocabulary';
 	import type { GraphFilters } from '$lib/graph/graph-store';
@@ -66,6 +66,7 @@
 		yearPeriod = null as Period | null,
 		rechter = null as Rechter | null,
 		selectedEdgeId = null as string | null,
+		lineLids = new Map() as ReadonlyMap<string, string>,
 		inFluxMap = new Map() as NodeCounts,
 		heatMap = new Map() as NodeCounts,
 		heatActive = false,
@@ -108,6 +109,9 @@
 		rechter?: Rechter | null;
 		/** The edge whose card is open: drawn wider. */
 		selectedEdgeId?: string | null;
+		/** The lid a line names, by its edge (`edgeKey`), where its row or card knows it: the
+		 *  light meta of the canvas names none where the source cites several places. */
+		lineLids?: ReadonlyMap<string, string>;
 		inFluxMap?: NodeCounts;
 		heatMap?: NodeCounts;
 		heatActive?: boolean;
@@ -214,6 +218,7 @@
 	let latestPinnedIds = new Set<string>();
 	let latestCoreIds: ReadonlySet<string> | null = null;
 	let latestSelectedEdge: string | null = null;
+	let latestLineLids: ReadonlyMap<string, string> = new Map();
 	let latestInFluxMap: NodeCounts = new Map();
 	let latestHeatMap: NodeCounts = new Map();
 	let latestHeatActive = false;
@@ -381,6 +386,7 @@
 		latestCoreIds = coreIds;
 		recomputeStrays();
 		latestSelectedEdge = selectedEdgeId;
+		latestLineLids = lineLids;
 		renderer?.refresh();
 	});
 
@@ -1066,7 +1072,8 @@
 		data: Record<string, unknown>,
 		sourceCollection: Collection,
 		source: string,
-		targetCollection: Collection
+		targetCollection: Collection,
+		target: string
 	): string {
 		const relation = data.relation as Relation;
 		const meta = (data.meta ?? {}) as Record<string, unknown>;
@@ -1078,7 +1085,8 @@
 			direction: 'inbound',
 			citingEcli: sourceCollection === 'judgments' ? keyEcli(parseNodeId(source)?.key ?? '') : null
 		});
-		if (lid) parts.push(`lid ${lid}`);
+		const ofRow = latestLineLids.get(edgeKey(source, target, relation));
+		if (lid ?? ofRow) parts.push(`lid ${lid ?? ofRow}`);
 		if (position) parts.push(position);
 		if (data.status === 'voorgesteld') parts.push('voorgesteld');
 		return parts.join(', ');
@@ -1420,7 +1428,7 @@
 						type: edgeType,
 						color: t.focus,
 						size: restSize * 2.4,
-						label: edgeLabel(data, sourceCollection, src, tgtAttrs.collection as Collection),
+						label: edgeLabel(data, sourceCollection, src, tgtAttrs.collection as Collection, tgt),
 						forceLabel: true,
 						zIndex: 3
 					};
@@ -1432,7 +1440,7 @@
 						type: edgeType,
 						color: renderColor,
 						size: restSize * 1.8,
-						label: edgeLabel(data, sourceCollection, src, tgtAttrs.collection as Collection),
+						label: edgeLabel(data, sourceCollection, src, tgtAttrs.collection as Collection, tgt),
 						forceLabel: true,
 						zIndex: 3
 					};
@@ -1447,7 +1455,7 @@
 							type: edgeType,
 							color: renderColor,
 							size: restSize * 1.3,
-							label: edgeLabel(data, sourceCollection, src, tgtAttrs.collection as Collection),
+							label: edgeLabel(data, sourceCollection, src, tgtAttrs.collection as Collection, tgt),
 							forceLabel: true,
 							zIndex: 2
 						};

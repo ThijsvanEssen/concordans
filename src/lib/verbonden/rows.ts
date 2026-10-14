@@ -109,6 +109,11 @@ export function dossierNumbersOf(props: Record<string, unknown> | null | undefin
 	return Array.isArray(raw) ? raw.filter((n): n is string => typeof n === 'string' && !!n) : [];
 }
 
+/** The dossier a Kamerstuk or vote is numbered in: `dossier_number` where the API gives it
+ *  (`explained-by`, a light node), else the first of `dossier_numbers`. */
+export const dossierNumberOf = (props: Record<string, unknown> | null | undefined): string | null =>
+	text(props?.dossier_number) ?? dossierNumbersOf(props)[0] ?? null;
+
 /** The name of a court the API gives as a code (`GHAMS`). */
 const COURTS: Record<string, string> = {
 	HR: 'Hoge Raad',
@@ -152,7 +157,7 @@ function documentName(
 	const kind = text(props.kind);
 	const shortKind = kind?.replace(/\s*\(.*\)\s*$/, '') ?? null;
 	const title = text(props.title) ? withoutKamerstuk(text(props.title)!) : null;
-	const dossier = text(props.dossier_number) ?? dossierNumbersOf(props)[0] ?? null;
+	const dossier = dossierNumberOf(props);
 	const sequence = text(props.sequence != null ? String(props.sequence) : null);
 	// The Eerste Kamer numbers its papers with a letter (`C`, `AB`), without `nr.`.
 	const letter = sequence ? null : text(props.number);
