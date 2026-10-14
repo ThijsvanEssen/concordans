@@ -432,3 +432,39 @@ describe('vakken (UX-toets 0.79.47, #52)', () => {
 		expect(v[1].hits.map((x) => x.id)).toEqual(['a2']);
 	});
 });
+
+describe('a judgment found by a person', () => {
+	const gevonden = (person: Record<string, unknown>) =>
+		hit({
+			collection: 'judgments',
+			key: 'ecli_nl_rvs_2007_bb0782',
+			display_name: 'Raad van State 2007-08-01 / 200604968/1',
+			snippet: 'Inhoudsindicatie.',
+			extra: { ecli: 'ECLI:NL:RVS:2007:BB0782', names: [], person }
+		});
+	const tekst = (s: { text: string }[] | null) => s?.map((d) => d.text).join('');
+
+	it('says who acts for whom under the hit, the name marked', () => {
+		const shown = presentHit(
+			gevonden({ name: 'mr. drs. R. van Gelder', role: 'advocaat', party: '[appellanten]' }),
+			'R. van Gelder'
+		);
+		expect(tekst(shown.snippet)).toBe('mr. drs. R. van Gelder, advocaat van [appellanten]');
+		expect(shown.snippet?.filter((d) => d.mark).map((d) => d.text)).toEqual(['van', 'Gelder']);
+	});
+
+	it('says the role of a party, and keeps the text of a hit not found by a person', () => {
+		const partij = presentHit(
+			gevonden({
+				name: 'het college van gedeputeerde staten van Zuid-Holland',
+				role: 'Verweerder',
+				party: null
+			}),
+			'gedeputeerde staten'
+		);
+		expect(tekst(partij.snippet)).toBe(
+			'het college van gedeputeerde staten van Zuid-Holland, verweerder'
+		);
+		expect(tekst(presentHit(gevonden({}), 'x').snippet)).toBe('Inhoudsindicatie.');
+	});
+});

@@ -47,6 +47,13 @@ describe('what an opened row shows', () => {
 		).toBe('inwerkingtreding');
 		// Without the law it changes, nothing to ask.
 		expect(inhoudVan(item('inwerkingtreding'))).toBeNull();
+		// The row names the publication already (API 0.79.55): nothing more to open.
+		const publication = { key: 'stcrt_2026_17140', series: 'stcrt', year: 2026, number: '17140' };
+		expect(
+			inhoudVan(
+				item('inwerkingtreding', { commencement: { instrument: wet, publication } as never })
+			)
+		).toBeNull();
 	});
 
 	it('takes the opening of a stuk past its letterhead, to the end of a sentence', () => {

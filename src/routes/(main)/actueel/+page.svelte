@@ -7,7 +7,8 @@
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { uniqueBy } from '$lib/util/unique';
-	import { volg, volgt } from '$lib/onderwerpen/onderwerpen';
+	import { volg, volgt, volgtWet, volgWet, type GevolgdeWet } from '$lib/onderwerpen/onderwerpen';
+	import { getInstrumentDetail } from '$lib/api/instrument-cache';
 	// Actueel: what happened in the Kamer and the government, newest first, per day. Every
 	// filter and the line opened are in the URL, so a view can be shared; the same view is an
 	// Atom feed. Beside it, the day of the newest event: how current the data is.
@@ -82,6 +83,11 @@
 		((v) => (v && v in COALITIE ? (v as keyof typeof COALITIE) : ''))(params.get('coalitie'))
 	);
 	const q = $derived(params.get('q') ?? '');
+	// A law, or an article of it (API 0.79.55): what the feed ties to it, each row with how.
+	const wet = $derived(
+		((v) => (/^BWBR\d+$/i.test(v) ? v.toUpperCase() : ''))(params.get('wet') ?? '')
+	);
+	const artikel = $derived(wet ? (params.get('artikel')?.trim() ?? '') : '');
 	/** The words searched for, marked in the rows that hold them (FeedDay), as in Gevolgd. */
 	const termen = $derived(q.trim() ? [q.trim()] : []);
 	// Which Kamer (API 0.59): the Tweede with its papers, votes and toezeggingen, or the
@@ -103,7 +109,9 @@
 		'coalitie',
 		'q',
 		'kamer',
-		'komend'
+		'komend',
+		'wet',
+		'artikel'
 	];
 
 	/** A filter is a step in the history; the search text and the line opened replace it. */
@@ -153,6 +161,31 @@
 		gevolgd = volgt(q);
 	}
 
+	// The law chosen by its name, asked once; following it, or its article, as the words.
+	let wetTitel = $state<{ bwb: string; titel: string } | null>(null);
+	$effect(() => {
+		const bwb = wet;
+		if (!bwb || wetTitel?.bwb === bwb) return;
+		getInstrumentDetail(bwb)
+			.then((d) => (wetTitel = { bwb, titel: d.title ?? bwb }))
+			.catch(() => (wetTitel = { bwb, titel: bwb }));
+	});
+	const gevolgdeWet = $derived<GevolgdeWet | null>(
+		wet
+			? {
+					bwb: wet,
+					titel: wetTitel?.bwb === wet ? wetTitel.titel : wet,
+					artikel: artikel || null
+				}
+			: null
+	);
+	let wetGevolgd = $derived(gevolgdeWet ? volgtWet(gevolgdeWet) : false);
+	function volgDezeWet() {
+		if (!gevolgdeWet) return;
+		volgWet(gevolgdeWet);
+		wetGevolgd = volgtWet(gevolgdeWet);
+	}
+
 	// ── The feed ────────────────────────────────────────────────────────────
 	type Query = NonNullable<paths['/api/feed']['get']['parameters']['query']>;
 	const query = $derived<Query>({
@@ -170,6 +203,8 @@
 		// API 0.79.30 takes several q; one as before (Front-end #2 widens it).
 		q: q ? [q] : undefined,
 		chamber: chamber || undefined,
+		instrument: wet || undefined,
+		article: artikel || undefined,
 		limit: 100
 	});
 
@@ -330,7 +365,19 @@
 	});
 	$effect(() => {
 		const s = span;
-		const { kind, cabinet, ministry, dossier, member, faction, coalition, q, chamber } = query;
+		const {
+			kind,
+			cabinet,
+			ministry,
+			dossier,
+			member,
+			faction,
+			coalition,
+			q,
+			chamber,
+			instrument,
+			article
+		} = query;
 		if (!s) return;
 		const ac = new AbortController();
 		unwrap(
@@ -347,6 +394,8 @@
 						coalition,
 						q,
 						chamber,
+						instrument,
+						article,
 						margin: CLOSE_VOTE,
 						limit: 1
 					}
@@ -478,6 +527,24 @@
 				placeholder: 'Kamerstuknummer',
 				onChange: (v) => patchUrl({ dossier: v || null })
 			},
+			// The law followed through an address (`?wet=`): chosen, to undo.
+			...(wet
+				? [
+						{
+							id: 'wet',
+							label: 'Wet',
+							kind: 'list' as const,
+							options: [
+								{
+									id: wet,
+									label: gevolgdeWet ? wetNaamKort(gevolgdeWet) : wet,
+									on: true,
+									onClick: () => patchUrl({ wet: null, artikel: null })
+								}
+							]
+						}
+					]
+				: []),
 			...(member
 				? [
 						{
@@ -511,6 +578,10 @@
 		];
 	});
 	const chips = $derived(activeFilters(groups));
+	/** `Cyberbeveiligingswet`, `art. 3 Cyberbeveiligingswet`: the law chosen, as a filter names it. */
+	function wetNaamKort(w: GevolgdeWet) {
+		return w.artikel ? `art. ${w.artikel} ${w.titel}` : w.titel;
+	}
 	let filtersOpen = $state(false);
 
 	/**
@@ -565,6 +636,20 @@
 						class="btn is-groot"
 						title="Volg deze woorden onder Gevolgd"
 						onclick={volgQ}>Volg als onderwerp</button
+					>
+				{/if}
+			{/if}
+			{#if gevolgdeWet}
+				{#if wetGevolgd}
+					<a class="btn is-groot" href="/onderwerpen"
+						>{artikel ? 'Artikel gevolgd' : 'Wet gevolgd'}</a
+					>
+				{:else}
+					<button
+						type="button"
+						class="btn is-groot"
+						title="Volg {wetNaamKort(gevolgdeWet)} onder Gevolgd"
+						onclick={volgDezeWet}>{artikel ? 'Volg dit artikel' : 'Volg deze wet'}</button
 					>
 				{/if}
 			{/if}
@@ -664,6 +749,7 @@
 						{filterHref}
 						summary={summaries.get(day.date)}
 						{termen}
+						wet={gevolgdeWet}
 						meer={n === days.length - 1 && cursor && !doorzocht ? volgende : undefined}
 					/>
 				{/each}

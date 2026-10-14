@@ -7,19 +7,20 @@
 	// counts are the whole day's from the summary when it has come; until then, those of the
 	// lines loaded. The words of a followed topic or a search (`termen`) are marked where the
 	// row shows them; where it does not, a line under the headline says where they are
-	// (`In dossier: …`): the reason the row is there.
+	// (`In dossier: …`): the reason the row is there, as the API found it (`matched`). Of a
+	// followed law, how the row is tied to it (`via`). What a row is tied to stands under it
+	// without a click (verband.ts): the laws of a publication, the publication of a new
+	// version, the motions a letter answers, the articles an amendment changes.
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
 	import type { TijdRegel } from '$lib/components/tijdlijn/tijdlijn';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
 	import CoalitieRegel from '$lib/components/parliamentary/CoalitieRegel.svelte';
 	import { inhoudVan } from '$lib/components/open/rij-inhoud';
-	import { uniqueBy } from '$lib/util/unique';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import SubmitterLine from '$lib/bron/SubmitterLine.svelte';
 	import { fromFeed } from '$lib/bron/submitters';
 	import {
 		KIND_LABEL,
-		artikelenGewijzigd,
 		countLine,
 		dayLabel,
 		dossierLabel,
@@ -34,7 +35,15 @@
 		type FeedItem
 	} from './feed';
 	import { headlineOf, tekenVanFeed, voteHow, vormVanFeed } from './timeline';
-	import { getoondOnder, plekVan, type Plek } from './treffer';
+	import { getoondOnder, plekVan, termenVan, type Plek } from './treffer';
+	import {
+		inwerkingVerbanden,
+		publicatieVerbanden,
+		relatieVerbanden,
+		viaRegel,
+		type Gevolgd,
+		type Verband
+	} from './verband';
 	import { markeer } from '$lib/text/treffer';
 	import Markering from '$lib/components/ui/Markering.svelte';
 
@@ -54,6 +63,7 @@
 		summary,
 		nieuwSinds = null,
 		termen,
+		wet = null,
 		meer
 	}: {
 		day: Day;
@@ -70,6 +80,8 @@
 		nieuwSinds?: string | null;
 		/** The words the feed was asked for (`q`): a followed topic's, Actueel's search; or none. */
 		termen: readonly string[];
+		/** The law followed: how each row is tied to it (`via`), where the row does not say it. */
+		wet?: Gevolgd | null;
 		/** Under the day, in the text column: the next days, on the last day loaded. */
 		meer?: import('svelte').Snippet;
 	} = $props();
@@ -142,7 +154,7 @@
 				vorm: h.vorm,
 				label: `${h.label}${nieuw(i.date)}`,
 				zin: h.title,
-				zinDelen: markeer(termen, h.title),
+				zinDelen: markeer(termenVan(termen, i), h.title),
 				ref: refOf(i),
 				heeftTekst: i.has_text,
 				bron: i.id,
@@ -176,8 +188,11 @@
 {#snippet itemOnder(id: string)}
 	{@const i = items.get(id)}
 	{#if i}
+		{@const woorden = termenVan(termen, i)}
+		{@const via = viaRegel(i, wet)}
 		<span class="meta">
 			{@render plekRegel(id)}
+			{#if via}<span class="plek">{via}</span>{/if}
 			<!-- The citation where the headline is another name; a headline that is it says it once. -->
 			{#if i.publication && publicationCite(i.publication) !== titleOf(i)}<span
 					>{publicationCite(i.publication)}</span
@@ -185,20 +200,26 @@
 			{#if i.dossier}
 				<BronLink
 					ref={{ collection: 'dossiers', key: i.dossier.key, number: i.dossier.number }}
-					title={i.dossier.title ?? undefined}>{@render merk(dossierLabel(i.dossier))}</BronLink
+					title={i.dossier.title ?? undefined}
+					>{@render merk(dossierLabel(i.dossier), woorden)}</BronLink
 				>
 			{/if}
 			{#if i.persons.length}{@render persons(i)}{/if}
 			{#if i.ministry}<span class="ministry">{ministryName(i.ministry)}</span>{/if}
 			{#if i.commencement?.instrument && i.kind !== 'inwerkingtreding'}
 				<BronLink ref={`instruments/${i.commencement.instrument.key}`}
-					>{@render merk(i.commencement.instrument.title)}</BronLink
+					>{@render merk(i.commencement.instrument.title, woorden)}</BronLink
 				>
 			{/if}
 			{#if i.judgment?.procedure}<span class="ministry">{i.judgment.procedure}</span>{/if}
-			{#each uniqueBy(i.publication?.instruments ?? [], (w) => w.key) as w (w.key)}
-				<BronLink ref={`instruments/${w.key}`}>{@render merk(w.title)}</BronLink>
-			{/each}
+			{#if i.publication?.instruments?.length}
+				<!-- Stelt vast: Cyberbeveiligingswet. Wijzigt: Telecommunicatiewet (5 artikelen). -->
+				<span class="verband verband--regel"
+					>{#each publicatieVerbanden(i.publication) as v, n (v.label)}{n ? ' ' : ''}<span
+							class="verband-label">{v.label}:&nbsp;</span
+						>{@render delen(v, woorden)}.{/each}</span
+				>
+			{/if}
 			{#if i.vote}
 				<!-- The outcome is in the label; the tally beside it, or how it was decided. -->
 				{@const t = tally(i)}
@@ -212,9 +233,10 @@
 						? `, verwacht ${shortDate(i.commitment.expected_resolution)}`
 						: ''}</span
 				>
-			{:else if artikelenGewijzigd(i.commencement)}
-				<span>{artikelenGewijzigd(i.commencement)}</span>
+			{:else if i.commencement}
+				{#each inwerkingVerbanden(i.commencement) as v, n (n)}{@render verband(v, woorden)}{/each}
 			{/if}
+			{#each relatieVerbanden(i) as v (v.label)}{@render verband(v, woorden, true)}{/each}
 		</span>
 	{/if}
 {/snippet}
@@ -234,9 +256,26 @@
 {/snippet}
 
 <!-- A name the row shows, the words of the topic marked in it. -->
-{#snippet merk(tekst: string | null | undefined)}
-	{@const delen = markeer(termen, tekst)}
+{#snippet merk(tekst: string | null | undefined, woorden: readonly string[] = termen)}
+	{@const delen = markeer(woorden, tekst)}
 	{#if delen}<Markering {delen} />{:else}{tekst ?? ''}{/if}
+{/snippet}
+
+<!-- What a row is tied to: `Gaat in op motie-Kathmann (36764, nr. 31)`, each bron a link that
+     opens it. A line of its own (`regel`) under the row's names, or one among them. -->
+{#snippet verband(v: Verband, woorden: readonly string[], regel = false)}
+	<span class="verband" class:verband--regel={regel}
+		>{#if v.label}<span class="verband-label">{v.label}&nbsp;</span>{/if}{@render delen(
+			v,
+			woorden
+		)}</span
+	>
+{/snippet}
+
+{#snippet delen(v: Verband, woorden: readonly string[])}
+	{#each v.delen as d, n (n)}{#if d.ref}<BronLink ref={d.ref} href={d.href ?? null}
+				>{@render merk(d.tekst, woorden)}</BronLink
+			>{:else}{d.tekst}{/if}{/each}
 {/snippet}
 
 {#snippet itemInhoud(id: string)}
@@ -257,7 +296,9 @@
 			<!-- In a fold of one dossier, the fold's line says where; in the day's votes, each. -->
 			{@const p = f.dossier ? null : plekVan(termen, i, [titel])}
 			<li>
-				<BronLink ref={refOf(i)} class="fold-title">{@render merk(titel)}</BronLink>
+				<BronLink ref={refOf(i)} class="fold-title"
+					>{@render merk(titel, termenVan(termen, i))}</BronLink
+				>
 				{#if p}<span class="meta">{@render plekTekst(p)}</span>{/if}
 				{#if i.persons.length || i.vote}
 					<span class="meta"
@@ -354,6 +395,13 @@
 	}
 	.plek-waar {
 		color: var(--ink-3);
+	}
+	/* What the row is tied to: its verb in the grey of a label, its bronnen as the names. */
+	.verband-label {
+		color: var(--ink-3);
+	}
+	.verband--regel {
+		flex-basis: 100%;
 	}
 	.person {
 		padding-left: var(--s-1);

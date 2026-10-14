@@ -3,9 +3,11 @@
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
-	// Gevolgde onderwerpen: per topic what came into Actueel since the visit before. The topics
-	// are kept in this browser; an address with `?onderwerp=` shows someone else's without
-	// touching the own list, and can be followed in one step.
+	// Gevolgde onderwerpen: per topic what came into Actueel since the visit before. A topic is
+	// words, or a law or an article of one (`?wet=`, API 0.79.55). The topics are kept in this
+	// browser; an address with `?onderwerp=` shows someone else's without touching the own
+	// list, and can be followed in one step. A topic with nothing in its period shows the last
+	// that came in before it, as the API finds them (`huur`: nothing since September).
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
 	import { api, unwrap } from '$lib/api/client';
@@ -29,16 +31,21 @@
 		haalTermWeg,
 		naarParam,
 		normaal,
-		ontvolg,
+		ontvolgOnderwerp,
+		sleutelVan,
 		splitsTermen,
 		uitParams,
 		RECENT_DAGEN,
 		vensterVan,
 		voegTermenToe,
 		volg,
+		volgWet,
+		wetNaam,
+		wettenUitParams,
 		zetGezien,
 		type Onderwerp
 	} from '$lib/onderwerpen/onderwerpen';
+	import { getInstrumentDetail } from '$lib/api/instrument-cache';
 	import { vandaag } from '$lib/text/datum';
 	import { getMinistries } from '$lib/components/explore/index/government';
 
@@ -53,16 +60,38 @@
 	const dagenTerug = (n: number) =>
 		new Date(Date.parse(today) - n * 86_400_000).toISOString().slice(0, 10);
 
-	const gedeeld = $derived(uitParams(page.url.searchParams));
+	const gedeeld = $derived<Onderwerp[]>([
+		...uitParams(page.url.searchParams).map((termen) => ({ termen, vorige: null, gezien: null })),
+		...wettenUitParams(page.url.searchParams).map((wet) => ({
+			termen: [wetNaam(wet)],
+			wet,
+			vorige: null,
+			gezien: null
+		}))
+	]);
 	let eigen = $state<Onderwerp[]>([]);
 	let geladen = $state(false);
 	$effect(() => {
 		eigen = nieuwBezoek(lees());
 		geladen = true;
 	});
-	const lijst = $derived<Onderwerp[]>(
-		gedeeld.length ? gedeeld.map((termen) => ({ termen, vorige: null, gezien: null })) : eigen
-	);
+	const lijst = $derived<Onderwerp[]>(gedeeld.length ? gedeeld : eigen);
+
+	// The name of a law an address names by its id alone, asked once.
+	let wetNamen = $state<Record<string, string>>({});
+	$effect(() => {
+		for (const o of lijst) {
+			const bwb = o.wet?.bwb;
+			if (!bwb || o.wet?.titel !== bwb || bwb in wetNamen) continue;
+			wetNamen[bwb] = bwb;
+			getInstrumentDetail(bwb)
+				.then((d) => (wetNamen[bwb] = d.title ?? bwb))
+				.catch(() => {});
+		}
+	});
+	/** What a topic is called: its words, or the law (and article) it follows. */
+	const naamVan = (o: Onderwerp) =>
+		o.wet ? wetNaam({ ...o.wet, titel: wetNamen[o.wet.bwb] ?? o.wet.titel }) : o.termen.join('; ');
 
 	type Stand = {
 		status: 'laden' | 'klaar' | 'fout';
@@ -70,12 +99,20 @@
 		meer: boolean;
 		/** The first day searched, when the API stopped short (0.79.28). */
 		doorzocht: string | null;
+		/** Nothing in the period: the last lines before it. */
+		eerder: boolean;
 	};
 	let standen = $state<Record<string, Stand>>({});
 	let uitgeklapt = $state<Record<string, boolean>>({});
-	const sleutel = (o: Pick<Onderwerp, 'termen'>) => o.termen.join('|').toLowerCase();
+	const sleutel = sleutelVan;
 	// A shared topic asks another window than an own one with the same words.
-	const vak = (o: Pick<Onderwerp, 'termen'>) => (gedeeld.length ? 'gedeeld:' : '') + sleutel(o);
+	const vak = (o: Pick<Onderwerp, 'termen' | 'wet'>) =>
+		(gedeeld.length ? 'gedeeld:' : '') + sleutel(o);
+	/** What the feed is asked for a topic: its words, or its law and article. */
+	const vraagVan = (o: Onderwerp) =>
+		o.wet
+			? { instrument: o.wet.bwb, ...(o.wet.artikel ? { article: o.wet.artikel } : {}) }
+			: { q: o.termen };
 	const recent = dagenTerug(RECENT_DAGEN);
 	const vanaf = (o: Onderwerp) => vensterVan(o.vorige, recent);
 
@@ -87,7 +124,7 @@
 		verder?: { tot: string; items: FeedItem[] }
 	) {
 		// One question per topic with all its words (repeated q, API 0.79.30): the API finds
-		// a line that holds any of them, once, by the same word rule as woordIn here.
+		// a line that holds any of them, once, and says where (`matched`). A law by its id.
 		const taken = [...onderwerpen];
 		const werk = async () => {
 			for (let o = taken.shift(); o && !signal.aborted; o = taken.shift()) {
@@ -95,33 +132,37 @@
 				const items = new Map((verder?.items ?? []).map((i) => [i.id, i]));
 				let meer = false;
 				let doorzocht: string | null = null;
+				let eerder = false;
 				let gelukt = true;
-				try {
-					const r = await unwrap(
+				const vraag = (query: Record<string, unknown>) =>
+					unwrap(
 						api.GET('/api/feed', {
-							params: {
-								query: {
-									q: o.termen,
-									since: vanaf(o),
-									...(verder ? { until: verder.tot } : {}),
-									limit: PER_ONDERWERP,
-									facets: false
-								}
-							},
+							params: { query: { ...vraagVan(o), ...query, facets: false } },
 							signal: AbortSignal.any([signal, AbortSignal.timeout(WACHT)])
 						})
 					);
+				try {
+					let r = await vraag({
+						since: vanaf(o),
+						...(verder ? { until: verder.tot } : {}),
+						limit: PER_ONDERWERP
+					});
+					if (!verder) {
+						const stand = feedStand(r.data_as_of);
+						if (stand && !gedeeld.length) zetGezien(o, stand.newest);
+					}
+					// Nothing in the period: the last lines before it, as the API has them.
+					if (!verder && !r.items.length && !doorzochtVanaf(r)) {
+						r = await vraag({ until: dagVoor(vanaf(o)), limit: EERST });
+						eerder = r.items.length > 0;
+					}
 					for (const raw of r.items) {
 						const i = normalizeItem(raw);
 						items.set(i.id, i);
 					}
-					if (!verder) {
-						const stand = feedStand(r.data_as_of);
-						if (stand && !gedeeld.length) zetGezien(o.termen[0], stand.newest);
-					}
 					// Searched only from a day on: the rest is a question further back.
-					doorzocht = doorzochtVanaf(r);
-					meer = !doorzocht && !!r.next_cursor;
+					doorzocht = eerder ? null : doorzochtVanaf(r);
+					meer = !eerder && !doorzocht && !!r.next_cursor;
 				} catch {
 					if (signal.aborted) return;
 					gelukt = false;
@@ -132,7 +173,8 @@
 						(a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id)
 					),
 					meer,
-					doorzocht
+					doorzocht,
+					eerder
 				};
 			}
 		};
@@ -148,9 +190,15 @@
 		const nieuw = lijst.filter((o) => !untrack(() => standen[vak(o)]));
 		if (!nieuw.length) return;
 		for (const o of nieuw)
-			standen[vak(o)] = { status: 'laden', items: [], meer: false, doorzocht: null };
+			standen[vak(o)] = {
+				status: 'laden',
+				items: [],
+				meer: false,
+				doorzocht: null,
+				eerder: false
+			};
 		void laadAlles(
-			nieuw.map((o) => ({ ...o, termen: [...o.termen] })),
+			nieuw.map((o) => ({ ...o, termen: [...o.termen], wet: o.wet ? { ...o.wet } : undefined })),
 			ac.signal
 		);
 	});
@@ -185,7 +233,7 @@
 		vanaf(o) === recent ? `Afgelopen ${RECENT_DAGEN} dagen` : `Sinds ${shortDate(vanaf(o))}`;
 	/** The count beside the topic's heading: `25`, or `25+` where the search stopped short. */
 	function telling(s: Stand | undefined): string | null {
-		if (s?.status !== 'klaar') return null;
+		if (s?.status !== 'klaar' || s.eerder) return null;
 		return `${s.items.length}${s.meer || s.doorzocht ? '+' : ''}`;
 	}
 	/**
@@ -193,6 +241,11 @@
 	 * `Afgelopen 30 dagen; 2 nieuw sinds 8 okt. 2026`.
 	 */
 	function telRegel(o: Onderwerp, s: Stand | undefined): string {
+		// Nothing in the period: what is shown lies before it.
+		if (s?.eerder)
+			return vanaf(o) === recent
+				? `Eerder dan de afgelopen ${RECENT_DAGEN} dagen`
+				: `Vóór ${shortDate(vanaf(o))}`;
 		if (o.vorige && vanaf(o) === o.vorige) return `Nieuw sinds ${shortDate(o.vorige)}`;
 		const periode = periodeVan(o);
 		if (s?.status !== 'klaar' || !o.vorige) return periode;
@@ -202,12 +255,18 @@
 		return `${periode}; ${nieuw}${minNieuw} nieuw sinds ${shortDate(o.vorige)}`;
 	}
 
-	/** The topic as an Atom feed: every word as a q of its own, any of them counts. */
-	const atomHref = (termen: string[]) => {
+	/** The topic as an Atom feed: every word as a q of its own, any of them counts; a law. */
+	const atomHref = (o: Onderwerp) => {
 		const p = new URLSearchParams();
-		for (const t of termen) p.append('q', t);
+		if (o.wet) {
+			p.set('instrument', o.wet.bwb);
+			if (o.wet.artikel) p.set('article', o.wet.artikel);
+		} else for (const t of o.termen) p.append('q', t);
 		return `${API_BASE_URL}/api/feed.atom?${p}`;
 	};
+	/** The law (and article) in Actueel. */
+	const actueelWetHref = (o: Onderwerp) =>
+		`/actueel?${new URLSearchParams({ wet: o.wet!.bwb, ...(o.wet!.artikel ? { artikel: o.wet!.artikel } : {}) })}`;
 
 	// The whole of Actueel for a word: the API searches its titles fast since 0.79.30, and says
 	// how far back it searched where it stopped short (Doorzocht vanaf).
@@ -243,16 +302,17 @@
 		bewerkt = sleutel(eigen.find((x) => blijft && x.termen.includes(blijft)) ?? o);
 	}
 	function verwijder(o: Onderwerp) {
-		ontvolg(o.termen[0]);
+		ontvolgOnderwerp(o);
 		eigen = lees();
 	}
 	function volgGedeeld() {
-		for (const termen of gedeeld) volg(termen);
+		for (const o of gedeeld)
+			if (o.wet) volgWet({ ...o.wet, titel: wetNamen[o.wet.bwb] ?? o.wet.titel });
+			else volg(o.termen);
 		eigen = lees();
 	}
 	const alGevolgd = $derived(
-		gedeeld.length > 0 &&
-			gedeeld.every((t) => eigen.some((o) => sleutel(o) === sleutel({ termen: t })))
+		gedeeld.length > 0 && gedeeld.every((t) => eigen.some((o) => sleutel(o) === sleutel(t)))
 	);
 
 	let gekopieerd = $state(false);
@@ -312,7 +372,7 @@
 			<h2 class="opzij__kop">Gevolgd</h2>
 			<ul>
 				{#each lijst as o, n (sleutel(o))}
-					<li><a href="#onderwerp-{n}">{o.termen.join('; ')}</a></li>
+					<li><a href="#onderwerp-{n}">{naamVan(o)}</a></li>
 				{/each}
 			</ul>
 		{/if}
@@ -329,7 +389,7 @@
 			     opens and closes it, remembered per topic in this browser (Thijs, 10 Oct), its
 			     actions at the right on the same line, what is new under it. -->
 			<Sectie
-				titel={o.termen.join('; ')}
+				titel={naamVan(o)}
 				id="onderwerp-{n}"
 				niveau={2}
 				aantal={telling(s)}
@@ -339,14 +399,16 @@
 				{#snippet naast()}
 					<span class="acties">
 						{#if !gedeeld.length}
-							<TekstLink
-								aria-expanded={bewerkt === sleutel(o)}
-								onclick={() => (bewerkt = bewerkt === sleutel(o) ? null : sleutel(o))}
-								>Woorden</TekstLink
-							>
+							{#if !o.wet}
+								<TekstLink
+									aria-expanded={bewerkt === sleutel(o)}
+									onclick={() => (bewerkt = bewerkt === sleutel(o) ? null : sleutel(o))}
+									>Woorden</TekstLink
+								>
+							{/if}
 							<TekstLink onclick={() => verwijder(o)}>Niet meer volgen</TekstLink>
 						{/if}
-						<a class="naar-overzicht" href={overzichtHref(o)}>Overzicht</a>
+						{#if !o.wet}<a class="naar-overzicht" href={overzichtHref(o)}>Overzicht</a>{/if}
 					</span>
 				{/snippet}
 				<p class="sinds">{telRegel(o, s)}</p>
@@ -397,7 +459,8 @@
 								{ministryName}
 								filterHref={(patch) => `/actueel?${new URLSearchParams(patch)}`}
 								nieuwSinds={o.vorige}
-								termen={o.termen}
+								termen={o.wet ? [] : o.termen}
+								wet={o.wet ? { bwb: o.wet.bwb, titel: wetNamen[o.wet.bwb] ?? o.wet.titel } : null}
 							/>
 						{/each}
 					</div>
@@ -418,11 +481,15 @@
 					</p>
 				{/if}
 				<p class="verder">
-					{#each o.termen as term (term)}
-						<a href={actueelHref(term)}>‘{term}’ in Actueel</a>
-					{/each}
+					{#if o.wet}
+						<a href={actueelWetHref(o)}>In Actueel</a>
+					{:else}
+						{#each o.termen as term (term)}
+							<a href={actueelHref(term)}>‘{term}’ in Actueel</a>
+						{/each}
+					{/if}
 					<!-- The topic as a feed of its own, all its words in one (API 0.79.30). -->
-					<a href={atomHref(o.termen)} rel="alternate" type="application/atom+xml">Atom-feed</a>
+					<a href={atomHref(o)} rel="alternate" type="application/atom+xml">Atom-feed</a>
 				</p>
 			</Sectie>
 		{/each}

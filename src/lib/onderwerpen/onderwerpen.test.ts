@@ -6,12 +6,17 @@ import {
 	lees,
 	nieuwBezoek,
 	ontvolg,
+	ontvolgOnderwerp,
+	sleutelVan,
 	splitsTermen,
 	uitParams,
 	vensterVan,
 	voegTermenToe,
 	volg,
 	volgt,
+	volgtWet,
+	volgWet,
+	wettenUitParams,
 	woordIn,
 	zetGezien
 } from './onderwerpen';
@@ -104,5 +109,37 @@ describe('onderwerpen', () => {
 		expect(woordIn('AI', 'Groningen Airport Eelde')).toBe(false);
 		expect(woordIn('algoritme', 'Algoritmeregister')).toBe(true);
 		expect(woordIn('AI', null)).toBe(false);
+	});
+
+	it('volgt een wet of een artikel naast woorden, en draagt die in het adres', () => {
+		const cbw = { bwb: 'bwbr0052872', titel: 'Cyberbeveiligingswet' };
+		volg(['Cyberbeveiligingswet']);
+		volgWet(cbw);
+		volgWet({ ...cbw, artikel: '3' });
+		volgWet(cbw);
+		const lijst = lees();
+		expect(lijst.map((o) => o.termen[0])).toEqual([
+			'Cyberbeveiligingswet',
+			'Cyberbeveiligingswet',
+			'artikel 3 Cyberbeveiligingswet'
+		]);
+		expect(lijst.map(sleutelVan)).toEqual([
+			'cyberbeveiligingswet',
+			'wet:BWBR0052872',
+			'wet:BWBR0052872:3'
+		]);
+		// The word and the law are two topics: following one leaves the other.
+		expect(volgt('cyberbeveiligingswet')).toBe(true);
+		ontvolgOnderwerp(lijst[1]);
+		expect(volgtWet(cbw)).toBe(false);
+		expect(volgtWet({ ...cbw, artikel: '3' })).toBe(true);
+		const adres = new URL(deelAdres(lees()), 'https://x');
+		expect(adres.search).toBe('?onderwerp=Cyberbeveiligingswet&wet=BWBR0052872%2F3');
+		expect(wettenUitParams(adres.searchParams)).toEqual([
+			{ bwb: 'BWBR0052872', titel: 'BWBR0052872', artikel: '3' }
+		]);
+		expect(wettenUitParams(new URLSearchParams('wet=BWBR0005289/6:162&wet=onzin'))).toEqual([
+			{ bwb: 'BWBR0005289', titel: 'BWBR0005289', artikel: '6:162' }
+		]);
 	});
 });

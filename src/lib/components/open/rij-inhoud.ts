@@ -49,12 +49,13 @@ export function inhoudVan(i: MetInhoud): Inhoud {
 			return telt(i) ? 'stemming' : null;
 		case 'uitspraak':
 			return i.summary?.trim() ? 'samenvatting' : null;
-		// A publication its changes per law, an inwerkingtreding the publication that brought
-		// it, asked when the row opens (wijzigingen.ts): what the feed's row cannot say.
+		// A publication its changes per law, asked when the row opens (wijzigingen.ts): what the
+		// feed's row cannot say. An inwerkingtreding the publication that brought it, where the
+		// row does not name it already (`commencement.publication`, API 0.79.55).
 		case 'publicatie':
 			return 'wijzigingen';
 		case 'inwerkingtreding':
-			return i.commencement?.instrument ? 'inwerkingtreding' : null;
+			return i.commencement?.instrument && !i.commencement.publication ? 'inwerkingtreding' : null;
 		// A toezegging is its text, and that is the row's title.
 		default:
 			return null;

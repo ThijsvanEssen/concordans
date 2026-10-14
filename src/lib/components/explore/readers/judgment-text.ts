@@ -484,7 +484,8 @@ function fromApi(parties: JudgmentParty[]): Participant[] {
 			{
 				role: p.role,
 				name: p.name,
-				stated: p.role_stated !== false,
+				// `Partij` claims no role, so none is derived (an interested party, side `other`).
+				stated: p.role_stated !== false || p.role === 'Partij',
 				...(alias ? { alias } : {}),
 				...(alsoAs.length ? { alsoAs } : {})
 			}
@@ -497,7 +498,9 @@ function fromApi(parties: JudgmentParty[]): Participant[] {
 			rows.push({
 				role: REPRESENTATIVE_ROLES[r.role] ?? r.role,
 				name: r.name,
-				party: [...labels].join(', ')
+				party: [...labels].join(', '),
+				...(r.place?.trim() ? { place: r.place.trim() } : {}),
+				...(r.capacity?.trim() ? { capacity: r.capacity.trim() } : {})
 			});
 		}
 		return rows;
@@ -616,6 +619,10 @@ export type Participant = {
 	name: string;
 	/** Whom a lawyer acts for. */
 	party?: string;
+	/** Where a lawyer practises: `Voorschoten` of "advocaat te Voorschoten". */
+	place?: string;
+	/** What else the judgment calls them: `ambtenaar in dienst van de provincie`. */
+	capacity?: string;
 	/** False when the role is derived, not named in the judgment. */
 	stated?: boolean;
 	/** What the judgment calls the party: `KLM` for "hierna: KLM". */
@@ -625,9 +632,10 @@ export type Participant = {
 };
 
 /**
- * Extract named parties from the judgment. The parties come from the heading
- * block (see `extractParties`); raadsman and A-G are scanned from the "Geding in
- * cassatie" body paragraph (typically the first body paragraph that mentions "mr.").
+ * The participants of a judgment: its parties with who acts for them (from the API, or
+ * the heading block, see `extractParties`), then the A-G and the officier van justitie
+ * scanned from its first body paragraphs. Lawyers are not scanned from the body: the API
+ * reads them per party (`representatives`), and a scan labelled every advocaat a raadsman.
  */
 export function extractParticipants(
 	paragraphs: Array<{ kind?: string | null; text: string }>,
@@ -638,77 +646,12 @@ export function extractParticipants(
 	const bare = (n: string) => n.replace(/^mr\.\s*/i, '').toLowerCase();
 	const known = (n: string) => participants.some((p) => bare(p.name) === bare(n));
 
-	// Scan first several body paragraphs for raadsman, A-G and OvJ mentions.
+	// Scan first several body paragraphs for A-G and OvJ mentions.
 	// GH judgments can place these in para 10–12 (after procesgang header), so scan wider.
 	const bodyParas = paragraphs.filter((p) => p.kind === 'body').slice(0, 10);
 	for (const para of bodyParas) {
 		// Normalise non-breaking spaces (U+00A0) as well as regular whitespace
 		const t = para.text.replace(/[\s\u00a0]+/g, ' ');
-
-		// ── Party-context map ─────────────────────────────────────────────────
-		// Scan "namens [party]" occurrences and record their positions so each
-		// raadsman can be associated with the party they represent.
-		type PartySpan = { party: string; pos: number };
-		const partySpans: PartySpan[] = [];
-		for (const pm of t.matchAll(
-			/[Nn]amens\s+(deze\b|hem\b|haar\b|(?:de\s+)?verdachte\b|(?:de\s+)?benadeelde\s+partij(?:\s+\[[^\]]*\])?)\s/g
-		)) {
-			const raw = pm[1].trim().toLowerCase();
-			const party = /deze|hem|haar|verdachte/.test(raw)
-				? 'verdachte'
-				: /benadeelde/.test(raw)
-					? 'benadeelde partij'
-					: undefined;
-			if (party) partySpans.push({ party, pos: pm.index! });
-		}
-		/** Return the party context active just before a given text position. */
-		const partyAt = (pos: number): string | undefined => {
-			let result: string | undefined;
-			for (const span of partySpans) {
-				if (span.pos <= pos) result = span.party;
-				else break;
-			}
-			return result;
-		};
-
-		// Two lawyers: "mr. X en mr. Y, beiden advocaat te ..."
-		for (const m of t.matchAll(
-			/mr\.\s+([A-Z][^,\n]{1,40}?)\s+en\s+(mr\.\s+[A-Z][^,\n]{1,40}?),?\s+beiden\s+advocaat\b/g
-		)) {
-			const party = partyAt(m.index!);
-			for (const raw of [m[1], m[2]]) {
-				const bare = raw.trim().replace(/\s+voornoemd$/, '');
-				const n = bare.startsWith('mr.') ? bare : `mr. ${bare}`;
-				if (!known(n)) {
-					participants.push({ role: 'Raadsman', name: n, party });
-				}
-			}
-		}
-
-		// Single lawyer with "mr." prefix: "mr. X, advocaat te ..."
-		for (const m of t.matchAll(/mr\.\s+([A-Z][^,]{1,40}?),?\s+advocaat\b/g)) {
-			// Two lawyers ("mr. X voornoemd en mr. Y") are the pattern above.
-			if (/\sen\s+mr\./.test(m[1])) continue;
-			const n = `mr. ${m[1]
-				.trim()
-				.replace(/,$/, '')
-				.replace(/\s+voornoemd$/, '')}`;
-			const party = partyAt(m.index!);
-			if (!known(n)) {
-				participants.push({ role: 'Raadsman', name: n, party });
-			}
-		}
-
-		// Lawyer without "mr." prefix but with initials: "R.J. Baumgardt, advocaat te ..."
-		for (const m of t.matchAll(
-			/([A-Z]\.(?:[A-Z]\.)*\s+(?:(?:van|de|den|der|ten|ter)\s+)?[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?),\s+advocaat\b/g
-		)) {
-			const n = `mr. ${m[1].trim()}`;
-			const party = partyAt(m.index!);
-			if (!known(n)) {
-				participants.push({ role: 'Raadsman', name: n, party });
-			}
-		}
 
 		// Advocaat-generaal / Procureur-generaal.
 		// Keyword matched explicitly (Title Case and lowercase) so no 'i' flag is
