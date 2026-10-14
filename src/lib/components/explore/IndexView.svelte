@@ -10,6 +10,7 @@
 	import { formatDecimal } from '$lib/text/getal';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import { axisLabels } from './index/years-axis';
+	import { faceted, type Fetcher, type FacetsApart } from './index/faceted';
 	import { uniqueBy } from '$lib/util/unique';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -484,7 +485,7 @@
 	 * The facets of a first page asked on their own, beside it (one row, the same filters):
 	 * counting them can take seconds, and the list does not wait for it (Thijs, 10 Oct: lazy).
 	 */
-	function facettenApart<T>(vraag: () => Promise<T>, zet: (r: T) => void, signal: AbortSignal) {
+	const facettenApart: FacetsApart = (vraag, zet, signal) => {
 		facettenLaden = true;
 		facettenFout = null;
 		vraag()
@@ -498,7 +499,7 @@
 			.finally(() => {
 				if (!signal.aborted) facettenLaden = false;
 			});
-	}
+	};
 	/** The stemmingen counted under the filters, from the facets asked apart (API 0.79.41). */
 	let decisionTotal = $state<number | null>(null);
 	/** The number of commitments in each state, under the other filters. */
@@ -514,7 +515,6 @@
 
 	// The request for the current category and filters. It is rebuilt only when
 	// one of the values it reads changes, and that is what triggers a new load.
-	type Fetcher = (offset: number, signal: AbortSignal) => Promise<void>;
 	const fetchPage = $derived.by<Fetcher>(() => {
 		const limit = PAGE;
 		switch (category) {
@@ -531,47 +531,34 @@
 					sort: oneOf(sortDef.id, ['title', 'article_count'] as const),
 					limit
 				};
-				return async (offset, signal) => {
-					// The rows without the facets (API 0.79.41), the facets beside them.
-					if (!offset)
-						facettenApart(
-							() =>
-								unwrap(
-									api.GET('/api/instruments', {
-										params: { query: { ...query, offset: 0, limit: 1, facets: true } },
-										signal
-									})
-								),
-							(f) => (instrumentFacets = f.facets ?? null),
-							signal
-						);
-					const r = await unwrap(
-						api.GET('/api/instruments', {
-							params: { query: { ...query, offset, facets: false } },
-							signal
-						})
-					);
-					pages.instruments = toPage(pages.instruments, r.items, offset, r.total);
-					if (offset) return;
-					// The count beside Verdragen: this list's own total where it is the treaties,
-					// else one row asked under the same filters.
-					// Beside the rows, not before them: the rows stood waiting for it (live, 10 Oct:
-					// rows in at 1.7 s, on screen at 4.1 s).
-					if (instrumentSoort) verdragTotaal = r.total;
-					else
-						void unwrap(
-							api.GET('/api/instruments', {
-								params: {
-									query: { ...query, kind: 'verdrag', limit: 1, offset: 0, facets: false }
-								},
-								signal
-							})
-						)
-							.then((v) => {
-								if (!signal.aborted) verdragTotaal = v.total;
-							})
-							.catch((e) => report('Aantal verdragen', e));
-				};
+				return faceted(
+					'/api/instruments',
+					query,
+					facettenApart,
+					(f) => (instrumentFacets = f.facets ?? null),
+					(r, offset, signal) => {
+						pages.instruments = toPage(pages.instruments, r.items, offset, r.total);
+						if (offset) return;
+						// The count beside Verdragen: this list's own total where it is the treaties,
+						// else one row asked under the same filters.
+						// Beside the rows, not before them: the rows stood waiting for it (live, 10 Oct:
+						// rows in at 1.7 s, on screen at 4.1 s).
+						if (instrumentSoort) verdragTotaal = r.total;
+						else
+							void unwrap(
+								api.GET('/api/instruments', {
+									params: {
+										query: { ...query, kind: 'verdrag', limit: 1, offset: 0, facets: false }
+									},
+									signal
+								})
+							)
+								.then((v) => {
+									if (!signal.aborted) verdragTotaal = v.total;
+								})
+								.catch((e) => report('Aantal verdragen', e));
+					}
+				);
 			}
 			case 'judgments': {
 				const query = {
@@ -589,36 +576,20 @@
 					sort: oneOf(sortDef.id, ['date_desc', 'date_asc', 'citation_count'] as const),
 					limit
 				};
-				return async (offset, signal) => {
-					// The rows without the facets (API 0.79.2: counting them took ~10 s uncached);
-					// the facets of the first page in a request of their own, beside it.
-					if (!offset)
-						facettenApart(
-							() =>
-								unwrap(
-									api.GET('/api/judgments', {
-										params: { query: { ...query, offset: 0, limit: 1, facets: true } },
-										signal
-									})
-								),
-							(f) => {
-								judgmentFacets = f.facets ?? null;
-								// The source facet counts every source, whichever the list shows.
-								echrTotal =
-									query.q || query.from || query.to
-										? (f.facets?.source?.find((x) => x.value === 'echr')?.count ?? 0)
-										: null;
-							},
-							signal
-						);
-					const r = await unwrap(
-						api.GET('/api/judgments', {
-							params: { query: { ...query, offset, facets: false } },
-							signal
-						})
-					);
-					pages.judgments = toPage(pages.judgments, r.items, offset, r.total);
-				};
+				return faceted(
+					'/api/judgments',
+					query,
+					facettenApart,
+					(f) => {
+						judgmentFacets = f.facets ?? null;
+						// The source facet counts every source, whichever the list shows.
+						echrTotal =
+							query.q || query.from || query.to
+								? (f.facets?.source?.find((x) => x.value === 'echr')?.count ?? 0)
+								: null;
+					},
+					(r, offset) => (pages.judgments = toPage(pages.judgments, r.items, offset, r.total))
+				);
 			}
 			case 'dossiers': {
 				const query = {
@@ -640,27 +611,13 @@
 					] as const),
 					limit
 				};
-				return async (offset, signal) => {
-					if (!offset)
-						facettenApart(
-							() =>
-								unwrap(
-									api.GET('/api/dossiers', {
-										params: { query: { ...query, offset: 0, limit: 1, facets: true } },
-										signal
-									})
-								),
-							(f) => (dossierFacets = f.facets ?? null),
-							signal
-						);
-					const r = await unwrap(
-						api.GET('/api/dossiers', {
-							params: { query: { ...query, offset, facets: false } },
-							signal
-						})
-					);
-					pages.dossiers = toPage(pages.dossiers, r.items, offset, r.total);
-				};
+				return faceted(
+					'/api/dossiers',
+					query,
+					facettenApart,
+					(f) => (dossierFacets = f.facets ?? null),
+					(r, offset) => (pages.dossiers = toPage(pages.dossiers, r.items, offset, r.total))
+				);
 			}
 			case 'committees': {
 				const query = {
@@ -800,28 +757,14 @@
 					to: dateTo || undefined,
 					limit
 				};
-				return async (offset, signal) => {
-					// The kinds counted in a request of their own, as for the judgments.
-					if (!offset)
-						facettenApart(
-							() =>
-								unwrap(
-									api.GET('/api/documents', {
-										params: { query: { ...query, offset: 0, limit: 1, facets: true } },
-										signal
-									})
-								),
-							(f) => (documentKinds = facetMap(f.facets?.kind)),
-							signal
-						);
-					const r = await unwrap(
-						api.GET('/api/documents', {
-							params: { query: { ...query, offset, facets: false } },
-							signal
-						})
-					);
-					pages.documents = toPage(pages.documents, r.items, offset, r.total ?? undefined);
-				};
+				return faceted(
+					'/api/documents',
+					query,
+					facettenApart,
+					(f) => (documentKinds = facetMap(f.facets?.kind)),
+					(r, offset) =>
+						(pages.documents = toPage(pages.documents, r.items, offset, r.total ?? undefined))
+				);
 			}
 			case 'commitments': {
 				const filters = {
@@ -839,33 +782,19 @@
 					sort: oneOf(sortDef.id, ['date', 'expected_resolution'] as const),
 					limit
 				};
-				return async (offset, signal) => {
-					// The number in each state under the other filters, from the facet asked apart.
-					if (!offset)
-						facettenApart(
-							() =>
-								unwrap(
-									api.GET('/api/commitments', {
-										params: { query: { ...query, offset: 0, limit: 1, facets: true } },
-										signal
-									})
-								),
-							(f) =>
-								(statusCounts = new Map(
-									(f.facets?.status ?? []).flatMap((x) =>
-										x.value ? [[x.value, x.count] as const] : []
-									)
-								)),
-							signal
-						);
-					const r = await unwrap(
-						api.GET('/api/commitments', {
-							params: { query: { ...query, offset, facets: false } },
-							signal
-						})
-					);
-					pages.commitments = toPage(pages.commitments, r.items, offset, r.total);
-				};
+				// The number in each state under the other filters, from the facet asked apart.
+				return faceted(
+					'/api/commitments',
+					query,
+					facettenApart,
+					(f) =>
+						(statusCounts = new Map(
+							(f.facets?.status ?? []).flatMap((x) =>
+								x.value ? [[x.value, x.count] as const] : []
+							)
+						)),
+					(r, offset) => (pages.commitments = toPage(pages.commitments, r.items, offset, r.total))
+				);
 			}
 		}
 	});
@@ -1527,6 +1456,16 @@
 		toggleParam(name, current, value);
 	const flag = (name: string, on: boolean) => () => patchUrl({ [name]: on ? null : '1' });
 
+	/** The period of a list, the date it is about named by `label`. */
+	const periodGroup = (label: string, unit: 'year' | 'date'): FacetGroup => ({
+		id: 'period',
+		label,
+		kind: 'range',
+		unit,
+		from: dateFrom,
+		to: dateTo,
+		onChange: (from, to) => patchUrl({ from: from || null, to: to || null })
+	});
 	const facetGroupsBasis = $derived.by<FacetGroup[]>(() => {
 		switch (category) {
 			case 'instruments':
@@ -1586,15 +1525,7 @@
 					...courtOptions,
 					...judgmentAreas(),
 					...sourceFacet('procedure', 'Procedure', judgmentFacets?.procedure, procedure),
-					{
-						id: 'period',
-						label: 'Periode',
-						kind: 'range',
-						unit: 'year',
-						from: dateFrom,
-						to: dateTo,
-						onChange: (from, to) => patchUrl({ from: from || null, to: to || null })
-					}
+					periodGroup('Periode', 'year')
 				];
 			case 'dossiers': {
 				// The kinds are the ones the API counts, in its order, the chosen one always. A
@@ -1699,15 +1630,7 @@
 					},
 					// When the dossier was opened (`opened_from`/`opened_to`), as every list with
 					// dates has its period (Thijs, 9 Oct).
-					{
-						id: 'period',
-						label: 'Geopend',
-						kind: 'range',
-						unit: 'date',
-						from: dateFrom,
-						to: dateTo,
-						onChange: (from, to) => patchUrl({ from: from || null, to: to || null })
-					}
+					periodGroup('Geopend', 'date')
 				];
 			}
 			case 'decisions': {
@@ -1749,15 +1672,7 @@
 							}
 						]
 					},
-					{
-						id: 'period',
-						label: 'Datum',
-						kind: 'range',
-						unit: 'date',
-						from: dateFrom,
-						to: dateTo,
-						onChange: (from, to) => patchUrl({ from: from || null, to: to || null })
-					},
+					periodGroup('Datum', 'date'),
 					{
 						id: 'dossier',
 						label: 'Dossier',
@@ -1785,15 +1700,7 @@
 								onClick: toggle('soort', documentKind, k)
 							}))
 					},
-					{
-						id: 'period',
-						label: 'Datum',
-						kind: 'range',
-						unit: 'date',
-						from: dateFrom,
-						to: dateTo,
-						onChange: (from, to) => patchUrl({ from: from || null, to: to || null })
-					}
+					periodGroup('Datum', 'date')
 				];
 			case 'members':
 				return [
@@ -1883,15 +1790,7 @@
 							onClick: toggle('coalition', coalition, p)
 						}))
 					},
-					{
-						id: 'period',
-						label: 'Periode',
-						kind: 'range',
-						unit: 'year',
-						from: dateFrom,
-						to: dateTo,
-						onChange: (from, to) => patchUrl({ from: from || null, to: to || null })
-					}
+					periodGroup('Periode', 'year')
 				];
 			case 'ministers': {
 				// Weergave first: a choice, not a filter, as the Kamer.
@@ -2033,20 +1932,7 @@
 	const facetGroupsAll = $derived.by<FacetGroup[]>(() => {
 		// Side by side the cabinets are the period (Tot en met): no second one beside it.
 		const label = category === 'ministers' && naast ? undefined : PERIOD_LABEL[category];
-		return label
-			? [
-					...facetGroupsBasis,
-					{
-						id: 'period',
-						label,
-						kind: 'range',
-						unit: 'date',
-						from: dateFrom,
-						to: dateTo,
-						onChange: (from: string, to: string) => patchUrl({ from: from || null, to: to || null })
-					}
-				]
-			: facetGroupsBasis;
+		return label ? [...facetGroupsBasis, periodGroup(label, 'date')] : facetGroupsBasis;
 	});
 	const chips = $derived(activeFilters(facetGroupsAll));
 	let filtersOpen = $state(false);

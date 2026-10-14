@@ -159,6 +159,13 @@ describe('one form for each thing', () => {
 			).toEqual([]);
 	});
 
+	it('asks the facets of an index list by faceted, and builds its period once (code-eenvoud F47)', () => {
+		const index = sources.find((s) => s.path === 'lib/components/explore/IndexView.svelte')!.text;
+		// The stemmingen are counted through $lib/api/decisions (geteld), which waits for the count.
+		expect(index).not.toMatch(/api\.GET\([^)]*facets: true/s);
+		expect(index.match(/id: 'period'/g)).toHaveLength(1);
+	});
+
 	it('fills no missing value with a sign: Waarde leaves it empty, Veld drops the row', () => {
 		// "—" or "–" as a value reads as a fact ("unknown") where the data only lacks it.
 		const sign = /['"`>][—–]['"`<]/;
