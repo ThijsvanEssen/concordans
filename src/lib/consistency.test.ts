@@ -1430,15 +1430,11 @@ describe('errors that are not swallowed', () => {
 			// A throw that is no failure: a popover already in that state, a pointer capture
 			// refused, graphology on an edge or node already there or gone, storage or a clipboard
 			// that refuses (one storage helper, F32). Each gets a handler that says so.
-			'lib/bron/BronLink.svelte': 2,
-			'lib/bron/OverwegingKaart.svelte': 2,
-			'lib/components/articles/GrondslagFormule.svelte': 2,
 			'lib/components/explore/index/pannable.ts': 1,
 			'lib/components/graph/GraphCanvas.svelte': 4,
-			'lib/components/graph/GraphView.svelte': 5,
+			'lib/components/graph/GraphView.svelte': 4,
 			'lib/components/ui/dicht.svelte.ts': 1,
 			'lib/map/map.svelte.ts': 1,
-			'lib/netwerk/NetwerkPanel.svelte': 1,
 			'lib/onderwerpen/onderwerpen.ts': 1,
 			'lib/onderwerpen/strekking.ts': 1,
 			'routes/(main)/onderwerpen/+page.svelte': 1,
@@ -1561,6 +1557,56 @@ describe('the names said once (code-eenvoud F55)', () => {
 		const ownName =
 			/\{\s*TK: 'Tweede Kamer'|label: 'Tweede Kamer'|=== 'EK' \? 'Eerste Kamer' : 'Tweede Kamer'/;
 		expect(offenders((t) => ownName.test(t), ['lib/components/parliamentary/chamber.ts'])).toEqual(
+			[]
+		);
+	});
+});
+
+describe('one top layer, one fold, one role per collection (code-eenvoud F63–F65)', () => {
+	it('puts a menu or a card in the top layer through actions/top-layer.ts only (F63)', () => {
+		const own = /showPopover\(|popover="manual"|setAttribute\('popover'/;
+		expect(offenders((t) => own.test(t), ['lib/actions/top-layer.ts'])).toEqual([]);
+		// Its margins and the pointer's moments are said once, there.
+		expect(
+			offenders(
+				(t) => /\b(HOVER_MS|LEAVE_MS|SLUIT_MS|WEG_MS)\s*=/.test(t),
+				['lib/actions/top-layer.ts']
+			)
+		).toEqual([]);
+	});
+
+	it('closes on a click outside through clickOutside only (F63)', () => {
+		const own = /document\.addEventListener\(\s*'(?:pointerdown|click)'/;
+		expect(offenders((t) => own.test(t), ['lib/actions/top-layer.ts'])).toEqual([]);
+	});
+
+	it('moves through a menu with the keys of actions/menu.ts (F63)', () => {
+		expect(offenders((t) => /e\.key === 'ArrowDown'\s*\?/.test(t))).toEqual([]);
+	});
+
+	it('folds a heading with FoldButton, under a key that is not its words (F64)', () => {
+		// A heading's own button and the keys of a heading inside a section are said once.
+		expect(offenders((t) => /class="(?:kop-knop|wet-knop)"/.test(t))).toEqual([]);
+		expect(offenders((t) => /[`'"]sub:/.test(t), ['lib/components/ui/dicht.svelte.ts'])).toEqual(
+			[]
+		);
+		// What opens Amendementen from elsewhere and its section share one key, its anchor too.
+		const src = (pad: string) => sources.find((s) => s.path === pad)!.text;
+		const sectie = src('lib/components/parliamentary/AmendementenDienstregeling.svelte');
+		expect(sectie).toContain('sleutel={FOLD.amendments}');
+		expect(sectie).toContain('id={FOLD.amendments}');
+		// The cards over the canvas are kept as every heading is, in dicht.svelte.ts.
+		expect(offenders((t) => /'concordans:(?:legenda|netwerkpaneel)'/.test(t))).toEqual([]);
+	});
+
+	it('reads the role of a collection on the canvas from COLLECTION_ROLE (F65)', () => {
+		const own = [
+			/filter\(\(e\) => e\.relation !== 'VERSION_OF'\)/,
+			/instrument: 'Wet',\s*faction: 'Fractie'/,
+			/cabinets: 'committee'/,
+			/c !== 'cases'|collection === 'cases'\) return null/
+		];
+		expect(offenders((t) => own.some((r) => r.test(t)), ['lib/graph/collection-role.ts'])).toEqual(
 			[]
 		);
 	});

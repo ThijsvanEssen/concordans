@@ -15,7 +15,8 @@ import { foldVersions } from '../paths';
 import { withoutLawHops } from '../neighborhood';
 import { NODE_TYPES, nodeId, type Collection } from '$lib/vocabulary';
 import { get, writable } from 'svelte/store';
-import { isVersionCollection, nodeToGraphNode, relationOf } from '../types';
+import { nodeToGraphNode, relationOf } from '../types';
+import { COLLECTION_ROLE } from '../collection-role';
 import type { GraphContext } from './context';
 import {
 	NEIGHBORHOOD_CAP,
@@ -65,11 +66,11 @@ export function createExpansion(
 	// One request per bron serves the canvas, the panel Verbonden and a reader (`getNode`:
 	// 200 per bucket, the most API 0.5 allows; every bucket comes with its total).
 	// The neighbourhood without the kinds the canvas does not draw around a focus (a zaak,
-	// a version; context.ts `drawable`): they would take the cap. A member's 1,019 zaken
+	// a version: COLLECTION_ROLE): they would take the cap. A member's 1,019 zaken
 	// filled all 150 places and the canvas showed the member alone (UX test 10 Oct, #11).
 	const getekend = (focus: Collection) =>
 		(Object.keys(NODE_TYPES) as Collection[])
-			.filter((c) => c === focus || (c !== 'cases' && !isVersionCollection(c)))
+			.filter((c) => c === focus || COLLECTION_ROLE[c].neighbour)
 			.map((c) => NODE_TYPES[c]);
 
 	const inflight = new Map<string, Promise<Schema<'NodeGraphResponse'>>>();

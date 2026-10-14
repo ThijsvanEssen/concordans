@@ -140,7 +140,6 @@
 				{ kind: 'link', text: new URL(openHref, page.url).toString() }
 			]}
 			name="deze verbinding"
-			drop="up"
 		/>
 	</div>
 </section>

@@ -200,6 +200,40 @@ a:hover {
 	clip: rect(0 0 0 0);
 	white-space: nowrap;
 }
+/* The list of every menu (TekstMenu, Citeer, a place's menu): in the top layer by its button
+   (actions/top-layer.ts), as high as the room it has there. Its items are TekstMenu's
+   .tekstmenu__item; a step out of it stands under a rule (.tekstmenu__onder). */
+.tekstmenu__lijst {
+	position: fixed;
+	inset: auto;
+	margin: 0;
+	z-index: var(--z-float);
+	min-width: 200px;
+	max-height: min(60vh, var(--room, 60vh));
+	overflow-y: auto;
+	padding: var(--s-1) 0;
+	background: var(--paper);
+	color: var(--ink);
+	border: 1px solid var(--rule-strong);
+	border-radius: var(--r-2);
+	box-shadow: var(--shadow-modal);
+	text-align: left;
+}
+/* A menu of forms to copy: wide enough for a citation in full. */
+.tekstmenu__lijst.is-breed {
+	width: min(340px, calc(100vw - 2 * var(--s-2)));
+}
+.tekstmenu__onder {
+	margin-top: var(--s-1);
+	padding-top: var(--s-1);
+	border-top: 1px solid var(--rule);
+}
+/* A menu of actions alone (no options): no rule above its first. */
+.tekstmenu__onder:first-child {
+	margin-top: 0;
+	padding-top: 0;
+	border-top: 0;
+}
 .btn .caret {
 	font-size: var(--t-glyph);
 	opacity: 0.7;

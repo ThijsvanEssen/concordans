@@ -18,6 +18,7 @@
 	import { loadPreview, type Preview } from './preview';
 	import { report } from '$lib/api/errors';
 	import { isEscape } from '$lib/actions/keys';
+	import { clickOutside, HOVER_MS, LEAVE_MS, topLayer } from '$lib/actions/top-layer';
 	import { isOverwegingRef } from './overweging';
 	import OverwegingKaart from './OverwegingKaart.svelte';
 	import { zetMarkering, type Markering } from './markering.svelte';
@@ -58,15 +59,10 @@
 		children: Snippet;
 	} = $props();
 
-	const HOVER_MS = 350;
-	/** Space between the link and the card, and between the card and the screen's edge. */
-	const AFSTAND = 4;
-	const RAND = 8;
 	const uid = $props.id();
 	let card = $state<Preview | null>(null);
 	let timer: ReturnType<typeof setTimeout> | null = null;
 	let anker = $state<HTMLElement | null>(null);
-	let kaart = $state<HTMLElement | null>(null);
 	/** The last pointer was a finger: its focus and its emulated hover show no card. */
 	let tast = false;
 
@@ -80,8 +76,6 @@
 	let roOpen = $state(false);
 	let roKaart = $state<HTMLElement | null>(null);
 	let sluitTimer: ReturnType<typeof setTimeout> | null = null;
-	/** The pointer went from the link to the card, or back: a moment to cross the gap. */
-	const SLUIT_MS = 250;
 	function roToon(direct = false) {
 		if (sluitTimer) clearTimeout(sluitTimer);
 		sluitTimer = null;
@@ -100,7 +94,7 @@
 		if (timer) clearTimeout(timer);
 		timer = null;
 		if (sluitTimer) clearTimeout(sluitTimer);
-		sluitTimer = setTimeout(() => (roOpen = false), SLUIT_MS);
+		sluitTimer = setTimeout(() => (roOpen = false), LEAVE_MS);
 	}
 	function roSluit() {
 		if (timer) clearTimeout(timer);
@@ -115,9 +109,7 @@
 	// scroll of the page moves the link away, one within the card does not.
 	$effect(() => {
 		if (!roOpen) return;
-		const buiten = (e: Event) => {
-			if (!binnen(e.target)) roSluit();
-		};
+		const stop = clickOutside(() => [anker, roKaart], roSluit);
 		const weg = (e: Event) => {
 			if (!binnen(e.target)) roSluit();
 		};
@@ -128,12 +120,11 @@
 			e.stopPropagation();
 			roSluit();
 		};
-		document.addEventListener('click', buiten, true);
 		document.addEventListener('keydown', esc);
 		addEventListener('scroll', weg, { capture: true, passive: true });
 		addEventListener('resize', roSluit);
 		return () => {
-			document.removeEventListener('click', buiten, true);
+			stop();
 			document.removeEventListener('keydown', esc);
 			removeEventListener('scroll', weg, { capture: true });
 			removeEventListener('resize', roSluit);
@@ -217,40 +208,15 @@
 		anker?.focus();
 	}
 
-	/** Below the link, or above it where the screen ends below; never past a side. */
-	function plaats() {
-		if (!anker || !kaart) return;
-		const a = anker.getBoundingClientRect();
-		const k = kaart.getBoundingClientRect();
-		const onder = a.bottom + AFSTAND;
-		const boven = a.top - AFSTAND - k.height;
-		const top = onder + k.height > innerHeight - RAND && boven >= RAND ? boven : onder;
-		const left = Math.max(RAND, Math.min(a.left, innerWidth - RAND - k.width));
-		kaart.style.top = `${Math.round(top)}px`;
-		kaart.style.left = `${Math.round(left)}px`;
-	}
-
-	// The card in the top layer while it shows; a scroll moves the link away, so it closes.
+	// The card in the top layer while it shows (actions/top-layer.ts); a scroll moves the link
+	// away, so it closes.
 	$effect(() => {
-		if (!card || !kaart) return;
-		const el = kaart;
-		try {
-			el.showPopover();
-		} catch {
-			// Without the popover API the card stands fixed above the page by its z-index.
-		}
-		plaats();
-		const weg = () => hide();
-		addEventListener('scroll', weg, { capture: true, passive: true });
-		addEventListener('resize', weg);
+		if (!card) return;
+		addEventListener('scroll', hide, { capture: true, passive: true });
+		addEventListener('resize', hide);
 		return () => {
-			removeEventListener('scroll', weg, { capture: true });
-			removeEventListener('resize', weg);
-			try {
-				el.hidePopover();
-			} catch {
-				// Already closed, or no popover API.
-			}
+			removeEventListener('scroll', hide, { capture: true });
+			removeEventListener('resize', hide);
 		};
 	});
 </script>
@@ -285,12 +251,11 @@
 		onfocusout={(e) => {
 			if (e.relatedTarget !== null && !binnen(e.relatedTarget)) roSluit();
 		}}
-	/>{/if}{#if card}<span
+	/>{/if}{#if card && anker}<span
 		class="card"
 		id="{uid}-card"
 		role="tooltip"
-		popover="manual"
-		bind:this={kaart}
+		use:topLayer={{ anchor: anker }}
 		><span class="card__kicker">{card.kicker}{card.date ? `, ${card.date}` : ''}</span><span
 			class="card__title">{card.title}</span
 		>{#if card.dossier}<span class="card__regel">{card.dossier}</span>{/if}{#if card.wie}<span
@@ -310,6 +275,8 @@
 		flex-direction: column;
 		gap: var(--s-1);
 		width: min(44ch, calc(100vw - 16px));
+		max-height: var(--room);
+		overflow: hidden;
 		padding: var(--s-3);
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);

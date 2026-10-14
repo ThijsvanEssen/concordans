@@ -12,10 +12,10 @@
 	import type { Snippet } from 'svelte';
 	import { dagMaand, sorteer, type TijdGroep, type TijdRegel, type Volgorde } from './tijdlijn';
 	import { yearsOf } from '$lib/components/parliamentary/career';
-	import Caret from '$lib/components/ui/Caret.svelte';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import Markering from '$lib/components/ui/Markering.svelte';
-	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
+	import { isOpen, subKey } from '$lib/components/ui/dicht.svelte';
+	import FoldButton from '$lib/components/ui/FoldButton.svelte';
 	import { VORMEN, VORM_VAN } from '$lib/bron/vormen';
 	import { openHref } from '$lib/bron/href';
 	import { rowClick, terPlekke } from '$lib/actions/klik';
@@ -88,21 +88,14 @@
 
 <div class="tl" class:zonder={!datums} class:perioden class:met-acties={bewaar}>
 	{#each groepen as g (g.id)}
-		{@const sleutel = `sub:${g.titel}`}
+		{@const sleutel = subKey(g.titel)}
 		{@const groepOpen = !inklapbaar || isOpen(sleutel, true)}
 		<section class="groep">
 			{#if g.titel}
 				<svelte:element this={niveau === 2 ? 'h2' : 'h4'} class="kop kop--{niveau}">
 					{#if inklapbaar}
-						<button
-							type="button"
-							class="kop-knop"
-							aria-expanded={groepOpen}
-							onclick={() => zetOpen(sleutel, !groepOpen)}
-							>{g.titel}{#if g.sub}<span class="sub">{g.sub}</span>{/if}<Caret
-								open={groepOpen}
-								side
-							/></button
+						<FoldButton {sleutel} open={groepOpen}
+							>{g.titel}{#if g.sub}<span class="sub">{g.sub}</span>{/if}</FoldButton
 						>
 					{:else}
 						{g.titel}{#if g.sub}<span class="sub">{g.sub}</span>{/if}
@@ -259,24 +252,6 @@
 		font-weight: 800;
 		border-bottom-width: 1px;
 		border-bottom-color: var(--rule-strong);
-	}
-	/* The heading is the button: its own letter, no frame. */
-	.kop-knop {
-		display: inline-flex;
-		align-items: baseline;
-		gap: var(--s-2);
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		color: inherit;
-		cursor: pointer;
-		text-align: left;
-	}
-	.kop-knop:hover {
-		color: var(--ink);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
 	}
 	.sub {
 		font-weight: 400;

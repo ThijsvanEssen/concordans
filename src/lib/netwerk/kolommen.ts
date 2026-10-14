@@ -2,22 +2,10 @@
 // schets draws (dossier and stukken, then the law and its articles, then the judgments), so the
 // Verkenner opens in the shape the homepage promised (UX evaluation of 8 Oct, point 1).
 import type { Collection } from '$lib/vocabulary';
+import { COLLECTION_ROLE } from '$lib/graph/collection-role';
 
 /** The column of a kind: 0 parliament, 1 law, 2 judgments. */
-export function kolomVan(collection: Collection): 0 | 1 | 2 {
-	switch (collection) {
-		case 'instruments':
-		case 'instrument_versions':
-		case 'articles':
-		case 'article_versions':
-		case 'annexes':
-			return 1;
-		case 'judgments':
-			return 2;
-		default:
-			return 0;
-	}
-}
+export const kolomVan = (collection: Collection): 0 | 1 | 2 => COLLECTION_ROLE[collection].column;
 
 /**
  * The starting places of `ids` in three columns around (`cx`, `cy`), `breedte` apart, each

@@ -4,6 +4,7 @@
 // ?uit the ones switched off, and ?tussen=0 hides the bronnen that join them. They show by
 // default, on a phone too (Thijs, 9 Oct), faint and clustered there as everywhere.
 import type { GraphNode } from '$lib/graph/types';
+import type { ContainerKind } from '$lib/graph/container-membership';
 import type { Neighbor } from '$lib/api/nodes';
 import { parseNodeId, type Collection } from '$lib/vocabulary';
 
@@ -32,7 +33,7 @@ export type NetwerkEntry = {
 	/** The bron itself, so that its name follows bron/naam.ts once law titles load. */
 	node?: GraphNode;
 	/** On, but hidden with a grouping switched off (a stuk of a dossier with Dossier off). */
-	verborgenMet?: 'instrument' | 'faction' | 'committee' | 'dossier';
+	verborgenMet?: ContainerKind;
 	/** A group the paths ran through some of its members of: how many of how many. */
 	via?: { used: number; total: number };
 };

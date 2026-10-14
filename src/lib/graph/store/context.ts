@@ -11,12 +11,12 @@ import {
 	type ContainerKind,
 	type Period
 } from '../container-membership';
-import type { Collection, Relation } from '$lib/vocabulary';
+import { isCollection, type Collection, type Relation } from '$lib/vocabulary';
+import { COLLECTION_ROLE } from '../collection-role';
 import { get, writable } from 'svelte/store';
 import {
 	buildNodeLabel,
 	edgeCategory,
-	isVersionCollection,
 	kindOfCollection,
 	lawIdOf,
 	nodeToGraphNode,
@@ -216,12 +216,8 @@ export function createGraphContext() {
 	 * is only recorded; null for it and for collections this app does not know.
 	 */
 	const drawable = (node: BaseNode): GraphNode | null => {
-		if (isVersionCollection(node.collection)) return null;
-		// A Zaak is the procedure its stukken, activities and decisions belong to, and
-		// they are tied to the dossier themselves: as a neighbour it would only repeat
-		// the dossier's hull (37014's one Zaak is the bill itself). Opened as the focus,
-		// or put on the canvas from a panel, it is still drawn.
-		if (node.collection === 'cases') return null;
+		// Not a zaak or a version (COLLECTION_ROLE.neighbour): 37014's one Zaak is the bill.
+		if (!isCollection(node.collection) || !COLLECTION_ROLE[node.collection].neighbour) return null;
 		const p = node.props ?? {};
 		const containerKind = containerKindOf(node.collection);
 		if (containerKind) {

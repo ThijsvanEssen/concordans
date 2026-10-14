@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { AMENDEMENTEN_ID } from './naar';
+	import { FOLD } from '$lib/components/ui/dicht.svelte';
 	// The amendments of a bill as a timetable (amendementen.ts; Thijs, 10 Oct: "schematisch
 	// als spoorboekje wel beter, omdat het info communiceert zonder al die tekst, dus een
 	// tussenweg"). A row per amendment as it came to the vote; a column per day on which a
@@ -104,7 +104,8 @@
 
 <div class="amendementen" use:inView={() => (zichtbaar = true)}>
 	<Sectie
-		id={AMENDEMENTEN_ID}
+		id={FOLD.amendments}
+		sleutel={FOLD.amendments}
 		titel="Amendementen"
 		soort="documents"
 		aantal={regeling?.rijen.length ?? null}

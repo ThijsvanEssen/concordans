@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Collection } from '$lib/vocabulary';
+	import { clickOutside } from '$lib/actions/top-layer';
 	import { report } from '$lib/api/errors';
 	import { naFilter, zichtSleutel } from '$lib/graph/zicht';
 	import { vandaag } from '$lib/text/datum';
@@ -22,6 +23,7 @@
 	import type { GraphStore, GraphFilters } from '$lib/graph/graph-store';
 	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
 	import { isVersionCollection, kindOfCollection, kort } from '$lib/graph/types';
+	import { isDrawn } from '$lib/graph/collection-role';
 	import {
 		clusterLabel,
 		clustersOf,
@@ -63,6 +65,7 @@
 	} from '$lib/verbonden/filter';
 	import type { VerbondenState } from '$lib/verbonden/source';
 	import { laatstOpen, opzij, passenSamen, type Zwevend } from '$lib/stores/zwevend';
+	import { FOLD, isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { netwerkMelding } from '$lib/stores/netwerk-melding';
 	import { kaart } from '$lib/map/map.svelte';
 	import { gemerkt, notitiesPerBron } from '$lib/map/notities';
@@ -188,40 +191,13 @@
 		filter.bronnen ? new Set(BRON_KINDS.filter((k) => !filter.bronnen!.has(k))) : new Set()
 	);
 
-	// De zwevende legenda, dicht tot iemand hem opent; per browser onthouden.
-	const LEGENDA = 'concordans:legenda';
-	let legendaOpen = $state(false);
-	$effect(() => {
-		try {
-			// Closed until opened; where both cards do not fit, the accordion folds one.
-			legendaOpen = localStorage.getItem(LEGENDA) === 'open';
-		} catch {
-			legendaOpen = false;
-		}
-	});
-	/** Folded for want of room, not by a click: it opens again once there is room. */
-	let legendaOpzij = false;
-	$effect(() =>
-		opzij.subscribe((wie) => {
-			if (wie === 'legenda' && legendaOpen) {
-				legendaOpen = false;
-				legendaOpzij = true;
-			} else if (wie !== 'legenda' && legendaOpzij) {
-				legendaOpzij = false;
-				legendaOpen = true;
-			}
-		})
-	);
+	// The floating legend: closed until opened, kept per browser (FOLD.legend), and folded
+	// while the canvas has no room for it beside the panel Netwerk (opzij, zwevend.ts).
+	const legendaOpen = $derived(isOpen(FOLD.legend, false) && $opzij !== 'legenda');
 	const zetLegenda = (v: boolean) => {
-		legendaOpen = v;
-		legendaOpzij = false;
 		if (v && get(opzij) === 'legenda') opzij.set(null);
 		if (v) laatstOpen.set('legenda');
-		try {
-			localStorage.setItem(LEGENDA, v ? 'open' : 'dicht');
-		} catch {
-			/* geen opslag */
-		}
+		zetOpen(FOLD.legend, v);
 	};
 
 	// What the filter leaves on the canvas.
@@ -459,22 +435,16 @@
 		return true;
 	}
 	// A click or tap outside the card and the list of bronnen closes the card of the keyboard's
-	// bron, as a menu does (actions/menu.ts): in the capture phase, only watched, never stopped.
+	// bron, as a menu does.
 	$effect(() => {
 		if (!keyNode) return;
-		const onClick = (e: MouseEvent) => {
-			const t = e.target as Node | null;
-			if (
-				t &&
-				(citeEl?.contains(t) ||
-					canvasWrap?.parentElement?.querySelector('.canvas-node-list')?.contains(t))
-			)
-				return;
-			keyNode = null;
-			hoverNode = null;
-		};
-		document.addEventListener('click', onClick, true);
-		return () => document.removeEventListener('click', onClick, true);
+		return clickOutside(
+			() => [citeEl, canvasWrap?.parentElement?.querySelector('.canvas-node-list')],
+			() => {
+				keyNode = null;
+				hoverNode = null;
+			}
+		);
 	});
 	function kaartUit(focus: 'lijst' | 'canvas', sluit = false) {
 		if (sluit) stilNa = keyNode?.id ?? null;
@@ -698,7 +668,7 @@
 		const keep = new Set<string>([...pinnedIds, ...(coreIds ?? [])]);
 		for (const group of containerGroups.values()) for (const id of group.members) keep.add(id);
 		const canvasNodes = rawNodes.filter(isCanvasNode);
-		const edges = rawEdges.filter((e) => e.relation !== 'VERSION_OF');
+		const edges = rawEdges.filter((e) => isDrawn(e.relation));
 		// Between the chosen bronnen of a netwerk: what ties the same ones, as one.
 		const chosen = new Set<string>(pinnedIds);
 		if (focus) chosen.add(focus);
@@ -1166,10 +1136,7 @@
 	}
 
 	function drawEdges(allEdges: GraphEdge[]) {
-		// VERSION_OF links an article's own versions across time: real, but not a
-		// network relation — the reader's own version nav uses it directly, not this
-		// canvas, so it never becomes an edge here.
-		const es = allEdges.filter((e) => e.relation !== 'VERSION_OF');
+		const es = allEdges.filter((e) => isDrawn(e.relation));
 		let changed = false;
 		const keep = new Set(es.map((e) => e.id));
 		g.edges()
