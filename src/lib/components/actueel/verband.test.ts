@@ -1,0 +1,259 @@
+import { describe, expect, it } from 'vitest';
+import { normalizeItem, type FeedItem } from './feed';
+import {
+	inwerkingVerbanden,
+	publicatieVerbanden,
+	relatieVerbanden,
+	stukNaam,
+	viaRegel,
+	viaTekst,
+	type Verband
+} from './verband';
+
+const zin = (v: Verband) =>
+	`${v.label ? `${v.label} ` : ''}${v.delen.map((d) => d.tekst).join('')}`;
+
+const item = (extra: Record<string, unknown>): FeedItem =>
+	normalizeItem({
+		kind: 'Brief regering',
+		date: '2026-10-07',
+		node: { collection: 'documents', key: 'k' },
+		headline: {},
+		...extra
+	} as never);
+
+describe('a publication', () => {
+	it('names the law it enacts, then the laws it changes with their articles (Stb. 2026, 187)', () => {
+		const v = publicatieVerbanden({
+			series: 'stb',
+			year: 2026,
+			number: '187',
+			instruments: [
+				{
+					key: 'bwbr0052872',
+					title: 'Cyberbeveiligingswet',
+					effect: 'establishes',
+					article_count: 111
+				},
+				{ key: 'bwbr0009950', title: 'Telecommunicatiewet', effect: 'amends', article_count: 5 },
+				{
+					key: 'bwbr0041548',
+					title: 'Wet bekostiging financieel toezicht 2019',
+					effect: 'amends',
+					article_count: 1
+				}
+			]
+		});
+		expect(v.map(zin)).toEqual([
+			'Stelt vast Cyberbeveiligingswet',
+			'Wijzigt Telecommunicatiewet (5 artikelen) en Wet bekostiging financieel toezicht 2019 (1 artikel)'
+		]);
+		expect(v[0].delen[0].ref).toBe('instruments/bwbr0052872');
+	});
+});
+
+describe('an inwerkingtreding', () => {
+	it('says what changed, by which publication, and under which law', () => {
+		const v = inwerkingVerbanden({
+			instrument: { key: 'bwbr0038456', title: 'Besluit energieprestatievergoeding huur' },
+			article_count: 9,
+			changed_articles: 1,
+			articles: ['2'],
+			new: false,
+			publication: {
+				key: 'stcrt_2026_17140',
+				series: 'stcrt',
+				year: 2026,
+				number: '17140',
+				path: '/stcrt/2026/17140'
+			},
+			based_on: {
+				instrument: { key: 'bwbr0014315', title: 'Uitvoeringswet huurprijzen woonruimte' },
+				kind: 'amvb',
+				articles: ['10', '19bis']
+			}
+		});
+		expect(v.map(zin)).toEqual([
+			'Art. 2 gewijzigd bij Stcrt. 2026, 17140',
+			'Krachtens Uitvoeringswet huurprijzen woonruimte, art. 10 en 19bis'
+		]);
+		expect(v[0].delen[2]).toMatchObject({
+			ref: 'instruments/stcrt_2026_17140',
+			href: '/stcrt/2026/17140'
+		});
+	});
+
+	it('names a new law by its articles and the publication that enacted it; many by their count', () => {
+		const nieuw = inwerkingVerbanden({
+			instrument: { key: 'bwbr0052872', title: 'Cyberbeveiligingswet' },
+			article_count: 111,
+			changed_articles: 111,
+			articles: [],
+			new: true,
+			publication: {
+				key: 'stb_2026_187',
+				series: 'stb',
+				year: 2026,
+				number: '187',
+				path: '/stb/2026/187'
+			}
+		});
+		expect(nieuw.map(zin)).toEqual(['111 artikelen, vastgesteld bij Stb. 2026, 187']);
+		const veel = inwerkingVerbanden({
+			instrument: { key: 'x', title: 'X' },
+			article_count: 11,
+			changed_articles: 8,
+			articles: ['1', '2', '3', '4', '5', '6', '7', '8'],
+			new: false
+		});
+		expect(veel.map(zin)).toEqual(['8 van 11 artikelen gewijzigd']);
+	});
+});
+
+describe('the papers and articles a row is tied to', () => {
+	const motie = {
+		id: 'documents/m',
+		kind: 'Motie',
+		number: '31',
+		dossier: '36764',
+		surname: 'Kathmann',
+		path: '/kamerstukken/36764/31'
+	};
+
+	it('names a motion a letter answers by its submitter and place', () => {
+		const v = relatieVerbanden(item({ answers: [motie] }));
+		expect(v.map(zin)).toEqual(['Gaat in op motie-Kathmann (36764, nr. 31)']);
+		expect(v[0].delen[0]).toMatchObject({ ref: 'documents/m', href: '/kamerstukken/36764/31' });
+	});
+
+	it('names several commitments a letter answers by their numbers, the word once', () => {
+		const tz = (number: string) => ({
+			id: `commitments/${number}`,
+			kind: 'toezegging',
+			number,
+			path: null
+		});
+		const v = relatieVerbanden(
+			item({ answers: [tz('TZ202604-062'), tz('TZ202604-064'), tz('TZ202604-065')] })
+		);
+		expect(v.map(zin)).toEqual([
+			'Gaat in op toezeggingen TZ202604-062, TZ202604-064 en TZ202604-065'
+		]);
+	});
+
+	it('names a letter by its day where it has no number, and a commitment by its number', () => {
+		expect(
+			stukNaam({
+				id: 'documents/b',
+				kind: 'Brief regering',
+				date: '2026-10-07',
+				surname: 'Karremans',
+				path: null
+			})
+		).toBe('brief van 7 okt. 2026');
+		expect(
+			stukNaam({ id: 'commitments/t', kind: 'toezegging', number: 'TZ202609-124', path: null })
+		).toBe('toezegging TZ202609-124');
+		// Within its own dossier, the number alone.
+		expect(stukNaam(motie, '36764')).toBe('motie-Kathmann (nr. 31)');
+	});
+
+	it('says the articles an amendment changes per law, the paper a changed one replaces', () => {
+		const a = (number: string, effect: string | null = 'amends') => ({
+			key: `bwbr0005537_${number}`,
+			number,
+			law: 'Algemene wet bestuursrecht',
+			law_short: 'Awb',
+			effect,
+			path: `/wetten/BWBR0005537/artikel/${number}`
+		});
+		const v = relatieVerbanden(
+			item({
+				kind: 'Amendement',
+				dossier: { key: '37022', number: '37022' },
+				amends_articles: [a('3:2'), a('3:4'), a('4:5', 'introduces')],
+				replaces: { id: 'documents/r', kind: 'Amendement', number: '9', dossier: '37022' }
+			})
+		);
+		expect(v.map(zin)).toEqual([
+			'Wijzigt art. 3:2 en 3:4 Awb',
+			'Voegt in art. 4:5 Awb',
+			'Ter vervanging van nr. 9'
+		]);
+	});
+
+	it('names the articles a judgment cites, and nothing for a row tied to none', () => {
+		const v = relatieVerbanden(
+			item({
+				kind: 'uitspraak',
+				cites: [
+					{ key: 'bwbr0030250_2_8', number: '2.8', law: 'Wet dieren' },
+					{
+						key: 'bwbr0005537_7_12',
+						number: '7:12',
+						law: 'Algemene wet bestuursrecht',
+						law_short: 'Awb'
+					}
+				]
+			})
+		);
+		expect(v.map(zin)).toEqual(['Noemt art. 2.8 Wet dieren en art. 7:12 Awb']);
+		expect(relatieVerbanden(item({}))).toEqual([]);
+	});
+});
+
+describe('how a row is tied to a followed law', () => {
+	it('says it in the words of the relation', () => {
+		expect(viaTekst({ relation: 'amends', article: '3' })).toBe('Wijzigt art. 3');
+		expect(viaTekst({ relation: 'based_on', article: '68' }, 'Cyberbeveiligingswet')).toBe(
+			'Krachtens art. 68 Cyberbeveiligingswet'
+		);
+		expect(viaTekst({ relation: 'establishes' })).toBe('Stelt de wet vast');
+		expect(viaTekst({ relation: 'proposes', dossier: '36764' })).toBe('In dossier 36764');
+		expect(viaTekst(null)).toBeNull();
+	});
+});
+
+describe('the tie to a followed law, once', () => {
+	const cbw = { bwb: 'BWBR0052872', titel: 'Cyberbeveiligingswet' };
+	it('leaves it out where the row says it already', () => {
+		const pub = item({
+			kind: 'publicatie',
+			via: { relation: 'establishes' },
+			publication: {
+				instruments: [{ key: 'bwbr0052872', title: 'Cyberbeveiligingswet', effect: 'establishes' }]
+			}
+		});
+		expect(viaRegel(pub, cbw)).toBeNull();
+		const brief = item({
+			via: { relation: 'legislated_in', dossier: '36764' },
+			dossier: { key: '36764', number: '36764' }
+		});
+		expect(viaRegel(brief, cbw)).toBeNull();
+		const amendement = item({
+			kind: 'Amendement',
+			via: { relation: 'proposes', article: '94' },
+			amends_articles: [{ key: 'bwbr0052872_94', bwb_id: 'BWBR0052872', number: '94', path: null }]
+		});
+		expect(viaRegel(amendement, cbw)).toBeNull();
+	});
+
+	it('says it where the row does not: a regulation issued under one issued under the law', () => {
+		const regeling = item({
+			kind: 'inwerkingtreding',
+			via: { relation: 'based_on', article: '68' },
+			commencement: {
+				instrument: { key: 'bwbr0053034', title: 'Cyberbeveiligingsregeling voor de zorg' },
+				changed_articles: 8,
+				new: false,
+				based_on: {
+					instrument: { key: 'bwbr0052875', title: 'Cyberbeveiligingsbesluit' },
+					kind: 'amvb',
+					articles: ['20']
+				}
+			}
+		});
+		expect(viaRegel(regeling, cbw)).toBe('Krachtens art. 68 Cyberbeveiligingswet');
+		expect(viaRegel(regeling, null)).toBeNull();
+	});
+});

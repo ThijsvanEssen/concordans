@@ -406,16 +406,69 @@ Namens de verdachte is hoger beroep ingesteld.`
 	expect(judgmentParticipants({ ...judgment, props: { subjects: ['Strafrecht'] } })).toEqual([]);
 });
 
-test('"mr. X voornoemd en mr. Y" names two lawyers', () => {
+test('lawyers are not scanned from the body: the API reads them per party (BB0782)', () => {
+	// The scan called an administrative lawyer a raadsman and named one twice.
 	const paragraphs = [
 		{
 			kind: 'body',
 			text: 'Namens KLM hebben mr. Van Slooten voornoemd en mr. J. Boer, beiden advocaat te Amsterdam, het woord gevoerd.'
+		},
+		{
+			kind: 'body',
+			text: 'De Afdeling heeft de zaak ter zitting behandeld, waar appellanten, vertegenwoordigd door mr. drs. R. van Gelder, advocaat te Voorschoten, zijn verschenen.'
 		}
 	];
-	expect(extractParticipants(paragraphs, []).map((p) => p.name)).toEqual([
-		'mr. Van Slooten',
-		'mr. J. Boer'
+	expect(extractParticipants(paragraphs, [])).toEqual([]);
+});
+
+test('a representative from the API with where they practise and in what capacity', () => {
+	const parties = [
+		{
+			name: '[appellanten]',
+			role: 'Appellant',
+			roles: ['Appellant'],
+			role_stated: true,
+			side: 'first' as const,
+			alias: null,
+			representatives: [
+				{ name: 'mr. drs. R. van Gelder', role: 'advocaat' as const, place: 'Voorschoten' }
+			]
+		},
+		{
+			name: 'het college van gedeputeerde staten van Zuid-Holland',
+			role: 'Verweerder',
+			role_stated: true,
+			side: 'second' as const,
+			representatives: [
+				{
+					name: 'mr. A. Jansen',
+					role: 'gemachtigde' as const,
+					capacity: 'ambtenaar in dienst van de provincie'
+				}
+			]
+		},
+		{ name: 'Vereniging X', role: 'Partij', role_stated: false, side: 'other' as const }
+	];
+	expect(judgmentParticipants({ paragraphs: [], parties })).toEqual([
+		{ role: 'Appellant', name: '[appellanten]', stated: true },
+		{
+			role: 'Advocaat',
+			name: 'mr. drs. R. van Gelder',
+			party: '[appellanten]',
+			place: 'Voorschoten'
+		},
+		{
+			role: 'Verweerder',
+			name: 'het college van gedeputeerde staten van Zuid-Holland',
+			stated: true
+		},
+		{
+			role: 'Gemachtigde',
+			name: 'mr. A. Jansen',
+			party: 'het college van gedeputeerde staten van Zuid-Holland',
+			capacity: 'ambtenaar in dienst van de provincie'
+		},
+		{ role: 'Partij', name: 'Vereniging X', stated: true }
 	]);
 });
 

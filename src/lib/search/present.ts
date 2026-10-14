@@ -85,6 +85,22 @@ export function around(text: string, query: string, lead = 40): string {
 	return `…${text.slice(start < 0 ? at - lead : start + 1)}`;
 }
 
+/**
+ * The person a judgment was found by (`extra.person`, API 0.79.55): `mr. drs. R. van Gelder,
+ * advocaat van [appellanten]` for who acts for a party, `het college van gedeputeerde staten
+ * van Zuid-Holland, verweerder` for a party; the words searched marked in the name. Null
+ * where the hit was not found by a person.
+ */
+export function persoonVan(hit: Hit, query: string): Segment[] | null {
+	const p = hit.extra?.person as { name?: unknown; role?: unknown; party?: unknown } | undefined;
+	const name = typeof p?.name === 'string' ? p.name.trim() : '';
+	if (!name) return null;
+	const role = typeof p?.role === 'string' ? p.role.trim().toLowerCase() : '';
+	const party = typeof p?.party === 'string' ? p.party.trim() : '';
+	const wat = role ? `, ${role}${party ? ` van ${party}` : ''}` : party ? `, voor ${party}` : '';
+	return [...marked(name, query), ...(wat ? [{ text: wat, mark: false }] : [])];
+}
+
 const TRANSLATION = /\((engels|engelse vertaling|english translation)\)\s*$/i;
 
 /** "Hoge Raad 2024-09-24 / 23/02910" in its parts. */
@@ -165,10 +181,13 @@ export function presentHit(hit: Hit, query: string, neighbours: readonly Hit[] =
 			// The court publishes a translation under its own ECLI and the same date; the name
 			// it gives says so ("(Engels)", "(English translation)"), and the title too.
 			const translation = TRANSLATION.test(caseNumber ?? '') ? ', Engelse vertaling' : '';
+			// Found by a person: who they are in the case, under the hit, before its text.
 			return {
 				title: `${names.length ? `${when} (${names.join(', ')})` : when || ecli}${translation}`,
 				context: ecli,
-				snippet: snippet && snippet !== ecli ? marked(around(snippet, query), query) : null
+				snippet:
+					persoonVan(hit, query) ??
+					(snippet && snippet !== ecli ? marked(around(snippet, query), query) : null)
 			};
 		}
 		case 'dossiers': {

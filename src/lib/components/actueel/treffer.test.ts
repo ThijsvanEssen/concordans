@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getoondOnder, plekVan } from './treffer';
+import { getoondOnder, plekVan, termenVan } from './treffer';
 import { normalizeItem, type FeedItem } from './feed';
 import { headlineOf } from './timeline';
 
@@ -70,5 +70,30 @@ describe('why a row is in a followed topic', () => {
 		const i = item({ summary: 'Tekst.', dossier: DOSSIER_36875 });
 		expect(plekVan([], i, ['Tekst.'])).toBeNull();
 		expect(plekVan(['huur'], i, ['Tekst.'])).toBeNull();
+	});
+
+	it('goes by where the API found the word (`matched`, API 0.79.55)', () => {
+		// The API found it in the dossier's title: the excerpt, though the row's title holds a
+		// word the front end alone would take for it.
+		const i = item({
+			summary: 'Een terugkoppeling over cyberbeveiliging-light.',
+			title: 'Een terugkoppeling…',
+			dossier: DOSSIER_36875,
+			matched: [{ term: 'cyberbeveiliging', field: 'dossier_title' }]
+		});
+		expect(plekVan(['cyberbeveiliging'], i, ['Een terugkoppeling…'])?.waar).toBe('In dossier');
+		// In the names of a publication's laws: marked there, no line.
+		const p = item({
+			kind: 'publicatie',
+			node: { collection: 'instruments', key: 'stb_2026_187' },
+			title: 'Stb. 2026, 187',
+			publication: {
+				instruments: [{ key: 'bwbr0052872', title: 'Cyberbeveiligingswet', effect: 'establishes' }]
+			},
+			matched: [{ term: 'Cyberbeveiligingswet', field: 'laws' }]
+		});
+		expect(plekVan(['Cyberbeveiligingswet'], p, ['Stb. 2026, 187'])).toBeNull();
+		expect(termenVan(['cyber'], p)).toEqual(['Cyberbeveiligingswet']);
+		expect(termenVan(['cyber'], {})).toEqual(['cyber']);
 	});
 });
