@@ -97,6 +97,20 @@ describe('one form for each thing', () => {
 		expect(offenders((t) => /new URL\(page\.url\)/.test(t))).toEqual([]);
 	});
 
+	it('makes a filter a step in the history on every page of filters, typing not (#50)', () => {
+		// Actueel and Bladeren step on a filter and replace on typing; the overview of a topic
+		// has filters only, so every patch it makes is a step.
+		const text = (path: string) => sources.find((s) => s.path === path)?.text ?? '';
+		for (const path of [
+			'routes/(main)/actueel/+page.svelte',
+			'lib/components/explore/IndexView.svelte'
+		])
+			expect(text(path), path).toMatch(/navigate\([^;]*\{ step: !replaceState \}\)/);
+		expect(text('routes/(main)/onderwerpen/overzicht/+page.svelte')).toMatch(
+			/const zet = [^;]*navigate\([^;]*\{ step: true \}\)/
+		);
+	});
+
 	it('formats a date only in $lib/text/datum.ts', () => {
 		const dateFormat = /toLocaleDateString|Intl\.DateTimeFormat|\btoLocaleTimeString\b/;
 		const monthNames = /['"](januari|jan\.)['"]/;

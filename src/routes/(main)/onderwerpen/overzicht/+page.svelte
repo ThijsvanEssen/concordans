@@ -132,7 +132,9 @@
 	const FILTERS = ['soort', 'uitkomst', 'jaar', 'stem', 'cel'];
 	const hrefMet = (patch: ParamPatch, alleen = false) =>
 		withParams(page.url, patch, { clear: alleen ? FILTERS : [] });
-	const zet = (patch: ParamPatch, alleen = false) => navigate(hrefMet(patch, alleen));
+	/** Every patch here is a filter: a step in the history (a filter is a step, typing is not). */
+	const zet = (patch: ParamPatch, alleen = false) =>
+		navigate(hrefMet(patch, alleen), { step: true });
 	const kies = (k: Keuze | null) => zet({ cel: k ? schrijfKeuze(k) : null }, true);
 
 	// ── The stemmingen, counted by the API (first paint) ─────────────────────
