@@ -7,6 +7,7 @@ import { decisionOutcome } from '$lib/components/explore/index/decision-kind';
 import { isEkDecision } from '$lib/components/parliamentary/timeline-kind';
 import { chamberName } from '$lib/components/parliamentary/chamber';
 import { langeDatum } from '$lib/text/datum';
+import { bwCode } from '$lib/text/bw';
 import { dossierName, dossierUitProps, kamerstukNummer } from './dossier-naam';
 
 const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
@@ -37,7 +38,8 @@ export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): strin
 		return title && title !== UNNAMED ? title : n.label;
 	}
 	const bwb = lawIdOf(p);
-	const shortTitle = bwb ? meta.get(bwb)?.shortTitle : null;
+	// A book of the BW by the code, as the article is cited: "Art. 7A:1576 BW" (F21).
+	const shortTitle = bwCode(bwb) ?? (bwb ? meta.get(bwb)?.shortTitle : null);
 	if (shortTitle) return `${n.label} ${shortTitle}`;
 	// Until its law's short title is in, the abbreviation or citation title the article itself
 	// carries: never "Art. 419" without its law (UX test 10 Oct, #23).
