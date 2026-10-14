@@ -35,7 +35,7 @@
 			const v = url.searchParams.get(k);
 			if (v !== null) doel.set(k, v);
 		}
-		void goto(`/gemarkeerd?${doel}`, { replaceState: true });
+		goto(`/gemarkeerd?${doel}`, { replaceState: true });
 	});
 </script>
 

@@ -51,7 +51,7 @@
 
 	/** The halls on the first day of a stretch; the last stretch is the halls without ?zetels. */
 	const kies = (s: Stuk) =>
-		void navigate(
+		navigate(
 			withParams(page.url, { zetels: !s.to_date || s.to_date >= eind ? null : s.from_date })
 		);
 </script>

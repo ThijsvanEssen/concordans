@@ -378,3 +378,10 @@ export function doorzochtVanaf(r: object): string | null {
 /** The day before: where a search goes on further back. */
 export const dagVoor = (iso: string) =>
 	new Date(Date.parse(`${iso.slice(0, 10)}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+
+/**
+ * Where a failure of the feed is said: in place of the list it left empty, or under the list
+ * it could not lengthen (the next days, further back), so it never goes unseen.
+ */
+export const errorPlace = (error: string | null, items: number): 'none' | 'instead' | 'below' =>
+	!error ? 'none' : items ? 'below' : 'instead';

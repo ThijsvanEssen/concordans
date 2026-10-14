@@ -5,7 +5,7 @@
 	// the place, then the forms to copy, Kopieer tekst, Bewaar, and where the place leads on
 	// (its verbindingen, its history). In the top layer, under its marker; the arrows move,
 	// Escape and a click outside close it and give the focus back to the marker.
-	import { tick } from 'svelte';
+	import { afterTick } from '$lib/util/after-tick';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import type { CiteItem } from '$lib/components/ui/cite';
 	import { kaart } from '$lib/map/map.svelte';
@@ -74,7 +74,7 @@
 		zet();
 		addEventListener('scroll', zet, true);
 		addEventListener('resize', zet);
-		void tick().then(() => items()[0]?.focus());
+		afterTick(() => items()[0]?.focus());
 		// A click outside closes it; one on the marker is the marker's (it toggles).
 		const buiten = (e: PointerEvent) => {
 			const t = e.target as Node;

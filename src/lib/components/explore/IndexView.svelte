@@ -23,7 +23,8 @@
 	// Every filter, the sort and the open row are in the URL, so a view can be shared.
 	// What the API can filter or sort is passed on as a query; the rest is done
 	// on the rows loaded so far.
-	import { tick, untrack } from 'svelte';
+	import { untrack } from 'svelte';
+	import { afterTick } from '$lib/util/after-tick';
 	import { page } from '$app/state';
 	import { afterNavigate, beforeNavigate } from '$app/navigation';
 	import { bronHref, openHref } from '$lib/bron/href';
@@ -969,7 +970,7 @@
 		loadAbort?.abort();
 		loading = false;
 		(pages as Record<IndexCategory, AnyPage>)[category] = kept.page;
-		tick().then(() => scroller?.scrollTo({ top: kept.scroll }));
+		afterTick(() => scroller?.scrollTo({ top: kept.scroll }));
 	});
 
 	// Seats for the hemicycle, once, when the factions are opened.
@@ -2101,7 +2102,7 @@
 		if (!revealOpen || loading || !pages[category]) return;
 		revealOpen = false;
 		const id = untrack(() => openId);
-		tick().then(() =>
+		afterTick(() =>
 			scroller
 				?.querySelector(`[data-bron="${CSS.escape(id ?? '')}"]`)
 				?.scrollIntoView({ block: 'center' })

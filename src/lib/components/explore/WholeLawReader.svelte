@@ -99,8 +99,6 @@
 		try {
 			const detail = await getArticleDetail(bwb, articleNumber);
 			if (bwb === bwbId) detailByNumber.set(articleNumber, detail);
-		} catch {
-			// The preview stays; scrolling back into view retries.
 		} finally {
 			pending.delete(articleNumber);
 		}
@@ -114,7 +112,8 @@
 			(entries) => {
 				if (entries.some((e) => e.isIntersecting)) {
 					observer.disconnect();
-					void ensureDetail(bwb, articleNumber);
+					// The preview stays.
+					ensureDetail(bwb, articleNumber).catch((e) => report('Wet artikel', e));
 				}
 			},
 			{ rootMargin: '600px 0px' }
@@ -478,7 +477,8 @@
 			// Another division of the table of contents: it opens alone, as from a link.
 			const [bwb, day] = [bwbId, peildatum];
 			untrack(() => open(bwb, day, hash));
-		} else if (start > 0 || start + articles.length < total) void reach(hash);
+		} else if (start > 0 || start + articles.length < total)
+			reach(hash).catch((e) => report('Wet plek', e));
 		else doelGezien = hash;
 	});
 

@@ -7,18 +7,13 @@
 	// brought it (Wijzigingen); asked when the row opens (one request, shared with the reader), a motie's
 	// dictum from the feed itself where it has one. A paper the feed says has no text yet does
 	// not open (inhoudVan). The reader stays one step further: the title, or Lees verder.
-	import { getDocument } from '$lib/api/records';
 	import { bronHref } from '$lib/bron/href';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { load } from '$lib/util/load.svelte';
 	import Wijzigingen from './Wijzigingen.svelte';
-	import {
-		inhoudVan,
-		kernSoort,
-		kernUitLijst,
-		kernVan,
-		type Inhoud,
-		type MetInhoud
-	} from './rij-inhoud';
+	import { rowText } from './requests';
+	import { inhoudVan, kernUitLijst, type Inhoud, type MetInhoud } from './rij-inhoud';
 
 	let {
 		item,
@@ -38,39 +33,21 @@
 			: `${item.node.collection}/${item.node.key}`
 	);
 
-	let tekst = $state<string | null | 'laden'>(null);
-	/** What the text is, once the stuk has said its kind (`kern`). */
-	let gelezen = $state<Inhoud>(null);
-	$effect(() => {
-		const s = soort;
-		const key = item.node.key;
-		tekst = null;
-		gelezen = s;
-		if (s !== 'dictum' && s !== 'toelichting' && s !== 'opening' && s !== 'kern') return;
-		// A motion's dictum or an amendment's explanation as the list gives it: no request (API
-		// 0.79.42, 0.79.55).
-		const lijst = kernUitLijst(s, item);
-		if (lijst) {
-			tekst = lijst.tekst;
-			gelezen = lijst.als;
-			return;
-		}
-		tekst = 'laden';
-		let stale = false;
-		getDocument(key)
-			.then((d) => {
-				if (stale) return;
-				// The API's dictum before the one read from the text; the feed's summary where the
-				// stuk has no text in the data yet (the newest papers).
-				const k = s === 'kern' ? kernSoort(d.kind) : s;
-				gelezen = k;
-				tekst = kernVan(k, d) ?? (item.summary?.trim() || null);
-			})
-			.catch(() => {
-				if (!stale) tekst = null;
-			});
-		return () => (stale = true);
-	});
+	// A motion's dictum or an amendment's explanation as the list gives it: no request (API
+	// 0.79.42, 0.79.55).
+	const fromList = $derived(kernUitLijst(soort, item));
+	/** The text asked of the stuk, where the list does not give it. */
+	const asked = $derived(
+		!fromList &&
+			(soort === 'dictum' || soort === 'toelichting' || soort === 'opening' || soort === 'kern')
+			? soort
+			: null
+	);
+	const text = load(
+		() => (asked ? `${asked}/${item.node.key}` : null),
+		(key, signal) => (key && asked ? rowText(item, asked, signal) : Promise.resolve(null)),
+		'Rij'
+	);
 
 	const tally = $derived.by(() => {
 		const t = (item.vote?.tally ?? {}) as Record<string, number>;
@@ -94,10 +71,18 @@
 	{:else if soort === 'wijzigingen' || soort === 'inwerkingtreding'}
 		{#if item.summary?.trim()}<p class="tekst">{item.summary}</p>{/if}
 		<Wijzigingen {item} {soort} />
-	{:else if tekst === 'laden'}
-		<p class="stil">Laden…</p>
-	{:else if tekst}
-		<p class="tekst" class:dictum={gelezen === 'dictum'}>{tekst}</p>
+	{:else if fromList}
+		<p class="tekst" class:dictum={fromList.als === 'dictum'}>{fromList.tekst}</p>
+	{:else if asked}
+		<LoadState state={text.state} what="De tekst" retry={text.retry}>
+			{#snippet children(t)}
+				{#if t?.text}
+					<p class="tekst" class:dictum={t.as === 'dictum'}>{t.text}</p>
+				{:else}
+					<p class="stil">Tekst nog niet in de gegevens.</p>
+				{/if}
+			{/snippet}
+		</LoadState>
 	{:else}
 		<p class="stil">Tekst nog niet in de gegevens.</p>
 	{/if}
@@ -122,12 +107,6 @@
 	}
 	.dictum {
 		font-style: italic;
-	}
-	.stil {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
 	}
 	.verder {
 		margin: 0;

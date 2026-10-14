@@ -1,5 +1,6 @@
 import { getNodeGraph, getNodeNeighborhood, neighborsOf } from '$lib/api/nodes';
 import { inPool } from '$lib/api/pool';
+import { report } from '$lib/api/errors';
 import {
 	abortable,
 	CANVAS_BUCKET,
@@ -237,7 +238,7 @@ export function createExpansion(
 			// the bill it explains (BE-49). From the stuk's light node (its one PART_OF dossier;
 			// 9 kB, not 42), four at a time and for at most twelve stukken, so one composition
 			// stays within the API's limit. The paths are drawn without waiting for it.
-			void inPool(
+			inPool(
 				[...drawn].filter((id) => id.startsWith('documents/')),
 				async (id) => {
 					const key = id.slice('documents/'.length);
@@ -257,7 +258,9 @@ export function createExpansion(
 					containers.markLone(container);
 				},
 				{ parallel: 4, max: 12 }
-			).then(() => emit());
+			)
+				.then(() => emit())
+				.catch((e) => report('Netwerk dossiers', e));
 			emit();
 			// The chosen bronnen at the ends of a path that is drawn: they are tied.
 			const tied = paths.flatMap((p) => [p.source, p.target]);

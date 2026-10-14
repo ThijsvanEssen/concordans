@@ -10,7 +10,7 @@
 	// status, applied with one button. The same sheet opens from the panel and from
 	// the legend of the network. A modal dialog: the focus goes to the search field on
 	// open, stays inside while it is open, and returns to where it was on close.
-	import { tick } from 'svelte';
+	import { afterTick } from '$lib/util/after-tick';
 	import type { Collection } from '$lib/vocabulary';
 	import {
 		BRON_KINDS,
@@ -60,7 +60,7 @@
 	let opener: HTMLElement | null = null;
 	$effect(() => {
 		if (!open) return;
-		void tick().then(() => {
+		afterTick(() => {
 			const at = document.activeElement;
 			opener =
 				at instanceof HTMLElement && at !== document.body && !sheet?.contains(at) ? at : null;

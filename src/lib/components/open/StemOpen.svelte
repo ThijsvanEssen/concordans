@@ -39,12 +39,3 @@
 {:else}
 	<p class="stil">Laden…</p>
 {/if}
-
-<style>
-	.stil {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-</style>

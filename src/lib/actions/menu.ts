@@ -3,7 +3,7 @@
 // keys, Home and End move between the items. Escape closes the menu and puts the focus
 // back on the button; Tab closes it and moves on from the button. A click outside closes
 // it, as `outside` does: the click is only watched, never stopped.
-import { tick } from 'svelte';
+import { afterTick } from '$lib/util/after-tick';
 import type { Action } from 'svelte/action';
 
 type Menu = { open: boolean; close: () => void };
@@ -72,13 +72,13 @@ export const menu: Action<HTMLElement, Menu> = (node, params) => {
 	node.addEventListener('keydown', onKey);
 	// The capture phase: the menu closes before whatever was clicked reacts.
 	document.addEventListener('click', onClick, true);
-	if (open) void tick().then(focusFirst);
+	if (open) afterTick(focusFirst);
 
 	return {
 		update(next) {
 			const was = open;
 			({ open, close } = next);
-			if (open && !was) void tick().then(focusFirst);
+			if (open && !was) afterTick(focusFirst);
 			if (!open && was) {
 				// An item that closed the menu took the focus with it: it returns to the button.
 				// A click elsewhere keeps the focus where it went.

@@ -291,12 +291,12 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 				// passages, once it has rows to show (not for the canvas: the payload grows 62%).
 				for (const g of groups)
 					if (g.rows.length && (GROUPS[collection] ?? []).find((d) => d.id === g.id)?.passages)
-						void groep(g.id, true);
+						groep(g.id, true).catch((e) => report('Verbonden passages', e));
 				// The node now; a loader's further rows (`meer`) once the loaders are in.
 				const alsGevraagd = () => {
 					if (!wilVolledig) return;
 					if (pending.size === 0) wilVolledig = false;
-					void volledig();
+					volledig().catch((e) => report('Verbonden volledig', e));
 				};
 				alsGevraagd();
 				const ctx = {

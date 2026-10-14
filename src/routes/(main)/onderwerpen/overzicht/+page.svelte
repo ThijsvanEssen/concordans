@@ -16,6 +16,8 @@
 	import { page } from '$app/state';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
 	import { api, unwrap } from '$lib/api/client';
+	import { isAborted, report } from '$lib/api/errors';
+	import { failureText } from '$lib/components/ui/LoadState.svelte';
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
 	import KeuzeKnoppen from '$lib/components/ui/Keuze.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
@@ -170,7 +172,8 @@
 				);
 				apiTotaal = r.total;
 			})
-			.catch(() => {
+			.catch((e) => {
+				report('Overzicht tellingen', e);
 				if (!ac.signal.aborted) tellenFout = true;
 			})
 			.finally(() => {
@@ -185,12 +188,14 @@
 	// One fractie's voor and tegen per day: two more counted questions, no list.
 	let fractieDagen = $state<{ voor: Dag[]; tegen: Dag[] } | null>(null);
 	let fractieLaden = $state(false);
+	let fractieFout = $state(false);
 	$effect(() => {
 		const woorden = termenSleutel ? termenSleutel.split('|') : [];
 		const basis = basisVan(woorden, kamer, van, tot);
 		const wie = fractie;
 		const ac = new AbortController();
 		fractieDagen = null;
+		fractieFout = false;
 		const vragen = !!wie && !!woorden.length;
 		fractieLaden = vragen;
 		if (!vragen) return;
@@ -200,7 +205,10 @@
 			);
 		Promise.all([vraag('voor'), vraag('tegen')])
 			.then(([voor, tegen]) => (fractieDagen = { voor, tegen }))
-			.catch(() => {})
+			.catch((e) => {
+				report('Overzicht fractie', e);
+				if (!ac.signal.aborted) fractieFout = true;
+			})
 			.finally(() => {
 				if (!ac.signal.aborted) fractieLaden = false;
 			});
@@ -237,6 +245,8 @@
 	 *  only when a cell of the column opens, and only for its period. */
 	let ketensGeteld = $state(false);
 	let feedLaden = $state(untrack(() => !!termenSleutel));
+	/** The feed's pages broke off: its columns are not counted, not 0. */
+	let feedFout = $state(false);
 	/** The day of the last event counted, where the feed has more than was asked. */
 	let feedGrens = $state<string | null>(null);
 	let dataTot = $state<string | null>(null);
@@ -273,6 +283,7 @@
 		perioden = null;
 		ketensGeteld = false;
 		feedGrens = null;
+		feedFout = false;
 		feedLaden = !!woorden.length;
 		if (!woorden.length) return;
 		const filters = {
@@ -286,12 +297,16 @@
 		const per = perWeek ? (dagen400 ? 'day' : null) : 'month';
 		(async () => {
 			if (per) {
+				// Without the periods the feed's pages count, as before #444.
 				const r = await unwrap(
 					api.GET('/api/feed/periods', {
 						params: { query: { ...filters, per } },
 						signal: ac.signal
 					})
-				).catch(() => null);
+				).catch((e) => {
+					report('Overzicht perioden', e);
+					return null;
+				});
 				if (r && !r.partial) {
 					const ketens = (r.periods ?? []).every((p) => p.amendment_chains != null);
 					perioden = (r.periods ?? []).flatMap((p) => [
@@ -347,7 +362,10 @@
 			}
 			feedGrens = feed.at(-1)?.date ?? null;
 		})()
-			.catch(() => {})
+			.catch((e) => {
+				report('Overzicht feed', e);
+				if (!ac.signal.aborted) feedFout = true;
+			})
 			.finally(() => {
 				if (!ac.signal.aborted) feedLaden = false;
 			});
@@ -368,6 +386,7 @@
 		const ac = new AbortController();
 		feed = [];
 		feedGrens = null;
+		feedFout = false;
 		feedLaden = true;
 		(async () => {
 			let cursor: string | undefined;
@@ -395,7 +414,10 @@
 			}
 			feedGrens = feed.at(-1)?.date ?? null;
 		})()
-			.catch(() => {})
+			.catch((e) => {
+				report('Overzicht feed', e);
+				if (!ac.signal.aborted) feedFout = true;
+			})
 			.finally(() => {
 				if (!ac.signal.aborted) feedLaden = false;
 			});
@@ -410,6 +432,7 @@
 	// once the feed is counted, two at a time.
 	let amendementen = $state<Amendement[]>([]);
 	let ketensLaden = $state(false);
+	let ketensFout = $state(false);
 	let ketenDossiers = $state<{ gedaan: number; totaal: number }>({ gedaan: 0, totaal: 0 });
 	$effect(() => {
 		if (feedLaden) return;
@@ -420,6 +443,7 @@
 		];
 		const ac = new AbortController();
 		amendementen = [];
+		ketensFout = false;
 		ketenDossiers = { gedaan: 0, totaal: dossiers.length };
 		ketensLaden = !!dossiers.length;
 		if (!dossiers.length) return;
@@ -428,7 +452,7 @@
 		const werk = async () => {
 			for (let d = rij.shift(); d; d = rij.shift()) {
 				if (ac.signal.aborted) return;
-				const tr = await getAmendementen(d.key).catch(() => null);
+				const tr = await getAmendementen(d.key);
 				if (ac.signal.aborted) return;
 				for (const a of amendementKetens(tr?.rijen ?? [], ids, d.number))
 					if (!gevonden.has(a.id)) gevonden.set(a.id, a);
@@ -436,9 +460,14 @@
 				ketenDossiers = { ...ketenDossiers, gedaan: ketenDossiers.gedaan + 1 };
 			}
 		};
-		Promise.all([werk(), werk()]).finally(() => {
-			if (!ac.signal.aborted) ketensLaden = false;
-		});
+		Promise.all([werk(), werk()])
+			.catch((e) => {
+				report('Overzicht amendementen', e);
+				if (!ac.signal.aborted) ketensFout = true;
+			})
+			.finally(() => {
+				if (!ac.signal.aborted) ketensLaden = false;
+			});
 		return () => {
 			ac.abort();
 			ketensLaden = false;
@@ -471,6 +500,7 @@
 	const strekkingVan = (d: Besluit): StrekkingLaag => mijn[d.key] ?? 'geen';
 	let moties = $state<Besluit[] | null>(null);
 	let motiesLaden = $state(false);
+	let motiesFout = $state(false);
 	/** The day of the last motie asked, where a kind had more than CSV_MAX. */
 	let motiesGrens = $state<string | null>(null);
 	const motieSoorten = $derived(
@@ -502,6 +532,7 @@
 		const ac = new AbortController();
 		moties = null;
 		motiesGrens = null;
+		motiesFout = false;
 		motiesLaden = true;
 		Promise.all(motieSoorten.split('|').map((kind) => alle({ ...basis, kind }, ac.signal)))
 			.then((lijsten) => {
@@ -513,7 +544,10 @@
 						.sort()
 						.at(-1) || null;
 			})
-			.catch(() => {})
+			.catch((e) => {
+				report('Overzicht moties', e);
+				if (!ac.signal.aborted) motiesFout = true;
+			})
 			.finally(() => {
 				if (!ac.signal.aborted) motiesLaden = false;
 			});
@@ -525,10 +559,12 @@
 	/** A chosen fractie's vote on each motie, where a strekking is chosen. */
 	let fractieStemmen = $state<ReadonlyMap<string, Stem>>(new Map());
 	let fractieStemmenLaden = $state(false);
+	let fractieStemmenFout = $state(false);
 	$effect(() => {
 		const wie = fractie;
 		fractieStemmen = new Map();
 		fractieStemmenLaden = false;
+		fractieStemmenFout = false;
 		if (!laag || !wie || !motieSoorten || !termenSleutel) return;
 		const basis = basisVan(termenSleutel.split('|'), kamer, van, tot);
 		const ac = new AbortController();
@@ -544,7 +580,10 @@
 			)
 		)
 			.then(() => (fractieStemmen = st))
-			.catch(() => {})
+			.catch((e) => {
+				report('Overzicht fractiestemmen', e);
+				if (!ac.signal.aborted) fractieStemmenFout = true;
+			})
 			.finally(() => {
 				if (!ac.signal.aborted) fractieStemmenLaden = false;
 			});
@@ -626,6 +665,21 @@
 			voor: fractieLaden,
 			tegen: fractieLaden
 		};
+	});
+	/** The columns whose count broke off: not counted and a line, never a 0 (Kruiswoord). */
+	const failed = $derived.by<ReadonlySet<Kolom>>(() => {
+		const uit = new Set<Kolom>();
+		const mark = (fout: boolean, ...ks: Kolom[]) => fout && ks.forEach((k) => uit.add(k));
+		if (laag) {
+			mark(motiesFout, 'moties', 'aangenomen', 'verworpen', 'voor', 'tegen');
+			mark(fractieStemmenFout, 'voor', 'tegen');
+			return uit;
+		}
+		mark(feedFout, 'moties', 'brieven', 'toezeggingen');
+		mark(!ketensGeteld && (feedFout || ketensFout), 'amendementen');
+		mark(tellenFout, 'aangenomen', 'verworpen');
+		mark(fractieFout, 'voor', 'tegen');
+		return uit;
 	});
 	/** With a strekking, the columns it does not apply to stand empty. */
 	const uit = $derived<ReadonlySet<Kolom>>(
@@ -761,6 +815,12 @@
 	let lijstTotaal = $state<number | null>(null);
 	// Busy from the first draw where the address names a topic, as the counts above.
 	let lijstLaden = $state(untrack(() => !!termenSleutel));
+	/** The list under the grid, or its next page, did not come: said under it. */
+	let lijstFout = $state<unknown>(null);
+	const lijstMislukt = (e: unknown) => {
+		report('Overzicht lijst', e);
+		if (!isAborted(e)) lijstFout = e;
+	};
 	$effect(() => {
 		lijstLaden = false;
 		if (lijstSoort !== 'besluiten' || !termenSleutel) return;
@@ -768,6 +828,7 @@
 		const ac = new AbortController();
 		apiLijst = [];
 		lijstTotaal = null;
+		lijstFout = null;
 		lijstLaden = true;
 		besluiten({ ...query, limit: STAP, offset: 0 }, ac.signal)
 			.then(async (r) => {
@@ -778,7 +839,7 @@
 				const t = await telling(r, { ...query, limit: STAP, offset: 0 }, ac.signal);
 				if (t) lijstTotaal = t.total;
 			})
-			.catch(() => {})
+			.catch(lijstMislukt)
 			.finally(() => {
 				if (!ac.signal.aborted) lijstLaden = false;
 			});
@@ -790,6 +851,7 @@
 	async function meerLaden() {
 		if (lijstLaden) return;
 		lijstLaden = true;
+		lijstFout = null;
 		try {
 			const r = await unwrap(
 				api.GET('/api/decisions', {
@@ -797,6 +859,8 @@
 				})
 			);
 			apiLijst = [...apiLijst, ...r.items];
+		} catch (e) {
+			lijstMislukt(e);
 		} finally {
 			lijstLaden = false;
 		}
@@ -824,6 +888,7 @@
 		const ac = new AbortController();
 		feedLijst = [];
 		feedCursor = null;
+		lijstFout = null;
 		feedLijstLaden = !!query;
 		if (!query) return;
 		unwrap(api.GET('/api/feed', { params: { query }, signal: ac.signal }))
@@ -831,7 +896,7 @@
 				feedLijst = r.items.map(naarItem);
 				feedCursor = r.next_cursor ?? null;
 			})
-			.catch(() => {})
+			.catch(lijstMislukt)
 			.finally(() => {
 				if (!ac.signal.aborted) feedLijstLaden = false;
 			});
@@ -843,12 +908,15 @@
 	async function meerFeed() {
 		if (feedLijstLaden || !feedVraag || !feedCursor) return;
 		feedLijstLaden = true;
+		lijstFout = null;
 		try {
 			const r = await unwrap(
 				api.GET('/api/feed', { params: { query: { ...feedVraag, cursor: feedCursor } } })
 			);
 			feedLijst = [...feedLijst, ...r.items.map(naarItem)];
 			feedCursor = r.next_cursor ?? null;
+		} catch (e) {
+			lijstMislukt(e);
 		} finally {
 			feedLijstLaden = false;
 		}
@@ -934,7 +1002,8 @@
 						}))
 						.sort((a, b) => a.naam.localeCompare(b.naam, 'nl')))
 			)
-			.catch(() => {});
+			// The facet stands without its fracties.
+			.catch((e) => report('Overzicht fracties', e));
 	});
 	const fractieKeuze = $derived(
 		fracties.filter((x) => !kamer || !x.chamber || x.chamber === kamer)
@@ -967,10 +1036,21 @@
 		);
 		return m;
 	}
-	async function exporteer() {
+	/** The CSV could not be made: said beside its button, and nothing is downloaded. */
+	let exportFout = $state<unknown>(null);
+	function exporteer() {
 		exporteren = true;
-		const lijst = lokaal ?? (await alle(lijstVraag).catch(() => [] as Besluit[]));
-		const stemmenLijst = await stemmenVan(lijst).catch(() => new Map<string, Stem>());
+		exportFout = null;
+		maakCsv()
+			.catch((e) => {
+				report('Overzicht CSV', e);
+				exportFout = e;
+			})
+			.finally(() => (exporteren = false));
+	}
+	async function maakCsv() {
+		const lijst = lokaal ?? (await alle(lijstVraag));
+		const stemmenLijst = await stemmenVan(lijst);
 		// The names the decisions carry (API 0.79.30), one per number.
 		const namen = new Map<string, string>();
 		for (const d of lijst)
@@ -979,7 +1059,6 @@
 				if (n !== x.number) namen.set(x.number, n);
 			}
 		const motie = await motieVelden(lijst);
-		exporteren = false;
 		download(
 			`Overzicht ${bestandsnaam()}.csv`,
 			csvTekst(
@@ -1111,6 +1190,9 @@
 			>
 		{/if}
 	</header>
+	{#if exportFout}
+		<p class="stil" role="alert">De CSV kon niet worden gemaakt.</p>
+	{/if}
 
 	{#if !termen.length}
 		<p class="status stil">Geen onderwerp gekozen.</p>
@@ -1240,6 +1322,7 @@
 							{keuze}
 							onKies={kies}
 							{bezig}
+							{failed}
 							{ongeteld}
 							{uit}
 							nieuwSinds={vorige}
@@ -1273,7 +1356,10 @@
 												class="sr-only"
 												onchange={(e) => {
 													sluit();
-													laadCodering(e);
+													laadCodering(e).catch((err) => {
+														report('Codering', err);
+														importFout = true;
+													});
 												}}
 											/>
 										</label>
@@ -1436,7 +1522,9 @@
 								>
 							</p>
 						{/if}
-						{#if lijstLaadt && !lijstAantal}<p class="status stil">Laden…</p>{/if}
+						{#if lijstFout}
+							<p class="status stil" role="alert">{failureText('De lijst', lijstFout)}</p>
+						{:else if lijstLaadt && !lijstAantal}<p class="status stil">Laden…</p>{/if}
 					</section>
 				{/if}
 			</div>

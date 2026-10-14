@@ -3,11 +3,12 @@ import { ApiError } from '$lib/api/client';
 import { fail, fakeApi } from '$lib/test/fakeApi';
 import { createLoader, type LoadState } from '$lib/util/load.svelte';
 import { changesOf, postRecord, rowText, type PostRecord } from './requests';
+import type { MetInhoud } from './rij-inhoud';
 
 const signal = () => new AbortController().signal;
 const settle = () => new Promise((r) => setTimeout(r));
 
-const motie = {
+const motie: MetInhoud = {
 	kind: 'Motie',
 	node: { collection: 'documents', key: 'motie_1' },
 	summary: null,
@@ -35,8 +36,8 @@ describe('the text of an opened row', () => {
 });
 
 describe('the changes of an opened publication', () => {
-	const publicatie = {
-		kind: 'Publicatie',
+	const publicatie: MetInhoud = {
+		kind: 'publicatie',
 		node: { collection: 'instruments', key: 'stb_2026_1' },
 		summary: null,
 		vote: null,
@@ -97,7 +98,8 @@ describe('the record of an opened post', () => {
 
 	it('shows no count of the bewindspersoon before when the next one fails', async () => {
 		fakeApi({
-			'/api/commitments': ({ params }) => (params.query?.member === 'a' ? commitments(2) : fail(500)),
+			'/api/commitments': ({ params }) =>
+				params.query?.member === 'a' ? commitments(2) : fail(500),
 			'/api/nodes/{collection}/{key}': authored(4)
 		});
 		const states: LoadState<PostRecord>[] = [];

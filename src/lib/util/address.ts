@@ -38,6 +38,10 @@ export const withParams = (
 	{ clear = [], hash = '' }: { clear?: readonly string[]; hash?: string } = {}
 ) => queryHref(url.pathname, patchParams(url.searchParams, patch, clear), hash);
 
-/** Follow `href` in place. A step (a filter) takes a history entry; typing or opening replaces it. */
-export const navigate = (href: string, { step = false } = {}) =>
+/**
+ * Follow `href` in place. A step (a filter) takes a history entry; typing or opening replaces
+ * it. A navigation that fails is SvelteKit's to show (+error.svelte): nothing waits for it.
+ */
+export function navigate(href: string, { step = false } = {}): void {
 	goto(href, { replaceState: !step, keepFocus: true, noScroll: true });
+}

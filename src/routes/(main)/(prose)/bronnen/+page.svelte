@@ -2,8 +2,9 @@
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	// Bronnen en hergebruik: the one place for where the data comes from, how far it goes, and
 	// what may be done with it. Elsewhere one sentence links here.
-	import { onMount } from 'svelte';
 	import { getCoverage, getStats, type Coverage, type Stats } from '$lib/api/stats';
+	import { load } from '$lib/util/load.svelte';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { longDate } from '$lib/verbonden/rows';
 	import { formatCount } from '$lib/verbonden/filter';
 	import { TIERS, TIER_LABEL } from '$lib/vocabulary';
@@ -111,12 +112,12 @@
 		verdragenbank: 'Verdragenbank'
 	};
 
-	let stats = $state<Stats | null>(null);
-	let coverage = $state<Coverage | null>(null);
+	const stats = load(() => 'stats', getStats, 'Bronnen');
+	const coverage = load(() => 'coverage', getCoverage, 'Bronnen dekking');
 
 	/** How current each source is (`data_as_of`): the last date in its data, and when it was fetched. */
-	const asOf = $derived(
-		Object.entries(stats?.data_as_of ?? {}).flatMap(([source, d]) =>
+	const asOfIn = (stats: Stats) =>
+		Object.entries(stats.data_as_of ?? {}).flatMap(([source, d]) =>
 			d?.retrieved_at
 				? [
 						{
@@ -126,24 +127,13 @@
 						}
 					]
 				: []
-		)
-	);
+		);
 
 	/** The colleges the dataset holds judgments of, in the order of the filters. */
-	const tiers = $derived(
+	const tiersIn = (coverage: Coverage) =>
 		TIERS.flatMap((tier) =>
-			(coverage?.tiers ?? []).filter((c) => c.tier === tier).map((c) => ({ ...c, tier }))
-		)
-	);
-
-	onMount(() => {
-		getStats()
-			.then((s) => (stats = s))
-			.catch(() => (stats = null));
-		getCoverage()
-			.then((c) => (coverage = c))
-			.catch(() => (coverage = null));
-	});
+			(coverage.tiers ?? []).filter((c) => c.tier === tier).map((c) => ({ ...c, tier }))
+		);
 </script>
 
 <RouteKop pad="/bronnen" />
@@ -179,48 +169,53 @@
 				Het netwerk bevat een selectie uit deze bronnen; wat erbuiten valt, staat bij de
 				<a href="/docs/methode#grenzen" class="cite">grenzen</a>.
 			</p>
-			{#if stats}
-				<div class="list">
-					{#each COVERAGE as c (c.collection)}
-						<div class="list-row">
-							<span class="list-k">{c.label}</span><span
-								>{formatCount(stats.nodes[c.collection] ?? 0)}</span
-							>
+			<LoadState state={stats.state} what="De dekking" retry={stats.retry}>
+				{#snippet children(stats)}
+					<div class="list">
+						{#each COVERAGE as c (c.collection)}
+							<div class="list-row">
+								<span class="list-k">{c.label}</span><span
+									>{formatCount(stats.nodes[c.collection] ?? 0)}</span
+								>
+							</div>
+						{/each}
+					</div>
+					<LoadState state={coverage.state} what="De dekking per college" retry={coverage.retry}>
+						{#snippet children(coverage)}
+							<div class="list">
+								{#each tiersIn(coverage) as t (t.tier)}
+									<div class="list-row">
+										<span class="list-k">{TIER_LABEL[t.tier]}</span><span
+											>{formatCount(t.count)}{#if t.first_date && t.last_date}, {t.first_date.slice(
+													0,
+													4
+												)} tot {longDate(t.last_date)}{/if}</span
+										>
+									</div>
+								{/each}
+							</div>
+						{/snippet}
+					</LoadState>
+					{@const asOf = asOfIn(stats)}
+					{#if asOf.length}
+						<p class="list-note">
+							Stand per bron: de laatste datum in de gegevens, waar de bron die heeft, en de datum
+							van ophalen.
+						</p>
+						<div class="list">
+							{#each asOf as a (a.source)}
+								<div class="list-row">
+									<span class="list-k">{a.source}</span><span
+										>{a.newest ? `tot en met ${longDate(a.newest)}, ` : ''}opgehaald op {longDate(
+											a.fetched
+										)}</span
+									>
+								</div>
+							{/each}
 						</div>
-					{/each}
-				</div>
-				{#if coverage}
-					<div class="list">
-						{#each tiers as t (t.tier)}
-							<div class="list-row">
-								<span class="list-k">{TIER_LABEL[t.tier]}</span><span
-									>{formatCount(t.count)}{#if t.first_date && t.last_date}, {t.first_date.slice(
-											0,
-											4
-										)} tot {longDate(t.last_date)}{/if}</span
-								>
-							</div>
-						{/each}
-					</div>
-				{/if}
-				{#if asOf.length}
-					<p class="list-note">
-						Stand per bron: de laatste datum in de gegevens, waar de bron die heeft, en de datum van
-						ophalen.
-					</p>
-					<div class="list">
-						{#each asOf as a (a.source)}
-							<div class="list-row">
-								<span class="list-k">{a.source}</span><span
-									>{a.newest ? `tot en met ${longDate(a.newest)}, ` : ''}opgehaald op {longDate(
-										a.fetched
-									)}</span
-								>
-							</div>
-						{/each}
-					</div>
-				{/if}
-			{/if}
+					{/if}
+				{/snippet}
+			</LoadState>
 		</div>
 
 		<div class="section" id="hergebruik">

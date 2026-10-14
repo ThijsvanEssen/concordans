@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { bewaarItem } from '$lib/map/map';
+	import { report } from '$lib/api/errors';
 	import { naamVan } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
@@ -93,13 +94,15 @@
 					view = { kind: 'error', message: 'Dossier kon niet worden geladen.' };
 			});
 		// The timeline is optional: when it fails its section is left out.
-		getDossierTimeline(number, TIMELINE_LIMIT)
-			.catch(() => null)
-			.then((t) => {
-				if (ac.signal.aborted) return;
-				timeline = t;
-				timelineLaden = false;
-			});
+		const toonTijdlijn = (t: Awaited<ReturnType<typeof getDossierTimeline>> | null) => {
+			if (ac.signal.aborted) return;
+			timeline = t;
+			timelineLaden = false;
+		};
+		getDossierTimeline(number, TIMELINE_LIMIT).then(toonTijdlijn, (e) => {
+			report('Dossier tijdlijn', e);
+			toonTijdlijn(null);
+		});
 		// Optional too: a dossier without changed articles has no section.
 		getChangedArticles(number)
 			.then((c) => {

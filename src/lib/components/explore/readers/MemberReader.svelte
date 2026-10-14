@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { bewaarItem } from '$lib/map/map';
+	import { report } from '$lib/api/errors';
 	import { fractieNaam, naamVan } from '$lib/bron/menselijk';
 	import ReaderHead from './ReaderHead.svelte';
 	import { formatCount } from '$lib/text/getal';
@@ -96,13 +97,15 @@
 				if (!ac.signal.aborted)
 					view = { kind: 'error', message: 'Persoon kon niet worden geladen.' };
 			});
-		getMemberVotes(key)
-			.catch(() => null)
-			.then((v) => {
-				if (ac.signal.aborted) return;
-				votes = v;
-				votesLaden = false;
-			});
+		const toonStemmen = (v: Awaited<ReturnType<typeof getMemberVotes>> | null) => {
+			if (ac.signal.aborted) return;
+			votes = v;
+			votesLaden = false;
+		};
+		getMemberVotes(key).then(toonStemmen, (e) => {
+			report('Lid stemmen', e);
+			toonStemmen(null);
+		});
 		getMemberAuthored(key)
 			.then((authored) => {
 				if (!ac.signal.aborted) signatures = authored.map(signatureOf);

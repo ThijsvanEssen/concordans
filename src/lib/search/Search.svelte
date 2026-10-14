@@ -520,7 +520,7 @@
 		} else if (e.key === 'Enter') {
 			e.preventDefault();
 			if (active < keuzes.length) openBare(keuzes[active]);
-			else if (citation && active === 0) void openCitation();
+			else if (citation && active === 0) openCitation().catch((e) => report('Zoeken', e));
 			else if (bare && active === 0) openBare(bare);
 			// A hit opens only when the list answers what is typed.
 			else if (answered === q && hits[active - offset]) openHit(hits[active - offset]);

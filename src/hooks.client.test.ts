@@ -6,7 +6,9 @@ afterEach(() => vi.restoreAllMocks());
 
 const rejection = (reason: unknown) => {
 	const event = { reason, preventDefault: vi.fn() };
-	return event as unknown as PromiseRejectionEvent & { preventDefault: typeof event.preventDefault };
+	return event as unknown as PromiseRejectionEvent & {
+		preventDefault: typeof event.preventDefault;
+	};
 };
 
 describe('the outer boundary', () => {
@@ -34,7 +36,8 @@ describe('the outer boundary', () => {
 		expect(handleError({ ...args, error, status: 500 })).toEqual({ message: 'Internal Error' });
 		expect(warn).toHaveBeenCalledWith('Pagina:', error);
 		warn.mockClear();
-		handleError({ ...args, error: new Error('Not found'), status: 404, message: 'Not Found' });
+		const notFound = { ...args, error: new Error('Not found'), status: 404, message: 'Not Found' };
+		expect(handleError(notFound)).toEqual({ message: 'Not Found' });
 		expect(warn).not.toHaveBeenCalled();
 	});
 });

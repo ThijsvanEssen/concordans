@@ -1,5 +1,6 @@
 <script lang="ts">
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import { report } from '$lib/api/errors';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
@@ -84,7 +85,8 @@
 			wetNamen[bwb] = bwb;
 			getInstrumentDetail(bwb)
 				.then((d) => (wetNamen[bwb] = d.title ?? bwb))
-				.catch(() => {});
+				// The topic keeps the law's id as its name.
+				.catch((e) => report('Gevolgd wet', e));
 		}
 	});
 	/** What a topic is called: its words, or the law (and article) it follows. */
@@ -195,10 +197,10 @@
 				doorzocht: null,
 				eerder: false
 			};
-		void laadAlles(
+		laadAlles(
 			nieuw.map((o) => ({ ...o, termen: [...o.termen], wet: o.wet ? { ...o.wet } : undefined })),
 			ac.signal
-		);
+		).catch((e) => report('Gevolgd', e));
 	});
 
 	/** The row opened in place, as on Actueel. */
@@ -210,7 +212,7 @@
 	$effect(() => {
 		getMinistries()
 			.then((m) => (ministries = m))
-			.catch(() => {});
+			.catch((e) => report('Gevolgd ministeries', e));
 	});
 	const ministryName = (key: string | null | undefined) =>
 		(key && ministries.find((m) => m.key === key)?.name) || key || '';

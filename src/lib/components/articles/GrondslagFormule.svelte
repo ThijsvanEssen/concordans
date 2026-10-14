@@ -6,7 +6,8 @@
 	// or the focus first comes to a formula. Hover shows the card; a click or a tap holds it
 	// open. Escape, a tap outside or a second click close it.
 	import BronLink from '$lib/bron/BronLink.svelte';
-	import { report } from '$lib/api/errors';
+	import { failureText } from '$lib/components/ui/LoadState.svelte';
+	import { load } from '$lib/util/load.svelte';
 	import { isEscape } from '$lib/actions/keys';
 	import {
 		artikelKort,
@@ -38,23 +39,30 @@
 
 	/** `hover` while the pointer rests on it, `vast` after a click or a tap. */
 	let open = $state<null | 'hover' | 'vast'>(null);
-	let antwoord = $state<Gedelegeerd | null | undefined>(undefined);
+	/** Asked when the pointer or the focus first comes; until then nothing is loaded. */
+	let gevraagd = $state(false);
+	const antwoord = load(
+		() => gevraagd,
+		(ja) => (ja ? laad() : Promise.resolve(null)),
+		'Grondslag'
+	);
 	let knop = $state<HTMLElement | null>(null);
 	let kaart = $state<HTMLElement | null>(null);
 	let timer: ReturnType<typeof setTimeout> | null = null;
 
-	const regelingen = $derived(antwoord ? (vullingVan(antwoord, formule.bij) ?? []) : null);
+	/** The regulations that fill the formula; none where the API does not have the article. */
+	const regelingen = $derived(
+		gevraagd && antwoord.state.status === 'ready'
+			? antwoord.state.data
+				? (vullingVan(antwoord.state.data, formule.bij) ?? [])
+				: []
+			: null
+	);
 
-	/** Asked once; after a failure ("niet geladen") again on the next hover or tap. */
+	/** Asked once; after a failure again on the next hover or tap. */
 	function vraag() {
-		if (antwoord) return;
-		laad().then(
-			(a) => (antwoord = a),
-			(e) => {
-				report('Grondslag', e);
-				antwoord = null;
-			}
-		);
+		if (!gevraagd) gevraagd = true;
+		else if (antwoord.state.status === 'error') antwoord.retry();
 	}
 	function wacht(fn: () => void, ms: number) {
 		if (timer) clearTimeout(timer);
@@ -169,9 +177,10 @@
 		onpointerleave={buiten}
 		onclick={(e) => e.stopPropagation()}
 		onkeydown={toets}
-		><span class="kaart__kop">{grondslagKop(formule)}</span>{#if regelingen === null}<span
-				class="kaart__stil"
-				>{antwoord === null ? 'Regelingen niet geladen' : 'Regelingen laden…'}</span
+		><span class="kaart__kop">{grondslagKop(formule)}</span
+		>{#if antwoord.state.status === 'error'}<span class="kaart__stil" role="alert"
+				>{failureText('De regelingen', antwoord.state.error)}</span
+			>{:else if regelingen === null}<span class="kaart__stil">Regelingen laden…</span
 			>{:else if regelingen.length === 0}<span class="kaart__leeg">{nogGeen(formule)}</span
 			>{:else}{#each regelingen as r (r.instrument.key)}{@const regel = regelingRegel(r)}<span
 					class="kaart__regeling"

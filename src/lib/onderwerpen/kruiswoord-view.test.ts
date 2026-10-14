@@ -31,10 +31,11 @@ const cells = (body: string, row: string) => {
 };
 
 describe('the Kruiswoord with a column that could not be counted', () => {
-	it('shows a dash there, never a 0, and says which columns failed', () => {
+	it('leaves them not counted, never a 0, and says which columns failed', () => {
 		const body = html(['moties', 'brieven']);
-		expect(cells(body, 'Totaal')).toEqual(['–', '–', '1']);
-		expect(cells(body, '>2026<')).toEqual(['–', '–', '1']);
+		expect(cells(body, 'Totaal')).toEqual(['', '', '1']);
+		expect(cells(body, '>2026<')).toEqual(['', '', '1']);
+		expect(body.match(/aria-label="Niet geteld"/g)).toHaveLength(4);
 		expect(body).toContain('role="alert"');
 		expect(body).toContain('Moties en brieven konden niet worden geteld.');
 	});

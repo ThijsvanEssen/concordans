@@ -1,10 +1,12 @@
 <script lang="ts">
 	import type { Collection } from '$lib/vocabulary';
+	import { report } from '$lib/api/errors';
 	import { naFilter, zichtSleutel } from '$lib/graph/zicht';
 	import { vandaag } from '$lib/text/datum';
 	import { formatCount } from '$lib/text/getal';
 	import type { NeighborhoodReach } from '$lib/graph/store/types';
-	import { onDestroy, onMount, tick, untrack } from 'svelte';
+	import { onDestroy, onMount, untrack } from 'svelte';
+	import { afterTick } from '$lib/util/after-tick';
 	import { isEscape } from '$lib/actions/keys';
 	import { get } from 'svelte/store';
 	import Graph from 'graphology';
@@ -293,7 +295,7 @@
 		const passen = naFilter(vorigeZicht, nu);
 		vorigeZicht = nu;
 		// After the refresh above has hidden what the filter leaves out.
-		if (passen && !untrack(() => fitSuppressed)) void tick().then(() => canvas?.fit());
+		if (passen && !untrack(() => fitSuppressed)) afterTick(() => canvas?.fit());
 	});
 
 	// ── camera ────────────────────────────────────────────────────────────────
@@ -363,7 +365,7 @@
 			g.setNodeAttribute(id, 'y', Math.sin(ang) * outerR);
 		});
 		const movable = new Set<string>([...l1List, ...outerList]);
-		void runLayout(movable);
+		runLayout(movable).catch((e) => report('Netwerk opmaak', e));
 	}
 
 	// A new focus from outside the canvas (a link in a reader, Back) frames the network as
@@ -778,7 +780,7 @@
 		if (!c) return;
 		clusterOpener = opener;
 		if (opener)
-			void tick().then(() =>
+			afterTick(() =>
 				canvasWrap?.parentElement?.querySelector<HTMLElement>('.cluster-kaart button')?.focus()
 			);
 		const at = lastPointer ?? { x: CARD_GAP, y: CARD_GAP };
@@ -786,7 +788,7 @@
 		const x = at.x + CARD_GAP + CARD_W < w ? at.x + CARD_GAP : Math.max(8, w - CARD_W - 8);
 		clusterCard = { cluster: c, x, y: Math.max(8, at.y - CARD_GAP) };
 		// Measured once drawn, before it is painted: the card moves off the panels it covers.
-		void tick().then(() => {
+		afterTick(() => {
 			const card = canvasWrap?.querySelector<HTMLElement>('.cluster-kaart');
 			if (!canvasWrap || !card || !clusterCard) return;
 			const origin = canvasWrap.getBoundingClientRect();
@@ -951,7 +953,7 @@
 		hasNodes = g.order > 0;
 		applyFilters();
 		if (changed) scheduleFit();
-		runLayout(addedThisSync);
+		runLayout(addedThisSync).catch((e) => report('Netwerk opmaak', e));
 		syncContainerAnchors();
 	}
 
