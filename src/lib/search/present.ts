@@ -4,12 +4,11 @@ import { menselijkeNaam } from '$lib/bron/menselijk';
 // lawyer checks it by, and where the API gives one, a line of the text with the words
 // searched for marked. Stukken of one dossier stand under that dossier.
 import type { Schema } from '$lib/api/types';
-import { formatLongDate } from '$lib/components/explore/readers/_shared';
 import { kindName } from '$lib/components/explore/law-head';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { articleName } from '$lib/text/bw';
-import { korteDatum } from '$lib/text/datum';
+import { korteDatum, langeDatum } from '$lib/text/datum';
 import { bronPlural, type Collection } from '$lib/vocabulary';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
 
@@ -176,7 +175,7 @@ export function presentHit(hit: Hit, query: string, neighbours: readonly Hit[] =
 					? `${cited} ${year}`
 					: cited
 				: date
-					? `${court}, ${formatLongDate(date)}`
+					? `${court}, ${langeDatum(date)}`
 					: court;
 			// The court publishes a translation under its own ECLI and the same date; the name
 			// it gives says so ("(Engels)", "(English translation)"), and the title too.

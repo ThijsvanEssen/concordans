@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { textOf } from '$lib/text/words';
+	import { langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	// Reader for instruments: the articles of the whole regulation in natural order. A
 	// publication in the Staatsblad or Staatscourant has no articles of its own: it is
@@ -7,7 +9,6 @@
 	import ReaderHead from './ReaderHead.svelte';
 	import { lawIdOf, type GraphNode } from '$lib/graph/types';
 	import WholeLawReader from '../WholeLawReader.svelte';
-	import { formatLongDate, textProp } from './_shared';
 	import { publicationName } from '../law-head';
 	import { citeItems } from '$lib/components/ui/cite';
 	import { permalink } from '$lib/bron/anchor';
@@ -17,12 +18,12 @@
 
 	const p = $derived(node.raw?.props ?? {});
 	const bwbId = $derived(lawIdOf(p) ?? node.key.toUpperCase());
-	const publication = $derived(textProp(p.publication_kind));
+	const publication = $derived(textOf(p.publication_kind));
 </script>
 
 <ReaderFrame>
 	{#if publication}
-		{@const titel = textProp(p.display_name) ?? node.label}
+		{@const titel = textOf(p.display_name) ?? node.label}
 		<ReaderHead
 			collection="instruments"
 			title={titel}
@@ -34,11 +35,10 @@
 			}}
 		>
 			{#snippet status()}
-				{#if textProp(p.date_signed)}<span
-						>Ondertekend {formatLongDate(textProp(p.date_signed))}.</span
+				{#if textOf(p.date_signed)}<span>Ondertekend {langeDatum(textOf(p.date_signed))}.</span
 					>{/if}
-				{#if textProp(p.date_published)}<span
-						>Gepubliceerd {formatLongDate(textProp(p.date_published))}.</span
+				{#if textOf(p.date_published)}<span
+						>Gepubliceerd {langeDatum(textOf(p.date_published))}.</span
 					>{/if}
 			{/snippet}
 		</ReaderHead>

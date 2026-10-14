@@ -4,6 +4,7 @@
 // duidelijk onderscheid tussen wet en gelijknamig dossier"). The name follows from official
 // data only (Thijs, 9 Oct: "dossiernummers zijn prima, maar ik heb liever ook human-readable
 // namen"). The responses carry the short title (API 0.79.54); without one the title, cut.
+import { textOf } from '$lib/text/words';
 
 export type DossierNaamBron = {
 	number: string;
@@ -29,13 +30,15 @@ export function dossierUitProps(
 	props: Record<string, unknown> | null | undefined,
 	fallback = ''
 ): DossierNaamBron {
-	const t = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
 	const p = props ?? {};
-	const number = t(p.label) ?? t(p.number) ?? fallback;
-	const title = (t(p.title) ?? t(p.display_name))?.replace(/^Kamerstukdossier\s+[^:]+:\s*/, '');
+	const number = textOf(p.label) ?? textOf(p.number) ?? fallback;
+	const title = (textOf(p.title) ?? textOf(p.display_name))?.replace(
+		/^Kamerstukdossier\s+[^:]+:\s*/,
+		''
+	);
 	const d: DossierNaamBron = { number, title: title ?? null };
-	if ('short_title' in p) d.short_title = t(p.short_title);
-	const basis = t(p.short_title_basis);
+	if ('short_title' in p) d.short_title = textOf(p.short_title);
+	const basis = textOf(p.short_title_basis);
 	if (basis) d.short_title_basis = basis as DossierNaamBron['short_title_basis'];
 	return d;
 }

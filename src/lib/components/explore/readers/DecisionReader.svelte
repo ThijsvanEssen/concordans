@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { langeDatum } from '$lib/text/datum';
 	import { joinParts, withoutGroup } from '$lib/text/words';
 	import { kamerstukName } from '$lib/components/parliamentary/kamerstuk';
 	import { bewaarItem } from '$lib/map/map';
@@ -19,7 +20,6 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronHref } from '$lib/bron/href';
 	import { bronLabel } from '$lib/vocabulary';
-	import { formatLongDate } from './_shared';
 	import { ekFactionGroups, votersOf } from './voters';
 	import { decisionMethod, decisionOutcome } from '$lib/components/explore/index/decision-kind';
 	import { EK_SOURCE, chamberName } from '$lib/components/parliamentary/chamber';
@@ -137,7 +137,7 @@
 			>
 				{#snippet soort()}
 					<SoortLink collection="decisions">{bronLabel('decisions')}</SoortLink><span
-						>, {chamberName(chamber)}{d.date ? `, ${formatLongDate(d.date)}` : ''}</span
+						>, {chamberName(chamber)}{d.date ? `, ${langeDatum(d.date)}` : ''}</span
 					>
 				{/snippet}
 				<!-- The outcome and what was voted on; the dossier is in the band ("Over 34372 …"), a
@@ -262,7 +262,7 @@
 				<p class="source">
 					Bron: <a href={d.source_url ?? EK_SOURCE.url} rel="external"
 						>{EK_SOURCE.name}, {EK_SOURCE.site}</a
-					>{d.retrieved_on ? `, geraadpleegd op ${formatLongDate(d.retrieved_on)}` : ''}.
+					>{d.retrieved_on ? `, geraadpleegd op ${langeDatum(d.retrieved_on)}` : ''}.
 				</p>
 			{/if}
 

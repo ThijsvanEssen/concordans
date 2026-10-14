@@ -1,10 +1,10 @@
 <script lang="ts">
+	import { langeDatum } from '$lib/text/datum';
 	import { RIJEN_150, RIJEN_75, deelStoelen, stemVanStoel } from './stoel';
 	import { fractieNaam } from '$lib/bron/menselijk';
 	import type { Schema } from '$lib/api/types';
 	import { bronHref } from '$lib/bron/href';
 	import { seatCount } from '$lib/verbonden/filter';
-	import { formatLongDate } from './readers/_shared';
 	import { chamberName } from '$lib/components/parliamentary/chamber';
 	import FractiePatronen from './FractiePatronen.svelte';
 	import { patroonId, patroonVan } from './partijkleuren.svelte';
@@ -269,7 +269,7 @@
 	{#if !meubels}
 		<figcaption class="hemicycle-caption">
 			<!-- The count stands in the middle; only seats not yet assigned are worth a word. -->
-			{kamer}, {data.chamber === 'EK' ? 'samenstelling' : 'stand'} op {formatLongDate(
+			{kamer}, {data.chamber === 'EK' ? 'samenstelling' : 'stand'} op {langeDatum(
 				data.as_of ?? null
 			)}{data.assigned_seats < data.total_seats
 				? `, ${data.assigned_seats} van ${data.total_seats} zetels toegewezen`

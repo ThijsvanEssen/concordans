@@ -53,7 +53,7 @@ export function nagekomenIn(brieven: readonly Brief[] | null | undefined): {
 		voor: `Nagekomen in ${bs.length > 1 ? 'brieven' : 'brief'}${genummerd ? (bs.length > 1 ? ' nrs.' : ' nr.') : ' van'}`,
 		brieven: bs.map((b) => ({
 			key: b.key,
-			naam: genummerd ? String(b.sequence) : langeDatum(b.date ?? null) || 'onbekende datum'
+			naam: genummerd ? String(b.sequence) : langeDatum(b.date) || 'onbekende datum'
 		}))
 	};
 }

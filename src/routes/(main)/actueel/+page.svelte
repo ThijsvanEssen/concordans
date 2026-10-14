@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { lijstDoel } from '$lib/stores/sprong';
 	import { fractieNaam } from '$lib/bron/menselijk';
-	import { vandaag } from '$lib/text/datum';
+	import { korteDatum, vandaag } from '$lib/text/datum';
 	import { formatCount } from '$lib/text/getal';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
@@ -48,7 +48,6 @@
 		feedStand,
 		kindFromParam,
 		normalizeItem,
-		shortDate,
 		standLine,
 		type DaySummary,
 		type FeedItem,
@@ -605,7 +604,7 @@
 {#snippet verder()}
 	{#if doorzocht}
 		<p class="doorzocht">
-			Doorzocht vanaf {shortDate(doorzocht)}.
+			Doorzocht vanaf {korteDatum(doorzocht)}.
 			<button type="button" class="btn is-groot" onclick={verderTerug} disabled={verderLaden}
 				>{verderLaden ? 'Laden…' : 'Zoek verder terug'}</button
 			>

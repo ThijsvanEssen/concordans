@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { bewaarItem } from '$lib/map/map';
 	import { naamVanId } from '$lib/bron/menselijk';
-	import { vandaag } from '$lib/text/datum';
+	import { langeDatum, vandaag } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
 	import { onderdeelMark } from '$lib/text/article-parts';
 	import { api, unwrap } from '$lib/api/client';
@@ -16,7 +16,6 @@
 		primeInstrumentNames
 	} from '$lib/api/instrument-cache';
 	import { formatCount } from '$lib/verbonden/filter';
-	import { formatLongDate } from './readers/_shared';
 	import type { Schema } from '$lib/api/types';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
@@ -154,9 +153,9 @@
 		const of = v?.current
 			? ', de geldende tekst'
 			: v?.valid_from
-				? `, versie van ${formatLongDate(v.valid_from)}${v.valid_until ? ` tot ${formatLongDate(v.valid_until)}` : ''}`
+				? `, versie van ${langeDatum(v.valid_from)}${v.valid_until ? ` tot ${langeDatum(v.valid_until)}` : ''}`
 				: '';
-		return `Tekst zoals geldend op ${formatLongDate(peildatum)}${of}.`;
+		return `Tekst zoals geldend op ${langeDatum(peildatum)}${of}.`;
 	});
 
 	// A regulation's grondslag, under its head: the laws its Gelet op names (`/basis`), asked
@@ -182,7 +181,7 @@
 			count: total,
 			peildatum,
 			currentFrom: currentVersion?.valid_from,
-			longDate: (day) => formatLongDate(day),
+			longDate: (day) => langeDatum(day),
 			formatCount
 		})
 	);
@@ -359,13 +358,11 @@
 					<!-- The peildatum: the versions of the law by year, the text of today first. -->
 					<div class="whole-peil">
 						<span>Tekst geldend op</span>
-						<TekstMenu label="Tekst geldend op" tekst={formatLongDate(peildatum ?? today)}>
+						<TekstMenu label="Tekst geldend op" tekst={langeDatum(peildatum ?? today)}>
 							{#snippet inhoud(sluit)}
 								<div class="peil-lijst">
 									<span class="peil-noot"
-										>{formatCount(versions.length)} versies sinds {formatLongDate(
-											oldest ?? null
-										)}</span
+										>{formatCount(versions.length)} versies sinds {langeDatum(oldest ?? null)}</span
 									>
 									<button
 										type="button"
@@ -375,7 +372,7 @@
 										onclick={() => {
 											sluit();
 											choose('');
-										}}>{formatLongDate(today)}, vandaag</button
+										}}>{langeDatum(today)}, vandaag</button
 									>
 									{#each versionsByYear(versions) as [year, list] (year)}
 										<span class="peil-jaar" aria-hidden="true">{year}</span>
@@ -388,10 +385,7 @@
 												onclick={() => {
 													sluit();
 													choose(v.valid_from ?? '');
-												}}
-												>{formatLongDate(v.valid_from ?? null)}{v.current
-													? ', geldend'
-													: ''}</button
+												}}>{langeDatum(v.valid_from)}{v.current ? ', geldend' : ''}</button
 											>
 										{/each}
 									{/each}
@@ -417,7 +411,7 @@
 			{#if firstVersionFrom && peildatum < firstVersionFrom}
 				<!-- Before the first toestand: the BWB holds no text of that day. -->
 				<p class="whole-before">
-					De BWB heeft geen tekst van vóór {formatLongDate(firstVersionFrom)}.
+					De BWB heeft geen tekst van vóór {langeDatum(firstVersionFrom)}.
 					<a href={withParams(page.url, { peildatum: firstVersionFrom })} data-sveltekit-noscroll
 						>Naar de eerste versie</a
 					>
@@ -432,7 +426,7 @@
 				</p>
 			{:else}
 				<p class="whole-empty-text stil">
-					Geen tekst van deze regeling op {formatLongDate(peildatum)}.
+					Geen tekst van deze regeling op {langeDatum(peildatum)}.
 				</p>
 			{/if}
 		{/if}

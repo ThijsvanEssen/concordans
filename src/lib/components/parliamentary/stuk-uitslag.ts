@@ -3,6 +3,7 @@
 // with the day (`decided_on`) and the seats voor and tegen of that vote (`tally`), a link to
 // the stemming (`decision`). A stuk another replaced names the one that did (`replaced_by`).
 // Source values only: nothing is read from a title, and a stuk without an outcome shows none.
+import { textOf } from '$lib/text/words';
 import { korteDatum } from '$lib/text/datum';
 import { nrWoord, tussen } from './vervanging';
 
@@ -35,7 +36,6 @@ export type StukUitslag = {
 	vervangers: { key: string; nummer: string }[];
 };
 
-const tekst = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
 const getal = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 
 /** The seats voor and tegen of a tally, `150–0`; null for a tally without seats. */
@@ -49,7 +49,7 @@ export function telling(tally: unknown): string | null {
 
 /** The outcome of a stuk from its props or its list item; null while nothing was decided. */
 export function stukUitslag(p: Record<string, unknown> | null | undefined): StukUitslag | null {
-	const uitkomst = tekst(p?.outcome);
+	const uitkomst = textOf(p?.outcome);
 	if (!p || !uitkomst || !UITKOMSTEN.includes(uitkomst)) return null;
 	const vervangers = (Array.isArray(p.replaced_by) ? p.replaced_by : [])
 		.filter(
@@ -61,8 +61,8 @@ export function stukUitslag(p: Record<string, unknown> | null | undefined): Stuk
 	return {
 		uitkomst: uitkomst as Uitkomst,
 		telling: telling(p.tally),
-		datum: korteDatum(tekst(p.decided_on)) || null,
-		besluit: tekst(p.decision),
+		datum: korteDatum(textOf(p.decided_on)) || null,
+		besluit: textOf(p.decision),
 		vervangers
 	};
 }

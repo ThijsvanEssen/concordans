@@ -1,9 +1,10 @@
 <script lang="ts">
+	import { textOf } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
 	import { fractieNaam, naamVan } from '$lib/bron/menselijk';
 	import ReaderHead from './ReaderHead.svelte';
 	import { formatCount } from '$lib/text/getal';
-	import { vandaag } from '$lib/text/datum';
+	import { korteDatum, langeDatum, vandaag } from '$lib/text/datum';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
@@ -29,7 +30,6 @@
 	} from '$lib/components/parliamentary/career';
 	import { parseFilter } from '$lib/verbonden/filter';
 	import { page } from '$app/state';
-	import { formatDate, formatLongDate } from './_shared';
 	import BewindspersoonOverzicht from '$lib/components/parliamentary/BewindspersoonOverzicht.svelte';
 	import BewindspersoonKop from './BewindspersoonKop.svelte';
 	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
@@ -177,11 +177,10 @@
 
 	const signatureOf = (n: Neighbor): Signature => {
 		const meta = (n.meta ?? {}) as Record<string, unknown>;
-		const text = (v: unknown) => (typeof v === 'string' && v ? v : null);
 		return {
-			function: text(meta.function),
-			capacity: text(meta.capacity),
-			date: text(n.props?.date)
+			function: textOf(meta.function),
+			capacity: textOf(meta.capacity),
+			date: textOf(n.props?.date)
 		};
 	};
 
@@ -259,7 +258,7 @@
 					</Feiten>
 					{#if ek.source}
 						<p class="ek-source">
-							{`Samenstelling op ${formatLongDate(ek.source.composition_date ?? null)}, gegevens sinds ${formatLongDate(ek.source.data_since ?? null)}. `}Bron:
+							{`Samenstelling op ${langeDatum(ek.source.composition_date)}, gegevens sinds ${langeDatum(ek.source.data_since)}. `}Bron:
 							<a href={ek.source.url} rel="external">{ek.source.attribution}</a>.
 						</p>
 					{/if}
@@ -445,7 +444,7 @@
 															{v.passed ? 'Aangenomen' : 'Verworpen'}
 														</span>
 													{/if}
-													{#if v.date}<span class="vote-date">{formatDate(v.date)}</span>{/if}
+													{#if v.date}<span class="vote-date">{korteDatum(v.date)}</span>{/if}
 												</span>
 												<!-- What the coalition did (API 0.79.45, #559; Thijs, 10 Oct). -->
 												{#if v.coalition}<div class="vote-coal">

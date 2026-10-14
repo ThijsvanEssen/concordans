@@ -9,6 +9,7 @@
 // collections at its two ends and what its meta says. The row, the line on the canvas, the
 // line between two hulls, the legend, the table, the CSV and the card Verbinding all read
 // them, so one verbinding is never called two things (onderzoek samenhang, 14 Oct).
+import { textOf } from '$lib/text/words';
 import { paragraphNumber } from '$lib/text/anchor';
 import type { Collection, Relation } from '$lib/vocabulary';
 import { langeDatum } from '$lib/text/datum';
@@ -22,7 +23,6 @@ import {
 import { passageOf, type Row } from './rows';
 import { uitsnede, type Passage } from './passage';
 import { confidenceWord } from './filter';
-import { text } from './edge-meta';
 
 /** The words of one verbinding, by its relation, its two ends and its meta. */
 export type Woorden = {
@@ -96,7 +96,7 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 	// A preamble that names an article without the power the regulation is made under in it
 	// (`basis_kind` mentioned, Awb 3:2 and 3:4) only names it.
 	BASED_ON: ({ meta }) =>
-		text(meta.basis_kind) === 'mentioned'
+		textOf(meta.basis_kind) === 'mentioned'
 			? [
 					'noemt in de aanhef',
 					'genoemd in de aanhef van',
@@ -120,7 +120,7 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 		naar === 'instruments' ? 'toelichting bij een wet' : 'toelichting bij een artikel'
 	],
 	APPEAL_OF: ({ meta }) => {
-		const aard = text(meta.procedure_type)?.toLowerCase() ?? 'hoger beroep';
+		const aard = textOf(meta.procedure_type)?.toLowerCase() ?? 'hoger beroep';
 		return [`${aard} tegen`, `bestreden in ${aard}`, aard];
 	},
 	ADVISES_ON: () => ['conclusie bij', 'uitspraak op', 'conclusie in dezelfde zaak'],
@@ -165,7 +165,7 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 			? ['toegezegd in', 'toegezegd in', 'toezegging in een activiteit']
 			: van === 'decisions'
 				? ['genomen in', 'genomen in', 'stemming in een activiteit']
-				: van === 'documents' && text(meta.reason) === 'ingediend'
+				: van === 'documents' && textOf(meta.reason) === 'ingediend'
 					? ['ingediend in', 'ingediend in', 'motie ingediend in een debat']
 					: van === 'documents'
 						? ['verslag van', 'verslag van', 'verslag van een debat']
@@ -176,8 +176,8 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 	// signed as minister or for the Kamer, not as Kamerlid, ondertekende.
 	AUTHORED: ({ naar, meta }) => {
 		if (naar === 'commitments') return ['deed', 'gedaan door', 'toezegging'];
-		const functie = text(meta.function);
-		const capacity = text(meta.capacity);
+		const functie = textOf(meta.function);
+		const capacity = textOf(meta.capacity);
 		return capacity && capacity !== 'kamerlid'
 			? [
 					functie ? `ondertekende als ${functie}` : 'ondertekende',
@@ -187,7 +187,7 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 			: ['diende in', 'ingediend door', 'indiening'];
 	},
 	VOTED: ({ meta }) => {
-		const keuze = text(meta.choice)?.toLowerCase();
+		const keuze = textOf(meta.choice)?.toLowerCase();
 		return [
 			keuze === 'voor' || keuze === 'tegen' ? `stemde ${keuze}` : 'stemde over',
 			'gestemd door',
@@ -197,9 +197,9 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 	// A supplementary budget revises its chapter (Dossier → Dossier); an amended motion or
 	// amendment replaces the one it names (Document → Document, `rule` vervanging).
 	REVISES: ({ van, meta }) =>
-		van === 'documents' || text(meta.rule) === 'vervanging'
+		van === 'documents' || textOf(meta.rule) === 'vervanging'
 			? ['vervangt', 'vervangt', 'vervanging van een motie of amendement']
-			: text(meta.rule) === 'slotwet'
+			: textOf(meta.rule) === 'slotwet'
 				? ['slotwet bij', 'slotwet bij', 'slotwet bij een begroting']
 				: ['wijzigt de begroting', 'wijzigt de begroting', 'wijziging van een begroting'],
 	// A budget change is submitted with its nota (Dossier → Dossier); a bijlage goes with
@@ -244,7 +244,7 @@ export function woordenVan(
 ): Woorden {
 	const m = meta ?? {};
 	// A change of an article by its effect: an AMENDS whose effect is `vervallen` repeals.
-	const effect = EFFECT[text(m.effect) ?? ''];
+	const effect = EFFECT[textOf(m.effect) ?? ''];
 	const r =
 		effect &&
 		(relation === 'ESTABLISHES' ||
@@ -366,9 +366,9 @@ const HERKOMST_BASIS: Partial<Record<string, string>> = {
  * what a row shows.
  */
 export function aanhalingUitMeta(meta: Record<string, unknown>): Passage | null {
-	const zin = text(meta.text);
+	const zin = textOf(meta.text);
 	if (!zin) return null;
-	const ref = text(meta.reference);
+	const ref = textOf(meta.reference);
 	const i = ref ? zin.indexOf(ref) : -1;
 	if (i >= 0)
 		return uitsnede({ before: zin.slice(0, i), mark: ref!, after: zin.slice(i + ref!.length) });
@@ -380,10 +380,10 @@ function paarStuk(kant: unknown, eerste: boolean): string | null {
 	if (!kant || typeof kant !== 'object') return null;
 	const k = kant as Record<string, unknown>;
 	if (!k.paper) return null;
-	const soort = text(k.kind)?.split(/[\s(]/)[0] ?? null;
-	const dossier = text(k.dossier_number);
+	const soort = textOf(k.kind)?.split(/[\s(]/)[0] ?? null;
+	const dossier = textOf(k.dossier_number);
 	if (!soort || !dossier) return null;
-	const suffix = text(k.dossier_suffix);
+	const suffix = textOf(k.dossier_suffix);
 	const nr = num(k.sequence);
 	const woord = eerste ? groot(soort) : soort.toLowerCase();
 	return `${woord} ${suffix ? `${dossier}-${suffix}` : dossier}${nr != null ? ` nr. ${nr}` : ''}`;
@@ -434,9 +434,10 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 	const lid = row.lid ? `lid ${row.lid}` : null;
 	// The place in the citing text: `in r.o. 4.3 en 5.1`.
 	const plaats = row.position && row.position !== lid ? `in ${row.position}` : null;
-	const reden = text(edge.reason);
+	const reden = textOf(edge.reason);
 	const uit = (s: string | null) => (s ? (HERKOMST_REDEN[s] ?? null) : null);
-	const formeel = text(edge.basis) === 'formal_relation' ? 'Rechtspraak.nl, formele relatie' : null;
+	const formeel =
+		textOf(edge.basis) === 'formal_relation' ? 'Rechtspraak.nl, formele relatie' : null;
 	const regel = (werkwoord: string | null, rest: string | null, herkomst: string | null) =>
 		({
 			werkwoord,
@@ -477,7 +478,7 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 			);
 		}
 		case 'APPEAL_OF': {
-			const aard = row.aard ?? text(edge.procedure_type)?.toLowerCase() ?? 'hoger beroep';
+			const aard = row.aard ?? textOf(edge.procedure_type)?.toLowerCase() ?? 'hoger beroep';
 			return inbound
 				? regel(`${groot(aard)} tegen`, 'deze uitspraak', formeel)
 				: regel('Bestreden', `in ${aard} met deze uitspraak`, formeel);
@@ -487,13 +488,13 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 			// lid 1 en 7` on the law, `AMvB op grond van lid 1 en 7` on the article; one under a
 			// regulation under the law, `Ministeriële regeling op grond van art. 19, 23, 28
 			// Cyberbeveiligingsbesluit` (delegaties.ts). Then the articles that work it out.
-			const basis = text(edge.basis_kind);
+			const basis = textOf(edge.basis_kind);
 			const grondslag = edge.grondslag as Grondslag | undefined;
 			if (!inbound && !grondslag) break;
 			const lijn = grondslag
 				? grondslagRegel(grondslag)
 				: {
-						werkwoord: grondslagWerkwoord(text(props.kind), basis),
+						werkwoord: grondslagWerkwoord(textOf(props.kind), basis),
 						rest:
 							selected === 'instruments'
 								? (row.position ?? null)
@@ -507,11 +508,11 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 		case 'EXPLAINS': {
 			// A memorie's section about the article (`explained-by`, API 0.79.55): its number where
 			// the title lacks it and its heading, a link to the section, its opening under it.
-			const kop = text(edge.heading);
+			const kop = textOf(edge.heading);
 			if (!inbound || !kop || !row.position || !row.at) break;
 			const nr = num(props.sequence);
 			const nummer = nr != null && !row.title.includes(`nr. ${nr}`) ? `nr. ${nr}` : null;
-			const opening = text(edge.excerpt);
+			const opening = textOf(edge.excerpt);
 			return {
 				...regel(null, join(nummer, row.position), null),
 				citaat: opening ? { before: '', mark: '', after: opening } : null,
@@ -526,16 +527,16 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 		case 'AMENDS':
 		case 'INTRODUCES':
 		case 'REPEALS': {
-			const effect = text(edge.effect);
+			const effect = textOf(edge.effect);
 			// The publication that enacted a law, among those that change it (`/amended-by`,
 			// `establishes`): `Stelt vast`, its day in the meta line.
 			const vastgesteld = woorden?.actief === 'stelt vast';
 			if (vastgesteld && num(edge.establishes)) return regel('Stelt vast', null, null);
 			// A row from the legislative history carries its change in its own meta line.
-			if (!effect && !text(edge.effective_date) && !text(edge.source_publication)) return null;
+			if (!effect && !textOf(edge.effective_date) && !textOf(edge.source_publication)) return null;
 			const werkwoord = effect === 'vernummering' ? 'Vernummert' : groot(woorden!.actief);
-			const datum = text(edge.effective_date);
-			const pub = publicatie(text(edge.source_publication));
+			const datum = textOf(edge.effective_date);
+			const pub = publicatie(textOf(edge.source_publication));
 			const wat = join(
 				lid,
 				datum ? `in werking ${langeDatum(datum)}` : row.proposed ? 'voorgesteld' : null
@@ -556,13 +557,13 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 				return regel(
 					'Tot stand gekomen',
 					'in dit dossier',
-					text(edge.dossier_number) ? 'Dossiernummer in de publicatie' : null
+					textOf(edge.dossier_number) ? 'Dossiernummer in de publicatie' : null
 				);
 			// The dossiers of a wet: the bill that made it, or a bill whose publication amended
 			// it (`via`, /api/instruments/{bwb}/dossiers). What the dossier is to the wet, in the
 			// Kamer's words; its kind and number stand under it ("Kamerstuk 36764").
-			const pub = publicatie(text(edge.publication));
-			return text(edge.via) === 'amending_publication'
+			const pub = publicatie(textOf(edge.publication));
+			return textOf(edge.via) === 'amending_publication'
 				? regel('Wijzigt', join('deze wet', pub), null)
 				: regel('Wetsvoorstel', 'van deze wet', null);
 		}
@@ -576,7 +577,7 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 			return regel(
 				inbound ? 'Gaat in op' : 'Deze brief gaat erop in',
 				inbound ? 'dit stuk' : null,
-				HERKOMST_BASIS[text(edge.basis) ?? ''] ?? null
+				HERKOMST_BASIS[textOf(edge.basis) ?? ''] ?? null
 			);
 		}
 		case 'REFERS_TO': {
@@ -591,7 +592,7 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 					const g = grondslagRegel(grondslag);
 					return regel(g.werkwoord, g.rest, null);
 				}
-				const dit = text(edge.dit) ?? 'deze wet';
+				const dit = textOf(edge.dit) ?? 'deze wet';
 				const artikelen = (n: number) => `${n} ${n === 1 ? 'artikel' : 'artikelen'}`;
 				const verwijzen = (n: number) => (n === 1 ? 'verwijst' : 'verwijzen');
 				const hierheen = naar ? `${artikelen(naar)} ${verwijzen(naar)} naar ${dit}` : null;
@@ -607,15 +608,15 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 					: null;
 			// An article of the law and the article it refers to, by its aard: `Verwijst naar
 			// art. 6:214 BW, als voorwaarde`.
-			const doel = text(edge.doel);
+			const doel = textOf(edge.doel);
 			if (doel) return regel('Verwijst naar', join(doel, aard), uit(reden));
 			const vaak = keer(num(edge.mention_count) ?? (row.mentions?.length || null));
 			// The words of the source, where they are not the passage under the line.
-			const eigen = !citaat && text(edge.text) ? `‘${text(edge.text)}’` : null;
+			const eigen = !citaat && textOf(edge.text) ? `‘${textOf(edge.text)}’` : null;
 			const herkomst =
 				uit(reden) ??
-				HERKOMST_BASIS[text(edge.basis) ?? ''] ??
-				(text(edge.cited_ecli)
+				HERKOMST_BASIS[textOf(edge.basis) ?? ''] ??
+				(textOf(edge.cited_ecli)
 					? HERKOMST_REDEN.ecli
 					: row.snippet || row.match
 						? 'Herkend in de tekst'
@@ -641,7 +642,7 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 		}
 		case 'VOTED': {
 			// A fractie's vote on the decision: `Tegen, 7 zetels`.
-			const keuze = text(edge.choice);
+			const keuze = textOf(edge.choice);
 			if (!keuze || !inbound) break;
 			const zetels = num(edge.seats);
 			return regel(
@@ -652,14 +653,14 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 		}
 		case 'PUBLISHED_IN': {
 			// What the Tractatenblad publishes of the treaty, as the Verdragenbank writes it.
-			const wat = text(edge.description);
+			const wat = textOf(edge.description);
 			if (wat) return regel(null, wat, 'Verdragenbank');
 			break;
 		}
 		case 'ABOUT': {
 			if (other !== 'decisions') break;
 			const besluit =
-				text(props.decision_text)?.replace(/\.$/, '') ??
+				textOf(props.decision_text)?.replace(/\.$/, '') ??
 				(props.passed === true ? 'Aangenomen' : props.passed === false ? 'Verworpen' : null);
 			if (!besluit) break;
 			const tally = (props.tally ?? {}) as Record<string, unknown>;

@@ -322,13 +322,12 @@ export function feedStand(
 /** `Stukken van de Kamers tot en met 24 sep. 2026, opgehaald op 24 sep. 2026` */
 export function standLine(stand: NonNullable<ReturnType<typeof feedStand>>): string {
 	const fetched = stand.retrievedAt
-		? `, opgehaald op ${shortDate(stand.retrievedAt.slice(0, 10))}`
+		? `, opgehaald op ${korteDatum(stand.retrievedAt.slice(0, 10))}`
 		: '';
-	return `Stukken van de Kamers tot en met ${shortDate(stand.newest)}${fetched}`;
+	return `Stukken van de Kamers tot en met ${korteDatum(stand.newest)}${fetched}`;
 }
 
 /** `24 sep. 2026`, for a date in a line of text. */
-export const shortDate = (iso: string | null | undefined): string => korteDatum(iso);
 
 /**
  * The articles a version changed, of all the law has: `8 van 11 artikelen gewijzigd`; where

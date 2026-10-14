@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { korteDatum, langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
 	import ReaderHead from './ReaderHead.svelte';
@@ -10,7 +11,6 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import { str } from '$lib/components/parliamentary/data';
 	import { EK_SOURCE } from '$lib/components/parliamentary/chamber';
-	import { formatDate, formatLongDate } from './_shared';
 	import { ekVoteLine } from './voters';
 	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
 	import { load } from '$lib/util/load.svelte';
@@ -89,7 +89,7 @@
 		{@const board = boardOf(f.props)}
 		{@const sinds = str(f.props?.active_from)}
 		{@const composed = read
-			? `Samenstelling op ${formatLongDate(read)}${since ? `, gegevens sinds ${formatLongDate(since)}` : ''}. `
+			? `Samenstelling op ${langeDatum(read)}${since ? `, gegevens sinds ${langeDatum(since)}` : ''}. `
 			: ''}
 		{@const titel = abbreviation ?? name ?? naamVan('factions', f)}
 		<div class="r-faction">
@@ -110,10 +110,9 @@
 							<span class="zetels"
 								>{seats}
 								{seats === 1 ? 'zetel' : 'zetels'}{ek && read
-									? ` op ${formatLongDate(read)}`
+									? ` op ${langeDatum(read)}`
 									: ''}</span
-							>{#if sinds && !ek}, <span class="sinds">fractie sinds {formatLongDate(sinds)}</span
-								>{/if}
+							>{#if sinds && !ek}, <span class="sinds">fractie sinds {langeDatum(sinds)}</span>{/if}
 						</p>
 					{/if}
 				{/snippet}
@@ -127,7 +126,7 @@
 							<dd>
 								{#if seat.member}<BronLink ref={`members/${seat.member}`}>{seat.name}</BronLink
 									>{:else}{seat.name}{/if}{#if seat.since}<span class="since"
-										>, sinds {formatLongDate(seat.since)}</span
+										>, sinds {langeDatum(seat.since)}</span
 									>{/if}
 							</dd>
 						{/each}
@@ -182,7 +181,7 @@
 									>{stemmingNaam(v.subject, v.dossiers?.[0] ?? v.dossier_numbers?.[0])}</BronLink
 								>
 								<span class="vote-meta"
-									>{v.date ? formatDate(v.date) : ''}{v.result
+									>{v.date ? korteDatum(v.date) : ''}{v.result
 										? `, ${v.result.toLowerCase()}`
 										: ''}</span
 								>

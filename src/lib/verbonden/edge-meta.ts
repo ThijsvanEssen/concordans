@@ -1,6 +1,7 @@
 // The meta of one edge, read once: the lid it names, where it stands in the citing text, the
 // passage and the phrase in it. The row of Verbonden, the card of the canvas and the line on
 // the canvas all read it here, so they say the same of one verbinding.
+import { textOf } from '$lib/text/words';
 import { parseQualifier } from '$lib/text/qualifier';
 import { paragraphCite } from '$lib/text/judgment-cite';
 import { paragraphAnchor } from '$lib/text/anchor';
@@ -13,8 +14,6 @@ import {
 } from '$lib/text/voetnoten';
 
 /** A string with its words, or null: what an API field carries where it carries anything. */
-export const text = (value: unknown): string | null =>
-	typeof value === 'string' && value.trim() ? value.trim() : null;
 
 /** One edge of the canvas, by its ends and relation: how a row and a line are matched. */
 export const edgeKey = (source: string, target: string, relation: string) =>
@@ -83,22 +82,22 @@ export function plaatsVanEdge(meta: Record<string, unknown>, ecli: string | null
 	const passages = Array.isArray(meta.passages) ? (meta.passages as EdgePassage[]) : [];
 	const p = passages[0];
 	if (p && typeof p.snippet === 'string' && p.snippet) {
-		const nr = text(p.paragraph_number);
-		const label = text(p.footnote);
+		const nr = textOf(p.paragraph_number);
+		const label = textOf(p.footnote);
 		const start = typeof p.start === 'number' ? p.start : null;
 		const end = typeof p.end === 'number' ? p.end : null;
 		const words = start != null && end != null && end > start ? p.snippet.slice(start, end) : null;
 		const own = positionsLabel(
 			passages
-				.map((q) => text(q.paragraph_number))
+				.map((q) => textOf(q.paragraph_number))
 				.filter((x): x is string => !!x)
 				.filter((x, i, all) => all.indexOf(x) === i)
 				.map((x) => paragraphCite(ecli, x))
 		);
 		return {
 			snippet: p.snippet,
-			match: words ?? text(p.text),
-			passageAt: nr ? paragraphAnchor(nr) : text(p.paragraph_id),
+			match: words ?? textOf(p.text),
+			passageAt: nr ? paragraphAnchor(nr) : textOf(p.paragraph_id),
 			noot: label ? { id: nootAnker(label), label } : null,
 			// The note goes with the place it is in: the first passage's, the others after it.
 			...(label && nr
@@ -135,11 +134,11 @@ export function plaatsVanMeta(
 	const numbers = Array.isArray(m.paragraphs)
 		? m.paragraphs.filter((p): p is string => typeof p === 'string' && !!p)
 		: [];
-	const one = text(m.paragraph_number);
+	const one = textOf(m.paragraph_number);
 	const all = numbers.length ? numbers : one ? [one] : [];
 	return {
 		position: positionsLabel(all.map((nr) => paragraphCite(ecli, nr))),
-		at: text(m.paragraph_id) ?? (all[0] ? paragraphAnchor(all[0]) : null)
+		at: textOf(m.paragraph_id) ?? (all[0] ? paragraphAnchor(all[0]) : null)
 	};
 }
 
@@ -172,22 +171,22 @@ export function readEdge(
 	{ direction, citingEcli }: { direction: 'inbound' | 'outbound'; citingEcli: string | null }
 ): EdgeReading {
 	const m = meta ?? {};
-	const phrase = text(m.raw_match) ?? text(m.qualifier);
+	const phrase = textOf(m.raw_match) ?? textOf(m.qualifier);
 	const lid =
-		(Array.isArray(m.leden) && text(m.leden[0])) ||
-		text(m.lid) ||
+		(Array.isArray(m.leden) && textOf(m.leden[0])) ||
+		textOf(m.lid) ||
 		(direction === 'inbound' ? lidOfMatch(phrase) : null);
 	const place = plaatsVanEdge(m, citingEcli);
 	const paragraphs = plaatsVanMeta(m, citingEcli);
 	return {
 		lid,
 		match: place.match ?? phrase,
-		snippet: place.snippet ?? text(m.snippet),
+		snippet: place.snippet ?? textOf(m.snippet),
 		position: place.position ?? paragraphs.position,
 		at: place.noot?.id ?? place.passageAt ?? paragraphs.at,
 		passageAt: place.passageAt ?? null,
 		noot: place.noot ?? null,
 		bereik: place.bereik ?? null,
-		reason: text(m.reason)
+		reason: textOf(m.reason)
 	};
 }

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { lidAnchor, lidNumber } from '$lib/text/anchor';
-	import { korteDatum } from '$lib/text/datum';
+	import { korteDatum, langeDatum } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
@@ -15,7 +15,6 @@
 	// formulations instead.
 	import type { Schema } from '$lib/api/types';
 	import { citeArticle, type Citation } from '$lib/text/cite';
-	import { longDate } from '$lib/verbonden/rows';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import IconKnop from '$lib/components/ui/IconKnop.svelte';
@@ -119,7 +118,7 @@
 
 	// ── Wording ──────────────────────────────────────────────────────────────────
 
-	const date = (iso: string | null | undefined) => longDate(iso ?? null) ?? 'niet in de gegevens';
+	const date = (iso: string | null | undefined) => langeDatum(iso) || 'niet in de gegevens';
 	const year = (iso: string | null | undefined) => (iso ? iso.slice(0, 4) : '');
 	const capital = (s: string) => s[0].toUpperCase() + s.slice(1);
 
@@ -131,8 +130,8 @@
 
 	const signedAndPublished = (p: Schema<'PublicationDTO'> | null | undefined) =>
 		[
-			p?.signed ? `vastgesteld ${longDate(p.signed)}` : null,
-			p?.published ? `uitgegeven ${longDate(p.published)}` : null
+			p?.signed ? `vastgesteld ${langeDatum(p.signed)}` : null,
+			p?.published ? `uitgegeven ${langeDatum(p.published)}` : null
 		]
 			.filter(Boolean)
 			.join(', ') || undefined;

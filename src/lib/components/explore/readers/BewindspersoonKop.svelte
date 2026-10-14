@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { korteDatum } from '$lib/text/datum';
 	import { report } from '$lib/api/errors';
 	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
@@ -8,7 +9,6 @@
 	import { getMemberCommitments, getMemberDossiers } from '$lib/api/records';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import ReaderHead from './ReaderHead.svelte';
-	import { datum } from '$lib/components/parliamentary/stand';
 
 	let { m, id }: { m: Schema<'MemberDetailDTO'>; id: string } = $props();
 	const fns = $derived(
@@ -64,9 +64,10 @@
 		{#if laatst}
 			<p class="zin">
 				{#if nu.length}
-					{nu.map((f) => f.function).join(' en ')} sinds {datum(nu[0].from_date)}, {nu[0].cabinet}.
+					{nu.map((f) => f.function).join(' en ')} sinds {korteDatum(nu[0].from_date)}, {nu[0]
+						.cabinet}.
 				{:else}
-					Laatst {laatst.function?.charAt(0).toLowerCase()}{laatst.function?.slice(1)}, tot {datum(
+					Laatst {laatst.function?.charAt(0).toLowerCase()}{laatst.function?.slice(1)}, tot {korteDatum(
 						laatst.to_date
 					)} ({laatst.cabinet}).
 				{/if}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { korteDatum } from '$lib/text/datum';
 	import { naamVanId } from '$lib/bron/menselijk';
 	// Een geopende post in Bewindspersonen, in de vorm
 	// van OpenRij. Wat de bewindspersoon deed staat er meteen: de laatste toezeggingen (met
@@ -7,7 +8,6 @@
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';
 	import { postRecord } from './requests';
-	import { datum } from '$lib/components/parliamentary/stand';
 	import OpenRij from './OpenRij.svelte';
 	import RijInhoud from './RijInhoud.svelte';
 	import ToezeggingInhoud from './ToezeggingInhoud.svelte';
@@ -88,7 +88,7 @@
 
 	const bron = $derived(`members/${memberKey}`);
 	const zin = $derived(
-		`${naam}${partij ? ` (${partij})` : ''}: ${functie.charAt(0).toLowerCase()}${functie.slice(1)}, ${tot ? `van ${datum(van)} tot ${datum(tot)}` : `sinds ${datum(van)}`}.`
+		`${naam}${partij ? ` (${partij})` : ''}: ${functie.charAt(0).toLowerCase()}${functie.slice(1)}, ${tot ? `van ${korteDatum(van)} tot ${korteDatum(tot)}` : `sinds ${korteDatum(van)}`}.`
 	);
 </script>
 

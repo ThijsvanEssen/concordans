@@ -2,6 +2,7 @@
 // a law name (citation formats, graph labels) reads it through
 // `instrumentMetaStore` or `getInstrumentMeta`.
 
+import { textOf } from '$lib/text/words';
 import { writable, type Readable } from 'svelte/store';
 import { api, unwrap } from './client';
 import type { Schema } from './types';
@@ -17,12 +18,9 @@ export type InstrumentMeta = {
 	citationTitle: string | null;
 };
 
-// Node props are untyped, so the fields may be anything.
-const clean = (value: unknown) => (typeof value === 'string' && value.trim()) || null;
-
 /** The id a law is grouped under: its BWB id, or its own key when it has none (EU). */
 export function instrumentContainerId(input: { bwb_id?: unknown; key?: unknown }): string | null {
-	return clean(input.bwb_id) ?? clean(input.key);
+	return textOf(input.bwb_id) ?? textOf(input.key);
 }
 
 const cache = new Map<string, InstrumentMeta>();
@@ -54,13 +52,13 @@ export function recordInstrument(input: {
 	if (!bwbId) return;
 
 	const existing = cache.get(bwbId);
-	const title = clean(input.title) ?? clean(input.display_name) ?? existing?.title ?? null;
-	const citationTitle = clean(input.citation_title) ?? existing?.citationTitle ?? null;
+	const title = textOf(input.title) ?? textOf(input.display_name) ?? existing?.title ?? null;
+	const citationTitle = textOf(input.citation_title) ?? existing?.citationTitle ?? null;
 
 	cache.set(bwbId, {
 		bwbId,
 		title: title ?? citationTitle,
-		shortTitle: clean(input.short_title) ?? existing?.shortTitle ?? null,
+		shortTitle: textOf(input.short_title) ?? existing?.shortTitle ?? null,
 		citationTitle: citationTitle ?? title
 	});
 	flush();

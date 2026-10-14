@@ -5,11 +5,10 @@
 	import { lijstDoel } from '$lib/stores/sprong';
 	import { fractieNaam, naamVan } from '$lib/bron/menselijk';
 	import { voteCitation } from '$lib/bron/naam';
-	import { vandaag } from '$lib/text/datum';
+	import { korteDatum, langeDatum, vandaag, weekdag } from '$lib/text/datum';
 	import { formatDecimal } from '$lib/text/getal';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import { axisLabels } from './index/years-axis';
-	import { korteDatum, weekdag } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -62,7 +61,7 @@
 		groupRuns
 	} from '$lib/components/parliamentary/dossier-number';
 	import { partyColor } from '$lib/utils/party-color.svelte';
-	import { stand, datum } from '$lib/components/parliamentary/stand';
+	import { stand } from '$lib/components/parliamentary/stand';
 	import Hemicycle from './Hemicycle.svelte';
 	import ZaalTegenover from './ZaalTegenover.svelte';
 	import { indelingMarkering } from './zaaltegenover';
@@ -86,7 +85,6 @@
 		chamberFromParam,
 		type Chamber
 	} from '$lib/components/parliamentary/chamber';
-	import { formatLongDate } from './readers/_shared';
 	import { kamerstukLabel } from '$lib/components/parliamentary/kamerstuk';
 	import { judgmentCaseNumber, judgmentCourt, judgmentRowTitle } from './index/judgment-kind';
 	import {
@@ -2218,8 +2216,6 @@
 	];
 
 	const openSearch = useSearchOpener();
-
-	const fmtDateShort = (iso: string | null | undefined) => korteDatum(iso) || null;
 </script>
 
 <svelte:window onkeydown={handleKey} />
@@ -2342,7 +2338,7 @@
 									rijen={10}
 									coalitie={coalitieRegel}
 									peil={[
-										`Samenstelling op ${formatLongDate(
+										`Samenstelling op ${langeDatum(
 											(seats.chamber === 'EK' ? composition?.composition_date : null) ??
 												seats.as_of ??
 												null
@@ -2579,7 +2575,7 @@
 											{@const bron = `judgments/${j.key}`}
 											<IndexRow {bron} title={judgmentRowTitle(j)} href={hrefOf(bron)} acties>
 												{#snippet lead()}
-													<span class="row-id-main"><Waarde value={fmtDateShort(j.date)} /></span>
+													<span class="row-id-main"><Waarde value={korteDatum(j.date)} /></span>
 													<span class="row-id-sub"
 														><Waarde value={judgmentCourt(j.display_name, j.court)} /></span
 													>
@@ -2845,9 +2841,7 @@
 													{#snippet lead()}
 														{#if !day.date || kindLabel}
 															<span class="row-id-main"
-																><Waarde
-																	value={day.date ? kindLabel : fmtDateShort(s.date)}
-																/></span
+																><Waarde value={day.date ? kindLabel : korteDatum(s.date)} /></span
 															>
 															{#if s.dossiers?.[0] ?? s.dossier_numbers?.[0]}
 																{@const d = s.dossiers?.[0] ?? { number: s.dossier_numbers![0] }}
@@ -3003,7 +2997,7 @@
 														>{/if}
 												{/snippet}
 												{#snippet aside()}
-													{#if doc.date}<span class="row-sub">{fmtDateShort(doc.date)}</span>{/if}
+													{#if doc.date}<span class="row-sub">{korteDatum(doc.date)}</span>{/if}
 												{/snippet}
 												{#snippet detail()}
 													<RijInhoud
@@ -3038,7 +3032,7 @@
 												acties
 											>
 												{#snippet lead()}
-													<span class="row-id-main"><Waarde value={fmtDateShort(t.date)} /></span>
+													<span class="row-id-main"><Waarde value={korteDatum(t.date)} /></span>
 													{#if t.status}
 														<span class="row-id-sub">{t.status}</span>
 													{/if}
@@ -3061,7 +3055,7 @@
 													{#if t.expected_resolution}
 														<span class="row-sub" class:row-sub--late={late}
 															>{late ? 'Verlopen sinds' : 'Verwacht'}
-															{fmtDateShort(t.expected_resolution)}</span
+															{korteDatum(t.expected_resolution)}</span
 														>
 													{/if}
 												{/snippet}
@@ -3076,8 +3070,9 @@
 					<!-- Where the list comes from, under it: the source and its date close the list. -->
 					{#if composition && category !== 'factions' && !loading}
 						<p class="list-source">
-							Samenstelling op {formatLongDate(composition.composition_date ?? null)}, gegevens
-							sinds {formatLongDate(composition.data_since ?? null)}. Bron:
+							Samenstelling op {langeDatum(composition.composition_date)}, gegevens sinds {langeDatum(
+								composition.data_since
+							)}. Bron:
 							<a href={composition.url} rel="external">{composition.attribution}</a>.
 						</p>
 					{/if}
@@ -3117,7 +3112,7 @@
 			{@const dag = laatst ?? d.opened_on}
 			<span class="row-sub"
 				>{who}{who && dag ? ', ' : ''}{#if dag}{laatst ? 'laatste activiteit' : 'geopend'}
-					{datum(dag)}{/if}</span
+					{korteDatum(dag)}{/if}</span
 			>
 		{/snippet}
 		{#snippet aside()}

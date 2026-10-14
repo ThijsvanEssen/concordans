@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
@@ -19,7 +20,6 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronLabel } from '$lib/vocabulary';
 	import { getDossier, str } from '$lib/components/parliamentary/data';
-	import { formatLongDate } from './_shared';
 
 	import StandBalk from '$lib/components/parliamentary/StandBalk.svelte';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
@@ -154,7 +154,7 @@
 					{#if d.submitted_on_tk}
 						<!-- The day the bill reached the Kamer (API 0.75), before any stage below it. -->
 						<p class="reading">
-							Ingediend bij de Tweede Kamer op {formatLongDate(d.submitted_on_tk)}.
+							Ingediend bij de Tweede Kamer op {langeDatum(d.submitted_on_tk)}.
 						</p>
 					{/if}
 				{/snippet}
@@ -164,7 +164,7 @@
 					<!-- The Eerste Kamer's decision stands in the bar; its source is named here. -->
 					<p class="source">
 						Bron: <a href={ek.source_url} rel="external">{ek.attribution}</a>{ek.retrieved_on
-							? `, geraadpleegd op ${formatLongDate(ek.retrieved_on)}`
+							? `, geraadpleegd op ${langeDatum(ek.retrieved_on)}`
 							: ''}.
 					</p>
 				{:else if d.senate?.source?.url}
@@ -172,7 +172,7 @@
 					<!-- Where the Eerste Kamer's progress in the bar and the procedure comes from. -->
 					<p class="source">
 						Bron: <a href={bill.url} rel="external">{bill.attribution}</a>{bill.read_on
-							? `, geraadpleegd op ${formatLongDate(bill.read_on)}`
+							? `, geraadpleegd op ${langeDatum(bill.read_on)}`
 							: ''}.
 					</p>
 				{/if}

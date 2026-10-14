@@ -3,6 +3,7 @@
 // law and verb, from its own ESTABLISHES, AMENDS, INTRODUCES and REPEALS; an inwerkingtreding the
 // publication that brought the version, from the law's `/amended-by`. The feed gives neither
 // verb nor article (onderzoek samenhang, GGN 3.2 and 3.3: back-end B2, B3).
+import { textOf } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import type { Collection, Relation } from '$lib/vocabulary';
 import { woordenVan } from '$lib/verbonden/hoe';
@@ -34,7 +35,6 @@ export type WetRegel = {
 	meer: number;
 };
 
-const tekst = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v.trim() : null);
 const groot = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** Articles named on one line; the rest counted. */
@@ -43,7 +43,7 @@ export const ARTIKELEN_GENOEMD = 12;
 /** The verb of a change, as the row of Verbonden says it: `Wijzigt`, `Voegt in`, `Doet vervallen`. */
 function werkwoordVan(b: Buur): string {
 	const meta = b.meta ?? {};
-	if (tekst(meta.effect) === 'vernummering') return 'Vernummert';
+	if (textOf(meta.effect) === 'vernummering') return 'Vernummert';
 	const naar = b.collection === 'instruments' ? 'instruments' : 'articles';
 	return groot(woordenVan(b.relation as Relation, 'instruments', naar as Collection, meta).actief);
 }
@@ -64,7 +64,7 @@ export function wijzigingenVan(
 		if (!WIJZIGINGEN.includes(b.relation as Relation) || b.direction !== 'outbound') continue;
 		const p = b.props ?? {};
 		const isWet = b.collection === 'instruments';
-		const wetKey = (isWet ? b.key : (tekst(p.bwb_id) ?? '')).toLowerCase();
+		const wetKey = (isWet ? b.key : (textOf(p.bwb_id) ?? '')).toLowerCase();
 		if (!wetKey) continue;
 		const werkwoord = werkwoordVan(b);
 		const sleutel = `${werkwoord}/${wetKey}`;
@@ -72,13 +72,13 @@ export function wijzigingenVan(
 		if (!regel) {
 			const titel =
 				titels.get(wetKey) ??
-				tekst(p.instrument_citation_title) ??
-				(isWet ? tekst(b.display_name) : null) ??
+				textOf(p.instrument_citation_title) ??
+				(isWet ? textOf(b.display_name) : null) ??
 				naamVanId(`instruments/${wetKey}`);
 			regel = { werkwoord, wet: { key: wetKey, titel }, artikelen: [], meer: 0, plek: [] };
 			regels.set(sleutel, regel);
 		}
-		const nummer = tekst(p.article_number);
+		const nummer = textOf(p.article_number);
 		if (!isWet && nummer) {
 			const positie = typeof p.position === 'number' ? p.position : Number.POSITIVE_INFINITY;
 			regel.plek.push({ key: b.key, nummer, positie });

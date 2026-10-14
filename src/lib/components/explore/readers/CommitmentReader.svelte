@@ -2,7 +2,7 @@
 	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
 	import ReaderHead from './ReaderHead.svelte';
-	import { vandaag } from '$lib/text/datum';
+	import { langeDatum, vandaag } from '$lib/text/datum';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { getCommitment } from '$lib/api/records';
 	import { uniqueBy } from '$lib/util/unique';
@@ -20,7 +20,6 @@
 		type Cabinet,
 		type Ministry
 	} from '$lib/components/explore/index/government';
-	import { formatLongDate } from './_shared';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
 	import { nagekomenIn, toegezegdIn } from '$lib/components/parliamentary/toezegging';
@@ -110,7 +109,7 @@
 					<BronLink ref={`cabinets/${c.cabinet}`}>{cabinetName(c.cabinet ?? '')}</BronLink>
 				</Veld>
 				<Veld label="Geregistreerd" value={c.date}>
-					<span class="nums">{formatLongDate(c.date ?? null)}</span>
+					<span class="nums">{langeDatum(c.date)}</span>
 				</Veld>
 				<Veld label="Stand" value={c.status} nodig>
 					<span class:late
@@ -118,7 +117,7 @@
 					>
 				</Veld>
 				<Veld label="Verwacht" value={c.expected_resolution} nodig>
-					<span class="nums">{formatLongDate(c.expected_resolution ?? null)}</span>
+					<span class="nums">{langeDatum(c.expected_resolution)}</span>
 				</Veld>
 				<Veld label={c.dossiers?.length === 1 ? 'Dossier' : 'Dossiers'} value={c.dossiers}>
 					<span class="dossiers">

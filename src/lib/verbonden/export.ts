@@ -1,11 +1,12 @@
 // The verbindingen as a CSV, with the columns of the table. Separated by semicolons and
 // preceded by a byte order mark, as Excel with Dutch settings reads a CSV.
+import { korteDatum } from '$lib/text/datum';
 import { buildBronHref } from '$lib/bron/href';
 import type { Collection } from '$lib/vocabulary';
 import { allRows, filterGroups, rowLabel } from './view';
 import { BRON_KIND_LABEL, type VerbondenFilter } from './filter';
 import type { Group } from './groups';
-import { mentionRows, shortDate, type Row } from './rows';
+import { mentionRows, type Row } from './rows';
 import { betrouwbaarheid } from './verbinding';
 
 /** What a cell needs besides its row: the kind of the selected bron, and the site for links. */
@@ -61,7 +62,7 @@ export const COLUMNS: readonly Column[] = [
 	{
 		id: 'datum',
 		label: 'Datum',
-		value: (r) => shortDate(r.date ?? null) ?? '',
+		value: (r) => korteDatum(r.date),
 		csv: (r) => r.date ?? '',
 		sort: (r) => r.date ?? ''
 	},

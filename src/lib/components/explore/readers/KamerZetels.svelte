@@ -11,8 +11,7 @@
 	import { indelingMarkering } from '../zaaltegenover';
 	import ZaalPlaatsen from '../ZaalPlaatsen.svelte';
 	import { achtergrondVan, kleurVan } from '../partijkleuren.svelte';
-	import { korteDatum, vandaag } from '$lib/text/datum';
-	import { formatLongDate } from './_shared';
+	import { korteDatum, langeDatum, vandaag } from '$lib/text/datum';
 	import { hallOfDay, vacantZonderFractie, wijzigingenVan, zetelHoogte } from './zetels';
 	import { load } from '$lib/util/load.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -279,13 +278,11 @@
 								class="doel"
 								role="button"
 								tabindex="0"
-								aria-label="{k.s.coalition} zetels, {formatLongDate(k.s.from_date)}{onzekerWoord(
-									k.s
-								)}"
+								aria-label="{k.s.coalition} zetels, {langeDatum(k.s.from_date)}{onzekerWoord(k.s)}"
 								onclick={() => onKies(k.s)}
 								onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && onKies(k.s)}
 								><title
-									>{k.s.coalition} zetels vanaf {formatLongDate(k.s.from_date)}{onzekerWoord(
+									>{k.s.coalition} zetels vanaf {langeDatum(k.s.from_date)}{onzekerWoord(
 										k.s
 									)}</title
 								></rect
@@ -317,7 +314,7 @@
 		{:else if !zaal}
 			<p class="onderschrift">
 				{stukken.length
-					? `Geen samenstelling in de gegevens op ${formatLongDate(dag)}.`
+					? `Geen samenstelling in de gegevens op ${langeDatum(dag)}.`
 					: `Geen samenstelling van de ${kamer === 'TK' ? 'Tweede' : 'Eerste'} Kamer voor dit kabinet in de gegevens.`}
 			</p>
 		{:else}
@@ -326,7 +323,7 @@
 			{@const markering = indelingMarkering(zaal)}
 			<figure class="kamer">
 				<p class="onderschrift">
-					Samenstelling op {formatLongDate(zaal.as_of ?? dag)}.{markering ? ` ${markering}.` : ''}
+					Samenstelling op {langeDatum(zaal.as_of ?? dag)}.{markering ? ` ${markering}.` : ''}
 				</p>
 				<div class="zaal">
 					{#if kamer === 'TK'}

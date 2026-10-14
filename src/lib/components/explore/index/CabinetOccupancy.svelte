@@ -109,7 +109,6 @@
 	/** A post found through an old link closes by the link's own id. */
 	const toggle = (id: string) => onToggle(openKey === id && openId && openId !== id ? openId : id);
 
-	const day = (iso: string) => korteDatum(iso);
 	const month = (iso: string) => maandJaar(iso);
 	/** On a phone: the post on the scale of the figure, as a Strookje. */
 	const plek = (p: SeatPost) =>
@@ -127,7 +126,7 @@
 
 	const nameOf = (p: SeatPost) => p.member.name ?? naamVan('members', p.member);
 	const label = (p: SeatPost) =>
-		`${nameOf(p)}${p.party?.short ? `, ${p.party.short}` : ''}, ${periodeZin(p.from_date, p.to_date, day)}${p.acting ? ', waarnemend' : ''}`;
+		`${nameOf(p)}${p.party?.short ? `, ${p.party.short}` : ''}, ${periodeZin(p.from_date, p.to_date, korteDatum)}${p.acting ? ', waarnemend' : ''}`;
 </script>
 
 {#if !term}
@@ -145,7 +144,7 @@
 			<p class="occ-phases">
 				{#each phases as b, i (i)}{i ? ', ' : ''}{phaseLabel(b.phase).toLowerCase()}{b.phase
 						.from_date
-						? ` vanaf ${day(b.phase.from_date)}`
+						? ` vanaf ${korteDatum(b.phase.from_date)}`
 						: ''}{/each}
 			</p>
 		{/if}

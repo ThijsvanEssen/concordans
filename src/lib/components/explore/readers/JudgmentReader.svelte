@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { textOf } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
 	import { bevindingen, hoofdletter, strekking } from './uitkomst';
 	import { keyEcli } from '$lib/bron/leesbaar';
@@ -35,14 +36,13 @@
 		bodyItems,
 		splitSummary
 	} from './judgment-text';
-	import { formatLongDate, textProp } from './_shared';
 	import { sourceName } from '../law-head';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { getNodeGraph, neighborsOf } from '$lib/api/nodes';
 	import { getNodeFirst, once } from '$lib/api/records';
 	import { conclusieVan, type Laag } from '$lib/bron/behoort';
 	import { paragraphNumber } from '$lib/text/anchor';
-	import { korteDatum } from '$lib/text/datum';
+	import { korteDatum, langeDatum } from '$lib/text/datum';
 	import { samenhangVan, type Samenhang } from './samenhang';
 	import Voetnoten from '$lib/components/articles/Voetnoten.svelte';
 	import { kantlijn } from '$lib/actions/kantlijn';
@@ -155,8 +155,8 @@
 	{#snippet children(data)}
 		{@const j = data.judgment}
 		{@const paragraphs = j.paragraphs ?? []}
-		{@const caseNumber = textProp(j.props?.case_number)}
-		{@const judgmentDate = formatLongDate(textProp(j.props?.date))}
+		{@const caseNumber = textOf(j.props?.case_number)}
+		{@const judgmentDate = langeDatum(textOf(j.props?.date))}
 		<!-- The judgment on its official site, named by it as a law is (API 0.71):
 		     uitspraken.rechtspraak.nl, hudoc.echr.coe.int. -->
 		{@const deeplink =
@@ -213,14 +213,14 @@
 		{@const eigenStrekking = conclusion ? strekking(j.conclusion_outcome) : null}
 		{@const echr = bevindingen(j.echr_findings)}
 		{@const kop = j.ecli
-			? judgmentCite(j.ecli, textProp(j.props?.date), textProp(j.props?.court), author)
+			? judgmentCite(j.ecli, textOf(j.props?.date), textOf(j.props?.court), author)
 			: null}
 		{@const ro = paragraphNumber(anchor)}
 		{@const naamKort = kop?.short ?? j.display_name ?? 'Uitspraak'}
 		<ReaderHead
 			collection="judgments"
 			kind={conclusion ? 'Conclusie' : null}
-			juris={textProp(j.props?.court)}
+			juris={textOf(j.props?.court)}
 			title={(kop ? kop.full : (j.display_name ?? 'Uitspraak')) +
 				(j.names?.length ? ` (${j.names.join(', ')})` : '')}
 			acties={{

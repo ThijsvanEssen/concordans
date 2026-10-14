@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import { opsomming } from '$lib/text/opsomming';
 	import ReaderHead from './ReaderHead.svelte';
@@ -12,7 +13,6 @@
 	import type { Schema } from '$lib/api/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronLabel } from '$lib/vocabulary';
-	import { formatLongDate } from './_shared';
 	import { activityLine } from '$lib/verbonden/rows';
 	import { getActivity, getActivityRecords } from '$lib/api/records';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
@@ -84,7 +84,7 @@
 					node.id,
 					{
 						kort: titel,
-						voluit: [kind, date ? formatLongDate(date) : null, titel].filter(Boolean).join(', ')
+						voluit: [kind, date ? langeDatum(date) : null, titel].filter(Boolean).join(', ')
 					},
 					{ groep: kind }
 				)
@@ -99,7 +99,7 @@
 						status,
 						date
 					}),
-					date ? formatLongDate(date) : null
+					date ? langeDatum(date) : null
 				])}
 			{/snippet}
 		</ReaderHead>

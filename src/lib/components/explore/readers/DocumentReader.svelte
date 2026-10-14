@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { korteDatum } from '$lib/text/datum';
+	import { textOf } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
 	import { eigenSoort, naamVan } from '$lib/bron/menselijk';
 	import { getDocument } from '$lib/api/records';
@@ -23,7 +25,6 @@
 	import { markeringVoor } from '$lib/bron/markering.svelte';
 	import { findPassage } from '$lib/text/find-passage';
 	import { afterTick } from '$lib/util/after-tick';
-	import { formatDate } from './_shared';
 	import SubmitterLine from '$lib/bron/SubmitterLine.svelte';
 	import StemmingUitslag from '$lib/components/parliamentary/StemmingUitslag.svelte';
 	import Vervanging from '$lib/components/parliamentary/Vervanging.svelte';
@@ -73,7 +74,6 @@
 		return () => (stale = true);
 	});
 	const lichtProps = $derived((licht?.node.props ?? {}) as Record<string, unknown>);
-	const tekstVan = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
 	const bijlagen = $derived(
 		licht?.neighbors.buckets?.find(
 			(b) =>
@@ -280,9 +280,9 @@
 		{@const kind = eigenSoort(doc.kind)}
 		{@const cite = kamerstukCitation({
 			chamber: doc.chamber,
-			session_year: tekstVan(lichtProps.session_year),
-			dossier_number: tekstVan(lichtProps.dossier_number) ?? doc.dossier_numbers?.[0],
-			dossier_suffix: tekstVan(lichtProps.dossier_suffix),
+			session_year: textOf(lichtProps.session_year),
+			dossier_number: textOf(lichtProps.dossier_number) ?? doc.dossier_numbers?.[0],
+			dossier_suffix: textOf(lichtProps.dossier_suffix),
 			number: doc.number
 		})}
 		{@const naam = cite ?? doc.title ?? naamVan('documents', doc)}
@@ -316,7 +316,7 @@
 					<!-- Running text, the comma against the word before it. -->
 					<span
 						>{#if term}<GlossaryPill {term} label={kind ?? term} />{:else}{kind ??
-								'Document'}{/if}{#if doc.date}, {formatDate(doc.date)}{/if}{#if caseKinds.length},
+								'Document'}{/if}{#if doc.date}, {korteDatum(doc.date)}{/if}{#if caseKinds.length},
 							{caseKinds.join(', ')}{/if}</span
 					>
 				{/snippet}

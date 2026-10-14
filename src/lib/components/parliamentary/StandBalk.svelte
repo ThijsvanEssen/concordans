@@ -1,10 +1,11 @@
 <script lang="ts">
+	import { korteDatum } from '$lib/text/datum';
 	// De stand van een wetsvoorstel als balk in drie
 	// gelijke vakken, in de volgorde van de procedure. Afgerond met een uitkomst: mos met een
 	// gevuld vakje. Afgerond zonder uitkomst: inkt 2. Nu: inkt, vet, met een vlak. Nog niet:
 	// gestippeld. Onder elk vak één zin met de datum. Werkt op een lijstitem en op het detail.
 	import type { Schema } from '$lib/api/types';
-	import { stand, datum } from './stand';
+	import { stand } from './stand';
 	import Uitkomst from './Uitkomst.svelte';
 
 	type Item = Schema<'DossierSummaryDTO'> | Schema<'DossierDetailResponse'>;
@@ -29,7 +30,7 @@
 						naam: 'Raad van State',
 						soort: 'klaar',
 						woord: 'Advies',
-						zin: a ? `Uitgebracht, ${datum(a)}` : 'Uitgebracht'
+						zin: a ? `Uitgebracht, ${korteDatum(a)}` : 'Uitgebracht'
 					}
 				: {
 						// No mark in the source: not in the data, which is not "not yet".
@@ -45,16 +46,16 @@
 				naam: 'Tweede Kamer',
 				soort: 'ja',
 				woord: 'Aangenomen',
-				zin: `${datum(d.tk_decision.date)}${how}`
+				zin: `${korteDatum(d.tk_decision.date)}${how}`
 			};
 		} else if (d.outcome === 'verworpen') {
-			v2 = { naam: 'Tweede Kamer', soort: 'nee', woord: 'Verworpen', zin: datum(d.closed_on) };
+			v2 = { naam: 'Tweede Kamer', soort: 'nee', woord: 'Verworpen', zin: korteDatum(d.closed_on) };
 		} else if (tk.state === 'done') {
 			v2 = {
 				naam: 'Tweede Kamer',
 				soort: 'ja',
 				woord: 'Aangenomen',
-				zin: datum(dateOf('Eindtekst'))
+				zin: korteDatum(dateOf('Eindtekst'))
 			};
 		} else {
 			const fase = (st.zin.match(/: (.*?)(,|\.)/)?.[1] ?? '').trim();
@@ -83,7 +84,7 @@
 				naam: 'Eerste Kamer',
 				soort: ja ? 'ja' : 'nee',
 				woord: d.ek_outcome.outcome,
-				zin: `${datum(d.ek_outcome.date)}${how}`
+				zin: `${korteDatum(d.ek_outcome.date)}${how}`
 			};
 		} else if (ek.state === 'now') {
 			// Where the bill is, as eerstekamer.nl heads its list (API 0.76); else its step.

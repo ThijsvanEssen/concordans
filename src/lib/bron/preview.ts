@@ -3,12 +3,13 @@
 // the API gives: a stuk its dossier, its indieners with their fractie and, for a motie or
 // amendement, the vote on its zaak; a judgment the first sentence of its summary, or at an
 // r.o. that overweging; an article its first lid, or the part the reference names.
+import { langeDatum } from '$lib/text/datum';
+import { textOf } from '$lib/text/words';
 import { getDossier } from '$lib/components/parliamentary/data';
 import { getNodeFirst, once } from '$lib/api/records';
 import { ifExists } from '$lib/api/errors';
 import { getNodeGraph } from '$lib/api/nodes';
 import { getArticleDetail } from '$lib/api/articles';
-import { formatLongDate } from '$lib/components/explore/readers/_shared';
 import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { parseArticleParts, partText } from '$lib/text/article-parts';
 import { articleTitle } from '$lib/text/bw';
@@ -47,9 +48,6 @@ export type Preview = {
 /** How much text a card shows. */
 export const PREVIEW_CHARS = 400;
 
-const text = (value: unknown): string | null =>
-	typeof value === 'string' && value.trim() ? value.trim() : null;
-
 /**
  * The first sentence of a text: up to the first full stop that is followed by a capital and
  * does not close a usual abbreviation (`art.`, `mr.`, `r.o.`, `o.a.`).
@@ -71,9 +69,9 @@ export function eersteZin(s: string | null): string | null {
 }
 
 const persoon = (a: Record<string, unknown>) => {
-	const name = text(a.name);
+	const name = textOf(a.name);
 	if (!name) return null;
-	const faction = text(a.faction);
+	const faction = textOf(a.faction);
 	return faction ? `${name} (${faction})` : name;
 };
 
@@ -95,7 +93,7 @@ export function indieners(actors: unknown): string | null {
 /** `Aangenomen, 137 voor en 13 tegen`, from a decision's props as the API gives them. */
 export function uitslagVan(props: Record<string, unknown>): string | null {
 	const besluit =
-		text(props.decision_text)?.replace(/\.$/, '') ??
+		textOf(props.decision_text)?.replace(/\.$/, '') ??
 		(props.passed === true ? 'Aangenomen' : props.passed === false ? 'Verworpen' : null);
 	if (!besluit) return null;
 	const tally = (props.tally ?? {}) as Record<string, unknown>;
@@ -114,20 +112,20 @@ export function previewFromNode(
 	props: Record<string, unknown>
 ): Preview {
 	const kind = bronLabel(collection);
-	const name = text(displayName) ?? text(props.name) ?? text(props.title) ?? kind;
+	const name = textOf(displayName) ?? textOf(props.name) ?? textOf(props.title) ?? kind;
 	// A judgment and a stemming are named as their heading and tab name them, not by the
 	// display name with its ISO date ("Hoge Raad 2026-08-25 / 24/01299").
 	const asHeading = () =>
 		tabTitle({ collection, label: name, raw: { display_name: displayName, props } as never });
 	switch (collection) {
 		case 'judgments': {
-			const court = courtName(text(props.court) ?? text(props.court_code));
+			const court = courtName(textOf(props.court) ?? textOf(props.court_code));
 			return {
 				kicker: court ? `${kind}, ${court}` : kind,
 				title: asHeading(),
 				// Cited by its ECLI, the title carries the day already: HR 25 augustus 2026.
-				date: text(props.ecli) ? null : formatLongDate(text(props.date)) || null,
-				lines: clip(eersteZin(text(props.summary)))
+				date: textOf(props.ecli) ? null : langeDatum(textOf(props.date)) || null,
+				lines: clip(eersteZin(textOf(props.summary)))
 			};
 		}
 		case 'dossiers': {
@@ -139,7 +137,7 @@ export function previewFromNode(
 			return {
 				kicker: d.number ? `${kind}, ${kamerstukNummer(d.number)}` : kind,
 				title: naam === d.number ? name : naam,
-				date: formatLongDate(text(props.opened_on)) || null,
+				date: langeDatum(textOf(props.opened_on)) || null,
 				lines: dossierStatus({
 					outcome: isOutcome(outcome) ? outcome : null,
 					current_phase: typeof current_phase === 'string' ? current_phase : null
@@ -150,10 +148,10 @@ export function previewFromNode(
 		case 'instruments': {
 			// A law by its citeertitel and its kind, "Wet", the official title under it: the kind
 			// tells it from the dossier of the same name.
-			const title = text(props.citation_title) ?? text(props.title) ?? name;
-			const official = text(props.official_title);
+			const title = textOf(props.citation_title) ?? textOf(props.title) ?? name;
+			const official = textOf(props.official_title);
 			return {
-				kicker: kindName(text(props.kind)) ?? kind,
+				kicker: kindName(textOf(props.kind)) ?? kind,
 				title,
 				date: null,
 				lines: null,
@@ -161,20 +159,21 @@ export function previewFromNode(
 			};
 		}
 		case 'documents': {
-			const soort = text(props.kind)?.replace(/\s*\(.*\)\s*$/, '') ?? kind;
-			const number = text(props.number) ?? (props.sequence != null ? String(props.sequence) : null);
+			const soort = textOf(props.kind)?.replace(/\s*\(.*\)\s*$/, '') ?? kind;
+			const number =
+				textOf(props.number) ?? (props.sequence != null ? String(props.sequence) : null);
 			const nr = number ? (/^\d/.test(number) ? `nr. ${number}` : number) : null;
-			const dn = text(props.dossier_number);
+			const dn = textOf(props.dossier_number);
 			return {
 				kicker: nr ? `${soort}, ${nr}` : soort,
-				title: text(props.title) ?? name,
-				date: formatLongDate(text(props.date)) || null,
+				title: textOf(props.title) ?? name,
+				date: langeDatum(textOf(props.date)) || null,
 				lines: null,
 				dossier: dn
 					? dossierLabel({
 							number: dn,
-							title: text(props.dossier_title),
-							short_title: text(props.dossier_short_title)
+							title: textOf(props.dossier_title),
+							short_title: textOf(props.dossier_short_title)
 						})
 					: null,
 				wie: indieners(props.actors)
@@ -183,20 +182,20 @@ export function previewFromNode(
 		case 'members':
 			return {
 				kicker: kind,
-				title: text(props.name) ?? name,
+				title: textOf(props.name) ?? name,
 				date: null,
-				lines: text(props.party)
+				lines: textOf(props.party)
 			};
 		case 'factions':
 			return {
 				kicker: kind,
-				title: text(props.name) ?? name,
+				title: textOf(props.name) ?? name,
 				date: null,
-				lines: text(props.seats) ? `${text(props.seats)} zetels` : null
+				lines: textOf(props.seats) ? `${textOf(props.seats)} zetels` : null
 			};
 		case 'cabinets': {
-			const from = formatLongDate(text(props.from_date));
-			const to = formatLongDate(text(props.to_date));
+			const from = langeDatum(textOf(props.from_date));
+			const to = langeDatum(textOf(props.to_date));
 			return {
 				kicker: kind,
 				title: name,
@@ -216,8 +215,8 @@ export function previewFromNode(
 			// "Stemmingen (2026-09-29)": the kind, with its day on the date line.
 			return {
 				kicker: kind,
-				title: text(props.kind) ?? name.replace(/\s*\(\d{4}-\d{2}-\d{2}\)$/, ''),
-				date: formatLongDate(text(props.date)) || null,
+				title: textOf(props.kind) ?? name.replace(/\s*\(\d{4}-\d{2}-\d{2}\)$/, ''),
+				date: langeDatum(textOf(props.date)) || null,
 				lines: null
 			};
 		case 'articles':
@@ -265,9 +264,9 @@ async function fetchPreview(id: string, at: string | null): Promise<Preview | nu
 	if (collection === 'documents') {
 		// The vote on a motie or amendement is a decision on its zaak, the one whose primary
 		// case it is; the last of them where it was voted on more than once.
-		if (!/motie|amendement/i.test(text(props.kind) ?? '')) return preview;
+		if (!/motie|amendement/i.test(textOf(props.kind) ?? '')) return preview;
 		const zaak = data.neighbors?.buckets?.find((b) => b.collection === 'cases')?.items?.[0];
-		const caseId = Array.isArray(props.case_ids) ? text(props.case_ids[0]) : null;
+		const caseId = Array.isArray(props.case_ids) ? textOf(props.case_ids[0]) : null;
 		if (!zaak?.key || !caseId) return preview;
 		const besluiten = await getNodeGraph('cases', zaak.key, {
 			limit: 20,
@@ -277,7 +276,7 @@ async function fetchPreview(id: string, at: string | null): Promise<Preview | nu
 		const eigen = (besluiten.neighbors?.buckets ?? [])
 			.flatMap((b) => b.items ?? [])
 			.map((i) => (i.props ?? {}) as Record<string, unknown>)
-			.filter((p) => p.primary_case_id === caseId && (p.passed != null || text(p.decision_text)))
+			.filter((p) => p.primary_case_id === caseId && (p.passed != null || textOf(p.decision_text)))
 			.sort((a, b) => String(a.date ?? '').localeCompare(String(b.date ?? '')));
 		const laatste = eigen.at(-1);
 		return laatste ? { ...preview, uitslag: uitslagVan(laatste) } : preview;
@@ -291,8 +290,8 @@ async function fetchPreview(id: string, at: string | null): Promise<Preview | nu
 	}
 	if (collection !== 'articles') return preview;
 	// An article shows its text, or the part the reference names.
-	const bwb = text(props.bwb_id) ?? text(props.celex);
-	const number = text(props.article_number);
+	const bwb = textOf(props.bwb_id) ?? textOf(props.celex);
+	const number = textOf(props.article_number);
 	if (!bwb || !number) return preview;
 	const { article } = await getArticleDetail(bwb, number);
 	const whole = article.text ?? '';

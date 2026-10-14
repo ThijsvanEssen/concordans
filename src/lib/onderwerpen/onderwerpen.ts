@@ -1,4 +1,5 @@
 // The API's word rule, and the mark that shows where a row was found: $lib/text/treffer.
+import { textOf } from '$lib/text/words';
 import { isDay } from '$lib/text/datum';
 import { normaal, woordIn } from '$lib/text/treffer';
 export { normaal, woordIn };
@@ -55,7 +56,7 @@ const leesWet = (v: unknown): GevolgdeWet | null => {
 	return {
 		bwb: bwb.toUpperCase(),
 		titel: typeof titel === 'string' && titel.trim() ? titel.trim() : bwb.toUpperCase(),
-		artikel: typeof artikel === 'string' && artikel.trim() ? artikel.trim() : null
+		artikel: textOf(artikel)
 	};
 };
 

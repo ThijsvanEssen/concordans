@@ -21,7 +21,6 @@
 		doorzochtVanaf,
 		feedStand,
 		normalizeItem,
-		shortDate,
 		type FeedItem
 	} from '$lib/components/actueel/feed';
 	import {
@@ -47,7 +46,7 @@
 		type Onderwerp
 	} from '$lib/onderwerpen/onderwerpen';
 	import { getInstrumentDetail } from '$lib/api/instrument-cache';
-	import { vandaag } from '$lib/text/datum';
+	import { korteDatum, vandaag } from '$lib/text/datum';
 	import { getMinistries } from '$lib/components/explore/index/government';
 
 	/** Lines per topic, as the feed gives at most in one page. */
@@ -230,7 +229,7 @@
 	}
 
 	const periodeVan = (o: Onderwerp) =>
-		vanaf(o) === recent ? `Afgelopen ${RECENT_DAGEN} dagen` : `Sinds ${shortDate(vanaf(o))}`;
+		vanaf(o) === recent ? `Afgelopen ${RECENT_DAGEN} dagen` : `Sinds ${korteDatum(vanaf(o))}`;
 	/** The count beside the topic's heading: `25`, or `25+` where the search stopped short. */
 	function telling(s: Stand | undefined): string | null {
 		if (s?.status !== 'klaar' || s.eerder) return null;
@@ -245,14 +244,14 @@
 		if (s?.eerder)
 			return vanaf(o) === recent
 				? `Eerder dan de afgelopen ${RECENT_DAGEN} dagen`
-				: `Vóór ${shortDate(vanaf(o))}`;
-		if (o.vorige && vanaf(o) === o.vorige) return `Nieuw sinds ${shortDate(o.vorige)}`;
+				: `Vóór ${korteDatum(vanaf(o))}`;
+		if (o.vorige && vanaf(o) === o.vorige) return `Nieuw sinds ${korteDatum(o.vorige)}`;
 		const periode = periodeVan(o);
 		if (s?.status !== 'klaar' || !o.vorige) return periode;
 		const nieuw = s.items.filter((i) => isNieuw(i.date, o.vorige)).length;
 		// Searched only from after the visit before: what is new may be more too.
 		const minNieuw = s.doorzocht && s.doorzocht > o.vorige ? '+' : '';
-		return `${periode}; ${nieuw}${minNieuw} nieuw sinds ${shortDate(o.vorige)}`;
+		return `${periode}; ${nieuw}${minNieuw} nieuw sinds ${korteDatum(o.vorige)}`;
 	}
 
 	/** The topic as an Atom feed: every word as a q of its own, any of them counts; a law. */
@@ -474,7 +473,7 @@
 				{/if}
 				{#if s?.status === 'klaar' && s.doorzocht}
 					<p class="status stil">
-						Doorzocht vanaf {shortDate(s.doorzocht)}.
+						Doorzocht vanaf {korteDatum(s.doorzocht)}.
 						<TekstLink disabled={verderBezig === vak(o)} onclick={() => verderTerug(o)}
 							>{verderBezig === vak(o) ? 'Laden…' : 'Zoek verder terug'}</TekstLink
 						>

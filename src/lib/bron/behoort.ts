@@ -4,6 +4,7 @@
 // docs/hierarchie.md ("Kern of context"); a layer the data lacks is left out without a word.
 // Thijs, 9 Oct: "maak het consistent en klikbaar", and the conclusie and eerdere aanleg of an
 // arrest are "vrij cruciale info", not extra data.
+import { textOf } from '$lib/text/words';
 import { naamVan } from '$lib/bron/menselijk';
 import type { Bucket, NodeGraph, Neighbor } from '$lib/api/nodes';
 import { getActivity, getNodeFirst } from '$lib/api/records';
@@ -48,9 +49,9 @@ export type Laag = {
  * data says none.
  */
 export function uitkomstVan(outcome: unknown, procedure?: unknown): string | null {
-	const o = text(outcome);
+	const o = textOf(outcome);
 	if (!o) return null;
-	const p = text(procedure)?.toLowerCase();
+	const p = textOf(procedure)?.toLowerCase();
 	return p ? `${p} ${o}` : o;
 }
 
@@ -89,8 +90,6 @@ const LEEG: Behoort = { regels: [], naast: [], onder: [] };
 
 const KAMER: Record<string, string> = { TK: 'Tweede Kamer', EK: 'Eerste Kamer' };
 
-const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
-
 const norm = (x: string) => x.replace(/\s+/g, ' ').trim().toLowerCase();
 
 /**
@@ -112,10 +111,10 @@ function stukLaag(r: Row, soort: string, gedeeld: Set<string>): Laag {
  * suffix (UX-toets 10 Oct: "Over 36600 Vaststelling van de begrotingsstaten …" for 36600-VII).
  */
 export function dossierNummer(props: Record<string, unknown>): string | null {
-	const label = text(props.label);
+	const label = textOf(props.label);
 	if (label) return label;
-	const nummer = text(props.number);
-	const suffix = text(props.suffix);
+	const nummer = textOf(props.number);
+	const suffix = textOf(props.suffix);
 	return nummer ? (suffix ? `${nummer}-${suffix}` : nummer) : null;
 }
 
@@ -242,7 +241,7 @@ export function behoort(
 	 */
 	const bijWetsvoorstel = (): Regel[] => {
 		const key = light?.node.key;
-		const soort = text(props.kind) ?? '';
+		const soort = textOf(props.kind) ?? '';
 		if (!key || !(bak('PART_OF', 'outbound', 'cases')?.total ?? 0) || !isBijWetsvoorstel(soort))
 			return [];
 		return [
@@ -275,7 +274,7 @@ export function behoort(
 				los: true,
 				laad: (signal) =>
 					stukkenInDezelfdeZaak({ key }, signal).then(({ rows }) =>
-						aangebodenVan(rows).map((r) => stukLaag(r, text(r.props?.kind) ?? 'Stuk', new Set()))
+						aangebodenVan(rows).map((r) => stukLaag(r, textOf(r.props?.kind) ?? 'Stuk', new Set()))
 					)
 			}
 		];
@@ -285,7 +284,7 @@ export function behoort(
 		const label = (light?.node as { labels?: string[] } | undefined)?.labels?.find(
 			(l) => l === 'TK' || l === 'EK'
 		);
-		const k = KAMER[(text(props.chamber) ?? label ?? '').toUpperCase()];
+		const k = KAMER[(textOf(props.chamber) ?? label ?? '').toUpperCase()];
 		return k ? [{ soort: 'Kamer', naam: k }] : [];
 	};
 
@@ -294,7 +293,7 @@ export function behoort(
 	 * `Ministeriële regeling`, `Verdrag`; `Wet` where its node gives none.
 	 */
 	const soortVanWet = () =>
-		kindName(text(bak('PART_OF', 'outbound', 'instruments')?.items?.[0]?.props?.kind)) ?? 'Wet';
+		kindName(textOf(bak('PART_OF', 'outbound', 'instruments')?.items?.[0]?.props?.kind)) ?? 'Wet';
 
 	/** A line where it names something. */
 	const regel = (id: string, label: string, lagen: Laag[]): Regel[] =>
@@ -304,9 +303,11 @@ export function behoort(
 		case 'articles': {
 			// Wet › hoofdstuk › titel › afdeling: the law as a bron, the division by name
 			// (in props, `breadcrumb`); a layer that is the law itself is no layer.
-			const afk = text(bak('PART_OF', 'outbound', 'instruments')?.items?.[0]?.props?.abbreviation);
+			const afk = textOf(
+				bak('PART_OF', 'outbound', 'instruments')?.items?.[0]?.props?.abbreviation
+			);
 			// The law opens with this article in view (WholeLawReader, `#artikel-658`).
-			const nummer = text(props.article_number);
+			const nummer = textOf(props.article_number);
 			const soort = soortVanWet();
 			const wet = eerste('PART_OF', 'outbound', 'instruments', soort).map((l) => ({
 				...l,
@@ -316,14 +317,14 @@ export function behoort(
 			const crumbs = Array.isArray(props.breadcrumb)
 				? (props.breadcrumb as { type?: string; label?: string; title?: string }[])
 				: [];
-			const lagen = layersOf(crumbs, text(props.instrument_citation_title));
+			const lagen = layersOf(crumbs, textOf(props.instrument_citation_title));
 			// Each division opens in the whole law at its heading (WholeLawReader, `deelIds`).
 			const ids = deelIds(crumbs).slice(crumbs.length - lagen.length);
 			const deel = lagen
 				.map((c, i) => ({
-					soort: text(c.type) ?? 'Deel',
-					naam: [text(c.label), text(c.title)].filter(Boolean).join(' '),
-					kort: text(c.label) ?? undefined,
+					soort: textOf(c.type) ?? 'Deel',
+					naam: [textOf(c.label), textOf(c.title)].filter(Boolean).join(' '),
+					kort: textOf(c.label) ?? undefined,
 					ref: wet[0]?.ref,
 					at: wet[0]?.ref ? ids[i] : undefined
 				}))
@@ -332,7 +333,9 @@ export function behoort(
 		}
 		case 'annexes': {
 			// A bijlage belongs to its law, as an article does (UX-toets 0.79.43, #30).
-			const afk = text(bak('PART_OF', 'outbound', 'instruments')?.items?.[0]?.props?.abbreviation);
+			const afk = textOf(
+				bak('PART_OF', 'outbound', 'instruments')?.items?.[0]?.props?.abbreviation
+			);
 			const soort = soortVanWet();
 			const wet = eerste('PART_OF', 'outbound', 'instruments', soort).map((l) =>
 				afk ? { ...l, kort: afk } : l
@@ -350,11 +353,11 @@ export function behoort(
 					? (props.unresolved_appeal_targets as Record<string, unknown>[])
 					: []
 			).map((t) => {
-				const court = text(t.court) ?? '';
+				const court = textOf(t.court) ?? '';
 				const naam = [
 					court.charAt(0).toUpperCase() + court.slice(1),
-					text(t.date) ? langeDatum(text(t.date)!) : null,
-					text(t.case_number)
+					textOf(t.date) ? langeDatum(textOf(t.date)!) : null,
+					textOf(t.case_number)
 				]
 					.filter(Boolean)
 					.join(', ');
@@ -400,7 +403,7 @@ export function behoort(
 			// A translation the Rechtspraak published under its own ECLI has no instances of its
 			// own: it names its original (`translation_of`, a source value), and the procesgang
 			// is the original's, asked when the band is there (audit L4).
-			const origineel = text(props.translation_of);
+			const origineel = textOf(props.translation_of);
 			const origineelKey = origineel ? ecliKey(origineel) : null;
 			const vertaling: Regel[] =
 				origineelKey && !gang.length
@@ -457,7 +460,7 @@ export function behoort(
 			// them (#351: MADE_IN, ACCOMPANIES). A stuk at a bill stands in one chain with it,
 			// "Dossier: 34372 … › Voorstel van wet, nr. 2" (concept 21, Thijs 10 Oct); its own
 			// bijlagen are in the reader's status line, not in the band.
-			const ingediend = /motie|amendement/i.test(text(props.kind) ?? '');
+			const ingediend = /motie|amendement/i.test(textOf(props.kind) ?? '');
 			const dossier = eerste('PART_OF', 'outbound', 'dossiers', 'Dossier');
 			const wetsvoorstel = bijWetsvoorstel()[0];
 			const label = ingediend ? 'Ingediend bij' : 'Dossier';
@@ -615,7 +618,7 @@ export function behoort(
 										((await activiteit()).moved_from ?? []).map(
 											(m): Laag => ({
 												soort: 'Activiteit',
-												naam: langeDatum(m.date ?? null) || 'een eerdere datum',
+												naam: langeDatum(m.date) || 'een eerdere datum',
 												ref: { collection: 'activities', key: m.key }
 											})
 										)
@@ -727,7 +730,7 @@ async function procesgangVan(key: string): Promise<Laag[]> {
 export async function procesgangIds(key: string): Promise<string[]> {
 	const light = await getNodeFirst('judgments', key).catch(() => null);
 	// A translation: its original's procesgang, the original included.
-	const origineel = text(
+	const origineel = textOf(
 		(light?.node as { props?: Record<string, unknown> } | undefined)?.props?.translation_of
 	);
 	if (origineel && !appeal(light, 'outbound') && !appeal(light, 'inbound'))

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import { opsomming } from '$lib/text/opsomming';
 	import ReaderHead from './ReaderHead.svelte';
@@ -11,7 +12,6 @@
 	import { OUTCOME_LABEL, type Outcome } from '$lib/components/parliamentary/stages';
 	import { chamberName } from '$lib/components/parliamentary/chamber';
 	import { seatWord } from '$lib/components/parliamentary/career';
-	import { formatLongDate } from './_shared';
 	import { load } from '$lib/util/load.svelte';
 
 	let { node }: { node: GraphNode } = $props();
@@ -119,7 +119,7 @@
 
 			{#if ek && source}
 				<p class="source">
-					{`Samenstelling op ${formatLongDate(source.composition_date ?? null)}, gegevens sinds ${formatLongDate(source.data_since ?? null)}. `}Bron:
+					{`Samenstelling op ${langeDatum(source.composition_date)}, gegevens sinds ${langeDatum(source.data_since)}. `}Bron:
 					<a href={source.url} rel="external">{source.attribution}</a>.
 				</p>
 			{/if}

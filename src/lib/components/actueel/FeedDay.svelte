@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { korteDatum } from '$lib/text/datum';
 	// One day of Actueel in the shared timeline, as on the homepage: the day as the heading
 	// (rung 2, the timeline is the page), its kinds counted beside it; each line the kind above
 	// its headline, the teken of its kind on the line. An item with content of its own opens it
@@ -26,7 +27,6 @@
 		dossierLabel,
 		foldTitle,
 		publicationCite,
-		shortDate,
 		summaryCounts,
 		titleOf,
 		type Day,
@@ -230,7 +230,7 @@
 			{:else if i.commitment}
 				<span
 					>{i.commitment.status ?? ''}{i.commitment.expected_resolution
-						? `, verwacht ${shortDate(i.commitment.expected_resolution)}`
+						? `, verwacht ${korteDatum(i.commitment.expected_resolution)}`
 						: ''}</span
 				>
 			{:else if i.commencement}

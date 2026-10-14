@@ -1,10 +1,11 @@
 <script lang="ts">
+	import { textOf } from '$lib/text/words';
 	import { meldNetwerk } from '$lib/stores/netwerk-melding';
 	import { report } from '$lib/api/errors';
 	import { goto } from '$app/navigation';
 	import { rijen } from '$lib/actions/rijen';
 	import { hoeVan, kleineLetter } from './hoe';
-	import { text } from './edge-meta';
+
 	import Aanhaling from './Aanhaling.svelte';
 	import { zetMarkering } from '$lib/bron/markering.svelte';
 	import { itemVanRij } from '$lib/map/rij';
@@ -845,8 +846,8 @@
 											<RijInhoud
 												item={{
 													node: row.ref,
-													dictum: text(row.props?.dictum),
-													explanation: text(row.props?.explanation)
+													dictum: textOf(row.props?.dictum),
+													explanation: textOf(row.props?.explanation)
 												}}
 												als="kern"
 											/>
