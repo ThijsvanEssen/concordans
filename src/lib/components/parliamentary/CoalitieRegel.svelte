@@ -1,13 +1,12 @@
 <script lang="ts">
-	import { CHOICE } from '$lib/components/parliamentary/stemming';
 	// What the coalition did on a vote of the Tweede Kamer, as a line under its row (concept 24,
 	// variant A; Thijs, 10 Oct): "Coalitie tegen" where it voted as one, "Coalitie verdeeld" with
-	// its fracties per side where it did not, and the source's own words for a wisselmeerderheid
-	// and a coalition that decided the outcome (`pattern`, `decisive`, API 0.79.45, #546). Where
-	// the feed has no fracties yet (older votes until the weekly run) the line says the pattern.
+	// its fracties per side where it did not (their seats where the fracties are not known), and
+	// the source's own words for a wisselmeerderheid and a coalition that decided the outcome
+	// (`pattern`, `decisive`, API 0.79.45, #546). The line itself is coalitionLine (coalitie.ts).
 	import type { Schema } from '$lib/api/types';
 	import Uitkomst from './Uitkomst.svelte';
-	import { naamVanId } from '$lib/bron/menselijk';
+	import { coalitionLine } from './coalitie';
 
 	let {
 		coalitie,
@@ -17,49 +16,31 @@
 		fracties?: Schema<'CoalitionFactionDTO'>[];
 	} = $props();
 
-	const eensgezind = $derived(coalitie.pattern === 'together');
-	const kant = $derived(coalitie.coalition_for > 0 ? 'voor' : 'tegen');
-	const naam = (f: Schema<'CoalitionFactionDTO'>) => f.short ?? naamVanId(`factions/${f.key}`);
-	const zijden = $derived(
-		(
-			[
-				['ja', CHOICE.for],
-				['nee', CHOICE.against]
-			] as const
-		)
-			.map(([soort, keuze]) => ({
-				soort,
-				keuze,
-				namen: fracties.filter((f) => f.choice === keuze).map(naam)
-			}))
-			.filter((z) => z.namen.length > 0)
-	);
-	/** A fractie whose seats went both ways (a roll call). */
-	const gesplitst = $derived(fracties.filter((f) => f.choice == null).map(naam));
-	const labels = $derived(
-		[
-			coalitie.pattern === 'wissel' ? 'wisselmeerderheid' : null,
-			coalitie.decisive ? 'doorslaggevend' : null
-		].filter((l): l is string => !!l)
-	);
+	const line = $derived(coalitionLine(coalitie, fracties));
 </script>
 
-<p class="coal" class:coal--eensgezind={eensgezind}>
-	{#if eensgezind}
-		<Uitkomst soort={kant === 'voor' ? 'ja' : 'nee'} titel={kant} /><span class="kop"
-			>Coalitie {kant}</span
-		>
-	{:else}
-		<span class="kop">Coalitie verdeeld</span>
-		{#each zijden as z (z.keuze)}
-			<span class="zijde"
-				><Uitkomst soort={z.soort} titel={z.keuze.toLowerCase()} />{z.namen.join(', ')}</span
+{#if line}
+	<p class="coal" class:coal--eensgezind={!!line.together}>
+		{#if line.together}
+			{@const kant = line.together.choice.toLowerCase()}
+			<Uitkomst soort={line.together.outcome} titel={kant} /><span class="kop">Coalitie {kant}</span
 			>
-		{/each}
-		{#if gesplitst.length}<span class="zijde">{gesplitst.join(', ')} verdeeld</span>{/if}
-	{/if}
-	{#each labels as l (l)}<span class="label">{l}</span>{/each}
-</p>
+		{:else}
+			<span class="kop">Coalitie verdeeld</span>
+			{#each line.sides as z (z.choice)}
+				<span class="zijde"
+					><Uitkomst soort={z.outcome} titel={z.choice.toLowerCase()} />{z.names.length
+						? z.names.join(', ')
+						: `${z.seats} zetels`}</span
+				>
+			{/each}
+			{#if line.splitFactions.length}<span class="zijde"
+					>{line.splitFactions.join(', ')} verdeeld</span
+				>{/if}
+		{/if}
+		{#each line.labels as l (l)}<span class="label">{l}</span>{/each}
+	</p>
+{/if}
 
 <style>
 	.coal {

@@ -7,7 +7,8 @@
 	import { bewaarItem } from '$lib/map/map';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import { getDecision, getDecisionDocument, getParliamentSeats } from '$lib/api/records';
-	import { coalitieRegel, coalitieVan } from '$lib/components/parliamentary/coalitie';
+	import { coalitionFactionsOf } from '$lib/components/parliamentary/coalitie';
+	import CoalitieRegel from '$lib/components/parliamentary/CoalitieRegel.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Stem from '$lib/components/parliamentary/Stem.svelte';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
@@ -58,10 +59,10 @@
 	// What the coalition did (API 0.79.34, `coalition`; Thijs, 10 Oct). Only in the Tweede
 	// Kamer, and only where the API gives the block: before 0.79.34 nothing shows.
 	const coalitie = $derived(
-		loaded && (loaded.chamber ?? 'TK') !== 'EK' ? coalitieVan(loaded) : null
+		loaded && (loaded.chamber ?? 'TK') !== 'EK' ? (loaded.coalition ?? null) : null
 	);
-	/** The hall of the day of the vote: the cabinet's name and which fractie is of it. */
-	let zaal = $state<{ naam: string; van: Map<string, boolean | null> } | null>(null);
+	/** The hall of the day of the vote: which fractie is of the coalition, by its key. */
+	let zaal = $state<Map<string, boolean | null> | null>(null);
 	$effect(() => {
 		const c = coalitie;
 		const dag = loaded?.date?.slice(0, 10);
@@ -71,12 +72,9 @@
 		getParliamentSeats('TK', dag)
 			.then((z) => {
 				if (weg || z.cabinet?.key !== c.cabinet) return;
-				zaal = {
-					naam: z.cabinet.name ?? c.cabinet,
-					van: new Map(
-						z.factions.flatMap((f) => (f.key ? [[f.key, f.coalition ?? null] as const] : []))
-					)
-				};
+				zaal = new Map(
+					z.factions.flatMap((f) => (f.key ? [[f.key, f.coalition ?? null] as const] : []))
+				);
 			})
 			.catch((e) => report('Zaal van de stemming', e));
 		return () => {
@@ -86,7 +84,7 @@
 	/** Coalitie or oppositie for a fractie that voted, from the hall of that day. */
 	const kabinetVan = (id: string) => {
 		if (!zaal || !id.startsWith('factions/')) return null;
-		const c = zaal.van.get(id.slice('factions/'.length));
+		const c = zaal.get(id.slice('factions/'.length));
 		return c === true ? 'coalitie' : c === false ? 'oppositie' : null;
 	};
 
@@ -217,31 +215,7 @@
 			{/if}
 
 			{#if coalitie}
-				{@const r = coalitieRegel(
-					coalitie,
-					voters,
-					zaal ? (k: string) => zaal?.van.get(k) ?? null : null
-				)}
-				<!-- The coalition on this vote, in words and the shape of a stem; seats where the
-				     names of its fracties are not known (a vote by member). -->
-				<p class="coalitie">
-					<span class="coalitie-kop">Coalitie{zaal ? ` (${zaal.naam})` : ''} {r.stand}</span>
-					{#if r.kant}
-						<span class="zijde"
-							><Stem keuze={r.kant} />
-							<span class="coalitie-n">{r.kant === 'voor' ? r.voor : r.tegen} zetels</span></span
-						>
-					{:else}
-						{#each [['voor', r.fractiesVoor, r.voor], ['tegen', r.fractiesTegen, r.tegen]] as const as [kant, fracties, zetels] (kant)}
-							<span class="zijde"
-								><Stem keuze={kant} />
-								{#if fracties.length}<span class="coalitie-f"
-										>{fracties.map((f) => f.name).join(', ')}</span
-									>{:else}<span class="coalitie-n">{zetels} zetels</span>{/if}</span
-							>
-						{/each}
-					{/if}
-				</p>
+				<CoalitieRegel {coalitie} fracties={coalitionFactionsOf(voters, zaal)} />
 			{/if}
 
 			{#if chamber === 'EK'}
@@ -475,31 +449,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-	.coalitie {
-		margin: var(--s-2) 0 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		gap: var(--s-1) var(--s-2);
-	}
-	.coalitie-kop {
-		font-weight: 600;
-		color: var(--ink);
-	}
-	/* A side: its stem and the coalition fracties on it, kept together on a narrow screen. */
-	.zijde {
-		display: inline-flex;
-		align-items: baseline;
-		gap: var(--s-2);
-	}
-	.coalitie-f {
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		color: var(--ink);
 	}
 	.voter-seats {
 		font-family: var(--font-serif);

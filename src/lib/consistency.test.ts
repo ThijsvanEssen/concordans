@@ -1453,7 +1453,7 @@ describe('errors that are not swallowed', () => {
 	});
 });
 
-describe('the explorer’s small things said once (code-eenvoud F48–F50)', () => {
+describe('the explorer’s small things said once (code-eenvoud F48–F62)', () => {
 	it('takes the ministries, their order and their renamings from the API (F48)', () => {
 		// No list of ministry codes of its own: getMinistries gives order and successors.
 		expect(offenders((t) => /['"]az['"],\s*['"]bz['"]|\bvenj\s*:/.test(t))).toEqual([]);
@@ -1488,6 +1488,37 @@ describe('the explorer’s small things said once (code-eenvoud F48–F50)', () 
 						t
 					),
 				['lib/components/parliamentary/stemming.ts']
+			)
+		).toEqual([]);
+	});
+
+	it('reads the verbs of a change from woordenVan, in the order of CHANGE_HEAD (F60)', () => {
+		expect(
+			offenders(
+				(t) => /['"](Stelt vast|Wijzigt|Voegt in|Doet vervallen|Trekt in|Vernummert)['"]/i.test(t),
+				['lib/verbonden/hoe.ts']
+			)
+		).toEqual([]);
+	});
+
+	it('says a tally through votesSentence and votesShort (F61)', () => {
+		expect(
+			offenders(
+				(t) => /\} voor(, | en )\$?\{|\}–\$?\{[^}]*tegen|\.Voor\b|\.Tegen\b/.test(t),
+				['lib/components/parliamentary/stemming.ts']
+			)
+		).toEqual([]);
+	});
+
+	it('draws what the coalition did with CoalitieRegel, from coalitionLine (F62)', () => {
+		expect(
+			offenders(
+				(t) => /coalition_(for|against)\b|Coalitie (verdeeld|voor|tegen)/.test(t),
+				[
+					'lib/components/parliamentary/coalitie.ts',
+					'lib/components/parliamentary/CoalitieRegel.svelte',
+					'lib/fixtures/coalition-votes.ts'
+				]
 			)
 		).toEqual([]);
 	});
