@@ -9,7 +9,7 @@
 // collections at its two ends and what its meta says. The row, the line on the canvas, the
 // line between two hulls, the legend, the table, the CSV and the card Verbinding all read
 // them, so one verbinding is never called two things (onderzoek samenhang, 14 Oct).
-import { textOf } from '$lib/text/words';
+import { capitalize, lowerFirst, textOf } from '$lib/text/words';
 import { paragraphNumber } from '$lib/text/anchor';
 import type { Collection, Relation } from '$lib/vocabulary';
 import { langeDatum } from '$lib/text/datum';
@@ -281,9 +281,7 @@ export const soortVan = (
  * after a comma. A name keeps its capital: the Tweede Kamer, the ECLI.
  */
 export const kleineLetter = (s: string) =>
-	/^[A-Z][a-z]/.test(s) && !/^(Tweede|Eerste) Kamer\b/.test(s)
-		? s.charAt(0).toLowerCase() + s.slice(1)
-		: s;
+	/^[A-Z][a-z]/.test(s) && !/^(Tweede|Eerste) Kamer\b/.test(s) ? lowerFirst(s) : s;
 
 export type Hoe = {
 	/** The verb, in weight: `Haalt aan`, `Wijzigt`, `Door de Kamer verbonden`. */
@@ -310,12 +308,14 @@ const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFi
 const keer = (n: number | null) => (n && n > 1 ? `${n} keer` : null);
 const join = (...parts: (string | null | undefined)[]) => parts.filter(Boolean).join(', ') || null;
 const erbij = (teken: string, s: string | null) => (s ? `${teken}${s}` : null);
-const groot = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** `Stb.2021-162` and `stb_2021_162` as they are cited: `Stb. 2021, 162`. */
 export const publicatie = (s: string | null) =>
 	s
-		?.replace(/^(stb|stcrt|trb)_(\d{4})_(\d+)$/i, (_, k: string, j, n) => `${groot(k)}.${j}-${n}`)
+		?.replace(
+			/^(stb|stcrt|trb)_(\d{4})_(\d+)$/i,
+			(_, k: string, j, n) => `${capitalize(k)}.${j}-${n}`
+		)
 		.replace(/^(Stb|Stcrt|Trb)\.?\s*(\d{4})-(\d+)$/, '$1. $2, $3') ?? null;
 
 export const HERKOMST_REDEN: Record<string, string> = {
@@ -385,7 +385,7 @@ function paarStuk(kant: unknown, eerste: boolean): string | null {
 	if (!soort || !dossier) return null;
 	const suffix = textOf(k.dossier_suffix);
 	const nr = num(k.sequence);
-	const woord = eerste ? groot(soort) : soort.toLowerCase();
+	const woord = eerste ? capitalize(soort) : soort.toLowerCase();
 	return `${woord} ${suffix ? `${dossier}-${suffix}` : dossier}${nr != null ? ` nr. ${nr}` : ''}`;
 }
 
@@ -480,7 +480,7 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 		case 'APPEAL_OF': {
 			const aard = row.aard ?? textOf(edge.procedure_type)?.toLowerCase() ?? 'hoger beroep';
 			return inbound
-				? regel(`${groot(aard)} tegen`, 'deze uitspraak', formeel)
+				? regel(`${capitalize(aard)} tegen`, 'deze uitspraak', formeel)
 				: regel('Bestreden', `in ${aard} met deze uitspraak`, formeel);
 		}
 		case 'BASED_ON': {
@@ -534,7 +534,7 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 			if (vastgesteld && num(edge.establishes)) return regel('Stelt vast', null, null);
 			// A row from the legislative history carries its change in its own meta line.
 			if (!effect && !textOf(edge.effective_date) && !textOf(edge.source_publication)) return null;
-			const werkwoord = effect === 'vernummering' ? 'Vernummert' : groot(woorden!.actief);
+			const werkwoord = effect === 'vernummering' ? 'Vernummert' : capitalize(woorden!.actief);
 			const datum = textOf(edge.effective_date);
 			const pub = publicatie(textOf(edge.source_publication));
 			const wat = join(
@@ -624,7 +624,7 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 			// A verb with an object names it before the rest: `Verwijst naar lid 2`, `Verwijst
 			// naar dit artikel als ‘…’`, `Verwijst ernaar als ‘…’`, never `Verwijst naar als`. A
 			// participle needs none: `Aangehaald in r.o. 6`.
-			const woord = groot(inbound ? woorden!.actief : woorden!.terug);
+			const woord = capitalize(inbound ? woorden!.actief : woorden!.terug);
 			const deelwoord = /^(Aangehaald|Genoemd|Besproken)$/.test(woord);
 			const zonderLid = !lid && !deelwoord && !!(eigen || aard);
 			const werkwoord = zonderLid && !inbound ? woord.replace(/ naar$/, ' ernaar') : woord;
@@ -646,7 +646,7 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 			if (!keuze || !inbound) break;
 			const zetels = num(edge.seats);
 			return regel(
-				groot(keuze.toLowerCase()),
+				capitalize(keuze.toLowerCase()),
 				zetels ? `, ${zetels} ${zetels === 1 ? 'zetel' : 'zetels'}` : null,
 				null
 			);
@@ -677,7 +677,7 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 	// what the edge adds, else nothing.
 	if (afgeleid || citaat || lid || plaats) {
 		const label = woorden ? (inbound ? woorden.actief : woorden.terug) : null;
-		return regel(label ? groot(label) : null, join(lid, plaats), uit(reden));
+		return regel(label ? capitalize(label) : null, join(lid, plaats), uit(reden));
 	}
 	return null;
 }

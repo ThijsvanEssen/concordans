@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { capitalize } from '$lib/text/words';
 	// A vote cast, Voor or Tegen, in the shape of an outcome (Uitkomst): a filled box for
 	// voor, an open box for tegen, a dashed one for what is neither (niet deelgenomen). Shape,
 	// colour and word, so it reads without colour too (Thijs, 9 Oct: "voor en tegen mogen
@@ -18,7 +19,7 @@
 	const soort = $derived(
 		/^voor$/i.test(keuze) ? 'ja' : /^tegen$/i.test(keuze) ? 'nee' : ('open' as const)
 	);
-	const naam = $derived(keuze.charAt(0).toUpperCase() + keuze.slice(1).toLowerCase());
+	const naam = $derived(capitalize(keuze.toLowerCase()));
 </script>
 
 <Uitkomst {soort} woord={woord ? naam : null} titel={naam} />

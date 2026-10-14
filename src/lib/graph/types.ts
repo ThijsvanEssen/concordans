@@ -1,4 +1,4 @@
-import { textOf } from '$lib/text/words';
+import { capitalize, textOf } from '$lib/text/words';
 import { eersteIndiener } from '$lib/bron/submitters';
 import type { Schema } from '$lib/api/types';
 import { menselijkeNaam } from '$lib/bron/menselijk';
@@ -244,9 +244,7 @@ export function stukLabel(props: Record<string, unknown>): string | null {
 		? `${lead.name.replace(/^(\p{Lu}[\p{L}]?\.\s*)+/u, '')}${lead.faction ? ` (${lead.faction})` : ''}`
 		: null;
 	const naam = motie
-		? [`${motie[0][0].toUpperCase()}${motie[0].slice(1).toLowerCase()}`, indiener]
-				.filter(Boolean)
-				.join(' ')
+		? [capitalize(motie[0].toLowerCase()), indiener].filter(Boolean).join(' ')
 		: !draagtWetstitel(kind) && title && !isGeneriek(title, kind)
 			? kort(title, 36)
 			: (shortKind ?? title);

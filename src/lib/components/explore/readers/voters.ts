@@ -1,5 +1,6 @@
 // The rows of a stemming. A fractie counts its seats; in a hoofdelijke stemming each
 // member is one vote, listed by choice and then by name.
+import { capitalize } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import { UNNAMED } from '$lib/verbonden/rows';
 
@@ -49,7 +50,7 @@ export function ekVoteLine(
 	const list =
 		parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} en ${parts.at(-1)}`;
 	const line = `${list} van de ${total} ${total === 1 ? 'stemming' : 'stemmingen'}`;
-	return line.charAt(0).toUpperCase() + line.slice(1);
+	return capitalize(line);
 }
 
 /**

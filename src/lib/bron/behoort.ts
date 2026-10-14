@@ -4,7 +4,7 @@
 // docs/hierarchie.md ("Kern of context"); a layer the data lacks is left out without a word.
 // Thijs, 9 Oct: "maak het consistent en klikbaar", and the conclusie and eerdere aanleg of an
 // arrest are "vrij cruciale info", not extra data.
-import { textOf } from '$lib/text/words';
+import { capitalize, textOf } from '$lib/text/words';
 import { naamVan } from '$lib/bron/menselijk';
 import type { Bucket, NodeGraph, Neighbor } from '$lib/api/nodes';
 import { getActivity, getNodeFirst } from '$lib/api/records';
@@ -355,7 +355,7 @@ export function behoort(
 			).map((t) => {
 				const court = textOf(t.court) ?? '';
 				const naam = [
-					court.charAt(0).toUpperCase() + court.slice(1),
+					capitalize(court),
 					textOf(t.date) ? langeDatum(textOf(t.date)!) : null,
 					textOf(t.case_number)
 				]

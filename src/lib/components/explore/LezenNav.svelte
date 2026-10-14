@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { capitalize } from '$lib/text/words';
 	import NavKolom from './NavKolom.svelte';
 	// The table of contents of the law in Lezen: the name of the law, the title of the
 	// current section under it, and the articles, the active one marked.
@@ -43,9 +44,8 @@
 		return lawName($instrumentMetaStore.get(currentBwb), currentBwb);
 	});
 
-	const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 	const groupLabel = (g: Group) => {
-		const label = g.label.trim() || (g.type && g.type !== 'sectie' ? capitalise(g.type) : '');
+		const label = g.label.trim() || (g.type && g.type !== 'sectie' ? capitalize(g.type) : '');
 		return g.title ? `${label} ${g.title}` : label;
 	};
 

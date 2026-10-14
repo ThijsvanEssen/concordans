@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { lowerFirst } from '$lib/text/words';
 	import { korteDatum } from '$lib/text/datum';
 	import { naamVanId } from '$lib/bron/menselijk';
 	// Een geopende post in Bewindspersonen, in de vorm
@@ -88,7 +89,7 @@
 
 	const bron = $derived(`members/${memberKey}`);
 	const zin = $derived(
-		`${naam}${partij ? ` (${partij})` : ''}: ${functie.charAt(0).toLowerCase()}${functie.slice(1)}, ${tot ? `van ${korteDatum(van)} tot ${korteDatum(tot)}` : `sinds ${korteDatum(van)}`}.`
+		`${naam}${partij ? ` (${partij})` : ''}: ${lowerFirst(functie)}, ${tot ? `van ${korteDatum(van)} tot ${korteDatum(tot)}` : `sinds ${korteDatum(van)}`}.`
 	);
 </script>
 

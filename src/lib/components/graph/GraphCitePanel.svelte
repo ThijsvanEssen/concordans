@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { textOf } from '$lib/text/words';
 	import { naamVanId } from '$lib/bron/menselijk';
 	// The hover panel of the canvas: what the bron is, a preview, and two actions: open
 	// it, and add it to the netwerk or take it out.
@@ -80,24 +81,22 @@
 	const W = 360;
 
 	const nodeProps = $derived(node.raw?.props ?? undefined);
-	const text = (value: unknown): string | null =>
-		typeof value === 'string' && value ? value : null;
 
 	// The line next to the kind: the context the source belongs to.
 	const cite = $derived.by(() => {
 		switch (node.kind) {
 			// The title already names court and date (bron/naam.ts); the ECLI identifies it.
 			case 'judgment':
-				return text(nodeProps?.['ecli']);
+				return textOf(nodeProps?.['ecli']);
 			case 'article':
-				return text(nodeProps?.['instrument_citation_title']) ?? lawIdOf(nodeProps);
+				return textOf(nodeProps?.['instrument_citation_title']) ?? lawIdOf(nodeProps);
 			case 'member':
-				return text(nodeProps?.['party']);
+				return textOf(nodeProps?.['party']);
 			case 'dossier':
-				return text(nodeProps?.['number']) ?? text(nodeProps?.['label']) ?? naamVanId(node.id);
+				return textOf(nodeProps?.['number']) ?? textOf(nodeProps?.['label']) ?? naamVanId(node.id);
 			case 'committee':
 			case 'faction':
-				return text(nodeProps?.['abbreviation']);
+				return textOf(nodeProps?.['abbreviation']);
 			default:
 				return null;
 		}
@@ -110,13 +109,13 @@
 	const nodeText = $derived.by(() => {
 		switch (node.kind) {
 			case 'judgment':
-				return text(nodeProps?.['summary']);
+				return textOf(nodeProps?.['summary']);
 			case 'dossier':
 			case 'document':
-				return text(nodeProps?.['title']) ?? text(nodeProps?.['subject']);
+				return textOf(nodeProps?.['title']) ?? textOf(nodeProps?.['subject']);
 			case 'committee':
 			case 'faction':
-				return text(nodeProps?.['name']);
+				return textOf(nodeProps?.['name']);
 			default:
 				return null;
 		}

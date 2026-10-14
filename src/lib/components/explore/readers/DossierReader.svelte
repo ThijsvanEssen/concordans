@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { textOf } from '$lib/text/words';
 	import { langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
@@ -19,7 +20,7 @@
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronLabel } from '$lib/vocabulary';
-	import { getDossier, str } from '$lib/components/parliamentary/data';
+	import { getDossier } from '$lib/components/parliamentary/data';
 
 	import StandBalk from '$lib/components/parliamentary/StandBalk.svelte';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
@@ -40,7 +41,7 @@
 
 	// The API addresses a dossier by its number (`37020-XV`), the node's `label`. The
 	// number, not the node: the node is drawn anew once its neighbourhood loads.
-	const dossierNumber = $derived(str(node.raw?.props?.label));
+	const dossierNumber = $derived(textOf(node.raw?.props?.label));
 	const dossier = load(
 		() => dossierNumber,
 		(number) => (number ? getDossier(number) : Promise.reject(new Error('Dossier zonder nummer'))),

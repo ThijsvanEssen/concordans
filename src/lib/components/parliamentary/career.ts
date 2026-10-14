@@ -3,6 +3,7 @@
 // and the functions they signed stukken in (AUTHORED meta.function, when not as
 // Kamerlid). A function known only from stukken has no term, only the dates of the
 // stukken signed in it; one that falls in a post is counted with that post.
+import { capitalize } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import { fractieNaam } from '$lib/bron/menselijk';
 
@@ -171,20 +172,19 @@ export function foldPremier(entries: CareerEntry[]): CareerEntry[] {
  * their latest signature when it is later than their last seat; else Oud-Kamerlid.
  */
 export function currentTitle(career: CareerEntry[], sitting: boolean): string {
-	const capital = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 	const fns = career.filter(
 		(e): e is Extract<CareerEntry, { kind: 'function' }> => e.kind === 'function'
 	);
 	// A post held now names the person, before a seat.
 	const held = fns.find((e) => e.cabinet && e.to === null);
-	if (held) return capital(held.function);
+	if (held) return capitalize(held.function);
 	if (sitting) return 'Kamerlid';
 	const lastSeat = career
 		.filter((e) => e.kind === 'seat')
 		.reduce<string | null>((max, e) => (e.to && (!max || e.to > max) ? e.to : max), null);
 	const end = (e: (typeof fns)[number]) => e.to ?? '9999';
 	const latest = [...fns].sort((a, b) => end(b).localeCompare(end(a)))[0];
-	if (latest && (!lastSeat || end(latest) > lastSeat)) return capital(latest.function);
+	if (latest && (!lastSeat || end(latest) > lastSeat)) return capitalize(latest.function);
 	return career.some((e) => e.kind === 'seat') ? 'Oud-Kamerlid' : 'Persoon';
 }
 

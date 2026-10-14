@@ -1,3 +1,4 @@
+import { capitalize } from '$lib/text/words';
 import { bewindspersoonVan, eersteIndiener } from '$lib/bron/submitters';
 import type { BronRef } from '$lib/bron/href';
 import type { Vorm } from '$lib/bron/vormen';
@@ -101,8 +102,7 @@ function listLine(names: string[], max: number, other: [string, string] = ['ande
 // ── Names ───────────────────────────────────────────────────────────────
 
 /** A surname at the head of a phrase: `van den Berg` gives `Van den Berg`. */
-export const headSurname = (s: string | null | undefined) =>
-	s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+export const headSurname = (s: string | null | undefined) => (s ? capitalize(s) : '');
 
 /** `motie-Grinwis`, `motie-Kostić c.s.`: a paper by its first submitter. */
 function paperOf(noun: string, i: FeedItem): string {

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { textOf } from '$lib/text/words';
+	import { capitalize, textOf } from '$lib/text/words';
 	import { meldNetwerk } from '$lib/stores/netwerk-melding';
 	import { report } from '$lib/api/errors';
 	import { goto } from '$app/navigation';
@@ -133,7 +133,7 @@
 	const zin = (woorden: string[]) => {
 		const z =
 			woorden.length > 1 ? `${woorden.slice(0, -1).join(', ')} en ${woorden.at(-1)}` : woorden[0];
-		return `${z.charAt(0).toUpperCase()}${z.slice(1)}`;
+		return `${capitalize(z)}`;
 	};
 	// The kind of a waiting row, for its height: what a row of that group holds on this page.
 	const wachtSoort = (noun?: string) => {
@@ -610,7 +610,7 @@
 								&nbsp;
 							</p>{/if}
 						<p class="sr-only">
-							{g.noun ? `${g.noun.charAt(0).toUpperCase()}${g.noun.slice(1)} laden…` : 'Laden…'}
+							{g.noun ? `${capitalize(g.noun)} laden…` : 'Laden…'}
 						</p>
 					{/if}
 					{#if g.failed && g.rows.length === 0}

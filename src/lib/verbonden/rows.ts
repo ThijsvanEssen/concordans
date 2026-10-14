@@ -2,7 +2,7 @@
 // title and one meta line: the lid it names, the position in the source, the
 // identifier or the date, and the betrouwbaarheid when it is not hoog. The passage
 // of the source (`snippet`, with `match` marked) appears when the row is opened.
-import { textOf } from '$lib/text/words';
+import { lowerFirst, textOf } from '$lib/text/words';
 import { isRauw, menselijkeNaam, naamVanId } from '$lib/bron/menselijk';
 import { keyEcli } from '$lib/bron/leesbaar';
 import { korteDatum, langeDatum, vandaag } from '$lib/text/datum';
@@ -383,7 +383,7 @@ function periodOf(meta: Record<string, unknown>): Row['period'] {
 		return {
 			from: froms.includes(null) ? null : (froms as string[]).sort()[0],
 			to: tos.includes(null) ? null : (tos as string[]).sort().at(-1)!,
-			role: functions.length > 0 ? functions.map(firstLower).join(' en ') : null
+			role: functions.length > 0 ? functions.map(lowerFirst).join(' en ') : null
 		};
 	}
 	const from = textOf(meta.from_date)?.slice(0, 10) ?? null;
@@ -410,11 +410,10 @@ export function periodLabel(period: NonNullable<Row['period']>): string {
 				? `sinds ${from}`
 				: `tot en met ${to}`;
 	if (!period.role || period.role === 'Lid') return span;
-	return `${firstLower(period.role)}, ${span}`;
+	return `${lowerFirst(period.role)}, ${span}`;
 }
 
 /** `voorzitter`, `minister van Justitie en Veiligheid`: the names in a function keep their capitals. */
-const firstLower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
 /**
  * The mentions of one bron as one row: the first place it names the selected bron,

@@ -1,3 +1,4 @@
+import { capitalize } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 
 // A decision as the Tweede Kamer records it (API 0.52): `kind` the Zaak.Soort of what was
@@ -36,7 +37,7 @@ export function decisionOutcome(d: Decision): string | null {
 	if (d.passed === true) return 'Aangenomen';
 	if (d.passed === false) return 'Verworpen';
 	const rest = d.decision_kind?.replace(/^Stemmen\s*-\s*/i, '').trim();
-	return rest ? rest.charAt(0).toUpperCase() + rest.slice(1) : null;
+	return rest ? capitalize(rest) : null;
 }
 
 /**

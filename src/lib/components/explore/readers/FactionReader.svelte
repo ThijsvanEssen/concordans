@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { textOf } from '$lib/text/words';
 	import { korteDatum, langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
@@ -9,7 +10,6 @@
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
-	import { str } from '$lib/components/parliamentary/data';
 	import { EK_SOURCE } from '$lib/components/parliamentary/chamber';
 	import { ekVoteLine } from './voters';
 	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
@@ -31,7 +31,7 @@
 		'Fractie'
 	);
 	const loaded = $derived(faction.state.status === 'ready' ? faction.state.data : null);
-	const isEk = $derived(str(loaded?.props?.chamber) === 'EK');
+	const isEk = $derived(textOf(loaded?.props?.chamber) === 'EK');
 
 	// How an Eerste Kamer fractie voted on the bills (API 0.68); the Tweede Kamer's are
 	// with its members.
@@ -79,15 +79,15 @@
 
 <ReaderFrame state={faction.state} what="Fractie" retry={faction.retry}>
 	{#snippet children(f)}
-		{@const name = str(f.props?.name)}
-		{@const abbreviation = str(f.props?.abbreviation)}
+		{@const name = textOf(f.props?.name)}
+		{@const abbreviation = textOf(f.props?.abbreviation)}
 		{@const seats = f.props?.seats}
-		{@const chamber = str(f.props?.chamber)}
+		{@const chamber = textOf(f.props?.chamber)}
 		{@const ek = chamber === 'EK'}
-		{@const read = str(f.props?.retrieved_on)}
-		{@const since = str(f.props?.data_since)}
+		{@const read = textOf(f.props?.retrieved_on)}
+		{@const since = textOf(f.props?.data_since)}
 		{@const board = boardOf(f.props)}
-		{@const sinds = str(f.props?.active_from)}
+		{@const sinds = textOf(f.props?.active_from)}
 		{@const composed = read
 			? `Samenstelling op ${langeDatum(read)}${since ? `, gegevens sinds ${langeDatum(since)}` : ''}. `
 			: ''}
@@ -194,7 +194,7 @@
 			{#if ek}
 				<p class="source">
 					{composed}Bron:
-					<a href={str(f.props?.url) ?? EK_SOURCE.url} rel="external"
+					<a href={textOf(f.props?.url) ?? EK_SOURCE.url} rel="external"
 						>{EK_SOURCE.name}, {EK_SOURCE.site}</a
 					>.
 				</p>

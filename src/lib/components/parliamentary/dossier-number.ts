@@ -2,6 +2,7 @@
 // (`Toevoeging`): `37035-XXII`, `21501-31`, `23908-(R1519)`. Each label is a dossier of its
 // own; the dossiers that share a number belong together (the chapters of one budget, the
 // meetings of one Council series).
+import { capitalize } from '$lib/text/words';
 
 /** `37035` for `37035-XXII`, `37035` for `37035`. */
 export const numberOf = (label: string): string => label.split('-')[0];
@@ -86,5 +87,5 @@ export function chapterTitle(title: string): string {
 		/^Vaststelling van de begrotingssta(?:at|ten) van (?:het |de )?(.+?) voor het jaar \d{4}$/i.exec(
 			title.trim()
 		);
-	return m ? m[1].charAt(0).toUpperCase() + m[1].slice(1) : title;
+	return m ? capitalize(m[1]) : title;
 }

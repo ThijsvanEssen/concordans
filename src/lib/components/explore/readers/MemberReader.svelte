@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { textOf } from '$lib/text/words';
+	import { capitalize, textOf } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
 	import { fractieNaam, naamVan } from '$lib/bron/menselijk';
 	import ReaderHead from './ReaderHead.svelte';
@@ -303,7 +303,7 @@
 														.join(', ') || null
 											}
 										: {
-												zin: step.function.charAt(0).toUpperCase() + step.function.slice(1),
+												zin: capitalize(step.function),
 												onder: step.cabinet || step.count > 0 ? ambtOnder : null,
 												hint: step.cabinet
 													? null

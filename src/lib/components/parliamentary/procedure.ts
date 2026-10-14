@@ -2,6 +2,7 @@
 // groepen (Raad van State, Tweede Kamer, Eerste Kamer). Alleen wat gebeurd is; wat nog kan
 // volgen staat als één gestippelde regel die zegt dat het kan volgen. Moties, amendementen,
 // brieven en procedurevergaderingen worden geteld en staan achter één knop.
+import { capitalize, lowerFirst } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import { bronHref } from '$lib/bron/href';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
@@ -40,7 +41,6 @@ export type ProcedureInhoud =
 	| { soort: 'stukken'; stukken: { ref: string; zin: string }[] };
 type Inhouden = Map<string, ProcedureInhoud>;
 
-const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 const bodyOf = (e: Entry) => (e.body ?? {}) as Body;
 /**
  * The number of a paper in its dossier: the Eerste Kamer's letter (`number`, API 0.73,
@@ -82,7 +82,7 @@ const NAAM: Record<string, string> = {
 	'Advies Afdeling advisering Raad van State en Nader rapport': 'advies en nader rapport',
 	'Advies Afdeling advisering Raad van State': 'advies'
 };
-const naam = (kind: string) => NAAM[kind] ?? lower(kind);
+const naam = (kind: string) => NAAM[kind] ?? lowerFirst(kind);
 const reeks = (namen: string[]) =>
 	namen.length < 2 ? namen.join('') : `${namen.slice(0, -1).join(', ')} en ${namen.at(-1)}`;
 const nrs = (n: string[]) =>
@@ -94,7 +94,7 @@ function activiteitZin(e: Entry, b: Body): string {
 	const kind = e.kind ?? '';
 	if (agenda && !isGeneriek(agenda, kind)) return agenda;
 	const zin = agenda || kind;
-	return zin.charAt(0).toUpperCase() + zin.slice(1);
+	return capitalize(zin);
 }
 
 /**
@@ -266,7 +266,7 @@ function regelsVan(
 							const k = naam(d.kind ?? '');
 							return {
 								ref: d.node_id,
-								zin: `${k.charAt(0).toUpperCase()}${k.slice(1)}${nr ? `, ${groep === 'ek' ? nr : `nr. ${nr}`}` : ''}`
+								zin: `${capitalize(k)}${nr ? `, ${groep === 'ek' ? nr : `nr. ${nr}`}` : ''}`
 							};
 						})
 					}
@@ -277,7 +277,7 @@ function regelsVan(
 			teken: 'stuk',
 			soort: 'documents',
 			label: null,
-			zin: zin.charAt(0).toUpperCase() + zin.slice(1),
+			zin: capitalize(zin),
 			meta: nummers.length
 				? `${kamerstukNummer(dossier, groep === 'ek' ? 'EK' : null)}, ${groep === 'ek' ? nummers.join(', ') : nrs(nummers)}`
 				: null,
@@ -302,7 +302,7 @@ const STAP: Record<string, string> = {
 	Plenair: 'plenaire behandeling',
 	Afkondiging: 'afkondiging'
 };
-const stapNaam = (s: EkStep) => (s.phase ? (STAP[s.phase] ?? lower(s.phase)) : '');
+const stapNaam = (s: EkStep) => (s.phase ? (STAP[s.phase] ?? lowerFirst(s.phase)) : '');
 
 /**
  * De voortgang zoals de pagina van het wetsvoorstel op eerstekamer.nl hem toont (API 0.76):
@@ -329,7 +329,7 @@ function ekVoortgang(d: Detail, ek: TijdRegel[]): TijdRegel[] | null {
 				teken: 'stuk',
 				soort: 'documents',
 				label: null,
-				zin: kind.charAt(0).toUpperCase() + kind.slice(1),
+				zin: capitalize(kind),
 				meta: letter
 					? kamerstukName({ chamber: 'EK', dossier_number: d.number, number: letter })
 					: null,

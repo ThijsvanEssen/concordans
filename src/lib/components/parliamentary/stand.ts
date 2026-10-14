@@ -1,3 +1,4 @@
+import { lowerFirst } from '$lib/text/words';
 import { korteDatum } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 
@@ -29,7 +30,6 @@ const SUBMITTED = ['Voorstel van wet', 'Memorie van toelichting', 'Advies Raad v
 
 /** `28 sep. 2026`; see `$lib/text/datum`. */
 
-const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 /** A phase as a sentence names it. */
 const PHASE_ZIN: Record<string, string> = {
 	Verslag: 'verslag',
@@ -88,7 +88,7 @@ export function stand(d: Dossier): Stand | null {
 		group = 'ek';
 	} else if (d.current_phase && TK_PHASES.includes(d.current_phase)) {
 		const when = dateOf(d.current_phase);
-		zin = `Bij de Tweede Kamer: ${PHASE_ZIN[d.current_phase] ?? lower(d.current_phase)}${when ? `, ${korteDatum(when)}` : ''}.`;
+		zin = `Bij de Tweede Kamer: ${PHASE_ZIN[d.current_phase] ?? lowerFirst(d.current_phase)}${when ? `, ${korteDatum(when)}` : ''}.`;
 		group = 'tk';
 	} else if (d.current_phase && SUBMITTED.includes(d.current_phase)) {
 		const when = dateOf('Voorstel van wet') ?? d.opened_on;

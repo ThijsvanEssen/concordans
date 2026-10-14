@@ -1,5 +1,6 @@
 // What the panel, the table and the legend derive from the groups and the filter:
 // the rows that pass, the counts, the groupings and the years of the judgments.
+import { capitalize } from '$lib/text/words';
 import type { Collection } from '$lib/vocabulary';
 import { relationLabel } from './hoe';
 import { sumLidCounts } from '$lib/api/nodes';
@@ -301,7 +302,7 @@ export function regroup(groups: Group[], by: Grouping, selection: Collection): G
 					? k || 'Zonder datum'
 					: by === 'aard'
 						? k
-							? k.charAt(0).toUpperCase() + k.slice(1)
+							? capitalize(k)
 							: 'Zonder aard'
 						: k || 'Overige verbindingen',
 		rows: buckets

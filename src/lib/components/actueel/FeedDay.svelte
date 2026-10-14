@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { capitalize } from '$lib/text/words';
 	import { korteDatum } from '$lib/text/datum';
 	// One day of Actueel in the shared timeline, as on the homepage: the day as the heading
 	// (rung 2, the timeline is the page), its kinds counted beside it; each line the kind above
@@ -95,7 +96,6 @@
 		const t = (i.vote?.tally ?? {}) as Record<string, number>;
 		return { voor: t['Voor'] ?? 0, tegen: t['Tegen'] ?? 0 };
 	};
-	const hoofd = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 	// The items and folds of the day by their line's id, for what a line shows under it.
 	const items = $derived(
@@ -138,7 +138,7 @@
 					datum: f.items[0]?.date ?? day.date,
 					teken: f.kind === 'toezegging' ? 'open' : 'stuk',
 					vorm: vormVanFeed({ kind: f.kind }),
-					label: `${hoofd(KIND_LABEL[f.kind].many)}${nieuw(f.items[0]?.date)}`,
+					label: `${capitalize(KIND_LABEL[f.kind].many)}${nieuw(f.items[0]?.date)}`,
 					zin,
 					zinDelen: markeer(termen, zin),
 					onder: plekken.has(f.id) ? foldOnder : null,

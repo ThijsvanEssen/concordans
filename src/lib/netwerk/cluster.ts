@@ -2,6 +2,7 @@
 // drawn as hundreds of signs: past CLUSTER_MIN, the bronnen of a kind that hang on the
 // focus alone stand on the canvas as one cluster bron, "250 uitspraken". One click on it
 // opens a card that shows them all, or the group in Verbonden; shown, they fold back.
+import { lowerFirst } from '$lib/text/words';
 import { formatCount } from '$lib/text/getal';
 import { bronPlural, type Collection } from '$lib/vocabulary';
 
@@ -200,7 +201,7 @@ export function clusterZinnen(
 		);
 	if (group?.total && group.total > c.neighbours)
 		zinnen.push(
-			`In het netwerk: ${n(c.neighbours)} van de ${n(group.total)} ${group.label.charAt(0).toLowerCase()}${group.label.slice(1)}.`
+			`In het netwerk: ${n(c.neighbours)} van de ${n(group.total)} ${lowerFirst(group.label)}.`
 		);
 	return zinnen;
 }

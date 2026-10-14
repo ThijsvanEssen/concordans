@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { textOf } from '$lib/text/words';
 	// The bijlagen of a stuk in its status line (concept 21: "de bijlagen gaan in de
 	// statusregel"): "Bijlagen 15" with a caret; opened, the list under the line, asked then
 	// (ACCOMPANIES inbound, one request). Verbonden has them all.
@@ -36,10 +37,8 @@
 				// Politie"), as the source gives it.
 				rijen = ns.slice(0, TOON).map((n) => {
 					const l = laagVan(n, 'Bijlage');
-					const onderwerp = (n.props as Record<string, unknown> | undefined)?.subject;
-					return typeof onderwerp === 'string' && onderwerp.trim()
-						? { ...l, naam: onderwerp.trim(), vol: l.vol ?? l.naam }
-						: l;
+					const onderwerp = textOf((n.props as Record<string, unknown> | undefined)?.subject);
+					return onderwerp ? { ...l, naam: onderwerp, vol: l.vol ?? l.naam } : l;
 				});
 			})
 			.catch(() => {

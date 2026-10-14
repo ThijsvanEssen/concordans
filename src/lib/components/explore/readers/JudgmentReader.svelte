@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { textOf } from '$lib/text/words';
+	import { capitalize, textOf } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
-	import { bevindingen, hoofdletter, strekking } from './uitkomst';
+	import { bevindingen, strekking } from './uitkomst';
 	import { keyEcli } from '$lib/bron/leesbaar';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import {
@@ -191,9 +191,7 @@
 		{@const outside = j.unresolved_citations ?? []}
 		<!-- The status in one sentence: kind, date, case number; the conclusie after it. -->
 		{@const statusWoorden = [
-			j.decision_kind && !conclusion
-				? j.decision_kind.charAt(0).toUpperCase() + j.decision_kind.slice(1)
-				: null,
+			j.decision_kind && !conclusion ? capitalize(j.decision_kind) : null,
 			judgmentDate,
 			caseNumber
 		].filter(Boolean)}
@@ -249,7 +247,7 @@
 						{#if statusWoorden.length || eigenStrekking}{[...statusWoorden, eigenStrekking]
 								.filter(Boolean)
 								.join(', ')}.{/if}
-						{#if echr}{hoofdletter(echr)}.{/if}
+						{#if echr}{capitalize(echr)}.{/if}
 						{#if conclusies.length}{conclusies.length > 1 ? 'Conclusies' : 'Conclusie'}: {#each conclusies as c, i (c.naam)}{i >
 								0
 									? '; '

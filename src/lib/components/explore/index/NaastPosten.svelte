@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { capitalize } from '$lib/text/words';
 	// Bewindspersonen side by side: the ministers per post across cabinets. A row per post of
 	// a minister, a column per cabinet, the column heads as in the Kruiswoord and the rows as
 	// IndexRow. Who stayed on from the cabinet before is grey, who came new is in ink. Under
@@ -231,11 +232,7 @@
 {/snippet}
 
 {#each mislukt as k (k.key)}
-	<LoadState
-		state={details[k.key]!}
-		what={k.name.charAt(0).toUpperCase() + k.name.slice(1)}
-		retry={() => ask(k.key)}
-	/>
+	<LoadState state={details[k.key]!} what={capitalize(k.name)} retry={() => ask(k.key)} />
 {/each}
 
 {#if scherm.smal}

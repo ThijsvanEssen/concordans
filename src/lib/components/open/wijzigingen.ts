@@ -3,7 +3,7 @@
 // law and verb, from its own ESTABLISHES, AMENDS, INTRODUCES and REPEALS; an inwerkingtreding the
 // publication that brought the version, from the law's `/amended-by`. The feed gives neither
 // verb nor article (onderzoek samenhang, GGN 3.2 and 3.3: back-end B2, B3).
-import { textOf } from '$lib/text/words';
+import { capitalize, textOf } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import type { Collection, Relation } from '$lib/vocabulary';
 import { woordenVan } from '$lib/verbonden/hoe';
@@ -35,8 +35,6 @@ export type WetRegel = {
 	meer: number;
 };
 
-const groot = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
 /** Articles named on one line; the rest counted. */
 export const ARTIKELEN_GENOEMD = 12;
 
@@ -45,7 +43,9 @@ function werkwoordVan(b: Buur): string {
 	const meta = b.meta ?? {};
 	if (textOf(meta.effect) === 'vernummering') return 'Vernummert';
 	const naar = b.collection === 'instruments' ? 'instruments' : 'articles';
-	return groot(woordenVan(b.relation as Relation, 'instruments', naar as Collection, meta).actief);
+	return capitalize(
+		woordenVan(b.relation as Relation, 'instruments', naar as Collection, meta).actief
+	);
 }
 
 /**

@@ -4,6 +4,7 @@
 // the letters that answer it, an amendment the articles it changes, a changed paper the one
 // it replaces, a judgment the articles it cites; of a followed law, how the row is tied to it
 // (`via`). Each a line of words with its bronnen as links, so each opens in place.
+import { capitalize } from '$lib/text/words';
 import { korteDatum } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
@@ -112,8 +113,8 @@ export function inwerkingVerbanden(c: FeedItem['commencement']): Verband[] {
 			? artikelen(c.article_count)
 			: 'Nieuw'
 		: nummers.length && nummers.length <= ARTIKELEN_GENOEMD
-			? `${groot(artNummers(nummers))} gewijzigd`
-			: groot(artikelenGewijzigd(c) ?? '') || (pub ? 'Gewijzigd' : '');
+			? `${capitalize(artNummers(nummers))} gewijzigd`
+			: capitalize(artikelenGewijzigd(c) ?? '') || (pub ? 'Gewijzigd' : '');
 	if (wat) uit.push({ label: '', delen: [{ tekst: wat }, ...bij] });
 	const basis = c.based_on;
 	if (basis?.instrument)
@@ -129,8 +130,6 @@ export function inwerkingVerbanden(c: FeedItem['commencement']): Verband[] {
 		});
 	return uit;
 }
-
-const groot = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 // ── Papers and articles ─────────────────────────────────────────────────
 

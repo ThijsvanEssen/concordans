@@ -55,7 +55,7 @@ const leesWet = (v: unknown): GevolgdeWet | null => {
 	if (typeof bwb !== 'string' || !/^BWBR\d+$/i.test(bwb)) return null;
 	return {
 		bwb: bwb.toUpperCase(),
-		titel: typeof titel === 'string' && titel.trim() ? titel.trim() : bwb.toUpperCase(),
+		titel: textOf(titel) ?? bwb.toUpperCase(),
 		artikel: textOf(artikel)
 	};
 };

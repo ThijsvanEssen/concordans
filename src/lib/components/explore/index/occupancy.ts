@@ -1,3 +1,4 @@
+import { lowerFirst } from '$lib/text/words';
 import { vandaag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 
@@ -100,8 +101,6 @@ export function bandsOf(
 		.filter((b) => b.to > b.from);
 }
 
-const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
-
 /**
  * Why a post was held ad interim, in words for the reader: beside which other post, or in
  * the words of Rijksoverheid. A sentence, with its one full stop.
@@ -112,14 +111,14 @@ export function actingReason(
 	if (post.acting_reason === 'held_other_seat') {
 		const other = post.acting_other_seat?.function;
 		return other
-			? `Naast de post ${lower(other)}, tot de opvolger aantrad.`
+			? `Naast de post ${lowerFirst(other)}, tot de opvolger aantrad.`
 			: 'Naast een andere post, tot de opvolger aantrad.';
 	}
 	if (post.acting_reason === 'source') {
 		const text = post.acting_basis?.trim();
 		if (!text || /^a\.i\.?$/i.test(text)) return 'Ad interim, volgens Rijksoverheid.';
 		// One full stop at the end, whether the source gave one or not.
-		return `Volgens Rijksoverheid: ${lower(text).replace(/\.?$/, '.')}`;
+		return `Volgens Rijksoverheid: ${lowerFirst(text).replace(/\.?$/, '.')}`;
 	}
 	return null;
 }

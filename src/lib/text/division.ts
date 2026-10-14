@@ -2,6 +2,7 @@
 // gives it in `breadcrumb`. Each layer is shown once; a layer that is the law itself
 // (Boek 6 in Burgerlijk Wetboek Boek 6) is not a layer.
 
+import { lowerFirst } from './words';
 import { formatAnchor, parseAnchor } from './anchor';
 
 export type Division = {
@@ -20,8 +21,6 @@ export function layersOf<D extends Division>(crumbs: D[], lawName: string | null
 	const first = norm(crumbs[0]?.label);
 	return first && law.endsWith(` ${first}`) ? crumbs.slice(1) : crumbs;
 }
-
-const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
 /**
  * The place of an article in one line: every layer by its designation, the innermost

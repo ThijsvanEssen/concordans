@@ -28,4 +28,3 @@ export const bevindingen = (bs: readonly Bevinding[] | null | undefined): string
 	(bs ?? []).map(bevinding).join('; ') || null;
 
 /** The first letter up, for the start of a sentence. */
-export const hoofdletter = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);

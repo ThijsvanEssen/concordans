@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { capitalize } from '$lib/text/words';
 	import { korteDatum } from '$lib/text/datum';
 	// De stand van een wetsvoorstel als balk in drie
 	// gelijke vakken, in de volgorde van de procedure. Afgerond met een uitkomst: mos met een
@@ -64,10 +65,7 @@
 				naam: 'Tweede Kamer',
 				soort: 'nu',
 				woord: st.group === 'ingediend' ? 'Ingediend' : 'In behandeling',
-				zin:
-					st.group === 'ingediend'
-						? when
-						: `${fase.charAt(0).toUpperCase() + fase.slice(1)}${when ? `, ${when}` : ''}`
+				zin: st.group === 'ingediend' ? when : `${capitalize(fase)}${when ? `, ${when}` : ''}`
 			};
 		}
 		let v3: Vak;
