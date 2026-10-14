@@ -121,12 +121,16 @@
 
 	let {
 		groups,
-		pending = false
+		pending = false,
+		stale = false
 	}: {
 		groups: FacetGroup[];
 		/** The first answer is still on its way: no counts yet, rather than a column of zeros. */
 		pending?: boolean;
+		/** The counts did not come for these filters: none, rather than those of the filters before. */
+		stale?: boolean;
 	} = $props();
+	const hidden = $derived(pending || stale);
 
 	let alle = $state<Record<string, boolean>>({});
 	/** The options a long list shows: the first `preview`, and a chosen one beyond them. */
@@ -164,7 +168,7 @@
 		<section class="group" aria-labelledby="facet-{g.id}">
 			<h2 class="group-head" id="facet-{g.id}">
 				<span>{g.label}</span>
-				{#if g.note && !pending}<span class="group-note">{g.note}</span>{/if}
+				{#if g.note && !hidden}<span class="group-note">{g.note}</span>{/if}
 			</h2>
 
 			{#if g.kind === 'list'}
@@ -173,7 +177,7 @@
 						{#if isHeading(o)}
 							<li class="subhead">
 								<span>{o.heading}</span>
-								{#if o.count !== undefined && !pending}<span class="n">{formatCount(o.count)}</span
+								{#if o.count !== undefined && !hidden}<span class="n">{formatCount(o.count)}</span
 									>{/if}
 							</li>
 						{:else}
@@ -182,7 +186,7 @@
 									label={o.label}
 									on={o.on}
 									onToggle={o.onClick}
-									count={pending ? null : o.count}
+									count={hidden ? null : o.count}
 									bezig={pending && o.count !== undefined}
 									swatch={o.swatch}
 									indent={o.indent}
@@ -207,7 +211,7 @@
 								label={o.label}
 								on={o.on}
 								onToggle={o.onClick}
-								count={pending ? null : o.count}
+								count={hidden ? null : o.count}
 								bezig={pending && o.count !== undefined}
 							/>
 						</li>
@@ -224,7 +228,7 @@
 						{ waarde: '', label: sel.all },
 						...sel.options.map((o) => ({
 							waarde: o.value,
-							label: `${o.label}${o.count !== undefined ? ` (${formatCount(o.count)})` : ''}`
+							label: `${o.label}${o.count !== undefined && !hidden ? ` (${formatCount(o.count)})` : ''}`
 						}))
 					]}
 					tekst={sel.value

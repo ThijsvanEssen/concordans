@@ -44,9 +44,15 @@ type Paper = {
 	number?: string | number | null;
 };
 
+// `36600-VIII`, `23908-(R1519)`: a number and its suffix as the data joins them. A digit after
+// the hyphen (`21501-20`) is part of the number, and is cited so.
+const JOINED_SUFFIX = /^(\d+)-([A-Z]+|\([A-Z0-9]+\))$/i;
+
 /** `36945 IV`: the dossier with its suffix, as a citation writes it. */
 const dossierOf = (p: Paper & { dossier_number: string }) =>
-	p.dossier_suffix ? `${p.dossier_number} ${p.dossier_suffix}` : p.dossier_number;
+	p.dossier_suffix
+		? `${p.dossier_number} ${p.dossier_suffix}`
+		: p.dossier_number.replace(JOINED_SUFFIX, '$1 $2');
 
 /** `36791, C` or `36945 IV, nr. 5`: a paper's place in its dossier; null for no Kamerstuk. */
 export function kamerstukLabel(p: Paper): string | null {

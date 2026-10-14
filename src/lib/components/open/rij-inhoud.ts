@@ -15,6 +15,16 @@ export type MetInhoud = { node: { collection: string; key: string } } & Partial<
 		/** Of an amendement, the opening of its toelichting as the API gives it (API 0.79.55). */
 		explanation?: string | null;
 	};
+/** A stemming as an opened row shows it, from its tally: its bar. */
+export const stemmingInhoud = (
+	key: string,
+	tally: Record<string, number> | null | undefined
+): MetInhoud => ({
+	kind: 'stemming',
+	node: { collection: 'decisions', key },
+	vote: { chamber: 'TK', tally: tally ?? {} }
+});
+
 /** `kern`: a stuk's core text by its own kind (kernSoort), where the row does not know it. */
 export type Inhoud =
 	| 'dictum'

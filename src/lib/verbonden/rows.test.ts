@@ -145,6 +145,20 @@ describe('the name of a Kamerstuk', () => {
 		});
 	});
 
+	it('writes the dossier with its suffix as a citation does (#84)', () => {
+		const motie = { kind: 'Motie', title: 'Motie van het lid X over Y', sequence: 183 };
+		expect(doc({ ...motie, dossier_numbers: ['36600-VIII'] }).context).toBe(
+			'Motie, Kamerstuk 36600 VIII, nr. 183'
+		);
+		expect(doc({ ...motie, dossier_number: '36600', dossier_suffix: 'VIII' }).context).toBe(
+			'Motie, Kamerstuk 36600 VIII, nr. 183'
+		);
+		// The Eerste Kamer's letter, also where the data gives it as the sequence.
+		expect(doc({ ...motie, dossier_number: '31936', sequence: 'CG' }).context).toBe(
+			'Motie, Kamerstuk I 31936, CG'
+		);
+	});
+
 	it('is its kind and number where the title only names the kind', () => {
 		expect(
 			doc({

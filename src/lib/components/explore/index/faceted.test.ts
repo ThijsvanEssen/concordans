@@ -97,6 +97,25 @@ describe('a faceted list', () => {
 		expect(l.facets).toEqual([{ tag: 'facets' }]);
 	});
 
+	it('asks the facets with the time of a search (zoekApi, 30 s), the rows as any list (#80)', async () => {
+		const api = fakeApi({
+			'/api/judgments': ({ params }: FakeRequest) =>
+				params.query?.facets ? answer([], 'facets') : answer([{ id: 'a' }], 'rows')
+		});
+		const l = list();
+		await faceted(
+			'/api/judgments',
+			{ from: '2025-10-14', limit: 100 },
+			l.apart,
+			() => {},
+			() => {}
+		)(0, new AbortController().signal);
+		expect(api.requests.map((r) => [r.client, r.params.query?.facets])).toEqual([
+			['zoekApi', true],
+			['api', false]
+		]);
+	});
+
 	it('shows the rows when the facets fail', async () => {
 		fakeApi({
 			'/api/dossiers': ({ params }: FakeRequest) =>

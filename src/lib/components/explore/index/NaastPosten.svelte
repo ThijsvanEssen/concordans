@@ -210,7 +210,7 @@
 		leeg={binnen ? 'Geen ministers met deze naam.' : 'Laden…'}
 	/>
 {:else}
-	<div class="matrix" style:--kol={kabinetten.length}>
+	<div class="matrix" style:--kol={kabinetten.length} data-zijscroll>
 		<div class="rij rij--kop">
 			<span class="k k--post">Post</span>
 			{#each kabinetten as k (k.key)}
@@ -271,13 +271,18 @@
 {/if}
 
 <style>
+	/* A cabinet's column holds its name and "Rutte-Verhagen" whole; where the column of the
+	   page is narrower than all of them, the cabinets scroll within it beside the post (#81). */
 	.matrix {
 		--post: 176px;
+		--cel: 112px;
+		overflow-x: auto;
 	}
 	.rij {
 		display: grid;
-		grid-template-columns: var(--post) repeat(var(--kol), minmax(0, 1fr));
+		grid-template-columns: var(--post) repeat(var(--kol), minmax(var(--cel), 1fr));
 		column-gap: var(--s-3);
+		min-width: calc(var(--post) + var(--kol) * (var(--cel) + var(--s-3)));
 		border-bottom: 1px solid var(--rule);
 	}
 	.rij--open {
@@ -297,8 +302,21 @@
 		font-family: var(--font-serif);
 	}
 	.k--post {
+		/* The whole height of the head, so the cabinets pass under it. */
+		align-self: stretch;
+		justify-content: flex-end;
 		font-size: var(--t-micro);
 		color: var(--ink-3);
+	}
+	.k--post,
+	.post {
+		position: sticky;
+		left: 0;
+		z-index: 1;
+		background: var(--paper);
+	}
+	.rij--open .post {
+		background: var(--paper-2);
 	}
 	.k-naam {
 		font-size: var(--t-meta);
@@ -371,6 +389,8 @@
 		background: var(--paper-2);
 	}
 	.open {
+		position: sticky;
+		left: 0;
 		padding-left: calc(var(--post) + var(--s-3));
 		background: var(--paper-2);
 		border-bottom: 1px solid var(--rule);

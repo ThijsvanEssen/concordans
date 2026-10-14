@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { GraphNode } from '$lib/graph/types';
-import { tabTitle } from './tab-title';
+import { documentTitle, tabTitle } from './tab-title';
 
 const node = (collection: string, label: string, display_name: string | null, props = {}) =>
 	({ collection, label, raw: { display_name, props } }) as unknown as GraphNode;
@@ -18,6 +18,28 @@ describe('tabTitle', () => {
 				})
 			)
 		).toBe('36264 Verzamelwet gegevensbescherming');
+	});
+
+	it('names a Kamerstuk by its kind, title and place as a citation writes it (#84)', () => {
+		const brief = node(
+			'documents',
+			'x',
+			'Kamerstuk 36600-VIII, nr. 5. Brief regering: Werkprogramma',
+			{
+				kind: 'Brief regering',
+				title: 'Werkprogramma AWTI 2025',
+				dossier_number: '36600',
+				dossier_suffix: 'VIII',
+				sequence: 5
+			}
+		);
+		expect(documentTitle(brief)).toBe(
+			'Brief regering: Werkprogramma AWTI 2025 (36600 VIII, nr. 5)'
+		);
+		expect(tabTitle(brief)).toBe(documentTitle(brief));
+		expect(documentTitle(node('documents', 'x', 'Sprekerslijst', { kind: 'Sprekerslijst' }))).toBe(
+			null
+		);
 	});
 
 	it('names a judgment by its label and name, a BW article by its book', () => {

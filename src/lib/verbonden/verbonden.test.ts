@@ -177,6 +177,27 @@ describe('buildGroups', () => {
 		expect(countLabel(counted)).toBe('1.412');
 	});
 
+	it('lists the fracties that voted Voor first, then Tegen, the most seats first (#83)', () => {
+		const vote = (key: string, choice: string, seats: number) =>
+			({
+				id: `factions/${key}`,
+				key,
+				collection: 'factions',
+				display_name: key,
+				relation: 'VOTED',
+				direction: 'inbound',
+				props: {},
+				meta: { choice, seats }
+			}) as unknown as Neighbor;
+		const rows = buildGroups('decisions', [
+			vote('sp', 'Tegen', 3),
+			vote('markuszower', 'Voor', 7),
+			vote('pvv', 'Tegen', 26),
+			vote('cu', 'Voor', 3)
+		]).find((g) => g.id === 'votes')!.rows;
+		expect(rows.map((r) => r.ref.key)).toEqual(['markuszower', 'cu', 'pvv', 'sp']);
+	});
+
 	it('sends a treaty article to Europees en internationaal, not to Verwijst naar', () => {
 		const evrm = {
 			id: 'articles/bwbv0001000_6',

@@ -13,6 +13,7 @@ import { isInternational } from './filter';
 import { formatCount } from '$lib/text/getal';
 import { rowOfNeighbor, type Neighbor, type Row } from './rows';
 import { chamberOf, type Chamber } from './chamber';
+import { choiceRank } from '$lib/components/parliamentary/stemming';
 
 export { isInternational };
 
@@ -75,6 +76,8 @@ export type GroupDef = {
 	passages?: boolean;
 	/** A name that follows the rows shown: the functions a lid signed in. */
 	labelOf?: (rows: Row[]) => string;
+	/** The order of its rows, where the API's is not the one to read them in. */
+	rowOrder?: (a: Neighbor, b: Neighbor) => number;
 };
 
 export type Group = GroupDef & {
@@ -108,6 +111,12 @@ const votedIn = (chamber: Chamber) => (n: Neighbor) =>
 	}) === chamber;
 
 const signedAs = (capacity: Capacity) => (n: Neighbor) => n.meta?.capacity === capacity;
+
+/** The fracties of a vote as its block of Fracties lists them: Voor, then Tegen, by seats. */
+const choiceOf = (n: Neighbor) => capitalize(String(n.meta?.choice ?? '').toLowerCase());
+const seatsOf = (n: Neighbor) => Number(n.meta?.seats ?? 0);
+const byChoice = (a: Neighbor, b: Neighbor) =>
+	choiceRank(choiceOf(a)) - choiceRank(choiceOf(b)) || seatsOf(b) - seatsOf(a);
 
 /** `a`, `a en b`, `a, b en c`; beyond three, `a, b en 2 andere functies`. */
 function functionList(rows: Row[]): string {
@@ -777,7 +786,8 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			id: 'votes',
 			label: 'Fracties die stemden',
 			noun: 'fracties',
-			match: [{ relation: 'VOTED', direction: 'inbound', collection: 'factions' }]
+			match: [{ relation: 'VOTED', direction: 'inbound', collection: 'factions' }],
+			rowOrder: byChoice
 		}
 	],
 	activities: [
@@ -972,7 +982,7 @@ export function buildGroups(
 	const placed = neighbors
 		.map((n) => ({ n, at: groups.findIndex((g) => g.match?.some((m) => matches(m, n))) }))
 		.filter((p) => p.at >= 0)
-		.sort((a, b) => a.at - b.at);
+		.sort((a, b) => a.at - b.at || (groups[a.at].rowOrder?.(a.n, b.n) ?? 0));
 	for (const { n, at } of placed) {
 		const group = groups[at];
 		const bucket = bucketKey(n.relation, n.collection, n.direction);
