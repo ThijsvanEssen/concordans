@@ -5,6 +5,8 @@
 // lost among them in one hull. Only the bronnen within the depth along other verbindingen
 // stay; the law itself is still a step away, as the hull its articles stand in.
 
+import { neighbours } from './adjacency';
+
 type Node = { id: string; collection: string };
 type Edge = { source: string; target: string; relation: string | null };
 
@@ -21,13 +23,7 @@ export function withoutLawHops<N extends Node, E extends Edge>(
 	const collection = new Map(nodes.map((n) => [n.id, n.collection]));
 	const throughLaw = (e: Edge) =>
 		e.relation === 'PART_OF' && collection.get(e.target) === 'instruments' && e.target !== focal;
-	const next = new Map<string, string[]>();
-	const link = (a: string, b: string) => (next.get(a) ?? next.set(a, []).get(a)!).push(b);
-	for (const e of edges) {
-		if (throughLaw(e)) continue;
-		link(e.source, e.target);
-		link(e.target, e.source);
-	}
+	const next = neighbours(edges.filter((e) => !throughLaw(e)));
 	const steps = new Map<string, number>([[focal, 0]]);
 	const queue = [focal];
 	while (queue.length) {

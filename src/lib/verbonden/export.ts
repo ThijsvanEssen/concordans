@@ -1,5 +1,5 @@
-// The verbindingen as a CSV, with the columns of the table. Separated by semicolons and
-// preceded by a byte order mark, as Excel with Dutch settings reads a CSV.
+// The verbindingen as a CSV, with the columns of the table.
+import { csvText } from '$lib/text/csv';
 import { korteDatum } from '$lib/text/datum';
 import { buildBronHref } from '$lib/bron/href';
 import type { Collection } from '$lib/vocabulary';
@@ -83,20 +83,12 @@ export const TABLE_COLUMNS = COLUMNS.filter((c) => !c.csvOnly);
 export const exportRows = (groups: Group[], filter: VerbondenFilter): Row[] =>
 	mentionRows(allRows(filterGroups(groups, filter)));
 
-const SEP = ';';
-const BOM = '\uFEFF';
-
-const cell = (v: string | null | undefined) => {
-	const s = v ?? '';
-	return /[";,\r\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s;
-};
-
 export function rowsToCsv(rows: Row[], selection: Collection, origin: string): string {
 	const ctx = { selection, origin };
-	const lines = [COLUMNS.map((c) => c.label.toLowerCase()).join(SEP)];
-	for (const r of rows)
-		lines.push(COLUMNS.map((c) => cell(c.csv ? c.csv(r) : c.value(r, ctx))).join(SEP));
-	return BOM + lines.join('\r\n');
+	return csvText(
+		COLUMNS.map((c) => c.label.toLowerCase()),
+		rows.map((r) => COLUMNS.map((c) => (c.csv ? c.csv(r) : c.value(r, ctx))))
+	);
 }
 
 /** The name of the file: the verbindingen of the bron by its title, in characters every

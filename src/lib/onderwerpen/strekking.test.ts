@@ -43,6 +43,12 @@ describe('strekking', () => {
 		);
 		expect(coderingUitCsv(csv)).toEqual({ huur: { d1: 'bevorderend', d2: 'neutraal' } });
 		expect(coderingUitCsv('kop\nhuur,d3,onzin,x')).toEqual({});
+		const regels = coderingNaarCsv(
+			'huur',
+			{ d1: 'beperkend', d2: 'neutraal' },
+			new Map([['d1', 'Motie "Jansen", over huur\nhuur,d9,neutraal']])
+		);
+		expect(coderingUitCsv(regels)).toEqual({ huur: { d1: 'beperkend', d2: 'neutraal' } });
 		expect(
 			samen({ huur: { d1: 'bevorderend' } }, { huur: { d1: 'beperkend', d2: 'neutraal' } })
 		).toEqual({ huur: { d1: 'beperkend', d2: 'neutraal' } });

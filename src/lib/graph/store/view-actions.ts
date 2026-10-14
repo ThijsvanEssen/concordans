@@ -24,7 +24,6 @@ export function createViewActions(
 		nodes,
 		edges,
 		pinned,
-		insertedAt,
 		containers,
 		selectionStore,
 		filtersStore,
@@ -32,8 +31,9 @@ export function createViewActions(
 		emit,
 		focusInternal,
 		pruneToIds,
-		reset,
-		state
+		removeNodes,
+		touchNode,
+		reset
 	} = ctx;
 
 	return {
@@ -54,11 +54,8 @@ export function createViewActions(
 			const container = raw && kind ? containerIdFor(raw) : null;
 			for (const row of rows) {
 				const id = nodeId(row.ref.collection, row.ref.key);
-				if (!nodes.has(id)) {
-					const node = syntheticNode(row.ref.collection, row.ref.key, row.title, row.props ?? {});
-					insertedAt.set(id, ++state.seq);
-					nodes.set(id, node);
-				}
+				if (!nodes.has(id))
+					touchNode(id, syntheticNode(row.ref.collection, row.ref.key, row.title, row.props ?? {}));
 				if (kind && container && isContainerMembership(kind, row.relation)) {
 					containers.recordMember(kind, container, id, row.relation, row.period ?? null);
 					continue;
@@ -71,14 +68,7 @@ export function createViewActions(
 		},
 		hideRows: (ids) => {
 			const selectedId = get(selectionStore)?.id;
-			const drop = new Set(ids.filter((id) => id !== selectedId && !pinned.has(id)));
-			for (const id of drop) {
-				nodes.delete(id);
-				insertedAt.delete(id);
-			}
-			for (const [id, e] of [...edges]) {
-				if (drop.has(e.source) || drop.has(e.target)) edges.delete(id);
-			}
+			removeNodes(ids.filter((id) => id !== selectedId && !pinned.has(id)));
 			emit();
 		},
 
@@ -104,15 +94,11 @@ export function createViewActions(
 				connected.add(e.target);
 			}
 			const selectedId = get(selectionStore)?.id;
-			let dropped = false;
-			for (const id of [...nodes.keys()]) {
-				if (connected.has(id) || pinned.has(id) || id === selectedId || containers.holds(id))
-					continue;
-				nodes.delete(id);
-				insertedAt.delete(id);
-				dropped = true;
-			}
-			if (dropped) emit();
+			const orphans = [...nodes.keys()].filter(
+				(id) => !connected.has(id) && !pinned.has(id) && id !== selectedId && !containers.holds(id)
+			);
+			removeNodes(orphans);
+			if (orphans.length > 0) emit();
 		}
 	};
 }

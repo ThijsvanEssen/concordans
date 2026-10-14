@@ -1,5 +1,6 @@
 // The overview of a topic: the decisions of the Kamers on moties, amendementen and bills with
 // its words in their title, counted by kind, outcome and year, and for one fractie by its vote.
+import { csvText, type CsvCell } from '$lib/text/csv';
 import { buildBronHref } from '$lib/bron/href';
 import type { Schema } from '$lib/api/types';
 import { CHOICE } from '$lib/components/parliamentary/stemming';
@@ -178,15 +179,6 @@ export function lijstQuery(
 }
 
 // ── CSV ─────────────────────────────────────────────────────────────────────
-// As the CSV of Verbonden: semicolons and a byte order mark, as Excel with Dutch settings
-// reads it.
-
-const SEP = ';';
-const BOM = '﻿';
-const cell = (v: string | number | null | undefined) => {
-	const s = v == null ? '' : String(v);
-	return /[";,\r\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s;
-};
 const UITKOMST: Record<Uitkomst, string> = {
 	aangenomen: 'aangenomen',
 	verworpen: 'verworpen',
@@ -203,9 +195,8 @@ export type MotieVelden = ReadonlyMap<
 export const KOLOM_STREKKING = 'strekking (eigen codering)';
 export const kolomStem = (fractie: string) => `stem ${fractie}`;
 
-export type CsvCel = string | number | null | undefined;
 /** The export as rows of cells under a head: what the CSV writes. */
-export type CsvTabel = { kop: string[]; rijen: CsvCel[][] };
+export type CsvTabel = { kop: string[]; rijen: CsvCell[][] };
 
 export function csvTabel(
 	lijst: readonly Besluit[],
@@ -260,5 +251,4 @@ export function csvTabel(
 	return { kop, rijen };
 }
 
-export const csvTekst = (t: CsvTabel) =>
-	BOM + [t.kop.join(SEP), ...t.rijen.map((r) => r.map(cell).join(SEP))].join('\r\n');
+export const csvTekst = (t: CsvTabel) => csvText(t.kop, t.rijen);

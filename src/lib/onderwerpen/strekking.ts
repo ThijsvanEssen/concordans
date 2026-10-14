@@ -5,6 +5,7 @@
 // the sentence it rests on. Stored in this browser only (no account, no server), and as a file
 // to share.
 import { truncate } from '$lib/text/words';
+import { CODING_FORMAT, csvText, parseCsv } from '$lib/text/csv';
 
 export type Strekking = 'bevorderend' | 'beperkend' | 'neutraal';
 export const STREKKINGEN: readonly Strekking[] = ['bevorderend', 'beperkend', 'neutraal'];
@@ -90,47 +91,23 @@ export function dictumUit(tekst: string | null | undefined): string | null {
 	return zin ? truncate(zin, 600) : null;
 }
 
-const veld = (v: string) => (/[",;\n]/.test(v) ? `"${v.replaceAll('"', '""')}"` : v);
-
 /** The coding of one topic as a file: one decision a line, to share or keep. */
 export function coderingNaarCsv(
 	onderwerp: string,
 	rijen: Record<string, Strekking>,
 	titels: ReadonlyMap<string, string> = new Map()
 ): string {
-	const kop = ['onderwerp', 'besluit', 'strekking', 'titel'];
-	const regels = Object.entries(rijen).map(([k, r]) =>
-		[onderwerp, k, r, titels.get(k) ?? ''].map(veld).join(',')
+	return csvText(
+		['onderwerp', 'besluit', 'strekking', 'titel'],
+		Object.entries(rijen).map(([k, r]) => [onderwerp, k, r, titels.get(k) ?? '']),
+		CODING_FORMAT
 	);
-	return [kop.join(','), ...regels].join('\n');
 }
 
 /** A coding file read back: the lines it holds, per topic; a line it cannot read is skipped. */
 export function coderingUitCsv(tekst: string): Codering {
 	const uit: Codering = {};
-	const regels = tekst
-		.replace(/^\uFEFF/, '')
-		.split(/\r?\n/)
-		.slice(1);
-	for (const regel of regels) {
-		const velden: string[] = [];
-		let v = '';
-		let tussen = false;
-		for (let i = 0; i < regel.length; i++) {
-			const ch = regel[i];
-			if (tussen) {
-				if (ch === '"' && regel[i + 1] === '"') {
-					v += '"';
-					i++;
-				} else if (ch === '"') tussen = false;
-				else v += ch;
-			} else if (ch === '"') tussen = true;
-			else if (ch === ',') {
-				velden.push(v);
-				v = '';
-			} else v += ch;
-		}
-		velden.push(v);
+	for (const velden of parseCsv(tekst, CODING_FORMAT).slice(1)) {
 		const [onderwerp, besluit, strekking] = velden.map((x) => x.trim());
 		if (!onderwerp || !besluit || !isStrekking(strekking)) continue;
 		uit[onderwerp] = { ...(uit[onderwerp] ?? {}), [besluit]: strekking };

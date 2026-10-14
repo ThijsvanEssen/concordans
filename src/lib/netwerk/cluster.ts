@@ -5,6 +5,7 @@
 import { joinAnd, lowerFirst, plural } from '$lib/text/words';
 import { formatCount } from '$lib/text/getal';
 import { bronPlural, type Collection } from '$lib/vocabulary';
+import { edgesByNode, mostCommonRelation, pushTo } from '$lib/graph/adjacency';
 
 /** More than this many bronnen of one kind make a cluster. */
 export const CLUSTER_MAX_LOOSE = 40;
@@ -51,11 +52,7 @@ export function clustersOf(
 ): Cluster[] {
 	if (!focus) return [];
 	const collectionOf = new Map(nodes.map((n) => [n.id, n.collection]));
-	const ties = new Map<string, Edge[]>();
-	for (const e of edges) {
-		(ties.get(e.source) ?? ties.set(e.source, []).get(e.source)!).push(e);
-		(ties.get(e.target) ?? ties.set(e.target, []).get(e.target)!).push(e);
-	}
+	const ties = edgesByNode(edges);
 	const level1 = new Set<string>();
 	for (const e of ties.get(focus) ?? []) level1.add(e.source === focus ? e.target : e.source);
 	level1.delete(focus);
@@ -69,29 +66,19 @@ export function clustersOf(
 			const other = e.source === id ? e.target : e.source;
 			return other === focus || (level1.has(other) && collectionOf.get(other) === collection);
 		});
-		if (loose) (byKind.get(collection) ?? byKind.set(collection, []).get(collection)!).push(id);
+		if (loose) pushTo(byKind, collection, id);
 	}
 
 	const clusters: Cluster[] = [];
 	for (const [collection, members] of byKind) {
 		if (members.length <= CLUSTER_MAX_LOOSE) continue;
-		const set = new Set(members);
-		const counts = new Map<string, number>();
-		for (const id of members) {
-			for (const e of ties.get(id) ?? []) {
-				if (e.source !== focus && e.target !== focus) continue;
-				const key = `${e.relation}|${set.has(e.source) ? 'in' : 'out'}`;
-				counts.set(key, (counts.get(key) ?? 0) + 1);
-			}
-		}
-		const [top] = [...counts].sort((a, b) => b[1] - a[1]);
-		const [relation, way] = (top?.[0] ?? 'RELATED_TO|in').split('|');
+		const { relation, toEnd } = mostCommonRelation(new Set(members), ties, focus);
 		clusters.push({
 			id: clusterId(collection),
 			collection,
 			members,
 			relation,
-			toFocus: way === 'in',
+			toFocus: toEnd,
 			neighbours: [...level1].filter((id) => collectionOf.get(id) === collection).length
 		});
 	}
@@ -117,11 +104,7 @@ export function tussenClustersOf(
 	expanded: ReadonlySet<string>
 ): Cluster[] {
 	if (chosen.size < 2) return [];
-	const ties = new Map<string, Edge[]>();
-	for (const e of edges) {
-		(ties.get(e.source) ?? ties.set(e.source, []).get(e.source)!).push(e);
-		(ties.get(e.target) ?? ties.set(e.target, []).get(e.target)!).push(e);
-	}
+	const ties = edgesByNode(edges);
 	const byEnds = new Map<string, { collection: Collection; ends: string[]; members: string[] }>();
 	for (const n of nodes) {
 		if (chosen.has(n.id) || keep.has(n.id) || isClusterId(n.id)) continue;
@@ -149,19 +132,8 @@ export function tussenClustersOf(
 	const clusters: Cluster[] = [];
 	for (const [id, { collection, ends, members }] of byEnds) {
 		if (members.length <= TUSSEN_MAX_LOOSE) continue;
-		const set = new Set(members);
-		const lines = ends.map((end) => {
-			const counts = new Map<string, number>();
-			for (const m of members)
-				for (const e of ties.get(m) ?? []) {
-					if (e.source !== end && e.target !== end) continue;
-					const key = `${e.relation}|${set.has(e.source) ? 'in' : 'out'}`;
-					counts.set(key, (counts.get(key) ?? 0) + 1);
-				}
-			const [top] = [...counts].sort((a, b) => b[1] - a[1]);
-			const [relation, way] = (top?.[0] ?? 'RELATED_TO|in').split('|');
-			return { id: end, relation, toEnd: way === 'in' };
-		});
+		const memberIds = new Set(members);
+		const lines = ends.map((end) => ({ id: end, ...mostCommonRelation(memberIds, ties, end) }));
 		clusters.push({
 			id,
 			collection,
