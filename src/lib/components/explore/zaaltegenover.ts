@@ -8,8 +8,8 @@ import { langeDatum } from '$lib/text/datum';
 
 export type Plaats = { block: 'left' | 'right'; row: number; column: number; name: string };
 
-const RIJEN = 10;
-const KOLOMMEN = 4;
+export const HALL_ROWS = 10;
+export const HALL_COLUMNS = 4;
 
 /**
  * The places in the order they are filled: the left block from the regering down, row by
@@ -18,10 +18,10 @@ const KOLOMMEN = 4;
 export function plaatsenOpVolgorde(fracties: { name: string; seats: number }[]): Plaats[] {
 	const plaatsen: Plaats[] = [];
 	const vrij = (['left', 'right'] as const).flatMap((block) =>
-		Array.from({ length: RIJEN * KOLOMMEN }, (_, i) => ({
+		Array.from({ length: HALL_ROWS * HALL_COLUMNS }, (_, i) => ({
 			block,
-			row: Math.floor(i / KOLOMMEN),
-			column: i % KOLOMMEN
+			row: Math.floor(i / HALL_COLUMNS),
+			column: i % HALL_COLUMNS
 		}))
 	);
 	for (const f of [...fracties].sort((a, b) => b.seats - a.seats))

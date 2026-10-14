@@ -121,7 +121,7 @@
 	} from './index/categories';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { PERIOD_LABEL, seatedOnly } from './index/period';
-	import { formatCount } from '$lib/verbonden/filter';
+	import { formatCount } from '$lib/text/getal';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
 
 	let { category }: { category: IndexCategory } = $props();

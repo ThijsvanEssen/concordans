@@ -15,7 +15,7 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronLabel } from '$lib/vocabulary';
 	import { ensureInstrumentName, instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
-	import { formatCount } from '$lib/verbonden/filter';
+	import { formatCount } from '$lib/text/getal';
 	import { annexGroups, type AnnexItem } from './annex';
 	import { load } from '$lib/util/load.svelte';
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { indelingMarkering, plaatsenOpVolgorde } from './zaaltegenover';
+import { HALL_COLUMNS, HALL_ROWS, indelingMarkering, plaatsenOpVolgorde } from './zaaltegenover';
 
 describe('plaatsenOpVolgorde: the Eerste Kamer on a day without its plan', () => {
 	// kabinet-Schoof, 22 Feb 2026: no `hall` with a date (API 0.79.48).
@@ -14,7 +14,13 @@ describe('plaatsenOpVolgorde: the Eerste Kamer on a day without its plan', () =>
 		const p = plaatsenOpVolgorde(fracties);
 		expect(p).toHaveLength(75);
 		expect(new Set(p.map((s) => `${s.block}:${s.row}:${s.column}`)).size).toBe(75);
-		expect(p.every((s) => s.row >= 0 && s.row < 10 && s.column >= 0 && s.column < 4)).toBe(true);
+		expect(
+			p.every((s) => s.row >= 0 && s.row < HALL_ROWS && s.column >= 0 && s.column < HALL_COLUMNS)
+		).toBe(true);
+	});
+
+	it('has two blocks of four places by ten rows', () => {
+		expect([HALL_COLUMNS, HALL_ROWS]).toEqual([4, 10]);
 	});
 
 	it('keeps a fractie together, the largest first', () => {

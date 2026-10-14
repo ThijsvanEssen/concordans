@@ -15,7 +15,7 @@
 		lawName,
 		primeInstrumentNames
 	} from '$lib/api/instrument-cache';
-	import { formatCount } from '$lib/verbonden/filter';
+	import { formatCount } from '$lib/text/getal';
 	import type { Schema } from '$lib/api/types';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
@@ -84,6 +84,9 @@
 		}
 	}
 
+	/** How far below the viewport an article's full text is asked already. */
+	const PRELOAD_MARGIN = '600px 0px';
+
 	/** Fetches an article's full text once its preview scrolls near the viewport. */
 	function lazyLoad(el: HTMLElement, articleNumber: string | null) {
 		const bwb = bwbId;
@@ -95,7 +98,7 @@
 					ensureDetail(bwb, articleNumber).catch((e) => report('Artikeltekst', e));
 				}
 			},
-			{ rootMargin: '600px 0px' }
+			{ rootMargin: PRELOAD_MARGIN }
 		);
 		observer.observe(el);
 		return { destroy: () => observer.disconnect() };
@@ -204,41 +207,41 @@
 	// A link to a place in the law: a division (`#deel-hoofdstuk-3`, from the band Behoort bij
 	// or the table of contents) or an article (`#artikel-658`, from the article itself). The
 	// pages load up to it, then it scrolls to the top once and the article is marked.
-	let doelGezien = '';
+	let landedHash = '';
 	$effect(() => {
 		const hash = decodeURIComponent(page.url.hash.slice(1));
-		const doel = parseAnchor(hash);
-		if (doel?.kind !== 'division' && doel?.kind !== 'article') {
-			doelGezien = '';
+		const target = parseAnchor(hash);
+		if (target?.kind !== 'division' && target?.kind !== 'article') {
+			landedHash = '';
 			return;
 		}
-		if (status !== 'ready' || doelGezien === hash) return;
+		if (status !== 'ready' || landedHash === hash) return;
 		void articles.length;
 		// Not an id: on a fresh load the browser would scroll the document itself to it.
 		const el = document.querySelector<HTMLElement>(
-			doel.kind === 'division'
+			target.kind === 'division'
 				? `[data-deel="${CSS.escape(hash)}"]`
-				: `[data-artikel="${CSS.escape(doel.number)}"]`
+				: `[data-artikel="${CSS.escape(target.number)}"]`
 		);
 		if (el) {
-			doelGezien = hash;
-			landOp(el);
-		} else if (doel.kind === 'division' && lawList.opensAlone(bwbId, peildatum, hash)) {
+			landedHash = hash;
+			landAt(el);
+		} else if (target.kind === 'division' && lawList.opensAlone(bwbId, peildatum, hash)) {
 			// Another division of the table of contents: it opens alone, as from a link.
 			const [bwb, day] = [bwbId, peildatum];
 			untrack(() => lawList.open(bwb, day, hash));
 		} else if (start > 0 || start + articles.length < total)
 			lawList.reach(hash).then(
 				(found) => {
-					if (!found) doelGezien = hash;
+					if (!found) landedHash = hash;
 				},
 				(e) => report('Wet plek', e)
 			);
-		else doelGezien = hash;
+		else landedHash = hash;
 	});
 
 	/** Scrolls a heading or an article to the top of the reader; an article is marked. */
-	function landOp(el: HTMLElement) {
+	function landAt(el: HTMLElement) {
 		scrollInReader(el);
 		if (!el.matches('.whole-article')) return;
 		el.classList.add('is-landed');
@@ -295,19 +298,18 @@
 		form="block"
 	/>
 {:else}
-	{@const naam = lawTitle}
 	<article class="whole-law" bind:this={lawEl}>
 		<ReaderHead
 			collection="instruments"
-			title={naam}
+			title={lawTitle}
 			acties={{
 				bewaar: bewaarItem(
 					`instruments/${bwbId.toLowerCase()}`,
-					{ kort: naam, voluit: fullTitle ?? naam },
-					{ groep: naam, wet: bwbId }
+					{ kort: lawTitle, voluit: fullTitle ?? lawTitle },
+					{ groep: lawTitle, wet: bwbId }
 				),
-				cite: citeItems({ kort: naam, voluit: fullTitle ?? naam }, permalink(page.url, '')),
-				naam,
+				cite: citeItems({ kort: lawTitle, voluit: fullTitle ?? lawTitle }, permalink(page.url, '')),
+				naam: lawTitle,
 				bron: officialUrl
 					? { label: sourceName(officialUrl) ?? 'Officiële tekst', href: officialUrl }
 					: null
@@ -318,7 +320,7 @@
 				{#if fullTitle}<p class="whole-official">{fullTitle}</p>{/if}
 			{/snippet}
 			<!-- What is on screen and which text: the count, a treaty, the peildatum. -->
-			{#snippet status()}
+			{#snippet statusLine()}
 				<span>{headLine}</span>
 				{#if detail.state.status === 'error'}
 					<LoadState state={detail.state} what="De gegevens van de wet" retry={detail.retry} />
@@ -456,8 +458,7 @@
 			{@const name = articleName(bwbId, a.article_number, a.label) ?? naamVanId(a.id)}
 			<section
 				class="whole-article"
-				id="article-{address}"
-				data-artikel={a.article_number ?? address}
+				data-artikel={address}
 				use:lazyLoad={peildatum || a.textToday ? null : address}
 			>
 				<div class="whole-article-head">

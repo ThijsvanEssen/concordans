@@ -21,6 +21,9 @@ export type LawArticle = {
 /** An article with the layers of its place (book, title), as the reader shows them. */
 export type LawNavItem = { key: string; label: string; breadcrumb: Division[] };
 
+/** The largest page the API gives: the whole list of a law in one request. */
+const WHOLE_LIST = 2000;
+
 const lists = new Map<string, Promise<Schema<'InstrumentArticlesResponse'>>>();
 onForget(() => lists.clear());
 
@@ -34,7 +37,7 @@ export function lawArticleList(bwb: string): Promise<Schema<'InstrumentArticlesR
 	if (!request) {
 		request = unwrap(
 			api.GET('/api/instruments/{bwb_id}/articles', {
-				params: { path: { bwb_id: bwb }, query: { text_preview_chars: 0, limit: 2000 } }
+				params: { path: { bwb_id: bwb }, query: { text_preview_chars: 0, limit: WHOLE_LIST } }
 			})
 		);
 		request.catch(() => lists.delete(bwb));

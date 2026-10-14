@@ -9,7 +9,8 @@ import { langeDatum } from '$lib/text/datum';
 import { kindName, lawKind } from '$lib/components/explore/law-head';
 import { bucketKey, type Bucket } from '$lib/api/nodes';
 import { isRelation, type Collection, type Relation } from '$lib/vocabulary';
-import { formatCount, isInternational } from './filter';
+import { isInternational } from './filter';
+import { formatCount } from '$lib/text/getal';
 import { rowOfNeighbor, type Neighbor, type Row } from './rows';
 import { chamberOf, type Chamber } from './chamber';
 

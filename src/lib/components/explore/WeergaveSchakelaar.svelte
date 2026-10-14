@@ -3,32 +3,25 @@
 	// chosen one filled in ink (Keuze). Key L.
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import Picto from '$lib/components/ui/Picto.svelte';
+	import type { Weergave } from './weergave';
 
-	type Stand = 'netwerk' | 'tekst';
-	let {
-		stand,
-		onKies,
-		tekstMogelijk = true
-	}: {
-		stand: Stand;
-		onKies: (s: Stand) => void;
-		/** A bron without a text of its own: the reader already stands beside the network. */
-		tekstMogelijk?: boolean;
-	} = $props();
+	let { weergave }: { weergave: Weergave } = $props();
 </script>
 
 <Keuze
 	klein
 	label="Weergave (toets L)"
-	waarde={stand}
-	{onKies}
+	waarde={weergave.stand}
+	onKies={weergave.onKies}
 	opties={[
 		{ waarde: 'netwerk', label: 'Netwerk', titel: 'Netwerk: de verbindingen' },
 		{
 			waarde: 'tekst',
 			label: 'Tekst',
-			uit: !tekstMogelijk,
-			titel: tekstMogelijk ? 'Tekst: lezen op volle breedte' : 'Deze bron heeft geen eigen tekst'
+			uit: !weergave.tekstMogelijk,
+			titel: weergave.tekstMogelijk
+				? 'Tekst: lezen op volle breedte'
+				: 'Deze bron heeft geen eigen tekst'
 		}
 	]}
 >

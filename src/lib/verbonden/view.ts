@@ -4,13 +4,8 @@ import { capitalize, plural } from '$lib/text/words';
 import type { Collection } from '$lib/vocabulary';
 import { relationLabel } from './hoe';
 import { sumLidCounts } from '$lib/api/nodes';
-import {
-	formatCount,
-	hiddenByKind,
-	rowPasses,
-	type BronKind,
-	type VerbondenFilter
-} from './filter';
+import { hiddenByKind, rowPasses, type BronKind, type VerbondenFilter } from './filter';
+import { formatCount } from '$lib/text/getal';
 import { groupCount, type Group } from './groups';
 import type { Row } from './rows';
 

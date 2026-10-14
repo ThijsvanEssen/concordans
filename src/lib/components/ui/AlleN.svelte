@@ -3,7 +3,7 @@
 	// open (docs/bediening.md). A text link in ink under the list; the count in the words, not
 	// in a sentence beside them.
 	import TekstLink from './TekstLink.svelte';
-	import { formatCount } from '$lib/verbonden/filter';
+	import { formatCount } from '$lib/text/getal';
 
 	let {
 		aantal = null,

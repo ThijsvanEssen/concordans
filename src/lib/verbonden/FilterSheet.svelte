@@ -20,13 +20,13 @@
 		PRESETS,
 		RECHTERS,
 		activePreset,
-		formatCount,
 		toggleKind,
 		withPreset,
 		type Betrouwbaarheid,
 		type Status,
 		type VerbondenFilter
 	} from './filter';
+	import { formatCount } from '$lib/text/getal';
 	import type { Group } from './groups';
 	import { allRows, kindTotals, lidCounts, relationCounts, shownCount, totalCount } from './view';
 

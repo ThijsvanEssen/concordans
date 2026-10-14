@@ -152,7 +152,7 @@
 						</p>
 					{/if}
 				{/snippet}
-				{#snippet status()}
+				{#snippet statusLine()}
 					{#if d.submitted_on_tk}
 						<!-- The day the bill reached the Kamer (API 0.75), before any stage below it. -->
 						<p class="reading">

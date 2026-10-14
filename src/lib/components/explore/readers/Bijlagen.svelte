@@ -7,7 +7,7 @@
 	import { getBuckets } from '$lib/api/nodes';
 	import { laagVan, type Laag } from '$lib/bron/behoort';
 	import { bronHref } from '$lib/bron/href';
-	import { formatCount } from '$lib/verbonden/filter';
+	import { formatCount } from '$lib/text/getal';
 	import type { Collection } from '$lib/vocabulary';
 
 	let { collection, bronKey, aantal }: { collection: Collection; bronKey: string; aantal: number } =

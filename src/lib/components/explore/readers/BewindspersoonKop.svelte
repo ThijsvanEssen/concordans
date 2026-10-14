@@ -62,7 +62,7 @@
 	{#snippet soort()}
 		<KindGlyph collection="members" />Bewindspersoon{partij ? `, ${partij}` : ''}
 	{/snippet}
-	{#snippet status()}
+	{#snippet statusLine()}
 		{#if laatst}
 			<p class="zin">
 				{#if nu.length}

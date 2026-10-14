@@ -63,7 +63,7 @@
 				bewaar: bewaarItem(node.id, { kort: title, voluit: title })
 			}}
 		>
-			{#snippet status()}
+			{#snippet statusLine()}
 				{#if facts.length > 0}<span>{facts.join(', ')}</span>{/if}
 			{/snippet}
 		</ReaderHead>

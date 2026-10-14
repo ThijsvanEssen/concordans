@@ -37,10 +37,10 @@
 		type Rechter,
 		kindCount,
 		BRON_KIND_NOUN,
-		formatCount,
 		withKind,
 		type VerbondenFilter
 	} from './filter';
+	import { formatCount } from '$lib/text/getal';
 	import { countLabel, groupCount, type Group } from './groups';
 	import { csvName, download, exportRows, rowsToCsv } from './export';
 	import {

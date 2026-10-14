@@ -59,7 +59,7 @@
 				{#if bron}<div class="kop-rij__band"><BehoortBij node={bron()} /></div>{/if}
 				{#if w}
 					<div class="weergave">
-						<WeergaveSchakelaar stand={w.stand} onKies={w.onKies} tekstMogelijk={w.tekstMogelijk} />
+						<WeergaveSchakelaar weergave={w} />
 					</div>
 				{/if}
 			</div>

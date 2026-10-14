@@ -143,7 +143,7 @@
 				{/snippet}
 				<!-- The outcome and what was voted on; the dossier is in the band ("Over 34372 …"), a
 				     second one here. A stemming is cited through what was voted on (KOP_ACTIES). -->
-				{#snippet status()}
+				{#snippet statusLine()}
 					<p class="woorden">
 						{#if uitkomst}<span
 								class="uitslag"

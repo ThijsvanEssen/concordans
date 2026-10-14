@@ -6,7 +6,7 @@
 	import { getCoverage, getStats, type Coverage, type Stats } from '$lib/api/stats';
 	import { load } from '$lib/util/load.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
-	import { formatCount } from '$lib/verbonden/filter';
+	import { formatCount } from '$lib/text/getal';
 	import { TIERS, TIER_LABEL } from '$lib/vocabulary';
 
 	type Herkomst = {

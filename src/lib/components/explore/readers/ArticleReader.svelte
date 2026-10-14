@@ -32,7 +32,8 @@
 	import { lidHistory, unitsOf, wordingsOf } from '$lib/text/version-diff';
 	import { inForceOn } from '../peildatum';
 	import Caret from '$lib/components/ui/Caret.svelte';
-	import { filterParams, formatCount, type VerbondenFilter } from '$lib/verbonden/filter';
+	import { filterParams, type VerbondenFilter } from '$lib/verbonden/filter';
+	import { formatCount } from '$lib/text/getal';
 	import { proposedTextOf, type ProposedText } from '$lib/verbonden/proposed-text';
 	import type { Row } from '$lib/verbonden/rows';
 	import { untrack } from 'svelte';
@@ -504,7 +505,7 @@
 					<nav class="reader-nav" aria-label="Artikelen">{@render steps('')}</nav>
 				{/if}
 			{/snippet}
-			{#snippet status()}
+			{#snippet statusLine()}
 				<span class="head__stand" class:is-old={!!shown}>{versionLabel}</span>
 				{#if wordings.length > 1}
 					<span class="menu" use:menu={{ open: versionMenu, close: () => (versionMenu = false) }}>

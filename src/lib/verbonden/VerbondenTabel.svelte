@@ -12,7 +12,8 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import { TABLE_COLUMNS, csvName, download, exportRows, rowsToCsv } from './export';
-	import { formatCount, type VerbondenFilter } from './filter';
+	import { type VerbondenFilter } from './filter';
+	import { formatCount } from '$lib/text/getal';
 	import { ankerVanRij, dossierVanRij, openLabelOf, rowKey, type Row } from './rows';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import RowOpen from './RowOpen.svelte';

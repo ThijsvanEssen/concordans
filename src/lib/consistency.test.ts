@@ -1009,7 +1009,7 @@ describe('canvas cards and halls', () => {
 		const lezer = sources.find(
 			(s) => s.path === 'lib/components/explore/readers/DocumentReader.svelte'
 		)!.text;
-		const status = /\{#snippet status\(\)\}([\s\S]*?)\{\/snippet\}/.exec(lezer)?.[1] ?? '';
+		const status = /\{#snippet statusLine\(\)\}([\s\S]*?)\{\/snippet\}/.exec(lezer)?.[1] ?? '';
 		expect(status).toMatch(/<Vervanging zinnen=\{vervanging\(doc\)\} \/>/);
 		expect(lezer.match(/<Vervanging\b/g)).toHaveLength(1);
 		expect(

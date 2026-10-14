@@ -102,7 +102,7 @@
 				{#snippet onderTitel()}
 					{#if name && abbreviation && name !== abbreviation}<p class="sub">{name}</p>{/if}
 				{/snippet}
-				{#snippet status()}
+				{#snippet statusLine()}
 					{#if typeof seats === 'number'}
 						<p class="woorden">
 							<span class="zetels"

@@ -113,7 +113,7 @@
 </script>
 
 <script lang="ts">
-	import { formatCount } from '$lib/verbonden/filter';
+	import { formatCount } from '$lib/text/getal';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
