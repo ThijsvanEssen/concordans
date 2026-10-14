@@ -15,7 +15,7 @@
 	// bottom, folded, every BWB version. `?versies=lid-4` shows one lid through all its
 	// formulations instead.
 	import type { Schema } from '$lib/api/types';
-	import { citeArticle, type Citation } from '$lib/text/cite';
+	import { citeArticle, citePublication, type Citation } from '$lib/text/cite';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import IconKnop from '$lib/components/ui/IconKnop.svelte';
@@ -126,7 +126,7 @@
 		w.until ? `${date(w.from)} tot ${date(w.until)}` : `sinds ${date(w.from)}`;
 
 	const publication = (p: Schema<'PublicationDTO'> | null | undefined) =>
-		p?.kind && p.year && p.number ? `${p.kind}. ${p.year}, ${p.number}` : null;
+		citePublication(p?.kind, p?.year, p?.number);
 
 	const signedAndPublished = (p: Schema<'PublicationDTO'> | null | undefined) =>
 		[
@@ -243,11 +243,11 @@
 			`[-geschrapt-] [+ingevoegd+]\n\n${plainDiff(rows)}`
 	);
 
-	const formulationCite = (
-		lid: string,
-		f: { since: Wording<Version>; through: Wording<Version> }
-	) =>
-		`${cite(lid)} (tekst geldig ${f.through.until ? `van ${date(f.since.from)} tot ${date(f.through.until)}` : `sinds ${date(f.since.from)}`})`;
+	type Formulation = { since: Wording<Version>; through: Wording<Version> };
+	const formulationPeriod = (f: Formulation) =>
+		period({ from: f.since.from, until: f.through.until });
+	const formulationCite = (lid: string, f: Formulation) =>
+		`${cite(lid)} (tekst geldig ${f.through.until ? 'van ' : ''}${formulationPeriod(f)})`;
 </script>
 
 {#snippet marked(segments: Segment[], side: 'both' | 'old' | 'new')}
@@ -261,18 +261,24 @@
 	{/each}
 {/snippet}
 
-{#snippet made(w: VersionWording, verb: string)}
-	{@const v = w.first}
+<!-- Where a version came from: the publication that made it, the one that brought it into
+     force where that is another, its dossiers; a comma between them. -->
+{#snippet herkomst(v: Version)}
 	{@const pub = publication(v.amended_by)}
 	{@const inForce = publication(v.commencement)}
+	<span class="herkomst"
+		>{#if pub}<span title={signedAndPublished(v.amended_by)}>{pub}</span
+			>{/if}{#if inForce && inForce !== pub}<span title={signedAndPublished(v.commencement)}
+				>in werking bij {inForce}</span
+			>{/if}{#each uniqueBy(v.amended_by?.dossiers ?? [], (d) => d.key) as dossier (dossier.key)}<span
+				><DossierLink {dossier} missing={missingDossiers.has(dossier.number)} /></span
+			>{/each}</span
+	>
+{/snippet}
+
+{#snippet made(w: VersionWording, verb: string)}
 	<span class="origin__what">{verb} {date(w.from)}</span>
-	{#if pub}<span title={signedAndPublished(v.amended_by)}>{pub}</span>{/if}
-	{#if inForce && inForce !== pub}<span title={signedAndPublished(v.commencement)}
-			>in werking bij {inForce}</span
-		>{/if}
-	{#each uniqueBy(v.amended_by?.dossiers ?? [], (d) => d.key) as dossier (dossier.key)}
-		<DossierLink {dossier} missing={missingDossiers.has(dossier.number)} />
-	{/each}
+	{@render herkomst(w.first)}
 {/snippet}
 
 {#snippet chooser(which: 'A' | 'B', w: VersionWording, other: number, pick: (i: number) => void)}
@@ -333,9 +339,7 @@
 				{#each history.formulations as f, i (i)}
 					<li class="formulation">
 						<div class="formulation__head">
-							<span class="formulation__when"
-								>{capitalize(period({ from: f.since.from, until: f.through.until }))}</span
-							>
+							<span class="formulation__when">{capitalize(formulationPeriod(f))}</span>
 							{#if f.kind === 'first' && f.since.index === 0}
 								<span>Oudste tekst in de gegevens</span>
 							{:else}
@@ -428,17 +432,7 @@
 			<!-- ── The history between A and B: the shared timeline, oldest first, the publication
 			     that made each change under it; the day shows only that change. ── -->
 			{#snippet bron(id: string)}
-				{@const w = wordings[Number(id)]}
-				{@const pub = publication(w.first.amended_by)}
-				{@const inForce = publication(w.first.commencement)}
-				<span class="bron"
-					>{#if pub}<span title={signedAndPublished(w.first.amended_by)}>{pub}</span
-						>{/if}{#if inForce && inForce !== pub}<span
-							title={signedAndPublished(w.first.commencement)}>in werking bij {inForce}</span
-						>{/if}{#each uniqueBy(w.first.amended_by?.dossiers ?? [], (d) => d.key) as dossier (dossier.key)}<span
-							><DossierLink {dossier} missing={missingDossiers.has(dossier.number)} /></span
-						>{/each}</span
-				>
+				{@render herkomst(wordings[Number(id)].first)}
 			{/snippet}
 			<Tijdlijn
 				volgorde="oplopend"
@@ -627,14 +621,7 @@
 								{capitalize(w.summary)}
 							{/if}
 						</td>
-						<td class="table__source">
-							{#if publication(v.amended_by)}<span title={signedAndPublished(v.amended_by)}
-									>{publication(v.amended_by)}</span
-								>{/if}
-							{#each uniqueBy(v.amended_by?.dossiers ?? [], (d) => d.key) as dossier (dossier.key)}
-								<DossierLink {dossier} missing={missingDossiers.has(dossier.number)} />
-							{/each}
-						</td>
+						<td class="table__source">{@render herkomst(v)}</td>
 					</tr>
 				{/each}
 			</tbody>
@@ -823,23 +810,15 @@
 	.origin__what {
 		color: var(--ink-2);
 	}
-	.formulation__head a {
-		color: var(--ink-2);
-	}
-	.formulation__head a:hover {
-		color: var(--ink);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
-	}
 
-	/* The publication under a change: its parts with a comma between them. */
-	.bron > span:not(:last-child)::after {
+	/* Where a version came from: its parts with a comma between them. */
+	.herkomst > span:not(:last-child)::after {
 		content: ', ';
 	}
-	.bron :global(a) {
+	.herkomst :global(a) {
 		color: var(--ink-2);
 	}
-	.bron :global(a:hover) {
+	.herkomst :global(a:hover) {
 		color: var(--ink);
 		text-decoration-line: underline;
 		text-underline-offset: 3px;
@@ -1215,9 +1194,6 @@
 		font-variant-numeric: tabular-nums;
 	}
 	.table__source {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0 var(--s-3);
 		color: var(--ink-3);
 	}
 	tr.is-quiet td {

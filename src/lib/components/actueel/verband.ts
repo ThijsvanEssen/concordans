@@ -87,13 +87,14 @@ export function inwerkingVerbanden(c: FeedItem['commencement']): Verband[] {
 	if (!c) return [];
 	const uit: Verband[] = [];
 	const pub = c.publication;
-	const bij: Schakel[] = pub
+	const cited = pub ? publicationCite(pub) : null;
+	const bij: Schakel[] = cited
 		? [
 				{ tekst: c.new ? ', vastgesteld bij ' : ' bij ' },
 				{
-					tekst: publicationCite(pub),
-					...(pub.key ? { ref: `instruments/${pub.key}` } : {}),
-					href: pub.path ?? null
+					tekst: cited,
+					...(pub?.key ? { ref: `instruments/${pub.key}` } : {}),
+					href: pub?.path ?? null
 				}
 			]
 		: [];
