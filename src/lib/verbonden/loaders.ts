@@ -8,11 +8,11 @@ import { geteld } from '$lib/api/decisions';
 import type { Schema } from '$lib/api/types';
 import { getCommittee } from '$lib/components/parliamentary/data';
 import { numberOf } from '$lib/components/parliamentary/dossier-number';
-import { parseNodeId } from '$lib/vocabulary';
+import { AMENDING_RELATIONS, isAmendingRelation, parseNodeId } from '$lib/vocabulary';
 import { refOf } from '$lib/bron/href';
 import { naastHetStuk, stukkenInDezelfdeZaak } from '$lib/bron/zaak';
 import { loadDossierHub, type DossierHub } from './dossier-hub';
-import { explanatoryDocuments } from './explanatory-documents';
+import { EXPLANATORY_RELATIONS, explanatoryDocuments } from './explanatory-documents';
 import { CITED_BY_PAGE, rowsOfCitedBy } from './cited-by';
 import { getArticleDetail, getDelegated, getLawBasis, getLawDelegated } from '$lib/api/articles';
 import {
@@ -39,6 +39,7 @@ import {
 } from '$lib/api/verbonden';
 import { lawArticleList } from '$lib/api/law-articles';
 import { buildGroups, ditVan, EUROPEAN, type Loader, type Match } from './groups';
+import { YEARS_IN_CHART } from './view';
 import { bronKindOf, isInternational } from './filter';
 import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 import { getJudgmentDetail } from '$lib/api/judgments';
@@ -208,6 +209,9 @@ function lidOfStub(key: string, props: Record<string, unknown> | null | undefine
 	const lid = key.toLowerCase().startsWith(`${own}_`) ? key.slice(own.length + 1) : null;
 	return lid && /^\d+[a-z]*$/i.test(lid) ? { key: key.slice(0, own.length), lid } : null;
 }
+
+/** The votes of the Tweede Kamer on a dossier read at once: one page of the decision browser. */
+const DECISIONS_SHOWN = 100;
 
 /** The dossiers of a lid or fractie read at once: about 0.7 KB each. */
 const DOSSIERS_SHOWN = 100;
@@ -503,7 +507,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		const label = textOf(node.props?.label);
 		if (!label) return { rows: [] };
 		// Its total is the count per kind: the counted answer (API 0.79.41, decisions.ts).
-		const page = await geteld({ dossier: label, chamber: 'TK', limit: 100 }, signal);
+		const page = await geteld({ dossier: label, chamber: 'TK', limit: DECISIONS_SHOWN }, signal);
 		const amendement = (kind: string | null | undefined) => /^amendement/i.test(kind ?? '');
 		const rows = page.items
 			.filter((d) => !amendement(d.kind))
@@ -592,7 +596,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			() =>
 				buren([
 					{
-						relation: ['EXPLAINS', 'AMENDS', 'INTRODUCES'],
+						relation: [...EXPLANATORY_RELATIONS],
 						direction: 'inbound',
 						collection: 'documents'
 					}
@@ -770,15 +774,16 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					})
 				)
 			};
-		const changes = ['AMENDS', 'INTRODUCES', 'REPEALS'];
 		return {
 			total:
-				changes.reduce((n, r) => n + (totals.get(bucketKey(r, 'documents', 'inbound')) ?? 0), 0) ||
-				undefined,
+				AMENDING_RELATIONS.reduce(
+					(n, r) => n + (totals.get(bucketKey(r, 'documents', 'inbound')) ?? 0),
+					0
+				) || undefined,
 			rows: (
 				await buren([
 					{
-						relation: ['AMENDS', 'INTRODUCES', 'REPEALS'],
+						relation: [...AMENDING_RELATIONS],
 						direction: 'inbound',
 						collection: 'documents'
 					}
@@ -786,7 +791,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			)
 				.filter(
 					(n) =>
-						changes.includes(n.relation as string) &&
+						isAmendingRelation(n.relation) &&
 						n.direction === 'inbound' &&
 						n.collection === 'documents'
 				)
@@ -1304,7 +1309,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			years: (found.facets?.year ?? [])
 				.filter((f) => f.value)
 				.map((f) => ({ year: Number(f.value), count: f.count }))
-				.slice(-12),
+				.slice(-YEARS_IN_CHART),
 			rows: found.items
 				.filter((j) => !isInternational({ key: j.key, props: {} }))
 				.map((j) => ({

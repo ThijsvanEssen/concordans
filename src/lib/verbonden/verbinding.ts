@@ -4,13 +4,14 @@
 import { textOf } from '$lib/text/words';
 import { refId, refOf, type BronRef } from '$lib/bron/href';
 import type { GraphEdge, GraphNode } from '$lib/graph/types';
-import { statusLabel, type Collection, type Relation } from '$lib/vocabulary';
+import { isAmendingRelation, statusLabel, type Relation } from '$lib/vocabulary';
 import { HERKOMST_REDEN, kleineLetter, relationLabel, soortVan } from './hoe';
 import { confidenceWord } from './filter';
 import { describe, type Row } from './rows';
 import { edgeKey, isDerived, plaatsVanEdge, readEdge } from './edge-meta';
 import type { Bereik } from '$lib/text/voetnoten';
 import { getNodeGraph, neighborsOf, type Neighbor } from '$lib/api/nodes';
+import { NODE_BUCKET } from '$lib/api/records';
 import { NODE_TYPES } from '$lib/vocabulary';
 import { keyEcli } from '$lib/bron/leesbaar';
 import { ifExists, report } from '$lib/api/errors';
@@ -50,24 +51,13 @@ export type Verbinding = {
 	edgeId: string | null;
 };
 
-/** What the verbinding is, for the head of the card: the words of hoe.ts. */
-export const kindOfVerbinding = (
-	relation: Relation,
-	sourceCollection: Collection,
-	targetCollection?: Collection | null,
-	meta?: Record<string, unknown> | null
-): string => soortVan(relation, sourceCollection, targetCollection, meta);
-
 /**
  * Whether the card says the status: only of a change of the law, where `voorgesteld` or
  * `vastgesteld` says whether the wetgever enacted it. Of a citation, a stuk in its dossier or
  * a vote it says nothing a jurist would read as such.
  */
 export const toontStatus = (v: Pick<Verbinding, 'relation' | 'status'>): boolean =>
-	v.status === 'voorgesteld' ||
-	v.relation === 'AMENDS' ||
-	v.relation === 'INTRODUCES' ||
-	v.relation === 'REPEALS';
+	v.status === 'voorgesteld' || isAmendingRelation(v.relation);
 
 /** `hoog`, `matig` or `laag`, with the reason. */
 export function betrouwbaarheid(
@@ -129,7 +119,7 @@ export function verbindingOfRow(row: Row, selection: GraphNode): Verbinding | nu
 		to,
 		relation: row.relation,
 		label: relationLabel(row.relation, sourceCollection, targetCollection, row.edge),
-		kind: kindOfVerbinding(row.relation, sourceCollection, targetCollection, row.edge),
+		kind: soortVan(row.relation, sourceCollection, targetCollection, row.edge),
 		lid: row.lid ?? null,
 		position: row.position ?? null,
 		// The place in the citing text: its note, the row's own, or where the selected bron cites it.
@@ -160,7 +150,7 @@ export function verbindingOfEdge(
 		to: endOfNode(target),
 		relation: edge.relation,
 		label: relationLabel(edge.relation, source.collection, target.collection, meta),
-		kind: kindOfVerbinding(edge.relation, source.collection, target.collection, meta),
+		kind: soortVan(edge.relation, source.collection, target.collection, meta),
 		lid: read.lid,
 		position: read.position,
 		at: read.at,
@@ -261,7 +251,7 @@ export async function kaartMetPassages(
 	if (target.collection === 'articles') return withCitedBy(v, source, target);
 	if (v.snippet) return v;
 	const r = await getNodeGraph(source.collection, source.key, {
-		limit: 200,
+		limit: NODE_BUCKET,
 		relations: v.relation,
 		nodeTypes: NODE_TYPES[target.collection],
 		direction: 'outbound',

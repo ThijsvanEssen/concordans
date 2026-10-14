@@ -7,7 +7,7 @@ import { getNodeGraph, neighborsOf } from '$lib/api/nodes';
 import { abortable, getAmendedBy, getDocument } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
 import { kernSoort, kernVan, type Inhoud, type MetInhoud } from './rij-inhoud';
-import { CHANGE_RELATIONS } from '$lib/verbonden/hoe';
+import { CHANGE_RELATIONS } from '$lib/vocabulary';
 import { brengersVan, wijzigingenVan, type Brenger, type WetRegel } from './wijzigingen';
 
 /** The text a row opens on, and what it is (a stuk of kind `kern` says its own). */

@@ -9,14 +9,24 @@ import { formatCount } from '$lib/text/getal';
 import { alsDag } from '$lib/text/periode';
 import { isExplanatory } from './chamber';
 import type { Row } from './rows';
+import { isAmendingRelation } from '$lib/vocabulary';
 
-/** Betrouwbaarheid as a word: hoog from 0.9, matig from 0.6, else laag. */
+/** The confidence from which a verbinding's betrouwbaarheid is hoog: a citation read whole has 0.95. */
+export const HIGH_CONFIDENCE = 0.9;
+/** The confidence from which it is matig; below it laag. */
+export const MODERATE_CONFIDENCE = 0.6;
+
+/** Betrouwbaarheid as a word: hoog, matig or laag; without a figure, derived is matig. */
 export function confidenceWord(
 	confidence: number | null | undefined,
 	derived: boolean
 ): 'hoog' | 'matig' | 'laag' {
 	if (confidence == null) return derived ? 'matig' : 'hoog';
-	return confidence >= 0.9 ? 'hoog' : confidence >= 0.6 ? 'matig' : 'laag';
+	return confidence >= HIGH_CONFIDENCE
+		? 'hoog'
+		: confidence >= MODERATE_CONFIDENCE
+			? 'matig'
+			: 'laag';
 }
 
 export const BRON_KINDS = [
@@ -226,13 +236,12 @@ export const isInternational = (n: {
 
 /** A document that proposes or enacts a change: a wetsvoorstel or an amendment to it. */
 export const BILL_KIND = /\b(voorstel van wet|wetsvoorstel|nota van wijziging|amendement)\b/i;
-const CHANGE_RELATIONS: ReadonlySet<string> = new Set(['AMENDS', 'INTRODUCES', 'REPEALS']);
 
 /**
  * The kind of a bron for the filter. Documents are split by what they are:
  * toelichtingen (`is_explanatory`, or the kind memorie or nota van toelichting) and
- * wetsvoorstellen (the relations AMENDS, INTRODUCES and REPEALS, or the kind of the
- * document). Kamerleden, fracties and commissies are leden: who is involved, not what
+ * wetsvoorstellen (a change of a law that exists, AMENDING_RELATIONS, or the kind of
+ * the document). Kamerleden, fracties and commissies are leden: who is involved, not what
  * a dossier holds. Besluiten are stemmingen: what the Kamer decided, not a paper in the
  * dossier (Thijs, 11 Oct: "zijn toch echt anders"); a motie or amendement is a paper and
  * stays with the documents. Activiteiten and toezeggingen stay dossiers: what a dossier's
@@ -259,8 +268,7 @@ export function bronKindOf(
 			const kind = typeof props?.kind === 'string' ? props.kind : null;
 			if (isExplanatory({ kind, is_explanatory: props?.is_explanatory as boolean | null }))
 				return 'toelichtingen';
-			if ((relation && CHANGE_RELATIONS.has(relation)) || (kind && BILL_KIND.test(kind)))
-				return 'wetsvoorstellen';
+			if (isAmendingRelation(relation) || (kind && BILL_KIND.test(kind))) return 'wetsvoorstellen';
 			return 'dossiers';
 		}
 		case 'decisions':
@@ -276,25 +284,36 @@ export function bronKindOf(
 
 // ── Applying the filter to rows ───────────────────────────────────────────
 
-/** The rechter of a judgment, from its ECLI or its court name. */
-export function rechterOf(row: Pick<Row, 'identifier' | 'court' | 'ref'>): Rechter | null {
-	const ecli = row.identifier ?? '';
-	const code = /^ECLI:([A-Z]{2}):([A-Z]+):/i.exec(ecli);
-	const court = row.court ?? '';
-	if (code) {
-		const [, country, c] = [code[0], code[1].toUpperCase(), code[2].toUpperCase()];
-		if (country === 'CE') return 'ehrm';
-		if (c === 'HR' || c === 'PHR') return 'hr';
-		if (c.startsWith('GH')) return 'hof';
-		if (c.startsWith('RB')) return 'rechtbank';
-		if (c === 'RVS') return 'rvs';
-	}
-	if (/hoge raad/i.test(court)) return 'hr';
-	if (/gerechtshof|\bhof\b/i.test(court)) return 'hof';
-	if (/rechtbank/i.test(court)) return 'rechtbank';
-	if (/raad van state/i.test(court)) return 'rvs';
-	if (/echr|ehrm|europees hof/i.test(court) || row.ref.key.startsWith('ecli_ce_echr_'))
-		return 'ehrm';
+/** The rechter of a tier of the Instanties value list (`tier`); the conclusions of the Parket with the Hoge Raad. */
+const RECHTER_OF_TIER: Record<string, Rechter> = {
+	hoge_raad: 'hr',
+	parket: 'hr',
+	gerechtshof: 'hof',
+	rechtbank: 'rechtbank',
+	raad_van_state: 'rvs'
+};
+
+/** The country and the court of an ECLI, in its own form or as a key. */
+const ECLI_COURT = /^ECLI[:_]([A-Z]{2})[:_]([A-Z]+)[:_]/i;
+
+/**
+ * The rechter of a judgment: from the tier the API gives, else from its ECLI (the identifier,
+ * or the key it is the id of: `ecli_nl_hr_2024_1769`).
+ */
+export function rechterOf(row: Pick<Row, 'identifier' | 'props' | 'ref'>): Rechter | null {
+	const tier = row.props?.tier;
+	if (typeof tier === 'string' && Object.hasOwn(RECHTER_OF_TIER, tier))
+		return RECHTER_OF_TIER[tier];
+	const code = [row.identifier, row.ref.key]
+		.map((id) => (id ? ECLI_COURT.exec(id) : null))
+		.find((c) => c !== null);
+	if (!code) return null;
+	const [country, court] = [code[1].toUpperCase(), code[2].toUpperCase()];
+	if (country === 'CE') return 'ehrm';
+	if (court === 'HR' || court === 'PHR') return 'hr';
+	if (court.startsWith('GH')) return 'hof';
+	if (court.startsWith('RB')) return 'rechtbank';
+	if (court === 'RVS') return 'rvs';
 	return null;
 }
 

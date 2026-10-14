@@ -107,6 +107,17 @@ describe('verbindingOfEdge', () => {
 		expect(toontStatus({ relation: 'AMENDS', status: 'vastgesteld' })).toBe(true);
 		expect(toontStatus({ relation: 'REFERS_TO', status: 'voorgesteld' })).toBe(true);
 	});
+
+	it.each([
+		['ESTABLISHES', false],
+		['AMENDS', true],
+		['INTRODUCES', true],
+		['REPEALS', true]
+	] as const)('says the status of %s as enacted: %s', (relation, shown) => {
+		// An enactment is a publication: enacted by what it is, so the card does not say so.
+		expect(toontStatus({ relation, status: 'vastgesteld' })).toBe(shown);
+		expect(toontStatus({ relation, status: 'voorgesteld' })).toBe(true);
+	});
 });
 
 // UX-toets 14 Oct, #49: RBDHA 2013:19764 cites art. 126ffa Sv five times, the first without a

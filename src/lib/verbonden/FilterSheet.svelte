@@ -118,7 +118,6 @@
 		else if (draft.status === null) draft = { ...draft, status: andere(s) };
 	}
 
-	/** The year field that holds no year, until it does. */
 	/** The period, as every list with dates has it ($lib/components/ui/Periode). */
 	function periode(van: string, tot: string) {
 		const next = { ...draft, van: van || null, tot: tot || null, geldendOp: null };

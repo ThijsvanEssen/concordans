@@ -8,7 +8,8 @@ import { capitalize, count, joinAnd, separatorBefore } from '$lib/text/words';
 import { korteDatum } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
-import { changeAround, changeRelation, changeVerb } from '$lib/verbonden/hoe';
+import { changeAround, changeVerb } from '$lib/verbonden/hoe';
+import { changeRelation } from '$lib/vocabulary';
 import { headSurname } from './timeline';
 import { artikelenGewijzigd, publicationCite, type FeedItem } from './feed';
 

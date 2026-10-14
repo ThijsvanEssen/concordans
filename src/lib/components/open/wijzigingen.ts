@@ -5,14 +5,13 @@
 // verb nor article (onderzoek samenhang, GGN 3.2 and 3.3: back-end B2, B3).
 import { count, textOf } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
-import type { Relation } from '$lib/vocabulary';
 import {
 	CHANGE_RELATIONS,
-	changeAround,
-	changeByEffect,
-	changeVerb,
-	type ChangeRelation
-} from '$lib/verbonden/hoe';
+	isChangeRelation,
+	type ChangeRelation,
+	type Relation
+} from '$lib/vocabulary';
+import { changeAround, changeByEffect, changeVerb } from '$lib/verbonden/hoe';
 import { naamVanId } from '$lib/bron/menselijk';
 
 /** A neighbour as the node response gives it: the part a change reads. */
@@ -55,8 +54,8 @@ export function wijzigingenVan(
 	const titels = new Map(wetten.map((w) => [w.key.toLowerCase(), w.title ?? null]));
 	const regels = new Map<string, WetRegel & { plek: (Artikel & { positie: number })[] }>();
 	for (const b of buren) {
-		const relation = b.relation as ChangeRelation;
-		if (!CHANGE_RELATIONS.includes(relation) || b.direction !== 'outbound') continue;
+		const relation = b.relation;
+		if (!isChangeRelation(relation) || b.direction !== 'outbound') continue;
 		const p = b.props ?? {};
 		const meta = b.meta ?? {};
 		const isWet = b.collection === 'instruments';
@@ -88,7 +87,7 @@ export function wijzigingenVan(
 			regel.plek.push({ key: b.key, nummer, positie });
 		}
 	}
-	const orde = (r: Relation) => (CHANGE_RELATIONS as Relation[]).indexOf(r);
+	const orde = (r: Relation) => (CHANGE_RELATIONS as readonly Relation[]).indexOf(r);
 	const wetOrde = [...new Set([...regels.values()].map((r) => r.wet.key))];
 	return [...regels.values()]
 		.sort(

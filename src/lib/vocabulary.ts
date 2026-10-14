@@ -61,6 +61,45 @@ export type Relation = (typeof RELATIONS)[number];
 
 const relations: ReadonlySet<string> = new Set(RELATIONS);
 
+/** The changes of the law, in the order a line names them: enacts, amends, inserts, repeals. */
+export const CHANGE_RELATIONS = [
+	'ESTABLISHES',
+	'AMENDS',
+	'INTRODUCES',
+	'REPEALS'
+] as const satisfies readonly Relation[];
+
+export type ChangeRelation = (typeof CHANGE_RELATIONS)[number];
+
+/**
+ * The changes of a law that exists: what a bill proposes and an amending publication makes.
+ * ESTABLISHES is a publication enacting a regulation: no bill proposes it, and it is enacted
+ * by what it is.
+ */
+export const AMENDING_RELATIONS = [
+	'AMENDS',
+	'INTRODUCES',
+	'REPEALS'
+] as const satisfies readonly ChangeRelation[];
+
+export const isChangeRelation = (value: string | null | undefined): value is ChangeRelation =>
+	(CHANGE_RELATIONS as readonly (string | null | undefined)[]).includes(value);
+
+export const isAmendingRelation = (
+	value: string | null | undefined
+): value is (typeof AMENDING_RELATIONS)[number] =>
+	(AMENDING_RELATIONS as readonly (string | null | undefined)[]).includes(value);
+
+/** A change as the API writes it, `amends`, as its relation. */
+export const changeRelation = <E extends Lowercase<ChangeRelation>>(effect: E) =>
+	effect.toUpperCase() as Uppercase<E>;
+
+/** The same for a code the API may give for something else (`legislated_in`): null then. */
+export const changeRelationOf = (code: string | null | undefined): ChangeRelation | null => {
+	const relation = code?.toUpperCase();
+	return isChangeRelation(relation) ? relation : null;
+};
+
 export const isCollection = (value: string | null | undefined): value is Collection =>
 	value != null && Object.hasOwn(NODE_TYPES, value);
 

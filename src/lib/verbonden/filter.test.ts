@@ -3,7 +3,10 @@ import {
 	EMPTY_FILTER,
 	PRESETS,
 	activePreset,
+	HIGH_CONFIDENCE,
+	MODERATE_CONFIDENCE,
 	bronKindOf,
+	confidenceWord,
 	filterParams,
 	hiddenByKind,
 	kindCount,
@@ -89,6 +92,15 @@ describe('bronKindOf', () => {
 		expect(bronKindOf('instruments', 'bwbr0001854', {})).toBe('wetten');
 	});
 
+	it.each([
+		['ESTABLISHES', 'dossiers'],
+		['AMENDS', 'wetsvoorstellen'],
+		['INTRODUCES', 'wetsvoorstellen'],
+		['REPEALS', 'wetsvoorstellen']
+	] as const)('counts a stuk that %s a law as %s', (relation, kind) => {
+		expect(bronKindOf('documents', 'd', { kind: 'Brief regering' }, relation)).toBe(kind);
+	});
+
 	it('groups kamerleden, fracties and commissies as leden, not dossiers', () => {
 		expect(bronKindOf('members', 'm1', {})).toBe('leden');
 		expect(bronKindOf('factions', 'f1', {})).toBe('leden');
@@ -148,8 +160,38 @@ describe('rowPasses', () => {
 	it('tells the rechter from the ECLI and the court name', () => {
 		expect(rechterOf(hr)).toBe('hr');
 		expect(rechterOf(hof)).toBe('hof');
-		expect(rechterOf(row({ court: 'Rechtbank Amsterdam' }))).toBe('rechtbank');
-		expect(rechterOf(row({ court: 'Raad van State' }))).toBe('rvs');
+		expect(rechterOf(row({ ref: { collection: 'judgments', key: 'ecli_nl_rbams_2020_1' } }))).toBe(
+			'rechtbank'
+		);
+		expect(rechterOf(row({ ref: { collection: 'judgments', key: 'ecli_ce_echr_2026_1' } }))).toBe(
+			'ehrm'
+		);
+		expect(rechterOf(row({ identifier: 'ECLI:NL:CRVB:2020:1' }))).toBeNull();
+	});
+
+	it('reads the rechter from the tier the API gives, before the ECLI', () => {
+		const tier = (t: string) => row({ props: { tier: t } });
+		expect(rechterOf(tier('hoge_raad'))).toBe('hr');
+		expect(rechterOf(tier('parket'))).toBe('hr');
+		expect(rechterOf(tier('gerechtshof'))).toBe('hof');
+		expect(rechterOf(tier('rechtbank'))).toBe('rechtbank');
+		expect(rechterOf(tier('raad_van_state'))).toBe('rvs');
+		expect(rechterOf(tier('andere_instantie'))).toBeNull();
+		// No guess from the court's name: a row without tier or ECLI has no rechter.
+		expect(rechterOf(row({ court: 'Rechtbank Amsterdam' }))).toBeNull();
+	});
+});
+
+describe('confidenceWord', () => {
+	it('grades hoog from HIGH_CONFIDENCE, matig from MODERATE_CONFIDENCE, else laag', () => {
+		expect([HIGH_CONFIDENCE, MODERATE_CONFIDENCE]).toEqual([0.9, 0.6]);
+		expect(confidenceWord(0.9, false)).toBe('hoog');
+		expect(confidenceWord(0.89, false)).toBe('matig');
+		expect(confidenceWord(0.6, true)).toBe('matig');
+		expect(confidenceWord(0.59, false)).toBe('laag');
+		// Without a figure: read from the source is hoog, derived matig.
+		expect(confidenceWord(null, false)).toBe('hoog');
+		expect(confidenceWord(null, true)).toBe('matig');
 	});
 });
 

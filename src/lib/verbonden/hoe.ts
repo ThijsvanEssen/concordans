@@ -11,7 +11,12 @@
 // them, so one verbinding is never called two things (onderzoek samenhang, 14 Oct).
 import { capitalize, count, escapeRegExp, lowerFirst, plural, textOf } from '$lib/text/words';
 import { atPlace, paragraphNumber } from '$lib/text/anchor';
-import type { Collection, Relation } from '$lib/vocabulary';
+import {
+	isChangeRelation,
+	type ChangeRelation,
+	type Collection,
+	type Relation
+} from '$lib/vocabulary';
 import { langeDatum } from '$lib/text/datum';
 import {
 	grondslagRegel,
@@ -254,32 +259,20 @@ export function woordenVan(
 }
 
 /**
- * The relations of a change, in the order a line names them (`Stelt vast`, `Wijzigt`, `Voegt
- * in`, `Doet vervallen`), each with the word that heads an article's line under Gewijzigde
- * artikelen; a bill does not enact an article on its own.
+ * Per change, the word that heads an article's line under Gewijzigde artikelen; a bill does
+ * not enact an article on its own.
  */
-export const CHANGE_HEAD = {
+export const CHANGE_HEAD: Record<ChangeRelation, string | null> = {
 	ESTABLISHES: null,
 	AMENDS: 'Wijziging',
 	INTRODUCES: 'Nieuw artikel',
 	REPEALS: 'Vervalt'
-} as const satisfies Partial<Record<Relation, string | null>>;
-
-export type ChangeRelation = keyof typeof CHANGE_HEAD;
-
-export const CHANGE_RELATIONS = Object.keys(CHANGE_HEAD) as ChangeRelation[];
-
-const isChange = (relation: Relation): relation is ChangeRelation =>
-	(CHANGE_RELATIONS as Relation[]).includes(relation);
-
-/** A change as the API writes it, `amends`, as its relation. */
-export const changeRelation = <E extends Lowercase<ChangeRelation>>(effect: E) =>
-	effect.toUpperCase() as Uppercase<E>;
+};
 
 /** A change by its effect on wetten.overheid.nl, where the edge gives one: an AMENDS whose effect is `vervallen` repeals. */
 export function changeByEffect(relation: Relation, meta: Record<string, unknown>): Relation {
 	const effect = EFFECT[textOf(meta.effect) ?? ''];
-	return effect && isChange(relation) ? effect : relation;
+	return effect && isChangeRelation(relation) ? effect : relation;
 }
 
 /**
@@ -470,8 +463,7 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 	const props = (row.props ?? {}) as Record<string, unknown>;
 	const other = row.ref.collection;
 	const inbound = row.direction === 'inbound';
-	// Derived, or below high confidence: as the filter Betrouwbaarheid grades it (0.9 and up
-	// is high; a citation recognised in the text has 0.95).
+	// Derived, or below high confidence: as the filter Betrouwbaarheid grades it.
 	const afgeleid = confidenceWord(row.confidence, !!row.derived) !== 'hoog';
 	const p = passageOf(row);
 	const citaat = p?.mark ? uitsnede(p) : row.relation === 'ANSWERS' ? aanhalingUitMeta(edge) : null;

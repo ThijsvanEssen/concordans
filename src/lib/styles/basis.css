@@ -186,6 +186,12 @@ a:hover {
 		inset: calc(-1 * var(--s-2));
 	}
 }
+/* A proposed change, in Verbonden's rows, its table and the card of a verbinding: in ink, as
+   everything at rest but "nee" (Thijs, 10 Oct); the weight keeps it seen. */
+.is-proposed {
+	color: var(--ink);
+	font-weight: 600;
+}
 /* Text for a screen reader only: a live region, a full name behind a short one. */
 /* Read, not seen, and taking no room: no margin of its own (a <p> had 14 px, which made every
    reader 827 px high on an 812 px phone, UX-toets 10 Oct, #35). */

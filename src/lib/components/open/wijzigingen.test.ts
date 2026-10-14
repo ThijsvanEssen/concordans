@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CHANGE_RELATIONS } from '$lib/verbonden/hoe';
+import { CHANGE_RELATIONS } from '$lib/vocabulary';
 import { brengersVan, wijzigingenVan } from './wijzigingen';
 
 const artikel = (

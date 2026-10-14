@@ -8,7 +8,13 @@ import { capitalize, joinAnd } from '$lib/text/words';
 import { langeDatum } from '$lib/text/datum';
 import { kindName, lawKind } from '$lib/components/explore/law-head';
 import { bucketKey, type Bucket } from '$lib/api/nodes';
-import { isRelation, type Collection, type Relation } from '$lib/vocabulary';
+import {
+	CHANGE_RELATIONS,
+	isChangeRelation,
+	isRelation,
+	type Collection,
+	type Relation
+} from '$lib/vocabulary';
 import { isInternational } from './filter';
 import { formatCount } from '$lib/text/getal';
 import { rowOfNeighbor, type Neighbor, type Row } from './rows';
@@ -17,8 +23,6 @@ import { chamberOf } from './chamber';
 import { CHAMBER_NAME, type Chamber } from '$lib/components/parliamentary/chamber';
 
 import { choiceRank } from '$lib/components/parliamentary/stemming';
-
-export { isInternational };
 
 export type Match = Bucket & {
 	where?: (n: Neighbor) => boolean;
@@ -157,9 +161,6 @@ const authored = (
 	labelOf
 });
 
-// A publication that enacted a regulation sets its articles (ESTABLISHES); others change them.
-const CHANGES: Relation[] = ['ESTABLISHES', 'AMENDS', 'INTRODUCES', 'REPEALS'];
-
 export const EUROPEAN: GroupDef = {
 	id: 'international',
 	label: 'Europees en internationaal',
@@ -297,7 +298,13 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			id: 'changes',
 			label: 'Artikelen die deze publicatie wijzigt',
 			noun: 'artikelen',
-			match: [{ relation: CHANGES, direction: 'outbound', collection: ['articles', 'instruments'] }]
+			match: [
+				{
+					relation: [...CHANGE_RELATIONS],
+					direction: 'outbound',
+					collection: ['articles', 'instruments']
+				}
+			]
 		},
 		{
 			id: 'dossiers',
@@ -454,7 +461,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 					relation: 'REFERS_TO',
 					direction: 'inbound',
 					collection: 'documents',
-					where: (n) => !CHANGES.includes(n.relation as Relation)
+					where: (n) => !isChangeRelation(n.relation)
 				}
 			]
 		},
@@ -616,7 +623,13 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			id: 'changes',
 			label: 'Artikelen die dit stuk wijzigt',
 			noun: 'artikelen',
-			match: [{ relation: CHANGES, direction: 'outbound', collection: ['articles', 'instruments'] }]
+			match: [
+				{
+					relation: [...CHANGE_RELATIONS],
+					direction: 'outbound',
+					collection: ['articles', 'instruments']
+				}
+			]
 		},
 		{
 			id: 'refers-to',

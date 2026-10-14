@@ -18,8 +18,10 @@
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import RowOpen from './RowOpen.svelte';
 	import { isEscape } from '$lib/actions/keys';
-	import type { VerbondenState } from './source';
+	import { LOAD_FAILED, type VerbondenState } from './source';
 	import { betrouwbaarheid } from './verbinding';
+	import ConfidenceDot from './ConfidenceDot.svelte';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { countLine, filterGroups, mentionLine } from './view';
 
 	let {
@@ -199,12 +201,9 @@
 
 	<div class="scroll" aria-busy={verbonden.loading}>
 		{#if verbonden.failed}
-			<p class="note">
-				De verbindingen konden niet worden geladen.
-				{#if onRetry}
-					<button type="button" class="btn is-text" onclick={onRetry}>Opnieuw</button>
-				{/if}
-			</p>
+			<div class="note">
+				<LoadState state={LOAD_FAILED} what="De verbindingen" plural retry={onRetry} />
+			</div>
 		{:else if sorted.length === 0}
 			<p class="note">
 				{verbonden.loading ? 'Laden…' : 'Geen verbindingen binnen de gekozen bronnen en filters.'}
@@ -275,7 +274,7 @@
 									</td>
 								{:else if c.id === 'betrouwbaarheid'}
 									{@const b = betrouwbaarheid(r.confidence, !!r.derived, null)}
-									<td><span class="conf conf--{b.word}" aria-hidden="true"></span> {b.word}</td>
+									<td><ConfidenceDot word={b.word} /> {b.word}</td>
 								{:else if c.id === 'status'}
 									<td class:is-proposed={r.proposed}>{c.value(r, ctx)}</td>
 								{:else}
@@ -454,26 +453,6 @@
 		.bron__card {
 			opacity: 1;
 		}
-	}
-	td.is-proposed {
-		color: var(--ink);
-		/* In ink, as everything at rest but "nee" (Thijs, 10 Oct); the weight keeps it seen. */
-		font-weight: 600;
-	}
-	.conf {
-		display: inline-block;
-		width: 7px;
-		height: 7px;
-		margin-right: 1px;
-		border: 1.3px solid var(--ink-3);
-		border-radius: 50%;
-		vertical-align: 0;
-	}
-	.conf--hoog {
-		background: var(--ink-3);
-	}
-	.conf--matig {
-		background: linear-gradient(90deg, var(--ink-3) 50%, transparent 50%);
 	}
 	.foot {
 		display: flex;

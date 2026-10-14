@@ -11,7 +11,7 @@ import { anchorLabel } from '$lib/text/anchor';
 import { articleTitle, bookNumber } from '$lib/text/bw';
 import { authorCite } from '$lib/text/judgment-cite';
 import { courtName } from '$lib/text/court';
-import { isCollection, type Relation } from '$lib/vocabulary';
+import { changeRelationOf, isCollection, type Relation } from '$lib/vocabulary';
 import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
 import {
 	dossierLabel,
@@ -23,7 +23,7 @@ import {
 import { kindName } from '$lib/components/explore/law-head';
 import { kamerstukName, withoutKamerstuk } from '$lib/components/parliamentary/kamerstuk';
 import { seatWord } from '$lib/components/parliamentary/career';
-import { bronKindOf, confidenceWord, type BronKind } from './filter';
+import { MODERATE_CONFIDENCE, bronKindOf, confidenceWord, type BronKind } from './filter';
 import { isDerived, positionsLabel, readEdge } from './edge-meta';
 import { woordenVan } from './hoe';
 import type { Bereik } from '$lib/text/voetnoten';
@@ -314,12 +314,12 @@ const AARD: Record<string, string> = {
 	// cross_reference and scope_limitation are named above.
 };
 
-export const aardLabel = (code: string | null | undefined): string | null =>
+const aardLabel = (code: string | null | undefined): string | null =>
 	code ? (AARD[code.toLowerCase()] ?? code.replaceAll('_', ' ')) : null;
 
 /**
  * The aard with how sure it is (`semantic_confidence`, API 0.70: the share a hand check
- * found right): `voorwaarde`, or `mogelijk voorwaarde` below 0.6, where the betrouwbaarheid
+ * found right): `voorwaarde`, or `mogelijk voorwaarde` below MODERATE_CONFIDENCE, where the betrouwbaarheid
  * of a verbinding reads laag.
  */
 export function aardOf(
@@ -328,7 +328,9 @@ export function aardOf(
 ): string | null {
 	const label = aardLabel(code);
 	if (!label) return null;
-	return semanticConfidence != null && semanticConfidence < 0.6 ? `mogelijk ${label}` : label;
+	return semanticConfidence != null && semanticConfidence < MODERATE_CONFIDENCE
+		? `mogelijk ${label}`
+		: label;
 }
 
 export function rowOfNeighbor(n: Neighbor): Row | null {
@@ -645,14 +647,6 @@ export function rolesLine(d: {
 	);
 }
 
-/** A change of the legislative history by its relation; its verb is the one of hoe.ts. */
-const CHANGE: Record<string, Relation> = {
-	establishes: 'ESTABLISHES',
-	amends: 'AMENDS',
-	introduces: 'INTRODUCES',
-	repeals: 'REPEALS'
-};
-
 /** The dossier of a change, by the name the API gives it (`dossier_short_title`). */
 const dossierVan = (e: {
 	dossier_number?: string | null;
@@ -691,7 +685,7 @@ export function historyRow(e: {
 				? { collection: 'dossiers', key: e.dossier_number, number: e.dossier_number }
 				: null;
 	if (!ref) return null;
-	const change = CHANGE[e.change ?? ''];
+	const change = changeRelationOf(e.change);
 	const proposed = e.status === 'voorgesteld';
 	return {
 		ref,
@@ -711,7 +705,7 @@ export function historyRow(e: {
 		date: e.date ?? null,
 		kind: bronKindOf(ref.collection, ref.key, {}),
 		proposed,
-		relation: change,
+		relation: change ?? undefined,
 		direction: 'inbound'
 	};
 }

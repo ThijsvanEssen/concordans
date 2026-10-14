@@ -54,7 +54,10 @@
 	} from './rows';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import { dossierName } from '$lib/bron/dossier-naam';
-	import type { VerbondenState } from './source';
+	import { LOAD_FAILED, type VerbondenState } from './source';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import PendingRows, { type PendingKind } from './PendingRows.svelte';
+	import { VERBONDEN_BUCKET } from '$lib/api/records';
 	import { groupRequest } from './open-group';
 	import type { LoaderOptions } from './loaders';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
@@ -117,17 +120,14 @@
 		onAlles?: () => Promise<void>;
 	} = $props();
 
+	/** The rows a closed group shows. */
 	const PREVIEW = 3;
-	/**
-	 * The height a waiting row keeps, as its rows measure (UX-toets e7a2f95, #1 and #36): a
-	 * judgment citing an article or a law holds its passage (142 px), one beside a judgment
-	 * none (95), an article cited by a judgment a title and a line (77); the rest a title over
-	 * two lines and its meta (112).
-	 */
+	/** The width of a row's glyph: the opened content of a row stands in from it. */
+	const ROW_GLYPH = 11;
 	/** "Toelichtingen en wijzigingen", the first word with a capital. */
 	const zin = (woorden: string[]) => capitalize(joinAnd(woorden));
 	// The kind of a waiting row, for its height: what a row of that group holds on this page.
-	const wachtSoort = (noun?: string) => {
+	const wachtSoort = (noun?: string): PendingKind => {
 		const wet = selection.collection === 'articles' || selection.collection === 'instruments';
 		if (noun === 'uitspraken') return wet ? 'passage' : 'uitspraak';
 		if (noun === 'artikelen')
@@ -277,8 +277,6 @@
 	const wachtSet = $derived(new Set(verbonden.wachtend ?? []));
 	const total = $derived(shownLabel(vast ?? verbonden.groups, filter, wachtSet));
 
-	const rowId = rowKey;
-
 	function toggle(set: Set<string>, id: string) {
 		const next = new Set(set);
 		if (!next.delete(id)) next.add(id);
@@ -372,11 +370,10 @@
 	// A row opens its bron as every link to a bron does (openHref): in Netwerk, a Kamerstuk on
 	// its text; a group read beside the text opens it there.
 	// A citing judgment opens at the note its citation stands in.
-	const rijAnker = ankerVanRij;
 	const rowHref = (g: Group, row: Row) =>
 		g.inPlace
-			? inPlaceHref({ ...row, at: rijAnker(row) })
-			: openHref(row.ref, { at: rijAnker(row) });
+			? inPlaceHref({ ...row, at: ankerVanRij(row) })
+			: openHref(row.ref, { at: ankerVanRij(row) });
 	/** What its reader marks where a row opens it at a note: the citation in it. */
 	const rijMarkering = (row: Row) =>
 		inRij(row) && row.noot
@@ -428,9 +425,7 @@
 		(row.ref.collection === 'documents' || !!wetVerband(row)) && !row.missing;
 	/** A motie's dictum, an amendement's explanation, from the row's props: no request. */
 	let openRij = $state<string | null>(null);
-	const wisselRij = (row: Row) => (openRij = openRij === rowId(row) ? null : rowId(row));
-
-	/** The row whose provenance a tap shows, on touch. */
+	const wisselRij = (row: Row) => (openRij = openRij === rowKey(row) ? null : rowKey(row));
 
 	// The years of all the group's judgments where the API counts them (a wet, BE-47);
 	// else of the rows loaded, which the sentence then says.
@@ -439,7 +434,7 @@
 			? []
 			: g.years?.length
 				? g.years
-				: g.rows.length > 5
+				: g.rows.length > VERBONDEN_BUCKET
 					? yearHistogram(g.rows)
 					: [];
 
@@ -456,7 +451,7 @@
 	}
 </script>
 
-<aside class="verbonden" aria-label="Verbonden" bind:this={root}>
+<aside class="verbonden" aria-label="Verbonden" style:--row-glyph="{ROW_GLYPH}px" bind:this={root}>
 	<div class="head">
 		<h2 class="head__title">Verbonden</h2>
 		<!-- A bron without verbindingen says so by its count, not by a sentence (R7, UX-toets
@@ -481,12 +476,9 @@
 
 	<div class="body" use:rijen={'a.row__title'} aria-busy={verbonden.loading}>
 		{#if verbonden.failed}
-			<p class="note stil">
-				De verbindingen konden niet worden geladen.
-				{#if onRetry}
-					<TekstLink onclick={onRetry}>Opnieuw</TekstLink>
-				{/if}
-			</p>
+			<div class="note">
+				<LoadState state={LOAD_FAILED} what="De verbindingen" plural retry={onRetry} />
+			</div>
 		{:else if verbonden.loading && verbonden.groups.length === 0}
 			<!-- The heads of the groups to come, with their counts, and rows still being read. -->
 			<!-- Each group in its place, with blank rows as many as it will show (#1): what
@@ -511,18 +503,11 @@
 							<span class="group__count">{p.count != null ? formatCount(p.count) : '…'}</span>
 						</div>
 						{#if p.count && isOpen(`verbonden:${p.id}`, true)}
-							{#if p.noun === 'uitspraken' && (p.count > 5 || p.ordered)}
+							{#if p.noun === 'uitspraken' && (p.count > VERBONDEN_BUCKET || p.ordered)}
 								<!-- The line of the judgments' order and years, as it will stand. -->
 								<div class="group__regel regel--wacht" aria-hidden="true"></div>
 							{/if}
-							<ul class="rows rows--wacht" data-wacht={wachtSoort(p.noun)} aria-hidden="true">
-								{#each { length: Math.min(p.count, PREVIEW) } as _, k (k)}
-									<li class="row row--wacht"><span class="wacht-regel"></span></li>
-								{/each}
-							</ul>
-							{#if p.count > PREVIEW}<p class="group__alle wacht-alle" aria-hidden="true">
-									&nbsp;
-								</p>{/if}
+							<PendingRows count={p.count} shown={PREVIEW} kind={wachtSoort(p.noun)} />
 						{/if}
 					</section>
 				{:else}
@@ -588,17 +573,11 @@
 					{#if g.laden && verbonden.verwacht?.[g.id]}
 						<!-- Its place as it will be: blank rows as many as it will show, so the rows
 						     that come do not push down what stands below (#1). -->
-						<ul class="rows rows--wacht" data-wacht={wachtSoort(g.noun)} aria-hidden="true">
-							{#each { length: Math.min(verbonden.verwacht[g.id], PREVIEW) } as _, k (k)}
-								<li class="row row--wacht"><span class="wacht-regel"></span></li>
-							{/each}
-						</ul>
-						{#if verbonden.verwacht[g.id] > PREVIEW}<p
-								class="group__alle wacht-alle"
-								aria-hidden="true"
-							>
-								&nbsp;
-							</p>{/if}
+						<PendingRows
+							count={verbonden.verwacht[g.id]}
+							shown={PREVIEW}
+							kind={wachtSoort(g.noun)}
+						/>
 						<p class="sr-only">
 							{g.noun ? `${capitalize(g.noun)} laden…` : 'Laden…'}
 						</p>
@@ -691,7 +670,7 @@
 						</div>
 					{/if}
 					<ul class="rows">
-						{#each all ? g.rows : g.rows.slice(0, PREVIEW) as row (rowId(row))}
+						{#each all ? g.rows : g.rows.slice(0, PREVIEW) as row (rowKey(row))}
 							{@const sister = repeatedTitles(g.rows).has(row.title) ? caseNumberOf(row) : null}
 							{@const hoe = hoeVan(row, selection.collection)}
 							{@const href = rowHref(g, row)}
@@ -707,7 +686,7 @@
 								<div
 									class="row__main"
 									data-rij
-									class:is-open={openRij === rowId(row)}
+									class:is-open={openRij === rowKey(row)}
 									onclick={(e) => {
 										if (row.missing) return;
 										rowClick(e, () => {
@@ -722,7 +701,7 @@
 									<KindGlyph
 										collection={row.ref.collection}
 										vorm={row.kind === 'wetsvoorstellen' ? 'voorstel' : undefined}
-										size={11}
+										size={ROW_GLYPH}
 									/>
 									<span class="row__text">
 										{#if row.missing}
@@ -732,7 +711,7 @@
 												class="row__title"
 												{href}
 												data-sveltekit-noscroll
-												aria-expanded={opentTerPlekke(row) ? openRij === rowId(row) : undefined}
+												aria-expanded={opentTerPlekke(row) ? openRij === rowKey(row) : undefined}
 												onclick={(e) => {
 													if (!opentTerPlekke(row)) zetMarkering(rijMarkering(row));
 													return opentTerPlekke(row) && terPlekke(e, () => wisselRij(row));
@@ -773,7 +752,10 @@
 											     the box over the next row was "out of place"). -->
 											{#each delen as part, k (k)}
 												{#if k > 0}<span class="row__sep">,</span>{/if}
-												<span class="row__part row__part--{part.kind}">{part.text}</span>
+												<span
+													class="row__part row__part--{part.kind}"
+													class:is-proposed={part.kind === 'proposed'}>{part.text}</span
+												>
 											{/each}{#if uitslag}{#if delen.length}<span class="row__sep">,</span
 													>{/if}<span class="row__part"><StukUitslag {uitslag} /></span
 												>{/if}{#if hoe?.herkomst}{#if delen.length || uitslag}<span class="row__sep"
@@ -799,7 +781,7 @@
 											: null}
 									/>
 								</div>
-								{#if openRij === rowId(row)}
+								{#if openRij === rowKey(row)}
 									{@const verband = wetVerband(row)}
 									<div class="row__inhoud">
 										{#if verband}
@@ -911,8 +893,6 @@
 		font-weight: 500;
 		color: var(--ink);
 		cursor: pointer;
-	}
-	.regel__knop {
 		height: var(--veld-h-klein);
 	}
 	.regel__knop:hover,
@@ -946,7 +926,7 @@
 	}
 	.balk {
 		display: block;
-		height: 12px;
+		height: var(--s-3);
 		width: 85%;
 		border-radius: var(--r-1);
 		/* The panel is paper-2 itself: the bars take the colour of its rules, faintly. */
@@ -954,7 +934,7 @@
 		opacity: 0.6;
 	}
 	.balk--kop {
-		height: 16px;
+		height: var(--s-4);
 		width: 45%;
 	}
 	.balk--kort {
@@ -1029,8 +1009,7 @@
 		flex: none;
 		color: var(--ink-3);
 	}
-	/* Whether the group is drawn on the canvas, said in words beside its box. */
-	/* On the margin of the group's head and caption. */
+	/* What the last drawing of the group in the network did, under its head. */
 	.group__melding {
 		margin: 0;
 		padding: 0 var(--s-4) var(--s-1);
@@ -1041,51 +1020,6 @@
 		list-style: none;
 		margin: 0;
 		padding: 0;
-	}
-	/* A waiting row: the height of a row with a title over two lines and its meta line, a
-	   quiet bar where the title will be. */
-	/* The heights measured on 6:162 BW: a judgment's row holds its passage (142 to 163 px),
-	   another row a title and a meta line (77 to 140 px). On an article (6:74, 6:98 and 7:611
-	   BW, UX-toets 0.79.47, #1): a judgment's row 142 to 163 px, an article's 77 to 119, a
-	   Kamerstuk's 163. */
-	.row--wacht {
-		height: 112px;
-		padding: var(--s-2) var(--s-4);
-	}
-	.rows--wacht[data-wacht='passage'] .row--wacht {
-		height: 156px;
-	}
-	.rows--wacht[data-wacht='verwijzing'] .row--wacht {
-		height: 96px;
-	}
-	.rows--wacht[data-wacht='kamerstuk'] .row--wacht {
-		height: 164px;
-	}
-	/* On a phone the rows wrap more (6:98 BW at 375 px): a judgment's 188, an article's 148 to
-	   176, a Kamerstuk's 172. */
-	@media (max-width: 768px) {
-		.rows--wacht[data-wacht='passage'] .row--wacht {
-			height: 188px;
-		}
-		.rows--wacht[data-wacht='verwijzing'] .row--wacht {
-			height: 148px;
-		}
-		.rows--wacht[data-wacht='kamerstuk'] .row--wacht {
-			height: 172px;
-		}
-	}
-	.rows--wacht[data-wacht='uitspraak'] .row--wacht {
-		height: 95px;
-	}
-	.rows--wacht[data-wacht='artikel'] .row--wacht {
-		height: 77px;
-	}
-	.wacht-regel {
-		display: block;
-		width: 70%;
-		height: var(--s-2);
-		margin-top: var(--s-2);
-		background: var(--paper-2);
 	}
 	.row__main {
 		position: relative;
@@ -1125,9 +1059,8 @@
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
-	/* The dot between parts, with its own room: whitespace around it in the markup is not
-	   kept at the start of an element. */
-	/* A comma against the word before it, a space after. */
+	/* A comma against the word before it, a space after: whitespace in the markup is not kept
+	   at the start of an element. */
 	.row__sep {
 		margin-right: 0.3em;
 	}
@@ -1139,11 +1072,6 @@
 	.row__part--lid {
 		font-weight: 600;
 		color: var(--ink-2);
-	}
-	.row__part--proposed {
-		color: var(--ink);
-		/* In ink, as everything at rest but "nee" (Thijs, 10 Oct); the weight keeps it seen. */
-		font-weight: 600;
 	}
 	.row__part--derived {
 		font-style: italic;
@@ -1171,7 +1099,7 @@
 		border-left: 1px solid var(--rule);
 	}
 	.row__inhoud {
-		padding: 0 var(--s-4) var(--s-3) calc(var(--s-4) + 11px + var(--s-3));
+		padding: 0 var(--s-4) var(--s-3) calc(var(--s-4) + var(--row-glyph) + var(--s-3));
 		background: var(--paper-2);
 	}
 	/* The r.o. of the passage: a reference whose card is the overweging, in the line's ink. */
@@ -1224,7 +1152,7 @@
 	}
 	/* One line of controls under a group's heading: the order, the year and the court. */
 	.regel--wacht {
-		height: 32px;
+		height: var(--s-6);
 	}
 	.group__regel {
 		display: flex;
