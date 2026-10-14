@@ -5,6 +5,7 @@ import {
 	citaten,
 	csv,
 	groepen,
+	itemHref,
 	mapParams,
 	naarParam,
 	netwerkHref,
@@ -17,6 +18,7 @@ import {
 	type MapItem
 } from './map';
 import { itemVanRij } from './rij';
+import { remember } from '$lib/bron/leesbaar';
 import type { Row } from '$lib/verbonden/rows';
 
 const lid2: MapItem = {
@@ -297,6 +299,24 @@ describe('keeping a bron', () => {
 	it('carries the group key in the address', () => {
 		const i = bewaarItem(stuk, { kort: 'MvT' }, { dossier: '36889' });
 		expect(uitParam(naarParam([i]))).toEqual([i]);
+	});
+
+	it('keeps the readable address of a bron, so its link needs no redirect (#57)', () => {
+		remember('/kamerstukken/34372/14', 'documents/093662ee');
+		const i = bewaarItem('documents/093662ee', {
+			kort: 'Kamerstukken II, 34372, nr. 14',
+			at: 's-3'
+		});
+		expect(i.pad).toBe('/kamerstukken/34372/14');
+		expect(itemHref(i)).toBe('/kamerstukken/34372/14#s-3');
+		expect(uitParam(naarParam([i]))).toEqual([i]);
+		// An EU article seen in a list: its own address, not /explore?focus=.
+		remember('/wetten/32022L2555/artikel/21', 'articles/32022l2555_21');
+		const eu = bewaarItem('articles/32022l2555_21', { kort: 'art. 21', at: 'lid-2' });
+		expect(itemHref(eu)).toBe('/wetten/32022L2555/artikel/21#lid-2');
+		// A link without the address reads as before, and opens through the network.
+		expect(uitParam(naarParam([lid2]))[0].pad).toBeUndefined();
+		expect(itemHref(lid2)).not.toContain('#lid-2#');
 	});
 
 	it('leaves out an item of an old or broken link or store, and says so', () => {
