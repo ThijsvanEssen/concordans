@@ -198,13 +198,13 @@
 				return;
 			}
 			if (!dossier) return;
-			const r = await getDossierPapers(dossier);
+			const papers = await getDossierPapers(dossier);
 			if (ac.signal.aborted) return;
-			if (r.status === 404) {
+			if (!papers) {
 				missingDossiers = new Set([...missingDossiers, dossier]);
 				return;
 			}
-			const mvt = r.data?.items.find((d) => /memorie van toelichting/i.test(d.kind ?? ''));
+			const mvt = papers.items.find((d) => /memorie van toelichting/i.test(d.kind ?? ''));
 			if (!mvt || ac.signal.aborted) return;
 			explanatory = {
 				key: mvt.key,

@@ -632,7 +632,10 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					data.echr_judgment_total > 0
 						? {
 								international: {
-									rows: await echrJudgments(bwb, node.key, signal),
+									// Another group's rows: this group stands without them.
+									rows: await echrJudgments(bwb, node.key, signal).catch(
+										(e) => (report('Verbonden: EHRM-uitspraken', e), [])
+									),
 									total: data.echr_judgment_total
 								}
 							}

@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { PREVIEW_CHARS, eersteZin, indieners, previewFromNode, uitslagVan } from './preview';
+import { fail, fakeApi, slow } from '$lib/test/fakeApi';
+import {
+	PREVIEW_CHARS,
+	eersteZin,
+	indieners,
+	loadPreview,
+	previewFromNode,
+	uitslagVan
+} from './preview';
 
 describe('previewFromNode', () => {
 	it('shows a judgment by its court, date and the first sentence of its summary', () => {
@@ -111,5 +119,25 @@ describe('preview helpers', () => {
 		);
 		expect(uitslagVan({ passed: false })).toBe('Verworpen');
 		expect(uitslagVan({})).toBeNull();
+	});
+});
+
+describe('loadPreview', () => {
+	const node = {
+		node: { collection: 'commitments', key: 'c1', display_name: 'Toezegging', props: {} },
+		neighbors: { total: 0, buckets: [] }
+	};
+
+	it('asks again after a failure, instead of keeping no card for the session', async () => {
+		const answers: unknown[] = [slow(), node];
+		const fake = fakeApi({ '/api/nodes/{collection}/{key}': () => answers.shift() });
+		await expect(loadPreview('commitments/c1')).rejects.toMatchObject({ name: 'TimeoutError' });
+		expect((await loadPreview('commitments/c1'))?.title).toBe('Toezegging');
+		expect(fake.asked('/api/nodes/{collection}/{key}')).toHaveLength(2);
+	});
+
+	it('gives no card for a bron the API does not have (404)', async () => {
+		fakeApi({ '/api/nodes/{collection}/{key}': fail(404) });
+		expect(await loadPreview('commitments/c2')).toBeNull();
 	});
 });

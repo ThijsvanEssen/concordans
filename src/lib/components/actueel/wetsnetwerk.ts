@@ -4,7 +4,7 @@
 // Its links are made as from outside the Verkenner, where the band stands.
 import { naamVanId } from '$lib/bron/menselijk';
 import { formatCount } from '$lib/text/getal';
-import { api } from '$lib/api/client';
+import { api, unwrap } from '$lib/api/client';
 import { once } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
 import { buildBronHref } from '$lib/bron/href';
@@ -273,25 +273,29 @@ const lawHref = (l: ChangedLaw) =>
 
 /** The judgments on an article, the most cited first; one page is enough for two. */
 const getCitedBy = (bwb: string, number: string, signal?: AbortSignal) =>
-	once(`articles/${bwb}/${number}/cited-by/top`, async () => {
-		const { data } = await api.GET('/api/articles/{bwb_id}/{article_number}/cited-by', {
-			params: {
-				path: { bwb_id: bwb, article_number: number },
-				query: { limit: 6, sort: 'citation_count' }
-			},
-			signal
-		});
-		if (!data) throw new Error('cited-by');
-		return data;
-	});
+	once(`articles/${bwb}/${number}/cited-by/top`, () =>
+		unwrap(
+			api.GET('/api/articles/{bwb_id}/{article_number}/cited-by', {
+				params: {
+					path: { bwb_id: bwb, article_number: number },
+					query: { limit: 6, sort: 'citation_count' }
+				},
+				signal
+			})
+		)
+	);
 
 /** The bills the Eerste Kamer passed before the summary's days: its votes are on bills only. */
 async function oudere(today: string, signal?: AbortSignal): Promise<Kandidaat[]> {
-	const { data } = await api.GET('/api/feed', {
-		params: { query: { kind: 'stemming', chamber: 'EK', limit: 50, facets: false, until: today } },
-		signal
-	});
-	return kandidaten(data?.items ?? []);
+	const { items } = await unwrap(
+		api.GET('/api/feed', {
+			params: {
+				query: { kind: 'stemming', chamber: 'EK', limit: 50, facets: false, until: today }
+			},
+			signal
+		})
+	);
+	return kandidaten(items);
 }
 
 /**

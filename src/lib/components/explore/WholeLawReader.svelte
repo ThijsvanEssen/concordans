@@ -5,6 +5,7 @@
 	import { uniqueBy } from '$lib/util/unique';
 	import { onderdeelMark } from '$lib/text/article-parts';
 	import { ApiError, api, unwrap } from '$lib/api/client';
+	import { report } from '$lib/api/errors';
 	import { tick, untrack } from 'svelte';
 	import { getArticleDetail, getLawBasis } from '$lib/api/articles';
 	import { grondslagKopregel, type KopDeel } from '$lib/text/delegaties';
@@ -217,9 +218,13 @@
 		const bwb = bwbId;
 		const soort = kindName(lawDetail?.kind);
 		if (!bwb || !/^BWBR/i.test(bwb) || !soort || /wet$/i.test(soort)) return;
-		getLawBasis(bwb).then((b) => {
-			if (bwb === bwbId) grondslag = grondslagKopregel(b?.items ?? []);
-		});
+		// Without it the head stands without its Gelet op line.
+		getLawBasis(bwb).then(
+			(b) => {
+				if (bwb === bwbId) grondslag = grondslagKopregel(b?.items ?? []);
+			},
+			(e) => report('Grondslag', e)
+		);
 	});
 
 	const headLine = $derived(

@@ -1230,23 +1230,27 @@ describe('errors that are not swallowed', () => {
 		for (const code of handled) expect(swallowed(code), code).toBe(0);
 	});
 
+	it('reads every answer of the API through unwrap, so a failure is an ApiError', () => {
+		// `data ?? null` or `response.ok` made a 500 into "geen" (F05); a 404 that means "geen"
+		// goes through ifExists ($lib/api/errors.ts).
+		const raw = (text: string) =>
+			(text.match(/\.GET\(/g) ?? []).length -
+			(text.match(/\bunwrap\(\s*[\w.()]+\.GET\(/g) ?? []).length;
+		expect(sources.filter(({ text }) => raw(text) > 0).map((s) => s.path)).toEqual([]);
+	});
+
 	it('swallows a failure nowhere but in the named places, whose counts only go down', () => {
 		// Each count is what the file has now: a package that handles one lowers it, and an
 		// entry at 0 comes out. A new file is never added.
 		const places: Record<string, number> = {
 			// A request whose failure becomes an empty state, a 0 or "niet in de gegevens": the
 			// area packages turn each into ifExists, report, ignore or load with LoadState.
-			'lib/api/articles.ts': 3,
 			'lib/api/instrument-cache.ts': 2,
 			'lib/bron/behoort.ts': 5,
-			'lib/bron/leesbaar.ts': 7,
-			'lib/bron/names.svelte.ts': 2,
-			'lib/bron/preview.ts': 5,
 			'lib/components/actueel/wetsnetwerk.ts': 2,
 			'lib/components/explore/IndexView.svelte': 8,
 			'lib/components/explore/WholeLawReader.svelte': 7,
 			'lib/components/explore/index/IndexOverzicht.svelte': 1,
-			'lib/components/explore/partijkleuren.svelte.ts': 1,
 			'lib/components/explore/readers/ActivityReader.svelte': 2,
 			'lib/components/explore/readers/ArticleReader.svelte': 4,
 			'lib/components/explore/readers/BewindspersoonKop.svelte': 2,
@@ -1267,7 +1271,7 @@ describe('errors that are not swallowed', () => {
 			'lib/components/parliamentary/StemmingUitslag.svelte': 1,
 			'lib/components/parliamentary/data.ts': 1,
 			'lib/graph/store/expansion.ts': 1,
-			'lib/map/MapRegelingen.svelte': 2,
+			'lib/map/MapRegelingen.svelte': 1,
 			'lib/search/Search.svelte': 1,
 			'lib/search/resolve-query.ts': 5,
 			'routes/(main)/+page.svelte': 1,

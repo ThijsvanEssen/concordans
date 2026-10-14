@@ -1,5 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
-import { once, RECORDS_KEPT } from './records';
+import { fail, fakeApi } from '$lib/test/fakeApi';
+import { ApiError } from './client';
+import {
+	getDecisionDocument,
+	getDossierPapers,
+	getExplainedBy,
+	getExplanations,
+	once,
+	RECORDS_KEPT
+} from './records';
 
 describe('once', () => {
 	it('asks for a record once, also after its answer came', async () => {
@@ -32,5 +41,45 @@ describe('once', () => {
 		for (let i = 0; i < RECORDS_KEPT; i++) await once(`other/${i}`, async () => i);
 		await once('first', load);
 		expect(load).toHaveBeenCalledTimes(2);
+	});
+});
+
+describe('getters that say "geen" only for a 404', () => {
+	const getters = [
+		{
+			name: 'getDecisionDocument',
+			path: '/api/decisions/{key}/document',
+			get: () => getDecisionDocument('d1')
+		},
+		{
+			name: 'getExplanations',
+			path: '/api/articles/{bwb_id}/{article_number}/explanations',
+			get: () => getExplanations('BWBR0005537', '3:2')
+		},
+		{
+			name: 'getExplainedBy',
+			path: '/api/articles/{bwb_id}/{article_number}/explained-by',
+			get: () => getExplainedBy('BWBR0005537', '3:2')
+		},
+		{
+			name: 'getDossierPapers',
+			path: '/api/dossiers/{number}/documents',
+			get: () => getDossierPapers('36327')
+		}
+	] as const;
+
+	describe.each(getters)('$name', ({ path, get }) => {
+		it('gives null where the API does not have it', async () => {
+			fakeApi({ [path]: fail(404) });
+			expect(await get()).toBeNull();
+		});
+
+		it('rejects on a failure, and asks again the next time', async () => {
+			const answers: unknown[] = [fail(500), { total: 0, items: [] }];
+			const fake = fakeApi({ [path]: () => answers.shift() });
+			await expect(get()).rejects.toBeInstanceOf(ApiError);
+			expect(await get()).toEqual({ total: 0, items: [] });
+			expect(fake.asked(path)).toHaveLength(2);
+		});
 	});
 });

@@ -13,11 +13,9 @@ type QueryOf<P extends keyof paths> = NonNullable<
 /** The laws a member or a fractie has worked on, with the number of their documents. */
 export const getTouchedInstruments = (who: 'members' | 'factions', key: string) =>
 	once(`${who}/${key}/touched-instruments`, () =>
-		unwrap(
-			who === 'members'
-				? api.GET('/api/members/{key}/touched-instruments', { params: { path: { key } } })
-				: api.GET('/api/factions/{key}/touched-instruments', { params: { path: { key } } })
-		)
+		who === 'members'
+			? unwrap(api.GET('/api/members/{key}/touched-instruments', { params: { path: { key } } }))
+			: unwrap(api.GET('/api/factions/{key}/touched-instruments', { params: { path: { key } } }))
 	);
 
 export const getFactionDossiers = (key: string, limit: number) =>

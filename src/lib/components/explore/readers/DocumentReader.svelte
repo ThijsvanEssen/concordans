@@ -7,7 +7,8 @@
 	// Reader for a document (memorie van toelichting, verslag, nota, amendement, motie, ...):
 	// its text. Opened as the toelichting of an article, it lands on the passage for it.
 	import ReaderFrame from './ReaderFrame.svelte';
-	import { api } from '$lib/api/client';
+	import { api, unwrap } from '$lib/api/client';
+	import { ifExists, report } from '$lib/api/errors';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import GlossaryPill from './GlossaryPill.svelte';
@@ -193,14 +194,20 @@
 		apiPassage = undefined;
 		if (!wanted) return;
 		const ac = new AbortController();
-		api
-			.GET('/api/documents/{key}/passages', {
-				params: { path: { key }, query: { bwb_id: wanted.lawId, article: wanted.articleNumber } },
-				signal: ac.signal
-			})
-			.then(({ data, response }) => {
+		ifExists(
+			unwrap(
+				api.GET('/api/documents/{key}/passages', {
+					params: {
+						path: { key },
+						query: { bwb_id: wanted.lawId, article: wanted.articleNumber }
+					},
+					signal: ac.signal
+				})
+			)
+		)
+			.then((data) => {
 				if (ac.signal.aborted) return;
-				const first = response.ok ? data?.items[0] : undefined;
+				const first = data?.items[0];
 				apiPassage = first
 					? {
 							start: first.char_start,
@@ -210,7 +217,9 @@
 						}
 					: null;
 			})
-			.catch(() => {
+			.catch((e) => {
+				// The passage is then found in the text, as a guess.
+				report('Passage', e);
 				if (!ac.signal.aborted) apiPassage = null;
 			});
 		return () => ac.abort();

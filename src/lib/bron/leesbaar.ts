@@ -23,7 +23,8 @@
 // ?netwerk=…, the bronfilter. `/explore?focus=…` keeps working and is replaced by the
 // readable address once the bron is known.
 import { SvelteMap } from 'svelte/reactivity';
-import { api, leesAntwoorden } from '$lib/api/client';
+import { api, leesAntwoorden, unwrap } from '$lib/api/client';
+import { ifExists, ignore } from '$lib/api/errors';
 import { onthoudTitel } from './titels.svelte';
 import { getArticleDetail, getArticleHistory, onthoudArtikel } from '$lib/api/articles';
 import { lawArticleList } from '$lib/api/law-articles';
@@ -335,7 +336,7 @@ export function focusUitPagina(pad: Pad): string | null {
 	remember(href, focus);
 	const target = parseNodeId(focus)!;
 	// What the lookup would have set going: a Kamerstuk's text beside its node.
-	if (target.collection === 'documents') getDocument(target.key).catch(() => {});
+	if (target.collection === 'documents') getDocument(target.key).catch(ignore('leesbaar'));
 	return focus;
 }
 
@@ -363,18 +364,18 @@ export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | n
 				const href = padHref(pad);
 				if (d.article?.id && !focusVan.has(href)) remember(href, d.article.id);
 			})
-			.catch(() => {});
+			.catch(ignore('leesbaar'));
 		// Where no EXPLAINS edge names its memorie, the reader looks in the dossier of the wet
 		// that gave its text in force: asked as soon as the tekstversies name it.
 		getArticleHistory(artikel.wet, artikel.nummer)
 			.then((h) => {
 				const w = wordingsOf(h.versions ?? []).at(-1);
 				const dossier = w && w.until === null ? w.first.amended_by?.dossiers?.[0]?.number : null;
-				if (dossier) getDossierPapers(dossier).catch(() => {});
+				if (dossier) getDossierPapers(dossier).catch(ignore('leesbaar'));
 			})
-			.catch(() => {});
-		lawArticleList(artikel.wet).catch(() => {});
-		getExplainedBy(artikel.wet, artikel.nummer).catch(() => {});
+			.catch(ignore('leesbaar'));
+		lawArticleList(artikel.wet).catch(ignore('leesbaar'));
+		getExplainedBy(artikel.wet, artikel.nummer).catch(ignore('leesbaar'));
 	}
 	const known = focusOfPad(pad) ?? focusUitPagina(pad);
 	if (known) {
@@ -382,16 +383,14 @@ export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | n
 		if (artikel && target) onthoudArtikel(target.key, artikel.wet, artikel.nummer);
 		return known;
 	}
-	const { data, response } = await api.GET('/api/lookup', {
-		params: { query: lookupQuery(pad) },
-		signal
-	});
-	if (response.status === 404) return null;
-	if (!data) throw new Error(`lookup ${response.status}`);
+	const data = await ifExists(
+		unwrap(api.GET('/api/lookup', { params: { query: lookupQuery(pad) }, signal }))
+	);
+	if (!data) return null;
 	const focus = `${data.collection}/${data.key}`;
 	// A Kamerstuk's text is asked as soon as its key is known, beside its node, not after it
 	// (live, 10 Oct: the reader asked it only once the light node was in).
-	if (data.collection === 'documents') getDocument(data.key).catch(() => {});
+	if (data.collection === 'documents') getDocument(data.key).catch(ignore('leesbaar'));
 	// The reader stands on the article's detail, asked above, while its node is on its way.
 	if (artikel) onthoudArtikel(data.key, artikel.wet, artikel.nummer);
 	remember(padHref(pad), focus);

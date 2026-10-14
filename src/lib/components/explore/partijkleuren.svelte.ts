@@ -11,7 +11,8 @@
 // houdt de eerste fractie van een groep gelijkende kleuren (ΔE onder 23) haar volle kleur,
 // de tweede krijgt arcering, de derde stippen, de volgende strepen. Een fractie met twee
 // kleuren (GroenLinks-PvdA) is al onderscheiden.
-import { api } from '$lib/api/client';
+import { api, unwrap } from '$lib/api/client';
+import { report } from '$lib/api/errors';
 import { onForget } from '$lib/util/forget';
 
 const kamers = $state<{ TK: Record<string, string[]>; EK: Record<string, string[]> }>({
@@ -35,16 +36,18 @@ onForget(() => {
 function laad() {
 	if (gevraagd || typeof window === 'undefined') return;
 	gevraagd = true;
-	api
-		.GET('/api/parties/colors')
-		.then(({ data }) => {
-			kamers.TK = data?.chambers?.TK?.colors ?? {};
-			kamers.EK = data?.chambers?.EK?.colors ?? {};
-			eigen.kleuren = data?.colors ?? {};
-			eigen.aliassen = data?.aliases ?? {};
+	unwrap(api.GET('/api/parties/colors'))
+		.then((data) => {
+			kamers.TK = data.chambers?.TK?.colors ?? {};
+			kamers.EK = data.chambers?.EK?.colors ?? {};
+			eigen.kleuren = data.colors ?? {};
+			eigen.aliassen = data.aliases ?? {};
 		})
-		.catch(() => {
-			// De terugvalkleur blijft: de naam van de fractie staat erbij.
+		.catch((e) => {
+			// De terugvalkleur blijft, de naam van de fractie staat erbij; de volgende keer
+			// opnieuw gevraagd.
+			gevraagd = false;
+			report('Partijkleuren', e);
 		});
 }
 

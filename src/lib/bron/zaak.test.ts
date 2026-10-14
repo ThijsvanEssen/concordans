@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Row } from '$lib/verbonden/rows';
-import { isBijWetsvoorstel, naastHetStuk, wetsvoorstelVan } from './zaak';
+import { fakeApi, slow } from '$lib/test/fakeApi';
+import { isBijWetsvoorstel, naastHetStuk, stukkenInDezelfdeZaak, wetsvoorstelVan } from './zaak';
 
 const rij = (key: string, kind: string): Row =>
 	({
@@ -39,5 +40,17 @@ describe('naastHetStuk', () => {
 		expect(
 			naastHetStuk('Aanbiedingsbrief', { rows: [voorstel, brief], order: undefined }).rows
 		).toEqual([brief]);
+	});
+});
+
+describe('stukkenInDezelfdeZaak', () => {
+	it('asks the zaken of a stuk again after a time-out', async () => {
+		const answers: unknown[] = [slow(), { node: {}, neighbors: { total: 0, buckets: [] } }];
+		const fake = fakeApi({ '/api/nodes/{collection}/{key}': () => answers.shift() });
+		await expect(stukkenInDezelfdeZaak({ key: 's1' })).rejects.toMatchObject({
+			name: 'TimeoutError'
+		});
+		expect((await stukkenInDezelfdeZaak({ key: 's1' })).rows).toEqual([]);
+		expect(fake.asked('/api/nodes/{collection}/{key}')).toHaveLength(2);
 	});
 });

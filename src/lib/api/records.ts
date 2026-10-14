@@ -8,6 +8,7 @@
 // A shared request takes no AbortSignal: one caller leaving must not cancel it for the
 // others. A caller that leaves ignores the answer instead.
 import { api, unwrap } from './client';
+import { ifExists } from './errors';
 import { getNodeGraph, neighborsOf } from './nodes';
 import type { Collection } from '$lib/vocabulary';
 import { onForget } from '$lib/util/forget';
@@ -140,9 +141,7 @@ export const getDecision = (key: string) =>
 /** The stuk a stemming is about; null when the API has none. */
 export const getDecisionDocument = (key: string) =>
 	once(`decisions/${key}/document`, () =>
-		api
-			.GET('/api/decisions/{key}/document', { params: { path: { key } } })
-			.then(({ data }) => data ?? null)
+		ifExists(unwrap(api.GET('/api/decisions/{key}/document', { params: { path: { key } } })))
 	);
 
 /** One activity: its kind, day, committee, dossiers and moves (cheap; API 0.79.55). */
@@ -229,40 +228,47 @@ export const getAmendedBy = (bwb: string) =>
 		)
 	);
 
-/** The stukken that explain an article, the first fifty; null when the API has none. The
- *  reader and the panel Verbonden share it. */
 /**
  * The papers that explain an article, each with its passages about it (API 0.79.41, #478):
- * one request where the reader asked every paper's `/passages` in turn.
+ * one request where the reader asked every paper's `/passages` in turn. Null where the API
+ * does not have the article.
  */
 export const getExplanations = (bwb: string, number: string) =>
 	once(`articles/${bwb}/${number}/explanations`, () =>
-		api
-			.GET('/api/articles/{bwb_id}/{article_number}/explanations', {
-				params: { path: { bwb_id: bwb, article_number: number } }
-			})
-			.then(({ data }) => data ?? null)
+		ifExists(
+			unwrap(
+				api.GET('/api/articles/{bwb_id}/{article_number}/explanations', {
+					params: { path: { bwb_id: bwb, article_number: number } }
+				})
+			)
+		)
 	);
 
 /**
  * The first hundred papers of a dossier, once: where an article's memorie is found when no
- * EXPLAINS edge names it (the dossier of the wet that gave its text). Its status kept, so a
- * dossier the data lacks (404) is said as such.
+ * EXPLAINS edge names it (the dossier of the wet that gave its text). Null for a dossier the
+ * data lacks, said as such.
  */
 export const getDossierPapers = (number: string) =>
 	once(`dossiers/${number}/documents?limit=100`, () =>
-		api
-			.GET('/api/dossiers/{number}/documents', {
-				params: { path: { number }, query: { limit: 100 } }
-			})
-			.then(({ data, response }) => ({ status: response.status, data: data ?? null }))
+		ifExists(
+			unwrap(
+				api.GET('/api/dossiers/{number}/documents', {
+					params: { path: { number }, query: { limit: 100 } }
+				})
+			)
+		)
 	);
 
+/** The stukken that explain an article, the first fifty; null where the API does not have
+ *  the article. The reader and the panel Verbonden share it. */
 export const getExplainedBy = (bwb: string, number: string) =>
 	once(`articles/${bwb}/${number}/explained-by`, () =>
-		api
-			.GET('/api/articles/{bwb_id}/{article_number}/explained-by', {
-				params: { path: { bwb_id: bwb, article_number: number }, query: { limit: 50 } }
-			})
-			.then(({ data }) => data ?? null)
+		ifExists(
+			unwrap(
+				api.GET('/api/articles/{bwb_id}/{article_number}/explained-by', {
+					params: { path: { bwb_id: bwb, article_number: number }, query: { limit: 50 } }
+				})
+			)
+		)
 	);

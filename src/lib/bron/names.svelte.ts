@@ -2,6 +2,7 @@
 // it is: its key, from the lists the API gives, asked for once. A name that is not in
 // the list stays text; a guessed key would be a link to nothing.
 import { api, unwrap } from '$lib/api/client';
+import { report } from '$lib/api/errors';
 import { getCabinets } from '$lib/components/explore/index/government';
 import { onForget } from '$lib/util/forget';
 
@@ -26,37 +27,41 @@ export function keyOfName(items: Named[], name: string | null | undefined): stri
 	return null;
 }
 
-const lists = $state<{ factions: Named[]; cabinets: Named[] }>({ factions: [], cabinets: [] });
-let requested = false;
+type List = 'factions' | 'cabinets';
+
+const lists = $state<Record<List, Named[]>>({ factions: [], cabinets: [] });
+/** The lists asked or in; one that failed is asked again the next time. */
+const requested = new Set<List>();
 onForget(() => {
 	lists.factions = [];
 	lists.cabinets = [];
-	requested = false;
+	requested.clear();
 });
 
-function request() {
-	if (requested || typeof window === 'undefined') return;
-	requested = true;
-	unwrap(api.GET('/api/factions'))
-		.then((items) => {
-			lists.factions = items.map((f) => ({ key: f.key, names: [f.abbreviation, f.name] }));
-		})
-		.catch(() => {});
-	getCabinets()
-		.then((items) => {
-			lists.cabinets = items.map((c) => ({ key: c.key, names: [c.name] }));
-		})
-		.catch(() => {});
+const LOAD: Record<List, () => Promise<Named[]>> = {
+	factions: () =>
+		unwrap(api.GET('/api/factions')).then((items) =>
+			items.map((f) => ({ key: f.key, names: [f.abbreviation, f.name] }))
+		),
+	cabinets: () => getCabinets().then((items) => items.map((c) => ({ key: c.key, names: [c.name] })))
+};
+
+/** A name stays text while its list is not in, or failed. */
+function keyIn(list: List, name: string | null | undefined): string | null {
+	if (!requested.has(list) && typeof window !== 'undefined') {
+		requested.add(list);
+		LOAD[list]()
+			.then((items) => (lists[list] = items))
+			.catch((e) => {
+				requested.delete(list);
+				report(`Namen (${list})`, e);
+			});
+	}
+	return keyOfName(lists[list], name);
 }
 
 /** The key of the fractie a name or abbreviation stands for, once the list is in. */
-export function factionKeyOf(name: string | null | undefined): string | null {
-	request();
-	return keyOfName(lists.factions, name);
-}
+export const factionKeyOf = (name: string | null | undefined) => keyIn('factions', name);
 
 /** The key of the cabinet a name stands for (`kabinet-Rutte IV`), once the list is in. */
-export function cabinetKeyOf(name: string | null | undefined): string | null {
-	request();
-	return keyOfName(lists.cabinets, name);
-}
+export const cabinetKeyOf = (name: string | null | undefined) => keyIn('cabinets', name);
