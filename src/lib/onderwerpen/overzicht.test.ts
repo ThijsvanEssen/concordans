@@ -4,6 +4,7 @@ import {
 	KOLOM_STREKKING,
 	kolomStem,
 	lijstQuery,
+	outcomeShape,
 	uitFacets,
 	type Besluit,
 	type Facets,
@@ -110,5 +111,13 @@ describe('de API telt (0.79.30)', () => {
 			party: 'VVD',
 			vote: 'tegen'
 		});
+	});
+});
+
+describe('the mark of an outcome', () => {
+	it('is ja for passed, nee for rejected, open for the rest', () => {
+		expect(
+			['aangenomen', 'verworpen', 'overig', 'nog niet gestemd', null].map(outcomeShape)
+		).toEqual(['ja', 'nee', 'open', 'open', 'open']);
 	});
 });

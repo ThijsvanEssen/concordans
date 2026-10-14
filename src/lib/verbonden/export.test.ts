@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { COLUMNS, TABLE_COLUMNS, csvName, exportRows, rowsToCsv } from './export';
+import { COLUMNS, TABLE_COLUMNS, csvName, exportRows, rowsToCsv, safeFileName } from './export';
 import { EMPTY_FILTER } from './filter';
 import type { Group } from './groups';
 import type { Row } from './rows';
@@ -25,6 +25,13 @@ describe('rowsToCsv', () => {
 		expect(line.startsWith('"Hoge Raad; ""uitspraak"", 19 juli 2019";')).toBe(true);
 		expect(line).toContain(';r.o. 2.2;');
 		expect(line).toContain(';ECLI:NL:HR:2019:1278;https://example.org/');
+	});
+});
+
+describe('safeFileName', () => {
+	it('keeps a name to the characters and the length a file system takes', () => {
+		expect(safeFileName('stikstof; "natuur"/water', 12)).toBe('stikstof; na');
+		expect(safeFileName(' ..?.. ')).toBe('');
 	});
 });
 
