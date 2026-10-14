@@ -16,6 +16,7 @@
 	import { page } from '$app/state';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
 	import { ApiError, api, isTimeout, unwrap, zoekApi } from '$lib/api/client';
+	import { report } from '$lib/api/errors';
 	import { untrack } from 'svelte';
 	import { API_BASE_URL } from '$lib/api/base-url';
 	import type { Schema } from '$lib/api/types';
@@ -43,6 +44,7 @@
 		dagVoor,
 		daysOf,
 		doorzochtVanaf,
+		errorPlace,
 		feedStand,
 		kindFromParam,
 		normalizeItem,
@@ -154,7 +156,10 @@
 		if (!bwb || wetTitel?.bwb === bwb) return;
 		getInstrumentDetail(bwb)
 			.then((d) => (wetTitel = { bwb, titel: d.title ?? bwb }))
-			.catch(() => (wetTitel = { bwb, titel: bwb }));
+			.catch((e) => {
+				report('Actueel wet', e);
+				wetTitel = { bwb, titel: bwb };
+			});
 	});
 	const gevolgdeWet = $derived<GevolgdeWet | null>(
 		wet
@@ -246,6 +251,7 @@
 			})
 			.catch((e) => {
 				if (ac.signal.aborted) return;
+				report('Actueel', e);
 				// No list under filters it does not answer.
 				items = [];
 				cursor = null;
@@ -261,7 +267,7 @@
 		// Without the counts in 3 s the API answers `partial` (0.79.14) and counts on: asked
 		// once more after 30 s, or with the next filter. Then the filters stand without them.
 		let opnieuw: ReturnType<typeof setTimeout> | undefined;
-		const tel = (poging: number) =>
+		const tel = (poging: number): void => {
 			unwrap(
 				api.GET('/api/feed', {
 					params: { query: { ...q, limit: 1, facets: true } },
@@ -278,10 +284,13 @@
 					total = r.total ?? null;
 					tellen = false;
 				})
-				.catch(() => {
+				.catch((e) => {
+					// The list stands; the filters without their counts.
+					report('Actueel tellingen', e);
 					if (!ac.signal.aborted) tellen = false;
 				});
-		void tel(0);
+		};
+		tel(0);
 		return () => {
 			clearTimeout(opnieuw);
 			ac.abort();
@@ -296,6 +305,7 @@
 	async function verderTerug() {
 		if (!doorzocht || verderLaden) return;
 		verderLaden = true;
+		error = null;
 		try {
 			const r = await unwrap(
 				zoekApi.GET('/api/feed', {
@@ -305,7 +315,8 @@
 			items = uniqueBy([...items, ...r.items.map(normalizeItem)], (i) => i.id);
 			cursor = r.next_cursor ?? null;
 			doorzocht = doorzochtVanaf(r);
-		} catch {
+		} catch (e) {
+			report('Actueel verder terug', e);
 			error = 'Verder terug zoeken lukte niet.';
 		} finally {
 			verderLaden = false;
@@ -315,6 +326,7 @@
 	async function loadMore() {
 		if (!cursor || loadingMore) return;
 		loadingMore = true;
+		error = null;
 		try {
 			const r = await unwrap(
 				zoekApi.GET('/api/feed', { params: { query: { ...query, cursor, facets: false } } })
@@ -322,7 +334,8 @@
 			items = uniqueBy([...items, ...r.items.map(normalizeItem)], (i) => i.id);
 			cursor = r.next_cursor ?? null;
 			doorzocht = doorzochtVanaf(r);
-		} catch {
+		} catch (e) {
+			report('Actueel volgende dagen', e);
 			error = 'De volgende dagen konden niet worden geladen.';
 		} finally {
 			loadingMore = false;
@@ -385,7 +398,8 @@
 			})
 		)
 			.then((r) => (summaries = new Map((r.days ?? []).map((d) => [d.date, d]))))
-			.catch(() => {});
+			// A day stands without its whole count.
+			.catch((e) => report('Actueel dagtellingen', e));
 		return () => ac.abort();
 	});
 
@@ -397,15 +411,16 @@
 	let ministries = $state<Ministry[]>([]);
 	let factionNames = $state<Record<string, string>>({});
 	$effect(() => {
+		// A filter without its name shows its key.
 		getCabinets()
 			.then((c) => (cabinets = c))
-			.catch(() => {});
+			.catch((e) => report('Actueel kabinetten', e));
 		getMinistries()
 			.then((m) => (ministries = m))
-			.catch(() => {});
+			.catch((e) => report('Actueel ministeries', e));
 		unwrap(api.GET('/api/factions'))
 			.then((f) => (factionNames = Object.fromEntries(f.map((x) => [x.key, fractieNaam(x)]))))
-			.catch(() => {});
+			.catch((e) => report('Actueel fracties', e));
 	});
 	const colorOf = (short: string | null | undefined) =>
 		short ? partyColor(short) : 'var(--rule-strong)';
@@ -695,7 +710,7 @@
 
 		{#if loading && !items.length}
 			<p class="status stil">Laden…</p>
-		{:else if error && !items.length}
+		{:else if errorPlace(error, items.length) === 'instead'}
 			<div class="status status--error stil">
 				<p>{error}</p>
 				{#if teLang && korter.length}
@@ -735,6 +750,9 @@
 					/>
 				{/each}
 			</div>
+			{#if errorPlace(error, items.length) === 'below'}
+				<p class="stil" role="alert">{error}</p>
+			{/if}
 			{@render verder()}
 		{/if}
 	</div>

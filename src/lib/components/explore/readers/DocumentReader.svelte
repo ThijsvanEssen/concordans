@@ -22,7 +22,7 @@
 	import { zetNootStand } from '$lib/text/voetnoten.svelte';
 	import { markeringVoor } from '$lib/bron/markering.svelte';
 	import { findPassage } from '$lib/text/find-passage';
-	import { tick } from 'svelte';
+	import { afterTick } from '$lib/util/after-tick';
 	import { formatDate } from './_shared';
 	import SubmitterLine from '$lib/bron/SubmitterLine.svelte';
 	import StemmingUitslag from '$lib/components/parliamentary/StemmingUitslag.svelte';
@@ -259,14 +259,14 @@
 	$effect(() => {
 		if (passageEntryIndex < 0 || !root) return;
 		const container = root;
-		void tick().then(() => landOn(container, 'passage'));
+		afterTick(() => landOn(container, 'passage'));
 	});
 	$effect(() => {
 		if (!loaded || article || !anchor || !root) return;
 		const container = root;
 		if (isNootAnker(anchor)) noten.toon(anchor, { bereik: markering?.bereik });
 		const doelwit = tekstBereik ? 'markering' : anchor;
-		void tick().then(() => landOn(container, doelwit));
+		afterTick(() => landOn(container, doelwit));
 	});
 
 	// The kind is the source's own wording; where a glossary term exists the kicker links to it.

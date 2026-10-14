@@ -23,7 +23,8 @@
 	import CitedText from '$lib/components/articles/CitedText.svelte';
 	import { page } from '$app/state';
 	import { anchorOfHash, landOn, permalink } from '$lib/bron/anchor';
-	import { tick, untrack } from 'svelte';
+	import { untrack } from 'svelte';
+	import { afterTick } from '$lib/util/after-tick';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 	import {
@@ -98,7 +99,7 @@
 			const m = markeringVoor(`judgments/${loaded.judgment.key}`, anchor);
 			noten.toon(anchor, { doel: m?.doel, bereik: m?.bereik });
 		}
-		void tick().then(() => landOn(container, anchor));
+		afterTick(() => landOn(container, anchor));
 	});
 	const nootVan = (alle: Map<string, Noot>, markers: NootMarker[] | undefined) =>
 		(markers ?? []).flatMap((m) => alle.get(m.id) ?? []);

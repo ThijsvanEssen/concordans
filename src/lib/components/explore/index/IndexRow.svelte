@@ -84,7 +84,7 @@
 	function onRowClick(e: MouseEvent) {
 		if (onControl(e)) return;
 		if (window.getSelection()?.toString()) return;
-		if (direct) void goto(href!);
+		if (direct) goto(href!);
 		else onToggle?.();
 	}
 

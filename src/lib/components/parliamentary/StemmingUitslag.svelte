@@ -6,7 +6,9 @@
 	// word, the seats beside it, so it reads at once without scrolling, on a phone too (Thijs,
 	// 9 Oct: "De uitslag moet duidelijk zijn"); docs/typografie.md.
 	import type { Schema } from '$lib/api/types';
-	import { getDecision } from '$lib/api/records';
+	import { abortable, getDecision } from '$lib/api/records';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { load } from '$lib/util/load.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { decisionOutcome } from '$lib/components/explore/index/decision-kind';
@@ -19,22 +21,20 @@
 
 	let { decisions }: { decisions: Decision[] } = $props();
 
-	let details = $state<Map<string, Decision>>(new Map());
-	$effect(() => {
-		const ac = new AbortController();
-		const keys = decisions.filter((d) => d.chamber !== 'EK').map((d) => d.key);
-		Promise.all(
-			keys.map((key) =>
-				getDecision(key)
-					.then((d) => [key, d] as const)
-					.catch(() => null)
-			)
-		).then((found) => {
-			if (!ac.signal.aborted)
-				details = new Map(found.filter((f): f is readonly [string, Decision] => f !== null));
-		});
-		return () => ac.abort();
-	});
+	// The fracties of the Tweede Kamer are in each decision's votes; the outcome and the tally
+	// stand without them.
+	const tkKeys = $derived(decisions.filter((d) => d.chamber !== 'EK').map((d) => d.key));
+	const votes = load(
+		() => tkKeys.join(','),
+		(_, signal) =>
+			Promise.all(
+				tkKeys.map((key) => abortable(getDecision(key), signal).then((d) => [key, d] as const))
+			).then((found) => new Map(found)),
+		'Stemming'
+	);
+	const details = $derived(
+		votes.state.status === 'ready' ? votes.state.data : new Map<string, Decision>()
+	);
 
 	/** The fracties per side: Voor, Tegen, and any other choice the source gives. */
 	function sides(d: Decision): { label: string; names: string[] }[] {
@@ -90,6 +90,9 @@
 				{/each}
 			</div>
 		{/each}
+		{#if votes.state.status === 'error'}
+			<LoadState state={votes.state} what="De stemming per fractie" retry={votes.retry} />
+		{/if}
 	</Sectie>
 {/if}
 

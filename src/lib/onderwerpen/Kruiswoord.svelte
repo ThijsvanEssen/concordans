@@ -28,6 +28,7 @@
 		keuze,
 		onKies,
 		bezig = {},
+		failed = new Set(),
 		ongeteld = {},
 		uit = new Set(),
 		nieuwSinds = null,
@@ -41,6 +42,8 @@
 		onKies: (k: Keuze | null) => void;
 		/** A column still counting: its empty cells wait instead of reading as none. */
 		bezig?: Partial<Record<Kolom, boolean>>;
+		/** Columns whose count did not come: not counted, never a 0, and a line under the grid. */
+		failed?: ReadonlySet<Kolom>;
 		/** Per column the last month or week not counted (the feed's pages ran out before). */
 		ongeteld?: Partial<Record<Kolom, Vak | null>>;
 		/** Columns a chosen strekking does not apply to: they stand empty. */
@@ -86,6 +89,16 @@
 		}, [])
 	);
 	const vakkenVan = (j: string) => vakken.filter((v) => jaarVanVak(v) === j);
+	/** "Moties en brieven konden niet worden geteld.", in the order of the columns. */
+	const failedLine = $derived.by(() => {
+		const labels = kolommen
+			.filter((c) => failed.has(c.k) && !uit.has(c.k))
+			.map((c, i) => (i ? c.label.toLowerCase() : c.label));
+		if (!labels.length) return null;
+		const list =
+			labels.length === 1 ? labels[0] : `${labels.slice(0, -1).join(', ')} en ${labels.at(-1)}`;
+		return `${list} ${labels.length === 1 ? 'kon' : 'konden'} niet worden geteld.`;
+	});
 </script>
 
 <div class="schuif" data-zijscroll>
@@ -119,6 +132,9 @@
 				{@const t = totaal(vakken, c.k)}
 				{#if uit.has(c.k)}
 					<span class="som-groot af" role="gridcell" aria-label="Niet van toepassing"></span>
+				{:else if failed.has(c.k)}
+					<span class="som-groot" role="gridcell" title="Niet geteld" aria-label="Niet geteld"
+					></span>
 				{:else if bezig[c.k]}
 					<span class="som-groot" role="gridcell" aria-label="Laden">…</span>
 				{:else if t > 0}
@@ -154,6 +170,8 @@
 							<span class="t" role="gridcell"></span>
 						{:else if vs.every((v) => isOngeteld(c.k, v))}
 							<span class="t" role="gridcell" title="Niet geteld" aria-label="Niet geteld"></span>
+						{:else if failed.has(c.k)}
+							<span class="t" role="gridcell" title="Niet geteld" aria-label="Niet geteld"></span>
 						{:else if bezig[c.k]}
 							<span class="t" role="gridcell">…</span>
 						{:else if t > 0}
@@ -183,6 +201,8 @@
 							{@const cel = r?.[c.k]}
 							{#if uit.has(c.k)}
 								<span class="cel nvt" role="gridcell"></span>
+							{:else if failed.has(c.k)}
+								<span class="cel ongeteld" role="gridcell" title="Niet geteld"></span>
 							{:else if cel && cel.n > 0}
 								<button
 									type="button"
@@ -209,6 +229,9 @@
 		{/each}
 	</div>
 </div>
+{#if failedLine}
+	<p class="stil" role="alert">{failedLine}</p>
+{/if}
 {#if heeftNieuw && nieuwSinds}
 	<p class="legenda">
 		<span

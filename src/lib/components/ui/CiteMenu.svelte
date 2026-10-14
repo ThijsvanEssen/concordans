@@ -2,6 +2,7 @@
 	// Citeer, the same everywhere: a button that opens a menu of the forms to copy (kort,
 	// voluit, met datum, link), with the keys of a menu, and Gekopieerd on the button.
 	import type { Snippet } from 'svelte';
+	import { report } from '$lib/api/errors';
 	import { menu } from '$lib/actions/menu';
 	import Caret from './Caret.svelte';
 	import { createCopier } from './copy.svelte';
@@ -56,7 +57,7 @@
 	};
 
 	function copy(text: string) {
-		void copier.copy(text, 'cite');
+		copier.copy(text, 'cite').catch((e) => report('Citeren', e));
 		setOpen(false);
 	}
 </script>

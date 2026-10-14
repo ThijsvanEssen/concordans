@@ -5,7 +5,8 @@
 	// at the present or at the cabinet opened. A click opens the cabinet in place under the
 	// strip (OpenRij); the bron is one step further, Kabinet lezen. An end no source gives is
 	// a dotted frame, as a stand-in on a post.
-	import { tick, untrack } from 'svelte';
+	import { untrack } from 'svelte';
+	import { afterTick } from '$lib/util/after-tick';
 	import IconKnop from '$lib/components/ui/IconKnop.svelte';
 	import OpenRij from '$lib/components/open/OpenRij.svelte';
 	import { pannable } from './pannable';
@@ -78,7 +79,7 @@
 		const el = scroller;
 		const midden = el ? (el.scrollLeft + el.clientWidth / 2) / yearWidth : 0;
 		yearWidth = YEAR_WIDTHS[i];
-		if (el) tick().then(() => (el.scrollLeft = midden * yearWidth - el.clientWidth / 2));
+		if (el) afterTick(() => (el.scrollLeft = midden * yearWidth - el.clientWidth / 2));
 	}
 	// Opens at the present, or at the cabinet opened.
 	$effect(() => {
@@ -86,7 +87,7 @@
 		void rows.length;
 		if (!el) return;
 		untrack(() =>
-			tick().then(() => {
+			afterTick(() => {
 				const g = geplaatst.find((p) => p.c.key === openKey);
 				el.scrollLeft = g ? g.van - el.clientWidth / 2 : el.scrollWidth;
 			})

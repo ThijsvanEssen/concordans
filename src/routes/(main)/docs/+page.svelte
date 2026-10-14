@@ -1,22 +1,13 @@
 <script lang="ts">
 	import RouteKop from '$lib/seo/RouteKop.svelte';
-	import { onMount } from 'svelte';
-	import { getStats, type Stats } from '$lib/api/stats';
+	import { getStats } from '$lib/api/stats';
+	import { load } from '$lib/util/load.svelte';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { modKey } from '$lib/utils/platform';
 	import { RELATIONS } from '$lib/vocabulary';
 	import { relationLabel } from '$lib/verbonden/hoe';
 
-	let stats = $state<Stats | null>(null);
-
-	const relations = $derived(
-		stats ? RELATIONS.filter((r) => (stats!.edges.by_relation[r] ?? 0) > 0) : []
-	);
-
-	onMount(() => {
-		getStats()
-			.then((s) => (stats = s))
-			.catch(() => (stats = null));
-	});
+	const stats = load(() => 'stats', getStats, 'Documentatie');
 </script>
 
 <RouteKop pad="/docs" />
@@ -174,15 +165,17 @@
 				>.
 			</p>
 			<p>De soorten verbindingen:</p>
-			{#if relations.length}
-				<div class="list list--two-col">
-					{#each relations as relation (relation)}
-						<div class="list-row">
-							<span>{relationLabel(relation)}</span>
-						</div>
-					{/each}
-				</div>
-			{/if}
+			<LoadState state={stats.state} what="De soorten verbindingen" retry={stats.retry}>
+				{#snippet children(s)}
+					<div class="list list--two-col">
+						{#each RELATIONS.filter((r) => (s.edges.by_relation[r] ?? 0) > 0) as relation (relation)}
+							<div class="list-row">
+								<span>{relationLabel(relation)}</span>
+							</div>
+						{/each}
+					</div>
+				{/snippet}
+			</LoadState>
 		</div>
 
 		<div class="section">

@@ -91,7 +91,7 @@
 			(entries) => {
 				if (entries.some((e) => e.isIntersecting)) {
 					observer.disconnect();
-					void ensureDetail(bwb, articleNumber);
+					ensureDetail(bwb, articleNumber).catch((e) => report('Artikeltekst', e));
 				}
 			},
 			{ rootMargin: '600px 0px' }
@@ -235,9 +235,12 @@
 			const [bwb, day] = [bwbId, peildatum];
 			untrack(() => lawList.open(bwb, day, hash));
 		} else if (start > 0 || start + articles.length < total)
-			void lawList.reach(hash).then((found) => {
-				if (!found) doelGezien = hash;
-			});
+			lawList.reach(hash).then(
+				(found) => {
+					if (!found) doelGezien = hash;
+				},
+				(e) => report('Wet plek', e)
+			);
 		else doelGezien = hash;
 	});
 

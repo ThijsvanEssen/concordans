@@ -1294,6 +1294,27 @@ describe('errors that are not swallowed', () => {
 		for (const code of handled) expect(swallowed(code), code).toBe(0);
 	});
 
+	it('has one catch-all, at the outer boundary, and one boundary per panel of the Verkenner', () => {
+		// hooks.client.ts reports what nobody handled; a panel that fails to draw says so in its
+		// place (PanelBoundary), the other panels stay. Code-eenvoud F06.
+		expect(offenders((t) => /addEventListener\(\s*'unhandledrejection'/.test(t))).toEqual([
+			'hooks.client.ts'
+		]);
+		expect(offenders((t) => /<svelte:boundary\b/.test(t))).toEqual([
+			'lib/components/ui/PanelBoundary.svelte'
+		]);
+		const explore = sources.find((s) => s.path === 'routes/explore/+page.svelte')!.text;
+		const panels = [...explore.matchAll(/<PanelBoundary what="([^"]+)"/g)].map((m) => m[1]);
+		expect(new Set(panels)).toEqual(new Set(['De tekst', 'Verbonden', 'Het netwerk']));
+	});
+
+	it('defines the quiet line once, in AppShell: no component styles its own .stil', () => {
+		// Code-eenvoud F30: the open rows had a smaller one of their own.
+		const own = (text: string) =>
+			rules(text).some((r) => r.selector.split(',').some((s) => s.trim() === '.stil'));
+		expect(offenders(own).filter((p) => p.startsWith('lib/components/'))).toEqual([]);
+	});
+
 	it('reads every answer of the API through unwrap, so a failure is an ApiError', () => {
 		// `data ?? null` or `response.ok` made a 500 into "geen" (F05); a 404 that means "geen"
 		// goes through ifExists ($lib/api/errors.ts).
@@ -1313,23 +1334,12 @@ describe('errors that are not swallowed', () => {
 			'lib/bron/behoort.ts': 5,
 			'lib/components/actueel/wetsnetwerk.ts': 2,
 			'lib/components/explore/IndexView.svelte': 1,
-			'lib/components/graph/GraphCitePanel.svelte': 1,
-			'lib/components/layout/SiteFooter.svelte': 1,
-			'lib/components/open/PostOpen.svelte': 2,
-			'lib/components/parliamentary/BewindspersoonOverzicht.svelte': 3,
-			'lib/components/parliamentary/StemmingUitslag.svelte': 1,
 			'lib/components/parliamentary/data.ts': 1,
 			'lib/graph/store/expansion.ts': 1,
 			'lib/map/MapRegelingen.svelte': 1,
-			'routes/(main)/+page.svelte': 1,
-			'routes/(main)/actueel/+page.svelte': 4,
-			'routes/(main)/onderwerpen/+page.svelte': 3,
-			'routes/(main)/onderwerpen/overzicht/+page.svelte': 11,
-			'routes/+error.svelte': 1,
-			'routes/explore/+page.svelte': 14,
 			// A throw that is no failure: a popover already in that state, a pointer capture
-			// refused, graphology on an edge or node already there or gone, storage that refuses
-			// (one storage helper, F32). Each gets a handler that says so.
+			// refused, graphology on an edge or node already there or gone, storage or a clipboard
+			// that refuses (one storage helper, F32). Each gets a handler that says so.
 			'lib/bron/BronLink.svelte': 2,
 			'lib/bron/OverwegingKaart.svelte': 2,
 			'lib/components/articles/GrondslagFormule.svelte': 2,
@@ -1340,7 +1350,9 @@ describe('errors that are not swallowed', () => {
 			'lib/map/map.svelte.ts': 1,
 			'lib/netwerk/NetwerkPanel.svelte': 1,
 			'lib/onderwerpen/onderwerpen.ts': 1,
-			'lib/onderwerpen/strekking.ts': 1
+			'lib/onderwerpen/strekking.ts': 1,
+			'routes/(main)/onderwerpen/+page.svelte': 1,
+			'routes/explore/+page.svelte': 7
 		};
 		const found = Object.fromEntries(
 			sources.map(({ path, text }) => [path, swallowed(text)]).filter(([, n]) => n)

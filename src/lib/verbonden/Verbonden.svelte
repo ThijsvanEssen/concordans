@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { meldNetwerk } from '$lib/stores/netwerk-melding';
+	import { report } from '$lib/api/errors';
 	import { goto } from '$app/navigation';
 	import { rijen } from '$lib/actions/rijen';
 	import { hoeVan, kleineLetter } from './hoe';
@@ -25,6 +26,7 @@
 	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { page } from '$app/state';
 	import { tick } from 'svelte';
+	import { afterTick } from '$lib/util/after-tick';
 	import { bronHref, openHref, refId } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import type { GraphStore } from '$lib/graph/graph-store';
@@ -163,7 +165,7 @@
 			// A group closed in this browser opens for it.
 			zetOpen(`verbonden:${best.id}`, true);
 			// Once its rows are drawn: a smooth scroll is cut off while they render.
-			void tick().then(() =>
+			afterTick(() =>
 				root
 					?.querySelector(`[data-group="${CSS.escape(best.id)}"]`)
 					?.scrollIntoView({ block: 'start' })
@@ -199,10 +201,12 @@
 	$effect(() => {
 		const { collection, key, id } = selection;
 		keten = new Set();
+		// Without the kern Verbonden shows its groups whole.
 		lazeKernIds(collection, key, (selection.raw?.props ?? {}) as Record<string, unknown>).then(
 			(ids) => {
 				if (selection.id === id) keten = new Set(ids);
-			}
+			},
+			(e) => report('Verbonden kern', e)
 		);
 	});
 	/** The judgment a translation renders (`translation_of`, an ECLI), as an id. */
@@ -859,7 +863,8 @@
 								noun={g.noun ?? 'verbindingen'}
 								open={all}
 								onclick={() => {
-									if (!all && (g.total ?? 0) > g.rows.length) onMeer?.(g.id);
+									if (!all && (g.total ?? 0) > g.rows.length)
+										onMeer?.(g.id)?.catch((e) => report('Verbonden meer', e));
 									expanded = toggle(expanded, g.id);
 								}}
 							/>

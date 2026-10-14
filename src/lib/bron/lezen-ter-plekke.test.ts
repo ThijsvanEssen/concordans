@@ -71,7 +71,7 @@ describe('an r.o. read in place', () => {
 
 describe('a Kamerstuk opened in place', () => {
 	it('shows one core text, from kernVan, in every list that opens it', () => {
-		expect(bron('lib/components/open/RijInhoud.svelte')).toMatch(/kernVan\(/);
+		expect(bron('lib/components/open/requests.ts')).toMatch(/kernVan\(/);
 		expect(bron('lib/map/MapInhoud.svelte')).toMatch(/kernVan\(/);
 		// Verbonden and Bronnen open a stuk with RijInhoud, by the stuk's own kind.
 		for (const path of [

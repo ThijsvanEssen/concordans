@@ -10,6 +10,8 @@
 	// outcome as a shape and the tally. Where the column is narrower than the timetable, it
 	// scrolls in its own box, the names standing.
 	import Sectie from '$lib/components/ui/Sectie.svelte';
+	import { inView } from '$lib/actions/in-view';
+	import { report } from '$lib/api/errors';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Uitkomst from './Uitkomst.svelte';
 	import { maandNaam } from '$lib/text/datum';
@@ -38,26 +40,14 @@
 			.then((r) => {
 				if (!weg) regeling = r;
 			})
-			.catch(() => {
+			.catch((e) => {
+				report('Amendementen', e);
 				if (!weg) fout = true;
 			});
 		return () => {
 			weg = true;
 		};
 	});
-
-	function inBeeld(el: HTMLElement) {
-		const kijk = new IntersectionObserver(
-			([e]) => {
-				if (!e.isIntersecting) return;
-				zichtbaar = true;
-				kijk.disconnect();
-			},
-			{ rootMargin: '200px' }
-		);
-		kijk.observe(el);
-		return { destroy: () => kijk.disconnect() };
-	}
 
 	/** The columns are weeks where the days are too many (amendementen.ts). */
 	const weken = $derived(
@@ -112,7 +102,7 @@
 				: { soort: 'nee' as const, woord: null, titel: 'verworpen' };
 </script>
 
-<div class="amendementen" use:inBeeld>
+<div class="amendementen" use:inView={() => (zichtbaar = true)}>
 	<Sectie
 		id={AMENDEMENTEN_ID}
 		titel="Amendementen"

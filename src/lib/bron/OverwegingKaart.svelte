@@ -6,7 +6,7 @@
 	// top layer by the link that opened it (BronLink), below it or above it where the screen
 	// ends; it scrolls within itself where the overweging is long. The overweging as Gemarkeerd
 	// opens a kept one (Overweging), from the detail the reader shares.
-	import { tick } from 'svelte';
+	import { afterTick } from '$lib/util/after-tick';
 	import type { Action } from 'svelte/action';
 	import { anchorLabel } from '$lib/text/anchor';
 	import { isConclusion, uitspraakKop } from '$lib/text/judgment-cite';
@@ -102,7 +102,7 @@
 	// once (its own scroll: the page stays).
 	$effect(() => {
 		if (u === 'laden') return plaatsKaart();
-		void tick().then(() => {
+		afterTick(() => {
 			plaatsKaart();
 			const m = kaart?.querySelector<HTMLElement>('mark.doel, .voetnoot.is-open');
 			if (!kaart || !m) return;

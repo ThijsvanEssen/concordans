@@ -58,9 +58,10 @@ describe('the list of the whole-law reader', () => {
 		await settle();
 		expect(now().status).toBe('ready');
 
-		void law.loadMore();
+		const more = law.loadMore();
 		law.open('BWBR2', null, null);
 		page2.give();
+		await more;
 		await settle();
 		// The page of BWBR1 came after the switch: BWBR2 is still loading, empty.
 		expect(now().status).toBe('loading');
@@ -84,10 +85,11 @@ describe('the list of the whole-law reader', () => {
 		const { law } = reader();
 		law.open('BWBR1', null, null);
 		await settle();
-		void law.loadMore();
+		const more = law.loadMore();
 		await settle();
 		law.open('BWBR2', null, null);
 		page2.give();
+		await more;
 		const paged = api.requests.filter((r) => Number(r.params.query?.offset) > 0);
 		expect(paged.length).toBeGreaterThan(0);
 		expect(paged.every((r) => r.signal?.aborted)).toBe(true);

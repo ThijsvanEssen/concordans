@@ -5,83 +5,58 @@
 	// artikel, voegt 7 artikelen in`. One request when the row opens (wijzigingen.ts); each
 	// law, article and publication a BronLink, so it opens in place.
 	import BronLink from '$lib/bron/BronLink.svelte';
-	import { getNodeGraph, neighborsOf } from '$lib/api/nodes';
-	import { getAmendedBy } from '$lib/api/records';
-	import {
-		brengersVan,
-		wijzigingenVan,
-		WIJZIGINGEN,
-		type Brenger,
-		type WetRegel
-	} from './wijzigingen';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { load } from '$lib/util/load.svelte';
+	import { changesOf } from './requests';
+	import type { Brenger, WetRegel } from './wijzigingen';
 	import type { MetInhoud } from './rij-inhoud';
 
 	let { item, soort }: { item: MetInhoud; soort: 'wijzigingen' | 'inwerkingtreding' } = $props();
 
-	let regels = $state<WetRegel[] | Brenger[] | 'laden' | null>(null);
-	$effect(() => {
-		const s = soort;
-		const key = item.node.key;
-		const wet = item.commencement?.instrument?.key;
-		const datum = item.date ?? '';
-		const wetten = item.publication?.instruments ?? [];
-		regels = 'laden';
-		let stale = false;
-		const klaar = (r: WetRegel[] | Brenger[]) => {
-			if (!stale) regels = r;
-		};
-		const fout = () => {
-			if (!stale) regels = null;
-		};
-		if (s === 'wijzigingen')
-			getNodeGraph('instruments', key, {
-				limit: 200,
-				relations: WIJZIGINGEN.join(','),
-				direction: 'outbound'
-			})
-				.then((g) => klaar(wijzigingenVan(neighborsOf(g), wetten)))
-				.catch(fout);
-		else if (wet)
-			getAmendedBy(wet.toUpperCase())
-				.then((r) => klaar(brengersVan(r.items, datum)))
-				.catch(fout);
-		else regels = null;
-		return () => (stale = true);
-	});
+	const changes = load(
+		() => `${soort}/${item.node.key}`,
+		(_, signal) => changesOf(item, soort, signal),
+		'Wijzigingen'
+	);
 
 	const isWet = (r: WetRegel | Brenger): r is WetRegel => 'werkwoord' in r;
 	const tussen = (i: number, n: number, meer: number) =>
 		i === 0 ? '' : i === n - 1 && !meer ? ' en ' : ', ';
 </script>
 
-{#if regels === 'laden'}
-	<p class="stil">Laden…</p>
-{:else if regels?.length}
-	<ul class="wijzigingen">
-		{#each regels as r, n (n)}
-			<li>
-				{#if isWet(r)}
-					<span class="werkwoord">{r.werkwoord}</span>
-					<BronLink ref={`instruments/${r.wet.key}`}>{r.wet.titel}</BronLink
-					>{#if r.artikelen.length}, art. {#each r.artikelen as a, i (a.key)}{tussen(
-								i,
-								r.artikelen.length,
-								r.meer
-							)}<BronLink ref={`articles/${a.key}`}>{a.nummer}</BronLink
-							>{/each}{#if r.meer}{` en ${r.meer} ${r.meer === 1 ? 'ander' : 'andere'}`}{/if}{/if}
-				{:else}
-					<BronLink ref={`instruments/${r.key}`}>{r.naam}</BronLink>{#if r.wat}, {r.wat}{/if}
-				{/if}
-			</li>
-		{/each}
-	</ul>
-{:else}
-	<p class="stil">
-		{soort === 'wijzigingen'
-			? 'Wijzigingen niet in de gegevens.'
-			: 'Publicatie niet in de gegevens.'}
-	</p>
-{/if}
+<LoadState
+	state={changes.state}
+	what={soort === 'wijzigingen' ? 'De wijzigingen' : 'De publicatie'}
+	retry={changes.retry}
+>
+	{#snippet empty()}
+		<p class="stil">
+			{soort === 'wijzigingen'
+				? 'Wijzigingen niet in de gegevens.'
+				: 'Publicatie niet in de gegevens.'}
+		</p>
+	{/snippet}
+	{#snippet children(regels: WetRegel[] | Brenger[])}
+		<ul class="wijzigingen">
+			{#each regels as r, n (n)}
+				<li>
+					{#if isWet(r)}
+						<span class="werkwoord">{r.werkwoord}</span>
+						<BronLink ref={`instruments/${r.wet.key}`}>{r.wet.titel}</BronLink
+						>{#if r.artikelen.length}, art. {#each r.artikelen as a, i (a.key)}{tussen(
+									i,
+									r.artikelen.length,
+									r.meer
+								)}<BronLink ref={`articles/${a.key}`}>{a.nummer}</BronLink
+								>{/each}{#if r.meer}{` en ${r.meer} ${r.meer === 1 ? 'ander' : 'andere'}`}{/if}{/if}
+					{:else}
+						<BronLink ref={`instruments/${r.key}`}>{r.naam}</BronLink>{#if r.wat}, {r.wat}{/if}
+					{/if}
+				</li>
+			{/each}
+		</ul>
+	{/snippet}
+</LoadState>
 
 <style>
 	.wijzigingen {
@@ -107,11 +82,5 @@
 	.wijzigingen :global(a:hover) {
 		text-decoration-line: underline;
 		text-underline-offset: 3px;
-	}
-	.stil {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
 	}
 </style>

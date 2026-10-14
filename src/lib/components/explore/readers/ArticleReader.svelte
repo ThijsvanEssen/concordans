@@ -33,7 +33,8 @@
 	import { proposedTextOf, type ProposedText } from '$lib/verbonden/proposed-text';
 	import type { Row } from '$lib/verbonden/rows';
 	import { longDate } from '$lib/verbonden/rows';
-	import { tick, untrack } from 'svelte';
+	import { untrack } from 'svelte';
+	import { afterTick } from '$lib/util/after-tick';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
@@ -138,7 +139,7 @@
 	$effect(() => {
 		if (!loaded || !anchor || !root) return;
 		const container = root;
-		void tick().then(() => landOn(container, anchor));
+		afterTick(() => landOn(container, anchor));
 	});
 
 	// Whether a toelichting explains this article, for the header. Only the existence

@@ -33,8 +33,11 @@
 	import { afterNavigate, goto } from '$app/navigation';
 	import { cut, tabTitle } from '$lib/bron/tab-title';
 	import { titelVan } from '$lib/bron/titels.svelte';
-	import { api, ApiError, unwrap } from '$lib/api/client';
-	import { report } from '$lib/api/errors';
+	import { api, unwrap } from '$lib/api/client';
+	import { ignore, isAborted, isNotFound, report } from '$lib/api/errors';
+	import { reloadForNewVersion } from '$lib/util/reload';
+	import PanelBoundary from '$lib/components/ui/PanelBoundary.svelte';
+	import LoadState, { failureText } from '$lib/components/ui/LoadState.svelte';
 	import { getNodeCanvas, getNodeFirst, getNodeHull } from '$lib/api/records';
 	import { kopNode } from '$lib/bron/kop';
 	import { getInFlux, getHeat, getDossierInFlux, type NodeCounts } from '$lib/api/overlays';
@@ -202,7 +205,7 @@
 		const path = padOfFocus(f, props);
 		if (!path) return;
 		rememberPad(path, f);
-		void navigate(verkennerHref(logisch.searchParams, page.url.hash, props));
+		navigate(verkennerHref(logisch.searchParams, page.url.hash, props));
 	});
 	// The Verkenner is the network. A bron with a text of its own is read at full width
 	// (?lezen=1, once ?mode=read); its verbindingen as a table are read so too. Bladeren
@@ -270,8 +273,9 @@
 		laadtSoort = new Set([...laadtSoort, soort]);
 		try {
 			await store.laadSoort(target.collection, target.key, soort, { grens: SOORT_GRENS });
-		} catch {
-			/* the row keeps its count; Alle laden stays */
+		} catch (e) {
+			// The row keeps its count; Alle laden stays.
+			report('Verkenner soort', e);
 		} finally {
 			laadtSoort = new Set([...laadtSoort].filter((c) => c !== soort));
 		}
@@ -324,7 +328,7 @@
 				const query = new URL(schets.verkenner, 'https://concordans.nl').searchParams.toString();
 				voorbeeld = { query, naam: schets.kandidaat.naam };
 			})
-			.catch(() => {});
+			.catch((e) => report('Verkenner voorbeeld', e));
 		return () => ac.abort();
 	});
 	const voorbeeldAan = $derived(zonderKeuze && !!voorbeeld);
@@ -393,7 +397,7 @@
 				!(verbonden.lidPerBak && lidTellingenOnder(verbonden.lidPerBak, f.bronnen)));
 		// Asked again for each bron Verbonden starts on: a readable address names it later.
 		void verbonden.id;
-		if (tableMode || opRijen) void source.volledig();
+		if (tableMode || opRijen) source.volledig().catch((e) => report('Verbonden volledig', e));
 	});
 
 	// The counts in the margin of the reader hold under every filter but the lid, so a
@@ -465,7 +469,7 @@
 			.then((v) => {
 				if (v !== verbinding && card?.edgeId === edge.id) card = { ...card, verbinding: v };
 			})
-			.catch(() => {});
+			.catch((e) => report('Verbinding passages', e));
 	}
 	// The lid each line names, as its row or its card names it: the canvas has the edge's light
 	// meta only, which names no lid where the judgment cites several places (UX-toets #49).
@@ -614,10 +618,10 @@
 		});
 		if (stap?.soort === 'laden') {
 			loadedFocus = focus;
-			void loadFocus(focus);
+			loadFocus(focus).catch((e) => showFocusError(e, focus));
 		} else if (stap?.soort === 'verdiepen') {
 			const anchor = verdiept ?? selectedNode;
-			if (anchor) void deepen(anchor);
+			if (anchor) deepen(anchor).catch((e) => showFocusError(e, anchor.key));
 		}
 	});
 
@@ -648,15 +652,17 @@
 		try {
 			// The reader stands on the bron's head ($lib/bron/kop): a person's record, a judgment's
 			// text, a law's or a dossier's detail; the node, once in, takes its place.
-			void kopNode(target.collection, target.key)
+			kopNode(target.collection, target.key)
 				?.then((node) => {
 					if (id === loadedFocus && (!selectedNode || wachtOp === id)) {
 						selectedNode = node;
 						wachtOp = null;
 					}
 				})
-				.catch(() => {});
-			if (target.collection === 'members') void getMemberVotes(target.key).catch(() => {});
+				// The node takes the head's place when it comes.
+				.catch((e) => report('Verkenner kop', e));
+			if (target.collection === 'members')
+				getMemberVotes(target.key).catch(ignore('Verkenner stemmen'));
 			// A link names a dossier by its number (`37020-XV`); the API gives its node key.
 			if (target.collection === 'dossiers') target.key = await getDossierKey(target.key);
 			if (id !== loadedFocus) return;
@@ -703,8 +709,11 @@
 			const canvasNode = Number.isFinite(neighborLimit)
 				? getNodeCanvas(target.collection, target.key)
 				: getNodeHull(target.collection, target.key);
-			canvasNode.catch(() => {});
-			const first = await store.peekNode(target.collection, target.key).catch(() => null);
+			canvasNode.catch(ignore('Verkenner canvas'));
+			// The light node only makes the start quicker: expandNode asks the whole one.
+			const first = await store
+				.peekNode(target.collection, target.key)
+				.catch(ignore('Verkenner licht'));
 			if (id !== loadedFocus) return;
 			if (first) store.focusNode(first.id);
 			const node = await store.expandNode(target.collection, target.key, {
@@ -719,14 +728,21 @@
 			store.focusNode(node.id);
 			if (inGraph) await deepen(node, replace);
 		} catch (err) {
-			if (err instanceof ApiError && err.status === 404) {
-				missing(target.key);
-				return;
-			}
-			wachtOp = null;
-			console.warn('[explore] focus load failed:', err);
-			focusError = `'${target.key}' kon niet worden geladen.`;
+			if (isNotFound(err)) missing(target.key);
+			else showFocusError(err, target.key);
 		}
+	}
+
+	/**
+	 * A focus or its neighbourhood that did not come: a newer focus (an abort) says nothing.
+	 * Over a bron already shown the canvas and the reader stay, and the network says it.
+	 */
+	function showFocusError(err: unknown, key: string) {
+		if (isAborted(err)) return;
+		wachtOp = null;
+		report('Verkenner focus', err);
+		focusError = `'${key}' kon niet worden geladen.`;
+		if (untrack(() => selectedNode)) meldNetwerk(focusError, null);
 	}
 
 	// Expand around `node` once per depth, or again when `force`d.
@@ -758,7 +774,7 @@
 				? Object.fromEntries(new URLSearchParams(voorbeeld!.query))
 				: undefined;
 			const href = bronHref(refOf(node.collection, node.key, node.raw?.props), { params });
-			void navigate(href, { step: true });
+			navigate(href, { step: true });
 		}
 		end();
 	}
@@ -776,10 +792,10 @@
 		replaceNext = id;
 		if (id === focus && !netwerkActive) {
 			replaceNext = null;
-			void deepen(node, true);
+			deepen(node, true).catch((e) => showFocusError(e, node.key));
 			return;
 		}
-		void navigate(bronHref(ref, { keepNetwerk: false }), { step: true });
+		navigate(bronHref(ref, { keepNetwerk: false }), { step: true });
 	}
 
 	// ── Composing the netwerk ─────────────────────────────────────────────────
@@ -829,7 +845,7 @@
 		const n = netwerk;
 		if (mode !== 'graph') return;
 		untrack(() => {
-			if (n.ids.length > 0) void compose(n);
+			if (n.ids.length > 0) compose(n).catch(composeFailed);
 			else if (composedOnce) {
 				store.releaseNetwerk();
 				composedOnce = false;
@@ -871,6 +887,14 @@
 	// again when their full nodes are in: a bron added stands on the canvas before the
 	// neighbours of the others (art. 3:2 Awb: 651 kB, 3.8 s on prod). The paths between them
 	// need only their ids, so they are asked beside the full nodes, not after them.
+	/** A netwerk that could not be composed: the canvas stays, the network says it. */
+	function composeFailed(e: unknown) {
+		if (isAborted(e)) return;
+		report('Netwerk samenstellen', e);
+		netwerkLoading = false;
+		meldNetwerk(failureText('Het netwerk', e), null);
+	}
+
 	async function compose(n: Netwerk) {
 		const epoch = ++composeEpoch;
 		netwerkLoading = true;
@@ -1112,7 +1136,7 @@
 			!f && pad
 				? queryHref(page.url.pathname, params) + page.url.hash
 				: verkennerHref(params, page.url.hash, props);
-		void navigate(href, { step: push });
+		navigate(href, { step: push });
 	}
 
 	// Reading at full width, or the network with the text beside it.
@@ -1127,15 +1151,17 @@
 			setUrl({ diepte: String(d) });
 			return;
 		}
-		if (!selectedNode || selectedNode.id.startsWith('synth:')) return;
+		const node = selectedNode;
+		if (!node || node.id.startsWith('synth:')) return;
 		graphView?.suppressFit();
-		void store
-			.expandNeighborhood(selectedNode.collection, selectedNode.key, {
+		store
+			.expandNeighborhood(node.collection, node.key, {
 				depth: d,
 				cap: omgevingGrens,
 				additive: true
 			})
-			.then(() => graphView?.fitWhenSettled());
+			.then(() => graphView?.fitWhenSettled())
+			.catch((e) => showFocusError(e, node.key));
 	}
 
 	const tableHref = $derived(withParams(page.url, { tabel: '1', mode: null, naast: null }));
@@ -1151,12 +1177,24 @@
 	// request waited for it (first visit after a deploy, 10 Oct: the first request at 2.6 s).
 	let GraphViewC = $state<typeof GraphView | null>(null);
 	let IndexViewC = $state<typeof IndexView | null>(null);
+	/** A chunk that did not come (a deploy removed it): said in its place, the page loaded
+	 *  again once from the new release ($lib/util/reload.ts). */
+	let chunkError = $state<unknown>(null);
+	function chunkFailed(e: unknown) {
+		report('Verkenner onderdeel', e);
+		chunkError = e;
+		reloadForNewVersion();
+	}
 	$effect(() => {
-		void import('$lib/components/graph/GraphView.svelte').then((m) => (GraphViewC = m.default));
+		import('$lib/components/graph/GraphView.svelte')
+			.then((m) => (GraphViewC = m.default))
+			.catch(chunkFailed);
 	});
 	$effect(() => {
 		if (mode === 'index' && !IndexViewC)
-			void import('$lib/components/explore/IndexView.svelte').then((m) => (IndexViewC = m.default));
+			import('$lib/components/explore/IndexView.svelte')
+				.then((m) => (IndexViewC = m.default))
+				.catch(chunkFailed);
 	});
 	let inFluxMap = $state<NodeCounts>(new Map());
 	let heatMap = $state<NodeCounts>(new Map());
@@ -1439,37 +1477,39 @@
 	{#if wachtOp}
 		<ReaderFrame state={{ status: 'loading' }} />
 	{:else if selectedNode}
-		<div class="reader" class:reader--pair={!!beside}>
-			<div class="reader__main">
-				<KindReader
-					selection={selectedNode}
-					prevHref={articleHref(articleIndex - 1)}
-					nextHref={articleIndex >= 0 ? articleHref(articleIndex + 1) : undefined}
-					{place}
-					lidCounts={lidCountsOfArticle}
-					lidTellend={!geteld && !apiTellingen}
-					{billCount}
-					{filter}
-					{proposedRow}
-					onCloseProposed={() => (proposedRow = null)}
-				/>
-			</div>
-			{#if beside}
-				<div class="reader__beside">
-					<a
-						class="reader__close"
-						href={closeBesideHref}
-						data-sveltekit-noscroll
-						aria-label="Sluiten">×</a
-					>
-					{#if besideJudgment}
-						<JudgmentReader node={besideJudgment} />
-					{:else}
-						<DocumentReader node={beside} article={besideArticle} />
-					{/if}
+		<PanelBoundary what="De tekst" resetOn={selectedNode.id}>
+			<div class="reader" class:reader--pair={!!beside}>
+				<div class="reader__main">
+					<KindReader
+						selection={selectedNode}
+						prevHref={articleHref(articleIndex - 1)}
+						nextHref={articleIndex >= 0 ? articleHref(articleIndex + 1) : undefined}
+						{place}
+						lidCounts={lidCountsOfArticle}
+						lidTellend={!geteld && !apiTellingen}
+						{billCount}
+						{filter}
+						{proposedRow}
+						onCloseProposed={() => (proposedRow = null)}
+					/>
 				</div>
-			{/if}
-		</div>
+				{#if beside}
+					<div class="reader__beside">
+						<a
+							class="reader__close"
+							href={closeBesideHref}
+							data-sveltekit-noscroll
+							aria-label="Sluiten">×</a
+						>
+						{#if besideJudgment}
+							<JudgmentReader node={besideJudgment} />
+						{:else}
+							<DocumentReader node={beside} article={besideArticle} />
+						{/if}
+					</div>
+				{/if}
+			</div>
+		</PanelBoundary>
 	{/if}
 {/snippet}
 
@@ -1488,26 +1528,28 @@
 {#snippet panel(network: boolean)}
 	{#if selectedNode}
 		<div class="panel">
-			<Verbonden
-				onRetry={() => source.reload()}
-				onMeer={(id) => source.groep(id)}
-				onAlles={() => source.volledig()}
-				{verbonden}
-				selection={selectedNode}
-				{filter}
-				{store}
-				{network}
-				onFilter={applyFilter}
-				onOpenFilter={() => (filterOpen = true)}
-				onNaarNetwerk={() => (mobilePanel = 'graph')}
-				onAddToNetwerk={(row) => {
-					const id = focusOf(row.ref);
-					if (id) addIdToNetwerk(id, row.title);
-				}}
-				inNetwerk={(row) => netwerk.ids.includes(focusOf(row.ref) ?? '')}
-				onProposedText={(row) => (proposedRow = row)}
-				{tableHref}
-			/>
+			<PanelBoundary what="Verbonden" resetOn={selectedNode.id}>
+				<Verbonden
+					onRetry={() => source.reload()}
+					onMeer={(id) => source.groep(id)}
+					onAlles={() => source.volledig()}
+					{verbonden}
+					selection={selectedNode}
+					{filter}
+					{store}
+					{network}
+					onFilter={applyFilter}
+					onOpenFilter={() => (filterOpen = true)}
+					onNaarNetwerk={() => (mobilePanel = 'graph')}
+					onAddToNetwerk={(row) => {
+						const id = focusOf(row.ref);
+						if (id) addIdToNetwerk(id, row.title);
+					}}
+					inNetwerk={(row) => netwerk.ids.includes(focusOf(row.ref) ?? '')}
+					onProposedText={(row) => (proposedRow = row)}
+					{tableHref}
+				/>
+			</PanelBoundary>
 			{#if card && !network}
 				<div class="panel__card">
 					<VerbindingCard
@@ -1538,12 +1580,11 @@
 			{#if param('kind') === null}
 				<!-- The overview scrolls in its own field: the shell does not scroll. -->
 				<div class="index-rol"><IndexOverzicht /></div>
-			{:else if IndexViewC}<IndexViewC category={indexKind} />{:else}<p
-					class="explore-empty stil"
-					role="status"
-				>
-					Laden…
-				</p>{/if}
+			{:else if IndexViewC}<IndexViewC category={indexKind} />{:else if chunkError}<LoadState
+					state={{ status: 'error', error: chunkError }}
+					what="De lijst"
+					form="block"
+				/>{:else}<p class="explore-empty stil" role="status">Laden…</p>{/if}
 		{:else if nietGevonden}
 			<NietGevonden titel="Bron niet gevonden" kop={false}>
 				<p>{padMissing ?? focusError}</p>
@@ -1618,93 +1659,103 @@
 					}}
 				>
 					{#if GraphViewC}
-						<GraphViewC
-							bind:this={graphView}
-							{store}
-							compact={!!selectedNode}
-							{filter}
-							{verbonden}
-							{depth}
-							{reach}
-							selectedEdgeId={card?.edgeId ?? null}
-							{lineLids}
-							{inFluxMap}
-							{heatMap}
-							{overlay}
-							onNodeClick={(n) => {
-								handleNodeClick(n);
-								mobilePanel = 'reader';
-							}}
-							onNodeDoubleClick={handleNodeReplace}
-							onMetGroep={(m) => (metGroep = m)}
-							onToggleChosen={toggleChosen}
-							{netwerkActive}
-							onEdgeClick={openEdgeCard}
-							onClear={() => (card = null)}
-							onGoBack={goBack}
-							onGoForward={() => history.forward()}
-							onFilter={applyFilter}
-							onOpenFilter={() => (filterOpen = true)}
-							onDepth={setDepth}
-							onLaadSoort={netwerkActive ? undefined : laadSoort}
-							{laadtSoort}
-							allesGrens={{ grens: ALLES_GRENS, geladen: alles }}
-							onAllesLaden={alles
-								? undefined
-								: () => setUrl({ alles: '1', diepte: null }, { push: true })}
-							onToggleHeat={toggleHeat}
-							onHeatPeriodChange={setHeatPeriod}
-							onToggleMutatie={toggleMutatie}
-						>
-							{#snippet canvasOverlay()}
-								<NetwerkPanel
-									entries={netwerkActive
-										? netwerkEntries.map((e) =>
-												e.node
-													? { ...chipNaam(e, e.node), verborgenMet: metGroep.get(e.node.id) }
-													: e
-											)
-										: []}
-									loading={netwerkLoading}
-									start={!focus && !netwerkActive}
-									{telefoon}
-									onPick={addIdToNetwerk}
-									omgeving={selectedNode && !selectedNode.stub
-										? bronNaam(selectedNode, $instrumentMetaStore)
-										: null}
-									onOmgeving={() => selectedNode && handleNodeReplace(selectedNode)}
-									onVoorbeeld={() => {
-										keepCanvas = true;
-										setNetwerk(
-											withAdded(
-												withAdded(netwerk, 'articles/bwbr0005537_3_4'),
-												'articles/bwbr0005537_3_2'
-											)
-										);
-									}}
-									selection={selectedNode && selectedLinkId && !netwerk.ids.includes(selectedLinkId)
-										? { label: bronNaam(selectedNode, $instrumentMetaStore) }
-										: null}
-									tussen={netwerk.tussen}
-									onGroepAan={(kind) => {
-										const uit = new Set(get(store.filters).hiddenGroups);
-										uit.delete(kind);
-										store.setFilters({ hiddenGroups: uit });
-									}}
-									{joiningCount}
-									deels={padenDeels}
-									onToggle={(id) => setNetwerk(withToggled(netwerk, id))}
-									onRemove={(id) => setNetwerk(withRemoved(netwerk, id))}
-									onAdd={() => selectedNode && addToNetwerk(selectedNode)}
-									onTussen={() => setNetwerk({ ...netwerk, tussen: !netwerk.tussen })}
-									onClearContext={() => store.clearContext()}
-									onClear={wisAlles}
-									deelLabel={shareCopier.label('share', 'Deel')}
-									deelMelding={shareCopier.announcement}
-									onDeel={handleShareView}
-								/>
-							{/snippet}
-						</GraphViewC>
+						<PanelBoundary what="Het netwerk" resetOn={focus}>
+							<GraphViewC
+								bind:this={graphView}
+								{store}
+								compact={!!selectedNode}
+								{filter}
+								{verbonden}
+								{depth}
+								{reach}
+								selectedEdgeId={card?.edgeId ?? null}
+								{lineLids}
+								{inFluxMap}
+								{heatMap}
+								{overlay}
+								onNodeClick={(n) => {
+									handleNodeClick(n);
+									mobilePanel = 'reader';
+								}}
+								onNodeDoubleClick={handleNodeReplace}
+								onMetGroep={(m) => (metGroep = m)}
+								onToggleChosen={toggleChosen}
+								{netwerkActive}
+								onEdgeClick={openEdgeCard}
+								onClear={() => (card = null)}
+								onGoBack={goBack}
+								onGoForward={() => history.forward()}
+								onFilter={applyFilter}
+								onOpenFilter={() => (filterOpen = true)}
+								onDepth={setDepth}
+								onLaadSoort={netwerkActive ? undefined : laadSoort}
+								{laadtSoort}
+								allesGrens={{ grens: ALLES_GRENS, geladen: alles }}
+								onAllesLaden={alles
+									? undefined
+									: () => setUrl({ alles: '1', diepte: null }, { push: true })}
+								onToggleHeat={toggleHeat}
+								onHeatPeriodChange={setHeatPeriod}
+								onToggleMutatie={toggleMutatie}
+							>
+								{#snippet canvasOverlay()}
+									<NetwerkPanel
+										entries={netwerkActive
+											? netwerkEntries.map((e) =>
+													e.node
+														? { ...chipNaam(e, e.node), verborgenMet: metGroep.get(e.node.id) }
+														: e
+												)
+											: []}
+										loading={netwerkLoading}
+										start={!focus && !netwerkActive}
+										{telefoon}
+										onPick={addIdToNetwerk}
+										omgeving={selectedNode && !selectedNode.stub
+											? bronNaam(selectedNode, $instrumentMetaStore)
+											: null}
+										onOmgeving={() => selectedNode && handleNodeReplace(selectedNode)}
+										onVoorbeeld={() => {
+											keepCanvas = true;
+											setNetwerk(
+												withAdded(
+													withAdded(netwerk, 'articles/bwbr0005537_3_4'),
+													'articles/bwbr0005537_3_2'
+												)
+											);
+										}}
+										selection={selectedNode &&
+										selectedLinkId &&
+										!netwerk.ids.includes(selectedLinkId)
+											? { label: bronNaam(selectedNode, $instrumentMetaStore) }
+											: null}
+										tussen={netwerk.tussen}
+										onGroepAan={(kind) => {
+											const uit = new Set(get(store.filters).hiddenGroups);
+											uit.delete(kind);
+											store.setFilters({ hiddenGroups: uit });
+										}}
+										{joiningCount}
+										deels={padenDeels}
+										onToggle={(id) => setNetwerk(withToggled(netwerk, id))}
+										onRemove={(id) => setNetwerk(withRemoved(netwerk, id))}
+										onAdd={() => selectedNode && addToNetwerk(selectedNode)}
+										onTussen={() => setNetwerk({ ...netwerk, tussen: !netwerk.tussen })}
+										onClearContext={() => store.clearContext()}
+										onClear={wisAlles}
+										deelLabel={shareCopier.label('share', 'Deel')}
+										deelMelding={shareCopier.announcement}
+										onDeel={handleShareView}
+									/>
+								{/snippet}
+							</GraphViewC>
+						</PanelBoundary>
+					{:else if chunkError}
+						<LoadState
+							state={{ status: 'error', error: chunkError }}
+							what="Het netwerk"
+							form="block"
+						/>
 					{/if}
 					{#if card}
 						<VerbindingCard

@@ -9,6 +9,7 @@
 	import { page } from '$app/state';
 	import { navigate } from '$lib/util/address';
 	import { tick } from 'svelte';
+	import { afterTick } from '$lib/util/after-tick';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import IconKnop from '$lib/components/ui/IconKnop.svelte';
@@ -53,7 +54,7 @@
 	function gedeeldKlaar(hoe: 'map' | 'erbij' | 'niet') {
 		if (gedeeld && hoe === 'map') kaart.bewaarAlsMap(gedeeld);
 		else if (gedeeld && hoe === 'erbij') kaart.voegToe(gedeeld);
-		void navigate('/gemarkeerd');
+		navigate('/gemarkeerd');
 	}
 
 	const reeksen = (lijst: MapItem[], v: Map['volgorde']) =>
@@ -106,7 +107,7 @@
 	function nieuw() {
 		const m = kaart.nieuw();
 		naamgeven = m.id;
-		void tick().then(() => document.getElementById(anker(m))?.scrollIntoView());
+		afterTick(() => document.getElementById(anker(m))?.scrollIntoView());
 	}
 
 	// ── The notes: an item's, a group's, the map's, opened in place (Aantekening) ──

@@ -1,9 +1,11 @@
 <script lang="ts">
 	import AppShell from '$lib/components/layout/AppShell.svelte';
+	import { report } from '$lib/api/errors';
 	import type { Snippet } from 'svelte';
 	import { browser, dev } from '$app/environment';
 	import { afterNavigate } from '$app/navigation';
 	import { tick } from 'svelte';
+	import { afterTick } from '$lib/util/after-tick';
 	import { page } from '$app/state';
 	import { meldZijscroll } from '$lib/dev/zijscroll';
 	import { canonical } from '$lib/seo/routes';
@@ -34,7 +36,7 @@
 		const van = from?.url;
 		const naar = to?.url;
 		if (dev && naar) meldZijscroll(naar.pathname + naar.search);
-		void tick().then(stilAnnouncer);
+		afterTick(stilAnnouncer);
 		if (!van || !naar || canonical(van) === canonical(naar)) return;
 		if (serverKop.actief) {
 			for (const el of document.head.querySelectorAll('[data-seo]')) el.remove();
@@ -42,7 +44,7 @@
 		}
 		// An English judgment of the EHRM is served as lang="en"; the next page is Dutch.
 		document.documentElement.lang = 'nl';
-		void kondigAan();
+		kondigAan().catch((e) => report('Aankondiging', e));
 	});
 
 	// The page's name after a step is said here, once, when it has settled (UX test 10 Oct

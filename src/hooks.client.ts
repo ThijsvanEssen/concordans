@@ -1,0 +1,21 @@
+// The outer boundary of the app, its one catch-all: a failure nobody handled is reported
+// here ($lib/api/errors.ts), an abort says nothing. A page that fails is +error.svelte's; a
+// panel that fails to draw is PanelBoundary's.
+import type { ClientInit, HandleClientError } from '@sveltejs/kit';
+import { report } from '$lib/api/errors';
+
+/** A promise rejected with no one to handle it: reported once, in our words. */
+export function onUnhandledRejection(event: PromiseRejectionEvent) {
+	event.preventDefault();
+	report('Onafgehandeld', event.reason);
+}
+
+export const init: ClientInit = () => {
+	window.addEventListener('unhandledrejection', onUnhandledRejection);
+};
+
+/** A page or its load that threw; a path that is no page is +error.svelte's 404. */
+export const handleError: HandleClientError = ({ error, status, message }) => {
+	if (status !== 404) report('Pagina', error);
+	return { message };
+};

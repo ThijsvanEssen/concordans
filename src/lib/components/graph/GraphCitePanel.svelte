@@ -5,6 +5,9 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import { articleOf, lawIdOf } from '$lib/graph/types';
 	import { getArticleDetail } from '$lib/api/articles';
+	import { abortable } from '$lib/api/records';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { load } from '$lib/util/load.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronHref, refOf } from '$lib/bron/href';
 	import { bronLabel } from '$lib/vocabulary';
@@ -119,30 +122,20 @@
 		}
 	});
 
-	// The text of an article is not on the node; it is fetched, and the request is
-	// aborted when the pointer moves on.
-	let articleText = $state<string | null>(null);
-	let loading = $state(false);
-
-	$effect(() => {
-		articleText = null;
-		loading = false;
-		const identity = articleOf(nodeProps);
-		if (node.stub || node.kind !== 'article' || !identity) return;
-		let stale = false;
-		loading = true;
-		getArticleDetail(identity.lawId, identity.articleNumber)
-			.then((res) => {
-				if (!stale) articleText = preview(res.article.text);
-			})
-			.catch(() => {})
-			.finally(() => {
-				if (!stale) loading = false;
-			});
-		return () => {
-			stale = true;
-		};
-	});
+	// The text of an article is not on the node: it is asked, and an answer for a bron the
+	// pointer has left is dropped (the shared request goes on for the reader).
+	const identity = $derived(!node.stub && node.kind === 'article' ? articleOf(nodeProps) : null);
+	const article = load(
+		() => (identity ? `${identity.lawId}/${identity.articleNumber}` : null),
+		(_, signal) =>
+			identity
+				? abortable(getArticleDetail(identity.lawId, identity.articleNumber), signal)
+				: Promise.resolve(null),
+		'Kaart artikel'
+	);
+	const articleText = $derived(
+		article.state.status === 'ready' ? preview(article.state.data?.article.text ?? null) : null
+	);
 
 	const snippet = $derived(articleText ?? preview(nodeText));
 </script>
@@ -169,8 +162,8 @@
 
 	{#if node.stub}
 		<p class="snippet stub-note">Niet in de gegevens.</p>
-	{:else if loading}
-		<span class="cite-loading">Laden…</span>
+	{:else if identity && article.state.status !== 'ready'}
+		<div class="cite-loading"><LoadState state={article.state} what="De tekst" /></div>
 	{:else if snippet}
 		<p class="snippet">{snippet}</p>
 	{/if}
@@ -282,11 +275,7 @@
 	}
 
 	.cite-loading {
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-		font-family: var(--font-serif);
 		padding: var(--s-2) var(--s-3);
-		display: block;
 	}
 
 	/* In a narrow network the actions take a second line rather than leave the card. */

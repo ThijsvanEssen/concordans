@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { vandaag } from '$lib/text/datum';
+	import { report } from '$lib/api/errors';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
@@ -121,7 +122,10 @@
 		await tick();
 		await idle();
 		if (signal.aborted) return;
-		wetsnetwerk = await laadWetsnetwerk(summary.items ?? [], today, signal).catch(() => null);
+		wetsnetwerk = await laadWetsnetwerk(summary.items ?? [], today, signal).catch((e) => {
+			report('Wetsnetwerk', e);
+			return null;
+		});
 		if (!signal.aborted) wetsnetwerkLaden = false;
 	}
 

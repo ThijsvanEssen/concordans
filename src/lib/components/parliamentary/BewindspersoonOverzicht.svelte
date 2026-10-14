@@ -6,39 +6,42 @@
 	import ToezeggingInhoud from '$lib/components/open/ToezeggingInhoud.svelte';
 	// Wat een bewindspersoon toezegde en ondertekende,
 	// bovenaan de lezer. Tellingen per stand zijn links naar Bladeren met het filter gezet.
-	import { getMemberCommitments, getMemberDossiers } from '$lib/api/records';
-	import type { Schema } from '$lib/api/types';
+	import { abortable, getMemberCommitments, getMemberDossiers } from '$lib/api/records';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { load, type LoadState as State } from '$lib/util/load.svelte';
 	import { bronHref, indexHref } from '$lib/bron/href';
 	import { stand } from './stand';
 
 	let { memberKey, ruim = false }: { memberKey: string; ruim?: boolean } = $props();
 
-	type C = Schema<'CommitmentListResponse'>;
-	type D = Schema<'ActorDossiersResponse'>;
-	let commitments = $state<C | null>(null);
-	let open = $state<C | null>(null);
-	let dossiers = $state<D | null>(null);
+	// The same counts the kop above asks for: one request serves both (records.ts).
+	const counts = load(
+		() => memberKey,
+		(key, signal) => abortable(getMemberCommitments(key, 1), signal),
+		'Bewindspersoon toezeggingen'
+	);
+	const openCommitments = load(
+		() => memberKey,
+		(key, signal) => abortable(getMemberCommitments(key, 3, 'Openstaand'), signal),
+		'Bewindspersoon openstaand'
+	);
+	// One request of a hundred; the three newest shown until "Alle … dossiers".
+	const memberDossiers = load(
+		() => memberKey,
+		(key, signal) => abortable(getMemberDossiers(key), signal),
+		'Bewindspersoon dossiers'
+	);
+	function ready<T>(state: State<T>) {
+		return state.status === 'ready' ? state.data : null;
+	}
+	const commitments = $derived(ready(counts.state));
+	const open = $derived(ready(openCommitments.state));
+	const dossiers = $derived(ready(memberDossiers.state));
 	/** All of the dossiers, not the three newest: after "Alle … dossiers". */
 	let alleDossiers = $state(false);
-
-	$effect(() => {
-		const key = memberKey;
-		const ac = new AbortController();
-		void alleDossiers;
-		commitments = open = null;
-		if (!alleDossiers) dossiers = null;
-		// The same counts the kop above asks for: one request serves both.
-		getMemberCommitments(key, 1)
-			.catch(() => null)
-			.then((r) => !ac.signal.aborted && (commitments = r));
-		getMemberCommitments(key, 3, 'Openstaand')
-			.catch(() => null)
-			.then((r) => !ac.signal.aborted && (open = r));
-		getMemberDossiers(key, alleDossiers ? 100 : 3)
-			.then((r) => !ac.signal.aborted && (dossiers = r))
-			.catch(() => null);
-		return () => ac.abort();
-	});
+	const dossierItems = $derived(
+		dossiers ? (alleDossiers ? dossiers.items : dossiers.items.slice(0, 3)) : []
+	);
 
 	const statusCounts = $derived(commitments?.facets?.status ?? []);
 	const href = (status?: string) =>
@@ -46,7 +49,11 @@
 	const lower = (s: string) => s.toLowerCase();
 </script>
 
-{#if commitments && commitments.total > 0}
+{#if counts.state.status === 'error'}
+	<Sectie titel="Toezeggingen" soort="commitments" id="toezeggingen">
+		<LoadState state={counts.state} what="De toezeggingen" retry={counts.retry} />
+	</Sectie>
+{:else if commitments && commitments.total > 0}
 	<Sectie titel="Toezeggingen" soort="commitments" id="toezeggingen">
 		<div class="ov" class:ruim>
 			<p class="zin">
@@ -56,7 +63,13 @@
 							: ', '}{/if}<a href={href(s.value ?? undefined)}>{s.count} {lower(s.value ?? '')}</a
 					>{/each}.
 			</p>
-			{#if open && open.items.length}
+			{#if openCommitments.state.status === 'error'}
+				<LoadState
+					state={openCommitments.state}
+					what="De openstaande toezeggingen"
+					retry={openCommitments.retry}
+				/>
+			{:else if open && open.items.length}
 				{@const items = open.items}
 				<!-- The open ones as in a post in Bladeren (PostOpen): the shared timeline, newest
 				     first, a line opening in place. -->
@@ -100,7 +113,11 @@
 	</Sectie>
 {/if}
 
-{#if dossiers && dossiers.total > 0}
+{#if memberDossiers.state.status === 'error'}
+	<Sectie titel="Dossiers met ondertekende stukken" soort="dossiers" id="dossiers">
+		<LoadState state={memberDossiers.state} what="De dossiers" retry={memberDossiers.retry} />
+	</Sectie>
+{:else if dossiers && dossiers.total > 0}
 	<!-- The heading says what is listed, the count beside it (Thijs, 10 Oct: no sentence). -->
 	<Sectie
 		titel="Dossiers met ondertekende stukken"
@@ -110,7 +127,7 @@
 	>
 		<div class="ov" class:ruim>
 			<ol class="items">
-				{#each dossiers.items as d (d.key)}
+				{#each dossierItems as d (d.key)}
 					{@const st = stand(d)}
 					<li>
 						<BronLink ref={`dossiers/${d.number}`}>{d.short_title ?? d.title ?? d.number}</BronLink>
@@ -118,7 +135,7 @@
 					</li>
 				{/each}
 			</ol>
-			{#if !alleDossiers && dossiers.total > dossiers.items.length}
+			{#if !alleDossiers && dossiers.total > dossierItems.length}
 				<AlleN aantal={dossiers.total} noun="dossiers" onclick={() => (alleDossiers = true)} />
 			{/if}
 		</div>

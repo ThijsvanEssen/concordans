@@ -6,7 +6,8 @@
 	import { formatCount } from '$lib/text/getal';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { langeDatum } from '$lib/text/datum';
-	import { onMount, tick } from 'svelte';
+	import { onMount } from 'svelte';
+	import { afterTick } from '$lib/util/after-tick';
 	import type { Schets, SchetsBron } from './wetsnetwerk';
 
 	let { schets }: { schets: Schets } = $props();
@@ -75,7 +76,7 @@
 	$effect(() => {
 		void gekozen;
 		void schets;
-		tick().then(meet);
+		afterTick(meet);
 	});
 </script>
 

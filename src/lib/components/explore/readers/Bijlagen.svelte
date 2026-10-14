@@ -121,8 +121,4 @@
 		text-decoration-line: underline;
 		text-underline-offset: 3px;
 	}
-	.stil {
-		margin: 0;
-		color: var(--ink-3);
-	}
 </style>
