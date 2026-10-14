@@ -10,12 +10,7 @@
 	import { bronHref } from '$lib/bron/href';
 	import type { Collection } from '$lib/vocabulary';
 	import { atomHref, dayLabel, CLOSE_VOTE } from '$lib/components/actueel/feed';
-	import {
-		FEW_VOTES,
-		tekenVan,
-		timelineOf,
-		type TimelineLine
-	} from '$lib/components/actueel/timeline';
+	import { FEW_VOTES, timelineOf, type TimelineLine } from '$lib/components/actueel/timeline';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
 	import { inhoudVan } from '$lib/components/open/rij-inhoud';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
@@ -150,7 +145,7 @@
 			regels: ls.map((l) => ({
 				id: l.id,
 				datum: null,
-				teken: tekenVan(l),
+				teken: l.teken,
 				vorm: l.vorm,
 				label: l.label,
 				zin: l.title,

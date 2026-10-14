@@ -1611,3 +1611,39 @@ describe('one top layer, one fold, one role per collection (code-eenvoud F63–F
 		);
 	});
 });
+
+describe('the words of the Kamer said once, its state read from data (code-eenvoud F66–F68)', () => {
+	/** The code without its comments: a comment may name what the code says once. */
+	const code = (t: string) =>
+		t.replace(/\/\*[\s\S]*?\*\/|<!--[\s\S]*?-->|(^|[^:'"`])\/\/.*$/gm, '$1');
+
+	it('names a Kamer by CHAMBER_NAME (F66)', () => {
+		const ownName = /['"`](?:Tweede|Eerste) Kamer['"`]/;
+		expect(
+			offenders((t) => ownName.test(code(t)), ['lib/components/parliamentary/chamber.ts'])
+		).toEqual([]);
+	});
+
+	it('names the kinds of bill in stages.ts (F66)', () => {
+		const own = /new Set\(\['Wetgeving'|'Initiatiefwetgeving'/;
+		expect(offenders((t) => own.test(t), ['lib/components/parliamentary/stages.ts'])).toEqual([]);
+	});
+
+	it('draws the state of a toezegging by commitmentTeken (F66)', () => {
+		expect(
+			offenders((t) => /['"]Afgedaan['"]/.test(t), ['lib/components/explore/index/government.ts'])
+		).toEqual([]);
+	});
+
+	it('reads a teken from the data, not from the words of a label (F67)', () => {
+		expect(offenders((t) => /\/aangenomen\/i\.test\(/.test(t))).toEqual([]);
+		expect(offenders((t) => /meta\.split\(/.test(t))).toEqual([]);
+	});
+
+	it('cuts spans to a window by spansWithin, and segments a text in $lib/text/segments (F68)', () => {
+		const own = /\.filter\(\(\w\) => \w\.start!? >= from && \w\.end!? <= from \+ length\)/;
+		expect(offenders((t) => own.test(t), ['lib/text/spans.ts'])).toEqual([]);
+		const cited = sources.find((s) => s.path === 'lib/components/articles/CitedText.svelte')!;
+		expect(cited.text).not.toMatch(/\$derived\.by<Segment\[\]>/);
+	});
+});

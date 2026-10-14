@@ -1,6 +1,7 @@
 import { capitalize } from '$lib/text/words';
 import { korteDatum } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
+import { CHAMBER_NAME } from './chamber';
 import { methodPhrase, phasePlace, voteMethod, type PhaseName } from './stages';
 
 // Where a bill stands, per body that handles it, Raad van
@@ -55,8 +56,8 @@ export function stand(d: Dossier): Stand | null {
 
 	const bodies: [Body, Body, Body] = [
 		{ name: 'Raad van State', short: 'RvS', state: rvs },
-		{ name: 'Tweede Kamer', short: 'TK', state: tk },
-		{ name: 'Eerste Kamer', short: 'EK', state: ek }
+		{ name: CHAMBER_NAME.TK, short: 'TK', state: tk },
+		{ name: CHAMBER_NAME.EK, short: 'EK', state: ek }
 	];
 	const on = (date: string | null, before: string) => (date ? `${before}${korteDatum(date)}` : '');
 	const place = phasePlace(d.current_phase);

@@ -36,7 +36,7 @@
 		type Fold,
 		type FeedItem
 	} from './feed';
-	import { headlineOf, tekenVanFeed, voteHow, vormVanFeed } from './timeline';
+	import { headlineOf, voteHow, vormVanFeed } from './timeline';
 	import { getoondOnder, plekVan, termenVan, type Plek } from './treffer';
 	import {
 		inwerkingVerbanden,
@@ -149,7 +149,7 @@
 			return {
 				id: i.id,
 				datum: i.date,
-				teken: tekenVanFeed(i, h),
+				teken: h.teken,
 				vorm: h.vorm,
 				label: `${h.label}${nieuw(i.date)}`,
 				zin: h.title,

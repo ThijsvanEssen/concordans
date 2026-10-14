@@ -2,7 +2,7 @@
 // Kamer documents are recognisable by their key only and the kind is read.
 // TODO(backend B2): the fallbacks go when every document carries the fields.
 
-export type Chamber = 'TK' | 'EK';
+import type { Chamber } from '$lib/components/parliamentary/chamber';
 
 export const chamberOf = (document: { key: string; chamber?: string | null }): Chamber =>
 	document.chamber === 'EK' || document.chamber === 'TK'

@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import openapi from '$lib/api/openapi.json';
-import { OUTCOME_LABEL, dossierStatus, kindFromParam, phaseFromParam } from './stages';
+import {
+	AMENDING_BILL_KINDS,
+	BILL_KINDS,
+	DOSSIER_KINDS,
+	OUTCOME_LABEL,
+	dossierStatus,
+	kindFromParam,
+	phaseFromParam
+} from './stages';
 
 // The outcomes the API may send, read from the schema the types were generated from.
 const outcomes = openapi.components.schemas.DossierSummaryDTO.properties.outcome.anyOf.flatMap(
@@ -28,5 +36,13 @@ describe('old links', () => {
 		expect(phaseFromParam('mvt')).toBe('Memorie van toelichting');
 		expect(phaseFromParam('Stemmingen')).toBe('Stemmingen');
 		expect(phaseFromParam('behandeling')).toBeNull();
+	});
+});
+
+describe('the kinds of bill', () => {
+	it('counts a begroting as a bill, but not as one that changes articles', () => {
+		expect([...BILL_KINDS]).toEqual(['Wetgeving', 'Initiatiefwetgeving', 'Begroting']);
+		expect([...AMENDING_BILL_KINDS]).toEqual(['Wetgeving', 'Initiatiefwetgeving']);
+		for (const k of BILL_KINDS) expect(DOSSIER_KINDS).toContain(k);
 	});
 });

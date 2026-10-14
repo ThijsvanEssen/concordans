@@ -5,7 +5,7 @@
 import { joinAnd } from '$lib/text/words';
 import { paragraphAnchor } from '$lib/text/anchor';
 import type { Schema } from '$lib/api/types';
-import { citationsWithin } from '$lib/components/articles/citations';
+import { spansWithin } from '$lib/text/spans';
 import type { NootMarker } from '$lib/text/voetnoten';
 
 type Span = Schema<'ArticleCitationSpan'>;
@@ -746,7 +746,7 @@ export function splitBodyParagraph(
 	for (const chunk of chunks) {
 		if (chunk.trim()) {
 			const para = parseOnePara(chunk, chunkOffset);
-			result.push({ ...para, citations: citationsWithin(spans, para.offset, para.body.length) });
+			result.push({ ...para, citations: spansWithin(spans, para.offset, para.body.length) });
 		}
 		chunkOffset += chunk.length;
 	}

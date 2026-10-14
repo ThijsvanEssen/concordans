@@ -12,7 +12,7 @@
 	import { load } from '$lib/util/load.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
-	import { decisionOutcome } from '$lib/components/explore/index/decision-kind';
+	import { decisionOutcome, decisionResult } from '$lib/components/explore/index/decision-kind';
 	import { ekFactionGroups } from '$lib/components/explore/readers/voters';
 	import { langeDatum } from '$lib/text/datum';
 	import Uitkomst from './Uitkomst.svelte';
@@ -48,12 +48,11 @@
 	}
 
 	/** Aangenomen (also without a vote) a filled box, verworpen an open one, else dashed. */
-	const soortVan = (d: Decision, uitslag: string | null) =>
-		d.passed === true || /aangenomen/i.test(uitslag ?? '')
-			? ('ja' as const)
-			: d.passed === false
-				? ('nee' as const)
-				: ('open' as const);
+	const SOORT = { aangenomen: 'ja', verworpen: 'nee' } as const;
+	const soortVan = (d: Decision) => {
+		const result = decisionResult(d);
+		return result ? SOORT[result] : 'open';
+	};
 
 	/** "120 voor, 30 tegen" from the tally; empty for a decision without votes. */
 	function telling(d: Decision): string {
@@ -71,7 +70,7 @@
 			{@const tally = telling(d)}
 			<div class="stemming">
 				<p class="uitslag">
-					<Uitkomst soort={soortVan(d, uitslag)} woord={uitslag ?? 'Stemming'} />{#if tally}<span
+					<Uitkomst soort={soortVan(d)} woord={uitslag ?? 'Stemming'} />{#if tally}<span
 							class="telling">{tally}</span
 						>{/if}
 				</p>

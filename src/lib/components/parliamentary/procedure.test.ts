@@ -113,6 +113,43 @@ describe('procedure: the Eerste Kamer as eerstekamer.nl shows it', () => {
 		expect(g.regels.map((r) => r.zin)).toEqual(['Verslag', 'Nu: afkondiging.']);
 	});
 
+	it('names a paper of its page once where a line of the timeline holds its letter', () => {
+		const d = {
+			...base,
+			senate: senate([
+				{
+					phase: 'Schriftelijke voorbereiding',
+					state: 'vol',
+					papers: [
+						paper('voorlopig verslag', '2026-09-08', 'EK, A'),
+						paper('memorie van antwoord', '2026-09-08', 'EK, B'),
+						paper('brief', '2026-09-10', 'EK, C'),
+						paper('nader voorlopig verslag', '2026-09-20', 'EK, D')
+					]
+				}
+			])
+		};
+		const doc = (key: string, date: string, kind: string, number: string) => ({
+			node_id: `documents/${key}`,
+			node_type: 'document',
+			date,
+			kind,
+			title: kind,
+			body: { chamber: 'EK', number }
+		});
+		const entries = [
+			doc('a', '2026-09-08', 'Verslag', 'A'),
+			doc('b', '2026-09-08', 'Memorie van antwoord', 'B'),
+			{ ...doc('c', '2026-09-10', 'Brief', 'C'), title: 'Brief over de planning' }
+		] as unknown as Entry[];
+		const g = procedure(d as unknown as Detail, entries, true).groepen.find((g) => g.id === 'ek')!;
+		expect(g.regels.map((r) => [r.zin, r.nummers ?? null])).toEqual([
+			['Verslag en memorie van antwoord', ['A', 'B']],
+			['Brief over de planning', ['C']],
+			['Nader voorlopig verslag', null]
+		]);
+	});
+
 	it('puts the papers of its page between the others by their day (36496: a verslag of 2025 stood before the papers of 2024)', () => {
 		const d = {
 			...base,

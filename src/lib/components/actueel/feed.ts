@@ -1,4 +1,5 @@
 import { forAgainst, hasVotes } from '$lib/components/parliamentary/stemming';
+import { BILL_KINDS } from '$lib/components/parliamentary/stages';
 import { count } from '$lib/text/words';
 import { DAY_MS, korteDatum, weekdag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
@@ -136,7 +137,6 @@ export const voteMargin = (i: FeedItem) => {
  */
 export const MOTIE = 'Motie';
 export const AMENDEMENT = 'Amendement';
-const BILL_KINDS: ReadonlySet<string> = new Set(['Wetgeving', 'Initiatiefwetgeving', 'Begroting']);
 
 type VoteLike = {
 	subkind?: string | null;

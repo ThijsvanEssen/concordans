@@ -12,7 +12,9 @@ import { isRelation, type Collection, type Relation } from '$lib/vocabulary';
 import { isInternational } from './filter';
 import { formatCount } from '$lib/text/getal';
 import { rowOfNeighbor, type Neighbor, type Row } from './rows';
-import { chamberOf, type Chamber } from './chamber';
+import { chamberOf } from './chamber';
+import { CHAMBER_NAME, type Chamber } from '$lib/components/parliamentary/chamber';
+
 import { choiceRank } from '$lib/components/parliamentary/stemming';
 
 export { isInternational };
@@ -234,7 +236,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		{
 			id: 'committees',
 			label: 'Commissie',
-			section: 'Tweede Kamer',
+			section: CHAMBER_NAME.TK,
 			load: 'dossier-committees'
 		},
 		{
@@ -243,7 +245,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			// headings read as two kinds of papers (UX-toets 10 Oct).
 			label: 'Kamerstukken in de Tweede Kamer',
 			noun: 'stukken',
-			section: 'Tweede Kamer',
+			section: CHAMBER_NAME.TK,
 			load: 'dossier-documents-tk'
 		},
 		{
@@ -251,28 +253,28 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			// Named by the Kamer: the section heading alone does not tell the two apart.
 			label: 'Stemmingen in de Tweede Kamer',
 			noun: 'stemmingen',
-			section: 'Tweede Kamer',
+			section: CHAMBER_NAME.TK,
 			load: 'dossier-decisions-tk'
 		},
 		{
 			id: 'commitments',
 			label: 'Toezeggingen over dit dossier',
 			noun: 'toezeggingen',
-			section: 'Tweede Kamer',
+			section: CHAMBER_NAME.TK,
 			match: [{ relation: 'ABOUT', direction: 'inbound', collection: 'commitments' }]
 		},
 		{
 			id: 'documents-ek',
 			label: 'Kamerstukken in de Eerste Kamer',
 			noun: 'stukken',
-			section: 'Eerste Kamer',
+			section: CHAMBER_NAME.EK,
 			load: 'dossier-documents-ek'
 		},
 		{
 			id: 'decisions-ek',
 			label: 'Stemmingen in de Eerste Kamer',
 			noun: 'stemmingen',
-			section: 'Eerste Kamer',
+			section: CHAMBER_NAME.EK,
 			match: [
 				{
 					relation: 'ABOUT',

@@ -1,6 +1,7 @@
 // Where the data comes from: each publisher once, with what it gives, its licence and the
 // names of its sources in `data_as_of`. Bronnen en hergebruik reads it.
 import { BRON_LABEL, type Collection } from '$lib/vocabulary';
+import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 
 const PUBLISHER_TERMS = 'Voorwaarden van de uitgever';
 const CC0 = 'CC0 1.0';
@@ -37,16 +38,16 @@ export const PUBLISHERS: readonly Publisher[] = [
 		sources: { echr: 'HUDOC' }
 	},
 	{
-		name: 'Tweede Kamer',
+		name: CHAMBER_NAME.TK,
 		gives: 'De open data van de Tweede Kamer; Kamerstukken op dossier- en ondernummer',
 		licence: { name: CC0, url: 'https://opendata.tweedekamer.nl/disclaimer' },
-		sources: { tk: 'Tweede Kamer' }
+		sources: { tk: CHAMBER_NAME.TK }
 	},
 	{
-		name: 'Eerste Kamer',
+		name: CHAMBER_NAME.EK,
 		gives: 'eerstekamer.nl; Kamerstukken op dossiernummer en letter',
 		licence: { name: PUBLISHER_TERMS, url: 'https://www.eerstekamer.nl/begrip/colofon' },
-		sources: { eerstekamer: 'Eerste Kamer' }
+		sources: { eerstekamer: CHAMBER_NAME.EK }
 	},
 	{
 		name: 'Publicaties',

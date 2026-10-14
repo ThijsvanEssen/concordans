@@ -21,8 +21,8 @@
 	import { citeArticle, placeCitation, type ArticleCitation } from '$lib/text/cite';
 	import type { ProposedText } from '$lib/verbonden/proposed-text';
 	import CitedText from './CitedText.svelte';
-	import { citationsWithin } from './citations';
-	import { begrippenWithin, definitiesOp, type Begrip, type Definitie } from '$lib/text/begrippen';
+	import { spansWithin } from '$lib/text/spans';
+	import { definitiesOp, type Begrip, type Definitie } from '$lib/text/begrippen';
 	import { delegatiesWithin, type Delegatie, type Gedelegeerd } from '$lib/text/delegaties';
 
 	let {
@@ -113,8 +113,8 @@
 		const body = raw.trim();
 		return {
 			body,
-			citations: citationsWithin(citations, part.textStart + lead, body.length),
-			begrippen: begrippenWithin(begrippen, part.textStart + lead, body.length),
+			citations: spansWithin(citations, part.textStart + lead, body.length),
+			begrippen: spansWithin(begrippen, part.textStart + lead, body.length),
 			delegaties: delegatiesWithin(delegaties, part.textStart + lead, body.length)
 		};
 	};

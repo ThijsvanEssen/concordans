@@ -19,6 +19,27 @@ export const DOSSIER_KINDS = [
 	'PKB/Structuurvisie'
 ] as const;
 
+export type DossierKind = (typeof DOSSIER_KINDS)[number];
+
+/**
+ * The kinds of dossier that are a bill and run its procedure: a begroting is a bill too (a
+ * begrotingswet, voted on as one).
+ */
+export const BILL_KINDS: ReadonlySet<string> = new Set<DossierKind>([
+	'Wetgeving',
+	'Initiatiefwetgeving',
+	'Begroting'
+]);
+
+/** A bill of members, whose advice of the Raad van State can still come after submission. */
+export const INITIATIVE_BILL: DossierKind = 'Initiatiefwetgeving';
+
+/** The bills that change the articles of a law: a begroting changes none. */
+export const AMENDING_BILL_KINDS: ReadonlySet<string> = new Set<DossierKind>([
+	'Wetgeving',
+	INITIATIVE_BILL
+]);
+
 /** A dossier of letters and motions has no kind: it is listed as one of the others. */
 export const NO_KIND_LABEL = 'Overige dossiers';
 
