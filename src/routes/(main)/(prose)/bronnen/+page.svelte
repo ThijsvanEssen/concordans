@@ -8,109 +8,7 @@
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { formatCount } from '$lib/text/getal';
 	import { TIERS, TIER_LABEL } from '$lib/vocabulary';
-
-	type Herkomst = {
-		bron: string;
-		/** What it gives and from whom, as it starts the line (a site keeps its own case). */
-		wat: string;
-		/** The licence or terms as the publisher states them, with their page. */
-		licentie: { naam: string; url: string } | null;
-	};
-
-	// The licence as the publisher states it on its own page (read 8 October 2026,
-	// ~/Development/bronnen-licenties.md). Where that is not clear: the publisher's terms.
-	const HERKOMST: Herkomst[] = [
-		{
-			bron: 'Wetgeving',
-			wat: 'wetten.overheid.nl (Basiswettenbestand), op BWB-id',
-			licentie: { naam: 'CC0 1.0', url: 'https://data.overheid.nl/dataset/basis-wetten-bestand' }
-		},
-		{
-			bron: 'Rechtspraak',
-			wat: 'rechtspraak.nl, op ECLI',
-			licentie: { naam: 'Voorwaarden van de uitgever', url: 'https://www.rechtspraak.nl/colofon' }
-		},
-		{
-			bron: 'EHRM',
-			wat: 'HUDOC, op ECLI of zaaknummer',
-			licentie: {
-				naam: 'Voorwaarden van de uitgever',
-				url: 'https://www.echr.coe.int/copyright-and-disclaimer'
-			}
-		},
-		{
-			bron: 'Tweede Kamer',
-			wat: 'De open data van de Tweede Kamer; Kamerstukken op dossier- en ondernummer',
-			licentie: { naam: 'CC0 1.0', url: 'https://opendata.tweedekamer.nl/disclaimer' }
-		},
-		{
-			bron: 'Eerste Kamer',
-			wat: 'eerstekamer.nl; Kamerstukken op dossiernummer en letter',
-			licentie: {
-				naam: 'Voorwaarden van de uitgever',
-				url: 'https://www.eerstekamer.nl/begrip/colofon'
-			}
-		},
-		{
-			bron: 'Publicaties',
-			wat: 'Staatsblad, Staatscourant en Tractatenblad, van officielebekendmakingen.nl',
-			licentie: {
-				naam: 'CC0 1.0',
-				url: 'https://data.overheid.nl/dataset/officiele-bekendmakingen'
-			}
-		},
-		{
-			bron: 'Regering',
-			wat: 'Kabinetten, hun periodes en bewindspersonen van rijksoverheid.nl',
-			licentie: { naam: 'CC0 1.0', url: 'https://www.rijksoverheid.nl/copyright' }
-		},
-		{
-			bron: 'Europees recht',
-			wat: 'EUR-Lex, op CELEX-nummer',
-			licentie: {
-				naam: 'Voorwaarden van de uitgever',
-				url: 'https://eur-lex.europa.eu/content/legal-notice/legal-notice.html'
-			}
-		},
-		{
-			bron: 'Verdragen',
-			wat: 'De Verdragenbank van de Rijksoverheid',
-			licentie: { naam: 'Voorwaarden van de uitgever', url: 'https://verdragenbank.overheid.nl' }
-		},
-		{
-			bron: 'Organisaties',
-			wat: 'Ministeries en rechtsgebieden uit de waardelijsten van de overheid (TOOI)',
-			licentie: { naam: 'Voorwaarden van de uitgever', url: 'https://standaarden.overheid.nl/tooi' }
-		}
-	];
-
-	/** The collections the dekking lists. */
-	const COVERAGE: { collection: string; label: string }[] = [
-		{ collection: 'instruments', label: 'Wetten en regelingen' },
-		{ collection: 'articles', label: 'Artikelen' },
-		{ collection: 'judgments', label: 'Uitspraken' },
-		{ collection: 'dossiers', label: 'Dossiers' },
-		{ collection: 'documents', label: 'Kamerstukken en andere documenten' },
-		{ collection: 'members', label: 'Personen' },
-		{ collection: 'committees', label: 'Commissies' },
-		{ collection: 'cabinets', label: 'Kabinetten' },
-		{ collection: 'commitments', label: 'Toezeggingen' }
-	];
-
-	/** The sources the API names in `data_as_of`, as a reader knows them. */
-	const SOURCE_LABEL: Record<string, string> = {
-		bwb: 'wetten.overheid.nl',
-		rechtspraak: 'rechtspraak.nl',
-		echr: 'HUDOC',
-		eurlex: 'EUR-Lex',
-		tk: 'Tweede Kamer',
-		eerstekamer: 'Eerste Kamer',
-		staatsblad: 'Staatsblad',
-		staatscourant: 'Staatscourant',
-		rijksoverheid: 'rijksoverheid.nl',
-		tooi: 'TOOI',
-		verdragenbank: 'Verdragenbank'
-	};
+	import { COVERAGE, PUBLISHERS, SOURCE_LABEL } from '$lib/bron/herkomst';
 
 	const stats = load(() => 'stats', getStats, 'Bronnen');
 	const coverage = load(() => 'coverage', getCoverage, 'Bronnen dekking');
@@ -150,13 +48,13 @@
 		<div class="section" id="herkomst">
 			<h2 class="section-title">Herkomst</h2>
 			<div class="list">
-				{#each HERKOMST as h (h.bron)}
+				{#each PUBLISHERS as p (p.name)}
 					<div class="list-row">
-						<span class="list-k">{h.bron}</span><span
-							>{h.wat}.{#if h.licentie}
-								<span class="licentie"
-									><a href={h.licentie.url} class="cite" rel="external">{h.licentie.naam}</a></span
-								>{/if}</span
+						<span class="list-k">{p.name}</span><span
+							>{p.gives}.
+							<span class="licentie"
+								><a href={p.licence.url} class="cite" rel="external">{p.licence.name}</a></span
+							></span
 						>
 					</div>
 				{/each}

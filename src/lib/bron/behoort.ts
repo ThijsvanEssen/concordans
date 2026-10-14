@@ -9,6 +9,7 @@ import { naamVan } from '$lib/bron/menselijk';
 import type { Bucket, NodeGraph, Neighbor } from '$lib/api/nodes';
 import { getActivity, getNodeFirst } from '$lib/api/records';
 import { getDossier } from '$lib/components/parliamentary/data';
+import { CHAMBER_NAME, chamberFromParam } from '$lib/components/parliamentary/chamber';
 import { refOf, type BronRef } from '$lib/bron/href';
 import { dossierName, dossierUitProps, kamerstukNummer } from './dossier-naam';
 import { artikelAnker, deelIds, layersOf } from '$lib/text/division';
@@ -88,8 +89,6 @@ export type Groep = {
 export type Behoort = { regels: Regel[]; naast: Groep[]; onder: Groep[] };
 
 const LEEG: Behoort = { regels: [], naast: [], onder: [] };
-
-const KAMER: Record<string, string> = { TK: 'Tweede Kamer', EK: 'Eerste Kamer' };
 
 const norm = (x: string) => x.replace(/\s+/g, ' ').trim().toLowerCase();
 
@@ -281,8 +280,8 @@ export function behoort(
 	const kamer = (): Laag[] => {
 		// The Kamer in props, else in the bron's label (a dossier node: `TK`), a source value.
 		const label = light?.node.labels.find((l) => l === 'TK' || l === 'EK');
-		const k = KAMER[(textOf(props.chamber) ?? label ?? '').toUpperCase()];
-		return k ? [{ soort: 'Kamer', naam: k }] : [];
+		const chamber = chamberFromParam(textOf(props.chamber) ?? label);
+		return chamber ? [{ soort: 'Kamer', naam: CHAMBER_NAME[chamber] }] : [];
 	};
 
 	/**

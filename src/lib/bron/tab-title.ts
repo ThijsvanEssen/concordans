@@ -8,6 +8,7 @@ import { articleTitle } from '$lib/text/bw';
 import { langeDatum } from '$lib/text/datum';
 import { menselijkeNaam } from './menselijk';
 import { dossierName, dossierUitProps } from './dossier-naam';
+import { chamberName } from '$lib/components/parliamentary/chamber';
 
 const MAX = 80;
 
@@ -43,7 +44,7 @@ export function tabTitle(
 		// Kamer's case number ("Wetgeving 2025Z15911: …") or an ISO date ("2026-09-29").
 		const subject = textOf(props.subject);
 		if (subject) {
-			const kamer = textOf(props.chamber) === 'EK' ? 'Eerste Kamer' : 'Tweede Kamer';
+			const kamer = chamberName(textOf(props.chamber));
 			const day = langeDatum(textOf(props.date));
 			return cut(
 				`${[kamer, day].filter(Boolean).join(', ')}: ${shortDossierTitle(subject) ?? subject}`

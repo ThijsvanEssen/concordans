@@ -53,7 +53,7 @@ export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): strin
  */
 export function stemmingNaam(n: Pick<GraphNode, 'id' | 'label' | 'raw'>): string {
 	const p = n.raw?.props ?? {};
-	const kamer = isEkDecision(n.id) || p['chamber'] === 'EK' ? 'Eerste Kamer' : 'Tweede Kamer';
+	const kamer = chamberName(isEkDecision(n.id) ? 'EK' : textOf(p['chamber']));
 	const uitslag = decisionOutcome({
 		kind: textOf(p['kind']),
 		decision_kind: textOf(p['decision_kind']),

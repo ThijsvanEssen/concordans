@@ -9,10 +9,10 @@
 	import { onMount } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';
 	import type { Schets, SchetsBron } from './wetsnetwerk';
+	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 
 	let { schets }: { schets: Schets } = $props();
 
-	const KAMER = { TK: 'Tweede Kamer', EK: 'Eerste Kamer' } as const;
 	const k = $derived(schets.kandidaat);
 	const keten = $derived(schets.keten);
 	const telwoord = (n: number, een: string, meer: string) =>
@@ -82,7 +82,7 @@
 
 <section class="wetsnetwerk" aria-labelledby="wetsnetwerk-heading">
 	<p class="waarom">
-		<KindGlyph vorm="voorstel" size={12} />Laatst aangenomen wetsvoorstel: {KAMER[k.kamer]},
+		<KindGlyph vorm="voorstel" size={12} />Laatst aangenomen wetsvoorstel: {CHAMBER_NAME[k.kamer]},
 		{langeDatum(k.datum)}
 	</p>
 	<h2 id="wetsnetwerk-heading">{k.naam}</h2>

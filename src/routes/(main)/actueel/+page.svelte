@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { BOTH_CHAMBERS, CHAMBER_CHOICES } from '$lib/components/parliamentary/chamber';
 	import { plural } from '$lib/text/words';
 	import { lijstDoel } from '$lib/stores/sprong';
 	import { fractieNaam } from '$lib/bron/menselijk';
@@ -593,13 +594,9 @@
 				onChange: (van, tot) => patchUrl({ van: van || null, tot: tot || null })
 			}}
 			kamer={{
-				waarde: chamber || 'beide',
-				opties: [
-					{ waarde: 'beide', label: 'Beide' },
-					{ waarde: 'TK', label: 'Tweede Kamer' },
-					{ waarde: 'EK', label: 'Eerste Kamer' }
-				],
-				onKies: (v) => patchUrl({ kamer: v === 'beide' ? null : v })
+				waarde: chamber || BOTH_CHAMBERS,
+				opties: CHAMBER_CHOICES,
+				onKies: (v) => patchUrl({ kamer: v === BOTH_CHAMBERS ? null : v })
 			}}
 		/>
 	</div>

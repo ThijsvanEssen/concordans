@@ -35,7 +35,13 @@
 	import { getDecisionDocument } from '$lib/api/records';
 	import { besluiten, geteld, telling } from '$lib/api/decisions';
 	import { getAmendementen } from '$lib/components/parliamentary/amendementen';
-	import { chamberFromParam, type Chamber } from '$lib/components/parliamentary/chamber';
+	import {
+		BOTH_CHAMBERS,
+		CHAMBER_CHOICES,
+		chamberFromParam,
+		chamberName,
+		type Chamber
+	} from '$lib/components/parliamentary/chamber';
 	import { feedStand, normalizeItem, type FeedItem } from '$lib/components/actueel/feed';
 	import {
 		LAAG_LABEL,
@@ -1167,13 +1173,9 @@
 					onChange: (v, t) => zet({ van: v || null, tot: t || null, cel: null })
 				}}
 				kamer={{
-					waarde: kamer || 'beide',
-					opties: [
-						{ waarde: 'beide', label: 'Beide' },
-						{ waarde: 'TK', label: 'Tweede Kamer' },
-						{ waarde: 'EK', label: 'Eerste Kamer' }
-					],
-					onKies: (v) => zet({ kamer: v === 'beide' ? null : v, cel: null })
+					waarde: kamer || BOTH_CHAMBERS,
+					opties: CHAMBER_CHOICES,
+					onKies: (v) => zet({ kamer: v === BOTH_CHAMBERS ? null : v, cel: null })
 				}}
 			/>
 		</div>
@@ -1354,9 +1356,7 @@
 									<li class="rij">
 										<span class="rij__datum">{korteDatum(d.date)}</span>
 										<div class="rij__tekst">
-											<span class="rij__soort"
-												>{soortVan(d)}, {d.chamber === 'EK' ? 'Eerste Kamer' : 'Tweede Kamer'}</span
-											>
+											<span class="rij__soort">{soortVan(d)}, {chamberName(d.chamber)}</span>
 											<a
 												class="rij__titel"
 												href={buildOpenHref(null, { collection: 'decisions', key: d.key })}

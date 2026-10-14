@@ -1049,9 +1049,7 @@ describe('canvas cards and halls', () => {
 	it('wires the feed of Actueel and Gevolgd once (code-eenvoud F53)', () => {
 		// A ministry by its name from ministries.svelte.ts, a fractie's colour in FeedDay, the Atom link
 		// from feed.ts and "Doorzocht vanaf" from Doorzocht.svelte: no page keeps its own copy.
-		expect(
-			offenders((t) => /ministries\.find\(/.test(t)).filter((p) => p.startsWith('routes/'))
-		).toEqual([]);
+		expect(offenders((t) => /ministries\.find\(/.test(t))).toEqual([]);
 		expect(
 			offenders((t) => /\/api\/feed\.atom/.test(t), ['lib/components/actueel/feed.ts'])
 		).toEqual([]);
@@ -1501,5 +1499,15 @@ describe('the generated types as the contract (code-eenvoud F54)', () => {
 		// The canvas keeps its attributes in graphology, which does not type them.
 		const untyped = ['lib/components/graph/GraphCanvas.svelte'];
 		expect(offenders((t) => /meta as Record<string, unknown>/.test(t), untyped)).toEqual([]);
+	});
+});
+
+describe('the names said once (code-eenvoud F55)', () => {
+	it('names a Kamer from $lib/components/parliamentary/chamber', () => {
+		const ownName =
+			/\{\s*TK: 'Tweede Kamer'|label: 'Tweede Kamer'|=== 'EK' \? 'Eerste Kamer' : 'Tweede Kamer'/;
+		expect(offenders((t) => ownName.test(t), ['lib/components/parliamentary/chamber.ts'])).toEqual(
+			[]
+		);
 	});
 });
