@@ -17,18 +17,14 @@
 	import { ekFactionGroups, votersOf } from './voters';
 	import { decisionMethod, decisionOutcome } from '$lib/components/explore/index/decision-kind';
 	import { EK_SOURCE, chamberName } from '$lib/components/parliamentary/chamber';
+	import { kamerstukNummer } from '$lib/bron/dossier-naam';
 
 	let { node }: { node: GraphNode } = $props();
 
 	type State =
 		| { kind: 'loading' }
 		| { kind: 'error'; message: string }
-		| {
-				kind: 'loaded';
-				decision: Schema<'DecisionDTO'>;
-				// The motion, amendment or bill that was voted on.
-				document: Schema<'DocumentTextResponse'> | null;
-		  };
+		| { kind: 'loaded'; decision: Schema<'DecisionDTO'> };
 
 	let view = $state<State>({ kind: 'loading' });
 
@@ -44,9 +40,9 @@
 		const key = bronKey;
 		const ac = new AbortController();
 		view = { kind: 'loading' };
-		Promise.all([getDecision(key), getDecisionDocument(key).catch(() => null)])
-			.then(([decision, document]) => {
-				if (!ac.signal.aborted) view = { kind: 'loaded', decision, document };
+		getDecision(key)
+			.then((decision) => {
+				if (!ac.signal.aborted) view = { kind: 'loaded', decision };
 			})
 			.catch(() => {
 				if (!ac.signal.aborted)
@@ -54,6 +50,41 @@
 			});
 		return () => ac.abort();
 	});
+
+	// The text of what was voted on, only where the decision gives no dictum (an amendment, a
+	// bill): asked after the first paint, which the decision alone makes.
+	let doc = $state<Schema<'DocumentTextResponse'> | null>(null);
+	/** Asked and answered, with a text or without one. */
+	let docKlaar = $state(false);
+	const zonderDictum = $derived(view.kind === 'loaded' && !view.decision.dictum?.trim());
+	$effect(() => {
+		const key = bronKey;
+		doc = null;
+		docKlaar = false;
+		if (!zonderDictum) return;
+		let weg = false;
+		getDecisionDocument(key)
+			.then((d) => {
+				if (!weg) doc = d;
+			})
+			.catch(() => {})
+			.finally(() => {
+				if (!weg) docKlaar = true;
+			});
+		return () => {
+			weg = true;
+		};
+	});
+
+	/** What was voted on, by its kind and number: `Motie, Kamerstuk 36764, nr. 31`. */
+	const stukNaam = (p: Schema<'DecisionPaperDTO'>) =>
+		[
+			p.kind?.replace(/\s*\(.*\)\s*$/, '') ?? 'Kamerstuk',
+			p.dossier_number ? kamerstukNummer(p.dossier_number) : null,
+			p.number ? (/^\d+$/.test(p.number) ? `nr. ${p.number}` : p.number) : null
+		]
+			.filter(Boolean)
+			.join(', ');
 
 	// What the coalition did (API 0.79.34, `coalition`; Thijs, 10 Oct). Only in the Tweede
 	// Kamer, and only where the API gives the block: before 0.79.34 nothing shows.
@@ -112,7 +143,6 @@
 			</p>
 		{:else}
 			{@const d = view.decision}
-			{@const doc = view.document}
 			{@const tally = d.tally ?? {}}
 			{@const inFavour = tally['Voor'] ?? 0}
 			{@const against = tally['Tegen'] ?? 0}
@@ -178,11 +208,25 @@
 				{/snippet}
 			</ReaderHead>
 
-			{#if doc?.text}
+			<!-- What was voted on (`primary_document`), its dictum under it: the stuk itself is one
+			     step further, by its link or its card on hover. -->
+			{#if d.primary_document}
+				{@const p = d.primary_document}
+				<div class="over">
+					<p class="over__regel">
+						Over: <BronLink ref={{ collection: 'documents', key: p.key }}>{stukNaam(p)}</BronLink>
+					</p>
+					{#if d.dictum?.trim()}
+						<p class="over__dictum">{d.dictum}</p>
+					{:else if doc?.text}
+						<p class="document-text">{doc.text}</p>
+					{/if}
+				</div>
+			{:else if doc?.text}
 				<Sectie titel={doc.kind ?? 'Document'} soort="documents">
 					<p class="document-text">{doc.text}</p>
 				</Sectie>
-			{:else if chamber !== 'EK'}
+			{:else if chamber !== 'EK' && zonderDictum && docKlaar}
 				<p class="document-unavailable">Tekst niet in de gegevens.</p>
 			{/if}
 
@@ -369,6 +413,32 @@
 		color: var(--ink);
 		white-space: pre-wrap;
 		margin: 0;
+	}
+	.over {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-2);
+	}
+	.over__regel {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
+	.over__regel :global(a) {
+		color: var(--ink);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
+	}
+	/* The dictum as a motie reads, in the reader's letter: what the Kamer was asked. */
+	.over__dictum {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
+		font-style: italic;
+		color: var(--ink);
 	}
 	.document-unavailable {
 		font-family: var(--font-serif);

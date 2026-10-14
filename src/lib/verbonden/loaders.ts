@@ -21,7 +21,7 @@ import {
 	type WetRegeling
 } from '$lib/text/delegaties';
 import { kindName } from '$lib/components/explore/law-head';
-import { abortable, getAmendedBy, getMemberDossiers } from '$lib/api/records';
+import { abortable, getAmendedBy, getDecision, getMemberDossiers } from '$lib/api/records';
 import { lawArticleList } from '$lib/api/law-articles';
 import { buildGroups, ditVan, EUROPEAN, type Loader, type Match } from './groups';
 import { bronKindOf, isInternational } from './filter';
@@ -1160,6 +1160,108 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				direction: 'inbound' as const,
 				edge: { establishes: d.establishes ?? 0 }
 			}))
+		};
+	},
+
+	// The pending proposals to change this law, newest first (API 0.79.55): the same answer
+	// as the publications above, asked once.
+	'instrument-proposals': async ({ node, signal }) => {
+		const bwb = bwbOf(node);
+		if (!bwb) return { rows: [] };
+		const found = await abortable(getAmendedBy(bwb), signal);
+		return {
+			total: found.proposals_total,
+			rows: (found.proposals ?? []).map((p): Row => {
+				const dossier = p.dossiers?.[0];
+				// Its own subject, without the citation and kind the display name opens with
+				// ("Kamerstuk 35501, nr. 49. Amendement: …"); a bill by the name of its dossier.
+				const onderwerp = (p.display_name ?? '')
+					.replace(/^Kamerstuk [^.]+?, nr\. [^.]+\.\s*/, '')
+					.replace(/^[^:]{1,60}:\s*/, '');
+				const props = {
+					kind: p.kind ?? null,
+					title: onderwerp || null,
+					sequence: p.number ?? null,
+					dossier_number: dossier?.number ?? null,
+					dossier_short_title: dossier?.short_title ?? null,
+					date: p.date ?? null,
+					outcome: p.outcome ?? null
+				};
+				const wetsvoorstel = /^voorstel van wet/i.test(p.kind ?? '') && !!dossier;
+				// A bill: titled by its dossier's name, its kind and number under it.
+				const stuk = describe('documents', p.key, p.display_name ?? null, {
+					...props,
+					title: null,
+					dossier_short_title: null
+				}).title;
+				return {
+					ref: { collection: 'documents' as const, key: p.key },
+					...describe('documents', p.key, p.display_name ?? null, props),
+					...(wetsvoorstel && dossier
+						? {
+								title: dossier.short_title?.trim() || dossier.title?.trim() || stuk,
+								context: stuk,
+								dossier: {
+									number: dossier.number,
+									title: dossier.title ?? null,
+									short_title: dossier.short_title ?? null
+								}
+							}
+						: {}),
+					kind: bronKindOf('documents', p.key, props, 'AMENDS'),
+					relation: 'AMENDS' as const,
+					direction: 'inbound' as const,
+					props
+				};
+			})
+		};
+	},
+
+	// What a vote was on: the Kamerstuk itself (`primary_document` of the decision, the reader's
+	// own answer), which opens on its text in place, then the activity; the zaak only where the
+	// vote names no stuk (a bill, a vote of the Eerste Kamer).
+	'decision-subject': async ({ node, buren, signal }) => {
+		const MATCH: Match[] = [
+			{
+				relation: ['ABOUT', 'MADE_IN'],
+				direction: 'outbound',
+				collection: ['documents', 'cases', 'activities']
+			}
+		];
+		const vanBakken = async () =>
+			(await buren(MATCH))
+				.filter(
+					(n) =>
+						(n.relation === 'ABOUT' || n.relation === 'MADE_IN') &&
+						n.direction === 'outbound' &&
+						['documents', 'cases', 'activities'].includes(n.collection)
+				)
+				.map(rowOfNeighbor)
+				.filter((r): r is Row => r !== null);
+		const [d, rows] = await Promise.all([
+			abortable(getDecision(node.key), signal).catch(() => null),
+			vanBakken()
+		]);
+		const p = d?.primary_document;
+		if (!p) return { rows };
+		const props = {
+			kind: p.kind ?? null,
+			title: p.title ?? null,
+			sequence: p.number ?? null,
+			dossier_number: p.dossier_number ?? null,
+			date: p.date ?? null,
+			dictum: d.dictum ?? null
+		};
+		const stuk: Row = {
+			ref: { collection: 'documents', key: p.key },
+			...describe('documents', p.key, p.title ?? null, props),
+			kind: bronKindOf('documents', p.key, props, 'ABOUT'),
+			relation: 'ABOUT',
+			direction: 'outbound',
+			props
+		};
+		return {
+			rows: [stuk, ...rows.filter((r) => r.ref.collection === 'activities')]
 		};
 	},
 

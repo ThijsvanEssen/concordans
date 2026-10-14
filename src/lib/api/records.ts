@@ -146,6 +146,18 @@ export const getDecisionDocument = (key: string) =>
 			.then(({ data }) => data ?? null)
 	);
 
+/** One activity: its kind, day, committee, dossiers and moves (cheap; API 0.79.55). */
+export const getActivity = (key: string) =>
+	once(`activities/${key}`, () =>
+		unwrap(api.GET('/api/activities/{key}', { params: { path: { key } } }))
+	);
+
+/** What was made in an activity: its record, motions, toezeggingen and stemmingen. */
+export const getActivityRecords = (key: string) =>
+	once(`activities/${key}/records`, () =>
+		unwrap(api.GET('/api/activities/{key}/records', { params: { path: { key } } }))
+	);
+
 export const getDocument = (key: string) =>
 	once(`documents/${key}`, () =>
 		unwrap(api.GET('/api/documents/{key}', { params: { path: { key } } }))

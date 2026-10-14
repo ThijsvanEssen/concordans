@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bevindingen, hoofdletter, strekking } from './uitkomst';
 	import { keyEcli } from '$lib/bron/leesbaar';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import {
@@ -225,11 +226,16 @@
 		{@const conclusies = view.data.conclusions
 			? view.data.conclusions.map((c) => ({
 					ref: { collection: 'judgments' as const, key: ecliKey(c.ecli) },
-					naam: conclusieNaam(c)
+					naam: conclusieNaam(c),
+					strekking: strekking(c.outcome)
 				}))
 			: conclusie
-				? [conclusie]
+				? [{ ...conclusie, strekking: null }]
 				: []}
+		<!-- How it ended, in its own words (API 0.79.55): what a conclusie proposes, what the
+		     ECHR found per article; nothing while the data says none. -->
+		{@const eigenStrekking = conclusion ? strekking(j.conclusion_outcome) : null}
+		{@const echr = bevindingen(j.echr_findings)}
 		{@const kop = j.ecli
 			? judgmentCite(j.ecli, textProp(j.props?.date), textProp(j.props?.court), author)
 			: null}
@@ -262,14 +268,17 @@
 			}}
 		>
 			{#snippet status()}
-				{#if statusWoorden.length || conclusies.length}
+				{#if statusWoorden.length || conclusies.length || eigenStrekking || echr}
 					<p>
-						{#if statusWoorden.length}{statusWoorden.join(', ')}.{/if}
+						{#if statusWoorden.length || eigenStrekking}{[...statusWoorden, eigenStrekking]
+								.filter(Boolean)
+								.join(', ')}.{/if}
+						{#if echr}{hoofdletter(echr)}.{/if}
 						{#if conclusies.length}{conclusies.length > 1 ? 'Conclusies' : 'Conclusie'}: {#each conclusies as c, i (c.naam)}{i >
 								0
 									? '; '
 									: ''}{#if c.ref}<BronLink ref={c.ref}>{c.naam}</BronLink
-									>{:else}{c.naam}{/if}{/each}{/if}
+									>{:else}{c.naam}{/if}{#if c.strekking}, {c.strekking}{/if}{/each}{/if}
 					</p>
 				{/if}
 			{/snippet}

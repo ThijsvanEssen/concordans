@@ -283,7 +283,8 @@ describe('kern of context', () => {
 			'replaces',
 			'replaced-by',
 			'attachment-of',
-			'record-of'
+			'record-of',
+			'submitted-in'
 		]);
 		expect(kern('members')).toEqual(['factions']);
 		expect(kern('instruments')).toEqual([]);

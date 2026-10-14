@@ -42,6 +42,8 @@ export type Loader =
 	| 'instrument-basis'
 	| 'instrument-aard'
 	| 'instrument-amended-by'
+	| 'instrument-proposals'
+	| 'decision-subject'
 	| 'instrument-articles'
 	| 'instrument-judgments'
 	| 'committee-dossiers'
@@ -88,6 +90,9 @@ export type Group = GroupDef & {
 };
 
 const national = (n: Neighbor) => !isInternational(n);
+/** A motie `MADE_IN` the debate it was submitted in (`meta.reason` `ingediend`), not its record. */
+const ingediend = (n: Neighbor) =>
+	(n.meta as Record<string, unknown> | null)?.reason === 'ingediend';
 
 // What a lid signed a stuk as (`meta.capacity` of AUTHORED): as Kamerlid, as
 // bewindspersoon, or in another function (vicepresident van de Raad van State).
@@ -316,6 +321,14 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Publicaties die deze wet wijzigen',
 			noun: 'publicaties',
 			load: 'instrument-amended-by'
+		},
+		{
+			// The bills and amendments of an open dossier that would change it (`/amended-by`,
+			// `proposals`, API 0.79.55): proposed, not enacted.
+			id: 'proposals',
+			label: 'Voorstellen die deze wet wijzigen',
+			noun: 'voorstellen',
+			load: 'instrument-proposals'
 		},
 		{
 			id: 'aard',
@@ -616,11 +629,33 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			noun: 'bijlagen',
 			match: [{ relation: 'ACCOMPANIES', direction: 'inbound', collection: 'documents' }]
 		},
-		// A stenogram and the debate it is the record of.
+		// A stenogram and the debate it is the record of; a motie and the debate it was
+		// submitted in (`ingediend`, API 0.79.55).
 		{
 			id: 'record-of',
 			label: 'Verslag van',
-			match: [{ relation: 'MADE_IN', direction: 'outbound', collection: 'activities' }]
+			match: [
+				{
+					relation: 'MADE_IN',
+					direction: 'outbound',
+					collection: 'activities',
+					where: (n) => !ingediend(n),
+					split: true
+				}
+			]
+		},
+		{
+			id: 'submitted-in',
+			label: 'Ingediend in',
+			match: [
+				{
+					relation: 'MADE_IN',
+					direction: 'outbound',
+					collection: 'activities',
+					where: ingediend,
+					split: true
+				}
+			]
 		}
 	],
 	committees: [
@@ -722,14 +757,16 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			match: [{ relation: 'ABOUT', direction: 'outbound', collection: 'dossiers' }]
 		},
 		{
+			// The Kamerstuk itself (`primary_document`), which opens on its text, before the zaak
+			// it is a stuk of; without one, what the vote was about as the edges give it.
 			id: 'subject',
 			label: 'Stuk waarover is gestemd',
-			match: [
-				{
-					relation: ['ABOUT', 'MADE_IN'],
-					direction: 'outbound',
-					collection: ['documents', 'cases', 'activities']
-				}
+			load: 'decision-subject',
+			bakken: [
+				{ relation: 'ABOUT', direction: 'outbound', collection: 'documents' },
+				{ relation: 'ABOUT', direction: 'outbound', collection: 'cases' },
+				{ relation: 'ABOUT', direction: 'outbound', collection: 'activities' },
+				{ relation: 'MADE_IN', direction: 'outbound', collection: 'activities' }
 			]
 		},
 		{
@@ -760,7 +797,29 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			id: 'records',
 			label: 'Verslag van deze activiteit',
 			noun: 'verslagen',
-			match: [{ relation: 'MADE_IN', direction: 'inbound', collection: 'documents' }]
+			match: [
+				{
+					relation: 'MADE_IN',
+					direction: 'inbound',
+					collection: 'documents',
+					where: (n) => !ingediend(n),
+					split: true
+				}
+			]
+		},
+		{
+			id: 'motions',
+			label: 'Moties ingediend in deze activiteit',
+			noun: 'moties',
+			match: [
+				{
+					relation: 'MADE_IN',
+					direction: 'inbound',
+					collection: 'documents',
+					where: ingediend,
+					split: true
+				}
+			]
 		},
 		{
 			id: 'commitments',

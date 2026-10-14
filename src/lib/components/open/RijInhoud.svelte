@@ -11,7 +11,14 @@
 	import { bronHref } from '$lib/bron/href';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import Wijzigingen from './Wijzigingen.svelte';
-	import { inhoudVan, kernSoort, kernVan, type Inhoud, type MetInhoud } from './rij-inhoud';
+	import {
+		inhoudVan,
+		kernSoort,
+		kernUitLijst,
+		kernVan,
+		type Inhoud,
+		type MetInhoud
+	} from './rij-inhoud';
 
 	let {
 		item,
@@ -40,10 +47,12 @@
 		tekst = null;
 		gelezen = s;
 		if (s !== 'dictum' && s !== 'toelichting' && s !== 'opening' && s !== 'kern') return;
-		// A motion's dictum as the feed gives it: no request (API 0.79.42).
-		const dictum = s === 'dictum' ? item.dictum?.trim() : null;
-		if (dictum) {
-			tekst = dictum;
+		// A motion's dictum or an amendment's explanation as the list gives it: no request (API
+		// 0.79.42, 0.79.55).
+		const lijst = kernUitLijst(s, item);
+		if (lijst) {
+			tekst = lijst.tekst;
+			gelezen = lijst.als;
 			return;
 		}
 		tekst = 'laden';

@@ -24,6 +24,8 @@
 	import { formatLongDate } from './_shared';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
+	import { nagekomenIn, toegezegdIn } from '$lib/components/parliamentary/toezegging';
+	import { tussen } from '$lib/components/parliamentary/vervanging';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -99,7 +101,29 @@
 						groep: bronLabel('commitments')
 					}
 				}}
-			/>
+			>
+				<!-- Where it was made and where it was kept, in the Kamer's words (toezegging.ts):
+				     the activity by its kind and day, the letters by their number. -->
+				{#snippet status()}
+					{@const gedaan = toegezegdIn(c.activity)}
+					{@const nagekomen = nagekomenIn(c.fulfilled_by)}
+					{#if gedaan || nagekomen}
+						<p class="zinnen">
+							{#if gedaan && c.activity}<span
+									>{gedaan.voor}
+									<BronLink ref={`activities/${c.activity.key}`}>{gedaan.link}</BronLink>.</span
+								>{/if}
+							{#if nagekomen}<span
+									>{nagekomen.voor}
+									{#each nagekomen.brieven as b, i (b.key)}{tussen(
+											i,
+											nagekomen.brieven.length
+										)}<BronLink ref={`documents/${b.key}`}>{b.naam}</BronLink>{/each}.</span
+								>{/if}
+						</p>
+					{/if}
+				{/snippet}
+			</ReaderHead>
 
 			<Feiten>
 				<Veld label="Bewindspersoon" value={c.member ?? c.minister_name} nodig>
@@ -116,12 +140,8 @@
 				<Veld label="Kabinet" value={c.cabinet}>
 					<BronLink ref={`cabinets/${c.cabinet}`}>{cabinetName(c.cabinet ?? '')}</BronLink>
 				</Veld>
-				<Veld label="Gedaan op" value={c.date}>
-					<span class="nums"
-						>{formatLongDate(c.date ?? null)}{#if c.activity}, in <BronLink
-								ref={`activities/${c.activity.key}`}>activiteit {c.activity.number ?? ''}</BronLink
-							>{/if}</span
-					>
+				<Veld label="Geregistreerd" value={c.date}>
+					<span class="nums">{formatLongDate(c.date ?? null)}</span>
 				</Veld>
 				<Veld label="Stand" value={c.status} nodig>
 					<span class:late
@@ -170,6 +190,18 @@
 		color: var(--ink) !important;
 		/* In ink, as everything at rest but "nee" (Thijs, 10 Oct); the weight keeps it seen. */
 		font-weight: 600;
+	}
+	.zinnen {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
+	.zinnen :global(a) {
+		color: var(--ink);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
 	}
 	.nums {
 		font-variant-numeric: tabular-nums;
