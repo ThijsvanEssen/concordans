@@ -8,6 +8,7 @@ import { bronLabel, parseNodeId } from '$lib/vocabulary';
 import { queryHref } from '$lib/util/address';
 import { buildBronHref } from '$lib/bron/href';
 import { padOfFocus } from '$lib/bron/leesbaar';
+import { csvText } from '$lib/text/csv';
 import { anchorLabel } from '$lib/text/anchor';
 
 /** One thing kept: a bron, or a place in it (`lid-2`, `rov-5.7.1`), with how it is cited. */
@@ -294,12 +295,9 @@ export function citaten(
 	);
 }
 
-const cel = (v: string) => (/[";\r\n]/.test(v) ? `"${v.replaceAll('"', '""')}"` : v);
-
 /**
- * As Verbonden's CSV: semicolons and a byte order mark, as Excel with Dutch settings reads it.
- * Its rows as the map shows them: per group in the order of the groups, or in the reader's own
- * order; each under its group's name, its place as the reader prints it.
+ * The map as a CSV, its rows as the map shows them: per group in the order of the groups, or
+ * in the reader's own order; each under its group's name, its place as the reader prints it.
  */
 export function csv(
 	items: readonly MapItem[],
@@ -308,9 +306,9 @@ export function csv(
 ): string {
 	const reeks = groepen(items);
 	const naamVan = new Map(reeks.map((g) => [g.sleutel, g.groep]));
-	const rijen = [
+	return csvText(
 		['volgorde', 'groep', 'citaat', 'vindplaats', 'aantekening', 'adres'],
-		...(volgorde === 'eigen' ? items : reeks.flatMap((g) => g.items)).map((i, n) => [
+		(volgorde === 'eigen' ? items : reeks.flatMap((g) => g.items)).map((i, n) => [
 			String(n + 1),
 			naamVan.get(i.groupKey) ?? i.groep,
 			i.voluit || i.kort,
@@ -318,8 +316,7 @@ export function csv(
 			i.notitie ?? '',
 			adres(i)
 		])
-	];
-	return '\ufeff' + rijen.map((r) => r.map(cel).join(';')).join('\r\n');
+	);
 }
 
 /**
