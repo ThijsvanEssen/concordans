@@ -1,7 +1,7 @@
 // De tekens van Concordans. De vorm zegt wat een bron
 // is; alle tekens staan in inkt, er is geen kleur te onthouden. Eén tabel voor de tekens
 // in de tekst (KindGlyph) en op het canvas (nodeSprites), getekend in een vak van 16.
-import type { Collection } from '$lib/vocabulary';
+import { isCollection, type Collection } from '$lib/vocabulary';
 import { BILL_KIND, isInternational, type BronKind } from '$lib/verbonden/filter';
 
 export type Vorm =
@@ -77,9 +77,11 @@ export const VORM_VAN: Record<Collection, Vorm> = {
 	cabinets: 'kabinet'
 };
 
+const vormOf = (collection: string): Vorm =>
+	isCollection(collection) ? VORM_VAN[collection] : 'overig';
+
 /** De vorm van een bron uit zijn id (`decisions/…`) of collectie. */
-export const vormVan = (idOfCollectie: string): Vorm =>
-	VORM_VAN[idOfCollectie.split('/')[0] as Collection] ?? 'overig';
+export const vormVan = (idOfCollectie: string): Vorm => vormOf(idOfCollectie.split('/')[0]);
 
 /** Het teken van een soort in het bronfilter. */
 export const BRON_KIND_VORM: Record<BronKind, Vorm> = {
@@ -103,7 +105,7 @@ export function vormVanBron(
 	props?: Record<string, unknown> | null,
 	key = ''
 ): Vorm {
-	const vorm = VORM_VAN[collection as Collection] ?? 'overig';
+	const vorm = vormOf(collection);
 	if (vorm === 'regel' && isInternational({ key, props })) return 'regel-int';
 	if (collection === 'documents' && typeof props?.kind === 'string' && BILL_KIND.test(props.kind))
 		return 'voorstel';

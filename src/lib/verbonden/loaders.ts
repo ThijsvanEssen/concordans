@@ -938,7 +938,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			}
 			// Its places as this judgment cites them (`onder 3` in a conclusion): the edge's
 			// paragraphs, else the overwegingen of the detail.
-			const ro = plaatsVanMeta(n.meta as Record<string, unknown> | null, ecli).position;
+			const ro = plaatsVanMeta(n.meta, ecli).position;
 			const uitDetail = overwegingen.get(n.key);
 			if (ro) row.position = ro;
 			else if (uitDetail?.length)

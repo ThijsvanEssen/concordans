@@ -95,8 +95,7 @@ export type Group = GroupDef & {
 
 const national = (n: Neighbor) => !isInternational(n);
 /** A motie `MADE_IN` the debate it was submitted in (`meta.reason` `ingediend`), not its record. */
-const ingediend = (n: Neighbor) =>
-	(n.meta as Record<string, unknown> | null)?.reason === 'ingediend';
+const ingediend = (n: Neighbor) => n.meta?.reason === 'ingediend';
 
 // What a lid signed a stuk as (`meta.capacity` of AUTHORED): as Kamerlid, as
 // bewindspersoon, or in another function (vicepresident van de Raad van State).
@@ -108,8 +107,7 @@ const votedIn = (chamber: Chamber) => (n: Neighbor) =>
 		chamber: (n.props as Record<string, unknown> | null)?.chamber as string
 	}) === chamber;
 
-const signedAs = (capacity: Capacity) => (n: Neighbor) =>
-	(n.meta as Record<string, unknown> | null)?.capacity === capacity;
+const signedAs = (capacity: Capacity) => (n: Neighbor) => n.meta?.capacity === capacity;
 
 /** `a`, `a en b`, `a, b en c`; beyond three, `a, b en 2 andere functies`. */
 function functionList(rows: Row[]): string {

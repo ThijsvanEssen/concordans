@@ -31,7 +31,7 @@ export function mergeExplanatory(neighbors: Neighbor[]): Row[] {
 		)
 			continue;
 		if (!BINDING.has(n.relation ?? '') || found.has(n.key)) continue;
-		const edge = readEdge(n.meta as Record<string, unknown> | null, {
+		const edge = readEdge(n.meta, {
 			direction: 'inbound',
 			citingEcli: null
 		});

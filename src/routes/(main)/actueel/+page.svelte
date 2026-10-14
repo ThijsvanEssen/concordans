@@ -244,7 +244,7 @@
 				})
 			)
 				.then((r) => {
-					if ((r as { partial?: boolean }).partial && !r.facets) {
+					if (r.partial && !r.facets) {
 						if (poging === 0) opnieuw = setTimeout(() => tel(1), 30_000);
 						else tellen = false;
 						return;

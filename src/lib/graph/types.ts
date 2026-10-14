@@ -389,6 +389,7 @@ export function syntheticNode(
 	);
 }
 
-export function memberToGraphNode(m: Schema<'MemberDTO'>): GraphNode {
+/** A member's node from its record: a list's MemberDTO or the detail's MemberDetailDTO. */
+export function memberToGraphNode(m: Pick<Schema<'MemberDTO'>, 'key' | 'name'>): GraphNode {
 	return syntheticNode('members', m.key, m.name, { ...m });
 }

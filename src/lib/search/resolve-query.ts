@@ -218,7 +218,7 @@ export function keuzesOf(data: Schema<'ResolveResponse'> | null | undefined): {
 	const items = (data.alternatives ?? [])
 		.map((m) => resolvedMatch(m, data.qualifier))
 		.filter((r): r is Resolved => r !== null);
-	const total = (data as { alternatives_total?: number }).alternatives_total ?? items.length;
+	const total = data.alternatives_total ?? items.length;
 	return { items, total: Math.max(total, items.length) };
 }
 

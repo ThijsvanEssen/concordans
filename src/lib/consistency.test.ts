@@ -1487,3 +1487,19 @@ describe('the explorer’s small things said once (code-eenvoud F48–F50)', () 
 		).toEqual([]);
 	});
 });
+
+describe('the generated types as the contract (code-eenvoud F54)', () => {
+	it('reads what the API gives without a cast past its types', () => {
+		// `partial`, `expanded`, `next_offset`, `membership_edge_ids`, `alternatives_total`,
+		// `passed`, the query of /api/paths and a Kamer are all in openapi-types.ts.
+		const pastTheTypes =
+			/as \{ (?:partial|expanded|ids|membership_edge_ids|next_offset|alternatives_total|passed|rejected|labels)\??:|as 'TK' \| 'EK'|as unknown as (?:BaseNode|Schema<'MemberDTO'>)|\} as object\)|collection as never|split\('\/'\)\[0\] as Collection/;
+		expect(offenders((t) => pastTheTypes.test(t))).toEqual([]);
+	});
+
+	it('reads the meta of a neighbour as the API types it, without a cast', () => {
+		// The canvas keeps its attributes in graphology, which does not type them.
+		const untyped = ['lib/components/graph/GraphCanvas.svelte'];
+		expect(offenders((t) => /meta as Record<string, unknown>/.test(t), untyped)).toEqual([]);
+	});
+});

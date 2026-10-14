@@ -21,12 +21,13 @@ import {
 import { dossierName } from './feed';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import { langeDatum } from '$lib/text/datum';
+import type { Chamber } from '$lib/components/parliamentary/chamber';
 
 type FeedItem = Schema<'FeedItemDTO'>;
 export type CitedBy = Schema<'ArticleCitedByResponse'>;
 
 /** A bill the Kamer passed: by its dossier, the day and the Kamer. */
-export type Kandidaat = { number: string; naam: string; datum: string; kamer: 'TK' | 'EK' };
+export type Kandidaat = { number: string; naam: string; datum: string; kamer: Chamber };
 
 /** The zaak of a bill, as the Kamer names it (`subkind`); a begroting changes no articles. */
 const WET: ReadonlySet<string> = new Set(['Wetgeving', 'Initiatiefwetgeving']);
@@ -46,7 +47,7 @@ export function kandidaten(items: readonly FeedItem[]): Kandidaat[] {
 			number: i.dossier!.number,
 			naam: dossierName(i.dossier!),
 			datum: i.date,
-			kamer: (i.vote?.chamber ?? 'TK') as 'TK' | 'EK'
+			kamer: i.vote!.chamber
 		}))
 		.sort((a, b) => b.datum.localeCompare(a.datum) || a.kamer.localeCompare(b.kamer));
 	for (const k of passed) if (!out.has(k.number)) out.set(k.number, k);

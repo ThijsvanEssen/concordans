@@ -333,7 +333,7 @@
 							else if (title) outside = term;
 						}
 						results = r.results;
-						const partial = (r as { partial?: Partial<Record<Kind, boolean>> }).partial ?? {};
+						const partial = r.partial ?? {};
 						snelMeer = { term, kinds: snel.filter((k) => partial[k]) };
 						vraagVolAls(term, snelMeer.kinds, r.results as Partial<Record<Kind, Hit[]>>);
 						answered = term;
@@ -385,7 +385,7 @@
 				if (!geldt()) return;
 				laanHits[laan.id] = r.results as Partial<Record<Kind, Hit[]>>;
 				// The live mode names the kinds it cut off at its time: more on "Meer uitspraken".
-				const partial = (r as { partial?: Partial<Record<Kind, boolean>> }).partial ?? {};
+				const partial = r.partial ?? {};
 				laanMeer[laan.id] = types.some((k) => partial[k]) ? term : '';
 				vraagVolAls(
 					term,

@@ -5,7 +5,7 @@
 // default, on a phone too (Thijs, 9 Oct), faint and clustered there as everywhere.
 import type { GraphNode } from '$lib/graph/types';
 import type { Neighbor } from '$lib/api/nodes';
-import { nodeId, parseNodeId, type Collection } from '$lib/vocabulary';
+import { parseNodeId, type Collection } from '$lib/vocabulary';
 
 export type Netwerk = {
 	/** The chosen bronnen, in the order they were added. */
@@ -105,7 +105,7 @@ export type Between = {
 	alone: Set<string>;
 };
 
-const idOf = (n: Pick<Neighbor, 'collection' | 'key'>) => nodeId(n.collection as never, n.key);
+const idOf = (n: Pick<Neighbor, 'collection' | 'key'>) => `${n.collection}/${n.key}`;
 
 /**
  * What ties the chosen bronnen together, from their own node responses: a direct

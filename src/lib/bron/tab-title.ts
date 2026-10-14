@@ -2,7 +2,7 @@
 // apart. A judgment by its label and the name it is known by, a dossier by its number and
 // short title, a BW article by its book, anything else by its name cut at a word.
 import { textOf, truncate } from '$lib/text/words';
-import { shortDossierTitle, type GraphNode } from '$lib/graph/types';
+import { shortDossierTitle, type BaseNode, type GraphNode } from '$lib/graph/types';
 import { authorCite, judgmentCite } from '$lib/text/judgment-cite';
 import { articleTitle } from '$lib/text/bw';
 import { langeDatum } from '$lib/text/datum';
@@ -14,7 +14,9 @@ const MAX = 80;
 /** A name cut at a word within `MAX` characters. */
 export const cut = (name: string): string => truncate(name, MAX, { atWord: true });
 
-export function tabTitle(node: Pick<GraphNode, 'collection' | 'label' | 'raw'>): string {
+export function tabTitle(
+	node: Pick<GraphNode, 'collection' | 'label'> & { raw?: Pick<BaseNode, 'display_name' | 'props'> }
+): string {
 	const props = node.raw?.props ?? {};
 	if (node.collection === 'judgments') {
 		const names = Array.isArray(props.names)

@@ -155,9 +155,7 @@ export function laagVan(n: Neighbor, soort: string): Laag {
 		// instance's own remedy is on another edge, so it has its outcome alone.
 		const uitkomst = uitkomstVan(
 			props.outcome,
-			n.relation === 'APPEAL_OF' && n.direction === 'inbound'
-				? (n.meta as Record<string, unknown> | null | undefined)?.procedure_type
-				: null
+			n.relation === 'APPEAL_OF' && n.direction === 'inbound' ? n.meta?.procedure_type : null
 		);
 		return { soort, naam: vol, ref, kort: instantie(vol), ...(uitkomst ? { uitkomst } : {}) };
 	}
@@ -282,9 +280,7 @@ export function behoort(
 	};
 	const kamer = (): Laag[] => {
 		// The Kamer in props, else in the bron's label (a dossier node: `TK`), a source value.
-		const label = (light?.node as { labels?: string[] } | undefined)?.labels?.find(
-			(l) => l === 'TK' || l === 'EK'
-		);
+		const label = light?.node.labels.find((l) => l === 'TK' || l === 'EK');
 		const k = KAMER[(textOf(props.chamber) ?? label ?? '').toUpperCase()];
 		return k ? [{ soort: 'Kamer', naam: k }] : [];
 	};
@@ -374,8 +370,7 @@ export function behoort(
 			// This one's outcome, after the remedy its edge to the eerdere aanleg names.
 			const eigen = uitkomstVan(
 				props.outcome,
-				(bak('APPEAL_OF', 'outbound', 'judgments')?.items?.[0]?.meta as Record<string, unknown>)
-					?.procedure_type
+				bak('APPEAL_OF', 'outbound', 'judgments')?.items?.[0]?.meta?.procedure_type
 			);
 			const gang: Laag[] =
 				eerder.length + later.length > 0
@@ -490,8 +485,7 @@ export function behoort(
 					// stenogram is the record of it.
 					...regel(
 						'debat',
-						(bak('MADE_IN', 'outbound', 'activities')?.items?.[0]?.meta as Record<string, unknown>)
-							?.reason === 'ingediend'
+						bak('MADE_IN', 'outbound', 'activities')?.items?.[0]?.meta?.reason === 'ingediend'
 							? 'Ingediend in'
 							: 'Verslag van',
 						eerste('MADE_IN', 'outbound', 'activities', 'Activiteit')
