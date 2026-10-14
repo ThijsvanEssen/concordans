@@ -4,7 +4,8 @@
 // TODO(backend): no field of the API names the proposed text; the keys below are read
 // where they occur, and the lid is the one the edge names.
 import { api, unwrap } from '$lib/api/client';
-import { dossierNumbersOf, lidOfMatch, type Row } from './rows';
+import { dossierNumbersOf, type Row } from './rows';
+import { readEdge } from './edge-meta';
 
 export type ProposedText = { lid: string | null; text: string; source: string };
 
@@ -36,13 +37,7 @@ export async function proposedTextOf(
 			const meta = (e.meta ?? null) as Record<string, unknown> | null;
 			const text = textOf(meta);
 			if (!text) continue;
-			const lid =
-				(Array.isArray(meta?.leden) &&
-					typeof meta!.leden[0] === 'string' &&
-					(meta!.leden[0] as string)) ||
-				lidOfMatch(typeof meta?.raw_match === 'string' ? (meta.raw_match as string) : null) ||
-				row.lid ||
-				null;
+			const lid = readEdge(meta, { direction: 'inbound', citingEcli: null }).lid ?? row.lid ?? null;
 			return { lid, text, source: row.title };
 		}
 	}

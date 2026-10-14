@@ -48,14 +48,13 @@ import {
 	rolesLine,
 	citedLine,
 	describe,
-	lidOfMatch,
-	positionsLabel,
 	rowOfNeighbor,
 	unresolvedRows,
 	type Neighbor,
 	type Row
 } from './rows';
 import { onForget } from '$lib/util/forget';
+import { isDerived, lidOfMatch, positionsLabel } from './edge-meta';
 
 /** What an implementation rests on (API 0.67), in words: EUR-Lex, the considerans, or both. */
 const BASIS: Record<string, string> = {
@@ -658,7 +657,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 							at,
 							lid: item.leden?.[0] ?? lidOfMatch(item.qualifier ?? item.text),
 							position: item.paragraph_number ? paragraphCite(j.key, item.paragraph_number) : null,
-							derived: item.confidence < 1,
+							derived: isDerived(item.confidence),
 							confidence: item.confidence,
 							snippet: item.snippet || null,
 							match: item.text || null,
@@ -765,7 +764,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				match: rel.text ?? row.match ?? null,
 				edgeId: rel.edge_id ?? row.edgeId ?? null,
 				confidence: rel.confidence ?? row.confidence ?? null,
-				derived: rel.confidence != null ? rel.confidence < 1 : row.derived
+				derived: rel.confidence != null ? isDerived(rel.confidence) : row.derived
 			});
 		}
 		return { rows: [...byKey.values()], total };
@@ -863,7 +862,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 						implemented.includes(link) ? amending : new Set<string>()
 					),
 					kind: 'internationaal',
-					derived: link.confidence != null && link.confidence < 1,
+					derived: isDerived(link.confidence),
 					relation: 'IMPLEMENTS',
 					direction: implemented.includes(link) ? 'outbound' : 'inbound'
 				});
@@ -878,7 +877,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					// The line says it: `Genoemd`, `Noemt` (hoe.ts), not "Aangehaald" with "alleen genoemd".
 					context: null,
 					kind: 'internationaal',
-					derived: link.confidence != null && link.confidence < 1,
+					derived: isDerived(link.confidence),
 					relation: 'REFERS_TO',
 					direction: mentions.includes(link) ? 'outbound' : 'inbound'
 				});
@@ -893,7 +892,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 							naamVan('instruments', link.instrument),
 						context: null,
 						kind: 'internationaal',
-						derived: link.confidence != null && link.confidence < 1
+						derived: isDerived(link.confidence)
 					});
 				} else if (link.judgment) {
 					const j = link.judgment;
@@ -901,7 +900,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 						ref: { collection: 'judgments', key: j.key },
 						...describe('judgments', j.key, j.display_name, { ...j }),
 						kind: 'internationaal',
-						derived: link.confidence != null && link.confidence < 1
+						derived: isDerived(link.confidence)
 					});
 				}
 			}
@@ -1067,7 +1066,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				direction: 'outbound',
 				edgeId: r.edge_id,
 				confidence: r.confidence ?? null,
-				derived: r.confidence != null && r.confidence < 1
+				derived: isDerived(r.confidence)
 			});
 		}
 		const order = (row: Row) => row.title;

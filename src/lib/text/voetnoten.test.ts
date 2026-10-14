@@ -10,7 +10,8 @@ import {
 } from './voetnoten';
 import { bodyItems, splitBodyParagraph } from '$lib/components/explore/readers/judgment-text';
 import { legUit, overwegingVanNoot } from '$lib/bron/overweging';
-import { plaatsVanEdge, type Row } from '$lib/verbonden/rows';
+import type { Row } from '$lib/verbonden/rows';
+import { plaatsVanEdge } from '$lib/verbonden/edge-meta';
 import { hoeVan, plaatsIn } from '$lib/verbonden/hoe';
 import { aanhalingIn } from '$lib/verbonden/passage';
 import { kantlijnBreedte, schuif } from '$lib/actions/kantlijn';

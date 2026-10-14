@@ -17,7 +17,6 @@ import {
 	metaParts,
 	openLabelOf,
 	passageOf,
-	positionsLabel,
 	type Neighbor,
 	type Row,
 	describe as describeBron,
@@ -25,6 +24,7 @@ import {
 	repeatedTitles,
 	UNNAMED
 } from './rows';
+import { positionsLabel } from './edge-meta';
 
 const neighbors = (fixture: { neighbors: { all: unknown[] } }) =>
 	fixture.neighbors.all as Neighbor[];

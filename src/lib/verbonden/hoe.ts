@@ -21,6 +21,7 @@ import {
 import { passageOf, type Row } from './rows';
 import { uitsnede, type Passage } from './passage';
 import { confidenceWord } from './filter';
+import { text } from './edge-meta';
 
 /** The words of one verbinding, by its relation, its two ends and its meta. */
 export type Woorden = {
@@ -37,9 +38,6 @@ export type Woorden = {
 
 type Ends = { van: Collection | null; naar: Collection | null; meta: Record<string, unknown> };
 type W = readonly [actief: string, terug: string, soort: string];
-
-const tekstVan = (v: unknown): string | null =>
-	typeof v === 'string' && v.trim() ? v.trim() : null;
 
 /** The kind of a change by its effect on wetten.overheid.nl, where the edge gives one. */
 const EFFECT: Record<string, Relation> = {
@@ -97,7 +95,7 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 	// A preamble that names an article without the power the regulation is made under in it
 	// (`basis_kind` mentioned, Awb 3:2 and 3:4) only names it.
 	BASED_ON: ({ meta }) =>
-		tekstVan(meta.basis_kind) === 'mentioned'
+		text(meta.basis_kind) === 'mentioned'
 			? [
 					'noemt in de aanhef',
 					'genoemd in de aanhef van',
@@ -121,7 +119,7 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 		naar === 'instruments' ? 'toelichting bij een wet' : 'toelichting bij een artikel'
 	],
 	APPEAL_OF: ({ meta }) => {
-		const aard = tekstVan(meta.procedure_type)?.toLowerCase() ?? 'hoger beroep';
+		const aard = text(meta.procedure_type)?.toLowerCase() ?? 'hoger beroep';
 		return [`${aard} tegen`, `bestreden in ${aard}`, aard];
 	},
 	ADVISES_ON: () => ['conclusie bij', 'uitspraak op', 'conclusie in dezelfde zaak'],
@@ -166,7 +164,7 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 			? ['toegezegd in', 'toegezegd in', 'toezegging in een activiteit']
 			: van === 'decisions'
 				? ['genomen in', 'genomen in', 'stemming in een activiteit']
-				: van === 'documents' && tekstVan(meta.reason) === 'ingediend'
+				: van === 'documents' && text(meta.reason) === 'ingediend'
 					? ['ingediend in', 'ingediend in', 'motie ingediend in een debat']
 					: van === 'documents'
 						? ['verslag van', 'verslag van', 'verslag van een debat']
@@ -177,8 +175,8 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 	// signed as minister or for the Kamer, not as Kamerlid, ondertekende.
 	AUTHORED: ({ naar, meta }) => {
 		if (naar === 'commitments') return ['deed', 'gedaan door', 'toezegging'];
-		const functie = tekstVan(meta.function);
-		const capacity = tekstVan(meta.capacity);
+		const functie = text(meta.function);
+		const capacity = text(meta.capacity);
 		return capacity && capacity !== 'kamerlid'
 			? [
 					functie ? `ondertekende als ${functie}` : 'ondertekende',
@@ -188,7 +186,7 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 			: ['diende in', 'ingediend door', 'indiening'];
 	},
 	VOTED: ({ meta }) => {
-		const keuze = tekstVan(meta.choice)?.toLowerCase();
+		const keuze = text(meta.choice)?.toLowerCase();
 		return [
 			keuze === 'voor' || keuze === 'tegen' ? `stemde ${keuze}` : 'stemde over',
 			'gestemd door',
@@ -198,9 +196,9 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 	// A supplementary budget revises its chapter (Dossier → Dossier); an amended motion or
 	// amendment replaces the one it names (Document → Document, `rule` vervanging).
 	REVISES: ({ van, meta }) =>
-		van === 'documents' || tekstVan(meta.rule) === 'vervanging'
+		van === 'documents' || text(meta.rule) === 'vervanging'
 			? ['vervangt', 'vervangt', 'vervanging van een motie of amendement']
-			: tekstVan(meta.rule) === 'slotwet'
+			: text(meta.rule) === 'slotwet'
 				? ['slotwet bij', 'slotwet bij', 'slotwet bij een begroting']
 				: ['wijzigt de begroting', 'wijzigt de begroting', 'wijziging van een begroting'],
 	// A budget change is submitted with its nota (Dossier → Dossier); a bijlage goes with
@@ -245,7 +243,7 @@ export function woordenVan(
 ): Woorden {
 	const m = meta ?? {};
 	// A change of an article by its effect: an AMENDS whose effect is `vervallen` repeals.
-	const effect = EFFECT[tekstVan(m.effect) ?? ''];
+	const effect = EFFECT[text(m.effect) ?? ''];
 	const r =
 		effect &&
 		(relation === 'ESTABLISHES' ||
@@ -307,7 +305,6 @@ export type Hoe = {
 	herkomst: string | null;
 };
 
-const text = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v.trim() : null);
 const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 const keer = (n: number | null) => (n && n > 1 ? `${n} keer` : null);
 const join = (...parts: (string | null | undefined)[]) => parts.filter(Boolean).join(', ') || null;
