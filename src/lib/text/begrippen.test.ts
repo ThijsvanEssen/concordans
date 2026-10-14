@@ -37,8 +37,8 @@ const csirt: Definitie = {
 		key: 'bwbr0051234',
 		bwb_id: 'BWBR0051234',
 		citation_title: 'Cyberbeveiligingswet',
-		short_title: 'Cyberbeveiligingswet',
-		abbreviation: null,
+		short_title: 'Cbw',
+		abbreviation: 'Cbw',
 		path: '/wetten/BWBR0051234'
 	}
 };
@@ -72,12 +72,17 @@ describe('begrippen', () => {
 		});
 	});
 
-	it('names the law a definition is taken from, by its shortest name', () => {
+	it('names the law a definition is taken from, by its full name', () => {
 		expect(gegevenDoor(wet)).toBeNull();
 		expect(gegevenDoor(csirt)).toBe('Cyberbeveiligingswet');
 		const g = csirt.given_by!;
-		expect(gegevenDoor({ given_by: { ...g, abbreviation: 'Cbw' } })).toBe('Cbw');
-		expect(gegevenDoor({ given_by: { ...g, short_title: null } })).toBe('Cyberbeveiligingswet');
+		// The full name, not the abbreviation (Thijs, 14 Oct); shorter only where it lacks one.
+		expect(gegevenDoor({ given_by: { ...g, citation_title: null } })).toBe('Cbw');
+		expect(
+			gegevenDoor({
+				given_by: { ...g, citation_title: null, short_title: null, abbreviation: 'Cbw' }
+			})
+		).toBe('Cbw');
 		expect(gegevenDoor({ given_by: { key: g.key, path: null } })).toBeNull();
 
 		expect(plaatsVan(csirt)).toBe('art. 1 Cyberbeveiligingswet');

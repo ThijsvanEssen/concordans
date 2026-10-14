@@ -10,10 +10,13 @@ import { PREVIEW_CHARS, type Preview } from '$lib/bron/preview';
 export type Definitie = Schema<'DefinitionDTO'>;
 export type Begrip = Schema<'TermSpanDTO'>;
 
-/** The law a definition is taken from, by its shortest name; null for the regulation's own. */
+/**
+ * The law a definition is taken from, by its citation title ("Cyberbeveiligingswet", not
+ * "Cbw"); null for the regulation's own.
+ */
 export function gegevenDoor(d: Pick<Definitie, 'given_by'>): string | null {
 	const g = d.given_by;
-	return g ? (g.abbreviation ?? g.short_title ?? g.citation_title ?? null) : null;
+	return g ? (g.citation_title ?? g.short_title ?? g.abbreviation ?? null) : null;
 }
 
 /**
