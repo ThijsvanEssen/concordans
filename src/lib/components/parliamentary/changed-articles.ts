@@ -2,7 +2,8 @@
 // 0.74.0): what the dossier reader shows under "Gewijzigde artikelen".
 import { naamVanId } from '$lib/bron/menselijk';
 import { once } from '$lib/api/records';
-import { api } from '$lib/api/client';
+import { api, unwrap } from '$lib/api/client';
+import { ifExists } from '$lib/api/errors';
 import type { Schema } from '$lib/api/types';
 import { bookNumber } from '$lib/text/bw';
 import { langeDatum } from '$lib/text/datum';
@@ -34,14 +35,11 @@ export function zonderArtikelen(data: ChangedArticles, wijzigt: readonly LegalEf
 
 /** The changes of a dossier, or null where the API has none to give (an older API: 404). */
 export const getChangedArticles = (number: string): Promise<ChangedArticles | null> =>
-	once(`dossiers/${number}/changed-articles`, async () => {
-		const { data, response } = await api.GET('/api/dossiers/{number}/changed-articles', {
-			params: { path: { number } }
-		});
-		if (response.status === 404) return null;
-		if (!data) throw new Error(`changed-articles ${response.status}`);
-		return data;
-	});
+	once(`dossiers/${number}/changed-articles`, () =>
+		ifExists(
+			unwrap(api.GET('/api/dossiers/{number}/changed-articles', { params: { path: { number } } }))
+		)
+	);
 
 /** What a change does to the article, as the first word of its line. */
 export const RELATION_WORD: Record<DossierChange['relation'], string> = {

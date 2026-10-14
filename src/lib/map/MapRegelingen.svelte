@@ -4,6 +4,7 @@
 	// law, the articles it rests on below. First the names, as the list gives them; kind and
 	// date fill in after. Nothing where there are none.
 	import { buildBronHref } from '$lib/bron/href';
+	import { report } from '$lib/api/errors';
 	import { korteDatum } from '$lib/text/datum';
 	import { aangevuld, type Regeling, type Regelingen } from './verbonden';
 
@@ -28,7 +29,7 @@
 						.catch(() => {})
 				);
 			})
-			.catch(() => {});
+			.catch((e) => report('Regelingen', e));
 		return () => (stale = true);
 	});
 

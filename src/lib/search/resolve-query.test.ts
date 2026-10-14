@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
+import { ApiError } from '$lib/api/client';
+import { fail, fakeApi } from '$lib/test/fakeApi';
 import {
 	type ResolveDeps,
+	apiDeps,
 	bareArticle,
 	lawAbbreviation,
 	lawTitle,
@@ -330,5 +333,26 @@ describe('a fractie or lid the API resolves (0.79.30)', () => {
 		} as never);
 		expect(r?.ref).toEqual({ collection: 'factions', key: 'vvd' });
 		expect(r?.label).toBe('Volkspartij voor Vrijheid en Democratie');
+	});
+});
+
+describe('the API behind resolveQuery', () => {
+	const ecli = { collection: 'judgments', key: 'ecli_nl_hr_2099_1' } as const;
+
+	it('says a bron is not there only when the API says so (404)', async () => {
+		fakeApi({ '/api/nodes/{collection}/{key}': fail(404) });
+		expect(await apiDeps.exists(ecli)).toBe(false);
+	});
+
+	it('does not say "niet gevonden" when the API fails', async () => {
+		fakeApi({ '/api/nodes/{collection}/{key}': fail(500) });
+		await expect(apiDeps.exists(ecli)).rejects.toBeInstanceOf(ApiError);
+	});
+
+	it('resolves nothing for a 404, and rejects on a failure', async () => {
+		fakeApi({ '/api/resolve': fail(404) });
+		expect(await apiDeps.resolve('art. 6:162 BW')).toBeNull();
+		fakeApi({ '/api/resolve': fail(500) });
+		await expect(apiDeps.resolve('art. 6:162 BW')).rejects.toBeInstanceOf(ApiError);
 	});
 });

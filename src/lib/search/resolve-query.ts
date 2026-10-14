@@ -5,6 +5,7 @@ import { BW_BOOKS, withBook } from '$lib/text/bw';
 import { getArticleDetail } from '$lib/api/articles';
 import { getDossier, getDossierDocuments } from '$lib/components/parliamentary/data';
 import { api, unwrap } from '$lib/api/client';
+import { ifExists } from '$lib/api/errors';
 import type { Schema } from '$lib/api/types';
 import type { BronRef } from '$lib/bron/href';
 import { parseNodeId, type Collection } from '$lib/vocabulary';
@@ -162,11 +163,10 @@ const RESOLVE_KINDS: Record<string, Collection> = {
 	commitment: 'commitments'
 };
 
-const apiDeps: ResolveDeps = {
-	resolve: async (q) => {
-		const { data, response } = await api.GET('/api/resolve', { params: { query: { q } } });
-		return response.ok ? resolvedOf(data) : null;
-	},
+/** The API behind `resolveQuery`: "geen" only where the API says so (404). */
+export const apiDeps: ResolveDeps = {
+	resolve: async (q) =>
+		resolvedOf(await ifExists(unwrap(api.GET('/api/resolve', { params: { query: { q } } })))),
 	lawId: async (law, articleNumber) => {
 		// The API's parser stops at a colon, so it is asked for the part before it.
 		const q = `art. ${articleNumber.split(':')[0]} ${law}`;
@@ -193,12 +193,14 @@ const apiDeps: ResolveDeps = {
 			.then((d) => ({ key: d.key, number: d.number }))
 			.catch(() => null),
 	lookUp: (pad) => lookUp(pad),
-	exists: async ({ collection, key }) => {
-		const { response } = await api.GET('/api/nodes/{collection}/{key}', {
-			params: { path: { collection, key }, query: { limit: 1 } }
-		});
-		return response.ok;
-	}
+	exists: async ({ collection, key }) =>
+		(await ifExists(
+			unwrap(
+				api.GET('/api/nodes/{collection}/{key}', {
+					params: { path: { collection, key }, query: { limit: 1 } }
+				})
+			)
+		)) !== null
 };
 
 /**

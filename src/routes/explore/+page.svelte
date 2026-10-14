@@ -33,7 +33,8 @@
 	import { afterNavigate, goto } from '$app/navigation';
 	import { cut, tabTitle } from '$lib/bron/tab-title';
 	import { titelVan } from '$lib/bron/titels.svelte';
-	import { api, ApiError } from '$lib/api/client';
+	import { api, ApiError, unwrap } from '$lib/api/client';
+	import { report } from '$lib/api/errors';
 	import { getNodeCanvas, getNodeFirst, getNodeHull } from '$lib/api/records';
 	import { kopNode } from '$lib/bron/kop';
 	import { getInFlux, getHeat, getDossierInFlux, type NodeCounts } from '$lib/api/overlays';
@@ -825,10 +826,10 @@
 		// a lid's MEMBER_OF and an article's PART_OF (Thijs, 9 Oct). An API without
 		// `expand` ignores it.
 		const query = { ids: ids.join(','), max_depth: 4, expand: 'members', expand_cap: EXPAND_CAP };
-		const { data } = await api
-			.GET('/api/paths', { params: { query: query as { ids: string; max_depth: number } } })
-			.catch(() => ({ data: undefined }));
-		return data ?? null;
+		// Without them the canvas draws the shared neighbours only.
+		return unwrap(
+			api.GET('/api/paths', { params: { query: query as { ids: string; max_depth: number } } })
+		).catch((e) => (report('Paden tussen bronnen', e), null));
 	}
 
 	/** Per group the API widened, how many of its members it took: "via 200 van 846 leden". */

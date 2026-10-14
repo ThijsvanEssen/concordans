@@ -6,6 +6,7 @@
 	// or the focus first comes to a formula. Hover shows the card; a click or a tap holds it
 	// open. Escape, a tap outside or a second click close it.
 	import BronLink from '$lib/bron/BronLink.svelte';
+	import { report } from '$lib/api/errors';
 	import { isEscape } from '$lib/actions/keys';
 	import {
 		artikelKort,
@@ -44,9 +45,16 @@
 
 	const regelingen = $derived(antwoord ? (vullingVan(antwoord, formule.bij) ?? []) : null);
 
+	/** Asked once; after a failure ("niet geladen") again on the next hover or tap. */
 	function vraag() {
-		if (antwoord !== undefined) return;
-		void laad().then((a) => (antwoord = a));
+		if (antwoord) return;
+		laad().then(
+			(a) => (antwoord = a),
+			(e) => {
+				report('Grondslag', e);
+				antwoord = null;
+			}
+		);
 	}
 	function wacht(fn: () => void, ms: number) {
 		if (timer) clearTimeout(timer);

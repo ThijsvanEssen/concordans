@@ -4,7 +4,8 @@
 // amendement, the vote on its zaak; a judgment the first sentence of its summary, or at an
 // r.o. that overweging; an article its first lid, or the part the reference names.
 import { getDossier } from '$lib/components/parliamentary/data';
-import { getNodeFirst } from '$lib/api/records';
+import { getNodeFirst, once } from '$lib/api/records';
+import { ifExists } from '$lib/api/errors';
 import { getNodeGraph } from '$lib/api/nodes';
 import { getArticleDetail } from '$lib/api/articles';
 import { formatLongDate } from '$lib/components/explore/readers/_shared';
@@ -25,7 +26,6 @@ import { bronLabel, isCollection, type Collection } from '$lib/vocabulary';
 import { focusOf, type BronRef } from './href';
 import { tabTitle } from './tab-title';
 import { isOverwegingAnker, laadUitspraak, tekstVanOverweging } from './overweging';
-import { onForget } from '$lib/util/forget';
 
 export type Preview = {
 	/** The kind, and where it helps its place: `Uitspraak, Hoge Raad`. */
@@ -227,23 +227,14 @@ export function previewFromNode(
 	}
 }
 
-const cache = new Map<string, Promise<Preview | null>>();
-onForget(() => cache.clear());
-
-/** The card of a bron, asked for once per bron and position. */
+/** The card of a bron, asked for once per bron and position; null for none to show. */
 export function loadPreview(
 	ref: BronRef | string,
 	at: string | null = null
 ): Promise<Preview | null> {
 	const id = focusOf(ref);
 	if (!id) return Promise.resolve(null);
-	const cacheKey = `${id}#${at ?? ''}`;
-	let request = cache.get(cacheKey);
-	if (!request) {
-		request = fetchPreview(id, at).catch(() => null);
-		cache.set(cacheKey, request);
-	}
-	return request;
+	return once(`preview/${id}#${at ?? ''}`, () => fetchPreview(id, at));
 }
 
 async function fetchPreview(id: string, at: string | null): Promise<Preview | null> {
@@ -252,7 +243,7 @@ async function fetchPreview(id: string, at: string | null): Promise<Preview | nu
 	const key = id.slice(slash + 1);
 	if (!isCollection(collection)) return null;
 	if (collection === 'dossiers') {
-		const data = await getDossier(key).catch(() => null);
+		const data = await ifExists(getDossier(key));
 		return data
 			? previewFromNode('dossiers', data.title ?? null, {
 					label: data.number,
@@ -266,7 +257,7 @@ async function fetchPreview(id: string, at: string | null): Promise<Preview | nu
 	}
 	// The light node, kept as a record: a click on the bron after the card opens its
 	// reader and the heads of its panel at once (`peekNode`, Verbonden's preview).
-	const data = await getNodeFirst(collection, key).catch(() => null);
+	const data = await ifExists(getNodeFirst(collection, key));
 	const node = data?.node;
 	if (!node) return null;
 	const props = (node.props ?? {}) as Record<string, unknown>;
@@ -282,8 +273,8 @@ async function fetchPreview(id: string, at: string | null): Promise<Preview | nu
 			limit: 20,
 			relations: 'ABOUT',
 			nodeTypes: 'decision'
-		}).catch(() => null);
-		const eigen = (besluiten?.neighbors?.buckets ?? [])
+		});
+		const eigen = (besluiten.neighbors?.buckets ?? [])
 			.flatMap((b) => b.items ?? [])
 			.map((i) => (i.props ?? {}) as Record<string, unknown>)
 			.filter((p) => p.primary_case_id === caseId && (p.passed != null || text(p.decision_text)))
@@ -294,7 +285,7 @@ async function fetchPreview(id: string, at: string | null): Promise<Preview | nu
 	if (collection === 'judgments' && isOverwegingAnker(at)) {
 		// At an r.o., the overweging the reference means, not the summary (the detail the
 		// reader shares).
-		const u = await laadUitspraak(key)?.catch(() => null);
+		const u = await laadUitspraak(key);
 		const t = u ? tekstVanOverweging(u, at, PREVIEW_CHARS) : null;
 		return t ? { ...preview, lines: t } : preview;
 	}

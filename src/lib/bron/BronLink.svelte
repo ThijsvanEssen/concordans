@@ -16,6 +16,7 @@
 	import { focusIn } from './leesbaar';
 	import { focusOf, openHref, type BronRef } from './href';
 	import { loadPreview, type Preview } from './preview';
+	import { report } from '$lib/api/errors';
 	import { isEscape } from '$lib/actions/keys';
 	import { isOverwegingRef } from './overweging';
 	import OverwegingKaart from './OverwegingKaart.svelte';
@@ -147,7 +148,9 @@
 		if (!preview || tast) return;
 		if (timer) clearTimeout(timer);
 		timer = setTimeout(async () => {
-			const loaded = voorbeeld ?? (await loadPreview(ref, at));
+			// A card that cannot be loaded is not shown; the next hover asks again.
+			const loaded =
+				voorbeeld ?? (await loadPreview(ref, at).catch((e) => (report('Kaart', e), null)));
 			if (timer) card = loaded && extra ? { ...loaded, extra } : loaded;
 		}, HOVER_MS);
 	}

@@ -3,6 +3,7 @@
 // the API gives one.
 import { naamVan, naamVanId } from '$lib/bron/menselijk';
 import { api, unwrap } from '$lib/api/client';
+import { ifExists, report } from '$lib/api/errors';
 import { geteld } from '$lib/api/decisions';
 import type { Schema } from '$lib/api/types';
 import { getCommittee, str } from '$lib/components/parliamentary/data';
@@ -130,12 +131,14 @@ export type Loaded = {
  * names the article a judgment applies): all of them, not the few in the node response.
  */
 async function echrJudgments(bwb: string, articleKey: string, signal: AbortSignal): Promise<Row[]> {
-	const { data } = await api
-		.GET('/api/instruments/{identifier}/eu-links', {
-			params: { path: { identifier: bwb } },
-			signal
-		})
-		.catch(() => ({ data: undefined }));
+	const data = await ifExists(
+		unwrap(
+			api.GET('/api/instruments/{identifier}/eu-links', {
+				params: { path: { identifier: bwb } },
+				signal
+			})
+		)
+	);
 	return (data?.international ?? [])
 		.filter((l) => l.judgment && l.own_article?.key === articleKey)
 		.map((l) => {
@@ -216,11 +219,10 @@ async function touched(
 	key: string,
 	signal: AbortSignal
 ): Promise<Loaded> {
-	const found = await unwrap(
-		who === 'members'
-			? api.GET('/api/members/{key}/touched-instruments', { params: { path: { key } }, signal })
-			: api.GET('/api/factions/{key}/touched-instruments', { params: { path: { key } }, signal })
-	);
+	const query = { params: { path: { key } }, signal };
+	const found = await (who === 'members'
+		? unwrap(api.GET('/api/members/{key}/touched-instruments', query))
+		: unwrap(api.GET('/api/factions/{key}/touched-instruments', query)));
 	return {
 		rows: found.items.map((i) => ({
 			ref: { collection: 'instruments', key: i.key },
@@ -555,9 +557,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		const found = await Promise.all(
 			laws
 				.slice(0, MAX_LAWS)
-				.map((law) =>
-					getBuckets('instruments', law.ref.key, EUROPEAN.match ?? [], ctx.signal).catch(() => [])
-				)
+				.map((law) => getBuckets('instruments', law.ref.key, EUROPEAN.match ?? [], ctx.signal))
 		);
 		const rows = new Map<string, Row>();
 		for (const neighbors of found) {
@@ -617,24 +617,29 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		if (bwb && number) {
 			const sort = get(uitspraakVolgorde);
 			const page = (offset: number) =>
-				api
-					.GET('/api/articles/{bwb_id}/{article_number}/cited-by', {
-						params: {
-							path: { bwb_id: bwb, article_number: number },
-							query: { limit: CITED_BY_PAGE, offset, sort }
-						},
-						signal
-					})
-					.catch(() => ({ data: undefined, response: null }));
-			const { data, response } = await page(0);
-			if (response?.ok && data && data.items.length > 0) {
+				ifExists(
+					unwrap(
+						api.GET('/api/articles/{bwb_id}/{article_number}/cited-by', {
+							params: {
+								path: { bwb_id: bwb, article_number: number },
+								query: { limit: CITED_BY_PAGE, offset, sort }
+							},
+							signal
+						})
+					)
+				);
+			const data = await page(0);
+			if (data && data.items.length > 0) {
 				// The ECHR judgments are no passage (HUDOC names the article, not the place):
 				// they stand in Europees en internationaal, not here (BE-9).
 				const judgmentsOf =
 					data.echr_judgment_total > 0
 						? {
 								international: {
-									rows: await echrJudgments(bwb, node.key, signal),
+									// Another group's rows: this group stands without them.
+									rows: await echrJudgments(bwb, node.key, signal).catch(
+										(e) => (report('Verbonden: EHRM-uitspraken', e), [])
+									),
 									total: data.echr_judgment_total
 								}
 							}
@@ -694,8 +699,8 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 								const items = [...first];
 								while (!complete(items)) {
 									const next = await page(items.length);
-									if (!next.data || next.data.items.length === 0) break;
-									items.push(...next.data.items);
+									if (!next || next.items.length === 0) break;
+									items.push(...next.items);
 								}
 								return loaded(items);
 							}
@@ -824,19 +829,21 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// that, what the node shows: IMPLEMENTS and references to treaties.
 	// TODO(backend B9): the fallback goes when every law answers on `eu-links`.
 	'instrument-international': async ({ node, buren, signal }) => {
-		const { data, response } = await api
-			.GET('/api/instruments/{identifier}/eu-links', {
-				params: { path: { identifier: node.key }, query: { limit: 50 } },
-				signal
-			})
-			.catch(() => ({ data: undefined, response: null }));
+		const data = await ifExists(
+			unwrap(
+				api.GET('/api/instruments/{identifier}/eu-links', {
+					params: { path: { identifier: node.key }, query: { limit: 50 } },
+					signal
+				})
+			)
+		);
 		const linked =
 			(data?.implements?.length ?? 0) +
 			(data?.implemented_by?.length ?? 0) +
 			(data?.mentions?.length ?? 0) +
 			(data?.mentioned_by?.length ?? 0) +
 			(data?.international?.length ?? 0);
-		if (response?.ok && data && linked > 0) {
+		if (data && linked > 0) {
 			const rows = new Map<string, Row>();
 			const add = (row: Row) => {
 				if (!rows.has(row.ref.key)) rows.set(row.ref.key, row);

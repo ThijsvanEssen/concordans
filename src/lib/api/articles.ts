@@ -1,4 +1,5 @@
 import { api, unwrap } from './client';
+import { ifExists } from './errors';
 import { once } from './records';
 import { onForget } from '$lib/util/forget';
 
@@ -46,42 +47,43 @@ export function getArticleDetailByKey(key: string) {
 /**
  * The regulations issued under an article (its `Gelet op` names it), and per delegation
  * formula of its text the ones that fill it; once per article, for the formula's card and
- * the group in Verbonden. Null where the API does not answer it (one without the route).
+ * the group in Verbonden. Null where the API does not have the article.
  */
 export const getDelegated = (bwbId: string, articleNumber: string) =>
 	once(`articles/${bwbId}/${articleNumber}/delegated`, () =>
-		api
-			.GET('/api/articles/{bwb_id}/{article_number}/delegated', {
-				params: { path: { bwb_id: bwbId, article_number: articleNumber } }
-			})
-			.then(({ data }) => data ?? null)
-			.catch(() => null)
+		ifExists(
+			unwrap(
+				api.GET('/api/articles/{bwb_id}/{article_number}/delegated', {
+					params: { path: { bwb_id: bwbId, article_number: articleNumber } }
+				})
+			)
+		)
 	);
 
 /**
  * The regulations issued under a law: one per regulation whose `Gelet op` names an article of
  * it, with those articles; once per law, for its group in Verbonden and its row in a map.
- * Null where the API does not answer it.
+ * Null where the API does not have the law.
  */
 export const getLawDelegated = (bwbId: string) =>
 	once(`instruments/${bwbId}/delegated`, () =>
-		api
-			.GET('/api/instruments/{bwb_id}/delegated', { params: { path: { bwb_id: bwbId } } })
-			.then(({ data }) => data ?? null)
-			.catch(() => null)
+		ifExists(
+			unwrap(
+				api.GET('/api/instruments/{bwb_id}/delegated', { params: { path: { bwb_id: bwbId } } })
+			)
+		)
 	);
 
 /**
  * The grondslag of a regulation: per law its `Gelet op` names, those articles; once per law,
  * for the head of the regulation and its group in Verbonden. Null where the API does not
- * answer it.
+ * have the law.
  */
 export const getLawBasis = (bwbId: string) =>
 	once(`instruments/${bwbId}/basis`, () =>
-		api
-			.GET('/api/instruments/{bwb_id}/basis', { params: { path: { bwb_id: bwbId } } })
-			.then(({ data }) => data ?? null)
-			.catch(() => null)
+		ifExists(
+			unwrap(api.GET('/api/instruments/{bwb_id}/basis', { params: { path: { bwb_id: bwbId } } }))
+		)
 	);
 
 /**

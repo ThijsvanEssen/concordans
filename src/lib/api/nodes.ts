@@ -5,6 +5,8 @@ import { api, unwrap, zoekApi } from './client';
 // Keys are lower case in the API and the routes are case-sensitive.
 const path = (collection: Collection, key: string) => ({ collection, key: key.toLowerCase() });
 
+const clientFor = (limit = 0) => (limit > 1 ? zoekApi : api);
+
 export const getNodeGraph = (
 	collection: Collection,
 	key: string,
@@ -27,7 +29,7 @@ export const getNodeGraph = (
 	// A full node can take a cold API more than 10 s (art. 3:2 Awb, 651 kB, prod 9 Oct): it
 	// waits as long as the API does, so the work is not cut off and asked again.
 	unwrap(
-		((opts.limit ?? 0) > 1 ? zoekApi : api).GET('/api/nodes/{collection}/{key}', {
+		clientFor(opts.limit).GET('/api/nodes/{collection}/{key}', {
 			params: {
 				path: path(collection, key),
 				query: {
@@ -54,7 +56,8 @@ export type Bucket = {
 	collection: Collection | Collection[];
 };
 
-/** The rows of these buckets of a bron, up to 200 each, one request per bucket. */
+/** The rows of these buckets of a bron, up to 200 each, one request per bucket; one that
+ *  fails fails them all, so no group stands short without saying so. */
 export const getBuckets = (
 	collection: Collection,
 	key: string,
@@ -62,7 +65,7 @@ export const getBuckets = (
 	signal?: AbortSignal,
 	edgeMeta?: 'passages'
 ): Promise<Neighbor[]> =>
-	Promise.allSettled(
+	Promise.all(
 		buckets.map((b) =>
 			getNodeGraph(collection, key, {
 				limit: 200,
@@ -76,9 +79,7 @@ export const getBuckets = (
 				edgeMeta
 			})
 		)
-	).then((results) =>
-		results.flatMap((r) => (r.status === 'fulfilled' ? neighborsOf(r.value) : []))
-	);
+	).then((responses) => responses.flatMap(neighborsOf));
 
 /** The neighbours of a node response, whatever bucket they are in. An API before 0.5 lists them flat. */
 export const neighborsOf = (response: NodeGraph): Neighbor[] =>
