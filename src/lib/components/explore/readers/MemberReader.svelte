@@ -42,6 +42,9 @@
 	import { onControl } from '$lib/actions/outside';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
+	import { load } from '$lib/util/load.svelte';
+	import { report } from '$lib/api/errors';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -49,19 +52,9 @@
 
 	type Vote = Schema<'MemberVoteDTO'>;
 
-	type State =
-		| { kind: 'loading' }
-		| { kind: 'error'; message: string }
-		| { kind: 'loaded'; member: Schema<'MemberDetailDTO'> };
-
 	const VOTES_PREVIEW = 20;
 	const CHOICE_ORDER = ['Voor', 'Tegen'];
 
-	let view = $state<State>({ kind: 'loading' });
-	// The votes (8.8 s on prod, 9 Oct) and the signatures (from the full node) come after
-	// the person: the reader stands as soon as the person is in, and these fill in.
-	let votes = $state<Schema<'MemberVotesResponse'> | null>(null);
-	let votesLaden = $state(true);
 	/** What the person signed stukken as, and when (AUTHORED meta). */
 	let signatures = $state<Signature[]>([]);
 	let showAllVotes = $state(false);
@@ -71,50 +64,40 @@
 	let openStem = $state<string | null>(null);
 	const toggleStem = (key: string) => (openStem = openStem === key ? null : key);
 
-	// Raised by Opnieuw, to load the bron again after an error.
-	let attempt = $state(0);
-
 	// The key, not the node: the node is drawn anew with the same key once its
 	// neighbourhood loads, and the records are not asked again for that.
 	const bronKey = $derived(node.key);
+	const member = load(
+		() => bronKey,
+		(key) => getMember(key),
+		'Persoon'
+	);
+	// The votes (8.8 s on prod, 9 Oct) and the signatures (from the full node) come after
+	// the person: the reader stands as soon as the person is in, and these fill in.
+	const votes = load(
+		() => bronKey,
+		(key) => getMemberVotes(key),
+		'Stemmen van het lid'
+	);
 
 	$effect(() => {
-		void attempt;
 		const key = bronKey;
-		const ac = new AbortController();
-		view = { kind: 'loading' };
+		let stale = false;
 		showAllVotes = false;
 		inOffice = null;
-		votes = null;
-		votesLaden = true;
 		signatures = [];
-		getMember(key)
-			.then((member) => {
-				if (!ac.signal.aborted) view = { kind: 'loaded', member };
-			})
-			.catch(() => {
-				if (!ac.signal.aborted)
-					view = { kind: 'error', message: 'Persoon kon niet worden geladen.' };
-			});
-		getMemberVotes(key)
-			.catch(() => null)
-			.then((v) => {
-				if (ac.signal.aborted) return;
-				votes = v;
-				votesLaden = false;
-			});
 		getMemberAuthored(key)
 			.then((authored) => {
-				if (!ac.signal.aborted) signatures = authored.map(signatureOf);
+				if (!stale) signatures = authored.map(signatureOf);
 			})
-			.catch(() => {});
-		return () => ac.abort();
+			.catch((e) => report('Ondertekeningen van het lid', e));
+		return () => (stale = true);
 	});
 
 	// A bewindspersoon's votes in a post: all of them, page by page, not those among the newest
 	// 50 (UX-toets 0.79.43, #29: "20 stemmen" of 50).
 	const bewindspersoon = $derived(
-		view.kind === 'loaded' && (view.member.government_functions ?? []).length > 0
+		member.state.status === 'ready' && (member.state.data.government_functions ?? []).length > 0
 	);
 	$effect(() => {
 		if (!bewindspersoon) return;
@@ -210,31 +193,22 @@
 	const years = $derived(parseFilter(page.url.searchParams));
 </script>
 
-<ReaderFrame>
-	<div class="r-member">
-		{#if view.kind === 'loading'}
-			<p class="loading stil">Laden…</p>
-		{:else if view.kind === 'error'}
-			<p class="error">
-				{view.message}
-				<button type="button" class="btn is-text" onclick={() => attempt++}>Opnieuw</button>
-			</p>
-		{:else}
-			{@const m = view.member}
-			{@const career = careerOf(
-				m.faction_memberships ?? [],
-				signatures,
-				m.government_functions ?? []
-			)}
-			<!-- An end date is the last day in the seat (TotEnMet): on it, the member still sits. -->
-			{@const sitting = (m.faction_memberships ?? []).some(
-				(f) => !f.to_date || f.to_date.slice(0, 10) >= today
-			)}
+<ReaderFrame state={member.state} what="Persoon" retry={member.retry}>
+	{#snippet children(m)}
+		{@const career = careerOf(
+			m.faction_memberships ?? [],
+			signatures,
+			m.government_functions ?? []
+		)}
+		<!-- An end date is the last day in the seat (TotEnMet): on it, the member still sits. -->
+		{@const sitting = (m.faction_memberships ?? []).some(
+			(f) => !f.to_date || f.to_date.slice(0, 10) >= today
+		)}
 
-			<!-- A seat in the Eerste Kamer, as its site lists it (API 0.65); none before our first read. -->
-			{@const ek = m.ek ?? null}
-			{@const ekSitting = !!ek && !ek.observed_until}
-
+		<!-- A seat in the Eerste Kamer, as its site lists it (API 0.65); none before our first read. -->
+		{@const ek = m.ek ?? null}
+		{@const ekSitting = !!ek && !ek.observed_until}
+		<div class="r-member">
 			{#if (m.government_functions ?? []).length > 0}
 				<BewindspersoonKop {m} id={node.id} />
 			{:else}
@@ -377,14 +351,17 @@
 				</Sectie>
 			{/if}
 
-			{#if votesLaden}
+			{#if votes.state.status === 'loading'}
 				<p class="laden">Stemmen laden…</p>
-			{:else if votes && votes.votes.length > 0}
+			{:else if votes.state.status === 'error'}
+				<LoadState state={votes.state} what="De stemgeschiedenis" retry={votes.retry} />
+			{:else if votes.state.data.votes.length > 0}
+				{@const stemmen = votes.state.data}
 				<!-- A bewindspersoon's votes in a post come on their own, all of them (#534); the
 				     newest 50 give the rest. Until the first page is in, the 50 give both. -->
 				{@const apart = !!inOffice && !(inOffice.laden && inOffice.votes.length === 0)}
 				{@const ambt = apart ? inOffice!.votes : []}
-				{@const eigen = apart ? votes.votes.filter((v) => !v.in_office?.length) : votes.votes}
+				{@const eigen = apart ? stemmen.votes.filter((v) => !v.in_office?.length) : stemmen.votes}
 				{@const alle = [...ambt, ...eigen]}
 				{@const groups = groupVotes(
 					showAllVotes ? alle : [...ambt.slice(0, VOTES_PREVIEW), ...eigen.slice(0, VOTES_PREVIEW)],
@@ -396,7 +373,7 @@
 				<Sectie
 					titel={(m.government_functions ?? []).length > 0 ? 'Als Kamerlid' : 'Stemgeschiedenis'}
 					soort="decisions"
-					aantal={apart ? `${alle.length}${inOffice!.next != null ? '+' : ''}` : votes.count}
+					aantal={apart ? `${alle.length}${inOffice!.next != null ? '+' : ''}` : stemmen.count}
 				>
 					{#each groups as group (`${group.party}|${group.ambt}`)}
 						{#if groups.length > 1 || group.ambt}
@@ -505,8 +482,8 @@
 					{/if}
 				</Sectie>
 			{/if}
-		{/if}
-	</div>
+		</div>
+	{/snippet}
 </ReaderFrame>
 
 <style>
@@ -518,11 +495,6 @@
 		gap: var(--lezer-stap);
 		color: var(--ink-2);
 	}
-	.loading,
-	.error {
-		margin: 0;
-	}
-
 	/* The faction is a word, not a tag. */
 	/* Also on the link NameLink renders. */
 	.r-member :global(.fractie-woord) {

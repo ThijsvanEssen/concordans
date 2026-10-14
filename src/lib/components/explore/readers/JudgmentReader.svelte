@@ -19,7 +19,6 @@
 	// Reader for judgments: header, summary, participants and the numbered body.
 	// Text restructuring lives in judgment-text.ts.
 	import { getJudgmentDetail } from '$lib/api/judgments';
-	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import CitedText from '$lib/components/articles/CitedText.svelte';
 	import { page } from '$app/state';
@@ -49,18 +48,18 @@
 	import { isNootAnker, uitspraakNoten, type Noot, type NootMarker } from '$lib/text/voetnoten';
 	import { zetNootStand } from '$lib/text/voetnoten.svelte';
 	import { markeringVoor } from '$lib/bron/markering.svelte';
+	import { load } from '$lib/util/load.svelte';
+	import { report } from '$lib/api/errors';
 
-	let { selection }: { selection: GraphNode | null } = $props();
+	let { node }: { node: GraphNode } = $props();
 
-	type View =
-		| { kind: 'empty' }
-		| { kind: 'loading' }
-		| { kind: 'error' }
-		| { kind: 'loaded'; data: Schema<'JudgmentDetailResponse'> };
-
-	let view = $state<View>({ kind: 'empty' });
-
-	const ecli = $derived(selection ? String(selection.raw?.props?.ecli ?? selection.key) : null);
+	const ecli = $derived(String(node.raw?.props?.ecli ?? node.key));
+	const judgment = load(
+		() => ecli,
+		(e) => getJudgmentDetail(e),
+		'Uitspraak'
+	);
+	const loaded = $derived(judgment.state.status === 'ready' ? judgment.state.data : null);
 
 	// The anchor of an overweging: `paragraph_id` for the first sub-paragraph split out of
 	// an API paragraph, else built from its number — a later split shares one `paragraph_id`
@@ -93,10 +92,10 @@
 	// it, with the words a row or a card came for marked (markering).
 	const noten = zetNootStand();
 	$effect(() => {
-		if (view.kind !== 'loaded' || !anchor || !root) return;
+		if (!loaded || !anchor || !root) return;
 		const container = root;
 		if (isNootAnker(anchor)) {
-			const m = markeringVoor(`judgments/${view.data.judgment.key}`, anchor);
+			const m = markeringVoor(`judgments/${loaded.judgment.key}`, anchor);
 			noten.toon(anchor, { doel: m?.doel, bereik: m?.bereik });
 		}
 		void tick().then(() => landOn(container, anchor));
@@ -104,35 +103,14 @@
 	const nootVan = (alle: Map<string, Noot>, markers: NootMarker[] | undefined) =>
 		(markers ?? []).flatMap((m) => alle.get(m.id) ?? []);
 
-	// Raised by Opnieuw, to load the bron again after an error.
-	let attempt = $state(0);
-
-	$effect(() => {
-		void attempt;
-		if (!ecli) {
-			view = { kind: 'empty' };
-			return;
-		}
-		let stale = false;
-		view = { kind: 'loading' };
-		getJudgmentDetail(ecli)
-			.then((data) => {
-				if (!stale) view = { kind: 'loaded', data };
-			})
-			.catch(() => {
-				if (!stale) view = { kind: 'error' };
-			});
-		return () => (stale = true);
-	});
-
 	// The connected cases (API 0.78): the sentence that ties each is on the edge of the node
 	// response, asked only for a judgment that has any.
 	let samenhang = $state<Samenhang[]>([]);
 	$effect(() => {
 		samenhang = [];
-		if (view.kind !== 'loaded') return;
-		const j = view.data.judgment;
-		const related = view.data.related_to ?? [];
+		if (!loaded) return;
+		const j = loaded.judgment;
+		const related = loaded.related_to ?? [];
 		if (related.length === 0) return;
 		let stale = false;
 		samenhang = samenhangVan([], related);
@@ -140,7 +118,7 @@
 			.then((response) => {
 				if (!stale) samenhang = samenhangVan(neighborsOf(response), related);
 			})
-			.catch(() => {});
+			.catch((e) => report('Samenhangende zaken', e));
 		return () => (stale = true);
 	});
 
@@ -149,17 +127,16 @@
 	// Kept per judgment: the reader's node is replaced under the same id (its head, its light
 	// node, the canvas's), and the line would lose it and get it back each time.
 	let conclusieVoor = $state<{ id: string; laag: Laag | null } | null>(null);
-	const selectieId = $derived(selection?.id ?? null);
+	const selectieId = $derived(node.id);
 	$effect(() => {
 		const id = selectieId;
-		if (!id) return;
-		const { collection, key } = untrack(() => selection!);
+		const { collection, key } = untrack(() => node);
 		let stale = false;
 		getNodeFirst(collection, key)
 			.then((r) => {
 				if (!stale) conclusieVoor = { id, laag: conclusieVan(r) };
 			})
-			.catch(() => {});
+			.catch((e) => report('Conclusie bij de uitspraak', e));
 		return () => (stale = true);
 	});
 	const conclusie = $derived(conclusieVoor?.id === selectieId ? conclusieVoor.laag : null);
@@ -168,18 +145,14 @@
 	const PARTIES_PREVIEW = 6;
 	let showAllParties = $state(false);
 	$effect(() => {
-		void selection?.key;
+		void node.key;
 		showAllParties = false;
 	});
 </script>
 
-<ReaderFrame
-	onRetry={() => attempt++}
-	status={view.kind === 'loaded' ? 'ready' : view.kind}
-	what="Uitspraak"
->
-	{#if view.kind === 'loaded'}
-		{@const j = view.data.judgment}
+<ReaderFrame state={judgment.state} what="Uitspraak" retry={judgment.retry}>
+	{#snippet children(data)}
+		{@const j = data.judgment}
 		{@const paragraphs = j.paragraphs ?? []}
 		{@const caseNumber = textProp(j.props?.case_number)}
 		{@const judgmentDate = formatLongDate(textProp(j.props?.date))}
@@ -213,7 +186,7 @@
 			j.advocate_general,
 			paragraphs.filter((p) => p.kind === 'signature').map((p) => p.text)
 		)}
-		{@const alsoAs = view.data.same_as ?? []}
+		{@const alsoAs = data.same_as ?? []}
 		{@const outside = j.unresolved_citations ?? []}
 		<!-- The status in one sentence: kind, date, case number; the conclusie after it. -->
 		{@const statusWoorden = [
@@ -225,8 +198,8 @@
 		].filter(Boolean)}
 		<!-- The conclusies by their A-G or P-G and day from the judgment's own detail, so they
 		     stand with the text (API 0.79.43, #507); before it, from the light node. -->
-		{@const conclusies = view.data.conclusions
-			? view.data.conclusions.map((c) => ({
+		{@const conclusies = data.conclusions
+			? data.conclusions.map((c) => ({
 					ref: { collection: 'judgments' as const, key: ecliKey(c.ecli) },
 					naam: conclusieNaam(c),
 					strekking: strekking(c.outcome)
@@ -251,20 +224,18 @@
 				(j.names?.length ? ` (${j.names.join(', ')})` : '')}
 			acties={{
 				// Bewaar follows the overweging chosen (#rov-5.7.1), else the whole judgment.
-				bewaar: selection
-					? bewaarItem(
-							selection.id,
-							{
-								at: ro && kop && j.ecli ? anchor! : '',
-								kort: ro && kop && j.ecli ? `${kop.short}, ${paragraphCite(j.ecli, ro)}` : naamKort,
-								voluit:
-									ro && kop && j.ecli
-										? `${kop.full}, ${paragraphCite(j.ecli, ro)}`
-										: (kop?.full ?? naamKort)
-							},
-							{ groep: zaakNaam(naamKort, j.names) }
-						)
-					: null,
+				bewaar: bewaarItem(
+					node.id,
+					{
+						at: ro && kop && j.ecli ? anchor! : '',
+						kort: ro && kop && j.ecli ? `${kop.short}, ${paragraphCite(j.ecli, ro)}` : naamKort,
+						voluit:
+							ro && kop && j.ecli
+								? `${kop.full}, ${paragraphCite(j.ecli, ro)}`
+								: (kop?.full ?? naamKort)
+					},
+					{ groep: zaakNaam(naamKort, j.names) }
+				),
 				wat: ro && kop ? `r.o. ${ro}` : '',
 				cite: kop ? citeItems({ kort: kop.short, voluit: kop.full }, permalink(page.url, '')) : [],
 				naam: naamKort,
@@ -435,7 +406,7 @@
 						item.num,
 						item.id,
 						permalink(page.url, item.id),
-						selection?.id ?? null
+						node.id
 					)}
 					{@const bewaarItem = forms?.bewaar ?? null}
 					<!-- Every number in one column, whatever its depth; the number is the
@@ -525,7 +496,7 @@
 				<p class="reader-attribution">Tekst: © ECHR-CEDH, uit HUDOC.</p>
 			{/if}
 		</div>
-	{/if}
+	{/snippet}
 </ReaderFrame>
 
 <style>

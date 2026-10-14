@@ -11,6 +11,7 @@
 	import { collectionOf, INDEX_TABS } from './categories';
 	import { getStats } from '$lib/api/stats';
 	import { formatCount } from '$lib/text/getal';
+	import { report } from '$lib/api/errors';
 
 	// Each kind with the total its own list gives without a filter (`/api/stats` `lists`,
 	// API 0.79.41): the number the list shows when opened. Empty while it is not there.
@@ -18,7 +19,7 @@
 	$effect(() => {
 		getStats()
 			.then((s) => (lijsten = (s as { lists?: Record<string, number | null> }).lists ?? {}))
-			.catch(() => {});
+			.catch((e) => report('Aantallen per soort', e));
 	});
 	/** The key of a kind in `lists`: the bewindspersonen are its name for the ministers. */
 	const telVan = (kind: string) => lijsten[kind === 'ministers' ? 'bewindspersonen' : kind] ?? null;

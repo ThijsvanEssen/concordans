@@ -35,8 +35,10 @@
 	import { nog, verderLabel, volgendeBladzijden, vorigeBladzijde, type Richting } from './bladeren';
 	import { kindName, lawFullTitle, lawHeadLine, lawKind, sourceName, treatyLink } from './law-head';
 	import { navigate, withParams } from '$lib/util/address';
+	import { report } from '$lib/api/errors';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 
-	let { bwbId }: { bwbId: string | null } = $props();
+	let { bwbId }: { bwbId: string } = $props();
 
 	// The overview lists every article of the law with a preview only: at full text and
 	// parts per article, 810 articles would balloon the payload. The full, leden-structured
@@ -81,9 +83,9 @@
 	let total = $state(0);
 	/** Where the BWB text of the law begins; before it there is no text of the day. */
 	let firstVersionFrom = $state<string | null>(null);
-	let status = $state<'idle' | 'loading' | 'loading-more' | 'loading-before' | 'ready' | 'error'>(
-		'idle'
-	);
+	let status = $state<'loading' | 'loading-more' | 'loading-before' | 'ready' | 'error'>('loading');
+	/** Why the list failed, for LoadState: slow or broken. */
+	let failure = $state<unknown>(null);
 	/** The reader's text, for keeping the article in view when a page goes in above it. */
 	let lawEl = $state<HTMLElement | null>(null);
 	// A plain `Map` (even inside `$state()`) does not give `.set()`/`.get()` reactivity
@@ -108,7 +110,7 @@
 	/** Fetches an article's full text once its preview scrolls near the viewport. */
 	function lazyLoad(el: HTMLElement, articleNumber: string | null) {
 		const bwb = bwbId;
-		if (!bwb || !articleNumber) return {};
+		if (!articleNumber) return {};
 		const observer = new IntersectionObserver(
 			(entries) => {
 				if (entries.some((e) => e.isIntersecting)) {
@@ -124,14 +126,14 @@
 
 	// The law's names for Citeer, as the article reader builds them.
 	const citationOf = (articleNumber: string | null, heading: string | null = null) => {
-		const meta = bwbId ? $instrumentMetaStore.get(bwbId) : null;
+		const meta = $instrumentMetaStore.get(bwbId);
 		const title = meta?.citationTitle ?? meta?.title ?? null;
 		if (!articleNumber || !title) return null;
 		return { articleNumber, heading, shortTitle: meta?.shortTitle ?? null, citationTitle: title };
 	};
 
 	const lawName = $derived.by(() => {
-		const meta = bwbId ? $instrumentMetaStore.get(bwbId) : null;
+		const meta = $instrumentMetaStore.get(bwbId);
 		// A record without a BWB id (a treaty of the Verdragenbank) by the title of its detail.
 		return (
 			meta?.citationTitle ??
@@ -150,7 +152,6 @@
 	$effect(() => {
 		lawDetail = null;
 		const bwb = bwbId;
-		if (!bwb) return;
 		getInstrumentDetail(bwb)
 			.then((d) => {
 				if (bwb === bwbId) lawDetail = d;
@@ -170,7 +171,6 @@
 		versions = [];
 		versionsLoaded = false;
 		const bwb = bwbId;
-		if (!bwb) return;
 		const ac = new AbortController();
 		unwrap(
 			api.GET('/api/instruments/{bwb_id}/versions', {
@@ -216,7 +216,7 @@
 		grondslag = [];
 		const bwb = bwbId;
 		const soort = kindName(lawDetail?.kind);
-		if (!bwb || !/^BWBR/i.test(bwb) || !soort || /wet$/i.test(soort)) return;
+		if (!/^BWBR/i.test(bwb) || !soort || /wet$/i.test(soort)) return;
 		getLawBasis(bwb).then((b) => {
 			if (bwb === bwbId) grondslag = grondslagKopregel(b?.items ?? []);
 		});
@@ -411,14 +411,18 @@
 					.then((n) => {
 						if (!ac.signal.aborted) total = Math.max(n, total);
 					})
-					.catch(() => {});
+					.catch((e) => report('Omvang van de wet', e));
 			})
 			.catch((e) => {
 				if (ac.signal.aborted) return;
 				if (division && e instanceof ApiError && e.status === 404) {
 					zonderDeel.add(`${bwb}/${day}/${division}`);
 					open(bwb, day, null);
-				} else status = 'error';
+				} else {
+					report('Wet', e);
+					failure = e;
+					status = 'error';
+				}
 			});
 	}
 
@@ -430,11 +434,6 @@
 		pending.clear();
 		const bwb = bwbId;
 		const day = peildatum;
-		if (!bwb) {
-			articles = [];
-			status = 'idle';
-			return;
-		}
 		primeInstrumentNames();
 		// The division the link names opens alone; a later anchor is the effect below.
 		const hash = untrack(() => decodeURIComponent(page.url.hash.slice(1)));
@@ -495,7 +494,6 @@
 	 */
 	async function reach(hash: string) {
 		const bwb = bwbId;
-		if (!bwb) return;
 		if (start > 0 && (peildatum || isDeel(hash))) {
 			// The division opened but names no heading here: from the start, page by page.
 			zonderDeel.add(`${bwb}/${peildatum}/${hash}`);
@@ -519,7 +517,7 @@
 	 * time; after a division the list of the whole law reads on.
 	 */
 	async function loadMore(upTo = 0) {
-		if (!bwbId || status !== 'ready') return;
+		if (status !== 'ready') return;
 		const bwb = bwbId;
 		const day = peildatum;
 		const offsets = volgendeBladzijden(start + articles.length, upTo, total, PAGE_SIZE);
@@ -545,7 +543,7 @@
 	 * stays where it is on screen.
 	 */
 	async function loadPrevious() {
-		if (!bwbId || status !== 'ready' || start <= 0) return;
+		if (status !== 'ready' || start <= 0) return;
 		const bwb = bwbId;
 		const day = peildatum;
 		const { offset, limit } = vorigeBladzijde(start, PAGE_SIZE);
@@ -592,30 +590,26 @@
 	</p>
 {/snippet}
 
-{#snippet laden()}
-	<div class="whole-loading">
-		<div class="spinner" aria-hidden="true"></div>
-		<span>Laden…</span>
-	</div>
-{/snippet}
-
 <!-- The head stands on the law's own detail, the cheapest call; the list of its articles
      follows under it (lazy: the text of the head first, Orchestrator 10 Oct). -->
-{#if status === 'idle'}
-	<div class="whole-empty"></div>
-{:else if status === 'loading' && !lawDetail}
-	{@render laden()}
+{#if status === 'loading' && !lawDetail}
+	<LoadState state={{ status: 'loading' }} what="De wet" form="block" />
 {:else if status === 'error'}
-	<div class="whole-error">De wet kon niet worden geladen.</div>
+	<LoadState
+		state={{ status: 'error', error: failure }}
+		what="De wet"
+		retry={() => open(bwbId, peildatum, null)}
+		form="block"
+	/>
 {:else}
-	{@const naam = lawName ?? bwbId ?? 'Regeling'}
+	{@const naam = lawName ?? bwbId}
 	<article class="whole-law" bind:this={lawEl}>
 		<ReaderHead
 			collection="instruments"
 			title={naam}
 			acties={{
 				bewaar: bewaarItem(
-					`instruments/${(bwbId ?? naam).toLowerCase()}`,
+					`instruments/${bwbId.toLowerCase()}`,
 					{ kort: naam, voluit: fullTitle ?? naam },
 					{ groep: naam, wet: bwbId }
 				),
@@ -713,7 +707,7 @@
 		</ReaderHead>
 
 		{#if status === 'loading'}
-			{@render laden()}
+			<LoadState state={{ status: 'loading' }} what="De wet" />
 		{:else if peildatum && articles.length === 0}
 			{#if firstVersionFrom && peildatum < firstVersionFrom}
 				<!-- Before the first toestand: the BWB holds no text of that day. -->
@@ -819,48 +813,6 @@
 {/if}
 
 <style>
-	.whole-empty,
-	.whole-error {
-		padding: var(--s-7);
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: var(--t-body-2);
-		color: var(--ink-3);
-		text-align: center;
-	}
-
-	.whole-error {
-		color: var(--ink-2);
-		font-style: normal;
-	}
-
-	.whole-loading {
-		padding: var(--s-7);
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-3);
-		align-items: center;
-		color: var(--ink-3);
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: var(--t-body-2);
-	}
-
-	.spinner {
-		width: 26px;
-		height: 26px;
-		border: 2px solid var(--rule);
-		border-top-color: var(--ink-2);
-		border-radius: 50%;
-		animation: spin 0.9s linear infinite;
-	}
-
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
-	}
-
 	/* The reader frame sets the margins and the width, as for every reader. */
 	.whole-law {
 		width: 100%;

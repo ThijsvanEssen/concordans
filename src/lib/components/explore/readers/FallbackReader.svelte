@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { report } from '$lib/api/errors';
 	import { bewaarItem } from '$lib/map/map';
 	import ReaderHead from './ReaderHead.svelte';
 	// Reader for the kinds without a text of their own (toezegging, zaak, ...): what the
@@ -23,7 +24,7 @@
 			.then((d) => {
 				if (!stale) wet = { bwb: b, naam: d.citation_title ?? d.display_name ?? d.title ?? null };
 			})
-			.catch(() => {});
+			.catch((e) => report('Naam van de wet', e));
 		return () => (stale = true);
 	});
 	// Never the key ($lib/bron/menselijk): "Algemene wet bestuursrecht, versie van 1 mei 2022".

@@ -18,6 +18,9 @@
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
 	import { activiteitGroepen } from './activiteit';
+	import { load } from '$lib/util/load.svelte';
+	import { report } from '$lib/api/errors';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -36,27 +39,24 @@
 	// neighbourhood loads, and nothing is asked again for that.
 	const bronKey = $derived(node.key);
 
+	// The head stands on the node's props without the detail: a failure costs it nothing.
 	let detail = $state<Schema<'ActivityDTO'> | null>(null);
-	let records = $state<Schema<'ActivityRecordsResponse'> | null>(null);
 	$effect(() => {
 		const key = bronKey;
-		let weg = false;
+		let stale = false;
 		detail = null;
-		records = null;
 		getActivity(key)
 			.then((a) => {
-				if (!weg) detail = a;
+				if (!stale) detail = a;
 			})
-			.catch(() => {});
-		getActivityRecords(key)
-			.then((r) => {
-				if (!weg) records = r;
-			})
-			.catch(() => {});
-		return () => {
-			weg = true;
-		};
+			.catch((e) => report('Activiteit', e));
+		return () => (stale = true);
 	});
+	const records = load(
+		() => bronKey,
+		(key) => getActivityRecords(key),
+		'Stukken van de activiteit'
+	);
 
 	const kind = $derived(detail?.kind ?? attrs.kind);
 	const date = $derived(detail?.date ?? attrs.date);
@@ -64,7 +64,9 @@
 	const tkUrl = $derived(detail?.tk_url ?? attrs.tk_url);
 	const titel = $derived(detail?.agenda_title || attrs.agenda_title || node.label);
 
-	const inhouden = $derived(records ? activiteitGroepen(records) : null);
+	const inhouden = $derived(
+		records.state.status === 'ready' ? activiteitGroepen(records.state.data) : null
+	);
 </script>
 
 {#snippet inhoud(id: string)}
@@ -102,7 +104,13 @@
 			{/snippet}
 		</ReaderHead>
 
-		{#if inhouden && inhouden.groepen.length}
+		{#if records.state.status === 'error'}
+			<LoadState
+				state={records.state}
+				what="Wat in de activiteit gemaakt is"
+				retry={records.retry}
+			/>
+		{:else if inhouden && inhouden.groepen.length}
 			<Tijdlijn
 				groepen={inhouden.groepen.map((g) => ({
 					...g,

@@ -29,7 +29,10 @@
 	import { bronHref, openHref } from '$lib/bron/href';
 	import { useSearchOpener } from '$lib/stores/search-trigger';
 	import { api, unwrap } from '$lib/api/client';
-	import { getCabinet } from '$lib/api/records';
+	import { getCabinet, getParliamentSeats } from '$lib/api/records';
+	import { load } from '$lib/util/load.svelte';
+	import { isAborted, report } from '$lib/api/errors';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { besluiten, geteld, nogTeTellen } from '$lib/api/decisions';
 	import type { Schema } from '$lib/api/types';
 	import {
@@ -445,7 +448,13 @@
 	}
 
 	let pages = $state<Pages>({});
-	let seats = $state<Schema<'ParliamentSeatsResponse'> | null>(null);
+	// Seats for the hemicycle, when the factions are opened (asked once per Kamer).
+	const hall = load(
+		() => (category === 'factions' ? kamer : null),
+		(chamber) => (chamber ? getParliamentSeats(chamber) : Promise.resolve(null)),
+		'Zaal van de Kamer'
+	);
+	const seats = $derived(hall.state.status === 'ready' ? hall.state.data : null);
 	// The cabinet in office on the day of the hall and its fracties (API 0.79.33): one line
 	// to the cabinet, whose reader shows its seats (Thijs, 10 Oct: the coalition is the
 	// cabinet's, not the Kamer's).
@@ -478,17 +487,23 @@
 	let echrTotal = $state<number | null>(null);
 	/** The facets of the list asked apart from its first page, still on their way. */
 	let facettenLaden = $state(false);
+	/** Why they did not come: the filters say so instead of standing empty. */
+	let facettenFout = $state<unknown>(null);
 	/**
 	 * The facets of a first page asked on their own, beside it (one row, the same filters):
 	 * counting them can take seconds, and the list does not wait for it (Thijs, 10 Oct: lazy).
 	 */
 	function facettenApart<T>(vraag: () => Promise<T>, zet: (r: T) => void, signal: AbortSignal) {
 		facettenLaden = true;
+		facettenFout = null;
 		vraag()
 			.then((r) => {
 				if (!signal.aborted) zet(r);
 			})
-			.catch(() => {})
+			.catch((e) => {
+				report('Verfijning', e);
+				if (!signal.aborted && !isAborted(e)) facettenFout = e;
+			})
 			.finally(() => {
 				if (!signal.aborted) facettenLaden = false;
 			});
@@ -563,7 +578,7 @@
 							.then((v) => {
 								if (!signal.aborted) verdragTotaal = v.total;
 							})
-							.catch(() => {});
+							.catch((e) => report('Aantal verdragen', e));
 				};
 			}
 			case 'judgments': {
@@ -870,15 +885,16 @@
 	let loadAbort: AbortController | null = null;
 
 	$effect(() => {
-		const load = fetchPage;
+		const fetchFirst = fetchPage;
 		const ac = new AbortController();
 		loadAbort = ac;
 		loading = true;
 		// A list whose facets come apart says so itself (facettenApart).
 		facettenLaden = false;
+		facettenFout = null;
 		error = null;
 		loadMoreFailed = false;
-		load(0, ac.signal)
+		fetchFirst(0, ac.signal)
 			.catch(() => {
 				if (!ac.signal.aborted) error = `De ${labelOf(category)} konden niet worden geladen.`;
 			})
@@ -972,17 +988,6 @@
 		tick().then(() => scroller?.scrollTo({ top: kept.scroll }));
 	});
 
-	// Seats for the hemicycle, once, when the factions are opened.
-	$effect(() => {
-		if (category !== 'factions' || seats?.chamber === kamer) return;
-		const ac = new AbortController();
-		const chamber = kamer;
-		unwrap(api.GET('/api/parliament/seats', { params: { query: { chamber } }, signal: ac.signal }))
-			.then((r) => (seats = r))
-			.catch(() => {});
-		return () => ac.abort();
-	});
-
 	// The factions to filter members by, of the Kamer shown; the list is filtered by the API.
 	let partiesOf = $state<Chamber | null>(null);
 	$effect(() => {
@@ -1000,7 +1005,7 @@
 					.sort((a, b) => (b.seats ?? 0) - (a.seats ?? 0));
 				partiesOf = chamber;
 			})
-			.catch(() => {});
+			.catch((e) => report('Fracties om op te filteren', e));
 		return () => ac.abort();
 	});
 
@@ -1117,11 +1122,11 @@
 		if (!cabinets.length)
 			getCabinets()
 				.then((c) => (cabinets = c))
-				.catch(() => {});
+				.catch((e) => report('Kabinetten', e));
 		if (!ministries.length)
 			getMinistries()
 				.then((m) => (ministries = m))
-				.catch(() => {});
+				.catch((e) => report('Ministeries', e));
 	});
 	const ministryName = (key: string | null | undefined) =>
 		(key && ministries.find((m) => m.key === key)?.name) || key || '';
@@ -1220,9 +1225,8 @@
 		if (category !== 'judgments' || coverage) return;
 		getCoverage()
 			.then((c) => (coverage = c))
-			.catch(() => {
-				// Without coverage the filters are the usual colleges, without counts.
-			});
+			// Without coverage the filters are the usual colleges, without counts.
+			.catch((e) => report('Gerechten', e));
 	});
 	// Counts per tier and for the EHRM. Which courts there are comes from the coverage; the
 	// counts under the period and search from the list's facet.
@@ -2321,6 +2325,9 @@
 							groups={facetten}
 							pending={(!pages[category] && !error) || facettenLaden}
 						/>
+						{#if facettenFout}
+							<LoadState state={{ status: 'error', error: facettenFout }} what="De verfijning" />
+						{/if}
 						{#if chips.length}
 							<p class="wis"><TekstLink onclick={clearFilters}>Wis alle filters</TekstLink></p>
 						{/if}
@@ -2334,7 +2341,9 @@
 					style:--row-lead="{columns.leadW}px"
 					style:--row-aside="{columns.asideW}px"
 				>
-					{#if category === 'factions' && seats && seats.chamber === kamer}
+					{#if category === 'factions' && hall.state.status === 'error'}
+						<LoadState state={hall.state} what="De zaal" retry={hall.retry} />
+					{:else if category === 'factions' && seats && seats.chamber === kamer}
 						<div class="hemi-card">
 							<div class="hemi-svg-wrap">
 								{#if seats.chamber === 'EK'}

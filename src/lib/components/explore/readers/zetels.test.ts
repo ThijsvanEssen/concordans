@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import { vacantZonderFractie, wijzigingenVan, zaalMetPlan, zetelHoogte } from './zetels';
+import { describe, expect, it, vi } from 'vitest';
+import { fakeApi, fail } from '$lib/test/fakeApi';
+import { hallOfDay, vacantZonderFractie, wijzigingenVan, zaalMetPlan, zetelHoogte } from './zetels';
 
 const fracties = [
 	{ key: 'vvd', abbreviation: 'VVD', name: 'VVD', seats: 24, coalition: true },
@@ -122,5 +123,25 @@ describe('zaalMetPlan: the Eerste Kamer’s seats in its hall', () => {
 		const dag = zaal([stoel]);
 		expect(zaalMetPlan(dag, zaal([stoel, stoel])).hall?.seats).toHaveLength(1);
 		expect(zaalMetPlan(zaal(null), null).hall).toBeNull();
+	});
+});
+
+describe('hallOfDay', () => {
+	const hall = (cabinet: string) => ({ cabinet: { key: cabinet }, factions: [], hall: null });
+
+	it('gives the hall of the day for a cabinet with stretches', async () => {
+		fakeApi({ '/api/parliament/seats': hall('schoof') });
+		expect(await hallOfDay('TK', '2025-01-01', 'rutte_iv', true)).toMatchObject(hall('schoof'));
+	});
+
+	it('has none where the hall of the day is another cabinet’s', async () => {
+		fakeApi({ '/api/parliament/seats': hall('schoof') });
+		expect(await hallOfDay('TK', '2025-01-01', 'rutte_iv', false)).toBeNull();
+	});
+
+	it('fails where the request fails, so a failure never reads as "niet in de gegevens"', async () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+		fakeApi({ '/api/parliament/seats': fail(500) });
+		await expect(hallOfDay('TK', '2025-01-01', 'rutte_iv', false)).rejects.toThrow();
 	});
 });

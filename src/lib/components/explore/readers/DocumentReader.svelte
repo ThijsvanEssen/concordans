@@ -36,6 +36,8 @@
 	import type { NodeGraph } from '$lib/api/nodes';
 	import { kamerstukCitation } from '$lib/components/parliamentary/kamerstuk';
 	import { ensureInstrumentName, instrumentMetaStore } from '$lib/api/instrument-cache';
+	import { load } from '$lib/util/load.svelte';
+	import { report } from '$lib/api/errors';
 
 	let {
 		node,
@@ -46,18 +48,15 @@
 		article?: { lawId: string; articleNumber: string } | null;
 	} = $props();
 
-	type State =
-		| { kind: 'loading' }
-		| { kind: 'error'; message: string }
-		| { kind: 'loaded'; document: Schema<'DocumentTextResponse'> };
-
-	let view = $state<State>({ kind: 'loading' });
-	/** Raised by Opnieuw: the load runs again. */
-	let attempt = $state(0);
-
 	// The key, not the node: the node is drawn anew with the same key once its
 	// neighbourhood loads, and the record is not asked again for that.
 	const bronKey = $derived(node.key);
+	const record = load(
+		() => bronKey,
+		(key) => getDocument(key),
+		'Document'
+	);
+	const loaded = $derived(record.state.status === 'ready' ? record.state.data : null);
 
 	// The light node (the band asks it too, one request): the vergaderjaar and the dossier for
 	// the citation, the count of the bijlagen.
@@ -70,7 +69,7 @@
 			.then((r) => {
 				if (!stale) licht = r;
 			})
-			.catch(() => {});
+			.catch((e) => report('Lichte bron van het document', e));
 		return () => (stale = true);
 	});
 	const lichtProps = $derived((licht?.node.props ?? {}) as Record<string, unknown>);
@@ -85,9 +84,8 @@
 	// The articles a memorie explains (`explains`), per law: the reverse of the Toelichting on
 	// an article (concept 21). The laws' names are asked once each.
 	const toegelicht = $derived.by(() => {
-		if (view.kind !== 'loaded') return [];
 		const perWet = new Map<string, { key: string; nummer: string }[]>();
-		for (const e of view.document.explains ?? []) {
+		for (const e of loaded?.explains ?? []) {
 			if (e.collection !== 'articles' || !e.bwb_id || !e.article_number) continue;
 			const rij = perWet.get(e.bwb_id) ?? [];
 			rij.push({ key: e.key, nummer: e.article_number });
@@ -102,27 +100,11 @@
 		for (const w of toegelicht) ensureInstrumentName(w.bwbId);
 	});
 
-	$effect(() => {
-		void attempt;
-		const key = bronKey;
-		const ac = new AbortController();
-		view = { kind: 'loading' };
-		getDocument(key)
-			.then((document) => {
-				if (!ac.signal.aborted) view = { kind: 'loaded', document };
-			})
-			.catch(() => {
-				if (!ac.signal.aborted)
-					view = { kind: 'error', message: 'Document kon niet worden geladen.' };
-			});
-		return () => ac.abort();
-	});
-
 	// The source gives a paragraph per line. Each keeps its place in the text, so that
 	// a passage can be found back.
 	const paragraphs = $derived.by(() => {
-		if (view.kind !== 'loaded' || !view.document.text) return [];
-		const text = view.document.text;
+		const text = loaded?.text;
+		if (!text) return [];
 		const out: { start: number; text: string; i: number }[] = [];
 		for (const m of text.matchAll(/[^\n]+/g)) {
 			const t = m[0].trim();
@@ -136,9 +118,7 @@
 	// artikel, ... Rendered as the same anchored, leden-like structure ArticleText gives
 	// an article, instead of one long run of paragraphs.
 	type Section = Schema<'SectionDTO'>;
-	const sections = $derived<Section[]>(
-		view.kind === 'loaded' ? (view.document.sections ?? []) : []
-	);
+	const sections = $derived<Section[]>(loaded?.sections ?? []);
 	const headingTexts = $derived(new Set(sections.map((s) => s.heading.trim().toLowerCase())));
 
 	type Entry =
@@ -147,9 +127,7 @@
 
 	// The footnotes (API 0.79.55): a marker in the paragraph that refers to a note, the note
 	// under it or in the margin; one without a marker at the end of its section, else of the stuk.
-	const voetnoten = $derived(
-		stukNoten(view.kind === 'loaded' ? view.document.footnotes : [], paragraphs, sections)
-	);
+	const voetnoten = $derived(stukNoten(loaded?.footnotes ?? [], paragraphs, sections));
 	const noten = zetNootStand();
 	const nootLijst = (ids: readonly string[] | undefined) =>
 		(ids ?? []).flatMap((id) => voetnoten.noten.get(id) ?? []);
@@ -219,11 +197,11 @@
 	const fromText = (p: { start: number; end: number } | null) =>
 		p ? { start: p.start, end: p.end, possible: true, why: null } : null;
 	const passage = $derived(
-		view.kind !== 'loaded' || !article
+		!loaded || !article
 			? null
 			: apiPassage === undefined
 				? null
-				: (apiPassage ?? fromText(findPassage(view.document.text ?? '', article.articleNumber)))
+				: (apiPassage ?? fromText(findPassage(loaded.text ?? '', article.articleNumber)))
 	);
 	// The paragraph the passage starts in; when it starts on a heading (a section of the
 	// API), the first paragraph under it.
@@ -276,7 +254,7 @@
 		void tick().then(() => landOn(container, 'passage'));
 	});
 	$effect(() => {
-		if (view.kind !== 'loaded' || article || !anchor || !root) return;
+		if (!loaded || article || !anchor || !root) return;
 		const container = root;
 		if (isNootAnker(anchor)) noten.toon(anchor, { bereik: markering?.bereik });
 		const doelwit = tekstBereik ? 'markering' : anchor;
@@ -287,33 +265,25 @@
 	const glossaryTerm = termOfKind;
 </script>
 
-<ReaderFrame>
-	<div class="r-document" aria-busy={view.kind === 'loading'}>
-		{#if view.kind === 'loading'}
-			<p class="loading stil">Laden…</p>
-		{:else if view.kind === 'error'}
-			<p class="error">
-				{view.message}
-				<button type="button" class="btn is-text" onclick={() => attempt++}>Opnieuw</button>
-			</p>
-		{:else}
-			{@const doc = view.document}
-			{@const term = glossaryTerm(doc.kind)}
-			<!-- Without the group of kinds the source files it under (#58): "Amendement". -->
-			{@const kind = eigenSoort(doc.kind)}
-			{@const cite = kamerstukCitation({
-				chamber: doc.chamber,
-				session_year: tekstVan(lichtProps.session_year),
-				dossier_number: tekstVan(lichtProps.dossier_number) ?? doc.dossier_numbers?.[0],
-				dossier_suffix: tekstVan(lichtProps.dossier_suffix),
-				number: doc.number
-			})}
-			{@const naam = cite ?? doc.title ?? naamVan('documents', doc)}
-			<!-- The kind of the case the stuk is in, where it adds to the stuk's own: a motie is in
+<ReaderFrame state={record.state} what="Document" retry={record.retry}>
+	{#snippet children(doc)}
+		{@const term = glossaryTerm(doc.kind)}
+		<!-- Without the group of kinds the source files it under (#58): "Amendement". -->
+		{@const kind = eigenSoort(doc.kind)}
+		{@const cite = kamerstukCitation({
+			chamber: doc.chamber,
+			session_year: tekstVan(lichtProps.session_year),
+			dossier_number: tekstVan(lichtProps.dossier_number) ?? doc.dossier_numbers?.[0],
+			dossier_suffix: tekstVan(lichtProps.dossier_suffix),
+			number: doc.number
+		})}
+		{@const naam = cite ?? doc.title ?? naamVan('documents', doc)}
+		<!-- The kind of the case the stuk is in, where it adds to the stuk's own: a motie is in
 			     a case of the kind Motie, which "Motie, 7 sep. 2026, Motie" said twice. -->
-			{@const caseKinds = (doc.case_kinds ?? []).filter(
-				(k) => !doc.kind?.toLowerCase().startsWith(k.toLowerCase())
-			)}
+		{@const caseKinds = (doc.case_kinds ?? []).filter(
+			(k) => !doc.kind?.toLowerCase().startsWith(k.toLowerCase())
+		)}
+		<div class="r-document">
 			<ReaderHead
 				collection="documents"
 				title={doc.title ?? naamVan('documents', doc)}
@@ -451,8 +421,8 @@
 					{/if}
 				</footer>
 			{/if}
-		{/if}
-	</div>
+		</div>
+	{/snippet}
 </ReaderFrame>
 
 <style>
@@ -568,8 +538,6 @@
 		gap: var(--lezer-stap);
 		color: var(--ink-2);
 	}
-	.loading,
-	.error,
 	.empty {
 		margin: 0;
 	}

@@ -4,7 +4,7 @@
 	// course over the period, the hall of the day chosen (concept 16, variant B). One day for
 	// both Kamers (?zetels=); a step in either sets it. The Eerste Kamer always has its section,
 	// with a quiet line where the data has nothing for this cabinet (partial over waiting). A
-	// cabinet from before 30 November 2006 has no seats per day: no sections. The phases
+	// cabinet from before 30 November 2006 has no seats per day: no sections; a failure says so. The phases
 	// (demissionair and after) stand over the steps, as over the posts.
 	import { page } from '$app/state';
 	import { navigate, withParams } from '$lib/util/address';
@@ -12,6 +12,8 @@
 	import { getCabinetSeats } from '$lib/api/records';
 	import { vandaag } from '$lib/text/datum';
 	import type { Schema } from '$lib/api/types';
+	import { load } from '$lib/util/load.svelte';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 
 	type Stuk = Schema<'SeatStretchDTO'>;
 
@@ -24,21 +26,12 @@
 		fasen?: { van: string; label: string }[];
 	} = $props();
 
-	let zetels = $state<Schema<'CabinetSeatsResponse'> | null>(null);
-
-	$effect(() => {
-		const key = kabinet;
-		let weg = false;
-		zetels = null;
-		getCabinetSeats(key)
-			.then((z) => {
-				if (!weg) zetels = z;
-			})
-			.catch(() => {});
-		return () => {
-			weg = true;
-		};
-	});
+	const seats = load(
+		() => kabinet,
+		(key) => getCabinetSeats(key),
+		'Zetels van het kabinet'
+	);
+	const zetels = $derived(seats.state.status === 'ready' ? seats.state.data : null);
 
 	const dag = vandaag();
 	/** The cabinet's last day, or today while it is in office. */
@@ -56,7 +49,9 @@
 		);
 </script>
 
-{#if zetels?.tk?.length}
+{#if seats.state.status === 'error'}
+	<LoadState state={seats.state} what="De zetelverdeling" retry={seats.retry} />
+{:else if zetels?.tk?.length}
 	<!-- One section per Kamer, so either closes on its own (Thijs, 10 Oct). -->
 	<KamerZetels
 		kamer="TK"

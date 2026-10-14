@@ -11,6 +11,9 @@
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 	import type { Schema } from '$lib/api/types';
+	import { load } from '$lib/util/load.svelte';
+	import { report } from '$lib/api/errors';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronHref } from '$lib/bron/href';
 	import { bronLabel } from '$lib/vocabulary';
@@ -22,60 +25,24 @@
 
 	let { node }: { node: GraphNode } = $props();
 
-	type State =
-		| { kind: 'loading' }
-		| { kind: 'error'; message: string }
-		| { kind: 'loaded'; decision: Schema<'DecisionDTO'> };
-
-	let view = $state<State>({ kind: 'loading' });
-
-	// Raised by Opnieuw, to load the bron again after an error.
-	let attempt = $state(0);
-
 	// The key, not the node: the node is drawn anew with the same key once its
 	// neighbourhood loads, and the record is not asked again for that.
-	const bronKey = $derived(node.key);
-
-	$effect(() => {
-		void attempt;
-		const key = bronKey;
-		const ac = new AbortController();
-		view = { kind: 'loading' };
-		getDecision(key)
-			.then((decision) => {
-				if (!ac.signal.aborted) view = { kind: 'loaded', decision };
-			})
-			.catch(() => {
-				if (!ac.signal.aborted)
-					view = { kind: 'error', message: 'Stemming kon niet worden geladen.' };
-			});
-		return () => ac.abort();
-	});
+	const decision = load(
+		() => node.key,
+		(key) => getDecision(key),
+		'Stemming'
+	);
+	const loaded = $derived(decision.state.status === 'ready' ? decision.state.data : null);
 
 	// The text of what was voted on, only where the decision gives no dictum (an amendment, a
 	// bill): asked after the first paint, which the decision alone makes.
-	let doc = $state<Schema<'DocumentTextResponse'> | null>(null);
-	/** Asked and answered, with a text or without one. */
-	let docKlaar = $state(false);
-	const zonderDictum = $derived(view.kind === 'loaded' && !view.decision.dictum?.trim());
-	$effect(() => {
-		const key = bronKey;
-		doc = null;
-		docKlaar = false;
-		if (!zonderDictum) return;
-		let weg = false;
-		getDecisionDocument(key)
-			.then((d) => {
-				if (!weg) doc = d;
-			})
-			.catch(() => {})
-			.finally(() => {
-				if (!weg) docKlaar = true;
-			});
-		return () => {
-			weg = true;
-		};
-	});
+	const zonderDictum = $derived(!!loaded && !loaded.dictum?.trim());
+	const tekst = load(
+		() => (zonderDictum ? node.key : null),
+		(key) => (key ? getDecisionDocument(key) : Promise.resolve(null)),
+		'Stemmingstekst'
+	);
+	const doc = $derived(tekst.state.status === 'ready' ? tekst.state.data : null);
 
 	/** What was voted on, by its kind and number: `Motie, Kamerstuk 36764, nr. 31`. */
 	const stukNaam = (p: Schema<'DecisionPaperDTO'>) =>
@@ -90,15 +57,13 @@
 	// What the coalition did (API 0.79.34, `coalition`; Thijs, 10 Oct). Only in the Tweede
 	// Kamer, and only where the API gives the block: before 0.79.34 nothing shows.
 	const coalitie = $derived(
-		view.kind === 'loaded' && (view.decision.chamber ?? 'TK') !== 'EK'
-			? coalitieVan(view.decision)
-			: null
+		loaded && (loaded.chamber ?? 'TK') !== 'EK' ? coalitieVan(loaded) : null
 	);
 	/** The hall of the day of the vote: the cabinet's name and which fractie is of it. */
 	let zaal = $state<{ naam: string; van: Map<string, boolean | null> } | null>(null);
 	$effect(() => {
 		const c = coalitie;
-		const dag = view.kind === 'loaded' ? view.decision.date?.slice(0, 10) : null;
+		const dag = loaded?.date?.slice(0, 10);
 		zaal = null;
 		if (!c || !dag) return;
 		let weg = false;
@@ -112,7 +77,7 @@
 					)
 				};
 			})
-			.catch(() => {});
+			.catch((e) => report('Zaal van de stemming', e));
 		return () => {
 			weg = true;
 		};
@@ -133,43 +98,35 @@
 	const ekHref = (id: string) => bronHref(id.includes('/') ? id : `factions/${id}`);
 </script>
 
-<ReaderFrame>
-	<div class="r-decision">
-		{#if view.kind === 'loading'}
-			<p class="loading stil">Laden…</p>
-		{:else if view.kind === 'error'}
-			<p class="error">
-				{view.message}
-				<button type="button" class="btn is-text" onclick={() => attempt++}>Opnieuw</button>
-			</p>
-		{:else}
-			{@const d = view.decision}
-			{@const tally = d.tally ?? {}}
-			{@const inFavour = tally['Voor'] ?? 0}
-			{@const against = tally['Tegen'] ?? 0}
-			{@const inFavourPct =
-				inFavour + against > 0 ? Math.round((inFavour / (inFavour + against)) * 100) : 50}
-			{@const others = Object.entries(tally).filter(
-				([choice]) => choice !== 'Voor' && choice !== 'Tegen'
-			)}
-			<!-- The dossiers by number and name (API 0.79.30); the node's numbers before it. -->
-			{@const dossiers = d.dossiers?.length
-				? d.dossiers
-				: ((node.raw?.props?.dossier_numbers ?? []) as string[]).map((number) => ({ number }))}
-			{@const chamber = d.chamber ?? 'TK'}
-			<!-- The Eerste Kamer's fracties stand once, in its own lists (complete, also a fractie
+<ReaderFrame state={decision.state} what="Stemming" retry={decision.retry}>
+	{#snippet children(d)}
+		{@const tally = d.tally ?? {}}
+		{@const inFavour = tally['Voor'] ?? 0}
+		{@const against = tally['Tegen'] ?? 0}
+		{@const inFavourPct =
+			inFavour + against > 0 ? Math.round((inFavour / (inFavour + against)) * 100) : 50}
+		{@const others = Object.entries(tally).filter(
+			([choice]) => choice !== 'Voor' && choice !== 'Tegen'
+		)}
+		<!-- The dossiers by number and name (API 0.79.30); the node's numbers before it. -->
+		{@const dossiers = d.dossiers?.length
+			? d.dossiers
+			: ((node.raw?.props?.dossier_numbers ?? []) as string[]).map((number) => ({ number }))}
+		{@const chamber = d.chamber ?? 'TK'}
+		<!-- The Eerste Kamer's fracties stand once, in its own lists (complete, also a fractie
 			     without a node); its votes[] (#369) only link the names they share. -->
-			{@const voters = chamber === 'EK' ? [] : votersOf(d)}
-			{@const ekLink = new Map(
-				chamber === 'EK'
-					? (d.votes ?? []).flatMap((v) => (v.name?.trim() ? [[v.name.trim(), v.voter_id]] : []))
-					: []
-			)}
+		{@const voters = chamber === 'EK' ? [] : votersOf(d)}
+		{@const ekLink = new Map(
+			chamber === 'EK'
+				? (d.votes ?? []).flatMap((v) => (v.name?.trim() ? [[v.name.trim(), v.voter_id]] : []))
+				: []
+		)}
 
-			{@const uitkomst = decisionOutcome(d)}
-			{@const eigen = uniqueBy(dossiers, (x) => x.number).slice(0, 3)}
-			{@const verder = eigen.slice(1)}
-			{@const onderwerp = (d.subject ?? doc?.title ?? '').trim()}
+		{@const uitkomst = decisionOutcome(d)}
+		{@const eigen = uniqueBy(dossiers, (x) => x.number).slice(0, 3)}
+		{@const verder = eigen.slice(1)}
+		{@const onderwerp = (d.subject ?? doc?.title ?? '').trim()}
+		<div class="r-decision">
 			<ReaderHead
 				collection="decisions"
 				title={d.subject ?? doc?.title ?? 'Onderwerp niet in de gegevens'}
@@ -220,16 +177,26 @@
 					</p>
 					{#if d.dictum?.trim()}
 						<p class="over__dictum">{d.dictum}</p>
-					{:else if doc?.text}
-						<p class="document-text">{doc.text}</p>
+					{:else}
+						<LoadState state={tekst.state} what="De tekst" retry={tekst.retry}>
+							{#snippet children(doc)}
+								{#if doc?.text}<p class="document-text">{doc.text}</p>{/if}
+							{/snippet}
+						</LoadState>
 					{/if}
 				</div>
-			{:else if doc?.text}
-				<Sectie titel={doc.kind ?? 'Document'} soort="documents">
-					<p class="document-text">{doc.text}</p>
-				</Sectie>
-			{:else if chamber !== 'EK' && zonderDictum && docKlaar}
-				<p class="document-unavailable">Tekst niet in de gegevens.</p>
+			{:else if zonderDictum}
+				<LoadState state={tekst.state} what="De tekst" retry={tekst.retry}>
+					{#snippet children(doc)}
+						{#if doc?.text}
+							<Sectie titel={doc.kind ?? 'Document'} soort="documents">
+								<p class="document-text">{doc.text}</p>
+							</Sectie>
+						{:else if chamber !== 'EK'}
+							<p class="document-unavailable">Tekst niet in de gegevens.</p>
+						{/if}
+					{/snippet}
+				</LoadState>
 			{/if}
 
 			<!-- Seats of 0 are unknown (an older Eerste Kamer vote), not a tally of 0. -->
@@ -328,8 +295,8 @@
 					</ul>
 				</Sectie>
 			{/if}
-		{/if}
-	</div>
+		</div>
+	{/snippet}
 </ReaderFrame>
 
 <style>
@@ -341,11 +308,6 @@
 		gap: var(--lezer-stap);
 		color: var(--ink-2);
 	}
-	.loading,
-	.error {
-		margin: 0;
-	}
-
 	.head {
 		display: flex;
 		flex-direction: column;

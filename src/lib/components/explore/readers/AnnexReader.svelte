@@ -12,44 +12,28 @@
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { api, unwrap } from '$lib/api/client';
-	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronLabel } from '$lib/vocabulary';
 	import { ensureInstrumentName, instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { formatCount } from '$lib/verbonden/filter';
 	import { annexGroups, type AnnexItem } from './annex';
+	import { load } from '$lib/util/load.svelte';
 
 	let { node }: { node: GraphNode } = $props();
 
-	type State =
-		| { kind: 'loading' }
-		| { kind: 'error'; message: string }
-		| { kind: 'loaded'; detail: Schema<'AnnexDetailResponse'> };
-
-	let view = $state<State>({ kind: 'loading' });
-	// Raised by Opnieuw, to load the bron again after an error.
-	let attempt = $state(0);
 	// The key, not the node: a new node of the same bron (its light node, then the full one)
 	// does not load it again and empty the reader for a moment (UX-toets 0.79.43, #33).
-	const bronKey = $derived(node.key);
-
-	$effect(() => {
-		void attempt;
-		const key = bronKey;
-		const ac = new AbortController();
-		view = { kind: 'loading' };
-		unwrap(api.GET('/api/annexes/{key}', { params: { path: { key } }, signal: ac.signal }))
-			.then((detail) => {
-				if (ac.signal.aborted) return;
-				view = { kind: 'loaded', detail };
-				ensureInstrumentName(detail.annex.bwb_id);
-			})
-			.catch(() => {
-				if (!ac.signal.aborted)
-					view = { kind: 'error', message: 'Bijlage kon niet worden geladen.' };
-			});
-		return () => ac.abort();
-	});
+	const annex = load(
+		() => node.key,
+		async (key, signal) => {
+			const detail = await unwrap(
+				api.GET('/api/annexes/{key}', { params: { path: { key } }, signal })
+			);
+			ensureInstrumentName(detail.annex.bwb_id);
+			return detail;
+		},
+		'Bijlage'
+	);
 
 	const lawName = (bwbId: string) => {
 		const meta = $instrumentMetaStore.get(bwbId);
@@ -65,24 +49,17 @@
 			.map((line) => ({ line, heading: line.endsWith(':') }));
 </script>
 
-<ReaderFrame>
-	<div class="r-annex">
-		{#if view.kind === 'loading'}
-			<p class="loading stil">Laden…</p>
-		{:else if view.kind === 'error'}
-			<p class="error">
-				{view.message}
-				<button type="button" class="btn is-text" onclick={() => attempt++}>Opnieuw</button>
-			</p>
-		{:else}
-			{@const a = view.detail.annex}
-			{@const entries = a.entries ?? []}
-			{@const refs = view.detail.referenced_by ?? []}
-			{@const titel = a.title ?? naamVan('annexes', a)}
-			{@const kort =
-				[a.label ? `${bronLabel('annexes')} ${a.label}` : null, a.bwb_id ? lawName(a.bwb_id) : null]
-					.filter(Boolean)
-					.join(', ') || titel}
+<ReaderFrame state={annex.state} what="Bijlage" retry={annex.retry}>
+	{#snippet children(detail)}
+		{@const a = detail.annex}
+		{@const entries = a.entries ?? []}
+		{@const refs = detail.referenced_by ?? []}
+		{@const titel = a.title ?? naamVan('annexes', a)}
+		{@const kort =
+			[a.label ? `${bronLabel('annexes')} ${a.label}` : null, a.bwb_id ? lawName(a.bwb_id) : null]
+				.filter(Boolean)
+				.join(', ') || titel}
+		<div class="r-annex">
 			<ReaderHead
 				collection="annexes"
 				title={titel}
@@ -147,8 +124,8 @@
 					{/each}
 				</details>
 			{/if}
-		{/if}
-	</div>
+		</div>
+	{/snippet}
 </ReaderFrame>
 
 <!-- The provisions under a law, each with the ones nested under it. -->
@@ -172,8 +149,6 @@
 		gap: var(--lezer-stap);
 		color: var(--ink-2);
 	}
-	.loading,
-	.error,
 	.empty {
 		margin: 0;
 	}
