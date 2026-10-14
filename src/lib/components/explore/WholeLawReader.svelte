@@ -4,7 +4,7 @@
 	import { uniqueBy } from '$lib/util/unique';
 	import { onderdeelMark } from '$lib/text/article-parts';
 	import { ApiError, api, unwrap } from '$lib/api/client';
-	import { untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import { getArticleDetail } from '$lib/api/articles';
 	import {
 		getInstrumentDetail,
@@ -20,7 +20,7 @@
 	import { SvelteMap } from 'svelte/reactivity';
 
 	import { bronHref } from '$lib/bron/href';
-	import { scrollInReader } from '$lib/bron/anchor';
+	import { keepInPlace, scrollInReader } from '$lib/bron/anchor';
 	import { deelIds, layersOf, plekVan } from '$lib/text/division';
 	import { lawArticleList } from '$lib/api/law-articles';
 	import { articleName } from '$lib/text/bw';
@@ -30,6 +30,7 @@
 	import { permalink } from '$lib/bron/anchor';
 	import { goto } from '$app/navigation';
 	import { atArticles, isDay, versionOn, versionsByYear } from './peildatum';
+	import { nog, verderLabel, volgendeBladzijden, vorigeBladzijde, type Richting } from './bladeren';
 	import { lawFullTitle, lawHeadLine, lawKind, sourceName, treatyLink } from './law-head';
 
 	let { bwbId }: { bwbId: string | null } = $props();
@@ -89,7 +90,11 @@
 	let total = $state(0);
 	/** Where the BWB text of the law begins; before it there is no text of the day. */
 	let firstVersionFrom = $state<string | null>(null);
-	let status = $state<'idle' | 'loading' | 'loading-more' | 'ready' | 'error'>('idle');
+	let status = $state<'idle' | 'loading' | 'loading-more' | 'loading-before' | 'ready' | 'error'>(
+		'idle'
+	);
+	/** The reader's text, for keeping the article in view when a page goes in above it. */
+	let lawEl = $state<HTMLElement | null>(null);
 	// A plain `Map` (even inside `$state()`) does not give `.set()`/`.get()` reactivity
 	// in Svelte 5, so a mutation here would never re-render the article that just
 	// loaded — SvelteMap is reactive on its own and is cleared in place, never reassigned.
@@ -247,13 +252,15 @@
 	/**
 	 * A page of the list from `offset`; with `division` the articles of that division alone
 	 * (`deel-hoofdstuk-10-titel-10.2-afdeling-10.2.2`), its place in the whole list in `division`.
+	 * A page before a division is shorter (`limit`): it ends where the list shown begins.
 	 */
 	async function load(
 		bwb: string,
 		day: string | null,
 		offset: number,
 		signal?: AbortSignal,
-		division?: string
+		division?: string,
+		limit = PAGE_SIZE
 	): Promise<{
 		items: Row[];
 		total: number;
@@ -270,7 +277,7 @@
 							path: { bwb_id: bwb, at_date: day },
 							query: {
 								text_preview_chars: PREVIEW_CHARS,
-								limit: PAGE_SIZE,
+								limit,
 								offset,
 								include_text: true,
 								division
@@ -296,7 +303,7 @@
 				api.GET('/api/instruments/{bwb_id}/articles', {
 					params: {
 						path: { bwb_id: bwb },
-						query: { text_preview_chars: PREVIEW_CHARS, limit: PAGE_SIZE, offset, division }
+						query: { text_preview_chars: PREVIEW_CHARS, limit, offset, division }
 					},
 					signal
 				})
@@ -307,7 +314,7 @@
 						path: { bwb_id: bwb, at_date: today },
 						query: {
 							text_preview_chars: 0,
-							limit: PAGE_SIZE,
+							limit,
 							offset,
 							include_text: true,
 							division
@@ -503,10 +510,7 @@
 		if (!bwbId || status !== 'ready') return;
 		const bwb = bwbId;
 		const day = peildatum;
-		const offsets: number[] = [];
-		const from = start + articles.length;
-		const end = Math.max(Math.min(upTo, total), from + 1);
-		for (let o = from; o < end; o += PAGE_SIZE) offsets.push(o);
+		const offsets = volgendeBladzijden(start + articles.length, upTo, total, PAGE_SIZE);
 		status = 'loading-more';
 		try {
 			const pages: Row[][] = [];
@@ -518,6 +522,31 @@
 			}
 			if (bwb === bwbId && day === peildatum)
 				articles = uniqueBy([...articles, ...pages.flat()], (a) => a.id);
+		} catch {
+			// The articles already shown stay; the button remains for another attempt.
+		}
+		status = 'ready';
+	}
+
+	/**
+	 * The page before the first article shown, above it: the article the reader looks at
+	 * stays where it is on screen.
+	 */
+	async function loadPrevious() {
+		if (!bwbId || status !== 'ready' || start <= 0) return;
+		const bwb = bwbId;
+		const day = peildatum;
+		const { offset, limit } = vorigeBladzijde(start, PAGE_SIZE);
+		status = 'loading-before';
+		try {
+			const before = await load(bwb, day, offset, undefined, undefined, limit);
+			if (bwb === bwbId && day === peildatum) {
+				const terug = lawEl ? keepInPlace(lawEl, '.whole-article') : () => {};
+				articles = uniqueBy([...before.items, ...articles], (a) => a.id);
+				start = offset;
+				await tick();
+				terug();
+			}
 		} catch {
 			// The articles already shown stay; the button remains for another attempt.
 		}
@@ -537,6 +566,20 @@
 	}
 </script>
 
+<!-- Paging on through the law, both ways: one control, the same label and count. -->
+{#snippet verder(richting: Richting)}
+	<p class="whole-verder whole-verder--{richting}">
+		{#if status === (richting === 'vorige' ? 'loading-before' : 'loading-more')}Laden…{:else}<TekstLink
+				onclick={() => (richting === 'vorige' ? loadPrevious() : loadMore())}
+				disabled={status !== 'ready'}
+				>{verderLabel(
+					richting,
+					formatCount(nog(richting, start, articles.length, total))
+				)}</TekstLink
+			>{/if}
+	</p>
+{/snippet}
+
 {#snippet laden()}
 	<div class="whole-loading">
 		<div class="spinner" aria-hidden="true"></div>
@@ -554,7 +597,7 @@
 	<div class="whole-error">De wet kon niet worden geladen.</div>
 {:else}
 	{@const naam = lawName ?? bwbId ?? 'Regeling'}
-	<article class="whole-law">
+	<article class="whole-law" bind:this={lawEl}>
 		<ReaderHead
 			collection="instruments"
 			title={naam}
@@ -674,6 +717,10 @@
 			{/if}
 		{/if}
 
+		{#if status !== 'loading' && articles.length > 0 && start > 0}
+			{@render verder('vorige')}
+		{/if}
+
 		{#each articles as a, i (a.id)}
 			{#each newSections(articles[i - 1], a) as section, j (j)}
 				<!-- The designation once (Hoofdstuk 3), the heading under it; deeper layers on one line. -->
@@ -744,11 +791,7 @@
 		{/each}
 
 		{#if status !== 'loading' && start + articles.length < total}
-			<p class="whole-volgende">
-				{#if status === 'loading-more'}Laden…{:else}<TekstLink onclick={() => loadMore()}
-						>Volgende artikelen, nog {formatCount(total - start - articles.length)}</TekstLink
-					>{/if}
-			</p>
+			{@render verder('volgende')}
 		{/if}
 	</article>
 {/if}
@@ -986,12 +1029,16 @@
 		white-space: pre-line;
 	}
 
-	.whole-volgende {
+	.whole-verder {
 		margin: var(--s-6) 0 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 		text-align: center;
+	}
+	/* Above the text: the step under it is the first heading's own. */
+	.whole-verder--vorige {
+		margin: 0 0 var(--s-5);
 	}
 
 	.whole-empty-text {
