@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import { fail, fakeApi } from '$lib/test/fakeApi';
 import {
+	ecliKey,
 	focusIn,
 	focusOfPad,
 	isVerkenner,
+	lookUp,
 	onthoudPaden,
 	padHref,
 	padOfFocus,
@@ -260,5 +263,52 @@ describe('the address of a focus', () => {
 			ministries: []
 		});
 		expect(padOfFocus('members/lid_pm_1')).toBe('/leden/met-adres');
+	});
+});
+
+describe('the key of a judgment', () => {
+	it('is its ECLI as the API makes it, a dot and a space too', () => {
+		expect(ecliKey('ECLI:NL:HR:2019:2006')).toBe('ecli_nl_hr_2019_2006');
+		expect(ecliKey(' ECLI:BE:CASS:2019:ARR.20190101.1 ')).toBe('ecli_be_cass_2019_arr_20190101_1');
+	});
+});
+
+describe('lookUp', () => {
+	const artikel = { soort: 'artikel', wet: 'BWBR0005537', nummer: '3:4' } as const;
+	const vooraf = {
+		'/api/articles/{bwb_id}/{article_number}': { article: {} },
+		'/api/articles/{bwb_id}/{article_number}/history': { versions: [] },
+		'/api/instruments/{bwb_id}/articles': { items: [] },
+		'/api/articles/{bwb_id}/{article_number}/explained-by': { items: [] }
+	} as const;
+
+	it('asks an article’s text and what its reader shows beside the lookup', async () => {
+		const fake = fakeApi({ ...vooraf, '/api/lookup': fail(404) });
+		expect(await lookUp(artikel)).toBeNull();
+		expect(fake.requests.map((r) => r.path).sort()).toEqual(
+			[...Object.keys(vooraf), '/api/lookup'].sort()
+		);
+	});
+
+	it('throws another failure than a 404, whatever the requests beside it do', async () => {
+		fakeApi({
+			'/api/articles/{bwb_id}/{article_number}': fail(500),
+			'/api/articles/{bwb_id}/{article_number}/history': fail(500),
+			'/api/instruments/{bwb_id}/articles': fail(500),
+			'/api/articles/{bwb_id}/{article_number}/explained-by': fail(500),
+			'/api/lookup': fail(500)
+		});
+		await expect(lookUp(artikel)).rejects.toBeDefined();
+	});
+
+	it('asks a Kamerstuk’s text as soon as the lookup names it', async () => {
+		const fake = fakeApi({
+			'/api/lookup': { collection: 'documents', key: 'kst-36600-vii-147' },
+			'/api/documents/{key}': {}
+		});
+		expect(await lookUp({ soort: 'kamerstuk', dossier: '36600-VII', nummer: '147' })).toBe(
+			'documents/kst-36600-vii-147'
+		);
+		expect(fake.asked('/api/documents/{key}')).toEqual([{ path: { key: 'kst-36600-vii-147' } }]);
 	});
 });

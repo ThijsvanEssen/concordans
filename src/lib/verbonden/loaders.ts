@@ -1,6 +1,7 @@
 // The groups of the panel Verbonden that no edge of the selected bron fills. One
 // function per `Loader` of the group table; each returns rows, and a total where
 // the API gives one.
+import { isBill, motionOrAmendment } from '$lib/text/document-kind';
 import { textOf } from '$lib/text/words';
 import { naamVan, naamVanId } from '$lib/bron/menselijk';
 import { ifExists, report } from '$lib/api/errors';
@@ -508,9 +509,8 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		if (!label) return { rows: [] };
 		// Its total is the count per kind: the counted answer (API 0.79.41, decisions.ts).
 		const page = await geteld({ dossier: label, chamber: 'TK', limit: DECISIONS_SHOWN }, signal);
-		const amendement = (kind: string | null | undefined) => /^amendement/i.test(kind ?? '');
 		const rows = page.items
-			.filter((d) => !amendement(d.kind))
+			.filter((d) => motionOrAmendment(d.kind) !== 'amendement')
 			.map(
 				(d): Row => ({
 					ref: { collection: 'decisions', key: d.key },
@@ -523,7 +523,9 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			);
 		const kinds = page.facets?.kind;
 		const total = kinds
-			? kinds.filter((k) => !amendement(k.value)).reduce((n, k) => n + k.count, 0)
+			? kinds
+					.filter((k) => motionOrAmendment(k.value) !== 'amendement')
+					.reduce((n, k) => n + k.count, 0)
 			: rows.length;
 		return { rows, total };
 	},
@@ -1157,7 +1159,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					date: p.date ?? null,
 					outcome: p.outcome ?? null
 				};
-				const wetsvoorstel = /^voorstel van wet/i.test(p.kind ?? '') && !!dossier;
+				const wetsvoorstel = isBill(p.kind) && !!dossier;
 				// A bill: titled by its dossier's name, its kind and number under it.
 				const stuk = describe('documents', p.key, p.display_name ?? null, {
 					...props,

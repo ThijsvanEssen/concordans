@@ -1,10 +1,11 @@
-import { capitalize, textOf, truncate, withoutGroup } from '$lib/text/words';
+import { carriesBillTitle, motionOrAmendment, shortKind } from '$lib/text/document-kind';
+import { capitalize, textOf, truncate } from '$lib/text/words';
 import { eersteIndiener } from '$lib/bron/submitters';
 import type { Schema } from '$lib/api/types';
 import { menselijkeNaam } from '$lib/bron/menselijk';
 import { dossierOwnName, dossierUitProps, officialNumber } from '$lib/bron/dossier-naam';
 import { articleName } from '$lib/text/bw';
-import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
+import { isGeneriek } from '$lib/bron/generiek';
 import { maandJaar } from '$lib/text/datum';
 import { COLLECTION_ROLE } from './collection-role';
 import {
@@ -209,21 +210,21 @@ export const kort = (name: string, max = 40): string => truncate(name, max, { at
  */
 export function stukLabel(props: Record<string, unknown>): string | null {
 	const kind = textOf(props.kind);
-	const shortKind = kind ? withoutGroup(kind) : null;
+	const short = kind ? shortKind(kind) : null;
 	const number =
 		textOf(props.number) ?? (props.sequence != null ? textOf(String(props.sequence)) : null);
 	const nr = number ? (/^\d/.test(number) ? `nr. ${number}` : number) : null;
 	const title = textOf(props.title);
-	const motie = kind ? /amendement|motie/i.exec(kind) : null;
+	const motie = motionOrAmendment(kind);
 	const lead = motie ? leadSignatory(props.actors) : null;
 	const indiener = lead
 		? `${lead.name.replace(/^(\p{Lu}[\p{L}]?\.\s*)+/u, '')}${lead.faction ? ` (${lead.faction})` : ''}`
 		: null;
 	const naam = motie
-		? [capitalize(motie[0].toLowerCase()), indiener].filter(Boolean).join(' ')
-		: !draagtWetstitel(kind) && title && !isGeneriek(title, kind)
+		? [capitalize(motie), indiener].filter(Boolean).join(' ')
+		: !carriesBillTitle(kind) && title && !isGeneriek(title, kind)
 			? kort(title, 36)
-			: (shortKind ?? title);
+			: (short ?? title);
 	if (!naam) return null;
 	const waar = nr ?? (textOf(props.date) ? maandJaar(textOf(props.date)) : null);
 	return waar ? `${naam}, ${waar}` : naam;

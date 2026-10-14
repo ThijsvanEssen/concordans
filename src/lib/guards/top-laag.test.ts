@@ -15,6 +15,34 @@ describe('one top layer (code-eenvoud F63)', () => {
 		).toEqual([]);
 	});
 
+	it('floats a card through FloatingCard, the box of a menu in basis.css (F75)', () => {
+		expect(
+			overtreders(
+				(t) => /position: fixed;\s*inset: auto;/.test(t),
+				[
+					plek('lib/components/ui/FloatingCard.svelte', 'the box of every card'),
+					plek('lib/styles/basis.css', 'the list of every menu, .tekstmenu__lijst')
+				]
+			)
+		).toEqual([]);
+	});
+
+	it('shows the card of a link through HoverCard (F75)', () => {
+		expect(
+			overtreders(
+				(t) => /\bHOVER_MS\b/.test(t),
+				[
+					plek('lib/actions/top-layer.ts', 'where the moment is said'),
+					plek('lib/actions/hover-card.svelte.ts'),
+					{
+						pad: 'lib/components/articles/GrondslagFormule.svelte',
+						reden: 'a card a click holds open'
+					}
+				]
+			)
+		).toEqual([]);
+	});
+
 	it('closes on a click outside through clickOutside only (F63)', () => {
 		const own = /document\.addEventListener\(\s*'(?:pointerdown|click)'/;
 		expect(overtreders((t) => own.test(t), [plek('lib/actions/top-layer.ts')])).toEqual([]);

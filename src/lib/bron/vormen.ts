@@ -29,33 +29,31 @@ const HEX_O = 'M8 2.4 13.3 5.45v6.1L8 14.6 2.7 11.55v-6.1z';
 const CIRKEL = (cx: number, cy: number, r: number) =>
 	`M${cx + r} ${cy}a${r} ${r} 0 1 1-${2 * r} 0a${r} ${r} 0 1 1 ${2 * r} 0z`;
 
-export const VORMEN: Record<Vorm, { d: string; wijze: Wijze; naam: string }> = {
-	regel: { d: 'M2 2h12v12H2z', wijze: 'vul', naam: 'regel' },
+export const VORMEN: Record<Vorm, { d: string; wijze: Wijze }> = {
+	regel: { d: 'M2 2h12v12H2z', wijze: 'vul' },
 	// A European or international regel: the square with a square hole, 5 of 16 wide, so at
 	// 12 px it still reads as a hole (3.75 px).
-	'regel-int': { d: 'M2 2h12v12H2zM5.5 5.5v5h5v-5z', wijze: 'gat', naam: 'internationaal' },
-	'regel-o': { d: 'M3 3h10v10H3z', wijze: 'lijn', naam: 'artikel' },
-	uitspraak: { d: CIRKEL(8, 8, 6.5), wijze: 'vul', naam: 'uitspraak' },
-	stuk: { d: 'M3.5 1h6.5l3 3v11H3.5z', wijze: 'vul', naam: 'stuk' },
+	'regel-int': { d: 'M2 2h12v12H2zM5.5 5.5v5h5v-5z', wijze: 'gat' },
+	'regel-o': { d: 'M3 3h10v10H3z', wijze: 'lijn' },
+	uitspraak: { d: CIRKEL(8, 8, 6.5), wijze: 'vul' },
+	stuk: { d: 'M3.5 1h6.5l3 3v11H3.5z', wijze: 'vul' },
 	// Een wetsvoorstel is een blad met een open vak, los van de toelichting.
 	voorstel: {
 		d: 'M3.5 1h6.5l3 3v11H3.5zM5.6 7.2h5.3v5.3H5.6z',
-		wijze: 'gat',
-		naam: 'wetsvoorstel'
+		wijze: 'gat'
 	},
-	dossier: { d: 'M1 3.5h5l1.5 1.5H15V14H1z', wijze: 'vul', naam: 'dossier' },
-	besluit: { d: 'M8 1.5 15 14.5H1z', wijze: 'vul', naam: 'besluit' },
-	activiteit: { d: 'M8 3.2 13.6 13.5H2.4z', wijze: 'lijn', naam: 'activiteit' },
-	toezegging: { d: 'M3 1h1.6v14H3zM4.6 2H14l-3 3.5L14 9H4.6z', wijze: 'vul', naam: 'toezegging' },
+	dossier: { d: 'M1 3.5h5l1.5 1.5H15V14H1z', wijze: 'vul' },
+	besluit: { d: 'M8 1.5 15 14.5H1z', wijze: 'vul' },
+	activiteit: { d: 'M8 3.2 13.6 13.5H2.4z', wijze: 'lijn' },
+	toezegging: { d: 'M3 1h1.6v14H3zM4.6 2H14l-3 3.5L14 9H4.6z', wijze: 'vul' },
 	persoon: {
 		d: `${CIRKEL(8, 4.6, 3.2)}M1.5 15c0-4.2 2.9-6.4 6.5-6.4s6.5 2.2 6.5 6.4z`,
-		wijze: 'vul',
-		naam: 'persoon'
+		wijze: 'vul'
 	},
-	orgaan: { d: HEX, wijze: 'vul', naam: 'fractie' },
-	'orgaan-o': { d: HEX_O, wijze: 'lijn', naam: 'commissie' },
-	kabinet: { d: `${HEX}${CIRKEL(8, 8.5, 2.6)}`, wijze: 'gat', naam: 'kabinet' },
-	overig: { d: CIRKEL(8, 8, 4), wijze: 'lijn', naam: 'overig' }
+	orgaan: { d: HEX, wijze: 'vul' },
+	'orgaan-o': { d: HEX_O, wijze: 'lijn' },
+	kabinet: { d: `${HEX}${CIRKEL(8, 8.5, 2.6)}`, wijze: 'gat' },
+	overig: { d: CIRKEL(8, 8, 4), wijze: 'lijn' }
 };
 
 export const VORM_VAN: Record<Collection, Vorm> = {

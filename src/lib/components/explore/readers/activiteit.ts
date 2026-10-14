@@ -3,7 +3,8 @@
 // in it, the toezeggingen made in it, the besluiten taken. A stuk opens in place on its core
 // text (a motie its dictum, from the answer itself), a besluit on its bar; a toezegging is its
 // text. The bron is one step further.
-import { withoutGroup } from '$lib/text/words';
+
+import { shortKind } from '$lib/text/document-kind';
 import type { Schema } from '$lib/api/types';
 import type { TijdGroep, TijdRegel } from '$lib/components/tijdlijn/tijdlijn';
 import type { Inhoud, MetInhoud } from '$lib/components/open/rij-inhoud';
@@ -38,7 +39,7 @@ export function activiteitGroepen(r: Records): {
 			datum: s.date ?? null,
 			teken: 'stuk',
 			soort: 'documents',
-			label: s.kind ? withoutGroup(s.kind) : null,
+			label: s.kind ? shortKind(s.kind) : null,
 			zin: (s.title ? withoutKamerstuk(s.title) : null) || s.kind || 'Kamerstuk',
 			meta: stukNummer(s),
 			ref: { collection: 'documents', key: s.key },

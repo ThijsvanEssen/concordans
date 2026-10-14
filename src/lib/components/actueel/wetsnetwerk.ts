@@ -2,7 +2,8 @@
 // stukken that change a law, the articles they change and the judgments on the most
 // changed one. Chosen by a rule, not by hand: the newest passed bill that changes articles.
 // Its links are made as from outside the Verkenner, where the band stands.
-import { count, withoutGroup } from '$lib/text/words';
+import { isBill, motionOrAmendment, shortKind } from '$lib/text/document-kind';
+import { count } from '$lib/text/words';
 import { naamVanId } from '$lib/bron/menselijk';
 import { formatCount } from '$lib/text/getal';
 import { api, unwrap } from '$lib/api/client';
@@ -94,10 +95,10 @@ export type Schets = {
  *  publication has neither. */
 const stukVan = (s: DossierChange['source']): { nr: string; soort: string } => ({
 	nr: s.number ?? (s.sequence != null ? String(s.sequence) : ''),
-	soort: s.official_id ? '' : withoutGroup(s.kind ?? '')
+	soort: s.official_id ? '' : shortKind(s.kind ?? '')
 });
 
-const isAmendement = (soort: string) => /^amendement/i.test(soort);
+const isAmendement = (soort: string) => motionOrAmendment(soort) === 'amendement';
 const nummer = (nr: string) => Number.parseInt(nr, 10) || Number.MAX_SAFE_INTEGER;
 
 /** The articles to draw and the one the judgments are about. */
@@ -133,7 +134,7 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 			stukken.set(c.source.id, {
 				id: c.source.id,
 				nr,
-				vorm: /^voorstel van wet/i.test(soort) ? 'voorstel' : 'stuk',
+				vorm: isBill(soort) ? 'voorstel' : 'stuk',
 				label: soort || naamVanId(c.source.id, c.source.display_name),
 				sub: nr ? `nr. ${nr}` : null,
 				href: buildBronHref(null, { collection: 'documents', key: c.source.key ?? c.source.id })

@@ -1,8 +1,9 @@
 <script lang="ts">
+	import { ownKind } from '$lib/text/document-kind';
 	import { korteDatum } from '$lib/text/datum';
 	import { textOf } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
-	import { eigenSoort, naamVan } from '$lib/bron/menselijk';
+	import { naamVan } from '$lib/bron/menselijk';
 	import { getDocument } from '$lib/api/records';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
@@ -277,7 +278,7 @@
 	{#snippet children(doc)}
 		{@const term = glossaryTerm(doc.kind)}
 		<!-- Without the group of kinds the source files it under (#58): "Amendement". -->
-		{@const kind = eigenSoort(doc.kind)}
+		{@const kind = ownKind(doc.kind)}
 		{@const cite = kamerstukCitation({
 			chamber: doc.chamber,
 			session_year: textOf(lichtProps.session_year),

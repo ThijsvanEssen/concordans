@@ -9,7 +9,8 @@
 	import { failureText } from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';
 	import { isEscape } from '$lib/actions/keys';
-	import { clickOutside, HOVER_MS, LEAVE_MS, topLayer } from '$lib/actions/top-layer';
+	import { clickOutside, HOVER_MS, LEAVE_MS } from '$lib/actions/top-layer';
+	import FloatingCard from '$lib/components/ui/FloatingCard.svelte';
 	import {
 		artikelKort,
 		grondslagKop,
@@ -118,14 +119,16 @@
 	onfocus={vraag}
 	onclick={klik}
 	onkeydown={toets}>{@render children()}</button
->{#if open && knop}<!-- A click on the card stays on it: not the place's menu under it (ArticleText). --><span
-		class="kaart"
+>{#if open && knop}<!-- A click on the card stays on it: not the place's menu under it (ArticleText). --><FloatingCard
+		kind="list"
+		tag="span"
+		anchor={knop}
+		onclose={sluit}
+		bind:element={kaart}
 		id="{uid}-kaart"
 		role="dialog"
 		aria-label={grondslagKop(formule)}
-		tabindex="-1"
-		bind:this={kaart}
-		use:topLayer={{ anchor: knop, close: sluit }}
+		tabindex={-1}
 		onpointerenter={binnen}
 		onpointerleave={buiten}
 		onclick={(e) => e.stopPropagation()}
@@ -147,7 +150,7 @@
 									></span
 								>{/each}</span
 						>{/if}</span
-				>{/each}{/if}</span
+				>{/each}{/if}</FloatingCard
 	>{/if}
 
 <style>
@@ -164,7 +167,7 @@
 		text-decoration: underline;
 		text-decoration-style: dotted;
 		text-decoration-color: var(--ink-3);
-		text-underline-offset: 3px;
+		text-underline-offset: var(--underline-offset);
 	}
 	.grondslag:hover,
 	.grondslag:focus-visible,
@@ -174,27 +177,6 @@
 	.grondslag:focus-visible {
 		outline: 2px solid var(--focus);
 		outline-offset: 2px;
-	}
-	.kaart {
-		position: fixed;
-		inset: auto;
-		margin: 0;
-		z-index: var(--z-float);
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-		width: min(44ch, calc(100vw - 16px));
-		max-height: var(--room);
-		overflow-y: auto;
-		padding: var(--s-3);
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		box-shadow: var(--shadow-modal);
-		color: var(--ink);
-		text-align: left;
-		white-space: normal;
-		font-family: var(--font-serif);
 	}
 	.kaart__kop {
 		font-size: var(--t-label);
@@ -223,7 +205,7 @@
 	.kaart__regeling :global(a.kaart__naam:hover),
 	.kaart__artikelen :global(a.kaart__artikel:hover) {
 		text-decoration-line: underline;
-		text-underline-offset: 3px;
+		text-underline-offset: var(--underline-offset);
 	}
 	.kaart__regel,
 	.kaart__artikelen {

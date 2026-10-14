@@ -4,7 +4,7 @@
 // pair that changed for the most part is shown as the old text and the new.
 import { joinAnd } from './words';
 import type { Schema } from '$lib/api/types';
-import { parseArticleParts, partsFromApi } from './article-parts';
+import { partsOf } from './article-parts';
 
 export type Segment = { op: 'eq' | 'del' | 'ins'; text: string };
 
@@ -149,7 +149,7 @@ export function unitsOf(
 	apiParts: Schema<'ArticlePartDTO'>[] | null | undefined
 ): Unit[] {
 	const source = text ?? '';
-	const parts = apiParts?.length ? partsFromApi(apiParts) : parseArticleParts(source);
+	const parts = partsOf(source, apiParts);
 	// Text outside the parts (the list of laws in a bijlage between its onderdelen) is a
 	// unit of its own: a change there is a change of the article.
 	const units: Unit[] = [];

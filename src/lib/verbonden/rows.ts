@@ -2,7 +2,8 @@
 // title and one meta line: the lid it names, the position in the source, the
 // identifier or the date, and the betrouwbaarheid when it is not hoog. The passage
 // of the source (`snippet`, with `match` marked) appears when the row is opened.
-import { count, escapeRegExp, joinAnd, lowerFirst, textOf, withoutGroup } from '$lib/text/words';
+import { carriesBillTitle, shortKind } from '$lib/text/document-kind';
+import { count, escapeRegExp, joinAnd, lowerFirst, textOf } from '$lib/text/words';
 import { isRauw, menselijkeNaam, naamVanId } from '$lib/bron/menselijk';
 import { keyEcli } from '$lib/bron/leesbaar';
 import { korteDatum, langeDatum, vandaag } from '$lib/text/datum';
@@ -12,7 +13,7 @@ import { articleTitle, bookNumber } from '$lib/text/bw';
 import { authorCite } from '$lib/text/judgment-cite';
 import { courtName } from '$lib/text/court';
 import { changeRelationOf, isCollection, type Relation } from '$lib/vocabulary';
-import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
+import { isGeneriek } from '$lib/bron/generiek';
 import {
 	dossierLabel,
 	dossierOwnName,
@@ -124,7 +125,7 @@ function documentName(
 	name: string
 ): { title: string; context: string | null } {
 	const kind = textOf(props.kind);
-	const shortKind = kind ? withoutGroup(kind) : null;
+	const short = kind ? shortKind(kind) : null;
 	const title = textOf(props.title) ? withoutKamerstuk(textOf(props.title)!) : null;
 	const dossier = dossierNumberOf(props);
 	const given = textOf(props.sequence != null ? String(props.sequence) : null);
@@ -147,14 +148,13 @@ function documentName(
 	const naamOnder = dossierNaam && !(title ?? '').includes(dossierNaam) ? dossierNaam : null;
 	// A paper of a bill by its kind and number: its title is the bill's, the same for all.
 	// `Blanco verslag` says more than the kind `Verslag`.
-	if (draagtWetstitel(kind) && stuk)
+	if (carriesBillTitle(kind) && stuk)
 		return {
-			title: join(title && isGeneriek(title, kind) ? title : shortKind, stuk)!,
+			title: join(title && isGeneriek(title, kind) ? title : short, stuk)!,
 			context: naamOnder
 		};
-	if (title && !isGeneriek(title, kind))
-		return { title, context: join(shortKind, stuk, naamOnder) };
-	const lead = title ?? shortKind!;
+	if (title && !isGeneriek(title, kind)) return { title, context: join(short, stuk, naamOnder) };
+	const lead = title ?? short!;
 	const where = stuk ?? langeDatum(textOf(props.date));
 	return { title: join(lead, where) ?? lead, context: naamOnder };
 }

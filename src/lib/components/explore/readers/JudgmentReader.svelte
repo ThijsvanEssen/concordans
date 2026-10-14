@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ecliKey } from '$lib/bron/leesbaar';
 	import { capitalize, textOf } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
 	import { bevindingen, strekking } from './uitkomst';
@@ -65,7 +66,6 @@
 	// The anchor of an overweging: `paragraph_id` for the first sub-paragraph split out of
 	// an API paragraph, else built from its number — a later split shares one `paragraph_id`
 	// with the first and needs its own anchor.
-	const ecliKey = (e: string) => e.toLowerCase().replaceAll(':', '_');
 
 	/** The articles outside the dataset named in the head; the rest are counted. */
 	const OUTSIDE_SHOWN = 6;

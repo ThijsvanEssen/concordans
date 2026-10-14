@@ -45,9 +45,6 @@ export function joinAnd(parts: readonly string[], others?: Others): string {
 	return parts.map((p, i) => separatorBefore(i, parts.length) + p).join('');
 }
 
-/** `Motie` from `Motie (gewijzigd)`: a kind without the group the source adds in brackets. */
-export const withoutGroup = (kind: string): string => kind.replace(/\s*\(.*\)\s*$/, '');
-
 /**
  * A text of at most `max` characters, "…" included. Cut `atWord`, it ends on a whole word
  * where one ends past half of `max`, and loses a comma or bracket before the "…".

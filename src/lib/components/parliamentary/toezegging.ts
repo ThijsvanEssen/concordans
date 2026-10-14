@@ -2,7 +2,8 @@
 // in het wetgevingsoverleg van 23 maart 2026", "Nagekomen in brief nr. 33". One wording for the
 // reader of a toezegging and its line opened in a list (ToezeggingInhoud). The activity is
 // named by its kind and day, never by its number.
-import { withoutGroup } from '$lib/text/words';
+
+import { shortKind } from '$lib/text/document-kind';
 import { langeDatum } from '$lib/text/datum';
 
 /** `het` or `de` before the kind of an activity: het debat, het overleg, de procedurevergadering. */
@@ -15,7 +16,7 @@ function lidwoord(soort: string): 'het' | 'de' {
 }
 
 /** The kind of an activity in a sentence: `Plenair debat (wetgeving)` is `plenair debat`. */
-const soortInZin = (kind: string) => withoutGroup(kind).trim().toLowerCase();
+const soortInZin = (kind: string) => shortKind(kind).trim().toLowerCase();
 
 /**
  * "Toegezegd in het wetgevingsoverleg van 23 maart 2026", in two parts: the words before the

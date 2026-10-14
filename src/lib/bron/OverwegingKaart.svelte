@@ -8,7 +8,8 @@
 	// The overweging as Gemarkeerd opens a kept one (Overweging), from the detail the reader
 	// shares.
 	import { afterTick } from '$lib/util/after-tick';
-	import { EDGE, topLayer } from '$lib/actions/top-layer';
+	import { EDGE } from '$lib/actions/top-layer';
+	import FloatingCard from '$lib/components/ui/FloatingCard.svelte';
 	import { anchorLabel } from '$lib/text/anchor';
 	import { isConclusion, uitspraakKop } from '$lib/text/judgment-cite';
 	import Overweging from './Overweging.svelte';
@@ -22,11 +23,10 @@
 		noot = null,
 		markering = null,
 		href,
-		anker,
-		kaart = $bindable(null),
+		anchor,
+		element = $bindable(null),
 		onpointerenter,
 		onpointerleave,
-		onkeydown,
 		onfocusout,
 		onclose
 	}: {
@@ -40,11 +40,10 @@
 		markering?: Markering | null;
 		/** Where the link goes: the judgment at the r.o., or beside the article. */
 		href: string;
-		anker: HTMLElement;
-		kaart?: HTMLElement | null;
+		anchor: HTMLElement;
+		element?: HTMLElement | null;
 		onpointerenter?: () => void;
 		onpointerleave?: () => void;
-		onkeydown?: (e: KeyboardEvent) => void;
 		onfocusout?: (e: FocusEvent) => void;
 		/** Closes the card: its link has scrolled out of view. */
 		onclose: () => void;
@@ -69,26 +68,27 @@
 	$effect(() => {
 		if (u === 'laden') return;
 		afterTick(() => {
-			const m = kaart?.querySelector<HTMLElement>('mark.doel, .voetnoot.is-open');
-			if (!kaart || !m) return;
+			const m = element?.querySelector<HTMLElement>('mark.doel, .voetnoot.is-open');
+			if (!element || !m) return;
 			const r = m.getBoundingClientRect();
-			const top = r.top - kaart.getBoundingClientRect().top + kaart.scrollTop;
-			if (top + r.height > kaart.clientHeight - EDGE * 4)
-				kaart.scrollTop = Math.max(0, top - kaart.clientHeight / 3);
+			const top = r.top - element.getBoundingClientRect().top + element.scrollTop;
+			if (top + r.height > element.clientHeight - EDGE * 4)
+				element.scrollTop = Math.max(0, top - element.clientHeight / 3);
 		});
 	});
 </script>
 
-<div
-	class="kaart"
+<FloatingCard
+	kind="text"
+	detach
+	{anchor}
+	{onclose}
+	bind:element
 	role="dialog"
-	tabindex="-1"
+	tabindex={-1}
 	aria-label="{kop ? `${kop}, ` : ''}{plaats}"
-	bind:this={kaart}
-	use:topLayer={{ anchor: anker, close: onclose, detach: true }}
 	{onpointerenter}
 	{onpointerleave}
-	{onkeydown}
 	{onfocusout}
 >
 	<p class="kop">{kop ? `${kop}, ${plaats}` : plaats}</p>
@@ -106,32 +106,9 @@
 				: `Open de uitspraak bij ${plaats}`}</a
 		>
 	</p>
-</div>
+</FloatingCard>
 
 <style>
-	.kaart {
-		position: fixed;
-		inset: auto;
-		margin: 0;
-		z-index: var(--z-float);
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-		width: min(64ch, calc(100vw - 16px));
-		max-height: min(60vh, 480px, var(--room));
-		padding: var(--s-3) var(--s-4);
-		overflow: auto;
-		overscroll-behavior: contain;
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		box-shadow: var(--shadow-modal);
-		color: var(--ink);
-		text-align: left;
-		font-style: normal;
-		font-weight: normal;
-		white-space: normal;
-	}
 	.kop {
 		margin: 0;
 		font-family: var(--font-serif);
@@ -167,7 +144,7 @@
 		color: var(--ink);
 		text-decoration: underline;
 		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 3px;
+		text-underline-offset: var(--underline-offset);
 	}
 	.verder a:hover,
 	.verder a:focus-visible {
