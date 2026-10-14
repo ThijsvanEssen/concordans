@@ -11,7 +11,7 @@
 	import { indelingMarkering } from '../zaaltegenover';
 	import ZaalPlaatsen from '../ZaalPlaatsen.svelte';
 	import { achtergrondVan, kleurVan } from '../partijkleuren.svelte';
-	import { korteDatum, langeDatum, vandaag } from '$lib/text/datum';
+	import { DAY_MS, korteDatum, langeDatum, vandaag } from '$lib/text/datum';
 	import { hallOfDay, vacantZonderFractie, wijzigingenVan, zetelHoogte } from './zetels';
 	import { load } from '$lib/util/load.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -167,7 +167,7 @@
 	const W = 600;
 	const H = 72;
 	const PAD = 0;
-	const dagNr = (d: string) => Date.parse(`${d}T00:00:00Z`) / 864e5;
+	const dagNr = (d: string) => Date.parse(`${d}T00:00:00Z`) / DAY_MS;
 	// The Kamer's whole scale, none to all its seats: the majority at its true height.
 	const schaal = (n: number) => zetelHoogte(n, zetelsVanKamer, H, PAD);
 	const stappen = $derived.by(() => {
@@ -197,7 +197,7 @@
 	const as = $derived(
 		van
 			? {
-					periode: { van: ms(van), tot: ms(eind) + 864e5, lopend: eind === vandaag() },
+					periode: { van: ms(van), tot: ms(eind) + DAY_MS, lopend: eind === vandaag() },
 					begin: korteDatum(van),
 					eind: eind === vandaag() ? 'nu' : korteDatum(eind)
 				}

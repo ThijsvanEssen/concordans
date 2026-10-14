@@ -1,6 +1,7 @@
 // TODO(backend B4, B5): nothing maps an article to the passage of a memorie van
 // toelichting that explains it. This looks for the heading of the artikelsgewijze
 // toelichting in the plain text. When the API delivers `passages`, this is a lookup.
+import { escapeRegExp } from './words';
 
 export type Passage = {
 	start: number;
@@ -8,8 +9,6 @@ export type Passage = {
 	/** A text match, not a fact of the source. */
 	derived: true;
 };
-
-const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** A heading is a short line; a sentence that happens to start with "Artikel 107" is not. */
 const MAX_HEADING = 140;
@@ -19,7 +18,7 @@ const MAX_HEADING = 140;
  * or a heading of the amending law that names it ("Artikel I, onderdeel C (artikel 287)").
  */
 export function findPassage(text: string, articleNumber: string): Passage | null {
-	const number = escape(articleNumber.trim());
+	const number = escapeRegExp(articleNumber.trim());
 	if (!text || !number) return null;
 	const own = new RegExp(`^[ \\t]*artikel[ \\t]+${number}(?![\\w.:])[^\\n]*$`, 'gim');
 	const amending = new RegExp(

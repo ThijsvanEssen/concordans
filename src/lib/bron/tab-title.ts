@@ -1,7 +1,7 @@
 // The name of a bron in the browser tab: short enough to tell tabs, bookmarks and history
 // apart. A judgment by its label and the name it is known by, a dossier by its number and
 // short title, a BW article by its book, anything else by its name cut at a word.
-import { textOf } from '$lib/text/words';
+import { textOf, truncate } from '$lib/text/words';
 import { shortDossierTitle, type GraphNode } from '$lib/graph/types';
 import { authorCite, judgmentCite } from '$lib/text/judgment-cite';
 import { articleTitle } from '$lib/text/bw';
@@ -12,11 +12,7 @@ import { dossierName, dossierUitProps } from './dossier-naam';
 const MAX = 80;
 
 /** A name cut at a word within `MAX` characters. */
-export function cut(name: string): string {
-	if (name.length <= MAX) return name;
-	const head = name.slice(0, MAX);
-	return `${head.slice(0, head.lastIndexOf(' ') > 40 ? head.lastIndexOf(' ') : MAX).trimEnd()}…`;
-}
+export const cut = (name: string): string => truncate(name, MAX, { atWord: true });
 
 export function tabTitle(node: Pick<GraphNode, 'collection' | 'label' | 'raw'>): string {
 	const props = node.raw?.props ?? {};

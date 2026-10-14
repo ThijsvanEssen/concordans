@@ -2,7 +2,7 @@
 	import { plural } from '$lib/text/words';
 	import { lijstDoel } from '$lib/stores/sprong';
 	import { fractieNaam } from '$lib/bron/menselijk';
-	import { korteDatum, vandaag } from '$lib/text/datum';
+	import { addDays, daysBetween, korteDatum, vandaag } from '$lib/text/datum';
 	import { formatCount } from '$lib/text/getal';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
@@ -42,7 +42,6 @@
 		FEED_KINDS,
 		KIND_LABEL,
 		atomParams,
-		dagVoor,
 		daysOf,
 		doorzochtVanaf,
 		errorPlace,
@@ -210,14 +209,12 @@
 	let error = $state<string | null>(null);
 	/** The API gave up on the words searched (30 s): a shorter period is quick. */
 	let teLang = $state(false);
-	const dagenTerug = (n: number) =>
-		new Date(Date.parse(today) - n * 86_400_000).toISOString().slice(0, 10);
 	/** A shorter period to offer, when the one asked is longer. */
 	const korter = $derived(
 		[
 			{ dagen: 91, label: 'De afgelopen 3 maanden' },
 			{ dagen: 365, label: 'Het afgelopen jaar' }
-		].filter((k) => !since || since < dagenTerug(k.dagen))
+		].filter((k) => !since || since < addDays(today, -k.dagen))
 	);
 
 	// The items first, the counts beside them in a request of their own: a slow or failed
@@ -309,7 +306,7 @@
 		try {
 			const r = await unwrap(
 				zoekApi.GET('/api/feed', {
-					params: { query: { ...query, until: dagVoor(doorzocht), facets: false } }
+					params: { query: { ...query, until: addDays(doorzocht, -1), facets: false } }
 				})
 			);
 			items = uniqueBy([...items, ...r.items.map(normalizeItem)], (i) => i.id);
@@ -354,7 +351,7 @@
 		const newest = days[0]?.date;
 		const oldest = days.at(-1)?.date;
 		if (!newest || !oldest) return null;
-		const count = Math.round((Date.parse(newest) - Date.parse(oldest)) / 86_400_000) + 1;
+		const count = Math.round(daysBetween(oldest, newest)) + 1;
 		return { until: newest, days: Math.min(count, SUMMARY_DAYS_MAX) };
 	});
 	$effect(() => {
@@ -719,7 +716,7 @@
 							<button
 								type="button"
 								class="btn is-groot"
-								onclick={() => patchUrl({ van: dagenTerug(k.dagen) })}>{k.label}</button
+								onclick={() => patchUrl({ van: addDays(today, -k.dagen) })}>{k.label}</button
 							>
 						{/each}
 					</p>

@@ -3,6 +3,7 @@
 // and the functions they signed stukken in (AUTHORED meta.function, when not as
 // Kamerlid). A function known only from stukken has no term, only the dates of the
 // stukken signed in it; one that falls in a post is counted with that post.
+import { daysBetween } from '$lib/text/datum';
 import { capitalize } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import { fractieNaam } from '$lib/bron/menselijk';
@@ -41,8 +42,6 @@ const GAP_DAYS = 31;
  * fractievoorzitter is often a plain Lid for some weeks after an election.
  */
 const ROLE_GAP_DAYS = 90;
-const days = (a: string, b: string) => (Date.parse(b) - Date.parse(a)) / 86_400_000;
-
 /** Whether a signed function names this post: `minister-president` in `minister-president van Nederland`. */
 const names = (post: GovernmentFunction, fn: string) =>
 	!!post.function?.toLowerCase().startsWith(fn.toLowerCase());
@@ -65,7 +64,7 @@ export function careerOf(
 		const joins =
 			last &&
 			last.factionKey === m.faction_key &&
-			(last.to === null || !m.from_date || days(last.to, m.from_date) <= GAP_DAYS);
+			(last.to === null || !m.from_date || daysBetween(last.to, m.from_date) <= GAP_DAYS);
 		const seat = joins
 			? last
 			: {
@@ -86,7 +85,7 @@ export function careerOf(
 				role.role === m.role &&
 				role.to &&
 				m.from_date &&
-				days(role.to, m.from_date) <= ROLE_GAP_DAYS
+				daysBetween(role.to, m.from_date) <= ROLE_GAP_DAYS
 			)
 				role.to = m.to_date && m.to_date < role.to ? role.to : (m.to_date ?? null);
 			else seat.roles.push({ role: m.role, from: m.from_date ?? null, to: m.to_date ?? null });

@@ -1,5 +1,5 @@
 import { count } from '$lib/text/words';
-import { korteDatum, weekdag } from '$lib/text/datum';
+import { DAY_MS, korteDatum, weekdag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 import { isGeneriek } from '$lib/bron/generiek';
 import { padHref, parsePad, remember } from '$lib/bron/leesbaar';
@@ -296,7 +296,7 @@ export const countLine = (counts: Day['counts']) =>
 export function dayLabel(iso: string, today: string): string {
 	const d = new Date(`${iso}T00:00:00Z`);
 	const t = new Date(`${today}T00:00:00Z`);
-	const diff = Math.round((t.getTime() - d.getTime()) / 86_400_000);
+	const diff = Math.round((t.getTime() - d.getTime()) / DAY_MS);
 	if (diff === 0) return 'Vandaag';
 	if (diff === 1) return 'Gisteren';
 	if (diff === -1) return 'Morgen';
@@ -374,10 +374,6 @@ export function doorzochtVanaf(r: object): string | null {
 	};
 	return partial && typeof vanaf === 'string' && vanaf ? vanaf.slice(0, 10) : null;
 }
-
-/** The day before: where a search goes on further back. */
-export const dagVoor = (iso: string) =>
-	new Date(Date.parse(`${iso.slice(0, 10)}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
 
 /**
  * Where a failure of the feed is said: in place of the list it left empty, or under the list

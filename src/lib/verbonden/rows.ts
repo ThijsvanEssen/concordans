@@ -2,7 +2,7 @@
 // title and one meta line: the lid it names, the position in the source, the
 // identifier or the date, and the betrouwbaarheid when it is not hoog. The passage
 // of the source (`snippet`, with `match` marked) appears when the row is opened.
-import { count, joinAnd, lowerFirst, textOf } from '$lib/text/words';
+import { count, escapeRegExp, joinAnd, lowerFirst, textOf, withoutGroup } from '$lib/text/words';
 import { isRauw, menselijkeNaam, naamVanId } from '$lib/bron/menselijk';
 import { keyEcli } from '$lib/bron/leesbaar';
 import { korteDatum, langeDatum, vandaag } from '$lib/text/datum';
@@ -124,7 +124,7 @@ function documentName(
 	name: string
 ): { title: string; context: string | null } {
 	const kind = textOf(props.kind);
-	const shortKind = kind?.replace(/\s*\(.*\)\s*$/, '') ?? null;
+	const shortKind = kind ? withoutGroup(kind) : null;
 	const title = textOf(props.title) ? withoutKamerstuk(textOf(props.title)!) : null;
 	const dossier = dossierNumberOf(props);
 	const sequence = textOf(props.sequence != null ? String(props.sequence) : null);
@@ -480,7 +480,7 @@ function zonderNaam<P extends { text: string; kind: string }>(title: string, par
 		if (p.kind !== 'plain') return true;
 		const w = p.text.trim().toLowerCase();
 		if (!w) return false;
-		const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		const escaped = escapeRegExp(w);
 		return !new RegExp(`(^|[^\\p{L}\\p{N}])${escaped}($|[^\\p{L}\\p{N}])`, 'u').test(t);
 	});
 }

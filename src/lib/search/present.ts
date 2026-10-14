@@ -1,3 +1,4 @@
+import { escapeRegExp } from '$lib/text/words';
 import { judgmentCite } from '$lib/text/judgment-cite';
 import { menselijkeNaam } from '$lib/bron/menselijk';
 // How a search result reads: a title that tells it from its neighbours, the context a
@@ -56,14 +57,12 @@ const extras = (hit: Hit, name: string): string[] => {
 	return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
 };
 
-const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
 /** `text` in pieces, the words of `query` (three letters or more) marked. */
 export function marked(text: string, query: string): Segment[] {
 	const words = query
 		.split(/\s+/)
 		.filter((w) => w.length >= 3)
-		.map(escape);
+		.map(escapeRegExp);
 	if (words.length === 0) return [{ text, mark: false }];
 	// Split with a capture group: the odd pieces are the matches.
 	return text
@@ -77,7 +76,7 @@ export function around(text: string, query: string, lead = 40): string {
 	const words = query
 		.split(/\s+/)
 		.filter((w) => w.length >= 3)
-		.map(escape);
+		.map(escapeRegExp);
 	const at = words.length ? text.search(new RegExp(words.join('|'), 'i')) : -1;
 	if (at <= lead) return text;
 	const start = text.lastIndexOf(' ', at - lead);

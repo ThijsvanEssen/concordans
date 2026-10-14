@@ -2,7 +2,7 @@
 // groepen (Raad van State, Tweede Kamer, Eerste Kamer). Alleen wat gebeurd is; wat nog kan
 // volgen staat als één gestippelde regel die zegt dat het kan volgen. Moties, amendementen,
 // brieven en procedurevergaderingen worden geteld en staan achter één knop.
-import { capitalize, count, joinAnd, lowerFirst } from '$lib/text/words';
+import { capitalize, count, joinAnd, lowerFirst, withoutGroup } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import { bronHref } from '$lib/bron/href';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
@@ -111,7 +111,7 @@ const opening = (e: Entry): ProcedureInhoud => ({
 });
 
 function eigenStuk(e: Entry, groep: 'rvs' | 'tk' | 'ek', dossier: string): TijdRegel {
-	const kind = (e.kind ?? '').replace(/\s*\(.*\)\s*$/, '');
+	const kind = withoutGroup(e.kind ?? '');
 	const title = e.title ? withoutKamerstuk(e.title).trim() : '';
 	const eigen = title && !isGeneriek(title, e.kind) ? title : null;
 	const nr = nrOf(e);

@@ -1,6 +1,7 @@
 // The passage of a citing text a row of Verbonden shows under its line: the words that cite
 // the bron marked, a few words before them and the rest of the sentence after (Thijs, 13 Oct:
 // "de geciteerde tekst hier zien zodat ik niet heel hard moet zoeken").
+import { truncate } from '$lib/text/words';
 import { paragraphNumber } from '$lib/text/anchor';
 
 export type Passage = { before: string; mark: string; after: string };
@@ -29,11 +30,7 @@ export function uitsnede(p: Passage): Passage {
 			before = `…${tail.slice(space + 1)}`;
 		}
 	}
-	let after = p.after;
-	if (after.length > NA) {
-		const cut = after.lastIndexOf(' ', NA);
-		after = `${after.slice(0, cut > 0 ? cut : NA)}…`;
-	}
+	const after = truncate(p.after, NA, { atWord: true });
 	return { before: before.replace(/^\s+/, ''), mark: p.mark, after: after.replace(/\s+$/, '') };
 }
 

@@ -1,5 +1,5 @@
 import { lowerFirst } from '$lib/text/words';
-import { vandaag } from '$lib/text/datum';
+import { DAY_MS, vandaag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 
 // Who held which post in a cabinet, laid out on the cabinet's term: per ministry its seats,
@@ -11,7 +11,6 @@ export type Seat = Schema<'CabinetSeatDTO'>;
 export type SeatPost = Schema<'CabinetPostDTO'>;
 export type Phase = Schema<'CabinetPhaseDTO'>;
 
-const DAY = 86_400_000;
 const parse = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
 
 export type Term = { start: number; end: number; open: boolean };
@@ -61,7 +60,7 @@ export function lanesOf(seat: Seat, term: Term): Block[][] {
 		.sort((a, b) => a.from - b.from || a.to - b.to);
 	const lanes: Block[][] = [];
 	// A day's slack: one holder often ends on the day the next begins.
-	const slack = DAY / (term.end - term.start);
+	const slack = DAY_MS / (term.end - term.start);
 	for (const block of blocks) {
 		const lane = lanes.find((l) => l[l.length - 1].to <= block.from + slack);
 		if (lane) lane.push(block);

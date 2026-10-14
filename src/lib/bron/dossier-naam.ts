@@ -4,7 +4,7 @@
 // duidelijk onderscheid tussen wet en gelijknamig dossier"). The name follows from official
 // data only (Thijs, 9 Oct: "dossiernummers zijn prima, maar ik heb liever ook human-readable
 // namen"). The responses carry the short title (API 0.79.54); without one the title, cut.
-import { textOf } from '$lib/text/words';
+import { textOf, truncate } from '$lib/text/words';
 
 export type DossierNaamBron = {
 	number: string;
@@ -62,7 +62,7 @@ export function dossierName(d: DossierNaamBron): string {
 	if (short) return d.short_title_basis === 'amended_law' ? `wijziging van ${short}` : short;
 	const title = d.title?.trim();
 	if (!title) return d.number;
-	return title.length > NAAM_MAX ? `${title.slice(0, NAAM_MAX - 1).trimEnd()}…` : title;
+	return truncate(title, NAAM_MAX);
 }
 
 /** "Kamerstuk 36889 wijziging van Archiefwet 1995"; "Kamerstuk 36889" where no name is known. */

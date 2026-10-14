@@ -1,4 +1,4 @@
-import { capitalize, textOf } from '$lib/text/words';
+import { capitalize, textOf, truncate, withoutGroup } from '$lib/text/words';
 import { eersteIndiener } from '$lib/bron/submitters';
 import type { Schema } from '$lib/api/types';
 import { menselijkeNaam } from '$lib/bron/menselijk';
@@ -213,16 +213,11 @@ export function shortDossierTitle(title: string | null): string | null {
 	const t = title.trim();
 	const m = t.match(/\(([^()]+)\)\s*$/);
 	if (m && m[1].trim().length > 0) return m[1].trim();
-	return t.length > 60 ? t.slice(0, 57).trimEnd() + '…' : t;
+	return truncate(t, 60);
 }
 
 /** A name the canvas can carry: at most `max` characters, cut at a word, with "…". */
-export function kort(name: string, max = 40): string {
-	if (name.length <= max) return name;
-	const cut = name.slice(0, max - 1);
-	const space = cut.lastIndexOf(' ');
-	return `${(space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s,.:;(–-]+$/, '')}…`;
-}
+export const kort = (name: string, max = 40): string => truncate(name, max, { atWord: true });
 
 /**
  * A Kamerstuk on the canvas, short and by what tells it apart in its dossier (API 0.79.6
@@ -233,7 +228,7 @@ export function kort(name: string, max = 40): string {
  */
 export function stukLabel(props: Record<string, unknown>): string | null {
 	const kind = textOf(props.kind);
-	const shortKind = kind?.replace(/\s*\(.*\)\s*$/, '') ?? null;
+	const shortKind = kind ? withoutGroup(kind) : null;
 	const number =
 		textOf(props.number) ?? (props.sequence != null ? textOf(String(props.sequence)) : null);
 	const nr = number ? (/^\d/.test(number) ? `nr. ${number}` : number) : null;

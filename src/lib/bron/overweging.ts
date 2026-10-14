@@ -2,6 +2,7 @@
 // Verbonden) laid out as its reader lays it out, and the overweging an anchor names in it.
 // Gemarkeerd opens a kept r.o. with it (MapInhoud), a reference to a judgment at an r.o.
 // shows it in its card (OverwegingKaart): one way to read an r.o. without the judgment.
+import { truncate } from '$lib/text/words';
 import { getJudgmentDetail } from '$lib/api/judgments';
 import type { Schema } from '$lib/api/types';
 import {
@@ -70,9 +71,7 @@ export function tekstVanOverweging(u: Uitspraak, at: string, max = 400): string 
 		.join(' ')
 		.replace(/\s+/g, ' ')
 		.trim();
-	if (t.length <= max) return t;
-	const cut = t.lastIndexOf(' ', max);
-	return `${t.slice(0, cut > 0 ? cut : max)}…`;
+	return truncate(t, max, { atWord: true });
 }
 
 /**

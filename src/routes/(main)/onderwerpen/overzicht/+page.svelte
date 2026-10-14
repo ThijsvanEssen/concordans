@@ -28,7 +28,7 @@
 	import Kruiswoord, { type KolomKop } from '$lib/onderwerpen/Kruiswoord.svelte';
 	import StrekkingTeken from '$lib/onderwerpen/StrekkingTeken.svelte';
 	import { buildOpenHref } from '$lib/bron/href';
-	import { isDay, korteDatum, langeDatum, maandNaam, vandaag } from '$lib/text/datum';
+	import { daysBetween, isDay, korteDatum, langeDatum, maandNaam, vandaag } from '$lib/text/datum';
 	import { download } from '$lib/verbonden/export';
 	import { lees, uitParams, vindIndex } from '$lib/onderwerpen/onderwerpen';
 	import { dossierName } from '$lib/bron/dossier-naam';
@@ -295,7 +295,7 @@
 			...(t ? { until: t } : {})
 		};
 		// Per day for weeks, which the API allows over at most 400 days from a first day.
-		const dagen400 = !!v && (Date.parse(t || vandaag()) - Date.parse(v)) / 864e5 <= 400;
+		const dagen400 = !!v && daysBetween(v, t || vandaag()) <= 400;
 		const per = perWeek ? (dagen400 ? 'day' : null) : 'month';
 		(async () => {
 			if (per) {

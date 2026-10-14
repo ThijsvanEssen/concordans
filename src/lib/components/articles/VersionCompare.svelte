@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { capitalize } from '$lib/text/words';
 	import { lidAnchor, lidNumber } from '$lib/text/anchor';
-	import { korteDatum, langeDatum } from '$lib/text/datum';
+	import { DAY_MS, korteDatum, langeDatum } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
@@ -148,7 +148,7 @@
 	const today = Date.now();
 	/** A period's share of the line: its years, so a long-lived text takes more room. */
 	const years = (w: VersionWording) =>
-		Math.max(0.1, ((w.until ? time(w.until) : today) - time(w.from)) / (365.25 * 864e5));
+		Math.max(0.1, ((w.until ? time(w.until) : today) - time(w.from)) / (365.25 * DAY_MS));
 
 	/** The changes between A and B, oldest first, whichever way round they are held. */
 	const between = $derived(wordings.slice(older.index + 1, newer.index + 1));

@@ -4,7 +4,7 @@
 // amendement, the vote on its zaak; a judgment the first sentence of its summary, or at an
 // r.o. that overweging; an article its first lid, or the part the reference names.
 import { langeDatum } from '$lib/text/datum';
-import { separatorBefore, textOf } from '$lib/text/words';
+import { separatorBefore, textOf, truncate, withoutGroup } from '$lib/text/words';
 import { getDossier } from '$lib/components/parliamentary/data';
 import { getNodeFirst, once } from '$lib/api/records';
 import { ifExists } from '$lib/api/errors';
@@ -102,8 +102,7 @@ export function uitslagVan(props: Record<string, unknown>): string | null {
 	return voor != null && tegen != null ? `${besluit}, ${voor} voor en ${tegen} tegen` : besluit;
 }
 
-const clip = (s: string | null) =>
-	s && s.length > PREVIEW_CHARS ? `${s.slice(0, PREVIEW_CHARS).trimEnd()}…` : s;
+const clip = (s: string | null) => s && truncate(s, PREVIEW_CHARS);
 
 /** The card of a bron from its node: the name, the kind, a date, and what it says first. */
 export function previewFromNode(
@@ -159,7 +158,7 @@ export function previewFromNode(
 			};
 		}
 		case 'documents': {
-			const soort = textOf(props.kind)?.replace(/\s*\(.*\)\s*$/, '') ?? kind;
+			const soort = withoutGroup(textOf(props.kind) ?? kind);
 			const number =
 				textOf(props.number) ?? (props.sequence != null ? String(props.sequence) : null);
 			const nr = number ? (/^\d/.test(number) ? `nr. ${number}` : number) : null;

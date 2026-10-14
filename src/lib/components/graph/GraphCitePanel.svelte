@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { textOf } from '$lib/text/words';
+	import { textOf, truncate } from '$lib/text/words';
 	import { naamVanId } from '$lib/bron/menselijk';
 	// The hover panel of the canvas: what the bron is, a preview, and two actions: open
 	// it, and add it to the netwerk or take it out.
@@ -102,8 +102,7 @@
 		}
 	});
 
-	const preview = (value: string | null) =>
-		value && value.length > 220 ? value.slice(0, 220) + '…' : value;
+	const preview = (value: string | null) => value && truncate(value, 220);
 
 	// Text the node already carries, so hovering costs no request.
 	const nodeText = $derived.by(() => {

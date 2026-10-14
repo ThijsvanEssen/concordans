@@ -4,6 +4,7 @@
 // names it too (`definition_ref`: "artikel 11 van de wet"). Nothing is read from the text.
 // A regulation issued under a law takes that law's definitions where they reach it
 // (`scope.reach`); such a definition names the law that gives it (`given_by`).
+import { truncate } from './words';
 import type { Schema } from '$lib/api/types';
 import { PREVIEW_CHARS, type Preview } from '$lib/bron/preview';
 
@@ -50,7 +51,7 @@ export function definitieKaart(d: Definitie): Preview {
 		kicker: plaats ? `Begrip, ${plaats}` : 'Begrip',
 		title: d.term,
 		date: null,
-		lines: d.text.length > PREVIEW_CHARS ? `${d.text.slice(0, PREVIEW_CHARS).trimEnd()}…` : d.text
+		lines: truncate(d.text, PREVIEW_CHARS)
 	};
 }
 

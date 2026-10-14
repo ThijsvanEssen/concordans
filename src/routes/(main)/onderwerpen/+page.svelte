@@ -17,7 +17,6 @@
 	import { partyColor } from '$lib/utils/party-color.svelte';
 	import {
 		daysOf,
-		dagVoor,
 		doorzochtVanaf,
 		feedStand,
 		normalizeItem,
@@ -46,7 +45,7 @@
 		type Onderwerp
 	} from '$lib/onderwerpen/onderwerpen';
 	import { getInstrumentDetail } from '$lib/api/instrument-cache';
-	import { korteDatum, vandaag } from '$lib/text/datum';
+	import { addDays, korteDatum, vandaag } from '$lib/text/datum';
 	import { getMinistries } from '$lib/components/explore/index/government';
 
 	/** Lines per topic, as the feed gives at most in one page. */
@@ -55,8 +54,6 @@
 	const EERST = 10;
 
 	const today = vandaag();
-	const dagenTerug = (n: number) =>
-		new Date(Date.parse(today) - n * 86_400_000).toISOString().slice(0, 10);
 
 	const gedeeld = $derived<Onderwerp[]>([
 		...uitParams(page.url.searchParams).map((termen) => ({ termen, vorige: null, gezien: null })),
@@ -112,7 +109,7 @@
 		o.wet
 			? { instrument: o.wet.bwb, ...(o.wet.artikel ? { article: o.wet.artikel } : {}) }
 			: { q: o.termen };
-	const recent = dagenTerug(RECENT_DAGEN);
+	const recent = addDays(today, -RECENT_DAGEN);
 	const vanaf = (o: Onderwerp) => vensterVan(o.vorige, recent);
 
 	/** One request per word, at most two at a time (the API's limit per address). */
@@ -152,7 +149,7 @@
 					}
 					// Nothing in the period: the last lines before it, as the API has them.
 					if (!verder && !r.items.length && !doorzochtVanaf(r)) {
-						r = await vraag({ until: dagVoor(vanaf(o)), limit: EERST });
+						r = await vraag({ until: addDays(vanaf(o), -1), limit: EERST });
 						eerder = r.items.length > 0;
 					}
 					for (const raw of r.items) {
@@ -222,7 +219,7 @@
 		if (!s?.doorzocht || verderBezig) return;
 		verderBezig = vak(o);
 		try {
-			await laadAlles([o], ac.signal, { tot: dagVoor(s.doorzocht), items: s.items });
+			await laadAlles([o], ac.signal, { tot: addDays(s.doorzocht, -1), items: s.items });
 		} finally {
 			verderBezig = null;
 		}

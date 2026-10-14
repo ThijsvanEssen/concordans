@@ -1,4 +1,4 @@
-import { capitalize, joinAnd } from '$lib/text/words';
+import { capitalize, joinAnd, truncate } from '$lib/text/words';
 import { bewindspersoonVan, eersteIndiener } from '$lib/bron/submitters';
 import type { BronRef } from '$lib/bron/href';
 import type { Vorm } from '$lib/bron/vormen';
@@ -85,8 +85,7 @@ const WORDS = [
 /** `zes`, `14`: a small number in words, as a headline writes it. */
 export const inWords = (n: number) => WORDS[n] ?? String(n);
 
-const cut = (text: string, max = TITLE_MAX) =>
-	text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
+const cut = (text: string, max = TITLE_MAX) => truncate(text, max);
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 

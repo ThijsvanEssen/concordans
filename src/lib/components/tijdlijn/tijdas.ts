@@ -2,9 +2,8 @@
 // zetels. Een plek op de as is een fractie van de periode (0 aan het begin, 1 aan het eind);
 // de streepjes kiezen hun stap naar de breedte, zodat twee labels nooit botsen en geen label
 // tegen een rand komt.
-import { korteDatum, maandJaar, vandaag } from '$lib/text/datum';
+import { DAY_MS, korteDatum, maandJaar, vandaag } from '$lib/text/datum';
 
-const DAG = 86_400_000;
 export const ms = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
 
 export type Periode = { van: number; tot: number; lopend: boolean };
@@ -23,7 +22,7 @@ export function streepjes(
 	breedte: number,
 	randen: { begin: number; eind: number } = { begin: RAND, eind: RAND }
 ): Streepje[] {
-	const jaren = (p.tot - p.van) / (365.25 * DAG);
+	const jaren = (p.tot - p.van) / (365.25 * DAY_MS);
 	const stappen = [3, 12, 24, 60, 120]; // maanden
 	for (const maanden of stappen) {
 		const aantal = (jaren * 12) / maanden;
