@@ -17,3 +17,16 @@ export function terPlekke(e: MouseEvent, open: () => void): void {
 	e.stopPropagation();
 	open();
 }
+
+/** Whether a click inside a clickable row landed on a control of its own (a link, a button). */
+const onControl = (e: Event) =>
+	e.target instanceof Element && e.target !== e.currentTarget && !!e.target.closest('a, button');
+
+/**
+ * For the onclick of a clickable row: a click on the row itself opens it. A click on a link
+ * or button in it is that control's, and a click that ends a text selection selects.
+ */
+export function rowClick(e: MouseEvent, open: () => void): void {
+	if (onControl(e) || window.getSelection()?.toString()) return;
+	open();
+}

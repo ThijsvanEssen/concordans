@@ -2,6 +2,7 @@
 // groepen (Raad van State, Tweede Kamer, Eerste Kamer). Alleen wat gebeurd is; wat nog kan
 // volgen staat als één gestippelde regel die zegt dat het kan volgen. Moties, amendementen,
 // brieven en procedurevergaderingen worden geteld en staan achter één knop.
+import { forAgainst } from './stemming';
 import { capitalize, count, joinAnd, lowerFirst, withoutGroup } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import { bronHref } from '$lib/bron/href';
@@ -180,7 +181,8 @@ function regelsVan(
 			const b = bodyOf(e);
 			const uitslag = uitslagVan(b);
 			const tally = (b.tally ?? {}) as Record<string, number>;
-			if ((tally['Voor'] ?? 0) + (tally['Tegen'] ?? 0) > 0)
+			const { voor, tegen } = forAgainst(tally);
+			if (voor + tegen > 0)
 				inhoud.set(e.node_id, {
 					soort: 'stemming',
 					item: {

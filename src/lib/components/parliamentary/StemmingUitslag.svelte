@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { choiceRank } from '$lib/components/parliamentary/stemming';
 	// The vote on a motie or an amendement, on the page of the stuk itself (API 0.73, BE-33):
 	// the outcome and the day, the seats for and against, and the fracties on each side. The
 	// stuk names its decisions; the fracties of the Tweede Kamer are in the decision's votes,
@@ -41,9 +42,8 @@
 		if (d.chamber === 'EK') return ekFactionGroups(d);
 		const full = details.get(d.key);
 		const by = Map.groupBy(full?.votes ?? [], (v) => v.choice);
-		const order = ['Voor', 'Tegen', ...[...by.keys()].filter((c) => c !== 'Voor' && c !== 'Tegen')];
-		return order
-			.filter((c) => by.has(c))
+		return [...by.keys()]
+			.sort((a, b) => choiceRank(a) - choiceRank(b))
 			.map((c) => ({ label: c, names: by.get(c)!.map((v) => v.name?.trim() || v.voter_id) }));
 	}
 

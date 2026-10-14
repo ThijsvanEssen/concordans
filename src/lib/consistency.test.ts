@@ -1400,3 +1400,59 @@ describe('errors that are not swallowed', () => {
 		expect(Object.keys(found).filter((p) => p.includes('/explore/readers/'))).toEqual([]);
 	});
 });
+
+describe('the explorer’s small things said once (code-eenvoud F48–F50)', () => {
+	it('takes the ministries, their order and their renamings from the API (F48)', () => {
+		// No list of ministry codes of its own: getMinistries gives order and successors.
+		expect(offenders((t) => /['"]az['"],\s*['"]bz['"]|\bvenj\s*:/.test(t))).toEqual([]);
+	});
+
+	it('opens a post of a cabinet through CabinetPostOpen (F50)', () => {
+		expect(
+			offenders(
+				(t) => /import PostOpen\b/.test(t),
+				['lib/components/explore/index/CabinetPostOpen.svelte']
+			)
+		).toEqual([]);
+		expect(
+			offenders((t) => /\/\^kabinet-\//.test(t), ['lib/components/explore/index/government.ts'])
+		).toEqual([]);
+	});
+
+	it('says where a composition or a decision comes from in BronRegel (F49)', () => {
+		expect(
+			offenders(
+				(t) => /gegevens sinds|geraadpleegd op/.test(t),
+				['lib/components/parliamentary/BronRegel.svelte']
+			)
+		).toEqual([]);
+	});
+
+	it('counts and orders the choices of a stemming in $lib/components/parliamentary/stemming (F50)', () => {
+		expect(
+			offenders(
+				(t) =>
+					/\[['"](Voor|Tegen)['"]\]|['"]Voor['"],\s*['"]Tegen['"]|[!=]== ?['"](Voor|Tegen)['"]/.test(
+						t
+					),
+				['lib/components/parliamentary/stemming.ts']
+			)
+		).toEqual([]);
+	});
+
+	it('names the open state of a toezegging by OPEN_STATUS (F50)', () => {
+		expect(
+			offenders((t) => /['"]Openstaand['"]/.test(t), ['lib/components/explore/index/government.ts'])
+		).toEqual([]);
+	});
+
+	it('opens a clickable row by one rule, rowClick in $lib/actions/klik (F50)', () => {
+		// A row is marked data-rij; RijActies only looks for its row.
+		expect(
+			offenders(
+				(t) => /\sdata-rij[\s>]/.test(t) && !t.includes('rowClick('),
+				['lib/components/ui/RijActies.svelte']
+			)
+		).toEqual([]);
+	});
+});

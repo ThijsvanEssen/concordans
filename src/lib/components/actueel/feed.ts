@@ -1,3 +1,4 @@
+import { forAgainst } from '$lib/components/parliamentary/stemming';
 import { count } from '$lib/text/words';
 import { DAY_MS, korteDatum, weekdag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
@@ -121,10 +122,7 @@ export type Fold = {
 /** A vote closer than this many seats stands on its own. */
 export const CLOSE_VOTE = 10;
 
-const tallyOf = (i: FeedItem) => {
-	const t = (i.vote?.tally ?? {}) as Record<string, number>;
-	return { voor: t['Voor'] ?? 0, tegen: t['Tegen'] ?? 0 };
-};
+const tallyOf = (i: FeedItem) => forAgainst(i.vote?.tally);
 
 /** The difference in seats of a vote; without a tally, none. */
 export const voteMargin = (i: FeedItem) => {

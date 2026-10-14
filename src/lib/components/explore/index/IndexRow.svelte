@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { bewaarItem } from '$lib/map/map';
-	import { terPlekke } from '$lib/actions/klik';
-	import { onControl } from '$lib/actions/outside';
+	import { rowClick, terPlekke } from '$lib/actions/klik';
 	// One row of the index. A click anywhere in the row, the title too, opens its detail
 	// beneath it; the bron itself opens from the buttons there. The title stays a link, so
 	// cmd-click and a middle click open the bron in a new tab and it can be copied. The
@@ -80,13 +79,7 @@
 			: null;
 	});
 
-	// A click after selecting text selects; a click on another control is that control's.
-	function onRowClick(e: MouseEvent) {
-		if (onControl(e)) return;
-		if (window.getSelection()?.toString()) return;
-		if (direct) goto(href!);
-		else onToggle?.();
-	}
+	const onRowClick = (e: MouseEvent) => rowClick(e, () => (direct ? goto(href!) : onToggle?.()));
 
 	/** A plain click on the title opens the row; with a modifier it is the link's. With
 	 *  `acties` the title is a plain link: it opens the bron. */
@@ -157,7 +150,7 @@
 	.row {
 		position: relative;
 		display: grid;
-		grid-template-columns: var(--row-lead, 120px) minmax(0, 1fr) var(--row-aside, 190px);
+		grid-template-columns: var(--row-lead) minmax(0, 1fr) var(--row-aside);
 		gap: var(--s-5);
 		padding: var(--s-3) var(--s-2);
 		border-bottom: 1px solid var(--rule);
@@ -243,7 +236,7 @@
 	.detail {
 		background: var(--paper-2);
 		border-bottom: 1px solid var(--rule);
-		padding: 0 var(--s-2) 0 calc(var(--row-lead, 120px) + var(--s-5) + var(--s-2));
+		padding: 0 var(--s-2) 0 calc(var(--row-lead) + var(--s-5) + var(--s-2));
 	}
 
 	/* Dossiers under one number: the rows of the opened number stand indented beneath it. */

@@ -18,7 +18,7 @@
 	let lijsten = $state<Record<string, number | null>>({});
 	$effect(() => {
 		getStats()
-			.then((s) => (lijsten = (s as { lists?: Record<string, number | null> }).lists ?? {}))
+			.then((s) => (lijsten = s.lists ?? {}))
 			.catch((e) => report('Aantallen per soort', e));
 	});
 	/** The key of a kind in `lists`: the bewindspersonen are its name for the ministers. */

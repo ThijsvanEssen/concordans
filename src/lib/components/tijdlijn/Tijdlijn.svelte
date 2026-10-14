@@ -18,8 +18,7 @@
 	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { VORMEN, VORM_VAN } from '$lib/bron/vormen';
 	import { openHref } from '$lib/bron/href';
-	import { terPlekke } from '$lib/actions/klik';
-	import { onControl } from '$lib/actions/outside';
+	import { rowClick, terPlekke } from '$lib/actions/klik';
 	import { parseNodeId } from '$lib/vocabulary';
 	// Het teken op de lijn is het bronteken zelf, uit dezelfde tabel als KindGlyph en het
 	// canvas (vormen.ts); de uitkomst zit in vulling en kleur. Geen teken van zichzelf.
@@ -71,10 +70,8 @@
 		if (onToggle) onToggle(id);
 		else eigen = eigen === id ? null : id;
 	};
-	/** A click on the line, not on a link or button in it, and not after selecting text. */
 	function opRegel(e: MouseEvent, r: TijdRegel) {
-		if (!r.inhoud || onControl(e) || window.getSelection()?.toString()) return;
-		wissel(r.id);
+		if (r.inhoud) rowClick(e, () => wissel(r.id));
 	}
 
 	const regelsVan = (g: TijdGroep) => (volgorde ? sorteer(g.regels, volgorde) : g.regels);

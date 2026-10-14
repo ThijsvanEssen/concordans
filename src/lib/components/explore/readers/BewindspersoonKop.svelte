@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { OPEN_STATUS } from '$lib/components/explore/index/government';
 	import { lowerFirst, plural } from '$lib/text/words';
 	import { korteDatum } from '$lib/text/datum';
 	import { report } from '$lib/api/errors';
@@ -33,7 +34,7 @@
 				if (ac.signal.aborted) return;
 				tz = {
 					total: r.total,
-					open: r.facets?.status?.find((s) => s.value === 'Openstaand')?.count ?? 0
+					open: r.facets?.status?.find((s) => s.value === OPEN_STATUS)?.count ?? 0
 				};
 			})
 			.catch((e) => report('Toezeggingen van de bewindspersoon', e));

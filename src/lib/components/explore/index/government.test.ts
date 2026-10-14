@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { laterPosts, statusFromParam } from './government';
+import { cabinetShortName, laterPosts, statusFromParam } from './government';
 
 describe('statusFromParam', () => {
 	it('reads a state as the Kamer writes it, and one of before API 0.48 as its word', () => {
@@ -18,5 +18,12 @@ describe('laterPosts', () => {
 		const steur = { member: { key: 'steur' }, from_date: '2015-03-20', to_date: '2017-01-27' };
 		const later = laterPosts([blokJenv, steur, blokWoRi]);
 		expect([...later]).toEqual([blokJenv]);
+	});
+});
+
+describe('cabinetShortName', () => {
+	it('says a cabinet by its own name', () => {
+		expect(cabinetShortName('kabinet-Schoof')).toBe('Schoof');
+		expect(cabinetShortName('Schoof')).toBe('Schoof');
 	});
 });

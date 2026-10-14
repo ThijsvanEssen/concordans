@@ -584,7 +584,6 @@
 	}
 	/* Bladeren's rows: the kind in the lead, the place as the title, the citation under it. */
 	.rijen {
-		--row-lead: 140px;
 		--row-aside: 280px;
 		container-type: inline-size;
 		margin: 0;

@@ -1,10 +1,12 @@
 <script lang="ts">
+	import { choiceRank } from '$lib/components/parliamentary/stemming';
+	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { capitalize, count, textOf } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
 	import { fractieNaam, naamVan } from '$lib/bron/menselijk';
 	import ReaderHead from './ReaderHead.svelte';
 	import { formatCount } from '$lib/text/getal';
-	import { korteDatum, langeDatum, vandaag } from '$lib/text/datum';
+	import { korteDatum, vandaag } from '$lib/text/datum';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
@@ -38,8 +40,7 @@
 	import { ambtZin } from '$lib/components/parliamentary/ambt';
 	import StemOpen from '$lib/components/open/StemOpen.svelte';
 	import { bronHref } from '$lib/bron/href';
-	import { terPlekke } from '$lib/actions/klik';
-	import { onControl } from '$lib/actions/outside';
+	import { rowClick, terPlekke } from '$lib/actions/klik';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
 	import { load } from '$lib/util/load.svelte';
@@ -53,7 +54,6 @@
 	type Vote = Schema<'MemberVoteDTO'>;
 
 	const VOTES_PREVIEW = 20;
-	const CHOICE_ORDER = ['Voor', 'Tegen'];
 
 	/** What the person signed stukken as, and when (AUTHORED meta). */
 	let signatures = $state<Signature[]>([]);
@@ -158,10 +158,6 @@
 	function groupVotes(votes: Vote[], alle: Vote[] = votes, ambtMeer = false): PartyGroup[] {
 		const tel = Map.groupBy(alle, groepSleutel);
 		const byParty = Map.groupBy(votes, groepSleutel);
-		const rank = (choice: string) => {
-			const i = CHOICE_ORDER.indexOf(choice);
-			return i === -1 ? CHOICE_ORDER.length : i;
-		};
 		return [...byParty]
 			.map(([sleutel, rows]) => ({
 				party: rows[0].party ?? null,
@@ -169,7 +165,7 @@
 				total: tel.get(sleutel)?.length ?? rows.length,
 				meer: ambtMeer && !!ambtVan(rows[0]),
 				byChoice: [...Map.groupBy(rows, (v) => v.choice)].sort(
-					([a], [b]) => rank(a) - rank(b) || a.localeCompare(b)
+					([a], [b]) => choiceRank(a) - choiceRank(b) || a.localeCompare(b)
 				)
 			}))
 			.sort((a, b) => b.total - a.total);
@@ -257,10 +253,12 @@
 						<Veld label="Woonplaats" value={ek.residence} />
 					</Feiten>
 					{#if ek.source}
-						<p class="ek-source">
-							{`Samenstelling op ${langeDatum(ek.source.composition_date)}, gegevens sinds ${langeDatum(ek.source.data_since)}. `}Bron:
-							<a href={ek.source.url} rel="external">{ek.source.attribution}</a>.
-						</p>
+						<BronRegel
+							composedOn={ek.source.composition_date}
+							dataSince={ek.source.data_since}
+							label={ek.source.attribution}
+							href={ek.source.url}
+						/>
 					{/if}
 				</Sectie>
 			{/if}
@@ -407,10 +405,7 @@
 											<div
 												class="vote-link"
 												data-rij
-												onclick={(e) => {
-													if (onControl(e) || window.getSelection()?.toString()) return;
-													toggleStem(v.decision_key);
-												}}
+												onclick={(e) => rowClick(e, () => toggleStem(v.decision_key))}
 											>
 												<button
 													type="button"
@@ -650,12 +645,6 @@
 
 	/* A text button: no border, the hover as a paper-2 field. */
 
-	.ek-source {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
 	.laden {
 		margin: var(--s-4) 0 0;
 		font-family: var(--font-serif);

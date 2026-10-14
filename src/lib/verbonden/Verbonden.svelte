@@ -12,7 +12,6 @@
 	// The panel Verbonden: the verbindingen of the selected bron, in the groups of the
 	// table in groups.ts, under the bronfilter. In the network each group can put its
 	// bronnen on the canvas or take them off.
-	import { onControl } from '$lib/actions/outside';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
@@ -22,7 +21,7 @@
 	import WetVerwijzingen from './WetVerwijzingen.svelte';
 	import StukUitslag from '$lib/components/parliamentary/StukUitslag.svelte';
 	import { stukUitslag } from '$lib/components/parliamentary/stuk-uitslag';
-	import { terPlekke } from '$lib/actions/klik';
+	import { rowClick, terPlekke } from '$lib/actions/klik';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { page } from '$app/state';
@@ -744,13 +743,14 @@
 									data-rij
 									class:is-open={openRij === rowId(row)}
 									onclick={(e) => {
-										if (onControl(e) || row.missing) return;
-										if (window.getSelection()?.toString()) return;
-										if (opentTerPlekke(row)) wisselRij(row);
-										else {
-											zetMarkering(rijMarkering(row));
-											goto(href, { noScroll: true });
-										}
+										if (row.missing) return;
+										rowClick(e, () => {
+											if (opentTerPlekke(row)) wisselRij(row);
+											else {
+												zetMarkering(rijMarkering(row));
+												goto(href, { noScroll: true });
+											}
+										});
 									}}
 								>
 									<KindGlyph

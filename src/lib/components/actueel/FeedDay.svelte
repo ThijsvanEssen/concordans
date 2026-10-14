@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { forAgainst } from '$lib/components/parliamentary/stemming';
 	import { capitalize, count } from '$lib/text/words';
 	import { korteDatum } from '$lib/text/datum';
 	// One day of Actueel in the shared timeline, as on the homepage: the day as the heading
@@ -92,10 +93,7 @@
 	const nieuw = (date: string | undefined) =>
 		nieuwSinds && date && date > nieuwSinds ? ', nieuw' : '';
 	const refOf = (i: FeedItem) => `${i.node.collection}/${i.node.key}`;
-	const tally = (i: FeedItem) => {
-		const t = (i.vote?.tally ?? {}) as Record<string, number>;
-		return { voor: t['Voor'] ?? 0, tegen: t['Tegen'] ?? 0 };
-	};
+	const tally = (i: FeedItem) => forAgainst(i.vote?.tally);
 
 	// The items and folds of the day by their line's id, for what a line shows under it.
 	const items = $derived(

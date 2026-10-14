@@ -1,4 +1,5 @@
 <script lang="ts">
+	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { count, plural } from '$lib/text/words';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
 	import StukUitslag from '$lib/components/parliamentary/StukUitslag.svelte';
@@ -109,7 +110,7 @@
 	import NaastPosten from './index/NaastPosten.svelte';
 	import IndexRow from './index/IndexRow.svelte';
 	import Waarde from '$lib/components/ui/Waarde.svelte';
-	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
+	import { forAgainst, stemmingNaam } from '$lib/components/parliamentary/stemming';
 	import { dossierLabel, dossierName } from '$lib/bron/dossier-naam';
 	import {
 		INDEX_CATEGORIES,
@@ -2012,12 +2013,12 @@
 	});
 
 	// ── Columns ─────────────────────────────────────────────────────────────
-	// The heads over the three columns of a row, and their widths.
+	// The heads over the three columns of a row, and the width of the aside (the lead's is
+	// --row-lead).
 	type Columns = {
 		lead: string;
 		body: string;
 		aside: string | string[];
-		leadW: number;
 		asideW: number;
 	};
 	const COLUMNS: Record<IndexCategory, Columns> = {
@@ -2025,37 +2026,33 @@
 			lead: 'BWB of CELEX',
 			body: 'Wet',
 			aside: 'Rechtsorde',
-			leadW: 140,
 			asideW: 110
 		},
-		judgments: { lead: 'Datum', body: 'Uitspraak', aside: 'Aangehaald', leadW: 140, asideW: 110 },
-		dossiers: { lead: 'Nummer', body: 'Titel', aside: 'Fase', leadW: 140, asideW: 150 },
-		decisions: { lead: 'Soort', body: 'Onderwerp', aside: 'Uitslag', leadW: 140, asideW: 180 },
-		members: { lead: 'Fractie', body: 'Naam', aside: '', leadW: 140, asideW: 60 },
-		factions: { lead: 'Fractie', body: 'Naam', aside: 'Zetels', leadW: 140, asideW: 110 },
+		judgments: { lead: 'Datum', body: 'Uitspraak', aside: 'Aangehaald', asideW: 110 },
+		dossiers: { lead: 'Nummer', body: 'Titel', aside: 'Fase', asideW: 150 },
+		decisions: { lead: 'Soort', body: 'Onderwerp', aside: 'Uitslag', asideW: 180 },
+		members: { lead: 'Fractie', body: 'Naam', aside: '', asideW: 60 },
+		factions: { lead: 'Fractie', body: 'Naam', aside: 'Zetels', asideW: 110 },
 		committees: {
 			lead: 'Afkorting',
 			body: 'Commissie',
 			aside: 'Lopende dossiers',
-			leadW: 140,
 			asideW: 130
 		},
 		cabinets: {
 			lead: 'Periode',
 			body: 'Kabinet',
 			aside: 'Bewindspersonen',
-			leadW: 140,
 			asideW: 130
 		},
 		ministers: {
 			lead: 'Functie',
 			body: 'Bewindspersoon',
 			aside: ['Dossiers', 'Wetsvoorstellen', 'Open toezeggingen'],
-			leadW: 140,
 			asideW: 300
 		},
-		commitments: { lead: 'Gedaan', body: 'Toezegging', aside: 'Verwacht', leadW: 140, asideW: 130 },
-		documents: { lead: 'Kamerstuk', body: 'Stuk', aside: 'Datum', leadW: 140, asideW: 110 }
+		commitments: { lead: 'Gedaan', body: 'Toezegging', aside: 'Verwacht', asideW: 130 },
+		documents: { lead: 'Kamerstuk', body: 'Stuk', aside: 'Datum', asideW: 110 }
 	};
 	// The Kamer is a choice, not a filter: the first group of the filters, always one of the
 	// two, and no chip above the list (chips come from facetGroupsAll).
@@ -2202,7 +2199,6 @@
 					use:lijstDoel
 					use:rijen={'a.row-title'}
 					aria-busy={loading}
-					style:--row-lead="{columns.leadW}px"
 					style:--row-aside="{columns.asideW}px"
 				>
 					{#if category === 'factions' && hall.state.status === 'error'}
@@ -2709,8 +2705,8 @@
 										<ul class="list">
 											{#each day.rows as s (s.id)}
 												{@const bron = `decisions/${s.key}`}
-												{@const inFavour = s.tally?.['Voor'] ?? 0}
-												{@const against = s.tally?.['Tegen'] ?? 0}
+												{@const { voor: inFavour, tegen: against } = forAgainst(s.tally)}
+												{@const voters = forAgainst(s.voters)}
 												{@const inFavourPct = (inFavour / (inFavour + against)) * 100}
 												<!-- The Eerste Kamer's decisions carry no kind yet: their dossier leads. -->
 												{@const kindLabel =
@@ -2748,9 +2744,10 @@
 														{#if inFavour + against > 0}
 															<span
 																class="stem-mini"
-																title="Zetelverdeling: {s.voters?.['Voor'] ?? 0} voor, {s.voters?.[
-																	'Tegen'
-																] ?? 0} tegen ({s.vote_kind === 'member' ? 'leden' : 'fracties'})"
+																title="Zetelverdeling: {voters.voor} voor, {voters.tegen} tegen ({s.vote_kind ===
+																'member'
+																	? 'leden'
+																	: 'fracties'})"
 															>
 																<span class="stem-mini__v">{inFavour}</span>
 																<span class="stem-mini__bar">
@@ -2785,10 +2782,11 @@
 									{/each}
 									{@render loadMoreButton(pages.decisions, 'stemmingen')}
 									{#if kamer === 'EK'}
-										<p class="list-source">
-											Bron: {EK_SOURCE.name},
-											<a href={EK_SOURCE.url} rel="external">{EK_SOURCE.site}</a>.
-										</p>
+										<BronRegel
+											afterList
+											label={`${EK_SOURCE.name}, ${EK_SOURCE.site}`}
+											href={EK_SOURCE.url}
+										/>
 									{/if}
 								{/if}
 							{:else if category === 'cabinets' && cabinetsShown}
@@ -2954,12 +2952,13 @@
 					{/if}
 					<!-- Where the list comes from, under it: the source and its date close the list. -->
 					{#if composition && category !== 'factions' && !loading}
-						<p class="list-source">
-							Samenstelling op {langeDatum(composition.composition_date)}, gegevens sinds {langeDatum(
-								composition.data_since
-							)}. Bron:
-							<a href={composition.url} rel="external">{composition.attribution}</a>.
-						</p>
+						<BronRegel
+							afterList
+							composedOn={composition.composition_date}
+							dataSince={composition.data_since}
+							label={composition.attribution}
+							href={composition.url}
+						/>
 					{/if}
 				</div>
 			</div>
@@ -3251,12 +3250,6 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	.list-source {
-		margin: var(--s-4) 0 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
 
 	/* Above the list: how many, then the filters that are on. */
 	.result-head {
@@ -3286,7 +3279,7 @@
 	/* The heads of the columns, over the rows in the same grid. */
 	.list-head {
 		display: grid;
-		grid-template-columns: var(--row-lead, 120px) minmax(0, 1fr) var(--row-aside, 190px);
+		grid-template-columns: var(--row-lead) minmax(0, 1fr) var(--row-aside);
 		gap: var(--s-5);
 		padding: 0 var(--s-2) var(--s-1);
 		border-bottom: 1px solid var(--rule-strong);

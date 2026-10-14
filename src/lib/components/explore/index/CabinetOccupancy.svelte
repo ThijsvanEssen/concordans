@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { naamVan } from '$lib/bron/menselijk';
 	import { korteDatum, maandJaar } from '$lib/text/datum';
-	import PostOpen from '$lib/components/open/PostOpen.svelte';
+	import CabinetPostOpen from './CabinetPostOpen.svelte';
 	// Who held which post in a cabinet, on the cabinet's term. Per ministry a line per seat;
 	// a successor is the next block on the line, a stand-in has a dotted frame (not italic).
 	// The axis is the shared Tijdas, with the phases (demissionair and after) as dotted lines
@@ -12,7 +12,6 @@
 	import { smalScherm } from '$lib/utils/smal.svelte';
 	import { POST_LABEL, laterPosts } from './government';
 	import {
-		postNotes,
 		at,
 		bandsOf,
 		phaseLabel,
@@ -267,27 +266,13 @@
 	</div>
 {/if}
 
-<!-- The details of a post: who, what, when, why a stand-in, and what they signed. -->
 {#snippet detail(p: SeatPost)}
-	<PostOpen
-		memberKey={p.member.key}
-		naam={nameOf(p)}
-		partij={p.party?.short ?? null}
-		functie={(p.function ?? '') + (p.acting ? ', waarnemend' : '')}
-		van={p.from_date ?? null}
-		tot={p.to_date ?? null}
-		dossiers={p.dossiers ?? 0}
-		wetsvoorstellen={p.bills ?? 0}
-		geteld={counted(p)}
-		toezeggingenHref={counted(p) && p.open_commitments ? commitmentsHref(p.member.key) : null}
-		opmerkingen={postNotes(p)}
-	/>
+	<CabinetPostOpen post={p} counted={counted(p)} {commitmentsHref} />
 {/snippet}
 
 <style>
 	.occ {
 		--label: 240px;
-		--lane: 24px;
 		margin: 0 0 var(--s-5);
 		font-family: var(--font-serif);
 	}
