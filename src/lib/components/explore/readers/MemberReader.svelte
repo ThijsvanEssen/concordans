@@ -41,7 +41,7 @@
 	import { ambtZin } from '$lib/components/parliamentary/ambt';
 	import StemOpen from '$lib/components/open/StemOpen.svelte';
 	import { bronHref } from '$lib/bron/href';
-	import { rowClick, terPlekke } from '$lib/actions/klik';
+	import { blockClick, terPlekke } from '$lib/actions/klik';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
 	import { load } from '$lib/util/load.svelte';
@@ -402,11 +402,10 @@
 										     10 Oct, #20); the title stays a link, the stemming one step further. -->
 										<li class="vote-row" class:vote-row--open={open}>
 											<!-- The button is the keyboard's way in; this only widens its target. -->
-											<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 											<div
 												class="vote-link"
 												data-rij
-												onclick={(e) => rowClick(e, () => toggleStem(v.decision_key))}
+												use:blockClick={() => toggleStem(v.decision_key)}
 											>
 												<button
 													type="button"

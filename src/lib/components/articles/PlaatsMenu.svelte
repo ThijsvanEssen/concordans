@@ -1,3 +1,15 @@
+<script lang="ts" module>
+	/**
+	 * The marker a click on a place's text opens the menu at: the first `.plaats-marker` of
+	 * the place (`place`, a selector) that is its own, not a nested place's; else the place.
+	 */
+	export function placeMarker(e: MouseEvent, place: string): HTMLElement | null {
+		const own = (e.currentTarget as HTMLElement).closest<HTMLElement>(place);
+		const markers = own?.querySelectorAll<HTMLElement>('.plaats-marker') ?? [];
+		return [...markers].find((m) => m.closest(place) === own) ?? own;
+	}
+</script>
+
 <script lang="ts">
 	import { plural } from '$lib/text/words';
 	// The menu of a place in a text (a lid, an onderdeel, a sub), opened from its own marker

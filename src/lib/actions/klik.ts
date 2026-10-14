@@ -18,15 +18,47 @@ export function terPlekke(e: MouseEvent, open: () => void): void {
 	open();
 }
 
-/** Whether a click inside a clickable row landed on a control of its own (a link, a button). */
-const onControl = (e: Event) =>
-	e.target instanceof Element && e.target !== e.currentTarget && !!e.target.closest('a, button');
+/** What in a clickable block is a control of its own, which a click on it is for. */
+const CONTROLS = 'a, button, input, select, textarea, summary, [role="button"]';
+
+/** Whether a click inside a clickable block landed on a control in it. */
+function onControl(e: Event): boolean {
+	const block = e.currentTarget as Element | null;
+	const control = e.target instanceof Element ? e.target.closest(CONTROLS) : null;
+	return !!control && control !== block && !!block?.contains(control);
+}
+
+/** The clicks a block took: a block around it leaves them. */
+const taken = new WeakSet<Event>();
 
 /**
- * For the onclick of a clickable row: a click on the row itself opens it. A click on a link
- * or button in it is that control's, and a click that ends a text selection selects.
+ * For the onclick of a clickable row: a click on the row itself opens it. A click on a control
+ * in it is that control's, a click that ends a text selection selects, and a click an inner
+ * block took is that block's.
  */
 export function rowClick(e: MouseEvent, open: () => void): void {
-	if (onControl(e) || window.getSelection()?.toString()) return;
+	if (taken.has(e) || onControl(e) || window.getSelection()?.toString()) return;
+	taken.add(e);
 	open();
+}
+
+/**
+ * `use:blockClick={open}`: a click on the block opens it, as rowClick says; null makes it no
+ * block. The block's button stays the keyboard's way in; this only widens its target, so the
+ * block itself needs no key handler.
+ */
+export function blockClick(node: HTMLElement, open: ((e: MouseEvent) => void) | null) {
+	let current = open;
+	const listener = (e: MouseEvent) => {
+		if (current) rowClick(e, () => current?.(e));
+	};
+	node.addEventListener('click', listener);
+	return {
+		update(next: ((e: MouseEvent) => void) | null) {
+			current = next;
+		},
+		destroy() {
+			node.removeEventListener('click', listener);
+		}
+	};
 }

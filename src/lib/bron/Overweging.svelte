@@ -6,7 +6,8 @@
 	// judgment: an opened item of Gemarkeerd (MapInhoud) and the card of a reference to an r.o.
 	// (OverwegingKaart). With `bewaar`, a number is the overweging's menu, as in the reader:
 	// Citeer, Kopieer tekst and Bewaar (overwegingCitaat).
-	import PlaatsMenu from '$lib/components/articles/PlaatsMenu.svelte';
+	import PlaatsMenu, { placeMarker } from '$lib/components/articles/PlaatsMenu.svelte';
+	import { blockClick } from '$lib/actions/klik';
 	import CitedText from '$lib/components/articles/CitedText.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	import { overwegingVan } from '$lib/map/inhoud';
@@ -50,18 +51,11 @@
 	function openMenu(id: string, anker: HTMLElement) {
 		menu = menu?.id === id ? null : { id, anker };
 	}
-	/** A click on an overweging's text opens its menu, as in the reader: not on a link or a
-	 *  control, not when text is being selected. */
-	function opTekst(e: MouseEvent, id: string) {
-		const t = e.target as HTMLElement;
-		if (t.closest('a, button, input, textarea, summary, [role="button"]')) return;
-		if (window.getSelection()?.toString()) return;
-		e.stopPropagation();
-		const anker = (e.currentTarget as HTMLElement)
-			.closest('.rov')
-			?.querySelector<HTMLElement>('.plaats-marker');
+	/** A click on an overweging's text opens its menu, as in the reader (blockClick). */
+	const opTekst = (id: string) => (e: MouseEvent) => {
+		const anker = placeMarker(e, '.rov');
 		if (anker) openMenu(id, anker);
-	}
+	};
 </script>
 
 {#if deel}
@@ -84,8 +78,7 @@
 					{:else}
 						<span class="rov-num">{b.num}</span>
 					{/if}
-					<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-					<div class:is-klikbaar={!!forms} onclick={(e) => forms && opTekst(e, b.id)}>
+					<div class:is-klikbaar={!!forms} use:blockClick={forms ? opTekst(b.id) : null}>
 						<p><CitedText text={b.body} citations={b.citations} {doel} noten={b.noten} /></p>
 						<Voetnoten noten={nootVan(b.noten)} ids={false} marge={false} />
 					</div>

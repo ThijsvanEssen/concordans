@@ -4,7 +4,8 @@
 	// anchor, so a reference can point at it and the address can be shared. Nothing stands
 	// beside the text: a place's own marker ("1.", "a.") is its menu (PlaatsMenu), and so is
 	// a click on its text, the innermost place clicked (concept 21, variant B, Thijs 10 Oct).
-	import PlaatsMenu from './PlaatsMenu.svelte';
+	import PlaatsMenu, { placeMarker } from './PlaatsMenu.svelte';
+	import { blockClick } from '$lib/actions/klik';
 	import { kaart } from '$lib/map/map.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	import { page } from '$app/state';
@@ -125,18 +126,11 @@
 	function openMenu(part: ArticlePart, anker: HTMLElement) {
 		menu = menuFor === keyOf(part) ? null : { part: placeOf(parts, part), anker };
 	}
-	/** A click on a place's text opens its menu, at its marker: not on a link or a control,
-	 *  not when text is being selected, and only for the innermost place. */
-	function opTekst(e: MouseEvent, part: ArticlePart) {
-		const t = e.target as HTMLElement;
-		if (t.closest('a, button, input, textarea, summary')) return;
-		if (window.getSelection()?.toString()) return;
-		e.stopPropagation();
-		const plaats = (e.currentTarget as HTMLElement).closest('.lid, .part');
-		const anker =
-			plaats?.querySelector<HTMLElement>(':scope > .plaats-marker') ?? (plaats as HTMLElement);
+	/** A click on a place's text opens its menu, at its marker (blockClick: the innermost). */
+	const opTekst = (part: ArticlePart) => (e: MouseEvent) => {
+		const anker = placeMarker(e, '.lid, .part');
 		if (anker) openMenu(part, anker);
-	}
+	};
 	/** The place as the menu names it: its short citation, else `Lid 2`. */
 	const naamVan = (part: ArticlePart | null) =>
 		formsOf(part)?.kort ??
@@ -175,8 +169,7 @@
 				>{part.kind === 'lid' ? `${part.number}.` : part.number ? marker(part.number) : ''}</button
 			>
 			<div class="lid__body" class:lid__body--pair={showProposed}>
-				<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-				<div class="lid__text" onclick={(e) => opTekst(e, part)}>
+				<div class="lid__text" use:blockClick={opTekst(part)}>
 					{#if body}<p>
 							<CitedText
 								text={body}
@@ -227,8 +220,7 @@
 					onclick={(e) => openMenu(part, e.currentTarget)}>{marker(part.number)}</button
 				>
 			{/if}
-			<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-			<div class="part__body" onclick={(e) => opTekst(e, part)}>
+			<div class="part__body" use:blockClick={opTekst(part)}>
 				{#if body}<p>
 						<CitedText
 							text={body}

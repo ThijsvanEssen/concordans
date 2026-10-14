@@ -41,8 +41,10 @@ describe('opening a bron', () => {
 		).toEqual([]);
 	});
 
-	it('opens a clickable row by one rule, rowClick in $lib/actions/klik (F50)', () => {
-		// A row is marked data-rij; RijActies only looks for its row.
-		expect(overtreders((t) => /\sdata-rij[\s>]/.test(t) && !t.includes('rowClick('))).toEqual([]);
+	it('opens a clickable row by one rule, blockClick in $lib/actions/klik (F50, F81)', () => {
+		// A row is marked data-rij; RijActies only looks for its row. The timeline keeps rowClick.
+		expect(
+			overtreders((t) => /\sdata-rij[\s>]/.test(t) && !/use:blockClick|rowClick\(/.test(t))
+		).toEqual([]);
 	});
 });
