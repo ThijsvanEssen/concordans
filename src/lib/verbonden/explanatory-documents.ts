@@ -104,7 +104,7 @@ export async function explanatoryDocuments(
 	if (article.bwbId && article.number) {
 		// One request with the reader (`getExplainedBy`); an empty answer means the pipeline
 		// has not reached this article: the fallback still applies.
-		const data = await getExplainedBy(article.bwbId, article.number).catch(() => null);
+		const data = await getExplainedBy(article.bwbId, article.number);
 		if (data && data.items.length > 0) return rowsOfExplanations(data.items);
 	}
 	return mergeExplanatory(await neighbors());

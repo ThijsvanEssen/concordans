@@ -5,6 +5,7 @@ import type { GraphStore } from '$lib/graph/graph-store';
 import type { GraphNode } from '$lib/graph/types';
 import { get, writable, type Readable } from 'svelte/store';
 import { getNodeFirst, getNodeVerbonden } from '$lib/api/records';
+import { report } from '$lib/api/errors';
 import {
 	bucketKey,
 	bucketTotals,
@@ -121,14 +122,16 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		vervolg.delete(id);
 		const b = basis;
 		return meer()
-			.then(({ rows, total, mentions, order, years }) => {
+			.then(({ rows, total, mentions, order, years, capped }) => {
 				if (b !== basis) return;
 				groups = groups.map((g) =>
-					g.id === id ? { ...g, rows, total, mentions, order, years } : g
+					g.id === id ? { ...g, rows, total, mentions, order, years, capped: !!capped } : g
 				);
 				state.set({ ...get(state), groups });
 			})
-			.catch(() => {
+			.catch((e) => {
+				report(`Verbonden ${id}, de rest`, e);
+				// Asked again the next time it is opened.
 				if (b === basis) vervolg.set(id, meer);
 			});
 	};
@@ -208,14 +211,22 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 					lidPerBak: lidCountsByCollection(first)
 				});
 			})
-			.catch(() => {});
+			// The groups come without their heads first; the full load says whether it failed.
+			.catch((e) => report('Verbonden, lichte knoop', e));
 		basis = null;
 		wilVolledig = false;
 		groups = [];
 		vervolg.clear();
 		let lui = true;
 		// An article waits for its light node, to see whether the API counts its leden.
-		(collection === 'articles' ? first.catch(() => null) : Promise.resolve(null))
+		// Without it, from the full node.
+		(collection === 'articles'
+			? first.catch((e) => {
+					report('Verbonden, lichte knoop', e);
+					return null;
+				})
+			: Promise.resolve(null)
+		)
 			.then((first) => {
 				if (first) perBak = lidCountsByCollection(first);
 				lui = luiTeLaden(collection, first);
@@ -298,12 +309,14 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 				};
 				for (const def of groups) {
 					if (!def.load) continue;
-					LOADERS[def.load](ctx)
-						.then(({ rows, total, mentions, order, years, judgmentsOf, meer }) => {
+					const load = def.load;
+					LOADERS[load](ctx)
+						.then(({ rows, total, mentions, order, years, judgmentsOf, meer, capped }) => {
 							if (ac.signal.aborted) return;
 							if (meer) vervolg.set(def.id, meer);
 							groups = groups.map((g) => {
-								if (g.id === def.id) return { ...g, rows, total, mentions, order, years };
+								if (g.id === def.id)
+									return { ...g, rows, total, mentions, order, years, capped: !!capped };
 								const judgments = judgmentsOf?.[g.id];
 								if (judgments == null) return g;
 								// Its other bronnen as counted, and the judgments as the API counts them.
@@ -319,8 +332,11 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 								};
 							});
 						})
-						.catch(() => {
-							// A group that cannot be filled is left out, like an empty one.
+						.catch((e) => {
+							if (ac.signal.aborted) return;
+							// It keeps its place, with "kon niet laden" and Opnieuw.
+							report(`Verbonden ${load}`, e);
+							groups = groups.map((g) => (g.id === def.id ? { ...g, failed: true } : g));
 						})
 						.finally(() => {
 							if (ac.signal.aborted) return;
@@ -351,7 +367,8 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 				b.totals = bucketTotals(response);
 				herbouw();
 			})
-			.catch(() => {
+			.catch((e) => {
+				report('Verbonden, hele knoop', e);
 				b.volledig = false;
 			});
 		return Promise.all([rest, node]).then(() => {});
@@ -400,7 +417,8 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 				}
 				herbouw();
 			})
-			.catch(() => {
+			.catch((e) => {
+				report(`Verbonden ${id}, eigen bakken`, e);
 				// Asked again the next time.
 				if (b === basis) b.geopend.delete(id);
 			});

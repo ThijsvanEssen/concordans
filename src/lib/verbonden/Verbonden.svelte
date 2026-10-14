@@ -240,7 +240,7 @@
 			})
 	);
 	const alleenKern = $derived(
-		groepen.every((g) => g.rows.length === 0) &&
+		groepen.every((g) => g.rows.length === 0 && !g.failed) &&
 			verbonden.groups.some(
 				(g) =>
 					g.rows.length > 0 &&
@@ -572,7 +572,9 @@
 							? verbonden.verwacht?.[g.id] != null
 								? formatCount(verbonden.verwacht[g.id])
 								: '…'
-							: countLabel(g)}</span
+							: g.failed && g.rows.length === 0
+								? ''
+								: countLabel(g)}</span
 					>
 					{#if network && drawable(g.rows).length > 0}
 						<span class="group__laag">
@@ -604,6 +606,14 @@
 							</p>{/if}
 						<p class="sr-only">
 							{g.noun ? `${g.noun.charAt(0).toUpperCase()}${g.noun.slice(1)} laden…` : 'Laden…'}
+						</p>
+					{/if}
+					{#if g.failed && g.rows.length === 0}
+						<p class="note stil">
+							Kon niet worden geladen.
+							{#if onRetry}
+								<TekstLink onclick={onRetry}>Opnieuw</TekstLink>
+							{/if}
 						</p>
 					{/if}
 					{#if melding?.groep === g.id}

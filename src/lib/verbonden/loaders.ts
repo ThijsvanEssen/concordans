@@ -2,7 +2,7 @@
 // function per `Loader` of the group table; each returns rows, and a total where
 // the API gives one.
 import { naamVan, naamVanId } from '$lib/bron/menselijk';
-import { api, unwrap } from '$lib/api/client';
+import { ifExists, report } from '$lib/api/errors';
 import { geteld } from '$lib/api/decisions';
 import type { Schema } from '$lib/api/types';
 import { getCommittee, str } from '$lib/components/parliamentary/data';
@@ -21,7 +21,20 @@ import {
 	type WetRegeling
 } from '$lib/text/delegaties';
 import { kindName } from '$lib/components/explore/law-head';
-import { abortable, getAmendedBy, getDecision, getMemberDossiers } from '$lib/api/records';
+import { abortable, getAmendedBy, getDecision, getMemberDossiers, once } from '$lib/api/records';
+import {
+	getCitedBy,
+	getCommitteeActivities,
+	getDossiersOfNumber,
+	getEuLinks,
+	getFactionDossiers,
+	getInstrumentDossiers,
+	getInstrumentJudgments,
+	getLegislativeHistory,
+	getRelatedInstruments,
+	getRelationshipsWithAard,
+	getTouchedInstruments
+} from '$lib/api/verbonden';
 import { lawArticleList } from '$lib/api/law-articles';
 import { buildGroups, ditVan, EUROPEAN, type Loader, type Match } from './groups';
 import { bronKindOf, isInternational } from './filter';
@@ -53,7 +66,6 @@ import {
 	type Neighbor,
 	type Row
 } from './rows';
-import { onForget } from '$lib/util/forget';
 import { isDerived, lidOfMatch, positionsLabel } from './edge-meta';
 
 /** What an implementation rests on (API 0.67), in words: EUR-Lex, the considerans, or both. */
@@ -123,6 +135,8 @@ export type Loaded = {
 	years?: { year: number; count: number }[];
 	/** The rest of the rows, asked when the group is opened, the table or an export. */
 	meer?: () => Promise<Loaded>;
+	/** Rows are missing that the API has (a further page failed): no total, shown as `12+`. */
+	capped?: boolean;
 };
 
 /**
@@ -130,12 +144,7 @@ export type Loaded = {
  * names the article a judgment applies): all of them, not the few in the node response.
  */
 async function echrJudgments(bwb: string, articleKey: string, signal: AbortSignal): Promise<Row[]> {
-	const { data } = await api
-		.GET('/api/instruments/{identifier}/eu-links', {
-			params: { path: { identifier: bwb } },
-			signal
-		})
-		.catch(() => ({ data: undefined }));
+	const data = await abortable(ifExists(getEuLinks(bwb)), signal);
 	return (data?.international ?? [])
 		.filter((l) => l.judgment && l.own_article?.key === articleKey)
 		.map((l) => {
@@ -153,15 +162,14 @@ async function echrJudgments(bwb: string, articleKey: string, signal: AbortSigna
 		});
 }
 
-// The four dossier groups read one hub.
-let hub: { key: string; request: Promise<DossierHub> } | null = null;
-onForget(() => (hub = null));
-const hubOf = ({ node, buren, neighbors }: LoaderContext) => {
-	if (hub?.key !== node.key)
-		hub = {
-			key: node.key,
-			request: loadDossierHub(
-				str(node.props?.label) ?? '',
+// The four dossier groups read one hub, one request; a failed or broken-off one is asked
+// again (Opnieuw).
+const hubOf = ({ node, buren, neighbors, signal }: LoaderContext): Promise<DossierHub> => {
+	const number = str(node.props?.label) ?? '';
+	return abortable(
+		once(`dossier-hub/${number}`, () =>
+			loadDossierHub(
+				number,
 				() =>
 					buren([
 						{ relation: 'LEGISLATED_IN', direction: 'inbound', collection: 'instruments' },
@@ -169,8 +177,9 @@ const hubOf = ({ node, buren, neighbors }: LoaderContext) => {
 					]),
 				neighbors
 			)
-		};
-	return hub.request;
+		),
+		signal
+	);
 };
 
 const bwbOf = (node: Schema<'BaseNodeDTO'>) =>
@@ -207,6 +216,11 @@ const AMENDED_SHOWN = 30;
 /** The judgments of a law read at once: about 1.2 KB each, for the articles they cite. */
 const JUDGMENTS_SHOWN = 100;
 
+/** The European and international links of a law read at once, per kind. */
+const EU_LINKS_SHOWN = 50;
+/** The laws connected to a law by the references between their articles, read at once. */
+const RELATED_SHOWN = 50;
+
 /** The laws of a dossier whose own verbindingen are read for the international group. */
 const MAX_LAWS = 3;
 
@@ -216,11 +230,7 @@ async function touched(
 	key: string,
 	signal: AbortSignal
 ): Promise<Loaded> {
-	const found = await unwrap(
-		who === 'members'
-			? api.GET('/api/members/{key}/touched-instruments', { params: { path: { key } }, signal })
-			: api.GET('/api/factions/{key}/touched-instruments', { params: { path: { key } }, signal })
-	);
+	const found = await abortable(getTouchedInstruments(who, key), signal);
 	return {
 		rows: found.items.map((i) => ({
 			ref: { collection: 'instruments', key: i.key },
@@ -237,12 +247,13 @@ async function actorDossiers(
 	key: string,
 	signal: AbortSignal
 ): Promise<Loaded> {
-	const query = { params: { path: { key }, query: { limit: DOSSIERS_SHOWN } }, signal };
 	// A lid's dossiers are one record with the head of a bewindspersoon (`getMemberDossiers`).
-	const found =
+	const found = await abortable(
 		who === 'members'
-			? await abortable(getMemberDossiers(key, DOSSIERS_SHOWN), signal)
-			: await unwrap(api.GET('/api/factions/{key}/dossiers', query));
+			? getMemberDossiers(key, DOSSIERS_SHOWN)
+			: getFactionDossiers(key, DOSSIERS_SHOWN),
+		signal
+	);
 	return {
 		total: found.total,
 		rows: found.items.map((d) => ({
@@ -262,6 +273,7 @@ async function actorDossiers(
 }
 
 /** The pages of references with an aard a law loads at most: 1000 references. */
+const AARD_PAGE = 200;
 const AARD_PAGES = 5;
 
 /**
@@ -471,9 +483,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// The wet that came from the dossier and its publication. The laws it changes stand once,
 	// above the reader (Wijzigt) and under Gewijzigde artikelen (Thijs, 10 Oct: "single count").
 	'dossier-laws': async (ctx) => ({
-		rows: (await abortable(hubOf(ctx), ctx.signal)).laws.filter(
-			(r) => r.relation === 'LEGISLATED_IN'
-		)
+		rows: (await hubOf(ctx)).laws.filter((r) => r.relation === 'LEGISLATED_IN')
 	}),
 	// The votes of the Tweede Kamer on the dossier's zaken but its amendementen: the reader
 	// lists those with their votes (Amendementen). One page of the decision browser, newest
@@ -504,13 +514,13 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		return { rows, total };
 	},
 	'dossier-committees': async (ctx) => ({
-		rows: (await abortable(hubOf(ctx), ctx.signal)).committees
+		rows: (await hubOf(ctx)).committees
 	}),
 	'dossier-documents-tk': async (ctx) => ({
-		rows: (await abortable(hubOf(ctx), ctx.signal)).tweedeKamer
+		rows: (await hubOf(ctx)).tweedeKamer
 	}),
 	'dossier-documents-ek': async (ctx) => ({
-		rows: (await abortable(hubOf(ctx), ctx.signal)).eersteKamer
+		rows: (await hubOf(ctx)).eersteKamer
 	}),
 
 	// The other dossiers of the number, in the order of the Kamer.
@@ -528,9 +538,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	'dossier-same-number': async ({ node, signal }) => {
 		const label = str(node.props?.label);
 		if (!label || !node.props?.same_number_count) return { rows: [] };
-		const found = await unwrap(
-			api.GET('/api/dossiers', { params: { query: { number: numberOf(label) } }, signal })
-		);
+		const found = await abortable(getDossiersOfNumber(numberOf(label)), signal);
 		return {
 			rows: found.items
 				.filter((d) => d.number !== label)
@@ -550,14 +558,12 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// TODO(backend B1, B9): the European and international instruments of a dossier are
 	// those of its laws, read from the node of each law.
 	'dossier-international': async (ctx) => {
-		const { laws } = await abortable(hubOf(ctx), ctx.signal);
+		const { laws } = await hubOf(ctx);
 		// Their European buckets, not their whole nodes (Wetboek van Strafrecht: 2 MB).
 		const found = await Promise.all(
 			laws
 				.slice(0, MAX_LAWS)
-				.map((law) =>
-					getBuckets('instruments', law.ref.key, EUROPEAN.match ?? [], ctx.signal).catch(() => [])
-				)
+				.map((law) => getBuckets('instruments', law.ref.key, EUROPEAN.match ?? [], ctx.signal))
 		);
 		const rows = new Map<string, Row>();
 		for (const neighbors of found) {
@@ -617,17 +623,9 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		if (bwb && number) {
 			const sort = get(uitspraakVolgorde);
 			const page = (offset: number) =>
-				api
-					.GET('/api/articles/{bwb_id}/{article_number}/cited-by', {
-						params: {
-							path: { bwb_id: bwb, article_number: number },
-							query: { limit: CITED_BY_PAGE, offset, sort }
-						},
-						signal
-					})
-					.catch(() => ({ data: undefined, response: null }));
-			const { data, response } = await page(0);
-			if (response?.ok && data && data.items.length > 0) {
+				abortable(getCitedBy(bwb, number, { limit: CITED_BY_PAGE, offset, sort }), signal);
+			const data = await ifExists(page(0));
+			if (data && data.items.length > 0) {
 				// The ECHR judgments are no passage (HUDOC names the article, not the place):
 				// they stand in Europees en internationaal, not here (BE-9).
 				const judgmentsOf =
@@ -695,8 +693,8 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 								const items = [...first];
 								while (!complete(items)) {
 									const next = await page(items.length);
-									if (!next.data || next.data.items.length === 0) break;
-									items.push(...next.data.items);
+									if (next.items.length === 0) break;
+									items.push(...next.items);
 								}
 								return loaded(items);
 							}
@@ -724,7 +722,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// reference, from the article's own detail (`downstream_implications`). Without
 	// it: the citing articles from the node, the lid read from the phrase.
 	// TODO(backend B6): the aard and the lid belong on the edge of the node response.
-	'article-cited-by': async ({ node, buren, totals }) => {
+	'article-cited-by': async ({ node, buren, totals, signal }) => {
 		const bwb = bwbOf(node);
 		const number =
 			typeof node.props?.article_number === 'string' ? node.props.article_number : null;
@@ -732,7 +730,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			buren([
 				{ relation: ['REFERS_TO', 'BASED_ON'], direction: 'inbound', collection: 'articles' }
 			]),
-			bwb && number ? getArticleDetail(bwb, number).catch(() => null) : null
+			bwb && number ? ifExists(abortable(getArticleDetail(bwb, number), signal)) : null
 		]);
 		const fromNode = neighbors
 			.filter(
@@ -778,14 +776,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		const number =
 			typeof node.props?.article_number === 'string' ? node.props.article_number : null;
 		const found =
-			bwb && number
-				? await unwrap(
-						api.GET('/api/articles/{bwb_id}/{article_number}/legislative-history', {
-							params: { path: { bwb_id: bwb, article_number: number } },
-							signal
-						})
-					).catch(() => null)
-				: null;
+			bwb && number ? await ifExists(abortable(getLegislativeHistory(bwb, number), signal)) : null;
 		if (found)
 			return {
 				total: found.total,
@@ -825,19 +816,14 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// that, what the node shows: IMPLEMENTS and references to treaties.
 	// TODO(backend B9): the fallback goes when every law answers on `eu-links`.
 	'instrument-international': async ({ node, buren, signal }) => {
-		const { data, response } = await api
-			.GET('/api/instruments/{identifier}/eu-links', {
-				params: { path: { identifier: node.key }, query: { limit: 50 } },
-				signal
-			})
-			.catch(() => ({ data: undefined, response: null }));
+		const data = await ifExists(abortable(getEuLinks(node.key, EU_LINKS_SHOWN), signal));
 		const linked =
 			(data?.implements?.length ?? 0) +
 			(data?.implemented_by?.length ?? 0) +
 			(data?.mentions?.length ?? 0) +
 			(data?.mentioned_by?.length ?? 0) +
 			(data?.international?.length ?? 0);
-		if (response?.ok && data && linked > 0) {
+		if (data && linked > 0) {
 			const rows = new Map<string, Row>();
 			const add = (row: Row) => {
 				if (!rows.has(row.ref.key)) rows.set(row.ref.key, row);
@@ -847,9 +833,9 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			const bwb = bwbOf(node);
 			const amending =
 				bwb && implemented.some((link) => (link.via ?? []).length > 0)
-					? await abortable(getAmendedBy(bwb), signal)
-							.then((found) => new Set(found.items.map((d) => publicationKey(d.key))))
-							.catch(() => new Set<string>())
+					? new Set(
+							(await abortable(getAmendedBy(bwb), signal)).items.map((d) => publicationKey(d.key))
+						)
 					: new Set<string>();
 			for (const link of [...implemented, ...(data.implemented_by ?? [])]) {
 				const i = link.instrument;
@@ -924,10 +910,10 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// TODO(backend B7): the lid a judgment cites is not a field. Where the citation
 	// pipeline made a stub article `{law}_{article}_{lid}`, the lid is in the key; else it
 	// is read from the citation spans of the paragraphs.
-	'judgment-articles': async ({ node, buren }) => {
+	'judgment-articles': async ({ node, buren, signal }) => {
 		const ecli = typeof node.props?.ecli === 'string' ? node.props.ecli : node.key;
 		const [detail, neighbors] = await Promise.all([
-			getJudgmentDetail(ecli).catch(() => null),
+			ifExists(abortable(getJudgmentDetail(ecli), signal)),
 			buren([{ relation: 'REFERS_TO', direction: 'outbound', collection: 'articles' }])
 		]);
 		const fromSpans = new Map<string, string>();
@@ -1023,21 +1009,19 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		if (!bwb) return { rows: [] };
 		// Every aard but the plain cross-reference, a page of 200 at a time.
 		const page = (offset: number) =>
-			unwrap(
-				api.GET('/api/relationships/search', {
-					params: {
-						query: { exclude_type: 'cross_reference', law: bwb.toUpperCase(), limit: 200, offset }
-					},
-					signal
-				})
-			);
+			abortable(getRelationshipsWithAard(bwb.toUpperCase(), AARD_PAGE, offset), signal);
 		const first = await page(0);
+		// A further page that fails leaves the group with what came, marked as more to come.
 		const rest = await Promise.all(
-			Array.from({ length: Math.min(Math.ceil(first.total / 200), AARD_PAGES) - 1 }, (_, i) =>
-				page((i + 1) * 200).catch(() => null)
+			Array.from({ length: Math.min(Math.ceil(first.total / AARD_PAGE), AARD_PAGES) - 1 }, (_, i) =>
+				page((i + 1) * AARD_PAGE).catch((e) => {
+					report('Verbonden instrument-aard', e);
+					return null;
+				})
 			)
 		);
 		const found = [first, ...rest];
+		const partial = rest.includes(null);
 		const rows = new Map<string, Row>();
 		for (const r of found.flatMap((f) => f?.relationships ?? [])) {
 			const from = r.source_article;
@@ -1077,7 +1061,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					(a.aard ?? '').localeCompare(b.aard ?? '', 'nl') ||
 					order(a).localeCompare(order(b), 'nl', { numeric: true })
 			),
-			total: first.total
+			...(partial ? { capped: true } : { total: first.total })
 		};
 	},
 
@@ -1104,12 +1088,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	'instrument-related': async ({ node, signal }) => {
 		const bwb = bwbOf(node);
 		if (!bwb) return { rows: [] };
-		const found = await unwrap(
-			api.GET('/api/instruments/{bwb_id}/related-instruments', {
-				params: { path: { bwb_id: bwb }, query: { limit: 50 } },
-				signal
-			})
-		);
+		const found = await abortable(getRelatedInstruments(bwb, RELATED_SHOWN), signal);
 		const items = found.items.filter((i) => !i.basis);
 		const dit = ditVan(node.props);
 		return {
@@ -1121,9 +1100,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	'instrument-dossiers': async ({ node, signal }) => {
 		const bwb = bwbOf(node);
 		if (!bwb) return { rows: [] };
-		const found = await unwrap(
-			api.GET('/api/instruments/{bwb_id}/dossiers', { params: { path: { bwb_id: bwb } }, signal })
-		);
+		const found = await abortable(getInstrumentDossiers(bwb), signal);
 		return {
 			total: found.total,
 			rows: found.items.map((d) => ({
@@ -1242,7 +1219,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				.map(rowOfNeighbor)
 				.filter((r): r is Row => r !== null);
 		const [d, rows] = await Promise.all([
-			abortable(getDecision(node.key), signal).catch(() => null),
+			ifExists(abortable(getDecision(node.key), signal)),
 			vanBakken()
 		]);
 		const p = d?.primary_document;
@@ -1285,7 +1262,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		});
 		if (!law) return fromNode();
 		// The law's whole list, which the reader's table of contents asks for too.
-		const found = await abortable(lawArticleList(law), signal).catch(() => null);
+		const found = await ifExists(abortable(lawArticleList(law), signal));
 		if (!found) return fromNode();
 		return {
 			total: found.total,
@@ -1327,15 +1304,16 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		// One year of them where the bronfilter chooses one (BE-51): all of that year, not
 		// the year's share of the first page.
 		const jaar = get(wetUitspraakJaar);
-		const found = await unwrap(
-			api.GET('/api/instruments/{bwb_id}/judgments', {
-				params: {
-					path: { bwb_id: bwb },
-					query: { limit: JUDGMENTS_SHOWN, sort, year: jaar ? String(jaar) : undefined }
-				},
+		const found = await ifExists(
+			abortable(
+				getInstrumentJudgments(bwb, {
+					limit: JUDGMENTS_SHOWN,
+					sort,
+					year: jaar ? String(jaar) : undefined
+				}),
 				signal
-			})
-		).catch(() => null);
+			)
+		);
 		if (!found) return fromNode();
 		return {
 			total: found.total,
@@ -1376,12 +1354,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	'committee-activities': async ({ node, buren, totals, signal }) => {
 		const slug = typeof node.props?.slug === 'string' ? node.props.slug : null;
 		const found = slug
-			? await unwrap(
-					api.GET('/api/committees/{slug}/activities', {
-						params: { path: { slug }, query: { limit: ACTIVITIES_SHOWN } },
-						signal
-					})
-				).catch(() => null)
+			? await ifExists(abortable(getCommitteeActivities(slug, ACTIVITIES_SHOWN), signal))
 			: null;
 		if (!found)
 			return {
@@ -1409,10 +1382,10 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		};
 	},
 
-	'committee-dossiers': async ({ node }) => {
+	'committee-dossiers': async ({ node, signal }) => {
 		const slug = typeof node.props?.slug === 'string' ? node.props.slug : null;
 		if (!slug) return { rows: [] };
-		const committee = await getCommittee(slug);
+		const committee = await abortable(getCommittee(slug), signal);
 		return {
 			total: committee.active_dossier_count,
 			rows: (committee.dossiers ?? []).map((d) => ({

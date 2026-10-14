@@ -87,6 +87,8 @@ export type Group = GroupDef & {
 	capped: boolean;
 	/** Its loader is still under way: the group keeps its place with "laden…". */
 	laden?: boolean;
+	/** Its loader failed: the group keeps its place with "kon niet laden" and Opnieuw. */
+	failed?: boolean;
 };
 
 const national = (n: Neighbor) => !isInternational(n);
