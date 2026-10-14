@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ecliKey } from '$lib/bron/leesbaar';
 	import { capitalize, count, joinAnd, textOf } from '$lib/text/words';
 	import { meldNetwerk } from '$lib/stores/netwerk-melding';
 	import { report } from '$lib/api/errors';
@@ -203,9 +204,7 @@
 	/** The judgment a translation renders (`translation_of`, an ECLI), as an id. */
 	const vertalingVan = (r: Row) => {
 		const ecli = r.props?.translation_of;
-		return typeof ecli === 'string' && ecli.trim()
-			? `judgments/${ecli.trim().toLowerCase().replaceAll(':', '_')}`
-			: null;
+		return typeof ecli === 'string' && ecli.trim() ? `judgments/${ecliKey(ecli)}` : null;
 	};
 	const kernIds = $derived(
 		new Set([

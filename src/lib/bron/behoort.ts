@@ -20,6 +20,7 @@ import { lawShortName } from '$lib/text/bw';
 import { fractiePeriodes } from './fractie-periode';
 import { describe, type Row } from '$lib/verbonden/rows';
 import { aangebodenVan, stukkenInDezelfdeZaak, wetsvoorstelVan } from './zaak';
+import { ecliKey } from './leesbaar';
 import type { Collection, Relation } from '$lib/vocabulary';
 
 /**
@@ -69,21 +70,17 @@ export type Regel = {
 /** The bucket a group lists, as the API names it. */
 export type Bak = { relation: Relation; direction: 'inbound' | 'outbound'; collection: Collection };
 
-/**
- * A group beside or below: its count where known, its rows when it is opened: the bucket
- * `bak`, or `laad` for a list that is no one bucket (the stukken of a zaak).
- */
+/** A group below the lines: its count where known, the rows of its bucket when it is opened. */
 export type Groep = {
 	id: string;
 	label: string;
 	aantal: number | null;
-	bak?: Bak;
-	laad?: (signal?: AbortSignal) => Promise<Laag[]>;
+	bak: Bak;
 };
 
-export type Behoort = { regels: Regel[]; naast: Groep[]; onder: Groep[] };
+export type Behoort = { regels: Regel[]; onder: Groep[] };
 
-const LEEG: Behoort = { regels: [], naast: [], onder: [] };
+const LEEG: Behoort = { regels: [], onder: [] };
 
 const norm = (x: string) => x.replace(/\s+/g, ' ').trim().toLowerCase();
 
@@ -322,7 +319,7 @@ export function behoort(
 					at: wet[0]?.ref ? ids[i] : undefined
 				}))
 				.filter((l) => l.kort);
-			return { regels: regel('wet', soort, [...wet, ...deel]), naast: [], onder: [] };
+			return { regels: regel('wet', soort, [...wet, ...deel]), onder: [] };
 		}
 		case 'annexes': {
 			// A bijlage belongs to its law, as an article does (UX-toets 0.79.43, #30).
@@ -331,7 +328,7 @@ export function behoort(
 			const wet = eerste('PART_OF', 'outbound', 'instruments', soort).map((l) =>
 				afk ? { ...l, kort: afk } : l
 			);
-			return { regels: regel('wet', soort, wet), naast: [], onder: [] };
+			return { regels: regel('wet', soort, wet), onder: [] };
 		}
 		case 'judgments': {
 			// The procesgang: eerdere aanleg › this uitspraak › hoger beroep or cassatie, the
@@ -436,7 +433,6 @@ export function behoort(
 					// (conclusieVan), not in the band (concept 21, Thijs 10 Oct).
 					...procesgang
 				],
-				naast: [],
 				// More than one appeal against it: the line names the first, the group all.
 				onder:
 					beroep && beroep.total > 1
@@ -485,7 +481,6 @@ export function behoort(
 					...regel('brief', 'Bijlage bij', eerste('ACCOMPANIES', 'outbound', 'documents', 'Brief')),
 					...biedtAan()
 				],
-				naast: [],
 				onder: []
 			};
 		}
@@ -514,14 +509,12 @@ export function behoort(
 							: undefined
 					}
 				],
-				naast: [],
 				onder: []
 			};
 		}
 		case 'cases':
 			return {
 				regels: regel('dossier', 'Dossier', eerste('PART_OF', 'outbound', 'dossiers', 'Dossier')),
-				naast: [],
 				onder: []
 			};
 		case 'members': {
@@ -548,26 +541,22 @@ export function behoort(
 					: [];
 			return {
 				regels,
-				naast: [],
 				onder: []
 			};
 		}
 		case 'factions':
 			return {
 				regels: regel('kamer', 'Kamer', kamer()),
-				naast: [],
 				onder: []
 			};
 		case 'committees':
 			return {
 				regels: regel('kamer', 'Kamer', kamer()),
-				naast: [],
 				onder: []
 			};
 		case 'cabinets':
 			return {
 				regels: [],
-				naast: [],
 				onder: []
 			};
 		case 'activities': {
@@ -615,14 +604,12 @@ export function behoort(
 							]
 						: [])
 				],
-				naast: [],
 				onder: []
 			};
 		}
 		case 'decisions':
 			return {
 				regels: regel('dossier', 'Over', eerste('ABOUT', 'outbound', 'dossiers', 'Dossier')),
-				naast: [],
 				onder: []
 			};
 		case 'commitments':
@@ -630,7 +617,6 @@ export function behoort(
 				// Where it was made stands in the reader's status line, in the Kamer's words
 				// ("Toegezegd in het wetgevingsoverleg van 23 maart 2026"): once, not here too.
 				regels: regel('dossier', 'Over', eerste('ABOUT', 'outbound', 'dossiers', 'Dossier')),
-				naast: [],
 				onder: []
 			};
 		case 'instruments':
@@ -640,7 +626,6 @@ export function behoort(
 					'Wetsvoorstel',
 					eerste('LEGISLATED_IN', 'outbound', 'dossiers', 'Dossier')
 				),
-				naast: [],
 				onder: []
 			};
 		default:
@@ -681,9 +666,6 @@ async function eerdereAanleg(key: string): Promise<Laag[]> {
 	}
 	return keten;
 }
-
-/** An ECLI as the key of its judgment: `ECLI:NL:HR:2019:2006` is `ecli_nl_hr_2019_2006`. */
-export const ecliKey = (ecli: string) => ecli.trim().toLowerCase().replaceAll(':', '_');
 
 const appeal = (light: NodeGraph | null, direction: 'inbound' | 'outbound') =>
 	light?.neighbors.buckets?.find(
@@ -754,7 +736,7 @@ export async function lazeKernIds(
  * The buckets of the kern per kind of bron: what the lines of the band read. Verbonden leaves
  * a group out that reads only these (Thijs, 9 Oct: "dubbelop"); Verbonden is the context.
  */
-export const KERN: Partial<Record<Collection, Bak[]>> = {
+const KERN: Partial<Record<Collection, Bak[]>> = {
 	articles: [{ relation: 'PART_OF', direction: 'outbound', collection: 'instruments' }],
 	judgments: [
 		{ relation: 'APPEAL_OF', direction: 'outbound', collection: 'judgments' },
@@ -811,7 +793,7 @@ export function isKernGroep(
  * of contents and its text (Thijs, 9 Oct: "overdreven als we al een inhoudsopgave hebben").
  * Verbonden leaves them out; the table and an export keep them.
  */
-export const INHOUD: Partial<Record<Collection, string[]>> = {
+const INHOUD: Partial<Record<Collection, string[]>> = {
 	instruments: ['articles'],
 	// A fractie's reader lists all its leden (Thijs, 10 Oct: "Leden is hier nu ook dubbelop").
 	// A commissie names only its officers and a kabinet counts its bewindspersonen: their
@@ -839,7 +821,7 @@ export const isInhoudGroep = (
 	(INHOUD_ALS[collection]?.[g.id]?.(props) ?? false);
 
 /** Whether a band has anything to show. */
-export const heeftIets = (b: Behoort) => b.regels.length + b.naast.length + b.onder.length > 0;
+export const heeftIets = (b: Behoort) => b.regels.length + b.onder.length > 0;
 
 /** The context through which a reader's frame learns which bron its band is for. */
 export const BEHOORT_KEY = Symbol('behoort-bij');

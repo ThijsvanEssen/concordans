@@ -144,7 +144,7 @@
 		color: var(--ink);
 		text-decoration: underline;
 		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 3px;
+		text-underline-offset: var(--underline-offset);
 	}
 	.verder a:hover,
 	.verder a:focus-visible {

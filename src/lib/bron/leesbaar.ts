@@ -170,7 +170,7 @@ export function padHref(pad: Pad): string {
  * other characters one underscore, `ecli_nl_hr_2019_2006`, and the dot too:
  * `ECLI:BE:CASS:2019:ARR.20190101.1` is `ecli_be_cass_2019_arr_20190101_1`.
  */
-const ecliKey = (ecli: string) =>
+export const ecliKey = (ecli: string): string =>
 	ecli
 		.toLowerCase()
 		.replace(/[^a-z0-9_]+/g, '_')
@@ -337,7 +337,7 @@ export function focusUitPagina(pad: Pad): string | null {
 	remember(href, focus);
 	const target = parseNodeId(focus)!;
 	// What the lookup would have set going: a Kamerstuk's text beside its node.
-	if (target.collection === 'documents') getDocument(target.key).catch(ignore('leesbaar'));
+	if (target.collection === 'documents') askDocumentAhead(target.key);
 	return focus;
 }
 
@@ -348,39 +348,51 @@ const apiArticle = (pad: Pad) =>
 		: null;
 
 /**
+ * An article's text, asked as soon as its address is known, beside the lookup and the node,
+ * so the reader finds it waiting (once() shares the request; Thijs, 10 Oct: lazy, the text
+ * first). The text names the article's node key too: where it comes before the lookup, the
+ * reader stands on it at once ($lib/bron/kop). Its tekstversies date the status line ("tekst
+ * sinds …"), the list of its law gives the place line and Vorig, Volgend, its explanations the
+ * line of the memorie: asked with it, so the head does not grow over the text when they come.
+ * By the API's own number (162 for BW 6:162), as the reader asks them. Nobody waits for these:
+ * the reader asks again, and a failure is its to say.
+ */
+function askArticleAhead(pad: Pad, artikel: { wet: string; nummer: string }) {
+	getArticleDetail(artikel.wet, artikel.nummer)
+		.then((d) => {
+			const href = padHref(pad);
+			if (d.article?.id && !focusVan.has(href)) remember(href, d.article.id);
+		})
+		.catch(ignore('leesbaar'));
+	// Where no EXPLAINS edge names its memorie, the reader looks in the dossier of the wet
+	// that gave its text in force: asked as soon as the tekstversies name it.
+	getArticleHistory(artikel.wet, artikel.nummer)
+		.then((h) => {
+			const w = wordingsOf(h.versions ?? []).at(-1);
+			const dossier = w && w.until === null ? w.first.amended_by?.dossiers?.[0]?.number : null;
+			if (dossier) getDossierPapers(dossier).catch(ignore('leesbaar'));
+		})
+		.catch(ignore('leesbaar'));
+	lawArticleList(artikel.wet).catch(ignore('leesbaar'));
+	getExplainedBy(artikel.wet, artikel.nummer).catch(ignore('leesbaar'));
+}
+
+/**
+ * A Kamerstuk's text, asked as soon as its key is known, beside its node, not after it (live,
+ * 10 Oct: the reader asked it only once the light node was in). The reader asks again.
+ */
+function askDocumentAhead(key: string) {
+	getDocument(key).catch(ignore('leesbaar'));
+}
+
+/**
  * The focus of an address that needs the API, by /api/lookup: exact or nothing. A
  * Kamerstuk that is not in the data does not open its dossier instead. Null when the
  * data lacks it (404 `not_in_data`); another failure is thrown, to be said as such.
  */
 export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | null> {
-	// An article's address names its text: asked at once, beside the lookup and the node,
-	// so the reader finds it waiting (once() shares the request; Thijs, 10 Oct: lazy, the
-	// text first). The text names the article's node key too: where it comes before the
-	// lookup, the reader stands on it at once ($lib/bron/kop). Its tekstversies date the
-	// status line ("tekst sinds …"), the list of its law gives the place line and Vorig,
-	// Volgend, its explanations the line of the memorie: asked with it, so the head does not
-	// grow over the text when they come. By the API's own number (162 for BW 6:162), as the
-	// reader asks them.
 	const artikel = apiArticle(pad);
-	if (artikel) {
-		getArticleDetail(artikel.wet, artikel.nummer)
-			.then((d) => {
-				const href = padHref(pad);
-				if (d.article?.id && !focusVan.has(href)) remember(href, d.article.id);
-			})
-			.catch(ignore('leesbaar'));
-		// Where no EXPLAINS edge names its memorie, the reader looks in the dossier of the wet
-		// that gave its text in force: asked as soon as the tekstversies name it.
-		getArticleHistory(artikel.wet, artikel.nummer)
-			.then((h) => {
-				const w = wordingsOf(h.versions ?? []).at(-1);
-				const dossier = w && w.until === null ? w.first.amended_by?.dossiers?.[0]?.number : null;
-				if (dossier) getDossierPapers(dossier).catch(ignore('leesbaar'));
-			})
-			.catch(ignore('leesbaar'));
-		lawArticleList(artikel.wet).catch(ignore('leesbaar'));
-		getExplainedBy(artikel.wet, artikel.nummer).catch(ignore('leesbaar'));
-	}
+	if (artikel) askArticleAhead(pad, artikel);
 	const known = focusOfPad(pad) ?? focusUitPagina(pad);
 	if (known) {
 		const target = parseNodeId(known);
@@ -401,9 +413,7 @@ export async function lookUpInData(pad: Pad, signal?: AbortSignal): Promise<stri
 	);
 	if (!data) return null;
 	const focus = `${data.collection}/${data.key}`;
-	// A Kamerstuk's text is asked as soon as its key is known, beside its node, not after it
-	// (live, 10 Oct: the reader asked it only once the light node was in).
-	if (data.collection === 'documents') getDocument(data.key).catch(ignore('leesbaar'));
+	if (data.collection === 'documents') askDocumentAhead(data.key);
 	// The reader stands on the article's detail, asked above, while its node is on its way.
 	if (artikel) onthoudArtikel(data.key, artikel.wet, artikel.nummer);
 	remember(padHref(pad), focus);

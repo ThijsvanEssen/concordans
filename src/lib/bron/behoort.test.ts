@@ -168,7 +168,6 @@ describe('behoort', () => {
 		]);
 		expect(b.regels[0].laad).toBeTypeOf('function');
 		expect(b.regels[0].lagen.map((l) => l.kort)).toEqual(['Hof Den Haag 2018', 'deze', 'HR 2020']);
-		expect(b.naast).toEqual([]);
 		expect(b.onder.map((g) => [g.label, g.aantal])).toEqual([['Hoger beroep of cassatie', 2]]);
 		const conclusie = behoort(
 			'judgments',
@@ -255,7 +254,7 @@ describe('behoort', () => {
 		);
 		expect(lid.regels.map((r) => r.label)).toEqual(['Fractie']);
 		// Commissies are context: in Verbonden, not in the band (Thijs, 9 Oct).
-		expect(lid.naast).toEqual([]);
+		expect(lid.onder).toEqual([]);
 		expect(heeftIets(behoort('cabinets', {}, light([])))).toBe(false);
 	});
 
@@ -272,20 +271,20 @@ describe('behoort', () => {
 			['wetsvoorstel', 'Bij wetsvoorstel', 0, true]
 		]);
 		// The rest of the zaak is context: in Verbonden, not in the band (Thijs, 9 Oct).
-		expect(mvt.naast).toEqual([]);
+		expect(mvt.onder).toEqual([]);
 		// A geleidende brief offers the substance of its zaak: kern, side by side.
 		expect(metZaak('Geleidende brief').regels.map((r) => [r.id, r.label, r.los, !!r.laad])).toEqual(
 			[['biedt-aan', 'Biedt aan', true, true]]
 		);
 		// A motie is no paper of the bill: no line.
 		expect(metZaak('Motie').regels).toEqual([]);
-		expect(metZaak('Motie').naast).toEqual([]);
+		expect(metZaak('Motie').onder).toEqual([]);
 		// Without a zaak, nothing: no line waits, no empty group.
 		const zonder = behoort('documents', { kind: 'Nota van wijziging' }, {
 			...(light([]) as object),
 			node: { key: 'x' }
 		} as never);
-		expect([zonder.regels, zonder.naast]).toEqual([[], []]);
+		expect([zonder.regels, zonder.onder]).toEqual([[], []]);
 	});
 });
 

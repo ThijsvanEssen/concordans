@@ -51,7 +51,7 @@ The parliamentary readers share request helpers in `src/lib/components/parliamen
 
 ## Text and anchors
 
-**Parts.** `ArticleText` (`src/lib/components/articles`) renders an article as aanhef, leden and onderdelen, each with an anchor id (`aanhef`, `lid-2`, `lid-2-onder-a`) and a permalink. The parts come from the API (`partsFromApi`) or are read from the text (`parseArticleParts` in `src/lib/text/article-parts.ts`).
+**Parts.** `ArticleText` (`src/lib/components/articles`) renders an article as aanhef, leden and onderdelen, each with an anchor id (`aanhef`, `lid-2`, `lid-2-onder-a`) and a permalink. The parts come from the API, or are read from the text where it gives none (`partsOf` in `src/lib/text/article-parts.ts`); the card of an article shows the same parts.
 
 **Citations.** `CitedText` turns the citation spans of an article or judgment into links, at the lid or onderdeel the source names: the qualifier comes from the span (`qualifierOfSpan`) or from the text around it (`parseQualifier` in `src/lib/text/qualifier.ts`). A link to the article on screen is a jump within the page. Hovering shows the cited part.
 
