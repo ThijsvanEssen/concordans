@@ -66,7 +66,7 @@ import {
 	type Neighbor,
 	type Row
 } from './rows';
-import { isDerived, lidOfMatch, positionsLabel } from './edge-meta';
+import { isDerived, lidOfMatch, plaatsVanMeta, positionsLabel } from './edge-meta';
 
 /** What an implementation rests on (API 0.67), in words: EUR-Lex, the considerans, or both. */
 const BASIS: Record<string, string> = {
@@ -968,9 +968,13 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				if (place?.kind === 'part' && place.lid) row.lid = place.lid;
 				if (!stub) row.derived = true;
 			}
-			const ro = overwegingen.get(n.key);
-			if (ro?.length && !row.edge?.paragraphs)
-				row.position = positionsLabel(ro.map((nr) => paragraphCite(ecli, nr)));
+			// Its places as this judgment cites them (`onder 3` in a conclusion): the edge's
+			// paragraphs, else the overwegingen of the detail.
+			const ro = plaatsVanMeta(n.meta as Record<string, unknown> | null, ecli).position;
+			const uitDetail = overwegingen.get(n.key);
+			if (ro) row.position = ro;
+			else if (uitDetail?.length)
+				row.position = positionsLabel(uitDetail.map((nr) => paragraphCite(ecli, nr)));
 			// The passage that cites it, from the citations the API found in the paragraphs the reader
 			// has loaded (Thijs, 13 Oct): the words of the span, so `art. 3:305a BW` for `305a`.
 			const aangehaald = detail?.cited_articles?.find(
