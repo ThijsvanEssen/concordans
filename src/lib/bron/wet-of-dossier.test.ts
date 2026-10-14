@@ -184,7 +184,10 @@ describe('a dossier number in its official notation', () => {
 
 	it('joins a number and its suffix with a hyphen only for a URL or a key', () => {
 		const joins = /\}-\$\{[^}]*[sS]uffix\b/;
-		const forAddress = [join('lib', 'bron', 'leesbaar.ts'), join('lib', 'bron', 'behoort.ts')];
+		const forAddress = [
+			join('lib', 'bron', 'leesbaar.ts'),
+			join('lib', 'bron', 'behoort-layer.ts')
+		];
 		const offenders = files(ROOT)
 			.filter((p) => !p.includes(join('lib', 'api', 'generated')))
 			.map((p) => relative(ROOT, p))
