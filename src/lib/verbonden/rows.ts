@@ -6,7 +6,8 @@ import { isRauw, menselijkeNaam, naamVanId } from '$lib/bron/menselijk';
 import { keyEcli } from '$lib/bron/leesbaar';
 import { korteDatum, langeDatum, vandaag } from '$lib/text/datum';
 import { refOf, type BronRef } from '$lib/bron/href';
-import { anchorLabel, parseQualifier } from '$lib/text/qualifier';
+import { anchorLabel } from '$lib/text/anchor';
+import { parseQualifier } from '$lib/text/qualifier';
 import { articleTitle, bookNumber } from '$lib/text/bw';
 import { authorCite, paragraphCite } from '$lib/text/judgment-cite';
 import { isCollection, type Relation } from '$lib/vocabulary';
@@ -691,14 +692,11 @@ export const ankerVanRij = (row: Pick<Row, 'direction' | 'noot' | 'at'>): string
 	row.direction === 'inbound' && row.noot ? row.noot.id : (row.at ?? null);
 
 /** What opening a row does, in words: at the position it names, or beside the article. */
-export const openLabelOf = (row: Pick<Row, 'position' | 'at'>, beside = false): string =>
-	beside
-		? 'Lees naast het artikel'
-		: row.position
-			? `Lees bij ${row.position}`
-			: row.at
-				? `Lees bij ${anchorLabel(row.at)}`
-				: 'Lees';
+export function openLabelOf(row: Pick<Row, 'position' | 'at' | 'ref'>, beside = false): string {
+	if (beside) return 'Lees naast het artikel';
+	const position = row.position ?? (row.at ? anchorLabel(row.at, row.ref.key) : null);
+	return position ? `Lees bij ${position}` : 'Lees';
+}
 
 /**
  * `art. 4:12, 5:49 en 3 andere`: the articles of the law a judgment cites; a BW article with

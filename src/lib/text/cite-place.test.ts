@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { BW_BOOKS } from './bw';
 import { citeArticle, partOfAnchor } from './cite';
 import {
 	parseArticleParts,
@@ -10,6 +11,7 @@ import {
 
 // What a place's menu in the text offers: the citation of the place a click lands on.
 const bw = (articleNumber: string, book: string) => ({
+	bwbId: BW_BOOKS[book.toLowerCase()],
 	articleNumber,
 	shortTitle: `BW${book}`,
 	citationTitle: `Burgerlijk Wetboek Boek ${book}`

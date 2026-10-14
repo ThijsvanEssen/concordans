@@ -3,6 +3,7 @@
 // in which a lid is a line that starts with `1. ` and an onderdeel one that starts
 // with `a. `, `1°. ` or a dash (`– `, the definitions of Cbw 1).
 // TODO(backend B6): `parseArticleParts` goes when every article carries `parts`.
+import { parentAnchor } from './anchor';
 
 export type ArticlePartKind = 'aanhef' | 'lid' | 'onderdeel' | 'tekst';
 
@@ -206,8 +207,8 @@ export function partsFromApi(parts: ApiPart[], text?: string): ArticlePart[] {
 		};
 		byId.set(p.id, part);
 		// `lid-3-onder-a` and `lid-3-aanhef` belong to `lid-3`.
-		const parentId = p.id.replace(/-(?:onder-[^-]+|aanhef)$/, '');
-		const parent = parentId !== p.id ? byId.get(parentId) : undefined;
+		const parentId = parentAnchor(p.id);
+		const parent = parentId ? byId.get(parentId) : undefined;
 		if (parent) {
 			if (parent.children.length === 0)
 				parent.textEnd = Math.max(parent.textStart, lineStart(text, p.start));

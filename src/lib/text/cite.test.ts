@@ -114,6 +114,7 @@ describe('articleCitation', () => {
 		expect(
 			articleCitation({ article_number: '3:4' }, { own: 'Awb-titel', meta, displayName: 'x' })
 		).toEqual({
+			bwbId: null,
 			articleNumber: '3:4',
 			heading: null,
 			shortTitle: 'Awb',
@@ -130,6 +131,7 @@ describe('articleCitation', () => {
 				{ displayName: 'Grondwet' }
 			)
 		).toEqual({
+			bwbId: null,
 			articleNumber: 'stam_1',
 			heading: 'Algemene bepaling',
 			shortTitle: null,

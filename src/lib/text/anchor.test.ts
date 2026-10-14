@@ -34,7 +34,8 @@ describe('the anchors the API gives', () => {
 	});
 
 	it('reads no anchor from what is none', () => {
-		for (const id of ['', 'p-12', 'lid', 'onder-a-lid-2', 'aanhef-lid-2']) expect(parseAnchor(id)).toBeNull();
+		for (const id of ['', 'p-12', 'lid', 'onder-a-lid-2', 'aanhef-lid-2'])
+			expect(parseAnchor(id)).toBeNull();
 	});
 
 	it('names the part a part stands in', () => {
