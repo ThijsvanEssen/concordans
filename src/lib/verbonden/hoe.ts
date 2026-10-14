@@ -20,6 +20,7 @@ import {
 	uitgewerktIn,
 	type Grondslag
 } from '$lib/text/delegaties';
+import { officialNumber } from '$lib/bron/dossier-naam';
 import { passageOf, type Row } from './rows';
 import { uitsnede, type Passage } from './passage';
 import { confidenceWord } from './filter';
@@ -428,7 +429,8 @@ function paarStuk(kant: unknown, eerste: boolean): string | null {
 	const suffix = textOf(k.dossier_suffix);
 	const nr = num(k.sequence);
 	const woord = eerste ? capitalize(soort) : soort.toLowerCase();
-	return `${woord} ${suffix ? `${dossier}-${suffix}` : dossier}${nr != null ? ` nr. ${nr}` : ''}`;
+	const nummer = suffix ? `${dossier} ${suffix}` : officialNumber(dossier);
+	return `${woord} ${nummer}${nr != null ? ` nr. ${nr}` : ''}`;
 }
 
 /**

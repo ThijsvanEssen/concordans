@@ -7,7 +7,7 @@ import { bronPlural } from '$lib/vocabulary';
 // these, under its own name.
 const TAGS: Record<string, { label: string; description: string }> = {
 	instruments: {
-		label: 'Instrumenten',
+		label: bronPlural('instruments'),
 		description:
 			'Regelingen, verdragen en Europese instrumenten, met artikelen, tekst op een datum en wijzigingen.'
 	},

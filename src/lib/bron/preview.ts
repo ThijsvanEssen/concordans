@@ -18,7 +18,7 @@ import { votesSentence } from '$lib/components/parliamentary/stemming';
 import { kindName } from '$lib/components/explore/law-head';
 import {
 	dossierLabel,
-	dossierName,
+	dossierOwnName,
 	dossierUitProps,
 	dossierVolledigeTitel,
 	kamerstukNummer
@@ -131,16 +131,15 @@ export function previewFromNode(
 			// long title under it.
 			const { outcome, current_phase } = props;
 			const d = dossierUitProps(props);
-			const naam = dossierName(d);
 			return {
 				kicker: d.number ? `${kind}, ${kamerstukNummer(d.number)}` : kind,
-				title: naam === d.number ? name : naam,
+				title: dossierOwnName(d) ?? name,
 				date: langeDatum(textOf(props.opened_on)) || null,
 				lines: dossierStatus({
 					outcome: isOutcome(outcome) ? outcome : null,
 					current_phase: typeof current_phase === 'string' ? current_phase : null
 				}),
-				extra: clip(dossierVolledigeTitel(d, naam))
+				extra: clip(dossierVolledigeTitel(d))
 			};
 		}
 		case 'instruments': {

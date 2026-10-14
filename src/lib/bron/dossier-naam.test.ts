@@ -20,6 +20,6 @@ describe('dossierLabel', () => {
 		const naam = dossierName({ number: '1', title: lang });
 		expect(naam.length).toBeLessThanOrEqual(80);
 		expect(naam.endsWith('…')).toBe(true);
-		expect(dossierLabel({ number: '36600-VII' })).toBe('Kamerstuk 36600-VII');
+		expect(dossierLabel({ number: '36600-VII' })).toBe('Kamerstuk 36600 VII');
 	});
 });

@@ -4,7 +4,7 @@
 	// beside it (a row of Verbonden, whose meta reads "Kamerstuk 36496"). The long title is on
 	// hover. The name is the short title the data on hand carries: no request of its own.
 	import {
-		dossierName,
+		dossierOwnName,
 		dossierVolledigeTitel,
 		kamerstukNummer,
 		type DossierNaamBron
@@ -24,7 +24,7 @@
 	} = $props();
 
 	const d = $derived<DossierNaamBron>(typeof dossier === 'string' ? { number: dossier } : dossier);
-	const naam = $derived(((n) => (n === d.number ? null : n))(dossierName(d)));
+	const naam = $derived(dossierOwnName(d));
 	const lang = $derived(hover ? dossierVolledigeTitel(d, naam ?? d.number) : null);
 </script>
 

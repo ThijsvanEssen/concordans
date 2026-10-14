@@ -12,6 +12,7 @@
 	import { load, type LoadState as State } from '$lib/util/load.svelte';
 	import { bronHref, indexHref } from '$lib/bron/href';
 	import { stand } from './stand';
+	import { officialNumber } from '$lib/bron/dossier-naam';
 
 	let { memberKey, ruim = false }: { memberKey: string; ruim?: boolean } = $props();
 
@@ -131,8 +132,10 @@
 				{#each dossierItems as d (d.key)}
 					{@const st = stand(d)}
 					<li>
-						<BronLink ref={`dossiers/${d.number}`}>{d.short_title ?? d.title ?? d.number}</BronLink>
-						<span class="meta">{st?.zin ?? ''} {d.number}</span>
+						<BronLink ref={`dossiers/${d.number}`}
+							>{d.short_title ?? d.title ?? officialNumber(d.number)}</BronLink
+						>
+						<span class="meta">{st?.zin ?? ''} {officialNumber(d.number)}</span>
 					</li>
 				{/each}
 			</ol>
