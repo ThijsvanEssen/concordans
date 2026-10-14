@@ -1430,9 +1430,6 @@ describe('errors that are not swallowed', () => {
 			// A throw that is no failure: a popover already in that state, a pointer capture
 			// refused, graphology on an edge or node already there or gone, storage or a clipboard
 			// that refuses (one storage helper, F32). Each gets a handler that says so.
-			'lib/bron/BronLink.svelte': 2,
-			'lib/bron/OverwegingKaart.svelte': 2,
-			'lib/components/articles/GrondslagFormule.svelte': 2,
 			'lib/components/explore/index/pannable.ts': 1,
 			'lib/components/graph/GraphCanvas.svelte': 4,
 			'lib/components/graph/GraphView.svelte': 5,
@@ -1563,5 +1560,28 @@ describe('the names said once (code-eenvoud F55)', () => {
 		expect(offenders((t) => ownName.test(t), ['lib/components/parliamentary/chamber.ts'])).toEqual(
 			[]
 		);
+	});
+});
+
+describe('one top layer, one fold, one role per collection (code-eenvoud F63–F65)', () => {
+	it('puts a menu or a card in the top layer through actions/top-layer.ts only (F63)', () => {
+		const own = /showPopover\(|popover="manual"|setAttribute\('popover'/;
+		expect(offenders((t) => own.test(t), ['lib/actions/top-layer.ts'])).toEqual([]);
+		// Its margins and the pointer's moments are said once, there.
+		expect(
+			offenders(
+				(t) => /\b(HOVER_MS|LEAVE_MS|SLUIT_MS|WEG_MS)\s*=/.test(t),
+				['lib/actions/top-layer.ts']
+			)
+		).toEqual([]);
+	});
+
+	it('closes on a click outside through clickOutside only (F63)', () => {
+		const own = /document\.addEventListener\(\s*'(?:pointerdown|click)'/;
+		expect(offenders((t) => own.test(t), ['lib/actions/top-layer.ts'])).toEqual([]);
+	});
+
+	it('moves through a menu with the keys of actions/menu.ts (F63)', () => {
+		expect(offenders((t) => /e\.key === 'ArrowDown'\s*\?/.test(t))).toEqual([]);
 	});
 });

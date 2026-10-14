@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { clickOutside } from '$lib/actions/top-layer';
 	import { kaart } from '$lib/map/map.svelte';
 	import { page } from '$app/stores';
 	import { isVerkenner } from '$lib/bron/leesbaar';
@@ -47,17 +48,13 @@
 		mobileMenuOpen = false;
 	}
 
-	// A click or tap outside the sheet and its button closes it, as a menu does
-	// (actions/menu.ts): in the capture phase, only watched, never stopped.
+	// A click or tap outside the sheet and its button closes it, as a menu does.
 	$effect(() => {
 		if (!mobileMenuOpen) return;
-		const onClick = (e: MouseEvent) => {
-			const t = e.target as Node | null;
-			if (t && (mobileNavEl?.contains(t) || toggleBtnEl?.contains(t))) return;
-			mobileMenuOpen = false;
-		};
-		document.addEventListener('click', onClick, true);
-		return () => document.removeEventListener('click', onClick, true);
+		return clickOutside(
+			() => [mobileNavEl, toggleBtnEl],
+			() => (mobileMenuOpen = false)
+		);
 	});
 
 	function handleKeydown(e: KeyboardEvent) {

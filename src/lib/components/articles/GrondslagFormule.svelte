@@ -9,6 +9,7 @@
 	import { failureText } from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';
 	import { isEscape } from '$lib/actions/keys';
+	import { clickOutside, HOVER_MS, LEAVE_MS, topLayer } from '$lib/actions/top-layer';
 	import {
 		artikelKort,
 		grondslagKop,
@@ -31,10 +32,6 @@
 		children: import('svelte').Snippet;
 	} = $props();
 
-	const HOVER_MS = 350;
-	const WEG_MS = 200;
-	const AFSTAND = 4;
-	const RAND = 8;
 	const uid = $props.id();
 
 	/** `hover` while the pointer rests on it, `vast` after a click or a tap. */
@@ -86,7 +83,7 @@
 	function buiten(e: PointerEvent) {
 		if (e.pointerType === 'touch') return;
 		if (open === 'vast') return;
-		wacht(() => (open = null), open ? WEG_MS : 0);
+		wacht(() => (open = null), open ? LEAVE_MS : 0);
 	}
 	function klik(e: MouseEvent) {
 		e.stopPropagation();
@@ -103,53 +100,9 @@
 		}
 	}
 
-	/** Below the formula, or above it where the screen ends below; never past a side. */
-	function plaats() {
-		if (!knop || !kaart) return;
-		const a = knop.getBoundingClientRect();
-		const k = kaart.getBoundingClientRect();
-		const onder = a.bottom + AFSTAND;
-		const boven = a.top - AFSTAND - k.height;
-		const top = onder + k.height > innerHeight - RAND && boven >= RAND ? boven : onder;
-		const left = Math.max(RAND, Math.min(a.left, innerWidth - RAND - k.width));
-		kaart.style.top = `${Math.round(top)}px`;
-		kaart.style.left = `${Math.round(left)}px`;
-	}
-
-	// In the top layer while open, following a scroll; a tap or click outside closes it (the
-	// capture phase, so the tap is only watched: actions/menu.ts).
+	// In the top layer while open (actions/top-layer.ts); a tap or click outside closes it.
 	$effect(() => {
-		if (!open || !kaart) return;
-		const el = kaart;
-		try {
-			el.showPopover();
-		} catch {
-			// Without the popover API the card stands fixed above the page by its z-index.
-		}
-		plaats();
-		const weg = (e: PointerEvent) => {
-			const t = e.target as Node;
-			if (!el.contains(t) && !knop?.contains(t)) sluit();
-		};
-		addEventListener('scroll', plaats, { capture: true, passive: true });
-		addEventListener('resize', plaats);
-		document.addEventListener('pointerdown', weg, true);
-		return () => {
-			removeEventListener('scroll', plaats, { capture: true });
-			removeEventListener('resize', plaats);
-			document.removeEventListener('pointerdown', weg, true);
-			try {
-				el.hidePopover();
-			} catch {
-				// Already closed, or no popover API.
-			}
-		};
-	});
-
-	// The card grows when the answer comes: placed again.
-	$effect(() => {
-		void regelingen;
-		if (open && kaart) plaats();
+		if (open) return clickOutside(() => [kaart, knop], sluit);
 	});
 </script>
 
@@ -165,14 +118,14 @@
 	onfocus={vraag}
 	onclick={klik}
 	onkeydown={toets}>{@render children()}</button
->{#if open}<!-- A click on the card stays on it: not the place's menu under it (ArticleText). --><span
+>{#if open && knop}<!-- A click on the card stays on it: not the place's menu under it (ArticleText). --><span
 		class="kaart"
 		id="{uid}-kaart"
 		role="dialog"
 		aria-label={grondslagKop(formule)}
-		popover="manual"
 		tabindex="-1"
 		bind:this={kaart}
+		use:topLayer={{ anchor: knop }}
 		onpointerenter={binnen}
 		onpointerleave={buiten}
 		onclick={(e) => e.stopPropagation()}
@@ -231,6 +184,8 @@
 		flex-direction: column;
 		gap: var(--s-2);
 		width: min(44ch, calc(100vw - 16px));
+		max-height: var(--room);
+		overflow-y: auto;
 		padding: var(--s-3);
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);

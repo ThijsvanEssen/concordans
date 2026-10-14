@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Collection } from '$lib/vocabulary';
+	import { clickOutside } from '$lib/actions/top-layer';
 	import { report } from '$lib/api/errors';
 	import { naFilter, zichtSleutel } from '$lib/graph/zicht';
 	import { vandaag } from '$lib/text/datum';
@@ -459,22 +460,16 @@
 		return true;
 	}
 	// A click or tap outside the card and the list of bronnen closes the card of the keyboard's
-	// bron, as a menu does (actions/menu.ts): in the capture phase, only watched, never stopped.
+	// bron, as a menu does.
 	$effect(() => {
 		if (!keyNode) return;
-		const onClick = (e: MouseEvent) => {
-			const t = e.target as Node | null;
-			if (
-				t &&
-				(citeEl?.contains(t) ||
-					canvasWrap?.parentElement?.querySelector('.canvas-node-list')?.contains(t))
-			)
-				return;
-			keyNode = null;
-			hoverNode = null;
-		};
-		document.addEventListener('click', onClick, true);
-		return () => document.removeEventListener('click', onClick, true);
+		return clickOutside(
+			() => [citeEl, canvasWrap?.parentElement?.querySelector('.canvas-node-list')],
+			() => {
+				keyNode = null;
+				hoverNode = null;
+			}
+		);
 	});
 	function kaartUit(focus: 'lijst' | 'canvas', sluit = false) {
 		if (sluit) stilNa = keyNode?.id ?? null;

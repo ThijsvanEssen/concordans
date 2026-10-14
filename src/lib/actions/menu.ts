@@ -1,19 +1,32 @@
-// How a menu behaves, on the element that holds its button (aria-haspopup) and its list
-// (role="menu"). On open the focus goes to the checked item, else the first. The arrow
-// keys, Home and End move between the items. Escape closes the menu and puts the focus
-// back on the button; Tab closes it and moves on from the button. A click outside closes
-// it, as `outside` does: the click is only watched, never stopped.
+// How a menu behaves, on the element that holds its list (role="menu") and, unless it is given
+// as `trigger` (a place's marker), its button (aria-haspopup). On open the focus goes to the
+// chosen option, else the first item. The arrow keys, Home and End move between the items.
+// Escape closes the menu and puts the focus back on the button; Tab closes it and moves on
+// from the button. A click outside closes it (clickOutside); one on the button is the button's.
 import { afterTick } from '$lib/util/after-tick';
 import type { Action } from 'svelte/action';
+import { clickOutside } from './top-layer';
 
-type Menu = { open: boolean; close: () => void };
+type Menu = { open: boolean; close: () => void; trigger?: HTMLElement };
 
 const ITEMS = '[role^="menuitem"], a[href], button, input';
+const CHOSEN = '[role="menuitemradio"][aria-checked="true"]';
+
+/** The item a key moves to from item `i` (-1: none has the focus) of `n`, or null for another key. */
+export function nextIndex(key: string, i: number, n: number): number | null {
+	const last = n - 1;
+	if (n === 0) return null;
+	if (key === 'ArrowDown') return i < 0 || i === last ? 0 : i + 1;
+	if (key === 'ArrowUp') return i <= 0 ? last : i - 1;
+	if (key === 'Home') return 0;
+	if (key === 'End') return last;
+	return null;
+}
 
 export const menu: Action<HTMLElement, Menu> = (node, params) => {
-	let { open, close } = params;
+	let { open, close, trigger: given } = params;
 
-	const trigger = () => node.querySelector<HTMLElement>('[aria-haspopup]');
+	const trigger = () => given ?? node.querySelector<HTMLElement>('[aria-haspopup]');
 	const items = () =>
 		[...node.querySelectorAll<HTMLElement>(`[role="menu"] :is(${ITEMS})`)].filter(
 			(el) => !(el as HTMLButtonElement).disabled
@@ -22,7 +35,7 @@ export const menu: Action<HTMLElement, Menu> = (node, params) => {
 	function focusFirst() {
 		if (!open) return;
 		const list = items();
-		(list.find((el) => el.getAttribute('aria-checked') === 'true') ?? list[0])?.focus();
+		(list.find((el) => el.matches(CHOSEN)) ?? list[0])?.focus();
 	}
 
 	const onKey = (e: KeyboardEvent) => {
@@ -31,8 +44,9 @@ export const menu: Action<HTMLElement, Menu> = (node, params) => {
 			// Stopped here, so that Escape does not also clear the selection of the network.
 			e.preventDefault();
 			e.stopPropagation();
+			const back = trigger();
 			close();
-			trigger()?.focus();
+			back?.focus();
 			return;
 		}
 		if (e.key === 'Tab') {
@@ -42,42 +56,24 @@ export const menu: Action<HTMLElement, Menu> = (node, params) => {
 			return;
 		}
 		const list = items();
-		if (list.length === 0) return;
-		const i = list.indexOf(document.activeElement as HTMLElement);
-		const last = list.length - 1;
-		const next =
-			e.key === 'ArrowDown'
-				? i < 0 || i === last
-					? 0
-					: i + 1
-				: e.key === 'ArrowUp'
-					? i <= 0
-						? last
-						: i - 1
-					: e.key === 'Home'
-						? 0
-						: e.key === 'End'
-							? last
-							: null;
+		const next = nextIndex(e.key, list.indexOf(document.activeElement as HTMLElement), list.length);
 		if (next === null) return;
 		e.preventDefault();
 		e.stopPropagation();
 		list[next].focus();
 	};
 
-	const onClick = (e: MouseEvent) => {
-		if (open && e.target instanceof Node && !node.contains(e.target)) close();
-	};
-
 	node.addEventListener('keydown', onKey);
-	// The capture phase: the menu closes before whatever was clicked reacts.
-	document.addEventListener('click', onClick, true);
+	const stop = clickOutside(
+		() => [node, given],
+		() => open && close()
+	);
 	if (open) afterTick(focusFirst);
 
 	return {
 		update(next) {
 			const was = open;
-			({ open, close } = next);
+			({ open, close, trigger: given } = next);
 			if (open && !was) afterTick(focusFirst);
 			if (!open && was) {
 				// An item that closed the menu took the focus with it: it returns to the button.
@@ -88,7 +84,7 @@ export const menu: Action<HTMLElement, Menu> = (node, params) => {
 		},
 		destroy() {
 			node.removeEventListener('keydown', onKey);
-			document.removeEventListener('click', onClick, true);
+			stop();
 		}
 	};
 };

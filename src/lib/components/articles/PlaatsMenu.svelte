@@ -4,9 +4,10 @@
 	// ("1.", "a.") or a click on its text (concept 21, variant B; Thijs, 10 Oct: "nummer of lid
 	// of onder-markering als menu"). Nothing stands beside the text at rest. The menu names
 	// the place, then the forms to copy, Kopieer tekst, Bewaar, and where the place leads on
-	// (its verbindingen, its history). In the top layer, under its marker; the arrows move,
-	// Escape and a click outside close it and give the focus back to the marker.
-	import { afterTick } from '$lib/util/after-tick';
+	// (its verbindingen, its history). In the top layer by its marker, with the keys of a menu:
+	// Escape gives the focus back to the marker, a click outside closes it.
+	import { menu } from '$lib/actions/menu';
+	import { topLayer } from '$lib/actions/top-layer';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import type { CiteItem } from '$lib/components/ui/cite';
 	import { kaart } from '$lib/map/map.svelte';
@@ -38,10 +39,8 @@
 	} = $props();
 
 	const copier = createCopier();
-	let lijst = $state<HTMLElement | null>(null);
 	const aan = $derived(!!bewaar && kaart.heeft(bewaar));
 
-	const items = () => [...(lijst?.querySelectorAll<HTMLElement>('.tekstmenu__item') ?? [])];
 	function sluit(focus = true) {
 		// Held before closing: once the menu is gone its props are too.
 		const marker = anker;
@@ -52,87 +51,15 @@
 		await copier.copy(wat, sleutel);
 		setTimeout(() => sluit(), 600);
 	}
-
-	/** In the top layer, under the marker, inside the window; it follows a scroll. */
-	function toplaag(el: HTMLElement) {
-		if (typeof el.showPopover === 'function') {
-			el.setAttribute('popover', 'manual');
-			el.showPopover();
-		}
-		const RAND = 8;
-		const zet = () => {
-			const r = anker.getBoundingClientRect();
-			const onder = innerHeight - r.bottom - 4 - RAND;
-			const boven = r.top - 4 - RAND;
-			// Under the marker; above it when it does not fit there and there is more room above.
-			const op = el.scrollHeight > onder && boven > onder;
-			const ruimte = Math.max(160, op ? boven : onder);
-			el.style.maxHeight = `${ruimte}px`;
-			const h = Math.min(el.scrollHeight, ruimte);
-			el.style.top = `${op ? r.top - 4 - h : r.bottom + 4}px`;
-			el.style.left = `${Math.max(RAND, Math.min(r.left, innerWidth - el.offsetWidth - RAND))}px`;
-		};
-		zet();
-		addEventListener('scroll', zet, true);
-		addEventListener('resize', zet);
-		afterTick(() => items()[0]?.focus());
-		// A click outside closes it; one on the marker is the marker's (it toggles).
-		const buiten = (e: PointerEvent) => {
-			const t = e.target as Node;
-			if (!el.contains(t) && !anker.contains(t)) sluit(false);
-		};
-		document.addEventListener('pointerdown', buiten, true);
-		return {
-			destroy() {
-				removeEventListener('scroll', zet, true);
-				removeEventListener('resize', zet);
-				document.removeEventListener('pointerdown', buiten, true);
-			}
-		};
-	}
-
-	function toets(e: KeyboardEvent) {
-		if (e.key === 'Escape') {
-			e.preventDefault();
-			e.stopPropagation();
-			sluit();
-			return;
-		}
-		if (e.key === 'Tab') {
-			sluit();
-			return;
-		}
-		const lijstItems = items();
-		const i = lijstItems.indexOf(document.activeElement as HTMLElement);
-		const last = lijstItems.length - 1;
-		const next =
-			e.key === 'ArrowDown'
-				? i < 0 || i === last
-					? 0
-					: i + 1
-				: e.key === 'ArrowUp'
-					? i <= 0
-						? last
-						: i - 1
-					: e.key === 'Home'
-						? 0
-						: e.key === 'End'
-							? last
-							: null;
-		if (next === null) return;
-		e.preventDefault();
-		lijstItems[next]?.focus();
-	}
 </script>
 
 <div
-	class="plaatsmenu"
+	class="tekstmenu__lijst is-breed plaatsmenu"
 	role="menu"
 	aria-label={titel}
 	tabindex="-1"
-	bind:this={lijst}
-	use:toplaag
-	onkeydown={toets}
+	use:topLayer={{ anchor: anker }}
+	use:menu={{ open: true, close: onClose, trigger: anker }}
 >
 	<p class="kop">{titel}</p>
 	{#if cite.length}
@@ -199,20 +126,7 @@
 
 <style>
 	.plaatsmenu {
-		position: fixed;
-		inset: auto;
-		margin: 0;
-		z-index: var(--z-float);
-		width: min(340px, calc(100vw - 16px));
-		overflow-y: auto;
-		padding: var(--s-1) 0;
-		background: var(--paper);
-		color: var(--ink);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		box-shadow: var(--shadow-modal);
 		font-size: var(--t-ui-micro);
-		text-align: left;
 	}
 	.kop {
 		margin: 0;

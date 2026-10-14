@@ -6,6 +6,7 @@
 	// than a list (two lists side by side) passes its own `inhoud`.
 	import type { Snippet } from 'svelte';
 	import { menu } from '$lib/actions/menu';
+	import { topLayer } from '$lib/actions/top-layer';
 	import Caret from './Caret.svelte';
 
 	/** `uit`: shown, not to be chosen now (its reason in `titel`). */
@@ -43,56 +44,32 @@
 	} = $props();
 
 	let open = $state(false);
+	let button = $state<HTMLElement | null>(null);
 	const sluit = () => (open = false);
 	const gekozen = $derived(opties.find((o) => o.waarde === waarde));
 	const woorden = $derived(tekst ?? gekozen?.label ?? label);
-
-	/**
-	 * The list in the top layer (the popover API, as BronLink's card), so that no column that
-	 * scrolls on its own (the facets of Bladeren, the Overzicht) cuts it off: fixed under its
-	 * button, at its left edge or (`rechts`) its right, kept there while the page scrolls, and
-	 * inside the window. It stays in the menu's element, so its keys and clicks are as before.
-	 * Without the popover API it stands under the button as it did.
-	 */
-	function toplaag(lijst: HTMLElement, rechtsUit: boolean) {
-		const knop = lijst.parentElement?.querySelector<HTMLElement>('.tekstmenu__knop');
-		if (!knop || typeof lijst.showPopover !== 'function') return;
-		lijst.setAttribute('popover', 'manual');
-		lijst.showPopover();
-		const RAND = 8;
-		const zet = () => {
-			const r = knop.getBoundingClientRect();
-			const top = r.bottom + 4;
-			lijst.style.top = `${top}px`;
-			lijst.style.maxHeight = `${Math.max(120, Math.min(innerHeight * 0.6, innerHeight - top - RAND))}px`;
-			const breed = lijst.offsetWidth;
-			const links = rechtsUit ? r.right - breed : r.left;
-			lijst.style.left = `${Math.max(RAND, Math.min(links, innerWidth - breed - RAND))}px`;
-		};
-		zet();
-		addEventListener('scroll', zet, true);
-		addEventListener('resize', zet);
-		return {
-			destroy() {
-				removeEventListener('scroll', zet, true);
-				removeEventListener('resize', zet);
-			}
-		};
-	}
 </script>
 
 <div class="tekstmenu" class:klein use:menu={{ open, close: sluit }}>
 	<button
 		type="button"
 		class="tekstmenu__knop"
+		bind:this={button}
 		aria-haspopup="menu"
 		aria-expanded={open}
 		aria-label="{label}: {woorden}"
 		onclick={() => (open = !open)}
 		>{#if knop}{@render knop()}{:else}{woorden}{/if}<Caret {open} /></button
 	>
-	{#if open}
-		<div class="tekstmenu__lijst" class:rechts role="menu" aria-label={label} use:toplaag={rechts}>
+	{#if open && button}
+		<!-- In the top layer (actions/top-layer.ts), so no column that scrolls on its own (the
+		     facets of Bladeren, the Overzicht) cuts it off; its keys and clicks stay the menu's. -->
+		<div
+			class="tekstmenu__lijst"
+			role="menu"
+			aria-label={label}
+			use:topLayer={{ anchor: button, align: rechts ? 'right' : 'left' }}
+		>
 			{#if inhoud}
 				{@render inhoud(sluit)}
 			{:else}
@@ -154,31 +131,6 @@
 		text-decoration: underline;
 		text-underline-offset: 3px;
 	}
-	.tekstmenu__lijst {
-		position: absolute;
-		top: calc(100% + var(--s-1));
-		left: 0;
-		z-index: var(--z-float);
-		min-width: 200px;
-		max-height: 60vh;
-		overflow-y: auto;
-		padding: var(--s-1) 0;
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		box-shadow: var(--shadow-modal);
-	}
-	.tekstmenu__lijst.rechts {
-		left: auto;
-		right: 0;
-	}
-	/* In the top layer: fixed where toplaag puts it, not the popover's centre of the window. */
-	.tekstmenu__lijst:popover-open {
-		position: fixed;
-		inset: auto;
-		margin: 0;
-		color: inherit;
-	}
 	/* Global: the one item of every menu, a step under the rule (`onder`) and the items of a
 	   menu with its own `inhoud` or of a menu of its own (a ⋯, the versions of an article). A
 	   menu that lays an item out otherwise (a count at the right) adds a class for that only. */
@@ -222,16 +174,5 @@
 	}
 	:global(.tekstmenu__item[aria-checked='true']) {
 		font-weight: 600;
-	}
-	.tekstmenu__onder {
-		margin-top: var(--s-1);
-		padding-top: var(--s-1);
-		border-top: 1px solid var(--rule);
-	}
-	/* A menu of actions alone (no options): no rule above its first. */
-	.tekstmenu__onder:first-child {
-		margin-top: 0;
-		padding-top: 0;
-		border-top: 0;
 	}
 </style>
