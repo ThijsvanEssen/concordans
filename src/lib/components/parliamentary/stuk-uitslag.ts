@@ -3,27 +3,24 @@
 // with the day (`decided_on`) and the seats voor and tegen of that vote (`tally`), a link to
 // the stemming (`decision`). A stuk another replaced names the one that did (`replaced_by`).
 // Source values only: nothing is read from a title, and a stuk without an outcome shows none.
-import { separatorBefore, textOf } from '$lib/text/words';
+import { textOf } from '$lib/text/words';
 import { korteDatum } from '$lib/text/datum';
-import { nrWoord } from './vervanging';
+import { genummerd, nrsTekst, type Nr } from './vervanging';
 import { votesShort } from './stemming';
 
-export type Uitkomst =
-	| 'aangenomen'
-	| 'verworpen'
-	| 'ingetrokken'
-	| 'aangehouden'
-	| 'vervallen'
-	| 'vervangen';
-
-const UITKOMSTEN: readonly string[] = [
+const UITKOMSTEN = [
 	'aangenomen',
 	'verworpen',
 	'ingetrokken',
 	'aangehouden',
 	'vervallen',
 	'vervangen'
-];
+] as const;
+
+export type Uitkomst = (typeof UITKOMSTEN)[number];
+
+const isUitkomst = (s: string | null): s is Uitkomst =>
+	!!s && (UITKOMSTEN as readonly string[]).includes(s);
 
 export type StukUitslag = {
 	uitkomst: Uitkomst;
@@ -34,32 +31,25 @@ export type StukUitslag = {
 	/** The stemming's key (`/stemmingen/{key}`); null without one. */
 	besluit: string | null;
 	/** The stukken that replaced it, by number, lowest first: of `vervangen`. */
-	vervangers: { key: string; nummer: string }[];
+	vervangers: Nr[];
 };
 
 /** The outcome of a stuk from its props or its list item; null while nothing was decided. */
 export function stukUitslag(p: Record<string, unknown> | null | undefined): StukUitslag | null {
 	const uitkomst = textOf(p?.outcome);
-	if (!p || !uitkomst || !UITKOMSTEN.includes(uitkomst)) return null;
-	const vervangers = (Array.isArray(p.replaced_by) ? p.replaced_by : [])
-		.filter(
-			(r): r is { key: string; sequence: number } =>
-				!!r && typeof r.key === 'string' && typeof r.sequence === 'number'
-		)
-		.sort((a, b) => a.sequence - b.sequence)
-		.map((r) => ({ key: r.key, nummer: String(r.sequence) }));
+	if (!p || !isUitkomst(uitkomst)) return null;
 	return {
-		uitkomst: uitkomst as Uitkomst,
+		uitkomst,
 		telling: votesShort(p.tally),
 		datum: korteDatum(textOf(p.decided_on)) || null,
 		besluit: textOf(p.decision),
-		vervangers
+		vervangers: genummerd(p.replaced_by)
 	};
 }
 
 /** The outcome as plain words, for the table and the export: `aangenomen 139–11 op 15 apr. 2026`. */
 export function uitslagTekst(u: StukUitslag): string {
 	if (u.uitkomst === 'vervangen' && u.vervangers.length)
-		return `vervangen door ${nrWoord(u.vervangers)} ${u.vervangers.map((v, i) => separatorBefore(i, u.vervangers.length) + v.nummer).join('')}`;
+		return `vervangen door ${nrsTekst(u.vervangers)}`;
 	return [u.uitkomst, u.telling].filter(Boolean).join(' ') + (u.datum ? ` op ${u.datum}` : '');
 }

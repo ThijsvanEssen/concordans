@@ -4,10 +4,8 @@ import { once } from '$lib/api/records';
 import type { GraphNode } from '$lib/graph/types';
 
 // The reader and the panel Verbonden of one bron ask for the same lists: asked once ($lib/api/records).
-const shared = once;
-
 export const getDossier = (number: string) =>
-	shared(`dossier/${number}`, () =>
+	once(`dossier/${number}`, () =>
 		unwrap(api.GET('/api/dossiers/{number}', { params: { path: { number } } }))
 	);
 
@@ -17,7 +15,7 @@ export const getDossier = (number: string) =>
  * waited. The detail where the list does not know the number.
  */
 export const getDossierKey = (number: string) =>
-	shared(`dossier-key/${number}`, async () => {
+	once(`dossier-key/${number}`, async () => {
 		const found = await unwrap(
 			api.GET('/api/dossiers', { params: { query: { number, limit: 5 } } })
 		).catch(() => null);
@@ -26,12 +24,12 @@ export const getDossierKey = (number: string) =>
 	});
 
 export const getDossierDocuments = (number: string) =>
-	shared(`documents/${number}`, () =>
+	once(`documents/${number}`, () =>
 		unwrap(api.GET('/api/dossiers/{number}/documents', { params: { path: { number } } }))
 	);
 
 export const getDossierMutations = (number: string) =>
-	shared(`mutations/${number}`, () =>
+	once(`mutations/${number}`, () =>
 		unwrap(api.GET('/api/dossiers/{number}/mutations', { params: { path: { number } } }))
 	);
 
@@ -39,7 +37,7 @@ export const getDossierMutations = (number: string) =>
 // A person's votes take the API seconds (8.8 to 10 s on prod, 9 Oct): they wait as long as the
 // API does, not the 10 s of `api`, which cut them off.
 export const getMemberVotes = (key: string) =>
-	shared(`votes/${key}`, () =>
+	once(`votes/${key}`, () =>
 		unwrap(
 			zoekApi.GET('/api/members/{key}/votes', { params: { path: { key }, query: { limit: 50 } } })
 		)
@@ -51,7 +49,7 @@ export const getMemberVotes = (key: string) =>
  * the API does not count them (UX-toets 0.79.43, #29).
  */
 export const getMemberVotesInOffice = (key: string, offset = 0) =>
-	shared(`votes/${key}/in-office/${offset}`, () =>
+	once(`votes/${key}/in-office/${offset}`, () =>
 		unwrap(
 			zoekApi.GET('/api/members/{key}/votes', {
 				params: { path: { key }, query: { limit: 200, offset, in_office: true } }
@@ -63,6 +61,6 @@ export const getMemberVotesInOffice = (key: string, offset = 0) =>
 export const committeeSlug = (node: GraphNode): string | null => textOf(node.raw?.props?.slug);
 
 export const getCommittee = (slug: string) =>
-	shared(`committees/${slug}`, () =>
+	once(`committees/${slug}`, () =>
 		unwrap(api.GET('/api/committees/{slug}', { params: { path: { slug } } }))
 	);

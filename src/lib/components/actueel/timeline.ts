@@ -5,7 +5,7 @@ import type { BronRef } from '$lib/bron/href';
 import type { Vorm } from '$lib/bron/vormen';
 import type { Teken } from '$lib/components/tijdlijn/tijdlijn';
 import type { Schema } from '$lib/api/types';
-import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
+import { CHAMBER_NAME, type Chamber } from '$lib/components/parliamentary/chamber';
 import { commitmentTeken } from '$lib/components/explore/index/government';
 import { describe } from '$lib/verbonden/rows';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
@@ -151,17 +151,24 @@ export const hrefOf = (i: FeedItem): BronRef =>
 		? { collection: 'dossiers', key: i.node.key, number: i.dossier.number }
 		: ({ collection: i.node.collection, key: i.node.key } as BronRef);
 
-function voteLine(i: FeedItem, noun: string): TimelineLine {
+const nounOf = (v: FeedItem) => (v.subkind === AMENDEMENT ? 'amendement' : 'motie');
+
+const outcomeWord = (passed: boolean) => (passed ? 'aangenomen' : 'verworpen');
+
+/** `Tweede Kamer neemt motie-Grinwis aan`, `Eerste Kamer verwerpt wetsvoorstel`. */
+const decides = (chamber: Chamber, passed: boolean, what: string) =>
+	`${CHAMBER_NAME[chamber]} ${passed ? 'neemt' : 'verwerpt'} ${what}${passed ? ' aan' : ''}`;
+
+function voteLine(i: FeedItem): TimelineLine {
 	const passed = !!i.vote?.passed;
 	const subject = subjectOf(i);
-	const paper = paperOf(noun, i);
 	return {
 		id: i.id,
 		date: i.date,
-		label: `Stemming, ${passed ? 'aangenomen' : 'verworpen'}`,
+		label: `Stemming, ${outcomeWord(passed)}`,
 		vorm: 'besluit',
 		title: cut(
-			`${CHAMBER_NAME[chamberOf(i)]} ${passed ? 'neemt' : 'verwerpt'} ${paper}${passed ? ' aan' : ''}${subject ? ` over ${subject}` : ''}`
+			`${decides(chamberOf(i), passed, paperOf(nounOf(i), i))}${subject ? ` over ${subject}` : ''}`
 		),
 		context: voteContext(i),
 		href: hrefOf(i),
@@ -179,19 +186,17 @@ function billVoteLines(date: string, bills: FeedItem[]): TimelineLine[] {
 	return groups.flatMap(({ chamber, passed }) => {
 		const those = bills.filter((b) => chamberOf(b) === chamber && !!b.vote?.passed === passed);
 		if (!those.length) return [];
-		const verb = passed ? 'neemt' : 'verwerpt';
-		const who = CHAMBER_NAME[chamber];
 		const names = those.map((b) => (b.dossier ? dossierName(b.dossier) : cut(b.title ?? '', 60)));
 		const one = those.length === 1;
 		return [
 			{
 				id: `bills/${date}/${chamber}/${passed}`,
 				date,
-				label: `${chamber === 'EK' ? CHAMBER_NAME.EK : one ? 'Wetsvoorstel' : 'Wetsvoorstellen'}, ${passed ? 'aangenomen' : 'verworpen'}`,
+				label: `${chamber === 'EK' ? CHAMBER_NAME.EK : one ? 'Wetsvoorstel' : 'Wetsvoorstellen'}, ${outcomeWord(passed)}`,
 				vorm: 'besluit',
 				title: one
-					? `${who} ${verb} wetsvoorstel${passed ? ' aan' : ''}: ${names[0]}`
-					: `${who} ${verb} ${inWords(those.length)} wetsvoorstellen${passed ? ' aan' : ''}`,
+					? `${decides(chamber, passed, 'wetsvoorstel')}: ${names[0]}`
+					: decides(chamber, passed, `${inWords(those.length)} wetsvoorstellen`),
 				context: one
 					? [voteHow(those[0]), those[0].dossier ? kamerstukNummer(those[0].dossier.number) : null]
 							.filter(Boolean)
@@ -206,7 +211,11 @@ function billVoteLines(date: string, bills: FeedItem[]): TimelineLine[] {
 	});
 }
 
-const nounOf = (v: FeedItem) => (v.subkind === AMENDEMENT ? 'amendement' : 'motie');
+/** A vote on a motie or amendement named on its own: major when it was close. */
+const namedVoteLine = (v: FeedItem): TimelineLine => ({
+	...voteLine(v),
+	major: voteMargin(v) <= CLOSE_VOTE
+});
 
 /** The close votes on moties and amendementen of a day, the closest first. */
 function closeVoteLines(votes: FeedItem[]): TimelineLine[] {
@@ -214,7 +223,7 @@ function closeVoteLines(votes: FeedItem[]): TimelineLine[] {
 		.filter((v) => voteMargin(v) <= CLOSE_VOTE)
 		.sort((x, y) => voteMargin(x) - voteMargin(y))
 		.slice(0, CLOSE_SHOWN)
-		.map((v) => voteLine(v, nounOf(v)));
+		.map(voteLine);
 }
 
 /** The votes of a day not on a bill, the summary counts; a bill's votes stand apart. */
@@ -227,8 +236,7 @@ const otherVoteCount = (day: SummaryDay) =>
  */
 function otherVoteLines(day: SummaryDay, votes: FeedItem[]): TimelineLine[] {
 	const count = otherVoteCount(day);
-	if (count && count <= FEW_VOTES && votes.length === count)
-		return votes.map((v) => ({ ...voteLine(v, nounOf(v)), major: voteMargin(v) <= CLOSE_VOTE }));
+	if (count && count <= FEW_VOTES && votes.length === count) return votes.map(namedVoteLine);
 	return [...closeVoteLines(votes), ...voteBundleLine(day)];
 }
 
@@ -317,7 +325,7 @@ function commitmentLines(date: string, items: FeedItem[]): TimelineLine[] {
 			href: more ? actueelDayHref(date, ['toezegging'], first.dossier?.number) : hrefOf(first),
 			// At the size of a motie beside it: large is the bill and its decisions (Thijs, 10 Oct).
 			major: false,
-			teken: 'open',
+			teken: commitmentTeken(first.commitment?.status),
 			...(more ? {} : { item: first })
 		};
 	});
@@ -540,45 +548,22 @@ export function vormVanFeed(i: Pick<FeedItem, 'kind'>): Vorm {
  * matters (a bill, a close vote, a law in force) is major; a toezegging stands at the size of
  * a motie beside it (Thijs, 10 Oct: two things at one level do not differ).
  */
-export const headlineOf = (i: FeedItem): Headline => ({ ...kopVan(i), vorm: vormVanFeed(i) });
+export function headlineOf(i: FeedItem): Headline {
+	const { label, title, major, teken } = kopVan(i);
+	return { label, title, major, teken, vorm: vormVanFeed(i) };
+}
 
+/** The line of one event alone, as a day of Actueel and the homepage write it. */
 function kopVan(i: FeedItem): Omit<Headline, 'vorm'> {
 	switch (i.kind) {
-		case 'stemming': {
-			const passed = !!i.vote?.passed;
-			if (isBillVote(i)) {
-				const name = i.dossier ? dossierName(i.dossier) : cut(i.title ?? '', 60);
-				const ek = chamberOf(i) === 'EK';
-				return {
-					label: `${ek ? CHAMBER_NAME.EK : 'Wetsvoorstel'}, ${passed ? 'aangenomen' : 'verworpen'}`,
-					title: `${CHAMBER_NAME[chamberOf(i)]} ${passed ? 'neemt' : 'verwerpt'} wetsvoorstel${passed ? ' aan' : ''}: ${name}`,
-					major: true,
-					teken: passed ? 'ja' : 'nee'
-				};
-			}
-			const { label, title, teken } = voteLine(i, nounOf(i));
-			return { label, title, major: voteMargin(i) <= CLOSE_VOTE, teken };
-		}
+		case 'stemming':
+			return isBillVote(i) ? billVoteLines(i.date, [i])[0] : namedVoteLine(i);
 		case 'toezegging':
-			return {
-				label: 'Toezegging',
-				title: commitmentTitle(i),
-				major: false,
-				teken: commitmentTeken(i.commitment?.status)
-			};
-		case 'Voorstel van wet': {
-			const name = i.dossier ? dossierName(i.dossier) : (i.title ?? 'Wetsvoorstel');
-			return {
-				label: 'Wetsvoorstel',
-				title: `Wetsvoorstel ingediend: ${name}`,
-				major: true,
-				teken: 'stuk'
-			};
-		}
-		case 'inwerkingtreding': {
-			const { label, title } = commencementLine(i);
-			return { label, title, major: true, teken: 'stuk' };
-		}
+			return commitmentLines(i.date, [i])[0];
+		case 'Voorstel van wet':
+			return billLines(i.date, [i])[0];
+		case 'inwerkingtreding':
+			return commencementLine(i);
 		case 'uitspraak': {
 			// A judgment as it is cited, by its court and the day it was decided; a conclusion
 			// by its A-G (BE-26). The highest courts and their parket stand out.

@@ -34,6 +34,12 @@ describe('the outcome of a motie or amendement', () => {
 		})!;
 		expect(u.vervangers.map((v) => v.nummer)).toEqual(['26', '38']);
 		expect(uitslagTekst(u)).toBe('vervangen door nrs. 26 en 38');
+		expect(
+			stukUitslag({
+				outcome: 'vervangen',
+				replaced_by: [{ sequence: 12 }, { key: 'c', sequence: null }, { key: 'd', sequence: 47 }]
+			})!.vervangers
+		).toEqual([{ key: 'd', nummer: '47' }]);
 	});
 
 	it('shows nothing while nothing was decided, and no tally without seats', () => {
