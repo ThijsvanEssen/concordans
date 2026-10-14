@@ -10,7 +10,7 @@ import {
 	daysOf,
 	publicationCite,
 	type FeedItem,
-	atomParams,
+	atomHref,
 	dossierLabel,
 	feedStand,
 	foldTitle,
@@ -91,11 +91,24 @@ describe('labels', () => {
 	});
 });
 
-describe('atomParams', () => {
-	it('keeps the filters chosen and leaves out the end of today the page adds', () => {
-		const q = { faction: 'd66', until: '2026-09-29', limit: 100, kind: undefined };
-		expect(atomParams(q, '').toString()).toBe('faction=d66');
-		expect(atomParams(q, '2026-09-29').toString()).toBe('faction=d66&until=2026-09-29');
+describe('atomHref', () => {
+	const atom = (href: string) => href.slice(href.indexOf('/api/'));
+	it('links the filters of Actueel, the end of a period only where it is asked', () => {
+		expect(atom(atomHref({ faction: 'd66', kind: undefined }))).toBe('/api/feed.atom?faction=d66');
+		expect(atom(atomHref({ faction: 'd66', until: '2026-09-29' }))).toBe(
+			'/api/feed.atom?faction=d66&until=2026-09-29'
+		);
+		expect(atom(atomHref({}))).toBe('/api/feed.atom');
+	});
+
+	it('gives every word a q of its own, any of them counts', () => {
+		expect(atom(atomHref({ q: ['huur', 'woning'] }))).toBe('/api/feed.atom?q=huur&q=woning');
+	});
+
+	it('links a law and an article of it', () => {
+		expect(atom(atomHref({ instrument: 'BWBR0005289', article: '6:162' }))).toBe(
+			'/api/feed.atom?instrument=BWBR0005289&article=6%3A162'
+		);
 	});
 });
 

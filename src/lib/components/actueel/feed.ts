@@ -2,6 +2,7 @@ import { forAgainst } from '$lib/components/parliamentary/stemming';
 import { count } from '$lib/text/words';
 import { DAY_MS, korteDatum, weekdag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
+import { API_BASE_URL } from '$lib/api/base-url';
 import { isGeneriek } from '$lib/bron/generiek';
 import { padHref, parsePad, remember } from '$lib/bron/leesbaar';
 
@@ -347,18 +348,21 @@ export function publicationCite(p: NonNullable<FeedItem['publication']>): string
 	return `${series} ${p.year ?? ''}, ${p.number ?? ''}`.trim();
 }
 
+/** What places a page of the feed, not what it holds. */
+const PAGING = new Set(['limit', 'cursor', 'facets']);
+
 /**
- * The query of the Atom feed of a view: the filters chosen, without the page size and
- * without the end of today the page adds, so a subscribed feed keeps coming.
+ * A view of the feed as an Atom feed: the filters asked, a list as one parameter per value
+ * (each word a `q`, any of them counts), without the page's size or place.
  */
-export function atomParams(
-	query: Record<string, string | number | undefined>,
-	chosenUntil: string
-): URLSearchParams {
+export function atomHref(
+	query: Record<string, string | number | boolean | readonly string[] | null | undefined>
+) {
 	const p = new URLSearchParams();
 	for (const [k, v] of Object.entries(query))
-		if (v !== undefined && k !== 'limit' && !(k === 'until' && !chosenUntil)) p.set(k, String(v));
-	return p;
+		if (v != null && !PAGING.has(k))
+			for (const one of typeof v === 'object' ? v : [v]) p.append(k, String(one));
+	return `${API_BASE_URL}/api/feed.atom${p.size ? `?${p}` : ''}`;
 }
 
 /**

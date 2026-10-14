@@ -1046,6 +1046,21 @@ describe('canvas cards and halls', () => {
 		).toEqual([]);
 	});
 
+	it('wires the feed of Actueel and Gevolgd once (code-eenvoud F53)', () => {
+		// A ministry by its name from ministries.svelte.ts, a fractie's colour in FeedDay, the Atom link
+		// from feed.ts and "Doorzocht vanaf" from Doorzocht.svelte: no page keeps its own copy.
+		expect(
+			offenders((t) => /ministries\.find\(/.test(t)).filter((p) => p.startsWith('routes/'))
+		).toEqual([]);
+		expect(
+			offenders((t) => /\/api\/feed\.atom/.test(t), ['lib/components/actueel/feed.ts'])
+		).toEqual([]);
+		expect(
+			offenders((t) => /Doorzocht vanaf \{/.test(t), ['lib/components/actueel/Doorzocht.svelte'])
+		).toEqual([]);
+		expect(offenders((t) => /<FeedDay\b[^>]*\b(colorOf|ministryName)=?/.test(t))).toEqual([]);
+	});
+
 	it('gives a page with a list a second skip link, through AppShell, and one main', () => {
 		const shell = sources.find((s) => s.path === 'lib/components/layout/AppShell.svelte')!.text;
 		expect(shell).toMatch(/class="skip-link">Naar de lijst<\/a>/);

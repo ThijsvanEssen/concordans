@@ -67,6 +67,14 @@ describe('patchParams', () => {
 		expect(patchParams(params, { diepte: null, lezen: '1' }).toString()).toBe('focus=a&lezen=1');
 		expect(params.toString()).toBe('focus=a&diepte=2');
 	});
+
+	it('sets a list as the param once per value, and an empty list removes it', () => {
+		const params = new URLSearchParams('q=oud&kamer=TK');
+		expect(patchParams(params, { q: ['huur', 'woning'] }).toString()).toBe(
+			'kamer=TK&q=huur&q=woning'
+		);
+		expect(patchParams(params, { q: [] }).toString()).toBe('kamer=TK');
+	});
 });
 
 describe('navigate', () => {

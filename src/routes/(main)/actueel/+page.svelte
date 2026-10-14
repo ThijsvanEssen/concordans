@@ -2,13 +2,20 @@
 	import { plural } from '$lib/text/words';
 	import { lijstDoel } from '$lib/stores/sprong';
 	import { fractieNaam } from '$lib/bron/menselijk';
-	import { addDays, daysBetween, korteDatum, vandaag } from '$lib/text/datum';
+	import { addDays, daysBetween, vandaag } from '$lib/text/datum';
 	import { formatCount } from '$lib/text/getal';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { uniqueBy } from '$lib/util/unique';
-	import { volg, volgt, volgtWet, volgWet, type GevolgdeWet } from '$lib/onderwerpen/onderwerpen';
+	import {
+		splitsTermen,
+		volg,
+		volgt,
+		volgtWet,
+		volgWet,
+		type GevolgdeWet
+	} from '$lib/onderwerpen/onderwerpen';
 	import { getInstrumentDetail } from '$lib/api/instrument-cache';
 	// Actueel: what happened in the Kamer and the government, newest first, per day. Every
 	// filter and the line opened are in the URL, so a view can be shared; the same view is an
@@ -19,9 +26,7 @@
 	import { ApiError, api, isTimeout, unwrap, zoekApi } from '$lib/api/client';
 	import { report } from '$lib/api/errors';
 	import { untrack } from 'svelte';
-	import { API_BASE_URL } from '$lib/api/base-url';
 	import type { Schema } from '$lib/api/types';
-	import type { paths } from '$lib/api/generated/openapi-types';
 	import { partyColor } from '$lib/utils/party-color.svelte';
 	import IndexFacets, {
 		activeFilters,
@@ -30,23 +35,28 @@
 	// Filters v2 (Thijs, 10 Oct: "ziet er goed uit"; ux-voorstel/filters/v2): the field and
 	// Periode on one line above the list, the facets with their counts on the left, a chosen
 	// option in bold where it is chosen and nowhere else; on a phone behind Verfijnen (N).
-	import {
-		getCabinets,
-		getMinistries,
-		type Cabinet,
-		type Ministry
-	} from '$lib/components/explore/index/government';
+	import { getCabinets, type Cabinet } from '$lib/components/explore/index/government';
+	import { ministryName } from '$lib/components/explore/index/ministries.svelte';
 	import FeedDay from '$lib/components/actueel/FeedDay.svelte';
+	import Doorzocht from '$lib/components/actueel/Doorzocht.svelte';
+	import {
+		COALITION,
+		FILTER_PARAMS,
+		feedQuery,
+		readFilters,
+		summaryQuery,
+		type CoalitionWord,
+		type FeedQuery
+	} from '$lib/components/actueel/filters';
 	import {
 		CLOSE_VOTE,
 		FEED_KINDS,
 		KIND_LABEL,
-		atomParams,
+		atomHref,
 		daysOf,
 		doorzochtVanaf,
 		errorPlace,
 		feedStand,
-		kindFromParam,
 		normalizeItem,
 		standLine,
 		type DaySummary,
@@ -58,62 +68,29 @@
 	/** The days one summary spans at most, as the API allows. */
 	const SUMMARY_DAYS_MAX = 31;
 
-	const COALITIE = {
-		eensgezind: { api: 'together', label: 'Eensgezind' },
-		verdeeld: { api: 'split', label: 'Verdeeld' },
-		wisselmeerderheid: { api: 'wissel', label: 'Wisselmeerderheid' },
-		doorslaggevend: { api: 'decisive', label: 'Doorslaggevend' }
-	} as const;
+	/** Events per page of the feed. */
+	const PAGE_SIZE = 100;
 
 	// ── The URL ─────────────────────────────────────────────────────────────
-	const params = $derived(page.url.searchParams);
-	// A link from before API 0.48 names a kind the old way (`motie`): read as the TK word.
-	const kinds = $derived([
-		...new Set((params.get('soort') ?? '').split(',').flatMap((v) => kindFromParam(v) ?? []))
-	]);
-	const since = $derived(params.get('van') ?? '');
-	const until = $derived(params.get('tot') ?? '');
-	const cabinet = $derived(params.get('kabinet') ?? '');
-	const ministry = $derived(params.get('ministerie') ?? '');
-	const dossier = $derived(params.get('dossier') ?? '');
-	const member = $derived(params.get('persoon') ?? '');
-	const faction = $derived(params.get('fractie') ?? '');
-	// What the coalition did on a vote (API 0.79.45, #546), in the site's words: the address
-	// says `coalitie=verdeeld`, the API `coalition=split` (concept 24, variant A).
-	const coalitie = $derived(
-		((v) => (v && v in COALITIE ? (v as keyof typeof COALITIE) : ''))(params.get('coalitie'))
-	);
-	const q = $derived(params.get('q') ?? '');
-	// A law, or an article of it (API 0.79.55): what the feed ties to it, each row with how.
-	const wet = $derived(
-		((v) => (/^BWBR\d+$/i.test(v) ? v.toUpperCase() : ''))(params.get('wet') ?? '')
-	);
-	const artikel = $derived(wet ? (params.get('artikel')?.trim() ?? '') : '');
-	/** The words searched for, marked in the rows that hold them (FeedDay), as in Gevolgd. */
-	const termen = $derived(q.trim() ? [q.trim()] : []);
-	// Which Kamer (API 0.59): the Tweede with its papers, votes and toezeggingen, or the
-	// Eerste with the votes that decided a bill. Publications belong to neither.
-	const chamber = $derived(((v) => (v === 'TK' || v === 'EK' ? v : ''))(params.get('kamer')));
-	// An inwerkingtreding can lie ahead; without asking, the feed ends today.
-	const ahead = $derived(params.get('komend') === '1');
-	const openId = $derived(params.get('open'));
-
-	const FILTERS = [
-		'soort',
-		'van',
-		'tot',
-		'kabinet',
-		'ministerie',
-		'dossier',
-		'persoon',
-		'fractie',
-		'coalitie',
-		'q',
-		'kamer',
-		'komend',
-		'wet',
-		'artikel'
-	];
+	// Every filter from its row in filters.ts; the line opened beside them.
+	const filters = $derived(readFilters(page.url.searchParams));
+	const {
+		kinds,
+		since,
+		until,
+		cabinet,
+		ministry,
+		dossier,
+		member,
+		faction,
+		coalition,
+		q,
+		chamber,
+		instrument,
+		article,
+		ahead
+	} = $derived(filters);
+	const openId = $derived(page.url.searchParams.get('open'));
 
 	/** A filter is a step in the history and closes the open line; typing or opening replaces it. */
 	function patchUrl(patch: ParamPatch, replaceState = false) {
@@ -122,36 +99,50 @@
 	}
 	const filterHref = (patch: ParamPatch) => withParams(page.url, patch, { clear: ['open'] });
 	const toggleOpen = (id: string) => patchUrl({ open: openId === id ? null : id }, true);
-	const clearFilters = () => patchUrl(Object.fromEntries(FILTERS.map((f) => [f, null])));
+	const clearFilters = () => patchUrl(Object.fromEntries(FILTER_PARAMS.map((f) => [f, null])));
 
 	function toggleKind(kind: FeedKind) {
 		const next = kinds.includes(kind) ? kinds.filter((k) => k !== kind) : [...kinds, kind];
 		patchUrl({ soort: next.join(',') || null });
 	}
 
-	// The search text goes into the URL when the typing pauses.
+	// The search text goes into the URL when the typing pauses; words apart by `;` or `,`,
+	// as a followed topic has them, each a q of its own. The field keeps what was typed (its
+	// spaces, its commas) until the address says other words: a filter cleared, a step back.
+	const qText = $derived(q.join('; '));
 	let qDraft = $state<string | null>(null);
+	let qPending = false;
 	let qTimer: ReturnType<typeof setTimeout> | undefined;
 	function typeQuery(v: string) {
 		qDraft = v;
+		qPending = true;
 		clearTimeout(qTimer);
-		qTimer = setTimeout(() => patchUrl({ q: v || null }, true), v ? 300 : 0);
+		qTimer = setTimeout(
+			() => {
+				qPending = false;
+				patchUrl({ q: splitsTermen(v) }, true);
+			},
+			v ? 300 : 0
+		);
 	}
 	$effect(() => {
-		if (qDraft === q) qDraft = null;
+		const text = qText;
+		untrack(() => {
+			if (!qPending && qDraft !== null && splitsTermen(qDraft).join('; ') !== text) qDraft = null;
+		});
 	});
 
 	// Following the words searched: new matches on /onderwerpen, kept in this browser.
-	let gevolgd = $derived(volgt(q));
+	let gevolgd = $derived(q.some(volgt));
 	function volgQ() {
-		volg([q]);
-		gevolgd = volgt(q);
+		volg(q);
+		gevolgd = q.some(volgt);
 	}
 
 	// The law chosen by its name, asked once; following it, or its article, as the words.
 	let wetTitel = $state<{ bwb: string; titel: string } | null>(null);
 	$effect(() => {
-		const bwb = wet;
+		const bwb = instrument;
 		if (!bwb || wetTitel?.bwb === bwb) return;
 		getInstrumentDetail(bwb)
 			.then((d) => (wetTitel = { bwb, titel: d.title ?? bwb }))
@@ -161,11 +152,11 @@
 			});
 	});
 	const gevolgdeWet = $derived<GevolgdeWet | null>(
-		wet
+		instrument
 			? {
-					bwb: wet,
-					titel: wetTitel?.bwb === wet ? wetTitel.titel : wet,
-					artikel: artikel || null
+					bwb: instrument,
+					titel: wetTitel?.bwb === instrument ? wetTitel.titel : instrument,
+					artikel: article || null
 				}
 			: null
 	);
@@ -177,26 +168,7 @@
 	}
 
 	// ── The feed ────────────────────────────────────────────────────────────
-	type Query = NonNullable<paths['/api/feed']['get']['parameters']['query']>;
-	const query = $derived<Query>({
-		kind: kinds.join(',') || undefined,
-		since: since || undefined,
-		// Only a day in the past: with `until` the API counts apart and took 100+ s (prod,
-		// 9 Oct), without it 0.25 s. What lies ahead is left out here instead (`shown`).
-		until: until && until < today ? until : undefined,
-		cabinet: cabinet || undefined,
-		ministry: (ministry || undefined) as Schema<'MinistryKey'> | undefined,
-		dossier: dossier || undefined,
-		member: member || undefined,
-		faction: faction || undefined,
-		coalition: coalitie ? COALITIE[coalitie].api : undefined,
-		// API 0.79.30 takes several q; one as before (Front-end #2 widens it).
-		q: q ? [q] : undefined,
-		chamber: chamber || undefined,
-		instrument: wet || undefined,
-		article: artikel || undefined,
-		limit: 100
-	});
+	const query = $derived<FeedQuery>({ ...feedQuery(filters, today), limit: PAGE_SIZE });
 
 	let items = $state<FeedItem[]>([]);
 	let cursor = $state<string | null>(null);
@@ -221,7 +193,7 @@
 	// count leaves the items standing, and the filters show their counts when they come.
 	// Other words searched: the list of the words before goes at once, or it reads as the
 	// answer to the new ones (FE1 audit, 9 Oct).
-	let gezocht = untrack(() => q);
+	let gezocht = untrack(() => q.join(' '));
 	$effect(() => {
 		const q = query;
 		const ac = new AbortController();
@@ -356,19 +328,7 @@
 	});
 	$effect(() => {
 		const s = span;
-		const {
-			kind,
-			cabinet,
-			ministry,
-			dossier,
-			member,
-			faction,
-			coalition,
-			q,
-			chamber,
-			instrument,
-			article
-		} = query;
+		const filtersOfDay = summaryQuery(query);
 		if (!s) return;
 		const ac = new AbortController();
 		unwrap(
@@ -376,17 +336,7 @@
 				params: {
 					query: {
 						...s,
-						kind,
-						cabinet,
-						ministry,
-						dossier,
-						member,
-						faction,
-						coalition,
-						q,
-						chamber,
-						instrument,
-						article,
+						...filtersOfDay,
 						margin: CLOSE_VOTE,
 						limit: 1
 					}
@@ -405,24 +355,16 @@
 
 	// ── Names for the filters ───────────────────────────────────────────────
 	let cabinets = $state<Cabinet[]>([]);
-	let ministries = $state<Ministry[]>([]);
 	let factionNames = $state<Record<string, string>>({});
 	$effect(() => {
 		// A filter without its name shows its key.
 		getCabinets()
 			.then((c) => (cabinets = c))
 			.catch((e) => report('Actueel kabinetten', e));
-		getMinistries()
-			.then((m) => (ministries = m))
-			.catch((e) => report('Actueel ministeries', e));
 		unwrap(api.GET('/api/factions'))
 			.then((f) => (factionNames = Object.fromEntries(f.map((x) => [x.key, fractieNaam(x)]))))
 			.catch((e) => report('Actueel fracties', e));
 	});
-	const colorOf = (short: string | null | undefined) =>
-		short ? partyColor(short) : 'var(--rule-strong)';
-	const ministryName = (key: string | null | undefined) =>
-		(key && ministries.find((m) => m.key === key)?.name) || key || '';
 	const cabinetName = (key: string) => cabinets.find((c) => c.key === key)?.name ?? key;
 	const memberName = $derived(
 		items.flatMap((i) => i.persons).find((p) => p.key === member)?.name ?? 'Gekozen persoon'
@@ -431,7 +373,7 @@
 	const facetMap = (list: { value?: string | null; count: number }[] | undefined) =>
 		new Map((list ?? []).flatMap((f) => (f.value ? [[f.value, f.count] as const] : [])));
 
-	const coalitieTellingen = $derived(facetMap(facets?.coalition));
+	const coalitionCounts = $derived(facetMap(facets?.coalition));
 	const groups = $derived.by<FacetGroup[]>(() => {
 		const kindCounts = facetMap(facets?.kind);
 		// Every fraction, as on Kamerleden; the chosen one also when this view has none of it.
@@ -462,7 +404,7 @@
 						id: key,
 						label: short,
 						count,
-						swatch: colorOf(short),
+						swatch: partyColor(short),
 						on: faction === key,
 						onClick: () => patchUrl({ fractie: faction === key ? null : key })
 					};
@@ -470,18 +412,18 @@
 			},
 			// Only where the votes of the view have a coalition (the Tweede Kamer, a cabinet in
 			// office); a chosen value stays to be undone.
-			...(coalitieTellingen.size || coalitie
+			...(coalitionCounts.size || coalition
 				? [
 						{
 							id: 'coalitie',
 							label: 'Coalitie',
 							kind: 'list' as const,
-							options: (Object.keys(COALITIE) as (keyof typeof COALITIE)[]).map((k) => ({
+							options: (Object.keys(COALITION) as CoalitionWord[]).map((k) => ({
 								id: k,
-								label: COALITIE[k].label,
-								count: coalitieTellingen.get(COALITIE[k].api) ?? 0,
-								on: coalitie === k,
-								onClick: () => patchUrl({ coalitie: coalitie === k ? null : k })
+								label: COALITION[k].label,
+								count: coalitionCounts.get(COALITION[k].api) ?? 0,
+								on: coalition === k,
+								onClick: () => patchUrl({ coalitie: coalition === k ? null : k })
 							}))
 						}
 					]
@@ -521,7 +463,7 @@
 				onChange: (v) => patchUrl({ dossier: v || null })
 			},
 			// The law followed through an address (`?wet=`): chosen, to undo.
-			...(wet
+			...(instrument
 				? [
 						{
 							id: 'wet',
@@ -529,8 +471,8 @@
 							kind: 'list' as const,
 							options: [
 								{
-									id: wet,
-									label: gevolgdeWet ? wetNaamKort(gevolgdeWet) : wet,
+									id: instrument,
+									label: gevolgdeWet ? wetNaamKort(gevolgdeWet) : instrument,
 									on: true,
 									onClick: () => patchUrl({ wet: null, artikel: null })
 								}
@@ -577,14 +519,8 @@
 	}
 	let filtersOpen = $state(false);
 
-	/**
-	 * The same view as an Atom feed. Only the filters chosen: the page's own end of today is
-	 * left out, or a subscribed feed would stop at the day it was subscribed.
-	 */
-	const atomHref = $derived.by(() => {
-		const p = atomParams(query as Record<string, string | number | undefined>, until);
-		return `${API_BASE_URL}/api/feed.atom${p.size ? `?${p}` : ''}`;
-	});
+	/** The same view as an Atom feed: the filters chosen, so a subscribed feed keeps coming. */
+	const atom = $derived(atomHref(query));
 
 	function onKey(e: KeyboardEvent) {
 		if (isEscape(e) && openId) patchUrl({ open: null }, true);
@@ -601,12 +537,7 @@
 {/snippet}
 {#snippet verder()}
 	{#if doorzocht}
-		<p class="doorzocht">
-			Doorzocht vanaf {korteDatum(doorzocht)}.
-			<button type="button" class="btn is-groot" onclick={verderTerug} disabled={verderLaden}
-				>{verderLaden ? 'Laden…' : 'Zoek verder terug'}</button
-			>
-		</p>
+		<Doorzocht vanaf={doorzocht} laden={verderLaden} onVerder={verderTerug} />
 	{/if}
 {/snippet}
 <svelte:window onkeydown={onKey} />
@@ -617,10 +548,8 @@
 			<h1 class="blad__titel">Actueel</h1>
 		</div>
 		<div class="acties">
-			<a class="btn is-groot" href={atomHref} rel="alternate" type="application/atom+xml"
-				>Atom-feed</a
-			>
-			{#if q}
+			<a class="btn is-groot" href={atom} rel="alternate" type="application/atom+xml">Atom-feed</a>
+			{#if q.length}
 				{#if gevolgd}
 					<a class="btn is-groot" href="/onderwerpen">Gevolgd als onderwerp</a>
 				{:else}
@@ -635,14 +564,14 @@
 			{#if gevolgdeWet}
 				{#if wetGevolgd}
 					<a class="btn is-groot" href="/onderwerpen"
-						>{artikel ? 'Artikel gevolgd' : 'Wet gevolgd'}</a
+						>{article ? 'Artikel gevolgd' : 'Wet gevolgd'}</a
 					>
 				{:else}
 					<button
 						type="button"
 						class="btn is-groot"
 						title="Volg {wetNaamKort(gevolgdeWet)} onder Gevolgd"
-						onclick={volgDezeWet}>{artikel ? 'Volg dit artikel' : 'Volg deze wet'}</button
+						onclick={volgDezeWet}>{article ? 'Volg dit artikel' : 'Volg deze wet'}</button
 					>
 				{/if}
 			{/if}
@@ -653,7 +582,7 @@
 	<div class="regel">
 		<Bepaalregel
 			zoek={{
-				waarde: qDraft ?? q,
+				waarde: qDraft ?? qText,
 				placeholder: 'Zoek in titels en dossiertitels',
 				naam: 'Zoek in Actueel',
 				onInput: typeQuery
@@ -737,11 +666,9 @@
 						{today}
 						{openId}
 						onToggle={toggleOpen}
-						{colorOf}
-						{ministryName}
 						{filterHref}
 						summary={summaries.get(day.date)}
-						{termen}
+						termen={q}
 						wet={gevolgdeWet}
 						meer={n === days.length - 1 && cursor && !doorzocht ? volgende : undefined}
 					/>
@@ -822,16 +749,6 @@
 	}
 	.empty p {
 		margin: 0 0 var(--s-1);
-	}
-	.doorzocht {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		gap: var(--s-2) var(--s-3);
-		margin: var(--s-5) 0;
-		color: var(--ink-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
 	}
 
 	@media (max-width: 767px) {
