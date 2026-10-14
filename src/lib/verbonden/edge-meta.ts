@@ -16,6 +16,10 @@ import {
 export const text = (value: unknown): string | null =>
 	typeof value === 'string' && value.trim() ? value.trim() : null;
 
+/** One edge of the canvas, by its ends and relation: how a row and a line are matched. */
+export const edgeKey = (source: string, target: string, relation: string) =>
+	`${source}>${relation}>${target}`;
+
 /** Derived, not read from the source: a confidence below 1. */
 export const isDerived = (confidence: number | null | undefined): boolean =>
 	confidence != null && confidence < 1;

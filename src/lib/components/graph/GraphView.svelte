@@ -74,6 +74,7 @@
 		depth = 2,
 		reach = null,
 		selectedEdgeId = null,
+		lineLids = new Map() as ReadonlyMap<string, string>,
 		inFluxMap = new Map() as NodeCounts,
 		heatMap = new Map() as NodeCounts,
 		overlay = { kind: 'none' } as Overlay,
@@ -106,6 +107,8 @@
 		/** How far the last neighbourhood reached, and whether the API cut it off. */
 		reach?: NeighborhoodReach | null;
 		selectedEdgeId?: string | null;
+		/** The lid a line names, by its edge (`edgeKey`), where its row or card knows it. */
+		lineLids?: ReadonlyMap<string, string>;
 		inFluxMap?: NodeCounts;
 		heatMap?: NodeCounts;
 		overlay?: Overlay;
@@ -1640,6 +1643,7 @@
 					{yearPeriod}
 					rechter={filter.rechter}
 					{selectedEdgeId}
+					{lineLids}
 					{inFluxMap}
 					{heatMap}
 					heatActive={overlay.kind === 'heat'}
