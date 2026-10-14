@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { atArticles, isDay, versionOn, versionsByYear } from './peildatum';
+import { atArticles, inForceOn, versionOn, versionsByYear } from './peildatum';
 
 const versions = [
 	{ valid_from: '2026-08-15', valid_until: null, current: true },
@@ -8,12 +8,21 @@ const versions = [
 	{ valid_from: '2015-01-01', valid_until: '2015-04-01', current: false }
 ];
 
-describe('isDay', () => {
-	it('takes a day and nothing else', () => {
-		expect(isDay('2015-01-01')).toBe(true);
-		expect(isDay('2015-1-1')).toBe(false);
-		expect(isDay('gisteren')).toBe(false);
-		expect(isDay(null)).toBe(false);
+describe('inForceOn', () => {
+	// A tekstversie of the article reader: its period as `from` and `until`.
+	const wordings = [
+		{ from: '2015-01-01', until: '2018-01-01' },
+		{ from: '2018-01-01', until: null }
+	];
+	const period = (w: (typeof wordings)[number]) => w;
+	it('finds the wording of the day, its end not included', () => {
+		expect(inForceOn(wordings, '2017-12-31', period)).toBe(wordings[0]);
+		expect(inForceOn(wordings, '2018-01-01', period)).toBe(wordings[1]);
+	});
+	it('ignores a peildatum that is no day, as ?peildatum=gisteren', () => {
+		expect(inForceOn(wordings, 'gisteren', period)).toBeNull();
+		expect(inForceOn(wordings, '2015-1-1', period)).toBeNull();
+		expect(inForceOn(wordings, null, period)).toBeNull();
 	});
 });
 

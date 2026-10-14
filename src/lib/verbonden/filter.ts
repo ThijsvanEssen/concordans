@@ -4,6 +4,7 @@
 // (`?bronnen=artikelen,wetten`; absent means all) and is parsed once, in
 // explore/+page.svelte, into one `VerbondenFilter` that the panel, the margin of the
 // reader, the canvas, the legend and the table read.
+import { isDay } from '$lib/text/datum';
 import { formatCount } from '$lib/text/getal';
 import { alsDag } from '$lib/text/periode';
 import { isExplanatory } from './chamber';
@@ -142,7 +143,7 @@ export function parseFilter(params: URLSearchParams): VerbondenFilter {
 		rechter: isRechter(rechter) ? rechter : null,
 		van: alsDag(params.get('van'), false),
 		tot: alsDag(params.get('tot'), true),
-		geldendOp: geldendOp && /^\d{4}-\d{2}-\d{2}$/.test(geldendOp) ? geldendOp : null,
+		geldendOp: isDay(geldendOp) ? geldendOp : null,
 		betrouwbaarheid:
 			betrouwbaarheid === 'bron' || betrouwbaarheid === 'afgeleid' ? betrouwbaarheid : null,
 		status: status === 'vastgesteld' || status === 'voorgesteld' ? status : null,

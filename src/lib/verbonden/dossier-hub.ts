@@ -6,7 +6,7 @@
 import { naamVan } from '$lib/bron/menselijk';
 import { ifExists } from '$lib/api/errors';
 import { getCommittees } from '$lib/api/verbonden';
-import { instrumentMetaStore } from '$lib/api/instrument-cache';
+import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 import type { Schema } from '$lib/api/types';
 import {
 	getDossier,
@@ -197,10 +197,7 @@ export async function loadDossierHub(
 		documents,
 		mutations,
 		committees,
-		(bwb) => {
-			const meta = names.get(bwb);
-			return meta?.citationTitle ?? meta?.title ?? null;
-		},
+		(bwb) => lawName(names.get(bwb), null),
 		detail,
 		bekend
 	);

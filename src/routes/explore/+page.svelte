@@ -100,7 +100,7 @@
 		verkennerUrl,
 		type Pad
 	} from '$lib/bron/leesbaar';
-	import { instrumentMetaStore } from '$lib/api/instrument-cache';
+	import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 	import NetwerkPanel from '$lib/netwerk/NetwerkPanel.svelte';
 	import { focusStap } from '$lib/graph/focus-stap';
 	import {
@@ -526,12 +526,11 @@
 			navItems = [];
 			return;
 		}
-		const meta = $instrumentMetaStore.get(bwb);
-		const lawName = meta?.citationTitle ?? meta?.title ?? meta?.shortTitle ?? bwb;
+		const name = lawName($instrumentMetaStore.get(bwb), bwb);
 		let current = true;
 		lawArticles(bwb)
 			.then((list) => {
-				if (current) navItems = lawNav(list, lawName);
+				if (current) navItems = lawNav(list, name);
 			})
 			.catch(() => {
 				if (current) navItems = [];

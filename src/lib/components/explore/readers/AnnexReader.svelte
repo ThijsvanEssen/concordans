@@ -14,7 +14,7 @@
 	import { api, unwrap } from '$lib/api/client';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronLabel } from '$lib/vocabulary';
-	import { ensureInstrumentName, instrumentMetaStore } from '$lib/api/instrument-cache';
+	import { ensureInstrumentName, instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 	import { formatCount } from '$lib/verbonden/filter';
 	import { annexGroups, type AnnexItem } from './annex';
 	import { load } from '$lib/util/load.svelte';
@@ -35,10 +35,7 @@
 		'Bijlage'
 	);
 
-	const lawName = (bwbId: string) => {
-		const meta = $instrumentMetaStore.get(bwbId);
-		return meta?.citationTitle ?? meta?.title ?? bwbId;
-	};
+	const nameOf = (bwbId: string) => lawName($instrumentMetaStore.get(bwbId), bwbId);
 
 	// The text line by line. A line ending in a colon heads the entries of one law.
 	const linesOf = (text: string | null | undefined) =>
@@ -56,7 +53,7 @@
 		{@const refs = detail.referenced_by ?? []}
 		{@const titel = a.title ?? naamVan('annexes', a)}
 		{@const kort =
-			[a.label ? `${bronLabel('annexes')} ${a.label}` : null, a.bwb_id ? lawName(a.bwb_id) : null]
+			[a.label ? `${bronLabel('annexes')} ${a.label}` : null, a.bwb_id ? nameOf(a.bwb_id) : null]
 				.filter(Boolean)
 				.join(', ') || titel}
 		<div class="r-annex">
@@ -67,7 +64,7 @@
 					bewaar: bewaarItem(
 						node.id,
 						{ kort, voluit: a.title ? `${kort}: ${a.title}` : kort },
-						{ groep: a.bwb_id ? lawName(a.bwb_id) : kort }
+						{ groep: a.bwb_id ? nameOf(a.bwb_id) : kort }
 					),
 					cite: citeItems(
 						{ kort, voluit: a.title ? `${kort}: ${a.title}` : kort },

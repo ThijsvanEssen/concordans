@@ -12,6 +12,7 @@
 	import {
 		getInstrumentDetail,
 		instrumentMetaStore,
+		lawName,
 		primeInstrumentNames
 	} from '$lib/api/instrument-cache';
 	import { formatCount } from '$lib/verbonden/filter';
@@ -31,7 +32,8 @@
 	import ReaderHead from './readers/ReaderHead.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	import { permalink } from '$lib/bron/anchor';
-	import { isDay, versionOn, versionsByYear } from './peildatum';
+	import { versionOn, versionsByYear } from './peildatum';
+	import { isDay } from '$lib/text/datum';
 	import { nog, verderLabel, type Richting } from './bladeren';
 	import {
 		EMPTY_LIST,
@@ -103,23 +105,15 @@
 	// The law's names for Citeer, as the article reader builds them.
 	const citationOf = (articleNumber: string | null, heading: string | null = null) => {
 		const meta = $instrumentMetaStore.get(bwbId);
-		const title = meta?.citationTitle ?? meta?.title ?? null;
+		const title = lawName(meta, null);
 		if (!articleNumber || !title) return null;
 		return { articleNumber, heading, shortTitle: meta?.shortTitle ?? null, citationTitle: title };
 	};
 
-	const lawName = $derived.by(() => {
-		const meta = $instrumentMetaStore.get(bwbId);
-		// A record without a BWB id (a treaty of the Verdragenbank) by the title of its detail.
-		return (
-			meta?.citationTitle ??
-			meta?.title ??
-			meta?.shortTitle ??
-			lawDetail?.citation_title ??
-			lawDetail?.title ??
-			bwbId
-		);
-	});
+	// A record without a BWB id (a treaty of the Verdragenbank) by the title of its detail.
+	const lawTitle = $derived.by(() =>
+		lawName($instrumentMetaStore.get(bwbId), lawDetail?.citation_title ?? lawDetail?.title ?? bwbId)
+	);
 
 	// The head of the law: its kind, official title, dates and citations, from its own detail.
 	// Its dates are those of the law itself (Awb: in force 1 January 1994); the text in force
@@ -128,7 +122,7 @@
 	const detail = load(() => bwbId, getInstrumentDetail, 'Wet, gegevens');
 	const lawDetail = $derived(detail.state.status === 'ready' ? detail.state.data : null);
 	const kindLabel = $derived(lawKind(lawDetail));
-	const fullTitle = $derived(lawFullTitle(lawDetail, lawName));
+	const fullTitle = $derived(lawFullTitle(lawDetail, lawTitle));
 	// A treaty: its record in the Verdragenbank, or from there its text in the BWB.
 	const treaty = $derived(treatyLink(lawDetail, lawDetail?.same_treaty ?? []));
 	// The versions of the law, for the peildatum; the current one dates the text in force
@@ -262,9 +256,9 @@
 	// The layers that begin at this article, each once; a layer that is the law itself
 	// (Boek 6 of Burgerlijk Wetboek Boek 6) is no heading.
 	function newSections(prev: Row | undefined, cur: Row) {
-		const before = layersOf(prev?.breadcrumb ?? [], lawName);
+		const before = layersOf(prev?.breadcrumb ?? [], lawTitle);
 		const crumbs = cur.breadcrumb ?? [];
-		const layers = layersOf(crumbs, lawName);
+		const layers = layersOf(crumbs, lawTitle);
 		const ids = deelIds(crumbs).slice(crumbs.length - layers.length);
 		return layers
 			.map((crumb, depth) => ({ ...crumb, depth, id: ids[depth] }))
@@ -302,7 +296,7 @@
 		form="block"
 	/>
 {:else}
-	{@const naam = lawName ?? bwbId}
+	{@const naam = lawTitle}
 	<article class="whole-law" bind:this={lawEl}>
 		<ReaderHead
 			collection="instruments"
@@ -313,7 +307,7 @@
 					{ kort: naam, voluit: fullTitle ?? naam },
 					{ groep: naam, wet: bwbId }
 				),
-				cite: citeItems({ kort: naam, voluit: fullTitle ?? lawName }, permalink(page.url, '')),
+				cite: citeItems({ kort: naam, voluit: fullTitle ?? naam }, permalink(page.url, '')),
 				naam,
 				bron: officialUrl
 					? { label: sourceName(officialUrl) ?? 'Officiële tekst', href: officialUrl }

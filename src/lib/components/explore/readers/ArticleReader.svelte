@@ -28,6 +28,7 @@
 	import { articleName } from '$lib/text/bw';
 	import { placeOf, type Division } from '$lib/text/division';
 	import { lidHistory, unitsOf, wordingsOf } from '$lib/text/version-diff';
+	import { inForceOn } from '../peildatum';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { filterParams, formatCount, type VerbondenFilter } from '$lib/verbonden/filter';
 	import { proposedTextOf, type ProposedText } from '$lib/verbonden/proposed-text';
@@ -275,7 +276,7 @@
 	$effect(() => {
 		const day = peildatum;
 		if (!day || wordings.length === 0) return;
-		const w = wordings.find((x) => (x.from ?? '') <= day && (!x.until || day < x.until));
+		const w = inForceOn(wordings, day, (x) => x);
 		untrack(() => {
 			shownIndex = w && w !== current && w !== lapse ? w.index : null;
 		});

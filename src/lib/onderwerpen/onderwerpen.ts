@@ -1,4 +1,5 @@
 // The API's word rule, and the mark that shows where a row was found: $lib/text/treffer.
+import { isDay } from '$lib/text/datum';
 import { normaal, woordIn } from '$lib/text/treffer';
 export { normaal, woordIn };
 
@@ -63,8 +64,7 @@ export function lees(): Onderwerp[] {
 		const raw = JSON.parse(localStorage.getItem(SLEUTEL) ?? '[]');
 		if (!Array.isArray(raw)) return [];
 		return raw.flatMap((o) => {
-			const dag = (v: unknown) =>
-				typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
+			const dag = (v: unknown) => (typeof v === 'string' && isDay(v) ? v : null);
 			const wet = leesWet(o?.wet);
 			if (wet)
 				return [{ termen: [wetNaam(wet)], wet, vorige: dag(o.vorige), gezien: dag(o.gezien) }];

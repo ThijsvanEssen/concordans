@@ -4,7 +4,7 @@
 import { get } from 'svelte/store';
 import { focusOf } from '$lib/bron/href';
 import { voteCitation } from '$lib/bron/naam';
-import { instrumentMetaStore } from '$lib/api/instrument-cache';
+import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 import { lawIdOf } from '$lib/graph/types';
 import { kamerstukCitation } from '$lib/components/parliamentary/kamerstuk';
 import { text } from '$lib/verbonden/edge-meta';
@@ -45,7 +45,7 @@ function groepVanRij(r: Row): string {
 			const m = bwb ? get(instrumentMetaStore).get(bwb) : null;
 			// Where the law is not loaded yet, its name as the row's title carries it.
 			const uitTitel = /^(?:artikel|art\.)\s+\S+\s+(.+)$/i.exec(r.title)?.[1];
-			return m?.citationTitle ?? m?.shortTitle ?? uitTitel ?? bwb ?? BRON_KIND_LABEL[r.kind];
+			return lawName(m, uitTitel ?? bwb ?? BRON_KIND_LABEL[r.kind]);
 		}
 		case 'documents':
 		case 'decisions': {

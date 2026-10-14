@@ -2,6 +2,7 @@
 // the day, the versions per year for the list, and the articles of that day with their
 // place in the law as it was that day.
 import type { Schema } from '$lib/api/types';
+import { isDay } from '$lib/text/datum';
 
 type Version = Pick<Schema<'InstrumentVersionDTO'>, 'valid_from' | 'valid_until' | 'current'>;
 type Part = Schema<'ArticlePartSpanDTO'>;
@@ -20,18 +21,29 @@ type AtItem = Pick<
 	// An API before 0.79.52 gives no parts.
 	Partial<Pick<Schema<'InstrumentArticleVersionDTO'>, 'parts'>>;
 
-/** A day as the URL and the API write it. */
-export const isDay = (s: string | null | undefined): s is string =>
-	!!s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s));
+type Period = { from: string | null | undefined; until: string | null | undefined };
 
-/** The version in force on `day`: from its first day up to, not including, its end. */
-export function versionOn<V extends Version>(versions: V[], day: string): V | null {
+/**
+ * The item in force on `day`: from its first day up to, not including, its end. A day that
+ * is none (`?peildatum=gisteren`) is no peildatum, and finds nothing.
+ */
+export function inForceOn<T>(
+	items: readonly T[],
+	day: string | null | undefined,
+	period: (item: T) => Period
+): T | null {
+	if (!isDay(day)) return null;
 	return (
-		versions.find(
-			(v) => !!v.valid_from && v.valid_from <= day && (!v.valid_until || day < v.valid_until)
-		) ?? null
+		items.find((item) => {
+			const { from, until } = period(item);
+			return !!from && from <= day && (!until || day < until);
+		}) ?? null
 	);
 }
+
+/** The version of the whole law in force on `day`. */
+export const versionOn = <V extends Version>(versions: V[], day: string | null | undefined) =>
+	inForceOn(versions, day, (v) => ({ from: v.valid_from, until: v.valid_until }));
 
 /** The versions by the year they took effect, newest first, as the list groups them. */
 export function versionsByYear<V extends Version>(versions: V[]): [string, V[]][] {

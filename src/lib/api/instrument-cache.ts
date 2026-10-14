@@ -87,6 +87,15 @@ export function recordArticleLaw(
 	});
 }
 
+/**
+ * A law by its name: its citation title (a title where it has none, see recordInstrument),
+ * else its short title, else `fallback`, mostly its id.
+ */
+export const lawName = <F extends string | null>(
+	meta: InstrumentMeta | null | undefined,
+	fallback: F
+): string | F => meta?.citationTitle ?? meta?.shortTitle ?? fallback;
+
 export function getInstrumentMeta(bwbId: string | null | undefined): InstrumentMeta | null {
 	return bwbId ? (cache.get(bwbId) ?? null) : null;
 }

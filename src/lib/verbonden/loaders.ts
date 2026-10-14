@@ -39,7 +39,7 @@ import {
 import { lawArticleList } from '$lib/api/law-articles';
 import { buildGroups, ditVan, EUROPEAN, type Loader, type Match } from './groups';
 import { bronKindOf, isInternational } from './filter';
-import { instrumentMetaStore } from '$lib/api/instrument-cache';
+import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 import { getJudgmentDetail } from '$lib/api/judgments';
 import { aanhalingIn } from './passage';
 import { legUit, overwegingVanNoot, type Uitspraak } from '$lib/bron/overweging';
@@ -923,9 +923,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				const law = lawId ? names.get(lawId) : null;
 				const number = str(n.props.article_number) || key.slice(key.indexOf('_') + 1);
 				row.ref = { collection: 'articles', key };
-				row.title =
-					real?.display_name ??
-					`Artikel ${number}${law ? ` ${law.citationTitle ?? law.title ?? ''}` : ''}`.trim();
+				row.title = real?.display_name ?? `Artikel ${number} ${lawName(law, '')}`.trim();
 				row.derived = false;
 			}
 			if (at) {
