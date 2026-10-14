@@ -17,7 +17,7 @@ const light = (
 	}[]
 ) =>
 	({
-		node: {},
+		node: { labels: [] },
 		neighbors: {
 			total: 0,
 			buckets: buckets.map((b) => ({
@@ -288,6 +288,94 @@ describe('behoort', () => {
 	});
 });
 
+describe('the lines of every kind of bron', () => {
+	const one = (relation: string, collection: string, item: Partial<Item> = {}, meta = {}) => ({
+		relation,
+		direction: 'outbound',
+		collection,
+		total: 1,
+		items: [{ key: 'k', collection, display_name: 'Naam', ...item, meta } as Item]
+	});
+	const lines = (b: ReturnType<typeof behoort>) =>
+		b.regels.map((r) => [r.id, r.label, r.lagen.map((l) => l.soort), !!r.laad, !!r.los]);
+
+	it('gives a stuk its dossier with its bill, its debat, its brief, in that order', () => {
+		const stuk = (kind: string, reason: string) =>
+			behoort('documents', { kind }, {
+				...(light([
+					one('PART_OF', 'dossiers', { props: { number: '34372' } }),
+					one('MADE_IN', 'activities', {}, { reason }),
+					one('ACCOMPANIES', 'documents'),
+					{ relation: 'PART_OF', direction: 'outbound', collection: 'cases', total: 1 }
+				]) as object),
+				node: { key: 'stuk' }
+			} as never);
+		expect(lines(stuk('Memorie van toelichting', 'verslag'))).toEqual([
+			['dossier', 'Dossier', ['Dossier'], true, false],
+			['debat', 'Verslag van', ['Activiteit'], false, false],
+			['brief', 'Bijlage bij', ['Brief'], false, false]
+		]);
+		expect(lines(stuk('Motie', 'ingediend'))).toEqual([
+			['dossier', 'Ingediend bij', ['Dossier'], false, false],
+			['debat', 'Ingediend in', ['Activiteit'], false, false],
+			['brief', 'Bijlage bij', ['Brief'], false, false]
+		]);
+		expect(lines(stuk('Geleidende brief', 'verslag')).map((l) => l[0])).toEqual([
+			'dossier',
+			'debat',
+			'brief',
+			'biedt-aan'
+		]);
+	});
+
+	it('gives an activiteit its commissie, its dossiers and where it moved from', () => {
+		const b = behoort('activities', {}, {
+			...(light([one('LED_BY', 'committees'), one('ABOUT', 'dossiers')]) as object),
+			node: { key: 'a1' }
+		} as never);
+		expect(lines(b)).toEqual([
+			['commissie', 'Commissie', ['Commissie'], false, false],
+			['dossier', 'Over', ['Dossier'], true, true],
+			['verplaatst', 'Verplaatst van', [], true, true]
+		]);
+	});
+
+	it('gives the other kinds one line from one bucket, or from their Kamer', () => {
+		expect(lines(behoort('cases', {}, light([one('PART_OF', 'dossiers')])))).toEqual([
+			['dossier', 'Dossier', ['Dossier'], false, false]
+		]);
+		for (const c of ['decisions', 'commitments'] as const)
+			expect(lines(behoort(c, {}, light([one('ABOUT', 'dossiers')])))).toEqual([
+				['dossier', 'Over', ['Dossier'], false, false]
+			]);
+		expect(lines(behoort('instruments', {}, light([one('LEGISLATED_IN', 'dossiers')])))).toEqual([
+			['wetsvoorstel', 'Wetsvoorstel', ['Dossier'], false, false]
+		]);
+		for (const c of ['factions', 'committees'] as const)
+			expect(lines(behoort(c, { chamber: 'EK' }, light([])))).toEqual([
+				['kamer', 'Kamer', ['Kamer'], false, false]
+			]);
+		expect(lines(behoort('annexes', {}, light([one('PART_OF', 'instruments')])))).toEqual([
+			['wet', 'Wet', ['Wet'], false, false]
+		]);
+		expect(behoort('cabinets', {}, light([]))).toEqual({ regels: [], onder: [] });
+		expect(behoort('concepts' as never, {}, light([]))).toEqual({ regels: [], onder: [] });
+	});
+
+	it('gives a lid its fracties with their periods side by side', () => {
+		const b = behoort(
+			'members',
+			{
+				faction_memberships: [
+					{ faction_key: 'd66', abbreviation: 'D66', start_date: '2023-12-06', end_date: null }
+				]
+			},
+			light([])
+		);
+		expect(lines(b)).toEqual([['fractie', 'Fractie', ['Fractie'], false, true]]);
+	});
+});
+
 describe('kern of context', () => {
 	it('leaves the kern out of Verbonden, and only the kern', async () => {
 		const { GROUPS } = await import('$lib/verbonden/groups');
@@ -311,6 +399,60 @@ describe('kern of context', () => {
 		]);
 		expect(kern('members')).toEqual(['factions']);
 		expect(kern('instruments')).toEqual([]);
+	});
+
+	it('leaves the same groups out of Verbonden for every kind of bron', async () => {
+		const { GROUPS } = await import('$lib/verbonden/groups');
+		const { isKernGroep } = await import('./behoort');
+		const kern = Object.fromEntries(
+			Object.entries(GROUPS).map(([c, groups]) => [
+				c,
+				(groups ?? []).filter((g) => isKernGroep(c as never, g)).map((g) => g.id)
+			])
+		);
+		expect(kern).toMatchInlineSnapshot(`
+			{
+			  "activities": [
+			    "dossier",
+			    "committee",
+			  ],
+			  "articles": [
+			    "law",
+			  ],
+			  "cabinets": [],
+			  "cases": [
+			    "dossier",
+			  ],
+			  "commitments": [
+			    "dossier",
+			    "activity",
+			  ],
+			  "committees": [],
+			  "decisions": [
+			    "dossier",
+			  ],
+			  "documents": [
+			    "dossier",
+			    "replaces",
+			    "replaced-by",
+			    "attachment-of",
+			    "record-of",
+			    "submitted-in",
+			  ],
+			  "dossiers": [],
+			  "factions": [],
+			  "instruments": [],
+			  "judgments": [
+			    "conclusion",
+			    "advised",
+			    "earlier-instance",
+			    "later-instance",
+			  ],
+			  "members": [
+			    "factions",
+			  ],
+			}
+		`);
 	});
 
 	it('puts an eerdere aanleg the data lacks in the procesgang, as text', () => {
