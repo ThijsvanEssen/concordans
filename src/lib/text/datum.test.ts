@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { dagMaand, dagVan, korteDatum, langeDatum, maandJaar, weekdag } from './datum';
+import {
+	addDays,
+	dagMaand,
+	dagVan,
+	DAY_MS,
+	daysBetween,
+	isDay,
+	korteDatum,
+	langeDatum,
+	maandJaar,
+	weekdag
+} from './datum';
 
 describe('datum', () => {
 	it('abbreviates as the Taalunie does', () => {
@@ -34,5 +45,25 @@ describe('datum', () => {
 			expect(f('sep 2026')).toBe('');
 		}
 		expect(dagVan('2026-13-01')).toBeNull();
+	});
+});
+
+describe('days', () => {
+	it('takes a day as the URL writes it, and nothing else', () => {
+		expect(isDay('2015-01-01')).toBe(true);
+		expect(isDay('2015-1-1')).toBe(false);
+		expect(isDay('gisteren')).toBe(false);
+		expect(isDay('2015-13-45')).toBe(false);
+		expect(isDay('')).toBe(false);
+		expect(isDay(null)).toBe(false);
+	});
+
+	it('counts the days between two dates and adds days to one', () => {
+		expect(DAY_MS).toBe(86_400_000);
+		expect(daysBetween('2026-10-01', '2026-10-14')).toBe(13);
+		expect(daysBetween('2026-10-14', '2026-10-01')).toBe(-13);
+		expect(addDays('2026-10-14', -1)).toBe('2026-10-13');
+		expect(addDays('2026-03-01T10:00:00Z', -1)).toBe('2026-02-28');
+		expect(addDays('2026-12-31', 1)).toBe('2027-01-01');
 	});
 });
