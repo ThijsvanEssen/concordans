@@ -1,4 +1,6 @@
 <script lang="ts">
+	import KeyList from '$lib/components/ui/KeyList.svelte';
+	import KeyRow from '$lib/components/ui/KeyRow.svelte';
 	import { langeDatum } from '$lib/text/datum';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	// Bronnen en hergebruik: the one place for where the data comes from, how far it goes, and
@@ -47,18 +49,16 @@
 
 		<div class="section" id="herkomst">
 			<h2 class="section-title">Herkomst</h2>
-			<div class="list">
+			<KeyList>
 				{#each PUBLISHERS as p (p.name)}
-					<div class="list-row">
-						<span class="list-k">{p.name}</span><span
-							>{p.gives}.
-							<span class="licentie"
-								><a href={p.licence.url} class="cite" rel="external">{p.licence.name}</a></span
-							></span
-						>
-					</div>
+					<KeyRow key={p.name}
+						>{p.gives}.
+						<span class="licentie"
+							><a href={p.licence.url} class="cite" rel="external">{p.licence.name}</a></span
+						></KeyRow
+					>
 				{/each}
-			</div>
+			</KeyList>
 		</div>
 
 		<div class="section" id="dekking">
@@ -69,29 +69,23 @@
 			</p>
 			<LoadState state={stats.state} what="De dekking" retry={stats.retry}>
 				{#snippet children(stats)}
-					<div class="list">
+					<KeyList>
 						{#each COVERAGE as c (c.collection)}
-							<div class="list-row">
-								<span class="list-k">{c.label}</span><span
-									>{formatCount(stats.nodes[c.collection] ?? 0)}</span
-								>
-							</div>
+							<KeyRow key={c.label}>{formatCount(stats.nodes[c.collection] ?? 0)}</KeyRow>
 						{/each}
-					</div>
+					</KeyList>
 					<LoadState state={coverage.state} what="De dekking per college" retry={coverage.retry}>
 						{#snippet children(coverage)}
-							<div class="list">
+							<KeyList>
 								{#each tiersIn(coverage) as t (t.tier)}
-									<div class="list-row">
-										<span class="list-k">{TIER_LABEL[t.tier]}</span><span
-											>{formatCount(t.count)}{#if t.first_date && t.last_date}, {t.first_date.slice(
-													0,
-													4
-												)} tot {langeDatum(t.last_date)}{/if}</span
-										>
-									</div>
+									<KeyRow key={TIER_LABEL[t.tier]}
+										>{formatCount(t.count)}{#if t.first_date && t.last_date}, {t.first_date.slice(
+												0,
+												4
+											)} tot {langeDatum(t.last_date)}{/if}</KeyRow
+									>
 								{/each}
-							</div>
+							</KeyList>
 						{/snippet}
 					</LoadState>
 					{@const asOf = asOfIn(stats)}
@@ -100,17 +94,15 @@
 							Stand per bron: de laatste datum in de gegevens, waar de bron die heeft, en de datum
 							van ophalen.
 						</p>
-						<div class="list">
+						<KeyList>
 							{#each asOf as a (a.source)}
-								<div class="list-row">
-									<span class="list-k">{a.source}</span><span
-										>{a.newest ? `tot en met ${langeDatum(a.newest)}, ` : ''}opgehaald op {langeDatum(
-											a.fetched
-										)}</span
-									>
-								</div>
+								<KeyRow key={a.source}
+									>{a.newest ? `tot en met ${langeDatum(a.newest)}, ` : ''}opgehaald op {langeDatum(
+										a.fetched
+									)}</KeyRow
+								>
 							{/each}
-						</div>
+						</KeyList>
 					{/if}
 				{/snippet}
 			</LoadState>
@@ -174,44 +166,5 @@
 		margin-top: var(--s-1);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-
-	.list {
-		border: 1px solid var(--rule);
-		border-radius: var(--r-2);
-		overflow: hidden;
-		margin-bottom: var(--s-3);
-	}
-
-	.list-row {
-		display: flex;
-		gap: var(--s-4);
-		padding: var(--s-2) var(--s-4);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink);
-		border-top: 1px solid var(--rule);
-	}
-
-	.list-row:first-child {
-		border-top: 0;
-	}
-
-	.list-k {
-		flex: none;
-		width: 11em;
-		color: var(--ink-3);
-		font-variant-numeric: tabular-nums;
-	}
-
-	/* A phone: the name of the bron above its line, not in a narrow column beside it. */
-	@media (max-width: 560px) {
-		.list-row {
-			flex-direction: column;
-			gap: var(--s-1);
-		}
-		.list-k {
-			width: auto;
-		}
 	}
 </style>

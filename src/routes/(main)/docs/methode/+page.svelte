@@ -1,4 +1,6 @@
 <script lang="ts">
+	import KeyList from '$lib/components/ui/KeyList.svelte';
+	import KeyRow from '$lib/components/ui/KeyRow.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 </script>
 
@@ -33,25 +35,17 @@
 		<div class="section" id="betrouwbaarheid">
 			<h2 class="section-title">Betrouwbaarheid</h2>
 			<p>De kaart van een verbinding noemt haar herkomst:</p>
-			<div class="list">
-				<div class="list-row">
-					<span class="list-k">gelezen uit de bron</span><span
-						>De uitgever legt de verbinding zelf vast, zoals het artikel van een wet of het dossier
-						van een Kamerstuk.</span
-					>
-				</div>
-				<div class="list-row">
-					<span class="list-k">herkend in de tekst</span><span
-						>Een verwijzing in de tekst, zoals ‘artikel 6:162 BW’ in een uitspraak. De kaart toont
-						de passage.</span
-					>
-				</div>
-				<div class="list-row">
-					<span class="list-k">afgeleid</span><span
-						>Uit het dossier of uit de tekst, zonder verwijzing.</span
-					>
-				</div>
-			</div>
+			<KeyList>
+				<KeyRow key="gelezen uit de bron"
+					>De uitgever legt de verbinding zelf vast, zoals het artikel van een wet of het dossier
+					van een Kamerstuk.</KeyRow
+				>
+				<KeyRow key="herkend in de tekst"
+					>Een verwijzing in de tekst, zoals ‘artikel 6:162 BW’ in een uitspraak. De kaart toont de
+					passage.</KeyRow
+				>
+				<KeyRow key="afgeleid">Uit het dossier of uit de tekst, zonder verwijzing.</KeyRow>
+			</KeyList>
 			<p>
 				Daarbij staat hoe zeker de verbinding is: hoog, matig of laag. Wat uit de bron gelezen is,
 				is hoog. Bij een herkenning of afleiding zegt het woord hoe goed het patroon past. Bij laag:
@@ -132,43 +126,5 @@
 
 	p:last-child {
 		margin-bottom: 0;
-	}
-
-	.list {
-		border: 1px solid var(--rule);
-		border-radius: var(--r-2);
-		overflow: hidden;
-		margin-bottom: var(--s-3);
-	}
-
-	.list-row {
-		display: flex;
-		gap: var(--s-4);
-		padding: var(--s-2) var(--s-4);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		line-height: 1.5;
-		color: var(--ink);
-		border-top: 1px solid var(--rule);
-	}
-
-	.list-row:first-child {
-		border-top: 0;
-	}
-
-	.list-k {
-		flex: none;
-		width: 10em;
-		color: var(--ink-3);
-	}
-
-	@media (max-width: 560px) {
-		.list-row {
-			flex-direction: column;
-			gap: var(--s-1);
-		}
-		.list-k {
-			width: auto;
-		}
 	}
 </style>

@@ -100,3 +100,21 @@ describe('the frame of a page', () => {
 		).toEqual([]);
 	});
 });
+
+describe('a text page', () => {
+	it('lists key and value with KeyList, which breaks a long value on a phone', () => {
+		// Three copies drifted apart: /docs did not stack, and its addresses ran past their row
+		// at 375 px, cut off (code-eenvoud F24).
+		expect(overtreders((t) => /\blist-row\b|\blist-k\b/.test(t))).toEqual([]);
+	});
+
+	it('keeps the anchors other pages link to', () => {
+		const anchors: [string, string[]][] = [
+			['routes/(main)/(prose)/over/+page.svelte', ['contact']],
+			['routes/(main)/(prose)/bronnen/+page.svelte', ['herkomst', 'dekking', 'hergebruik']],
+			['routes/(main)/docs/methode/+page.svelte', ['betrouwbaarheid', 'grenzen']]
+		];
+		for (const [path, ids] of anchors)
+			for (const id of ids) expect(bron(path), `${path}#${id}`).toContain(`id="${id}"`);
+	});
+});
