@@ -1,12 +1,6 @@
 import { nodeId } from '$lib/vocabulary';
 import { get } from 'svelte/store';
-import {
-	containerIdFor,
-	containerKindOf,
-	isContainerMember,
-	isContainerMembership,
-	recordContainerMember
-} from '../container-membership';
+import { containerIdFor, containerKindOf, isContainerMembership } from '../container-membership';
 import { syntheticNode } from '../types';
 import type { GraphContext } from './context';
 import type { GraphStore } from './types';
@@ -31,6 +25,7 @@ export function createViewActions(
 		edges,
 		pinned,
 		insertedAt,
+		containers,
 		selectionStore,
 		filtersStore,
 		addEdge,
@@ -65,7 +60,7 @@ export function createViewActions(
 					nodes.set(id, node);
 				}
 				if (kind && container && isContainerMembership(kind, row.relation)) {
-					recordContainerMember(kind, container, id, row.relation, row.period ?? null);
+					containers.recordMember(kind, container, id, row.relation, row.period ?? null);
 					continue;
 				}
 				const [source, target] = row.direction === 'inbound' ? [id, focusId] : [focusId, id];
@@ -111,7 +106,7 @@ export function createViewActions(
 			const selectedId = get(selectionStore)?.id;
 			let dropped = false;
 			for (const id of [...nodes.keys()]) {
-				if (connected.has(id) || pinned.has(id) || id === selectedId || isContainerMember(id))
+				if (connected.has(id) || pinned.has(id) || id === selectedId || containers.holds(id))
 					continue;
 				nodes.delete(id);
 				insertedAt.delete(id);

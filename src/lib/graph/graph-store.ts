@@ -18,6 +18,7 @@ export function createGraphStore(): GraphStore {
 		pinned: ctx.pinnedStore,
 		filters: ctx.filtersStore,
 		trimmedCount: ctx.trimmedCountStore,
+		containers: ctx.containers.groups,
 		...createExpansion(ctx),
 		...view,
 		...netwerk,

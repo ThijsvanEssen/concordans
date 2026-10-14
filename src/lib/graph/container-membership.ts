@@ -3,7 +3,8 @@
 // never drawn as a node when it turns up as someone else's neighbour (see `drawable()`
 // in `store/context.ts`); this is where its children are recorded instead, so the
 // canvas can draw a hull around them. Membership is canvas state, not a session-wide
-// cache: `pruneContainerMembers` keeps it in step with what is still on canvas.
+// cache: each graph store holds its own (`createContainerGroups`), `prune` keeps it in
+// step with what is still on canvas and a reset clears it.
 
 import { instrumentContainerId } from '$lib/api/instrument-cache';
 import { isCollection, nodeId, type Relation } from '$lib/vocabulary';
@@ -145,105 +146,116 @@ export function containerIdFor(node: {
 	return isCollection(node.collection) ? nodeId(node.collection, node.key) : null;
 }
 
-const groups = new Map<string, ContainerGroup>();
-const store = writable(groups);
+/**
+ * The hulls of one canvas: which bronnen each suppressed container holds. Each graph
+ * store has its own, and a reset starts it afresh. Subscribers get one new map per
+ * microtask, however many members a load records.
+ */
+export function createContainerGroups() {
+	const groups = new Map<string, ContainerGroup>();
+	const store = writable(new Map(groups));
 
-let flushQueued = false;
-function flush() {
-	if (flushQueued) return;
-	flushQueued = true;
-	queueMicrotask(() => {
-		flushQueued = false;
-		store.set(new Map(groups));
-	});
-}
+	let flushQueued = false;
+	const flush = () => {
+		if (flushQueued) return;
+		flushQueued = true;
+		queueMicrotask(() => {
+			flushQueued = false;
+			store.set(new Map(groups));
+		});
+	};
 
-function ensureGroup(kind: ContainerKind, id: string): ContainerGroup {
-	let group = groups.get(id);
-	if (!group) {
-		group = {
-			kind,
-			id,
-			label: '',
-			fullLabel: '',
-			members: new Set(),
-			parts: new Set(),
-			periods: new Map()
-		};
-		groups.set(id, group);
-	}
-	return group;
-}
-
-/** Registers the names of a suppressed container bron. Keeps an existing name where one is empty. */
-export function recordContainerMeta(
-	kind: ContainerKind,
-	id: string | null,
-	label: string,
-	fullLabel = ''
-): void {
-	if (!id) return;
-	const group = ensureGroup(kind, id);
-	if (label) group.label = label;
-	if (fullLabel) group.fullLabel = fullLabel;
-	flush();
-}
-
-/** Registers that `childId` (a bron on canvas) belongs to the container `id`, by `relation`. */
-export function recordContainerMember(
-	kind: ContainerKind,
-	id: string | null,
-	childId: string,
-	relation: Relation = 'PART_OF',
-	period: Period | null = null
-): void {
-	if (!id) return;
-	const group = ensureGroup(kind, id);
-	const part = relation === 'PART_OF';
-	const known = group.members.has(childId) && (!part || group.parts.has(childId));
-	if (known && (!period || group.periods.has(childId))) return;
-	group.members.add(childId);
-	if (part) group.parts.add(childId);
-	if (period) group.periods.set(childId, period);
-	flush();
-}
-
-/** Lets a container's hull stand around a single member (a stuk on a path, BE-49). */
-export function markLone(id: string | null): void {
-	const group = id ? groups.get(id) : undefined;
-	if (!group || group.lone) return;
-	group.lone = true;
-	flush();
-}
-
-/** The current group for a container id, if any bron has been recorded into it. */
-export function getContainerGroup(id: string): ContainerGroup | undefined {
-	return groups.get(id);
-}
-
-/** Whether a bron is currently held by some hull: its own relation is bookkeeping, not a
- *  drawn edge, so it would otherwise look orphaned and be swept off the canvas. */
-export function isContainerMember(id: string): boolean {
-	for (const group of groups.values()) if (group.members.has(id)) return true;
-	return false;
-}
-
-/** Drops children no longer on canvas, so a hull does not outlive its bronnen. */
-export function pruneContainerMembers(keepIds: ReadonlySet<string>): void {
-	let changed = false;
-	for (const group of groups.values()) {
-		for (const id of group.members) {
-			if (!keepIds.has(id)) {
-				group.members.delete(id);
-				group.parts.delete(id);
-				group.periods.delete(id);
-				changed = true;
-			}
+	const ensureGroup = (kind: ContainerKind, id: string): ContainerGroup => {
+		let group = groups.get(id);
+		if (!group) {
+			group = {
+				kind,
+				id,
+				label: '',
+				fullLabel: '',
+				members: new Set(),
+				parts: new Set(),
+				periods: new Map()
+			};
+			groups.set(id, group);
 		}
-	}
-	if (changed) flush();
+		return group;
+	};
+
+	return {
+		groups: { subscribe: store.subscribe } as Readable<Map<string, ContainerGroup>>,
+
+		/** Registers the names of a suppressed container bron. Keeps an existing name where one is empty. */
+		recordMeta(kind: ContainerKind, id: string | null, label: string, fullLabel = ''): void {
+			if (!id) return;
+			const group = ensureGroup(kind, id);
+			if (label) group.label = label;
+			if (fullLabel) group.fullLabel = fullLabel;
+			flush();
+		},
+
+		/** Registers that `childId` (a bron on canvas) belongs to the container `id`, by `relation`. */
+		recordMember(
+			kind: ContainerKind,
+			id: string | null,
+			childId: string,
+			relation: Relation = 'PART_OF',
+			period: Period | null = null
+		): void {
+			if (!id) return;
+			const group = ensureGroup(kind, id);
+			const part = relation === 'PART_OF';
+			const known = group.members.has(childId) && (!part || group.parts.has(childId));
+			if (known && (!period || group.periods.has(childId))) return;
+			group.members.add(childId);
+			if (part) group.parts.add(childId);
+			if (period) group.periods.set(childId, period);
+			flush();
+		},
+
+		/** Lets a container's hull stand around a single member (a stuk on a path, BE-49). */
+		markLone(id: string | null): void {
+			const group = id ? groups.get(id) : undefined;
+			if (!group || group.lone) return;
+			group.lone = true;
+			flush();
+		},
+
+		/** The current group for a container id, if any bron has been recorded into it. */
+		get(id: string): ContainerGroup | undefined {
+			return groups.get(id);
+		},
+
+		/** Whether a bron is currently held by some hull: its own relation is bookkeeping, not a
+		 *  drawn edge, so it would otherwise look orphaned and be swept off the canvas. */
+		holds(id: string): boolean {
+			for (const group of groups.values()) if (group.members.has(id)) return true;
+			return false;
+		},
+
+		/** Drops children no longer on canvas, so a hull does not outlive its bronnen. */
+		prune(keepIds: ReadonlySet<string>): void {
+			let changed = false;
+			for (const group of groups.values()) {
+				for (const id of group.members) {
+					if (!keepIds.has(id)) {
+						group.members.delete(id);
+						group.parts.delete(id);
+						group.periods.delete(id);
+						changed = true;
+					}
+				}
+			}
+			if (changed) flush();
+		},
+
+		/** Forgets every hull, its names and `lone` included: the canvas starts afresh. */
+		clear(): void {
+			if (groups.size === 0) return;
+			groups.clear();
+			flush();
+		}
+	};
 }
 
-export const containerMembershipStore: Readable<Map<string, ContainerGroup>> = {
-	subscribe: store.subscribe
-};
+export type ContainerGroups = ReturnType<typeof createContainerGroups>;

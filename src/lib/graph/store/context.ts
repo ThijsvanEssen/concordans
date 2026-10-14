@@ -4,12 +4,9 @@ import type { Schema } from '$lib/api/types';
 import {
 	containerIdFor,
 	containerKindOf,
-	getContainerGroup,
+	createContainerGroups,
 	isContainerMembership,
 	isContainment,
-	pruneContainerMembers,
-	recordContainerMember,
-	recordContainerMeta,
 	type ContainerKind,
 	type Period
 } from '../container-membership';
@@ -49,6 +46,8 @@ export function createGraphContext() {
 	const state = { seq: 0 };
 	// Insertion sequence per node: the order in which the soft cap trims.
 	const insertedAt = new Map<string, number>();
+	// The hulls around the bronnen a suppressed container holds.
+	const containers = createContainerGroups();
 
 	const nodesStore = writable<GraphNode[]>([]);
 	const edgesStore = writable<GraphEdge[]>([]);
@@ -100,14 +99,14 @@ export function createGraphContext() {
 		const bron = nodes.get(source)?.raw;
 		if (!container || !kind || !isContainment(kind, relation)) return false;
 		if (bron && containerKindOf(bron.collection)) return false;
-		recordContainerMember(kind, containerIdFor(container), source, relation);
+		containers.recordMember(kind, containerIdFor(container), source, relation);
 		return true;
 	};
 
 	const emit = () => {
 		nodesStore.set([...nodes.values()]);
 		edgesStore.set([...edges.values()]);
-		pruneContainerMembers(new Set(nodes.keys()));
+		containers.prune(new Set(nodes.keys()));
 	};
 
 	const focusInternal = (id: string) => {
@@ -130,6 +129,7 @@ export function createGraphContext() {
 	const reset = () => {
 		supersede();
 		clearCanvas();
+		containers.clear();
 		pinned.clear();
 		pinnedStore.set(new Set());
 		selectionStore.set(null);
@@ -155,7 +155,7 @@ export function createGraphContext() {
 			const selectedContainerKind = selected.raw && containerKindOf(selected.raw.collection);
 			const selectedContainerId =
 				selected.raw && selectedContainerKind && containerIdFor(selected.raw);
-			const group = selectedContainerId ? getContainerGroup(selectedContainerId) : undefined;
+			const group = selectedContainerId ? containers.get(selectedContainerId) : undefined;
 			if (group) for (const id of group.members) protect.add(id);
 			for (const e of edges.values()) {
 				if (e.source === selected.id) protect.add(e.target);
@@ -180,7 +180,7 @@ export function createGraphContext() {
 	// ── Nodes and edges from API responses ────────────────────────────────────
 	/**
 	 * Records a container's own name (an instrument's through `instrumentMetaStore`,
-	 * the rest through `recordContainerMeta`) so the hull around its children has a
+	 * the rest through `containers.recordMeta`) so the hull around its children has a
 	 * label, whether the container is a neighbour or the bron navigated to.
 	 */
 	const recordContainerFor = (node: BaseNode, containerKind: ContainerKind) => {
@@ -206,7 +206,7 @@ export function createGraphContext() {
 						buildNodeLabel(node, kindOfCollection(node.collection as Collection)));
 			const full =
 				containerKind === 'dossier' ? [short, text(p.title)].filter(Boolean).join(', ') : name;
-			recordContainerMeta(containerKind, containerIdFor(node), short ?? '', full ?? '');
+			containers.recordMeta(containerKind, containerIdFor(node), short ?? '', full ?? '');
 		}
 	};
 
@@ -233,7 +233,7 @@ export function createGraphContext() {
 		if (law) {
 			recordInstrument({ bwb_id: law, citation_title: p.instrument_citation_title });
 			primeInstrumentNames();
-			recordContainerMember('instrument', law, graphNode!.id);
+			containers.recordMember('instrument', law, graphNode!.id);
 		}
 		return graphNode;
 	};
@@ -271,7 +271,7 @@ export function createGraphContext() {
 		if (!anchor) return null;
 		anchor.anchor = true;
 		recordContainerFor(node, 'instrument');
-		recordContainerMember('instrument', containerIdFor(node), anchor.id);
+		containers.recordMember('instrument', containerIdFor(node), anchor.id);
 		touchNode(anchor.id, anchor);
 		return anchor;
 	};
@@ -330,7 +330,7 @@ export function createGraphContext() {
 		if (centerContainerKind) {
 			center.anchor = true;
 			recordContainerFor(response.node, centerContainerKind);
-			recordContainerMember(centerContainerKind, containerIdFor(response.node), center.id);
+			containers.recordMember(centerContainerKind, containerIdFor(response.node), center.id);
 		}
 		touchNode(center.id, center);
 
@@ -358,7 +358,7 @@ export function createGraphContext() {
 				neighborContainerKind &&
 				isContainerMembership(neighborContainerKind, relation)
 			) {
-				recordContainerMember(
+				containers.recordMember(
 					neighborContainerKind,
 					containerIdFor(neighbor),
 					center.id,
@@ -374,7 +374,7 @@ export function createGraphContext() {
 				isContainerMembership(centerContainerKind, relation)
 			) {
 				touchNode(other.id, other);
-				recordContainerMember(
+				containers.recordMember(
 					centerContainerKind,
 					containerIdFor(response.node),
 					other.id,
@@ -417,7 +417,7 @@ export function createGraphContext() {
 		if (!kind || !anchor) return null;
 		anchor.anchor = true;
 		recordContainerFor(node, kind);
-		recordContainerMember(kind, containerIdFor(node), anchor.id);
+		containers.recordMember(kind, containerIdFor(node), anchor.id);
 		touchNode(anchor.id, anchor);
 		return anchor;
 	};
@@ -440,6 +440,7 @@ export function createGraphContext() {
 		cache,
 		pinned,
 		insertedAt,
+		containers,
 		nodesStore,
 		edgesStore,
 		selectionStore,
