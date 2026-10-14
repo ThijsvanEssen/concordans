@@ -1,6 +1,7 @@
 // The Kamerstuk a paper is: its own dossier and its number there (API 0.63). A dossier's
 // timeline also holds papers of another dossier (in 31746 stands 31058, nr. 11), so the
 // number alone would name the wrong Kamerstuk.
+import { kamerstukNummer } from '$lib/bron/dossier-naam';
 
 export type Kamerstuk = {
 	dossier: string;
@@ -21,14 +22,29 @@ type Paper = {
 	session_year?: string | null;
 	dossier_number?: string | null;
 	dossier_suffix?: string | null;
-	number?: string | null;
+	/** `5` in the Tweede Kamer, a letter (`C`) in the Eerste Kamer. */
+	number?: string | number | null;
 };
+
+/** `36945 IV`: the dossier with its suffix, as a citation writes it. */
+const dossierOf = (p: Paper & { dossier_number: string }) =>
+	p.dossier_suffix ? `${p.dossier_number} ${p.dossier_suffix}` : p.dossier_number;
 
 /** `36791, C` or `36945 IV, nr. 5`: a paper's place in its dossier; null for no Kamerstuk. */
 export function kamerstukLabel(p: Paper): string | null {
-	if (!p.dossier_number || !p.number) return null;
-	const dossier = p.dossier_suffix ? `${p.dossier_number} ${p.dossier_suffix}` : p.dossier_number;
+	if (!p.dossier_number || p.number == null || p.number === '') return null;
+	const dossier = dossierOf({ ...p, dossier_number: p.dossier_number });
 	return p.chamber === 'EK' ? `${dossier}, ${p.number}` : `${dossier}, nr. ${p.number}`;
+}
+
+/**
+ * `Kamerstuk 36945 IV, nr. 5` or `Kamerstuk I 36791, C`: a paper by its place, the dossier
+ * alone where it has no number; null without a dossier.
+ */
+export function kamerstukName(p: Paper): string | null {
+	if (!p.dossier_number) return null;
+	const place = kamerstukLabel(p) ?? dossierOf({ ...p, dossier_number: p.dossier_number });
+	return kamerstukNummer(place, p.chamber === 'EK' ? 'EK' : null);
 }
 
 /**

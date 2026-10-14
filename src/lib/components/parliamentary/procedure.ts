@@ -14,7 +14,7 @@ import {
 } from '$lib/components/tijdlijn/tijdlijn';
 import type { MetInhoud } from '$lib/components/open/rij-inhoud';
 import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
-import { withoutKamerstuk } from './kamerstuk';
+import { kamerstukName, withoutKamerstuk } from './kamerstuk';
 
 type Detail = Schema<'DossierDetailResponse'>;
 import { naarAmendementen, naarStemmingen } from './naar';
@@ -125,7 +125,11 @@ function eigenStuk(e: Entry, groep: 'rvs' | 'tk' | 'ek', dossier: string): TijdR
 		label: eigen ? kind || null : null,
 		zin: eigen ?? (kind || title || 'Stuk'),
 		meta: nr
-			? `${kamerstukNummer(dossier, groep === 'ek' ? 'EK' : null)}, ${groep === 'ek' ? nr : `nr. ${nr}`}`
+			? kamerstukName({
+					chamber: groep === 'ek' ? 'EK' : 'TK',
+					dossier_number: dossier,
+					number: nr
+				})
 			: null,
 		href: bronHref(e.node_id, { keepMode: false, mode: 'read' }),
 		ref: e.node_id
@@ -326,7 +330,9 @@ function ekVoortgang(d: Detail, ek: TijdRegel[]): TijdRegel[] | null {
 				soort: 'documents',
 				label: null,
 				zin: kind.charAt(0).toUpperCase() + kind.slice(1),
-				meta: letter ? `${kamerstukNummer(d.number, 'EK')}, ${letter}` : null,
+				meta: letter
+					? kamerstukName({ chamber: 'EK', dossier_number: d.number, number: letter })
+					: null,
 				href: p.url ?? null
 			});
 		}

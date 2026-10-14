@@ -20,7 +20,7 @@ import {
 	type DossierNaamBron
 } from '$lib/bron/dossier-naam';
 import { kindName } from '$lib/components/explore/law-head';
-import { withoutKamerstuk } from '$lib/components/parliamentary/kamerstuk';
+import { kamerstukName, withoutKamerstuk } from '$lib/components/parliamentary/kamerstuk';
 import { seatWord } from '$lib/components/parliamentary/career';
 import { bronKindOf, confidenceWord, type BronKind } from './filter';
 import { isDerived, positionsLabel, readEdge, text } from './edge-meta';
@@ -133,9 +133,10 @@ function documentName(
 	const sequence = text(props.sequence != null ? String(props.sequence) : null);
 	// The Eerste Kamer numbers its papers with a letter (`C`, `AB`), without `nr.`.
 	const letter = sequence ? null : text(props.number);
-	const ek = props.chamber === 'EK' || !!letter;
-	const nr = sequence ? `nr. ${sequence}` : letter;
-	const stuk = dossier ? join(kamerstukNummer(dossier, ek ? 'EK' : null), nr) : nr;
+	const chamber = props.chamber === 'EK' || letter ? 'EK' : 'TK';
+	const stuk =
+		kamerstukName({ chamber, dossier_number: dossier, number: sequence ?? letter }) ??
+		(sequence ? `nr. ${sequence}` : letter);
 	if (!kind && !title) return { title: name, context: null };
 	// The dossier's name on the line under it (API 0.79.30), where the title does not carry
 	// it already: the number in the title is how a Kamerstuk is cited.

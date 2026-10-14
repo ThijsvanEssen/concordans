@@ -3,11 +3,11 @@
 // in it, the toezeggingen made in it, the besluiten taken. A stuk opens in place on its core
 // text (a motie its dictum, from the answer itself), a besluit on its bar; a toezegging is its
 // text. The bron is one step further.
+import { withoutGroup } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import type { TijdGroep, TijdRegel } from '$lib/components/tijdlijn/tijdlijn';
 import type { Inhoud, MetInhoud } from '$lib/components/open/rij-inhoud';
-import { kamerstukNummer } from '$lib/bron/dossier-naam';
-import { withoutKamerstuk } from '$lib/components/parliamentary/kamerstuk';
+import { kamerstukName, withoutKamerstuk } from '$lib/components/parliamentary/kamerstuk';
 import { telling } from '$lib/components/parliamentary/stuk-uitslag';
 
 type Records = Schema<'ActivityRecordsResponse'>;
@@ -16,16 +16,9 @@ type Stuk = Schema<'ActivityPaperDTO'>;
 /** What a line opens in place: the item RijInhoud reads, and as what. */
 export type RegelInhoud = { item: MetInhoud; als: Inhoud };
 
-/** `Kamerstuk 36764, nr. 32`; null for a paper without a number. */
-export function stukNummer(s: Pick<Stuk, 'dossier_number' | 'dossier_suffix' | 'sequence'>) {
-	if (!s.dossier_number) return null;
-	const dossier = s.dossier_suffix ? `${s.dossier_number}-${s.dossier_suffix}` : s.dossier_number;
-	return [kamerstukNummer(dossier), s.sequence != null ? `nr. ${s.sequence}` : null]
-		.filter(Boolean)
-		.join(', ');
-}
-
-const kort = (kind: string | null | undefined) => kind?.replace(/\s*\(.*\)\s*$/, '') ?? null;
+/** `Kamerstuk 36764, nr. 32`; null for a paper without a dossier. */
+export const stukNummer = (s: Pick<Stuk, 'dossier_number' | 'dossier_suffix' | 'sequence'>) =>
+	kamerstukName({ ...s, number: s.sequence });
 
 export function activiteitGroepen(r: Records): {
 	groepen: TijdGroep[];
@@ -45,7 +38,7 @@ export function activiteitGroepen(r: Records): {
 			datum: s.date ?? null,
 			teken: 'stuk',
 			soort: 'documents',
-			label: kort(s.kind),
+			label: s.kind ? withoutGroup(s.kind) : null,
 			zin: (s.title ? withoutKamerstuk(s.title) : null) || s.kind || 'Kamerstuk',
 			meta: stukNummer(s),
 			ref: { collection: 'documents', key: s.key },

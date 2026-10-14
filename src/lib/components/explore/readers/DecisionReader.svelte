@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { joinParts, withoutGroup } from '$lib/text/words';
+	import { kamerstukName } from '$lib/components/parliamentary/kamerstuk';
 	import { bewaarItem } from '$lib/map/map';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import { getDecision, getDecisionDocument, getParliamentSeats } from '$lib/api/records';
@@ -21,7 +23,6 @@
 	import { ekFactionGroups, votersOf } from './voters';
 	import { decisionMethod, decisionOutcome } from '$lib/components/explore/index/decision-kind';
 	import { EK_SOURCE, chamberName } from '$lib/components/parliamentary/chamber';
-	import { kamerstukNummer } from '$lib/bron/dossier-naam';
 	import { voteCitation } from '$lib/bron/naam';
 
 	let { node }: { node: GraphNode } = $props();
@@ -47,13 +48,10 @@
 
 	/** What was voted on, by its kind and number: `Motie, Kamerstuk 36764, nr. 31`. */
 	const stukNaam = (p: Schema<'DecisionPaperDTO'>) =>
-		[
-			p.kind?.replace(/\s*\(.*\)\s*$/, '') ?? 'Kamerstuk',
-			p.dossier_number ? kamerstukNummer(p.dossier_number) : null,
-			p.number ? (/^\d+$/.test(p.number) ? `nr. ${p.number}` : p.number) : null
-		]
-			.filter(Boolean)
-			.join(', ');
+		joinParts([
+			p.kind ? withoutGroup(p.kind) : 'Kamerstuk',
+			kamerstukName({ ...p, chamber: loaded?.chamber })
+		]);
 
 	// What the coalition did (API 0.79.34, `coalition`; Thijs, 10 Oct). Only in the Tweede
 	// Kamer, and only where the API gives the block: before 0.79.34 nothing shows.
