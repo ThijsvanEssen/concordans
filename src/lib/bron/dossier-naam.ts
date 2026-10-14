@@ -14,12 +14,22 @@ export type DossierNaamBron = {
 	short_title_basis?: 'title' | 'citation' | 'case' | 'amended_law' | null;
 };
 
+// `36600-VIII`, `23908-(R1519)`: a number and its suffix as the data and the URLs join them. A
+// digit after the hyphen (`21501-20`) is part of the number, and is cited so.
+const JOINED_SUFFIX = /^(\d+)-([A-Z]+|\([A-Z0-9]+\))$/i;
+
+/**
+ * A dossier number as a citation writes it, its suffix after a space: `36600 VIII`,
+ * `23908 (R1519)`; `21501-20` stays. For the text a reader sees, never for a URL or a key.
+ */
+export const officialNumber = (number: string) => number.replace(JOINED_SUFFIX, '$1 $2');
+
 /**
  * The kind of a dossier with its number, the one wording for it everywhere: `Kamerstuk 36764`,
  * `Kamerstuk I 36764` for the Eerste Kamer. A stuk in it follows after a comma.
  */
 export const kamerstukNummer = (number: string, kamer?: 'EK' | 'TK' | null) =>
-	`Kamerstuk${kamer === 'EK' ? ' I' : ''} ${number}`;
+	`Kamerstuk${kamer === 'EK' ? ' I' : ''} ${officialNumber(number)}`;
 
 /**
  * A dossier from the props of a node or a row: its number (`label`, else `number`), its title
@@ -55,19 +65,22 @@ const NAAM_MAX = 80;
 /**
  * The name alone: the API's short title, or where that is the law the bill amends
  * (`amended_law`) `wijziging van {wet}`; else the title, cut, without parsing it (the API
- * reads the name from its brackets); the number without a title.
+ * reads the name from its brackets). Null where the data knows no name.
  */
-export function dossierName(d: DossierNaamBron): string {
+export function dossierOwnName(d: DossierNaamBron): string | null {
 	const short = d.short_title?.trim();
 	if (short) return d.short_title_basis === 'amended_law' ? `wijziging van ${short}` : short;
 	const title = d.title?.trim();
-	if (!title) return d.number;
-	return truncate(title, NAAM_MAX);
+	return title ? truncate(title, NAAM_MAX) : null;
 }
+
+/** The name alone, the number in its official notation where no name is known. */
+export const dossierName = (d: DossierNaamBron): string =>
+	dossierOwnName(d) ?? officialNumber(d.number);
 
 /** "Kamerstuk 36889 wijziging van Archiefwet 1995"; "Kamerstuk 36889" where no name is known. */
 export function dossierLabel(d: DossierNaamBron): string {
-	const name = dossierName(d);
+	const name = dossierOwnName(d);
 	const nummer = kamerstukNummer(d.number);
-	return name === d.number ? nummer : `${nummer} ${name}`;
+	return name ? `${nummer} ${name}` : nummer;
 }

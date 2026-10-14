@@ -114,7 +114,7 @@
 	import IndexRow from './index/IndexRow.svelte';
 	import Waarde from '$lib/components/ui/Waarde.svelte';
 	import { forAgainst, stemmingNaam, votesSentence } from '$lib/components/parliamentary/stemming';
-	import { dossierLabel, dossierName } from '$lib/bron/dossier-naam';
+	import { dossierLabel, dossierOwnName, officialNumber } from '$lib/bron/dossier-naam';
 	import {
 		INDEX_CATEGORIES,
 		INDEX_TABS,
@@ -2535,13 +2535,14 @@
 												<!-- A filter or an unloaded page can leave out dossiers of the number. -->
 												{@const all = (entry.rows[0].same_number_count ?? 0) + 1}
 												<IndexRow
-													title={own?.title ?? `Dossiers onder nummer ${entry.number}`}
+													title={own?.title ??
+														`Dossiers onder nummer ${officialNumber(entry.number)}`}
 													href={own ? hrefOf(`dossiers/${own.number}`) : undefined}
 													open={isOpen}
 													onToggle={() => toggleNumber(entry.number)}
 												>
 													{#snippet lead()}
-														<span class="row-id-main">{entry.number}</span>
+														<span class="row-id-main">{officialNumber(entry.number)}</span>
 														{#if kinds.size === 1 && kind}
 															<span class="row-id-sub">{kind}</span>
 														{/if}
@@ -2753,10 +2754,10 @@
 															{/if}
 														{:else if s.dossiers?.[0] ?? s.dossier_numbers?.[0]}
 															{@const d = s.dossiers?.[0] ?? { number: s.dossier_numbers![0] }}
-															<span class="row-id-main">{d.number}</span>
-															{#if dossierName(d) !== d.number}
+															<span class="row-id-main">{officialNumber(d.number)}</span>
+															{#if dossierOwnName(d)}
 																<span class="row-id-sub row-id-naam" title={d.title ?? undefined}
-																	>{dossierName(d)}</span
+																	>{dossierOwnName(d)}</span
 																>
 															{/if}
 														{/if}
@@ -2887,11 +2888,11 @@
 												{#snippet lead()}
 													<span class="row-id-main"><Waarde value={label} /></span>
 													<!-- The dossier by name under its number (API 0.79.30). -->
-													{#if doc.dossiers?.[0] && dossierName(doc.dossiers[0]) !== doc.dossiers[0].number}
+													{#if doc.dossiers?.[0] && dossierOwnName(doc.dossiers[0])}
 														<span
 															class="row-id-sub row-id-naam"
 															title={doc.dossiers[0].title ?? undefined}
-															>{dossierName(doc.dossiers[0])}</span
+															>{dossierOwnName(doc.dossiers[0])}</span
 														>
 													{/if}
 												{/snippet}
@@ -3005,12 +3006,14 @@
 	<IndexRow
 		{bron}
 		{member}
-		title={member && d.title ? chapterTitle(d.title) : (d.short_title ?? d.title ?? d.number)}
+		title={member && d.title
+			? chapterTitle(d.title)
+			: (d.short_title ?? d.title ?? officialNumber(d.number))}
 		href={hrefOf(bron)}
 		acties
 	>
 		{#snippet lead()}
-			<span class="row-id-main">{d.number}</span>
+			<span class="row-id-main">{officialNumber(d.number)}</span>
 			{#if d.kind && !member}
 				<span class="row-id-sub">{d.kind}</span>
 			{/if}

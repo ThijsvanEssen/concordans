@@ -2,7 +2,7 @@ import { capitalize, textOf, truncate, withoutGroup } from '$lib/text/words';
 import { eersteIndiener } from '$lib/bron/submitters';
 import type { Schema } from '$lib/api/types';
 import { menselijkeNaam } from '$lib/bron/menselijk';
-import { dossierName, dossierUitProps } from '$lib/bron/dossier-naam';
+import { dossierOwnName, dossierUitProps, officialNumber } from '$lib/bron/dossier-naam';
 import { articleName } from '$lib/text/bw';
 import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
 import { maandJaar } from '$lib/text/datum';
@@ -276,8 +276,8 @@ export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {
 		case 'dossier': {
 			// By the short title its props carry (API 0.79.54), else its title, cut.
 			const number = textOf(props.label) ?? textOf(props.number) ?? mens();
-			const naam = dossierName(dossierUitProps(props, number));
-			return naam === number ? number : `${number}, ${naam}`;
+			const naam = dossierOwnName(dossierUitProps(props, number));
+			return naam ? `${officialNumber(number)}, ${naam}` : officialNumber(number);
 		}
 		case 'committee':
 		case 'faction':

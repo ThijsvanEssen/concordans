@@ -25,6 +25,7 @@
 	import { nagekomenIn, toegezegdIn } from '$lib/components/parliamentary/toezegging';
 	import { load } from '$lib/util/load.svelte';
 	import { report } from '$lib/api/errors';
+	import { officialNumber } from '$lib/bron/dossier-naam';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -116,7 +117,7 @@
 					<span class="dossiers">
 						{#each uniqueBy(c.dossiers ?? [], (d) => d.key) as d (d.key)}
 							<BronLink ref={{ collection: 'dossiers', key: d.key, number: d.number ?? d.key }}
-								>{d.number}{d.title ? ` ${d.title}` : ''}</BronLink
+								>{d.number ? officialNumber(d.number) : ''}{d.title ? ` ${d.title}` : ''}</BronLink
 							>
 						{/each}
 					</span>

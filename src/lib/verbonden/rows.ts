@@ -15,7 +15,7 @@ import { isCollection, type Relation } from '$lib/vocabulary';
 import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
 import {
 	dossierLabel,
-	dossierName,
+	dossierOwnName,
 	dossierUitProps,
 	kamerstukNummer,
 	type DossierNaamBron
@@ -241,9 +241,8 @@ export function describe(
 			// "Kamerstuk 36764", never the bare number or the title of three lines (Thijs, 13 Oct).
 			// Where the props lack the short title, the row asks it (DossierNaam).
 			const d = dossierUitProps({ display_name: name, ...props }, key);
-			const naam = dossierName(d);
 			return {
-				title: naam === d.number ? name : naam,
+				title: dossierOwnName(d) ?? name,
 				context: null,
 				identifier: d.number ? kamerstukNummer(d.number) : null,
 				date
@@ -697,7 +696,7 @@ export function historyRow(e: {
 	return {
 		ref,
 		title: e.dossier_number
-			? ((n) => (n === e.dossier_number ? kamerstukNummer(n) : n))(dossierName(dossierVan(e)!))
+			? (dossierOwnName(dossierVan(e)!) ?? kamerstukNummer(e.dossier_number))
 			: (e.summary ?? naamVanId(`${ref.collection}/${ref.key}`)),
 		dossier: dossierVan(e),
 		identifier: e.summary ?? null,

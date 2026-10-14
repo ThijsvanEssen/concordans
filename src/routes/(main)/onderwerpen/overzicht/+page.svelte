@@ -33,7 +33,7 @@
 	import { daysBetween, isDay, korteDatum, langeDatum, maandNaam, vandaag } from '$lib/text/datum';
 	import { download } from '$lib/verbonden/export';
 	import { lees, uitParams, vindIndex } from '$lib/onderwerpen/onderwerpen';
-	import { dossierLabel, dossierName } from '$lib/bron/dossier-naam';
+	import { dossierLabel, dossierOwnName } from '$lib/bron/dossier-naam';
 	import { getDecisionDocument } from '$lib/api/records';
 	import { besluiten, geteld, telling } from '$lib/api/decisions';
 	import { getAmendementen } from '$lib/components/parliamentary/amendementen';
@@ -1029,8 +1029,8 @@
 		const namen = new Map<string, string>();
 		for (const d of lijst)
 			for (const x of d.dossiers ?? []) {
-				const n = dossierName(x);
-				if (n !== x.number) namen.set(x.number, n);
+				const n = dossierOwnName(x);
+				if (n) namen.set(x.number, n);
 			}
 		const motie = await motieVelden(lijst);
 		download(

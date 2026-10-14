@@ -8,7 +8,7 @@
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
-	import { dossierLabel } from '$lib/bron/dossier-naam';
+	import { dossierLabel, kamerstukNummer, officialNumber } from '$lib/bron/dossier-naam';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -102,14 +102,14 @@
 		<div class="r-dossier">
 			<ReaderHead
 				collection="dossiers"
-				title={d.short_title ?? d.title ?? d.number}
+				title={d.short_title ?? d.title ?? officialNumber(d.number)}
 				acties={{
 					// One group per dossier in a map, as a Kamerstuk of it is grouped (map.ts).
 					bewaar: bewaarItem(
 						node.id,
 						{
-							kort: `Kamerstukken ${d.number}`,
-							voluit: `Kamerstukken ${d.number}${d.title ? ` (${d.short_title ?? d.title})` : ''}`
+							kort: `Kamerstukken ${officialNumber(d.number)}`,
+							voluit: `Kamerstukken ${officialNumber(d.number)}${d.title ? ` (${d.short_title ?? d.title})` : ''}`
 						},
 						{ groep: dossierLabel(d), dossier: d.number }
 					)
@@ -117,7 +117,7 @@
 			>
 				{#snippet soort()}
 					<SoortLink collection="dossiers">{bronLabel('dossiers')}</SoortLink><span
-						>, Kamerstuk {d.number}</span
+						>, {kamerstukNummer(d.number)}</span
 					>
 				{/snippet}
 				{#snippet onderTitel()}

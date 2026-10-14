@@ -11,7 +11,7 @@ import { getActivity, getNodeFirst } from '$lib/api/records';
 import { getDossier } from '$lib/components/parliamentary/data';
 import { CHAMBER_NAME, chamberFromParam } from '$lib/components/parliamentary/chamber';
 import { refOf, type BronRef } from '$lib/bron/href';
-import { dossierName, dossierUitProps, kamerstukNummer } from './dossier-naam';
+import { dossierLabel, dossierUitProps } from './dossier-naam';
 import { artikelAnker, deelIds, layersOf } from '$lib/text/division';
 import { langeDatum } from '$lib/text/datum';
 import { kindName } from '$lib/components/explore/law-head';
@@ -145,9 +145,7 @@ export function laagVan(n: Neighbor, soort: string): Laag {
 		const d = dossierUitProps({ display_name: n.display_name, ...props }, nummer ?? '');
 		const lang = d.title ?? vol;
 		if (!nummer) return { soort, naam: naamVan('dossiers', n), ref, vol: lang };
-		const label = kamerstukNummer(nummer);
-		const titel = dossierName(d);
-		return { soort, naam: titel !== nummer ? `${label} ${titel}` : label, ref, vol: lang };
+		return { soort, naam: dossierLabel(d), ref, vol: lang };
 	}
 	if (n.collection === 'judgments') {
 		// An appeal against this one names its remedy on the edge (`Cassatie`); an earlier
@@ -661,11 +659,9 @@ function dossierLaag(d: {
 	short_title?: string | null;
 	title?: string | null;
 }): Laag {
-	const label = kamerstukNummer(d.number);
-	const titel = dossierName(d);
 	return {
 		soort: 'Dossier',
-		naam: titel !== d.number ? `${label} ${titel}` : label,
+		naam: dossierLabel(d),
 		ref: { collection: 'dossiers', key: d.number, number: d.number },
 		vol: d.title?.trim() || undefined
 	};

@@ -9,7 +9,7 @@ import { isEkDecision } from '$lib/components/parliamentary/timeline-kind';
 import { chamberName } from '$lib/components/parliamentary/chamber';
 import { langeDatum } from '$lib/text/datum';
 import { bwCode } from '$lib/text/bw';
-import { dossierName, dossierUitProps, kamerstukNummer } from './dossier-naam';
+import { dossierOwnName, dossierUitProps, kamerstukNummer } from './dossier-naam';
 
 export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
 	const p = n.raw?.props ?? undefined;
@@ -27,8 +27,7 @@ export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): strin
 	// Verbonden: "Cyberbeveiligingswet", never the title of three lines.
 	if (n.collection === 'dossiers') {
 		const d = dossierUitProps({ display_name: n.raw?.display_name, ...p }, n.key);
-		const naam = dossierName(d);
-		return naam === d.number ? kamerstukNummer(d.number) : naam;
+		return dossierOwnName(d) ?? kamerstukNummer(d.number);
 	}
 	// Anything else by the title Verbonden gives it: "Rechtbank Rotterdam, 2 juni 2022".
 	if (n.kind !== 'article') {
