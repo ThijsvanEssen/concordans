@@ -17,9 +17,7 @@
 		"check:api": "npm run sync:api && git diff --exit-code -- src/lib/api/openapi.json src/lib/api/generated"
 	},
 	"dependencies": {
-		"@sigma/node-border": "^3.0.0",
 		"@sigma/node-image": "^3.0.0",
-		"@sigma/node-square": "^3.0.0",
 		"graphology": "^0.26.0",
 		"graphology-layout-forceatlas2": "^0.10.1",
 		"openapi-fetch": "^0.17.0",

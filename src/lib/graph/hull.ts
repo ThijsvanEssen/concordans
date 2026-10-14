@@ -121,3 +121,15 @@ export function exitPoint(inside: Point, outside: Point, polygon: Point[]): Poin
 	}
 	return best === Infinity ? inside : { x: inside.x + dx * best, y: inside.y + dy * best };
 }
+
+/** Whether `p` lies inside `polygon` (even-odd): the pointer over a hull. */
+export function pointInPolygon(p: Point, polygon: Point[]): boolean {
+	let hit = false;
+	for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+		const a = polygon[i];
+		const b = polygon[j];
+		if (a.y > p.y !== b.y > p.y && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x)
+			hit = !hit;
+	}
+	return hit;
+}

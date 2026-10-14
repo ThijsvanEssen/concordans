@@ -18,7 +18,7 @@ export function labelX(x: number, size: number, w: number, room: number): number
 
 export type Rect = { x: number; y: number; w: number; h: number };
 
-const overlaps = (a: Rect, b: Rect) =>
+export const overlaps = (a: Rect, b: Rect) =>
 	a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
 /**

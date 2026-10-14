@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { Collection } from '$lib/vocabulary';
 	import { clickOutside } from '$lib/actions/top-layer';
 	import { report } from '$lib/api/errors';
 	import { naFilter, zichtSleutel } from '$lib/graph/zicht';
@@ -19,7 +18,7 @@
 	import CanvasNodeList from './CanvasNodeList.svelte';
 	import { readingOrder } from './canvas-keys';
 	import GraphSidebar from './GraphSidebar.svelte';
-	import type { Snippet } from 'svelte';
+	import type { ComponentProps, Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/graph-store';
 	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
 	import { isVersionCollection, kindOfCollection, kort } from '$lib/graph/types';
@@ -30,12 +29,11 @@
 		tussenClustersOf,
 		clusterZinnen,
 		isClusterId,
-		placeCard,
 		type Cluster
 	} from '$lib/netwerk/cluster';
 	import { openGroup } from '$lib/verbonden/open-group';
 	import { bronPlural } from '$lib/vocabulary';
-	import { spriteForVorm, IMAGE_SIZE_BUMP, tokens, fillFor, strokeFor } from './nodeSprites';
+	import { spriteForVorm, IMAGE_SIZE_BUMP } from './nodeSprites';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { bronNaam } from '$lib/bron/naam';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -52,6 +50,7 @@
 	} from '$lib/graph/container-membership';
 	import { metGroepVerborgen } from '$lib/graph/met-groep';
 	import { kolomPlekken } from '$lib/netwerk/kolommen';
+	import { packGroups, placeClusters, ringAround, syncGroupLinks } from '$lib/graph/layout';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import type { Overlay } from '$lib/netwerk/overlay';
 	import { DEFAULT_HEAT_MONTHS } from '$lib/netwerk/overlay';
@@ -64,19 +63,42 @@
 		type VerbondenFilter
 	} from '$lib/verbonden/filter';
 	import type { VerbondenState } from '$lib/verbonden/source';
-	import { laatstOpen, opzij, passenSamen, type Zwevend } from '$lib/stores/zwevend';
+	import { laatstOpen, opzij, type Zwevend } from '$lib/stores/zwevend';
+	import {
+		cardBeside,
+		CLUSTER_CARD,
+		clusterCardAt,
+		foldStep,
+		legendPlace,
+		placeCard
+	} from '$lib/netwerk/card-place';
 	import { FOLD, isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { netwerkMelding } from '$lib/stores/netwerk-melding';
 	import { kaart } from '$lib/map/map.svelte';
 	import { gemerkt, notitiesPerBron } from '$lib/map/notities';
 	import { keepsCamera, saveCamera, savedCamera } from './camera';
 
+	/** What the legend (GraphSidebar) asks of the page, handed through as one. */
+	type LegendProps = Pick<
+		ComponentProps<typeof GraphSidebar>,
+		| 'onFilter'
+		| 'onOpenFilter'
+		| 'depth'
+		| 'onDepth'
+		| 'onAllesLaden'
+		| 'onLaadSoort'
+		| 'laadtSoort'
+		| 'allesGrens'
+		| 'onToggleHeat'
+		| 'onHeatPeriodChange'
+		| 'onToggleMutatie'
+	>;
+
 	let {
 		store,
 		compact = false,
 		filter,
 		verbonden,
-		depth = 2,
 		reach = null,
 		selectedEdgeId = null,
 		lineLids = new Map() as ReadonlyMap<string, string>,
@@ -92,23 +114,13 @@
 		onClear,
 		onGoBack,
 		onGoForward,
-		onFilter,
-		onOpenFilter,
-		onDepth,
-		onAllesLaden,
-		onLaadSoort,
-		laadtSoort,
-		allesGrens,
-		onToggleHeat,
-		onHeatPeriodChange,
-		onToggleMutatie,
-		canvasOverlay
+		canvasOverlay,
+		...legend
 	}: {
 		store: GraphStore;
 		compact?: boolean;
 		filter: VerbondenFilter;
 		verbonden: VerbondenState;
-		depth?: number;
 		/** How far the last neighbourhood reached, and whether the API cut it off. */
 		reach?: NeighborhoodReach | null;
 		selectedEdgeId?: string | null;
@@ -130,19 +142,8 @@
 		onClear?: () => void;
 		onGoBack?: () => void;
 		onGoForward?: () => void;
-		onFilter: (f: VerbondenFilter) => void;
-		onOpenFilter: () => void;
-		onDepth: (d: number) => void;
-		/** Load all the focus's direct neighbours (?alles=1); absent once they are asked. */
-		onAllesLaden?: () => void;
-		onLaadSoort?: (collection: Collection) => void;
-		laadtSoort?: ReadonlySet<string>;
-		allesGrens?: { grens: number; geladen: boolean } | null;
-		onToggleHeat?: () => void;
-		onHeatPeriodChange?: (months: number) => void;
-		onToggleMutatie?: () => void;
 		canvasOverlay?: Snippet;
-	} = $props();
+	} & LegendProps = $props();
 
 	// ── graphology (data + layout, no sigma) ─────────────────────────────────
 	const g = new Graph();
@@ -311,39 +312,7 @@
 	/** Re-centre the layout on `focalId` after an update that kept old positions. */
 	export function reseatAround(focalId: string) {
 		if (!g.hasNode(focalId)) return;
-		const pinnedSet = get(store.pinned);
-		const l1 = new Set<string>();
-		g.forEachEdge((_id, _attrs, src, tgt) => {
-			if (src === focalId) l1.add(tgt);
-			else if (tgt === focalId) l1.add(src);
-		});
-		l1.delete(focalId);
-		const l1List: string[] = [];
-		const outerList: string[] = [];
-		g.forEachNode((id) => {
-			if (id === focalId) return;
-			if (pinnedSet.has(id)) return;
-			if (l1.has(id)) l1List.push(id);
-			else outerList.push(id);
-		});
-		g.setNodeAttribute(focalId, 'x', 0);
-		g.setNodeAttribute(focalId, 'y', 0);
-		const innerR = Math.max(120, 60 + Math.sqrt(l1List.length) * 30);
-		l1List.forEach((id, i) => {
-			const ang = (i / Math.max(l1List.length, 1)) * Math.PI * 2 - Math.PI / 2;
-			g.setNodeAttribute(id, 'x', Math.cos(ang) * innerR);
-			g.setNodeAttribute(id, 'y', Math.sin(ang) * innerR);
-		});
-		const outerR = innerR + Math.max(140, Math.sqrt(outerList.length) * 30);
-		outerList.forEach((id, i) => {
-			const ang =
-				(i / Math.max(outerList.length, 1)) * Math.PI * 2 -
-				Math.PI / 2 +
-				Math.PI / Math.max(l1List.length, 1);
-			g.setNodeAttribute(id, 'x', Math.cos(ang) * outerR);
-			g.setNodeAttribute(id, 'y', Math.sin(ang) * outerR);
-		});
-		const movable = new Set<string>([...l1List, ...outerList]);
+		const movable = ringAround(g, focalId, get(store.pinned));
 		runLayout(movable).catch((e) => report('Netwerk opmaak', e));
 	}
 
@@ -488,11 +457,8 @@
 	let hideTimer: ReturnType<typeof setTimeout> | null = null;
 	let showTimer: ReturnType<typeof setTimeout> | null = null;
 
-	// A stub (referenced, not loaded yet) has a paper fill and keeps the ring of its kind.
-	function nodeColors(n: GraphNode): { color: string; borderColor: string } {
-		const borderColor = strokeFor(n.kind);
-		return { color: n.stub || n.kind === 'other' ? tokens().paper : fillFor(n.kind), borderColor };
-	}
+	/** Every node is drawn by sigma's image program: its sprite on a background of this. */
+	const TRANSPARENT = 'rgba(0,0,0,0)';
 
 	// Elk teken even groot; de vorm zegt wat een bron is, niet de maat. Een groep
 	// (dossier, fractie, commissie) een stap groter.
@@ -572,16 +538,10 @@
 			});
 		}
 		await ensureLayout();
-		if (!layout) {
-			for (const id of pinnedDuringBurst) {
-				try {
-					g.removeNodeAttribute(id, 'fixed');
-				} catch {
-					/* gone */
-				}
-			}
-			return;
-		}
+		const unpin = () => {
+			for (const id of pinnedDuringBurst) if (g.hasNode(id)) g.removeNodeAttribute(id, 'fixed');
+		};
+		if (!layout) return unpin();
 		if (!layout.isRunning()) layout.start();
 		if (layoutStopTimer) clearTimeout(layoutStopTimer);
 		const burst = pinExisting
@@ -589,15 +549,9 @@
 			: Math.min(2500, 600 + g.order * 6);
 		layoutStopTimer = setTimeout(() => {
 			layout?.stop();
-			for (const id of pinnedDuringBurst) {
-				try {
-					g.removeNodeAttribute(id, 'fixed');
-				} catch {
-					/* gone */
-				}
-			}
+			unpin();
 			separateContainerGroups();
-			placeClusters();
+			placeClusterNodes();
 			scheduleFit();
 		}, burst);
 	}
@@ -756,10 +710,11 @@
 			afterTick(() =>
 				canvasWrap?.parentElement?.querySelector<HTMLElement>('.cluster-kaart button')?.focus()
 			);
-		const at = lastPointer ?? { x: CARD_GAP, y: CARD_GAP };
-		const w = canvasWrap?.clientWidth ?? CARD_W;
-		const x = at.x + CARD_GAP + CARD_W < w ? at.x + CARD_GAP : Math.max(8, w - CARD_W - 8);
-		clusterCard = { cluster: c, x, y: Math.max(8, at.y - CARD_GAP) };
+		const at = lastPointer ?? { x: CLUSTER_CARD.gap, y: CLUSTER_CARD.gap };
+		clusterCard = {
+			cluster: c,
+			...clusterCardAt(at, canvasWrap?.clientWidth ?? CLUSTER_CARD.w)
+		};
 		// Measured once drawn, before it is painted: the card moves off the panels it covers.
 		afterTick(() => {
 			const card = canvasWrap?.querySelector<HTMLElement>('.cluster-kaart');
@@ -776,8 +731,7 @@
 				at,
 				{ w: card.offsetWidth, h: card.offsetHeight },
 				{ width: canvasWrap.clientWidth, height: canvasWrap.clientHeight },
-				obstacles,
-				CARD_GAP
+				obstacles
 			);
 			clusterCard = { ...clusterCard, ...place };
 		});
@@ -789,8 +743,6 @@
 		const best = [...verbonden.groups].sort((a, b) => count(b) - count(a))[0];
 		return best && count(best) > 0 ? best : null;
 	};
-	const CARD_W = 280;
-	const CARD_GAP = 16;
 	/** What floats over the canvas and stays readable: the panel Netwerk, zoom, legenda. */
 	const FLOATING = '.canvas-overlay > *, .zoom, .legenda, .vouw';
 
@@ -854,18 +806,13 @@
 		for (const n of nodes) {
 			lookup.set(n.id, n);
 			if (!isCanvasNode(n)) continue;
-			const { color, borderColor } = nodeColors(n);
-			// Elke bron als teken uit vormen.ts.
+			// Elke bron als teken uit vormen.ts, op een doorzichtige ondergrond.
 			const vorm = vormVanBron(n.collection, n.raw?.props, n.key);
-			const useImage = true;
-			const stub = !!n.stub;
-			const rawSize = nodeSize(n.id);
 			const attrs: Record<string, unknown> = {
 				label: nodeLabel(n),
 				cluster: isClusterId(n.id),
 				forceLabel: isClusterId(n.id),
-				color: useImage ? 'rgba(0,0,0,0)' : color,
-				borderColor,
+				color: TRANSPARENT,
 				kind: n.kind,
 				vorm,
 				collection: n.collection,
@@ -879,18 +826,16 @@
 								ref: { collection: 'judgments', key: n.key }
 							})
 						: null,
-				stub,
+				stub: !!n.stub,
 				date: typeof n.raw?.props?.date === 'string' ? n.raw.props.date.slice(0, 10) : null,
-				size: useImage ? rawSize * IMAGE_SIZE_BUMP : rawSize,
-				type: useImage ? 'image' : 'border'
+				size: nodeSize(n.id) * IMAGE_SIZE_BUMP,
+				image: spriteForVorm(vorm, !!n.stub, false)
 			};
-			if (useImage) attrs.image = spriteForVorm(vorm, stub, false);
-			// A wet's anchor is a point its hull and the lines of a change end at, not a dot.
+			// A wet's anchor is a point its hull and the lines of a change end at: no sprite.
 			if (n.anchor)
 				Object.assign(attrs, {
 					anchor: true,
-					type: 'circle',
-					color: 'rgba(0,0,0,0)',
+					image: undefined,
 					size: 2,
 					label: '',
 					// Its hull's name where the law's meta has none (a law that only joins a netwerk).
@@ -930,209 +875,29 @@
 		syncContainerAnchors();
 	}
 
-	// Invisible edges that pull a container's children (a wet's artikelen, a
-	// fractie's or commissie's leden, ...) toward each other in the layout, so the
-	// hull GraphCanvas draws around them is a compact shape instead of a straggle
-	// across the canvas. Never rendered, never clickable: GraphCanvas hides any
-	// edge marked `layoutOnly`.
-	let anchorEdgeIds = new Set<string>();
-	// A star from one member pulls every other member toward that one point, which
-	// still leaves the group loose (nothing pulls member 12 toward member 47) and,
-	// for a lid on several commissies, stacks every one of its groups on the same
-	// anchor. A ring plus a chord to the opposite member pulls the whole group into
-	// one another instead, so it settles as a small, round cluster: the padded hull
-	// GraphCanvas draws around it stays close to the group and does not reach out
-	// to unrelated bronnen sitting nearby on canvas.
+	/** The layout-only links that pull each hull's members together (layout.ts). */
+	let anchorEdgeIds: ReadonlySet<string> = new Set();
 	function syncContainerAnchors() {
-		const next = new Set<string>();
-		const link = (groupId: string, a: string, b: string) => {
-			if (a === b) return;
-			const edgeId = `anchor:${groupId}:${a < b ? a : b}~${a < b ? b : a}`;
-			next.add(edgeId);
-			if (!g.hasEdge(edgeId)) {
-				try {
-					g.addUndirectedEdgeWithKey(edgeId, a, b, { layoutOnly: true });
-				} catch {
-					/* a parallel edge already links these two */
-				}
-			}
-		};
-		for (const group of containerGroups.values()) {
-			const present = [...group.members].filter((id) => g.hasNode(id));
-			const n = present.length;
-			if (n < 2) continue;
-			for (let i = 0; i < n; i++) {
-				link(group.id, present[i], present[(i + 1) % n]);
-				if (n > 3) link(group.id, present[i], present[(i + Math.floor(n / 2)) % n]);
-			}
-		}
-		for (const id of anchorEdgeIds) {
-			if (!next.has(id) && g.hasEdge(id)) g.dropEdge(id);
-		}
-		anchorEdgeIds = next;
+		anchorEdgeIds = syncGroupLinks(g, containerGroups.values(), anchorEdgeIds);
 	}
 
-	// A ring settles as a loop under FA2, not a knot — pulling an outlying member
-	// straight toward the centroid only shrinks the loop, it does not fill it in.
-	// And a ring does nothing about a SECOND group: two wetten never share an
-	// artikel, a wet and a dossier never share a bron either, yet nothing stops FA2
-	// from settling their two clusters on top of each other. After every burst:
-	// each group's members are packed into a small, filled disk around their own
-	// centroid, in a fixed sunflower spiral (a golden-angle turn and a growing
-	// radius per member) rather than wherever FA2 happened to leave them, so the
-	// group reads as one round cluster at any size; then any two groups' disks that
-	// still overlap are pushed apart along the line between their centres — Venn
-	// diagram, not physics: disjoint groups get disjoint ground, whatever kinds
-	// they are.
-	const CLUSTER_GAP = 36;
-	const GOLDEN_ANGLE = 2.399963229728653;
-	const groupRadius = (memberCount: number) => Math.max(26, 14 + Math.sqrt(memberCount) * 10);
-
-	// A cluster bron stands where it has most room around the focus: FA2 put "172
-	// uitspraken" on the hull of BW5 and its name under the hull's. Of sixteen directions
-	// just outside the focus's other neighbours, the one furthest from any bron.
-	function placeClusters() {
+	function placeClusterNodes() {
 		// A fractie, commissie or dossier as focus: round its anchor, outside its hull.
 		const focus = focusNodeId ?? selection?.id ?? null;
 		if (!focus || !g.hasNode(focus) || clusters.length === 0) return;
-		const fx = g.getNodeAttribute(focus, 'x') as number;
-		const fy = g.getNodeAttribute(focus, 'y') as number;
-		const taken: { x: number; y: number }[] = [];
-		g.forEachNode((id, a) => {
-			if (id !== focus && !isClusterId(id) && !a.anchor)
-				taken.push({ x: a.x as number, y: a.y as number });
-		});
-		const dists = g
-			.neighbors(focus)
-			.filter((id) => !isClusterId(id))
-			.map((id) =>
-				Math.hypot(
-					(g.getNodeAttribute(id, 'x') as number) - fx,
-					(g.getNodeAttribute(id, 'y') as number) - fy
-				)
-			)
-			.sort((a, b) => a - b);
-		// Just outside the ring of the other neighbours, which FA2 sets at one distance.
-		const r = dists.length ? dists[Math.floor((dists.length - 1) * 0.9)] * CLUSTER_OUT : 100;
-		const room = (x: number, y: number) =>
-			taken.reduce((min, t) => Math.min(min, Math.hypot(t.x - x, t.y - y)), Infinity);
-		for (const c of clusters) {
-			if (!g.hasNode(c.id)) continue;
-			let best = { x: fx - r, y: fy, room: -1 };
-			for (let k = 0; k < DIRECTIONS; k++) {
-				const angle = (k / DIRECTIONS) * 2 * Math.PI;
-				const x = fx + Math.cos(angle) * r;
-				const y = fy + Math.sin(angle) * r;
-				const free = room(x, y);
-				if (free > best.room) best = { x, y, room: free };
-			}
-			g.setNodeAttribute(c.id, 'x', best.x);
-			g.setNodeAttribute(c.id, 'y', best.y);
-			taken.push(best);
-		}
+		placeClusters(
+			g,
+			focus,
+			clusters.map((c) => c.id),
+			isClusterId
+		);
 	}
-	const DIRECTIONS = 16;
-	const CLUSTER_OUT = 1.3;
 
 	function separateContainerGroups() {
-		type Disk = { cx: number; cy: number; r: number; ids: string[] };
-		// A bron can genuinely belong to two groups at once (a stuk that both PART_OF
-		// a dossier and AMENDS a wet directly): packing it into each in turn leaves
-		// it wherever the last group put it, which then reads as that bron's OWN
-		// group reaching out to the other — the very overlap this whole pass exists
-		// to remove. Each bron is packed by its largest group only; a smaller group
-		// it also belongs to draws its hull around wherever that leaves it, same as
-		// any other bron on canvas.
-		const eligible = [...containerGroups.values()]
-			.filter(
-				(group) =>
-					group.members.size >= 2 && isDrawnGroup(group, focusContainerId, focusNodeId, groupPeriod)
-			)
-			.sort((a, b) => b.members.size - a.members.size);
-		const primaryGroupId = new Map<string, string>();
-		for (const group of eligible) {
-			for (const id of group.members) {
-				if (g.hasNode(id) && !primaryGroupId.has(id)) primaryGroupId.set(id, group.id);
-			}
-		}
-		const disks: Disk[] = [];
-		for (const group of eligible) {
-			const ids = [...group.members].filter(
-				(id) => g.hasNode(id) && primaryGroupId.get(id) === group.id
-			);
-			const n = ids.length;
-			if (n < 2) continue;
-			let cx = 0;
-			let cy = 0;
-			for (const id of ids) {
-				cx += g.getNodeAttribute(id, 'x') as number;
-				cy += g.getNodeAttribute(id, 'y') as number;
-			}
-			cx /= n;
-			cy /= n;
-			const r = groupRadius(n);
-			ids.forEach((id, i) => {
-				const angle = i * GOLDEN_ANGLE;
-				const radius = r * Math.sqrt((i + 0.5) / n);
-				g.setNodeAttribute(id, 'x', cx + radius * Math.cos(angle));
-				g.setNodeAttribute(id, 'y', cy + radius * Math.sin(angle));
-			});
-			disks.push({ cx, cy, r, ids });
-		}
-		for (let pass = 0; pass < 6 && disks.length > 1; pass++) {
-			for (let i = 0; i < disks.length; i++) {
-				for (let j = i + 1; j < disks.length; j++) {
-					const a = disks[i];
-					const b = disks[j];
-					const dx = b.cx - a.cx;
-					const dy = b.cy - a.cy;
-					const dist = Math.hypot(dx, dy) || 0.01;
-					const minDist = a.r + b.r + CLUSTER_GAP;
-					if (dist >= minDist) continue;
-					const overlap = minDist - dist;
-					const ux = dx / dist;
-					const uy = dy / dist;
-					const move = overlap / 2;
-					for (const id of a.ids) {
-						g.setNodeAttribute(id, 'x', (g.getNodeAttribute(id, 'x') as number) - ux * move);
-						g.setNodeAttribute(id, 'y', (g.getNodeAttribute(id, 'y') as number) - uy * move);
-					}
-					for (const id of b.ids) {
-						g.setNodeAttribute(id, 'x', (g.getNodeAttribute(id, 'x') as number) + ux * move);
-						g.setNodeAttribute(id, 'y', (g.getNodeAttribute(id, 'y') as number) + uy * move);
-					}
-					a.cx -= ux * move;
-					a.cy -= uy * move;
-					b.cx += ux * move;
-					b.cy += uy * move;
-				}
-			}
-		}
-		// A bron that is not packed into a disk (a judgment citing one of a law's
-		// articles) would otherwise sit inside that law's hull and read as part of it.
-		// It moves out of every disk it landed in, in its own direction from the disk's
-		// centre, into a band around the disk as wide as those bronnen need: a
-		// low-discrepancy step spreads them across the band, so bronnen in one direction
-		// do not stack on one ring.
-		const packed = new Set(disks.flatMap((disk) => disk.ids));
-		for (const disk of disks) {
-			const inside: { id: string; angle: number }[] = [];
-			g.forEachNode((id, attrs) => {
-				if (packed.has(id)) return;
-				const dx = (attrs.x as number) - disk.cx;
-				const dy = (attrs.y as number) - disk.cy;
-				if (Math.hypot(dx, dy) >= disk.r + CLUSTER_GAP) return;
-				const angle = dx || dy ? Math.atan2(dy, dx) : inside.length * GOLDEN_ANGLE;
-				inside.push({ id, angle });
-			});
-			const band = groupRadius(inside.length);
-			inside.forEach(({ id, angle }, i) => {
-				const radius = disk.r + CLUSTER_GAP + band * ((i * 0.618034) % 1);
-				g.setNodeAttribute(id, 'x', disk.cx + Math.cos(angle) * radius);
-				g.setNodeAttribute(id, 'y', disk.cy + Math.sin(angle) * radius);
-			});
-		}
-		if (disks.length > 0) canvas?.refresh();
+		const drawn = [...containerGroups.values()].filter((group) =>
+			isDrawnGroup(group, focusContainerId, focusNodeId, groupPeriod)
+		);
+		if (packGroups(g, drawn)) canvas?.refresh();
 	}
 
 	function drawEdges(allEdges: GraphEdge[]) {
@@ -1155,13 +920,14 @@
 			};
 			if (g.hasEdge(e.id)) {
 				g.mergeEdgeAttributes(e.id, attrs);
-			} else if (g.hasNode(e.source) && g.hasNode(e.target)) {
-				try {
-					g.addDirectedEdgeWithKey(e.id, e.source, e.target, attrs);
-					changed = true;
-				} catch {
-					// A parallel edge between this source and target exists with another key.
-				}
+			} else if (
+				g.hasNode(e.source) &&
+				g.hasNode(e.target) &&
+				// A simple graph: one directed edge per source and target, whatever its key.
+				!g.hasDirectedEdge(e.source, e.target)
+			) {
+				g.addDirectedEdgeWithKey(e.id, e.source, e.target, attrs);
+				changed = true;
 			}
 		}
 		applyFilters();
@@ -1192,23 +958,11 @@
 		}, 400);
 	}
 
-	/** Where the card stands: beside the bron at `at`, not loose in a corner. */
-	function kaartPlek(at: { x: number; y: number } | null): { x: number; y: number } | null {
-		if (!at || !canvasWrap) return null;
-		const W = 360,
-			H = 240,
-			GAP = 20;
-		const w = canvasWrap.clientWidth,
-			h = canvasWrap.clientHeight;
-		// In a narrow network (beside the reader) the card is as wide as the network allows.
-		const breed = Math.min(W, w - 16);
-		const x =
-			at.x + GAP + breed < w - 8
-				? at.x + GAP
-				: Math.max(8, Math.min(at.x - GAP - breed, w - breed - 8));
-		const y = Math.min(Math.max(8, at.y - 40), Math.max(8, h - H - 8));
-		return { x, y };
-	}
+	/** Where the card of a bron stands: beside the bron at `at` (card-place.ts). */
+	const kaartPlek = (at: { x: number; y: number } | null) =>
+		at && canvasWrap
+			? cardBeside(at, { width: canvasWrap.clientWidth, height: canvasWrap.clientHeight })
+			: null;
 
 	// A card taller than its place (an article's text, the reader's notes) moves up until its
 	// foot is inside the network, as its text loads too.
@@ -1347,7 +1101,6 @@
 	});
 	/** The height of each card when it last stood open, to know whether it fits again. */
 	const hoogteOpen: Partial<Record<Zwevend, number>> = {};
-	const SPEELRUIMTE = 48;
 	// A last guard: no more than a few folds a second, whatever the measures say.
 	let wissels: number[] = [];
 	function wissel(wie: Zwevend | null) {
@@ -1361,21 +1114,20 @@
 	function schik() {
 		const host = overlayHost;
 		if (!host) return;
-		const H = host.clientHeight;
 		// The cards' width and edge from the tokens (--paneel-breed, --paneel-rand).
 		const stijl = getComputedStyle(host);
-		const breed = parseFloat(stijl.getPropertyValue('--paneel-breed')) || 280;
-		const rand = parseFloat(stijl.getPropertyValue('--paneel-rand')) || 12;
-		const nw = host.querySelector<HTMLElement>('.netwerk:not(.netwerk--start)');
-		const top = nw ? nw.offsetTop + nw.offsetHeight + 8 : rand;
-		// As wide as the panel open, its right edge on the panel's: a folded panel is narrower.
-		const right = nw ? host.clientWidth - (nw.offsetLeft + nw.offsetWidth) : rand;
-		legendaPlek = {
-			top,
-			right,
-			width: Math.min(Math.max(nw?.offsetWidth ?? 0, breed), host.clientWidth - 2 * right),
-			max: Math.max(0, H - top - rand)
+		const card = {
+			width: parseFloat(stijl.getPropertyValue('--paneel-breed')) || 280,
+			edge: parseFloat(stijl.getPropertyValue('--paneel-rand')) || 12
 		};
+		const nw = host.querySelector<HTMLElement>('.netwerk:not(.netwerk--start)');
+		legendaPlek = legendPlace(
+			{ width: host.clientWidth, height: host.clientHeight },
+			nw
+				? { top: nw.offsetTop, left: nw.offsetLeft, width: nw.offsetWidth, height: nw.offsetHeight }
+				: null,
+			card
+		);
 		const nwOpen = !!nw && !nw.classList.contains('netwerk--dicht');
 		const nwH = nw ? nw.scrollHeight : 0;
 		// The legend scrolls inside its content: its whole height is its head and that content.
@@ -1384,19 +1136,16 @@
 		const lgH = legendaEl ? (kop?.offsetHeight ?? 0) + (inhoud?.scrollHeight ?? 0) + 2 : 0;
 		if (nwOpen) hoogteOpen.netwerk = nwH;
 		if (legendaOpen) hoogteOpen.legenda = lgH;
-		const zij = get(opzij);
-		if (nwOpen && legendaOpen && !passenSamen(nwH, lgH, H)) {
-			wissel(get(laatstOpen) === 'legenda' ? 'netwerk' : 'legenda');
-			return;
-		}
-		// A folded card opens again only with room to spare: measured open and remembered, the
-		// heights differ by a few pixels, and without that margin the cards folded and opened
-		// each other without end (the page hung once the Legenda grew, 10 Oct).
-		const ruim = H - SPEELRUIMTE;
-		if (zij === 'legenda' && passenSamen(nwH, hoogteOpen.legenda ?? Infinity, ruim))
-			opzij.set(null);
-		if (zij === 'netwerk' && passenSamen(hoogteOpen.netwerk ?? Infinity, lgH, ruim))
-			opzij.set(null);
+		const step = foldStep({
+			height: host.clientHeight,
+			panel: nw ? { open: nwOpen, height: nwH } : null,
+			legend: { open: legendaOpen, height: lgH },
+			folded: get(opzij),
+			lastOpened: get(laatstOpen),
+			openHeights: hoogteOpen
+		});
+		if (step === 'unfold') opzij.set(null);
+		else if (step) wissel(step.fold);
 	}
 	$effect(() => {
 		const host = overlayHost;
@@ -1495,18 +1244,11 @@
 
 {#snippet sidebar()}
 	<GraphSidebar
+		{...legend}
 		{verbonden}
 		{filter}
 		selectionCollection={selection?.collection ?? null}
-		{onFilter}
-		{onOpenFilter}
-		{depth}
 		{reach}
-		{onDepth}
-		{onAllesLaden}
-		{onLaadSoort}
-		{laadtSoort}
-		{allesGrens}
 		hiddenRelations={filters.hiddenRelations}
 		onToggleRelation={toggleRelation}
 		hiddenGroups={filters.hiddenGroups}
@@ -1515,9 +1257,6 @@
 		{overlay}
 		inFluxCount={inFluxMap.size}
 		{netwerkActive}
-		{onToggleHeat}
-		{onHeatPeriodChange}
-		{onToggleMutatie}
 		{hasNodes}
 	/>
 {/snippet}

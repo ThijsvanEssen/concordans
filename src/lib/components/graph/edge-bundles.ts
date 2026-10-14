@@ -74,7 +74,8 @@ export function bundledInto(
 	return bundled;
 }
 
-function inSameGroup(
+/** Whether `a` and `b` are in one hull: a line between them repeats what the hull says. */
+export function inSameGroup(
 	a: string,
 	b: string,
 	nodeGroupIds: ReadonlyMap<string, ReadonlySet<string>>
