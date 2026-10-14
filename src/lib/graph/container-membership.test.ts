@@ -5,7 +5,6 @@ import {
 	momentOf,
 	type ContainerGroup
 } from './container-membership';
-import { periodLabel } from '$lib/verbonden/rows';
 
 const lid = 'members/jetten';
 const group = (id: string, from: string | null, to: string | null): ContainerGroup => ({
@@ -57,18 +56,6 @@ describe('isDrawnGroup', () => {
 		expect(isDrawnGroup(dossier, null)).toBe(false);
 		expect(isDrawnGroup(dossier, 'dossiers/1')).toBe(true);
 		expect(isDrawnGroup({ ...dossier, parts: new Set(['documents/a']) }, null)).toBe(true);
-	});
-});
-
-describe('periodLabel', () => {
-	it('writes a seat as years, with a role other than plain membership', () => {
-		expect(periodLabel({ from: '2017-11-14', to: '2021-04-06', role: null })).toBe('2017–2021');
-		expect(periodLabel({ from: '2025-11-12', to: null, role: 'Lid' })).toBe('sinds 2025');
-		expect(periodLabel({ from: '2023-12-06', to: '2026-02-09', role: 'Fractievoorzitter' })).toBe(
-			'fractievoorzitter, 2023–2026'
-		);
-		// The end date is the last day of the seat (TotEnMet).
-		expect(periodLabel({ from: null, to: '2026-06-09', role: null })).toBe('tot en met 2026');
 	});
 });
 

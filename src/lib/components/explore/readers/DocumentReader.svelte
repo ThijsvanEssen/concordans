@@ -269,14 +269,11 @@
 		const doelwit = tekstBereik ? 'markering' : anchor;
 		afterTick(() => landOn(container, doelwit));
 	});
-
-	// The kind is the source's own wording; where a glossary term exists the kicker links to it.
-	const glossaryTerm = termOfKind;
 </script>
 
 <ReaderFrame state={record.state} what="Document" retry={record.retry}>
 	{#snippet children(doc)}
-		{@const term = glossaryTerm(doc.kind)}
+		{@const term = termOfKind(doc.kind)}
 		<!-- Without the group of kinds the source files it under (#58): "Amendement". -->
 		{@const kind = ownKind(doc.kind)}
 		{@const cite = kamerstukCitation({

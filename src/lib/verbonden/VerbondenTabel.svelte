@@ -1,7 +1,7 @@
 <script lang="ts">
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import Vinkje from '$lib/components/ui/Vinkje.svelte';
-	import { rowClick, terPlekke } from '$lib/actions/klik';
+	import { blockClick, terPlekke } from '$lib/actions/klik';
 	// All verbindingen of the selected bron as a table, under the same bronfilter:
 	// bron, verbinding, plaats in de bron, plaats in dit artikel, aard, status,
 	// betrouwbaarheid, datum. Fifty rows per page.
@@ -235,10 +235,7 @@
 						{@const open = openRow === id}
 						<!-- A click on the row opens it under itself, as in Verbonden; the card
 						     Verbinding is the button under the title. -->
-						<tr
-							class:is-open={open}
-							onclick={(e) => rowClick(e, () => (openRow = open ? null : id))}
-						>
+						<tr class:is-open={open} use:blockClick={() => (openRow = open ? null : id)}>
 							{#each visibleColumns as c (c.id)}
 								{#if c.id === 'bron'}
 									<td class="cell-bron">

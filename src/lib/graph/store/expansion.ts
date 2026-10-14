@@ -13,7 +13,7 @@ import type { Schema } from '$lib/api/types';
 import { containerIdFor, containerKindOf, isContainerMembership } from '../container-membership';
 import { foldVersions } from '../paths';
 import { withoutLawHops } from '../neighborhood';
-import { NODE_TYPES, nodeId, type Collection } from '$lib/vocabulary';
+import { NODE_TYPES, nodeId, parseNodeId, type Collection } from '$lib/vocabulary';
 import { get, writable } from 'svelte/store';
 import { nodeToGraphNode, relationOf } from '../types';
 import { COLLECTION_ROLE } from '../collection-role';
@@ -25,6 +25,13 @@ import {
 	type NeighborhoodReach
 } from './types';
 import { behoudenBuckets, behoudenIds, meldSoort, type SoortenGeladen } from './soorten';
+
+/** "Alles laden" of one kind: at most this many bronnen, asked a page of this many at a time. */
+const LOAD_ALL_CAP = 5000;
+const LOAD_ALL_PAGE = 500;
+
+/** The dossiers of the stukken on a path: four at a time, for at most twelve stukken. */
+const PATH_DOSSIERS = { parallel: 4, max: 12 };
 
 export function createExpansion(
 	ctx: GraphContext
@@ -109,13 +116,13 @@ export function createExpansion(
 		/** Paths: a step to a container is drawn to its hull, not dropped (Sr, VVD). */
 		naarOmtrek = false
 	) {
-		const byId = new Map(nodesIn.map((n) => [`${n.collection}/${n.key}`, n]));
+		const byId = new Map(nodesIn.map((n) => [nodeId(n.collection, n.key), n]));
 		const drawn = new Set<string>();
 		for (const node of nodesIn) {
 			// The requested bron itself is drawn even when it is a container: it stays
 			// selectable for the reader, though `GraphView` never draws it as a canvas
 			// node. A container met only as a neighbour is folded into a hull instead.
-			const isFocal = `${node.collection}/${node.key}` === focalId;
+			const isFocal = nodeId(node.collection, node.key) === focalId;
 			if (isFocal) {
 				const containerKind = containerKindOf(node.collection);
 				if (containerKind) recordContainerFor(node, containerKind);
@@ -217,7 +224,7 @@ export function createExpansion(
 					.filter(
 						(e) =>
 							e.relation === 'PART_OF' &&
-							e.target.startsWith('instruments/') &&
+							parseNodeId(e.target)?.collection === 'instruments' &&
 							!membership.has(e.id)
 					)
 					.map((e) => e.id)
@@ -227,18 +234,20 @@ export function createExpansion(
 			const edgeIds = new Set(paths.flatMap((p) => p.edge_ids));
 			// A version of an article is no bron: the hop through it folds onto the article.
 			const folded = foldVersions(
-				response.nodes.filter((n) => onPath.has(`${n.collection}/${n.key}`)),
+				response.nodes.filter((n) => onPath.has(nodeId(n.collection, n.key))),
 				response.edges.filter((e) => edgeIds.has(e.id))
 			);
 			const { drawn } = mergeSubgraph(folded.nodes, folded.edges, null, true);
 			// The dossier a stuk on a path is in, as a hull around it: the MvT of 33328 shows
 			// the bill it explains (BE-49). From the stuk's light node (its one PART_OF dossier;
-			// 9 kB, not 42), four at a time and for at most twelve stukken, so one composition
-			// stays within the API's limit. The paths are drawn without waiting for it.
+			// 9 kB, not 42), within PATH_DOSSIERS, so one composition stays within the API's
+			// limit. The paths are drawn without waiting for it.
 			inPool(
-				[...drawn].filter((id) => id.startsWith('documents/')),
-				async (id) => {
-					const key = id.slice('documents/'.length);
+				[...drawn].flatMap((id) => {
+					const ref = parseNodeId(id);
+					return ref?.collection === 'documents' ? [{ id, key: ref.key }] : [];
+				}),
+				async ({ id, key }) => {
 					const r = await abortable(getNodeFirst('documents', key), signal()).catch(() => null);
 					const dossier = r
 						? neighborsOf(r).find(
@@ -254,7 +263,7 @@ export function createExpansion(
 					containers.recordMember('dossier', container, id, 'PART_OF');
 					containers.markLone(container);
 				},
-				{ parallel: 4, max: 12 }
+				PATH_DOSSIERS
 			)
 				.then(() => emit())
 				.catch((e) => report('Netwerk dossiers', e));
@@ -267,19 +276,19 @@ export function createExpansion(
 		neighborhood: { subscribe: neighborhoodStore.subscribe },
 
 		laadSoort: async (collection, key, soort, opts = {}) => {
-			const grens = opts.grens ?? 5000;
+			const grens = opts.grens ?? LOAD_ALL_CAP;
 			const focus = nodeId(collection, key.toLowerCase());
 			const ids = new Set<string>();
 			let offset = 0;
 			for (;;) {
 				const response = await getNodeGraph(collection, key, {
-					limit: 500,
+					limit: LOAD_ALL_PAGE,
 					offset,
 					nodeTypes: NODE_TYPES[soort],
 					props: 'canvas',
 					signal: opts.signal ?? signal()
 				});
-				for (const n of neighborsOf(response)) ids.add(nodeId(n.collection as Collection, n.key));
+				for (const n of neighborsOf(response)) ids.add(nodeId(n.collection, n.key));
 				soortenGeladen = meldSoort(soortenGeladen, focus, soort, ids);
 				// The same bronnen as the neighbourhood's on their id: drawn once.
 				mergeResponse(response);

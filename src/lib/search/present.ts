@@ -357,6 +357,9 @@ export function orderGroups<G extends { kind: Collection; hits: Hit[] }>(groups:
 	return [...groups].sort((a, b) => best(b) - best(a) || tie(a) - tie(b));
 }
 
+/** The score from which a hit is the identifier asked for (an ECLI, a BWB id, a number). */
+const IDENTIFIER_SCORE = 1;
+
 /** How much lower a law's or an article's best hit may score and still come first. */
 export const RECHT_MARGE = 0.25;
 const RECHT: readonly Collection[] = ['articles', 'instruments'];
@@ -377,7 +380,7 @@ export function besteTreffer<G extends { kind: Collection; hits: Hit[] }>(
 	const top = Math.max(...all.map(score));
 	const first = (xs: typeof all) =>
 		xs.reduce<(typeof all)[number] | null>((m, x) => (!m || score(x) > score(m) ? x : m), null);
-	const id = all.find((x) => score(x) >= 1);
+	const id = all.find((x) => score(x) >= IDENTIFIER_SCORE);
 	if (id) return id;
 	const recht = first(RECHT.flatMap((k) => all.filter((x) => x.kind === k && score(x) > 0)));
 	if (recht && score(recht) >= top - RECHT_MARGE) return recht;

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { bewaarItem } from '$lib/map/map';
-	import { rowClick, terPlekke } from '$lib/actions/klik';
+	import { blockClick, terPlekke } from '$lib/actions/klik';
 	// One row of the index. A click anywhere in the row, the title too, opens its detail
 	// beneath it; the bron itself opens from the buttons there. The title stays a link, so
 	// cmd-click and a middle click open the bron in a new tab and it can be copied. The
@@ -79,7 +79,7 @@
 			: null;
 	});
 
-	const onRowClick = (e: MouseEvent) => rowClick(e, () => (direct ? goto(href!) : onToggle?.()));
+	const onRowClick = () => (direct ? goto(href!) : onToggle?.());
 
 	/** A plain click on the title opens the row; with a modifier it is the link's. With
 	 *  `acties` the title is a plain link: it opens the bron. */
@@ -91,13 +91,12 @@
 
 <li class="row-wrap" class:row-wrap--member={member} data-bron={bron}>
 	<!-- The button below is the keyboard's way in; this only widens its target. -->
-	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 	<div
 		class="row"
 		class:row--on={open}
 		class:row--emphasis={emphasis}
 		data-rij
-		onclick={onRowClick}
+		use:blockClick={onRowClick}
 	>
 		{#if !direct}
 			<button

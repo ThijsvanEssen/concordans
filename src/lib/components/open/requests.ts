@@ -3,7 +3,7 @@
 // rejects, so it is shown as one and never as an empty row or a 0.
 import { api, unwrap } from '$lib/api/client';
 import { ifExists } from '$lib/api/errors';
-import { getNodeGraph, neighborsOf } from '$lib/api/nodes';
+import { getNodeGraph, neighborsOf, NODE_BUCKET } from '$lib/api/nodes';
 import { abortable, getAmendedBy, getDocument } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
 import { kernSoort, kernVan, type Inhoud, type MetInhoud } from './rij-inhoud';
@@ -33,7 +33,7 @@ export async function changesOf(
 ): Promise<WetRegel[] | Brenger[]> {
 	if (soort === 'wijzigingen') {
 		const g = await getNodeGraph('instruments', item.node.key, {
-			limit: 200,
+			limit: NODE_BUCKET,
 			relations: CHANGE_RELATIONS.join(','),
 			direction: 'outbound',
 			signal

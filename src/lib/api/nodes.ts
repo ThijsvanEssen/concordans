@@ -1,11 +1,15 @@
 import type { Schema } from '$lib/api/types';
 import { NODE_TYPES, type Collection, type Relation } from '$lib/vocabulary';
-import { api, unwrap, zoekApi } from './client';
+import { api, unwrap, slowApi } from './client';
 
 // Keys are lower case in the API and the routes are case-sensitive.
 const path = (collection: Collection, key: string) => ({ collection, key: key.toLowerCase() });
 
-const clientFor = (limit = 0) => (limit > 1 ? zoekApi : api);
+/** A light node waits the ordinary 10 s, any other as long as the API does. */
+const clientOf = (wait: 'short' | 'long' = 'long') => (wait === 'short' ? api : slowApi);
+
+/** The most the API gives per bucket of a node. */
+export const NODE_BUCKET = 200;
 
 export const getNodeGraph = (
 	collection: Collection,
@@ -24,12 +28,16 @@ export const getNodeGraph = (
 		/** `passages`: an edge of a judgment's citation with the places it cites (API 0.79.55),
 		 *  asked only where a row or a card shows them, not for the canvas. */
 		edgeMeta?: 'passages';
+		/**
+		 * A node waits as long as the API does: a full one can take a cold API more than 10 s
+		 * (art. 3:2 Awb, 651 kB, prod 9 Oct), and is then not cut off and asked again. `short`:
+		 * a light node (one neighbour per bucket), the ordinary 10 s.
+		 */
+		wait?: 'short' | 'long';
 	} = {}
 ) =>
-	// A full node can take a cold API more than 10 s (art. 3:2 Awb, 651 kB, prod 9 Oct): it
-	// waits as long as the API does, so the work is not cut off and asked again.
 	unwrap(
-		clientFor(opts.limit).GET('/api/nodes/{collection}/{key}', {
+		clientOf(opts.wait).GET('/api/nodes/{collection}/{key}', {
 			params: {
 				path: path(collection, key),
 				query: {
@@ -57,7 +65,7 @@ export type Bucket = {
 };
 
 /**
- * The rows of these buckets of a bron, up to 200 each, one request per bucket; one that
+ * The rows of these buckets of a bron, up to NODE_BUCKET each, one request per bucket; one that
  * fails fails them all, so no group stands with part of its rows as if whole.
  */
 export const getBuckets = (
@@ -70,7 +78,7 @@ export const getBuckets = (
 	Promise.all(
 		buckets.map((b) =>
 			getNodeGraph(collection, key, {
-				limit: 200,
+				limit: NODE_BUCKET,
 				relations: [b.relation].flat().join(','),
 				nodeTypes: [b.collection]
 					.flat()
@@ -83,16 +91,14 @@ export const getBuckets = (
 		)
 	).then((results) => results.flatMap(neighborsOf));
 
-/** The neighbours of a node response, whatever bucket they are in. An API before 0.5 lists them flat. */
+/** The neighbours of a node response, whatever bucket they are in. */
 export const neighborsOf = (response: NodeGraph): Neighbor[] =>
-	response.neighbors.buckets?.flatMap((b) => b.items) ??
-	(response.neighbors as { all?: Neighbor[] }).all ??
-	[];
+	response.neighbors.buckets?.flatMap((b) => b.items) ?? [];
 
 export const bucketKey = (relation: string | null, collection: string, direction: string) =>
 	`${relation}/${collection}/${direction}`;
 
-/** How many neighbours each bucket has in the database; empty for an API before 0.5. */
+/** How many neighbours each bucket has in the database. */
 export function bucketTotals(response: NodeGraph): Map<string, number> {
 	const totals = new Map<string, number>();
 	for (const b of response.neighbors.buckets ?? []) {
@@ -116,7 +122,7 @@ export function lidCountsByCollection(
 ): Map<string, Map<string, number>> | null {
 	let per: Map<string, Map<string, number>> | null = null;
 	for (const b of response.neighbors.buckets ?? []) {
-		const lid = (b as { lid_counts?: Record<string, number> | null }).lid_counts;
+		const lid = b.lid_counts;
 		if (!lid) continue;
 		per ??= new Map();
 		const of = per.get(b.collection) ?? new Map<string, number>();

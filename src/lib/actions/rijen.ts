@@ -3,7 +3,7 @@
 // the keys go to the list that holds the focus, or else to the first one on screen. Not while
 // typing, not with a modifier. In docs/sneltoetsen.
 
-const TYPING = 'input, select, textarea, [contenteditable]';
+import { hasModifier, isTyping } from './keys';
 
 /** The row to go to from `nu` (-1 for none yet), one step `richting`, kept inside the list. */
 export function stap(nu: number, aantal: number, richting: 1 | -1): number {
@@ -18,11 +18,10 @@ const lijsten = new Set<Lijst>();
 const zichtbaar = (el: HTMLElement) => el.offsetParent !== null && el.getClientRects().length > 0;
 
 function opToets(e: KeyboardEvent) {
-	if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return;
+	if (hasModifier(e) || e.defaultPrevented) return;
 	const toets = e.key.toLowerCase();
 	if (toets !== 'j' && toets !== 'k') return;
-	const doel = e.target as HTMLElement | null;
-	if (doel?.closest?.(TYPING)) return;
+	if (isTyping(e.target)) return;
 	const actief = document.activeElement as HTMLElement | null;
 	const lijst =
 		[...lijsten].find((l) => actief && l.node.contains(actief)) ??

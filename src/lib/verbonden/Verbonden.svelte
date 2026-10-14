@@ -22,7 +22,7 @@
 	import WetVerwijzingen from './WetVerwijzingen.svelte';
 	import StukUitslag from '$lib/components/parliamentary/StukUitslag.svelte';
 	import { stukUitslag } from '$lib/components/parliamentary/stuk-uitslag';
-	import { rowClick, terPlekke } from '$lib/actions/klik';
+	import { blockClick, terPlekke } from '$lib/actions/klik';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { page } from '$app/state';
@@ -681,21 +681,19 @@
 							<li class="row" class:row--onder={!!row.onder}>
 								<!-- The row is the way to its bron: a click anywhere on it opens the bron in
 								     Netwerk, as its title does. -->
-								<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 								<div
 									class="row__main"
 									data-rij
 									class:is-open={openRij === rowKey(row)}
-									onclick={(e) => {
-										if (row.missing) return;
-										rowClick(e, () => {
-											if (opentTerPlekke(row)) wisselRij(row);
-											else {
-												zetMarkering(rijMarkering(row));
-												goto(href, { noScroll: true });
-											}
-										});
-									}}
+									use:blockClick={row.missing
+										? null
+										: () => {
+												if (opentTerPlekke(row)) wisselRij(row);
+												else {
+													zetMarkering(rijMarkering(row));
+													goto(href, { noScroll: true });
+												}
+											}}
 								>
 									<KindGlyph
 										collection={row.ref.collection}

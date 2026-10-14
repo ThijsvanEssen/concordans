@@ -52,14 +52,17 @@ export type HullShape = {
 	path: string;
 };
 
+/** The corners of the polygon that stands for the circle around one point. */
+const CIRCLE_CORNERS = 24;
+
 export function hullOutline(points: Point[], margin: number): HullShape {
 	if (points.length === 0) return { outline: [], polygon: [], path: '' };
 	if (points.length === 1) {
 		const { x, y } = points[0];
 		const path = `M ${x - margin} ${y} A ${margin} ${margin} 0 1 0 ${x + margin} ${y} A ${margin} ${margin} 0 1 0 ${x - margin} ${y} Z`;
-		const polygon = Array.from({ length: 24 }, (_, i) => ({
-			x: x + Math.cos((i / 24) * Math.PI * 2) * margin,
-			y: y + Math.sin((i / 24) * Math.PI * 2) * margin
+		const polygon = Array.from({ length: CIRCLE_CORNERS }, (_, i) => ({
+			x: x + Math.cos((i / CIRCLE_CORNERS) * Math.PI * 2) * margin,
+			y: y + Math.sin((i / CIRCLE_CORNERS) * Math.PI * 2) * margin
 		}));
 		return { outline: [{ x, y: y - margin }], polygon, path };
 	}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { gewoneKlik } from '$lib/actions/klik';
 	import NavKolom from './NavKolom.svelte';
 	import { judgmentCite } from '$lib/text/judgment-cite';
 	import { replaceState } from '$app/navigation';
@@ -66,7 +67,7 @@
 	// A link to the passage, so that it can be copied and opened elsewhere; a plain click
 	// scrolls smoothly and puts the passage in the address without a history entry.
 	function jump(e: MouseEvent, id: string) {
-		if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+		if (!gewoneKlik(e)) return;
 		e.preventDefault();
 		document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 		replaceState(`#${id}`, page.state);

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { bron, overtreders, plek } from '$lib/test/bronnen';
 
 describe('the address and the requests', () => {
-	it('sets how long a request waits only in $lib/api/client.ts (api or zoekApi)', () => {
+	it('sets how long a request waits only in $lib/api/client.ts (api or slowApi)', () => {
 		// A caller's own timeout can only shorten the client's: 30 s on top of `api` gave up after 10.
 		expect(
 			overtreders((t) => /AbortSignal\.timeout\(/.test(t), [plek('lib/api/client.ts')])

@@ -1,5 +1,5 @@
 // A focus with hundreds of bronnen of one kind (6:162 BW and its 250 uitspraken) is not
-// drawn as hundreds of signs: past CLUSTER_MIN, the bronnen of a kind that hang on the
+// drawn as hundreds of signs: past CLUSTER_MAX_LOOSE, the bronnen of a kind that hang on the
 // focus alone stand on the canvas as one cluster bron, "250 uitspraken". One click on it
 // opens a card that shows them all, or the group in Verbonden; shown, they fold back.
 import { joinAnd, lowerFirst, plural } from '$lib/text/words';

@@ -11,6 +11,7 @@
 	import { get } from 'svelte/store';
 	import { meldNetwerk } from '$lib/stores/netwerk-melding';
 	import {
+		DEFAULT_FILTERS,
 		NEIGHBORHOOD_CAP,
 		NEIGHBORHOOD_CAP_PHONE,
 		type NeighborhoodReach
@@ -86,7 +87,12 @@
 		isContainerKind,
 		type ContainerKind
 	} from '$lib/graph/container-membership';
-	import { parseOverlay, DEFAULT_HEAT_MONTHS, type Overlay } from '$lib/stores/overlay';
+	import {
+		parseOverlay,
+		overlayParam,
+		DEFAULT_HEAT_MONTHS,
+		type Overlay
+	} from '$lib/netwerk/overlay';
 	import { AMENDING_RELATIONS, parseNodeId, type Mode } from '$lib/vocabulary';
 	import type { Schema } from '$lib/api/types';
 	import { articleOf, kort, lawIdOf, nodeToGraphNode } from '$lib/graph/types';
@@ -714,11 +720,13 @@
 			// A wet, fractie, commissie or dossier is a hull, not a scattered handful of
 			// dots: its own children are its point, so they are not capped like an
 			// ordinary bron's neighbours are.
-			const neighborLimit = containerKindOf(target.collection) ? Number.POSITIVE_INFINITY : 30;
+			const neighborLimit = containerKindOf(target.collection)
+				? Number.POSITIVE_INFINITY
+				: DEFAULT_FILTERS.neighborLimit;
 			// The bron itself first, from its light node: the reader and the panels start while
 			// the node the canvas draws is on its way, asked at the same time: a container's
 			// hull (`getNodeHull`: a wet's articles, a dossier's whole node), an ordinary bron's
-			// 30 per bucket (`getNodeCanvas`).
+			// first per bucket (`getNodeCanvas`, CANVAS_BUCKET).
 			const canvasNode = Number.isFinite(neighborLimit)
 				? getNodeCanvas(target.collection, target.key)
 				: getNodeHull(target.collection, target.key);
@@ -1177,8 +1185,7 @@
 	const readHref = $derived(withParams(page.url, { tabel: null }));
 
 	// ── Overlay (open dossiers or citations per month, never both) ────────────
-	const overlayParam = $derived(param('overlay'));
-	const overlay = $derived<Overlay>(parseOverlay(overlayParam));
+	const overlay = $derived<Overlay>(parseOverlay(param('overlay')));
 
 	let graphView = $state<GraphView | null>(null);
 	// The canvas and the lists of Bronnen are chunks of their own, asked at once beside the
@@ -1262,11 +1269,16 @@
 			});
 	});
 
+	const setOverlay = (o: Overlay) => setUrl({ overlay: overlayParam(o) });
 	const toggleHeat = () =>
-		setUrl({ overlay: overlay.kind === 'heat' ? null : `heat:${DEFAULT_HEAT_MONTHS}` });
-	const setHeatPeriod = (months: number) => setUrl({ overlay: `heat:${months}` });
+		setOverlay(
+			overlay.kind === 'heat' ? { kind: 'none' } : { kind: 'heat', months: DEFAULT_HEAT_MONTHS }
+		);
+	const setHeatPeriod = (months: number) => setOverlay({ kind: 'heat', months });
 	const toggleMutatie = () =>
-		setUrl({ overlay: overlay.kind === 'open' || overlay.kind === 'dossier' ? null : 'open' });
+		setOverlay(
+			overlay.kind === 'open' || overlay.kind === 'dossier' ? { kind: 'none' } : { kind: 'open' }
+		);
 
 	// ── Share ────────────────────────────────────────────────────────────────
 	const shareCopier = createCopier();

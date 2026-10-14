@@ -15,7 +15,8 @@
 	} from '$lib/text/judgment-cite';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
-	import PlaatsMenu from '$lib/components/articles/PlaatsMenu.svelte';
+	import PlaatsMenu, { placeMarker } from '$lib/components/articles/PlaatsMenu.svelte';
+	import { blockClick } from '$lib/actions/klik';
 	import { kaart } from '$lib/map/map.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	// Reader for judgments: header, summary, participants and the numbered body.
@@ -77,15 +78,10 @@
 	function openMenu(id: string, anker: HTMLElement) {
 		menu = menu?.id === id ? null : { id, anker };
 	}
-	function opTekst(e: MouseEvent, id: string) {
-		const t = e.target as HTMLElement;
-		if (t.closest('a, button, input, textarea, summary, [role="button"]')) return;
-		if (window.getSelection()?.toString()) return;
-		const anker = (e.currentTarget as HTMLElement)
-			.closest('.reader-para-block')
-			?.querySelector<HTMLElement>('.plaats-marker');
+	const opTekst = (id: string) => (e: MouseEvent) => {
+		const anker = placeMarker(e, '.reader-para-block');
 		if (anker) openMenu(id, anker);
-	}
+	};
 
 	let root = $state<HTMLElement | null>(null);
 	const anchor = $derived(anchorOfHash(page.url.hash));
@@ -440,11 +436,10 @@
 								onClose={() => (menu = null)}
 							/>
 						{/if}
-						<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 						<div
 							class="reader-para-inner"
 							class:is-klikbaar={!!forms}
-							onclick={(e) => forms && opTekst(e, item.id)}
+							use:blockClick={forms ? opTekst(item.id) : null}
 						>
 							{#if item.subTitle}
 								<p class="reader-para-subtitle">{item.subTitle}</p>

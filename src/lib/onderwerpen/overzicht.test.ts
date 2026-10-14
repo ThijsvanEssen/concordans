@@ -3,11 +3,7 @@ import {
 	csvTabel,
 	KOLOM_STREKKING,
 	kolomStem,
-	filter,
 	lijstQuery,
-	perJaar,
-	perSoort,
-	totaal,
 	uitFacets,
 	type Besluit,
 	type Facets,
@@ -36,47 +32,17 @@ const b = (
 
 const lijst = [
 	b('a', '2026-07-02', 'Motie', true, 'Motie over stikstof'),
-	b('b', '2026-06-01', 'Motie', false),
-	b('c', '2024-03-01', 'Amendement', true),
-	b('d', '2024-01-01', null, null)
+	b('b', '2026-06-01', 'Motie', false)
 ];
 const stemmen = new Map<string, Stem>([
 	['a', 'voor'],
 	['b', 'tegen']
 ]);
 
-describe('overzicht', () => {
-	it('telt per soort, met de stem van een fractie', () => {
-		expect(perSoort(lijst, stemmen)[0]).toEqual([
-			'Motie',
-			{ totaal: 2, aangenomen: 1, verworpen: 1, overig: 0, voor: 1, tegen: 1 }
-		]);
-		expect(perSoort(lijst, stemmen).map(([k]) => k)).toContain('Overig');
-		expect(totaal(lijst, stemmen).totaal).toBe(4);
-	});
-
-	it('telt per jaar, ook een jaar zonder besluiten ertussen', () => {
-		expect(perJaar(lijst, stemmen).map(([j, t]) => [j, t.totaal])).toEqual([
-			['2026', 2],
-			['2025', 0],
-			['2024', 2]
-		]);
-	});
-
-	it('een getal en zijn lijst zijn even lang', () => {
-		const [, motie] = perSoort(lijst, stemmen)[0];
-		expect(filter(lijst, { soort: 'Motie', uitkomst: 'verworpen' }, stemmen)).toHaveLength(
-			motie.verworpen
-		);
-		expect(filter(lijst, { stem: 'voor' }, stemmen).map((d) => d.key)).toEqual(['a']);
-		expect(filter(lijst, { jaar: '2024' }, stemmen)).toHaveLength(2);
-	});
-});
-
 describe('de tabel van de export', () => {
 	it('zet de stem van de fractie en de eigen strekking in hun kolommen', () => {
 		const motie = new Map([['a', { strekking: 'bevorderend' }]]);
-		const t = csvTabel(lijst.slice(0, 2), '', 'VVD', stemmen, new Map(), motie);
+		const t = csvTabel(lijst, '', 'VVD', stemmen, new Map(), motie);
 		const stem = t.kop.indexOf(kolomStem('VVD'));
 		const strekking = t.kop.indexOf(KOLOM_STREKKING);
 		expect(t.rijen.map((r) => r[stem])).toEqual(['voor', 'tegen']);

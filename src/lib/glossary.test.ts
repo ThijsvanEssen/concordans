@@ -1,5 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { termOfKind } from './glossary';
+import { GLOSSARY, termOfKind } from './glossary';
+
+const KINDS = [
+	'Nota van wijziging (initiatiefvoorstel)',
+	'Nota n.a.v. het (nader/tweede nader/enz.) verslag',
+	'Nota naar aanleiding van het verslag',
+	'Memorie van toelichting',
+	'mvt',
+	'Verslag',
+	'Nader verslag',
+	'Gewijzigd amendement',
+	'Motie van het lid',
+	'Initiatiefnota'
+];
 
 describe('termOfKind', () => {
 	it('reads a kind of kamerstuk as the source words it', () => {
@@ -15,5 +28,10 @@ describe('termOfKind', () => {
 		expect(termOfKind('Memorie van antwoord')).toBeNull();
 		expect(termOfKind('Verslag van een schriftelijk overleg')).toBeNull();
 		expect(termOfKind('Brief regering')).toBeNull();
+	});
+	it('has an entry for every term it gives, and no entry it never gives', () => {
+		const given = new Set(KINDS.map(termOfKind));
+		for (const term of given) expect(term && GLOSSARY[term]).toBeTruthy();
+		expect(Object.keys(GLOSSARY).sort()).toEqual([...given].sort());
 	});
 });

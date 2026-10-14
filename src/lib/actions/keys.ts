@@ -8,11 +8,17 @@ type KeyLike = Pick<
 	target: EventTarget | null;
 };
 
-const TYPING = 'input, select, textarea, [contenteditable]';
+/** Whether a key lands in a field: a keyboard shortcut leaves it to the field. */
+export function isTyping(target: EventTarget | null): boolean {
+	const el = target as { closest?: (selector: string) => unknown } | null;
+	return !!el?.closest?.('input, select, textarea, [contenteditable]');
+}
+
+/** Whether a key is pressed with a modifier: a shortcut of its own, or the browser's. */
+export const hasModifier = (e: Pick<KeyLike, 'metaKey' | 'ctrlKey' | 'altKey' | 'shiftKey'>) =>
+	e.metaKey || e.ctrlKey || e.altKey || e.shiftKey;
 
 export function isEscape(e: KeyLike): boolean {
 	if (e.key !== 'Escape' || e.defaultPrevented) return false;
-	if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return false;
-	const el = e.target as { closest?: (selector: string) => unknown } | null;
-	return !el?.closest?.(TYPING);
+	return !hasModifier(e) && !isTyping(e.target);
 }

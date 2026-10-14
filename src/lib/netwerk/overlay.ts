@@ -13,16 +13,25 @@ export type Overlay =
 export const DEFAULT_HEAT_MONTHS = 12;
 export const HEAT_PERIODS = [3, 6, 12, 24] as const;
 
+/** A period the overlay offers; any other is the default. */
+const heatMonths = (months: number) =>
+	(HEAT_PERIODS as readonly number[]).includes(months) ? months : DEFAULT_HEAT_MONTHS;
+
 export function parseOverlay(param: string | null): Overlay {
 	if (!param) return { kind: 'none' };
 	if (param === 'open') return { kind: 'open' };
-	if (param.startsWith('heat:')) {
-		const months = parseInt(param.slice('heat:'.length), 10);
-		return { kind: 'heat', months: isNaN(months) ? DEFAULT_HEAT_MONTHS : months };
-	}
+	if (param.startsWith('heat:'))
+		return { kind: 'heat', months: heatMonths(Number(param.slice('heat:'.length))) };
 	if (param.startsWith('dossier:')) {
 		const id = param.slice('dossier:'.length).trim();
 		return id ? { kind: 'dossier', id } : { kind: 'none' };
 	}
 	return { kind: 'none' };
+}
+
+/** The parameter of an overlay, as parseOverlay reads it; null without one. */
+export function overlayParam(o: Overlay): string | null {
+	if (o.kind === 'heat') return `heat:${heatMonths(o.months)}`;
+	if (o.kind === 'dossier') return `dossier:${o.id}`;
+	return o.kind === 'open' ? 'open' : null;
 }

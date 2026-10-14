@@ -1,11 +1,11 @@
 <script lang="ts">
 	// Inline term that shows a popover with the full name and a plain explanation on
-	// hover or focus. Used in the parliamentary readers around acronyms (MvT, RvS, ECLI,
-	// BWB) and procedural terms (Toezegging, Motie). A dotted underline marks the term.
-	import { lookupGlossary } from '$lib/glossary';
+	// hover or focus: the kind of a kamerstuk in the document reader (MvT, Motie). A dotted
+	// underline marks the term.
+	import { GLOSSARY, type GlossaryTerm } from '$lib/glossary';
 
-	let { term, label }: { term: string; label?: string } = $props();
-	const entry = $derived(lookupGlossary(term));
+	let { term, label }: { term: GlossaryTerm; label?: string } = $props();
+	const entry = $derived(GLOSSARY[term]);
 	const display = $derived(label ?? term);
 
 	let open = $state(false);
@@ -48,40 +48,36 @@
 	});
 </script>
 
-{#if entry}
-	<span
-		class="glossary-pill"
-		bind:this={pillEl}
-		onmouseenter={() => (open = true)}
-		onmouseleave={() => (open = false)}
-		onfocusin={() => (open = true)}
-		onfocusout={() => (open = false)}
-		onkeydown={(e) => {
-			if (e.key === 'Escape') open = false;
-			if (e.key === 'Enter' || e.key === ' ') {
-				e.preventDefault();
-				open = !open;
-			}
-		}}
-		role="button"
-		tabindex="0"
-		aria-describedby={uid}
-		>{display}<span
-			id={uid}
-			class="glossary-pop"
-			class:is-open={open}
-			role="tooltip"
-			bind:this={popEl}
-			style:top="{pos.top}px"
-			style:left="{pos.left}px"
-		>
-			<span class="glossary-pop__full">{entry.full}</span>
-			<span class="glossary-pop__plain">{entry.plain}</span>
-		</span>
+<span
+	class="glossary-pill"
+	bind:this={pillEl}
+	onmouseenter={() => (open = true)}
+	onmouseleave={() => (open = false)}
+	onfocusin={() => (open = true)}
+	onfocusout={() => (open = false)}
+	onkeydown={(e) => {
+		if (e.key === 'Escape') open = false;
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			open = !open;
+		}
+	}}
+	role="button"
+	tabindex="0"
+	aria-describedby={uid}
+	>{display}<span
+		id={uid}
+		class="glossary-pop"
+		class:is-open={open}
+		role="tooltip"
+		bind:this={popEl}
+		style:top="{pos.top}px"
+		style:left="{pos.left}px"
+	>
+		<span class="glossary-pop__full">{entry.full}</span>
+		<span class="glossary-pop__plain">{entry.plain}</span>
 	</span>
-{:else}
-	<span>{display}</span>
-{/if}
+</span>
 
 <style>
 	.glossary-pill {

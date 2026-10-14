@@ -7,7 +7,7 @@
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
-	import { HEAT_PERIODS, type Overlay } from '$lib/stores/overlay';
+	import { HEAT_PERIODS, type Overlay } from '$lib/netwerk/overlay';
 	import type { Collection, Relation } from '$lib/vocabulary';
 	import {
 		BRON_KINDS,
