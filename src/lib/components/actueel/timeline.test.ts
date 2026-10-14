@@ -331,6 +331,54 @@ describe('headlineOf', () => {
 	});
 });
 
+describe('the homepage and Actueel head one event alike', () => {
+	const kop = ({ label, title, major, teken }: ReturnType<typeof headlineOf>) => ({
+		label,
+		title,
+		major,
+		teken
+	});
+	const alone = (i: FeedItem, d: Partial<Day> = {}) => {
+		const [line] = dayLines(day(d), [i]);
+		return { label: line.label, title: line.title, major: line.major, teken: line.teken };
+	};
+
+	it('for a bill voted on', () => {
+		const bill = vote(100, 50, {
+			subkind: 'Wetgeving',
+			dossier: { key: 'a', number: '36889', short_title: 'Archiefwet' } as never
+		});
+		expect(kop(headlineOf(bill))).toEqual(alone(bill));
+	});
+
+	it('for a single vote on a motie', () => {
+		expect(kop(headlineOf(schilder))).toEqual(
+			alone(schilder, {
+				votes: [{ chamber: 'TK', subkind: 'Motie', outcome: 'verworpen', count: 1 }]
+			})
+		);
+	});
+
+	it('for a bill brought in', () => {
+		const ingediend = item({
+			kind: 'Voorstel van wet',
+			dossier: { key: 'b', number: '36900', short_title: 'Wet x' } as never
+		});
+		expect(kop(headlineOf(ingediend))).toEqual(alone(ingediend));
+	});
+
+	it('for a toezegging, with its state', () => {
+		for (const status of ['Afgedaan', 'Vervallen', 'Openstaand', null]) {
+			const t = item({
+				kind: 'toezegging',
+				summary: 'De minister stuurt een brief.',
+				commitment: { status } as never
+			});
+			expect(kop(headlineOf(t))).toEqual(alone(t));
+		}
+	});
+});
+
 describe('the teken of a line', () => {
 	it('is the outcome of a vote, open for a toezegging, a stuk for the rest', () => {
 		const ek = item({

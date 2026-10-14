@@ -371,7 +371,7 @@
 
 	// ── The verbindingen of the selected bron, loaded once ───────────────────
 	const source = createVerbondenSource(store);
-	let verbonden = $state<VerbondenState>({ id: null, groups: [], loading: false, failed: false });
+	let verbonden = $state<VerbondenState>(get(source));
 	source.subscribe((s) => (verbonden = s));
 	// Verbonden loads when it is in view (Thijs, 9 Oct: "alles zo lazy mogelijk"): beside the
 	// reader on a wide screen; on a phone when its tab is opened, or for an article, whose
@@ -1544,6 +1544,7 @@
 			<PanelBoundary what="Verbonden" resetOn={selectedNode.id}>
 				<Verbonden
 					onRetry={() => source.reload()}
+					onReloadGroup={(id, options) => source.reloadGroup(id, options)}
 					onMeer={(id) => source.groep(id)}
 					onAlles={() => source.volledig()}
 					{verbonden}

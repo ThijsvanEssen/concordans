@@ -1,6 +1,7 @@
 import { forAgainst, hasVotes } from '$lib/components/parliamentary/stemming';
 import { BILL_KINDS } from '$lib/components/parliamentary/stages';
 import { count } from '$lib/text/words';
+import { citePublication } from '$lib/text/cite';
 import { DAY_MS, korteDatum, weekdag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 import { API_BASE_URL } from '$lib/api/base-url';
@@ -100,7 +101,8 @@ export { dossierLabel, dossierName };
 export function titleOf(i: FeedItem): string {
 	if (i.kind === 'toezegging' && i.summary) return i.summary;
 	const title = i.title?.trim();
-	if (!title && i.publication) return publicationCite(i.publication);
+	const cited = i.publication ? publicationCite(i.publication) : null;
+	if (!title && cited) return cited;
 	// A title that only names the kind (every bill is `Voorstel van wet`): the dossier's.
 	if (title && isGeneriek(title, i.kind)) return i.dossier?.title?.trim() || title;
 	return title || KIND_LABEL[i.kind].one;
@@ -339,12 +341,9 @@ export function artikelenGewijzigd(c: FeedItem['commencement']): string | null {
 	return n === van ? `alle ${van} artikelen` : `${n} van ${van} artikelen gewijzigd`;
 }
 
-/** `Stb. 2026, 204`, as a publication is cited. */
-export function publicationCite(p: NonNullable<FeedItem['publication']>): string {
-	const SERIES: Record<string, string> = { stb: 'Stb.', stcrt: 'Stcrt.', trb: 'Trb.' };
-	const series = p.series ? (SERIES[p.series] ?? p.series) : '';
-	return `${series} ${p.year ?? ''}, ${p.number ?? ''}`.trim();
-}
+/** `Stb. 2026, 204`, as a publication is cited; null while the feed lacks a part. */
+export const publicationCite = (p: NonNullable<FeedItem['publication']>) =>
+	citePublication(p.series, p.year, p.number);
 
 /** What places a page of the feed, not what it holds. */
 const PAGING = new Set(['limit', 'cursor', 'facets']);

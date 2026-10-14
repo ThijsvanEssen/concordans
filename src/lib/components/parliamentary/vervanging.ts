@@ -14,11 +14,14 @@ export type Nr = { key: string; nummer: string };
 /** One phrase of the status line: "Vervangt nrs. 26 en 38", "Vervangen door nr. 47". */
 export type Zin = { woord: 'Vervangt' | 'Vervangen door'; nrs: Nr[] };
 
+const isGenummerd = (r: unknown): r is { key: string; sequence: number } =>
+	!!r && typeof (r as Ref).key === 'string' && typeof (r as Ref).sequence === 'number';
+
 /** The numbered stukken of a list, lowest first; a stuk without a number is left out. */
-const genummerd = (refs: readonly Ref[] | null | undefined): Nr[] =>
-	(refs ?? [])
-		.filter((r) => typeof r.sequence === 'number')
-		.sort((a, b) => a.sequence! - b.sequence!)
+export const genummerd = (refs: unknown): Nr[] =>
+	(Array.isArray(refs) ? refs : [])
+		.filter(isGenummerd)
+		.sort((a, b) => a.sequence - b.sequence)
 		.map((r) => ({ key: r.key, nummer: String(r.sequence) }));
 
 /** The phrases of the chain: what the stuk replaces, then what replaced it. */
@@ -34,9 +37,12 @@ export function vervanging(doc: Keten): Zin[] {
 /** "nr." before one number, "nrs." before more. */
 export const nrWoord = (nrs: readonly Nr[]) => (nrs.length > 1 ? 'nrs.' : 'nr.');
 
+/** The numbers as plain words: "nr. 10", "nrs. 26, 30 en 38". */
+export const nrsTekst = (nrs: readonly Nr[]) =>
+	`${nrWoord(nrs)} ${nrs.map((n, i) => separatorBefore(i, nrs.length) + n.nummer).join('')}`;
+
 /** A phrase as plain words: "Vervangt nrs. 26, 30 en 38". */
-export const alsTekst = (z: Zin) =>
-	`${z.woord} ${nrWoord(z.nrs)} ${z.nrs.map((n, i) => separatorBefore(i, z.nrs.length) + n.nummer).join('')}`;
+export const alsTekst = (z: Zin) => `${z.woord} ${nrsTekst(z.nrs)}`;
 
 /** A replaced stuk was not voted on as itself: its vote, if any, is that of what replaced it. */
 export const eigenUitslag = (doc: Keten) => !(doc.replaced_by ?? []).length;

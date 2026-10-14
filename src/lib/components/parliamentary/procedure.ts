@@ -6,6 +6,7 @@ import { forAgainst } from './stemming';
 import { capitalize, count, joinAnd, lowerFirst, withoutGroup } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import { bronHref } from '$lib/bron/href';
+import { parseNodeId } from '$lib/vocabulary';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import { stand } from './stand';
 import { CHAMBER_NAME } from './chamber';
@@ -107,7 +108,7 @@ const opening = (e: Entry): ProcedureInhoud => ({
 	soort: 'opening',
 	item: {
 		kind: 'Brief regering',
-		node: { collection: 'documents', key: e.node_id.split('/')[1] ?? '' },
+		node: { collection: 'documents', key: parseNodeId(e.node_id)?.key ?? '' },
 		summary: null,
 		vote: null
 	}
@@ -190,7 +191,7 @@ function regelsVan(
 					soort: 'stemming',
 					item: {
 						kind: 'stemming',
-						node: { collection: 'decisions', key: e.node_id.split('/')[1] ?? '' },
+						node: { collection: 'decisions', key: parseNodeId(e.node_id)?.key ?? '' },
 						summary: null,
 						vote: { chamber: groep === 'ek' ? 'EK' : 'TK', passed: uitslag, tally }
 					}
@@ -223,7 +224,7 @@ function regelsVan(
 				// Its agenda title where that says more than its kind; the committee under it.
 				label: null,
 				zin: activiteitZin(e, b),
-				meta: e.node_type === 'activity' ? (e.committee?.name ?? null) : null,
+				meta: e.committee?.name ?? null,
 				href: bronHref(e.node_id, { keepMode: false, mode: 'read' }),
 				ref: e.node_id
 			});

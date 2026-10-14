@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { articleCitation, citeArticle, partOfAnchor, placeCitation } from './cite';
+import { articleCitation, citeArticle, citePublication, partOfAnchor, placeCitation } from './cite';
 import { ordinalWord } from './getal';
 
 describe('citeArticle', () => {
@@ -227,5 +227,19 @@ describe('placeCitation', () => {
 		expect(cite('onder-_39-onder-a', oud).kort).toBe('art. 1 Cbw');
 		expect(cite('lid-2-onder-a', oud).kort).toBe('art. 1 lid 2 onder a Cbw');
 		expect(placeCitation(null, cbwParts).definitie).toBeNull();
+	});
+});
+
+describe('citePublication', () => {
+	it('cites a publication by series, year and number, from its code or its abbreviation', () => {
+		expect(citePublication('stb', 2026, '204')).toBe('Stb. 2026, 204');
+		expect(citePublication('Stcrt', 2026, '35238')).toBe('Stcrt. 2026, 35238');
+		expect(citePublication('Trb', 2018, '201')).toBe('Trb. 2018, 201');
+	});
+
+	it('cites nothing without all three', () => {
+		expect(citePublication(null, 2026, '204')).toBeNull();
+		expect(citePublication('stb', null, '204')).toBeNull();
+		expect(citePublication('stb', 2026, null)).toBeNull();
 	});
 });

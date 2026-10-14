@@ -189,13 +189,12 @@
 	{#if i}
 		{@const woorden = termenVan(termen, i)}
 		{@const via = viaRegel(i, wet)}
+		{@const cited = i.publication ? publicationCite(i.publication) : null}
 		<span class="meta">
 			{@render plekRegel(id)}
 			{#if via}<span class="plek">{via}</span>{/if}
 			<!-- The citation where the headline is another name; a headline that is it says it once. -->
-			{#if i.publication && publicationCite(i.publication) !== titleOf(i)}<span
-					>{publicationCite(i.publication)}</span
-				>{/if}
+			{#if cited && cited !== titleOf(i)}<span>{cited}</span>{/if}
 			{#if i.dossier}
 				<BronLink
 					ref={{ collection: 'dossiers', key: i.dossier.key, number: i.dossier.number }}

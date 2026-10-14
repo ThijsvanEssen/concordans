@@ -177,3 +177,18 @@ export function placeCitation(
 	// names it, and only the onderdelen with a number are cited.
 	return { ...(readPart(anchor, 'skip') ?? NO_PART), definitie: terms.get(at)! };
 }
+
+const SERIES: Record<string, string> = { stb: 'Stb.', stcrt: 'Stcrt.', trb: 'Trb.' };
+
+/**
+ * `Stb. 2026, 204`, as a publication is cited: the series as the feed codes it (`stb`) or as
+ * a version records it (`Stb`). Null without a series, year and number.
+ */
+export function citePublication(
+	series: string | null | undefined,
+	year: number | null | undefined,
+	number: string | null | undefined
+): string | null {
+	if (!series || !year || !number) return null;
+	return `${SERIES[series.toLowerCase()] ?? `${series}.`} ${year}, ${number}`;
+}

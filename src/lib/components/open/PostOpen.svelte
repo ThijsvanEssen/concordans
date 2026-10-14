@@ -1,11 +1,12 @@
 <script lang="ts">
+	// Een geopende post in Bewindspersonen, in de vorm
+	// van OpenRij. Wat de bewindspersoon deed staat er meteen: de laatste toezeggingen (met
+	// hun stand), de laatste stukken die hij of zij ondertekende, en de dossiers.
 	import { OPEN_STATUS, commitmentTeken } from '$lib/components/explore/index/government';
 	import { lowerFirst } from '$lib/text/words';
 	import { korteDatum } from '$lib/text/datum';
 	import { naamVanId } from '$lib/bron/menselijk';
-	// Een geopende post in Bewindspersonen, in de vorm
-	// van OpenRij. Wat de bewindspersoon deed staat er meteen: de laatste toezeggingen (met
-	// hun stand), de laatste stukken die hij of zij ondertekende, en de dossiers.
+	import { parseNodeId } from '$lib/vocabulary';
 	import { bronHref, indexHref } from '$lib/bron/href';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';
@@ -100,7 +101,7 @@
 	{#if t}<ToezeggingInhoud toezegging={t} />{:else}<RijInhoud
 			item={{
 				kind: 'Brief regering',
-				node: { collection: 'documents', key: id.split('/')[1] ?? '' },
+				node: { collection: 'documents', key: parseNodeId(id)?.key ?? '' },
 				summary: null,
 				vote: null
 			}}

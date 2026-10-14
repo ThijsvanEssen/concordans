@@ -191,5 +191,3 @@ export const dossierStatus = (d: {
 	outcome?: Outcome | null;
 	current_phase?: string | null;
 }): string | null => (d.outcome ? OUTCOME_LABEL[d.outcome] : (d.current_phase ?? null));
-
-export type StepState = 'done' | 'active' | 'open';
