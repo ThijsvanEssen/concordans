@@ -117,7 +117,7 @@
 	let mapNotitieVan = $state<string | null>(null);
 </script>
 
-<RouteKop pad="/gemarkeerd" />
+<RouteKop />
 
 {#snippet rij(i: MapItem, m: Map | null)}
 	{@const k = rijSleutel(m, i)}

@@ -14,7 +14,7 @@
 	}
 </script>
 
-<RouteKop pad="/api" />
+<RouteKop />
 
 <div class="page-wrap">
 	<div class="container blad blad__indeling">

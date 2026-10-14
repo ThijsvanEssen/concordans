@@ -34,7 +34,7 @@
 		);
 </script>
 
-<RouteKop pad="/bronnen" />
+<RouteKop />
 
 <div class="page-wrap">
 	<div class="container blad blad--tekst">

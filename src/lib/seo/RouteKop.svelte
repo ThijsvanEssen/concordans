@@ -1,12 +1,14 @@
 <script lang="ts">
 	// The title and description of a page from spa-routes.json, the list the server
-	// serves the same head from. `title` replaces the fixed title where the page has a
-	// name of its own (the topic of the Overzicht).
-	import { routeKop } from './routes';
+	// serves the same head from, found by the page's own route. `title` replaces the fixed
+	// title where the page has a name of its own (the topic of the Overzicht).
+	import { page } from '$app/state';
+	import { routeKop, routePath } from './routes';
 	import { serverKop } from './kop.svelte';
 
-	let { pad, title }: { pad: string; title?: string } = $props();
-	const kop = $derived(routeKop(pad));
+	let { title }: { title?: string } = $props();
+	// Read once: the page that renders this is the route's own, and leaves with it.
+	const kop = routeKop(routePath(page.route.id ?? ''));
 </script>
 
 <svelte:head>

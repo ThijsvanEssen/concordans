@@ -4,7 +4,7 @@
 	// title the server gives its 404 ("Niet gevonden, Concordans"), and noindex, so a search
 	// engine keeps no empty page. The SEO plan: ~/Development/marktonderzoek-seo.md, part 2.
 	import type { Snippet } from 'svelte';
-	import { serverKop } from '$lib/seo/kop.svelte';
+	import { serverKop, siteTitle } from '$lib/seo/kop.svelte';
 
 	let {
 		status = 404,
@@ -25,7 +25,7 @@
 
 <svelte:head>
 	{#if kop}
-		{#if !serverKop.actief}<title>{fout ? 'Fout' : 'Niet gevonden'}, Concordans</title>{/if}
+		{#if !serverKop.actief}<title>{siteTitle(fout ? 'Fout' : 'Niet gevonden')}</title>{/if}
 		{#if !fout}<meta name="robots" content="noindex" />{/if}
 	{/if}
 </svelte:head>

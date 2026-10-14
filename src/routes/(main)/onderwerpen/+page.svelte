@@ -304,7 +304,7 @@
 	}
 </script>
 
-<RouteKop pad="/onderwerpen" />
+<RouteKop />
 
 <div class="onderwerpen blad blad__indeling">
 	<!-- The heading with its actions at the right, as Actueel (docs/bediening.md). -->

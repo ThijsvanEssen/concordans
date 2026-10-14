@@ -14,6 +14,9 @@ export type SpaRoute = {
 
 export const SPA_ROUTES: readonly SpaRoute[] = routes;
 
+/** The path of a route id: `/(main)/(prose)/over` is `/over`, groups left out. */
+export const routePath = (routeId: string): string => routeId.replace(/\/\([^)]+\)/g, '') || '/';
+
 /** The head of a page by its path; a path that is not in the list is a mistake. */
 export function routeKop(path: string): SpaRoute {
 	const r = SPA_ROUTES.find((x) => x.path === path);

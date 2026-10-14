@@ -2,7 +2,7 @@
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 </script>
 
-<RouteKop pad="/docs/methode" />
+<RouteKop />
 
 <div class="page-wrap">
 	<div class="container blad blad--tekst">

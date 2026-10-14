@@ -528,7 +528,7 @@
 	}
 </script>
 
-<RouteKop pad="/actueel" />
+<RouteKop />
 
 <!-- Under the last day, in the text column of the timeline. -->
 {#snippet volgende()}
