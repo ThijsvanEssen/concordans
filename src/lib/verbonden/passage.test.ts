@@ -64,7 +64,8 @@ describe('aanhalingIn', () => {
 		expect(aanhalingIn(cited, paragraphs)).toEqual({
 			snippet: t7,
 			match: 'artikel 3:2 van de Awb',
-			at: 'rov-7'
+			at: 'rov-7',
+			noot: null
 		});
 	});
 
@@ -97,7 +98,8 @@ describe('aanhalingIn', () => {
 		expect(aanhalingIn(bw, paragraphs)).toEqual({
 			snippet: t,
 			match: 'art. 3:305a BW',
-			at: 'rov-2.2.1'
+			at: 'rov-2.2.1',
+			noot: null
 		});
 	});
 
@@ -145,7 +147,8 @@ describe('aanhalingIn', () => {
 		expect(aanhalingIn(met, paragraphs)).toEqual({
 			snippet: t,
 			match: 'artikel 3:2 van de Awb',
-			at: 'p-9'
+			at: 'p-9',
+			noot: null
 		});
 	});
 
@@ -166,7 +169,8 @@ describe('aanhalingIn', () => {
 		expect(aanhalingIn(noot, paragraphs)).toEqual({
 			snippet,
 			match: 'artikel 3:2 Awb',
-			at: 'p-4'
+			at: 'p-4',
+			noot: null
 		});
 	});
 
@@ -186,7 +190,12 @@ describe('aanhalingIn', () => {
 			end: cited.snippet.indexOf(words) + words.length,
 			text: words
 		};
-		expect(aanhalingIn(met, [])).toEqual({ snippet: cited.snippet, match: words, at: 'rov-6' });
+		expect(aanhalingIn(met, [])).toEqual({
+			snippet: cited.snippet,
+			match: words,
+			at: 'rov-6',
+			noot: null
+		});
 	});
 
 	it('takes the words as written where the offsets are gone (normalized again)', () => {
@@ -198,8 +207,16 @@ describe('aanhalingIn', () => {
 
 describe('the r.o. of the passage in the row’s line', () => {
 	it('names the words of the paragraph', () => {
-		expect(plaatsIn('in r.o. 3.4', 'rov-3.4')).toEqual({ text: 'r.o. 3.4', at: 'rov-3.4' });
-		expect(plaatsIn('in r.o. 3.4 en 5.1', 'rov-5.1')).toEqual({ text: '5.1', at: 'rov-5.1' });
+		expect(plaatsIn('in r.o. 3.4', 'rov-3.4')).toEqual({
+			text: 'r.o. 3.4',
+			at: 'rov-3.4',
+			noot: null
+		});
+		expect(plaatsIn('in r.o. 3.4 en 5.1', 'rov-5.1')).toEqual({
+			text: '5.1',
+			at: 'rov-5.1',
+			noot: null
+		});
 		expect(plaatsIn('in r.o. 3.4', 'rov-3')).toBeNull();
 		expect(plaatsIn('in r.o. 3.4', 'p-3f2a9c1e')).toBeNull();
 	});
@@ -222,7 +239,7 @@ describe('the r.o. of the passage in the row’s line', () => {
 		const hoe = hoeVan(row, 'judgments');
 		expect(hoe?.werkwoord).toBe('Aangehaald');
 		expect(hoe?.rest).toBe('in r.o. 3.4');
-		expect(hoe?.plaats).toEqual({ text: 'r.o. 3.4', at: 'rov-3.4' });
+		expect(hoe?.plaats).toEqual({ text: 'r.o. 3.4', at: 'rov-3.4', noot: null });
 		expect(hoe?.citaat?.mark).toBe('artikel 3:2 van de Awb');
 	});
 });

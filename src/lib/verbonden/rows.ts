@@ -23,6 +23,13 @@ import { withoutKamerstuk } from '$lib/components/parliamentary/kamerstuk';
 import { seatWord } from '$lib/components/parliamentary/career';
 import { bronKindOf, confidenceWord, type BronKind } from './filter';
 import { woordenVan } from './hoe';
+import {
+	metVoetnoot,
+	nootAnker,
+	stukPlaats,
+	voetnootWoord,
+	type Bereik
+} from '$lib/text/voetnoten';
 
 export type { Neighbor } from '$lib/api/nodes';
 import type { Neighbor } from '$lib/api/nodes';
@@ -65,6 +72,11 @@ export type Row = {
 	match?: string | null;
 	/** The paragraph of the citing judgment the passage is in, `rov-3.4`: its r.o. opens the reader there. */
 	passageAt?: string | null;
+	/** The footnote the passage stands in: its anchor (`fn-35`) and its label as printed. */
+	noot?: { id: string; label: string | null } | null;
+	/** The words of the citation by their offsets, where the edge keeps them (a Kamerstuk's
+	 *  `meta.place`): in the note's text, or in the stuk's text. */
+	bereik?: Bereik | null;
 	/** The court of a judgment. */
 	court?: string | null;
 	/** Props the canvas needs to draw a bron not on it yet. */
@@ -371,12 +383,14 @@ export function rowOfNeighbor(n: Neighbor): Row | null {
 		: [];
 	// They are the row's own where it is the citing judgment; else the selected one's (`r.o.`).
 	const ecli = n.collection === 'judgments' ? (text(props.ecli) ?? keyEcli(n.key)) : null;
+	const plaats = plaatsVanEdge(meta, n.direction === 'inbound' ? ecli : null);
 	return {
 		ref: refOf(n.collection, n.key, props),
 		...describe(n.collection, n.key, n.display_name, props),
 		...(paragraphs.length
 			? { position: positionsLabel(paragraphs.map((nr) => paragraphCite(ecli, nr))) }
 			: {}),
+		...plaats,
 		kind: bronKindOf(n.collection, n.key, props, n.relation),
 		lid,
 		derived: n.confidence != null && n.confidence < 1,
@@ -385,8 +399,8 @@ export function rowOfNeighbor(n: Neighbor): Row | null {
 		direction: n.direction === 'inbound' ? 'inbound' : 'outbound',
 		edgeId: n.edge_id ?? null,
 		confidence: n.confidence ?? null,
-		snippet: text(meta.snippet),
-		match,
+		snippet: plaats.snippet ?? text(meta.snippet),
+		match: plaats.match ?? match,
 		period: periodOf(meta),
 		function: text(meta.function),
 		// An appeal link names its remedy: `Cassatie`, `Hoger beroep`.
@@ -395,6 +409,68 @@ export function rowOfNeighbor(n: Neighbor): Row | null {
 		props,
 		edge: meta
 	};
+}
+
+/** A place an edge keeps of a judgment's citation, with `edge_meta=passages` (API 0.79.55). */
+type EdgePassage = {
+	paragraph_id?: unknown;
+	paragraph_number?: unknown;
+	footnote?: unknown;
+	snippet?: unknown;
+	text?: unknown;
+	start?: unknown;
+	end?: unknown;
+};
+
+/**
+ * Where an edge stands in the text that cites, from its meta: the first passage a judgment's
+ * edge keeps (`passages`, asked where a row shows it), with its note (`r.o. 5.7.6 (voetnoot
+ * 35)`); a Kamerstuk's place (`place`): its note, or its section, with the words' offsets.
+ * `ecli` is the citing judgment's, where it is known: its r.o. is cited as it cites.
+ */
+export function plaatsVanEdge(
+	meta: Record<string, unknown>,
+	ecli: string | null
+): Partial<Pick<Row, 'snippet' | 'match' | 'passageAt' | 'noot' | 'bereik' | 'position'>> {
+	const passages = Array.isArray(meta.passages) ? (meta.passages as EdgePassage[]) : [];
+	const p = passages[0];
+	if (p && typeof p.snippet === 'string' && p.snippet) {
+		const nr = text(p.paragraph_number);
+		const label = text(p.footnote);
+		const start = typeof p.start === 'number' ? p.start : null;
+		const end = typeof p.end === 'number' ? p.end : null;
+		const words = start != null && end != null && end > start ? p.snippet.slice(start, end) : null;
+		const own = positionsLabel(
+			passages
+				.map((q) => text(q.paragraph_number))
+				.filter((x): x is string => !!x)
+				.filter((x, i, all) => all.indexOf(x) === i)
+				.map((x) => paragraphCite(ecli, x))
+		);
+		return {
+			snippet: p.snippet,
+			match: words ?? text(p.text),
+			passageAt: nr ? `rov-${nr}` : text(p.paragraph_id),
+			noot: label ? { id: nootAnker(label), label } : null,
+			// The note goes with the place it is in: the first passage's, the others after it.
+			...(label && nr
+				? { position: metVoetnoot(paragraphCite(ecli, nr), label) }
+				: own
+					? { position: own }
+					: label
+						? { position: voetnootWoord(label) }
+						: {})
+		};
+	}
+	const place = stukPlaats(meta);
+	if (place?.part === 'footnote')
+		return {
+			noot: { id: place.at, label: place.label },
+			bereik: place.bereik,
+			...(place.label ? { position: voetnootWoord(place.label) } : {})
+		};
+	if (place?.part === 'text') return { passageAt: place.at, bereik: place.bereik };
+	return {};
 }
 
 /**
@@ -607,6 +683,10 @@ export function passageOf(row: Pick<Row, 'snippet' | 'match'>): {
 		after: row.snippet.slice(i + row.match!.length)
 	};
 }
+
+/** Where a row opens its bron: a citing judgment at the note its citation stands in. */
+export const ankerVanRij = (row: Pick<Row, 'direction' | 'noot' | 'at'>): string | null =>
+	row.direction === 'inbound' && row.noot ? row.noot.id : (row.at ?? null);
 
 /** What opening a row does, in words: at the position it names, or beside the article. */
 export const openLabelOf = (row: Pick<Row, 'position' | 'at'>, beside = false): string =>

@@ -5,6 +5,7 @@
 	import { passageOf, type Row } from './rows';
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import Aanhaling from './Aanhaling.svelte';
 
 	let {
 		row,
@@ -28,7 +29,7 @@
 	{#if p}
 		{#if row.position}<p class="where">{row.position}</p>{/if}
 		<p class="passage">
-			{p.before}{#if p.mark}<mark>{p.mark}</mark>{/if}{p.after}
+			<Aanhaling passage={p} />
 		</p>
 	{/if}
 	<div class="acts">
@@ -62,10 +63,6 @@
 		line-height: 1.5;
 		color: var(--ink);
 		white-space: normal;
-	}
-	.passage mark {
-		background: var(--wassing);
-		color: inherit;
 	}
 	.acts {
 		display: flex;

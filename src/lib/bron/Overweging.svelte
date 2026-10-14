@@ -12,13 +12,17 @@
 	import { overwegingVan } from '$lib/map/inhoud';
 	import { overwegingCitaat } from '$lib/text/judgment-cite';
 	import type { Uitspraak } from './overweging';
+	import Voetnoten from '$lib/components/articles/Voetnoten.svelte';
+	import type { NootMarker } from '$lib/text/voetnoten';
+	import { zetNootStand } from '$lib/text/voetnoten.svelte';
 
 	let {
 		uitspraak,
 		at,
 		ruim = false,
 		doel = null,
-		bewaar = null
+		bewaar = null,
+		noot = null
 	}: {
 		uitspraak: Uitspraak;
 		/** The overweging: `rov-5.1`. */
@@ -29,7 +33,15 @@
 		doel?: string | null;
 		/** The menu of a number: the item's id it keeps under, and the link to a place. */
 		bewaar?: { id: string; link: (anker: string) => string } | null;
+		/** The note the citation stands in (`fn-35`): open, its words that cite `doel` marked. */
+		noot?: string | null;
 	} = $props();
+
+	// Its own notes, under each overweging: a marker opens one; `noot` is open from the start.
+	const noten = zetNootStand();
+	$effect(() => noten.toon(noot, { doel }));
+	const nootVan = (markers: NootMarker[] | undefined) =>
+		(markers ?? []).flatMap((m) => uitspraak.noten.get(m.id) ?? []);
 
 	const deel = $derived(overwegingVan(uitspraak.items, at, ruim));
 
@@ -74,7 +86,8 @@
 					{/if}
 					<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 					<div class:is-klikbaar={!!forms} onclick={(e) => forms && opTekst(e, b.id)}>
-						<p><CitedText text={b.body} citations={b.citations} {doel} /></p>
+						<p><CitedText text={b.body} citations={b.citations} {doel} noten={b.noten} /></p>
+						<Voetnoten noten={nootVan(b.noten)} ids={false} marge={false} />
 					</div>
 					{#if menu && menu.id === b.id && forms}
 						<PlaatsMenu
@@ -88,9 +101,10 @@
 					{/if}
 				</div>
 			{:else if b.kind === 'prose'}
-				<p class="rov-verder" class:eigen={ruim && deel.eigen.has(k)}>
-					<CitedText text={b.body} citations={b.citations} {doel} />
-				</p>
+				<div class="rov-verder" class:eigen={ruim && deel.eigen.has(k)}>
+					<p><CitedText text={b.body} citations={b.citations} {doel} noten={b.noten} /></p>
+					<Voetnoten noten={nootVan(b.noten)} ids={false} marge={false} />
+				</div>
 			{:else}
 				<p class="rov-kop">{b.text}</p>
 			{/if}

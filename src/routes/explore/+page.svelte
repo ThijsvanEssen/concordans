@@ -63,7 +63,12 @@
 	import { filterParams, parseFilter, type VerbondenFilter } from '$lib/verbonden/filter';
 	import type { Row } from '$lib/verbonden/rows';
 	import { createVerbondenSource, type VerbondenState } from '$lib/verbonden/source';
-	import { verbindingOfEdge, verbindingOfRow, type Verbinding } from '$lib/verbonden/verbinding';
+	import {
+		kaartMetPassages,
+		verbindingOfEdge,
+		verbindingOfRow,
+		type Verbinding
+	} from '$lib/verbonden/verbinding';
 	import { allRows, filterGroups, lidCounts, lidTellingenOnder } from '$lib/verbonden/view';
 	import { perfStart } from '$lib/util/perf';
 	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
@@ -443,7 +448,14 @@
 		const from = store.getNodeById(edge.source);
 		const to = store.getNodeById(edge.target);
 		if (!from || !to) return;
-		card = { verbinding: verbindingOfEdge(edge, from, to), edgeId: edge.id, row: null };
+		const verbinding = verbindingOfEdge(edge, from, to);
+		card = { verbinding, edgeId: edge.id, row: null };
+		// The passage, which the canvas does not load: asked once the card shows it.
+		kaartMetPassages(verbinding, from, to)
+			.then((v) => {
+				if (v !== verbinding && card?.edgeId === edge.id) card = { ...card, verbinding: v };
+			})
+			.catch(() => {});
 	}
 	function showInNetwork(row: Row) {
 		if (selectedNode && row.relation && row.direction) {

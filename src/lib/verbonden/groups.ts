@@ -66,6 +66,8 @@ export type GroupDef = {
 	 * empty keeps no place while its loader runs, one that may have rows does (`wachtend`).
 	 */
 	bakken?: { relation: string; direction: 'inbound' | 'outbound'; collection: string }[];
+	/** Its edges with the places a judgment cites (`edge_meta=passages`): the row shows the passage. */
+	passages?: boolean;
 	/** A name that follows the rows shown: the functions a lid signed in. */
 	labelOf?: (rows: Row[]) => string;
 };
@@ -490,12 +492,14 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			// Not `die deze uitspraak aanhaalt`: one letter from the group below, which is the other way.
 			label: 'Uitspraken die hier worden aangehaald',
 			noun: 'uitspraken',
+			passages: true,
 			match: [{ relation: 'REFERS_TO', direction: 'outbound', collection: 'judgments' }]
 		},
 		{
 			id: 'cited-by',
 			label: 'Uitspraken die deze uitspraak aanhalen',
 			noun: 'uitspraken',
+			passages: true,
 			match: [{ relation: 'REFERS_TO', direction: 'inbound', collection: 'judgments' }]
 		},
 		// Cases its summary names as connected: "Samenhang met 24/03860 E".

@@ -276,6 +276,11 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 						volledig: basis?.volledig ?? false
 					});
 				zet();
+				// A group whose rows show where a judgment cites: its edges again, with their
+				// passages, once it has rows to show (not for the canvas: the payload grows 62%).
+				for (const g of groups)
+					if (g.rows.length && (GROUPS[collection] ?? []).find((d) => d.id === g.id)?.passages)
+						void groep(g.id, true);
 				// The node now; a loader's further rows (`meer`) once the loaders are in.
 				const alsGevraagd = () => {
 					if (!wilVolledig) return;
@@ -359,33 +364,47 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 			current = null;
 			load(last);
 		},
-		groep: (id) => {
-			if (vervolg.has(id)) return vervolgVan(id);
-			const b = basis;
-			if (!b || b.volledig) return Promise.resolve();
-			const bezig = b.geopend.get(id);
-			if (bezig) return bezig;
-			const def = (GROUPS[b.collection] ?? []).find((d) => d.id === id);
-			if (!def?.match) return Promise.resolve();
-			const klaar = getBuckets(b.collection, b.key, def.match, b.signal)
-				.then((found) => {
-					if (b !== basis) return;
-					const seen = new Set(b.neighbors.map(neighborKey));
-					for (const n of found) {
-						if (seen.has(neighborKey(n))) continue;
-						seen.add(neighborKey(n));
-						b.neighbors.push(n);
-					}
-					herbouw();
-				})
-				.catch(() => {
-					// Asked again the next time.
-					if (b === basis) b.geopend.delete(id);
-				});
-			b.geopend.set(id, klaar);
-			return klaar;
-		},
+		groep,
 		volledig,
 		destroy: () => controller?.abort()
 	};
+
+	/** A group's own buckets, all their rows (up to 200 each); with their passages where it shows them. */
+	function groep(id: string, zelfsVolledig = false): Promise<void> {
+		if (vervolg.has(id)) return vervolgVan(id);
+		const b = basis;
+		if (!b || (b.volledig && !zelfsVolledig)) return Promise.resolve();
+		const bezig = b.geopend.get(id);
+		if (bezig) return bezig;
+		const def = (GROUPS[b.collection] ?? []).find((d) => d.id === id);
+		if (!def?.match) return Promise.resolve();
+		const klaar = getBuckets(
+			b.collection,
+			b.key,
+			def.match,
+			b.signal,
+			def.passages ? 'passages' : undefined
+		)
+			.then((found) => {
+				if (b !== basis) return;
+				const seen = new Map(b.neighbors.map((n, i) => [neighborKey(n), i]));
+				for (const n of found) {
+					const i = seen.get(neighborKey(n));
+					// A row the light node gave already takes its passages from this one.
+					if (i != null) {
+						if (def.passages) b.neighbors[i] = n;
+						continue;
+					}
+					seen.set(neighborKey(n), b.neighbors.length);
+					b.neighbors.push(n);
+				}
+				herbouw();
+			})
+			.catch(() => {
+				// Asked again the next time.
+				if (b === basis) b.geopend.delete(id);
+			});
+		b.geopend.set(id, klaar);
+		return klaar;
+	}
 }

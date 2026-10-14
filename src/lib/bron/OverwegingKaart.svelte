@@ -10,12 +10,15 @@
 	import type { Action } from 'svelte/action';
 	import { paragraphCite, uitspraakKop } from '$lib/text/judgment-cite';
 	import Overweging from './Overweging.svelte';
+	import { zetMarkering, type Markering } from './markering.svelte';
 	import { heeftOverweging, laadUitspraak, nummerVan, type Uitspraak } from './overweging';
 
 	let {
 		judgment,
 		at,
 		doel = null,
+		noot = null,
+		markering = null,
 		href,
 		anker,
 		kaart = $bindable(null),
@@ -28,6 +31,10 @@
 		judgment: string;
 		at: string;
 		doel?: string | null;
+		/** The note the citation stands in: open, its words marked. */
+		noot?: string | null;
+		/** What the reader marks where the link opens it. */
+		markering?: Markering | null;
 		/** Where the link goes: the judgment at the r.o., or beside the article. */
 		href: string;
 		anker: HTMLElement;
@@ -98,7 +105,7 @@
 		if (u === 'laden') return plaatsKaart();
 		void tick().then(() => {
 			plaatsKaart();
-			const m = kaart?.querySelector<HTMLElement>('mark.doel');
+			const m = kaart?.querySelector<HTMLElement>('mark.doel, .voetnoot.is-open');
 			if (!kaart || !m) return;
 			const r = m.getBoundingClientRect();
 			const top = r.top - kaart.getBoundingClientRect().top + kaart.scrollTop;
@@ -125,12 +132,12 @@
 	{#if u === 'laden'}
 		<p class="stil">Laden…</p>
 	{:else if u && heeftOverweging(u, at)}
-		<div class="tekst"><Overweging uitspraak={u} {at} {doel} /></div>
+		<div class="tekst"><Overweging uitspraak={u} {at} {doel} {noot} /></div>
 	{:else}
 		<p class="stil">Tekst niet in de gegevens.</p>
 	{/if}
 	<p class="verder">
-		<a {href} data-sveltekit-noscroll
+		<a {href} data-sveltekit-noscroll onclick={() => markering && zetMarkering(markering)}
 			>{plaats.startsWith('onder ')
 				? `Open de conclusie ${plaats}`
 				: `Open de uitspraak bij ${plaats}`}</a

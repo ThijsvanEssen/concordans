@@ -59,6 +59,33 @@ describe('one form for each thing', () => {
 		expect(offenders((t) => /mode: 'graph'/.test(t), buiten(netwerkLinks))).toEqual([]);
 	});
 
+	it('sets footnotes by one component in every reader (Voetnoten, CitedText `noten`)', () => {
+		// A judgment, a Kamerstuk and an overweging read in place (its card, Gemarkeerd) show
+		// their notes alike: the marker in CitedText, the notes in Voetnoten, one open note.
+		const lezers = [
+			'lib/components/explore/readers/JudgmentReader.svelte',
+			'lib/components/explore/readers/DocumentReader.svelte',
+			'lib/bron/Overweging.svelte'
+		];
+		for (const pad of lezers) {
+			const t = sources.find((s) => s.path === pad)!.text;
+			expect(t, pad).toMatch(/<Voetnoten\b/);
+			expect(t, pad).toMatch(/<CitedText\b[^>]*\bnoten=/);
+			expect(t, pad).toMatch(/zetNootStand\(\)/);
+		}
+		// No other place draws a note or its marker of its own.
+		expect(
+			offenders(
+				(t) => /class="voetnoot"|class="noot-ref/.test(t),
+				['lib/components/articles/Voetnoten.svelte', 'lib/components/articles/CitedText.svelte']
+			)
+		).toEqual([]);
+		// The passage with its marked words is one component (Aanhaling) wherever a row or a card shows it.
+		expect(
+			offenders((t) => /\.before\}<mark>|\{p\.before\}/.test(t), ['lib/verbonden/Aanhaling.svelte'])
+		).toEqual([]);
+	});
+
 	it('formats a date only in $lib/text/datum.ts', () => {
 		const dateFormat = /toLocaleDateString|Intl\.DateTimeFormat|\btoLocaleTimeString\b/;
 		const monthNames = /['"](januari|jan\.)['"]/;

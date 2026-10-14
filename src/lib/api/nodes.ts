@@ -19,6 +19,9 @@ export const getNodeGraph = (
 		offset?: number;
 		/** `canvas`: the neighbours with only what the canvas draws (500 a page, API 0.79.45). */
 		props?: 'full' | 'canvas';
+		/** `passages`: an edge of a judgment's citation with the places it cites (API 0.79.55),
+		 *  asked only where a row or a card shows them, not for the canvas. */
+		edgeMeta?: 'passages';
 	} = {}
 ) =>
 	// A full node can take a cold API more than 10 s (art. 3:2 Awb, 651 kB, prod 9 Oct): it
@@ -33,7 +36,8 @@ export const getNodeGraph = (
 					node_types: opts.nodeTypes,
 					direction: opts.direction,
 					offset: opts.offset,
-					props: opts.props
+					props: opts.props,
+					edge_meta: opts.edgeMeta
 				}
 			},
 			signal: opts.signal
@@ -55,7 +59,8 @@ export const getBuckets = (
 	collection: Collection,
 	key: string,
 	buckets: Bucket[],
-	signal?: AbortSignal
+	signal?: AbortSignal,
+	edgeMeta?: 'passages'
 ): Promise<Neighbor[]> =>
 	Promise.allSettled(
 		buckets.map((b) =>
@@ -67,7 +72,8 @@ export const getBuckets = (
 					.map((c) => NODE_TYPES[c])
 					.join(','),
 				direction: b.direction,
-				signal
+				signal,
+				edgeMeta
 			})
 		)
 	).then((results) =>

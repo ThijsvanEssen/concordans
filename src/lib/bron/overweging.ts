@@ -10,13 +10,27 @@ import {
 	type BodyItem
 } from '$lib/components/explore/readers/judgment-text';
 import { overwegingVan } from '$lib/map/inhoud';
+import { uitspraakNoten, type Noot } from '$lib/text/voetnoten';
 import { keyEcli } from './leesbaar';
 
 export type Uitspraak = {
 	j: Schema<'JudgmentDetailResponse'>['judgment'];
 	/** The body up to the signature, as the reader lays it out. */
 	items: BodyItem[];
+	/** Its footnotes by their anchor (`fn-35`); the markers stand in `items`. */
+	noten: Map<string, Noot>;
 };
+
+/** The body of a judgment as its reader lays it out: its overwegingen with their notes. */
+export function legUit(j: Schema<'JudgmentDetailResponse'>['judgment']): Uitspraak {
+	const paragraphs = j.paragraphs ?? [];
+	const { noten, perAlinea } = uitspraakNoten(j.footnotes);
+	return {
+		j,
+		items: bodyItems(paragraphs.slice(0, signatureStart(paragraphs)), perAlinea),
+		noten
+	};
+}
 
 const gelegd = new Map<string, Promise<Uitspraak>>();
 
@@ -26,10 +40,7 @@ export function laadUitspraak(keyOfEcli: string): Promise<Uitspraak> | null {
 	if (!ecli) return null;
 	let p = gelegd.get(ecli);
 	if (!p) {
-		p = getJudgmentDetail(ecli).then(({ judgment: j }) => {
-			const paragraphs = j.paragraphs ?? [];
-			return { j, items: bodyItems(paragraphs.slice(0, signatureStart(paragraphs))) };
-		});
+		p = getJudgmentDetail(ecli).then(({ judgment: j }) => legUit(j));
 		p.catch(() => gelegd.delete(ecli));
 		gelegd.set(ecli, p);
 	}
@@ -62,4 +73,28 @@ export function tekstVanOverweging(u: Uitspraak, at: string, max = 400): string 
 	if (t.length <= max) return t;
 	const cut = t.lastIndexOf(' ', max);
 	return `${t.slice(0, cut > 0 ? cut : max)}…`;
+}
+
+/**
+ * The overweging a note stands in, by the note's anchor or its label: `rov-5.7.6` and its
+ * number, where the reader numbers it; the paragraph's own anchor where it does not. Null
+ * where no paragraph refers to the note.
+ */
+export function overwegingVanNoot(
+	u: Pick<Uitspraak, 'items' | 'noten'>,
+	noot: string
+): { at: string; num: string | null; id: string } | null {
+	const id = u.noten.has(noot) ? noot : [...u.noten.values()].find((n) => n.label === noot)?.id;
+	if (!id) return null;
+	const k = u.items.findIndex(
+		(i) => (i.kind === 'rov' || i.kind === 'prose') && i.noten?.some((m) => m.id === id)
+	);
+	if (k < 0) return null;
+	for (let i = k; i >= 0; i--) {
+		const item = u.items[i];
+		if (item.kind === 'rov') return { at: `rov-${item.num}`, num: item.num, id };
+		if (item.kind !== 'prose' || !item.within) break;
+	}
+	const own = u.items[k];
+	return { at: (own.kind === 'prose' && own.id) || id, num: null, id };
 }

@@ -19,6 +19,7 @@
 	import { isEscape } from '$lib/actions/keys';
 	import { isOverwegingRef } from './overweging';
 	import OverwegingKaart from './OverwegingKaart.svelte';
+	import { zetMarkering, type Markering } from './markering.svelte';
 
 	let {
 		ref,
@@ -27,6 +28,8 @@
 		voorbeeld = null,
 		extra = null,
 		doel = null,
+		noot = null,
+		markering = null,
 		href: naar = null,
 		class: className = '',
 		title,
@@ -43,6 +46,10 @@
 		extra?: string | null;
 		/** The bron an r.o.'s card is read for: its citations in the overweging marked. */
 		doel?: string | null;
+		/** The note at the r.o. the citation stands in (`fn-35`): open in its card. */
+		noot?: string | null;
+		/** What the reader marks where the link opens it (markering.svelte.ts). */
+		markering?: Markering | null;
 		/** Where the link goes, where not to the bron's own reader: beside the article. */
 		href?: string | null;
 		class?: string;
@@ -178,6 +185,7 @@
 			roToon(true);
 			return;
 		}
+		if (markering) zetMarkering(markering);
 		if (ro) roSluit();
 		hide();
 	}
@@ -263,6 +271,8 @@
 		judgment={id.slice('judgments/'.length)}
 		at={at!}
 		{doel}
+		{noot}
+		{markering}
 		{href}
 		{anker}
 		bind:kaart={roKaart}

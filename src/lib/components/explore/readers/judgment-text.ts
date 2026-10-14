@@ -4,6 +4,7 @@
 
 import type { Schema } from '$lib/api/types';
 import { citationsWithin } from '$lib/components/articles/citations';
+import type { NootMarker } from '$lib/text/voetnoten';
 
 type Span = Schema<'ArticleCitationSpan'>;
 
@@ -568,6 +569,8 @@ export type ParsedBodyPara = {
 	offset: number;
 	/** Citations inside `body`, with offsets relative to it. */
 	citations?: Span[];
+	/** The footnote markers in `body`, `at` relative to it. */
+	noten?: NootMarker[];
 };
 export type ParsedHeading = { kind: 'heading'; text: string };
 export type ParsedSegment = ParsedBodyPara | ParsedHeading;
@@ -734,17 +737,30 @@ export function extractParticipants(
 
 /** Split a body paragraph that may contain multiple sub-paragraphs or a
  *  trailing embedded section heading into an array of render segments. */
-export function splitBodyParagraph(text: string, citations: Span[] = []): ParsedSegment[] {
+export function splitBodyParagraph(
+	text: string,
+	citations: Span[] = [],
+	noten: NootMarker[] = []
+): ParsedSegment[] {
 	const { text: normalized, at } = normalize(text);
 	const spans = citations
 		.filter((c) => c.start != null && c.end != null)
 		.map((c) => ({ ...c, start: at[c.start!], end: at[c.end!] }));
+	// A marker follows its words as a citation does; one without a place stands at the end.
+	const markers = noten.map((n) => ({
+		...n,
+		at:
+			n.at == null || n.at < 0 || n.at >= at.length
+				? normalized.length
+				: Math.min(at[n.at], normalized.length)
+	}));
 
 	// Early-out: backend sometimes emits section titles as kind=body.
 	// Detect: single line (no \n), starts with a decimal number + space, short
 	// enough for a title, and does not end with sentence punctuation. A line that ends
 	// in a closing quote is a quotation (a judgment quoted in the facts), never a title.
 	if (
+		markers.length === 0 &&
 		!normalized.includes('\n') &&
 		normalized.length < 130 &&
 		!normalized.endsWith('.') &&
@@ -788,6 +804,16 @@ export function splitBodyParagraph(text: string, citations: Span[] = []): Parsed
 			result.push({ ...para, citations: citationsWithin(spans, para.offset, para.body.length) });
 		}
 		chunkOffset += chunk.length;
+	}
+
+	// Each marker in the paragraph it stands in; past the last (in a trailing heading), at
+	// its end.
+	const bodies = result.filter((r): r is ParsedBodyPara => r.kind === 'body');
+	for (const m of markers) {
+		const para = bodies.find((b) => m.at <= b.offset + b.body.length) ?? bodies.at(-1);
+		if (!para) continue;
+		const rel = Math.max(0, Math.min(m.at - para.offset, para.body.length));
+		para.noten = [...(para.noten ?? []), { id: m.id, label: m.label, at: rel }];
 	}
 
 	return [...result, ...trailingHeadings];
@@ -881,6 +907,7 @@ export type BodyItem =
 			subTitle: string | null;
 			body: string;
 			citations?: Span[];
+			noten?: NootMarker[];
 			/** The anchor of the overweging: `paragraph_id` of its paragraph, else `rov-<num>`. */
 			id: string;
 	  }
@@ -888,6 +915,7 @@ export type BodyItem =
 			kind: 'prose';
 			body: string;
 			citations?: Span[];
+			noten?: NootMarker[];
 			id?: string;
 			/** It continues the overweging above it: the API numbers only an overweging's first paragraph. */
 			within: boolean;
@@ -944,7 +972,11 @@ export function headRest(text: string): string[] {
  * above it or stands on its own. The first subheading is the kop (the participants
  * table shows it); only what the source left after it is read.
  */
-export function bodyItems(paragraphs: Paragraph[]): BodyItem[] {
+export function bodyItems(
+	paragraphs: Paragraph[],
+	/** The footnote markers per `paragraph_id`, `at` in its raw text (uitspraakNoten). */
+	noten: ReadonlyMap<string, NootMarker[]> = new Map()
+): BodyItem[] {
 	const first = paragraphs.find((p) => p.kind === 'subheading');
 	const items: BodyItem[] = [];
 	let within = false;
@@ -957,7 +989,7 @@ export function bodyItems(paragraphs: Paragraph[]): BodyItem[] {
 		/** The API marks a paragraph that continues an overweging (`continues`, BE-56). */
 		continues = false
 	) => {
-		const segs = splitBodyParagraph(text, citations ?? []);
+		const segs = splitBodyParagraph(text, citations ?? [], (paraId && noten.get(paraId)) || []);
 		if (continues) within = true;
 		segs.forEach((seg, i) => {
 			if (seg.kind === 'heading') {
@@ -973,12 +1005,13 @@ export function bodyItems(paragraphs: Paragraph[]): BodyItem[] {
 					subTitle: seg.subTitle,
 					body: seg.body,
 					citations: seg.citations,
+					...(seg.noten ? { noten: seg.noten } : {}),
 					id: (i === 0 && paraId) || `rov-${num}`
 				});
 				within = true;
 				return;
 			}
-			if (segs.length === 1 && !continues && isTitleLine(seg.body)) {
+			if (segs.length === 1 && !continues && !seg.noten && isTitleLine(seg.body)) {
 				items.push({ kind: 'subheading', text: seg.body });
 				within = false;
 				return;
@@ -987,6 +1020,7 @@ export function bodyItems(paragraphs: Paragraph[]): BodyItem[] {
 				kind: 'prose',
 				body: seg.body,
 				citations: seg.citations,
+				...(seg.noten ? { noten: seg.noten } : {}),
 				id: i === 0 ? paraId : undefined,
 				within
 			});

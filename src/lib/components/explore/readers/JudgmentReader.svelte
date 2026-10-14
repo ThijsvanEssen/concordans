@@ -41,6 +41,11 @@
 	import { conclusieVan, type Laag } from '$lib/bron/behoort';
 	import { korteDatum } from '$lib/text/datum';
 	import { samenhangVan, type Samenhang } from './samenhang';
+	import Voetnoten from '$lib/components/articles/Voetnoten.svelte';
+	import { kantlijn } from '$lib/actions/kantlijn';
+	import { isNootAnker, uitspraakNoten, type Noot, type NootMarker } from '$lib/text/voetnoten';
+	import { zetNootStand } from '$lib/text/voetnoten.svelte';
+	import { markeringVoor } from '$lib/bron/markering.svelte';
 
 	let { selection }: { selection: GraphNode | null } = $props();
 
@@ -81,11 +86,20 @@
 
 	let root = $state<HTMLElement | null>(null);
 	const anchor = $derived(anchorOfHash(page.url.hash));
+	// The footnotes: a marker opens its note in place; an anchor to a note (`#fn-35`) opens
+	// it, with the words a row or a card came for marked (markering).
+	const noten = zetNootStand();
 	$effect(() => {
 		if (view.kind !== 'loaded' || !anchor || !root) return;
 		const container = root;
+		if (isNootAnker(anchor)) {
+			const m = markeringVoor(`judgments/${view.data.judgment.key}`, anchor);
+			noten.toon(anchor, { doel: m?.doel, bereik: m?.bereik });
+		}
 		void tick().then(() => landOn(container, anchor));
 	});
+	const nootVan = (alle: Map<string, Noot>, markers: NootMarker[] | undefined) =>
+		(markers ?? []).flatMap((m) => alle.get(m.id) ?? []);
 
 	// Raised by Opnieuw, to load the bron again after an error.
 	let attempt = $state(0);
@@ -176,7 +190,15 @@
 		{@const participants = judgmentParticipants(j)}
 		{@const hasSummary = !!j.summary?.trim()}
 		{@const signed = signatureStart(paragraphs)}
-		{@const items = bodyItems(paragraphs.slice(0, signed))}
+		{@const voetnoten = uitspraakNoten(j.footnotes)}
+		{@const items = bodyItems(paragraphs.slice(0, signed), voetnoten.perAlinea)}
+		<!-- A note no paragraph before the signature refers to closes the text. -->
+		{@const geplaatst = new Set(
+			items.flatMap((it) =>
+				(it.kind === 'rov' || it.kind === 'prose' ? (it.noten ?? []) : []).map((m) => m.id)
+			)
+		)}
+		{@const losseNoten = [...voetnoten.noten.values()].filter((n) => !geplaatst.has(n.id))}
 		<!-- With numbers, all text stands in one column and the numbers hang left of it. -->
 		{@const numbered = items.some((it) => it.kind === 'rov')}
 		{@const conclusion = j.decision_kind === 'conclusie'}
@@ -377,7 +399,7 @@
 			</Sectie>
 		{/if}
 
-		<div class="reader-body" class:reader-body--numbered={numbered} bind:this={root}>
+		<div class="reader-body" class:reader-body--numbered={numbered} bind:this={root} use:kantlijn>
 			{#each items as item, k (k)}
 				{#if item.kind === 'subheading'}
 					<p class="reader-subheading">{item.text}</p>
@@ -443,20 +465,34 @@
 								<p class="reader-para-subtitle">{item.subTitle}</p>
 							{/if}
 							<p class="reader-para">
-								<CitedText text={item.body} citations={item.citations} />
+								<CitedText text={item.body} citations={item.citations} noten={item.noten} />
 							</p>
+							<Voetnoten noten={nootVan(voetnoten.noten, item.noten)} />
 						</div>
 					</div>
 				{:else}
 					<!-- An unnumbered paragraph is still a target: its positional id (`p-21`).
 					     Under an overweging it continues it, in the same column. -->
-					<p
-						class="reader-para reader-para--prose"
-						class:reader-para--within={item.within}
-						id={item.id}
-					>
-						<CitedText text={item.body} citations={item.citations} />
-					</p>
+					{#if item.noten?.length}
+						<div
+							class="reader-para reader-para--prose reader-para--noten"
+							class:reader-para--within={item.within}
+							id={item.id}
+						>
+							<p class="reader-para">
+								<CitedText text={item.body} citations={item.citations} noten={item.noten} />
+							</p>
+							<Voetnoten noten={nootVan(voetnoten.noten, item.noten)} />
+						</div>
+					{:else}
+						<p
+							class="reader-para reader-para--prose"
+							class:reader-para--within={item.within}
+							id={item.id}
+						>
+							<CitedText text={item.body} citations={item.citations} />
+						</p>
+					{/if}
 				{/if}
 			{/each}
 			{#if signed < paragraphs.length}
@@ -465,6 +501,7 @@
 							/>{/if}{line.text.trim()}{/each}
 				</p>
 			{/if}
+			<Voetnoten noten={losseNoten} marge={false} kop="Voetnoten" />
 			{#if paragraphs.length === 0 && !hasSummary && !replacedBy && !replacedOutside}
 				<p class="reader-empty-text">Tekst niet in de gegevens.</p>
 			{/if}
@@ -712,6 +749,13 @@
 
 	.reader-para:last-child {
 		margin-bottom: 0;
+	}
+	/* A paragraph with notes: its notes under it, or in the margin beside it. */
+	.reader-para--noten {
+		position: relative;
+	}
+	.reader-para--noten > .reader-para {
+		margin: 0;
 	}
 
 	.reader-para-block {

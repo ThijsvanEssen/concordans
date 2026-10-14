@@ -3,6 +3,8 @@
 	import { goto } from '$app/navigation';
 	import { rijen } from '$lib/actions/rijen';
 	import { hoeVan, kleineLetter } from './hoe';
+	import Aanhaling from './Aanhaling.svelte';
+	import { zetMarkering } from '$lib/bron/markering.svelte';
 	import { itemVanRij } from '$lib/map/rij';
 	// The panel Verbonden: the verbindingen of the selected bron, in the groups of the
 	// table in groups.ts, under the bronfilter. In the network each group can put its
@@ -36,6 +38,7 @@
 	import { countLabel, groupCount, type Group } from './groups';
 	import { csvName, download, rowsToCsv } from './export';
 	import {
+		ankerVanRij,
 		caseNumberOf,
 		dossierVanRij,
 		mentionRows,
@@ -374,31 +377,44 @@
 
 	// A row opens its bron as every link to a bron does (openHref): in Netwerk, a Kamerstuk on
 	// its text; a group read beside the text opens it there.
+	// A citing judgment opens at the note its citation stands in.
+	const rijAnker = ankerVanRij;
 	const rowHref = (g: Group, row: Row) =>
-		g.inPlace ? inPlaceHref(row) : openHref(row.ref, { at: row.at });
+		g.inPlace
+			? inPlaceHref({ ...row, at: rijAnker(row) })
+			: openHref(row.ref, { at: rijAnker(row) });
+	/** What its reader marks where a row opens it at a note: the citation in it. */
+	const rijMarkering = (row: Row) =>
+		inRij(row) && row.noot
+			? { bron: refId(row.ref), at: row.noot.id, doel: plaatsDoel(row), bereik: row.bereik ?? null }
+			: null;
 
 	// The r.o. of a passage opens the citing judgment's text there: the row's, or the selected
 	// one's where it cites the row's bron.
+	// The passage is the row's where its bron cites the selected one, else the selected one's.
+	const inRij = (row: Row) => row.direction === 'inbound';
 	const plaatsHref = (g: Group, row: Row, at: string) =>
-		row.ref.collection === 'judgments'
+		inRij(row)
 			? g.inPlace
 				? inPlaceHref({ ...row, at })
 				: bronHref(row.ref, { at, keepMode: false, mode: 'read', paneel: 'tekst' })
 			: bronHref(selection.id, { at, keepMode: false, mode: 'read', paneel: 'tekst' });
 
 	// The r.o. of a passage is a reference to the judgment at it: its card is the overweging,
-	// the words that cite the article marked (OverwegingKaart). The judgment is the row's, or
-	// the selected one where it cites the row's article.
-	const plaatsRef = (row: Row) =>
-		row.ref.collection === 'judgments' ? row.ref : `judgments/${selection.key}`;
-	const plaatsDoel = (row: Row) =>
-		row.ref.collection === 'judgments'
-			? selection.collection === 'articles'
-				? selection.key
-				: null
-			: row.ref.collection === 'articles'
-				? row.ref.key
-				: null;
+	// the words that cite the article or judgment marked, in its note where the citation stands
+	// in one (OverwegingKaart). A note of a Kamerstuk opens the stuk there.
+	const plaatsRef = (row: Row) => (inRij(row) ? row.ref : selection.id);
+	const plaatsDoel = (row: Row) => {
+		const cited = inRij(row) ? selection : row.ref;
+		return cited.collection === 'articles' || cited.collection === 'judgments' ? cited.key : null;
+	};
+	// What the reader marks where the place opens it: the note opened, the citation in it.
+	const plaatsMarkering = (row: Row, plaats: { at: string; noot: string | null }) => ({
+		bron: inRij(row) ? refId(row.ref) : selection.id,
+		at: plaats.noot ?? plaats.at,
+		doel: plaatsDoel(row),
+		bereik: row.bereik ?? null
+	});
 
 	// A Kamerstuk opens in place under its row: its core text (a motie its dictum, an
 	// amendement its toelichting, another its opening), as in Actueel, Bronnen and Gemarkeerd
@@ -703,7 +719,10 @@
 										if (onControl(e) || row.missing) return;
 										if (window.getSelection()?.toString()) return;
 										if (opentTerPlekke(row)) wisselRij(row);
-										else goto(href, { noScroll: true });
+										else {
+											zetMarkering(rijMarkering(row));
+											goto(href, { noScroll: true });
+										}
 									}}
 								>
 									<KindGlyph
@@ -720,7 +739,10 @@
 												{href}
 												data-sveltekit-noscroll
 												aria-expanded={opentTerPlekke(row) ? openRij === rowId(row) : undefined}
-												onclick={(e) => opentTerPlekke(row) && terPlekke(e, () => wisselRij(row))}
+												onclick={(e) => {
+													if (!opentTerPlekke(row)) zetMarkering(rijMarkering(row));
+													return opentTerPlekke(row) && terPlekke(e, () => wisselRij(row));
+												}}
 												>{#if dossier}<DossierNaam
 														{dossier}
 														vorm="naam"
@@ -739,8 +761,10 @@
 														)}{hoe.rest.slice(0, i)}<BronLink
 															ref={plaatsRef(row)}
 															at={hoe.plaats.at}
+															noot={hoe.plaats.noot}
 															doel={plaatsDoel(row)}
-															href={plaatsHref(g, row, hoe.plaats.at)}
+															markering={plaatsMarkering(row, hoe.plaats)}
+															href={plaatsHref(g, row, hoe.plaats.noot ?? hoe.plaats.at)}
 															class="row__plaats">{hoe.plaats.text}</BronLink
 														>{hoe.rest.slice(
 															i + hoe.plaats.text.length
@@ -748,9 +772,7 @@
 											>
 										{/if}
 										{#if hoe?.citaat}
-											<span class="row__citaat"
-												>{hoe.citaat.before}<mark>{hoe.citaat.mark}</mark>{hoe.citaat.after}</span
-											>
+											<span class="row__citaat"><Aanhaling passage={hoe.citaat} /></span>
 										{/if}
 										<span class="row__meta">
 											<!-- Where the verbinding comes from, in the line's own words (Thijs, 10 Oct:
@@ -1158,10 +1180,6 @@
 		line-clamp: 3;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
-	}
-	.row__citaat mark {
-		background: var(--wassing);
-		color: var(--ink);
 	}
 	/* The counts of the line, a comma between them. */
 	.ook > span + span::before {
