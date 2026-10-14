@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { clickOutside, EDGE, GAP, MIN_ROOM, placement, topOf } from './top-layer';
+import { clickOutside, EDGE, GAP, MIN_ROOM, outOfView, placement, topOf } from './top-layer';
 
 const view = { width: 1440, height: 900 };
 const anchor = (top: number, left = 100, width = 60, height = 20) => ({
@@ -45,6 +45,24 @@ describe('placement', () => {
 	});
 });
 
+describe('outOfView', () => {
+	// The Verbonden column of art. 6:162 BW at 1440×700: its top at 136 under the TopBar (#96).
+	const column = { top: 136, bottom: 700, left: 900, right: 1440 };
+	const shown = { top: 0, bottom: 700, left: 0, right: 1440 };
+
+	it('keeps a box while its anchor shows in every box that clips it', () => {
+		expect(outOfView(anchor(300, 1200), [column, shown])).toBe(false);
+		// Half of it under the column's edge still shows it.
+		expect(outOfView(anchor(130, 1200), [column, shown])).toBe(false);
+	});
+
+	it('closes it once its anchor scrolls out of the visible part of its column (#96)', () => {
+		expect(outOfView(anchor(2, 1200), [column, shown])).toBe(true);
+		expect(outOfView(anchor(695, 1200), [column, shown])).toBe(true);
+		expect(outOfView(anchor(300, 1200), [{ ...column, right: 1100 }])).toBe(true);
+	});
+});
+
 describe('clickOutside', () => {
 	class FakeNode {
 		constructor(private within: FakeNode[] = []) {}
@@ -69,11 +87,19 @@ describe('clickOutside', () => {
 		);
 		const [type, watch, capture] = listeners[0];
 		expect([type, capture]).toEqual(['click', true]);
-		watch({ target: item } as unknown as Event);
-		watch({ target: anchorNode } as unknown as Event);
+		const click = (target: unknown) =>
+			({ target, stopPropagation: vi.fn(), preventDefault: vi.fn() }) as unknown as Event;
+		const within = click(item);
+		watch(within);
+		watch(click(anchorNode));
 		expect(outside).not.toHaveBeenCalled();
-		watch({ target: new FakeNode() } as unknown as Event);
+		expect(within.preventDefault).not.toHaveBeenCalled();
+		// The tap that closes the box opens nothing under it (#98).
+		const elsewhere = click(new FakeNode());
+		watch(elsewhere);
 		expect(outside).toHaveBeenCalledOnce();
+		expect(elsewhere.stopPropagation).toHaveBeenCalled();
+		expect(elsewhere.preventDefault).toHaveBeenCalled();
 		stop();
 		expect(document.removeEventListener).toHaveBeenCalledWith('click', watch, true);
 	});

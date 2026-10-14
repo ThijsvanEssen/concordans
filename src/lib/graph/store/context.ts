@@ -1,4 +1,5 @@
 import { textOf } from '$lib/text/words';
+import { officialNumber } from '$lib/bron/dossier-naam';
 import { primeInstrumentNames, recordInstrument } from '$lib/api/instrument-cache';
 import { neighborsOf } from '$lib/api/nodes';
 import type { Schema } from '$lib/api/types';
@@ -27,6 +28,22 @@ import {
 	type GraphNodeKind
 } from '../types';
 import { DEFAULT_FILTERS, SOFT_NODE_CAP, type GraphFilters } from './types';
+
+/**
+ * The names of a container's hull: short on the hull, in full on hover. A dossier by its number
+ * as a citation writes it (`36600 VIII`, #95), a commissie or fractie by its abbreviation.
+ */
+export function containerNames(node: BaseNode, containerKind: ContainerKind) {
+	const p = node.props ?? {};
+	if (containerKind === 'dossier') {
+		const number = textOf(p.label);
+		const short = number ? officialNumber(number) : '';
+		return { short, full: [short, textOf(p.title)].filter(Boolean).join(', ') };
+	}
+	const short =
+		textOf(p.abbreviation) ?? buildNodeLabel(node, kindOfCollection(node.collection as Collection));
+	return { short: short ?? '', full: textOf(p.name) ?? textOf(node.display_name) ?? '' };
+}
 
 const edgeId = (source: string, target: string, relation: Relation) =>
 	`${source}->${target}:${relation}`;
@@ -196,17 +213,8 @@ export function createGraphContext() {
 				short_title: p.short_title
 			});
 		} else {
-			// Short on the hull, in full on hover: a dossier by its number, a commissie or
-			// fractie by its abbreviation.
-			const name = textOf(p.name) ?? textOf(node.display_name);
-			const short =
-				containerKind === 'dossier'
-					? textOf(p.label)
-					: (textOf(p.abbreviation) ??
-						buildNodeLabel(node, kindOfCollection(node.collection as Collection)));
-			const full =
-				containerKind === 'dossier' ? [short, textOf(p.title)].filter(Boolean).join(', ') : name;
-			containers.recordMeta(containerKind, containerIdFor(node), short ?? '', full ?? '');
+			const { short, full } = containerNames(node, containerKind);
+			containers.recordMeta(containerKind, containerIdFor(node), short, full);
 		}
 	};
 

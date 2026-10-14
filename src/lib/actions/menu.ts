@@ -2,7 +2,8 @@
 // as `trigger` (a place's marker), its button (aria-haspopup). On open the focus goes to the
 // chosen option, else the first item. The arrow keys, Home and End move between the items.
 // Escape closes the menu and puts the focus back on the button; Tab closes it and moves on
-// from the button. A click outside closes it (clickOutside); one on the button is the button's.
+// from the button. A click outside closes it (clickOutside, while open); one on the button is
+// the button's.
 import { afterTick } from '$lib/util/after-tick';
 import type { Action } from 'svelte/action';
 import { clickOutside } from './top-layer';
@@ -64,27 +65,37 @@ export const menu: Action<HTMLElement, Menu> = (node, params) => {
 	};
 
 	node.addEventListener('keydown', onKey);
-	const stop = clickOutside(
-		() => [node, given],
-		() => open && close()
-	);
+	let stop: (() => void) | null = null;
+	const watch = () => {
+		stop?.();
+		stop = open
+			? clickOutside(
+					() => [node, given],
+					() => close()
+				)
+			: null;
+	};
+	watch();
 	if (open) afterTick(focusFirst);
 
 	return {
 		update(next) {
 			const was = open;
 			({ open, close, trigger: given } = next);
+			if (open !== was) watch();
 			if (open && !was) afterTick(focusFirst);
 			if (!open && was) {
 				// An item that closed the menu took the focus with it: it returns to the button.
-				// A click elsewhere keeps the focus where it went.
+				// A click elsewhere keeps the focus where it went. A menu whose button scrolled out of
+				// view closed: the column stays where the reader scrolled it.
 				const at = document.activeElement;
-				if (!at || at === document.body || node.contains(at)) trigger()?.focus();
+				if (!at || at === document.body || node.contains(at))
+					trigger()?.focus({ preventScroll: true });
 			}
 		},
 		destroy() {
 			node.removeEventListener('keydown', onKey);
-			stop();
+			stop?.();
 		}
 	};
 };

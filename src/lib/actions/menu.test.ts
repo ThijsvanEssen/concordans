@@ -49,7 +49,10 @@ describe('menu, for a place whose marker stands outside its list', () => {
 			removeEventListener: vi.fn()
 		});
 	});
-	afterEach(() => vi.unstubAllGlobals());
+	afterEach(() => {
+		vi.unstubAllGlobals();
+		doc.click = undefined;
+	});
 
 	const key = (k: string) => ({ key: k, preventDefault: vi.fn(), stopPropagation: vi.fn() });
 
@@ -86,10 +89,20 @@ describe('menu, for a place whose marker stands outside its list', () => {
 			close,
 			trigger: marker as unknown as HTMLElement
 		});
-		doc.click!({ target: marker });
-		doc.click!({ target: list.within[0] });
+		const click = (target: unknown) => ({ target, ...key('') });
+		doc.click!(click(marker));
+		doc.click!(click(list.within[0]));
 		expect(close).not.toHaveBeenCalled();
-		doc.click!({ target: new FakeNode() });
+		doc.click!(click(new FakeNode()));
 		expect(close).toHaveBeenCalledOnce();
+	});
+
+	it('watches clicks only while open: a closed menu lets every click through (#98)', () => {
+		const list = new FakeNode([new FakeNode()]);
+		const close = vi.fn();
+		const m = menu(list as unknown as HTMLElement, { open: false, close });
+		expect(doc.click).toBeUndefined();
+		m!.update!({ open: true, close });
+		expect(doc.click).toBeDefined();
 	});
 });

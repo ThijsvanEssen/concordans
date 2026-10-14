@@ -31,7 +31,7 @@
 	import { onDestroy, onMount, setContext, untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { afterNavigate, goto } from '$app/navigation';
-	import { cut, documentTitle, tabTitle } from '$lib/bron/tab-title';
+	import { pageName } from '$lib/bron/tab-title';
 	import { titelVan } from '$lib/bron/titels.svelte';
 	import { api, unwrap } from '$lib/api/client';
 	import { ignore, isAborted, isNotFound, report } from '$lib/api/errors';
@@ -1105,11 +1105,7 @@
 		// While the next bron is on its way the reader still holds the previous one: its name
 		// would be the new page's (a screen reader announces the title after each step).
 		if (wachtOp || (pad && !focus && !padMissing)) return LADEN_TITEL;
-		// The title the API gives the bron, as the server's page has it (#529); the name made
-		// here until its node is in. Cut at a word for the tab only. A Kamerstuk by its place
-		// as a citation writes it, not the API's `36600-VIII-5` (#84).
-		const api = selectedNode ? (documentTitle(selectedNode) ?? titelVan(selectedNode.id)) : null;
-		const name = api ? cut(api) : selectedNode ? tabTitle(selectedNode) : null;
+		const name = selectedNode ? pageName(selectedNode, titelVan(selectedNode.id)) : null;
 		if (name) return siteTitle(name);
 		if (netwerkActive) return siteTitle('Netwerk');
 		return routeKop('/explore').title;

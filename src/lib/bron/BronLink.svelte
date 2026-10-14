@@ -248,6 +248,7 @@
 		onpointerenter={() => roToon(true)}
 		onpointerleave={() => roSluitStraks()}
 		onkeydown={kaartToets}
+		onclose={roSluit}
 		onfocusout={(e) => {
 			if (e.relatedTarget !== null && !binnen(e.relatedTarget)) roSluit();
 		}}
@@ -255,7 +256,7 @@
 		class="card"
 		id="{uid}-card"
 		role="tooltip"
-		use:topLayer={{ anchor: anker }}
+		use:topLayer={{ anchor: anker, close: hide }}
 		><span class="card__kicker">{card.kicker}{card.date ? `, ${card.date}` : ''}</span><span
 			class="card__title">{card.title}</span
 		>{#if card.dossier}<span class="card__regel">{card.dossier}</span>{/if}{#if card.wie}<span

@@ -27,7 +27,8 @@
 		onpointerenter,
 		onpointerleave,
 		onkeydown,
-		onfocusout
+		onfocusout,
+		onclose
 	}: {
 		/** The judgment's key: `ecli_nl_hr_2019_2006`. */
 		judgment: string;
@@ -45,6 +46,8 @@
 		onpointerleave?: () => void;
 		onkeydown?: (e: KeyboardEvent) => void;
 		onfocusout?: (e: FocusEvent) => void;
+		/** Closes the card: its link has scrolled out of view. */
+		onclose: () => void;
 	} = $props();
 
 	let u = $state<Uitspraak | null | 'laden'>('laden');
@@ -82,7 +85,7 @@
 	tabindex="-1"
 	aria-label="{kop ? `${kop}, ` : ''}{plaats}"
 	bind:this={kaart}
-	use:topLayer={{ anchor: anker, detach: true }}
+	use:topLayer={{ anchor: anker, close: onclose, detach: true }}
 	{onpointerenter}
 	{onpointerleave}
 	{onkeydown}

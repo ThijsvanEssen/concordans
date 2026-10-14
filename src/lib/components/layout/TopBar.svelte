@@ -45,7 +45,11 @@
 		// werken de menuknoppen niet"). A tap elsewhere closes it by its click (below).
 		if (!naar) return;
 		if (mobileNavEl?.contains(naar) || toggleBtnEl?.contains(naar)) return;
-		mobileMenuOpen = false;
+		// A tapped column takes the focus too, without showing it: closing here let the tap's
+		// click open what lay under it (#98). Tab shows the focus; a tap closes by its click.
+		setTimeout(() => {
+			if (naar instanceof Element && naar.matches(':focus-visible')) mobileMenuOpen = false;
+		});
 	}
 
 	// A click or tap outside the sheet and its button closes it, as a menu does.

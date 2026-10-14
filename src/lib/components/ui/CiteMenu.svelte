@@ -63,7 +63,7 @@
 				class="tekstmenu__lijst is-breed pop"
 				role="menu"
 				aria-label="Citeer {name}"
-				use:topLayer={{ anchor: button, align }}
+				use:topLayer={{ anchor: button, close: () => setOpen(false), align }}
 			>
 				<div class="pop__label">Kopieer als</div>
 				{#each items as item (item.kind)}
