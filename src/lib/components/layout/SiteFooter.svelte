@@ -105,7 +105,7 @@
 	/* On the edge of the pages above it: the frame of Bladeren, without its height. */
 	.container {
 		box-sizing: border-box;
-		max-width: 1440px;
+		max-width: var(--blad-max);
 		margin: 0 auto;
 		padding: 0 var(--s-6);
 	}

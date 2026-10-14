@@ -159,7 +159,7 @@ a:hover {
 	text-underline-offset: 4px;
 	cursor: pointer;
 }
-@media (max-width: 767px) {
+@media (max-width: 768px) {
 	.verfijnen-knop {
 		display: inline-block;
 	}

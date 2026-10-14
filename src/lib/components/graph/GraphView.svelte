@@ -1898,7 +1898,7 @@
 	}
 
 	/* On a phone the full width, as the Netwerk card above it: one width, one right edge. */
-	@media (max-width: 767px) {
+	@media (max-width: 768px) {
 		:global(.canvas-kaart.legenda) {
 			left: var(--paneel-rand);
 			width: auto;

@@ -746,7 +746,7 @@
 		margin: 0 0 var(--s-1);
 	}
 
-	@media (max-width: 767px) {
+	@media (max-width: 768px) {
 		.regel {
 			margin-bottom: var(--s-3);
 		}

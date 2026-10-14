@@ -267,7 +267,7 @@
 	}
 	/* On a phone the full width at the top of the canvas, open or folded: no empty strip
 	   beside it (sweep at 375, 10 Oct). */
-	@media (max-width: 767px) {
+	@media (max-width: 768px) {
 		:global(.canvas-kaart.netwerk) {
 			left: var(--paneel-rand);
 			width: auto;

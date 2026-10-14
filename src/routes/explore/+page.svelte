@@ -2,6 +2,7 @@
 	import { kamerstukName } from '$lib/components/parliamentary/kamerstuk';
 	import type { Collection } from '$lib/vocabulary';
 	import { sprongDoel } from '$lib/stores/sprong';
+	import { BESIDE, PHONE } from '$lib/utils/breakpoints';
 	import { naamVanId } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import IconKnop from '$lib/components/ui/IconKnop.svelte';
@@ -300,7 +301,7 @@
 			.map(([k, v]) => `${k}=${encodeURIComponent(v!)}`)
 			.join('&')
 	);
-	const telefoon = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches;
+	const telefoon = typeof window !== 'undefined' && window.matchMedia(PHONE).matches;
 	// "Bronnen ertussen" is on by default, on a phone too (Thijs, 9 Oct, from an iPhone): the
 	// clusters, the faint bronnen between and the cap of 100 keep it light there.
 	// ── The example, where nothing is chosen ─────────────────────────────────
@@ -1651,7 +1652,7 @@
 						use:sprongDoel={{
 							id: 'verbonden',
 							label: 'Naar Verbonden',
-							naast: '(min-width: 769px)'
+							naast: BESIDE
 						}}
 					>
 						{@render panel(true)}
@@ -1665,7 +1666,7 @@
 						id: 'netwerk',
 						label: 'Naar het netwerk',
 						aan: !!selectedNode,
-						naast: '(min-width: 769px)'
+						naast: BESIDE
 					}}
 				>
 					{#if GraphViewC}
@@ -1906,8 +1907,8 @@
 	.explore-shell {
 		display: flex;
 		flex-direction: column;
-		height: calc(100vh - 60px);
-		height: calc(100dvh - 60px);
+		height: calc(100vh - var(--topbar-h));
+		height: calc(100dvh - var(--topbar-h));
 		overflow: hidden;
 	}
 

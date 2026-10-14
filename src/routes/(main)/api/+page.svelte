@@ -247,7 +247,7 @@
 		grid-row: 3;
 		align-self: start;
 		position: sticky;
-		top: 90px;
+		top: calc(var(--topbar-h) + var(--s-6));
 	}
 	.toc-title {
 		font-family: var(--font-serif);
@@ -304,7 +304,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-3);
-		scroll-margin-top: 90px;
+		scroll-margin-top: calc(var(--topbar-h) + var(--s-6));
 	}
 	.api-tag-head {
 		display: flex;
@@ -478,7 +478,7 @@
 		text-underline-offset: 3px;
 	}
 
-	@media (max-width: 820px) {
+	@media (max-width: 768px) {
 		.toc {
 			position: static;
 			grid-column: 1;

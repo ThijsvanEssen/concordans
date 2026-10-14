@@ -343,7 +343,7 @@
 	}
 	.sheet {
 		position: fixed;
-		top: 60px;
+		top: var(--topbar-h);
 		right: 0;
 		bottom: 0;
 		z-index: var(--z-modal);

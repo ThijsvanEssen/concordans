@@ -3212,9 +3212,10 @@
 	}
 	/* The filters in a column beside the list, on a narrow screen above it: the frame and
 	   its grid are the shared .blad and .blad__indeling (lib/styles/frame.css). */
-	/* The shared .blad__facetten (lib/styles/frame.css), as high as this scrolling box rather than the
-	   window, so its last filter can be reached. */
+	/* The shared .blad__facetten (lib/styles/frame.css), in this scrolling box rather than the
+	   window: no top bar over it, and as high as the box, so its last filter can be reached. */
 	.facet-col {
+		top: var(--s-6);
 		max-height: calc(100cqh - var(--s-6));
 	}
 	.results {
@@ -3793,7 +3794,7 @@
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 	}
-	@media (max-width: 767px) {
+	@media (max-width: 768px) {
 		.regel {
 			margin-bottom: var(--s-3);
 		}
