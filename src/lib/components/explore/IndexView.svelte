@@ -1,4 +1,5 @@
 <script lang="ts">
+	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { count, plural } from '$lib/text/words';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
 	import StukUitslag from '$lib/components/parliamentary/StukUitslag.svelte';
@@ -2899,10 +2900,11 @@
 									{/each}
 									{@render loadMoreButton(pages.decisions, 'stemmingen')}
 									{#if kamer === 'EK'}
-										<p class="list-source">
-											Bron: {EK_SOURCE.name},
-											<a href={EK_SOURCE.url} rel="external">{EK_SOURCE.site}</a>.
-										</p>
+										<BronRegel
+											afterList
+											label={`${EK_SOURCE.name}, ${EK_SOURCE.site}`}
+											href={EK_SOURCE.url}
+										/>
 									{/if}
 								{/if}
 							{:else if category === 'cabinets' && cabinetsShown}
@@ -3068,12 +3070,13 @@
 					{/if}
 					<!-- Where the list comes from, under it: the source and its date close the list. -->
 					{#if composition && category !== 'factions' && !loading}
-						<p class="list-source">
-							Samenstelling op {langeDatum(composition.composition_date)}, gegevens sinds {langeDatum(
-								composition.data_since
-							)}. Bron:
-							<a href={composition.url} rel="external">{composition.attribution}</a>.
-						</p>
+						<BronRegel
+							afterList
+							composedOn={composition.composition_date}
+							dataSince={composition.data_since}
+							label={composition.attribution}
+							href={composition.url}
+						/>
 					{/if}
 				</div>
 			</div>
@@ -3361,12 +3364,6 @@
 	}
 
 	.row-method {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	.list-source {
-		margin: var(--s-4) 0 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);

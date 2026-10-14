@@ -1,4 +1,5 @@
 <script lang="ts">
+	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { langeDatum } from '$lib/text/datum';
 	import { joinParts, withoutGroup } from '$lib/text/words';
 	import { kamerstukName } from '$lib/components/parliamentary/kamerstuk';
@@ -259,11 +260,11 @@
 						</dl>
 					</Sectie>
 				{/if}
-				<p class="source">
-					Bron: <a href={d.source_url ?? EK_SOURCE.url} rel="external"
-						>{EK_SOURCE.name}, {EK_SOURCE.site}</a
-					>{d.retrieved_on ? `, geraadpleegd op ${langeDatum(d.retrieved_on)}` : ''}.
-				</p>
+				<BronRegel
+					readOn={d.retrieved_on}
+					label={`${EK_SOURCE.name}, ${EK_SOURCE.site}`}
+					href={d.source_url ?? EK_SOURCE.url}
+				/>
 			{/if}
 
 			{#if voters.length > 0}
@@ -324,12 +325,6 @@
 	.ek-factions dd {
 		margin: 0;
 		color: var(--ink-2);
-	}
-	.source {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
 	}
 	/* As the article's status line: t-meta, in ink. */
 	.woorden {

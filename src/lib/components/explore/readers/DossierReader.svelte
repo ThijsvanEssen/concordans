@@ -1,4 +1,5 @@
 <script lang="ts">
+	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { textOf } from '$lib/text/words';
 	import { langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
@@ -163,19 +164,11 @@
 				{#if d.ek_outcome}
 					{@const ek = d.ek_outcome}
 					<!-- The Eerste Kamer's decision stands in the bar; its source is named here. -->
-					<p class="source">
-						Bron: <a href={ek.source_url} rel="external">{ek.attribution}</a>{ek.retrieved_on
-							? `, geraadpleegd op ${langeDatum(ek.retrieved_on)}`
-							: ''}.
-					</p>
+					<BronRegel readOn={ek.retrieved_on} label={ek.attribution} href={ek.source_url} />
 				{:else if d.senate?.source?.url}
 					{@const bill = d.senate.source}
 					<!-- Where the Eerste Kamer's progress in the bar and the procedure comes from. -->
-					<p class="source">
-						Bron: <a href={bill.url} rel="external">{bill.attribution}</a>{bill.read_on
-							? `, geraadpleegd op ${langeDatum(bill.read_on)}`
-							: ''}.
-					</p>
+					<BronRegel readOn={bill.read_on} label={bill.attribution} href={bill.url} />
 				{/if}
 				{#if readings.first.length > 0}
 					<p class="reading">
@@ -313,23 +306,6 @@
 		text-decoration-color: currentColor;
 	}
 	/* Where the Eerste Kamer's outcome comes from: its site, named as its terms ask. */
-	.source {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	.source a {
-		color: inherit;
-		text-decoration: underline;
-		text-decoration-color: var(--rule);
-		text-underline-offset: 2px;
-	}
-	.source a:hover {
-		color: var(--ink);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
-	}
 	.laden {
 		margin: var(--s-4) 0 0;
 		font-family: var(--font-serif);

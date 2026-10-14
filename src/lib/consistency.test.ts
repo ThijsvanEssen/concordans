@@ -1411,4 +1411,13 @@ describe('the explorer’s small things said once (code-eenvoud F48–F50)', () 
 			offenders((t) => /\/\^kabinet-\//.test(t), ['lib/components/explore/index/government.ts'])
 		).toEqual([]);
 	});
+
+	it('says where a composition or a decision comes from in BronRegel (F49)', () => {
+		expect(
+			offenders(
+				(t) => /gegevens sinds|geraadpleegd op/.test(t),
+				['lib/components/parliamentary/BronRegel.svelte']
+			)
+		).toEqual([]);
+	});
 });

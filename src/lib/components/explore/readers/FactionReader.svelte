@@ -1,4 +1,5 @@
 <script lang="ts">
+	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { plural, textOf } from '$lib/text/words';
 	import { korteDatum, langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
@@ -88,9 +89,6 @@
 		{@const since = textOf(f.props?.data_since)}
 		{@const board = boardOf(f.props)}
 		{@const sinds = textOf(f.props?.active_from)}
-		{@const composed = read
-			? `Samenstelling op ${langeDatum(read)}${since ? `, gegevens sinds ${langeDatum(since)}` : ''}. `
-			: ''}
 		{@const titel = abbreviation ?? name ?? naamVan('factions', f)}
 		<div class="r-faction">
 			<!-- The Kamer stands in the band (Kamer: Tweede Kamer), not again here (Thijs, 10 Oct). -->
@@ -192,12 +190,12 @@
 			{/if}
 
 			{#if ek}
-				<p class="source">
-					{composed}Bron:
-					<a href={textOf(f.props?.url) ?? EK_SOURCE.url} rel="external"
-						>{EK_SOURCE.name}, {EK_SOURCE.site}</a
-					>.
-				</p>
+				<BronRegel
+					composedOn={read}
+					dataSince={since}
+					label={`${EK_SOURCE.name}, ${EK_SOURCE.site}`}
+					href={textOf(f.props?.url) ?? EK_SOURCE.url}
+				/>
 			{/if}
 		</div>
 	{/snippet}
@@ -285,12 +283,6 @@
 		color: var(--ink);
 	}
 	.vote-meta {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	.source {
-		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);

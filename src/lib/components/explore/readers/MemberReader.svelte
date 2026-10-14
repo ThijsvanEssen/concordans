@@ -1,10 +1,11 @@
 <script lang="ts">
+	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { capitalize, count, textOf } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
 	import { fractieNaam, naamVan } from '$lib/bron/menselijk';
 	import ReaderHead from './ReaderHead.svelte';
 	import { formatCount } from '$lib/text/getal';
-	import { korteDatum, langeDatum, vandaag } from '$lib/text/datum';
+	import { korteDatum, vandaag } from '$lib/text/datum';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
@@ -257,10 +258,12 @@
 						<Veld label="Woonplaats" value={ek.residence} />
 					</Feiten>
 					{#if ek.source}
-						<p class="ek-source">
-							{`Samenstelling op ${langeDatum(ek.source.composition_date)}, gegevens sinds ${langeDatum(ek.source.data_since)}. `}Bron:
-							<a href={ek.source.url} rel="external">{ek.source.attribution}</a>.
-						</p>
+						<BronRegel
+							composedOn={ek.source.composition_date}
+							dataSince={ek.source.data_since}
+							label={ek.source.attribution}
+							href={ek.source.url}
+						/>
 					{/if}
 				</Sectie>
 			{/if}
@@ -650,12 +653,6 @@
 
 	/* A text button: no border, the hover as a paper-2 field. */
 
-	.ek-source {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
 	.laden {
 		margin: var(--s-4) 0 0;
 		font-family: var(--font-serif);

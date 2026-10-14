@@ -1,6 +1,6 @@
 <script lang="ts">
+	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { capitalize, joinParts, textOf } from '$lib/text/words';
-	import { langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import ReaderHead from './ReaderHead.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
@@ -118,10 +118,12 @@
 			{/if}
 
 			{#if ek && source}
-				<p class="source">
-					{`Samenstelling op ${langeDatum(source.composition_date)}, gegevens sinds ${langeDatum(source.data_since)}. `}Bron:
-					<a href={source.url} rel="external">{source.attribution}</a>.
-				</p>
+				<BronRegel
+					composedOn={source.composition_date}
+					dataSince={source.data_since}
+					label={source.attribution}
+					href={source.url}
+				/>
 			{/if}
 		</div>
 	{/snippet}
@@ -157,12 +159,6 @@
 		color: var(--ink);
 	}
 	.faction {
-		color: var(--ink-3);
-	}
-	.source {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	/* The abbreviation: a word, not a tag. */
