@@ -1156,9 +1156,14 @@ describe('canvas cards and halls', () => {
 		const uitspraak = src('lib/components/explore/readers/JudgmentReader.svelte');
 		// An article: one citation (articleCitation), the law's names recorded alike, and
 		// ArticleText given the same citation props as in the reader.
-		for (const t of [lezer, kaart]) {
+		// The reader records the law's names where it loads the article (readers/article.ts).
+		const laden = src('lib/components/explore/readers/article.ts');
+		for (const [t, names] of [
+			[lezer, laden],
+			[kaart, kaart]
+		]) {
 			expect(t).toContain('articleCitation(');
-			expect(t).toContain('recordArticleLaw(');
+			expect(names).toContain('recordArticleLaw(');
 			const tekst = /<ArticleText\b[\s\S]*?\/>/.exec(t)![0];
 			expect(tekst).toMatch(/\{citation\}/);
 			expect(tekst).toMatch(
@@ -1248,6 +1253,17 @@ describe('the keyboard', () => {
 				.map((r) => `${path} ${r.selector.replace(/\s+/g, ' ')}`)
 		);
 		expect(zonder.filter((k) => !(k in eigen))).toEqual([]);
+	});
+});
+
+describe('runes', () => {
+	it('assigns state in a statement, never as the value of an arrow (assignment_value_stale, #71)', () => {
+		// `.then((items) => (lists[list] = items))`: Svelte warns that the value is the right-hand
+		// side, not the proxy the state now holds.
+		const memberAsValue = /=>\s*\(\s*[\w$]+(?:\.[\w$]+|\[[^\]]+\])+\s*=[^=>]/;
+		expect(
+			offenders((text) => memberAsValue.test(text)).filter((p) => /\.svelte(\.ts)?$/.test(p))
+		).toEqual([]);
 	});
 });
 

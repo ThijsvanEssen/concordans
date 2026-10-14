@@ -8,7 +8,7 @@ import type { Schema } from '$lib/api/types';
 import type { BronRef } from '$lib/bron/href';
 import { parseNodeId, type Collection } from '$lib/vocabulary';
 import { anchorOf, parseQualifier } from '$lib/text/qualifier';
-import { lookUp, type Pad, type Reeks } from '$lib/bron/leesbaar';
+import { lookUp, lookUpInData, type Pad, type Reeks } from '$lib/bron/leesbaar';
 
 export type Citation =
 	| { kind: 'ecli'; ecli: string }
@@ -168,7 +168,8 @@ export const apiDeps: ResolveDeps = {
 		const bwb = found.results.articles?.[0]?.extra?.bwb_id;
 		return typeof bwb === 'string' ? bwb : null;
 	},
-	lookUp: (pad) => lookUp(pad),
+	// A dossier is named without a request (focusOfPad); here it must be known to exist.
+	lookUp: (pad) => (pad.soort === 'dossier' ? lookUpInData(pad) : lookUp(pad)),
 	exists: async ({ collection, key }) =>
 		(await ifExists(
 			unwrap(

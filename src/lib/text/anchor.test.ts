@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	anchorLabel,
+	atPlace,
 	formatAnchor,
 	lidAnchor,
 	lidNumber,
@@ -79,6 +80,16 @@ describe('anchorLabel', () => {
 		expect(anchorLabel('deel-hoofdstuk-3')).toBeNull();
 		expect(anchorLabel('onder-_39')).toBeNull();
 		expect(anchorLabel('onder-_39-onder-a')).toBe('onder a');
+	});
+});
+
+describe('atPlace', () => {
+	it('puts "in" before a place, and nothing before one that is its own preposition (#66)', () => {
+		expect(atPlace('r.o. 4.3 en 5.1')).toBe('in r.o. 4.3 en 5.1');
+		expect(atPlace('§ 5')).toBe('in § 5');
+		expect(atPlace('voetnoot 3')).toBe('in voetnoot 3');
+		expect(atPlace(anchorLabel('rov-3', 'ECLI:NL:PHR:2026:901')!)).toBe('onder 3');
+		expect(atPlace(anchorLabel('onder-a')!)).toBe('onder a');
 	});
 });
 

@@ -10,7 +10,7 @@
 // line between two hulls, the legend, the table, the CSV and the card Verbinding all read
 // them, so one verbinding is never called two things (onderzoek samenhang, 14 Oct).
 import { capitalize, count, escapeRegExp, lowerFirst, plural, textOf } from '$lib/text/words';
-import { paragraphNumber } from '$lib/text/anchor';
+import { atPlace, paragraphNumber } from '$lib/text/anchor';
 import type { Collection, Relation } from '$lib/vocabulary';
 import { langeDatum } from '$lib/text/datum';
 import {
@@ -431,8 +431,8 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 	const p = passageOf(row);
 	const citaat = p?.mark ? uitsnede(p) : row.relation === 'ANSWERS' ? aanhalingUitMeta(edge) : null;
 	const lid = row.lid ? `lid ${row.lid}` : null;
-	// The place in the citing text: `in r.o. 4.3 en 5.1`.
-	const plaats = row.position && row.position !== lid ? `in ${row.position}` : null;
+	// The place in the citing text: `in r.o. 4.3 en 5.1`, `onder 3`.
+	const plaats = row.position && row.position !== lid ? atPlace(row.position) : null;
 	const reden = textOf(edge.reason);
 	const uit = (s: string | null) => (s ? (HERKOMST_REDEN[s] ?? null) : null);
 	const formeel =
@@ -619,7 +619,7 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 						: null);
 			// A verb with an object names it before the rest: `Verwijst naar lid 2`, `Verwijst
 			// naar dit artikel als ‘…’`, `Verwijst ernaar als ‘…’`, never `Verwijst naar als`. A
-			// participle needs none: `Aangehaald in r.o. 6`.
+			// participle needs none: `Aangehaald in r.o. 6`, `Aangehaald onder 3`.
 			const woord = capitalize(inbound ? woorden!.actief : woorden!.terug);
 			const deelwoord = /^(Aangehaald|Genoemd|Besproken)$/.test(woord);
 			const zonderLid = !lid && !deelwoord && !!(eigen || aard);

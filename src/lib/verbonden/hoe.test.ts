@@ -102,6 +102,20 @@ describe('hoeVan', () => {
 		]);
 	});
 
+	it('says a conclusion cites onder its point, not "in onder" (#66)', () => {
+		const h = hoeVan(
+			row({
+				relation: 'REFERS_TO',
+				direction: 'inbound',
+				ref: { collection: 'judgments', key: 'ecli_nl_phr_2026_901' },
+				position: 'onder 3',
+				edge: { reason: 'bwb_article' }
+			}),
+			'articles'
+		);
+		expect(h?.rest).toBe('onder 3');
+	});
+
 	it('quotes the words of a law that refers, and names its source', () => {
 		const h = hoeVan(
 			row({

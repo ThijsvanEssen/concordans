@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { apiNumber, articleName, articleTitle, bookNumber, withBook } from './bw';
+import { apiNumber, articleName, articleTitle, bookNumber, lawShortName, withBook } from './bw';
 
 describe('BW article numbers', () => {
 	it('gives the number the API gives a BW article, without its book', () => {
@@ -67,5 +67,14 @@ describe('articleTitle', () => {
 			})
 		).toBe('Artikel 6:162 BW');
 		expect(articleTitle('Artikel 1 Wet X', { article_number: '1' })).toBe('Artikel 1 Wet X');
+	});
+});
+
+describe('lawShortName', () => {
+	it('names a book of the BW as lawyers do, never by its BWB abbreviation (#68)', () => {
+		expect(lawShortName('BWBR0006000', 'BW7A')).toBe('Boek 7A BW');
+		expect(lawShortName('bwbr0005289', 'BW6')).toBe('Boek 6 BW');
+		expect(lawShortName('BWBR0005537', 'Awb')).toBe('Awb');
+		expect(lawShortName('BWBR0005537', null)).toBeNull();
 	});
 });

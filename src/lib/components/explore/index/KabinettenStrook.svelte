@@ -79,7 +79,10 @@
 		const el = scroller;
 		const midden = el ? (el.scrollLeft + el.clientWidth / 2) / yearWidth : 0;
 		yearWidth = YEAR_WIDTHS[i];
-		if (el) afterTick(() => (el.scrollLeft = midden * yearWidth - el.clientWidth / 2));
+		if (el)
+			afterTick(() => {
+				el.scrollLeft = midden * yearWidth - el.clientWidth / 2;
+			});
 	}
 	// Opens at the present, or at the cabinet opened.
 	$effect(() => {

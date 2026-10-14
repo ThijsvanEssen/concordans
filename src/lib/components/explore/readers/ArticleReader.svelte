@@ -17,8 +17,8 @@
 	// comparison; a lid changed since the oldest tekstversie says so in the margin.
 	import { menu } from '$lib/actions/menu';
 	import { api, unwrap } from '$lib/api/client';
-	import { getArticleDetail, getArticleHistory, getDelegated } from '$lib/api/articles';
-	import { instrumentMetaStore, recordArticleLaw } from '$lib/api/instrument-cache';
+	import { getDelegated } from '$lib/api/articles';
+	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import type { Schema } from '$lib/api/types';
 	import { articleOf, type GraphNode } from '$lib/graph/types';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
@@ -39,8 +39,9 @@
 	import { afterTick } from '$lib/util/after-tick';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
+	import { articleKey as keyOfArticle, fetchArticle } from './article';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
-	import { load, type LoadState as State } from '$lib/util/load.svelte';
+	import { load } from '$lib/util/load.svelte';
 	import { report } from '$lib/api/errors';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 
@@ -100,30 +101,9 @@
 	const bwbId = $derived(identity?.lawId ?? '');
 	const articleNumber = $derived(identity?.articleNumber ?? '');
 
-	type Version = Schema<'ArticleVersionDTO'>;
-	// The text and its tekstversies come together, both asked by the address at once: the
-	// status line ("tekst sinds …") stands with the text instead of growing over it after.
 	// Without versions the picker shows the current text alone, and says why.
-	const articleKey = $derived(bwbId && articleNumber ? `${bwbId}/${articleNumber}` : null);
-	const article = load(
-		() => articleKey,
-		async (key) => {
-			if (!key) throw new Error('Artikel zonder wet of nummer');
-			const [law, number] = [bwbId, articleNumber];
-			const versions = getArticleHistory(law, number).then(
-				(r): State<Version[]> => ({ status: 'ready', data: r.versions ?? [] }),
-				(error): State<Version[]> => {
-					report('Tekstversies', error);
-					return { status: 'error', error };
-				}
-			);
-			const [detail, versionState] = await Promise.all([getArticleDetail(law, number), versions]);
-			// The citation panel and the citation forms read the law's names from this cache.
-			recordArticleLaw(law, detail.instrument);
-			return { detail, versions: versionState };
-		},
-		'Artikel'
-	);
+	const articleKey = $derived(keyOfArticle(bwbId, articleNumber));
+	const article = load(() => articleKey, fetchArticle, 'Artikel');
 	const loaded = $derived(article.state.status === 'ready' ? article.state.data.detail : null);
 	const versionState = $derived(
 		article.state.status === 'ready' ? article.state.data.versions : null

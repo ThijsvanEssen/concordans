@@ -3,6 +3,7 @@
 // `instrumentMetaStore` or `getInstrumentMeta`.
 
 import { textOf } from '$lib/text/words';
+import { lawShortName } from '$lib/text/bw';
 import { writable, type Readable } from 'svelte/store';
 import { api, unwrap } from './client';
 import type { Schema } from './types';
@@ -58,7 +59,7 @@ export function recordInstrument(input: {
 	cache.set(bwbId, {
 		bwbId,
 		title: title ?? citationTitle,
-		shortTitle: textOf(input.short_title) ?? existing?.shortTitle ?? null,
+		shortTitle: lawShortName(bwbId, textOf(input.short_title) ?? existing?.shortTitle),
 		citationTitle: citationTitle ?? title
 	});
 	flush();

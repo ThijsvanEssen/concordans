@@ -1,4 +1,4 @@
-import { api, unwrap } from './client';
+import { api, unwrap, zoekApi } from './client';
 import { ifExists } from './errors';
 import { once } from './records';
 import { onForget } from '$lib/util/forget';
@@ -61,7 +61,8 @@ export const getDelegated = (bwbId: string, articleNumber: string) =>
 	);
 
 /**
- * The regulations issued under a law: one per regulation whose `Gelet op` names an article of
+ * The regulations issued under a law, with the deadline of the slow lanes (the Grondwet took
+ * 20 s on the live API, past the 10 s of `api`): one per regulation whose `Gelet op` names an article of
  * it, with those articles; once per law, for its group in Verbonden and its row in a map.
  * Null where the API does not have the law.
  */
@@ -69,7 +70,7 @@ export const getLawDelegated = (bwbId: string) =>
 	once(`instruments/${bwbId}/delegated`, () =>
 		ifExists(
 			unwrap(
-				api.GET('/api/instruments/{bwb_id}/delegated', { params: { path: { bwb_id: bwbId } } })
+				zoekApi.GET('/api/instruments/{bwb_id}/delegated', { params: { path: { bwb_id: bwbId } } })
 			)
 		)
 	);

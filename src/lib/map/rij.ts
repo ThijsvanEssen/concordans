@@ -88,6 +88,7 @@ function readerCitation(r: Row): { kort: string; voluit?: string } | null {
 	const kort = kamerstukCitation({
 		chamber: textOf(p.chamber),
 		session_year: textOf(p.session_year),
+		date: textOf(p.date) ?? r.date,
 		dossier_number: dossierNumberOf(p),
 		dossier_suffix: textOf(p.dossier_suffix),
 		number: p.sequence != null ? String(p.sequence) : textOf(p.number)

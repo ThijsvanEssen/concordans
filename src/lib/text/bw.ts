@@ -29,6 +29,18 @@ export const bwBookOf = (bwbId: string | null | undefined): string | null =>
 export const bwCode = (bwbId: string | null | undefined): 'BW' | null =>
 	bwBookOf(bwbId) ? 'BW' : null;
 
+/**
+ * The short name of a law: a book of the BW as lawyers write it, `Boek 7A BW` (never the
+ * BWB's `BW7A`); another law by its abbreviation.
+ */
+export function lawShortName(
+	bwbId: string | null | undefined,
+	abbreviation: string | null | undefined
+): string | null {
+	const book = bwBookOf(bwbId);
+	return book ? `Boek ${book} BW` : (abbreviation ?? null);
+}
+
 /** The number an article is cited by: `6:162` for article 162 of Boek 6, else as it is. */
 export function bookNumber(bwbId: string | null | undefined, number: string): string;
 export function bookNumber(

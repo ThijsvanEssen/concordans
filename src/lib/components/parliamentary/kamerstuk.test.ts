@@ -4,6 +4,7 @@ import {
 	kamerstukLabel,
 	kamerstukName,
 	sessionYear,
+	sessionYearOn,
 	withoutKamerstuk
 } from './kamerstuk';
 
@@ -37,6 +38,22 @@ describe('kamerstukCitation', () => {
 		expect(kamerstukLabel({ chamber: 'EK', dossier_number: '36791', number: 'C' })).toBe(
 			'36791, C'
 		);
+	});
+});
+
+describe('sessionYearOn', () => {
+	it('starts the vergaderjaar on Prinsjesdag, the third Tuesday of September (#67)', () => {
+		expect(sessionYearOn('2016-12-12')).toBe('2016-2017');
+		expect(sessionYearOn('2016-09-19')).toBe('2015-2016');
+		expect(sessionYearOn('2016-09-20')).toBe('2016-2017');
+		expect(sessionYearOn('2026-03-01')).toBe('2025-2026');
+		expect(sessionYearOn(null)).toBeNull();
+	});
+
+	it('cites a paper without its vergaderjaar by the year of its date', () => {
+		expect(
+			kamerstukCitation({ chamber: 'TK', dossier_number: '34372', number: 14, date: '2016-12-12' })
+		).toBe('Kamerstukken II 2016/17, 34372, nr. 14');
 	});
 });
 

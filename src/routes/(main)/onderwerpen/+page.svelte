@@ -80,7 +80,9 @@
 			if (!bwb || o.wet?.titel !== bwb || bwb in wetNamen) continue;
 			wetNamen[bwb] = bwb;
 			getInstrumentDetail(bwb)
-				.then((d) => (wetNamen[bwb] = d.title ?? bwb))
+				.then((d) => {
+					wetNamen[bwb] = d.title ?? bwb;
+				})
 				// The topic keeps the law's id as its name.
 				.catch((e) => report('Gevolgd wet', e));
 		}
@@ -462,8 +464,10 @@
 					</div>
 					{#if !alle}
 						<p class="alle">
-							<TekstLink onclick={() => (uitgeklapt[vak(o)] = true)}
-								>Alle {s.items.length} tonen</TekstLink
+							<TekstLink
+								onclick={() => {
+									uitgeklapt[vak(o)] = true;
+								}}>Alle {s.items.length} tonen</TekstLink
 							>
 						</p>
 					{/if}

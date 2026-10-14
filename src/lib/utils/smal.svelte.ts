@@ -6,7 +6,9 @@ export function smalScherm(): { readonly smal: boolean } {
 	$effect(() => {
 		const query = window.matchMedia('(max-width: 767px)');
 		scherm.smal = query.matches;
-		const change = () => (scherm.smal = query.matches);
+		const change = () => {
+			scherm.smal = query.matches;
+		};
 		query.addEventListener('change', change);
 		return () => query.removeEventListener('change', change);
 	});

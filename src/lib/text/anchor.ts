@@ -80,6 +80,12 @@ export function formatAnchor(a: Anchor): string {
 	}
 }
 
+/**
+ * A printed place (`anchorLabel`) as a sentence names it: `in r.o. 5.1`, `in § 5`; `onder 3`
+ * (a point of a conclusion, an onderdeel) is its own preposition and takes no `in`.
+ */
+export const atPlace = (label: string): string => (/^onder /.test(label) ? label : `in ${label}`);
+
 /** The anchor of an overweging by its number: `rov-5.7.1`. */
 export const paragraphAnchor = (number: string): string =>
 	formatAnchor({ kind: 'paragraph', number });

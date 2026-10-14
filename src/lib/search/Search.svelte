@@ -802,8 +802,10 @@
 				<p class="state state--group stil" role="status">
 					{naam}
 					{laan.stand === 'traag' ? 'duren lang.' : 'konden niet worden geladen.'}
-					<TekstLink onclick={() => (opnieuw[laan.id] = (opnieuw[laan.id] ?? 0) + 1)}
-						>Probeer opnieuw</TekstLink
+					<TekstLink
+						onclick={() => {
+							opnieuw[laan.id] = (opnieuw[laan.id] ?? 0) + 1;
+						}}>Probeer opnieuw</TekstLink
 					>
 				</p>
 			</div>
@@ -812,8 +814,10 @@
 		{#if failed}
 			<p class="state stil" role="status">
 				{traag ? 'Zoeken duurt lang.' : 'Zoeken mislukt.'}
-				<TekstLink onclick={() => (opnieuw.snel = (opnieuw.snel ?? 0) + 1)}
-					>Probeer opnieuw</TekstLink
+				<TekstLink
+					onclick={() => {
+						opnieuw.snel = (opnieuw.snel ?? 0) + 1;
+					}}>Probeer opnieuw</TekstLink
 				>
 			</p>
 		{:else if empty}
