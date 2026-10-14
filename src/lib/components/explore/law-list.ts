@@ -42,6 +42,23 @@ export type Row = {
 	text_preview: string | null;
 };
 
+/** The whole text an article shows, and whether Citeer names its places (not on a peildatum). */
+export type ArticleText = { text: string; parts: Part[] | null; cited: boolean };
+
+/**
+ * The one text of a row: of the peildatum, else of today from its page, else of the article
+ * asked alone (`detail`, of today only). Null while none came: the preview stands.
+ */
+export function articleText(
+	row: Row,
+	detail: { text: string | null; parts?: Part[] | null } | undefined
+): ArticleText | null {
+	if (row.text) return { text: row.text, parts: row.parts, cited: false };
+	if (row.textToday) return { text: row.textToday, parts: row.partsToday ?? null, cited: true };
+	if (detail?.text) return { text: detail.text, parts: detail.parts ?? null, cited: true };
+	return null;
+}
+
 export type ListStatus = 'loading' | 'loading-more' | 'loading-before' | 'ready' | 'error';
 
 export type LawList = {

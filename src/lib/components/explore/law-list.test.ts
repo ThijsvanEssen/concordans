@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { lawArticleList } from '$lib/api/law-articles';
 import { fakeApi, fail, type FakeRequest } from '$lib/test/fakeApi';
-import { createLawList, type LawList } from './law-list';
+import { articleText, createLawList, type LawList, type Row } from './law-list';
 
 const TODAY = '2026-10-14';
 const LIST = '/api/instruments/{bwb_id}/articles';
@@ -141,5 +141,157 @@ describe('the list of the whole-law reader', () => {
 		await settle();
 		expect(await law.reach('artikel-150')).toBe(true);
 		expect(now().pageFailure?.richting).toBe('volgende');
+	});
+});
+
+/** A law of `total` articles, numbered from 1; a division answers from `division` alone. */
+function law(total: number, division?: { anchor: string; offset: number; size: number }) {
+	return ({ params }: FakeRequest) => {
+		const bwb = String(params.path?.bwb_id);
+		const day = params.path?.at_date ? String(params.path.at_date) : null;
+		const asked = params.query?.division;
+		const within = asked && division && asked === division.anchor;
+		if (asked && !within) return fail(404);
+		const from = Number(params.query?.offset ?? 0) + (within ? division.offset : 0);
+		const end = within ? division.offset + division.size : total;
+		const count = Math.max(Math.min(Number(params.query?.limit ?? 100), end - from), 0);
+		const items = Array.from({ length: count }, (_, i) => {
+			const n = String(from + i + 1);
+			return {
+				id: `${bwb}-${n}`,
+				key: `${bwb}-${n}`,
+				article_number: n,
+				label: null,
+				breadcrumb: [],
+				text: day ? `Artikel ${n} op ${day}.` : null,
+				parts: [],
+				text_preview: ''
+			};
+		});
+		return {
+			items,
+			total: within ? division.size : total,
+			division: within
+				? { anchor: division.anchor, type: 'hoofdstuk', label: null, offset: division.offset }
+				: null,
+			first_version_from: null
+		};
+	};
+}
+
+describe('what the whole-law reader does with its list', () => {
+	it('opens a division alone, then reads on through the rest of the law', async () => {
+		const chapter = { anchor: 'deel-hoofdstuk-3', offset: 120, size: 30 };
+		const api = fakeApi({ [LIST]: law(400, chapter), [AT]: law(400, chapter) });
+		const { law: list, now } = reader();
+		list.open('BWBR1', null, chapter.anchor);
+		await settle();
+		await lawArticleList('BWBR1');
+		await settle();
+		expect(now().start).toBe(120);
+		expect(now().articles.map((a) => a.article_number)).toEqual(
+			Array.from({ length: 30 }, (_, i) => String(121 + i))
+		);
+		// The rest of the law counts in, for the controls on both sides.
+		expect(now().total).toBe(400);
+		expect(list.opensAlone('BWBR1', null, chapter.anchor)).toBe(false);
+
+		await list.loadMore();
+		const next = api.asked(LIST).at(-1);
+		expect(next?.query).toMatchObject({ offset: 150 });
+		expect(next?.query?.division).toBeUndefined();
+		expect(now().articles.at(-1)?.article_number).toBe('250');
+	});
+
+	it('reads a division the API does not know from the start of the law', async () => {
+		fakeApi({ [LIST]: law(400), [AT]: law(400) });
+		const { law: list, now } = reader();
+		list.open('BWBR1', null, 'deel-hoofdstuk-9');
+		await settle();
+		await settle();
+		expect(now().start).toBe(0);
+		expect(now().articles[0].article_number).toBe('1');
+		expect(list.opensAlone('BWBR1', null, 'deel-hoofdstuk-9')).toBe(false);
+	});
+
+	it('loads the pages up to the article an anchor names', async () => {
+		fakeApi({ [LIST]: law(400), [AT]: law(400) });
+		const { law: list, now } = reader();
+		list.open('BWBR1', null, null);
+		await settle();
+		expect(now().articles).toHaveLength(100);
+		expect(await list.reach('artikel-250')).toBe(true);
+		expect(now().articles.some((a) => a.article_number === '250')).toBe(true);
+		expect(now().status).toBe('ready');
+		// A place the law lacks: nothing to load.
+		expect(await list.reach('artikel-999')).toBe(false);
+	});
+
+	it('pages up with the article looked at kept in place', async () => {
+		const chapter = { anchor: 'deel-hoofdstuk-5', offset: 150, size: 20 };
+		fakeApi({ [LIST]: law(400, chapter), [AT]: law(400, chapter) });
+		const { law: list, now } = reader();
+		list.open('BWBR1', null, chapter.anchor);
+		await settle();
+		const steps: string[] = [];
+		await list.loadPrevious(() => {
+			steps.push(`keep at ${now().articles.length}`);
+			return () => steps.push(`back at ${now().articles.length}`);
+		});
+		// The place is taken before the page goes in above it and given back after.
+		expect(steps).toEqual(['keep at 20', 'back at 120']);
+		expect(now().start).toBe(50);
+		expect(now().articles[0].article_number).toBe('51');
+	});
+
+	it('brings the texts of a peildatum, and those of today, with the list', async () => {
+		fakeApi({ [LIST]: law(30), [AT]: law(30) });
+		const { law: list, now } = reader();
+		list.open('BWBR1', '2015-01-01', null);
+		await settle();
+		const first = now().articles[0];
+		expect(first.text).toBe('Artikel 1 op 2015-01-01.');
+		expect(first.key).toBe('BWBR1-1');
+
+		list.open('BWBR1', null, null);
+		await settle();
+		expect(now().articles[0].text).toBeNull();
+		expect(now().articles[0].textToday).toBe(`Artikel 1 op ${TODAY}.`);
+	});
+});
+
+describe('the text an article of the whole law shows', () => {
+	const row = (r: Partial<Row>): Row => ({
+		id: 'a',
+		key: 'a',
+		article_number: '1',
+		label: null,
+		address: '1',
+		breadcrumb: [],
+		text: null,
+		parts: null,
+		text_preview: null,
+		...r
+	});
+	const detail = { text: 'Uit het artikel.', parts: null };
+
+	it('takes the text of the peildatum first, uncited', () => {
+		expect(articleText(row({ text: 'Oud.', textToday: 'Nu.' }), detail)).toEqual({
+			text: 'Oud.',
+			parts: null,
+			cited: false
+		});
+	});
+
+	it('takes the text of today from the page, else from the article alone, cited', () => {
+		expect(articleText(row({ textToday: 'Nu.' }), detail)).toMatchObject({
+			text: 'Nu.',
+			cited: true
+		});
+		expect(articleText(row({}), detail)).toMatchObject({ text: 'Uit het artikel.', cited: true });
+	});
+
+	it('has no text where none came: the preview stands', () => {
+		expect(articleText(row({ text_preview: 'Begin' }), undefined)).toBeNull();
 	});
 });

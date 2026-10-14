@@ -1,0 +1,151 @@
+<script lang="ts">
+	// One article of the whole law: its number as the link to the article, and its one text
+	// (articleText), else its preview. Today's text not on its page is asked once the article
+	// comes near the viewport.
+	import { naamVanId } from '$lib/bron/menselijk';
+	import { bronHref } from '$lib/bron/href';
+	import { onderdeelMark } from '$lib/text/article-parts';
+	import { articleName } from '$lib/text/bw';
+	import type { ArticleCitation } from '$lib/text/cite';
+	import type { Schema } from '$lib/api/types';
+	import ArticleText from '$lib/components/articles/ArticleText.svelte';
+	import { PREVIEW_CHARS, articleText, type Row } from './law-list';
+
+	let {
+		row,
+		bwbId,
+		peildatum,
+		detail,
+		citationOf,
+		onNear
+	}: {
+		row: Row;
+		bwbId: string;
+		peildatum: string | null;
+		/** The article asked alone, of today. */
+		detail: { text: string | null; parts?: Schema<'ArticlePartSpanDTO'>[] | null } | undefined;
+		citationOf: (articleNumber: string | null, heading: string | null) => ArticleCitation | null;
+		/** Asks today's text of an article whose page did not bring it. */
+		onNear: (articleNumber: string) => void;
+	} = $props();
+
+	const shown = $derived(articleText(row, peildatum ? undefined : detail));
+	const name = $derived(articleName(bwbId, row.article_number, row.label) ?? naamVanId(row.id));
+
+	/** How far below the viewport an article's full text is asked already. */
+	const PRELOAD_MARGIN = '600px 0px';
+
+	function near(el: HTMLElement, articleNumber: string | null) {
+		if (!articleNumber) return {};
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (!entries.some((e) => e.isIntersecting)) return;
+				observer.disconnect();
+				onNear(articleNumber);
+			},
+			{ rootMargin: PRELOAD_MARGIN }
+		);
+		observer.observe(el);
+		return { destroy: () => observer.disconnect() };
+	}
+</script>
+
+<section
+	class="whole-article"
+	data-artikel={row.address}
+	use:near={peildatum || row.textToday ? null : row.address}
+>
+	<div class="whole-article-head">
+		<!-- The anchor of reading: Artikel 3:4, a BW article with its book (6:162). -->
+		{#if row.key}
+			<a
+				class="whole-article-jump"
+				href={bronHref(
+					{ collection: 'articles', key: row.key },
+					{ params: peildatum ? { peildatum } : {} }
+				)}
+				data-sveltekit-noscroll><span class="whole-art-num">{name}</span></a
+			>
+		{:else}
+			<span class="whole-art-num">{name}</span>
+			<span class="whole-art-note">niet meer in de geldende tekst</span>
+		{/if}
+	</div>
+
+	{#if shown}
+		<ArticleText
+			text={shown.text}
+			parts={shown.parts}
+			citation={shown.cited
+				? citationOf(row.address, row.article_number ? null : (row.label ?? null))
+				: null}
+			mark={onderdeelMark(bwbId)}
+		/>
+	{:else if row.text_preview}
+		<p class="whole-text">
+			{row.text_preview}{row.text_preview.length >= PREVIEW_CHARS ? '…' : ''}
+		</p>
+	{:else}
+		<p class="whole-text">
+			<span class="whole-empty-text stil">Tekst niet in de gegevens.</span>
+		</p>
+	{/if}
+</section>
+
+<style>
+	.whole-article {
+		margin: var(--s-6) 0 0;
+	}
+
+	.whole-article-head {
+		margin-bottom: var(--s-1);
+	}
+	/* The article a link landed on (#artikel-658): its number washed until the next click. */
+	.whole-article:global(.is-landed) .whole-art-num {
+		background: var(--wassing);
+		box-shadow: 0 0 0 var(--s-1) var(--wassing);
+	}
+
+	.whole-article-jump {
+		background: none;
+		border: 0;
+		padding: 0;
+		cursor: pointer;
+		display: inline-flex;
+		align-items: baseline;
+		gap: var(--s-2);
+		text-align: left;
+	}
+
+	.whole-art-num {
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		font-weight: 600;
+		color: var(--ink);
+	}
+
+	.whole-article-jump:hover .whole-art-num {
+		color: var(--ink);
+		text-decoration: underline;
+	}
+
+	.whole-art-note {
+		margin-left: var(--s-2);
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+
+	.whole-text {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
+		color: var(--ink);
+		white-space: pre-line;
+	}
+
+	.whole-empty-text {
+		margin: 0;
+	}
+</style>
