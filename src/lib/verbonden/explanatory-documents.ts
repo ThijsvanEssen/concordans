@@ -6,7 +6,8 @@
 import { getExplainedBy } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
 import { isExplanatory } from './chamber';
-import { describe, lidOfMatch, type Neighbor, type Row } from './rows';
+import { describe, type Neighbor, type Row } from './rows';
+import { isDerived, readEdge } from './edge-meta';
 
 /**
  * The relations by which a document is tied to the article's text. A toelichting that
@@ -30,6 +31,10 @@ export function mergeExplanatory(neighbors: Neighbor[]): Row[] {
 		)
 			continue;
 		if (!BINDING.has(n.relation ?? '') || found.has(n.key)) continue;
+		const edge = readEdge(n.meta as Record<string, unknown> | null, {
+			direction: 'inbound',
+			citingEcli: null
+		});
 		found.set(n.key, {
 			binding: true,
 			date: typeof props.date === 'string' ? props.date : '',
@@ -37,14 +42,12 @@ export function mergeExplanatory(neighbors: Neighbor[]): Row[] {
 				ref: { collection: 'documents', key: n.key },
 				...describe('documents', n.key, n.display_name, props),
 				kind: 'toelichtingen',
-				lid: lidOfMatch(
-					typeof n.meta?.raw_match === 'string' ? (n.meta.raw_match as string) : null
-				),
-				derived: n.confidence != null && n.confidence < 1,
+				lid: edge.lid,
+				derived: isDerived(n.confidence),
 				confidence: n.confidence ?? null,
 				edgeId: n.edge_id ?? null,
-				snippet: typeof n.meta?.snippet === 'string' ? (n.meta.snippet as string) : null,
-				match: typeof n.meta?.raw_match === 'string' ? (n.meta.raw_match as string) : null,
+				snippet: edge.snippet,
+				match: edge.match,
 				relation: 'EXPLAINS',
 				direction: 'inbound',
 				props
@@ -84,7 +87,7 @@ export function rowsOfExplanations(items: Schema<'ArticleExplanationDTO'>[]): Ro
 					? `§ ${section[1]}`
 					: null,
 			edge: { heading: item.heading ?? null, excerpt: item.excerpt ?? null },
-			derived: item.confidence != null && item.confidence < 1,
+			derived: isDerived(item.confidence),
 			confidence: item.confidence ?? null,
 			relation: 'EXPLAINS',
 			direction: 'inbound',

@@ -7,7 +7,8 @@ import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { BodyItem } from '$lib/components/explore/readers/judgment-text';
 import { kernSoort, kernVan } from '$lib/components/open/rij-inhoud';
-import { plaatsVanMeta, verbindingOfRow } from '$lib/verbonden/verbinding';
+import { verbindingOfRow } from '$lib/verbonden/verbinding';
+import { plaatsVanMeta } from '$lib/verbonden/edge-meta';
 import { GROUPS } from '$lib/verbonden/groups';
 import type { GraphNode } from '$lib/graph/types';
 import { isOverwegingRef, tekstVanOverweging, type Uitspraak } from './overweging';
@@ -115,7 +116,7 @@ describe('the place of a verbinding in its source', () => {
 			plaatsVanMeta({ paragraph_number: '5.1', paragraph_id: 'rov-5.1' }, 'ecli_nl_hr_2019_2006')
 		).toEqual({ position: 'r.o. 5.1', at: 'rov-5.1' });
 		expect(plaatsVanMeta({}, 'x')).toEqual({ position: null, at: null });
-		expect(bron('lib/components/graph/GraphCanvas.svelte')).toMatch(/plaatsVanMeta\(/);
+		expect(bron('lib/components/graph/GraphCanvas.svelte')).toMatch(/readEdge\(/);
 		expect(bron('lib/components/graph/GraphCanvas.svelte')).not.toMatch(/meta\.paragraph_number/);
 	});
 

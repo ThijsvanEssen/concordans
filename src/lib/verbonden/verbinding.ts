@@ -5,9 +5,9 @@ import { refOf, type BronRef } from '$lib/bron/href';
 import type { GraphEdge, GraphNode } from '$lib/graph/types';
 import { statusLabel, type Collection, type Relation } from '$lib/vocabulary';
 import { HERKOMST_REDEN, kleineLetter, relationLabel, soortVan } from './hoe';
-import { paragraphCite } from '$lib/text/judgment-cite';
 import { confidenceWord } from './filter';
-import { describe, plaatsVanEdge, positionsLabel, type Row } from './rows';
+import { describe, type Row } from './rows';
+import { isDerived, plaatsVanEdge, readEdge, text } from './edge-meta';
 import type { Bereik } from '$lib/text/voetnoten';
 import { getNodeGraph, neighborsOf, type Neighbor } from '$lib/api/nodes';
 import { NODE_TYPES } from '$lib/vocabulary';
@@ -134,32 +134,8 @@ export function verbindingOfRow(row: Row, selection: GraphNode): Verbinding | nu
 		derived: !!row.derived,
 		status: row.proposed ? 'voorgesteld' : 'vastgesteld',
 		// Why the edge exists is the edge's (`row.edge`), not the bron's props.
-		reason: typeof row.edge?.reason === 'string' ? row.edge.reason : null,
+		reason: text(row.edge?.reason),
 		edgeId: row.edgeId ?? null
-	};
-}
-
-/**
- * Where an edge stands in its source, from its meta: the light meta of a node's response
- * gives the numbers of the paragraphs (`paragraphs: ["6", "7"]`), one mention its own
- * (`paragraph_number`, `paragraph_id`). `r.o. 6 en 7` and the anchor of the first, so the
- * line, the card and its Lees open where the row does.
- */
-export function plaatsVanMeta(
-	meta: Record<string, unknown> | null | undefined,
-	sourceKey: string
-): { position: string | null; at: string | null } {
-	const m = meta ?? {};
-	const nummers = Array.isArray(m.paragraphs)
-		? m.paragraphs.filter((p): p is string => typeof p === 'string' && !!p)
-		: [];
-	const een =
-		typeof m.paragraph_number === 'string' && m.paragraph_number ? m.paragraph_number : null;
-	const alle = nummers.length ? nummers : een ? [een] : [];
-	const id = typeof m.paragraph_id === 'string' && m.paragraph_id ? m.paragraph_id : null;
-	return {
-		position: positionsLabel(alle.map((nr) => paragraphCite(sourceKey, nr))),
-		at: id ?? (alle[0] ? `rov-${alle[0]}` : null)
 	};
 }
 
@@ -169,32 +145,30 @@ export function verbindingOfEdge(
 	target: GraphNode
 ): Verbinding {
 	const meta = (edge.meta ?? {}) as Record<string, unknown>;
-	const text = (v: unknown) => (typeof v === 'string' && v ? v : null);
-	const lid = (Array.isArray(meta.leden) && text(meta.leden[0])) || text(meta.lid) || null;
-	const plaats = plaatsVanEdge(meta, ecliVan(source));
+	// The edge's source cites: the canvas card reads it as the row of its target does.
+	const read = readEdge(meta, { direction: 'inbound', citingEcli: ecliOf(source) });
 	return {
 		from: endOfNode(source),
 		to: endOfNode(target),
 		relation: edge.relation,
 		label: relationLabel(edge.relation, source.collection, target.collection, meta),
 		kind: kindOfVerbinding(edge.relation, source.collection, target.collection, meta),
-		lid,
-		...plaatsVanMeta(meta, source.key),
-		...(plaats.position ? { position: plaats.position } : {}),
-		...(plaats.noot || plaats.passageAt ? { at: plaats.noot?.id ?? plaats.passageAt ?? null } : {}),
-		snippet: plaats.snippet ?? text(meta.snippet),
-		match: plaats.match ?? text(meta.raw_match),
-		noot: plaats.noot ?? null,
-		bereik: plaats.bereik ?? null,
+		lid: read.lid,
+		position: read.position,
+		at: read.at,
+		snippet: read.snippet,
+		match: read.match,
+		noot: read.noot,
+		bereik: read.bereik,
 		confidence: edge.confidence ?? null,
-		derived: edge.confidence != null && edge.confidence < 1,
+		derived: isDerived(edge.confidence),
 		status: statusLabel(edge.status) as 'vastgesteld' | 'voorgesteld',
-		reason: text(meta.reason),
-		edgeId: edge.id.startsWith('synth:') ? null : (text(meta.edge_id) ?? null)
+		reason: read.reason,
+		edgeId: edge.id.startsWith('synth:') ? null : text(meta.edge_id)
 	};
 }
 
-const ecliVan = (node: GraphNode) =>
+const ecliOf = (node: GraphNode) =>
 	node.collection === 'judgments'
 		? ((typeof node.raw?.props?.ecli === 'string' ? node.raw.props.ecli : null) ??
 			keyEcli(node.key))
@@ -206,8 +180,7 @@ const ecliVan = (node: GraphNode) =>
  * bucket gives for the edge's other end.
  */
 export function metPassages(v: Verbinding, source: GraphNode, n: Neighbor): Verbinding {
-	const meta = (n.meta ?? {}) as Record<string, unknown>;
-	const p = plaatsVanEdge(meta, ecliVan(source));
+	const p = plaatsVanEdge((n.meta ?? {}) as Record<string, unknown>, ecliOf(source));
 	if (!p.snippet) return v;
 	return {
 		...v,
