@@ -443,6 +443,249 @@ const DIT: Partial<Record<Collection, string>> = {
 	dossiers: 'dit dossier'
 };
 
+/** What a relation's line reads: the row, the selected bron and what is read off the edge. */
+type HoeContext = {
+	row: Row;
+	selected: Collection;
+	edge: Record<string, unknown>;
+	props: Record<string, unknown>;
+	/** The collection of the row's bron. */
+	other: Collection;
+	inbound: boolean;
+	/** `lid 3`, where the verbinding names one. */
+	lid: string | null;
+	/** The place in the citing text: `in r.o. 4.3 en 5.1`, `onder 3`. */
+	plaats: string | null;
+	citaat: Passage | null;
+	/** The provenance of the edge by its `reason`. */
+	uitReden: string | null;
+	/** Rechtspraak.nl's formal relation, where the edge is one. */
+	formeel: string | null;
+	/** The words of the relation, read from its source: the row's where it points here. */
+	woorden: Woorden | null;
+	regel: (werkwoord: string | null, rest: string | null, herkomst: string | null) => Hoe;
+};
+
+/**
+ * Per relation, its line; `undefined` where the edge says too little for one of its own, and
+ * the line falls back to what the group's label leaves out (`hoeVan`).
+ */
+const HOE: Partial<Record<Relation, (c: HoeContext) => Hoe | null | undefined>> = {
+	RELATED_TO: ({ other, selected, edge, regel }) => {
+		if (other !== 'dossiers' || selected !== 'dossiers') return undefined;
+		const zaken = num(edge.cases);
+		// The newest pair of papers the Kamer relates (`meta.pairs`, API 0.79.55): "Brief 32761
+		// nr. 12 gaat in op motie 36764 nr. 28".
+		const paar = paarZin(edge.pairs);
+		if (paar)
+			return regel(
+				'Door de Kamer verbonden',
+				`: ${paar}${zaken && zaken > 1 ? `; ${zaken} zaken` : ''}`,
+				'Tweede Kamer, zaak gerelateerd aan zaak'
+			);
+		const soorten = Array.isArray(edge.case_kinds)
+			? edge.case_kinds.filter((k): k is string => typeof k === 'string').join('; ')
+			: null;
+		return regel(
+			'Door de Kamer verbonden',
+			erbij(': ', join(zaken ? count(zaken, 'zaak', 'zaken') : null, soorten?.toLowerCase())),
+			'Tweede Kamer, zaak gerelateerd aan zaak'
+		);
+	},
+	APPEAL_OF: ({ row, edge, inbound, formeel, regel }) => {
+		const aard = row.aard ?? textOf(edge.procedure_type)?.toLowerCase() ?? 'hoger beroep';
+		return inbound
+			? regel(`${capitalize(aard)} tegen`, 'deze uitspraak', formeel)
+			: regel('Bestreden', `in ${aard} met deze uitspraak`, formeel);
+	},
+	// A regulation under a law or an article, by its kind: `AMvB op grond van art. 3, 16 lid 1
+	// en 7` on the law, `AMvB op grond van lid 1 en 7` on the article; one under a regulation
+	// under the law, `Ministeriële regeling op grond van art. 19, 23, 28 Cyberbeveiligingsbesluit`
+	// (delegaties.ts). Then the articles that work it out.
+	BASED_ON: ({ row, selected, edge, props, inbound, uitReden, regel }) => {
+		const basis = textOf(edge.basis_kind);
+		const grondslag = edge.grondslag as Grondslag | undefined;
+		if (!inbound && !grondslag) return undefined;
+		const lijn = grondslag
+			? grondslagRegel(grondslag)
+			: {
+					werkwoord: grondslagWerkwoord(textOf(props.kind), basis),
+					rest:
+						selected === 'instruments'
+							? (row.position ?? null)
+							: selected === 'articles'
+								? (ledenTekst(edge.leden) ?? 'dit artikel')
+								: null
+				};
+		if (!lijn.rest) return undefined;
+		return regel(lijn.werkwoord, join(lijn.rest, uitgewerktIn(edge.referring)), uitReden);
+	},
+	// A memorie's section about the article (`explained-by`, API 0.79.55): its number where the
+	// title lacks it and its heading, a link to the section, its opening under it.
+	EXPLAINS: ({ row, edge, props, inbound, regel }) => {
+		const kop = textOf(edge.heading);
+		if (!inbound || !kop || !row.position || !row.at) return undefined;
+		const nr = num(props.sequence);
+		const nummer = nr != null && !row.title.includes(`nr. ${nr}`) ? `nr. ${nr}` : null;
+		const opening = textOf(edge.excerpt);
+		return {
+			...regel(null, join(nummer, row.position), null),
+			citaat: opening ? { before: '', mark: '', after: opening } : null,
+			plaats: { text: row.position, at: row.at, noot: null }
+		};
+	},
+	ADVISES_ON: ({ inbound, formeel, regel }) =>
+		inbound
+			? regel('Conclusie bij', 'deze uitspraak', formeel)
+			: regel('Uitspraak op', 'deze conclusie', formeel),
+	ESTABLISHES: (c) => wijziging(c),
+	AMENDS: (c) => wijziging(c),
+	INTRODUCES: (c) => wijziging(c),
+	REPEALS: (c) => wijziging(c),
+	LEGISLATED_IN: ({ edge, inbound, regel }) => {
+		if (inbound)
+			return regel(
+				'Tot stand gekomen',
+				'in dit dossier',
+				textOf(edge.dossier_number) ? 'Dossiernummer in de publicatie' : null
+			);
+		// The dossiers of a wet: the bill that made it, or a bill whose publication amended it
+		// (`via`, /api/instruments/{bwb}/dossiers). What the dossier is to the wet, in the Kamer's
+		// words; its kind and number stand under it ("Kamerstuk 36764").
+		const pub = publicatie(textOf(edge.publication));
+		return textOf(edge.via) === 'amending_publication'
+			? regel('Wijzigt', join('deze wet', pub), null)
+			: regel('Wetsvoorstel', 'van deze wet', null);
+	},
+	// A letter of the government and the motion it answers: `Gaat in op`, read from the letter.
+	// The subject, line or footnote that names the motion (`meta.text`) stands under it with the
+	// reference as written marked (`meta.reference`); where it was read (`meta.basis`) is its
+	// provenance. A prejudiciële beslissing and a letter that fulfils a toezegging say it in
+	// their group's label.
+	ANSWERS: ({ other, selected, edge, inbound, regel }) => {
+		if (other !== 'documents' || selected !== 'documents') return undefined;
+		return regel(
+			inbound ? 'Gaat in op' : 'Deze brief gaat erop in',
+			inbound ? 'dit stuk' : null,
+			HERKOMST_BASIS[textOf(edge.basis) ?? ''] ?? null
+		);
+	},
+	REFERS_TO: verwijzing,
+	// A fractie's vote on the decision: `Tegen, 7 zetels`.
+	VOTED: ({ edge, inbound, regel }) => {
+		const keuze = textOf(edge.choice);
+		if (!keuze || !inbound) return undefined;
+		const zetels = num(edge.seats);
+		return regel(
+			capitalize(keuze.toLowerCase()),
+			zetels ? `, ${count(zetels, 'zetel', 'zetels')}` : null,
+			null
+		);
+	},
+	// What the Tractatenblad publishes of the treaty, as the Verdragenbank writes it.
+	PUBLISHED_IN: ({ edge, regel }) => {
+		const wat = textOf(edge.description);
+		return wat ? regel(null, wat, 'Verdragenbank') : undefined;
+	},
+	ABOUT: ({ other, props, regel }) => {
+		if (other !== 'decisions') return undefined;
+		const besluit =
+			textOf(props.decision_text)?.replace(/\.$/, '') ??
+			(props.passed === true ? 'Aangenomen' : props.passed === false ? 'Verworpen' : null);
+		if (!besluit) return undefined;
+		const stemmen = votesSentence(props.tally, ' en ');
+		return regel(besluit, stemmen && `, ${stemmen}`, 'Besluit van de Kamer');
+	}
+};
+
+/** A change of the law: its verb, the lid, the day it took effect, the publication. */
+function wijziging({ row, selected, edge, other, inbound, lid, regel }: HoeContext): Hoe | null {
+	const relation = row.relation!;
+	const effect = textOf(edge.effect);
+	// The publication that enacted a law, among those that change it (`/amended-by`,
+	// `establishes`): `Stelt vast`, its day in the meta line.
+	const vastgesteld = changeByEffect(relation, edge) === 'ESTABLISHES';
+	const werkwoord = changeVerb(relation, inbound ? selected : other, edge);
+	if (vastgesteld && num(edge.establishes)) return regel(werkwoord, null, null);
+	// A row from the legislative history carries its change in its own meta line.
+	if (!effect && !textOf(edge.effective_date) && !textOf(edge.source_publication)) return null;
+	const datum = textOf(edge.effective_date);
+	const pub = publicatie(textOf(edge.source_publication));
+	const wat = join(
+		lid,
+		datum ? `in werking ${langeDatum(datum)}` : row.proposed ? 'voorgesteld' : null
+	);
+	return regel(
+		werkwoord,
+		// The article it changes, where it is the selected one: `Wijzigt dit artikel, in werking
+		// …`; else the row names it, and the rest follows a comma. A separable verb takes no
+		// object after it: `Stelt vast, in werking …`.
+		inbound && !vastgesteld
+			? join(`dit ${selected === 'articles' ? 'artikel' : 'onderdeel'}`, wat)
+			: erbij(', ', wat),
+		pub ? `Wetten.overheid.nl, ${pub}` : row.proposed ? 'Voorstel van wet' : null
+	);
+}
+
+/** A reference: between two laws by their articles, an article's by its aard, a citation. */
+function verwijzing(c: HoeContext): Hoe {
+	const { row, selected, edge, inbound, lid, plaats, citaat, uitReden, woorden, regel } = c;
+	// Two laws, by the references between their articles (`related-instruments`): the
+	// grondslag where one is issued under the other, else the articles in force that refer,
+	// which way: `17 artikelen verwijzen naar deze wet`.
+	const naar = num(edge.inbound_count);
+	const vanuit = num(edge.outbound_count);
+	if (naar != null || vanuit != null) {
+		const grondslag = edge.grondslag as Grondslag | undefined;
+		if (grondslag) {
+			const g = grondslagRegel(grondslag);
+			return regel(g.werkwoord, g.rest, null);
+		}
+		const dit = textOf(edge.dit) ?? 'deze wet';
+		const artikelen = (n: number) => count(n, 'artikel', 'artikelen');
+		const verwijzen = (n: number) => plural(n, 'verwijst', 'verwijzen');
+		const hierheen = naar ? `${artikelen(naar)} ${verwijzen(naar)} naar ${dit}` : null;
+		const daarheen = vanuit
+			? `${artikelen(vanuit)} van ${dit} ${naar ? 'ernaar' : `${verwijzen(vanuit)} ernaar`}`
+			: null;
+		return regel(null, join(hierheen, daarheen), null);
+	}
+	// The aard where it says more than that it refers: `als voorwaarde`, not `als verwijzing`.
+	const aard =
+		row.aard && !/^(mogelijk )?verwijzing$/.test(row.aard)
+			? row.aard.replace(/^(mogelijk )?/, (m) => `${m}als `)
+			: null;
+	// An article of the law and the article it refers to, by its aard: `Verwijst naar art.
+	// 6:214 BW, als voorwaarde`.
+	const doel = textOf(edge.doel);
+	if (doel) return regel('Verwijst naar', join(doel, aard), uitReden);
+	const vaak = keer(num(edge.mention_count) ?? (row.mentions?.length || null));
+	// The words of the source, where they are not the passage under the line.
+	const eigen = !citaat && textOf(edge.text) ? `‘${textOf(edge.text)}’` : null;
+	const herkomst =
+		uitReden ??
+		HERKOMST_BASIS[textOf(edge.basis) ?? ''] ??
+		(textOf(edge.cited_ecli)
+			? HERKOMST_REDEN.ecli
+			: row.snippet || row.match
+				? 'Herkend in de tekst'
+				: null);
+	// A verb with an object names it before the rest: `Verwijst naar lid 2`, `Verwijst naar dit
+	// artikel als ‘…’`, `Verwijst ernaar als ‘…’`, never `Verwijst naar als`. A participle needs
+	// none: `Aangehaald in r.o. 6`, `Aangehaald onder 3`.
+	const woord = capitalize(inbound ? woorden!.actief : woorden!.terug);
+	const deelwoord = /^(Aangehaald|Genoemd|Besproken)$/.test(woord);
+	const zonderLid = !lid && !deelwoord && !!(eigen || aard);
+	const werkwoord = zonderLid && !inbound ? woord.replace(/ naar$/, ' ernaar') : woord;
+	const object = lid ?? (zonderLid && inbound ? (DIT[selected] ?? null) : null);
+	const kern = join(object, plaats, vaak, aard);
+	return regel(
+		werkwoord,
+		eigen ? (aard ? `${kern}: ${eigen}` : [kern, `als ${eigen}`].filter(Boolean).join(' ')) : kern,
+		herkomst
+	);
+}
+
 /**
  * The line of a row: what the verbinding between the selected bron (`selected`, its
  * collection) and the row's bron is. Null where the group's label says all (a Kamerstuk in
@@ -450,7 +693,6 @@ const DIT: Partial<Record<Collection, string>> = {
  */
 export function hoeVan(row: Row, selected: Collection): Hoe | null {
 	const edge = row.edge ?? {};
-	const props = (row.props ?? {}) as Record<string, unknown>;
 	const other = row.ref.collection;
 	const inbound = row.direction === 'inbound';
 	// Derived, or below high confidence: as the filter Betrouwbaarheid grades it.
@@ -458,243 +700,44 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 	const p = passageOf(row);
 	const citaat = p?.mark ? uitsnede(p) : row.relation === 'ANSWERS' ? aanhalingUitMeta(edge) : null;
 	const lid = row.lid ? `lid ${row.lid}` : null;
-	// The place in the citing text: `in r.o. 4.3 en 5.1`, `onder 3`.
 	const plaats = row.position && row.position !== lid ? atPlace(row.position) : null;
 	const reden = textOf(edge.reason);
-	const uit = (s: string | null) => (s ? (HERKOMST_REDEN[s] ?? null) : null);
-	const formeel =
-		textOf(edge.basis) === 'formal_relation' ? 'Rechtspraak.nl, formele relatie' : null;
-	const regel = (werkwoord: string | null, rest: string | null, herkomst: string | null) =>
-		({
-			werkwoord,
-			rest,
-			afgeleid,
-			citaat,
-			plaats: citaat ? plaatsIn(rest, row.passageAt, row.noot ?? null) : null,
-			herkomst
-		}) satisfies Hoe;
-	// The words of the relation, read from its source: the row's where it points here.
+	const uitReden = reden ? (HERKOMST_REDEN[reden] ?? null) : null;
+	const regel = (werkwoord: string | null, rest: string | null, herkomst: string | null): Hoe => ({
+		werkwoord,
+		rest,
+		afgeleid,
+		citaat,
+		plaats: citaat ? plaatsIn(rest, row.passageAt, row.noot ?? null) : null,
+		herkomst
+	});
 	const woorden = row.relation
 		? woordenVan(row.relation, inbound ? other : selected, inbound ? selected : other, edge)
 		: null;
-
-	switch (row.relation) {
-		case 'RELATED_TO': {
-			if (other !== 'dossiers' || selected !== 'dossiers') break;
-			const zaken = num(edge.cases);
-			// The newest pair of papers the Kamer relates (`meta.pairs`, API 0.79.55): "Brief 32761
-			// nr. 12 gaat in op motie 36764 nr. 28".
-			const paar = paarZin(edge.pairs);
-			if (paar)
-				return regel(
-					'Door de Kamer verbonden',
-					`: ${paar}${zaken && zaken > 1 ? `; ${zaken} zaken` : ''}`,
-					'Tweede Kamer, zaak gerelateerd aan zaak'
-				);
-			const soorten = Array.isArray(edge.case_kinds)
-				? edge.case_kinds.filter((k): k is string => typeof k === 'string').join('; ')
-				: null;
-			return regel(
-				'Door de Kamer verbonden',
-				erbij(': ', join(zaken ? count(zaken, 'zaak', 'zaken') : null, soorten?.toLowerCase())),
-				'Tweede Kamer, zaak gerelateerd aan zaak'
-			);
-		}
-		case 'APPEAL_OF': {
-			const aard = row.aard ?? textOf(edge.procedure_type)?.toLowerCase() ?? 'hoger beroep';
-			return inbound
-				? regel(`${capitalize(aard)} tegen`, 'deze uitspraak', formeel)
-				: regel('Bestreden', `in ${aard} met deze uitspraak`, formeel);
-		}
-		case 'BASED_ON': {
-			// A regulation under a law or an article, by its kind: `AMvB op grond van art. 3, 16
-			// lid 1 en 7` on the law, `AMvB op grond van lid 1 en 7` on the article; one under a
-			// regulation under the law, `Ministeriële regeling op grond van art. 19, 23, 28
-			// Cyberbeveiligingsbesluit` (delegaties.ts). Then the articles that work it out.
-			const basis = textOf(edge.basis_kind);
-			const grondslag = edge.grondslag as Grondslag | undefined;
-			if (!inbound && !grondslag) break;
-			const lijn = grondslag
-				? grondslagRegel(grondslag)
-				: {
-						werkwoord: grondslagWerkwoord(textOf(props.kind), basis),
-						rest:
-							selected === 'instruments'
-								? (row.position ?? null)
-								: selected === 'articles'
-									? (ledenTekst(edge.leden) ?? 'dit artikel')
-									: null
-					};
-			if (!lijn.rest) break;
-			return regel(lijn.werkwoord, join(lijn.rest, uitgewerktIn(edge.referring)), uit(reden));
-		}
-		case 'EXPLAINS': {
-			// A memorie's section about the article (`explained-by`, API 0.79.55): its number where
-			// the title lacks it and its heading, a link to the section, its opening under it.
-			const kop = textOf(edge.heading);
-			if (!inbound || !kop || !row.position || !row.at) break;
-			const nr = num(props.sequence);
-			const nummer = nr != null && !row.title.includes(`nr. ${nr}`) ? `nr. ${nr}` : null;
-			const opening = textOf(edge.excerpt);
-			return {
-				...regel(null, join(nummer, row.position), null),
-				citaat: opening ? { before: '', mark: '', after: opening } : null,
-				plaats: { text: row.position, at: row.at, noot: null }
-			};
-		}
-		case 'ADVISES_ON':
-			return inbound
-				? regel('Conclusie bij', 'deze uitspraak', formeel)
-				: regel('Uitspraak op', 'deze conclusie', formeel);
-		case 'ESTABLISHES':
-		case 'AMENDS':
-		case 'INTRODUCES':
-		case 'REPEALS': {
-			const effect = textOf(edge.effect);
-			// The publication that enacted a law, among those that change it (`/amended-by`,
-			// `establishes`): `Stelt vast`, its day in the meta line.
-			const vastgesteld = changeByEffect(row.relation, edge) === 'ESTABLISHES';
-			const werkwoord = changeVerb(row.relation, inbound ? selected : other, edge);
-			if (vastgesteld && num(edge.establishes)) return regel(werkwoord, null, null);
-			// A row from the legislative history carries its change in its own meta line.
-			if (!effect && !textOf(edge.effective_date) && !textOf(edge.source_publication)) return null;
-			const datum = textOf(edge.effective_date);
-			const pub = publicatie(textOf(edge.source_publication));
-			const wat = join(
+	const eigen = row.relation
+		? HOE[row.relation]?.({
+				row,
+				selected,
+				edge,
+				props: (row.props ?? {}) as Record<string, unknown>,
+				other,
+				inbound,
 				lid,
-				datum ? `in werking ${langeDatum(datum)}` : row.proposed ? 'voorgesteld' : null
-			);
-			return regel(
-				werkwoord,
-				// The article it changes, where it is the selected one: `Wijzigt dit artikel, in
-				// werking …`; else the row names it, and the rest follows a comma. A separable verb
-				// takes no object after it: `Stelt vast, in werking …`.
-				inbound && !vastgesteld
-					? join(`dit ${selected === 'articles' ? 'artikel' : 'onderdeel'}`, wat)
-					: erbij(', ', wat),
-				pub ? `Wetten.overheid.nl, ${pub}` : row.proposed ? 'Voorstel van wet' : null
-			);
-		}
-		case 'LEGISLATED_IN': {
-			if (inbound)
-				return regel(
-					'Tot stand gekomen',
-					'in dit dossier',
-					textOf(edge.dossier_number) ? 'Dossiernummer in de publicatie' : null
-				);
-			// The dossiers of a wet: the bill that made it, or a bill whose publication amended
-			// it (`via`, /api/instruments/{bwb}/dossiers). What the dossier is to the wet, in the
-			// Kamer's words; its kind and number stand under it ("Kamerstuk 36764").
-			const pub = publicatie(textOf(edge.publication));
-			return textOf(edge.via) === 'amending_publication'
-				? regel('Wijzigt', join('deze wet', pub), null)
-				: regel('Wetsvoorstel', 'van deze wet', null);
-		}
-		case 'ANSWERS': {
-			// A letter of the government and the motion it answers: `Gaat in op`, read from the
-			// letter. The subject, line or footnote that names the motion (`meta.text`) stands under
-			// it with the reference as written marked (`meta.reference`); where it was read
-			// (`meta.basis`) is its provenance. A prejudiciële beslissing and a letter that fulfils
-			// a toezegging say it in their group's label.
-			if (other !== 'documents' || selected !== 'documents') break;
-			return regel(
-				inbound ? 'Gaat in op' : 'Deze brief gaat erop in',
-				inbound ? 'dit stuk' : null,
-				HERKOMST_BASIS[textOf(edge.basis) ?? ''] ?? null
-			);
-		}
-		case 'REFERS_TO': {
-			// Two laws, by the references between their articles (`related-instruments`): the
-			// grondslag where one is issued under the other, else the articles in force that refer,
-			// which way: `17 artikelen verwijzen naar deze wet`.
-			const naar = num(edge.inbound_count);
-			const vanuit = num(edge.outbound_count);
-			if (naar != null || vanuit != null) {
-				const grondslag = edge.grondslag as Grondslag | undefined;
-				if (grondslag) {
-					const g = grondslagRegel(grondslag);
-					return regel(g.werkwoord, g.rest, null);
-				}
-				const dit = textOf(edge.dit) ?? 'deze wet';
-				const artikelen = (n: number) => count(n, 'artikel', 'artikelen');
-				const verwijzen = (n: number) => plural(n, 'verwijst', 'verwijzen');
-				const hierheen = naar ? `${artikelen(naar)} ${verwijzen(naar)} naar ${dit}` : null;
-				const daarheen = vanuit
-					? `${artikelen(vanuit)} van ${dit} ${naar ? 'ernaar' : `${verwijzen(vanuit)} ernaar`}`
-					: null;
-				return regel(null, join(hierheen, daarheen), null);
-			}
-			// The aard where it says more than that it refers: `als voorwaarde`, not `als verwijzing`.
-			const aard =
-				row.aard && !/^(mogelijk )?verwijzing$/.test(row.aard)
-					? row.aard.replace(/^(mogelijk )?/, (m) => `${m}als `)
-					: null;
-			// An article of the law and the article it refers to, by its aard: `Verwijst naar
-			// art. 6:214 BW, als voorwaarde`.
-			const doel = textOf(edge.doel);
-			if (doel) return regel('Verwijst naar', join(doel, aard), uit(reden));
-			const vaak = keer(num(edge.mention_count) ?? (row.mentions?.length || null));
-			// The words of the source, where they are not the passage under the line.
-			const eigen = !citaat && textOf(edge.text) ? `‘${textOf(edge.text)}’` : null;
-			const herkomst =
-				uit(reden) ??
-				HERKOMST_BASIS[textOf(edge.basis) ?? ''] ??
-				(textOf(edge.cited_ecli)
-					? HERKOMST_REDEN.ecli
-					: row.snippet || row.match
-						? 'Herkend in de tekst'
-						: null);
-			// A verb with an object names it before the rest: `Verwijst naar lid 2`, `Verwijst
-			// naar dit artikel als ‘…’`, `Verwijst ernaar als ‘…’`, never `Verwijst naar als`. A
-			// participle needs none: `Aangehaald in r.o. 6`, `Aangehaald onder 3`.
-			const woord = capitalize(inbound ? woorden!.actief : woorden!.terug);
-			const deelwoord = /^(Aangehaald|Genoemd|Besproken)$/.test(woord);
-			const zonderLid = !lid && !deelwoord && !!(eigen || aard);
-			const werkwoord = zonderLid && !inbound ? woord.replace(/ naar$/, ' ernaar') : woord;
-			const object = lid ?? (zonderLid && inbound ? (DIT[selected] ?? null) : null);
-			const kern = join(object, plaats, vaak, aard);
-			return regel(
-				werkwoord,
-				eigen
-					? aard
-						? `${kern}: ${eigen}`
-						: [kern, `als ${eigen}`].filter(Boolean).join(' ')
-					: kern,
-				herkomst
-			);
-		}
-		case 'VOTED': {
-			// A fractie's vote on the decision: `Tegen, 7 zetels`.
-			const keuze = textOf(edge.choice);
-			if (!keuze || !inbound) break;
-			const zetels = num(edge.seats);
-			return regel(
-				capitalize(keuze.toLowerCase()),
-				zetels ? `, ${count(zetels, 'zetel', 'zetels')}` : null,
-				null
-			);
-		}
-		case 'PUBLISHED_IN': {
-			// What the Tractatenblad publishes of the treaty, as the Verdragenbank writes it.
-			const wat = textOf(edge.description);
-			if (wat) return regel(null, wat, 'Verdragenbank');
-			break;
-		}
-		case 'ABOUT': {
-			if (other !== 'decisions') break;
-			const besluit =
-				textOf(props.decision_text)?.replace(/\.$/, '') ??
-				(props.passed === true ? 'Aangenomen' : props.passed === false ? 'Verworpen' : null);
-			if (!besluit) break;
-			const stemmen = votesSentence(props.tally, ' en ');
-			return regel(besluit, stemmen && `, ${stemmen}`, 'Besluit van de Kamer');
-		}
-	}
-	// The group's label names it (a Kamerstuk in its dossier, a lid in a fractie): only
-	// what the edge adds, else nothing.
+				plaats,
+				citaat,
+				uitReden,
+				formeel:
+					textOf(edge.basis) === 'formal_relation' ? 'Rechtspraak.nl, formele relatie' : null,
+				woorden,
+				regel
+			})
+		: undefined;
+	if (eigen !== undefined) return eigen;
+	// The group's label names it (a Kamerstuk in its dossier, a lid in a fractie): only what
+	// the edge adds, else nothing.
 	if (afgeleid || citaat || lid || plaats) {
 		const label = woorden ? (inbound ? woorden.actief : woorden.terug) : null;
-		return regel(label ? capitalize(label) : null, join(lid, plaats), uit(reden));
+		return regel(label ? capitalize(label) : null, join(lid, plaats), uitReden);
 	}
 	return null;
 }

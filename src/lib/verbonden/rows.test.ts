@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-	activityLine,
-	describe as describeBron,
 	historyRow,
 	openLabelOf,
-	periodLabel,
 	rowKey,
 	rowOfNeighbor,
 	uniqueRows,
@@ -16,12 +13,10 @@ import {
 	metaParts,
 	passageOf,
 	caseNumberOf,
-	repeatedTitles,
-	UNNAMED,
-	citedLine,
-	describe as beschrijf,
-	rolesLine
+	repeatedTitles
 } from './rows';
+import { describeBron, UNNAMED } from '$lib/bron/describe';
+import { activityLine, periodLabel, citedLine, rolesLine } from './lines';
 import type { Neighbor } from '$lib/api/nodes';
 import { positionsLabel } from './edge-meta';
 import { stemmingNaam } from '$lib/components/parliamentary/stemming';
@@ -492,7 +487,7 @@ describe('activityLine', () => {
 			'Stemming over Kamerstuk 29665 Evaluatie Schipholbeleid'
 		);
 		expect(stemmingNaam(null, '36496')).toBe('Stemming over Kamerstuk 36496');
-		const brief = beschrijf('documents', 'b', null, {
+		const brief = describeBron('documents', 'b', null, {
 			kind: 'Brief regering',
 			title: 'Kabinetsreactie op het advies',
 			dossier_number: '36496',

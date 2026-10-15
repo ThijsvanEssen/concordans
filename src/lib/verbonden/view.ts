@@ -9,6 +9,9 @@ import { formatCount } from '$lib/text/getal';
 import { groupCount, type Group } from './groups';
 import type { Row } from './rows';
 
+/** The rows a closed group of the panel shows, and holds the place of while they come. */
+export const PREVIEW_ROWS = 3;
+
 /** Whether the filter has a criterion that cuts inside a group, so its total no longer holds. */
 const cutsRows = (f: VerbondenFilter) =>
 	f.lid !== null ||

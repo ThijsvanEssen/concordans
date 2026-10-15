@@ -66,7 +66,7 @@ describe('the outcome of a motie or amendement', () => {
 		expect(met).toEqual([
 			'lib/components/explore/IndexView.svelte',
 			'lib/map/MapInhoud.svelte',
-			'lib/verbonden/Verbonden.svelte'
+			'lib/verbonden/VerbondenRow.svelte'
 		]);
 	});
 });

@@ -1,12 +1,18 @@
 <script lang="ts" module>
+	import type { Collection } from '$lib/vocabulary';
+
 	/** What a row of the group will hold, for its height: a judgment beside an article holds its passage. */
-	export type PendingKind =
-		| 'passage'
-		| 'verwijzing'
-		| 'kamerstuk'
-		| 'uitspraak'
-		| 'artikel'
-		| 'stuk';
+	type PendingKind = 'passage' | 'verwijzing' | 'kamerstuk' | 'uitspraak' | 'artikel' | 'stuk';
+
+	/** The kind of a waiting row of a group (`noun`): what a row of it holds beside this bron. */
+	export function pendingKind(noun: string | undefined, collection: Collection): PendingKind {
+		const wet = collection === 'articles' || collection === 'instruments';
+		if (noun === 'uitspraken') return wet ? 'passage' : 'uitspraak';
+		if (noun === 'artikelen')
+			return collection === 'judgments' ? 'artikel' : wet ? 'verwijzing' : 'stuk';
+		if (wet && (noun === 'stukken' || noun === 'Kamerstukken')) return 'kamerstuk';
+		return 'stuk';
+	}
 </script>
 
 <script lang="ts">

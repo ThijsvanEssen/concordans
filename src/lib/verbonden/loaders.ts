@@ -9,11 +9,11 @@ import { geteld } from '$lib/api/decisions';
 import type { Schema } from '$lib/api/types';
 import { getCommittee } from '$lib/components/parliamentary/data';
 import { numberOf } from '$lib/components/parliamentary/dossier-number';
-import { AMENDING_RELATIONS, isAmendingRelation, parseNodeId } from '$lib/vocabulary';
+import { parseNodeId } from '$lib/vocabulary';
 import { refOf } from '$lib/bron/href';
 import { naastHetStuk, stukkenInDezelfdeZaak } from '$lib/bron/zaak';
 import { loadDossierHub, type DossierHub } from './dossier-hub';
-import { EXPLANATORY_RELATIONS, explanatoryDocuments } from './explanatory-documents';
+import { explanatoryDocuments } from './explanatory-documents';
 import { CITED_BY_PAGE, rowsOfCitedBy } from './cited-by';
 import { getArticleDetail, getDelegated, getLawBasis, getLawDelegated } from '$lib/api/articles';
 import {
@@ -39,7 +39,7 @@ import {
 	getTouchedInstruments
 } from '$lib/api/verbonden';
 import { lawArticleList } from '$lib/api/law-articles';
-import { buildGroups, ditVan, EUROPEAN, type Loader, type Match } from './groups';
+import { buildGroups, ditVan, EUROPEAN, matches, type Loader, type Match } from './groups';
 import { YEARS_IN_CHART } from './view';
 import { bronKindOf, isInternational } from './filter';
 import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
@@ -55,18 +55,9 @@ import { articleName, bookNumber, withBook } from '$lib/text/bw';
 import { korteDatum } from '$lib/text/datum';
 import { anchorLabel, lidAnchor, parseAnchor } from '$lib/text/anchor';
 import { anchorOf, parseQualifier } from '$lib/text/qualifier';
-import {
-	aardOf,
-	activityLine,
-	historyRow,
-	uniqueRows,
-	rolesLine,
-	citedLine,
-	describe,
-	rowOfNeighbor,
-	unresolvedRows,
-	type Row
-} from './rows';
+import { aardOf, historyRow, uniqueRows, rowOfNeighbor, unresolvedRows, type Row } from './rows';
+import { describeBron } from '$lib/bron/describe';
+import { activityLine, rolesLine, citedLine } from './lines';
 import { type Neighbor } from '$lib/api/nodes';
 import { isDerived, lidOfMatch, plaatsVanMeta, positionsLabel } from './edge-meta';
 
@@ -165,7 +156,7 @@ async function echrJudgments(bwb: string, articleKey: string, signal: AbortSigna
 			const props = { ecli: j.ecli };
 			return {
 				ref: { collection: 'judgments' as const, key: j.key },
-				...describe('judgments', j.key, j.display_name, props),
+				...describeBron('judgments', j.key, j.display_name, props),
 				kind: bronKindOf('judgments', j.key, props, 'REFERS_TO'),
 				relation: 'REFERS_TO' as const,
 				direction: 'inbound' as const,
@@ -177,26 +168,31 @@ async function echrJudgments(bwb: string, articleKey: string, signal: AbortSigna
 
 // The four dossier groups read one hub, one request; a failed or broken-off one is asked
 // again (Opnieuw).
-const hubOf = ({ node, buren, neighbors, signal }: LoaderContext): Promise<DossierHub> => {
+const hubOf = ({ node, neighbors, signal }: LoaderContext): Promise<DossierHub> => {
 	const number = textOf(node.props?.label) ?? '';
 	return abortable(
-		once(`dossier-hub/${number}`, () =>
-			loadDossierHub(
-				number,
-				() =>
-					buren([
-						{ relation: 'LEGISLATED_IN', direction: 'inbound', collection: 'instruments' },
-						{ relation: 'ABOUT', direction: 'inbound', collection: 'activities' }
-					]),
-				neighbors
-			)
-		),
+		once(`dossier-hub/${number}`, () => loadDossierHub(number, neighbors)),
 		signal
 	);
 };
 
+/**
+ * The rows of the node's own buckets, where no route of the API says more of them: the
+ * activities of a vote, the articles that refer to an article (with their aard from its
+ * detail).
+ */
+async function uitBuren({ buren }: LoaderContext, match: Match[]): Promise<Row[]> {
+	return (await buren(match))
+		.filter((n) => match.some((m) => matches(m, n)))
+		.map(rowOfNeighbor)
+		.filter((r): r is Row => r !== null);
+}
+
 const bwbOf = (node: Schema<'BaseNodeDTO'>) =>
 	typeof node.props?.bwb_id === 'string' ? node.props.bwb_id : null;
+
+const articleNumberOf = (node: Schema<'BaseNodeDTO'>) =>
+	typeof node.props?.article_number === 'string' ? node.props.article_number : null;
 
 /**
  * The article and lid a stub `{law}_{article}_{lid}` stands for, or null for a stub
@@ -273,7 +269,7 @@ async function actorDossiers(
 		total: found.total,
 		rows: found.items.map((d) => ({
 			ref: { collection: 'dossiers' as const, key: d.key, number: d.number },
-			...describe('dossiers', d.key, d.title, {
+			...describeBron('dossiers', d.key, d.title, {
 				title: d.title,
 				short_title: d.short_title ?? null,
 				label: d.number
@@ -310,7 +306,7 @@ export function regelingRow(
 	};
 	return {
 		ref: { collection: 'instruments', key: i.key },
-		...describe('instruments', i.key, i.display_name, props),
+		...describeBron('instruments', i.key, i.display_name, props),
 		// The kind stands in the line (`AMvB op grond van`), not again under it.
 		context: null,
 		// Its day, not its BWB id: `in werking 15 aug. 2026` (Thijs, 13 Oct).
@@ -424,7 +420,7 @@ export function basisRow(b: Schema<'InstrumentBasisItem'>): Row {
 	};
 	return {
 		ref: { collection: 'instruments', key: i.key },
-		...describe('instruments', i.key, i.display_name, props),
+		...describeBron('instruments', i.key, i.display_name, props),
 		context: kindName(b.kind),
 		identifier: null,
 		kind: bronKindOf('instruments', i.key, props),
@@ -514,7 +510,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			.map(
 				(d): Row => ({
 					ref: { collection: 'decisions', key: d.key },
-					...describe('decisions', d.key, d.display_name, { ...d }),
+					...describeBron('decisions', d.key, d.display_name, { ...d }),
 					kind: bronKindOf('decisions', d.key, { ...d }),
 					relation: 'ABOUT',
 					direction: 'inbound',
@@ -560,7 +556,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				.filter((d) => d.number !== label)
 				.map((d) => ({
 					ref: { collection: 'dossiers', key: d.key, number: d.number },
-					...describe('dossiers', d.key, d.title, {
+					...describeBron('dossiers', d.key, d.title, {
 						title: d.title,
 						short_title: d.short_title ?? null,
 						label: d.number
@@ -589,147 +585,92 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		return { rows: [...rows.values()] };
 	},
 
-	'article-explanatory': async ({ node, buren }) => ({
-		rows: await explanatoryDocuments(
-			{
-				bwbId: bwbOf(node),
-				number: typeof node.props?.article_number === 'string' ? node.props.article_number : null
-			},
-			() =>
-				buren([
-					{
-						relation: [...EXPLANATORY_RELATIONS],
-						direction: 'inbound',
-						collection: 'documents'
-					}
-				])
-		)
-	}),
+	'article-explanatory': async ({ node }) => {
+		const bwb = bwbOf(node);
+		const number = articleNumberOf(node);
+		return { rows: bwb && number ? await explanatoryDocuments(bwb, number) : [] };
+	},
 
 	// The regulations issued under an article, from `.../delegated`: its kind and the day it
-	// took effect, the lid its Gelet op names. Without that route: the node's own edges.
-	'article-delegated': async ({ node, buren }) => {
+	// took effect, the lid its Gelet op names.
+	'article-delegated': async ({ node }) => {
 		const bwb = bwbOf(node);
-		const number =
-			typeof node.props?.article_number === 'string' ? node.props.article_number : null;
+		const number = articleNumberOf(node);
 		const found = bwb && number ? await getDelegated(bwb, number) : null;
-		if (found) return { total: found.total, rows: (found.items ?? []).map(regelingRow) };
-		const neighbors = await buren([
-			{ relation: 'BASED_ON', direction: 'inbound', collection: 'instruments' }
-		]);
+		return { total: found?.total ?? 0, rows: (found?.items ?? []).map(regelingRow) };
+	},
+
+	// The judgments that cite an article, each at the overweging that does (`cited-by`),
+	// counted as the API counts them: passages and judgments (`judgment_total`, 0.62).
+	'article-judgments': async ({ node, signal, options }) => {
+		const bwb = bwbOf(node);
+		const number = articleNumberOf(node);
+		if (!bwb || !number) return { rows: [] };
+		const sort = options.order === 'cited' ? 'citation_count' : 'date_desc';
+		const page = (offset: number) =>
+			abortable(getCitedBy(bwb, number, { limit: CITED_BY_PAGE, offset, sort }), signal);
+		const data = await ifExists(page(0));
+		if (!data) return { rows: [] };
+		// The ECHR judgments are no passage (HUDOC names the article, not the place): they
+		// stand in Europees en internationaal, not here (BE-9).
+		const judgmentsOf =
+			data.echr_judgment_total > 0
+				? {
+						international: {
+							// Another group's rows: this group stands without them.
+							rows: await echrJudgments(bwb, node.key, signal).catch(
+								(e) => (report('Verbonden: EHRM-uitspraken', e), [])
+							),
+							total: data.echr_judgment_total
+						}
+					}
+				: undefined;
+		// One row per judgment; each overweging that cites the article is a mention.
+		const loaded = (items: typeof data.items): Loaded => ({
+			rows: rowsOfCitedBy(items),
+			total: data.judgment_total,
+			mentions: data.total,
+			judgmentsOf
+		});
+		const first = [...data.items];
+		const judgments = (items: typeof first) => new Set(items.map((item) => item.judgment.key)).size;
+		const complete = (items: typeof first) =>
+			items.length >= data.total ||
+			items.length >= CITED_BY_PAGE * CITED_BY_PAGES ||
+			judgments(items) >= data.judgment_total;
+		// The first page now; the others when the group is opened (Thijs, 9 Oct: "alles zo lazy
+		// mogelijk"). 3:4 Awb on prod: five pages, 1 MB, the last after 6 s.
 		return {
-			rows: neighbors
-				.filter(
-					(n) =>
-						n.relation === 'BASED_ON' && n.direction === 'inbound' && n.collection === 'instruments'
-				)
-				.map(rowOfNeighbor)
-				.filter((r) => r !== null)
+			...loaded(first),
+			meer: complete(first)
+				? undefined
+				: async () => {
+						// The passages page by page, one after the other, until every judgment is in:
+						// 6:162 BW has 624 passages in 250 judgments, the first 200 only in 119.
+						const items = [...first];
+						while (!complete(items)) {
+							const next = await page(items.length);
+							if (next.items.length === 0) break;
+							items.push(...next.items);
+						}
+						return loaded(items);
+					}
 		};
 	},
 
-	// The judgments that cite an article, each at the overweging that does (API 0.5,
-	// `cited-by`), counted as the API counts them: passages and judgments (`judgment_total`, 0.62).
-	// Before that: the citing judgments from the node, without a position.
-	// TODO(backend B8): the fallback goes when every article answers on `cited-by`.
-	'article-judgments': async ({ node, buren, totals, signal, options }) => {
+	// The articles that refer to this one: the node's own edges, with the lid they name and the
+	// aard of the reference from the article's detail (`downstream_implications`); without it,
+	// the lid read from the phrase. The edge of the node carries no aard (B6).
+	'article-cited-by': async (ctx) => {
+		const { node, totals, signal } = ctx;
 		const bwb = bwbOf(node);
-		const number =
-			typeof node.props?.article_number === 'string' ? node.props.article_number : null;
-		if (bwb && number) {
-			const sort = options.order === 'cited' ? 'citation_count' : 'date_desc';
-			const page = (offset: number) =>
-				abortable(getCitedBy(bwb, number, { limit: CITED_BY_PAGE, offset, sort }), signal);
-			const data = await ifExists(page(0));
-			if (data && data.items.length > 0) {
-				// The ECHR judgments are no passage (HUDOC names the article, not the place):
-				// they stand in Europees en internationaal, not here (BE-9).
-				const judgmentsOf =
-					data.echr_judgment_total > 0
-						? {
-								international: {
-									// Another group's rows: this group stands without them.
-									rows: await echrJudgments(bwb, node.key, signal).catch(
-										(e) => (report('Verbonden: EHRM-uitspraken', e), [])
-									),
-									total: data.echr_judgment_total
-								}
-							}
-						: undefined;
-				// One row per judgment; each overweging that cites the article is a mention.
-				const loaded = (items: typeof data.items): Loaded => ({
-					rows: rowsOfCitedBy(items),
-					total: data.judgment_total,
-					mentions: data.total,
-					judgmentsOf
-				});
-				const first = [...data.items];
-				const judgments = (items: typeof first) =>
-					new Set(items.map((item) => item.judgment.key)).size;
-				const complete = (items: typeof first) =>
-					items.length >= data.total ||
-					items.length >= CITED_BY_PAGE * CITED_BY_PAGES ||
-					judgments(items) >= data.judgment_total;
-				// The first page now; the others when the group is opened (Thijs, 9 Oct: "alles
-				// zo lazy mogelijk"). 3:4 Awb on prod: five pages, 1 MB, the last after 6 s.
-				return {
-					...loaded(first),
-					meer: complete(first)
-						? undefined
-						: async () => {
-								// The passages page by page, one after the other, until every judgment is
-								// in: 6:162 BW has 624 passages in 250 judgments, the first 200 only in 119.
-								const items = [...first];
-								while (!complete(items)) {
-									const next = await page(items.length);
-									if (next.items.length === 0) break;
-									items.push(...next.items);
-								}
-								return loaded(items);
-							}
-				};
-			}
-		}
-		return {
-			total: totals.get(bucketKey('REFERS_TO', 'judgments', 'inbound')),
-			rows: (
-				await buren([{ relation: 'REFERS_TO', direction: 'inbound', collection: 'judgments' }])
-			)
-				.filter(
-					(n) =>
-						n.relation === 'REFERS_TO' &&
-						n.direction === 'inbound' &&
-						n.collection === 'judgments' &&
-						!isInternational(n)
-				)
-				.map(rowOfNeighbor)
-				.filter((r) => r !== null)
-		};
-	},
-
-	// The articles that refer to this one, with the lid they name and the aard of the
-	// reference, from the article's own detail (`downstream_implications`). Without
-	// it: the citing articles from the node, the lid read from the phrase.
-	// TODO(backend B6): the aard and the lid belong on the edge of the node response.
-	'article-cited-by': async ({ node, buren, totals, signal }) => {
-		const bwb = bwbOf(node);
-		const number =
-			typeof node.props?.article_number === 'string' ? node.props.article_number : null;
-		const [neighbors, detail] = await Promise.all([
-			buren([
+		const number = articleNumberOf(node);
+		const [fromNode, detail] = await Promise.all([
+			uitBuren(ctx, [
 				{ relation: ['REFERS_TO', 'BASED_ON'], direction: 'inbound', collection: 'articles' }
 			]),
 			bwb && number ? ifExists(abortable(getArticleDetail(bwb, number), signal)) : null
 		]);
-		const fromNode = neighbors
-			.filter(
-				(n) =>
-					(n.relation === 'REFERS_TO' || n.relation === 'BASED_ON') &&
-					n.direction === 'inbound' &&
-					n.collection === 'articles'
-			)
-			.map(rowOfNeighbor)
-			.filter((r) => r !== null);
 		const total =
 			(totals.get(bucketKey('REFERS_TO', 'articles', 'inbound')) ?? 0) +
 				(totals.get(bucketKey('BASED_ON', 'articles', 'inbound')) ?? 0) || undefined;
@@ -759,142 +700,103 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	},
 
 	// The changes of an article, enacted and proposed, each with its dossier and date
-	// (`legislative-history`). Without the route: the bills that change it, from the node.
-	'article-changes': async ({ node, buren, totals, signal }) => {
+	// (`legislative-history`).
+	'article-changes': async ({ node, signal }) => {
 		const bwb = bwbOf(node);
-		const number =
-			typeof node.props?.article_number === 'string' ? node.props.article_number : null;
+		const number = articleNumberOf(node);
 		const found =
 			bwb && number ? await ifExists(abortable(getLegislativeHistory(bwb, number), signal)) : null;
-		if (found)
-			return {
-				total: found.total,
-				rows: uniqueRows(
-					(found.entries ?? []).flatMap((e) => {
-						const row = historyRow(e);
-						return row ? [row] : [];
-					})
-				)
-			};
 		return {
-			total:
-				AMENDING_RELATIONS.reduce(
-					(n, r) => n + (totals.get(bucketKey(r, 'documents', 'inbound')) ?? 0),
-					0
-				) || undefined,
-			rows: (
-				await buren([
-					{
-						relation: [...AMENDING_RELATIONS],
-						direction: 'inbound',
-						collection: 'documents'
-					}
-				])
+			total: found?.total ?? 0,
+			rows: uniqueRows(
+				(found?.entries ?? []).flatMap((e) => {
+					const row = historyRow(e);
+					return row ? [row] : [];
+				})
 			)
-				.filter(
-					(n) =>
-						isAmendingRelation(n.relation) &&
-						n.direction === 'inbound' &&
-						n.collection === 'documents'
-				)
-				.map(rowOfNeighbor)
-				.filter((r) => r !== null)
 		};
 	},
 
-	// The European and international instruments of a law (API 0.5, `eu-links`). Before
-	// that, what the node shows: IMPLEMENTS and references to treaties.
-	// TODO(backend B9): the fallback goes when every law answers on `eu-links`.
-	'instrument-international': async ({ node, buren, signal }) => {
+	// The European and international instruments of a law (`eu-links`).
+	'instrument-international': async ({ node, signal }) => {
 		const data = await ifExists(abortable(getEuLinks(node.key, EU_LINKS_SHOWN), signal));
-		const linked =
-			(data?.implements?.length ?? 0) +
-			(data?.implemented_by?.length ?? 0) +
-			(data?.mentions?.length ?? 0) +
-			(data?.mentioned_by?.length ?? 0) +
-			(data?.international?.length ?? 0);
-		if (data && linked > 0) {
-			const rows = new Map<string, Row>();
-			const add = (row: Row) => {
-				if (!rows.has(row.ref.key)) rows.set(row.ref.key, row);
-			};
-			const implemented = data.implements ?? [];
-			// Which of the measures EUR-Lex names change this law: its AMENDS publications.
-			const bwb = bwbOf(node);
-			const amending =
-				bwb && implemented.some((link) => (link.via ?? []).length > 0)
-					? new Set(
-							(await abortable(getAmendedBy(bwb), signal)).items.map((d) => publicationKey(d.key))
-						)
-					: new Set<string>();
-			for (const link of [...implemented, ...(data.implemented_by ?? [])]) {
-				const i = link.instrument;
+		if (!data) return { rows: [] };
+		const rows = new Map<string, Row>();
+		const add = (row: Row) => {
+			if (!rows.has(row.ref.key)) rows.set(row.ref.key, row);
+		};
+		const implemented = data.implements ?? [];
+		// Which of the measures EUR-Lex names change this law: its AMENDS publications.
+		const bwb = bwbOf(node);
+		const amending =
+			bwb && implemented.some((link) => (link.via ?? []).length > 0)
+				? new Set(
+						(await abortable(getAmendedBy(bwb), signal)).items.map((d) => publicationKey(d.key))
+					)
+				: new Set<string>();
+		for (const link of [...implemented, ...(data.implemented_by ?? [])]) {
+			const i = link.instrument;
+			add({
+				ref: { collection: 'instruments', key: i.key },
+				title: i.citation_title ?? i.title ?? naamVan('instruments', i),
+				// The other way round (a directive and the laws that implement it), this law's
+				// AMENDS publications are not the ones to test: the measures stand as EUR-Lex has them.
+				context: implementationLine(
+					link,
+					implemented.includes(link) ? amending : new Set<string>()
+				),
+				kind: 'internationaal',
+				derived: isDerived(link.confidence),
+				relation: 'IMPLEMENTS',
+				direction: implemented.includes(link) ? 'outbound' : 'inbound'
+			});
+		}
+		// An act the text names by its CELEX number without implementing it (API 0.67).
+		const mentions = data.mentions ?? [];
+		for (const link of [...mentions, ...(data.mentioned_by ?? [])]) {
+			const i = link.instrument;
+			add({
+				ref: { collection: 'instruments', key: i.key },
+				title: i.citation_title ?? i.title ?? naamVan('instruments', i),
+				// The line says it: `Genoemd`, `Noemt` (hoe.ts), not "Aangehaald" with "alleen genoemd".
+				context: null,
+				kind: 'internationaal',
+				derived: isDerived(link.confidence),
+				relation: 'REFERS_TO',
+				direction: mentions.includes(link) ? 'outbound' : 'inbound'
+			});
+		}
+		for (const link of data.international ?? []) {
+			if (link.instrument) {
 				add({
-					ref: { collection: 'instruments', key: i.key },
-					title: i.citation_title ?? i.title ?? naamVan('instruments', i),
-					// The other way round (a directive and the laws that implement it), this law's
-					// AMENDS publications are not the ones to test: the measures stand as EUR-Lex has them.
-					context: implementationLine(
-						link,
-						implemented.includes(link) ? amending : new Set<string>()
-					),
-					kind: 'internationaal',
-					derived: isDerived(link.confidence),
-					relation: 'IMPLEMENTS',
-					direction: implemented.includes(link) ? 'outbound' : 'inbound'
-				});
-			}
-			// An act the text names by its CELEX number without implementing it (API 0.67).
-			const mentions = data.mentions ?? [];
-			for (const link of [...mentions, ...(data.mentioned_by ?? [])]) {
-				const i = link.instrument;
-				add({
-					ref: { collection: 'instruments', key: i.key },
-					title: i.citation_title ?? i.title ?? naamVan('instruments', i),
-					// The line says it: `Genoemd`, `Noemt` (hoe.ts), not "Aangehaald" with "alleen genoemd".
+					ref: { collection: 'instruments', key: link.instrument.key },
+					title:
+						link.instrument.citation_title ??
+						link.instrument.title ??
+						naamVan('instruments', link.instrument),
 					context: null,
 					kind: 'internationaal',
-					derived: isDerived(link.confidence),
-					relation: 'REFERS_TO',
-					direction: mentions.includes(link) ? 'outbound' : 'inbound'
+					derived: isDerived(link.confidence)
+				});
+			} else if (link.judgment) {
+				const j = link.judgment;
+				add({
+					ref: { collection: 'judgments', key: j.key },
+					...describeBron('judgments', j.key, j.display_name, { ...j }),
+					kind: 'internationaal',
+					derived: isDerived(link.confidence)
 				});
 			}
-			for (const link of data.international ?? []) {
-				if (link.instrument) {
-					add({
-						ref: { collection: 'instruments', key: link.instrument.key },
-						title:
-							link.instrument.citation_title ??
-							link.instrument.title ??
-							naamVan('instruments', link.instrument),
-						context: null,
-						kind: 'internationaal',
-						derived: isDerived(link.confidence)
-					});
-				} else if (link.judgment) {
-					const j = link.judgment;
-					add({
-						ref: { collection: 'judgments', key: j.key },
-						...describe('judgments', j.key, j.display_name, { ...j }),
-						kind: 'internationaal',
-						derived: isDerived(link.confidence)
-					});
-				}
-			}
-			return {
-				rows: [...rows.values()],
-				total:
-					(data.implements_total ?? 0) +
-					(data.implemented_by_total ?? 0) +
-					(data.mentions_total ?? 0) +
-					(data.mentioned_by_total ?? 0) +
-					(data.international_total ?? 0)
-			};
 		}
-		const group = buildGroups('instruments', await buren(EUROPEAN.match ?? [])).find(
-			(g) => g.id === 'international'
-		);
-		return { rows: group?.rows ?? [] };
+		return {
+			rows: [...rows.values()],
+			total:
+				(data.implements_total ?? 0) +
+				(data.implemented_by_total ?? 0) +
+				(data.mentions_total ?? 0) +
+				(data.mentioned_by_total ?? 0) +
+				(data.international_total ?? 0)
+		};
 	},
 
 	// TODO(backend B7): the lid a judgment cites is not a field. Where the citation
@@ -902,9 +804,10 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// is read from the citation spans of the paragraphs.
 	'judgment-articles': async ({ node, buren, signal }) => {
 		const ecli = typeof node.props?.ecli === 'string' ? node.props.ecli : node.key;
+		const match: Match = { relation: 'REFERS_TO', direction: 'outbound', collection: 'articles' };
 		const [detail, neighbors] = await Promise.all([
 			ifExists(abortable(getJudgmentDetail(ecli), signal)),
-			buren([{ relation: 'REFERS_TO', direction: 'outbound', collection: 'articles' }])
+			buren([match])
 		]);
 		const fromSpans = new Map<string, string>();
 		let uitspraak: Uitspraak | null = null;
@@ -924,9 +827,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				if (anchor) fromSpans.set(c.target.key, anchor);
 			}
 		}
-		const cited = neighbors.filter(
-			(n) => n.relation === 'REFERS_TO' && n.direction === 'outbound' && n.collection === 'articles'
-		);
+		const cited = neighbors.filter((n) => matches(match, n));
 		const names = get(instrumentMetaStore);
 		const rows = new Map<string, Row>();
 		for (const n of cited) {
@@ -1097,7 +998,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			total: found.total,
 			rows: found.items.map((d) => ({
 				ref: { collection: 'dossiers', key: d.key, number: d.dossier_number },
-				...describe('dossiers', d.key, d.display_name, {
+				...describeBron('dossiers', d.key, d.display_name, {
 					title: d.title,
 					label: d.dossier_number,
 					short_title: d.short_title ?? null
@@ -1161,14 +1062,14 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				};
 				const wetsvoorstel = isBill(p.kind) && !!dossier;
 				// A bill: titled by its dossier's name, its kind and number under it.
-				const stuk = describe('documents', p.key, p.display_name ?? null, {
+				const stuk = describeBron('documents', p.key, p.display_name ?? null, {
 					...props,
 					title: null,
 					dossier_short_title: null
 				}).title;
 				return {
 					ref: { collection: 'documents' as const, key: p.key },
-					...describe('documents', p.key, p.display_name ?? null, props),
+					...describeBron('documents', p.key, p.display_name ?? null, props),
 					...(wetsvoorstel && dossier
 						? {
 								title: dossier.short_title?.trim() || dossier.title?.trim() || stuk,
@@ -1192,27 +1093,17 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// What a vote was on: the Kamerstuk itself (`primary_document` of the decision, the reader's
 	// own answer), which opens on its text in place, then the activity; the zaak only where the
 	// vote names no stuk (a bill, a vote of the Eerste Kamer).
-	'decision-subject': async ({ node, buren, signal }) => {
-		const MATCH: Match[] = [
-			{
-				relation: ['ABOUT', 'MADE_IN'],
-				direction: 'outbound',
-				collection: ['documents', 'cases', 'activities']
-			}
-		];
-		const vanBakken = async () =>
-			(await buren(MATCH))
-				.filter(
-					(n) =>
-						(n.relation === 'ABOUT' || n.relation === 'MADE_IN') &&
-						n.direction === 'outbound' &&
-						['documents', 'cases', 'activities'].includes(n.collection)
-				)
-				.map(rowOfNeighbor)
-				.filter((r): r is Row => r !== null);
+	'decision-subject': async (ctx) => {
+		const { node, signal } = ctx;
 		const [d, rows] = await Promise.all([
 			ifExists(abortable(getDecision(node.key), signal)),
-			vanBakken()
+			uitBuren(ctx, [
+				{
+					relation: ['ABOUT', 'MADE_IN'],
+					direction: 'outbound',
+					collection: ['documents', 'cases', 'activities']
+				}
+			])
 		]);
 		const p = d?.primary_document;
 		if (!p) return { rows };
@@ -1226,7 +1117,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		};
 		const stuk: Row = {
 			ref: { collection: 'documents', key: p.key },
-			...describe('documents', p.key, p.title ?? null, props),
+			...describeBron('documents', p.key, p.title ?? null, props),
 			kind: bronKindOf('documents', p.key, props, 'ABOUT'),
 			relation: 'ABOUT',
 			direction: 'outbound',
@@ -1239,32 +1130,20 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 
 	// The articles of this law in the law's own order, as the reader has them: the node
 	// response holds a sample in no order (Richtlijn 2017/1132 began with 27, 126, 10).
-	// Without the route: the node's own bucket.
-	'instrument-articles': async ({ node, buren, totals, signal }) => {
+	'instrument-articles': async ({ node, signal }) => {
 		const law = lawIdOf(node.props);
-		const fromNode = async () => ({
-			total: totals.get(bucketKey('PART_OF', 'articles', 'inbound')),
-			rows: (await buren([{ relation: 'PART_OF', direction: 'inbound', collection: 'articles' }]))
-				.filter(
-					(n) =>
-						n.relation === 'PART_OF' && n.direction === 'inbound' && n.collection === 'articles'
-				)
-				.map(rowOfNeighbor)
-				.filter((r) => r !== null)
-		});
-		if (!law) return fromNode();
 		// The law's whole list, which the reader's table of contents asks for too.
-		const found = await ifExists(abortable(lawArticleList(law), signal));
-		if (!found) return fromNode();
+		const found = law ? await ifExists(abortable(lawArticleList(law), signal)) : null;
+		if (!law || !found) return { rows: [] };
 		return {
 			total: found.total,
 			rows: found.items.slice(0, ARTICLES_SHOWN).map((a) => ({
 				ref: refOf('articles', a.key, a),
-				...describe('articles', a.key, a.display_name, a),
+				...describeBron('articles', a.key, a.display_name, a),
 				// Within its law an article is "Artikel 1", not the law's title again (Thijs, 9 Oct).
 				title:
 					articleName(law, a.article_number, a.label) ??
-					describe('articles', a.key, a.display_name, a).title,
+					describeBron('articles', a.key, a.display_name, a).title,
 				kind: 'artikelen' as const,
 				relation: 'PART_OF' as const,
 				direction: 'inbound' as const
@@ -1273,25 +1152,10 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	},
 
 	// The judgments that cite this law, each with the articles it cites; the total is the
-	// API's, where the node response stops at 30. Without the route: the node's own bucket.
-	'instrument-judgments': async ({ node, buren, totals, signal, options }) => {
+	// API's, where the node response stops at 30.
+	'instrument-judgments': async ({ node, signal, options }) => {
 		const bwb = bwbOf(node);
-		const fromNode = async () => ({
-			total: totals.get(bucketKey('REFERS_TO', 'judgments', 'inbound')),
-			rows: (
-				await buren([{ relation: 'REFERS_TO', direction: 'inbound', collection: 'judgments' }])
-			)
-				.filter(
-					(n) =>
-						n.relation === 'REFERS_TO' &&
-						n.direction === 'inbound' &&
-						n.collection === 'judgments' &&
-						!isInternational(n)
-				)
-				.map(rowOfNeighbor)
-				.filter((r) => r !== null)
-		});
-		if (!bwb) return fromNode();
+		if (!bwb) return { rows: [] };
 		// One year of them where the bronfilter chooses one (BE-51): all of that year, not
 		// the year's share of the first page.
 		const found = await ifExists(
@@ -1304,7 +1168,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				signal
 			)
 		);
-		if (!found) return fromNode();
+		if (!found) return { rows: [] };
 		return {
 			total: found.total,
 			// Every citing judgment per year (BE-47), not the page; the oldest first.
@@ -1317,7 +1181,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				.map((j) => ({
 					ref: { collection: 'judgments' as const, key: j.key },
 					// The court and the day (API 0.73, BE-7), as every other row of a judgment.
-					...describe('judgments', j.key, j.display_name, {
+					...describeBron('judgments', j.key, j.display_name, {
 						ecli: j.ecli,
 						court: j.court,
 						tier: j.tier,
@@ -1340,30 +1204,18 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	'faction-instruments': ({ node, signal }) => touched('factions', node.key, signal),
 
 	// The debates and hearings a committee leads, newest first, with the API's total and
-	// the dossiers on their agenda. Without the route: the node's own bucket.
-	'committee-activities': async ({ node, buren, totals, signal }) => {
+	// the dossiers on their agenda.
+	'committee-activities': async ({ node, signal }) => {
 		const slug = typeof node.props?.slug === 'string' ? node.props.slug : null;
 		const found = slug
 			? await ifExists(abortable(getCommitteeActivities(slug, ACTIVITIES_SHOWN), signal))
 			: null;
-		if (!found)
-			return {
-				total: totals.get(bucketKey('LED_BY', 'activities', 'inbound')),
-				rows: (
-					await buren([{ relation: 'LED_BY', direction: 'inbound', collection: 'activities' }])
-				)
-					.filter(
-						(n) =>
-							n.relation === 'LED_BY' && n.direction === 'inbound' && n.collection === 'activities'
-					)
-					.map(rowOfNeighbor)
-					.filter((r) => r !== null)
-			};
+		if (!found) return { rows: [] };
 		return {
 			total: found.total,
 			rows: found.items.map((a) => ({
 				ref: { collection: 'activities' as const, key: a.key },
-				...describe('activities', a.key, a.agenda_title, { ...a }),
+				...describeBron('activities', a.key, a.agenda_title, { ...a }),
 				context: activityLine(a),
 				kind: bronKindOf('activities', a.key, {}),
 				relation: 'LED_BY' as const,
@@ -1380,7 +1232,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			total: committee.active_dossier_count,
 			rows: (committee.dossiers ?? []).map((d) => ({
 				ref: { collection: 'dossiers', key: d.key, number: d.number },
-				...describe('dossiers', d.key, d.title, { title: d.title, label: d.number }),
+				...describeBron('dossiers', d.key, d.title, { title: d.title, label: d.number }),
 				kind: 'dossiers' as const
 			}))
 		};

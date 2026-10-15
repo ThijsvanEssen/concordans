@@ -1,0 +1,1083 @@
+{
+	"/api/nodes/{collection}/{key} {\"collection\":\"cases\",\"key\":\"f602bc60_70a8_4c56_8781_fc735b9e2e9d\"} {\"direction\":\"inbound\",\"limit\":200,\"node_types\":\"document\",\"relations\":\"PART_OF\"}": {
+		"node": {
+			"id": "cases/f602bc60_70a8_4c56_8781_fc735b9e2e9d",
+			"key": "f602bc60_70a8_4c56_8781_fc735b9e2e9d",
+			"collection": "cases",
+			"type": "case",
+			"display_name": "Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen",
+			"labels": [
+				"TK"
+			],
+			"props": {
+				"citation_title": "Cyberbeveiligingswet",
+				"display_name": "Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen",
+				"done": true,
+				"dossier_numbers": [
+					"36764"
+				],
+				"external_id": "f602bc60-70a8-4c56-8781-fc735b9e2e9d",
+				"kind": "Motie",
+				"number": "2026Z05832",
+				"related_cases": [],
+				"replaces_cases": [],
+				"source": "tk",
+				"started_on": "2026-03-23",
+				"title": "Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen"
+			},
+			"path": "/zaken/2026Z05832"
+		},
+		"neighbors": {
+			"total": 1,
+			"buckets": [
+				{
+					"relation": "PART_OF",
+					"direction": "inbound",
+					"collection": "documents",
+					"type": "document",
+					"total": 1,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "documents/04739c40_e398_4e5a_a205_654b789b6731",
+							"key": "04739c40_e398_4e5a_a205_654b789b6731",
+							"collection": "documents",
+							"type": "document",
+							"display_name": "Kamerstuk 36764, nr. 22: Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet…",
+							"labels": [
+								"TK",
+								"Kamerstuk"
+							],
+							"props": {
+								"actors": [
+									{
+										"person_id": "98f026ef-74d5-4b6e-80ae-4a76e9ec7e81",
+										"faction_id": "fab6e7e1-9d63-446a-a6e1-e1c74e3f679e",
+										"name": "D.J. van den Berg",
+										"faction": "JA21",
+										"role": "Eerste ondertekenaar",
+										"function": "Tweede Kamerlid",
+										"capacity": "kamerlid"
+									}
+								],
+								"budget": false,
+								"case_ids": [
+									"f602bc60-70a8-4c56-8781-fc735b9e2e9d"
+								],
+								"case_kinds": [
+									"Motie"
+								],
+								"date": "2026-03-23",
+								"decided_on": "2026-03-31",
+								"decision": "decision_b607e4cd_dae2_48ce_86a4_590731d0fb23",
+								"dictum": "verzoekt de regering om voor entiteiten die onder beide wetten vallen uit te werken dat één gecoördineerd dossier, één auditkalender, één zo veel mogelijk herbruikbare bewijsset en één coördinerend aanspreekpunt het uitgangspunt zijn, en dat dubbele informatieverzoeken alleen plaatsvinden indien dat aantoonbaar noodzakelijk is",
+								"display_name": "Kamerstuk 36764, nr. 22: Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet…",
+								"document_number": "2026D13235",
+								"dossier_number": "36764",
+								"dossier_numbers": [
+									"36764"
+								],
+								"dossier_suffix": null,
+								"dossier_title": "Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet)",
+								"external_id": "04739c40-e398-4e5a-a205-654b789b6731",
+								"kind": "Motie",
+								"outcome": "aangenomen",
+								"sequence": 22,
+								"session_year": "2025-2026",
+								"source": "tk",
+								"structure_quality": "none",
+								"subject": "Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen ",
+								"tally": {
+									"Voor": 150
+								},
+								"text_source": "kst-xml",
+								"text_truncated": false,
+								"title": "Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen",
+								"xml_dialect": "officiele-publicatie",
+								"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2026D13235&did=2026D13235",
+								"number": "22",
+								"sender": {
+									"name": "D.J. van den Berg",
+									"function": "Tweede Kamerlid",
+									"faction": "JA21",
+									"capacity": "kamerlid",
+									"member_key": "98f026ef_74d5_4b6e_80ae_4a76e9ec7e81",
+									"ministry": null
+								},
+								"dossier_short_title": "Cyberbeveiligingswet"
+							},
+							"edge_id": "ac9345f39e86d57613cafb47e78d4df541b84291",
+							"relation": "PART_OF",
+							"direction": "inbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/kamerstukken/36764/22"
+						}
+					]
+				}
+			]
+		},
+		"title": "Motie Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen (2026Z05832)",
+		"description": "Motie Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen (2026Z05832)",
+		"path": "/zaken/2026Z05832",
+		"lid_counts_pending": false
+	},
+	"/api/nodes/{collection}/{key} {\"collection\":\"documents\",\"key\":\"04739c40_e398_4e5a_a205_654b789b6731\"} {\"direction\":\"outbound\",\"limit\":200,\"node_types\":\"case\",\"relations\":\"PART_OF\"}": {
+		"node": {
+			"id": "documents/04739c40_e398_4e5a_a205_654b789b6731",
+			"key": "04739c40_e398_4e5a_a205_654b789b6731",
+			"collection": "documents",
+			"type": "document",
+			"display_name": "Kamerstuk 36764, nr. 22: Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet…",
+			"labels": [
+				"TK",
+				"Kamerstuk"
+			],
+			"props": {
+				"actors": [
+					{
+						"person_id": "98f026ef-74d5-4b6e-80ae-4a76e9ec7e81",
+						"faction_id": "fab6e7e1-9d63-446a-a6e1-e1c74e3f679e",
+						"name": "D.J. van den Berg",
+						"faction": "JA21",
+						"role": "Eerste ondertekenaar",
+						"function": "Tweede Kamerlid",
+						"capacity": "kamerlid"
+					}
+				],
+				"budget": false,
+				"case_ids": [
+					"f602bc60-70a8-4c56-8781-fc735b9e2e9d"
+				],
+				"case_kinds": [
+					"Motie"
+				],
+				"date": "2026-03-23",
+				"decided_on": "2026-03-31",
+				"decision": "decision_b607e4cd_dae2_48ce_86a4_590731d0fb23",
+				"dictum": "verzoekt de regering om voor entiteiten die onder beide wetten vallen uit te werken dat één gecoördineerd dossier, één auditkalender, één zo veel mogelijk herbruikbare bewijsset en één coördinerend aanspreekpunt het uitgangspunt zijn, en dat dubbele informatieverzoeken alleen plaatsvinden indien dat aantoonbaar noodzakelijk is",
+				"display_name": "Kamerstuk 36764, nr. 22: Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet…",
+				"document_number": "2026D13235",
+				"dossier_number": "36764",
+				"dossier_numbers": [
+					"36764"
+				],
+				"dossier_suffix": null,
+				"dossier_title": "Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet)",
+				"external_id": "04739c40-e398-4e5a-a205-654b789b6731",
+				"footnotes": [],
+				"kind": "Motie",
+				"outcome": "aangenomen",
+				"sections": [],
+				"sequence": 22,
+				"session_year": "2025-2026",
+				"source": "tk",
+				"structure_quality": "none",
+				"subject": "Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen ",
+				"tally": {
+					"Voor": 150
+				},
+				"text_source": "kst-xml",
+				"text_truncated": false,
+				"title": "Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen",
+				"xml_dialect": "officiele-publicatie",
+				"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2026D13235&did=2026D13235",
+				"number": "22",
+				"sender": {
+					"name": "D.J. van den Berg",
+					"function": "Tweede Kamerlid",
+					"faction": "JA21",
+					"capacity": "kamerlid",
+					"member_key": "98f026ef_74d5_4b6e_80ae_4a76e9ec7e81",
+					"ministry": null
+				}
+			},
+			"path": "/kamerstukken/36764/22"
+		},
+		"neighbors": {
+			"total": 1,
+			"buckets": [
+				{
+					"relation": "PART_OF",
+					"direction": "outbound",
+					"collection": "cases",
+					"type": "case",
+					"total": 1,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "cases/f602bc60_70a8_4c56_8781_fc735b9e2e9d",
+							"key": "f602bc60_70a8_4c56_8781_fc735b9e2e9d",
+							"collection": "cases",
+							"type": "case",
+							"display_name": "Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"citation_title": "Cyberbeveiligingswet",
+								"display_name": "Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen",
+								"done": true,
+								"dossier_numbers": [
+									"36764"
+								],
+								"external_id": "f602bc60-70a8-4c56-8781-fc735b9e2e9d",
+								"kind": "Motie",
+								"number": "2026Z05832",
+								"related_cases": [],
+								"replaces_cases": [],
+								"source": "tk",
+								"started_on": "2026-03-23",
+								"title": "Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen"
+							},
+							"edge_id": "ac9345f39e86d57613cafb47e78d4df541b84291",
+							"relation": "PART_OF",
+							"direction": "outbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/zaken/2026Z05832"
+						}
+					]
+				}
+			]
+		},
+		"title": "Motie 36764-22 Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen",
+		"description": "Motie 36764-22 Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen",
+		"path": "/kamerstukken/36764/22",
+		"lid_counts_pending": false
+	},
+	"/api/nodes/{collection}/{key} {\"collection\":\"documents\",\"key\":\"04739c40_e398_4e5a_a205_654b789b6731\"} {\"limit\":1}": {
+		"node": {
+			"id": "documents/04739c40_e398_4e5a_a205_654b789b6731",
+			"key": "04739c40_e398_4e5a_a205_654b789b6731",
+			"collection": "documents",
+			"type": "document",
+			"display_name": "Kamerstuk 36764, nr. 22: Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet…",
+			"labels": [
+				"TK",
+				"Kamerstuk"
+			],
+			"props": {
+				"actors": [
+					{
+						"person_id": "98f026ef-74d5-4b6e-80ae-4a76e9ec7e81",
+						"faction_id": "fab6e7e1-9d63-446a-a6e1-e1c74e3f679e",
+						"name": "D.J. van den Berg",
+						"faction": "JA21",
+						"role": "Eerste ondertekenaar",
+						"function": "Tweede Kamerlid",
+						"capacity": "kamerlid"
+					}
+				],
+				"budget": false,
+				"case_ids": [
+					"f602bc60-70a8-4c56-8781-fc735b9e2e9d"
+				],
+				"case_kinds": [
+					"Motie"
+				],
+				"date": "2026-03-23",
+				"decided_on": "2026-03-31",
+				"decision": "decision_b607e4cd_dae2_48ce_86a4_590731d0fb23",
+				"dictum": "verzoekt de regering om voor entiteiten die onder beide wetten vallen uit te werken dat één gecoördineerd dossier, één auditkalender, één zo veel mogelijk herbruikbare bewijsset en één coördinerend aanspreekpunt het uitgangspunt zijn, en dat dubbele informatieverzoeken alleen plaatsvinden indien dat aantoonbaar noodzakelijk is",
+				"display_name": "Kamerstuk 36764, nr. 22: Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet…",
+				"document_number": "2026D13235",
+				"dossier_number": "36764",
+				"dossier_numbers": [
+					"36764"
+				],
+				"dossier_suffix": null,
+				"dossier_title": "Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet)",
+				"external_id": "04739c40-e398-4e5a-a205-654b789b6731",
+				"footnotes": [],
+				"kind": "Motie",
+				"outcome": "aangenomen",
+				"sections": [],
+				"sequence": 22,
+				"session_year": "2025-2026",
+				"source": "tk",
+				"structure_quality": "none",
+				"subject": "Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen ",
+				"tally": {
+					"Voor": 150
+				},
+				"text_source": "kst-xml",
+				"text_truncated": false,
+				"title": "Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen",
+				"xml_dialect": "officiele-publicatie",
+				"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2026D13235&did=2026D13235",
+				"number": "22",
+				"sender": {
+					"name": "D.J. van den Berg",
+					"function": "Tweede Kamerlid",
+					"faction": "JA21",
+					"capacity": "kamerlid",
+					"member_key": "98f026ef_74d5_4b6e_80ae_4a76e9ec7e81",
+					"ministry": null
+				}
+			},
+			"path": "/kamerstukken/36764/22"
+		},
+		"neighbors": {
+			"total": 10,
+			"buckets": [
+				{
+					"relation": "AUTHORED",
+					"direction": "inbound",
+					"collection": "members",
+					"type": "member",
+					"total": 1,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "members/98f026ef_74d5_4b6e_80ae_4a76e9ec7e81",
+							"key": "98f026ef_74d5_4b6e_80ae_4a76e9ec7e81",
+							"collection": "members",
+							"type": "member",
+							"display_name": "Daniël van den Berg (JA21)",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"birth_date": "1991-10-17",
+								"death_date": null,
+								"display_name": "Daniël van den Berg (JA21)",
+								"external_id": "98f026ef-74d5-4b6e-80ae-4a76e9ec7e81",
+								"faction_memberships": [
+									{
+										"faction_id": "factions/ja21",
+										"faction_key": "ja21",
+										"name": "JA21",
+										"abbreviation": "JA21",
+										"aliases": [
+											"JA21"
+										],
+										"from_date": "2025-11-12",
+										"to_date": null,
+										"role": "Lid"
+									}
+								],
+								"family_name": "Berg",
+								"full_name": "Daniël Juriën van den Berg",
+								"initials": "D.J.",
+								"name": "Daniël van den Berg",
+								"name_prefix": "van den",
+								"number": "65376",
+								"party": "JA21",
+								"slug": "daniel-van-den-berg"
+							},
+							"edge_id": "3aaeb71294d07fa739f0a5d2a69123500789a937",
+							"relation": "AUTHORED",
+							"direction": "inbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {
+								"role": "Eerste ondertekenaar",
+								"function": "Tweede Kamerlid",
+								"capacity": "kamerlid"
+							},
+							"path": "/leden/daniel-van-den-berg"
+						}
+					]
+				},
+				{
+					"relation": "MADE_IN",
+					"direction": "outbound",
+					"collection": "activities",
+					"type": "activity",
+					"total": 1,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "activities/18f47274_7437_422c_8100_68f1982311fb",
+							"key": "18f47274_7437_422c_8100_68f1982311fb",
+							"collection": "activities",
+							"type": "activity",
+							"display_name": "Wet weerbaarheid kritieke entiteiten (36765) en Cyberbeveiligingswet (36764) (2026-03-23)",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"external_id": "18f47274-7437-422c-8100-68f1982311fb",
+								"date": "2026-03-23",
+								"agenda_title": "Wet weerbaarheid kritieke entiteiten (36765) en Cyberbeveiligingswet (36764)",
+								"kind": "Wetgevingsoverleg",
+								"status": "Uitgevoerd",
+								"committee_id": "14cac666-51cb-4154-80da-9b0e2eeb5014",
+								"dossier_numbers": [
+									"36765",
+									"36764"
+								],
+								"display_name": "Wet weerbaarheid kritieke entiteiten (36765) en Cyberbeveiligingswet (36764) (2026-03-23)",
+								"number": "2026A01323",
+								"replaced_by": [],
+								"tk_url": "https://www.tweedekamer.nl/debat_en_vergadering/commissievergaderingen/details?id=2026A01323",
+								"dossier_short_title": "Wet weerbaarheid kritieke entiteiten"
+							},
+							"edge_id": "2df1b782ee17577a9da01d616e1bf1f713667728",
+							"relation": "MADE_IN",
+							"direction": "outbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {
+								"reason": "ingediend"
+							},
+							"path": "/activiteiten/2026A01323"
+						}
+					]
+				},
+				{
+					"relation": "PART_OF",
+					"direction": "outbound",
+					"collection": "cases",
+					"type": "case",
+					"total": 1,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "cases/f602bc60_70a8_4c56_8781_fc735b9e2e9d",
+							"key": "f602bc60_70a8_4c56_8781_fc735b9e2e9d",
+							"collection": "cases",
+							"type": "case",
+							"display_name": "Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"citation_title": "Cyberbeveiligingswet",
+								"display_name": "Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen",
+								"done": true,
+								"dossier_numbers": [
+									"36764"
+								],
+								"external_id": "f602bc60-70a8-4c56-8781-fc735b9e2e9d",
+								"kind": "Motie",
+								"number": "2026Z05832",
+								"related_cases": [],
+								"replaces_cases": [],
+								"source": "tk",
+								"started_on": "2026-03-23",
+								"title": "Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen"
+							},
+							"edge_id": "ac9345f39e86d57613cafb47e78d4df541b84291",
+							"relation": "PART_OF",
+							"direction": "outbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/zaken/2026Z05832"
+						}
+					]
+				},
+				{
+					"relation": "PART_OF",
+					"direction": "outbound",
+					"collection": "dossiers",
+					"type": "dossier",
+					"total": 1,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "dossiers/36764",
+							"key": "36764",
+							"collection": "dossiers",
+							"type": "dossier",
+							"display_name": "Kamerstukdossier 36764: Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet) ",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"cabinet": "schoof",
+								"case_kinds": [
+									"Amendement",
+									"Brief regering",
+									"Motie",
+									"Nota n.a.v. het (nader/tweede nader/enz.) verslag"
+								],
+								"closed": true,
+								"closed_on": "2026-07-10",
+								"current_phase": "Eindtekst",
+								"display_name": "Kamerstukdossier 36764: Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet) ",
+								"ek_bill": {
+									"url": "https://www.eerstekamer.nl/wetsvoorstel/36764_cyberbeveiligingswet",
+									"read_on": "2026-10-04",
+									"status": "Plenaire behandeling Eerste Kamer afgerond",
+									"submitted_on": "2025-06-02",
+									"progress": [
+										{
+											"phase": null,
+											"house": "Tweede Kamer",
+											"state": "vol",
+											"papers": [
+												{
+													"kind": "voorstel van wet",
+													"date": "2025-06-02",
+													"number": "TK, 2",
+													"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmo01rq7g8zm/f=y.pdf"
+												},
+												{
+													"kind": "stemmingsoverzicht Tweede Kamer",
+													"date": "2026-04-15",
+													"number": null,
+													"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmwqb3ym5w8b/f=y.pdf"
+												}
+											]
+										},
+										{
+											"phase": "Schriftelijke voorbereiding",
+											"house": "Eerste Kamer",
+											"state": "vol",
+											"papers": [
+												{
+													"kind": "gewijzigd voorstel van wet",
+													"date": "2026-04-15",
+													"number": "EK, A",
+													"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmwvkitp1ukc/f=y.pdf"
+												},
+												{
+													"kind": "verslag",
+													"date": "2026-06-02",
+													"number": "EK, B",
+													"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmy2m4k8z1yy/f=y.pdf"
+												},
+												{
+													"kind": "nota naar aanleiding van het verslag",
+													"date": "2026-06-17",
+													"number": "EK, C",
+													"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmyhjijw07ad/f=y.pdf"
+												},
+												{
+													"kind": "tweede verslag",
+													"date": "2026-06-26",
+													"number": "EK, D",
+													"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmyph9i9jqrt/f=y.pdf"
+												}
+											]
+										},
+										{
+											"phase": "Plenair",
+											"house": null,
+											"state": "vol",
+											"papers": [
+												{
+													"kind": "stemming",
+													"date": "2026-07-07",
+													"number": null,
+													"url": "https://www.eerstekamer.nl/verslagdeel/20260707/cyberbeveiligingswet"
+												}
+											]
+										},
+										{
+											"phase": "Afkondiging",
+											"house": "Staatsblad(en)",
+											"state": "geblokt",
+											"papers": []
+										}
+									]
+								},
+								"ek_outcome": {
+									"outcome": "Aangenomen",
+									"date": "2026-07-07",
+									"method": "Stemming bij zitten en opstaan, aangenomen",
+									"source_url": "https://www.eerstekamer.nl/verslagdeel/20260707/cyberbeveiligingswet",
+									"retrieved_on": "2026-10-09"
+								},
+								"external_id": "674896f4-5e50-4948-bf95-a9182108a25e",
+								"first_signed": {
+									"date": "2025-06-02",
+									"member": "88f29701_8fe7_4a10_8b0f_0973fdde12bb",
+									"capacity": "bewindspersoon",
+									"function": "minister van Justitie en Veiligheid",
+									"paper": "documents/3befbdfa_30de_48d9_b0da_b0572504b962"
+								},
+								"initiative": false,
+								"kind": "Wetgeving",
+								"kind_basis": "case",
+								"label": "36764",
+								"last_activity": "2026-09-10",
+								"ministry": "jenv",
+								"number": "36764",
+								"opened_on": "2025-06-02",
+								"opened_on_basis": "first_paper",
+								"order": "00036764.0.0000.",
+								"outcome": "aangenomen",
+								"phases": [
+									{
+										"name": "Voorstel van wet",
+										"done": true,
+										"date": "2025-06-02"
+									},
+									{
+										"name": "Memorie van toelichting",
+										"done": true,
+										"date": "2025-06-02"
+									},
+									{
+										"name": "Advies Raad van State",
+										"done": true,
+										"date": "2025-06-02"
+									},
+									{
+										"name": "Verslag",
+										"done": true,
+										"date": "2025-09-08"
+									}
+								],
+								"same_number_count": 0,
+								"submitted_on_tk": "2025-06-02",
+								"suffix": "",
+								"title": "Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet) ",
+								"title_source": "dossier",
+								"tk_decision": {
+									"kind": "Stemmen - aangenomen",
+									"text": "Aangenomen.",
+									"date": "2026-04-15"
+								},
+								"short_title": "Cyberbeveiligingswet"
+							},
+							"edge_id": "996118ab68ea37f852bd0e3c421b7c36cc3a2438",
+							"relation": "PART_OF",
+							"direction": "outbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/dossiers/36764"
+						}
+					]
+				}
+			]
+		},
+		"title": "Motie 36764-22 Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen",
+		"description": "Motie 36764-22 Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen",
+		"path": "/kamerstukken/36764/22",
+		"lid_counts_pending": false
+	},
+	"/api/nodes/{collection}/{key} {\"collection\":\"documents\",\"key\":\"04739c40_e398_4e5a_a205_654b789b6731\"} {\"limit\":5}": {
+		"node": {
+			"id": "documents/04739c40_e398_4e5a_a205_654b789b6731",
+			"key": "04739c40_e398_4e5a_a205_654b789b6731",
+			"collection": "documents",
+			"type": "document",
+			"display_name": "Kamerstuk 36764, nr. 22: Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet…",
+			"labels": [
+				"TK",
+				"Kamerstuk"
+			],
+			"props": {
+				"actors": [
+					{
+						"person_id": "98f026ef-74d5-4b6e-80ae-4a76e9ec7e81",
+						"faction_id": "fab6e7e1-9d63-446a-a6e1-e1c74e3f679e",
+						"name": "D.J. van den Berg",
+						"faction": "JA21",
+						"role": "Eerste ondertekenaar",
+						"function": "Tweede Kamerlid",
+						"capacity": "kamerlid"
+					}
+				],
+				"budget": false,
+				"case_ids": [
+					"f602bc60-70a8-4c56-8781-fc735b9e2e9d"
+				],
+				"case_kinds": [
+					"Motie"
+				],
+				"date": "2026-03-23",
+				"decided_on": "2026-03-31",
+				"decision": "decision_b607e4cd_dae2_48ce_86a4_590731d0fb23",
+				"dictum": "verzoekt de regering om voor entiteiten die onder beide wetten vallen uit te werken dat één gecoördineerd dossier, één auditkalender, één zo veel mogelijk herbruikbare bewijsset en één coördinerend aanspreekpunt het uitgangspunt zijn, en dat dubbele informatieverzoeken alleen plaatsvinden indien dat aantoonbaar noodzakelijk is",
+				"display_name": "Kamerstuk 36764, nr. 22: Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet…",
+				"document_number": "2026D13235",
+				"dossier_number": "36764",
+				"dossier_numbers": [
+					"36764"
+				],
+				"dossier_suffix": null,
+				"dossier_title": "Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet)",
+				"external_id": "04739c40-e398-4e5a-a205-654b789b6731",
+				"footnotes": [],
+				"kind": "Motie",
+				"outcome": "aangenomen",
+				"sections": [],
+				"sequence": 22,
+				"session_year": "2025-2026",
+				"source": "tk",
+				"structure_quality": "none",
+				"subject": "Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen ",
+				"tally": {
+					"Voor": 150
+				},
+				"text_source": "kst-xml",
+				"text_truncated": false,
+				"title": "Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen",
+				"xml_dialect": "officiele-publicatie",
+				"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2026D13235&did=2026D13235",
+				"number": "22",
+				"sender": {
+					"name": "D.J. van den Berg",
+					"function": "Tweede Kamerlid",
+					"faction": "JA21",
+					"capacity": "kamerlid",
+					"member_key": "98f026ef_74d5_4b6e_80ae_4a76e9ec7e81",
+					"ministry": null
+				}
+			},
+			"path": "/kamerstukken/36764/22"
+		},
+		"neighbors": {
+			"total": 10,
+			"buckets": [
+				{
+					"relation": "AUTHORED",
+					"direction": "inbound",
+					"collection": "members",
+					"type": "member",
+					"total": 1,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "members/98f026ef_74d5_4b6e_80ae_4a76e9ec7e81",
+							"key": "98f026ef_74d5_4b6e_80ae_4a76e9ec7e81",
+							"collection": "members",
+							"type": "member",
+							"display_name": "Daniël van den Berg (JA21)",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"birth_date": "1991-10-17",
+								"death_date": null,
+								"display_name": "Daniël van den Berg (JA21)",
+								"external_id": "98f026ef-74d5-4b6e-80ae-4a76e9ec7e81",
+								"faction_memberships": [
+									{
+										"faction_id": "factions/ja21",
+										"faction_key": "ja21",
+										"name": "JA21",
+										"abbreviation": "JA21",
+										"aliases": [
+											"JA21"
+										],
+										"from_date": "2025-11-12",
+										"to_date": null,
+										"role": "Lid"
+									}
+								],
+								"family_name": "Berg",
+								"full_name": "Daniël Juriën van den Berg",
+								"initials": "D.J.",
+								"name": "Daniël van den Berg",
+								"name_prefix": "van den",
+								"number": "65376",
+								"party": "JA21",
+								"slug": "daniel-van-den-berg"
+							},
+							"edge_id": "3aaeb71294d07fa739f0a5d2a69123500789a937",
+							"relation": "AUTHORED",
+							"direction": "inbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {
+								"role": "Eerste ondertekenaar",
+								"function": "Tweede Kamerlid",
+								"capacity": "kamerlid"
+							},
+							"path": "/leden/daniel-van-den-berg"
+						}
+					]
+				},
+				{
+					"relation": "MADE_IN",
+					"direction": "outbound",
+					"collection": "activities",
+					"type": "activity",
+					"total": 1,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "activities/18f47274_7437_422c_8100_68f1982311fb",
+							"key": "18f47274_7437_422c_8100_68f1982311fb",
+							"collection": "activities",
+							"type": "activity",
+							"display_name": "Wet weerbaarheid kritieke entiteiten (36765) en Cyberbeveiligingswet (36764) (2026-03-23)",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"external_id": "18f47274-7437-422c-8100-68f1982311fb",
+								"date": "2026-03-23",
+								"agenda_title": "Wet weerbaarheid kritieke entiteiten (36765) en Cyberbeveiligingswet (36764)",
+								"kind": "Wetgevingsoverleg",
+								"status": "Uitgevoerd",
+								"committee_id": "14cac666-51cb-4154-80da-9b0e2eeb5014",
+								"dossier_numbers": [
+									"36765",
+									"36764"
+								],
+								"display_name": "Wet weerbaarheid kritieke entiteiten (36765) en Cyberbeveiligingswet (36764) (2026-03-23)",
+								"number": "2026A01323",
+								"replaced_by": [],
+								"tk_url": "https://www.tweedekamer.nl/debat_en_vergadering/commissievergaderingen/details?id=2026A01323",
+								"dossier_short_title": "Wet weerbaarheid kritieke entiteiten"
+							},
+							"edge_id": "2df1b782ee17577a9da01d616e1bf1f713667728",
+							"relation": "MADE_IN",
+							"direction": "outbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {
+								"reason": "ingediend"
+							},
+							"path": "/activiteiten/2026A01323"
+						}
+					]
+				},
+				{
+					"relation": "PART_OF",
+					"direction": "outbound",
+					"collection": "cases",
+					"type": "case",
+					"total": 1,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "cases/f602bc60_70a8_4c56_8781_fc735b9e2e9d",
+							"key": "f602bc60_70a8_4c56_8781_fc735b9e2e9d",
+							"collection": "cases",
+							"type": "case",
+							"display_name": "Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"citation_title": "Cyberbeveiligingswet",
+								"display_name": "Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen",
+								"done": true,
+								"dossier_numbers": [
+									"36764"
+								],
+								"external_id": "f602bc60-70a8-4c56-8781-fc735b9e2e9d",
+								"kind": "Motie",
+								"number": "2026Z05832",
+								"related_cases": [],
+								"replaces_cases": [],
+								"source": "tk",
+								"started_on": "2026-03-23",
+								"title": "Motie van het lid Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen"
+							},
+							"edge_id": "ac9345f39e86d57613cafb47e78d4df541b84291",
+							"relation": "PART_OF",
+							"direction": "outbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/zaken/2026Z05832"
+						}
+					]
+				},
+				{
+					"relation": "PART_OF",
+					"direction": "outbound",
+					"collection": "dossiers",
+					"type": "dossier",
+					"total": 1,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "dossiers/36764",
+							"key": "36764",
+							"collection": "dossiers",
+							"type": "dossier",
+							"display_name": "Kamerstukdossier 36764: Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet) ",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"cabinet": "schoof",
+								"case_kinds": [
+									"Amendement",
+									"Brief regering",
+									"Motie",
+									"Nota n.a.v. het (nader/tweede nader/enz.) verslag"
+								],
+								"closed": true,
+								"closed_on": "2026-07-10",
+								"current_phase": "Eindtekst",
+								"display_name": "Kamerstukdossier 36764: Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet) ",
+								"ek_bill": {
+									"url": "https://www.eerstekamer.nl/wetsvoorstel/36764_cyberbeveiligingswet",
+									"read_on": "2026-10-04",
+									"status": "Plenaire behandeling Eerste Kamer afgerond",
+									"submitted_on": "2025-06-02",
+									"progress": [
+										{
+											"phase": null,
+											"house": "Tweede Kamer",
+											"state": "vol",
+											"papers": [
+												{
+													"kind": "voorstel van wet",
+													"date": "2025-06-02",
+													"number": "TK, 2",
+													"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmo01rq7g8zm/f=y.pdf"
+												},
+												{
+													"kind": "stemmingsoverzicht Tweede Kamer",
+													"date": "2026-04-15",
+													"number": null,
+													"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmwqb3ym5w8b/f=y.pdf"
+												}
+											]
+										},
+										{
+											"phase": "Schriftelijke voorbereiding",
+											"house": "Eerste Kamer",
+											"state": "vol",
+											"papers": [
+												{
+													"kind": "gewijzigd voorstel van wet",
+													"date": "2026-04-15",
+													"number": "EK, A",
+													"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmwvkitp1ukc/f=y.pdf"
+												},
+												{
+													"kind": "verslag",
+													"date": "2026-06-02",
+													"number": "EK, B",
+													"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmy2m4k8z1yy/f=y.pdf"
+												},
+												{
+													"kind": "nota naar aanleiding van het verslag",
+													"date": "2026-06-17",
+													"number": "EK, C",
+													"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmyhjijw07ad/f=y.pdf"
+												},
+												{
+													"kind": "tweede verslag",
+													"date": "2026-06-26",
+													"number": "EK, D",
+													"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmyph9i9jqrt/f=y.pdf"
+												}
+											]
+										},
+										{
+											"phase": "Plenair",
+											"house": null,
+											"state": "vol",
+											"papers": [
+												{
+													"kind": "stemming",
+													"date": "2026-07-07",
+													"number": null,
+													"url": "https://www.eerstekamer.nl/verslagdeel/20260707/cyberbeveiligingswet"
+												}
+											]
+										},
+										{
+											"phase": "Afkondiging",
+											"house": "Staatsblad(en)",
+											"state": "geblokt",
+											"papers": []
+										}
+									]
+								},
+								"ek_outcome": {
+									"outcome": "Aangenomen",
+									"date": "2026-07-07",
+									"method": "Stemming bij zitten en opstaan, aangenomen",
+									"source_url": "https://www.eerstekamer.nl/verslagdeel/20260707/cyberbeveiligingswet",
+									"retrieved_on": "2026-10-09"
+								},
+								"external_id": "674896f4-5e50-4948-bf95-a9182108a25e",
+								"first_signed": {
+									"date": "2025-06-02",
+									"member": "88f29701_8fe7_4a10_8b0f_0973fdde12bb",
+									"capacity": "bewindspersoon",
+									"function": "minister van Justitie en Veiligheid",
+									"paper": "documents/3befbdfa_30de_48d9_b0da_b0572504b962"
+								},
+								"initiative": false,
+								"kind": "Wetgeving",
+								"kind_basis": "case",
+								"label": "36764",
+								"last_activity": "2026-09-10",
+								"ministry": "jenv",
+								"number": "36764",
+								"opened_on": "2025-06-02",
+								"opened_on_basis": "first_paper",
+								"order": "00036764.0.0000.",
+								"outcome": "aangenomen",
+								"phases": [
+									{
+										"name": "Voorstel van wet",
+										"done": true,
+										"date": "2025-06-02"
+									},
+									{
+										"name": "Memorie van toelichting",
+										"done": true,
+										"date": "2025-06-02"
+									},
+									{
+										"name": "Advies Raad van State",
+										"done": true,
+										"date": "2025-06-02"
+									},
+									{
+										"name": "Verslag",
+										"done": true,
+										"date": "2025-09-08"
+									}
+								],
+								"same_number_count": 0,
+								"submitted_on_tk": "2025-06-02",
+								"suffix": "",
+								"title": "Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet) ",
+								"title_source": "dossier",
+								"tk_decision": {
+									"kind": "Stemmen - aangenomen",
+									"text": "Aangenomen.",
+									"date": "2026-04-15"
+								},
+								"short_title": "Cyberbeveiligingswet"
+							},
+							"edge_id": "996118ab68ea37f852bd0e3c421b7c36cc3a2438",
+							"relation": "PART_OF",
+							"direction": "outbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/dossiers/36764"
+						}
+					]
+				}
+			]
+		},
+		"title": "Motie 36764-22 Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen",
+		"description": "Motie 36764-22 Van den Berg over zo min mogelijk dubbeling voor entiteiten die zowel onder de Cyberbeveiligingswet als de Wwke vallen",
+		"path": "/kamerstukken/36764/22",
+		"lid_counts_pending": false
+	}
+}

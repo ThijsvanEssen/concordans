@@ -2,7 +2,7 @@
 // member is one vote, listed by choice and then by name.
 import { capitalize, count, joinAnd } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
-import { UNNAMED } from '$lib/verbonden/rows';
+import { UNNAMED } from '$lib/bron/describe';
 import { choiceRank } from '$lib/components/parliamentary/stemming';
 
 export type Voter = {

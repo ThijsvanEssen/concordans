@@ -13,7 +13,7 @@
 	import type { Schema } from '$lib/api/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronLabel } from '$lib/vocabulary';
-	import { activityLine } from '$lib/verbonden/rows';
+	import { activityLine } from '$lib/verbonden/lines';
 	import { getActivity, getActivityRecords } from '$lib/api/records';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';

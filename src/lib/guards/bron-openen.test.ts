@@ -25,8 +25,8 @@ describe('opening a bron', () => {
 		);
 		expect(rows.length).toBeGreaterThan(0);
 		expect(rows.filter(({ text }) => !text.includes('terPlekke')).map((s) => s.path)).toEqual([]);
-		const verbonden = rows.find(({ path }) => path.endsWith('verbonden/Verbonden.svelte'))!;
-		expect(verbonden.text).toMatch(/opentTerPlekke\(row\) && terPlekke\(/);
+		const verbonden = rows.find(({ path }) => path.endsWith('verbonden/VerbondenRow.svelte'))!;
+		expect(verbonden.text).toMatch(/opentTerPlekke && terPlekke\(/);
 	});
 
 	it('opens a row of a list on the bron’s content, with Bewaar on the row (Thijs, 10 Oct)', () => {

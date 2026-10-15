@@ -6,7 +6,8 @@ import { paragraphAnchor } from '$lib/text/anchor';
 import { paragraphCite } from '$lib/text/judgment-cite';
 import { isDerived, lidOfMatch } from './edge-meta';
 import { isInternational } from './filter';
-import { bundleMentions, describe, type Row } from './rows';
+import { bundleMentions, type Row } from './rows';
+import { describeBron } from '$lib/bron/describe';
 
 /** The passages of the judgments that cite an article, a page: as many as the API gives. */
 export const CITED_BY_PAGE = 200;
@@ -24,7 +25,7 @@ export function rowsOfCitedBy(items: Schema<'ArticleCitedByItem'>[]): Row[] {
 		if (of.has(at ?? '')) continue;
 		of.set(at ?? '', {
 			ref: { collection: 'judgments', key: j.key },
-			...describe('judgments', j.key, j.display_name, { ...j }),
+			...describeBron('judgments', j.key, j.display_name, { ...j }),
 			kind: 'uitspraken',
 			at,
 			lid: item.leden?.[0] ?? lidOfMatch(item.qualifier ?? item.text),

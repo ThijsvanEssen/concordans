@@ -7,7 +7,8 @@ import type { GraphEdge, GraphNode } from '$lib/graph/types';
 import { isAmendingRelation, statusLabel, type Relation } from '$lib/vocabulary';
 import { HERKOMST_REDEN, kleineLetter, relationLabel, soortVan } from './hoe';
 import { confidenceWord } from './filter';
-import { describe, type Row } from './rows';
+import { type Row } from './rows';
+import { describeBron } from '$lib/bron/describe';
 import { edgeKey, isDerived, plaatsVanEdge, readEdge } from './edge-meta';
 import type { Bereik } from '$lib/text/voetnoten';
 import { getNodeGraph, neighborsOf, NODE_BUCKET, type Neighbor } from '$lib/api/nodes';
@@ -81,7 +82,7 @@ export function betrouwbaarheid(
 }
 
 const endOfNode = (node: GraphNode): End => {
-	const d = describe(
+	const d = describeBron(
 		node.collection,
 		node.key,
 		node.raw?.display_name ?? node.label,
