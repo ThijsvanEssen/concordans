@@ -32,16 +32,33 @@ export const kamerstukNummer = (number: string, kamer?: 'EK' | 'TK' | null) =>
 	`Kamerstuk${kamer === 'EK' ? ' I' : ''} ${officialNumber(number)}`;
 
 /**
- * A dossier from the props of a node or a row: its number (`label`, else `number`), its title
- * without the API's "Kamerstukdossier 36764: " in front, and its short title where the props
- * carry one.
+ * A dossier's number as the Kamer writes it, with its suffix: "36600-VII", the one way to read
+ * it from props. The source gives it as `label`; else `number` and `suffix` apart ("36600",
+ * "VII"); `number` alone dropped the suffix (UX-toets 10 Oct: "Over 36600 Vaststelling van de
+ * begrotingsstaten …" for 36600-VII). `fallback` where the props have none.
+ */
+export function dossierNummer(
+	props: Record<string, unknown> | null | undefined,
+	fallback: string | null = null
+): string | null {
+	const label = textOf(props?.label);
+	if (label) return label;
+	const nummer = textOf(props?.number);
+	const suffix = textOf(props?.suffix);
+	return nummer ? (suffix ? `${nummer}-${suffix}` : nummer) : fallback;
+}
+
+/**
+ * A dossier from the props of a node or a row: its number (dossierNummer), its title without
+ * the API's "Kamerstukdossier 36764: " in front, and its short title where the props carry
+ * one.
  */
 export function dossierUitProps(
 	props: Record<string, unknown> | null | undefined,
 	fallback = ''
 ): DossierNaamBron {
 	const p = props ?? {};
-	const number = textOf(p.label) ?? textOf(p.number) ?? fallback;
+	const number = dossierNummer(p, fallback) ?? fallback;
 	const title = (textOf(p.title) ?? textOf(p.display_name))?.replace(
 		/^Kamerstukdossier\s+[^:]+:\s*/,
 		''

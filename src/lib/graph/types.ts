@@ -245,9 +245,9 @@ export function buildNodeLabel(node: BaseNode, drawClass: DrawClass): string {
 	switch (drawClass) {
 		case 'dossier': {
 			// By the short title its props carry (API 0.79.54), else its title, cut.
-			const number = textOf(props.label) ?? textOf(props.number) ?? mens();
-			const naam = dossierOwnName(dossierUitProps(props, number));
-			return naam ? `${officialNumber(number)}, ${naam}` : officialNumber(number);
+			const d = dossierUitProps(props, mens());
+			const naam = dossierOwnName(d);
+			return naam ? `${officialNumber(d.number)}, ${naam}` : officialNumber(d.number);
 		}
 		case 'committee':
 		case 'faction':

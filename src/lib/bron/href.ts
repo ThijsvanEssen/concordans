@@ -5,6 +5,7 @@
 import { page } from '$app/state';
 import { parseNodeId, type Collection, type Mode } from '$lib/vocabulary';
 import { isExplorePath, exploreHref, exploreUrl } from './leesbaar';
+import { dossierNummer } from './dossier-naam';
 import type { SharedParam } from '$lib/url/filters';
 
 /** Bronnen with a text long enough to read at full width; the rest reads beside the network. */
@@ -46,14 +47,14 @@ export type BronRef =
 	| { collection: Exclude<Collection, 'dossiers'>; key: string }
 	| { collection: 'dossiers'; key: string; number: string };
 
-/** The ref of a node the API returned; a dossier node has its label in `props.label`. */
+/** The ref of a node the API returned; a dossier with its number (dossierNummer). */
 export const refOf = (
 	collection: Collection,
 	key: string,
 	props?: Record<string, unknown> | null
 ): BronRef =>
 	collection === 'dossiers'
-		? { collection, key, number: typeof props?.label === 'string' ? props.label : '' }
+		? { collection, key, number: dossierNummer(props) ?? '' }
 		: { collection, key };
 
 type BronHrefOptions = {

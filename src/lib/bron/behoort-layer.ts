@@ -4,7 +4,7 @@ import { textOf } from '$lib/text/words';
 import { naamVan } from '$lib/bron/menselijk';
 import type { Neighbor } from '$lib/api/nodes';
 import { refOf, type BronRef } from '$lib/bron/href';
-import { dossierLabel, dossierUitProps } from './dossier-naam';
+import { dossierLabel, dossierNummer, dossierUitProps } from './dossier-naam';
 import { describeBron } from '$lib/bron/describe';
 import type { Collection, Relation } from '$lib/vocabulary';
 
@@ -78,19 +78,6 @@ export function uitkomstVan(outcome: unknown, procedure?: unknown): string | nul
 	if (!o) return null;
 	const p = textOf(procedure)?.toLowerCase();
 	return p ? `${p} ${o}` : o;
-}
-
-/**
- * A dossier's number as the Kamer writes it, with its suffix: "36600-VII". The source gives
- * it as `label`; else `number` and `suffix` apart ("36600", "VII"); `number` alone dropped the
- * suffix (UX-toets 10 Oct: "Over 36600 Vaststelling van de begrotingsstaten …" for 36600-VII).
- */
-export function dossierNummer(props: Record<string, unknown>): string | null {
-	const label = textOf(props.label);
-	if (label) return label;
-	const nummer = textOf(props.number);
-	const suffix = textOf(props.suffix);
-	return nummer ? (suffix ? `${nummer}-${suffix}` : nummer) : null;
 }
 
 /** A neighbour as a layer: its kind in the source's word, its name, its ref. */

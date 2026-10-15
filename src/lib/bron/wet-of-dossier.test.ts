@@ -186,7 +186,8 @@ describe('a dossier number in its official notation', () => {
 		const joins = /\}-\$\{[^}]*[sS]uffix\b/;
 		const forAddress = [
 			join('lib', 'bron', 'leesbaar.ts'),
-			join('lib', 'bron', 'behoort-layer.ts')
+			// dossierNummer: the number as the data and the URLs join it.
+			join('lib', 'bron', 'dossier-naam.ts')
 		];
 		const offenders = files(ROOT)
 			.filter((p) => !p.includes(join('lib', 'api', 'generated')))

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { dossierNummer, uitkomstVan } from './behoort-layer';
+import { uitkomstVan } from './behoort-layer';
+import { dossierNummer } from './dossier-naam';
 
 describe('uitkomstVan', () => {
 	it('names an instance of the procesgang by its remedy and outcome', () => {

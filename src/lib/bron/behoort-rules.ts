@@ -19,8 +19,8 @@ import { lawShortName } from '$lib/text/bw';
 import { fractiePeriodes } from './fractie-periode';
 import { kernVanZaak, stukkenInDezelfdeZaak } from './zaak';
 import type { Collection } from '$lib/vocabulary';
+import { dossierNummer } from './dossier-naam';
 import {
-	dossierNummer,
 	inbound,
 	laagVan,
 	outbound,
