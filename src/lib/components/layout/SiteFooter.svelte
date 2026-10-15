@@ -22,7 +22,10 @@
 			<a href="/" class="foot-logo no-underline" aria-label="Concordans home">
 				<Wordmark size={17} />
 			</a>
-			<p>Werkomgeving voor juridisch onderzoek, op officiële bronnen.</p>
+			<p>
+				Werkomgeving voor juridisch onderzoek, op officiële bronnen. Gratis, zonder account en
+				zonder cookies.
+			</p>
 		</div>
 
 		<div class="foot-col">

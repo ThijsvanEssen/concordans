@@ -20,7 +20,6 @@
 	import { HOME_SUMMARY } from '$lib/api/first-pages';
 	import type { TijdGroep } from '$lib/components/tijdlijn/tijdlijn';
 	import { page } from '$app/state';
-	import { replaceState } from '$app/navigation';
 	import Entrances from '$lib/components/home/Entrances.svelte';
 	import CoverageLine from '$lib/components/home/CoverageLine.svelte';
 	import HOME from '$lib/seo/home.json';
@@ -70,14 +69,8 @@
 	/** The lines of Actueel shown; the rest is in Actueel. */
 	const LINES_SHOWN = 6;
 
-	/** The query in the field: from ?q= (a shared search, the SearchAction of the server's
-	 *  page) or an example under it, which fills the field in place and the address with it. */
-	let query = $state(page.url.searchParams.get('q') ?? '');
-	function tryExample(e: MouseEvent, example: string) {
-		e.preventDefault();
-		query = example;
-		replaceState(`/?q=${encodeURIComponent(example)}`, page.state);
-	}
+	/** The query in the field from ?q=: a shared search, the SearchAction of the server's page. */
+	const query = page.url.searchParams.get('q') ?? '';
 	/** The days the summary spans: enough for the lines on a quiet week (first-pages.json). */
 	const SUMMARY_DAYS = HOME_SUMMARY.days;
 	/**
@@ -182,22 +175,14 @@
 	<link rel="alternate" type="application/atom+xml" title="Actueel" href={atomHref({})} />
 </svelte:head>
 
-<div class="home blad blad__indeling">
+<div class="home blad">
 	<header class="blad__kop intro">
 		<h1 class="blad__titel">Wetten, uitspraken en Kamerstukken in samenhang</h1>
 		<p class="who">
-			Voor juristen, studenten en beleidsjuristen. Gratis, zonder account en zonder cookies.
+			Het geldende recht met zijn uitleg in de rechtspraak en zijn totstandkoming in het parlement,
+			uit de officiële bronnen.
 		</p>
 	</header>
-	<nav class="side laws" aria-labelledby="laws-heading">
-		<h2 id="laws-heading">Wetten</h2>
-		<ul>
-			{#each HOME.laws as law (law.href)}
-				<li><a href={law.href}>{law.label}</a></li>
-			{/each}
-		</ul>
-		<a class="topics" href="/onderwerpen">Onderwerpen</a>
-	</nav>
 	<div class="main">
 		<div class="search">
 			<!-- Where to search: one choice of five, a Keuze as everywhere (Thijs, 10 Oct); Alle
@@ -231,17 +216,11 @@
 						: 'Zoek een artikel, uitspraak of motie'}
 				/>
 			{/key}
-			<p class="examples">
-				<span class="examples-label">Bijvoorbeeld</span>
-				{#each HOME.examples as example (example)}
-					<a
-						class="example"
-						href="/?q={encodeURIComponent(example)}"
-						onclick={(e) => tryExample(e, example)}>{example}</a
-					>
-				{/each}
-			</p>
 		</div>
+		{#if lawNetwork}<Wetsnetwerk schets={lawNetwork} />{:else if networkLoading}<div
+				class="wetsnetwerk-plek"
+				aria-hidden="true"
+			></div>{/if}
 		<Entrances />
 		<section class="actueel" aria-labelledby="actueel-heading">
 			<header>
@@ -261,18 +240,24 @@
 				<p class="fout">Actueel kon niet worden geladen.</p>
 			{/if}
 			<Tijdlijn groepen={groups} datums={false} />
-			<a class="all" href="/actueel">Alles in Actueel →</a>
+			<p class="all"><a href="/actueel">Alles in Actueel →</a></p>
 		</section>
-		{#if lawNetwork}<Wetsnetwerk schets={lawNetwork} />{:else if networkLoading}<div
-				class="wetsnetwerk-plek"
-				aria-hidden="true"
-			></div>{/if}
 		<CoverageLine />
+		<nav class="laws" aria-label="Wetten en onderwerpen">
+			<p>
+				<span class="laws-label">Wetten</span>
+				{#each HOME.laws as law, n (law.href)}<a href={law.href}>{law.label}</a>{n <
+					HOME.laws.length - 1
+						? ', '
+						: ''}{/each}
+			</p>
+			<p><a class="laws-label" href="/onderwerpen">Onderwerpen</a></p>
+		</nav>
 	</div>
 </div>
 
 <style>
-	/* The band's height while it is asked (1440: 366 px; a phone: 274 px), its frame quiet. */
+	/* The band's height while it is asked (1440: 366 px; a phone: 264 px), its frame quiet. */
 	.wetsnetwerk-plek {
 		min-height: 366px;
 		border-radius: var(--r-1);
@@ -280,11 +265,10 @@
 	}
 	@media (max-width: 640px) {
 		.wetsnetwerk-plek {
-			min-height: 274px;
+			min-height: 264px;
 		}
 	}
-	/* The frame and grid of Bladeren (lib/styles/frame.css): the heading over both columns,
-	   the laws in the column of the facets, on a phone under the rest. */
+	/* The frame of Bladeren (lib/styles/frame.css), one column the full width. */
 	.who {
 		flex-basis: 100%;
 		margin: calc(-1 * var(--s-2)) 0 0;
@@ -292,73 +276,31 @@
 		line-height: var(--lh-snug);
 		color: var(--ink-2);
 	}
+	/* The laws and topics at the foot of the page: links to crawl, quiet. */
 	.laws {
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-2);
-	}
-	.laws h2 {
-		margin: 0;
-		font-size: var(--t-meta);
-		font-weight: 600;
-		color: var(--ink-3);
-	}
-	.laws ul {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-1);
-		margin: 0;
-		padding: 0;
-		list-style: none;
 		font-size: var(--t-meta);
 		line-height: var(--lh-snug);
+		color: var(--ink-3);
+	}
+	.laws p {
+		margin: 0;
 	}
 	.laws a {
-		color: var(--ink);
+		color: var(--ink-2);
 		text-decoration: none;
 	}
 	.laws a:hover {
-		text-decoration: underline;
-		text-underline-offset: 3px;
-	}
-	.laws .topics {
-		margin-top: var(--s-2);
-		font-size: var(--t-meta);
-		font-weight: 600;
-	}
-	@media (max-width: 768px) {
-		.laws {
-			order: 2;
-		}
-		.laws ul {
-			display: block;
-			columns: 2;
-			column-gap: var(--s-4);
-		}
-		.laws li {
-			break-inside: avoid;
-			padding: var(--s-1) 0;
-		}
-	}
-	.examples {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		gap: var(--s-2) var(--s-3);
-		margin: 0;
-		font-size: var(--t-meta);
-	}
-	.examples-label {
-		color: var(--ink-3);
-	}
-	.example {
 		color: var(--ink);
 		text-decoration: underline;
-		text-decoration-color: var(--rule);
 		text-underline-offset: 3px;
 	}
-	.example:hover {
-		text-decoration-color: var(--ink);
+	.laws-label {
+		margin-right: var(--s-2);
+		font-weight: 600;
+		color: var(--ink-3);
 	}
 	.search {
 		display: flex;
@@ -396,30 +338,19 @@
 		color: var(--ink);
 		text-decoration: none;
 	}
-	@media (max-width: 768px) {
-		.home {
-			row-gap: var(--s-6);
-		}
-	}
-
+	/* On a line of its own under the timeline, at the right, as Open in Samenhang. */
 	.all {
-		align-self: flex-start;
-		margin-top: var(--s-5);
+		display: flex;
+		justify-content: flex-end;
+		margin: var(--s-5) 0 0;
 		font-size: var(--t-meta);
+	}
+	.all a {
 		font-weight: 600;
 		color: var(--ink);
-		text-decoration: none;
-		border-bottom: 1px solid var(--ink);
 	}
-	.all:hover {
-		color: var(--ink);
-		border-color: var(--ink);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
-	}
-
 	@media (max-width: 640px) {
-		.all {
+		.all a {
 			padding: var(--s-2) 0;
 		}
 	}
