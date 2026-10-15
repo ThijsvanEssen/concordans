@@ -1,7 +1,9 @@
 // The maps as the page holds them, in this browser: each with a name, one active, where a box
-// keeps what is chosen; the panel open or not; a map someone shared (?map=) until it is kept
+// keeps what is chosen; the panel open or not; a map someone shared (a link, share.ts) until it is kept
 // or put aside.
 import {
+	freeName,
+	readItem,
 	withItems,
 	itemKey,
 	verschuif,
@@ -34,18 +36,10 @@ const alleenTekst = (v: unknown): GroepNotities =>
 			)
 		: {};
 
-const isItem = (i: unknown): i is MapItem =>
-	!!i &&
-	typeof (i as MapItem).id === 'string' &&
-	typeof (i as MapItem).kort === 'string' &&
-	typeof (i as MapItem).groep === 'string' &&
-	typeof (i as MapItem).groupKey === 'string' &&
-	!!(i as MapItem).groupKey;
-
 /** The items kept in this browser that are whole; the rest left out, and said. */
 function heleItems(v: unknown): MapItem[] {
 	if (!Array.isArray(v)) return [];
-	const items = v.filter(isItem);
+	const items = v.flatMap((i) => readItem(i) ?? []);
 	const skipped = v.length - items.length;
 	if (skipped > 0)
 		console.warn(
@@ -165,12 +159,13 @@ class Kaarten {
 		this.#stand = { ...this.#stand, actief: id };
 		this.#bewaar();
 	}
-	/** A new map, active from now on; its name the next free `Map 2`, `Map 3` where none given. */
+	/** A new map, active from now on; its name the next free `Bundel 2`, `Bundel 3` where none given. */
 	nieuw(naam?: string, items: MapItem[] = []): Map {
 		const namen = new Set(this.#stand.mappen.map((m) => m.naam));
 		let n = this.#stand.mappen.length + 1;
-		while (!naam && namen.has(`Map ${n}`)) n++;
-		const m = { ...leeg(naam?.trim() || `Map ${n}`), items };
+		while (!naam && namen.has(`Bundel ${n}`)) n++;
+		// A name a bundel has already is numbered on: `Gemarkeerd 2` beside `Gemarkeerd`.
+		const m = { ...leeg(naam?.trim() ? freeName(naam.trim(), namen) : `Bundel ${n}`), items };
 		this.#stand = { mappen: [...this.#stand.mappen, m], actief: m.id };
 		this.#bewaar();
 		return m;
@@ -201,7 +196,7 @@ class Kaarten {
 		if (!this.heeft(i)) this.wissel(i);
 	}
 
-	// ── A shared map (a link, ?map=) ─────────────────────────────────────────
+	// ── A shared map (a link) ─────────────────────────────────────────────
 	/** Into the active map, without doubles; its notes where the map has none. */
 	voegToe(g: Gedeeld) {
 		this.#werk((m) => ({

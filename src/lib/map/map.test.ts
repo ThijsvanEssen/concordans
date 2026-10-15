@@ -4,25 +4,24 @@ import {
 	bewaarItem,
 	citaten,
 	csv,
+	externalItem,
+	freeName,
+	webAddress,
+	isExternal,
+	itemAddress,
+	readItem,
 	groepen,
 	itemHref,
-	mapParams,
-	itemsParam,
 	netwerkHref,
 	netwerkIds,
 	withItems,
 	itemKey,
-	readParam,
-	sharedMapOf,
 	verschuif,
 	type MapItem
 } from './map';
 import { itemVanRij } from './rij';
 import { remember } from '$lib/bron/address';
 import type { Row } from '$lib/verbonden/rows';
-
-/** The items a `map` param reads as. */
-const uitParam = (v: string | null): MapItem[] => readParam(v).items;
 
 const lid2: MapItem = {
 	id: 'articles/bwbr0005289_162',
@@ -73,16 +72,6 @@ describe('the map', () => {
 		]);
 	});
 
-	it('goes into a link and comes back the same, whatever its words hold', () => {
-		const terug = uitParam(itemsParam([lid2, ro]));
-		expect(terug).toEqual([
-			{ id: lid2.id, at: lid2.at, kort: lid2.kort, groep: lid2.groep, groupKey: lid2.groupKey },
-			{ id: ro.id, at: ro.at, kort: ro.kort, groep: ro.groep, groupKey: ro.groupKey }
-		]);
-		expect(uitParam('nonsense~~')).toEqual([]);
-		expect(uitParam(null)).toEqual([]);
-	});
-
 	it('adds a shared map to its own without doubles', () => {
 		expect(withItems([lid2], [lid2, ro]).map(itemKey)).toEqual([itemKey(lid2), itemKey(ro)]);
 	});
@@ -95,7 +84,9 @@ describe('the map', () => {
 
 	it('writes a CSV as Excel reads it', () => {
 		const t = csv([ro], (i) => `/x#${i.at}`);
-		expect(t.startsWith('﻿volgorde;groep;citaat;vindplaats;aantekening;adres\r\n')).toBe(true);
+		expect(t.startsWith('﻿volgorde;groep;soort;citaat;vindplaats;aantekening;adres\r\n')).toBe(
+			true
+		);
 		expect(t).toContain('"HR 20 december 2019 (Urgenda); a~b"');
 	});
 
@@ -110,9 +101,9 @@ describe('the map', () => {
 		const regels = (t: string) => t.slice(1).split('\r\n').slice(1);
 		const adres = () => '';
 		expect(regels(csv([lid2, ro, lid3a], adres))).toEqual([
-			'1;Burgerlijk Wetboek Boek 6;artikel 6:162 lid 2 Burgerlijk Wetboek;lid 2;;',
-			'2;Burgerlijk Wetboek Boek 6;art. 6:162 lid 3 BW;lid 3, onder a;;',
-			'3;"HR 20 december 2019 (Urgenda); a~b";HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1;r.o. 5.7.1;;'
+			'1;Burgerlijk Wetboek Boek 6;Artikel;artikel 6:162 lid 2 Burgerlijk Wetboek;lid 2;;',
+			'2;Burgerlijk Wetboek Boek 6;Artikel;art. 6:162 lid 3 BW;lid 3, onder a;;',
+			'3;"HR 20 december 2019 (Urgenda); a~b";Uitspraak;HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1;r.o. 5.7.1;;'
 		]);
 		// In the reader's own order: that order, each under its group's name.
 		expect(regels(csv([lid2, ro, lid3a], adres, 'eigen')).map((r) => r.split(';')[1])).toEqual([
@@ -122,13 +113,12 @@ describe('the map', () => {
 		]);
 		// A place the reader cannot print stays out.
 		expect(regels(csv([{ ...lid2, at: 'p-54bd15c1' }], adres))[0]).toBe(
-			'1;Burgerlijk Wetboek Boek 6;artikel 6:162 lid 2 Burgerlijk Wetboek;;;'
+			'1;Burgerlijk Wetboek Boek 6;Artikel;artikel 6:162 lid 2 Burgerlijk Wetboek;;;'
 		);
 	});
 
-	it('carries a note in the link, the citations and the CSV', () => {
+	it('carries a note in the citations and the CSV', () => {
 		const met = { ...lid2, notitie: 'Drie categorieën; ~ en ; erin' };
-		expect(uitParam(itemsParam([met]))[0].notitie).toBe(met.notitie);
 		expect(citaten([met])).toContain('\n   Drie categorieën; ~ en ; erin');
 		expect(csv([met], () => '')).toContain('Drie categorieën');
 	});
@@ -155,36 +145,6 @@ describe('the map', () => {
 		expect(verschuif(lijst, itemKey(lid2), -1, 'eigen')).toEqual(lijst);
 	});
 
-	it('carries the note of the map in its address, and reads one without it as before', () => {
-		const m = {
-			naam: 'Cyberbeveiligingswet',
-			items: [lid2, ro],
-			volgorde: 'eigen' as const,
-			notitie: 'Zorgplicht en training; ~ en ; erin\nTweede regel'
-		};
-		const terug = sharedMapOf(new URLSearchParams(mapParams(m).toString()));
-		expect(terug).toEqual({
-			naam: m.naam,
-			items: uitParam(itemsParam(m.items)),
-			volgorde: 'eigen',
-			notitie: m.notitie,
-			groepNotities: {},
-			skipped: 0
-		});
-		// A link of before: no note, no order.
-		const oud = new URLSearchParams({ map: itemsParam([lid2]), mapnaam: 'Oud' });
-		expect(sharedMapOf(oud)).toEqual({
-			naam: 'Oud',
-			items: uitParam(itemsParam([lid2])),
-			volgorde: 'groep',
-			notitie: null,
-			groepNotities: {},
-			skipped: 0
-		});
-		expect(mapParams({ ...m, volgorde: 'groep', notitie: '  ' }).has('mapnotitie')).toBe(false);
-		expect(sharedMapOf(new URLSearchParams('mapnotitie=x'))).toBeNull();
-	});
-
 	it('puts the note of the map above its citations', () => {
 		expect(citaten([lid2], 'eigen', 'Waarom deze map')).toBe(
 			'Waarom deze map\n\n1. artikel 6:162 lid 2 Burgerlijk Wetboek'
@@ -204,23 +164,6 @@ describe('the map', () => {
 		expect(n.tussen).toBe(false);
 		expect(n.uit.size).toBe(0);
 		expect(netwerkHref([])).toBeNull();
-	});
-
-	it('carries the notes per group in the address, only of groups the map holds', () => {
-		const groepNotities = {
-			'wet:bwbr0005289': 'De onrechtmatige daad; ~ en ; erin',
-			[ro.id]: 'Urgenda',
-			'wet:bwbr0000000': 'weg'
-		};
-		const p = mapParams({ naam: 'M', items: [lid2, ro], volgorde: 'groep', groepNotities });
-		const terug = sharedMapOf(new URLSearchParams(p.toString()))!;
-		expect(terug.groepNotities).toEqual({
-			'wet:bwbr0005289': 'De onrechtmatige daad; ~ en ; erin',
-			[ro.id]: 'Urgenda'
-		});
-		expect(mapParams({ naam: 'M', items: [lid2], volgorde: 'groep' }).has('mapgroepen')).toBe(
-			false
-		);
 	});
 
 	it("puts a group's note under its name in the citations", () => {
@@ -328,11 +271,6 @@ describe('keeping a bron', () => {
 		expect(bewaarItem('committees/x', { kort: 'x' }).groupKey).toBe('groep:Commissie');
 	});
 
-	it('carries the group key in the address', () => {
-		const i = bewaarItem(stuk, { kort: 'MvT' }, { dossier: '36889' });
-		expect(uitParam(itemsParam([i]))).toEqual([i]);
-	});
-
 	it('keeps the readable address of a bron, so its link needs no redirect (#57)', () => {
 		remember('/kamerstukken/34372/14', 'documents/093662ee');
 		const i = bewaarItem('documents/093662ee', {
@@ -341,32 +279,12 @@ describe('keeping a bron', () => {
 		});
 		expect(i.pad).toBe('/kamerstukken/34372/14');
 		expect(itemHref(i)).toBe('/kamerstukken/34372/14#s-3');
-		expect(uitParam(itemsParam([i]))).toEqual([i]);
 		// An EU article seen in a list: its own address, not /explore?focus=.
 		remember('/wetten/32022L2555/artikel/21', 'articles/32022l2555_21');
 		const eu = bewaarItem('articles/32022l2555_21', { kort: 'art. 21', at: 'lid-2' });
 		expect(itemHref(eu)).toBe('/wetten/32022L2555/artikel/21#lid-2');
-		// A link without the address reads as before, and opens through the network.
-		expect(uitParam(itemsParam([lid2]))[0].pad).toBeUndefined();
+		// Without the address it opens through the network.
 		expect(itemHref(lid2)).not.toContain('#lid-2#');
-	});
-
-	it('leaves out an item of an old or broken link, and counts it for the page (#53)', () => {
-		// A link of before 14 Oct: five fields, no group key.
-		const oud = `${stuk}~~MvT~Kamerstukken 36889~een notitie`;
-		expect(uitParam(oud)).toEqual([]);
-		expect(sharedMapOf(new URLSearchParams({ map: `${oud};${oud}`, mapnaam: 'Oud' }))).toEqual({
-			naam: 'Oud',
-			items: [],
-			volgorde: 'groep',
-			notitie: null,
-			groepNotities: {},
-			skipped: 2
-		});
-		const heel = itemsParam([lid2]);
-		const gemengd = sharedMapOf(new URLSearchParams({ map: `${heel};${stuk}~~MvT` }))!;
-		expect(gemengd.items).toEqual([{ ...lid2, voluit: undefined }]);
-		expect(gemengd.skipped).toBe(1);
 	});
 
 	it('moves an item among the items of its group by key, whatever its name', () => {
@@ -379,5 +297,90 @@ describe('keeping a bron', () => {
 		const c = bewaarItem('members/c', { kort: 'c' });
 		const uit = verschuif([a, c, b], itemKey(b), -1, 'groep');
 		expect(uit.map((i) => i.kort)).toEqual(['b', 'c', 'a']);
+	});
+});
+
+describe('a source outside Concordans', () => {
+	const boek = externalItem({
+		citation: '  Asser/Heerma van Voss & Van Slooten 7-V 2022/321 ',
+		kind: 'book',
+		url: 'https://example.org/asser'
+	});
+
+	it('is kept as the reader cites it, under Andere bronnen, its address its own', () => {
+		expect(boek.id).toMatch(/^external:[a-z0-9]+$/);
+		expect(isExternal(boek)).toBe(true);
+		expect(boek).toMatchObject({
+			at: '',
+			kort: 'Asser/Heerma van Voss & Van Slooten 7-V 2022/321',
+			groep: 'Andere bronnen',
+			groupKey: 'groep:Andere bronnen',
+			kind: 'book',
+			url: 'https://example.org/asser'
+		});
+		expect(boek.pad).toBeUndefined();
+		expect(isExternal(lid2)).toBe(false);
+	});
+
+	it('goes into a group of the map where the reader chooses one', () => {
+		const noot = externalItem({
+			citation: 'P.T. de Vries, noot bij HR 11 november 2005, JAR 2005/287',
+			kind: 'annotation',
+			group: { name: ro.groep, key: ro.groupKey }
+		});
+		expect(groepen([lid2, ro, noot]).map((g) => g.items.length)).toEqual([1, 2]);
+		expect(noot.url).toBeUndefined();
+	});
+
+	it('takes only a web address', () => {
+		expect(externalItem({ citation: 'x', kind: 'other', url: 'javascript:alert(1)' }).url).toBe(
+			undefined
+		);
+		expect(externalItem({ citation: 'x', kind: 'other', url: 'geen adres' }).url).toBeUndefined();
+	});
+
+	it('is cited, exported, moved and read back as an item of Concordans', () => {
+		expect(citaten([lid2, boek])).toContain('Andere bronnen\n2. Asser/Heerma van Voss');
+		const regels = csv([lid2, boek], (i) => itemAddress(i, 'https://concordans.nl'));
+		expect(regels).toContain('https://example.org/asser');
+		expect(regels).toContain('https://concordans.nl/');
+		expect(verschuif([lid2, boek], itemKey(boek), -1, 'eigen').map(itemKey)).toEqual([
+			itemKey(boek),
+			itemKey(lid2)
+		]);
+		expect(readItem(JSON.parse(JSON.stringify(boek)))).toEqual(boek);
+		expect(readItem({ ...boek, kind: 'onzin', url: 'ftp://x' })).toEqual({
+			...boek,
+			kind: 'other',
+			url: undefined
+		});
+		// Not a bron of the network.
+		expect(netwerkIds([lid2, boek])).toEqual([lid2.id]);
+	});
+});
+
+describe('the follow-ups of the UX test of 16 Oct', () => {
+	it('numbers a name a bundel has already (#3)', () => {
+		expect(freeName('Gemarkeerd', new Set(['Thuiswerk']))).toBe('Gemarkeerd');
+		expect(freeName('Gemarkeerd', new Set(['Gemarkeerd']))).toBe('Gemarkeerd 2');
+		expect(freeName('Gemarkeerd', new Set(['Gemarkeerd', 'Gemarkeerd 2']))).toBe('Gemarkeerd 3');
+	});
+
+	it('puts https:// before an address without its scheme (#5)', () => {
+		expect(webAddress('voorbeeld.nl/boek')).toBe('https://voorbeeld.nl/boek');
+		expect(webAddress('www.navigator.nl')).toBe('https://www.navigator.nl/');
+		expect(webAddress('http://voorbeeld.nl/')).toBe('http://voorbeeld.nl/');
+		expect(webAddress('geen adres')).toBeNull();
+		expect(webAddress('javascript:alert(1)')).toBeNull();
+	});
+
+	it('writes the kind of each item in the CSV (#7)', () => {
+		const boek = externalItem({ citation: 'Asser 7-V', kind: 'journal' });
+		const [kop, eerste, tweede] = csv([lid2, boek], () => '')
+			.slice(1)
+			.split('\r\n');
+		expect(kop.split(';')).toContain('soort');
+		expect(eerste.split(';')).toContain('Artikel');
+		expect(tweede.split(';')).toContain('Tijdschrift');
 	});
 });

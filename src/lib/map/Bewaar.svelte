@@ -40,7 +40,7 @@
 	<TekstMenu
 		klein
 		rechts
-		label="Bewaar {item.kort} in map"
+		label="Bewaar {item.kort} in bundel"
 		tekst=""
 		opties={kaart.mappen.map((m) => ({ waarde: m.id, label: m.naam }))}
 		waarde={kaart.actief.id}
@@ -55,7 +55,7 @@
 					dicht();
 					// A new map with the item, active from now on; named on Gemarkeerd.
 					kaart.nieuw(undefined, [item]);
-				}}>Nieuwe map</button
+				}}>Nieuwe bundel</button
 			>
 		{/snippet}
 	</TekstMenu>
