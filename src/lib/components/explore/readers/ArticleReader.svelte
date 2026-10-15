@@ -22,7 +22,7 @@
 	import type { Schema } from '$lib/api/types';
 	import { articleOf, type GraphNode } from '$lib/graph/types';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
-	import VersionCompare from '$lib/components/articles/VersionCompare.svelte';
+	import { Lazy } from '$lib/util/lazy.svelte';
 	import { page } from '$app/state';
 	import { anchorOfHash, landOn } from '$lib/bron/landing';
 	import { refId } from '$lib/bron/href';
@@ -391,6 +391,14 @@
 	// so a comparison can be cited and shared.
 	const compareParam = $derived(page.url.searchParams.get('versies'));
 	const comparing = $derived(compareParam !== null && wordings.length > 1);
+	// The comparison of two versions is a chunk of its own, asked at the first Vergelijken.
+	const versionCompare = new Lazy(
+		() => import('$lib/components/articles/VersionCompare.svelte'),
+		'Vergelijken'
+	);
+	$effect(() => {
+		if (comparing) versionCompare.load();
+	});
 	const layout = $derived(page.url.searchParams.get('weergave') === 'naast' ? 'naast' : 'een');
 	const compareHref = (from: number, to: number) =>
 		withParams(page.url, { versies: `${wordings[from].from ?? ''}..${wordings[to].from ?? ''}` });
@@ -637,15 +645,24 @@
 
 		<div class="reader-body" class:reader-body--compare={comparing} bind:this={root}>
 			{#if comparing}
-				<VersionCompare
-					{versions}
-					param={compareParam ?? ''}
-					{layout}
-					{citation}
-					{link}
-					{go}
-					{missingDossiers}
-				/>
+				{#if versionCompare.component}
+					{@const VersionCompare = versionCompare.component}
+					<VersionCompare
+						{versions}
+						param={compareParam ?? ''}
+						{layout}
+						{citation}
+						{link}
+						{go}
+						{missingDossiers}
+					/>
+				{:else if versionCompare.error}
+					<LoadState
+						state={{ status: 'error', error: versionCompare.error }}
+						what="De vergelijking"
+						form="block"
+					/>
+				{/if}
 			{:else}
 				<ArticleText
 					text={shownVersion?.text ?? a.text}
