@@ -51,6 +51,19 @@
 		  }
 	);
 
+	/**
+	 * A menu's options from its counts, the chosen value among them though the counts lack it
+	 * (not in yet, or partial): by its name, never its key (#136).
+	 */
+	export const selectOptions = (
+		counts: Map<string, number>,
+		chosen: string,
+		name: (key: string) => string
+	): { value: string; label: string; count?: number }[] => [
+		...(chosen && !counts.has(chosen) ? [{ value: chosen, label: name(chosen) }] : []),
+		...[...counts].map(([key, count]) => ({ value: key, label: name(key), count }))
+	];
+
 	/** A filter that is on, as a chip above the list. */
 	type ActiveFilter = { id: string; label: string; onRemove: () => void };
 
