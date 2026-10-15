@@ -1,6 +1,6 @@
 // A request of Verbonden that fails is reported and shown: the group stays with "kon niet
-// laden" and Opnieuw, a fallback answers only where the API does not have it (404), and a
-// partial answer never states a total its rows do not reach. Code-eenvoud F14, F16.
+// laden" and Opnieuw, a 404 of a route is a bron it does not know (no rows), and a partial
+// answer never states a total its rows do not reach. Code-eenvoud F14, F16, F97.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { get } from 'svelte/store';
 import { aborted, fail, fakeApi, type FakeAnswer, type ApiPath } from '$lib/test/fakeApi';
@@ -9,9 +9,7 @@ import type { GraphNode } from '$lib/graph/types';
 import { createVerbondenSource } from './source';
 import { DEFAULT_LOADER_OPTIONS, LOADERS, type LoaderContext } from './loaders';
 import { loadDossierHub } from './dossier-hub';
-import { proposedTextOf } from './proposed-text';
 import type { Loader } from './groups';
-import type { Row } from './rows';
 import type { Neighbor } from '$lib/api/nodes';
 import { filterGroups } from './view';
 import { EMPTY_FILTER } from './filter';
@@ -124,23 +122,17 @@ describe('the dossier hub', () => {
 		source.destroy();
 	});
 
-	it('shares the mutations of its dossier with the proposed text', async () => {
+	it('asks the detail and the documents of the dossier, nothing more', async () => {
 		const api = fakeApi({
-			'/api/dossiers/{number}': { key: '36000', number: '36000' },
-			'/api/dossiers/{number}/documents': { items: [], total: 0 },
-			'/api/dossiers/{number}/mutations': { nodes: [], edges: [] },
-			'/api/committees': []
+			'/api/dossiers/{number}': { key: '36000', number: '36000', instruments: [], committees: [] },
+			'/api/dossiers/{number}/documents': { items: [document], total: 1 }
 		});
-		const row = {
-			ref: { collection: 'documents', key: 'tk_36000_2' },
-			title: 'Voorstel van wet',
-			props: { dossier_numbers: ['36000'] }
-		} as unknown as Row;
-		await Promise.all([
-			loadDossierHub('36000', async () => []),
-			proposedTextOf(row, 'articles/bwbr0001854_1')
+		const hub = await loadDossierHub('36000');
+		expect(hub.tweedeKamer.map((r) => r.ref.key)).toEqual(['tk_36000_1']);
+		expect([...new Set(api.requests.map((r) => r.path))].sort()).toEqual([
+			'/api/dossiers/{number}',
+			'/api/dossiers/{number}/documents'
 		]);
-		expect(api.asked('/api/dossiers/{number}/mutations')).toHaveLength(1);
 	});
 });
 
@@ -156,8 +148,9 @@ const ctx = (props: Record<string, unknown>, neighbors: Neighbor[] = []): Loader
 const ARTICLE = { bwb_id: 'BWBR0005537', article_number: '3:4', key: 'bwbr0005537_3_4' };
 const LAW = { bwb_id: 'BWBR0005537', key: 'bwbr0005537' };
 
-// A loader with a fallback for an API that lacks the route: the fallback on a 404 only.
-const FALLBACKS: [Loader, Record<string, unknown>, ApiPath][] = [
+// A loader of a route of the API: a 500 is a failure, a 404 (a bron the route does not know)
+// no rows.
+const ROUTES: [Loader, Record<string, unknown>, ApiPath][] = [
 	['article-judgments', ARTICLE, '/api/articles/{bwb_id}/{article_number}/cited-by'],
 	['article-changes', ARTICLE, '/api/articles/{bwb_id}/{article_number}/legislative-history'],
 	['article-cited-by', ARTICLE, '/api/articles/{bwb_id}/{article_number}'],
@@ -173,15 +166,15 @@ const FALLBACKS: [Loader, Record<string, unknown>, ApiPath][] = [
 	['decision-subject', { key: 'd1' }, '/api/decisions/{key}']
 ];
 
-describe('a loader with a fallback', () => {
-	it.each(FALLBACKS)('%s fails on a 500 of its route', async (loader, props, path) => {
+describe('a loader of a route', () => {
+	it.each(ROUTES)('%s fails on a 500 of its route', async (loader, props, path) => {
 		fakeApi({ [path]: fail(500), '/api/instruments/{bwb_id}/articles': fail(500) });
 		await expect(LOADERS[loader](ctx(props))).rejects.toThrow();
 	});
 
-	it.each(FALLBACKS)('%s falls back on a 404 of its route', async (loader, props, path) => {
+	it.each(ROUTES)('%s has no rows on a 404 of its route', async (loader, props, path) => {
 		fakeApi({ [path]: fail(404), '/api/instruments/{bwb_id}/articles': fail(404) });
-		await expect(LOADERS[loader](ctx(props))).resolves.toHaveProperty('rows');
+		await expect(LOADERS[loader](ctx(props))).resolves.toMatchObject({ rows: [] });
 	});
 });
 

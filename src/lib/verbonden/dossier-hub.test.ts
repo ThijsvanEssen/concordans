@@ -1,80 +1,95 @@
 import { describe, expect, it } from 'vitest';
 import { type Schema } from '$lib/api/types';
 import { buildDossierHub } from './dossier-hub';
-import { type Neighbor } from '$lib/api/nodes';
-import node35869 from '$lib/fixtures/node-dossier-35869.json';
-import node36327 from '$lib/fixtures/node-dossier-36327.json';
 import documents36327 from '$lib/fixtures/documents-36327.json';
-import committees from '$lib/fixtures/committees.json';
 
-const neighbors = (fixture: { neighbors: { all: unknown[] } }) =>
-	fixture.neighbors.all as Neighbor[];
 const documents = documents36327 as unknown as Schema<'DossierDocumentsResponse'>;
 
+const instrument = (key: string, relation: string, status = 'canoniek') => ({
+	id: `instruments/${key}`,
+	key,
+	bwb_id: key.toUpperCase(),
+	display_name: key,
+	relation,
+	status,
+	links: []
+});
+
 describe('buildDossierHub', () => {
-	it('finds the law of a dossier through LEGISLATED_IN', () => {
-		const hub = buildDossierHub(neighbors(node35869), null, null, []);
-		expect(hub.laws.map((l) => l.ref.key)).toEqual(['bwbr0046999']);
-		expect(hub.laws[0].proposed).toBeFalsy();
+	it('has the law of a dossier from its detail: the wet it made, and one it changes', () => {
+		const hub = buildDossierHub(
+			{
+				instruments: [
+					instrument('bwbr0046999', 'legislated_in'),
+					instrument('bwbr0001854', 'amends', 'voorgesteld')
+				]
+			} as never,
+			null
+		);
+		expect(hub.laws.map((l) => [l.ref.key, l.relation, l.direction, !!l.proposed])).toEqual([
+			['bwbr0046999', 'LEGISLATED_IN', 'inbound', false],
+			['bwbr0001854', 'AMENDS', 'outbound', true]
+		]);
 	});
 
-	it('names the committee of the activities of dossier 36327', () => {
+	it('names the committees of its detail by name, in order', () => {
 		const hub = buildDossierHub(
-			neighbors(node36327),
-			null,
-			null,
-			committees as Schema<'CommitteeDTO'>[]
+			{
+				committees: [
+					{ key: 'c2', name: 'Vaste commissie voor Justitie en Veiligheid', abbreviation: 'J&V' },
+					{ key: 'c1', name: 'Vaste commissie voor Digitale Zaken', abbreviation: 'DiZa' }
+				]
+			} as never,
+			null
 		);
-		expect(hub.committees.map((c) => c.title)).toEqual([
-			'Vaste commissie voor Justitie en Veiligheid'
+		expect(hub.committees.map((c) => [c.title, c.context])).toEqual([
+			['Vaste commissie voor Digitale Zaken', 'DiZa'],
+			['Vaste commissie voor Justitie en Veiligheid', 'J&V']
 		]);
 	});
 
 	it('splits the documents by chamber, the memorie van toelichting first', () => {
-		const hub = buildDossierHub([], documents, null, []);
+		const hub = buildDossierHub(null, documents);
 		expect(hub.tweedeKamer[0].title).toMatch(/^Memorie van toelichting/);
 		expect(hub.eersteKamer.length).toBeGreaterThan(0);
 		expect(hub.eersteKamer.every((r) => r.ref.key.startsWith('ek_'))).toBe(true);
 		expect(hub.tweedeKamer.some((r) => r.ref.key.startsWith('ek_'))).toBe(false);
 	});
-
-	it('marks a law that is only changed by a proposal', () => {
-		const mutations = {
-			number: '1',
-			nodes: [{ id: 'articles/bwbr0001854_287', key: 'bwbr0001854_287', collection: 'articles' }],
-			edges: [{ to_id: 'articles/bwbr0001854_287', relation: 'AMENDS', status: 'voorgesteld' }]
-		} as unknown as Schema<'DossierMutationsResponse'>;
-		const [law] = buildDossierHub([], null, mutations, [], () => 'Wetboek van Strafrecht').laws;
-		expect(law).toMatchObject({ title: 'Wetboek van Strafrecht', proposed: true });
-		expect(law.ref).toEqual({ collection: 'instruments', key: 'bwbr0001854' });
-	});
 });
 
 describe('buildDossierHub with laws_named', () => {
 	it('adds a law the title names: a link when loaded, grey when not', () => {
-		const hub = buildDossierHub([], null, null, [], () => null, {
-			instruments: [
-				{
-					id: 'instruments/bwbr0001854',
-					key: 'bwbr0001854',
-					bwb_id: 'BWBR0001854',
-					display_name: 'Wetboek van Strafrecht',
-					relation: 'amends',
-					status: 'canoniek',
-					links: []
-				}
-			],
-			laws_named: [
-				{ name: 'Wetboek van Strafrecht', loaded: true, key: 'bwbr0001854', bwb_id: 'BWBR0001854' },
-				{
-					name: 'Wetboek van Strafvordering',
-					loaded: true,
-					key: 'bwbr0001903',
-					bwb_id: 'BWBR0001903'
-				},
-				{ name: 'Vreemdelingenwet 2000', loaded: false, key: null, bwb_id: null }
-			]
-		} as never);
+		const hub = buildDossierHub(
+			{
+				instruments: [
+					{
+						id: 'instruments/bwbr0001854',
+						key: 'bwbr0001854',
+						bwb_id: 'BWBR0001854',
+						display_name: 'Wetboek van Strafrecht',
+						relation: 'amends',
+						status: 'canoniek',
+						links: []
+					}
+				],
+				laws_named: [
+					{
+						name: 'Wetboek van Strafrecht',
+						loaded: true,
+						key: 'bwbr0001854',
+						bwb_id: 'BWBR0001854'
+					},
+					{
+						name: 'Wetboek van Strafvordering',
+						loaded: true,
+						key: 'bwbr0001903',
+						bwb_id: 'BWBR0001903'
+					},
+					{ name: 'Vreemdelingenwet 2000', loaded: false, key: null, bwb_id: null }
+				]
+			} as never,
+			null
+		);
 		expect(hub.laws.map((r) => [r.title, !!r.missing])).toEqual([
 			['Wetboek van Strafrecht', false],
 			['Wetboek van Strafvordering', false],
@@ -95,11 +110,9 @@ describe('buildDossierHub: the wet from the dossier', () => {
 			links: []
 		};
 		const node = { collection: 'instruments', key: 'bwbr0052872', props: { kind: 'wet' } };
-		const met = buildDossierHub([], null, null, [], () => null, { instruments: [cbw] } as never, [
-			node as never
-		]);
+		const met = buildDossierHub({ instruments: [cbw] } as never, null, [node as never]);
 		expect([met.laws[0].context, met.laws[0].identifier]).toEqual(['Wet', null]);
-		const zonder = buildDossierHub([], null, null, [], () => null, { instruments: [cbw] } as never);
+		const zonder = buildDossierHub({ instruments: [cbw] } as never, null);
 		expect(zonder.laws[0].identifier).toBe('BWBR0052872');
 	});
 });

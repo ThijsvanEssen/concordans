@@ -95,7 +95,7 @@ describe('buildGroups', () => {
 		expect(ek.rows).toHaveLength(2);
 	});
 
-	it('marks a bucket at the cap of an API without totals, and prints the total of one with', () => {
+	it('prints the total the API gives of a bucket, not the rows loaded', () => {
 		const many = Array.from({ length: 30 }, (_, i) => ({
 			id: `articles/a${i}`,
 			key: `a${i}`,
@@ -105,8 +105,8 @@ describe('buildGroups', () => {
 			props: {}
 		})) as unknown as Neighbor[];
 		const group = buildGroups('articles', many).find((g) => g.id === 'refers-to')!;
-		expect(countLabel(group)).toBe('30+');
-		expect(countLabel({ rows: group.rows.slice(0, 4), capped: false })).toBe('4');
+		expect(countLabel(group)).toBe('30');
+		expect(countLabel({ ...group, capped: true })).toBe('30+');
 		const totals = new Map([['REFERS_TO/articles/outbound', 1412]]);
 		const counted = buildGroups('articles', many, totals).find((g) => g.id === 'refers-to')!;
 		expect(counted.capped).toBe(false);

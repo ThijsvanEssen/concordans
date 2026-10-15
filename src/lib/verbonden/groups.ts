@@ -8,13 +8,7 @@ import { capitalize, joinAnd } from '$lib/text/words';
 import { langeDatum } from '$lib/text/datum';
 import { kindName, lawKind } from '$lib/components/explore/law-head';
 import { bucketKey, type Bucket } from '$lib/api/nodes';
-import {
-	CHANGE_RELATIONS,
-	isChangeRelation,
-	isRelation,
-	type Collection,
-	type Relation
-} from '$lib/vocabulary';
+import { CHANGE_RELATIONS, isChangeRelation, isRelation, type Collection } from '$lib/vocabulary';
 import { isInternational } from './filter';
 import { formatCount } from '$lib/text/getal';
 import { rowOfNeighbor, type Row } from './rows';
@@ -98,7 +92,7 @@ export type Group = GroupDef & {
 	mentions?: number;
 	/** The years of all its bronnen, as the API counts them; else counted from the rows. */
 	years?: { year: number; count: number }[];
-	/** The API caps a bucket without saying how many there are: shown as `30+`. */
+	/** Rows are missing that the API has (a bucket split over groups, a page that failed): `30+`. */
 	capped: boolean;
 	/** Its loader is still under way: the group keeps its place with "laden…". */
 	laden?: boolean;
@@ -928,18 +922,11 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 	]
 };
 
-/** The API's cap per relation and collection; a bucket of this size may be cut off. */
-const BUCKET_CAP = 30;
-const CAPS: Partial<Record<Collection, Partial<Record<Relation, number>>>> = {
-	factions: { VOTED: 20, MEMBER_OF: 50 },
-	members: { VOTED: 20, MEMBER_OF: 5 },
-	decisions: { VOTED: 50 }
-};
-
 const among = <T>(one: T | T[], value: unknown) =>
 	Array.isArray(one) ? one.includes(value as T) : one === value;
 
-const matches = (m: Match, n: Neighbor) =>
+/** Whether a neighbour falls in a bucket of a group. */
+export const matches = (m: Match, n: Neighbor) =>
 	among(m.relation, n.relation) &&
 	among(m.collection, n.collection) &&
 	(!m.direction || m.direction === n.direction) &&
@@ -1028,16 +1015,10 @@ export function buildGroups(
 		if (total != null && group.match?.some((m) => m.split && matches(m, n))) {
 			if ((counted.get(bucket) ?? 0) < total) group.capped = true;
 			claimed.set(bucket, (claimed.get(bucket) ?? 0) + 1);
-		} else if (total != null) {
+		} else if (total != null && !summed.has(`${group.id}:${bucket}`)) {
 			// A bucket counts for its group once; a `where` may leave some of it out.
-			if (!summed.has(`${group.id}:${bucket}`)) {
-				summed.add(`${group.id}:${bucket}`);
-				group.total = (group.total ?? 0) + total;
-			}
-		} else {
-			// TODO(backend B12): an API before 0.5 caps a bucket without a total.
-			const cap = CAPS[collection]?.[n.relation as Relation] ?? BUCKET_CAP;
-			if ((counted.get(bucket) ?? 0) >= cap) group.capped = true;
+			summed.add(`${group.id}:${bucket}`);
+			group.total = (group.total ?? 0) + total;
 		}
 	}
 	for (const key of summed) {

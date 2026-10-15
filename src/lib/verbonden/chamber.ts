@@ -1,6 +1,6 @@
-// API 0.5 gives a document its `chamber` and `is_explanatory`. Before that, the Eerste
-// Kamer documents are recognisable by their key only and the kind is read.
-// TODO(backend B2): the fallbacks go when every document carries the fields.
+// The chamber of a document or vote, and whether a document is a toelichting. A list of a
+// dossier's documents gives `chamber` and `is_explanatory`; a neighbour in a node response
+// carries neither in its props, and then the key (`ek_…`) and the kind tell.
 
 import type { Chamber } from '$lib/components/parliamentary/chamber';
 
