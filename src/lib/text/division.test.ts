@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { artikelAnker, deelIds, layersOf, placeOf, plekVan } from './division';
+import { artikelAnker, layersOf, placeOf, plekVan } from './division';
 
 const awb34 = [
 	{ type: 'hoofdstuk', label: 'Hoofdstuk 3', title: 'Algemene bepalingen over besluiten' },
@@ -56,31 +56,23 @@ describe('placeOf', () => {
 	it('is null without a layer', () => {
 		expect(placeOf([], 'Grondwet')).toBeNull();
 	});
-
-	it('names each layer by its path, a book of the BW with its titel', () => {
-		expect(
-			deelIds([
-				{ label: 'Boek 6' },
-				{ label: 'Titel 3' },
-				{ label: 'Afdeling 1', title: 'Onrechtmatige daad' }
-			])
-		).toEqual(['deel-boek-6', 'deel-boek-6-titel-3', 'deel-boek-6-titel-3-afdeling-1']);
-		expect(deelIds([{ label: 'Hoofdstuk Ä 2' }])).toEqual(['deel-hoofdstuk-a-2']);
-	});
 });
 
 describe('plekVan', () => {
 	const lijst = [
-		{ article_number: '1', breadcrumb: [{ label: 'Hoofdstuk 1' }] },
-		{ article_number: '2', breadcrumb: [{ label: 'Hoofdstuk 1' }] },
-		{ article_number: '3', breadcrumb: [{ label: 'Hoofdstuk 2' }, { label: 'Afdeling 2.1' }] },
+		{ article_number: '1', breadcrumb: [{ anchor: 'deel-hoofdstuk-1' }] },
+		{ article_number: '2', breadcrumb: [{ anchor: 'deel-hoofdstuk-1' }] },
+		{
+			article_number: '3',
+			breadcrumb: [{ anchor: 'deel-hoofdstuk-2' }, { anchor: 'deel-hoofdstuk-2-afdeling-2.1' }]
+		},
 		{ article_number: null, address: 'stam_7', breadcrumb: [] }
 	];
 	it('finds the article an anchor names', () => {
 		expect(plekVan(lijst, artikelAnker('2'))).toBe(1);
 		expect(plekVan(lijst, artikelAnker('stam_7'))).toBe(3);
 	});
-	it('finds the first article of a division, at any depth', () => {
+	it('finds the first article of a division by the anchor the API gives, at any depth', () => {
 		expect(plekVan(lijst, 'deel-hoofdstuk-2')).toBe(2);
 		expect(plekVan(lijst, 'deel-hoofdstuk-2-afdeling-2.1')).toBe(2);
 	});

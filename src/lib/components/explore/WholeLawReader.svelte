@@ -21,7 +21,7 @@
 	import { bronHref } from '$lib/bron/href';
 	import { keepInPlace, scrollInReader } from '$lib/bron/landing';
 	import { parseAnchor } from '$lib/text/anchor';
-	import { deelIds, layersOf } from '$lib/text/division';
+	import { layersOf } from '$lib/text/division';
 	import { page } from '$app/state';
 	import ReaderHead from './readers/ReaderHead.svelte';
 	import { citeItems } from '$lib/components/ui/cite-items';
@@ -223,11 +223,8 @@
 	// (Boek 6 of Burgerlijk Wetboek Boek 6) is no heading.
 	function newSections(prev: Row | undefined, cur: Row) {
 		const before = layersOf(prev?.breadcrumb ?? [], lawTitle);
-		const crumbs = cur.breadcrumb ?? [];
-		const layers = layersOf(crumbs, lawTitle);
-		const ids = deelIds(crumbs).slice(crumbs.length - layers.length);
-		return layers
-			.map((crumb, depth) => ({ ...crumb, depth, id: ids[depth] }))
+		return layersOf(cur.breadcrumb ?? [], lawTitle)
+			.map((crumb, depth) => ({ ...crumb, depth, id: crumb.anchor }))
 			.filter((crumb, i) => before[i]?.label !== crumb.label || before[i]?.type !== crumb.type);
 	}
 </script>

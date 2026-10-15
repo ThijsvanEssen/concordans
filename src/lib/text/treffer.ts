@@ -5,7 +5,7 @@
 import { escapeRegExp } from './words';
 
 /** Up to this length a word is an abbreviation (`AI`, `PFAS`): it has to stand whole. */
-const KORT = 4;
+export const KORT = 4;
 
 /** A word as it is matched: trimmed, its spaces one. */
 export const normaal = (term: string) => term.trim().replace(/\s+/g, ' ');
