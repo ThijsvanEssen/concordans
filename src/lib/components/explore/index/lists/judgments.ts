@@ -32,8 +32,8 @@ const query = (p: IndexParams, sort: SortDef) => ({
 	subject: p.subject || undefined,
 	subject_area: p.subjectArea || undefined,
 	procedure: p.procedure || undefined,
-	// Without a source the list holds the cited judgments whose text is not loaded.
-	source: p.source ?? 'rechtspraak',
+	// Without a source every judgment, the EHRM's among them; `echr` the EHRM alone.
+	source: p.source,
 	from: p.from || undefined,
 	to: p.to || undefined,
 	sort: choiceOf(sort.id, ['date_desc', 'date_asc', 'citation_count'] as const),
@@ -46,7 +46,8 @@ const USUAL: Tier[] = ['hoge_raad', 'parket', 'raad_van_state', 'gerechtshof', '
 /**
  * Counts per tier and for the EHRM. Which courts there are comes from the coverage
  * (`/api/stats/coverage`); the counts under the period and search from the list's facet. The
- * EHRM is its own source (`echr`): the list of a college holds the judgments of `rechtspraak`.
+ * EHRM is its own source (`echr`): the tier facet's `ehrm` also counts the Dutch judgments that
+ * name it as court, which choosing the EHRM leaves out.
  */
 function courtCounts({ p, state, shared }: Context) {
 	const coverage = shared.coverage;

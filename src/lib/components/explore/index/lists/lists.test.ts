@@ -16,8 +16,8 @@ function query(category: IndexCategory, address = '') {
 	return JSON.parse(JSON.stringify(list.query(p, sorts.find((s) => s.id === p.sort) ?? sorts[0])));
 }
 
-/** The filters of a list for an address, as its chips name them. */
-function chips(category: IndexCategory, address: string, state = {}) {
+/** The filter groups of a list for an address, under its state and the courts' coverage. */
+function facetGroups(category: IndexCategory, address: string, state = {}, coverage = null) {
 	const p = params(address);
 	const list = LISTS[category];
 	const sort = forParams(list.sorts, p)[0];
@@ -28,7 +28,7 @@ function chips(category: IndexCategory, address: string, state = {}) {
 		rows: [],
 		page: undefined,
 		state,
-		shared: { cabinets: [], ministries: [], coverage: null, parties: [] },
+		shared: { cabinets: [], ministries: [], coverage, parties: [] },
 		loading: false,
 		patch: () => {},
 		toggleOpen: () => {},
@@ -37,7 +37,12 @@ function chips(category: IndexCategory, address: string, state = {}) {
 		tabHref: () => '',
 		empty: (() => {}) as never
 	} satisfies ListContext<unknown, object>;
-	return activeFilters(list.facets(ctx)).map((c) => c.label);
+	return list.facets(ctx);
+}
+
+/** The filters of a list for an address, as its chips name them. */
+function chips(category: IndexCategory, address: string, state = {}) {
+	return activeFilters(facetGroups(category, address, state)).map((c) => c.label);
 }
 
 describe('the register of Bronnen', () => {
@@ -87,8 +92,8 @@ describe('the request of a list', () => {
 		});
 	});
 
-	it('asks the judgments of the Rechtspraak unless the EHRM is chosen', () => {
-		expect(query('judgments')).toEqual({ source: 'rechtspraak', sort: 'date_desc', limit: 100 });
+	it('asks every judgment, those of the EHRM alone when it is chosen', () => {
+		expect(query('judgments')).toEqual({ sort: 'date_desc', limit: 100 });
 		expect(
 			query(
 				'judgments',
@@ -230,5 +235,48 @@ describe('the filters of a list', () => {
 		expect(chips('members', 'kamer=EK&include_inactive=1')).toEqual([]);
 		expect(chips('factions', 'kamer=EK&include_inactive=1')).toEqual([]);
 		expect(chips('committees', 'kamer=EK&only_active=1')).toEqual([]);
+	});
+});
+
+describe('the courts of the judgments', () => {
+	// The live answer without a filter: every source, the EHRM's 3.232 among them.
+	const coverage = {
+		total: 1001512,
+		first_date: null,
+		last_date: null,
+		stubs: 0,
+		replaced: 0,
+		tiers: [
+			{ tier: 'hoge_raad', count: 57506 },
+			{ tier: 'rechtbank', count: 510203 },
+			{ tier: 'ehrm', count: 3480 }
+		],
+		courts: [
+			{ source: 'rechtspraak', count: 998280 },
+			{ source: 'echr', count: 3232 }
+		]
+	} as never;
+	const facets = {
+		tier: [
+			{ value: 'rechtbank', count: 510203 },
+			{ value: 'hoge_raad', count: 57506 },
+			{ value: 'ehrm', count: 3480 }
+		],
+		source: [
+			{ value: 'rechtspraak', count: 998280 },
+			{ value: 'echr', count: 3232 }
+		]
+	};
+	const counts = (address: string) =>
+		Object.fromEntries(
+			facetGroups('judgments', address, { facets }, coverage)
+				.flatMap((g) => (g.kind === 'list' ? g.options : []))
+				.map((o) => [o.id, o.count])
+		);
+
+	it('counts each court as the list it chooses holds', () => {
+		// The EHRM is `source=echr`: its own judgments, not the Dutch ones that name it as court.
+		expect(counts('')).toMatchObject({ hoge_raad: 57506, rechtbank: 510203, ehrm: 3232 });
+		expect(counts('q=huur')).toMatchObject({ hoge_raad: 57506, ehrm: 3232 });
 	});
 });
