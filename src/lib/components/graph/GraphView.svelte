@@ -635,6 +635,8 @@
 						: []
 			)
 		]);
+		// Counted and drawn once, nodes and edges together.
+		applyFilters();
 	}
 
 	const clusterNode = (c: Cluster): GraphNode =>
@@ -841,7 +843,6 @@
 			}
 		}
 		hasNodes = g.order > 0;
-		applyFilters();
 		if (changed) scheduleFit();
 		runLayout(addedThisSync).catch((e) => report('Netwerk opmaak', e));
 		syncContainerAnchors();
@@ -902,7 +903,6 @@
 				changed = true;
 			}
 		}
-		applyFilters();
 		if (changed) scheduleFit();
 	}
 
@@ -976,17 +976,18 @@
 		const unsub = [
 			store.nodes.subscribe(syncNodes),
 			store.edges.subscribe(syncEdges),
+			// Drawn with the nodes and edges of the same change, in one microtask (queueRedraw).
 			store.selection.subscribe((n) => {
 				selection = n;
-				redraw();
+				queueRedraw();
 			}),
 			store.pinned.subscribe((s) => {
 				pinnedIds = new Set(s);
-				redraw();
+				queueRedraw();
 			}),
 			store.core.subscribe((c) => {
 				coreIds = c;
-				redraw();
+				queueRedraw();
 			}),
 			store.filters.subscribe((f) => {
 				filters = f;
@@ -994,7 +995,7 @@
 			}),
 			store.containers.subscribe((groups) => {
 				containerGroups = groups;
-				redraw();
+				queueRedraw();
 				syncContainerAnchors();
 			})
 		];

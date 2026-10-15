@@ -275,7 +275,7 @@
 		latestHeatPeriodMonths = heatPeriodMonths ?? 12;
 		latestMutatieActive = mutatieActive ?? false;
 		updateViewportLabels();
-		renderer?.refresh();
+		redrawInFrame();
 	});
 
 	$effect(() => {
@@ -304,7 +304,7 @@
 		recomputeStrays();
 		recomputeLinesIntoGroup();
 		computeHulls();
-		renderer?.refresh();
+		redrawInFrame();
 	});
 
 	/** Context of a netwerk: on the canvas, but not chosen nor tying chosen bronnen. */
@@ -354,7 +354,7 @@
 		latestGewezen = new Map(
 			zetels.filter(([, p]) => p.to !== null && p.to < eind).map(([id, p]) => [id, p.to as string])
 		);
-		renderer?.refresh();
+		redrawInFrame();
 	});
 
 	$effect(() => {
@@ -371,7 +371,7 @@
 		recomputeStrays();
 		latestSelectedEdge = selectedEdgeId;
 		latestLineLids = lineLids;
-		renderer?.refresh();
+		redrawInFrame();
 	});
 
 	// Activity halos: HTML rings above the canvas, from rule-strong at low activity
@@ -637,6 +637,13 @@
 
 	const isHiddenNode = (id: string, attrs: Record<string, unknown>) =>
 		id !== focusedId && (hiddenByFilter(attrs) || strays.has(id));
+
+	/**
+	 * What this component's $effects change is drawn in the next frame, once for all of them:
+	 * a step of the focus woke five, each a render of the whole canvas. Nothing they do reads
+	 * the drawing back; a fit or a measurement after a refresh stays synchronous.
+	 */
+	const redrawInFrame = () => renderer?.refresh({ schedule: true });
 
 	function refresh() {
 		recomputeFocusLevel1();
@@ -1230,7 +1237,7 @@
 	$effect(() => {
 		void focusedId;
 		recomputeFocusLevel1();
-		renderer?.refresh();
+		redrawInFrame();
 	});
 
 	onDestroy(() => {
