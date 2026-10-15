@@ -5,13 +5,13 @@
 	let {
 		tone,
 		woord = null,
-		titel = null
+		title = null
 	}: {
 		tone: 'ja' | 'nee' | 'nu' | 'open' | 'klaar';
 		/** Het woord naast het vakje; zonder woord alleen het vakje (met een title). */
 		woord?: string | null;
 		/** The title of a box without a word, where the general one does not fit. */
-		titel?: string | null;
+		title?: string | null;
 	} = $props();
 	const TITLE = {
 		ja: 'aangenomen of afgerond',
@@ -22,7 +22,7 @@
 	};
 </script>
 
-<span class="uk uk--{tone}" title={woord ? undefined : (titel ?? TITLE[tone])}
+<span class="uk uk--{tone}" title={woord ? undefined : (title ?? TITLE[tone])}
 	><span class="vak" aria-hidden="true"></span>{#if woord}<span class="w">{woord}</span>{/if}</span
 >
 

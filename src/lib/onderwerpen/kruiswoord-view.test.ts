@@ -16,7 +16,7 @@ const html = (failed: Kolom[]) =>
 			vakken: ['2026-10', '2026-09'],
 			rijen: tel([], [{ date: '2026-10-02', kolom: 'aangenomen' }], 'maand', null),
 			keuze: null,
-			onKies: () => {},
+			onSelect: () => {},
 			failed: new Set(failed)
 		}
 	}).body;

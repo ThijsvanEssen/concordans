@@ -4,19 +4,19 @@
 	// list under itself; the chosen option in weight. The one form for every select in
 	// Concordans: Alle bronnen, Per soort, Nieuwste eerst, Alle jaren. A menu that holds more
 	// than a list (two lists side by side) passes its own `inhoud`.
+	import type { Option } from './option';
 	import type { Snippet } from 'svelte';
 	import { menu } from '$lib/actions/menu';
 	import { topLayer } from '$lib/actions/top-layer';
 	import Caret from './Caret.svelte';
 
 	/** `uit`: shown, not to be chosen now (its reason in `titel`). */
-	type Optie = { waarde: T; label: string; titel?: string; uit?: boolean };
 
 	let {
 		label,
 		opties = [],
 		waarde = null,
-		onKies,
+		onSelect,
 		tekst,
 		klein = false,
 		rechts = false,
@@ -26,9 +26,9 @@
 	}: {
 		/** What the menu sets, for a screen reader: `Bronnen`, `Volgorde`. */
 		label: string;
-		opties?: Optie[];
+		opties?: Option<T>[];
 		waarde?: T | null;
-		onKies?: (w: T) => void;
+		onSelect?: (w: T) => void;
 		/** The words on the button where they are not one option's label (`Alle jaren, alle rechters`). */
 		tekst?: string;
 		/** In a panel or a group: the panel's height (24 px) instead of the page's (32 px). */
@@ -83,7 +83,7 @@
 						disabled={o.uit}
 						onclick={() => {
 							sluit();
-							if (o.waarde !== waarde) onKies?.(o.waarde);
+							if (o.waarde !== waarde) onSelect?.(o.waarde);
 						}}>{o.label}</button
 					>
 				{/each}

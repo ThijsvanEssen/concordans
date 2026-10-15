@@ -45,7 +45,7 @@
 	import Doorzocht from '$lib/components/actueel/Doorzocht.svelte';
 	import {
 		COALITION,
-		FILTER_PARAMS,
+		FEED_FILTER_PARAMS,
 		feedQuery,
 		readFilters,
 		summaryQuery,
@@ -102,7 +102,7 @@
 	}
 	const filterHref = (patch: ParamPatch) => withParams(page.url, patch, { clear: ['open'] });
 	const toggleOpen = (id: string) => patchUrl({ open: openId === id ? null : id }, true);
-	const clearFilters = () => patchUrl(Object.fromEntries(FILTER_PARAMS.map((f) => [f, null])));
+	const clearFilters = () => patchUrl(Object.fromEntries(FEED_FILTER_PARAMS.map((f) => [f, null])));
 
 	function toggleKind(kind: FeedKind) {
 		const next = kinds.includes(kind) ? kinds.filter((k) => k !== kind) : [...kinds, kind];
@@ -512,7 +512,7 @@
 {/snippet}
 {#snippet verder()}
 	{#if doorzocht}
-		<Doorzocht vanaf={doorzocht} laden={verderLaden} onVerder={verderTerug} />
+		<Doorzocht vanaf={doorzocht} loading={verderLaden} onVerder={verderTerug} />
 	{/if}
 {/snippet}
 <svelte:window onkeydown={onKey} />

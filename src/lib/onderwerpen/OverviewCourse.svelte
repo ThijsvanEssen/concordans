@@ -40,7 +40,7 @@
 						...STREKKING_LAGEN.map((r) => ({ waarde: r, label: LAAG_LABEL[r] }))
 					]}
 					waarde={layer ?? 'alle'}
-					onKies={(w) => onLayer(w === 'alle' ? null : (w as StrekkingLaag))}
+					onSelect={(w) => onLayer(w === 'alle' ? null : (w as StrekkingLaag))}
 				>
 					{#snippet voor(w)}{#if w !== 'alle'}<StrekkingTeken
 								strekking={w as StrekkingLaag}

@@ -7,19 +7,20 @@
 
 	let {
 		vanaf,
-		laden,
+		loading,
 		onVerder
 	}: {
 		/** The first day searched. */
 		vanaf: string;
-		laden: boolean;
+		loading: boolean;
 		onVerder: () => void;
 	} = $props();
 </script>
 
 <p class="doorzocht">
 	Doorzocht vanaf {korteDatum(vanaf)}.
-	<TekstLink disabled={laden} onclick={onVerder}>{laden ? 'Laden…' : 'Zoek verder terug'}</TekstLink
+	<TekstLink disabled={loading} onclick={onVerder}
+		>{loading ? 'Laden…' : 'Zoek verder terug'}</TekstLink
 	>
 </p>
 

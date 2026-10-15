@@ -3,25 +3,25 @@
 	// mogen even breed zijn en hetzelfde soort component zijn"). One frame, one width in every
 	// state (--paneel-breed, folded or open), a head row (the title, what it holds while folded,
 	// the caret, an action at the right) and its content. Where it stands is its user's
-	// (`klasse`, `stijl`); what it looks like is this.
+	// (`class`, `style`); what it looks like is this.
 	import type { Snippet } from 'svelte';
 	import Caret from '$lib/components/ui/Caret.svelte';
 
 	let {
-		titel,
+		title,
 		open = true,
 		onToggle,
 		samenvatting,
 		kop,
 		actie,
 		children,
-		klasse = '',
-		stijl = '',
+		class: className = '',
+		style = '',
 		label,
 		el = $bindable(null),
 		...rest
 	}: {
-		titel: string;
+		title: string;
 		/** Open: the content shows. A card without `onToggle` is always open. */
 		open?: boolean;
 		onToggle?: () => void;
@@ -32,8 +32,8 @@
 		/** At the right of the head (Deel, Wissen, Meer). */
 		actie?: Snippet;
 		children?: Snippet;
-		klasse?: string;
-		stijl?: string;
+		class?: string;
+		style?: string;
 		label?: string;
 		el?: HTMLElement | null;
 		/** What the frame carries besides (a dialog's role, its key handler). */
@@ -43,9 +43,9 @@
 
 <section
 	{...rest}
-	class="canvas-kaart {klasse}"
-	style={stijl}
-	aria-label={label ?? titel}
+	class="canvas-kaart {className}"
+	{style}
+	aria-label={label ?? title}
 	bind:this={el}
 >
 	<div class="canvas-kaart__kop">
@@ -53,12 +53,12 @@
 			{@render kop()}
 		{:else if onToggle}
 			<button type="button" class="canvas-kaart__knop" aria-expanded={open} onclick={onToggle}>
-				<span class="canvas-kaart__titel">{titel}</span>
+				<span class="canvas-kaart__titel">{title}</span>
 				{#if samenvatting}{@render samenvatting()}{/if}
 				<Caret {open} />
 			</button>
 		{:else}
-			<span class="canvas-kaart__titel">{titel}</span>
+			<span class="canvas-kaart__titel">{title}</span>
 		{/if}
 		{#if actie}<span class="canvas-kaart__actie">{@render actie()}</span>{/if}
 	</div>

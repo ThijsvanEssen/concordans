@@ -62,7 +62,7 @@ export const members = defineList<Row, object, ReturnType<typeof query>>({
 				// The seats are the sitting members; with historical ones they no longer are.
 				count: p.includeInactive ? undefined : (f.seats ?? undefined),
 				on: p.party === f.abbreviation,
-				onClick: toggle(patch, 'party', p.party, f.abbreviation)
+				onClick: toggle(patch, 'fractie', p.party, f.abbreviation)
 			}))
 		},
 		// The Eerste Kamer is known from our first read on: no history to show or filter by.

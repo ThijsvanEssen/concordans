@@ -180,8 +180,8 @@
 									{@const b = plek(p)!}
 									<span class="holder-strook"
 										><Strookje
-											van={b.van}
-											tot={b.tot}
+											from={b.van}
+											to={b.tot}
 											kleur={colorOf(p.party?.short)}
 											open={openKey === id}
 											waarnemend={p.acting}
@@ -206,8 +206,8 @@
 			{#if as}
 				<Tijdas
 					periode={as.periode}
-					begin={as.begin}
-					eind={as.eind}
+					from={as.begin}
+					to={as.eind}
 					plaats="boven"
 					fasen={phases.map((b) => ({
 						at: b.from,

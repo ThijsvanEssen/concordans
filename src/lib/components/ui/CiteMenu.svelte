@@ -7,7 +7,7 @@
 	import { topLayer } from '$lib/actions/top-layer';
 	import Caret from './Caret.svelte';
 	import { createCopier } from './copy.svelte';
-	import type { CiteItem } from './cite';
+	import type { CiteItem } from './cite-items';
 
 	let {
 		items,

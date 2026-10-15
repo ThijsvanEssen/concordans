@@ -5,7 +5,7 @@
 	let { aan = false, gedimd = false }: { aan?: boolean; gedimd?: boolean } = $props();
 </script>
 
-<span class="vinkje" class:aan class:gedimd aria-hidden="true"
+<span class="vinkje" class:is-active={aan} class:is-dim={gedimd} aria-hidden="true"
 	>{#if aan}<svg viewBox="0 0 12 12" width="12" height="12" focusable="false"
 			><path d="M3.1 6.3 5.2 8.4 8.9 4" /></svg
 		>{/if}</span
@@ -25,11 +25,11 @@
 		background: var(--paper);
 		color: var(--paper);
 	}
-	.aan {
+	.is-active {
 		box-shadow: none;
 		background: var(--ink);
 	}
-	.gedimd {
+	.is-dim {
 		box-shadow: none;
 		background: var(--rule-strong);
 	}

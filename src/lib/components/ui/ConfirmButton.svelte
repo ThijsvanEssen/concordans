@@ -5,13 +5,13 @@
 		label,
 		confirmLabel,
 		onConfirm,
-		buttonClass = 'btn'
+		class: className = 'btn'
 	}: {
 		label: string;
 		/** What the second click does, in words: `Ja, netwerk wissen`. */
 		confirmLabel: string;
 		onConfirm: () => void;
-		buttonClass?: string;
+		class?: string;
 	} = $props();
 
 	let asking = $state(false);
@@ -29,4 +29,4 @@
 	}
 </script>
 
-<button type="button" class={buttonClass} {onclick}>{asking ? confirmLabel : label}</button>
+<button type="button" class={className} {onclick}>{asking ? confirmLabel : label}</button>

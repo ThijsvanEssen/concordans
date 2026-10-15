@@ -2,10 +2,10 @@
 	// A row of the table opened under itself: the passage that names the bron, then the ways
 	// on: Lees (the bron itself), Alleen de omgeving (the bron with what it touches, as a
 	// double click on the canvas), and what the verbinding is.
-	import { passageOf, type Row } from './rows';
+	import { passageOf, type Row } from '../../verbonden/rows';
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import Aanhaling from './Aanhaling.svelte';
+	import Aanhaling from '../../verbonden/Aanhaling.svelte';
 
 	let {
 		row,

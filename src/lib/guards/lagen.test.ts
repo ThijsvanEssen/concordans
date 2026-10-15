@@ -89,7 +89,7 @@ describe('the layers', () => {
 			'lib/search/kamer.ts',
 			'lib/search/present.ts',
 			'lib/text/delegaties.ts',
-			'lib/verbonden/chamber.ts',
+			'lib/verbonden/document-chamber.ts',
 			'lib/verbonden/dossier-hub.ts',
 			'lib/verbonden/groups.ts',
 			'lib/verbonden/hoe.ts',

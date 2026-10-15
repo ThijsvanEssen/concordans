@@ -7,7 +7,7 @@
 	import CitedText from './CitedText.svelte';
 	import type { Noot } from '$lib/text/voetnoten';
 	import { nootStand } from '$lib/text/voetnoten.svelte';
-	import { scrollInReader } from '$lib/bron/anchor';
+	import { scrollInReader } from '$lib/bron/landing';
 
 	let {
 		noten,

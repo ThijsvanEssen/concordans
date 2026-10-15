@@ -74,7 +74,7 @@ exports[`Bronnen, list by list > cabinets ? > view 1`] = `
 }
 `;
 
-exports[`Bronnen, list by list > cabinets ?coalition=VVD&from=2010-01-01&q=rutte&sort=name > requests 1`] = `
+exports[`Bronnen, list by list > cabinets ?coalitie=VVD&van=2010-01-01&q=rutte&sort=name > requests 1`] = `
 {
   "/api/cabinets": [
     {},
@@ -88,7 +88,7 @@ exports[`Bronnen, list by list > cabinets ?coalition=VVD&from=2010-01-01&q=rutte
 }
 `;
 
-exports[`Bronnen, list by list > cabinets ?coalition=VVD&from=2010-01-01&q=rutte&sort=name > view 1`] = `
+exports[`Bronnen, list by list > cabinets ?coalitie=VVD&van=2010-01-01&q=rutte&sort=name > view 1`] = `
 {
   "facetten": "In de coalitie kabinetten VVD 4 D66 3 CDA 3 ChristenUnie 2 Wis alle filters",
   "filters": [
@@ -174,7 +174,7 @@ exports[`Bronnen, list by list > commitments ? > view 1`] = `
 }
 `;
 
-exports[`Bronnen, list by list > commitments ?status=Openstaand&overdue=1&cabinet=jetten&ministry=bzk&member=x&q=brief&from=2026-01-01&sort=expected_resolution > requests 1`] = `
+exports[`Bronnen, list by list > commitments ?status=Openstaand&overdue=1&kabinet=jetten&ministerie=bzk&persoon=x&q=brief&van=2026-01-01&sort=expected_resolution > requests 1`] = `
 {
   "/api/cabinets": [
     {},
@@ -213,7 +213,7 @@ exports[`Bronnen, list by list > commitments ?status=Openstaand&overdue=1&cabine
 }
 `;
 
-exports[`Bronnen, list by list > commitments ?status=Openstaand&overdue=1&cabinet=jetten&ministry=bzk&member=x&q=brief&from=2026-01-01&sort=expected_resolution > view 1`] = `
+exports[`Bronnen, list by list > commitments ?status=Openstaand&overdue=1&kabinet=jetten&ministerie=bzk&persoon=x&q=brief&van=2026-01-01&sort=expected_resolution > view 1`] = `
 {
   "facetten": "Stand Openstaand 2.530 Afgedaan 4.046 Deels Afgedaan 66 Vervallen 32 Termijn Open en over de verwachte datum Kabinet kabinet-Jetten Ministerie bzk Bewindspersoon Gekozen bewindspersoon Wis alle filters",
   "filters": [
@@ -229,9 +229,9 @@ exports[`Bronnen, list by list > commitments ?status=Openstaand&overdue=1&cabine
   "regel": "Zoeken Gedaan AllesMaandKwartaalJaarEigen van tot",
   "richting": null,
   "rijen": [
-    "De Kamer ontvangt aan het einde van het eerste kwartaal van 2027 een update over toegankelijk onderwijs voor studenten met een ondersteuningsbehoefte. -> /explore?focus=commitments/0ce0711d_0f70_4a6e_b863_ed7fa0948458&paneel=netwerk&status=Openstaand",
-    "De Kamer ontvangt over een halfjaar concrete informatie over de manieren om de besteding van de bekostiging transparanter te maken. -> /explore?focus=commitments/1764f942_f9c9_4a23_9da2_038e0abd2cad&paneel=netwerk&status=Openstaand",
-    "De staatssecretaris informeert in het voorjaar van 2027 de Kamer over de resultaten van de bereikbaarheidsanalyse en de uitkomsten van de gesprekken die gevoerd zijn met de sector en de verschillende regio's. -> /explore?focus=commitments/207e4c20_5f93_4b44_a37d_d4935b077790&paneel=netwerk&status=Openstaand",
+    "De Kamer ontvangt aan het einde van het eerste kwartaal van 2027 een update over toegankelijk onderwijs voor studenten met een ondersteuningsbehoefte. -> /explore?focus=commitments/0ce0711d_0f70_4a6e_b863_ed7fa0948458&paneel=netwerk",
+    "De Kamer ontvangt over een halfjaar concrete informatie over de manieren om de besteding van de bekostiging transparanter te maken. -> /explore?focus=commitments/1764f942_f9c9_4a23_9da2_038e0abd2cad&paneel=netwerk",
+    "De staatssecretaris informeert in het voorjaar van 2027 de Kamer over de resultaten van de bereikbaarheidsanalyse en de uitkomsten van de gesprekken die gevoerd zijn met de sector en de verschillende regio's. -> /explore?focus=commitments/207e4c20_5f93_4b44_a37d_d4935b077790&paneel=netwerk",
   ],
   "volgorde": [
     "Datum",
@@ -464,7 +464,7 @@ exports[`Bronnen, list by list > decisions ?kamer=EK&sort=subject > view 1`] = `
 }
 `;
 
-exports[`Bronnen, list by list > decisions ?soort=Motie&passed=false&dossier=36600&party=VVD&q=huur&from=2026-01-01 > requests 1`] = `
+exports[`Bronnen, list by list > decisions ?soort=Motie&passed=false&dossier=36600&fractie=VVD&q=huur&van=2026-01-01 > requests 1`] = `
 {
   "/api/decisions": [
     {
@@ -499,7 +499,7 @@ exports[`Bronnen, list by list > decisions ?soort=Motie&passed=false&dossier=366
 }
 `;
 
-exports[`Bronnen, list by list > decisions ?soort=Motie&passed=false&dossier=36600&party=VVD&q=huur&from=2026-01-01 > view 1`] = `
+exports[`Bronnen, list by list > decisions ?soort=Motie&passed=false&dossier=36600&fractie=VVD&q=huur&van=2026-01-01 > view 1`] = `
 {
   "facetten": "Soort Motie 52.847 Amendement 8.319 Wetgeving 2.408 Begroting 1.963 Uitslag Aangenomen 34.625 Verworpen 31.563 Dossier Wis alle filters",
   "filters": [
@@ -580,7 +580,7 @@ exports[`Bronnen, list by list > documents ? > view 1`] = `
 }
 `;
 
-exports[`Bronnen, list by list > documents ?kamer=EK&soort=Motie&q=36600&from=2026-01-01&to=2026-06-30 > requests 1`] = `
+exports[`Bronnen, list by list > documents ?kamer=EK&soort=Motie&q=36600&van=2026-01-01&tot=2026-06-30 > requests 1`] = `
 {
   "/api/documents": [
     {
@@ -607,7 +607,7 @@ exports[`Bronnen, list by list > documents ?kamer=EK&soort=Motie&q=36600&from=20
 }
 `;
 
-exports[`Bronnen, list by list > documents ?kamer=EK&soort=Motie&q=36600&from=2026-01-01&to=2026-06-30 > view 1`] = `
+exports[`Bronnen, list by list > documents ?kamer=EK&soort=Motie&q=36600&van=2026-01-01&tot=2026-06-30 > view 1`] = `
 {
   "facetten": "Soort Bijlage 124.687 Brief regering 89.644 Motie 59.998 Schriftelijke vragen 47.322 Antwoord schriftelijke vragen 45.775 Convocatie commissieactiviteit 29.956 Wis alle filters",
   "filters": [
@@ -869,7 +869,7 @@ exports[`Bronnen, list by list > dossiers ?stand=all&sort=last_activity > view 1
 }
 `;
 
-exports[`Bronnen, list by list > dossiers ?stand=closed&outcome=aangenomen&phase=Eerste+Kamer,Tweede+Kamer&has_phase=Raad+van+State&track=Wetsvoorstel&ministry=bzk&from=2020-01-01&sort=number > requests 1`] = `
+exports[`Bronnen, list by list > dossiers ?stand=closed&uitkomst=aangenomen&phase=Eerste+Kamer,Tweede+Kamer&has_phase=Raad+van+State&track=Wetsvoorstel&ministerie=bzk&van=2020-01-01&sort=number > requests 1`] = `
 {
   "/api/cabinets": [
     {},
@@ -902,7 +902,7 @@ exports[`Bronnen, list by list > dossiers ?stand=closed&outcome=aangenomen&phase
 }
 `;
 
-exports[`Bronnen, list by list > dossiers ?stand=closed&outcome=aangenomen&phase=Eerste+Kamer,Tweede+Kamer&has_phase=Raad+van+State&track=Wetsvoorstel&ministry=bzk&from=2020-01-01&sort=number > view 1`] = `
+exports[`Bronnen, list by list > dossiers ?stand=closed&uitkomst=aangenomen&phase=Eerste+Kamer,Tweede+Kamer&has_phase=Raad+van+State&track=Wetsvoorstel&ministerie=bzk&van=2020-01-01&sort=number > view 1`] = `
 {
   "facetten": "Stand Lopend 3.728 Afgehandeld 4.077 Aangenomen 0 Alle dossiers 7.805 Soort 1.997 overige dossiers, zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Wis alle filters",
   "filters": [
@@ -1283,7 +1283,7 @@ exports[`Bronnen, list by list > instruments ?q=huur&sort=article_count&legal_ar
 }
 `;
 
-exports[`Bronnen, list by list > instruments ?soort=verdrag&jurisdiction=eu&leeg=1&from=2020-01-01&to=2024-12-31 > requests 1`] = `
+exports[`Bronnen, list by list > instruments ?soort=verdrag&jurisdiction=eu&leeg=1&van=2020-01-01&tot=2024-12-31 > requests 1`] = `
 {
   "/api/instruments": [
     {
@@ -1310,7 +1310,7 @@ exports[`Bronnen, list by list > instruments ?soort=verdrag&jurisdiction=eu&leeg
 }
 `;
 
-exports[`Bronnen, list by list > instruments ?soort=verdrag&jurisdiction=eu&leeg=1&from=2020-01-01&to=2024-12-31 > view 1`] = `
+exports[`Bronnen, list by list > instruments ?soort=verdrag&jurisdiction=eu&leeg=1&van=2020-01-01&tot=2024-12-31 > view 1`] = `
 {
   "facetten": "Rechtsgebied Wonen, onroerend goed, bouwrecht 199 Belastingrecht 26 Contracten, schade en aansprakelijkheid 12 Arbeidsrecht en sociaal-zekerheidsrecht 11 Staats- en bestuursrecht 11 Thema Bouwen, wonen en leefomgeving 136 Subsidies, uitkeringen en toeslagen 77 Belastingen 26 Economie en ondernemen 25 Overheid, bestuur en koninkrijk 11 Rechtsorde Nederland Europese Unie Soort Verdragen 279 Weergave Ook zonder artikelen Wis alle filters",
   "filters": [
@@ -1425,7 +1425,7 @@ exports[`Bronnen, list by list > judgments ? > view 1`] = `
 }
 `;
 
-exports[`Bronnen, list by list > judgments ?q=huur&tier=rechtbank&court_kind=rechtbank&subject_area=Civiel+recht&procedure=Hoger+beroep&from=2020-01-01&to=2020-12-31&sort=date_asc > requests 1`] = `
+exports[`Bronnen, list by list > judgments ?q=huur&tier=rechtbank&court_kind=rechtbank&subject_area=Civiel+recht&procedure=Hoger+beroep&van=2020-01-01&tot=2020-12-31&sort=date_asc > requests 1`] = `
 {
   "/api/judgments": [
     {
@@ -1463,7 +1463,7 @@ exports[`Bronnen, list by list > judgments ?q=huur&tier=rechtbank&court_kind=rec
 }
 `;
 
-exports[`Bronnen, list by list > judgments ?q=huur&tier=rechtbank&court_kind=rechtbank&subject_area=Civiel+recht&procedure=Hoger+beroep&from=2020-01-01&to=2020-12-31&sort=date_asc > view 1`] = `
+exports[`Bronnen, list by list > judgments ?q=huur&tier=rechtbank&court_kind=rechtbank&subject_area=Civiel+recht&procedure=Hoger+beroep&van=2020-01-01&tot=2020-12-31&sort=date_asc > view 1`] = `
 {
   "facetten": "Hoogste rechters 865 Hoge Raad 243 Parket bij de Hoge Raad 236 Raad van State 162 Centrale Raad van Beroep 217 College van Beroep voor het bedrijfsleven 7 Feitenrechtspraak 7.272 Gerechtshoven 2.539 Rechtbanken 4.733 Kantongerechten 0 Caribisch deel 193 Gerechten in het Caribisch deel 193 Europees 0 EHRM 0 Hof van Justitie EU 0 Overig 1 Tuchtcolleges 0 Andere colleges 0 Kroon 0 Buitenlandse instanties 1 Rechtsgebied Civiel recht 7.243 Verbintenissenrecht 2.071 Insolventierecht 134 Burgerlijk procesrecht 54 Personen- en familierecht 28 Goederenrecht 11 Arbeidsrecht 5 Europees civiel recht 5 Ondernemingsrecht 3 Aanbestedingsrecht 2 Intellectueel-eigendomsrecht 1 Bestuursrecht 931 Strafrecht 164 Internationaal publiekrecht 1 Procedure Eerste aanleg - enkelvoudig 3.082 Hoger beroep 2.646 Kort geding 769 Bodemzaak 591 Eerste aanleg - meervoudig 245 Wis alle filters",
   "filters": [
@@ -1661,7 +1661,7 @@ exports[`Bronnen, list by list > members ? > view 1`] = `
 }
 `;
 
-exports[`Bronnen, list by list > members ?include_inactive=1&party=VVD&q=kops&sort=party > requests 1`] = `
+exports[`Bronnen, list by list > members ?include_inactive=1&fractie=VVD&q=kops&sort=party > requests 1`] = `
 {
   "/api/factions": [
     {
@@ -1686,7 +1686,7 @@ exports[`Bronnen, list by list > members ?include_inactive=1&party=VVD&q=kops&so
 }
 `;
 
-exports[`Bronnen, list by list > members ?include_inactive=1&party=VVD&q=kops&sort=party > view 1`] = `
+exports[`Bronnen, list by list > members ?include_inactive=1&fractie=VVD&q=kops&sort=party > view 1`] = `
 {
   "facetten": "Fractie D66 VVD PRO PVV CDA JA21 FVD Groep Markuszower Alle 17Weergave Ook historische leden Wis alle filters",
   "filters": [
@@ -1721,7 +1721,7 @@ exports[`Bronnen, list by list > members ?include_inactive=1&party=VVD&q=kops&so
 }
 `;
 
-exports[`Bronnen, list by list > members ?kamer=EK&from=2020-01-01 > requests 1`] = `
+exports[`Bronnen, list by list > members ?kamer=EK&van=2020-01-01 > requests 1`] = `
 {
   "/api/factions": [
     {
@@ -1746,7 +1746,7 @@ exports[`Bronnen, list by list > members ?kamer=EK&from=2020-01-01 > requests 1`
 }
 `;
 
-exports[`Bronnen, list by list > members ?kamer=EK&from=2020-01-01 > view 1`] = `
+exports[`Bronnen, list by list > members ?kamer=EK&van=2020-01-01 > view 1`] = `
 {
   "facetten": "Fractie zetels D66 26 VVD 22 PRO 20 PVV 19 CDA 18 JA21 9 FVD 7 Groep Markuszower 7 Alle 17 Wis alle filters",
   "filters": [
@@ -1823,7 +1823,7 @@ exports[`Bronnen, list by list > ministers ? > view 1`] = `
 }
 `;
 
-exports[`Bronnen, list by list > ministers ?cabinet=jetten&post=minister&q=a&from=2026-01-01 > requests 1`] = `
+exports[`Bronnen, list by list > ministers ?kabinet=jetten&post=minister&q=a&van=2026-01-01 > requests 1`] = `
 {
   "/api/cabinets": [
     {},
@@ -1842,7 +1842,7 @@ exports[`Bronnen, list by list > ministers ?cabinet=jetten&post=minister&q=a&fro
 }
 `;
 
-exports[`Bronnen, list by list > ministers ?cabinet=jetten&post=minister&q=a&from=2026-01-01 > view 1`] = `
+exports[`Bronnen, list by list > ministers ?kabinet=jetten&post=minister&q=a&van=2026-01-01 > view 1`] = `
 {
   "facetten": "Weergave Eén kabinetNaast elkaarKabinet jetten Functie Minister-president 1 Minister 3 Staatssecretaris 1 Wis alle filters",
   "filters": [

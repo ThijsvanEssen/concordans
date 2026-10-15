@@ -4,7 +4,7 @@
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import IconKnop from '$lib/components/ui/IconKnop.svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { FILTER_GROUP_VORM } from '$lib/bron/vormen';
 	// The filter sheet: bronnen, verbindingen, lid, rechter, periode, betrouwbaarheid and
@@ -164,7 +164,7 @@
 			<span class="sheet__count">{formatCount(count)} van {formatCount(total)}</span>
 			<span class="sheet__space"></span>
 			<TekstLink onclick={() => (draft = EMPTY_FILTER)}>Wis alles</TekstLink>
-			<IconKnop label="Sluiten" onclick={onClose}>×</IconKnop>
+			<IconButton label="Sluiten" onclick={onClose}>×</IconButton>
 		</div>
 
 		<div class="sheet__body">
@@ -205,7 +205,7 @@
 						>
 					</div>
 				{:else}
-					<Periode van={draft.van ?? ''} tot={draft.tot ?? ''} onChange={periode} />
+					<Periode from={draft.van ?? ''} to={draft.tot ?? ''} onChange={periode} />
 					<p class="period">
 						<TekstLink onclick={() => (dateMode = true)}>Of geldend op een datum</TekstLink>
 					</p>
@@ -303,7 +303,7 @@
 						{ waarde: 'afgeleid', label: 'Matig of laag' }
 					]}
 					waarde={draft.betrouwbaarheid ?? 'alles'}
-					onKies={(w) => setBetrouwbaarheid(w === 'alles' ? null : (w as Betrouwbaarheid))}
+					onSelect={(w) => setBetrouwbaarheid(w === 'alles' ? null : (w as Betrouwbaarheid))}
 				/>
 			</div>
 

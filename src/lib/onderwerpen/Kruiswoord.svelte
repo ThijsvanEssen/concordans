@@ -27,8 +27,8 @@
 		vakken,
 		rijen,
 		keuze,
-		onKies,
-		bezig = {},
+		onSelect,
+		loading = {},
 		failed = new Set(),
 		ongeteld = {},
 		uit = new Set(),
@@ -40,9 +40,9 @@
 		vakken: Vak[];
 		rijen: Map<Vak, Rij>;
 		keuze: Keuze | null;
-		onKies: (k: Keuze | null) => void;
+		onSelect: (k: Keuze | null) => void;
 		/** A column still counting: its empty cells wait instead of reading as none. */
-		bezig?: Partial<Record<Kolom, boolean>>;
+		loading?: Partial<Record<Kolom, boolean>>;
 		/** Columns whose count did not come: not counted, never a 0, and a line under the grid. */
 		failed?: ReadonlySet<Kolom>;
 		/** Per column the last month or week not counted (the feed's pages ran out before). */
@@ -79,7 +79,7 @@
 	const label = (v: Vak, kort: boolean) =>
 		v.includes('-W') ? `week ${Number(v.slice(6))}` : maandNaam(`${v}-01`, kort);
 	const gekozen = (k: Kolom, v: Vak) => keuze?.kolom === k && keuze.vak === v;
-	const kies = (k: Kolom, v: Vak) => onKies(gekozen(k, v) ? null : { kolom: k, vak: v });
+	const kies = (k: Kolom, v: Vak) => onSelect(gekozen(k, v) ? null : { kolom: k, vak: v });
 	const heeftNieuw = $derived([...rijen.values()].some((r) => kolommen.some((c) => r[c.k].nieuw)));
 	const groepen = $derived(
 		kolommen.reduce<{ label: string; van: number; n: number }[]>((g, c, i) => {
@@ -134,7 +134,7 @@
 				{:else if failed.has(c.k)}
 					<span class="som-groot" role="gridcell" title="Niet geteld" aria-label="Niet geteld"
 					></span>
-				{:else if bezig[c.k]}
+				{:else if loading[c.k]}
 					<span class="som-groot" role="gridcell" aria-label="Laden">…</span>
 				{:else if t > 0}
 					<button
@@ -171,7 +171,7 @@
 							<span class="t" role="gridcell" title="Niet geteld" aria-label="Niet geteld"></span>
 						{:else if failed.has(c.k)}
 							<span class="t" role="gridcell" title="Niet geteld" aria-label="Niet geteld"></span>
-						{:else if bezig[c.k]}
+						{:else if loading[c.k]}
 							<span class="t" role="gridcell">…</span>
 						{:else if t > 0}
 							<button
@@ -216,7 +216,7 @@
 								>
 							{:else if isOngeteld(c.k, v)}
 								<span class="cel ongeteld" role="gridcell" title="Niet geteld"></span>
-							{:else if bezig[c.k]}
+							{:else if loading[c.k]}
 								<span class="cel wacht" role="gridcell" aria-label="Laden">…</span>
 							{:else}
 								<span class="cel leeg" role="gridcell" aria-label="Geen"></span>

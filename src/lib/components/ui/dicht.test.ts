@@ -20,7 +20,7 @@ describe('the keys of what opens and closes', () => {
 		const sectie = () =>
 			render(Sectie, {
 				props: {
-					titel: 'Amendementen en moties',
+					title: 'Amendementen en moties',
 					sleutel: FOLD.amendments,
 					id: FOLD.amendments,
 					children: tekst('de regeling')

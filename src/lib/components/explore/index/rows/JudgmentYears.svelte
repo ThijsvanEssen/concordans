@@ -38,8 +38,8 @@
 					aria-pressed={on}
 					onclick={() =>
 						ctx.patch({
-							from: on ? null : `${year}-01-01`,
-							to: on ? null : `${year}-12-31`
+							van: on ? null : `${year}-01-01`,
+							tot: on ? null : `${year}-12-31`
 						})}
 				></button>
 			{/each}

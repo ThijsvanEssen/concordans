@@ -163,7 +163,7 @@
 							class="stoel"
 							class:tegen={v === 'tegen'}
 							class:overig={v === 'other'}
-							class:dim={hovered !== null && hovered !== name}
+							class:is-dim={hovered !== null && hovered !== name}
 							fill={v === 'tegen' ? undefined : vullingVan(uid, name, i, fillOf.get(name) ?? null)}
 							style:stroke={v === 'tegen'
 								? kleurVan('EK', name, i, fillOf.get(name) ?? null)
@@ -265,7 +265,7 @@
 	.cel {
 		fill: transparent;
 	}
-	rect.dim {
+	rect.is-dim {
 		opacity: 0.22;
 	}
 	/* A fractie with neither side (no vote, no cabinet): faded, as in the other hall. */

@@ -43,7 +43,7 @@
 	const tot = $derived(record ? record.to_date : textOf(p.to_date));
 
 	const listHref = (kind: 'ministers' | 'commitments', key: string) =>
-		indexHref(kind, { cabinet: key });
+		indexHref(kind, { kabinet: key });
 </script>
 
 <ReaderFrame state={cabinet.state} what="Kabinet" retry={cabinet.retry}>

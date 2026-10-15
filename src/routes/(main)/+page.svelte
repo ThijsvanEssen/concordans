@@ -10,7 +10,7 @@
 	import { bronHref } from '$lib/bron/href';
 	import type { Collection } from '$lib/vocabulary';
 	import { atomHref, dayLabel, CLOSE_VOTE } from '$lib/components/actueel/feed';
-	import { FEW_VOTES, timelineOf, type TimelineLine } from '$lib/components/actueel/timeline';
+	import { FEW_VOTES, timelineOf, type TimelineLine } from '$lib/components/actueel/home-stream';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
 	import { inhoudVan } from '$lib/components/open/rij-inhoud';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
@@ -185,7 +185,7 @@
 						...SCOPES.map((sc) => ({ waarde: sc.id, label: sc.label }))
 					]}
 					waarde={scope ?? 'alles'}
-					onKies={(w) => (scope = w === 'alles' ? null : w)}
+					onSelect={(w) => (scope = w === 'alles' ? null : w)}
 					klein={smal.current}
 				>
 					{#snippet voor(w)}

@@ -4,10 +4,10 @@
 	// controls on one line, Zoeken, Periode and Kamer, each 32 px high, its label above its
 	// left edge. On a phone they stand under each other, the width of the page. The facets
 	// hold the rest.
+	import type { Option } from './option';
 	import Periode from './Periode.svelte';
 	import Keuze from './Keuze.svelte';
 
-	type Optie = { waarde: string; label: string; titel?: string };
 	let {
 		zoek = null,
 		periode = null,
@@ -31,7 +31,7 @@
 			tot: string;
 			onChange: (van: string, tot: string) => void;
 		} | null;
-		kamer?: { waarde: string; opties: Optie[]; onKies: (v: string) => void } | null;
+		kamer?: { waarde: string; opties: Option[]; onKies: (v: string) => void } | null;
 	} = $props();
 	const uid = $props.id();
 </script>
@@ -65,8 +65,8 @@
 		<div class="vak vak--periode">
 			<span class="kop" aria-hidden="true">{periode.label ?? 'Periode'}</span>
 			<Periode
-				van={periode.van}
-				tot={periode.tot}
+				from={periode.van}
+				to={periode.tot}
 				label={periode.label ?? 'Periode'}
 				klein={false}
 				onChange={periode.onChange}
@@ -76,7 +76,13 @@
 	{#if kamer}
 		<div class="vak vak--kamer">
 			<span class="kop" aria-hidden="true">Kamer</span>
-			<Keuze vol label="Kamer" waarde={kamer.waarde} opties={kamer.opties} onKies={kamer.onKies} />
+			<Keuze
+				vol
+				label="Kamer"
+				waarde={kamer.waarde}
+				opties={kamer.opties}
+				onSelect={kamer.onKies}
+			/>
 		</div>
 	{/if}
 </div>

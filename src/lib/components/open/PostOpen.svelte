@@ -21,8 +21,8 @@
 		naam,
 		partij,
 		functie,
-		van,
-		tot,
+		from: van,
+		to: tot,
 		dossiers,
 		wetsvoorstellen,
 		geteld = true,
@@ -33,8 +33,8 @@
 		naam: string;
 		partij: string | null;
 		functie: string;
-		van: string | null;
-		tot: string | null;
+		from: string | null;
+		to: string | null;
 		dossiers: number;
 		wetsvoorstellen: number;
 		/** False for a short stand-in beside a longer post: the API counts per person. */
@@ -117,13 +117,13 @@
 
 <OpenRij
 	{zin}
-	laden={post.state.status === 'loading'}
+	loading={post.state.status === 'loading'}
 	boven={failure}
 	groepen={[{ id: 'recent', titel: 'Recent', regels }]}
 	links={[
 		{
 			label: tz ? `${tz.total} toezeggingen, ${tz.open} openstaand` : 'Toezeggingen',
-			href: toezeggingenHref ?? indexHref('commitments', { member: memberKey })
+			href: toezeggingenHref ?? indexHref('commitments', { persoon: memberKey })
 		},
 		...(record ? [{ label: `${record.signed} stukken ondertekend` }] : []),
 		...(geteld

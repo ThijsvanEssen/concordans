@@ -9,7 +9,7 @@
 	import PlaatsMenu, { placeMarker } from '$lib/components/articles/PlaatsMenu.svelte';
 	import { blockClick } from '$lib/actions/klik';
 	import CitedText from '$lib/components/articles/CitedText.svelte';
-	import { citeItems } from '$lib/components/ui/cite';
+	import { citeItems } from '$lib/components/ui/cite-items';
 	import { overwegingVan } from '$lib/map/inhoud';
 	import { overwegingCitaat } from '$lib/text/judgment-cite';
 	import type { Uitspraak } from './overweging';
@@ -85,7 +85,7 @@
 					{#if menu && menu.id === b.id && forms}
 						<PlaatsMenu
 							anker={menu.anker}
-							titel={forms.kort}
+							title={forms.kort}
 							cite={citeItems(forms, forms.link)}
 							tekst={() => b.body}
 							bewaar={forms.bewaar}

@@ -26,7 +26,7 @@
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import IconKnop from '$lib/components/ui/IconKnop.svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import IndexFacets, { activeFilters, type FacetGroup } from './index/IndexFacets.svelte';
 	import type { FacetsApart } from './index/faceted';
 	import {
@@ -44,9 +44,9 @@
 	} from './index/categories';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { formatCount } from '$lib/text/getal';
-	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
+	import { navigate, withParams } from '$lib/util/address';
 	import { LISTS } from './index/lists';
-	import { FILTER_PARAMS, readParams } from './index/lists/params';
+	import { INDEX_FILTER_PARAMS, readParams, type IndexPatch } from './index/lists/params';
 	import {
 		PAGE,
 		forParams,
@@ -65,15 +65,15 @@
 	const kamer = $derived(p.kamer);
 
 	/** A filter is a step in the history; the search text and the open row replace it. */
-	const patchUrl = (patch: ParamPatch, replaceState = false) =>
+	const patchUrl = (patch: IndexPatch, replaceState = false) =>
 		navigate(withParams(page.url, patch), { step: !replaceState });
 
 	// A tab drops the filters and the open row, so a stage filter of dossiers does not leak into decisions.
-	const tabHref = (k: IndexCategory, filters: ParamPatch = {}) =>
+	const tabHref = (k: IndexCategory, filters: IndexPatch = {}) =>
 		withParams(
 			page.url,
 			{ mode: 'index', kind: k, ...filters },
-			{ clear: [...FILTER_PARAMS, 'open'] }
+			{ clear: [...INDEX_FILTER_PARAMS, 'open'] }
 		);
 
 	// ── Search text ─────────────────────────────────────────────────────────
@@ -98,7 +98,7 @@
 	const clearFilters = () =>
 		patchUrl(
 			Object.fromEntries(
-				FILTER_PARAMS.filter((name) => name !== 'sort' && name !== 'dir').map((name) => [
+				INDEX_FILTER_PARAMS.filter((name) => name !== 'sort' && name !== 'dir').map((name) => [
 					name,
 					null
 				])
@@ -402,7 +402,7 @@
 					unit: period.unit,
 					from: p.from,
 					to: p.to,
-					onChange: (from, to) => patchUrl({ from: from || null, to: to || null })
+					onChange: (from, to) => patchUrl({ van: from || null, tot: to || null })
 				} satisfies FacetGroup)
 			: null;
 	});
@@ -479,7 +479,7 @@
 	// two, and no chip above the list.
 	/** Another Kamer: its own list, without the filters that belonged to the other. */
 	const kiesKamer = (c: Chamber) =>
-		patchUrl({ kamer: c === 'TK' ? null : c, open: null, party: null });
+		patchUrl({ kamer: c === 'TK' ? null : c, open: null, fractie: null });
 	const widen = $derived(list.widen?.(p) ?? null);
 	const after = $derived(list.after?.(p) ?? null);
 
@@ -615,15 +615,15 @@
 									label="Volgorde"
 									waarde={sortDef.id}
 									opties={sorts.map((o) => ({ waarde: o.id, label: o.label }))}
-									onKies={(v) => patchUrl({ sort: v || null })}
+									onSelect={(v) => patchUrl({ sort: v || null })}
 								/>
 								{#if dir}
-									<IconKnop
+									<IconButton
 										label={dir === 'asc'
 											? 'Oplopend; sorteer aflopend'
 											: 'Aflopend; sorteer oplopend'}
 										onclick={() => patchUrl({ dir: dir === 'asc' ? 'desc' : 'asc' })}
-										>{dir === 'asc' ? '↑' : '↓'}</IconKnop
+										>{dir === 'asc' ? '↑' : '↓'}</IconButton
 									>
 								{/if}
 							</span>

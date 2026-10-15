@@ -5,7 +5,7 @@ import type { InstrumentMeta } from '$lib/api/instrument-cache';
 import { lawIdOf, type GraphNode } from '$lib/graph/types';
 import { describeBron, UNNAMED } from '$lib/bron/describe';
 import { decisionOutcome } from '$lib/components/explore/index/decision-kind';
-import { isEkDecision } from '$lib/components/parliamentary/timeline-kind';
+import { isEkDecision } from '$lib/components/parliamentary/ek-decision';
 import { chamberName } from '$lib/components/parliamentary/chamber';
 import { langeDatum } from '$lib/text/datum';
 import { bwCode } from '$lib/text/bw';

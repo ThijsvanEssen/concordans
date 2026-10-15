@@ -2,8 +2,8 @@
 // keeps what is chosen; the panel open or not; a map someone shared (?map=) until it is kept
 // or put aside.
 import {
-	samen,
-	sleutelVan,
+	withItems,
+	itemKey,
 	verschuif,
 	type Gedeeld,
 	type GroepNotities,
@@ -89,12 +89,12 @@ class Kaarten {
 		this.#stand.mappen.find((m) => m.id === this.#stand.actief) ?? this.#stand.mappen[0]
 	);
 	items = $derived(this.actief.items);
-	sleutels = $derived(new Set(this.items.map(sleutelVan)));
+	sleutels = $derived(new Set(this.items.map(itemKey)));
 
-	heeft = (i: Pick<MapItem, 'id' | 'at'>) => this.sleutels.has(sleutelVan(i));
+	heeft = (i: Pick<MapItem, 'id' | 'at'>) => this.sleutels.has(itemKey(i));
 	/** The item as the active map holds it, with its note. */
 	vind = (i: Pick<MapItem, 'id' | 'at'>) =>
-		this.items.find((x) => sleutelVan(x) === sleutelVan(i)) ?? null;
+		this.items.find((x) => itemKey(x) === itemKey(i)) ?? null;
 
 	#bewaar() {
 		try {
@@ -116,29 +116,29 @@ class Kaarten {
 	// ── Items in the active map ───────────────────────────────────────────────
 	/** Kept, or no longer: what a box beside a lid or a row does. */
 	wissel(i: MapItem) {
-		const k = sleutelVan(i);
+		const k = itemKey(i);
 		this.#werk((m) => ({
-			items: m.items.some((x) => sleutelVan(x) === k)
-				? m.items.filter((x) => sleutelVan(x) !== k)
+			items: m.items.some((x) => itemKey(x) === k)
+				? m.items.filter((x) => itemKey(x) !== k)
 				: [...m.items, i]
 		}));
 	}
 	weg(i: Pick<MapItem, 'id' | 'at'>) {
-		const k = sleutelVan(i);
-		this.#werk((m) => ({ items: m.items.filter((x) => sleutelVan(x) !== k) }));
+		const k = itemKey(i);
+		this.#werk((m) => ({ items: m.items.filter((x) => itemKey(x) !== k) }));
 	}
 	wis() {
 		this.#werk(() => ({ items: [] }));
 	}
 	notitie(i: Pick<MapItem, 'id' | 'at'>, tekst: string) {
-		const k = sleutelVan(i);
+		const k = itemKey(i);
 		const t = tekst.trim();
 		this.#werk((m) => ({
-			items: m.items.map((x) => (sleutelVan(x) === k ? { ...x, notitie: t || null } : x))
+			items: m.items.map((x) => (itemKey(x) === k ? { ...x, notitie: t || null } : x))
 		}));
 	}
 	schuif(i: Pick<MapItem, 'id' | 'at'>, richting: -1 | 1) {
-		this.#werk((m) => ({ items: verschuif(m.items, sleutelVan(i), richting, m.volgorde) }));
+		this.#werk((m) => ({ items: verschuif(m.items, itemKey(i), richting, m.volgorde) }));
 	}
 	ordening(v: Map['volgorde']) {
 		this.#werk(() => ({ volgorde: v }));
@@ -205,7 +205,7 @@ class Kaarten {
 	/** Into the active map, without doubles; its notes where the map has none. */
 	voegToe(g: Gedeeld) {
 		this.#werk((m) => ({
-			items: samen(m.items, g.items),
+			items: withItems(m.items, g.items),
 			notitie: m.notitie || g.notitie,
 			groepNotities: { ...g.groepNotities, ...m.groepNotities }
 		}));

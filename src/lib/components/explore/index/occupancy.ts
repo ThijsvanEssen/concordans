@@ -9,7 +9,7 @@ import type { Schema } from '$lib/api/types';
 export type CabinetDetail = Schema<'CabinetDetailDTO'>;
 export type CabinetPost = Schema<'CabinetSeatDTO'>;
 export type SeatPost = Schema<'CabinetPostDTO'>;
-export type Phase = Schema<'CabinetPhaseDTO'>;
+type CabinetPhase = Schema<'CabinetPhaseDTO'>;
 
 const parse = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
 
@@ -74,22 +74,22 @@ const PHASE_LABEL: Record<string, string> = {
 	dubbel_demissionair: 'Dubbel demissionair',
 	missionair: 'Weer missionair'
 };
-const changes = (p: Phase) => !!p.kind && p.kind !== 'in_functie' && p.kind !== 'formatie';
+const changes = (p: CabinetPhase) => !!p.kind && p.kind !== 'in_functie' && p.kind !== 'formatie';
 
 /** A phase's name, as the axis of the posts and of the seats writes it. */
-export const phaseLabel = (p: Phase) => PHASE_LABEL[p.kind ?? ''] ?? p.label ?? '';
+export const phaseLabel = (p: CabinetPhase) => PHASE_LABEL[p.kind ?? ''] ?? p.label ?? '';
 
 /** The phases that change how a cabinet governs, from their first day: for the seats. */
-export const phaseStarts = (phases: readonly Phase[]): { van: string; label: string }[] =>
+export const phaseStarts = (phases: readonly CabinetPhase[]): { van: string; label: string }[] =>
 	phases
 		.filter((p) => changes(p) && p.from_date)
 		.map((p) => ({ van: p.from_date!, label: phaseLabel(p) }));
 
 /** The phases that change how a cabinet governs, within its term: demissionair and after. */
 export function bandsOf(
-	phases: readonly Phase[],
+	phases: readonly CabinetPhase[],
 	term: Term
-): { phase: Phase; from: number; to: number }[] {
+): { phase: CabinetPhase; from: number; to: number }[] {
 	return phases
 		.filter(changes)
 		.map((phase) => ({

@@ -7,15 +7,15 @@
 
 	let {
 		periode,
-		begin,
-		eind,
+		from: begin,
+		to: eind,
 		plaats,
 		fasen = [],
 		lijnen = false
 	}: {
 		periode: Periode;
-		begin: string;
-		eind: string;
+		from: string;
+		to: string;
 		plaats: 'boven' | 'onder';
 		fasen?: { at: number; label: string }[];
 		/** Streepjes als lijnen door de figuur erboven (kabinetten): de hoogte geeft de ouder. */

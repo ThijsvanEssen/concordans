@@ -159,7 +159,7 @@
 								on={o.on}
 								onToggle={o.onClick}
 								count={hidden ? null : o.count}
-								bezig={pending && o.count !== undefined}
+								loading={pending && o.count !== undefined}
 								swatch={o.swatch}
 								indent={o.indent}
 							/>
@@ -190,18 +190,18 @@
 					tekst={sel.value
 						? (sel.options.find((o) => o.value === sel.value)?.label ?? sel.value)
 						: sel.all}
-					onKies={(v) => sel.onChange(v)}
+					onSelect={(v) => sel.onChange(v)}
 				/>
 			{:else if g.kind === 'range'}
 				<!-- The same period in every list with dates ($lib/components/ui/Periode). -->
-				<Periode van={g.from} tot={g.to} label={g.label} onChange={g.onChange} />
+				<Periode from={g.from} to={g.to} label={g.label} onChange={g.onChange} />
 			{:else if g.kind === 'keuze'}
 				{@const k = g}
 				<Keuze
 					vol
 					label={k.label}
 					waarde={k.value}
-					onKies={k.onChange}
+					onSelect={k.onChange}
 					opties={k.options.map((o) => ({ waarde: o.value, label: o.label, titel: o.titel }))}
 				/>
 			{:else if g.kind === 'text'}

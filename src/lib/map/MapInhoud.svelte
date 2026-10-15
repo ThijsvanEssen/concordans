@@ -20,7 +20,7 @@
 	import { getArticleDetail, getArticleDetailByKey } from '$lib/api/articles';
 	import { instrumentMetaStore, recordArticleLaw } from '$lib/api/instrument-cache';
 	import { page } from '$app/state';
-	import { permalink } from '$lib/bron/anchor';
+	import { permalink } from '$lib/bron/landing';
 	import { anchorLabel } from '$lib/text/anchor';
 	import { articleCitation } from '$lib/text/cite';
 	import { getDocument, getNodeFirst } from '$lib/api/records';

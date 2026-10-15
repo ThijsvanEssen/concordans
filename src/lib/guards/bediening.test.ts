@@ -26,16 +26,16 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 		expect(overtreders(meer)).toEqual([]);
 	});
 
-	it('frames a button only as the Knop (.btn, is-groot) or the IconKnop', () => {
+	it('frames a button only as the Knop (.btn, is-groot) or the IconButton', () => {
 		// A frame in the control's face, or a frame and a pointer, is a button (a field aside);
-		// its one form is in lib/styles/basis.css and IconKnop.
+		// its one form is in lib/styles/basis.css and IconButton.
 		const knop = (r: { selector: string; body: string }) =>
 			/border:\s*1px solid/.test(r.body) &&
 			/var\(--font-ui\)|cursor:\s*pointer/.test(r.body) &&
 			!/(input|textarea|select|kbd)\b[^,]*$/.test(r.selector);
 		const eigen: Uitzondering[] = [
 			{ pad: 'lib/styles/basis.css', reden: 'the Knop itself' },
-			{ pad: 'lib/components/ui/IconKnop.svelte', reden: 'the one icon button' },
+			{ pad: 'lib/components/ui/IconButton.svelte', reden: 'the one icon button' },
 			{
 				pad: 'lib/components/layout/TopBar.svelte',
 				reden: 'the search in the bar looks as the field it opens'
@@ -106,7 +106,7 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 	it('gives the actions of a row one look: two fixed places, a glyph without a frame', () => {
 		// Thijs, 10 Oct: "toch wat raar met de verschillen in hoe ze weergegeven worden".
 		const t = bron('lib/components/ui/RijActies.svelte');
-		expect(t).not.toMatch(/IconKnop/);
+		expect(t).not.toMatch(/IconButton/);
 		expect(t.match(/<span class="plek">/g)).toHaveLength(2);
 		expect(regels(t).some((r) => /(?<![-\w])border:\s*(?!\s|0)/.test(r.body))).toBe(false);
 		// Where a verbinding comes from is words in the row's meta line, not a box over the

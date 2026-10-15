@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { redundantAnchors, type AnchorInput } from './anchor';
+import { redundantAnchors, type AnchorInput } from './redundant-anchors';
 
 // Art. 3:4 and 3:2 Awb chosen together: the Awb is the bron they share, drawn as an
 // anchor with a PART_OF line from each, while both articles are already in its hull.

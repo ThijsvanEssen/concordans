@@ -215,6 +215,52 @@ describe('nothing left over', () => {
 		expect(vondsten(found, TEST_HOOKS)).toEqual([]);
 	});
 
+	it('exports a name from one module only, fewer shared over time (code-eenvoud F104)', () => {
+		// Two modules exporting one name let auto-import take the wrong one. These still do; a
+		// name renamed to what it is comes off the list.
+		const NOG = [
+			'Box',
+			'Bucket',
+			'Citation',
+			'Deel',
+			'End',
+			'GraphEdge',
+			'GraphNode',
+			'Mode',
+			'PAGE_SIZE',
+			'PREVIEW_CHARS',
+			'Regel',
+			'Regeling',
+			'Richting',
+			'Rij',
+			'Row',
+			'Stuk',
+			'Uitkomst',
+			'Zin',
+			'countLine',
+			'feedQuery',
+			'kolomVan',
+			'matches',
+			'metStrekking',
+			'placeOf',
+			'plekVan',
+			'soortVan',
+			'stemmingNaam',
+			'uitkomstVan',
+			'uitslagVan',
+			'vullingVan',
+			'wijzigingenVan'
+		];
+		const modules = new Map<string, Set<string>>();
+		for (const { path, text } of BRONNEN) {
+			if (!/\.(ts|svelte)$/.test(path) || NOT_A_MODULE.test(path)) continue;
+			for (const [, name] of text.matchAll(EXPORT))
+				modules.set(name, (modules.get(name) ?? new Set()).add(path));
+		}
+		const shared = [...modules].filter(([, paths]) => paths.size > 1).map(([name]) => name);
+		expect(shared.sort()).toEqual(NOG.sort());
+	});
+
 	it('gives every name one address: no re-export (code-eenvoud F83)', () => {
 		const reExport =
 			/^\s*export\s*(?:type\s*)?(?:\{[^}]*\w[^}]*\}|\*)(?:\s*as\s+\w+)?\s*(?:from\b|;|$)/m;

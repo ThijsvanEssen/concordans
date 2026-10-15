@@ -44,7 +44,7 @@
 		tekst=""
 		opties={kaart.mappen.map((m) => ({ waarde: m.id, label: m.naam }))}
 		waarde={kaart.actief.id}
-		onKies={(id) => kaart.bewaarIn(id, item)}
+		onSelect={(id) => kaart.bewaarIn(id, item)}
 	>
 		{#snippet onder(dicht)}
 			<button

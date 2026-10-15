@@ -56,7 +56,7 @@
 </script>
 
 {#if key}
-	<NavKolom label="Inhoud" titel={title} onder={kind ? capitalize(kind) : null}>
+	<NavKolom label="Inhoud" {title} onder={kind ? capitalize(kind) : null}>
 		{#if loading && sections.length === 0}
 			<p class="nav-kolom__note">Laden…</p>
 		{:else if error}

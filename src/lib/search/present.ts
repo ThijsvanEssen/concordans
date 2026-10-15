@@ -16,14 +16,14 @@ import type { Chamber } from '$lib/components/parliamentary/chamber';
 
 type Hit = Schema<'SearchResultItem'>;
 
-export type Segment = { text: string; mark: boolean };
+type HitSegment = { text: string; mark: boolean };
 
 type Presented = {
 	title: string;
 	/** Right of the title, in the small face: the law, the ECLI, the dossier number. */
 	context: string;
 	/** A line of the text, or null when the API gives none worth reading. */
-	snippet: Segment[] | null;
+	snippet: HitSegment[] | null;
 	/** The Kamer of a stuk: the same kind of stuk exists in both. */
 	chamber?: Chamber;
 };
@@ -40,7 +40,7 @@ export const groupLabel = (kind: Collection): string =>
 	kind === 'members' ? 'Leden' : bronPlural(kind);
 
 /** The hit's name, never its key ($lib/bron/menselijk). */
-const naamVan = (hit: Hit): string =>
+const nameOf = (hit: Hit): string =>
 	menselijkeNaam({
 		collection: hit.collection,
 		key: hit.key,
@@ -64,7 +64,7 @@ const extras = (hit: Hit, name: string): string[] => {
 };
 
 /** `text` in pieces, the words of `query` (three letters or more) marked. */
-export function marked(text: string, query: string): Segment[] {
+export function marked(text: string, query: string): HitSegment[] {
 	const words = query
 		.split(/\s+/)
 		.filter((w) => w.length >= 3)
@@ -95,7 +95,7 @@ export function around(text: string, query: string, lead = 40): string {
  * van Zuid-Holland, verweerder` for a party; the words searched marked in the name. Null
  * where the hit was not found by a person.
  */
-function persoonVan(hit: Hit, query: string): Segment[] | null {
+function personOf(hit: Hit, query: string): HitSegment[] | null {
 	const p = hit.extra?.person as { name?: unknown; role?: unknown; party?: unknown } | undefined;
 	const name = typeof p?.name === 'string' ? p.name.trim() : '';
 	if (!name) return null;
@@ -190,7 +190,7 @@ export function presentHit(hit: Hit, query: string, neighbours: readonly Hit[] =
 				title: `${names.length ? `${when} (${names.join(', ')})` : when || ecli}${translation}`,
 				context: ecli,
 				snippet:
-					persoonVan(hit, query) ??
+					personOf(hit, query) ??
 					(snippet && snippet !== ecli ? marked(around(snippet, query), query) : null)
 			};
 		}
@@ -201,7 +201,7 @@ export function presentHit(hit: Hit, query: string, neighbours: readonly Hit[] =
 				current_phase: typeof current_phase === 'string' ? current_phase : null
 			});
 			const kort = citeertitel(hit);
-			const lang = naamVan(hit);
+			const lang = nameOf(hit);
 			return {
 				title: kort ?? lang,
 				context: [extra(hit, 'number') && kamerstukNummer(extra(hit, 'number')), status]
@@ -215,7 +215,7 @@ export function presentHit(hit: Hit, query: string, neighbours: readonly Hit[] =
 			// The name of a Kamerstuk is its dossier's title, the heading it stands under; its
 			// kind and number tell stukken apart. A stuk outside a dossier (a stenogram) has
 			// its own name: `Stikstof en natuur`, with its kind beside it.
-			const kind = extra(hit, 'kind') || naamVan(hit);
+			const kind = extra(hit, 'kind') || nameOf(hit);
 			const chamber = chamberOfHit(hit);
 			// The day it was published (BE-1): stukken of one kind differ by it.
 			const date = korteDatum(extra(hit, 'date'));
@@ -240,7 +240,7 @@ export function presentHit(hit: Hit, query: string, neighbours: readonly Hit[] =
 			// Regelingen of one title differ by their kind and day (UX-toets 0.79.47, #53):
 			// "Beleidsregel, 27 apr. 2007"; the BWB id only where those are the same too, or
 			// where the API gives neither.
-			const title = naamVan(hit);
+			const title = nameOf(hit);
 			const meta = instrumentMeta(hit);
 			const same =
 				meta !== '' &&
@@ -248,7 +248,7 @@ export function presentHit(hit: Hit, query: string, neighbours: readonly Hit[] =
 					(n) =>
 						n.id !== hit.id &&
 						n.collection === 'instruments' &&
-						naamVan(n) === title &&
+						nameOf(n) === title &&
 						instrumentMeta(n) === meta
 				);
 			return {
@@ -258,13 +258,13 @@ export function presentHit(hit: Hit, query: string, neighbours: readonly Hit[] =
 			};
 		}
 		case 'members':
-			return { title: naamVan(hit), context: extra(hit, 'party'), snippet: null };
+			return { title: nameOf(hit), context: extra(hit, 'party'), snippet: null };
 		case 'commitments': {
 			// A toezegging by its text, with its number and the day it was made: "TZ202609-117,
 			// 29 sep. 2026", and its status where it is not open.
 			const status = extra(hit, 'status');
 			return {
-				title: naamVan(hit),
+				title: nameOf(hit),
 				context: [
 					extra(hit, 'number'),
 					korteDatum(extra(hit, 'made_on')),
@@ -278,7 +278,7 @@ export function presentHit(hit: Hit, query: string, neighbours: readonly Hit[] =
 		case 'decisions': {
 			// A vote by what it was about, with its outcome and day as the source has them:
 			// "Wet toekomstbestendige huurcommissie (36.791)", "aangenomen, 29 sep. 2026".
-			const name = naamVan(hit);
+			const name = nameOf(hit);
 			const subject = extra(hit, 'subject') || name.replace(/^[^:]*\d{4}-\d{2}-\d{2}:\s*/, '');
 			const passed = hit.extra?.passed;
 			return {
@@ -298,13 +298,13 @@ export function presentHit(hit: Hit, query: string, neighbours: readonly Hit[] =
 			const from = korteDatum(extra(hit, 'from_date'));
 			const to = korteDatum(extra(hit, 'to_date'));
 			return {
-				title: naamVan(hit),
+				title: nameOf(hit),
 				context: from ? (to ? `${from} tot ${to}` : `sinds ${from}`) : '',
 				snippet: null
 			};
 		}
 	}
-	return { title: naamVan(hit), context: '', snippet: null };
+	return { title: nameOf(hit), context: '', snippet: null };
 }
 
 /** The dossier a stuk belongs to, as its heading reads: `Kamerstuk 32621 Wet nadeelcompensatie …`. */
@@ -366,16 +366,16 @@ export function orderGroups<G extends { kind: Collection; hits: Hit[] }>(groups:
 const IDENTIFIER_SCORE = 1;
 
 /** How much lower a law's or an article's best hit may score and still come first. */
-const RECHT_MARGE = 0.25;
-const RECHT: readonly Collection[] = ['articles', 'instruments'];
+const LAW_MARGIN = 0.25;
+const LAW: readonly Collection[] = ['articles', 'instruments'];
 
 /**
  * The one hit above all groups (Thijs, 8 Oct: "Beste treffer"): an identifier where one
  * matches; else an article or a law where its best hit scores nearly as well as the best of
- * all (within RECHT_MARGE), so "huurverhoging" leads with the rule and not with Kamervragen;
+ * all (within LAW_MARGIN), so "huurverhoging" leads with the rule and not with Kamervragen;
  * else the best hit of all. None for a single group, which says it already.
  */
-export function besteTreffer<G extends { kind: Collection; hits: Hit[] }>(
+export function bestHit<G extends { kind: Collection; hits: Hit[] }>(
 	groups: G[]
 ): { kind: G['kind']; hit: Hit } | null {
 	if (groups.length < 2) return null;
@@ -387,37 +387,37 @@ export function besteTreffer<G extends { kind: Collection; hits: Hit[] }>(
 		xs.reduce<(typeof all)[number] | null>((m, x) => (!m || score(x) > score(m) ? x : m), null);
 	const id = all.find((x) => score(x) >= IDENTIFIER_SCORE);
 	if (id) return id;
-	const recht = first(RECHT.flatMap((k) => all.filter((x) => x.kind === k && score(x) > 0)));
-	if (recht && score(recht) >= top - RECHT_MARGE) return recht;
+	const law = first(LAW.flatMap((k) => all.filter((x) => x.kind === k && score(x) > 0)));
+	if (law && score(law) >= top - LAW_MARGIN) return law;
 	return first(orderGroups(groups).flatMap((g) => all.filter((x) => x.kind === g.kind)));
 }
 
 /** A place in the list of a search: a group of hits, the Beste treffer, or a group still coming. */
-export type Vak<K, H> = { kind: K; hits: H[]; beste: boolean; wacht: boolean };
+export type Slot<K, H> = { kind: K; hits: H[]; best: boolean; pending: boolean };
 
 /**
  * The groups of a search in one order, whichever answer comes first (UX-toets 0.79.47, #52):
  * the Beste treffer on top (out of its own group), then each kind in `order` that has hits,
- * or whose answer is still coming (`wacht`, an empty place with its heading). A group that
+ * or whose answer is still coming (`pending`, an empty place with its heading). A group that
  * comes later takes its own place and moves none of the others.
  */
-export function vakken<K, H extends { id: string }>(
+export function slots<K, H extends { id: string }>(
 	order: readonly K[],
 	groups: readonly { kind: K; hits: H[] }[],
-	beste: { kind: K; hit: H } | null,
-	wacht: (kind: K) => boolean = () => false
-): Vak<K, H>[] {
-	const top: Vak<K, H>[] = beste
-		? [{ kind: beste.kind, hits: [beste.hit], beste: true, wacht: false }]
+	best: { kind: K; hit: H } | null,
+	pending: (kind: K) => boolean = () => false
+): Slot<K, H>[] {
+	const top: Slot<K, H>[] = best
+		? [{ kind: best.kind, hits: [best.hit], best: true, pending: false }]
 		: [];
 	return [
 		...top,
-		...order.flatMap((kind): Vak<K, H>[] => {
+		...order.flatMap((kind): Slot<K, H>[] => {
 			const hits = (groups.find((g) => g.kind === kind)?.hits ?? []).filter(
-				(h) => h.id !== beste?.hit.id
+				(h) => h.id !== best?.hit.id
 			);
-			if (hits.length) return [{ kind, hits, beste: false, wacht: false }];
-			return wacht(kind) ? [{ kind, hits: [], beste: false, wacht: true }] : [];
+			if (hits.length) return [{ kind, hits, best: false, pending: false }];
+			return pending(kind) ? [{ kind, hits: [], best: false, pending: true }] : [];
 		})
 	];
 }

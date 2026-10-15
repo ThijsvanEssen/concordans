@@ -57,22 +57,22 @@
 		kamer="TK"
 		stretches={zetels.tk}
 		meerderheid={zetels.majority.TK ?? 76}
-		van={zetels.from_date ?? null}
-		{eind}
+		from={zetels.from_date ?? null}
+		to={eind}
 		dag={opDag}
 		kabinet={zetels.key}
-		onKies={kies}
+		onSelect={kies}
 		{fasen}
 	/>
 	<KamerZetels
 		kamer="EK"
 		stretches={zetels.ek ?? []}
 		meerderheid={zetels.majority.EK ?? 38}
-		van={zetels.from_date ?? null}
-		{eind}
+		from={zetels.from_date ?? null}
+		to={eind}
 		dag={opDag}
 		kabinet={zetels.key}
-		onKies={kies}
+		onSelect={kies}
 		{fasen}
 	/>
 {/if}

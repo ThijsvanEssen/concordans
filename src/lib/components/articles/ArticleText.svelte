@@ -7,9 +7,9 @@
 	import PlaatsMenu, { placeMarker } from './PlaatsMenu.svelte';
 	import { blockClick } from '$lib/actions/klik';
 	import { kaart } from '$lib/map/map.svelte';
-	import { citeItems } from '$lib/components/ui/cite';
+	import { citeItems } from '$lib/components/ui/cite-items';
 	import { page } from '$app/state';
-	import { permalink } from '$lib/bron/anchor';
+	import { permalink } from '$lib/bron/landing';
 	import type { Schema } from '$lib/api/types';
 	import { markerOf, partsOf, placeOf, walkParts, type ArticlePart } from '$lib/text/article-parts';
 	import { citeArticle, placeCitation, type ArticleCitation } from '$lib/text/cite';
@@ -284,7 +284,7 @@
 	{@const count = lid ? counts.get(lid) : undefined}
 	<PlaatsMenu
 		anker={menu.anker}
-		titel={naamVan(p)}
+		title={naamVan(p)}
 		cite={forms
 			? citeItems(forms, permalink(adres ? new URL(adres, page.url) : page.url, p?.id ?? ''))
 			: []}

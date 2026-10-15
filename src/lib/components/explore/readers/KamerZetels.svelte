@@ -16,6 +16,7 @@
 	import { load } from '$lib/util/load.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { Schema } from '$lib/api/types';
+	import type { Chamber } from '$lib/components/parliamentary/chamber';
 	import Tijdas from '$lib/components/tijdlijn/Tijdas.svelte';
 	import Fasen from '$lib/components/tijdlijn/Fasen.svelte';
 	import { ms, periodeZin } from '$lib/components/tijdlijn/tijdas';
@@ -27,26 +28,26 @@
 		kamer,
 		stretches,
 		meerderheid,
-		van,
-		eind,
+		from: van,
+		to: eind,
 		dag,
 		kabinet,
-		onKies,
+		onSelect,
 		fasen = []
 	}: {
-		kamer: 'TK' | 'EK';
+		kamer: Chamber;
 		/** The cabinet's stretches in this Kamer; empty where the API has none. */
 		stretches: Stretch[];
 		/** The seats a majority takes (`majority` of the cabinet's seats). */
 		meerderheid: number;
 		/** The cabinet's first day. */
-		van: string | null;
+		from: string | null;
 		/** Its last day, or today while it is in office. */
-		eind: string;
+		to: string;
 		/** The day the hall shows. */
 		dag: string;
 		kabinet: string;
-		onKies: (s: Stretch) => void;
+		onSelect: (s: Stretch) => void;
 		/** The cabinet's phases (demissionair and after), as on its posts. */
 		fasen?: { van: string; label: string }[];
 	} = $props();
@@ -218,7 +219,7 @@
 		? 'meerderheid'
 		: 'geen meerderheid'}{/snippet}
 
-<Sectie {titel}>
+<Sectie title={titel}>
 	<div class="zetels">
 		{#if kop}
 			<!-- The head figure (concept 16, B): the coalition's seats on the day shown. -->
@@ -261,7 +262,7 @@
 								width={k.x1 - k.x0}
 								height={H - PAD - k.y}
 								class="stap"
-								class:gekozen={gekozen === k.s}
+								class:is-active={gekozen === k.s}
 								class:onzeker={k.s.checked === false}
 							/>
 						{/each}
@@ -278,8 +279,8 @@
 								role="button"
 								tabindex="0"
 								aria-label="{k.s.coalition} zetels, {langeDatum(k.s.from_date)}{onzekerWoord(k.s)}"
-								onclick={() => onKies(k.s)}
-								onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && onKies(k.s)}
+								onclick={() => onSelect(k.s)}
+								onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelect(k.s)}
 								><title
 									>{k.s.coalition} zetels vanaf {langeDatum(k.s.from_date)}{onzekerWoord(
 										k.s
@@ -296,7 +297,7 @@
 				<!-- The period's ends under its ends; what the strip shows as a caption at the left
 				     edge, as under the hall. -->
 				{#if as}
-					<Tijdas periode={as.periode} begin={as.begin} eind={as.eind} plaats="onder" />
+					<Tijdas periode={as.periode} from={as.begin} to={as.eind} plaats="onder" />
 				{/if}
 				{#if gekozen}
 					<p class="onderschrift">
@@ -350,7 +351,7 @@
 									<li>
 										<span
 											class="stip"
-											class:open={kopje === 'Oppositie'}
+											class:is-hollow={kopje === 'Oppositie'}
 											style:--kleur={kleurVan(kamer, f.naam, 0, f.color)}
 											style:--achter={achtergrondVan(f.naam, f.color)}
 										></span>
@@ -513,7 +514,7 @@
 		border-radius: var(--r-1);
 		background: var(--achter, var(--kleur));
 	}
-	.stip.open {
+	.stip.is-hollow {
 		background: var(--paper);
 		box-shadow: inset 0 0 0 1.5px var(--kleur);
 	}
@@ -556,7 +557,7 @@
 		fill: var(--rule);
 		shape-rendering: crispEdges;
 	}
-	.stap.gekozen {
+	.stap.is-active {
 		fill: var(--ink);
 	}
 	/* A term whose count did not add up: the step filled as any, its edge dotted. */

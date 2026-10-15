@@ -21,7 +21,7 @@ import {
 	type Lane,
 	type SearchKind
 } from './lanes';
-import { besteTreffer, bySection, hitName, vakken } from './present';
+import { bestHit, bySection, hitName, slots } from './present';
 import {
 	bareArticle,
 	keuzesOf,
@@ -154,7 +154,7 @@ export class SearchSession {
 	);
 	/** The groups in the one order, with the places of those still coming (#52). */
 	readonly shown = $derived(
-		vakken(this.kinds, this.groups, this.best, (kind) => !!this.q && this.loadingKinds.has(kind))
+		slots(this.kinds, this.groups, this.best, (kind) => !!this.q && this.loadingKinds.has(kind))
 	);
 	readonly hits = $derived(this.shown.flatMap((g) => g.hits));
 	readonly rowOfHit = $derived(new Map(this.hits.map((hit, i) => [hit.id, this.offset + i])));
@@ -278,7 +278,7 @@ export class SearchSession {
 		// answer clears it. Only once every answer is in, so the top does not change under the
 		// pointer.
 		$effect(() => {
-			if (this.allIn) this.best = besteTreffer(this.groups);
+			if (this.allIn) this.best = bestHit(this.groups);
 			else if (this.groups.length === 0) this.best = null;
 		});
 		$effect(() => {

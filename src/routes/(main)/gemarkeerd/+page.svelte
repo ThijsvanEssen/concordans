@@ -13,7 +13,7 @@
 	import { afterTick } from '$lib/util/after-tick';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
-	import IconKnop from '$lib/components/ui/IconKnop.svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import ConfirmButton from '$lib/components/ui/ConfirmButton.svelte';
@@ -32,8 +32,8 @@
 		itemHref,
 		mapParams,
 		netwerkHref,
-		sleutelVan,
-		uitParams,
+		itemKey,
+		sharedMapOf,
 		type Gedeeld,
 		type GroepNotities,
 		type Map,
@@ -50,7 +50,7 @@
 	const copier = createCopier();
 
 	// ── A shared map, from the address ─────────────────────────────────────────
-	const gedeeld = $derived<Gedeeld | null>(uitParams(page.url.searchParams));
+	const gedeeld = $derived<Gedeeld | null>(sharedMapOf(page.url.searchParams));
 	/** A shared map kept or put aside: its link leaves the address, a reload asks no more. */
 	function gedeeldKlaar(hoe: 'map' | 'erbij' | 'niet') {
 		if (gedeeld && hoe === 'map') kaart.bewaarAlsMap(gedeeld);
@@ -85,7 +85,7 @@
 	// ── An item's content: a click on its row opens it in place ───────────────
 	/** The rows open, by map and item (`<map>:<sleutel>`, `gedeeld:<sleutel>`). */
 	const geopend = new SvelteSet<string>();
-	const rijSleutel = (m: Map | null, i: MapItem) => `${m?.id ?? 'gedeeld'}:${sleutelVan(i)}`;
+	const rijSleutel = (m: Map | null, i: MapItem) => `${m?.id ?? 'gedeeld'}:${itemKey(i)}`;
 	function wisselOpen(k: string) {
 		if (!geopend.delete(k)) geopend.add(k);
 	}
@@ -145,16 +145,16 @@
 							>Aantekening</button
 						>
 					{/if}
-					<IconKnop
+					<IconButton
 						label="{i.kort} een plaats omhoog"
-						onclick={() => op(m, () => kaart.schuif(i, -1))}>↑</IconKnop
+						onclick={() => op(m, () => kaart.schuif(i, -1))}>↑</IconButton
 					>
-					<IconKnop
+					<IconButton
 						label="{i.kort} een plaats omlaag"
-						onclick={() => op(m, () => kaart.schuif(i, 1))}>↓</IconKnop
+						onclick={() => op(m, () => kaart.schuif(i, 1))}>↓</IconButton
 					>
-					<IconKnop label="{i.kort} uit {m.naam} halen" onclick={() => op(m, () => kaart.weg(i))}
-						>×</IconKnop
+					<IconButton label="{i.kort} uit {m.naam} halen" onclick={() => op(m, () => kaart.weg(i))}
+						>×</IconButton
 					>
 				</span>
 			{/if}
@@ -214,7 +214,7 @@
 			/>
 		{/if}
 		<ul class="rijen">
-			{#each g.items as i (sleutelVan(i))}{@render rij(i, m)}{/each}
+			{#each g.items as i (itemKey(i))}{@render rij(i, m)}{/each}
 		</ul>
 	{/each}
 {/snippet}
@@ -233,7 +233,7 @@
 					<button
 						type="button"
 						class="raakvlak"
-						class:actief={m.id === kaart.actief.id}
+						class:is-active={m.id === kaart.actief.id}
 						aria-current={m.id === kaart.actief.id ? 'true' : undefined}
 						title="{tel(m.items.length)}, gewijzigd {dag(m.gewijzigd)}"
 						onclick={() => naarMap(m)}>{m.naam}</button
@@ -246,7 +246,7 @@
 
 	<div class="inhoud">
 		{#if gedeeld}
-			<Sectie titel="Gedeelde map: {gedeeld.naam ?? 'zonder naam'}" niveau={2} inklapbaar={false}>
+			<Sectie title="Gedeelde map: {gedeeld.naam ?? 'zonder naam'}" niveau={2} inklapbaar={false}>
 				{#snippet naast()}
 					<span class="acties">
 						{#if gedeeld.items.length}
@@ -272,7 +272,7 @@
 		{/if}
 
 		{#each kaart.mappen as m (m.id)}
-			<Sectie titel={m.naam} id={anker(m)} niveau={2} sleutel="map:{m.id}" standaardOpen>
+			<Sectie title={m.naam} id={anker(m)} niveau={2} sleutel="map:{m.id}" standaardOpen>
 				{#snippet naast()}
 					<span class="acties">
 						{#if m.items.length}
@@ -412,7 +412,7 @@
 								{ waarde: 'eigen' as const, label: 'Eigen volgorde' }
 							]}
 							waarde={m.volgorde}
-							onKies={(v) => op(m, () => kaart.ordening(v))}
+							onSelect={(v) => op(m, () => kaart.ordening(v))}
 						/>
 					{/if}
 					{#if m.items.length}{@render alles(m, m.items)}{/if}
@@ -425,7 +425,7 @@
 						<ConfirmButton
 							label="Wis de map"
 							confirmLabel="Ja, alles uit {m.naam} halen"
-							buttonClass="wis raakvlak"
+							class="wis raakvlak"
 							onConfirm={() => op(m, () => kaart.wis())}
 						/>
 					</p>
@@ -474,7 +474,7 @@
 		color: var(--ink);
 		text-decoration: underline;
 	}
-	.opzij li button.actief {
+	.opzij li button.is-active {
 		color: var(--ink);
 		font-weight: 600;
 	}

@@ -43,7 +43,7 @@
 
 	<div class="groepen">
 		{#each INDEX_TABS as groep (groep.label)}
-			<Sectie titel={groep.label} id={anker(groep.label)} niveau={2} inklapbaar={false}>
+			<Sectie title={groep.label} id={anker(groep.label)} niveau={2} inklapbaar={false}>
 				<ul class="rijen">
 					{#each groep.categories as cat (cat.key)}
 						{@const n = telVan(cat.key)}

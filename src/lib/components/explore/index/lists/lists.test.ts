@@ -92,7 +92,7 @@ describe('the request of a list', () => {
 		expect(
 			query(
 				'judgments',
-				'tier=rechtbank&court_kind=x&subject_area=Civiel+recht&from=2020-01-01&source=echr'
+				'tier=rechtbank&court_kind=x&subject_area=Civiel+recht&van=2020-01-01&source=echr'
 			)
 		).toEqual({
 			tier: 'rechtbank',
@@ -113,7 +113,7 @@ describe('the request of a list', () => {
 		expect(
 			query(
 				'dossiers',
-				'stand=closed&outcome=aangenomen&phase=Eindtekst,Verslag&track=Wetgeving&ministry=bzk&from=2020-01-01&sort=number'
+				'stand=closed&uitkomst=aangenomen&phase=Eindtekst,Verslag&track=Wetgeving&ministerie=bzk&van=2020-01-01&sort=number'
 			)
 		).toEqual({
 			status: 'closed',
@@ -135,7 +135,7 @@ describe('the request of a list', () => {
 			sort: 'family_name',
 			limit: 200
 		});
-		expect(query('members', 'kamer=EK&from=2020-01-01&party=VVD&sort=party')).toEqual({
+		expect(query('members', 'kamer=EK&van=2020-01-01&fractie=VVD&sort=party')).toEqual({
 			chamber: 'EK',
 			party: 'VVD',
 			include_all: true,
@@ -147,7 +147,7 @@ describe('the request of a list', () => {
 	it('asks the fracties and commissies of the Kamer shown, sorted here', () => {
 		expect(query('factions', 'sort=name&q=pvv')).toEqual({ chamber: 'TK', q: 'pvv', active: true });
 		expect(query('factions', 'include_inactive=1')).toEqual({ chamber: 'TK' });
-		expect(query('committees', 'kamer=EK&q=x&to=2024-12-31')).toEqual({
+		expect(query('committees', 'kamer=EK&q=x&tot=2024-12-31')).toEqual({
 			chamber: 'EK',
 			active_to: '2024-12-31'
 		});
@@ -155,15 +155,17 @@ describe('the request of a list', () => {
 
 	it('asks the stemmingen with one q and the outcome as a boolean', () => {
 		expect(query('decisions')).toEqual({ chamber: 'TK', limit: 200 });
-		expect(query('decisions', 'q=huur&passed=false&soort=Motie&dossier=36600&party=VVD')).toEqual({
-			chamber: 'TK',
-			kind: 'Motie',
-			passed: false,
-			q: ['huur'],
-			dossier: '36600',
-			party: 'VVD',
-			limit: 200
-		});
+		expect(query('decisions', 'q=huur&passed=false&soort=Motie&dossier=36600&fractie=VVD')).toEqual(
+			{
+				chamber: 'TK',
+				kind: 'Motie',
+				passed: false,
+				q: ['huur'],
+				dossier: '36600',
+				party: 'VVD',
+				limit: 200
+			}
+		);
 	});
 
 	it('asks the stukken of one Kamer, a number searched for as their dossier', () => {
@@ -177,7 +179,7 @@ describe('the request of a list', () => {
 
 	it('asks the toezeggingen by their filters, the government lists by the cabinet', () => {
 		expect(
-			query('commitments', 'status=Openstaand&overdue=1&member=x&sort=expected_resolution')
+			query('commitments', 'status=Openstaand&overdue=1&persoon=x&sort=expected_resolution')
 		).toEqual({
 			member: 'x',
 			overdue: true,
@@ -185,7 +187,7 @@ describe('the request of a list', () => {
 			sort: 'expected_resolution',
 			limit: 100
 		});
-		expect(query('ministers', 'cabinet=jetten&from=2026-01-01&post=minister')).toEqual({
+		expect(query('ministers', 'kabinet=jetten&van=2026-01-01&post=minister')).toEqual({
 			cabinet: 'jetten',
 			from: '2026-01-01',
 			to: ''
@@ -194,7 +196,7 @@ describe('the request of a list', () => {
 	});
 
 	it('leaves out a value the site does not know', () => {
-		expect(query('dossiers', 'track=x&phase=y&ministry=z&stand=q')).toEqual(query('dossiers'));
+		expect(query('dossiers', 'track=x&phase=y&ministerie=z&stand=q')).toEqual(query('dossiers'));
 		expect(query('judgments', 'tier=x&court_kind=y&source=z')).toEqual(query('judgments'));
 	});
 });
@@ -202,12 +204,9 @@ describe('the request of a list', () => {
 describe('the filters of a list', () => {
 	it('names each filter in force, a default one not', () => {
 		expect(chips('dossiers', '')).toEqual([]);
-		expect(chips('dossiers', 'stand=closed&track=Wetgeving&phase=Eindtekst&ministry=bzk')).toEqual([
-			'Afgehandeld',
-			'Wetgeving',
-			'Eindtekst',
-			'bzk'
-		]);
+		expect(
+			chips('dossiers', 'stand=closed&track=Wetgeving&phase=Eindtekst&ministerie=bzk')
+		).toEqual(['Afgehandeld', 'Wetgeving', 'Eindtekst', 'bzk']);
 		expect(chips('decisions', 'passed=true&soort=Motie&dossier=36600')).toEqual([
 			'Motie',
 			'Aangenomen',
@@ -219,7 +218,7 @@ describe('the filters of a list', () => {
 			'Verdragen',
 			'Ook zonder artikelen'
 		]);
-		expect(chips('commitments', 'status=Afgedaan&overdue=1&member=x')).toEqual([
+		expect(chips('commitments', 'status=Afgedaan&overdue=1&persoon=x')).toEqual([
 			'Afgedaan',
 			'Open en over de verwachte datum',
 			'Gekozen bewindspersoon'

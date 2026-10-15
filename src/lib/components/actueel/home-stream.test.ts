@@ -9,7 +9,7 @@ import {
 	inWords,
 	timelineOf,
 	voteHow
-} from './timeline';
+} from './home-stream';
 
 let n = 0;
 const item = (over: Partial<FeedItem>): FeedItem =>

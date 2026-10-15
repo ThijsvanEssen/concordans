@@ -7,7 +7,7 @@
 	// a dotted frame, as a stand-in on a post.
 	import { untrack } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';
-	import IconKnop from '$lib/components/ui/IconKnop.svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import OpenRij from '$lib/components/open/OpenRij.svelte';
 	import { pannable } from './pannable';
 	import { cabinetShortName, inOffice, type Cabinet } from './government';
@@ -111,11 +111,13 @@
 {#if periode}
 	<div class="strook">
 		<div class="tools">
-			<IconKnop label="Uitzoomen" onclick={() => zoom(-1)} disabled={yearWidth === YEAR_WIDTHS[0]}
-				>−</IconKnop
+			<IconButton label="Uitzoomen" onclick={() => zoom(-1)} disabled={yearWidth === YEAR_WIDTHS[0]}
+				>−</IconButton
 			>
-			<IconKnop label="Inzoomen" onclick={() => zoom(1)} disabled={yearWidth === YEAR_WIDTHS.at(-1)}
-				>+</IconKnop
+			<IconButton
+				label="Inzoomen"
+				onclick={() => zoom(1)}
+				disabled={yearWidth === YEAR_WIDTHS.at(-1)}>+</IconButton
 			>
 		</div>
 		<div
@@ -147,7 +149,7 @@
 						</button>
 					{/each}
 				</div>
-				<Tijdas {periode} begin={rows[0].from_date!.slice(0, 4)} eind="nu" plaats="onder" lijnen />
+				<Tijdas {periode} from={rows[0].from_date!.slice(0, 4)} to="nu" plaats="onder" lijnen />
 			</div>
 		</div>
 		{#if gekozen}
@@ -158,7 +160,7 @@
 					links={[
 						{
 							label: `${gekozen.members} bewindspersonen`,
-							href: indexHref('ministers', { cabinet: gekozen.key })
+							href: indexHref('ministers', { kabinet: gekozen.key })
 						}
 					]}
 					lezen={bronHref(`cabinets/${gekozen.key}`, { keepMode: false, mode: 'read' })}

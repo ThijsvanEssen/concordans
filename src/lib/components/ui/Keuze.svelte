@@ -2,22 +2,21 @@
 	// One choice among a few, as a joined row of buttons: the chosen one filled in ink, the
 	// others with a border. The one form for every segmented choice in Concordans (the
 	// Netwerk and Tekst switch, the Kamer, the depth of a network).
+	import type { Option } from './option';
 	import type { Snippet } from 'svelte';
-
-	type Optie = { waarde: T; label: string; titel?: string; uit?: boolean };
 
 	let {
 		opties,
 		waarde,
-		onKies,
+		onSelect,
 		label,
 		klein = false,
 		vol = false,
 		voor
 	}: {
-		opties: Optie[];
+		opties: Option<T>[];
 		waarde: T | null;
-		onKies: (w: T) => void;
+		onSelect: (w: T) => void;
 		/** What is chosen, for a screen reader: `Weergave`, `Kamer`. */
 		label: string;
 		/** In a tight spot (the switch beside the band): a step smaller. */
@@ -36,7 +35,7 @@
 			aria-pressed={waarde === o.waarde}
 			disabled={o.uit}
 			title={o.titel}
-			onclick={() => waarde !== o.waarde && onKies(o.waarde)}
+			onclick={() => waarde !== o.waarde && onSelect(o.waarde)}
 			>{@render voor?.(o.waarde)}{o.label}</button
 		>
 	{/each}

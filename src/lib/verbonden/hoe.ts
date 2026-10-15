@@ -27,7 +27,7 @@ import {
 } from '$lib/text/delegaties';
 import { officialNumber } from '$lib/bron/dossier-naam';
 import { passageOf, type Row } from './rows';
-import { uitsnede, type Passage } from './passage';
+import { uitsnede, type PassageParts } from './passage';
 import { confidenceWord } from './filter';
 import { votesSentence } from '$lib/components/parliamentary/stemming';
 
@@ -321,7 +321,7 @@ export type Hoe = {
 	/** Derived or below full confidence: the line in italics, with "afgeleid". */
 	afgeleid: boolean;
 	/** The passage of the source with the words that name the selected bron. */
-	citaat: Passage | null;
+	citaat: PassageParts | null;
 	/**
 	 * The words in `rest` that name the paragraph the passage is in (`r.o. 3.4`), and its
 	 * anchor: a link that opens the citing judgment there.
@@ -391,7 +391,7 @@ const HERKOMST_BASIS: Partial<Record<string, string>> = {
  * `ANSWERS` from a letter), with the reference as written marked (`meta.reference`); cut to
  * what a row shows.
  */
-function aanhalingUitMeta(meta: Record<string, unknown>): Passage | null {
+function aanhalingUitMeta(meta: Record<string, unknown>): PassageParts | null {
 	const zin = textOf(meta.text);
 	if (!zin) return null;
 	const ref = textOf(meta.reference);
@@ -456,7 +456,7 @@ type HoeContext = {
 	lid: string | null;
 	/** The place in the citing text: `in r.o. 4.3 en 5.1`, `onder 3`. */
 	plaats: string | null;
-	citaat: Passage | null;
+	citaat: PassageParts | null;
 	/** The provenance of the edge by its `reason`. */
 	uitReden: string | null;
 	/** Rechtspraak.nl's formal relation, where the edge is one. */

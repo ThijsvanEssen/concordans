@@ -5,7 +5,7 @@
 	// text under its rule. A reader puts it at the right of its status line.
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import { report } from '$lib/api/errors';
-	import type { CiteItem } from '$lib/components/ui/cite';
+	import type { CiteItem } from '$lib/components/ui/cite-items';
 	import Bewaar from '$lib/map/Bewaar.svelte';
 	import type { MapItem } from '$lib/map/map';
 	import { createCopier } from '$lib/components/ui/copy.svelte';

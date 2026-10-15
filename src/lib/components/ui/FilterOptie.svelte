@@ -16,7 +16,7 @@
 		voor,
 		indent = false,
 		empty = false,
-		bezig = false,
+		loading = false,
 		wrap = false,
 		gedimd = false,
 		inline = false,
@@ -36,7 +36,7 @@
 		/** Nothing of this kind: the option stays, quieter. */
 		empty?: boolean;
 		/** Its count is still being read: "…" in its place. */
-		bezig?: boolean;
+		loading?: boolean;
 		/** A long label runs on to a second line instead of being cut ("Europees en internationaal"). */
 		wrap?: boolean;
 		/** On, but nothing of it shown for another switch (its grouping off): all of it grey. */
@@ -50,9 +50,9 @@
 <button
 	type="button"
 	class="optie"
-	class:aan={on}
+	class:is-active={on}
 	class:leeg={empty}
-	class:gedimd
+	class:is-dim={gedimd}
 	class:in={indent}
 	class:inline
 	aria-pressed={on}
@@ -66,7 +66,7 @@
 	{/if}
 	{#if voor}<span class="voor">{@render voor()}</span>{/if}
 	<span class="label" class:wrap>{label}</span>
-	{#if bezig}<span class="aantal" aria-label="wordt geteld"></span>{:else if count != null}<span
+	{#if loading}<span class="aantal" aria-label="wordt geteld"></span>{:else if count != null}<span
 			class="aantal">{formatCount(count)}</span
 		>{/if}
 </button>
@@ -100,19 +100,19 @@
 		min-height: 0;
 		font-size: var(--t-micro);
 	}
-	.aan {
+	.is-active {
 		color: var(--ink);
 		font-weight: 600;
 	}
 	.leeg {
 		color: var(--ink-3);
 	}
-	.gedimd,
-	.gedimd .aantal {
+	.is-dim,
+	.is-dim .aantal {
 		color: var(--ink-3);
 		font-weight: 400;
 	}
-	.gedimd .voor {
+	.is-dim .voor {
 		opacity: 0.5;
 	}
 	.in {
@@ -124,7 +124,7 @@
 		flex: none;
 		border-radius: 50%;
 	}
-	.aan .kleur {
+	.is-active .kleur {
 		box-shadow:
 			0 0 0 2px var(--paper),
 			0 0 0 3px var(--ink);

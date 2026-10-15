@@ -29,11 +29,11 @@
 		lees,
 		nieuwBezoek,
 		haalTermWeg,
-		naarParam,
+		topicParam,
 		ontvolgOnderwerp,
-		sleutelVan,
+		topicKey,
 		splitsTermen,
-		uitParams,
+		topicsOf,
 		RECENT_DAGEN,
 		vensterVan,
 		voegTermenToe,
@@ -56,7 +56,7 @@
 	const today = vandaag();
 
 	const gedeeld = $derived<Onderwerp[]>([
-		...uitParams(page.url.searchParams).map((termen) => ({ termen, vorige: null, gezien: null })),
+		...topicsOf(page.url.searchParams).map((termen) => ({ termen, vorige: null, gezien: null })),
 		...wettenUitParams(page.url.searchParams).map((wet) => ({
 			termen: [wetNaam(wet)],
 			wet,
@@ -104,7 +104,7 @@
 	let uitgeklapt = $state<Record<string, boolean>>({});
 	// A shared topic asks another window than an own one with the same words.
 	const vak = (o: Pick<Onderwerp, 'termen' | 'wet'>) =>
-		(gedeeld.length ? 'gedeeld:' : '') + sleutelVan(o);
+		(gedeeld.length ? 'gedeeld:' : '') + topicKey(o);
 	/** What the feed is asked for a topic: its words, or its law and article. */
 	const vraagVan = (o: Onderwerp) =>
 		o.wet
@@ -242,7 +242,7 @@
 	const actueelHref = (term: string) => `/actueel?${new URLSearchParams({ q: term })}`;
 
 	const overzichtHref = (o: Pick<Onderwerp, 'termen'>) =>
-		`/onderwerpen/overzicht?${new URLSearchParams({ onderwerp: naarParam(o.termen) })}`;
+		`/onderwerpen/overzicht?${new URLSearchParams({ onderwerp: topicParam(o.termen) })}`;
 
 	// ── Following ───────────────────────────────────────────────────────────
 	let invoer = $state('');
@@ -262,13 +262,13 @@
 		voegTermenToe(o.termen[0], splitsTermen(erbij));
 		eigen = lees();
 		erbij = '';
-		bewerkt = sleutelVan(eigen.find((x) => x.termen[0] === o.termen[0]) ?? o);
+		bewerkt = topicKey(eigen.find((x) => x.termen[0] === o.termen[0]) ?? o);
 	}
 	function haalWeg(o: Onderwerp, term: string) {
 		haalTermWeg(term);
 		eigen = lees();
 		const blijft = o.termen.find((t) => t !== term);
-		bewerkt = sleutelVan(eigen.find((x) => blijft && x.termen.includes(blijft)) ?? o);
+		bewerkt = topicKey(eigen.find((x) => blijft && x.termen.includes(blijft)) ?? o);
 	}
 	function verwijder(o: Onderwerp) {
 		ontvolgOnderwerp(o);
@@ -281,7 +281,7 @@
 		eigen = lees();
 	}
 	const alGevolgd = $derived(
-		gedeeld.length > 0 && gedeeld.every((t) => eigen.some((o) => sleutelVan(o) === sleutelVan(t)))
+		gedeeld.length > 0 && gedeeld.every((t) => eigen.some((o) => topicKey(o) === topicKey(t)))
 	);
 
 	let gekopieerd = $state(false);
@@ -340,7 +340,7 @@
 		{#if lijst.length > 1}
 			<h2 class="opzij__kop">Gevolgd</h2>
 			<ul>
-				{#each lijst as o, n (sleutelVan(o))}
+				{#each lijst as o, n (topicKey(o))}
 					<li><a href="#onderwerp-{n}">{naamVan(o)}</a></li>
 				{/each}
 			</ul>
@@ -352,17 +352,17 @@
 			<p class="status stil">Nog geen onderwerpen.</p>
 		{/if}
 
-		{#each lijst as o, n (sleutelVan(o))}
+		{#each lijst as o, n (topicKey(o))}
 			{@const s = standen[vak(o)]}
 			<!-- A topic as a group of the page (Sectie): the ink rule, its words as the heading that
 			     opens and closes it, remembered per topic in this browser (Thijs, 10 Oct), its
 			     actions at the right on the same line, what is new under it. -->
 			<Sectie
-				titel={naamVan(o)}
+				title={naamVan(o)}
 				id="onderwerp-{n}"
 				niveau={2}
 				aantal={telling(s)}
-				sleutel="onderwerp:{sleutelVan(o)}"
+				sleutel="onderwerp:{topicKey(o)}"
 				standaardOpen
 			>
 				{#snippet naast()}
@@ -370,8 +370,8 @@
 						{#if !gedeeld.length}
 							{#if !o.wet}
 								<TekstLink
-									aria-expanded={bewerkt === sleutelVan(o)}
-									onclick={() => (bewerkt = bewerkt === sleutelVan(o) ? null : sleutelVan(o))}
+									aria-expanded={bewerkt === topicKey(o)}
+									onclick={() => (bewerkt = bewerkt === topicKey(o) ? null : topicKey(o))}
 									>Woorden</TekstLink
 								>
 							{/if}
@@ -381,7 +381,7 @@
 					</span>
 				{/snippet}
 				<p class="sinds">{telRegel(o, s)}</p>
-				{#if bewerkt === sleutelVan(o) && !gedeeld.length}
+				{#if bewerkt === topicKey(o) && !gedeeld.length}
 					<div class="woorden">
 						<ul>
 							{#each o.termen as term (term)}
@@ -444,7 +444,7 @@
 				{#if s?.status === 'klaar' && s.doorzocht}
 					<Doorzocht
 						vanaf={s.doorzocht}
-						laden={verderBezig === vak(o)}
+						loading={verderBezig === vak(o)}
 						onVerder={() => verderTerug(o)}
 					/>
 				{/if}

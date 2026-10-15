@@ -5,6 +5,7 @@
 import { fractieNaam } from '$lib/bron/menselijk';
 import type { Schema } from '$lib/api/types';
 import { getParliamentSeats } from '$lib/api/records';
+import type { Chamber } from '$lib/components/parliamentary/chamber';
 import { report } from '$lib/api/errors';
 import { vandaag } from '$lib/text/datum';
 
@@ -40,7 +41,7 @@ export function zaalMetPlan(opDag: Zaal, nu: Zaal | null): Zaal {
  * "niet in de gegevens". The Eerste Kamer's seating only comes without a date: today takes it.
  */
 export async function hallOfDay(
-	chamber: 'TK' | 'EK',
+	chamber: Chamber,
 	day: string,
 	cabinet: string,
 	withStretches: boolean

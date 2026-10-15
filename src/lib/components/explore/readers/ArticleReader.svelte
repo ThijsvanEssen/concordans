@@ -6,7 +6,7 @@
 	import { getDossierDocuments, getExplainedBy, getExplanations } from '$lib/api/records';
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
-	import { citeItems } from '$lib/components/ui/cite';
+	import { citeItems } from '$lib/components/ui/cite-items';
 	import { lidAnchor } from '$lib/text/anchor';
 	import { onderdeelMark } from '$lib/text/article-parts';
 	// Reader for articles: the place of the article, its title, one line with the version
@@ -24,7 +24,7 @@
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
 	import VersionCompare from '$lib/components/articles/VersionCompare.svelte';
 	import { page } from '$app/state';
-	import { anchorOfHash, landOn } from '$lib/bron/anchor';
+	import { anchorOfHash, landOn } from '$lib/bron/landing';
 	import { refId } from '$lib/bron/href';
 	import { articleCitation, citeArticle, placeCitation } from '$lib/text/cite';
 	import { articleName } from '$lib/text/bw';
@@ -578,7 +578,7 @@
 				{#if wordings.length > 1}
 					<a
 						class="btn head__compare"
-						class:is-on={comparing}
+						class:is-active={comparing}
 						aria-expanded={comparing}
 						href={comparing
 							? closeCompareHref
@@ -720,7 +720,7 @@
 		text-decoration: none;
 	}
 	/* Pressed while the comparison is unfolded. */
-	.head__compare.is-on {
+	.head__compare.is-active {
 		background: var(--paper-2);
 		border-color: var(--ink-3);
 		color: var(--ink);

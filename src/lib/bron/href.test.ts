@@ -52,6 +52,11 @@ describe('buildBronHref', () => {
 		);
 	});
 
+	it('leaves the filters of Bladeren behind', () => {
+		const bladeren = '/explore?mode=index&kind=commitments&van=2020-01-01&tot=2020-12-31&status=x';
+		expect(buildBronHref(at(bladeren), 'judgments/j')).toBe('/explore?focus=judgments/j&lezen=1');
+	});
+
 	it('carries the position as a fragment', () => {
 		expect(buildBronHref(null, 'articles/bwbr0001903_27c', { at: 'lid-2' })).toBe(
 			'/explore?focus=articles/bwbr0001903_27c&lezen=1#lid-2'
@@ -121,8 +126,8 @@ describe('buildOpenHref', () => {
 describe('indexHref', () => {
 	it('names a list in Bladeren with its filters', () => {
 		expect(indexHref('dossiers')).toBe('/explore?mode=index&kind=dossiers');
-		expect(indexHref('ministers', { cabinet: 'rutte_iv' })).toBe(
-			'/explore?mode=index&kind=ministers&cabinet=rutte_iv'
+		expect(indexHref('ministers', { kabinet: 'rutte_iv' })).toBe(
+			'/explore?mode=index&kind=ministers&kabinet=rutte_iv'
 		);
 	});
 });

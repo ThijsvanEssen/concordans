@@ -33,7 +33,7 @@
 			<button
 				type="button"
 				class="rij-knop"
-				class:aan={bewaard}
+				class:is-active={bewaard}
 				aria-pressed={bewaard}
 				aria-label={bewaard
 					? `${naam}: uit ${kaart.actief.naam} halen`
@@ -49,7 +49,7 @@
 			<button
 				type="button"
 				class="rij-knop"
-				class:aan={n.aan}
+				class:is-active={n.aan}
 				aria-pressed={n.aan}
 				aria-label={n.aan
 					? n.haalWeg
@@ -90,7 +90,7 @@
 		cursor: pointer;
 		opacity: 0;
 	}
-	.rij-knop.aan {
+	.rij-knop.is-active {
 		color: var(--ink);
 		opacity: 1;
 	}

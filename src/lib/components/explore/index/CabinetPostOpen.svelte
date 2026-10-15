@@ -23,8 +23,8 @@
 	naam={post.member.name ?? naamVan('members', post.member)}
 	partij={post.party?.short ?? null}
 	functie={(post.function ?? '') + (post.acting ? ', waarnemend' : '')}
-	van={post.from_date ?? null}
-	tot={post.to_date ?? null}
+	from={post.from_date ?? null}
+	to={post.to_date ?? null}
 	dossiers={post.dossiers ?? 0}
 	wetsvoorstellen={post.bills ?? 0}
 	geteld={counted}

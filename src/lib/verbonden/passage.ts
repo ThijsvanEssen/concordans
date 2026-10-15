@@ -4,7 +4,7 @@
 import { truncate } from '$lib/text/words';
 import { paragraphNumber } from '$lib/text/anchor';
 
-export type Passage = { before: string; mark: string; after: string };
+export type PassageParts = { before: string; mark: string; after: string };
 
 /** Characters before the marked words where the sentence starts earlier. */
 const VOOR = 60;
@@ -18,7 +18,7 @@ const OPEN = /[.;:!?]\s+(?=[A-Z[(‘“"'])/g;
  * that holds the mark where that is near, else from a word boundary, with an ellipsis; and
  * as far after it.
  */
-export function uitsnede(p: Passage): Passage {
+export function uitsnede(p: PassageParts): PassageParts {
 	let before = p.before;
 	if (before.length > VOOR) {
 		const tail = before.slice(-VOOR);

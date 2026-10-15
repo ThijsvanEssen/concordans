@@ -22,4 +22,4 @@
 	const naam = $derived(capitalize(keuze.toLowerCase()));
 </script>
 
-<Uitkomst {tone} woord={woord ? naam : null} titel={naam} />
+<Uitkomst {tone} woord={woord ? naam : null} title={naam} />

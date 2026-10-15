@@ -247,8 +247,8 @@
 										>{[partij(p), p.acting ? 'waarnemend' : null].filter(Boolean).join(', ')}</span
 									>
 									<Strookje
-										van={b.van}
-										tot={b.tot}
+										from={b.van}
+										to={b.tot}
 										kleur={kleur(p)}
 										open={openId === id}
 										waarnemend={p.acting}

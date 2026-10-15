@@ -12,7 +12,7 @@
 	import type { Collection } from '$lib/vocabulary';
 
 	let {
-		titel,
+		title,
 		collection,
 		aantal,
 		id,
@@ -23,7 +23,7 @@
 		standaardOpen = false,
 		children
 	}: {
-		titel: string;
+		title: string;
 		/** The glyph before the title: what the section lists. */
 		collection?: Collection;
 		/** The count beside the heading; a string as given (`25+`). */
@@ -44,14 +44,14 @@
 		children: Snippet;
 	} = $props();
 
-	const foldKey = $derived(sleutel ?? titel);
+	const foldKey = $derived(sleutel ?? title);
 	/** Drawn from the first paint as it was left: a closed section never draws its content. */
 	const isOpen = $derived(!inklapbaar || staatOpen(foldKey, standaardOpen));
 	const uid = $props.id();
 </script>
 
 {#snippet kop()}
-	{#if collection}<KindGlyph {collection} size={14} />{/if}{titel}{#if aantal != null}<span
+	{#if collection}<KindGlyph {collection} size={14} />{/if}{title}{#if aantal != null}<span
 			class="aantal">{typeof aantal === 'number' ? formatCount(aantal) : aantal}</span
 		>{/if}
 {/snippet}

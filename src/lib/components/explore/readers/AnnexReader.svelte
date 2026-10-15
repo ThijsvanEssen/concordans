@@ -2,8 +2,8 @@
 	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
 	import { page } from '$app/state';
-	import { permalink } from '$lib/bron/anchor';
-	import { citeItems } from '$lib/components/ui/cite';
+	import { permalink } from '$lib/bron/landing';
+	import { citeItems } from '$lib/components/ui/cite-items';
 	import ReaderHead from './ReaderHead.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	// Reader for a bijlage: its title, the law it belongs to, its text, its entries in order

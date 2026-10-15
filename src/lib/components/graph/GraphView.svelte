@@ -13,7 +13,7 @@
 	import type FA2LayoutType from 'graphology-layout-forceatlas2/worker';
 	import GraphCanvas from './GraphCanvas.svelte';
 	import type { GraphCanvasApi } from './GraphCanvas.svelte';
-	import GraphCitePanel from './GraphCitePanel.svelte';
+	import CanvasHoverCard from './CanvasHoverCard.svelte';
 	import CanvasKaart from './CanvasKaart.svelte';
 	import CanvasNodeList from './CanvasNodeList.svelte';
 	import { readingOrder } from './canvas-keys';
@@ -37,7 +37,7 @@
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { bronNaam } from '$lib/bron/naam';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import IconKnop from '$lib/components/ui/IconKnop.svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import { VORM_LABEL, VORM_VOLGORDE, vormVanBron, type Vorm } from '$lib/bron/vormen';
 	import {
 		containerIdFor,
@@ -112,7 +112,7 @@
 		netwerkActive = false,
 		onEdgeClick,
 		onClear,
-		onGoBack,
+		onBack,
 		onGoForward,
 		canvasOverlay,
 		...legend
@@ -140,7 +140,7 @@
 		onEdgeClick?: (edge: GraphEdge) => void;
 		/** A click on the stage or Escape: the card Verbinding closes; the selection stays. */
 		onClear?: () => void;
-		onGoBack?: () => void;
+		onBack?: () => void;
 		onGoForward?: () => void;
 		canvasOverlay?: Snippet;
 	} & LegendProps = $props();
@@ -1065,9 +1065,9 @@
 			return;
 		}
 		if (!canvasWrap?.contains(document.activeElement)) return;
-		if (e.key === 'ArrowLeft' && onGoBack) {
+		if (e.key === 'ArrowLeft' && onBack) {
 			e.preventDefault();
-			onGoBack();
+			onBack();
 		}
 		if (e.key === 'ArrowRight' && onGoForward) {
 			e.preventDefault();
@@ -1282,12 +1282,12 @@
 		     Dicht: de tekens van wat er staat. Open: filter, groepering en verbindingen. -->
 			{#if canvasCounts.nodes > 0}
 				<CanvasKaart
-					klasse="legenda"
-					titel="Legenda"
+					class="legenda"
+					title="Legenda"
 					open={legendaOpen}
 					onToggle={() => zetLegenda(!legendaOpen)}
 					bind:el={legendaEl}
-					stijl="top:{legendaPlek.top}px; right:{legendaPlek.right}px; max-height:{legendaPlek.max}px"
+					style="top:{legendaPlek.top}px; right:{legendaPlek.right}px; max-height:{legendaPlek.max}px"
 				>
 					{#snippet samenvatting()}
 						{#if !legendaOpen}
@@ -1337,9 +1337,9 @@
 				onwheel={() => (fitFollows = false)}
 			>
 				<div class="zoom" role="group" aria-label="Zoomen">
-					<IconKnop label="Inzoomen" onclick={() => canvas?.zoom(1.5)}>+</IconKnop>
-					<IconKnop label="Uitzoomen" onclick={() => canvas?.zoom(1 / 1.5)}>−</IconKnop>
-					<IconKnop label="Alles in beeld" onclick={() => canvas?.fit()}>⤢</IconKnop>
+					<IconButton label="Inzoomen" onclick={() => canvas?.zoom(1.5)}>+</IconButton>
+					<IconButton label="Uitzoomen" onclick={() => canvas?.zoom(1 / 1.5)}>−</IconButton>
+					<IconButton label="Alles in beeld" onclick={() => canvas?.fit()}>⤢</IconButton>
 				</div>
 				<GraphCanvas
 					avoid={overlayRect}
@@ -1404,11 +1404,11 @@
 				{#if clusterCard}
 					{@const c = clusterCard.cluster}
 					<CanvasKaart
-						klasse="cluster-kaart"
-						titel={clusterLabel(c)}
+						class="cluster-kaart"
+						title={clusterLabel(c)}
 						role="dialog"
 						tabindex="-1"
-						stijl="left:{clusterCard.x}px; top:{clusterCard.y}px"
+						style="left:{clusterCard.x}px; top:{clusterCard.y}px"
 						onkeydown={(e: KeyboardEvent) => {
 							if (!isEscape(e)) return;
 							e.preventDefault();
@@ -1474,7 +1474,7 @@
 				{/if}
 
 				{#if hoverNode && (!compact || keyNode || gemarkeerd)}
-					<GraphCitePanel
+					<CanvasHoverCard
 						node={hoverNode}
 						isChosen={pinnedIds.has(hoverNode.id)}
 						notities={notities.get(hoverNode.id) ?? []}
@@ -1495,9 +1495,9 @@
 							if (!gemarkeerd) hoverNode = null;
 						}}
 						bind:el={citeEl}
-						onSluit={keyNode ? () => kaartUit('lijst', true) : undefined}
+						onClose={keyNode ? () => kaartUit('lijst', true) : undefined}
 						onVerder={keyNode ? () => kaartUit('canvas') : undefined}
-						onTerug={keyNode ? () => kaartUit('lijst') : undefined}
+						onBack={keyNode ? () => kaartUit('lijst') : undefined}
 					/>
 				{/if}
 			</div>

@@ -8,8 +8,7 @@ import type { Cabinet, Ministry } from '../government';
 import type { IndexCategory } from '../categories';
 import type { Coverage } from '$lib/api/stats';
 import type { Schema } from '$lib/api/types';
-import type { ParamPatch } from '$lib/util/address';
-import type { IndexParams } from './params';
+import type { IndexParam, IndexParams, IndexPatch } from './params';
 
 /** The rows a list asks at a time. */
 export const PAGE = 100;
@@ -53,12 +52,12 @@ export type ListContext<Row, State> = {
 	state: Partial<State>;
 	shared: Shared;
 	loading: boolean;
-	patch: (patch: ParamPatch) => void;
+	patch: (patch: IndexPatch) => void;
 	toggleOpen: (id: string) => void;
 	/** The groups of rows opened (a dossier number's dossiers), kept across the lists. */
 	openGroups: ReadonlySet<string>;
 	toggleGroup: (key: string) => void;
-	tabHref: (category: IndexCategory, filters?: ParamPatch) => string;
+	tabHref: (category: IndexCategory, filters?: IndexPatch) => string;
 	/** Nothing to show, in the list's words. */
 	empty: Snippet<[string]>;
 };
@@ -74,7 +73,7 @@ export type List<Row, State extends object, Query> = {
 	/** The empty list in its own words (the open dossiers). */
 	emptyNoun?(p: IndexParams): string;
 	/** A way on from an empty list besides the search in all bronnen. */
-	widen?(p: IndexParams): { label: string; patch: ParamPatch } | null;
+	widen?(p: IndexParams): { label: string; patch: IndexPatch } | null;
 	/** The list holds one Kamer at a time: the choose-line has the Kamer. */
 	chamber?: true;
 	/** What must be loaded beside the rows. */
@@ -147,7 +146,7 @@ export const facetMap = (
 export const toggle =
 	(
 		patch: ListContext<unknown, object>['patch'],
-		name: string,
+		name: IndexParam,
 		current: string | undefined,
 		value: string
 	) =>
@@ -156,7 +155,7 @@ export const toggle =
 
 /** A filter that is on or off (`1`). */
 export const flag =
-	(patch: ListContext<unknown, object>['patch'], name: string, on: boolean) => () =>
+	(patch: ListContext<unknown, object>['patch'], name: IndexParam, on: boolean) => () =>
 		patch({ [name]: on ? null : '1' });
 
 /** The number of each value among the rows. */

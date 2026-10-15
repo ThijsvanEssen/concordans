@@ -2,7 +2,7 @@
 	// One quiet line over the example network: it is an example, and how to choose another. Once
 	// closed it stays closed in this browser.
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import IconKnop from '$lib/components/ui/IconKnop.svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import { useSearchOpener } from '$lib/stores/search-trigger';
 	import { readStored, writeStored } from '$lib/util/storage';
 
@@ -25,7 +25,7 @@
 				>zoekveld</TekstLink
 			> (⌘K).</span
 		>
-		<IconKnop label="Deze regel verbergen" onclick={close}>×</IconKnop>
+		<IconButton label="Deze regel verbergen" onclick={close}>×</IconButton>
 	</p>
 {/if}
 

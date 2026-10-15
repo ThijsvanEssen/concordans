@@ -6,7 +6,7 @@
 	import { naamVan } from '$lib/bron/menselijk';
 	import { getDocument } from '$lib/api/records';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
-	import { citeItems } from '$lib/components/ui/cite';
+	import { citeItems } from '$lib/components/ui/cite-items';
 	// Reader for a document (memorie van toelichting, verslag, nota, amendement, motie, ...):
 	// its text. Opened as the toelichting of an article, it lands on the passage for it.
 	import ReaderFrame from './ReaderFrame.svelte';
@@ -17,7 +17,7 @@
 	import GlossaryPill from './GlossaryPill.svelte';
 	import { termOfKind } from '$lib/glossary';
 	import { page } from '$app/state';
-	import { anchorOfHash, landOn, permalink } from '$lib/bron/anchor';
+	import { anchorOfHash, landOn, permalink } from '$lib/bron/landing';
 	import CitedText from '$lib/components/articles/CitedText.svelte';
 	import Voetnoten from '$lib/components/articles/Voetnoten.svelte';
 	import { kantlijn } from '$lib/actions/kantlijn';
@@ -329,7 +329,7 @@
 			</ReaderHead>
 
 			{#if toegelicht.length > 0}
-				<Sectie titel="Licht toe" collection="articles" aantal={doc.explains?.length ?? 0}>
+				<Sectie title="Licht toe" collection="articles" aantal={doc.explains?.length ?? 0}>
 					<ul class="toegelicht">
 						{#each toegelicht as w (w.bwbId)}
 							{@const wet = $instrumentMetaStore.get(w.bwbId)}

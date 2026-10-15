@@ -10,8 +10,8 @@
 	import { lawIdOf, type GraphNode } from '$lib/graph/types';
 	import WholeLawReader from '../WholeLawReader.svelte';
 	import { publicationName } from '../law-head';
-	import { citeItems } from '$lib/components/ui/cite';
-	import { permalink } from '$lib/bron/anchor';
+	import { citeItems } from '$lib/components/ui/cite-items';
+	import { permalink } from '$lib/bron/landing';
 	import { page } from '$app/state';
 
 	let { node }: { node: GraphNode } = $props();

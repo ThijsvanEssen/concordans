@@ -28,10 +28,6 @@ export type Codering = Record<string, Record<string, Strekking>>;
 
 const SLEUTEL = 'concordans:strekking';
 
-/** A topic as one key: its words, lowercase and sorted, so `Huur; huurtoeslag` is one topic. */
-export const onderwerpSleutel = (termen: readonly string[]) =>
-	[...new Set(termen.map((t) => t.trim().toLowerCase()).filter(Boolean))].sort().join('|');
-
 const isStrekking = (v: unknown): v is Strekking => STREKKINGEN.includes(v as Strekking);
 
 /** The coding in this browser; empty where there is none or storage is closed. */
@@ -116,7 +112,7 @@ export function coderingUitCsv(tekst: string): Codering {
 }
 
 /** Two codings together; where both code a decision, the second one counts. */
-export const samen = (a: Codering, b: Codering): Codering =>
+export const withCoding = (a: Codering, b: Codering): Codering =>
 	Object.fromEntries(
 		[...new Set([...Object.keys(a), ...Object.keys(b)])].map((o) => [o, { ...a[o], ...b[o] }])
 	);

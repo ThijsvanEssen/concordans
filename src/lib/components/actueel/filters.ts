@@ -2,6 +2,8 @@
 // it is read from there, and what it asks the feed. Reading, clearing, the feed's query and
 // the day counts all follow from this table, so a new filter is one row.
 import type { paths } from '$lib/api/generated/openapi-types';
+import { PARAM } from '$lib/url/filters';
+import type { Chamber } from '$lib/components/parliamentary/chamber';
 import { isFeedKind, type FeedKind } from './feed';
 
 export type FeedQuery = NonNullable<paths['/api/feed']['get']['parameters']['query']>;
@@ -30,7 +32,7 @@ type ActueelFilters = {
 	coalition: CoalitionWord | '';
 	/** Every word searched, each a `q` of its own: any of them counts. */
 	q: string[];
-	chamber: 'TK' | 'EK' | '';
+	chamber: Chamber | '';
 	instrument: string;
 	/** An article of the law, only with the law. */
 	article: string;
@@ -59,33 +61,36 @@ const readLaw = (p: URLSearchParams) => {
 
 const FILTERS: { [K in keyof ActueelFilters]: Filter<ActueelFilters[K]> } = {
 	kinds: {
-		param: 'soort',
-		read: (p) => [...new Set((p.get('soort') ?? '').split(',').filter(isFeedKind))],
+		param: PARAM.kind,
+		read: (p) => [...new Set((p.get(PARAM.kind) ?? '').split(',').filter(isFeedKind))],
 		ask: (v) => (v.length ? { kind: v.join(',') } : {})
 	},
-	since: plain('van', 'since'),
+	since: plain(PARAM.since, 'since'),
 	// Only a day in the past: with `until` the API counts apart and took 100+ s (prod, 9 Oct),
 	// without it 0.25 s. What lies ahead is left out by the page instead.
-	until: { ...plain('tot', 'until'), ask: (v, today) => (v && v < today ? { until: v } : {}) },
-	cabinet: plain('kabinet', 'cabinet'),
-	ministry: plain('ministerie', 'ministry'),
-	dossier: plain('dossier', 'dossier'),
-	member: plain('persoon', 'member'),
-	faction: plain('fractie', 'faction'),
+	until: {
+		...plain(PARAM.until, 'until'),
+		ask: (v, today) => (v && v < today ? { until: v } : {})
+	},
+	cabinet: plain(PARAM.cabinet, 'cabinet'),
+	ministry: plain(PARAM.ministry, 'ministry'),
+	dossier: plain(PARAM.dossier, 'dossier'),
+	member: plain(PARAM.member, 'member'),
+	faction: plain(PARAM.party, 'faction'),
 	coalition: {
-		param: 'coalitie',
+		param: PARAM.coalition,
 		read: (p) => {
-			const v = p.get('coalitie') ?? '';
+			const v = p.get(PARAM.coalition) ?? '';
 			return Object.hasOwn(COALITION, v) ? (v as CoalitionWord) : '';
 		},
 		ask: (v) => (v ? { coalition: COALITION[v].api } : {})
 	},
 	q: {
-		param: 'q',
+		param: PARAM.q,
 		read: (p) => [
 			...new Set(
 				p
-					.getAll('q')
+					.getAll(PARAM.q)
 					.map((v) => v.trim())
 					.filter(Boolean)
 			)
@@ -93,9 +98,9 @@ const FILTERS: { [K in keyof ActueelFilters]: Filter<ActueelFilters[K]> } = {
 		ask: (v) => (v.length ? { q: v } : {})
 	},
 	chamber: {
-		param: 'kamer',
+		param: PARAM.chamber,
 		read: (p) => {
-			const v = p.get('kamer');
+			const v = p.get(PARAM.chamber);
 			return v === 'TK' || v === 'EK' ? v : '';
 		},
 		ask: (v) => (v ? { chamber: v } : {})
@@ -111,7 +116,7 @@ const FILTERS: { [K in keyof ActueelFilters]: Filter<ActueelFilters[K]> } = {
 const ENTRIES = Object.entries(FILTERS) as [keyof ActueelFilters, Filter<unknown>][];
 
 /** The names of the filters in the address: what clearing them removes. */
-export const FILTER_PARAMS = ENTRIES.map(([, f]) => f.param);
+export const FEED_FILTER_PARAMS = ENTRIES.map(([, f]) => f.param);
 
 /** The filters of an address. */
 export const readFilters = (params: URLSearchParams): ActueelFilters =>

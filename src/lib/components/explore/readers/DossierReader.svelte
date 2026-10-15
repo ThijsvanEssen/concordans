@@ -201,7 +201,7 @@
 						<RijInhoud item={i.item} als={i.soort} />
 					{/if}
 				{/snippet}
-				<Sectie titel="Procedure">
+				<Sectie title="Procedure">
 					<Tijdlijn
 						groepen={p.groepen.map((g) => ({
 							...g,

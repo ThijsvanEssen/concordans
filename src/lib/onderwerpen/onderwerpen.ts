@@ -37,17 +37,20 @@ export const vindIndex = (lijst: Onderwerp[], term: string) =>
 export const wetNaam = (w: GevolgdeWet) =>
 	w.artikel ? `artikel ${w.artikel} ${w.titel}` : w.titel;
 
-/** A topic by what it follows: its words, or its law and article. */
-export const sleutelVan = (o: Pick<Onderwerp, 'termen' | 'wet'>) =>
+/**
+ * A topic by what it follows: its law and article, or its words, lowercase and sorted, so
+ * `Huur; huurtoeslag` and `huurtoeslag;Huur` are one topic, with one coding (strekking).
+ */
+export const topicKey = (o: Pick<Onderwerp, 'termen'> & Partial<Pick<Onderwerp, 'wet'>>) =>
 	o.wet
 		? `wet:${o.wet.bwb.toUpperCase()}${o.wet.artikel ? `:${o.wet.artikel}` : ''}`
-		: o.termen.join('|').toLowerCase();
+		: [...new Set(o.termen.map((t) => normaal(t).toLowerCase()).filter(Boolean))].sort().join('|');
 
-const wetSleutel = (w: GevolgdeWet) => sleutelVan({ termen: [], wet: w });
+const wetSleutel = (w: GevolgdeWet) => topicKey({ termen: [], wet: w });
 
 /** Where the list follows this law or article; -1 where it does not. */
 const wetIndex = (lijst: Onderwerp[], w: GevolgdeWet) =>
-	lijst.findIndex((o) => o.wet && sleutelVan(o) === wetSleutel(w));
+	lijst.findIndex((o) => o.wet && topicKey(o) === wetSleutel(w));
 
 const leesWet = (v: unknown): GevolgdeWet | null => {
 	if (!v || typeof v !== 'object') return null;
@@ -104,8 +107,8 @@ export function volgWet(w: GevolgdeWet) {
 
 /** Stop following a topic, of words or of a law. */
 export function ontvolgOnderwerp(o: Pick<Onderwerp, 'termen' | 'wet'>) {
-	const k = sleutelVan(o);
-	bewaar(lees().filter((x) => sleutelVan(x) !== k));
+	const k = topicKey(o);
+	bewaar(lees().filter((x) => topicKey(x) !== k));
 }
 
 /** The words once each, whatever their capitals, in the order given. */
@@ -172,7 +175,7 @@ export function zetGezien(term: string | Pick<Onderwerp, 'termen' | 'wet'>, dag:
 	const i =
 		typeof term === 'string'
 			? vindIndex(lijst, term)
-			: lijst.findIndex((o) => sleutelVan(o) === sleutelVan(term));
+			: lijst.findIndex((o) => topicKey(o) === topicKey(term));
 	if (i < 0 || (lijst[i].gezien && lijst[i].gezien >= dag)) return;
 	lijst[i] = { ...lijst[i], gezien: dag };
 	bewaar(lijst);
@@ -195,9 +198,9 @@ export const isNieuw = (datum: string, vorige: string | null) => !!vorige && dat
 // `?onderwerp=kunstmatige intelligentie|AI&onderwerp=stikstof`: one parameter per topic, its
 // words apart by `|`, which a title rarely holds.
 
-export const naarParam = (termen: string[]) => termen.map(normaal).join('|');
+export const topicParam = (termen: string[]) => termen.map(normaal).join('|');
 
-export function uitParams(params: URLSearchParams): string[][] {
+export function topicsOf(params: URLSearchParams): string[][] {
 	return params
 		.getAll('onderwerp')
 		.map((v) => uniek(v.split('|')))
@@ -208,7 +211,7 @@ export function deelAdres(lijst: Pick<Onderwerp, 'termen' | 'wet'>[]): string {
 	const p = new URLSearchParams();
 	for (const o of lijst)
 		if (o.wet) p.append('wet', naarWetParam(o.wet));
-		else p.append('onderwerp', naarParam(o.termen));
+		else p.append('onderwerp', topicParam(o.termen));
 	return `/onderwerpen?${p}`;
 }
 

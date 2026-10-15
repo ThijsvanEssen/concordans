@@ -16,6 +16,7 @@
 	import { siteTitle } from '$lib/seo/server-head.svelte';
 	import { page } from '$app/state';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
+	import { PARAM } from '$lib/url/filters';
 	import { load } from '$lib/util/load.svelte';
 	import { getFeed } from '$lib/api/feed';
 	import { isAborted, report } from '$lib/api/errors';
@@ -26,7 +27,7 @@
 	import OverviewList from '$lib/onderwerpen/OverviewList.svelte';
 	import { isDay, langeDatum, maandNaam, vandaag } from '$lib/text/datum';
 	import { download, safeFileName } from '$lib/verbonden/export';
-	import { lees, uitParams, vindIndex } from '$lib/onderwerpen/onderwerpen';
+	import { lees, topicKey, topicsOf, vindIndex } from '$lib/onderwerpen/onderwerpen';
 	import { dossierOwnName } from '$lib/bron/dossier-naam';
 	import { getDecisionDocument } from '$lib/api/records';
 	import { besluiten, telling } from '$lib/api/decisions';
@@ -46,8 +47,7 @@
 		dictumUit,
 		leesCodering,
 		metStrekking as coderingMet,
-		onderwerpSleutel,
-		samen,
+		withCoding,
 		schrijfCodering,
 		type Codering,
 		type Strekking
@@ -107,14 +107,14 @@
 	const params = $derived(page.url.searchParams);
 	// As a string: a filter changes the URL, and a new array of the same words would load
 	// everything again.
-	const termenSleutel = $derived((uitParams(params)[0] ?? []).join('|'));
+	const termenSleutel = $derived((topicsOf(params)[0] ?? []).join('|'));
 	const termen = $derived(termenSleutel ? termenSleutel.split('|') : []);
-	const kamer: Chamber | '' = $derived(chamberFromParam(params.get('kamer')) ?? '');
+	const kamer: Chamber | '' = $derived(chamberFromParam(params.get(PARAM.chamber)) ?? '');
 	// The period, as everywhere (Periode.svelte): days in the URL and to the API.
 	const dag = (v: string | null) => (isDay(v) ? v : '');
-	const van = $derived(dag(params.get('van')));
-	const tot = $derived(dag(params.get('tot')));
-	const fractie = $derived(params.get('fractie') ?? '');
+	const van = $derived(dag(params.get(PARAM.since)));
+	const tot = $derived(dag(params.get(PARAM.until)));
+	const fractie = $derived(params.get(PARAM.party) ?? '');
 	/** The chosen number (`cel=moties:2026-10`, `cel=voor:2025`, `cel=brieven`). */
 	const keuze = $derived(leesKeuze(params.get('cel')));
 	/** A strekking chosen: every number counts only the moties so read. */
@@ -122,9 +122,9 @@
 	const week = $derived(params.get('per') === 'week');
 	/** The filters of an older address, read for its list (soort, uitkomst, jaar, stem). */
 	const f = $derived<Filter>({
-		soort: params.get('soort') || undefined,
+		soort: params.get(PARAM.kind) || undefined,
 		uitkomst: (['aangenomen', 'verworpen', 'overig'] as const).find(
-			(u) => u === params.get('uitkomst')
+			(u) => u === params.get(PARAM.outcome)
 		),
 		jaar: params.get('jaar') || undefined,
 		stem: (['voor', 'tegen'] as const).find((s) => s === params.get('stem'))
@@ -133,7 +133,7 @@
 	const topic = $derived<Topic>({ words: termen, chamber: kamer, from: van, to: tot });
 	const asked = $derived(termen.length > 0);
 
-	const FILTERS = ['soort', 'uitkomst', 'jaar', 'stem', 'cel'];
+	const FILTERS = [PARAM.kind, PARAM.outcome, 'jaar', 'stem', 'cel'];
 	const hrefMet = (patch: ParamPatch, alleen = false) =>
 		withParams(page.url, patch, { clear: alleen ? FILTERS : [] });
 	/** Every patch here is a filter: a step in the history (a filter is a step, typing is not). */
@@ -269,7 +269,7 @@
 	// only those so read: the moties by the day of their vote, their outcome and the fractie's
 	// vote.
 	let codering = $state<Codering>(leesCodering());
-	const onderwerp = $derived(onderwerpSleutel(termen));
+	const onderwerp = $derived(topicKey({ termen }));
 	const mijn = $derived(codering[onderwerp] ?? {});
 	const isMotie = (d: Besluit) => motionOrAmendment(soortVan(d)) === 'motie';
 	function kiesStrekking(d: Besluit, r: Strekking | null) {
@@ -860,7 +860,7 @@
 			const gelezen = coderingUitCsv(await file.text());
 			importFout = !Object.keys(gelezen).length;
 			if (importFout) return;
-			codering = samen(codering, gelezen);
+			codering = withCoding(codering, gelezen);
 			schrijfCodering(codering);
 		} catch (e) {
 			report('Codering', e);
@@ -936,8 +936,8 @@
 							vakken,
 							rijen,
 							keuze,
-							onKies: kies,
-							bezig,
+							onSelect: kies,
+							loading: bezig,
 							failed,
 							ongeteld,
 							uit,

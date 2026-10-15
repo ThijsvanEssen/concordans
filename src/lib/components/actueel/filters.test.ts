@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import openapi from '$lib/api/openapi.json';
-import { FILTER_PARAMS, feedQuery, readFilters, summaryQuery } from './filters';
+import { FEED_FILTER_PARAMS, feedQuery, readFilters, summaryQuery } from './filters';
 
 const TODAY = '2026-10-14';
 const read = (query: string) => readFilters(new URLSearchParams(query));
@@ -73,9 +73,9 @@ describe('readFilters: every filter of Actueel by its name in the address', () =
 	});
 });
 
-describe('FILTER_PARAMS: the names a shared link keeps', () => {
+describe('FEED_FILTER_PARAMS: the names a shared link keeps', () => {
 	it('names every filter by its name in the address', () => {
-		expect(FILTER_PARAMS).toEqual([
+		expect(FEED_FILTER_PARAMS).toEqual([
 			'soort',
 			'van',
 			'tot',

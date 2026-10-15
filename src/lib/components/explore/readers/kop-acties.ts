@@ -1,7 +1,7 @@
 // The actions of a reader's head, per kind (ReaderHead): Bewaar on every reader; Citeer where
 // a bron of the kind is cited in legal writing. One table, so equal pages act alike (Thijs,
 // 10 Oct: "gelijke experience op gelijke pagina's").
-import type { CiteItem } from '$lib/components/ui/cite';
+import type { CiteItem } from '$lib/components/ui/cite-items';
 import type { MapItem } from '$lib/map/map';
 import type { Collection } from '$lib/vocabulary';
 

@@ -64,7 +64,7 @@
 </script>
 
 {#if decisions.length > 0}
-	<Sectie titel="Stemming" collection="decisions">
+	<Sectie title="Stemming" collection="decisions">
 		{#each decisions as d (d.key)}
 			{@const uitslag = decisionOutcome(d)}
 			{@const tally = telling(d)}

@@ -62,7 +62,7 @@ export type Gedeeld = {
 };
 
 /** An item's key: the bron and its place. */
-export const sleutelVan = (i: Pick<MapItem, 'id' | 'at'>) => (i.at ? `${i.id}#${i.at}` : i.id);
+export const itemKey = (i: Pick<MapItem, 'id' | 'at'>) => (i.at ? `${i.id}#${i.at}` : i.id);
 
 /** A dossier's number as a key: `36600-XV` for `36600 XV`, `36600_xv` or `36600-XV`. */
 const dossierSleutel = (nr: string) =>
@@ -151,7 +151,7 @@ export function groepen(
 const veld = (s: string) => s.replaceAll('%', '%25').replaceAll('~', '%7E').replaceAll(';', '%3B');
 const terug = (s: string) => s.replaceAll('%7E', '~').replaceAll('%3B', ';').replaceAll('%25', '%');
 
-export function naarParam(items: readonly MapItem[]): string {
+export function itemsParam(items: readonly MapItem[]): string {
 	return items
 		.map((i) => {
 			const velden = [i.id, i.at, i.kort, i.groep, i.notitie ?? '', i.groupKey];
@@ -188,7 +188,7 @@ export function readParam(v: string | null): { items: MapItem[]; skipped: number
 export function mapParams(
 	m: Pick<Map, 'items' | 'naam' | 'volgorde' | 'notitie' | 'groepNotities'>
 ): URLSearchParams {
-	const p = new URLSearchParams({ map: naarParam(m.items), mapnaam: m.naam });
+	const p = new URLSearchParams({ map: itemsParam(m.items), mapnaam: m.naam });
 	if (m.volgorde === 'eigen') p.set('mapvolgorde', 'eigen');
 	if (m.notitie?.trim()) p.set('mapnotitie', m.notitie.trim());
 	const groep = naarGroepParam(m.groepNotities, m.items);
@@ -221,7 +221,7 @@ function uitGroepParam(v: string | null): GroepNotities {
  * A map from an address; null where it holds nothing, read or left out. A link without a note
  * reads as before.
  */
-export function uitParams(p: URLSearchParams): Gedeeld | null {
+export function sharedMapOf(p: URLSearchParams): Gedeeld | null {
 	const { items, skipped } = readParam(p.get('map'));
 	if (!items.length && !skipped) return null;
 	return {
@@ -255,9 +255,9 @@ export function netwerkHref(items: readonly MapItem[]): string | null {
 }
 
 /** The items of `b` that `a` does not hold yet, after `a`'s. */
-export function samen(a: readonly MapItem[], b: readonly MapItem[]): MapItem[] {
-	const al = new Set(a.map(sleutelVan));
-	return [...a, ...b.filter((i) => !al.has(sleutelVan(i)))];
+export function withItems(a: readonly MapItem[], b: readonly MapItem[]): MapItem[] {
+	const al = new Set(a.map(itemKey));
+	return [...a, ...b.filter((i) => !al.has(itemKey(i)))];
 }
 
 // ── Citations and CSV ───────────────────────────────────────────────────────
@@ -324,7 +324,7 @@ export function verschuif(
 	richting: -1 | 1,
 	volgorde: Map['volgorde']
 ): MapItem[] {
-	const i = items.findIndex((x) => sleutelVan(x) === sleutel);
+	const i = items.findIndex((x) => itemKey(x) === sleutel);
 	if (i < 0) return [...items];
 	const groep = items[i].groupKey;
 	let j = i + richting;

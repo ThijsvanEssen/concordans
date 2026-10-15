@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { redundantAnchors } from '$lib/graph/anchor';
+	import { redundantAnchors } from '$lib/graph/redundant-anchors';
 	import {
 		bundledInto,
 		inSameGroup,
