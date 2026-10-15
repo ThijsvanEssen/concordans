@@ -7,7 +7,7 @@ describe('the generated types as the contract (code-eenvoud F54)', () => {
 		// `partial`, `expanded`, `next_offset`, `membership_edge_ids`, `alternatives_total`,
 		// `passed`, the query of /api/paths and a Kamer are all in openapi-types.ts.
 		const pastTheTypes =
-			/as \{ (?:partial|expanded|ids|membership_edge_ids|next_offset|alternatives_total|passed|rejected|labels)\??:|as 'TK' \| 'EK'|as unknown as (?:BaseNode|Schema<'MemberDTO'>)|\} as object\)|collection as never|split\('\/'\)\[0\] as Collection/;
+			/as \{ (?:partial|expanded|ids|membership_edge_ids|next_offset|alternatives_total|passed|rejected|labels|continues)\??:|as 'TK' \| 'EK'|as unknown as (?:BaseNode|Schema<'MemberDTO'>)|as JudgmentParty\[\]|\} as object\)|collection as never|split\('\/'\)\[0\] as Collection/;
 		expect(overtreders((t) => pastTheTypes.test(t))).toEqual([]);
 	});
 

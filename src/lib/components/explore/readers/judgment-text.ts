@@ -65,7 +65,7 @@ function areaOf(text: string): CaseArea | null {
  * The rechtsgebied of a judgment: from its `subjects` prop, else from the kamer or
  * afdeling in the heading, the court, or the form of the case number.
  */
-export function caseArea(
+function caseArea(
 	props: { subjects?: unknown; court?: unknown; case_number?: unknown } | null | undefined,
 	heading: string | null
 ): CaseArea | null {
@@ -173,7 +173,7 @@ const HEAD_END_RE =
  * The opening lines of a judgment's full text, up to its first section heading:
  * the part that names the court, the case and the parties.
  */
-export function judgmentHead(text: string): string {
+function judgmentHead(text: string): string {
 	const lines = text
 		.split(/\n/)
 		.map((l) => l.replace(/\s+/g, ' ').trim())
@@ -369,7 +369,7 @@ const sameParty = (a: string, b: string) => {
  * rechtsgebied. A role the judgment states itself takes precedence. Without
  * either, the role is "Partij".
  */
-export function extractParties(text: string, area: CaseArea | null): Participant[] {
+function extractParties(text: string, area: CaseArea | null): Participant[] {
 	const lines = text
 		.split(/\n/)
 		.map((l) => unspace(l.replace(/\s+/g, ' ').trim()))
@@ -455,13 +455,6 @@ export function extractParties(text: string, area: CaseArea | null): Participant
 // The parties the API reads from the kop (`JudgmentDTO.parties`).
 type JudgmentParty = Schema<'JudgmentParty'>;
 
-/** `parties` of a judgment when the API sends it, else null (an older API or judgment). */
-function partiesOf(value: unknown): JudgmentParty[] | null {
-	if (!Array.isArray(value)) return null;
-	const valid = value.every((p) => p && typeof p.name === 'string' && typeof p.role === 'string');
-	return valid ? (value as JudgmentParty[]) : null;
-}
-
 const isPlaceholder = (name: string) => /^\[.*\]$/.test(name.trim());
 
 const REPRESENTATIVE_ROLES = {
@@ -515,14 +508,10 @@ function fromApi(parties: JudgmentParty[]): Participant[] {
  * The parties come from the API (`parties`); a judgment the API has not read them
  * for gets them from the opening of its full text, or else its first subheading.
  */
-export function judgmentParticipants(judgment: {
-	props?: { [key: string]: unknown } | null;
-	paragraphs?: Array<{ kind?: string | null; text: string }> | null;
-	parties?: unknown;
-}): Participant[] {
+export function judgmentParticipants(judgment: Schema<'JudgmentDTO'>): Participant[] {
 	const paragraphs = judgment.paragraphs ?? [];
-	const read = partiesOf(judgment.parties);
-	if (read) return extractParticipants(paragraphs, fromApi(read));
+	// Null for a judgment normalized before the API read parties; empty when the kop names none.
+	if (judgment.parties) return extractParticipants(paragraphs, fromApi(judgment.parties));
 
 	const subheading = paragraphs.find((p) => p.kind === 'subheading')?.text ?? null;
 	const text = judgment.props?.text;
@@ -616,7 +605,7 @@ function parseOnePara(text: string, chunkOffset: number): ParsedBodyPara {
 }
 
 // ── Participant extraction ────────────────────────────────────────────────
-export type Participant = {
+type Participant = {
 	role: string;
 	name: string;
 	/** Whom a lawyer acts for. */
@@ -639,7 +628,7 @@ export type Participant = {
  * scanned from its first body paragraphs. Lawyers are not scanned from the body: the API
  * reads them per party (`representatives`), and a scan labelled every advocaat a raadsman.
  */
-export function extractParticipants(
+function extractParticipants(
 	paragraphs: Array<{ kind?: string | null; text: string }>,
 	parties: Participant[]
 ): Participant[] {
@@ -682,7 +671,7 @@ export function extractParticipants(
 
 /** Split a body paragraph that may contain multiple sub-paragraphs or a
  *  trailing embedded section heading into an array of render segments. */
-export function splitBodyParagraph(
+function splitBodyParagraph(
 	text: string,
 	citations: Span[] = [],
 	noten: NootMarker[] = []
@@ -873,7 +862,7 @@ export type BodyItem =
  * starts with a capital and ends without a stop, a comma, a colon, a bracket or a quote.
  * TODO(backend I): goes once every court's titles come as subheading or heading.
  */
-export function isTitleLine(text: string): boolean {
+function isTitleLine(text: string): boolean {
 	const t = text.trim();
 	return (
 		t.length >= 3 &&
@@ -894,7 +883,7 @@ const PARTIES_END_RE = /^\(?hierna(?: te noemen)?\s*:/i;
  * (PHR:2026:901); an arrest's first chapters follow its kop (HR:2026:1530). Blocks of
  * the text, or none where the subheading is only the kop.
  */
-export function headRest(text: string): string[] {
+function headRest(text: string): string[] {
 	const blocks = text
 		.split(/\n[ \t]*\n+/)
 		.map((b) => b.trim())
@@ -930,7 +919,7 @@ export function bodyItems(
 	const body = (
 		text: string,
 		citations: Span[] | undefined,
-		number: unknown,
+		number: string | null | undefined,
 		paraId?: string,
 		/** The API marks a paragraph that continues an overweging (`continues`, BE-56). */
 		continues = false
@@ -943,7 +932,7 @@ export function bodyItems(
 				within = false;
 				return;
 			}
-			const num = seg.num ?? (i === 0 && number != null ? String(number) : null);
+			const num = seg.num ?? (i === 0 ? (number ?? null) : null);
 			if (num) {
 				items.push({
 					kind: 'rov',
@@ -987,7 +976,7 @@ export function bodyItems(
 		} else if (p.kind === 'heading') {
 			// The number the API gives apart stands before the title, as in "1. Procesverloop".
 			const title = normalizeParagraphText(p.text);
-			const nr = p.number != null ? String(p.number) : null;
+			const nr = p.number ?? null;
 			const text = nr && !title.startsWith(nr) ? `${nr}. ${title}` : title;
 			// The anchor stays that of the title alone, so a shared link keeps working.
 			items.push({ kind: 'heading', text, id: headingId(title) });
@@ -997,14 +986,7 @@ export function bodyItems(
 			// it, and its lines are no overwegingen.
 			return;
 		} else {
-			const continues = (p as { continues?: unknown }).continues;
-			body(
-				p.text,
-				p.citations ?? [],
-				p.number,
-				p.paragraph_id ?? undefined,
-				typeof continues === 'string' && continues !== ''
-			);
+			body(p.text, p.citations ?? [], p.number, p.paragraph_id, !!p.continues);
 		}
 	});
 	return items;
