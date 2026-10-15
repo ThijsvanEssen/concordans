@@ -6,7 +6,7 @@ import { get } from 'svelte/store';
 import { aborted, fail, fakeApi, type FakeAnswer, type ApiPath } from '$lib/test/fakeApi';
 import type { GraphStore } from '$lib/graph/store/types';
 import type { GraphNode } from '$lib/graph/types';
-import { createVerbondenSource } from './source';
+import { createVerbondenSource } from './data-source';
 import { DEFAULT_LOADER_OPTIONS, LOADERS, type LoaderContext } from './loaders';
 import { loadDossierHub } from './dossier-hub';
 import type { Loader } from './groups';

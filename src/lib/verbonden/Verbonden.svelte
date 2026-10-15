@@ -30,7 +30,7 @@
 	import { countLabel, groupCount, type Group } from './groups';
 	import { csvName, download, exportLabel, exportRows, rowsToCsv } from './export';
 	import { caseNumberOf, repeatedTitles, rowKey, type Row } from './rows';
-	import { LOAD_FAILED, type VerbondenState } from './source';
+	import { LOAD_FAILED, type VerbondenState } from './data-source';
 	import PendingRows, { pendingKind } from './PendingRows.svelte';
 	import PendingGroup from './PendingGroup.svelte';
 	import GroupHead from './GroupHead.svelte';

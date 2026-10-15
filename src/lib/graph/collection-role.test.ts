@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { NODE_TYPES, RELATIONS, type Collection } from '$lib/vocabulary';
-import { kolomVan } from '$lib/netwerk/kolommen';
+import { kolomVan } from '$lib/selection/kolommen';
 import { COLLECTION_ROLE, GROUP_LABEL, inLegend, isDrawn } from './collection-role';
 import { containerKindOf } from './container-membership';
 import { drawClassOf } from './types';

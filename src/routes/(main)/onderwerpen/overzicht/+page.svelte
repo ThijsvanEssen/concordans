@@ -13,7 +13,7 @@
 	import { untrack } from 'svelte';
 	import { formatCount } from '$lib/text/getal';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
-	import { siteTitle } from '$lib/seo/kop.svelte';
+	import { siteTitle } from '$lib/seo/server-head.svelte';
 	import { page } from '$app/state';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
 	import { load } from '$lib/util/load.svelte';

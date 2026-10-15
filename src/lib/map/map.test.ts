@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseNetwerk } from '$lib/netwerk/netwerk';
+import { parseNetwerk } from '$lib/selection/netwerk';
 import {
 	bewaarItem,
 	citaten,

@@ -4,7 +4,7 @@ Two overlays paint counts on the network: **Open dossiers** (open proposed chang
 
 ## URL
 
-`?overlay=` holds the overlay. Parsing and writing are in `src/lib/netwerk/overlay.ts` (`parseOverlay`, `overlayParam`, type `Overlay` with kinds `none`, `open`, `heat`).
+`?overlay=` holds the overlay. Parsing and writing are in `src/lib/selection/overlay.ts` (`parseOverlay`, `overlayParam`, type `Overlay` with kinds `none`, `open`, `heat`).
 
 | Value           | Overlay                                                                                                   |
 | --------------- | --------------------------------------------------------------------------------------------------------- |

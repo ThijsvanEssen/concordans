@@ -5,7 +5,7 @@
 import { untrack } from 'svelte';
 import { report } from '$lib/api/errors';
 import { getHeat, getInFlux, type NodeCounts } from '$lib/api/overlays';
-import type { Overlay } from '$lib/netwerk/overlay';
+import type { Overlay } from '$lib/selection/overlay';
 
 export class OverlayCounts {
 	inFlux = $state<NodeCounts>(new Map());

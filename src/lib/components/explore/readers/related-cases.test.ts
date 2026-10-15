@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Neighbor } from '$lib/api/nodes';
-import { samenhangVan } from './samenhang';
+import { samenhangVan } from './related-cases';
 
 const edge = (direction: 'inbound' | 'outbound', text: string) =>
 	({

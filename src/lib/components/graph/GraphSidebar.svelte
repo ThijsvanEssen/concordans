@@ -7,7 +7,7 @@
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
-	import { HEAT_PERIODS, type Overlay } from '$lib/netwerk/overlay';
+	import { HEAT_PERIODS, type Overlay } from '$lib/selection/overlay';
 	import type { Collection, Relation } from '$lib/vocabulary';
 	import {
 		FILTER_GROUPS,
@@ -19,7 +19,7 @@
 		type FilterGroup,
 		type VerbondenFilter
 	} from '$lib/verbonden/filter';
-	import type { VerbondenState } from '$lib/verbonden/source';
+	import type { VerbondenState } from '$lib/verbonden/data-source';
 	import { allRows, groupTotals, lidCounts, relationCounts } from '$lib/verbonden/view';
 	import {
 		edgeColorFor,

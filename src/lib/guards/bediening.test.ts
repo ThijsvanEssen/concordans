@@ -9,7 +9,10 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 
 	it('shows a choice in the control itself, without chips', () => {
 		const chips: Uitzondering[] = [
-			{ pad: 'lib/netwerk/NetwerkPanel.svelte', reden: 'the chosen bronnen: content, not a filter' }
+			{
+				pad: 'lib/selection/NetwerkPanel.svelte',
+				reden: 'the chosen bronnen: content, not a filter'
+			}
 		];
 		expect(overtreders((t) => /class="[^"]*\bchip\b/.test(t), chips)).toEqual([]);
 	});
@@ -38,7 +41,7 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 				reden: 'the search in the bar looks as the field it opens'
 			},
 			{
-				pad: 'lib/netwerk/NetwerkPanel.svelte',
+				pad: 'lib/selection/NetwerkPanel.svelte',
 				reden: 'the example in an empty netwerk is a card, not a button'
 			}
 		];

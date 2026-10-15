@@ -30,7 +30,7 @@
 		clusterZinnen,
 		isClusterId,
 		type Cluster
-	} from '$lib/netwerk/cluster';
+	} from '$lib/selection/cluster';
 	import { openGroup } from '$lib/verbonden/open-group';
 	import { bronPlural } from '$lib/vocabulary';
 	import { spriteForVorm, IMAGE_SIZE_BUMP } from './nodeSprites';
@@ -49,11 +49,11 @@
 		type ContainerKind
 	} from '$lib/graph/container-membership';
 	import { metGroepVerborgen } from '$lib/graph/met-groep';
-	import { kolomPlekken } from '$lib/netwerk/kolommen';
+	import { kolomPlekken } from '$lib/selection/kolommen';
 	import { packGroups, placeClusters, ringAround, syncGroupLinks } from '$lib/graph/layout';
 	import type { NodeCounts } from '$lib/api/overlays';
-	import type { Overlay } from '$lib/netwerk/overlay';
-	import { DEFAULT_HEAT_MONTHS } from '$lib/netwerk/overlay';
+	import type { Overlay } from '$lib/selection/overlay';
+	import { DEFAULT_HEAT_MONTHS } from '$lib/selection/overlay';
 	import type { Relation } from '$lib/vocabulary';
 	import {
 		FILTER_GROUPS,
@@ -62,7 +62,7 @@
 		type FilterGroup,
 		type VerbondenFilter
 	} from '$lib/verbonden/filter';
-	import type { VerbondenState } from '$lib/verbonden/source';
+	import type { VerbondenState } from '$lib/verbonden/data-source';
 	import { laatstOpen, opzij, type Zwevend } from '$lib/stores/zwevend';
 	import {
 		cardBeside,
@@ -71,7 +71,7 @@
 		foldStep,
 		legendPlace,
 		placeCard
-	} from '$lib/netwerk/card-place';
+	} from '$lib/selection/card-place';
 	import { FOLD, isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { netwerkMelding } from '$lib/stores/netwerk-melding';
 	import { kaart } from '$lib/map/map.svelte';
@@ -576,7 +576,7 @@
 		(n.anchor || !isContainerKind(n.drawClass)) && !isVersionCollection(n.collection);
 
 	// ── clusters ────────────────────────────────────────────────────────────────
-	// What the store holds goes to the canvas through the clusters ($lib/netwerk/cluster):
+	// What the store holds goes to the canvas through the clusters ($lib/selection/cluster):
 	// past forty loose bronnen of one kind around the focus, one cluster bron stands for
 	// them. Shown in full (`expanded`) until the reader folds them again or the focus moves.
 	let rawNodes: GraphNode[] = [];

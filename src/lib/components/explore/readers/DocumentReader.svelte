@@ -32,7 +32,7 @@
 	import { eigenUitslag, vervanging } from '$lib/components/parliamentary/vervanging';
 	import { fromDocument } from '$lib/bron/submitters';
 	import ReaderHead from './ReaderHead.svelte';
-	import Bijlagen from './Bijlagen.svelte';
+	import DocumentAttachments from './DocumentAttachments.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import { getNodeFirst } from '$lib/api/records';
@@ -320,7 +320,7 @@
 				{#snippet statusLine()}
 					{#if cite}<span>{cite}.</span>{/if}
 					<Vervanging zinnen={vervanging(doc)} />
-					{#if bijlagen > 0}<Bijlagen
+					{#if bijlagen > 0}<DocumentAttachments
 							collection="documents"
 							bronKey={doc.key}
 							aantal={bijlagen}

@@ -32,7 +32,7 @@
 	import PanelBoundary from '$lib/components/ui/PanelBoundary.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { getNodeCanvas, getNodeHull } from '$lib/api/records';
-	import { kopNode } from '$lib/bron/kop';
+	import { kopNode } from '$lib/bron/first-node';
 	import { bronHref, focusOf, refId, refOf } from '$lib/bron/href';
 	import { getDossierKey } from '$lib/api/dossiers';
 	import { getMemberVotes } from '$lib/api/members';
@@ -42,7 +42,7 @@
 	import KindReader from '$lib/components/explore/KindReader.svelte';
 	import ReaderFrame from '$lib/components/explore/readers/ReaderFrame.svelte';
 	import NietGevonden from '$lib/components/ui/NietGevonden.svelte';
-	import { LADEN_TITEL, serverKop, siteTitle } from '$lib/seo/kop.svelte';
+	import { LADEN_TITEL, serverKop, siteTitle } from '$lib/seo/server-head.svelte';
 	import { routeKop } from '$lib/seo/routes';
 	import DocumentReader from '$lib/components/explore/readers/DocumentReader.svelte';
 	import JudgmentReader from '$lib/components/explore/readers/JudgmentReader.svelte';
@@ -58,7 +58,7 @@
 	import VerbondenTabel from '$lib/verbonden/VerbondenTabel.svelte';
 	import { filterParams, parseFilter, type VerbondenFilter } from '$lib/verbonden/filter';
 	import type { Row } from '$lib/verbonden/rows';
-	import { createVerbondenSource, type VerbondenState } from '$lib/verbonden/source';
+	import { createVerbondenSource, type VerbondenState } from '$lib/verbonden/data-source';
 	import { edgeKey } from '$lib/verbonden/edge-meta';
 	import {
 		edgeLids,
@@ -78,7 +78,7 @@
 		overlayParam,
 		DEFAULT_HEAT_MONTHS,
 		type Overlay
-	} from '$lib/netwerk/overlay';
+	} from '$lib/selection/overlay';
 	import { AMENDING_RELATIONS, parseNodeId } from '$lib/vocabulary';
 	import { articleOf, kort, lawIdOf } from '$lib/graph/types';
 	import { bronNaam } from '$lib/bron/naam';
@@ -91,7 +91,7 @@
 		verkennerUrl
 	} from '$lib/bron/leesbaar';
 	import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
-	import NetwerkPanel from '$lib/netwerk/NetwerkPanel.svelte';
+	import NetwerkPanel from '$lib/selection/NetwerkPanel.svelte';
 	import { focusStap } from '$lib/graph/focus-stap';
 	import {
 		EXAMPLE_NETWERK,
@@ -102,7 +102,7 @@
 		withToggled,
 		type Netwerk,
 		type NetwerkEntry
-	} from '$lib/netwerk/netwerk';
+	} from '$lib/selection/netwerk';
 	import { navigate, patchParams, queryHref, withParams, type ParamPatch } from '$lib/util/address';
 	import {
 		besideJudgment,
@@ -569,7 +569,7 @@
 		wachtOp =
 			huidig && huidig.id !== id && linkIdOf(huidig) !== id && !store.getNodeById(id) ? id : null;
 		try {
-			// The reader stands on the bron's head ($lib/bron/kop): a person's record, a judgment's
+			// The reader stands on the bron's head ($lib/bron/first-node): a person's record, a judgment's
 			// text, a law's or a dossier's detail; the node, once in, takes its place.
 			kopNode(target.collection, target.key)
 				?.then((node) => {

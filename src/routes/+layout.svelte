@@ -14,7 +14,7 @@
 	import { page } from '$app/state';
 	import { meldZijscroll } from '$lib/dev/zijscroll';
 	import { canonical } from '$lib/seo/routes';
-	import { LADEN_TITEL, serverKop } from '$lib/seo/kop.svelte';
+	import { LADEN_TITEL, serverKop } from '$lib/seo/server-head.svelte';
 
 	let { children }: { children: Snippet } = $props();
 

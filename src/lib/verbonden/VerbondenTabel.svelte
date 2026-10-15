@@ -18,7 +18,7 @@
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import RowOpen from './RowOpen.svelte';
 	import { isEscape } from '$lib/actions/keys';
-	import { LOAD_FAILED, type VerbondenState } from './source';
+	import { LOAD_FAILED, type VerbondenState } from './data-source';
 	import { betrouwbaarheid } from './verbinding';
 	import ConfidenceDot from './ConfidenceDot.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';

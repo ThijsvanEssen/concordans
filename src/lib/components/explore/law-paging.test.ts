@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { nog, verderLabel, volgendeBladzijden, vorigeBladzijde } from './bladeren';
+import { nog, verderLabel, volgendeBladzijden, vorigeBladzijde } from './law-paging';
 
 describe('bladeren', () => {
 	it('labels both ways alike', () => {

@@ -1,6 +1,6 @@
 # Search
 
-One component, `src/lib/search/Search.svelte`, in three places: on the start page (with a scope: Wetten, Uitspraken, Parlement or Kabinet), in the ⌘K dialog `src/lib/components/layout/SearchOverlay.svelte`, and in the panel Netwerk, to add a bron (`src/lib/netwerk/NetwerkPanel.svelte`). `AppShell` owns the dialog and provides the opener through `src/lib/stores/search-trigger.ts`. On a page with its own field (`main [data-search-field]`) ⌘K focuses that field; elsewhere it opens the dialog.
+One component, `src/lib/search/Search.svelte`, in three places: on the start page (with a scope: Wetten, Uitspraken, Parlement or Kabinet), in the ⌘K dialog `src/lib/components/layout/SearchOverlay.svelte`, and in the panel Netwerk, to add a bron (`src/lib/selection/NetwerkPanel.svelte`). `AppShell` owns the dialog and provides the opener through `src/lib/stores/search-trigger.ts`. On a page with its own field (`main [data-search-field]`) ⌘K focuses that field; elsewhere it opens the dialog.
 
 ## Request
 

@@ -55,7 +55,7 @@
 	<!-- One section per Kamer, so either closes on its own (Thijs, 10 Oct). -->
 	<KamerZetels
 		kamer="TK"
-		stukken={zetels.tk}
+		stretches={zetels.tk}
 		meerderheid={zetels.majority.TK ?? 76}
 		van={zetels.from_date ?? null}
 		{eind}
@@ -66,7 +66,7 @@
 	/>
 	<KamerZetels
 		kamer="EK"
-		stukken={zetels.ek ?? []}
+		stretches={zetels.ek ?? []}
 		meerderheid={zetels.majority.EK ?? 38}
 		van={zetels.from_date ?? null}
 		{eind}

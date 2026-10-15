@@ -7,7 +7,7 @@ import type { Schema } from '$lib/api/types';
 // of the term (0 at its start, 1 at its end), so the chart scales with its column.
 
 export type CabinetDetail = Schema<'CabinetDetailDTO'>;
-export type Seat = Schema<'CabinetSeatDTO'>;
+export type CabinetPost = Schema<'CabinetSeatDTO'>;
 export type SeatPost = Schema<'CabinetPostDTO'>;
 export type Phase = Schema<'CabinetPhaseDTO'>;
 
@@ -50,7 +50,7 @@ export type Block = { post: SeatPost; from: number; to: number };
  * follow each other share one lane; two at the same time (a doubt the API names in
  * `overlaps_with`) get a lane each.
  */
-export function lanesOf(seat: Seat, term: Term): Block[][] {
+export function lanesOf(seat: CabinetPost, term: Term): Block[][] {
 	const blocks = seat.posts
 		.map((post) => ({
 			post,

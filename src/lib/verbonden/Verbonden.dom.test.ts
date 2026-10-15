@@ -14,7 +14,7 @@ import { buildGroups } from './groups';
 import { EMPTY_FILTER } from './filter';
 import { DEFAULT_LOADER_OPTIONS } from './loaders';
 import type { Row } from './rows';
-import type { VerbondenState } from './source';
+import type { VerbondenState } from './data-source';
 import Verbonden from './Verbonden.svelte';
 
 vi.mock('$app/state', () => ({ page: { url: new URL('http://localhost/explore?bron=a') } }));

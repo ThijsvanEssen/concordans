@@ -88,8 +88,8 @@ const DUTCH = new Set(
 );
 
 // The names that may not grow: identifiers in the code, and the names of files and folders.
-const IDENTIFIERS_MAX = 4543;
-const PATHS_MAX = 147;
+const IDENTIFIERS_MAX = 4535;
+const PATHS_MAX = 141;
 
 /** The code of a script without its comments, strings and regular expressions. */
 function stripped(code: string): string {

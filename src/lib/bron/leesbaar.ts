@@ -352,7 +352,7 @@ const apiArticle = (pad: Pad) =>
  * An article's text, asked as soon as its address is known, beside the lookup and the node,
  * so the reader finds it waiting (once() shares the request; Thijs, 10 Oct: lazy, the text
  * first). The text names the article's node key too: where it comes before the lookup, the
- * reader stands on it at once ($lib/bron/kop). Its tekstversies date the status line ("tekst
+ * reader stands on it at once ($lib/bron/first-node). Its tekstversies date the status line ("tekst
  * sinds …"), the list of its law gives the place line and Vorig, Volgend, its explanations the
  * line of the memorie: asked with it, so the head does not grow over the text when they come.
  * By the API's own number (162 for BW 6:162), as the reader asks them. Nobody waits for these:
