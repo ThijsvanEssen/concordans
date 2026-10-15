@@ -291,8 +291,8 @@
 								{#each named as p, i (i)}
 									{@const note = partyNote(p)}
 									<span class="reader-party"
-										>{p.name}{#if note}
-											<span class="reader-parties-party">{note}</span>{/if}</span
+										>{p.name}{#if note}<span class="reader-parties-party">{` ${note}`}</span
+											>{/if}</span
 									>
 									{#each p.counsel as line (line)}
 										<span class="reader-parties-counsel">{line}</span>
@@ -570,7 +570,9 @@
 	/* Who acts for a party, under it: "mr. J. Geelhoed, advocaat te Delft". */
 	.reader-parties-counsel {
 		display: block;
-		padding-left: var(--s-4);
+		/* A hanging indent: a line that wraps goes on under the name, not under the party. */
+		padding-left: var(--s-6);
+		text-indent: calc(var(--s-4) - var(--s-6));
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);

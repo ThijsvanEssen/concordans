@@ -471,14 +471,18 @@ function fromApi(parties: JudgmentParty[]): Participant[] {
 	type Rep = NonNullable<JudgmentParty['representatives']>[number];
 	const acts = (p: JudgmentParty | undefined, r: Rep) =>
 		!!p?.representatives?.some((q) => q.name === r.name && q.role === r.role);
+	// A name the kop read up to the "en" that joins the next party: `[appellant 1] en`.
+	const nameOf = (p: JudgmentParty) => p.name.replace(/\s+en$/, '');
+	// An alias that is itself a placeholder ([eisers]) says nothing the name does not.
+	const aliasOf = (p: JudgmentParty) =>
+		p.alias && p.alias !== p.name && !isPlaceholder(p.alias) ? p.alias : null;
 	return parties.flatMap((p, i) => {
-		// An alias that is itself a placeholder ([eisers]) says nothing the name does not.
-		const alias = p.alias && p.alias !== p.name && !isPlaceholder(p.alias) ? p.alias : null;
+		const alias = aliasOf(p);
 		const alsoAs = p.roles?.filter((r) => r !== p.role) ?? [];
 		const rows: Participant[] = [
 			{
 				role: p.role,
-				name: p.name,
+				name: nameOf(p),
 				// `Partij` claims no role, so none is derived (an interested party, side `other`).
 				stated: p.role_stated !== false || p.role === 'Partij',
 				...(alias ? { alias } : {}),
@@ -489,11 +493,11 @@ function fromApi(parties: JudgmentParty[]): Participant[] {
 			if (acts(parties[i + 1], r)) continue;
 			let from = i;
 			while (from > 0 && acts(parties[from - 1], r)) from--;
-			const labels = new Set(parties.slice(from, i + 1).map((q) => q.alias ?? q.name));
+			const labels = new Set(parties.slice(from, i + 1).map((q) => aliasOf(q) ?? nameOf(q)));
 			rows.push({
 				role: REPRESENTATIVE_ROLES[r.role] ?? r.role,
 				name: r.name,
-				party: joinAnd([...labels]),
+				parties: [...labels],
 				...(r.place?.trim() ? { place: r.place.trim() } : {}),
 				...(r.capacity?.trim() ? { capacity: r.capacity.trim() } : {})
 			});
@@ -608,8 +612,8 @@ function parseOnePara(text: string, chunkOffset: number): ParsedBodyPara {
 type Participant = {
 	role: string;
 	name: string;
-	/** Whom a lawyer acts for. */
-	party?: string;
+	/** Whom a lawyer acts for: the parties by what the reader calls them (alias or name). */
+	parties?: string[];
 	/** Where a lawyer practises: `Voorschoten` of "advocaat te Voorschoten". */
 	place?: string;
 	/** What else the judgment calls them: `ambtenaar in dienst van de provincie`. */
@@ -768,15 +772,20 @@ type RoleGroup = {
 	derived: boolean;
 };
 
+/** What the reader calls a party: its alias, or else its name. */
+const labelOf = (p: Participant) => p.alias ?? p.name;
+
 /**
  * Who acts for a party, in the form a judgment writes it: `mr. J. Geelhoed, advocaat te
- * Delft`, `mr. A. Jansen, gemachtigde, ambtenaar in dienst van de provincie`. The party
- * is named only where the line does not stand under it (`under`): `, voor [eisers]`.
+ * Delft`, `mr. A. Jansen, gemachtigde, ambtenaar in dienst van de provincie`. The parties
+ * are named only where the line does not say it already (`said`): `, voor [eisers]`.
  */
-function counselLine(p: Participant, under?: string): string {
-	const parts = [p.name, `${p.role.toLowerCase()}${p.place ? ` te ${p.place}` : ''}`];
+function counselLine(p: Participant, said = false): string {
+	// A kop that writes "mr. S. Kriekaard, advocaat" gave the role with the name.
+	const name = p.name.replace(/,\s*(?:advocaat|gemachtigde|raadsman)$/i, '');
+	const parts = [name, `${p.role.toLowerCase()}${p.place ? ` te ${p.place}` : ''}`];
 	if (p.capacity) parts.push(p.capacity);
-	if (p.party && p.party !== under) parts.push(`voor ${forParties(p.party)}`);
+	if (p.parties?.length && !said) parts.push(`voor ${forParties(p.parties)}`);
 	return parts.join(', ');
 }
 
@@ -808,7 +817,7 @@ export function partiesByRole(participants: Participant[]): RoleGroup[] {
 	let host: PartyEntry | null = null;
 	const hosted: Array<[PartyEntry, Participant]> = [];
 	for (const p of participants) {
-		if (p.party && host) {
+		if (p.parties && host) {
 			hosted.push([host, p]);
 			continue;
 		}
@@ -816,37 +825,39 @@ export function partiesByRole(participants: Participant[]): RoleGroup[] {
 		const entry: PartyEntry = { ...p, counsel: [] };
 		(isPlaceholder(p.name) ? g.anonymous : g.named).push(entry);
 		if (p.stated === false) g.derived = true;
-		if (!p.party) host = entry;
+		if (!p.parties) host = entry;
 	}
 	// One pseudonymised party reads better by its placeholder than as a count of one.
 	for (const g of groups.values()) {
 		if (g.anonymous.length === 1) g.named.push(...g.anonymous.splice(0));
 	}
-	// A line under a listed party leaves the party out; under a count it names it.
+	// A line leaves its parties out where it stands under the one party it acts for, or
+	// acts for all the parties of its row; otherwise it names them.
 	for (const g of groups.values()) {
+		const row = new Set([...g.named, ...g.anonymous].map(labelOf));
+		const all = (p: Participant) =>
+			p.parties!.length === row.size && p.parties!.every((l) => row.has(l));
 		for (const [entry, p] of hosted) {
-			if (g.named.includes(entry)) entry.counsel.push(counselLine(p, entry.alias ?? entry.name));
-			else if (g.anonymous.includes(entry)) g.counsel.push(counselLine(p));
+			if (g.named.includes(entry)) {
+				const one = p.parties!.length === 1 && p.parties![0] === labelOf(entry);
+				entry.counsel.push(counselLine(p, one || all(p)));
+			} else if (g.anonymous.includes(entry)) g.counsel.push(counselLine(p, all(p)));
 		}
 	}
 	// The parties first, then who represents or advises them.
 	const counsel = (g: RoleGroup) =>
 		/advocaat|raadsman|raadslieden|gemachtigde|procureur/i.test(g.role) ||
-		(g.named.length > 0 && g.named.every((p) => p.party));
+		(g.named.length > 0 && g.named.every((p) => p.parties));
 	const all = [...groups.values()];
 	return [...all.filter((g) => !counsel(g)), ...all.filter(counsel)];
 }
 
 /** Whom a lawyer acts for, with pseudonymised parties counted: `KLM en 3 geanonimiseerde partijen`. */
-function forParties(party: string): string {
-	const parts = party
-		.split(/,\s*|\s+en\s+/)
-		.map((p) => p.trim())
-		.filter(Boolean);
-	const anonymous = parts.filter(isPlaceholder).length;
-	if (anonymous < 2) return party;
+function forParties(parties: string[]): string {
+	const anonymous = parties.filter(isPlaceholder).length;
+	if (anonymous < 2) return joinAnd(parties);
 	return joinAnd(
-		parts.filter((p) => !isPlaceholder(p)),
+		parties.filter((p) => !isPlaceholder(p)),
 		{ n: anonymous, one: 'geanonimiseerde partij', many: 'geanonimiseerde partijen' }
 	);
 }

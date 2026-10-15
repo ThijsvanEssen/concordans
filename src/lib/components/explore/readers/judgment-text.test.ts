@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { Schema } from '$lib/api/types';
-import { bodyItems, judgmentParticipants, partiesByRole, signatureStart } from './judgment-text';
+import {
+	bodyItems,
+	judgmentParticipants,
+	partiesByRole,
+	partyNote,
+	signatureStart
+} from './judgment-text';
+import partiesFixture from '$lib/test/judgment-parties.json';
 
 type Judgment = Schema<'JudgmentDTO'>;
 type Paragraph = Schema<'JudgmentParagraph'>;
@@ -560,7 +567,7 @@ describe('the participants named in the body', () => {
 		});
 		expect(judgmentParticipants(j)).toEqual([
 			{ role: 'Verweerder', name: 'DE STAAT DER NEDERLANDEN', stated: true },
-			{ role: 'Advocaat', name: 'Mr. K. Teuben', party: 'DE STAAT DER NEDERLANDEN' }
+			{ role: 'Advocaat', name: 'Mr. K. Teuben', parties: ['DE STAAT DER NEDERLANDEN'] }
 		]);
 	});
 });
@@ -594,7 +601,7 @@ describe('parties from the API', () => {
 		});
 		expect(judgmentParticipants(j)).toEqual([
 			{ role: 'Eiser', name: '[eiseres 1]', stated: true },
-			{ role: 'Advocaat', name: 'mr. H.J.W. Alt', party: '[eisers]' },
+			{ role: 'Advocaat', name: 'mr. H.J.W. Alt', parties: ['[eiseres 1]'] },
 			{ role: 'Verweerder', name: 'MAATSCHAP GRONINGEN', stated: false, alias: 'de Maatschap' }
 		]);
 	});
@@ -639,14 +646,14 @@ describe('parties from the API', () => {
 			judgmentParticipants(judgment({ paragraphs: [], parties })).map((p) => [
 				p.role,
 				p.name,
-				p.party
+				p.parties
 			])
 		).toEqual([
 			['Verweerder', 'MAATSCHAP GRONINGEN', undefined],
 			['Verweerder', 'NEDERLANDSE AARDOLIE MAATSCHAPPIJ B.V.', undefined],
-			['Advocaat', 'Mr. J. de Bie Leuveling Tjeenk', 'de Maatschap en NAM'],
+			['Advocaat', 'Mr. J. de Bie Leuveling Tjeenk', ['de Maatschap', 'NAM']],
 			['Verweerder', 'EBN B.V.', undefined],
-			['Advocaat', 'mr. J.F. de Groot', 'EBN']
+			['Advocaat', 'mr. J.F. de Groot', ['EBN']]
 		]);
 		const [{ named }] = partiesByRole(judgmentParticipants(judgment({ paragraphs: [], parties })));
 		expect(named.map((p) => p.counsel)).toEqual([
@@ -683,7 +690,7 @@ describe('parties from the API', () => {
 			{
 				role: 'Advocaat',
 				name: 'mr. drs. R. van Gelder',
-				party: '[appellanten]',
+				parties: ['[appellanten]'],
 				place: 'Voorschoten'
 			},
 			{
@@ -694,7 +701,7 @@ describe('parties from the API', () => {
 			{
 				role: 'Gemachtigde',
 				name: 'mr. A. Jansen',
-				party: 'het college van gedeputeerde staten van Zuid-Holland',
+				parties: ['het college van gedeputeerde staten van Zuid-Holland'],
 				capacity: 'ambtenaar in dienst van de provincie'
 			},
 			{ role: 'Partij', name: 'Vereniging X', stated: true }
@@ -724,7 +731,7 @@ describe('partiesByRole', () => {
 		}));
 		const groups = partiesByRole([
 			...appellants,
-			{ role: 'Advocaat', name: 'mr. M.A. de Jager', party: '[appellant 1]' },
+			{ role: 'Advocaat', name: 'mr. M.A. de Jager', parties: ['[appellant 1]'] },
 			{ role: 'Geïntimeerde', name: 'KONINKLIJKE LUCHTVAART MAATSCHAPPIJ N.V.' },
 			{ role: 'Geïntimeerde', name: 'VERENIGING NEDERLANDSE VERKEERSVLIEGERS' },
 			{ role: 'Eiser', name: '[eiser]', stated: false }
@@ -776,13 +783,13 @@ describe('the parties as the reader writes them (ECLI:NL:RVS:2026:6099)', () => 
 	it('names the party only where the line does not stand under it', () => {
 		const lines = partiesByRole([
 			{ role: 'Eiser', name: '[eiseres 1]', alias: '[eisers]' },
-			{ role: 'Advocaat', name: 'mr. H.J.W. Alt', party: '[eisers]' },
+			{ role: 'Advocaat', name: 'mr. H.J.W. Alt', parties: ['[eisers]'] },
 			{ role: 'Appellant', name: '[appellant 1]' },
 			{ role: 'Appellant', name: '[appellant 2]' },
 			{
 				role: 'Gemachtigde',
 				name: 'mr. A. Jansen',
-				party: '[appellant 2]',
+				parties: ['[appellant 2]'],
 				capacity: 'ambtenaar in dienst van de provincie'
 			}
 		]);
@@ -798,18 +805,110 @@ describe('the parties as the reader writes them (ECLI:NL:RVS:2026:6099)', () => 
 });
 
 describe('whom a lawyer acts for, where the line does not stand under the party', () => {
-	const under = (party: string) =>
+	const under = (parties: string[]) =>
 		partiesByRole([
 			{ role: 'Geïntimeerde', name: 'KLM' },
-			{ role: 'Advocaat', name: 'mr. X', party }
+			{ role: 'Advocaat', name: 'mr. X', parties }
 		])[0].named[0].counsel[0];
 	it('counts the pseudonymised parties a lawyer acts for', () => {
-		const many = Array.from({ length: 116 }, (_, i) => `[appellant ${i + 1}]`).join(', ');
+		const many = Array.from({ length: 116 }, (_, i) => `[appellant ${i + 1}]`);
 		expect(under(many)).toBe('mr. X, advocaat, voor 116 geanonimiseerde partijen');
-		expect(under('KLM, [eiser 1] en [eiser 2]')).toBe(
+		expect(under(['KLM', '[eiser 1]', '[eiser 2]'])).toBe(
 			'mr. X, advocaat, voor KLM en 2 geanonimiseerde partijen'
 		);
-		expect(under('[appellant]')).toBe('mr. X, advocaat, voor [appellant]');
+		expect(under(['[appellant]'])).toBe('mr. X, advocaat, voor [appellant]');
+	});
+});
+
+describe('the parties of judgments the API read them for', () => {
+	// `judgment.parties` as /api/judgments/{ecli} gives them.
+	const rows = (ecli: keyof typeof partiesFixture) =>
+		partiesByRole(
+			judgmentParticipants(
+				judgment({ paragraphs: [], parties: partiesFixture[ecli] as unknown as Party[] })
+			)
+		).map((g) => [
+			g.role,
+			g.named.map((p) => [[p.name, partyNote(p)].filter(Boolean).join(' '), ...p.counsel]),
+			g.anonymous.length,
+			g.counsel
+		]);
+
+	it('leaves the parties out where the lawyer acts for the whole row (HR:2025:1319)', () => {
+		expect(rows('ECLI:NL:HR:2025:1319')).toEqual([
+			[
+				'Eiser',
+				[
+					['COBRASPEN VASTGOED ONTWIKKELING B.V.'],
+					['STORM DUNE FILTERED WATER B.V. (Cobraspen c.s.)', 'R.T. Wiegerink, advocaat']
+				],
+				0,
+				[]
+			],
+			[
+				'Verweerder',
+				[
+					[
+						'N.V. PWN WATERLEIDINGBEDRIJF NOORD-HOLLAND (PWN)',
+						'P.A. Fruytier, advocaat',
+						'J.P. Jas, advocaat'
+					]
+				],
+				0,
+				[]
+			],
+			['Belanghebbende', [['STICHTING VOLKSSTERRENWACHT COPERNICUS']], 0, []]
+		]);
+	});
+
+	it('names a party by the alias the reader shows, not a placeholder (GHARL:2025:116)', () => {
+		expect(rows('ECLI:NL:GHARL:2025:116')).toEqual([
+			['Appellant', [['[appellant]', 'mr. M.B. Bollen, advocaat']], 0, []],
+			['Geïntimeerde', [['[geïntimeerde]', 'mr. A.A. Dooijeweerd, advocaat']], 0, []]
+		]);
+	});
+
+	it('reads a name without the "en" that joins the next party (GHAMS:2025:118)', () => {
+		expect(rows('ECLI:NL:GHAMS:2025:118')).toEqual([
+			['Appellant', [], 2, ['mr. M.A. van der Lubbe, advocaat']],
+			[
+				'Geïntimeerde',
+				[],
+				4,
+				[
+					'mr. J. van de Riet, advocaat, voor 3 geanonimiseerde partijen',
+					'mr. K. Kroon, advocaat, voor [VvE]'
+				]
+			],
+			['Belanghebbende', [], 3, []]
+		]);
+	});
+
+	it('writes the role once where the kop gave it with the name (RBGEL:2025:117, GHAMS:2025:109)', () => {
+		expect(rows('ECLI:NL:RBGEL:2025:117')[1]).toEqual([
+			'Verdachte',
+			[['[verdachte]', 'mr. S. Kriekaard, advocaat']],
+			0,
+			[]
+		]);
+		expect(rows('ECLI:NL:GHAMS:2025:109')[1]).toEqual([
+			'Geïntimeerde',
+			[['notaris', 'mr. H.J. Delhaas, gemachtigde'], ['[geïntimeerde]']],
+			0,
+			[]
+		]);
+	});
+
+	it('writes where a lawyer practises under the count (GHAMS:2025:122)', () => {
+		expect(rows('ECLI:NL:GHAMS:2025:122')).toEqual([
+			['Appellant', [], 2, ['mr. M. Steenhuis, advocaat te Den Bosch']],
+			[
+				'Geïntimeerde',
+				[['SONY MUSIC ENTERTAINMENT NETHERLANDS B.V.', 'mr. R. van Dongen, advocaat te Amsterdam']],
+				0,
+				[]
+			]
+		]);
 	});
 });
 

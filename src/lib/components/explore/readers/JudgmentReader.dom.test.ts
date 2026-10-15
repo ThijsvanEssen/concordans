@@ -8,6 +8,7 @@ import { fakeApi } from '$lib/test/fakeApi';
 import { open } from '$lib/test/navigation.svelte';
 import type { GraphNode } from '$lib/graph/types';
 import fixture from '$lib/test/judgment.json';
+import partiesFixture from '$lib/test/judgment-parties.json';
 import JudgmentReader from './JudgmentReader.svelte';
 import { overwegingCitaat } from '$lib/text/judgment-cite';
 
@@ -91,5 +92,32 @@ describe('JudgmentReader', () => {
 		await fireEvent.click(screen.getByRole('button', { name: /^Overweging 2\.1:/ }));
 		await settle();
 		expect(screen.getByRole('menu').getAttribute('aria-label')).toBe(kort);
+	});
+});
+
+describe('the parties of a judgment', () => {
+	it('writes a name and its alias apart, and who acts for a party under it (HR:2025:1319)', async () => {
+		const detail = {
+			...fixture.detail,
+			judgment: { ...judgment, parties: partiesFixture['ECLI:NL:HR:2025:1319'] }
+		};
+		api = fakeApi({
+			'/api/judgments/{ecli}': detail,
+			'/api/nodes/{collection}/{key}': fixture.related
+		});
+		const { container } = render(JudgmentReader, { node });
+		await settle();
+		const text = (sel: string) => [...container.querySelectorAll(sel)].map((e) => e.textContent);
+		expect(text('.reader-party')).toEqual([
+			'COBRASPEN VASTGOED ONTWIKKELING B.V.',
+			'STORM DUNE FILTERED WATER B.V. (Cobraspen c.s.)',
+			'N.V. PWN WATERLEIDINGBEDRIJF NOORD-HOLLAND (PWN)',
+			'STICHTING VOLKSSTERRENWACHT COPERNICUS'
+		]);
+		expect(text('.reader-parties-counsel')).toEqual([
+			'R.T. Wiegerink, advocaat',
+			'P.A. Fruytier, advocaat',
+			'J.P. Jas, advocaat'
+		]);
 	});
 });
