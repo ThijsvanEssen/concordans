@@ -120,6 +120,9 @@ const TEST_HOOKS: Uitzondering[] = [
 	}
 ];
 
+/** Modules tested through what they give other files, so no export only a test reads (code-eenvoud F98). */
+const NO_TEST_HOOKS = new Set(['lib/components/explore/readers/judgment-text.ts']);
+
 const EXPORT =
 	/^\s*export\s+(?:declare\s+)?(?:async\s+)?(?:const|let|function\*?|class|type|interface|enum)\s+([A-Za-z_$][\w$]*)/gm;
 
@@ -205,7 +208,7 @@ describe('nothing left over', () => {
 			for (const [, name] of text.matchAll(EXPORT)) {
 				if (elsewhere(path, name, sources)) continue;
 				const usedHere = (sources.get(path)!.get(name) ?? 0) > 1;
-				if (usedHere && elsewhere(path, name, tests)) continue;
+				if (usedHere && !NO_TEST_HOOKS.has(path) && elsewhere(path, name, tests)) continue;
 				found.push({ pad: path, wat: name });
 			}
 		}
