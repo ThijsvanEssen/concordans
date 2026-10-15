@@ -107,6 +107,7 @@ const judgment = (ecli: string, count: number) => ({
 		court_kind: 'hoge_raad',
 		date: '2009-10-27',
 		display_name: 'Hoge Raad 2009-10-27 / 08/03895',
+		cite: { short: 'HR 27 oktober 2009', full: 'HR 27 oktober 2009, ECLI:NL:HR:2009:BJ6999' },
 		inbound_citation_count: count
 	}
 });
@@ -144,7 +145,7 @@ describe('schetsVan', () => {
 	it('puts the most changed article first, and each judgment once', () => {
 		expect(s.kolommen[2].bronnen[0].label).toBe('Artikel 273f');
 		expect(s.kolommen[3].bronnen.map((b) => b.label)).toEqual(['A', 'B', '39 uitspraken']);
-		expect(s.kolommen[3].bronnen[0].sub).toBe('Hoge Raad 27 oktober 2009, 264× aangehaald');
+		expect(s.kolommen[3].bronnen[0].sub).toBe('HR 27 oktober 2009, 264× aangehaald');
 	});
 
 	it('links each stuk to the articles it changes', () => {

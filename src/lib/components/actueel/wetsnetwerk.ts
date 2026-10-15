@@ -21,7 +21,6 @@ import {
 } from '$lib/components/parliamentary/changed-articles';
 import { dossierName } from '$lib/bron/dossier-naam';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
-import { langeDatum } from '$lib/text/datum';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
 import { AMENDING_BILL_KINDS } from '$lib/components/parliamentary/stages';
 
@@ -231,8 +230,8 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 			vorm: 'uitspraak',
 			label: j.ecli ?? naamVanId(j.id, j.display_name),
 			sub: [
-				// `Hoge Raad 2009-10-27 / 08/03895`: the college and the day, the day in words.
-				j.display_name?.split(' / ')[0].replace(/\d{4}-\d{2}-\d{2}/, (d) => langeDatum(d)),
+				// The judgment as it is cited: `HR 27 oktober 2009`.
+				j.cite?.short,
 				j.inbound_citation_count ? `${j.inbound_citation_count}× aangehaald` : null
 			]
 				.filter(Boolean)

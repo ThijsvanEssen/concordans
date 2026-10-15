@@ -80,7 +80,12 @@ function resolvedMatch(
 		at: anchorOf(parseQualifier(qualifier ?? '')),
 		// "Artikel 162 Burgerlijk Wetboek Boek 6" as it is cited: "Artikel 6:162 BW". A dossier
 		// as it was typed: its display name is the title of three lines.
-		label: match.display_name && ref.collection !== 'dossiers' ? withBook(match.display_name) : null
+		label:
+			ref.collection === 'judgments'
+				? (match.title ?? null)
+				: match.display_name && ref.collection !== 'dossiers'
+					? withBook(match.display_name)
+					: null
 	};
 }
 
