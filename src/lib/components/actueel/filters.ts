@@ -3,6 +3,7 @@
 // the day counts all follow from this table, so a new filter is one row.
 import type { paths } from '$lib/api/generated/openapi-types';
 import { PARAM } from '$lib/url/filters';
+import type { Chamber } from '$lib/components/parliamentary/chamber';
 import { isFeedKind, type FeedKind } from './feed';
 
 export type FeedQuery = NonNullable<paths['/api/feed']['get']['parameters']['query']>;
@@ -31,7 +32,7 @@ type ActueelFilters = {
 	coalition: CoalitionWord | '';
 	/** Every word searched, each a `q` of its own: any of them counts. */
 	q: string[];
-	chamber: 'TK' | 'EK' | '';
+	chamber: Chamber | '';
 	instrument: string;
 	/** An article of the law, only with the law. */
 	article: string;
@@ -67,7 +68,10 @@ const FILTERS: { [K in keyof ActueelFilters]: Filter<ActueelFilters[K]> } = {
 	since: plain(PARAM.since, 'since'),
 	// Only a day in the past: with `until` the API counts apart and took 100+ s (prod, 9 Oct),
 	// without it 0.25 s. What lies ahead is left out by the page instead.
-	until: { ...plain(PARAM.until, 'until'), ask: (v, today) => (v && v < today ? { until: v } : {}) },
+	until: {
+		...plain(PARAM.until, 'until'),
+		ask: (v, today) => (v && v < today ? { until: v } : {})
+	},
 	cabinet: plain(PARAM.cabinet, 'cabinet'),
 	ministry: plain(PARAM.ministry, 'ministry'),
 	dossier: plain(PARAM.dossier, 'dossier'),
@@ -112,7 +116,7 @@ const FILTERS: { [K in keyof ActueelFilters]: Filter<ActueelFilters[K]> } = {
 const ENTRIES = Object.entries(FILTERS) as [keyof ActueelFilters, Filter<unknown>][];
 
 /** The names of the filters in the address: what clearing them removes. */
-export const FILTER_PARAMS = ENTRIES.map(([, f]) => f.param);
+export const FEED_FILTER_PARAMS = ENTRIES.map(([, f]) => f.param);
 
 /** The filters of an address. */
 export const readFilters = (params: URLSearchParams): ActueelFilters =>

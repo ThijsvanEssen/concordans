@@ -1,5 +1,6 @@
 import { forAgainst, hasVotes } from '$lib/components/parliamentary/stemming';
 import { BILL_KINDS } from '$lib/components/parliamentary/stages';
+import type { Chamber } from '$lib/components/parliamentary/chamber';
 import { count } from '$lib/text/words';
 import { citePublication } from '$lib/text/cite';
 import { DAY_MS, weekdag } from '$lib/text/datum';
@@ -127,20 +128,20 @@ export const AMENDEMENT = 'Amendement';
 type VoteLike = {
 	subkind?: string | null;
 	/** On a count of the summary. */
-	chamber?: 'TK' | 'EK';
+	chamber?: Chamber;
 	/** On an item of the feed. */
-	vote?: { chamber?: 'TK' | 'EK' } | null;
+	vote?: { chamber?: Chamber } | null;
 };
 
 /** The Kamer that voted (API 0.59): the Tweede unless the vote says the Eerste. */
-export const chamberOf = (v: VoteLike): 'TK' | 'EK' => v.chamber ?? v.vote?.chamber ?? 'TK';
+export const chamberOfVote = (v: VoteLike): Chamber => v.chamber ?? v.vote?.chamber ?? 'TK';
 
 /**
  * A vote on a bill itself: of the Tweede Kamer by the kind of its zaak; of the Eerste Kamer
  * always, as the feed gives only the vote that decided a bill there.
  */
 export const isBillVote = (v: VoteLike) =>
-	chamberOf(v) === 'EK' || (!!v.subkind && BILL_KINDS.has(v.subkind));
+	chamberOfVote(v) === 'EK' || (!!v.subkind && BILL_KINDS.has(v.subkind));
 
 /** A vote that goes into the day's bundle: not on a bill, and not close. */
 const bundledVote = (i: FeedItem) =>

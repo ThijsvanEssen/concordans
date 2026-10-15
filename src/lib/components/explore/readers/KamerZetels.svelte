@@ -16,6 +16,7 @@
 	import { load } from '$lib/util/load.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { Schema } from '$lib/api/types';
+	import type { Chamber } from '$lib/components/parliamentary/chamber';
 	import Tijdas from '$lib/components/tijdlijn/Tijdas.svelte';
 	import Fasen from '$lib/components/tijdlijn/Fasen.svelte';
 	import { ms, periodeZin } from '$lib/components/tijdlijn/tijdas';
@@ -34,7 +35,7 @@
 		onKies,
 		fasen = []
 	}: {
-		kamer: 'TK' | 'EK';
+		kamer: Chamber;
 		/** The cabinet's stretches in this Kamer; empty where the API has none. */
 		stukken: Stuk[];
 		/** The seats a majority takes (`majority` of the cabinet's seats). */

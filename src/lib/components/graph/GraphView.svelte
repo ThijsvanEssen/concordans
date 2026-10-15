@@ -1276,12 +1276,12 @@
 		     Dicht: de tekens van wat er staat. Open: filter, groepering en verbindingen. -->
 			{#if canvasCounts.nodes > 0}
 				<CanvasKaart
-					klasse="legenda"
+					class="legenda"
 					titel="Legenda"
 					open={legendaOpen}
 					onToggle={() => zetLegenda(!legendaOpen)}
 					bind:el={legendaEl}
-					stijl="top:{legendaPlek.top}px; right:{legendaPlek.right}px; max-height:{legendaPlek.max}px"
+					style="top:{legendaPlek.top}px; right:{legendaPlek.right}px; max-height:{legendaPlek.max}px"
 				>
 					{#snippet samenvatting()}
 						{#if !legendaOpen}
@@ -1398,11 +1398,11 @@
 				{#if clusterCard}
 					{@const c = clusterCard.cluster}
 					<CanvasKaart
-						klasse="cluster-kaart"
+						class="cluster-kaart"
 						titel={clusterLabel(c)}
 						role="dialog"
 						tabindex="-1"
-						stijl="left:{clusterCard.x}px; top:{clusterCard.y}px"
+						style="left:{clusterCard.x}px; top:{clusterCard.y}px"
 						onkeydown={(e: KeyboardEvent) => {
 							if (!isEscape(e)) return;
 							e.preventDefault();

@@ -31,7 +31,7 @@
 		wordingOf,
 		wordingsOf,
 		type CompareRow,
-		type Segment,
+		type DiffSegment,
 		type Wording
 	} from '$lib/text/version-diff';
 
@@ -249,7 +249,7 @@
 		`${cite(lid)} (tekst geldig ${f.through.until ? 'van ' : ''}${formulationPeriod(f)})`;
 </script>
 
-{#snippet marked(segments: Segment[], side: 'both' | 'old' | 'new')}
+{#snippet marked(segments: DiffSegment[], side: 'both' | 'old' | 'new')}
 	{#each segments as s, i (i)}
 		{@const [, lead, core, trail] = /^(\s*)([\s\S]*?)(\s*)$/.exec(s.text) ?? ['', '', s.text, '']}
 		{#if s.op === 'eq'}{s.text}{:else if s.op === 'del' && side !== 'new'}{lead}<del

@@ -24,6 +24,6 @@ describe('the touch target', () => {
 		const page = read('routes/(main)/gemarkeerd/+page.svelte');
 		for (const m of page.matchAll(/class="(notitie-knop[^"]*)"/g))
 			expect(m[1]).toContain('raakvlak');
-		expect(page).toContain('buttonClass="wis raakvlak"');
+		expect(page).toContain('class="wis raakvlak"');
 	});
 });

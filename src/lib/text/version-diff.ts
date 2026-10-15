@@ -6,7 +6,7 @@ import { joinAnd } from './words';
 import type { Schema } from '$lib/api/types';
 import { partsOf } from './article-parts';
 
-export type Segment = { op: 'eq' | 'del' | 'ins'; text: string };
+export type DiffSegment = { op: 'eq' | 'del' | 'ins'; text: string };
 
 /** One lid (or the whole text of an article without leden), with its onderdelen. */
 type Unit = { number: string | null; text: string };
@@ -18,7 +18,7 @@ export type CompareRow = {
 	old: Unit | null;
 	new: Unit | null;
 	/** Word-level, for `changed`; empty otherwise. */
-	segments: Segment[];
+	segments: DiffSegment[];
 };
 
 /** Above this share of changed characters a lid is shown as old and new, unmarked. */
@@ -33,14 +33,14 @@ const normalize = (s: string) => s.replace(/[\u00a0\u202f]/g, ' ');
 const TOKEN = /\s+|[\p{L}\p{N}]+|[^\s\p{L}\p{N}]/gu;
 const tokenize = (s: string) => s.match(TOKEN) ?? [];
 
-function push(out: Segment[], op: Segment['op'], text: string) {
+function push(out: DiffSegment[], op: DiffSegment['op'], text: string) {
 	const last = out[out.length - 1];
 	if (last?.op === op) last.text += text;
 	else out.push({ op, text });
 }
 
 /** The longest common subsequence of the words of `a` and `b`, as segments. */
-export function diffWords(a: string, b: string): Segment[] {
+export function diffWords(a: string, b: string): DiffSegment[] {
 	const x = tokenize(normalize(a));
 	const y = tokenize(normalize(b));
 	// The common head and tail first: most amendments touch a few words in the middle.
@@ -66,7 +66,7 @@ export function diffWords(a: string, b: string): Segment[] {
 					: Math.max(lcs[(i + 1) * (m + 1) + j], lcs[i * (m + 1) + j + 1]);
 		}
 	}
-	const out: Segment[] = [];
+	const out: DiffSegment[] = [];
 	push(out, 'eq', x.slice(0, head).join(''));
 	let i = 0;
 	let j = 0;
@@ -89,8 +89,8 @@ export function diffWords(a: string, b: string): Segment[] {
  * A change is read as a phrase: a space or a single short word between two changes
  * joins them, so "a b" → "c d" reads as one replacement, not four fragments.
  */
-function tidy(segments: Segment[]): Segment[] {
-	const out: Segment[] = [];
+function tidy(segments: DiffSegment[]): DiffSegment[] {
+	const out: DiffSegment[] = [];
 	for (let k = 0; k < segments.length; k++) {
 		const s = segments[k];
 		const between = k > 0 && k < segments.length - 1 && segments[k - 1].op !== 'eq';
@@ -104,8 +104,8 @@ function tidy(segments: Segment[]): Segment[] {
 		push(out, s.op, s.text);
 	}
 	// Deletions before insertions within one change: the old wording, then the new.
-	const sorted: Segment[] = [];
-	let run: Segment[] = [];
+	const sorted: DiffSegment[] = [];
+	let run: DiffSegment[] = [];
 	const flush = () => {
 		for (const op of ['del', 'ins'] as const) {
 			const text = run
@@ -127,7 +127,7 @@ function tidy(segments: Segment[]): Segment[] {
 }
 
 /** The share of the longer text that a change touches, 0 to 1. */
-function changedShare(segments: Segment[]): number {
+function changedShare(segments: DiffSegment[]): number {
 	let same = 0;
 	let old = 0;
 	let now = 0;
@@ -345,7 +345,7 @@ export type Formulation<V extends VersionLike = VersionLike> = {
 	through: Wording<V>;
 	/** How it differs from the formulation before it; `added` when the lid was new. */
 	kind: 'first' | 'changed' | 'rewritten' | 'added';
-	segments: Segment[];
+	segments: DiffSegment[];
 };
 
 type LidHistory<V extends VersionLike = VersionLike> = {

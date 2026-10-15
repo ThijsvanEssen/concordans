@@ -20,9 +20,9 @@ describe('the network and its cards', () => {
 		).toEqual([]);
 		const graph = bron('lib/components/graph/GraphView.svelte');
 		const netwerk = bron('lib/netwerk/NetwerkPanel.svelte');
-		expect(graph).toMatch(/<CanvasKaart[^>]*klasse="legenda"/);
-		expect(graph).toMatch(/<CanvasKaart[^>]*klasse="cluster-kaart"/);
-		expect(netwerk).toMatch(/<CanvasKaart[^>]*klasse="netwerk"/);
+		expect(graph).toMatch(/<CanvasKaart[^>]*class="legenda"/);
+		expect(graph).toMatch(/<CanvasKaart[^>]*class="cluster-kaart"/);
+		expect(netwerk).toMatch(/<CanvasKaart[^>]*class="netwerk"/);
 		const eigenKader = (t: string) =>
 			regels(t).some(
 				(r) =>

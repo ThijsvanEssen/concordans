@@ -18,7 +18,7 @@ const OUTCOMES = Object.keys(OUTCOME_LABEL) as Outcome[];
 const DOSSIER_NUMBER = /^\d{5}(-[a-z0-9()]+)?$/i;
 
 /** The parameters of the filters, the sort and the views; a tab and Wis alle filters drop them. */
-export const FILTER_PARAMS = [
+export const INDEX_FILTER_PARAMS = [
 	PARAM.q,
 	'phase',
 	'has_phase',
@@ -58,7 +58,7 @@ export const FILTER_PARAMS = [
 
 /** A name in the address of Bronnen: a filter, the Kamer, the open row or the tab. */
 export type IndexParam =
-	| (typeof FILTER_PARAMS)[number]
+	| (typeof INDEX_FILTER_PARAMS)[number]
 	| typeof PARAM.chamber
 	| 'open'
 	| 'mode'

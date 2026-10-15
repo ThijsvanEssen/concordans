@@ -15,7 +15,7 @@ import {
 	KIND_LABEL,
 	MOTIE,
 	artikelenGewijzigd,
-	chamberOf,
+	chamberOfVote,
 	isBillVote,
 	normalizeItem,
 	titleOf,
@@ -165,7 +165,7 @@ function voteLine(i: FeedItem): TimelineLine {
 		label: `Stemming, ${outcomeWord(passed)}`,
 		vorm: 'besluit',
 		title: cut(
-			`${decides(chamberOf(i), passed, paperOf(nounOf(i), i))}${subject ? ` over ${subject}` : ''}`
+			`${decides(chamberOfVote(i), passed, paperOf(nounOf(i), i))}${subject ? ` over ${subject}` : ''}`
 		),
 		context: voteContext(i),
 		href: hrefOf(i),
@@ -181,7 +181,7 @@ function billVoteLines(date: string, bills: FeedItem[]): TimelineLine[] {
 		[true, false].map((passed) => ({ chamber, passed }))
 	);
 	return groups.flatMap(({ chamber, passed }) => {
-		const those = bills.filter((b) => chamberOf(b) === chamber && !!b.vote?.passed === passed);
+		const those = bills.filter((b) => chamberOfVote(b) === chamber && !!b.vote?.passed === passed);
 		if (!those.length) return [];
 		const names = those.map((b) => (b.dossier ? dossierName(b.dossier) : cut(b.title ?? '', 60)));
 		const one = those.length === 1;

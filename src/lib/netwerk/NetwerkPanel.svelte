@@ -123,7 +123,7 @@
 {:else}
 	<!-- De gekozen bronnen als labels op één regel; zoeken pas na "+ bron";
 	     één regel voor wat ertussen ligt. Wissen is één klik, en Terug zet het terug. -->
-	<CanvasKaart titel="Netwerk" klasse="netwerk" {open} onToggle={() => kiesOpen(!open)}>
+	<CanvasKaart titel="Netwerk" class="netwerk" {open} onToggle={() => kiesOpen(!open)}>
 		{#snippet samenvatting()}
 			{#if loading}<span class="laden">laden</span>{:else if !open && entries.length > 0}<span
 					class="aantal">{count(entries.length, 'bron', 'bronnen')}</span

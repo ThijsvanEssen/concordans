@@ -4,7 +4,7 @@
 
 import type { Chamber } from '$lib/components/parliamentary/chamber';
 
-export const chamberOf = (document: { key: string; chamber?: string | null }): Chamber =>
+export const chamberOfDocument = (document: { key: string; chamber?: string | null }): Chamber =>
 	document.chamber === 'EK' || document.chamber === 'TK'
 		? document.chamber
 		: document.key.toLowerCase().startsWith('ek_')

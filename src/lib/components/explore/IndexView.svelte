@@ -46,7 +46,7 @@
 	import { formatCount } from '$lib/text/getal';
 	import { navigate, withParams } from '$lib/util/address';
 	import { LISTS } from './index/lists';
-	import { FILTER_PARAMS, readParams, type IndexPatch } from './index/lists/params';
+	import { INDEX_FILTER_PARAMS, readParams, type IndexPatch } from './index/lists/params';
 	import {
 		PAGE,
 		forParams,
@@ -73,7 +73,7 @@
 		withParams(
 			page.url,
 			{ mode: 'index', kind: k, ...filters },
-			{ clear: [...FILTER_PARAMS, 'open'] }
+			{ clear: [...INDEX_FILTER_PARAMS, 'open'] }
 		);
 
 	// ── Search text ─────────────────────────────────────────────────────────
@@ -98,7 +98,7 @@
 	const clearFilters = () =>
 		patchUrl(
 			Object.fromEntries(
-				FILTER_PARAMS.filter((name) => name !== 'sort' && name !== 'dir').map((name) => [
+				INDEX_FILTER_PARAMS.filter((name) => name !== 'sort' && name !== 'dir').map((name) => [
 					name,
 					null
 				])

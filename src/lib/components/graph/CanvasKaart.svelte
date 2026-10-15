@@ -3,7 +3,7 @@
 	// mogen even breed zijn en hetzelfde soort component zijn"). One frame, one width in every
 	// state (--paneel-breed, folded or open), a head row (the title, what it holds while folded,
 	// the caret, an action at the right) and its content. Where it stands is its user's
-	// (`klasse`, `stijl`); what it looks like is this.
+	// (`class`, `style`); what it looks like is this.
 	import type { Snippet } from 'svelte';
 	import Caret from '$lib/components/ui/Caret.svelte';
 
@@ -15,8 +15,8 @@
 		kop,
 		actie,
 		children,
-		klasse = '',
-		stijl = '',
+		class: className = '',
+		style = '',
 		label,
 		el = $bindable(null),
 		...rest
@@ -32,8 +32,8 @@
 		/** At the right of the head (Deel, Wissen, Meer). */
 		actie?: Snippet;
 		children?: Snippet;
-		klasse?: string;
-		stijl?: string;
+		class?: string;
+		style?: string;
 		label?: string;
 		el?: HTMLElement | null;
 		/** What the frame carries besides (a dialog's role, its key handler). */
@@ -43,8 +43,8 @@
 
 <section
 	{...rest}
-	class="canvas-kaart {klasse}"
-	style={stijl}
+	class="canvas-kaart {className}"
+	{style}
 	aria-label={label ?? titel}
 	bind:this={el}
 >

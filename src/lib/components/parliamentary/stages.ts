@@ -6,7 +6,6 @@ import type { Schema } from '$lib/api/types';
 
 type Dossier = Schema<'DossierSummaryDTO'>;
 
-export type Phase = Schema<'DossierPhaseDTO'>;
 export type Outcome = NonNullable<Dossier['outcome']>;
 
 /** The kinds of dossier, as the Kamer writes them, in the order the filter lists them. */

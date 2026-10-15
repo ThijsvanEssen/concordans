@@ -1,8 +1,8 @@
 // One name per filter on every page: Bronnen, Actueel, Onderwerpen and Verbonden write a
 // shared filter under the name of PARAM, and none under a name of its own.
 import { describe, expect, it } from 'vitest';
-import { FILTER_PARAMS as ACTUEEL } from '$lib/components/actueel/filters';
-import { FILTER_PARAMS as BRONNEN } from '$lib/components/explore/index/lists/params';
+import { FEED_FILTER_PARAMS as ACTUEEL } from '$lib/components/actueel/filters';
+import { INDEX_FILTER_PARAMS as BRONNEN } from '$lib/components/explore/index/lists/params';
 import { EMPTY_FILTER, filterParams } from '$lib/verbonden/filter';
 import { patchParams } from '$lib/util/address';
 import { PARAM } from './filters';

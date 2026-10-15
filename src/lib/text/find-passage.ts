@@ -3,7 +3,7 @@
 // toelichting in the plain text. When the API delivers `passages`, this is a lookup.
 import { escapeRegExp } from './words';
 
-export type Passage = {
+type TextRange = {
 	start: number;
 	end: number;
 	/** A text match, not a fact of the source. */
@@ -17,7 +17,7 @@ const MAX_HEADING = 140;
  * The first heading-like line for the article: "Artikel 287", "Artikel 1.1.3 [...]",
  * or a heading of the amending law that names it ("Artikel I, onderdeel C (artikel 287)").
  */
-export function findPassage(text: string, articleNumber: string): Passage | null {
+export function findPassage(text: string, articleNumber: string): TextRange | null {
 	const number = escapeRegExp(articleNumber.trim());
 	if (!text || !number) return null;
 	const own = new RegExp(`^[ \\t]*artikel[ \\t]+${number}(?![\\w.:])[^\\n]*$`, 'gim');

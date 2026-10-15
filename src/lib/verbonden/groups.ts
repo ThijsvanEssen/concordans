@@ -14,7 +14,7 @@ import { formatCount } from '$lib/text/getal';
 import { rowOfNeighbor, type Row } from './rows';
 import { type Neighbor } from '$lib/api/nodes';
 import type { JudgmentOrder } from './loaders';
-import { chamberOf } from './chamber';
+import { chamberOfDocument } from './chamber';
 import { CHAMBER_NAME, type Chamber } from '$lib/components/parliamentary/chamber';
 
 import { choiceRank } from '$lib/components/parliamentary/stemming';
@@ -109,7 +109,7 @@ const ingediend = (n: Neighbor) => n.meta?.reason === 'ingediend';
 type Capacity = 'kamerlid' | 'bewindspersoon' | 'overig';
 /** A vote of the one Kamer or the other: the API's `chamber`, else the key (`ek_…`). */
 const votedIn = (chamber: Chamber) => (n: Neighbor) =>
-	chamberOf({
+	chamberOfDocument({
 		key: n.key,
 		chamber: (n.props as Record<string, unknown> | null)?.chamber as string
 	}) === chamber;

@@ -16,14 +16,14 @@ import type { Chamber } from '$lib/components/parliamentary/chamber';
 
 type Hit = Schema<'SearchResultItem'>;
 
-export type Segment = { text: string; mark: boolean };
+type HitSegment = { text: string; mark: boolean };
 
 type Presented = {
 	title: string;
 	/** Right of the title, in the small face: the law, the ECLI, the dossier number. */
 	context: string;
 	/** A line of the text, or null when the API gives none worth reading. */
-	snippet: Segment[] | null;
+	snippet: HitSegment[] | null;
 	/** The Kamer of a stuk: the same kind of stuk exists in both. */
 	chamber?: Chamber;
 };
@@ -64,7 +64,7 @@ const extras = (hit: Hit, name: string): string[] => {
 };
 
 /** `text` in pieces, the words of `query` (three letters or more) marked. */
-export function marked(text: string, query: string): Segment[] {
+export function marked(text: string, query: string): HitSegment[] {
 	const words = query
 		.split(/\s+/)
 		.filter((w) => w.length >= 3)
@@ -95,7 +95,7 @@ export function around(text: string, query: string, lead = 40): string {
  * van Zuid-Holland, verweerder` for a party; the words searched marked in the name. Null
  * where the hit was not found by a person.
  */
-function persoonVan(hit: Hit, query: string): Segment[] | null {
+function persoonVan(hit: Hit, query: string): HitSegment[] | null {
 	const p = hit.extra?.person as { name?: unknown; role?: unknown; party?: unknown } | undefined;
 	const name = typeof p?.name === 'string' ? p.name.trim() : '';
 	if (!name) return null;

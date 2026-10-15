@@ -425,7 +425,7 @@
 						<ConfirmButton
 							label="Wis de map"
 							confirmLabel="Ja, alles uit {m.naam} halen"
-							buttonClass="wis raakvlak"
+							class="wis raakvlak"
 							onConfirm={() => op(m, () => kaart.wis())}
 						/>
 					</p>
