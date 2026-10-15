@@ -10,7 +10,7 @@ import {
 	getNodeHull
 } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
-import { containerIdFor, containerKindOf, isContainerMembership } from '../container-membership';
+import { containerIdFor, containerKindOf } from '../container-membership';
 import { foldVersions } from '../paths';
 import { withoutLawHops } from '../neighborhood';
 import { NODE_TYPES, nodeId, parseNodeId, type Collection } from '$lib/vocabulary';
@@ -18,6 +18,7 @@ import { get, writable } from 'svelte/store';
 import { nodeToGraphNode, relationOf } from '../types';
 import { COLLECTION_ROLE } from '../collection-role';
 import type { GraphContext } from './context';
+import { placeConnection, type End } from './placement';
 import {
 	NEIGHBORHOOD_CAP,
 	NEIGHBORHOOD_DEPTH,
@@ -56,10 +57,9 @@ export function createExpansion(
 		touchNode,
 		addEdge,
 		drawable,
-		lawAnchor,
 		anchorContainer,
 		recordContainerFor,
-		passesThreshold,
+		threshold,
 		mergeResponse,
 		pruneToIds,
 		signal
@@ -113,8 +113,8 @@ export function createExpansion(
 		nodesIn: SubNode[],
 		edgesIn: SubEdge[],
 		focalId: string | null,
-		/** Paths: a step to a container is drawn to its hull, not dropped (Sr, VVD). */
-		naarOmtrek = false
+		/** `path`: a step to a container is drawn to its hull, not dropped (Sr, VVD). */
+		mode: 'subgraph' | 'path' = 'subgraph'
 	) {
 		const byId = new Map(nodesIn.map((n) => [nodeId(n.collection, n.key), n]));
 		const drawn = new Set<string>();
@@ -133,51 +133,46 @@ export function createExpansion(
 			drawn.add(graphNode.id);
 		}
 
-		// An edge to a container is recorded rather than drawn, whether the container
-		// is a neighbour left out above or the bron this neighbourhood is centred on
-		// (`isContainerMembership`: any relation, except a wet, where only PART_OF —
-		// an article — counts; a stuk that merely AMENDS or REFERS_TO the wet is not
-		// one of its articles and stays a dropped edge, not a member of its hull).
+		// Where each edge lands is `placeConnection`'s to say: an edge to a container is
+		// recorded in its hull rather than drawn (a stuk that merely AMENDS or REFERS_TO a wet
+		// is not one of its articles and stays off), a wet a drawn stuk changes is drawn as its
+		// anchor, and on a path a step to a container ends at its anchor.
+		const endOf = (id: string, node: SubNode | undefined): End => ({
+			hull: node ? containerKindOf(node.collection) : null,
+			drawn: drawn.has(id),
+			kind: nodes.get(id)?.kind ?? 'other'
+		});
 		for (const e of edgesIn) {
 			const relation = relationOf(e.relation);
 			if (!relation) continue;
-			const targetNode = byId.get(e.target);
-			const targetKind = targetNode && containerKindOf(targetNode.collection);
-			if (targetKind && isContainerMembership(targetKind, relation) && drawn.has(e.source)) {
-				containers.recordMember(targetKind, containerIdFor(targetNode!), e.source, relation);
-				continue;
+			const ends = { source: byId.get(e.source), target: byId.get(e.target) };
+			const placement = placeConnection({
+				mode,
+				relation,
+				source: endOf(e.source, ends.source),
+				target: endOf(e.target, ends.target),
+				confidence: e.confidence,
+				threshold: threshold()
+			});
+			const id = { source: e.source, target: e.target };
+			if (placement.anchor) {
+				const point = anchorContainer(ends[placement.anchor]!);
+				if (!point) continue;
+				drawn.add(point.id);
+				id[placement.anchor] = point.id;
 			}
-			// A wet a drawn stuk changes is drawn as its anchor (`lawAnchor`).
-			const changed = targetNode && drawn.has(e.source) && lawAnchor(targetNode, relation);
-			if (changed) {
-				drawn.add(changed.id);
-				addEdge(e.source, changed.id, relation, { confidence: e.confidence, status: e.status });
-				continue;
+			if (placement.place === 'member') {
+				const hull = ends[placement.hull]!;
+				const member = placement.hull === 'source' ? id.target : id.source;
+				containers.recordMember(
+					containerKindOf(hull.collection)!,
+					containerIdFor(hull),
+					member,
+					relation
+				);
+			} else if (placement.place === 'line') {
+				addEdge(id.source, id.target, relation, { confidence: e.confidence, status: e.status });
 			}
-			// On a path every step ties: a stuk that REFERS_TO a chosen wet ends on the wet's
-			// hull, or the wet stands as "zonder verbinding" with the path drawn up to it.
-			const sourceNode = byId.get(e.source);
-			if (naarOmtrek) {
-				const naar = targetKind && drawn.has(e.source) ? anchorContainer(targetNode!) : null;
-				const sourceKindHier = sourceNode && containerKindOf(sourceNode.collection);
-				const van =
-					!naar && sourceKindHier && drawn.has(e.target) ? anchorContainer(sourceNode!) : null;
-				if (naar || van) {
-					const [s, t] = naar ? [e.source, naar.id] : [van!.id, e.target];
-					drawn.add(naar?.id ?? van!.id);
-					addEdge(s, t, relation, { confidence: e.confidence, status: e.status });
-					continue;
-				}
-			}
-			const sourceKind = sourceNode && containerKindOf(sourceNode.collection);
-			if (sourceKind && isContainerMembership(sourceKind, relation) && drawn.has(e.target)) {
-				containers.recordMember(sourceKind, containerIdFor(sourceNode!), e.target, relation);
-				continue;
-			}
-			if (!drawn.has(e.source) || !drawn.has(e.target)) continue;
-			const source = nodes.get(e.source);
-			if (!source || !passesThreshold(relation, source.kind, e.confidence)) continue;
-			addEdge(e.source, e.target, relation, { confidence: e.confidence, status: e.status });
 		}
 		return { byId, drawn };
 	}
@@ -237,7 +232,7 @@ export function createExpansion(
 				response.nodes.filter((n) => onPath.has(nodeId(n.collection, n.key))),
 				response.edges.filter((e) => edgeIds.has(e.id))
 			);
-			const { drawn } = mergeSubgraph(folded.nodes, folded.edges, null, true);
+			const { drawn } = mergeSubgraph(folded.nodes, folded.edges, null, 'path');
 			// The dossier a stuk on a path is in, as a hull around it: the MvT of 33328 shows
 			// the bill it explains (BE-49). From the stuk's light node (its one PART_OF dossier;
 			// 9 kB, not 42), within PATH_DOSSIERS, so one composition stays within the API's
