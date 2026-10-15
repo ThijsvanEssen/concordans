@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { alsTekst, eigenUitslag, vervanging } from './vervanging';
+import { eigenUitslag, nrsTekst, vervanging, type Zin } from './vervanging';
+
+/** A phrase as the status line reads it: its word, then its numbers. */
+const alsTekst = (z: Zin) => `${z.woord} ${nrsTekst(z.nrs)}`;
 
 const ref = (n: number | null) => ({ id: `documents/d${n}`, key: `d${n}`, sequence: n });
 

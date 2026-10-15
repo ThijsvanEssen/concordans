@@ -15,12 +15,11 @@ export type FacetedPath =
 
 type Get<P extends FacetedPath> = paths[P]['get'];
 /** The filters of a list, without the page and the facets this module sets. */
-export type ListQuery<P extends FacetedPath> = Omit<
+type ListQuery<P extends FacetedPath> = Omit<
 	NonNullable<Get<P>['parameters']['query']>,
 	'offset' | 'facets'
 >;
-export type ListPage<P extends FacetedPath> =
-	Get<P>['responses'][200]['content']['application/json'];
+type ListPage<P extends FacetedPath> = Get<P>['responses'][200]['content']['application/json'];
 
 /** Loads the page from `offset` into the list; a newer load aborts `signal`. */
 export type Fetcher = (offset: number, signal: AbortSignal) => Promise<void>;

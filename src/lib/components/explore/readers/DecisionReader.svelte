@@ -278,11 +278,6 @@
 		gap: var(--lezer-stap);
 		color: var(--ink-2);
 	}
-	.head {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-	}
 	/* A comma against the word before it: the kicker's gap only after it. */
 	.ek-factions {
 		display: grid;

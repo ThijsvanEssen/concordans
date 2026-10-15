@@ -24,12 +24,10 @@
 		acties = false,
 		bron,
 		member = false,
-		emphasis = false,
 		lead,
 		body,
 		aside,
 		detail,
-		bewaar = true,
 		dossier = null,
 		wet = null,
 		cite = null
@@ -39,15 +37,12 @@
 		href?: string;
 		open?: boolean;
 		onToggle?: () => void;
-		/** The ways on at the end of the row instead of a detail beneath it; `titel` where the
-		 *  title is the one way on (a kabinet, read only in the network). */
-		acties?: boolean | 'titel';
+		/** The ways on at the end of the row instead of a detail beneath it. */
+		acties?: boolean;
 		/** What the row stands for (`judgments/<key>`), to find it again in the list. */
 		bron?: string;
 		/** A dossier under its number, indented beneath it. */
 		member?: boolean;
-		/** What matters in a list of events (a bill, a close vote): its title larger. */
-		emphasis?: boolean;
 		lead?: Snippet;
 		/** Under the title. */
 		body?: Snippet;
@@ -55,8 +50,6 @@
 		/** What opens beneath the row: the bron's content. A row with nothing to open passes no
 		 *  `onToggle`, and a click on it goes to the bron (Thijs, 10 Oct). */
 		detail?: Snippet;
-		/** Bewaar on the row (RijActies, as in Verbonden); not where the list is the map itself. */
-		bewaar?: boolean;
 		/** The dossier the row's Kamerstuk or vote is in, for its group in a map. */
 		dossier?: string | null;
 		/** The law the row stands for (BWB id or CELEX), for its group in a map. */
@@ -71,10 +64,10 @@
 	// Without a toggle the row has nothing to open: a click on it goes to the bron.
 	const direct = $derived((acties || !onToggle) && !!href);
 
-	// The row's Bewaar: the bron it stands for, by its title, in its group (map.ts).
+	// The row's Bewaar (RijActies, as in Verbonden): the bron it stands for, by its title, in its group (map.ts).
 	const item = $derived.by(() => {
 		const doel = bron ? parseNodeId(bron) : null;
-		return bewaar && bron && doel
+		return bron && doel
 			? bewaarItem(bron, cite ?? { kort: title, voluit: title }, { dossier, wet })
 			: null;
 	});
@@ -91,13 +84,7 @@
 
 <li class="row-wrap" class:row-wrap--member={member} data-bron={bron}>
 	<!-- The button below is the keyboard's way in; this only widens its target. -->
-	<div
-		class="row"
-		class:row--on={open}
-		class:row--emphasis={emphasis}
-		data-rij
-		use:blockClick={onRowClick}
-	>
+	<div class="row" class:row--on={open} data-rij use:blockClick={onRowClick}>
 		{#if !direct}
 			<button
 				type="button"
@@ -207,11 +194,6 @@
 		-webkit-line-clamp: 2;
 		line-clamp: 2;
 		overflow: hidden;
-	}
-	.row--emphasis .row-title {
-		font-size: var(--t-body);
-		font-weight: 600;
-		line-height: 1.3;
 	}
 	a.row-title:hover {
 		text-decoration: underline;

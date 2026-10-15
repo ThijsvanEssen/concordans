@@ -29,7 +29,7 @@ export type Citation = {
 	date?: Date;
 };
 
-export type CitationForms = { kort: string; voluit: string; metDatum: string };
+type CitationForms = { kort: string; voluit: string; metDatum: string };
 
 /** What an article is cited by, before the place in it: ArticleText's `citation`. */
 export type ArticleCitation = Omit<

@@ -2,7 +2,7 @@
 // between them where there is room, so no label runs into another or past the edge.
 
 /** The room a label takes, in px: a year at the size of a label, with some air. */
-export const LABEL_PX = 32;
+const LABEL_PX = 32;
 
 /**
  * The label of each column: the year, or '' where it stays empty. A decade keeps clear of the

@@ -2,7 +2,8 @@
 // meta alike: the same lid, place, passage and phrase (code-eenvoud F15).
 import { describe, expect, it } from 'vitest';
 import type { GraphEdge, GraphNode } from '$lib/graph/types';
-import { rowOfNeighbor, type Neighbor } from './rows';
+import { rowOfNeighbor } from './rows';
+import { type Neighbor } from '$lib/api/nodes';
 import { verbindingOfEdge, verbindingOfRow } from './verbinding';
 import { readEdge } from './edge-meta';
 

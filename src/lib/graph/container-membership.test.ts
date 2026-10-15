@@ -3,7 +3,8 @@ import {
 	containerIdFor,
 	isDrawnGroup,
 	momentOf,
-	type ContainerGroup
+	type ContainerGroup,
+	isContainment
 } from './container-membership';
 
 const lid = 'members/jetten';
@@ -71,5 +72,15 @@ describe('containerIdFor', () => {
 		expect(containerIdFor({ collection: 'instruments', key: '32011l0036', props: {} })).toBe(
 			'32011L0036'
 		);
+	});
+});
+
+describe('isContainment', () => {
+	it('is PART_OF into a wet, dossier or commissie, not a lid in a fractie', () => {
+		expect(isContainment('dossier', 'PART_OF')).toBe(true);
+		expect(isContainment('instrument', 'PART_OF')).toBe(true);
+		expect(isContainment('instrument', 'REFERS_TO')).toBe(false);
+		expect(isContainment('committee', 'MEMBER_OF')).toBe(false);
+		expect(isContainment('faction', 'PART_OF')).toBe(false);
 	});
 });

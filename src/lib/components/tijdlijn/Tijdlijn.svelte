@@ -10,7 +10,8 @@
 	// Actueel (IndexRow): één klik opent die inhoud onder de regel, de bron staat een stap
 	// verder. Een termijn (`perioden`, Loopbaan) is geen moment: geen lijn en geen teken.
 	import type { Snippet } from 'svelte';
-	import { dagMaand, sorteer, type TijdGroep, type TijdRegel, type Volgorde } from './tijdlijn';
+	import { sorteer, type TijdGroep, type TijdRegel, type Volgorde } from './tijdlijn';
+	import { dagMaand } from '$lib/text/datum';
 	import { yearsOf } from '$lib/components/parliamentary/career';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import Markering from '$lib/components/ui/Markering.svelte';

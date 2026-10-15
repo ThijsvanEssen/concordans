@@ -7,7 +7,7 @@ import {
 	LOADERS,
 	type LoaderContext
 } from './loaders';
-import type { Neighbor } from './rows';
+import type { Neighbor } from '$lib/api/nodes';
 
 describe('basesLine', () => {
 	it('says what an implementation rests on', () => {

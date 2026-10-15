@@ -8,14 +8,12 @@
 		label,
 		value,
 		nodig = false,
-		class: klasse = '',
 		children
 	}: {
 		label: string;
 		/** Decides whether the row shows; shown as text when there are no children. */
 		value: unknown;
 		nodig?: boolean;
-		class?: string;
 		/** The value in its own form: a link, a date, a list. */
 		children?: Snippet;
 	} = $props();
@@ -23,7 +21,7 @@
 
 {#if !ontbreekt(value)}
 	<dt>{label}</dt>
-	<dd class={klasse}>
+	<dd>
 		{#if children}{@render children()}{:else}{value}{/if}
 	</dd>
 {:else if nodig}

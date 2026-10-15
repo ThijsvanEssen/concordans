@@ -3,7 +3,7 @@
 // to the Netwerk tab and the place it was done from is out of sight (Thijs, 9 Oct).
 import { writable } from 'svelte/store';
 
-export type NetwerkMelding = { tekst: string; terug: (() => void) | null };
+type NetwerkMelding = { tekst: string; terug: (() => void) | null };
 
 export const netwerkMelding = writable<NetwerkMelding | null>(null);
 

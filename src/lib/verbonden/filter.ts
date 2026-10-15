@@ -177,7 +177,7 @@ export function filterParams(f: VerbondenFilter): Record<string, string | null> 
 
 // ── Presets ───────────────────────────────────────────────────────────────
 
-export type Preset = {
+type Preset = {
 	id: string;
 	label: string;
 	bronnen: readonly BronKind[] | null;

@@ -78,7 +78,7 @@ const OWN_GROUP = new Set(['judgments', 'documents', 'decisions']);
  * What a bron belongs to, as the reader knows it from the API: the law of an article (its BWB
  * id or CELEX), the dossier of a Kamerstuk or a vote, and the group's name where it has one.
  */
-export type BewaarContext = { groep?: string | null; dossier?: string | null; wet?: string | null };
+type BewaarContext = { groep?: string | null; dossier?: string | null; wet?: string | null };
 
 /**
  * A bron as the map keeps it: its citations as the reader gives them, its group from the
@@ -162,7 +162,7 @@ export function naarParam(items: readonly MapItem[]): string {
 }
 
 /** The items of a link, and how many it holds in an older or broken form (left out). */
-function readParam(v: string | null): { items: MapItem[]; skipped: number } {
+export function readParam(v: string | null): { items: MapItem[]; skipped: number } {
 	if (!v) return { items: [], skipped: 0 };
 	const delen = v.split(';');
 	const items = delen.flatMap((deel) => {
@@ -184,8 +184,6 @@ function readParam(v: string | null): { items: MapItem[]; skipped: number } {
 	return { items, skipped: delen.length - items.length };
 }
 
-export const uitParam = (v: string | null): MapItem[] => readParam(v).items;
-
 /** The address params of a map: its items, its name, its order where its own, its note. */
 export function mapParams(
 	m: Pick<Map, 'items' | 'naam' | 'volgorde' | 'notitie' | 'groepNotities'>
@@ -199,7 +197,7 @@ export function mapParams(
 }
 
 /** The notes per group as `sleutel~notitie;…`, only of groups the map holds. */
-export function naarGroepParam(
+function naarGroepParam(
 	notities: GroepNotities | null | undefined,
 	items: readonly MapItem[]
 ): string {
@@ -210,7 +208,7 @@ export function naarGroepParam(
 		.join(';');
 }
 
-export function uitGroepParam(v: string | null): GroepNotities {
+function uitGroepParam(v: string | null): GroepNotities {
 	const uit: GroepNotities = {};
 	for (const deel of (v ?? '').split(';')) {
 		const [k, n] = deel.split('~').map(terug);

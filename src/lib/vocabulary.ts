@@ -107,7 +107,7 @@ export const isRelation = (value: string | null | undefined): value is Relation 
 	value != null && relations.has(value);
 
 /** A node id: `collection/key`. */
-export type NodeId = `${Collection}/${string}`;
+type NodeId = `${Collection}/${string}`;
 
 /** The id of a node; of a known collection it is a NodeId. */
 export function nodeId(collection: Collection, key: string): NodeId;

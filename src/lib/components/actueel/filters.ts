@@ -18,7 +18,7 @@ export type CoalitionWord = keyof typeof COALITION;
 /** A law the feed follows by its BWB id: a law or a regulation (BWBR), or a treaty (BWBV). */
 export const isFeedLaw = (value: string) => /^BWB[RV]\d+$/i.test(value);
 
-export type ActueelFilters = {
+type ActueelFilters = {
 	kinds: FeedKind[];
 	since: string;
 	until: string;

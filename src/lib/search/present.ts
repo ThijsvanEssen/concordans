@@ -18,7 +18,7 @@ type Hit = Schema<'SearchResultItem'>;
 
 export type Segment = { text: string; mark: boolean };
 
-export type Presented = {
+type Presented = {
 	title: string;
 	/** Right of the title, in the small face: the law, the ECLI, the dossier number. */
 	context: string;
@@ -95,7 +95,7 @@ export function around(text: string, query: string, lead = 40): string {
  * van Zuid-Holland, verweerder` for a party; the words searched marked in the name. Null
  * where the hit was not found by a person.
  */
-export function persoonVan(hit: Hit, query: string): Segment[] | null {
+function persoonVan(hit: Hit, query: string): Segment[] | null {
 	const p = hit.extra?.person as { name?: unknown; role?: unknown; party?: unknown } | undefined;
 	const name = typeof p?.name === 'string' ? p.name.trim() : '';
 	if (!name) return null;
@@ -146,7 +146,7 @@ export function citeertitel(hit: Hit): string | null {
  * A regeling by its kind and its day: published, else in force, else its text in force
  * (the BWB often gives only the last). Empty where the hit carries neither.
  */
-export function instrumentMeta(hit: Hit): string {
+function instrumentMeta(hit: Hit): string {
 	const day = ['date_published', 'date_in_force', 'version_date_in_force']
 		.map((name) => korteDatum(extra(hit, name)))
 		.find(Boolean);
@@ -366,7 +366,7 @@ export function orderGroups<G extends { kind: Collection; hits: Hit[] }>(groups:
 const IDENTIFIER_SCORE = 1;
 
 /** How much lower a law's or an article's best hit may score and still come first. */
-export const RECHT_MARGE = 0.25;
+const RECHT_MARGE = 0.25;
 const RECHT: readonly Collection[] = ['articles', 'instruments'];
 
 /**

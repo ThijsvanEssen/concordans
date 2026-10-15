@@ -247,5 +247,3 @@ export function createContainerGroups() {
 		}
 	};
 }
-
-export type ContainerGroups = ReturnType<typeof createContainerGroups>;

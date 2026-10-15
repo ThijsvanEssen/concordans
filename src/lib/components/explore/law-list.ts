@@ -59,7 +59,7 @@ export function articleText(
 	return null;
 }
 
-export type ListStatus = 'loading' | 'loading-more' | 'loading-before' | 'ready' | 'error';
+type ListStatus = 'loading' | 'loading-more' | 'loading-before' | 'ready' | 'error';
 
 export type LawList = {
 	articles: Row[];

@@ -1,13 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { markeer, rondTreffer, woordIn, type Deel } from './treffer';
+import { markeer, rondTreffer, type Deel } from './treffer';
+
+/** Whether the text holds the word: one place marked. */
+const woordIn = (term: string, tekst: string | null) => markeer([term], tekst) !== null;
 
 const gemarkeerd = (d: Deel[] | null) => d?.filter((x) => x.mark).map((x) => x.tekst) ?? [];
 const geheel = (d: Deel[] | null) => d?.map((x) => x.tekst).join('') ?? null;
 
 describe('the words a reader follows, found by the API’s rule', () => {
 	it('finds a word from the start of a word, a short one whole', () => {
+		expect(woordIn('AI', 'De inzet van AI bij de IND')).toBe(true);
 		expect(woordIn('AI', 'AI-verordening')).toBe(true);
 		expect(woordIn('AI', 'universitaire aanstelling')).toBe(false);
+		expect(woordIn('AI', 'onderzoekers zonder universitaire aanstelling')).toBe(false);
+		expect(woordIn('AI', 'Kabinetsreactie AIV-advies EU-uitbreiding')).toBe(false);
+		expect(woordIn('AI', 'Groningen Airport Eelde')).toBe(false);
+		expect(woordIn('AI', null)).toBe(false);
 		expect(woordIn('algoritme', 'Algoritmeregister')).toBe(true);
 		expect(woordIn('cyberbeveiliging', 'horizontale cyberbeveiligingsvereisten')).toBe(true);
 		expect(woordIn('beveiliging', 'cyberbeveiligingsvereisten')).toBe(false);

@@ -4,7 +4,7 @@
 // next to index.html, for the head it serves and to tell a page from a 404.
 import routes from './spa-routes.json';
 
-export type SpaRoute = {
+type SpaRoute = {
 	path: string;
 	title: string;
 	description: string;

@@ -10,8 +10,8 @@ import { edgesByNode, mostCommonRelation, pushTo } from '$lib/graph/adjacency';
 /** More than this many bronnen of one kind make a cluster. */
 export const CLUSTER_MAX_LOOSE = 40;
 
-export const CLUSTER_PREFIX = 'cluster:';
-export const clusterId = (collection: Collection) => `${CLUSTER_PREFIX}${collection}`;
+const CLUSTER_PREFIX = 'cluster:';
+const clusterId = (collection: Collection) => `${CLUSTER_PREFIX}${collection}`;
 export const isClusterId = (id: string) => id.startsWith(CLUSTER_PREFIX);
 
 export type Cluster = {

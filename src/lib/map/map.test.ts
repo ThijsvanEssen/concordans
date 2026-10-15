@@ -12,7 +12,7 @@ import {
 	netwerkIds,
 	samen,
 	sleutelVan,
-	uitParam,
+	readParam,
 	uitParams,
 	verschuif,
 	type MapItem
@@ -20,6 +20,9 @@ import {
 import { itemVanRij } from './rij';
 import { remember } from '$lib/bron/leesbaar';
 import type { Row } from '$lib/verbonden/rows';
+
+/** The items a `map` param reads as. */
+const uitParam = (v: string | null): MapItem[] => readParam(v).items;
 
 const lid2: MapItem = {
 	id: 'articles/bwbr0005289_162',

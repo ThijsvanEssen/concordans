@@ -3,7 +3,6 @@
 import { describe, expect, it } from 'vitest';
 import { get } from 'svelte/store';
 import type { Schema } from '$lib/api/types';
-import { isContainment } from './container-membership';
 import { createGraphStore } from './graph-store';
 import { createGraphContext } from './store/context';
 
@@ -54,16 +53,6 @@ const hull = async (store: ReturnType<typeof createGraphStore>) => {
 
 const linesToDossier = (store: ReturnType<typeof createGraphStore>) =>
 	get(store.edges).filter((e) => e.source === dossier.id || e.target === dossier.id);
-
-describe('isContainment', () => {
-	it('is PART_OF into a wet, dossier or commissie, not a lid in a fractie', () => {
-		expect(isContainment('dossier', 'PART_OF')).toBe(true);
-		expect(isContainment('instrument', 'PART_OF')).toBe(true);
-		expect(isContainment('instrument', 'REFERS_TO')).toBe(false);
-		expect(isContainment('committee', 'MEMBER_OF')).toBe(false);
-		expect(isContainment('faction', 'PART_OF')).toBe(false);
-	});
-});
 
 describe('a stuk onderdeel van a dossier', () => {
 	it('stands in the hull when the dossier ties two chosen stukken, without a line', async () => {

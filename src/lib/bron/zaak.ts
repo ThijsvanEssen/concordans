@@ -9,7 +9,7 @@ import { rowOfNeighbor, type Row } from '$lib/verbonden/rows';
 import { belongsToBill, isBill, isCoverLetter, isLetter } from '$lib/text/document-kind';
 
 /** The zaken of a stuk asked for their papers: one is the rule, a few at most. */
-export const ZAKEN_MAX = 3;
+const ZAKEN_MAX = 3;
 
 const NAAR_ZAAK = { relation: 'PART_OF', direction: 'outbound', collection: 'cases' } as const;
 
@@ -30,7 +30,7 @@ export const wetsvoorstelVan = (rows: Row[]): Row | null =>
 	rows.find((r) => isBill(r.props?.kind)) ?? null;
 
 /** The papers a letter offers: the substance of its zaak (zaakRang 0), its kern line Biedt aan. */
-export const aangebodenVan = (rows: Row[]): Row[] => rows.filter((r) => zaakRang(r) === 0);
+const aangebodenVan = (rows: Row[]): Row[] => rows.filter((r) => zaakRang(r) === 0);
 
 /**
  * What a stuk's kern lines name of its zaak: the voorstel of a paper of a bill (Bij
@@ -56,7 +56,7 @@ export function naastHetStuk(kind: unknown, zaak: DezelfdeZaak): DezelfdeZaak {
 	};
 }
 
-export type DezelfdeZaak = {
+type DezelfdeZaak = {
 	/** The other papers, without the stuk itself; empty where its zaak holds only it. */
 	rows: Row[];
 	/** Said only where the list holds both the substance and a letter. */

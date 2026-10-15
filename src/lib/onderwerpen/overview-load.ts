@@ -22,11 +22,11 @@ import {
 /** Decisions and feed events the API gives in one page. */
 export const PAGE_SIZE = 200;
 /** Pages of the feed counted at most, the newest first. */
-export const FEED_PAGES = 5;
+const FEED_PAGES = 5;
 /** Dossiers whose amendments are followed at most (one request each, cached). */
 export const DOSSIERS_MAX = 20;
 /** Decisions asked at most for one question: a list counted here, or the CSV. */
-export const DECISIONS_MAX = 2000;
+const DECISIONS_MAX = 2000;
 /** The API counts per day over at most this many days from a first day. */
 const DAYS_MAX = 400;
 
@@ -60,7 +60,7 @@ const days = (r: Awaited<ReturnType<typeof geteld>>): Dag[] =>
 		d.date ? [{ date: d.date, count: d.count, passed: d.passed ?? 0 }] : []
 	);
 
-export type DecisionCounts = { counted: Getelden | null; days: Dag[]; total: number | null };
+type DecisionCounts = { counted: Getelden | null; days: Dag[]; total: number | null };
 
 /** The stemmingen of the topic counted: per day with how many passed, per kind, and in all. */
 export async function countDecisions(t: Topic, signal: AbortSignal): Promise<DecisionCounts> {
@@ -143,7 +143,7 @@ export async function factionVotesOn(
  * handed on as it comes, with the newest day of the data. The day of the last event, where the
  * feed had more than was asked; else null.
  */
-export async function feedPages(
+async function feedPages(
 	query: FeedQuery,
 	signal: AbortSignal,
 	onPage: (items: FeedItem[], newest: string | null) => void
@@ -182,7 +182,7 @@ export type PeriodCounts = { counted: Telbaar[]; chains: boolean; newest: string
  * call, and the amendments once per chain (`amendment_chains`, #451); null where the answer is
  * not whole (`partial`).
  */
-export async function countPeriods(
+async function countPeriods(
 	t: Topic,
 	per: 'day' | 'month',
 	signal: AbortSignal

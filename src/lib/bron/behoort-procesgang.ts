@@ -1,6 +1,6 @@
 // The procesgang of a judgment in the band: eerdere aanleg › this uitspraak › hoger beroep or
 // cassatie, the instances before the eerdere aanleg asked one by one; for a translation its
-// original's. Also the conclusie for the reader's status line, and the ids Verbonden leaves out.
+// original's; and the ids Verbonden leaves out.
 import { capitalize, textOf } from '$lib/text/words';
 import { findBucket, type NodeGraph, type Neighbor } from '$lib/api/nodes';
 import { getNodeFirst } from '$lib/api/records';
@@ -24,17 +24,6 @@ export const CONCLUSION = inbound('ADVISES_ON', 'judgments');
 export const ADVISED = outbound('ADVISES_ON', 'judgments');
 
 const first = (light: NodeGraph | null, bak: typeof EARLIER) => findBucket(light, bak)?.items?.[0];
-
-/**
- * The conclusie of the A-G or P-G on a judgment, from its light node: "P-G Langemeijer en
- * Wissink, 13 september 2019", for the status line of the reader.
- */
-export function conclusieVan(light: NodeGraph | null): Laag | null {
-	const n = first(light, CONCLUSION);
-	if (!n) return null;
-	const l = laagVan(n, 'Conclusie');
-	return { ...l, naam: l.naam.replace(/^Conclusie\s+/i, '') };
-}
 
 /**
  * An eerdere aanleg the source names but the data lacks (`unresolved_appeal_targets`), as

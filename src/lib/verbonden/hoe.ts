@@ -229,16 +229,6 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 };
 
 /**
- * The relations the API's catalogue has (lawgraph docs/data-model.md) that the reader never
- * sees as a verbinding, each with the reason. Every other relation has its words here, for
- * every pair of collections the catalogue lets it join (guard: hoe.test.ts).
- */
-export const ZONDER_WOORDEN: Partial<Record<Relation, string>> = {
-	VERSION_OF:
-		'Een versie is de bron zelf op een dag: de lezer bladert erdoor, Verbonden en het netwerk tonen haar niet als verbinding.'
-};
-
-/**
  * The words of a verbinding: the relation, the collection of its source (`van`) and of its
  * target (`naar`), and its meta where the edge carries one (`procedure_type`, `rule`,
  * `function`, `effect`). Without collections, the words of the relation in general.
@@ -401,7 +391,7 @@ const HERKOMST_BASIS: Partial<Record<string, string>> = {
  * `ANSWERS` from a letter), with the reference as written marked (`meta.reference`); cut to
  * what a row shows.
  */
-export function aanhalingUitMeta(meta: Record<string, unknown>): Passage | null {
+function aanhalingUitMeta(meta: Record<string, unknown>): Passage | null {
 	const zin = textOf(meta.text);
 	if (!zin) return null;
 	const ref = textOf(meta.reference);

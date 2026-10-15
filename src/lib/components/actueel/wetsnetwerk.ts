@@ -19,7 +19,7 @@ import {
 	type ChangedLaw,
 	type DossierChange
 } from '$lib/components/parliamentary/changed-articles';
-import { dossierName } from './feed';
+import { dossierName } from '$lib/bron/dossier-naam';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import { langeDatum } from '$lib/text/datum';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
@@ -29,10 +29,10 @@ type FeedItem = Schema<'FeedItemDTO'>;
 export type CitedBy = Schema<'ArticleCitedByResponse'>;
 
 /** A bill the Kamer passed: by its dossier, the day and the Kamer. */
-export type Kandidaat = { number: string; naam: string; datum: string; kamer: Chamber };
+type Kandidaat = { number: string; naam: string; datum: string; kamer: Chamber };
 
 /** The changed-articles asked at most, the summary's candidates and the older ones together. */
-export const POGINGEN = 4;
+const POGINGEN = 4;
 
 /**
  * The bills passed, newest first, each dossier once: a vote on a law that passed. On one day
@@ -68,7 +68,7 @@ export type SchetsBron = {
 	/** A group stands for more bronnen than are drawn. */
 	groep?: boolean;
 };
-export type SchetsKolom = {
+type SchetsKolom = {
 	titel: string;
 	/** A law draws as a frame round its articles. */
 	kader?: { label: string; href: string } | null;
@@ -102,7 +102,7 @@ const isAmendement = (soort: string) => motionOrAmendment(soort) === 'amendement
 const nummer = (nr: string) => Number.parseInt(nr, 10) || Number.MAX_SAFE_INTEGER;
 
 /** The articles to draw and the one the judgments are about. */
-export const ARTIKELEN = 4;
+const ARTIKELEN = 4;
 
 export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null): Schets | null {
 	const laws = [...ch.laws].sort((a, b) => b.total - a.total);

@@ -123,7 +123,7 @@ export function regelVan(regels: readonly Regel[], at: number): number {
  * (`fn-71`, the words at `start`..`end` of its text), in the text (the section, the words at
  * `start`..`end` of the stuk's text) or in its title. Null for an edge without a place.
  */
-export type StukPlaats =
+type StukPlaats =
 	| { part: 'footnote'; at: string; label: string | null; bereik: Bereik | null }
 	| { part: 'text'; at: string | null; bereik: Bereik | null }
 	| { part: 'title'; at: null; bereik: null };

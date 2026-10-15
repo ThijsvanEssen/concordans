@@ -2,10 +2,10 @@
 
 export type CsvCell = string | number | null | undefined;
 
-export type CsvFormat = { separator: string; bom: boolean };
+type CsvFormat = { separator: string; bom: boolean };
 
 /** As Excel with Dutch settings reads a CSV: semicolons and a byte order mark. */
-export const EXCEL_FORMAT: CsvFormat = { separator: ';', bom: true };
+const EXCEL_FORMAT: CsvFormat = { separator: ';', bom: true };
 
 /** The coding of a topic, shared as a file: commas, as the files already shared were written. */
 export const CODING_FORMAT: CsvFormat = { separator: ',', bom: false };

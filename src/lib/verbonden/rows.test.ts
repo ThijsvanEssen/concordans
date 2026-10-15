@@ -8,9 +8,23 @@ import {
 	rowKey,
 	rowOfNeighbor,
 	uniqueRows,
-	type Row
+	type Row,
+	aardOf,
+	bundleMentions,
+	unresolvedRows,
+	mentionRows,
+	metaParts,
+	passageOf,
+	caseNumberOf,
+	repeatedTitles,
+	UNNAMED,
+	citedLine,
+	describe as beschrijf,
+	rolesLine
 } from './rows';
 import type { Neighbor } from '$lib/api/nodes';
+import { positionsLabel } from './edge-meta';
+import { stemmingNaam } from '$lib/components/parliamentary/stemming';
 
 describe('rowKey', () => {
 	it('tells apart two references from one article', () => {
@@ -253,5 +267,266 @@ describe('periodLabel', () => {
 		);
 		// The end date is the last day of the seat (TotEnMet).
 		expect(periodLabel({ from: null, to: '2026-06-09', role: null })).toBe('tot en met 2026');
+	});
+});
+
+describe('bundleMentions', () => {
+	const mention = (position: string, confidence: number, lid: string | null = null): Row => ({
+		ref: { collection: 'judgments', key: 'ecli_nl_hr_2019_1278' },
+		title: 'Hoge Raad, 19 juli 2019',
+		context: null,
+		kind: 'uitspraken',
+		position,
+		confidence,
+		lid,
+		derived: confidence < 1
+	});
+
+	it('makes one row of the mentions of one bron, keeping each mention', () => {
+		const row = bundleMentions([
+			mention('r.o. 2.2.2', 0.8),
+			mention('r.o. 2.4.1', 0.95, '1'),
+			mention('r.o. 2.7.3', 0.9)
+		]);
+		expect(row.position).toBe('r.o. 2.2.2, 2.4.1 en 1 meer');
+		expect(row.confidence).toBe(0.95);
+		expect(row.lid).toBe('1');
+		expect(row.mentions).toHaveLength(3);
+		expect(mentionRows([row])).toHaveLength(3);
+	});
+
+	it('leaves a single mention as it is', () => {
+		const one = mention('r.o. 3.1', 1);
+		expect(bundleMentions([one])).toBe(one);
+		expect(positionsLabel(['r.o. 3.1', 'r.o. 3.2'])).toBe('r.o. 3.1 en 3.2');
+		expect(positionsLabel(['onder 3.4', 'onder 4.1', 'onder 5'])).toBe('onder 3.4, 4.1 en 1 meer');
+		expect(positionsLabel(['§ 9', '§ 12'])).toBe('§ 9 en 12');
+	});
+});
+
+describe('metaParts', () => {
+	it('names the betrouwbaarheid only when it is not hoog', () => {
+		const base: Row = {
+			ref: { collection: 'judgments', key: 'j' },
+			title: 't',
+			context: null,
+			kind: 'uitspraken'
+		};
+		expect(metaParts({ ...base, confidence: 0.95, derived: true }).map((p) => p.text)).toEqual([]);
+		expect(metaParts({ ...base, confidence: 0.7 }).map((p) => p.text)).toEqual([
+			'betrouwbaarheid matig'
+		]);
+	});
+
+	it('does not say the name again under it', () => {
+		const fractie: Row = {
+			ref: { collection: 'factions', key: 'd66' },
+			title: 'D66-fractie',
+			context: 'D66',
+			kind: 'leden'
+		};
+		expect(metaParts(fractie).map((p) => p.text)).toEqual([]);
+		expect(metaParts(fractie, true).map((p) => p.text)).toEqual([]);
+		// Part of a word is no repeat: "D6" under "D66-fractie" stays.
+		expect(metaParts({ ...fractie, context: 'D6' }).map((p) => p.text)).toEqual(['D6']);
+	});
+});
+
+describe('describe, a bron without a name', () => {
+	it('says the name is unknown instead of showing the database key', () => {
+		expect(
+			describeBron('members', '71868ebc_5700_4a64_9d6e_0110f2148b38', '', { name: '' }).title
+		).toBe(UNNAMED);
+		expect(describeBron('members', 'k', null, { name: 'Claudia van Bruggen' }).title).toBe(
+			'Claudia van Bruggen'
+		);
+	});
+});
+
+describe('sister cases', () => {
+	it('finds the titles rows share, and the case number that tells them apart', () => {
+		const row = (ecli: string, display_name: string) =>
+			({
+				title: 'Gerechtshof Amsterdam, 22 september 2026',
+				identifier: ecli,
+				props: { display_name }
+			}) as unknown as Row;
+		const rows = [
+			row('ECLI:NL:GHAMS:2026:2678', 'Gerechtshof Amsterdam 2026-09-22 / 200.343.062/01'),
+			row('ECLI:NL:GHAMS:2026:2679', 'Gerechtshof Amsterdam 2026-09-22 / 200.343.064/01')
+		];
+		expect([...repeatedTitles(rows)]).toEqual(['Gerechtshof Amsterdam, 22 september 2026']);
+		expect(rows.map(caseNumberOf)).toEqual(['200.343.062/01', '200.343.064/01']);
+		expect(caseNumberOf({ ...rows[0], props: {} } as Row)).toBe('2678');
+	});
+
+	it('say of a judgment outside the dataset that it is, without a case number', () => {
+		const props = { court_code: 'HR', ecli: 'ECLI:NL:HR:2017:305', stub: true };
+		const bron = describeBron('judgments', 'ecli_nl_hr_2017_305', null, props);
+		expect(bron.title).toBe('Hoge Raad');
+		expect(bron.context).toBe('niet in de gegevens');
+		const row: Row = {
+			ref: { collection: 'judgments', key: 'k' },
+			kind: 'uitspraken',
+			...bron,
+			props
+		};
+		expect(caseNumberOf(row)).toBeNull();
+		expect(metaParts(row).map((p) => p.text)).toEqual([
+			'niet in de gegevens',
+			'ECLI:NL:HR:2017:305'
+		]);
+	});
+});
+
+describe('a row opened under itself', () => {
+	it('marks the cited phrase in its passage', () => {
+		expect(
+			passageOf({ snippet: 'in strijd met art. 6:162 BW gehandeld', match: 'art. 6:162 BW' })
+		).toEqual({
+			before: 'in strijd met ',
+			mark: 'art. 6:162 BW',
+			after: ' gehandeld'
+		});
+		expect(passageOf({ snippet: null, match: null })).toBeNull();
+	});
+
+	it('says where opening it goes', () => {
+		const ref = { collection: 'judgments', key: 'ecli_nl_hr_2019_2006' } as const;
+		expect(openLabelOf({ ref, position: 'r.o. 6.16', at: 'rov-6.16' })).toBe('Lees bij r.o. 6.16');
+		expect(openLabelOf({ ref, position: null, at: null })).toBe('Lees');
+		expect(openLabelOf({ ref, position: null, at: null }, true)).toBe('Lees naast het artikel');
+	});
+});
+
+describe('unresolvedRows', () => {
+	it('lists an article of a law the dataset lacks, grey and without a link', () => {
+		const [row] = unresolvedRows([
+			{ law: 'Rv', article_number: '843a', leden: ['1'], paragraph_ids: ['rov-3.2'] }
+		]);
+		expect(row.title).toBe('Artikel 843a Rv');
+		expect(row.missing).toBe(true);
+		expect(metaParts(row).map((p) => p.text)).toEqual(['lid 1', 'niet in de gegevens']);
+	});
+});
+
+describe('aardOf', () => {
+	it('says an aard the hand check found often wrong is only possible', () => {
+		expect(aardOf('conditional_requirement', 0.3)).toBe('mogelijk voorwaarde');
+		expect(aardOf('conditional_requirement', 0.9)).toBe('voorwaarde');
+		expect(aardOf('definition', null)).toBe('definitie');
+		expect(aardOf(null, 0.3)).toBeNull();
+	});
+});
+
+describe('rolesLine', () => {
+	it('names the role, a function other than Kamerlid and the stukken', () => {
+		expect(
+			rolesLine({
+				roles: ['Eerste ondertekenaar', 'Mede ondertekenaar'],
+				functions: ['minister van Financiën'],
+				document_count: 6
+			})
+		).toBe('eerste ondertekenaar, als minister van Financiën, 6 stukken');
+		expect(
+			rolesLine({
+				roles: ['Mede ondertekenaar'],
+				functions: ['Tweede Kamerlid'],
+				document_count: 1
+			})
+		).toBe('mede ondertekenaar, 1 stuk');
+		expect(rolesLine({ roles: ['Mede ondertekenaar'], functions: ['Eerste Kamerlid'] })).toBe(
+			'mede ondertekenaar, als Eerste Kamerlid'
+		);
+		expect(rolesLine({})).toBeNull();
+	});
+});
+
+describe('citedLine', () => {
+	it('names two articles and counts the rest', () => {
+		expect(citedLine([])).toBeNull();
+		expect(citedLine([{ article_number: '4:12' }])).toBe('art. 4:12');
+		expect(
+			citedLine([
+				{ article_number: '4:12' },
+				{ article_number: '5:49' },
+				{ article_number: '5:50' }
+			])
+		).toBe('art. 4:12, 5:49 en 1 ander');
+		expect(
+			citedLine([
+				{ article_number: '1' },
+				{ article_number: '2' },
+				{ article_number: '3' },
+				{ article_number: null },
+				{ article_number: '4' }
+			])
+		).toBe('art. 1, 2 en 2 andere');
+	});
+});
+
+describe('activityLine', () => {
+	it('names the kind, a status out of the ordinary and the dossiers', () => {
+		expect(
+			activityLine({ kind: 'Commissiedebat', status: 'Uitgevoerd', dossier_numbers: ['36600'] })
+		).toBe('Commissiedebat, over Kamerstuk 36600');
+		expect(
+			activityLine({
+				kind: 'Commissiedebat',
+				status: 'Geannuleerd',
+				dossier_numbers: ['22112', '21501-04']
+			})
+		).toBe('Commissiedebat, geannuleerd, over Kamerstuk 22112 en Kamerstuk 21501-04');
+		expect(activityLine({})).toBeNull();
+	});
+
+	it('names a dossier by number and name where the API gives it (0.79.30)', () => {
+		expect(
+			activityLine({
+				kind: 'Commissiedebat',
+				dossier_numbers: ['36496'],
+				dossiers: [{ number: '36496', short_title: 'Wet betaalbare huur', title: null }]
+			})
+		).toBe('Commissiedebat, over Kamerstuk 36496 Wet betaalbare huur');
+		expect(stemmingNaam(null, { number: '29665', title: 'Evaluatie Schipholbeleid' })).toBe(
+			'Stemming over Kamerstuk 29665 Evaluatie Schipholbeleid'
+		);
+		expect(stemmingNaam(null, '36496')).toBe('Stemming over Kamerstuk 36496');
+		const brief = beschrijf('documents', 'b', null, {
+			kind: 'Brief regering',
+			title: 'Kabinetsreactie op het advies',
+			dossier_number: '36496',
+			sequence: 12,
+			dossier_short_title: 'Wet betaalbare huur'
+		});
+		expect(brief.context).toBe('Brief regering, Kamerstuk 36496, nr. 12, Wet betaalbare huur');
+	});
+});
+
+describe('historyRow', () => {
+	it('titles a change by its dossier and says what it does', () => {
+		const row = historyRow({
+			dossier_number: '34588',
+			dossier_title: 'Wet op de inlichtingen- en veiligheidsdiensten 2017',
+			date: '2017-08-17',
+			change: 'amends',
+			status: 'canoniek',
+			summary: 'Stb. 2017, 317',
+			document_id: 'instruments/stb_2017_317'
+		});
+		expect(row?.ref).toEqual({ collection: 'instruments', key: 'stb_2017_317' });
+		expect(row?.title).toBe('Wet op de inlichtingen- en veiligheidsdiensten 2017');
+		expect(row?.identifier).toBe('Stb. 2017, 317');
+		expect(row?.context).toBe('wijzigt, Kamerstuk 34588');
+		expect(row?.proposed).toBe(false);
+		expect(row?.relation).toBe('AMENDS');
+	});
+
+	it('marks a proposed change and falls back on the dossier', () => {
+		const row = historyRow({ dossier_number: '36000', change: 'repeals', status: 'voorgesteld' });
+		expect(row?.ref).toEqual({ collection: 'dossiers', key: '36000', number: '36000' });
+		expect(row?.proposed).toBe(true);
+		expect(row?.context).toBe('voorgesteld, doet vervallen, Kamerstuk 36000');
+		expect(historyRow({})).toBeNull();
 	});
 });

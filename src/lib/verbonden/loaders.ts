@@ -65,9 +65,9 @@ import {
 	describe,
 	rowOfNeighbor,
 	unresolvedRows,
-	type Neighbor,
 	type Row
 } from './rows';
+import { type Neighbor } from '$lib/api/nodes';
 import { isDerived, lidOfMatch, plaatsVanMeta, positionsLabel } from './edge-meta';
 
 /** What an implementation rests on (API 0.67), in words: EUR-Lex, the considerans, or both. */
@@ -364,7 +364,7 @@ export function wetRegelingRow(r: WetRegeling, bwb?: string | null): Row {
  * A regulation issued under a regulation under the law (`sub_delegated`), as a row under
  * that one: `Ministeriële regeling op grond van art. 19, 23, 28 Cyberbeveiligingsbesluit`.
  */
-export function onderRegelingRow(
+function onderRegelingRow(
 	s: NonNullable<WetRegeling['sub_delegated']>[number],
 	boven: WetRegeling
 ): Row {

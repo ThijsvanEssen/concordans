@@ -21,7 +21,7 @@ const BOOK_OF: Record<string, string> = Object.fromEntries(
 );
 
 /** The book of the Burgerlijk Wetboek a law is, by its BWB id: `6`, `7A`; null for another law. */
-export const bwBookOf = (bwbId: string | null | undefined): string | null =>
+const bwBookOf = (bwbId: string | null | undefined): string | null =>
 	(bwbId && BOOK_OF[bwbId.toUpperCase()]) || null;
 
 /** The code a book of the Burgerlijk Wetboek is cited by, `BW` (never `BW6`, `BW7A`); null

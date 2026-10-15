@@ -18,7 +18,8 @@
 	import { bronHref } from '$lib/bron/href';
 	import { formatCount } from '$lib/text/getal';
 	import Caret from '$lib/components/ui/Caret.svelte';
-	import { behoort, heeftIets, laagVan, type Groep, type Laag } from './behoort';
+	import { behoort, heeftIets } from './behoort';
+	import { laagVan, type Groep, type Laag } from '$lib/bron/behoort-layer';
 
 	let { node }: { node: GraphNode } = $props();
 

@@ -9,7 +9,7 @@ import { bronPlural, type Collection } from '$lib/vocabulary';
 
 type Group = { label: string; keys: readonly (Collection | 'ministers')[] };
 
-export const INDEX_GROUPS = [
+const INDEX_GROUPS = [
 	{ label: 'Recht', keys: ['instruments', 'judgments'] },
 	{ label: 'Parlementaire behandeling', keys: ['dossiers', 'decisions', 'documents'] },
 	{ label: 'Parlement', keys: ['members', 'factions', 'committees'] },
@@ -18,7 +18,7 @@ export const INDEX_GROUPS = [
 
 export type IndexCategory = (typeof INDEX_GROUPS)[number]['keys'][number];
 
-export const INDEX_CATEGORY_KEYS: readonly IndexCategory[] = INDEX_GROUPS.flatMap((g) => g.keys);
+const INDEX_CATEGORY_KEYS: readonly IndexCategory[] = INDEX_GROUPS.flatMap((g) => g.keys);
 
 export const isIndexCategory = (value: string | null | undefined): value is IndexCategory =>
 	INDEX_CATEGORY_KEYS.some((k) => k === value);

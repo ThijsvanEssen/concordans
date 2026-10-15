@@ -50,7 +50,7 @@ export const DEBOUNCE_MS = 150;
 export const FAST_MIN_CHARS = 2;
 
 /** The slower lanes from three characters. */
-export const LANE_MIN_CHARS = 3;
+const LANE_MIN_CHARS = 3;
 
 export const LANES: readonly Lane[] = [
 	{

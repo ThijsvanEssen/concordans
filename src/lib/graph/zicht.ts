@@ -4,7 +4,7 @@
 // mark (Thijs, 10 Oct: Wet buitenlandse schepen art. 1, "1 stuk en geen lijnen").
 import type { BronKind } from '$lib/verbonden/filter';
 
-export type Zicht = {
+type Zicht = {
 	verborgen: ReadonlySet<BronKind>;
 	rechter: string | null;
 	van: string | null;

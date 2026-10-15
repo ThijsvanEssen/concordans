@@ -7,7 +7,7 @@ import { DAY_MS, korteDatum, maandJaar, vandaag } from '$lib/text/datum';
 export const ms = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
 
 export type Periode = { van: number; tot: number; lopend: boolean };
-export type Streepje = { at: number; label: string };
+type Streepje = { at: number; label: string };
 
 /** Tussen twee labels minstens 56px, en een label niet binnen 40px van een rand. */
 const AFSTAND = 56;

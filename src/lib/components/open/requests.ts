@@ -11,7 +11,7 @@ import { CHANGE_RELATIONS } from '$lib/vocabulary';
 import { brengersVan, wijzigingenVan, type Brenger, type WetRegel } from './wijzigingen';
 
 /** The text a row opens on, and what it is (a stuk of kind `kern` says its own). */
-export type RowText = { text: string | null; as: Inhoud };
+type RowText = { text: string | null; as: Inhoud };
 
 export async function rowText(
 	item: MetInhoud,

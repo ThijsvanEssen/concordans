@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Row } from '$lib/verbonden/rows';
 import { fakeApi, slow } from '$lib/test/fakeApi';
 import { naastHetStuk, stukkenInDezelfdeZaak, wetsvoorstelVan } from './zaak';
+import { zaakRang } from '$lib/bron/zaak';
 
 const rij = (key: string, kind: string): Row =>
 	({
@@ -20,7 +21,7 @@ describe('naastHetStuk', () => {
 		order: 'Het stuk zelf eerst, de begeleidende brief als laatste'
 	};
 
-	it('laat het wetsvoorstel weg naast een stuk dat er bij hoort: dat staat al als kernregel', () => {
+	it('leaves the wetsvoorstel out beside a stuk that belongs to it: it is a kern line already', () => {
 		expect(wetsvoorstelVan(zaak.rows)).toBe(voorstel);
 		expect(naastHetStuk('Memorie van toelichting', zaak)).toEqual({
 			rows: [brief],
@@ -28,11 +29,11 @@ describe('naastHetStuk', () => {
 		});
 	});
 
-	it('houdt alles naast een stuk zonder die regel', () => {
+	it('keeps everything beside a stuk without that line', () => {
 		expect(naastHetStuk('Motie', zaak)).toBe(zaak);
 	});
 
-	it('laat bij een geleidende brief de aangeboden stukken weg: die zijn zijn kernregel', () => {
+	it('leaves the stukken offered out beside a covering letter: they are its kern line', () => {
 		const mvt = rij('nr3', 'Memorie van toelichting');
 		const metMvt = { rows: [voorstel, mvt], order: undefined };
 		expect(naastHetStuk('Geleidende brief', metMvt).rows).toEqual([]);
@@ -51,5 +52,16 @@ describe('stukkenInDezelfdeZaak', () => {
 		});
 		expect((await stukkenInDezelfdeZaak({ key: 's1' })).rows).toEqual([]);
 		expect(fake.asked('/api/nodes/{collection}/{key}')).toHaveLength(2);
+	});
+});
+
+describe('zaakRang', () => {
+	it('puts the substance first and the geleidende brief last, by the kind the source gives', () => {
+		const rang = (kind: string) => zaakRang({ props: { kind } });
+		expect(rang('Memorie van toelichting (initiatiefvoorstel)')).toBe(0);
+		expect(rang('Bijlage')).toBe(0);
+		expect(rang('Nota n.a.v. het (nader/tweede nader/enz.) verslag')).toBe(0);
+		expect(rang('Brief regering')).toBe(1);
+		expect(rang('Geleidende brief')).toBe(2);
 	});
 });

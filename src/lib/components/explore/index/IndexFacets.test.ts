@@ -8,7 +8,7 @@ const groups: FacetGroup[] = [
 		label: 'Instantie',
 		kind: 'list',
 		options: [
-			{ heading: 'Rechtbanken', count: 509984 },
+			{ id: 'rb', label: 'Rechtbanken', on: false, onClick: () => {}, count: 509984 },
 			{ id: 'hr', label: 'Hoge Raad', on: false, onClick: () => {}, count: 57506 }
 		]
 	}

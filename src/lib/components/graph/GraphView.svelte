@@ -19,7 +19,7 @@
 	import { readingOrder } from './canvas-keys';
 	import GraphSidebar from './GraphSidebar.svelte';
 	import type { ComponentProps, Snippet } from 'svelte';
-	import type { GraphStore, GraphFilters } from '$lib/graph/graph-store';
+	import type { GraphStore, GraphFilters } from '$lib/graph/store/types';
 	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
 	import { isVersionCollection, kindOfCollection, kort } from '$lib/graph/types';
 	import { isDrawn } from '$lib/graph/collection-role';

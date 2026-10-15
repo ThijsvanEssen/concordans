@@ -7,12 +7,13 @@ import type { Schema } from '$lib/api/types';
 import { API_BASE_URL } from '$lib/api/base-url';
 import { isGeneriek } from '$lib/bron/generiek';
 import { padHref, parsePad, remember } from '$lib/bron/leesbaar';
+import { dossierLabel } from '$lib/bron/dossier-naam';
 
 // Actueel: what happened, newest first, per day. A day's many items of one kind on one
 // dossier (the moties of a debate) fold into one line that opens.
 
 type RawFeedItem = Schema<'FeedItemDTO'>;
-export type FeedPerson = Schema<'FeedPersonDTO'>;
+type FeedPerson = Schema<'FeedPersonDTO'>;
 /** An item as the page uses it: an id and its persons always there. */
 export type FeedItem = Omit<RawFeedItem, 'persons' | 'id'> & { id: string; persons: FeedPerson[] };
 export type FeedKind = FeedItem['kind'];
@@ -77,10 +78,6 @@ export const FEED_KINDS = Object.keys(KIND_LABEL) as FeedKind[];
 
 export const isFeedKind = (value: string): value is FeedKind => Object.hasOwn(KIND_LABEL, value);
 
-// A dossier by number and name: one helper for the whole site ($lib/bron/dossier-naam).
-import { dossierLabel, dossierName } from '$lib/bron/dossier-naam';
-export { dossierLabel, dossierName };
-
 /**
  * What a row is called: a toezegging by its text, a publication as it is cited, a paper
  * that only names its kind by the title of its dossier.
@@ -96,7 +93,7 @@ export function titleOf(i: FeedItem): string {
 }
 
 /** Fewer than this many of one kind on one dossier in a day stay single rows. */
-export const FOLD_AT = 3;
+const FOLD_AT = 3;
 
 export type Fold = {
 	/**
@@ -192,7 +189,7 @@ export function foldTitle(f: Fold, votes?: VoteCount[]): string {
 }
 
 /** The votes of a day per subkind and outcome, as the summary counts them. */
-export type VoteCount = Schema<'FeedVoteCountDTO'>;
+type VoteCount = Schema<'FeedVoteCountDTO'>;
 
 /** A day as the summary counts it. */
 export type DaySummary = Schema<'FeedDayDTO'>;

@@ -1575,9 +1575,7 @@
 						id: 'phase',
 						label: 'Fase',
 						note: `${formatCount(PHASES.reduce((n, p) => n + (dossierPhases.get(p) ?? 0), 0))} met fase`,
-						kind: 'steps',
-						ends: ['Voorstel', 'Eindtekst'],
-						none: 'Alle fasen',
+						kind: 'list',
 						options: PHASES.map((p) => ({
 							id: p,
 							label: p,
@@ -2029,18 +2027,17 @@
 	const kiesKamer = (c: Chamber) =>
 		patchUrl({ kamer: c === 'TK' ? null : c, open: null, party: null });
 	// Kamer stands in the choose-line (Bepaalregel), with the search and the period.
-	const facetGroups = $derived(facetGroupsAll);
 	// The period stands in the choose-line, the other groups in the facet column.
 	const periode = $derived(
-		facetGroups.find((g): g is Extract<FacetGroup, { kind: 'range' }> => g.kind === 'range') ?? null
+		facetGroupsAll.find((g): g is Extract<FacetGroup, { kind: 'range' }> => g.kind === 'range') ??
+			null
 	);
-	const facetten = $derived(facetGroups.filter((g) => g.kind !== 'range'));
+	const facetten = $derived(facetGroupsAll.filter((g) => g.kind !== 'range'));
 	const columns = $derived(noDossiers ? { ...COLUMNS.committees, aside: '' } : COLUMNS[category]);
 
 	// ── Opening a source ────────────────────────────────────────────────────
 	// A row opens its bron as every link to a bron does (openHref): in the network (Thijs,
 	// 10 Oct: "laten we standaard navigeren naar Netwerk"), a Kamerstuk on its text (12 Oct).
-	const hrefOf = (bron: string) => openHref(bron);
 
 	// A wet that amends others is known from its Staatsblad number only: its own text
 	// was not downloaded, but the articles it changed point to it.
@@ -2055,7 +2052,6 @@
 					? 'Stb.'
 					: 'NL';
 
-	const fmtDay = (iso: string) => weekdag(iso);
 	/** The numbered places of each hall, as the Kamers' own plans name them. */
 	const PLAATSEN_EK = ['Voorzitter', 'Griffie', 'Regering', 'Verslag en redactie'];
 	const PLAATSEN_TK = [
@@ -2317,7 +2313,7 @@
 					{:else if category === 'ministers' && shownCabinet && occupancyCabinet}
 						<!-- One title line; the chart is the list: a block opens its details. -->
 						<h2 class="gov-title">
-							<a href={hrefOf(`cabinets/${shownCabinet.key}`)}>{shownCabinet.name}</a>
+							<a href={openHref(`cabinets/${shownCabinet.key}`)}>{shownCabinet.name}</a>
 						</h2>
 						<!-- "sinds 2026, minister-president Rob Jetten, 28 bewindspersonen": no space before a comma. -->
 						<p class="gov-sub">
@@ -2394,7 +2390,7 @@
 													w.short_title ??
 													w.title ??
 													naamVan('instruments', w)}
-												href={hrefOf(bron)}
+												href={openHref(bron)}
 												acties
 											>
 												{#snippet lead()}
@@ -2415,7 +2411,7 @@
 													>
 												{/snippet}
 												{#snippet aside()}
-													<span class="tag tag--outline" class:tag--eu={w.jurisdiction === 'eu'}>
+													<span class="tag">
 														{jurisdictionTag(w)}
 													</span>
 												{/snippet}
@@ -2431,7 +2427,7 @@
 									<ul class="list">
 										{#each pages.judgments.items as j (j.id)}
 											{@const bron = `judgments/${j.key}`}
-											<IndexRow {bron} title={judgmentRowTitle(j)} href={hrefOf(bron)} acties>
+											<IndexRow {bron} title={judgmentRowTitle(j)} href={openHref(bron)} acties>
 												{#snippet lead()}
 													<span class="row-id-main"><Waarde value={korteDatum(j.date)} /></span>
 													<span class="row-id-sub"
@@ -2492,7 +2488,7 @@
 												<IndexRow
 													title={own?.title ??
 														`Dossiers onder nummer ${officialNumber(entry.number)}`}
-													href={own ? hrefOf(`dossiers/${own.number}`) : undefined}
+													href={own ? openHref(`dossiers/${own.number}`) : undefined}
 													open={isOpen}
 													onToggle={() => toggleNumber(entry.number)}
 												>
@@ -2547,7 +2543,7 @@
 											<IndexRow
 												{bron}
 												title={c.name ?? naamVan('committees', c)}
-												href={hrefOf(bron)}
+												href={openHref(bron)}
 												acties
 											>
 												{#snippet lead()}
@@ -2583,7 +2579,7 @@
 											<IndexRow
 												{bron}
 												title={m.name ?? naamVan('members', m)}
-												href={hrefOf(bron)}
+												href={openHref(bron)}
 												acties
 											>
 												{#snippet lead()}
@@ -2619,7 +2615,7 @@
 											<IndexRow
 												{bron}
 												title={f.name ?? naamVan('factions', f)}
-												href={hrefOf(bron)}
+												href={openHref(bron)}
 												acties
 											>
 												{#snippet lead()}
@@ -2666,7 +2662,7 @@
 										{#if day.date}
 											{@const failed = day.count - day.passed}
 											<div class="day-head">
-												<h3 class="day-title">{fmtDay(day.date)}</h3>
+												<h3 class="day-title">{weekdag(day.date)}</h3>
 												<span class="day-meta"
 													>{day.count}
 													{plural(day.count, 'stemming', 'stemmingen')}: {day.passed} aangenomen,
@@ -2692,7 +2688,7 @@
 													dossier={s.dossiers?.[0]?.number ?? s.dossier_numbers?.[0]}
 													title={stemmingNaam(s.subject, s.dossiers?.[0] ?? s.dossier_numbers?.[0])}
 													cite={voteCitation(s)}
-													href={hrefOf(bron)}
+													href={openHref(bron)}
 													open={openId === bron}
 													onToggle={inhoudVan(inhoud) ? () => toggleOpen(bron) : undefined}
 												>
@@ -2748,7 +2744,6 @@
 																class:tag--passed={s.passed === true}
 																class:tag--rejected={s.passed === false}
 															>
-																<span class="tag-dot" aria-hidden="true"></span>
 																{decisionOutcome(s)}
 															</span>
 														{/if}
@@ -2777,7 +2772,7 @@
 										{#each cabinetsShown as c (c.key)}
 											{@const bron = `cabinets/${c.key}`}
 											{@const parties = c.parties ?? []}
-											<IndexRow {bron} title={c.name} href={hrefOf(bron)} acties="titel">
+											<IndexRow {bron} title={c.name} href={openHref(bron)} acties>
 												{#snippet lead()}
 													<span class="row-id-main"
 														>{period(c.from_date, c.to_date, isOpen(c))}</span
@@ -2836,7 +2831,7 @@
 												{bron}
 												dossier={doc.dossier_numbers?.[0]}
 												title={doc.title ?? doc.kind ?? naamVan('documents', doc)}
-												href={hrefOf(bron)}
+												href={openHref(bron)}
 												open={openId === bron}
 												onToggle={() => toggleOpen(bron)}
 											>
@@ -2891,7 +2886,7 @@
 											<IndexRow
 												{bron}
 												title={t.text ?? 'Toezegging zonder tekst'}
-												href={hrefOf(bron)}
+												href={openHref(bron)}
 												open={openId === bron}
 												onToggle={() => toggleOpen(bron)}
 											>
@@ -2964,7 +2959,7 @@
 		title={member && d.title
 			? chapterTitle(d.title)
 			: (d.short_title ?? d.title ?? officialNumber(d.number))}
-		href={hrefOf(bron)}
+		href={openHref(bron)}
 		acties
 	>
 		{#snippet lead()}
@@ -3287,11 +3282,6 @@
 		text-align: right;
 		font-variant-numeric: tabular-nums;
 	}
-	.nums:not(.list-head .nums) {
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		color: var(--ink);
-	}
 
 	.party-list {
 		display: flex;
@@ -3568,9 +3558,6 @@
 		white-space: nowrap;
 		line-height: 22px;
 	}
-	.tag-dot {
-		display: none;
-	}
 	.tag--passed,
 	.tag--rejected {
 		color: var(--ink-2);
@@ -3661,8 +3648,6 @@
 		color: var(--ink-3);
 		border-bottom: 1px solid var(--rule);
 	}
-
-	/* Load more */
 
 	/* Narrow viewports: the columns stack. */
 	@media (max-width: 768px) {

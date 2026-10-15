@@ -24,7 +24,7 @@ const TOC_LINE_RE = /^\d[\d.]*\s+\S.{2,40}\s+\d+$/; // "1.2 Opbouw arrest 3"
 const TOC_START_RE = /^inhoudsopgave/i;
 
 /** The anchor id a rendered heading gets, from its (already normalized) text. */
-export function headingId(text: string): string {
+function headingId(text: string): string {
 	return (
 		'h-' +
 		text
@@ -45,7 +45,7 @@ export function splitSummary(text: string): string[] {
 }
 
 // ── Rechtsgebied and parties ─────────────────────────────────────────────
-export type CaseArea = 'strafrecht' | 'civiel' | 'bestuursrecht';
+type CaseArea = 'strafrecht' | 'civiel' | 'bestuursrecht';
 
 const AREA_PATTERNS: Array<[CaseArea, RegExp]> = [
 	['strafrecht', /straf/i],
@@ -453,7 +453,7 @@ export function extractParties(text: string, area: CaseArea | null): Participant
 }
 
 // The parties the API reads from the kop (`JudgmentDTO.parties`).
-export type JudgmentParty = Schema<'JudgmentParty'>;
+type JudgmentParty = Schema<'JudgmentParty'>;
 
 /** `parties` of a judgment when the API sends it, else null (an older API or judgment). */
 function partiesOf(value: unknown): JudgmentParty[] | null {
@@ -561,9 +561,9 @@ function normalize(raw: string): { text: string; at: number[] } {
 	return { text: text.trim(), at: at.map((p) => Math.max(0, p - lead)) };
 }
 
-export const normalizeParagraphText = (text: string): string => normalize(text).text;
+const normalizeParagraphText = (text: string): string => normalize(text).text;
 
-export type ParsedBodyPara = {
+type ParsedBodyPara = {
 	kind: 'body';
 	num: string | null;
 	/** Nesting depth: 0 = top-level (e.g. 2.1), 1 = sub-sub (e.g. 2.2.1) */
@@ -577,8 +577,8 @@ export type ParsedBodyPara = {
 	/** The footnote markers in `body`, `at` relative to it. */
 	noten?: NootMarker[];
 };
-export type ParsedHeading = { kind: 'heading'; text: string };
-export type ParsedSegment = ParsedBodyPara | ParsedHeading;
+type ParsedHeading = { kind: 'heading'; text: string };
+type ParsedSegment = ParsedBodyPara | ParsedHeading;
 
 /** Parse a single (already-normalized) text chunk into a body paragraph. */
 function parseOnePara(text: string, chunkOffset: number): ParsedBodyPara {
@@ -764,7 +764,7 @@ export function splitBodyParagraph(
 	return [...result, ...trailingHeadings];
 }
 
-export type RoleGroup = {
+type RoleGroup = {
 	role: string;
 	/** Parties the judgment names, in its order. */
 	named: Participant[];

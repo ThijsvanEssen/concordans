@@ -4,7 +4,6 @@ import type { FeedItem } from './feed';
 import {
 	commitmentTitle,
 	dayLines,
-	dossierName,
 	headSurname,
 	headlineOf,
 	inWords,
@@ -54,36 +53,6 @@ describe('headSurname', () => {
 	it('sets a surname at the head of a phrase', () => {
 		expect(headSurname('van den Berg')).toBe('Van den Berg');
 		expect(headSurname(null)).toBe('');
-	});
-});
-
-describe('dossierName', () => {
-	it('takes the official short title, and names an amended law as its change', () => {
-		expect(
-			dossierName({
-				number: '37014',
-				short_title: 'Wet weerbare waarden',
-				short_title_basis: 'title'
-			})
-		).toBe('Wet weerbare waarden');
-		expect(
-			dossierName({
-				number: '36889',
-				title: 'Wijziging van de Archiefwet 1995 ter verruiming van de mogelijkheden',
-				short_title: 'Archiefwet 1995',
-				short_title_basis: 'amended_law'
-			})
-		).toBe('wijziging van Archiefwet 1995');
-	});
-
-	it('falls back on the title, cut, and on the number', () => {
-		const title =
-			'Vaststelling van de begrotingsstaten van Koninkrijksrelaties (IV) en het BES-fonds (H) voor het jaar 2027';
-		expect(dossierName({ number: '37020-IV', title })).toBe(`${title.slice(0, 79).trimEnd()}…`);
-		expect(dossierName({ number: '36892', title: 'Wijziging van de Gemeentewet' })).toBe(
-			'Wijziging van de Gemeentewet'
-		);
-		expect(dossierName({ number: '36000' })).toBe('36000');
 	});
 });
 

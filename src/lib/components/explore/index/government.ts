@@ -34,7 +34,7 @@ export const COMMITMENT_STATUSES = [
 	'Vervallen'
 ] as const;
 
-export type CommitmentStatus = (typeof COMMITMENT_STATUSES)[number];
+type CommitmentStatus = (typeof COMMITMENT_STATUSES)[number];
 
 /** The state of a toezegging not yet settled; past its date it is overdue. */
 export const OPEN_STATUS: CommitmentStatus = 'Openstaand';

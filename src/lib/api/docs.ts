@@ -33,12 +33,12 @@ interface OpenApiOperation {
 	>;
 }
 
-export interface OpenApiSpec {
+interface OpenApiSpec {
 	info: { version: string };
 	paths: Record<string, Record<string, OpenApiOperation>>;
 }
 
-export interface ParamDoc {
+interface ParamDoc {
 	name: string;
 	in: string;
 	type: string;

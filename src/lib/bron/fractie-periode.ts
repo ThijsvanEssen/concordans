@@ -5,7 +5,7 @@
 import { DAY_MS } from '$lib/text/datum';
 import { naamVan } from '$lib/bron/menselijk';
 
-export type Lidmaatschap = {
+type Lidmaatschap = {
 	faction_key?: string | null;
 	abbreviation?: string | null;
 	name?: string | null;
@@ -13,7 +13,7 @@ export type Lidmaatschap = {
 	to_date?: string | null;
 };
 
-export type FractiePeriode = {
+type FractiePeriode = {
 	key: string;
 	naam: string;
 	/** `sinds 2021`, `2017–2021`, `2017–2022, 2023–2026`. */

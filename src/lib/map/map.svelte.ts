@@ -15,7 +15,6 @@ const OPSLAG = 'concordans:mappen';
 const EERSTE = 'Gemarkeerd';
 
 type Stand = { mappen: Map[]; actief: string };
-export type { Gedeeld };
 
 const nu = () => new Date().toISOString();
 const nieuwId = () => Math.random().toString(36).slice(2, 10);

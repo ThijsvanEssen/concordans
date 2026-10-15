@@ -8,7 +8,7 @@
 	import Uitkomst from './Uitkomst.svelte';
 
 	type Item = Schema<'DossierSummaryDTO'> | Schema<'DossierDetailResponse'>;
-	let { d, kop = true }: { d: Item; kop?: boolean } = $props();
+	let { d }: { d: Item } = $props();
 
 	const st = $derived(stand(d));
 	const boxes = $derived(boxesOf(d));
@@ -22,7 +22,7 @@
 	</p>
 {:else if st}
 	<section class="stand" aria-label="Stand van zaken">
-		{#if kop}<p class="zin">{st.zin}</p>{/if}
+		<p class="zin">{st.zin}</p>
 		<ol class="balk">
 			{#each boxes as box (box.body)}
 				<li class="vak vak--{box.mark}">

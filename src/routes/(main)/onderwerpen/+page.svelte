@@ -30,7 +30,6 @@
 		nieuwBezoek,
 		haalTermWeg,
 		naarParam,
-		normaal,
 		ontvolgOnderwerp,
 		sleutelVan,
 		splitsTermen,
@@ -45,6 +44,7 @@
 		zetGezien,
 		type Onderwerp
 	} from '$lib/onderwerpen/onderwerpen';
+	import { normaal } from '$lib/text/treffer';
 	import { getInstrumentDetail } from '$lib/api/instrument-cache';
 	import { addDays, korteDatum, vandaag } from '$lib/text/datum';
 

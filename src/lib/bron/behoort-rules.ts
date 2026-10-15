@@ -50,9 +50,9 @@ export type BucketLine = {
 };
 
 /** A line of its own making; `kern` the buckets whose bronnen it names. */
-export type OwnLine = { kern: Bak[]; lines: (c: Context) => Regel[] };
+type OwnLine = { kern: Bak[]; lines: (c: Context) => Regel[] };
 
-export type Band = {
+type Band = {
 	lines: (BucketLine | OwnLine)[];
 	/** A bucket listed below the lines once it holds `atLeast` bronnen, its rows on opening. */
 	groups?: { id: string; label: string; bak: Bak; atLeast: number }[];
@@ -310,7 +310,7 @@ export const BANDS: Partial<Record<Collection, Band>> = {
 		],
 		// More than one appeal against it: the line names the first, the group all.
 		groups: [{ id: 'beroep', label: 'Hoger beroep of cassatie', bak: LATER, atLeast: 2 }],
-		// The conclusie of the A-G or P-G (conclusieVan; concept 21, Thijs 10 Oct).
+		// The conclusie of the A-G or P-G (concept 21, Thijs 10 Oct).
 		statusLine: [CONCLUSION]
 	},
 	documents: {

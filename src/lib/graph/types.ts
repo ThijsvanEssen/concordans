@@ -63,7 +63,7 @@ export interface GraphNode {
 	size?: number;
 }
 
-export type EdgeCategory = 'structural' | 'mutation' | 'semantic';
+type EdgeCategory = 'structural' | 'mutation' | 'semantic';
 
 export interface GraphEdge {
 	id: string;
@@ -159,7 +159,7 @@ export function edgeCategory(relation: Relation, sourceKind: GraphNodeKind): Edg
 
 // Compress verbose court codes to short readable labels for graph nodes.
 // "RBNHO 2014/12958" → "Rb 2014/12958"; "GHAMS 2020/3" → "GH 2020/3"
-export function shortenCourtCode(code: string): string {
+function shortenCourtCode(code: string): string {
 	const u = code.toUpperCase();
 	if (u === 'HR' || u === 'PHR') return code; // already short
 	if (u === 'RVS') return 'RvS';
@@ -175,7 +175,7 @@ export function shortenCourtCode(code: string): string {
  * "ECLI:NL:HR:2023:456"  → "HR 2023/456"
  * "ECLI:EU:C:2020:12"    → "C 2020/12"
  */
-export function formatEcliLabel(ecli: string): string {
+function formatEcliLabel(ecli: string): string {
 	const raw = ecli.trim().replace(/^ECLI:/i, '');
 	const parts = raw.split(':');
 	if (parts.length >= 4 && parts[0] === 'NL') {
@@ -208,7 +208,7 @@ export const kort = (name: string, max = 40): string => truncate(name, max, { at
  * own title where that says more than its kind. The Eerste Kamer numbers with a letter ("C").
  * Without a number, the month. The full name is in the panel and the card.
  */
-export function stukLabel(props: Record<string, unknown>): string | null {
+function stukLabel(props: Record<string, unknown>): string | null {
 	const kind = textOf(props.kind);
 	const short = kind ? shortKind(kind) : null;
 	const number =

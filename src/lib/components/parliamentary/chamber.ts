@@ -4,7 +4,7 @@
 
 export type Chamber = 'TK' | 'EK';
 
-export const CHAMBERS: readonly Chamber[] = ['TK', 'EK'];
+const CHAMBERS: readonly Chamber[] = ['TK', 'EK'];
 
 export const CHAMBER_NAME: Record<Chamber, string> = {
 	TK: 'Tweede Kamer',

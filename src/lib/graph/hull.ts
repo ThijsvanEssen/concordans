@@ -14,7 +14,7 @@ function cross(o: Point, a: Point, b: Point): number {
 }
 
 /** The convex hull of two or more points, by Andrew's monotone chain. */
-export function convexHull(points: Point[]): Point[] {
+function convexHull(points: Point[]): Point[] {
 	const pts = [...points].sort((a, b) => a.x - b.x || a.y - b.y);
 	if (pts.length <= 2) return pts;
 	const lower: Point[] = [];
@@ -44,7 +44,7 @@ export function convexHull(points: Point[]): Point[] {
  * edge. `outline` holds the points the path passes through, so the label can anchor
  * to this hull's own top.
  */
-export type HullShape = {
+type HullShape = {
 	/** The points the path passes through, and each point's top: where a label anchors. */
 	outline: Point[];
 	/** The outline as a closed polygon, in order: what a line between hulls is cut at. */

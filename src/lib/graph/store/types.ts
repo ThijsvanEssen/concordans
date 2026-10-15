@@ -29,7 +29,7 @@ export type NeighborhoodReach = {
 	buckets: { collection: string; total: number; kept: number }[];
 };
 
-export type NetwerkParticipant = { response: Schema<'NodeGraphResponse'> };
+type NetwerkParticipant = { response: Schema<'NodeGraphResponse'> };
 
 /** A bron a group of the panel Verbonden puts on the canvas. */
 export type CanvasRow = {
@@ -56,7 +56,7 @@ export type GraphFilters = {
 	dimStaleContext: boolean;
 };
 
-export type GraphExpansionOptions = {
+type GraphExpansionOptions = {
 	/** Neighbours of the response that are drawn; the response itself is always whole. */
 	neighborLimit?: number;
 	/** Fetch again although the neighbours of the node are cached. */

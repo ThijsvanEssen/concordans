@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fail, fakeApi, type FakeRequest } from '$lib/test/fakeApi';
 import { ApiError } from '$lib/api/client';
-import { lazeKernIds, procesgangIds } from './behoort';
+import { procesgangIds } from './behoort-procesgang';
 
 // A judgment and the instance before it: `hr` was appealed from `hof`, `hof` from `rb`.
 const appealOf = (key: string, before: string | null) => ({
@@ -52,19 +52,5 @@ describe('procesgangIds', () => {
 				keyOf(r) === 'hr3' ? appealOf('hr3', 'hof3') : fail(404)
 		});
 		expect(await procesgangIds('hr3')).toEqual([]);
-	});
-});
-
-describe('lazeKernIds', () => {
-	it('fails where the dossier fails', async () => {
-		fakeApi({ '/api/dossiers/{number}': fail(500) });
-		await expect(lazeKernIds('dossiers', '36001', { label: '36001' })).rejects.toBeInstanceOf(
-			ApiError
-		);
-	});
-
-	it('names nothing for a dossier the data lacks', async () => {
-		fakeApi({ '/api/dossiers/{number}': fail(404) });
-		expect(await lazeKernIds('dossiers', '36002', { label: '36002' })).toEqual([]);
 	});
 });

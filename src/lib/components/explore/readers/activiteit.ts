@@ -15,7 +15,7 @@ type Records = Schema<'ActivityRecordsResponse'>;
 type Stuk = Schema<'ActivityPaperDTO'>;
 
 /** What a line opens in place: the item RijInhoud reads, and as what. */
-export type RegelInhoud = { item: MetInhoud; als: Inhoud };
+type RegelInhoud = { item: MetInhoud; als: Inhoud };
 
 /** `Kamerstuk 36764, nr. 32`; null for a paper without a dossier. */
 export const stukNummer = (s: Pick<Stuk, 'dossier_number' | 'dossier_suffix' | 'sequence'>) =>

@@ -5,7 +5,7 @@
 	// (ACCOMPANIES inbound, one request). Verbonden has them all.
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { getBuckets } from '$lib/api/nodes';
-	import { laagVan, type Laag } from '$lib/bron/behoort';
+	import { laagVan, type Laag } from '$lib/bron/behoort-layer';
 	import { bronHref } from '$lib/bron/href';
 	import { formatCount } from '$lib/text/getal';
 	import type { Collection } from '$lib/vocabulary';

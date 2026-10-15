@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { MapItem } from './map';
 import { gemerkt, notitiesPerBron } from './notities';
 
-const cbw = 'Centrale bankenwet (Cbw)';
+const cbw = 'Cyberbeveiligingswet (Cbw)';
 const lid3: MapItem = {
 	id: 'articles/bwbr0052872_21',
 	at: 'lid-3',

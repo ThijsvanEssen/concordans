@@ -200,7 +200,7 @@ export const getMemberCommitments = (key: string, limit: number, status?: string
 	);
 
 /** The most dossiers of a lid any view shows: the panel Verbonden lists a hundred. */
-export const MEMBER_DOSSIERS = 100;
+const MEMBER_DOSSIERS = 100;
 
 /**
  * The dossiers with stukken a lid signed, the first `limit`; `total` counts them all. One

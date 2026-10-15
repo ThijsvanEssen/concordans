@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { behoort, conclusieVan, dossierNummer, heeftIets, metEersteKamer } from './behoort';
+import { behoort, heeftIets, lazeKernIds } from './behoort';
+import { fail, fakeApi } from '$lib/test/fakeApi';
+import { ApiError } from '$lib/api/client';
 
 type Item = {
 	key: string;
@@ -183,29 +185,6 @@ describe('behoort', () => {
 			])
 		);
 		expect(conclusie.regels.map((r) => r.label)).toEqual(['Conclusie bij']);
-	});
-
-	it('gives the conclusie of a judgment for its status line, without the word Conclusie', () => {
-		const g = light([
-			{
-				relation: 'ADVISES_ON',
-				direction: 'inbound',
-				collection: 'judgments',
-				total: 1,
-				items: [
-					{
-						key: 'ecli_nl_phr_2019_887',
-						collection: 'judgments',
-						display_name: 'Conclusie P-G Langemeijer en Wissink, 13 september 2019'
-					}
-				]
-			}
-		]);
-		const c = conclusieVan(g);
-		expect(c?.naam).toBe('P-G Langemeijer en Wissink, 13 september 2019');
-		expect(c?.ref?.key).toBe('ecli_nl_phr_2019_887');
-		expect(conclusieVan(light([]))).toBeNull();
-		expect(conclusieVan(null)).toBeNull();
 	});
 
 	it('puts a stuk in its dossier, a lid in its one fractie, and leaves out what is missing', () => {
@@ -497,25 +476,16 @@ describe('a translation and a dossier', () => {
 	});
 });
 
-describe('the number of a dossier', () => {
-	it('keeps its suffix, from the label or from number and suffix', () => {
-		expect(dossierNummer({ number: '36600', suffix: 'VII', label: '36600-VII' })).toBe('36600-VII');
-		expect(dossierNummer({ number: '36600', suffix: 'VII' })).toBe('36600-VII');
-		expect(dossierNummer({ number: '36496' })).toBe('36496');
-		expect(dossierNummer({})).toBeNull();
-	});
-});
-
-describe('the Kamers that dealt with a dossier', () => {
-	const tk = [{ soort: 'Kamer', naam: 'Tweede Kamer' }];
-	it('adds the Eerste Kamer where the detail holds its papers or its outcome there', () => {
-		expect(metEersteKamer(tk, { senate: { document_count: 14 } })).toEqual([
-			{ soort: 'Kamer', naam: 'Tweede Kamer en Eerste Kamer' }
-		]);
-		expect(metEersteKamer(tk, { ek_outcome: { outcome: 'Aangenomen' } })[0].naam).toBe(
-			'Tweede Kamer en Eerste Kamer'
+describe('lazeKernIds', () => {
+	it('fails where the dossier fails', async () => {
+		fakeApi({ '/api/dossiers/{number}': fail(500) });
+		await expect(lazeKernIds('dossiers', '36001', { label: '36001' })).rejects.toBeInstanceOf(
+			ApiError
 		);
-		expect(metEersteKamer(tk, { senate: { document_count: 0 }, ek_outcome: null })).toEqual(tk);
-		expect(metEersteKamer([], { senate: { document_count: 3 } })[0].naam).toBe('Eerste Kamer');
+	});
+
+	it('names nothing for a dossier the data lacks', async () => {
+		fakeApi({ '/api/dossiers/{number}': fail(404) });
+		expect(await lazeKernIds('dossiers', '36002', { label: '36002' })).toEqual([]);
 	});
 });

@@ -13,7 +13,7 @@ export type Phase = Schema<'CabinetPhaseDTO'>;
 
 const parse = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
 
-export type Term = { start: number; end: number; open: boolean };
+type Term = { start: number; end: number; open: boolean };
 
 /**
  * The cabinet's term. Without an end it runs to today only while a post is still held (the

@@ -17,7 +17,7 @@ export type Kolom =
 	| 'verworpen'
 	| 'voor'
 	| 'tegen';
-export const KOLOMMEN: readonly Kolom[] = [
+const KOLOMMEN: readonly Kolom[] = [
 	'moties',
 	'amendementen',
 	'brieven',
@@ -50,7 +50,7 @@ export type Indeling = 'maand' | 'week';
 /** `2026-10` for a month; `2026-W41` for an ISO week. */
 export type Vak = string;
 
-export function maandVan(dag: string): Vak {
+function maandVan(dag: string): Vak {
 	return dag.slice(0, 7);
 }
 
@@ -214,7 +214,7 @@ export const inVak = (v: Vak, gekozen: Vak) =>
 	!gekozen || (gekozen.length === 4 ? jaarVanVak(v) === gekozen : v === gekozen);
 
 /** The columns a decision counts in: moties for a motie, its outcome and the fractie's vote. */
-export function kolommenVan(d: Besluit, stem: Stem | undefined): Kolom[] {
+function kolommenVan(d: Besluit, stem: Stem | undefined): Kolom[] {
 	const uit: Kolom[] = ['moties'];
 	const u = uitkomstVan(d);
 	if (u !== 'overig') uit.push(u);

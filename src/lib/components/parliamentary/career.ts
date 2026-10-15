@@ -9,7 +9,7 @@ import type { Schema } from '$lib/api/types';
 import { fractieNaam } from '$lib/bron/menselijk';
 
 type Membership = Schema<'FactionMembershipDTO'>;
-export type GovernmentFunction = Schema<'GovernmentFunctionDTO'>;
+type GovernmentFunction = Schema<'GovernmentFunctionDTO'>;
 
 export type Signature = { function: string | null; capacity: string | null; date: string | null };
 

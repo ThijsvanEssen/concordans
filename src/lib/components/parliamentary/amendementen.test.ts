@@ -69,17 +69,17 @@ const graaf: Graph = {
 	edges: [herziet('30', '22'), herziet('40', '30'), herziet('48', '26'), herziet('48', '38')]
 };
 
-describe('dienstregeling van de amendementen', () => {
+describe('the timetable of the amendementen', () => {
 	const d = dienstregeling(graaf);
 
-	it('een rij per amendement zoals het in stemming kwam, met de stukken waaruit het groeide', () => {
+	it('gives a row per amendement as it came to the vote, with the stukken it grew from', () => {
 		expect(d.rijen.map((r) => r.stuk.nummer)).toEqual(['6', '40', '48', '60']);
 		const r = d.rijen.find((x) => x.stuk.nummer === '40')!;
 		expect(r.haltes.map((h) => h.nummer)).toEqual(['22', '30', '40']);
 		expect(d.metVervanging).toBe(true);
 	});
 
-	it('de uitslag is het besluit op de zaak van het laatste stuk, niets uit de titel', () => {
+	it('takes the outcome from the besluit on the zaak of the last stuk, nothing from the title', () => {
 		const r = d.rijen.find((x) => x.stuk.nummer === '40')!;
 		expect(r.uitslag).toMatchObject({
 			aangenomen: true,
@@ -89,7 +89,7 @@ describe('dienstregeling van de amendementen', () => {
 		expect(d.rijen.find((x) => x.stuk.nummer === '60')!.uitslag).toBeNull();
 	});
 
-	it('de halte die in stemming kwam wordt gevuld, de andere blijven open', () => {
+	it('fills the stop that came to the vote, and leaves the others open', () => {
 		const gevuld = (nummer: string) => {
 			const r = d.rijen.find((x) => x.stuk.nummer === nummer)!;
 			return r.haltes.filter((h) => h.id === inStemming(r)).map((h) => h.nummer);
@@ -102,7 +102,7 @@ describe('dienstregeling van de amendementen', () => {
 		expect(gevuld('60')).toEqual([]);
 	});
 
-	it('een besluit zonder uitslag (ingetrokken) vult geen halte', () => {
+	it('fills no stop for a besluit without an outcome (ingetrokken)', () => {
 		const ingetrokken = dienstregeling({
 			nodes: [
 				stuk('70', '2024-04-24', 'k70'),
@@ -122,13 +122,13 @@ describe('dienstregeling van de amendementen', () => {
 		expect(inStemming(ingetrokken.rijen[0])).toBeNull();
 	});
 
-	it('samengevoegd waar twee ketens in één stuk uitkomen', () => {
+	it('marks samengevoegd where two chains end in one stuk', () => {
 		const r = d.rijen.find((x) => x.stuk.nummer === '48')!;
 		expect(r.samengevoegd).toBe(true);
 		expect(r.haltes.map((h) => h.nummer)).toEqual(['26', '38', '48']);
 	});
 
-	it('de eerste ondertekenaar uit de actoren, met het aantal anderen', () => {
+	it('names the first ondertekenaar from the actors, with the number of others', () => {
 		expect(d.rijen.find((x) => x.stuk.nummer === '40')!.indiener).toEqual({
 			naam: 'De Hoop',
 			fractie: 'GL-PvdA',
@@ -136,7 +136,7 @@ describe('dienstregeling van de amendementen', () => {
 		});
 	});
 
-	it('kolommen zijn de dagen, of weken boven veertien dagen', () => {
+	it('makes the columns days, or weeks above fourteen days', () => {
 		expect(d.kolommen).toEqual([
 			'2024-02-09',
 			'2024-04-19',
@@ -148,7 +148,7 @@ describe('dienstregeling van de amendementen', () => {
 		expect(kolomVan(d, '2024-04-22')).toBe('2024-04-22');
 	});
 
-	it('de route: ingediend, gewijzigd, en samengevoegd waar ketens samenkomen', () => {
+	it('draws the route: ingediend, gewijzigd, and samengevoegd where chains meet', () => {
 		const r40 = d.rijen.find((x) => x.stuk.nummer === '40')!;
 		expect(stappen(r40).map((s) => `${s.wat} ${s.stukken.map((h) => h.nummer).join('+')}`)).toEqual(
 			['ingediend 22', 'gewijzigd 30', 'gewijzigd 40']
@@ -159,13 +159,13 @@ describe('dienstregeling van de amendementen', () => {
 		);
 	});
 
-	it('zonder REVISES staat elk stuk apart', () => {
+	it('keeps every stuk apart without REVISES', () => {
 		const zonder = dienstregeling({ ...graaf, edges: [] });
 		expect(zonder.metVervanging).toBe(false);
 		expect(zonder.rijen).toHaveLength(8);
 	});
 
-	it('telt de amendementen uit de eigen telling per soort van het dossier', () => {
+	it('counts the amendementen from the dossier’s own count per kind', () => {
 		expect(
 			aantalAmendementen({
 				Amendement: 25,
@@ -177,14 +177,14 @@ describe('dienstregeling van de amendementen', () => {
 	});
 });
 
-describe('besluiten zonder stemming (gap 2, BesluitSoort)', () => {
+describe('besluiten without a vote (gap 2, BesluitSoort)', () => {
 	const b = (id: string, date: string, passed: boolean | null, decision_kind: string) => ({
 		id: `decisions/${id}`,
 		key: id,
 		props: { primary_case_id: 'k', date, passed, decision_kind }
 	});
 
-	it('noemt de soort zoals de Kamer besloot, nooit "gestemd"', () => {
+	it('names the kind as the Kamer decided, never "gestemd"', () => {
 		expect(besluitSoort('Stemmen - ingetrokken')).toBe('ingetrokken');
 		expect(besluitSoort('Aanhouden')).toBe('aangehouden');
 		expect(besluitSoort('Stemmen - aangehouden')).toBe('aangehouden');
@@ -195,7 +195,7 @@ describe('besluiten zonder stemming (gap 2, BesluitSoort)', () => {
 		expect(besluitSoort(null)).toBeNull();
 	});
 
-	it('kiest bij meer besluiten het laatste met een uitslag, anders het laatste', () => {
+	it('chooses, of several besluiten, the last with an outcome, else the last', () => {
 		const uitgesteld = b('u', '2024-04-18', null, 'Uitstellen');
 		const gestemd = b('g', '2024-04-23', true, 'Stemmen - aangenomen');
 		const aangehouden = b('a', '2024-04-25', null, 'Stemmen - aangehouden');
@@ -204,7 +204,7 @@ describe('besluiten zonder stemming (gap 2, BesluitSoort)', () => {
 		expect(kiesBesluit([])).toBeNull();
 	});
 
-	it('geeft een ingetrokken amendement zijn woord, en een vervangen stuk zijn opvolger', () => {
+	it('gives an ingetrokken amendement its word, and a replaced stuk its successor', () => {
 		const g: Graph = {
 			nodes: [
 				...graaf.nodes,
@@ -230,7 +230,7 @@ describe('besluiten zonder stemming (gap 2, BesluitSoort)', () => {
 		expect(r40.haltes.map((h) => h.vervangenDoor)).toEqual(['30', '40', null]);
 	});
 
-	it('zegt nog niet gestemd waar de zaak niet af is en geen besluit heeft', () => {
+	it('says "nog niet gestemd" where the zaak is not done and has no besluit', () => {
 		const g: Graph = {
 			nodes: [
 				...graaf.nodes,

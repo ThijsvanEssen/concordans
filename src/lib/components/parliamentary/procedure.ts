@@ -41,7 +41,7 @@ type Body = Record<string, unknown>;
  * vote on the bill its bar, a day's papers of the bill the papers by kind and number. A line
  * not in the map (an activity, the Eerste Kamer's own page) has none: its title is the bron.
  */
-export type ProcedureInhoud =
+type ProcedureInhoud =
 	| { soort: 'opening' | 'stemming'; item: MetInhoud }
 	| { soort: 'stukken'; stukken: { ref: string; zin: string }[] };
 type Inhouden = Map<string, ProcedureInhoud>;
@@ -365,7 +365,7 @@ export function uitslagVan(b: { passed?: unknown; result?: unknown }): boolean |
  * dossier's zaak (`kind`; the phases exist for these alone). Another dossier, a verzameldossier
  * such as Huurbeleid, has no steps to come: no advice, no Eerste Kamer.
  */
-export const isWetsvoorstel = (d: Pick<Detail, 'kind'>) => BILL_KINDS.has(d.kind ?? '');
+const isWetsvoorstel = (d: Pick<Detail, 'kind'>) => BILL_KINDS.has(d.kind ?? '');
 
 export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 	const st = stand(d);

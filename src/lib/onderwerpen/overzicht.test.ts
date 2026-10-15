@@ -40,8 +40,8 @@ const stemmen = new Map<string, Stem>([
 	['b', 'tegen']
 ]);
 
-describe('de tabel van de export', () => {
-	it('zet de stem van de fractie en de eigen strekking in hun kolommen', () => {
+describe('the table of the export', () => {
+	it('puts the vote of the fractie and the own strekking in their columns', () => {
 		const motie = new Map([['a', { strekking: 'bevorderend' }]]);
 		const t = csvTabel(lijst, '', 'VVD', stemmen, new Map(), motie);
 		const stem = t.kop.indexOf(kolomStem('VVD'));
@@ -51,7 +51,7 @@ describe('de tabel van de export', () => {
 	});
 });
 
-describe('de API telt (0.79.30)', () => {
+describe('the counts of the API (0.79.30)', () => {
 	const facets = {
 		kind: [
 			{ value: 'Motie', count: 61, passed: 45, rejected: 16 },
@@ -76,7 +76,7 @@ describe('de API telt (0.79.30)', () => {
 		]
 	} as unknown as Facets;
 
-	it('zet de tellingen per soort en jaar om, met de stem van de fractie', () => {
+	it('turns the counts per kind and year around, with the vote of the fractie', () => {
 		const g = uitFacets(facets, 'VVD');
 		expect(g.alles).toMatchObject({
 			totaal: 62,
@@ -97,7 +97,7 @@ describe('de API telt (0.79.30)', () => {
 		expect(uitFacets(facets, null).alles.voor).toBe(0);
 	});
 
-	it('vraagt de lijst achter een getal met precies zijn filters', () => {
+	it('asks the list behind a number with exactly its filters', () => {
 		const basis = { q: ['AI', 'kunstmatige intelligentie'], from: '2025-06-01' };
 		expect(lijstQuery(basis, { soort: 'Motie', uitkomst: 'verworpen' }, null)).toEqual({
 			...basis,
