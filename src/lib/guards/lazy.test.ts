@@ -13,7 +13,8 @@ const LAZY: Record<string, RegExp> = {
 	'routes/explore/+page.svelte':
 		/\/readers\/\w+Reader\.svelte$|VerbondenTabel\.svelte$|FilterSheet\.svelte$/,
 	'lib/components/explore/readers/ArticleReader.svelte': /VersionCompare\.svelte$/,
-	'lib/bron/BronLink.svelte': /OverwegingKaart\.svelte$|PreviewCard\.svelte$|\/overweging$/
+	'lib/bron/BronLink.svelte': /OverwegingKaart\.svelte$|PreviewCard\.svelte$|\/overweging$/,
+	'lib/components/layout/SearchOverlay.svelte': /\/Search\.svelte$/
 };
 
 describe('chunks of their own', () => {

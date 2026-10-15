@@ -1,12 +1,30 @@
+<script lang="ts" module>
+	import { Lazy } from '$lib/util/lazy.svelte';
+
+	// The search is a chunk of its own, asked once the page is idle (or at the first ⌘K), so it
+	// is in when the dialog opens and no page waits for it on its first load.
+	const search = new Lazy(() => import('$lib/search/Search.svelte'), 'Zoeken');
+</script>
+
 <script lang="ts">
 	// The dialog around the one search component; ⌘K opens it on every page.
-	import Search from '$lib/search/Search.svelte';
+	import { onMount } from 'svelte';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 
 	let {
 		open,
 		query = '',
 		onClose
 	}: { open: boolean; query?: string; onClose: () => void } = $props();
+
+	onMount(() => {
+		if (!('requestIdleCallback' in window)) return search.load();
+		const id = requestIdleCallback(() => search.load(), { timeout: 3000 });
+		return () => cancelIdleCallback(id);
+	});
+	$effect(() => {
+		if (open) search.load();
+	});
 
 	let previousFocus: HTMLElement | null = null;
 
@@ -43,7 +61,12 @@
 	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 	<div class="overlay" onclick={(e) => e.target === e.currentTarget && onClose()}>
 		<div class="modal" role="dialog" aria-modal="true" aria-label="Zoeken" tabindex="-1">
-			<Search overlay initial={query} onOpen={onClose} />
+			{#if search.component}
+				{@const Search = search.component}
+				<Search overlay initial={query} onOpen={onClose} />
+			{:else if search.error}
+				<LoadState state={{ status: 'error', error: search.error }} what="Zoeken" />
+			{/if}
 		</div>
 	</div>
 {/if}
