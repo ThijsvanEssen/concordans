@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	decisionKindFromParam,
-	decisionMethod,
-	decisionOutcome,
-	decisionResult,
-	isHammer
-} from './decision-kind';
+import { decisionMethod, decisionOutcome, decisionResult, isHammer } from './decision-kind';
 
 describe('decisionOutcome', () => {
 	it('names a vote, a hamerstuk and a decision that is no vote', () => {
@@ -40,16 +34,6 @@ describe('decisionResult', () => {
 		);
 		expect(decisionResult({ passed: null, decision_kind: 'Stemmen - uitstellen' })).toBeNull();
 		expect(decisionResult({ passed: null })).toBeNull();
-	});
-});
-
-describe('decisionKindFromParam', () => {
-	it('reads a kind as the Kamer writes it, and one of before API 0.52 as its word', () => {
-		expect(decisionKindFromParam('Motie')).toBe('Motie');
-		expect(decisionKindFromParam('motie')).toBe('Motie');
-		expect(decisionKindFromParam('wetsvoorstel')).toBe('Wetgeving');
-		expect(decisionKindFromParam('overig')).toBeUndefined();
-		expect(decisionKindFromParam('')).toBeUndefined();
 	});
 });
 

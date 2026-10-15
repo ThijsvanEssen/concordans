@@ -93,13 +93,10 @@ export function buildBronHref(
 	const inExplore = !!current && isVerkenner(current.pathname);
 	if (current && inExplore) current = verkennerUrl(current);
 	const currentMode = inExplore && current ? current.searchParams.get('mode') : null;
-	// Bladeren lists bronnen; opening one from there is reading it. `mode=read` is the
-	// name reading had before ?lezen.
+	// Bladeren lists bronnen; opening one from there is reading it.
 	const within = keepMode && inExplore && currentMode !== 'index';
 	const reading =
-		within && current
-			? current.searchParams.get('lezen') === '1' || currentMode === 'read'
-			: (mode ?? 'read') === 'read';
+		within && current ? current.searchParams.get('lezen') === '1' : (mode ?? 'read') === 'read';
 
 	const params = new URLSearchParams();
 	params.set('focus', focus);

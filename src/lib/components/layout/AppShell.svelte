@@ -4,9 +4,6 @@
 	import TopBar from './TopBar.svelte';
 	import SearchOverlay from './SearchOverlay.svelte';
 	import { provideSearchOpener } from '$lib/stores/search-trigger';
-	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
-	import { MAP_PARAMS } from '$lib/map/map';
 
 	let { children }: { children?: Snippet } = $props();
 
@@ -24,19 +21,6 @@
 		}
 	}
 	provideSearchOpener(openSearch);
-
-	// A map shared as a link (?map=) opens on Gemarkeerd, with the choice to keep it; a link
-	// of before (/explore?map=) goes there too.
-	$effect(() => {
-		const url = page.url;
-		if (!url.searchParams.has('map') || url.pathname.startsWith('/gemarkeerd')) return;
-		const doel = new URLSearchParams();
-		for (const k of MAP_PARAMS) {
-			const v = url.searchParams.get(k);
-			if (v !== null) doel.set(k, v);
-		}
-		goto(`/gemarkeerd?${doel}`, { replaceState: true });
-	});
 </script>
 
 <div class="app-shell">

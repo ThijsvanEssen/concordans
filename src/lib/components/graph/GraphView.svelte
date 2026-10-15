@@ -1354,7 +1354,7 @@
 					{heatMap}
 					heatActive={overlay.kind === 'heat'}
 					heatPeriodMonths={overlay.kind === 'heat' ? overlay.months : DEFAULT_HEAT_MONTHS}
-					mutatieActive={overlay.kind === 'open' || overlay.kind === 'dossier'}
+					mutatieActive={overlay.kind === 'open'}
 					externalHoveredId={gemarkeerd?.id ?? hoverNode?.id ?? null}
 					{notitieIds}
 					onNodeClick={(id) => {

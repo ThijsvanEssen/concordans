@@ -1,5 +1,5 @@
-# Every pull request and every push to main runs the checks the deploy runs, so main is
-# always deployable: a formatting slip shows on the pull request, not at the deploy.
+# Every pull request and every push to main runs the checks. The deploy of a commit waits for
+# a green run of this workflow on it (deploy.yml) and runs none of them again.
 # Lint is prettier --check over the whole repository (Markdown included) and ESLint.
 name: ci
 

@@ -35,7 +35,7 @@ export function zonderArtikelen(data: ChangedArticles, wijzigt: readonly LegalEf
 	);
 }
 
-/** The changes of a dossier, or null where the API has none to give (an older API: 404). */
+/** The changes of a dossier, or null where the API knows no such dossier (404). */
 export const getChangedArticles = (number: string): Promise<ChangedArticles | null> =>
 	once(`dossiers/${number}/changed-articles`, () =>
 		ifExists(

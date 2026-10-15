@@ -14,19 +14,16 @@ import {
 	dossierLabel,
 	feedStand,
 	foldTitle,
-	kindFromParam,
+	isFeedKind,
 	standLine,
 	titleOf
 } from './feed';
 
-describe('kindFromParam', () => {
-	it('reads a kind as the API names it, and one of before API 0.48 as the TK word', () => {
-		expect(kindFromParam('Motie')).toBe('Motie');
-		expect(kindFromParam('stemming')).toBe('stemming');
-		expect(kindFromParam('motie')).toBe('Motie');
-		expect(kindFromParam('brief_regering')).toBe('Brief regering');
-		expect(kindFromParam('wetsvoorstel')).toBe('Voorstel van wet');
-		expect(kindFromParam('iets')).toBeNull();
+describe('isFeedKind', () => {
+	it('knows a kind as the API names it, and nothing else', () => {
+		expect(isFeedKind('Motie')).toBe(true);
+		expect(isFeedKind('stemming')).toBe(true);
+		expect(isFeedKind('motie')).toBe(false);
 	});
 });
 
@@ -233,7 +230,6 @@ describe('doorzochtVanaf', () => {
 		expect(doorzochtVanaf({ partial: true, searched_from: '2026-07-01' })).toBe('2026-07-01');
 		expect(doorzochtVanaf({ partial: true, searched_from: null })).toBeNull();
 		expect(doorzochtVanaf({ partial: false })).toBeNull();
-		expect(doorzochtVanaf({})).toBeNull();
 	});
 });
 

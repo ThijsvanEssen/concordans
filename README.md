@@ -8,7 +8,7 @@ A reader finds a bron by search (start page, ⌘K), by Bladeren (lists per kind 
 
 ```sh
 npm install
-cp .env.example .env    # PUBLIC_CONCORDANS_API_BASE_URL, default http://localhost:8000
+cp .env.example .env    # PUBLIC_CONCORDANS_API_BASE_URL: the API
 npm run dev             # http://localhost:5173
 ```
 
@@ -25,14 +25,14 @@ The test database holds every relation of the model. Run the API on it and point
 
 ```sh
 # in ~/Development/lawgraph
-ARANGO_DB_NAME=lawgraph_small LAWGRAPH_API_PORT=8001 .venv/bin/lawgraph-api
+LAWGRAPH_DB_NAME=lawgraph_small LAWGRAPH_API_PORT=8001 .venv/bin/lawgraph-api
 ```
 
 ## Build and deploy
 
 The app is a static build (adapter-static) that fetches everything in the browser. A readable address such as `/dossiers/36799` is no file, so the web server answers every unknown path with `index.html` (`fallback` in `svelte.config.js`).
 
-A push to the branch `release` deploys that commit (`.github/workflows/deploy.yml`); main is merged into `release` to deploy. The workflow lints, checks and tests, builds against the API at the repository variable `CONCORDANS_API_BASE_URL`, copies the build to `/srv/lawgraph/concordans/releases/<commit>` and points `/srv/lawgraph/concordans/current` at it. The five newest builds stay; going back is `ln -sfn /srv/lawgraph/concordans/releases/<commit> /srv/lawgraph/concordans/current` on the server.
+A push to the branch `release` deploys that commit (`.github/workflows/deploy.yml`); `release` follows main fast-forward, so the commit deployed is one `ci` checked on main. The workflow waits for a green `ci` run of that commit (`.github/workflows/ci.yml`, run on every push to main), then builds against the API at the repository variable `CONCORDANS_API_BASE_URL`, copies the build to `/srv/lawgraph/concordans/releases/<commit>` and points `/srv/lawgraph/concordans/current` at it. The five newest builds stay; going back is `ln -sfn /srv/lawgraph/concordans/releases/<commit> /srv/lawgraph/concordans/current` on the server.
 
 Secrets: `DEPLOY_SSH_KEY`, `DEPLOY_HOST`, `DEPLOY_USER` and `DEPLOY_KNOWN_HOSTS` (the server's host key line; a changed key stops the deploy).
 

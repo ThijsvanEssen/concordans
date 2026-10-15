@@ -74,7 +74,7 @@ describe('onderwerpen', () => {
 		haalTermWeg('AI');
 		haalTermWeg('kunstmatige intelligentie');
 		expect(lees()[0].termen).toEqual(['algoritme']);
-		expect(uitParams(new URLSearchParams('onderwerp=AI|ki;KI'))).toEqual([['AI', 'ki']]);
+		expect(uitParams(new URLSearchParams('onderwerp=AI|ki|KI'))).toEqual([['AI', 'ki']]);
 	});
 
 	it('een onderwerp van vandaag houdt in een nieuwe sessie zijn recente lijst', () => {

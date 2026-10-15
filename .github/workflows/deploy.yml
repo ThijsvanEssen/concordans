@@ -1,5 +1,7 @@
-# A push to `release` puts that commit on the server: lint, check and tests first, then a static
-# build that is copied into a directory of its own on the server, after which `current` points
+# A push to `release` puts that commit on the server, once `ci` has passed on it: `release`
+# follows main fast-forward, so the commit was pushed to main first and `ci` ran there. A commit
+# without a green `ci` run (red, cancelled, or never run) stops here. Then a static build against
+# the production API that is copied into a directory of its own on the server, after which `current` points
 # at it. The reverse proxy serves `current`; the five newest builds stay, so going back is one
 # `ln -sfn`. `immutable` holds the _app/immutable files of all five: a tab opened before a deploy
 # still finds its chunks there (Caddy serves /_app/immutable/* from it, a 404 when none has it).
@@ -28,7 +30,27 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
     steps:
+      # Waits while a `ci` run of this commit is queued or running, up to 30 minutes.
+      - name: Green ci run of this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for _ in $(seq 60); do
+            runs=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$GITHUB_SHA" \
+              --jq '[.workflow_runs[] | .status + ":" + (.conclusion // "")] | join(" ")')
+            case " $runs " in *" completed:success "*) echo "ci green: $runs"; exit 0 ;; esac
+            case "$runs" in
+              *queued* | *in_progress* | *waiting* | *pending* | *requested* | "") sleep 30 ;;
+              *) echo "::error::no green ci run of $GITHUB_SHA: $runs"; exit 1 ;;
+            esac
+          done
+          echo "::error::no green ci run of $GITHUB_SHA within 30 minutes"
+          exit 1
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
@@ -37,9 +59,6 @@ jobs:
           cache: npm
 
       - run: npm ci
-      - run: npm run lint
-      - run: npm run check
-      - run: npm test
 
       - name: Build
         run: npm run build

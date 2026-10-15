@@ -1,6 +1,6 @@
 # Controls
 
-How a control looks and where it stands, on every page and in every panel (Thijs, 10 October 2026: "alle dingen versimpelen is akkoord", concept `ux-voorstel/9-bediening`). The text speaks, the controls stay quiet: each has one form and one place, so a reader neither searches for it nor reads past it.
+How a control looks and where it stands, on every page and in every panel. The text speaks, the controls stay quiet: each has one form and one place, so a reader neither searches for it nor reads past it.
 
 ## Five forms
 
@@ -21,13 +21,13 @@ No chips: a choice shows in its control (in weight in the facet, as the value of
 Every page and panel, from top to bottom:
 
 1. **Heading**: the title at the left, its actions at the right, at most three buttons (more in ⋯).
-2. **Choose-line**: what is shown, in `ui/Bepaalregel.svelte`: Zoeken, Periode and Kamer where the list has them, each labelled above its left edge, all 32 px on one line (Thijs, 10 Oct 2026: "Dan hebben we overal netjes een zelfde soort zoekbalk"); on a phone under each other. Nothing else.
+2. **Choose-line**: what is shown, in `ui/Bepaalregel.svelte`: Zoeken, Periode and Kamer where the list has them, each labelled above its left edge, all 32 px on one line; on a phone under each other. Nothing else.
 3. **Refine**: on a page the facets at the left with their counts; in a narrow panel behind one text menu or Filter; on a phone behind Verfijnen (N), opened in place.
 4. **List**: a group's heading is its fold; at most one switch at its right (netwerk, named "Toon in het netwerk"); at most one line of controls under it (order, refine); one text link at the foot, Alle N.
 
 A row has no buttons of its own: a click on the row does it. Its actions (and a group heading's In netwerk, for all its rows), Bewaar and In netwerk, are icon buttons (`ui/RijActies.svelte`: a bookmark, the network with a +) that show on hover or focus of the row (`data-rij`), always on a phone at 32 px. At rest only the state shows: a filled bookmark when kept, the network when in the network. A box is for a choice in a filter, never for an action.
 
-This holds for Bladeren too (Thijs, 10 October 2026, choice (a)): a row's title opens the bron in Netwerk, Lezen is one step from there. It replaces the earlier wish of the same day for buttons at the end of the row (Lezen, Netwerk, Openen). Those buttons do not come back. A Kamerstuk is the exception (Thijs, 12 October 2026): every click on it (a BronLink, a row of Verbonden or Bladeren, a line of a tijdlijn, a number in an amendment's chain) opens its text, and Netwerk is the step from there; one whose text is not in the data yet opens in Netwerk. One rule, `openHref` in `src/lib/bron/href.ts`; only a link that names the network (In het netwerk) builds its own.
+This holds for Bladeren too: a row's title opens the bron in Netwerk, Lezen is one step from there. There are no buttons at the end of the row. A Kamerstuk is the exception: every click on it (a BronLink, a row of Verbonden or Bladeren, a line of a tijdlijn, a number in an amendment's chain) opens its text, and Netwerk is the step from there; one whose text is not in the data yet opens in Netwerk. One rule, `openHref` in `src/lib/bron/href.ts`; only a link that names the network (In het netwerk) builds its own.
 
 A row of a Kamerstuk in Verbonden and in Bladeren opens in place on its core text, as in Actueel and Gemarkeerd: a motie its dictum, an amendement its toelichting, another stuk its opening (`RijInhoud`, `kernVan` in `src/lib/components/open/rij-inhoud.ts`); Lees verder, or the title with a modifier, opens the stuk. A judgment that cites an article opens beside the article at its r.o. (`?naast=judgments/…#rov-…`), as the memorie does.
 
@@ -35,7 +35,7 @@ A row of a Kamerstuk in Verbonden and in Bladeren opens in place on its core tex
 
 - Height: 32 on a page, 24 in a panel or group; one line of controls has one height. On the 4 px grid; `--s-2` between controls, `--s-4` between groups.
 - Letter: a control in Schibsted at `--t-ui` or `--t-ui-micro`, 500. A text link and a facet's label are text, in the serif.
-- Colour: ink for everything; chosen is filled (Keuze) or in weight. Red (`--accent`) only on hover and focus, for the outcome "nee" (`--uitkomst-nee`) and for an error (Thijs, 10 Oct 2026). What was red at rest is ink: te laat and voorgesteld in weight, nu, the majority, a chosen or active row, a cited link.
+- Colour: ink for everything; chosen is filled (Keuze) or in weight. Red (`--accent`) only on hover and focus, for the outcome "nee" (`--uitkomst-nee`) and for an error. What was red at rest is ink: te laat and voorgesteld in weight, nu, the majority, a chosen or active row, a cited link.
 - Words: a text menu shows its value ("Alle bronnen"), not a label with a colon; a button is a verb or a destination; counts stand in the control ("Alle 244 uitspraken"), not in a sentence; no explanatory sentences between controls.
 
 ## Size in a timeline
@@ -44,7 +44,7 @@ Two things at one level do not differ in size. In a timeline (Actueel, Onderwerp
 
 ## Layout
 
-Two kinds of page, no third (Thijs, 10 Oct 2026: "Houd de bladeren pagina's aan voor breedte van hele breedte dingen").
+Two kinds of page, no third.
 
 - **Full width**: lists, overviews, timelines and text: the home page, Bladeren and each of its categories, Actueel, Onderwerpen and its Overzicht, the API reference, /docs, /over, /bronnen, /voorwaarden, /privacy.
   - Every one sits in the frame of Bladeren: `.blad` (at most 1440 px, gutter `--s-6`; on a phone `--s-4`), with `.blad__indeling` for a facet column of 240 px, a gap of 40 px and the rest.
@@ -55,18 +55,18 @@ Two kinds of page, no third (Thijs, 10 Oct 2026: "Houd de bladeren pagina's aan 
 
 ## Kamer
 
-Kamer is one choice, never a set of boxes (Thijs, 10 Oct 2026: "Dit is raar ten opzichte van de rest van de TK/EK selectors"): a Keuze in the choose-line under its label Kamer (Bepaalregel), on a phone under the period. Where both may stand, Beide | Tweede Kamer | Eerste Kamer, Beide filtering nothing (Actueel, the Overzicht); where one must, Tweede Kamer | Eerste Kamer (the halls, Bladeren's Kamerleden and Fracties).
+Kamer is one choice, never a set of boxes: a Keuze in the choose-line under its label Kamer (Bepaalregel), on a phone under the period. Where both may stand, Beide | Tweede Kamer | Eerste Kamer, Beide filtering nothing (Actueel, the Overzicht); where one must, Tweede Kamer | Eerste Kamer (the halls, Bladeren's Kamerleden and Fracties).
 
 ## Cards over the network
 
-Netwerk and the Legenda stand in one column on the canvas, Netwerk on top and the Legenda under it, as wide as each other (Thijs, 10 Oct 2026: "legenda en netwerk onder elkaar"). Both may stand open while the canvas has the height. When the one opened last leaves no room for the other, the other folds, and opens again by itself once there is room, unless someone closed it (`src/lib/stores/zwevend.ts`). Each remembers open or closed per browser.
+Netwerk and the Legenda stand in one column on the canvas, Netwerk on top and the Legenda under it, as wide as each other. Both may stand open while the canvas has the height. When the one opened last leaves no room for the other, the other folds, and opens again by itself once there is room, unless someone closed it (`src/lib/stores/zwevend.ts`). Each remembers open or closed per browser.
 
 ## Gemarkeerd
 
-What a reader keeps while reading goes into a map (`src/lib/map`; concept ux-voorstel/13-map, variant 7, steps 1 and 2). Gemarkeerd is a page, as every item of the menu (Thijs, 10 Oct: one behaviour for every menu item); there is no panel.
+What a reader keeps while reading goes into a map (`src/lib/map`). Gemarkeerd is a page, as every item of the menu; there is no panel.
 
 - **Keeping:** Bewaar in the menu of each lid, onderdeel and overweging (`PlaatsMenu`). In the head of a reader, Bewaar follows the place chosen (`Bewaar lid 3`), with `in <map>` beside it: a menu of the maps and Nieuwe map. A map chosen there becomes the active map and holds the item; Nieuwe map starts a map with the item, named Map 2, Map 3, and renamed on the page. The count beside Gemarkeerd in the menu follows at once. In each row of Verbonden as a bookmark (`RijActies`); it replaced Verzamel.
-- **The page:** `/gemarkeerd`, the menu item with the active map's count, underlined there as the others. Built as Gevolgd (Thijs, 10 Oct: the same kind of page, one's own collections): the heading over both columns; the maps in the facet column, the active one in weight, its count beside it, Nieuwe map under them; in the list column each map a Sectie that opens and closes (`map:<id>`, open until closed), its name the heading, Netwerk, Kopieer link, Citaten, CSV and the menu Map (Bewaar hierin, Hernoem, Aantekening bij de map, Verwijder map) at the right of it, the map's own note under it, then the meta line (`Actieve map`, the number of bronnen, the last change, Volgorde). Its items are the rows of Bladeren (IndexRow): the kind with its glyph in the lead, the place (`art. 6:162 lid 2 BW`) as the title, the full citation and the note in italics under it, Aantekening, ↑ ↓ and × at the end on hover; then Wis de map.
+- **The page:** `/gemarkeerd`, the menu item with the active map's count, underlined there as the others. Built as Gevolgd: the heading over both columns; the maps in the facet column, the active one in weight, its count beside it, Nieuwe map under them; in the list column each map a Sectie that opens and closes (`map:<id>`, open until closed), its name the heading, Netwerk, Kopieer link, Citaten, CSV and the menu Map (Bewaar hierin, Hernoem, Aantekening bij de map, Verwijder map) at the right of it, the map's own note under it, then the meta line (`Actieve map`, the number of bronnen, the last change, Volgorde). Its items are the rows of Bladeren (IndexRow): the kind with its glyph in the lead, the place (`art. 6:162 lid 2 BW`) as the title, the full citation and the note in italics under it, Aantekening, ↑ ↓ and × at the end on hover; then Wis de map.
 - **Content in place:** a click on an item's row opens what it keeps beneath it (`MapInhoud`), asked only then: an article its lid in the reader's own text (ArticleText, with its references and defined terms), Heel artikel shows the article with the kept lid marked by the bar of a kept place; a judgment its overweging with its sub-overwegingen (CitedText), Overwegingen eromheen adds three before and after; a Kamerstuk the words its note quotes (`"…"`) in the text around them, else the opening of its text; another bron the lines of its card. Lees verder opens the bron. Alles uitklappen and Alles inklappen in the meta line open or close every item of a map; on a shared map too.
 - **Notes:** Aantekening beside an item opens a field in place; Enter keeps it, Escape leaves it. The note stands in italics under the item and goes into the link, the citations and the CSV.
 - **The map's note:** one note on the map as a whole, from Aantekening bij de map in the menu Map; it stands in italics at the top of the map, a click opens it in place as an item's note. It goes into the link (`mapnotitie=`) and above the citations.
@@ -74,12 +74,12 @@ What a reader keeps while reading goes into a map (`src/lib/map`; concept ux-voo
 - **Netwerk:** opens the Verkenner on the map's bronnen only, as a netwerk of chosen bronnen (`/explore?netwerk=…&tussen=0`): each bron once (two leden of one article are the article), the verbindingen among them, the bronnen between them off. The Netwerk panel adds to it (+ bron, Toon de bronnen ertussen). The shared map has it too.
 - **Order:** per law, dossier or judgment, or the reader's own. ↑ and ↓ move an item within its group, or among all items in the own order.
 - **The active map:** where Bewaar keeps; chosen in the facet column, by Bewaar hierin, or by `in …` in a reader.
-- **Sharing:** a link (`?map=`, with `mapnaam=`, in the own order `mapvolgorde=eigen`, the map's note as `mapnotitie=` and the notes per group as `mapgroepen=`) opens `/gemarkeerd` with the shared map as the first group, `Gedeelde map: <naam>`, its actions at the right of its heading: Bewaar als map, Voeg toe aan the active map, or Niet bewaren; after the choice the link leaves the address. A link of before (`/explore?map=`) goes there too (AppShell). Fields per item `id~at~kort~groep~notitie`, items separated by `;`; only `%`, `~` and `;` are escaped.
+- **Sharing:** a link (`?map=`, with `mapnaam=`, in the own order `mapvolgorde=eigen`, the map's note as `mapnotitie=` and the notes per group as `mapgroepen=`) opens `/gemarkeerd` with the shared map as the first group, `Gedeelde map: <naam>`, its actions at the right of its heading: Bewaar als map, Voeg toe aan the active map, or Niet bewaren; after the choice the link leaves the address. Fields per item `id~at~kort~groep~notitie`, items separated by `;`; only `%`, `~` and `;` are escaped.
 - **Storage:** the maps live in this browser (`concordans:mappen`), without an account. The one map of step 1 (`concordans:map`) became the first map.
 
 ## Lezers
 
-Every reader alike (concept ux-voorstel/21-lezers-rustiger, variant A with B's Toelichting; Thijs, 10 Oct: "nog wat druk met al de mogelijke klikken", and "zo eigenstandig mogelijk lezen").
+Every reader alike.
 
 - **The band:** one line at meta size, the term in ink-3 straight before what it names (no column of terms), a chain of more than two layers folded to `first › … › last` (the "…" opens it). One rule under the band and Netwerk/Tekst together, over the full width (ReaderFrame `.kop-rij`).
 - **The head:** two actions, framed, at the right of the status line (`KopActies`). Bewaar is a button with the bookmark that keeps at once, with the map choice on a caret joined to it. Citeer holds the forms, Kopieer tekst and the official text (`bron ↗`). No other buttons in the head. A dossier and a stemming have Bewaar alone: a stemming is cited through what was voted on.
@@ -89,7 +89,7 @@ Every reader alike (concept ux-voorstel/21-lezers-rustiger, variant A with B's T
 
 ## Bronregels
 
-Lines about how current the data is, and the dates that belong to what a page shows (Thijs, 10 Oct: "een gelijke ervaring op de hele website"; inventory in ux-voorstel/20-bronregels).
+Lines about how current the data is, and the dates that belong to what a page shows.
 
 - **How current the data is:** one line in the footer of every page, `Stukken van de Kamers tot en met 9 okt. 2026, opgehaald op 10 okt. 2026` (`data_as_of` of `/api/stats`, asked when the footer comes into view). Not in the head of a page. Two exceptions: the empty list of Actueel, where it says why nothing shows, and Bronnen en hergebruik, whose subject it is (per source, `tot en met …, opgehaald op …`).
 - **A date of what is shown:** a caption under the object, serif, `--t-micro`, `--ink-3`, in one of these words:
@@ -100,7 +100,7 @@ Lines about how current the data is, and the dates that belong to what a page sh
 
 ## Marks on a timeline
 
-A line of a timeline (Actueel on the home page, Onderwerpen, a dossier's procedure) carries the mark of its kind from `src/lib/bron/vormen.ts`, the table KindGlyph and the network draw from (Thijs, 10 Oct 2026: "Dit hebben we toch al door de rest van de site?"). A vote is the triangle of a decision, a paper the sheet, a bill the sheet with its window, a toezegging the flag, a law in force the square of a law. A bundle has the mark of its kind (Stemmingen the triangle). The outcome is in the fill: aangenomen or afgedaan filled in moss, verworpen open in the accent, open or still to come dashed. The Tijdlijn has no circle or square of its own.
+A line of a timeline (Actueel on the home page, Onderwerpen, a dossier's procedure) carries the mark of its kind from `src/lib/bron/vormen.ts`, the table KindGlyph and the network draw from. A vote is the triangle of a decision, a paper the sheet, a bill the sheet with its window, a toezegging the flag, a law in force the square of a law. A bundle has the mark of its kind (Stemmingen the triangle). The outcome is in the fill: aangenomen or afgedaan filled in moss, verworpen open in the accent, open or still to come dashed. The Tijdlijn has no circle or square of its own.
 
 Every series of dated lines is the one `Tijdlijn` (`src/lib/components/tijdlijn/`): Actueel and Onderwerpen, the home page, a dossier's procedure, a post in Bladeren, the toezeggingen, Loopbaan and Commissies of a member, and the changes of an article between A and B. Its date column says only what the heading does not: no column where the heading names the day (Actueel), the day and month where it names the year (a group of the procedure), else the day and month with the year under it. A term (Loopbaan, Commissies) is the compact form `perioden`: the years in the reader's term column, no line and no mark. A course (procedure, changes) runs from old to new, an overview (Actueel, toezeggingen) from new to old; the Tijdlijn sorts each group itself (`volgorde`). A line with content of its own (`inhoud`: a dictum, the bar of a vote, the opening of a paper, the facts of a toezegging, the papers of one day) behaves as a row of Actueel: one click on the line or its title opens the content beneath it, one line at a time; the bron is a link in that content, and cmd-click on the title opens it at once. A line without content has its title as a BronLink. The lid history of an article is legal text, not a timeline: each formulation under its period as a heading.
 

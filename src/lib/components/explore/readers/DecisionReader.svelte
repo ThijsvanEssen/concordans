@@ -57,8 +57,8 @@
 			kamerstukName({ ...p, chamber: loaded?.chamber })
 		]);
 
-	// What the coalition did (API 0.79.34, `coalition`; Thijs, 10 Oct). Only in the Tweede
-	// Kamer, and only where the API gives the block: before 0.79.34 nothing shows.
+	// What the coalition did (`coalition`). Only in the Tweede Kamer, and only where the API
+	// gives the block.
 	const coalitie = $derived(
 		loaded && (loaded.chamber ?? 'TK') !== 'EK' ? (loaded.coalition ?? null) : null
 	);

@@ -26,7 +26,6 @@
 	import CitedText from '$lib/components/articles/CitedText.svelte';
 	import { page } from '$app/state';
 	import { anchorOfHash, landOn, permalink } from '$lib/bron/anchor';
-	import { untrack } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
@@ -41,8 +40,7 @@
 	import { sourceName } from '../law-head';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { getNodeGraph, neighborsOf } from '$lib/api/nodes';
-	import { getNodeFirst, once } from '$lib/api/records';
-	import { conclusieVan, type Laag } from '$lib/bron/behoort';
+	import { once } from '$lib/api/records';
 	import { paragraphNumber } from '$lib/text/anchor';
 	import { korteDatum, langeDatum } from '$lib/text/datum';
 	import { samenhangVan, type Samenhang } from './samenhang';
@@ -119,25 +117,6 @@
 		return () => (stale = true);
 	});
 
-	// The conclusie of the A-G or P-G before API 0.79.43 gave it in the detail: from the light
-	// node the band has asked already (one request for both).
-	// Kept per judgment: the reader's node is replaced under the same id (its head, its light
-	// node, the canvas's), and the line would lose it and get it back each time.
-	let conclusieVoor = $state<{ id: string; laag: Laag | null } | null>(null);
-	const selectieId = $derived(node.id);
-	$effect(() => {
-		const id = selectieId;
-		const { collection, key } = untrack(() => node);
-		let stale = false;
-		getNodeFirst(collection, key)
-			.then((r) => {
-				if (!stale) conclusieVoor = { id, laag: conclusieVan(r) };
-			})
-			.catch((e) => report('Conclusie bij de uitspraak', e));
-		return () => (stale = true);
-	});
-	const conclusie = $derived(conclusieVoor?.id === selectieId ? conclusieVoor.laag : null);
-
 	// The participants table shows this many rows before "Alle N partijen tonen".
 	const PARTIES_PREVIEW = 6;
 	let showAllParties = $state(false);
@@ -192,16 +171,12 @@
 			caseNumber
 		].filter(Boolean)}
 		<!-- The conclusies by their A-G or P-G and day from the judgment's own detail, so they
-		     stand with the text (API 0.79.43, #507); before it, from the light node. -->
-		{@const conclusies = data.conclusions
-			? data.conclusions.map((c) => ({
-					ref: { collection: 'judgments' as const, key: ecliKey(c.ecli) },
-					naam: conclusieNaam(c),
-					strekking: strekking(c.outcome)
-				}))
-			: conclusie
-				? [{ ...conclusie, strekking: null }]
-				: []}
+		     stand with the text. -->
+		{@const conclusies = (data.conclusions ?? []).map((c) => ({
+			ref: { collection: 'judgments' as const, key: ecliKey(c.ecli) },
+			naam: conclusieNaam(c),
+			strekking: strekking(c.outcome)
+		}))}
 		<!-- How it ended, in its own words (API 0.79.55): what a conclusie proposes, what the
 		     ECHR found per article; nothing while the data says none. -->
 		{@const eigenStrekking = conclusion ? strekking(j.conclusion_outcome) : null}

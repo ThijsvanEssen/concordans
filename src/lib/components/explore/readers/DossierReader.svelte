@@ -56,7 +56,7 @@
 		(number) => (number ? getDossierTimeline(number, TIMELINE_LIMIT) : Promise.resolve(null)),
 		'Procedure van het dossier'
 	);
-	/** The articles the bill changes; null without them or on an older API. */
+	/** The articles the bill changes; null without them. */
 	let changed = $state<ChangedArticles | null>(null);
 	$effect(() => {
 		const number = dossierNumber;

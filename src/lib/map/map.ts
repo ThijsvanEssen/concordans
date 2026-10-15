@@ -236,9 +236,6 @@ export function uitParams(p: URLSearchParams): Gedeeld | null {
 	};
 }
 
-/** The params a map's address carries, for a link that lands elsewhere first. */
-export const MAP_PARAMS = ['map', 'mapnaam', 'mapvolgorde', 'mapnotitie', 'mapgroepen'] as const;
-
 // ── The network ─────────────────────────────────────────────────────────────
 /** The bronnen of a map, each once (two leden of one article are one bron), in its order. */
 export const netwerkIds = (items: readonly MapItem[]): string[] => [

@@ -167,7 +167,7 @@
 		return m && isOn(k) && m.count > 0 && m.count >= m.van ? m.groepen : null;
 	};
 
-	const mutOn = $derived(overlay.kind === 'open' || overlay.kind === 'dossier');
+	const mutOn = $derived(overlay.kind === 'open');
 	const heatOn = $derived(overlay.kind === 'heat');
 
 	// The line sample of a relation, in the colour of the edge from this bron.
