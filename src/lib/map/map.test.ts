@@ -4,6 +4,10 @@ import {
 	bewaarItem,
 	citaten,
 	csv,
+	externalItem,
+	isExternal,
+	itemAddress,
+	readItem,
 	groepen,
 	itemHref,
 	netwerkHref,
@@ -289,5 +293,64 @@ describe('keeping a bron', () => {
 		const c = bewaarItem('members/c', { kort: 'c' });
 		const uit = verschuif([a, c, b], itemKey(b), -1, 'groep');
 		expect(uit.map((i) => i.kort)).toEqual(['b', 'c', 'a']);
+	});
+});
+
+describe('a source outside Concordans', () => {
+	const boek = externalItem({
+		citation: '  Asser/Heerma van Voss & Van Slooten 7-V 2022/321 ',
+		kind: 'book',
+		url: 'https://example.org/asser'
+	});
+
+	it('is kept as the reader cites it, under Andere bronnen, its address its own', () => {
+		expect(boek.id).toMatch(/^external:[a-z0-9]+$/);
+		expect(isExternal(boek)).toBe(true);
+		expect(boek).toMatchObject({
+			at: '',
+			kort: 'Asser/Heerma van Voss & Van Slooten 7-V 2022/321',
+			groep: 'Andere bronnen',
+			groupKey: 'groep:Andere bronnen',
+			kind: 'book',
+			url: 'https://example.org/asser'
+		});
+		expect(boek.pad).toBeUndefined();
+		expect(isExternal(lid2)).toBe(false);
+	});
+
+	it('goes into a group of the map where the reader chooses one', () => {
+		const noot = externalItem({
+			citation: 'P.T. de Vries, noot bij HR 11 november 2005, JAR 2005/287',
+			kind: 'annotation',
+			group: { name: ro.groep, key: ro.groupKey }
+		});
+		expect(groepen([lid2, ro, noot]).map((g) => g.items.length)).toEqual([1, 2]);
+		expect(noot.url).toBeUndefined();
+	});
+
+	it('takes only a web address', () => {
+		expect(externalItem({ citation: 'x', kind: 'other', url: 'javascript:alert(1)' }).url).toBe(
+			undefined
+		);
+		expect(externalItem({ citation: 'x', kind: 'other', url: 'geen adres' }).url).toBeUndefined();
+	});
+
+	it('is cited, exported, moved and read back as an item of Concordans', () => {
+		expect(citaten([lid2, boek])).toContain('Andere bronnen\n2. Asser/Heerma van Voss');
+		const regels = csv([lid2, boek], (i) => itemAddress(i, 'https://concordans.nl'));
+		expect(regels).toContain('https://example.org/asser');
+		expect(regels).toContain('https://concordans.nl/');
+		expect(verschuif([lid2, boek], itemKey(boek), -1, 'eigen').map(itemKey)).toEqual([
+			itemKey(boek),
+			itemKey(lid2)
+		]);
+		expect(readItem(JSON.parse(JSON.stringify(boek)))).toEqual(boek);
+		expect(readItem({ ...boek, kind: 'onzin', url: 'ftp://x' })).toEqual({
+			...boek,
+			kind: 'other',
+			url: undefined
+		});
+		// Not a bron of the network.
+		expect(netwerkIds([lid2, boek])).toEqual([lid2.id]);
 	});
 });

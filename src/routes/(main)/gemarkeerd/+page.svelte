@@ -30,6 +30,9 @@
 		csv,
 		groepen,
 		itemHref,
+		itemAddress,
+		isExternal,
+		SOURCE_KINDS,
 		netwerkHref,
 		itemKey,
 		type Gedeeld,
@@ -41,6 +44,7 @@
 	import { shareFragment, sharedOfFragment } from '$lib/map/share';
 	import { ignore } from '$lib/api/errors';
 	import MapInhoud from '$lib/map/MapInhoud.svelte';
+	import AddSource from '$lib/map/AddSource.svelte';
 	import Aantekening from '$lib/map/Aantekening.svelte';
 	import MapRegelingen from '$lib/map/MapRegelingen.svelte';
 	import { onderWet, wetVanGroep } from '$lib/map/verbonden';
@@ -136,6 +140,9 @@
 	let notitieVan = $state<string | null>(null);
 	let groepNotitieVan = $state<string | null>(null);
 	let mapNotitieVan = $state<string | null>(null);
+
+	// ── A source outside Concordans, added in place under a map's groups ───────
+	let addingTo = $state<string | null>(null);
 </script>
 
 <RouteKop />
@@ -143,11 +150,17 @@
 {#snippet rij(i: MapItem, m: Map | null)}
 	{@const k = rijSleutel(m, i)}
 	{@const collection = parseNodeId(i.id)?.collection}
-	<IndexRow title={i.kort} href={itemHref(i)} open={geopend.has(k)} onToggle={() => wisselOpen(k)}>
+	{@const external = isExternal(i)}
+	<IndexRow
+		title={i.kort}
+		href={external ? undefined : itemHref(i)}
+		open={geopend.has(k)}
+		onToggle={external && !i.url ? undefined : () => wisselOpen(k)}
+	>
 		{#snippet lead()}
 			{#if collection}<span class="row-id-main"
 					><KindGlyph {collection} size={12} />{bronLabel(collection)}</span
-				>{/if}
+				>{:else if external}<span class="row-id-main">{SOURCE_KINDS[i.kind ?? 'other']}</span>{/if}
 		{/snippet}
 		{#snippet body()}
 			{#if i.voluit && i.voluit !== i.kort}<span class="row-sub">{i.voluit}</span>{/if}
@@ -179,12 +192,28 @@
 					>
 				</span>
 			{/if}
-			<TekstLink href={itemHref(i)} class="naar-lezer" aria-label="{i.kort} in de lezer"
-				>In de lezer</TekstLink
-			>
+			{#if external}
+				{#if i.url}<TekstLink
+						href={i.url}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="naar-lezer"
+						aria-label="{i.kort}, de bron">Bron ↗</TekstLink
+					>{/if}
+			{:else}
+				<TekstLink href={itemHref(i)} class="naar-lezer" aria-label="{i.kort} in de lezer"
+					>In de lezer</TekstLink
+				>
+			{/if}
 		{/snippet}
 		{#snippet detail()}
-			<MapInhoud item={i} href={itemHref(i)} />
+			{#if external}
+				{#if i.url}<p class="adres">
+						<TekstLink href={i.url} target="_blank" rel="noopener noreferrer">{i.url}</TekstLink>
+					</p>{/if}
+			{:else}
+				<MapInhoud item={i} href={itemHref(i)} />
+			{/if}
 		{/snippet}
 	</IndexRow>
 {/snippet}
@@ -318,11 +347,7 @@
 								onclick={() =>
 									download(
 										`${bestand(m)}.csv`,
-										csv(
-											m.items,
-											(i) => new URL(itemHref(i), page.url.origin).toString(),
-											m.volgorde
-										)
+										csv(m.items, (i) => itemAddress(i, page.url.origin), m.volgorde)
 									)}>CSV</TekstLink
 							>
 						{/if}
@@ -445,6 +470,20 @@
 					<p class="leeg stil">Nog niets bewaard.</p>
 				{:else}
 					{@render lijst(m.items, m.volgorde, m, m.groepNotities ?? {})}
+				{/if}
+				{#if addingTo === m.id}
+					<AddSource
+						groups={groepen(m.items).map((g) => ({ key: g.sleutel, name: g.groep }))}
+						onAdd={(i) => op(m, () => kaart.wissel(i))}
+						onReader={() => kaart.kies(m.id)}
+						onClose={() => (addingTo = null)}
+					/>
+				{:else}
+					<p class="erbij">
+						<TekstLink onclick={() => (addingTo = m.id)}>Andere bron toevoegen</TekstLink>
+					</p>
+				{/if}
+				{#if m.items.length}
 					<p class="voet">
 						<ConfirmButton
 							label="Wis de map"
@@ -693,6 +732,15 @@
 	}
 	.voet {
 		margin: var(--s-2) 0 0;
+	}
+	.erbij {
+		margin: var(--s-3) 0 0;
+		font-size: var(--t-meta);
+	}
+	.adres {
+		margin: 0;
+		font-size: var(--t-meta);
+		overflow-wrap: anywhere;
 	}
 	.voet :global(.wis) {
 		padding: 0;
