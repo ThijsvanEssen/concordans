@@ -2,6 +2,7 @@
 // keeps what is chosen; the panel open or not; a map someone shared (a link, share.ts) until it is kept
 // or put aside.
 import {
+	freeName,
 	readItem,
 	withItems,
 	itemKey,
@@ -163,7 +164,8 @@ class Kaarten {
 		const namen = new Set(this.#stand.mappen.map((m) => m.naam));
 		let n = this.#stand.mappen.length + 1;
 		while (!naam && namen.has(`Bundel ${n}`)) n++;
-		const m = { ...leeg(naam?.trim() || `Bundel ${n}`), items };
+		// A name a bundel has already is numbered on: `Gemarkeerd 2` beside `Gemarkeerd`.
+		const m = { ...leeg(naam?.trim() ? freeName(naam.trim(), namen) : `Bundel ${n}`), items };
 		this.#stand = { mappen: [...this.#stand.mappen, m], actief: m.id };
 		this.#bewaar();
 		return m;

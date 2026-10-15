@@ -16,6 +16,7 @@
 		type SourceKind
 	} from './map';
 	import { recognize } from './recognize';
+	import { ensureInstrumentName, instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 
 	let {
 		groups,
@@ -48,6 +49,23 @@
 	const known = $derived(recognize(url, page.url.origin) ?? recognize(citation, page.url.origin));
 	const badUrl = $derived(!!url.trim() && !webAddress(url));
 
+	// A law or an article named as its reader names it (`Burgerlijk Wetboek Boek 6`, `art.
+	// 7:658 BW`), once Concordans gives the law's name; until then `deze wet`, never its id.
+	$effect(() => {
+		if (known?.law) ensureInstrumentName(known.law);
+	});
+	const law = $derived(
+		known?.law
+			? ($instrumentMetaStore.get(known.law) ?? $instrumentMetaStore.get(known.law.toLowerCase()))
+			: null
+	);
+	const knownLabel = $derived.by(() => {
+		if (!known?.law) return known?.label ?? '';
+		const name = known.article ? (law?.shortTitle ?? lawName(law, null)) : lawName(law, null);
+		if (known.article) return `art. ${known.article}${name ? ` ${name}` : ', deze wet'}`;
+		return name ?? 'deze wet';
+	});
+
 	const focus = (field: HTMLInputElement) => field.focus();
 	/** A field's own Escape (isEscape leaves a field alone) closes the form. */
 	const leave = (e: KeyboardEvent) => {
@@ -63,7 +81,7 @@
 	}
 </script>
 
-<form class="bron-erbij" aria-label="Andere bron toevoegen" onsubmit={submit}>
+<form class="bron-erbij" aria-label="Andere bron toevoegen" novalidate onsubmit={submit}>
 	<label for="{uid}-citation">Citeervorm</label>
 	<input
 		id="{uid}-citation"
@@ -82,9 +100,11 @@
 		autocomplete="off"
 		placeholder="https://… (optioneel)"
 		aria-invalid={badUrl || undefined}
+		aria-describedby={badUrl ? `${uid}-hint` : undefined}
 		bind:value={url}
 		onkeydown={leave}
 	/>
+	{#if badUrl}<span class="hint" id="{uid}-hint">Geen webadres</span>{/if}
 	<span class="label" id="{uid}-kind">Soort</span>
 	<span class="keuze" aria-labelledby="{uid}-kind">
 		<TekstMenu klein label="Soort" opties={kinds} waarde={kind} onSelect={(v) => (kind = v)} />
@@ -101,7 +121,7 @@
 	</span>
 	{#if known}
 		<p class="in-concordans">
-			<span>In Concordans: {known.label}</span>
+			<span>In Concordans: {knownLabel}</span>
 			<TekstLink href={known.path} onclick={onReader}>Bewaar vanuit de lezer</TekstLink>
 		</p>
 	{/if}
@@ -145,6 +165,12 @@
 	.keuze {
 		justify-self: start;
 	}
+	.hint {
+		grid-column: 2;
+		margin-top: calc(-1 * var(--s-1));
+		font-size: var(--t-micro);
+		color: var(--ink-2);
+	}
 	.in-concordans,
 	.knoppen {
 		grid-column: 1 / -1;
@@ -168,6 +194,9 @@
 		.bron-erbij > input,
 		.keuze {
 			margin-bottom: var(--s-2);
+		}
+		.hint {
+			grid-column: 1;
 		}
 	}
 </style>

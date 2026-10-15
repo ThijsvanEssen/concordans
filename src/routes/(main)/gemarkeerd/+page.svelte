@@ -21,7 +21,6 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import { buildBronHref } from '$lib/bron/href';
-	import { isEscape } from '$lib/actions/keys';
 	import { download, safeFileName } from '$lib/verbonden/export';
 	import { korteDatum, vandaag } from '$lib/text/datum';
 	import { bronLabel, parseNodeId } from '$lib/vocabulary';
@@ -41,7 +40,7 @@
 		type MapItem
 	} from '$lib/map/map';
 	import { kaart } from '$lib/map/map.svelte';
-	import { shareFragment, sharedOfFragment } from '$lib/map/share';
+	import { BROKEN, isOldLink, shareFragment, sharedOfFragment } from '$lib/map/share';
 	import { ignore } from '$lib/api/errors';
 	import MapInhoud from '$lib/map/MapInhoud.svelte';
 	import AddSource from '$lib/map/AddSource.svelte';
@@ -54,9 +53,15 @@
 	const copier = createCopier();
 
 	// ── A shared map, from the address's fragment ──────────────────────────────
-	let gedeeld = $state<Gedeeld | null>(null);
+	let gedeeld = $state<Gedeeld | typeof BROKEN | null>(null);
+	/** A link of the older form (its map in the query) was opened: said as a broken one. */
+	let oldLink = $state(false);
 	$effect(() => {
 		const hash = page.url.hash;
+		if (isOldLink(page.url.searchParams)) {
+			oldLink = true;
+			navigate(`/gemarkeerd${hash}`);
+		}
 		let current = true;
 		sharedOfFragment(hash)
 			.then((shared) => {
@@ -69,9 +74,11 @@
 	});
 	/** A shared map kept or put aside: its link leaves the address, a reload asks no more. */
 	function gedeeldKlaar(hoe: 'map' | 'erbij' | 'niet') {
-		if (gedeeld && hoe === 'map') kaart.bewaarAlsMap(gedeeld);
-		else if (gedeeld && hoe === 'erbij') kaart.voegToe(gedeeld);
+		if (gedeeld && gedeeld !== BROKEN && hoe === 'map') kaart.bewaarAlsMap(gedeeld);
+		else if (gedeeld && gedeeld !== BROKEN && hoe === 'erbij') kaart.voegToe(gedeeld);
+		oldLink = false;
 		navigate('/gemarkeerd');
+		focusHead(kaart.actief);
 	}
 
 	const reeksen = (lijst: MapItem[], v: Map['volgorde']) =>
@@ -95,6 +102,11 @@
 	const tel = (n: number) => `${formatCount(n)} ${plural(n, 'bron', 'bronnen')}`;
 	const dag = (iso: string) => korteDatum(vandaag(new Date(iso)));
 	const anker = (m: Map) => `map-${m.id}`;
+	/** The focus back on a bundel's heading, once the page has drawn it. */
+	const focusHead = (m: Map) =>
+		afterTick(() => document.querySelector<HTMLElement>(`#${anker(m)} .kop button`)?.focus());
+	/** The focus back on Andere bron toevoegen of a bundel, once the form has gone. */
+	const focusAdd = (m: Map) => afterTick(() => document.getElementById(`erbij-${m.id}`)?.focus());
 
 	/** A map's actions on its own: the store acts on the active map. */
 	function op(m: Map, f: () => void) {
@@ -295,7 +307,12 @@
 	</nav>
 
 	<div class="inhoud">
-		{#if gedeeld}
+		{#if gedeeld === BROKEN || oldLink}
+			<p class="vraag" role="status">
+				<span>Link onvolledig of beschadigd</span>
+				<TekstLink onclick={() => gedeeldKlaar('niet')}>Niet bewaren</TekstLink>
+			</p>
+		{:else if gedeeld}
 			{@const shared = gedeeld}
 			<Sectie
 				title="Gedeelde bundel: {gedeeld.naam ?? 'zonder naam'}"
@@ -408,6 +425,7 @@
 							const veld = e.currentTarget.elements.namedItem('naam') as HTMLInputElement;
 							kaart.hernoem(m.id, veld.value);
 							naamgeven = null;
+							focusHead(m);
 						}}
 					>
 						<!-- svelte-ignore a11y_autofocus -->
@@ -422,9 +440,11 @@
 								naamgeven = null;
 							}}
 							onkeydown={(e) => {
-								if (isEscape(e)) {
+								// The field's own Escape (isEscape leaves a field alone).
+								if (e.key === 'Escape') {
 									e.currentTarget.value = m.naam;
 									naamgeven = null;
+									focusHead(m);
 								}
 							}}
 						/>
@@ -480,11 +500,16 @@
 						groups={groepen(m.items).map((g) => ({ key: g.sleutel, name: g.groep }))}
 						onAdd={(i) => op(m, () => kaart.wissel(i))}
 						onReader={() => kaart.kies(m.id)}
-						onClose={() => (addingTo = null)}
+						onClose={() => {
+							addingTo = null;
+							focusAdd(m);
+						}}
 					/>
 				{:else}
 					<p class="erbij">
-						<TekstLink onclick={() => (addingTo = m.id)}>Andere bron toevoegen</TekstLink>
+						<TekstLink id="erbij-{m.id}" onclick={() => (addingTo = m.id)}
+							>Andere bron toevoegen</TekstLink
+						>
 					</p>
 				{/if}
 				{#if m.items.length}

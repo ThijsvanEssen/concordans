@@ -7,6 +7,13 @@ import { readItem } from './map';
 /** The fragment's key: `#m=…`. */
 const KEY = 'm';
 
+/** A link whose map does not read: cut off in a mail, or broken. */
+export const BROKEN = 'broken';
+
+/** A link of the older form, the map in its query: no longer read. */
+export const isOldLink = (p: URLSearchParams) =>
+	[...p.keys()].some((k) => /^map(?:naam|notitie|groepen|volgorde)?$/.test(k));
+
 /** What the fragment holds: the map's name, order, note, notes per group and items. */
 type Payload = {
 	naam: string;
@@ -58,20 +65,23 @@ export async function shareFragment(
 }
 
 /**
- * The map of a link's fragment; null where the fragment holds none, or none that reads. An
- * item in a broken form is left out, and counted for the page.
+ * The map of a link's fragment; null where the fragment holds none, BROKEN where it holds
+ * one that does not read. An item in a broken form is left out, and counted for the page.
  */
-export async function sharedOfFragment(hash: string): Promise<Gedeeld | null> {
-	const value = new URLSearchParams(hash.replace(/^#/, '')).get(KEY);
-	if (!value) return null;
+export async function sharedOfFragment(hash: string): Promise<Gedeeld | typeof BROKEN | null> {
+	const params = new URLSearchParams(hash.replace(/^#/, ''));
+	if (!params.has(KEY)) return null;
 	let payload: Partial<Payload>;
 	try {
-		const bytes = await pipe(fromBase64Url(value), new DecompressionStream('deflate-raw'));
+		const bytes = await pipe(
+			fromBase64Url(params.get(KEY)!),
+			new DecompressionStream('deflate-raw')
+		);
 		payload = JSON.parse(new TextDecoder().decode(bytes));
 	} catch {
-		return null;
+		return BROKEN;
 	}
-	if (!payload || !Array.isArray(payload.items)) return null;
+	if (!payload || !Array.isArray(payload.items)) return BROKEN;
 	const items = payload.items.flatMap((v) => readItem(v) ?? []);
 	return {
 		naam: typeof payload.naam === 'string' && payload.naam.trim() ? payload.naam.trim() : null,

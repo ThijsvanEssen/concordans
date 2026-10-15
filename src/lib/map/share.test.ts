@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { BRONNEN, bron } from '$lib/test/bronnen';
-import type { MapItem } from './map';
-import { shareFragment, sharedOfFragment } from './share';
+import type { Gedeeld, MapItem } from './map';
+import { BROKEN, isOldLink, shareFragment, sharedOfFragment } from './share';
 
 const lid2: MapItem = {
 	id: 'articles/bwbr0005289_162',
@@ -66,15 +66,27 @@ describe('the link of a map', () => {
 		expect(hash.length).toBeLessThan(JSON.stringify(many).length / 3);
 	});
 
-	it('reads no map from another fragment or a broken one', async () => {
+	it('reads no map from another fragment, and says a cut or broken one is (UX 16 Oct #1)', async () => {
 		expect(await sharedOfFragment('')).toBeNull();
 		expect(await sharedOfFragment('#lid-2')).toBeNull();
-		expect(await sharedOfFragment('#m=nonsense')).toBeNull();
+		expect(await sharedOfFragment('#m=nonsense')).toBe(BROKEN);
+		expect(await sharedOfFragment('#m=abc!!def')).toBe(BROKEN);
+		expect(await sharedOfFragment('#m=')).toBe(BROKEN);
+		const whole = await shareFragment(map);
+		expect(await sharedOfFragment(whole.slice(0, Math.round(whole.length * 0.6)))).toBe(BROKEN);
+	});
+
+	it('knows a link of the older form, in the query (UX 16 Oct #2)', () => {
+		expect(isOldLink(new URLSearchParams('map=articles/bwbr0005289_162'))).toBe(true);
+		expect(isOldLink(new URLSearchParams('mapnaam=x'))).toBe(true);
+		expect(isOldLink(new URLSearchParams('q=x'))).toBe(false);
 	});
 
 	it('leaves out an item in a broken form, and counts it for the page', async () => {
 		const broken = { ...ro, groupKey: '' };
-		const shared = await sharedOfFragment(await shareFragment({ ...map, items: [lid2, broken] }));
+		const shared = (await sharedOfFragment(
+			await shareFragment({ ...map, items: [lid2, broken] })
+		)) as Gedeeld;
 		expect(shared?.items).toEqual([lid2]);
 		expect(shared?.skipped).toBe(1);
 	});

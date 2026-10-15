@@ -40,7 +40,18 @@ describe('a pasted source Concordans holds', () => {
 			'art. 7:658, BWBR0005290'
 		]
 	])('%s', (text, path, label) => {
-		expect(recognize(text)).toEqual({ path, label });
+		expect(recognize(text)).toMatchObject({ path, label });
+	});
+
+	it('names the law it found, so the form can name it as its reader does (#6)', () => {
+		expect(recognize('https://wetten.overheid.nl/BWBR0005289/2024-01-01')).toMatchObject({
+			law: 'BWBR0005289'
+		});
+		expect(recognize('https://concordans.nl/wetten/BWBR0005290/artikel/7:658')).toMatchObject({
+			law: 'BWBR0005290',
+			article: '7:658'
+		});
+		expect(recognize('ECLI:NL:HR:2005:AU3313')?.law).toBeUndefined();
 	});
 
 	it('reads the address of this site too, and nothing else', () => {

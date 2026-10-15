@@ -28,12 +28,24 @@ function labelOf(path: string): string {
 	return path;
 }
 
-/** The bron of Concordans at a path: its readable address and how the proposal names it. */
-function found(path: string): { path: string; label: string } | null {
+/**
+ * The bron of Concordans at a path: its readable address, how the proposal names it, and for
+ * a law or an article its law's id and the article's number, so the form names them as the
+ * reader does once the law's name is known.
+ */
+function found(
+	path: string
+): { path: string; label: string; law?: string; article?: string } | null {
 	const parsed = parsePad(path);
 	if (!parsed) return null;
 	const href = padHref(parsed);
-	return { path: href, label: labelOf(href) };
+	const [kind, law, part, article] = href.split('/').filter(Boolean).map(decodeURIComponent);
+	return {
+		path: href,
+		label: labelOf(href),
+		...(kind === 'wetten' && (!part || part === 'artikel') ? { law: law.toUpperCase() } : {}),
+		...(kind === 'wetten' && part === 'artikel' ? { article } : {})
+	};
 }
 
 /** The path of Concordans in a URL of its own; null for any other. */

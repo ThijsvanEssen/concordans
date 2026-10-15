@@ -152,14 +152,32 @@ export function itemHref(i: Pick<MapItem, 'id' | 'at' | 'pad'>): string {
 	return i.at ? `${href.split('#')[0]}#${encodeURIComponent(i.at)}` : href;
 }
 
+/** A name no bundel has yet: the name itself, else numbered on (`Gemarkeerd 2`). */
+export function freeName(name: string, taken: ReadonlySet<string>): string {
+	if (!taken.has(name)) return name;
+	let n = 2;
+	while (taken.has(`${name} ${n}`)) n++;
+	return `${name} ${n}`;
+}
+
+/** What an item is, as the CSV names it: its kind of bron, or the kind of a source outside. */
+const kindLabel = (i: MapItem): string => {
+	if (isExternal(i)) return SOURCE_KINDS[i.kind ?? 'other'];
+	const collection = parseNodeId(i.id)?.collection;
+	return collection ? bronLabel(collection) : '';
+};
+
 /** An item's address in a CSV: the bron's in Concordans, a source outside it its own. */
 export const itemAddress = (i: MapItem, origin: string): string =>
 	isExternal(i) ? (i.url ?? '') : new URL(itemHref(i), origin).toString();
 
 /** A web address as the reader may give one: http or https, else none. */
 export function webAddress(text: string | null | undefined): string | null {
+	const typed = (text ?? '').trim();
+	// A domain without its scheme (`voorbeeld.nl/boek`) is read as https.
+	const full = /^[\w-]+(?:\.[\w-]+)+(?:[/?#:]|$)/.test(typed) ? `https://${typed}` : typed;
 	try {
-		const url = new URL((text ?? '').trim());
+		const url = new URL(full);
 		return /^https?:$/.test(url.protocol) ? url.toString() : null;
 	} catch {
 		return null;
@@ -316,10 +334,11 @@ export function csv(
 	const reeks = groepen(items);
 	const naamVan = new Map(reeks.map((g) => [g.sleutel, g.groep]));
 	return csvText(
-		['volgorde', 'groep', 'citaat', 'vindplaats', 'aantekening', 'adres'],
+		['volgorde', 'groep', 'soort', 'citaat', 'vindplaats', 'aantekening', 'adres'],
 		(volgorde === 'eigen' ? items : reeks.flatMap((g) => g.items)).map((i, n) => [
 			String(n + 1),
 			naamVan.get(i.groupKey) ?? i.groep,
+			kindLabel(i),
 			i.voluit || i.kort,
 			(i.at && anchorLabel(i.at, i.id)) || '',
 			i.notitie ?? '',

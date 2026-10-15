@@ -5,6 +5,8 @@ import {
 	citaten,
 	csv,
 	externalItem,
+	freeName,
+	webAddress,
 	isExternal,
 	itemAddress,
 	readItem,
@@ -82,7 +84,9 @@ describe('the map', () => {
 
 	it('writes a CSV as Excel reads it', () => {
 		const t = csv([ro], (i) => `/x#${i.at}`);
-		expect(t.startsWith('﻿volgorde;groep;citaat;vindplaats;aantekening;adres\r\n')).toBe(true);
+		expect(t.startsWith('﻿volgorde;groep;soort;citaat;vindplaats;aantekening;adres\r\n')).toBe(
+			true
+		);
 		expect(t).toContain('"HR 20 december 2019 (Urgenda); a~b"');
 	});
 
@@ -97,9 +101,9 @@ describe('the map', () => {
 		const regels = (t: string) => t.slice(1).split('\r\n').slice(1);
 		const adres = () => '';
 		expect(regels(csv([lid2, ro, lid3a], adres))).toEqual([
-			'1;Burgerlijk Wetboek Boek 6;artikel 6:162 lid 2 Burgerlijk Wetboek;lid 2;;',
-			'2;Burgerlijk Wetboek Boek 6;art. 6:162 lid 3 BW;lid 3, onder a;;',
-			'3;"HR 20 december 2019 (Urgenda); a~b";HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1;r.o. 5.7.1;;'
+			'1;Burgerlijk Wetboek Boek 6;Artikel;artikel 6:162 lid 2 Burgerlijk Wetboek;lid 2;;',
+			'2;Burgerlijk Wetboek Boek 6;Artikel;art. 6:162 lid 3 BW;lid 3, onder a;;',
+			'3;"HR 20 december 2019 (Urgenda); a~b";Uitspraak;HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1;r.o. 5.7.1;;'
 		]);
 		// In the reader's own order: that order, each under its group's name.
 		expect(regels(csv([lid2, ro, lid3a], adres, 'eigen')).map((r) => r.split(';')[1])).toEqual([
@@ -109,7 +113,7 @@ describe('the map', () => {
 		]);
 		// A place the reader cannot print stays out.
 		expect(regels(csv([{ ...lid2, at: 'p-54bd15c1' }], adres))[0]).toBe(
-			'1;Burgerlijk Wetboek Boek 6;artikel 6:162 lid 2 Burgerlijk Wetboek;;;'
+			'1;Burgerlijk Wetboek Boek 6;Artikel;artikel 6:162 lid 2 Burgerlijk Wetboek;;;'
 		);
 	});
 
@@ -352,5 +356,31 @@ describe('a source outside Concordans', () => {
 		});
 		// Not a bron of the network.
 		expect(netwerkIds([lid2, boek])).toEqual([lid2.id]);
+	});
+});
+
+describe('the follow-ups of the UX test of 16 Oct', () => {
+	it('numbers a name a bundel has already (#3)', () => {
+		expect(freeName('Gemarkeerd', new Set(['Thuiswerk']))).toBe('Gemarkeerd');
+		expect(freeName('Gemarkeerd', new Set(['Gemarkeerd']))).toBe('Gemarkeerd 2');
+		expect(freeName('Gemarkeerd', new Set(['Gemarkeerd', 'Gemarkeerd 2']))).toBe('Gemarkeerd 3');
+	});
+
+	it('puts https:// before an address without its scheme (#5)', () => {
+		expect(webAddress('voorbeeld.nl/boek')).toBe('https://voorbeeld.nl/boek');
+		expect(webAddress('www.navigator.nl')).toBe('https://www.navigator.nl/');
+		expect(webAddress('http://voorbeeld.nl/')).toBe('http://voorbeeld.nl/');
+		expect(webAddress('geen adres')).toBeNull();
+		expect(webAddress('javascript:alert(1)')).toBeNull();
+	});
+
+	it('writes the kind of each item in the CSV (#7)', () => {
+		const boek = externalItem({ citation: 'Asser 7-V', kind: 'journal' });
+		const [kop, eerste, tweede] = csv([lid2, boek], () => '')
+			.slice(1)
+			.split('\r\n');
+		expect(kop.split(';')).toContain('soort');
+		expect(eerste.split(';')).toContain('Artikel');
+		expect(tweede.split(';')).toContain('Tijdschrift');
 	});
 });
