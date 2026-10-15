@@ -7,7 +7,6 @@
 import { untrack } from 'svelte';
 import { isTimeout } from '$lib/api/client';
 import { search } from '$lib/api/search';
-import { report } from '$lib/api/errors';
 import type { Schema } from '$lib/api/types';
 import type { BronRef } from '$lib/bron/href';
 import { EarlyEnter } from './enter.svelte';
@@ -23,13 +22,11 @@ import {
 } from './lanes';
 import { bestHit, bySection, hitName, slots } from './present';
 import {
-	bareArticle,
 	keuzesOf,
 	lawAbbreviation,
 	lawTitle,
-	parseCitation,
 	resolvedOf,
-	resolveQuery,
+	type Notation,
 	type Resolved
 } from './resolve-query';
 
@@ -95,22 +92,23 @@ export class SearchSession {
 	waiting = $state(Object.fromEntries(LANES.map((l) => [l.id, false])) as Record<LaneId, boolean>);
 	/** The query the resolving lane answered; '' before the first answer. */
 	answered = $state('');
-	/** A citation being opened. */
-	resolving = $state(false);
-	/** The query whose bare article ("6:162 BW") the API is still asked to confirm. */
-	confirming = $state('');
 	/** A citation the API did not confirm: its row is gone and the results stay. */
 	unresolved = $state('');
-	/** "55 Gw" typed without "art.", or "AVG", which the API confirmed. */
+	/** "AVG", which the API confirmed as a law. */
 	confirmed = $state<{ term: string; target: Resolved } | null>(null);
-	/** What /api/search resolved the query to (`resolve=true`, API 0.74). */
-	resolvedWith = $state<{ term: string; target: Resolved | null } | null>(null);
+	/**
+	 * What /api/search resolved the query to (`resolve=true`, API 0.74): the bron, and the
+	 * notation the query is (API 0.79.60).
+	 */
+	resolvedWith = $state<{
+		term: string;
+		target: Resolved | null;
+		notation: Notation | null;
+	} | null>(null);
 	/** The articles a citation can mean where it is not one ("artikel 3 BW"), per query. */
 	choicesFor = $state<{ term: string; items: Resolved[]; total: number } | null>(null);
 	/** A regeling named by its title that the API does not know ("Omgevingswet"). */
 	outside = $state('');
-	/** Opening a citation failed: the search says so, to try again. */
-	citeFailure = $state<{ slow: boolean } | null>(null);
 	/** The one hit above the groups, set once every answer is in (#52). */
 	best = $state<{ kind: SearchKind; hit: Hit } | null>(null);
 
@@ -137,12 +135,8 @@ export class SearchSession {
 			.map((kind) => ({ kind, hits: bySection(this.hitsOf(kind)) }))
 			.filter((g) => g.hits.length > 0)
 	);
-	/** Every answer to this query is in: every lane, and the article it may cite. */
-	readonly allIn = $derived(
-		this.answered === this.q &&
-			this.confirming !== this.q &&
-			LANES.every((l) => !this.waiting[l.id])
-	);
+	/** Every answer to this query is in: every lane. */
+	readonly allIn = $derived(this.answered === this.q && LANES.every((l) => !this.waiting[l.id]));
 	readonly bestComing = $derived(!this.best && !this.allIn && this.groups.length > 0);
 	/** The kinds whose group says "laden…" while their lane waits. */
 	readonly loadingKinds = $derived(
@@ -164,8 +158,11 @@ export class SearchSession {
 	readonly choicesMore = $derived(
 		this.choicesFor?.term === this.q ? this.choicesFor.total - this.choices.length : 0
 	);
+	/** The notation the query is, as the API read it: its row, before the hits. */
 	readonly citation = $derived(
-		this.q && this.q !== this.unresolved && this.choices.length === 0 ? parseCitation(this.q) : null
+		this.q && this.q !== this.unresolved && this.choices.length === 0
+			? (this.#ofQuery(this.resolvedWith)?.notation ?? null)
+			: null
 	);
 	readonly bare = $derived(
 		!this.citation && this.choices.length === 0 && this.confirmed?.term === this.q
@@ -198,7 +195,7 @@ export class SearchSession {
 	readonly failure = $derived.by((): { slow: boolean } | null => {
 		const lane = this.inScope.find((l) => !l.failsAlone);
 		const status = lane ? this.lanes[lane.id].status : 'done';
-		return failed(status) ? { slow: status === 'slow' } : this.citeFailure;
+		return failed(status) ? { slow: status === 'slow' } : null;
 	});
 	/** Kinds whose live answer left more out for this query, not yet asked in full. */
 	readonly moreKinds = $derived(
@@ -212,7 +209,6 @@ export class SearchSession {
 	readonly empty = $derived(
 		this.q.length > 0 &&
 			this.answered === this.q &&
-			!this.citeFailure &&
 			this.inScope.every((l) => this.lanes[l.id].status === 'done') &&
 			// Never "Geen resultaten" while the live mode left kinds out.
 			this.moreKinds.size === 0 &&
@@ -221,8 +217,8 @@ export class SearchSession {
 			!this.bare &&
 			!this.outsideLaw
 	);
-	/** The field turns: the fast kinds on their way, or a citation being opened. */
-	readonly spinning = $derived(this.lanes.fast.status === 'loading' || this.resolving);
+	/** The field turns: the fast kinds on their way. */
+	readonly spinning = $derived(this.lanes.fast.status === 'loading');
 	/** The list has something to show, a row or a state. */
 	readonly filled = $derived(
 		this.rowCount > 0 ||
@@ -251,7 +247,6 @@ export class SearchSession {
 		to: '',
 		fullFor: ''
 	};
-	#cite?: { timer: ReturnType<typeof setTimeout>; controller: AbortController };
 	/** The first ↓ confirms the preselected row instead of skipping it. */
 	#moved = false;
 	// An Enter before the answer waits for it (#79): the article the moment the API confirms
@@ -287,16 +282,19 @@ export class SearchSession {
 			this.active = 0;
 			this.#moved = false;
 		});
-		$effect(() => this.#earlyEnter.answer(this.q, this.bare !== null || this.allIn));
+		$effect(() =>
+			this.#earlyEnter.answer(
+				this.q,
+				this.bare !== null || !!this.#ofQuery(this.resolvedWith)?.target || this.allIn
+			)
+		);
 		$effect(() => () => this.stop());
 	}
 
-	/** Ask every lane for `request`, and confirm what it cites; what the query before asked stops. */
+	/** Ask every lane for `request`; what the query before asked stops. */
 	ask(request: SearchRequest) {
 		this.#asked = request;
-		this.citeFailure = null;
 		if (request.term.length < FAST_MIN_CHARS) this.answered = '';
-		this.#confirmBareArticle(request.term);
 		for (const lane of LANES) this.#schedule(lane);
 	}
 
@@ -307,8 +305,6 @@ export class SearchSession {
 
 	/** "Probeer opnieuw" under the search: the fast kinds and what the query cites. */
 	retrySearch() {
-		this.citeFailure = null;
-		this.#confirmBareArticle(this.#asked.term);
 		for (const lane of LANES) if (!lane.failsAlone) this.#schedule(lane);
 	}
 
@@ -320,8 +316,6 @@ export class SearchSession {
 	/** The requests stop: the search is gone. */
 	stop() {
 		this.#stopped.abort();
-		this.#cite?.controller.abort();
-		if (this.#cite) clearTimeout(this.#cite.timer);
 		for (const run of Object.values(this.#runs)) {
 			clearTimeout(run.timer);
 			run.controller?.abort();
@@ -333,7 +327,7 @@ export class SearchSession {
 	enter(): boolean {
 		const { active, choices, citation, bare, offset } = this;
 		if (active < choices.length) this.#open(choices[active].ref, choices[active].at);
-		else if (citation && active === 0) this.openCitation().catch((e) => report('Zoeken', e));
+		else if (citation && active === 0) this.openCitation();
 		else if (bare && active === 0) this.#open(bare.ref, bare.at);
 		// A hit opens only when the list answers what is typed: the first row once every answer
 		// is in (#118), a row the reader chose at once.
@@ -366,47 +360,16 @@ export class SearchSession {
 		this.#moved = true;
 	}
 
-	async openCitation() {
-		if (this.resolving) return;
-		const term = this.q;
-		this.resolving = true;
-		// The answer that came with the hits, where it names the bron; else the full way.
-		const known = this.resolvedWith?.term === term ? this.resolvedWith.target : null;
-		try {
-			const target = known ?? (await resolveQuery(term));
-			if (target) this.#open(target.ref, target.at);
-			else this.unresolved = term;
-		} catch (e) {
-			// The API failed: not "niet in de gegevens", but the failure, to try again.
-			report('Zoeken', e);
-			this.citeFailure = { slow: isTimeout(e) };
-		} finally {
-			this.resolving = false;
-		}
+	/** The citation's bron, as the API named it; "staat niet in de gegevens" where it named none. */
+	openCitation() {
+		const target = this.#ofQuery(this.resolvedWith)?.target;
+		if (target) this.#open(target.ref, target.at);
+		else this.unresolved = this.q;
 	}
 
-	/** Beside the words, the article they may cite: shown only once the API has it. */
-	#confirmBareArticle(term: string) {
-		if (this.#cite) {
-			clearTimeout(this.#cite.timer);
-			this.#cite.controller.abort();
-		}
-		const written = term.length >= FAST_MIN_CHARS ? bareArticle(term) : null;
-		if (!written) return;
-		const controller = new AbortController();
-		const timer = setTimeout(() => {
-			this.confirming = term;
-			// A failure leaves the row out: the words are searched all the same.
-			resolveQuery(written)
-				.then((target) => {
-					if (!controller.signal.aborted && target) this.confirmed = { term, target };
-				})
-				.catch((e) => report('Zoeken', e))
-				.finally(() => {
-					if (this.confirming === term) this.confirming = '';
-				});
-		}, DEBOUNCE_MS);
-		this.#cite = { timer, controller };
+	/** What the API answered for this query, not an earlier one. */
+	#ofQuery<T extends { term: string }>(answer: T | null): T | null {
+		return answer?.term === this.q ? answer : null;
 	}
 
 	/** The lane asked for the request, once the typing pauses. */
@@ -492,10 +455,10 @@ export class SearchSession {
 	/** What the query cites, as the answer of the resolving lane says. */
 	#resolved(term: string, resolved: Schema<'ResolveResponse'> | null | undefined, laws: boolean) {
 		const target = resolvedOf(resolved);
-		this.resolvedWith = { term, target };
+		this.resolvedWith = { term, target, notation: resolved?.notation ?? null };
 		this.choicesFor = { term, ...keuzesOf(resolved) };
 		this.answered = term;
-		if (!laws || bareArticle(term)) return;
+		if (!laws || resolved?.notation) return;
 		// The law an abbreviation stands for, first: "AVG" has its law the moment its hits are
 		// there, so Enter cannot open a hit before the law is known. A title the API does not
 		// know is a law outside the selection.

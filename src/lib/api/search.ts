@@ -1,4 +1,4 @@
-// The search of every kind, and `/api/resolve`, which turns a citation into one bron.
+// The search of every kind, which also says what a query cites (`resolve=true`).
 import { api, clientFor, unwrap, type Wait } from './client';
 import type { QueryOf } from './types';
 
@@ -10,9 +10,6 @@ export const search = (
 	query: QueryOf<'/api/search'>,
 	{ signal, wait = 'long' }: { signal?: AbortSignal; wait?: Wait } = {}
 ) => unwrap(clientFor(wait).GET('/api/search', { params: { query }, signal }));
-
-/** The bron a citation names (API 0.5). */
-export const resolve = (q: string) => unwrap(api.GET('/api/resolve', { params: { query: { q } } }));
 
 /** The bron at a readable address (`/api/lookup`). */
 export const lookup = (query: QueryOf<'/api/lookup'>, signal?: AbortSignal) =>

@@ -14,8 +14,8 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { groupLabel, hitName, presentHit, sectionOf } from './present';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
-	import { bronLabel, nodeId, type Collection } from '$lib/vocabulary';
-	import type { Citation } from './resolve-query';
+	import { bronLabel, nodeId } from '$lib/vocabulary';
+	import { NOTATION_COLLECTION } from './resolve-query';
 	import { SearchSession } from './session.svelte';
 	import SearchOption from './SearchOption.svelte';
 
@@ -66,16 +66,6 @@
 		if (initial) search.query = initial;
 	});
 	search.connect();
-
-	/** What a citation row is marked as before the API has confirmed the bron. */
-	const CITED: Record<Citation['kind'], Collection> = {
-		ecli: 'judgments',
-		article: 'articles',
-		dossier: 'dossiers',
-		bwb: 'instruments',
-		celex: 'instruments',
-		publication: 'instruments'
-	};
 
 	const uid = $props.id();
 	const rowId = (row: number) => `${uid}-row-${row}`;
@@ -234,10 +224,11 @@
 				{/if}
 			</div>
 		{:else if search.citation}
-			{@const citation = search.citation}
-			<!-- "36799, nr. 31" is a stuk; the dossier itself has no number after it. -->
+			<!-- The bron the API named, else the kind of the notation ("36799, nr. 31" a stuk). -->
 			{@const kind =
-				citation.kind === 'dossier' && citation.document ? 'documents' : CITED[citation.kind]}
+				(search.resolvedWith?.term === search.q
+					? search.resolvedWith.target?.ref.collection
+					: null) ?? NOTATION_COLLECTION[search.citation.kind]}
 			<!-- The name from the source once the answer has it, not the query as typed. -->
 			{@const naam =
 				(search.resolvedWith?.term === search.q ? search.resolvedWith.target?.label : null) ??

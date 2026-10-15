@@ -8,19 +8,13 @@ One component, `src/lib/search/Search.svelte`, in three places: on the start pag
 
 ## Rows
 
-`presentHit` in `src/lib/search/present.ts` makes each row: a title that tells it from its neighbours, the context at the right, and a line of the text where the API gives one (`snippet`), started just before the first word searched for, with the words marked. An article reads `Artikel 6:164` with its code at the right; a judgment `Hoge Raad, 19 februari 1993` with its ECLI; a stuk is named by its kind under its dossier.
+`presentHit` in `src/lib/search/present.ts` makes each row: a title that tells it from its neighbours, the context at the right, and a line of the text where the API gives one (`snippet`), started just before the first word searched for, with the words marked. An article reads `Artikel 6:164` with its code at the right; a judgment `HR 19 februari 1993` with its ECLI; a stuk is named by its kind under its dossier.
 
 ## Citations
 
-`parseCitation` in `src/lib/search/resolve-query.ts` recognises an ECLI, a BWB id, a CELEX number, a publication (`Stb. 2026, 94`), a dossier number with an optional document number, and an article citation (`art. 6:162 BW`, `artikel 359a lid 1 onder b Sv`, `artikel 3:4, tweede lid, Awb`). A query that parses gets a first row above the hits.
+The `resolved` part of the search answer says what the query cites: the notation the API read in it (`notation`: an ECLI, a BWB id, a CELEX number, a publication `Stb. 2026, 94`, a dossier or a Kamerstuk `36799, nr. 31`, an article `Sr 287` or `art. 6:162 BW`, a toezegging `TZ202603-130`), the bron it names (`match`), or the articles a citation can mean (`alternatives`: `artikel 3 BW`). A notation gets a first row above the hits; the search parses nothing itself (`src/lib/search/resolve-query.ts`).
 
-Choosing that row resolves it. The `resolved` part of the search answer is used when it is there; otherwise `resolveQuery`:
-
-1. A Kamerstuk with its number, or a publication: `/api/lookup`, exact.
-2. Anything else: `/api/resolve`.
-3. Where that finds nothing, the parser's own lookups: the article of a law, the paper or the dossier of a number, the existence of a judgment or law.
-
-A bron opens only when the API confirmed it; otherwise the row goes and the hits stay. The lid or onderdeel of a citation becomes the fragment (`parseQualifier` and `anchorOf` in `src/lib/text/qualifier.ts`).
+Choosing that row opens the bron the API named; where it named none the row goes, the search says the citation is not in the data, and the hits stay. The lid or onderdeel of a citation becomes the fragment (`parseQualifier` and `anchorOf` in `src/lib/text/qualifier.ts`).
 
 ## Opening
 

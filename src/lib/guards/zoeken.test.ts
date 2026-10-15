@@ -9,10 +9,7 @@ describe('the search', () => {
 		expect(
 			overtreders(
 				(t) => /import \{[^}]*\bsearch\b[^}]*\} from '\$lib\/api\/search'/.test(t),
-				[
-					plek('lib/search/session.svelte.ts'),
-					plek('lib/search/resolve-query.ts', 'the law of a cited article, a question of its own')
-				],
+				[plek('lib/search/session.svelte.ts')],
 				SEARCH
 			)
 		).toEqual([]);
