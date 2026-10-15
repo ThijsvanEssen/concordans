@@ -19,51 +19,65 @@
 	import { tick } from 'svelte';
 	import { HOME_SUMMARY } from '$lib/api/first-pages';
 	import type { TijdGroep } from '$lib/components/tijdlijn/tijdlijn';
+	import { page } from '$app/state';
+	import { replaceState } from '$app/navigation';
+	import Entrances from '$lib/components/home/Entrances.svelte';
+	import CoverageLine from '$lib/components/home/CoverageLine.svelte';
+	import HOME from '$lib/seo/home.json';
 
 	// Four ways in to search, each with the glyphs of what it holds.
 	const SCOPES: {
 		id: string;
 		label: string;
 		kinds: string[];
-		tekens: Collection[];
+		marks: Collection[];
 	}[] = [
 		{
 			id: 'wetten',
 			label: 'Wetten',
 			kinds: ['instruments', 'articles'],
-			tekens: ['instruments', 'articles']
+			marks: ['instruments', 'articles']
 		},
 		{
 			id: 'uitspraken',
 			label: 'Uitspraken',
 			kinds: ['judgments'],
-			tekens: ['judgments']
+			marks: ['judgments']
 		},
 		{
 			id: 'parlement',
 			label: 'Parlement',
 			kinds: ['dossiers', 'documents', 'decisions', 'members', 'factions', 'committees'],
-			tekens: ['dossiers', 'documents', 'decisions', 'members']
+			marks: ['dossiers', 'documents', 'decisions', 'members']
 		},
 		{
 			id: 'kabinet',
 			label: 'Kabinet',
 			kinds: ['cabinets', 'members', 'commitments'],
-			tekens: ['cabinets', 'members', 'commitments']
+			marks: ['cabinets', 'members', 'commitments']
 		}
 	];
 	/** Alle bronnen: the first mark of each way in, in the same order. */
-	const ALLE: Collection[] = SCOPES.map((sc) => sc.tekens[0]);
+	const ALL_MARKS: Collection[] = SCOPES.map((sc) => sc.marks[0]);
 	let scope = $state<string | null>(null);
 	const chosen = $derived(SCOPES.find((x) => x.id === scope) ?? null);
 	/** On a phone the scopes a step smaller and without their marks: five words fit, as wide
 	 *  as the field under them. */
-	const smal = new MediaQuery('width <= 600px');
+	const narrow = new MediaQuery('width <= 600px');
 	/** Below a phone of 360: Alles for Alle bronnen, so Kabinet keeps its place in the row. */
-	const smalst = new MediaQuery('width < 360px');
+	const narrowest = new MediaQuery('width < 360px');
 
 	/** The lines of Actueel shown; the rest is in Actueel. */
-	const LINES_SHOWN = 10;
+	const LINES_SHOWN = 6;
+
+	/** The query in the field: from ?q= (a shared search, the SearchAction of the server's
+	 *  page) or an example under it, which fills the field in place and the address with it. */
+	let query = $state(page.url.searchParams.get('q') ?? '');
+	function tryExample(e: MouseEvent, example: string) {
+		e.preventDefault();
+		query = example;
+		replaceState(`/?q=${encodeURIComponent(example)}`, page.state);
+	}
 	/** The days the summary spans: enough for the lines on a quiet week (first-pages.json). */
 	const SUMMARY_DAYS = HOME_SUMMARY.days;
 	/**
@@ -77,19 +91,19 @@
 
 	let lines = $state<TimelineLine[]>([]);
 	/** Actueel's first answer: under way, in, or failed. A phone waits seconds for it. */
-	let actueelStaat = $state<'laden' | 'klaar' | 'fout'>('laden');
+	let feedState = $state<'laden' | 'klaar' | 'fout'>('laden');
 	/** The network of the last passed bill: after Actueel is on screen; none on an error. */
-	let wetsnetwerk = $state<Schets | null>(null);
+	let lawNetwork = $state<Schets | null>(null);
 	/** Its place stands while it is asked, so Actueel under it does not drop (0.16 of layout
 	 *  shift live, 10 Oct); it closes only where there is no bill to show. */
-	let wetsnetwerkLaden = $state(true);
+	let networkLoading = $state(true);
 
 	$effect(() => {
 		const ac = new AbortController();
 		loadLines(ac.signal).catch(() => {
 			if (!ac.signal.aborted) {
-				actueelStaat = 'fout';
-				wetsnetwerkLaden = false;
+				feedState = 'fout';
+				networkLoading = false;
 			}
 		});
 		return () => ac.abort();
@@ -108,16 +122,16 @@
 			signal
 		);
 		lines = timelineOf(summary, LINES_SHOWN);
-		actueelStaat = 'klaar';
+		feedState = 'klaar';
 		// The network waits until Actueel is drawn and the browser is idle.
 		await tick();
 		await idle();
 		if (signal.aborted) return;
-		wetsnetwerk = await laadWetsnetwerk(summary.items ?? [], today, signal).catch((e) => {
+		lawNetwork = await laadWetsnetwerk(summary.items ?? [], today, signal).catch((e) => {
 			report('Wetsnetwerk', e);
 			return null;
 		});
-		if (!signal.aborted) wetsnetwerkLaden = false;
+		if (!signal.aborted) networkLoading = false;
 	}
 
 	const idle = () =>
@@ -134,7 +148,7 @@
 	};
 	// Actueel in the shared timeline: days, newest first; a decision large with its outcome,
 	// a quiet day small.
-	const groepen = $derived<TijdGroep[]>(
+	const groups = $derived<TijdGroep[]>(
 		[...Map.groupBy(lines, (l) => l.date)].map(([date, ls]) => ({
 			id: date,
 			titel: dayHeading(date),
@@ -169,10 +183,21 @@
 </svelte:head>
 
 <div class="home blad blad__indeling">
-	<aside class="side">
-		<h1>Concordans</h1>
-		<p class="what">Wetten, uitspraken en Kamerstukken met hun onderlinge verbindingen.</p>
-	</aside>
+	<header class="blad__kop intro">
+		<h1 class="blad__titel">Wetten, uitspraken en Kamerstukken in samenhang</h1>
+		<p class="who">
+			Voor juristen, studenten en beleidsjuristen. Gratis, zonder account en zonder cookies.
+		</p>
+	</header>
+	<nav class="side laws" aria-labelledby="laws-heading">
+		<h2 id="laws-heading">Wetten</h2>
+		<ul>
+			{#each HOME.laws as law (law.href)}
+				<li><a href={law.href}>{law.label}</a></li>
+			{/each}
+		</ul>
+		<a class="topics" href="/onderwerpen">Onderwerpen</a>
+	</nav>
 	<div class="main">
 		<div class="search">
 			<!-- Where to search: one choice of five, a Keuze as everywhere (Thijs, 10 Oct); Alle
@@ -182,17 +207,17 @@
 					label="Zoek in"
 					vol
 					opties={[
-						{ waarde: 'alles', label: smalst.current ? 'Alles' : 'Alle bronnen' },
+						{ waarde: 'alles', label: narrowest.current ? 'Alles' : 'Alle bronnen' },
 						...SCOPES.map((sc) => ({ waarde: sc.id, label: sc.label }))
 					]}
 					waarde={scope ?? 'alles'}
 					onSelect={(w) => (scope = w === 'alles' ? null : w)}
-					klein={smal.current}
+					klein={narrow.current}
 				>
 					{#snippet voor(w)}
-						{@const tekens = w === 'alles' ? ALLE : SCOPES.find((x) => x.id === w)?.tekens}
-						{#if tekens && !smal.current}<span class="glyphs"
-								>{#each tekens as c (c)}<KindGlyph collection={c} size={12} />{/each}</span
+						{@const marks = w === 'alles' ? ALL_MARKS : SCOPES.find((x) => x.id === w)?.marks}
+						{#if marks && !narrow.current}<span class="glyphs"
+								>{#each marks as c (c)}<KindGlyph collection={c} size={12} />{/each}</span
 							>{/if}
 					{/snippet}
 				</Keuze>
@@ -200,21 +225,29 @@
 			{#key scope}
 				<Search
 					scope={chosen?.kinds ?? null}
+					initial={query}
 					placeholder={chosen
 						? `Zoek in ${chosen.label.toLowerCase()}`
-						: 'Zoek een wet, uitspraak of dossier'}
+						: 'Zoek een artikel, uitspraak of motie'}
 				/>
 			{/key}
+			<p class="examples">
+				<span class="examples-label">Bijvoorbeeld</span>
+				{#each HOME.examples as example (example)}
+					<a
+						class="example"
+						href="/?q={encodeURIComponent(example)}"
+						onclick={(e) => tryExample(e, example)}>{example}</a
+					>
+				{/each}
+			</p>
 		</div>
-		{#if wetsnetwerk}<Wetsnetwerk schets={wetsnetwerk} />{:else if wetsnetwerkLaden}<div
-				class="wetsnetwerk-plek"
-				aria-hidden="true"
-			></div>{/if}
+		<Entrances />
 		<section class="actueel" aria-labelledby="actueel-heading">
 			<header>
 				<h2 id="actueel-heading"><a href="/actueel">Actueel</a></h2>
 			</header>
-			{#if actueelStaat === 'laden'}
+			{#if feedState === 'laden'}
 				<div class="laden" aria-hidden="true">
 					{#each [0, 1, 2] as i (i)}
 						<div class="laden__regel">
@@ -224,12 +257,17 @@
 					{/each}
 				</div>
 				<p class="sr-only" role="status">Actueel laden</p>
-			{:else if actueelStaat === 'fout'}
+			{:else if feedState === 'fout'}
 				<p class="fout">Actueel kon niet worden geladen.</p>
 			{/if}
-			<Tijdlijn {groepen} datums={false} />
+			<Tijdlijn groepen={groups} datums={false} />
 			<a class="all" href="/actueel">Alles in Actueel →</a>
 		</section>
+		{#if lawNetwork}<Wetsnetwerk schets={lawNetwork} />{:else if networkLoading}<div
+				class="wetsnetwerk-plek"
+				aria-hidden="true"
+			></div>{/if}
+		<CoverageLine />
 	</div>
 </div>
 
@@ -245,22 +283,82 @@
 			min-height: 274px;
 		}
 	}
-	/* The frame and grid of Bladeren (lib/styles/frame.css). */
-	.side {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-5);
-	}
-	.side h1 {
-		margin: 0;
-		font-size: var(--t-h1);
-		font-weight: 600;
-	}
-	.what {
-		margin: calc(-1 * var(--s-3)) 0 0;
+	/* The frame and grid of Bladeren (lib/styles/frame.css): the heading over both columns,
+	   the laws in the column of the facets, on a phone under the rest. */
+	.who {
+		flex-basis: 100%;
+		margin: calc(-1 * var(--s-2)) 0 0;
 		font-size: var(--t-body-2);
 		line-height: var(--lh-snug);
 		color: var(--ink-2);
+	}
+	.laws {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-2);
+	}
+	.laws h2 {
+		margin: 0;
+		font-size: var(--t-meta);
+		font-weight: 600;
+		color: var(--ink-3);
+	}
+	.laws ul {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-1);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		font-size: var(--t-meta);
+		line-height: var(--lh-snug);
+	}
+	.laws a {
+		color: var(--ink);
+		text-decoration: none;
+	}
+	.laws a:hover {
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+	.laws .topics {
+		margin-top: var(--s-2);
+		font-size: var(--t-meta);
+		font-weight: 600;
+	}
+	@media (max-width: 768px) {
+		.laws {
+			order: 2;
+		}
+		.laws ul {
+			display: block;
+			columns: 2;
+			column-gap: var(--s-4);
+		}
+		.laws li {
+			break-inside: avoid;
+			padding: var(--s-1) 0;
+		}
+	}
+	.examples {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: var(--s-2) var(--s-3);
+		margin: 0;
+		font-size: var(--t-meta);
+	}
+	.examples-label {
+		color: var(--ink-3);
+	}
+	.example {
+		color: var(--ink);
+		text-decoration: underline;
+		text-decoration-color: var(--rule);
+		text-underline-offset: 3px;
+	}
+	.example:hover {
+		text-decoration-color: var(--ink);
 	}
 	.search {
 		display: flex;

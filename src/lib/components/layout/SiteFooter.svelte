@@ -4,6 +4,7 @@
 	import { feedStand, standLine } from '$lib/text/stand';
 	import { report } from '$lib/api/errors';
 	import { inView } from '$lib/actions/in-view';
+	import { CONTACT_EMAIL, MAKER } from '$lib/site/contact';
 
 	// How current the data is, one line on every page (Thijs, 10 Oct: out of the page heads,
 	// docs/bediening.md, Bronregels): from /api/stats, asked once the footer comes into view.
@@ -89,7 +90,7 @@
 	</div>
 
 	<div class="container foot-bottom" use:inView={askStand}>
-		<span>© 2026 Concordans</span>
+		<span>© 2026 {MAKER}, <a href="mailto:{CONTACT_EMAIL}">{CONTACT_EMAIL}</a></span>
 		{#if stand}<span class="stand">{standLine(stand)}</span>{/if}
 	</div>
 </footer>
