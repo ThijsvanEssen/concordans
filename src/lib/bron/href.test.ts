@@ -203,3 +203,14 @@ describe('the id a link names', () => {
 		}
 	});
 });
+
+describe('the ref of a dossier', () => {
+	it('keeps its suffix, from its label or from its number and suffix (F110)', () => {
+		expect(refOf('dossiers', '36600_vii', { number: '36600', suffix: 'VII' })).toEqual({
+			collection: 'dossiers',
+			key: '36600_vii',
+			number: '36600-VII'
+		});
+		expect(refOf('dossiers', '36600_vii', { label: '36600-VII' }).collection).toBe('dossiers');
+	});
+});

@@ -22,19 +22,25 @@ describe('previewFromNode', () => {
 	});
 
 	it('names a judgment as its heading does, without an ISO date', () => {
-		const p = previewFromNode('judgments', 'Hoge Raad 2026-08-25 / 24/01299', {
-			ecli: 'ECLI:NL:HR:2026:1357',
-			court: 'Hoge Raad',
-			date: '2026-08-25'
-		});
+		const p = previewFromNode(
+			'judgments',
+			'Hoge Raad 2026-08-25 / 24/01299',
+			{ ecli: 'ECLI:NL:HR:2026:1357', court: 'Hoge Raad', date: '2026-08-25' },
+			{ short: 'HR 25 augustus 2026', full: 'HR 25 augustus 2026, ECLI:NL:HR:2026:1357' }
+		);
 		expect(p.title).toBe('HR 25 augustus 2026');
 		expect(p.date).toBeNull();
-		const named = previewFromNode('judgments', 'Hoge Raad 2019-12-20 / 19/00135', {
-			ecli: 'ECLI:NL:HR:2019:2006',
-			court: 'Hoge Raad',
-			date: '2019-12-20',
-			names: ['Urgenda']
-		});
+		const named = previewFromNode(
+			'judgments',
+			'Hoge Raad 2019-12-20 / 19/00135',
+			{
+				ecli: 'ECLI:NL:HR:2019:2006',
+				court: 'Hoge Raad',
+				date: '2019-12-20',
+				names: ['Urgenda']
+			},
+			{ short: 'HR 20 december 2019', full: 'HR 20 december 2019, ECLI:NL:HR:2019:2006' }
+		);
 		expect(named.title).toBe('HR 20 december 2019 (Urgenda)');
 	});
 

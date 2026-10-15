@@ -331,21 +331,79 @@ describe('Enter and the citations', () => {
 		stop();
 	});
 
-	it('opens "55 Gw" as the article the API confirms, also for an Enter before it', async () => {
-		let confirm!: (v: unknown) => void;
-		api({
-			'/api/resolve': () => new Promise((r) => (confirm = r))
-		});
+	/** The answer of the resolving lane for a notation the API reads, with its match. */
+	const notation = (
+		kind: string,
+		parts: Record<string, unknown>,
+		match: Record<string, unknown>
+	) => ({
+		resolved: {
+			kind: match.kind,
+			match: { id: `${match.collection}/${match.key}`, path: null, ...match },
+			alternatives: [],
+			qualifier: null,
+			notation: {
+				kind,
+				parts: {
+					identifier: null,
+					dossier_number: null,
+					suffix: null,
+					sequence: null,
+					articles: [],
+					qualifier: null,
+					choice: false,
+					...parts
+				}
+			}
+		}
+	});
+
+	it('shows the citation row for a notation the API reads, and opens its match (F108)', async () => {
+		for (const [q, kind, parts, match] of [
+			[
+				'TZ202603-130',
+				'commitment',
+				{ identifier: 'TZ202603-130' },
+				{ kind: 'commitment', collection: 'commitments', key: '74065c45' }
+			],
+			[
+				'Sr 287',
+				'article',
+				{ articles: [{ law_id: 'BWBR0001854', number: '287' }] },
+				{ kind: 'article', collection: 'articles', key: 'bwbr0001854_287' }
+			]
+		] as const) {
+			const { of, fake } = api();
+			const { s, opened, stop } = session();
+			await type(s, q);
+			of('instruments').answer(answer({}, notation(kind, parts, match)));
+			await settle();
+			expect(s.citation?.kind).toBe(kind);
+			s.pressEnter();
+			await settle();
+			expect(opened).toEqual([{ collection: match.collection, key: match.key }]);
+			expect(fake.asked('/api/resolve')).toEqual([]);
+			stop();
+		}
+	});
+
+	it('opens "55 Gw" as the article the API reads, also for an Enter before the answer', async () => {
+		const { of } = api();
 		const { s, opened, stop } = session();
 		await type(s, '55 Gw');
 		expect(s.citation).toBe(null);
 		s.pressEnter();
-		confirm({
-			match: { kind: 'article', key: 'bwbr0001840_55', display_name: 'Artikel 55 Grondwet' },
-			qualifier: null
-		});
+		of('instruments').answer(
+			answer(
+				{},
+				notation(
+					'article',
+					{ articles: [{ law_id: 'BWBR0001840', number: '55' }] },
+					{ kind: 'article', collection: 'articles', key: 'bwbr0001840_55' }
+				)
+			)
+		);
 		await settle();
-		expect(s.bare?.ref).toEqual({ collection: 'articles', key: 'bwbr0001840_55' });
 		expect(opened).toEqual([{ collection: 'articles', key: 'bwbr0001840_55' }]);
 		stop();
 	});
@@ -355,14 +413,18 @@ describe('Enter and the citations', () => {
 		const { s, opened, stop } = session();
 		const ecli = 'ECLI:NL:HR:2019:2006';
 		await type(s, ecli);
-		expect(s.citation).toEqual({ kind: 'ecli', ecli });
 		of('instruments').answer(
 			answer(
 				{},
-				{ resolved: { match: { kind: 'judgment', key: 'ecli_nl_hr_2019_2006' }, qualifier: null } }
+				notation(
+					'ecli',
+					{ identifier: ecli },
+					{ kind: 'judgment', collection: 'judgments', key: 'ecli_nl_hr_2019_2006' }
+				)
 			)
 		);
 		await settle();
+		expect(s.citation?.kind).toBe('ecli');
 		s.pressEnter();
 		await settle();
 		expect(opened).toEqual([{ collection: 'judgments', key: 'ecli_nl_hr_2019_2006' }]);
@@ -370,60 +432,47 @@ describe('Enter and the citations', () => {
 		stop();
 	});
 
-	/** /api/lookup that knows only these dossiers by number. */
-	const dossiers =
-		(...known: string[]) =>
-		(r: FakeRequest) => {
-			const q = r.params.query as { kind: string; number: string };
-			return q.kind === 'dossier' && known.includes(q.number)
-				? { collection: 'dossiers', key: q.number.toLowerCase().replace('-', '_') }
-				: fail(404);
-		};
-
-	it('opens "21501-31" as the dossier of that number, not a paper 31 of 21501', async () => {
-		api({ '/api/lookup': dossiers('21501-31', '21501'), '/api/resolve': fail(404) });
-		const { s, opened, stop } = session();
-		await type(s, '21501-31');
-		expect(s.citation).toEqual({ kind: 'dossier', number: '21501', document: '31' });
-		s.pressEnter();
-		await settle();
-		await settle();
-		expect(opened).toEqual([{ collection: 'dossiers', key: '21501_31', number: '21501-31' }]);
-		stop();
-	});
-
-	it('opens "36327-999", a paper the data lacks, as its dossier', async () => {
-		api({ '/api/lookup': dossiers('36327'), '/api/resolve': fail(404) });
-		const { s, opened, stop } = session();
-		await type(s, '36327-999');
-		s.pressEnter();
-		await settle();
-		await settle();
-		expect(opened).toEqual([{ collection: 'dossiers', key: '36327', number: '36327' }]);
-		stop();
+	it('opens a dossier by the number of its address: "21501-31" and "36327-999" (#64)', async () => {
+		for (const [q, sequence, key, number] of [
+			['21501-31', '31', '21501_31', '21501-31'],
+			['36327-999', '999', '36327', '36327']
+		]) {
+			const { of } = api();
+			const { s, opened, stop } = session();
+			await type(s, q);
+			of('instruments').answer(
+				answer(
+					{},
+					notation(
+						'document',
+						{ dossier_number: q.split('-')[0], sequence },
+						{ kind: 'dossier', collection: 'dossiers', key, path: `/dossiers/${number}` }
+					)
+				)
+			);
+			await settle();
+			s.pressEnter();
+			await settle();
+			expect(opened).toEqual([{ collection: 'dossiers', key, number }]);
+			stop();
+		}
 	});
 
 	it('says a citation the data does not have where its row was', async () => {
-		api({ '/api/lookup': fail(404), '/api/resolve': fail(404) });
+		const { of } = api();
 		const { s, opened, stop } = session();
 		await type(s, '99999');
-		s.pressEnter();
+		const none = notation('dossier', { dossier_number: '99999' }, {});
+		of('instruments').answer(
+			answer({}, { resolved: { ...none.resolved, kind: 'none', match: null } })
+		);
 		await settle();
+		expect(s.citation?.kind).toBe('dossier');
+		s.pressEnter();
 		await settle();
 		expect(opened).toEqual([]);
 		expect(s.notFound).toBe(true);
 		expect(s.citation).toBe(null);
-		stop();
-	});
-
-	it('says that opening a citation failed, not that the data lacks it', async () => {
-		api({ '/api/lookup': fail(500), '/api/resolve': fail(500) });
-		vi.spyOn(console, 'warn').mockImplementation(() => {});
-		const { s, stop } = session();
-		await type(s, '36327-3');
-		await s.openCitation();
-		expect(s.failure).toEqual({ slow: false });
-		expect(s.notFound).toBe(false);
 		stop();
 	});
 
@@ -435,7 +484,12 @@ describe('Enter and the citations', () => {
 		of('instruments').answer(
 			answer(
 				{ instruments: [hit('instruments', 'uavg')] },
-				{ resolved: { match: { kind: 'instrument', key: 'bwbr0040940' } } }
+				{
+					resolved: {
+						match: { kind: 'instrument', collection: 'instruments', key: 'bwbr0040940' },
+						notation: null
+					}
+				}
 			)
 		);
 		await settle();

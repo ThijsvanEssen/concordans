@@ -157,36 +157,6 @@ export function edgeCategory(relation: Relation, sourceClass: DrawClass): EdgeCa
 		: CATEGORY_OF_RELATION[relation];
 }
 
-// Compress verbose court codes to short readable labels for graph nodes.
-// "RBNHO 2014/12958" → "Rb 2014/12958"; "GHAMS 2020/3" → "GH 2020/3"
-function shortenCourtCode(code: string): string {
-	const u = code.toUpperCase();
-	if (u === 'HR' || u === 'PHR') return code; // already short
-	if (u === 'RVS') return 'RvS';
-	if (u === 'CRVB') return 'CRvB';
-	if (u === 'CBB') return 'CBB';
-	if (u.startsWith('GH')) return 'GH'; // all Gerechtshoven → "GH"
-	if (u.startsWith('RB')) return 'Rb'; // all Rechtbanken → "Rb"
-	return code;
-}
-
-/**
- * Format an ECLI string into a short, readable label.
- * "ECLI:NL:HR:2023:456"  → "HR 2023/456"
- * "ECLI:EU:C:2020:12"    → "C 2020/12"
- */
-function formatEcliLabel(ecli: string): string {
-	const raw = ecli.trim().replace(/^ECLI:/i, '');
-	const parts = raw.split(':');
-	if (parts.length >= 4 && parts[0] === 'NL') {
-		return `${shortenCourtCode(parts[1])} ${parts[2]}/${parts[3]}`;
-	}
-	if (parts.length >= 4) {
-		return `${parts[1]} ${parts[2]}/${parts[3]}`;
-	}
-	return raw;
-}
-
 // Dutch dossier titles are routinely 200+ characters and end with the wet's
 // handelsnaam in parentheses — "(Wet verbetering aanpak rijden onder invloed)".
 // Use that parenthetical when present; otherwise take a sensible truncation.
@@ -275,9 +245,9 @@ export function buildNodeLabel(node: BaseNode, drawClass: DrawClass): string {
 	switch (drawClass) {
 		case 'dossier': {
 			// By the short title its props carry (API 0.79.54), else its title, cut.
-			const number = textOf(props.label) ?? textOf(props.number) ?? mens();
-			const naam = dossierOwnName(dossierUitProps(props, number));
-			return naam ? `${officialNumber(number)}, ${naam}` : officialNumber(number);
+			const d = dossierUitProps(props, mens());
+			const naam = dossierOwnName(d);
+			return naam ? `${officialNumber(d.number)}, ${naam}` : officialNumber(d.number);
 		}
 		case 'committee':
 		case 'faction':
@@ -317,10 +287,9 @@ export function buildNodeLabel(node: BaseNode, drawClass: DrawClass): string {
 			const yearMonth = textOf(props.date)?.slice(0, 7);
 			return yearMonth ? `${yearMonth}, ${firstWord}` : firstWord;
 		}
-		case 'judgment': {
-			const ecli = textOf(props.ecli) ?? node.display_name;
-			return ecli ? formatEcliLabel(ecli) : mens();
-		}
+		// As the reader cites it: ABRvS 3 september 2026 (API `cite`).
+		case 'judgment':
+			return node.cite?.short ?? mens();
 	}
 	return mens();
 }
@@ -353,7 +322,8 @@ export function syntheticNode(
 	collection: Collection,
 	key: string,
 	displayName: string | null | undefined,
-	props: Record<string, unknown>
+	props: Record<string, unknown>,
+	cite: BaseNode['cite'] = null
 ): GraphNode {
 	return buildGraphNode(
 		{
@@ -364,6 +334,7 @@ export function syntheticNode(
 			display_name: displayName ?? null,
 			labels: [],
 			props,
+			cite,
 			path: null
 		},
 		collection

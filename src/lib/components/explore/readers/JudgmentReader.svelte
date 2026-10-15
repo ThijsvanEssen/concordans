@@ -5,14 +5,8 @@
 	import { bevindingen, strekking } from './judgment-outcome';
 	import { keyEcli } from '$lib/bron/leesbaar';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import {
-		authorCite,
-		conclusieNaam,
-		judgmentCite,
-		overwegingCitaat,
-		paragraphCite,
-		zaakNaam
-	} from '$lib/text/judgment-cite';
+	import { overwegingCitaat, uitspraakKop, zaakNaam } from '$lib/text/judgment-cite';
+	import { paragraphCite } from '$lib/text/ecli';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import PlaatsMenu, { placeMarker } from '$lib/components/articles/PlaatsMenu.svelte';
@@ -157,11 +151,6 @@
 		{@const replacedBy = j.same_as ?? null}
 		<!-- A replacement the dataset lacks: named, without a link (`replaced_by`, API 0.72). -->
 		{@const replacedOutside = replacedBy ? null : (j.replaced_by ?? null)}
-		<!-- The A-G of a conclusion, as it is cited: Conclusie A-G Hartlief 8 mei 2020. -->
-		{@const author = authorCite(
-			j.advocate_general,
-			paragraphs.filter((p) => p.kind === 'signature').map((p) => p.text)
-		)}
 		{@const alsoAs = data.same_as ?? []}
 		{@const outside = j.unresolved_citations ?? []}
 		<!-- The status in one sentence: kind, date, case number; the conclusie after it. -->
@@ -170,20 +159,19 @@
 			judgmentDate,
 			caseNumber
 		].filter(Boolean)}
-		<!-- The conclusies by their A-G or P-G and day from the judgment's own detail, so they
-		     stand with the text. -->
+		<!-- The conclusies as the API cites them (Conclusie P-G Langemeijer en Wissink 13
+		     september 2019), from the judgment's own detail, so they stand with the text. -->
 		{@const conclusies = (data.conclusions ?? []).map((c) => ({
 			ref: c.id,
-			naam: conclusieNaam(c),
+			naam: c.cite?.short ?? c.ecli,
 			strekking: strekking(c.outcome)
 		}))}
 		<!-- How it ended, in its own words (API 0.79.55): what a conclusie proposes, what the
 		     ECHR found per article; nothing while the data says none. -->
 		{@const eigenStrekking = conclusion ? strekking(j.conclusion_outcome) : null}
 		{@const echr = bevindingen(j.echr_findings)}
-		{@const kop = j.ecli
-			? judgmentCite(j.ecli, textOf(j.props?.date), textOf(j.props?.court), author)
-			: null}
+		<!-- As the API cites it: HR 20 december 2019; Conclusie A-G Hartlief 8 mei 2020. -->
+		{@const kop = uitspraakKop(j)}
 		{@const ro = paragraphNumber(anchor)}
 		{@const naamKort = kop?.short ?? j.display_name ?? 'Uitspraak'}
 		<ReaderHead
@@ -219,8 +207,7 @@
 								.filter(Boolean)
 								.join(', ')}.{/if}
 						{#if echr}{capitalize(echr)}.{/if}
-						{#if conclusies.length}{conclusies.length > 1 ? 'Conclusies' : 'Conclusie'}: {#each conclusies as c, i (c.naam)}{i >
-								0
+						{#if conclusies.length}{#each conclusies as c, i (c.naam)}{i > 0
 									? '; '
 									: ''}{#if c.ref}<BronLink ref={c.ref}>{c.naam}</BronLink
 									>{:else}{c.naam}{/if}{#if c.strekking}, {c.strekking}{/if}{/each}{/if}

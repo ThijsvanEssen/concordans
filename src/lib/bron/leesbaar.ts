@@ -55,7 +55,7 @@ export type Pad =
 	| { soort: 'bijlage'; wet: string; label: string };
 
 /** The series of officielebekendmakingen.nl a publication appears in. */
-export type Reeks = 'stb' | 'stcrt' | 'trb';
+type Reeks = 'stb' | 'stcrt' | 'trb';
 const SERIES: readonly string[] = ['stb', 'stcrt', 'trb'] satisfies Reeks[];
 /** The node key of a publication: its series, year and number, `stb_2026_94`. */
 const PUBLICATION_KEY = new RegExp(`^(${SERIES.join('|')})_(\\d{4})_(\\d+)$`);
@@ -483,7 +483,7 @@ export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | n
  * The focus of an address as the data has it, always by /api/lookup: also where
  * `focusOfPad` would name it unasked (a dossier), for whoever must know it exists.
  */
-export async function lookUpInData(pad: Pad, signal?: AbortSignal): Promise<string | null> {
+async function lookUpInData(pad: Pad, signal?: AbortSignal): Promise<string | null> {
 	const artikel = apiArticle(pad);
 	const query = ruleOf(pad).lookup?.(pad);
 	if (!query) return null;

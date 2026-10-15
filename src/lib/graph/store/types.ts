@@ -1,7 +1,7 @@
 import type { Readable } from 'svelte/store';
 import type { Schema } from '$lib/api/types';
 import type { Collection, Relation } from '$lib/vocabulary';
-import type { GraphNode, GraphEdge } from '../types';
+import type { BaseNode, GraphNode, GraphEdge } from '../types';
 import type { ContainerGroup, ContainerKind, Period } from '../container-membership';
 
 /** The API's default depth of a neighbourhood: three steps. */
@@ -39,6 +39,8 @@ export type CanvasRow = {
 	direction: 'inbound' | 'outbound';
 	proposed?: boolean;
 	props?: Record<string, unknown>;
+	/** A judgment as the API cites it: its label on the canvas. */
+	cite?: BaseNode['cite'];
 	/** The seat the verbinding records (a member's term, a bewindspersoon's posts). */
 	period?: Period | null;
 };

@@ -26,9 +26,9 @@ describe('the names of a bron', () => {
 				{ ...graphNode, raw: { ...graphNode.raw!, title: null } },
 				null
 			),
-			card: previewFromNode(n.collection, n.display_name, props).title,
+			card: previewFromNode(n.collection, n.display_name, props, n.cite).title,
 			canvas: bronNaam(graphNode, new Map()),
-			row: describeBron(n.collection, n.key, n.display_name, props).title,
+			row: describeBron(n.collection, n.key, n.display_name, props, n.cite).title,
 			label: graphNode.label
 		}).toMatchSnapshot();
 	});

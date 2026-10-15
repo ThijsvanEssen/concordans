@@ -51,7 +51,7 @@ import { metVoetnoot } from '$lib/text/voetnoten';
 import { bucketKey, getBuckets } from '$lib/api/nodes';
 import { lawIdOf } from '$lib/graph/types';
 import { get } from 'svelte/store';
-import { paragraphCite } from '$lib/text/judgment-cite';
+import { paragraphCite } from '$lib/text/ecli';
 import { articleName, bookNumber, withBook } from '$lib/text/bw';
 import { korteDatum } from '$lib/text/datum';
 import { anchorLabel, lidAnchor, parseAnchor } from '$lib/text/anchor';
@@ -154,7 +154,7 @@ async function echrJudgments(bwb: string, articleKey: string, signal: AbortSigna
 			const props = { ecli: j.ecli };
 			return {
 				ref: { collection: 'judgments' as const, key: j.key },
-				...describeBron('judgments', j.key, j.display_name, props),
+				...describeBron('judgments', j.key, j.display_name, props, j.cite),
 				filterGroup: filterGroupOf('judgments', j.key, props, 'REFERS_TO'),
 				relation: 'REFERS_TO' as const,
 				direction: 'inbound' as const,
@@ -778,7 +778,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				const j = link.judgment;
 				add({
 					ref: { collection: 'judgments', key: j.key },
-					...describeBron('judgments', j.key, j.display_name, { ...j }),
+					...describeBron('judgments', j.key, j.display_name, { ...j }, j.cite),
 					filterGroup: 'internationaal',
 					derived: isDerived(link.confidence)
 				});
@@ -1177,15 +1177,21 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				.map((j) => ({
 					ref: { collection: 'judgments' as const, key: j.key },
 					// The court and the day (API 0.73, BE-7), as every other row of a judgment.
-					...describeBron('judgments', j.key, j.display_name, {
-						ecli: j.ecli,
-						court: j.court,
-						tier: j.tier,
-						court_kind: j.court_kind,
-						date: j.date,
-						advocate_general: j.advocate_general,
-						advocate_general_role: j.advocate_general_role
-					}),
+					...describeBron(
+						'judgments',
+						j.key,
+						j.display_name,
+						{
+							ecli: j.ecli,
+							court: j.court,
+							tier: j.tier,
+							court_kind: j.court_kind,
+							date: j.date,
+							advocate_general: j.advocate_general,
+							advocate_general_role: j.advocate_general_role
+						},
+						j.cite
+					),
 					context: citedLine(j.cited_articles ?? [], bwb),
 					filterGroup: 'uitspraken' as const,
 					relation: 'REFERS_TO' as const,

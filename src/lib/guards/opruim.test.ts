@@ -226,7 +226,6 @@ describe('nothing left over', () => {
 		const NOG = [
 			'Box',
 			'Bucket',
-			'Citation',
 			'Deel',
 			'End',
 			'PAGE_SIZE',

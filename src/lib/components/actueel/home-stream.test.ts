@@ -445,7 +445,7 @@ describe('voteHow', () => {
 });
 
 describe('a judgment in the feed', () => {
-	it('is cited by its court and the day it was decided, a conclusion by its A-G', () => {
+	it('is cited as the API cites it: the Afdeling, a conclusion by its A-G (F107)', () => {
 		const item = (judgment: Record<string, unknown>) =>
 			({
 				id: 'judgments/x',
@@ -457,10 +457,17 @@ describe('a judgment in the feed', () => {
 				judgment
 			}) as unknown as FeedItem;
 		expect(
-			headlineOf(item({ court: 'RVS', tier: 'raad_van_state', decided_on: '2026-09-15' }))
+			headlineOf(
+				item({
+					court: 'RVS',
+					tier: 'raad_van_state',
+					decided_on: '2026-09-15',
+					cite: { short: 'ABRvS 15 september 2026', full: '' }
+				})
+			)
 		).toEqual({
 			label: 'Uitspraak',
-			title: 'Raad van State, 15 september 2026',
+			title: 'ABRvS 15 september 2026',
 			major: false,
 			teken: 'stuk',
 			vorm: 'uitspraak'
@@ -471,13 +478,14 @@ describe('a judgment in the feed', () => {
 				tier: 'parket',
 				decided_on: '2018-08-02',
 				advocate_general: 'mr. R.E.C.M. Niessen',
-				advocate_general_role: 'advocaat-generaal'
+				advocate_general_role: 'advocaat-generaal',
+				cite: { short: 'Conclusie A-G Niessen 2 augustus 2018', full: '' }
 			})
 		);
 		expect(conclusie).toEqual({
 			label: 'Conclusie',
 			vorm: 'uitspraak',
-			title: 'Conclusie A-G Niessen, 2 augustus 2018',
+			title: 'Conclusie A-G Niessen 2 augustus 2018',
 			major: true,
 			teken: 'stuk'
 		});

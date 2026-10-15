@@ -1270,6 +1270,10 @@
 			"source_kind": "rs-content",
 			"stub": false,
 			"tier": "hoge_raad"
+		},
+		"cite": {
+			"short": "HR 20 december 2019",
+			"full": "HR 20 december 2019, ECLI:NL:HR:2019:2006"
 		}
 	},
 	{
@@ -1308,6 +1312,10 @@
 			"summary": "Klimaatzaak Urgenda. Onrechtmatige daad. Schending zorgplicht ex artikelen 2 en 8 EVRM. Staat moet broeikasgassen nu verder terugdringen. Vonnis bekrachtigd",
 			"summary_en": "Disclaimer: The translation of this judgment on appeal is solely intended to provide information. The text of the translation is an unofficial translation. Liability cannot be claimed for possible errors and/or omissions in this translation. The Dutch text of the judgment is the only authentic and formal text (ECLI-number: ECLI:NL:GHDHA:2018:2591) \n       \n       Climate case Urgenda. Duty of care under Articles 2 and 8 ECHR. Reduction greenhouse gas emissions.",
 			"tier": "gerechtshof"
+		},
+		"cite": {
+			"short": "Hof Den Haag 9 oktober 2018",
+			"full": "Hof Den Haag 9 oktober 2018, ECLI:NL:GHDHA:2018:2591"
 		}
 	},
 	{
@@ -1343,6 +1351,10 @@
 			"stub": false,
 			"summary": "Kelderluik-arrest. Onrechtmatige daad. Gevaarzetting. Maatstaven voor beoordeling.",
 			"tier": "hoge_raad"
+		},
+		"cite": {
+			"short": "HR 5 november 1965",
+			"full": "HR 5 november 1965, ECLI:NL:HR:1965:AB7079"
 		}
 	},
 	{

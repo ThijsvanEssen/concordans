@@ -565,13 +565,13 @@ function kopVan(i: FeedItem): Omit<Headline, 'vorm'> {
 			// A judgment as it is cited, by its court and the day it was decided; a conclusion
 			// by its A-G (BE-26). The highest courts and their parket stand out.
 			const j = i.judgment;
-			const { title } = describeBron('judgments', i.node.key, i.title, {
-				ecli: j?.ecli,
-				court: j?.court,
-				date: j?.decided_on,
-				advocate_general: j?.advocate_general,
-				advocate_general_role: j?.advocate_general_role
-			});
+			const { title } = describeBron(
+				'judgments',
+				i.node.key,
+				i.title,
+				{ ecli: j?.ecli, court: j?.court, date: j?.decided_on },
+				j?.cite
+			);
 			return {
 				label: j?.advocate_general ? 'Conclusie' : 'Uitspraak',
 				title,

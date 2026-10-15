@@ -8,7 +8,8 @@ import { findBucket, type Bucket, type NodeGraph } from '$lib/api/nodes';
 import { ifExists } from '$lib/api/errors';
 import { getDossier } from '$lib/api/dossiers';
 import type { Collection } from '$lib/vocabulary';
-import { dossierNummer, laagVan, type Behoort, type Regel } from './behoort-layer';
+import { laagVan, type Behoort, type Regel } from './behoort-layer';
+import { dossierNummer } from './dossier-naam';
 import { procesgangIds } from './behoort-procesgang';
 import { BANDS, kernOf, type BucketLine, type Context } from './behoort-rules';
 

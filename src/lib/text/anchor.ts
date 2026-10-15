@@ -2,7 +2,7 @@
 // overweging (`rov-5.7.1`), a part of an article (`lid-2-onder-a`, `onder-q_2`,
 // `onder-_39-onder-a`, `lid-3-aanhef`, `tekst-6-onder-a`), a note (`fn-35-2`), an article
 // in the whole law (`artikel-658`) and a division of it (`deel-hoofdstuk-3`).
-import { paragraphCite } from './judgment-cite';
+import { paragraphCite } from './ecli';
 
 type Anchor =
 	| { kind: 'paragraph'; number: string }

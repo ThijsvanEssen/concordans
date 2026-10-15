@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { fakeApi } from '$lib/test/fakeApi';
 import { EarlyEnter } from './enter.svelte';
-import { bareArticle, resolveQuery, type Resolved } from './resolve-query';
+import type { Resolved } from './resolve-query';
 
 /** An answer the test lets through when it wants: the API's delay, without a clock. */
 function delayed<T>() {
@@ -10,12 +9,15 @@ function delayed<T>() {
 	return { answer, release };
 }
 
-const ARTICLE = { kind: 'article', key: 'bwbr0005289_boek6_art162', display_name: 'Artikel 6:162' };
+const ARTICLE: Resolved = {
+	ref: { collection: 'articles', key: 'bwbr0005289_boek6_art162' },
+	at: null,
+	label: 'Artikel 6:162 BW'
+};
 
 describe('EarlyEnter: an Enter typed before the answer is done once it is in (#79)', () => {
 	it('opens "6:162 BW" once the API confirms the article, not before', async () => {
-		const resolve = delayed<unknown>();
-		fakeApi({ '/api/resolve': () => resolve.answer });
+		const resolve = delayed<Resolved>();
 		const opened: Resolved[] = [];
 		let confirmed: Resolved | null = null;
 		const enter = new EarlyEnter(() => {
@@ -25,12 +27,12 @@ describe('EarlyEnter: an Enter typed before the answer is done once it is in (#7
 		});
 
 		const term = '6:162 BW';
-		const asked = resolveQuery(bareArticle(term)!).then((t) => (confirmed = t));
+		const asked = resolve.answer.then((t) => (confirmed = t));
 		enter.press(term);
 		enter.answer(term, false);
 		expect(opened).toEqual([]);
 
-		resolve.release({ match: ARTICLE, qualifier: null });
+		resolve.release(ARTICLE);
 		await asked;
 		enter.answer(term, confirmed !== null);
 		expect(opened.map((r) => r.ref.key)).toEqual(['bwbr0005289_boek6_art162']);

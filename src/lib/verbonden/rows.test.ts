@@ -65,9 +65,10 @@ describe('a conclusion', () => {
 			advocate_general: 'mr. R.E.C.M. Niessen',
 			advocate_general_role: 'advocaat-generaal'
 		};
-		expect(describeBron('judgments', 'ecli_nl_phr_2018_1', 'x', props).title).toBe(
-			'Conclusie A-G Niessen, 2 augustus 2018'
-		);
+		const short = 'Conclusie A-G Niessen 2 augustus 2018';
+		expect(
+			describeBron('judgments', 'ecli_nl_phr_2018_1', 'x', props, { short, full: '' }).title
+		).toBe(short);
 	});
 });
 

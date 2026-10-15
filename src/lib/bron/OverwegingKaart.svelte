@@ -11,7 +11,8 @@
 	import { EDGE } from '$lib/actions/top-layer';
 	import FloatingCard from '$lib/components/ui/FloatingCard.svelte';
 	import { anchorLabel } from '$lib/text/anchor';
-	import { isConclusion, uitspraakKop } from '$lib/text/judgment-cite';
+	import { uitspraakKop } from '$lib/text/judgment-cite';
+	import { isConclusion } from '$lib/text/ecli';
 	import Overweging from './Overweging.svelte';
 	import { zetMarkering, type Markering } from './markering.svelte';
 	import { heeftOverweging, laadUitspraak, type Uitspraak } from './overweging';

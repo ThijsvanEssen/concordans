@@ -178,7 +178,11 @@
 					"representatives": []
 				}
 			],
-			"path": "/uitspraken/ECLI:NL:HR:2024:1769"
+			"path": "/uitspraken/ECLI:NL:HR:2024:1769",
+			"cite": {
+				"short": "HR 3 december 2024",
+				"full": "HR 3 december 2024, ECLI:NL:HR:2024:1769"
+			}
 		},
 		"articles": [
 			{
@@ -500,7 +504,11 @@
 				"key": "ecli_nl_hr_2018_2056",
 				"display_name": "Hoge Raad 2018-11-06 / 17/00795",
 				"ecli": "ECLI:NL:HR:2018:2056",
-				"path": "/uitspraken/ECLI:NL:HR:2018:2056"
+				"path": "/uitspraken/ECLI:NL:HR:2018:2056",
+				"cite": {
+					"short": "HR 6 november 2018",
+					"full": "HR 6 november 2018, ECLI:NL:HR:2018:2056"
+				}
 			},
 			{
 				"paragraph_ids": [],
@@ -517,7 +525,11 @@
 				"key": "ecli_nl_hr_2018_368",
 				"display_name": "Hoge Raad 2018-03-20 / 16/03113",
 				"ecli": "ECLI:NL:HR:2018:368",
-				"path": "/uitspraken/ECLI:NL:HR:2018:368"
+				"path": "/uitspraken/ECLI:NL:HR:2018:368",
+				"cite": {
+					"short": "HR 20 maart 2018",
+					"full": "HR 20 maart 2018, ECLI:NL:HR:2018:368"
+				}
 			}
 		],
 		"same_as": [],
@@ -585,7 +597,11 @@
 					}
 				]
 			},
-			"path": "/uitspraken/ECLI:NL:HR:2024:1769"
+			"path": "/uitspraken/ECLI:NL:HR:2024:1769",
+			"cite": {
+				"short": "HR 3 december 2024",
+				"full": "HR 3 december 2024, ECLI:NL:HR:2024:1769"
+			}
 		},
 		"neighbors": {
 			"total": 2,
@@ -629,7 +645,11 @@
 							"meta": {
 								"cited_ecli": "ECLI:NL:HR:2018:368"
 							},
-							"path": "/uitspraken/ECLI:NL:HR:2018:368"
+							"path": "/uitspraken/ECLI:NL:HR:2018:368",
+							"cite": {
+								"short": "HR 20 maart 2018",
+								"full": "HR 20 maart 2018, ECLI:NL:HR:2018:368"
+							}
 						},
 						{
 							"id": "judgments/ecli_nl_hr_2018_2056",
@@ -660,7 +680,11 @@
 							"meta": {
 								"cited_ecli": "ECLI:NL:HR:2018:2056"
 							},
-							"path": "/uitspraken/ECLI:NL:HR:2018:2056"
+							"path": "/uitspraken/ECLI:NL:HR:2018:2056",
+							"cite": {
+								"short": "HR 6 november 2018",
+								"full": "HR 6 november 2018, ECLI:NL:HR:2018:2056"
+							}
 						}
 					]
 				}
@@ -719,7 +743,11 @@
 					}
 				]
 			},
-			"path": "/uitspraken/ECLI:NL:HR:2024:1769"
+			"path": "/uitspraken/ECLI:NL:HR:2024:1769",
+			"cite": {
+				"short": "HR 3 december 2024",
+				"full": "HR 3 december 2024, ECLI:NL:HR:2024:1769"
+			}
 		},
 		"neighbors": {
 			"total": 7,
@@ -956,7 +984,11 @@
 					}
 				]
 			},
-			"path": "/uitspraken/ECLI:NL:HR:2024:1769"
+			"path": "/uitspraken/ECLI:NL:HR:2024:1769",
+			"cite": {
+				"short": "HR 3 december 2024",
+				"full": "HR 3 december 2024, ECLI:NL:HR:2024:1769"
+			}
 		},
 		"neighbors": {
 			"total": 10,
@@ -1002,7 +1034,11 @@
 							"meta": {
 								"basis": "formal_relation"
 							},
-							"path": "/uitspraken/ECLI:NL:PHR:2024:994"
+							"path": "/uitspraken/ECLI:NL:PHR:2024:994",
+							"cite": {
+								"short": "Conclusie A-G Paridaens 1 oktober 2024",
+								"full": "Conclusie A-G Paridaens 1 oktober 2024, ECLI:NL:PHR:2024:994"
+							}
 						}
 					]
 				},
@@ -1095,7 +1131,11 @@
 							"meta": {
 								"cited_ecli": "ECLI:NL:HR:2018:368"
 							},
-							"path": "/uitspraken/ECLI:NL:HR:2018:368"
+							"path": "/uitspraken/ECLI:NL:HR:2018:368",
+							"cite": {
+								"short": "HR 20 maart 2018",
+								"full": "HR 20 maart 2018, ECLI:NL:HR:2018:368"
+							}
 						}
 					]
 				}
@@ -1154,7 +1194,11 @@
 					}
 				]
 			},
-			"path": "/uitspraken/ECLI:NL:HR:2024:1769"
+			"path": "/uitspraken/ECLI:NL:HR:2024:1769",
+			"cite": {
+				"short": "HR 3 december 2024",
+				"full": "HR 3 december 2024, ECLI:NL:HR:2024:1769"
+			}
 		},
 		"neighbors": {
 			"total": 10,
@@ -1200,7 +1244,11 @@
 							"meta": {
 								"basis": "formal_relation"
 							},
-							"path": "/uitspraken/ECLI:NL:PHR:2024:994"
+							"path": "/uitspraken/ECLI:NL:PHR:2024:994",
+							"cite": {
+								"short": "Conclusie A-G Paridaens 1 oktober 2024",
+								"full": "Conclusie A-G Paridaens 1 oktober 2024, ECLI:NL:PHR:2024:994"
+							}
 						}
 					]
 				},
@@ -1420,7 +1468,11 @@
 							"meta": {
 								"cited_ecli": "ECLI:NL:HR:2018:368"
 							},
-							"path": "/uitspraken/ECLI:NL:HR:2018:368"
+							"path": "/uitspraken/ECLI:NL:HR:2018:368",
+							"cite": {
+								"short": "HR 20 maart 2018",
+								"full": "HR 20 maart 2018, ECLI:NL:HR:2018:368"
+							}
 						},
 						{
 							"id": "judgments/ecli_nl_hr_2018_2056",
@@ -1451,7 +1503,11 @@
 							"meta": {
 								"cited_ecli": "ECLI:NL:HR:2018:2056"
 							},
-							"path": "/uitspraken/ECLI:NL:HR:2018:2056"
+							"path": "/uitspraken/ECLI:NL:HR:2018:2056",
+							"cite": {
+								"short": "HR 6 november 2018",
+								"full": "HR 6 november 2018, ECLI:NL:HR:2018:2056"
+							}
 						}
 					]
 				}
