@@ -1,5 +1,6 @@
 <script lang="ts">
 	import RouteKop from '$lib/seo/RouteKop.svelte';
+	import { CONTACT_EMAIL, MAKER } from '$lib/site/contact';
 </script>
 
 <RouteKop />
@@ -13,13 +14,19 @@
 		</p>
 
 		<div class="section">
+			<h2 class="section-title">Verwerkingsverantwoordelijke</h2>
+			<p>
+				{MAKER}, de maker van Concordans. Vragen over de verwerking van persoonsgegevens gaan naar
+				<a href="mailto:{CONTACT_EMAIL}" class="cite">{CONTACT_EMAIL}</a>.
+			</p>
+		</div>
+
+		<div class="section">
 			<h2 class="section-title">Wat wordt verwerkt</h2>
 			<p>
-				Concordans heeft geen accounts en plaatst geen cookies. Wie via de <a
-					href="/over#contact"
-					class="cite">contactpagina</a
-				> een e-mail stuurt, deelt het e-mailadres en de inhoud van het bericht. Een advertentie op Concordans
-				is nooit afgestemd op wie de pagina bekijkt.
+				Concordans heeft geen accounts, plaatst geen cookies en gebruikt geen externe diensten voor
+				statistiek. Wie Concordans een e-mail stuurt, deelt het e-mailadres en de inhoud van het
+				bericht.
 			</p>
 		</div>
 
@@ -41,16 +48,6 @@
 				onderwerpen staan daar, met de dag van het vorige bezoek. Die blijven in de browser en gaan
 				niet naar een server. Om nieuwe stukken bij een onderwerp te vinden, gaan de woorden als
 				zoekterm naar de API.
-			</p>
-		</div>
-
-		<div class="section">
-			<h2 class="section-title">Contact</h2>
-			<p>
-				Vragen over de verwerking van persoonsgegevens gaan via de <a
-					href="/over#contact"
-					class="cite">contactpagina</a
-				>.
 			</p>
 		</div>
 

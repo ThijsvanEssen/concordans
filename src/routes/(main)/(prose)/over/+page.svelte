@@ -1,5 +1,6 @@
 <script lang="ts">
 	import RouteKop from '$lib/seo/RouteKop.svelte';
+	import { CONTACT_EMAIL, MAKER } from '$lib/site/contact';
 </script>
 
 <RouteKop />
@@ -14,7 +15,8 @@
 		<div class="section">
 			<h2 class="section-title">Maker</h2>
 			<p>
-				Het project is niet gelieerd aan een juridische instelling, rechtbank of overheidsorgaan.
+				{MAKER} is maker van Concordans en verwerkingsverantwoordelijke. Het project is niet gelieerd
+				aan een juridische instelling, rechtbank of overheidsorgaan.
 			</p>
 		</div>
 
@@ -22,7 +24,7 @@
 			<h2 class="section-title">Contact</h2>
 			<p>
 				Vragen, opmerkingen, verzoeken voor grootschalig gebruik van de API en vragen over privacy
-				gaan naar <a href="mailto:concordans@tmve.nl" class="cite">concordans@tmve.nl</a>.
+				gaan naar <a href="mailto:{CONTACT_EMAIL}" class="cite">{CONTACT_EMAIL}</a>.
 			</p>
 		</div>
 
