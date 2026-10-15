@@ -17,6 +17,7 @@
 	import Wetsnetwerk from '$lib/components/actueel/Wetsnetwerk.svelte';
 	import { laadWetsnetwerk, type Schets } from '$lib/components/actueel/wetsnetwerk';
 	import { tick } from 'svelte';
+	import { HOME_SUMMARY } from '$lib/api/first-pages';
 	import type { TijdGroep } from '$lib/components/tijdlijn/tijdlijn';
 
 	// Four ways in to search, each with the glyphs of what it holds.
@@ -63,14 +64,14 @@
 
 	/** The lines of Actueel shown; the rest is in Actueel. */
 	const LINES_SHOWN = 10;
-	/** The days the summary spans: enough for the lines on a quiet week. */
-	const SUMMARY_DAYS = 14;
+	/** The days the summary spans: enough for the lines on a quiet week (first-pages.json). */
+	const SUMMARY_DAYS = HOME_SUMMARY.days;
 	/**
 	 * Events the summary gives one by one: three for each line shown, room for a busy day
 	 * whose lines fold several. Its counts per day come whatever this is; the band of the
 	 * law network asks older votes itself where these hold no passed bill (laadWetsnetwerk).
 	 */
-	const SUMMARY_ITEMS = 3 * LINES_SHOWN;
+	const SUMMARY_ITEMS = HOME_SUMMARY.limit;
 
 	const today = vandaag();
 

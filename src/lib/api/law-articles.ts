@@ -4,11 +4,12 @@
 // (about 0.1 s on PostgreSQL); a route per division (BE-6) would make it smaller. Their
 // labels and places: $lib/bron/law-articles.
 import { api, unwrap } from './client';
+import { volledig } from './limits';
 import type { Schema } from './types';
 import { onForget } from '$lib/util/forget';
 
 /** The largest page the API gives: the whole list of a law in one request. */
-const WHOLE_LIST = 2000;
+const WHOLE_LIST = volledig('/api/instruments/{bwb_id}/articles');
 
 const lists = new Map<string, Promise<Schema<'InstrumentArticlesResponse'>>>();
 onForget(() => lists.clear());

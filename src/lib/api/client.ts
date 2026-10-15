@@ -6,12 +6,15 @@ export const TIMEOUT_MS = 10_000;
 /** A search of the slow kinds (judgments, articles and stukken): the API's own deadline. */
 export const SLOW_TIMEOUT_MS = 30_000;
 
+/** A loop while developing: more requests than this in this time (below the API's limit). */
+export const LUS = { max: 100, ms: 10_000 };
+
 /**
  * While developing: more than `max` requests in `ms` is a loop, not a reader. The next one
  * is refused with an error in the console, so a page that asks without end stops at once
  * instead of running into the API's limit (an effect that reran on its own cleanup, 10 Oct).
  */
-export function teller(max = 100, ms = 10_000, nu = () => Date.now()) {
+export function teller(max = LUS.max, ms = LUS.ms, nu = () => Date.now()) {
 	const tijden: number[] = [];
 	return (url: string) => {
 		const t = nu();

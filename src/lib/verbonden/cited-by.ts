@@ -9,9 +9,6 @@ import { isInternational } from './filter';
 import { bundleMentions, type Row } from './rows';
 import { describeBron } from '$lib/bron/describe';
 
-/** The passages of the judgments that cite an article, a page: as many as the API gives. */
-export const CITED_BY_PAGE = 200;
-
 export function rowsOfCitedBy(items: Schema<'ArticleCitedByItem'>[]): Row[] {
 	const mentions = new Map<string, Map<string, Row>>();
 	for (const item of items) {

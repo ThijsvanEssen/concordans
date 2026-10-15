@@ -2,6 +2,7 @@
 import { api, slowApi, unwrap } from './client';
 import { once } from './records';
 import type { QueryOf } from './types';
+import { volledig } from './limits';
 
 /** The votes of a member's reader; one request serves every mount of the same key. */
 // A person's votes take the API seconds (8.8 to 10 s on prod, 9 Oct): they wait as long as the
@@ -15,14 +16,17 @@ export const getMemberVotes = (key: string) =>
 
 /**
  * The votes a member cast while holding a post of the government (`in_office=true`, API
- * 0.79.44, #534), a page of 200 from `offset`; `next_offset` null after the last. No total:
+ * 0.79.44, #534), a page as large as the API gives from `offset`; `next_offset` null after the last. No total:
  * the API does not count them (UX-toets 0.79.43, #29).
  */
 export const getMemberVotesInOffice = (key: string, offset = 0) =>
 	once(`votes/${key}/in-office/${offset}`, () =>
 		unwrap(
 			slowApi.GET('/api/members/{key}/votes', {
-				params: { path: { key }, query: { limit: 200, offset, in_office: true } }
+				params: {
+					path: { key },
+					query: { limit: volledig('/api/members/{key}/votes'), offset, in_office: true }
+				}
 			})
 		)
 	);

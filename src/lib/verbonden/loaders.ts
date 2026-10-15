@@ -14,7 +14,8 @@ import { refOf } from '$lib/bron/href';
 import { naastHetStuk, stukkenInDezelfdeZaak } from '$lib/bron/zaak';
 import { loadDossierHub, type DossierHub } from './dossier-hub';
 import { explanatoryDocuments } from './explanatory-documents';
-import { CITED_BY_PAGE, rowsOfCitedBy } from './cited-by';
+import { rowsOfCitedBy } from './cited-by';
+import { CITED_BY_PAGE, LAW_JUDGMENTS } from '$lib/api/first-pages';
 import { getArticleDetail, getDelegated, getLawBasis, getLawDelegated } from '$lib/api/articles';
 import {
 	grondslagArtikelen,
@@ -225,7 +226,7 @@ const ARTICLES_SHOWN = 100;
 const AMENDED_SHOWN = 30;
 
 /** The judgments of a law read at once: about 1.2 KB each, for the articles they cite. */
-const JUDGMENTS_SHOWN = 100;
+const JUDGMENTS_SHOWN = LAW_JUDGMENTS;
 
 /** The European and international links of a law read at once, per kind. */
 const EU_LINKS_SHOWN = 50;

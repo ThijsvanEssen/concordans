@@ -19,9 +19,10 @@ import {
 	type Kolom,
 	type Telbaar
 } from './kruiswoord';
+import { volledig } from '$lib/api/limits';
 
-/** Decisions and feed events the API gives in one page. */
-export const PAGE_SIZE = 200;
+/** Decisions and feed events in one page: as many as the API gives of both. */
+export const PAGE_SIZE = Math.min(volledig('/api/decisions'), volledig('/api/feed'));
 /** Pages of the feed counted at most, the newest first. */
 const FEED_PAGES = 5;
 /** Dossiers whose amendments are followed at most (one request each, cached). */

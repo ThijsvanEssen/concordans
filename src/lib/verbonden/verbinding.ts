@@ -16,7 +16,8 @@ import { NODE_TYPES } from '$lib/vocabulary';
 import { keyEcli } from '$lib/bron/leesbaar';
 import { ifExists, report } from '$lib/api/errors';
 import { getCitedBy } from '$lib/api/verbonden';
-import { CITED_BY_PAGE, rowsOfCitedBy } from './cited-by';
+import { rowsOfCitedBy } from './cited-by';
+import { CITED_BY_PAGE } from '$lib/api/first-pages';
 
 export type End = {
 	ref: BronRef;

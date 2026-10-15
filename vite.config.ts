@@ -4,6 +4,7 @@ import type { Plugin } from 'vite';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { apiDocs } from './src/lib/api/docs';
+import { limitMaxima } from './src/lib/api/limit-maxima';
 
 // The pages of the app with their title and description ($lib/seo/routes.ts), next to
 // index.html in the build: the server reads it for a page's head, and to tell a page from
@@ -37,13 +38,28 @@ const apiDocsModule: Plugin = {
 	}
 };
 
+// The largest `limit` of each route that has one, from the OpenAPI schema ($lib/api/limits):
+// a list asked whole follows the API's cap.
+const API_LIMITS = 'virtual:api-limits';
+const apiLimitsModule: Plugin = {
+	name: 'api-limits',
+	resolveId(id) {
+		if (id === API_LIMITS) return `\0${API_LIMITS}`;
+	},
+	load(id) {
+		if (id !== `\0${API_LIMITS}`) return;
+		this.addWatchFile(OPENAPI);
+		return `export default ${JSON.stringify(limitMaxima(JSON.parse(readFileSync(OPENAPI, 'utf8'))))};`;
+	}
+};
+
 /** The tests of a `.svelte.ts` module whose runes must react. */
 const RUNES = 'src/**/*.svelte.test.ts';
 /** The tests of a component in a page: clicks, focus and keys (src/lib/test/dom-setup.ts). */
 const DOM = 'src/**/*.dom.test.ts';
 
 export default defineConfig({
-	plugins: [sveltekit(), spaRoutes, apiDocsModule],
+	plugins: [sveltekit(), spaRoutes, apiDocsModule, apiLimitsModule],
 	// Safari can aggressively cache ESM modules in dev; force fresh loads.
 	server: {
 		headers: {
