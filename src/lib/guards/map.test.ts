@@ -41,12 +41,12 @@ describe('the map', () => {
 				/bewaar=\{[^}]*citation\s*\?\s*\{\s*id: [\w.]+, groep: citation\.citationTitle, wet: [\w.]+ \}/
 			);
 		}
-		// An overweging: one citation and one Bewaar (overwegingCitaat), in the reader's menu; a
+		// An overweging: one citation and one Bewaar (citeOverwegingen), in the reader's menu; a
 		// map's item shows it with the one Overweging, with its menu (bewaar).
 		const overweging = bron('lib/bron/Overweging.svelte');
 		expect(kaart).toMatch(/<Overweging[\s\S]*?bewaar=\{\{ id: item\.id/);
 		for (const t of [uitspraak, overweging]) {
-			expect(t).toContain('overwegingCitaat(');
+			expect(t).toMatch(/\b(overwegingCitaat|citeOverwegingen)\(/);
 			expect(t).toContain('<PlaatsMenu');
 			expect(t).toMatch(/cite=\{citeItems\(forms, forms\.link\)\}/);
 		}

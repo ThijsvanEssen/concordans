@@ -23,33 +23,41 @@ export const zaakNaam = (kort: string, namen: string[] | null | undefined) =>
 	namen?.length ? `${kort} (${namen.join(', ')})` : kort;
 
 /**
- * An overweging as its menu cites and keeps it: kort and voluit with `r.o. 3.1`, the link to
- * its place, and the item Bewaar keeps (with the bron's id). The reader and a map's item
- * (MapInhoud) offer the same menu from it. Null without a citation.
+ * The overwegingen of a judgment as their menu cites and keeps them: kort and voluit with
+ * `r.o. 3.1`, the link to its place, and the item Bewaar keeps (with the bron's id). The
+ * judgment is read once; per overweging only its number and anchor are added. Null without a
+ * citation.
  */
-export function overwegingCitaat(
+export function citeOverwegingen(j: UitspraakVoorCitaat, bronId: string | null) {
+	const kop = uitspraakKop(j);
+	const ecli = j.ecli;
+	if (!kop || !ecli) return null;
+	const groep = zaakNaam(kop.short, j.names);
+	return (
+		num: string,
+		anker: string,
+		link: string
+	): { kort: string; voluit: string; link: string; bewaar: MapItem | null } => {
+		const at = paragraphCite(ecli, num);
+		const kort = `${kop.short}, ${at}`;
+		const voluit = `${kop.full}, ${at}`;
+		return {
+			kort,
+			voluit,
+			link,
+			bewaar: bronId ? bewaarItem(bronId, { at: anker, kort, voluit }, { groep }) : null
+		};
+	};
+}
+
+/**
+ * One overweging as its menu cites and keeps it (citeOverwegingen). The reader and a map's
+ * item (MapInhoud) offer the same menu from it. Null without a citation.
+ */
+export const overwegingCitaat = (
 	j: UitspraakVoorCitaat,
 	num: string,
 	anker: string,
 	link: string,
 	bronId: string | null
-): {
-	kort: string;
-	voluit: string;
-	link: string;
-	bewaar: MapItem | null;
-} | null {
-	const kop = uitspraakKop(j);
-	if (!kop || !j.ecli) return null;
-	const at = paragraphCite(j.ecli, num);
-	const kort = `${kop.short}, ${at}`;
-	const voluit = `${kop.full}, ${at}`;
-	return {
-		kort,
-		voluit,
-		link,
-		bewaar: bronId
-			? bewaarItem(bronId, { at: anker, kort, voluit }, { groep: zaakNaam(kop.short, j.names) })
-			: null
-	};
-}
+) => citeOverwegingen(j, bronId)?.(num, anker, link) ?? null;

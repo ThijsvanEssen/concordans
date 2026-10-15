@@ -5,7 +5,7 @@
 	import { bevindingen, strekking } from './judgment-outcome';
 	import { keyEcli } from '$lib/bron/address';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import { overwegingCitaat, uitspraakKop, zaakNaam } from '$lib/text/judgment-cite';
+	import { citeOverwegingen, uitspraakKop, zaakNaam } from '$lib/text/judgment-cite';
 	import { paragraphCite } from '$lib/text/ecli';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
@@ -19,7 +19,7 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import CitedText from '$lib/components/articles/CitedText.svelte';
 	import { page } from '$app/state';
-	import { anchorOfHash, landOn, permalink } from '$lib/bron/landing';
+	import { anchorOfHash, landOn, linkTo, viewLink } from '$lib/bron/landing';
 	import { afterTick } from '$lib/util/after-tick';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
@@ -55,6 +55,10 @@
 		'Uitspraak'
 	);
 	const loaded = $derived(judgment.state.status === 'ready' ? judgment.state.data : null);
+	// The judgment's citation and the view's address, once: an overweging adds only its number
+	// and anchor, and another overweging chosen (the hash) changes neither.
+	const citeer = $derived(loaded ? citeOverwegingen(loaded.judgment, node.id) : null);
+	const view = $derived(viewLink(page.url));
 
 	// The anchor of an overweging: `paragraph_id` for the first sub-paragraph split out of
 	// an API paragraph, else built from its number — a later split shares one `paragraph_id`
@@ -195,7 +199,7 @@
 					{ groep: zaakNaam(naamKort, j.names) }
 				),
 				wat: ro && kop ? `r.o. ${ro}` : '',
-				cite: kop ? citeItems({ kort: kop.short, voluit: kop.full }, permalink(page.url, '')) : [],
+				cite: kop ? citeItems({ kort: kop.short, voluit: kop.full }, view) : [],
 				naam: naamKort,
 				bron: deeplink ? { label: sourceName(deeplink) ?? 'Officiële tekst', href: deeplink } : null
 			}}
@@ -348,20 +352,14 @@
 					<div class="reader-heading" id={item.id}>
 						<h3 class="reader-heading__text">{item.text}</h3>
 						<CiteMenu
-							items={citeItems(null, permalink(page.url, item.id))}
+							items={citeItems(null, linkTo(view, item.id))}
 							name={item.text}
 							buttonClass="reader-heading__link"
 						/>
 					</div>
 				{:else if item.kind === 'rov'}
-					<!-- Cited and kept as a map's item offers it too (overwegingCitaat, MapInhoud). -->
-					{@const forms = overwegingCitaat(
-						j,
-						item.num,
-						item.id,
-						permalink(page.url, item.id),
-						node.id
-					)}
+					<!-- Cited and kept as a map's item offers it too (citeOverwegingen, MapInhoud). -->
+					{@const forms = citeer?.(item.num, item.id, linkTo(view, item.id)) ?? null}
 					{@const bewaarItem = forms?.bewaar ?? null}
 					<!-- Every number in one column, whatever its depth; the number is the
 					     overweging's menu, so the text is as wide as the prose around it. -->
