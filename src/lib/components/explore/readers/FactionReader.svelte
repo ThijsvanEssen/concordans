@@ -8,7 +8,8 @@
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
-	import { api, unwrap } from '$lib/api/client';
+	import { getFaction, getFactionVotes } from '$lib/api/factions';
+	import { getMembers } from '$lib/api/members';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import { EK_SOURCE } from '$lib/components/parliamentary/chamber';
@@ -28,7 +29,7 @@
 	// does not load it again and empty the reader for a moment (UX-toets 0.79.43, #33).
 	const faction = load(
 		() => node.key,
-		(key, signal) => unwrap(api.GET('/api/factions/{key}', { params: { path: { key } }, signal })),
+		(key, signal) => getFaction(key, signal),
 		'Fractie'
 	);
 	const loaded = $derived(faction.state.status === 'ready' ? faction.state.data : null);
@@ -38,10 +39,7 @@
 	// with its members.
 	const votes = load(
 		() => (loaded && isEk ? loaded.key : null),
-		(key, signal) =>
-			key
-				? unwrap(api.GET('/api/factions/{key}/votes', { params: { path: { key } }, signal }))
-				: Promise.resolve(null),
+		(key, signal) => (key ? getFactionVotes(key, signal) : Promise.resolve(null)),
 		'Stemgedrag van de fractie'
 	);
 
@@ -53,12 +51,7 @@
 		() => (loaded && !isEk ? loaded.key : null),
 		async (key, signal): Promise<Lid[]> => {
 			if (!key) return [];
-			const r = await unwrap(
-				api.GET('/api/members', {
-					params: { query: { party: key, active: true, limit: 200 } },
-					signal
-				})
-			);
+			const r = await getMembers({ party: key, active: true, limit: 200 }, signal);
 			return [...r].sort((a, b) =>
 				(a.family_name ?? a.name ?? '').localeCompare(b.family_name ?? b.name ?? '', 'nl')
 			);

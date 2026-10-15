@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	addDays,
+	yearsOf,
 	dagMaand,
 	dagVan,
 	DAY_MS,
@@ -65,5 +66,13 @@ describe('days', () => {
 		expect(addDays('2026-10-14', -1)).toBe('2026-10-13');
 		expect(addDays('2026-03-01T10:00:00Z', -1)).toBe('2026-02-28');
 		expect(addDays('2026-12-31', 1)).toBe('2027-01-01');
+	});
+});
+
+describe('yearsOf', () => {
+	it('starts every period with a year, an open one ending in a dash', () => {
+		expect(yearsOf('2017-03-23', '2021-03-31')).toBe('2017–2021');
+		expect(yearsOf('2026-02-23', null)).toBe('2026–');
+		expect(yearsOf('2024-07-02', '2024-11-12')).toBe('2024');
 	});
 });

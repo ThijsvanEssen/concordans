@@ -2,7 +2,8 @@
 // first and, where it is absent or finds nothing, parses the notation itself.
 // TODO(backend B11): the parser goes when every notation resolves.
 import { BW_BOOKS, bookNumber, withBook } from '$lib/text/bw';
-import { api, unwrap } from '$lib/api/client';
+import { getNodePage } from '$lib/api/nodes';
+import { resolve, search } from '$lib/api/search';
 import { ifExists } from '$lib/api/errors';
 import type { Schema } from '$lib/api/types';
 import type { BronRef } from '$lib/bron/href';
@@ -157,27 +158,18 @@ const RESOLVE_KINDS: Record<string, Collection> = {
 
 /** The API behind `resolveQuery`: "geen" only where the API says so (404). */
 export const apiDeps: ResolveDeps = {
-	resolve: async (q) =>
-		resolvedOf(await ifExists(unwrap(api.GET('/api/resolve', { params: { query: { q } } })))),
+	resolve: async (q) => resolvedOf(await ifExists(resolve(q))),
 	lawId: async (law, articleNumber) => {
 		// The API's parser stops at a colon, so it is asked for the part before it.
 		const q = `art. ${articleNumber.split(':')[0]} ${law}`;
-		const found = await unwrap(
-			api.GET('/api/search', { params: { query: { q, types: ['articles'], limit: 1 } } })
-		);
+		const found = await search({ q, types: ['articles'], limit: 1 }, { wait: 'short' });
 		const bwb = found.results.articles?.[0]?.extra?.bwb_id;
 		return typeof bwb === 'string' ? bwb : null;
 	},
 	// A dossier is named without a request (focusOfPad); here it must be known to exist.
 	lookUp: (pad) => (pad.soort === 'dossier' ? lookUpInData(pad) : lookUp(pad)),
 	exists: async ({ collection, key }) =>
-		(await ifExists(
-			unwrap(
-				api.GET('/api/nodes/{collection}/{key}', {
-					params: { path: { collection, key }, query: { limit: 1 } }
-				})
-			)
-		)) !== null
+		(await ifExists(getNodePage(collection, key, { limit: 1 }))) !== null
 };
 
 /**

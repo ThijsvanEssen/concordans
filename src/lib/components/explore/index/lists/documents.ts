@@ -1,7 +1,8 @@
 // Stukken of a Kamer, newest first: always one Kamer, as without a filter the list is slow.
 import type { Schema } from '$lib/api/types';
 import { facetOptions } from '$lib/util/choice';
-import { faceted, type FacetsOf } from '../faceted';
+import { faceted } from '../faceted';
+import type { FacetsOf } from '$lib/api/lists';
 import DocumentRows from '../rows/DocumentRows.svelte';
 import { PAGE, defineList, facetMap, toggle } from './list';
 import type { IndexParams } from './params';

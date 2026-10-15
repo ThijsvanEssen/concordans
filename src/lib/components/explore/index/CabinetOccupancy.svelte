@@ -8,8 +8,8 @@
 	// named above it. A block opens its details beneath its line: by click, Enter or Space,
 	// and by `?open=`. On a narrow screen the lines become text: per seat the holders one under
 	// the other, each with its Strookje on the same scale.
-	import { partyColor } from '$lib/utils/party-color.svelte';
-	import { smalScherm } from '$lib/utils/smal.svelte';
+	import { partyColor } from '$lib/components/explore/party-color.svelte';
+	import { smalScherm } from '$lib/util/smal.svelte';
 	import { POST_LABEL, laterPosts } from './government';
 	import {
 		at,

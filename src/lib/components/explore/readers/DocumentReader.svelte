@@ -10,7 +10,7 @@
 	// Reader for a document (memorie van toelichting, verslag, nota, amendement, motie, ...):
 	// its text. Opened as the toelichting of an article, it lands on the passage for it.
 	import ReaderFrame from './ReaderFrame.svelte';
-	import { api, unwrap } from '$lib/api/client';
+	import { getDocumentPassages } from '$lib/api/documents';
 	import { ifExists, report } from '$lib/api/errors';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
@@ -173,15 +173,7 @@
 		if (!wanted) return;
 		const ac = new AbortController();
 		ifExists(
-			unwrap(
-				api.GET('/api/documents/{key}/passages', {
-					params: {
-						path: { key },
-						query: { bwb_id: wanted.lawId, article: wanted.articleNumber }
-					},
-					signal: ac.signal
-				})
-			)
+			getDocumentPassages(key, { bwb_id: wanted.lawId, article: wanted.articleNumber }, ac.signal)
 		)
 			.then((data) => {
 				if (ac.signal.aborted) return;

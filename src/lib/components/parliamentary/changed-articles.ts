@@ -1,9 +1,6 @@
 // The articles a bill changes, per law (GET /api/dossiers/{number}/changed-articles, API
 // 0.74.0): what the dossier reader shows under "Gewijzigde artikelen".
 import { naamVanId } from '$lib/bron/menselijk';
-import { once } from '$lib/api/records';
-import { api, unwrap } from '$lib/api/client';
-import { ifExists } from '$lib/api/errors';
 import type { Schema } from '$lib/api/types';
 import { bookNumber } from '$lib/text/bw';
 import { langeDatum } from '$lib/text/datum';
@@ -33,14 +30,6 @@ export function zonderArtikelen(data: ChangedArticles, wijzigt: readonly LegalEf
 		(w) => ![w.key, w.bwb_id, w.celex].some((x) => x && bekend.has(x.toLowerCase()))
 	);
 }
-
-/** The changes of a dossier, or null where the API knows no such dossier (404). */
-export const getChangedArticles = (number: string): Promise<ChangedArticles | null> =>
-	once(`dossiers/${number}/changed-articles`, () =>
-		ifExists(
-			unwrap(api.GET('/api/dossiers/{number}/changed-articles', { params: { path: { number } } }))
-		)
-	);
 
 /** What a change does to the article, as the first word of its line: `Wijziging`, `Vervalt`. */
 export const changeHead = (c: DossierChange) => CHANGE_HEAD[changeRelation(c.relation)];

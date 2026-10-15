@@ -8,7 +8,7 @@ describe('the search', () => {
 	it('asks /api/search per lane in the session alone (code-eenvoud F92)', () => {
 		expect(
 			overtreders(
-				(t) => t.includes("'/api/search'"),
+				(t) => /import \{[^}]*\bsearch\b[^}]*\} from '\$lib\/api\/search'/.test(t),
 				[
 					plek('lib/search/session.svelte.ts'),
 					plek('lib/search/resolve-query.ts', 'the law of a cited article, a question of its own')

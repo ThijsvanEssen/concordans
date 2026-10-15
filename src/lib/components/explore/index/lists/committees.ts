@@ -1,5 +1,5 @@
 // Commissies of a Kamer, filtered and sorted here: the API gives them all at once.
-import { api, unwrap } from '$lib/api/client';
+import { getCommittees } from '$lib/api/committees';
 import type { Schema } from '$lib/api/types';
 import CommitteeRows from '../rows/CommitteeRows.svelte';
 import { defineList, flag, matches, sorted, type Columns, type SortDef } from './list';
@@ -37,7 +37,7 @@ export const committees = defineList<Row, object, ReturnType<typeof query>>({
 	period: () => ({ label: 'Actief', unit: 'date' }),
 	query,
 	load: async (query, _offset, signal) => {
-		const items = await unwrap(api.GET('/api/committees', { params: { query }, signal }));
+		const items = await getCommittees(query, signal);
 		return { items, total: items.length };
 	},
 	shown: (rows, { p, sort, dir }) =>

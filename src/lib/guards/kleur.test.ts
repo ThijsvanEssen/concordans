@@ -20,7 +20,16 @@ describe('colour', () => {
 		expect(
 			overtreders(
 				(t) => t.includes(`'/api/parties/colors'`),
-				[plek('lib/components/explore/partijkleuren.svelte.ts')]
+				[plek('lib/api/parties.ts', 'the request')]
+			)
+		).toEqual([]);
+		expect(
+			overtreders(
+				(t) => /\bgetPartyColors\b/.test(t),
+				[
+					plek('lib/api/parties.ts', 'the request'),
+					plek('lib/components/explore/partijkleuren.svelte.ts')
+				]
 			)
 		).toEqual([]);
 	});

@@ -1,12 +1,9 @@
-import type { Schema } from '$lib/api/types';
+import type { QueryOf, Schema } from '$lib/api/types';
 import { NODE_TYPES, type Collection, type Relation } from '$lib/vocabulary';
-import { api, unwrap, slowApi } from './client';
+import { api, clientFor, unwrap } from './client';
 
 // Keys are lower case in the API and the routes are case-sensitive.
 const path = (collection: Collection, key: string) => ({ collection, key: key.toLowerCase() });
-
-/** A light node waits the ordinary 10 s, any other as long as the API does. */
-const clientOf = (wait: 'short' | 'long' = 'long') => (wait === 'short' ? api : slowApi);
 
 /** The most the API gives per bucket of a node. */
 export const NODE_BUCKET = 200;
@@ -37,7 +34,7 @@ export const getNodeGraph = (
 	} = {}
 ) =>
 	unwrap(
-		clientOf(opts.wait).GET('/api/nodes/{collection}/{key}', {
+		clientFor(opts.wait).GET('/api/nodes/{collection}/{key}', {
 			params: {
 				path: path(collection, key),
 				query: {
@@ -184,3 +181,24 @@ export const getNodeNeighborhood = (
 			signal: opts.signal
 		})
 	);
+
+/**
+ * A node by its key as given, under `query`, in the ordinary 10 s: whether a bron exists
+ * (`limit: 1`), or one bucket of it.
+ */
+export const getNodePage = (
+	collection: Collection,
+	key: string,
+	query: QueryOf<'/api/nodes/{collection}/{key}'>,
+	signal?: AbortSignal
+) =>
+	unwrap(
+		api.GET('/api/nodes/{collection}/{key}', {
+			params: { path: { collection, key }, query },
+			signal
+		})
+	);
+
+/** The paths between bronnen (`/api/paths`). */
+export const getPaths = (query: QueryOf<'/api/paths'>) =>
+	unwrap(api.GET('/api/paths', { params: { query } }));

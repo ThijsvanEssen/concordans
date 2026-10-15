@@ -6,7 +6,7 @@
 import { motionOrAmendment, shortKind } from '$lib/text/document-kind';
 import { langeDatum } from '$lib/text/datum';
 import { separatorBefore, textOf, truncate } from '$lib/text/words';
-import { getDossier } from '$lib/components/parliamentary/data';
+import { getDossier } from '$lib/api/dossiers';
 import { getNodeFirst, once } from '$lib/api/records';
 import { ifExists } from '$lib/api/errors';
 import { getNodeGraph } from '$lib/api/nodes';

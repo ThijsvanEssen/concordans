@@ -12,7 +12,7 @@
 	import { afterNavigate, goto } from '$app/navigation';
 	import type { Collection } from '$lib/vocabulary';
 	import { sprongDoel } from '$lib/stores/sprong';
-	import { BESIDE, PHONE, READ_BESIDE } from '$lib/utils/breakpoints';
+	import { BESIDE, PHONE, READ_BESIDE } from '$lib/util/breakpoints';
 	import { laadWetsnetwerk } from '$lib/components/actueel/wetsnetwerk';
 	import { vandaag } from '$lib/text/datum';
 	import { meldNetwerk } from '$lib/stores/netwerk-melding';
@@ -22,7 +22,7 @@
 		NEIGHBORHOOD_CAP_PHONE,
 		type NeighborhoodReach
 	} from '$lib/graph/store/types';
-	import { lawArticles, lawNav, type LawNavItem } from '$lib/api/law-articles';
+	import { lawArticles, lawNav, type LawNavItem } from '$lib/bron/law-articles';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import { pageName } from '$lib/bron/tab-title';
 	import { titelVan } from '$lib/bron/titels.svelte';
@@ -34,7 +34,8 @@
 	import { getNodeCanvas, getNodeHull } from '$lib/api/records';
 	import { kopNode } from '$lib/bron/kop';
 	import { bronHref, focusOf, refId, refOf } from '$lib/bron/href';
-	import { getDossierKey, getMemberVotes } from '$lib/components/parliamentary/data';
+	import { getDossierKey } from '$lib/api/dossiers';
+	import { getMemberVotes } from '$lib/api/members';
 	import { createGraphStore } from '$lib/graph/graph-store';
 	import type { CanvasRow } from '$lib/graph/store/types';
 	import type GraphView from '$lib/components/graph/GraphView.svelte';

@@ -1,7 +1,6 @@
-<script lang="ts">
+<script lang="ts" generics="B = unknown">
 	import { bewaarItem } from '$lib/map/map';
 	import BronLink from '$lib/bron/BronLink.svelte';
-	import CoalitieRegel from '$lib/components/parliamentary/CoalitieRegel.svelte';
 	// De gedeelde tijdlijn, het ene patroon voor een reeks met datums. Datum links in een vaste
 	// kolom, alleen wat de kop nog niet zegt; een teken op een doorlopende lijn; dan label, zin
 	// en meta. Het teken is dat van de soort, zoals in het netwerk en Verbonden: een stemming
@@ -11,8 +10,7 @@
 	// verder. Een termijn (`perioden`, Loopbaan) is geen moment: geen lijn en geen teken.
 	import type { Snippet } from 'svelte';
 	import { sorteer, type TijdGroep, type TijdRegel, type Volgorde } from './tijdlijn';
-	import { dagMaand } from '$lib/text/datum';
-	import { yearsOf } from '$lib/components/parliamentary/career';
+	import { dagMaand, yearsOf } from '$lib/text/datum';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import Markering from '$lib/components/ui/Markering.svelte';
 	import { isOpen, subKey } from '$lib/components/ui/dicht.svelte';
@@ -23,7 +21,7 @@
 	import { parseNodeId } from '$lib/vocabulary';
 	// Het teken op de lijn is het bronteken zelf, uit dezelfde tabel als KindGlyph en het
 	// canvas (vormen.ts); de uitkomst zit in vulling en kleur. Geen teken van zichzelf.
-	const vormVan = (r: TijdRegel) =>
+	const vormVan = (r: TijdRegel<B>) =>
 		VORMEN[r.vorm ?? (r.soort ? VORM_VAN[r.soort] : null) ?? 'overig'];
 
 	let {
@@ -37,9 +35,10 @@
 		openId,
 		onToggle,
 		leeg = null,
-		meer
+		meer,
+		onderRegel
 	}: {
-		groepen: TijdGroep[];
+		groepen: TijdGroep<B>[];
 		/** Zonder datumkolom als de kop de dag al noemt. */ datums?: boolean;
 		/** Each group's heading opens and closes it (the procedure of a dossier: the Raad van
 		 *  State, the Tweede and the Eerste Kamer); open until closed, kept per heading. */
@@ -59,10 +58,12 @@
 		leeg?: string | null;
 		/** Onder de laatste groep, in de tekstkolom: Volgende dagen, Alle 9 openstaande toezeggingen. */
 		meer?: Snippet;
+		/** Under a line with `bij`, after its meta: what the caller draws of it (CoalitieRegel). */
+		onderRegel?: Snippet<[B]>;
 	} = $props();
 
 	/** Het jaar onder de dag, tenzij de kop het al noemt. */
-	const metJaar = (g: TijdGroep, iso: string) => iso.slice(0, 4) !== g.jaar;
+	const metJaar = (g: TijdGroep<B>, iso: string) => iso.slice(0, 4) !== g.jaar;
 
 	// One line open at a time.
 	let eigen = $state<string | null>(null);
@@ -71,18 +72,18 @@
 		if (onToggle) onToggle(id);
 		else eigen = eigen === id ? null : id;
 	};
-	function opRegel(e: MouseEvent, r: TijdRegel) {
+	function opRegel(e: MouseEvent, r: TijdRegel<B>) {
 		if (r.inhoud) rowClick(e, () => wissel(r.id));
 	}
 
-	const regelsVan = (g: TijdGroep) => (volgorde ? sorteer(g.regels, volgorde) : g.regels);
+	const regelsVan = (g: TijdGroep<B>) => (volgorde ? sorteer(g.regels, volgorde) : g.regels);
 	/** What a line's Bewaar keeps: the bron it names, by its zin, under its kind. */
-	const bewaarVan = (r: TijdRegel) => {
+	const bewaarVan = (r: TijdRegel<B>) => {
 		const id = r.bron ?? (typeof r.ref === 'string' ? r.ref : null);
 		const doel = id ? parseNodeId(id) : null;
 		return id && doel ? bewaarItem(id, { kort: r.zin, voluit: r.zin }) : null;
 	};
-	const bronVan = (r: TijdRegel) =>
+	const bronVan = (r: TijdRegel<B>) =>
 		r.href ?? (r.ref ? openHref(r.ref, { hasText: r.heeftTekst }) : null);
 	const uid = $props.id();
 </script>
@@ -174,10 +175,7 @@
 									>{:else}<span class="zin">{@render zinVan(r)}</span>{/if}
 								{#if r.meta}<span class="meta">{r.meta}</span>{/if}
 								{#if r.onder}<span class="meta">{@render r.onder(r.id)}</span>{/if}
-								{#if r.coalitie}<CoalitieRegel
-										coalitie={r.coalitie.blok}
-										fracties={r.coalitie.fracties}
-									/>{/if}
+								{#if r.bij && onderRegel}{@render onderRegel(r.bij)}{/if}
 								{#if isHet && r.inhoud}<div class="inhoud" id="{uid}-{r.id}">
 										{@render r.inhoud(r.id)}
 									</div>{/if}

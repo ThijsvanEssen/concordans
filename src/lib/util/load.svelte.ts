@@ -10,11 +10,11 @@ export type LoadState<T> =
 	| { status: 'error'; error: unknown }
 	| { status: 'ready'; data: T };
 
-type Fetch<K, T> = (key: K, signal: AbortSignal) => Promise<T>;
+type Ask<K, T> = (key: K, signal: AbortSignal) => Promise<T>;
 
 /** The loader without the runes: `load` starts a key, `retry` the last one, `stop` drops it. */
 export function createLoader<K, T>(
-	fetch: Fetch<K, T>,
+	ask: Ask<K, T>,
 	onState: (state: LoadState<T>) => void,
 	where: string
 ) {
@@ -27,7 +27,7 @@ export function createLoader<K, T>(
 		onState({ status: 'loading' });
 		let request: Promise<T>;
 		try {
-			request = fetch(key, controller.signal);
+			request = ask(key, controller.signal);
 		} catch (e) {
 			request = Promise.reject(e);
 		}
@@ -56,14 +56,14 @@ export function createLoader<K, T>(
 }
 
 /**
- * What `key()` names, loaded by `fetch` for as long as the component lives:
+ * What `key()` names, loaded by `ask` for as long as the component lives:
  * `const lid = load(() => id, (id, signal) => getMember(id, { signal }), 'Lid')`, then
  * `<LoadState state={lid.state} what="Het lid" retry={lid.retry}>`. Only the key is
- * tracked: what `fetch` reads does not start it again.
+ * tracked: what `ask` reads does not start it again.
  */
-export function load<K, T>(key: () => K, fetch: Fetch<K, T>, where = 'load') {
+export function load<K, T>(key: () => K, ask: Ask<K, T>, where = 'load') {
 	let state = $state.raw<LoadState<T>>({ status: 'loading' });
-	const loader = createLoader<K, T>(fetch, (s) => (state = s), where);
+	const loader = createLoader<K, T>(ask, (s) => (state = s), where);
 	const asked = $derived(key());
 	$effect(() => {
 		const k = asked;

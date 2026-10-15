@@ -12,17 +12,17 @@
 	// that came in before it, as the API finds them (`huur`: nothing since September).
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
-	import { unwrap, slowApi } from '$lib/api/client';
+	import { getFeed } from '$lib/api/feed';
 	import FeedDay from '$lib/components/actueel/FeedDay.svelte';
 	import Doorzocht from '$lib/components/actueel/Doorzocht.svelte';
 	import {
 		atomHref,
 		daysOf,
 		doorzochtVanaf,
-		feedStand,
 		normalizeItem,
 		type FeedItem
 	} from '$lib/components/actueel/feed';
+	import { feedStand } from '$lib/text/stand';
 	import {
 		deelAdres,
 		isNieuw,
@@ -131,12 +131,7 @@
 			let eerder = false;
 			let gelukt = true;
 			const vraag = (query: Record<string, unknown>) =>
-				unwrap(
-					slowApi.GET('/api/feed', {
-						params: { query: { ...vraagVan(o), ...query, facets: false } },
-						signal
-					})
-				);
+				getFeed({ ...vraagVan(o), ...query, facets: false }, { signal });
 			try {
 				let r = await vraag({
 					since: vanaf(o),

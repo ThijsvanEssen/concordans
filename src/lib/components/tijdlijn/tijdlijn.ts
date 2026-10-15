@@ -3,7 +3,8 @@
 import type { Snippet } from 'svelte';
 
 export type Teken = 'ja' | 'nee' | 'stuk' | 'activiteit' | 'verwacht' | 'open';
-export type TijdRegel = {
+/** A line of a timeline; `B` is what its caller draws under it (`bij`, the Tijdlijn's `onderRegel`). */
+export type TijdRegel<B = unknown> = {
 	id: string;
 	/** ISO-datum; leeg bij wat nog kan volgen. */
 	datum: string | null;
@@ -36,11 +37,9 @@ export type TijdRegel = {
 	groot?: boolean;
 	/** A line that leads elsewhere on the page (a day of votes to its list), not to a bron. */
 	actie?: (() => void) | null;
-	/** A vote of the Tweede Kamer: what the coalition did, as a line under it (CoalitieRegel). */
-	coalitie?: {
-		blok: import('$lib/api/types').Schema<'CoalitionVoteDTO'>;
-		fracties: import('$lib/api/types').Schema<'CoalitionFactionDTO'>[];
-	} | null;
+	/** Under the line, after its meta: what the caller draws with `onderRegel` (a vote of the
+	 *  Tweede Kamer: what the coalition did, CoalitieRegel). */
+	bij?: B | null;
 	/** Wat één klik onder de regel opent: de inhoud van de bron zelf (RijInhoud). De bron
 	 *  staat dan een stap verder, in die inhoud; cmd-klik op de zin opent hem meteen. Het
 	 *  krijgt de id van de regel, zodat één snippet de regels van een lijst kan dienen. */
@@ -54,13 +53,13 @@ export type TijdRegel = {
 	/** Bij hover, wat de regel zelf niet zegt. */
 	hint?: string | null;
 };
-export type TijdGroep = {
+export type TijdGroep<B = unknown> = {
 	id: string;
 	titel: string;
 	sub?: string | null;
 	/** Het jaar dat de kop al noemt: dan staat het niet nog eens onder elke dag. */
 	jaar?: string | null;
-	regels: TijdRegel[];
+	regels: TijdRegel<B>[];
 	noot?: string | null;
 };
 
@@ -71,7 +70,7 @@ export type Volgorde = 'oplopend' | 'aflopend';
  * De regels van een groep op datum, stabiel: regels van één dag houden hun volgorde. Wat
  * nog kan volgen (zonder datum) staat achteraan.
  */
-export function sorteer(regels: readonly TijdRegel[], volgorde: Volgorde): TijdRegel[] {
+export function sorteer<R extends TijdRegel>(regels: readonly R[], volgorde: Volgorde): R[] {
 	const richting = volgorde === 'oplopend' ? 1 : -1;
 	return [...regels].sort((a, b) => {
 		if (!a.datum || !b.datum) return (a.datum ? 0 : 1) - (b.datum ? 0 : 1);

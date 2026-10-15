@@ -5,7 +5,8 @@
 // Each lane on its own (lanes.ts): its group waits or fails alone, and "Probeer opnieuw" asks
 // it again without the rest. The first lane in scope also says what the query cites.
 import { untrack } from 'svelte';
-import { isTimeout, slowApi, unwrap } from '$lib/api/client';
+import { isTimeout } from '$lib/api/client';
+import { search } from '$lib/api/search';
 import { report } from '$lib/api/errors';
 import type { Schema } from '$lib/api/types';
 import type { BronRef } from '$lib/bron/href';
@@ -463,7 +464,7 @@ export class SearchSession {
 		this.lanes[lane.id].status = 'loading';
 		// The search client waits as long as the API may (30 s): a cold path took longer than
 		// the 10 s of the others (Thijs, 10 Oct).
-		unwrap(slowApi.GET('/api/search', { params: { query }, signal }))
+		search(query, { signal })
 			.then((r) => {
 				if (!current()) return;
 				const hits = r.results as Hits;

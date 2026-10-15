@@ -5,7 +5,7 @@
 	import { getStats } from '$lib/api/stats';
 	import { load } from '$lib/util/load.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
-	import { modKey } from '$lib/utils/platform';
+	import { modKey } from '$lib/util/platform';
 	import { RELATIONS } from '$lib/vocabulary';
 	import { relationLabel } from '$lib/verbonden/hoe';
 

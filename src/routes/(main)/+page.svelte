@@ -6,7 +6,7 @@
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import Search from '$lib/search/Search.svelte';
-	import { api, unwrap } from '$lib/api/client';
+	import { getFeedSummary } from '$lib/api/feed';
 	import { bronHref } from '$lib/bron/href';
 	import type { Collection } from '$lib/vocabulary';
 	import { atomHref, dayLabel, CLOSE_VOTE } from '$lib/components/actueel/feed';
@@ -96,19 +96,15 @@
 
 	/** The last days in one answer: their counts and the events that stand alone. */
 	async function loadLines(signal: AbortSignal) {
-		const summary = await unwrap(
-			api.GET('/api/feed/summary', {
-				params: {
-					query: {
-						until: today,
-						days: SUMMARY_DAYS,
-						margin: CLOSE_VOTE,
-						few: FEW_VOTES,
-						limit: SUMMARY_ITEMS
-					}
-				},
-				signal
-			})
+		const summary = await getFeedSummary(
+			{
+				until: today,
+				days: SUMMARY_DAYS,
+				margin: CLOSE_VOTE,
+				few: FEW_VOTES,
+				limit: SUMMARY_ITEMS
+			},
+			signal
 		);
 		lines = timelineOf(summary, LINES_SHOWN);
 		actueelStaat = 'klaar';

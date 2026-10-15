@@ -1,5 +1,5 @@
 // Fracties of a Kamer, the sitting ones unless the dissolved ones are asked for, under its hall.
-import { api, unwrap } from '$lib/api/client';
+import { getFactions } from '$lib/api/factions';
 import type { Schema } from '$lib/api/types';
 import { seatedOnly } from '../period';
 import FactionRows from '../rows/FactionRows.svelte';
@@ -30,7 +30,7 @@ export const factions = defineList<Row, object, ReturnType<typeof query>>({
 	period: () => ({ label: 'Actief', unit: 'date' }),
 	query,
 	load: async (query, _offset, signal) => {
-		const items = await unwrap(api.GET('/api/factions', { params: { query }, signal }));
+		const items = await getFactions(query, signal);
 		return { items, total: items.length };
 	},
 	shown: (rows, { sort, dir }) =>

@@ -6,7 +6,7 @@
 import { textOf } from '$lib/text/words';
 import { ifExists } from '$lib/api/errors';
 import { abortable } from '$lib/api/records';
-import { getDossierMutations } from '$lib/components/parliamentary/data';
+import { getDossierMutations } from '$lib/api/dossiers';
 import { type Row } from './rows';
 import { dossierNumbersOf } from '$lib/bron/describe';
 import { readEdge } from './edge-meta';

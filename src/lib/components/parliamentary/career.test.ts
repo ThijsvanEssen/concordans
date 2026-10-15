@@ -1,13 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-	careerOf,
-	currentTitle,
-	foldPremier,
-	inYears,
-	seatWord,
-	type CareerEntry,
-	yearsOf
-} from './career';
+import { careerOf, currentTitle, foldPremier, inYears, seatWord, type CareerEntry } from './career';
+import { yearsOf } from '$lib/text/datum';
 
 const d66 = (from: string, to: string | null, role = 'Lid') => ({
 	faction_id: 'factions/d66',
@@ -106,14 +99,6 @@ describe('careerOf with posts in a cabinet', () => {
 
 	it('names a person by the post they hold now', () => {
 		expect(currentTitle(career, false)).toBe('Minister-president van Nederland');
-	});
-});
-
-describe('yearsOf', () => {
-	it('starts every period with a year, an open one ending in a dash', () => {
-		expect(yearsOf('2017-03-23', '2021-03-31')).toBe('2017–2021');
-		expect(yearsOf('2026-02-23', null)).toBe('2026–');
-		expect(yearsOf('2024-07-02', '2024-11-12')).toBe('2024');
 	});
 });
 

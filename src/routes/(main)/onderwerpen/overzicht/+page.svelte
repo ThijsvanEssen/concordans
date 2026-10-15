@@ -17,7 +17,7 @@
 	import { page } from '$app/state';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
 	import { load } from '$lib/util/load.svelte';
-	import { api, unwrap } from '$lib/api/client';
+	import { getFeed } from '$lib/api/feed';
 	import { isAborted, report } from '$lib/api/errors';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import type { KolomKop } from '$lib/onderwerpen/Kruiswoord.svelte';
@@ -629,7 +629,7 @@
 			feedCursor = null;
 			meerFout = null;
 			if (!query) return;
-			const r = await unwrap(api.GET('/api/feed', { params: { query }, signal }));
+			const r = await getFeed(query, { signal, wait: 'short' });
 			feedLijst = r.items.map(normalizeItem);
 			feedCursor = r.next_cursor ?? null;
 		},
@@ -640,9 +640,7 @@
 		meerLaden = true;
 		meerFout = null;
 		try {
-			const r = await unwrap(
-				api.GET('/api/feed', { params: { query: { ...feedVraag, cursor: feedCursor } } })
-			);
+			const r = await getFeed({ ...feedVraag, cursor: feedCursor }, { wait: 'short' });
 			feedLijst = [...feedLijst, ...r.items.map(normalizeItem)];
 			feedCursor = r.next_cursor ?? null;
 		} catch (e) {

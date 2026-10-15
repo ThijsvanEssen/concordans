@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { openHref } from '$lib/bron/href';
 	import NameLink from '$lib/bron/NameLink.svelte';
-	import { partyColor } from '$lib/utils/party-color.svelte';
+	import { partyColor } from '$lib/components/explore/party-color.svelte';
 	import IndexRow from '../IndexRow.svelte';
 	import { inOffice, period, type Cabinet } from '../government';
 	import type { ViewProps } from '../lists/list';

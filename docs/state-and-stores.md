@@ -23,7 +23,7 @@ There is no history in the store. Every link to a bron is a navigation (`bronHre
 | `sprong.ts`          | The second skip link, "Naar de lijst", of a page with a list.                                               |
 | `zwevend.ts`         | Which of the two cards over the network, Netwerk and the legend, gives way when there is no room for both.  |
 
-Module-level caches: `$lib/api/records.ts` (`once`, the records of readers and of `GraphStore`), `law-articles.ts` (the articles of a law), `stats.ts`, `instrument-cache.ts` (law names by BWB id), `src/lib/utils/party-color.svelte.ts` (party colours; a party the API does not list is grey) and the address ↔ focus maps of `bron/leesbaar.ts`.
+Module-level caches: `$lib/api/records.ts` (`once`, the records of readers and of `GraphStore`), `law-articles.ts` (the articles of a law), `stats.ts`, `instrument-cache.ts` (law names by BWB id), `src/lib/components/explore/party-color.svelte.ts` (party colours; a party the API does not list is grey) and the address ↔ focus maps of `bron/leesbaar.ts`.
 
 ## GraphStore
 
@@ -52,7 +52,7 @@ An effect that fetches passes an `AbortSignal` and aborts in its cleanup, so a v
 ```ts
 $effect(() => {
 	const controller = new AbortController();
-	unwrap(api.GET('/api/search', { params: { query: { q } }, signal: controller.signal }))
+	search({ q }, { signal: controller.signal })
 		.then((result) => (results = result))
 		.catch(() => {});
 	return () => controller.abort();

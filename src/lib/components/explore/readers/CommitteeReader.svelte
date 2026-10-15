@@ -8,13 +8,16 @@
 	import ReaderFrame from './ReaderFrame.svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronLabel } from '$lib/vocabulary';
-	import { committeeSlug, getCommittee } from '$lib/components/parliamentary/data';
+	import { getCommittee } from '$lib/api/committees';
 	import { OUTCOME_LABEL, type Outcome } from '$lib/components/parliamentary/stages';
 	import { chamberName } from '$lib/components/parliamentary/chamber';
 	import { seatWord } from '$lib/components/parliamentary/career';
 	import { load } from '$lib/util/load.svelte';
 
 	let { node }: { node: GraphNode } = $props();
+
+	/** A committee is addressed by slug in `/api/committees/{slug}`; the node key is a GUID. */
+	const committeeSlug = (n: GraphNode): string | null => textOf(n.raw?.props?.slug);
 
 	const p = $derived(node.raw?.props ?? {});
 	const name = $derived(textOf(p.name) ?? node.raw?.display_name ?? node.label);

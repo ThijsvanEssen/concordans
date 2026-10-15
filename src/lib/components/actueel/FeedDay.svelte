@@ -18,6 +18,7 @@
 	import type { TijdRegel } from '$lib/components/tijdlijn/tijdlijn';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
 	import CoalitieRegel from '$lib/components/parliamentary/CoalitieRegel.svelte';
+	import type { CoalitieBij } from '$lib/components/parliamentary/coalitie';
 	import { inhoudVan } from '$lib/components/open/rij-inhoud';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import SubmitterLine from '$lib/bron/SubmitterLine.svelte';
@@ -49,7 +50,7 @@
 	import { markeer } from '$lib/text/treffer';
 	import Markering from '$lib/components/ui/Markering.svelte';
 	import { ministryName } from '$lib/components/explore/index/ministries.svelte';
-	import { partyColor } from '$lib/utils/party-color.svelte';
+	import { partyColor } from '$lib/components/explore/party-color.svelte';
 
 	/** Medeindieners named in a line; the rest are counted. */
 	const SUBMITTERS_SHOWN = 2;
@@ -127,7 +128,7 @@
 		)
 	);
 
-	const regels = $derived<TijdRegel[]>(
+	const regels = $derived<TijdRegel<CoalitieBij>[]>(
 		day.entries.map((entry) => {
 			if ('fold' in entry) {
 				const f = entry.fold;
@@ -161,7 +162,7 @@
 				onder: itemOnder,
 				// What the coalition did on a vote of the Tweede Kamer (API 0.79.45, #546): the
 				// same line as under the bill's vote in a dossier's procedure.
-				coalitie: i.vote?.coalition
+				bij: i.vote?.coalition
 					? { blok: i.vote.coalition, fracties: i.vote.coalition_factions ?? [] }
 					: null,
 				// Opened, the bron's own content; a kind with none beyond the line does not open,
@@ -180,7 +181,13 @@
 	{openId}
 	{onToggle}
 	{meer}
+	{onderRegel}
 />
+
+{#snippet onderRegel(c: CoalitieBij)}<CoalitieRegel
+		coalitie={c.blok}
+		fracties={c.fracties}
+	/>{/snippet}
 
 <!-- Under an item's headline: where it was published, its dossier, its persons, its ministry,
      the law it concerns; then the tally of a vote, the state of a toezegging. -->

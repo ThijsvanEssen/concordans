@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fakeApi, fail, type FakeRequest } from '$lib/test/fakeApi';
-import { faceted, type FacetedPath, type FacetsApart } from './faceted';
+import type { FacetedPath } from '$lib/api/lists';
+import { faceted, type FacetsApart } from './faceted';
 
 const settle = () => new Promise((r) => setTimeout(r));
 

@@ -7,7 +7,7 @@
 	import { fractieNaam, naamVan } from '$lib/bron/menselijk';
 	import ReaderHead from './ReaderHead.svelte';
 	import { formatCount } from '$lib/text/getal';
-	import { korteDatum, vandaag } from '$lib/text/datum';
+	import { korteDatum, vandaag, yearsOf } from '$lib/text/datum';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
@@ -21,13 +21,12 @@
 	import type { Neighbor } from '$lib/api/nodes';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
-	import { getMemberVotes, getMemberVotesInOffice } from '$lib/components/parliamentary/data';
+	import { getMemberVotes, getMemberVotesInOffice } from '$lib/api/members';
 	import {
 		careerOf,
 		currentTitle,
 		inYears,
 		seatWord,
-		yearsOf,
 		type CareerEntry,
 		type Signature
 	} from '$lib/components/parliamentary/career';
