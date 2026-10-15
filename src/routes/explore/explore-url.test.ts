@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
 	besideJudgment,
 	depthFor,
-	exploreMode,
 	explicitDepth,
 	filterQuery,
 	indexCategory,
@@ -11,23 +10,6 @@ import {
 } from './explore-url';
 
 const q = (query: string) => new URLSearchParams(query);
-
-describe('exploreMode', () => {
-	it.each([
-		['', 'graph'],
-		['mode=index', 'index'],
-		['mode=index&focus=articles/a_1&lezen=1', 'index'],
-		['focus=articles/a_1', 'graph'],
-		['focus=articles/a_1&lezen=1', 'read'],
-		['focus=judgments/ecli_nl_hr_2019_1&lezen=1', 'read'],
-		['focus=members/m1&lezen=1', 'graph'],
-		['focus=members/m1&tabel=1', 'read'],
-		['tabel=1', 'graph'],
-		['lezen=1', 'graph']
-	])('?%s is %s', (query, mode) => {
-		expect(exploreMode(q(query))).toBe(mode);
-	});
-});
 
 describe('the depth', () => {
 	it.each([

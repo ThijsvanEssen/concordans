@@ -33,7 +33,7 @@
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { getNodeCanvas, getNodeHull } from '$lib/api/records';
 	import { kopNode } from '$lib/bron/first-node';
-	import { bronHref, focusOf, refId, refOf } from '$lib/bron/href';
+	import { bronHref, exploreMode, focusOf, hasReadableFocus, refId, refOf } from '$lib/bron/href';
 	import { getDossierKey } from '$lib/api/dossiers';
 	import { getMemberVotes } from '$lib/api/members';
 	import { createGraphStore } from '$lib/graph/graph-store';
@@ -87,8 +87,8 @@
 		padOfFocus,
 		parsePad,
 		remember as rememberPad,
-		verkennerHref,
-		verkennerUrl
+		exploreHref,
+		exploreUrl
 	} from '$lib/bron/leesbaar';
 	import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 	import NetwerkPanel from '$lib/selection/NetwerkPanel.svelte';
@@ -107,10 +107,8 @@
 	import {
 		besideJudgment,
 		depthFor as depthOfClass,
-		exploreMode,
 		explicitDepth as explicitDepthOf,
 		filterQuery,
-		hasReadableFocus,
 		indexCategory,
 		nameOfPad,
 		netwerkQuery as netwerkQueryOf
@@ -151,7 +149,7 @@
 
 	// The URL as the Verkenner reads it: a readable address (/uitspraken/ECLI:…) has its
 	// focus in the path, and reads as /explore?focus=… (see $lib/bron/leesbaar.ts).
-	const logisch = $derived(verkennerUrl(page.url));
+	const logisch = $derived(exploreUrl(page.url));
 	const params = $derived(logisch.searchParams);
 
 	// ── A readable address the API has to look up ────────────────────────────
@@ -192,7 +190,7 @@
 		const path = padOfFocus(f, props);
 		if (!path) return;
 		rememberPad(path, f);
-		navigate(verkennerHref(logisch.searchParams, page.url.hash, props));
+		navigate(exploreHref(logisch.searchParams, page.url.hash, props));
 	});
 	const readableFocus = $derived(hasReadableFocus(params));
 	const mode = $derived(exploreMode(params));
@@ -252,7 +250,7 @@
 		laadWetsnetwerk([], vandaag(), ac.signal)
 			.then((schets) => {
 				if (!schets || ac.signal.aborted) return;
-				const query = new URL(schets.verkenner, location.origin).searchParams.toString();
+				const query = new URL(schets.exploreHref, location.origin).searchParams.toString();
 				voorbeeld = { query, naam: schets.kandidaat.naam };
 			})
 			.catch((e) => report('Verkenner voorbeeld', e));
@@ -849,8 +847,8 @@
 	afterNavigate((nav) => {
 		const van = nav.from?.url;
 		const naar = nav.to?.url;
-		const from = van ? verkennerUrl(van).searchParams : null;
-		const to = naar ? verkennerUrl(naar).searchParams : null;
+		const from = van ? exploreUrl(van).searchParams : null;
+		const to = naar ? exploreUrl(naar).searchParams : null;
 		const changed = (name: string) => (from?.get(name) ?? null) !== (to?.get(name) ?? null);
 		if (nav.type === 'link' || nav.type === 'popstate' || changed('focus') || changed('lezen'))
 			steppedIn = true;
@@ -871,7 +869,7 @@
 		const href =
 			!f && pad
 				? queryHref(page.url.pathname, next) + page.url.hash
-				: verkennerHref(next, page.url.hash, props);
+				: exploreHref(next, page.url.hash, props);
 		navigate(href, { step: push });
 	}
 

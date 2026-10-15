@@ -1,5 +1,5 @@
 // The Verkenner's state as its address holds it, as pure functions of the query the Verkenner
-// reads (verkennerUrl: a readable address has its focus in the path). The page derives its
+// reads (exploreUrl: a readable address has its focus in the path). The page derives its
 // state from these; writing the address stays with the page.
 //
 // ?mode=index (Bladeren, with ?kind), ?focus (the bron), ?lezen=1 (read at full width),
@@ -8,32 +8,13 @@
 // (?bronnen, ?lid, ?rechter, ?van, ?tot, ?geldend, ?betrouwbaarheid, ?status, ?jaar, ?zoek),
 // the netwerk of chosen bronnen (?netwerk, ?uit, ?tussen), ?paneel (a phone's tab, read once)
 // and the position inside the text as the fragment.
-import { isReadable } from '$lib/bron/href';
 import { keyEcli, padHref, type Pad } from '$lib/bron/leesbaar';
 import { kamerstukName } from '$lib/components/parliamentary/kamerstuk';
 import { isIndexCategory, type IndexCategory } from '$lib/components/explore/index/categories';
 import { isContainerKind } from '$lib/graph/container-membership';
 import type { GraphNode, DrawClass } from '$lib/graph/types';
 import { filterParams, parseFilter } from '$lib/verbonden/filter';
-import { parseNodeId, type Mode } from '$lib/vocabulary';
-
-/** The bron of ?focus has a text of its own, to read at full width. */
-export function hasReadableFocus(params: URLSearchParams): boolean {
-	const target = parseNodeId(params.get('focus') ?? '');
-	return target ? isReadable(target.collection) : false;
-}
-
-/**
- * The Verkenner is the network. A bron with a text of its own is read at full width
- * (?lezen=1); its verbindingen as a table are read so too, whatever the bron. Bladeren is
- * ?mode=index, whatever else the address holds.
- */
-export function exploreMode(params: URLSearchParams): Mode {
-	if (params.get('mode') === 'index') return 'index';
-	if (!params.get('focus')) return 'graph';
-	if (params.get('tabel') === '1') return 'read';
-	return params.get('lezen') === '1' && hasReadableFocus(params) ? 'read' : 'graph';
-}
+import { parseNodeId } from '$lib/vocabulary';
 
 /** The steps from the focus the canvas can show, and what an unreadable ?diepte means. */
 export const DEPTH = { min: 1, max: 3, fallback: 2 } as const;

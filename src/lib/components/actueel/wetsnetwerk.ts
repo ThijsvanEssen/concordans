@@ -11,7 +11,7 @@ import { getFeed } from '$lib/api/feed';
 import { getCitedByTop } from '$lib/api/articles';
 import type { Schema } from '$lib/api/types';
 import { buildBronHref } from '$lib/bron/href';
-import { verkennerHref } from '$lib/bron/leesbaar';
+import { exploreHref } from '$lib/bron/leesbaar';
 import type { Vorm } from '$lib/bron/vormen';
 import {
 	articleLabel,
@@ -80,7 +80,7 @@ export type Schets = {
 	kandidaat: Kandidaat;
 	kolommen: SchetsKolom[];
 	lijnen: [string, string][];
-	verkenner: string;
+	exploreHref: string;
 	/** The chain in counts, for a narrow screen: stukken, articles, the law, judgments. */
 	keten: {
 		stukken: number;
@@ -258,7 +258,7 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 		kandidaat: k,
 		kolommen,
 		lijnen,
-		verkenner: verkennerHref(params),
+		exploreHref: exploreHref(params),
 		keten: {
 			stukken: stukken.size + amendementen.size,
 			artikelen: tel.size,

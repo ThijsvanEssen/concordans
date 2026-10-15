@@ -2,7 +2,7 @@
 	import { clickOutside } from '$lib/actions/top-layer';
 	import { kaart } from '$lib/map/map.svelte';
 	import { page } from '$app/stores';
-	import { isVerkenner } from '$lib/bron/leesbaar';
+	import { modeOf } from '$lib/bron/href';
 	import { goto } from '$app/navigation';
 	import { modKey } from '$lib/util/platform';
 	import Wordmark from './Wordmark.svelte';
@@ -10,11 +10,10 @@
 	let { onSearchOpen }: { onSearchOpen?: () => void } = $props();
 
 	const isHome = $derived($page.url.pathname === '/');
-	// Verkenner and Bladeren share the route /explore; `mode=index` tells them apart.
-	const isIndex = $derived(
-		$page.url.pathname.startsWith('/explore') && $page.url.searchParams.get('mode') === 'index'
-	);
-	const isExplore = $derived(isVerkenner($page.url.pathname) && !isIndex);
+	// The network and the index share the route /explore; `mode=index` tells them apart.
+	const mode = $derived(modeOf($page.url));
+	const isIndex = $derived(mode === 'index');
+	const isExplore = $derived(mode !== null && mode !== 'index');
 	const isActueel = $derived($page.url.pathname.startsWith('/actueel'));
 	const isGemarkeerd = $derived($page.url.pathname.startsWith('/gemarkeerd'));
 	const isOnderwerpen = $derived($page.url.pathname.startsWith('/onderwerpen'));
