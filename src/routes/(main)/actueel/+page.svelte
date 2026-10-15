@@ -33,7 +33,7 @@
 	import { partyColor } from '$lib/components/explore/party-color.svelte';
 	import IndexFacets, {
 		activeFilters,
-		selectOpties,
+		selectOptions,
 		type FacetGroup
 	} from '$lib/components/explore/index/IndexFacets.svelte';
 	// Filters v2 (Thijs, 10 Oct: "ziet er goed uit"; ux-voorstel/filters/v2): the field and
@@ -410,7 +410,7 @@
 				kind: 'select',
 				value: ministry,
 				all: 'Alle ministeries',
-				options: selectOpties(facetMap(facets?.ministry), ministry, ministryName),
+				options: selectOptions(facetMap(facets?.ministry), ministry, ministryName),
 				onChange: (v) => patchUrl({ ministerie: v || null })
 			},
 			{
@@ -419,7 +419,7 @@
 				kind: 'select',
 				value: cabinet,
 				all: 'Alle kabinetten',
-				options: selectOpties(facetMap(facets?.cabinet), cabinet, cabinetName),
+				options: selectOptions(facetMap(facets?.cabinet), cabinet, cabinetName),
 				onChange: (v) => patchUrl({ kabinet: v || null })
 			},
 			{

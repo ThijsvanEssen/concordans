@@ -1,6 +1,6 @@
 import { render } from 'svelte/server';
 import { describe, expect, it } from 'vitest';
-import IndexFacets, { selectOpties, type FacetGroup } from './IndexFacets.svelte';
+import IndexFacets, { selectOptions, type FacetGroup } from './IndexFacets.svelte';
 
 const groups: FacetGroup[] = [
 	{
@@ -35,16 +35,16 @@ describe('IndexFacets: counts that are not current are not shown (#80)', () => {
 	});
 });
 
-describe('selectOpties', () => {
-	const naam = (k: string) => ({ bz: 'Buitenlandse Zaken', fin: 'Financiën' })[k] ?? k;
+describe('selectOptions', () => {
+	const name = (k: string) => ({ bz: 'Buitenlandse Zaken', fin: 'Financiën' })[k] ?? k;
 	it('names the chosen value, also where the counts lack it (#136)', () => {
-		expect(selectOpties(new Map(), 'bz', naam)).toEqual([
+		expect(selectOptions(new Map(), 'bz', name)).toEqual([
 			{ value: 'bz', label: 'Buitenlandse Zaken' }
 		]);
-		expect(selectOpties(new Map([['bz', 3]]), 'bz', naam)).toEqual([
+		expect(selectOptions(new Map([['bz', 3]]), 'bz', name)).toEqual([
 			{ value: 'bz', label: 'Buitenlandse Zaken', count: 3 }
 		]);
-		expect(selectOpties(new Map([['fin', 2]]), '', naam)).toEqual([
+		expect(selectOptions(new Map([['fin', 2]]), '', name)).toEqual([
 			{ value: 'fin', label: 'Financiën', count: 2 }
 		]);
 	});

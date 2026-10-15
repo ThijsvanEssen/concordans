@@ -327,7 +327,7 @@ describe('Back and Forward to a bron', () => {
 	it('open the bron again after the list of bronnen (#135)', async () => {
 		const { container } = await openAt('/kabinetten/schoof');
 		expect(view(container)).not.toBeNull();
-		const geopend = view(container);
+		const opened = view(container);
 		await appNavigation.goto('/explore?mode=index');
 		await settle();
 		expect(view(container)).toBe('index');
@@ -336,7 +336,7 @@ describe('Back and Forward to a bron', () => {
 		await settle();
 		expect(address()).toBe('/kabinetten/schoof');
 		expect(container.querySelector('.explore-empty')?.textContent ?? '').not.toMatch(/Laden/);
-		expect(view(container)).toBe(geopend);
+		expect(view(container)).toBe(opened);
 		forward();
 		await settle();
 		back();

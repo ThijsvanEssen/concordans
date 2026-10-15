@@ -55,7 +55,7 @@
 	 * A menu's options from its counts, the chosen value among them though the counts lack it
 	 * (not in yet, or partial): by its name, never its key (#136).
 	 */
-	export const selectOpties = (
+	export const selectOptions = (
 		counts: Map<string, number>,
 		chosen: string,
 		name: (key: string) => string
