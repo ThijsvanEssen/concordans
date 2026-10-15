@@ -119,11 +119,9 @@
 	import { PERIOD_LABEL, seatedOnly } from './index/period';
 	import { formatCount } from '$lib/text/getal';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
+	import { MINISTRY_KEYS, facetOpties, keuzeUit } from '$lib/util/keuze';
 
 	let { category }: { category: IndexCategory } = $props();
-
-	const oneOf = <T extends string>(value: string | null, allowed: readonly T[]): T | undefined =>
-		allowed.find((a) => a === value);
 
 	// ── URL-driven filter state ─────────────────────────────────────────────
 	const params = $derived(page.url.searchParams);
@@ -152,43 +150,41 @@
 	const ekComposition = $derived(
 		kamer === 'EK' && category !== 'decisions' && category !== 'documents'
 	);
-	const ministry = $derived(params.get('ministry') ?? '');
-	/** A ministry of the URL as the API types it; an unknown key is left to the API to refuse. */
-	const asMinistry = (key: string) => (key || undefined) as Schema<'MinistryKey'> | undefined;
+	const ministry = $derived(keuzeUit(params.get('ministry'), MINISTRY_KEYS) ?? '');
 	const cabinetParam = $derived(params.get('cabinet') ?? '');
 	const memberParam = $derived(params.get('member') ?? '');
-	const post = $derived(oneOf(params.get('post'), POSTS));
+	const post = $derived(keuzeUit(params.get('post'), POSTS));
 	// Bewindspersonen: one cabinet's posts, or the ministers of six cabinets side by side.
 	const naast = $derived(params.get('weergave') === 'naast');
-	const commitmentStatus = $derived(oneOf(params.get('status'), COMMITMENT_STATUSES));
+	const commitmentStatus = $derived(keuzeUit(params.get('status'), COMMITMENT_STATUSES));
 	const overdue = $derived(params.get('overdue') === '1');
 	const coalition = $derived(params.get('coalition') ?? '');
 	// Dossiers: the open ones unless asked otherwise; a number searched for is looked up in all.
 	const OUTCOMES = Object.keys(OUTCOME_LABEL) as Outcome[];
 	const DOSSIER_NUMBER = /^\d{5}(-[a-z0-9()]+)?$/i;
 	const dossierStatusParam = $derived(
-		oneOf(params.get('stand'), ['open', 'closed', 'all'] as const)
+		keuzeUit(params.get('stand'), ['open', 'closed', 'all'] as const)
 	);
 	const dossierScope = $derived(
 		dossierStatusParam ?? (DOSSIER_NUMBER.test(q.trim()) ? 'all' : 'open')
 	);
-	const outcome = $derived(oneOf(params.get('outcome'), OUTCOMES));
-	const passed = $derived(oneOf(params.get('passed'), ['true', 'false'] as const));
+	const outcome = $derived(keuzeUit(params.get('outcome'), OUTCOMES));
+	const passed = $derived(keuzeUit(params.get('passed'), ['true', 'false'] as const));
 	const dateFrom = $derived(params.get('from') ?? '');
 	const dateTo = $derived(params.get('to') ?? '');
 	const dossierFilter = $derived(params.get('dossier') ?? '');
 	const party = $derived(params.get('party') ?? '');
-	const jurisdiction = $derived(oneOf(params.get('jurisdiction'), ['nl', 'eu'] as const));
+	const jurisdiction = $derived(keuzeUit(params.get('jurisdiction'), ['nl', 'eu'] as const));
 	// A kind of wet as the source names it; the treaties for now (Thijs, 10 Oct: "ook
 	// verdragen een plekje"): the BWBV and the Verdragenbank, kind `verdrag`.
-	const instrumentSoort = $derived(oneOf(params.get('soort'), ['verdrag'] as const));
+	const instrumentSoort = $derived(keuzeUit(params.get('soort'), ['verdrag'] as const));
 	const court = $derived(params.get('court') ?? '');
 	// TODO(backend G14): the lists hold records without text or articles; until they can
 	// be left out by a parameter, a wet needs an article and a judgment a source.
 	const withEmpty = $derived(params.get('leeg') === '1');
-	const source = $derived(oneOf(params.get('source'), ['echr'] as const));
-	const tier = $derived(oneOf(params.get('tier'), TIERS));
-	const courtKind = $derived(oneOf(params.get('court_kind'), COURT_KINDS));
+	const source = $derived(keuzeUit(params.get('source'), ['echr'] as const));
+	const tier = $derived(keuzeUit(params.get('tier'), TIERS));
+	const courtKind = $derived(keuzeUit(params.get('court_kind'), COURT_KINDS));
 	// Rechtsgebied and procedure as rechtspraak.nl gives them (API 0.74, BE-44).
 	const subject = $derived(params.get('subject') ?? '');
 	// The main area of law (BE-57, API 0.75): `Bestuursrecht` holds `Bestuursrecht; Belastingrecht`.
@@ -198,7 +194,7 @@
 	const policyDomain = $derived(params.get('policy_domain') ?? '');
 	const procedure = $derived(params.get('procedure') ?? '');
 	const sort = $derived(params.get('sort'));
-	const dirParam = $derived(oneOf(params.get('dir'), ['asc', 'desc'] as const));
+	const dirParam = $derived(keuzeUit(params.get('dir'), ['asc', 'desc'] as const));
 	const onlyActive = $derived(params.get('only_active') === '1');
 	// Members and factions are the sitting ones unless historical ones are asked for.
 	const includeInactive = $derived(params.get('include_inactive') === '1');
@@ -505,7 +501,7 @@
 					policy_domain: policyDomain || undefined,
 					from: dateFrom || undefined,
 					to: dateTo || undefined,
-					sort: oneOf(sortDef.id, ['title', 'article_count'] as const),
+					sort: keuzeUit(sortDef.id, ['title', 'article_count'] as const),
 					limit
 				};
 				return faceted(
@@ -550,7 +546,7 @@
 					source: source ?? 'rechtspraak',
 					from: dateFrom || undefined,
 					to: dateTo || undefined,
-					sort: oneOf(sortDef.id, ['date_desc', 'date_asc', 'citation_count'] as const),
+					sort: keuzeUit(sortDef.id, ['date_desc', 'date_asc', 'citation_count'] as const),
 					limit
 				};
 				return faceted(
@@ -578,10 +574,10 @@
 					phase: phases.length ? phases.join(',') : undefined,
 					has_phase: hasPhase || undefined,
 					kind: track || undefined,
-					ministry: asMinistry(ministry),
+					ministry: ministry || undefined,
 					opened_from: dateFrom || undefined,
 					opened_to: dateTo || undefined,
-					sort: oneOf(sortDef.id, [
+					sort: keuzeUit(sortDef.id, [
 						'number',
 						'opened_on',
 						'last_activity',
@@ -621,7 +617,7 @@
 					include_all: !seated,
 					active_from: dateFrom || undefined,
 					active_to: dateTo || undefined,
-					sort: oneOf(sortDef.id, ['family_name', 'name'] as const),
+					sort: keuzeUit(sortDef.id, ['family_name', 'name'] as const),
 					limit: seated ? SEATED : limit
 				};
 				return async (offset, signal) => {
@@ -751,7 +747,7 @@
 			case 'commitments': {
 				const filters = {
 					cabinet: cabinetParam || undefined,
-					ministry: asMinistry(ministry),
+					ministry: ministry || undefined,
 					member: memberParam || undefined,
 					overdue: overdue || undefined,
 					q: q || undefined,
@@ -761,7 +757,7 @@
 				const query = {
 					...filters,
 					status: commitmentStatus,
-					sort: oneOf(sortDef.id, ['date', 'expected_resolution'] as const),
+					sort: keuzeUit(sortDef.id, ['date', 'expected_resolution'] as const),
 					limit
 				};
 				// The number in each state under the other filters, from the facet asked apart.
@@ -1513,10 +1509,7 @@
 			case 'dossiers': {
 				// The kinds are the ones the API counts, in its order, the chosen one always. A
 				// dossier without a kind (letters and motions) cannot be chosen: it is counted.
-				const kinds = [...dossierKinds.keys()].filter(
-					(k) => k !== 'null' && ((dossierKinds.get(k) ?? 0) > 0 || k === track)
-				);
-				if (track && !kinds.includes(track)) kinds.push(track);
+				const kinds = facetOpties(dossierKinds, track).map(([k]) => k);
 				const withoutKind = dossierKinds.get('null') ?? 0;
 				const statusCounts_ = facetMap(dossierFacets?.status);
 				const outcomes = facetMap(dossierFacets?.outcome);
@@ -1600,8 +1593,7 @@
 						id: 'ministry',
 						label: 'Ministerie',
 						kind: 'list',
-						options: [...dossierMinistries]
-							.filter(([m, n]) => m !== 'null' && (n > 0 || m === ministry))
+						options: facetOpties(dossierMinistries, ministry)
 							.sort((a, b) => b[1] - a[1])
 							.map(([m, n]) => ({
 								id: m,
@@ -1619,15 +1611,13 @@
 			case 'decisions': {
 				// The kinds the Kamer's decisions have, as the facet counts them; one without a zaak
 				// cannot be chosen. The Eerste Kamer's decisions have none yet: no group then.
-				const kinds = [...decisionKinds.keys()]
-					.filter((k) => k !== 'null' && ((decisionKinds.get(k) ?? 0) > 0 || k === soort))
-					.map((k) => ({
-						id: k,
-						label: k,
-						count: decisionKinds.get(k) ?? 0,
-						on: soort === k,
-						onClick: toggle('soort', soort, k)
-					}));
+				const kinds = facetOpties(decisionKinds, soort).map(([k, n]) => ({
+					id: k,
+					label: k,
+					count: n,
+					on: soort === k,
+					onClick: toggle('soort', soort, k)
+				}));
 				return [
 					...(kinds.length || kamer === 'TK'
 						? [{ id: 'soort', label: 'Soort', kind: 'list' as const, options: kinds }]
@@ -1670,8 +1660,7 @@
 						id: 'soort',
 						label: 'Soort',
 						kind: 'list',
-						options: [...soorts]
-							.filter(([k, n]) => k !== 'null' && (n > 0 || k === soort))
+						options: facetOpties(soorts, soort)
 							.sort((a, b) => b[1] - a[1])
 							.map(([k, n]) => ({
 								id: k,
