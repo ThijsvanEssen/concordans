@@ -64,17 +64,20 @@
 	>
 		{#each fracties as f (fractieNaam(f))}
 			{@const extra = marker(f)}
-			<li>
+			<!-- The whole row is the fractie's link, a finger's height (UX-toets 16 Oct). -->
+			{#snippet row()}
 				<span class="stip" style:background={achtergrondVan(fractieNaam(f), f.color ?? null)}
 				></span>
+				<span class="n"
+					>{fractieNaam(f)}{#if extra}<span class="extra">, {extra}</span>{/if}</span
+				><span class="z">{f.seats}</span>
+			{/snippet}
+			<li>
 				{#if f.key}<a
-						class="n"
+						class="entry"
 						href={openHref(`factions/${f.key}`)}
-						title={f.name && f.name !== fractieNaam(f) ? f.name : undefined}
-						>{fractieNaam(f)}{#if extra}<span class="extra">, {extra}</span>{/if}</a
-					>{:else}<span class="n"
-						>{fractieNaam(f)}{#if extra}<span class="extra">, {extra}</span>{/if}</span
-					>{/if}<span class="z">{f.seats}</span>
+						title={f.name && f.name !== fractieNaam(f) ? f.name : undefined}>{@render row()}</a
+					>{:else}<span class="entry">{@render row()}</span>{/if}
 			</li>
 		{/each}
 	</ol>
@@ -116,31 +119,33 @@
 		column-gap: var(--s-6);
 	}
 	.fr li {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-2);
-		padding: 3px 0;
 		border-bottom: 1px solid var(--rule);
+	}
+	/* A name and its marker wrap rather than being cut off (UX-toets 16 Oct). */
+	.entry {
+		display: flex;
+		align-items: center;
+		gap: var(--s-2);
+		min-height: var(--veld-h);
+		color: inherit;
+		text-decoration: none;
 	}
 	.stip {
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
 		flex: none;
-		transform: translateY(-1px);
 	}
 	.n {
 		flex: 1;
 		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
+		overflow-wrap: anywhere;
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
+		line-height: var(--lh-tight);
 		color: var(--ink);
-		text-decoration: none;
 	}
-	a.n:hover {
+	a.entry:hover .n {
 		text-decoration: underline;
 	}
 	.extra {

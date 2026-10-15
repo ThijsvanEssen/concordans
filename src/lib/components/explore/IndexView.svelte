@@ -109,8 +109,9 @@
 	// The first option is the default. An option with `dir` is sorted here, with
 	// that direction unless the URL says otherwise; the others are sorted by the API.
 	const sorts = $derived(forParams(list.sorts, p));
-	/** The rows under the Header, unless they show no more than it (the fracties under their hall). */
-	const rowsShown = $derived(!!list.Rows && (list.rowsShown?.(p) ?? true));
+	/** The rows under the Header, unless they show no more than it (the fracties under their
+	 *  hall): then no count, order or rule of a list either. */
+	const rowsShown = $derived(list.rowsShown?.(p) ?? true);
 	const sortDef = $derived(sorts.find((s) => s.id === p.sort) ?? sorts[0]);
 	const dir = $derived(sortDef.dir && (p.dir ?? sortDef.dir));
 
@@ -597,40 +598,40 @@
 					{#if list.Header}<list.Header {ctx} />{/if}
 
 					<!-- How many, under which filters; a click on a filter takes it off. -->
-					<div class="result-head">
-						{#if rowsShown && resultTotal !== null}
-							<p class="result-count">
-								{formatCount(resultTotal)}<span class="result-noun"
-									>{resultTotal === 1 ? noun1(category) : labelOf(category)}</span
-								>
-							</p>
-						{:else if rowsShown}
-							<!-- The count's own height before it is known, so nothing below it moves. -->
-							<p class="result-count" aria-hidden="true">&nbsp;</p>
-						{/if}
-						{#if rowsShown && sorts.length > 1}
-							<!-- The order of the list: one line under its count (docs/bediening.md). -->
-							<span class="volgorde">
-								<TekstMenu
-									klein
-									rechts
-									label="Volgorde"
-									waarde={sortDef.id}
-									opties={sorts.map((o) => ({ waarde: o.id, label: o.label }))}
-									onSelect={(v) => patchUrl({ sort: v || null })}
-								/>
-								{#if dir}
-									<IconButton
-										label={dir === 'asc'
-											? 'Oplopend; sorteer aflopend'
-											: 'Aflopend; sorteer oplopend'}
-										onclick={() => patchUrl({ dir: dir === 'asc' ? 'desc' : 'asc' })}
-										>{dir === 'asc' ? '↑' : '↓'}</IconButton
+					{#if rowsShown}<div class="result-head">
+							{#if list.Rows && resultTotal !== null}
+								<p class="result-count">
+									{formatCount(resultTotal)}<span class="result-noun"
+										>{resultTotal === 1 ? noun1(category) : labelOf(category)}</span
 									>
-								{/if}
-							</span>
-						{/if}
-					</div>
+								</p>
+							{:else if list.Rows}
+								<!-- The count's own height before it is known, so nothing below it moves. -->
+								<p class="result-count" aria-hidden="true">&nbsp;</p>
+							{/if}
+							{#if sorts.length > 1}
+								<!-- The order of the list: one line under its count (docs/bediening.md). -->
+								<span class="volgorde">
+									<TekstMenu
+										klein
+										rechts
+										label="Volgorde"
+										waarde={sortDef.id}
+										opties={sorts.map((o) => ({ waarde: o.id, label: o.label }))}
+										onSelect={(v) => patchUrl({ sort: v || null })}
+									/>
+									{#if dir}
+										<IconButton
+											label={dir === 'asc'
+												? 'Oplopend; sorteer aflopend'
+												: 'Aflopend; sorteer oplopend'}
+											onclick={() => patchUrl({ dir: dir === 'asc' ? 'desc' : 'asc' })}
+											>{dir === 'asc' ? '↑' : '↓'}</IconButton
+										>
+									{/if}
+								</span>
+							{/if}
+						</div>{/if}
 
 					{#if list.Figure}<list.Figure {ctx} />{/if}
 

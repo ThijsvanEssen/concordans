@@ -31,7 +31,7 @@
 	// The cabinet in office on the day of the hall and its fracties (API 0.79.33): one line
 	// to the cabinet, whose reader shows its seats (Thijs, 10 Oct: the coalition is the
 	// cabinet's, not the Kamer's).
-	const coalitieRegel = $derived.by(() => {
+	const coalitionLine = $derived.by(() => {
 		const kabinet = seats?.cabinet;
 		if (!seats || !kabinet?.key) return null;
 		const fracties = [...seats.factions]
@@ -69,7 +69,12 @@
 
 {#if hall.state.status === 'error'}
 	<LoadState state={hall.state} what="De zaal" retry={hall.retry} />
-{:else if seats && seats.chamber === ctx.p.kamer}
+{:else if !seats || seats.chamber !== ctx.p.kamer}
+	<!-- The hall's place kept while it loads, so nothing below it moves. -->
+	<div class="hemi-card hemi-card--loading">
+		<p class="sr-only" role="status">Laden…</p>
+	</div>
+{:else}
 	<div class="hemi-card">
 		<div class="hemi-svg-wrap">
 			{#if seats.chamber === 'EK'}
@@ -85,7 +90,7 @@
 				data={seats}
 				kolommen={2}
 				rijen={10}
-				coalitie={coalitieRegel}
+				coalitie={coalitionLine}
 				{members}
 				peil={[
 					`Samenstelling op ${langeDatum(
@@ -119,6 +124,12 @@
 	.hemi-card {
 		margin-bottom: var(--s-6);
 	}
+	/* About the height of the hall and its legend, at each width (1440: 440, 375: 730). */
+	.hemi-card--loading {
+		height: 440px;
+		border-radius: var(--r-1);
+		background: var(--paper-2);
+	}
 	.hemi-svg-wrap {
 		display: grid;
 		grid-template-columns: 456px minmax(0, 1fr);
@@ -142,6 +153,9 @@
 		max-height: none;
 	}
 	@media (max-width: 1100px) {
+		.hemi-card--loading {
+			height: 760px;
+		}
 		.hemi-svg-wrap {
 			grid-template-columns: minmax(0, 1fr);
 			row-gap: var(--s-4);
@@ -150,6 +164,9 @@
 	/* On a phone both halls in the box of the Tweede Kamer's (440 by 291) as wide as the
 	   column: as high as each other, at one scale, no empty band. */
 	@media (max-width: 520px) {
+		.hemi-card--loading {
+			height: 728px;
+		}
 		.hemi-svg-wrap :global(.hemicycle svg),
 		.hemi-svg-wrap :global(.zaal svg) {
 			width: 100%;

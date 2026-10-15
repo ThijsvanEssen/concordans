@@ -58,5 +58,17 @@ describe('the hall', () => {
 		const list = bron('lib/components/explore/index/lists/factions.ts');
 		expect(list).toMatch(/rowsShown:/);
 		expect(bron('lib/components/explore/IndexView.svelte')).toContain('list.rowsShown');
+		// Without the rows no rule of a list under the hall; while the hall loads, its place.
+		expect(bron('lib/components/explore/IndexView.svelte')).toMatch(
+			/\{#if rowsShown\}<div class="result-head">/
+		);
+		expect(hall).toMatch(/hemi-card--loading[\s\S]*?class="sr-only" role="status">Laden…/);
+		// No name cut off; the whole row is the link, a finger's height.
+		expect(legend.match(/\.n \{[^}]*\}/)?.[0]).not.toMatch(/ellipsis|nowrap/);
+		expect(legend).toMatch(/\.entry \{[^}]*min-height: var\(--veld-h\)/);
+		// A share of the seats of the Kamer, not of the rows a search leaves.
+		expect(bron('lib/components/explore/index/rows/FactionRows.svelte')).not.toMatch(
+			/rows[^\n]*reduce\([^\n]*seats/
+		);
 	});
 });
