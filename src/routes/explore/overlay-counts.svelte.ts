@@ -5,7 +5,7 @@
 import { untrack } from 'svelte';
 import { report } from '$lib/api/errors';
 import { getHeat, getInFlux, type NodeCounts } from '$lib/api/overlays';
-import type { Overlay } from '$lib/selection/overlay';
+import { overlayParam, parseOverlay, type Overlay } from '$lib/selection/overlay';
 
 export class OverlayCounts {
 	inFlux = $state<NodeCounts>(new Map());
@@ -15,10 +15,14 @@ export class OverlayCounts {
 	#heatFor: string | null = null;
 	#heatAbort: AbortController | null = null;
 
-	/** Follow the overlay and the bronnen on the canvas; call in a component's script. */
+	/**
+	 * Follow the overlay and the bronnen on the canvas; call in a component's script. Keyed on
+	 * the overlay's parameter: a step that keeps the overlay keeps its counts.
+	 */
 	constructor(overlay: () => Overlay, canvasIds: () => string[]) {
+		const param = $derived(overlayParam(overlay()));
 		$effect(() => {
-			const o = overlay();
+			const o = parseOverlay(param);
 			this.inFlux = new Map();
 			this.heat = new Map();
 			if (o.kind !== 'open') return;
@@ -30,7 +34,7 @@ export class OverlayCounts {
 				.catch((e) => report('Verkenner lopende dossiers', e));
 			return () => ctrl.abort();
 		});
-		$effect(() => this.#followHeat(overlay(), canvasIds()));
+		$effect(() => this.#followHeat(parseOverlay(param), canvasIds()));
 	}
 
 	#followHeat(o: Overlay, ids: string[]) {

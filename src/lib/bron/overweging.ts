@@ -14,7 +14,7 @@ import { overwegingVan } from '$lib/map/inhoud';
 import { uitspraakNoten, type Noot } from '$lib/text/voetnoten';
 import { paragraphAnchor, paragraphNumber } from '$lib/text/anchor';
 import { keyEcli } from './leesbaar';
-import { onForget } from '$lib/util/forget';
+import { once } from '$lib/api/records';
 
 export type Uitspraak = {
 	j: Schema<'JudgmentDetailResponse'>['judgment'];
@@ -35,20 +35,13 @@ export function legUit(j: Schema<'JudgmentDetailResponse'>['judgment']): Uitspra
 	};
 }
 
-const gelegd = new Map<string, Promise<Uitspraak>>();
-onForget(() => gelegd.clear());
-
 /** The judgment of a key (`ecli_nl_hr_2019_2006`) or an ECLI, laid out once. */
 export function laadUitspraak(keyOfEcli: string): Promise<Uitspraak> | null {
 	const ecli = keyOfEcli.startsWith('ECLI:') ? keyOfEcli : keyEcli(keyOfEcli);
 	if (!ecli) return null;
-	let p = gelegd.get(ecli);
-	if (!p) {
-		p = getJudgmentDetail(ecli).then(({ judgment: j }) => legUit(j));
-		p.catch(() => gelegd.delete(ecli));
-		gelegd.set(ecli, p);
-	}
-	return p;
+	return once(`judgments/${ecli}/gelegd`, () =>
+		getJudgmentDetail(ecli).then(({ judgment: j }) => legUit(j))
+	);
 }
 
 /** Whether an anchor names an overweging: `rov-5.1`. */

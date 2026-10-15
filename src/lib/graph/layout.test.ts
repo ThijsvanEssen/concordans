@@ -1,7 +1,15 @@
 import Graph from 'graphology';
 import { describe, expect, it } from 'vitest';
 import type { ContainerGroup } from './container-membership';
-import { packGroups, placeClusters, ringAround, syncGroupLinks } from './layout';
+import { readFileSync } from 'node:fs';
+import {
+	forEachRealNeighbor,
+	packGroups,
+	placeClusters,
+	realDegree,
+	ringAround,
+	syncGroupLinks
+} from './layout';
 
 const group = (id: string, members: string[]): ContainerGroup => ({
 	kind: 'dossier',
@@ -106,6 +114,27 @@ describe('packGroups', () => {
 		const g = small();
 		packGroups(g, [group('A', ['a1', 'a2']), group('B', ['a1', 'b1', 'b2'])]);
 		expect(dist(g, 'a1', 'b1')).toBeLessThan(dist(g, 'a1', 'a2'));
+	});
+});
+
+describe('forEachRealNeighbor and realDegree', () => {
+	it('pass over the links of a hull: a group of four without lines has no neighbours', () => {
+		const g = small();
+		syncGroupLinks(g, [group('A', ['a1', 'a2', 'a3', 'b1'])], new Set());
+		const of = (id: string) => {
+			const found: string[] = [];
+			forEachRealNeighbor(g, id, (n) => found.push(n));
+			return found;
+		};
+		expect(of('a2')).toEqual([]);
+		expect(realDegree(g, 'a2')).toBe(0);
+		expect(of('a1')).toEqual(['f']);
+		expect(realDegree(g, 'f')).toBe(3);
+	});
+
+	it('are what the canvas reads: no bare neighbours or degree in GraphCanvas', () => {
+		const src = readFileSync('src/lib/components/graph/GraphCanvas.svelte', 'utf8');
+		expect(src).not.toMatch(/graph\.(forEachNeighbor|degree)\(/);
 	});
 });
 

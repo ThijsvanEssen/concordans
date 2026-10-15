@@ -68,7 +68,7 @@ describe('the record of an opened post', () => {
 		total,
 		facets: { status: [{ value: 'Openstaand', count: 1 }] }
 	});
-	const authored = (n: number) => ({
+	const authored = (n: number, total = n) => ({
 		node: { id: 'members/a', key: 'a', collection: 'members' },
 		neighbors: {
 			buckets: [
@@ -76,7 +76,7 @@ describe('the record of an opened post', () => {
 					relation: 'AUTHORED',
 					direction: 'outbound',
 					collection: 'documents',
-					total: n,
+					total,
 					items: Array.from({ length: n }, (_, i) => ({
 						id: `documents/d${i}`,
 						key: `d${i}`,
@@ -94,6 +94,21 @@ describe('the record of an opened post', () => {
 			'/api/nodes/{collection}/{key}': fail(500)
 		});
 		await expect(postRecord('a', signal())).rejects.toBeInstanceOf(ApiError);
+	});
+
+	it('counts every stuk signed, past the first page, and asks for canvas props', async () => {
+		let query: Record<string, unknown> | undefined;
+		fakeApi({
+			'/api/commitments': commitments(0),
+			'/api/nodes/{collection}/{key}': ({ params }) => {
+				query = params.query;
+				return authored(200, 450);
+			}
+		});
+		const record = await postRecord('a', signal());
+		expect(record.signed).toBe(450);
+		expect(record.authored).toHaveLength(200);
+		expect(query).toMatchObject({ relations: 'AUTHORED', props: 'canvas' });
 	});
 
 	it('shows no count of the bewindspersoon before when the next one fails', async () => {

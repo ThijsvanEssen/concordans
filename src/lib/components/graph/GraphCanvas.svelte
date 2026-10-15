@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { redundantAnchors } from '$lib/graph/redundant-anchors';
+	import { forEachRealNeighbor, realDegree } from '$lib/graph/layout';
 	import {
 		bundledInto,
 		inSameGroup,
@@ -96,6 +97,7 @@
 		onStageClick,
 		onReady,
 		onCameraChange,
+		onDrawn,
 		externalHoveredId = null as string | null,
 		notitieIds = new Set() as ReadonlySet<string>,
 		avoid = null as Rect | null
@@ -128,6 +130,8 @@
 		/** The lid a line names, by its edge (`edgeKey`), where its row or card knows it: the
 		 *  light meta of the canvas names none where the source cites several places. */
 		lineLids?: ReadonlyMap<string, string>;
+		/** The bronnen drawn, after every change of what is hidden: what the Legenda counts. */
+		onDrawn?: (drawn: ReadonlySet<string>) => void;
 		inFluxMap?: NodeCounts;
 		heatMap?: NodeCounts;
 		heatActive?: boolean;
@@ -259,7 +263,7 @@
 		hoveredId = next;
 		hoveredNeighbours = new Set();
 		if (hoveredId && graph.hasNode(hoveredId))
-			graph.forEachNeighbor(hoveredId, (n) => hoveredNeighbours.add(n));
+			forEachRealNeighbor(graph, hoveredId, (n) => hoveredNeighbours.add(n));
 		promoteEdgesForHover(hoveredId);
 		renderer?.refresh();
 	}
@@ -361,6 +365,7 @@
 		latestFilters = filters;
 		latestHiddenKinds = hiddenKinds;
 		void rechter;
+		void yearPeriod;
 		latestPinnedIds = pinnedIds;
 		latestCoreIds = coreIds;
 		recomputeStrays();
@@ -559,10 +564,7 @@
 		const next = new Set<string>();
 		const endsOf = (id: string) => {
 			const ends: string[] = [];
-			if (graph.hasNode(id))
-				graph.forEachEdge(id, (_e, a, src, tgt) => {
-					if (!a.layoutOnly) ends.push(src === id ? tgt : src);
-				});
+			if (graph.hasNode(id)) forEachRealNeighbor(graph, id, (n) => ends.push(n));
 			return ends;
 		};
 		// A grouping switched off takes along what is in it (the stukken of a dossier).
@@ -603,6 +605,20 @@
 		});
 		for (const id of leftOut) next.add(id);
 		strays = next;
+		reportDrawn();
+	}
+
+	let drawn: ReadonlySet<string> | null = null;
+	/** Tells `onDrawn` what is drawn now, when that changed. */
+	function reportDrawn() {
+		if (!onDrawn) return;
+		const now = new Set<string>();
+		graph.forEachNode((id, attrs) => {
+			if (!isHiddenNode(id, attrs)) now.add(id);
+		});
+		if (drawn && drawn.size === now.size && [...now].every((id) => drawn!.has(id))) return;
+		drawn = now;
+		onDrawn(now);
 	}
 
 	const outsideYears = (date: unknown) =>
@@ -1142,7 +1158,7 @@
 
 				// Without a focus, a member with a hundred stukken draws a hundred lines: the
 				// fan pales by the size of its busier end, as the focus's own fan does.
-				const degree = Math.max(graph.degree(src), graph.degree(tgt));
+				const degree = Math.max(realDegree(graph, src), realDegree(graph, tgt));
 				return {
 					...data,
 					hidden: false,
@@ -1209,7 +1225,7 @@
 	function recomputeFocusLevel1() {
 		focusLevel1 = new Set();
 		if (!focusedId || !graph.hasNode(focusedId)) return;
-		graph.forEachNeighbor(focusedId, (n) => focusLevel1.add(n));
+		forEachRealNeighbor(graph, focusedId, (n) => focusLevel1.add(n));
 	}
 	$effect(() => {
 		void focusedId;
