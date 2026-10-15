@@ -1,0 +1,1540 @@
+{
+	"nodes": [
+		{
+			"id": "cases/03ee96e9_9f6d_4f44_a448_5489d38010b9",
+			"key": "03ee96e9_9f6d_4f44_a448_5489d38010b9",
+			"props": { "external_id": "03ee96e9-9f6d-4f44-a448-5489d38010b9", "done": true }
+		},
+		{
+			"id": "cases/0a831fcc_6d00_45d0_8b28_88c98d2713c4",
+			"key": "0a831fcc_6d00_45d0_8b28_88c98d2713c4",
+			"props": { "external_id": "0a831fcc-6d00-45d0-8b28-88c98d2713c4", "done": true }
+		},
+		{
+			"id": "cases/0bdef0ce_c174_46cb_b0d9_e7c4880b2424",
+			"key": "0bdef0ce_c174_46cb_b0d9_e7c4880b2424",
+			"props": { "external_id": "0bdef0ce-c174-46cb-b0d9-e7c4880b2424", "done": true }
+		},
+		{
+			"id": "cases/0c4c6cbb_7b49_4eb7_938a_ead242c49ef3",
+			"key": "0c4c6cbb_7b49_4eb7_938a_ead242c49ef3",
+			"props": { "external_id": "0c4c6cbb-7b49-4eb7-938a-ead242c49ef3", "done": true }
+		},
+		{
+			"id": "cases/0c9d3354_3232_49c8_91fc_96ed3f1427ac",
+			"key": "0c9d3354_3232_49c8_91fc_96ed3f1427ac",
+			"props": { "external_id": "0c9d3354-3232-49c8-91fc-96ed3f1427ac", "done": true }
+		},
+		{
+			"id": "cases/0d3a4aa8_d957_4de9_852d_3979cf7a9230",
+			"key": "0d3a4aa8_d957_4de9_852d_3979cf7a9230",
+			"props": { "external_id": "0d3a4aa8-d957-4de9-852d-3979cf7a9230", "done": true }
+		},
+		{
+			"id": "cases/0fb2e0db_f031_4fc9_90d5_1ea2b2acab41",
+			"key": "0fb2e0db_f031_4fc9_90d5_1ea2b2acab41",
+			"props": { "external_id": "0fb2e0db-f031-4fc9-90d5-1ea2b2acab41", "done": true }
+		},
+		{
+			"id": "cases/0fc923ce_1176_4583_8f19_37ff1a4a44e6",
+			"key": "0fc923ce_1176_4583_8f19_37ff1a4a44e6",
+			"props": { "external_id": "0fc923ce-1176-4583-8f19-37ff1a4a44e6", "done": true }
+		},
+		{
+			"id": "cases/111cd407_5949_4639_a4c3_1186437618a7",
+			"key": "111cd407_5949_4639_a4c3_1186437618a7",
+			"props": { "external_id": "111cd407-5949-4639-a4c3-1186437618a7", "done": true }
+		},
+		{
+			"id": "cases/1a9fb6e2_3b11_430d_9827_10fb763e50d7",
+			"key": "1a9fb6e2_3b11_430d_9827_10fb763e50d7",
+			"props": { "external_id": "1a9fb6e2-3b11-430d-9827-10fb763e50d7", "done": true }
+		},
+		{
+			"id": "cases/1ac4a6a9_c362_4341_9fca_15042de1f575",
+			"key": "1ac4a6a9_c362_4341_9fca_15042de1f575",
+			"props": { "external_id": "1ac4a6a9-c362-4341-9fca-15042de1f575", "done": true }
+		},
+		{
+			"id": "cases/1cfe0570_aaac_4833_aa26_e087af48c459",
+			"key": "1cfe0570_aaac_4833_aa26_e087af48c459",
+			"props": { "external_id": "1cfe0570-aaac-4833-aa26-e087af48c459", "done": true }
+		},
+		{
+			"id": "cases/1f4cb277_ee3f_4102_9493_e41ff4e90e3c",
+			"key": "1f4cb277_ee3f_4102_9493_e41ff4e90e3c",
+			"props": { "external_id": "1f4cb277-ee3f-4102-9493-e41ff4e90e3c", "done": true }
+		},
+		{
+			"id": "cases/21d640af_5259_4a16_8fb4_99a456532c66",
+			"key": "21d640af_5259_4a16_8fb4_99a456532c66",
+			"props": { "external_id": "21d640af-5259-4a16-8fb4-99a456532c66", "done": true }
+		},
+		{
+			"id": "cases/2d436102_4a88_4a3f_bd9f_a5d760a119c1",
+			"key": "2d436102_4a88_4a3f_bd9f_a5d760a119c1",
+			"props": { "external_id": "2d436102-4a88-4a3f-bd9f-a5d760a119c1", "done": true }
+		},
+		{
+			"id": "cases/3b7bf1ff_8af4_4636_818c_21cd6b83fae6",
+			"key": "3b7bf1ff_8af4_4636_818c_21cd6b83fae6",
+			"props": { "external_id": "3b7bf1ff-8af4-4636-818c-21cd6b83fae6", "done": true }
+		},
+		{
+			"id": "cases/3b865040_bcf8_48f2_8a86_9854f938494d",
+			"key": "3b865040_bcf8_48f2_8a86_9854f938494d",
+			"props": { "external_id": "3b865040-bcf8-48f2-8a86-9854f938494d", "done": true }
+		},
+		{
+			"id": "cases/433e76bd_91b8_4304_a4eb_3f1463f56448",
+			"key": "433e76bd_91b8_4304_a4eb_3f1463f56448",
+			"props": { "external_id": "433e76bd-91b8-4304-a4eb-3f1463f56448", "done": true }
+		},
+		{
+			"id": "cases/48afddd3_737d_4cef_963b_d2a10c6b079d",
+			"key": "48afddd3_737d_4cef_963b_d2a10c6b079d",
+			"props": { "external_id": "48afddd3-737d-4cef-963b-d2a10c6b079d", "done": true }
+		},
+		{
+			"id": "cases/4c57d1ee_64cb_41d6_8b78_3120691ca973",
+			"key": "4c57d1ee_64cb_41d6_8b78_3120691ca973",
+			"props": { "external_id": "4c57d1ee-64cb-41d6-8b78-3120691ca973", "done": true }
+		},
+		{
+			"id": "cases/52d1f137_1cd2_4aa9_87cd_2431b1d8eddd",
+			"key": "52d1f137_1cd2_4aa9_87cd_2431b1d8eddd",
+			"props": { "external_id": "52d1f137-1cd2-4aa9-87cd-2431b1d8eddd", "done": true }
+		},
+		{
+			"id": "cases/5b7a314d_b452_4210_94d7_8561fe2f6154",
+			"key": "5b7a314d_b452_4210_94d7_8561fe2f6154",
+			"props": { "external_id": "5b7a314d-b452-4210-94d7-8561fe2f6154", "done": true }
+		},
+		{
+			"id": "cases/5bde2dd4_4c71_475a_9553_abe9c95a75ee",
+			"key": "5bde2dd4_4c71_475a_9553_abe9c95a75ee",
+			"props": { "external_id": "5bde2dd4-4c71-475a-9553-abe9c95a75ee", "done": true }
+		},
+		{
+			"id": "cases/5e4d011a_575d_43ef_a920_f67ee23e7906",
+			"key": "5e4d011a_575d_43ef_a920_f67ee23e7906",
+			"props": { "external_id": "5e4d011a-575d-43ef-a920-f67ee23e7906", "done": true }
+		},
+		{
+			"id": "cases/623751c3_b241_448d_a41a_3b6e2e1c8c90",
+			"key": "623751c3_b241_448d_a41a_3b6e2e1c8c90",
+			"props": { "external_id": "623751c3-b241-448d-a41a-3b6e2e1c8c90", "done": true }
+		},
+		{
+			"id": "cases/6a8a38aa_2cfa_45fb_82bf_09d21b0ce6ae",
+			"key": "6a8a38aa_2cfa_45fb_82bf_09d21b0ce6ae",
+			"props": { "external_id": "6a8a38aa-2cfa-45fb-82bf-09d21b0ce6ae", "done": true }
+		},
+		{
+			"id": "cases/6cd6ad20_e509_4e2e_a5ae_47f0df70462b",
+			"key": "6cd6ad20_e509_4e2e_a5ae_47f0df70462b",
+			"props": { "external_id": "6cd6ad20-e509-4e2e-a5ae-47f0df70462b", "done": true }
+		},
+		{
+			"id": "cases/8309a2f8_6834_460a_9e67_90b6fb86c3f2",
+			"key": "8309a2f8_6834_460a_9e67_90b6fb86c3f2",
+			"props": { "external_id": "8309a2f8-6834-460a-9e67-90b6fb86c3f2", "done": true }
+		},
+		{
+			"id": "cases/84af85b2_86e3_4b5e_ad90_88765982b713",
+			"key": "84af85b2_86e3_4b5e_ad90_88765982b713",
+			"props": { "external_id": "84af85b2-86e3-4b5e-ad90-88765982b713", "done": true }
+		},
+		{
+			"id": "cases/89217685_2350_4900_a290_3b89574c7bfd",
+			"key": "89217685_2350_4900_a290_3b89574c7bfd",
+			"props": { "external_id": "89217685-2350-4900-a290-3b89574c7bfd", "done": true }
+		},
+		{
+			"id": "cases/8fb7b9bc_1fee_4a26_88a3_7c182c5ab1d5",
+			"key": "8fb7b9bc_1fee_4a26_88a3_7c182c5ab1d5",
+			"props": { "external_id": "8fb7b9bc-1fee-4a26-88a3-7c182c5ab1d5", "done": true }
+		},
+		{
+			"id": "cases/91c7a316_c4f7_4e3f_ac02_f83483e6f672",
+			"key": "91c7a316_c4f7_4e3f_ac02_f83483e6f672",
+			"props": { "external_id": "91c7a316-c4f7-4e3f-ac02-f83483e6f672", "done": true }
+		},
+		{
+			"id": "cases/94ed3f32_956f_432f_9350_a34e438b7d83",
+			"key": "94ed3f32_956f_432f_9350_a34e438b7d83",
+			"props": { "external_id": "94ed3f32-956f-432f-9350-a34e438b7d83", "done": true }
+		},
+		{
+			"id": "cases/9815c73b_d86d_4da5_bb69_2c93c4b0a51c",
+			"key": "9815c73b_d86d_4da5_bb69_2c93c4b0a51c",
+			"props": { "external_id": "9815c73b-d86d-4da5-bb69-2c93c4b0a51c", "done": true }
+		},
+		{
+			"id": "cases/98e52b56_b6e0_4521_a99a_a41bd64b65b4",
+			"key": "98e52b56_b6e0_4521_a99a_a41bd64b65b4",
+			"props": { "external_id": "98e52b56-b6e0-4521-a99a-a41bd64b65b4", "done": true }
+		},
+		{
+			"id": "cases/9a319122_e947_486c_a8f0_1fd499af0173",
+			"key": "9a319122_e947_486c_a8f0_1fd499af0173",
+			"props": { "external_id": "9a319122-e947-486c-a8f0-1fd499af0173", "done": true }
+		},
+		{
+			"id": "cases/9c3cb1d8_396b_4287_9f68_5f3439cdaedf",
+			"key": "9c3cb1d8_396b_4287_9f68_5f3439cdaedf",
+			"props": { "external_id": "9c3cb1d8-396b-4287-9f68-5f3439cdaedf", "done": true }
+		},
+		{
+			"id": "cases/9d524975_2e71_4224_bddb_7822e3efe715",
+			"key": "9d524975_2e71_4224_bddb_7822e3efe715",
+			"props": { "external_id": "9d524975-2e71-4224-bddb-7822e3efe715", "done": true }
+		},
+		{
+			"id": "cases/9e4ec611_73ab_4834_a5e6_eaaa13b0145c",
+			"key": "9e4ec611_73ab_4834_a5e6_eaaa13b0145c",
+			"props": { "external_id": "9e4ec611-73ab-4834-a5e6-eaaa13b0145c", "done": true }
+		},
+		{
+			"id": "cases/9e8d2f39_80ae_4565_a9fe_0a7954c6ee3b",
+			"key": "9e8d2f39_80ae_4565_a9fe_0a7954c6ee3b",
+			"props": { "external_id": "9e8d2f39-80ae-4565-a9fe-0a7954c6ee3b", "done": true }
+		},
+		{
+			"id": "cases/9f06735b_1795_4218_b505_3b96603bbba3",
+			"key": "9f06735b_1795_4218_b505_3b96603bbba3",
+			"props": { "external_id": "9f06735b-1795-4218-b505-3b96603bbba3", "done": true }
+		},
+		{
+			"id": "cases/a0309179_e29f_42a5_9db0_e59229f70bd0",
+			"key": "a0309179_e29f_42a5_9db0_e59229f70bd0",
+			"props": { "external_id": "a0309179-e29f-42a5-9db0-e59229f70bd0", "done": true }
+		},
+		{
+			"id": "cases/a82106e7_5196_4a5f_9c42_9e2b4f0af6e9",
+			"key": "a82106e7_5196_4a5f_9c42_9e2b4f0af6e9",
+			"props": { "external_id": "a82106e7-5196-4a5f-9c42-9e2b4f0af6e9", "done": true }
+		},
+		{
+			"id": "cases/adc28f18_3760_489e_b82b_9991edd0dee8",
+			"key": "adc28f18_3760_489e_b82b_9991edd0dee8",
+			"props": { "external_id": "adc28f18-3760-489e-b82b-9991edd0dee8", "done": true }
+		},
+		{
+			"id": "cases/b20fa7c5_a608_42c1_ba2d_de816727e667",
+			"key": "b20fa7c5_a608_42c1_ba2d_de816727e667",
+			"props": { "external_id": "b20fa7c5-a608-42c1-ba2d-de816727e667", "done": true }
+		},
+		{
+			"id": "cases/b81caa33_d338_4c37_a22e_655e81426293",
+			"key": "b81caa33_d338_4c37_a22e_655e81426293",
+			"props": { "external_id": "b81caa33-d338-4c37-a22e-655e81426293", "done": true }
+		},
+		{
+			"id": "cases/befbf88f_128f_4f3c_bf74_b5aff969c8ab",
+			"key": "befbf88f_128f_4f3c_bf74_b5aff969c8ab",
+			"props": { "external_id": "befbf88f-128f-4f3c-bf74-b5aff969c8ab", "done": true }
+		},
+		{
+			"id": "cases/c302d486_87cd_4973_ba96_34a60e057e93",
+			"key": "c302d486_87cd_4973_ba96_34a60e057e93",
+			"props": { "external_id": "c302d486-87cd-4973-ba96-34a60e057e93", "done": true }
+		},
+		{
+			"id": "cases/ca5f5b4c_fe5d_4ac4_8dae_ec7f67c7b72e",
+			"key": "ca5f5b4c_fe5d_4ac4_8dae_ec7f67c7b72e",
+			"props": { "external_id": "ca5f5b4c-fe5d-4ac4-8dae-ec7f67c7b72e", "done": true }
+		},
+		{
+			"id": "cases/cc3df56f_1288_44f1_beec_581c1e998d5c",
+			"key": "cc3df56f_1288_44f1_beec_581c1e998d5c",
+			"props": { "external_id": "cc3df56f-1288-44f1-beec-581c1e998d5c", "done": true }
+		},
+		{
+			"id": "cases/d19d43fc_0c6f_41d5_838e_e965f7193484",
+			"key": "d19d43fc_0c6f_41d5_838e_e965f7193484",
+			"props": { "external_id": "d19d43fc-0c6f-41d5-838e-e965f7193484", "done": true }
+		},
+		{
+			"id": "cases/d3779836_3079_4ec2_8313_b801fc9f5f65",
+			"key": "d3779836_3079_4ec2_8313_b801fc9f5f65",
+			"props": { "external_id": "d3779836-3079-4ec2-8313-b801fc9f5f65", "done": true }
+		},
+		{
+			"id": "cases/dae4fc36_ee17_4355_b0ff_ee7158b9530c",
+			"key": "dae4fc36_ee17_4355_b0ff_ee7158b9530c",
+			"props": { "external_id": "dae4fc36-ee17-4355-b0ff-ee7158b9530c", "done": true }
+		},
+		{
+			"id": "cases/dc3ae12b_97e1_4e71_9238_4877191b9533",
+			"key": "dc3ae12b_97e1_4e71_9238_4877191b9533",
+			"props": { "external_id": "dc3ae12b-97e1-4e71-9238-4877191b9533", "done": true }
+		},
+		{
+			"id": "cases/dc9ccbd9_e26e_4635_97c1_a915d5ebc5fb",
+			"key": "dc9ccbd9_e26e_4635_97c1_a915d5ebc5fb",
+			"props": { "external_id": "dc9ccbd9-e26e-4635-97c1-a915d5ebc5fb", "done": true }
+		},
+		{
+			"id": "cases/e1747889_a78c_4142_b634_9535a79d4327",
+			"key": "e1747889_a78c_4142_b634_9535a79d4327",
+			"props": { "external_id": "e1747889-a78c-4142-b634-9535a79d4327", "done": true }
+		},
+		{
+			"id": "cases/e81296f7_c8c3_4fa8_8c06_f8f7522c7682",
+			"key": "e81296f7_c8c3_4fa8_8c06_f8f7522c7682",
+			"props": { "external_id": "e81296f7-c8c3-4fa8-8c06-f8f7522c7682", "done": true }
+		},
+		{
+			"id": "cases/e81c6e49_4e8d_4e62_a66b_f0bd71d556e2",
+			"key": "e81c6e49_4e8d_4e62_a66b_f0bd71d556e2",
+			"props": { "external_id": "e81c6e49-4e8d-4e62-a66b-f0bd71d556e2", "done": true }
+		},
+		{
+			"id": "cases/e9d816ef_650c_44c8_84d6_45cb4d64f93b",
+			"key": "e9d816ef_650c_44c8_84d6_45cb4d64f93b",
+			"props": { "external_id": "e9d816ef-650c-44c8-84d6-45cb4d64f93b", "done": true }
+		},
+		{
+			"id": "cases/ec5b978c_cb65_4c25_97f9_3e969ffc38f9",
+			"key": "ec5b978c_cb65_4c25_97f9_3e969ffc38f9",
+			"props": { "external_id": "ec5b978c-cb65-4c25-97f9-3e969ffc38f9", "done": true }
+		},
+		{
+			"id": "cases/f1a6877c_3a98_48cd_b7bf_ab4c303f0cae",
+			"key": "f1a6877c_3a98_48cd_b7bf_ab4c303f0cae",
+			"props": { "external_id": "f1a6877c-3a98-48cd-b7bf-ab4c303f0cae", "done": true }
+		},
+		{
+			"id": "cases/f2734331_1ed1_4d49_b088_aaeba3d59385",
+			"key": "f2734331_1ed1_4d49_b088_aaeba3d59385",
+			"props": { "external_id": "f2734331-1ed1-4d49-b088-aaeba3d59385", "done": true }
+		},
+		{
+			"id": "cases/fc1590ac_e03b_4def_af6f_4b5ca58ac846",
+			"key": "fc1590ac_e03b_4def_af6f_4b5ca58ac846",
+			"props": { "external_id": "fc1590ac-e03b-4def-af6f-4b5ca58ac846", "done": true }
+		},
+		{
+			"id": "cases/fc395d23_62fd_4425_b0e5_99d31cd89e1f",
+			"key": "fc395d23_62fd_4425_b0e5_99d31cd89e1f",
+			"props": { "external_id": "fc395d23-62fd-4425-b0e5-99d31cd89e1f", "done": true }
+		},
+		{
+			"id": "cases/fe256c36_81d1_4823_bab5_fe633a023d41",
+			"key": "fe256c36_81d1_4823_bab5_fe633a023d41",
+			"props": { "external_id": "fe256c36-81d1-4823-bab5-fe633a023d41", "done": true }
+		},
+		{
+			"id": "decisions/decision_053c50ca_0e7f_4412_970e_7609608e7144",
+			"key": "decision_053c50ca_0e7f_4412_970e_7609608e7144",
+			"props": {
+				"primary_case_id": "f2734331-1ed1-4d49-b088-aaeba3d59385",
+				"passed": false,
+				"date": "2025-03-25",
+				"tally": { "Voor": 70, "Tegen": 80 },
+				"decision_kind": "Stemmen - verworpen"
+			}
+		},
+		{
+			"id": "decisions/decision_05665df2_1316_4ece_acea_ac358aabfb40",
+			"key": "decision_05665df2_1316_4ece_acea_ac358aabfb40",
+			"props": {
+				"primary_case_id": "fc395d23-62fd-4425-b0e5-99d31cd89e1f",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 147, "Tegen": 3 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_088c66de_ceb3_449e_8b29_a7857474cd11",
+			"key": "decision_088c66de_ceb3_449e_8b29_a7857474cd11",
+			"props": {
+				"primary_case_id": "433e76bd-91b8-4304-a4eb-3f1463f56448",
+				"passed": null,
+				"date": "2025-03-25",
+				"tally": {},
+				"decision_kind": "Stemmen - vervallen"
+			}
+		},
+		{
+			"id": "decisions/decision_0d61da2e_6189_433d_a2bf_813bc8ea9a8e",
+			"key": "decision_0d61da2e_6189_433d_a2bf_813bc8ea9a8e",
+			"props": {
+				"primary_case_id": "dc3ae12b-97e1-4e71-9238-4877191b9533",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 105, "Tegen": 45 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_11def514_4ef2_46d0_a093_d50dc4241b39",
+			"key": "decision_11def514_4ef2_46d0_a093_d50dc4241b39",
+			"props": {
+				"primary_case_id": "9e4ec611-73ab-4834-a5e6-eaaa13b0145c",
+				"passed": null,
+				"date": "2025-03-25",
+				"tally": {},
+				"decision_kind": "Stemmen - ingetrokken"
+			}
+		},
+		{
+			"id": "decisions/decision_15ca0b7b_01a4_48dc_99bf_44b1ca03c94f",
+			"key": "decision_15ca0b7b_01a4_48dc_99bf_44b1ca03c94f",
+			"props": {
+				"primary_case_id": "8309a2f8-6834-460a-9e67-90b6fb86c3f2",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 144, "Tegen": 6 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_1c721cc8_6dfd_4a4a_8d2c_1f642f5272ce",
+			"key": "decision_1c721cc8_6dfd_4a4a_8d2c_1f642f5272ce",
+			"props": {
+				"primary_case_id": "5e4d011a-575d-43ef-a920-f67ee23e7906",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 108, "Tegen": 42 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_3067145f_aab7_476c_80c4_ddb9e7ff7a71",
+			"key": "decision_3067145f_aab7_476c_80c4_ddb9e7ff7a71",
+			"props": {
+				"primary_case_id": "fe256c36-81d1-4823-bab5-fe633a023d41",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 109, "Tegen": 41 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_324c6224_4288_4398_af71_638b47437339",
+			"key": "decision_324c6224_4288_4398_af71_638b47437339",
+			"props": {
+				"primary_case_id": "4c57d1ee-64cb-41d6-8b78-3120691ca973",
+				"passed": false,
+				"date": "2025-03-25",
+				"tally": { "Voor": 36, "Tegen": 114 },
+				"decision_kind": "Stemmen - verworpen"
+			}
+		},
+		{
+			"id": "decisions/decision_3434b3b7_59da_4aad_96fe_ba6a41837654",
+			"key": "decision_3434b3b7_59da_4aad_96fe_ba6a41837654",
+			"props": {
+				"primary_case_id": "1a9fb6e2-3b11-430d-9827-10fb763e50d7",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 88, "Tegen": 62 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_390e2dc0_b23e_45f1_88a0_cf4a72223a51",
+			"key": "decision_390e2dc0_b23e_45f1_88a0_cf4a72223a51",
+			"props": {
+				"primary_case_id": "3b865040-bcf8-48f2-8a86-9854f938494d",
+				"passed": null,
+				"date": "2025-03-19",
+				"tally": {},
+				"decision_kind": "Stemmen - ingetrokken"
+			}
+		},
+		{
+			"id": "decisions/decision_3aa06ad6_ce3c_46d0_8038_c2a19b362d17",
+			"key": "decision_3aa06ad6_ce3c_46d0_8038_c2a19b362d17",
+			"props": {
+				"primary_case_id": "ca5f5b4c-fe5d-4ac4-8dae-ec7f67c7b72e",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 85, "Tegen": 65 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_3d74fed4_242b_4927_aedb_a38987808717",
+			"key": "decision_3d74fed4_242b_4927_aedb_a38987808717",
+			"props": {
+				"primary_case_id": "6a8a38aa-2cfa-45fb-82bf-09d21b0ce6ae",
+				"passed": false,
+				"date": "2025-03-25",
+				"tally": { "Voor": 60, "Tegen": 90 },
+				"decision_kind": "Stemmen - verworpen"
+			}
+		},
+		{
+			"id": "decisions/decision_454a063e_9fb6_441e_b3b7_18c20b248473",
+			"key": "decision_454a063e_9fb6_441e_b3b7_18c20b248473",
+			"props": {
+				"primary_case_id": "9815c73b-d86d-4da5-bb69-2c93c4b0a51c",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 147, "Tegen": 3 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_52302cf0_3990_4594_b6d2_14d4e53f549f",
+			"key": "decision_52302cf0_3990_4594_b6d2_14d4e53f549f",
+			"props": {
+				"primary_case_id": "9d524975-2e71-4224-bddb-7822e3efe715",
+				"passed": false,
+				"date": "2025-03-25",
+				"tally": { "Voor": 48, "Tegen": 102 },
+				"decision_kind": "Stemmen - verworpen"
+			}
+		},
+		{
+			"id": "decisions/decision_53b660e2_0858_4844_b1e2_2b8a080a383c",
+			"key": "decision_53b660e2_0858_4844_b1e2_2b8a080a383c",
+			"props": {
+				"primary_case_id": "dc9ccbd9-e26e-4635-97c1-a915d5ebc5fb",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 85, "Tegen": 65 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_55ebf85e_bc53_46da_9067_3f826963077c",
+			"key": "decision_55ebf85e_bc53_46da_9067_3f826963077c",
+			"props": {
+				"primary_case_id": "89217685-2350-4900-a290-3b89574c7bfd",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 150 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_5ac3b781_ec0d_4039_84eb_252d912514e7",
+			"key": "decision_5ac3b781_ec0d_4039_84eb_252d912514e7",
+			"props": {
+				"primary_case_id": "9a319122-e947-486c-a8f0-1fd499af0173",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 150 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_5c923780_6177_4c36_99ed_0ec524000266",
+			"key": "decision_5c923780_6177_4c36_99ed_0ec524000266",
+			"props": {
+				"primary_case_id": "9e8d2f39-80ae-4565-a9fe-0a7954c6ee3b",
+				"passed": false,
+				"date": "2025-03-25",
+				"tally": { "Voor": 31, "Tegen": 119 },
+				"decision_kind": "Stemmen - verworpen"
+			}
+		},
+		{
+			"id": "decisions/decision_5e7f5850_d788_482a_b495_c7bbc24e40ee",
+			"key": "decision_5e7f5850_d788_482a_b495_c7bbc24e40ee",
+			"props": {
+				"primary_case_id": "dae4fc36-ee17-4355-b0ff-ee7158b9530c",
+				"passed": false,
+				"date": "2025-03-25",
+				"tally": { "Voor": 51, "Tegen": 99 },
+				"decision_kind": "Stemmen - verworpen"
+			}
+		},
+		{
+			"id": "decisions/decision_5f5ba637_3502_4b76_82ff_9c61be074054",
+			"key": "decision_5f5ba637_3502_4b76_82ff_9c61be074054",
+			"props": {
+				"primary_case_id": "0d3a4aa8-d957-4de9-852d-3979cf7a9230",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 105, "Tegen": 45 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_6252d4e6_5c43_443a_be3f_cd6436a2ab79",
+			"key": "decision_6252d4e6_5c43_443a_be3f_cd6436a2ab79",
+			"props": {
+				"primary_case_id": "e81c6e49-4e8d-4e62-a66b-f0bd71d556e2",
+				"passed": false,
+				"date": "2025-03-25",
+				"tally": { "Voor": 72, "Tegen": 78 },
+				"decision_kind": "Stemmen - verworpen"
+			}
+		},
+		{
+			"id": "decisions/decision_62a7253a_ab9b_4a5d_887a_1ace6ee9560b",
+			"key": "decision_62a7253a_ab9b_4a5d_887a_1ace6ee9560b",
+			"props": {
+				"primary_case_id": "0c4c6cbb-7b49-4eb7-938a-ead242c49ef3",
+				"passed": false,
+				"date": "2025-03-25",
+				"tally": { "Voor": 72, "Tegen": 78 },
+				"decision_kind": "Stemmen - verworpen"
+			}
+		},
+		{
+			"id": "decisions/decision_6d07837a_f53c_4d1c_9404_1603a6f0d3e8",
+			"key": "decision_6d07837a_f53c_4d1c_9404_1603a6f0d3e8",
+			"props": {
+				"primary_case_id": "d19d43fc-0c6f-41d5-838e-e965f7193484",
+				"passed": false,
+				"date": "2025-03-25",
+				"tally": { "Voor": 53, "Tegen": 97 },
+				"decision_kind": "Stemmen - verworpen"
+			}
+		},
+		{
+			"id": "decisions/decision_700e7aab_4de9_4cbd_a019_09bd637e25fe",
+			"key": "decision_700e7aab_4de9_4cbd_a019_09bd637e25fe",
+			"props": {
+				"primary_case_id": "f1a6877c-3a98-48cd-b7bf-ab4c303f0cae",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 83, "Tegen": 67 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_74899e9d_372b_4257_84d4_a2ff7b27f5a1",
+			"key": "decision_74899e9d_372b_4257_84d4_a2ff7b27f5a1",
+			"props": {
+				"primary_case_id": "b81caa33-d338-4c37-a22e-655e81426293",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 94, "Tegen": 56 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_768f40ff_a9ed_4264_9ae4_154238359158",
+			"key": "decision_768f40ff_a9ed_4264_9ae4_154238359158",
+			"props": {
+				"primary_case_id": "0c9d3354-3232-49c8-91fc-96ed3f1427ac",
+				"passed": null,
+				"date": "2025-03-19",
+				"tally": {},
+				"decision_kind": "Stemmen - ingetrokken"
+			}
+		},
+		{
+			"id": "decisions/decision_8075c06a_9c82_451d_ac22_cae699dedd43",
+			"key": "decision_8075c06a_9c82_451d_ac22_cae699dedd43",
+			"props": {
+				"primary_case_id": "befbf88f-128f-4f3c-bf74-b5aff969c8ab",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 89, "Tegen": 61 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_8e121a6e_c3ec_45a2_8b49_e842aa930d95",
+			"key": "decision_8e121a6e_c3ec_45a2_8b49_e842aa930d95",
+			"props": {
+				"primary_case_id": "5bde2dd4-4c71-475a-9553-abe9c95a75ee",
+				"passed": false,
+				"date": "2025-03-25",
+				"tally": { "Voor": 41, "Tegen": 109 },
+				"decision_kind": "Stemmen - verworpen"
+			}
+		},
+		{
+			"id": "decisions/decision_903494fa_1910_4181_b4d5_cf1b87288f8e",
+			"key": "decision_903494fa_1910_4181_b4d5_cf1b87288f8e",
+			"props": {
+				"primary_case_id": "623751c3-b241-448d-a41a-3b6e2e1c8c90",
+				"passed": false,
+				"date": "2025-03-25",
+				"tally": { "Voor": 53, "Tegen": 97 },
+				"decision_kind": "Stemmen - verworpen"
+			}
+		},
+		{
+			"id": "decisions/decision_9834d0cb_5a25_4f36_abd1_d5f77b682f11",
+			"key": "decision_9834d0cb_5a25_4f36_abd1_d5f77b682f11",
+			"props": {
+				"primary_case_id": "ec5b978c-cb65-4c25-97f9-3e969ffc38f9",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 150 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_9b32bad5_3e25_4737_add9_d7d451079115",
+			"key": "decision_9b32bad5_3e25_4737_add9_d7d451079115",
+			"props": {
+				"primary_case_id": "3b7bf1ff-8af4-4636-818c-21cd6b83fae6",
+				"passed": true,
+				"date": "2025-04-01",
+				"tally": { "Voor": 144, "Tegen": 6 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_9c7ca919_f86b_4595_9d30_c7b3ed132449",
+			"key": "decision_9c7ca919_f86b_4595_9d30_c7b3ed132449",
+			"props": {
+				"primary_case_id": "1cfe0570-aaac-4833-aa26-e087af48c459",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 148, "Tegen": 2 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_a492f01d_ae50_44c2_ae02_312ce803b980",
+			"key": "decision_a492f01d_ae50_44c2_ae02_312ce803b980",
+			"props": {
+				"primary_case_id": "adc28f18-3760-489e-b82b-9991edd0dee8",
+				"passed": false,
+				"date": "2025-03-25",
+				"tally": { "Voor": 51, "Tegen": 99 },
+				"decision_kind": "Stemmen - verworpen"
+			}
+		},
+		{
+			"id": "decisions/decision_a6b9b38d_b30f_45b9_967e_a761f237ca47",
+			"key": "decision_a6b9b38d_b30f_45b9_967e_a761f237ca47",
+			"props": {
+				"primary_case_id": "0a831fcc-6d00-45d0-8b28-88c98d2713c4",
+				"passed": null,
+				"date": "2025-03-25",
+				"tally": {},
+				"decision_kind": "Stemmen - ingetrokken (al tijdens debat)"
+			}
+		},
+		{
+			"id": "decisions/decision_b0036de1_2350_489c_9ff8_5fcd37e1a454",
+			"key": "decision_b0036de1_2350_489c_9ff8_5fcd37e1a454",
+			"props": {
+				"primary_case_id": "48afddd3-737d-4cef-963b-d2a10c6b079d",
+				"passed": false,
+				"date": "2025-03-25",
+				"tally": { "Voor": 31, "Tegen": 119 },
+				"decision_kind": "Stemmen - verworpen"
+			}
+		},
+		{
+			"id": "decisions/decision_b118b626_9f81_4bd5_abdd_76bc07e788bb",
+			"key": "decision_b118b626_9f81_4bd5_abdd_76bc07e788bb",
+			"props": {
+				"primary_case_id": "a0309179-e29f-42a5-9db0-e59229f70bd0",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 150 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_b4fcdc30_9929_4fef_9c58_9fe6fd18afc4",
+			"key": "decision_b4fcdc30_9929_4fef_9c58_9fe6fd18afc4",
+			"props": {
+				"primary_case_id": "e1747889-a78c-4142-b634-9535a79d4327",
+				"passed": null,
+				"date": "2025-03-19",
+				"tally": {},
+				"decision_kind": "Stemmen - ingetrokken"
+			}
+		},
+		{
+			"id": "decisions/decision_c66a7fc6_ca2e_42bd_8606_6e079bef759c",
+			"key": "decision_c66a7fc6_ca2e_42bd_8606_6e079bef759c",
+			"props": {
+				"primary_case_id": "8fb7b9bc-1fee-4a26-88a3-7c182c5ab1d5",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 144, "Tegen": 6 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_c6df2b3e_8665_45d3_b629_06b8dd293f5e",
+			"key": "decision_c6df2b3e_8665_45d3_b629_06b8dd293f5e",
+			"props": {
+				"primary_case_id": "cc3df56f-1288-44f1-beec-581c1e998d5c",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 150 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_c9722d00_be72_4d7e_a8ce_aabdad4f649d",
+			"key": "decision_c9722d00_be72_4d7e_a8ce_aabdad4f649d",
+			"props": {
+				"primary_case_id": "2d436102-4a88-4a3f-bd9f-a5d760a119c1",
+				"passed": false,
+				"date": "2025-03-25",
+				"tally": { "Voor": 41, "Tegen": 109 },
+				"decision_kind": "Stemmen - verworpen"
+			}
+		},
+		{
+			"id": "decisions/decision_cdde972e_1eee_4511_a04d_bd7f3955804a",
+			"key": "decision_cdde972e_1eee_4511_a04d_bd7f3955804a",
+			"props": {
+				"primary_case_id": "d3779836-3079-4ec2-8313-b801fc9f5f65",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 112, "Tegen": 38 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_ce1c3055_cb26_4e8b_a71d_9d7f2428549d",
+			"key": "decision_ce1c3055_cb26_4e8b_a71d_9d7f2428549d",
+			"props": {
+				"primary_case_id": "03ee96e9-9f6d-4f44-a448-5489d38010b9",
+				"passed": false,
+				"date": "2025-03-25",
+				"tally": { "Voor": 64, "Tegen": 86 },
+				"decision_kind": "Stemmen - verworpen"
+			}
+		},
+		{
+			"id": "decisions/decision_f87495ca_a6f8_430a_832e_d4ab14548239",
+			"key": "decision_f87495ca_a6f8_430a_832e_d4ab14548239",
+			"props": {
+				"primary_case_id": "84af85b2-86e3-4b5e-ad90-88765982b713",
+				"passed": true,
+				"date": "2025-03-25",
+				"tally": { "Voor": 142, "Tegen": 8 },
+				"decision_kind": "Stemmen - aangenomen"
+			}
+		},
+		{
+			"id": "decisions/decision_fe50ae22_22fe_4b99_b7fb_0cb5c0fc1e3f",
+			"key": "decision_fe50ae22_22fe_4b99_b7fb_0cb5c0fc1e3f",
+			"props": {
+				"primary_case_id": "52d1f137-1cd2-4aa9-87cd-2431b1d8eddd",
+				"passed": false,
+				"date": "2025-03-25",
+				"tally": { "Voor": 53, "Tegen": 97 },
+				"decision_kind": "Stemmen - verworpen"
+			}
+		},
+		{
+			"id": "decisions/ek_2026_02_24_36327_1",
+			"key": "ek_2026_02_24_36327_1",
+			"props": { "passed": true, "date": "2026-02-24" }
+		},
+		{
+			"id": "documents/0cf80f2b_af63_421c_9a08_5ba4ebd0de32",
+			"key": "0cf80f2b_af63_421c_9a08_5ba4ebd0de32",
+			"props": {
+				"sequence": 21,
+				"number": "21",
+				"date": "2025-01-23",
+				"title": "Gewijzigd amendement van de leden Sneller en Ellian ter vervanging van nr. 19 over niet-aanwezigheid van de verdachte bij getuigenverhoor als hoofdregel",
+				"subject": "Gewijzigd amendement van de leden Sneller en Ellian ter vervanging van nr. 19 over niet-aanwezigheid van de verdachte bij getuigenverhoor als hoofdregel",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["fc395d23-62fd-4425-b0e5-99d31cd89e1f"],
+				"actors": [
+					{ "name": "U. Ellian", "faction": "VVD", "role": "Mede ondertekenaar" },
+					{ "name": "J.C. Sneller", "faction": "D66", "role": "Eerste ondertekenaar" }
+				]
+			}
+		},
+		{
+			"id": "documents/0f587d35_1316_4049_881d_6bab14ecac7e",
+			"key": "0f587d35_1316_4049_881d_6bab14ecac7e",
+			"props": {
+				"sequence": 20,
+				"number": "20",
+				"date": "2025-01-16",
+				"title": "Amendement van het lid Ellian over een algemene onderzoeksbevoegdheid voor de rechter-commissaris",
+				"subject": "Amendement van het lid Ellian over een algemene onderzoeksbevoegdheid voor de rechter-commissaris",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["111cd407-5949-4639-a4c3-1186437618a7"],
+				"actors": [{ "name": "U. Ellian", "faction": "VVD", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/1aa51cf5_7109_448b_ba62_d812e4720225",
+			"key": "1aa51cf5_7109_448b_ba62_d812e4720225",
+			"props": {
+				"sequence": 46,
+				"number": "46",
+				"date": "2025-03-05",
+				"title": "Gewijzigd amendement van het lid Ellian ter vervanging van nr. 20 over een algemene onderzoeksbevoegdheid voor de rechter-commissaris",
+				"subject": "Gewijzigd amendement van het lid Ellian ter vervanging van nr. 20 over een algemene onderzoeksbevoegdheid voor de rechter-commissaris",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["f1a6877c-3a98-48cd-b7bf-ab4c303f0cae"],
+				"actors": [{ "name": "U. Ellian", "faction": "VVD", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/1eaf17ce_c385_4c96_9e89_fcf5849d2f61",
+			"key": "1eaf17ce_c385_4c96_9e89_fcf5849d2f61",
+			"props": {
+				"sequence": 17,
+				"number": "17",
+				"date": "2024-12-19",
+				"title": "Amendement van het lid Sneller over niet-aanwezigheid van de verdachte bij getuigenverhoor als hoofdregel",
+				"subject": "Amendement van het lid Sneller over niet-aanwezigheid van de verdachte bij getuigenverhoor als hoofdregel",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["c302d486-87cd-4973-ba96-34a60e057e93"],
+				"actors": [{ "name": "J.C. Sneller", "faction": "D66", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/1ebc6a27_55a7_4ee1_b602_85ce82a94ee3",
+			"key": "1ebc6a27_55a7_4ee1_b602_85ce82a94ee3",
+			"props": {
+				"sequence": 48,
+				"number": "48",
+				"date": "2025-03-05",
+				"title": "Amendement van het lid Koops over het verlengen van de termijn voor het instellen van verzet tegen een strafbeschikking naar zes weken",
+				"subject": "Amendement van het lid Koops over het verlengen van de termijn voor het instellen van verzet tegen een strafbeschikking naar zes weken",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["48afddd3-737d-4cef-963b-d2a10c6b079d"],
+				"actors": [{ "name": "W.J. Koops", "faction": "NSC", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/2da57f27_6910_4bfe_a436_bc78c07dce78",
+			"key": "2da57f27_6910_4bfe_a436_bc78c07dce78",
+			"props": {
+				"sequence": 19,
+				"number": "19",
+				"date": "2024-12-19",
+				"title": "Amendement van de leden Sneller en Ellian ter vervanging van nr. 17 over niet-aanwezigheid van de verdachte bij getuigenverhoor als hoofdregel",
+				"subject": "Amendement van de leden Sneller en Ellian ter vervanging van nr. 17 over niet-aanwezigheid van de verdachte bij getuigenverhoor als hoofdregel",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["9f06735b-1795-4218-b505-3b96603bbba3"],
+				"actors": [
+					{ "name": "U. Ellian", "faction": "VVD", "role": "Mede ondertekenaar" },
+					{ "name": "J.C. Sneller", "faction": "D66", "role": "Eerste ondertekenaar" }
+				]
+			}
+		},
+		{
+			"id": "documents/2ddc4310_9b3e_4047_89e7_282b870d01fd",
+			"key": "2ddc4310_9b3e_4047_89e7_282b870d01fd",
+			"props": {
+				"sequence": 40,
+				"number": "40",
+				"date": "2025-03-03",
+				"title": "Gewijzigd amendement van het lid Sneller ter vervanging van nr. 12 over het beperken van de toepassing van voorlopige hechtenis",
+				"subject": "Gewijzigd amendement van het lid Sneller ter vervanging van nr. 12 over het beperken van de toepassing van voorlopige hechtenis",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["433e76bd-91b8-4304-a4eb-3f1463f56448"],
+				"actors": [{ "name": "J.C. Sneller", "faction": "D66", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/2ef5eeeb_b290_45c1_9fb6_9890f3010a7c",
+			"key": "2ef5eeeb_b290_45c1_9fb6_9890f3010a7c",
+			"props": {
+				"sequence": 41,
+				"number": "41",
+				"date": "2025-03-03",
+				"title": "Gewijzigd amendement van het lid Sneller ter vervanging van nr. 13 over een wettelijke verplichting om concreter te motiveren waarom toepassing van voorlopige hechtenis noodzakelijk en proportioneel is",
+				"subject": "Gewijzigd amendement van het lid Sneller ter vervanging van nr. 13 over een wettelijke verplichting om concreter te motiveren waarom toepassing van voorlopige hechtenis noodzakelijk en proportioneel is",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["0d3a4aa8-d957-4de9-852d-3979cf7a9230"],
+				"actors": [{ "name": "J.C. Sneller", "faction": "D66", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/2f8c2d65_0ea1_4f12_b87f_f3f21f87cc14",
+			"key": "2f8c2d65_0ea1_4f12_b87f_f3f21f87cc14",
+			"props": {
+				"sequence": 51,
+				"number": "51",
+				"date": "2025-03-06",
+				"title": "Gewijzigd amendement van de leden Mutluer en Van Nispen ter vervanging van nr. 27 over het stimuleren van het gebruik van mediation en andere herstelvoorzieningen",
+				"subject": "Gewijzigd amendement van de leden Mutluer en Van Nispen ter vervanging van nr. 27 over het stimuleren van het gebruik van mediation en andere herstelvoorzieningen",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["d3779836-3079-4ec2-8313-b801fc9f5f65"],
+				"actors": [
+					{ "name": "S. Mutluer", "faction": "GroenLinks-PvdA", "role": "Eerste ondertekenaar" },
+					{ "name": "M. van Nispen", "faction": "SP", "role": "Mede ondertekenaar" }
+				]
+			}
+		},
+		{
+			"id": "documents/313fdaf0_b8cc_41a0_a544_5f9583a48134",
+			"key": "313fdaf0_b8cc_41a0_a544_5f9583a48134",
+			"props": {
+				"sequence": 76,
+				"number": "76",
+				"date": "2025-03-25",
+				"title": "Gewijzigd amendement van het lid Koops ter vervanging van nr. 49 over het meteen motiveren in het eindvonnis als is afgeweken van een uitdrukkelijk voorgedragen standpunt",
+				"subject": "Gewijzigd amendement van het lid Koops ter vervanging van nr. 49 over het meteen motiveren in het eindvonnis als is afgeweken van een uitdrukkelijk voorgedragen standpunt",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["6a8a38aa-2cfa-45fb-82bf-09d21b0ce6ae"],
+				"actors": [{ "name": "W.J. Koops", "faction": "NSC", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/32f4f7c7_abf0_4f4e_9f7f_dcc3fa790e5c",
+			"key": "32f4f7c7_abf0_4f4e_9f7f_dcc3fa790e5c",
+			"props": {
+				"sequence": 22,
+				"number": "22",
+				"date": "2025-01-23",
+				"title": "Amendement van het lid Ellian over het slachtoffer ook bij niet-vervolging de mogelijkheid geven om kennis te nemen van processtukken",
+				"subject": "Amendement van het lid Ellian over het slachtoffer ook bij niet-vervolging de mogelijkheid geven om kennis te nemen van processtukken",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["6cd6ad20-e509-4e2e-a5ae-47f0df70462b"],
+				"actors": [{ "name": "U. Ellian", "faction": "VVD", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/388865b9_7319_401a_9a66_9f963c148056",
+			"key": "388865b9_7319_401a_9a66_9f963c148056",
+			"props": {
+				"sequence": 12,
+				"number": "12",
+				"date": "2024-12-19",
+				"title": "Amendement van het lid Sneller over het beperken van de toepassing van voorlopige hechtenis",
+				"subject": "Amendement van het lid Sneller over het beperken van de toepassing van voorlopige hechtenis",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["e81296f7-c8c3-4fa8-8c06-f8f7522c7682"],
+				"actors": [{ "name": "J.C. Sneller", "faction": "D66", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/428526b0_3888_46ed_8ed7_09bba8a6532e",
+			"key": "428526b0_3888_46ed_8ed7_09bba8a6532e",
+			"props": {
+				"sequence": 39,
+				"number": "39",
+				"date": "2025-03-03",
+				"title": "Gewijzigd amendement van het lid Ellian ter vervanging van nr. 28 over het gebruik van videoconferentie als hoofdregel bij verdachten in EBI's en AIT's",
+				"subject": "Gewijzigd amendement van het lid Ellian ter vervanging van nr. 28 over het gebruik van videoconferentie als hoofdregel bij verdachten in EBI's en AIT's",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["dc3ae12b-97e1-4e71-9238-4877191b9533"],
+				"actors": [{ "name": "U. Ellian", "faction": "VVD", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/460826b0_e214_4e0b_bc7e_aa0743e579e8",
+			"key": "460826b0_e214_4e0b_bc7e_aa0743e579e8",
+			"props": {
+				"sequence": 56,
+				"number": "56",
+				"date": "2025-03-18",
+				"title": "Nader gewijzigd amendement van het lid Sneller ter vervanging van nr. 50 over verduidelijking van de gronden voor voorlopige hechtenis",
+				"subject": "Nader gewijzigd amendement van het lid Sneller ter vervanging van nr. 50 over verduidelijking van de gronden voor voorlopige hechtenis",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["b81caa33-d338-4c37-a22e-655e81426293"],
+				"actors": [{ "name": "J.C. Sneller", "faction": "D66", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/48e9c004_1f43_46cf_8164_7c532d0073d7",
+			"key": "48e9c004_1f43_46cf_8164_7c532d0073d7",
+			"props": {
+				"sequence": 24,
+				"number": "24",
+				"date": "2025-01-23",
+				"title": "Amendement van het lid Ellian over het laten vervallen van de mogelijkheden voor specifiek beklag met betrekking tot gegevens",
+				"subject": "Amendement van het lid Ellian over het laten vervallen van de mogelijkheden voor specifiek beklag met betrekking tot gegevens",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["9c3cb1d8-396b-4287-9f68-5f3439cdaedf"],
+				"actors": [{ "name": "U. Ellian", "faction": "VVD", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/4a15428e_4afd_44bf_bf71_1fa84660d729",
+			"key": "4a15428e_4afd_44bf_bf71_1fa84660d729",
+			"props": {
+				"sequence": 29,
+				"number": "29",
+				"date": "2025-01-24",
+				"title": "Amendement van het lid Koops over het verduidelijken van de aanduiding voorzitter",
+				"subject": "Amendement van het lid Koops over het verduidelijken van de aanduiding voorzitter",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["e1747889-a78c-4142-b634-9535a79d4327"],
+				"actors": [{ "name": "W.J. Koops", "faction": "NSC", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/4d3f77df_af1a_4828_baaa_553c2b6b31f4",
+			"key": "4d3f77df_af1a_4828_baaa_553c2b6b31f4",
+			"props": {
+				"sequence": 37,
+				"number": "37",
+				"date": "2025-02-07",
+				"title": "Amendement van de leden Mutluer en Van Nispen over herstelvoorzieningen bij jeugdige verdachten",
+				"subject": "Amendement van de leden Mutluer en Van Nispen over herstelvoorzieningen bij jeugdige verdachten",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["2d436102-4a88-4a3f-bd9f-a5d760a119c1"],
+				"actors": [
+					{ "name": "M. van Nispen", "faction": "SP", "role": "Mede ondertekenaar" },
+					{ "name": "S. Mutluer", "faction": "GroenLinks-PvdA", "role": "Eerste ondertekenaar" }
+				]
+			}
+		},
+		{
+			"id": "documents/5817d753_c684_4eec_9ca9_0bd5feebfdad",
+			"key": "5817d753_c684_4eec_9ca9_0bd5feebfdad",
+			"props": {
+				"sequence": 23,
+				"number": "23",
+				"date": "2025-01-23",
+				"title": "Amendement van het lid Ellian over de noodzaak van een deugdelijke motivering als de rechter geen medebrenging van de ouder beveelt",
+				"subject": "Amendement van het lid Ellian over de noodzaak van een deugdelijke motivering als de rechter geen medebrenging van de ouder beveelt",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["0fb2e0db-f031-4fc9-90d5-1ea2b2acab41"],
+				"actors": [{ "name": "U. Ellian", "faction": "VVD", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/5bcf5830_176e_4af3_abf9_71bb8188abcc",
+			"key": "5bcf5830_176e_4af3_abf9_71bb8188abcc",
+			"props": {
+				"sequence": 26,
+				"number": "26",
+				"date": "2025-01-23",
+				"title": "Amendement van het lid Ellian over het ontvangen door het slachtoffer van een goede en volledige motivering van een sepot",
+				"subject": "Amendement van het lid Ellian over het ontvangen door het slachtoffer van een goede en volledige motivering van een sepot",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["89217685-2350-4900-a290-3b89574c7bfd"],
+				"actors": [{ "name": "U. Ellian", "faction": "VVD", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/7364ff6d_5343_4511_b852_0ac53f8ef3f1",
+			"key": "7364ff6d_5343_4511_b852_0ac53f8ef3f1",
+			"props": {
+				"sequence": 14,
+				"number": "14",
+				"date": "2024-12-19",
+				"title": "Amendement van het lid Sneller over een inspanningsverplichting voor de officier van justitie voor het realiseren van alternatieven voor voorlopige hechtenis",
+				"subject": "Amendement van het lid Sneller over een inspanningsverplichting voor de officier van justitie voor het realiseren van alternatieven voor voorlopige hechtenis",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["1ac4a6a9-c362-4341-9fca-15042de1f575"],
+				"actors": [{ "name": "J.C. Sneller", "faction": "D66", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/791e6754_7af7_436a_848d_e02bde78efe1",
+			"key": "791e6754_7af7_436a_848d_e02bde78efe1",
+			"props": {
+				"sequence": 30,
+				"number": "30",
+				"date": "2025-01-27",
+				"title": "Amendement van het lid Sneller over verduidelijking van de gronden voor voorlopige hechtenis",
+				"subject": "Amendement van het lid Sneller over verduidelijking van de gronden voor voorlopige hechtenis",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["21d640af-5259-4a16-8fb4-99a456532c66"],
+				"actors": [{ "name": "J.C. Sneller", "faction": "D66", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/7c4e38d1_3766_48c1_b0c8_7fb5fde17703",
+			"key": "7c4e38d1_3766_48c1_b0c8_7fb5fde17703",
+			"props": {
+				"sequence": 57,
+				"number": "57",
+				"date": "2025-03-19",
+				"title": "Amendement van het lid Ellian over termijnoverschrijding bij onderzoekswensen",
+				"subject": "Amendement van het lid Ellian over termijnoverschrijding bij onderzoekswensen",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["9e4ec611-73ab-4834-a5e6-eaaa13b0145c"],
+				"actors": [{ "name": "U. Ellian", "faction": "VVD", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/7d66f9a2_772d_46c8_a275_b61b660b5b8a",
+			"key": "7d66f9a2_772d_46c8_a275_b61b660b5b8a",
+			"props": {
+				"sequence": 42,
+				"number": "42",
+				"date": "2025-03-03",
+				"title": "Gewijzigd amendement van het lid Sneller ter vervanging van nr. 14 over een inspanningsverplichting voor de officier van justitie voor het realiseren van alternatieven voor voorlopige hechtenis",
+				"subject": "Gewijzigd amendement van het lid Sneller ter vervanging van nr. 14 over een inspanningsverplichting voor de officier van justitie voor het realiseren van alternatieven voor voorlopige hechtenis",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["0c4c6cbb-7b49-4eb7-938a-ead242c49ef3"],
+				"actors": [{ "name": "J.C. Sneller", "faction": "D66", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/7d830943_ca22_420e_af86_fba90b432310",
+			"key": "7d830943_ca22_420e_af86_fba90b432310",
+			"props": {
+				"sequence": 58,
+				"number": "58",
+				"date": "2025-03-19",
+				"title": "Gewijzigd amendement van het lid Ellian ter vervanging van nr. 24 over het laten vervallen van de mogelijkheden voor specifiek beklag met betrekking tot gegevens",
+				"subject": "Gewijzigd amendement van het lid Ellian ter vervanging van nr. 24 over het laten vervallen van de mogelijkheden voor specifiek beklag met betrekking tot gegevens",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["e81c6e49-4e8d-4e62-a66b-f0bd71d556e2"],
+				"actors": [{ "name": "U. Ellian", "faction": "VVD", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/7de2bb93_bda7_48a5_a2b2_1d1201444ebf",
+			"key": "7de2bb93_bda7_48a5_a2b2_1d1201444ebf",
+			"props": {
+				"sequence": 52,
+				"number": "52",
+				"date": "2025-03-06",
+				"title": "Amendement van het lid Ellian ter vervanging van nr. 22 over het slachtoffer ook bij niet-vervolging de mogelijkheid geven om kennis te nemen van processtukken",
+				"subject": "Amendement van het lid Ellian ter vervanging van nr. 22 over het slachtoffer ook bij niet-vervolging de mogelijkheid geven om kennis te nemen van processtukken",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["1cfe0570-aaac-4833-aa26-e087af48c459"],
+				"actors": [{ "name": "U. Ellian", "faction": "VVD", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/86b24abf_9d17_44f6_920c_66a44a037b00",
+			"key": "86b24abf_9d17_44f6_920c_66a44a037b00",
+			"props": {
+				"sequence": 16,
+				"number": "16",
+				"date": "2024-12-19",
+				"title": "Amendement van het lid Sneller over verruiming van de termijn voor het indienen van onderzoeksverzoeken",
+				"subject": "Amendement van het lid Sneller over verruiming van de termijn voor het indienen van onderzoeksverzoeken",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["0c9d3354-3232-49c8-91fc-96ed3f1427ac"],
+				"actors": [{ "name": "J.C. Sneller", "faction": "D66", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/8e7b7c2b_9110_4879_a91f_22d541d610c5",
+			"key": "8e7b7c2b_9110_4879_a91f_22d541d610c5",
+			"props": {
+				"sequence": 35,
+				"number": "35",
+				"date": "2025-01-31",
+				"title": "Gewijzigd amendement van het lid Helder ter vervanging van nr. 34 over de aanhouding van de verdachte",
+				"subject": "Gewijzigd amendement van het lid Helder ter vervanging van nr. 34 over de aanhouding van de verdachte",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["84af85b2-86e3-4b5e-ad90-88765982b713"],
+				"actors": [{ "name": "L.M.J.S. Helder", "faction": "BBB", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/8eabc29a_1a6a_4ecd_9fc0_3d59a992d7cf",
+			"key": "8eabc29a_1a6a_4ecd_9fc0_3d59a992d7cf",
+			"props": {
+				"sequence": 61,
+				"number": "61",
+				"date": "2025-03-19",
+				"title": "Amendement van de leden Emiel van Dijk en Vondeling over het schrappen van de bevoegdheid om strafbeschikkingen op te leggen aan criminele asielzoekers",
+				"subject": "Amendement van de leden Emiel van Dijk en Vondeling over het schrappen van de bevoegdheid om strafbeschikkingen op te leggen aan criminele asielzoekers",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["dae4fc36-ee17-4355-b0ff-ee7158b9530c"],
+				"actors": [
+					{ "name": "M. Vondeling", "faction": "PVV", "role": "Mede ondertekenaar" },
+					{ "name": "E. (Emiel) van Dijk", "faction": "PVV", "role": "Eerste ondertekenaar" }
+				]
+			}
+		},
+		{
+			"id": "documents/a614fe49_0390_46b1_9d0c_0f194b55230c",
+			"key": "a614fe49_0390_46b1_9d0c_0f194b55230c",
+			"props": {
+				"sequence": 59,
+				"number": "59",
+				"date": "2025-03-19",
+				"title": "Amendement van het lid Emiel van Dijk over het schrappen van de mogelijkheid van strafbeschikkingen voor misdrijven tegen de zeden, persoonlijke vrijheid en mishandeling",
+				"subject": "Amendement van het lid Emiel van Dijk over het schrappen van de mogelijkheid van strafbeschikkingen voor misdrijven tegen de zeden, persoonlijke vrijheid en mishandeling",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["adc28f18-3760-489e-b82b-9991edd0dee8"],
+				"actors": [
+					{ "name": "E. (Emiel) van Dijk", "faction": "PVV", "role": "Eerste ondertekenaar" }
+				]
+			}
+		},
+		{
+			"id": "documents/a85ab347_b03f_4bab_8042_0b6a8a3637db",
+			"key": "a85ab347_b03f_4bab_8042_0b6a8a3637db",
+			"props": {
+				"sequence": 43,
+				"number": "43",
+				"date": "2025-03-03",
+				"title": "Gewijzigd amendement van het lid Ellian ter vervanging van nr. 23 over schorsing van het onderzoek bij niet-verschijnen van de ouder",
+				"subject": "Gewijzigd amendement van het lid Ellian ter vervanging van nr. 23 over schorsing van het onderzoek bij niet-verschijnen van de ouder",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["8fb7b9bc-1fee-4a26-88a3-7c182c5ab1d5"],
+				"actors": [{ "name": "U. Ellian", "faction": "VVD", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/b38c42d6_7c1d_4a93_b7e4_9e2118e4cb05",
+			"key": "b38c42d6_7c1d_4a93_b7e4_9e2118e4cb05",
+			"props": {
+				"sequence": 25,
+				"number": "25",
+				"date": "2025-01-23",
+				"title": "Amendement van het lid Ellian over ontneming van wederrechtelijk verkregen voordeel ook mogelijk te maken bij misdrijven waarvoor een boete van de vierde categorie mogelijk is.",
+				"subject": "Amendement van het lid Ellian over ontneming van wederrechtelijk verkregen voordeel ook mogelijk te maken bij misdrijven waarvoor een boete van de vierde categorie mogelijk is.",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["1f4cb277-ee3f-4102-9493-e41ff4e90e3c"],
+				"actors": [{ "name": "U. Ellian", "faction": "VVD", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/be97a2db_323c_4a6d_8032_b3675e9cd8b9",
+			"key": "be97a2db_323c_4a6d_8032_b3675e9cd8b9",
+			"props": {
+				"sequence": 27,
+				"number": "27",
+				"date": "2025-01-24",
+				"title": "Amendement van de leden Mutluer en Van Nispen over het stimuleren van het gebruik van mediation en andere herstelvoorzieningen",
+				"subject": "Amendement van de leden Mutluer en Van Nispen over het stimuleren van het gebruik van mediation en andere herstelvoorzieningen",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["98e52b56-b6e0-4521-a99a-a41bd64b65b4"],
+				"actors": [
+					{ "name": "M. van Nispen", "faction": "SP", "role": "Mede ondertekenaar" },
+					{ "name": "S. Mutluer", "faction": "GroenLinks-PvdA", "role": "Eerste ondertekenaar" }
+				]
+			}
+		},
+		{
+			"id": "documents/c00fe044_33a6_4166_aff1_37eb16355409",
+			"key": "c00fe044_33a6_4166_aff1_37eb16355409",
+			"props": {
+				"sequence": 60,
+				"number": "60",
+				"date": "2025-03-19",
+				"title": "Amendement van het lid Emiel van Dijk over het verlagen van de grens voor strafbeschikkingen naar maximaal drie jaar",
+				"subject": "Amendement van het lid Emiel van Dijk over het verlagen van de grens voor strafbeschikkingen naar maximaal drie jaar",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["9d524975-2e71-4224-bddb-7822e3efe715"],
+				"actors": [
+					{ "name": "E. (Emiel) van Dijk", "faction": "PVV", "role": "Eerste ondertekenaar" }
+				]
+			}
+		},
+		{
+			"id": "documents/c266bea4_7fe6_43e3_a050_17e121651a82",
+			"key": "c266bea4_7fe6_43e3_a050_17e121651a82",
+			"props": {
+				"sequence": 15,
+				"number": "15",
+				"date": "2024-12-19",
+				"title": "Amendement van het lid Sneller over consequenties voor termijnoverschrijding door het OM",
+				"subject": "Amendement van het lid Sneller over consequenties voor termijnoverschrijding door het OM",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["3b865040-bcf8-48f2-8a86-9854f938494d"],
+				"actors": [{ "name": "J.C. Sneller", "faction": "D66", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/c5fc1fdd_d3a8_4801_8c2d_0c91c97fd3d6",
+			"key": "c5fc1fdd_d3a8_4801_8c2d_0c91c97fd3d6",
+			"props": {
+				"sequence": 34,
+				"number": "34",
+				"date": "2025-01-30",
+				"title": "Amendement van het lid Helder over de aanhouding van de verdachte",
+				"subject": "Amendement van het lid Helder over de aanhouding van de verdachte",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["91c7a316-c4f7-4e3f-ac02-f83483e6f672"],
+				"actors": [{ "name": "L.M.J.S. Helder", "faction": "BBB", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/ce970f9a_5961_4505_92ae_33c1518c60f5",
+			"key": "ce970f9a_5961_4505_92ae_33c1518c60f5",
+			"props": {
+				"sequence": 18,
+				"number": "18",
+				"date": "2024-12-19",
+				"title": "Amendement van het lid Sneller over het verduidelijken dat de motivering van beslissingen mede gericht is op explicatie, inscherping en controle",
+				"subject": "Amendement van het lid Sneller over het verduidelijken dat de motivering van beslissingen mede gericht is op explicatie, inscherping en controle",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["a82106e7-5196-4a5f-9c42-9e2b4f0af6e9"],
+				"actors": [{ "name": "J.C. Sneller", "faction": "D66", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/d456f55b_5e5d_4bd8_b235_fc8bf870045c",
+			"key": "d456f55b_5e5d_4bd8_b235_fc8bf870045c",
+			"props": {
+				"sequence": 28,
+				"number": "28",
+				"date": "2025-01-24",
+				"title": "Amendement van het lid Ellian over het gebruik van videoconferentie als hoofdregel bij verdachten in EBI's en AITs",
+				"subject": "Amendement van het lid Ellian over het gebruik van videoconferentie als hoofdregel bij verdachten in EBI's en AITs",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["0fc923ce-1176-4583-8f19-37ff1a4a44e6"],
+				"actors": [{ "name": "U. Ellian", "faction": "VVD", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/dee1a119_ed40_47ea_9a49_f7f5fcff2836",
+			"key": "dee1a119_ed40_47ea_9a49_f7f5fcff2836",
+			"props": {
+				"sequence": 49,
+				"number": "49",
+				"date": "2025-03-05",
+				"title": "Amendement van het lid Koops over het meteen motiveren in het eindvonnis als is afgeweken van een uitdrukkelijk voorgedragen standpunt",
+				"subject": "Amendement van het lid Koops over het meteen motiveren in het eindvonnis als is afgeweken van een uitdrukkelijk voorgedragen standpunt",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["b20fa7c5-a608-42c1-ba2d-de816727e667"],
+				"actors": [{ "name": "W.J. Koops", "faction": "NSC", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/e224dca7_1716_4819_aba1_bd8f7635c5f6",
+			"key": "e224dca7_1716_4819_aba1_bd8f7635c5f6",
+			"props": {
+				"sequence": 44,
+				"number": "44",
+				"date": "2025-03-03",
+				"title": "Gewijzigd amendement van het lid Ellian ter vervanging van nr. 25 over ontneming van wederrechtelijk verkregen voordeel ook mogelijk te maken bij misdrijven waarvoor een boete van de vierde categorie mogelijk is.",
+				"subject": "Gewijzigd amendement van het lid Ellian ter vervanging van nr. 25 over ontneming van wederrechtelijk verkregen voordeel ook mogelijk te maken bij misdrijven waarvoor een boete van de vierde categorie mogelijk is.",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["8309a2f8-6834-460a-9e67-90b6fb86c3f2"],
+				"actors": [{ "name": "U. Ellian", "faction": "VVD", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/e61a814f_a759_474c_a504_6afc0cd9922e",
+			"key": "e61a814f_a759_474c_a504_6afc0cd9922e",
+			"props": {
+				"sequence": 50,
+				"number": "50",
+				"date": "2025-03-05",
+				"title": "Gewijzigd amendement van het lid Sneller ter vervanging van nr. 30 over verduidelijking van de gronden voor voorlopige hechtenis",
+				"subject": "Gewijzigd amendement van het lid Sneller ter vervanging van nr. 30 over verduidelijking van de gronden voor voorlopige hechtenis",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["fc1590ac-e03b-4def-af6f-4b5ca58ac846"],
+				"actors": [{ "name": "J.C. Sneller", "faction": "D66", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/f90795da_3a01_4f23_b9d9_c918dd9afe3a",
+			"key": "f90795da_3a01_4f23_b9d9_c918dd9afe3a",
+			"props": {
+				"sequence": 45,
+				"number": "45",
+				"date": "2025-03-04",
+				"title": "Amendement van het lid Sneller ter vervanging van nr. 18 over het verduidelijken dat de motivering van beslissingen mede gericht is op explicatie, inscherping en controle",
+				"subject": "Amendement van het lid Sneller ter vervanging van nr. 18 over het verduidelijken dat de motivering van beslissingen mede gericht is op explicatie, inscherping en controle",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["fe256c36-81d1-4823-bab5-fe633a023d41"],
+				"actors": [{ "name": "J.C. Sneller", "faction": "D66", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/fdf69b98_5c84_4f1f_8458_c85a42b4b01b",
+			"key": "fdf69b98_5c84_4f1f_8458_c85a42b4b01b",
+			"props": {
+				"sequence": 13,
+				"number": "13",
+				"date": "2024-12-19",
+				"title": "Amendement van het lid Sneller over een wettelijke verplichting om concreter te motiveren waarom toepassing van voorlopige hechtenis noodzakelijk en proportioneel is",
+				"subject": "Amendement van het lid Sneller over een wettelijke verplichting om concreter te motiveren waarom toepassing van voorlopige hechtenis noodzakelijk en proportioneel is",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["94ed3f32-956f-432f-9350-a34e438b7d83"],
+				"actors": [{ "name": "J.C. Sneller", "faction": "D66", "role": "Eerste ondertekenaar" }]
+			}
+		},
+		{
+			"id": "documents/fe10f579_e1ad_4d45_a083_ca81dfe3b3a5",
+			"key": "fe10f579_e1ad_4d45_a083_ca81dfe3b3a5",
+			"props": {
+				"sequence": 47,
+				"number": "47",
+				"date": "2025-03-05",
+				"title": "Amendement van het lid Koops over Het verlengen van de termijn voor het instellen van hoger beroep naar drie maanden",
+				"subject": "Amendement van het lid Koops over Het verlengen van de termijn voor het instellen van hoger beroep naar drie maanden",
+				"case_kinds": ["Amendement"],
+				"case_ids": ["9e8d2f39-80ae-4565-a9fe-0a7954c6ee3b"],
+				"actors": [{ "name": "W.J. Koops", "faction": "NSC", "role": "Eerste ondertekenaar" }]
+			}
+		}
+	],
+	"edges": [
+		{
+			"source": "documents/e61a814f_a759_474c_a504_6afc0cd9922e",
+			"target": "documents/791e6754_7af7_436a_848d_e02bde78efe1",
+			"relation": "REVISES"
+		},
+		{
+			"source": "documents/e224dca7_1716_4819_aba1_bd8f7635c5f6",
+			"target": "documents/b38c42d6_7c1d_4a93_b7e4_9e2118e4cb05",
+			"relation": "REVISES"
+		},
+		{
+			"source": "documents/313fdaf0_b8cc_41a0_a544_5f9583a48134",
+			"target": "documents/dee1a119_ed40_47ea_9a49_f7f5fcff2836",
+			"relation": "REVISES"
+		},
+		{
+			"source": "documents/0cf80f2b_af63_421c_9a08_5ba4ebd0de32",
+			"target": "documents/2da57f27_6910_4bfe_a436_bc78c07dce78",
+			"relation": "REVISES"
+		},
+		{
+			"source": "documents/2da57f27_6910_4bfe_a436_bc78c07dce78",
+			"target": "documents/1eaf17ce_c385_4c96_9e89_fcf5849d2f61",
+			"relation": "REVISES"
+		},
+		{
+			"source": "documents/2f8c2d65_0ea1_4f12_b87f_f3f21f87cc14",
+			"target": "documents/be97a2db_323c_4a6d_8032_b3675e9cd8b9",
+			"relation": "REVISES"
+		},
+		{
+			"source": "documents/2ddc4310_9b3e_4047_89e7_282b870d01fd",
+			"target": "documents/388865b9_7319_401a_9a66_9f963c148056",
+			"relation": "REVISES"
+		},
+		{
+			"source": "documents/8e7b7c2b_9110_4879_a91f_22d541d610c5",
+			"target": "documents/c5fc1fdd_d3a8_4801_8c2d_0c91c97fd3d6",
+			"relation": "REVISES"
+		},
+		{
+			"source": "documents/7d66f9a2_772d_46c8_a275_b61b660b5b8a",
+			"target": "documents/7364ff6d_5343_4511_b852_0ac53f8ef3f1",
+			"relation": "REVISES"
+		},
+		{
+			"source": "documents/7d830943_ca22_420e_af86_fba90b432310",
+			"target": "documents/48e9c004_1f43_46cf_8164_7c532d0073d7",
+			"relation": "REVISES"
+		},
+		{
+			"source": "documents/1aa51cf5_7109_448b_ba62_d812e4720225",
+			"target": "documents/0f587d35_1316_4049_881d_6bab14ecac7e",
+			"relation": "REVISES"
+		},
+		{
+			"source": "documents/a85ab347_b03f_4bab_8042_0b6a8a3637db",
+			"target": "documents/5817d753_c684_4eec_9ca9_0bd5feebfdad",
+			"relation": "REVISES"
+		},
+		{
+			"source": "documents/7de2bb93_bda7_48a5_a2b2_1d1201444ebf",
+			"target": "documents/32f4f7c7_abf0_4f4e_9f7f_dcc3fa790e5c",
+			"relation": "REVISES"
+		},
+		{
+			"source": "documents/f90795da_3a01_4f23_b9d9_c918dd9afe3a",
+			"target": "documents/ce970f9a_5961_4505_92ae_33c1518c60f5",
+			"relation": "REVISES"
+		},
+		{
+			"source": "documents/428526b0_3888_46ed_8ed7_09bba8a6532e",
+			"target": "documents/d456f55b_5e5d_4bd8_b235_fc8bf870045c",
+			"relation": "REVISES"
+		},
+		{
+			"source": "documents/2ef5eeeb_b290_45c1_9fb6_9890f3010a7c",
+			"target": "documents/fdf69b98_5c84_4f1f_8458_c85a42b4b01b",
+			"relation": "REVISES"
+		},
+		{
+			"source": "documents/460826b0_e214_4e0b_bc7e_aa0743e579e8",
+			"target": "documents/e61a814f_a759_474c_a504_6afc0cd9922e",
+			"relation": "REVISES"
+		}
+	]
+}

@@ -1,0 +1,478 @@
+{
+	"kolommen": [
+		"2024-12-16",
+		"2025-01-13",
+		"2025-01-20",
+		"2025-01-27",
+		"2025-02-03",
+		"2025-03-03",
+		"2025-03-17",
+		"2025-03-24"
+	],
+	"metVervanging": true,
+	"rijen": [
+		{
+			"stuk": "documents/2ddc4310_9b3e_4047_89e7_282b870d01fd",
+			"nummer": "40",
+			"titel": "Gewijzigd amendement van het lid Sneller ter vervanging van nr. 12 over het beperken van de toepassing van voorlopige hechtenis",
+			"haltes": [
+				["12", "2024-12-19", true, "40"],
+				["40", "2025-03-03", false, null]
+			],
+			"indiener": { "naam": "J.C. Sneller", "fractie": "D66", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_088c66de_ceb3_449e_8b29_a7857474cd11",
+				"datum": "2025-03-25",
+				"aangenomen": null,
+				"telling": null,
+				"soort": "vervallen"
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/2ef5eeeb_b290_45c1_9fb6_9890f3010a7c",
+			"nummer": "41",
+			"titel": "Gewijzigd amendement van het lid Sneller ter vervanging van nr. 13 over een wettelijke verplichting om concreter te motiveren waarom toepassing van voorlopige hechtenis noodzakelijk en proportioneel is",
+			"haltes": [
+				["13", "2024-12-19", true, "41"],
+				["41", "2025-03-03", false, null]
+			],
+			"indiener": { "naam": "J.C. Sneller", "fractie": "D66", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_5f5ba637_3502_4b76_82ff_9c61be074054",
+				"datum": "2025-03-25",
+				"aangenomen": true,
+				"telling": "105–45",
+				"soort": null
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/7d66f9a2_772d_46c8_a275_b61b660b5b8a",
+			"nummer": "42",
+			"titel": "Gewijzigd amendement van het lid Sneller ter vervanging van nr. 14 over een inspanningsverplichting voor de officier van justitie voor het realiseren van alternatieven voor voorlopige hechtenis",
+			"haltes": [
+				["14", "2024-12-19", true, "42"],
+				["42", "2025-03-03", false, null]
+			],
+			"indiener": { "naam": "J.C. Sneller", "fractie": "D66", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_62a7253a_ab9b_4a5d_887a_1ace6ee9560b",
+				"datum": "2025-03-25",
+				"aangenomen": false,
+				"telling": "72–78",
+				"soort": null
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/c266bea4_7fe6_43e3_a050_17e121651a82",
+			"nummer": "15",
+			"titel": "Amendement van het lid Sneller over consequenties voor termijnoverschrijding door het OM",
+			"haltes": [["15", "2024-12-19", true, null]],
+			"indiener": { "naam": "J.C. Sneller", "fractie": "D66", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_390e2dc0_b23e_45f1_88a0_cf4a72223a51",
+				"datum": "2025-03-19",
+				"aangenomen": null,
+				"telling": null,
+				"soort": "ingetrokken"
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/86b24abf_9d17_44f6_920c_66a44a037b00",
+			"nummer": "16",
+			"titel": "Amendement van het lid Sneller over verruiming van de termijn voor het indienen van onderzoeksverzoeken",
+			"haltes": [["16", "2024-12-19", true, null]],
+			"indiener": { "naam": "J.C. Sneller", "fractie": "D66", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_768f40ff_a9ed_4264_9ae4_154238359158",
+				"datum": "2025-03-19",
+				"aangenomen": null,
+				"telling": null,
+				"soort": "ingetrokken"
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/0cf80f2b_af63_421c_9a08_5ba4ebd0de32",
+			"nummer": "21",
+			"titel": "Gewijzigd amendement van de leden Sneller en Ellian ter vervanging van nr. 19 over niet-aanwezigheid van de verdachte bij getuigenverhoor als hoofdregel",
+			"haltes": [
+				["17", "2024-12-19", true, "19"],
+				["19", "2024-12-19", false, "21"],
+				["21", "2025-01-23", false, null]
+			],
+			"indiener": { "naam": "J.C. Sneller", "fractie": "D66", "anderen": 1 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_05665df2_1316_4ece_acea_ac358aabfb40",
+				"datum": "2025-03-25",
+				"aangenomen": true,
+				"telling": "147–3",
+				"soort": null
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/f90795da_3a01_4f23_b9d9_c918dd9afe3a",
+			"nummer": "45",
+			"titel": "Amendement van het lid Sneller ter vervanging van nr. 18 over het verduidelijken dat de motivering van beslissingen mede gericht is op explicatie, inscherping en controle",
+			"haltes": [
+				["18", "2024-12-19", true, "45"],
+				["45", "2025-03-04", false, null]
+			],
+			"indiener": { "naam": "J.C. Sneller", "fractie": "D66", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_3067145f_aab7_476c_80c4_ddb9e7ff7a71",
+				"datum": "2025-03-25",
+				"aangenomen": true,
+				"telling": "109–41",
+				"soort": null
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/1aa51cf5_7109_448b_ba62_d812e4720225",
+			"nummer": "46",
+			"titel": "Gewijzigd amendement van het lid Ellian ter vervanging van nr. 20 over een algemene onderzoeksbevoegdheid voor de rechter-commissaris",
+			"haltes": [
+				["20", "2025-01-16", true, "46"],
+				["46", "2025-03-05", false, null]
+			],
+			"indiener": { "naam": "U. Ellian", "fractie": "VVD", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_700e7aab_4de9_4cbd_a019_09bd637e25fe",
+				"datum": "2025-03-25",
+				"aangenomen": true,
+				"telling": "83–67",
+				"soort": null
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/7de2bb93_bda7_48a5_a2b2_1d1201444ebf",
+			"nummer": "52",
+			"titel": "Amendement van het lid Ellian ter vervanging van nr. 22 over het slachtoffer ook bij niet-vervolging de mogelijkheid geven om kennis te nemen van processtukken",
+			"haltes": [
+				["22", "2025-01-23", true, "52"],
+				["52", "2025-03-06", false, null]
+			],
+			"indiener": { "naam": "U. Ellian", "fractie": "VVD", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_9c7ca919_f86b_4595_9d30_c7b3ed132449",
+				"datum": "2025-03-25",
+				"aangenomen": true,
+				"telling": "148–2",
+				"soort": null
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/a85ab347_b03f_4bab_8042_0b6a8a3637db",
+			"nummer": "43",
+			"titel": "Gewijzigd amendement van het lid Ellian ter vervanging van nr. 23 over schorsing van het onderzoek bij niet-verschijnen van de ouder",
+			"haltes": [
+				["23", "2025-01-23", true, "43"],
+				["43", "2025-03-03", false, null]
+			],
+			"indiener": { "naam": "U. Ellian", "fractie": "VVD", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_c66a7fc6_ca2e_42bd_8606_6e079bef759c",
+				"datum": "2025-03-25",
+				"aangenomen": true,
+				"telling": "144–6",
+				"soort": null
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/7d830943_ca22_420e_af86_fba90b432310",
+			"nummer": "58",
+			"titel": "Gewijzigd amendement van het lid Ellian ter vervanging van nr. 24 over het laten vervallen van de mogelijkheden voor specifiek beklag met betrekking tot gegevens",
+			"haltes": [
+				["24", "2025-01-23", true, "58"],
+				["58", "2025-03-19", false, null]
+			],
+			"indiener": { "naam": "U. Ellian", "fractie": "VVD", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_6252d4e6_5c43_443a_be3f_cd6436a2ab79",
+				"datum": "2025-03-25",
+				"aangenomen": false,
+				"telling": "72–78",
+				"soort": null
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/e224dca7_1716_4819_aba1_bd8f7635c5f6",
+			"nummer": "44",
+			"titel": "Gewijzigd amendement van het lid Ellian ter vervanging van nr. 25 over ontneming van wederrechtelijk verkregen voordeel ook mogelijk te maken bij misdrijven waarvoor een boete van de vierde categorie mogelijk is.",
+			"haltes": [
+				["25", "2025-01-23", true, "44"],
+				["44", "2025-03-03", false, null]
+			],
+			"indiener": { "naam": "U. Ellian", "fractie": "VVD", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_15ca0b7b_01a4_48dc_99bf_44b1ca03c94f",
+				"datum": "2025-03-25",
+				"aangenomen": true,
+				"telling": "144–6",
+				"soort": null
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/5bcf5830_176e_4af3_abf9_71bb8188abcc",
+			"nummer": "26",
+			"titel": "Amendement van het lid Ellian over het ontvangen door het slachtoffer van een goede en volledige motivering van een sepot",
+			"haltes": [["26", "2025-01-23", true, null]],
+			"indiener": { "naam": "U. Ellian", "fractie": "VVD", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_55ebf85e_bc53_46da_9067_3f826963077c",
+				"datum": "2025-03-25",
+				"aangenomen": true,
+				"telling": "150–0",
+				"soort": null
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/2f8c2d65_0ea1_4f12_b87f_f3f21f87cc14",
+			"nummer": "51",
+			"titel": "Gewijzigd amendement van de leden Mutluer en Van Nispen ter vervanging van nr. 27 over het stimuleren van het gebruik van mediation en andere herstelvoorzieningen",
+			"haltes": [
+				["27", "2025-01-24", true, "51"],
+				["51", "2025-03-06", false, null]
+			],
+			"indiener": { "naam": "S. Mutluer", "fractie": "GroenLinks-PvdA", "anderen": 1 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_cdde972e_1eee_4511_a04d_bd7f3955804a",
+				"datum": "2025-03-25",
+				"aangenomen": true,
+				"telling": "112–38",
+				"soort": null
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/428526b0_3888_46ed_8ed7_09bba8a6532e",
+			"nummer": "39",
+			"titel": "Gewijzigd amendement van het lid Ellian ter vervanging van nr. 28 over het gebruik van videoconferentie als hoofdregel bij verdachten in EBI's en AIT's",
+			"haltes": [
+				["28", "2025-01-24", true, "39"],
+				["39", "2025-03-03", false, null]
+			],
+			"indiener": { "naam": "U. Ellian", "fractie": "VVD", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_0d61da2e_6189_433d_a2bf_813bc8ea9a8e",
+				"datum": "2025-03-25",
+				"aangenomen": true,
+				"telling": "105–45",
+				"soort": null
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/4a15428e_4afd_44bf_bf71_1fa84660d729",
+			"nummer": "29",
+			"titel": "Amendement van het lid Koops over het verduidelijken van de aanduiding voorzitter",
+			"haltes": [["29", "2025-01-24", true, null]],
+			"indiener": { "naam": "W.J. Koops", "fractie": "NSC", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_b4fcdc30_9929_4fef_9c58_9fe6fd18afc4",
+				"datum": "2025-03-19",
+				"aangenomen": null,
+				"telling": null,
+				"soort": "ingetrokken"
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/460826b0_e214_4e0b_bc7e_aa0743e579e8",
+			"nummer": "56",
+			"titel": "Nader gewijzigd amendement van het lid Sneller ter vervanging van nr. 50 over verduidelijking van de gronden voor voorlopige hechtenis",
+			"haltes": [
+				["30", "2025-01-27", true, "50"],
+				["50", "2025-03-05", false, "56"],
+				["56", "2025-03-18", false, null]
+			],
+			"indiener": { "naam": "J.C. Sneller", "fractie": "D66", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_74899e9d_372b_4257_84d4_a2ff7b27f5a1",
+				"datum": "2025-03-25",
+				"aangenomen": true,
+				"telling": "94–56",
+				"soort": null
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/8e7b7c2b_9110_4879_a91f_22d541d610c5",
+			"nummer": "35",
+			"titel": "Gewijzigd amendement van het lid Helder ter vervanging van nr. 34 over de aanhouding van de verdachte",
+			"haltes": [
+				["34", "2025-01-30", true, "35"],
+				["35", "2025-01-31", false, null]
+			],
+			"indiener": { "naam": "L.M.J.S. Helder", "fractie": "BBB", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_f87495ca_a6f8_430a_832e_d4ab14548239",
+				"datum": "2025-03-25",
+				"aangenomen": true,
+				"telling": "142–8",
+				"soort": null
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/4d3f77df_af1a_4828_baaa_553c2b6b31f4",
+			"nummer": "37",
+			"titel": "Amendement van de leden Mutluer en Van Nispen over herstelvoorzieningen bij jeugdige verdachten",
+			"haltes": [["37", "2025-02-07", true, null]],
+			"indiener": { "naam": "S. Mutluer", "fractie": "GroenLinks-PvdA", "anderen": 1 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_c9722d00_be72_4d7e_a8ce_aabdad4f649d",
+				"datum": "2025-03-25",
+				"aangenomen": false,
+				"telling": "41–109",
+				"soort": null
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/fe10f579_e1ad_4d45_a083_ca81dfe3b3a5",
+			"nummer": "47",
+			"titel": "Amendement van het lid Koops over Het verlengen van de termijn voor het instellen van hoger beroep naar drie maanden",
+			"haltes": [["47", "2025-03-05", true, null]],
+			"indiener": { "naam": "W.J. Koops", "fractie": "NSC", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_5c923780_6177_4c36_99ed_0ec524000266",
+				"datum": "2025-03-25",
+				"aangenomen": false,
+				"telling": "31–119",
+				"soort": null
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/1ebc6a27_55a7_4ee1_b602_85ce82a94ee3",
+			"nummer": "48",
+			"titel": "Amendement van het lid Koops over het verlengen van de termijn voor het instellen van verzet tegen een strafbeschikking naar zes weken",
+			"haltes": [["48", "2025-03-05", true, null]],
+			"indiener": { "naam": "W.J. Koops", "fractie": "NSC", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_b0036de1_2350_489c_9ff8_5fcd37e1a454",
+				"datum": "2025-03-25",
+				"aangenomen": false,
+				"telling": "31–119",
+				"soort": null
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/313fdaf0_b8cc_41a0_a544_5f9583a48134",
+			"nummer": "76",
+			"titel": "Gewijzigd amendement van het lid Koops ter vervanging van nr. 49 over het meteen motiveren in het eindvonnis als is afgeweken van een uitdrukkelijk voorgedragen standpunt",
+			"haltes": [
+				["49", "2025-03-05", true, "76"],
+				["76", "2025-03-25", false, null]
+			],
+			"indiener": { "naam": "W.J. Koops", "fractie": "NSC", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_3d74fed4_242b_4927_aedb_a38987808717",
+				"datum": "2025-03-25",
+				"aangenomen": false,
+				"telling": "60–90",
+				"soort": null
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/7c4e38d1_3766_48c1_b0c8_7fb5fde17703",
+			"nummer": "57",
+			"titel": "Amendement van het lid Ellian over termijnoverschrijding bij onderzoekswensen",
+			"haltes": [["57", "2025-03-19", true, null]],
+			"indiener": { "naam": "U. Ellian", "fractie": "VVD", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_11def514_4ef2_46d0_a093_d50dc4241b39",
+				"datum": "2025-03-25",
+				"aangenomen": null,
+				"telling": null,
+				"soort": "ingetrokken"
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/a614fe49_0390_46b1_9d0c_0f194b55230c",
+			"nummer": "59",
+			"titel": "Amendement van het lid Emiel van Dijk over het schrappen van de mogelijkheid van strafbeschikkingen voor misdrijven tegen de zeden, persoonlijke vrijheid en mishandeling",
+			"haltes": [["59", "2025-03-19", true, null]],
+			"indiener": { "naam": "E. (Emiel) van Dijk", "fractie": "PVV", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_a492f01d_ae50_44c2_ae02_312ce803b980",
+				"datum": "2025-03-25",
+				"aangenomen": false,
+				"telling": "51–99",
+				"soort": null
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/c00fe044_33a6_4166_aff1_37eb16355409",
+			"nummer": "60",
+			"titel": "Amendement van het lid Emiel van Dijk over het verlagen van de grens voor strafbeschikkingen naar maximaal drie jaar",
+			"haltes": [["60", "2025-03-19", true, null]],
+			"indiener": { "naam": "E. (Emiel) van Dijk", "fractie": "PVV", "anderen": 0 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_52302cf0_3990_4594_b6d2_14d4e53f549f",
+				"datum": "2025-03-25",
+				"aangenomen": false,
+				"telling": "48–102",
+				"soort": null
+			},
+			"nogNiet": false
+		},
+		{
+			"stuk": "documents/8eabc29a_1a6a_4ecd_9fc0_3d59a992d7cf",
+			"nummer": "61",
+			"titel": "Amendement van de leden Emiel van Dijk en Vondeling over het schrappen van de bevoegdheid om strafbeschikkingen op te leggen aan criminele asielzoekers",
+			"haltes": [["61", "2025-03-19", true, null]],
+			"indiener": { "naam": "E. (Emiel) van Dijk", "fractie": "PVV", "anderen": 1 },
+			"samengevoegd": false,
+			"uitslag": {
+				"id": "decisions/decision_5e7f5850_d788_482a_b495_c7bbc24e40ee",
+				"datum": "2025-03-25",
+				"aangenomen": false,
+				"telling": "51–99",
+				"soort": null
+			},
+			"nogNiet": false
+		}
+	]
+}
