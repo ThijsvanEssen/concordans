@@ -7,33 +7,24 @@ import {
 	containerIdFor,
 	containerKindOf,
 	createContainerGroups,
-	isContainerMembership,
-	isContainment,
 	type ContainerKind,
 	type Period
 } from '../container-membership';
-import {
-	isAmendingRelation,
-	isCollection,
-	nodeId,
-	type Collection,
-	type Relation
-} from '$lib/vocabulary';
+import { isCollection, nodeId, type Collection, type Relation } from '$lib/vocabulary';
 import { COLLECTION_ROLE } from '../collection-role';
 import { get, writable } from 'svelte/store';
 import {
 	buildNodeLabel,
-	edgeCategory,
 	kindOfCollection,
 	lawIdOf,
 	nodeToGraphNode,
 	relationOf,
 	type BaseNode,
 	type GraphEdge,
-	type GraphNode,
-	type GraphNodeKind
+	type GraphNode
 } from '../types';
 import { DEFAULT_FILTERS, SOFT_NODE_CAP, type GraphFilters } from './types';
+import { placeConnection, type End } from './placement';
 
 /**
  * The names of a container's hull: short on the hull, in full on hover. A dossier by its number
@@ -98,33 +89,17 @@ export function createGraphContext() {
 	// ── Derived edges ─────────────────────────────────────────────────────────
 	// Rebuilt from scratch on every emit, so prunes and deloads stay consistent.
 	// Each one stands for an API relation the loaded nodes imply but the loaded
-	// edges do not show.
+	// edges do not show. Where a verbinding lands is `placeConnection`'s to say.
 	const addEdge = (
 		source: string,
 		target: string,
 		relation: Relation,
 		extra: Partial<Pick<GraphEdge, 'label' | 'confidence' | 'status' | 'meta'>> = {}
 	) => {
-		if (intoHull(source, target, relation)) return;
 		const id = edgeId(source, target, relation);
 		// A neighbourhood edge carries no meta; it does not wipe what a node response said.
 		const meta = extra.meta ?? edges.get(id)?.meta;
 		edges.set(id, { id, source, target, relation, label: '', directed: true, ...extra, meta });
-	};
-
-	/**
-	 * A bron "onderdeel van" a container on the canvas (its anchor: a dossier shared by two
-	 * chosen stukken, a row put on the canvas) goes into the container's hull instead of on a
-	 * line to it (`isContainment`). Every edge passes here, so no loader draws one.
-	 */
-	const intoHull = (source: string, target: string, relation: Relation) => {
-		const container = nodes.get(target)?.raw;
-		const kind = container ? containerKindOf(container.collection) : null;
-		const bron = nodes.get(source)?.raw;
-		if (!container || !kind || !isContainment(kind, relation)) return false;
-		if (bron && containerKindOf(bron.collection)) return false;
-		containers.recordMember(kind, containerIdFor(container), source, relation);
-		return true;
 	};
 
 	const emit = () => {
@@ -276,21 +251,15 @@ export function createGraphContext() {
 		return from || to ? { from, to } : null;
 	};
 
-	/** The anchor of a wet that a drawn bron changes (AMENDING_RELATIONS): a member of the wet's own hull. */
-	const lawAnchor = (node: BaseNode, relation: Relation): GraphNode | null =>
-		node.collection === 'instruments' && isAmendingRelation(relation)
-			? anchorContainer(node)
-			: null;
+	/** The end of a verbinding as `placeConnection` reads it. */
+	const endOf = (collection: string, node: GraphNode | null | undefined): End => ({
+		hull: containerKindOf(collection),
+		drawn: !!node,
+		kind: node?.kind ?? 'other'
+	});
 
-	/** Whether an edge passes the semantic threshold; only semantic edges carry a confidence worth checking. */
-	const passesThreshold = (
-		relation: Relation,
-		sourceKind: GraphNodeKind,
-		confidence: number | null | undefined
-	) =>
-		confidence == null ||
-		edgeCategory(relation, sourceKind) !== 'semantic' ||
-		confidence >= get(filtersStore).semanticThreshold;
+	/** The semantic threshold of the filters: only semantic edges carry a confidence worth checking. */
+	const threshold = () => get(filtersStore).semanticThreshold;
 
 	/**
 	 * Puts a node and its neighbours on the canvas. Returns the id of the node.
@@ -319,7 +288,7 @@ export function createGraphContext() {
 	 * A container `joins` accepts is drawn as a point with a verbinding to the centre,
 	 * not as a hull around it: a commissie two chosen bronnen share ties them, and a
 	 * hull around both would pull them onto each other. A bron "onderdeel van" it (a stuk
-	 * of a dossier two chosen stukken share) is in its hull all the same (`intoHull`).
+	 * of a dossier two chosen stukken share) is in its hull all the same (`placeConnection`).
 	 */
 	const mergeInto = (
 		response: Schema<'NodeGraphResponse'>,
@@ -340,73 +309,55 @@ export function createGraphContext() {
 		}
 		touchNode(center.id, center);
 
+		const near = { ...endOf(response.node.collection, center), drawn: true };
 		for (const neighbor of neighborsOf(response).slice(0, draw)) {
-			if (keep && !keep(nodeId(neighbor.collection, neighbor.key))) continue;
+			const id = nodeId(neighbor.collection, neighbor.key);
+			if (keep && !keep(id)) continue;
 			const relation = relationOf(neighbor.relation);
-			const other = relation && drawable(neighbor);
-
-			const neighborContainerKind = relation && containerKindOf(neighbor.collection);
-			if (relation && neighborContainerKind && joins?.(nodeId(neighbor.collection, neighbor.key))) {
-				const point = anchorContainer(neighbor);
-				if (point) {
-					const [source, target] =
-						neighbor.direction === 'outbound' ? [center.id, point.id] : [point.id, center.id];
-					addEdge(source, target, relation, {
-						confidence: neighbor.confidence,
-						status: neighbor.status,
-						meta: neighbor.meta
-					});
-				}
+			if (!relation) continue;
+			const other = drawable(neighbor);
+			const far = endOf(neighbor.collection, other);
+			const outbound = neighbor.direction === 'outbound';
+			const placement = placeConnection({
+				mode: 'node',
+				relation,
+				source: outbound ? near : far,
+				target: outbound ? far : near,
+				focus: outbound ? 'source' : 'target',
+				joins: !!far.hull && !!joins?.(id),
+				confidence: neighbor.confidence,
+				threshold: threshold()
+			});
+			// The neighbour is the only end that is ever drawn as an anchor here.
+			const point = placement.anchor ? anchorContainer(neighbor) : null;
+			if (placement.anchor && !point) continue;
+			if (placement.place === 'member') {
+				const period = placement.seat ? periodOf(neighbor.meta) : null;
+				const inFocus = placement.hull === (outbound ? 'source' : 'target');
+				// In the focus's hull goes the neighbour, drawn; in the neighbour's, the focus.
+				if (inFocus && other) touchNode(other.id, other);
+				if (inFocus && other && near.hull)
+					containers.recordMember(
+						near.hull,
+						containerIdFor(response.node),
+						other.id,
+						relation,
+						period
+					);
+				if (!inFocus && far.hull)
+					containers.recordMember(far.hull, containerIdFor(neighbor), center.id, relation, period);
 				continue;
 			}
-			if (
-				relation &&
-				neighborContainerKind &&
-				isContainerMembership(neighborContainerKind, relation)
-			) {
-				containers.recordMember(
-					neighborContainerKind,
-					containerIdFor(neighbor),
-					center.id,
-					relation,
-					periodOf(neighbor.meta)
-				);
-				continue;
-			}
-			if (
-				relation &&
-				other &&
-				centerContainerKind &&
-				isContainerMembership(centerContainerKind, relation)
-			) {
-				touchNode(other.id, other);
-				containers.recordMember(
-					centerContainerKind,
-					containerIdFor(response.node),
-					other.id,
-					relation,
-					periodOf(neighbor.meta)
-				);
-				continue;
-			}
-
-			const changed = relation && !other && lawAnchor(neighbor, relation);
-			if (relation && changed && neighbor.direction === 'outbound') {
-				addEdge(center.id, changed.id, relation, {
-					confidence: neighbor.confidence,
-					status: neighbor.status
-				});
-				continue;
-			}
-			if (!relation || !other) continue;
-			const [source, target] =
-				neighbor.direction === 'outbound' ? [center, other] : [other, center];
-			if (!passesThreshold(relation, source.kind, neighbor.confidence)) continue;
-			touchNode(other.id, other);
+			if (placement.place === 'none') continue;
+			// The line ends at the neighbour's anchor, or at the neighbour, drawn.
+			const end = point ?? other;
+			if (!end) continue;
+			if (end === other) touchNode(other.id, other);
+			const [source, target] = outbound ? [center, end] : [end, center];
 			addEdge(source.id, target.id, relation, {
 				confidence: neighbor.confidence,
 				status: neighbor.status,
-				meta: neighbor.meta
+				meta: placement.meta ? neighbor.meta : undefined
 			});
 		}
 		return center.id;
@@ -414,7 +365,7 @@ export function createGraphContext() {
 
 	/**
 	 * Draws a container (a wet, fractie, commissie or dossier) as the point its hull is
-	 * drawn around, as `lawAnchor` does for a wet a stuk changes: a chosen container
+	 * drawn around, as for a wet a stuk changes (`placeConnection`): a chosen container
 	 * stays on the canvas with nothing of its own drawn around it yet.
 	 */
 	const anchorContainer = (node: BaseNode): GraphNode | null => {
@@ -449,9 +400,9 @@ export function createGraphContext() {
 		emit,
 		addEdge,
 		drawable,
-		lawAnchor,
 		recordContainerFor,
-		passesThreshold,
+		endOf,
+		threshold,
 		mergeResponse,
 		mergeInto,
 		anchorContainer,

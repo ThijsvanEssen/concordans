@@ -1,8 +1,9 @@
 import { nodeId } from '$lib/vocabulary';
 import { get } from 'svelte/store';
-import { containerIdFor, containerKindOf, isContainerMembership } from '../container-membership';
+import { containerIdFor, containerKindOf } from '../container-membership';
 import { syntheticNode } from '../types';
 import type { GraphContext } from './context';
+import { placeConnection } from './placement';
 import type { GraphStore } from './types';
 
 export function createViewActions(
@@ -28,6 +29,8 @@ export function createViewActions(
 		selectionStore,
 		filtersStore,
 		addEdge,
+		endOf,
+		threshold,
 		emit,
 		focusInternal,
 		pruneToIds,
@@ -46,22 +49,40 @@ export function createViewActions(
 		showRows: (focusId, rows) => {
 			const focus = nodes.get(focusId);
 			if (!focus) return false;
-			// A cabinet, commissie, fractie, dossier or wet holds its members in its hull, as
-			// mergeInto does: no verbinding drawn out of it (Kabinet-Jetten, 10 Oct: five
+			// A cabinet, commissie, fractie, dossier or wet holds its members in its hull, as a
+			// node response does: no verbinding drawn out of it (Kabinet-Jetten, 10 Oct: five
 			// bewindspersonen hung outside the hull after Ongedaan maken).
-			const raw = focus.raw;
-			const kind = raw ? containerKindOf(raw.collection) : null;
-			const container = raw && kind ? containerIdFor(raw) : null;
+			const near = endOf(focus.raw?.collection ?? '', focus);
 			for (const row of rows) {
 				const id = nodeId(row.ref.collection, row.ref.key);
 				if (!nodes.has(id))
 					touchNode(id, syntheticNode(row.ref.collection, row.ref.key, row.title, row.props ?? {}));
-				if (kind && container && isContainerMembership(kind, row.relation)) {
-					containers.recordMember(kind, container, id, row.relation, row.period ?? null);
-					continue;
+				const node = nodes.get(id)!;
+				const far = endOf(node.raw?.collection ?? '', node);
+				const inbound = row.direction === 'inbound';
+				const placement = placeConnection({
+					mode: 'rows',
+					relation: row.relation,
+					source: inbound ? far : near,
+					target: inbound ? near : far,
+					focus: inbound ? 'target' : 'source',
+					threshold: threshold()
+				});
+				const [source, target] = inbound ? [node, focus] : [focus, node];
+				if (placement.place === 'member') {
+					const [hull, member] = placement.hull === 'source' ? [source, target] : [target, source];
+					containers.recordMember(
+						containerKindOf(hull.raw!.collection)!,
+						containerIdFor(hull.raw!),
+						member.id,
+						row.relation,
+						placement.seat ? (row.period ?? null) : null
+					);
+				} else if (placement.place === 'line') {
+					addEdge(source.id, target.id, row.relation, {
+						status: row.proposed ? 'voorgesteld' : null
+					});
 				}
-				const [source, target] = row.direction === 'inbound' ? [id, focusId] : [focusId, id];
-				addEdge(source, target, row.relation, { status: row.proposed ? 'voorgesteld' : null });
 			}
 			emit();
 			return true;
