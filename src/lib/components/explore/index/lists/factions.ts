@@ -24,7 +24,9 @@ export const factions = defineList<Row, object, ReturnType<typeof query>>({
 		{ id: 'name', label: 'Naam', dir: 'asc' }
 	],
 	placeholder: 'Zoek op naam of afkorting',
-	columns: { lead: 'Fractie', body: 'Naam', aside: 'Zetels', asideW: 110 },
+	// Wide enough for "26 zetels" beside the row's actions on one line, so every count stands
+	// at one edge (Thijs, 16 Oct: "9 zetels" stood apart from "14 zetels").
+	columns: { lead: 'Fractie', body: 'Naam', aside: 'Zetels', asideW: 124 },
 	noun: 'fracties',
 	chamber: true,
 	period: () => ({ label: 'Actief', unit: 'date' }),
@@ -65,5 +67,8 @@ export const factions = defineList<Row, object, ReturnType<typeof query>>({
 				],
 	// The Eerste Kamer's composition is named in the legend of its hall (FactionsHall).
 	Header: FactionsHall,
+	// The sitting fracties are the legend of the hall: the rows only for what it does not
+	// show, a name searched for, the dissolved fracties or another period (Thijs, 16 Oct).
+	rowsShown: (p) => !!(p.q || p.includeInactive || p.from || p.to),
 	Rows: FactionRows
 });

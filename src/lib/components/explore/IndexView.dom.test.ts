@@ -261,7 +261,7 @@ describe('Bronnen, the address', () => {
 	});
 
 	it('turns the direction of a sort done here', async () => {
-		await open('factions');
+		await open('factions', 'include_inactive=1');
 		await fireEvent.click(screen.getByRole('button', { name: /^Aflopend/ }));
 		expect(page.url.searchParams.get('dir')).toBe('asc');
 	});

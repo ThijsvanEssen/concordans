@@ -9,7 +9,8 @@
 	import type { ViewProps } from '../lists/list';
 
 	let { ctx }: ViewProps<Schema<'FactionDTO'>, object> = $props();
-	const totalSeats = $derived((ctx.rows ?? []).reduce((sum, f) => sum + (f.seats ?? 0), 0));
+	/** The seats of the Kamer (Grondwet art. 51), not of the rows a search leaves. */
+	const totalSeats = $derived(ctx.p.kamer === 'EK' ? 75 : 150);
 </script>
 
 <ul class="list">

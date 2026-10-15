@@ -41,4 +41,34 @@ describe('the hall', () => {
 				.map((s) => s.path)
 		).toEqual([]);
 	});
+
+	it('lets the legend of the hall stand for the fracties of both Kamers (Thijs, 16 Oct)', () => {
+		// One hall with one legend for the Tweede and the Eerste Kamer alike.
+		const hall = bron('lib/components/explore/index/rows/FactionsHall.svelte');
+		expect(hall.match(/<ZaalLegenda\b/g)).toHaveLength(1);
+		// The legend is what the list was: each fractie opens in place, its members and its
+		// vacancies marked where they differ from its seats.
+		const legend = bron('lib/components/explore/ZaalLegenda.svelte');
+		expect(legend).toContain('openHref(');
+		expect(legend).toMatch(/\bvacant\b/);
+		expect(legend).toMatch(/count\([^)]*'lid', 'leden'\)/);
+		// The source in full: no line cut off.
+		expect(legend.match(/\.peil \{[^}]*\}/)?.[0]).not.toMatch(/ellipsis|nowrap/);
+		// The list under the hall only where it shows more than the legend.
+		const list = bron('lib/components/explore/index/lists/factions.ts');
+		expect(list).toMatch(/rowsShown:/);
+		expect(bron('lib/components/explore/IndexView.svelte')).toContain('list.rowsShown');
+		// Without the rows no rule of a list under the hall; while the hall loads, its place.
+		expect(bron('lib/components/explore/IndexView.svelte')).toMatch(
+			/\{#if rowsShown\}<div class="result-head">/
+		);
+		expect(hall).toMatch(/hemi-card--loading[\s\S]*?class="sr-only" role="status">Laden…/);
+		// No name cut off; the whole row is the link, a finger's height.
+		expect(legend.match(/\.n \{[^}]*\}/)?.[0]).not.toMatch(/ellipsis|nowrap/);
+		expect(legend).toMatch(/\.entry \{[^}]*min-height: var\(--veld-h\)/);
+		// A share of the seats of the Kamer, not of the rows a search leaves.
+		expect(bron('lib/components/explore/index/rows/FactionRows.svelte')).not.toMatch(
+			/rows[^\n]*reduce\([^\n]*seats/
+		);
+	});
 });

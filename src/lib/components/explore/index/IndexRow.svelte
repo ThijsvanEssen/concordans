@@ -240,6 +240,10 @@
 			justify-content: flex-start;
 			padding-top: var(--s-2);
 		}
+		/* A count stays at the right edge, as on a wide screen (UX-toets 16 Oct). */
+		.row-aside:has(:global(.num-strong)) {
+			justify-content: flex-end;
+		}
 		.detail {
 			padding-left: 0;
 		}
