@@ -87,7 +87,8 @@ const endOfNode = (node: GraphNode): End => {
 		node.collection,
 		node.key,
 		node.raw?.display_name ?? node.label,
-		node.raw?.props ?? {}
+		node.raw?.props ?? {},
+		node.raw?.cite
 	);
 	return {
 		ref: refOf(node.collection, node.key, node.raw?.props),

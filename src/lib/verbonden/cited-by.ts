@@ -3,7 +3,7 @@
 // and the canvas card of the same verbinding read them here, so they name the same lid.
 import type { Schema } from '$lib/api/types';
 import { paragraphAnchor } from '$lib/text/anchor';
-import { paragraphCite } from '$lib/text/judgment-cite';
+import { paragraphCite } from '$lib/text/ecli';
 import { isDerived, lidOfMatch } from './edge-meta';
 import { isInternational } from './filter';
 import { bundleMentions, type Row } from './rows';
@@ -22,7 +22,7 @@ export function rowsOfCitedBy(items: Schema<'ArticleCitedByItem'>[]): Row[] {
 		if (of.has(at ?? '')) continue;
 		of.set(at ?? '', {
 			ref: { collection: 'judgments', key: j.key },
-			...describeBron('judgments', j.key, j.display_name, { ...j }),
+			...describeBron('judgments', j.key, j.display_name, { ...j }, j.cite),
 			filterGroup: 'uitspraken',
 			at,
 			lid: item.leden?.[0] ?? lidOfMatch(item.qualifier ?? item.text),

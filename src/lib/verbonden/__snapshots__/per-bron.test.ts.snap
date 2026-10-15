@@ -2,10 +2,10 @@
 
 exports[`Verbonden of a 'artikel' > keeps its groups, rows, kern and export > csv 1`] = `
 "﻿bron;soort;verbinding;plaats in de bron;plaats in dit artikel;aard;status;betrouwbaarheid;datum;identificatie;link
-College van Beroep voor het bedrijfsleven, 13 oktober 2026;Uitspraken;haalt aan;r.o. 5.6;lid 3;;vastgesteld;hoog;2026-10-13;ECLI:NL:CBB:2026:489;https://concordans.nl/uitspraken/ECLI:NL:CBB:2026:489?lezen=1#rov-5.6
-Rechtbank Den Haag, 13 oktober 2026;Uitspraken;haalt aan;r.o. 7;lid 6;;vastgesteld;hoog;2026-10-13;ECLI:NL:RBDHA:2026:30184;https://concordans.nl/uitspraken/ECLI:NL:RBDHA:2026:30184?lezen=1#rov-7
-Rechtbank Den Haag, 12 oktober 2026;Uitspraken;haalt aan;r.o. 8;lid 4;;vastgesteld;hoog;2026-10-12;ECLI:NL:RBDHA:2026:30092;https://concordans.nl/uitspraken/ECLI:NL:RBDHA:2026:30092?lezen=1#rov-8
-Rechtbank Den Haag, 12 oktober 2026;Uitspraken;haalt aan;r.o. 10.1;lid 4;;vastgesteld;hoog;2026-10-12;ECLI:NL:RBDHA:2026:30152;https://concordans.nl/uitspraken/ECLI:NL:RBDHA:2026:30152?lezen=1#rov-10.1
+CBb 13 oktober 2026;Uitspraken;haalt aan;r.o. 5.6;lid 3;;vastgesteld;hoog;2026-10-13;ECLI:NL:CBB:2026:489;https://concordans.nl/uitspraken/ECLI:NL:CBB:2026:489?lezen=1#rov-5.6
+Rb. Den Haag 13 oktober 2026;Uitspraken;haalt aan;r.o. 7;lid 6;;vastgesteld;hoog;2026-10-13;ECLI:NL:RBDHA:2026:30184;https://concordans.nl/uitspraken/ECLI:NL:RBDHA:2026:30184?lezen=1#rov-7
+Rb. Den Haag 12 oktober 2026;Uitspraken;haalt aan;r.o. 8;lid 4;;vastgesteld;hoog;2026-10-12;ECLI:NL:RBDHA:2026:30092;https://concordans.nl/uitspraken/ECLI:NL:RBDHA:2026:30092?lezen=1#rov-8
+Rb. Den Haag 12 oktober 2026;Uitspraken;haalt aan;r.o. 10.1;lid 4;;vastgesteld;hoog;2026-10-12;ECLI:NL:RBDHA:2026:30152;https://concordans.nl/uitspraken/ECLI:NL:RBDHA:2026:30152?lezen=1#rov-10.1
 Artikel 15 Wedervergeldingswet zeescheepvaart;Artikelen;verwijst naar;;lid 2;uitzondering;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0003104/artikel/15?lezen=1
 Artikel 3a:146 Wft;Artikelen;verwijst naar;;lid 3;mogelijk verwijzing;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0020368/artikel/3a:146?lezen=1
 Artikel 8:87 Awb;Artikelen;verwijst naar;;lid 5;mogelijk verwijzing;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/8:87?lezen=1
@@ -30,10 +30,10 @@ exports[`Verbonden of a 'artikel' > keeps its groups, rows, kern and export > gr
     "label": "Uitspraken die dit artikel aanhalen",
     "plaats": "verbonden",
     "rows": [
-      "judgments/ecli_nl_cbb_2026_489 | College van Beroep voor het bedrijfsleven, 13 oktober 2026 | Haalt aan lid 3, in r.o. 5.6 [Herkend in de tekst] | ECLI:NL:CBB:2026:489",
-      "judgments/ecli_nl_rbdha_2026_30184 | Rechtbank Den Haag, 13 oktober 2026 | Haalt aan lid 6, in r.o. 7 [Herkend in de tekst] | ECLI:NL:RBDHA:2026:30184",
-      "judgments/ecli_nl_rbdha_2026_30092 | Rechtbank Den Haag, 12 oktober 2026 | Haalt aan lid 4, in r.o. 8 [Herkend in de tekst] | ECLI:NL:RBDHA:2026:30092",
-      "judgments/ecli_nl_rbdha_2026_30152 | Rechtbank Den Haag, 12 oktober 2026 | Haalt aan lid 4, in r.o. 10.1 [Herkend in de tekst] | ECLI:NL:RBDHA:2026:30152",
+      "judgments/ecli_nl_cbb_2026_489 | CBb 13 oktober 2026 | Haalt aan lid 3, in r.o. 5.6 [Herkend in de tekst] | ECLI:NL:CBB:2026:489",
+      "judgments/ecli_nl_rbdha_2026_30184 | Rb. Den Haag 13 oktober 2026 | Haalt aan lid 6, in r.o. 7 [Herkend in de tekst] | ECLI:NL:RBDHA:2026:30184",
+      "judgments/ecli_nl_rbdha_2026_30092 | Rb. Den Haag 12 oktober 2026 | Haalt aan lid 4, in r.o. 8 [Herkend in de tekst] | ECLI:NL:RBDHA:2026:30092",
+      "judgments/ecli_nl_rbdha_2026_30152 | Rb. Den Haag 12 oktober 2026 | Haalt aan lid 4, in r.o. 10.1 [Herkend in de tekst] | ECLI:NL:RBDHA:2026:30152",
     ],
     "section": null,
   },
@@ -452,10 +452,10 @@ Artikel 81 RO;Artikelen;haalt aan;;;;vastgesteld;hoog;;;https://concordans.nl/we
 Artikel 29 Sv;Artikelen;haalt aan;r.o. 2.2.3, 2.3.1 en 1 meer;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/29?lezen=1
 Artikel 27c Sv;Artikelen;haalt aan;r.o. 2.2.3 en 2.3.3;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/27c?lezen=1
 Artikel 28 Sv;Artikelen;haalt aan;r.o. 2.2.3 en 2.3.3;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/28?lezen=1
-Conclusie A-G Paridaens, 1 oktober 2024;Uitspraken;conclusie bij;;;;vastgesteld;hoog;2024-10-01;ECLI:NL:PHR:2024:994;https://concordans.nl/uitspraken/ECLI:NL:PHR:2024:994?lezen=1
+Conclusie A-G Paridaens 1 oktober 2024;Uitspraken;conclusie bij;;;;vastgesteld;hoog;2024-10-01;ECLI:NL:PHR:2024:994;https://concordans.nl/uitspraken/ECLI:NL:PHR:2024:994?lezen=1
 Gerechtshof Arnhem-Leeuwarden, 24 juni 2022, 21-004903-20;Uitspraken;;;;;vastgesteld;hoog;;;https://concordans.nl/explore?focus=judgments/unresolved%3Agerechtshof+Arnhem-Leeuwarden%3A2022-06-24%3A21-004903-20&lezen=1
-Hoge Raad, 20 maart 2018;Uitspraken;haalt aan;;;;vastgesteld;hoog;2018-03-20;ECLI:NL:HR:2018:368;https://concordans.nl/uitspraken/ECLI:NL:HR:2018:368?lezen=1
-Hoge Raad, 6 november 2018;Uitspraken;haalt aan;;;;vastgesteld;hoog;2018-11-06;ECLI:NL:HR:2018:2056;https://concordans.nl/uitspraken/ECLI:NL:HR:2018:2056?lezen=1"
+HR 20 maart 2018;Uitspraken;haalt aan;;;;vastgesteld;hoog;2018-03-20;ECLI:NL:HR:2018:368;https://concordans.nl/uitspraken/ECLI:NL:HR:2018:368?lezen=1
+HR 6 november 2018;Uitspraken;haalt aan;;;;vastgesteld;hoog;2018-11-06;ECLI:NL:HR:2018:2056;https://concordans.nl/uitspraken/ECLI:NL:HR:2018:2056?lezen=1"
 `;
 
 exports[`Verbonden of a 'uitspraak' > keeps its groups, rows, kern and export > groups 1`] = `
@@ -487,7 +487,7 @@ exports[`Verbonden of a 'uitspraak' > keeps its groups, rows, kern and export > 
     "label": "Conclusie in dezelfde zaak",
     "plaats": "kern",
     "rows": [
-      "judgments/ecli_nl_phr_2024_994 | Conclusie A-G Paridaens, 1 oktober 2024 | Conclusie bij deze uitspraak [Rechtspraak.nl, formele relatie] | ECLI:NL:PHR:2024:994",
+      "judgments/ecli_nl_phr_2024_994 | Conclusie A-G Paridaens 1 oktober 2024 | Conclusie bij deze uitspraak [Rechtspraak.nl, formele relatie] | ECLI:NL:PHR:2024:994",
     ],
     "section": null,
   },
@@ -571,8 +571,8 @@ exports[`Verbonden of a 'uitspraak' > keeps its groups, rows, kern and export > 
     "label": "Uitspraken die hier worden aangehaald",
     "plaats": "verbonden",
     "rows": [
-      "judgments/ecli_nl_hr_2018_368 | Hoge Raad, 20 maart 2018 | Aangehaald [ECLI genoemd in de tekst] | ECLI:NL:HR:2018:368",
-      "judgments/ecli_nl_hr_2018_2056 | Hoge Raad, 6 november 2018 | Aangehaald [ECLI genoemd in de tekst] | ECLI:NL:HR:2018:2056",
+      "judgments/ecli_nl_hr_2018_368 | HR 20 maart 2018 | Aangehaald [ECLI genoemd in de tekst] | ECLI:NL:HR:2018:368",
+      "judgments/ecli_nl_hr_2018_2056 | HR 6 november 2018 | Aangehaald [ECLI genoemd in de tekst] | ECLI:NL:HR:2018:2056",
     ],
     "section": null,
   },
@@ -637,10 +637,10 @@ Omgevingswet;Wetten;noemt;;;;vastgesteld;hoog;2024-01-01;in werking 1 jan. 2024;
 Wet op het financieel toezicht;Wetten;noemt;;;;vastgesteld;hoog;2007-01-01;in werking 1 jan. 2007;https://concordans.nl/wetten/BWBR0020368?lezen=1
 Vreemdelingenwet 2000;Wetten;noemt;;;;vastgesteld;hoog;2001-04-01;in werking 1 apr. 2001;https://concordans.nl/wetten/BWBR0011823?lezen=1
 Algemene wet inzake rijksbelastingen;Wetten;noemt;;;;vastgesteld;hoog;1962-10-01;in werking 1 okt. 1962;https://concordans.nl/wetten/BWBR0002320?lezen=1
-Rechtbank Den Haag, 14 oktober 2026;Uitspraken;haalt aan;;;;vastgesteld;hoog;2026-10-14;ECLI:NL:RBDHA:2026:30262;https://concordans.nl/uitspraken/ECLI:NL:RBDHA:2026:30262?lezen=1
-Raad van State, 14 oktober 2026;Uitspraken;haalt aan;;;;vastgesteld;hoog;2026-10-14;ECLI:NL:RVS:2026:6065;https://concordans.nl/uitspraken/ECLI:NL:RVS:2026:6065?lezen=1
-Raad van State, 14 oktober 2026;Uitspraken;haalt aan;;;;vastgesteld;hoog;2026-10-14;ECLI:NL:RVS:2026:6066;https://concordans.nl/uitspraken/ECLI:NL:RVS:2026:6066?lezen=1
-Raad van State, 14 oktober 2026;Uitspraken;haalt aan;;;;vastgesteld;hoog;2026-10-14;ECLI:NL:RVS:2026:6068;https://concordans.nl/uitspraken/ECLI:NL:RVS:2026:6068?lezen=1"
+Rb. Den Haag 14 oktober 2026;Uitspraken;haalt aan;;;;vastgesteld;hoog;2026-10-14;ECLI:NL:RBDHA:2026:30262;https://concordans.nl/uitspraken/ECLI:NL:RBDHA:2026:30262?lezen=1
+ABRvS 14 oktober 2026;Uitspraken;haalt aan;;;;vastgesteld;hoog;2026-10-14;ECLI:NL:RVS:2026:6065;https://concordans.nl/uitspraken/ECLI:NL:RVS:2026:6065?lezen=1
+ABRvS 14 oktober 2026;Uitspraken;haalt aan;;;;vastgesteld;hoog;2026-10-14;ECLI:NL:RVS:2026:6066;https://concordans.nl/uitspraken/ECLI:NL:RVS:2026:6066?lezen=1
+ABRvS 14 oktober 2026;Uitspraken;haalt aan;;;;vastgesteld;hoog;2026-10-14;ECLI:NL:RVS:2026:6068;https://concordans.nl/uitspraken/ECLI:NL:RVS:2026:6068?lezen=1"
 `;
 
 exports[`Verbonden of a 'wet' > keeps its groups, rows, kern and export > groups 1`] = `
@@ -786,10 +786,10 @@ exports[`Verbonden of a 'wet' > keeps its groups, rows, kern and export > groups
     "label": "Uitspraken die deze wet aanhalen",
     "plaats": "verbonden",
     "rows": [
-      "judgments/ecli_nl_rbdha_2026_30262 | Rechtbank Den Haag, 14 oktober 2026 | Haalt aan | art. 6:22, ECLI:NL:RBDHA:2026:30262",
-      "judgments/ecli_nl_rvs_2026_6065 | Raad van State, 14 oktober 2026 | Haalt aan | art. 4:84, ECLI:NL:RVS:2026:6065",
-      "judgments/ecli_nl_rvs_2026_6066 | Raad van State, 14 oktober 2026 | Haalt aan | art. 4:84, 6:19 en 1 ander, ECLI:NL:RVS:2026:6066",
-      "judgments/ecli_nl_rvs_2026_6068 | Raad van State, 14 oktober 2026 | Haalt aan | art. 3:9, ECLI:NL:RVS:2026:6068",
+      "judgments/ecli_nl_rbdha_2026_30262 | Rb. Den Haag 14 oktober 2026 | Haalt aan | art. 6:22, ECLI:NL:RBDHA:2026:30262",
+      "judgments/ecli_nl_rvs_2026_6065 | ABRvS 14 oktober 2026 | Haalt aan | art. 4:84, ECLI:NL:RVS:2026:6065",
+      "judgments/ecli_nl_rvs_2026_6066 | ABRvS 14 oktober 2026 | Haalt aan | art. 4:84, 6:19 en 1 ander, ECLI:NL:RVS:2026:6066",
+      "judgments/ecli_nl_rvs_2026_6068 | ABRvS 14 oktober 2026 | Haalt aan | art. 3:9, ECLI:NL:RVS:2026:6068",
     ],
     "section": null,
   },

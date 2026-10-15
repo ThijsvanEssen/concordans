@@ -60,7 +60,8 @@ export function createViewActions(
 					row.ref.collection,
 					row.ref.key,
 					row.title,
-					row.props ?? {}
+					row.props ?? {},
+					row.cite
 				);
 				// A container a row names is not drawn as a bron: it ties, as a point with a
 				// line, the way a node response draws a container chosen bronnen share.

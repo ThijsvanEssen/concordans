@@ -6,7 +6,7 @@ import { textOf } from '$lib/text/words';
 import { isRauw, menselijkeNaam } from '$lib/bron/menselijk';
 import { langeDatum } from '$lib/text/datum';
 import { articleTitle } from '$lib/text/bw';
-import { authorCite } from '$lib/text/judgment-cite';
+import type { Cite } from '$lib/text/judgment-cite';
 import { courtName } from '$lib/text/court';
 import { isGeneriek } from '$lib/bron/generiek';
 import { dossierOwnName, dossierUitProps, kamerstukNummer } from '$lib/bron/dossier-naam';
@@ -24,6 +24,8 @@ type BronDescription = {
 	date?: string | null;
 	/** The court of a judgment. */
 	court?: string | null;
+	/** A judgment as the API cites it: the head of its reader, the canvas, Behoort bij. */
+	cite?: Cite | null;
 };
 
 const join = (...parts: (string | null | undefined)[]) => parts.filter(Boolean).join(', ') || null;
@@ -113,13 +115,14 @@ export const UNNAMED = 'Naam niet in de gegevens';
 
 /**
  * Title, context, identifier, date and court of a bron, from what a list or node
- * response says about it.
+ * response says about it; a judgment by its `cite`.
  */
 export function describeBron(
 	collection: string,
 	key: string,
 	displayName: string | null | undefined,
-	props: Record<string, unknown> = {}
+	props: Record<string, unknown> = {},
+	cite: Cite | null = null
 ): BronDescription {
 	// Never the key: the reader's name of the bron where the data gives none ($lib/bron/menselijk).
 	const eigen = textOf(displayName);
@@ -133,21 +136,15 @@ export function describeBron(
 		case 'judgments': {
 			const ecli = textOf(props.ecli);
 			const court = courtName(textOf(props.court) ?? textOf(props.court_code));
-			// The name a judgment is known by: "Hoge Raad, 20 december 2019 (Urgenda)".
+			// The names a judgment is known by: "Urgenda".
 			const names = Array.isArray(props.names)
 				? props.names.filter((n): n is string => typeof n === 'string')
 				: [];
 			const known = names.length ? ` (${names.join(', ')})` : '';
-			// A conclusion by its author (API 0.74): "Conclusie A-G Niessen, 2 augustus 2018".
-			const ag = textOf(props.advocate_general);
-			const role = textOf(props.advocate_general_role) ?? '';
-			const author = ag
-				? authorCite(ag, /procureur-generaal/i.test(role) ? ['procureur-generaal'] : [])
-				: null;
+			// As the API cites it, as the head of its reader: "HR 20 december 2019 (Urgenda)",
+			// "Conclusie P-G Langemeijer en Wissink 13 september 2019".
 			return {
-				title: author
-					? (join(`Conclusie ${author}`, langeDatum(date)) ?? `Conclusie ${author}`) + known
-					: (court ? (join(court, langeDatum(date)) ?? court) : name) + known,
+				title: (cite?.short ?? (court ? (join(court, langeDatum(date)) ?? court) : name)) + known,
 				// A judgment known only as cited: its ECLI and court, nothing more. A translation
 				// the Rechtspraak published under its own ECLI says so (in its name, as the source
 				// gives it): HR Urgenda cites the English one of the Rechtbank, not its procesgang.
@@ -159,7 +156,8 @@ export function describeBron(
 							: null,
 				identifier: ecli ?? (court ? null : name),
 				date,
-				court
+				court,
+				cite
 			};
 		}
 		case 'dossiers': {

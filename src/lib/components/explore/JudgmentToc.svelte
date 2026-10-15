@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { gewoneKlik } from '$lib/actions/klik';
 	import NavKolom from './NavKolom.svelte';
-	import { judgmentCite } from '$lib/text/judgment-cite';
 	import { replaceState } from '$app/navigation';
 	import { page } from '$app/state';
 	// The table of contents of a judgment in Lezen: samenvatting, partijen, and its
@@ -36,13 +35,7 @@
 			.then((data) => {
 				if (stale) return;
 				const j = data.judgment;
-				ecliLabel = j.ecli
-					? judgmentCite(
-							j.ecli,
-							typeof j.props?.date === 'string' ? j.props.date : null,
-							typeof j.props?.court === 'string' ? j.props.court : null
-						).short
-					: (j.display_name ?? 'Uitspraak');
+				ecliLabel = j.cite?.short ?? j.display_name ?? 'Uitspraak';
 				const paragraphs = j.paragraphs ?? [];
 				// The same condition under which JudgmentReader renders its table.
 				const hasParties = judgmentParticipants(j).length > 0;

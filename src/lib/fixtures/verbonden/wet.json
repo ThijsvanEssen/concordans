@@ -758,7 +758,11 @@
 						"display_name": "Artikel 6:22 Algemene wet bestuursrecht"
 					}
 				],
-				"path": "/uitspraken/ECLI:NL:RBDHA:2026:30262"
+				"path": "/uitspraken/ECLI:NL:RBDHA:2026:30262",
+				"cite": {
+					"short": "Rb. Den Haag 14 oktober 2026",
+					"full": "Rb. Den Haag 14 oktober 2026, ECLI:NL:RBDHA:2026:30262"
+				}
 			},
 			{
 				"outcome": "bevestigd",
@@ -784,7 +788,11 @@
 						"display_name": "Artikel 4:84 Algemene wet bestuursrecht"
 					}
 				],
-				"path": "/uitspraken/ECLI:NL:RVS:2026:6065"
+				"path": "/uitspraken/ECLI:NL:RVS:2026:6065",
+				"cite": {
+					"short": "ABRvS 14 oktober 2026",
+					"full": "ABRvS 14 oktober 2026, ECLI:NL:RVS:2026:6065"
+				}
 			},
 			{
 				"outcome": "bevestigd",
@@ -822,7 +830,11 @@
 						"display_name": "Artikel 6:24 Algemene wet bestuursrecht"
 					}
 				],
-				"path": "/uitspraken/ECLI:NL:RVS:2026:6066"
+				"path": "/uitspraken/ECLI:NL:RVS:2026:6066",
+				"cite": {
+					"short": "ABRvS 14 oktober 2026",
+					"full": "ABRvS 14 oktober 2026, ECLI:NL:RVS:2026:6066"
+				}
 			},
 			{
 				"outcome": "bevestigd",
@@ -848,7 +860,11 @@
 						"display_name": "Artikel 3:9 Algemene wet bestuursrecht"
 					}
 				],
-				"path": "/uitspraken/ECLI:NL:RVS:2026:6068"
+				"path": "/uitspraken/ECLI:NL:RVS:2026:6068",
+				"cite": {
+					"short": "ABRvS 14 oktober 2026",
+					"full": "ABRvS 14 oktober 2026, ECLI:NL:RVS:2026:6068"
+				}
 			}
 		]
 	},

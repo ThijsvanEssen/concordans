@@ -71,9 +71,13 @@ describe('node labels', () => {
 		expect(buildNodeLabel(node('articles', 'a', { article_number: '287' }), 'article')).toBe(
 			'Art. 287'
 		);
+		const cite = { short: 'HR 3 maart 2023', full: 'HR 3 maart 2023, ECLI:NL:HR:2023:456' };
 		expect(
-			buildNodeLabel(node('judgments', 'j', { ecli: 'ECLI:NL:HR:2023:456' }), 'judgment')
-		).toBe('HR 2023/456');
+			buildNodeLabel(
+				{ ...node('judgments', 'j', { ecli: 'ECLI:NL:HR:2023:456' }), cite },
+				'judgment'
+			)
+		).toBe('HR 3 maart 2023');
 	});
 
 	it('names a motion after its lead signatory', () => {

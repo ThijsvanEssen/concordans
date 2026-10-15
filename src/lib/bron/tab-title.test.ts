@@ -61,8 +61,11 @@ describe('pageName', () => {
 });
 
 describe('the card of a judgment and a stemming', () => {
-	const title = (collection: 'judgments' | 'decisions', props: Record<string, unknown>) =>
-		previewFromNode(collection, null, props).title;
+	const title = (
+		collection: 'judgments' | 'decisions',
+		props: Record<string, unknown>,
+		short: string | null = null
+	) => previewFromNode(collection, null, props, short ? { short, full: short } : null).title;
 
 	it('names a judgment by its citation and name, a translation as such', () => {
 		const props = {
@@ -72,19 +75,21 @@ describe('the card of a judgment and a stemming', () => {
 			names: ['Urgenda'],
 			translation_of: 'ECLI:NL:HR:2019:2006'
 		};
-		expect(title('judgments', props)).toBe('HR 20 december 2019 (Urgenda), vertaling');
+		expect(title('judgments', props, 'HR 20 december 2019')).toBe(
+			'HR 20 december 2019 (Urgenda), vertaling'
+		);
 	});
 
-	it('names a conclusion by its A-G, as it is cited', () => {
+	it('names a conclusion by its A-G or P-G, as the API cites it (F107)', () => {
 		const props = {
 			ecli: 'ECLI:NL:PHR:2019:887',
 			date: '2019-09-13',
 			court: 'Parket bij de Hoge Raad',
-			advocate_general: 'F.F. Langemeijer en M.H. Wissink'
+			advocate_general: 'F.F. Langemeijer en M.H. Wissink',
+			advocate_general_role: 'procureur-generaal'
 		};
-		expect(title('judgments', props)).toBe(
-			'Conclusie A-G Langemeijer en Wissink 13 september 2019'
-		);
+		const short = 'Conclusie P-G Langemeijer en Wissink 13 september 2019';
+		expect(title('judgments', props, short)).toBe(short);
 	});
 
 	it('names a stemming as its heading does: Kamer, day and subject, no ISO date', () => {

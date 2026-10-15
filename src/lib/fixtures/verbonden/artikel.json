@@ -517,7 +517,11 @@
 					"date": "2026-10-13",
 					"display_name": "College van Beroep voor het bedrijfsleven 2026-10-13 / 23/1444 en 24/256",
 					"inbound_citation_count": 0,
-					"path": "/uitspraken/ECLI:NL:CBB:2026:489"
+					"path": "/uitspraken/ECLI:NL:CBB:2026:489",
+					"cite": {
+						"short": "CBb 13 oktober 2026",
+						"full": "CBb 13 oktober 2026, ECLI:NL:CBB:2026:489"
+					}
 				},
 				"paragraph_id": "rov-5.6",
 				"paragraph_number": "5.6",
@@ -549,7 +553,11 @@
 					"date": "2026-10-13",
 					"display_name": "Rechtbank Den Haag 2026-10-13 / NL25.17904",
 					"inbound_citation_count": 0,
-					"path": "/uitspraken/ECLI:NL:RBDHA:2026:30184"
+					"path": "/uitspraken/ECLI:NL:RBDHA:2026:30184",
+					"cite": {
+						"short": "Rb. Den Haag 13 oktober 2026",
+						"full": "Rb. Den Haag 13 oktober 2026, ECLI:NL:RBDHA:2026:30184"
+					}
 				},
 				"paragraph_id": "rov-7",
 				"paragraph_number": "7",
@@ -581,7 +589,11 @@
 					"date": "2026-10-12",
 					"display_name": "Rechtbank Den Haag 2026-10-12 / NL24.21369",
 					"inbound_citation_count": 0,
-					"path": "/uitspraken/ECLI:NL:RBDHA:2026:30092"
+					"path": "/uitspraken/ECLI:NL:RBDHA:2026:30092",
+					"cite": {
+						"short": "Rb. Den Haag 12 oktober 2026",
+						"full": "Rb. Den Haag 12 oktober 2026, ECLI:NL:RBDHA:2026:30092"
+					}
 				},
 				"paragraph_id": "rov-8",
 				"paragraph_number": "8",
@@ -613,7 +625,11 @@
 					"date": "2026-10-12",
 					"display_name": "Rechtbank Den Haag 2026-10-12 / NL26.20569",
 					"inbound_citation_count": 0,
-					"path": "/uitspraken/ECLI:NL:RBDHA:2026:30152"
+					"path": "/uitspraken/ECLI:NL:RBDHA:2026:30152",
+					"cite": {
+						"short": "Rb. Den Haag 12 oktober 2026",
+						"full": "Rb. Den Haag 12 oktober 2026, ECLI:NL:RBDHA:2026:30152"
+					}
 				},
 				"paragraph_id": "rov-10.1",
 				"paragraph_number": "10.1",

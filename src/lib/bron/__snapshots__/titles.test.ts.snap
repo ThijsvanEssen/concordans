@@ -376,34 +376,34 @@ exports[`the names of a bron > 'instruments/stb_2026_187' 1`] = `
 
 exports[`the names of a bron > 'judgments/ecli_nl_ghdha_2018_2591' 1`] = `
 {
-  "canvas": "Gerechtshof Den Haag, 9 oktober 2018 (Urgenda)",
+  "canvas": "Hof Den Haag 9 oktober 2018 (Urgenda)",
   "card": "Hof Den Haag 9 oktober 2018 (Urgenda)",
-  "label": "GH 2018/2591",
-  "row": "Gerechtshof Den Haag, 9 oktober 2018 (Urgenda)",
+  "label": "Hof Den Haag 9 oktober 2018",
+  "row": "Hof Den Haag 9 oktober 2018 (Urgenda)",
   "tab": "Hof Den Haag 9 oktober 2018 (Urgenda), ECLI:NL:GHDHA:2018:2591",
-  "tab before its title": "Gerechtshof Den Haag, 9 oktober 2018 (Urgenda)",
+  "tab before its title": "Hof Den Haag 9 oktober 2018 (Urgenda)",
 }
 `;
 
 exports[`the names of a bron > 'judgments/ecli_nl_hr_1965_ab7079' 1`] = `
 {
-  "canvas": "Hoge Raad, 5 november 1965 (Kelderluik)",
+  "canvas": "HR 5 november 1965 (Kelderluik)",
   "card": "HR 5 november 1965 (Kelderluik)",
-  "label": "HR 1965/AB7079",
-  "row": "Hoge Raad, 5 november 1965 (Kelderluik)",
+  "label": "HR 5 november 1965",
+  "row": "HR 5 november 1965 (Kelderluik)",
   "tab": "HR 5 november 1965 (Kelderluik), ECLI:NL:HR:1965:AB7079",
-  "tab before its title": "Hoge Raad, 5 november 1965 (Kelderluik)",
+  "tab before its title": "HR 5 november 1965 (Kelderluik)",
 }
 `;
 
 exports[`the names of a bron > 'judgments/ecli_nl_hr_2019_2006' 1`] = `
 {
-  "canvas": "Hoge Raad, 20 december 2019 (Urgenda)",
+  "canvas": "HR 20 december 2019 (Urgenda)",
   "card": "HR 20 december 2019 (Urgenda)",
-  "label": "HR 2019/2006",
-  "row": "Hoge Raad, 20 december 2019 (Urgenda)",
+  "label": "HR 20 december 2019",
+  "row": "HR 20 december 2019 (Urgenda)",
   "tab": "HR 20 december 2019 (Urgenda), ECLI:NL:HR:2019:2006",
-  "tab before its title": "Hoge Raad, 20 december 2019 (Urgenda)",
+  "tab before its title": "HR 20 december 2019 (Urgenda)",
 }
 `;
 

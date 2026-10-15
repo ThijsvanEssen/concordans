@@ -7,15 +7,7 @@ import { getNodeFirst } from '$lib/api/records';
 import { ifExists } from '$lib/api/errors';
 import { langeDatum } from '$lib/text/datum';
 import { ecliKey } from './leesbaar';
-import {
-	inbound,
-	instantie,
-	laagVan,
-	outbound,
-	uitkomstVan,
-	type Laag,
-	type Regel
-} from './behoort-layer';
+import { inbound, laagVan, outbound, uitkomstVan, type Laag, type Regel } from './behoort-layer';
 
 export const EARLIER = outbound('APPEAL_OF', 'judgments');
 export const LATER = inbound('APPEAL_OF', 'judgments');
@@ -41,7 +33,7 @@ function notInData(props: Record<string, unknown>): Laag[] {
 		]
 			.filter(Boolean)
 			.join(', ');
-		return { soort: 'Eerdere aanleg, niet in de gegevens', naam, kort: instantie(naam) };
+		return { soort: 'Eerdere aanleg, niet in de gegevens', naam };
 	});
 }
 

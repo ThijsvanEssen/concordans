@@ -103,7 +103,11 @@ describe('a judgment kept from a row of Verbonden (#55)', () => {
 		at: 'rov-3',
 		identifier: 'ECLI:NL:RBDHA:2013:19764',
 		date: '2013-01-01',
-		props: { ecli: 'ECLI:NL:RBDHA:2013:19764', date: '2013-01-01', court: 'Rechtbank Den Haag' }
+		props: { ecli: 'ECLI:NL:RBDHA:2013:19764', date: '2013-01-01', court: 'Rechtbank Den Haag' },
+		cite: {
+			short: 'Rb. Den Haag 1 januari 2013',
+			full: 'Rb. Den Haag 1 januari 2013, ECLI:NL:RBDHA:2013:19764'
+		}
 	} as unknown as Row;
 
 	it('is cited at its r.o., never with the lid of the article it cites', () => {

@@ -14,7 +14,6 @@ import { type Row } from '$lib/verbonden/rows';
 import { dossierNumberOf } from '$lib/bron/describe';
 import { FILTER_GROUP_LABEL } from '$lib/verbonden/filter';
 import { dossierLabel } from '$lib/bron/dossier-naam';
-import { keyEcli } from '$lib/bron/leesbaar';
 import { uitspraakKop, zaakNaam } from '$lib/text/judgment-cite';
 import { bewaarItem, type MapItem } from './map';
 
@@ -27,19 +26,7 @@ const dossierOf = (r: Row) =>
 		: null;
 
 /** A judgment row as its reader heads it: `Rb. Den Haag 1 januari 2013`, with its ECLI in full. */
-function judgmentHead(r: Row): { short: string; full: string } | null {
-	if (r.ref.collection !== 'judgments') return null;
-	const p = propsOf(r);
-	const ecli = textOf(p.ecli) ?? keyEcli(r.ref.key);
-	return ecli
-		? uitspraakKop({
-				ecli,
-				props: p,
-				advocate_general: textOf(p.advocate_general),
-				advocate_general_role: textOf(p.advocate_general_role)
-			})
-		: null;
-}
+const judgmentHead = (r: Row) => (r.ref.collection === 'judgments' ? uitspraakKop(r) : null);
 
 function groepVanRij(r: Row): string {
 	switch (r.ref.collection) {

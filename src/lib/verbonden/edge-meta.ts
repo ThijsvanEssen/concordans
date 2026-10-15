@@ -3,7 +3,7 @@
 // the canvas all read it here, so they say the same of one verbinding.
 import { textOf } from '$lib/text/words';
 import { parseQualifier } from '$lib/text/qualifier';
-import { paragraphCite } from '$lib/text/judgment-cite';
+import { paragraphCite } from '$lib/text/ecli';
 import { paragraphAnchor } from '$lib/text/anchor';
 import {
 	metVoetnoot,

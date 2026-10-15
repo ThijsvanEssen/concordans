@@ -22,6 +22,7 @@ import { isDerived, positionsLabel, readEdge } from './edge-meta';
 import { woordenVan } from './hoe';
 import { periodLabel } from './lines';
 import type { Bereik } from '$lib/text/voetnoten';
+import type { Cite } from '$lib/text/judgment-cite';
 
 import type { Neighbor } from '$lib/api/nodes';
 
@@ -70,6 +71,8 @@ export type Row = {
 	bereik?: Bereik | null;
 	/** The court of a judgment. */
 	court?: string | null;
+	/** A judgment as the API cites it. */
+	cite?: Cite | null;
 	/** Props the canvas needs to draw a bron not on it yet. */
 	props?: Record<string, unknown>;
 	/** The meta of the edge, as the API gives it: what the row's line reads (`hoe.ts`). */
@@ -149,7 +152,7 @@ export function rowOfNeighbor(n: Neighbor): Row | null {
 	const edge = readEdge(meta, { direction: inbound ? 'inbound' : 'outbound', citingEcli: ecli });
 	return {
 		ref: refOf(n.collection, n.key, props),
-		...describeBron(n.collection, n.key, n.display_name, props),
+		...describeBron(n.collection, n.key, n.display_name, props, n.cite),
 		...(edge.position ? { position: edge.position } : {}),
 		...(edge.passageAt ? { passageAt: edge.passageAt } : {}),
 		...(edge.noot ? { noot: edge.noot } : {}),

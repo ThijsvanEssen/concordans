@@ -15,7 +15,7 @@ import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { partsOf, partText } from '$lib/text/article-parts';
 import { articleTitle } from '$lib/text/bw';
 import { courtName } from '$lib/text/court';
-import { authorCite, judgmentCite } from '$lib/text/judgment-cite';
+import type { Cite } from '$lib/text/judgment-cite';
 import { chamberName } from '$lib/components/parliamentary/chamber';
 import { shortDossierTitle } from '$lib/graph/types';
 import { votesSentence } from '$lib/components/parliamentary/stemming';
@@ -108,19 +108,15 @@ export function uitslagVan(props: Record<string, unknown>): string | null {
 const clip = (s: string | null) => s && truncate(s, PREVIEW_CHARS);
 
 /**
- * A judgment as its heading cites it, not by the display name with its ISO date ("Hoge Raad
- * 2026-08-25 / 24/01299"): `HR 20 december 2019 (Urgenda)`; a conclusion by its A-G
- * (`Conclusie A-G Hartlief 8 mei 2020`; a P-G is in the detail only); a translation says so.
+ * A judgment as its heading cites it (`cite`), not by the display name with its ISO date
+ * ("Hoge Raad 2026-08-25 / 24/01299"): `HR 20 december 2019 (Urgenda)`, `Conclusie P-G
+ * Langemeijer en Wissink 13 september 2019`; a translation says so.
  */
-function judgmentHeading(props: Record<string, unknown>, name: string): string {
+function judgmentHeading(props: Record<string, unknown>, name: string, cite: Cite | null): string {
 	const names = Array.isArray(props.names) ? props.names.filter((n) => typeof n === 'string') : [];
-	const ecli = textOf(props.ecli);
-	const author = authorCite(textOf(props.advocate_general));
-	const cite = ecli
-		? judgmentCite(ecli, textOf(props.date), textOf(props.court), author).short
-		: name;
+	const short = cite?.short ?? name;
 	const translation = textOf(props.translation_of) ? ', vertaling' : '';
-	return `${names.length ? `${cite} (${names.join(', ')})` : cite}${translation}`;
+	return `${names.length ? `${short} (${names.join(', ')})` : short}${translation}`;
 }
 
 /**
@@ -141,7 +137,8 @@ function decisionHeading(props: Record<string, unknown>): string | null {
 export function previewFromNode(
 	collection: Collection,
 	displayName: string | null,
-	props: Record<string, unknown>
+	props: Record<string, unknown>,
+	cite: Cite | null = null
 ): Preview {
 	const kind = bronLabel(collection);
 	const name = textOf(displayName) ?? textOf(props.name) ?? textOf(props.title) ?? kind;
@@ -150,7 +147,7 @@ export function previewFromNode(
 			const court = courtName(textOf(props.court) ?? textOf(props.court_code));
 			return {
 				kicker: court ? `${kind}, ${court}` : kind,
-				title: judgmentHeading(props, name),
+				title: judgmentHeading(props, name, cite),
 				// Cited by its ECLI, the title carries the day already: HR 25 augustus 2026.
 				date: textOf(props.ecli) ? null : langeDatum(textOf(props.date)) || null,
 				lines: clip(eersteZin(textOf(props.summary)))
@@ -287,7 +284,7 @@ async function fetchPreview(id: string, at: string | null): Promise<Preview | nu
 	const node = data?.node;
 	if (!node) return null;
 	const props = (node.props ?? {}) as Record<string, unknown>;
-	const preview = previewFromNode(collection, node.display_name ?? null, props);
+	const preview = previewFromNode(collection, node.display_name ?? null, props, node.cite);
 	if (collection === 'documents') {
 		// The vote on a motie or amendement is a decision on its zaak, the one whose primary
 		// case it is; the last of them where it was voted on more than once.

@@ -97,7 +97,7 @@ export function dossierNummer(props: Record<string, unknown>): string | null {
 export function laagVan(n: Neighbor, soort: string): Laag {
 	const props = (n.props ?? {}) as Record<string, unknown>;
 	const ref = refOf(n.collection as Collection, n.key, props);
-	const vol = describeBron(n.collection, n.key, n.display_name, props).title;
+	const vol = describeBron(n.collection, n.key, n.display_name, props, n.cite).title;
 	if (n.collection === 'dossiers') {
 		// A dossier by its kind, number and the name of its bill, "Kamerstuk 36496 Wet
 		// betaalbare huur" (dossier-naam); its title runs to three lines.
@@ -114,26 +114,9 @@ export function laagVan(n: Neighbor, soort: string): Laag {
 			props.outcome,
 			n.relation === 'APPEAL_OF' && n.direction === 'inbound' ? n.meta?.procedure_type : null
 		);
-		return { soort, naam: vol, ref, kort: instantie(vol), ...(uitkomst ? { uitkomst } : {}) };
+		// As the head of its reader cites it; on a phone without the names it is known by.
+		const kort = n.cite?.short;
+		return { soort, naam: vol, ref, ...(kort ? { kort } : {}), ...(uitkomst ? { uitkomst } : {}) };
 	}
 	return { soort, naam: vol, ref };
-}
-
-const GERECHT: [RegExp, string][] = [
-	[/^Rechtbank\b/, 'Rb.'],
-	[/^Gerechtshof\b/, 'Hof'],
-	[/^Hoge Raad\b/, 'HR'],
-	[/^Centrale Raad van Beroep\b/, 'CRvB'],
-	[/^Raad van State\b/, 'RvS']
-];
-
-/**
- * A judgment as a phone's line carries it, the court as lawyers shorten it and the year:
- * "Rechtbank Den Haag, 24 juni 2015 (Urgenda)" is "Rb. Den Haag 2015".
- */
-export function instantie(naam: string): string | undefined {
-	const gerecht = naam.split(',')[0].trim();
-	const jaar = /\b(1[89]|20)\d{2}\b/.exec(naam.slice(gerecht.length))?.[0];
-	const kort = GERECHT.reduce((g, [re, k]) => g.replace(re, k), gerecht);
-	return kort !== gerecht || jaar ? [kort, jaar].filter(Boolean).join(' ') : undefined;
 }

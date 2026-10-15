@@ -14,7 +14,7 @@ const MAX = 80;
 export const cut = (name: string): string => truncate(name, MAX, { atWord: true });
 
 type TitledNode = Pick<GraphNode, 'collection' | 'label'> & {
-	raw?: Pick<BaseNode, 'display_name' | 'props'> & Partial<Pick<BaseNode, 'title'>>;
+	raw?: Pick<BaseNode, 'display_name' | 'props'> & Partial<Pick<BaseNode, 'title' | 'cite'>>;
 };
 
 /**
@@ -48,7 +48,13 @@ export function pageName(node: TitledNode, apiTitle: string | null): string {
 	const title = textOf(apiTitle) ?? textOf(node.raw?.title);
 	if (title) return cut(zonderKopInKapitalen(title));
 	const display = node.raw?.display_name ?? null;
-	const named = describeBron(node.collection, '', display, node.raw?.props ?? {}).title;
+	const named = describeBron(
+		node.collection,
+		'',
+		display,
+		node.raw?.props ?? {},
+		node.raw?.cite
+	).title;
 	return cut(
 		named && named !== UNNAMED && !isRauw(named)
 			? named

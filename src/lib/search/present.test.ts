@@ -118,6 +118,29 @@ describe('presentHit', () => {
 		expect(shown.snippet).not.toBeNull();
 	});
 
+	it('cites the court of a hit as the API cites a judgment: the Afdeling, a court by its place', () => {
+		const titel = (ecli: string, display_name: string) =>
+			presentHit(
+				hit({ collection: 'judgments', key: ecli, display_name, extra: { ecli, names: [] } }),
+				''
+			).title;
+		expect(titel('ECLI:NL:RVS:2026:5670', 'Raad van State 2026-09-03 / 202401234/1/R2')).toBe(
+			'ABRvS 3 september 2026'
+		);
+		expect(titel('ECLI:NL:RBDHA:2026:1', 'Rechtbank Den Haag 2026-07-06 / C/09/1')).toBe(
+			'Rb. Den Haag 6 juli 2026'
+		);
+		expect(titel('ECLI:NL:GHSGR:2010:BN1234', "Gerechtshof 's-Gravenhage 2010-08-24 / 1")).toBe(
+			"Hof 's-Gravenhage 24 augustus 2010"
+		);
+		expect(titel('ECLI:NL:CRVB:2026:404', 'Centrale Raad van Beroep 2026-02-11 / 24/1')).toBe(
+			'CRvB 11 februari 2026'
+		);
+		expect(titel('ECLI:CE:ECHR:2026:0908JUD000748123', 'EHRM 2026-09-08 / 7481/23')).toBe(
+			'EHRM 8 september 2026'
+		);
+	});
+
 	it('names a stuk by its kind, under the dossier it belongs to', () => {
 		const shown = presentHit(stuk('a', 'Nader rapport'), 'nadeel');
 		expect(shown.title).toBe('Nader rapport');

@@ -1,11 +1,12 @@
-// One judgment, one citation (code-eenvoud F107): the reader's head, the tab, the canvas and
-// Behoort bij cite it as the API does (`cite`), never by a rule of their own. The court of
+// One judgment, one citation (code-eenvoud F107): the reader's head, the card, the canvas and
+// Behoort bij cite it as the API does (`cite`), never by a rule of their own; the tab shows the
+// API's title, which starts with it. The court of
 // the Raad van State is the Afdeling (ABRvS, Thijs 14 Oct), a conclusion signed as
 // procureur-generaal is by the P-G.
 import { describe, expect, it } from 'vitest';
 import type { Schema } from '$lib/api/types';
-import { buildNodeLabel, nodeToGraphNode, type BaseNode } from '$lib/graph/types';
-import { tabTitle } from './tab-title';
+import { buildNodeLabel, type BaseNode } from '$lib/graph/types';
+import { previewFromNode } from './preview';
 import { laagVan } from './behoort-layer';
 import { uitspraakKop } from '$lib/text/judgment-cite';
 
@@ -56,10 +57,9 @@ const pg = node(
 describe('a judgment cited one way', () => {
 	for (const n of [abrvs, pg]) {
 		const short = n.cite!.short;
-		it(`cites ${short} alike in the reader, the tab, the canvas and Behoort bij`, () => {
+		it(`cites ${short} alike in the reader, the card, the canvas and Behoort bij`, () => {
 			expect(uitspraakKop(n)).toEqual(n.cite);
-			const g = nodeToGraphNode(n)!;
-			expect(tabTitle(g)).toBe(short);
+			expect(previewFromNode('judgments', null, n.props!, n.cite).title).toBe(short);
 			expect(buildNodeLabel(n, 'judgment')).toBe(short);
 			const laag = laagVan(neighbor(n), 'Eerdere aanleg');
 			expect([laag.naam, laag.kort]).toEqual([short, short]);
@@ -72,7 +72,9 @@ describe('a judgment cited one way', () => {
 			{ ecli: 'ECLI:NL:HR:2019:2006', date: '2019-12-20', court: 'Hoge Raad', names: ['Urgenda'] },
 			{ short: 'HR 20 december 2019', full: 'HR 20 december 2019, ECLI:NL:HR:2019:2006' }
 		);
-		expect(tabTitle(nodeToGraphNode(urgenda)!)).toBe('HR 20 december 2019 (Urgenda)');
+		expect(previewFromNode('judgments', null, urgenda.props!, urgenda.cite).title).toBe(
+			'HR 20 december 2019 (Urgenda)'
+		);
 		expect(laagVan(neighbor(urgenda), 'Hoger beroep of cassatie').naam).toBe(
 			'HR 20 december 2019 (Urgenda)'
 		);

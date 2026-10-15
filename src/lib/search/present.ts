@@ -1,6 +1,6 @@
 import { OPEN_STATUS } from '$lib/components/explore/index/government';
 import { escapeRegExp } from '$lib/text/words';
-import { judgmentCite } from '$lib/text/judgment-cite';
+import { courtName } from '$lib/text/court';
 import { menselijkeNaam } from '$lib/bron/menselijk';
 // How a search result reads: a title that tells it from its neighbours, the context a
 // lawyer checks it by, and where the API gives one, a line of the text with the words
@@ -119,6 +119,45 @@ function judgmentParts(name: string): {
 		: { court: name, date: null, caseNumber: null };
 }
 
+/** The place of a rechtbank or gerechtshof from its name: `Rechtbank Den Haag` → `Den Haag`. */
+const placeOf = (name: string | null, kind: 'Rechtbank' | 'Gerechtshof') =>
+	new RegExp(`^${kind}\\s+(.+)$`, 'i').exec(name?.trim() ?? '')?.[1] ?? null;
+
+const FIXED_COURT: Record<string, string> = {
+	HR: 'HR',
+	PHR: 'Conclusie',
+	RVS: 'ABRvS',
+	CRVB: 'CRvB',
+	CBB: 'CBb'
+};
+
+/** The court as it is cited, from the code of the ECLI and the court's name. */
+function citedCourt(country: string, code: string, name: string | null): string {
+	if (country === 'CE' && code === 'ECHR') return 'EHRM';
+	if (country === 'EU') return code === 'T' ? 'Gerecht EU' : 'HvJ EU';
+	if (FIXED_COURT[code]) return FIXED_COURT[code];
+	const [kind, short] = code.startsWith('GH')
+		? (['Gerechtshof', 'Hof'] as const)
+		: code.startsWith('RB')
+			? (['Rechtbank', 'Rb.'] as const)
+			: [null, null];
+	if (!kind) return name ?? code;
+	const place = placeOf(name, kind);
+	return place ? `${short} ${place}` : short;
+}
+
+/**
+ * A judgment hit as its reader cites it, `HR 20 december 2019`: a hit carries no `cite` (API
+ * 0.79.60), so its court and day are read from its ECLI and its name, by the rule of the
+ * API's `core/judgment_cite.py`.
+ */
+function hitCite(ecli: string, date: string | null, court: string): string {
+	const [, country = '', code = ''] = ecli.trim().toUpperCase().split(':');
+	const who = citedCourt(country, code, courtName(court) ?? courtName(code));
+	const when = langeDatum(date);
+	return when ? `${who} ${when}` : who;
+}
+
 /** The code a BW book is cited by is `BW`; any other law by its short title. */
 function lawOf(hit: Hit): string {
 	const title = extra(hit, 'citation_title');
@@ -174,7 +213,7 @@ export function presentHit(hit: Hit, query: string, neighbours: readonly Hit[] =
 			const ecli = extra(hit, 'ecli');
 			// A judgment only cited, not in the data, has no date: the year of its ECLI.
 			const year = !date && ecli ? (/^ECLI:[^:]+:[^:]+:(\d{4}):/i.exec(ecli)?.[1] ?? null) : null;
-			const cited = ecli ? judgmentCite(ecli, date, court).short : null;
+			const cited = ecli ? hitCite(ecli, date, court) : null;
 			const when = cited
 				? year
 					? `${cited} ${year}`
