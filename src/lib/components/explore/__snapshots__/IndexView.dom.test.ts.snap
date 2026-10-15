@@ -966,9 +966,6 @@ exports[`Bronnen, list by list > factions ? > requests 1`] = `
       "chamber": "TK",
     },
   ],
-  "/api/parties/colors": [
-    {},
-  ],
 }
 `;
 
@@ -978,34 +975,12 @@ exports[`Bronnen, list by list > factions ? > view 1`] = `
   "filters": [
     "Ook opgeheven fracties",
   ],
-  "lijst": "De zaal kon niet op tijd worden geladen. Opnieuw 17fracties Zetels ↓ Fractie Naam Zetels D66 Democraten 66 17,3% van de zetels, 26 leden 26zetels VVD Volkspartij voor Vrijheid en Democratie 14,7% van de zetels, 22 leden 22zetels PRO Progressief Nederland 13,3% van de zetels, 20 leden 20zetels PVV Partij voor de Vrijheid 12,7% van de zetels, 19 leden 19zetels CDA Christen-Democratisch Appèl 12% van de zetels, 18 leden 18zetels JA21 JA21 6% van de zetels, 9 leden 9zetels FVD Forum voor Democratie 4,7% van de zetels, 7 leden 7zetels Groep Markuszower Groep Markuszower 4,7% van de zetels, 7 leden 7zetels BBB BoerBurgerBeweging 2% van de zetels, 3 leden 3zetels ChristenUnie ChristenUnie 2% van de zetels, 3 leden 3zetels DENK DENK 2% van de zetels, 3 leden 3zetels PvdD Partij voor de Dieren 2% van de zetels, 3 leden 3zetels SGP Staatkundig Gereformeerde Partij 2% van de zetels, 3 leden 3zetels SP Socialistische Partij 2% van de zetels, 3 leden 3zetels 50PLUS 50PLUS 1,3% van de zetels, 2 leden 2zetels Lid Keijzer Lid Keijzer 0,7% van de zetels, 1 lid 1zetel Volt Volt 0,7% van de zetels, 1 lid 1zetel",
-  "openbaar": 1,
+  "lijst": "De zaal kon niet op tijd worden geladen. Opnieuw",
+  "openbaar": 0,
   "regel": "Zoeken Actief AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
-  "richting": "Aflopend; sorteer oplopend",
-  "rijen": [
-    "Democraten 66 -> /fracties/d66?paneel=netwerk",
-    "Volkspartij voor Vrijheid en Democratie -> /fracties/vvd?paneel=netwerk",
-    "Progressief Nederland -> /fracties/pro?paneel=netwerk",
-    "Partij voor de Vrijheid -> /fracties/pvv?paneel=netwerk",
-    "Christen-Democratisch Appèl -> /fracties/cda?paneel=netwerk",
-    "JA21 -> /fracties/ja21?paneel=netwerk",
-    "Forum voor Democratie -> /fracties/fvd?paneel=netwerk",
-    "Groep Markuszower -> /fracties/groep_markuszower?paneel=netwerk",
-    "BoerBurgerBeweging -> /fracties/bbb?paneel=netwerk",
-    "ChristenUnie -> /fracties/christenunie?paneel=netwerk",
-    "DENK -> /fracties/denk?paneel=netwerk",
-    "Partij voor de Dieren -> /fracties/pvdd?paneel=netwerk",
-    "Staatkundig Gereformeerde Partij -> /fracties/sgp?paneel=netwerk",
-    "Socialistische Partij -> /fracties/sp?paneel=netwerk",
-    "50PLUS -> /fracties/50plus?paneel=netwerk",
-    "Lid Keijzer -> /fracties/lid_keijzer?paneel=netwerk",
-    "Volt -> /fracties/volt?paneel=netwerk",
-  ],
-  "volgorde": [
-    "Zetels (gekozen)",
-    "Afkorting",
-    "Naam",
-  ],
+  "richting": null,
+  "rijen": [],
+  "volgorde": null,
   "zoek": {
     "naam": "Zoek in fracties",
     "placeholder": "Zoek op naam of afkorting",
@@ -1088,9 +1063,6 @@ exports[`Bronnen, list by list > factions ?kamer=EK > requests 1`] = `
       "chamber": "EK",
     },
   ],
-  "/api/parties/colors": [
-    {},
-  ],
 }
 `;
 
@@ -1098,34 +1070,12 @@ exports[`Bronnen, list by list > factions ?kamer=EK > view 1`] = `
 {
   "facetten": "",
   "filters": [],
-  "lijst": "De zaal kon niet op tijd worden geladen. Opnieuw 17fracties Zetels ↓ Fractie Naam Zetels D66 Democraten 66 17,3% van de zetels, 26 leden 26zetels VVD Volkspartij voor Vrijheid en Democratie 14,7% van de zetels, 22 leden 22zetels PRO Progressief Nederland 13,3% van de zetels, 20 leden 20zetels PVV Partij voor de Vrijheid 12,7% van de zetels, 19 leden 19zetels CDA Christen-Democratisch Appèl 12% van de zetels, 18 leden 18zetels JA21 JA21 6% van de zetels, 9 leden 9zetels FVD Forum voor Democratie 4,7% van de zetels, 7 leden 7zetels Groep Markuszower Groep Markuszower 4,7% van de zetels, 7 leden 7zetels BBB BoerBurgerBeweging 2% van de zetels, 3 leden 3zetels ChristenUnie ChristenUnie 2% van de zetels, 3 leden 3zetels DENK DENK 2% van de zetels, 3 leden 3zetels PvdD Partij voor de Dieren 2% van de zetels, 3 leden 3zetels SGP Staatkundig Gereformeerde Partij 2% van de zetels, 3 leden 3zetels SP Socialistische Partij 2% van de zetels, 3 leden 3zetels 50PLUS 50PLUS 1,3% van de zetels, 2 leden 2zetels Lid Keijzer Lid Keijzer 0,7% van de zetels, 1 lid 1zetel Volt Volt 0,7% van de zetels, 1 lid 1zetel",
-  "openbaar": 1,
+  "lijst": "De zaal kon niet op tijd worden geladen. Opnieuw",
+  "openbaar": 0,
   "regel": "Zoeken Actief AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
-  "richting": "Aflopend; sorteer oplopend",
-  "rijen": [
-    "Democraten 66 -> /fracties/d66?paneel=netwerk",
-    "Volkspartij voor Vrijheid en Democratie -> /fracties/vvd?paneel=netwerk",
-    "Progressief Nederland -> /fracties/pro?paneel=netwerk",
-    "Partij voor de Vrijheid -> /fracties/pvv?paneel=netwerk",
-    "Christen-Democratisch Appèl -> /fracties/cda?paneel=netwerk",
-    "JA21 -> /fracties/ja21?paneel=netwerk",
-    "Forum voor Democratie -> /fracties/fvd?paneel=netwerk",
-    "Groep Markuszower -> /fracties/groep_markuszower?paneel=netwerk",
-    "BoerBurgerBeweging -> /fracties/bbb?paneel=netwerk",
-    "ChristenUnie -> /fracties/christenunie?paneel=netwerk",
-    "DENK -> /fracties/denk?paneel=netwerk",
-    "Partij voor de Dieren -> /fracties/pvdd?paneel=netwerk",
-    "Staatkundig Gereformeerde Partij -> /fracties/sgp?paneel=netwerk",
-    "Socialistische Partij -> /fracties/sp?paneel=netwerk",
-    "50PLUS -> /fracties/50plus?paneel=netwerk",
-    "Lid Keijzer -> /fracties/lid_keijzer?paneel=netwerk",
-    "Volt -> /fracties/volt?paneel=netwerk",
-  ],
-  "volgorde": [
-    "Zetels (gekozen)",
-    "Afkorting",
-    "Naam",
-  ],
+  "richting": null,
+  "rijen": [],
+  "volgorde": null,
   "zoek": {
     "naam": "Zoek in fracties",
     "placeholder": "Zoek op naam of afkorting",

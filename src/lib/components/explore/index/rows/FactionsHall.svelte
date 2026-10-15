@@ -45,6 +45,15 @@
 		};
 	});
 
+	/** The members of each sitting fractie, from the list the hall heads. */
+	const members = $derived(
+		new Map(
+			(ctx.rows ?? []).flatMap((f) => (f.member_count != null ? [[f.key, f.member_count]] : []))
+		)
+	);
+	/** The source by its name; the link holds its address (`…, www.eerstekamer.nl`). */
+	const sourceName = (attribution: string) => attribution.replace(/,\s*www\.\S+$/, '');
+
 	/** The numbered places of each hall, as the Kamers' own plans name them. */
 	const PLAATSEN_EK = ['Voorzitter', 'Griffie', 'Regering', 'Verslag en redactie'];
 	const PLAATSEN_TK = [
@@ -77,6 +86,7 @@
 				kolommen={2}
 				rijen={10}
 				coalitie={coalitieRegel}
+				{members}
 				peil={[
 					`Samenstelling op ${langeDatum(
 						(seats.chamber === 'EK' ? composition?.composition_date : null) ?? seats.as_of ?? null
@@ -87,7 +97,7 @@
 					.join('. ')}
 				bron={seats.chamber === 'EK'
 					? composition
-						? { label: composition.attribution, href: composition.url }
+						? { label: sourceName(composition.attribution), href: composition.url }
 						: null
 					: seats.seating_plan
 						? {

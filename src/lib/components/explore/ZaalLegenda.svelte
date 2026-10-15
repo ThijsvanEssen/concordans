@@ -1,8 +1,12 @@
 <script lang="ts">
 	// A small legend in the style of Concordans: per fractie a dot in the colour of the hall,
 	// its name and its seats, by size, in columns; under it the numbered places on one line.
-	// The same for both Kamers.
+	// The same for both Kamers. It is the list of the sitting fracties (Thijs, 16 Oct): each
+	// opens in place, its full name on hover, its members and vacancies marked where they
+	// differ from its seats.
 	import { fractieNaam } from '$lib/bron/menselijk';
+	import { openHref } from '$lib/bron/href';
+	import { count } from '$lib/text/words';
 	import type { Schema } from '$lib/api/types';
 	import { achtergrondVan } from './partijkleuren.svelte';
 	import ZaalPlaatsen from './ZaalPlaatsen.svelte';
@@ -16,7 +20,8 @@
 		kolommen = 3,
 		rijen = 0,
 		ruimte = null,
-		coalitie = null
+		coalitie = null,
+		members = null
 	}: {
 		data: Seats;
 		plaatsen: string[];
@@ -34,7 +39,19 @@
 		ruimte?: string[] | null;
 		/** The cabinet in office and its fracties: one line to the cabinet, where its seats are. */
 		coalitie?: { naam: string; href: string; fracties: string[] } | null;
+		/** The members of each fractie by its key, where the list of fracties gave them. */
+		members?: ReadonlyMap<string, number> | null;
 	} = $props();
+	/** What sets a fractie's seats apart: members other than its seats, and its vacancies. */
+	const marker = (f: Seats['factions'][number]) => {
+		const n = f.key ? members?.get(f.key) : undefined;
+		return [
+			n != null && n !== f.seats ? count(n, 'lid', 'leden') : null,
+			f.vacant ? `${f.vacant} vacant` : null
+		]
+			.filter(Boolean)
+			.join(', ');
+	};
 	const fracties = $derived([...data.factions].sort((a, b) => b.seats - a.seats));
 </script>
 
@@ -46,10 +63,18 @@
 		style:grid-template-columns="repeat({kolommen}, minmax(0, 1fr))"
 	>
 		{#each fracties as f (fractieNaam(f))}
+			{@const extra = marker(f)}
 			<li>
 				<span class="stip" style:background={achtergrondVan(fractieNaam(f), f.color ?? null)}
 				></span>
-				<span class="n">{fractieNaam(f)}</span><span class="z">{f.seats}</span>
+				{#if f.key}<a
+						class="n"
+						href={openHref(`factions/${f.key}`)}
+						title={f.name && f.name !== fractieNaam(f) ? f.name : undefined}
+						>{fractieNaam(f)}{#if extra}<span class="extra">, {extra}</span>{/if}</a
+					>{:else}<span class="n"
+						>{fractieNaam(f)}{#if extra}<span class="extra">, {extra}</span>{/if}</span
+					>{/if}<span class="z">{f.seats}</span>
 			</li>
 		{/each}
 	</ol>
@@ -113,6 +138,13 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		color: var(--ink);
+		text-decoration: none;
+	}
+	a.n:hover {
+		text-decoration: underline;
+	}
+	.extra {
+		color: var(--ink-3);
 	}
 	.z {
 		font-family: var(--font-serif);
@@ -127,11 +159,8 @@
 	.pl-cel > :global(.zaal-plaatsen) {
 		grid-area: 1 / 1;
 	}
-	/* One line, so it takes the same height under either Kamer. */
+	/* The source in full: its name a link (Thijs, 16 Oct: no line cut off). */
 	.peil {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);

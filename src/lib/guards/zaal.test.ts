@@ -41,4 +41,22 @@ describe('the hall', () => {
 				.map((s) => s.path)
 		).toEqual([]);
 	});
+
+	it('lets the legend of the hall stand for the fracties of both Kamers (Thijs, 16 Oct)', () => {
+		// One hall with one legend for the Tweede and the Eerste Kamer alike.
+		const hall = bron('lib/components/explore/index/rows/FactionsHall.svelte');
+		expect(hall.match(/<ZaalLegenda\b/g)).toHaveLength(1);
+		// The legend is what the list was: each fractie opens in place, its members and its
+		// vacancies marked where they differ from its seats.
+		const legend = bron('lib/components/explore/ZaalLegenda.svelte');
+		expect(legend).toContain('openHref(');
+		expect(legend).toMatch(/\bvacant\b/);
+		expect(legend).toMatch(/count\([^)]*'lid', 'leden'\)/);
+		// The source in full: no line cut off.
+		expect(legend.match(/\.peil \{[^}]*\}/)?.[0]).not.toMatch(/ellipsis|nowrap/);
+		// The list under the hall only where it shows more than the legend.
+		const list = bron('lib/components/explore/index/lists/factions.ts');
+		expect(list).toMatch(/rowsShown:/);
+		expect(bron('lib/components/explore/IndexView.svelte')).toContain('list.rowsShown');
+	});
 });
