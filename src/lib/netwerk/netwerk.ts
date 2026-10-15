@@ -38,6 +38,9 @@ export type NetwerkEntry = {
 	via?: { used: number; total: number };
 };
 
+/** The example the panel offers on an empty Verkenner: articles 3:4 and 3:2 of the Awb. */
+export const EXAMPLE_NETWERK = ['articles/bwbr0005537_3_4', 'articles/bwbr0005537_3_2'] as const;
+
 /** Only where the API took part of a group's members: then the chip says so. */
 export const deelVan = (e: { used: number; total: number } | undefined) =>
 	e && e.used < e.total ? e : undefined;
