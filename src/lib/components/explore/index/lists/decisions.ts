@@ -1,6 +1,6 @@
 // Stemmingen of a Kamer by sitting day, newest first; their total and facets counted apart.
 import type { Schema } from '$lib/api/types';
-import { besluiten, geteld, nogTeTellen } from '$lib/api/decisions';
+import { decisionsPage, geteld, nogTeTellen } from '$lib/api/decisions';
 import { EK_SOURCE } from '$lib/components/parliamentary/chamber';
 import { facetOptions } from '$lib/util/choice';
 import DecisionRows from '../rows/DecisionRows.svelte';
@@ -54,7 +54,7 @@ export const decisions = defineList<Row, DecisionsState, ReturnType<typeof query
 				signal
 			);
 		}
-		return besluiten({ ...query, offset, facets: false }, signal);
+		return decisionsPage(query, offset, signal);
 	},
 	total: (state) => state.total ?? null,
 	shown: (rows, { sort, dir }) =>

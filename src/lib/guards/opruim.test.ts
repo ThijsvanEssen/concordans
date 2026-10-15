@@ -170,10 +170,8 @@ describe('nothing left over', () => {
 	});
 
 	it('gives every prop of a component from some caller (code-eenvoud F83)', () => {
-		// A reader takes the node KindReader gives each one through its table.
-		const kindReader = BRONNEN.find(
-			(b) => b.path === 'lib/components/explore/KindReader.svelte'
-		)!.text;
+		// A reader takes the node KindReader gives each one through its table (readers.ts).
+		const kindReader = BRONNEN.find((b) => b.path === 'lib/components/explore/readers.ts')!.text;
 		// A list's views take their one prop, ctx, from IndexView through the register (F87).
 		const register = BRONNEN.filter((b) => b.path.startsWith('lib/components/explore/index/lists/'))
 			.map((b) => b.text)

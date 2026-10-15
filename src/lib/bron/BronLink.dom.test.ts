@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { createRawSnippet, tick } from 'svelte';
 import { HOVER_MS } from '$lib/actions/top-layer';
@@ -39,6 +39,12 @@ async function wacht(ms: number) {
 	await vi.advanceTimersByTimeAsync(ms);
 	await tick();
 }
+
+// The cards are chunks of their own, asked when the pointer reaches the link: loaded once
+// here, before the clock is faked, as a browser has them after the first.
+beforeAll(async () => {
+	await Promise.all([import('./PreviewCard.svelte'), import('./OverwegingKaart.svelte')]);
+});
 
 beforeEach(() => {
 	vi.useFakeTimers();

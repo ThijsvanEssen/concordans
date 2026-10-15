@@ -30,7 +30,7 @@
 	import { lees, topicKey, topicsOf, vindIndex } from '$lib/onderwerpen/onderwerpen';
 	import { dossierOwnName } from '$lib/bron/dossier-naam';
 	import { getDecisionDocument } from '$lib/api/records';
-	import { besluiten, telling } from '$lib/api/decisions';
+	import { besluiten, decisionsPage, telling } from '$lib/api/decisions';
 	import {
 		BOTH_CHAMBERS,
 		CHAMBER_CHOICES,
@@ -600,7 +600,7 @@
 		meerLaden = true;
 		meerFout = null;
 		try {
-			const r = await besluiten({ ...lijstVraag, limit: STEP, offset: apiLijst.length });
+			const r = await decisionsPage({ ...lijstVraag, limit: STEP }, apiLijst.length);
 			apiLijst = [...apiLijst, ...r.items];
 		} catch (e) {
 			meerMislukt(e);

@@ -96,6 +96,14 @@ export function paragraphNumber(id: string | null | undefined): string | null {
 	return a?.kind === 'paragraph' ? a.number : null;
 }
 
+/** Whether an anchor names an overweging: `rov-5.1`. */
+export const isOverwegingAnker = (at: string | null | undefined): at is string =>
+	paragraphNumber(at) !== null;
+
+/** Whether a reference is to a judgment at an overweging: its card is the overweging. */
+export const isOverwegingRef = (ref: string | null, at: string | null | undefined) =>
+	!!ref && ref.startsWith('judgments/') && isOverwegingAnker(at);
+
 /** The anchor of a lid by its number: `lid-2`. */
 export const lidAnchor = (lid: string): string =>
 	formatAnchor({ kind: 'part', lid, text: null, onderdelen: [], aanhef: false });

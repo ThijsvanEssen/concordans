@@ -31,6 +31,7 @@
 	import { readStored, writeStored } from '$lib/util/storage';
 	import PanelBoundary from '$lib/components/ui/PanelBoundary.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { Lazy } from '$lib/util/lazy.svelte';
 	import { getNodeCanvas, getNodeHull } from '$lib/api/records';
 	import { kopNode } from '$lib/bron/first-node';
 	import { bronHref, exploreMode, focusOf, hasReadableFocus, refId, refOf } from '$lib/bron/href';
@@ -40,12 +41,16 @@
 	import type { CanvasRow } from '$lib/graph/store/types';
 	import type GraphView from '$lib/components/graph/GraphView.svelte';
 	import KindReader from '$lib/components/explore/KindReader.svelte';
+	import {
+		collectionOfPad,
+		documentReader,
+		judgmentReader,
+		preloadReader
+	} from '$lib/components/explore/readers';
 	import ReaderFrame from '$lib/components/explore/readers/ReaderFrame.svelte';
 	import NietGevonden from '$lib/components/ui/NietGevonden.svelte';
 	import { LADEN_TITEL, serverKop, siteTitle } from '$lib/seo/server-head.svelte';
 	import { routeKop } from '$lib/seo/routes';
-	import DocumentReader from '$lib/components/explore/readers/DocumentReader.svelte';
-	import JudgmentReader from '$lib/components/explore/readers/JudgmentReader.svelte';
 	import { WEERGAVE_KEY, type Weergave } from '$lib/components/explore/weergave';
 	import LezenNav from '$lib/components/explore/LezenNav.svelte';
 	import DocumentToc from '$lib/components/explore/DocumentToc.svelte';
@@ -53,9 +58,7 @@
 	import type IndexView from '$lib/components/explore/IndexView.svelte';
 	import IndexOverzicht from '$lib/components/explore/index/IndexOverzicht.svelte';
 	import Verbonden from '$lib/verbonden/Verbonden.svelte';
-	import FilterSheet from '$lib/verbonden/FilterSheet.svelte';
 	import VerbindingCard from '$lib/verbonden/VerbindingCard.svelte';
-	import VerbondenTabel from '$lib/verbonden/VerbondenTabel.svelte';
 	import { filterParams, parseFilter, type VerbondenFilter } from '$lib/verbonden/filter';
 	import type { Row } from '$lib/verbonden/rows';
 	import { createVerbondenSource, type VerbondenState } from '$lib/verbonden/data-source';
@@ -935,6 +938,33 @@
 				.catch(chunkFailed);
 	});
 
+	// The table of all verbindingen, the filter sheet and a reader beside the article come
+	// when first asked for; the reader of the focus as soon as its collection is known, beside
+	// the bron's first request (lezers in chunks of their own, $lib/components/explore/readers).
+	const connectionsTable = new Lazy(
+		() => import('$lib/verbonden/VerbondenTabel.svelte'),
+		'Verkenner onderdeel'
+	);
+	const filterSheet = new Lazy(
+		() => import('$lib/verbonden/FilterSheet.svelte'),
+		'Verkenner onderdeel'
+	);
+	$effect(() => {
+		if (tableMode) connectionsTable.load();
+	});
+	$effect(() => {
+		if (filterOpen) filterSheet.load();
+	});
+	$effect(() => {
+		if (besideJudgmentNode) judgmentReader.load();
+		else if (beside) documentReader.load();
+	});
+	$effect(() => {
+		const target = parseNodeId(focus);
+		const collection = target?.collection ?? (pad ? collectionOfPad(pad) : null);
+		if (collection && mode !== 'index') preloadReader(collection);
+	});
+
 	const setOverlay = (o: Overlay) => setUrl({ overlay: overlayParam(o) });
 	const toggleHeat = () =>
 		setOverlay(
@@ -1078,6 +1108,11 @@
 	{#if nietGevonden}<meta name="robots" content="noindex" />{/if}
 </svelte:head>
 
+<!-- A part whose chunk did not come (a deploy removed it): said in its place. -->
+{#snippet chunkMissing(error: unknown)}
+	<LoadState state={{ status: 'error', error }} what="Dit onderdeel" form="block" />
+{/snippet}
+
 {#snippet reader()}
 	{#if wachtOp}
 		<ReaderFrame state={{ status: 'loading' }} />
@@ -1107,10 +1142,14 @@
 							aria-label="Sluiten">×</a
 						>
 						{#if besideJudgmentNode}
-							<JudgmentReader node={besideJudgmentNode} />
-						{:else}
+							{#if judgmentReader.component}
+								{@const JudgmentReader = judgmentReader.component}
+								<JudgmentReader node={besideJudgmentNode} />
+							{:else if judgmentReader.error}{@render chunkMissing(judgmentReader.error)}{/if}
+						{:else if documentReader.component}
+							{@const DocumentReader = documentReader.component}
 							<DocumentReader node={beside} article={besideArticle} />
-						{/if}
+						{:else if documentReader.error}{@render chunkMissing(documentReader.error)}{/if}
 					</div>
 				{/if}
 			</div>
@@ -1358,15 +1397,23 @@
 			</div>
 		{:else if selectedNode && tableMode}
 			<div class="explore-table">
-				<VerbondenTabel
-					onRetry={() => source.reload()}
-					{verbonden}
-					selection={selectedNode}
-					{filter}
-					onOpenFilter={() => (filterOpen = true)}
-					onRow={openRowCard}
-					backHref={readHref}
-				/>
+				{#if connectionsTable.component}
+					{@const VerbondenTabel = connectionsTable.component}
+					<VerbondenTabel
+						onRetry={() => source.reload()}
+						{verbonden}
+						selection={selectedNode}
+						{filter}
+						onOpenFilter={() => (filterOpen = true)}
+						onRow={openRowCard}
+						backHref={readHref}
+					/>
+				{:else if connectionsTable.error}{@render chunkMissing(connectionsTable.error)}{:else}<p
+						class="explore-empty stil"
+						role="status"
+					>
+						Laden…
+					</p>{/if}
 				{#if card}
 					<div class="explore-table__card">
 						<VerbindingCard
@@ -1433,7 +1480,8 @@
 	</div>
 </div>
 
-{#if selectedNode}
+{#if selectedNode && filterSheet.component}
+	{@const FilterSheet = filterSheet.component}
 	<FilterSheet
 		open={filterOpen}
 		{filter}

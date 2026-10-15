@@ -33,8 +33,8 @@
 	} from './judgment-text';
 	import { sourceName } from '../law-head';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
-	import { getNodeGraph, neighborsOf } from '$lib/api/nodes';
-	import { once } from '$lib/api/records';
+	import { neighborsOf } from '$lib/api/nodes';
+	import { getRelatedCases } from '$lib/api/records';
 	import { paragraphNumber } from '$lib/text/anchor';
 	import { korteDatum, langeDatum } from '$lib/text/datum';
 	import { samenhangVan, type Samenhang } from './related-cases';
@@ -103,7 +103,7 @@
 		if (related.length === 0) return;
 		let stale = false;
 		samenhang = samenhangVan([], related);
-		once(`nodes/judgments/${j.key}`, () => getNodeGraph('judgments', j.key, { limit: 50 }))
+		getRelatedCases(j.key)
 			.then((response) => {
 				if (!stale) samenhang = samenhangVan(neighborsOf(response), related);
 			})
