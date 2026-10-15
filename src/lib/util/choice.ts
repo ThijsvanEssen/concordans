@@ -4,7 +4,7 @@
 import type { Schema } from '$lib/api/types';
 
 /** A choice from the URL: one of `allowed`, else none. */
-export const keuzeUit = <T extends string>(
+export const choiceOf = <T extends string>(
 	value: string | null | undefined,
 	allowed: readonly T[]
 ): T | undefined => allowed.find((a) => a === value);
@@ -13,7 +13,7 @@ export const keuzeUit = <T extends string>(
  * The options of a facet whose values the API names (`soort`, `ministry`): those it counts,
  * and the chosen one always, with 0 where the API counts none of it.
  */
-export function facetOpties(
+export function facetOptions(
 	counts: ReadonlyMap<string, number>,
 	gekozen: string | null | undefined
 ): [string, number][] {

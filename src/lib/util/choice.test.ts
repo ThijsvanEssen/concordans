@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import openapi from '$lib/api/openapi.json';
-import { MINISTRY_KEYS, facetOpties, keuzeUit } from './keuze';
+import { MINISTRY_KEYS, facetOptions, choiceOf } from './choice';
 
 describe('a choice filter from the URL', () => {
 	it('keeps a known value and ignores an unknown one', () => {
-		expect(keuzeUit('open', ['open', 'closed'] as const)).toBe('open');
-		expect(keuzeUit('Open', ['open', 'closed'] as const)).toBeUndefined();
-		expect(keuzeUit(null, ['open'] as const)).toBeUndefined();
-		expect(keuzeUit('fin', MINISTRY_KEYS)).toBe('fin');
-		expect(keuzeUit('financien', MINISTRY_KEYS)).toBeUndefined();
+		expect(choiceOf('open', ['open', 'closed'] as const)).toBe('open');
+		expect(choiceOf('Open', ['open', 'closed'] as const)).toBeUndefined();
+		expect(choiceOf(null, ['open'] as const)).toBeUndefined();
+		expect(choiceOf('fin', MINISTRY_KEYS)).toBe('fin');
+		expect(choiceOf('financien', MINISTRY_KEYS)).toBeUndefined();
 	});
 
 	it('knows the ministries the schema knows', () => {
@@ -26,15 +26,15 @@ describe('the options of a facet', () => {
 	]);
 
 	it('lists what is counted, without the empty and without none', () => {
-		expect(facetOpties(counts, null)).toEqual([['Motie', 12]]);
+		expect(facetOptions(counts, null)).toEqual([['Motie', 12]]);
 	});
 
 	it('keeps the chosen value in sight, also at 0 or unknown to the API', () => {
-		expect(facetOpties(counts, 'Amendement')).toEqual([
+		expect(facetOptions(counts, 'Amendement')).toEqual([
 			['Motie', 12],
 			['Amendement', 0]
 		]);
-		expect(facetOpties(counts, 'motie')).toEqual([
+		expect(facetOptions(counts, 'motie')).toEqual([
 			['Motie', 12],
 			['motie', 0]
 		]);
