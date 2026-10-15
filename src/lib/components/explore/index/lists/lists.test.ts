@@ -155,15 +155,17 @@ describe('the request of a list', () => {
 
 	it('asks the stemmingen with one q and the outcome as a boolean', () => {
 		expect(query('decisions')).toEqual({ chamber: 'TK', limit: 200 });
-		expect(query('decisions', 'q=huur&passed=false&soort=Motie&dossier=36600&fractie=VVD')).toEqual({
-			chamber: 'TK',
-			kind: 'Motie',
-			passed: false,
-			q: ['huur'],
-			dossier: '36600',
-			party: 'VVD',
-			limit: 200
-		});
+		expect(query('decisions', 'q=huur&passed=false&soort=Motie&dossier=36600&fractie=VVD')).toEqual(
+			{
+				chamber: 'TK',
+				kind: 'Motie',
+				passed: false,
+				q: ['huur'],
+				dossier: '36600',
+				party: 'VVD',
+				limit: 200
+			}
+		);
 	});
 
 	it('asks the stukken of one Kamer, a number searched for as their dossier', () => {
@@ -202,12 +204,9 @@ describe('the request of a list', () => {
 describe('the filters of a list', () => {
 	it('names each filter in force, a default one not', () => {
 		expect(chips('dossiers', '')).toEqual([]);
-		expect(chips('dossiers', 'stand=closed&track=Wetgeving&phase=Eindtekst&ministerie=bzk')).toEqual([
-			'Afgehandeld',
-			'Wetgeving',
-			'Eindtekst',
-			'bzk'
-		]);
+		expect(
+			chips('dossiers', 'stand=closed&track=Wetgeving&phase=Eindtekst&ministerie=bzk')
+		).toEqual(['Afgehandeld', 'Wetgeving', 'Eindtekst', 'bzk']);
 		expect(chips('decisions', 'passed=true&soort=Motie&dossier=36600')).toEqual([
 			'Motie',
 			'Aangenomen',
