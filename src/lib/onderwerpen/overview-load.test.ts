@@ -12,11 +12,13 @@ import {
 } from './overview-load';
 
 vi.mock('$lib/components/parliamentary/amendementen', () => ({
-	getAmendementen: async (key: string) => ({
+	getAmendementen: async (number: string) => ({
 		rijen: [
 			{
-				stuk: { id: `documents/${key}-am`, nummer: '8', titel: `Amendement ${key}` },
-				haltes: [{ id: `documents/${key}-p`, datum: key === 'a' ? '2026-01-02' : '2026-03-04' }],
+				stuk: { id: `documents/${number}-am`, nummer: '8', titel: `Amendement ${number}` },
+				haltes: [
+					{ id: `documents/${number}-p`, datum: number === 'a' ? '2026-01-02' : '2026-03-04' }
+				],
 				uitslag: null,
 				nogNiet: true
 			}

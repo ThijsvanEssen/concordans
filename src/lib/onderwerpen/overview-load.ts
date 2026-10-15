@@ -243,7 +243,7 @@ export const dossiersOf = (papers: readonly FeedItem[]) => [
 
 /**
  * An amendment once per chain: the timetable of each dossier holding one of the papers
- * (getAmendementen: one neighbourhood, cached), its chains that hold such a paper. Two dossiers
+ * (getAmendementen: its amendments, asked once), its chains that hold such a paper. Two dossiers
  * at a time, DOSSIERS_MAX at most; `onFound` has every chain found so far, the newest first.
  */
 export async function followChains(
@@ -255,7 +255,7 @@ export async function followChains(
 	const found = new Map<string, Amendement>();
 	await twoAtATime(dossiersOf(papers).slice(0, DOSSIERS_MAX), async (d) => {
 		signal.throwIfAborted();
-		const timetable = await getAmendementen(d.key);
+		const timetable = d.number ? await getAmendementen(d.number) : null;
 		signal.throwIfAborted();
 		for (const a of amendementKetens(timetable?.rijen ?? [], ids, d.number))
 			if (!found.has(a.id)) found.set(a.id, a);

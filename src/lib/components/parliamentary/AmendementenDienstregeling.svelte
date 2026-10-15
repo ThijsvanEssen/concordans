@@ -24,7 +24,7 @@
 		type Rij
 	} from './amendementen';
 
-	let { dossierKey }: { dossierKey: string } = $props();
+	let { dossierNumber }: { dossierNumber: string } = $props();
 
 	let regeling = $state<Dienstregeling | null>(null);
 	let fout = $state(false);
@@ -32,11 +32,11 @@
 
 	$effect(() => {
 		if (!zichtbaar) return;
-		const key = dossierKey;
+		const number = dossierNumber;
 		let weg = false;
 		regeling = null;
 		fout = false;
-		getAmendementen(key)
+		getAmendementen(number)
 			.then((r) => {
 				if (!weg) regeling = r;
 			})
