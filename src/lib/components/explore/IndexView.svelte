@@ -44,9 +44,9 @@
 	} from './index/categories';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { formatCount } from '$lib/text/getal';
-	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
+	import { navigate, withParams } from '$lib/util/address';
 	import { LISTS } from './index/lists';
-	import { FILTER_PARAMS, readParams } from './index/lists/params';
+	import { FILTER_PARAMS, readParams, type IndexPatch } from './index/lists/params';
 	import {
 		PAGE,
 		forParams,
@@ -65,11 +65,11 @@
 	const kamer = $derived(p.kamer);
 
 	/** A filter is a step in the history; the search text and the open row replace it. */
-	const patchUrl = (patch: ParamPatch, replaceState = false) =>
+	const patchUrl = (patch: IndexPatch, replaceState = false) =>
 		navigate(withParams(page.url, patch), { step: !replaceState });
 
 	// A tab drops the filters and the open row, so a stage filter of dossiers does not leak into decisions.
-	const tabHref = (k: IndexCategory, filters: ParamPatch = {}) =>
+	const tabHref = (k: IndexCategory, filters: IndexPatch = {}) =>
 		withParams(
 			page.url,
 			{ mode: 'index', kind: k, ...filters },
@@ -402,7 +402,7 @@
 					unit: period.unit,
 					from: p.from,
 					to: p.to,
-					onChange: (from, to) => patchUrl({ from: from || null, to: to || null })
+					onChange: (from, to) => patchUrl({ van: from || null, tot: to || null })
 				} satisfies FacetGroup)
 			: null;
 	});
@@ -479,7 +479,7 @@
 	// two, and no chip above the list.
 	/** Another Kamer: its own list, without the filters that belonged to the other. */
 	const kiesKamer = (c: Chamber) =>
-		patchUrl({ kamer: c === 'TK' ? null : c, open: null, party: null });
+		patchUrl({ kamer: c === 'TK' ? null : c, open: null, fractie: null });
 	const widen = $derived(list.widen?.(p) ?? null);
 	const after = $derived(list.after?.(p) ?? null);
 

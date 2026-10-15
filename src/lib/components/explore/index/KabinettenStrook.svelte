@@ -158,7 +158,7 @@
 					links={[
 						{
 							label: `${gekozen.members} bewindspersonen`,
-							href: indexHref('ministers', { cabinet: gekozen.key })
+							href: indexHref('ministers', { kabinet: gekozen.key })
 						}
 					]}
 					lezen={bronHref(`cabinets/${gekozen.key}`, { keepMode: false, mode: 'read' })}

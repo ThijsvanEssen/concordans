@@ -122,7 +122,7 @@
 
 			{#if c.member}
 				<p class="alle">
-					<TekstLink href={indexHref('commitments', { member: c.member.key })}
+					<TekstLink href={indexHref('commitments', { persoon: c.member.key })}
 						>Alle toezeggingen van {c.member.name}</TekstLink
 					>
 				</p>

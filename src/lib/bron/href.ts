@@ -5,6 +5,7 @@
 import { page } from '$app/state';
 import { parseNodeId, type Collection, type Mode } from '$lib/vocabulary';
 import { isVerkenner, verkennerHref, verkennerUrl } from './leesbaar';
+import type { SharedParam } from '$lib/url/filters';
 
 /** Bronnen with a text long enough to read at full width; the rest reads beside the network. */
 const READABLE: ReadonlySet<Collection> = new Set([
@@ -51,7 +52,7 @@ type BronHrefOptions = {
 /**
  * View state that belongs to the view, not to the bron, and travels along: the
  * overlay, the bronfilter, the depth of the network and the netwerk of chosen
- * bronnen. What names a place in one bron (`lid`, `jaar`, `zoek`, `tabel`) stays behind.
+ * bronnen. What names a place in one bron (`lid`, `jaar`, `q`, `tabel`) stays behind.
  */
 const KEPT_PARAMS = [
 	'overlay',
@@ -69,6 +70,9 @@ const KEPT_PARAMS = [
 ];
 
 const NETWERK_PARAMS = new Set(['netwerk', 'uit', 'tussen']);
+
+/** The kept params that Bronnen names a filter of its own by (its period): left there. */
+const BRONNEN_PARAMS = new Set(['van', 'tot', 'status']);
 
 export const refId = (ref: BronRef) => `${ref.collection}/${ref.key}`;
 
@@ -110,6 +114,7 @@ export function buildBronHref(
 	if (inExplore && current) {
 		for (const name of KEPT_PARAMS) {
 			if (!keepNetwerk && NETWERK_PARAMS.has(name)) continue;
+			if (currentMode === 'index' && BRONNEN_PARAMS.has(name)) continue;
 			const value = current.searchParams.get(name);
 			if (value) params.set(name, value);
 		}
@@ -158,8 +163,11 @@ export const bronHref = (ref: BronRef | string, opts?: BronHrefOptions) =>
 export const openHref = (ref: BronRef | string, opts?: OpenHrefOptions) =>
 	buildOpenHref(page.url, ref, opts);
 
-/** A list in Bladeren, with its filters: `/explore?mode=index&kind=ministers&cabinet=rutte_iv`. */
-export function indexHref(kind: string, filters: Record<string, string> = {}): string {
+/** A list in Bladeren, with its filters: `/explore?mode=index&kind=ministers&kabinet=rutte_iv`. */
+export function indexHref(
+	kind: string,
+	filters: { [K in SharedParam | 'status']?: string } = {}
+): string {
 	const params = new URLSearchParams({ mode: 'index', kind, ...filters });
 	return `/explore?${params.toString()}`;
 }

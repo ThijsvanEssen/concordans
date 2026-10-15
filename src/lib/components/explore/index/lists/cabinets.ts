@@ -67,7 +67,7 @@ export const cabinets = defineList<Cabinet, object, null>({
 					count: n,
 					swatch: partyColor(x),
 					on: p.coalition === x,
-					onClick: toggle(patch, 'coalition', p.coalition, x)
+					onClick: toggle(patch, 'coalitie', p.coalition, x)
 				}))
 			}
 		];

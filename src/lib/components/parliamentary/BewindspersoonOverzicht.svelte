@@ -47,7 +47,7 @@
 
 	const statusCounts = $derived(commitments?.facets?.status ?? []);
 	const href = (status?: string) =>
-		indexHref('commitments', { member: memberKey, ...(status ? { status } : {}) });
+		indexHref('commitments', { persoon: memberKey, ...(status ? { status } : {}) });
 	const lower = (s: string) => s.toLowerCase();
 </script>
 

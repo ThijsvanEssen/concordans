@@ -46,7 +46,7 @@ function facets({ p, page, shared, patch }: ListContext<MinisterRow, object>): F
 				value: p.cabinet,
 				all: inFunctie,
 				options: earlier,
-				onChange: (v) => patch({ cabinet: v || null, open: null })
+				onChange: (v) => patch({ kabinet: v || null, open: null })
 			}
 		];
 	const postCounts = countBy(page?.items, (m) => m.post ?? '');
@@ -59,7 +59,7 @@ function facets({ p, page, shared, patch }: ListContext<MinisterRow, object>): F
 			value: p.cabinet,
 			all: inFunctie,
 			options: earlier,
-			onChange: (v) => patch({ cabinet: v || null, post: null })
+			onChange: (v) => patch({ kabinet: v || null, post: null })
 		},
 		{
 			id: 'post',

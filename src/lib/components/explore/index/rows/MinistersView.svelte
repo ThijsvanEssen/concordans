@@ -44,7 +44,7 @@
 		};
 	});
 	const commitmentsHref = (key: string) =>
-		ctx.tabHref('commitments', { member: key, status: OPEN_STATUS });
+		ctx.tabHref('commitments', { persoon: key, status: OPEN_STATUS });
 </script>
 
 {#if p.sideBySide}

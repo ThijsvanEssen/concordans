@@ -123,7 +123,7 @@
 	links={[
 		{
 			label: tz ? `${tz.total} toezeggingen, ${tz.open} openstaand` : 'Toezeggingen',
-			href: toezeggingenHref ?? indexHref('commitments', { member: memberKey })
+			href: toezeggingenHref ?? indexHref('commitments', { persoon: memberKey })
 		},
 		...(record ? [{ label: `${record.signed} stukken ondertekend` }] : []),
 		...(geteld

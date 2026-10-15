@@ -16,6 +16,7 @@
 	import { siteTitle } from '$lib/seo/kop.svelte';
 	import { page } from '$app/state';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
+	import { PARAM } from '$lib/url/filters';
 	import { load } from '$lib/util/load.svelte';
 	import { getFeed } from '$lib/api/feed';
 	import { isAborted, report } from '$lib/api/errors';
@@ -109,12 +110,12 @@
 	// everything again.
 	const termenSleutel = $derived((uitParams(params)[0] ?? []).join('|'));
 	const termen = $derived(termenSleutel ? termenSleutel.split('|') : []);
-	const kamer: Chamber | '' = $derived(chamberFromParam(params.get('kamer')) ?? '');
+	const kamer: Chamber | '' = $derived(chamberFromParam(params.get(PARAM.chamber)) ?? '');
 	// The period, as everywhere (Periode.svelte): days in the URL and to the API.
 	const dag = (v: string | null) => (isDay(v) ? v : '');
-	const van = $derived(dag(params.get('van')));
-	const tot = $derived(dag(params.get('tot')));
-	const fractie = $derived(params.get('fractie') ?? '');
+	const van = $derived(dag(params.get(PARAM.since)));
+	const tot = $derived(dag(params.get(PARAM.until)));
+	const fractie = $derived(params.get(PARAM.party) ?? '');
 	/** The chosen number (`cel=moties:2026-10`, `cel=voor:2025`, `cel=brieven`). */
 	const keuze = $derived(leesKeuze(params.get('cel')));
 	/** A strekking chosen: every number counts only the moties so read. */
@@ -122,9 +123,9 @@
 	const week = $derived(params.get('per') === 'week');
 	/** The filters of an older address, read for its list (soort, uitkomst, jaar, stem). */
 	const f = $derived<Filter>({
-		soort: params.get('soort') || undefined,
+		soort: params.get(PARAM.kind) || undefined,
 		uitkomst: (['aangenomen', 'verworpen', 'overig'] as const).find(
-			(u) => u === params.get('uitkomst')
+			(u) => u === params.get(PARAM.outcome)
 		),
 		jaar: params.get('jaar') || undefined,
 		stem: (['voor', 'tegen'] as const).find((s) => s === params.get('stem'))
@@ -133,7 +134,7 @@
 	const topic = $derived<Topic>({ words: termen, chamber: kamer, from: van, to: tot });
 	const asked = $derived(termen.length > 0);
 
-	const FILTERS = ['soort', 'uitkomst', 'jaar', 'stem', 'cel'];
+	const FILTERS = [PARAM.kind, PARAM.outcome, 'jaar', 'stem', 'cel'];
 	const hrefMet = (patch: ParamPatch, alleen = false) =>
 		withParams(page.url, patch, { clear: alleen ? FILTERS : [] });
 	/** Every patch here is a filter: a step in the history (a filter is a step, typing is not). */

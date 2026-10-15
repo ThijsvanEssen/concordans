@@ -10,6 +10,7 @@ import { alsDag } from '$lib/text/periode';
 import { isExplanatory } from './chamber';
 import type { Row } from './rows';
 import { isAmendingRelation } from '$lib/vocabulary';
+import { PARAM } from '$lib/url/filters';
 
 /** The confidence from which a verbinding's betrouwbaarheid is hoog: a citation read whole has 0.95. */
 export const HIGH_CONFIDENCE = 0.9;
@@ -148,14 +149,14 @@ export function parseFilter(params: URLSearchParams): VerbondenFilter {
 		bronnen: kinds.length > 0 ? new Set(kinds) : null,
 		lid: params.get('lid') || null,
 		rechter: isRechter(rechter) ? rechter : null,
-		van: alsDag(params.get('van')),
-		tot: alsDag(params.get('tot')),
+		van: alsDag(params.get(PARAM.since)),
+		tot: alsDag(params.get(PARAM.until)),
 		geldendOp: isDay(geldendOp) ? geldendOp : null,
 		betrouwbaarheid:
 			betrouwbaarheid === 'bron' || betrouwbaarheid === 'afgeleid' ? betrouwbaarheid : null,
 		status: status === 'vastgesteld' || status === 'voorgesteld' ? status : null,
 		jaar: year(params.get('jaar')),
-		zoek: params.get('zoek') ?? ''
+		zoek: params.get(PARAM.q) ?? ''
 	};
 }
 
@@ -165,13 +166,13 @@ export function filterParams(f: VerbondenFilter): Record<string, string | null> 
 		bronnen: f.bronnen ? BRON_KINDS.filter((k) => f.bronnen!.has(k)).join(',') : null,
 		lid: f.lid,
 		rechter: f.rechter,
-		van: f.van,
-		tot: f.tot,
+		[PARAM.since]: f.van,
+		[PARAM.until]: f.tot,
 		geldend: f.geldendOp,
 		betrouwbaarheid: f.betrouwbaarheid,
 		status: f.status,
 		jaar: f.jaar ? String(f.jaar) : null,
-		zoek: f.zoek || null
+		[PARAM.q]: f.zoek || null
 	};
 }
 

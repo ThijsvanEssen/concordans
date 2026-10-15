@@ -123,44 +123,44 @@ async function open(category: IndexCategory, query = '', routes = ROUTES) {
 const SCENARIOS: [IndexCategory, string][] = [
 	['instruments', ''],
 	['instruments', 'q=huur&sort=article_count&legal_area=bouwen-en-wonen&policy_domain=x'],
-	['instruments', 'soort=verdrag&jurisdiction=eu&leeg=1&from=2020-01-01&to=2024-12-31'],
+	['instruments', 'soort=verdrag&jurisdiction=eu&leeg=1&van=2020-01-01&tot=2024-12-31'],
 	['judgments', ''],
 	[
 		'judgments',
-		'q=huur&tier=rechtbank&court_kind=rechtbank&subject_area=Civiel+recht&procedure=Hoger+beroep&from=2020-01-01&to=2020-12-31&sort=date_asc'
+		'q=huur&tier=rechtbank&court_kind=rechtbank&subject_area=Civiel+recht&procedure=Hoger+beroep&van=2020-01-01&tot=2020-12-31&sort=date_asc'
 	],
 	['judgments', 'source=echr&subject=Huurrecht&sort=citation_count'],
 	['dossiers', ''],
 	['dossiers', 'q=36600'],
 	[
 		'dossiers',
-		'stand=closed&outcome=aangenomen&phase=Eerste+Kamer,Tweede+Kamer&has_phase=Raad+van+State&track=Wetsvoorstel&ministry=bzk&from=2020-01-01&sort=number'
+		'stand=closed&uitkomst=aangenomen&phase=Eerste+Kamer,Tweede+Kamer&has_phase=Raad+van+State&track=Wetsvoorstel&ministerie=bzk&van=2020-01-01&sort=number'
 	],
 	['dossiers', 'stand=all&sort=last_activity'],
 	['committees', ''],
 	['committees', 'only_active=1&q=wonen&sort=name&dir=desc'],
 	['committees', 'kamer=EK'],
 	['members', ''],
-	['members', 'include_inactive=1&party=VVD&q=kops&sort=party'],
-	['members', 'kamer=EK&from=2020-01-01'],
+	['members', 'include_inactive=1&fractie=VVD&q=kops&sort=party'],
+	['members', 'kamer=EK&van=2020-01-01'],
 	['factions', ''],
 	['factions', 'include_inactive=1&q=pvv&sort=abbreviation&dir=desc'],
 	['factions', 'kamer=EK'],
 	['decisions', ''],
-	['decisions', 'soort=Motie&passed=false&dossier=36600&party=VVD&q=huur&from=2026-01-01'],
+	['decisions', 'soort=Motie&passed=false&dossier=36600&fractie=VVD&q=huur&van=2026-01-01'],
 	['decisions', 'kamer=EK&sort=subject'],
 	['cabinets', ''],
-	['cabinets', 'coalition=VVD&from=2010-01-01&q=rutte&sort=name'],
+	['cabinets', 'coalitie=VVD&van=2010-01-01&q=rutte&sort=name'],
 	['ministers', ''],
-	['ministers', 'cabinet=jetten&post=minister&q=a&from=2026-01-01'],
+	['ministers', 'kabinet=jetten&post=minister&q=a&van=2026-01-01'],
 	['ministers', 'weergave=naast'],
 	['commitments', ''],
 	[
 		'commitments',
-		'status=Openstaand&overdue=1&cabinet=jetten&ministry=bzk&member=x&q=brief&from=2026-01-01&sort=expected_resolution'
+		'status=Openstaand&overdue=1&kabinet=jetten&ministerie=bzk&persoon=x&q=brief&van=2026-01-01&sort=expected_resolution'
 	],
 	['documents', ''],
-	['documents', 'kamer=EK&soort=Motie&q=36600&from=2026-01-01&to=2026-06-30']
+	['documents', 'kamer=EK&soort=Motie&q=36600&van=2026-01-01&tot=2026-06-30']
 ];
 
 describe('Bronnen, list by list', () => {
@@ -252,7 +252,7 @@ describe('Bronnen, the address', () => {
 	});
 
 	it('switches the Kamer as a choice, dropping the fractie and the open row', async () => {
-		await open('members', 'party=VVD&open=members/x&q=a');
+		await open('members', 'fractie=VVD&open=members/x&q=a');
 		const kamer = screen.getByRole('group', { name: 'Kamer' });
 		await fireEvent.click(within(kamer).getByRole('button', { name: /Eerste/ }));
 		expect(page.url.search).toMatchSnapshot();

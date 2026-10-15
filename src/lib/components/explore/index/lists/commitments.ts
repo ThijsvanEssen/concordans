@@ -84,7 +84,7 @@ export const commitments = defineList<Row, State, ReturnType<typeof query>>({
 				options: shared.cabinets
 					.filter((c) => c.commitments > 0 || c.key === p.cabinet)
 					.map((c) => ({ value: c.key, label: c.name, count: c.commitments })),
-				onChange: (v) => patch({ cabinet: v || null })
+				onChange: (v) => patch({ kabinet: v || null })
 			},
 			{
 				id: 'ministry',
@@ -95,7 +95,7 @@ export const commitments = defineList<Row, State, ReturnType<typeof query>>({
 				options: shared.ministries
 					.filter((m) => !m.until || m.key === p.ministry)
 					.map((m) => ({ value: m.key, label: m.name })),
-				onChange: (v) => patch({ ministry: v || null })
+				onChange: (v) => patch({ ministerie: v || null })
 			},
 			...(p.member
 				? [
@@ -110,7 +110,7 @@ export const commitments = defineList<Row, State, ReturnType<typeof query>>({
 										page?.items.find((c) => c.member?.key === p.member)?.member?.name ??
 										'Gekozen bewindspersoon',
 									on: true,
-									onClick: () => patch({ member: null })
+									onClick: () => patch({ persoon: null })
 								}
 							]
 						}

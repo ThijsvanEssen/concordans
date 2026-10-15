@@ -74,7 +74,7 @@ export const dossiers = defineList<Row, State, ReturnType<typeof query>>({
 		const kinds = facetOptions(kindCounts, p.track).map(([k]) => k);
 		const withoutKind = kindCounts.get('null') ?? 0;
 		const scope = (v: 'open' | 'closed' | 'all') => () =>
-			patch({ stand: v === 'open' ? null : v, outcome: null });
+			patch({ stand: v === 'open' ? null : v, uitkomst: null });
 		const { dossierScope, outcome } = p;
 		return [
 			{
@@ -104,7 +104,7 @@ export const dossiers = defineList<Row, State, ReturnType<typeof query>>({
 						indent: true,
 						on: outcome === o,
 						onClick: () =>
-							patch(outcome === o ? { outcome: null } : { outcome: o, stand: 'closed' })
+							patch(outcome === o ? { uitkomst: null } : { uitkomst: o, stand: 'closed' })
 					})),
 					{
 						id: 'all',
@@ -146,7 +146,7 @@ export const dossiers = defineList<Row, State, ReturnType<typeof query>>({
 						const next = p.phases.includes(ph)
 							? p.phases.filter((x) => x !== ph)
 							: [...p.phases, ph];
-						patch({ phase: next.length ? next.join(',') : null, stage: null });
+						patch({ phase: next.length ? next.join(',') : null });
 					}
 				}))
 			},
@@ -161,7 +161,7 @@ export const dossiers = defineList<Row, State, ReturnType<typeof query>>({
 						label: ministryName(m),
 						count: n,
 						on: p.ministry === m,
-						onClick: toggle(patch, 'ministry', p.ministry, m)
+						onClick: toggle(patch, 'ministerie', p.ministry, m)
 					}))
 			}
 		];
