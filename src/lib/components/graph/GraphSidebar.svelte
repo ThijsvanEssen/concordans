@@ -7,20 +7,20 @@
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
-	import { HEAT_PERIODS, type Overlay } from '$lib/netwerk/overlay';
+	import { HEAT_PERIODS, type Overlay } from '$lib/selection/overlay';
 	import type { Collection, Relation } from '$lib/vocabulary';
 	import {
-		BRON_KINDS,
-		BRON_KIND_LABEL,
+		FILTER_GROUPS,
+		FILTER_GROUP_LABEL,
 		PRESETS,
 		activePreset,
-		toggleKind,
+		toggleFilterGroup,
 		withPreset,
-		type BronKind,
+		type FilterGroup,
 		type VerbondenFilter
 	} from '$lib/verbonden/filter';
-	import type { VerbondenState } from '$lib/verbonden/source';
-	import { allRows, kindTotals, lidCounts, relationCounts } from '$lib/verbonden/view';
+	import type { VerbondenState } from '$lib/verbonden/data-source';
+	import { allRows, groupTotals, lidCounts, relationCounts } from '$lib/verbonden/view';
 	import {
 		edgeColorFor,
 		edgeStyleFor,
@@ -31,12 +31,12 @@
 		PIJL_BREED
 	} from './nodeSprites';
 	import { EDGE_WEIGHT } from '$lib/graph/types';
-	import { kindOfCollection } from '$lib/graph/types';
+	import { drawClassOf } from '$lib/graph/types';
 	import { GROUP_LABEL, inLegend } from '$lib/graph/collection-role';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { BRON_LABEL, isCollection } from '$lib/vocabulary';
 	import { formatCount } from '$lib/text/getal';
-	import { BRON_KIND_VORM } from '$lib/bron/vormen';
+	import { FILTER_GROUP_VORM } from '$lib/bron/vormen';
 	import type { ContainerKind } from '$lib/graph/container-membership';
 	import { NEIGHBORHOOD_CAP, type NeighborhoodReach } from '$lib/graph/store/types';
 
@@ -86,9 +86,9 @@
 		hiddenGroups?: ReadonlySet<ContainerKind>;
 		onToggleGroup?: (kind: ContainerKind) => void;
 		canvasCounts: {
-			kinds?: Partial<Record<BronKind, number>>;
+			kinds?: Partial<Record<FilterGroup, number>>;
 			metGroep?: Partial<
-				Record<BronKind, { count: number; van: number; groepen: ContainerKind[] }>
+				Record<FilterGroup, { count: number; van: number; groepen: ContainerKind[] }>
 			>;
 		};
 		overlay?: Overlay;
@@ -106,7 +106,7 @@
 	// With nothing selected, the kinds count what is on the canvas; with a selection, its
 	// verbindingen. While those load the counts say so ("…"), not a column of zeros.
 	const fromCanvas = $derived(!selectionCollection);
-	const totals = $derived(fromCanvas ? (canvasCounts.kinds ?? {}) : kindTotals(verbonden.groups));
+	const totals = $derived(fromCanvas ? (canvasCounts.kinds ?? {}) : groupTotals(verbonden.groups));
 	const counting = $derived(!fromCanvas && verbonden.loading && verbonden.groups.length === 0);
 
 	// Diepte: the steps that add nothing, as the API cut the neighbourhood off at its cap.
@@ -142,13 +142,13 @@
 	// On the canvas a wet, dossier, fractie or commissie is a hull, never a bron: the kinds
 	// are named by what does stand there (Thijs). Verbonden lists the wetten, dossiers and
 	// fracties themselves, and keeps their names; the switch is the same.
-	const OP_HET_NETWERK: Partial<Record<BronKind, { label: string; elders: string }>> = {
+	const OP_HET_NETWERK: Partial<Record<FilterGroup, { label: string; elders: string }>> = {
 		wetten: { label: 'Publicaties', elders: 'Wetten' },
 		dossiers: { label: 'Overige stukken', elders: 'Dossiers' },
 		leden: { label: 'Leden', elders: 'Leden en fracties' }
 	};
-	const kindLabel = (k: BronKind) => OP_HET_NETWERK[k]?.label ?? BRON_KIND_LABEL[k];
-	const kindTitle = (k: BronKind) => {
+	const kindLabel = (k: FilterGroup) => OP_HET_NETWERK[k]?.label ?? FILTER_GROUP_LABEL[k];
+	const kindTitle = (k: FilterGroup) => {
 		const n = OP_HET_NETWERK[k];
 		return n ? `${n.label} (in Verbonden: ${n.elders})` : undefined;
 	};
@@ -158,11 +158,12 @@
 			.filter((k) => k !== '')
 			.sort((a, b) => a.localeCompare(b, 'nl', { numeric: true }))
 	);
-	const isOn = (k: (typeof BRON_KINDS)[number]) => filter.bronnen === null || filter.bronnen.has(k);
+	const isOn = (k: (typeof FILTER_GROUPS)[number]) =>
+		filter.bronnen === null || filter.bronnen.has(k);
 
 	// A kind whose bronnen all went with a grouping switched off stays, greyed: a click
 	// switches that grouping on again (Thijs, 9 Oct). Partly hidden, the row is as ever.
-	const metGroepUit = (k: BronKind): ContainerKind[] | null => {
+	const metGroepUit = (k: FilterGroup): ContainerKind[] | null => {
 		const m = canvasCounts.metGroep?.[k];
 		return m && isOn(k) && m.count > 0 && m.count >= m.van ? m.groepen : null;
 	};
@@ -172,7 +173,7 @@
 
 	// The line sample of a relation, in the colour of the edge from this bron.
 	const sourceKind = (relation: Relation) =>
-		kindOfCollection(
+		drawClassOf(
 			// A citation of the selected bron comes from the other end.
 			relation === 'REFERS_TO' && selectionCollection === 'articles'
 				? 'judgments'
@@ -218,7 +219,7 @@
 				</TekstMenu>
 			</div>
 			<!-- Articles are switched with their wet, under Groepering (Thijs, 9 Oct). -->
-			{#each BRON_KINDS.filter((b) => b !== 'artikelen') as k (k)}
+			{#each FILTER_GROUPS.filter((b) => b !== 'artikelen') as k (k)}
 				{@const n = totals[k] ?? 0}
 				{@const groepen = metGroepUit(k)}
 				<FilterOptie
@@ -229,13 +230,15 @@
 					wrap
 					on={isOn(k)}
 					onToggle={() =>
-						groepen ? groepen.forEach((g) => onToggleGroup?.(g)) : onFilter(toggleKind(filter, k))}
+						groepen
+							? groepen.forEach((g) => onToggleGroup?.(g))
+							: onFilter(toggleFilterGroup(filter, k))}
 					count={counting ? null : n}
 					bezig={counting}
 					empty={!counting && n === 0}
 					gedimd={!!groepen}
 				>
-					{#snippet voor()}<KindGlyph vorm={BRON_KIND_VORM[k]} size={11} />{/snippet}
+					{#snippet voor()}<KindGlyph vorm={FILTER_GROUP_VORM[k]} size={11} />{/snippet}
 				</FilterOptie>
 			{/each}
 		</section>
@@ -292,7 +295,7 @@
 					bezig={kind === 'instrument' && counting}
 					onToggle={() =>
 						kind === 'instrument'
-							? onFilter(toggleKind(filter, 'artikelen'))
+							? onFilter(toggleFilterGroup(filter, 'artikelen'))
 							: onToggleGroup?.(kind)}
 				>
 					<!-- As on the canvas: the colour of the group and its own line. -->

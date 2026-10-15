@@ -84,7 +84,7 @@
 
 	// The line next to the kind: the context the source belongs to.
 	const cite = $derived.by(() => {
-		switch (node.kind) {
+		switch (node.drawClass) {
 			// The title already names court and date (bron/naam.ts); the ECLI identifies it.
 			case 'judgment':
 				return textOf(nodeProps?.['ecli']);
@@ -106,7 +106,7 @@
 
 	// Text the node already carries, so hovering costs no request.
 	const nodeText = $derived.by(() => {
-		switch (node.kind) {
+		switch (node.drawClass) {
 			case 'judgment':
 				return textOf(nodeProps?.['summary']);
 			case 'dossier':
@@ -122,7 +122,9 @@
 
 	// The text of an article is not on the node: it is asked, and an answer for a bron the
 	// pointer has left is dropped (the shared request goes on for the reader).
-	const identity = $derived(!node.stub && node.kind === 'article' ? articleOf(nodeProps) : null);
+	const identity = $derived(
+		!node.stub && node.drawClass === 'article' ? articleOf(nodeProps) : null
+	);
 	const article = load(
 		() => (identity ? `${identity.lawId}/${identity.articleNumber}` : null),
 		(_, signal) =>

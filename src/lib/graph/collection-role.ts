@@ -4,10 +4,10 @@
 // a focus, and its column in a netwerk's first layout (0 parliament, 1 law, 2 judgments).
 import { bronLabel, type Collection, type Relation } from '$lib/vocabulary';
 import type { ContainerKind } from './container-membership';
-import type { GraphNodeKind } from './types';
+import type { DrawClass } from './types';
 
 type Role = {
-	kind: GraphNodeKind;
+	drawClass: DrawClass;
 	hull: ContainerKind | null;
 	/**
 	 * Asked and drawn around a focus. A zaak is the procedure its stukken, activities and
@@ -20,22 +20,22 @@ type Role = {
 };
 
 export const COLLECTION_ROLE: Record<Collection, Role> = {
-	instruments: { kind: 'instrument', hull: 'instrument', neighbour: true, column: 1 },
-	instrument_versions: { kind: 'other', hull: null, neighbour: false, column: 1 },
-	articles: { kind: 'article', hull: null, neighbour: true, column: 1 },
-	article_versions: { kind: 'other', hull: null, neighbour: false, column: 1 },
-	annexes: { kind: 'other', hull: null, neighbour: true, column: 1 },
-	judgments: { kind: 'judgment', hull: null, neighbour: true, column: 2 },
-	dossiers: { kind: 'dossier', hull: 'dossier', neighbour: true, column: 0 },
-	cases: { kind: 'activity', hull: null, neighbour: false, column: 0 },
-	documents: { kind: 'document', hull: null, neighbour: true, column: 0 },
-	activities: { kind: 'activity', hull: null, neighbour: true, column: 0 },
-	decisions: { kind: 'activity', hull: null, neighbour: true, column: 0 },
-	commitments: { kind: 'activity', hull: null, neighbour: true, column: 0 },
-	members: { kind: 'member', hull: null, neighbour: true, column: 0 },
-	factions: { kind: 'faction', hull: 'faction', neighbour: true, column: 0 },
-	committees: { kind: 'committee', hull: 'committee', neighbour: true, column: 0 },
-	cabinets: { kind: 'committee', hull: 'committee', neighbour: true, column: 0 }
+	instruments: { drawClass: 'instrument', hull: 'instrument', neighbour: true, column: 1 },
+	instrument_versions: { drawClass: 'other', hull: null, neighbour: false, column: 1 },
+	articles: { drawClass: 'article', hull: null, neighbour: true, column: 1 },
+	article_versions: { drawClass: 'other', hull: null, neighbour: false, column: 1 },
+	annexes: { drawClass: 'other', hull: null, neighbour: true, column: 1 },
+	judgments: { drawClass: 'judgment', hull: null, neighbour: true, column: 2 },
+	dossiers: { drawClass: 'dossier', hull: 'dossier', neighbour: true, column: 0 },
+	cases: { drawClass: 'activity', hull: null, neighbour: false, column: 0 },
+	documents: { drawClass: 'document', hull: null, neighbour: true, column: 0 },
+	activities: { drawClass: 'activity', hull: null, neighbour: true, column: 0 },
+	decisions: { drawClass: 'activity', hull: null, neighbour: true, column: 0 },
+	commitments: { drawClass: 'activity', hull: null, neighbour: true, column: 0 },
+	members: { drawClass: 'member', hull: null, neighbour: true, column: 0 },
+	factions: { drawClass: 'faction', hull: 'faction', neighbour: true, column: 0 },
+	committees: { drawClass: 'committee', hull: 'committee', neighbour: true, column: 0 },
+	cabinets: { drawClass: 'committee', hull: 'committee', neighbour: true, column: 0 }
 };
 
 /** A hull by the name of the collection it stands for. */

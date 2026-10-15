@@ -5,14 +5,14 @@ import {
 	activePreset,
 	HIGH_CONFIDENCE,
 	MODERATE_CONFIDENCE,
-	bronKindOf,
+	filterGroupOf,
 	confidenceWord,
 	filterParams,
-	kindCount,
+	filterGroupCount,
 	parseFilter,
 	rechterOf,
 	rowPasses,
-	toggleKind,
+	toggleFilterGroup,
 	withPreset,
 	type VerbondenFilter
 } from './filter';
@@ -22,7 +22,7 @@ const row = (over: Partial<Row>): Row => ({
 	ref: { collection: 'judgments', key: 'j' },
 	title: 'Hof Amsterdam',
 	context: null,
-	kind: 'uitspraken',
+	filterGroup: 'uitspraken',
 	...over
 });
 
@@ -60,32 +60,34 @@ describe('presets', () => {
 		expect(activePreset(EMPTY_FILTER)?.id).toBe('alles');
 		expect(activePreset(withPreset(EMPTY_FILTER, PRESETS[2]))?.id).toBe('wetteksten');
 		expect(activePreset(withPreset(EMPTY_FILTER, PRESETS[4]))?.id).toBe('hoge-raad');
-		const f = toggleKind(toggleKind(EMPTY_FILTER, 'toelichtingen'), 'internationaal');
+		const f = toggleFilterGroup(toggleFilterGroup(EMPTY_FILTER, 'toelichtingen'), 'internationaal');
 		expect(activePreset(f)).toBeNull();
 		expect(activePreset({ ...EMPTY_FILTER, rechter: 'hr' })).toBeNull();
 	});
 
 	it('toggles one kind and returns to all when every kind is on', () => {
-		const one = toggleKind(EMPTY_FILTER, 'uitspraken');
+		const one = toggleFilterGroup(EMPTY_FILTER, 'uitspraken');
 		expect(one.bronnen!.has('uitspraken')).toBe(false);
 		expect(one.bronnen!.size).toBe(8);
-		expect(toggleKind(one, 'uitspraken').bronnen).toBeNull();
+		expect(toggleFilterGroup(one, 'uitspraken').bronnen).toBeNull();
 	});
 });
 
-describe('bronKindOf', () => {
+describe('filterGroupOf', () => {
 	it('splits documents by kind and relation', () => {
-		expect(bronKindOf('documents', 'd', { kind: 'Memorie van toelichting' })).toBe('toelichtingen');
-		expect(bronKindOf('documents', 'd', { kind: 'Voorstel van wet' })).toBe('wetsvoorstellen');
-		expect(bronKindOf('documents', 'd', { kind: 'Brief regering' }, 'AMENDS')).toBe(
+		expect(filterGroupOf('documents', 'd', { kind: 'Memorie van toelichting' })).toBe(
+			'toelichtingen'
+		);
+		expect(filterGroupOf('documents', 'd', { kind: 'Voorstel van wet' })).toBe('wetsvoorstellen');
+		expect(filterGroupOf('documents', 'd', { kind: 'Brief regering' }, 'AMENDS')).toBe(
 			'wetsvoorstellen'
 		);
-		expect(bronKindOf('documents', 'd', { kind: 'Brief regering' })).toBe('dossiers');
-		expect(bronKindOf('articles', 'bwbv0001000_6', {})).toBe('internationaal');
-		expect(bronKindOf('judgments', 'ecli_ce_echr_2026_0908jud000748123', {})).toBe(
+		expect(filterGroupOf('documents', 'd', { kind: 'Brief regering' })).toBe('dossiers');
+		expect(filterGroupOf('articles', 'bwbv0001000_6', {})).toBe('internationaal');
+		expect(filterGroupOf('judgments', 'ecli_ce_echr_2026_0908jud000748123', {})).toBe(
 			'internationaal'
 		);
-		expect(bronKindOf('instruments', 'bwbr0001854', {})).toBe('wetten');
+		expect(filterGroupOf('instruments', 'bwbr0001854', {})).toBe('wetten');
 	});
 
 	it.each([
@@ -94,22 +96,26 @@ describe('bronKindOf', () => {
 		['INTRODUCES', 'wetsvoorstellen'],
 		['REPEALS', 'wetsvoorstellen']
 	] as const)('counts a stuk that %s a law as %s', (relation, kind) => {
-		expect(bronKindOf('documents', 'd', { kind: 'Brief regering' }, relation)).toBe(kind);
+		expect(filterGroupOf('documents', 'd', { kind: 'Brief regering' }, relation)).toBe(kind);
 	});
 
 	it('groups kamerleden, fracties and commissies as leden, not dossiers', () => {
-		expect(bronKindOf('members', 'm1', {})).toBe('leden');
-		expect(bronKindOf('factions', 'f1', {})).toBe('leden');
-		expect(bronKindOf('committees', 'c1', {})).toBe('leden');
-		expect(bronKindOf('activities', 'a1', {})).toBe('dossiers');
-		expect(bronKindOf('decisions', 'b1', {})).toBe('stemmingen');
+		expect(filterGroupOf('members', 'm1', {})).toBe('leden');
+		expect(filterGroupOf('factions', 'f1', {})).toBe('leden');
+		expect(filterGroupOf('committees', 'c1', {})).toBe('leden');
+		expect(filterGroupOf('activities', 'a1', {})).toBe('dossiers');
+		expect(filterGroupOf('decisions', 'b1', {})).toBe('stemmingen');
 	});
 });
 
 describe('rowPasses', () => {
 	const hr = row({ identifier: 'ECLI:NL:HR:2024:1769', date: '2024-12-03', lid: '2' });
 	const hof = row({ identifier: 'ECLI:NL:GHAMS:2024:2920', date: '2019-09-10', derived: true });
-	const art = row({ ref: { collection: 'articles', key: 'a' }, kind: 'artikelen', lid: null });
+	const art = row({
+		ref: { collection: 'articles', key: 'a' },
+		filterGroup: 'artikelen',
+		lid: null
+	});
 
 	it('applies the bronnen, the lid, the rechter, the period and the betrouwbaarheid', () => {
 		const only = (f: Partial<VerbondenFilter>) => ({ ...EMPTY_FILTER, ...f });
@@ -138,12 +144,12 @@ describe('rowPasses', () => {
 		const only = (f: Partial<VerbondenFilter>) => ({ ...EMPTY_FILTER, ...f });
 		const lnv = row({
 			ref: { collection: 'committees', key: 'lnv' },
-			kind: 'leden',
+			filterGroup: 'leden',
 			period: { from: '2017-11-14', to: '2021-04-06', role: null }
 		});
 		const now = row({
 			ref: { collection: 'committees', key: 'iv' },
-			kind: 'leden',
+			filterGroup: 'leden',
 			period: { from: '2025-11-12', to: null, role: null }
 		});
 		expect(rowPasses(lnv, only({ van: '2019-01-01', tot: '2019-12-31' }))).toBe(true);
@@ -191,10 +197,10 @@ describe('confidenceWord', () => {
 	});
 });
 
-describe('kindCount', () => {
+describe('filterGroupCount', () => {
 	it('put the noun in the number of the count', () => {
-		expect(kindCount(1, 'wetten')).toBe('1 wet');
-		expect(kindCount(3, 'artikelen')).toBe('3 artikelen');
-		expect(kindCount(1_064, 'uitspraken')).toBe('1.064 uitspraken');
+		expect(filterGroupCount(1, 'wetten')).toBe('1 wet');
+		expect(filterGroupCount(3, 'artikelen')).toBe('3 artikelen');
+		expect(filterGroupCount(1_064, 'uitspraken')).toBe('1.064 uitspraken');
 	});
 });

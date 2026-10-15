@@ -9,7 +9,7 @@
 
 import { VORMEN, type Vorm } from '$lib/bron/vormen';
 import type { ContainerKind } from '$lib/graph/container-membership';
-import type { GraphNodeKind } from '$lib/graph/types';
+import type { DrawClass } from '$lib/graph/types';
 import { isAmendingRelation, type Relation } from '$lib/vocabulary';
 
 type Tokens = {
@@ -115,11 +115,11 @@ export function tokens(): Tokens {
  * law in moss, appeals and gedaan-in in slate, toelichting and ingediend-door
  * in plum, changes to a wet in the wet's hue, the rest (gaat over, geleid door) in grey.
  */
-export function edgeColorFor(relation: Relation, sourceKind: GraphNodeKind): string {
+export function edgeColorFor(relation: Relation, sourceClass: DrawClass): string {
 	const t = tokens();
 	switch (relation) {
 		case 'REFERS_TO':
-			return sourceKind === 'article' ? t.moss : t.slate;
+			return sourceClass === 'article' ? t.moss : t.slate;
 		case 'PART_OF':
 		case 'BASED_ON':
 		case 'IMPLEMENTS':

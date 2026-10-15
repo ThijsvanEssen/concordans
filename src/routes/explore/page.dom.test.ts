@@ -41,7 +41,7 @@ vi.mock('$lib/verbonden/Verbonden.svelte', () => stub('Verbonden'));
 vi.mock('$lib/verbonden/VerbondenTabel.svelte', () => stub('VerbondenTabel'));
 vi.mock('$lib/verbonden/FilterSheet.svelte', () => stub('FilterSheet'));
 vi.mock('$lib/verbonden/VerbindingCard.svelte', () => stub('VerbindingCard'));
-vi.mock('$lib/netwerk/NetwerkPanel.svelte', () => stub('NetwerkPanel'));
+vi.mock('$lib/selection/NetwerkPanel.svelte', () => stub('NetwerkPanel'));
 vi.mock('$lib/util/reload', () => ({ reloadForNewVersion: () => {} }));
 
 /** An article of the Awb without an address of its own (no number): it stays at /explore. */

@@ -46,7 +46,7 @@ describe('hoeVan', () => {
 			hoeVan(
 				row({
 					ref: { collection: 'dossiers', key: '36764', number: '36764' },
-					kind: 'dossiers',
+					filterGroup: 'dossiers',
 					relation: 'LEGISLATED_IN',
 					direction: 'outbound',
 					confidence: 1,
@@ -487,7 +487,7 @@ describe('the line of a reference', () => {
 	const artikel = (r: Partial<Row>) =>
 		row({
 			ref: { collection: 'articles', key: 'a' },
-			kind: 'artikelen',
+			filterGroup: 'artikelen',
 			relation: 'REFERS_TO',
 			...r
 		});
@@ -717,7 +717,7 @@ describe('the line of a vote', () => {
 		const h = hoeVan(
 			row({
 				ref: { collection: 'factions', key: 'f' },
-				kind: 'fracties' as Row['kind'],
+				filterGroup: 'fracties' as Row['filterGroup'],
 				relation: 'VOTED',
 				direction: 'inbound',
 				edge: { choice: 'Tegen', seats: 7 }

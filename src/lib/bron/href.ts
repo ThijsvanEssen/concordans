@@ -4,7 +4,7 @@
 // network stays the network. From outside the Verkenner a bron opens to be read.
 import { page } from '$app/state';
 import { parseNodeId, type Collection, type Mode } from '$lib/vocabulary';
-import { isVerkenner, verkennerHref, verkennerUrl } from './leesbaar';
+import { isExplorePath, exploreHref, exploreUrl } from './leesbaar';
 
 /** Bronnen with a text long enough to read at full width; the rest reads beside the network. */
 const READABLE: ReadonlySet<Collection> = new Set([
@@ -13,7 +13,29 @@ const READABLE: ReadonlySet<Collection> = new Set([
 	'judgments',
 	'documents'
 ]);
-export const isReadable = (collection: Collection) => READABLE.has(collection);
+const isReadable = (collection: Collection) => READABLE.has(collection);
+
+/** The bron of ?focus has a text of its own, to read at full width. */
+export function hasReadableFocus(params: URLSearchParams): boolean {
+	const target = parseNodeId(params.get('focus') ?? '');
+	return target ? isReadable(target.collection) : false;
+}
+
+/**
+ * The Verkenner is the network. A bron with a text of its own is read at full width
+ * (?lezen=1); its verbindingen as a table are read so too, whatever the bron. Bladeren is
+ * ?mode=index, whatever else the address holds.
+ */
+export function exploreMode(params: URLSearchParams): Mode {
+	if (params.get('mode') === 'index') return 'index';
+	if (!params.get('focus')) return 'graph';
+	if (params.get('tabel') === '1') return 'read';
+	return params.get('lezen') === '1' && hasReadableFocus(params) ? 'read' : 'graph';
+}
+
+/** The view an address shows: null off /explore and the readable addresses of bronnen. */
+export const modeOf = (url: URL): Mode | null =>
+	isExplorePath(url.pathname) ? exploreMode(exploreUrl(url).searchParams) : null;
 
 /**
  * A bron as the interface holds it: its node key, and for a dossier also its number
@@ -90,11 +112,11 @@ export function buildBronHref(
 	const focus = focusOf(ref);
 	const target = focus && parseNodeId(focus);
 	if (!focus || !target) return '/explore';
-	const inExplore = !!current && isVerkenner(current.pathname);
-	if (current && inExplore) current = verkennerUrl(current);
-	const currentMode = inExplore && current ? current.searchParams.get('mode') : null;
+	const onExplorePath = !!current && isExplorePath(current.pathname);
+	if (current && onExplorePath) current = exploreUrl(current);
+	const currentMode = onExplorePath && current ? current.searchParams.get('mode') : null;
 	// Bladeren lists bronnen; opening one from there is reading it.
-	const within = keepMode && inExplore && currentMode !== 'index';
+	const within = keepMode && onExplorePath && currentMode !== 'index';
 	const reading =
 		within && current ? current.searchParams.get('lezen') === '1' : (mode ?? 'read') === 'read';
 
@@ -107,7 +129,7 @@ export function buildBronHref(
 	if (!within && mode === 'graph') params.set('paneel', 'netwerk');
 	else if (!within && paneel === 'tekst' && reading && isReadable(target.collection))
 		params.set('paneel', 'tekst');
-	if (inExplore && current) {
+	if (onExplorePath && current) {
 		for (const name of KEPT_PARAMS) {
 			if (!keepNetwerk && NETWERK_PARAMS.has(name)) continue;
 			const value = current.searchParams.get(name);
@@ -115,7 +137,7 @@ export function buildBronHref(
 		}
 	}
 	for (const [name, value] of Object.entries(own ?? {})) params.set(name, value);
-	return verkennerHref(params, at ? `#${encodeURIComponent(at)}` : '');
+	return exploreHref(params, at ? `#${encodeURIComponent(at)}` : '');
 }
 
 /**

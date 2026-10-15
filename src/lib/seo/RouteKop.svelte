@@ -4,7 +4,7 @@
 	// title where the page has a name of its own (the topic of the Overzicht).
 	import { page } from '$app/state';
 	import { routeKop, routePath } from './routes';
-	import { serverKop } from './kop.svelte';
+	import { serverKop } from './server-head.svelte';
 
 	let { title }: { title?: string } = $props();
 	// Read once: the page that renders this is the route's own, and leaves with it.

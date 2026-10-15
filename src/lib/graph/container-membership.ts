@@ -20,7 +20,7 @@ const CONTAINER_KINDS: ReadonlySet<string> = new Set<ContainerKind>([
 	'dossier'
 ]);
 
-/** Whether a `GraphNodeKind` (or any string) is a container kind: never a canvas node. */
+/** Whether a `DrawClass` (or any string) is a container kind: never a canvas node. */
 export function isContainerKind(kind: string): kind is ContainerKind {
 	return CONTAINER_KINDS.has(kind);
 }

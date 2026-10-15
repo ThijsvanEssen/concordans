@@ -110,7 +110,7 @@
 			</ReaderHead>
 
 			{#if board.length > 0}
-				<Sectie titel="Fractiebestuur" soort="members">
+				<Sectie titel="Fractiebestuur" collection="members">
 					<dl class="board">
 						{#each board as seat, i (i)}
 							<dt>{seat.function ?? ''}</dt>
@@ -138,7 +138,7 @@
 				{/if}
 				<Sectie
 					titel="Leden"
-					soort="members"
+					collection="members"
 					aantal={leden.state.status === 'ready' ? lijst.length : null}
 				>
 					<LoadState state={leden.state} what="De ledenlijst" retry={leden.retry}>
@@ -155,12 +155,12 @@
 			{/if}
 
 			{#if votes.state.status === 'error'}
-				<Sectie titel="Stemgedrag in de Eerste Kamer" soort="decisions">
+				<Sectie titel="Stemgedrag in de Eerste Kamer" collection="decisions">
 					<LoadState state={votes.state} what="Het stemgedrag" retry={votes.retry} />
 				</Sectie>
 			{:else if votes.state.status === 'ready' && votes.state.data && votes.state.data.total > 0}
 				{@const stemmen = votes.state.data}
-				<Sectie titel="Stemgedrag in de Eerste Kamer" soort="decisions">
+				<Sectie titel="Stemgedrag in de Eerste Kamer" collection="decisions">
 					<p class="vote-line">{ekVoteLine(stemmen.counts, stemmen.total)}.</p>
 					<ul class="votes">
 						{#each stemmen.items as v (v.decision_key)}

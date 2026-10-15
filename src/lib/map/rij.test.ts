@@ -57,7 +57,7 @@ describe('a row of Verbonden kept in the map', () => {
 			ref: { collection: 'documents', key: 'los' },
 			title: 'Antwoord op vragen',
 			context: null,
-			kind: 'toelichtingen',
+			filterGroup: 'toelichtingen',
 			props: {}
 		} as Row;
 		const lezer = bewaarItem('documents/los', { kort: 'Antwoord' }, { groep: 'Antwoord' });
@@ -72,7 +72,7 @@ describe('a vote kept in the map (#54)', () => {
 			ref: { collection: 'decisions', key: 'fee7da7e' },
 			title: 'Amendement van de leden Recourt en Tellegen over melding',
 			context: 'aangenomen',
-			kind: 'stemmingen',
+			filterGroup: 'stemmingen',
 			date: '2016-12-20',
 			props: {
 				subject: 'Amendement van de leden Recourt en Tellegen over melding',
@@ -97,7 +97,7 @@ describe('a judgment kept from a row of Verbonden (#55)', () => {
 		ref: { collection: 'judgments', key: 'ecli_nl_rbdha_2013_19764' },
 		title: 'Rechtbank Den Haag, 1 januari 2013',
 		context: null,
-		kind: 'uitspraken',
+		filterGroup: 'uitspraken',
 		lid: '1',
 		position: 'r.o. 3',
 		at: 'rov-3',

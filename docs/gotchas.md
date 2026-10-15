@@ -15,7 +15,7 @@ The URL holds the view (path and query, see [`routes.md`](routes.md)). The `Grap
 - Node keys are lower case in the API and its routes are case-sensitive. `nodes.ts` and `nodeResponse` lower-case the key. `nodeId()` does not: lower-case an ECLI or BWB id before building an id from it.
 - The key of a committee is a GUID. The `slug` (a prop) only addresses `/api/committees/{slug}`. Never build a node id from a slug.
 - The API addresses a dossier as `29684-I`; its node key is `29684_i`.
-- A `decisions` node has `GraphNodeKind` `activity`, like activities, cases and commitments; a cabinet has `committee`, like a commissie. Code that must tell them apart checks `node.collection`, as `KindReader.svelte` does.
+- A `decisions` node has the `DrawClass` `activity`, like activities, cases and commitments; a cabinet has `committee`, like a commissie. Code that must tell them apart checks `node.collection`, as `KindReader.svelte` does.
 - Node `props` are `{ [key: string]: any }` in the schema. Check a real response before reading a prop.
 
 ## Cached responses

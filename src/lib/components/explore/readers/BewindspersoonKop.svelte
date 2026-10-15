@@ -59,7 +59,7 @@
 		})
 	}}
 >
-	{#snippet soort()}
+	{#snippet kindLine()}
 		<KindGlyph collection="members" />Bewindspersoon{partij ? `, ${partij}` : ''}
 	{/snippet}
 	{#snippet statusLine()}

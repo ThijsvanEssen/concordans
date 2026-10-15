@@ -21,11 +21,11 @@
 	import { ms, periodeZin } from '$lib/components/tijdlijn/tijdas';
 
 	type Zaal = Schema<'ParliamentSeatsResponse'>;
-	type Stuk = Schema<'SeatStretchDTO'>;
+	type Stretch = Schema<'SeatStretchDTO'>;
 
 	let {
 		kamer,
-		stukken,
+		stretches,
 		meerderheid,
 		van,
 		eind,
@@ -36,7 +36,7 @@
 	}: {
 		kamer: 'TK' | 'EK';
 		/** The cabinet's stretches in this Kamer; empty where the API has none. */
-		stukken: Stuk[];
+		stretches: Stretch[];
 		/** The seats a majority takes (`majority` of the cabinet's seats). */
 		meerderheid: number;
 		/** The cabinet's first day. */
@@ -46,7 +46,7 @@
 		/** The day the hall shows. */
 		dag: string;
 		kabinet: string;
-		onKies: (s: Stuk) => void;
+		onKies: (s: Stretch) => void;
 		/** The cabinet's phases (demissionair and after), as on its posts. */
 		fasen?: { van: string; label: string }[];
 	} = $props();
@@ -74,13 +74,13 @@
 	 */
 	const zaalDag = $derived.by(() => {
 		const s =
-			stukken.find((t) => dag >= t.from_date && dag <= (t.to_date ?? eind)) ?? stukken.at(-1);
+			stretches.find((t) => dag >= t.from_date && dag <= (t.to_date ?? eind)) ?? stretches.at(-1);
 		if (!s) return vandaag();
 		const tot = s.to_date ?? eind;
 		return dag < s.from_date ? s.from_date : dag > tot ? tot : dag;
 	});
 	const hall = load(
-		() => ({ day: zaalDag, withStretches: stukken.length > 0, chamber: kamer, cabinet: kabinet }),
+		() => ({ day: zaalDag, withStretches: stretches.length > 0, chamber: kamer, cabinet: kabinet }),
 		(k) => hallOfDay(k.chamber, k.day, k.cabinet, k.withStretches),
 		'Zaal van het kabinet'
 	);
@@ -88,20 +88,22 @@
 	const zaal = $derived(hall.state.status === 'ready' ? hall.state.data : null);
 
 	const gekozen = $derived(
-		stukken.find((s) => dag >= s.from_date && dag <= (s.to_date ?? eind)) ?? stukken.at(-1) ?? null
+		stretches.find((s) => dag >= s.from_date && dag <= (s.to_date ?? eind)) ??
+			stretches.at(-1) ??
+			null
 	);
 
 	/**
 	 * Of this cabinet's coalition, per fractie: from the stretch of the day (on a cabinet's last
 	 * day the hall's own `coalition` is already the next cabinet's), else from the hall.
 	 */
-	const vanKabinet = (stuk: Stuk | null) => {
-		const m = stuk?.factions ? new Map(stuk.factions.map((f) => [f.key, f.coalition])) : null;
+	const vanKabinet = (stretch: Stretch | null) => {
+		const m = stretch?.factions ? new Map(stretch.factions.map((f) => [f.key, f.coalition])) : null;
 		return (f: Zaal['factions'][number]) =>
 			m && f.key ? (m.get(f.key) ?? null) : (f.coalition ?? null);
 	};
-	const kantVan = (z: Zaal, stuk: Stuk | null) => {
-		const c = vanKabinet(stuk);
+	const kantVan = (z: Zaal, stretch: Stretch | null) => {
+		const c = vanKabinet(stretch);
 		return Object.fromEntries(
 			z.factions.map((f) => [
 				f.key ?? naam(f),
@@ -117,10 +119,10 @@
 	 * the list): from the stretch, its fracties' seats with their vacancies; the hall gives the
 	 * colours. Without a stretch, from the hall.
 	 */
-	const zijden = (z: Zaal, stuk: Stuk | null) => {
+	const zijden = (z: Zaal, stretch: Stretch | null) => {
 		const kleur = new Map(z.factions.map((f) => [f.key, f.color ?? null]));
-		const rijen: (Rij & { ja: boolean | null })[] = stuk?.factions?.length
-			? stuk.factions.map((f) => ({
+		const rijen: (Rij & { ja: boolean | null })[] = stretch?.factions?.length
+			? stretch.factions.map((f) => ({
 					key: f.key ?? naam(f),
 					naam: naam(f),
 					seats: f.seats,
@@ -141,7 +143,7 @@
 		const nee = fr.filter((f) => f.ja === false);
 		const som = (l: typeof fr) => l.reduce((n, f) => n + f.seats, 0);
 		// The vacant seats no fractie holds: of neither side (UX #48).
-		const los = stuk ? vacantZonderFractie(stuk) : 0;
+		const los = stretch ? vacantZonderFractie(stretch) : 0;
 		return { ja, nee, jaZetels: som(ja), los };
 	};
 
@@ -168,12 +170,12 @@
 	// The Kamer's whole scale, none to all its seats: the majority at its true height.
 	const schaal = (n: number) => zetelHoogte(n, zetelsVanKamer, H, PAD);
 	const stappen = $derived.by(() => {
-		if (!van || stukken.length < 2) return [];
+		if (!van || stretches.length < 2) return [];
 		const a = dagNr(van);
 		const b = Math.max(dagNr(eind) + 1, a + 1);
 		const x = (d: string) => ((dagNr(d) - a) / (b - a)) * W;
 		const dagBreed = W / (b - a);
-		return stukken.map((s) => {
+		return stretches.map((s) => {
 			const x0 = Math.max(0, x(s.from_date));
 			const tot = s.to_date && s.to_date < eind ? s.to_date : eind;
 			// A stretch of one day stays wide enough to see and to point at.
@@ -183,10 +185,10 @@
 	});
 	const yMeerderheid = $derived(schaal(meerderheid));
 	/** A count that did not add up is marked once, with the count. */
-	const onzekerWoord = (s: Stuk) => (s.checked === false ? ' (onzeker)' : '');
+	const onzekerWoord = (s: Stretch) => (s.checked === false ? ' (onzeker)' : '');
 	const wijzigingen = $derived(gekozen ? wijzigingenVan(gekozen) : []);
 	/** `66 zetels, 2 sep. 2026 tot 10 okt. 2026.`, or `24 zetels, … (onzeker).` */
-	const stapZin = (s: Stuk) =>
+	const stapZin = (s: Stretch) =>
 		`${s.coalition} zetels, ${
 			s.to_date === s.from_date ? korteDatum(s.from_date) : periodeZin(s.from_date, s.to_date)
 		}${onzekerWoord(s)}.`;
@@ -310,7 +312,7 @@
 			<LoadState state={hall.state} what="De zaal" retry={hall.retry} />
 		{:else if !zaal}
 			<p class="onderschrift">
-				{stukken.length
+				{stretches.length
 					? `Geen samenstelling in de gegevens op ${langeDatum(dag)}.`
 					: `Geen samenstelling van de ${kamer === 'TK' ? 'Tweede' : 'Eerste'} Kamer voor dit kabinet in de gegevens.`}
 			</p>

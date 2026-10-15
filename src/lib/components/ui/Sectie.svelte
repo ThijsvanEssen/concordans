@@ -13,7 +13,7 @@
 
 	let {
 		titel,
-		soort,
+		collection,
 		aantal,
 		id,
 		naast,
@@ -25,7 +25,7 @@
 	}: {
 		titel: string;
 		/** The glyph before the title: what the section lists. */
-		soort?: Collection;
+		collection?: Collection;
 		/** The count beside the heading; a string as given (`25+`). */
 		aantal?: number | string | null;
 		id?: string;
@@ -44,14 +44,14 @@
 		children: Snippet;
 	} = $props();
 
-	const soortSleutel = $derived(sleutel ?? titel);
+	const foldKey = $derived(sleutel ?? titel);
 	/** Drawn from the first paint as it was left: a closed section never draws its content. */
-	const isOpen = $derived(!inklapbaar || staatOpen(soortSleutel, standaardOpen));
+	const isOpen = $derived(!inklapbaar || staatOpen(foldKey, standaardOpen));
 	const uid = $props.id();
 </script>
 
 {#snippet kop()}
-	{#if soort}<KindGlyph collection={soort} size={14} />{/if}{titel}{#if aantal != null}<span
+	{#if collection}<KindGlyph {collection} size={14} />{/if}{titel}{#if aantal != null}<span
 			class="aantal">{typeof aantal === 'number' ? formatCount(aantal) : aantal}</span
 		>{/if}
 {/snippet}
@@ -59,7 +59,7 @@
 <section class="sectie" class:is-dicht={!isOpen} {id}>
 	<svelte:element this={`h${niveau}`} class="kop">
 		{#if inklapbaar}
-			<FoldButton sleutel={soortSleutel} open={isOpen} controls="{uid}-inhoud"
+			<FoldButton sleutel={foldKey} open={isOpen} controls="{uid}-inhoud"
 				>{@render kop()}</FoldButton
 			>
 		{:else}

@@ -143,7 +143,7 @@
 	>
 		<KindGlyph
 			collection={row.ref.collection}
-			vorm={row.kind === 'wetsvoorstellen' ? 'voorstel' : undefined}
+			vorm={row.filterGroup === 'wetsvoorstellen' ? 'voorstel' : undefined}
 			size={ROW_GLYPH}
 		/>
 		<span class="row__text">

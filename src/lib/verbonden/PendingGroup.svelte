@@ -9,7 +9,7 @@
 	import GroupHead from './GroupHead.svelte';
 	import PendingRows, { pendingKind } from './PendingRows.svelte';
 	import { PREVIEW_ROWS } from './view';
-	import type { VerbondenState } from './source';
+	import type { VerbondenState } from './data-source';
 
 	let {
 		group,

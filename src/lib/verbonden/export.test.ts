@@ -19,7 +19,7 @@ describe('rowsToCsv', () => {
 		ref: { collection: 'judgments', key: 'ecli_nl_hr_2019_1278' },
 		title: 'Hoge Raad; "uitspraak", 19 juli 2019',
 		context: null,
-		kind: 'uitspraken',
+		filterGroup: 'uitspraken',
 		position: 'r.o. 2.2',
 		identifier: 'ECLI:NL:HR:2019:1278',
 		date: '2019-07-19'
@@ -87,7 +87,7 @@ describe('exportRows', () => {
 		ref: { collection: 'judgments', key },
 		title: key,
 		context: null,
-		kind: 'uitspraken',
+		filterGroup: 'uitspraken',
 		...extra
 	});
 	const groups: Group[] = [

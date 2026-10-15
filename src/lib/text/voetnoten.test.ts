@@ -185,7 +185,7 @@ describe('a citation in a note, on a row', () => {
 			ref: { collection: 'judgments', key: 'ecli_nl_hr_2019_2006' },
 			title: 'HR 20 december 2019',
 			context: null,
-			kind: 'uitspraken',
+			filterGroup: 'uitspraken',
 			relation: 'REFERS_TO',
 			direction: 'inbound',
 			position: 'r.o. 5.7.6 (voetnoot 35)',

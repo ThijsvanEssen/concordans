@@ -6,7 +6,7 @@ import { ifExists } from '$lib/api/errors';
 import type { Schema } from '$lib/api/types';
 import { getDossierDocuments } from '$lib/api/records';
 import { getDossier } from '$lib/api/dossiers';
-import { bronKindOf } from './filter';
+import { filterGroupOf } from './filter';
 import { changeRelationOf } from '$lib/vocabulary';
 import { type Row } from './rows';
 import { describeBron } from '$lib/bron/describe';
@@ -43,7 +43,7 @@ export function buildDossierHub(
 			ref: { collection: 'instruments', key: i.key },
 			title: naamVan('instruments', i),
 			context: soort,
-			kind: bronKindOf('instruments', i.key, { bwb_id: i.bwb_id, celex: i.celex }),
+			filterGroup: filterGroupOf('instruments', i.key, { bwb_id: i.bwb_id, celex: i.celex }),
 			identifier: soort ? null : (i.bwb_id ?? i.celex ?? null),
 			proposed: i.status === 'voorgesteld' || undefined,
 			relation: changeRelationOf(i.relation) ?? 'LEGISLATED_IN',
@@ -61,7 +61,7 @@ export function buildDossierHub(
 			ref: { collection: 'instruments', key: key ?? l.name },
 			title: l.name,
 			context: 'in de titel genoemd',
-			kind: 'wetten',
+			filterGroup: 'wetten',
 			identifier: l.bwb_id ?? null,
 			missing: !l.loaded || !key || undefined
 		});
@@ -72,7 +72,7 @@ export function buildDossierHub(
 			ref: { collection: 'committees', key: c.key },
 			title: c.name ?? c.abbreviation ?? naamVan('committees', c),
 			context: c.abbreviation || null,
-			kind: 'dossiers',
+			filterGroup: 'dossiers',
 			relation: 'LED_BY',
 			direction: 'outbound'
 		}))
@@ -86,7 +86,7 @@ export function buildDossierHub(
 		row: {
 			ref: { collection: 'documents', key: d.key },
 			...describeBron('documents', d.key, d.display_name, { ...d }),
-			kind: bronKindOf('documents', d.key, { ...d }),
+			filterGroup: filterGroupOf('documents', d.key, { ...d }),
 			relation: 'PART_OF',
 			direction: 'inbound',
 			props: { ...d }

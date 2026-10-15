@@ -32,8 +32,8 @@
 	import PanelBoundary from '$lib/components/ui/PanelBoundary.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { getNodeCanvas, getNodeHull } from '$lib/api/records';
-	import { kopNode } from '$lib/bron/kop';
-	import { bronHref, focusOf, refId, refOf } from '$lib/bron/href';
+	import { kopNode } from '$lib/bron/first-node';
+	import { bronHref, exploreMode, focusOf, hasReadableFocus, refId, refOf } from '$lib/bron/href';
 	import { getDossierKey } from '$lib/api/dossiers';
 	import { getMemberVotes } from '$lib/api/members';
 	import { createGraphStore } from '$lib/graph/graph-store';
@@ -42,7 +42,7 @@
 	import KindReader from '$lib/components/explore/KindReader.svelte';
 	import ReaderFrame from '$lib/components/explore/readers/ReaderFrame.svelte';
 	import NietGevonden from '$lib/components/ui/NietGevonden.svelte';
-	import { LADEN_TITEL, serverKop, siteTitle } from '$lib/seo/kop.svelte';
+	import { LADEN_TITEL, serverKop, siteTitle } from '$lib/seo/server-head.svelte';
 	import { routeKop } from '$lib/seo/routes';
 	import DocumentReader from '$lib/components/explore/readers/DocumentReader.svelte';
 	import JudgmentReader from '$lib/components/explore/readers/JudgmentReader.svelte';
@@ -58,7 +58,7 @@
 	import VerbondenTabel from '$lib/verbonden/VerbondenTabel.svelte';
 	import { filterParams, parseFilter, type VerbondenFilter } from '$lib/verbonden/filter';
 	import type { Row } from '$lib/verbonden/rows';
-	import { createVerbondenSource, type VerbondenState } from '$lib/verbonden/source';
+	import { createVerbondenSource, type VerbondenState } from '$lib/verbonden/data-source';
 	import { edgeKey } from '$lib/verbonden/edge-meta';
 	import {
 		edgeLids,
@@ -71,14 +71,14 @@
 	} from '$lib/verbonden/verbinding';
 	import { allRows, filterGroups, lidCounts, lidTellingenOnder } from '$lib/verbonden/view';
 	import { perfStart } from '$lib/dev/perf';
-	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
+	import type { GraphEdge, GraphNode, DrawClass } from '$lib/graph/types';
 	import { containerKindOf, type ContainerKind } from '$lib/graph/container-membership';
 	import {
 		parseOverlay,
 		overlayParam,
 		DEFAULT_HEAT_MONTHS,
 		type Overlay
-	} from '$lib/netwerk/overlay';
+	} from '$lib/selection/overlay';
 	import { AMENDING_RELATIONS, parseNodeId } from '$lib/vocabulary';
 	import { articleOf, kort, lawIdOf } from '$lib/graph/types';
 	import { bronNaam } from '$lib/bron/naam';
@@ -87,11 +87,11 @@
 		padOfFocus,
 		parsePad,
 		remember as rememberPad,
-		verkennerHref,
-		verkennerUrl
+		exploreHref,
+		exploreUrl
 	} from '$lib/bron/leesbaar';
 	import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
-	import NetwerkPanel from '$lib/netwerk/NetwerkPanel.svelte';
+	import NetwerkPanel from '$lib/selection/NetwerkPanel.svelte';
 	import { focusStap } from '$lib/graph/focus-stap';
 	import {
 		EXAMPLE_NETWERK,
@@ -102,15 +102,13 @@
 		withToggled,
 		type Netwerk,
 		type NetwerkEntry
-	} from '$lib/netwerk/netwerk';
+	} from '$lib/selection/netwerk';
 	import { navigate, patchParams, queryHref, withParams, type ParamPatch } from '$lib/util/address';
 	import {
 		besideJudgment,
-		depthFor as depthOfKind,
-		exploreMode,
+		depthFor as depthOfClass,
 		explicitDepth as explicitDepthOf,
 		filterQuery,
-		hasReadableFocus,
 		indexCategory,
 		nameOfPad,
 		netwerkQuery as netwerkQueryOf
@@ -151,7 +149,7 @@
 
 	// The URL as the Verkenner reads it: a readable address (/uitspraken/ECLI:…) has its
 	// focus in the path, and reads as /explore?focus=… (see $lib/bron/leesbaar.ts).
-	const logisch = $derived(verkennerUrl(page.url));
+	const logisch = $derived(exploreUrl(page.url));
 	const params = $derived(logisch.searchParams);
 
 	// ── A readable address the API has to look up ────────────────────────────
@@ -192,7 +190,7 @@
 		const path = padOfFocus(f, props);
 		if (!path) return;
 		rememberPad(path, f);
-		navigate(verkennerHref(logisch.searchParams, page.url.hash, props));
+		navigate(exploreHref(logisch.searchParams, page.url.hash, props));
 	});
 	const readableFocus = $derived(hasReadableFocus(params));
 	const mode = $derived(exploreMode(params));
@@ -227,11 +225,11 @@
 			laadtSoort = new Set([...laadtSoort].filter((c) => c !== soort));
 		}
 	}
-	const depthFor = (kind: GraphNodeKind) =>
-		depthOfKind(kind, { explicit: explicitDepth, all: alles });
+	const depthFor = (drawClass: DrawClass) =>
+		depthOfClass(drawClass, { explicit: explicitDepth, all: alles });
 	// The bron the canvas is drawn around; a click selects another without moving it.
-	let anchorKind = $state<GraphNodeKind>('other');
-	const depth = $derived(depthFor(anchorKind));
+	let anchorClass = $state<DrawClass>('other');
+	const depth = $derived(depthFor(anchorClass));
 
 	// ── The netwerk of chosen bronnen ─────────────────────────────────────────
 	// Parsed from its own three params only, so selecting a bron does not compose again.
@@ -252,7 +250,7 @@
 		laadWetsnetwerk([], vandaag(), ac.signal)
 			.then((schets) => {
 				if (!schets || ac.signal.aborted) return;
-				const query = new URL(schets.verkenner, location.origin).searchParams.toString();
+				const query = new URL(schets.exploreHref, location.origin).searchParams.toString();
 				voorbeeld = { query, naam: schets.kandidaat.naam };
 			})
 			.catch((e) => report('Verkenner voorbeeld', e));
@@ -344,7 +342,7 @@
 				: new Map<string, number>())
 	);
 	const billCount = $derived(
-		allRows(verbonden.groups).filter((r) => r.kind === 'wetsvoorstellen').length
+		allRows(verbonden.groups).filter((r) => r.filterGroup === 'wetsvoorstellen').length
 	);
 
 	// ── The card Verbinding ──────────────────────────────────────────────────
@@ -478,7 +476,7 @@
 	async function expandAround(node: GraphNode, epoch: number) {
 		if (node.id.startsWith('synth:')) return;
 		await store.expandNeighborhood(node.collection, node.key, {
-			depth: depthFor(node.kind),
+			depth: depthFor(node.drawClass),
 			cap: alles ? ALLES_GRENS : omgevingGrens
 		});
 		if (epoch !== focusEpoch) return;
@@ -569,7 +567,7 @@
 		wachtOp =
 			huidig && huidig.id !== id && linkIdOf(huidig) !== id && !store.getNodeById(id) ? id : null;
 		try {
-			// The reader stands on the bron's head ($lib/bron/kop): a person's record, a judgment's
+			// The reader stands on the bron's head ($lib/bron/first-node): a person's record, a judgment's
 			// text, a law's or a dossier's detail; the node, once in, takes its place.
 			kopNode(target.collection, target.key)
 				?.then((node) => {
@@ -668,12 +666,12 @@
 
 	// Expand around `node` once per depth, or again when `force`d.
 	async function deepen(node: GraphNode, force = false) {
-		const d = depthFor(node.kind);
+		const d = depthFor(node.drawClass);
 		if (!force && deepenedId === node.id && deepenedDepth === d && deepenedAlles === alles) return;
 		deepenedId = node.id;
 		deepenedDepth = d;
 		deepenedAlles = alles;
-		anchorKind = node.kind;
+		anchorClass = node.drawClass;
 		graphView?.suppressFit();
 		// The focus it was asked for: a link followed while the neighbourhood comes in moves
 		// the focus on, and the reader stays on the new bron (#48).
@@ -849,8 +847,8 @@
 	afterNavigate((nav) => {
 		const van = nav.from?.url;
 		const naar = nav.to?.url;
-		const from = van ? verkennerUrl(van).searchParams : null;
-		const to = naar ? verkennerUrl(naar).searchParams : null;
+		const from = van ? exploreUrl(van).searchParams : null;
+		const to = naar ? exploreUrl(naar).searchParams : null;
 		const changed = (name: string) => (from?.get(name) ?? null) !== (to?.get(name) ?? null);
 		if (nav.type === 'link' || nav.type === 'popstate' || changed('focus') || changed('lezen'))
 			steppedIn = true;
@@ -871,7 +869,7 @@
 		const href =
 			!f && pad
 				? queryHref(page.url.pathname, next) + page.url.hash
-				: verkennerHref(next, page.url.hash, props);
+				: exploreHref(next, page.url.hash, props);
 		navigate(href, { step: push });
 	}
 

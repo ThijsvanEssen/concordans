@@ -15,7 +15,7 @@ import { COLLECTION_ROLE } from '../collection-role';
 import { get, writable } from 'svelte/store';
 import {
 	buildNodeLabel,
-	kindOfCollection,
+	drawClassOf,
 	lawIdOf,
 	nodeToGraphNode,
 	relationOf,
@@ -38,7 +38,7 @@ export function containerNames(node: BaseNode, containerKind: ContainerKind) {
 		return { short, full: [short, textOf(p.title)].filter(Boolean).join(', ') };
 	}
 	const short =
-		textOf(p.abbreviation) ?? buildNodeLabel(node, kindOfCollection(node.collection as Collection));
+		textOf(p.abbreviation) ?? buildNodeLabel(node, drawClassOf(node.collection as Collection));
 	return { short: short ?? '', full: textOf(p.name) ?? textOf(node.display_name) ?? '' };
 }
 
@@ -219,7 +219,7 @@ export function createGraphContext() {
 			return null;
 		}
 		const graphNode = nodeToGraphNode(node);
-		const law = graphNode?.kind === 'article' ? lawIdOf(p) : null;
+		const law = graphNode?.drawClass === 'article' ? lawIdOf(p) : null;
 		if (law) {
 			recordInstrument({ bwb_id: law, citation_title: p.instrument_citation_title });
 			primeInstrumentNames();
@@ -255,7 +255,7 @@ export function createGraphContext() {
 	const endOf = (collection: string, node: GraphNode | null | undefined): End => ({
 		hull: containerKindOf(collection),
 		drawn: !!node,
-		kind: node?.kind ?? 'other'
+		drawClass: node?.drawClass ?? 'other'
 	});
 
 	/** The semantic threshold of the filters: only semantic edges carry a confidence worth checking. */

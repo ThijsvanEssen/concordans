@@ -140,7 +140,7 @@ export function createExpansion(
 		const endOf = (id: string, node: SubNode | undefined): End => ({
 			hull: node ? containerKindOf(node.collection) : null,
 			drawn: drawn.has(id),
-			kind: nodes.get(id)?.kind ?? 'other'
+			drawClass: nodes.get(id)?.drawClass ?? 'other'
 		});
 		for (const e of edgesIn) {
 			const relation = relationOf(e.relation);

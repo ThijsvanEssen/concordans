@@ -32,7 +32,7 @@
 	import { eigenUitslag, vervanging } from '$lib/components/parliamentary/vervanging';
 	import { fromDocument } from '$lib/bron/submitters';
 	import ReaderHead from './ReaderHead.svelte';
-	import Bijlagen from './Bijlagen.svelte';
+	import DocumentAttachments from './DocumentAttachments.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import { getNodeFirst } from '$lib/api/records';
@@ -302,7 +302,7 @@
 					tekst: doc.text ? () => doc.text ?? '' : undefined
 				}}
 			>
-				{#snippet soort()}
+				{#snippet kindLine()}
 					<!-- Running text, the comma against the word before it. -->
 					<span
 						>{#if term}<GlossaryPill {term} label={kind ?? term} />{:else}{kind ??
@@ -320,7 +320,7 @@
 				{#snippet statusLine()}
 					{#if cite}<span>{cite}.</span>{/if}
 					<Vervanging zinnen={vervanging(doc)} />
-					{#if bijlagen > 0}<Bijlagen
+					{#if bijlagen > 0}<DocumentAttachments
 							collection="documents"
 							bronKey={doc.key}
 							aantal={bijlagen}
@@ -329,7 +329,7 @@
 			</ReaderHead>
 
 			{#if toegelicht.length > 0}
-				<Sectie titel="Licht toe" soort="articles" aantal={doc.explains?.length ?? 0}>
+				<Sectie titel="Licht toe" collection="articles" aantal={doc.explains?.length ?? 0}>
 					<ul class="toegelicht">
 						{#each toegelicht as w (w.bwbId)}
 							{@const wet = $instrumentMetaStore.get(w.bwbId)}

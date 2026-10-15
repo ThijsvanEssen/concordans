@@ -3,7 +3,7 @@ import { get } from 'svelte/store';
 import { fakeApi } from '$lib/test/fakeApi';
 import type { GraphStore } from '$lib/graph/store/types';
 import type { GraphNode } from '$lib/graph/types';
-import { createVerbondenSource, luiTeLaden } from './source';
+import { createVerbondenSource, luiTeLaden } from './data-source';
 import { VERBONDEN_BUCKET } from '$lib/api/records';
 
 const first = (buckets: unknown[]) => ({ node: {}, neighbors: { total: 0, buckets } }) as never;

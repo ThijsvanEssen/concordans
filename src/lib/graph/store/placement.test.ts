@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { ContainerKind } from '../container-membership';
-import type { GraphNodeKind } from '../types';
+import type { DrawClass } from '../types';
 import type { Relation } from '$lib/vocabulary';
 import { placeConnection, type Connection, type End, type Mode, type Placement } from './placement';
 
-const bron = (kind: GraphNodeKind, drawn = true): End => ({ hull: null, drawn, kind });
-const hull = (h: ContainerKind, drawn = false): End => ({ hull: h, drawn, kind: h });
+const bron = (drawClass: DrawClass, drawn = true): End => ({ hull: null, drawn, drawClass });
+const hull = (h: ContainerKind, drawn = false): End => ({ hull: h, drawn, drawClass: h });
 
 const at = (
 	mode: Mode,

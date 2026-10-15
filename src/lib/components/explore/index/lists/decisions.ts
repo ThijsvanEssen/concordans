@@ -16,7 +16,7 @@ export type DecisionsState = {
 
 const query = (p: IndexParams) => ({
 	chamber: p.kamer,
-	kind: p.soort || undefined,
+	kind: p.decisionKind || undefined,
 	passed: p.passed === undefined ? undefined : p.passed === 'true',
 	from: p.from || undefined,
 	to: p.to || undefined,
@@ -72,12 +72,12 @@ export const decisions = defineList<Row, DecisionsState, ReturnType<typeof query
 		const outcomes = facetMap(state.facets?.passed);
 		// The kinds the Kamer's decisions have, as the facet counts them; one without a zaak
 		// cannot be chosen. The Eerste Kamer's decisions have none yet: no group then.
-		const kinds = facetOptions(facetMap(state.facets?.kind), p.soort).map(([k, n]) => ({
+		const kinds = facetOptions(facetMap(state.facets?.kind), p.decisionKind).map(([k, n]) => ({
 			id: k,
 			label: k,
 			count: n,
-			on: p.soort === k,
-			onClick: toggle(patch, 'soort', p.soort, k)
+			on: p.decisionKind === k,
+			onClick: toggle(patch, 'soort', p.decisionKind, k)
 		}));
 		return [
 			...(kinds.length || p.kamer === 'TK'

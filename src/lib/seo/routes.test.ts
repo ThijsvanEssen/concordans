@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { SPA_ROUTES, canonical, routeKop, routePath } from './routes';
-import { LADEN_TITEL, siteTitle } from './kop.svelte';
+import { LADEN_TITEL, siteTitle } from './server-head.svelte';
 
 /** Every +page.svelte under src/routes, with its route id as SvelteKit gives it. */
 const PAGES = readdirSync('src/routes', { recursive: true, encoding: 'utf8' })

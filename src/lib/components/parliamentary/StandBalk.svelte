@@ -28,7 +28,7 @@
 				<li class="vak vak--{box.mark}">
 					<span class="naam">{box.body}</span>
 					<span class="streep" aria-hidden="true"></span>
-					<Uitkomst soort={box.mark} woord={box.word} />
+					<Uitkomst tone={box.mark} woord={box.word} />
 					<span class="wanneer">{box.line}</span>
 				</li>
 			{/each}

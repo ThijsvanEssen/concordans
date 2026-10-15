@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { actingReason, at, bandsOf, lanesOf, termOf, type Seat, type SeatPost } from './occupancy';
+import {
+	actingReason,
+	at,
+	bandsOf,
+	lanesOf,
+	termOf,
+	type CabinetPost,
+	type SeatPost
+} from './occupancy';
 
 const post = (name: string, from: string, to: string | null, extra: Partial<SeatPost> = {}) =>
 	({
@@ -17,8 +25,8 @@ const post = (name: string, from: string, to: string | null, extra: Partial<Seat
 		...extra
 	}) as SeatPost;
 
-const seat = (posts: SeatPost[], extra: Partial<Seat> = {}) =>
-	({ seat: 'ienw/minister', post: 'minister', posts, ...extra }) as Seat;
+const seat = (posts: SeatPost[], extra: Partial<CabinetPost> = {}) =>
+	({ seat: 'ienw/minister', post: 'minister', posts, ...extra }) as CabinetPost;
 
 const schoof = termOf({ from_date: '2024-07-02', to_date: '2026-02-23', ministries: [] })!;
 

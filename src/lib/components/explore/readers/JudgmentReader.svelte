@@ -2,7 +2,7 @@
 	import { ecliKey } from '$lib/bron/leesbaar';
 	import { capitalize, textOf } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
-	import { bevindingen, strekking } from './uitkomst';
+	import { bevindingen, strekking } from './judgment-outcome';
 	import { keyEcli } from '$lib/bron/leesbaar';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import {
@@ -43,7 +43,7 @@
 	import { once } from '$lib/api/records';
 	import { paragraphNumber } from '$lib/text/anchor';
 	import { korteDatum, langeDatum } from '$lib/text/datum';
-	import { samenhangVan, type Samenhang } from './samenhang';
+	import { samenhangVan, type Samenhang } from './related-cases';
 	import Voetnoten from '$lib/components/articles/Voetnoten.svelte';
 	import { kantlijn } from '$lib/actions/kantlijn';
 	import { isNootAnker, uitspraakNoten, type Noot, type NootMarker } from '$lib/text/voetnoten';
@@ -188,7 +188,7 @@
 		{@const naamKort = kop?.short ?? j.display_name ?? 'Uitspraak'}
 		<ReaderHead
 			collection="judgments"
-			kind={conclusion ? 'Conclusie' : null}
+			kindLabel={conclusion ? 'Conclusie' : null}
 			juris={textOf(j.props?.court)}
 			title={(kop ? kop.full : (j.display_name ?? 'Uitspraak')) +
 				(j.names?.length ? ` (${j.names.join(', ')})` : '')}
@@ -333,7 +333,7 @@
 		{/if}
 
 		{#if samenhang.length > 0}
-			<Sectie titel="Samenhangende zaken" soort="judgments" aantal={samenhang.length}>
+			<Sectie titel="Samenhangende zaken" collection="judgments" aantal={samenhang.length}>
 				<ul class="samenhang">
 					{#each samenhang as z (z.key)}
 						<li>
