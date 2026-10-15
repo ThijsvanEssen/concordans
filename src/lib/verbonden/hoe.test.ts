@@ -7,6 +7,7 @@ import {
 	type Relation
 } from '$lib/vocabulary';
 import { capitalize } from '$lib/text/words';
+import catalogus from '$lib/api/relations.json';
 import {
 	CHANGE_HEAD,
 	changeAround,
@@ -331,89 +332,22 @@ describe('hoeVan', () => {
 });
 
 // The relations of the API with the collections at their two ends, as its catalogue lists them
-// (lawgraph docs/data-model.md, generated from core/relations.py).
-const CATALOGUS: Record<Relation, [Collection[], Collection[]]> = {
-	PART_OF: [
-		['articles', 'annexes', 'documents', 'cases', 'instruments'],
-		['instruments', 'cases', 'dossiers']
-	],
-	VERSION_OF: [
-		['instrument_versions', 'article_versions'],
-		['instruments', 'articles']
-	],
-	ESTABLISHES: [['instruments'], ['articles']],
-	AMENDS: [
-		['instruments', 'documents'],
-		['instruments', 'articles']
-	],
-	INTRODUCES: [
-		['instruments', 'documents'],
-		['instruments', 'articles']
-	],
-	REPEALS: [
-		['instruments', 'documents'],
-		['instruments', 'articles']
-	],
-	BASED_ON: [['instruments'], ['articles']],
-	IMPLEMENTS: [['instruments'], ['instruments']],
-	LEGISLATED_IN: [['instruments'], ['dossiers']],
-	PUBLISHED_IN: [['instruments'], ['instruments']],
-	REFERS_TO: [
-		['articles', 'documents', 'judgments', 'instruments'],
-		['articles', 'instruments', 'judgments', 'documents']
-	],
-	EXPLAINS: [['documents'], ['article_versions', 'articles', 'instruments']],
-	APPEAL_OF: [['judgments'], ['judgments']],
-	CONTINUES: [
-		['judgments', 'activities'],
-		['judgments', 'activities']
-	],
-	REFERRED_BY: [['judgments'], ['judgments']],
-	ADVISES_ON: [['judgments'], ['judgments']],
-	ANSWERS: [
-		['judgments', 'documents'],
-		['judgments', 'commitments', 'documents']
-	],
-	SAME_AS: [
-		['judgments', 'instruments', 'documents', 'members'],
-		['judgments', 'instruments', 'members']
-	],
-	SCOPED_BY: [['articles'], ['annexes']],
-	ABOUT: [
-		['activities', 'decisions', 'commitments'],
-		['cases', 'dossiers']
-	],
-	LED_BY: [['activities', 'cases'], ['committees']],
-	MADE_IN: [['commitments', 'documents', 'decisions'], ['activities']],
-	MEMBER_OF: [['members'], ['committees', 'factions']],
-	SERVED_IN: [['members'], ['cabinets']],
-	AUTHORED: [['members'], ['documents', 'cases', 'commitments']],
-	RELATED_TO: [
-		['dossiers', 'judgments', 'cases'],
-		['dossiers', 'judgments', 'cases']
-	],
-	REVISES: [
-		['dossiers', 'documents'],
-		['dossiers', 'documents']
-	],
-	ACCOMPANIES: [
-		['dossiers', 'documents'],
-		['dossiers', 'documents']
-	],
-	SECOND_READING_OF: [['dossiers'], ['dossiers']],
-	VOTED: [['members', 'factions'], ['decisions']]
-};
+// (lawgraph tests/data/relations.json, generated from core/relations.py).
+const CATALOGUS = catalogus.relations as {
+	name: Relation;
+	sources: Collection[];
+	targets: Collection[];
+}[];
 
 describe('one source of words per relation, direction and collection', () => {
 	it('knows every relation of the API', () => {
-		expect(Object.keys(CATALOGUS).sort()).toEqual([...RELATIONS].sort());
+		expect(CATALOGUS.map((r) => r.name).sort()).toEqual([...RELATIONS].sort());
 	});
 
 	const paren: [Relation, Collection, Collection][] = [];
-	for (const relation of RELATIONS) {
+	for (const { name: relation, sources, targets } of CATALOGUS) {
 		if (ZONDER_WOORDEN[relation]) continue;
-		const [van, naar] = CATALOGUS[relation];
-		for (const a of van) for (const b of naar) paren.push([relation, a, b]);
+		for (const a of sources) for (const b of targets) paren.push([relation, a, b]);
 	}
 
 	it.each(paren)('%s from %s to %s has its words both ways and its kind', (relation, van, naar) => {

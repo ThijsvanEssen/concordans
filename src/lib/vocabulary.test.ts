@@ -13,6 +13,8 @@ import {
 	nodeId,
 	parseNodeId
 } from './vocabulary';
+import catalogus from '$lib/api/relations.json';
+import openapi from '$lib/api/openapi.json';
 
 describe('node ids', () => {
 	it('builds and parses collection/key', () => {
@@ -31,10 +33,20 @@ describe('node ids', () => {
 });
 
 describe('vocabulary', () => {
-	it('knows the 16 collections and 30 relations of the API', () => {
-		expect(Object.keys(NODE_TYPES)).toHaveLength(16);
-		expect(RELATIONS).toHaveLength(30);
-		expect(new Set(RELATIONS).size).toBe(30);
+	it('knows the collections and relations of the API catalogue, each once', () => {
+		expect(Object.keys(NODE_TYPES).sort()).toEqual([...catalogus.collections].sort());
+		expect([...RELATIONS].sort()).toEqual(catalogus.relations.map((r) => r.name).sort());
+		expect(new Set(RELATIONS).size).toBe(RELATIONS.length);
+	});
+
+	it('has the catalogue the API types its schema with', () => {
+		const schemas = openapi.components.schemas;
+		expect([...catalogus.collections].sort()).toEqual(
+			[...schemas.BaseNodeDTO.properties.collection.enum].sort()
+		);
+		expect(catalogus.relations.map((r) => r.name).sort()).toEqual(
+			[...schemas.NodeNeighborhoodEdge.properties.relation.anyOf[0].enum!].sort()
+		);
 	});
 
 	it('refuses names of the old API', () => {
