@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Schema } from '$lib/api/types';
-import {
-	bodyItems,
-	forParties,
-	judgmentParticipants,
-	partiesByRole,
-	signatureStart
-} from './judgment-text';
+import { bodyItems, judgmentParticipants, partiesByRole, signatureStart } from './judgment-text';
 
 type Judgment = Schema<'JudgmentDTO'>;
 type Paragraph = Schema<'JudgmentParagraph'>;
@@ -650,9 +644,15 @@ describe('parties from the API', () => {
 		).toEqual([
 			['Verweerder', 'MAATSCHAP GRONINGEN', undefined],
 			['Verweerder', 'NEDERLANDSE AARDOLIE MAATSCHAPPIJ B.V.', undefined],
-			['Advocaat', 'Mr. J. de Bie Leuveling Tjeenk', 'de Maatschap, NAM'],
+			['Advocaat', 'Mr. J. de Bie Leuveling Tjeenk', 'de Maatschap en NAM'],
 			['Verweerder', 'EBN B.V.', undefined],
 			['Advocaat', 'mr. J.F. de Groot', 'EBN']
+		]);
+		const [{ named }] = partiesByRole(judgmentParticipants(judgment({ paragraphs: [], parties })));
+		expect(named.map((p) => p.counsel)).toEqual([
+			[],
+			['Mr. J. de Bie Leuveling Tjeenk, advocaat, voor de Maatschap en NAM'],
+			['mr. J.F. de Groot, advocaat']
 		]);
 	});
 
@@ -732,18 +732,84 @@ describe('partiesByRole', () => {
 		expect(groups.map((g) => [g.role, g.named.length, g.anonymous.length, g.derived])).toEqual([
 			['Appellant', 0, 116, false],
 			['Geïntimeerde', 2, 0, false],
-			['Eiser', 1, 0, true],
-			['Advocaat', 1, 0, false]
+			['Eiser', 1, 0, true]
+		]);
+		expect(groups[0].counsel).toEqual(['mr. M.A. de Jager, advocaat, voor [appellant 1]']);
+	});
+});
+
+describe('the parties as the reader writes them (ECLI:NL:RVS:2026:6099)', () => {
+	// `judgment.parties` as /api/judgments/ECLI:NL:RVS:2026:6099 gives them.
+	const parties = [
+		party('Trusthave Management B.V.', 'Appellant', { roles: ['Appellant'] }),
+		party('de raad van de gemeente Sluis', 'Verweerder', {
+			side: 'second',
+			roles: ['Verweerder'],
+			representatives: [
+				{ name: 'mr. J. Geelhoed', role: 'advocaat', place: 'Delft', capacity: null },
+				{ name: 'D. den Hamer BSc', role: 'gemachtigde', place: null, capacity: null },
+				{ name: 'L.E.G. de Rooij', role: 'gemachtigde', place: null, capacity: null }
+			]
+		})
+	];
+	const groups = partiesByRole(judgmentParticipants(judgment({ paragraphs: [], parties })));
+
+	it('puts who acts for a party under it, in the form a judgment uses', () => {
+		expect(groups.map((g) => [g.role, g.named.map((p) => [p.name, p.counsel])])).toEqual([
+			['Appellant', [['Trusthave Management B.V.', []]]],
+			[
+				'Verweerder',
+				[
+					[
+						'de raad van de gemeente Sluis',
+						[
+							'mr. J. Geelhoed, advocaat te Delft',
+							'D. den Hamer BSc, gemachtigde',
+							'L.E.G. de Rooij, gemachtigde'
+						]
+					]
+				]
+			]
+		]);
+	});
+
+	it('names the party only where the line does not stand under it', () => {
+		const lines = partiesByRole([
+			{ role: 'Eiser', name: '[eiseres 1]', alias: '[eisers]' },
+			{ role: 'Advocaat', name: 'mr. H.J.W. Alt', party: '[eisers]' },
+			{ role: 'Appellant', name: '[appellant 1]' },
+			{ role: 'Appellant', name: '[appellant 2]' },
+			{
+				role: 'Gemachtigde',
+				name: 'mr. A. Jansen',
+				party: '[appellant 2]',
+				capacity: 'ambtenaar in dienst van de provincie'
+			}
+		]);
+		expect(lines.map((g) => [g.role, g.named.flatMap((p) => p.counsel), g.counsel])).toEqual([
+			['Eiser', ['mr. H.J.W. Alt, advocaat'], []],
+			[
+				'Appellant',
+				[],
+				['mr. A. Jansen, gemachtigde, ambtenaar in dienst van de provincie, voor [appellant 2]']
+			]
 		]);
 	});
 });
 
-describe('forParties', () => {
+describe('whom a lawyer acts for, where the line does not stand under the party', () => {
+	const under = (party: string) =>
+		partiesByRole([
+			{ role: 'Geïntimeerde', name: 'KLM' },
+			{ role: 'Advocaat', name: 'mr. X', party }
+		])[0].named[0].counsel[0];
 	it('counts the pseudonymised parties a lawyer acts for', () => {
 		const many = Array.from({ length: 116 }, (_, i) => `[appellant ${i + 1}]`).join(', ');
-		expect(forParties(many)).toBe('116 geanonimiseerde partijen');
-		expect(forParties('KLM, [eiser 1] en [eiser 2]')).toBe('KLM en 2 geanonimiseerde partijen');
-		expect(forParties('[appellant]')).toBe('[appellant]');
+		expect(under(many)).toBe('mr. X, advocaat, voor 116 geanonimiseerde partijen');
+		expect(under('KLM, [eiser 1] en [eiser 2]')).toBe(
+			'mr. X, advocaat, voor KLM en 2 geanonimiseerde partijen'
+		);
+		expect(under('[appellant]')).toBe('mr. X, advocaat, voor [appellant]');
 	});
 });
 

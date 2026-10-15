@@ -493,7 +493,7 @@ function fromApi(parties: JudgmentParty[]): Participant[] {
 			rows.push({
 				role: REPRESENTATIVE_ROLES[r.role] ?? r.role,
 				name: r.name,
-				party: [...labels].join(', '),
+				party: joinAnd([...labels]),
 				...(r.place?.trim() ? { place: r.place.trim() } : {}),
 				...(r.capacity?.trim() ? { capacity: r.capacity.trim() } : {})
 			});
@@ -753,34 +753,81 @@ function splitBodyParagraph(
 	return [...result, ...trailingHeadings];
 }
 
+/** A party in the reader, with the lines of who acts for it under it. */
+type PartyEntry = Participant & { counsel: string[] };
+
 type RoleGroup = {
 	role: string;
 	/** Parties the judgment names, in its order. */
-	named: Participant[];
+	named: PartyEntry[];
 	/** Parties it names only by a placeholder (`[appellant 1]`), counted instead of listed. */
-	anonymous: Participant[];
+	anonymous: PartyEntry[];
+	/** Who acts for the counted parties: their lines stand under the count. */
+	counsel: string[];
 	/** Some role in the group is derived, not stated in the judgment. */
 	derived: boolean;
 };
 
 /**
+ * Who acts for a party, in the form a judgment writes it: `mr. J. Geelhoed, advocaat te
+ * Delft`, `mr. A. Jansen, gemachtigde, ambtenaar in dienst van de provincie`. The party
+ * is named only where the line does not stand under it (`under`): `, voor [eisers]`.
+ */
+function counselLine(p: Participant, under?: string): string {
+	const parts = [p.name, `${p.role.toLowerCase()}${p.place ? ` te ${p.place}` : ''}`];
+	if (p.capacity) parts.push(p.capacity);
+	if (p.party && p.party !== under) parts.push(`voor ${forParties(p.party)}`);
+	return parts.join(', ');
+}
+
+/** What the reader writes after a party's name: `(KLM), ook appellant`. */
+export function partyNote(p: Participant): string {
+	const notes = [
+		p.alias ? `(${p.alias})` : null,
+		p.alsoAs?.length ? `ook ${p.alsoAs.map((r) => r.toLowerCase()).join(', ')}` : null
+	];
+	return notes.filter(Boolean).join(', ');
+}
+
+/**
  * The parties by role, in the order the roles first appear: a mass appeal of a hundred
- * pseudonymised appellants is one row, and the parties that are named stand out.
+ * pseudonymised appellants is one row, and the parties that are named stand out. Who
+ * acts for a party stands under the party it follows; one that follows no party is a
+ * row of its own.
  */
 export function partiesByRole(participants: Participant[]): RoleGroup[] {
 	const groups = new Map<string, RoleGroup>();
-	for (const p of participants) {
-		let g = groups.get(p.role);
+	const group = (role: string) => {
+		let g = groups.get(role);
 		if (!g) {
-			g = { role: p.role, named: [], anonymous: [], derived: false };
-			groups.set(p.role, g);
+			g = { role, named: [], anonymous: [], counsel: [], derived: false };
+			groups.set(role, g);
 		}
-		(isPlaceholder(p.name) ? g.anonymous : g.named).push(p);
+		return g;
+	};
+	let host: PartyEntry | null = null;
+	const hosted: Array<[PartyEntry, Participant]> = [];
+	for (const p of participants) {
+		if (p.party && host) {
+			hosted.push([host, p]);
+			continue;
+		}
+		const g = group(p.role);
+		const entry: PartyEntry = { ...p, counsel: [] };
+		(isPlaceholder(p.name) ? g.anonymous : g.named).push(entry);
 		if (p.stated === false) g.derived = true;
+		if (!p.party) host = entry;
 	}
 	// One pseudonymised party reads better by its placeholder than as a count of one.
 	for (const g of groups.values()) {
 		if (g.anonymous.length === 1) g.named.push(...g.anonymous.splice(0));
+	}
+	// A line under a listed party leaves the party out; under a count it names it.
+	for (const g of groups.values()) {
+		for (const [entry, p] of hosted) {
+			if (g.named.includes(entry)) entry.counsel.push(counselLine(p, entry.alias ?? entry.name));
+			else if (g.anonymous.includes(entry)) g.counsel.push(counselLine(p));
+		}
 	}
 	// The parties first, then who represents or advises them.
 	const counsel = (g: RoleGroup) =>
@@ -791,7 +838,7 @@ export function partiesByRole(participants: Participant[]): RoleGroup[] {
 }
 
 /** Whom a lawyer acts for, with pseudonymised parties counted: `KLM en 3 geanonimiseerde partijen`. */
-export function forParties(party: string): string {
+function forParties(party: string): string {
 	const parts = party
 		.split(/,\s*|\s+en\s+/)
 		.map((p) => p.trim())
