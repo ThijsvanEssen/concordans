@@ -5,6 +5,7 @@ import {
 	allDecisions,
 	countDecisions,
 	countFeed,
+	factionVotesOn,
 	followChains,
 	motionsOf,
 	periodUnit,
@@ -158,6 +159,32 @@ describe('the stemmingen of a topic', () => {
 		});
 		expect(await allDecisions({ q: ['x'] })).toHaveLength(203);
 		expect(api.asked('/api/decisions').map((q) => q.query?.offset)).toEqual([0, 200]);
+	});
+
+	it('asks the pages of a long list without facets, three for 450', async () => {
+		const api = fakeApi({
+			'/api/decisions': (r: FakeRequest) => {
+				const offset = Number(r.params.query?.offset);
+				const length = Math.max(0, Math.min(200, 450 - offset));
+				return {
+					items: Array.from({ length }, (_, i) => ({ key: `${offset + i}` })),
+					total: null
+				};
+			}
+		});
+		expect(await allDecisions({ q: ['x'] })).toHaveLength(450);
+		const asked = api.asked('/api/decisions');
+		expect(asked).toHaveLength(3);
+		expect(asked.every((q) => q.query?.facets === false)).toBe(true);
+	});
+
+	it('asks the moties and a fractie’s votes without facets', async () => {
+		const api = fakeApi({ '/api/decisions': { items: [], total: null } });
+		await motionsOf(topic, ['Motie'], signal());
+		await factionVotesOn({ q: ['x'] }, 'VVD');
+		const asked = api.asked('/api/decisions');
+		expect(asked).toHaveLength(3);
+		expect(asked.every((q) => q.query?.facets === false)).toBe(true);
 	});
 
 	it('asks the moties per kind and gives them together', async () => {

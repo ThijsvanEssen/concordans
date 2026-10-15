@@ -21,8 +21,9 @@ src/routes/
   (main)/(prose)/             colofon, contact, privacy, voorwaarden
 src/lib/
   vocabulary.ts               collections, relations, node ids, BRON_LABEL, MODES
-  bron/                       bronHref (every link to a bron), leesbaar (readable addresses), anchor,
-                              BronLink (opens in Netwerk, card on hover), names, tab titles, KindGlyph
+  bron/                       bronHref (every link to a bron), pad (readable addresses), leesbaar
+                              (their lookup), anchor, BronLink (opens in Netwerk, card on hover),
+                              names, tab titles, KindGlyph
   api/                        client, generated types, records (once), helpers
   graph/                      GraphNode/GraphEdge types, GraphStore (store/*), hulls, anchors
   netwerk/                    the composed netwerk: chosen bronnen, clusters, the panel Netwerk
@@ -50,7 +51,7 @@ Every other kind of bron reads beside the network. The groups of Verbonden are t
 
 ## Data flow
 
-1. A readable address is parsed by `parsePad` (`bron/leesbaar.ts`). A judgment, dossier, cabinet or fractie names its focus directly; an article, Kamerstuk, publication, lid, commissie or toezegging is looked up once through `/api/lookup`. An old `/explore?focus=…` link is rewritten to the readable address once the bron is known.
+1. A readable address is parsed by `parsePad` (`bron/address.ts`). A judgment, dossier, cabinet or fractie names its focus directly; an article, Kamerstuk, publication, lid, commissie or toezegging is looked up once through `/api/lookup`. An old `/explore?focus=…` link is rewritten to the readable address once the bron is known.
 2. The effect on the focus fetches the bron through `GraphStore` and selects it; in Netwerk the neighbourhood around it is loaded and pruned ([`graph-system.md`](graph-system.md)).
 3. `GraphView` renders the store; `KindReader` picks the reader by collection ([`readers.md`](readers.md)); Verbonden reads the same node record as the canvas.
 4. Every link to a bron is `bronHref`, so every step is a navigation and the browser history is the history of bronnen.

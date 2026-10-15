@@ -1,8 +1,8 @@
 // De tekens van Concordans. De vorm zegt wat een bron
 // is; alle tekens staan in inkt, er is geen kleur te onthouden. Eén tabel voor de tekens
 // in de tekst (KindGlyph) en op het canvas (nodeSprites), getekend in een vak van 16.
-import { isCollection, type Collection } from '$lib/vocabulary';
-import { BILL_KIND, isInternational, type FilterGroup } from '$lib/verbonden/filter';
+import { BILL_KIND, isCollection, isInternational, type Collection } from '$lib/vocabulary';
+import type { FilterGroup } from '$lib/verbonden/filter';
 
 export type Vorm =
 	| 'regel'

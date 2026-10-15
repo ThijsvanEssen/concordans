@@ -16,7 +16,7 @@
 
 ## Readable addresses
 
-`src/hooks.ts` serves these paths with the Verkenner; `src/lib/bron/leesbaar.ts` reads and writes them, one rule per kind (`ADDRESS_RULES`). The address of a bron is the `path` the API gives it; the front end makes one only where the key is in it (a judgment, a law, a dossier by its number, a cabinet, a fractie, a stemming, a publication).
+`src/hooks.ts` serves these paths with the Verkenner; `src/lib/bron/address.ts` reads and writes them, one rule per kind (`ADDRESS_RULES`). The address of a bron is the `path` the API gives it; the front end makes one only where the key is in it (a judgment, a law, a dossier by its number, a cabinet, a fractie, a stemming, a publication).
 
 | Bron        | Address                                                      | Focus                            |
 | ----------- | ------------------------------------------------------------ | -------------------------------- |

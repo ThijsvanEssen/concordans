@@ -215,3 +215,26 @@ describe('the hulls of a canvas', () => {
 		expect([...((await hullOf(one, 'dossiers/36764'))?.parts ?? [])]).toEqual(['documents/4']);
 	});
 });
+
+describe('the answer of a node', () => {
+	const full = () =>
+		fake.asked('/api/nodes/{collection}/{key}').filter((p) => p.query?.limit !== 1);
+
+	it('is asked once for two who ask at the same time', async () => {
+		const store = createGraphStore();
+		const [a, b] = await Promise.all([
+			store.nodeResponse('instruments', 'bwbr0005537'),
+			store.nodeResponse('instruments', 'BWBR0005537')
+		]);
+		expect(a).toBe(b);
+		expect(full()).toHaveLength(1);
+	});
+
+	it('is not asked again after a reset while the request is kept', async () => {
+		const store = createGraphStore();
+		await store.nodeResponse('instruments', 'bwbr0005537');
+		store.reset();
+		await store.nodeResponse('instruments', 'bwbr0005537');
+		expect(full()).toHaveLength(1);
+	});
+});

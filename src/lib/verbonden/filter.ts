@@ -9,7 +9,7 @@ import { formatCount } from '$lib/text/getal';
 import { alsDag } from '$lib/text/periode';
 import { isExplanatory } from './document-chamber';
 import type { Row } from './rows';
-import { isAmendingRelation } from '$lib/vocabulary';
+import { BILL_KIND, isAmendingRelation, isInternational } from '$lib/vocabulary';
 import { PARAM } from '$lib/url/filters';
 
 /** The confidence from which a verbinding's betrouwbaarheid is hoog: a citation read whole has 0.95. */
@@ -222,23 +222,6 @@ export const withFilterGroup = (f: VerbondenFilter, kind: FilterGroup): Verbonde
 	f.bronnen === null || f.bronnen.has(kind) ? f : { ...f, bronnen: new Set([...f.bronnen, kind]) };
 
 // ── The kind of a bron ────────────────────────────────────────────────────
-
-// TODO(backend B9): nothing marks a bron as European or international. Until an
-// `eu-links` route exists, the jurisdiction is read from the id: a CELEX number, a
-// BWBV (verdrag) id, an ECLI of the EHRM.
-const INTERNATIONAL_KEY = /^(bwbv\d{7}|[0-9ce]\d{4}[a-z]{1,2}\d{4}|ecli_ce_echr_)/i;
-
-export const isInternational = (n: {
-	key: string;
-	props?: Record<string, unknown> | null;
-}): boolean =>
-	INTERNATIONAL_KEY.test(n.key) ||
-	n.props?.source === 'echr' ||
-	n.props?.jurisdiction === 'eu' ||
-	n.props?.jurisdiction === 'int';
-
-/** A document that proposes or enacts a change: a wetsvoorstel or an amendment to it. */
-export const BILL_KIND = /\b(voorstel van wet|wetsvoorstel|nota van wijziging|amendement)\b/i;
 
 /**
  * The kind of a bron for the filter. Documents are split by what they are:

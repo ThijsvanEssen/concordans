@@ -28,7 +28,7 @@
 	import type SigmaType from 'sigma';
 	import type Graph from 'graphology';
 	import { edgeKey, readEdge } from '$lib/verbonden/edge-meta';
-	import { keyEcli } from '$lib/bron/leesbaar';
+	import { keyEcli } from '$lib/bron/address';
 	import { parseNodeId } from '$lib/vocabulary';
 	import type { GraphFilters } from '$lib/graph/store/types';
 	import type { NodeCounts } from '$lib/api/overlays';
@@ -41,7 +41,7 @@
 		type Rect as LabelRect
 	} from './label-place';
 	import type { Collection, Relation } from '$lib/vocabulary';
-	import { relationLabel } from '$lib/verbonden/hoe';
+	import { relationLabel } from '$lib/verbonden/relation-words';
 	import type { FilterGroup, Rechter } from '$lib/verbonden/filter';
 	import { getInstrumentMeta, lawName } from '$lib/api/instrument-cache';
 	import { isDrawnGroup, type ContainerGroup, type Period } from '$lib/graph/container-membership';
@@ -275,7 +275,7 @@
 		latestHeatPeriodMonths = heatPeriodMonths ?? 12;
 		latestMutatieActive = mutatieActive ?? false;
 		updateViewportLabels();
-		renderer?.refresh();
+		redrawInFrame();
 	});
 
 	$effect(() => {
@@ -304,7 +304,7 @@
 		recomputeStrays();
 		recomputeLinesIntoGroup();
 		computeHulls();
-		renderer?.refresh();
+		redrawInFrame();
 	});
 
 	/** Context of a netwerk: on the canvas, but not chosen nor tying chosen bronnen. */
@@ -354,7 +354,7 @@
 		latestGewezen = new Map(
 			zetels.filter(([, p]) => p.to !== null && p.to < eind).map(([id, p]) => [id, p.to as string])
 		);
-		renderer?.refresh();
+		redrawInFrame();
 	});
 
 	$effect(() => {
@@ -371,7 +371,7 @@
 		recomputeStrays();
 		latestSelectedEdge = selectedEdgeId;
 		latestLineLids = lineLids;
-		renderer?.refresh();
+		redrawInFrame();
 	});
 
 	// Activity halos: HTML rings above the canvas, from rule-strong at low activity
@@ -638,6 +638,13 @@
 	const isHiddenNode = (id: string, attrs: Record<string, unknown>) =>
 		id !== focusedId && (hiddenByFilter(attrs) || strays.has(id));
 
+	/**
+	 * What this component's $effects change is drawn in the next frame, once for all of them:
+	 * a step of the focus woke five, each a render of the whole canvas. Nothing they do reads
+	 * the drawing back; a fit or a measurement after a refresh stays synchronous.
+	 */
+	const redrawInFrame = () => renderer?.refresh({ schedule: true });
+
 	function refresh() {
 		recomputeFocusLevel1();
 		recomputeStrays();
@@ -731,7 +738,7 @@
 	): string {
 		const relation = data.relation as Relation;
 		const meta = (data.meta ?? {}) as Record<string, unknown>;
-		// In the words of hoe.ts, read from the source: a member `diende in` or `ondertekende
+		// In the words of relation-words.ts, read from the source: a member `diende in` or `ondertekende
 		// als minister-president`; a bijlage is `bijlage bij` its letter.
 		const parts = [relationLabel(relation, sourceCollection, targetCollection, meta)];
 		// The source cites: the line says what the card and the row of its target say.
@@ -1230,7 +1237,7 @@
 	$effect(() => {
 		void focusedId;
 		recomputeFocusLevel1();
-		renderer?.refresh();
+		redrawInFrame();
 	});
 
 	onDestroy(() => {

@@ -7,7 +7,7 @@ import {
 	GROUPS,
 	withUnresolvedAppeals
 } from './groups';
-import { isInternational } from './filter';
+import { isInternational } from '$lib/vocabulary';
 import { metaParts } from './rows';
 import { describeBron } from '$lib/bron/describe';
 import { type Neighbor } from '$lib/api/nodes';

@@ -62,9 +62,11 @@
 		doorzochtVanaf,
 		errorPlace,
 		normalizeItem,
+		summaryAsk,
 		type DaySummary,
 		type FeedItem,
-		type FeedKind
+		type FeedKind,
+		type SummarySpan
 	} from '$lib/components/actueel/feed';
 	import { feedStand, standLine } from '$lib/text/stand';
 	import { FEED_PAGE } from '$lib/api/first-pages';
@@ -215,6 +217,7 @@
 			.then((r) => {
 				items = r.items.map(normalizeItem);
 				cursor = r.next_cursor ?? null;
+				feedFilters = JSON.stringify(summaryQuery(q));
 				stand = feedStand(r.data_as_of) ?? stand;
 				doorzocht = doorzochtVanaf(r);
 			})
@@ -306,22 +309,36 @@
 	const days = $derived(daysOf(shown));
 
 	// The whole of each day loaded, under the same filters: a day a page cuts off is
-	// counted in full. Asked again when the filters change or more days come in.
+	// counted in full. Asked once the feed has answered the filters shown (not with their
+	// days before), the whole span for other filters, only the days added for a next page.
 	let summaries = $state<Map<string, DaySummary>>(new Map());
-	const span = $derived.by(() => {
+	/** The filters of the days shown, as the summary takes them; set with the feed's answer. */
+	let feedFilters = $state<string | null>(null);
+	/** The days counted in `summaries`, and under which filters. */
+	let counted: { filters: string; span: SummarySpan } | null = null;
+	const span = $derived.by<SummarySpan | null>(() => {
 		const newest = days[0]?.date;
 		const oldest = days.at(-1)?.date;
 		if (!newest || !oldest) return null;
 		const count = Math.round(daysBetween(oldest, newest)) + 1;
 		return { until: newest, days: Math.min(count, SUMMARY_DAYS_MAX) };
 	});
+	const summaryKey = $derived(
+		span && feedFilters ? `${span.until}|${span.days}|${feedFilters}` : null
+	);
 	$effect(() => {
-		const s = span;
-		const filtersOfDay = summaryQuery(query);
-		if (!s) return;
+		if (!summaryKey) return;
+		const [s, filters] = untrack(() => [span!, feedFilters!] as const);
+		const had = counted?.filters === filters ? counted.span : null;
+		const ask = summaryAsk(s, had);
+		if (!ask) return;
 		const ac = new AbortController();
-		getFeedSummary({ ...s, ...filtersOfDay, margin: CLOSE_VOTE, limit: 1 }, ac.signal)
-			.then((r) => (summaries = new Map((r.days ?? []).map((d) => [d.date, d]))))
+		getFeedSummary({ ...ask, ...JSON.parse(filters), margin: CLOSE_VOTE, limit: 1 }, ac.signal)
+			.then((r) => {
+				const found = (r.days ?? []).map((d) => [d.date, d] as const);
+				summaries = new Map(had ? [...summaries, ...found] : found);
+				counted = { filters, span: s };
+			})
 			// A day stands without its whole count.
 			.catch((e) => report('Actueel dagtellingen', e));
 		return () => ac.abort();

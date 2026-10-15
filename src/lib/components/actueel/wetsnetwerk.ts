@@ -11,7 +11,7 @@ import { getFeed } from '$lib/api/feed';
 import { getCitedByTop } from '$lib/api/articles';
 import type { Schema } from '$lib/api/types';
 import { buildBronHref } from '$lib/bron/href';
-import { exploreHref } from '$lib/bron/leesbaar';
+import { exploreHref } from '$lib/bron/address';
 import type { Vorm } from '$lib/bron/vormen';
 import {
 	articleLabel,

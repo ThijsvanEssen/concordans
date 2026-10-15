@@ -5,7 +5,7 @@
 import { getBuckets } from '$lib/api/nodes';
 import { abortable, once } from '$lib/api/records';
 import type { Neighbor } from '$lib/api/nodes';
-import { rowOfNeighbor, type Row } from '$lib/verbonden/rows';
+import { rowOfNeighbor, type Row } from './rows';
 import { belongsToBill, isBill, isCoverLetter, isLetter } from '$lib/text/document-kind';
 
 /** The zaken of a stuk asked for their papers: one is the rule, a few at most. */

@@ -1,0 +1,297 @@
+{
+	"detail": {
+		"judgment": {
+			"id": "judgments/ecli_nl_rbrot_2026_12500",
+			"key": "ecli_nl_rbrot_2026_12500",
+			"collection": "judgments",
+			"type": "judgment",
+			"display_name": "Rechtbank Rotterdam 2026-09-23 / 11948529 VZ VERZ 25-6741",
+			"labels": ["Rechtspraak"],
+			"props": {
+				"case_number": "11948529 VZ VERZ 25-6741",
+				"case_number_keys": ["11948529vzverz25-6741"],
+				"court": "Rechtbank Rotterdam",
+				"court_code": "RBROT",
+				"court_kind": "rechtbank",
+				"date": "2026-09-23",
+				"date_eff": "2026-09-23",
+				"decision_kind": "beschikking",
+				"display_name": "Rechtbank Rotterdam 2026-09-23 / 11948529 VZ VERZ 25-6741",
+				"ecli": "ECLI:NL:RBROT:2026:12500",
+				"inbound_citation_count": 0,
+				"meta": { "ecli": "ECLI:NL:RBROT:2026:12500", "updated": "2026-09-24T08:00:14+00:00" },
+				"names": [],
+				"outbound_citation_count": 0,
+				"published_on": "2026-09-24",
+				"replaced_by": null,
+				"source": "rechtspraak",
+				"source_kind": "rs-content",
+				"stub": false,
+				"subjects": ["Civiel recht"],
+				"summary": "Herstelvonnis \n         Zie ook ECLI:NL:RBROT:2026:11738",
+				"tier": "rechtbank",
+				"unresolved_citations": null
+			},
+			"cite": {
+				"short": "Rb. Rotterdam 23 september 2026",
+				"full": "Rb. Rotterdam 23 september 2026, ECLI:NL:RBROT:2026:12500"
+			},
+			"title": "Rb. Rotterdam 23 september 2026, ECLI:NL:RBROT:2026:12500",
+			"outcome": null,
+			"outcome_text": null,
+			"conclusion_outcome": null,
+			"conclusion_outcome_text": null,
+			"echr_findings": [],
+			"outcome_paragraph_id": null,
+			"conclusion_outcome_paragraph_id": null,
+			"ecli": "ECLI:NL:RBROT:2026:12500",
+			"source": "rechtspraak",
+			"official_url": "https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBROT:2026:12500",
+			"summary": "Herstelvonnis \n         Zie ook ECLI:NL:RBROT:2026:11738",
+			"summary_en": null,
+			"translation_of": null,
+			"names": [],
+			"decision_kind": "beschikking",
+			"series_id": null,
+			"series_size": null,
+			"same_as": null,
+			"replaced_by": null,
+			"published_on": "2026-09-24",
+			"advocate_general": null,
+			"advocate_general_role": null,
+			"unresolved_appeal_targets": [],
+			"unresolved_citations": [],
+			"paragraphs": [
+				{
+					"paragraph_id": "p-e1cab7de",
+					"number": null,
+					"kind": "subheading",
+					"continues": null,
+					"text": "RECHTBANK ROTTERDAM\n\nlocatie Rotterdam\n\nzaaknummer: 11948529 VZ VERZ 25-6741\n\ndatum uitspraak: 23 september 2026\n\nHerstelbeschikking van de kantonrechter\n\nin de zaak van\n\nde ondernemingsraad van ExxonMobil in Nederland,\n\nvestigingsplaats: Rotterdam,\n\nverzoekster,\n\nvertegenwoordigd door zijn voorzitter [naam] ,\n\ngemachtigden: mr. D. Schwartz en mr. L.J.M. van Westerlaak,\n\ntegen\n\nESSO Nederland B.V. en ExxonMobil Chemical Holland B.V.,\n\nvestigingsplaats: Rotterdam,\n\nverweerster,\n\ngemachtigde: mr. E. Lutjens.\n\nDe partijen worden hierna ‘de ondernemingsraad’ en ‘ExxonMobil’ genoemd.\n\n1 Het voornemen van de kantonrechter en de reactie van partijen\n\nDe kantonrechter heeft partijen op 11 september 2026 geïnformeerd over het voornemen om een kennelijke fout in de beschikking van 10 september 2026 te herstellen. Onder de ‘De beoordeling’ in rechtsoverweging 2.15 staat dat de beschikking uitvoerbaar bij voorraad wordt verklaard, maar onder ‘De beslissing’ ontbreekt de uitvoerbaar bij voorraadverklaring. Dit is naar het oordeel van de kantonrechter een kennelijke fout, die zich voor eenvoudig herstel leent.\n\nPartijen is gevraagd om op dit voornemen te reageren.\n\nDe advocaat van ExxonMobil geeft in een brief van 17 september aan dat hij er bezwaar tegen heeft dat de beschikking wordt aangepast. Hij stelt dat hij de beschikking aldus heeft verstaan dat het een bewuste keuze is het uitvoerbaar bij voorraad niet in de beschikking op te nemen. Dit bezwaar is niet terecht. In rechtsoverweging 2.15 van de beschikking staat duidelijk dat de beschikking uitvoerbaar bij voorraad wordt verklaard. In deze rechtsoverweging wordt ook uitgelegd waarom de kantonrechter dit heeft besloten. De alinea wordt afgesloten met de zin: Daarom wijst de kantonrechter de uitvoerbaar bij voorraad verklaring toe.\n\n1.4.. De advocaat van de ondernemingsraad heeft niet schriftelijk gereageerd, maar telefonisch aan de griffie van de rechtbank laten weten in te stemmen met het voorgenomen herstel.",
+					"citations": []
+				},
+				{
+					"paragraph_id": "kop-2",
+					"number": "2",
+					"kind": "heading",
+					"continues": null,
+					"text": "De beoordeling",
+					"citations": []
+				},
+				{
+					"paragraph_id": "rov-2.1",
+					"number": "2.1",
+					"kind": "body",
+					"continues": null,
+					"text": "De kantonrechter zal de beschikking verbeteren omdat sprake is van een kennelijke fout die makkelijk hersteld kan worden (artikel 31 Rv).",
+					"citations": []
+				},
+				{
+					"paragraph_id": "rov-2.2",
+					"number": "2.2",
+					"kind": "body",
+					"continues": null,
+					"text": "De kantonrechter heeft geconstateerd dat er nog een typefout staat in de beschikking van 10 september 2026. In 2.8 van de beschikking staat ‘toerekende motivering’. Dit moet zijn ‘toereikende motivering’. De kantonrechter zal deze kennelijke verschrijving in deze herstelbeschikking ook verbeteren.",
+					"citations": []
+				}
+			],
+			"footnotes": [],
+			"parties": [
+				{
+					"name": "de ondernemingsraad van ExxonMobil in Nederland",
+					"role": "Verzoeker",
+					"roles": ["Verzoeker"],
+					"role_stated": true,
+					"side": "first",
+					"alias": null,
+					"representatives": [
+						{ "name": "mr. D. Schwartz", "role": "gemachtigde", "place": null, "capacity": null },
+						{
+							"name": "mr. L.J.M. van Westerlaak",
+							"role": "gemachtigde",
+							"place": null,
+							"capacity": null
+						}
+					]
+				},
+				{
+					"name": "ESSO Nederland B.V. en ExxonMobil Chemical Holland B.V.",
+					"role": "Verweerder",
+					"roles": ["Verweerder"],
+					"role_stated": true,
+					"side": "second",
+					"alias": null,
+					"representatives": [
+						{ "name": "mr. E. Lutjens", "role": "gemachtigde", "place": null, "capacity": null }
+					]
+				}
+			],
+			"path": "/uitspraken/ECLI:NL:RBROT:2026:12500",
+			"translation_of_id": null,
+			"replaced_by_id": null
+		},
+		"articles": [],
+		"cited_articles": [],
+		"cited_judgments": [],
+		"same_as": [],
+		"related_to": [
+			{
+				"cite": { "short": "Rb. Rotterdam", "full": "Rb. Rotterdam, ECLI:NL:RBROT:2026:11738" },
+				"id": "judgments/ecli_nl_rbrot_2026_11738",
+				"key": "ecli_nl_rbrot_2026_11738",
+				"display_name": "Rechtbank Rotterdam 2026-09-10 / 11948529 VZ VERZ 25-6741",
+				"ecli": "ECLI:NL:RBROT:2026:11738",
+				"links": [
+					{
+						"direction": "outbound",
+						"basis": "summary_text",
+						"text": "Zie ook ECLI:NL:RBROT:2026:11738"
+					},
+					{
+						"direction": "inbound",
+						"basis": "summary_text",
+						"text": "Zie ook ECLI:NL:RBROT:2026:12500"
+					}
+				],
+				"path": "/uitspraken/ECLI:NL:RBROT:2026:11738"
+			}
+		],
+		"conclusions": [],
+		"series": [],
+		"metadata": { "article_count": 2 }
+	},
+	"related": {
+		"node": {
+			"id": "judgments/ecli_nl_rbrot_2026_12500",
+			"key": "ecli_nl_rbrot_2026_12500",
+			"collection": "judgments",
+			"type": "judgment",
+			"display_name": "Rechtbank Rotterdam 2026-09-23 / 11948529 VZ VERZ 25-6741",
+			"labels": ["Rechtspraak"],
+			"props": {
+				"case_number": "11948529 VZ VERZ 25-6741",
+				"case_number_keys": ["11948529vzverz25-6741"],
+				"court": "Rechtbank Rotterdam",
+				"court_code": "RBROT",
+				"court_kind": "rechtbank",
+				"date": "2026-09-23",
+				"date_eff": "2026-09-23",
+				"decision_kind": "beschikking",
+				"display_name": "Rechtbank Rotterdam 2026-09-23 / 11948529 VZ VERZ 25-6741",
+				"ecli": "ECLI:NL:RBROT:2026:12500",
+				"inbound_citation_count": 0,
+				"meta": { "ecli": "ECLI:NL:RBROT:2026:12500", "updated": "2026-09-24T08:00:14+00:00" },
+				"names": [],
+				"outbound_citation_count": 0,
+				"published_on": "2026-09-24",
+				"replaced_by": null,
+				"source": "rechtspraak",
+				"source_kind": "rs-content",
+				"stub": false,
+				"summary": "Herstelvonnis \n         Zie ook ECLI:NL:RBROT:2026:11738",
+				"tier": "rechtbank"
+			},
+			"cite": {
+				"short": "Rb. Rotterdam 23 september 2026",
+				"full": "Rb. Rotterdam 23 september 2026, ECLI:NL:RBROT:2026:12500"
+			},
+			"title": "Rb. Rotterdam 23 september 2026, ECLI:NL:RBROT:2026:12500",
+			"path": "/uitspraken/ECLI:NL:RBROT:2026:12500"
+		},
+		"neighbors": {
+			"total": 2,
+			"buckets": [
+				{
+					"relation": "RELATED_TO",
+					"direction": "inbound",
+					"collection": "judgments",
+					"type": "judgment",
+					"total": 1,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "judgments/ecli_nl_rbrot_2026_11738",
+							"key": "ecli_nl_rbrot_2026_11738",
+							"collection": "judgments",
+							"type": "judgment",
+							"display_name": "Rechtbank Rotterdam 2026-09-10 / 11948529 VZ VERZ 25-6741",
+							"labels": ["Rechtspraak"],
+							"props": {
+								"case_number": "11948529 VZ VERZ 25-6741",
+								"court": "Rechtbank Rotterdam",
+								"court_code": "RBROT",
+								"date": "2026-09-10",
+								"display_name": "Rechtbank Rotterdam 2026-09-10 / 11948529 VZ VERZ 25-6741",
+								"ecli": "ECLI:NL:RBROT:2026:11738",
+								"names": [],
+								"source": "rechtspraak",
+								"stub": false
+							},
+							"cite": {
+								"short": "Rb. Rotterdam 10 september 2026",
+								"full": "Rb. Rotterdam 10 september 2026, ECLI:NL:RBROT:2026:11738"
+							},
+							"title": "Rb. Rotterdam 10 september 2026, ECLI:NL:RBROT:2026:11738",
+							"edge_id": "61e7794cbf34acd8be12b4d4df02c78cf2c17179",
+							"relation": "RELATED_TO",
+							"direction": "inbound",
+							"confidence": 1.0,
+							"status": "canoniek",
+							"meta": { "basis": "summary_text", "text": "Zie ook ECLI:NL:RBROT:2026:12500" },
+							"path": "/uitspraken/ECLI:NL:RBROT:2026:11738"
+						}
+					]
+				},
+				{
+					"relation": "RELATED_TO",
+					"direction": "outbound",
+					"collection": "judgments",
+					"type": "judgment",
+					"total": 1,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "judgments/ecli_nl_rbrot_2026_11738",
+							"key": "ecli_nl_rbrot_2026_11738",
+							"collection": "judgments",
+							"type": "judgment",
+							"display_name": "Rechtbank Rotterdam 2026-09-10 / 11948529 VZ VERZ 25-6741",
+							"labels": ["Rechtspraak"],
+							"props": {
+								"case_number": "11948529 VZ VERZ 25-6741",
+								"court": "Rechtbank Rotterdam",
+								"court_code": "RBROT",
+								"date": "2026-09-10",
+								"display_name": "Rechtbank Rotterdam 2026-09-10 / 11948529 VZ VERZ 25-6741",
+								"ecli": "ECLI:NL:RBROT:2026:11738",
+								"names": [],
+								"source": "rechtspraak",
+								"stub": false
+							},
+							"cite": {
+								"short": "Rb. Rotterdam 10 september 2026",
+								"full": "Rb. Rotterdam 10 september 2026, ECLI:NL:RBROT:2026:11738"
+							},
+							"title": "Rb. Rotterdam 10 september 2026, ECLI:NL:RBROT:2026:11738",
+							"edge_id": "dc316426e26430e07206922c5c88712f76a0b49a",
+							"relation": "RELATED_TO",
+							"direction": "outbound",
+							"confidence": 1.0,
+							"status": "canoniek",
+							"meta": { "basis": "summary_text", "text": "Zie ook ECLI:NL:RBROT:2026:11738" },
+							"path": "/uitspraken/ECLI:NL:RBROT:2026:11738"
+						}
+					]
+				}
+			]
+		},
+		"title": "Rb. Rotterdam 23 september 2026, ECLI:NL:RBROT:2026:12500",
+		"description": "Herstelvonnis Zie ook ECLI:NL:RBROT:2026:11738",
+		"path": "/uitspraken/ECLI:NL:RBROT:2026:12500",
+		"lid_counts_pending": false
+	}
+}

@@ -79,7 +79,7 @@
 					>{#if to}{from} tot {to}{:else}sinds {from}{/if}</span
 				>
 			</Veld>
-			<!-- The link takes the person's address from the answer (onthoudPaden):
+			<!-- The link takes the person's address from the answer (keepPaths):
 				     `prime_minister.path`. -->
 			<Veld label="Minister-president" value={c.prime_minister}>
 				<BronLink ref={`members/${c.prime_minister?.key}`}>{c.prime_minister?.name}</BronLink>

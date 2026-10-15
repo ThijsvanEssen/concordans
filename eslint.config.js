@@ -61,5 +61,28 @@ export default defineConfig(
 				}
 			]
 		}
+	},
+	{
+		// The light layers (a link to a bron, its glyph, the ui, the layout) stay light: the
+		// words of a verbinding are in verbonden/relation-words, an address in bron/address. The rows of
+		// Verbonden, its filter and the resolver of an address (bron/leesbaar, with its API
+		// getters) are for the pages that read them.
+		files: ['src/lib/bron/**', 'src/lib/components/ui/**', 'src/lib/components/layout/**'],
+		ignores: ['**/*.test.ts'],
+		rules: {
+			'no-restricted-imports': [
+				'error',
+				{
+					patterns: [
+						{
+							group: ['**/verbonden/rows', '**/verbonden/filter', '**/bron/leesbaar', './leesbaar'],
+							allowTypeImports: true,
+							message:
+								'Import the pure layer: $lib/verbonden/relation-words, $lib/bron/address, $lib/vocabulary.'
+						}
+					]
+				}
+			]
+		}
 	}
 );

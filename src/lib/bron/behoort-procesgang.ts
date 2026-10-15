@@ -6,7 +6,7 @@ import { findBucket, type NodeGraph, type Neighbor } from '$lib/api/nodes';
 import { getNodeFirst } from '$lib/api/records';
 import { ifExists } from '$lib/api/errors';
 import { langeDatum } from '$lib/text/datum';
-import { ecliKey } from './leesbaar';
+import { ecliKey } from './address';
 import { inbound, laagVan, outbound, uitkomstVan, type Laag, type Regel } from './behoort-layer';
 
 export const EARLIER = outbound('APPEAL_OF', 'judgments');

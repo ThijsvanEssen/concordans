@@ -1,10 +1,10 @@
 // Guard: one verbinding says the same words in the row's card, the table, the CSV, the legend
-// and on the canvas (hoe.ts), and the card reads where the verbinding comes from from the edge.
+// and on the canvas (relation-words.ts), and the card reads where the verbinding comes from from the edge.
 import { describe, expect, it, vi } from 'vitest';
 import type { GraphEdge, GraphNode } from '$lib/graph/types';
 import type { Group } from './groups';
 import { rowsToCsv } from './export';
-import { relationLabel } from './hoe';
+import { relationLabel } from './relation-words';
 import type { Row } from './rows';
 import { relationCounts, rowLabel } from './view';
 import { fail, fakeApi } from '$lib/test/fakeApi';

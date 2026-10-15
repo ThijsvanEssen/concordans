@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Row } from '$lib/verbonden/rows';
 import { fakeApi, slow } from '$lib/test/fakeApi';
 import { naastHetStuk, stukkenInDezelfdeZaak, wetsvoorstelVan } from './zaak';
-import { zaakRang } from '$lib/bron/zaak';
+import { zaakRang } from './zaak';
 
 const rij = (key: string, kind: string): Row =>
 	({

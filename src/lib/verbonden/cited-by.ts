@@ -5,7 +5,7 @@ import type { Schema } from '$lib/api/types';
 import { paragraphAnchor } from '$lib/text/anchor';
 import { paragraphCite } from '$lib/text/ecli';
 import { isDerived, lidOfMatch } from './edge-meta';
-import { isInternational } from './filter';
+import { isInternational } from '$lib/vocabulary';
 import { bundleMentions, type Row } from './rows';
 import { describeBron } from '$lib/bron/describe';
 

@@ -1,8 +1,9 @@
 // What the panel, the table and the legend derive from the groups and the filter:
 // the rows that pass, the counts, the groupings and the years of the judgments.
 import { capitalize, plural } from '$lib/text/words';
+import { NL } from '$lib/text/collator';
 import type { Collection } from '$lib/vocabulary';
-import { relationLabel } from './hoe';
+import { relationLabel } from './relation-words';
 import { sumLidCounts } from '$lib/api/nodes';
 import { hiddenByGroup, rowPasses, type FilterGroup, type VerbondenFilter } from './filter';
 import { formatCount } from '$lib/text/getal';
@@ -191,7 +192,7 @@ export function relationCounts(
 		.sort((a, b) => b.count - a.count);
 }
 
-/** The label of a row's verbinding, read from its source (hoe.ts). */
+/** The label of a row's verbinding, read from its source (relation-words.ts). */
 export function rowLabel(r: Row, selection: Collection): string {
 	if (!r.relation) return '';
 	const inbound = r.direction === 'inbound';
@@ -256,8 +257,7 @@ export const GROUPINGS: { id: Grouping; label: string }[] = [
 	{ id: 'datum', label: 'Op datum' }
 ];
 
-const lidOrder = (a: string, b: string) =>
-	a === '' ? 1 : b === '' ? -1 : a.localeCompare(b, 'nl', { numeric: true });
+const lidOrder = (a: string, b: string) => (a === '' ? 1 : b === '' ? -1 : NL.compare(a, b));
 
 /**
  * The groups regrouped: per lid (`Lid 2`, the rest under `Hele artikel`), per soort

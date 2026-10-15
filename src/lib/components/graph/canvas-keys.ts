@@ -1,5 +1,6 @@
 // Moving through the bronnen on the canvas by keyboard: ↑ and ↓ step, Home and End jump,
 // and the list wraps neither way, so the ends are felt.
+import { NL } from '$lib/text/collator';
 
 export function moveIndex(key: string, index: number, count: number): number | null {
 	if (count === 0) return null;
@@ -24,7 +25,6 @@ export function readingOrder<T extends { id: string; label: string }>(
 ): T[] {
 	return [...nodes].sort(
 		(a, b) =>
-			Number(b.id === selectedId) - Number(a.id === selectedId) ||
-			a.label.localeCompare(b.label, 'nl', { numeric: true })
+			Number(b.id === selectedId) - Number(a.id === selectedId) || NL.compare(a.label, b.label)
 	);
 }

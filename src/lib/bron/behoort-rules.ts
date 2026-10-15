@@ -17,7 +17,7 @@ import { langeDatum } from '$lib/text/datum';
 import { kindName } from '$lib/components/explore/law-head';
 import { lawShortName } from '$lib/text/bw';
 import { fractiePeriodes } from './fractie-periode';
-import { kernVanZaak, stukkenInDezelfdeZaak } from './zaak';
+import { kernVanZaak, stukkenInDezelfdeZaak } from '$lib/verbonden/zaak';
 import type { Collection } from '$lib/vocabulary';
 import { dossierNummer } from './dossier-naam';
 import {

@@ -3,11 +3,11 @@ import { BILL_KINDS } from '$lib/components/parliamentary/stages';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
 import { count } from '$lib/text/words';
 import { citePublication } from '$lib/text/cite';
-import { DAY_MS, weekdag } from '$lib/text/datum';
+import { DAY_MS, addDays, weekdag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 import { API_BASE_URL } from '$lib/api/base-url';
 import { isGeneriek } from '$lib/bron/generiek';
-import { padHref, parsePad, remember } from '$lib/bron/leesbaar';
+import { padHref, parsePad, remember } from '$lib/bron/address';
 import { dossierLabel } from '$lib/bron/dossier-naam';
 
 // Actueel: what happened, newest first, per day. A day's many items of one kind on one
@@ -194,6 +194,20 @@ type VoteCount = Schema<'FeedVoteCountDTO'>;
 
 /** A day as the summary counts it. */
 export type DaySummary = Schema<'FeedDayDTO'>;
+
+/** The days a summary counts: the newest and how many back from it. */
+export type SummarySpan = { until: string; days: number };
+
+/**
+ * What to ask of the summary for the days shown, given the days counted already under the
+ * same filters: the whole span when none are, or the newest day moved; else only the days
+ * older than those counted; null when all are.
+ */
+export function summaryAsk(want: SummarySpan, had: SummarySpan | null): SummarySpan | null {
+	if (!had || had.until !== want.until) return want;
+	if (want.days <= had.days) return null;
+	return { until: addDays(want.until, -had.days), days: want.days - had.days };
+}
 
 /** A day's kinds from the summary, most first, as `Day.counts` holds them. */
 export const summaryCounts = (s: DaySummary): Day['counts'] =>

@@ -8,8 +8,13 @@ import { capitalize, joinAnd } from '$lib/text/words';
 import { langeDatum } from '$lib/text/datum';
 import { kindName, lawKind } from '$lib/components/explore/law-head';
 import { bucketKey, type Bucket } from '$lib/api/nodes';
-import { CHANGE_RELATIONS, isChangeRelation, isRelation, type Collection } from '$lib/vocabulary';
-import { isInternational } from './filter';
+import {
+	CHANGE_RELATIONS,
+	isChangeRelation,
+	isInternational,
+	isRelation,
+	type Collection
+} from '$lib/vocabulary';
 import { formatCount } from '$lib/text/getal';
 import { rowOfNeighbor, type Row } from './rows';
 import { type Neighbor } from '$lib/api/nodes';
@@ -448,7 +453,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		},
 		{
 			id: 'documents',
-			// A Kamerstuk noemt; a judgment haalt aan (hoe.ts).
+			// A Kamerstuk noemt; a judgment haalt aan (relation-words.ts).
 			label: 'Kamerstukken die dit artikel noemen',
 			noun: 'Kamerstukken',
 			match: [

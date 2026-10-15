@@ -1,3 +1,12 @@
+<script lang="ts" module>
+	import { Lazy } from '$lib/util/lazy.svelte';
+
+	// The cards come in a chunk of their own, asked when the pointer or the focus reaches a
+	// link: the moment before a card shows covers it, and a page of links loads without them.
+	const overwegingCard = new Lazy(() => import('./OverwegingKaart.svelte'), 'Kaart');
+	const previewCard = new Lazy(() => import('./PreviewCard.svelte'), 'Kaart');
+</script>
+
 <script lang="ts">
 	// A reference to a bron, the same everywhere. A click opens the bron in the Verkenner with
 	// its network (Thijs, 10 Oct: "laten we standaard navigeren naar Netwerk"), a Kamerstuk on
@@ -8,15 +17,13 @@
 	// leaves for nowhere does not (actions/menu.ts).
 	import { page } from '$app/state';
 	import type { Snippet } from 'svelte';
-	import { focusIn } from './leesbaar';
+	import { focusIn } from './address';
 	import { focusOf, openHref, type BronRef } from './href';
 	import type { Preview } from './preview';
 	import { isEscape } from '$lib/actions/keys';
 	import { clickOutside } from '$lib/actions/top-layer';
 	import { HoverCard } from '$lib/actions/hover-card.svelte';
-	import { isOverwegingRef } from './overweging';
-	import OverwegingKaart from './OverwegingKaart.svelte';
-	import PreviewCard from './PreviewCard.svelte';
+	import { isOverwegingRef } from '$lib/text/anchor';
 	import { zetMarkering, type Markering } from './markering.svelte';
 
 	let {
@@ -100,7 +107,12 @@
 		};
 	});
 
-	const enter = () => preview && hover.enter();
+	const loadCard = () => (ro ? overwegingCard : previewCard).load();
+	function enter() {
+		if (!preview) return;
+		loadCard();
+		hover.enter();
+	}
 
 	/** Focus that leaves for the card to read stays; for nowhere (a tap on the canvas) too. */
 	function onblur(e: FocusEvent) {
@@ -110,6 +122,7 @@
 
 	/** On touch the first tap shows the r.o.; the second, or one on the card's link, goes. */
 	function onclick(e: MouseEvent) {
+		if (preview) loadCard();
 		if (hover.tap()) return e.preventDefault();
 		if (markering) zetMarkering(markering);
 	}
@@ -133,22 +146,24 @@
 	{onblur}
 	{onclick}
 	onkeydown={() => hover.keys()}>{@render children()}</a
->{#if hover.open && anker}{#if ro && id}<OverwegingKaart
-			judgment={id.slice('judgments/'.length)}
-			at={at!}
-			{doel}
-			{noot}
-			{markering}
-			{href}
-			anchor={anker}
-			bind:element={kaart}
-			onpointerenter={() => hover.enter()}
-			onpointerleave={() => hover.leave()}
-			onclose={() => hover.close()}
-			onfocusout={(e) => {
-				if (e.relatedTarget !== null && !binnen(e.relatedTarget)) hover.close();
-			}}
-		/>{:else}<PreviewCard
+>{#if hover.open && anker}{#if ro && id}{#if overwegingCard.component}{@const OverwegingKaart =
+				overwegingCard.component}<OverwegingKaart
+				judgment={id.slice('judgments/'.length)}
+				at={at!}
+				{doel}
+				{noot}
+				{markering}
+				{href}
+				anchor={anker}
+				bind:element={kaart}
+				onpointerenter={() => hover.enter()}
+				onpointerleave={() => hover.leave()}
+				onclose={() => hover.close()}
+				onfocusout={(e) => {
+					if (e.relatedTarget !== null && !binnen(e.relatedTarget)) hover.close();
+				}}
+			/>{/if}{:else if previewCard.component}{@const PreviewCard =
+			previewCard.component}<PreviewCard
 			{ref}
 			{at}
 			{voorbeeld}

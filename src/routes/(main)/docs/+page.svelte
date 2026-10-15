@@ -7,7 +7,7 @@
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { modKey } from '$lib/util/platform';
 	import { RELATIONS } from '$lib/vocabulary';
-	import { relationLabel } from '$lib/verbonden/hoe';
+	import { relationLabel } from '$lib/verbonden/relation-words';
 
 	const stats = load(() => 'stats', getStats, 'Documentatie');
 </script>

@@ -11,7 +11,7 @@ import { getInstrumentDetail } from '$lib/api/instrument-cache';
 import { getDossier } from '$lib/api/dossiers';
 import { memberToGraphNode, syntheticNode, type GraphNode } from '$lib/graph/types';
 import type { Collection } from '$lib/vocabulary';
-import { keyEcli } from './leesbaar';
+import { keyEcli } from './address';
 
 export const headOfMember = (m: Schema<'MemberDetailDTO'>): GraphNode => memberToGraphNode(m);
 

@@ -79,3 +79,9 @@ export function permalink(url: URL, id: string): string {
 	link.hash = id;
 	return link.toString();
 }
+
+/** The address of the current view without a position: the same while only the hash changes. */
+export const viewLink = (url: URL): string => permalink(url, '');
+
+/** The address of a position in a view given by viewLink. */
+export const linkTo = (view: string, id: string): string => permalink(new URL(view), id);

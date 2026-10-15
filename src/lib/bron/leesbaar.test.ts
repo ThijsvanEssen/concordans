@@ -6,16 +6,15 @@ import {
 	focusIn,
 	focusOfPad,
 	isExplorePath,
-	lookUp,
-	onthoudPaden,
 	padHref,
 	padOfFocus,
 	parsePad,
 	remember,
 	exploreHref,
-	focusUitPagina,
 	type Pad
-} from './leesbaar';
+} from './address';
+import { focusUitPagina, lookUp } from './leesbaar';
+import { keepPaths } from './kept-paths';
 
 describe('a readable address', () => {
 	it('reads the official identifier from the path', () => {
@@ -192,7 +191,7 @@ describe('the address of a focus', () => {
 	});
 
 	it('takes the address the API gives beside an id, anywhere in an answer', () => {
-		onthoudPaden({
+		keepPaths({
 			node: { id: 'articles/abc123', path: '/wetten/BWBR0005289/artikel/6:162' },
 			neighbors: [{ id: 'documents/9f8e', path: '/kamerstukken/36600-VIII/12' }],
 			dossier: { id: 'dossiers/k1', path: '/dossiers/36600-VIII' },
@@ -219,7 +218,7 @@ describe('the address of a focus', () => {
 	});
 
 	it("takes a feed item's address: Actueel links to the paper, not /explore?focus (#523)", () => {
-		onthoudPaden({
+		keepPaths({
 			items: [
 				{
 					id: 'documents/feed01',
@@ -240,7 +239,7 @@ describe('the address of a focus', () => {
 	});
 
 	it('takes a person’s address beside the key of the lid (UX-toets 0.79.47, #51)', () => {
-		onthoudPaden({
+		keepPaths({
 			key: 'kabinet_test',
 			path: '/kabinetten/kabinet_test',
 			prime_minister: { key: 'lid_pad_0', name: 'Zonder adres', path: null },
@@ -262,7 +261,7 @@ describe('the address of a focus', () => {
 	});
 
 	it('links the minister-president by `prime_minister.path` (API 0.79.48, #580)', () => {
-		onthoudPaden({
+		keepPaths({
 			key: 'kabinet_pm',
 			path: '/kabinetten/kabinet_pm',
 			prime_minister: { key: 'lid_pm_1', name: 'Met adres', path: '/leden/met-adres' },

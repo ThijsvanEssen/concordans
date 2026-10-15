@@ -58,14 +58,21 @@ export function recordInstrument(input: {
 	const title = textOf(input.title) ?? textOf(input.display_name) ?? existing?.title ?? null;
 	const citationTitle = textOf(input.citation_title) ?? existing?.citationTitle ?? null;
 
-	cache.set(bwbId, {
+	const meta: InstrumentMeta = {
 		bwbId,
 		title: title ?? citationTitle,
 		shortTitle: lawShortName(bwbId, textOf(input.short_title) ?? existing?.shortTitle),
 		citationTitle: citationTitle ?? title
-	});
+	};
+	// Nothing new is no news: every drawn article records its law, and each change relabels
+	// the whole canvas.
+	if (existing && sameMeta(existing, meta)) return;
+	cache.set(bwbId, meta);
 	flush();
 }
+
+const sameMeta = (a: InstrumentMeta, b: InstrumentMeta) =>
+	a.title === b.title && a.shortTitle === b.shortTitle && a.citationTitle === b.citationTitle;
 
 /**
  * The names an article's detail carries of its law, under the id the article names it by

@@ -9,7 +9,7 @@ import { korteDatum } from '$lib/text/datum';
 import { isLetter, motionOrAmendment } from '$lib/text/document-kind';
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
-import { changeAround, changeVerb } from '$lib/verbonden/hoe';
+import { changeAround, changeVerb } from '$lib/verbonden/relation-words';
 import { changeRelation } from '$lib/vocabulary';
 import { headSurname } from './home-stream';
 import { artikelenGewijzigd, publicationCite, type FeedItem } from './feed';

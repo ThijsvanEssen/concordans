@@ -7,7 +7,7 @@ import { dossierLabel } from '$lib/bron/dossier-naam';
 import { bronLabel, parseNodeId } from '$lib/vocabulary';
 import { queryHref } from '$lib/util/address';
 import { buildBronHref } from '$lib/bron/href';
-import { padOfFocus } from '$lib/bron/leesbaar';
+import { padOfFocus } from '$lib/bron/address';
 import { csvText } from '$lib/text/csv';
 import { anchorLabel } from '$lib/text/anchor';
 

@@ -2,6 +2,7 @@
 // function per `Loader` of the group table; each returns rows, and a total where
 // the API gives one.
 import { isBill, motionOrAmendment } from '$lib/text/document-kind';
+import { NL } from '$lib/text/collator';
 import { textOf } from '$lib/text/words';
 import { naamVan, naamVanId } from '$lib/bron/menselijk';
 import { ifExists, report } from '$lib/api/errors';
@@ -9,9 +10,9 @@ import { geteld } from '$lib/api/decisions';
 import type { Schema } from '$lib/api/types';
 import { getCommittee } from '$lib/api/committees';
 import { numberOf } from '$lib/components/parliamentary/dossier-number';
-import { parseNodeId } from '$lib/vocabulary';
+import { isInternational, parseNodeId } from '$lib/vocabulary';
 import { refOf } from '$lib/bron/href';
-import { naastHetStuk, stukkenInDezelfdeZaak } from '$lib/bron/zaak';
+import { naastHetStuk, stukkenInDezelfdeZaak } from './zaak';
 import { loadDossierHub, type DossierHub } from './dossier-hub';
 import { explanatoryDocuments } from './explanatory-documents';
 import { rowsOfCitedBy } from './cited-by';
@@ -42,7 +43,7 @@ import {
 import { lawArticleList } from '$lib/api/law-articles';
 import { buildGroups, ditVan, EUROPEAN, matches, type Loader, type Match } from './groups';
 import { YEARS_IN_CHART } from './view';
-import { filterGroupOf, isInternational } from './filter';
+import { filterGroupOf } from './filter';
 import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 import { getJudgmentDetail } from '$lib/api/judgments';
 import { aanhalingIn } from './passage';
@@ -326,7 +327,7 @@ export function regelingRow(
 /** Articles once each, in their law's order: `2`, `3`, `17`, `18`. */
 const opNummer = <A extends { article_number?: string | null }>(xs: readonly A[]): A[] =>
 	[...new Map(xs.filter((a) => a.article_number).map((a) => [a.article_number, a])).values()].sort(
-		(a, b) => a.article_number!.localeCompare(b.article_number!, 'nl', { numeric: true })
+		(a, b) => NL.compare(a.article_number!, b.article_number!)
 	);
 
 /**
@@ -534,7 +535,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	}),
 
 	// The other dossiers of the number, in the order of the Kamer.
-	// The papers of the same zaak, the substance first ($lib/bron/zaak).
+	// The papers of the same zaak, the substance first (./zaak).
 	'document-same-case': async ({ node, buren, signal }) =>
 		naastHetStuk(
 			node.props?.kind,
@@ -946,9 +947,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		const order = (row: Row) => row.title;
 		return {
 			rows: [...rows.values()].sort(
-				(a, b) =>
-					(a.aard ?? '').localeCompare(b.aard ?? '', 'nl') ||
-					order(a).localeCompare(order(b), 'nl', { numeric: true })
+				(a, b) => (a.aard ?? '').localeCompare(b.aard ?? '', 'nl') || NL.compare(order(a), order(b))
 			),
 			...(partial ? { capped: true } : { total: first.total })
 		};
@@ -1024,7 +1023,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				filterGroup: 'wetten' as const,
 				identifier: d.identifier && d.identifier !== d.key ? d.identifier : null,
 				date: d.first_effective_date ?? null,
-				// The publication that enacted the law: `Stelt vast` (hoe.ts).
+				// The publication that enacted the law: `Stelt vast` (relation-words.ts).
 				relation: (d.establishes ?? 0) > 0 ? ('ESTABLISHES' as const) : ('AMENDS' as const),
 				direction: 'inbound' as const,
 				edge: { establishes: d.establishes ?? 0 }

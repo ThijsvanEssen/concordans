@@ -81,25 +81,17 @@ export function createExpansion(
 			.filter((c) => c === focus || COLLECTION_ROLE[c].neighbour)
 			.map((c) => NODE_TYPES[c]);
 
-	const inflight = new Map<string, Promise<Schema<'NodeGraphResponse'>>>();
-
-	const nodeResponse: GraphStore['nodeResponse'] = (collection, key, opts = {}) => {
+	const nodeResponse: GraphStore['nodeResponse'] = (collection, key) => {
 		const id = nodeId(collection, key.toLowerCase());
-		const cached = opts.force ? undefined : cache.get(id);
+		const cached = cache.get(id);
 		if (cached) return Promise.resolve(cached);
-		let request = inflight.get(id);
-		if (!request) {
-			// Shared with a reader that wants a bucket of the same node (a lid's AUTHORED); a
-			// reset of the canvas drops this answer, not the request.
-			request = abortable(getNode(collection, key), signal())
-				.then((response) => {
-					cache.set(id, response);
-					return response;
-				})
-				.finally(() => inflight.delete(id));
-			inflight.set(id, request);
-		}
-		return request;
+		// getNode shares one request between all who ask (once); a reader that wants a bucket of
+		// the same node (a lid's AUTHORED) gets it too. A reset of the canvas drops this answer,
+		// not the request.
+		return abortable(getNode(collection, key), signal()).then((response) => {
+			cache.set(id, response);
+			return response;
+		});
 	};
 
 	type SubNode = Schema<'NodeNeighborhoodResponse'>['nodes'][number];
@@ -207,11 +199,11 @@ export function createExpansion(
 			const draw = opts.neighborLimit ?? get(filtersStore).neighborLimit;
 			// A bron that draws few neighbours asks few, unless its whole node is in already.
 			const response =
-				!opts.force && Number.isFinite(draw) && draw <= CANVAS_BUCKET && !cache.has(id)
+				Number.isFinite(draw) && draw <= CANVAS_BUCKET && !cache.has(id)
 					? await abortable(getNodeCanvas(collection, key), signal())
-					: opts.hull && collection === 'instruments' && !opts.force && !cache.has(id)
+					: opts.hull && collection === 'instruments' && !cache.has(id)
 						? await abortable(getNodeHull(collection, key), signal())
-						: await nodeResponse(collection, key, opts);
+						: await nodeResponse(collection, key);
 			return nodes.get(mergeResponse(response, draw) ?? id) ?? null;
 		},
 

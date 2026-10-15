@@ -1,6 +1,6 @@
 import Graph from 'graphology';
 import { describe, expect, it } from 'vitest';
-import { countCanvas } from './canvas-count';
+import { countCanvas, sameIds } from './canvas-count';
 
 /** A focus, a stuk in the chosen years, one before them, and one in a dossier switched off. */
 function canvas() {
@@ -39,5 +39,13 @@ describe('countCanvas', () => {
 		const { counts } = count(['f', 'in']);
 		expect(counts.kinds).toEqual({ stukken: 4 });
 		expect(counts.metGroep).toEqual({ stukken: { count: 1, van: 4, groepen: ['dossier'] } });
+	});
+});
+
+describe('sameIds', () => {
+	it('tells the same drawn bronnen in another order from a change', () => {
+		expect(sameIds(['a', 'b'], ['b', 'a'])).toBe(true);
+		expect(sameIds(['a', 'b'], ['a', 'c'])).toBe(false);
+		expect(sameIds(['a'], ['a', 'b'])).toBe(false);
 	});
 });

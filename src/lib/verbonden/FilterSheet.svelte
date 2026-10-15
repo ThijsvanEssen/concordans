@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { plural } from '$lib/text/words';
+	import { NL } from '$lib/text/collator';
 	import Periode from '$lib/components/ui/Periode.svelte';
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
@@ -98,9 +99,7 @@
 	const relations = $derived(relationCounts(groups, selection));
 	const perLid = $derived(lidTellingen ?? lidCounts(allRows(groups)));
 	const lids = $derived(
-		[...perLid.entries()]
-			.filter(([k]) => k !== '')
-			.sort(([a], [b]) => a.localeCompare(b, 'nl', { numeric: true }))
+		[...perLid.entries()].filter(([k]) => k !== '').sort(([a], [b]) => NL.compare(a, b))
 	);
 	const noLid = $derived(perLid.get('') ?? 0);
 	const total = $derived(totalCount(groups));
