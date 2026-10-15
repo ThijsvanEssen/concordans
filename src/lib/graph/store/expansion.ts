@@ -18,7 +18,7 @@ import { get, writable } from 'svelte/store';
 import { nodeToGraphNode, relationOf } from '../types';
 import { COLLECTION_ROLE } from '../collection-role';
 import type { GraphContext } from './context';
-import { placeConnection, type End } from './placement';
+import { periodOf, placeConnection, type End } from './placement';
 import {
 	NEIGHBORHOOD_CAP,
 	NEIGHBORHOOD_DEPTH,
@@ -174,7 +174,8 @@ export function createExpansion(
 					containerKindOf(hull.collection)!,
 					containerIdFor(hull),
 					member,
-					relation
+					relation,
+					placement.seat ? periodOf(e.meta) : null
 				);
 			} else if (placement.place === 'line') {
 				addEdge(id.source, id.target, relation, { confidence: e.confidence, status: e.status });

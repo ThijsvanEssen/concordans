@@ -7,8 +7,7 @@ import {
 	containerIdFor,
 	containerKindOf,
 	createContainerGroups,
-	type ContainerKind,
-	type Period
+	type ContainerKind
 } from '../container-membership';
 import { isCollection, nodeId, type Collection, type Relation } from '$lib/vocabulary';
 import { COLLECTION_ROLE } from '../collection-role';
@@ -24,7 +23,7 @@ import {
 	type GraphNode
 } from '../types';
 import { DEFAULT_FILTERS, SOFT_NODE_CAP, type GraphFilters } from './types';
-import { placeConnection, type End } from './placement';
+import { periodOf, placeConnection, type End } from './placement';
 
 /**
  * The names of a container's hull: short on the hull, in full on hover. A dossier by its number
@@ -226,29 +225,6 @@ export function createGraphContext() {
 			containers.recordMember('instrument', law, graphNode!.id);
 		}
 		return graphNode;
-	};
-
-	/**
-	 * The seat an edge records (`meta.from_date`, `meta.to_date`), or null when it records
-	 * none. A bewindspersoon's SERVED_IN lists the posts in the cabinet (`meta.posts`): the
-	 * seat runs from the first post to the end of the last, open while one is open.
-	 */
-	const periodOf = (meta: unknown): Period | null => {
-		const m = (meta ?? {}) as Record<string, unknown>;
-		const date = (v: unknown) => (typeof v === 'string' && v ? v.slice(0, 10) : null);
-		if (Array.isArray(m.posts) && m.posts.length > 0) {
-			const seats = m.posts.map((post) => periodOf(post));
-			if (seats.some((seat) => seat === null)) return null;
-			const froms = seats.map((seat) => seat!.from);
-			const tos = seats.map((seat) => seat!.to);
-			return {
-				from: froms.includes(null) ? null : (froms as string[]).sort()[0],
-				to: tos.includes(null) ? null : (tos as string[]).sort().at(-1)!
-			};
-		}
-		const from = date(m.from_date);
-		const to = date(m.to_date);
-		return from || to ? { from, to } : null;
 	};
 
 	/** The end of a verbinding as `placeConnection` reads it. */

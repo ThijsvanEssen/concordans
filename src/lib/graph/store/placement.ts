@@ -5,7 +5,12 @@
 // carry out what this returns, by one rule for all of them: the node response's (code-eenvoud
 // F93, Thijs 15 Oct).
 import { isAmendingRelation, type Relation } from '$lib/vocabulary';
-import { isContainerMembership, isContainment, type ContainerKind } from '../container-membership';
+import {
+	isContainerMembership,
+	isContainment,
+	type ContainerKind,
+	type Period
+} from '../container-membership';
 import { edgeCategory, type DrawClass } from '../types';
 
 export type Side = 'source' | 'target';
@@ -88,4 +93,28 @@ export function placeConnection(c: Connection): Placement {
 	const semantic = edgeCategory(relation, source.drawClass) === 'semantic';
 	if (semantic && c.confidence != null && c.confidence < c.threshold) return { place: 'none' };
 	return line(true);
+}
+
+/**
+ * The seat an edge records (`meta.from_date`, `meta.to_date`), or null when it records none:
+ * of a neighbour's edge, a neighbourhood's or a path's alike. A bewindspersoon's SERVED_IN
+ * lists the posts in the cabinet (`meta.posts`): the seat runs from the first post to the end
+ * of the last, open while one is open.
+ */
+export function periodOf(meta: unknown): Period | null {
+	const m = (meta ?? {}) as Record<string, unknown>;
+	const date = (v: unknown) => (typeof v === 'string' && v ? v.slice(0, 10) : null);
+	if (Array.isArray(m.posts) && m.posts.length > 0) {
+		const seats = m.posts.map((post) => periodOf(post));
+		if (seats.some((seat) => seat === null)) return null;
+		const froms = seats.map((seat) => seat!.from);
+		const tos = seats.map((seat) => seat!.to);
+		return {
+			from: froms.includes(null) ? null : (froms as string[]).sort()[0],
+			to: tos.includes(null) ? null : (tos as string[]).sort().at(-1)!
+		};
+	}
+	const from = date(m.from_date);
+	const to = date(m.to_date);
+	return from || to ? { from, to } : null;
 }
