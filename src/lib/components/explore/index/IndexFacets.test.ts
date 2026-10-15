@@ -1,6 +1,6 @@
 import { render } from 'svelte/server';
 import { describe, expect, it } from 'vitest';
-import IndexFacets, { type FacetGroup } from './IndexFacets.svelte';
+import IndexFacets, { selectOpties, type FacetGroup } from './IndexFacets.svelte';
 
 const groups: FacetGroup[] = [
 	{
@@ -32,5 +32,20 @@ describe('IndexFacets: counts that are not current are not shown (#80)', () => {
 		expect(text({ stale: true })).not.toMatch(/57\.506|509\.984/);
 		expect(text({ stale: true })).toContain('Hoge Raad');
 		expect(html).not.toContain('aria-busy="true"');
+	});
+});
+
+describe('selectOpties', () => {
+	const naam = (k: string) => ({ bz: 'Buitenlandse Zaken', fin: 'Financiën' })[k] ?? k;
+	it('names the chosen value, also where the counts lack it (#136)', () => {
+		expect(selectOpties(new Map(), 'bz', naam)).toEqual([
+			{ value: 'bz', label: 'Buitenlandse Zaken' }
+		]);
+		expect(selectOpties(new Map([['bz', 3]]), 'bz', naam)).toEqual([
+			{ value: 'bz', label: 'Buitenlandse Zaken', count: 3 }
+		]);
+		expect(selectOpties(new Map([['fin', 2]]), '', naam)).toEqual([
+			{ value: 'fin', label: 'Financiën', count: 2 }
+		]);
 	});
 });
