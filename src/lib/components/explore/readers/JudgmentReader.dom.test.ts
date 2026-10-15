@@ -23,9 +23,10 @@ const node: GraphNode = {
 	raw: judgment as unknown as GraphNode['raw']
 };
 
+let api: ReturnType<typeof fakeApi>;
 beforeEach(() => {
 	open(`/uitspraken/${judgment.ecli}`);
-	fakeApi({
+	api = fakeApi({
 		'/api/judgments/{ecli}': fixture.detail,
 		'/api/nodes/{collection}/{key}': fixture.related
 	});
@@ -55,6 +56,19 @@ describe('JudgmentReader', () => {
 			'Zie ook ECLI:NL:RBROT:2026:11738 Inhoudsindicatie van deze uitspraak',
 			'Zie ook ECLI:NL:RBROT:2026:12500 Inhoudsindicatie van die uitspraak'
 		]);
+	});
+
+	it('asks the connected cases alone, in one bucket', async () => {
+		render(JudgmentReader, { node });
+		await settle();
+		const asked = api.asked('/api/nodes/{collection}/{key}');
+		expect(asked).toHaveLength(1);
+		expect(asked[0].query).toMatchObject({
+			relations: 'RELATED_TO',
+			node_types: 'judgment',
+			limit: 50
+		});
+		expect(asked[0].query?.direction).toBeUndefined();
 	});
 
 	it('opens the menu of an overweging from its number', async () => {
