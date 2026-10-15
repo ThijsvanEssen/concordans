@@ -6,7 +6,7 @@
 	import { lawArticles, type LawArticle } from '$lib/bron/law-articles';
 	import { parseAnchor } from '$lib/text/anchor';
 	import { artikelAnker, deelIds, layersOf } from '$lib/text/division';
-	import { scrollInReader } from '$lib/bron/anchor';
+	import { scrollInReader } from '$lib/bron/landing';
 	import { page } from '$app/state';
 	import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 	import { lawIdOf, type GraphNode } from '$lib/graph/types';
@@ -245,8 +245,8 @@
 	     above its title. -->
 	<NavKolom
 		label="Overzicht"
-		titel={lawTitle}
-		titelHref={lawHref}
+		title={lawTitle}
+		titleHref={lawHref}
 		onder={selection?.collection !== 'articles' && items.length > 0
 			? `${items.length} artikelen`
 			: null}

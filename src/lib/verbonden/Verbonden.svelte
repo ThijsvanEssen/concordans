@@ -367,7 +367,7 @@
 			label="Indeling"
 			waarde={grouping}
 			opties={GROUPINGS.map((g) => ({ waarde: g.id, label: g.label }))}
-			onKies={(id) => (grouping = id)}
+			onSelect={(id) => (grouping = id)}
 		/>
 		<button type="button" class="regel__knop" onclick={onOpenFilter}>Filter</button>
 	</div>

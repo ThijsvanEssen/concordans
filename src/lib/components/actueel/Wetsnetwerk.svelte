@@ -97,7 +97,7 @@
 	<figure class="schets">
 		<div class="veld" bind:this={root} style:--kolommen={schets.kolommen.length}>
 			<svg class="lijnen" aria-hidden="true">
-				{#each paden as p (p.id)}<path d={p.d} class:aan={p.aan} />{/each}
+				{#each paden as p (p.id)}<path d={p.d} class:is-active={p.aan} />{/each}
 			</svg>
 			{#each schets.kolommen as kol (kol.titel)}
 				<div class="kolom">
@@ -110,7 +110,7 @@
 							{#each kol.bronnen as b (b.id)}
 								<li
 									data-bron={b.id}
-									class:dim={!!buren && gekozen?.id !== b.id && !buren.has(b.id)}
+									class:is-dim={!!buren && gekozen?.id !== b.id && !buren.has(b.id)}
 								>
 									<button
 										type="button"
@@ -188,7 +188,7 @@
 		stroke: var(--rule-strong);
 		stroke-width: 1;
 	}
-	.lijnen path.aan {
+	.lijnen path.is-active {
 		stroke: var(--ink);
 	}
 	.kolom {
@@ -231,7 +231,7 @@
 		flex-direction: column;
 		gap: var(--s-1);
 	}
-	li.dim {
+	li.is-dim {
 		opacity: 0.35;
 	}
 	li button {

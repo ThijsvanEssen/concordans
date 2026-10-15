@@ -74,7 +74,7 @@ describe('the map', () => {
 		);
 		expect(bron('lib/map/Aantekening.svelte')).not.toMatch(/font-style:\s*italic|var\(--accent/);
 		// The network's card shows the same notes in the same form, read only (Thijs, 12 Oct).
-		const kaart = bron('lib/components/graph/GraphCitePanel.svelte');
+		const kaart = bron('lib/components/graph/CanvasHoverCard.svelte');
 		expect(kaart).toMatch(/\{#each notities as n\b[^}]*\}\s*<Aantekening\b[^>]*tekst=\{n\.tekst\}/);
 		expect(kaart).not.toMatch(/<Aantekening\b[^>]*onBewaar/);
 		expect(kaart).not.toMatch(/class="[^"]*\bnotitie\b|\.notitie\b|\{n\.tekst\}<\/|\.waar\s*\{/);

@@ -238,7 +238,7 @@
 			{/if}
 
 			{#if ek}
-				<Sectie titel={CHAMBER_NAME.EK}>
+				<Sectie title={CHAMBER_NAME.EK}>
 					<Feiten klein>
 						<Veld label="Fractie" value={ek.faction}>
 							<BronLink ref={{ collection: 'factions', key: ek.faction ?? '' }}
@@ -276,7 +276,7 @@
 							/>{/if}{#if step.count > 0}{`${step.cabinet ? ', ' : ''}${count(step.count, 'stuk', 'stukken')} ondertekend`}{/if}
 					{/if}
 				{/snippet}
-				<Sectie titel="Loopbaan" id="loopbaan">
+				<Sectie title="Loopbaan" id="loopbaan">
 					<Tijdlijn
 						perioden
 						groepen={[
@@ -316,7 +316,7 @@
 				<!-- The committees they sat on (API 0.75, BE-30), those they sit on now first: the
 				     seat that stands for them, its role where it is more than a seat, and the other
 				     periods beside it, as Loopbaan names a role. -->
-				<Sectie titel="Commissies" soort="committees" aantal={m.committees?.length}>
+				<Sectie title="Commissies" soort="committees" aantal={m.committees?.length}>
 					<Tijdlijn
 						perioden
 						groepen={[
@@ -366,7 +366,7 @@
 				<!-- Their own votes on a roll-call, and their faction's while they sat in it (API
 				     0.75, BE-43); a bewindspersoon's are what they voted as a Kamerlid. -->
 				<Sectie
-					titel={(m.government_functions ?? []).length > 0 ? 'Als Kamerlid' : 'Stemgeschiedenis'}
+					title={(m.government_functions ?? []).length > 0 ? 'Als Kamerlid' : 'Stemgeschiedenis'}
 					soort="decisions"
 					aantal={apart ? `${alle.length}${inOffice!.next != null ? '+' : ''}` : stemmen.count}
 				>

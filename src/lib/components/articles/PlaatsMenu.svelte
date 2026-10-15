@@ -21,14 +21,14 @@
 	import { menu } from '$lib/actions/menu';
 	import { topLayer } from '$lib/actions/top-layer';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
-	import type { CiteItem } from '$lib/components/ui/cite';
+	import type { CiteItem } from '$lib/components/ui/cite-items';
 	import { kaart } from '$lib/map/map.svelte';
 	import type { MapItem } from '$lib/map/map';
 	import { formatCount } from '$lib/text/getal';
 
 	let {
 		anker,
-		titel,
+		title,
 		cite = [],
 		tekst,
 		bewaar = null,
@@ -39,7 +39,7 @@
 		/** The marker the menu hangs from, and gets the focus back. */
 		anker: HTMLElement;
 		/** The place, as it is cited: `art. 1:1 onder q sub 1 Wft`, `Lid 2`. */
-		titel: string;
+		title: string;
 		cite?: CiteItem[];
 		/** The text Kopieer tekst copies. */
 		tekst: () => string;
@@ -68,12 +68,12 @@
 <div
 	class="tekstmenu__lijst is-breed plaatsmenu"
 	role="menu"
-	aria-label={titel}
+	aria-label={title}
 	tabindex="-1"
 	use:topLayer={{ anchor: anker, close: onClose }}
 	use:menu={{ open: true, close: onClose, trigger: anker }}
 >
-	<p class="kop">{titel}</p>
+	<p class="kop">{title}</p>
 	{#if cite.length}
 		<p class="label">Kopieer als</p>
 		{#each cite as c (c.kind)}

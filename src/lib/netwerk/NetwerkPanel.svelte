@@ -25,7 +25,7 @@
 		tussen,
 		joiningCount,
 		deels = false,
-		onPick,
+		onSelect,
 		onToggle,
 		onRemove,
 		onGroepAan,
@@ -60,7 +60,7 @@
 		/** The API ran out of time looking for paths: these are the ones it found (`partial`). */
 		deels?: boolean;
 		/** Adds a bron found by the search, by the name a link uses. */
-		onPick: (id: string) => void;
+		onSelect: (id: string) => void;
 		onToggle: (id: string) => void;
 		onRemove: (id: string) => void;
 		/** A chip greyed with its grouping: switch that grouping on again. */
@@ -111,7 +111,7 @@
 		<!-- The field itself, not steps that explain it (Thijs, 9 Oct: "de UI moet zichzelf
 		     wijzen"). -->
 		<div class="zoek zoek--start">
-			<Search compact placeholder="Bron toevoegen" {onPick} />
+			<Search compact placeholder="Bron toevoegen" {onSelect} />
 		</div>
 		{#if onVoorbeeld}
 			<button type="button" class="voorbeeld" onclick={onVoorbeeld}>
@@ -123,7 +123,7 @@
 {:else}
 	<!-- De gekozen bronnen als labels op één regel; zoeken pas na "+ bron";
 	     één regel voor wat ertussen ligt. Wissen is één klik, en Terug zet het terug. -->
-	<CanvasKaart titel="Netwerk" class="netwerk" {open} onToggle={() => kiesOpen(!open)}>
+	<CanvasKaart title="Netwerk" class="netwerk" {open} onToggle={() => kiesOpen(!open)}>
 		{#snippet samenvatting()}
 			{#if loading}<span class="laden">laden</span>{:else if !open && entries.length > 0}<span
 					class="aantal">{count(entries.length, 'bron', 'bronnen')}</span
@@ -158,7 +158,7 @@
 		{/snippet}
 		<ul class="chips">
 			{#each getoond as e (e.id)}
-				<li class="chip" class:uit={!e.on} class:mist={e.missing} class:gedimd={!!e.verborgenMet}>
+				<li class="chip" class:uit={!e.on} class:mist={e.missing} class:is-dim={!!e.verborgenMet}>
 					<button
 						type="button"
 						class="chip-naam"
@@ -219,8 +219,8 @@
 						<Search
 							compact
 							placeholder="Bron toevoegen"
-							onPick={(id) => {
-								onPick(id);
+							onSelect={(id) => {
+								onSelect(id);
 								zoeken = false;
 							}}
 						/>
@@ -367,11 +367,11 @@
 	.chip-weg:hover {
 		color: var(--ink);
 	}
-	.chip.gedimd {
+	.chip.is-dim {
 		color: var(--ink-3);
 		border-color: var(--rule-strong);
 	}
-	.chip.gedimd :global(svg) {
+	.chip.is-dim :global(svg) {
 		opacity: 0.5;
 	}
 	.chip.uit {

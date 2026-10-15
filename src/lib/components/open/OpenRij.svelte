@@ -12,7 +12,7 @@
 	let {
 		zin = null,
 		groepen = [],
-		laden = false,
+		loading = false,
 		links = [],
 		lezen,
 		lezenLabel,
@@ -23,7 +23,7 @@
 		/** Alleen wat de rij zelf nog niet zegt. */
 		zin?: string | null;
 		groepen?: TijdGroep[];
-		laden?: boolean;
+		loading?: boolean;
 		/** With `ref`, the link is a bron: a click opens it in place (BronLink). */
 		links?: { label: string; href?: string | null; ref?: string | null }[];
 		lezen: string;
@@ -41,7 +41,7 @@
 	{#if zin}<p class="zin">{zin}</p>{/if}
 	{#each opmerkingen as o (o)}<p class="opmerking">{o}</p>{/each}
 	{@render boven?.()}
-	{#if laden}
+	{#if loading}
 		<p class="laden">Laden…</p>
 	{:else if groepen.some((g) => g.regels.length)}
 		<Tijdlijn {groepen} volgorde="aflopend" />

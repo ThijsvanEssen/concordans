@@ -29,9 +29,9 @@
 		at = null,
 		onMouseEnter,
 		onMouseLeave,
-		onSluit,
+		onClose,
 		onVerder,
-		onTerug,
+		onBack,
 		notities = [],
 		el = $bindable(null)
 	}: {
@@ -49,10 +49,10 @@
 		onMouseEnter?: () => void;
 		onMouseLeave?: () => void;
 		/** Escape in the card (reached from the keyboard's list of bronnen). */
-		onSluit?: () => void;
+		onClose?: () => void;
 		/** Tab past its last action, and Shift+Tab before its first. */
 		onVerder?: () => void;
-		onTerug?: () => void;
+		onBack?: () => void;
 		/** The reader's notes on this bron in the active map (Gemarkeerd), under the card's lines. */
 		notities?: readonly NodeNotitie[];
 		el?: HTMLElement | null;
@@ -61,9 +61,9 @@
 	// The card is reached from the list of bronnen with Tab; it hands the focus on to the
 	// canvas after its last action and back to the list before its first (UX test, #14).
 	function onkeydown(e: KeyboardEvent) {
-		if (isEscape(e) && onSluit) {
+		if (isEscape(e) && onClose) {
 			e.preventDefault();
-			onSluit();
+			onClose();
 			return;
 		}
 		if (e.key !== 'Tab' || !el) return;
@@ -72,9 +72,9 @@
 		if (!e.shiftKey && hier === acties.length - 1 && onVerder) {
 			e.preventDefault();
 			onVerder();
-		} else if (e.shiftKey && hier === 0 && onTerug) {
+		} else if (e.shiftKey && hier === 0 && onBack) {
 			e.preventDefault();
-			onTerug();
+			onBack();
 		}
 	}
 
@@ -195,7 +195,7 @@
 			<button
 				type="button"
 				class="btn is-text netwerk"
-				class:gekozen={isChosen}
+				class:is-active={isChosen}
 				aria-pressed={isChosen}
 				onclick={() => onToggleChosen(node)}
 				><Picto naam="plus" size={13} />{isChosen ? 'Uit netwerk' : 'In netwerk'}</button
@@ -299,7 +299,7 @@
 		color: var(--ink-3);
 		margin-left: auto;
 	}
-	.netwerk.gekozen {
+	.netwerk.is-active {
 		color: var(--ink);
 	}
 </style>

@@ -8,12 +8,12 @@
 
 	let {
 		status = 404,
-		titel = 'Pagina niet gevonden',
+		title = 'Pagina niet gevonden',
 		kop = true,
 		children
 	}: {
 		status?: number;
-		titel?: string;
+		title?: string;
 		/** Whether this page sets the title; the Verkenner sets its own. */
 		kop?: boolean;
 		/** What is missing, in a sentence or two; a default where none is given. */
@@ -33,7 +33,7 @@
 <div class="niet-gevonden">
 	<div class="inner">
 		<span class="code">{status}</span>
-		<h1>{titel}</h1>
+		<h1>{title}</h1>
 		<div class="tekst">
 			{#if children}
 				{@render children()}

@@ -75,7 +75,7 @@
 </script>
 
 {#if ecli}
-	<NavKolom label="Inhoud" titel={ecliLabel}>
+	<NavKolom label="Inhoud" title={ecliLabel}>
 		{#if loading && items.length === 0}
 			<p class="nav-kolom__note">Laden…</p>
 		{:else if error}

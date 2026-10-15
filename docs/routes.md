@@ -56,7 +56,7 @@ A stemming has none and stays under `/explore?focus=`. A lookup that answers 404
 | bronfilter            | `bronnen`, `rechter`, `van`, `tot`, `geldend`, `betrouwbaarheid`, `status` (`verbonden/filter.ts`) | Which verbindingen the panel, the canvas, the legend and the table show                       |
 | `lid`, `jaar`, `zoek` | a lid, a year, text                                                                                | A place within the verbindingen of one bron                                                   |
 
-The fragment is a position in the text: `#lid-2-onder-a`, `#aanhef` in an article, `#rov-5.3` in a judgment. `bron/anchor.ts` scrolls to it and marks it.
+The fragment is a position in the text: `#lid-2-onder-a`, `#aanhef` in an article, `#rov-5.3` in a judgment. `bron/landing.ts` scrolls to it and marks it.
 
 The key `L` switches between Netwerk and Tekst. Bladeren opens from the top nav.
 

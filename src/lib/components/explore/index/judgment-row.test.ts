@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { judgmentCaseNumber, judgmentCourt, judgmentRowTitle } from './judgment-kind';
+import { judgmentCaseNumber, judgmentCourt, judgmentRowTitle } from './judgment-row';
 
 describe('a judgment in the list', () => {
 	const j = {

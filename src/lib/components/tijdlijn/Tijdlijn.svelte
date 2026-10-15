@@ -116,7 +116,7 @@
 							class:groot={r.groot}
 							class:kan-open={!!r.inhoud}
 							class:is-open={isHet}
-							class:gedimd={r.gedimd}
+							class:is-dim={r.gedimd}
 							data-rij
 						>
 							<span class="datum"
@@ -302,7 +302,7 @@
 	.regel:only-child::before {
 		display: none;
 	}
-	.gedimd {
+	.is-dim {
 		opacity: 0.4;
 	}
 	.datum {

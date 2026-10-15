@@ -106,7 +106,7 @@
 	<Sectie
 		id={FOLD.amendments}
 		sleutel={FOLD.amendments}
-		titel="Amendementen"
+		title="Amendementen"
 		soort="documents"
 		aantal={regeling?.rijen.length ?? null}
 	>
@@ -180,13 +180,13 @@
 											><Uitkomst
 												soort={u.soort}
 												woord={u.woord}
-												titel={u.titel}
+												title={u.titel}
 											/>{#if r.uitslag.telling}<span>{r.uitslag.telling}</span>{/if}</BronLink
 										>
 									{:else if regeling.metVervanging || r.nogNiet}
 										<!-- Not replaced and never voted: withdrawn or still open. Without the
 										     chains a paper without a vote may have been replaced: nothing said. -->
-										<Uitkomst soort={u.soort} woord={u.woord} titel={u.titel} />
+										<Uitkomst soort={u.soort} woord={u.woord} title={u.titel} />
 									{/if}
 								</td>
 							</tr>

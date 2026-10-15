@@ -25,7 +25,7 @@
 		placeholder = 'Zoek een wet, uitspraak of dossier',
 		initial = '',
 		onOpen,
-		onPick,
+		onSelect,
 		scope = null
 	}: {
 		/** Alleen deze soorten doorzoeken (een ingang op de startpagina). */
@@ -40,15 +40,15 @@
 		/** Called when a bron is opened; the overlay closes on it. */
 		onOpen?: () => void;
 		/** Given, a result is not opened but handed over by the name a link uses; the field empties. */
-		onPick?: (id: string) => void;
+		onSelect?: (id: string) => void;
 	} = $props();
 
 	// A result chosen here starts a network of its own, as a double click does (Thijs, 8 Oct);
-	// the + in the Netwerk panel (onPick) is the way to add one.
+	// the + in the Netwerk panel (onSelect) is the way to add one.
 	function open(ref: BronRef | string, at: string | null) {
-		if (onPick) {
+		if (onSelect) {
 			const id = focusOf(ref);
-			if (id) onPick(id);
+			if (id) onSelect(id);
 			search.query = '';
 			return;
 		}
@@ -164,8 +164,8 @@
 		<!-- The same period as every list with dates (Periode). -->
 		<div class="periode">
 			<Periode
-				van={search.from}
-				tot={search.to}
+				from={search.from}
+				to={search.to}
 				onChange={(v, t) => {
 					search.from = v;
 					search.to = t;

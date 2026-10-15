@@ -12,7 +12,7 @@
 	klein
 	label="Weergave (toets L)"
 	waarde={weergave.stand}
-	onKies={weergave.onKies}
+	onSelect={weergave.onKies}
 	opties={[
 		{ waarde: 'netwerk', label: 'Netwerk', titel: 'Netwerk: de verbindingen' },
 		{

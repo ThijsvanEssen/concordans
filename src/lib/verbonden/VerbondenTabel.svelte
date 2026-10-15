@@ -16,7 +16,7 @@
 	import { formatCount } from '$lib/text/getal';
 	import { ankerVanRij, dossierVanRij, openLabelOf, rowKey, type Row } from './rows';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
-	import RowOpen from './RowOpen.svelte';
+	import VerbindingOpen from '$lib/components/open/VerbindingOpen.svelte';
 	import { isEscape } from '$lib/actions/keys';
 	import { LOAD_FAILED, type VerbondenState } from './source';
 	import { betrouwbaarheid } from './verbinding';
@@ -153,7 +153,7 @@
 			tekst={sortLabel}
 			opties={TABLE_COLUMNS.map((c) => ({ waarde: c.id, label: c.label }))}
 			waarde={sortBy}
-			onKies={(id) => {
+			onSelect={(id) => {
 				sortBy = id;
 				sortDir = id === 'datum' ? 'desc' : 'asc';
 			}}
@@ -284,7 +284,7 @@
 						{#if open}
 							<tr class="open-row">
 								<td colspan={visibleColumns.length}>
-									<RowOpen
+									<VerbindingOpen
 										row={r}
 										openHref={bronHref(r.ref, { at: ankerVanRij(r) })}
 										openLabel={openLabelOf(r)}

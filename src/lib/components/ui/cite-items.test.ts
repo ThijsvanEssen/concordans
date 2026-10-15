@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { citeItems } from './cite';
+import { citeItems } from './cite-items';
 
 describe('citeItems', () => {
 	it('lists the forms in one order, the link last, and leaves out what is missing', () => {

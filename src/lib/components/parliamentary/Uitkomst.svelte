@@ -5,13 +5,13 @@
 	let {
 		soort,
 		woord = null,
-		titel = null
+		title = null
 	}: {
 		soort: 'ja' | 'nee' | 'nu' | 'open' | 'klaar';
 		/** Het woord naast het vakje; zonder woord alleen het vakje (met een title). */
 		woord?: string | null;
 		/** The title of a box without a word, where the general one does not fit. */
-		titel?: string | null;
+		title?: string | null;
 	} = $props();
 	const TITLE = {
 		ja: 'aangenomen of afgerond',
@@ -22,7 +22,7 @@
 	};
 </script>
 
-<span class="uk uk--{soort}" title={woord ? undefined : (titel ?? TITLE[soort])}
+<span class="uk uk--{soort}" title={woord ? undefined : (title ?? TITLE[soort])}
 	><span class="vak" aria-hidden="true"></span>{#if woord}<span class="w">{woord}</span>{/if}</span
 >
 

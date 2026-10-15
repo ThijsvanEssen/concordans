@@ -37,7 +37,7 @@
 			klein
 			opties={orders.map((o) => ({ waarde: o.value, label: o.label }))}
 			waarde={order}
-			onKies={(o) => {
+			onSelect={(o) => {
 				if (o !== order) onOrder(o);
 			}}
 		/>

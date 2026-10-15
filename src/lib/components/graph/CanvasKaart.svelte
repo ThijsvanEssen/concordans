@@ -8,7 +8,7 @@
 	import Caret from '$lib/components/ui/Caret.svelte';
 
 	let {
-		titel,
+		title,
 		open = true,
 		onToggle,
 		samenvatting,
@@ -21,7 +21,7 @@
 		el = $bindable(null),
 		...rest
 	}: {
-		titel: string;
+		title: string;
 		/** Open: the content shows. A card without `onToggle` is always open. */
 		open?: boolean;
 		onToggle?: () => void;
@@ -45,7 +45,7 @@
 	{...rest}
 	class="canvas-kaart {className}"
 	{style}
-	aria-label={label ?? titel}
+	aria-label={label ?? title}
 	bind:this={el}
 >
 	<div class="canvas-kaart__kop">
@@ -53,12 +53,12 @@
 			{@render kop()}
 		{:else if onToggle}
 			<button type="button" class="canvas-kaart__knop" aria-expanded={open} onclick={onToggle}>
-				<span class="canvas-kaart__titel">{titel}</span>
+				<span class="canvas-kaart__titel">{title}</span>
 				{#if samenvatting}{@render samenvatting()}{/if}
 				<Caret {open} />
 			</button>
 		{:else}
-			<span class="canvas-kaart__titel">{titel}</span>
+			<span class="canvas-kaart__titel">{title}</span>
 		{/if}
 		{#if actie}<span class="canvas-kaart__actie">{@render actie()}</span>{/if}
 	</div>

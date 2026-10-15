@@ -48,7 +48,7 @@
 		aria-controls="overzicht-facetten"
 		onclick={() => (open = !open)}>Verfijnen{faction ? ' (1)' : ''}</button
 	>
-	<div class="facet-lijst" id="overzicht-facetten" class:open>
+	<div class="facet-lijst" id="overzicht-facetten" class:is-open={open}>
 		<section class="facet" aria-labelledby="f-fractie">
 			<h2 class="facet__kop" id="f-fractie">Fractie</h2>
 			<TekstMenu klein label="Fractie" tekst={faction || 'Geen fractie'}>
@@ -119,7 +119,7 @@
 			display: none;
 			padding-top: var(--s-3);
 		}
-		.facet-lijst.open {
+		.facet-lijst.is-open {
 			display: block;
 		}
 	}

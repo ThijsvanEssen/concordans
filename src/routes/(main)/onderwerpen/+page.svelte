@@ -358,7 +358,7 @@
 			     opens and closes it, remembered per topic in this browser (Thijs, 10 Oct), its
 			     actions at the right on the same line, what is new under it. -->
 			<Sectie
-				titel={naamVan(o)}
+				title={naamVan(o)}
 				id="onderwerp-{n}"
 				niveau={2}
 				aantal={telling(s)}
@@ -444,7 +444,7 @@
 				{#if s?.status === 'klaar' && s.doorzocht}
 					<Doorzocht
 						vanaf={s.doorzocht}
-						laden={verderBezig === vak(o)}
+						loading={verderBezig === vak(o)}
 						onVerder={() => verderTerug(o)}
 					/>
 				{/if}

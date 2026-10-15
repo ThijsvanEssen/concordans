@@ -23,13 +23,13 @@
 	<p class="coal" class:coal--eensgezind={!!line.together}>
 		{#if line.together}
 			{@const kant = line.together.choice.toLowerCase()}
-			<Uitkomst soort={line.together.outcome} titel={kant} /><span class="kop">Coalitie {kant}</span
+			<Uitkomst soort={line.together.outcome} title={kant} /><span class="kop">Coalitie {kant}</span
 			>
 		{:else}
 			<span class="kop">Coalitie verdeeld</span>
 			{#each line.sides as z (z.choice)}
 				<span class="zijde"
-					><Uitkomst soort={z.outcome} titel={z.choice.toLowerCase()} />{z.names.length
+					><Uitkomst soort={z.outcome} title={z.choice.toLowerCase()} />{z.names.length
 						? z.names.join(', ')
 						: `${z.seats} zetels`}</span
 				>

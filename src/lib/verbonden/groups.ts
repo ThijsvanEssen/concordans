@@ -14,7 +14,7 @@ import { formatCount } from '$lib/text/getal';
 import { rowOfNeighbor, type Row } from './rows';
 import { type Neighbor } from '$lib/api/nodes';
 import type { JudgmentOrder } from './loaders';
-import { chamberOfDocument } from './chamber';
+import { chamberOfDocument } from './document-chamber';
 import { CHAMBER_NAME, type Chamber } from '$lib/components/parliamentary/chamber';
 
 import { choiceRank } from '$lib/components/parliamentary/stemming';

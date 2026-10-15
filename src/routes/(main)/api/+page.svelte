@@ -88,7 +88,7 @@
 									{#if ep.summary}
 										<span class="api-summary">{ep.summary}</span>
 									{/if}
-									<span class="api-chev" aria-hidden="true" class:open={opOpen}>▸</span>
+									<span class="api-chev" aria-hidden="true" class:is-open={opOpen}>▸</span>
 								</button>
 
 								{#if opOpen}
@@ -387,7 +387,7 @@
 		transition: transform var(--dur-1);
 		margin-right: var(--s-1);
 	}
-	.api-chev.open {
+	.api-chev.is-open {
 		transform: rotate(90deg);
 	}
 

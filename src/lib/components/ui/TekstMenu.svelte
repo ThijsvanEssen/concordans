@@ -16,7 +16,7 @@
 		label,
 		opties = [],
 		waarde = null,
-		onKies,
+		onSelect,
 		tekst,
 		klein = false,
 		rechts = false,
@@ -28,7 +28,7 @@
 		label: string;
 		opties?: Option<T>[];
 		waarde?: T | null;
-		onKies?: (w: T) => void;
+		onSelect?: (w: T) => void;
 		/** The words on the button where they are not one option's label (`Alle jaren, alle rechters`). */
 		tekst?: string;
 		/** In a panel or a group: the panel's height (24 px) instead of the page's (32 px). */
@@ -83,7 +83,7 @@
 						disabled={o.uit}
 						onclick={() => {
 							sluit();
-							if (o.waarde !== waarde) onKies?.(o.waarde);
+							if (o.waarde !== waarde) onSelect?.(o.waarde);
 						}}>{o.label}</button
 					>
 				{/each}

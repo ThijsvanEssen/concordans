@@ -19,7 +19,7 @@
 	import { citeArticle, citePublication, type Citation } from '$lib/text/cite';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
-	import IconKnop from '$lib/components/ui/IconKnop.svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import { slide } from 'svelte/transition';
 	import {
@@ -372,10 +372,10 @@
 		     change that began it; ‹ › and the arrow keys step through the changes. -->
 			<div class="ab">
 				{@render chooser('A', from, to.index, (i) => showPair(i, to.index))}
-				<IconKnop label="A en B omdraaien" onclick={() => showPair(to.index, from.index)}
+				<IconButton label="A en B omdraaien" onclick={() => showPair(to.index, from.index)}
 					><svg class="ab__ruil" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"
 						><path d="M2 5.5h11M10 2.5l3 3-3 3M14 10.5H3M6 7.5l-3 3 3 3" /></svg
-					></IconKnop
+					></IconButton
 				>
 				{@render chooser('B', to, from.index, (i) => showPair(from.index, i))}
 			</div>
@@ -395,7 +395,7 @@
 							<button
 								type="button"
 								class="line__label"
-								class:is-on={adjacent && w.index === newer.index}
+								class:is-active={adjacent && w.index === newer.index}
 								disabled={w.index === 0}
 								title="{capitalize(period(w))}: {w.index === 0
 									? 'oudste tekst in de gegevens'
@@ -414,16 +414,16 @@
 					{/each}
 				</ol>
 				<span class="pick__steps">
-					<IconKnop
+					<IconButton
 						class="ab__vorige"
 						label="Vorige wijziging (←)"
 						disabled={prevChange === null}
-						onclick={() => prevChange !== null && showChange(prevChange)}><Caret side /></IconKnop
+						onclick={() => prevChange !== null && showChange(prevChange)}><Caret side /></IconButton
 					>
-					<IconKnop
+					<IconButton
 						label="Volgende wijziging (→)"
 						disabled={nextChange === null}
-						onclick={() => nextChange !== null && showChange(nextChange)}><Caret side /></IconKnop
+						onclick={() => nextChange !== null && showChange(nextChange)}><Caret side /></IconButton
 					>
 				</span>
 			</div>
@@ -470,7 +470,7 @@
 							{ waarde: 'naast', label: 'Naast elkaar' }
 						]}
 						waarde={layout}
-						onKies={(w) => go({ weergave: w === 'naast' ? 'naast' : null })}
+						onSelect={(w) => go({ weergave: w === 'naast' ? 'naast' : null })}
 					/>
 					{#if sameCount > 0}
 						<button type="button" class="btn is-text" onclick={() => (showSame = !showSame)}
@@ -760,8 +760,8 @@
 		text-decoration-line: underline;
 		text-underline-offset: 3px;
 	}
-	.line__label.is-on .line__year,
-	.line__label.is-on .line__what {
+	.line__label.is-active .line__year,
+	.line__label.is-active .line__what {
 		color: var(--ink);
 	}
 	.line__bar {

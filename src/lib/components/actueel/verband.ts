@@ -11,7 +11,7 @@ import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
 import { changeAround, changeVerb } from '$lib/verbonden/hoe';
 import { changeRelation } from '$lib/vocabulary';
-import { headSurname } from './timeline';
+import { headSurname } from './home-stream';
 import { artikelenGewijzigd, publicationCite, type FeedItem } from './feed';
 
 /** A piece of a line: words, or a bron by its id and its readable address. */

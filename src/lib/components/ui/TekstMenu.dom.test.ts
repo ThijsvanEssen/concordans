@@ -11,7 +11,7 @@ const opties = [
 
 async function open() {
 	const onKies = vi.fn();
-	render(TekstMenu, { label: 'Volgorde', opties, waarde: 'oud', onKies });
+	render(TekstMenu, { label: 'Volgorde', opties, waarde: 'oud', onSelect: onKies });
 	const knop = screen.getByRole('button', { name: 'Volgorde: Oudste eerst' });
 	await fireEvent.click(knop);
 	await tick();

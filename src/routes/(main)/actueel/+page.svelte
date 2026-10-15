@@ -512,7 +512,7 @@
 {/snippet}
 {#snippet verder()}
 	{#if doorzocht}
-		<Doorzocht vanaf={doorzocht} laden={verderLaden} onVerder={verderTerug} />
+		<Doorzocht vanaf={doorzocht} loading={verderLaden} onVerder={verderTerug} />
 	{/if}
 {/snippet}
 <svelte:window onkeydown={onKey} />

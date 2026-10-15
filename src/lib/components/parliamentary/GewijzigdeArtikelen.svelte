@@ -39,7 +39,7 @@
 	let open = $state<Record<string, boolean>>({});
 </script>
 
-<Sectie titel="Gewijzigde artikelen" soort="articles" aantal={data.articles}>
+<Sectie title="Gewijzigde artikelen" soort="articles" aantal={data.articles}>
 	{#each data.laws as l, i (l.law.id ?? `buiten-${i}`)}
 		{@const artikelen = byArticle(l.changes)}
 		{@const key = l.law.id ?? `buiten-${i}`}

@@ -1184,7 +1184,7 @@
 			type="button"
 			class="mobile-tab"
 			class:mobile-tab--phone={read && id === 'graph'}
-			class:active={mobilePanel === id}
+			class:is-active={mobilePanel === id}
 			aria-pressed={mobilePanel === id}
 			onclick={() => kiesPaneel(id)}>{label}</button
 		>
@@ -1203,7 +1203,7 @@
 					form="block"
 				/>{:else}<p class="explore-empty stil" role="status">Laden…</p>{/if}
 		{:else if nietGevonden}
-			<NietGevonden titel="Bron niet gevonden" kop={false}>
+			<NietGevonden title="Bron niet gevonden" kop={false}>
 				<p>{padMissing ?? focusError}</p>
 				<p><a href="/bronnen#dekking">Bronnen en dekking</a></p>
 			</NietGevonden>
@@ -1280,7 +1280,7 @@
 								{netwerkActive}
 								onEdgeClick={openEdgeCard}
 								onClear={() => (card = null)}
-								onGoBack={goBack}
+								onBack={goBack}
 								onGoForward={() => history.forward()}
 								onFilter={applyFilter}
 								onOpenFilter={() => (filterOpen = true)}
@@ -1307,7 +1307,7 @@
 										loading={composer.loading}
 										start={!focus && !netwerkActive}
 										{telefoon}
-										onPick={addIdToNetwerk}
+										onSelect={addIdToNetwerk}
 										omgeving={selectedNode && !selectedNode.stub
 											? bronNaam(selectedNode, $instrumentMetaStore)
 											: null}
@@ -1747,7 +1747,7 @@
 		cursor: pointer;
 		margin-bottom: -1px;
 	}
-	.mobile-tabs .mobile-tab.active {
+	.mobile-tabs .mobile-tab.is-active {
 		color: var(--ink);
 		border-bottom-color: var(--ink);
 		font-weight: 500;

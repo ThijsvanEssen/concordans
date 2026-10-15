@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chamberOfDocument, isExplanatory } from './chamber';
+import { chamberOfDocument, isExplanatory } from './document-chamber';
 
 describe('chamberOfDocument', () => {
 	it('reads the chamber from the key', () => {

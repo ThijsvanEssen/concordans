@@ -10,14 +10,14 @@
 	import { VOORKEUZEN, gekozen, maandenTerug } from '$lib/text/periode';
 
 	let {
-		van,
-		tot,
+		from: van,
+		to: tot,
 		onChange,
 		label = 'Periode',
 		klein = true
 	}: {
-		van: string;
-		tot: string;
+		from: string;
+		to: string;
 		onChange: (van: string, tot: string) => void;
 		/** For the row of choices, where no heading names it. */
 		label?: string;
@@ -45,7 +45,7 @@
 </script>
 
 <div class="periode" class:groot={!klein}>
-	<Keuze {klein} vol {label} {opties} waarde={toon} onKies={kies} />
+	<Keuze {klein} vol {label} {opties} waarde={toon} onSelect={kies} />
 	{#if toon === 'eigen'}
 		<div class="range">
 			<label for="{uid}-van">van</label>

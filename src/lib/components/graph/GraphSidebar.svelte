@@ -199,7 +199,7 @@
 					tekst="Voorkeuze"
 					waarde={activePreset(filter)?.id ?? null}
 					opties={PRESETS.map((p) => ({ waarde: p.id, label: p.label }))}
-					onKies={(id) => {
+					onSelect={(id) => {
 						const p = PRESETS.find((x) => x.id === id);
 						if (p) onFilter(withPreset(filter, p));
 					}}
@@ -231,7 +231,7 @@
 					onToggle={() =>
 						groepen ? groepen.forEach((g) => onToggleGroup?.(g)) : onFilter(toggleKind(filter, k))}
 					count={counting ? null : n}
-					bezig={counting}
+					loading={counting}
 					empty={!counting && n === 0}
 					gedimd={!!groepen}
 				>
@@ -289,7 +289,7 @@
 					title={`${GROUP_LABEL[kind]}: ${CONTAINER_KIND_HINT[kind]}${kind === 'instrument' ? '; uit verbergt ook de artikelen' : ''}`}
 					on={kind === 'instrument' ? isOn('artikelen') : !hiddenGroups.has(kind)}
 					count={kind === 'instrument' && !counting ? (totals.artikelen ?? 0) : null}
-					bezig={kind === 'instrument' && counting}
+					loading={kind === 'instrument' && counting}
 					onToggle={() =>
 						kind === 'instrument'
 							? onFilter(toggleKind(filter, 'artikelen'))
@@ -369,7 +369,7 @@
 								: null;
 					return { waarde: String(d), label: String(d), uit: !!reden, titel: reden ?? undefined };
 				})}
-				onKies={(d) => onDepth(Number(d))}
+				onSelect={(d) => onDepth(Number(d))}
 			/>
 		</section>
 
@@ -385,7 +385,7 @@
 						...lids.map((lid) => ({ waarde: lid, label: `Lid ${lid}` })),
 						{ waarde: 'geen', label: 'Lid niet genoemd' }
 					]}
-					onKies={(v) => onFilter({ ...filter, lid: v === '' ? null : v })}
+					onSelect={(v) => onFilter({ ...filter, lid: v === '' ? null : v })}
 				/>
 			</section>
 		{/if}
@@ -412,7 +412,7 @@
 							titel: 'Hoe vaak een bron in de gekozen periode is aangehaald'
 						}
 					]}
-					onKies={(w) => {
+					onSelect={(w) => {
 						if (w === 'geen') {
 							if (mutOn) onToggleMutatie?.();
 							else if (heatOn) onToggleHeat?.();
@@ -436,7 +436,7 @@
 								label: `${m} maanden`,
 								uit: !onHeatPeriodChange
 							}))}
-							onKies={(m) => onHeatPeriodChange?.(Number(m))}
+							onSelect={(m) => onHeatPeriodChange?.(Number(m))}
 						/>
 					</div>
 				{/if}

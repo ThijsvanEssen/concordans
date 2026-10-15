@@ -19,13 +19,13 @@
 	import { SvelteMap } from 'svelte/reactivity';
 
 	import { bronHref } from '$lib/bron/href';
-	import { keepInPlace, scrollInReader } from '$lib/bron/anchor';
+	import { keepInPlace, scrollInReader } from '$lib/bron/landing';
 	import { parseAnchor } from '$lib/text/anchor';
 	import { deelIds, layersOf } from '$lib/text/division';
 	import { page } from '$app/state';
 	import ReaderHead from './readers/ReaderHead.svelte';
-	import { citeItems } from '$lib/components/ui/cite';
-	import { permalink } from '$lib/bron/anchor';
+	import { citeItems } from '$lib/components/ui/cite-items';
+	import { permalink } from '$lib/bron/landing';
 	import { versionOn } from './peildatum';
 	import { isDay } from '$lib/text/datum';
 	import { nog, verderLabel, type Richting } from './bladeren';

@@ -18,14 +18,14 @@
 	import PlaatsMenu, { placeMarker } from '$lib/components/articles/PlaatsMenu.svelte';
 	import { blockClick } from '$lib/actions/klik';
 	import { kaart } from '$lib/map/map.svelte';
-	import { citeItems } from '$lib/components/ui/cite';
+	import { citeItems } from '$lib/components/ui/cite-items';
 	// Reader for judgments: header, summary, participants and the numbered body.
 	// Text restructuring lives in judgment-text.ts.
 	import { getJudgmentDetail } from '$lib/api/judgments';
 	import type { GraphNode } from '$lib/graph/types';
 	import CitedText from '$lib/components/articles/CitedText.svelte';
 	import { page } from '$app/state';
-	import { anchorOfHash, landOn, permalink } from '$lib/bron/anchor';
+	import { anchorOfHash, landOn, permalink } from '$lib/bron/landing';
 	import { afterTick } from '$lib/util/after-tick';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
@@ -333,7 +333,7 @@
 		{/if}
 
 		{#if samenhang.length > 0}
-			<Sectie titel="Samenhangende zaken" soort="judgments" aantal={samenhang.length}>
+			<Sectie title="Samenhangende zaken" soort="judgments" aantal={samenhang.length}>
 				<ul class="samenhang">
 					{#each samenhang as z (z.key)}
 						<li>
@@ -404,7 +404,7 @@
 						{#if menu && menu.id === item.id && forms}
 							<PlaatsMenu
 								anker={menu.anker}
-								titel={forms.kort}
+								title={forms.kort}
 								cite={citeItems(forms, forms.link)}
 								tekst={() => item.body}
 								bewaar={bewaarItem}

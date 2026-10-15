@@ -13,7 +13,7 @@
 	import { afterTick } from '$lib/util/after-tick';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
-	import IconKnop from '$lib/components/ui/IconKnop.svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import ConfirmButton from '$lib/components/ui/ConfirmButton.svelte';
@@ -145,16 +145,16 @@
 							>Aantekening</button
 						>
 					{/if}
-					<IconKnop
+					<IconButton
 						label="{i.kort} een plaats omhoog"
-						onclick={() => op(m, () => kaart.schuif(i, -1))}>↑</IconKnop
+						onclick={() => op(m, () => kaart.schuif(i, -1))}>↑</IconButton
 					>
-					<IconKnop
+					<IconButton
 						label="{i.kort} een plaats omlaag"
-						onclick={() => op(m, () => kaart.schuif(i, 1))}>↓</IconKnop
+						onclick={() => op(m, () => kaart.schuif(i, 1))}>↓</IconButton
 					>
-					<IconKnop label="{i.kort} uit {m.naam} halen" onclick={() => op(m, () => kaart.weg(i))}
-						>×</IconKnop
+					<IconButton label="{i.kort} uit {m.naam} halen" onclick={() => op(m, () => kaart.weg(i))}
+						>×</IconButton
 					>
 				</span>
 			{/if}
@@ -233,7 +233,7 @@
 					<button
 						type="button"
 						class="raakvlak"
-						class:actief={m.id === kaart.actief.id}
+						class:is-active={m.id === kaart.actief.id}
 						aria-current={m.id === kaart.actief.id ? 'true' : undefined}
 						title="{tel(m.items.length)}, gewijzigd {dag(m.gewijzigd)}"
 						onclick={() => naarMap(m)}>{m.naam}</button
@@ -246,7 +246,7 @@
 
 	<div class="inhoud">
 		{#if gedeeld}
-			<Sectie titel="Gedeelde map: {gedeeld.naam ?? 'zonder naam'}" niveau={2} inklapbaar={false}>
+			<Sectie title="Gedeelde map: {gedeeld.naam ?? 'zonder naam'}" niveau={2} inklapbaar={false}>
 				{#snippet naast()}
 					<span class="acties">
 						{#if gedeeld.items.length}
@@ -272,7 +272,7 @@
 		{/if}
 
 		{#each kaart.mappen as m (m.id)}
-			<Sectie titel={m.naam} id={anker(m)} niveau={2} sleutel="map:{m.id}" standaardOpen>
+			<Sectie title={m.naam} id={anker(m)} niveau={2} sleutel="map:{m.id}" standaardOpen>
 				{#snippet naast()}
 					<span class="acties">
 						{#if m.items.length}
@@ -412,7 +412,7 @@
 								{ waarde: 'eigen' as const, label: 'Eigen volgorde' }
 							]}
 							waarde={m.volgorde}
-							onKies={(v) => op(m, () => kaart.ordening(v))}
+							onSelect={(v) => op(m, () => kaart.ordening(v))}
 						/>
 					{/if}
 					{#if m.items.length}{@render alles(m, m.items)}{/if}
@@ -474,7 +474,7 @@
 		color: var(--ink);
 		text-decoration: underline;
 	}
-	.opzij li button.actief {
+	.opzij li button.is-active {
 		color: var(--ink);
 		font-weight: 600;
 	}

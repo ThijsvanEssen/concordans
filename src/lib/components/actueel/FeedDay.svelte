@@ -37,8 +37,8 @@
 		type FeedItem
 	} from './feed';
 	import { dossierLabel } from '$lib/bron/dossier-naam';
-	import { headlineOf, voteHow, vormVanFeed } from './timeline';
-	import { getoondOnder, plekVan, termenVan, type Plek } from './treffer';
+	import { headlineOf, voteHow, vormVanFeed } from './home-stream';
+	import { getoondOnder, plekVan, termenVan, type Plek } from './match-place';
 	import {
 		inwerkingVerbanden,
 		publicatieVerbanden,

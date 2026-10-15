@@ -26,7 +26,7 @@
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import IconKnop from '$lib/components/ui/IconKnop.svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import IndexFacets, { activeFilters, type FacetGroup } from './index/IndexFacets.svelte';
 	import type { FacetsApart } from './index/faceted';
 	import {
@@ -615,15 +615,15 @@
 									label="Volgorde"
 									waarde={sortDef.id}
 									opties={sorts.map((o) => ({ waarde: o.id, label: o.label }))}
-									onKies={(v) => patchUrl({ sort: v || null })}
+									onSelect={(v) => patchUrl({ sort: v || null })}
 								/>
 								{#if dir}
-									<IconKnop
+									<IconButton
 										label={dir === 'asc'
 											? 'Oplopend; sorteer aflopend'
 											: 'Aflopend; sorteer oplopend'}
 										onclick={() => patchUrl({ dir: dir === 'asc' ? 'desc' : 'asc' })}
-										>{dir === 'asc' ? '↑' : '↓'}</IconKnop
+										>{dir === 'asc' ? '↑' : '↓'}</IconButton
 									>
 								{/if}
 							</span>

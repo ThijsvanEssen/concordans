@@ -1,6 +1,6 @@
 <script lang="ts">
 	// A text with the words a reader follows or searched for marked, as $lib/text/treffer finds
-	// them: the wash of a passage's cited words (RowOpen, MapInhoud), in the text's own colour.
+	// them: the wash of a passage's cited words (VerbindingOpen, MapInhoud), in the text's own colour.
 	import type { Deel } from '$lib/text/treffer';
 
 	let { delen }: { delen: readonly Deel[] } = $props();

@@ -12,7 +12,7 @@ How a control looks and where it stands, on every page and in every panel. The t
 | Vinkje    | switching a thing on or off in a list: facets, columns  | `ui/FilterOptie.svelte` (`inline` beside other things) | the box (`ui/Vinkje.svelte`: 12 px, `--r-1`, a drawn tick), the label, a count at the right; chosen in weight |
 | Tekstlink | going somewhere: Alle 244 uitspraken, Wis alle filters  | `ui/TekstLink.svelte`, `ui/AlleN.svelte`               | the serif in ink, underlined; red only on hover and focus                                                     |
 
-And one icon button, `ui/IconKnop.svelte`, 24 px, for +, ×, zoom and ⋯; it names what it does.
+And one icon button, `ui/IconButton.svelte`, 24 px, for +, ×, zoom and ⋯; it names what it does.
 
 No chips: a choice shows in its control (in weight in the facet, as the value of the text menu). No native `select`: it is a text menu. The chips of the panel Netwerk are content (the chosen bronnen), not a filter.
 
@@ -40,7 +40,7 @@ A row of a Kamerstuk in Verbonden and in Bladeren opens in place on its core tex
 
 ## Size in a timeline
 
-Two things at one level do not differ in size. In a timeline (Actueel, Onderwerpen, the home page, a dossier's procedure) the large line is kept for the bill, its own decisions, and a close vote, where the size carries meaning (decided by a narrow margin). A toezegging, a motie or a brief stands at the size of the lines beside it (`major` in `src/lib/components/actueel/timeline.ts`).
+Two things at one level do not differ in size. In a timeline (Actueel, Onderwerpen, the home page, a dossier's procedure) the large line is kept for the bill, its own decisions, and a close vote, where the size carries meaning (decided by a narrow margin). A toezegging, a motie or a brief stands at the size of the lines beside it (`major` in `src/lib/components/actueel/home-stream.ts`).
 
 ## Layout
 
@@ -106,4 +106,4 @@ Every series of dated lines is the one `Tijdlijn` (`src/lib/components/tijdlijn/
 
 ## Rules
 
-`src/lib/guards/bediening.test.ts`: no native `select` outside TekstMenu, no chips outside the panel Netwerk, no "meer" of its own beside AlleN, no control height but `--veld-h` or `--veld-h-klein`, no framed button but `.btn` and IconKnop, no menu item but `tekstmenu__item` (a menu of its own adds a class for its layout only), Verfijnen styled once in `basis.css`. `guards/tokens.test.ts` holds the tokens: no hex or `rgb()` in a style outside `tokens.css`, a radius only from `--r-*`, a face only through `--font-serif` or `--font-ui`. A place that keeps an older form is an `Uitzondering` with its reason (`src/lib/test/bronnen.ts`); one that no longer excepts anything fails its guard, so it comes out with the step that made it unneeded.
+`src/lib/guards/bediening.test.ts`: no native `select` outside TekstMenu, no chips outside the panel Netwerk, no "meer" of its own beside AlleN, no control height but `--veld-h` or `--veld-h-klein`, no framed button but `.btn` and IconButton, no menu item but `tekstmenu__item` (a menu of its own adds a class for its layout only), Verfijnen styled once in `basis.css`. `guards/tokens.test.ts` holds the tokens: no hex or `rgb()` in a style outside `tokens.css`, a radius only from `--r-*`, a face only through `--font-serif` or `--font-ui`. A place that keeps an older form is an `Uitzondering` with its reason (`src/lib/test/bronnen.ts`); one that no longer excepts anything fails its guard, so it comes out with the step that made it unneeded.

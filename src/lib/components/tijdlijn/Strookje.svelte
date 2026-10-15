@@ -3,15 +3,15 @@
 	// In rust `paper-2` met de partij als kap, open in ink, waarnemend een stippelrand. Dezelfde
 	// vorm op de telefoon (CabinetOccupancy) en in Naast elkaar (NaastPosten).
 	let {
-		van,
-		tot,
+		from: van,
+		to: tot,
 		kleur,
 		open = false,
 		waarnemend = false
 	}: {
 		/** Begin en eind als fractie van de schaal (0 tot 1). */
-		van: number;
-		tot: number;
+		from: number;
+		to: number;
 		kleur: string;
 		open?: boolean;
 		waarnemend?: boolean;
@@ -21,7 +21,7 @@
 <span class="strookje" aria-hidden="true"
 	><span
 		class="blok"
-		class:open
+		class:is-open={open}
 		class:waarnemend
 		style:left="{van * 100}%"
 		style:width="max(4px, {(tot - van) * 100}%)"
@@ -59,7 +59,7 @@
 		border: 1px dotted var(--ink-3);
 		border-left: 2px solid var(--partij);
 	}
-	.open {
+	.is-open {
 		background: var(--ink);
 		box-shadow: none;
 	}

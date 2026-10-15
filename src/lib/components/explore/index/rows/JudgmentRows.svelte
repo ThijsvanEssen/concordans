@@ -5,7 +5,7 @@
 	import { korteDatum } from '$lib/text/datum';
 	import { plural } from '$lib/text/words';
 	import IndexRow from '../IndexRow.svelte';
-	import { judgmentCaseNumber, judgmentCourt, judgmentRowTitle } from '../judgment-kind';
+	import { judgmentCaseNumber, judgmentCourt, judgmentRowTitle } from '../judgment-row';
 	import type { ViewProps } from '../lists/list';
 
 	let { ctx }: ViewProps<Schema<'JudgmentListItemDTO'>, object> = $props();

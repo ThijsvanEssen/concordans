@@ -65,8 +65,8 @@
 		<div class="vak vak--periode">
 			<span class="kop" aria-hidden="true">{periode.label ?? 'Periode'}</span>
 			<Periode
-				van={periode.van}
-				tot={periode.tot}
+				from={periode.van}
+				to={periode.tot}
 				label={periode.label ?? 'Periode'}
 				klein={false}
 				onChange={periode.onChange}
@@ -76,7 +76,13 @@
 	{#if kamer}
 		<div class="vak vak--kamer">
 			<span class="kop" aria-hidden="true">Kamer</span>
-			<Keuze vol label="Kamer" waarde={kamer.waarde} opties={kamer.opties} onKies={kamer.onKies} />
+			<Keuze
+				vol
+				label="Kamer"
+				waarde={kamer.waarde}
+				opties={kamer.opties}
+				onSelect={kamer.onKies}
+			/>
 		</div>
 	{/if}
 </div>

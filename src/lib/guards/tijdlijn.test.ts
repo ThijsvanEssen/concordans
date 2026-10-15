@@ -9,7 +9,7 @@ describe('the timeline', () => {
 		expect(tijdlijn).toMatch(/VORMEN\[/);
 		expect(tijdlijn).not.toMatch(/class="teken"|border-radius:\s*50%/);
 		// Required on Actueel's line, so the compiler holds every builder to it.
-		expect(bron('lib/components/actueel/timeline.ts')).toMatch(/\bvorm: Vorm\b/);
+		expect(bron('lib/components/actueel/home-stream.ts')).toMatch(/\bvorm: Vorm\b/);
 	});
 
 	it('shows every series of dated lines in the one Tijdlijn (tijdlijn-voorstel, Thijs 11 Oct: "Ja, beide")', () => {

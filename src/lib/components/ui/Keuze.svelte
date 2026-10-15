@@ -8,7 +8,7 @@
 	let {
 		opties,
 		waarde,
-		onKies,
+		onSelect,
 		label,
 		klein = false,
 		vol = false,
@@ -16,7 +16,7 @@
 	}: {
 		opties: Option<T>[];
 		waarde: T | null;
-		onKies: (w: T) => void;
+		onSelect: (w: T) => void;
 		/** What is chosen, for a screen reader: `Weergave`, `Kamer`. */
 		label: string;
 		/** In a tight spot (the switch beside the band): a step smaller. */
@@ -35,7 +35,7 @@
 			aria-pressed={waarde === o.waarde}
 			disabled={o.uit}
 			title={o.titel}
-			onclick={() => waarde !== o.waarde && onKies(o.waarde)}
+			onclick={() => waarde !== o.waarde && onSelect(o.waarde)}
 			>{@render voor?.(o.waarde)}{o.label}</button
 		>
 	{/each}

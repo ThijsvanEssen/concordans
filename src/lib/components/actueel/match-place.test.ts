@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { getoondOnder, plekVan, termenVan } from './treffer';
+import { getoondOnder, plekVan, termenVan } from './match-place';
 import { normalizeItem, type FeedItem } from './feed';
-import { headlineOf } from './timeline';
+import { headlineOf } from './home-stream';
 
 const DOSSIER_36875 = {
 	key: '36875',

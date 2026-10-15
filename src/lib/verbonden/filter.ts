@@ -7,7 +7,7 @@
 import { isDay } from '$lib/text/datum';
 import { formatCount } from '$lib/text/getal';
 import { alsDag } from '$lib/text/periode';
-import { isExplanatory } from './chamber';
+import { isExplanatory } from './document-chamber';
 import type { Row } from './rows';
 import { isAmendingRelation } from '$lib/vocabulary';
 import { PARAM } from '$lib/url/filters';
