@@ -7,7 +7,7 @@ exports[`the names of a bron > 'activities/3e394d68_06e1_4a3c_868a_61…' 1`] = 
   "label": "2025-04, Regeling",
   "row": "Regeling van werkzaamheden, 15 april 2025",
   "tab": "Regeling van werkzaamheden van 15 april 2025",
-  "tab before its title": "Regeling van werkzaamheden (2025-04-15)",
+  "tab before its title": "Regeling van werkzaamheden, 15 april 2025",
 }
 `;
 
@@ -18,7 +18,7 @@ exports[`the names of a bron > 'activities/481df0ca_7e30_4797_b0d9_4d…' 1`] = 
   "label": "2025-09, Procedurevergadering",
   "row": "Procedurevergadering commissie Binnenlandse Zaken",
   "tab": "Procedurevergadering van 25 september 2025: Procedurevergadering commissie…",
-  "tab before its title": "Procedurevergadering commissie Binnenlandse Zaken (2025-09-25)",
+  "tab before its title": "Procedurevergadering commissie Binnenlandse Zaken",
 }
 `;
 
@@ -29,7 +29,7 @@ exports[`the names of a bron > 'activities/1458fee0_6d30_4882_9d97_45…' 1`] = 
   "label": "2025-03, Procedurevergadering",
   "row": "Procedurevergadering commissie Binnenlandse Zaken",
   "tab": "Procedurevergadering van 13 maart 2025: Procedurevergadering commissie…",
-  "tab before its title": "Procedurevergadering commissie Binnenlandse Zaken (2025-03-13)",
+  "tab before its title": "Procedurevergadering commissie Binnenlandse Zaken",
 }
 `;
 
@@ -205,7 +205,7 @@ exports[`the names of a bron > 'decisions/decision_007f55ef_315a_43a3…' 1`] = 
   "label": "2025-05, Motie",
   "row": "Gewijzigde motie van de leden Kathmann en Van Nispen over de subsidie voor Offlimits meerjarig verhogen in lijn met de stijging van het aantal meldingen van online kindermisbruik (t.v.v. 36600-VII-70)",
   "tab": "Stemming over Gewijzigde motie van de leden Kathmann en Van Nispen over de…",
-  "tab before its title": "Tweede Kamer, 21 mei 2025: t.v.v. 36600-VII-70",
+  "tab before its title": "Gewijzigde motie van de leden Kathmann en Van Nispen over de subsidie voor…",
 }
 `;
 
@@ -216,7 +216,7 @@ exports[`the names of a bron > 'decisions/decision_2479b686_83f0_4c5e…' 1`] = 
   "label": "2024-04, Motie",
   "row": "Motie van het lid Beckerman over afzien van een extra huuropslag voor energielabels",
   "tab": "Stemming over Motie van het lid Beckerman over afzien van een extra huuropslag…",
-  "tab before its title": "Tweede Kamer, 25 april 2024: Motie van het lid Beckerman over afzien van een…",
+  "tab before its title": "Motie van het lid Beckerman over afzien van een extra huuropslag voor…",
 }
 `;
 
@@ -227,7 +227,7 @@ exports[`the names of a bron > 'decisions/ek_2025_04_15_36600_vii_i' 1`] = `
   "label": "2025-04, Motie",
   "row": "Motie-Perin-Gopie (Volt) c.s. over onderzoek naar de maatschappelijk kosten van discriminatie en racisme in Nederland",
   "tab": "Stemming over Motie-Perin-Gopie (Volt) c.s. over onderzoek naar de…",
-  "tab before its title": "Eerste Kamer, 15 april 2025: Motie-Perin-Gopie (Volt) c.s. over onderzoek naar…",
+  "tab before its title": "Motie-Perin-Gopie (Volt) c.s. over onderzoek naar de maatschappelijk kosten…",
 }
 `;
 
@@ -260,7 +260,7 @@ exports[`the names of a bron > 'documents/stcrt_stcrt_2017_74288' 1`] = `
   "label": "STAATSCOURANT, nr. 74288",
   "row": "STAATSCOURANT",
   "tab": "Ministeriële regeling",
-  "tab before its title": "Stcrt. 2017/74288: STAATSCOURANT",
+  "tab before its title": "STAATSCOURANT",
 }
 `;
 
@@ -271,7 +271,7 @@ exports[`the names of a bron > 'dossiers/27926' 1`] = `
   "label": "27926, Huurbeleid",
   "row": "Huurbeleid",
   "tab": "27926 Huurbeleid",
-  "tab before its title": "27926 Huurbeleid",
+  "tab before its title": "Huurbeleid",
 }
 `;
 
@@ -282,7 +282,7 @@ exports[`the names of a bron > 'dossiers/32761' 1`] = `
   "label": "32761, Verwerking en bescherming persoonsgegevens",
   "row": "Verwerking en bescherming persoonsgegevens",
   "tab": "32761 Verwerking en bescherming persoonsgegevens",
-  "tab before its title": "32761 Verwerking en bescherming persoonsgegevens",
+  "tab before its title": "Verwerking en bescherming persoonsgegevens",
 }
 `;
 
@@ -293,7 +293,7 @@ exports[`the names of a bron > 'dossiers/36600_vii' 1`] = `
   "label": "36600 VII, Begroting Binnenlandse Zaken en Koninkrijksrelaties 2025",
   "row": "Begroting Binnenlandse Zaken en Koninkrijksrelaties 2025",
   "tab": "36600 VII Begroting Binnenlandse Zaken en Koninkrijksrelaties 2025",
-  "tab before its title": "36600 VII Begroting Binnenlandse Zaken en Koninkrijksrelaties 2025",
+  "tab before its title": "Begroting Binnenlandse Zaken en Koninkrijksrelaties 2025",
 }
 `;
 
@@ -304,7 +304,7 @@ exports[`the names of a bron > 'factions/vvd' 1`] = `
   "label": "VVD",
   "row": "Volkspartij voor Vrijheid en Democratie",
   "tab": "VVD, fractie in de Tweede Kamer",
-  "tab before its title": "VVD",
+  "tab before its title": "Volkspartij voor Vrijheid en Democratie",
 }
 `;
 
@@ -381,7 +381,7 @@ exports[`the names of a bron > 'judgments/ecli_nl_ghdha_2018_2591' 1`] = `
   "label": "GH 2018/2591",
   "row": "Gerechtshof Den Haag, 9 oktober 2018 (Urgenda)",
   "tab": "Hof Den Haag 9 oktober 2018 (Urgenda), ECLI:NL:GHDHA:2018:2591",
-  "tab before its title": "Hof Den Haag 9 oktober 2018 (Urgenda)",
+  "tab before its title": "Gerechtshof Den Haag, 9 oktober 2018 (Urgenda)",
 }
 `;
 
@@ -392,7 +392,7 @@ exports[`the names of a bron > 'judgments/ecli_nl_hr_1965_ab7079' 1`] = `
   "label": "HR 1965/AB7079",
   "row": "Hoge Raad, 5 november 1965 (Kelderluik)",
   "tab": "HR 5 november 1965 (Kelderluik), ECLI:NL:HR:1965:AB7079",
-  "tab before its title": "HR 5 november 1965 (Kelderluik)",
+  "tab before its title": "Hoge Raad, 5 november 1965 (Kelderluik)",
 }
 `;
 
@@ -403,7 +403,7 @@ exports[`the names of a bron > 'judgments/ecli_nl_hr_2019_2006' 1`] = `
   "label": "HR 2019/2006",
   "row": "Hoge Raad, 20 december 2019 (Urgenda)",
   "tab": "HR 20 december 2019 (Urgenda), ECLI:NL:HR:2019:2006",
-  "tab before its title": "HR 20 december 2019 (Urgenda)",
+  "tab before its title": "Hoge Raad, 20 december 2019 (Urgenda)",
 }
 `;
 
@@ -414,6 +414,6 @@ exports[`the names of a bron > 'members/0442fb6c_8441_4292_a275_5f701…' 1`] = 
   "label": "Hayke Veldman (VVD)",
   "row": "Hayke Veldman",
   "tab": "Hayke Veldman, oud-Kamerlid",
-  "tab before its title": "Hayke Veldman (VVD)",
+  "tab before its title": "Hayke Veldman",
 }
 `;

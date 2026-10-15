@@ -22,7 +22,10 @@ describe('the names of a bron', () => {
 		const props = n.props ?? {};
 		expect({
 			tab: pageName(graphNode, titelVan(n.id)),
-			'tab before its title': pageName(graphNode, null),
+			'tab before its title': pageName(
+				{ ...graphNode, raw: { ...graphNode.raw!, title: null } },
+				null
+			),
 			card: previewFromNode(n.collection, n.display_name, props).title,
 			canvas: bronNaam(graphNode, new Map()),
 			row: describeBron(n.collection, n.key, n.display_name, props).title,

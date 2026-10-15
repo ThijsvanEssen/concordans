@@ -1,25 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import type { GraphNode } from '$lib/graph/types';
-import { documentTitle, pageName, tabTitle } from './tab-title';
+import { documentTitle, pageName } from './tab-title';
+import { previewFromNode } from './preview';
 
-const node = (collection: string, label: string, display_name: string | null, props = {}) =>
-	({ collection, label, raw: { display_name, props } }) as unknown as GraphNode;
+const node = (
+	collection: string,
+	label: string,
+	display_name: string | null,
+	props = {},
+	title?: string | null
+) => ({ collection, label, raw: { display_name, props, title } }) as unknown as GraphNode;
 
-describe('tabTitle', () => {
-	it('names a dossier by its number and short title', () => {
-		const title =
-			'Wijziging van de Uitvoeringswet Algemene verordening gegevensbescherming en enkele andere wetten (Verzamelwet gegevensbescherming)';
-		expect(
-			tabTitle(
-				node('dossiers', '36264', `Kamerstukdossier 36264: ${title}`, {
-					label: '36264',
-					title,
-					short_title: 'Verzamelwet gegevensbescherming'
-				})
-			)
-		).toBe('36264 Verzamelwet gegevensbescherming');
-	});
-
+describe('pageName', () => {
 	it('names a Kamerstuk by its kind, title and place as a citation writes it (#84)', () => {
 		const brief = node(
 			'documents',
@@ -36,36 +28,43 @@ describe('tabTitle', () => {
 		expect(documentTitle(brief)).toBe(
 			'Brief regering: Werkprogramma AWTI 2025 (36600 VIII, nr. 5)'
 		);
-		expect(tabTitle(brief)).toBe(documentTitle(brief));
+		expect(pageName(brief, 'Brief regering: Werkprogramma AWTI 2025 (36600-VIII-5)')).toBe(
+			documentTitle(brief)
+		);
 		expect(documentTitle(node('documents', 'x', 'Sprekerslijst', { kind: 'Sprekerslijst' }))).toBe(
 			null
 		);
 	});
 
-	it('names a judgment by its label and name, a BW article by its book', () => {
-		expect(tabTitle(node('judgments', 'HR 2019/2006', null, { names: ['Urgenda'] }))).toBe(
-			'HR 2019/2006 (Urgenda)'
-		);
-		expect(tabTitle(node('articles', 'Art. 6:162', 'Artikel 162 Burgerlijk Wetboek Boek 6'))).toBe(
-			'Artikel 6:162 BW'
-		);
-	});
-
-	it('names an article by its law where it has no abbreviation', () => {
+	it('takes the API title for any other bron, cut at a word, without a heading in capitals', () => {
+		const wet = node('instruments', 'x', 'Wet', {});
+		expect(pageName(wet, 'Burgerlijk Wetboek Boek 6')).toBe('Burgerlijk Wetboek Boek 6');
 		expect(
-			tabTitle(
-				node('articles', 'Art. 419', null, {
-					instrument_citation_title: 'Wetboek van Burgerlijke Rechtsvordering'
-				})
-			)
-		).toBe('Art. 419 Wetboek van Burgerlijke Rechtsvordering');
+			pageName(node('instruments', 'x', null, {}, 'Stb. 2026, 187: BEGRIPSBEPALING'), null)
+		).toBe('Stb. 2026, 187');
+		const long =
+			'Stemming over Gewijzigde motie van het lid Grinwis over optionele varianten van steward ownership en werknemerseigendom, 29 september 2026: aangenomen';
+		const title = pageName(node('decisions', 'x', null), long);
+		expect(title.length).toBeLessThanOrEqual(81);
+		expect(title.endsWith('…')).toBe(true);
+		expect(title).not.toMatch(/\s…$/);
 	});
 
-	it('names a bijlage as the reader does, not by the data\'s "Annex"', () => {
-		expect(tabTitle(node('annexes', 'Annex II', 'Annex II', { label: 'II' }))).toBe('Bijlage II');
+	it('names a bron as a reader reads it before its title is in, never by its key', () => {
+		expect(pageName(node('annexes', 'Annex II', 'Annex II', { label: 'II' }), null)).toBe(
+			'Bijlage II'
+		);
+		expect(
+			pageName(node('commitments', 'c8a96d5e_1f2a', null, { number: 'TZ202609-124' }), null)
+		).toBe('Toezegging TZ202609-124');
 	});
+});
 
-	it('names a translation as such: it shares the date and name of its original', () => {
+describe('the card of a judgment and a stemming', () => {
+	const title = (collection: 'judgments' | 'decisions', props: Record<string, unknown>) =>
+		previewFromNode(collection, null, props).title;
+
+	it('names a judgment by its citation and name, a translation as such', () => {
 		const props = {
 			ecli: 'ECLI:NL:HR:2019:2007',
 			date: '2019-12-20',
@@ -73,9 +72,7 @@ describe('tabTitle', () => {
 			names: ['Urgenda'],
 			translation_of: 'ECLI:NL:HR:2019:2006'
 		};
-		expect(tabTitle(node('judgments', 'x', null, props))).toBe(
-			'HR 20 december 2019 (Urgenda), vertaling'
-		);
+		expect(title('judgments', props)).toBe('HR 20 december 2019 (Urgenda), vertaling');
 	});
 
 	it('names a conclusion by its A-G, as it is cited', () => {
@@ -85,7 +82,7 @@ describe('tabTitle', () => {
 			court: 'Parket bij de Hoge Raad',
 			advocate_general: 'F.F. Langemeijer en M.H. Wissink'
 		};
-		expect(tabTitle(node('judgments', 'x', null, props))).toBe(
+		expect(title('judgments', props)).toBe(
 			'Conclusie A-G Langemeijer en Wissink 13 september 2019'
 		);
 	});
@@ -93,51 +90,11 @@ describe('tabTitle', () => {
 	it('names a stemming as its heading does: Kamer, day and subject, no ISO date', () => {
 		const subject =
 			'Wijziging van de Wet structuur uitvoeringsorganisatie werk en inkomen (Wet proactieve dienstverlening SZW) ';
+		expect(title('decisions', { subject, date: '2026-09-29' })).toBe(
+			'Tweede Kamer, 29 september 2026: Wet proactieve dienstverlening SZW'
+		);
 		expect(
-			tabTitle(
-				node('decisions', 'x', `Wetgeving 2025Z15911: ${subject}`, { subject, date: '2026-09-29' })
-			)
-		).toBe('Tweede Kamer, 29 september 2026: Wet proactieve dienstverlening SZW');
-		const ek = 'Eerste Kamer 2026-09-29: Goedkeuring Verdrag (36.455 (R2188))';
-		expect(
-			tabTitle(
-				node('decisions', 'x', ek, {
-					subject: 'Goedkeuring Verdrag',
-					chamber: 'EK',
-					date: '2026-09-29'
-				})
-			)
+			title('decisions', { subject: 'Goedkeuring Verdrag', chamber: 'EK', date: '2026-09-29' })
 		).toBe('Eerste Kamer, 29 september 2026: Goedkeuring Verdrag');
-	});
-
-	it('cuts a long name at a word', () => {
-		const long =
-			'Motie 2026Z19641 — Gewijzigde motie van het lid Grinwis over optionele varianten van steward ownership en werknemerseigendom';
-		const title = tabTitle(node('decisions', 'x', long));
-		expect(title.length).toBeLessThanOrEqual(81);
-		expect(title.endsWith('…')).toBe(true);
-		expect(title).not.toMatch(/\s…$/);
-	});
-});
-
-describe('pageName', () => {
-	const props = {
-		label: '36600-VIII',
-		number: '36600',
-		suffix: 'VIII',
-		title: 'Begroting OCW 2025'
-	};
-	const dossier = node('dossiers', '36600-VIII', null, props);
-
-	it('names a dossier by its number in official notation, not by the API title (#94)', () => {
-		const name = pageName(dossier, '36600-VIII Begroting OCW 2025');
-		expect(name).toBe(tabTitle(dossier));
-		expect(name).toMatch(/^36600 VIII\b/);
-	});
-
-	it('takes the API title for any other bron, cut at a word', () => {
-		const wet = node('instruments', 'x', 'Wet', {});
-		expect(pageName(wet, 'Burgerlijk Wetboek Boek 6')).toBe('Burgerlijk Wetboek Boek 6');
-		expect(pageName(wet, null)).toBe('Wet');
 	});
 });

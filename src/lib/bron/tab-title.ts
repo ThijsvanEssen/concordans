@@ -1,14 +1,11 @@
 // The name of a bron in the browser tab: short enough to tell tabs, bookmarks and history
-// apart. A judgment by its label and the name it is known by, a dossier by its number and
-// short title, a BW article by its book, anything else by its name cut at a word.
+// apart. The title the API gives the bron, as the server's page has it (#529), cut at a word;
+// a Kamerstuk by its place as a citation writes it.
 import { textOf, truncate } from '$lib/text/words';
-import { shortDossierTitle, type BaseNode, type GraphNode } from '$lib/graph/types';
-import { authorCite, judgmentCite } from '$lib/text/judgment-cite';
-import { articleTitle } from '$lib/text/bw';
-import { langeDatum } from '$lib/text/datum';
-import { menselijkeNaam } from './menselijk';
-import { dossierOwnName, dossierUitProps, officialNumber } from './dossier-naam';
-import { chamberName } from '$lib/components/parliamentary/chamber';
+import type { BaseNode, GraphNode } from '$lib/graph/types';
+import { isRauw, menselijkeNaam } from './menselijk';
+import { describeBron, UNNAMED } from './describe';
+import { zonderKopInKapitalen } from './titels.svelte';
 import { kamerstukLabel } from '$lib/components/parliamentary/kamerstuk';
 
 const MAX = 80;
@@ -17,7 +14,7 @@ const MAX = 80;
 export const cut = (name: string): string => truncate(name, MAX, { atWord: true });
 
 type TitledNode = Pick<GraphNode, 'collection' | 'label'> & {
-	raw?: Pick<BaseNode, 'display_name' | 'props'>;
+	raw?: Pick<BaseNode, 'display_name' | 'props'> & Partial<Pick<BaseNode, 'title'>>;
 };
 
 /**
@@ -39,69 +36,26 @@ export function documentTitle(node: TitledNode): string | null {
 	return cut(name ? `${name} (${place})` : place);
 }
 
-export function tabTitle(node: TitledNode): string {
-	const props = node.raw?.props ?? {};
-	const document = documentTitle(node);
-	if (document) return document;
-	if (node.collection === 'judgments') {
-		const names = Array.isArray(props.names)
-			? props.names.filter((n) => typeof n === 'string')
-			: [];
-		const ecli = textOf(props.ecli);
-		// A conclusion names its A-G, as the head of the reader does: Conclusie A-G Hartlief
-		// 8 mei 2020. The signature that tells a P-G is in the detail only.
-		const author = authorCite(textOf(props.advocate_general));
-		const cite = ecli
-			? judgmentCite(ecli, textOf(props.date), textOf(props.court), author).short
-			: node.label;
-		// A translation shares the date and the name of its original: the tab says which.
-		const translation = textOf(props.translation_of) ? ', vertaling' : '';
-		return `${names.length ? `${cite} (${names.join(', ')})` : cite}${translation}`;
-	}
-	if (node.collection === 'dossiers') {
-		const number = textOf(props.label) ?? node.label;
-		const naam = dossierOwnName(dossierUitProps(props, number));
-		return naam ? `${officialNumber(number)} ${naam}` : officialNumber(number);
-	}
-	if (node.collection === 'decisions') {
-		// A stemming as its heading reads: its Kamer and day, then its subject, not the
-		// Kamer's case number ("Wetgeving 2025Z15911: …") or an ISO date ("2026-09-29").
-		const subject = textOf(props.subject);
-		if (subject) {
-			const kamer = chamberName(textOf(props.chamber));
-			const day = langeDatum(textOf(props.date));
-			return cut(
-				`${[kamer, day].filter(Boolean).join(', ')}: ${shortDossierTitle(subject) ?? subject}`
-			);
-		}
-	}
-	// A bijlage as the reader names it: "Bijlage II", not the data's "Annex II" (#30).
-	if (node.collection === 'annexes')
-		return cut(
-			menselijkeNaam({ collection: 'annexes', display_name: node.raw?.display_name, props })
-		);
-	const name = textOf(node.raw?.display_name);
-	if (node.collection === 'articles') {
-		// An article names its law: "Artikel 8 EVRM", else the law's citation title, never
-		// "Art. 419" alone (UX test 10 Oct, #23).
-		const titel = articleTitle(name ?? node.label, props);
-		const wet = textOf(props.instrument_citation_title);
-		return cut(
-			textOf(props.instrument_abbreviation) || !wet || titel.includes(wet) || / BW$/.test(titel)
-				? titel
-				: `${titel} ${wet}`
-		);
-	}
-	return cut(name ?? node.label);
-}
-
 /**
- * The name of a bron in the tab, one source per kind: a Kamerstuk by its place and a dossier by
- * its number as a citation writes them (`36600 VIII`, not the API's `36600-VIII`, #84, #94);
- * anything else by the title the API gives it, as the server's page has it (#529), and by the
- * name made here until that is in.
+ * The name of a bron in the tab: a Kamerstuk by its place as a citation writes it (`36600 VIII,
+ * nr. 5`, not the API's `36600-VIII-5`, #84); anything else by the title the API gives it
+ * (`apiTitle` as kept from its node, else the node's own), without a heading in capitals; before
+ * that is in, the name its row in Verbonden has.
  */
 export function pageName(node: TitledNode, apiTitle: string | null): string {
-	if (node.collection === 'dossiers') return tabTitle(node);
-	return documentTitle(node) ?? (apiTitle ? cut(apiTitle) : tabTitle(node));
+	const document = documentTitle(node);
+	if (document) return document;
+	const title = textOf(apiTitle) ?? textOf(node.raw?.title);
+	if (title) return cut(zonderKopInKapitalen(title));
+	const display = node.raw?.display_name ?? null;
+	const named = describeBron(node.collection, '', display, node.raw?.props ?? {}).title;
+	return cut(
+		named && named !== UNNAMED && !isRauw(named)
+			? named
+			: menselijkeNaam({
+					collection: node.collection,
+					display_name: display,
+					props: node.raw?.props
+				})
+	);
 }
