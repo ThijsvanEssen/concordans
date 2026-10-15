@@ -11,14 +11,14 @@ const awb: InstrumentMeta = {
 };
 const meta = new Map([[awb.bwbId, awb]]);
 
-const node = (n: Partial<GraphNode> & Pick<GraphNode, 'collection' | 'kind'>): GraphNode =>
+const node = (n: Partial<GraphNode> & Pick<GraphNode, 'collection' | 'drawClass'>): GraphNode =>
 	({ id: `${n.collection}/x`, key: 'x', label: 'x', ...n }) as GraphNode;
 
 describe('bronNaam', () => {
 	it('names an article with the short title of its law', () => {
 		const art = node({
 			collection: 'articles',
-			kind: 'article',
+			drawClass: 'article',
 			label: 'Art. 3:4',
 			raw: { props: { bwb_id: 'BWBR0005537' } } as unknown as GraphNode['raw']
 		});
@@ -26,14 +26,14 @@ describe('bronNaam', () => {
 	});
 
 	it('keeps an article without a known law as it is', () => {
-		const art = node({ collection: 'articles', kind: 'article', label: 'Art. 1' });
+		const art = node({ collection: 'articles', drawClass: 'article', label: 'Art. 1' });
 		expect(bronNaam(art, meta)).toBe('Art. 1');
 	});
 
 	it('names an article by the law it carries until the short title is in', () => {
 		const art = node({
 			collection: 'articles',
-			kind: 'article',
+			drawClass: 'article',
 			label: 'Art. 419',
 			raw: {
 				props: {
@@ -48,7 +48,7 @@ describe('bronNaam', () => {
 	it('names an article of a book of the BW with the code, as it is cited: never "BW7A" (#52)', () => {
 		const art = node({
 			collection: 'articles',
-			kind: 'article',
+			drawClass: 'article',
 			label: 'Art. 7A:1576',
 			raw: {
 				props: {
@@ -71,7 +71,7 @@ describe('bronNaam', () => {
 	it('names a bijlage as the reader does: chip, canvas and list (#30)', () => {
 		const bijlage = node({
 			collection: 'annexes',
-			kind: 'other' as GraphNode['kind'],
+			drawClass: 'other' as GraphNode['drawClass'],
 			label: 'Annex II',
 			raw: { display_name: 'Annex II', props: { label: 'II' } } as unknown as GraphNode['raw']
 		});
@@ -81,7 +81,7 @@ describe('bronNaam', () => {
 	it('names a law by its short title', () => {
 		const law = node({
 			collection: 'instruments',
-			kind: 'instrument',
+			drawClass: 'instrument',
 			label: 'BWBR0005537',
 			raw: { props: { bwb_id: 'BWBR0005537' } } as unknown as GraphNode['raw']
 		});
@@ -91,7 +91,7 @@ describe('bronNaam', () => {
 	it('names a judgment as Verbonden does: court and date', () => {
 		const j = node({
 			collection: 'judgments',
-			kind: 'judgment',
+			drawClass: 'judgment',
 			label: 'RvS 2023/93',
 			raw: {
 				props: { court: 'Raad van State', date: '2023-01-11', ecli: 'ECLI:NL:RVS:2023:93' }

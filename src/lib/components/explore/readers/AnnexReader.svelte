@@ -73,7 +73,7 @@
 			>
 				<!-- The bijlage names itself once (UX-toets 0.79.43, #30): its number in the kind line
 				     only where the title is a heading of its own; its law stands in the band. -->
-				{#snippet soort()}
+				{#snippet kindLine()}
 					<KindGlyph collection="annexes" />{bronLabel('annexes')}{a.title && a.label
 						? ` ${a.label}`
 						: ''}

@@ -28,7 +28,7 @@
 	import { permalink } from '$lib/bron/landing';
 	import { versionOn } from './peildatum';
 	import { isDay } from '$lib/text/datum';
-	import { nog, verderLabel, type Richting } from './bladeren';
+	import { nog, verderLabel, type Richting } from './law-paging';
 	import { EMPTY_LIST, createLawList, isDivisionAnchor, type LawList, type Row } from './law-list';
 	import { kindName, lawFullTitle, lawHeadLine, lawKind, sourceName, treatyLink } from './law-head';
 	import { navigate, withParams } from '$lib/util/address';
@@ -279,7 +279,7 @@
 					: null
 			}}
 		>
-			{#snippet soort()}<span>{kindLabel}</span>{/snippet}
+			{#snippet kindLine()}<span>{kindLabel}</span>{/snippet}
 			{#snippet onderTitel()}
 				{#if fullTitle}<p class="whole-official">{fullTitle}</p>{/if}
 			{/snippet}

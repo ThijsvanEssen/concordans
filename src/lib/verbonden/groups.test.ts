@@ -146,7 +146,9 @@ describe('buildGroups', () => {
 		expect(isInternational(evrm)).toBe(true);
 		const groups = buildGroups('articles', [evrm]);
 		expect(groups.find((g) => g.id === 'international')!.rows).toHaveLength(1);
-		expect(groups.find((g) => g.id === 'international')!.rows[0].kind).toBe('internationaal');
+		expect(groups.find((g) => g.id === 'international')!.rows[0].filterGroup).toBe(
+			'internationaal'
+		);
 		expect(groups.find((g) => g.id === 'refers-to')!.rows).toHaveLength(0);
 	});
 
@@ -169,7 +171,7 @@ describe('buildGroups', () => {
 		} as unknown as Neighbor;
 		const groups = buildGroups('articles', [mvt]);
 		const row = groups.find((g) => g.id === 'documents')!.rows[0];
-		expect(row.kind).toBe('toelichtingen');
+		expect(row.filterGroup).toBe('toelichtingen');
 		expect(row.lid).toBe('2');
 		expect(row.title).toBe('Memorie van toelichting, Kamerstuk 36693, nr. 3');
 		expect(row.match).toBe('artikel 300, tweede lid, Sr');

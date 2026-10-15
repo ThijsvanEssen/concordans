@@ -15,7 +15,7 @@ The layers of the network are the groups of the panel Verbonden (`src/lib/verbon
 
 `src/lib/graph/types.ts` converts API nodes and edges to `GraphNode` and `GraphEdge`.
 
-`GraphNodeKind` is what the canvas draws a node as. Several collections share a kind: `decisions`, `commitments`, `cases` and `activities` are all `activity`; version and annex collections are `other`. The role of each collection is one row of `COLLECTION_ROLE` (`src/lib/graph/collection-role.ts`): its kind, the hull it is drawn as (a cabinet as a commissie's), whether it is asked and drawn as a neighbour of a focus (not a zaak or a version), and its column in a netwerk's first layout. Because the table is a `Record<Collection, …>`, a new collection in `vocabulary.ts` does not compile until it has a role.
+`DrawClass` (`drawClass` on a `GraphNode`) is what the canvas draws a node as. Several collections share a class: `decisions`, `commitments`, `cases` and `activities` are all `activity`; version and annex collections are `other`. The role of each collection is one row of `COLLECTION_ROLE` (`src/lib/graph/collection-role.ts`): its class, the hull it is drawn as (a cabinet as a commissie's), whether it is asked and drawn as a neighbour of a focus (not a zaak or a version), and its column in a netwerk's first layout. Because the table is a `Record<Collection, …>`, a new collection in `vocabulary.ts` does not compile until it has a role.
 
 `GraphEdge` carries the API relation, a `label`, `confidence`, `status` and `meta`. Its category (`structural`, `mutation`, `semantic`) is computed by `edgeCategory(relation, sourceKind)`; `REFERS_TO` is structural between two articles and semantic from any other bron (a citation). The category decides which edges pass the semantic threshold. What is drawn is decided by the bronfilter (`hiddenKinds`, a kind that is not drawn and not laid out) and by `GraphFilters.hiddenRelations` (a relation the legend switched off); the canvas hides both in its reducers, the store keeps them.
 
@@ -48,9 +48,9 @@ Each module is a factory that receives the context and returns part of the `Grap
 
 ## The composed netwerk
 
-The panel Netwerk (`src/lib/netwerk/NetwerkPanel.svelte`) holds chosen bronnen across focuses. They are in the URL (`?netwerk=`, switched off in `?uit=`, `?tussen=0` without the bronnen between them; `netwerk.ts`) and the last one in `localStorage`. `store.compose` draws the chosen bronnen, their verbindingen with each other, and the bronnen on the paths between them (`/api/paths`, up to four steps). A container two of them share is drawn as an anchor with a line to each; an anchor whose lines all go to members of its own hull is left out (`$lib/graph/redundant-anchors.ts`).
+The panel Netwerk (`src/lib/selection/NetwerkPanel.svelte`) holds chosen bronnen across focuses. They are in the URL (`?netwerk=`, switched off in `?uit=`, `?tussen=0` without the bronnen between them; `netwerk.ts`) and the last one in `localStorage`. `store.compose` draws the chosen bronnen, their verbindingen with each other, and the bronnen on the paths between them (`/api/paths`, up to four steps). A container two of them share is drawn as an anchor with a line to each; an anchor whose lines all go to members of its own hull is left out (`$lib/graph/anchor.ts`).
 
-**Clusters.** More than `CLUSTER_MAX_LOOSE` (40) bronnen of one kind tied only to the focus are drawn as one cluster bron ("250 uitspraken", `src/lib/netwerk/cluster.ts`); its card draws them all or opens their group in Verbonden. Where the cards over the canvas stand (a bron's, a cluster's, the Legenda under the panel Netwerk and which of the two folds) is `src/lib/netwerk/card-place.ts`.
+**Clusters.** More than `CLUSTER_MAX_LOOSE` (40) bronnen of one kind tied only to the focus are drawn as one cluster bron ("250 uitspraken", `src/lib/selection/cluster.ts`); its card draws them all or opens their group in Verbonden. Where the cards over the canvas stand (a bron's, a cluster's, the Legenda under the panel Netwerk and which of the two folds) is `src/lib/selection/card-place.ts`.
 
 ## Layers
 
@@ -95,6 +95,6 @@ The legend states what is on the canvas and what the bronfilter hides, with the 
 ## Adding a node kind
 
 1. Add the collection to `NODE_TYPES` and `BRON_LABEL` in `vocabulary.ts` if the API introduces one.
-2. Give it a row in `COLLECTION_ROLE`, with a kind or a new `GraphNodeKind`. The compiler then flags every `Record<GraphNodeKind, ...>` and switch that lacks an entry: `NODE_SIZE` in `GraphView.svelte`. Give its collection a vorm in `VORM_VAN` (`src/lib/bron/vormen.ts`). Give it a kind of bron for the filter in `bronKindOf` (`src/lib/verbonden/filter.ts`).
+2. Give it a row in `COLLECTION_ROLE`, with a class or a new `DrawClass`. The compiler then flags every `Record<DrawClass, ...>` and switch that lacks an entry: `NODE_SIZE` in `GraphView.svelte`. Give its collection a vorm in `VORM_VAN` (`src/lib/bron/vormen.ts`). Give it a filter group in `filterGroupOf` (`src/lib/verbonden/filter.ts`).
 3. Extend `buildNodeLabel` if the label is not `display_name`.
 4. Add its groups to `GROUPS` in `verbonden/groups.ts` and a reader in `KindReader.svelte` (see [`readers.md`](readers.md)).

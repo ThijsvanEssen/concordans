@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { BRON_KINDS } from '$lib/verbonden/filter';
-import { BRON_KIND_VORM, VORMEN, VORM_VAN, vormVan, vormVanBron } from './vormen';
+import { FILTER_GROUPS } from '$lib/verbonden/filter';
+import { FILTER_GROUP_VORM, VORMEN, VORM_VAN, vormVan, vormVanBron } from './vormen';
 
 describe('vormen', () => {
 	it('gives every collection a shape that exists', () => {
@@ -8,7 +8,7 @@ describe('vormen', () => {
 	});
 
 	it('gives every kind in the bronfilter a shape', () => {
-		for (const kind of BRON_KINDS) expect(VORMEN[BRON_KIND_VORM[kind]]).toBeDefined();
+		for (const kind of FILTER_GROUPS) expect(VORMEN[FILTER_GROUP_VORM[kind]]).toBeDefined();
 	});
 
 	it('reads the shape from an id', () => {
@@ -32,8 +32,8 @@ describe('a European or international regeling', () => {
 			'regel-int'
 		);
 		expect(vormVanBron('instruments', { jurisdiction: 'nl' }, 'bwbr0005289')).toBe('regel');
-		expect(BRON_KIND_VORM.internationaal).toBe('regel-int');
-		expect(BRON_KIND_VORM.internationaal).not.toBe(BRON_KIND_VORM.wetten);
+		expect(FILTER_GROUP_VORM.internationaal).toBe('regel-int');
+		expect(FILTER_GROUP_VORM.internationaal).not.toBe(FILTER_GROUP_VORM.wetten);
 		expect(VORMEN['regel-int'].wijze).toBe('gat');
 	});
 });

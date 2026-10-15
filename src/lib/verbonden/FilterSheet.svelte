@@ -6,7 +6,7 @@
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { BRON_KIND_VORM } from '$lib/bron/vormen';
+	import { FILTER_GROUP_VORM } from '$lib/bron/vormen';
 	// The filter sheet: bronnen, verbindingen, lid, rechter, periode, betrouwbaarheid and
 	// status, applied with one button. The same sheet opens from the panel and from
 	// the legend of the network. A modal dialog: the focus goes to the search field on
@@ -14,13 +14,13 @@
 	import { afterTick } from '$lib/util/after-tick';
 	import type { Collection } from '$lib/vocabulary';
 	import {
-		BRON_KINDS,
-		BRON_KIND_LABEL,
+		FILTER_GROUPS,
+		FILTER_GROUP_LABEL,
 		EMPTY_FILTER,
 		PRESETS,
 		RECHTERS,
 		activePreset,
-		toggleKind,
+		toggleFilterGroup,
 		withPreset,
 		type Betrouwbaarheid,
 		type Status,
@@ -28,7 +28,7 @@
 	} from './filter';
 	import { formatCount } from '$lib/text/getal';
 	import type { Group } from './groups';
-	import { allRows, kindTotals, lidCounts, relationCounts, shownCount, totalCount } from './view';
+	import { allRows, groupTotals, lidCounts, relationCounts, shownCount, totalCount } from './view';
 
 	let {
 		open,
@@ -94,7 +94,7 @@
 		}
 	}
 
-	const totals = $derived(kindTotals(groups));
+	const totals = $derived(groupTotals(groups));
 	const relations = $derived(relationCounts(groups, selection));
 	const perLid = $derived(lidTellingen ?? lidCounts(allRows(groups)));
 	const lids = $derived(
@@ -106,7 +106,8 @@
 	const total = $derived(totalCount(groups));
 	const count = $derived(shownCount(groups, draft));
 
-	const isOn = (k: (typeof BRON_KINDS)[number]) => draft.bronnen === null || draft.bronnen.has(k);
+	const isOn = (k: (typeof FILTER_GROUPS)[number]) =>
+		draft.bronnen === null || draft.bronnen.has(k);
 
 	const setBetrouwbaarheid = (b: Betrouwbaarheid | null) =>
 		(draft = { ...draft, betrouwbaarheid: b });
@@ -224,16 +225,16 @@
 
 			<div class="block">
 				<div class="block__label">Bronnen</div>
-				{#each BRON_KINDS as k (k)}
+				{#each FILTER_GROUPS as k (k)}
 					{@const n = totals[k] ?? 0}
 					<FilterOptie
-						label={BRON_KIND_LABEL[k]}
+						label={FILTER_GROUP_LABEL[k]}
 						on={isOn(k)}
-						onToggle={() => (draft = toggleKind(draft, k))}
+						onToggle={() => (draft = toggleFilterGroup(draft, k))}
 						count={n}
 						empty={n === 0}
 					>
-						{#snippet voor()}<KindGlyph vorm={BRON_KIND_VORM[k]} size={11} />{/snippet}
+						{#snippet voor()}<KindGlyph vorm={FILTER_GROUP_VORM[k]} size={11} />{/snippet}
 					</FilterOptie>
 				{/each}
 			</div>

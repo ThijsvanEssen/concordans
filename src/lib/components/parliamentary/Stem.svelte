@@ -16,10 +16,10 @@
 		woord?: boolean;
 	} = $props();
 
-	const soort = $derived(
+	const tone = $derived(
 		/^voor$/i.test(keuze) ? 'ja' : /^tegen$/i.test(keuze) ? 'nee' : ('open' as const)
 	);
 	const naam = $derived(capitalize(keuze.toLowerCase()));
 </script>
 
-<Uitkomst {soort} woord={woord ? naam : null} title={naam} />
+<Uitkomst {tone} woord={woord ? naam : null} title={naam} />

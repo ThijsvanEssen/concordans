@@ -12,7 +12,7 @@ import { kamerstukCitation } from '$lib/components/parliamentary/kamerstuk';
 
 import { type Row } from '$lib/verbonden/rows';
 import { dossierNumberOf } from '$lib/bron/describe';
-import { BRON_KIND_LABEL } from '$lib/verbonden/filter';
+import { FILTER_GROUP_LABEL } from '$lib/verbonden/filter';
 import { dossierLabel } from '$lib/bron/dossier-naam';
 import { keyEcli } from '$lib/bron/leesbaar';
 import { uitspraakKop, zaakNaam } from '$lib/text/judgment-cite';
@@ -48,13 +48,15 @@ function groepVanRij(r: Row): string {
 			const m = bwb ? get(instrumentMetaStore).get(bwb) : null;
 			// Where the law is not loaded yet, its name as the row's title carries it.
 			const uitTitel = /^(?:artikel|art\.)\s+\S+\s+(.+)$/i.exec(r.title)?.[1];
-			return lawName(m, uitTitel ?? bwb ?? BRON_KIND_LABEL[r.kind]);
+			return lawName(m, uitTitel ?? bwb ?? FILTER_GROUP_LABEL[r.filterGroup]);
 		}
 		case 'documents':
 		case 'decisions': {
 			const nr = dossierOf(r);
 			const kort = textOf(propsOf(r).dossier_short_title);
-			return nr ? dossierLabel({ number: nr, short_title: kort }) : BRON_KIND_LABEL[r.kind];
+			return nr
+				? dossierLabel({ number: nr, short_title: kort })
+				: FILTER_GROUP_LABEL[r.filterGroup];
 		}
 		case 'judgments': {
 			const names = propsOf(r).names;
@@ -67,7 +69,7 @@ function groepVanRij(r: Row): string {
 				: r.title;
 		}
 		default:
-			return BRON_KIND_LABEL[r.kind];
+			return FILTER_GROUP_LABEL[r.filterGroup];
 	}
 }
 

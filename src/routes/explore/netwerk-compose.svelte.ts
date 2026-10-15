@@ -11,7 +11,7 @@ import { getDossierKey } from '$lib/api/dossiers';
 import { failureText } from '$lib/components/ui/LoadState.svelte';
 import type { GraphStore } from '$lib/graph/store/types';
 import { nodeToGraphNode } from '$lib/graph/types';
-import { deelVan, isOn, type Netwerk, type NetwerkEntry } from '$lib/netwerk/netwerk';
+import { deelVan, isOn, type Netwerk, type NetwerkEntry } from '$lib/selection/netwerk';
 import { meldNetwerk } from '$lib/stores/netwerk-melding';
 import { parseNodeId } from '$lib/vocabulary';
 

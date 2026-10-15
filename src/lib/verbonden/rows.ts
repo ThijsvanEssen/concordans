@@ -17,7 +17,7 @@ import {
 } from '$lib/bron/dossier-naam';
 import { describeBron, UNNAMED } from '$lib/bron/describe';
 import { seatWord } from '$lib/components/parliamentary/career';
-import { MODERATE_CONFIDENCE, bronKindOf, confidenceWord, type BronKind } from './filter';
+import { MODERATE_CONFIDENCE, filterGroupOf, confidenceWord, type FilterGroup } from './filter';
 import { isDerived, positionsLabel, readEdge } from './edge-meta';
 import { woordenVan } from './hoe';
 import { periodLabel } from './lines';
@@ -30,7 +30,7 @@ export type Row = {
 	title: string;
 	/** Words about the bron that no other field carries: party, abbreviation, the place in the law. */
 	context: string | null;
-	kind: BronKind;
+	filterGroup: FilterGroup;
 	/** Position inside the bron the row opens at: `rov-5.1`, `lid-2`. */
 	at?: string | null;
 	/** The lid of the selected article the verbinding names: `2`. Null when it names none. */
@@ -154,7 +154,7 @@ export function rowOfNeighbor(n: Neighbor): Row | null {
 		...(edge.passageAt ? { passageAt: edge.passageAt } : {}),
 		...(edge.noot ? { noot: edge.noot } : {}),
 		...(edge.bereik ? { bereik: edge.bereik } : {}),
-		kind: bronKindOf(n.collection, n.key, props, n.relation),
+		filterGroup: filterGroupOf(n.collection, n.key, props, n.relation),
 		lid: edge.lid,
 		derived: isDerived(n.confidence),
 		proposed: n.status === 'voorgesteld' || undefined,
@@ -304,7 +304,7 @@ function metaPartsVan(
 	// Who signed, as what: the function unless it is the plain seat.
 	if (row.function && row.function !== 'Tweede Kamerlid')
 		parts.push({ text: `als ${row.function}`, kind: 'plain' });
-	const when = row.identifier ?? (row.kind === 'uitspraken' ? null : korteDatum(row.date));
+	const when = row.identifier ?? (row.filterGroup === 'uitspraken' ? null : korteDatum(row.date));
 	if (when) parts.push({ text: when, kind: 'plain' });
 	const word = confidenceWord(row.confidence, !!row.derived);
 	if (word !== 'hoog') parts.push({ text: `betrouwbaarheid ${word}`, kind: 'derived' });
@@ -415,7 +415,7 @@ export function historyRow(e: {
 				.filter(Boolean)
 				.join(', ') || null,
 		date: e.date ?? null,
-		kind: bronKindOf(ref.collection, ref.key, {}),
+		filterGroup: filterGroupOf(ref.collection, ref.key, {}),
 		proposed,
 		relation: change ?? undefined,
 		direction: 'inbound'
@@ -442,7 +442,7 @@ export function unresolvedRows(citations: UnresolvedCitation[]): Row[] {
 		ref: { collection: 'articles', key: `${c.law}_${c.article_number}` },
 		title: unresolvedTitle(c),
 		context: null,
-		kind: 'artikelen',
+		filterGroup: 'artikelen',
 		lid: c.leden?.[0] ?? null,
 		missing: true,
 		relation: 'REFERS_TO',

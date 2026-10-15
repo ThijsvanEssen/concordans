@@ -115,7 +115,7 @@
 					)
 				}}
 			>
-				{#snippet soort()}
+				{#snippet kindLine()}
 					<SoortLink collection="dossiers">{bronLabel('dossiers')}</SoortLink><span
 						>, {kamerstukNummer(d.number)}</span
 					>

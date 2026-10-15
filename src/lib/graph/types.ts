@@ -20,7 +20,7 @@ import {
 export type BaseNode = Schema<'BaseNodeDTO'>;
 
 /** What a node is called in the interface. Several collections share one kind. */
-export type GraphNodeKind =
+export type DrawClass =
 	| 'instrument'
 	| 'article'
 	| 'judgment'
@@ -32,8 +32,8 @@ export type GraphNodeKind =
 	| 'faction'
 	| 'other';
 
-export const kindOfCollection = (collection: Collection): GraphNodeKind =>
-	COLLECTION_ROLE[collection].kind;
+export const drawClassOf = (collection: Collection): DrawClass =>
+	COLLECTION_ROLE[collection].drawClass;
 
 // A version is kept so an article or instrument can be read as it stood at a past
 // moment, referring to the matching past version of whatever it cites (VERSION_OF).
@@ -47,7 +47,7 @@ export interface GraphNode {
 	id: string;
 	collection: Collection;
 	key: string;
-	kind: GraphNodeKind;
+	drawClass: DrawClass;
 	label: string;
 	stub?: boolean;
 	/**
@@ -151,8 +151,8 @@ export const EDGE_WEIGHT: Record<Relation, number> = {
  * REFERS_TO between two articles is part of the text of the law (structural).
  * From anything else it is a citation (semantic).
  */
-export function edgeCategory(relation: Relation, sourceKind: GraphNodeKind): EdgeCategory {
-	return relation === 'REFERS_TO' && sourceKind !== 'article'
+export function edgeCategory(relation: Relation, sourceClass: DrawClass): EdgeCategory {
+	return relation === 'REFERS_TO' && sourceClass !== 'article'
 		? 'semantic'
 		: CATEGORY_OF_RELATION[relation];
 }
@@ -262,7 +262,7 @@ function leadSignatory(actors: unknown): { name: string; faction: string | null 
 	return name ? { name, faction: textOf(lead?.faction) } : null;
 }
 
-export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {
+export function buildNodeLabel(node: BaseNode, drawClass: DrawClass): string {
 	const props = node.props ?? {};
 	// Where the data gives no name, the reader's name of the bron, never its key ($lib/bron/menselijk).
 	const mens = () =>
@@ -272,7 +272,7 @@ export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {
 			display_name: node.display_name,
 			props
 		});
-	switch (kind) {
+	switch (drawClass) {
 		case 'dossier': {
 			// By the short title its props carry (API 0.79.54), else its title, cut.
 			const number = textOf(props.label) ?? textOf(props.number) ?? mens();
@@ -326,13 +326,13 @@ export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {
 }
 
 function buildGraphNode(node: BaseNode, collection: Collection): GraphNode {
-	const kind = kindOfCollection(collection);
+	const drawClass = drawClassOf(collection);
 	return {
 		id: nodeId(collection, node.key),
 		collection,
 		key: node.key,
-		kind,
-		label: buildNodeLabel(node, kind),
+		drawClass,
+		label: buildNodeLabel(node, drawClass),
 		stub: node.props?.stub ? true : undefined,
 		raw: node
 	};

@@ -4,7 +4,7 @@ import { capitalize, plural } from '$lib/text/words';
 import type { Collection } from '$lib/vocabulary';
 import { relationLabel } from './hoe';
 import { sumLidCounts } from '$lib/api/nodes';
-import { hiddenByKind, rowPasses, type BronKind, type VerbondenFilter } from './filter';
+import { hiddenByGroup, rowPasses, type FilterGroup, type VerbondenFilter } from './filter';
 import { formatCount } from '$lib/text/getal';
 import { groupCount, type Group } from './groups';
 import type { Row } from './rows';
@@ -25,7 +25,7 @@ const cutsRows = (f: VerbondenFilter) =>
 	f.zoek !== '';
 
 /** The kind a group counts for: that of its rows. */
-const kindOfGroup = (g: Group): BronKind | null => g.rows[0]?.kind ?? null;
+const filterGroupOfRows = (g: Group): FilterGroup | null => g.rows[0]?.filterGroup ?? null;
 
 /**
  * The groups with the rows that pass the filter; a group without rows is left out, unless
@@ -58,7 +58,7 @@ export function filterGroups(
 					rows.length === 0 &&
 					!cut &&
 					wachtend.has(g.id) &&
-					(!f.bronnen || f.bronnen.has(g.noun as BronKind))
+					(!f.bronnen || f.bronnen.has(g.noun as FilterGroup))
 			};
 		})
 		.filter((g) => g.rows.length > 0 || g.laden || (g.failed && !cut));
@@ -144,12 +144,12 @@ export const shownLabel = (
 const afgekapt = (g: Group) => !!g.capped && !(g.total != null && g.total >= g.rows.length);
 
 /** Per kind of bron, the number of verbindingen, the API's totals where they hold. */
-export function kindTotals(groups: Group[]): Partial<Record<BronKind, number>> {
-	const totals: Partial<Record<BronKind, number>> = {};
+export function groupTotals(groups: Group[]): Partial<Record<FilterGroup, number>> {
+	const totals: Partial<Record<FilterGroup, number>> = {};
 	for (const g of groups) {
-		const byKind = new Map<BronKind, number>();
-		for (const r of g.rows) byKind.set(r.kind, (byKind.get(r.kind) ?? 0) + 1);
-		const first = kindOfGroup(g);
+		const byKind = new Map<FilterGroup, number>();
+		for (const r of g.rows) byKind.set(r.filterGroup, (byKind.get(r.filterGroup) ?? 0) + 1);
+		const first = filterGroupOfRows(g);
 		for (const [kind, n] of byKind) {
 			// The stated total of a group counts for the kind of its rows.
 			const count = kind === first && byKind.size === 1 ? groupCount(g) : n;
@@ -207,12 +207,12 @@ export function rowLabel(r: Row, selection: Collection): string {
 export function hiddenLine(
 	groups: Group[],
 	f: VerbondenFilter
-): { kind: BronKind; count: number }[] {
-	return hiddenByKind(allRows(groups), kindTotals(groups), f);
+): { group: FilterGroup; count: number }[] {
+	return hiddenByGroup(allRows(groups), groupTotals(groups), f);
 }
 
 /** The bron kinds the buckets of a collection hold, as far as an article's lid counts go. */
-const KINDS_OF_BUCKET: Record<string, BronKind[]> = {
+const GROUPS_OF_BUCKET: Record<string, FilterGroup[]> = {
 	judgments: ['uitspraken'],
 	articles: ['artikelen'],
 	documents: ['toelichtingen', 'wetsvoorstellen', 'dossiers']
@@ -225,15 +225,15 @@ const KINDS_OF_BUCKET: Record<string, BronKind[]> = {
  */
 export function lidTellingenOnder(
 	per: Map<string, Map<string, number>>,
-	bronnen: ReadonlySet<BronKind> | null
+	bronnen: ReadonlySet<FilterGroup> | null
 ): Map<string, number> | null {
 	if (!bronnen) return sumLidCounts(per);
 	for (const collection of per.keys()) {
-		const kinds = KINDS_OF_BUCKET[collection];
+		const kinds = GROUPS_OF_BUCKET[collection];
 		const on = kinds ? kinds.filter((k) => bronnen.has(k)).length : 0;
 		if (!kinds || (on > 0 && on < kinds.length)) return null;
 	}
-	return sumLidCounts(per, (c) => KINDS_OF_BUCKET[c].some((k) => bronnen.has(k)));
+	return sumLidCounts(per, (c) => GROUPS_OF_BUCKET[c].some((k) => bronnen.has(k)));
 }
 
 /** Rows per lid of the selected article, the ones without a lid under `Hele artikel`. */

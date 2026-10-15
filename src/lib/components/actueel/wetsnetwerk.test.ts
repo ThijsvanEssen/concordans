@@ -164,7 +164,7 @@ describe('schetsVan', () => {
 	});
 
 	it('opens the Verkenner on at least what the band draws: every stuk, every law', () => {
-		expect(s.verkenner).toBe(
+		expect(s.exploreHref).toBe(
 			'/explore?netwerk=dossiers/36547,documents/d2,documents/d7,documents/d20,documents/d22,' +
 				'instruments/bwbr0001854,instruments/bwbr0028180,articles/bwbr0001854_273f,judgments/A,judgments/B'
 		);

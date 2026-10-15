@@ -13,16 +13,16 @@ import { memberToGraphNode, syntheticNode, type GraphNode } from '$lib/graph/typ
 import type { Collection } from '$lib/vocabulary';
 import { keyEcli } from './leesbaar';
 
-export const kopVanLid = (m: Schema<'MemberDetailDTO'>): GraphNode => memberToGraphNode(m);
+export const headOfMember = (m: Schema<'MemberDetailDTO'>): GraphNode => memberToGraphNode(m);
 
-export const kopVanUitspraak = (j: Schema<'JudgmentDTO'>): GraphNode =>
+export const headOfJudgment = (j: Schema<'JudgmentDTO'>): GraphNode =>
 	syntheticNode('judgments', j.key, j.display_name, { ...(j.props ?? {}), ecli: j.ecli });
 
-export const kopVanWet = (d: Schema<'InstrumentDetailDTO'>): GraphNode =>
+export const headOfLaw = (d: Schema<'InstrumentDetailDTO'>): GraphNode =>
 	syntheticNode('instruments', d.key, d.display_name ?? d.citation_title ?? d.title, { ...d });
 
 /** A dossier's node carries its number as `label`, as its reader and its links read it. */
-export const kopVanDossier = (d: Schema<'DossierDetailResponse'>): GraphNode =>
+export const headOfDossier = (d: Schema<'DossierDetailResponse'>): GraphNode =>
 	syntheticNode('dossiers', d.key, d.title ?? d.number, { ...d, label: d.number });
 
 /** An article from its detail, with the names of its law the light node carries. */
@@ -41,15 +41,15 @@ const kopVanArtikel = (d: Schema<'ArticleDetailResponse'>): GraphNode =>
 export function kopNode(collection: Collection, key: string): Promise<GraphNode> | null {
 	switch (collection) {
 		case 'members':
-			return getMember(key).then(kopVanLid);
+			return getMember(key).then(headOfMember);
 		case 'judgments': {
 			const ecli = keyEcli(key);
-			return ecli ? getJudgmentDetail(ecli).then((d) => kopVanUitspraak(d.judgment)) : null;
+			return ecli ? getJudgmentDetail(ecli).then((d) => headOfJudgment(d.judgment)) : null;
 		}
 		case 'instruments':
-			return getInstrumentDetail(key.toUpperCase()).then(kopVanWet);
+			return getInstrumentDetail(key.toUpperCase()).then(headOfLaw);
 		case 'dossiers':
-			return getDossier(key).then(kopVanDossier);
+			return getDossier(key).then(headOfDossier);
 		case 'articles':
 			return getArticleDetailByKey(key)?.then(kopVanArtikel) ?? null;
 		default:

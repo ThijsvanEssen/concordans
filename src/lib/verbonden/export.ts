@@ -5,7 +5,7 @@ import { buildBronHref } from '$lib/bron/href';
 import type { Collection } from '$lib/vocabulary';
 import { formatCount } from '$lib/text/getal';
 import { allRows, filterGroups, rowLabel, shownCount, shownLabel } from './view';
-import { BRON_KIND_LABEL, type VerbondenFilter } from './filter';
+import { FILTER_GROUP_LABEL, type VerbondenFilter } from './filter';
 import type { Group } from './groups';
 import { mentionRows, type Row } from './rows';
 import { betrouwbaarheid } from './verbinding';
@@ -28,7 +28,7 @@ type Column = {
 /** The columns of the table and the CSV, in one order. */
 export const COLUMNS: readonly Column[] = [
 	{ id: 'bron', label: 'Bron', value: (r) => r.title, sort: (r) => r.title },
-	{ id: 'soort', label: 'Soort', value: (r) => BRON_KIND_LABEL[r.kind], csvOnly: true },
+	{ id: 'soort', label: 'Soort', value: (r) => FILTER_GROUP_LABEL[r.filterGroup], csvOnly: true },
 	{
 		id: 'verbinding',
 		label: 'Verbinding',

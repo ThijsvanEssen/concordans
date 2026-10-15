@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('$app/state', () => ({ page: { url: new URL('http://x/') } }));
 
-import { buildBronHref, buildOpenHref, indexHref, refOf } from './href';
+import { buildBronHref, buildOpenHref, exploreMode, indexHref, modeOf, refOf } from './href';
 
 const at = (path: string) => new URL(`http://localhost${path}`);
 
@@ -129,5 +129,37 @@ describe('indexHref', () => {
 		expect(indexHref('ministers', { kabinet: 'rutte_iv' })).toBe(
 			'/explore?mode=index&kind=ministers&kabinet=rutte_iv'
 		);
+	});
+});
+
+describe('exploreMode', () => {
+	it.each([
+		['', 'graph'],
+		['mode=index', 'index'],
+		['mode=index&focus=articles/a_1&lezen=1', 'index'],
+		['focus=articles/a_1', 'graph'],
+		['focus=articles/a_1&lezen=1', 'read'],
+		['focus=judgments/ecli_nl_hr_2019_1&lezen=1', 'read'],
+		['focus=members/m1&lezen=1', 'graph'],
+		['focus=members/m1&tabel=1', 'read'],
+		['tabel=1', 'graph'],
+		['lezen=1', 'graph']
+	])('?%s is %s', (query, mode) => {
+		expect(exploreMode(new URLSearchParams(query))).toBe(mode);
+	});
+});
+
+describe('modeOf', () => {
+	it.each([
+		['/explore', 'graph'],
+		['/explore?mode=index', 'index'],
+		['/explore?mode=index&kind=judgments', 'index'],
+		['/explore?focus=articles/a_1&lezen=1', 'read'],
+		['/dossiers/36799', 'graph'],
+		['/uitspraken/ECLI:NL:HR:2019:1?lezen=1', 'read'],
+		['/actueel', null],
+		['/', null]
+	])('%s is %s', (path, mode) => {
+		expect(modeOf(new URL(path, 'https://concordans.nl'))).toBe(mode);
 	});
 });

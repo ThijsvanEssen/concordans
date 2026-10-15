@@ -91,7 +91,7 @@ describe('wet and dossier of the same name', () => {
 			ref: { collection: 'dossiers', key: '36764', number: '36764' },
 			title: 'x',
 			context: null,
-			kind: 'dossiers',
+			filterGroup: 'dossiers',
 			props: { label: '36764', title: LONG }
 		} as Row;
 		expect(dossierVanRij(row)?.number).toBe('36764');

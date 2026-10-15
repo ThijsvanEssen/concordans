@@ -31,7 +31,7 @@
 	import { parseNodeId } from '$lib/vocabulary';
 	import type { GraphFilters } from '$lib/graph/store/types';
 	import type { NodeCounts } from '$lib/api/overlays';
-	import { EDGE_WEIGHT, type GraphNodeKind } from '$lib/graph/types';
+	import { EDGE_WEIGHT, type DrawClass } from '$lib/graph/types';
 	import {
 		hoverPlaats,
 		labelX,
@@ -41,7 +41,7 @@
 	} from './label-place';
 	import type { Collection, Relation } from '$lib/vocabulary';
 	import { relationLabel } from '$lib/verbonden/hoe';
-	import type { BronKind, Rechter } from '$lib/verbonden/filter';
+	import type { FilterGroup, Rechter } from '$lib/verbonden/filter';
 	import { getInstrumentMeta, lawName } from '$lib/api/instrument-cache';
 	import { isDrawnGroup, type ContainerGroup, type Period } from '$lib/graph/container-membership';
 	import { korteDatum, vandaag } from '$lib/text/datum';
@@ -73,7 +73,7 @@
 		graph,
 		focusedId = null as string | null,
 		filters = null as GraphFilters | null,
-		hiddenKinds = new Set<BronKind>() as ReadonlySet<BronKind>,
+		hiddenKinds = new Set<FilterGroup>() as ReadonlySet<FilterGroup>,
 		pinnedIds = new Set<string>() as Set<string>,
 		coreIds = null as ReadonlySet<string> | null,
 		containerGroups = new Map<string, ContainerGroup>() as Map<string, ContainerGroup>,
@@ -104,7 +104,7 @@
 		focusedId?: string | null;
 		filters?: GraphFilters | null;
 		/** Kinds of bron the bronfilter hides: not drawn, and their edges not drawn. */
-		hiddenKinds?: ReadonlySet<BronKind>;
+		hiddenKinds?: ReadonlySet<FilterGroup>;
 		/** The chosen bronnen of a netwerk: always named, a little larger. */
 		pinnedIds?: Set<string>;
 		/** While a netwerk is drawn, its chosen bronnen and what ties them; the rest is context and steps back. */
@@ -215,7 +215,7 @@
 
 	// Plain mutable refs read inside sigma reducer closures, not reactive state.
 	let latestFilters: GraphFilters | null = null;
-	let latestHiddenKinds: ReadonlySet<BronKind> = new Set();
+	let latestHiddenKinds: ReadonlySet<FilterGroup> = new Set();
 	let latestPinnedIds = new Set<string>();
 	let latestCoreIds: ReadonlySet<string> | null = null;
 	let latestSelectedEdge: string | null = null;
@@ -615,7 +615,7 @@
 		rechter !== null && attrs.collection === 'judgments' && attrs.rechter !== rechter;
 
 	const hiddenByFilter = (attrs: Record<string, unknown>) =>
-		latestHiddenKinds.has(attrs.bronKind as BronKind) ||
+		latestHiddenKinds.has(attrs.filterGroup as FilterGroup) ||
 		outsideYears(attrs.date) ||
 		otherCourt(attrs);
 
@@ -1010,9 +1010,9 @@
 				if (hiddenGroupKinds.has('instrument') && (lawAnchor(src) || lawAnchor(tgt)))
 					return { ...data, hidden: true };
 
-				const sourceKind = srcAttrs.kind as GraphNodeKind;
+				const sourceClass = srcAttrs.drawClass as DrawClass;
 				const style = edgeStyleFor(relation, data.status as string | null);
-				const renderColor = edgeColorFor(relation, sourceKind);
+				const renderColor = edgeColorFor(relation, sourceClass);
 				const edgeType = style === 'solid' ? 'arrow' : style;
 				const restSize = lijnDikte(Math.max(EDGE_WEIGHT[relation], style === 'dashed' ? 0.7 : 0));
 				const sourceCollection = srcAttrs.collection as Collection;

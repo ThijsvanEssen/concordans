@@ -5,7 +5,7 @@
 // carry out what this returns. Where they still differ, `mode` names it (code-eenvoud F93).
 import { isAmendingRelation, type Relation } from '$lib/vocabulary';
 import { isContainerMembership, isContainment, type ContainerKind } from '../container-membership';
-import { edgeCategory, type GraphNodeKind } from '../types';
+import { edgeCategory, type DrawClass } from '../types';
 
 export type Side = 'source' | 'target';
 
@@ -16,7 +16,7 @@ export type End = {
 	/** On the canvas as a bron: the focus, a drawn neighbour, a row, an anchor drawn before. */
 	drawn: boolean;
 	/** The kind it is drawn as: the source's says whether the semantic threshold counts. */
-	kind: GraphNodeKind;
+	drawClass: DrawClass;
 };
 
 /**
@@ -106,7 +106,7 @@ export function placeConnection(c: Connection): Placement {
 	}
 
 	if (!source.drawn || !target.drawn) return { place: 'none' };
-	const semantic = edgeCategory(relation, source.kind) === 'semantic';
+	const semantic = edgeCategory(relation, source.drawClass) === 'semantic';
 	if (semantic && c.confidence != null && c.confidence < c.threshold) return { place: 'none' };
 	return line(true);
 }

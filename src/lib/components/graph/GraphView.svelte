@@ -20,8 +20,8 @@
 	import GraphSidebar from './GraphSidebar.svelte';
 	import type { ComponentProps, Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/store/types';
-	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
-	import { isVersionCollection, kindOfCollection, kort } from '$lib/graph/types';
+	import type { GraphEdge, GraphNode, DrawClass } from '$lib/graph/types';
+	import { isVersionCollection, drawClassOf, kort } from '$lib/graph/types';
 	import { isDrawn } from '$lib/graph/collection-role';
 	import {
 		clusterLabel,
@@ -30,7 +30,7 @@
 		clusterZinnen,
 		isClusterId,
 		type Cluster
-	} from '$lib/netwerk/cluster';
+	} from '$lib/selection/cluster';
 	import { openGroup } from '$lib/verbonden/open-group';
 	import { bronPlural } from '$lib/vocabulary';
 	import { spriteForVorm, IMAGE_SIZE_BUMP } from './nodeSprites';
@@ -49,20 +49,20 @@
 		type ContainerKind
 	} from '$lib/graph/container-membership';
 	import { metGroepVerborgen } from '$lib/graph/met-groep';
-	import { kolomPlekken } from '$lib/netwerk/kolommen';
+	import { kolomPlekken } from '$lib/selection/kolommen';
 	import { packGroups, placeClusters, ringAround, syncGroupLinks } from '$lib/graph/layout';
 	import type { NodeCounts } from '$lib/api/overlays';
-	import type { Overlay } from '$lib/netwerk/overlay';
-	import { DEFAULT_HEAT_MONTHS } from '$lib/netwerk/overlay';
+	import type { Overlay } from '$lib/selection/overlay';
+	import { DEFAULT_HEAT_MONTHS } from '$lib/selection/overlay';
 	import type { Relation } from '$lib/vocabulary';
 	import {
-		BRON_KINDS,
-		bronKindOf,
+		FILTER_GROUPS,
+		filterGroupOf,
 		rechterOf,
-		type BronKind,
+		type FilterGroup,
 		type VerbondenFilter
 	} from '$lib/verbonden/filter';
-	import type { VerbondenState } from '$lib/verbonden/source';
+	import type { VerbondenState } from '$lib/verbonden/data-source';
 	import { laatstOpen, opzij, type Zwevend } from '$lib/stores/zwevend';
 	import {
 		cardBeside,
@@ -71,7 +71,7 @@
 		foldStep,
 		legendPlace,
 		placeCard
-	} from '$lib/netwerk/card-place';
+	} from '$lib/selection/card-place';
 	import { FOLD, isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { netwerkMelding } from '$lib/stores/netwerk-melding';
 	import { kaart } from '$lib/map/map.svelte';
@@ -158,21 +158,25 @@
 	let canvasCounts = $state<{
 		nodes: number;
 		edges: number;
-		kinds: Partial<Record<BronKind, number>>;
+		kinds: Partial<Record<FilterGroup, number>>;
 		/** The shapes drawn, for the legend: every shape on the canvas has its line there. */
 		vormen: Partial<Record<Vorm, number>>;
 		/** Per kind, the bronnen hidden with a grouping switched off, and which groupings. */
-		metGroep: Partial<Record<BronKind, { count: number; van: number; groepen: ContainerKind[] }>>;
+		metGroep: Partial<
+			Record<FilterGroup, { count: number; van: number; groepen: ContainerKind[] }>
+		>;
 	}>({ nodes: 0, edges: 0, kinds: {}, vormen: {}, metGroep: {} });
 	let containerGroups = $state<Map<string, ContainerGroup>>(new Map());
 	// When the selection is a container, there is no canvas node to focus around: its
 	// own children take that role in the dim/highlight pass instead (GraphCanvas).
 	const focusContainerId = $derived(
-		selection && isContainerKind(selection.kind) && selection.raw
+		selection && isContainerKind(selection.drawClass) && selection.raw
 			? containerIdFor(selection.raw)
 			: null
 	);
-	const focusNodeId = $derived(selection && !isContainerKind(selection.kind) ? selection.id : null);
+	const focusNodeId = $derived(
+		selection && !isContainerKind(selection.drawClass) ? selection.id : null
+	);
 	// The time a lid's commissies and fracties are drawn for: the years of the bronfilter,
 	// else the lid's own moment (today, or the end of their last seat).
 	// The years of the bronfilter as dates; the canvas hides a dated bron outside them.
@@ -188,8 +192,8 @@
 		yearPeriod ?? momentOf(focusNodeId, containerGroups.values(), vandaag())
 	);
 
-	const hiddenKinds = $derived<ReadonlySet<BronKind>>(
-		filter.bronnen ? new Set(BRON_KINDS.filter((k) => !filter.bronnen!.has(k))) : new Set()
+	const hiddenKinds = $derived<ReadonlySet<FilterGroup>>(
+		filter.bronnen ? new Set(FILTER_GROUPS.filter((k) => !filter.bronnen!.has(k))) : new Set()
 	);
 
 	// The floating legend: closed until opened, kept per browser (FOLD.legend), and folded
@@ -205,12 +209,12 @@
 	function countCanvas() {
 		let nodes = 0;
 		let edges = 0;
-		const kinds: Partial<Record<BronKind, number>> = {};
+		const kinds: Partial<Record<FilterGroup, number>> = {};
 		const vormen: Partial<Record<Vorm, number>> = {};
 		const metGroep: Partial<
-			Record<BronKind, { count: number; van: number; groepen: ContainerKind[] }>
+			Record<FilterGroup, { count: number; van: number; groepen: ContainerKind[] }>
 		> = {};
-		const bronnen: Partial<Record<BronKind, number>> = {};
+		const bronnen: Partial<Record<FilterGroup, number>> = {};
 		const visible = new Set<string>();
 		const verborgen = metGroepVerborgen({
 			groups: containerGroups.values(),
@@ -220,9 +224,9 @@
 		onMetGroep?.(verborgen);
 		g.forEachNode((id, attrs) => {
 			// Per kind, before the filter: the sidebar says what the filter hides.
-			const kind = attrs.bronKind as BronKind | undefined;
+			const kind = attrs.filterGroup as FilterGroup | undefined;
 			if (kind) kinds[kind] = (kinds[kind] ?? 0) + 1;
-			if (id !== selection?.id && hiddenKinds.has(kind as BronKind)) return;
+			if (id !== selection?.id && hiddenKinds.has(kind as FilterGroup)) return;
 			if (
 				id !== selection?.id &&
 				filter.rechter &&
@@ -251,7 +255,7 @@
 			if (filters.hiddenRelations.has(attrs.relation as Relation)) return;
 			edges++;
 		});
-		for (const [k, m] of Object.entries(metGroep)) m.van = bronnen[k as BronKind] ?? 0;
+		for (const [k, m] of Object.entries(metGroep)) m.van = bronnen[k as FilterGroup] ?? 0;
 		canvasCounts = { nodes, edges, kinds, vormen, metGroep };
 		drawnIds = [...visible];
 	}
@@ -464,7 +468,7 @@
 	// (dossier, fractie, commissie) een stap groter.
 	/** A cluster bron stands for forty or more: a step larger than a group. */
 	const CLUSTER_SIZE = 12;
-	const NODE_SIZE: Record<GraphNodeKind, number> = {
+	const NODE_SIZE: Record<DrawClass, number> = {
 		article: 8,
 		instrument: 8,
 		judgment: 8,
@@ -481,7 +485,7 @@
 		if (!n) return 4;
 		const seeded = (n as GraphNode & { size?: number }).size;
 		if (typeof seeded === 'number') return seeded;
-		return NODE_SIZE[n.kind];
+		return NODE_SIZE[n.drawClass];
 	}
 
 	function applyFilters() {
@@ -559,7 +563,9 @@
 	// Node label: the name of the bron (bron/naam.ts), short enough for the canvas; a
 	// Kamerstuk by its kind and number (`stukLabel`). The full name is in the panel and the card.
 	const nodeLabel = (n: GraphNode) =>
-		isClusterId(n.id) || n.kind === 'document' ? n.label : kort(bronNaam(n, $instrumentMetaStore));
+		isClusterId(n.id) || n.drawClass === 'document'
+			? n.label
+			: kort(bronNaam(n, $instrumentMetaStore));
 
 	// A container (a wet, fractie, commissie or dossier) is never a canvas node: its
 	// children carry it as a hull instead (`syncContainerAnchors`, GraphCanvas). Nor
@@ -567,10 +573,10 @@
 	// current text, and the reader reads a version's own data directly, not this
 	// canvas.
 	const isCanvasNode = (n: GraphNode) =>
-		(n.anchor || !isContainerKind(n.kind)) && !isVersionCollection(n.collection);
+		(n.anchor || !isContainerKind(n.drawClass)) && !isVersionCollection(n.collection);
 
 	// ── clusters ────────────────────────────────────────────────────────────────
-	// What the store holds goes to the canvas through the clusters ($lib/netwerk/cluster):
+	// What the store holds goes to the canvas through the clusters ($lib/selection/cluster):
 	// past forty loose bronnen of one kind around the focus, one cluster bron stands for
 	// them. Shown in full (`expanded`) until the reader folds them again or the focus moves.
 	let rawNodes: GraphNode[] = [];
@@ -670,7 +676,7 @@
 			id: c.id,
 			collection: c.collection,
 			key: c.id,
-			kind: kindOfCollection(c.collection),
+			drawClass: drawClassOf(c.collection),
 			label: clusterLabel(c),
 			size: CLUSTER_SIZE
 		}) as GraphNode;
@@ -813,10 +819,10 @@
 				cluster: isClusterId(n.id),
 				forceLabel: isClusterId(n.id),
 				color: TRANSPARENT,
-				kind: n.kind,
+				drawClass: n.drawClass,
 				vorm,
 				collection: n.collection,
-				bronKind: bronKindOf(n.collection, n.key, n.raw?.props ?? null),
+				filterGroup: filterGroupOf(n.collection, n.key, n.raw?.props ?? null),
 				// The court of a judgment, as the bronfilter's rechter reads it.
 				rechter:
 					n.collection === 'judgments'
@@ -1338,7 +1344,7 @@
 				<GraphCanvas
 					avoid={overlayRect}
 					graph={g}
-					focusedId={selection && !isContainerKind(selection.kind) ? selection.id : null}
+					focusedId={selection && !isContainerKind(selection.drawClass) ? selection.id : null}
 					{filters}
 					{hiddenKinds}
 					{pinnedIds}

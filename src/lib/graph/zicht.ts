@@ -2,10 +2,10 @@
 // period. When it changes the camera frames what is left (GraphView); without that the view
 // kept the zoom of the full network, and two papers next to their article vanished under its
 // mark (Thijs, 10 Oct: Wet buitenlandse schepen art. 1, "1 stuk en geen lijnen").
-import type { BronKind } from '$lib/verbonden/filter';
+import type { FilterGroup } from '$lib/verbonden/filter';
 
 type Zicht = {
-	verborgen: ReadonlySet<BronKind>;
+	verborgen: ReadonlySet<FilterGroup>;
 	rechter: string | null;
 	van: string | null;
 	tot: string | null;

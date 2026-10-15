@@ -5,14 +5,14 @@ import {
 	ecliKey,
 	focusIn,
 	focusOfPad,
-	isVerkenner,
+	isExplorePath,
 	lookUp,
 	onthoudPaden,
 	padHref,
 	padOfFocus,
 	parsePad,
 	remember,
-	verkennerHref,
+	exploreHref,
 	focusUitPagina
 } from './leesbaar';
 
@@ -37,7 +37,7 @@ describe('a readable address', () => {
 
 	it('opens an EU act by its CELEX number in the Verkenner, on its node', () => {
 		expect(parsePad('/wetten/32022L2555')).toEqual({ soort: 'wet', wet: '32022L2555' });
-		expect(isVerkenner('/wetten/32022L2555')).toBe(true);
+		expect(isExplorePath('/wetten/32022L2555')).toBe(true);
 		expect(focusIn(new URL('https://concordans.nl/wetten/32022L2555'))).toBe(
 			'instruments/32022l2555'
 		);
@@ -135,9 +135,9 @@ describe('a readable address', () => {
 			'/kamerstukken/36799/A1'
 		])
 			expect(parsePad(path)).toBeNull();
-		expect(isVerkenner('/explore')).toBe(true);
-		expect(isVerkenner('/dossiers/36799')).toBe(true);
-		expect(isVerkenner('/docs')).toBe(false);
+		expect(isExplorePath('/explore')).toBe(true);
+		expect(isExplorePath('/dossiers/36799')).toBe(true);
+		expect(isExplorePath('/docs')).toBe(false);
 	});
 
 	it('writes the path with its colons as they are', () => {
@@ -187,8 +187,8 @@ describe('the address of a focus', () => {
 
 	it('keeps the query and moves the focus into the path', () => {
 		const params = new URLSearchParams('focus=dossiers/36799&lezen=1');
-		expect(verkennerHref(params, '#stemming')).toBe('/dossiers/36799?lezen=1#stemming');
-		expect(verkennerHref(new URLSearchParams('focus=members/m'))).toBe('/explore?focus=members/m');
+		expect(exploreHref(params, '#stemming')).toBe('/dossiers/36799?lezen=1#stemming');
+		expect(exploreHref(new URLSearchParams('focus=members/m'))).toBe('/explore?focus=members/m');
 	});
 
 	it('remembers an address it looked up, both ways', () => {

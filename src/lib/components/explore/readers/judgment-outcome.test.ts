@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bevindingen, strekking } from './uitkomst';
+import { bevindingen, strekking } from './judgment-outcome';
 
 describe('how a judgment ended', () => {
 	it('says what a conclusie proposes', () => {

@@ -226,7 +226,7 @@ describe('the r.o. of the passage in the row’s line', () => {
 			ref: { collection: 'articles', key: 'bwbr0005537_3_2' },
 			title: 'Artikel 3:2 Awb',
 			context: null,
-			kind: 'artikelen',
+			filterGroup: 'artikelen',
 			relation: 'REFERS_TO',
 			direction: 'outbound',
 			position: 'r.o. 3.4',

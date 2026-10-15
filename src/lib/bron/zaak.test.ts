@@ -9,7 +9,7 @@ const rij = (key: string, kind: string): Row =>
 		ref: { collection: 'documents', key },
 		title: key,
 		context: null,
-		kind: 'toelichtingen',
+		filterGroup: 'toelichtingen',
 		props: { kind }
 	}) as Row;
 

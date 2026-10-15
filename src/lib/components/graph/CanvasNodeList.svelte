@@ -10,7 +10,7 @@
 	import { articleTitle } from '$lib/text/bw';
 	import { bronNaam, stemmingNaam } from '$lib/bron/naam';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
-	import { isClusterId } from '$lib/netwerk/cluster';
+	import { isClusterId } from '$lib/selection/cluster';
 
 	let {
 		nodes,

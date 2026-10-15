@@ -2,7 +2,7 @@
 // a lid of an article, an overweging of a judgment, a Kamerstuk, a motie, any bron. It lives
 // in this browser; a link (?map=) carries it to someone else, a list of citations to a memo,
 // a CSV to a spreadsheet. It replaces Verbonden's Verzamel.
-import { netwerkParams } from '$lib/netwerk/netwerk';
+import { netwerkParams } from '$lib/selection/netwerk';
 import { dossierLabel } from '$lib/bron/dossier-naam';
 import { bronLabel, parseNodeId } from '$lib/vocabulary';
 import { queryHref } from '$lib/util/address';

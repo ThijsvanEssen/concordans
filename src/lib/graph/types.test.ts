@@ -5,7 +5,7 @@ import {
 	buildNodeLabel,
 	kort,
 	edgeCategory,
-	kindOfCollection,
+	drawClassOf,
 	nodeToGraphNode,
 	relationOf,
 	type BaseNode
@@ -48,13 +48,13 @@ describe('relations', () => {
 describe('node kinds', () => {
 	it('gives every collection a kind', () => {
 		for (const collection of Object.keys(NODE_TYPES) as Collection[]) {
-			expect(kindOfCollection(collection)).toBeTruthy();
+			expect(drawClassOf(collection)).toBeTruthy();
 		}
 	});
 
 	it('drops a node of an unknown collection', () => {
 		expect(nodeToGraphNode(node('commissies', 'x'))).toBeNull();
-		expect(nodeToGraphNode(node('committees', 'x'))?.kind).toBe('committee');
+		expect(nodeToGraphNode(node('committees', 'x'))?.drawClass).toBe('committee');
 	});
 });
 

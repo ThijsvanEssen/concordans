@@ -41,7 +41,7 @@ import {
 import { lawArticleList } from '$lib/api/law-articles';
 import { buildGroups, ditVan, EUROPEAN, matches, type Loader, type Match } from './groups';
 import { YEARS_IN_CHART } from './view';
-import { bronKindOf, isInternational } from './filter';
+import { filterGroupOf, isInternational } from './filter';
 import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 import { getJudgmentDetail } from '$lib/api/judgments';
 import { aanhalingIn } from './passage';
@@ -157,7 +157,7 @@ async function echrJudgments(bwb: string, articleKey: string, signal: AbortSigna
 			return {
 				ref: { collection: 'judgments' as const, key: j.key },
 				...describeBron('judgments', j.key, j.display_name, props),
-				kind: bronKindOf('judgments', j.key, props, 'REFERS_TO'),
+				filterGroup: filterGroupOf('judgments', j.key, props, 'REFERS_TO'),
 				relation: 'REFERS_TO' as const,
 				direction: 'inbound' as const,
 				confidence: l.confidence ?? null,
@@ -247,7 +247,7 @@ async function touched(
 			ref: { collection: 'instruments', key: i.key },
 			title: i.citation_title ?? i.title ?? naamVan('instruments', i),
 			context: `${i.count} stukken`,
-			kind: bronKindOf('instruments', i.key, { bwb_id: i.bwb_id })
+			filterGroup: filterGroupOf('instruments', i.key, { bwb_id: i.bwb_id })
 		}))
 	};
 }
@@ -276,7 +276,7 @@ async function actorDossiers(
 			}),
 			dossier: { number: d.number, title: d.title, short_title: d.short_title ?? null },
 			context: rolesLine(d),
-			kind: 'dossiers' as const,
+			filterGroup: 'dossiers' as const,
 			relation: 'AUTHORED' as const,
 			direction: 'outbound' as const
 		}))
@@ -313,7 +313,7 @@ export function regelingRow(
 		identifier: r.date_in_force ? `in werking ${korteDatum(r.date_in_force)}` : null,
 		date: r.date_in_force ?? null,
 		lid: r.leden?.length === 1 ? r.leden[0] : null,
-		kind: bronKindOf('instruments', i.key, props, 'BASED_ON'),
+		filterGroup: filterGroupOf('instruments', i.key, props, 'BASED_ON'),
 		relation: 'BASED_ON',
 		direction: 'inbound',
 		props,
@@ -423,7 +423,7 @@ export function basisRow(b: Schema<'InstrumentBasisItem'>): Row {
 		...describeBron('instruments', i.key, i.display_name, props),
 		context: kindName(b.kind),
 		identifier: null,
-		kind: bronKindOf('instruments', i.key, props),
+		filterGroup: filterGroupOf('instruments', i.key, props),
 		relation: 'BASED_ON',
 		direction: 'outbound',
 		props,
@@ -475,7 +475,7 @@ export function wetRijVanRelated(
 		// Its day as a regulation's: `in werking 1 okt. 2024` (regelingRow).
 		identifier: i.date_in_force ? `in werking ${korteDatum(i.date_in_force)}` : null,
 		date: i.date_in_force ?? null,
-		kind: bronKindOf('instruments', i.key, props),
+		filterGroup: filterGroupOf('instruments', i.key, props),
 		relation: 'REFERS_TO',
 		// Which way its articles refer, as the API says; both ways count as towards this law.
 		direction: i.direction === 'outbound' ? 'outbound' : 'inbound',
@@ -511,7 +511,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				(d): Row => ({
 					ref: { collection: 'decisions', key: d.key },
 					...describeBron('decisions', d.key, d.display_name, { ...d }),
-					kind: bronKindOf('decisions', d.key, { ...d }),
+					filterGroup: filterGroupOf('decisions', d.key, { ...d }),
 					relation: 'ABOUT',
 					direction: 'inbound',
 					props: { ...d }
@@ -562,7 +562,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 						label: d.number
 					}),
 					dossier: { number: d.number, title: d.title, short_title: d.short_title ?? null },
-					kind: 'dossiers' as const
+					filterGroup: 'dossiers' as const
 				}))
 		};
 	},
@@ -681,7 +681,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				ref: { collection: 'articles' as const, key: t.key },
 				title: naamVan('articles', t),
 				context: null,
-				kind: bronKindOf('articles', t.key, { bwb_id: t.bwb_id, celex: t.celex }),
+				filterGroup: filterGroupOf('articles', t.key, { bwb_id: t.bwb_id, celex: t.celex }),
 				relation: 'REFERS_TO' as const,
 				direction: 'inbound' as const,
 				props: { ...t }
@@ -745,7 +745,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					link,
 					implemented.includes(link) ? amending : new Set<string>()
 				),
-				kind: 'internationaal',
+				filterGroup: 'internationaal',
 				derived: isDerived(link.confidence),
 				relation: 'IMPLEMENTS',
 				direction: implemented.includes(link) ? 'outbound' : 'inbound'
@@ -760,7 +760,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				title: i.citation_title ?? i.title ?? naamVan('instruments', i),
 				// The line says it: `Genoemd`, `Noemt` (hoe.ts), not "Aangehaald" with "alleen genoemd".
 				context: null,
-				kind: 'internationaal',
+				filterGroup: 'internationaal',
 				derived: isDerived(link.confidence),
 				relation: 'REFERS_TO',
 				direction: mentions.includes(link) ? 'outbound' : 'inbound'
@@ -775,7 +775,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 						link.instrument.title ??
 						naamVan('instruments', link.instrument),
 					context: null,
-					kind: 'internationaal',
+					filterGroup: 'internationaal',
 					derived: isDerived(link.confidence)
 				});
 			} else if (link.judgment) {
@@ -783,7 +783,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				add({
 					ref: { collection: 'judgments', key: j.key },
 					...describeBron('judgments', j.key, j.display_name, { ...j }),
-					kind: 'internationaal',
+					filterGroup: 'internationaal',
 					derived: isDerived(link.confidence)
 				});
 			}
@@ -937,7 +937,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				title: articleName(from.bwb_id ?? bwb, from.article_number) ?? naamVan('articles', from),
 				context: null,
 				edge: target ? { doel: target } : {},
-				kind: 'artikelen',
+				filterGroup: 'artikelen',
 				// The aard says how sure it is; the reference itself is in the BWB (1.0).
 				aard: aardOf(r.semantic_type, r.semantic_confidence),
 				relation: 'REFERS_TO',
@@ -1004,7 +1004,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					short_title: d.short_title ?? null
 				}),
 				dossier: { number: d.dossier_number, title: d.title, short_title: d.short_title ?? null },
-				kind: 'dossiers' as const,
+				filterGroup: 'dossiers' as const,
 				relation: 'LEGISLATED_IN',
 				direction: 'outbound',
 				// The dossier that made the law, or one whose publication amended it.
@@ -1025,7 +1025,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				ref: refOf(parseNodeId(d.id)?.collection ?? 'instruments', d.key, {}),
 				title: d.display_name ?? d.identifier ?? naamVanId(d.id),
 				context: null,
-				kind: 'wetten' as const,
+				filterGroup: 'wetten' as const,
 				identifier: d.identifier && d.identifier !== d.key ? d.identifier : null,
 				date: d.first_effective_date ?? null,
 				// The publication that enacted the law: `Stelt vast` (hoe.ts).
@@ -1081,7 +1081,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 								}
 							}
 						: {}),
-					kind: bronKindOf('documents', p.key, props, 'AMENDS'),
+					filterGroup: filterGroupOf('documents', p.key, props, 'AMENDS'),
 					relation: 'AMENDS' as const,
 					direction: 'inbound' as const,
 					props
@@ -1118,7 +1118,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		const stuk: Row = {
 			ref: { collection: 'documents', key: p.key },
 			...describeBron('documents', p.key, p.title ?? null, props),
-			kind: bronKindOf('documents', p.key, props, 'ABOUT'),
+			filterGroup: filterGroupOf('documents', p.key, props, 'ABOUT'),
 			relation: 'ABOUT',
 			direction: 'outbound',
 			props
@@ -1144,7 +1144,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				title:
 					articleName(law, a.article_number, a.label) ??
 					describeBron('articles', a.key, a.display_name, a).title,
-				kind: 'artikelen' as const,
+				filterGroup: 'artikelen' as const,
 				relation: 'PART_OF' as const,
 				direction: 'inbound' as const
 			}))
@@ -1191,7 +1191,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 						advocate_general_role: j.advocate_general_role
 					}),
 					context: citedLine(j.cited_articles ?? [], bwb),
-					kind: 'uitspraken' as const,
+					filterGroup: 'uitspraken' as const,
 					relation: 'REFERS_TO' as const,
 					direction: 'inbound' as const
 				}))
@@ -1217,7 +1217,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				ref: { collection: 'activities' as const, key: a.key },
 				...describeBron('activities', a.key, a.agenda_title, { ...a }),
 				context: activityLine(a),
-				kind: bronKindOf('activities', a.key, {}),
+				filterGroup: filterGroupOf('activities', a.key, {}),
 				relation: 'LED_BY' as const,
 				direction: 'inbound' as const
 			}))
@@ -1233,7 +1233,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			rows: (committee.dossiers ?? []).map((d) => ({
 				ref: { collection: 'dossiers', key: d.key, number: d.number },
 				...describeBron('dossiers', d.key, d.title, { title: d.title, label: d.number }),
-				kind: 'dossiers' as const
+				filterGroup: 'dossiers' as const
 			}))
 		};
 	}

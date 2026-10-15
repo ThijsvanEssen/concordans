@@ -124,7 +124,7 @@ export function parsePad(pathname: string): Pad | null {
 }
 
 /** Whether a path is the Verkenner: /explore, or a readable address of a bron. */
-export const isVerkenner = (pathname: string) =>
+export const isExplorePath = (pathname: string) =>
 	pathname === '/explore' || parsePad(pathname) !== null;
 
 /** The path of a readable address. */
@@ -352,7 +352,7 @@ const apiArticle = (pad: Pad) =>
  * An article's text, asked as soon as its address is known, beside the lookup and the node,
  * so the reader finds it waiting (once() shares the request; Thijs, 10 Oct: lazy, the text
  * first). The text names the article's node key too: where it comes before the lookup, the
- * reader stands on it at once ($lib/bron/kop). Its tekstversies date the status line ("tekst
+ * reader stands on it at once ($lib/bron/first-node). Its tekstversies date the status line ("tekst
  * sinds …"), the list of its law gives the place line and Vorig, Volgend, its explanations the
  * line of the memorie: asked with it, so the head does not grow over the text when they come.
  * By the API's own number (162 for BW 6:162), as the reader asks them. Nobody waits for these:
@@ -533,7 +533,7 @@ export function padOfFocus(focus: string, props?: Record<string, unknown> | null
  * The URL as the Verkenner reads it: `/explore` with the focus in the query. An
  * address whose focus is not known yet reads without one, until `lookUp` finds it.
  */
-export function verkennerUrl(url: URL): URL {
+export function exploreUrl(url: URL): URL {
 	if (url.pathname === '/explore') return url;
 	const pad = parsePad(url.pathname);
 	if (!pad) return url;
@@ -545,13 +545,13 @@ export function verkennerUrl(url: URL): URL {
 }
 
 /** The focus of the Verkenner at a URL, from the query or the readable address. */
-export const focusIn = (url: URL) => verkennerUrl(url).searchParams.get('focus');
+export const focusIn = (url: URL) => exploreUrl(url).searchParams.get('focus');
 
 /**
  * The address of a view of the Verkenner: the readable path of its focus where it has
  * one, the rest in the query. `params` is the query as the Verkenner reads it.
  */
-export function verkennerHref(
+export function exploreHref(
 	params: URLSearchParams,
 	hash = '',
 	props?: Record<string, unknown> | null

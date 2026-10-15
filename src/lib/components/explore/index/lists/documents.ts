@@ -12,7 +12,7 @@ type State = { facets: FacetsOf<'/api/documents'> };
 
 const query = (p: IndexParams) => ({
 	chamber: p.kamer,
-	kind: p.soort || undefined,
+	kind: p.documentKind || undefined,
 	dossier: p.q || undefined,
 	from: p.from || undefined,
 	to: p.to || undefined,
@@ -35,14 +35,14 @@ export const documents = defineList<Row, State, ReturnType<typeof query>>({
 			id: 'soort',
 			label: 'Soort',
 			kind: 'list',
-			options: facetOptions(facetMap(state.facets?.kind), p.soort)
+			options: facetOptions(facetMap(state.facets?.kind), p.documentKind)
 				.sort((a, b) => b[1] - a[1])
 				.map(([k, n]) => ({
 					id: k,
 					label: k,
 					count: n,
-					on: p.soort === k,
-					onClick: toggle(patch, 'soort', p.soort, k)
+					on: p.documentKind === k,
+					onClick: toggle(patch, 'soort', p.documentKind, k)
 				}))
 		}
 	],

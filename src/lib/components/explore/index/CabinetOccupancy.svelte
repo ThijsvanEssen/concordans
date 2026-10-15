@@ -18,7 +18,7 @@
 		lanesOf,
 		termOf,
 		type CabinetDetail,
-		type Seat,
+		type CabinetPost,
 		type SeatPost
 	} from './occupancy';
 	import Tijdas from '$lib/components/tijdlijn/Tijdas.svelte';
@@ -62,11 +62,11 @@
 	const rows = $derived.by(() => {
 		if (!term) return [];
 		const t = term;
-		const row = (name: string, seats: Seat[]) => ({
+		const row = (name: string, seats: CabinetPost[]) => ({
 			name,
 			seats: seats.map((seat) => ({ seat, lanes: lanesOf(seat, t) }))
 		});
-		const unknown = (s: Seat) => s.posts.some((p) => p.ministry_missing);
+		const unknown = (s: CabinetPost) => s.posts.some((p) => p.ministry_missing);
 		const named = (cabinet.ministries ?? []).filter((m) => m.name && m.seats.length);
 		const loose = (cabinet.ministries ?? []).filter((m) => !m.name).flatMap((m) => m.seats);
 		return [
@@ -88,7 +88,7 @@
 	});
 
 	/** How a post is named in `?open=`: its seat, holder and start. */
-	const postId = (seat: Seat, p: SeatPost) =>
+	const postId = (seat: CabinetPost, p: SeatPost) =>
 		`posts/${seat.seat}/${p.member.key}/${p.from_date ?? ''}`;
 
 	// A link names a seat by its slug, and seats are merged or renamed as the sources are
@@ -114,7 +114,7 @@
 		term ? { van: at(term, p.from_date, 'start'), tot: at(term, p.to_date, 'end') } : null;
 
 	/** The seat's name: the post grey where it is the usual one, the portfolio in ink. */
-	function seatName(seat: Seat): { post: string; portfolio: string } {
+	function seatName(seat: CabinetPost): { post: string; portfolio: string } {
 		if (seat.post === 'minister_zonder_portefeuille' && seat.portfolio)
 			return { post: 'Minister voor', portfolio: seat.portfolio };
 		return {

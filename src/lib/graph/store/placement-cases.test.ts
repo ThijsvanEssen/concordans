@@ -14,7 +14,7 @@ import { getNodeGraph } from '$lib/api/nodes';
 import { fakeApi, fail } from '$lib/test/fakeApi';
 import { opname } from '$lib/test/opname';
 import { isInhoudGroep, isKernGroep } from '$lib/bron/behoort';
-import { createVerbondenSource } from '$lib/verbonden/source';
+import { createVerbondenSource } from '$lib/verbonden/data-source';
 import { NODE_TYPES, nodeId, type Collection, type Relation } from '$lib/vocabulary';
 import type { GraphNode } from '../types';
 import { createGraphContext, type GraphContext } from './context';

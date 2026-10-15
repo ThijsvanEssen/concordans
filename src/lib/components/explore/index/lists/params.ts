@@ -81,8 +81,10 @@ export function readParams(params: URLSearchParams) {
 		hasPhase: get('has_phase').split(',').filter(isPhase).join(','),
 		// A dossier's kind keeps the URL name `track`: `kind` is the tab.
 		track: isDossierKind(track) ? track : ('' as const),
-		/** A kind of besluit or stuk, as the Kamer writes it (`Motie`, `Brief regering`). */
-		soort: get(PARAM.kind),
+		/** The kind of the zaak a besluit decides, as the Kamer writes it (`Motie`, `Wetgeving`). */
+		decisionKind: get(PARAM.kind),
+		/** The kind of a stuk, as the Kamer writes it (`Motie`, `Brief regering`). */
+		documentKind: get(PARAM.kind),
 		// The Kamer whose parliament is listed; no filter but a choice, so it stays across tabs.
 		kamer: chamberFromParam(params.get(PARAM.chamber)) ?? ('TK' as const),
 		ministry: choiceOf(params.get(PARAM.ministry), MINISTRY_KEYS) ?? ('' as const),

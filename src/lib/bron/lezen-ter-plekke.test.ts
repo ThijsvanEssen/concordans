@@ -125,7 +125,7 @@ describe('the place of a verbinding in its source', () => {
 			id: 'judgments/ecli_nl_rvs_2015_41',
 			collection: 'judgments',
 			key: 'ecli_nl_rvs_2015_41',
-			kind: 'judgment',
+			drawClass: 'judgment',
 			label: 'ABRvS 14 januari 2015'
 		} as GraphNode;
 		const v = verbindingOfRow(
@@ -133,7 +133,7 @@ describe('the place of a verbinding in its source', () => {
 				ref: { collection: 'articles', key: 'bwbr0005537_8_51d' },
 				title: 'Artikel 8:51d Awb',
 				context: null,
-				kind: 'artikelen',
+				filterGroup: 'artikelen',
 				relation: 'REFERS_TO',
 				direction: 'outbound',
 				position: 'r.o. 1 en 7',

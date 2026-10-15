@@ -10,7 +10,7 @@ import type { Schema } from '$lib/api/types';
 import { parseAnchor } from '$lib/text/anchor';
 import { plekVan } from '$lib/text/division';
 import { uniqueBy } from '$lib/util/unique';
-import { volgendeBladzijden, vorigeBladzijde, type Richting } from './bladeren';
+import { volgendeBladzijden, vorigeBladzijde, type Richting } from './law-paging';
 import { atArticles } from './peildatum';
 
 // The overview lists every article of the law with a preview only: at full text and parts

@@ -11,7 +11,7 @@ import type { Collection } from '$lib/vocabulary';
 import { getNodeGraph } from '$lib/api/nodes';
 import { isInhoudGroep, isKernGroep } from '$lib/bron/behoort';
 import { OPNAME, opname } from '$lib/test/opname';
-import { createVerbondenSource } from './source';
+import { createVerbondenSource } from './data-source';
 import { countLabel } from './groups';
 import { hoeVan } from './hoe';
 import { metaParts, type Row } from './rows';

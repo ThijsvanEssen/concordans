@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EMPTY_FILTER, hiddenByKind } from './filter';
+import { EMPTY_FILTER, hiddenByGroup } from './filter';
 import type { Group } from './groups';
 import type { Row } from './rows';
 import {
@@ -15,7 +15,7 @@ const row = (over: Partial<Row>): Row => ({
 	ref: { collection: 'judgments', key: 'j' },
 	title: 'Hof Amsterdam',
 	context: null,
-	kind: 'uitspraken',
+	filterGroup: 'uitspraken',
 	...over
 });
 
@@ -82,7 +82,9 @@ describe('the panel under the filter', () => {
 		{
 			id: 'cited-by',
 			label: 'Artikelen die naar dit artikel verwijzen',
-			rows: [row({ ref: { collection: 'articles', key: 'a' }, kind: 'artikelen', lid: '2' })],
+			rows: [
+				row({ ref: { collection: 'articles', key: 'a' }, filterGroup: 'artikelen', lid: '2' })
+			],
 			total: 34,
 			capped: false
 		}
@@ -100,12 +102,12 @@ describe('the panel under the filter', () => {
 		expect(countLine(afgekapt, EMPTY_FILTER)).toBe('1.099+ verbindingen');
 		expect(filterGroups(groups, f).map((g) => g.id)).toEqual(['cited-by']);
 		expect(
-			hiddenByKind(
+			hiddenByGroup(
 				groups.flatMap((g) => g.rows),
 				{ uitspraken: 1064 },
 				f
 			)
-		).toEqual([{ kind: 'uitspraken', count: 1064 }]);
+		).toEqual([{ group: 'uitspraken', count: 1064 }]);
 		const none = { ...EMPTY_FILTER, bronnen: new Set(['dossiers'] as const) };
 		expect(filterGroups(groups, none)).toEqual([]);
 	});
@@ -151,7 +153,7 @@ describe('the panel under the filter', () => {
 				{
 					id: 'law',
 					label: 'Wet',
-					rows: [row({ ref: { collection: 'instruments', key: 'w' }, kind: 'wetten' })],
+					rows: [row({ ref: { collection: 'instruments', key: 'w' }, filterGroup: 'wetten' })],
 					capped: false
 				}
 			],

@@ -10,7 +10,7 @@ The reading surfaces of `/explore` for the selected bron:
 | Table of contents (left) | Tekst, for an article or a law  | `LezenNav.svelte`: the articles of the whole law (`$lib/api/law-articles`, labelled in `$lib/bron/law-articles`), grouped by their place in the law |
 | Verbonden (right)        | both                            | `src/lib/verbonden/Verbonden.svelte`: the verbindingen of the bron in groups                                                                        |
 
-`explore/+page.svelte` places them. The page and `LezenNav` share one article list per law (`lawArticles`); the page derives `prevHref`, `nextHref` and `place` for `ArticleReader` from it. The page also loads the verbindingen of the bron once (`createVerbondenSource` in `src/lib/verbonden/source.ts`) and hands the same state to the panel, the table, the legend and the reader (the counts per lid, the number of wetsvoorstellen).
+`explore/+page.svelte` places them. The page and `LezenNav` share one article list per law (`lawArticles`); the page derives `prevHref`, `nextHref` and `place` for `ArticleReader` from it. The page also loads the verbindingen of the bron once (`createVerbondenSource` in `src/lib/verbonden/data-source.ts`) and hands the same state to the panel, the table, the legend and the reader (the counts per lid, the number of wetsvoorstellen).
 
 ## Dispatch
 
