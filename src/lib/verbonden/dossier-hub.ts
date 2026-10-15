@@ -14,7 +14,8 @@ import { get } from 'svelte/store';
 import { chamberOf, isExplanatory } from './chamber';
 import { bronKindOf } from './filter';
 import { changeRelationOf, isChangeRelation } from '$lib/vocabulary';
-import { describe, type Row } from './rows';
+import { type Row } from './rows';
+import { describeBron } from '$lib/bron/describe';
 import { type Neighbor } from '$lib/api/nodes';
 import { kindName } from '$lib/components/explore/law-head';
 
@@ -70,7 +71,7 @@ export function buildDossierHub(
 		if (n.relation !== 'LEGISLATED_IN' || n.collection !== 'instruments') continue;
 		laws.set(n.key, {
 			ref: { collection: 'instruments', key: n.key },
-			...describe('instruments', n.key, n.display_name, n.props ?? {}),
+			...describeBron('instruments', n.key, n.display_name, n.props ?? {}),
 			kind: bronKindOf('instruments', n.key, n.props),
 			relation: 'LEGISLATED_IN',
 			direction: 'inbound'
@@ -144,7 +145,7 @@ export function buildDossierHub(
 		date: d.date ?? '',
 		row: {
 			ref: { collection: 'documents', key: d.key },
-			...describe('documents', d.key, d.display_name, { ...d }),
+			...describeBron('documents', d.key, d.display_name, { ...d }),
 			kind: bronKindOf('documents', d.key, { ...d }),
 			relation: 'PART_OF',
 			direction: 'inbound',

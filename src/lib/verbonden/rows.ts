@@ -2,31 +2,25 @@
 // title and one meta line: the lid it names, the position in the source, the
 // identifier or the date, and the betrouwbaarheid when it is not hoog. The passage
 // of the source (`snippet`, with `match` marked) appears when the row is opened.
-import { carriesBillTitle, shortKind } from '$lib/text/document-kind';
-import { count, escapeRegExp, joinAnd, lowerFirst, textOf } from '$lib/text/words';
-import { isRauw, menselijkeNaam, naamVanId } from '$lib/bron/menselijk';
+import { escapeRegExp, lowerFirst, textOf } from '$lib/text/words';
+import { naamVanId } from '$lib/bron/menselijk';
 import { keyEcli } from '$lib/bron/leesbaar';
-import { korteDatum, langeDatum, vandaag } from '$lib/text/datum';
+import { korteDatum } from '$lib/text/datum';
 import { refOf, type BronRef } from '$lib/bron/href';
 import { anchorLabel } from '$lib/text/anchor';
-import { articleTitle, bookNumber } from '$lib/text/bw';
-import { authorCite } from '$lib/text/judgment-cite';
-import { courtName } from '$lib/text/court';
 import { changeRelationOf, isCollection, type Relation } from '$lib/vocabulary';
-import { isGeneriek } from '$lib/bron/generiek';
 import {
-	dossierLabel,
 	dossierOwnName,
 	dossierUitProps,
 	kamerstukNummer,
 	type DossierNaamBron
 } from '$lib/bron/dossier-naam';
-import { kindName } from '$lib/components/explore/law-head';
-import { kamerstukName, withoutKamerstuk } from '$lib/components/parliamentary/kamerstuk';
+import { describeBron, UNNAMED } from '$lib/bron/describe';
 import { seatWord } from '$lib/components/parliamentary/career';
 import { MODERATE_CONFIDENCE, bronKindOf, confidenceWord, type BronKind } from './filter';
 import { isDerived, positionsLabel, readEdge } from './edge-meta';
 import { woordenVan } from './hoe';
+import { periodLabel } from './lines';
 import type { Bereik } from '$lib/text/voetnoten';
 
 import type { Neighbor } from '$lib/api/nodes';
@@ -99,195 +93,6 @@ export function dossierVanRij(row: Row): DossierNaamBron | null {
 	return d.title || row.title === UNNAMED ? d : { ...d, title: row.title };
 }
 
-const join = (...parts: (string | null | undefined)[]) => parts.filter(Boolean).join(', ') || null;
-
-/** The dossier numbers of a node (`37020-XV`), in either chamber. */
-export function dossierNumbersOf(props: Record<string, unknown> | null | undefined): string[] {
-	const raw = props?.dossier_numbers;
-	return Array.isArray(raw) ? raw.filter((n): n is string => typeof n === 'string' && !!n) : [];
-}
-
-/** The dossier a Kamerstuk or vote is numbered in: `dossier_number` where the API gives it
- *  (`explained-by`, a light node), else the first of `dossier_numbers`. */
-export const dossierNumberOf = (props: Record<string, unknown> | null | undefined): string | null =>
-	textOf(props?.dossier_number) ?? dossierNumbersOf(props)[0] ?? null;
-
-/**
- * The name and the line under it of a Kamerstuk, by what tells it apart: its own title where
- * that says more than its kind (`Motie van het lid Krul c.s. over …`); else its kind or title
- * with its number (`Verslag, Kamerstuk I 36547, C`); else with its date. Never the kind alone
- * where something else is known. The line under it names the kind and the number the title
- * leaves out.
- */
-function documentName(
-	props: Record<string, unknown>,
-	name: string
-): { title: string; context: string | null } {
-	const kind = textOf(props.kind);
-	const short = kind ? shortKind(kind) : null;
-	const title = textOf(props.title) ? withoutKamerstuk(textOf(props.title)!) : null;
-	const dossier = dossierNumberOf(props);
-	const given = textOf(props.sequence != null ? String(props.sequence) : null);
-	// The Eerste Kamer numbers its papers with a letter (`C`, `AB`), without `nr.`; the data
-	// gives it as the number, or as the sequence.
-	const sequence = given && /^\d/.test(given) ? given : null;
-	const letter = sequence ? null : (given ?? textOf(props.number));
-	const chamber = props.chamber === 'EK' || letter ? 'EK' : 'TK';
-	const stuk =
-		kamerstukName({
-			chamber,
-			dossier_number: dossier,
-			dossier_suffix: textOf(props.dossier_suffix),
-			number: sequence ?? letter
-		}) ?? (sequence ? `nr. ${sequence}` : letter);
-	if (!kind && !title) return { title: name, context: null };
-	// The dossier's name on the line under it (API 0.79.30), where the title does not carry
-	// it already: the number in the title is how a Kamerstuk is cited.
-	const dossierNaam = textOf(props.dossier_short_title);
-	const naamOnder = dossierNaam && !(title ?? '').includes(dossierNaam) ? dossierNaam : null;
-	// A paper of a bill by its kind and number: its title is the bill's, the same for all.
-	// `Blanco verslag` says more than the kind `Verslag`.
-	if (carriesBillTitle(kind) && stuk)
-		return {
-			title: join(title && isGeneriek(title, kind) ? title : short, stuk)!,
-			context: naamOnder
-		};
-	if (title && !isGeneriek(title, kind)) return { title, context: join(short, stuk, naamOnder) };
-	const lead = title ?? short!;
-	const where = stuk ?? langeDatum(textOf(props.date));
-	return { title: join(lead, where) ?? lead, context: naamOnder };
-}
-
-/**
- * An activity, a zaak or a toezegging by what tells it apart: its agenda or own title where
- * that says more than its kind (`Procedures en brieven`); else the name the source gives it,
- * which names the committee and the day (`Commissie voor Justitie en Veiligheid (J&V)
- * (2026-03-24)`); else its kind with its date (`Stemmingen, 29 september 2026`). The kind goes
- * on the line under it.
- */
-function activityName(
-	props: Record<string, unknown>,
-	displayName: string | null | undefined,
-	name: string
-): { title: string; context: string | null } {
-	const kind = textOf(props.kind);
-	const own = textOf(props.agenda_title) ?? textOf(props.title) ?? textOf(props.text);
-	const context = kind && own?.toLowerCase() !== kind.toLowerCase() ? kind : null;
-	if (own && !isGeneriek(own, kind)) return { title: own, context };
-	const given = textOf(displayName);
-	if (given && !isGeneriek(given.replace(/\s*\(\d{4}-\d{2}-\d{2}\)$/, ''), kind))
-		return { title: given, context };
-	const lead = own ?? kind ?? name;
-	return { title: join(lead, langeDatum(textOf(props.date))) ?? lead, context };
-}
-
-/** A bron the data gives no name: said so, never shown by its database key. */
-export const UNNAMED = 'Naam niet in de gegevens';
-
-/**
- * Title, context, identifier, date and court of a bron, from what a list or node
- * response says about it.
- */
-export function describe(
-	collection: string,
-	key: string,
-	displayName: string | null | undefined,
-	props: Record<string, unknown> = {}
-): Pick<Row, 'title' | 'context' | 'identifier' | 'date' | 'court'> {
-	// Never the key: the reader's name of the bron where the data gives none ($lib/bron/menselijk).
-	const eigen = textOf(displayName);
-	// A bijlage by the reader's name ("Bijlage II"), not the data's "Annex II" (#30).
-	const name =
-		eigen && !isRauw(eigen) && collection !== 'annexes'
-			? eigen
-			: menselijkeNaam({ collection, key, display_name: displayName, props });
-	const date = textOf(props.date);
-	switch (collection) {
-		case 'judgments': {
-			const ecli = textOf(props.ecli);
-			const court = courtName(textOf(props.court) ?? textOf(props.court_code));
-			// The name a judgment is known by: "Hoge Raad, 20 december 2019 (Urgenda)".
-			const names = Array.isArray(props.names)
-				? props.names.filter((n): n is string => typeof n === 'string')
-				: [];
-			const known = names.length ? ` (${names.join(', ')})` : '';
-			// A conclusion by its author (API 0.74): "Conclusie A-G Niessen, 2 augustus 2018".
-			const ag = textOf(props.advocate_general);
-			const role = textOf(props.advocate_general_role) ?? '';
-			const author = ag
-				? authorCite(ag, /procureur-generaal/i.test(role) ? ['procureur-generaal'] : [])
-				: null;
-			return {
-				title: author
-					? (join(`Conclusie ${author}`, langeDatum(date)) ?? `Conclusie ${author}`) + known
-					: (court ? (join(court, langeDatum(date)) ?? court) : name) + known,
-				// A judgment known only as cited: its ECLI and court, nothing more. A translation
-				// the Rechtspraak published under its own ECLI says so (in its name, as the source
-				// gives it): HR Urgenda cites the English one of the Rechtbank, not its procesgang.
-				context:
-					props.stub === true
-						? 'niet in de gegevens'
-						: textOf(props.translation_of) || /\(English translation\)\s*$/i.test(name ?? '')
-							? 'Engelse vertaling'
-							: null,
-				identifier: ecli ?? (court ? null : name),
-				date,
-				court
-			};
-		}
-		case 'dossiers': {
-			// By the name it is known by, its kind and number under it: "Cyberbeveiligingswet",
-			// "Kamerstuk 36764", never the bare number or the title of three lines (Thijs, 13 Oct).
-			// Where the props lack the short title, the row asks it (DossierNaam).
-			const d = dossierUitProps({ display_name: name, ...props }, key);
-			return {
-				title: dossierOwnName(d) ?? name,
-				context: null,
-				identifier: d.number ? kamerstukNummer(d.number) : null,
-				date
-			};
-		}
-		case 'documents':
-			return { ...documentName(props, name), identifier: null, date };
-		case 'decisions':
-			return {
-				title: textOf(props.subject) ?? textOf(props.title) ?? name,
-				context: props.passed === true ? 'aangenomen' : props.passed === false ? 'verworpen' : null,
-				date
-			};
-		case 'activities':
-		case 'commitments':
-		case 'cases':
-			return { ...activityName(props, displayName, name), date };
-		case 'members':
-			return {
-				title: textOf(props.name) ?? textOf(displayName) ?? UNNAMED,
-				context: textOf(props.party)
-			};
-		case 'committees':
-		case 'factions':
-			// Its abbreviation is its name again ("D66" under "Democraten 66", UX-toets #16).
-			return { title: textOf(props.name) ?? name, context: null };
-		case 'instruments': {
-			// A law by its citeertitel and its kind, "Cyberbeveiligingswet", "Wet": the kind is
-			// what tells it from the dossier of the same name. The BWB id only without a kind.
-			const soort = kindName(textOf(props.kind));
-			return {
-				title: textOf(props.citation_title) ?? textOf(props.title) ?? name,
-				context: soort,
-				identifier: soort ? null : (textOf(props.bwb_id) ?? textOf(props.celex))
-			};
-		}
-		// An article of the BW by its book: "Artikel 6:162 BW".
-		case 'articles':
-			return { title: articleTitle(name, props), context: null };
-		case 'annexes':
-			return { title: name, context: null };
-		default:
-			return { title: textOf(displayName) ?? UNNAMED, context: null };
-	}
-}
-
 /** The aard of a reference as a word: the API's `semantic_type` codes in Dutch. */
 const AARD: Record<string, string> = {
 	cross_reference: 'verwijzing',
@@ -344,7 +149,7 @@ export function rowOfNeighbor(n: Neighbor): Row | null {
 	const edge = readEdge(meta, { direction: inbound ? 'inbound' : 'outbound', citingEcli: ecli });
 	return {
 		ref: refOf(n.collection, n.key, props),
-		...describe(n.collection, n.key, n.display_name, props),
+		...describeBron(n.collection, n.key, n.display_name, props),
 		...(edge.position ? { position: edge.position } : {}),
 		...(edge.passageAt ? { passageAt: edge.passageAt } : {}),
 		...(edge.noot ? { noot: edge.noot } : {}),
@@ -399,27 +204,6 @@ function periodOf(meta: Record<string, unknown>): Row['period'] {
 		? { from, to, role: seatWord(textOf(meta.role), meta.substitute === true) }
 		: null;
 }
-
-/**
- * `2017–2021`, `sinds 2025`, `tot en met 2021`, with a role other than plain membership in
- * front. The end date is the last day of the period (the Kamer's TotEnMet).
- */
-export function periodLabel(period: NonNullable<Row['period']>): string {
-	const from = period.from?.slice(0, 4);
-	const to = period.to?.slice(0, 4);
-	const span =
-		from && to
-			? from === to
-				? from
-				: `${from}–${to}`
-			: from
-				? `sinds ${from}`
-				: `tot en met ${to}`;
-	if (!period.role || period.role === 'Lid') return span;
-	return `${lowerFirst(period.role)}, ${span}`;
-}
-
-/** `voorzitter`, `minister van Justitie en Veiligheid`: the names in a function keep their capitals. */
 
 /**
  * The mentions of one bron as one row: the first place it names the selected bron,
@@ -573,77 +357,6 @@ export function openLabelOf(row: Pick<Row, 'position' | 'at' | 'ref'>, beside = 
 	if (beside) return 'Lees naast het artikel';
 	const position = row.position ?? (row.at ? anchorLabel(row.at, row.ref.key) : null);
 	return position ? `Lees bij ${position}` : 'Lees';
-}
-
-/**
- * `art. 4:12, 5:49 en 3 andere`: the articles of the law a judgment cites; a BW article with
- * its book, `art. 7:225` (`bwb` the law's id).
- */
-export function citedLine(
-	articles: readonly { article_number?: string | null }[],
-	bwb?: string | null
-): string | null {
-	const numbers = articles.flatMap((a) =>
-		a.article_number ? [bookNumber(bwb, a.article_number)] : []
-	);
-	if (!numbers.length) return null;
-	const shown = numbers.slice(0, 2).join(', ');
-	const rest = numbers.length - 2;
-	return `art. ${shown}${rest > 0 ? ` en ${count(rest, 'ander', 'andere')}` : ''}`;
-}
-
-/**
- * `Commissiedebat, geannuleerd, over 22112 en 21501-04`: what an activity was, a status
- * other than the usual one, and the dossiers on its agenda. One still to come says so
- * (UX-toets 0.79.47, #59): `Commissiedebat, gepland` on 3 June 2027; a planned one whose
- * day has passed is left as the source has it, without the word.
- */
-export function activityLine(
-	a: {
-		kind?: string | null;
-		status?: string | null;
-		date?: string | null;
-		dossier_numbers?: readonly string[] | null;
-		/** The dossiers by number and name (API 0.79.30), where the response has them. */
-		dossiers?: readonly DossierNaamBron[] | null;
-	},
-	today: string = vandaag()
-): string | null {
-	const usual = new Set(['gepland', 'uitgevoerd', 'vrijgegeven']);
-	const s = a.status?.toLowerCase() ?? null;
-	const gepland = s === 'gepland' && !!a.date && a.date.slice(0, 10) >= today;
-	const status = gepland ? 'gepland' : s && !usual.has(s) ? s : null;
-	// A dossier by its number and name: "over 22112 Nieuwe Commissievoorstellen …".
-	const numbers = a.dossiers?.length
-		? a.dossiers.map((d) => dossierLabel(d))
-		: (a.dossier_numbers ?? []).map((n) => kamerstukNummer(n));
-	const over = numbers.length ? `over ${joinAnd(numbers)}` : null;
-	return [a.kind, status, over].filter(Boolean).join(', ') || null;
-}
-
-/**
- * `eerste ondertekenaar, als minister van Financiën, 6 stukken`: what a lid or fractie
- * was in a dossier. The function only where it is not the plain seat of a Tweede Kamerlid:
- * an Eerste Kamerlid is named as such.
- */
-export function rolesLine(d: {
-	roles?: readonly string[] | null;
-	functions?: readonly string[] | null;
-	document_count?: number | null;
-}): string | null {
-	const roles = d.roles ?? [];
-	const role = roles.some((r) => /^eerste/i.test(r))
-		? 'eerste ondertekenaar'
-		: roles.length
-			? roles[0].toLowerCase()
-			: null;
-	const fn = (d.functions ?? []).find((f) => !/^tweede kamerlid$/i.test(f.trim()));
-	const n = d.document_count ?? 0;
-	return (
-		[role, fn ? `als ${fn}` : null, n ? count(n, 'stuk', 'stukken') : null]
-			.filter(Boolean)
-			.join(', ') || null
-	);
 }
 
 /** The dossier of a change, by the name the API gives it (`dossier_short_title`). */

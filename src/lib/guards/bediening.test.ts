@@ -108,9 +108,9 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 		expect(regels(t).some((r) => /(?<![-\w])border:\s*(?!\s|0)/.test(r.body))).toBe(false);
 		// Where a verbinding comes from is words in the row's meta line, not a box over the
 		// next row ("Herkend in de tekst" was "out of place").
-		const verbonden = bron('lib/verbonden/Verbonden.svelte');
-		expect(verbonden).not.toMatch(/row__herkomst/);
-		expect(verbonden).toMatch(/row__part--herkomst/);
+		const rij = bron('lib/verbonden/VerbondenRow.svelte');
+		expect(rij).not.toMatch(/row__herkomst/);
+		expect(rij).toMatch(/row__part--herkomst/);
 	});
 
 	it('keeps the choice of bronnen in the filter, not in the head of Verbonden', () => {

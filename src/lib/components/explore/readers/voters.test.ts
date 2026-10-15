@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { UNNAMED } from '$lib/verbonden/rows';
+import { UNNAMED } from '$lib/bron/describe';
 import { ekFactionGroups, ekVoteLine, votersOf } from './voters';
 
 describe('ekVoteLine', () => {

@@ -7,7 +7,7 @@ import type { Teken } from '$lib/components/tijdlijn/tijdlijn';
 import type { Schema } from '$lib/api/types';
 import { CHAMBER_NAME, type Chamber } from '$lib/components/parliamentary/chamber';
 import { commitmentTeken } from '$lib/components/explore/index/government';
-import { describe } from '$lib/verbonden/rows';
+import { describeBron } from '$lib/bron/describe';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import {
 	AMENDEMENT,
@@ -565,7 +565,7 @@ function kopVan(i: FeedItem): Omit<Headline, 'vorm'> {
 			// A judgment as it is cited, by its court and the day it was decided; a conclusion
 			// by its A-G (BE-26). The highest courts and their parket stand out.
 			const j = i.judgment;
-			const { title } = describe('judgments', i.node.key, i.title, {
+			const { title } = describeBron('judgments', i.node.key, i.title, {
 				ecli: j?.ecli,
 				court: j?.court,
 				date: j?.decided_on,

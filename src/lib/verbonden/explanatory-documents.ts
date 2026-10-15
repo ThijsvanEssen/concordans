@@ -6,7 +6,8 @@
 import { getExplainedBy } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
 import { isExplanatory } from './chamber';
-import { describe, type Row } from './rows';
+import { type Row } from './rows';
+import { describeBron } from '$lib/bron/describe';
 import { type Neighbor } from '$lib/api/nodes';
 import { isDerived, readEdge } from './edge-meta';
 import type { Relation } from '$lib/vocabulary';
@@ -49,7 +50,7 @@ export function mergeExplanatory(neighbors: Neighbor[]): Row[] {
 			date: typeof props.date === 'string' ? props.date : '',
 			row: {
 				ref: { collection: 'documents', key: n.key },
-				...describe('documents', n.key, n.display_name, props),
+				...describeBron('documents', n.key, n.display_name, props),
 				kind: 'toelichtingen',
 				lid: edge.lid,
 				derived: isDerived(n.confidence),
@@ -82,7 +83,7 @@ export function rowsOfExplanations(items: Schema<'ArticleExplanationDTO'>[]): Ro
 		const section = anchor && !/^s-\d+$/.test(anchor) ? /(\d+(?:\.\d+)*)/.exec(anchor) : null;
 		rows.set(d.key, {
 			ref: { collection: 'documents', key: d.key },
-			...describe('documents', d.key, d.title, { ...d }),
+			...describeBron('documents', d.key, d.title, { ...d }),
 			kind: 'toelichtingen',
 			at: item.section_anchor ?? null,
 			// The section by its heading as the memorie prints it (API 0.79.55): `§ Artikel 21

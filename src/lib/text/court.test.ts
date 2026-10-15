@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { courtName } from './court';
-import { describe as describeBron } from '$lib/verbonden/rows';
+import { describeBron } from '$lib/bron/describe';
 
 describe('courtName (#62)', () => {
 	it('names a court by its code, also one abolished in 2013', () => {

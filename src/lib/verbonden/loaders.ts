@@ -55,18 +55,9 @@ import { articleName, bookNumber, withBook } from '$lib/text/bw';
 import { korteDatum } from '$lib/text/datum';
 import { anchorLabel, lidAnchor, parseAnchor } from '$lib/text/anchor';
 import { anchorOf, parseQualifier } from '$lib/text/qualifier';
-import {
-	aardOf,
-	activityLine,
-	historyRow,
-	uniqueRows,
-	rolesLine,
-	citedLine,
-	describe,
-	rowOfNeighbor,
-	unresolvedRows,
-	type Row
-} from './rows';
+import { aardOf, historyRow, uniqueRows, rowOfNeighbor, unresolvedRows, type Row } from './rows';
+import { describeBron } from '$lib/bron/describe';
+import { activityLine, rolesLine, citedLine } from './lines';
 import { type Neighbor } from '$lib/api/nodes';
 import { isDerived, lidOfMatch, plaatsVanMeta, positionsLabel } from './edge-meta';
 
@@ -165,7 +156,7 @@ async function echrJudgments(bwb: string, articleKey: string, signal: AbortSigna
 			const props = { ecli: j.ecli };
 			return {
 				ref: { collection: 'judgments' as const, key: j.key },
-				...describe('judgments', j.key, j.display_name, props),
+				...describeBron('judgments', j.key, j.display_name, props),
 				kind: bronKindOf('judgments', j.key, props, 'REFERS_TO'),
 				relation: 'REFERS_TO' as const,
 				direction: 'inbound' as const,
@@ -273,7 +264,7 @@ async function actorDossiers(
 		total: found.total,
 		rows: found.items.map((d) => ({
 			ref: { collection: 'dossiers' as const, key: d.key, number: d.number },
-			...describe('dossiers', d.key, d.title, {
+			...describeBron('dossiers', d.key, d.title, {
 				title: d.title,
 				short_title: d.short_title ?? null,
 				label: d.number
@@ -310,7 +301,7 @@ export function regelingRow(
 	};
 	return {
 		ref: { collection: 'instruments', key: i.key },
-		...describe('instruments', i.key, i.display_name, props),
+		...describeBron('instruments', i.key, i.display_name, props),
 		// The kind stands in the line (`AMvB op grond van`), not again under it.
 		context: null,
 		// Its day, not its BWB id: `in werking 15 aug. 2026` (Thijs, 13 Oct).
@@ -424,7 +415,7 @@ export function basisRow(b: Schema<'InstrumentBasisItem'>): Row {
 	};
 	return {
 		ref: { collection: 'instruments', key: i.key },
-		...describe('instruments', i.key, i.display_name, props),
+		...describeBron('instruments', i.key, i.display_name, props),
 		context: kindName(b.kind),
 		identifier: null,
 		kind: bronKindOf('instruments', i.key, props),
@@ -514,7 +505,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			.map(
 				(d): Row => ({
 					ref: { collection: 'decisions', key: d.key },
-					...describe('decisions', d.key, d.display_name, { ...d }),
+					...describeBron('decisions', d.key, d.display_name, { ...d }),
 					kind: bronKindOf('decisions', d.key, { ...d }),
 					relation: 'ABOUT',
 					direction: 'inbound',
@@ -560,7 +551,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				.filter((d) => d.number !== label)
 				.map((d) => ({
 					ref: { collection: 'dossiers', key: d.key, number: d.number },
-					...describe('dossiers', d.key, d.title, {
+					...describeBron('dossiers', d.key, d.title, {
 						title: d.title,
 						short_title: d.short_title ?? null,
 						label: d.number
@@ -875,7 +866,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					const j = link.judgment;
 					add({
 						ref: { collection: 'judgments', key: j.key },
-						...describe('judgments', j.key, j.display_name, { ...j }),
+						...describeBron('judgments', j.key, j.display_name, { ...j }),
 						kind: 'internationaal',
 						derived: isDerived(link.confidence)
 					});
@@ -1097,7 +1088,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			total: found.total,
 			rows: found.items.map((d) => ({
 				ref: { collection: 'dossiers', key: d.key, number: d.dossier_number },
-				...describe('dossiers', d.key, d.display_name, {
+				...describeBron('dossiers', d.key, d.display_name, {
 					title: d.title,
 					label: d.dossier_number,
 					short_title: d.short_title ?? null
@@ -1161,14 +1152,14 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				};
 				const wetsvoorstel = isBill(p.kind) && !!dossier;
 				// A bill: titled by its dossier's name, its kind and number under it.
-				const stuk = describe('documents', p.key, p.display_name ?? null, {
+				const stuk = describeBron('documents', p.key, p.display_name ?? null, {
 					...props,
 					title: null,
 					dossier_short_title: null
 				}).title;
 				return {
 					ref: { collection: 'documents' as const, key: p.key },
-					...describe('documents', p.key, p.display_name ?? null, props),
+					...describeBron('documents', p.key, p.display_name ?? null, props),
 					...(wetsvoorstel && dossier
 						? {
 								title: dossier.short_title?.trim() || dossier.title?.trim() || stuk,
@@ -1226,7 +1217,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		};
 		const stuk: Row = {
 			ref: { collection: 'documents', key: p.key },
-			...describe('documents', p.key, p.title ?? null, props),
+			...describeBron('documents', p.key, p.title ?? null, props),
 			kind: bronKindOf('documents', p.key, props, 'ABOUT'),
 			relation: 'ABOUT',
 			direction: 'outbound',
@@ -1260,11 +1251,11 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			total: found.total,
 			rows: found.items.slice(0, ARTICLES_SHOWN).map((a) => ({
 				ref: refOf('articles', a.key, a),
-				...describe('articles', a.key, a.display_name, a),
+				...describeBron('articles', a.key, a.display_name, a),
 				// Within its law an article is "Artikel 1", not the law's title again (Thijs, 9 Oct).
 				title:
 					articleName(law, a.article_number, a.label) ??
-					describe('articles', a.key, a.display_name, a).title,
+					describeBron('articles', a.key, a.display_name, a).title,
 				kind: 'artikelen' as const,
 				relation: 'PART_OF' as const,
 				direction: 'inbound' as const
@@ -1317,7 +1308,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				.map((j) => ({
 					ref: { collection: 'judgments' as const, key: j.key },
 					// The court and the day (API 0.73, BE-7), as every other row of a judgment.
-					...describe('judgments', j.key, j.display_name, {
+					...describeBron('judgments', j.key, j.display_name, {
 						ecli: j.ecli,
 						court: j.court,
 						tier: j.tier,
@@ -1363,7 +1354,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			total: found.total,
 			rows: found.items.map((a) => ({
 				ref: { collection: 'activities' as const, key: a.key },
-				...describe('activities', a.key, a.agenda_title, { ...a }),
+				...describeBron('activities', a.key, a.agenda_title, { ...a }),
 				context: activityLine(a),
 				kind: bronKindOf('activities', a.key, {}),
 				relation: 'LED_BY' as const,
@@ -1380,7 +1371,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			total: committee.active_dossier_count,
 			rows: (committee.dossiers ?? []).map((d) => ({
 				ref: { collection: 'dossiers', key: d.key, number: d.number },
-				...describe('dossiers', d.key, d.title, { title: d.title, label: d.number }),
+				...describeBron('dossiers', d.key, d.title, { title: d.title, label: d.number }),
 				kind: 'dossiers' as const
 			}))
 		};

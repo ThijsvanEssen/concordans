@@ -30,7 +30,11 @@ describe('Verbonden alike in panel, table and card (code-eenvoud F72, F73)', () 
 	});
 
 	it('holds the place of rows still coming with PendingRows (F72)', () => {
-		expect(bron(PANEL).match(/<PendingRows\b/g)?.length).toBe(2);
+		// A group still to come (PendingGroup), and a group whose loader is under way.
+		const pending = [PANEL, 'lib/verbonden/PendingGroup.svelte'].map(
+			(p) => bron(p).match(/<PendingRows\b/g)?.length ?? 0
+		);
+		expect(pending).toEqual([1, 1]);
 		// The blank rows and their heights are its own, in no other place.
 		expect(overtreders((t) => /rows--wacht|row--wacht|wacht-regel/.test(t))).toEqual([]);
 	});

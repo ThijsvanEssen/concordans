@@ -8,7 +8,8 @@ import {
 	withUnresolvedAppeals
 } from './groups';
 import { isInternational } from './filter';
-import { metaParts, describe as describeBron } from './rows';
+import { metaParts } from './rows';
+import { describeBron } from '$lib/bron/describe';
 import { type Neighbor } from '$lib/api/nodes';
 import node36327 from '$lib/fixtures/node-dossier-36327.json';
 import { type Collection, type Relation } from '$lib/vocabulary';
