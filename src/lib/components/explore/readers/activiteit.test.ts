@@ -7,6 +7,10 @@ describe('what was made in an activity', () => {
 			activity_id: 'activities/a',
 			documents: [
 				{
+					date: null,
+					dossier_suffix: null,
+					dictum: null,
+					kind_group: null,
 					id: 'documents/v',
 					key: 'v',
 					kind: 'Verslag van een wetgevingsoverleg',
@@ -19,6 +23,11 @@ describe('what was made in an activity', () => {
 			],
 			motions: [
 				{
+					date: null,
+					dossier_number: null,
+					dossier_suffix: null,
+					sequence: null,
+					kind_group: null,
 					id: 'documents/m',
 					key: 'm',
 					kind: 'Motie',
@@ -31,6 +40,11 @@ describe('what was made in an activity', () => {
 			commitments: [],
 			decisions: [
 				{
+					date: null,
+					kind: null,
+					decision_kind: null,
+					decision_text: null,
+					kind_group: null,
 					id: 'decisions/d',
 					key: 'd',
 					subject: 'Motie van het lid X',
@@ -57,6 +71,6 @@ describe('what was made in an activity', () => {
 		expect(stukNummer({ dossier_number: '36600', dossier_suffix: 'VIII', sequence: 5 })).toBe(
 			'Kamerstuk 36600 VIII, nr. 5'
 		);
-		expect(stukNummer({ dossier_number: null, sequence: null })).toBeNull();
+		expect(stukNummer({ dossier_suffix: null, dossier_number: null, sequence: null })).toBeNull();
 	});
 });

@@ -15,7 +15,7 @@ export type Begrip = Schema<'TermSpanDTO'>;
  * The law a definition is taken from, by its citation title ("Cyberbeveiligingswet", not
  * "Cbw"); null for the regulation's own.
  */
-export function gegevenDoor(d: Pick<Definitie, 'given_by'>): string | null {
+export function gegevenDoor(d: Partial<Pick<Definitie, 'given_by'>>): string | null {
 	const g = d.given_by;
 	return g ? (g.citation_title ?? g.short_title ?? g.abbreviation ?? null) : null;
 }

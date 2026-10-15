@@ -175,6 +175,8 @@ const responseWith = (
 			total: 1,
 			buckets: [
 				{
+					lid_counts: null,
+					capacity_counts: null,
 					relation,
 					collection: other.collection,
 					direction,

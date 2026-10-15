@@ -13,6 +13,11 @@ const item = (key: string, scope: Item['scope'], section_anchor: string | null):
 			title: 'Verklaring dat er grond bestaat een voorstel in overweging te nemen',
 			kind: 'Memorie van toelichting',
 			dossier_number: '33989',
+			chamber: null,
+			source: null,
+			date: null,
+			sequence: null,
+			kind_group: null,
 			path: null
 		},
 		target: 'article_version',
@@ -21,7 +26,11 @@ const item = (key: string, scope: Item['scope'], section_anchor: string | null):
 		confidence: 0.9,
 		scope,
 		section_anchor,
-		article_id: 'articles/bwbr0001840_13'
+		article_id: 'articles/bwbr0001840_13',
+		heading: null,
+		char_start: null,
+		char_end: null,
+		excerpt: null
 	}) as Item;
 
 describe('rowsOfExplanations', () => {

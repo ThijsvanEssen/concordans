@@ -33,6 +33,11 @@ const vote = (voor: number, tegen: number, over: Partial<FeedItem> = {}) =>
 		subkind: 'Motie',
 		node: { collection: 'decisions', key: `d${n}` } as FeedItem['node'],
 		vote: {
+			vote_kind: null,
+			method: null,
+			decision_kind: null,
+			coalition: null,
+			coalition_factions: [],
 			chamber: 'TK',
 			passed: voor > tegen,
 			outcome: voor > tegen ? 'aangenomen' : 'verworpen',
@@ -42,11 +47,18 @@ const vote = (voor: number, tegen: number, over: Partial<FeedItem> = {}) =>
 	});
 
 type Day = Schema<'FeedDayDTO'>;
-const day = (over: Partial<Day> = {}): Day => ({ date: '2026-09-22', total: 1, ...over });
+const day = (over: Partial<Day> = {}): Day => ({
+	date: '2026-09-22',
+	total: 1,
+	kinds: [],
+	dossiers: [],
+	votes: [],
+	...over
+});
 
 const schilder = vote(75, 75, {
 	persons: [{ name: 'Joost Schilder', surname: 'Schilder', role: 'indiener' } as never],
-	headline: { surname: 'Schilder', subject: 'strafverzwaring' }
+	headline: { short_title: null, surname: 'Schilder', subject: 'strafverzwaring' }
 });
 
 describe('headSurname', () => {
@@ -161,7 +173,7 @@ describe('dayLines', () => {
 	it('names each vote of a day with few, and bundles none', () => {
 		const grinwis = vote(141, 7, {
 			persons: [{ surname: 'Grinwis', role: 'indiener' } as never],
-			headline: { surname: 'Grinwis', subject: 'steward ownership' }
+			headline: { short_title: null, surname: 'Grinwis', subject: 'steward ownership' }
 		});
 		const lines = dayLines(
 			day({ votes: [{ chamber: 'TK', subkind: 'Motie', outcome: 'aangenomen', count: 1 }] }),
@@ -181,10 +193,42 @@ describe('dayLines', () => {
 					{ value: 'Brief regering', count: 14 }
 				],
 				dossiers: [
-					{ kind: 'stemming', number: '29911', short_title: 'Drugsbeleid', count: 30 },
-					{ kind: 'Motie', number: '24557', short_title: 'Kansspelen', count: 12 },
-					{ kind: 'Motie', number: '31765', short_title: 'Kwaliteit van zorg', count: 7 },
-					{ kind: 'Amendement', number: '31765', short_title: 'Kwaliteit van zorg', count: 6 }
+					{
+						key: null,
+						title: null,
+						short_title_basis: null,
+						kind: 'stemming',
+						number: '29911',
+						short_title: 'Drugsbeleid',
+						count: 30
+					},
+					{
+						key: null,
+						title: null,
+						short_title_basis: null,
+						kind: 'Motie',
+						number: '24557',
+						short_title: 'Kansspelen',
+						count: 12
+					},
+					{
+						key: null,
+						title: null,
+						short_title_basis: null,
+						kind: 'Motie',
+						number: '31765',
+						short_title: 'Kwaliteit van zorg',
+						count: 7
+					},
+					{
+						key: null,
+						title: null,
+						short_title_basis: null,
+						kind: 'Amendement',
+						number: '31765',
+						short_title: 'Kwaliteit van zorg',
+						count: 6
+					}
 				]
 			}),
 			[]
@@ -206,6 +250,7 @@ describe('dayLines', () => {
 
 describe('timelineOf', () => {
 	const summary = (days: Day[], items: FeedItem[]): Schema<'FeedSummaryResponse'> => ({
+		data_as_of: {},
 		since: '2026-09-15',
 		until: '2026-09-29',
 		margin: 10,
@@ -271,6 +316,7 @@ describe('headlineOf', () => {
 				vote(141, 7, {
 					persons: [{ surname: 'Grinwis', role: 'indiener' } as never],
 					headline: {
+						short_title: null,
 						surname: 'Grinwis',
 						subject: 'steward ownership (t.v.v. 21501-30-712)'
 					}

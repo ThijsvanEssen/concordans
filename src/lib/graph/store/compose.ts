@@ -58,7 +58,7 @@ export function createCompose(
 		tiedByPaths = []
 	}) => {
 		const selectedId = get(selectionStore)?.id ?? null;
-		const on = participants.map((p) => nodeIdOf(p.response));
+		const on: string[] = participants.map((p) => nodeIdOf(p.response));
 		const result: Between = between(
 			participants.map((p, i) => ({
 				id: on[i],
@@ -72,7 +72,7 @@ export function createCompose(
 			withJoining
 		);
 
-		const wanted = new Set(on);
+		const wanted = new Set<string>(on);
 		for (const kept of result.keep.values()) for (const id of kept) wanted.add(id);
 		// What lies on a path between two chosen bronnen, further than one shared neighbour
 		// (member → stuk → wet → artikel, BE-38): joining too, when the joining are drawn.

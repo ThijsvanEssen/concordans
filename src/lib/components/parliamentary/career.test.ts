@@ -75,14 +75,24 @@ describe('careerOf with posts in a cabinet', () => {
 			cabinet: 'kabinet-Rutte IV',
 			acting: false,
 			from_date: '2022-01-10',
-			to_date: '2024-07-02'
+			to_date: '2024-07-02',
+			cabinet_key: null,
+			post: null,
+			ministry: null,
+			seat: null,
+			party: null
 		},
 		{
 			function: 'minister-president van Nederland',
 			cabinet: 'kabinet-Jetten',
 			acting: false,
 			from_date: '2026-02-23',
-			to_date: null
+			to_date: null,
+			cabinet_key: null,
+			post: null,
+			ministry: null,
+			seat: null,
+			party: null
 		}
 	];
 	const career = careerOf(memberships, signatures, government);

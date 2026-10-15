@@ -119,7 +119,7 @@ export function createExpansion(
 		 */
 		chosen: ReadonlySet<string> | null = null
 	) {
-		const byId = new Map(nodesIn.map((n) => [nodeId(n.collection, n.key), n]));
+		const byId = new Map<string, SubNode>(nodesIn.map((n) => [nodeId(n.collection, n.key), n]));
 		const drawn = new Set<string>();
 		for (const node of nodesIn) {
 			// The requested bron itself is drawn even when it is not drawn as a neighbour (a

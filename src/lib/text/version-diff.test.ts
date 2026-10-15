@@ -18,7 +18,8 @@ const part = (id: string, number: string, start: number, text: string) => ({
 	number,
 	start,
 	end: start + text.length,
-	text
+	text,
+	term: null
 });
 
 /** An article text with numbered leden, and its parts as the API delivers them. */
@@ -201,7 +202,8 @@ describe('compareVersions on a bijlage', () => {
 				number,
 				text: lines[line].slice(skip),
 				start,
-				end: start + lines[line].length - skip
+				end: start + lines[line].length - skip,
+				term: null
 			};
 		};
 		return {

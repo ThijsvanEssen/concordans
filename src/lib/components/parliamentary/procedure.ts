@@ -18,7 +18,7 @@ import {
 	type TijdGroep,
 	type TijdRegel
 } from '$lib/components/tijdlijn/tijdlijn';
-import type { MetInhoud } from '$lib/components/open/rij-inhoud';
+import { voteOf, type MetInhoud } from '$lib/components/open/rij-inhoud';
 import { isGeneriek } from '$lib/bron/generiek';
 import { kamerstukName, withoutKamerstuk } from './kamerstuk';
 import type { CoalitieBij } from './coalitie';
@@ -198,7 +198,7 @@ function regelsVan(
 						kind: 'stemming',
 						node: { collection: 'decisions', key: parseNodeId(e.node_id)?.key ?? '' },
 						summary: null,
-						vote: { chamber: groep === 'ek' ? 'EK' : 'TK', passed: uitslag, tally }
+						vote: voteOf({ chamber: groep === 'ek' ? 'EK' : 'TK', passed: uitslag, tally })
 					}
 				});
 			const method = typeof b.method === 'string' ? b.method : null;

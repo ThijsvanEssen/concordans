@@ -16,6 +16,20 @@ export type MetInhoud = { node: { collection: string; key: string } } & Partial<
 		/** Of an amendement, the opening of its toelichting as the API gives it (API 0.79.55). */
 		explanation?: string | null;
 	};
+type Vote = NonNullable<FeedItem['vote']>;
+
+/** A vote of which a row knows the chamber and the tally (and perhaps more): the rest null. */
+export const voteOf = (v: Pick<Vote, 'chamber' | 'tally'> & Partial<Vote>): Vote => ({
+	passed: null,
+	outcome: null,
+	vote_kind: null,
+	method: null,
+	decision_kind: null,
+	coalition: null,
+	coalition_factions: [],
+	...v
+});
+
 /** A stemming as an opened row shows it, from its tally: its bar. */
 export const stemmingInhoud = (
 	key: string,
@@ -23,7 +37,7 @@ export const stemmingInhoud = (
 ): MetInhoud => ({
 	kind: 'stemming',
 	node: { collection: 'decisions', key },
-	vote: { chamber: 'TK', tally: tally ?? {} }
+	vote: voteOf({ chamber: 'TK', tally: tally ?? {} })
 });
 
 /** `kern`: a stuk's core text by its own kind (kernSoort), where the row does not know it. */

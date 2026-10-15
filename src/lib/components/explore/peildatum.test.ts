@@ -52,7 +52,7 @@ describe('atArticles', () => {
 		key: `v_${n}`,
 		article_number: n,
 		label: `Artikel ${n}`,
-		breadcrumb: [{ type: 'hoofdstuk', label: crumb, title: null }],
+		breadcrumb: [{ type: 'hoofdstuk', label: crumb, title: null, anchor: '' }],
 		text: 'tekst',
 		text_preview: 'tekst',
 		valid_from: '2011-02-23',
@@ -72,7 +72,9 @@ describe('atArticles', () => {
 		expect(a.id).toBe('v_4:3a');
 	});
 	it('keeps the parts of the text, and none for a text without parts', () => {
-		const parts = [{ id: 'onder-_1', kind: 'onderdeel', number: '–', start: 2, end: 7 }];
+		const parts = [
+			{ id: 'onder-_1', kind: 'onderdeel', number: '–', start: 2, end: 7, term: null }
+		];
 		expect(atArticles([{ ...at('1:1', 'Hoofdstuk 1'), parts }], current)[0].parts).toEqual(parts);
 		expect(atArticles([at('1:1', 'Hoofdstuk 1')], current)[0].parts).toBeNull();
 	});
