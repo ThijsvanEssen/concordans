@@ -2,7 +2,8 @@
 import type { Schema } from '$lib/api/types';
 import { choiceOf } from '$lib/util/choice';
 import { COMMITMENT_STATUSES } from '../government';
-import { faceted, type FacetsOf } from '../faceted';
+import { faceted } from '../faceted';
+import type { FacetsOf } from '$lib/api/lists';
 import CommitmentRows from '../rows/CommitmentRows.svelte';
 import { PAGE, defineList, flag, toggle, type SortDef } from './list';
 import type { IndexParams } from './params';

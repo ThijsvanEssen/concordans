@@ -13,12 +13,8 @@
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import { indexHref } from '$lib/bron/href';
 	import type { GraphNode } from '$lib/graph/types';
-	import {
-		OPEN_STATUS,
-		POST_LABEL,
-		getCabinets,
-		type Cabinet
-	} from '$lib/components/explore/index/government';
+	import { OPEN_STATUS, POST_LABEL, type Cabinet } from '$lib/components/explore/index/government';
+	import { getCabinets } from '$lib/api/government';
 	import { ministryName } from '$lib/components/explore/index/ministries.svelte';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';

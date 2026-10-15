@@ -47,6 +47,10 @@ export const slowApi = createClient<paths>({
 	fetch: timedFetch(SLOW_TIMEOUT_MS)
 });
 
+/** `short`: the ordinary 10 s of `api`; `long`: as long as the API does (`slowApi`). */
+export type Wait = 'short' | 'long';
+export const clientFor = (wait: Wait = 'long') => (wait === 'short' ? api : slowApi);
+
 /** Whether a request gave up on its own time, not on the caller's abort. */
 export const isTimeout = (e: unknown) => e instanceof DOMException && e.name === 'TimeoutError';
 

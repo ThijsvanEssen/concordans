@@ -8,7 +8,7 @@
 // gebeurt nadat Svelte de DOM heeft overgenomen.
 //
 // Gebruik:
-//   import { modKey } from '$lib/utils/platform';
+//   import { modKey } from '$lib/util/platform';
 //   <kbd>{modKey} K</kbd>
 //
 // Voor SVG-text of plekken waar reactiviteit ertoe doet: gebruik de

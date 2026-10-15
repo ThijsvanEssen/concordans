@@ -1,7 +1,8 @@
 // Bewindspersonen: one cabinet's posts as a chart, or the ministers of six cabinets side by side.
 import { getCabinet } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
-import { POSTS, POST_LABEL, currentCabinet, getCabinets, inOffice, period } from '../government';
+import { POSTS, POST_LABEL, currentCabinet, inOffice, period } from '../government';
+import { getCabinets } from '$lib/api/government';
 import MinistersView from '../rows/MinistersView.svelte';
 import { countBy, defineList, matches, type ListContext } from './list';
 import type { FacetGroup } from '../IndexFacets.svelte';

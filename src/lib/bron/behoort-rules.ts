@@ -8,7 +8,7 @@ import { textOf } from '$lib/text/words';
 import { findBucket, type NodeGraph, type Neighbor } from '$lib/api/nodes';
 import { getActivity } from '$lib/api/records';
 import { ifExists } from '$lib/api/errors';
-import { getDossier } from '$lib/components/parliamentary/data';
+import { getDossier } from '$lib/api/dossiers';
 import { CHAMBER_NAME, chamberFromParam } from '$lib/components/parliamentary/chamber';
 import { refOf } from '$lib/bron/href';
 import { dossierLabel } from './dossier-naam';

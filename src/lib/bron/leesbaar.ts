@@ -24,7 +24,8 @@
 // readable address once the bron is known.
 import { textOf } from '$lib/text/words';
 import { SvelteMap } from 'svelte/reactivity';
-import { api, onAnswer, unwrap } from '$lib/api/client';
+import { onAnswer } from '$lib/api/client';
+import { lookup } from '$lib/api/search';
 import { ifExists, ignore } from '$lib/api/errors';
 import { onthoudTitel } from './titels.svelte';
 import { getArticleDetail, getArticleHistory, onthoudArtikel } from '$lib/api/articles';
@@ -408,9 +409,7 @@ export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | n
  */
 export async function lookUpInData(pad: Pad, signal?: AbortSignal): Promise<string | null> {
 	const artikel = apiArticle(pad);
-	const data = await ifExists(
-		unwrap(api.GET('/api/lookup', { params: { query: lookupQuery(pad) }, signal }))
-	);
+	const data = await ifExists(lookup(lookupQuery(pad), signal));
 	if (!data) return null;
 	const focus = `${data.collection}/${data.key}`;
 	if (data.collection === 'documents') askDocumentAhead(data.key);

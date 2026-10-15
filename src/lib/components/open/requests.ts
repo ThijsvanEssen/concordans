@@ -1,9 +1,9 @@
 // What an opened row asks the API (RijInhoud, Wijzigingen, PostOpen), for `load()`: an
 // answer, "niet in de gegevens" where the API does not have it (a 404), or a failure that
 // rejects, so it is shown as one and never as an empty row or a 0.
-import { api, unwrap } from '$lib/api/client';
 import { ifExists } from '$lib/api/errors';
-import { getNodeGraph, neighborsOf, NODE_BUCKET } from '$lib/api/nodes';
+import { getNodeGraph, getNodePage, neighborsOf, NODE_BUCKET } from '$lib/api/nodes';
+import { getCommitments } from '$lib/api/commitments';
 import { abortable, getAmendedBy, getDocument } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
 import { kernSoort, kernVan, type Inhoud, type MetInhoud } from './rij-inhoud';
@@ -56,21 +56,8 @@ export type PostRecord = {
 
 export async function postRecord(memberKey: string, signal: AbortSignal): Promise<PostRecord> {
 	const [commitments, node] = await Promise.all([
-		unwrap(
-			api.GET('/api/commitments', {
-				params: { query: { member: memberKey, limit: 3, sort: 'date' } },
-				signal
-			})
-		),
-		unwrap(
-			api.GET('/api/nodes/{collection}/{key}', {
-				params: {
-					path: { collection: 'members', key: memberKey },
-					query: { relations: 'AUTHORED', limit: 200 }
-				},
-				signal
-			})
-		)
+		getCommitments({ member: memberKey, limit: 3, sort: 'date' }, signal),
+		getNodePage('members', memberKey, { relations: 'AUTHORED', limit: 200 }, signal)
 	]);
 	const authored = neighborsOf(node);
 	return { commitments, authored, signed: authored.length };

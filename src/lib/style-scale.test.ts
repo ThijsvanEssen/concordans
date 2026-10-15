@@ -49,7 +49,7 @@ describe('the type and spacing scale', () => {
 });
 
 // The phone is one width, 768 px and narrower (Thijs, 14 Oct, decision 5): `max-width: 768px`
-// for the phone, `min-width: 769px` above it, in the stylesheets and in `$lib/utils/breakpoints`
+// for the phone, `min-width: 769px` above it, in the stylesheets and in `$lib/util/breakpoints`
 // alike. Before this, 767 and 768 stood side by side, and at exactly 768 px (an upright iPad)
 // the list folded to one column while "Verfijnen" stayed hidden.
 const WIDTHS = [520, 560, 620, 640, 768, 769, 780, 900, 1024, 1100, 1101, 1439, 1440, 1600];

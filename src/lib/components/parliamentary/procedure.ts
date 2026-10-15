@@ -21,13 +21,17 @@ import {
 import type { MetInhoud } from '$lib/components/open/rij-inhoud';
 import { isGeneriek } from '$lib/bron/generiek';
 import { kamerstukName, withoutKamerstuk } from './kamerstuk';
+import type { CoalitieBij } from './coalitie';
 
 type Detail = Schema<'DossierDetailResponse'>;
 import { naarAmendementen, naarStemmingen } from './naar';
 type Entry = Schema<'DossierTimelineResponse'>['entries'][number];
+/** A line of the procedure: a vote of the Tweede Kamer carries what the coalition did. */
+type Regel = TijdRegel<CoalitieBij>;
+type Groep = TijdGroep<CoalitieBij>;
 
 /** The coalition block of a decision entry and its fracties, where the timeline gives it. */
-function coalitieVan(e: Entry): TijdRegel['coalitie'] {
+function coalitieVan(e: Entry): CoalitieBij | null {
 	const b = e.body as {
 		coalition?: Schema<'CoalitionVoteDTO'> | null;
 		coalition_factions?: Schema<'CoalitionFactionDTO'>[] | null;
@@ -115,7 +119,7 @@ const opening = (e: Entry): ProcedureInhoud => ({
 	}
 });
 
-function eigenStuk(e: Entry, groep: 'rvs' | 'tk' | 'ek', dossier: string): TijdRegel {
+function eigenStuk(e: Entry, groep: 'rvs' | 'tk' | 'ek', dossier: string): Regel {
 	const kind = shortKind(e.kind ?? '');
 	const title = e.title ? withoutKamerstuk(e.title).trim() : '';
 	const eigen = title && !isGeneriek(title, e.kind) ? title : null;
@@ -145,7 +149,7 @@ function eigenStuk(e: Entry, groep: 'rvs' | 'tk' | 'ek', dossier: string): TijdR
  * "Stemmingen: 33 besluiten" (Thijs, 10 Oct). It leads to the amendementen in the reader
  * where the day has any, else to the votes in Verbonden. The vote on the bill keeps its line.
  */
-function stemdagen(decisions: Entry[]): TijdRegel[] {
+function stemdagen(decisions: Entry[]): Regel[] {
 	const perDag = Map.groupBy(decisions, (e) => e.date?.slice(0, 10) ?? '');
 	return [...perDag].map(([dag, besluiten]) => ({
 		id: `stemmingen-${dag}`,
@@ -165,8 +169,8 @@ function regelsVan(
 	groep: 'rvs' | 'tk' | 'ek',
 	dossier: string,
 	inhoud: Inhouden
-): TijdRegel[] {
-	const out: TijdRegel[] = [];
+): Regel[] {
+	const out: Regel[] = [];
 	const overig: Entry[] = [];
 	const asc = [...entries].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
 	// The papers of the bill of one day on one line: they carry the bill's title, their kind and
@@ -213,7 +217,7 @@ function regelsVan(
 				ref: e.node_id,
 				groot: true,
 				// What the coalition did on it (API 0.79.45, #559; Thijs, 10 Oct): the Tweede Kamer only.
-				coalitie: coalitieVan(e)
+				bij: coalitieVan(e)
 			});
 		} else if (e.node_type === 'activity') {
 			const b = bodyOf(e);
@@ -309,12 +313,12 @@ const stapNaam = (s: EkStep) => (s.phase ? (STAP[s.phase] ?? lowerFirst(s.phase)
  * letter) en een stemming die als besluit in de gegevens staat, komen niet dubbel.
  * Null zonder pagina: dan blijft de algemene regel staan.
  */
-function ekVoortgang(d: Detail, ek: TijdRegel[]): TijdRegel[] | null {
+function ekVoortgang(d: Detail, ek: Regel[]): Regel[] | null {
 	const steps = (d.senate?.progress ?? []).filter((s) => s.phase);
 	if (!steps.length) return null;
 	const letters = new Set(ek.flatMap((r) => r.nummers ?? []));
 	const besluit = !!d.ek_outcome || ek.some((r) => r.soort === 'decisions');
-	const out: TijdRegel[] = [];
+	const out: Regel[] = [];
 	for (const step of steps)
 		for (const [i, p] of (step.papers ?? []).entries()) {
 			const letter = p.number?.match(/^EK, (.+)$/)?.[1] ?? null;
@@ -374,7 +378,7 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 
 	const per = Map.groupBy(procedureEntries, instantie);
 	const inhoud: Inhouden = new Map();
-	const groepen: TijdGroep[] = [];
+	const groepen: Groep[] = [];
 	const wetsvoorstel = isWetsvoorstel(d);
 	// Without a bill nothing is to come: no state per Kamer, so no line of what can follow.
 	const state = st?.bodies.map((b) => b.state) ?? (wetsvoorstel ? ['open', 'now', 'open'] : []);

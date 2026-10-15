@@ -6,7 +6,7 @@
 // arrest are "vrij cruciale info", not extra data.
 import { findBucket, type Bucket, type NodeGraph } from '$lib/api/nodes';
 import { ifExists } from '$lib/api/errors';
-import { getDossier } from '$lib/components/parliamentary/data';
+import { getDossier } from '$lib/api/dossiers';
 import type { Collection } from '$lib/vocabulary';
 import { dossierNummer, laagVan, type Behoort, type Regel } from './behoort-layer';
 import { procesgangIds } from './behoort-procesgang';

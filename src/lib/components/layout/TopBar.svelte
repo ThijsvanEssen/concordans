@@ -4,7 +4,7 @@
 	import { page } from '$app/stores';
 	import { isVerkenner } from '$lib/bron/leesbaar';
 	import { goto } from '$app/navigation';
-	import { modKey } from '$lib/utils/platform';
+	import { modKey } from '$lib/util/platform';
 	import Wordmark from './Wordmark.svelte';
 
 	let { onSearchOpen }: { onSearchOpen?: () => void } = $props();

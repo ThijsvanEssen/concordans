@@ -24,11 +24,13 @@
 	import { isEscape } from '$lib/actions/keys';
 	import { page } from '$app/state';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
-	import { ApiError, api, isTimeout, unwrap, slowApi } from '$lib/api/client';
+	import { ApiError, isTimeout } from '$lib/api/client';
+	import { getFeed, getFeedSummary } from '$lib/api/feed';
+	import { getFactions } from '$lib/api/factions';
 	import { report } from '$lib/api/errors';
 	import { untrack } from 'svelte';
 	import type { Schema } from '$lib/api/types';
-	import { partyColor } from '$lib/utils/party-color.svelte';
+	import { partyColor } from '$lib/components/explore/party-color.svelte';
 	import IndexFacets, {
 		activeFilters,
 		type FacetGroup
@@ -36,7 +38,8 @@
 	// Filters v2 (Thijs, 10 Oct: "ziet er goed uit"; ux-voorstel/filters/v2): the field and
 	// Periode on one line above the list, the facets with their counts on the left, a chosen
 	// option in bold where it is chosen and nowhere else; on a phone behind Verfijnen (N).
-	import { getCabinets, type Cabinet } from '$lib/components/explore/index/government';
+	import { type Cabinet } from '$lib/components/explore/index/government';
+	import { getCabinets } from '$lib/api/government';
 	import { ministryName } from '$lib/components/explore/index/ministries.svelte';
 	import FeedDay from '$lib/components/actueel/FeedDay.svelte';
 	import Doorzocht from '$lib/components/actueel/Doorzocht.svelte';
@@ -57,13 +60,12 @@
 		daysOf,
 		doorzochtVanaf,
 		errorPlace,
-		feedStand,
 		normalizeItem,
-		standLine,
 		type DaySummary,
 		type FeedItem,
 		type FeedKind
 	} from '$lib/components/actueel/feed';
+	import { feedStand, standLine } from '$lib/text/stand';
 
 	const today = vandaag();
 	/** The days one summary spans at most, as the API allows. */
@@ -207,12 +209,7 @@
 			items = [];
 			cursor = null;
 		}
-		unwrap(
-			slowApi.GET('/api/feed', {
-				params: { query: { ...q, facets: false } },
-				signal: ac.signal
-			})
-		)
+		getFeed({ ...q, facets: false }, { signal: ac.signal })
 			.then((r) => {
 				items = r.items.map(normalizeItem);
 				cursor = r.next_cursor ?? null;
@@ -238,12 +235,7 @@
 		// once more after 30 s, or with the next filter. Then the filters stand without them.
 		let opnieuw: ReturnType<typeof setTimeout> | undefined;
 		const tel = (poging: number): void => {
-			unwrap(
-				api.GET('/api/feed', {
-					params: { query: { ...q, limit: 1, facets: true } },
-					signal: ac.signal
-				})
-			)
+			getFeed({ ...q, limit: 1, facets: true }, { signal: ac.signal, wait: 'short' })
 				.then((r) => {
 					if (r.partial && !r.facets) {
 						if (poging === 0) opnieuw = setTimeout(() => tel(1), 30_000);
@@ -277,11 +269,7 @@
 		verderLaden = true;
 		error = null;
 		try {
-			const r = await unwrap(
-				slowApi.GET('/api/feed', {
-					params: { query: { ...query, until: addDays(doorzocht, -1), facets: false } }
-				})
-			);
+			const r = await getFeed({ ...query, until: addDays(doorzocht, -1), facets: false });
 			items = uniqueBy([...items, ...r.items.map(normalizeItem)], (i) => i.id);
 			cursor = r.next_cursor ?? null;
 			doorzocht = doorzochtVanaf(r);
@@ -298,9 +286,7 @@
 		loadingMore = true;
 		error = null;
 		try {
-			const r = await unwrap(
-				slowApi.GET('/api/feed', { params: { query: { ...query, cursor, facets: false } } })
-			);
+			const r = await getFeed({ ...query, cursor, facets: false });
 			items = uniqueBy([...items, ...r.items.map(normalizeItem)], (i) => i.id);
 			cursor = r.next_cursor ?? null;
 			doorzocht = doorzochtVanaf(r);
@@ -332,19 +318,7 @@
 		const filtersOfDay = summaryQuery(query);
 		if (!s) return;
 		const ac = new AbortController();
-		unwrap(
-			api.GET('/api/feed/summary', {
-				params: {
-					query: {
-						...s,
-						...filtersOfDay,
-						margin: CLOSE_VOTE,
-						limit: 1
-					}
-				},
-				signal: ac.signal
-			})
-		)
+		getFeedSummary({ ...s, ...filtersOfDay, margin: CLOSE_VOTE, limit: 1 }, ac.signal)
 			.then((r) => (summaries = new Map((r.days ?? []).map((d) => [d.date, d]))))
 			// A day stands without its whole count.
 			.catch((e) => report('Actueel dagtellingen', e));
@@ -362,7 +336,7 @@
 		getCabinets()
 			.then((c) => (cabinets = c))
 			.catch((e) => report('Actueel kabinetten', e));
-		unwrap(api.GET('/api/factions'))
+		getFactions()
 			.then((f) => (factionNames = Object.fromEntries(f.map((x) => [x.key, fractieNaam(x)]))))
 			.catch((e) => report('Actueel fracties', e));
 	});

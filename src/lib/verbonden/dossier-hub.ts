@@ -5,7 +5,7 @@ import { naamVan } from '$lib/bron/menselijk';
 import { ifExists } from '$lib/api/errors';
 import type { Schema } from '$lib/api/types';
 import { getDossierDocuments } from '$lib/api/records';
-import { getDossier } from '$lib/components/parliamentary/data';
+import { getDossier } from '$lib/api/dossiers';
 import { bronKindOf } from './filter';
 import { changeRelationOf } from '$lib/vocabulary';
 import { type Row } from './rows';

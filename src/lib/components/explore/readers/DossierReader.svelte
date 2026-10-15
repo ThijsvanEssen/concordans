@@ -22,19 +22,19 @@
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronLabel } from '$lib/vocabulary';
-	import { getDossier } from '$lib/components/parliamentary/data';
+	import { getDossier } from '$lib/api/dossiers';
 
 	import StandBalk from '$lib/components/parliamentary/StandBalk.svelte';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
+	import CoalitieRegel from '$lib/components/parliamentary/CoalitieRegel.svelte';
+	import type { CoalitieBij } from '$lib/components/parliamentary/coalitie';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
 	import { procedure } from '$lib/components/parliamentary/procedure';
 	import GewijzigdeArtikelen from '$lib/components/parliamentary/GewijzigdeArtikelen.svelte';
 	import AmendementenDienstregeling from '$lib/components/parliamentary/AmendementenDienstregeling.svelte';
 	import { aantalAmendementen } from '$lib/components/parliamentary/amendementen';
-	import {
-		getChangedArticles,
-		type ChangedArticles
-	} from '$lib/components/parliamentary/changed-articles';
+	import { getChangedArticles } from '$lib/api/dossiers';
+	import type { ChangedArticles } from '$lib/components/parliamentary/changed-articles';
 	let metOverig = $state(false);
 
 	let { node }: { node: GraphNode } = $props();
@@ -210,6 +210,10 @@
 						volgorde="oplopend"
 						inklapbaar
 					>
+						{#snippet onderRegel(c: CoalitieBij)}<CoalitieRegel
+								coalitie={c.blok}
+								fracties={c.fracties}
+							/>{/snippet}
 						{#snippet meer()}
 							{#if p.overig}<TekstLink onclick={() => (metOverig = !metOverig)}
 									>{metOverig

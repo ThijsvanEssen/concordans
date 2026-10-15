@@ -107,3 +107,11 @@ export const addDays = (iso: string, n: number): string =>
 /** Today as an ISO day, in the reader's own time zone. */
 export const vandaag = (now = new Date()): string =>
 	`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+/** `2017–2026`, `2026`, `2025–` while it lasts: a year first, so a column of them aligns. */
+export function yearsOf(from: string | null, to: string | null): string {
+	const a = from?.slice(0, 4);
+	const b = to?.slice(0, 4);
+	if (a && b) return a === b ? a : `${a}–${b}`;
+	return a ? `${a}–` : b ? `–${b}` : '';
+}

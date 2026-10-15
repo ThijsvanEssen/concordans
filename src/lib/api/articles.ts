@@ -99,3 +99,17 @@ export const getLawReferences = (bwbId: string, other: string) =>
 			})
 		)
 	);
+
+/** The judgments on an article, the most cited first; one page is enough for two. */
+export const getCitedByTop = (bwb: string, number: string, signal?: AbortSignal) =>
+	once(`articles/${bwb}/${number}/cited-by/top`, () =>
+		unwrap(
+			api.GET('/api/articles/{bwb_id}/{article_number}/cited-by', {
+				params: {
+					path: { bwb_id: bwb, article_number: number },
+					query: { limit: 6, sort: 'citation_count' }
+				},
+				signal
+			})
+		)
+	);

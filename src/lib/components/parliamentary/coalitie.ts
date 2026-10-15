@@ -10,6 +10,9 @@ import { CHOICE } from './stemming';
 
 type CoalitionVote = Schema<'CoalitionVoteDTO'>;
 type CoalitionFaction = Schema<'CoalitionFactionDTO'>;
+
+/** What the coalition did on a vote, under its line in a Tijdlijn (`bij`, CoalitieRegel). */
+export type CoalitieBij = { blok: CoalitionVote; fracties: CoalitionFaction[] };
 type Choice = NonNullable<CoalitionFaction['choice']>;
 
 /** A side the coalition took: the choice, its outcome box, its fracties by name, its seats. */

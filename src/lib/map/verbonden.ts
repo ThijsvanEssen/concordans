@@ -7,7 +7,7 @@
 // articles in both places. A law under which nothing is issued lists the laws its articles
 // and theirs refer to (`related-instruments`). Asked when the item opens, once.
 import { textOf } from '$lib/text/words';
-import { api, unwrap } from '$lib/api/client';
+import { getRelatedInstruments } from '$lib/api/verbonden';
 import { getDelegated } from '$lib/api/articles';
 import { getInstrumentDetail } from '$lib/api/instrument-cache';
 import { kindName } from '$lib/components/explore/law-head';
@@ -82,11 +82,7 @@ export async function onderWet(bwb: string): Promise<Regelingen> {
  * is issued under the other; wetRijVanRelated).
  */
 async function bijWet(bwb: string): Promise<Regeling[]> {
-	const found = await unwrap(
-		api.GET('/api/instruments/{bwb_id}/related-instruments', {
-			params: { path: { bwb_id: bwb }, query: { limit: WETTEN } }
-		})
-	);
+	const found = await getRelatedInstruments(bwb, WETTEN);
 	return found.items.map((i) => ({
 		...regelingVanRij(wetRijVanRelated(i, bwb), 'instruments'),
 		ident: i.bwb_id ?? i.celex ?? null

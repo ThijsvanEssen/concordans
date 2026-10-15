@@ -35,7 +35,7 @@ describe('names, not keys', () => {
 				pad: 'lib/components/parliamentary/amendementen.ts',
 				reden: 'the ids of the zaken not done'
 			},
-			{ pad: 'lib/api/law-articles.ts', reden: 'the address of an article, not its name' },
+			{ pad: 'lib/bron/law-articles.ts', reden: 'the address of an article, not its name' },
 			{ pad: 'lib/text/version-diff.ts', reden: 'the id of a version, not shown' }
 		];
 		const fallback = /(\?\?|\|\|)\s*[A-Za-z_$][\w.?$]*\.(key|id)\b(?!\s*\.|\s*[!=]==|\s*\()/;

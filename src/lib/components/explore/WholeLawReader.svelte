@@ -2,7 +2,7 @@
 	import { bewaarItem } from '$lib/map/map';
 	import { langeDatum, vandaag } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
-	import { api, unwrap } from '$lib/api/client';
+	import { getInstrumentVersions } from '$lib/api/instruments';
 	import { report } from '$lib/api/errors';
 	import { untrack } from 'svelte';
 	import { getArticleDetail, getLawBasis } from '$lib/api/articles';
@@ -102,9 +102,9 @@
 	const versionList = load(
 		() => bwbId,
 		(bwb, signal) =>
-			unwrap(
-				api.GET('/api/instruments/{bwb_id}/versions', { params: { path: { bwb_id: bwb } }, signal })
-			).then((r) => uniqueBy(r.items, (v) => v.valid_from ?? v.key)),
+			getInstrumentVersions(bwb, signal).then((r) =>
+				uniqueBy(r.items, (v) => v.valid_from ?? v.key)
+			),
 		'Tekstversies'
 	);
 	const versions = $derived(versionList.state.status === 'ready' ? versionList.state.data : []);

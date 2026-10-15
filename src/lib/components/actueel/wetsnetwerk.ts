@@ -6,15 +6,15 @@ import { isBill, motionOrAmendment, shortKind } from '$lib/text/document-kind';
 import { count } from '$lib/text/words';
 import { naamVanId } from '$lib/bron/menselijk';
 import { formatCount } from '$lib/text/getal';
-import { api, unwrap } from '$lib/api/client';
-import { once } from '$lib/api/records';
+import { getChangedArticles } from '$lib/api/dossiers';
+import { getFeed } from '$lib/api/feed';
+import { getCitedByTop } from '$lib/api/articles';
 import type { Schema } from '$lib/api/types';
 import { buildBronHref } from '$lib/bron/href';
 import { verkennerHref } from '$lib/bron/leesbaar';
 import type { Vorm } from '$lib/bron/vormen';
 import {
 	articleLabel,
-	getChangedArticles,
 	type ChangedArticles,
 	type ChangedLaw,
 	type DossierChange
@@ -277,29 +277,11 @@ const lawNodeId = (l: ChangedLaw) => `instruments/${lawKey(l)}`;
 const lawHref = (l: ChangedLaw) =>
 	buildBronHref(null, { collection: 'instruments', key: lawKey(l) });
 
-/** The judgments on an article, the most cited first; one page is enough for two. */
-const getCitedBy = (bwb: string, number: string, signal?: AbortSignal) =>
-	once(`articles/${bwb}/${number}/cited-by/top`, () =>
-		unwrap(
-			api.GET('/api/articles/{bwb_id}/{article_number}/cited-by', {
-				params: {
-					path: { bwb_id: bwb, article_number: number },
-					query: { limit: 6, sort: 'citation_count' }
-				},
-				signal
-			})
-		)
-	);
-
 /** The bills the Eerste Kamer passed before the summary's days: its votes are on bills only. */
 async function oudere(today: string, signal?: AbortSignal): Promise<Kandidaat[]> {
-	const { items } = await unwrap(
-		api.GET('/api/feed', {
-			params: {
-				query: { kind: 'stemming', chamber: 'EK', limit: 50, facets: false, until: today }
-			},
-			signal
-		})
+	const { items } = await getFeed(
+		{ kind: 'stemming', chamber: 'EK', limit: 50, facets: false, until: today },
+		{ signal, wait: 'short' }
 	);
 	return kandidaten(items);
 }
@@ -327,7 +309,7 @@ export async function laadWetsnetwerk(
 			const top = law ? mostChanged(law) : null;
 			const cb =
 				bwb && top?.article_number
-					? await getCitedBy(bwb, top.article_number, signal).catch(() => null)
+					? await getCitedByTop(bwb, top.article_number, signal).catch(() => null)
 					: null;
 			return schetsVan(k, ch, cb);
 		}

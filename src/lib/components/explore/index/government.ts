@@ -1,11 +1,9 @@
-import { api, unwrap } from '$lib/api/client';
 import type { Schema } from '$lib/api/types';
 import { daysBetween, vandaag } from '$lib/text/datum';
-import { onForget } from '$lib/util/forget';
 import type { Teken } from '$lib/components/tijdlijn/tijdlijn';
 
 // The words for the government's side of the index: the posts in a cabinet, the state of a
-// commitment, and the cabinets and ministries, each asked for once per page load.
+// commitment; the cabinets and ministries themselves come from $lib/api/government.
 
 export type Cabinet = Schema<'CabinetSummaryDTO'>;
 export type Ministry = Schema<'MinistryDTO'>;
@@ -55,22 +53,6 @@ export const commitmentTeken = (status: string | null | undefined): Teken =>
 
 const isCommitmentStatus = (value: unknown): value is CommitmentStatus =>
 	(COMMITMENT_STATUSES as readonly unknown[]).includes(value);
-
-function once<T>(load: () => Promise<T>): () => Promise<T> {
-	let request: Promise<T> | null = null;
-	onForget(() => (request = null));
-	return () =>
-		(request ??= load().catch((err) => {
-			request = null;
-			throw err;
-		}));
-}
-
-/** Every cabinet, newest first. */
-export const getCabinets = once(() => unwrap(api.GET('/api/cabinets')));
-
-/** Every ministry, in protocol order, the ones under an earlier name included. */
-export const getMinistries = once(() => unwrap(api.GET('/api/ministries')));
 
 /** A cabinet by its own name, as a column head or a strip says it: `Schoof`. */
 export const cabinetShortName = (name: string): string => name.replace(/^kabinet-/, '');

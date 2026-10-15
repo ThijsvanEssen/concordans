@@ -15,7 +15,7 @@
 	import { page } from '$app/state';
 	import { afterNavigate, beforeNavigate } from '$app/navigation';
 	import { useSearchOpener } from '$lib/stores/search-trigger';
-	import { api, unwrap } from '$lib/api/client';
+	import { getFactions } from '$lib/api/factions';
 	import { isAborted, report } from '$lib/api/errors';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { bronLabel } from '$lib/vocabulary';
@@ -34,7 +34,7 @@
 		ekListSource,
 		type Chamber
 	} from '$lib/components/parliamentary/chamber';
-	import { getCabinets, getMinistries } from './index/government';
+	import { getCabinets, getMinistries } from '$lib/api/government';
 	import {
 		INDEX_CATEGORIES,
 		INDEX_TABS,
@@ -343,9 +343,7 @@
 		if (!needs.includes('parties') || partiesOf === kamer) return;
 		const ac = new AbortController();
 		const chamber = kamer;
-		unwrap(
-			api.GET('/api/factions', { params: { query: { active: true, chamber } }, signal: ac.signal })
-		)
+		getFactions({ active: true, chamber }, ac.signal)
 			.then((r) => {
 				shared.parties = r
 					.flatMap((f) =>

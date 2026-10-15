@@ -19,10 +19,10 @@ const swallowed = (text: string) => (text.match(SWALLOWED) ?? []).length;
 const PLACES: Record<string, number> = {
 	// A request whose failure becomes an empty state, a 0 or "niet in de gegevens": the
 	// area packages turn each into ifExists, report, ignore or load with LoadState.
+	'lib/api/dossiers.ts': 1,
 	'lib/api/instrument-cache.ts': 2,
 	'lib/components/actueel/wetsnetwerk.ts': 2,
 	'lib/components/explore/IndexView.svelte': 1,
-	'lib/components/parliamentary/data.ts': 1,
 	'lib/graph/store/expansion.ts': 1,
 	'lib/map/MapRegelingen.svelte': 1,
 	// A throw that is no failure: a popover already in that state, a pointer capture

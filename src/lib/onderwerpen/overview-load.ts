@@ -1,9 +1,10 @@
 // The questions of the overview of a topic (onderwerpen/overzicht), as plain functions: the
 // topic in, the counts or the rows out. The page asks each on its own, the cheapest first.
-import { api, unwrap } from '$lib/api/client';
 import { report } from '$lib/api/errors';
-import { geteld } from '$lib/api/decisions';
-import { feedStand, normalizeItem, type FeedItem } from '$lib/components/actueel/feed';
+import { besluiten, geteld } from '$lib/api/decisions';
+import { getFeed, getFeedPeriods } from '$lib/api/feed';
+import { normalizeItem, type FeedItem } from '$lib/components/actueel/feed';
+import { feedStand } from '$lib/text/stand';
 import { getAmendementen } from '$lib/components/parliamentary/amendementen';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
 import { daysBetween, vandaag } from '$lib/text/datum';
@@ -90,12 +91,7 @@ export async function countFactionVotes(
 export async function allDecisions(query: Record<string, unknown>, signal?: AbortSignal) {
 	const all: Besluit[] = [];
 	for (let offset = 0; offset < DECISIONS_MAX; offset += PAGE_SIZE) {
-		const r = await unwrap(
-			api.GET('/api/decisions', {
-				params: { query: { ...query, limit: PAGE_SIZE, offset } },
-				signal
-			})
-		);
+		const r = await besluiten({ ...query, limit: PAGE_SIZE, offset }, signal);
 		all.push(...r.items);
 		// A total still being counted (null) says nothing: a short page ends it.
 		if (r.items.length < PAGE_SIZE || (r.total !== null && offset + PAGE_SIZE >= r.total)) break;
@@ -151,13 +147,9 @@ async function feedPages(
 	let cursor: string | undefined;
 	let last: string | null = null;
 	for (let n = 0; n < FEED_PAGES; n++) {
-		const r = await unwrap(
-			api.GET('/api/feed', {
-				params: {
-					query: { ...query, limit: PAGE_SIZE, facets: false, ...(cursor ? { cursor } : {}) }
-				},
-				signal
-			})
+		const r = await getFeed(
+			{ ...query, limit: PAGE_SIZE, facets: false, ...(cursor ? { cursor } : {}) },
+			{ signal, wait: 'short' }
 		);
 		const items = r.items.map(normalizeItem);
 		onPage(items, newestDay(r.data_as_of));
@@ -187,9 +179,7 @@ async function countPeriods(
 	per: 'day' | 'month',
 	signal: AbortSignal
 ): Promise<PeriodCounts | null> {
-	const r = await unwrap(
-		api.GET('/api/feed/periods', { params: { query: { ...feedQuery(t), per } }, signal })
-	);
+	const r = await getFeedPeriods({ ...feedQuery(t), per }, signal);
 	if (r.partial) return null;
 	const periods = r.periods ?? [];
 	const chains = periods.every((p) => p.amendment_chains != null);

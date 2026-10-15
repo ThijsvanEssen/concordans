@@ -8,7 +8,8 @@ import {
 	PHASES,
 	type Outcome
 } from '$lib/components/parliamentary/stages';
-import { faceted, type FacetsOf } from '../faceted';
+import { faceted } from '../faceted';
+import type { FacetsOf } from '$lib/api/lists';
 import { ministryName } from '../ministries.svelte';
 import DossierRows from '../rows/DossierRows.svelte';
 import { PAGE, defineList, facetMap, toggle, type SortDef } from './list';

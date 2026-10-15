@@ -7,7 +7,7 @@ import { naamVan, naamVanId } from '$lib/bron/menselijk';
 import { ifExists, report } from '$lib/api/errors';
 import { geteld } from '$lib/api/decisions';
 import type { Schema } from '$lib/api/types';
-import { getCommittee } from '$lib/components/parliamentary/data';
+import { getCommittee } from '$lib/api/committees';
 import { numberOf } from '$lib/components/parliamentary/dossier-number';
 import { parseNodeId } from '$lib/vocabulary';
 import { refOf } from '$lib/bron/href';

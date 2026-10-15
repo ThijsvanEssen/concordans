@@ -11,7 +11,7 @@
 	import ReaderFrame from './ReaderFrame.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { api, unwrap } from '$lib/api/client';
+	import { getAnnex } from '$lib/api/documents';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronLabel } from '$lib/vocabulary';
 	import { ensureInstrumentName, instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
@@ -26,9 +26,7 @@
 	const annex = load(
 		() => node.key,
 		async (key, signal) => {
-			const detail = await unwrap(
-				api.GET('/api/annexes/{key}', { params: { path: { key } }, signal })
-			);
+			const detail = await getAnnex(key, signal);
 			ensureInstrumentName(detail.annex.bwb_id);
 			return detail;
 		},

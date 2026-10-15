@@ -8,7 +8,7 @@ import { getMember } from '$lib/api/records';
 import { getJudgmentDetail } from '$lib/api/judgments';
 import { getArticleDetailByKey } from '$lib/api/articles';
 import { getInstrumentDetail } from '$lib/api/instrument-cache';
-import { getDossier } from '$lib/components/parliamentary/data';
+import { getDossier } from '$lib/api/dossiers';
 import { memberToGraphNode, syntheticNode, type GraphNode } from '$lib/graph/types';
 import type { Collection } from '$lib/vocabulary';
 import { keyEcli } from './leesbaar';

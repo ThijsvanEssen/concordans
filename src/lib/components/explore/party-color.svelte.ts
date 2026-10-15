@@ -2,7 +2,7 @@
 // $lib/components/explore/partijkleuren gives it (the Tweede Kamer's, else the Eerste
 // Kamer's, else the party's own), by its abbreviation. A party none of them lists, such as
 // KVP or ARP, is grey: a colour made up from the name meant nothing.
-import { fractieKleuren } from '$lib/components/explore/partijkleuren.svelte';
+import { fractieKleuren } from './partijkleuren.svelte';
 
 /** The colour of a party the API does not list. */
 export const NO_PARTY_COLOR = 'var(--ink-3)';

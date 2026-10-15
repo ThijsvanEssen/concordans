@@ -12,11 +12,12 @@
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
 	import type { TijdGroep } from '$lib/components/tijdlijn/tijdlijn';
 	import { getCabinet } from '$lib/api/records';
-	import { cabinetShortName, getMinistries, laterPosts, period, type Cabinet } from './government';
+	import { cabinetShortName, laterPosts, period, type Cabinet } from './government';
+	import { getMinistries } from '$lib/api/government';
 	import { sideBySideRows, type SideBySideRow } from './side-by-side';
 	import { load } from '$lib/util/load.svelte';
-	import { smalScherm } from '$lib/utils/smal.svelte';
-	import { partyColor } from '$lib/utils/party-color.svelte';
+	import { smalScherm } from '$lib/util/smal.svelte';
+	import { partyColor } from '$lib/components/explore/party-color.svelte';
 	import { DAY_MS, vandaag } from '$lib/text/datum';
 	import type { Schema } from '$lib/api/types';
 	import Strookje from '$lib/components/tijdlijn/Strookje.svelte';

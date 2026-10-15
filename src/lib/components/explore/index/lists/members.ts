@@ -1,8 +1,8 @@
 // Kamerleden: the sitting members of a Kamer, or with the historical ones; sorted by surname by the API.
-import { api, unwrap } from '$lib/api/client';
+import { getMembers } from '$lib/api/members';
 import type { Schema } from '$lib/api/types';
 import { choiceOf } from '$lib/util/choice';
-import { partyColor } from '$lib/utils/party-color.svelte';
+import { partyColor } from '$lib/components/explore/party-color.svelte';
 import { seatedOnly } from '../period';
 import MemberRows from '../rows/MemberRows.svelte';
 import { PAGE, defineList, flag, sorted, toggle, type SortDef } from './list';
@@ -46,9 +46,7 @@ export const members = defineList<Row, object, ReturnType<typeof query>>({
 	query,
 	// A list without `total`: it is over when a slice comes back short.
 	load: async (query, offset, signal) => ({
-		items: await unwrap(
-			api.GET('/api/members', { params: { query: { ...query, offset } }, signal })
-		)
+		items: await getMembers({ ...query, offset }, signal)
 	}),
 	shown: (rows, { sort, dir }) => sorted(rows, { party: (m) => m.party ?? '' }, sort, dir),
 	facets: ({ p, shared, patch }) => [

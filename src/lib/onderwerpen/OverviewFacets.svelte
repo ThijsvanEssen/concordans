@@ -2,7 +2,7 @@
 	// The facets of the overview of a topic, at the left of the figures and the list as in
 	// Actueel and Bladeren: the fractie whose votes are counted. On a phone behind Verfijnen,
 	// opened in place.
-	import { api, unwrap } from '$lib/api/client';
+	import { getFactions } from '$lib/api/factions';
 	import { fractieNaam } from '$lib/bron/menselijk';
 	import type { Chamber } from '$lib/components/parliamentary/chamber';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
@@ -25,7 +25,7 @@
 	// The facet stands without its fracties where they do not come.
 	const factions = load(
 		() => 'factions',
-		(_, signal) => unwrap(api.GET('/api/factions', { signal })),
+		(_, signal) => getFactions(undefined, signal),
 		'Overzicht fracties'
 	);
 	const choices = $derived(

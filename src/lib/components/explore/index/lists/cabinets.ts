@@ -1,6 +1,7 @@
 // Kabinetten since 1945 in the time they governed, filtered and sorted here.
-import { partyColor } from '$lib/utils/party-color.svelte';
-import { getCabinets, inOffice, type Cabinet } from '../government';
+import { partyColor } from '$lib/components/explore/party-color.svelte';
+import { inOffice, type Cabinet } from '../government';
+import { getCabinets } from '$lib/api/government';
 import CabinetRows from '../rows/CabinetRows.svelte';
 import CabinetStrip from '../rows/CabinetStrip.svelte';
 import { countBy, defineList, matches, sorted, toggle } from './list';

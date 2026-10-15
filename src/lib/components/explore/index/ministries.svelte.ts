@@ -2,7 +2,7 @@
 // on first use. Until the list is in, or where it failed, a key stands for itself.
 import { report } from '$lib/api/errors';
 import { onForget } from '$lib/util/forget';
-import { getMinistries } from './government';
+import { getMinistries } from '$lib/api/government';
 
 let names = $state<Map<string, string>>(new Map());
 let asked = false;

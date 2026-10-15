@@ -1,9 +1,10 @@
 // Wetten: the BWB, the treaties and the EU's acts, with the Staatsblad publications that amend them.
-import { api, unwrap } from '$lib/api/client';
+import { getInstruments } from '$lib/api/instruments';
 import { report } from '$lib/api/errors';
 import type { Schema } from '$lib/api/types';
 import { choiceOf } from '$lib/util/choice';
-import { faceted, type FacetsOf } from '../faceted';
+import { faceted } from '../faceted';
+import type { FacetsOf } from '$lib/api/lists';
 import InstrumentRows from '../rows/InstrumentRows.svelte';
 import { areaTree, keepChosen, type Area } from './areas';
 import { PAGE, defineList, flag, toggle, type SortDef } from './list';
@@ -57,12 +58,7 @@ export const instruments = defineList<Row, State, ReturnType<typeof query>>({
 			// 10 Oct: rows in at 1.7 s, on screen at 4.1 s).
 			if (q.kind) set({ treaties: r.total });
 			else
-				void unwrap(
-					api.GET('/api/instruments', {
-						params: { query: { ...q, kind: 'verdrag', limit: 1, offset: 0, facets: false } },
-						signal
-					})
-				)
+				void getInstruments({ ...q, kind: 'verdrag', limit: 1, offset: 0, facets: false }, signal)
 					.then((v) => {
 						if (!signal.aborted) set({ treaties: v.total });
 					})

@@ -2,7 +2,8 @@
 // division, paged on both ways, and loaded up to a place. One list is open at a time; what
 // arrives for a list no longer open changes nothing.
 import { tick } from 'svelte';
-import { ApiError, api, unwrap } from '$lib/api/client';
+import { ApiError } from '$lib/api/client';
+import { getInstrumentArticles, getInstrumentArticlesAt } from '$lib/api/instruments';
 import { report } from '$lib/api/errors';
 import { lawArticleList } from '$lib/api/law-articles';
 import type { Schema } from '$lib/api/types';
@@ -118,20 +119,11 @@ async function loadPage(
 		// call per article for a version. Today's list, the one of the table of contents, says
 		// which article to link to.
 		const [at, now] = await Promise.all([
-			unwrap(
-				api.GET('/api/instruments/{bwb_id}/articles/at/{at_date}', {
-					params: {
-						path: { bwb_id: bwb, at_date: day },
-						query: {
-							text_preview_chars: PREVIEW_CHARS,
-							limit,
-							offset,
-							include_text: true,
-							division
-						}
-					},
-					signal
-				})
+			getInstrumentArticlesAt(
+				bwb,
+				day,
+				{ text_preview_chars: PREVIEW_CHARS, limit, offset, include_text: true, division },
+				signal
 			),
 			lawArticleList(bwb).then((r) => r.items)
 		]);
@@ -145,23 +137,16 @@ async function loadPage(
 	// Today's texts come a page at a time with the list of the day, in the same order: one
 	// request per hundred articles instead of one per article that scrolls into view.
 	const [r, texts] = await Promise.all([
-		unwrap(
-			api.GET('/api/instruments/{bwb_id}/articles', {
-				params: {
-					path: { bwb_id: bwb },
-					query: { text_preview_chars: PREVIEW_CHARS, limit, offset, division }
-				},
-				signal
-			})
+		getInstrumentArticles(
+			bwb,
+			{ text_preview_chars: PREVIEW_CHARS, limit, offset, division },
+			signal
 		),
-		unwrap(
-			api.GET('/api/instruments/{bwb_id}/articles/at/{at_date}', {
-				params: {
-					path: { bwb_id: bwb, at_date: today },
-					query: { text_preview_chars: 0, limit, offset, include_text: true, division }
-				},
-				signal
-			})
+		getInstrumentArticlesAt(
+			bwb,
+			today,
+			{ text_preview_chars: 0, limit, offset, include_text: true, division },
+			signal
 		)
 			.then(
 				(at) =>
@@ -204,12 +189,9 @@ async function loadPage(
 function lawTotal(bwb: string, day: string | null, signal: AbortSignal): Promise<number> {
 	// Today's whole list is the one the table of contents reads: no request of its own.
 	if (!day) return lawArticleList(bwb).then((r) => r.total);
-	return unwrap(
-		api.GET('/api/instruments/{bwb_id}/articles/at/{at_date}', {
-			params: { path: { bwb_id: bwb, at_date: day }, query: { text_preview_chars: 0, limit: 1 } },
-			signal
-		})
-	).then((r) => r.total);
+	return getInstrumentArticlesAt(bwb, day, { text_preview_chars: 0, limit: 1 }, signal).then(
+		(r) => r.total
+	);
 }
 
 /**

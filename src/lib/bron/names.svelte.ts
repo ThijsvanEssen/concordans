@@ -1,9 +1,9 @@
 // A fractie or a cabinet named in a row or a text (`D66`, `kabinet-Rutte IV`) as the bron
 // it is: its key, from the lists the API gives, asked for once. A name that is not in
 // the list stays text; a guessed key would be a link to nothing.
-import { api, unwrap } from '$lib/api/client';
+import { getFactions } from '$lib/api/factions';
 import { report } from '$lib/api/errors';
-import { getCabinets } from '$lib/components/explore/index/government';
+import { getCabinets } from '$lib/api/government';
 import { onForget } from '$lib/util/forget';
 
 type Named = { key: string; names: (string | null | undefined)[] };
@@ -40,7 +40,7 @@ onForget(() => {
 
 const LOAD: Record<List, () => Promise<Named[]>> = {
 	factions: () =>
-		unwrap(api.GET('/api/factions')).then((items) =>
+		getFactions().then((items) =>
 			items.map((f) => ({ key: f.key, names: [f.abbreviation, f.name] }))
 		),
 	cabinets: () => getCabinets().then((items) => items.map((c) => ({ key: c.key, names: [c.name] })))

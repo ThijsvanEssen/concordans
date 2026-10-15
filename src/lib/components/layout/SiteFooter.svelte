@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Wordmark from './Wordmark.svelte';
 	import { getStats } from '$lib/api/stats';
-	import { feedStand, standLine } from '$lib/components/actueel/feed';
+	import { feedStand, standLine } from '$lib/text/stand';
 	import { report } from '$lib/api/errors';
 	import { inView } from '$lib/actions/in-view';
 

@@ -4,11 +4,7 @@
 // that may leave wraps the answer in `abortable`.
 import { api, unwrap } from './client';
 import { once } from './records';
-import type { paths } from './generated/openapi-types';
-
-type QueryOf<P extends keyof paths> = NonNullable<
-	paths[P] extends { get: { parameters: { query?: infer Q } } } ? Q : never
->;
+import type { QueryOf } from './types';
 
 /** The laws a member or a fractie has worked on, with the number of their documents. */
 export const getTouchedInstruments = (who: 'members' | 'factions', key: string) =>

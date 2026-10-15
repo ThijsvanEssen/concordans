@@ -3,7 +3,7 @@
 	import NavKolom from './NavKolom.svelte';
 	// The table of contents of the law in Lezen: the name of the law, the title of the
 	// current section under it, and the articles, the active one marked.
-	import { lawArticles, type LawArticle } from '$lib/api/law-articles';
+	import { lawArticles, type LawArticle } from '$lib/bron/law-articles';
 	import { parseAnchor } from '$lib/text/anchor';
 	import { artikelAnker, deelIds, layersOf } from '$lib/text/division';
 	import { scrollInReader } from '$lib/bron/anchor';

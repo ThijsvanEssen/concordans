@@ -16,7 +16,7 @@
 	// (two tekstversies, `van..tot`, or one lid, `lid-4`) the text gives way to the
 	// comparison; a lid changed since the oldest tekstversie says so in the margin.
 	import { menu } from '$lib/actions/menu';
-	import { api, unwrap } from '$lib/api/client';
+	import { getDocumentPassages } from '$lib/api/documents';
 	import { getDelegated } from '$lib/api/articles';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import type { Schema } from '$lib/api/types';
@@ -218,11 +218,10 @@
 			return;
 		}
 		if (uitleg) return;
-		const r = await unwrap(
-			api.GET('/api/documents/{key}/passages', {
-				params: { path: { key: e.key }, query: { bwb_id: bwbId, article: articleNumber } },
-				signal
-			})
+		const r = await getDocumentPassages(
+			e.key,
+			{ bwb_id: bwbId, article: articleNumber },
+			signal
 		).catch(orNone('Passage van de toelichting'));
 		const eerste = r?.items[0]?.section_id;
 		if (eerste && !signal.aborted && explanatory?.key === e.key)

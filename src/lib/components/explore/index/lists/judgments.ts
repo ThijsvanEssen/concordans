@@ -12,7 +12,8 @@ import {
 } from '$lib/vocabulary';
 import type { FacetGroup } from '../IndexFacets.svelte';
 import { COURT_GROUPS, MIXED_TIERS } from '../courts';
-import { faceted, type FacetsOf } from '../faceted';
+import { faceted } from '../faceted';
+import type { FacetsOf } from '$lib/api/lists';
 import JudgmentRows from '../rows/JudgmentRows.svelte';
 import JudgmentYears from '../rows/JudgmentYears.svelte';
 import { areaTree, keepChosen, sourceFacet, type Area } from './areas';

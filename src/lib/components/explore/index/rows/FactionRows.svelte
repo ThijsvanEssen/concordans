@@ -4,7 +4,7 @@
 	import { openHref } from '$lib/bron/href';
 	import { formatDecimal } from '$lib/text/getal';
 	import { count, plural } from '$lib/text/words';
-	import { partyColor } from '$lib/utils/party-color.svelte';
+	import { partyColor } from '$lib/components/explore/party-color.svelte';
 	import IndexRow from '../IndexRow.svelte';
 	import type { ViewProps } from '../lists/list';
 

@@ -2,12 +2,12 @@
 // its bronnen (0.1–0.2 s each), and again when their full nodes are in: a bron added stands on
 // the canvas before the neighbours of the others (art. 3:2 Awb: 651 kB, 3.8 s on prod). The
 // paths between them need only their ids, so they are asked beside the full nodes.
-import { api, unwrap } from '$lib/api/client';
+import { getPaths } from '$lib/api/nodes';
 import { isAborted, report } from '$lib/api/errors';
 import { getNodeFirst } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
-import { getDossierKey } from '$lib/components/parliamentary/data';
+import { getDossierKey } from '$lib/api/dossiers';
 import { failureText } from '$lib/components/ui/LoadState.svelte';
 import type { GraphStore } from '$lib/graph/store/types';
 import { nodeToGraphNode } from '$lib/graph/types';
@@ -52,9 +52,7 @@ async function pathsBetween(ids: string[]): Promise<Schema<'PathsResponse'> | nu
 		expand: 'members',
 		expand_cap: EXPAND_CAP
 	} as const;
-	return unwrap(api.GET('/api/paths', { params: { query } })).catch(
-		(e) => (report('Paden tussen bronnen', e), null)
-	);
+	return getPaths(query).catch((e) => (report('Paden tussen bronnen', e), null));
 }
 
 export class NetwerkComposer {

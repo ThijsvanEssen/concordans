@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const getMinistries = vi.hoisted(() => vi.fn());
-vi.mock('./government', () => ({ getMinistries }));
+vi.mock('$lib/api/government', () => ({ getMinistries }));
 
 import { ministryName } from './ministries.svelte';
 
