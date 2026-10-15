@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { getInstrumentMeta, lawName, recordInstrument } from './instrument-cache';
+import {
+	getInstrumentMeta,
+	instrumentMetaStore,
+	lawName,
+	recordInstrument
+} from './instrument-cache';
 
 describe('lawName', () => {
 	it('names a law by its citation title, then its short title, then the fallback', () => {
@@ -26,5 +31,28 @@ describe('a book of the BW in the cache', () => {
 			short_title: 'BW7A'
 		});
 		expect(getInstrumentMeta('BWBR0006000')?.shortTitle).toBe('Boek 7A BW');
+	});
+});
+
+describe('what the cache tells its readers', () => {
+	const settle = () => new Promise<void>((r) => queueMicrotask(r));
+
+	it('tells only a real change: the same law recorded twice is news once', async () => {
+		let told = 0;
+		const stop = instrumentMetaStore.subscribe(() => told++);
+		told = 0;
+		const awb = { bwb_id: 'BWBR0005537', title: 'Algemene wet bestuursrecht', short_title: 'Awb' };
+		recordInstrument(awb);
+		await settle();
+		expect(told).toBe(1);
+		recordInstrument(awb);
+		recordInstrument({ bwb_id: 'BWBR0005537' });
+		await settle();
+		expect(told).toBe(1);
+		recordInstrument({ ...awb, citation_title: 'Awb 1992' });
+		await settle();
+		expect(told).toBe(2);
+		expect(getInstrumentMeta('BWBR0005537')?.citationTitle).toBe('Awb 1992');
+		stop();
 	});
 });
