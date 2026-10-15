@@ -7,6 +7,7 @@ import { lawShortName } from '$lib/text/bw';
 import { writable, type Readable } from 'svelte/store';
 import { api, unwrap } from './client';
 import { INSTRUMENT_NAMES } from './first-pages';
+import { once } from './records';
 import type { Schema } from './types';
 import { onForget } from '$lib/util/forget';
 
@@ -128,11 +129,9 @@ export function primeInstrumentNames(): void {
 	else setTimeout(ask, 1500);
 }
 
-const details = new Map<string, Promise<Schema<'InstrumentDetailDTO'>>>();
 onForget(() => {
 	cache.clear();
 	store.set(new Map());
-	details.clear();
 	primed = false;
 });
 
@@ -142,20 +141,14 @@ onForget(() => {
  * cache, so a law outside the 200 of `primeInstrumentNames` is named too.
  */
 export function getInstrumentDetail(identifier: string): Promise<Schema<'InstrumentDetailDTO'>> {
-	let request = details.get(identifier);
-	if (!request) {
-		request = unwrap(api.GET('/api/instruments/{identifier}', { params: { path: { identifier } } }))
-			.then((detail) => {
+	return once(`instruments/${identifier}/detail`, () =>
+		unwrap(api.GET('/api/instruments/{identifier}', { params: { path: { identifier } } })).then(
+			(detail) => {
 				recordInstrument(detail);
 				return detail;
-			})
-			.catch((err) => {
-				details.delete(identifier);
-				throw err;
-			});
-		details.set(identifier, request);
-	}
-	return request;
+			}
+		)
+	);
 }
 
 /** Asks for an instrument's names when the cache has none: a fallback, not a first source. */

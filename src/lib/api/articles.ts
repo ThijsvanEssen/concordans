@@ -1,6 +1,6 @@
 import { api, unwrap, slowApi } from './client';
 import { ifExists } from './errors';
-import { once } from './records';
+import { abortable, once } from './records';
 import { CITED_BY_TOP } from './first-pages';
 import { onForget } from '$lib/util/forget';
 
@@ -101,16 +101,21 @@ export const getLawReferences = (bwbId: string, other: string) =>
 		)
 	);
 
-/** The judgments on an article, the most cited first; one page is enough for two. */
+/**
+ * The judgments on an article, the most cited first; one page is enough for two. A shared
+ * request: a caller that leaves ignores the answer (`abortable`).
+ */
 export const getCitedByTop = (bwb: string, number: string, signal?: AbortSignal) =>
-	once(`articles/${bwb}/${number}/cited-by/top`, () =>
-		unwrap(
-			api.GET('/api/articles/{bwb_id}/{article_number}/cited-by', {
-				params: {
-					path: { bwb_id: bwb, article_number: number },
-					query: { limit: CITED_BY_TOP, sort: 'citation_count' }
-				},
-				signal
-			})
-		)
+	abortable(
+		once(`articles/${bwb}/${number}/cited-by/top`, () =>
+			unwrap(
+				api.GET('/api/articles/{bwb_id}/{article_number}/cited-by', {
+					params: {
+						path: { bwb_id: bwb, article_number: number },
+						query: { limit: CITED_BY_TOP, sort: 'citation_count' }
+					}
+				})
+			)
+		),
+		signal
 	);

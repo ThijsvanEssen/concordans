@@ -37,6 +37,12 @@ export function once<T>(id: string, load: () => Promise<T>): Promise<T> {
 	return request;
 }
 
+/** A request without parameters, asked once while it is kept, as `once` keeps `id`. */
+export const onceFn =
+	<T>(id: string, load: () => Promise<T>): (() => Promise<T>) =>
+	() =>
+		once(id, load);
+
 /**
  * A shared request for one caller that may leave: the caller's answer rejects when its
  * signal aborts, while the request itself goes on for the others.

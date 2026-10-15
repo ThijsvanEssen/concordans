@@ -5,14 +5,11 @@
 // labels and places: $lib/bron/law-articles.
 import { api, unwrap } from './client';
 import { volledig } from './limits';
+import { once } from './records';
 import type { Schema } from './types';
-import { onForget } from '$lib/util/forget';
 
 /** The largest page the API gives: the whole list of a law in one request. */
 const WHOLE_LIST = volledig('/api/instruments/{bwb_id}/articles');
-
-const lists = new Map<string, Promise<Schema<'InstrumentArticlesResponse'>>>();
-onForget(() => lists.clear());
 
 /**
  * The list of a law as the API gives it, asked once per law: the table of contents, the
@@ -20,15 +17,11 @@ onForget(() => lists.clear());
  * asked again next time.
  */
 export function lawArticleList(bwb: string): Promise<Schema<'InstrumentArticlesResponse'>> {
-	let request = lists.get(bwb);
-	if (!request) {
-		request = unwrap(
+	return once(`instruments/${bwb}/articles`, () =>
+		unwrap(
 			api.GET('/api/instruments/{bwb_id}/articles', {
 				params: { path: { bwb_id: bwb }, query: { text_preview_chars: 0, limit: WHOLE_LIST } }
 			})
-		);
-		request.catch(() => lists.delete(bwb));
-		lists.set(bwb, request);
-	}
-	return request;
+		)
+	);
 }

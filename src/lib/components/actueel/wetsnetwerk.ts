@@ -310,6 +310,8 @@ export async function laadWetsnetwerk(
 				bwb && top?.article_number
 					? await getCitedByTop(bwb, top.article_number, signal).catch(() => null)
 					: null;
+			// A caller that left ignores the answer; the shared cited-by goes on for others.
+			if (signal?.aborted) return null;
 			return schetsVan(k, ch, cb);
 		}
 		return null;
