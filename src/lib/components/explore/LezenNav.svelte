@@ -5,7 +5,7 @@
 	// current section under it, and the articles, the active one marked.
 	import { lawArticles, type LawArticle } from '$lib/bron/law-articles';
 	import { parseAnchor } from '$lib/text/anchor';
-	import { artikelAnker, deelIds, layersOf } from '$lib/text/division';
+	import { artikelAnker, layersOf } from '$lib/text/division';
 	import { scrollInReader } from '$lib/bron/landing';
 	import { page } from '$app/state';
 	import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
@@ -16,7 +16,7 @@
 	let { selection }: { selection: GraphNode | null } = $props();
 
 	/** An article with the anchor of each layer of its place in the whole law. */
-	type Item = LawArticle & { ids: string[] };
+	type Item = LawArticle;
 
 	type Group = {
 		/** Its anchor in the whole law: `deel-hoofdstuk-3`. */
@@ -100,13 +100,13 @@
 				continue;
 			}
 			let parent = root;
-			bc.forEach((seg, i) => {
+			bc.forEach((seg) => {
 				parent = findOrAdd(
 					parent,
 					seg.type ?? 'sectie',
 					seg.label ?? '',
 					seg.title ?? null,
-					it.ids[i]
+					seg.anchor
 				);
 			});
 			parent.items.push(it);
@@ -117,11 +117,7 @@
 	// A layer that is the law itself (Boek 6 of BW Boek 6) is no group and no place; the
 	// name of the law may come after the articles, so this follows it.
 	const shaped = $derived(
-		items.map((it): Item => {
-			const layers = layersOf(it.breadcrumb, lawTitle);
-			const ids = deelIds(it.breadcrumb).slice(it.breadcrumb.length - layers.length);
-			return { ...it, breadcrumb: layers, ids };
-		})
+		items.map((it): Item => ({ ...it, breadcrumb: layersOf(it.breadcrumb, lawTitle) }))
 	);
 	const groups = $derived(shaped.length > 0 ? buildGroups(shaped) : null);
 

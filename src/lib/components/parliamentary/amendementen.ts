@@ -1,19 +1,12 @@
 // The amendments of a bill as a timetable (ux-voorstel, recommendation 3; Thijs, 10 Oct):
 // a row per amendment as it came to the vote, a stop on the day of each paper it grew from
-// ("ter vervanging van", REVISES between papers, #378), and at the end its outcome. Read
-// from one neighbourhood of the dossier: its papers and cases (PART_OF), the decisions on
-// those cases (ABOUT), and the papers that revise others (REVISES). Every value is a source
-// value: the vote of an amendment is the decision whose `primary_case_id` is the case of
-// its paper, the chain is the REVISES edges; nothing is read from a title.
+// ("ter vervanging van", REVISES between papers, #378), and at the end its outcome. The
+// chains, their papers, submitters and decisions come from /api/dossiers/{number}/amendments
+// (API 0.79.60); here only the columns of the timetable are made.
 import { motionOrAmendment } from '$lib/text/document-kind';
-import { getNodeNeighborhood } from '$lib/api/nodes';
-import { once } from '$lib/api/records';
+import { getDossierAmendments } from '$lib/api/dossiers';
+import type { Schema } from '$lib/api/types';
 import { votesShort } from './stemming';
-
-type Props = Record<string, unknown>;
-export type GraphNode = { id: string; key: string; props?: Props | null };
-export type GraphEdge = { source: string; target: string; relation: string };
-export type Graph = { nodes: GraphNode[]; edges: GraphEdge[] };
 
 /** A paper of an amendment: a stop in its route. `nieuw` where it replaces no other. */
 export type Stuk = {
@@ -43,7 +36,7 @@ export type Rij = {
 	stuk: Stuk;
 	/** Every paper of the chain, oldest first, the last one included. */
 	haltes: Stuk[];
-	/** The first signer and the number of the others, from the paper's own actors. */
+	/** The indiener and the number of medeindieners. */
 	indiener: { naam: string; fractie: string | null; anderen: number } | null;
 	/** Several papers merged into this one (more than one chain leads here). */
 	samengevoegd: boolean;
@@ -58,38 +51,13 @@ export type Dienstregeling = {
 	kolommen: string[];
 	/** Whether the API gave any REVISES between the papers: without, each paper stands alone. */
 	metVervanging: boolean;
-	/** The neighbourhood reached its cap: some papers may be missing. */
-	afgekapt: boolean;
 };
 
-/** Nodes asked at most: a budget with hundreds of amendments still fits. */
-const CAP = 1000;
+type Antwoord = Schema<'AmendmentChainsResponse'>;
+type Keten = Antwoord['chains'][number];
 
-const str = (v: unknown) => (typeof v === 'string' ? v : v == null ? '' : String(v));
-const lijst = (v: unknown) => (Array.isArray(v) ? (v as unknown[]) : []);
-
-const isAmendement = (n: GraphNode) =>
-	n.id.startsWith('documents/') && lijst(n.props?.case_kinds).includes('Amendement');
-
-function stukVan(n: GraphNode): Stuk {
-	const p = n.props ?? {};
-	return {
-		id: n.id,
-		nummer: str(p.sequence ?? p.number),
-		datum: str(p.date),
-		titel: str(p.title ?? p.subject)
-	};
-}
-
-function indienerVan(n: GraphNode): Rij['indiener'] {
-	const actors = lijst(n.props?.actors) as Props[];
-	if (!actors.length) return null;
-	const eerste = actors.find((a) => str(a.role) === 'Eerste ondertekenaar') ?? actors[0];
-	return {
-		naam: str(eerste.name),
-		fractie: str(eerste.faction) || null,
-		anderen: actors.length - 1
-	};
+function stukVan(d: Keten['documents'][number]): Stuk {
+	return { id: d.id, nummer: d.number ?? '', datum: d.date ?? '', titel: d.title ?? '' };
 }
 
 /**
@@ -97,8 +65,8 @@ function indienerVan(n: GraphNode): Rij['indiener'] {
  * (`decision_kind`): `Stemmen - ingetrokken`, `Aanhouden`, `Uitstellen`, `Vervallen`. The
  * word, never "gestemd"; another kind by the part after its dash, lowercased.
  */
-export function besluitSoort(kind: unknown): string | null {
-	const k = str(kind).trim().toLowerCase();
+export function besluitSoort(kind: string | null | undefined): string | null {
+	const k = (kind ?? '').trim().toLowerCase();
 	if (!k) return null;
 	if (/ingetrokken|intrekken/.test(k)) return 'ingetrokken';
 	if (/aangehouden|aanhouden/.test(k)) return 'aangehouden';
@@ -113,21 +81,6 @@ export function besluitSoort(kind: unknown): string | null {
 	return deel && !/gestemd|stemmen/.test(deel) ? deel : null;
 }
 
-/**
- * The decision of a zaak that has several (postponed, then voted): the latest with an
- * outcome (`passed` set); without one, the latest by date.
- */
-export function kiesBesluit(besluiten: GraphNode[]): GraphNode | null {
-	const datum = (n: GraphNode) => str(n.props?.date);
-	const laatste = (ns: GraphNode[]) =>
-		ns.reduce<GraphNode | null>((a, n) => (!a || datum(n) >= datum(a) ? n : a), null);
-	const met = besluiten.filter((n) => typeof n.props?.passed === 'boolean');
-	return laatste(met.length ? met : besluiten);
-}
-
-const vroeger = (a: Stuk, b: Stuk) =>
-	a.datum.localeCompare(b.datum) || Number(a.nummer) - Number(b.nummer);
-
 /** Above this many days the columns are weeks, so a long dossier stays one screen wide. */
 const MAX_DAGEN = 14;
 
@@ -138,88 +91,49 @@ export function maandagVan(dag: string): string {
 	return d.toISOString().slice(0, 10);
 }
 
-export function dienstregeling(g: Graph, cap = CAP): Dienstregeling {
-	const nodes = new Map(g.nodes.map((n) => [n.id, n]));
-	const stukken = g.nodes.filter(isAmendement);
-	const ids = new Set(stukken.map((n) => n.id));
-
-	// REVISES: the newer paper revises the one it replaces.
-	const vorige = new Map<string, string[]>();
-	const volgende = new Map<string, string[]>();
-	for (const e of g.edges) {
-		if (e.relation !== 'REVISES' || !ids.has(e.source) || !ids.has(e.target)) continue;
-		vorige.set(e.source, [...(vorige.get(e.source) ?? []), e.target]);
-		volgende.set(e.target, [...(volgende.get(e.target) ?? []), e.source]);
-	}
-
-	// The decisions on a case, by the case they single out (`primary_case_id`).
-	const besluiten = new Map<string, GraphNode[]>();
-	for (const n of g.nodes)
-		if (n.id.startsWith('decisions/')) {
-			const c = str(n.props?.primary_case_id);
-			if (c) besluiten.set(c, [...(besluiten.get(c) ?? []), n]);
-		}
-	const uitslagVan = (n: GraphNode): Uitslag | null => {
-		for (const c of lijst(n.props?.case_ids)) {
-			const b = kiesBesluit(besluiten.get(str(c)) ?? []);
-			if (!b) continue;
-			const passed = b.props?.passed;
-			const aangenomen = typeof passed === 'boolean' ? passed : null;
-			return {
-				id: b.id,
-				datum: str(b.props?.date),
-				aangenomen,
-				telling: votesShort(b.props?.tally),
-				soort: aangenomen === null ? besluitSoort(b.props?.decision_kind) : null
-			};
-		}
-		return null;
+/** Without a vote the word of the decision: the API's outcome, else the BesluitSoort. */
+function uitslagVan(b: Keten['decision']): Uitslag | null {
+	if (!b) return null;
+	return {
+		id: b.id,
+		datum: b.date ?? '',
+		aangenomen: b.passed,
+		telling: votesShort(b.tally),
+		soort: b.passed === null ? (b.outcome ?? besluitSoort(b.decision_kind)) : null
 	};
-	// A zaak the API marks not done (`done: false`), by its external id.
-	const nietKlaar = new Set(
-		g.nodes
-			.filter((n) => n.id.startsWith('cases/') && n.props?.done === false)
-			.map((n) => str(n.props?.external_id) || n.key)
-	);
-	const nummer = (id: string) => stukVan(nodes.get(id)!).nummer;
+}
 
-	const rijen: Rij[] = stukken
-		.filter((n) => !volgende.has(n.id))
-		.map((n) => {
-			const gezien = new Set<string>();
-			const rij = [n.id];
-			while (rij.length) {
-				const id = rij.pop()!;
-				if (gezien.has(id)) continue;
-				gezien.add(id);
-				rij.push(...(vorige.get(id) ?? []));
-			}
-			const haltes = [...gezien]
-				.map((id) => ({
-					...stukVan(nodes.get(id)!),
-					nieuw: !vorige.has(id),
-					vervangenDoor: volgende.has(id) ? nummer(volgende.get(id)![0]) : null
-				}))
-				.sort(vroeger);
-			const begin = haltes.filter((h) => !vorige.has(h.id)).length;
-			const uitslag = uitslagVan(n);
-			return {
-				stuk: stukVan(n),
-				haltes,
-				indiener: indienerVan(n),
-				samengevoegd: begin > 1,
-				uitslag,
-				nogNiet: !uitslag && lijst(n.props?.case_ids).some((c) => nietKlaar.has(str(c)))
-			};
-		})
-		.sort((a, b) => vroeger(a.haltes[0], b.haltes[0]));
+function rijVan(k: Keten): Rij {
+	const nummer = new Map(k.documents.map((d) => [d.id, d.number ?? '']));
+	const laatste = k.documents.find((d) => d.id === k.id) ?? k.documents.at(-1)!;
+	const [eerste, ...anderen] = k.submitters;
+	return {
+		stuk: stukVan(laatste),
+		haltes: k.documents.map((d) => ({
+			...stukVan(d),
+			nieuw: d.replaces.length === 0,
+			vervangenDoor: d.replaced_by.length ? (nummer.get(d.replaced_by[0]) ?? null) : null
+		})),
+		indiener: eerste
+			? { naam: eerste.name, fractie: eerste.faction, anderen: anderen.length }
+			: null,
+		samengevoegd: k.merged,
+		uitslag: uitslagVan(k.decision),
+		nogNiet: k.waiting
+	};
+}
 
+export function dienstregeling(a: Antwoord): Dienstregeling {
+	const rijen = a.chains.filter((k) => k.documents.length).map(rijVan);
 	const dagen = [...new Set(rijen.flatMap((r) => r.haltes.map((h) => h.datum)))]
 		.filter(Boolean)
 		.sort();
 	const kolommen = dagen.length > MAX_DAGEN ? [...new Set(dagen.map(maandagVan))].sort() : dagen;
-
-	return { rijen, kolommen, metVervanging: vorige.size > 0, afgekapt: g.nodes.length >= cap };
+	return {
+		rijen,
+		kolommen,
+		metVervanging: a.chains.some((k) => k.documents.some((d) => d.replaces.length))
+	};
 }
 
 /**
@@ -234,19 +148,9 @@ export const inStemming = (r: Rij): string | null =>
 export const kolomVan = (d: Dienstregeling, dag: string) =>
 	d.kolommen.includes(dag) ? dag : maandagVan(dag);
 
-/** The neighbourhood of a dossier (by its node key) with its papers, cases, decisions and
- * REVISES, once. */
-export const getAmendementen = (key: string) =>
-	once(`dossiers/${key}/amendementen`, async () =>
-		dienstregeling(
-			(await getNodeNeighborhood('dossiers', key, {
-				depth: 2,
-				cap: CAP,
-				relations: ['PART_OF', 'ABOUT', 'REVISES'],
-				nodeTypes: ['document', 'case', 'decision', 'dossier']
-			})) as unknown as Graph
-		)
-	);
+/** The timetable of a dossier by its number, asked once. */
+export const getAmendementen = (number: string) =>
+	getDossierAmendments(number).then(dienstregeling);
 
 /** How many amendments a dossier has by its own counts per kind, without a request. */
 export const aantalAmendementen = (perSoort: Record<string, number> | null | undefined) =>

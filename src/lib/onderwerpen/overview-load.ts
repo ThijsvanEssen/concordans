@@ -19,9 +19,10 @@ import {
 	type Kolom,
 	type Telbaar
 } from './kruiswoord';
+import { volledig } from '$lib/api/limits';
 
-/** Decisions and feed events the API gives in one page. */
-export const PAGE_SIZE = 200;
+/** Decisions and feed events in one page: as many as the API gives of both. */
+export const PAGE_SIZE = Math.min(volledig('/api/decisions'), volledig('/api/feed'));
 /** Pages of the feed counted at most, the newest first. */
 const FEED_PAGES = 5;
 /** Dossiers whose amendments are followed at most (one request each, cached). */
@@ -243,7 +244,7 @@ export const dossiersOf = (papers: readonly FeedItem[]) => [
 
 /**
  * An amendment once per chain: the timetable of each dossier holding one of the papers
- * (getAmendementen: one neighbourhood, cached), its chains that hold such a paper. Two dossiers
+ * (getAmendementen: its amendments, asked once), its chains that hold such a paper. Two dossiers
  * at a time, DOSSIERS_MAX at most; `onFound` has every chain found so far, the newest first.
  */
 export async function followChains(
@@ -255,7 +256,7 @@ export async function followChains(
 	const found = new Map<string, Amendement>();
 	await twoAtATime(dossiersOf(papers).slice(0, DOSSIERS_MAX), async (d) => {
 		signal.throwIfAborted();
-		const timetable = await getAmendementen(d.key);
+		const timetable = d.number ? await getAmendementen(d.number) : null;
 		signal.throwIfAborted();
 		for (const a of amendementKetens(timetable?.rijen ?? [], ids, d.number))
 			if (!found.has(a.id)) found.set(a.id, a);

@@ -1,6 +1,7 @@
 import { api, unwrap, slowApi } from './client';
 import { ifExists } from './errors';
 import { once } from './records';
+import { CITED_BY_TOP } from './first-pages';
 import { onForget } from '$lib/util/forget';
 
 /** The address of an article by its node key, from every detail that came in. */
@@ -107,7 +108,7 @@ export const getCitedByTop = (bwb: string, number: string, signal?: AbortSignal)
 			api.GET('/api/articles/{bwb_id}/{article_number}/cited-by', {
 				params: {
 					path: { bwb_id: bwb, article_number: number },
-					query: { limit: 6, sort: 'citation_count' }
+					query: { limit: CITED_BY_TOP, sort: 'citation_count' }
 				},
 				signal
 			})

@@ -12,14 +12,15 @@ cp .env.example .env    # PUBLIC_CONCORDANS_API_BASE_URL: the API
 npm run dev             # http://localhost:5173
 ```
 
-| Command             | Purpose                                                                                         |
-| ------------------- | ----------------------------------------------------------------------------------------------- |
-| `npm run check`     | Type check, including every API call against the schema                                         |
-| `npm run lint`      | Prettier and ESLint                                                                             |
-| `npm test`          | Vitest                                                                                          |
-| `npm run build`     | Static build in `build/`                                                                        |
-| `npm run sync:api`  | Fetch the schema from the API in `.env` and regenerate `src/lib/api/generated/openapi-types.ts` |
-| `npm run check:api` | `sync:api`, then fail when the committed schema or types differ                                 |
+| Command             | Purpose                                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `npm run check`     | Type check, including every API call against the schema                                                      |
+| `npm run lint`      | Prettier and ESLint                                                                                          |
+| `npm test`          | Vitest                                                                                                       |
+| `npm run build`     | Static build in `build/`                                                                                     |
+| `npm run sync:api`  | Dump the schema with `lawgraph openapi` (in `$LAWGRAPH_DIR`, default `../lawgraph`) and regenerate the types |
+| `npm run types:api` | Regenerate `src/lib/api/generated/openapi-types.ts` from the committed schema                                |
+| `npm run check:api` | `sync:api`, then fail when the committed schema or types differ                                              |
 
 The test database holds every relation of the model. Run the API on it and point `.env` at it:
 

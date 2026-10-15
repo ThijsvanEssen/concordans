@@ -1,12 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fakeApi, fail } from '$lib/test/fakeApi';
+import type { Schema } from '$lib/api/types';
 import { hallOfDay, vacantZonderFractie, wijzigingenVan, zaalMetPlan, zetelHoogte } from './zetels';
 
 const fracties = [
 	{ key: 'vvd', abbreviation: 'VVD', name: 'VVD', seats: 24, coalition: true },
 	{ key: 'nieuw_sociaal_contract', abbreviation: 'NSC', name: 'NSC', seats: 19, coalition: true }
 ];
-const e = (kind: string, factions: string[], words: string | null = null) => ({
+const e = (kind: Schema<'SeatEventKind'>, factions: string[], words: string | null = null) => ({
 	kind,
 	date: '2024-07-04',
 	words,
@@ -63,7 +64,13 @@ describe('wijzigingenVan', () => {
 });
 
 describe('vacantZonderFractie (UX #48)', () => {
-	const f = (seats: number, vacant: number, coalition: boolean) => ({ seats, vacant, coalition });
+	const f = (seats: number, vacant: number, coalition: boolean) => ({
+		key: null,
+		abbreviation: null,
+		seats,
+		vacant,
+		coalition
+	});
 
 	it('counts the vacant seats no fractie holds', () => {
 		// kabinet-Jetten, 23 Feb 2026: 65 + 84 seats, 11 vacant of which 10 are the fracties'.

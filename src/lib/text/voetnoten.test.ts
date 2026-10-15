@@ -51,7 +51,16 @@ describe('the notes of a judgment', () => {
 			{ id: 'fn-35', label: '35', at: null }
 		];
 		const [item] = bodyItems(
-			[{ paragraph_id: 'rov-5.7.6', kind: 'body', text }],
+			[
+				{
+					number: null,
+					continues: null,
+					citations: [],
+					paragraph_id: 'rov-5.7.6',
+					kind: 'body',
+					text
+				}
+			],
 			new Map([['rov-5.7.6', markers]])
 		);
 		expect(item.kind).toBe('rov');

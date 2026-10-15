@@ -159,7 +159,7 @@ export const instruments = defineList<Row, State, ReturnType<typeof query>>({
 			const chosen = conceptKey(themes.get(p.policyDomain)) || p.policyDomain;
 			const all = [...(state.facets?.policy_domain ?? [])];
 			if (p.policyDomain && !themes.has(p.policyDomain))
-				all.unshift({ slug: p.policyDomain, label: p.policyDomain, count: 0 });
+				all.unshift({ id: null, slug: p.policyDomain, label: p.policyDomain, count: 0 });
 			const options = all.flatMap((f) => {
 				const value = conceptKey(f);
 				if (!value) return [];

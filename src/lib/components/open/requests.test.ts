@@ -41,7 +41,7 @@ describe('the changes of an opened publication', () => {
 		node: { collection: 'instruments', key: 'stb_2026_1' },
 		summary: null,
 		vote: null,
-		publication: { instruments: [] }
+		publication: { series: null, year: null, number: null, citation: null, instruments: [] }
 	};
 
 	it('fails as a failure, never as "Wijzigingen niet in de gegevens"', async () => {

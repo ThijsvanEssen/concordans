@@ -48,8 +48,9 @@ const slug = (s: string) =>
 
 /**
  * The anchor of each layer in the whole law, by the path of labels down to it:
- * `deel-hoofdstuk-3-afdeling-3.2`. One per crumb, over the whole breadcrumb, so the band
- * Behoort bij and the whole-law reader name a layer alike whatever name the law has.
+ * `deel-hoofdstuk-3-afdeling-3.2`. One per crumb, over the whole breadcrumb. The lists of a
+ * law give it as each crumb's `anchor`; this is for the breadcrumb of an article node's
+ * props, which has none (the band Behoort bij), by the same rule (text-rules.json).
  */
 export function deelIds(crumbs: Division[]): string[] {
 	const path: string[] = [];
@@ -66,7 +67,7 @@ export const artikelAnker = (number: string) => formatAnchor({ kind: 'article', 
 type Plek = {
 	article_number?: string | null;
 	address?: string | null;
-	breadcrumb?: Division[] | null;
+	breadcrumb?: { anchor: string }[] | null;
 };
 
 /**
@@ -78,6 +79,6 @@ export function plekVan(items: Plek[], anker: string): number {
 	if (a?.kind === 'article')
 		return items.findIndex((item) => (item.article_number ?? item.address) === a.number);
 	if (a?.kind === 'division')
-		return items.findIndex((item) => deelIds(item.breadcrumb ?? []).includes(anker));
+		return items.findIndex((item) => item.breadcrumb?.some((c) => c.anchor === anker));
 	return -1;
 }

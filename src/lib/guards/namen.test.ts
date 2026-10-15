@@ -31,10 +31,6 @@ describe('names, not keys', () => {
 				reden: 'the number in a dossier ref'
 			},
 			{ pad: 'lib/components/actueel/wetsnetwerk.ts', reden: 'the key of an href' },
-			{
-				pad: 'lib/components/parliamentary/amendementen.ts',
-				reden: 'the ids of the zaken not done'
-			},
 			{ pad: 'lib/bron/law-articles.ts', reden: 'the address of an article, not its name' },
 			{ pad: 'lib/text/version-diff.ts', reden: 'the id of a version, not shown' }
 		];

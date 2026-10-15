@@ -6,6 +6,7 @@ import { textOf } from '$lib/text/words';
 import { lawShortName } from '$lib/text/bw';
 import { writable, type Readable } from 'svelte/store';
 import { api, unwrap } from './client';
+import { INSTRUMENT_NAMES } from './first-pages';
 import type { Schema } from './types';
 import { onForget } from '$lib/util/forget';
 
@@ -117,7 +118,9 @@ export function primeInstrumentNames(): void {
 	// law keeps the name its own response carried (Thijs, 9 Oct: "alles zo lazy mogelijk").
 	const ask = () =>
 		unwrap(
-			api.GET('/api/instruments', { params: { query: { sort: 'article_count', limit: 200 } } })
+			api.GET('/api/instruments', {
+				params: { query: { sort: 'article_count', limit: INSTRUMENT_NAMES } }
+			})
 		)
 			.then(({ items }) => items.forEach(recordInstrument))
 			.catch(() => {});

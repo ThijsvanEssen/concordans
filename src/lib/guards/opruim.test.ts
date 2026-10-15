@@ -117,6 +117,11 @@ const TEST_HOOKS: Uitzondering[] = [
 		pad: 'lib/api/records.ts',
 		regel: /^RECORDS_KEPT$/,
 		reden: 'a test hook: how many records the cache keeps, for the test that fills it'
+	},
+	{
+		pad: 'lib/api/limit-maxima.ts',
+		regel: /^limitMaxima$/,
+		reden: 'read by vite.config.ts, which makes virtual:api-limits of it'
 	}
 ];
 
@@ -224,8 +229,6 @@ describe('nothing left over', () => {
 			'Citation',
 			'Deel',
 			'End',
-			'GraphEdge',
-			'GraphNode',
 			'PAGE_SIZE',
 			'PREVIEW_CHARS',
 			'Regel',

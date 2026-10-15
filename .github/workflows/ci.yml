@@ -28,6 +28,10 @@ jobs:
           cache: npm
 
       - run: npm ci
+      # The types are made from the schema in the repository (npm run sync:api dumps it from
+      # lawgraph): types that differ from it were edited by hand or not made again.
+      - name: Types from openapi.json
+        run: npm run types:api && git diff --exit-code -- src/lib/api/generated
       - name: Lint (prettier --check, eslint)
         run: npm run lint
       - name: Type check (svelte-check)

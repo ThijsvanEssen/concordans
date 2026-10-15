@@ -13,7 +13,8 @@
 		"test": "vitest run",
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint .",
-		"sync:api": "set -a; [ -f .env ] && . ./.env; set +a; curl -sf \"${PUBLIC_CONCORDANS_API_BASE_URL:?set it in .env, see .env.example}/openapi.json\" -o src/lib/api/openapi.json && prettier --ignore-path /dev/null --write src/lib/api/openapi.json && openapi-typescript src/lib/api/openapi.json -o src/lib/api/generated/openapi-types.ts",
+		"sync:api": "\"${LAWGRAPH_DIR:-../lawgraph}/.venv/bin/lawgraph\" openapi | python3 -c \"import json, sys; json.dump(json.load(sys.stdin), sys.stdout, ensure_ascii=False, separators=(',', ':'))\" > src/lib/api/openapi.json && prettier --ignore-path /dev/null --write src/lib/api/openapi.json && npm run types:api",
+		"types:api": "openapi-typescript src/lib/api/openapi.json -o src/lib/api/generated/openapi-types.ts",
 		"check:api": "npm run sync:api && git diff --exit-code -- src/lib/api/openapi.json src/lib/api/generated"
 	},
 	"dependencies": {

@@ -302,8 +302,9 @@ export function artikelenGewijzigd(c: FeedItem['commencement']): string | null {
 }
 
 /** `Stb. 2026, 204`, as a publication is cited; null while the feed lacks a part. */
-export const publicationCite = (p: NonNullable<FeedItem['publication']>) =>
-	citePublication(p.series, p.year, p.number);
+export const publicationCite = (
+	p: Pick<NonNullable<FeedItem['publication']>, 'series' | 'year' | 'number'>
+) => citePublication(p.series, p.year, p.number);
 
 /** What places a page of the feed, not what it holds. */
 const PAGING = new Set(['limit', 'cursor', 'facets']);

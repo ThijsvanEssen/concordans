@@ -7,7 +7,7 @@
 import { shortKind } from '$lib/text/document-kind';
 import type { Schema } from '$lib/api/types';
 import type { TijdGroep, TijdRegel } from '$lib/components/tijdlijn/tijdlijn';
-import type { Inhoud, MetInhoud } from '$lib/components/open/rij-inhoud';
+import { voteOf, type Inhoud, type MetInhoud } from '$lib/components/open/rij-inhoud';
 import { kamerstukName, withoutKamerstuk } from '$lib/components/parliamentary/kamerstuk';
 import { votesShort } from '$lib/components/parliamentary/stemming';
 
@@ -55,7 +55,7 @@ export function activiteitGroepen(r: Records): {
 					node: { collection: 'decisions', key: d.key },
 					kind: 'stemming',
 					// An activity is the Tweede Kamer's.
-					vote: { chamber: 'TK', tally: d.tally }
+					vote: voteOf({ chamber: 'TK', tally: d.tally })
 				},
 				als: 'stemming'
 			});

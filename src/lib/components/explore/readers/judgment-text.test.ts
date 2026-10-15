@@ -22,6 +22,33 @@ const judgment = (over: Partial<Judgment> = {}): Judgment => ({
 	display_name: null,
 	labels: [],
 	props: null,
+	outcome: null,
+	outcome_text: null,
+	conclusion_outcome: null,
+	conclusion_outcome_text: null,
+	echr_findings: [],
+	outcome_paragraph_id: null,
+	conclusion_outcome_paragraph_id: null,
+	source: null,
+	official_url: null,
+	summary_en: null,
+	translation_of: null,
+	names: [],
+	decision_kind: null,
+	series_id: null,
+	series_size: null,
+	same_as: null,
+	replaced_by: null,
+	published_on: null,
+	advocate_general: null,
+	advocate_general_role: null,
+	unresolved_appeal_targets: [],
+	unresolved_citations: [],
+	paragraphs: [],
+	footnotes: [],
+	parties: null,
+	translation_of_id: null,
+	replaced_by_id: null,
 	ecli: 'ECLI:NL:XX:2026:1',
 	summary: null,
 	path: null,
@@ -35,6 +62,7 @@ const para = (kind: string, text: string, over: Partial<Paragraph> = {}): Paragr
 	kind,
 	text,
 	number: null,
+	continues: null,
 	citations: [],
 	...over
 });
@@ -45,6 +73,9 @@ const party = (name: string, role: string, over: Partial<Party> = {}): Party => 
 	role,
 	role_stated: true,
 	side: 'first',
+	roles: [],
+	alias: null,
+	representatives: [],
 	...over
 });
 
@@ -70,7 +101,7 @@ const kinds = (items: ReturnType<typeof bodyItems>) =>
 const target = {
 	id: 'articles/x_1',
 	key: 'x_1',
-	collection: 'articles',
+	collection: 'articles' as const,
 	bwb_id: 'X',
 	article_number: '1',
 	display_name: null
@@ -87,7 +118,12 @@ describe('a citation in the text', () => {
 			text: 'artikel 8:73 Awb',
 			kind: 'REFERS_TO',
 			aanhef: false,
-			target
+			target,
+			leden: [],
+			onderdelen: [],
+			reference_kind: null,
+			confidence: null,
+			definition_ref: null
 		};
 
 		const items = bodyItems([para('body', text, { citations: [citation] })]);
@@ -515,7 +551,9 @@ describe('the participants named in the body', () => {
 		const j = judgment({
 			parties: [
 				party('DE STAAT DER NEDERLANDEN', 'Verweerder', {
-					representatives: [{ name: 'Mr. K. Teuben', role: 'advocaat' }]
+					representatives: [
+						{ place: null, capacity: null, name: 'Mr. K. Teuben', role: 'advocaat' }
+					]
 				})
 			],
 			paragraphs: [
@@ -548,7 +586,9 @@ describe('parties from the API', () => {
 			parties: [
 				party('[eiseres 1]', 'Eiser', {
 					alias: '[eisers]',
-					representatives: [{ name: 'mr. H.J.W. Alt', role: 'advocaat' }]
+					representatives: [
+						{ place: null, capacity: null, name: 'mr. H.J.W. Alt', role: 'advocaat' }
+					]
 				}),
 				party('MAATSCHAP GRONINGEN', 'Verweerder', {
 					role_stated: false,
@@ -586,13 +626,20 @@ describe('parties from the API', () => {
 	});
 
 	it('a lawyer for several parties in a row is one row after them (ECLI:NL:HR:2019:1278)', () => {
-		const bie = { name: 'Mr. J. de Bie Leuveling Tjeenk', role: 'advocaat' as const };
+		const bie = {
+			name: 'Mr. J. de Bie Leuveling Tjeenk',
+			role: 'advocaat' as const,
+			place: null,
+			capacity: null
+		};
 		const verweerder = (name: string, alias: string, representatives = [bie]) =>
 			party(name, 'Verweerder', { side: 'second', alias, representatives });
 		const parties = [
 			verweerder('MAATSCHAP GRONINGEN', 'de Maatschap'),
 			verweerder('NEDERLANDSE AARDOLIE MAATSCHAPPIJ B.V.', 'NAM'),
-			verweerder('EBN B.V.', 'EBN', [{ name: 'mr. J.F. de Groot', role: 'advocaat' }])
+			verweerder('EBN B.V.', 'EBN', [
+				{ name: 'mr. J.F. de Groot', role: 'advocaat', place: null, capacity: null }
+			])
 		];
 		expect(
 			judgmentParticipants(judgment({ paragraphs: [], parties })).map((p) => [
@@ -615,13 +662,14 @@ describe('parties from the API', () => {
 				roles: ['Appellant'],
 				alias: null,
 				representatives: [
-					{ name: 'mr. drs. R. van Gelder', role: 'advocaat', place: 'Voorschoten' }
+					{ capacity: null, name: 'mr. drs. R. van Gelder', role: 'advocaat', place: 'Voorschoten' }
 				]
 			}),
 			party('het college van gedeputeerde staten van Zuid-Holland', 'Verweerder', {
 				side: 'second',
 				representatives: [
 					{
+						place: null,
 						name: 'mr. A. Jansen',
 						role: 'gemachtigde',
 						capacity: 'ambtenaar in dienst van de provincie'

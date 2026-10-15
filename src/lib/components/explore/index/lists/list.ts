@@ -8,10 +8,11 @@ import type { Cabinet, Ministry } from '../government';
 import type { IndexCategory } from '../categories';
 import type { Coverage } from '$lib/api/stats';
 import type { Schema } from '$lib/api/types';
+import { LIST_PAGE } from '$lib/api/first-pages';
 import type { IndexParam, IndexParams, IndexPatch } from './params';
 
-/** The rows a list asks at a time. */
-export const PAGE = 100;
+/** The rows a list asks at a time (first-pages.json). */
+export const PAGE = LIST_PAGE;
 
 /** The first option is the default. With `dir` it is sorted here, else by the API. */
 export type SortDef = { id: string; label: string; dir?: 'asc' | 'desc' };

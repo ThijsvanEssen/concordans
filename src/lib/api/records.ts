@@ -9,6 +9,7 @@
 // others. A caller that leaves ignores the answer instead.
 import { api, unwrap } from './client';
 import { ifExists } from './errors';
+import { volledig } from './limits';
 import { getNodeGraph, neighborsOf, NODE_BUCKET } from './nodes';
 import type { Collection } from '$lib/vocabulary';
 import { onForget } from '$lib/util/forget';
@@ -215,13 +216,16 @@ export const getMemberDossiers = (key: string, limit: number = MEMBER_DOSSIERS) 
 		)
 	).then((found) => ({ ...found, items: found.items.slice(0, limit) }));
 
-/** The publications that change a law, up to 500 (the Awb has 114): the group in Verbonden
+/** The publications that change a law, as many as the API gives (the Awb has 114): the group in Verbonden
  *  and the implementations of BE-58 share them. */
 export const getAmendedBy = (bwb: string) =>
 	once(`instruments/${bwb}/amended-by`, () =>
 		unwrap(
 			api.GET('/api/instruments/{bwb_id}/amended-by', {
-				params: { path: { bwb_id: bwb }, query: { limit: 500 } }
+				params: {
+					path: { bwb_id: bwb },
+					query: { limit: volledig('/api/instruments/{bwb_id}/amended-by') }
+				}
 			})
 		)
 	);

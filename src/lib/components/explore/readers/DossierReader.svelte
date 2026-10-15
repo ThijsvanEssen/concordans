@@ -227,7 +227,7 @@
 
 			<!-- The amendments as a timetable, asked once in view; only where the dossier counts any. -->
 			{#if aantalAmendementen(d.documents_by_kind) > 0}
-				<AmendementenDienstregeling dossierKey={node.key} />
+				<AmendementenDienstregeling dossierNumber={d.number} />
 			{/if}
 
 			{#if changed && changed.total > 0}

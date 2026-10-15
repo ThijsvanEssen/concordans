@@ -67,13 +67,14 @@
 		type FeedKind
 	} from '$lib/components/actueel/feed';
 	import { feedStand, standLine } from '$lib/text/stand';
+	import { FEED_PAGE } from '$lib/api/first-pages';
 
 	const today = vandaag();
 	/** The days one summary spans at most, as the API allows. */
 	const SUMMARY_DAYS_MAX = 31;
 
-	/** Events per page of the feed. */
-	const PAGE_SIZE = 100;
+	/** Events per page of the feed (first-pages.json). */
+	const PAGE_SIZE = FEED_PAGE;
 
 	// ── The URL ─────────────────────────────────────────────────────────────
 	// Every filter from its row in filters.ts; the line opened beside them.

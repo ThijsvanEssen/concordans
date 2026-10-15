@@ -24,9 +24,13 @@ describe('ekFactionGroups', () => {
 			{ label: 'Voor', names: ['CDA', 'VVD'] },
 			{ label: 'Tegen', names: ['BBB', 'FVD'] }
 		]);
-		expect(ekFactionGroups({ factions_noted: ['SGP', 'FVD', 'JA21'] })).toEqual([
-			{ label: 'Aantekening', names: ['SGP', 'FVD', 'JA21'] }
-		]);
+		expect(
+			ekFactionGroups({
+				factions_for: [],
+				factions_against: [],
+				factions_noted: ['SGP', 'FVD', 'JA21']
+			})
+		).toEqual([{ label: 'Aantekening', names: ['SGP', 'FVD', 'JA21'] }]);
 	});
 });
 

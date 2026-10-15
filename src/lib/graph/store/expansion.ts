@@ -1,6 +1,7 @@
 import { getNodeGraph, getNodeNeighborhood, neighborsOf } from '$lib/api/nodes';
 import { inPool } from '$lib/api/pool';
 import { report } from '$lib/api/errors';
+import { volledig } from '$lib/api/limits';
 import {
 	abortable,
 	CANVAS_BUCKET,
@@ -29,7 +30,7 @@ import { behoudenBuckets, behoudenIds, meldSoort, type SoortenGeladen } from './
 
 /** "Alles laden" of one kind: at most this many bronnen, asked a page of this many at a time. */
 const LOAD_ALL_CAP = 5000;
-const LOAD_ALL_PAGE = 500;
+const LOAD_ALL_PAGE = volledig('/api/nodes/{collection}/{key}');
 
 /** The dossiers of the stukken on a path: four at a time, for at most twelve stukken. */
 const PATH_DOSSIERS = { parallel: 4, max: 12 };
@@ -119,7 +120,7 @@ export function createExpansion(
 		 */
 		chosen: ReadonlySet<string> | null = null
 	) {
-		const byId = new Map(nodesIn.map((n) => [nodeId(n.collection, n.key), n]));
+		const byId = new Map<string, SubNode>(nodesIn.map((n) => [nodeId(n.collection, n.key), n]));
 		const drawn = new Set<string>();
 		for (const node of nodesIn) {
 			// The requested bron itself is drawn even when it is not drawn as a neighbour (a

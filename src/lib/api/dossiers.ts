@@ -41,3 +41,9 @@ export const getChangedArticles = (
 			unwrap(api.GET('/api/dossiers/{number}/changed-articles', { params: { path: { number } } }))
 		)
 	);
+
+/** Its amendments as chains of papers with their decision (API 0.79.60). */
+export const getDossierAmendments = (number: string) =>
+	once(`dossiers/${number}/amendments`, () =>
+		unwrap(api.GET('/api/dossiers/{number}/amendments', { params: { path: { number } } }))
+	);

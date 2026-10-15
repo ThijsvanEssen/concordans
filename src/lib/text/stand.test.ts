@@ -12,7 +12,7 @@ describe('feedStand', () => {
 		expect(standLine(stand!)).toBe(
 			'Stukken van de Kamers tot en met 24 sep. 2026, opgehaald op 24 sep. 2026'
 		);
-		expect(feedStand({ bwb: { newest: '2026-09-01' } })).toBeNull();
+		expect(feedStand({ bwb: { retrieved_at: null, newest: '2026-09-01' } })).toBeNull();
 		expect(feedStand(undefined)).toBeNull();
 	});
 });

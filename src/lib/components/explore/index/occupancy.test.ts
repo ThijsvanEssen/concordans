@@ -33,7 +33,7 @@ const schoof = termOf({ from_date: '2024-07-02', to_date: '2026-02-23', ministri
 describe('termOf', () => {
 	it('runs to today only while a post is held, and is not made up without posts', () => {
 		const held = (to: string | null) => [
-			{ ministry: 'az' as const, seats: [seat([post('A', '2026-02-23', to)])] }
+			{ ministry: 'az' as const, name: null, seats: [seat([post('A', '2026-02-23', to)])] }
 		];
 		const t = termOf(
 			{ from_date: '2026-02-23', to_date: null, ministries: held(null) },
@@ -83,10 +83,34 @@ describe('bandsOf', () => {
 	it('keeps the demissionary phases within the term', () => {
 		const bands = bandsOf(
 			[
-				{ kind: 'formatie', from_date: '2023-11-22', to_date: '2024-07-02' },
-				{ kind: 'in_functie', from_date: '2024-07-02', to_date: '2025-06-03' },
-				{ kind: 'demissionair', from_date: '2025-06-03', to_date: '2025-08-22' },
-				{ kind: 'dubbel_demissionair', from_date: '2025-08-22', to_date: '2026-02-23' }
+				{
+					label: null,
+					source: null,
+					kind: 'formatie',
+					from_date: '2023-11-22',
+					to_date: '2024-07-02'
+				},
+				{
+					label: null,
+					source: null,
+					kind: 'in_functie',
+					from_date: '2024-07-02',
+					to_date: '2025-06-03'
+				},
+				{
+					label: null,
+					source: null,
+					kind: 'demissionair',
+					from_date: '2025-06-03',
+					to_date: '2025-08-22'
+				},
+				{
+					label: null,
+					source: null,
+					kind: 'dubbel_demissionair',
+					from_date: '2025-08-22',
+					to_date: '2026-02-23'
+				}
 			],
 			schoof
 		);
@@ -99,22 +123,37 @@ describe('actingReason', () => {
 	it('names the other post, or keeps the words of Rijksoverheid', () => {
 		expect(
 			actingReason({
+				acting_basis: null,
 				acting_reason: 'held_other_seat',
 				acting_other_seat: { seat: 'kgg', function: 'Minister van Klimaat en Groene Groei' }
 			})
 		).toBe('Naast de post minister van Klimaat en Groene Groei, tot de opvolger aantrad.');
-		expect(actingReason({ acting_reason: 'held_other_seat' })).toBe(
-			'Naast een andere post, tot de opvolger aantrad.'
-		);
-		expect(actingReason({ acting_reason: 'source', acting_basis: 'a.i.' })).toBe(
-			'Ad interim, volgens Rijksoverheid.'
-		);
 		expect(
-			actingReason({ acting_reason: 'source', acting_basis: 'Beheer portefeuille overgenomen (X)' })
+			actingReason({
+				acting_basis: null,
+				acting_other_seat: null,
+				acting_reason: 'held_other_seat'
+			})
+		).toBe('Naast een andere post, tot de opvolger aantrad.');
+		expect(
+			actingReason({ acting_other_seat: null, acting_reason: 'source', acting_basis: 'a.i.' })
+		).toBe('Ad interim, volgens Rijksoverheid.');
+		expect(
+			actingReason({
+				acting_other_seat: null,
+				acting_reason: 'source',
+				acting_basis: 'Beheer portefeuille overgenomen (X)'
+			})
 		).toBe('Volgens Rijksoverheid: beheer portefeuille overgenomen (X).');
-		expect(actingReason({ acting_reason: 'source', acting_basis: 'Wegens ziekte.' })).toBe(
-			'Volgens Rijksoverheid: wegens ziekte.'
-		);
-		expect(actingReason({})).toBeNull();
+		expect(
+			actingReason({
+				acting_other_seat: null,
+				acting_reason: 'source',
+				acting_basis: 'Wegens ziekte.'
+			})
+		).toBe('Volgens Rijksoverheid: wegens ziekte.');
+		expect(
+			actingReason({ acting_reason: null, acting_basis: null, acting_other_seat: null })
+		).toBeNull();
 	});
 });

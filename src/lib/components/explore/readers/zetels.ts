@@ -65,8 +65,8 @@ const zinsdeel = (t: string) =>
 		.trim()
 		.replace(/[.;,:]+$/, '');
 
-/** A kind as a label, as the API names it (SeatEventDTO.kind). */
-export const SOORT: Record<string, string> = {
+/** A kind as a label, for every kind the API names (SeatEventKind): a new kind is a type error. */
+export const SOORT: Record<Schema<'SeatEventKind'>, string> = {
 	verkiezing: 'Verkiezing',
 	afsplitsing: 'Afsplitsing',
 	overstap: 'Overstap',
@@ -109,6 +109,6 @@ export function wijzigingenVan(stuk: Pick<Stuk, 'events' | 'factions'>): Wijzigi
 	return [...per.values()].map(({ e, fracties }) =>
 		e.words && zinsdeel(e.words)
 			? { woorden: zinsdeel(e.words) }
-			: { soort: SOORT[e.kind] ?? e.kind, wie: [...fracties].join(', ') }
+			: { soort: SOORT[e.kind], wie: [...fracties].join(', ') }
 	);
 }

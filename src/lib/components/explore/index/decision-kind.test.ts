@@ -3,19 +3,23 @@ import { decisionMethod, decisionOutcome, decisionResult, isHammer } from './dec
 
 describe('decisionOutcome', () => {
 	it('names a vote, a hamerstuk and a decision that is no vote', () => {
-		expect(decisionOutcome({ passed: true, decision_kind: 'Stemmen - aangenomen' })).toBe(
-			'Aangenomen'
-		);
-		expect(decisionOutcome({ passed: false, decision_kind: 'Stemmen - verworpen' })).toBe(
-			'Verworpen'
-		);
-		const hammer = { passed: true, decision_kind: 'Stemmen - zonder stemming aannemen' };
+		expect(
+			decisionOutcome({ kind: null, passed: true, decision_kind: 'Stemmen - aangenomen' })
+		).toBe('Aangenomen');
+		expect(
+			decisionOutcome({ kind: null, passed: false, decision_kind: 'Stemmen - verworpen' })
+		).toBe('Verworpen');
+		const hammer = {
+			kind: null,
+			passed: true,
+			decision_kind: 'Stemmen - zonder stemming aannemen'
+		};
 		expect(isHammer(hammer)).toBe(true);
 		expect(decisionOutcome(hammer)).toBe('Zonder stemming aangenomen');
-		expect(decisionOutcome({ passed: null, decision_kind: 'Stemmen - uitstellen' })).toBe(
-			'Uitstellen'
-		);
-		expect(decisionOutcome({ passed: null })).toBeNull();
+		expect(
+			decisionOutcome({ kind: null, passed: null, decision_kind: 'Stemmen - uitstellen' })
+		).toBe('Uitstellen');
+		expect(decisionOutcome({ kind: null, decision_kind: null, passed: null })).toBeNull();
 	});
 });
 
