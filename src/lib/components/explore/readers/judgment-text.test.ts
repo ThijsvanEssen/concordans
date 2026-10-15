@@ -840,10 +840,10 @@ describe('the parties of judgments the API read them for', () => {
 				'Eiser',
 				[
 					['COBRASPEN VASTGOED ONTWIKKELING B.V.'],
-					['STORM DUNE FILTERED WATER B.V. (Cobraspen c.s.)', 'R.T. Wiegerink, advocaat']
+					['STORM DUNE FILTERED WATER B.V. (Cobraspen c.s.)']
 				],
 				0,
-				[]
+				['R.T. Wiegerink, advocaat']
 			],
 			[
 				'Verweerder',
@@ -884,18 +884,33 @@ describe('the parties of judgments the API read them for', () => {
 		]);
 	});
 
-	it('writes the role once where the kop gave it with the name (RBGEL:2025:117, GHAMS:2025:109)', () => {
+	it('writes the role once where the kop gave it with the name (RBGEL:2025:117)', () => {
 		expect(rows('ECLI:NL:RBGEL:2025:117')[1]).toEqual([
 			'Verdachte',
 			[['[verdachte]', 'mr. S. Kriekaard, advocaat']],
 			0,
 			[]
 		]);
+	});
+
+	it('puts a line for the whole row after its last party, with both roles (GHAMS:2025:109)', () => {
 		expect(rows('ECLI:NL:GHAMS:2025:109')[1]).toEqual([
 			'Geïntimeerde',
-			[['notaris', 'mr. H.J. Delhaas, gemachtigde'], ['[geïntimeerde]']],
+			[['notaris'], ['[geïntimeerde]']],
 			0,
-			[]
+			['mr. H.J. Delhaas, advocaat, gemachtigde']
+		]);
+	});
+
+	it('puts a line for the whole row after the count (GHAMS:2025:121)', () => {
+		expect(rows('ECLI:NL:GHAMS:2025:121')).toEqual([
+			['Appellant', [['[appellant]', 'mr. R.L.G.J. Eikelboom, advocaat']], 0, []],
+			[
+				'Geïntimeerde',
+				[['de Stichting RAAD VAN ARBITRAGE IN BOUWGESCHILLEN']],
+				4,
+				['mr. O.B. Zwijnenberg, advocaat']
+			]
 		]);
 	});
 

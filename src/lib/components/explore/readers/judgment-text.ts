@@ -781,9 +781,11 @@ const labelOf = (p: Participant) => p.alias ?? p.name;
  * are named only where the line does not say it already (`said`): `, voor [eisers]`.
  */
 function counselLine(p: Participant, said = false): string {
-	// A kop that writes "mr. S. Kriekaard, advocaat" gave the role with the name.
-	const name = p.name.replace(/,\s*(?:advocaat|gemachtigde|raadsman)$/i, '');
-	const parts = [name, `${p.role.toLowerCase()}${p.place ? ` te ${p.place}` : ''}`];
+	const role = p.role.toLowerCase();
+	// A kop that writes "mr. S. Kriekaard, advocaat" gave the role with the name; another
+	// role there stays ("mr. H.J. Delhaas, advocaat, gemachtigde").
+	const name = p.name.endsWith(`, ${role}`) ? p.name.slice(0, -role.length - 2) : p.name;
+	const parts = [name, `${role}${p.place ? ` te ${p.place}` : ''}`];
 	if (p.capacity) parts.push(p.capacity);
 	if (p.parties?.length && !said) parts.push(`voor ${forParties(p.parties)}`);
 	return parts.join(', ');
@@ -831,17 +833,18 @@ export function partiesByRole(participants: Participant[]): RoleGroup[] {
 	for (const g of groups.values()) {
 		if (g.anonymous.length === 1) g.named.push(...g.anonymous.splice(0));
 	}
-	// A line leaves its parties out where it stands under the one party it acts for, or
-	// acts for all the parties of its row; otherwise it names them.
+	// A line stands under the last party it acts for and names its parties, unless it acts
+	// for that one alone. A line for the whole row, or for counted parties, stands after
+	// the row's parties, or its count; for the whole row it leaves them out.
 	for (const g of groups.values()) {
 		const row = new Set([...g.named, ...g.anonymous].map(labelOf));
 		const all = (p: Participant) =>
 			p.parties!.length === row.size && p.parties!.every((l) => row.has(l));
 		for (const [entry, p] of hosted) {
-			if (g.named.includes(entry)) {
-				const one = p.parties!.length === 1 && p.parties![0] === labelOf(entry);
-				entry.counsel.push(counselLine(p, one || all(p)));
-			} else if (g.anonymous.includes(entry)) g.counsel.push(counselLine(p, all(p)));
+			if (!g.named.includes(entry) && !g.anonymous.includes(entry)) continue;
+			const one = p.parties!.length === 1 && p.parties![0] === labelOf(entry);
+			if (g.named.includes(entry) && (one || !all(p))) entry.counsel.push(counselLine(p, one));
+			else g.counsel.push(counselLine(p, all(p)));
 		}
 	}
 	// The parties first, then who represents or advises them.

@@ -381,5 +381,103 @@
 				}
 			]
 		}
+	],
+	"ECLI:NL:GHAMS:2025:121": [
+		{
+			"name": "[appellant]",
+			"role": "Appellant",
+			"roles": ["Appellant"],
+			"role_stated": true,
+			"side": "first",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. R.L.G.J. Eikelboom",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "de Stichting RAAD VAN ARBITRAGE IN BOUWGESCHILLEN",
+			"role": "Geïntimeerde",
+			"roles": ["Geïntimeerde"],
+			"role_stated": true,
+			"side": "second",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. O.B. Zwijnenberg",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "[geïntimeerde 1]",
+			"role": "Geïntimeerde",
+			"roles": ["Geïntimeerde"],
+			"role_stated": true,
+			"side": "second",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. O.B. Zwijnenberg",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "[geïntimeerde 2]",
+			"role": "Geïntimeerde",
+			"roles": ["Geïntimeerde"],
+			"role_stated": true,
+			"side": "second",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. O.B. Zwijnenberg",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "[geïntimeerde 3]",
+			"role": "Geïntimeerde",
+			"roles": ["Geïntimeerde"],
+			"role_stated": true,
+			"side": "second",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. O.B. Zwijnenberg",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "[geïntimeerde 4]",
+			"role": "Geïntimeerde",
+			"roles": ["Geïntimeerde"],
+			"role_stated": true,
+			"side": "second",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. O.B. Zwijnenberg",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		}
 	]
 }
