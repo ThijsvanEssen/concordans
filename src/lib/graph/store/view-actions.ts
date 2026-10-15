@@ -29,6 +29,7 @@ export function createViewActions(
 		selectionStore,
 		filtersStore,
 		addEdge,
+		anchorContainer,
 		endOf,
 		threshold,
 		emit,
@@ -55,20 +56,29 @@ export function createViewActions(
 			const near = endOf(focus.raw?.collection ?? '', focus);
 			for (const row of rows) {
 				const id = nodeId(row.ref.collection, row.ref.key);
-				if (!nodes.has(id))
-					touchNode(id, syntheticNode(row.ref.collection, row.ref.key, row.title, row.props ?? {}));
-				const node = nodes.get(id)!;
-				const far = endOf(node.raw?.collection ?? '', node);
+				const synthetic = syntheticNode(
+					row.ref.collection,
+					row.ref.key,
+					row.title,
+					row.props ?? {}
+				);
+				// A container a row names is not drawn as a bron: it ties, as a point with a
+				// line, the way a node response draws a container chosen bronnen share.
+				const container = !!containerKindOf(row.ref.collection);
+				if (!container && !nodes.has(id)) touchNode(id, synthetic);
+				const node = container ? null : nodes.get(id)!;
+				const far = { ...endOf(row.ref.collection, node), ties: true };
 				const inbound = row.direction === 'inbound';
 				const placement = placeConnection({
-					mode: 'rows',
 					relation: row.relation,
 					source: inbound ? far : near,
 					target: inbound ? near : far,
-					focus: inbound ? 'target' : 'source',
 					threshold: threshold()
 				});
-				const [source, target] = inbound ? [node, focus] : [focus, node];
+				const point = placement.anchor ? anchorContainer(synthetic.raw!) : null;
+				const end = point ?? node;
+				if (!end) continue;
+				const [source, target] = inbound ? [end, focus] : [focus, end];
 				if (placement.place === 'member') {
 					const [hull, member] = placement.hull === 'source' ? [source, target] : [target, source];
 					containers.recordMember(

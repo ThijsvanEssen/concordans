@@ -113,21 +113,27 @@ export function createExpansion(
 		nodesIn: SubNode[],
 		edgesIn: SubEdge[],
 		focalId: string | null,
-		/** `path`: a step to a container is drawn to its hull, not dropped (Sr, VVD). */
-		mode: 'subgraph' | 'path' = 'subgraph'
+		/**
+		 * The chosen bronnen of a path. A container among them is drawn as its anchor, as the
+		 * focus is; a container between them ties: a step to it ends at its anchor (Sr, VVD).
+		 */
+		chosen: ReadonlySet<string> | null = null
 	) {
 		const byId = new Map(nodesIn.map((n) => [nodeId(n.collection, n.key), n]));
 		const drawn = new Set<string>();
 		for (const node of nodesIn) {
-			// The requested bron itself is drawn even when it is a container: it stays
-			// selectable for the reader, though `GraphView` never draws it as a canvas
-			// node. A container met only as a neighbour is folded into a hull instead.
-			const isFocal = nodeId(node.collection, node.key) === focalId;
-			if (isFocal) {
-				const containerKind = containerKindOf(node.collection);
-				if (containerKind) recordContainerFor(node, containerKind);
-			}
-			const graphNode = isFocal ? nodeToGraphNode(node) : drawable(node);
+			// The requested bron itself is drawn even when it is not drawn as a neighbour (a
+			// zaak): it stays selectable for the reader. A container in focus or chosen is
+			// drawn as its anchor, as the centre of a node response is; one met only as a
+			// neighbour is folded into a hull instead.
+			const id = nodeId(node.collection, node.key);
+			const anchored = id === focalId || !!chosen?.has(id);
+			const graphNode =
+				anchored && containerKindOf(node.collection)
+					? anchorContainer(node)
+					: id === focalId
+						? nodeToGraphNode(node)
+						: drawable(node);
 			if (!graphNode) continue;
 			touchNode(graphNode.id, graphNode);
 			drawn.add(graphNode.id);
@@ -140,14 +146,14 @@ export function createExpansion(
 		const endOf = (id: string, node: SubNode | undefined): End => ({
 			hull: node ? containerKindOf(node.collection) : null,
 			drawn: drawn.has(id),
-			drawClass: nodes.get(id)?.drawClass ?? 'other'
+			drawClass: nodes.get(id)?.drawClass ?? 'other',
+			ties: !!chosen && !chosen.has(id)
 		});
 		for (const e of edgesIn) {
 			const relation = relationOf(e.relation);
 			if (!relation) continue;
 			const ends = { source: byId.get(e.source), target: byId.get(e.target) };
 			const placement = placeConnection({
-				mode,
 				relation,
 				source: endOf(e.source, ends.source),
 				target: endOf(e.target, ends.target),
@@ -232,7 +238,7 @@ export function createExpansion(
 				response.nodes.filter((n) => onPath.has(nodeId(n.collection, n.key))),
 				response.edges.filter((e) => edgeIds.has(e.id))
 			);
-			const { drawn } = mergeSubgraph(folded.nodes, folded.edges, null, 'path');
+			const { drawn } = mergeSubgraph(folded.nodes, folded.edges, null, new Set(response.ids));
 			// The dossier a stuk on a path is in, as a hull around it: the MvT of 33328 shows
 			// the bill it explains (BE-49). From the stuk's light node (its one PART_OF dossier;
 			// 9 kB, not 42), within PATH_DOSSIERS, so one composition stays within the API's
