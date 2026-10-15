@@ -36,7 +36,7 @@ const EFFECT: Record<string, Relation> = {
 };
 
 /** The bron in which a verbinding stands, for the head of the card. */
-const IN_EEN: Partial<Record<Collection, string>> = {
+const IN_A: Partial<Record<Collection, string>> = {
 	judgments: 'in een uitspraak',
 	documents: 'in een Kamerstuk',
 	articles: 'in een artikel',
@@ -44,12 +44,11 @@ const IN_EEN: Partial<Record<Collection, string>> = {
 	dossiers: 'in een dossier'
 };
 
-const inEen = (noun: string, van: Collection | null) =>
-	van && IN_EEN[van] ? `${noun} ${IN_EEN[van]}` : noun;
+const inA = (noun: string, van: Collection | null) =>
+	van && IN_A[van] ? `${noun} ${IN_A[van]}` : noun;
 
 /** Of a change: the article or the law it changes. */
-const vanEen = (naar: Collection | null) =>
-	naar === 'articles' ? 'van een artikel' : 'van een wet';
+const ofA = (naar: Collection | null) => (naar === 'articles' ? 'van een artikel' : 'van een wet');
 
 /**
  * Per relation, its words. The source collection decides who speaks: a judgment `haalt aan`,
@@ -72,9 +71,9 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 								: ['onderdeel van', 'omvat', 'onderdeel'],
 	VERSION_OF: () => ['versie van', 'versie', 'versie'],
 	// The publication that enacted a new regulation set its articles (BWB `nieuwe-regeling`).
-	ESTABLISHES: ({ naar }) => ['stelt vast', 'vastgesteld bij', `vaststelling ${vanEen(naar)}`],
-	AMENDS: ({ naar }) => ['wijzigt', 'wijzigt', `wijziging ${vanEen(naar)}`],
-	INTRODUCES: ({ naar }) => ['voegt in', 'voegt in', `invoeging ${vanEen(naar)}`],
+	ESTABLISHES: ({ naar }) => ['stelt vast', 'vastgesteld bij', `vaststelling ${ofA(naar)}`],
+	AMENDS: ({ naar }) => ['wijzigt', 'wijzigt', `wijziging ${ofA(naar)}`],
+	INTRODUCES: ({ naar }) => ['voegt in', 'voegt in', `invoeging ${ofA(naar)}`],
 	// An article vervalt; a law is ingetrokken (Aanwijzingen voor de regelgeving).
 	REPEALS: ({ naar }) =>
 		naar === 'instruments'
@@ -100,7 +99,7 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 				? ['noemt', 'genoemd', 'verwijzing in een Kamerstuk']
 				: van === 'instruments'
 					? ['noemt', 'genoemd', 'vermelding in een wet']
-					: ['verwijst naar', 'verwijst naar', inEen('verwijzing', van)],
+					: ['verwijst naar', 'verwijst naar', inA('verwijzing', van)],
 	EXPLAINS: ({ naar }) => [
 		'licht toe',
 		'toegelicht in',

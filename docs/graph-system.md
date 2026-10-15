@@ -97,4 +97,4 @@ The legend states what is on the canvas and what the bronfilter hides, with the 
 1. Sync the API (`npm run sync:api`) and copy lawgraph's `tests/data/relations.json`: the compiler then asks for the collection in `NODE_TYPES` and `BRON_LABEL` in `vocabulary.ts`.
 2. Give it a row in `COLLECTION_ROLE`, with a class or a new `DrawClass`. The compiler then flags every `Record<DrawClass, ...>` and switch that lacks an entry: `NODE_SIZE` in `GraphView.svelte`. Give its collection a vorm in `VORM_VAN` (`src/lib/bron/vormen.ts`). Give it a filter group in `filterGroupOf` (`src/lib/verbonden/filter.ts`).
 3. Extend `buildNodeLabel` if the label is not `display_name`.
-4. Add its groups to `GROUPS` in `verbonden/groups.ts` and a reader in `KindReader.svelte` (see [`readers.md`](readers.md)).
+4. Add its groups to `GROUPS` in `verbonden/groups.ts` and a reader in `explore/readers.ts` (see [`readers.md`](readers.md)).

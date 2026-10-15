@@ -33,8 +33,8 @@
 	} from './judgment-text';
 	import { sourceName } from '../law-head';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
-	import { getNodeGraph, neighborsOf } from '$lib/api/nodes';
-	import { once } from '$lib/api/records';
+	import { neighborsOf } from '$lib/api/nodes';
+	import { getRelatedCases } from '$lib/api/records';
 	import { paragraphNumber } from '$lib/text/anchor';
 	import { korteDatum, langeDatum } from '$lib/text/datum';
 	import { samenhangVan, type Samenhang } from './related-cases';
@@ -57,7 +57,7 @@
 	const loaded = $derived(judgment.state.status === 'ready' ? judgment.state.data : null);
 	// The judgment's citation and the view's address, once: an overweging adds only its number
 	// and anchor, and another overweging chosen (the hash) changes neither.
-	const citeer = $derived(loaded ? citeOverwegingen(loaded.judgment, node.id) : null);
+	const overwegingCite = $derived(loaded ? citeOverwegingen(loaded.judgment, node.id) : null);
 	const view = $derived(viewLink(page.url));
 
 	// The anchor of an overweging: `paragraph_id` for the first sub-paragraph split out of
@@ -107,7 +107,7 @@
 		if (related.length === 0) return;
 		let stale = false;
 		samenhang = samenhangVan([], related);
-		once(`nodes/judgments/${j.key}`, () => getNodeGraph('judgments', j.key, { limit: 50 }))
+		getRelatedCases(j.key)
 			.then((response) => {
 				if (!stale) samenhang = samenhangVan(neighborsOf(response), related);
 			})
@@ -359,7 +359,7 @@
 					</div>
 				{:else if item.kind === 'rov'}
 					<!-- Cited and kept as a map's item offers it too (citeOverwegingen, MapInhoud). -->
-					{@const forms = citeer?.(item.num, item.id, linkTo(view, item.id)) ?? null}
+					{@const forms = overwegingCite?.(item.num, item.id, linkTo(view, item.id)) ?? null}
 					{@const bewaarItem = forms?.bewaar ?? null}
 					<!-- Every number in one column, whatever its depth; the number is the
 					     overweging's menu, so the text is as wide as the prose around it. -->

@@ -14,7 +14,7 @@ The reading surfaces of `/explore` for the selected bron:
 
 ## Dispatch
 
-`KindReader.svelte` is one flat `{#if}` chain on `selection.collection`. A collection without a branch gets `FallbackReader`.
+Each reader is a chunk of its own. `explore/readers.ts` holds one `Lazy` (`$lib/util/lazy.svelte`) per collection; `KindReader.svelte` loads the one of `selection.collection` and shows it, or the failure in its place. A collection without an entry gets `FallbackReader`. The page asks the reader of the focus as soon as its collection is known (the focus, or the kind of a readable address), beside the bron's first request. The table, the filter sheet, a reader beside the article and `VersionCompare` load the same way, when first asked for.
 
 | Collection    | Reader             | Reads                                                                                                        |
 | ------------- | ------------------ | ------------------------------------------------------------------------------------------------------------ |
@@ -70,7 +70,7 @@ Links inside a reader are `bronHref` (see [`routes.md`](routes.md#links-to-a-bro
 ## Adding a reader
 
 1. Create `explore/readers/{Kind}Reader.svelte` with `node: GraphNode` (or `selection`) as prop and a `view` state.
-2. Add a branch to `KindReader.svelte`.
+2. Add it to `READERS` in `explore/readers.ts`, and its address kind to `COLLECTION_OF_PAD`.
 3. For a text source, use `ReaderFrame` and `ReaderHead`, and give the parts a reference can point at an id.
 4. Add the groups of its verbindingen to `GROUPS` in `src/lib/verbonden/groups.ts`.
 5. The kind itself is added as described in [`graph-system.md`](graph-system.md#adding-a-node-kind).

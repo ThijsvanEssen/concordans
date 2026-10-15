@@ -116,6 +116,15 @@ export const getNodeVerbonden = (collection: Collection, key: string) =>
 		getNodeGraph(collection, key, { limit: VERBONDEN_BUCKET })
 	);
 
+/**
+ * The judgments a judgment is connected to (RELATED_TO), with the sentence that ties each on
+ * the edge (`meta.text`): one bucket, both directions, not the whole node.
+ */
+export const getRelatedCases = (key: string) =>
+	once(`nodes/judgments/${key.toLowerCase()}/related`, () =>
+		getNodeGraph('judgments', key, { relations: 'RELATED_TO', nodeTypes: 'judgment', limit: 50 })
+	);
+
 /** How many records are kept. */
 export const RECORDS_KEPT = MAX;
 

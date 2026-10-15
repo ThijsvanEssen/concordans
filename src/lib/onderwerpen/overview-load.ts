@@ -1,7 +1,7 @@
 // The questions of the overview of a topic (onderwerpen/overzicht), as plain functions: the
 // topic in, the counts or the rows out. The page asks each on its own, the cheapest first.
 import { report } from '$lib/api/errors';
-import { besluiten, geteld } from '$lib/api/decisions';
+import { decisionsPage, geteld } from '$lib/api/decisions';
 import { getFeed, getFeedPeriods } from '$lib/api/feed';
 import { normalizeItem, type FeedItem } from '$lib/components/actueel/feed';
 import { feedStand } from '$lib/text/stand';
@@ -92,7 +92,7 @@ export async function countFactionVotes(
 export async function allDecisions(query: Record<string, unknown>, signal?: AbortSignal) {
 	const all: Besluit[] = [];
 	for (let offset = 0; offset < DECISIONS_MAX; offset += PAGE_SIZE) {
-		const r = await besluiten({ ...query, limit: PAGE_SIZE, offset }, signal);
+		const r = await decisionsPage({ ...query, limit: PAGE_SIZE }, offset, signal);
 		all.push(...r.items);
 		// A total still being counted (null) says nothing: a short page ends it.
 		if (r.items.length < PAGE_SIZE || (r.total !== null && offset + PAGE_SIZE >= r.total)) break;

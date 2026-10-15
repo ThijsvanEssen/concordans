@@ -6,22 +6,9 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import type { VerbondenFilter } from '$lib/verbonden/filter';
 	import type { Row } from '$lib/verbonden/rows';
-	import ArticleReader from './readers/ArticleReader.svelte';
-	import JudgmentReader from './readers/JudgmentReader.svelte';
-	import DocumentReader from './readers/DocumentReader.svelte';
-	import DossierReader from './readers/DossierReader.svelte';
-	import CommitteeReader from './readers/CommitteeReader.svelte';
-	import MemberReader from './readers/MemberReader.svelte';
-	import FactionReader from './readers/FactionReader.svelte';
-	import DecisionReader from './readers/DecisionReader.svelte';
-	import CabinetReader from './readers/CabinetReader.svelte';
-	import CommitmentReader from './readers/CommitmentReader.svelte';
-	import ActivityReader from './readers/ActivityReader.svelte';
-	import InstrumentReader from './readers/InstrumentReader.svelte';
-	import AnnexReader from './readers/AnnexReader.svelte';
-	import FallbackReader from './readers/FallbackReader.svelte';
-	import { setContext, type Component } from 'svelte';
-	import type { Collection } from '$lib/vocabulary';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { articleReader, readerOf } from './readers';
+	import { setContext } from 'svelte';
 	import { BEHOORT_KEY } from '$lib/bron/behoort';
 
 	let {
@@ -55,25 +42,16 @@
 	// Every reader's frame shows where this bron stands, from the same place (BehoortBij).
 	setContext(BEHOORT_KEY, () => selection);
 
-	/** The reader of each collection but the article's, which takes the place in its law too. */
-	const READERS: Partial<Record<Collection, Component<{ node: GraphNode }>>> = {
-		judgments: JudgmentReader,
-		documents: DocumentReader,
-		dossiers: DossierReader,
-		committees: CommitteeReader,
-		members: MemberReader,
-		factions: FactionReader,
-		decisions: DecisionReader,
-		activities: ActivityReader,
-		cabinets: CabinetReader,
-		commitments: CommitmentReader,
-		instruments: InstrumentReader,
-		annexes: AnnexReader
-	};
-	const Reader = $derived(READERS[selection.collection] ?? FallbackReader);
+	// Each reader is a chunk of its own (readers.ts), the article's apart: it takes the place in
+	// its law too.
+	const isArticle = $derived(selection.collection === 'articles');
+	const other = $derived(isArticle ? null : readerOf(selection.collection));
+	const chosen = $derived(other ?? articleReader);
+	$effect(() => chosen.load());
 </script>
 
-{#if selection.collection === 'articles'}
+{#if isArticle && articleReader.component}
+	{@const ArticleReader = articleReader.component}
 	<ArticleReader
 		node={selection}
 		{prevHref}
@@ -86,6 +64,9 @@
 		{proposedRow}
 		{onCloseProposed}
 	/>
-{:else}
+{:else if other?.component}
+	{@const Reader = other.component}
 	<Reader node={selection} />
+{:else if chosen.error}
+	<LoadState state={{ status: 'error', error: chosen.error }} what="De bron" form="block" />
 {/if}

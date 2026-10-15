@@ -31,7 +31,8 @@ import { eersteIndiener, isEersteIndiener } from './submitters';
 import { bronLabel, isCollection, type Collection } from '$lib/vocabulary';
 import { focusOf, type BronRef } from './href';
 import { cut } from './tab-title';
-import { isOverwegingAnker, laadUitspraak, tekstVanOverweging } from './overweging';
+import { laadUitspraak, tekstVanOverweging } from './overweging';
+import { isOverwegingAnker } from '$lib/text/anchor';
 
 export type Preview = {
 	/** The kind, and where it helps its place: `Uitspraak, Hoge Raad`. */
