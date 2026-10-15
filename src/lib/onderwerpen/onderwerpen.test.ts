@@ -75,6 +75,16 @@ describe('onderwerpen', () => {
 		expect(topicsOf(new URLSearchParams('onderwerp=AI|ki|KI'))).toEqual([['AI', 'ki']]);
 	});
 
+	it('reads one topic once from an address that holds it twice, in any order (#134)', () => {
+		const p = new URLSearchParams(
+			'onderwerp=Huur|huurtoeslag&onderwerp=huurtoeslag|Huur&onderwerp=huur&onderwerp=Huur'
+		);
+		expect(topicsOf(p)).toEqual([['Huur', 'huurtoeslag'], ['huur']]);
+		expect(
+			wettenUitParams(new URLSearchParams('wet=BWBR0005289/6:162&wet=bwbr0005289/6:162'))
+		).toEqual([{ bwb: 'BWBR0005289', titel: 'BWBR0005289', artikel: '6:162' }]);
+	});
+
 	it('keeps the recent list of a topic of today in a new session', () => {
 		volg(['AI']);
 		zetGezien('AI', '2026-10-08');

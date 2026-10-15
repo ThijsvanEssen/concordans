@@ -200,11 +200,18 @@ export const isNieuw = (datum: string, vorige: string | null) => !!vorige && dat
 
 export const topicParam = (termen: string[]) => termen.map(normaal).join('|');
 
+/** Each topic once, by its key: an address may hold one in two orders (#134). */
+const eenmaal = <T>(lijst: T[], sleutel: (x: T) => string): T[] => {
+	const gezien = new Set<string>();
+	return lijst.filter((x) => !gezien.has(sleutel(x)) && !!gezien.add(sleutel(x)));
+};
+
 export function topicsOf(params: URLSearchParams): string[][] {
-	return params
+	const lijst = params
 		.getAll('onderwerp')
 		.map((v) => uniek(v.split('|')))
 		.filter((t) => t.length);
+	return eenmaal(lijst, (termen) => topicKey({ termen }));
 }
 
 export function deelAdres(lijst: Pick<Onderwerp, 'termen' | 'wet'>[]): string {
@@ -221,9 +228,10 @@ const naarWetParam = (w: GevolgdeWet) =>
 
 /** The laws of an address; their names come with their first answer (`titel` the id). */
 export function wettenUitParams(params: URLSearchParams): GevolgdeWet[] {
-	return params.getAll('wet').flatMap((v) => {
+	const lijst = params.getAll('wet').flatMap((v) => {
 		const [bwb, ...rest] = v.trim().split('/');
 		const w = leesWet({ bwb, artikel: rest.join('/') });
 		return w ? [w] : [];
 	});
+	return eenmaal(lijst, wetSleutel);
 }
