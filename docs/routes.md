@@ -16,7 +16,7 @@
 
 ## Readable addresses
 
-`src/hooks.ts` serves these paths with the Verkenner; `src/lib/bron/leesbaar.ts` reads and writes them.
+`src/hooks.ts` serves these paths with the Verkenner; `src/lib/bron/leesbaar.ts` reads and writes them, one rule per kind (`ADDRESS_RULES`). The address of a bron is the `path` the API gives it; the front end makes one only where the key is in it (a judgment, a law, a dossier by its number, a cabinet, a fractie, a stemming, a publication).
 
 | Bron        | Address                                                      | Focus                            |
 | ----------- | ------------------------------------------------------------ | -------------------------------- |
@@ -31,7 +31,7 @@
 | commissie   | `/commissies/szw`                                            | `/api/lookup` kind `committee`   |
 | toezegging  | `/toezeggingen/TZ202609-124`                                 | `/api/lookup` kind `commitment`  |
 
-A stemming has none and stays under `/explore?focus=`. A lookup that answers 404 `not_in_data` reads "… staat niet in de gegevens".
+A bron the API gives no `path` stays under `/explore?focus=`. A lookup that answers 404 `not_in_data` reads "… staat niet in de gegevens".
 
 ## Query of the Verkenner
 

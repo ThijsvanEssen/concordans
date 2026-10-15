@@ -17,7 +17,6 @@ import {
 import { dossierVanRij, type Row } from '$lib/verbonden/rows';
 import { describeBron } from '$lib/bron/describe';
 import { previewFromNode } from './preview';
-import { tabTitle } from './tab-title';
 import { laagVan } from '$lib/bron/behoort-layer';
 import { paarZin } from '$lib/verbonden/hoe';
 import { buildNodeLabel } from '$lib/graph/types';
@@ -141,7 +140,7 @@ describe('a dossier number in its official notation', () => {
 			kamerstukName({ dossier_number: '36600-VIII' }),
 			describeBron('dossiers', '36600-VIII', null, props).identifier,
 			previewFromNode('dossiers', null, props).kicker,
-			tabTitle({ collection: 'dossiers', label: '36600-VIII', raw: { display_name: null, props } }),
+			// The tab takes the API's title, `36600 VIII Begroting …` (titles.test).
 			buildNodeLabel({ collection: 'dossiers', key: '36600-VIII', props } as never, 'dossier'),
 			// The hull on the canvas, short and on hover (#95).
 			...Object.values(

@@ -1,0 +1,419 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`the names of a bron > 'activities/3e394d68_06e1_4a3c_868a_61…' 1`] = `
+{
+  "canvas": "Regeling van werkzaamheden, 15 april 2025",
+  "card": "Regeling van werkzaamheden",
+  "label": "2025-04, Regeling",
+  "row": "Regeling van werkzaamheden, 15 april 2025",
+  "tab": "Regeling van werkzaamheden van 15 april 2025",
+  "tab before its title": "Regeling van werkzaamheden, 15 april 2025",
+}
+`;
+
+exports[`the names of a bron > 'activities/481df0ca_7e30_4797_b0d9_4d…' 1`] = `
+{
+  "canvas": "Procedurevergadering commissie Binnenlandse Zaken",
+  "card": "Procedurevergadering",
+  "label": "2025-09, Procedurevergadering",
+  "row": "Procedurevergadering commissie Binnenlandse Zaken",
+  "tab": "Procedurevergadering van 25 september 2025: Procedurevergadering commissie…",
+  "tab before its title": "Procedurevergadering commissie Binnenlandse Zaken",
+}
+`;
+
+exports[`the names of a bron > 'activities/1458fee0_6d30_4882_9d97_45…' 1`] = `
+{
+  "canvas": "Procedurevergadering commissie Binnenlandse Zaken",
+  "card": "Procedurevergadering",
+  "label": "2025-03, Procedurevergadering",
+  "row": "Procedurevergadering commissie Binnenlandse Zaken",
+  "tab": "Procedurevergadering van 13 maart 2025: Procedurevergadering commissie…",
+  "tab before its title": "Procedurevergadering commissie Binnenlandse Zaken",
+}
+`;
+
+exports[`the names of a bron > 'annexes/bwbr0005537_annex_1' 1`] = `
+{
+  "canvas": "Bijlage 1: Regeling rechtstreeks beroep (artikel 7:1, eerste lid, onderdeel g)",
+  "card": "Regeling rechtstreeks beroep (artikel 7:1, eerste lid, onderdeel g)",
+  "label": "Bijlage 1: Regeling rechtstreeks beroep (artikel 7:1, eerste lid, onderdeel g)",
+  "row": "Bijlage 1: Regeling rechtstreeks beroep (artikel 7:1, eerste lid, onderdeel g)",
+  "tab": "Bijlage 1 Awb: regeling rechtstreeks beroep (artikel 7:1, eerste lid…",
+  "tab before its title": "Bijlage 1: Regeling rechtstreeks beroep (artikel 7:1, eerste lid, onderdeel g)",
+}
+`;
+
+exports[`the names of a bron > 'annexes/bwbr0005537_annex_2' 1`] = `
+{
+  "canvas": "Bijlage 2: Bevoegdheidsregeling bestuursrechtspraak (artikelen 8:5, 8:6, 8:7, 8:105 en 8:106)",
+  "card": "Bevoegdheidsregeling bestuursrechtspraak (artikelen 8:5, 8:6, 8:7, 8:105 en 8:106)",
+  "label": "Bijlage 2: Bevoegdheidsregeling bestuursrechtspraak (artikelen 8:5, 8:6, 8:7, 8:105 en 8:106)",
+  "row": "Bijlage 2: Bevoegdheidsregeling bestuursrechtspraak (artikelen 8:5, 8:6, 8:7, 8:105 en 8:106)",
+  "tab": "Bijlage 2 Awb: bevoegdheidsregeling bestuursrechtspraak (artikelen 8:5, 8:6…",
+  "tab before its title": "Bijlage 2: Bevoegdheidsregeling bestuursrechtspraak (artikelen 8:5, 8:6, 8:7…",
+}
+`;
+
+exports[`the names of a bron > 'annexes/bwbr0005537_annex_3' 1`] = `
+{
+  "canvas": "Bijlage 3: Regeling verlaagd griffierecht (artikelen 8:41 en 8:109)",
+  "card": "Regeling verlaagd griffierecht (artikelen 8:41 en 8:109)",
+  "label": "Bijlage 3: Regeling verlaagd griffierecht (artikelen 8:41 en 8:109)",
+  "row": "Bijlage 3: Regeling verlaagd griffierecht (artikelen 8:41 en 8:109)",
+  "tab": "Bijlage 3 Awb: regeling verlaagd griffierecht (artikelen 8:41 en 8:109)",
+  "tab before its title": "Bijlage 3: Regeling verlaagd griffierecht (artikelen 8:41 en 8:109)",
+}
+`;
+
+exports[`the names of a bron > 'article_versions/bwbr0005289_av_29584…' 1`] = `
+{
+  "canvas": "Artikel 162 Burgerlijk Wetboek Boek 6",
+  "card": "Artikel 162 Burgerlijk Wetboek Boek 6",
+  "label": "Artikel 6:162 Burgerlijk Wetboek Boek 6, versie van 1 januari 1992",
+  "row": "Artikel 162 Burgerlijk Wetboek Boek 6",
+  "tab": "Artikel 162 Burgerlijk Wetboek Boek 6",
+  "tab before its title": "Artikel 162 Burgerlijk Wetboek Boek 6",
+}
+`;
+
+exports[`the names of a bron > 'articles/bwbr0001840_21' 1`] = `
+{
+  "canvas": "Art. 21 Gw",
+  "card": "Artikel 21 Gw",
+  "label": "Art. 21",
+  "row": "Artikel 21 Gw",
+  "tab": "Art. 21 Gw, Grondrechten",
+  "tab before its title": "Artikel 21 Gw",
+}
+`;
+
+exports[`the names of a bron > 'articles/bwbr0005289_162' 1`] = `
+{
+  "canvas": "Art. 6:162 BW",
+  "card": "Artikel 6:162 BW",
+  "label": "Art. 6:162",
+  "row": "Artikel 6:162 BW",
+  "tab": "Art. 6:162 BW, Onrechtmatige daad",
+  "tab before its title": "Artikel 6:162 BW",
+}
+`;
+
+exports[`the names of a bron > 'articles/bwbr0005291_305a' 1`] = `
+{
+  "canvas": "Art. 3:305a BW",
+  "card": "Artikel 3:305a BW",
+  "label": "Art. 3:305a",
+  "row": "Artikel 3:305a BW",
+  "tab": "Art. 3:305a BW, Rechtsvorderingen",
+  "tab before its title": "Artikel 3:305a BW",
+}
+`;
+
+exports[`the names of a bron > 'cabinets/schoof' 1`] = `
+{
+  "canvas": "kabinet-Schoof",
+  "card": "kabinet-Schoof",
+  "label": "kabinet-Schoof",
+  "row": "kabinet-Schoof",
+  "tab": "Kabinet-Schoof (2024–2026)",
+  "tab before its title": "kabinet-Schoof",
+}
+`;
+
+exports[`the names of a bron > 'cases/2c668293_f1cb_49e8_987d_c6e4f53…' 1`] = `
+{
+  "canvas": "Amendement van het lid Grinwis c.s. ter vervanging van nr. 27 over specificering van de evaluatie",
+  "card": "Amendement van het lid Grinwis c.s. ter vervanging van nr. 27 over specificering van de evaluatie",
+  "label": "Amendement",
+  "row": "Amendement van het lid Grinwis c.s. ter vervanging van nr. 27 over specificering van de evaluatie",
+  "tab": "Amendement Grinwis c.s. ter vervanging van nr. 27 over specificering van de…",
+  "tab before its title": "Amendement van het lid Grinwis c.s. ter vervanging van nr. 27 over…",
+}
+`;
+
+exports[`the names of a bron > 'cases/30a6eafe_5609_4587_a07b_ffe90c0…' 1`] = `
+{
+  "canvas": "Amendement van het lid de Hoop over een maximale huurverhoging gelijk aan de loonstijging of de inflatie",
+  "card": "Amendement van het lid de Hoop over een maximale huurverhoging gelijk aan de loonstijging of de inflatie",
+  "label": "Amendement",
+  "row": "Amendement van het lid de Hoop over een maximale huurverhoging gelijk aan de loonstijging of de inflatie",
+  "tab": "Amendement de Hoop over een maximale huurverhoging gelijk aan de loonstijging…",
+  "tab before its title": "Amendement van het lid de Hoop over een maximale huurverhoging gelijk aan de…",
+}
+`;
+
+exports[`the names of a bron > 'cases/81311fd5_88d6_4f10_b50e_49db185…' 1`] = `
+{
+  "canvas": "Motie van het lid Van Baarle over de Wet gedeeltelijk verbod gezichtsbedekkende kleding intrekken",
+  "card": "Motie van het lid Van Baarle over de Wet gedeeltelijk verbod gezichtsbedekkende kleding intrekken",
+  "label": "Motie",
+  "row": "Motie van het lid Van Baarle over de Wet gedeeltelijk verbod gezichtsbedekkende kleding intrekken",
+  "tab": "Motie Van Baarle over de Wet gedeeltelijk verbod gezichtsbedekkende kleding…",
+  "tab before its title": "Motie van het lid Van Baarle over de Wet gedeeltelijk verbod…",
+}
+`;
+
+exports[`the names of a bron > 'commitments/3ee787ef_401d_4a17_96fd_b…' 1`] = `
+{
+  "canvas": "Voor de zomer ontvangt de Kamer een voortgangsbrief over de uitvoering van het…",
+  "card": "Voor de zomer ontvangt de Kamer een voortgangsbrief over de uitvoering van het…",
+  "label": "Voor de zomer ontvangt de Kamer een voortgangsbrief over de uitvoering van het…",
+  "row": "Voor de zomer ontvangt de Kamer een voortgangsbrief over de uitvoering van het…",
+  "tab": "Toezegging TZ202603-105: Voor de zomer ontvangt de Kamer een voortgangsbrief…",
+  "tab before its title": "Voor de zomer ontvangt de Kamer een voortgangsbrief over de uitvoering van het…",
+}
+`;
+
+exports[`the names of a bron > 'commitments/23f6f72f_d46c_4b2b_a706_8…' 1`] = `
+{
+  "canvas": "De staatssecretaris van BZK zegt toe de Kamer in de verzamelbrief van juni…",
+  "card": "De staatssecretaris van BZK zegt toe de Kamer in de verzamelbrief van juni…",
+  "label": "De staatssecretaris van BZK zegt toe de Kamer in de verzamelbrief van juni…",
+  "row": "De staatssecretaris van BZK zegt toe de Kamer in de verzamelbrief van juni…",
+  "tab": "Toezegging TZ202504-150: De staatssecretaris van BZK zegt toe de Kamer in de…",
+  "tab before its title": "De staatssecretaris van BZK zegt toe de Kamer in de verzamelbrief van juni…",
+}
+`;
+
+exports[`the names of a bron > 'commitments/2066a598_a0c9_49aa_ab44_a…' 1`] = `
+{
+  "canvas": "De minister zegt toe in gesprek te gaan met de Nationaal Coördinator tegen…",
+  "card": "De minister zegt toe in gesprek te gaan met de Nationaal Coördinator tegen…",
+  "label": "De minister zegt toe in gesprek te gaan met de Nationaal Coördinator tegen…",
+  "row": "De minister zegt toe in gesprek te gaan met de Nationaal Coördinator tegen…",
+  "tab": "Toezegging TZ202503-040: De minister zegt toe in gesprek te gaan met de…",
+  "tab before its title": "De minister zegt toe in gesprek te gaan met de Nationaal Coördinator tegen…",
+}
+`;
+
+exports[`the names of a bron > 'committees/e6291928_7ea0_46f9_aa6a_58…' 1`] = `
+{
+  "canvas": "Algemene commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking",
+  "card": "Algemene commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking",
+  "label": "BuHaOS",
+  "row": "Algemene commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking",
+  "tab": "Algemene commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking…",
+  "tab before its title": "Algemene commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking",
+}
+`;
+
+exports[`the names of a bron > 'decisions/decision_007f55ef_315a_43a3…' 1`] = `
+{
+  "canvas": "Gewijzigde motie van de leden Kathmann en Van Nispen over de subsidie voor Offlimits meerjarig verhogen in lijn met de stijging van het aantal meldingen van online kindermisbruik (t.v.v. 36600-VII-70)",
+  "card": "Tweede Kamer, 21 mei 2025: t.v.v. 36600-VII-70",
+  "label": "2025-05, Motie",
+  "row": "Gewijzigde motie van de leden Kathmann en Van Nispen over de subsidie voor Offlimits meerjarig verhogen in lijn met de stijging van het aantal meldingen van online kindermisbruik (t.v.v. 36600-VII-70)",
+  "tab": "Stemming over Gewijzigde motie van de leden Kathmann en Van Nispen over de…",
+  "tab before its title": "Gewijzigde motie van de leden Kathmann en Van Nispen over de subsidie voor…",
+}
+`;
+
+exports[`the names of a bron > 'decisions/decision_2479b686_83f0_4c5e…' 1`] = `
+{
+  "canvas": "Motie van het lid Beckerman over afzien van een extra huuropslag voor energielabels",
+  "card": "Tweede Kamer, 25 april 2024: Motie van het lid Beckerman over afzien van een…",
+  "label": "2024-04, Motie",
+  "row": "Motie van het lid Beckerman over afzien van een extra huuropslag voor energielabels",
+  "tab": "Stemming over Motie van het lid Beckerman over afzien van een extra huuropslag…",
+  "tab before its title": "Motie van het lid Beckerman over afzien van een extra huuropslag voor…",
+}
+`;
+
+exports[`the names of a bron > 'decisions/ek_2025_04_15_36600_vii_i' 1`] = `
+{
+  "canvas": "Motie-Perin-Gopie (Volt) c.s. over onderzoek naar de maatschappelijk kosten van discriminatie en racisme in Nederland",
+  "card": "Eerste Kamer, 15 april 2025: Motie-Perin-Gopie (Volt) c.s. over onderzoek naar…",
+  "label": "2025-04, Motie",
+  "row": "Motie-Perin-Gopie (Volt) c.s. over onderzoek naar de maatschappelijk kosten van discriminatie en racisme in Nederland",
+  "tab": "Stemming over Motie-Perin-Gopie (Volt) c.s. over onderzoek naar de…",
+  "tab before its title": "Motie-Perin-Gopie (Volt) c.s. over onderzoek naar de maatschappelijk kosten…",
+}
+`;
+
+exports[`the names of a bron > 'documents/1e578723_e8ec_4c81_9bf3_92f…' 1`] = `
+{
+  "canvas": "Gewijzigd amendement van het lid De Hoop ter vervanging van nr. 22 over puntenwaardering van lage energieprestatiecertificaten",
+  "card": "Gewijzigd amendement van het lid De Hoop ter vervanging van nr. 22 over puntenwaardering van lage energieprestatiecertificaten",
+  "label": "Amendement de Hoop (GroenLinks-PvdA), nr. 30",
+  "row": "Gewijzigd amendement van het lid De Hoop ter vervanging van nr. 22 over puntenwaardering van lage energieprestatiecertificaten",
+  "tab": "Amendement (gewijzigd/nader/vervangend): Gewijzigd amendement van het lid De…",
+  "tab before its title": "Amendement (gewijzigd/nader/vervangend): Gewijzigd amendement van het lid De…",
+}
+`;
+
+exports[`the names of a bron > 'documents/2f36c6c3_0c2b_4fb9_b7e6_af9…' 1`] = `
+{
+  "canvas": "Memorie van toelichting, Kamerstuk 36314, nr. 3",
+  "card": "Wijziging van de Wet op het financieel toezicht, de Algemene wet bestuursrecht en de Faillissementswet in verband met de rechtsbescherming bij de afwikkeling van verzekeraars en enige andere verbeteringen in het kader voor herstel en afwikkeling van verzekeraars (Wijzigingswet herstel en afwikkeling van verzekeraars)",
+  "label": "Memorie van toelichting, nr. 3",
+  "row": "Memorie van toelichting, Kamerstuk 36314, nr. 3",
+  "tab": "Memorie van toelichting: Wijziging van de Wet op het financieel toezicht, de…",
+  "tab before its title": "Memorie van toelichting: Wijziging van de Wet op het financieel toezicht, de…",
+}
+`;
+
+exports[`the names of a bron > 'documents/stcrt_stcrt_2017_74288' 1`] = `
+{
+  "canvas": "STAATSCOURANT",
+  "card": "STAATSCOURANT",
+  "label": "STAATSCOURANT, nr. 74288",
+  "row": "STAATSCOURANT",
+  "tab": "Ministeriële regeling",
+  "tab before its title": "STAATSCOURANT",
+}
+`;
+
+exports[`the names of a bron > 'dossiers/27926' 1`] = `
+{
+  "canvas": "Huurbeleid",
+  "card": "Huurbeleid",
+  "label": "27926, Huurbeleid",
+  "row": "Huurbeleid",
+  "tab": "27926 Huurbeleid",
+  "tab before its title": "Huurbeleid",
+}
+`;
+
+exports[`the names of a bron > 'dossiers/32761' 1`] = `
+{
+  "canvas": "Verwerking en bescherming persoonsgegevens",
+  "card": "Verwerking en bescherming persoonsgegevens",
+  "label": "32761, Verwerking en bescherming persoonsgegevens",
+  "row": "Verwerking en bescherming persoonsgegevens",
+  "tab": "32761 Verwerking en bescherming persoonsgegevens",
+  "tab before its title": "Verwerking en bescherming persoonsgegevens",
+}
+`;
+
+exports[`the names of a bron > 'dossiers/36600_vii' 1`] = `
+{
+  "canvas": "Begroting Binnenlandse Zaken en Koninkrijksrelaties 2025",
+  "card": "Begroting Binnenlandse Zaken en Koninkrijksrelaties 2025",
+  "label": "36600 VII, Begroting Binnenlandse Zaken en Koninkrijksrelaties 2025",
+  "row": "Begroting Binnenlandse Zaken en Koninkrijksrelaties 2025",
+  "tab": "36600 VII Begroting Binnenlandse Zaken en Koninkrijksrelaties 2025",
+  "tab before its title": "Begroting Binnenlandse Zaken en Koninkrijksrelaties 2025",
+}
+`;
+
+exports[`the names of a bron > 'factions/vvd' 1`] = `
+{
+  "canvas": "Volkspartij voor Vrijheid en Democratie",
+  "card": "Volkspartij voor Vrijheid en Democratie",
+  "label": "VVD",
+  "row": "Volkspartij voor Vrijheid en Democratie",
+  "tab": "VVD, fractie in de Tweede Kamer",
+  "tab before its title": "Volkspartij voor Vrijheid en Democratie",
+}
+`;
+
+exports[`the names of a bron > 'instrument_versions/bwbr0005537_2002_…' 1`] = `
+{
+  "canvas": "Algemene wet bestuursrecht, versie van 29 mei 2002 tot 1 december 2002",
+  "card": "Versie",
+  "label": "Algemene wet bestuursrecht, versie van 29 mei 2002 tot 1 december 2002",
+  "row": "Naam niet in de gegevens",
+  "tab": "Algemene wet bestuursrecht, geldend van 29 mei 2002 tot 1 december 2002",
+  "tab before its title": "Algemene wet bestuursrecht, versie van 29 mei 2002 tot 1 december 2002",
+}
+`;
+
+exports[`the names of a bron > 'instrument_versions/bwbr0005537_2008_…' 1`] = `
+{
+  "canvas": "Algemene wet bestuursrecht, versie van 1 januari 2008 tot 1 februari 2008",
+  "card": "Versie",
+  "label": "Algemene wet bestuursrecht, versie van 1 januari 2008 tot 1 februari 2008",
+  "row": "Naam niet in de gegevens",
+  "tab": "Algemene wet bestuursrecht, geldend van 1 januari 2008 tot 1 februari 2008",
+  "tab before its title": "Algemene wet bestuursrecht, versie van 1 januari 2008 tot 1 februari 2008",
+}
+`;
+
+exports[`the names of a bron > 'instrument_versions/bwbr0005537_2022_…' 1`] = `
+{
+  "canvas": "Algemene wet bestuursrecht, versie van 1 mei 2022 tot 1 augustus 2022",
+  "card": "Versie",
+  "label": "Algemene wet bestuursrecht, versie van 1 mei 2022 tot 1 augustus 2022",
+  "row": "Naam niet in de gegevens",
+  "tab": "Algemene wet bestuursrecht, geldend van 1 mei 2022 tot 1 augustus 2022",
+  "tab before its title": "Algemene wet bestuursrecht, versie van 1 mei 2022 tot 1 augustus 2022",
+}
+`;
+
+exports[`the names of a bron > 'instruments/31979l0409' 1`] = `
+{
+  "canvas": "Richtlijn 79/409/EEG",
+  "card": "Richtlijn 79/409/EEG",
+  "label": "Richtlijn 79/409/EEG",
+  "row": "Richtlijn 79/409/EEG",
+  "tab": "Richtlijn 79/409/EEG",
+  "tab before its title": "Richtlijn 79/409/EEG",
+}
+`;
+
+exports[`the names of a bron > 'instruments/bwbr0005537' 1`] = `
+{
+  "canvas": "Algemene wet bestuursrecht",
+  "card": "Algemene wet bestuursrecht",
+  "label": "Algemene wet bestuursrecht",
+  "row": "Algemene wet bestuursrecht",
+  "tab": "Algemene wet bestuursrecht (Awb)",
+  "tab before its title": "Algemene wet bestuursrecht",
+}
+`;
+
+exports[`the names of a bron > 'instruments/stb_2026_187' 1`] = `
+{
+  "canvas": "Stb. 2026, 187",
+  "card": "Stb. 2026, 187",
+  "label": "Stb. 2026, 187",
+  "row": "Stb. 2026, 187",
+  "tab": "Stb. 2026, 187",
+  "tab before its title": "Stb. 2026, 187",
+}
+`;
+
+exports[`the names of a bron > 'judgments/ecli_nl_ghdha_2018_2591' 1`] = `
+{
+  "canvas": "Gerechtshof Den Haag, 9 oktober 2018 (Urgenda)",
+  "card": "Hof Den Haag 9 oktober 2018 (Urgenda)",
+  "label": "GH 2018/2591",
+  "row": "Gerechtshof Den Haag, 9 oktober 2018 (Urgenda)",
+  "tab": "Hof Den Haag 9 oktober 2018 (Urgenda), ECLI:NL:GHDHA:2018:2591",
+  "tab before its title": "Gerechtshof Den Haag, 9 oktober 2018 (Urgenda)",
+}
+`;
+
+exports[`the names of a bron > 'judgments/ecli_nl_hr_1965_ab7079' 1`] = `
+{
+  "canvas": "Hoge Raad, 5 november 1965 (Kelderluik)",
+  "card": "HR 5 november 1965 (Kelderluik)",
+  "label": "HR 1965/AB7079",
+  "row": "Hoge Raad, 5 november 1965 (Kelderluik)",
+  "tab": "HR 5 november 1965 (Kelderluik), ECLI:NL:HR:1965:AB7079",
+  "tab before its title": "Hoge Raad, 5 november 1965 (Kelderluik)",
+}
+`;
+
+exports[`the names of a bron > 'judgments/ecli_nl_hr_2019_2006' 1`] = `
+{
+  "canvas": "Hoge Raad, 20 december 2019 (Urgenda)",
+  "card": "HR 20 december 2019 (Urgenda)",
+  "label": "HR 2019/2006",
+  "row": "Hoge Raad, 20 december 2019 (Urgenda)",
+  "tab": "HR 20 december 2019 (Urgenda), ECLI:NL:HR:2019:2006",
+  "tab before its title": "Hoge Raad, 20 december 2019 (Urgenda)",
+}
+`;
+
+exports[`the names of a bron > 'members/0442fb6c_8441_4292_a275_5f701…' 1`] = `
+{
+  "canvas": "Hayke Veldman",
+  "card": "Hayke Veldman",
+  "label": "Hayke Veldman (VVD)",
+  "row": "Hayke Veldman",
+  "tab": "Hayke Veldman, oud-Kamerlid",
+  "tab before its title": "Hayke Veldman",
+}
+`;

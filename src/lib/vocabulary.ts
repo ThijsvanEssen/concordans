@@ -1,8 +1,14 @@
-// The names the API defines for nodes and edges (lawgraph docs/data-model.md).
-// The schema types them as plain strings, so this is the one place they are listed.
+// The names the API defines for nodes and edges (lawgraph docs/data-model.md), typed by the
+// generated schema: a collection or relation the API adds or drops fails the typecheck here.
 import type { Schema } from '$lib/api/types';
 
-/** Collection (the first half of a node id) to node type. */
+/** The collection of a node: the first half of its id. */
+export type Collection = Schema<'BaseNodeDTO'>['collection'];
+
+/** The relation of an edge. */
+export type Relation = NonNullable<Schema<'NodeNeighborhoodEdge'>['relation']>;
+
+/** Collection to node type. */
 export const NODE_TYPES = {
 	instruments: 'instrument',
 	instrument_versions: 'instrument_version',
@@ -20,46 +26,43 @@ export const NODE_TYPES = {
 	factions: 'faction',
 	committees: 'committee',
 	cabinets: 'cabinet'
-} as const;
+} as const satisfies Record<Collection, string>;
 
-export type Collection = keyof typeof NODE_TYPES;
+/** Every relation once, in the order of the API's catalogue; the record makes the type complete. */
+const RELATION_SET: Record<Relation, true> = {
+	PART_OF: true,
+	VERSION_OF: true,
+	ESTABLISHES: true,
+	AMENDS: true,
+	INTRODUCES: true,
+	REPEALS: true,
+	BASED_ON: true,
+	IMPLEMENTS: true,
+	LEGISLATED_IN: true,
+	PUBLISHED_IN: true,
+	REFERS_TO: true,
+	EXPLAINS: true,
+	APPEAL_OF: true,
+	CONTINUES: true,
+	REFERRED_BY: true,
+	ADVISES_ON: true,
+	ANSWERS: true,
+	SAME_AS: true,
+	SCOPED_BY: true,
+	ABOUT: true,
+	LED_BY: true,
+	MADE_IN: true,
+	MEMBER_OF: true,
+	SERVED_IN: true,
+	AUTHORED: true,
+	RELATED_TO: true,
+	REVISES: true,
+	ACCOMPANIES: true,
+	SECOND_READING_OF: true,
+	VOTED: true
+};
 
-export const RELATIONS = [
-	'PART_OF',
-	'VERSION_OF',
-	'ESTABLISHES',
-	'AMENDS',
-	'INTRODUCES',
-	'REPEALS',
-	'BASED_ON',
-	'IMPLEMENTS',
-	'LEGISLATED_IN',
-	'PUBLISHED_IN',
-	'REFERS_TO',
-	'EXPLAINS',
-	'APPEAL_OF',
-	'ADVISES_ON',
-	'ANSWERS',
-	'CONTINUES',
-	'REFERRED_BY',
-	'SAME_AS',
-	'SCOPED_BY',
-	'ABOUT',
-	'LED_BY',
-	'MADE_IN',
-	'MEMBER_OF',
-	'AUTHORED',
-	'VOTED',
-	'REVISES',
-	'ACCOMPANIES',
-	'RELATED_TO',
-	'SECOND_READING_OF',
-	'SERVED_IN'
-] as const;
-
-export type Relation = (typeof RELATIONS)[number];
-
-const relations: ReadonlySet<string> = new Set(RELATIONS);
+export const RELATIONS = Object.keys(RELATION_SET) as readonly Relation[];
 
 /** The changes of the law, in the order a line names them: enacts, amends, inserts, repeals. */
 export const CHANGE_RELATIONS = [
@@ -104,7 +107,7 @@ export const isCollection = (value: string | null | undefined): value is Collect
 	value != null && Object.hasOwn(NODE_TYPES, value);
 
 export const isRelation = (value: string | null | undefined): value is Relation =>
-	value != null && relations.has(value);
+	value != null && Object.hasOwn(RELATION_SET, value);
 
 /** A node id: `collection/key`. */
 type NodeId = `${Collection}/${string}`;

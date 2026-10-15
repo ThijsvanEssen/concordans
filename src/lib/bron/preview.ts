@@ -15,6 +15,9 @@ import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { partsOf, partText } from '$lib/text/article-parts';
 import { articleTitle } from '$lib/text/bw';
 import { courtName } from '$lib/text/court';
+import { authorCite, judgmentCite } from '$lib/text/judgment-cite';
+import { chamberName } from '$lib/components/parliamentary/chamber';
+import { shortDossierTitle } from '$lib/graph/types';
 import { votesSentence } from '$lib/components/parliamentary/stemming';
 import { kindName } from '$lib/components/explore/law-head';
 import {
@@ -27,7 +30,7 @@ import {
 import { eersteIndiener, isEersteIndiener } from './submitters';
 import { bronLabel, isCollection, type Collection } from '$lib/vocabulary';
 import { focusOf, type BronRef } from './href';
-import { tabTitle } from './tab-title';
+import { cut } from './tab-title';
 import { isOverwegingAnker, laadUitspraak, tekstVanOverweging } from './overweging';
 
 export type Preview = {
@@ -104,6 +107,36 @@ export function uitslagVan(props: Record<string, unknown>): string | null {
 
 const clip = (s: string | null) => s && truncate(s, PREVIEW_CHARS);
 
+/**
+ * A judgment as its heading cites it, not by the display name with its ISO date ("Hoge Raad
+ * 2026-08-25 / 24/01299"): `HR 20 december 2019 (Urgenda)`; a conclusion by its A-G
+ * (`Conclusie A-G Hartlief 8 mei 2020`; a P-G is in the detail only); a translation says so.
+ */
+function judgmentHeading(props: Record<string, unknown>, name: string): string {
+	const names = Array.isArray(props.names) ? props.names.filter((n) => typeof n === 'string') : [];
+	const ecli = textOf(props.ecli);
+	const author = authorCite(textOf(props.advocate_general));
+	const cite = ecli
+		? judgmentCite(ecli, textOf(props.date), textOf(props.court), author).short
+		: name;
+	const translation = textOf(props.translation_of) ? ', vertaling' : '';
+	return `${names.length ? `${cite} (${names.join(', ')})` : cite}${translation}`;
+}
+
+/**
+ * A stemming as its heading reads: its Kamer and day, then its subject, not the Kamer's case
+ * number ("Wetgeving 2025Z15911: …") or an ISO date; null without a subject.
+ */
+function decisionHeading(props: Record<string, unknown>): string | null {
+	const subject = textOf(props.subject);
+	if (!subject) return null;
+	const kamer = chamberName(textOf(props.chamber));
+	const day = langeDatum(textOf(props.date));
+	return cut(
+		`${[kamer, day].filter(Boolean).join(', ')}: ${shortDossierTitle(subject) ?? subject}`
+	);
+}
+
 /** The card of a bron from its node: the name, the kind, a date, and what it says first. */
 export function previewFromNode(
 	collection: Collection,
@@ -112,16 +145,12 @@ export function previewFromNode(
 ): Preview {
 	const kind = bronLabel(collection);
 	const name = textOf(displayName) ?? textOf(props.name) ?? textOf(props.title) ?? kind;
-	// A judgment and a stemming are named as their heading and tab name them, not by the
-	// display name with its ISO date ("Hoge Raad 2026-08-25 / 24/01299").
-	const asHeading = () =>
-		tabTitle({ collection, label: name, raw: { display_name: displayName, props } });
 	switch (collection) {
 		case 'judgments': {
 			const court = courtName(textOf(props.court) ?? textOf(props.court_code));
 			return {
 				kicker: court ? `${kind}, ${court}` : kind,
-				title: asHeading(),
+				title: judgmentHeading(props, name),
 				// Cited by its ECLI, the title carries the day already: HR 25 augustus 2026.
 				date: textOf(props.ecli) ? null : langeDatum(textOf(props.date)) || null,
 				lines: clip(eersteZin(textOf(props.summary)))
@@ -205,7 +234,7 @@ export function previewFromNode(
 			// The title carries the Kamer and the day: "Eerste Kamer, 29 september 2026: …".
 			return {
 				kicker: kind,
-				title: asHeading(),
+				title: decisionHeading(props) ?? cut(name),
 				date: null,
 				lines: null
 			};

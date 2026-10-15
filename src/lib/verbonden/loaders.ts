@@ -70,9 +70,6 @@ const BASIS: Record<string, string> = {
 export const basesLine = (bases: readonly string[] | null | undefined): string | null =>
 	(bases ?? []).map((b) => BASIS[b] ?? b).join(', ') || null;
 
-/** The publication of a measure as a key: `stb-2013-102` and `stb_2013_102` are one. */
-const publicationKey = (id: string) => id.toLowerCase().replace(/-/g, '_');
-
 /**
  * What an implementation rests on, with the measures EUR-Lex names (`via`, API 0.76, BE-58).
  * A measure that also changes the law (`amending`, the publications of its AMENDS edges)
@@ -82,13 +79,13 @@ const publicationKey = (id: string) => id.toLowerCase().replace(/-/g, '_');
 export function implementationLine(
 	link: {
 		bases?: readonly string[] | null;
-		via?: readonly { publication: string; citation: string }[] | null;
+		via?: readonly { id: string; citation: string }[] | null;
 	},
 	amending: ReadonlySet<string>
 ): string | null {
 	const via = link.via ?? [];
 	if (via.length === 0) return basesLine(link.bases);
-	const changed = via.filter((m) => amending.has(publicationKey(m.publication)));
+	const changed = via.filter((m) => amending.has(m.id));
 	const other = via.filter((m) => !changed.includes(m));
 	const cite = (ms: typeof via) => ms.map((m) => m.citation).join(' en ');
 	return (
@@ -731,9 +728,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		const bwb = bwbOf(node);
 		const amending =
 			bwb && implemented.some((link) => (link.via ?? []).length > 0)
-				? new Set(
-						(await abortable(getAmendedBy(bwb), signal)).items.map((d) => publicationKey(d.key))
-					)
+				? new Set((await abortable(getAmendedBy(bwb), signal)).items.map((d) => d.id))
 				: new Set<string>();
 		for (const link of [...implemented, ...(data.implemented_by ?? [])]) {
 			const i = link.instrument;
