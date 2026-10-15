@@ -1,0 +1,2912 @@
+{
+	"instruments": {
+		"items": [
+			{
+				"id": "instruments/bwbr0039968",
+				"key": "bwbr0039968",
+				"collection": "instruments",
+				"bwb_id": "BWBR0039968",
+				"celex": null,
+				"title": "Aanwijzingsbesluit huurcommissie",
+				"short_title": null,
+				"citation_title": "Aanwijzingsbesluit huurcommissie",
+				"display_name": "Aanwijzingsbesluit huurcommissie",
+				"jurisdiction": "nl",
+				"kind": "ministeriele-regeling",
+				"article_count": 3,
+				"inbound_citation_count": 0,
+				"next_version_from": null,
+				"official_url": "https://wetten.overheid.nl/BWBR0039968",
+				"path": "/wetten/BWBR0039968"
+			},
+			{
+				"id": "instruments/bwbr0010609",
+				"key": "bwbr0010609",
+				"collection": "instruments",
+				"bwb_id": "BWBR0010609",
+				"celex": null,
+				"title": "Aanwijzingsbesluit Huursubsidiewet",
+				"short_title": null,
+				"citation_title": "Aanwijzingsbesluit Huursubsidiewet",
+				"display_name": "Aanwijzingsbesluit Huursubsidiewet",
+				"jurisdiction": "nl",
+				"kind": "ministeriele-regeling",
+				"article_count": 3,
+				"inbound_citation_count": 0,
+				"next_version_from": null,
+				"official_url": "https://wetten.overheid.nl/BWBR0010609",
+				"path": "/wetten/BWBR0010609"
+			},
+			{
+				"id": "instruments/bwbr0004975",
+				"key": "bwbr0004975",
+				"collection": "instruments",
+				"bwb_id": "BWBR0004975",
+				"celex": null,
+				"title": "Afkoop eigen risico bij autoverhuur",
+				"short_title": null,
+				"citation_title": "Afkoop eigen risico bij autoverhuur",
+				"display_name": "Afkoop eigen risico bij autoverhuur",
+				"jurisdiction": "nl",
+				"kind": "beleidsregel",
+				"article_count": 0,
+				"inbound_citation_count": 0,
+				"next_version_from": null,
+				"official_url": "https://wetten.overheid.nl/BWBR0004975",
+				"path": "/wetten/BWBR0004975"
+			}
+		],
+		"total": 279,
+		"facets": {
+			"legal_area": [
+				{
+					"id": "c_3e6b35e2",
+					"slug": "wonen-onroerend-goed-bouwrecht",
+					"label": "Wonen, onroerend goed, bouwrecht",
+					"count": 199,
+					"narrower": [
+						{
+							"id": "c_3dbe5325",
+							"slug": "huurrecht",
+							"label": "Huurrecht",
+							"count": 181
+						},
+						{
+							"id": "c_43c42162",
+							"slug": "onroerend-goedrecht",
+							"label": "Onroerend goedrecht",
+							"count": 10
+						}
+					]
+				},
+				{
+					"id": "c_ba9504e5",
+					"slug": "belastingrecht",
+					"label": "Belastingrecht",
+					"count": 26,
+					"narrower": [
+						{
+							"id": "c_47a56149",
+							"slug": "btw-en-accijns",
+							"label": "BTW en accijns",
+							"count": 19
+						},
+						{
+							"id": "c_49a0d743",
+							"slug": "formeel-belastingrecht",
+							"label": "Formeel belastingrecht",
+							"count": 6
+						},
+						{
+							"id": "c_8173a6ff",
+							"slug": "inkomstenbelasting",
+							"label": "Inkomstenbelasting",
+							"count": 5
+						},
+						{
+							"id": "c_5090ae6f",
+							"slug": "loonbelasting-en-premieheffing",
+							"label": "Loonbelasting en premieheffing",
+							"count": 1
+						}
+					]
+				},
+				{
+					"id": "c_3405e4a1",
+					"slug": "contracten-schade-en-aansprakelijkheid",
+					"label": "Contracten, schade en aansprakelijkheid",
+					"count": 12,
+					"narrower": [
+						{
+							"id": "c_69b82af6",
+							"slug": "verbintenissenrecht",
+							"label": "Verbintenissenrecht",
+							"count": 9
+						},
+						{
+							"id": "c_a11eaa90",
+							"slug": "consumentenrecht",
+							"label": "Consumentenrecht",
+							"count": 3
+						}
+					]
+				},
+				{
+					"id": "c_7cca4bd5",
+					"slug": "arbeidsrecht-en-sociaal-zekerheidsrecht",
+					"label": "Arbeidsrecht en sociaal-zekerheidsrecht",
+					"count": 11,
+					"narrower": [
+						{
+							"id": "c_9a7dd375",
+							"slug": "sociaal-zekerheidsrecht",
+							"label": "Sociaal zekerheidsrecht",
+							"count": 5
+						},
+						{
+							"id": "c_b69dc535",
+							"slug": "ambtenarenrecht",
+							"label": "Ambtenarenrecht",
+							"count": 3
+						},
+						{
+							"id": "c_50a06faa",
+							"slug": "arbeidsrecht",
+							"label": "Arbeidsrecht",
+							"count": 2
+						},
+						{
+							"id": "c_b24639c1",
+							"slug": "militaire-ambtenarenrecht",
+							"label": "Militaire ambtenarenrecht",
+							"count": 1
+						}
+					]
+				},
+				{
+					"id": "c_da370768",
+					"slug": "staats-en-bestuursrecht",
+					"label": "Staats- en bestuursrecht",
+					"count": 11,
+					"narrower": [
+						{
+							"id": "c_052899f0",
+							"slug": "bestuursrecht",
+							"label": "Bestuursrecht",
+							"count": 7
+						},
+						{
+							"id": "c_77eb3af8",
+							"slug": "staatsrecht",
+							"label": "Staatsrecht",
+							"count": 4
+						}
+					]
+				}
+			],
+			"policy_domain": [
+				{
+					"id": "c_3708ac5e",
+					"slug": "bouwen-wonen-en-leefomgeving",
+					"label": "Bouwen, wonen en leefomgeving",
+					"count": 136
+				},
+				{
+					"id": "c_17f08b1f",
+					"slug": "subsidies-uitkeringen-en-toeslagen",
+					"label": "Subsidies, uitkeringen en toeslagen",
+					"count": 77
+				},
+				{
+					"id": "c_bed49b60",
+					"slug": "belastingen",
+					"label": "Belastingen",
+					"count": 26
+				},
+				{
+					"id": "c_9fbcfc19",
+					"slug": "economie-en-ondernemen",
+					"label": "Economie en ondernemen",
+					"count": 25
+				},
+				{
+					"id": "c_fd285f2b",
+					"slug": "overheid-bestuur-en-koninkrijk",
+					"label": "Overheid, bestuur en koninkrijk",
+					"count": 11
+				}
+			],
+			"kind": [
+				{
+					"value": "ministeriele-regeling",
+					"count": 112
+				},
+				{
+					"value": "wet",
+					"count": 62
+				},
+				{
+					"value": "beleidsregel",
+					"count": 34
+				},
+				{
+					"value": "amvb",
+					"count": 29
+				},
+				{
+					"value": "kb",
+					"count": 15
+				}
+			]
+		}
+	},
+	"judgments": {
+		"items": [
+			{
+				"id": "judgments/ecli_nl_rvs_2026_6087",
+				"key": "ecli_nl_rvs_2026_6087",
+				"collection": "judgments",
+				"ecli": "ECLI:NL:RVS:2026:6087",
+				"display_name": "Raad van State 2026-10-14 / 202304894/1/R3",
+				"court": "RVS",
+				"tier": "raad_van_state",
+				"court_kind": "raad_van_state",
+				"date": "2026-10-14",
+				"summary": "Bij besluit van 21 juni 2023 heeft de raad van de gemeente Leeuwarden het bestemmingsplan \"Leeuwarden - De Zuidlanden, plandeel De Hem\" vastgesteld. In de toelichting bij het bestemmingsplan staat dat Leeuwarden groeit. Er is vraag naar meer woningen. Daarom wordt ten zuidoosten van het dorp Goutum een aantal buurtschappen gerealiseerd, met de overkoepelende naam \"Zuidlanden\". In de afgelopen jaren zijn de buurtschappen Goutum-Súd, Techum, Wiarda en De Klamp gebouwd. Buurtschap Unia is in voorbereiding. Buurtschap De Hem is het laatste te ontwikkelen buurtschap in Zuidlanden-Oost. In De Hem komen maximaal 395 woningen in verschillende typen en segmenten, variërend van rij- tot vrijstaande woningen en van dure koop tot sociale huur. De raad heeft het bestemmingsplan vastgesteld om deze ontwikkeling in juridisch-planologische zin mogelijk te maken. Dorpsbelang Goutum, [appellant sub 2] en It Fryske Gea en anderen kunnen zich alle niet verenigen met het bestemmingsplan en hebben daarom beroep ingesteld.",
+				"names": [],
+				"decision_kind": "uitspraak",
+				"source": "rechtspraak",
+				"subjects": ["Bestuursrecht"],
+				"inbound_citation_count": 0,
+				"outbound_citation_count": 15,
+				"series_id": null,
+				"series_size": null,
+				"path": "/uitspraken/ECLI:NL:RVS:2026:6087"
+			},
+			{
+				"id": "judgments/ecli_nl_rbrot_2026_13915",
+				"key": "ecli_nl_rbrot_2026_13915",
+				"collection": "judgments",
+				"ecli": "ECLI:NL:RBROT:2026:13915",
+				"display_name": "Rechtbank Rotterdam 2026-10-12 / 12347789 VV EXPL 26-479",
+				"court": "RBROT",
+				"tier": "rechtbank",
+				"court_kind": "rechtbank",
+				"date": "2026-10-12",
+				"summary": "Kort geding. Huur bedrijfsruimte. Ontruimen vanwege herhaalde betalingsachterstand.",
+				"names": [],
+				"decision_kind": "vonnis",
+				"source": "rechtspraak",
+				"subjects": ["Civiel recht"],
+				"inbound_citation_count": 0,
+				"outbound_citation_count": 0,
+				"series_id": null,
+				"series_size": null,
+				"path": "/uitspraken/ECLI:NL:RBROT:2026:13915"
+			},
+			{
+				"id": "judgments/ecli_nl_rbzwb_2026_9751",
+				"key": "ecli_nl_rbzwb_2026_9751",
+				"collection": "judgments",
+				"ecli": "ECLI:NL:RBZWB:2026:9751",
+				"display_name": "Rechtbank Zeeland-West-Brabant 2026-10-08 / 12345650 VV EXPL 26-49 (E)",
+				"court": "RBZWB",
+				"tier": "rechtbank",
+				"court_kind": "rechtbank",
+				"date": "2026-10-08",
+				"summary": "Huur woning op terrein voormalige gasfabriek. Vordering huurder in kort geding op grond van gebreken (schimmel en vluchtige organische stoffen). Vordering afgewezen: gebreken onvoldoende onderbouwd, huurder werkt onvoldoende mee aan onderzoeken en eventueel verhelpen van gebreken door verhuuder. Huurder veroordeeld tot medewerking.",
+				"names": [],
+				"decision_kind": "vonnis",
+				"source": "rechtspraak",
+				"subjects": ["Civiel recht"],
+				"inbound_citation_count": 0,
+				"outbound_citation_count": 0,
+				"series_id": null,
+				"series_size": null,
+				"path": "/uitspraken/ECLI:NL:RBZWB:2026:9751"
+			}
+		],
+		"total": 8331,
+		"facets": {
+			"tier": [
+				{
+					"value": "rechtbank",
+					"count": 4733
+				},
+				{
+					"value": "gerechtshof",
+					"count": 2539
+				},
+				{
+					"value": "hoge_raad",
+					"count": 243
+				},
+				{
+					"value": "parket",
+					"count": 236
+				},
+				{
+					"value": "centrale_raad_van_beroep",
+					"count": 217
+				},
+				{
+					"value": "koninkrijksinstantie",
+					"count": 193
+				},
+				{
+					"value": "raad_van_state",
+					"count": 162
+				},
+				{
+					"value": "college_van_beroep_bedrijfsleven",
+					"count": 7
+				},
+				{
+					"value": "buitenlandse_instantie",
+					"count": 1
+				}
+			],
+			"court_kind": [
+				{
+					"value": "rechtbank",
+					"count": 4733
+				},
+				{
+					"value": "gerechtshof",
+					"count": 2539
+				},
+				{
+					"value": "hoge_raad",
+					"count": 243
+				},
+				{
+					"value": "parket",
+					"count": 236
+				},
+				{
+					"value": "centrale_raad_van_beroep",
+					"count": 217
+				}
+			],
+			"source": [
+				{
+					"value": "rechtspraak",
+					"count": 8331
+				}
+			],
+			"year": [
+				{
+					"value": "2021",
+					"count": 494
+				},
+				{
+					"value": "2022",
+					"count": 595
+				},
+				{
+					"value": "2023",
+					"count": 685
+				},
+				{
+					"value": "2024",
+					"count": 837
+				},
+				{
+					"value": "2025",
+					"count": 951
+				},
+				{
+					"value": "2026",
+					"count": 657
+				}
+			],
+			"subjects": [
+				{
+					"value": "Civiel recht",
+					"count": 4953
+				},
+				{
+					"value": "Civiel recht; Verbintenissenrecht",
+					"count": 2071
+				},
+				{
+					"value": "Bestuursrecht",
+					"count": 409
+				},
+				{
+					"value": "Bestuursrecht; Socialezekerheidsrecht",
+					"count": 279
+				},
+				{
+					"value": "Bestuursrecht; Belastingrecht",
+					"count": 250
+				}
+			],
+			"subject_area": [
+				{
+					"value": "Civiel recht",
+					"count": 7243,
+					"narrower": [
+						{
+							"value": "Civiel recht; Verbintenissenrecht",
+							"label": "Verbintenissenrecht",
+							"count": 2071
+						},
+						{
+							"value": "Civiel recht; Insolventierecht",
+							"label": "Insolventierecht",
+							"count": 134
+						},
+						{
+							"value": "Civiel recht; Burgerlijk procesrecht",
+							"label": "Burgerlijk procesrecht",
+							"count": 54
+						},
+						{
+							"value": "Civiel recht; Personen- en familierecht",
+							"label": "Personen- en familierecht",
+							"count": 28
+						},
+						{
+							"value": "Civiel recht; Goederenrecht",
+							"label": "Goederenrecht",
+							"count": 11
+						},
+						{
+							"value": "Civiel recht; Arbeidsrecht",
+							"label": "Arbeidsrecht",
+							"count": 5
+						},
+						{
+							"value": "Civiel recht; Europees civiel recht",
+							"label": "Europees civiel recht",
+							"count": 5
+						},
+						{
+							"value": "Civiel recht; Ondernemingsrecht",
+							"label": "Ondernemingsrecht",
+							"count": 3
+						},
+						{
+							"value": "Civiel recht; Aanbestedingsrecht",
+							"label": "Aanbestedingsrecht",
+							"count": 2
+						},
+						{
+							"value": "Civiel recht; Intellectueel-eigendomsrecht",
+							"label": "Intellectueel-eigendomsrecht",
+							"count": 1
+						}
+					]
+				},
+				{
+					"value": "Bestuursrecht",
+					"count": 931,
+					"narrower": [
+						{
+							"value": "Bestuursrecht; Socialezekerheidsrecht",
+							"label": "Socialezekerheidsrecht",
+							"count": 279
+						},
+						{
+							"value": "Bestuursrecht; Belastingrecht",
+							"label": "Belastingrecht",
+							"count": 250
+						},
+						{
+							"value": "Bestuursrecht; Bestuursprocesrecht",
+							"label": "Bestuursprocesrecht",
+							"count": 18
+						},
+						{
+							"value": "Bestuursrecht; Omgevingsrecht",
+							"label": "Omgevingsrecht",
+							"count": 18
+						},
+						{
+							"value": "Bestuursrecht; Ambtenarenrecht",
+							"label": "Ambtenarenrecht",
+							"count": 15
+						},
+						{
+							"value": "Bestuursrecht; Vreemdelingenrecht",
+							"label": "Vreemdelingenrecht",
+							"count": 7
+						},
+						{
+							"value": "Bestuursrecht; Bestuursstrafrecht",
+							"label": "Bestuursstrafrecht",
+							"count": 2
+						}
+					]
+				},
+				{
+					"value": "Strafrecht",
+					"count": 164,
+					"narrower": [
+						{
+							"value": "Strafrecht; Materieel strafrecht",
+							"label": "Materieel strafrecht",
+							"count": 1
+						}
+					]
+				},
+				{
+					"value": "Internationaal publiekrecht",
+					"count": 1,
+					"narrower": []
+				}
+			],
+			"procedure": [
+				{
+					"value": "Eerste aanleg - enkelvoudig",
+					"count": 3082
+				},
+				{
+					"value": "Hoger beroep",
+					"count": 2646
+				},
+				{
+					"value": "Kort geding",
+					"count": 769
+				},
+				{
+					"value": "Bodemzaak",
+					"count": 591
+				},
+				{
+					"value": "Eerste aanleg - meervoudig",
+					"count": 245
+				}
+			]
+		}
+	},
+	"dossiers": {
+		"items": [
+			{
+				"id": "dossiers/17050",
+				"key": "17050",
+				"number": "17050",
+				"suffix": null,
+				"same_number_count": 0,
+				"title": "Misbruik en oneigenlijk gebruik op het gebied van belastingen, sociale zekerheid en subsidies",
+				"short_title": null,
+				"title_source": "dossier",
+				"source": "tk",
+				"kind": null,
+				"kind_basis": null,
+				"phases": null,
+				"current_phase": null,
+				"closed": false,
+				"outcome": null,
+				"tk_decision": null,
+				"ek_outcome": null,
+				"opened_on": "2008-04-14",
+				"opened_on_basis": "earliest_record",
+				"submitted_on_tk": null,
+				"last_activity": "2026-09-24",
+				"closed_on": null,
+				"ministry": "szw",
+				"initiative": false,
+				"cabinet": "balkenende_iv",
+				"path": "/dossiers/17050"
+			},
+			{
+				"id": "dossiers/17257",
+				"key": "17257",
+				"number": "17257",
+				"suffix": null,
+				"same_number_count": 0,
+				"title": "Assemblee van de West-Europese Unie",
+				"short_title": null,
+				"title_source": "dossier",
+				"source": "tk",
+				"kind": null,
+				"kind_basis": null,
+				"phases": null,
+				"current_phase": null,
+				"closed": false,
+				"outcome": null,
+				"tk_decision": null,
+				"ek_outcome": null,
+				"opened_on": "1995-07-13",
+				"opened_on_basis": "earliest_record",
+				"submitted_on_tk": null,
+				"last_activity": "2010-09-06",
+				"closed_on": null,
+				"ministry": null,
+				"initiative": true,
+				"cabinet": "balkenende_iv",
+				"path": "/dossiers/17257"
+			},
+			{
+				"id": "dossiers/36600",
+				"key": "36600",
+				"number": "36600",
+				"suffix": null,
+				"same_number_count": 27,
+				"title": "Nota over de toestand van ’s Rijks Financiën",
+				"short_title": null,
+				"title_source": "dossier",
+				"source": "tk",
+				"kind": null,
+				"kind_basis": null,
+				"phases": null,
+				"current_phase": null,
+				"closed": true,
+				"outcome": "aangenomen",
+				"tk_decision": null,
+				"ek_outcome": null,
+				"opened_on": "2024-09-17",
+				"opened_on_basis": "first_paper",
+				"submitted_on_tk": null,
+				"last_activity": "2026-04-21",
+				"closed_on": "2025-02-27",
+				"ministry": "fin",
+				"initiative": false,
+				"cabinet": "schoof",
+				"path": "/dossiers/36600"
+			},
+			{
+				"id": "dossiers/36600_i",
+				"key": "36600_i",
+				"number": "36600-I",
+				"suffix": "I",
+				"same_number_count": 27,
+				"title": "Vaststelling van de begrotingsstaat van de Koning (I) voor het jaar 2025",
+				"short_title": "Begroting Koning 2025",
+				"title_source": "dossier",
+				"source": "tk",
+				"kind": "Begroting",
+				"kind_basis": "case",
+				"phases": [
+					{
+						"name": "Voorstel van wet",
+						"chamber": "TK",
+						"done": true,
+						"date": "2024-09-17"
+					},
+					{
+						"name": "Memorie van toelichting",
+						"chamber": "TK",
+						"done": true,
+						"date": "2024-09-17"
+					},
+					{
+						"name": "Advies Raad van State",
+						"chamber": "TK",
+						"done": true,
+						"date": "2024-09-17"
+					},
+					{
+						"name": "Verslag",
+						"chamber": "TK",
+						"done": false,
+						"date": null
+					},
+					{
+						"name": "Nota n.a.v. het verslag",
+						"chamber": "TK",
+						"done": false,
+						"date": null
+					},
+					{
+						"name": "Nota van wijziging / Amendement",
+						"chamber": "TK",
+						"done": true,
+						"date": "2024-09-30"
+					},
+					{
+						"name": "Stemmingen",
+						"chamber": "TK",
+						"done": true,
+						"date": "2024-12-12"
+					},
+					{
+						"name": "Eindtekst",
+						"chamber": "TK",
+						"done": true,
+						"date": "2024-12-12"
+					}
+				],
+				"current_phase": "Eindtekst",
+				"closed": true,
+				"outcome": "aangenomen",
+				"tk_decision": {
+					"kind": "Stemmen - aangenomen",
+					"text": "Aangenomen.",
+					"date": "2024-12-12"
+				},
+				"ek_outcome": {
+					"outcome": "Aangenomen",
+					"date": "2025-02-11",
+					"method": "Zonder stemmen, aangenomen",
+					"source_url": "https://www.eerstekamer.nl/verslagdeel/20250211/volledige_behandeling_zonder",
+					"retrieved_on": "2026-10-09",
+					"attribution": "Eerste Kamer der Staten-Generaal, www.eerstekamer.nl"
+				},
+				"opened_on": "2024-09-17",
+				"opened_on_basis": "first_paper",
+				"submitted_on_tk": "2024-09-17",
+				"last_activity": "2026-09-01",
+				"closed_on": "2025-02-11",
+				"ministry": "az",
+				"initiative": false,
+				"cabinet": "schoof",
+				"path": "/dossiers/36600-I"
+			},
+			{
+				"id": "dossiers/36600_iia",
+				"key": "36600_iia",
+				"number": "36600-IIA",
+				"suffix": "IIA",
+				"same_number_count": 27,
+				"title": "Vaststelling van de begrotingsstaat van de Staten-Generaal (IIA) voor het jaar 2025",
+				"short_title": "Begroting Staten-Generaal 2025",
+				"title_source": "dossier",
+				"source": "tk",
+				"kind": "Begroting",
+				"kind_basis": "case",
+				"phases": [
+					{
+						"name": "Voorstel van wet",
+						"chamber": "TK",
+						"done": true,
+						"date": "2024-09-17"
+					},
+					{
+						"name": "Memorie van toelichting",
+						"chamber": "TK",
+						"done": true,
+						"date": "2024-09-17"
+					},
+					{
+						"name": "Advies Raad van State",
+						"chamber": "TK",
+						"done": true,
+						"date": "2024-09-17"
+					},
+					{
+						"name": "Verslag",
+						"chamber": "TK",
+						"done": true,
+						"date": "2024-09-23"
+					},
+					{
+						"name": "Nota n.a.v. het verslag",
+						"chamber": "TK",
+						"done": false,
+						"date": null
+					},
+					{
+						"name": "Nota van wijziging / Amendement",
+						"chamber": "TK",
+						"done": false,
+						"date": null
+					},
+					{
+						"name": "Stemmingen",
+						"chamber": "TK",
+						"done": true,
+						"date": "2024-12-12"
+					},
+					{
+						"name": "Eindtekst",
+						"chamber": "TK",
+						"done": true,
+						"date": "2024-12-12"
+					}
+				],
+				"current_phase": "Eindtekst",
+				"closed": true,
+				"outcome": "aangenomen",
+				"tk_decision": {
+					"kind": "Stemmen - aangenomen",
+					"text": "Aangenomen.",
+					"date": "2024-12-12"
+				},
+				"ek_outcome": {
+					"outcome": "Aangenomen",
+					"date": "2025-02-18",
+					"method": "Hamerstuk",
+					"source_url": "https://www.eerstekamer.nl/verslagdeel/20250218/_2",
+					"retrieved_on": "2026-10-09",
+					"attribution": "Eerste Kamer der Staten-Generaal, www.eerstekamer.nl"
+				},
+				"opened_on": "2024-09-17",
+				"opened_on_basis": "first_paper",
+				"submitted_on_tk": "2024-09-17",
+				"last_activity": "2024-12-12",
+				"closed_on": "2025-02-18",
+				"ministry": "bzk",
+				"initiative": false,
+				"cabinet": "schoof",
+				"path": "/dossiers/36600-IIA"
+			}
+		],
+		"total": 3728,
+		"facets": {
+			"status": [
+				{
+					"value": "closed",
+					"count": 4077
+				},
+				{
+					"value": "open",
+					"count": 3728
+				}
+			],
+			"outcome": [
+				{
+					"value": null,
+					"count": 3728
+				}
+			],
+			"kind": [
+				{
+					"value": null,
+					"count": 1997
+				},
+				{
+					"value": "Begroting",
+					"count": 716
+				},
+				{
+					"value": "Wetgeving",
+					"count": 327
+				},
+				{
+					"value": "Initiatiefnota",
+					"count": 248
+				},
+				{
+					"value": "Verdrag",
+					"count": 236
+				},
+				{
+					"value": "Initiatiefwetgeving",
+					"count": 189
+				}
+			],
+			"phase": [
+				{
+					"value": null,
+					"count": 2496
+				},
+				{
+					"value": "Eindtekst",
+					"count": 493
+				},
+				{
+					"value": "Stemmingen",
+					"count": 315
+				},
+				{
+					"value": "Nota van wijziging / Amendement",
+					"count": 120
+				},
+				{
+					"value": "Verslag",
+					"count": 115
+				},
+				{
+					"value": "Advies Raad van State",
+					"count": 104
+				}
+			],
+			"ministry": [
+				{
+					"value": null,
+					"count": 1350
+				},
+				{
+					"value": "bz",
+					"count": 414
+				},
+				{
+					"value": "bzk",
+					"count": 327
+				},
+				{
+					"value": "fin",
+					"count": 259
+				},
+				{
+					"value": "ocw",
+					"count": 182
+				},
+				{
+					"value": "vws",
+					"count": 179
+				}
+			]
+		}
+	},
+	"committees": [
+		{
+			"id": "committees/e6291928_7ea0_46f9_aa6a_58b11ee069f2",
+			"key": "e6291928_7ea0_46f9_aa6a_58b11ee069f2",
+			"chamber": "TK",
+			"name": "Algemene commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking",
+			"abbreviation": "BuHaOS",
+			"observed_from": null,
+			"observed_until": null,
+			"source": null,
+			"slug": "buhaos-2021",
+			"kind": "algemeen",
+			"started_on": null,
+			"ended_on": "2021-03-31",
+			"active_dossier_count": 0,
+			"path": "/commissies/buhaos-2021"
+		},
+		{
+			"id": "committees/86cce16c_39ef_46bd_8fbe_4db6a57f433e",
+			"key": "86cce16c_39ef_46bd_8fbe_4db6a57f433e",
+			"chamber": "TK",
+			"name": "Algemene commissie voor Immigratie, Integratie en Asiel",
+			"abbreviation": "IA",
+			"observed_from": null,
+			"observed_until": null,
+			"source": null,
+			"slug": "ia",
+			"kind": "algemeen",
+			"started_on": null,
+			"ended_on": null,
+			"active_dossier_count": 42,
+			"path": "/commissies/ia"
+		},
+		{
+			"id": "committees/05f6f650_dc8d_4695_b131_57e7a842ecdd",
+			"key": "05f6f650_dc8d_4695_b131_57e7a842ecdd",
+			"chamber": "TK",
+			"name": "Algemene commissie voor Integratiebeleid",
+			"abbreviation": "INT",
+			"observed_from": null,
+			"observed_until": null,
+			"source": null,
+			"slug": "int",
+			"kind": "algemeen",
+			"started_on": null,
+			"ended_on": null,
+			"active_dossier_count": 0,
+			"path": "/commissies/int"
+		},
+		{
+			"id": "committees/6d327969_274a_4d8c_ab30_57e717eb0fe9",
+			"key": "6d327969_274a_4d8c_ab30_57e717eb0fe9",
+			"chamber": "TK",
+			"name": "Algemene commissie voor Jeugd en Gezin",
+			"abbreviation": "JG",
+			"observed_from": null,
+			"observed_until": null,
+			"source": null,
+			"slug": "jg",
+			"kind": "algemeen",
+			"started_on": null,
+			"ended_on": null,
+			"active_dossier_count": 46,
+			"path": "/commissies/jg"
+		},
+		{
+			"id": "committees/3bee1173_3218_4f55_895e_96a1d2d0533d",
+			"key": "3bee1173_3218_4f55_895e_96a1d2d0533d",
+			"chamber": "TK",
+			"name": "Algemene commissie voor Wonen, Wijken en Integratie",
+			"abbreviation": "WWI",
+			"observed_from": null,
+			"observed_until": null,
+			"source": null,
+			"slug": "wwi",
+			"kind": "algemeen",
+			"started_on": null,
+			"ended_on": null,
+			"active_dossier_count": 74,
+			"path": "/commissies/wwi"
+		},
+		{
+			"id": "committees/a0ceb8f9_5c8e_43c8_b591_584061753ab1",
+			"key": "a0ceb8f9_5c8e_43c8_b591_584061753ab1",
+			"chamber": "TK",
+			"name": "Vaste commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking",
+			"abbreviation": "BuHaOS",
+			"observed_from": null,
+			"observed_until": null,
+			"source": null,
+			"slug": "buhaos",
+			"kind": "vast",
+			"started_on": "2021-03-31",
+			"ended_on": "2024-07-02",
+			"active_dossier_count": 0,
+			"path": "/commissies/buhaos"
+		}
+	],
+	"members": [
+		{
+			"id": "members/77c541d2_49e3_483f_869d_134df420c5ea",
+			"key": "77c541d2_49e3_483f_869d_134df420c5ea",
+			"name": "Alexander Kops",
+			"full_name": "Alexander Kops",
+			"slug": "alexander-kops",
+			"family_name": "Kops",
+			"name_prefix": null,
+			"party": "PVV",
+			"active": true,
+			"faction_memberships": [
+				{
+					"faction_id": "factions/pvv",
+					"faction_key": "pvv",
+					"name": "Partij voor de Vrijheid",
+					"abbreviation": "PVV",
+					"aliases": ["PVV", "Partij voor de Vrijheid"],
+					"from_date": "2017-03-23",
+					"to_date": null,
+					"role": "Lid"
+				}
+			],
+			"ek_faction_memberships": [],
+			"government_functions": [],
+			"ek": null,
+			"role": null,
+			"observed_from": null,
+			"observed_until": null,
+			"from_date": null,
+			"to_date": null,
+			"path": "/leden/alexander-kops"
+		},
+		{
+			"id": "members/3b3c7923_b604_4902_97c1_210aa85182c1",
+			"key": "3b3c7923_b604_4902_97c1_210aa85182c1",
+			"name": "Alisha Müller",
+			"full_name": "Alisha Suzanna Müller",
+			"slug": "alisha-muller",
+			"family_name": "Müller",
+			"name_prefix": null,
+			"party": "VVD",
+			"active": true,
+			"faction_memberships": [
+				{
+					"faction_id": "factions/vvd",
+					"faction_key": "vvd",
+					"name": "Volkspartij voor Vrijheid en Democratie",
+					"abbreviation": "VVD",
+					"aliases": ["VVD", "Volkspartij voor Vrijheid en Democratie"],
+					"from_date": "2026-02-25",
+					"to_date": null,
+					"role": "Lid"
+				}
+			],
+			"ek_faction_memberships": [],
+			"government_functions": [],
+			"ek": null,
+			"role": null,
+			"observed_from": null,
+			"observed_until": null,
+			"from_date": null,
+			"to_date": null,
+			"path": "/leden/alisha-muller"
+		},
+		{
+			"id": "members/2bea63db_715f_401f_b710_e91c7650df0c",
+			"key": "2bea63db_715f_401f_b710_e91c7650df0c",
+			"name": "André Flach",
+			"full_name": "Andreas Johannes Flach",
+			"slug": "andre-flach",
+			"family_name": "Flach",
+			"name_prefix": null,
+			"party": "SGP",
+			"active": true,
+			"faction_memberships": [
+				{
+					"faction_id": "factions/sgp",
+					"faction_key": "sgp",
+					"name": "Staatkundig Gereformeerde Partij",
+					"abbreviation": "SGP",
+					"aliases": ["SGP", "Staatkundig Gereformeerde Partij"],
+					"from_date": "2023-12-06",
+					"to_date": null,
+					"role": "Lid"
+				}
+			],
+			"ek_faction_memberships": [],
+			"government_functions": [],
+			"ek": null,
+			"role": null,
+			"observed_from": null,
+			"observed_until": null,
+			"from_date": null,
+			"to_date": null,
+			"path": "/leden/andre-flach"
+		}
+	],
+	"factions": [
+		{
+			"id": "factions/50plus",
+			"key": "50plus",
+			"chamber": "TK",
+			"observed_from": null,
+			"observed_until": null,
+			"board": [],
+			"source": null,
+			"name": "50PLUS",
+			"abbreviation": "50PLUS",
+			"aliases": ["50PLUS"],
+			"active": true,
+			"seats": 2,
+			"active_from": "2012-09-20",
+			"active_until": null,
+			"member_count": 2,
+			"path": "/fracties/50plus"
+		},
+		{
+			"id": "factions/bbb",
+			"key": "bbb",
+			"chamber": "TK",
+			"observed_from": null,
+			"observed_until": null,
+			"board": [],
+			"source": null,
+			"name": "BoerBurgerBeweging",
+			"abbreviation": "BBB",
+			"aliases": ["BBB", "BoerBurgerBeweging"],
+			"active": true,
+			"seats": 3,
+			"active_from": "2021-03-31",
+			"active_until": null,
+			"member_count": 3,
+			"path": "/fracties/bbb"
+		},
+		{
+			"id": "factions/cda",
+			"key": "cda",
+			"chamber": "TK",
+			"observed_from": null,
+			"observed_until": null,
+			"board": [],
+			"source": null,
+			"name": "Christen-Democratisch Appèl",
+			"abbreviation": "CDA",
+			"aliases": ["CDA", "Christen-Democratisch Appèl"],
+			"active": true,
+			"seats": 18,
+			"active_from": "1980-10-11",
+			"active_until": null,
+			"member_count": 18,
+			"path": "/fracties/cda"
+		},
+		{
+			"id": "factions/christenunie",
+			"key": "christenunie",
+			"chamber": "TK",
+			"observed_from": null,
+			"observed_until": null,
+			"board": [],
+			"source": null,
+			"name": "ChristenUnie",
+			"abbreviation": "ChristenUnie",
+			"aliases": ["ChristenUnie"],
+			"active": true,
+			"seats": 3,
+			"active_from": "2001-03-15",
+			"active_until": null,
+			"member_count": 3,
+			"path": "/fracties/christenunie"
+		},
+		{
+			"id": "factions/d66",
+			"key": "d66",
+			"chamber": "TK",
+			"observed_from": null,
+			"observed_until": null,
+			"board": [],
+			"source": null,
+			"name": "Democraten 66",
+			"abbreviation": "D66",
+			"aliases": ["D66", "Democraten 66"],
+			"active": true,
+			"seats": 26,
+			"active_from": "1966-10-13",
+			"active_until": null,
+			"member_count": 26,
+			"path": "/fracties/d66"
+		},
+		{
+			"id": "factions/denk",
+			"key": "denk",
+			"chamber": "TK",
+			"observed_from": null,
+			"observed_until": null,
+			"board": [],
+			"source": null,
+			"name": "DENK",
+			"abbreviation": "DENK",
+			"aliases": ["DENK"],
+			"active": true,
+			"seats": 3,
+			"active_from": "2017-03-23",
+			"active_until": null,
+			"member_count": 3,
+			"path": "/fracties/denk"
+		},
+		{
+			"id": "factions/fvd",
+			"key": "fvd",
+			"chamber": "TK",
+			"observed_from": null,
+			"observed_until": null,
+			"board": [],
+			"source": null,
+			"name": "Forum voor Democratie",
+			"abbreviation": "FVD",
+			"aliases": ["FVD", "Forum voor Democratie"],
+			"active": true,
+			"seats": 7,
+			"active_from": "2017-03-23",
+			"active_until": null,
+			"member_count": 7,
+			"path": "/fracties/fvd"
+		},
+		{
+			"id": "factions/groep_markuszower",
+			"key": "groep_markuszower",
+			"chamber": "TK",
+			"observed_from": null,
+			"observed_until": null,
+			"board": [],
+			"source": null,
+			"name": "Groep Markuszower",
+			"abbreviation": "Groep Markuszower",
+			"aliases": ["Groep Markuszower"],
+			"active": true,
+			"seats": 7,
+			"active_from": "2026-01-20",
+			"active_until": null,
+			"member_count": 7,
+			"path": "/fracties/groep_markuszower"
+		},
+		{
+			"id": "factions/ja21",
+			"key": "ja21",
+			"chamber": "TK",
+			"observed_from": null,
+			"observed_until": null,
+			"board": [],
+			"source": null,
+			"name": "JA21",
+			"abbreviation": "JA21",
+			"aliases": ["JA21"],
+			"active": true,
+			"seats": 9,
+			"active_from": "2021-03-31",
+			"active_until": null,
+			"member_count": 9,
+			"path": "/fracties/ja21"
+		},
+		{
+			"id": "factions/lid_keijzer",
+			"key": "lid_keijzer",
+			"chamber": "TK",
+			"observed_from": null,
+			"observed_until": null,
+			"board": [],
+			"source": null,
+			"name": "Lid Keijzer",
+			"abbreviation": "Lid Keijzer",
+			"aliases": ["Keijzer", "Lid Keijzer"],
+			"active": true,
+			"seats": 1,
+			"active_from": "2026-02-24",
+			"active_until": null,
+			"member_count": 1,
+			"path": "/fracties/lid_keijzer"
+		},
+		{
+			"id": "factions/pro",
+			"key": "pro",
+			"chamber": "TK",
+			"observed_from": null,
+			"observed_until": null,
+			"board": [],
+			"source": null,
+			"name": "Progressief Nederland",
+			"abbreviation": "PRO",
+			"aliases": ["PRO", "Progressief Nederland"],
+			"active": true,
+			"seats": 20,
+			"active_from": "2026-06-10",
+			"active_until": null,
+			"member_count": 20,
+			"path": "/fracties/pro"
+		},
+		{
+			"id": "factions/pvdd",
+			"key": "pvdd",
+			"chamber": "TK",
+			"observed_from": null,
+			"observed_until": null,
+			"board": [],
+			"source": null,
+			"name": "Partij voor de Dieren",
+			"abbreviation": "PvdD",
+			"aliases": ["Partij voor de Dieren", "PvdD"],
+			"active": true,
+			"seats": 3,
+			"active_from": "2006-11-30",
+			"active_until": null,
+			"member_count": 3,
+			"path": "/fracties/pvdd"
+		},
+		{
+			"id": "factions/pvv",
+			"key": "pvv",
+			"chamber": "TK",
+			"observed_from": null,
+			"observed_until": null,
+			"board": [],
+			"source": null,
+			"name": "Partij voor de Vrijheid",
+			"abbreviation": "PVV",
+			"aliases": ["PVV", "Partij voor de Vrijheid"],
+			"active": true,
+			"seats": 19,
+			"active_from": "2006-11-30",
+			"active_until": null,
+			"member_count": 19,
+			"path": "/fracties/pvv"
+		},
+		{
+			"id": "factions/sgp",
+			"key": "sgp",
+			"chamber": "TK",
+			"observed_from": null,
+			"observed_until": null,
+			"board": [],
+			"source": null,
+			"name": "Staatkundig Gereformeerde Partij",
+			"abbreviation": "SGP",
+			"aliases": ["SGP", "Staatkundig Gereformeerde Partij"],
+			"active": true,
+			"seats": 3,
+			"active_from": "1922-04-30",
+			"active_until": null,
+			"member_count": 3,
+			"path": "/fracties/sgp"
+		},
+		{
+			"id": "factions/sp",
+			"key": "sp",
+			"chamber": "TK",
+			"observed_from": null,
+			"observed_until": null,
+			"board": [],
+			"source": null,
+			"name": "Socialistische Partij",
+			"abbreviation": "SP",
+			"aliases": ["SP", "Socialistische Partij"],
+			"active": true,
+			"seats": 3,
+			"active_from": "1994-05-17",
+			"active_until": null,
+			"member_count": 3,
+			"path": "/fracties/sp"
+		},
+		{
+			"id": "factions/volt",
+			"key": "volt",
+			"chamber": "TK",
+			"observed_from": null,
+			"observed_until": null,
+			"board": [],
+			"source": null,
+			"name": "Volt",
+			"abbreviation": "Volt",
+			"aliases": ["Volt"],
+			"active": true,
+			"seats": 1,
+			"active_from": "2021-03-31",
+			"active_until": null,
+			"member_count": 1,
+			"path": "/fracties/volt"
+		},
+		{
+			"id": "factions/vvd",
+			"key": "vvd",
+			"chamber": "TK",
+			"observed_from": null,
+			"observed_until": null,
+			"board": [],
+			"source": null,
+			"name": "Volkspartij voor Vrijheid en Democratie",
+			"abbreviation": "VVD",
+			"aliases": ["VVD", "Volkspartij voor Vrijheid en Democratie"],
+			"active": true,
+			"seats": 22,
+			"active_from": "1948-01-23",
+			"active_until": null,
+			"member_count": 22,
+			"path": "/fracties/vvd"
+		}
+	],
+	"decisions": {
+		"items": [
+			{
+				"id": "decisions/decision_00043b49_6b27_4298_956c_06075d02224c",
+				"key": "decision_00043b49_6b27_4298_956c_06075d02224c",
+				"date": "2026-10-14",
+				"subject": "Motie van het lid Van der Plas over bij de begrotingsonderhandelingen inzetten op een zelfstandig en geoormerkt landbouwbeleid ",
+				"display_name": "Motie van het lid Van der Plas over bij de begrotingsonderhandelingen inzetten op een zelfstandig en geoormerkt landbouwbeleid ",
+				"external_id": "00043b49-6b27-4298-956c-06075d02224c",
+				"dossier_numbers": ["21501-20"],
+				"dossiers": [
+					{
+						"number": "21501-20",
+						"short_title": null,
+						"title": "Europese Raad"
+					}
+				],
+				"kind": "Motie",
+				"primary_case_kind": "Motie",
+				"decision_kind": "Stemmen - verworpen",
+				"passed": false,
+				"chamber": "TK",
+				"result": null,
+				"method": null,
+				"bill_decision": null,
+				"vote_kind": null,
+				"tally": {},
+				"voters": {},
+				"dictum": null,
+				"motion": {
+					"collection": "documents",
+					"key": "3e31ceb6_36e7_45ac_8e20_e2999dd2114b",
+					"path": "/kamerstukken/21501-20/2461"
+				},
+				"coalition": null,
+				"path": "/stemmingen/decision_00043b49_6b27_4298_956c_06075d02224c"
+			},
+			{
+				"id": "decisions/decision_0d2d1e07_f145_465c_89c9_db2683a5b9d3",
+				"key": "decision_0d2d1e07_f145_465c_89c9_db2683a5b9d3",
+				"date": "2026-10-14",
+				"subject": "Motie van de leden Stöteler en Hoogeveen over uitdragen dat Nederland op geen enkel beleidsterrein bereid is tot afschaffing van unanimiteit ",
+				"display_name": "Motie van de leden Stöteler en Hoogeveen over uitdragen dat Nederland op geen enkel beleidsterrein bereid is tot afschaffing van unanimiteit ",
+				"external_id": "0d2d1e07-f145-465c-89c9-db2683a5b9d3",
+				"dossier_numbers": ["21501-20"],
+				"dossiers": [
+					{
+						"number": "21501-20",
+						"short_title": null,
+						"title": "Europese Raad"
+					}
+				],
+				"kind": "Motie",
+				"primary_case_kind": "Motie",
+				"decision_kind": "Stemmen - verworpen",
+				"passed": false,
+				"chamber": "TK",
+				"result": null,
+				"method": null,
+				"bill_decision": null,
+				"vote_kind": null,
+				"tally": {},
+				"voters": {},
+				"dictum": null,
+				"motion": {
+					"collection": "documents",
+					"key": "b4e5dafe_c712_46e1_b30a_bd19fe76bee0",
+					"path": "/kamerstukken/21501-20/2444"
+				},
+				"coalition": null,
+				"path": "/stemmingen/decision_0d2d1e07_f145_465c_89c9_db2683a5b9d3"
+			},
+			{
+				"id": "decisions/decision_11e1b0c5_e7e5_408b_b513_23a2721d5a6e",
+				"key": "decision_11e1b0c5_e7e5_408b_b513_23a2721d5a6e",
+				"date": "2026-10-14",
+				"subject": "Motie van het lid Klos over zich inzetten voor meer investeringen in wetenschap, innovatie en concurrentievermogen ",
+				"display_name": "Motie van het lid Klos over zich inzetten voor meer investeringen in wetenschap, innovatie en concurrentievermogen ",
+				"external_id": "11e1b0c5-e7e5-408b-b513-23a2721d5a6e",
+				"dossier_numbers": ["21501-20"],
+				"dossiers": [
+					{
+						"number": "21501-20",
+						"short_title": null,
+						"title": "Europese Raad"
+					}
+				],
+				"kind": "Motie",
+				"primary_case_kind": "Motie",
+				"decision_kind": "Stemmen - aangenomen",
+				"passed": true,
+				"chamber": "TK",
+				"result": null,
+				"method": null,
+				"bill_decision": null,
+				"vote_kind": null,
+				"tally": {},
+				"voters": {},
+				"dictum": null,
+				"motion": {
+					"collection": "documents",
+					"key": "1e76f01d_528c_40f3_9b73_54185b8fde53",
+					"path": "/kamerstukken/21501-20/2436"
+				},
+				"coalition": null,
+				"path": "/stemmingen/decision_11e1b0c5_e7e5_408b_b513_23a2721d5a6e"
+			}
+		],
+		"total": 66188,
+		"partial": false,
+		"facets": {
+			"kind": [
+				{
+					"value": "Motie",
+					"count": 52847,
+					"passed": 26511,
+					"rejected": 26336
+				},
+				{
+					"value": "Amendement",
+					"count": 8319,
+					"passed": 3275,
+					"rejected": 5044
+				},
+				{
+					"value": "Wetgeving",
+					"count": 2408,
+					"passed": 2398,
+					"rejected": 10
+				},
+				{
+					"value": "Begroting",
+					"count": 1963,
+					"passed": 1963,
+					"rejected": 0
+				}
+			],
+			"passed": [
+				{
+					"value": true,
+					"count": 34625
+				},
+				{
+					"value": false,
+					"count": 31563
+				}
+			],
+			"days": [
+				{
+					"date": "2026-10-14",
+					"count": 32,
+					"passed": 12
+				}
+			],
+			"years": [
+				{
+					"year": "2008",
+					"count": 1233,
+					"passed": 557,
+					"rejected": 676
+				},
+				{
+					"year": "2009",
+					"count": 2944,
+					"passed": 1424,
+					"rejected": 1520
+				},
+				{
+					"year": "2010",
+					"count": 2037,
+					"passed": 1110,
+					"rejected": 927
+				},
+				{
+					"year": "2011",
+					"count": 3698,
+					"passed": 1630,
+					"rejected": 2068
+				}
+			],
+			"party_votes": [],
+			"coalition": [
+				{
+					"value": "together",
+					"count": 49492
+				},
+				{
+					"value": "split",
+					"count": 9197
+				},
+				{
+					"value": "wissel",
+					"count": 5414
+				},
+				{
+					"value": "carried",
+					"count": 14856
+				}
+			],
+			"coalition_cabinets": [
+				{
+					"cabinet": "jetten",
+					"name": "kabinet-Jetten",
+					"votes": 3976,
+					"together": 3370,
+					"split": 512,
+					"wissel": 94,
+					"carried": 0,
+					"decisive": 1212
+				},
+				{
+					"cabinet": "schoof",
+					"name": "kabinet-Schoof",
+					"votes": 7013,
+					"together": 4459,
+					"split": 1928,
+					"wissel": 626,
+					"carried": 1323,
+					"decisive": 1891
+				},
+				{
+					"cabinet": "rutte_iv",
+					"name": "kabinet-Rutte IV",
+					"votes": 10157,
+					"together": 7529,
+					"split": 2043,
+					"wissel": 585,
+					"carried": 3414,
+					"decisive": 2939
+				},
+				{
+					"cabinet": "rutte_iii",
+					"name": "kabinet-Rutte III",
+					"votes": 16924,
+					"together": 13144,
+					"split": 3062,
+					"wissel": 718,
+					"carried": 5526,
+					"decisive": 6141
+				}
+			]
+		}
+	},
+	"cabinets": [
+		{
+			"key": "jetten",
+			"name": "kabinet-Jetten",
+			"from_date": "2026-02-23",
+			"to_date": null,
+			"previous": "schoof",
+			"prime_minister": {
+				"key": "49be3576_cea3_46c0_87eb_89beb108248d",
+				"name": "Rob Jetten",
+				"path": "/leden/rob-jetten"
+			},
+			"parties": [
+				{
+					"short": "D66",
+					"faction": "d66"
+				},
+				{
+					"short": "VVD",
+					"faction": "vvd"
+				},
+				{
+					"short": "CDA",
+					"faction": "cda"
+				}
+			],
+			"factions": ["d66", "vvd", "cda"],
+			"demissionary_from": null,
+			"phases": [
+				{
+					"kind": "formatie",
+					"from_date": "2025-10-29",
+					"to_date": "2026-02-23",
+					"label": "Tweede Kamerverkiezing: 29 oktober 2025",
+					"source": {
+						"name": "rijksoverheid",
+						"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-jetten",
+						"read_on": "2026-10-14"
+					}
+				},
+				{
+					"kind": "in_functie",
+					"from_date": "2026-02-23",
+					"to_date": null,
+					"label": "Beëdiging kabinet: 23 februari 2026",
+					"source": {
+						"name": "rijksoverheid",
+						"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-jetten",
+						"read_on": "2026-10-14"
+					}
+				}
+			],
+			"source": {
+				"name": "rijksoverheid",
+				"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-jetten",
+				"read_on": "2026-10-14"
+			},
+			"members": 28,
+			"bills": 82,
+			"commitments": 1224,
+			"path": "/kabinetten/jetten"
+		},
+		{
+			"key": "schoof",
+			"name": "kabinet-Schoof",
+			"from_date": "2024-07-02",
+			"to_date": "2026-02-23",
+			"previous": "rutte_iv",
+			"prime_minister": {
+				"key": "49b617db_cf37_4a99_91b9_210b4394fd81",
+				"name": "H.W.M. Schoof",
+				"path": "/leden/h-w-m-schoof"
+			},
+			"parties": [
+				{
+					"short": "PVV",
+					"faction": "pvv"
+				},
+				{
+					"short": "VVD",
+					"faction": "vvd"
+				},
+				{
+					"short": "NSC",
+					"faction": "nieuw_sociaal_contract"
+				},
+				{
+					"short": "BBB",
+					"faction": "bbb"
+				}
+			],
+			"factions": ["pvv", "vvd", "nieuw_sociaal_contract", "bbb"],
+			"demissionary_from": "2025-06-03",
+			"phases": [
+				{
+					"kind": "formatie",
+					"from_date": "2023-11-22",
+					"to_date": "2024-07-02",
+					"label": "Tweede Kamerverkiezing: 22 november 2023",
+					"source": {
+						"name": "rijksoverheid",
+						"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-schoof",
+						"read_on": "2026-10-14"
+					}
+				},
+				{
+					"kind": "in_functie",
+					"from_date": "2024-07-02",
+					"to_date": "2025-06-03",
+					"label": "Beëdiging kabinet: 2 juli 2024",
+					"source": {
+						"name": "rijksoverheid",
+						"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-schoof",
+						"read_on": "2026-10-14"
+					}
+				},
+				{
+					"kind": "demissionair",
+					"from_date": "2025-06-03",
+					"to_date": "2025-08-22",
+					"label": "Op 3 juni 2025 boden de bewindspersonen van de PVV hun ontslag aan de Koning aan.",
+					"source": {
+						"name": "rijksoverheid",
+						"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-schoof",
+						"read_on": "2026-10-14"
+					}
+				},
+				{
+					"kind": "dubbel_demissionair",
+					"from_date": "2025-08-22",
+					"to_date": "2026-02-23",
+					"label": "Op 22 augustus 2025 boden ook de bewindspersonen van NSC hun ontslag aan de Koning aan.",
+					"source": {
+						"name": "rijksoverheid",
+						"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-schoof",
+						"read_on": "2026-10-14"
+					}
+				}
+			],
+			"source": {
+				"name": "rijksoverheid",
+				"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-schoof",
+				"read_on": "2026-10-14"
+			},
+			"members": 45,
+			"bills": 159,
+			"commitments": 2312,
+			"path": "/kabinetten/schoof"
+		},
+		{
+			"key": "rutte_iv",
+			"name": "kabinet-Rutte IV",
+			"from_date": "2022-01-10",
+			"to_date": "2024-07-02",
+			"previous": "rutte_iii",
+			"prime_minister": {
+				"key": "8b3664bd_77e4_468b_af96_f3f4ec27fcce",
+				"name": "Mark Rutte",
+				"path": "/leden/mark-rutte"
+			},
+			"parties": [
+				{
+					"short": "VVD",
+					"faction": "vvd"
+				},
+				{
+					"short": "D66",
+					"faction": "d66"
+				},
+				{
+					"short": "CDA",
+					"faction": "cda"
+				},
+				{
+					"short": "ChristenUnie",
+					"faction": "christenunie"
+				}
+			],
+			"factions": ["vvd", "d66", "cda", "christenunie"],
+			"demissionary_from": "2023-07-07",
+			"phases": [
+				{
+					"kind": "formatie",
+					"from_date": "2021-03-17",
+					"to_date": "2022-01-10",
+					"label": "Tweede Kamerverkiezingen: 17 maart 2021",
+					"source": {
+						"name": "rijksoverheid",
+						"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-rutte-iv",
+						"read_on": "2026-10-14"
+					}
+				},
+				{
+					"kind": "in_functie",
+					"from_date": "2022-01-10",
+					"to_date": "2023-07-07",
+					"label": "Beëdiging kabinet: 10 januari 2022",
+					"source": {
+						"name": "rijksoverheid",
+						"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-rutte-iv",
+						"read_on": "2026-10-14"
+					}
+				},
+				{
+					"kind": "demissionair",
+					"from_date": "2023-07-07",
+					"to_date": "2024-07-02",
+					"label": "Op 7 juli 2023 bood minister-president Rutte aan de Koning het ontslag aan van alle ministers en staatssecretarissen.",
+					"source": {
+						"name": "rijksoverheid",
+						"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-rutte-iv",
+						"read_on": "2026-10-14"
+					}
+				}
+			],
+			"source": {
+				"name": "rijksoverheid",
+				"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-rutte-iv",
+				"read_on": "2026-10-14"
+			},
+			"members": 35,
+			"bills": 258,
+			"commitments": 3138,
+			"path": "/kabinetten/rutte_iv"
+		},
+		{
+			"key": "rutte_iii",
+			"name": "kabinet-Rutte III",
+			"from_date": "2017-10-26",
+			"to_date": "2022-01-10",
+			"previous": "rutte_asscher",
+			"prime_minister": {
+				"key": "8b3664bd_77e4_468b_af96_f3f4ec27fcce",
+				"name": "Mark Rutte",
+				"path": "/leden/mark-rutte"
+			},
+			"parties": [
+				{
+					"short": "VVD",
+					"faction": "vvd"
+				},
+				{
+					"short": "CDA",
+					"faction": "cda"
+				},
+				{
+					"short": "D66",
+					"faction": "d66"
+				},
+				{
+					"short": "ChristenUnie",
+					"faction": "christenunie"
+				}
+			],
+			"factions": ["vvd", "cda", "d66", "christenunie"],
+			"demissionary_from": "2021-01-15",
+			"phases": [
+				{
+					"kind": "formatie",
+					"from_date": "2017-03-15",
+					"to_date": "2017-10-26",
+					"label": "Tweede Kamerverkiezingen: 15 maart 2017",
+					"source": {
+						"name": "rijksoverheid",
+						"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-rutte-iii",
+						"read_on": "2026-10-14"
+					}
+				},
+				{
+					"kind": "in_functie",
+					"from_date": "2017-10-26",
+					"to_date": "2021-01-15",
+					"label": "Beëdiging kabinet: 26 oktober 2017",
+					"source": {
+						"name": "rijksoverheid",
+						"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-rutte-iii",
+						"read_on": "2026-10-14"
+					}
+				},
+				{
+					"kind": "demissionair",
+					"from_date": "2021-01-15",
+					"to_date": "2022-01-10",
+					"label": "Op 15 januari 2021 bood minister-president Rutte aan de Koning het ontslag aan van alle ministers en staatssecretarissen.",
+					"source": {
+						"name": "rijksoverheid",
+						"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-rutte-iii",
+						"read_on": "2026-10-14"
+					}
+				}
+			],
+			"source": {
+				"name": "rijksoverheid",
+				"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-rutte-iii",
+				"read_on": "2026-10-14"
+			},
+			"members": 36,
+			"bills": 567,
+			"commitments": 0,
+			"path": "/kabinetten/rutte_iii"
+		}
+	],
+	"ministries": [
+		{
+			"key": "az",
+			"name": "Algemene Zaken",
+			"abbreviation": "AZ",
+			"tooi": "mnre1010",
+			"successor": null,
+			"until": null,
+			"periods": [
+				{
+					"from_date": null,
+					"until": null,
+					"successor": null,
+					"basis": null,
+					"source": "tooi",
+					"successor_source": null
+				}
+			]
+		},
+		{
+			"key": "aok",
+			"name": "Algemene Oorlogvoering van het Koninkrijk",
+			"abbreviation": null,
+			"tooi": null,
+			"successor": "az",
+			"until": "1946-07-02",
+			"periods": [
+				{
+					"from_date": "1945-06-24",
+					"until": "1946-07-02",
+					"successor": "az",
+					"basis": null,
+					"source": "rijksoverheid",
+					"successor_source": "curated"
+				}
+			]
+		},
+		{
+			"key": "bz",
+			"name": "Buitenlandse Zaken",
+			"abbreviation": "BZ",
+			"tooi": "mnre1013",
+			"successor": null,
+			"until": null,
+			"periods": [
+				{
+					"from_date": "1798-03-12",
+					"until": null,
+					"successor": null,
+					"basis": null,
+					"source": "tooi",
+					"successor_source": null
+				}
+			]
+		},
+		{
+			"key": "jenv",
+			"name": "Justitie en Veiligheid",
+			"abbreviation": "JenV",
+			"tooi": "mnre1058",
+			"successor": null,
+			"until": null,
+			"periods": [
+				{
+					"from_date": "2018-01-01",
+					"until": null,
+					"successor": null,
+					"basis": null,
+					"source": "tooi",
+					"successor_source": null
+				}
+			]
+		},
+		{
+			"key": "venj",
+			"name": "Veiligheid en Justitie",
+			"abbreviation": "VenJ",
+			"tooi": "mnre1058",
+			"successor": "jenv",
+			"until": "2017-12-31",
+			"periods": [
+				{
+					"from_date": "2010-12-01",
+					"until": "2017-12-31",
+					"successor": "jenv",
+					"basis": "https://zoek.officielebekendmakingen.nl/stcrt-2017-62719.html",
+					"source": "tooi",
+					"successor_source": null
+				}
+			]
+		},
+		{
+			"key": "justitie",
+			"name": "Justitie",
+			"abbreviation": "MinJus",
+			"tooi": "mnre1058",
+			"successor": "venj",
+			"until": "2010-11-30",
+			"periods": [
+				{
+					"from_date": null,
+					"until": "2010-11-30",
+					"successor": "venj",
+					"basis": "https://zoek.officielebekendmakingen.nl/stcrt-2010-16523.html",
+					"source": "tooi",
+					"successor_source": null
+				}
+			]
+		}
+	],
+	"cabinet": {
+		"key": "jetten",
+		"name": "kabinet-Jetten",
+		"from_date": "2026-02-23",
+		"to_date": null,
+		"previous": "schoof",
+		"prime_minister": {
+			"key": "49be3576_cea3_46c0_87eb_89beb108248d",
+			"name": "Rob Jetten",
+			"path": "/leden/rob-jetten"
+		},
+		"parties": [
+			{
+				"short": "D66",
+				"faction": "d66"
+			},
+			{
+				"short": "VVD",
+				"faction": "vvd"
+			},
+			{
+				"short": "CDA",
+				"faction": "cda"
+			}
+		],
+		"factions": ["d66", "vvd", "cda"],
+		"demissionary_from": null,
+		"phases": [
+			{
+				"kind": "formatie",
+				"from_date": "2025-10-29",
+				"to_date": "2026-02-23",
+				"label": "Tweede Kamerverkiezing: 29 oktober 2025",
+				"source": {
+					"name": "rijksoverheid",
+					"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-jetten",
+					"read_on": "2026-10-14"
+				}
+			},
+			{
+				"kind": "in_functie",
+				"from_date": "2026-02-23",
+				"to_date": null,
+				"label": "Beëdiging kabinet: 23 februari 2026",
+				"source": {
+					"name": "rijksoverheid",
+					"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-jetten",
+					"read_on": "2026-10-14"
+				}
+			}
+		],
+		"source": {
+			"name": "rijksoverheid",
+			"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-jetten",
+			"read_on": "2026-10-14"
+		},
+		"members": 28,
+		"bills": 82,
+		"commitments": 1224,
+		"ministries": [
+			{
+				"ministry": "az",
+				"name": "Algemene Zaken",
+				"seats": [
+					{
+						"seat": "az/minister-president",
+						"post": "minister-president",
+						"portfolio": null,
+						"function": "Minister-president",
+						"posts": [
+							{
+								"member": {
+									"key": "49be3576_cea3_46c0_87eb_89beb108248d",
+									"name": "Rob Jetten",
+									"path": "/leden/rob-jetten"
+								},
+								"post": "minister-president",
+								"function": "Minister-president",
+								"also_named": ["minister van Algemene Zaken"],
+								"seat": "az/minister-president",
+								"portfolio": null,
+								"from_date": "2026-02-23",
+								"to_date": null,
+								"from_date_source": null,
+								"to_date_source": null,
+								"corrected": [],
+								"acting": false,
+								"acting_reason": null,
+								"acting_basis": null,
+								"acting_other_seat": null,
+								"ministry_source": "page",
+								"ministry_missing": null,
+								"party": {
+									"short": "D66",
+									"faction": "d66"
+								},
+								"overlaps_with": [],
+								"absent": null,
+								"source": {
+									"name": "rijksoverheid",
+									"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-jetten",
+									"read_on": "2026-10-14"
+								},
+								"dossiers": 13,
+								"bills": 0,
+								"open_commitments": 4
+							}
+						]
+					}
+				]
+			},
+			{
+				"ministry": "bz",
+				"name": "Buitenlandse Zaken",
+				"seats": [
+					{
+						"seat": "-/minister/buitenlandse-handel-en-ontwikkelingssamenwerking",
+						"post": "minister",
+						"portfolio": "Buitenlandse Handel en Ontwikkelingssamenwerking",
+						"function": "Minister van Buitenlandse Handel en Ontwikkelingssamenwerking",
+						"posts": [
+							{
+								"member": {
+									"key": "bf030048_0434_42f1_bbed_8b0c04014db4",
+									"name": "Sjoerd Sjoerdsma",
+									"path": "/leden/sjoerd-sjoerdsma"
+								},
+								"post": "minister",
+								"function": "Minister van Buitenlandse Handel en Ontwikkelingssamenwerking",
+								"also_named": [],
+								"seat": "-/minister/buitenlandse-handel-en-ontwikkelingssamenwerking",
+								"portfolio": "Buitenlandse Handel en Ontwikkelingssamenwerking",
+								"from_date": "2026-02-23",
+								"to_date": null,
+								"from_date_source": null,
+								"to_date_source": null,
+								"corrected": [],
+								"acting": false,
+								"acting_reason": null,
+								"acting_basis": null,
+								"acting_other_seat": null,
+								"ministry_source": "tk_commitments",
+								"ministry_missing": null,
+								"party": {
+									"short": "D66",
+									"faction": "d66"
+								},
+								"overlaps_with": [],
+								"absent": null,
+								"source": {
+									"name": "rijksoverheid",
+									"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-jetten",
+									"read_on": "2026-10-14"
+								},
+								"dossiers": 33,
+								"bills": 0,
+								"open_commitments": 18
+							}
+						]
+					},
+					{
+						"seat": "bz/minister",
+						"post": "minister",
+						"portfolio": null,
+						"function": "Minister van Buitenlandse Zaken",
+						"posts": [
+							{
+								"member": {
+									"key": "3edd081e_b219_43f2_88c1_39e5a25cb0fb",
+									"name": "T.B.W. Berendsen",
+									"path": "/leden/t-b-w-berendsen"
+								},
+								"post": "minister",
+								"function": "Minister van Buitenlandse Zaken",
+								"also_named": [],
+								"seat": "bz/minister",
+								"portfolio": null,
+								"from_date": "2026-02-23",
+								"to_date": null,
+								"from_date_source": null,
+								"to_date_source": null,
+								"corrected": [],
+								"acting": false,
+								"acting_reason": null,
+								"acting_basis": null,
+								"acting_other_seat": null,
+								"ministry_source": "page",
+								"ministry_missing": null,
+								"party": {
+									"short": "CDA",
+									"faction": "cda"
+								},
+								"overlaps_with": [],
+								"absent": null,
+								"source": {
+									"name": "rijksoverheid",
+									"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-jetten",
+									"read_on": "2026-10-14"
+								},
+								"dossiers": 74,
+								"bills": 9,
+								"open_commitments": 22
+							}
+						]
+					}
+				]
+			},
+			{
+				"ministry": "jenv",
+				"name": "Justitie en Veiligheid",
+				"seats": [
+					{
+						"seat": "jenv/minister",
+						"post": "minister",
+						"portfolio": null,
+						"function": "Minister van Justitie en Veiligheid",
+						"posts": [
+							{
+								"member": {
+									"key": "88f29701_8fe7_4a10_8b0f_0973fdde12bb",
+									"name": "D.M. van Weel",
+									"path": "/leden/d-m-van-weel"
+								},
+								"post": "minister",
+								"function": "Minister van Justitie en Veiligheid",
+								"also_named": [],
+								"seat": "jenv/minister",
+								"portfolio": null,
+								"from_date": "2026-02-23",
+								"to_date": null,
+								"from_date_source": null,
+								"to_date_source": null,
+								"corrected": [],
+								"acting": false,
+								"acting_reason": null,
+								"acting_basis": null,
+								"acting_other_seat": null,
+								"ministry_source": "page",
+								"ministry_missing": null,
+								"party": {
+									"short": "VVD",
+									"faction": "vvd"
+								},
+								"overlaps_with": [],
+								"absent": null,
+								"source": {
+									"name": "rijksoverheid",
+									"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-jetten",
+									"read_on": "2026-10-14"
+								},
+								"dossiers": 74,
+								"bills": 22,
+								"open_commitments": 71
+							}
+						]
+					},
+					{
+						"seat": "jenv/staatssecretaris",
+						"post": "staatssecretaris",
+						"portfolio": null,
+						"function": "Staatssecretaris van Justitie en Veiligheid",
+						"posts": [
+							{
+								"member": {
+									"key": "71868ebc_5700_4a64_9d6e_0110f2148b38",
+									"name": "K.T. van Bruggen",
+									"path": "/leden/k-t-van-bruggen"
+								},
+								"post": "staatssecretaris",
+								"function": "Staatssecretaris van Justitie en Veiligheid",
+								"also_named": [],
+								"seat": "jenv/staatssecretaris",
+								"portfolio": null,
+								"from_date": "2026-02-23",
+								"to_date": null,
+								"from_date_source": null,
+								"to_date_source": null,
+								"corrected": [],
+								"acting": false,
+								"acting_reason": null,
+								"acting_basis": null,
+								"acting_other_seat": null,
+								"ministry_source": "page",
+								"ministry_missing": null,
+								"party": {
+									"short": "D66",
+									"faction": "d66"
+								},
+								"overlaps_with": [],
+								"absent": null,
+								"source": {
+									"name": "rijksoverheid",
+									"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-jetten",
+									"read_on": "2026-10-14"
+								},
+								"dossiers": 48,
+								"bills": 15,
+								"open_commitments": 53
+							}
+						]
+					}
+				]
+			}
+		],
+		"path": "/kabinetten/jetten"
+	},
+	"commitments": {
+		"items": [
+			{
+				"key": "0ce0711d_0f70_4a6e_b863_ed7fa0948458",
+				"number": "TZ202610-132",
+				"text": "De Kamer ontvangt aan het einde van het eerste kwartaal van 2027 een update over toegankelijk onderwijs voor studenten met een ondersteuningsbehoefte.",
+				"status": "Openstaand",
+				"date": "2026-10-14",
+				"made_on": "2026-10-08",
+				"expected_resolution": null,
+				"minister_name": "Letschert, R.M.",
+				"member": {
+					"key": "d0755ec1_f51e_4396_8820_b61f0d14539c",
+					"name": "R.M. Letschert",
+					"function": "Minister van Onderwijs, Cultuur en Wetenschap",
+					"path": "/leden/r-m-letschert"
+				},
+				"post": "minister",
+				"ministry": "ocw",
+				"cabinet": "jetten",
+				"dossiers": [
+					{
+						"key": "24724",
+						"number": "24724",
+						"title": "Studiefinanciering",
+						"short_title": null,
+						"path": "/dossiers/24724"
+					},
+					{
+						"key": "26643",
+						"number": "26643",
+						"title": "Informatie- en communicatietechnologie (ICT)",
+						"short_title": "ICT",
+						"path": "/dossiers/26643"
+					},
+					{
+						"key": "29240",
+						"number": "29240",
+						"title": "Veiligheid op school",
+						"short_title": null,
+						"path": "/dossiers/29240"
+					},
+					{
+						"key": "31288",
+						"number": "31288",
+						"title": "Hoger Onderwijs-, Onderzoek- en Wetenschapsbeleid",
+						"short_title": null,
+						"path": "/dossiers/31288"
+					},
+					{
+						"key": "31524",
+						"number": "31524",
+						"title": "Beroepsonderwijs en Volwassenen Educatie",
+						"short_title": null,
+						"path": "/dossiers/31524"
+					},
+					{
+						"key": "36630",
+						"number": "36630",
+						"title": "Brede Welvaart",
+						"short_title": null,
+						"path": "/dossiers/36630"
+					},
+					{
+						"key": "36800_viii",
+						"number": "36800-VIII",
+						"title": "Vaststelling van de begrotingsstaten van het Ministerie van Onderwijs, Cultuur en Wetenschap (VIII) voor het jaar 2026",
+						"short_title": "Begroting Onderwijs, Cultuur en Wetenschap 2026",
+						"path": "/dossiers/36800-VIII"
+					}
+				],
+				"activity": {
+					"key": "45e9c5d8_dd69_47c4_8ae6_327a35e9a6a8",
+					"date": "2026-10-08",
+					"number": "2026A04374",
+					"kind": "Commissiedebat",
+					"agenda_title": "Hoger onderwijs, studiefinanciering en DUO",
+					"path": "/activiteiten/2026A04374"
+				},
+				"fulfilled_by": [],
+				"path": "/toezeggingen/TZ202610-132"
+			},
+			{
+				"key": "1764f942_f9c9_4a23_9da2_038e0abd2cad",
+				"number": "TZ202610-141",
+				"text": "De Kamer ontvangt over een halfjaar concrete informatie over de manieren om de besteding van de bekostiging transparanter te maken.",
+				"status": "Openstaand",
+				"date": "2026-10-14",
+				"made_on": "2026-10-14",
+				"expected_resolution": null,
+				"minister_name": "Tielen, J.Z.C.M.",
+				"member": {
+					"key": "97ffe642_648f_4dab_a0e8_0720e96e3e35",
+					"name": "Judith Tielen",
+					"function": "Staatssecretaris van Onderwijs, Cultuur en Wetenschap",
+					"path": "/leden/judith-tielen"
+				},
+				"post": "staatssecretaris",
+				"ministry": "ocw",
+				"cabinet": "jetten",
+				"dossiers": [
+					{
+						"key": "31289",
+						"number": "31289",
+						"title": "Voortgezet Onderwijs",
+						"short_title": null,
+						"path": "/dossiers/31289"
+					},
+					{
+						"key": "31293",
+						"number": "31293",
+						"title": "Primair Onderwijs",
+						"short_title": null,
+						"path": "/dossiers/31293"
+					},
+					{
+						"key": "31497",
+						"number": "31497",
+						"title": "Passend onderwijs",
+						"short_title": null,
+						"path": "/dossiers/31497"
+					},
+					{
+						"key": "35050",
+						"number": "35050",
+						"title": "Wijziging van diverse onderwijswetten door het wijzigen van de systematiek van het in aanmerking brengen voor bekostiging van nieuwe openbare en bijzondere scholen zodat er meer ruimte is voor een nieuw onderwijsaanbod (Wet meer ruimte voor nieuwe scholen)",
+						"short_title": "Wet meer ruimte voor nieuwe scholen",
+						"path": "/dossiers/35050"
+					},
+					{
+						"key": "36800_viii",
+						"number": "36800-VIII",
+						"title": "Vaststelling van de begrotingsstaten van het Ministerie van Onderwijs, Cultuur en Wetenschap (VIII) voor het jaar 2026",
+						"short_title": "Begroting Onderwijs, Cultuur en Wetenschap 2026",
+						"path": "/dossiers/36800-VIII"
+					}
+				],
+				"activity": {
+					"key": "9f7a1430_3b61_428d_8fbd_ace2d1cdf301",
+					"date": "2026-10-14",
+					"number": "2026A04925",
+					"kind": "Commissiedebat",
+					"agenda_title": "Stichting, sturing en toezicht in het funderend onderwijs",
+					"path": "/activiteiten/2026A04925"
+				},
+				"fulfilled_by": [],
+				"path": "/toezeggingen/TZ202610-141"
+			},
+			{
+				"key": "207e4c20_5f93_4b44_a37d_d4935b077790",
+				"number": "TZ202610-136",
+				"text": "De staatssecretaris informeert in het voorjaar van 2027 de Kamer over de resultaten van de bereikbaarheidsanalyse en de uitkomsten van de gesprekken die gevoerd zijn met de sector en de verschillende regio's.",
+				"status": "Openstaand",
+				"date": "2026-10-14",
+				"made_on": "2026-10-15",
+				"expected_resolution": null,
+				"minister_name": "Bertram, A.W.H.",
+				"member": {
+					"key": "2b70f6d8_04a3_475d_9f34_cee1a7f92bfe",
+					"name": "A.W.H. Bertram",
+					"function": "Staatssecretaris van Infrastructuur en Waterstaat",
+					"path": "/leden/a-w-h-bertram"
+				},
+				"post": "staatssecretaris",
+				"ministry": "ienw",
+				"cabinet": "jetten",
+				"dossiers": [],
+				"activity": {
+					"key": "0f096af3_c17d_4a2b_907b_f516ea068639",
+					"date": "2026-10-15",
+					"number": "2026A02811",
+					"kind": "Commissiedebat",
+					"agenda_title": "Openbaar vervoer en taxi",
+					"path": "/activiteiten/2026A02811"
+				},
+				"fulfilled_by": [],
+				"path": "/toezeggingen/TZ202610-136"
+			}
+		],
+		"total": 6674,
+		"facets": {
+			"status": [
+				{
+					"value": "Afgedaan",
+					"count": 4046
+				},
+				{
+					"value": "Openstaand",
+					"count": 2530
+				},
+				{
+					"value": "Deels Afgedaan",
+					"count": 66
+				},
+				{
+					"value": "Vervallen",
+					"count": 32
+				}
+			],
+			"cabinet": [
+				{
+					"value": "rutte_iv",
+					"count": 3138
+				},
+				{
+					"value": "schoof",
+					"count": 2312
+				},
+				{
+					"value": "jetten",
+					"count": 1224
+				}
+			],
+			"ministry": [
+				{
+					"value": "ienw",
+					"count": 1047
+				},
+				{
+					"value": "vws",
+					"count": 892
+				},
+				{
+					"value": "jenv",
+					"count": 746
+				},
+				{
+					"value": "bzk",
+					"count": 738
+				},
+				{
+					"value": "ocw",
+					"count": 660
+				},
+				{
+					"value": "szw",
+					"count": 474
+				}
+			]
+		}
+	},
+	"documents": {
+		"items": [
+			{
+				"dictum": null,
+				"explanation": null,
+				"outcome": null,
+				"decided_on": null,
+				"tally": null,
+				"decision": null,
+				"id": "documents/66bfe5c3_09ce_4112_a1ca_3c58f9905c6d",
+				"key": "66bfe5c3_09ce_4112_a1ca_3c58f9905c6d",
+				"chamber": "TK",
+				"kind": "Mededeling (uitstel antwoord)",
+				"dossier_number": null,
+				"dossier_suffix": null,
+				"dossier_numbers": [],
+				"dossiers": [],
+				"number": null,
+				"date": "2026-10-15",
+				"title": "Uitstel beantwoording vragen van het lid Müller over het bericht \"Trump overweegt exportverbod diesel, 'zou heel Europa veel last van hebben\"",
+				"session_year": "2026-2027",
+				"sender": {
+					"name": "S. van Veldhoven-van der Meer",
+					"function": "minister van Klimaat en Groene Groei",
+					"faction": null,
+					"capacity": "bewindspersoon",
+					"member_key": "9d2229a5_c46a_485a_9b82_315e270c3e9a",
+					"ministry": "kgg"
+				},
+				"path": null
+			},
+			{
+				"dictum": null,
+				"explanation": null,
+				"outcome": null,
+				"decided_on": null,
+				"tally": null,
+				"decision": null,
+				"id": "documents/00ad4623_3deb_4364_b9d7_2108441f6200",
+				"key": "00ad4623_3deb_4364_b9d7_2108441f6200",
+				"chamber": "TK",
+				"kind": "Schriftelijke vragen",
+				"dossier_number": null,
+				"dossier_suffix": null,
+				"dossier_numbers": [],
+				"dossiers": [],
+				"number": null,
+				"date": "2026-10-14",
+				"title": "De voorgenomen tracékeuze voor de 380 kV-hoogspanningsverbinding Diemen–Ens ter hoogte van Muiderberg en de Hollandse Brug.",
+				"session_year": "2026-2027",
+				"sender": {
+					"name": "H. Vermeer",
+					"function": "Tweede Kamerlid",
+					"faction": "BBB",
+					"capacity": "kamerlid",
+					"member_key": "02fab128_a8d3_4010_b936_5500a53caf27",
+					"ministry": null
+				},
+				"path": null
+			},
+			{
+				"dictum": null,
+				"explanation": null,
+				"outcome": null,
+				"decided_on": null,
+				"tally": null,
+				"decision": null,
+				"id": "documents/020ac41b_794c_4f9c_b129_9d5f4b726830",
+				"key": "020ac41b_794c_4f9c_b129_9d5f4b726830",
+				"chamber": "TK",
+				"kind": "Amendement",
+				"dossier_number": "37020",
+				"dossier_suffix": "XVI",
+				"dossier_numbers": ["37020-XVI"],
+				"dossiers": [
+					{
+						"number": "37020-XVI",
+						"short_title": "Begroting Volksgezondheid, Welzijn en Sport 2027",
+						"title": "Vaststelling van de begrotingsstaten van het Ministerie van Volksgezondheid, Welzijn en Sport (XVI) voor het jaar 2027"
+					}
+				],
+				"number": "20",
+				"date": "2026-10-14",
+				"title": "Amendement van het lid Van Brenk over middelen voor een 36-urige werkweek en betere arbeidsvoorwaarden voor het zorgpersoneel in Caribisch Nederland",
+				"session_year": "2026-2027",
+				"sender": {
+					"name": "C.M. van Brenk",
+					"function": "Tweede Kamerlid",
+					"faction": "50PLUS",
+					"capacity": "kamerlid",
+					"member_key": "b29c0e00_7ac2_4c28_ab4f_8fceb156337b",
+					"ministry": null
+				},
+				"path": "/kamerstukken/37020-XVI/20"
+			}
+		],
+		"total": 614889,
+		"facets": {
+			"kind": [
+				{
+					"value": "Bijlage",
+					"count": 124687
+				},
+				{
+					"value": "Brief regering",
+					"count": 89644
+				},
+				{
+					"value": "Motie",
+					"count": 59998
+				},
+				{
+					"value": "Schriftelijke vragen",
+					"count": 47322
+				},
+				{
+					"value": "Antwoord schriftelijke vragen",
+					"count": 45775
+				},
+				{
+					"value": "Convocatie commissieactiviteit",
+					"count": 29956
+				}
+			],
+			"chamber": [
+				{
+					"value": "TK",
+					"count": 614889
+				},
+				{
+					"value": "EK",
+					"count": 38148
+				}
+			]
+		}
+	},
+	"coverage": {
+		"total": 1001512,
+		"first_date": "1841-01-28",
+		"last_date": "2026-10-14",
+		"tiers": [
+			{
+				"tier": "hoge_raad",
+				"count": 57506,
+				"first_date": "1841-01-28",
+				"last_date": "2026-10-09"
+			},
+			{
+				"tier": "raad_van_state",
+				"count": 100193,
+				"first_date": "1976-08-25",
+				"last_date": "2026-10-14"
+			},
+			{
+				"tier": "centrale_raad_van_beroep",
+				"count": 87893,
+				"first_date": "1970-03-26",
+				"last_date": "2026-10-09"
+			},
+			{
+				"tier": "college_van_beroep_bedrijfsleven",
+				"count": 15869,
+				"first_date": "1988-07-15",
+				"last_date": "2026-10-13"
+			},
+			{
+				"tier": "parket",
+				"count": 34665,
+				"first_date": "1901-01-18",
+				"last_date": "2026-09-01"
+			},
+			{
+				"tier": "gerechtshof",
+				"count": 168232,
+				"first_date": "1932-06-22",
+				"last_date": "2026-10-14"
+			},
+			{
+				"tier": "rechtbank",
+				"count": 510203,
+				"first_date": "1924-01-08",
+				"last_date": "2026-10-14"
+			},
+			{
+				"tier": "kantongerecht",
+				"count": 139,
+				"first_date": "1932-06-08",
+				"last_date": "2011-02-14"
+			},
+			{
+				"tier": "tuchtcollege",
+				"count": 1669,
+				"first_date": "2008-03-04",
+				"last_date": "2026-01-30"
+			},
+			{
+				"tier": "andere_instantie",
+				"count": 4,
+				"first_date": "1955-12-06",
+				"last_date": "1968-05-06"
+			},
+			{
+				"tier": "koninkrijksinstantie",
+				"count": 21094,
+				"first_date": "1951-11-27",
+				"last_date": "2026-10-09"
+			},
+			{
+				"tier": "kroon",
+				"count": 4,
+				"first_date": "1976-09-25",
+				"last_date": "1986-06-05"
+			},
+			{
+				"tier": "buitenlandse_instantie",
+				"count": 147,
+				"first_date": "1950-07-12",
+				"last_date": "2020-06-15"
+			},
+			{
+				"tier": "hvj_eu",
+				"count": 295,
+				"first_date": "1994-03-03",
+				"last_date": "2014-03-27"
+			},
+			{
+				"tier": "ehrm",
+				"count": 3480,
+				"first_date": "1963-12-17",
+				"last_date": "2026-10-06"
+			},
+			{
+				"tier": null,
+				"count": 119,
+				"first_date": "1996-05-28",
+				"last_date": "2026-09-10"
+			}
+		],
+		"courts": [
+			{
+				"source": "echr",
+				"tier": "ehrm",
+				"court_kind": "ehrm",
+				"court_code": "ECHR",
+				"court": null,
+				"count": 3232,
+				"first_date": "1963-12-17",
+				"last_date": "2026-10-06"
+			},
+			{
+				"source": "rechtspraak",
+				"tier": "rechtbank",
+				"court_kind": "rechtbank",
+				"court_code": "RBDHA",
+				"court": "Rechtbank Den Haag",
+				"count": 104642,
+				"first_date": "2013-01-01",
+				"last_date": "2026-10-14"
+			},
+			{
+				"source": "rechtspraak",
+				"tier": "raad_van_state",
+				"court_kind": "raad_van_state",
+				"court_code": "RVS",
+				"court": "Raad van State",
+				"count": 100193,
+				"first_date": "1976-08-25",
+				"last_date": "2026-10-14"
+			},
+			{
+				"source": "rechtspraak",
+				"tier": "centrale_raad_van_beroep",
+				"court_kind": "centrale_raad_van_beroep",
+				"court_code": "CRVB",
+				"court": "Centrale Raad van Beroep",
+				"count": 87893,
+				"first_date": "1970-03-26",
+				"last_date": "2026-10-09"
+			}
+		]
+	}
+}
