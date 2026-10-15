@@ -27,7 +27,7 @@
 	import OverviewList from '$lib/onderwerpen/OverviewList.svelte';
 	import { isDay, langeDatum, maandNaam, vandaag } from '$lib/text/datum';
 	import { download, safeFileName } from '$lib/verbonden/export';
-	import { lees, uitParams, vindIndex } from '$lib/onderwerpen/onderwerpen';
+	import { lees, topicKey, topicsOf, vindIndex } from '$lib/onderwerpen/onderwerpen';
 	import { dossierOwnName } from '$lib/bron/dossier-naam';
 	import { getDecisionDocument } from '$lib/api/records';
 	import { besluiten, telling } from '$lib/api/decisions';
@@ -47,8 +47,7 @@
 		dictumUit,
 		leesCodering,
 		metStrekking as coderingMet,
-		onderwerpSleutel,
-		samen,
+		withCoding,
 		schrijfCodering,
 		type Codering,
 		type Strekking
@@ -108,7 +107,7 @@
 	const params = $derived(page.url.searchParams);
 	// As a string: a filter changes the URL, and a new array of the same words would load
 	// everything again.
-	const termenSleutel = $derived((uitParams(params)[0] ?? []).join('|'));
+	const termenSleutel = $derived((topicsOf(params)[0] ?? []).join('|'));
 	const termen = $derived(termenSleutel ? termenSleutel.split('|') : []);
 	const kamer: Chamber | '' = $derived(chamberFromParam(params.get(PARAM.chamber)) ?? '');
 	// The period, as everywhere (Periode.svelte): days in the URL and to the API.
@@ -270,7 +269,7 @@
 	// only those so read: the moties by the day of their vote, their outcome and the fractie's
 	// vote.
 	let codering = $state<Codering>(leesCodering());
-	const onderwerp = $derived(onderwerpSleutel(termen));
+	const onderwerp = $derived(topicKey({ termen }));
 	const mijn = $derived(codering[onderwerp] ?? {});
 	const isMotie = (d: Besluit) => motionOrAmendment(soortVan(d)) === 'motie';
 	function kiesStrekking(d: Besluit, r: Strekking | null) {
@@ -861,7 +860,7 @@
 			const gelezen = coderingUitCsv(await file.text());
 			importFout = !Object.keys(gelezen).length;
 			if (importFout) return;
-			codering = samen(codering, gelezen);
+			codering = withCoding(codering, gelezen);
 			schrijfCodering(codering);
 		} catch (e) {
 			report('Codering', e);

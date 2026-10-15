@@ -289,19 +289,14 @@
 				</div>
 			</div>
 		{/if}
-		{#each search.shown as group (group.beste ? 'beste' : group.kind)}
-			{@const gid = group.beste ? 'beste' : group.kind}
+		{#each search.shown as group (group.best ? 'beste' : group.kind)}
+			{@const gid = group.best ? 'beste' : group.kind}
 			<!-- The hits a row is told apart from: its whole group, the Beste treffer's too. -->
 			{@const buren = search.groups.find((g) => g.kind === group.kind)?.hits ?? group.hits}
-			<div
-				class="group"
-				class:group--beste={group.beste}
-				role="group"
-				aria-labelledby="{uid}-{gid}"
-			>
+			<div class="group" class:group--beste={group.best} role="group" aria-labelledby="{uid}-{gid}">
 				<div class="group-label" id="{uid}-{gid}">
 					<!-- The best hit says what it is, as every group does: "Beste treffer, Dossier". -->
-					{#if group.beste}Beste treffer, <KindGlyph collection={group.kind} />
+					{#if group.best}Beste treffer, <KindGlyph collection={group.kind} />
 						{bronLabel(group.kind)}{:else}<KindGlyph collection={group.kind} />
 						{groupLabel(group.kind)}{/if}
 					{#if search.loadingKinds.has(group.kind)}<span class="laden">laden…</span>{/if}
@@ -349,7 +344,7 @@
 
 		{#each search.failedLanes as lane (lane.id)}
 			<!-- A lane that failed: its group says so, the other groups stand. A lane under way
-			     holds its place among the groups (vakken). -->
+			     holds its place among the groups (slots). -->
 			{@const naam = lane.kinds.map((k) => groupLabel(k)).join(' en ')}
 			<div class="group" role="group" aria-labelledby="{uid}-{lane.id}-stand">
 				<div class="group-label" id="{uid}-{lane.id}-stand">

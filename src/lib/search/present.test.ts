@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Schema } from '$lib/api/types';
 import type { Collection } from '$lib/vocabulary';
 import {
-	besteTreffer,
+	bestHit,
 	around,
 	bySection,
 	chamberOfHit,
@@ -11,7 +11,7 @@ import {
 	orderGroups,
 	presentHit,
 	sectionOf,
-	vakken
+	slots
 } from './present';
 
 type Hit = Schema<'SearchResultItem'>;
@@ -326,14 +326,14 @@ describe('a vote as a hit', () => {
 	});
 });
 
-describe('besteTreffer', () => {
+describe('bestHit', () => {
 	type H = Schema<'SearchResultItem'>;
 	const hit = (id: string, collection: string, score: number) =>
 		({ id, key: id, collection, display_name: id, score }) as unknown as H;
 	const group = (kind: Collection, ...hits: H[]) => ({ kind, hits });
 
 	it('leads with the rule where it scores nearly as well: huurverhoging', () => {
-		const best = besteTreffer([
+		const best = bestHit([
 			group('documents', hit('kamervragen', 'documents', 0.25)),
 			group('dossiers', hit('36511', 'dossiers', 0.25)),
 			group('articles', hit('7:248', 'articles', 0.1), hit('7:253', 'articles', 0.1))
@@ -342,7 +342,7 @@ describe('besteTreffer', () => {
 	});
 
 	it('keeps a name that fits far better on top: a fractie for PVV', () => {
-		const best = besteTreffer([
+		const best = bestHit([
 			group('factions', hit('pvv', 'factions', 0.75)),
 			group('articles', hit('art', 'articles', 0.1))
 		]);
@@ -351,12 +351,12 @@ describe('besteTreffer', () => {
 
 	it('takes an identifier first, and says nothing for one group', () => {
 		expect(
-			besteTreffer([
+			bestHit([
 				group('articles', hit('art', 'articles', 0.5)),
 				group('judgments', hit('ecli', 'judgments', 1))
 			])?.hit.id
 		).toBe('ecli');
-		expect(besteTreffer([group('articles', hit('art', 'articles', 0.5))])).toBeNull();
+		expect(bestHit([group('articles', hit('art', 'articles', 0.5))])).toBeNull();
 	});
 });
 
@@ -393,15 +393,15 @@ describe('citeertitel', () => {
 	});
 });
 
-describe('vakken (UX-toets 0.79.47, #52)', () => {
+describe('slots (UX-toets 0.79.47, #52)', () => {
 	const ORDER = ['instruments', 'articles', 'judgments', 'dossiers'] as const;
 	const h = (id: string) => ({ id });
-	const kinds = (v: { kind: string; beste: boolean; wacht: boolean }[]) =>
-		v.map((x) => (x.beste ? 'beste' : x.wacht ? `${x.kind}…` : x.kind));
+	const kinds = (v: { kind: string; best: boolean; pending: boolean }[]) =>
+		v.map((x) => (x.best ? 'beste' : x.pending ? `${x.kind}…` : x.kind));
 
 	it('keeps one order whichever answer comes first', () => {
-		const vroeg = vakken(ORDER, [{ kind: 'judgments', hits: [h('j')] }], null);
-		const laat = vakken(
+		const vroeg = slots(ORDER, [{ kind: 'judgments', hits: [h('j')] }], null);
+		const laat = slots(
 			ORDER,
 			[
 				{ kind: 'dossiers', hits: [h('d')] },
@@ -415,12 +415,12 @@ describe('vakken (UX-toets 0.79.47, #52)', () => {
 	});
 
 	it('holds the place of a group still coming', () => {
-		const v = vakken(ORDER, [{ kind: 'dossiers', hits: [h('d')] }], null, (k) => k === 'judgments');
+		const v = slots(ORDER, [{ kind: 'dossiers', hits: [h('d')] }], null, (k) => k === 'judgments');
 		expect(kinds(v)).toEqual(['judgments…', 'dossiers']);
 	});
 
 	it('puts the Beste treffer on top, out of its own group', () => {
-		const v = vakken(
+		const v = slots(
 			ORDER,
 			[
 				{ kind: 'articles', hits: [h('a1'), h('a2')] },

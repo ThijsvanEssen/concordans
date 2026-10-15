@@ -145,7 +145,7 @@ describe('the lanes of a search', () => {
 		expect(s.best).toBe(null);
 		expect(s.bestComing).toBe(true);
 		// The judgments' group holds its place while they come.
-		expect(s.shown.map((g) => [g.kind, g.wacht])).toEqual([
+		expect(s.shown.map((g) => [g.kind, g.pending])).toEqual([
 			['instruments', false],
 			['articles', false],
 			['judgments', true]

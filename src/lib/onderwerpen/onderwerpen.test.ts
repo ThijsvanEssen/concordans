@@ -6,9 +6,9 @@ import {
 	lees,
 	nieuwBezoek,
 	ontvolgOnderwerp,
-	sleutelVan,
+	topicKey,
 	splitsTermen,
-	uitParams,
+	topicsOf,
 	vensterVan,
 	voegTermenToe,
 	volg,
@@ -72,7 +72,7 @@ describe('onderwerpen', () => {
 		haalTermWeg('AI');
 		haalTermWeg('kunstmatige intelligentie');
 		expect(lees()[0].termen).toEqual(['algoritme']);
-		expect(uitParams(new URLSearchParams('onderwerp=AI|ki|KI'))).toEqual([['AI', 'ki']]);
+		expect(topicsOf(new URLSearchParams('onderwerp=AI|ki|KI'))).toEqual([['AI', 'ki']]);
 	});
 
 	it('keeps the recent list of a topic of today in a new session', () => {
@@ -93,7 +93,7 @@ describe('onderwerpen', () => {
 			{ termen: ['kunstmatige intelligentie', 'AI'] },
 			{ termen: ['stikstof'] }
 		]);
-		expect(uitParams(new URL(adres, 'https://x').searchParams)).toEqual([
+		expect(topicsOf(new URL(adres, 'https://x').searchParams)).toEqual([
 			['kunstmatige intelligentie', 'AI'],
 			['stikstof']
 		]);
@@ -111,7 +111,7 @@ describe('onderwerpen', () => {
 			'Cyberbeveiligingswet',
 			'artikel 3 Cyberbeveiligingswet'
 		]);
-		expect(lijst.map(sleutelVan)).toEqual([
+		expect(lijst.map(topicKey)).toEqual([
 			'cyberbeveiligingswet',
 			'wet:BWBR0052872',
 			'wet:BWBR0052872:3'

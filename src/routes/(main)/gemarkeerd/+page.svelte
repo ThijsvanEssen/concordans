@@ -32,8 +32,8 @@
 		itemHref,
 		mapParams,
 		netwerkHref,
-		sleutelVan,
-		uitParams,
+		itemKey,
+		sharedMapOf,
 		type Gedeeld,
 		type GroepNotities,
 		type Map,
@@ -50,7 +50,7 @@
 	const copier = createCopier();
 
 	// ── A shared map, from the address ─────────────────────────────────────────
-	const gedeeld = $derived<Gedeeld | null>(uitParams(page.url.searchParams));
+	const gedeeld = $derived<Gedeeld | null>(sharedMapOf(page.url.searchParams));
 	/** A shared map kept or put aside: its link leaves the address, a reload asks no more. */
 	function gedeeldKlaar(hoe: 'map' | 'erbij' | 'niet') {
 		if (gedeeld && hoe === 'map') kaart.bewaarAlsMap(gedeeld);
@@ -85,7 +85,7 @@
 	// ── An item's content: a click on its row opens it in place ───────────────
 	/** The rows open, by map and item (`<map>:<sleutel>`, `gedeeld:<sleutel>`). */
 	const geopend = new SvelteSet<string>();
-	const rijSleutel = (m: Map | null, i: MapItem) => `${m?.id ?? 'gedeeld'}:${sleutelVan(i)}`;
+	const rijSleutel = (m: Map | null, i: MapItem) => `${m?.id ?? 'gedeeld'}:${itemKey(i)}`;
 	function wisselOpen(k: string) {
 		if (!geopend.delete(k)) geopend.add(k);
 	}
@@ -214,7 +214,7 @@
 			/>
 		{/if}
 		<ul class="rijen">
-			{#each g.items as i (sleutelVan(i))}{@render rij(i, m)}{/each}
+			{#each g.items as i (itemKey(i))}{@render rij(i, m)}{/each}
 		</ul>
 	{/each}
 {/snippet}
