@@ -8,7 +8,7 @@ import {
 	uitspraakNoten,
 	type NootMarker
 } from './voetnoten';
-import { bodyItems, splitBodyParagraph } from '$lib/components/explore/readers/judgment-text';
+import { bodyItems } from '$lib/components/explore/readers/judgment-text';
 import { legUit, overwegingVanNoot } from '$lib/bron/overweging';
 import type { Row } from '$lib/verbonden/rows';
 import { plaatsVanEdge } from '$lib/verbonden/edge-meta';
@@ -50,13 +50,16 @@ describe('the notes of a judgment', () => {
 			{ id: 'fn-34', label: '34', at: text.indexOf('  Ook') },
 			{ id: 'fn-35', label: '35', at: null }
 		];
-		const [seg] = splitBodyParagraph(text, [], markers);
-		expect(seg.kind).toBe('body');
-		if (seg.kind !== 'body') return;
-		expect(seg.body).toBe('De staat is aansprakelijk. Ook voor een deel.');
-		expect(seg.noten).toEqual([
+		const [item] = bodyItems(
+			[{ paragraph_id: 'rov-5.7.6', kind: 'body', text }],
+			new Map([['rov-5.7.6', markers]])
+		);
+		expect(item.kind).toBe('rov');
+		if (item.kind !== 'rov') return;
+		expect(item.body).toBe('De staat is aansprakelijk. Ook voor een deel.');
+		expect(item.noten).toEqual([
 			{ id: 'fn-34', label: '34', at: 'De staat is aansprakelijk.'.length },
-			{ id: 'fn-35', label: '35', at: seg.body.length }
+			{ id: 'fn-35', label: '35', at: item.body.length }
 		]);
 	});
 

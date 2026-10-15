@@ -1,18 +1,71 @@
 import { describe, expect, it } from 'vitest';
+import type { Schema } from '$lib/api/types';
 import {
 	bodyItems,
-	caseArea,
-	extractParticipants,
-	extractParties,
 	forParties,
-	headRest,
-	isTitleLine,
-	judgmentHead,
 	judgmentParticipants,
 	partiesByRole,
-	signatureStart,
-	splitBodyParagraph
+	signatureStart
 } from './judgment-text';
+
+type Judgment = Schema<'JudgmentDTO'>;
+type Paragraph = Schema<'JudgmentParagraph'>;
+type Party = Schema<'JudgmentParty'>;
+type Span = Schema<'ArticleCitationSpan'>;
+
+/** A judgment as the API sends it: nothing read but what a test gives. */
+const judgment = (over: Partial<Judgment> = {}): Judgment => ({
+	id: 'judgments/ECLI:NL:XX:2026:1',
+	key: 'ECLI:NL:XX:2026:1',
+	collection: 'judgments',
+	type: 'judgment',
+	display_name: null,
+	labels: [],
+	props: null,
+	ecli: 'ECLI:NL:XX:2026:1',
+	summary: null,
+	path: null,
+	...over
+});
+
+let paragraphs = 0;
+/** A paragraph of a judgment, with an id of its own unless a test gives one. */
+const para = (kind: string, text: string, over: Partial<Paragraph> = {}): Paragraph => ({
+	paragraph_id: `p-${++paragraphs}`,
+	kind,
+	text,
+	number: null,
+	citations: [],
+	...over
+});
+
+/** A party the API read from the kop. */
+const party = (name: string, role: string, over: Partial<Party> = {}): Party => ({
+	name,
+	role,
+	role_stated: true,
+	side: 'first',
+	...over
+});
+
+const SUBJECTS = {
+	civiel: 'Civiel recht',
+	strafrecht: 'Strafrecht',
+	bestuursrecht: 'Bestuursrecht'
+} as const;
+
+/** The parties of a judgment the API has not read them for, from the kop in its first subheading. */
+const fromKop = (kop: string, area?: keyof typeof SUBJECTS, props: Judgment['props'] = {}) =>
+	judgmentParticipants(
+		judgment({
+			props: area ? { ...props, subjects: [SUBJECTS[area]] } : props,
+			paragraphs: [para('subheading', kop)]
+		})
+	);
+
+/** The kinds of what the reader lays out, prose with whether it continues an overweging. */
+const kinds = (items: ReturnType<typeof bodyItems>) =>
+	items.map((i) => (i.kind === 'prose' ? `prose:${i.within}` : i.kind));
 
 const target = {
 	id: 'articles/x_1',
@@ -28,7 +81,7 @@ describe('a citation in the text', () => {
 		const text =
 			'2.1. \n       Eerste overweging.\n       \n         2.1.1. \n       Zie artikel 8:73 Awb en verder.';
 		const start = text.indexOf('artikel 8:73 Awb');
-		const citation = {
+		const citation: Span = {
 			start,
 			end: start + 'artikel 8:73 Awb'.length,
 			text: 'artikel 8:73 Awb',
@@ -37,17 +90,15 @@ describe('a citation in the text', () => {
 			target
 		};
 
-		const segments = splitBodyParagraph(text, [citation]);
+		const items = bodyItems([para('body', text, { citations: [citation] })]);
 
-		const cited = segments.flatMap((s) =>
-			s.kind === 'body' ? (s.citations ?? []).map((c) => [s, c] as const) : []
+		const cited = items.flatMap((i) =>
+			i.kind === 'rov' ? (i.citations ?? []).map((c) => [i, c] as const) : []
 		);
 		expect(cited).toHaveLength(1);
-		const [segment, span] = cited[0];
-		expect(segment.kind === 'body' && segment.num).toBe('2.1.1');
-		expect(segment.kind === 'body' && segment.body.slice(span.start!, span.end!)).toBe(
-			'artikel 8:73 Awb'
-		);
+		const [item, span] = cited[0];
+		expect(item.num).toBe('2.1.1');
+		expect(item.body.slice(span.start!, span.end!)).toBe('artikel 8:73 Awb');
 	});
 });
 
@@ -106,31 +157,59 @@ geboren in [geboorteplaats] op [geboortedatum] 1980,
 
 hierna: de verdachte.`;
 
+/** A kop with one party on each side and no role stated: the rechtsgebied decides the roles. */
+const tegen = `in de zaak van
+
+[A]
+
+tegen
+
+[B]`;
+
+/** The roles a kop without stated roles gets under these props. */
+const rolesUnder = (props: Judgment['props'], kop = tegen) =>
+	fromKop(kop, undefined, props).map((p) => p.role);
+
 describe('the rechtsgebied and the parties of the heading', () => {
 	it('the rechtsgebied comes from the subjects prop first', () => {
-		expect(caseArea({ subjects: ['Civiel recht'] }, strafHeading)).toBe('civiel');
-		expect(caseArea({ subjects: ['Strafrecht'] }, null)).toBe('strafrecht');
-		expect(caseArea({ subjects: ['Bestuursrecht'] }, null)).toBe('bestuursrecht');
-		expect(caseArea({ subjects: ['Civiel recht; Ondernemingsrecht'] }, null)).toBe('civiel');
-		expect(caseArea({ subjects: 'Belastingrecht' }, null)).toBe('bestuursrecht');
+		expect(rolesUnder({ subjects: ['Civiel recht'] }, `STRAFKAMER\n\n${tegen}`)).toEqual([
+			'Eiser',
+			'Verweerder'
+		]);
+		expect(rolesUnder({ subjects: ['Strafrecht'] })).toEqual(['Verdachte']);
+		expect(rolesUnder({ subjects: ['Bestuursrecht'] })).toEqual(['Appellant', 'Verweerder']);
+		expect(rolesUnder({ subjects: ['Civiel recht; Ondernemingsrecht'] })).toEqual([
+			'Eiser',
+			'Verweerder'
+		]);
+		expect(rolesUnder({ subjects: 'Belastingrecht' })).toEqual(['Appellant', 'Verweerder']);
 	});
 
 	it('without subjects, the rechtsgebied follows the kamer, court or case number', () => {
-		expect(caseArea({}, civielHeading)).toBe('civiel');
-		expect(caseArea({}, strafHeading)).toBe('strafrecht');
-		expect(caseArea({}, 'HOGE RAAD DER NEDERLANDEN\n\nBELASTINGKAMER')).toBe('bestuursrecht');
-		expect(caseArea({ court: 'Raad van State' }, null)).toBe('bestuursrecht');
-		expect(caseArea({ court: 'Centrale Raad van Beroep' }, null)).toBe('bestuursrecht');
-		expect(caseArea({ case_number: '21-004300-25' }, null)).toBe('strafrecht');
-		expect(caseArea({ case_number: 'C/15/329906 / HA ZA 22-419' }, null)).toBe('civiel');
-		expect(caseArea({ case_number: '200.344.286/01' }, null)).toBe('civiel');
-		expect(caseArea({ case_number: 'AMS 21/1234' }, null)).toBe('bestuursrecht');
-		expect(caseArea({ court: 'Hoge Raad', case_number: '18/04298' }, null)).toBeNull();
-		expect(caseArea(null, null)).toBeNull();
+		expect(rolesUnder({}, `CIVIELE KAMER\n\n${tegen}`)).toEqual(['Eiser', 'Verweerder']);
+		expect(rolesUnder({}, `STRAFKAMER\n\n${tegen}`)).toEqual(['Verdachte']);
+		expect(rolesUnder({}, `HOGE RAAD DER NEDERLANDEN\n\nBELASTINGKAMER\n\n${tegen}`)).toEqual([
+			'Appellant',
+			'Verweerder'
+		]);
+		expect(rolesUnder({ court: 'Raad van State' })).toEqual(['Appellant', 'Verweerder']);
+		expect(rolesUnder({ court: 'Centrale Raad van Beroep' })).toEqual(['Appellant', 'Verweerder']);
+		expect(rolesUnder({ case_number: '21-004300-25' })).toEqual(['Verdachte']);
+		expect(rolesUnder({ case_number: 'C/15/329906 / HA ZA 22-419' })).toEqual([
+			'Eiser',
+			'Verweerder'
+		]);
+		expect(rolesUnder({ case_number: '200.344.286/01' })).toEqual(['Eiser', 'Verweerder']);
+		expect(rolesUnder({ case_number: 'AMS 21/1234' })).toEqual(['Appellant', 'Verweerder']);
+		expect(rolesUnder({ court: 'Hoge Raad', case_number: '18/04298' })).toEqual([
+			'Partij',
+			'Partij'
+		]);
+		expect(rolesUnder(null)).toEqual(['Partij', 'Partij']);
 	});
 
 	it('a civil judgment names eisers and verweerders, not a verdachte', () => {
-		expect(extractParties(civielHeading, 'civiel')).toEqual([
+		expect(fromKop(civielHeading, 'civiel')).toEqual([
 			{ role: 'Eiser', name: '[eiseres 1]' },
 			{ role: 'Eiser', name: '[eiser 2]' },
 			{ role: 'Verweerder', name: 'MAATSCHAP GRONINGEN' },
@@ -140,7 +219,7 @@ describe('the rechtsgebied and the parties of the heading', () => {
 	});
 
 	it('a criminal judgment names the verdachte', () => {
-		expect(extractParties(strafHeading, 'strafrecht')).toEqual([
+		expect(fromKop(strafHeading, 'strafrecht')).toEqual([
 			{ role: 'Verdachte', name: '[verdachte]' }
 		]);
 	});
@@ -155,7 +234,7 @@ van
 [betrokkene] ,
 
 hierna: de betrokkene.`;
-		expect(extractParties(ontneming, 'strafrecht')).toEqual([
+		expect(fromKop(ontneming, 'strafrecht')).toEqual([
 			{ role: 'Betrokkene', name: '[betrokkene]' }
 		]);
 
@@ -174,30 +253,19 @@ KLM N.V., gevestigd te Amstelveen,
 geïntimeerde,
 
 advocaat: mr. J.M. van Slooten te Amsterdam,`;
-		expect(extractParties(hogerBeroep, 'civiel')).toEqual([
+		expect(fromKop(hogerBeroep, 'civiel')).toEqual([
 			{ role: 'Appellant', name: '[appellant]' },
 			{ role: 'Geïntimeerde', name: 'KLM N.V.' }
 		]);
 	});
 
 	it('roles follow the rechtsgebied when the judgment states none', () => {
-		const heading = `in de zaak van
-
-[A]
-
-tegen
-
-[B]`;
-		expect(extractParties(heading, 'civiel').map((p) => p.role)).toEqual(['Eiser', 'Verweerder']);
-		expect(extractParties(heading, 'bestuursrecht').map((p) => p.role)).toEqual([
-			'Appellant',
-			'Verweerder'
-		]);
-		expect(extractParties(`beschikking\n\n${heading}`, 'civiel').map((p) => p.role)).toEqual([
-			'Verzoeker',
-			'Verweerder'
-		]);
-		expect(extractParties(heading, null).map((p) => p.role)).toEqual(['Partij', 'Partij']);
+		const roles = (kop: string, area?: keyof typeof SUBJECTS) =>
+			fromKop(kop, area).map((p) => p.role);
+		expect(roles(tegen, 'civiel')).toEqual(['Eiser', 'Verweerder']);
+		expect(roles(tegen, 'bestuursrecht')).toEqual(['Appellant', 'Verweerder']);
+		expect(roles(`beschikking\n\n${tegen}`, 'civiel')).toEqual(['Verzoeker', 'Verweerder']);
+		expect(roles(tegen)).toEqual(['Partij', 'Partij']);
 	});
 
 	it('a place of residence is not taken for a name', () => {
@@ -212,13 +280,11 @@ tegen
 gevestigd te Amstelveen,
 
 geïntimeerde,`;
-		expect(extractParties(heading, 'civiel')).toEqual([]);
+		expect(fromKop(heading, 'civiel')).toEqual([]);
 	});
 
 	it('a heading without "tegen" yields no parties', () => {
-		expect(
-			extractParties('Afdeling strafrecht\n\nParketnummer: 21-004300-25', 'strafrecht')
-		).toEqual([]);
+		expect(fromKop('Afdeling strafrecht\n\nParketnummer: 21-004300-25', 'strafrecht')).toEqual([]);
 	});
 
 	// Headings below are shortened from real judgments; the ECLI names the source.
@@ -231,15 +297,14 @@ geïntimeerde,`;
    en
    het college van burgemeester en wethouders van Amsterdam, verweerder
    Samenvatting
-   1. Deze uitspraak gaat over het wegslepen van een auto.`;
-		expect(judgmentHead(text).split('\n')).toEqual([
-			'RECHTBANK AMSTERDAM',
-			'Bestuursrecht',
-			'uitspraak van de enkelvoudige kamer in de zaak tussen',
-			'[eiser] , uit [plaats] , eiser',
-			'en',
-			'het college van burgemeester en wethouders van Amsterdam, verweerder'
-		]);
+   Deze uitspraak gaat over het wegslepen van een auto.
+   tegen
+   [derde]`;
+		const head = [
+			{ role: 'Eiser', name: '[eiser]' },
+			{ role: 'Verweerder', name: 'het college van burgemeester en wethouders van Amsterdam' }
+		];
+		expect(judgmentParticipants(judgment({ props: { text }, paragraphs: [] }))).toEqual(head);
 	});
 
 	it('"tussen … en" with the role after each name (ECLI:NL:RBAMS:2025:3600)', () => {
@@ -249,7 +314,7 @@ Moonflower B.V., uit Nunspeet, eiseres
 en
 de minister van Infrastructuur en Waterstaat, verweerder
 (gemachtigden: mr. S. Deaney en mr. T.W. Franssen).`;
-		expect(extractParties(heading, 'bestuursrecht')).toEqual([
+		expect(fromKop(heading, 'bestuursrecht')).toEqual([
 			{ role: 'Eiser', name: 'Moonflower B.V.' },
 			{ role: 'Verweerder', name: 'de minister van Infrastructuur en Waterstaat' }
 		]);
@@ -264,7 +329,7 @@ tegen de uitspraak van de rechtbank Gelderland van 9 juli 2025 in zaak nr. 24/68
 [appellant]
 en
 de minister.`;
-		expect(extractParties(heading, 'bestuursrecht')).toEqual([
+		expect(fromKop(heading, 'bestuursrecht')).toEqual([
 			{ role: 'Appellant', name: 'de minister van Sociale Zaken en Werkgelegenheid' },
 			{ role: 'Appellant', name: '[appellant]' }
 		]);
@@ -275,7 +340,7 @@ de minister.`;
 Partijen:
 [Appellante] te [woonplaats] (appellante)
 de Raad van bestuur van het Uitvoeringsinstituut werknemersverzekeringen (Uwv)`;
-		expect(extractParties(heading, 'bestuursrecht')).toEqual([
+		expect(fromKop(heading, 'bestuursrecht')).toEqual([
 			{ role: 'Appellant', name: '[Appellante]' },
 			{
 				role: 'Verweerder',
@@ -291,9 +356,7 @@ geboren te [geboorteplaats] op [geboortedatum] 1977,
 ingeschreven in de Basisregistratie Personen op het adres
 [adres] ,
 hierna: verdachte.`;
-		expect(extractParties(heading, 'strafrecht')).toEqual([
-			{ role: 'Verdachte', name: '[verdachte]' }
-		]);
+		expect(fromKop(heading, 'strafrecht')).toEqual([{ role: 'Verdachte', name: '[verdachte]' }]);
 	});
 
 	it('one side only: a beklag by two klagers (ECLI:NL:RBAMS:2025:1014)', () => {
@@ -303,7 +366,7 @@ geboren op [geboortedag] 1989,
 en
 [klager 2] ,
 geboren op [geboortedag] 1990,`;
-		expect(extractParties(heading, 'strafrecht')).toEqual([
+		expect(fromKop(heading, 'strafrecht')).toEqual([
 			{ role: 'Klager', name: '[klager 1]' },
 			{ role: 'Klager', name: '[klager 2]' }
 		]);
@@ -321,7 +384,7 @@ de rechtspersoon naar buitenlands recht
 LETA CAPITAL FUND III LP ,
 te Grand Cayman (Kaaimaneilanden),
 gedaagde partij,`;
-		expect(extractParties(heading, 'civiel')).toEqual([
+		expect(fromKop(heading, 'civiel')).toEqual([
 			{ role: 'Eiser', name: 'C MANAGEMENT B.V.' },
 			{ role: 'Eiser', name: 'C TELEPORT B.V.' },
 			{ role: 'Gedaagde', name: 'LETA CAPITAL FUND III LP' }
@@ -353,7 +416,7 @@ verweerster als:
 [Aandeelhouder 3]
 belanghebbende als:
 [de Vennootschap] of de vennootschap`;
-		expect(extractParties(heading, 'civiel')).toEqual([
+		expect(fromKop(heading, 'civiel')).toEqual([
 			{ role: 'Verzoeker', name: '[Aandeelhouder 1]' },
 			{ role: 'Verzoeker', name: '[Aandeelhouder 2]' },
 			{ role: 'Verweerder', name: '[Aandeelhouder 3]' },
@@ -369,7 +432,7 @@ belanghebbende als:
 VERWEERDER in eerste aanleg,
 
 1 De prejudiciële procedure`;
-		expect(extractParties(heading, 'civiel').at(-1)).toEqual({
+		expect(fromKop(heading, 'civiel').at(-1)).toEqual({
 			role: 'Verweerder',
 			name: 'DE STAAT DER NEDERLANDEN'
 		});
@@ -381,13 +444,11 @@ VERWEERDER in eerste aanleg,
 geboren op [geboortedag] 2001 in [geboorteplaats] ,
 inschrijvingsadres in de Basisregistratie Personen:
 [BRP-adres] .`;
-		expect(extractParties(heading, 'strafrecht')).toEqual([
-			{ role: 'Verdachte', name: '[verdachte]' }
-		]);
+		expect(fromKop(heading, 'strafrecht')).toEqual([{ role: 'Verdachte', name: '[verdachte]' }]);
 	});
 
 	it('the full text is read when the subheading misses the party block', () => {
-		const judgment = {
+		const j = judgment({
 			props: {
 				subjects: ['Strafrecht'],
 				text: `Afdeling strafrecht
@@ -399,60 +460,177 @@ Hoger beroep
 Namens de verdachte is hoger beroep ingesteld.`
 			},
 			paragraphs: [
-				{
-					kind: 'subheading',
-					text: 'Afdeling strafrecht\n\nParketnummer: 21-004300-25\n\ngeboren op [geboortedatum] 1987'
-				}
+				para(
+					'subheading',
+					'Afdeling strafrecht\n\nParketnummer: 21-004300-25\n\ngeboren op [geboortedatum] 1987'
+				)
 			]
-		};
-		expect(judgmentParticipants(judgment)).toEqual([{ role: 'Verdachte', name: '[verdachte]' }]);
-		expect(judgmentParticipants({ ...judgment, props: { subjects: ['Strafrecht'] } })).toEqual([]);
+		});
+		expect(judgmentParticipants(j)).toEqual([{ role: 'Verdachte', name: '[verdachte]' }]);
+		expect(judgmentParticipants({ ...j, props: { subjects: ['Strafrecht'] } })).toEqual([]);
 	});
+});
 
+// ── The participants named in the body ────────────────────────────────────
+
+describe('the participants named in the body', () => {
 	it('lawyers are not scanned from the body: the API reads them per party (BB0782)', () => {
 		// The scan called an administrative lawyer a raadsman and named one twice.
-		const paragraphs = [
-			{
-				kind: 'body',
-				text: 'Namens KLM hebben mr. Van Slooten voornoemd en mr. J. Boer, beiden advocaat te Amsterdam, het woord gevoerd.'
-			},
-			{
-				kind: 'body',
-				text: 'De Afdeling heeft de zaak ter zitting behandeld, waar appellanten, vertegenwoordigd door mr. drs. R. van Gelder, advocaat te Voorschoten, zijn verschenen.'
-			}
+		const j = judgment({
+			parties: [],
+			paragraphs: [
+				para(
+					'body',
+					'Namens KLM hebben mr. Van Slooten voornoemd en mr. J. Boer, beiden advocaat te Amsterdam, het woord gevoerd.'
+				),
+				para(
+					'body',
+					'De Afdeling heeft de zaak ter zitting behandeld, waar appellanten, vertegenwoordigd door mr. drs. R. van Gelder, advocaat te Voorschoten, zijn verschenen.'
+				)
+			]
+		});
+		expect(judgmentParticipants(j)).toEqual([]);
+	});
+
+	it('the advocaat-generaal and a named officier van justitie come after the parties', () => {
+		const j = judgment({
+			parties: [party('[verdachte]', 'Verdachte')],
+			paragraphs: [
+				para(
+					'body',
+					'De advocaat-generaal mr. F.W. Bleichrodt heeft geconcludeerd tot verwerping.'
+				),
+				para('body', 'Gehoord de officier van justitie mr. J. de Vries, en de verdachte.'),
+				para('body', 'De advocaat-generaal merkte op dat het beroep faalt.')
+			]
+		});
+		expect(judgmentParticipants(j)).toEqual([
+			{ role: 'Verdachte', name: '[verdachte]', stated: true },
+			{ role: 'A-G', name: 'mr. F.W. Bleichrodt' },
+			{ role: 'OvJ', name: 'mr. J. de Vries' }
+		]);
+	});
+
+	it('an advocaat-generaal the kop names already is not repeated from the body', () => {
+		const j = judgment({
+			parties: [
+				party('DE STAAT DER NEDERLANDEN', 'Verweerder', {
+					representatives: [{ name: 'Mr. K. Teuben', role: 'advocaat' }]
+				})
+			],
+			paragraphs: [
+				para(
+					'body',
+					'Namens de Staat heeft mr. K. Teuben, advocaat te Den Haag, het woord gevoerd.'
+				),
+				para('body', 'De advocaat-generaal mr. K. Teuben heeft geconcludeerd.')
+			]
+		});
+		expect(judgmentParticipants(j)).toEqual([
+			{ role: 'Verweerder', name: 'DE STAAT DER NEDERLANDEN', stated: true },
+			{ role: 'Advocaat', name: 'Mr. K. Teuben', party: 'DE STAAT DER NEDERLANDEN' }
+		]);
+	});
+});
+
+// ── Parties from the API (`JudgmentDTO.parties`, API 0.11) ──────────────────
+
+describe('parties from the API', () => {
+	it('the parties the API read come first, each followed by its lawyers', () => {
+		const j = judgment({
+			props: { subjects: ['Civiel recht'], text: 'in de zaak van\n[X]\ntegen\n[Y]' },
+			paragraphs: [
+				para(
+					'body',
+					'Namens eisers heeft mr. H.J.W. Alt, advocaat te Amsterdam, het woord gevoerd.'
+				)
+			],
+			parties: [
+				party('[eiseres 1]', 'Eiser', {
+					alias: '[eisers]',
+					representatives: [{ name: 'mr. H.J.W. Alt', role: 'advocaat' }]
+				}),
+				party('MAATSCHAP GRONINGEN', 'Verweerder', {
+					role_stated: false,
+					side: 'second',
+					alias: 'de Maatschap',
+					representatives: []
+				})
+			]
+		});
+		expect(judgmentParticipants(j)).toEqual([
+			{ role: 'Eiser', name: '[eiseres 1]', stated: true },
+			{ role: 'Advocaat', name: 'mr. H.J.W. Alt', party: '[eisers]' },
+			{ role: 'Verweerder', name: 'MAATSCHAP GRONINGEN', stated: false, alias: 'de Maatschap' }
+		]);
+	});
+
+	it('an empty list from the API means the kop names no parties', () => {
+		const j = judgment({
+			props: { subjects: ['Strafrecht'], text: 'in de strafzaak tegen\n[verdachte] ,' },
+			paragraphs: [],
+			parties: []
+		});
+		expect(judgmentParticipants(j)).toEqual([]);
+	});
+
+	it('without parties from the API, the reader reads the full text', () => {
+		const j = judgment({
+			props: { subjects: ['Strafrecht'], text: 'in de strafzaak tegen\n[verdachte] ,' },
+			paragraphs: []
+		});
+		expect(judgmentParticipants(j)).toEqual([{ role: 'Verdachte', name: '[verdachte]' }]);
+		expect(judgmentParticipants({ ...j, parties: null })).toEqual([
+			{ role: 'Verdachte', name: '[verdachte]' }
+		]);
+	});
+
+	it('a lawyer for several parties in a row is one row after them (ECLI:NL:HR:2019:1278)', () => {
+		const bie = { name: 'Mr. J. de Bie Leuveling Tjeenk', role: 'advocaat' as const };
+		const verweerder = (name: string, alias: string, representatives = [bie]) =>
+			party(name, 'Verweerder', { side: 'second', alias, representatives });
+		const parties = [
+			verweerder('MAATSCHAP GRONINGEN', 'de Maatschap'),
+			verweerder('NEDERLANDSE AARDOLIE MAATSCHAPPIJ B.V.', 'NAM'),
+			verweerder('EBN B.V.', 'EBN', [{ name: 'mr. J.F. de Groot', role: 'advocaat' }])
 		];
-		expect(extractParticipants(paragraphs, [])).toEqual([]);
+		expect(
+			judgmentParticipants(judgment({ paragraphs: [], parties })).map((p) => [
+				p.role,
+				p.name,
+				p.party
+			])
+		).toEqual([
+			['Verweerder', 'MAATSCHAP GRONINGEN', undefined],
+			['Verweerder', 'NEDERLANDSE AARDOLIE MAATSCHAPPIJ B.V.', undefined],
+			['Advocaat', 'Mr. J. de Bie Leuveling Tjeenk', 'de Maatschap, NAM'],
+			['Verweerder', 'EBN B.V.', undefined],
+			['Advocaat', 'mr. J.F. de Groot', 'EBN']
+		]);
 	});
 
 	it('a representative from the API with where they practise and in what capacity', () => {
 		const parties = [
-			{
-				name: '[appellanten]',
-				role: 'Appellant',
+			party('[appellanten]', 'Appellant', {
 				roles: ['Appellant'],
-				role_stated: true,
-				side: 'first' as const,
 				alias: null,
 				representatives: [
-					{ name: 'mr. drs. R. van Gelder', role: 'advocaat' as const, place: 'Voorschoten' }
+					{ name: 'mr. drs. R. van Gelder', role: 'advocaat', place: 'Voorschoten' }
 				]
-			},
-			{
-				name: 'het college van gedeputeerde staten van Zuid-Holland',
-				role: 'Verweerder',
-				role_stated: true,
-				side: 'second' as const,
+			}),
+			party('het college van gedeputeerde staten van Zuid-Holland', 'Verweerder', {
+				side: 'second',
 				representatives: [
 					{
 						name: 'mr. A. Jansen',
-						role: 'gemachtigde' as const,
+						role: 'gemachtigde',
 						capacity: 'ambtenaar in dienst van de provincie'
 					}
 				]
-			},
-			{ name: 'Vereniging X', role: 'Partij', role_stated: false, side: 'other' as const }
+			}),
+			party('Vereniging X', 'Partij', { role_stated: false, side: 'other' })
 		];
-		expect(judgmentParticipants({ paragraphs: [], parties })).toEqual([
+		expect(judgmentParticipants(judgment({ paragraphs: [], parties }))).toEqual([
 			{ role: 'Appellant', name: '[appellanten]', stated: true },
 			{
 				role: 'Advocaat',
@@ -474,104 +652,19 @@ Namens de verdachte is hoger beroep ingesteld.`
 			{ role: 'Partij', name: 'Vereniging X', stated: true }
 		]);
 	});
-});
 
-// ── Parties from the API (`JudgmentDTO.parties`, API 0.11) ──────────────────
-
-describe('parties from the API', () => {
-	it('the parties the API read come first, each followed by its lawyers', () => {
-		const judgment = {
-			props: { subjects: ['Civiel recht'], text: 'in de zaak van\n[X]\ntegen\n[Y]' },
-			paragraphs: [
-				{
-					kind: 'body',
-					text: 'Namens eisers heeft mr. H.J.W. Alt, advocaat te Amsterdam, het woord gevoerd.'
-				}
-			],
-			parties: [
-				{
-					name: '[eiseres 1]',
-					role: 'Eiser',
-					role_stated: true,
-					side: 'first',
-					alias: '[eisers]',
-					representatives: [{ name: 'mr. H.J.W. Alt', role: 'advocaat' }]
-				},
-				{
-					name: 'MAATSCHAP GRONINGEN',
-					role: 'Verweerder',
-					role_stated: false,
-					side: 'second',
-					alias: 'de Maatschap',
-					representatives: []
-				}
-			]
-		};
-		expect(judgmentParticipants(judgment)).toEqual([
-			{ role: 'Eiser', name: '[eiseres 1]', stated: true },
-			{ role: 'Advocaat', name: 'mr. H.J.W. Alt', party: '[eisers]' },
-			{ role: 'Verweerder', name: 'MAATSCHAP GRONINGEN', stated: false, alias: 'de Maatschap' }
-		]);
-	});
-
-	it('an empty list from the API means the kop names no parties', () => {
-		const judgment = {
-			props: { subjects: ['Strafrecht'], text: 'in de strafzaak tegen\n[verdachte] ,' },
-			paragraphs: [],
-			parties: []
-		};
-		expect(judgmentParticipants(judgment)).toEqual([]);
-	});
-
-	it('without parties from the API, the reader reads the full text', () => {
-		const judgment = {
-			props: { subjects: ['Strafrecht'], text: 'in de strafzaak tegen\n[verdachte] ,' },
-			paragraphs: []
-		};
-		expect(judgmentParticipants(judgment)).toEqual([{ role: 'Verdachte', name: '[verdachte]' }]);
-		expect(judgmentParticipants({ ...judgment, parties: null })).toEqual([
-			{ role: 'Verdachte', name: '[verdachte]' }
-		]);
-	});
-
-	it('a lawyer in the kop is not repeated from the body', () => {
-		const paragraphs = [
-			{
-				kind: 'body',
-				text: 'Namens de Staat heeft mr. K. Teuben, advocaat te Den Haag, het woord gevoerd.'
-			}
-		];
-		const parties = [
-			{ role: 'Verweerder', name: 'DE STAAT DER NEDERLANDEN' },
-			{ role: 'Advocaat', name: 'Mr. K. Teuben', party: 'de Staat' }
-		];
-		expect(extractParticipants(paragraphs, parties)).toEqual(parties);
-	});
-
-	it('a lawyer for several parties in a row is one row after them (ECLI:NL:HR:2019:1278)', () => {
-		const bie = { name: 'Mr. J. de Bie Leuveling Tjeenk', role: 'advocaat' as const };
-		const party = (name: string, alias: string, representatives = [bie]) => ({
-			name,
-			role: 'Verweerder',
-			role_stated: true,
-			side: 'second' as const,
-			alias,
-			representatives
-		});
-		const parties = [
-			party('MAATSCHAP GRONINGEN', 'de Maatschap'),
-			party('NEDERLANDSE AARDOLIE MAATSCHAPPIJ B.V.', 'NAM'),
-			party('EBN B.V.', 'EBN', [{ name: 'mr. J.F. de Groot', role: 'advocaat' }])
-		];
-		expect(
-			judgmentParticipants({ paragraphs: [], parties }).map((p) => [p.role, p.name, p.party])
-		).toEqual([
-			['Verweerder', 'MAATSCHAP GRONINGEN', undefined],
-			['Verweerder', 'NEDERLANDSE AARDOLIE MAATSCHAPPIJ B.V.', undefined],
-			['Advocaat', 'Mr. J. de Bie Leuveling Tjeenk', 'de Maatschap, NAM'],
-			['Verweerder', 'EBN B.V.', undefined],
-			['Advocaat', 'mr. J.F. de Groot', 'EBN']
-		]);
+	it('keeps the alias and the other roles of a party', () => {
+		const [vnv] = judgmentParticipants(
+			judgment({
+				parties: [
+					party('VERENIGING NEDERLANDSE VERKEERSVLIEGERS', 'Geïntimeerde', {
+						roles: ['Geïntimeerde', 'Appellant'],
+						alias: 'VNV'
+					})
+				]
+			})
+		);
+		expect([vnv.alias, vnv.alsoAs]).toEqual(['VNV', ['Appellant']]);
 	});
 });
 
@@ -606,32 +699,16 @@ describe('forParties', () => {
 	});
 });
 
-describe('judgmentParticipants from the API', () => {
-	it('keeps the alias and the other roles of a party', () => {
-		const [vnv] = judgmentParticipants({
-			parties: [
-				{
-					name: 'VERENIGING NEDERLANDSE VERKEERSVLIEGERS',
-					role: 'Geïntimeerde',
-					roles: ['Geïntimeerde', 'Appellant'],
-					alias: 'VNV',
-					role_stated: true
-				}
-			]
-		});
-		expect([vnv.alias, vnv.alsoAs]).toEqual(['VNV', ['Appellant']]);
-	});
-});
-
 describe('a numbered line in the text', () => {
 	it('is a title when it reads as one', () => {
-		expect(splitBodyParagraph('2. De beoordeling')).toEqual([
-			{ kind: 'heading', text: '2. De beoordeling' }
+		const items = bodyItems([para('body', '2. De beoordeling')]);
+		expect(items.map((i) => [i.kind, i.kind === 'heading' && i.text])).toEqual([
+			['heading', '2. De beoordeling']
 		]);
 	});
 	it('is a quotation, not a title, when it ends in a closing quote', () => {
-		const segs = splitBodyParagraph('5.1. Both grounds for appeal fail.”');
-		expect(segs.some((s) => s.kind === 'heading')).toBe(false);
+		const items = bodyItems([para('body', '5.1. Both grounds for appeal fail.”')]);
+		expect(items.some((i) => i.kind === 'heading')).toBe(false);
 	});
 });
 
@@ -655,35 +732,20 @@ describe('signatureStart', () => {
 });
 
 describe('the body as the reader lays it out', () => {
-	const p = (kind: string, text: string, number: string | null = null, paragraph_id?: string) =>
-		({ kind, text, number, paragraph_id, citations: [] }) as never;
-
 	it('keeps a paragraph under the overweging it continues (RVS:2026:5682, r.o. 1)', () => {
 		const items = bodyItems([
-			p('subheading', 'AFDELING\n\nBESTUURSRECHTSPRAAK'),
-			p('body', 'Overgangsrecht inwerkingtreding Omgevingswet', null, 'p-1'),
-			p(
+			para('subheading', 'AFDELING\n\nBESTUURSRECHTSPRAAK'),
+			para('body', 'Overgangsrecht inwerkingtreding Omgevingswet'),
+			para(
 				'body',
 				'Op 1 januari 2024 zijn de Omgevingswet en de Invoeringswet in werking getreden.',
-				'1',
-				'rov-1'
+				{ number: '1', paragraph_id: 'rov-1' }
 			),
-			p('body', 'De aanvraag om een omgevingsvergunning is ingediend op 22 mei 2022.', null, 'p-2'),
-			p('body', 'Inleiding', null, 'p-3'),
-			p(
-				'body',
-				'Tot slot stelt appellant dat de vergunning leidt tot rechtsongelijkheid.',
-				null,
-				'p-4'
-			)
+			para('body', 'De aanvraag om een omgevingsvergunning is ingediend op 22 mei 2022.'),
+			para('body', 'Inleiding'),
+			para('body', 'Tot slot stelt appellant dat de vergunning leidt tot rechtsongelijkheid.')
 		]);
-		expect(items.map((i) => (i.kind === 'prose' ? `prose:${i.within}` : i.kind))).toEqual([
-			'subheading',
-			'rov',
-			'prose:true',
-			'subheading',
-			'prose:false'
-		]);
+		expect(kinds(items)).toEqual(['subheading', 'rov', 'prose:true', 'subheading', 'prose:false']);
 		expect(items[1]).toMatchObject({ kind: 'rov', num: '1', id: 'rov-1' });
 	});
 
@@ -698,39 +760,33 @@ describe('the body as the reader lays it out', () => {
 			'De verdachte is bij arrest van 7 oktober 2014 door het gerechtshof niet-ontvankelijk verklaard in het hoger beroep, ingesteld tegen het vonnis van de politierechter.',
 			'Derhalve is het cassatieberoep ontvankelijk.'
 		].join('\n\n');
-		expect(headRest(kop)).toHaveLength(2);
-		const items = bodyItems([p('subheading', kop)]);
-		expect(items.map((i) => i.kind)).toEqual(['prose', 'prose']);
+		const items = bodyItems([para('subheading', kop)]);
+		expect(items.map((i) => (i.kind === 'prose' ? i.body : i.kind))).toEqual([
+			'De verdachte is bij arrest van 7 oktober 2014 door het gerechtshof niet-ontvankelijk verklaard in het hoger beroep, ingesteld tegen het vonnis van de politierechter.',
+			'Derhalve is het cassatieberoep ontvankelijk.'
+		]);
 	});
 
 	it('takes the kinds the API will give: a table of contents is left out, continues is followed', () => {
 		const items = bodyItems([
-			p('toc', '1 Procesverloop'),
-			p(
+			para('toc', '1 Procesverloop'),
+			para(
 				'body',
 				'Op 1 januari 2024 zijn de Omgevingswet en de Invoeringswet in werking getreden.',
-				'1',
-				'rov-1'
+				{ number: '1', paragraph_id: 'rov-1' }
 			),
-			p('body', 'Tussenkop', null, 'p-1'),
-			{
-				...(p('body', 'Een zin die de overweging voortzet.', null, 'p-2') as object),
-				continues: 'rov-1'
-			} as never
+			para('body', 'Tussenkop'),
+			para('body', 'Een zin die de overweging voortzet.', { continues: 'rov-1' })
 		]);
-		expect(items.map((i) => (i.kind === 'prose' ? `prose:${i.within}` : i.kind))).toEqual([
-			'rov',
-			'subheading',
-			'prose:true'
-		]);
+		expect(kinds(items)).toEqual(['rov', 'subheading', 'prose:true']);
 	});
 
 	it('leaves out the heading of a table of contents with its lines', () => {
 		const items = bodyItems([
-			p('heading', 'Inhoudsopgave'),
-			p('toc', '1 Procesverloop'),
-			p('toc', '2 Uitgangspunten en feiten (2.1-2.3.2)'),
-			p('heading', 'Procesverloop', '1')
+			para('heading', 'Inhoudsopgave'),
+			para('toc', '1 Procesverloop'),
+			para('toc', '2 Uitgangspunten en feiten (2.1-2.3.2)'),
+			para('heading', 'Procesverloop', { number: '1' })
 		]);
 		expect(items.map((i) => (i.kind === 'heading' ? i.text : i.kind))).toEqual([
 			'1. Procesverloop'
@@ -739,27 +795,32 @@ describe('the body as the reader lays it out', () => {
 
 	it('puts the number of a heading before its title', () => {
 		const items = bodyItems([
-			p('heading', 'Beoordeling van de aanvraag', '3'),
-			p('heading', '4. Beslissing', '4')
+			para('heading', 'Beoordeling van de aanvraag', { number: '3' }),
+			para('heading', '4. Beslissing', { number: '4' })
 		]);
-		expect(items.map((i) => (i.kind === 'heading' ? i.text : ''))).toEqual([
-			'3. Beoordeling van de aanvraag',
-			'4. Beslissing'
+		expect(items.map((i) => (i.kind === 'heading' ? [i.text, i.id] : ''))).toEqual([
+			['3. Beoordeling van de aanvraag', 'h-beoordeling-van-de-aanvraag'],
+			['4. Beslissing', 'h-4-beslissing']
 		]);
 	});
 
 	it('leaves a kop that is only a kop', () => {
-		expect(
-			headRest('HOGE RAAD\n\nSTRAFKAMER\n\nNummer 25/04731\n\nARREST\n\nhierna: de klager.')
-		).toEqual([]);
+		const kop = 'HOGE RAAD\n\nSTRAFKAMER\n\nNummer 25/04731\n\nARREST\n\nhierna: de klager.';
+		expect(bodyItems([para('subheading', kop)])).toEqual([]);
+	});
+
+	it('shows a later subheading as one, its white space collapsed', () => {
+		const items = bodyItems([para('subheading', 'Kop'), para('subheading', '  De   feiten \n ')]);
+		expect(items).toEqual([{ kind: 'subheading', text: 'De feiten' }]);
 	});
 
 	it('takes a short line without a stop for a title, a sentence or a signature not', () => {
-		expect(isTitleLine('Toetsingskader')).toBe(true);
-		expect(isTitleLine('Bijlage: lijst van gebruikte afkortingen')).toBe(true);
-		expect(isTitleLine('(zie hierna in 4.1-4.8)')).toBe(false);
-		expect(isTitleLine('w.g. Minderhoud lid van de enkelvoudige kamer')).toBe(false);
-		expect(isTitleLine('932-1191')).toBe(false);
-		expect(isTitleLine('Ten slotte is vonnis bepaald.')).toBe(false);
+		const kind = (line: string) => bodyItems([para('body', line)])[0].kind;
+		expect(kind('Toetsingskader')).toBe('subheading');
+		expect(kind('Bijlage: lijst van gebruikte afkortingen')).toBe('subheading');
+		expect(kind('(zie hierna in 4.1-4.8)')).toBe('prose');
+		expect(kind('w.g. Minderhoud lid van de enkelvoudige kamer')).toBe('prose');
+		expect(kind('932-1191')).toBe('prose');
+		expect(kind('Ten slotte is vonnis bepaald.')).toBe('prose');
 	});
 });
