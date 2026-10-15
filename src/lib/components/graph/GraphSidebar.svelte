@@ -1,5 +1,6 @@
 <script lang="ts">
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
+	import { NL } from '$lib/text/collator';
 	// The legend of the network, which is also its filter: the bronnen that take part
 	// (with counts and the preset), the verbindingen per relation with a line sample,
 	// the depth from the focus, the lid, and one line with what is on the canvas and
@@ -156,7 +157,7 @@
 		[...(verbonden.lidTellingen ?? lidCounts(allRows(verbonden.groups)))]
 			.map(([k]) => k)
 			.filter((k) => k !== '')
-			.sort((a, b) => a.localeCompare(b, 'nl', { numeric: true }))
+			.sort(NL.compare)
 	);
 	const isOn = (k: (typeof FILTER_GROUPS)[number]) =>
 		filter.bronnen === null || filter.bronnen.has(k);

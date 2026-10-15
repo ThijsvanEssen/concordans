@@ -4,6 +4,7 @@
 // publication that brought the version, from the law's `/amended-by`. The feed gives neither
 // verb nor article (onderzoek samenhang, GGN 3.2 and 3.3: back-end B2, B3).
 import { count, textOf } from '$lib/text/words';
+import { NL } from '$lib/text/collator';
 import type { Schema } from '$lib/api/types';
 import {
 	CHANGE_RELATIONS,
@@ -96,9 +97,7 @@ export function wijzigingenVan(
 				orde(a.relation) - orde(b.relation)
 		)
 		.map(({ plek, ...r }) => {
-			const alle = plek.sort(
-				(a, b) => a.positie - b.positie || a.nummer.localeCompare(b.nummer, 'nl', { numeric: true })
-			);
+			const alle = plek.sort((a, b) => a.positie - b.positie || NL.compare(a.nummer, b.nummer));
 			return {
 				...r,
 				artikelen: alle.slice(0, genoemd).map(({ key, nummer }) => ({ key, nummer })),

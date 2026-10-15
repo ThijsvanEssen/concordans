@@ -2,6 +2,7 @@
 // function per `Loader` of the group table; each returns rows, and a total where
 // the API gives one.
 import { isBill, motionOrAmendment } from '$lib/text/document-kind';
+import { NL } from '$lib/text/collator';
 import { textOf } from '$lib/text/words';
 import { naamVan, naamVanId } from '$lib/bron/menselijk';
 import { ifExists, report } from '$lib/api/errors';
@@ -326,7 +327,7 @@ export function regelingRow(
 /** Articles once each, in their law's order: `2`, `3`, `17`, `18`. */
 const opNummer = <A extends { article_number?: string | null }>(xs: readonly A[]): A[] =>
 	[...new Map(xs.filter((a) => a.article_number).map((a) => [a.article_number, a])).values()].sort(
-		(a, b) => a.article_number!.localeCompare(b.article_number!, 'nl', { numeric: true })
+		(a, b) => NL.compare(a.article_number!, b.article_number!)
 	);
 
 /**
@@ -946,9 +947,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		const order = (row: Row) => row.title;
 		return {
 			rows: [...rows.values()].sort(
-				(a, b) =>
-					(a.aard ?? '').localeCompare(b.aard ?? '', 'nl') ||
-					order(a).localeCompare(order(b), 'nl', { numeric: true })
+				(a, b) => (a.aard ?? '').localeCompare(b.aard ?? '', 'nl') || NL.compare(order(a), order(b))
 			),
 			...(partial ? { capped: true } : { total: first.total })
 		};

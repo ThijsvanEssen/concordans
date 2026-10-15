@@ -17,7 +17,7 @@
 	import CanvasKaart from './CanvasKaart.svelte';
 	import CanvasNodeList from './CanvasNodeList.svelte';
 	import { readingOrder } from './canvas-keys';
-	import { countCanvas, NO_COUNTS, type CanvasCounts } from './canvas-count';
+	import { countCanvas, NO_COUNTS, sameIds, type CanvasCounts } from './canvas-count';
 	import GraphSidebar from './GraphSidebar.svelte';
 	import type { ComponentProps, Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/store/types';
@@ -216,7 +216,14 @@
 			hiddenRelations: filters.hiddenRelations
 		});
 		canvasCounts = geteld.counts;
-		drawnIds = geteld.drawnIds;
+		// The keyboard's list sorts what is drawn: only a change sorts it again.
+		if (
+			!sameIds(
+				untrack(() => drawnIds),
+				geteld.drawnIds
+			)
+		)
+			drawnIds = geteld.drawnIds;
 	}
 
 	$effect(() => {

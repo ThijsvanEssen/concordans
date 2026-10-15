@@ -23,4 +23,17 @@ describe('readingOrder', () => {
 		];
 		expect(readingOrder(nodes, 's').map((n) => n.id)).toEqual(['s', 'c', 'a', 'b']);
 	});
+
+	it('sorts numbers as numbers, the Dutch way', () => {
+		const labels = ['Artikel 2a', '10', 'Artikel 10', '2', 'artikel 2', 'Artikel 2'];
+		const nodes = labels.map((label, i) => ({ id: String(i), label }));
+		expect(readingOrder(nodes, null).map((n) => n.label)).toEqual([
+			'2',
+			'10',
+			'artikel 2',
+			'Artikel 2',
+			'Artikel 2a',
+			'Artikel 10'
+		]);
+	});
 });

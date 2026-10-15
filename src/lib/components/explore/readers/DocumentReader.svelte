@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { ownKind } from '$lib/text/document-kind';
+	import { NL } from '$lib/text/collator';
 	import { korteDatum } from '$lib/text/datum';
 	import { textOf } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
@@ -93,8 +94,7 @@
 			perWet.set(e.bwb_id, rij);
 		}
 		// In the order of the law: 54a before 138c.
-		const op = (a: { nummer: string }, b: { nummer: string }) =>
-			a.nummer.localeCompare(b.nummer, 'nl', { numeric: true });
+		const op = (a: { nummer: string }, b: { nummer: string }) => NL.compare(a.nummer, b.nummer);
 		return [...perWet].map(([bwbId, artikelen]) => ({ bwbId, artikelen: artikelen.sort(op) }));
 	});
 	$effect(() => {

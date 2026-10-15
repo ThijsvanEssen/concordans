@@ -17,6 +17,13 @@ export type CanvasCounts = {
 	metGroep: Partial<Record<FilterGroup, { count: number; van: number; groepen: ContainerKind[] }>>;
 };
 
+/** Whether two lists of drawn bronnen hold the same ones: the list is not handed on unchanged. */
+export const sameIds = (a: readonly string[], b: readonly string[]) => {
+	if (a.length !== b.length) return false;
+	const kept = new Set(a);
+	return b.every((id) => kept.has(id));
+};
+
 export const NO_COUNTS: CanvasCounts = { nodes: 0, edges: 0, kinds: {}, vormen: {}, metGroep: {} };
 
 export function countCanvas(o: {

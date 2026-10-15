@@ -11,6 +11,12 @@ describe('dates, figures and words', () => {
 		).toEqual([]);
 	});
 
+	it('sorts Dutch with its numbers only by NL in $lib/text/collator.ts (fe-graph-04)', () => {
+		expect(
+			overtreders((t) => /['"]nl['"],\s*\{\s*numeric:/.test(t), [plek('lib/text/collator.ts')])
+		).toEqual([]);
+	});
+
 	it('formats a figure only in $lib/text/getal.ts, and takes today from datum.ts', () => {
 		expect(overtreders((t) => /\.toLocaleString\(/.test(t), [plek('lib/text/getal.ts')])).toEqual(
 			[]
