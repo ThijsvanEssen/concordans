@@ -13,10 +13,23 @@ describe('list pages and the feed', () => {
 	});
 
 	it('asks the facets of an index list by faceted, and builds its period once (code-eenvoud F47)', () => {
-		const index = bron('lib/components/explore/IndexView.svelte');
+		const lijsten = BRONNEN.filter(({ path }) =>
+			path.startsWith('lib/components/explore/index/lists/')
+		);
 		// The stemmingen are counted through $lib/api/decisions (geteld), which waits for the count.
-		expect(index).not.toMatch(/api\.GET\([^)]*facets: true/s);
-		expect(index.match(/id: 'period'/g)).toHaveLength(1);
+		for (const { text } of [...lijsten, { text: bron('lib/components/explore/IndexView.svelte') }])
+			expect(text).not.toMatch(/api\.GET\([^)]*facets: true/s);
+		expect(BRONNEN.filter(({ text }) => /id: 'period'/.test(text)).map(({ path }) => path)).toEqual(
+			['lib/components/explore/IndexView.svelte']
+		);
+	});
+
+	it('keeps a list of Bronnen in its register, not in IndexView (code-eenvoud F87)', () => {
+		// A category named in IndexView is a list's own rule outside its definition (index/lists).
+		const index = bron('lib/components/explore/IndexView.svelte');
+		expect(index).not.toMatch(
+			/category\s*[!=]==\s*'|'(instruments|judgments|dossiers|decisions|documents|members|factions|committees|cabinets|ministers|commitments)'/
+		);
 	});
 
 	it('says why a row of the feed is there by one rule, on Actueel and Gevolgd alike (pakket H)', () => {

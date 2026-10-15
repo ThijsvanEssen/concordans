@@ -14,8 +14,8 @@ describe('names, not keys', () => {
 			},
 			{ pad: 'lib/components/graph/GraphView.svelte', reden: 'node ids for focus and hover' },
 			{
-				pad: 'lib/components/explore/IndexView.svelte',
-				reden: 'the key of a concept for the URL; a fraction key for its colour'
+				pad: 'lib/components/explore/index/lists/instruments.ts',
+				reden: 'the key of a concept for the URL'
 			},
 			{ pad: 'lib/components/explore/JudgmentToc.svelte', reden: 'the ECLI asked of the API' },
 			{

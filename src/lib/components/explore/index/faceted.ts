@@ -21,8 +21,8 @@ type ListQuery<P extends FacetedPath> = Omit<
 >;
 type ListPage<P extends FacetedPath> = Get<P>['responses'][200]['content']['application/json'];
 
-/** Loads the page from `offset` into the list; a newer load aborts `signal`. */
-export type Fetcher = (offset: number, signal: AbortSignal) => Promise<void>;
+/** The facets of a list as its answer gives them. */
+export type FacetsOf<P extends FacetedPath> = ListPage<P>['facets'];
 
 /** Asks the facets beside the rows and keeps what comes, or says why nothing came. */
 export type FacetsApart = <T>(
@@ -50,23 +50,22 @@ const getList = <P extends FacetedPath>(
 	);
 
 /**
- * The fetcher of a faceted list: its facets to `setFacets` (first page only, through `apart`),
- * its rows to `setRows`.
+ * The rows of a faceted list from `offset`; on the first page its facets to `setFacets`,
+ * asked apart (`apart`).
  */
 export function faceted<P extends FacetedPath>(
 	path: P,
 	query: ListQuery<P>,
 	apart: FacetsApart,
-	setFacets: (answer: ListPage<P>) => void,
-	setRows: (answer: ListPage<P>, offset: number, signal: AbortSignal) => void
-): Fetcher {
-	return async (offset, signal) => {
+	setFacets: (answer: ListPage<P>) => void
+): (offset: number, signal: AbortSignal) => Promise<ListPage<P>> {
+	return (offset, signal) => {
 		if (!offset)
 			apart(
 				() => getList(path, { ...query, offset: 0, limit: 1, facets: true }, signal),
 				setFacets,
 				signal
 			);
-		setRows(await getList(path, { ...query, offset, facets: false }, signal), offset, signal);
+		return getList(path, { ...query, offset, facets: false }, signal);
 	};
 }

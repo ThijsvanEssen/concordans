@@ -49,6 +49,7 @@ describe('typography', () => {
 		const columns = [
 			'lib/components/articles/VersionCompare.svelte',
 			'lib/components/explore/IndexView.svelte',
+			'lib/components/explore/index/rows/DecisionRows.svelte',
 			'lib/components/explore/ZaalLegenda.svelte',
 			'lib/components/explore/readers/CabinetReader.svelte',
 			'lib/components/explore/readers/CommitmentReader.svelte',
