@@ -33,8 +33,7 @@ const PLACES: Record<string, number> = {
 	'lib/map/map.svelte.ts': 1,
 	'lib/onderwerpen/onderwerpen.ts': 1,
 	'lib/onderwerpen/strekking.ts': 1,
-	'routes/(main)/onderwerpen/+page.svelte': 1,
-	'routes/explore/+page.svelte': 7
+	'routes/(main)/onderwerpen/+page.svelte': 1
 };
 
 describe('errors swallowed', () => {

@@ -15,6 +15,8 @@
 src/hooks.ts                  reroute: a readable address (/dossiers/36799, …) is served by explore/
 src/routes/
   explore/+page.svelte        the Verkenner: Netwerk, Tekst and Bladeren on one page, the view in the URL
+  explore/explore-url.ts      the Verkenner's state from its address, as pure functions; panels.ts the three layers
+  explore/*.svelte.ts         its parts with state: column widths, the netwerk composer, the overlay counts
   (main)/                     pages with the site chrome: start page, actueel, docs, api
   (main)/(prose)/             colofon, contact, privacy, voorwaarden
 src/lib/

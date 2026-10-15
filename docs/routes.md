@@ -70,4 +70,4 @@ A dossier is linked by its number: a `BronRef` of a dossier carries `number` nex
 
 ## Adding a query parameter
 
-Read it in `routes/explore/+page.svelte` in a `$derived`, write it with `setUrl` (`goto` with `replaceState`, `noScroll`, `keepFocus`), and add it to the table above. A parameter that must travel with a link to a bron goes in `KEPT_PARAMS`.
+Read it in `routes/explore/explore-url.ts` as a pure function of the query, derive it in `routes/explore/+page.svelte`, write it with `setUrl` (`goto` with `replaceState`, `noScroll`, `keepFocus`), and add it to the table above. A parameter that must travel with a link to a bron goes in `KEPT_PARAMS`.

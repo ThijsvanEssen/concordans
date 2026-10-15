@@ -16,7 +16,7 @@ The switch sets `open` or `heat:12`, or clears the active overlay. `bronHref` ca
 
 ## Data
 
-`explore/+page.svelte` derives the overlay from the URL and fetches only the active overlay's data when the parameter changes. A request of an overlay that is left is aborted.
+`explore/+page.svelte` derives the overlay from the URL; `explore/overlay-counts.svelte.ts` fetches only the active overlay's data when the parameter changes. A request of an overlay that is left is aborted.
 
 | Overlay                | Function in `src/lib/api/overlays.ts` | API                               |
 | ---------------------- | ------------------------------------- | --------------------------------- |
@@ -39,6 +39,6 @@ Both need the drawn radius of a node, which is not the `size` attribute. See [`g
 
 1. Extend `Overlay`, `parseOverlay` and `overlayParam`.
 2. Add a fetcher to `src/lib/api/overlays.ts` that returns `NodeCounts`.
-3. Add it to the effect on `overlay` in `explore/+page.svelte`.
+3. Add it to `OverlayCounts` in `explore/overlay-counts.svelte.ts`.
 4. Add a position to the switch in `GraphSidebar.svelte`. The switch assumes exclusion; overlays that stack need their own URL parameter.
 5. Add a layer and a position pass to `GraphCanvas.svelte`, inside `updateViewportLabels()`.
