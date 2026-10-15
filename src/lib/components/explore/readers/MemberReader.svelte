@@ -107,8 +107,7 @@
 		inOffice = { votes: [], next: 0, laden: true };
 		getMemberVotesInOffice(key)
 			.then((v) => {
-				// Only votes in a post, also from an API before 0.79.44 that ignores `in_office`.
-				if (!weg) inOffice = { votes: inPost(v.votes), next: v.next_offset ?? null, laden: false };
+				if (!weg) inOffice = { votes: v.votes, next: v.next_offset ?? null, laden: false };
 			})
 			.catch(() => {
 				if (!weg) inOffice = null;
@@ -117,7 +116,6 @@
 			weg = true;
 		};
 	});
-	const inPost = (vs: Vote[]) => vs.filter((v) => (v.in_office ?? []).length > 0);
 	/** The next page of votes in a post. */
 	function meerInOffice() {
 		const nu = inOffice;
@@ -128,7 +126,7 @@
 			.then((v) => {
 				if (key !== bronKey) return;
 				inOffice = {
-					votes: [...nu.votes, ...inPost(v.votes)],
+					votes: [...nu.votes, ...v.votes],
 					next: v.next_offset ?? null,
 					laden: false
 				};

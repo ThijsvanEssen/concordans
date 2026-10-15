@@ -12,17 +12,6 @@ type Decision = Pick<Schema<'DecisionSummaryDTO'>, 'kind' | 'decision_kind' | 'p
 /** A decision on no zaak: the former `overig`. */
 export const NO_DECISION_KIND = 'Overig';
 
-/** The kinds of API 0.51 and before, as a link from then names them in `?soort=`. */
-const OLD_KIND: Record<string, string> = {
-	motie: 'Motie',
-	amendement: 'Amendement',
-	wetsvoorstel: 'Wetgeving'
-};
-
-/** A kind from the URL: as the Kamer writes it, or by its name before API 0.52. */
-export const decisionKindFromParam = (value: string): string | undefined =>
-	value && value !== 'overig' ? (OLD_KIND[value] ?? value) : undefined;
-
 const HAMMER = 'Stemmen - zonder stemming aannemen';
 
 /** Passed without a vote: a hamerstuk. */

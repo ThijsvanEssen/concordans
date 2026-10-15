@@ -205,13 +205,10 @@ export const isNieuw = (datum: string, vorige: string | null) => !!vorige && dat
 export const naarParam = (termen: string[]) => termen.map(normaal).join('|');
 
 export function uitParams(params: URLSearchParams): string[][] {
-	return (
-		params
-			.getAll('onderwerp')
-			// `|` since 9 Oct; `;` as typed works too.
-			.map((v) => uniek(v.split(/[|;]/)))
-			.filter((t) => t.length)
-	);
+	return params
+		.getAll('onderwerp')
+		.map((v) => uniek(v.split('|')))
+		.filter((t) => t.length);
 }
 
 export function deelAdres(lijst: Pick<Onderwerp, 'termen' | 'wet'>[]): string {

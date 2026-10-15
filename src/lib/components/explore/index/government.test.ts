@@ -1,20 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	COMMITMENT_STATUSES,
-	cabinetShortName,
-	commitmentTeken,
-	laterPosts,
-	statusFromParam
-} from './government';
-
-describe('statusFromParam', () => {
-	it('reads a state as the Kamer writes it, and one of before API 0.48 as its word', () => {
-		expect(statusFromParam('Nagekomen')).toBe('Nagekomen');
-		expect(statusFromParam('open')).toBe('Openstaand');
-		expect(statusFromParam('partly_done')).toBe('Deels Afgedaan');
-		expect(statusFromParam(null)).toBeNull();
-	});
-});
+import { COMMITMENT_STATUSES, cabinetShortName, commitmentTeken, laterPosts } from './government';
 
 describe('laterPosts', () => {
 	it('keeps the counts with the longest post of each person', () => {

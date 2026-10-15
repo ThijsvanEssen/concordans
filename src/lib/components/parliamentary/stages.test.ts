@@ -6,8 +6,8 @@ import {
 	DOSSIER_KINDS,
 	OUTCOME_LABEL,
 	dossierStatus,
-	kindFromParam,
-	phaseFromParam
+	isDossierKind,
+	isPhase
 } from './stages';
 
 // The outcomes the API may send, read from the schema the types were generated from.
@@ -27,15 +27,12 @@ describe('dossier phases and outcome', () => {
 	});
 });
 
-describe('old links', () => {
-	it('read a track or stage of before API 0.52 as the Kamer’s word, or leave it out', () => {
-		expect(kindFromParam('Wetgeving')).toBe('Wetgeving');
-		expect(kindFromParam('wetsvoorstel')).toBe('Wetgeving');
-		expect(kindFromParam('structuurvisie')).toBe('PKB/Structuurvisie');
-		expect(kindFromParam('beleid')).toBeNull();
-		expect(phaseFromParam('mvt')).toBe('Memorie van toelichting');
-		expect(phaseFromParam('Stemmingen')).toBe('Stemmingen');
-		expect(phaseFromParam('behandeling')).toBeNull();
+describe('a kind and phase from the URL', () => {
+	it('knows them as the Kamer writes them, and nothing else', () => {
+		expect(isDossierKind('Wetgeving')).toBe(true);
+		expect(isDossierKind('wetsvoorstel')).toBe(false);
+		expect(isPhase('Stemmingen')).toBe(true);
+		expect(isPhase('mvt')).toBe(false);
 	});
 });
 

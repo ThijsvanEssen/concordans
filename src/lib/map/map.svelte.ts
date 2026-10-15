@@ -1,6 +1,6 @@
 // The maps as the page holds them, in this browser: each with a name, one active, where a box
 // keeps what is chosen; the panel open or not; a map someone shared (?map=) until it is kept
-// or put aside. The one map of step 1 (concordans:map) becomes the first map, untouched.
+// or put aside.
 import {
 	samen,
 	sleutelVan,
@@ -12,7 +12,6 @@ import {
 } from './map';
 
 const OPSLAG = 'concordans:mappen';
-const OUD = 'concordans:map';
 const EERSTE = 'Gemarkeerd';
 
 type Stand = { mappen: Map[]; actief: string };
@@ -56,6 +55,12 @@ function heleItems(v: unknown): MapItem[] {
 	return items;
 }
 
+/** One empty map, active: where this browser keeps none, or none it can read. */
+function eersteStand(): Stand {
+	const eerste = leeg(EERSTE);
+	return { mappen: [eerste], actief: eerste.id };
+}
+
 function lees(): Stand {
 	try {
 		const raw = JSON.parse(localStorage.getItem(OPSLAG) ?? 'null');
@@ -72,25 +77,14 @@ function lees(): Stand {
 			const actief = mappen.some((m) => m.id === raw.actief) ? raw.actief : mappen[0].id;
 			return { mappen, actief };
 		}
-		// Step 1 kept one map: it is the first, with all it holds.
-		const oud = JSON.parse(localStorage.getItem(OUD) ?? '[]');
-		const eerste = { ...leeg(EERSTE), items: heleItems(oud) };
-		return { mappen: [eerste], actief: eerste.id };
+		return eersteStand();
 	} catch {
-		const eerste = leeg(EERSTE);
-		return { mappen: [eerste], actief: eerste.id };
+		return eersteStand();
 	}
 }
 
 class Kaarten {
-	#stand = $state<Stand>(
-		typeof window === 'undefined'
-			? (() => {
-					const m = leeg(EERSTE);
-					return { mappen: [m], actief: m.id };
-				})()
-			: lees()
-	);
+	#stand = $state<Stand>(typeof window === 'undefined' ? eersteStand() : lees());
 	mappen = $derived(this.#stand.mappen);
 	actief = $derived(
 		this.#stand.mappen.find((m) => m.id === this.#stand.actief) ?? this.#stand.mappen[0]
@@ -106,7 +100,6 @@ class Kaarten {
 	#bewaar() {
 		try {
 			localStorage.setItem(OPSLAG, JSON.stringify(this.#stand));
-			localStorage.removeItem(OUD);
 		} catch {
 			/* geen opslag */
 		}

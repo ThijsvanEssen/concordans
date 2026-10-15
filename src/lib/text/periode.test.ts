@@ -15,10 +15,9 @@ describe('periode', () => {
 		expect(gekozen('2020-01-01', '', '2026-10-09')).toBeNull();
 	});
 
-	it('reads a year from an older address as its first or last day', () => {
-		expect(alsDag('2015', false)).toBe('2015-01-01');
-		expect(alsDag('2015', true)).toBe('2015-12-31');
-		expect(alsDag('2015-03-02', true)).toBe('2015-03-02');
-		expect(alsDag('maart', false)).toBeNull();
+	it('reads a day from the address, and nothing else', () => {
+		expect(alsDag('2015-03-02')).toBe('2015-03-02');
+		expect(alsDag('2015')).toBeNull();
+		expect(alsDag('maart')).toBeNull();
 	});
 });

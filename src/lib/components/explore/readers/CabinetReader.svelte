@@ -80,7 +80,7 @@
 				>
 			</Veld>
 			<!-- The link takes the person's address from the answer (onthoudPaden):
-				     `prime_minister.path` since API 0.79.48 (#580), before it the post in `ministries`. -->
+				     `prime_minister.path`. -->
 			<Veld label="Minister-president" value={c.prime_minister}>
 				<BronLink ref={`members/${c.prime_minister?.key}`}>{c.prime_minister?.name}</BronLink>
 			</Veld>

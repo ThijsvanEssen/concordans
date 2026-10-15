@@ -2,7 +2,7 @@
 // it is read from there, and what it asks the feed. Reading, clearing, the feed's query and
 // the day counts all follow from this table, so a new filter is one row.
 import type { paths } from '$lib/api/generated/openapi-types';
-import { kindFromParam, type FeedKind } from './feed';
+import { isFeedKind, type FeedKind } from './feed';
 
 export type FeedQuery = NonNullable<paths['/api/feed']['get']['parameters']['query']>;
 
@@ -58,12 +58,9 @@ const readLaw = (p: URLSearchParams) => {
 };
 
 const FILTERS: { [K in keyof ActueelFilters]: Filter<ActueelFilters[K]> } = {
-	// A link from before API 0.48 names a kind the old way (`motie`): read as the TK word.
 	kinds: {
 		param: 'soort',
-		read: (p) => [
-			...new Set((p.get('soort') ?? '').split(',').flatMap((v) => kindFromParam(v) ?? []))
-		],
+		read: (p) => [...new Set((p.get('soort') ?? '').split(',').filter(isFeedKind))],
 		ask: (v) => (v.length ? { kind: v.join(',') } : {})
 	},
 	since: plain('van', 'since'),

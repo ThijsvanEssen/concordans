@@ -73,7 +73,7 @@ describe('presentHit', () => {
 			);
 			expect(presentHit(a, 'belasting', [a]).context).toBe('Beleidsregel, 27 apr. 2007');
 		});
-		it('reads as before where the API gives neither kind nor day', () => {
+		it('names the BWB id where the API gives neither kind nor day', () => {
 			const a = regeling('bwbr0021767');
 			const b = regeling('bwbr0022916');
 			expect(presentHit(a, 'belasting', [a, b]).context).toBe('BWBR0021767');

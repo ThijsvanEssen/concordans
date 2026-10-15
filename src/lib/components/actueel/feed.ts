@@ -77,19 +77,6 @@ export const FEED_KINDS = Object.keys(KIND_LABEL) as FeedKind[];
 
 export const isFeedKind = (value: string): value is FeedKind => Object.hasOwn(KIND_LABEL, value);
 
-/** The kinds of API 0.47 and before, as a link from then names them in `?soort=`. */
-const OLD_KIND: Record<string, FeedKind> = {
-	wetsvoorstel: 'Voorstel van wet',
-	nota_van_wijziging: 'Nota van wijziging',
-	amendement: 'Amendement',
-	motie: 'Motie',
-	brief_regering: 'Brief regering'
-};
-
-/** A kind from the URL: as the API names it, or by its name before API 0.48. */
-export const kindFromParam = (value: string): FeedKind | null =>
-	isFeedKind(value) ? value : (OLD_KIND[value] ?? null);
-
 // A dossier by number and name: one helper for the whole site ($lib/bron/dossier-naam).
 import { dossierLabel, dossierName } from '$lib/bron/dossier-naam';
 export { dossierLabel, dossierName };
@@ -363,16 +350,12 @@ export function atomHref(
 }
 
 /**
- * The first day searched, when the API stopped short of the whole period (0.79.28: `partial`
- * with `searched_from`); null when it searched all. An API before it has neither field.
+ * The first day searched, when the API stopped short of the whole period (`partial` with
+ * `searched_from`); null when it searched all.
  */
-export function doorzochtVanaf(r: object): string | null {
-	const { partial, searched_from: vanaf } = r as {
-		partial?: boolean | null;
-		searched_from?: string | null;
-	};
-	return partial && typeof vanaf === 'string' && vanaf ? vanaf.slice(0, 10) : null;
-}
+export const doorzochtVanaf = (
+	r: Pick<Schema<'FeedResponse'>, 'partial' | 'searched_from'>
+): string | null => (r.partial && r.searched_from ? r.searched_from.slice(0, 10) : null);
 
 /**
  * Where a failure of the feed is said: in place of the list it left empty, or under the list
