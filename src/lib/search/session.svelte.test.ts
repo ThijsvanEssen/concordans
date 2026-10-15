@@ -350,6 +350,62 @@ describe('Enter and the citations', () => {
 		stop();
 	});
 
+	/** The answer of the resolving lane for a notation the API reads, with its match. */
+	const notation = (
+		kind: string,
+		parts: Record<string, unknown>,
+		match: Record<string, unknown>
+	) => ({
+		resolved: {
+			kind: match.kind,
+			match: { id: `${match.collection}/${match.key}`, path: null, ...match },
+			alternatives: [],
+			qualifier: null,
+			notation: {
+				kind,
+				parts: {
+					identifier: null,
+					dossier_number: null,
+					suffix: null,
+					sequence: null,
+					articles: [],
+					qualifier: null,
+					choice: false,
+					...parts
+				}
+			}
+		}
+	});
+
+	it('shows the citation row for a notation the API reads, and opens its match (F108)', async () => {
+		for (const [q, kind, parts, match] of [
+			[
+				'TZ202603-130',
+				'commitment',
+				{ identifier: 'TZ202603-130' },
+				{ kind: 'commitment', collection: 'commitments', key: '74065c45' }
+			],
+			[
+				'Sr 287',
+				'article',
+				{ articles: [{ law_id: 'BWBR0001854', number: '287' }] },
+				{ kind: 'article', collection: 'articles', key: 'bwbr0001854_287' }
+			]
+		] as const) {
+			const { of, fake } = api();
+			const { s, opened, stop } = session();
+			await type(s, q);
+			of('instruments').answer(answer({}, notation(kind, parts, match)));
+			await settle();
+			expect(s.citation?.kind).toBe(kind);
+			s.pressEnter();
+			await settle();
+			expect(opened).toEqual([{ collection: match.collection, key: match.key }]);
+			expect(fake.asked('/api/resolve')).toEqual([]);
+			stop();
+		}
+	});
+
 	it('opens an ECLI by what the search resolved, without asking again', async () => {
 		const { of, fake } = api();
 		const { s, opened, stop } = session();
