@@ -14,6 +14,7 @@ import {
 	atomHref,
 	foldTitle,
 	isFeedKind,
+	summaryAsk,
 	titleOf
 } from './feed';
 
@@ -265,5 +266,23 @@ describe('where a failure of the feed is said', () => {
 		expect(errorPlace('Actueel kon niet worden geladen.', 0)).toBe('instead');
 		expect(errorPlace(null, 40)).toBe('none');
 		expect(errorPlace(null, 0)).toBe('none');
+	});
+});
+
+describe('summaryAsk', () => {
+	const want = { until: '2026-10-15', days: 5 };
+	it('asks the whole span when nothing is counted, or the newest day moved', () => {
+		expect(summaryAsk(want, null)).toEqual(want);
+		expect(summaryAsk(want, { until: '2026-10-14', days: 2 })).toEqual(want);
+	});
+	it('asks only the days older than those counted', () => {
+		expect(summaryAsk(want, { until: '2026-10-15', days: 2 })).toEqual({
+			until: '2026-10-13',
+			days: 3
+		});
+	});
+	it('asks nothing when every day is counted', () => {
+		expect(summaryAsk(want, { until: '2026-10-15', days: 5 })).toBe(null);
+		expect(summaryAsk({ until: '2026-10-15', days: 3 }, want)).toBe(null);
 	});
 });
