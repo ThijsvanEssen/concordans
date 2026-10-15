@@ -11,7 +11,8 @@ import { verbindingOfRow } from '$lib/verbonden/verbinding';
 import { plaatsVanMeta } from '$lib/verbonden/edge-meta';
 import { GROUPS } from '$lib/verbonden/groups';
 import type { GraphNode } from '$lib/graph/types';
-import { isOverwegingRef, tekstVanOverweging, type Uitspraak } from './overweging';
+import { tekstVanOverweging, type Uitspraak } from './overweging';
+import { isOverwegingRef } from '$lib/text/anchor';
 
 const ROOT = join(process.cwd(), 'src');
 function files(dir: string): string[] {
@@ -43,7 +44,7 @@ describe('an r.o. read in place', () => {
 	});
 
 	it('is the card of every reference to a judgment at an r.o.', () => {
-		expect(bron('lib/bron/BronLink.svelte')).toMatch(/import OverwegingKaart from/);
+		expect(bron('lib/bron/BronLink.svelte')).toMatch(/import\('.\/OverwegingKaart\.svelte'\)/);
 		expect(isOverwegingRef('judgments/ecli_nl_hr_2019_2006', 'rov-2.2.1')).toBe(true);
 		expect(isOverwegingRef('judgments/ecli_nl_hr_2019_2006', null)).toBe(false);
 		expect(isOverwegingRef('articles/bwbr0005537_3_4', 'lid-2')).toBe(false);

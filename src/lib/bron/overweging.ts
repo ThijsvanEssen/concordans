@@ -12,7 +12,7 @@ import {
 } from '$lib/components/explore/readers/judgment-text';
 import { overwegingVan } from '$lib/map/inhoud';
 import { uitspraakNoten, type Noot } from '$lib/text/voetnoten';
-import { paragraphAnchor, paragraphNumber } from '$lib/text/anchor';
+import { paragraphAnchor } from '$lib/text/anchor';
 import { keyEcli } from './leesbaar';
 import { once } from '$lib/api/records';
 
@@ -43,14 +43,6 @@ export function laadUitspraak(keyOfEcli: string): Promise<Uitspraak> | null {
 		getJudgmentDetail(ecli).then(({ judgment: j }) => legUit(j))
 	);
 }
-
-/** Whether an anchor names an overweging: `rov-5.1`. */
-export const isOverwegingAnker = (at: string | null | undefined): at is string =>
-	paragraphNumber(at) !== null;
-
-/** Whether a reference is to a judgment at an overweging: its card is the overweging. */
-export const isOverwegingRef = (ref: string | null, at: string | null | undefined) =>
-	!!ref && ref.startsWith('judgments/') && isOverwegingAnker(at);
 
 /** Whether the judgment has the overweging, as the reader numbers it. */
 export const heeftOverweging = (u: Uitspraak, at: string) => !!overwegingVan(u.items, at);
