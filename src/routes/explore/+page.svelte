@@ -517,6 +517,8 @@
 		const withNetwerk = netwerkActive;
 		if (!focus) {
 			focusError = null;
+			// The selection goes, so the focus does too: Back to it loads it again (#135).
+			loadedFocus = '';
 			if (selectedNode) store.setSelection(null);
 			return;
 		}

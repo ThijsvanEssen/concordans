@@ -5,7 +5,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { fakeApi } from '$lib/test/fakeApi';
-import { address, back, forward, history, open, steps } from '$lib/test/navigation.svelte';
+import {
+	address,
+	appNavigation,
+	back,
+	forward,
+	history,
+	open,
+	steps
+} from '$lib/test/navigation.svelte';
 import Page from './+page.svelte';
 
 const seen = vi.hoisted(() => ({}) as Record<string, Record<string, unknown>>);
@@ -54,7 +62,11 @@ const READABLE = 'articles/bwbr0005537_3_2';
 /** A fractie: a group, drawn one step around. */
 const FACTION = 'factions/vvd';
 
-const TYPE: Record<string, string> = { members: 'member', factions: 'faction' };
+const TYPE: Record<string, string> = {
+	members: 'member',
+	factions: 'faction',
+	cabinets: 'cabinet'
+};
 const PROPS: Record<string, Record<string, unknown>> = {
 	[READABLE]: { bwb_id: 'BWBR0005537', article_number: '3:2' }
 };
@@ -308,6 +320,28 @@ describe('the readable address', () => {
 		back();
 		await settle();
 		expect(address()).toBe('/wetten/BWBR0005537/artikel/3:2?diepte=3');
+	});
+});
+
+describe('Back and Forward to a bron', () => {
+	it('open the bron again after the list of bronnen (#135)', async () => {
+		const { container } = await openAt('/kabinetten/schoof');
+		expect(view(container)).not.toBeNull();
+		const geopend = view(container);
+		await appNavigation.goto('/explore?mode=index');
+		await settle();
+		expect(view(container)).toBe('index');
+		delete seen.IndexOverzicht;
+		back();
+		await settle();
+		expect(address()).toBe('/kabinetten/schoof');
+		expect(container.querySelector('.explore-empty')?.textContent ?? '').not.toMatch(/Laden/);
+		expect(view(container)).toBe(geopend);
+		forward();
+		await settle();
+		back();
+		await settle();
+		expect(container.querySelector('.explore-empty')?.textContent ?? '').not.toMatch(/Laden/);
 	});
 });
 
