@@ -57,7 +57,7 @@ const ARTICLE = 'articles/bwbr0005537_3_4';
 /** A lid: no text of its own, so it is never read at full width. */
 const MEMBER = 'members/m1';
 
-/** An article with the props of its address: /wetten/BWBR0005537/artikel/3:2. */
+/** An article with an address of its own, as the API gives it: /wetten/BWBR0005537/artikel/3:2. */
 const READABLE = 'articles/bwbr0005537_3_2';
 /** A fractie: a group, drawn one step around. */
 const FACTION = 'factions/vvd';
@@ -70,6 +70,7 @@ const TYPE: Record<string, string> = {
 const PROPS: Record<string, Record<string, unknown>> = {
 	[READABLE]: { bwb_id: 'BWBR0005537', article_number: '3:2' }
 };
+const PATHS: Record<string, string> = { [READABLE]: '/wetten/BWBR0005537/artikel/3:2' };
 const nodeOf = (collection: string, key: string) => ({
 	node: {
 		id: `${collection}/${key}`,
@@ -78,7 +79,8 @@ const nodeOf = (collection: string, key: string) => ({
 		type: TYPE[collection] ?? 'article',
 		display_name: `Bron ${key}`,
 		labels: [],
-		props: PROPS[`${collection}/${key}`] ?? {}
+		props: PROPS[`${collection}/${key}`] ?? {},
+		path: PATHS[`${collection}/${key}`] ?? null
 	},
 	neighbors: { total: 0, buckets: [] },
 	title: '',

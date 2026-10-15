@@ -173,7 +173,7 @@
 		<!-- The conclusies by their A-G or P-G and day from the judgment's own detail, so they
 		     stand with the text. -->
 		{@const conclusies = (data.conclusions ?? []).map((c) => ({
-			ref: { collection: 'judgments' as const, key: ecliKey(c.ecli) },
+			ref: c.id,
 			naam: conclusieNaam(c),
 			strekking: strekking(c.outcome)
 		}))}
@@ -230,18 +230,15 @@
 			{#if j.translation_of}
 				<p class="reader-translation">
 					Vertaling van
-					<BronLink
-						ref={{
-							collection: 'judgments',
-							key: ecliKey(j.translation_of)
-						}}>{j.translation_of}</BronLink
+					<BronLink ref={j.translation_of_id ?? `judgments/${ecliKey(j.translation_of)}`}
+						>{j.translation_of}</BronLink
 					>. De samenvatting hieronder is die van het origineel.
 				</p>
 			{/if}
 			{#if replacedBy}
 				<p class="reader-translation">
 					Vervangen publicatie. De uitspraak staat onder
-					<BronLink ref={{ collection: 'judgments', key: ecliKey(replacedBy) }}
+					<BronLink ref={j.replaced_by_id ?? `judgments/${ecliKey(replacedBy)}`}
 						>{replacedBy}</BronLink
 					>.
 				</p>

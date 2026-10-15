@@ -25,13 +25,13 @@ describe('basesLine', () => {
 
 describe('implementationLine (BE-58)', () => {
 	const via = [
-		{ publication: 'stb-1992-315', citation: 'Stb. 1992, 315' },
-		{ publication: 'stb-2013-102', citation: 'Stb. 2013, 102' }
+		{ id: 'instruments/stb_1992_315', citation: 'Stb. 1992, 315' },
+		{ id: 'instruments/stb_2013_102', citation: 'Stb. 2013, 102' }
 	];
 	const bases = ['national_implementing_measure'];
 
 	it('says a change to implement only for a measure that amends the law (Awb, Richtlijn 2018/1972)', () => {
-		expect(implementationLine({ bases, via }, new Set(['stb_2013_102']))).toBe(
+		expect(implementationLine({ bases, via }, new Set(['instruments/stb_2013_102']))).toBe(
 			'gewijzigd ter implementatie door Stb. 2013, 102; uitvoeringsmaatregel Stb. 1992, 315 volgens EUR-Lex'
 		);
 	});

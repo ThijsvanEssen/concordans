@@ -22,17 +22,17 @@
 // the API ids stay as they are. The rest of the view stays in the query: ?lezen=1,
 // ?netwerk=…, the bronfilter. `/explore?focus=…` keeps working and is replaced by the
 // readable address once the bron is known.
-import { textOf } from '$lib/text/words';
 import { SvelteMap } from 'svelte/reactivity';
 import { onAnswer } from '$lib/api/client';
 import { lookup } from '$lib/api/search';
+import type { QueryOf } from '$lib/api/types';
 import { ifExists, ignore } from '$lib/api/errors';
 import { onthoudTitel } from './titels.svelte';
 import { getArticleDetail, getArticleHistory, onthoudArtikel } from '$lib/api/articles';
 import { lawArticleList } from '$lib/api/law-articles';
 import { getDocument, getDossierDocuments, getExplainedBy } from '$lib/api/records';
 import { wordingsOf } from '$lib/text/version-diff';
-import { apiNumber, bookNumber } from '$lib/text/bw';
+import { apiNumber } from '$lib/text/bw';
 import { readableQuery } from '$lib/util/address';
 import { parseNodeId } from '$lib/vocabulary';
 import { onForget } from '$lib/util/forget';
@@ -56,7 +56,9 @@ export type Pad =
 
 /** The series of officielebekendmakingen.nl a publication appears in. */
 export type Reeks = 'stb' | 'stcrt' | 'trb';
-const REEKSEN: readonly string[] = ['stb', 'stcrt', 'trb'];
+const SERIES: readonly string[] = ['stb', 'stcrt', 'trb'] satisfies Reeks[];
+/** The node key of a publication: its series, year and number, `stb_2026_94`. */
+const PUBLICATION_KEY = new RegExp(`^(${SERIES.join('|')})_(\\d{4})_(\\d+)$`);
 
 const segment = (s: string) => {
 	try {
@@ -73,53 +75,218 @@ const BWB = /^BWBR\d{7}$/i;
 /** An EU act by its CELEX number, its node key too: sector 3, year, kind, number (32022L2555). */
 const CELEX = /^3\d{4}[CDFLR]\d+$/i;
 /** A key or slug as the API gives it: `rutte_iv`, `ek_democraten_1966`, `buhaos-2021`. */
-const SLEUTEL = /^[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
+const KEY = /^[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
+/** The slug of a lid: words joined by hyphens, `rob-jetten`. */
+const LID_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 /** The number of a toezegging: `TZ202609-124` (COMMITMENT_NUMBER in the API). */
 const TOEZEGGING = /^TZ\d{6}-\d{1,5}$/i;
 /** The number of a zaak: `2025Z15468`. */
-const ZAAK = /^\d{4}Z\d+$/i;
+const CASE_NUMBER = /^\d{4}Z\d+$/i;
 /** The number of an activiteit of the Tweede Kamer: `2026A01323`. */
-const ACTIVITEIT = /^\d{4}A\d+$/i;
+const ACTIVITY_NUMBER = /^\d{4}A\d+$/i;
 /** The label of a bijlage: `II`, `1`, `2.A`, `B-1`. */
-const BIJLAGE = /^[A-Z0-9]+(?:[.-][A-Z0-9]+)*$/i;
+const ANNEX_LABEL = /^[A-Z0-9]+(?:[.-][A-Z0-9]+)*$/i;
 /** The number of a stuk: a figure in the Tweede Kamer, letters in the Eerste (`A`, `AB`). */
-const STUK = /^(\d+|[A-Z]{1,3})$/i;
+const PAPER_NUMBER = /^(\d+|[A-Z]{1,3})$/i;
+
+type AddressKind = Pad['soort'];
+type PadOf<S extends AddressKind> = Extract<Pad, { soort: S }>;
+
+/**
+ * One kind of address: how it reads from the segments of a path, how it is written, what
+ * /api/lookup is asked for it (a stemming: never, its key is its id), and for a kind whose
+ * key is in its address, the focus it names without a request and the address of a key.
+ */
+type AddressRule<S extends AddressKind> = {
+	read: (parts: readonly string[]) => PadOf<S> | null;
+	write: (pad: PadOf<S>) => string;
+	lookup?: (pad: PadOf<S>) => QueryOf<'/api/lookup'>;
+	focus?: (pad: PadOf<S>) => string;
+	fromKey?: (target: { collection: string; key: string }) => PadOf<S> | null;
+};
+
+const e = encodeURIComponent;
+/** A colon is safe in a path segment, and reads better than %3A. */
+const keep = (s: string) => e(s).replaceAll('%3A', ':');
+/** The one segment after `first`, where it passes `test`. */
+const single = (parts: readonly string[], first: string, test: RegExp) =>
+	parts.length === 2 && parts[0] === first && test.test(parts[1]) ? parts[1] : null;
+
+const ADDRESS_RULES: { [S in AddressKind]: AddressRule<S> } = {
+	uitspraak: {
+		read: (p) => {
+			const ecli = single(p, 'uitspraken', ECLI);
+			return ecli ? { soort: 'uitspraak', ecli: ecli.toUpperCase() } : null;
+		},
+		write: (pad) => `/uitspraken/${keep(pad.ecli)}`,
+		lookup: (pad) => ({ kind: 'judgment', ecli: pad.ecli }),
+		focus: (pad) => `judgments/${ecliKey(pad.ecli)}`,
+		fromKey: ({ collection, key }) => {
+			const ecli = collection === 'judgments' ? keyEcli(key) : null;
+			return ecli ? { soort: 'uitspraak', ecli } : null;
+		}
+	},
+	wet: {
+		read: (p) => {
+			const wet = single(p, 'wetten', BWB) ?? single(p, 'wetten', CELEX);
+			return wet ? { soort: 'wet', wet: wet.toUpperCase() } : null;
+		},
+		write: (pad) => `/wetten/${e(pad.wet)}`,
+		lookup: (pad) => ({ kind: 'law', law: pad.wet }),
+		focus: (pad) => `instruments/${pad.wet.toLowerCase()}`,
+		fromKey: ({ collection, key }) =>
+			collection === 'instruments' && (BWB.test(key) || CELEX.test(key))
+				? { soort: 'wet', wet: key.toUpperCase() }
+				: null
+	},
+	bijlage: {
+		read: ([first, wet, b, label, ...rest]) =>
+			first === 'wetten' &&
+			b === 'bijlage' &&
+			!rest.length &&
+			BWB.test(wet) &&
+			ANNEX_LABEL.test(label)
+				? { soort: 'bijlage', wet: wet.toUpperCase(), label: label.toUpperCase() }
+				: null,
+		write: (pad) => `/wetten/${e(pad.wet)}/bijlage/${e(pad.label)}`,
+		lookup: (pad) => ({ kind: 'annex', law: pad.wet, label: pad.label })
+	},
+	artikel: {
+		read: ([first, wet, b, nummer, ...rest]) =>
+			first === 'wetten' && b === 'artikel' && !rest.length && wet && nummer
+				? { soort: 'artikel', wet: wet.toUpperCase(), nummer }
+				: null,
+		write: (pad) => `/wetten/${e(pad.wet)}/artikel/${keep(pad.nummer)}`,
+		lookup: (pad) => ({ kind: 'article', law: pad.wet, number: pad.nummer })
+	},
+	zaak: {
+		read: (p) => {
+			const nummer = single(p, 'zaken', CASE_NUMBER);
+			return nummer ? { soort: 'zaak', nummer: nummer.toUpperCase() } : null;
+		},
+		write: (pad) => `/zaken/${pad.nummer}`,
+		lookup: (pad) => ({ kind: 'case', number: pad.nummer })
+	},
+	activiteit: {
+		read: (p) => {
+			const nummer = single(p, 'activiteiten', ACTIVITY_NUMBER);
+			return nummer ? { soort: 'activiteit', nummer: nummer.toUpperCase() } : null;
+		},
+		write: (pad) => `/activiteiten/${pad.nummer}`,
+		lookup: (pad) => ({ kind: 'activity', number: pad.nummer })
+	},
+	dossier: {
+		read: (p) => {
+			const nummer = single(p, 'dossiers', DOSSIER);
+			return nummer ? { soort: 'dossier', nummer: nummer.toUpperCase() } : null;
+		},
+		write: (pad) => `/dossiers/${e(pad.nummer)}`,
+		lookup: (pad) => ({ kind: 'dossier', number: pad.nummer }),
+		// The front end names a dossier by its number (36600-VIII), not its key (36600_viii).
+		focus: (pad) => `dossiers/${pad.nummer}`,
+		fromKey: ({ collection, key }) =>
+			collection === 'dossiers' && DOSSIER.test(key)
+				? { soort: 'dossier', nummer: key.toUpperCase() }
+				: null
+	},
+	lid: {
+		read: (p) => {
+			const slug = single(p, 'leden', LID_SLUG);
+			return slug ? { soort: 'lid', slug } : null;
+		},
+		write: (pad) => `/leden/${pad.slug}`,
+		lookup: (pad) => ({ kind: 'member', id: pad.slug })
+	},
+	kabinet: {
+		read: (p) => {
+			const key = single(p, 'kabinetten', KEY);
+			return key ? { soort: 'kabinet', key } : null;
+		},
+		write: (pad) => `/kabinetten/${pad.key}`,
+		lookup: (pad) => ({ kind: 'cabinet', id: pad.key }),
+		focus: (pad) => `cabinets/${pad.key}`,
+		fromKey: ({ collection, key }) =>
+			collection === 'cabinets' && KEY.test(key) ? { soort: 'kabinet', key } : null
+	},
+	fractie: {
+		read: (p) => {
+			const key = single(p, 'fracties', KEY);
+			return key ? { soort: 'fractie', key } : null;
+		},
+		write: (pad) => `/fracties/${pad.key}`,
+		lookup: (pad) => ({ kind: 'faction', id: pad.key }),
+		focus: (pad) => `factions/${pad.key}`,
+		fromKey: ({ collection, key }) =>
+			collection === 'factions' && KEY.test(key) ? { soort: 'fractie', key } : null
+	},
+	commissie: {
+		read: (p) => {
+			const slug = single(p, 'commissies', KEY);
+			return slug ? { soort: 'commissie', slug } : null;
+		},
+		write: (pad) => `/commissies/${pad.slug}`,
+		lookup: (pad) => ({ kind: 'committee', id: pad.slug })
+	},
+	toezegging: {
+		read: (p) => {
+			const nummer = single(p, 'toezeggingen', TOEZEGGING);
+			return nummer ? { soort: 'toezegging', nummer: nummer.toUpperCase() } : null;
+		},
+		write: (pad) => `/toezeggingen/${pad.nummer}`,
+		lookup: (pad) => ({ kind: 'commitment', number: pad.nummer })
+	},
+	stemming: {
+		read: (p) => {
+			const key = single(p, 'stemmingen', KEY);
+			return key ? { soort: 'stemming', key } : null;
+		},
+		write: (pad) => `/stemmingen/${pad.key}`,
+		focus: (pad) => `decisions/${pad.key}`,
+		fromKey: ({ collection, key }) =>
+			collection === 'decisions' && KEY.test(key) ? { soort: 'stemming', key } : null
+	},
+	publicatie: {
+		read: ([reeks, jaar, nummer, ...rest]) =>
+			SERIES.includes(reeks) && !rest.length && /^\d{4}$/.test(jaar) && /^\d+$/.test(nummer)
+				? { soort: 'publicatie', reeks: reeks as Reeks, jaar, nummer }
+				: null,
+		write: (pad) => `/${pad.reeks}/${pad.jaar}/${pad.nummer}`,
+		// Its key is its id at officielebekendmakingen.nl: stb_2026_94 is /stb/2026/94.
+		fromKey: ({ collection, key }) => {
+			const m = PUBLICATION_KEY.exec(key);
+			return collection === 'instruments' && m
+				? { soort: 'publicatie', reeks: m[1] as Reeks, jaar: m[2], nummer: m[3] }
+				: null;
+		},
+		lookup: (pad) => ({
+			kind: 'publication',
+			series: pad.reeks,
+			year: pad.jaar,
+			number: pad.nummer
+		})
+	},
+	kamerstuk: {
+		read: ([first, dossier, nummer, ...rest]) =>
+			first === 'kamerstukken' && !rest.length && DOSSIER.test(dossier) && PAPER_NUMBER.test(nummer)
+				? { soort: 'kamerstuk', dossier: dossier.toUpperCase(), nummer: nummer.toUpperCase() }
+				: null,
+		write: (pad) => `/kamerstukken/${e(pad.dossier)}/${e(pad.nummer)}`,
+		lookup: (pad) => ({ kind: 'document', dossier: pad.dossier, number: pad.nummer })
+	}
+};
+
+/** The description of a pad's kind, typed by that kind. */
+const ruleOf = <S extends AddressKind>(pad: PadOf<S>) => ADDRESS_RULES[pad.soort] as AddressRule<S>;
+const RULES = Object.values(ADDRESS_RULES) as AddressRule<AddressKind>[];
 
 /** The readable address in a path, or null for any other page. */
 export function parsePad(pathname: string): Pad | null {
 	const parts = pathname.split('/').filter(Boolean).map(segment);
 	if (parts.some((p) => p === null)) return null;
-	const [first, a, b, c] = parts as string[];
-	if (first === 'uitspraken' && parts.length === 2 && ECLI.test(a))
-		return { soort: 'uitspraak', ecli: a.toUpperCase() };
-	if (first === 'wetten' && parts.length === 2 && (BWB.test(a) || CELEX.test(a)))
-		return { soort: 'wet', wet: a.toUpperCase() };
-	if (first === 'wetten' && parts.length === 4 && b === 'bijlage' && BWB.test(a) && BIJLAGE.test(c))
-		return { soort: 'bijlage', wet: a.toUpperCase(), label: c.toUpperCase() };
-	if (first === 'zaken' && parts.length === 2 && ZAAK.test(a))
-		return { soort: 'zaak', nummer: a.toUpperCase() };
-	if (first === 'activiteiten' && parts.length === 2 && ACTIVITEIT.test(a))
-		return { soort: 'activiteit', nummer: a.toUpperCase() };
-	if (first === 'wetten' && parts.length === 4 && b === 'artikel' && a && c)
-		return { soort: 'artikel', wet: a.toUpperCase(), nummer: c };
-	if (first === 'dossiers' && parts.length === 2 && DOSSIER.test(a))
-		return { soort: 'dossier', nummer: a.toUpperCase() };
-	if (first === 'leden' && parts.length === 2 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(a))
-		return { soort: 'lid', slug: a };
-	if (first === 'kabinetten' && parts.length === 2 && SLEUTEL.test(a))
-		return { soort: 'kabinet', key: a };
-	if (first === 'fracties' && parts.length === 2 && SLEUTEL.test(a))
-		return { soort: 'fractie', key: a };
-	if (first === 'commissies' && parts.length === 2 && SLEUTEL.test(a))
-		return { soort: 'commissie', slug: a };
-	if (first === 'toezeggingen' && parts.length === 2 && TOEZEGGING.test(a))
-		return { soort: 'toezegging', nummer: a.toUpperCase() };
-	if (first === 'stemmingen' && parts.length === 2 && SLEUTEL.test(a))
-		return { soort: 'stemming', key: a };
-	if (REEKSEN.includes(first) && parts.length === 3 && /^\d{4}$/.test(a) && /^\d+$/.test(b))
-		return { soort: 'publicatie', reeks: first as Reeks, jaar: a, nummer: b };
-	if (first === 'kamerstukken' && parts.length === 3 && DOSSIER.test(a) && STUK.test(b))
-		return { soort: 'kamerstuk', dossier: a.toUpperCase(), nummer: b.toUpperCase() };
+	for (const rule of RULES) {
+		const pad = rule.read(parts as string[]);
+		if (pad) return pad;
+	}
 	return null;
 }
 
@@ -128,43 +295,7 @@ export const isExplorePath = (pathname: string) =>
 	pathname === '/explore' || parsePad(pathname) !== null;
 
 /** The path of a readable address. */
-export function padHref(pad: Pad): string {
-	const e = encodeURIComponent;
-	// A colon is safe in a path segment, and reads better than %3A.
-	const keep = (s: string) => e(s).replaceAll('%3A', ':');
-	switch (pad.soort) {
-		case 'uitspraak':
-			return `/uitspraken/${keep(pad.ecli)}`;
-		case 'artikel':
-			return `/wetten/${e(pad.wet)}/artikel/${keep(pad.nummer)}`;
-		case 'wet':
-			return `/wetten/${e(pad.wet)}`;
-		case 'dossier':
-			return `/dossiers/${e(pad.nummer)}`;
-		case 'kamerstuk':
-			return `/kamerstukken/${e(pad.dossier)}/${e(pad.nummer)}`;
-		case 'publicatie':
-			return `/${pad.reeks}/${pad.jaar}/${pad.nummer}`;
-		case 'lid':
-			return `/leden/${pad.slug}`;
-		case 'kabinet':
-			return `/kabinetten/${pad.key}`;
-		case 'fractie':
-			return `/fracties/${pad.key}`;
-		case 'commissie':
-			return `/commissies/${pad.slug}`;
-		case 'toezegging':
-			return `/toezeggingen/${pad.nummer}`;
-		case 'stemming':
-			return `/stemmingen/${pad.key}`;
-		case 'zaak':
-			return `/zaken/${pad.nummer}`;
-		case 'activiteit':
-			return `/activiteiten/${pad.nummer}`;
-		case 'bijlage':
-			return `/wetten/${e(pad.wet)}/bijlage/${e(pad.label)}`;
-	}
-}
+export const padHref = (pad: Pad): string => ruleOf(pad).write(pad);
 
 /**
  * A judgment's node key from its ECLI, as the API makes it (`make_node_key`): every run of
@@ -186,16 +317,16 @@ export const keyEcli = (key: string) =>
 // What was looked up, both ways: an address and the focus it names. Filled by the
 // lookups below and by `remember`, so a second visit, and the link to a bron already
 // seen, need no request.
-const focusVan = new SvelteMap<string, string>();
-const padVan = new SvelteMap<string, string>();
+const focusByPath = new SvelteMap<string, string>();
+const pathByFocus = new SvelteMap<string, string>();
 
 /** Keep an address and its focus together. */
 export function remember(path: string, focus: string) {
 	// A pair already kept is not written again: a list that remembers its rows on every load
 	// would otherwise wake whatever reads the maps.
-	if (focusVan.get(path) === focus && padVan.get(focus) === path) return;
-	focusVan.set(path, focus);
-	padVan.set(focus, path);
+	if (focusByPath.get(path) === focus && pathByFocus.get(focus) === path) return;
+	focusByPath.set(path, focus);
+	pathByFocus.set(focus, path);
 }
 
 /**
@@ -203,13 +334,13 @@ export function remember(path: string, focus: string) {
  * seen: a link to that bron is the API's address, not one built here. A dossier is left
  * out, since the front end names it by its number, not its key.
  */
-export function onthoudPaden(data: unknown, diepte = 0) {
-	if (!data || typeof data !== 'object' || diepte > 8) return;
+export function onthoudPaden(data: unknown, depth = 0) {
+	if (!data || typeof data !== 'object' || depth > 8) return;
 	if (Array.isArray(data)) {
-		for (const item of data) onthoudPaden(item, diepte + 1);
+		for (const item of data) onthoudPaden(item, depth + 1);
 		return;
 	}
-	const { path, slug, key, member_key } = data as Record<string, unknown>;
+	const { path, key, member_key } = data as Record<string, unknown>;
 	// A person is named by the key of the lid beside their address, without an id: a cabinet's
 	// bewindspersonen, a stuk's indieners, the lid of a toezegging (UX-toets 0.79.47, #51).
 	const lidKey = member_key ?? key;
@@ -218,16 +349,10 @@ export function onthoudPaden(data: unknown, diepte = 0) {
 		(typeof path === 'string' && path.startsWith('/leden/') && typeof lidKey === 'string'
 			? `members/${lidKey}`
 			: undefined);
-	// A dossier's commissies come with their slug but no path yet; the slug is their address.
-	const adres =
-		typeof path === 'string'
-			? path
-			: path === undefined && typeof id === 'string' && id.startsWith('committees/')
-				? padOfFocus(id, { slug })
-				: null;
-	if (typeof id === 'string' && adres && padVan.get(id) !== adres) {
+	const address = typeof path === 'string' ? path : null;
+	if (typeof id === 'string' && address && pathByFocus.get(id) !== address) {
 		const target = parseNodeId(id);
-		const pad = parsePad(adres);
+		const pad = parsePad(address);
 		if (target && pad && target.collection !== 'dossiers') {
 			remember(padHref(pad), id);
 			// The text of an article named here can stand in the reader before its node.
@@ -236,7 +361,7 @@ export function onthoudPaden(data: unknown, diepte = 0) {
 		}
 	}
 	for (const value of Object.values(data)) {
-		if (value && typeof value === 'object') onthoudPaden(value, diepte + 1);
+		if (value && typeof value === 'object') onthoudPaden(value, depth + 1);
 	}
 }
 onAnswer((data) => {
@@ -245,60 +370,11 @@ onAnswer((data) => {
 });
 
 /**
- * The focus an address names without a request: a judgment, a dossier, a cabinet and a
- * fractie (their key is their id), or one seen.
+ * The focus an address names without a request: a judgment, a law, a dossier, a cabinet, a
+ * fractie and a stemming (their key is in their address), or one seen.
  */
-export function focusOfPad(pad: Pad): string | null {
-	if (pad.soort === 'uitspraak') return `judgments/${ecliKey(pad.ecli)}`;
-	if (pad.soort === 'dossier') return `dossiers/${pad.nummer}`;
-	if (pad.soort === 'wet') return `instruments/${pad.wet.toLowerCase()}`;
-	if (pad.soort === 'kabinet') return `cabinets/${pad.key}`;
-	if (pad.soort === 'fractie') return `factions/${pad.key}`;
-	if (pad.soort === 'stemming') return `decisions/${pad.key}`;
-	return focusVan.get(padHref(pad)) ?? null;
-}
-
-/** What /api/lookup is asked for an address: its kind and exact parameters. */
-function lookupQuery(pad: Pad) {
-	switch (pad.soort) {
-		case 'uitspraak':
-			return { kind: 'judgment', ecli: pad.ecli } as const;
-		case 'artikel':
-			return { kind: 'article', law: pad.wet, number: pad.nummer } as const;
-		case 'wet':
-			return { kind: 'law', law: pad.wet } as const;
-		case 'dossier':
-			return { kind: 'dossier', number: pad.nummer } as const;
-		case 'kamerstuk':
-			return { kind: 'document', dossier: pad.dossier, number: pad.nummer } as const;
-		case 'publicatie':
-			return {
-				kind: 'publication',
-				series: pad.reeks,
-				year: pad.jaar,
-				number: pad.nummer
-			} as const;
-		case 'lid':
-			return { kind: 'member', id: pad.slug } as const;
-		case 'kabinet':
-			return { kind: 'cabinet', id: pad.key } as const;
-		case 'fractie':
-			return { kind: 'faction', id: pad.key } as const;
-		case 'commissie':
-			return { kind: 'committee', id: pad.slug } as const;
-		case 'toezegging':
-			return { kind: 'commitment', number: pad.nummer } as const;
-		case 'zaak':
-			return { kind: 'case', number: pad.nummer } as const;
-		case 'activiteit':
-			return { kind: 'activity', number: pad.nummer } as const;
-		case 'bijlage':
-			return { kind: 'annex', law: pad.wet, label: pad.label } as const;
-		case 'stemming':
-			// Never asked: its key is its id (focusOfPad), and /api/lookup has no such kind.
-			throw new Error('Een stemming heeft geen lookup');
-	}
-}
+export const focusOfPad = (pad: Pad): string | null =>
+	ruleOf(pad).focus?.(pad) ?? focusByPath.get(padHref(pad)) ?? null;
 
 // The focus the server gave the page, with the address it gave it for: read once, used
 // once. After a step in the app location.pathname is the new address while the meta still
@@ -307,11 +383,11 @@ function lookupQuery(pad: Pad) {
 // not the one of the moment.
 let paginaFocus: { href: string; focus: string } | null | undefined;
 onForget(() => {
-	focusVan.clear();
-	padVan.clear();
+	focusByPath.clear();
+	pathByFocus.clear();
 	paginaFocus = undefined;
 });
-function leesPaginaFocus(): { href: string; focus: string } | null {
+function readPageFocus(): { href: string; focus: string } | null {
 	const meta = document.querySelector('meta[name="focus"]');
 	const focus = meta?.getAttribute('content') ?? null;
 	meta?.remove();
@@ -330,7 +406,7 @@ function leesPaginaFocus(): { href: string; focus: string } | null {
  */
 export function focusUitPagina(pad: Pad): string | null {
 	if (typeof document === 'undefined') return null;
-	if (paginaFocus === undefined) paginaFocus = leesPaginaFocus();
+	if (paginaFocus === undefined) paginaFocus = readPageFocus();
 	const href = padHref(pad);
 	if (!paginaFocus || paginaFocus.href !== href) return null;
 	const { focus } = paginaFocus;
@@ -362,7 +438,7 @@ function askArticleAhead(pad: Pad, artikel: { wet: string; nummer: string }) {
 	getArticleDetail(artikel.wet, artikel.nummer)
 		.then((d) => {
 			const href = padHref(pad);
-			if (d.article?.id && !focusVan.has(href)) remember(href, d.article.id);
+			if (d.article?.id && !focusByPath.has(href)) remember(href, d.article.id);
 		})
 		.catch(ignore('leesbaar'));
 	// Where no EXPLAINS edge names its memorie, the reader looks in the dossier of the wet
@@ -409,7 +485,9 @@ export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | n
  */
 export async function lookUpInData(pad: Pad, signal?: AbortSignal): Promise<string | null> {
 	const artikel = apiArticle(pad);
-	const data = await ifExists(lookup(lookupQuery(pad), signal));
+	const query = ruleOf(pad).lookup?.(pad);
+	if (!query) return null;
+	const data = await ifExists(lookup(query, signal));
 	if (!data) return null;
 	const focus = `${data.collection}/${data.key}`;
 	if (data.collection === 'documents') askDocumentAhead(data.key);
@@ -420,111 +498,20 @@ export async function lookUpInData(pad: Pad, signal?: AbortSignal): Promise<stri
 }
 
 /**
- * The readable address of a focus, from its key or from the props of its node; null
- * where it has none (a stemming: still /explore).
+ * The readable address of a focus: the one seen beside its id, else the `path` the API gave its
+ * node, else the address its key makes for a kind whose key is in its address (a judgment, a
+ * law, a dossier by its number, a cabinet, a fractie, a stemming); null where it has none.
  */
-export function padOfFocus(focus: string, props?: Record<string, unknown> | null): string | null {
-	const seen = padVan.get(focus);
+export function padOfFocus(focus: string, path?: string | null): string | null {
+	const seen = pathByFocus.get(focus);
 	if (seen) return seen;
+	const given = path ? parsePad(path) : null;
+	if (given) return padHref(given);
 	const target = parseNodeId(focus);
 	if (!target) return null;
-	switch (target.collection) {
-		case 'judgments': {
-			const ecli = textOf(props?.ecli) ?? keyEcli(target.key);
-			return ecli && ECLI.test(ecli)
-				? padHref({ soort: 'uitspraak', ecli: ecli.toUpperCase() })
-				: null;
-		}
-		case 'dossiers': {
-			// The number as the Kamer writes it (36600-VIII). The front end names a dossier by
-			// it; a node key is that number made a key (36600_viii), which only the label
-			// (`number` on the dossier DTOs) gives back (Back-end #2, readable-paths.json); a DTO
-			// that gives the suffix apart (`number` 36600, `suffix` VIII) is joined.
-			const deel = textOf(props?.number);
-			const achter = textOf(props?.suffix);
-			const nummer = [
-				target.key,
-				textOf(props?.label),
-				deel && achter ? `${deel}-${achter}` : deel
-			].find((n): n is string => !!n && DOSSIER.test(n));
-			return nummer ? padHref({ soort: 'dossier', nummer: nummer.toUpperCase() }) : null;
-		}
-		case 'articles': {
-			const wet = textOf(props?.bwb_id) ?? textOf(props?.celex);
-			const nummer = textOf(props?.article_number);
-			// A number with a space ("bijlage 2 artikel 6") has no address of its own.
-			if (!wet || !nummer || /\s/.test(nummer)) return null;
-			return padHref({ soort: 'artikel', wet, nummer: bookNumber(wet, nummer) });
-		}
-		case 'instruments': {
-			// A law of the BWB by its id (/wetten/BWBR0005290).
-			if (BWB.test(target.key)) return padHref({ soort: 'wet', wet: target.key.toUpperCase() });
-			// An EU act by its CELEX number (/wetten/32022L2555).
-			const celex = [textOf(props?.celex), target.key].find((c) => !!c && CELEX.test(c));
-			if (celex) return padHref({ soort: 'wet', wet: celex.toUpperCase() });
-			// A publication by its id at officielebekendmakingen.nl (stb-2026-94), or its key.
-			const id = textOf(props?.official_id) ?? target.key.replaceAll('_', '-');
-			const m = /^(stb|stcrt|trb)-(\d{4})-(\d+)$/.exec(id.toLowerCase());
-			return m
-				? padHref({ soort: 'publicatie', reeks: m[1] as Reeks, jaar: m[2], nummer: m[3] })
-				: null;
-		}
-		case 'members': {
-			// A lid by the slug the API gives (API 0.75); without one it keeps /explore.
-			const slug = textOf(props?.slug);
-			return slug && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)
-				? padHref({ soort: 'lid', slug })
-				: null;
-		}
-		case 'cabinets':
-			return SLEUTEL.test(target.key) ? padHref({ soort: 'kabinet', key: target.key }) : null;
-		case 'decisions':
-			return SLEUTEL.test(target.key) ? padHref({ soort: 'stemming', key: target.key }) : null;
-		case 'factions':
-			return SLEUTEL.test(target.key) ? padHref({ soort: 'fractie', key: target.key }) : null;
-		case 'committees': {
-			// A commissie's key is a uuid; its slug (szw) is what a reader types.
-			const slug = textOf(props?.slug);
-			return slug && SLEUTEL.test(slug) ? padHref({ soort: 'commissie', slug }) : null;
-		}
-		case 'activities': {
-			// An activiteit of the Eerste Kamer has no number; it keeps /explore.
-			const nummer = textOf(props?.number);
-			return nummer && ACTIVITEIT.test(nummer)
-				? padHref({ soort: 'activiteit', nummer: nummer.toUpperCase() })
-				: null;
-		}
-		case 'commitments': {
-			const nummer = textOf(props?.number);
-			return nummer && TOEZEGGING.test(nummer)
-				? padHref({ soort: 'toezegging', nummer: nummer.toUpperCase() })
-				: null;
-		}
-		case 'cases': {
-			const nummer = textOf(props?.number);
-			return nummer && ZAAK.test(nummer)
-				? padHref({ soort: 'zaak', nummer: nummer.toUpperCase() })
-				: null;
-		}
-		case 'annexes': {
-			// A bijlage without a label has no address of its own.
-			const wet = textOf(props?.bwb_id);
-			const label = textOf(props?.label);
-			return wet && BWB.test(wet) && label && BIJLAGE.test(label)
-				? padHref({ soort: 'bijlage', wet: wet.toUpperCase(), label: label.toUpperCase() })
-				: null;
-		}
-		case 'documents': {
-			// Dossier and number as the stuk is cited: 36600-VIII, and 31 in the Tweede
-			// Kamer or AB in the Eerste (`number`, the letter).
-			const number = textOf(props?.dossier_number);
-			const suffix = textOf(props?.dossier_suffix);
-			const dossier = number && suffix ? `${number}-${suffix}` : number;
-			const nummer =
-				typeof props?.sequence === 'number' ? String(props.sequence) : textOf(props?.number);
-			if (!dossier || !nummer || !STUK.test(nummer)) return null;
-			return padHref({ soort: 'kamerstuk', dossier, nummer: nummer.toUpperCase() });
-		}
+	for (const rule of RULES) {
+		const pad = rule.fromKey?.(target);
+		if (pad) return padHref(pad);
 	}
 	return null;
 }
@@ -549,15 +536,12 @@ export const focusIn = (url: URL) => exploreUrl(url).searchParams.get('focus');
 
 /**
  * The address of a view of the Verkenner: the readable path of its focus where it has
- * one, the rest in the query. `params` is the query as the Verkenner reads it.
+ * one, the rest in the query. `params` is the query as the Verkenner reads it; `given` the
+ * path the API gave the focus's node.
  */
-export function exploreHref(
-	params: URLSearchParams,
-	hash = '',
-	props?: Record<string, unknown> | null
-): string {
+export function exploreHref(params: URLSearchParams, hash = '', given?: string | null): string {
 	const focus = params.get('focus');
-	const path = focus ? padOfFocus(focus, props) : null;
+	const path = focus ? padOfFocus(focus, given) : null;
 	const rest = new URLSearchParams(params);
 	if (path) rest.delete('focus');
 	const query = readableQuery(rest);

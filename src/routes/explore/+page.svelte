@@ -186,11 +186,11 @@
 		const node = selectedNode;
 		const f = focus;
 		if (!node || !f || mode === 'index' || page.url.pathname !== '/explore') return;
-		const props = node.id === f ? (node.raw?.props ?? null) : null;
-		const path = padOfFocus(f, props);
+		const given = node.id === f ? (node.raw?.path ?? null) : null;
+		const path = padOfFocus(f, given);
 		if (!path) return;
 		rememberPad(path, f);
-		navigate(exploreHref(logisch.searchParams, page.url.hash, props));
+		navigate(exploreHref(logisch.searchParams, page.url.hash, given));
 	});
 	const readableFocus = $derived(hasReadableFocus(params));
 	const mode = $derived(exploreMode(params));
@@ -867,11 +867,11 @@
 		// address still looked up has no focus yet: it keeps its path, or a step (?paneel
 		// dropped) would land on the empty /explore or the remembered netwerk.
 		const f = next.get('focus');
-		const props = selectedNode && selectedNode.id === f ? selectedNode.raw?.props : null;
+		const given = selectedNode && selectedNode.id === f ? selectedNode.raw?.path : null;
 		const href =
 			!f && pad
 				? queryHref(page.url.pathname, next) + page.url.hash
-				: exploreHref(next, page.url.hash, props);
+				: exploreHref(next, page.url.hash, given);
 		navigate(href, { step: push });
 	}
 

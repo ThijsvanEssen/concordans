@@ -68,9 +68,9 @@ describe('a readable address', () => {
 		expect(focusOfPad({ soort: 'commissie', slug: 'szw' })).toBeNull();
 		expect(padOfFocus('cabinets/rutte_iv')).toBe('/kabinetten/rutte_iv');
 		expect(padOfFocus('factions/d66')).toBe('/fracties/d66');
-		expect(padOfFocus('committees/b18e', { slug: 'szw' })).toBe('/commissies/szw');
+		expect(padOfFocus('committees/b18e', '/commissies/szw')).toBe('/commissies/szw');
 		expect(padOfFocus('committees/b18e')).toBeNull();
-		expect(padOfFocus('commitments/6149', { number: 'TZ202609-124' })).toBe(
+		expect(padOfFocus('commitments/6149', '/toezeggingen/tz202609-124')).toBe(
 			'/toezeggingen/TZ202609-124'
 		);
 		// A stemming by its key (Back-end #2, SEO PR 2): /stemmingen/<key>.
@@ -80,19 +80,17 @@ describe('a readable address', () => {
 			key: 'decision_6312'
 		});
 		expect(focusOfPad({ soort: 'stemming', key: 'decision_6312' })).toBe('decisions/decision_6312');
-		// A dossier's node key is its number made a key; the label gives the number back.
+		// A dossier is named by its number; its node key is the API's, with the path it gives.
 		expect(padOfFocus('dossiers/36496')).toBe('/dossiers/36496');
-		expect(padOfFocus('dossiers/36600_viii', { label: '36600-VIII' })).toBe('/dossiers/36600-VIII');
-		expect(padOfFocus('dossiers/36455_r2188', { label: '36455-(R2188)' })).toBe(
-			'/dossiers/36455-(R2188)'
-		);
+		expect(padOfFocus('dossiers/36600-VIII')).toBe('/dossiers/36600-VIII');
+		expect(padOfFocus('dossiers/36600_viii', '/dossiers/36600-VIII')).toBe('/dossiers/36600-VIII');
 		expect(padOfFocus('dossiers/36600_viii')).toBeNull();
 	});
 
 	it('reads a lid by its slug, and gives a lid its address from its slug', () => {
 		expect(parsePad('/leden/rob-jetten')).toEqual({ soort: 'lid', slug: 'rob-jetten' });
 		expect(parsePad('/leden/Rob Jetten')).toBeNull();
-		expect(padOfFocus('members/49be', { slug: 'rob-jetten' })).toBe('/leden/rob-jetten');
+		expect(padOfFocus('members/49be', '/leden/rob-jetten')).toBe('/leden/rob-jetten');
 		expect(padOfFocus('members/49be')).toBeNull();
 	});
 
@@ -104,10 +102,10 @@ describe('a readable address', () => {
 			nummer: '94'
 		});
 		expect(parsePad('/stb/26/94')).toBeNull();
+		// Its key is its id at officielebekendmakingen.nl.
 		expect(padOfFocus('instruments/stb_2026_94')).toBe('/stb/2026/94');
-		expect(padOfFocus('instruments/x', { official_id: 'stcrt-2025-1234' })).toBe(
-			'/stcrt/2025/1234'
-		);
+		expect(padOfFocus('instruments/stcrt_2025_1234')).toBe('/stcrt/2025/1234');
+		expect(padOfFocus('instruments/stb_26_94')).toBeNull();
 	});
 
 	it('reads a law by its BWB id, and names it so', () => {
@@ -160,30 +158,23 @@ describe('a readable address', () => {
 });
 
 describe('the address of a focus', () => {
-	it('gives an article its number as cited, a BW article with its book', () => {
-		expect(
-			padOfFocus('articles/bwbr0005289_162', { bwb_id: 'BWBR0005289', article_number: '162' })
-		).toBe('/wetten/BWBR0005289/artikel/6:162');
-		expect(
-			padOfFocus('articles/32017l1132_27', { celex: '32017L1132', article_number: '27' })
-		).toBe('/wetten/32017L1132/artikel/27');
+	it('takes the path the API gives its node, as it is written', () => {
+		expect(padOfFocus('articles/bwbr0005289_162', '/wetten/bwbr0005289/artikel/6:162')).toBe(
+			'/wetten/BWBR0005289/artikel/6:162'
+		);
+		expect(padOfFocus('documents/ek_kst_2', '/kamerstukken/36600-viii/ab')).toBe(
+			'/kamerstukken/36600-VIII/AB'
+		);
+		// No address of its own: none made from its props.
+		expect(padOfFocus('articles/bwbr0005289_162')).toBeNull();
+		expect(padOfFocus('documents/1501fbca', '/explore')).toBeNull();
+		expect(padOfFocus('members/49be')).toBeNull();
 	});
 
-	it('gives a Kamerstuk its number, or the letter of the Eerste Kamer', () => {
-		expect(padOfFocus('documents/1501fbca', { dossier_number: '36799', sequence: 31 })).toBe(
-			'/kamerstukken/36799/31'
-		);
-		expect(padOfFocus('documents/ek_kst_1', { dossier_number: '32317', number: 'QK' })).toBe(
-			'/kamerstukken/32317/QK'
-		);
+	it('keeps the query and moves the focus into the path, the node’s path where given', () => {
 		expect(
-			padOfFocus('documents/ek_kst_2', {
-				dossier_number: '36600',
-				dossier_suffix: 'VIII',
-				number: 'AB'
-			})
-		).toBe('/kamerstukken/36600-VIII/AB');
-		expect(padOfFocus('members/49be')).toBeNull();
+			exploreHref(new URLSearchParams('focus=members/m&lezen=1'), '', '/leden/rob-jetten')
+		).toBe('/leden/rob-jetten?lezen=1');
 	});
 
 	it('keeps the query and moves the focus into the path', () => {
@@ -206,7 +197,9 @@ describe('the address of a focus', () => {
 			neighbors: [{ id: 'documents/9f8e', path: '/kamerstukken/36600-VIII/12' }],
 			dossier: { id: 'dossiers/k1', path: '/dossiers/36600-VIII' },
 			stemming: { id: 'decisions/x1', path: null },
-			committees: [{ id: 'committees/ek_ocw', key: 'ek_ocw', slug: 'ek-ocw' }]
+			committees: [
+				{ id: 'committees/ek_ocw', key: 'ek_ocw', slug: 'ek-ocw', path: '/commissies/ek-ocw' }
+			]
 		});
 		expect(padOfFocus('committees/ek_ocw')).toBe('/commissies/ek-ocw');
 		expect(padOfFocus('articles/abc123')).toBe('/wetten/BWBR0005289/artikel/6:162');

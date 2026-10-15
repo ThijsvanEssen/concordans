@@ -389,7 +389,7 @@ const CATALOGUS = catalogus.relations as {
 	sources: Collection[];
 	targets: Collection[];
 }[];
-const ALLEEN: Partial<Record<Relation, Ends[]>> = {
+const ONLY_PAIRS: Partial<Record<Relation, Ends[]>> = {
 	REFERS_TO: [
 		[
 			['articles', 'documents', 'judgments'],
@@ -430,12 +430,12 @@ const neighbor = (
 		props: {}
 	}) as unknown as Neighbor;
 
-/** The pairs of a relation's ends in the catalogue, only those of ALLEEN where it names them. */
+/** The pairs of a relation's ends in the catalogue, only those of ONLY_PAIRS where it names them. */
 const pairs = (name: Relation, sources: Collection[], targets: Collection[]) =>
 	sources.flatMap((source) =>
 		targets
 			.filter((target) =>
-				(ALLEEN[name] ?? [[sources, targets]]).some(
+				(ONLY_PAIRS[name] ?? [[sources, targets]]).some(
 					([from, to]) => from.includes(source) && to.includes(target)
 				)
 			)

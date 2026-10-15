@@ -1,6 +1,7 @@
 // The contract of the readable addresses with the back end (Back-end #2, SEO PR #394): the
-// same file is tests/data/readable-paths.json in the API, which builds the canonical, the
-// 301 and the sitemaps from a port of leesbaar.ts. A change goes into both at once.
+// same file is tests/data/readable-paths.json in the API, which makes each bron's `path` from
+// its props. The front end reads and writes those addresses, and makes one only where the key
+// is in it (a bron the contract gives without props). A change goes into both at once.
 import { describe, expect, it } from 'vitest';
 import contract from './readable-paths.json';
 import { focusOfPad, keyEcli, padHref, padOfFocus, parsePad } from './leesbaar';
@@ -8,18 +9,19 @@ import { focusOfPad, keyEcli, padHref, padOfFocus, parsePad } from './leesbaar';
 type Geval = { focus: string; props: Record<string, unknown>; path?: string };
 
 describe('readable-paths.json', () => {
-	it('gives each bron its address, and reads the address back', () => {
+	it('reads each address back, and takes it as the API gives it', () => {
 		for (const g of contract.paths as Geval[]) {
-			expect(padOfFocus(g.focus, g.props), g.focus).toBe(g.path);
 			const pad = parsePad(g.path!);
 			expect(pad, g.path).not.toBeNull();
 			expect(padHref(pad!)).toBe(g.path);
+			expect(padOfFocus(g.focus, g.path), g.focus).toBe(g.path);
 		}
 	});
 
-	it('gives no address where the bron has none', () => {
-		for (const g of contract.none as Geval[])
-			expect(padOfFocus(g.focus, g.props), g.focus).toBeNull();
+	it('makes the address of a key that is in it, and no other', () => {
+		for (const g of contract.paths as Geval[])
+			if (Object.keys(g.props).length === 0) expect(padOfFocus(g.focus), g.focus).toBe(g.path);
+		for (const g of contract.none as Geval[]) expect(padOfFocus(g.focus), g.focus).toBeNull();
 	});
 
 	it('reads another spelling as its canonical address', () => {
