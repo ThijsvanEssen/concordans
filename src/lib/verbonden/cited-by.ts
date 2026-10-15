@@ -26,7 +26,7 @@ export function rowsOfCitedBy(items: Schema<'ArticleCitedByItem'>[]): Row[] {
 		of.set(at ?? '', {
 			ref: { collection: 'judgments', key: j.key },
 			...describeBron('judgments', j.key, j.display_name, { ...j }),
-			kind: 'uitspraken',
+			filterGroup: 'uitspraken',
 			at,
 			lid: item.leden?.[0] ?? lidOfMatch(item.qualifier ?? item.text),
 			position: item.paragraph_number ? paragraphCite(j.key, item.paragraph_number) : null,

@@ -71,7 +71,7 @@
 	} from '$lib/verbonden/verbinding';
 	import { allRows, filterGroups, lidCounts, lidTellingenOnder } from '$lib/verbonden/view';
 	import { perfStart } from '$lib/dev/perf';
-	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
+	import type { GraphEdge, GraphNode, DrawClass } from '$lib/graph/types';
 	import { containerKindOf, type ContainerKind } from '$lib/graph/container-membership';
 	import {
 		parseOverlay,
@@ -106,7 +106,7 @@
 	import { navigate, patchParams, queryHref, withParams, type ParamPatch } from '$lib/util/address';
 	import {
 		besideJudgment,
-		depthFor as depthOfKind,
+		depthFor as depthOfClass,
 		exploreMode,
 		explicitDepth as explicitDepthOf,
 		filterQuery,
@@ -227,11 +227,11 @@
 			laadtSoort = new Set([...laadtSoort].filter((c) => c !== soort));
 		}
 	}
-	const depthFor = (kind: GraphNodeKind) =>
-		depthOfKind(kind, { explicit: explicitDepth, all: alles });
+	const depthFor = (drawClass: DrawClass) =>
+		depthOfClass(drawClass, { explicit: explicitDepth, all: alles });
 	// The bron the canvas is drawn around; a click selects another without moving it.
-	let anchorKind = $state<GraphNodeKind>('other');
-	const depth = $derived(depthFor(anchorKind));
+	let anchorClass = $state<DrawClass>('other');
+	const depth = $derived(depthFor(anchorClass));
 
 	// ── The netwerk of chosen bronnen ─────────────────────────────────────────
 	// Parsed from its own three params only, so selecting a bron does not compose again.
@@ -344,7 +344,7 @@
 				: new Map<string, number>())
 	);
 	const billCount = $derived(
-		allRows(verbonden.groups).filter((r) => r.kind === 'wetsvoorstellen').length
+		allRows(verbonden.groups).filter((r) => r.filterGroup === 'wetsvoorstellen').length
 	);
 
 	// ── The card Verbinding ──────────────────────────────────────────────────
@@ -478,7 +478,7 @@
 	async function expandAround(node: GraphNode, epoch: number) {
 		if (node.id.startsWith('synth:')) return;
 		await store.expandNeighborhood(node.collection, node.key, {
-			depth: depthFor(node.kind),
+			depth: depthFor(node.drawClass),
 			cap: alles ? ALLES_GRENS : omgevingGrens
 		});
 		if (epoch !== focusEpoch) return;
@@ -668,12 +668,12 @@
 
 	// Expand around `node` once per depth, or again when `force`d.
 	async function deepen(node: GraphNode, force = false) {
-		const d = depthFor(node.kind);
+		const d = depthFor(node.drawClass);
 		if (!force && deepenedId === node.id && deepenedDepth === d && deepenedAlles === alles) return;
 		deepenedId = node.id;
 		deepenedDepth = d;
 		deepenedAlles = alles;
-		anchorKind = node.kind;
+		anchorClass = node.drawClass;
 		graphView?.suppressFit();
 		// The focus it was asked for: a link followed while the neighbourhood comes in moves
 		// the focus on, and the reader stays on the new bron (#48).

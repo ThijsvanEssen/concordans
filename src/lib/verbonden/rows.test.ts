@@ -28,7 +28,7 @@ describe('rowKey', () => {
 				ref: { collection: 'articles', key: 'bwbr0005289_13' },
 				title: 'Artikel 6:13',
 				context: null,
-				kind: 'artikelen',
+				filterGroup: 'artikelen',
 				edgeId
 			}) as Row;
 		expect(rowKey(row('e1'))).not.toBe(rowKey(row('e2')));
@@ -270,7 +270,7 @@ describe('bundleMentions', () => {
 		ref: { collection: 'judgments', key: 'ecli_nl_hr_2019_1278' },
 		title: 'Hoge Raad, 19 juli 2019',
 		context: null,
-		kind: 'uitspraken',
+		filterGroup: 'uitspraken',
 		position,
 		confidence,
 		lid,
@@ -305,7 +305,7 @@ describe('metaParts', () => {
 			ref: { collection: 'judgments', key: 'j' },
 			title: 't',
 			context: null,
-			kind: 'uitspraken'
+			filterGroup: 'uitspraken'
 		};
 		expect(metaParts({ ...base, confidence: 0.95, derived: true }).map((p) => p.text)).toEqual([]);
 		expect(metaParts({ ...base, confidence: 0.7 }).map((p) => p.text)).toEqual([
@@ -318,7 +318,7 @@ describe('metaParts', () => {
 			ref: { collection: 'factions', key: 'd66' },
 			title: 'D66-fractie',
 			context: 'D66',
-			kind: 'leden'
+			filterGroup: 'leden'
 		};
 		expect(metaParts(fractie).map((p) => p.text)).toEqual([]);
 		expect(metaParts(fractie, true).map((p) => p.text)).toEqual([]);
@@ -362,7 +362,7 @@ describe('sister cases', () => {
 		expect(bron.context).toBe('niet in de gegevens');
 		const row: Row = {
 			ref: { collection: 'judgments', key: 'k' },
-			kind: 'uitspraken',
+			filterGroup: 'uitspraken',
 			...bron,
 			props
 		};

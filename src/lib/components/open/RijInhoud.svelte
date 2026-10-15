@@ -25,23 +25,26 @@
 		als?: Inhoud;
 	} = $props();
 
-	const soort = $derived(als ?? inhoudVan(item));
+	const content = $derived(als ?? inhoudVan(item));
 	// An inwerkingtreding is read in its law; the version itself has no reader.
 	const wet = $derived(item.commencement?.instrument?.key);
 	const ref = $derived(
-		soort === 'inwerkingtreding' && wet
+		content === 'inwerkingtreding' && wet
 			? `instruments/${wet}`
 			: `${item.node.collection}/${item.node.key}`
 	);
 
 	// A motion's dictum or an amendment's explanation as the list gives it: no request (API
 	// 0.79.42, 0.79.55).
-	const fromList = $derived(kernUitLijst(soort, item));
+	const fromList = $derived(kernUitLijst(content, item));
 	/** The text asked of the stuk, where the list does not give it. */
 	const asked = $derived(
 		!fromList &&
-			(soort === 'dictum' || soort === 'toelichting' || soort === 'opening' || soort === 'kern')
-			? soort
+			(content === 'dictum' ||
+				content === 'toelichting' ||
+				content === 'opening' ||
+				content === 'kern')
+			? content
 			: null
 	);
 	const text = load(
@@ -55,16 +58,16 @@
 </script>
 
 <div class="inhoud">
-	{#if soort === 'stemming'}
+	{#if content === 'stemming'}
 		<!-- The tally is in the row; here its picture: the share voor. -->
 		<div class="balk" role="img" aria-label={tallySentence} title={tallySentence}>
 			<div class="voor" style:width="{(tally.voor / (tally.voor + tally.tegen)) * 100}%"></div>
 		</div>
-	{:else if soort === 'samenvatting'}
+	{:else if content === 'samenvatting'}
 		<p class="tekst">{item.summary}</p>
-	{:else if soort === 'wijzigingen' || soort === 'inwerkingtreding'}
+	{:else if content === 'wijzigingen' || content === 'inwerkingtreding'}
 		{#if item.summary?.trim()}<p class="tekst">{item.summary}</p>{/if}
-		<Wijzigingen {item} {soort} />
+		<Wijzigingen {item} variant={content} />
 	{:else if fromList}
 		<p class="tekst" class:dictum={fromList.als === 'dictum'}>{fromList.tekst}</p>
 	{:else if asked}

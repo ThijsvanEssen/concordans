@@ -15,12 +15,12 @@
 	let {
 		collection,
 		juris,
-		kind = null,
+		kindLabel = null,
 		title,
 		place = [],
 		placeTitle = null,
 		nav,
-		soort,
+		kindLine,
 		onderTitel,
 		statusLine,
 		later,
@@ -32,7 +32,7 @@
 		collection: Collection;
 		juris?: string | null;
 		/** The kind of the bron where it is more precise than its collection: `Conclusie`. */
-		kind?: string | null;
+		kindLabel?: string | null;
 		title: string;
 		/** The place of the bron, printed above the title: `Wetboek van Strafrecht, Tweede Boek, Titel XX`. */
 		place?: string[];
@@ -41,7 +41,7 @@
 		/** Links to the previous and next bron, at the end of the first line. */
 		nav?: Snippet;
 		/** The line above the title in a reader's own words (a mark, a date): else its kind. */
-		soort?: Snippet;
+		kindLine?: Snippet;
 		/** What stands under the title: the official title, the indieners, what a bill amends. */
 		onderTitel?: Snippet;
 		/** The words of the status line: `Geldend recht, tekst sinds 1 maart 2019`. */
@@ -65,8 +65,8 @@
 
 <div class="reader-head">
 	<div class="reader-line" class:reader-line--plaats={collection === 'articles'}>
-		{#if soort}
-			<div class="reader-kind">{@render soort()}</div>
+		{#if kindLine}
+			<div class="reader-kind">{@render kindLine()}</div>
 		{:else if place.length > 0 || placeTitle}
 			<!-- One line on a wide screen, the whole of it on hover; wrapped on a phone. A place
 			     the band Behoort bij names already gives only its heading. -->
@@ -77,7 +77,7 @@
 		{:else}
 			<div class="reader-kind">
 				<!-- One run of words: the kind as a link, the jurisdiction after its comma. -->
-				<SoortLink {collection}><span>{kind ?? bronLabel(collection)}</span></SoortLink
+				<SoortLink {collection}><span>{kindLabel ?? bronLabel(collection)}</span></SoortLink
 				>{#if joinParts([juris])}<span class="reader-juris">, {joinParts([juris])}</span>{/if}
 			</div>
 		{/if}

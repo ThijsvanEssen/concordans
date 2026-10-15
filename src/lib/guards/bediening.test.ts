@@ -122,6 +122,6 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 		expect(verbonden).toMatch(/onclick=\{onOpenFilter\}>Filter</);
 		const sheet = bron('lib/verbonden/FilterSheet.svelte');
 		expect(sheet).toMatch(/#each PRESETS as p/);
-		expect(sheet).toMatch(/#each BRON_KINDS as k/);
+		expect(sheet).toMatch(/#each FILTER_GROUPS as k/);
 	});
 });

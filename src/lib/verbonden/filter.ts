@@ -29,7 +29,7 @@ export function confidenceWord(
 			: 'laag';
 }
 
-export const BRON_KINDS = [
+export const FILTER_GROUPS = [
 	'artikelen',
 	'wetten',
 	'uitspraken',
@@ -41,9 +41,9 @@ export const BRON_KINDS = [
 	'internationaal'
 ] as const;
 
-export type BronKind = (typeof BRON_KINDS)[number];
+export type FilterGroup = (typeof FILTER_GROUPS)[number];
 
-export const BRON_KIND_LABEL: Record<BronKind, string> = {
+export const FILTER_GROUP_LABEL: Record<FilterGroup, string> = {
 	artikelen: 'Artikelen',
 	wetten: 'Wetten',
 	uitspraken: 'Uitspraken',
@@ -56,7 +56,7 @@ export const BRON_KIND_LABEL: Record<BronKind, string> = {
 };
 
 /** The kinds as the line "Toon ook rechtspraak" names them. */
-export const BRON_KIND_NOUN: Record<BronKind, string> = {
+export const FILTER_GROUP_NOUN: Record<FilterGroup, string> = {
 	artikelen: 'artikelen',
 	wetten: 'wetten',
 	uitspraken: 'rechtspraak',
@@ -69,7 +69,7 @@ export const BRON_KIND_NOUN: Record<BronKind, string> = {
 };
 
 /** One bron of a kind, for counts of one: `1 wet`, `2 wetten`. */
-const BRON_KIND_ONE: Record<BronKind, string> = {
+const FILTER_GROUP_ONE: Record<FilterGroup, string> = {
 	artikelen: 'artikel',
 	wetten: 'wet',
 	uitspraken: 'uitspraak',
@@ -82,8 +82,8 @@ const BRON_KIND_ONE: Record<BronKind, string> = {
 };
 
 /** `1 wet`, `3 wetten`: a count with the kind's noun in the right number. */
-export const kindCount = (n: number, kind: BronKind) =>
-	`${formatCount(n)} ${n === 1 ? BRON_KIND_ONE[kind] : BRON_KIND_LABEL[kind].toLowerCase()}`;
+export const filterGroupCount = (n: number, kind: FilterGroup) =>
+	`${formatCount(n)} ${n === 1 ? FILTER_GROUP_ONE[kind] : FILTER_GROUP_LABEL[kind].toLowerCase()}`;
 
 export const RECHTERS = [
 	{ id: 'hr', label: 'Hoge Raad' },
@@ -100,7 +100,7 @@ export type Status = 'vastgesteld' | 'voorgesteld';
 
 export type VerbondenFilter = {
 	/** The kinds that take part; null is all of them. */
-	bronnen: ReadonlySet<BronKind> | null;
+	bronnen: ReadonlySet<FilterGroup> | null;
 	/** `2`, or `geen` for verbindingen that name no lid. */
 	lid: string | null;
 	rechter: Rechter | null;
@@ -130,7 +130,8 @@ export const EMPTY_FILTER: VerbondenFilter = {
 	zoek: ''
 };
 
-const isKind = (v: string): v is BronKind => (BRON_KINDS as readonly string[]).includes(v);
+const isFilterGroup = (v: string): v is FilterGroup =>
+	(FILTER_GROUPS as readonly string[]).includes(v);
 const isRechter = (v: string | null): v is Rechter => RECHTERS.some((r) => r.id === v);
 const year = (v: string | null) => (v && /^\d{4}$/.test(v) ? Number(v) : null);
 
@@ -139,7 +140,7 @@ export function parseFilter(params: URLSearchParams): VerbondenFilter {
 	const kinds = (params.get('bronnen') ?? '')
 		.split(',')
 		.map((s) => s.trim())
-		.filter(isKind);
+		.filter(isFilterGroup);
 	const rechter = params.get('rechter');
 	const betrouwbaarheid = params.get('betrouwbaarheid');
 	const status = params.get('status');
@@ -162,7 +163,7 @@ export function parseFilter(params: URLSearchParams): VerbondenFilter {
 /** The query parameters of a filter; a null value clears the parameter. */
 export function filterParams(f: VerbondenFilter): Record<string, string | null> {
 	return {
-		bronnen: f.bronnen ? BRON_KINDS.filter((k) => f.bronnen!.has(k)).join(',') : null,
+		bronnen: f.bronnen ? FILTER_GROUPS.filter((k) => f.bronnen!.has(k)).join(',') : null,
 		lid: f.lid,
 		rechter: f.rechter,
 		van: f.van,
@@ -180,7 +181,7 @@ export function filterParams(f: VerbondenFilter): Record<string, string | null> 
 type Preset = {
 	id: string;
 	label: string;
-	bronnen: readonly BronKind[] | null;
+	bronnen: readonly FilterGroup[] | null;
 	rechter?: Rechter;
 };
 
@@ -196,12 +197,13 @@ export const PRESETS: readonly Preset[] = [
 	{ id: 'hoge-raad', label: 'Hoge Raad', bronnen: ['uitspraken'], rechter: 'hr' }
 ];
 
-const sameKinds = (a: ReadonlySet<BronKind> | null, b: readonly BronKind[] | null) =>
+const sameGroups = (a: ReadonlySet<FilterGroup> | null, b: readonly FilterGroup[] | null) =>
 	a === null ? b === null : b !== null && a.size === b.length && b.every((k) => a.has(k));
 
 /** The preset whose bronnen and rechter the filter has, or null. */
 export const activePreset = (f: VerbondenFilter): Preset | null =>
-	PRESETS.find((p) => sameKinds(f.bronnen, p.bronnen) && (p.rechter ?? null) === f.rechter) ?? null;
+	PRESETS.find((p) => sameGroups(f.bronnen, p.bronnen) && (p.rechter ?? null) === f.rechter) ??
+	null;
 
 export const withPreset = (f: VerbondenFilter, p: Preset): VerbondenFilter => ({
 	...f,
@@ -209,13 +211,13 @@ export const withPreset = (f: VerbondenFilter, p: Preset): VerbondenFilter => ({
 	rechter: p.rechter ?? null
 });
 
-export function toggleKind(f: VerbondenFilter, kind: BronKind): VerbondenFilter {
-	const next = new Set(f.bronnen ?? BRON_KINDS);
+export function toggleFilterGroup(f: VerbondenFilter, kind: FilterGroup): VerbondenFilter {
+	const next = new Set(f.bronnen ?? FILTER_GROUPS);
 	if (!next.delete(kind)) next.add(kind);
-	return { ...f, bronnen: next.size === BRON_KINDS.length ? null : next };
+	return { ...f, bronnen: next.size === FILTER_GROUPS.length ? null : next };
 }
 
-export const withKind = (f: VerbondenFilter, kind: BronKind): VerbondenFilter =>
+export const withFilterGroup = (f: VerbondenFilter, kind: FilterGroup): VerbondenFilter =>
 	f.bronnen === null || f.bronnen.has(kind) ? f : { ...f, bronnen: new Set([...f.bronnen, kind]) };
 
 // ── The kind of a bron ────────────────────────────────────────────────────
@@ -247,12 +249,12 @@ export const BILL_KIND = /\b(voorstel van wet|wetsvoorstel|nota van wijziging|am
  * stays with the documents. Activiteiten and toezeggingen stay dossiers: what a dossier's
  * process produced, not a person or a group of them.
  */
-export function bronKindOf(
+export function filterGroupOf(
 	collection: string,
 	key: string,
 	props: Record<string, unknown> | null | undefined,
 	relation?: string | null
-): BronKind {
+): FilterGroup {
 	if (isInternational({ key, props })) return 'internationaal';
 	switch (collection) {
 		case 'articles':
@@ -333,13 +335,13 @@ const day = (d: string | null | undefined) => (d ? d.slice(0, 10) : null);
 
 /** Whether a row passes the filter. */
 export function rowPasses(row: Row, f: VerbondenFilter): boolean {
-	if (f.bronnen && !f.bronnen.has(row.kind)) return false;
+	if (f.bronnen && !f.bronnen.has(row.filterGroup)) return false;
 	if (f.lid !== null) {
 		if (f.lid === 'geen' ? row.lid != null : row.lid !== f.lid) return false;
 	}
 	const judgment =
-		row.kind === 'uitspraken' ||
-		(row.kind === 'internationaal' && row.ref.collection === 'judgments');
+		row.filterGroup === 'uitspraken' ||
+		(row.filterGroup === 'internationaal' && row.ref.collection === 'judgments');
 	if (f.rechter !== null && judgment && rechterOf(row) !== f.rechter) return false;
 	// A rechter narrows the judgments only; the articles and laws they cite stay, so that
 	// the filter carried to the next bron does not hide what the reader came from.
@@ -376,15 +378,15 @@ export function rowPasses(row: Row, f: VerbondenFilter): boolean {
 }
 
 /** Rows per kind, hidden by the bronnen of the filter alone; the other filters do not count. */
-export function hiddenByKind(
+export function hiddenByGroup(
 	rows: readonly Row[],
-	totals: Partial<Record<BronKind, number>>,
+	totals: Partial<Record<FilterGroup, number>>,
 	f: VerbondenFilter
-): { kind: BronKind; count: number }[] {
+): { group: FilterGroup; count: number }[] {
 	if (f.bronnen === null) return [];
-	const counted = new Map<BronKind, number>();
-	for (const row of rows) counted.set(row.kind, (counted.get(row.kind) ?? 0) + 1);
-	return BRON_KINDS.filter((k) => !f.bronnen!.has(k))
-		.map((kind) => ({ kind, count: Math.max(totals[kind] ?? 0, counted.get(kind) ?? 0) }))
+	const counted = new Map<FilterGroup, number>();
+	for (const row of rows) counted.set(row.filterGroup, (counted.get(row.filterGroup) ?? 0) + 1);
+	return FILTER_GROUPS.filter((k) => !f.bronnen!.has(k))
+		.map((group) => ({ group, count: Math.max(totals[group] ?? 0, counted.get(group) ?? 0) }))
 		.filter((h) => h.count > 0);
 }

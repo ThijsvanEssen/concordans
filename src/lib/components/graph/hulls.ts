@@ -7,7 +7,7 @@ import type { Collection, Relation } from '$lib/vocabulary';
 import { relationLabel } from '$lib/verbonden/hoe';
 import type { ContainerGroup } from '$lib/graph/container-membership';
 import { centroid, exitPoint, hullOutline, type Point } from '$lib/graph/hull';
-import type { GraphNodeKind } from '$lib/graph/types';
+import type { DrawClass } from '$lib/graph/types';
 import { overlaps, type Rect } from './label-place';
 import { edgeColorFor, hullColorFor, hullDashFor } from './nodeSprites';
 
@@ -418,7 +418,7 @@ function anchorLines(
 			...arrowLine(start, end),
 			color: edgeColorFor(
 				attrs.relation as Relation,
-				graph.getNodeAttribute(src, 'kind') as GraphNodeKind
+				graph.getNodeAttribute(src, 'drawClass') as DrawClass
 			),
 			dashed: attrs.status === 'voorgesteld',
 			dim: active !== null && !lit && !active.has(hull.id),

@@ -20,7 +20,12 @@
 	import type { GraphStore } from '$lib/graph/store/types';
 	import type { CanvasRow } from '$lib/graph/store/types';
 	import type { GraphNode } from '$lib/graph/types';
-	import { kindCount, BRON_KIND_NOUN, withKind, type VerbondenFilter } from './filter';
+	import {
+		filterGroupCount,
+		FILTER_GROUP_NOUN,
+		withFilterGroup,
+		type VerbondenFilter
+	} from './filter';
 	import { formatCount } from '$lib/text/getal';
 	import { countLabel, groupCount, type Group } from './groups';
 	import { csvName, download, exportLabel, exportRows, rowsToCsv } from './export';
@@ -328,7 +333,7 @@
 	// The years of all the group's judgments where the API counts them (a wet, BE-47);
 	// else of the rows loaded, which the sentence then says.
 	const years = (g: Group) =>
-		grouping !== 'soort' || g.rows[0]?.kind !== 'uitspraken'
+		grouping !== 'soort' || g.rows[0]?.filterGroup !== 'uitspraken'
 			? []
 			: g.years?.length
 				? g.years
@@ -522,11 +527,11 @@
 			<!-- What the bronfilter leaves out, as a quiet line of links: each shows its group. -->
 			<p class="hidden">
 				Ook <span class="ook"
-					>{#each hidden as h (h.kind)}<span
+					>{#each hidden as h (h.group)}<span
 							><TekstLink
-								title="Toon ook de {BRON_KIND_NOUN[h.kind]}"
-								onclick={() => onFilter(withKind(filter, h.kind))}
-								>{kindCount(h.count, h.kind)}</TekstLink
+								title="Toon ook de {FILTER_GROUP_NOUN[h.group]}"
+								onclick={() => onFilter(withFilterGroup(filter, h.group))}
+								>{filterGroupCount(h.count, h.group)}</TekstLink
 							></span
 						>{/each}</span
 				>

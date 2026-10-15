@@ -11,7 +11,7 @@ const artikel: GraphNode = {
 	id: 'articles/bwbr0005537_3_2',
 	collection: 'articles',
 	key: 'bwbr0005537_3_2',
-	kind: 'article',
+	drawClass: 'article',
 	label: 'Artikel 3:2 Awb'
 };
 
@@ -19,7 +19,7 @@ const kamerstuk: GraphNode = {
 	id: 'documents/kst-36000-3',
 	collection: 'documents',
 	key: 'kst-36000-3',
-	kind: 'document',
+	drawClass: 'document',
 	label: 'Memorie van toelichting'
 };
 
@@ -27,7 +27,7 @@ const uitspraak: GraphNode = {
 	id: 'judgments/ecli_nl_hr_2019_2006',
 	collection: 'judgments',
 	key: 'ecli_nl_hr_2019_2006',
-	kind: 'judgment',
+	drawClass: 'judgment',
 	label: 'HR 20 december 2019',
 	raw: { props: { ecli: 'ECLI:NL:HR:2019:2006' } } as unknown as GraphNode['raw']
 };

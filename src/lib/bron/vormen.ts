@@ -2,7 +2,7 @@
 // is; alle tekens staan in inkt, er is geen kleur te onthouden. Eén tabel voor de tekens
 // in de tekst (KindGlyph) en op het canvas (nodeSprites), getekend in een vak van 16.
 import { isCollection, type Collection } from '$lib/vocabulary';
-import { BILL_KIND, isInternational, type BronKind } from '$lib/verbonden/filter';
+import { BILL_KIND, isInternational, type FilterGroup } from '$lib/verbonden/filter';
 
 export type Vorm =
 	| 'regel'
@@ -82,7 +82,7 @@ const vormOf = (collection: string): Vorm =>
 export const vormVan = (idOfCollectie: string): Vorm => vormOf(idOfCollectie.split('/')[0]);
 
 /** Het teken van een soort in het bronfilter. */
-export const BRON_KIND_VORM: Record<BronKind, Vorm> = {
+export const FILTER_GROUP_VORM: Record<FilterGroup, Vorm> = {
 	artikelen: 'regel-o',
 	wetten: 'regel',
 	uitspraken: 'uitspraak',

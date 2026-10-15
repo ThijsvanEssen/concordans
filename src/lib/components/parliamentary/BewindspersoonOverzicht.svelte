@@ -52,11 +52,11 @@
 </script>
 
 {#if counts.state.status === 'error'}
-	<Sectie titel="Toezeggingen" soort="commitments" id="toezeggingen">
+	<Sectie titel="Toezeggingen" collection="commitments" id="toezeggingen">
 		<LoadState state={counts.state} what="De toezeggingen" retry={counts.retry} />
 	</Sectie>
 {:else if commitments && commitments.total > 0}
-	<Sectie titel="Toezeggingen" soort="commitments" id="toezeggingen">
+	<Sectie titel="Toezeggingen" collection="commitments" id="toezeggingen">
 		<div class="ov" class:ruim>
 			<p class="zin">
 				<a href={href()}>{commitments.total} toezeggingen</a>:
@@ -116,14 +116,14 @@
 {/if}
 
 {#if memberDossiers.state.status === 'error'}
-	<Sectie titel="Dossiers met ondertekende stukken" soort="dossiers" id="dossiers">
+	<Sectie titel="Dossiers met ondertekende stukken" collection="dossiers" id="dossiers">
 		<LoadState state={memberDossiers.state} what="De dossiers" retry={memberDossiers.retry} />
 	</Sectie>
 {:else if dossiers && dossiers.total > 0}
 	<!-- The heading says what is listed, the count beside it (Thijs, 10 Oct: no sentence). -->
 	<Sectie
 		titel="Dossiers met ondertekende stukken"
-		soort="dossiers"
+		collection="dossiers"
 		aantal={dossiers.total}
 		id="dossiers"
 	>

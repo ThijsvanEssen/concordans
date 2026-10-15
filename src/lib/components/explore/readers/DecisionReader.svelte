@@ -135,7 +135,7 @@
 					})
 				}}
 			>
-				{#snippet soort()}
+				{#snippet kindLine()}
 					<SoortLink collection="decisions">{bronLabel('decisions')}</SoortLink><span
 						>, {chamberName(chamber)}{d.date ? `, ${langeDatum(d.date)}` : ''}</span
 					>
@@ -183,7 +183,7 @@
 				<LoadState state={tekst.state} what="De tekst" retry={tekst.retry}>
 					{#snippet children(doc)}
 						{#if doc?.text}
-							<Sectie titel={doc.kind ?? 'Document'} soort="documents">
+							<Sectie titel={doc.kind ?? 'Document'} collection="documents">
 								<p class="document-text">{doc.text}</p>
 							</Sectie>
 						{:else if chamber !== 'EK'}
@@ -222,7 +222,7 @@
 			{#if chamber === 'EK'}
 				{@const groups = ekFactionGroups(d)}
 				{#if groups.length > 0}
-					<Sectie titel="Fracties" soort="factions">
+					<Sectie titel="Fracties" collection="factions">
 						<dl class="ek-factions">
 							{#each groups as g (g.label)}
 								<dt>{g.label}</dt>

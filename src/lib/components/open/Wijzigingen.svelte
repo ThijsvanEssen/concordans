@@ -12,11 +12,12 @@
 	import type { Brenger, WetRegel } from './wijzigingen';
 	import type { MetInhoud } from './rij-inhoud';
 
-	let { item, soort }: { item: MetInhoud; soort: 'wijzigingen' | 'inwerkingtreding' } = $props();
+	let { item, variant }: { item: MetInhoud; variant: 'wijzigingen' | 'inwerkingtreding' } =
+		$props();
 
 	const changes = load(
-		() => `${soort}/${item.node.key}`,
-		(_, signal) => changesOf(item, soort, signal),
+		() => `${variant}/${item.node.key}`,
+		(_, signal) => changesOf(item, variant, signal),
 		'Wijzigingen'
 	);
 
@@ -25,12 +26,12 @@
 
 <LoadState
 	state={changes.state}
-	what={soort === 'wijzigingen' ? 'De wijzigingen' : 'De publicatie'}
+	what={variant === 'wijzigingen' ? 'De wijzigingen' : 'De publicatie'}
 	retry={changes.retry}
 >
 	{#snippet empty()}
 		<p class="stil">
-			{soort === 'wijzigingen'
+			{variant === 'wijzigingen'
 				? 'Wijzigingen niet in de gegevens.'
 				: 'Publicatie niet in de gegevens.'}
 		</p>

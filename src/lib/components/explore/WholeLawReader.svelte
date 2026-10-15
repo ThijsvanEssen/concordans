@@ -279,7 +279,7 @@
 					: null
 			}}
 		>
-			{#snippet soort()}<span>{kindLabel}</span>{/snippet}
+			{#snippet kindLine()}<span>{kindLabel}</span>{/snippet}
 			{#snippet onderTitel()}
 				{#if fullTitle}<p class="whole-official">{fullTitle}</p>{/if}
 			{/snippet}

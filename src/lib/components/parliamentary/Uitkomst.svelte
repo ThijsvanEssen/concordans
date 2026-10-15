@@ -3,11 +3,11 @@
 	// en groen niet onderscheidt het ziet. Ja: een gevuld vakje in mos. Nee: een open vakje
 	// met een rand in het accent. Nu: een gevuld vakje in inkt. Nog niet: een gestippeld vakje.
 	let {
-		soort,
+		tone,
 		woord = null,
 		titel = null
 	}: {
-		soort: 'ja' | 'nee' | 'nu' | 'open' | 'klaar';
+		tone: 'ja' | 'nee' | 'nu' | 'open' | 'klaar';
 		/** Het woord naast het vakje; zonder woord alleen het vakje (met een title). */
 		woord?: string | null;
 		/** The title of a box without a word, where the general one does not fit. */
@@ -22,7 +22,7 @@
 	};
 </script>
 
-<span class="uk uk--{soort}" title={woord ? undefined : (titel ?? TITLE[soort])}
+<span class="uk uk--{tone}" title={woord ? undefined : (titel ?? TITLE[tone])}
 	><span class="vak" aria-hidden="true"></span>{#if woord}<span class="w">{woord}</span>{/if}</span
 >
 

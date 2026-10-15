@@ -253,7 +253,7 @@ describe('keeping a bron', () => {
 			ref: { collection: 'documents', key: 'dba9b180_cb08' },
 			title: 'Memorie van toelichting',
 			context: null,
-			kind: 'toelichtingen',
+			filterGroup: 'toelichtingen',
 			props: { dossier_numbers: ['36889'] }
 		} as Row;
 		const lezer = bewaarItem(

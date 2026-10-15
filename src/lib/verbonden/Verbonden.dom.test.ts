@@ -25,7 +25,7 @@ const uitspraak: Row = {
 	ref: { collection: 'judgments', key: 'ecli_nl_hr_2019_2006' },
 	title: 'Hoge Raad, 20 december 2019',
 	context: null,
-	kind: 'uitspraken',
+	filterGroup: 'uitspraken',
 	identifier: 'ECLI:NL:HR:2019:2006',
 	lid: '2',
 	at: 'rov-5.7.6',
@@ -43,7 +43,7 @@ const motie: Row = {
 	ref: { collection: 'documents', key: 'tk_36764_19' },
 	title: 'Motie van het lid Kathmann over een meldportaal',
 	context: 'Motie, Kamerstuk 36764, nr. 19',
-	kind: 'dossiers',
+	filterGroup: 'dossiers',
 	date: '2026-03-23',
 	relation: 'REFERS_TO',
 	direction: 'inbound',
@@ -54,7 +54,7 @@ const wet: Row = {
 	ref: { collection: 'instruments', key: 'bwbr0005289' },
 	title: 'Burgerlijk Wetboek Boek 6',
 	context: 'Wet',
-	kind: 'wetten',
+	filterGroup: 'wetten',
 	relation: 'PART_OF',
 	direction: 'outbound'
 };

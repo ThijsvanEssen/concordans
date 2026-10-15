@@ -64,13 +64,13 @@
 </script>
 
 {#if decisions.length > 0}
-	<Sectie titel="Stemming" soort="decisions">
+	<Sectie titel="Stemming" collection="decisions">
 		{#each decisions as d (d.key)}
 			{@const uitslag = decisionOutcome(d)}
 			{@const tally = telling(d)}
 			<div class="stemming">
 				<p class="uitslag">
-					<Uitkomst soort={soortVan(d)} woord={uitslag ?? 'Stemming'} />{#if tally}<span
+					<Uitkomst tone={soortVan(d)} woord={uitslag ?? 'Stemming'} />{#if tally}<span
 							class="telling">{tally}</span
 						>{/if}
 				</p>

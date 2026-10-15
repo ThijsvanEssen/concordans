@@ -56,7 +56,7 @@
 				})
 			}}
 		>
-			{#snippet soort()}
+			{#snippet kindLine()}
 				<SoortLink collection="committees">{bronLabel('committees')}</SoortLink>{joinParts([
 					'',
 					chamberName(chamber),

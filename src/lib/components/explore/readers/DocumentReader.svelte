@@ -302,7 +302,7 @@
 					tekst: doc.text ? () => doc.text ?? '' : undefined
 				}}
 			>
-				{#snippet soort()}
+				{#snippet kindLine()}
 					<!-- Running text, the comma against the word before it. -->
 					<span
 						>{#if term}<GlossaryPill {term} label={kind ?? term} />{:else}{kind ??
@@ -329,7 +329,7 @@
 			</ReaderHead>
 
 			{#if toegelicht.length > 0}
-				<Sectie titel="Licht toe" soort="articles" aantal={doc.explains?.length ?? 0}>
+				<Sectie titel="Licht toe" collection="articles" aantal={doc.explains?.length ?? 0}>
 					<ul class="toegelicht">
 						{#each toegelicht as w (w.bwbId)}
 							{@const wet = $instrumentMetaStore.get(w.bwbId)}

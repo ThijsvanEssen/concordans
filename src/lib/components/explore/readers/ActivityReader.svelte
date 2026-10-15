@@ -90,7 +90,7 @@
 				)
 			}}
 		>
-			{#snippet soort()}
+			{#snippet kindLine()}
 				<KindGlyph collection="activities" />
 				<!-- One still to come says so, as its row in Verbonden does (#59). -->
 				{joinParts([

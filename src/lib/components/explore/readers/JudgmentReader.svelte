@@ -188,7 +188,7 @@
 		{@const naamKort = kop?.short ?? j.display_name ?? 'Uitspraak'}
 		<ReaderHead
 			collection="judgments"
-			kind={conclusion ? 'Conclusie' : null}
+			kindLabel={conclusion ? 'Conclusie' : null}
 			juris={textOf(j.props?.court)}
 			title={(kop ? kop.full : (j.display_name ?? 'Uitspraak')) +
 				(j.names?.length ? ` (${j.names.join(', ')})` : '')}
@@ -333,7 +333,7 @@
 		{/if}
 
 		{#if samenhang.length > 0}
-			<Sectie titel="Samenhangende zaken" soort="judgments" aantal={samenhang.length}>
+			<Sectie titel="Samenhangende zaken" collection="judgments" aantal={samenhang.length}>
 				<ul class="samenhang">
 					{#each samenhang as z (z.key)}
 						<li>

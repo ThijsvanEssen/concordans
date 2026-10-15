@@ -24,7 +24,7 @@ const artikel: GraphNode = {
 	id: 'articles/bwbr0005537_3_2',
 	collection: 'articles',
 	key: 'bwbr0005537_3_2',
-	kind: 'article',
+	drawClass: 'article',
 	label: 'Artikel 3:2 Awb'
 };
 
@@ -32,7 +32,7 @@ const uitspraak: Row = {
 	ref: { collection: 'judgments', key: 'ecli_nl_rvs_2015_41' },
 	title: 'Raad van State, 21 januari 2015',
 	context: null,
-	kind: 'uitspraken',
+	filterGroup: 'uitspraken',
 	relation: 'REFERS_TO',
 	direction: 'inbound',
 	confidence: 0.95,
@@ -73,7 +73,7 @@ describe('verbindingOfRow', () => {
 		const verwijzend: Row = {
 			...uitspraak,
 			ref: { collection: 'articles', key: 'bwbr0001_5' },
-			kind: 'artikelen'
+			filterGroup: 'artikelen'
 		};
 		const groep = { id: 'g', label: 'g', rows: [uitspraak, verwijzend], capped: false } as Group;
 		expect(relationCounts([groep], 'articles')[0].label).toBe('haalt aan, verwijst naar');
@@ -86,7 +86,7 @@ describe('verbindingOfEdge', () => {
 			id: 'documents/b',
 			collection: 'documents',
 			key: 'b',
-			kind: 'document',
+			drawClass: 'document',
 			label: 'Bijlage'
 		};
 		const brief: GraphNode = { ...motie, id: 'documents/a', key: 'a', label: 'Brief' };
@@ -128,7 +128,7 @@ describe('the card and line of a judgment that cites an article (#49)', () => {
 		id: 'judgments/ecli_nl_rbdha_2013_19764',
 		collection: 'judgments',
 		key: 'ecli_nl_rbdha_2013_19764',
-		kind: 'judgment',
+		drawClass: 'judgment',
 		label: 'Rb. Den Haag',
 		raw: {
 			display_name: 'Rechtbank Den Haag 2013-01-01 / 000000-00',
@@ -139,7 +139,7 @@ describe('the card and line of a judgment that cites an article (#49)', () => {
 		id: 'articles/bwbr0001903_126ffa',
 		collection: 'articles',
 		key: 'bwbr0001903_126ffa',
-		kind: 'article',
+		drawClass: 'article',
 		label: 'Art. 126ffa',
 		raw: {
 			display_name: 'Artikel 126ffa Wetboek van Strafvordering',

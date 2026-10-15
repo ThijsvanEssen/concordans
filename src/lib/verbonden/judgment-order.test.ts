@@ -15,7 +15,7 @@ const judgment: Row = {
 	ref: { collection: 'judgments', key: 'ecli_nl_hr_2020_1' },
 	relation: 'REFERS_TO',
 	direction: 'inbound',
-	kind: 'uitspraken'
+	filterGroup: 'uitspraken'
 } as Row;
 
 const html = (collection: 'articles' | 'instruments') => {

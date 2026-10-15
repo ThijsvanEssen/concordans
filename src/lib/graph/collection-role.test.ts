@@ -3,7 +3,7 @@ import { NODE_TYPES, RELATIONS, type Collection } from '$lib/vocabulary';
 import { kolomVan } from '$lib/netwerk/kolommen';
 import { COLLECTION_ROLE, GROUP_LABEL, inLegend, isDrawn } from './collection-role';
 import { containerKindOf } from './container-membership';
-import { kindOfCollection } from './types';
+import { drawClassOf } from './types';
 
 // The role of every collection, as the canvas has it: its kind, the hull it is drawn as
 // (a cabinet as a commissie's), whether it is asked and drawn as a neighbour of a focus,
@@ -31,11 +31,7 @@ describe('the role of a collection', () => {
 	it('is one row per collection, read by every place that asks', () => {
 		for (const c of Object.keys(NODE_TYPES) as Collection[]) {
 			const [kind, hull, neighbour, column] = ROLES[c];
-			expect([kindOfCollection(c), containerKindOf(c), kolomVan(c)], c).toEqual([
-				kind,
-				hull,
-				column
-			]);
+			expect([drawClassOf(c), containerKindOf(c), kolomVan(c)], c).toEqual([kind, hull, column]);
 			expect(COLLECTION_ROLE[c].neighbour, c).toBe(neighbour);
 		}
 	});

@@ -952,7 +952,7 @@ export function withUnresolvedAppeals(groups: Group[], props: Record<string, unk
 				.filter(Boolean)
 				.join(', '),
 			context: null,
-			kind: 'uitspraken',
+			filterGroup: 'uitspraken',
 			missing: true
 		};
 	});

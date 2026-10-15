@@ -161,7 +161,7 @@
 						>
 						<div class="rij__regel">
 							<span class="rij__uitkomst"
-								><UitkomstTeken soort={outcomeShape(u)} woord={UITKOMST_LABEL[u]} />{tally
+								><UitkomstTeken tone={outcomeShape(u)} woord={UITKOMST_LABEL[u]} />{tally
 									? `, ${tally}`
 									: ''}{#if s}<span class="rij__stem">{faction} <StemTeken keuze={s} /></span
 									>{/if}</span
@@ -218,7 +218,7 @@
 						{#if a.uitkomst}
 							<div class="rij__regel">
 								<span class="rij__uitkomst"
-									><UitkomstTeken soort={outcomeShape(a.uitkomst)} woord={a.uitkomst} /></span
+									><UitkomstTeken tone={outcomeShape(a.uitkomst)} woord={a.uitkomst} /></span
 								>
 							</div>
 						{/if}

@@ -13,7 +13,7 @@ import { keyEcli, padHref, type Pad } from '$lib/bron/leesbaar';
 import { kamerstukName } from '$lib/components/parliamentary/kamerstuk';
 import { isIndexCategory, type IndexCategory } from '$lib/components/explore/index/categories';
 import { isContainerKind } from '$lib/graph/container-membership';
-import type { GraphNode, GraphNodeKind } from '$lib/graph/types';
+import type { GraphNode, DrawClass } from '$lib/graph/types';
 import { filterParams, parseFilter } from '$lib/verbonden/filter';
 import { parseNodeId, type Mode } from '$lib/vocabulary';
 
@@ -51,11 +51,11 @@ export function explicitDepth(params: URLSearchParams): number | null {
  * own children are plenty (a fractie's members alone can be dozens); every other bron two.
  */
 export function depthFor(
-	kind: GraphNodeKind,
+	drawClass: DrawClass,
 	{ explicit, all }: { explicit: number | null; all: boolean }
 ): number {
 	if (all) return 1;
-	return explicit ?? (isContainerKind(kind) ? 1 : DEPTH.fallback);
+	return explicit ?? (isContainerKind(drawClass) ? 1 : DEPTH.fallback);
 }
 
 /** The netwerk's own three params, so that selecting a bron does not compose it again. */
@@ -97,7 +97,7 @@ export function besideJudgment(beside: ReturnType<typeof parseNodeId>): GraphNod
 		id,
 		collection: 'judgments',
 		key: beside.key,
-		kind: 'judgment',
+		drawClass: 'judgment',
 		label: ecli ?? 'Uitspraak',
 		raw: {
 			id,
