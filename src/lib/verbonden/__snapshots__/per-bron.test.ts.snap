@@ -1,0 +1,813 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Verbonden of a 'artikel' > keeps its groups, rows, kern and export > csv 1`] = `
+"﻿bron;soort;verbinding;plaats in de bron;plaats in dit artikel;aard;status;betrouwbaarheid;datum;identificatie;link
+College van Beroep voor het bedrijfsleven, 13 oktober 2026;Uitspraken;haalt aan;r.o. 5.6;lid 3;;vastgesteld;hoog;2026-10-13;ECLI:NL:CBB:2026:489;https://concordans.nl/uitspraken/ECLI:NL:CBB:2026:489?lezen=1#rov-5.6
+Rechtbank Den Haag, 13 oktober 2026;Uitspraken;haalt aan;r.o. 7;lid 6;;vastgesteld;hoog;2026-10-13;ECLI:NL:RBDHA:2026:30184;https://concordans.nl/uitspraken/ECLI:NL:RBDHA:2026:30184?lezen=1#rov-7
+Rechtbank Den Haag, 12 oktober 2026;Uitspraken;haalt aan;r.o. 8;lid 4;;vastgesteld;hoog;2026-10-12;ECLI:NL:RBDHA:2026:30092;https://concordans.nl/uitspraken/ECLI:NL:RBDHA:2026:30092?lezen=1#rov-8
+Rechtbank Den Haag, 12 oktober 2026;Uitspraken;haalt aan;r.o. 10.1;lid 4;;vastgesteld;hoog;2026-10-12;ECLI:NL:RBDHA:2026:30152;https://concordans.nl/uitspraken/ECLI:NL:RBDHA:2026:30152?lezen=1#rov-10.1
+Artikel 15 Wedervergeldingswet zeescheepvaart;Artikelen;verwijst naar;;lid 2;uitzondering;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0003104/artikel/15?lezen=1
+Artikel 3a:146 Wft;Artikelen;verwijst naar;;lid 3;mogelijk verwijzing;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0020368/artikel/3a:146?lezen=1
+Artikel 8:87 Awb;Artikelen;verwijst naar;;lid 5;mogelijk verwijzing;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/8:87?lezen=1
+Artikel 8:104 Awb;Artikelen;verwijst naar;;lid 5;definitie;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/8:104?lezen=1
+Amendement van het lid De Wit over het alleen buiten toepassing verklaren van uniforme openbare voorbereidingsprocedure bij wijzigingen van ondergeschikte aard;Toelichtingen;licht toe;§ Toelichting;;;vastgesteld;hoog;2009-02-12;;https://concordans.nl/kamerstukken/31352/12?lezen=1#s-1
+Wet aanpassing bestuursprocesrecht;Wetten;wijzigt;;;;vastgesteld;hoog;2012-12-27;Stb. 2012, 682;https://concordans.nl/stb/2012/682?lezen=1
+Wet bestuurlijke lus Awb;Wetten;wijzigt;;;;vastgesteld;hoog;2009-12-24;Stb. 2009, 570;https://concordans.nl/stb/2009/570?lezen=1
+Kamerstuk 29702;Wetten;wijzigt;;;;vastgesteld;hoog;2009-06-30;Stb. 2009, 264;https://concordans.nl/stb/2009/264?lezen=1
+Kamerstuk 26523;Wetten;wijzigt;;;;vastgesteld;hoog;2002-02-12;Stb. 2002, 53;https://concordans.nl/stb/2002/53?lezen=1
+Amendement van het lid Diederik van Dijk over het afschaffen van rechterlijke dwangsommen in vreemdelingenzaken;Wetsvoorstellen;noemt;;lid 4;;vastgesteld;hoog;2025-06-13;;https://concordans.nl/kamerstukken/36704/19?lezen=1
+Memorie van toelichting, Kamerstuk 32621, nr. 3;Toelichtingen;noemt;;lid 4;;vastgesteld;hoog;2011-02-02;;https://concordans.nl/kamerstukken/32621/3?lezen=1
+Voorstel van wet, Kamerstuk 36105, nr. 2;Wetsvoorstellen;noemt;;lid 3;;vastgesteld;hoog;2022-05-19;;https://concordans.nl/kamerstukken/36105/2?lezen=1
+Nota van wijziging, Kamerstuk 33219, nr. 11;Wetsvoorstellen;noemt;;;;vastgesteld;hoog;2013-03-11;;https://concordans.nl/kamerstukken/33219/11?lezen=1
+Algemene wet bestuursrecht;Wetten;artikel van;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537?lezen=1"
+`;
+
+exports[`Verbonden of a 'artikel' > keeps its groups, rows, kern and export > groups 1`] = `
+[
+  {
+    "count": "21.882",
+    "id": "judgments",
+    "label": "Uitspraken die dit artikel aanhalen",
+    "plaats": "verbonden",
+    "rows": [
+      "judgments/ecli_nl_cbb_2026_489 | College van Beroep voor het bedrijfsleven, 13 oktober 2026 | Haalt aan lid 3, in r.o. 5.6 [Herkend in de tekst] | ECLI:NL:CBB:2026:489",
+      "judgments/ecli_nl_rbdha_2026_30184 | Rechtbank Den Haag, 13 oktober 2026 | Haalt aan lid 6, in r.o. 7 [Herkend in de tekst] | ECLI:NL:RBDHA:2026:30184",
+      "judgments/ecli_nl_rbdha_2026_30092 | Rechtbank Den Haag, 12 oktober 2026 | Haalt aan lid 4, in r.o. 8 [Herkend in de tekst] | ECLI:NL:RBDHA:2026:30092",
+      "judgments/ecli_nl_rbdha_2026_30152 | Rechtbank Den Haag, 12 oktober 2026 | Haalt aan lid 4, in r.o. 10.1 [Herkend in de tekst] | ECLI:NL:RBDHA:2026:30152",
+    ],
+    "section": null,
+  },
+  {
+    "count": "20",
+    "id": "cited-by",
+    "label": "Artikelen die naar dit artikel verwijzen",
+    "plaats": "verbonden",
+    "rows": [
+      "articles/bwbr0003104_15 | Artikel 15 Wedervergeldingswet zeescheepvaart | Verwijst naar lid 2, als uitzondering: ‘artikel 8:72, tweede lid, van de Algemene wet bestuursrecht’ [Verwijzing in de wettekst, wetten.overheid.nl] | ",
+      "articles/bwbr0020368_3a_146 | Artikel 3a:146 Wft | Verwijst naar lid 3 als ‘artikel 8:72, derde lid, onderdeel a, van de Algemene wet bestuursrecht’ [Verwijzing in de wettekst, wetten.overheid.nl] | ",
+      "articles/bwbr0005537_8_87 | Artikel 8:87 Awb | Verwijst naar lid 5 als ‘artikel 8:72, vijfde lid’ [Verwijzing in de wettekst, wetten.overheid.nl] | ",
+      "articles/bwbr0005537_8_104 | Artikel 8:104 Awb | Verwijst naar lid 5, als definitie: ‘artikel 8:72, vijfde lid’ [Verwijzing in de wettekst, wetten.overheid.nl] | ",
+    ],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "based-on",
+    "label": "Gebaseerd op dit artikel",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "1",
+    "id": "explanatory",
+    "label": "Toelichting",
+    "plaats": "verbonden",
+    "rows": [
+      "documents/7e59f350_a461_4556_8c81_250abfaaafd7 | Amendement van het lid De Wit over het alleen buiten toepassing verklaren van uniforme openbare voorbereidingsprocedure bij wijzigingen van ondergeschikte aard | nr. 12, § Toelichting | Amendement, Kamerstuk 31352, nr. 12, 12 feb. 2009",
+    ],
+    "section": null,
+  },
+  {
+    "count": "4",
+    "id": "changes",
+    "label": "Wijzigingen van dit artikel",
+    "plaats": "verbonden",
+    "rows": [
+      "instruments/stb_2012_682 | Wet aanpassing bestuursprocesrecht |  | wijzigt, Kamerstuk 32450, Stb. 2012, 682",
+      "instruments/stb_2009_570 | Wet bestuurlijke lus Awb |  | wijzigt, Kamerstuk 31352, Stb. 2009, 570",
+      "instruments/stb_2009_264 | Kamerstuk 29702 |  | wijzigt, Kamerstuk 29702, Stb. 2009, 264",
+      "instruments/stb_2002_53 | Kamerstuk 26523 |  | wijzigt, Kamerstuk 26523, Stb. 2002, 53",
+    ],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "refers-to",
+    "label": "Artikelen waarnaar dit artikel verwijst",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "35",
+    "id": "documents",
+    "label": "Kamerstukken die dit artikel noemen",
+    "plaats": "verbonden",
+    "rows": [
+      "documents/75f60705_af3c_4ff3_85b7_821228bcd1dd | Amendement van het lid Diederik van Dijk over het afschaffen van rechterlijke dwangsommen in vreemdelingenzaken | Noemt lid 4 [Herkend in de tekst] | Amendement, Kamerstuk 36704, nr. 19, Asielnoodmaatregelenwet, 13 jun. 2025",
+      "documents/6c33ccba_751d_4877_9b10_d38154461203 | Memorie van toelichting, Kamerstuk 32621, nr. 3 | Noemt lid 4 [Herkend in de tekst] | 2 feb. 2011",
+      "documents/0f058717_f090_45a5_8efa_4c8f68783c38 | Voorstel van wet, Kamerstuk 36105, nr. 2 | Noemt lid 3 [Herkend in de tekst] | 19 mei 2022",
+      "documents/0bd1cf53_8117_4559_b0cd_7ec2f97571f9 | Nota van wijziging, Kamerstuk 33219, nr. 11 | Noemt [Herkend in de tekst] | 11 mrt. 2013",
+    ],
+    "section": null,
+  },
+  {
+    "count": "1",
+    "id": "law",
+    "label": "Wet",
+    "plaats": "kern",
+    "rows": [
+      "instruments/bwbr0005537 | Algemene wet bestuursrecht |  | ",
+    ],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "international",
+    "label": "Europees en internationaal",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+]
+`;
+
+exports[`Verbonden of a 'dossier' > keeps its groups, rows, kern and export > csv 1`] = `
+"﻿bron;soort;verbinding;plaats in de bron;plaats in dit artikel;aard;status;betrouwbaarheid;datum;identificatie;link
+Cyberbeveiligingswet;Wetten;tot stand gekomen in;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0052872?lezen=1
+Vaste commissie voor Defensie;Dossiers;onder leiding van;;;;vastgesteld;hoog;;;https://concordans.nl/commissies/def
+Vaste commissie voor Digitale Zaken;Dossiers;onder leiding van;;;;vastgesteld;hoog;;;https://concordans.nl/commissies/diza
+Vaste commissie voor Justitie en Veiligheid;Dossiers;onder leiding van;;;;vastgesteld;hoog;;;https://concordans.nl/commissies/j_v
+Publicatie van het samenwerkingsprotocol inzake toezicht op de Cyberbeveiligingswet (Cbw) en de Wet weerbaarheid kritieke entiteiten (Wwke) in de Staatscourant;Dossiers;stuk in;;;;vastgesteld;hoog;2026-09-01;;https://concordans.nl/kamerstukken/36764/34?lezen=1
+Besluit Eerste Kamer inzake Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet);Dossiers;stuk in;;;;vastgesteld;hoog;2026-07-07;;https://concordans.nl/explore?focus=documents/b529da85_8dc7_436c_abae_d2b317723250&lezen=1
+Gewijzigde motie van de leden Kathmann en Dassen over het inrichten van één centraal meldportaal voor organisaties (t.v.v. 36764-19);Stemmingen;over;;;;vastgesteld;hoog;2026-04-15;;https://concordans.nl/stemmingen/decision_c94c4b61_f72a_46bc_8cda_266eb0e48052
+De staatssecretaris Digitale Economie en Soevereiniteit en de minister van…;Dossiers;over;;;;vastgesteld;hoog;;;https://concordans.nl/toezeggingen/TZ202604-068
+De minister van JenV zegt toe, voor de inwerktreding van de wet, een…;Dossiers;over;;;;vastgesteld;hoog;;;https://concordans.nl/toezeggingen/TZ202604-062
+De minister van JenV zegt toe het door het lid Van den Berg gevraagde tijdspad…;Dossiers;over;;;;vastgesteld;hoog;;;https://concordans.nl/toezeggingen/TZ202604-067
+De minister van JenV zegt toe voor de zomer schriftelijk terug te komen op de…;Dossiers;over;;;;vastgesteld;hoog;;;https://concordans.nl/toezeggingen/TZ202604-065
+Nota naar aanleiding van het tweede verslag, Kamerstuk I 36764, E;Dossiers;stuk in;;;;vastgesteld;hoog;2026-06-29;;https://concordans.nl/kamerstukken/36764/E?lezen=1
+Tweede verslag, Kamerstuk I 36764, D;Dossiers;stuk in;;;;vastgesteld;hoog;2026-06-26;;https://concordans.nl/kamerstukken/36764/D?lezen=1"
+`;
+
+exports[`Verbonden of a 'dossier' > keeps its groups, rows, kern and export > groups 1`] = `
+[
+  {
+    "count": "1",
+    "id": "laws",
+    "label": "Wet uit dit dossier",
+    "plaats": "verbonden",
+    "rows": [
+      "instruments/bwbr0052872 | Cyberbeveiligingswet | Tot stand gekomen in dit dossier | Wet",
+    ],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "same-number",
+    "label": "Dossiers onder hetzelfde nummer",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "first-reading",
+    "label": "Eerste lezing van deze grondwetsherziening",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "second-reading",
+    "label": "Tweede lezing van deze grondwetsherziening",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "revises",
+    "label": "Begrotingen die dit dossier wijzigt",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "revised-by",
+    "label": "Dossiers die deze begroting wijzigen",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "accompanies",
+    "label": "Nota waarmee dit dossier is ingediend",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "accompanied-by",
+    "label": "Dossiers ingediend met deze nota",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "related",
+    "label": "Dossiers die de Kamer met dit dossier verbindt",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "3",
+    "id": "committees",
+    "label": "Commissie",
+    "plaats": "verbonden",
+    "rows": [
+      "committees/524d5de6_83dd_4754_9e1e_c10fc49ad9be | Vaste commissie voor Defensie |  | DEF",
+      "committees/807e03a0_df3f_49a1_9618_996f6fb7e24f | Vaste commissie voor Digitale Zaken |  | DiZa",
+      "committees/14cac666_51cb_4154_80da_9b0e2eeb5014 | Vaste commissie voor Justitie en Veiligheid |  | J&V",
+    ],
+    "section": "Tweede Kamer",
+  },
+  {
+    "count": "2",
+    "id": "documents-tk",
+    "label": "Kamerstukken in de Tweede Kamer",
+    "plaats": "verbonden",
+    "rows": [
+      "documents/acc2ade6_3130_4fcc_8fd8_285549213431 | Publicatie van het samenwerkingsprotocol inzake toezicht op de Cyberbeveiligingswet (Cbw) en de Wet weerbaarheid kritieke entiteiten (Wwke) in de Staatscourant |  | Brief regering, Kamerstuk 36764, nr. 34, 1 sep. 2026",
+      "documents/b529da85_8dc7_436c_abae_d2b317723250 | Besluit Eerste Kamer inzake Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet) |  | Brief Eerste Kamer, 7 jul. 2026",
+    ],
+    "section": "Tweede Kamer",
+  },
+  {
+    "count": "12",
+    "id": "decisions",
+    "label": "Stemmingen in de Tweede Kamer",
+    "plaats": "verbonden",
+    "rows": [
+      "decisions/decision_c94c4b61_f72a_46bc_8cda_266eb0e48052 | Gewijzigde motie van de leden Kathmann en Dassen over het inrichten van één centraal meldportaal voor organisaties (t.v.v. 36764-19) | Aangenomen , 139 voor en 11 tegen [Besluit van de Kamer] | 15 apr. 2026",
+    ],
+    "section": "Tweede Kamer",
+  },
+  {
+    "count": "7",
+    "id": "commitments",
+    "label": "Toezeggingen over dit dossier",
+    "plaats": "verbonden",
+    "rows": [
+      "commitments/b2492759_9424_4277_86e9_f105dfe02a9c | De staatssecretaris Digitale Economie en Soevereiniteit en de minister van… |  | ",
+      "commitments/8d7acc0e_a2a0_47be_b535_104ea97cf7b5 | De minister van JenV zegt toe, voor de inwerktreding van de wet, een… |  | ",
+      "commitments/9439054f_6f6f_4642_84b6_eccd1bb12646 | De minister van JenV zegt toe het door het lid Van den Berg gevraagde tijdspad… |  | ",
+      "commitments/f79ef0b3_cd6f_4ea1_8f2d_9d0ccc25fa2f | De minister van JenV zegt toe voor de zomer schriftelijk terug te komen op de… |  | ",
+    ],
+    "section": "Tweede Kamer",
+  },
+  {
+    "count": "2",
+    "id": "documents-ek",
+    "label": "Kamerstukken in de Eerste Kamer",
+    "plaats": "verbonden",
+    "rows": [
+      "documents/ek_kst_36764_e | Nota naar aanleiding van het tweede verslag, Kamerstuk I 36764, E |  | 29 jun. 2026",
+      "documents/ek_kst_36764_d | Tweede verslag, Kamerstuk I 36764, D |  | 26 jun. 2026",
+    ],
+    "section": "Eerste Kamer",
+  },
+  {
+    "count": "0",
+    "id": "decisions-ek",
+    "label": "Stemmingen in de Eerste Kamer",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": "Eerste Kamer",
+  },
+  {
+    "count": "0",
+    "id": "international",
+    "label": "Europees en internationaal",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+]
+`;
+
+exports[`Verbonden of a 'kamerstuk' > keeps its groups, rows, kern and export > csv 1`] = `
+"﻿bron;soort;verbinding;plaats in de bron;plaats in dit artikel;aard;status;betrouwbaarheid;datum;identificatie;link
+Cyberbeveiligingswet;Dossiers;stuk in;;;;vastgesteld;hoog;;Kamerstuk 36764;https://concordans.nl/dossiers/36764
+Daniël van den Berg;Leden en fracties;diende in;;;;vastgesteld;hoog;;;https://concordans.nl/leden/daniel-van-den-berg
+Wet weerbaarheid kritieke entiteiten (36765) en Cyberbeveiligingswet (36764);Dossiers;ingediend in;;;;vastgesteld;hoog;2026-03-23;;https://concordans.nl/activiteiten/2026A01323"
+`;
+
+exports[`Verbonden of a 'kamerstuk' > keeps its groups, rows, kern and export > groups 1`] = `
+[
+  {
+    "count": "1",
+    "id": "dossier",
+    "label": "Dossier",
+    "plaats": "kern",
+    "rows": [
+      "dossiers/36764 | Cyberbeveiligingswet |  | Kamerstuk 36764",
+    ],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "same-case",
+    "label": "Stukken van dezelfde zaak",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "answers",
+    "label": "Moties waarop deze brief ingaat",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "answered-by",
+    "label": "Brieven van de regering over deze motie",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "fulfils",
+    "label": "Toezeggingen die deze brief nakomt",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "names",
+    "label": "Kamerstukken die hier worden genoemd",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "named-by",
+    "label": "Kamerstukken die dit stuk noemen",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "explains",
+    "label": "Artikelen die dit stuk toelicht",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "changes",
+    "label": "Artikelen die dit stuk wijzigt",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "refers-to",
+    "label": "Artikelen die dit stuk noemt",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "1",
+    "id": "authors",
+    "label": "Indieners",
+    "plaats": "verbonden",
+    "rows": [
+      "members/98f026ef_74d5_4b6e_80ae_4a76e9ec7e81 | Daniël van den Berg |  | JA21",
+    ],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "replaces",
+    "label": "Vervangt",
+    "plaats": "kern",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "replaced-by",
+    "label": "Vervangen door",
+    "plaats": "kern",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "attachment-of",
+    "label": "Bijlage bij",
+    "plaats": "kern",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "attachments",
+    "label": "Bijlagen bij dit stuk",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "record-of",
+    "label": "Verslag van",
+    "plaats": "kern",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "1",
+    "id": "submitted-in",
+    "label": "Ingediend in",
+    "plaats": "kern",
+    "rows": [
+      "activities/18f47274_7437_422c_8100_68f1982311fb | Wet weerbaarheid kritieke entiteiten (36765) en Cyberbeveiligingswet (36764) |  | Wetgevingsoverleg, 23 mrt. 2026",
+    ],
+    "section": null,
+  },
+]
+`;
+
+exports[`Verbonden of a 'uitspraak' > keeps its groups, rows, kern and export > csv 1`] = `
+"﻿bron;soort;verbinding;plaats in de bron;plaats in dit artikel;aard;status;betrouwbaarheid;datum;identificatie;link
+Artikel 81 RO;Artikelen;haalt aan;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001830/artikel/81?lezen=1
+Artikel 29 Sv;Artikelen;haalt aan;r.o. 2.2.3, 2.3.1 en 1 meer;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/29?lezen=1
+Artikel 27c Sv;Artikelen;haalt aan;r.o. 2.2.3 en 2.3.3;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/27c?lezen=1
+Artikel 28 Sv;Artikelen;haalt aan;r.o. 2.2.3 en 2.3.3;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/28?lezen=1
+Conclusie A-G Paridaens, 1 oktober 2024;Uitspraken;conclusie bij;;;;vastgesteld;hoog;2024-10-01;ECLI:NL:PHR:2024:994;https://concordans.nl/uitspraken/ECLI:NL:PHR:2024:994?lezen=1
+Gerechtshof Arnhem-Leeuwarden, 24 juni 2022, 21-004903-20;Uitspraken;;;;;vastgesteld;hoog;;;https://concordans.nl/explore?focus=judgments/unresolved%3Agerechtshof+Arnhem-Leeuwarden%3A2022-06-24%3A21-004903-20&lezen=1
+Hoge Raad, 20 maart 2018;Uitspraken;haalt aan;;;;vastgesteld;hoog;2018-03-20;ECLI:NL:HR:2018:368;https://concordans.nl/uitspraken/ECLI:NL:HR:2018:368?lezen=1
+Hoge Raad, 6 november 2018;Uitspraken;haalt aan;;;;vastgesteld;hoog;2018-11-06;ECLI:NL:HR:2018:2056;https://concordans.nl/uitspraken/ECLI:NL:HR:2018:2056?lezen=1"
+`;
+
+exports[`Verbonden of a 'uitspraak' > keeps its groups, rows, kern and export > groups 1`] = `
+[
+  {
+    "count": "0",
+    "id": "same-as",
+    "label": "Zelfde uitspraak, ook gepubliceerd als",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "4",
+    "id": "articles",
+    "label": "Artikelen die hier worden aangehaald",
+    "plaats": "verbonden",
+    "rows": [
+      "articles/bwbr0001830_81 | Artikel 81 RO | Aangehaald [Herkend in de tekst] | ",
+      "articles/bwbr0001903_29 | Artikel 29 Sv | Aangehaald in r.o. 2.2.3, 2.3.1 en 1 meer, 3 keer [Herkend in de tekst] | ",
+      "articles/bwbr0001903_27c | Artikel 27c Sv | Aangehaald in r.o. 2.2.3 en 2.3.3, 3 keer [Herkend in de tekst] | ",
+      "articles/bwbr0001903_28 | Artikel 28 Sv | Aangehaald in r.o. 2.2.3 en 2.3.3, 3 keer [Herkend in de tekst] | ",
+    ],
+    "section": null,
+  },
+  {
+    "count": "1",
+    "id": "conclusion",
+    "label": "Conclusie in dezelfde zaak",
+    "plaats": "kern",
+    "rows": [
+      "judgments/ecli_nl_phr_2024_994 | Conclusie A-G Paridaens, 1 oktober 2024 | Conclusie bij deze uitspraak [Rechtspraak.nl, formele relatie] | ECLI:NL:PHR:2024:994",
+    ],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "advised",
+    "label": "Uitspraak in dezelfde zaak",
+    "plaats": "kern",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "1",
+    "id": "earlier-instance",
+    "label": "Uitspraak in eerdere aanleg",
+    "plaats": "kern",
+    "rows": [
+      "judgments/unresolved:gerechtshof Arnhem-Leeuwarden:2022-06-24:21-004903-20 | Gerechtshof Arnhem-Leeuwarden, 24 juni 2022, 21-004903-20 |  | niet in de gegevens",
+    ],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "later-instance",
+    "label": "Hoger beroep of cassatie tegen deze uitspraak",
+    "plaats": "kern",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "answers",
+    "label": "Beantwoordt prejudiciële vragen van",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "answered",
+    "label": "Prejudiciële beslissing op vragen uit deze uitspraak",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "continues",
+    "label": "Vervolg op",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "continued",
+    "label": "Voortgezet in",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "referred-by",
+    "label": "Verwezen door",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "referred-to",
+    "label": "Verwezen naar",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "2",
+    "id": "judgments",
+    "label": "Uitspraken die hier worden aangehaald",
+    "plaats": "verbonden",
+    "rows": [
+      "judgments/ecli_nl_hr_2018_368 | Hoge Raad, 20 maart 2018 | Aangehaald [ECLI genoemd in de tekst] | ECLI:NL:HR:2018:368",
+      "judgments/ecli_nl_hr_2018_2056 | Hoge Raad, 6 november 2018 | Aangehaald [ECLI genoemd in de tekst] | ECLI:NL:HR:2018:2056",
+    ],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "cited-by",
+    "label": "Uitspraken die deze uitspraak aanhalen",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "related",
+    "label": "Samenhangende zaken",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+]
+`;
+
+exports[`Verbonden of a 'wet' > keeps its groups, rows, kern and export > csv 1`] = `
+"﻿bron;soort;verbinding;plaats in de bron;plaats in dit artikel;aard;status;betrouwbaarheid;datum;identificatie;link
+Wijziging van diverse wetten in verband met het overzetten van bepalingen uit d…;Dossiers;tot stand gekomen in;;;;vastgesteld;hoog;;Kamerstuk 36824;https://concordans.nl/dossiers/36824
+Verzamelwet Justitie en Veiligheid en Asiel en Migratie 20XX;Dossiers;tot stand gekomen in;;;;vastgesteld;hoog;;Kamerstuk 36638;https://concordans.nl/dossiers/36638
+versterking strafrechtelijke aanpak ondermijnende criminaliteit II;Dossiers;tot stand gekomen in;;;;vastgesteld;hoog;;Kamerstuk 36463;https://concordans.nl/dossiers/36463
+Verzamelwet Omgevingswet 20..;Dossiers;tot stand gekomen in;;;;vastgesteld;hoog;;Kamerstuk 36367;https://concordans.nl/dossiers/36367
+Artikel 1:1;Artikelen;artikel van;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/1:1?lezen=1
+Artikel 1:2;Artikelen;artikel van;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/1:2?lezen=1
+Artikel 1:3;Artikelen;artikel van;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/1:3?lezen=1
+Artikel 1:4;Artikelen;artikel van;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/1:4?lezen=1
+Aanpassingsbesluit vereenvoudiging en digitalisering procesrecht;Wetten;gebaseerd op;art. 8:36f lid 1;;;vastgesteld;hoog;2017-03-01;in werking 1 mrt. 2017;https://concordans.nl/wetten/BWBR0038341?lezen=1
+Besluit buitengerechtelijke kosten;Wetten;gebaseerd op;art. 4:120 lid 2;;;vastgesteld;hoog;2009-07-01;in werking 1 jul. 2009;https://concordans.nl/wetten/BWBR0026012?lezen=1
+Besluit klachtencommissie vergunninghouders interlandelijke adoptie;Wetten;gebaseerd op;art. 9:13, 9:14;;;vastgesteld;hoog;2000-04-01;in werking 1 apr. 2000;https://concordans.nl/wetten/BWBR0011217?lezen=1
+Besluit proceskosten bestuursrecht;Wetten;gebaseerd op;art. 8:75;;;vastgesteld;hoog;1994-01-01;in werking 1 jan. 1994;https://concordans.nl/wetten/BWBR0006358?lezen=1
+Richtlijn 79/409/EEG;Europees en internationaal;implementeert;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/31979L0409?lezen=1
+Richtlijn 92/43/EEG;Europees en internationaal;implementeert;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/31992L0043?lezen=1
+Richtlijn 93/6/EEG;Europees en internationaal;implementeert;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/31993L0006?lezen=1
+Richtlijn 94/63/EG;Europees en internationaal;implementeert;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/31994L0063?lezen=1
+Richtlijn 2000/31/EG;Europees en internationaal;noemt;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/32000L0031?lezen=1
+Richtlijn 2002/47/EG;Europees en internationaal;noemt;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/32002L0047?lezen=1
+Richtlijn 2003/71/EG;Europees en internationaal;noemt;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/32003L0071?lezen=1
+Richtlijn 2004/25/EG;Europees en internationaal;noemt;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/32004L0025?lezen=1
+Stb. 2026, 94;Wetten;wijzigt;;;;vastgesteld;hoog;2026-06-04;;https://concordans.nl/stb/2026/94?lezen=1
+Stcrt. 2025, 39855;Wetten;wijzigt;;;;vastgesteld;hoog;2026-01-01;;https://concordans.nl/stcrt/2025/39855?lezen=1
+Stb. 2025, 333;Wetten;wijzigt;;;;vastgesteld;hoog;2026-01-01;;https://concordans.nl/stb/2025/333?lezen=1
+Stb. 2025, 124;Wetten;wijzigt;;;;vastgesteld;hoog;2025-07-01;;https://concordans.nl/stb/2025/124?lezen=1
+Artikel 4:20;Artikelen;noemt;;;definitie;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/4:20?lezen=1
+Artikel 5:43;Artikelen;noemt;;;definitie;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/5:43?lezen=1
+Artikel 8:36e;Artikelen;noemt;;;definitie;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/8:36e?lezen=1
+Artikel 8:94;Artikelen;noemt;;;definitie;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/8:94?lezen=1
+Artikel 8:107;Artikelen;noemt;;;definitie;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/8:107?lezen=1
+Artikel 8:4;Artikelen;noemt;;;mogelijk definitie;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/8:4?lezen=1
+Artikel bijlage 2 artikel 1;Artikelen;noemt;;;mogelijk voorwaarde;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_1&lezen=1
+Artikel bijlage 2 artikel 1;Artikelen;noemt;;;mogelijk voorwaarde;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_1&lezen=1
+Artikel bijlage 2 artikel 2;Artikelen;noemt;;;mogelijk voorwaarde;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_2&lezen=1
+Artikel bijlage 2 artikel 4;Artikelen;noemt;;;uitzondering;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_4&lezen=1
+Artikel bijlage 2 artikel 7;Artikelen;noemt;;;uitzondering;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_7&lezen=1
+Artikel bijlage 2 artikel 11;Artikelen;noemt;;;uitzondering;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_11&lezen=1
+Omgevingswet;Wetten;noemt;;;;vastgesteld;hoog;2024-01-01;in werking 1 jan. 2024;https://concordans.nl/wetten/BWBR0037885?lezen=1
+Wet op het financieel toezicht;Wetten;noemt;;;;vastgesteld;hoog;2007-01-01;in werking 1 jan. 2007;https://concordans.nl/wetten/BWBR0020368?lezen=1
+Vreemdelingenwet 2000;Wetten;noemt;;;;vastgesteld;hoog;2001-04-01;in werking 1 apr. 2001;https://concordans.nl/wetten/BWBR0011823?lezen=1
+Algemene wet inzake rijksbelastingen;Wetten;noemt;;;;vastgesteld;hoog;1962-10-01;in werking 1 okt. 1962;https://concordans.nl/wetten/BWBR0002320?lezen=1
+Rechtbank Den Haag, 14 oktober 2026;Uitspraken;haalt aan;;;;vastgesteld;hoog;2026-10-14;ECLI:NL:RBDHA:2026:30262;https://concordans.nl/uitspraken/ECLI:NL:RBDHA:2026:30262?lezen=1
+Raad van State, 14 oktober 2026;Uitspraken;haalt aan;;;;vastgesteld;hoog;2026-10-14;ECLI:NL:RVS:2026:6065;https://concordans.nl/uitspraken/ECLI:NL:RVS:2026:6065?lezen=1
+Raad van State, 14 oktober 2026;Uitspraken;haalt aan;;;;vastgesteld;hoog;2026-10-14;ECLI:NL:RVS:2026:6066;https://concordans.nl/uitspraken/ECLI:NL:RVS:2026:6066?lezen=1
+Raad van State, 14 oktober 2026;Uitspraken;haalt aan;;;;vastgesteld;hoog;2026-10-14;ECLI:NL:RVS:2026:6068;https://concordans.nl/uitspraken/ECLI:NL:RVS:2026:6068?lezen=1"
+`;
+
+exports[`Verbonden of a 'wet' > keeps its groups, rows, kern and export > groups 1`] = `
+[
+  {
+    "count": "0",
+    "id": "changes",
+    "label": "Artikelen die deze publicatie wijzigt",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "47",
+    "id": "dossiers",
+    "label": "Dossiers die deze wet raken",
+    "plaats": "verbonden",
+    "rows": [
+      "dossiers/36824 | Wijziging van diverse wetten in verband met het overzetten van bepalingen uit d… | Wijzigt deze wet, Stb. 2026, 94 | Kamerstuk 36824",
+      "dossiers/36638 | Verzamelwet Justitie en Veiligheid en Asiel en Migratie 20XX | Wijzigt deze wet, Stb. 2025, 124 | Kamerstuk 36638",
+      "dossiers/36463 | versterking strafrechtelijke aanpak ondermijnende criminaliteit II | Wijzigt deze wet, Stb. 2025, 333 | Kamerstuk 36463",
+      "dossiers/36367 | Verzamelwet Omgevingswet 20.. | Wijzigt deze wet, Stb. 2023, 376 | Kamerstuk 36367",
+    ],
+    "section": null,
+  },
+  {
+    "count": "565",
+    "id": "articles",
+    "label": "Artikelen van deze wet",
+    "plaats": "inhoud",
+    "rows": [
+      "articles/bwbr0005537_1_1 | Artikel 1:1 |  | ",
+      "articles/bwbr0005537_1_2 | Artikel 1:2 |  | ",
+      "articles/bwbr0005537_1_3 | Artikel 1:3 |  | ",
+      "articles/bwbr0005537_1_4 | Artikel 1:4 |  | ",
+    ],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "basis",
+    "label": "Grondslag van deze wet",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "845",
+    "id": "based-on",
+    "label": "Gebaseerd op deze wet",
+    "plaats": "verbonden",
+    "rows": [
+      "instruments/bwbr0038341 | Aanpassingsbesluit vereenvoudiging en digitalisering procesrecht | AMvB op grond van art. 8:36f lid 1 | mede op grond van Burgerlijk Wetboek Boek 1, Burgerlijk Wetboek Boek 8, Faillissementswet en Uitvoeringswet grondkamers, in werking 1 mrt. 2017",
+      "instruments/bwbr0026012 | Besluit buitengerechtelijke kosten | AMvB op grond van art. 4:120 lid 2, uitgewerkt in art. 1 | in werking 1 jul. 2009",
+      "instruments/bwbr0011217 | Besluit klachtencommissie vergunninghouders interlandelijke adoptie | AMvB op grond van art. 9:13, 9:14 | mede op grond van Uitvoeringswet Verdrag inzake de bescherming van kinderen en de samenwerking op het gebied van de interlandelijke adoptie en Wet opneming buitenlandse kinderen ter adoptie, in werking 1 apr. 2000",
+      "instruments/bwbr0006358 | Besluit proceskosten bestuursrecht | AMvB op grond van art. 8:75, uitgewerkt in art. 1 | in werking 1 jan. 1994",
+    ],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "implemented-by",
+    "label": "Regelingen die deze wet implementeren",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "36",
+    "id": "international",
+    "label": "Europees en internationaal",
+    "plaats": "verbonden",
+    "rows": [
+      "instruments/31979l0409 | Richtlijn 79/409/EEG |  | uitvoeringsmaatregel Stb. 2005, 282 volgens EUR-Lex",
+      "instruments/31992l0043 | Richtlijn 92/43/EEG |  | uitvoeringsmaatregel Stb. 2005, 282 volgens EUR-Lex",
+      "instruments/31993l0006 | Richtlijn 93/6/EEG |  | uitvoeringsmaatregel Stb. 1995, 250 volgens EUR-Lex",
+      "instruments/31994l0063 | Richtlijn 94/63/EG |  | uitvoeringsmaatregel Stb. 1995, 250 volgens EUR-Lex",
+      "instruments/32000l0031 | Richtlijn 2000/31/EG | Genoemd | ",
+      "instruments/32002l0047 | Richtlijn 2002/47/EG | Genoemd | ",
+      "instruments/32003l0071 | Richtlijn 2003/71/EG | Genoemd | ",
+      "instruments/32004l0025 | Richtlijn 2004/25/EG | Genoemd | ",
+    ],
+    "section": null,
+  },
+  {
+    "count": "114",
+    "id": "amended-by",
+    "label": "Publicaties die deze wet wijzigen",
+    "plaats": "verbonden",
+    "rows": [
+      "instruments/stb_2026_94 | Stb. 2026, 94 |  | 4 jun. 2026",
+      "instruments/stcrt_2025_39855 | Stcrt. 2025, 39855 |  | 1 jan. 2026",
+      "instruments/stb_2025_333 | Stb. 2025, 333 |  | 1 jan. 2026",
+      "instruments/stb_2025_124 | Stb. 2025, 124 |  | 1 jul. 2025",
+    ],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "proposals",
+    "label": "Voorstellen die deze wet wijzigen",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "485",
+    "id": "aard",
+    "label": "Verwijzingen vanuit deze wet, naar aard",
+    "plaats": "verbonden",
+    "rows": [
+      "articles/bwbr0005537_4_20 | Artikel 4:20 | Verwijst naar art. 4:18, als definitie | ",
+      "articles/bwbr0005537_5_43 | Artikel 5:43 | Verwijst naar art. 5:50, als definitie | ",
+      "articles/bwbr0005537_8_36e | Artikel 8:36e | Verwijst naar art. 8:45a, als definitie | ",
+      "articles/bwbr0005537_8_94 | Artikel 8:94 | Verwijst naar art. 26 Algemene wet inzake rijksbelastingen, als definitie | ",
+      "articles/bwbr0005537_8_107 | Artikel 8:107 | Verwijst naar art. 8:36e, als definitie | ",
+      "articles/bwbr0005537_8_4 | Artikel 8:4 | Verwijst naar art. 3:25, mogelijk als definitie | ",
+      "articles/bwbr0005537_bijlage_2_artikel_1 | Artikel bijlage 2 artikel 1 | Verwijst naar art. 124 Gemeentewet, mogelijk als voorwaarde | ",
+      "articles/bwbr0005537_bijlage_2_artikel_1 | Artikel bijlage 2 artikel 1 | Verwijst naar art. 2.21 Omgevingswet, mogelijk als voorwaarde | ",
+      "articles/bwbr0005537_bijlage_2_artikel_2 | Artikel bijlage 2 artikel 2 | Verwijst naar art. 19 Woningwet, mogelijk als voorwaarde | ",
+      "articles/bwbr0005537_bijlage_2_artikel_4 | Artikel bijlage 2 artikel 4 | Verwijst naar art. 18 Noodwet voedselvoorziening, als uitzondering | ",
+      "articles/bwbr0005537_bijlage_2_artikel_7 | Artikel bijlage 2 artikel 7 | Verwijst naar art. 27l Loodsenwet, als uitzondering | ",
+      "articles/bwbr0005537_bijlage_2_artikel_11 | Artikel bijlage 2 artikel 11 | Verwijst naar art. 27b Loodsenwet, als uitzondering | ",
+    ],
+    "section": null,
+  },
+  {
+    "count": "2.579",
+    "id": "related",
+    "label": "Wetten die met deze wet verbonden zijn",
+    "plaats": "verbonden",
+    "rows": [
+      "instruments/bwbr0037885 | Omgevingswet | 63 artikelen verwijzen naar deze wet, 2 artikelen van deze wet ernaar | Wet, in werking 1 jan. 2024",
+      "instruments/bwbr0020368 | Wet op het financieel toezicht | 34 artikelen verwijzen naar deze wet, 5 artikelen van deze wet ernaar | in werking 1 jan. 2007",
+      "instruments/bwbr0011823 | Vreemdelingenwet 2000 | 35 artikelen verwijzen naar deze wet, 2 artikelen van deze wet ernaar | Wet, in werking 1 apr. 2001",
+      "instruments/bwbr0002320 | Algemene wet inzake rijksbelastingen | 29 artikelen verwijzen naar deze wet, 2 artikelen van deze wet ernaar | in werking 1 okt. 1962",
+    ],
+    "section": null,
+  },
+  {
+    "count": "275.336",
+    "id": "judgments",
+    "label": "Uitspraken die deze wet aanhalen",
+    "plaats": "verbonden",
+    "rows": [
+      "judgments/ecli_nl_rbdha_2026_30262 | Rechtbank Den Haag, 14 oktober 2026 | Haalt aan | art. 6:22, ECLI:NL:RBDHA:2026:30262",
+      "judgments/ecli_nl_rvs_2026_6065 | Raad van State, 14 oktober 2026 | Haalt aan | art. 4:84, ECLI:NL:RVS:2026:6065",
+      "judgments/ecli_nl_rvs_2026_6066 | Raad van State, 14 oktober 2026 | Haalt aan | art. 4:84, 6:19 en 1 ander, ECLI:NL:RVS:2026:6066",
+      "judgments/ecli_nl_rvs_2026_6068 | Raad van State, 14 oktober 2026 | Haalt aan | art. 3:9, ECLI:NL:RVS:2026:6068",
+    ],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "published-in",
+    "label": "Gepubliceerd in het Tractatenblad",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "publishes",
+    "label": "Verdragen in dit Tractatenblad",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+]
+`;

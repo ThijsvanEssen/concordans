@@ -14,3 +14,6 @@ bun.lockb
 
 # The contract with the API (tests/data/readable-paths.json there), byte for byte.
 src/lib/bron/readable-paths.json
+
+# Recorded from the API, written by src/lib/test/opname.ts
+/src/lib/fixtures/verbonden/

@@ -7,7 +7,8 @@ import { textOf } from '$lib/text/words';
 import { ifExists } from '$lib/api/errors';
 import { abortable } from '$lib/api/records';
 import { getDossierMutations } from '$lib/components/parliamentary/data';
-import { dossierNumbersOf, type Row } from './rows';
+import { type Row } from './rows';
+import { dossierNumbersOf } from '$lib/bron/describe';
 import { readEdge } from './edge-meta';
 
 export type ProposedText = { lid: string | null; text: string; source: string };

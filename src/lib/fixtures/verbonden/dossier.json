@@ -1,0 +1,3544 @@
+{
+	"/api/decisions {} {\"chamber\":\"TK\",\"dossier\":\"36764\",\"limit\":100}": {
+		"total": 16,
+		"items": [
+			{
+				"id": "decisions/decision_01c34d79_d628_4e69_948a_d121b7d0f39b",
+				"key": "decision_01c34d79_d628_4e69_948a_d121b7d0f39b",
+				"date": "2026-04-15",
+				"subject": "Amendement van het lid Van den Berg over een evaluatie binnen twee jaar en een invoeringstoets binnen achttien maanden",
+				"display_name": "Amendement van het lid Van den Berg over een evaluatie binnen twee jaar en een invoeringstoets binnen achttien maanden",
+				"external_id": "01c34d79-d628-4e69-948a-d121b7d0f39b",
+				"dossier_numbers": [
+					"36764"
+				],
+				"dossiers": [
+					{
+						"number": "36764",
+						"short_title": "Cyberbeveiligingswet",
+						"title": "Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet) "
+					}
+				],
+				"kind": "Amendement",
+				"primary_case_kind": "Amendement",
+				"decision_kind": "Stemmen - aangenomen",
+				"passed": true,
+				"chamber": "TK",
+				"result": null,
+				"method": null,
+				"bill_decision": null,
+				"vote_kind": "faction",
+				"tally": {
+					"Voor": 149,
+					"Tegen": 1
+				},
+				"voters": {
+					"Voor": 16,
+					"Tegen": 1
+				},
+				"dictum": null,
+				"motion": {
+					"collection": "documents",
+					"key": "ccb9969a_2151_42c2_bb64_d2539f764b60",
+					"path": "/kamerstukken/36764/26"
+				},
+				"coalition": {
+					"cabinet": "jetten",
+					"coalition_for": 66,
+					"coalition_against": 0,
+					"opposition_for": 83,
+					"opposition_against": 1,
+					"pattern": "together",
+					"carried": false,
+					"decisive": false
+				},
+				"path": "/stemmingen/decision_01c34d79_d628_4e69_948a_d121b7d0f39b"
+			},
+			{
+				"id": "decisions/decision_58fd750a_3ec7_41de_8473_35006656a75a",
+				"key": "decision_58fd750a_3ec7_41de_8473_35006656a75a",
+				"date": "2026-04-15",
+				"subject": "Amendement van het lid Kathmann over de interventiebevoegdheid en de inspanningsplicht van de minister",
+				"display_name": "Amendement van het lid Kathmann over de interventiebevoegdheid en de inspanningsplicht van de minister",
+				"external_id": "58fd750a-3ec7-41de-8473-35006656a75a",
+				"dossier_numbers": [
+					"36764"
+				],
+				"dossiers": [
+					{
+						"number": "36764",
+						"short_title": "Cyberbeveiligingswet",
+						"title": "Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet) "
+					}
+				],
+				"kind": "Amendement",
+				"primary_case_kind": "Amendement",
+				"decision_kind": "Stemmen - verworpen",
+				"passed": false,
+				"chamber": "TK",
+				"result": null,
+				"method": null,
+				"bill_decision": null,
+				"vote_kind": "faction",
+				"tally": {
+					"Voor": 65,
+					"Tegen": 85
+				},
+				"voters": {
+					"Voor": 9,
+					"Tegen": 8
+				},
+				"dictum": null,
+				"motion": {
+					"collection": "documents",
+					"key": "c1378fff_8880_40c2_8595_7f81d6b34d71",
+					"path": "/kamerstukken/36764/12"
+				},
+				"coalition": {
+					"cabinet": "jetten",
+					"coalition_for": 0,
+					"coalition_against": 66,
+					"opposition_for": 65,
+					"opposition_against": 19,
+					"pattern": "together",
+					"carried": false,
+					"decisive": true
+				},
+				"path": "/stemmingen/decision_58fd750a_3ec7_41de_8473_35006656a75a"
+			},
+			{
+				"id": "decisions/decision_b610a37d_d799_48ae_b126_d56073ef9991",
+				"key": "decision_b610a37d_d799_48ae_b126_d56073ef9991",
+				"date": "2026-04-15",
+				"subject": "Amendement van het lid Kathmann over een voorhangbepaling",
+				"display_name": "Amendement van het lid Kathmann over een voorhangbepaling",
+				"external_id": "b610a37d-d799-48ae-b126-d56073ef9991",
+				"dossier_numbers": [
+					"36764"
+				],
+				"dossiers": [
+					{
+						"number": "36764",
+						"short_title": "Cyberbeveiligingswet",
+						"title": "Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet) "
+					}
+				],
+				"kind": "Amendement",
+				"primary_case_kind": "Amendement",
+				"decision_kind": "Stemmen - aangenomen",
+				"passed": true,
+				"chamber": "TK",
+				"result": null,
+				"method": null,
+				"bill_decision": null,
+				"vote_kind": "faction",
+				"tally": {
+					"Voor": 149,
+					"Tegen": 1
+				},
+				"voters": {
+					"Voor": 16,
+					"Tegen": 1
+				},
+				"dictum": null,
+				"motion": {
+					"collection": "documents",
+					"key": "746eb841_651c_474c_ba4f_a9c88638b03e",
+					"path": "/kamerstukken/36764/13"
+				},
+				"coalition": {
+					"cabinet": "jetten",
+					"coalition_for": 66,
+					"coalition_against": 0,
+					"opposition_for": 83,
+					"opposition_against": 1,
+					"pattern": "together",
+					"carried": false,
+					"decisive": false
+				},
+				"path": "/stemmingen/decision_b610a37d_d799_48ae_b126_d56073ef9991"
+			},
+			{
+				"id": "decisions/decision_c94c4b61_f72a_46bc_8cda_266eb0e48052",
+				"key": "decision_c94c4b61_f72a_46bc_8cda_266eb0e48052",
+				"date": "2026-04-15",
+				"subject": "Gewijzigde motie van de leden Kathmann en Dassen over het inrichten van één centraal meldportaal voor organisaties (t.v.v. 36764-19)",
+				"display_name": "Motie 2026Z07842: Gewijzigde motie van de leden Kathmann en Dassen over het inrichten van één centraal meldportaal voor organisaties (t.v.v. 36764-19)",
+				"external_id": "c94c4b61-f72a-46bc-8cda-266eb0e48052",
+				"dossier_numbers": [
+					"36764"
+				],
+				"dossiers": [
+					{
+						"number": "36764",
+						"short_title": "Cyberbeveiligingswet",
+						"title": "Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet) "
+					}
+				],
+				"kind": "Motie",
+				"primary_case_kind": "Motie",
+				"decision_kind": "Stemmen - aangenomen",
+				"passed": true,
+				"chamber": "TK",
+				"result": null,
+				"method": null,
+				"bill_decision": null,
+				"vote_kind": "faction",
+				"tally": {
+					"Voor": 139,
+					"Tegen": 11
+				},
+				"voters": {
+					"Voor": 14,
+					"Tegen": 3
+				},
+				"dictum": "verzoekt de regering om één centraal meldportaal in te richten voor organisaties en zich in te spannen om hier, naast de meldingen die volgen uit de Cyberbeveiligingswet en de Wet weerbaarheid kritieke entiteiten, ook zoveel mogelijk andere soorten meldingen in te kunnen maken; verzoekt de regering om de Kamer uiterlijk in Q4 van 2026 te informeren over het inrichten van het centrale meldportaal",
+				"motion": {
+					"collection": "documents",
+					"key": "bfada5de_9472_4447_9546_31a4b6329b11",
+					"path": "/kamerstukken/36764/31"
+				},
+				"coalition": {
+					"cabinet": "jetten",
+					"coalition_for": 66,
+					"coalition_against": 0,
+					"opposition_for": 73,
+					"opposition_against": 11,
+					"pattern": "together",
+					"carried": false,
+					"decisive": false
+				},
+				"path": "/stemmingen/decision_c94c4b61_f72a_46bc_8cda_266eb0e48052"
+			}
+		],
+		"facets": {
+			"kind": [
+				{
+					"value": "Motie",
+					"count": 11,
+					"passed": 11,
+					"rejected": 0
+				},
+				{
+					"value": "Amendement",
+					"count": 4,
+					"passed": 3,
+					"rejected": 1
+				},
+				{
+					"value": "Wetgeving",
+					"count": 1,
+					"passed": 1,
+					"rejected": 0
+				}
+			],
+			"passed": [
+				{
+					"value": true,
+					"count": 15
+				},
+				{
+					"value": false,
+					"count": 1
+				}
+			],
+			"days": [
+				{
+					"date": "2026-03-31",
+					"count": 10,
+					"passed": 10
+				},
+				{
+					"date": "2026-04-15",
+					"count": 6,
+					"passed": 5
+				}
+			],
+			"years": [
+				{
+					"year": "2026",
+					"count": 16,
+					"passed": 15,
+					"rejected": 1
+				}
+			],
+			"party_votes": [],
+			"coalition": [
+				{
+					"value": "together",
+					"count": 16
+				},
+				{
+					"value": "decisive",
+					"count": 1
+				}
+			],
+			"coalition_cabinets": [
+				{
+					"cabinet": "jetten",
+					"name": "kabinet-Jetten",
+					"votes": 16,
+					"together": 16,
+					"split": 0,
+					"wissel": 0,
+					"carried": 0,
+					"decisive": 1
+				}
+			]
+		},
+		"partial": false
+	},
+	"/api/dossiers/{number} {\"number\":\"36764\"} {}": {
+		"id": "dossiers/36764",
+		"key": "36764",
+		"number": "36764",
+		"suffix": null,
+		"same_number_count": 0,
+		"title": "Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet) ",
+		"short_title": "Cyberbeveiligingswet",
+		"title_source": "dossier",
+		"source": "tk",
+		"kind": "Wetgeving",
+		"kind_basis": "case",
+		"phases": [
+			{
+				"name": "Voorstel van wet",
+				"chamber": "TK",
+				"done": true,
+				"date": "2025-06-02"
+			},
+			{
+				"name": "Memorie van toelichting",
+				"chamber": "TK",
+				"done": true,
+				"date": "2025-06-02"
+			},
+			{
+				"name": "Advies Raad van State",
+				"chamber": "TK",
+				"done": true,
+				"date": "2025-06-02"
+			},
+			{
+				"name": "Verslag",
+				"chamber": "TK",
+				"done": true,
+				"date": "2025-09-08"
+			}
+		],
+		"current_phase": "Eindtekst",
+		"closed": true,
+		"outcome": "aangenomen",
+		"tk_decision": {
+			"kind": "Stemmen - aangenomen",
+			"text": "Aangenomen.",
+			"date": "2026-04-15"
+		},
+		"ek_outcome": {
+			"outcome": "Aangenomen",
+			"date": "2026-07-07",
+			"method": "Stemming bij zitten en opstaan, aangenomen",
+			"source_url": "https://www.eerstekamer.nl/verslagdeel/20260707/cyberbeveiligingswet",
+			"retrieved_on": "2026-10-09",
+			"attribution": "Eerste Kamer der Staten-Generaal, www.eerstekamer.nl"
+		},
+		"opened_on": "2025-06-02",
+		"opened_on_basis": "first_paper",
+		"submitted_on_tk": "2025-06-02",
+		"last_activity": "2026-09-10",
+		"closed_on": "2026-07-10",
+		"ministry": "jenv",
+		"initiative": false,
+		"cabinet": "schoof",
+		"document_count": 43,
+		"activity_count": 30,
+		"decision_count": 20,
+		"commitment_count": 7,
+		"instruments": [
+			{
+				"id": "instruments/bwbr0052872",
+				"key": "bwbr0052872",
+				"bwb_id": "BWBR0052872",
+				"celex": null,
+				"display_name": "Cyberbeveiligingswet",
+				"jurisdiction": "nl",
+				"relation": "legislated_in",
+				"status": "canoniek",
+				"links": [
+					{
+						"relation": "legislated_in",
+						"status": "canoniek"
+					},
+					{
+						"relation": "establishes",
+						"status": "canoniek"
+					}
+				]
+			},
+			{
+				"id": "instruments/bwbr0009950",
+				"key": "bwbr0009950",
+				"bwb_id": "BWBR0009950",
+				"celex": null,
+				"display_name": "Telecommunicatiewet",
+				"jurisdiction": "nl",
+				"relation": "amends",
+				"status": "canoniek",
+				"links": [
+					{
+						"relation": "amends",
+						"status": "canoniek"
+					},
+					{
+						"relation": "repeals",
+						"status": "canoniek"
+					}
+				]
+			},
+			{
+				"id": "instruments/bwbr0041548",
+				"key": "bwbr0041548",
+				"bwb_id": "BWBR0041548",
+				"celex": null,
+				"display_name": "Wet bekostiging financieel toezicht 2019",
+				"jurisdiction": "nl",
+				"relation": "amends",
+				"status": "canoniek",
+				"links": [
+					{
+						"relation": "amends",
+						"status": "canoniek"
+					}
+				]
+			},
+			{
+				"id": "instruments/bwbr0050130",
+				"key": "bwbr0050130",
+				"bwb_id": "BWBR0050130",
+				"celex": null,
+				"display_name": "Wet bevordering digitale weerbaarheid bedrijven",
+				"jurisdiction": "nl",
+				"relation": "amends",
+				"status": "canoniek",
+				"links": [
+					{
+						"relation": "amends",
+						"status": "canoniek"
+					}
+				]
+			}
+		],
+		"legal_effect": {
+			"amends": [
+				{
+					"key": "bwbr0009950",
+					"name": "Telecommunicatiewet",
+					"short": null,
+					"bwb_id": "BWBR0009950",
+					"celex": null,
+					"basis": [
+						"staatsblad"
+					]
+				},
+				{
+					"key": "bwbr0041548",
+					"name": "Wet bekostiging financieel toezicht 2019",
+					"short": null,
+					"bwb_id": "BWBR0041548",
+					"celex": null,
+					"basis": [
+						"staatsblad"
+					]
+				},
+				{
+					"key": "bwbr0050130",
+					"name": "Wet bevordering digitale weerbaarheid bedrijven",
+					"short": null,
+					"bwb_id": "BWBR0050130",
+					"celex": null,
+					"basis": [
+						"staatsblad"
+					]
+				},
+				{
+					"key": "bwbr0020368",
+					"name": "Wet op het financieel toezicht",
+					"short": "Wft",
+					"bwb_id": "BWBR0020368",
+					"celex": null,
+					"basis": [
+						"staatsblad"
+					]
+				}
+			],
+			"implements": [
+				{
+					"key": "32022l2555",
+					"name": "Richtlijn (EU) 2022/2555",
+					"short": null,
+					"bwb_id": null,
+					"celex": "32022L2555",
+					"basis": [
+						"staatsblad",
+						"wet"
+					]
+				}
+			]
+		},
+		"laws_named": [
+			{
+				"name": "Cyberbeveiligingswet",
+				"loaded": true,
+				"key": "bwbr0052872",
+				"bwb_id": "BWBR0052872"
+			}
+		],
+		"committees": [
+			{
+				"id": "committees/524d5de6_83dd_4754_9e1e_c10fc49ad9be",
+				"key": "524d5de6_83dd_4754_9e1e_c10fc49ad9be",
+				"slug": "def",
+				"name": "Vaste commissie voor Defensie",
+				"abbreviation": "DEF",
+				"role": "lead",
+				"path": "/commissies/def"
+			},
+			{
+				"id": "committees/807e03a0_df3f_49a1_9618_996f6fb7e24f",
+				"key": "807e03a0_df3f_49a1_9618_996f6fb7e24f",
+				"slug": "diza",
+				"name": "Vaste commissie voor Digitale Zaken",
+				"abbreviation": "DiZa",
+				"role": "lead",
+				"path": "/commissies/diza"
+			},
+			{
+				"id": "committees/14cac666_51cb_4154_80da_9b0e2eeb5014",
+				"key": "14cac666_51cb_4154_80da_9b0e2eeb5014",
+				"slug": "j_v",
+				"name": "Vaste commissie voor Justitie en Veiligheid",
+				"abbreviation": "J&V",
+				"role": "lead",
+				"path": "/commissies/j_v"
+			}
+		],
+		"documents_by_kind": {
+			"Advies Afdeling advisering Raad van State": 1,
+			"Advies Afdeling advisering Raad van State en Nader rapport": 1,
+			"Amendement": 5,
+			"Bijgewerkte tekst": 1,
+			"Brief Eerste Kamer": 1,
+			"Brief regering": 7,
+			"Eindtekst": 1,
+			"Koninklijke boodschap": 1,
+			"Memorie van toelichting": 1,
+			"Motie": 10,
+			"Motie (gewijzigd/nader)": 4,
+			"Nota n.a.v. het (nader/tweede nader/enz.) verslag": 1,
+			"Nota van wijziging": 1,
+			"Overig": 2,
+			"Verslag": 2,
+			"Verslag (initiatief)wetsvoorstel (nader)": 1,
+			"Verslag van een wetgevingsoverleg": 1,
+			"Voorstel van wet": 2
+		},
+		"senate": {
+			"document_count": 5,
+			"first_date": "2026-04-15",
+			"submitted_on": "2025-06-02",
+			"status": "Plenaire behandeling Eerste Kamer afgerond",
+			"progress": [
+				{
+					"phase": null,
+					"house": "Tweede Kamer",
+					"state": "vol",
+					"papers": [
+						{
+							"kind": "voorstel van wet",
+							"date": "2025-06-02",
+							"number": "TK, 2",
+							"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmo01rq7g8zm/f=y.pdf"
+						},
+						{
+							"kind": "stemmingsoverzicht Tweede Kamer",
+							"date": "2026-04-15",
+							"number": null,
+							"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmwqb3ym5w8b/f=y.pdf"
+						}
+					]
+				},
+				{
+					"phase": "Schriftelijke voorbereiding",
+					"house": "Eerste Kamer",
+					"state": "vol",
+					"papers": [
+						{
+							"kind": "gewijzigd voorstel van wet",
+							"date": "2026-04-15",
+							"number": "EK, A",
+							"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmwvkitp1ukc/f=y.pdf"
+						},
+						{
+							"kind": "verslag",
+							"date": "2026-06-02",
+							"number": "EK, B",
+							"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmy2m4k8z1yy/f=y.pdf"
+						},
+						{
+							"kind": "nota naar aanleiding van het verslag",
+							"date": "2026-06-17",
+							"number": "EK, C",
+							"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmyhjijw07ad/f=y.pdf"
+						},
+						{
+							"kind": "tweede verslag",
+							"date": "2026-06-26",
+							"number": "EK, D",
+							"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmyph9i9jqrt/f=y.pdf"
+						}
+					]
+				},
+				{
+					"phase": "Plenair",
+					"house": null,
+					"state": "vol",
+					"papers": [
+						{
+							"kind": "stemming",
+							"date": "2026-07-07",
+							"number": null,
+							"url": "https://www.eerstekamer.nl/verslagdeel/20260707/cyberbeveiligingswet"
+						}
+					]
+				},
+				{
+					"phase": "Afkondiging",
+					"house": "Staatsblad(en)",
+					"state": "geblokt",
+					"papers": []
+				}
+			],
+			"source": {
+				"url": "https://www.eerstekamer.nl/wetsvoorstel/36764_cyberbeveiligingswet",
+				"read_on": "2026-10-04",
+				"attribution": "Eerste Kamer der Staten-Generaal, www.eerstekamer.nl"
+			}
+		},
+		"next_activity": null,
+		"relations": [
+			{
+				"relation": "related_to",
+				"direction": "incoming",
+				"dossier": {
+					"id": "dossiers/32761",
+					"key": "32761",
+					"number": "32761",
+					"suffix": null,
+					"same_number_count": 0,
+					"title": "Verwerking en bescherming persoonsgegevens",
+					"short_title": null,
+					"title_source": "dossier",
+					"source": "tk",
+					"kind": null,
+					"kind_basis": null,
+					"phases": null,
+					"current_phase": null,
+					"closed": false,
+					"outcome": null,
+					"tk_decision": null,
+					"ek_outcome": null,
+					"opened_on": "2011-04-29",
+					"opened_on_basis": "first_paper",
+					"submitted_on_tk": null,
+					"last_activity": "2026-10-14",
+					"closed_on": null,
+					"ministry": "venj",
+					"initiative": false,
+					"cabinet": "rutte_verhagen",
+					"path": "/dossiers/32761"
+				},
+				"cases": 1,
+				"case_kinds": [
+					"Brief regering → Motie"
+				],
+				"rule": null,
+				"nota": null
+			}
+		],
+		"path": "/dossiers/36764"
+	},
+	"/api/dossiers/{number}/documents {\"number\":\"36764\"} {\"limit\":100}": {
+		"total": 43,
+		"items": [
+			{
+				"chamber": "TK",
+				"source": "tk",
+				"is_explanatory": false,
+				"id": "documents/acc2ade6_3130_4fcc_8fd8_285549213431",
+				"key": "acc2ade6_3130_4fcc_8fd8_285549213431",
+				"kind": "Brief regering",
+				"title": "Publicatie van het samenwerkingsprotocol inzake toezicht op de Cyberbeveiligingswet (Cbw) en de Wet weerbaarheid kritieke entiteiten (Wwke) in de Staatscourant",
+				"sequence": 34,
+				"number": "34",
+				"dossier_number": "36764",
+				"session_year": "2025-2026",
+				"date": "2026-09-01",
+				"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2026D40263&did=2026D40263",
+				"sender": {
+					"name": "D.M. van Weel",
+					"function": "minister van Justitie en Veiligheid",
+					"faction": null,
+					"capacity": "bewindspersoon",
+					"member_key": "88f29701_8fe7_4a10_8b0f_0973fdde12bb",
+					"ministry": "jenv"
+				},
+				"dictum": null,
+				"explanation": null,
+				"outcome": null,
+				"decided_on": null,
+				"tally": null,
+				"decision": null,
+				"display_name": "Kamerstuk 36764, nr. 34. Brief regering: Publicatie van het samenwerkingsprotocol inzake toezicht op de Cyberbeveiligingswet (Cbw) en de Wet weerbaarheid…",
+				"replaces": [],
+				"replaced_by": [],
+				"path": "/kamerstukken/36764/34"
+			},
+			{
+				"chamber": "TK",
+				"source": "tk",
+				"is_explanatory": false,
+				"id": "documents/b529da85_8dc7_436c_abae_d2b317723250",
+				"key": "b529da85_8dc7_436c_abae_d2b317723250",
+				"kind": "Brief Eerste Kamer",
+				"title": "Besluit Eerste Kamer inzake Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet)",
+				"sequence": null,
+				"number": null,
+				"dossier_number": null,
+				"session_year": "2025-2026",
+				"date": "2026-07-07",
+				"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2026D37988&did=2026D37988",
+				"sender": {
+					"name": "M.L. (Mei Li) Vos (EK/GroenLinks-PvdA)",
+					"function": "Voorzitter van de Eerste Kamer",
+					"faction": null,
+					"capacity": "overig",
+					"member_key": "edefa48b_f14e_4ec3_ab3c_dfe2aa0126ec",
+					"ministry": null
+				},
+				"dictum": null,
+				"explanation": null,
+				"outcome": null,
+				"decided_on": null,
+				"tally": null,
+				"decision": null,
+				"display_name": "Brief Eerste Kamer: Besluit Eerste Kamer inzake Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de…",
+				"replaces": [],
+				"replaced_by": [],
+				"path": null
+			},
+			{
+				"chamber": "EK",
+				"source": "eerstekamer",
+				"is_explanatory": false,
+				"id": "documents/ek_kst_36764_e",
+				"key": "ek_kst_36764_e",
+				"kind": "Overig",
+				"title": "Nota naar aanleiding van het tweede verslag",
+				"sequence": null,
+				"number": "E",
+				"dossier_number": "36764",
+				"session_year": "2025-2026",
+				"date": "2026-06-29",
+				"tk_url": null,
+				"sender": null,
+				"dictum": null,
+				"explanation": null,
+				"outcome": null,
+				"decided_on": null,
+				"tally": null,
+				"decision": null,
+				"display_name": "Kamerstuk I 36764, E: Nota naar aanleiding van het tweede verslag",
+				"replaces": [],
+				"replaced_by": [],
+				"path": "/kamerstukken/36764/E"
+			},
+			{
+				"chamber": "EK",
+				"source": "eerstekamer",
+				"is_explanatory": false,
+				"id": "documents/ek_kst_36764_d",
+				"key": "ek_kst_36764_d",
+				"kind": "Verslag",
+				"title": "Tweede verslag",
+				"sequence": null,
+				"number": "D",
+				"dossier_number": "36764",
+				"session_year": "2025-2026",
+				"date": "2026-06-26",
+				"tk_url": null,
+				"sender": null,
+				"dictum": null,
+				"explanation": null,
+				"outcome": null,
+				"decided_on": null,
+				"tally": null,
+				"decision": null,
+				"display_name": "Kamerstuk I 36764, D: Tweede verslag",
+				"replaces": [],
+				"replaced_by": [],
+				"path": "/kamerstukken/36764/D"
+			}
+		]
+	},
+	"/api/nodes/{collection}/{key} {\"collection\":\"dossiers\",\"key\":\"36764\"} {\"limit\":1}": {
+		"node": {
+			"id": "dossiers/36764",
+			"key": "36764",
+			"collection": "dossiers",
+			"type": "dossier",
+			"display_name": "Kamerstukdossier 36764: Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet) ",
+			"labels": [
+				"TK"
+			],
+			"props": {
+				"cabinet": "schoof",
+				"case_kinds": [
+					"Amendement",
+					"Brief regering",
+					"Motie",
+					"Nota n.a.v. het (nader/tweede nader/enz.) verslag"
+				],
+				"closed": true,
+				"closed_on": "2026-07-10",
+				"current_phase": "Eindtekst",
+				"display_name": "Kamerstukdossier 36764: Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet) ",
+				"ek_bill": {
+					"url": "https://www.eerstekamer.nl/wetsvoorstel/36764_cyberbeveiligingswet",
+					"read_on": "2026-10-04",
+					"status": "Plenaire behandeling Eerste Kamer afgerond",
+					"submitted_on": "2025-06-02",
+					"progress": [
+						{
+							"phase": null,
+							"house": "Tweede Kamer",
+							"state": "vol",
+							"papers": [
+								{
+									"kind": "voorstel van wet",
+									"date": "2025-06-02",
+									"number": "TK, 2",
+									"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmo01rq7g8zm/f=y.pdf"
+								},
+								{
+									"kind": "stemmingsoverzicht Tweede Kamer",
+									"date": "2026-04-15",
+									"number": null,
+									"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmwqb3ym5w8b/f=y.pdf"
+								}
+							]
+						},
+						{
+							"phase": "Schriftelijke voorbereiding",
+							"house": "Eerste Kamer",
+							"state": "vol",
+							"papers": [
+								{
+									"kind": "gewijzigd voorstel van wet",
+									"date": "2026-04-15",
+									"number": "EK, A",
+									"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmwvkitp1ukc/f=y.pdf"
+								},
+								{
+									"kind": "verslag",
+									"date": "2026-06-02",
+									"number": "EK, B",
+									"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmy2m4k8z1yy/f=y.pdf"
+								},
+								{
+									"kind": "nota naar aanleiding van het verslag",
+									"date": "2026-06-17",
+									"number": "EK, C",
+									"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmyhjijw07ad/f=y.pdf"
+								},
+								{
+									"kind": "tweede verslag",
+									"date": "2026-06-26",
+									"number": "EK, D",
+									"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmyph9i9jqrt/f=y.pdf"
+								}
+							]
+						},
+						{
+							"phase": "Plenair",
+							"house": null,
+							"state": "vol",
+							"papers": [
+								{
+									"kind": "stemming",
+									"date": "2026-07-07",
+									"number": null,
+									"url": "https://www.eerstekamer.nl/verslagdeel/20260707/cyberbeveiligingswet"
+								}
+							]
+						},
+						{
+							"phase": "Afkondiging",
+							"house": "Staatsblad(en)",
+							"state": "geblokt",
+							"papers": []
+						}
+					]
+				},
+				"ek_outcome": {
+					"outcome": "Aangenomen",
+					"date": "2026-07-07",
+					"method": "Stemming bij zitten en opstaan, aangenomen",
+					"source_url": "https://www.eerstekamer.nl/verslagdeel/20260707/cyberbeveiligingswet",
+					"retrieved_on": "2026-10-09"
+				},
+				"external_id": "674896f4-5e50-4948-bf95-a9182108a25e",
+				"first_signed": {
+					"date": "2025-06-02",
+					"member": "88f29701_8fe7_4a10_8b0f_0973fdde12bb",
+					"capacity": "bewindspersoon",
+					"function": "minister van Justitie en Veiligheid",
+					"paper": "documents/3befbdfa_30de_48d9_b0da_b0572504b962"
+				},
+				"initiative": false,
+				"kind": "Wetgeving",
+				"kind_basis": "case",
+				"label": "36764",
+				"last_activity": "2026-09-10",
+				"ministry": "jenv",
+				"number": "36764",
+				"opened_on": "2025-06-02",
+				"opened_on_basis": "first_paper",
+				"order": "00036764.0.0000.",
+				"outcome": "aangenomen",
+				"phases": [
+					{
+						"name": "Voorstel van wet",
+						"done": true,
+						"date": "2025-06-02"
+					},
+					{
+						"name": "Memorie van toelichting",
+						"done": true,
+						"date": "2025-06-02"
+					},
+					{
+						"name": "Advies Raad van State",
+						"done": true,
+						"date": "2025-06-02"
+					},
+					{
+						"name": "Verslag",
+						"done": true,
+						"date": "2025-09-08"
+					}
+				],
+				"same_number_count": 0,
+				"submitted_on_tk": "2025-06-02",
+				"suffix": "",
+				"title": "Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet) ",
+				"title_source": "dossier",
+				"tk_decision": {
+					"kind": "Stemmen - aangenomen",
+					"text": "Aangenomen.",
+					"date": "2026-04-15"
+				},
+				"short_title": "Cyberbeveiligingswet"
+			},
+			"path": "/dossiers/36764"
+		},
+		"neighbors": {
+			"total": 132,
+			"buckets": [
+				{
+					"relation": "ABOUT",
+					"direction": "inbound",
+					"collection": "activities",
+					"type": "activity",
+					"total": 30,
+					"next_offset": 1,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "activities/de3463ac_47a2_421c_918e_17e202134e47",
+							"key": "de3463ac_47a2_421c_918e_17e202134e47",
+							"collection": "activities",
+							"type": "activity",
+							"display_name": "Aansluitend: Regeling van werkzaamheden (2026-04-15)",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"external_id": "de3463ac-47a2-421c-918e-17e202134e47",
+								"date": "2026-04-15",
+								"agenda_title": "Aansluitend: Regeling van werkzaamheden",
+								"kind": "Regeling van werkzaamheden",
+								"status": "Uitgevoerd",
+								"committee_id": null,
+								"dossier_numbers": [
+									"36925-(R2219)",
+									"36800-XXII",
+									"36800-A",
+									"36558"
+								],
+								"display_name": "Aansluitend: Regeling van werkzaamheden (2026-04-15)",
+								"number": "2026A03119",
+								"replaced_by": [],
+								"tk_url": "https://www.tweedekamer.nl/debat_en_vergadering/plenaire_vergaderingen/details/activiteit?id=2026A03119",
+								"dossier_short_title": "Rijkswet uitlevering voor Aruba, Curaçao en Sint Maarten"
+							},
+							"edge_id": "09e41bd5fd0675973bf005e1152dab60d00dee6a",
+							"relation": "ABOUT",
+							"direction": "inbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/activiteiten/2026A03119"
+						}
+					]
+				},
+				{
+					"relation": "ABOUT",
+					"direction": "inbound",
+					"collection": "commitments",
+					"type": "commitment",
+					"total": 7,
+					"next_offset": 1,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "commitments/b2492759_9424_4277_86e9_f105dfe02a9c",
+							"key": "b2492759_9424_4277_86e9_f105dfe02a9c",
+							"collection": "commitments",
+							"type": "commitment",
+							"display_name": "De staatssecretaris Digitale Economie en Soevereiniteit en de minister van…",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"activity_number": "2026A01323",
+								"cabinet": "jetten",
+								"display_name": "De staatssecretaris Digitale Economie en Soevereiniteit en de minister van…",
+								"expected_resolution": "0001-01-01",
+								"external_id": "b2492759-9424-4277-86e9-f105dfe02a9c",
+								"letter_ids": [],
+								"made_on": "2026-04-10",
+								"member_key": "88f29701_8fe7_4a10_8b0f_0973fdde12bb",
+								"minister_name": "Weel, D.M. van",
+								"minister_role": "Minister van Justitie en Veiligheid",
+								"ministry": "jenv",
+								"ministry_name": "Justitie en Veiligheid",
+								"number": "TZ202604-068",
+								"post": "minister",
+								"status": "Openstaand"
+							},
+							"edge_id": "0c02fe6a9a7766e82818d5c15684d4968320b68a",
+							"relation": "ABOUT",
+							"direction": "inbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/toezeggingen/TZ202604-068"
+						}
+					]
+				},
+				{
+					"relation": "ABOUT",
+					"direction": "inbound",
+					"collection": "decisions",
+					"type": "decision",
+					"total": 20,
+					"next_offset": 1,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "decisions/decision_a64939c5_adf9_4ad9_a4a9_24323e10398b",
+							"key": "decision_a64939c5_adf9_4ad9_a4a9_24323e10398b",
+							"collection": "decisions",
+							"type": "decision",
+							"display_name": "Motie van het lid Van den Berg over geen meervoudige beboeting voor hetzelfde feitencomplex",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"decision_id": "a64939c5-adf9-4ad9-a4a9-24323e10398b",
+								"agenda_item_id": "169d6746-6fb3-4b97-89a6-6a94c8a37f3b",
+								"date": "2026-03-31",
+								"subject": "Motie van het lid Van den Berg over geen meervoudige beboeting voor hetzelfde feitencomplex",
+								"agenda_item_subject": "Moties ingediend bij het wetgevingsoverleg over de Cyberbeveiligingswet en de Wet weerbaarheid kritieke entiteiten",
+								"decision_text": "Aangenomen.",
+								"decision_kind": "Stemmen - aangenomen",
+								"decision_order": 11,
+								"meeting_kind": "",
+								"case_ids": [
+									"e3df21ab-e594-40a8-b1d2-6d44a0da629f",
+									"2eb0c538-78cb-49b9-bea2-0993b966cffb",
+									"3e779c3a-1e36-4bfa-a892-0b758e0fc5c3",
+									"376ed6db-ac21-4be3-8b21-0eeaf8a97d15"
+								],
+								"primary_case_id": "e3df21ab-e594-40a8-b1d2-6d44a0da629f",
+								"primary_case_kind": "Motie",
+								"kind": "Motie",
+								"dossier_numbers": [
+									"36764",
+									"36765"
+								],
+								"vote_kind": "faction",
+								"tally": {
+									"Voor": 150
+								},
+								"voters": {
+									"Voor": 17
+								},
+								"passed": true,
+								"display_name": "Motie van het lid Van den Berg over geen meervoudige beboeting voor hetzelfde feitencomplex",
+								"dossier_short_title": "Cyberbeveiligingswet"
+							},
+							"edge_id": "00aef566493f540a1ed97763b9c3f1647f0b9918",
+							"relation": "ABOUT",
+							"direction": "inbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/stemmingen/decision_a64939c5_adf9_4ad9_a4a9_24323e10398b"
+						}
+					]
+				},
+				{
+					"relation": "LEGISLATED_IN",
+					"direction": "inbound",
+					"collection": "instruments",
+					"type": "instrument",
+					"total": 2,
+					"next_offset": 1,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "instruments/stb_2026_187",
+							"key": "stb_2026_187",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Stb. 2026, 187",
+							"labels": [
+								"BWB",
+								"Publication"
+							],
+							"props": {
+								"article_count": 0,
+								"citation_title": "Stb. 2026, 187",
+								"date_published": "2026-07-10",
+								"date_signed": "2026-07-08",
+								"display_name": "Stb. 2026, 187",
+								"dossier_numbers": [
+									"36764"
+								],
+								"inbound_citation_count": 0,
+								"jurisdiction": "nl",
+								"kind": "publicatie",
+								"official_id": "stb-2026-187",
+								"publication_kind": "Stb",
+								"publication_number": "187",
+								"publication_year": 2026,
+								"source": "bwb",
+								"stub": false
+							},
+							"edge_id": "6dc132427ae4555c09068f634178df82fac9a017",
+							"relation": "LEGISLATED_IN",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"dossier_number": "36764"
+							},
+							"path": "/stb/2026/187"
+						}
+					]
+				}
+			]
+		},
+		"title": "36764 Cyberbeveiligingswet",
+		"description": "Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog…",
+		"path": "/dossiers/36764",
+		"lid_counts_pending": false
+	},
+	"/api/nodes/{collection}/{key} {\"collection\":\"dossiers\",\"key\":\"36764\"} {\"limit\":5}": {
+		"node": {
+			"id": "dossiers/36764",
+			"key": "36764",
+			"collection": "dossiers",
+			"type": "dossier",
+			"display_name": "Kamerstukdossier 36764: Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet) ",
+			"labels": [
+				"TK"
+			],
+			"props": {
+				"cabinet": "schoof",
+				"case_kinds": [
+					"Amendement",
+					"Brief regering",
+					"Motie",
+					"Nota n.a.v. het (nader/tweede nader/enz.) verslag"
+				],
+				"closed": true,
+				"closed_on": "2026-07-10",
+				"current_phase": "Eindtekst",
+				"display_name": "Kamerstukdossier 36764: Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet) ",
+				"ek_bill": {
+					"url": "https://www.eerstekamer.nl/wetsvoorstel/36764_cyberbeveiligingswet",
+					"read_on": "2026-10-04",
+					"status": "Plenaire behandeling Eerste Kamer afgerond",
+					"submitted_on": "2025-06-02",
+					"progress": [
+						{
+							"phase": null,
+							"house": "Tweede Kamer",
+							"state": "vol",
+							"papers": [
+								{
+									"kind": "voorstel van wet",
+									"date": "2025-06-02",
+									"number": "TK, 2",
+									"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmo01rq7g8zm/f=y.pdf"
+								},
+								{
+									"kind": "stemmingsoverzicht Tweede Kamer",
+									"date": "2026-04-15",
+									"number": null,
+									"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmwqb3ym5w8b/f=y.pdf"
+								}
+							]
+						},
+						{
+							"phase": "Schriftelijke voorbereiding",
+							"house": "Eerste Kamer",
+							"state": "vol",
+							"papers": [
+								{
+									"kind": "gewijzigd voorstel van wet",
+									"date": "2026-04-15",
+									"number": "EK, A",
+									"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmwvkitp1ukc/f=y.pdf"
+								},
+								{
+									"kind": "verslag",
+									"date": "2026-06-02",
+									"number": "EK, B",
+									"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmy2m4k8z1yy/f=y.pdf"
+								},
+								{
+									"kind": "nota naar aanleiding van het verslag",
+									"date": "2026-06-17",
+									"number": "EK, C",
+									"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmyhjijw07ad/f=y.pdf"
+								},
+								{
+									"kind": "tweede verslag",
+									"date": "2026-06-26",
+									"number": "EK, D",
+									"url": "https://www.eerstekamer.nl/9370000/1/j9vvkfvj6b325az/vmyph9i9jqrt/f=y.pdf"
+								}
+							]
+						},
+						{
+							"phase": "Plenair",
+							"house": null,
+							"state": "vol",
+							"papers": [
+								{
+									"kind": "stemming",
+									"date": "2026-07-07",
+									"number": null,
+									"url": "https://www.eerstekamer.nl/verslagdeel/20260707/cyberbeveiligingswet"
+								}
+							]
+						},
+						{
+							"phase": "Afkondiging",
+							"house": "Staatsblad(en)",
+							"state": "geblokt",
+							"papers": []
+						}
+					]
+				},
+				"ek_outcome": {
+					"outcome": "Aangenomen",
+					"date": "2026-07-07",
+					"method": "Stemming bij zitten en opstaan, aangenomen",
+					"source_url": "https://www.eerstekamer.nl/verslagdeel/20260707/cyberbeveiligingswet",
+					"retrieved_on": "2026-10-09"
+				},
+				"external_id": "674896f4-5e50-4948-bf95-a9182108a25e",
+				"first_signed": {
+					"date": "2025-06-02",
+					"member": "88f29701_8fe7_4a10_8b0f_0973fdde12bb",
+					"capacity": "bewindspersoon",
+					"function": "minister van Justitie en Veiligheid",
+					"paper": "documents/3befbdfa_30de_48d9_b0da_b0572504b962"
+				},
+				"initiative": false,
+				"kind": "Wetgeving",
+				"kind_basis": "case",
+				"label": "36764",
+				"last_activity": "2026-09-10",
+				"ministry": "jenv",
+				"number": "36764",
+				"opened_on": "2025-06-02",
+				"opened_on_basis": "first_paper",
+				"order": "00036764.0.0000.",
+				"outcome": "aangenomen",
+				"phases": [
+					{
+						"name": "Voorstel van wet",
+						"done": true,
+						"date": "2025-06-02"
+					},
+					{
+						"name": "Memorie van toelichting",
+						"done": true,
+						"date": "2025-06-02"
+					},
+					{
+						"name": "Advies Raad van State",
+						"done": true,
+						"date": "2025-06-02"
+					},
+					{
+						"name": "Verslag",
+						"done": true,
+						"date": "2025-09-08"
+					}
+				],
+				"same_number_count": 0,
+				"submitted_on_tk": "2025-06-02",
+				"suffix": "",
+				"title": "Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet) ",
+				"title_source": "dossier",
+				"tk_decision": {
+					"kind": "Stemmen - aangenomen",
+					"text": "Aangenomen.",
+					"date": "2026-04-15"
+				},
+				"short_title": "Cyberbeveiligingswet"
+			},
+			"path": "/dossiers/36764"
+		},
+		"neighbors": {
+			"total": 132,
+			"buckets": [
+				{
+					"relation": "ABOUT",
+					"direction": "inbound",
+					"collection": "activities",
+					"type": "activity",
+					"total": 30,
+					"next_offset": 5,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "activities/de3463ac_47a2_421c_918e_17e202134e47",
+							"key": "de3463ac_47a2_421c_918e_17e202134e47",
+							"collection": "activities",
+							"type": "activity",
+							"display_name": "Aansluitend: Regeling van werkzaamheden (2026-04-15)",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"external_id": "de3463ac-47a2-421c-918e-17e202134e47",
+								"date": "2026-04-15",
+								"agenda_title": "Aansluitend: Regeling van werkzaamheden",
+								"kind": "Regeling van werkzaamheden",
+								"status": "Uitgevoerd",
+								"committee_id": null,
+								"dossier_numbers": [
+									"36925-(R2219)",
+									"36800-XXII",
+									"36800-A",
+									"36558"
+								],
+								"display_name": "Aansluitend: Regeling van werkzaamheden (2026-04-15)",
+								"number": "2026A03119",
+								"replaced_by": [],
+								"tk_url": "https://www.tweedekamer.nl/debat_en_vergadering/plenaire_vergaderingen/details/activiteit?id=2026A03119",
+								"dossier_short_title": "Rijkswet uitlevering voor Aruba, Curaçao en Sint Maarten"
+							},
+							"edge_id": "09e41bd5fd0675973bf005e1152dab60d00dee6a",
+							"relation": "ABOUT",
+							"direction": "inbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/activiteiten/2026A03119"
+						},
+						{
+							"id": "activities/6b2fc9b6_fdcc_45de_9a11_4b945c94fc01",
+							"key": "6b2fc9b6_fdcc_45de_9a11_4b945c94fc01",
+							"collection": "activities",
+							"type": "activity",
+							"display_name": "Wet weerbaarheid kritieke entiteiten (36765) (2025-09-04)",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"external_id": "6b2fc9b6-fdcc-45de-9a11-4b945c94fc01",
+								"date": "2025-09-04",
+								"agenda_title": "Wet weerbaarheid kritieke entiteiten (36765)",
+								"kind": "Inbreng verslag (wetsvoorstel)",
+								"status": "Uitgevoerd",
+								"committee_id": "14cac666-51cb-4154-80da-9b0e2eeb5014",
+								"dossier_numbers": [
+									"36764",
+									"36765"
+								],
+								"display_name": "Wet weerbaarheid kritieke entiteiten (36765) (2025-09-04)",
+								"number": "2025A05418",
+								"replaced_by": [],
+								"tk_url": "https://www.tweedekamer.nl/debat_en_vergadering/commissievergaderingen/details?id=2025A05418",
+								"dossier_short_title": "Cyberbeveiligingswet"
+							},
+							"edge_id": "0c9be50e0a1356f00b11e8b416af57a1bc3cc370",
+							"relation": "ABOUT",
+							"direction": "inbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/activiteiten/2025A05418"
+						},
+						{
+							"id": "activities/79e697e9_eeb6_4d20_a039_f9b8aadb7b70",
+							"key": "79e697e9_eeb6_4d20_a039_f9b8aadb7b70",
+							"collection": "activities",
+							"type": "activity",
+							"display_name": "Aanvang middagvergadering: Regeling van werkzaamheden (2026-01-29)",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"external_id": "79e697e9-eeb6-4d20-a039-f9b8aadb7b70",
+								"date": "2026-01-29",
+								"agenda_title": "Aanvang middagvergadering: Regeling van werkzaamheden",
+								"kind": "Regeling van werkzaamheden",
+								"status": "Uitgevoerd",
+								"committee_id": null,
+								"dossier_numbers": [
+									"36888",
+									"36800-X",
+									"26643",
+									"21501-30"
+								],
+								"display_name": "Aanvang middagvergadering: Regeling van werkzaamheden (2026-01-29)",
+								"number": "2026A00713",
+								"replaced_by": [],
+								"tk_url": "https://www.tweedekamer.nl/debat_en_vergadering/plenaire_vergaderingen/details/activiteit?id=2026A00713",
+								"dossier_short_title": null
+							},
+							"edge_id": "13ac2b98741d9f81c04adddf786a6d6b87a1345b",
+							"relation": "ABOUT",
+							"direction": "inbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/activiteiten/2026A00713"
+						},
+						{
+							"id": "activities/f3b8d88e_d71a_4acb_a6e1_c14e8c8d4fcd",
+							"key": "f3b8d88e_d71a_4acb_a6e1_c14e8c8d4fcd",
+							"collection": "activities",
+							"type": "activity",
+							"display_name": "Stemmingen (2026-04-07)",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"external_id": "f3b8d88e-d71a-4acb-a6e1-c14e8c8d4fcd",
+								"date": "2026-04-07",
+								"agenda_title": "Stemmingen",
+								"kind": "Stemmingen",
+								"status": "Uitgevoerd",
+								"committee_id": null,
+								"dossier_numbers": [
+									"36764",
+									"36663",
+									"23432",
+									"31322"
+								],
+								"display_name": "Stemmingen (2026-04-07)",
+								"number": "2026A02872",
+								"replaced_by": [],
+								"tk_url": "https://www.tweedekamer.nl/debat_en_vergadering/plenaire_vergaderingen/details/activiteit?id=2026A02872",
+								"dossier_short_title": "Cyberbeveiligingswet"
+							},
+							"edge_id": "1751af832c4e8f640e35e7ed88286999912669ae",
+							"relation": "ABOUT",
+							"direction": "inbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/activiteiten/2026A02872"
+						}
+					]
+				},
+				{
+					"relation": "ABOUT",
+					"direction": "inbound",
+					"collection": "commitments",
+					"type": "commitment",
+					"total": 7,
+					"next_offset": 5,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "commitments/b2492759_9424_4277_86e9_f105dfe02a9c",
+							"key": "b2492759_9424_4277_86e9_f105dfe02a9c",
+							"collection": "commitments",
+							"type": "commitment",
+							"display_name": "De staatssecretaris Digitale Economie en Soevereiniteit en de minister van…",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"activity_number": "2026A01323",
+								"cabinet": "jetten",
+								"display_name": "De staatssecretaris Digitale Economie en Soevereiniteit en de minister van…",
+								"expected_resolution": "0001-01-01",
+								"external_id": "b2492759-9424-4277-86e9-f105dfe02a9c",
+								"letter_ids": [],
+								"made_on": "2026-04-10",
+								"member_key": "88f29701_8fe7_4a10_8b0f_0973fdde12bb",
+								"minister_name": "Weel, D.M. van",
+								"minister_role": "Minister van Justitie en Veiligheid",
+								"ministry": "jenv",
+								"ministry_name": "Justitie en Veiligheid",
+								"number": "TZ202604-068",
+								"post": "minister",
+								"status": "Openstaand"
+							},
+							"edge_id": "0c02fe6a9a7766e82818d5c15684d4968320b68a",
+							"relation": "ABOUT",
+							"direction": "inbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/toezeggingen/TZ202604-068"
+						},
+						{
+							"id": "commitments/8d7acc0e_a2a0_47be_b535_104ea97cf7b5",
+							"key": "8d7acc0e_a2a0_47be_b535_104ea97cf7b5",
+							"collection": "commitments",
+							"type": "commitment",
+							"display_name": "De minister van JenV zegt toe, voor de inwerktreding van de wet, een…",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"activity_number": "2026A01323",
+								"cabinet": "jetten",
+								"display_name": "De minister van JenV zegt toe, voor de inwerktreding van de wet, een…",
+								"expected_resolution": "2026-06-24",
+								"external_id": "8d7acc0e-a2a0-47be-b535-104ea97cf7b5",
+								"letter_ids": [
+									"c673b1db-e3d5-4121-8c12-6566a807ced4"
+								],
+								"made_on": "2026-04-10",
+								"member_key": "88f29701_8fe7_4a10_8b0f_0973fdde12bb",
+								"minister_name": "Weel, D.M. van",
+								"minister_role": "Minister van Justitie en Veiligheid",
+								"ministry": "jenv",
+								"ministry_name": "Justitie en Veiligheid",
+								"number": "TZ202604-062",
+								"post": "minister",
+								"status": "Afgedaan"
+							},
+							"edge_id": "389ab9667bab5bea7f008f19ffc518e2a8971e14",
+							"relation": "ABOUT",
+							"direction": "inbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/toezeggingen/TZ202604-062"
+						},
+						{
+							"id": "commitments/9439054f_6f6f_4642_84b6_eccd1bb12646",
+							"key": "9439054f_6f6f_4642_84b6_eccd1bb12646",
+							"collection": "commitments",
+							"type": "commitment",
+							"display_name": "De minister van JenV zegt toe het door het lid Van den Berg gevraagde tijdspad…",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"activity_number": "2026A01323",
+								"cabinet": "jetten",
+								"display_name": "De minister van JenV zegt toe het door het lid Van den Berg gevraagde tijdspad…",
+								"expected_resolution": "0001-01-01",
+								"external_id": "9439054f-6f6f-4642-84b6-eccd1bb12646",
+								"letter_ids": [],
+								"made_on": "2026-04-10",
+								"member_key": "88f29701_8fe7_4a10_8b0f_0973fdde12bb",
+								"minister_name": "Weel, D.M. van",
+								"minister_role": "Minister van Justitie en Veiligheid",
+								"ministry": "jenv",
+								"ministry_name": "Justitie en Veiligheid",
+								"number": "TZ202604-067",
+								"post": "minister",
+								"status": "Openstaand"
+							},
+							"edge_id": "89b6d49497e753b38be9033562a6355b4112fe77",
+							"relation": "ABOUT",
+							"direction": "inbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/toezeggingen/TZ202604-067"
+						},
+						{
+							"id": "commitments/f79ef0b3_cd6f_4ea1_8f2d_9d0ccc25fa2f",
+							"key": "f79ef0b3_cd6f_4ea1_8f2d_9d0ccc25fa2f",
+							"collection": "commitments",
+							"type": "commitment",
+							"display_name": "De minister van JenV zegt toe voor de zomer schriftelijk terug te komen op de…",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"activity_number": "2026A01323",
+								"cabinet": "jetten",
+								"display_name": "De minister van JenV zegt toe voor de zomer schriftelijk terug te komen op de…",
+								"expected_resolution": "2026-06-24",
+								"external_id": "f79ef0b3-cd6f-4ea1-8f2d-9d0ccc25fa2f",
+								"letter_ids": [
+									"c673b1db-e3d5-4121-8c12-6566a807ced4"
+								],
+								"made_on": "2026-04-10",
+								"member_key": "88f29701_8fe7_4a10_8b0f_0973fdde12bb",
+								"minister_name": "Weel, D.M. van",
+								"minister_role": "Minister van Justitie en Veiligheid",
+								"ministry": "jenv",
+								"ministry_name": "Justitie en Veiligheid",
+								"number": "TZ202604-065",
+								"post": "minister",
+								"status": "Afgedaan"
+							},
+							"edge_id": "93af265163f3b83a7fa029fa4be71eccd80e96b9",
+							"relation": "ABOUT",
+							"direction": "inbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/toezeggingen/TZ202604-065"
+						}
+					]
+				},
+				{
+					"relation": "ABOUT",
+					"direction": "inbound",
+					"collection": "decisions",
+					"type": "decision",
+					"total": 20,
+					"next_offset": 5,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "decisions/decision_a64939c5_adf9_4ad9_a4a9_24323e10398b",
+							"key": "decision_a64939c5_adf9_4ad9_a4a9_24323e10398b",
+							"collection": "decisions",
+							"type": "decision",
+							"display_name": "Motie van het lid Van den Berg over geen meervoudige beboeting voor hetzelfde feitencomplex",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"decision_id": "a64939c5-adf9-4ad9-a4a9-24323e10398b",
+								"agenda_item_id": "169d6746-6fb3-4b97-89a6-6a94c8a37f3b",
+								"date": "2026-03-31",
+								"subject": "Motie van het lid Van den Berg over geen meervoudige beboeting voor hetzelfde feitencomplex",
+								"agenda_item_subject": "Moties ingediend bij het wetgevingsoverleg over de Cyberbeveiligingswet en de Wet weerbaarheid kritieke entiteiten",
+								"decision_text": "Aangenomen.",
+								"decision_kind": "Stemmen - aangenomen",
+								"decision_order": 11,
+								"meeting_kind": "",
+								"case_ids": [
+									"e3df21ab-e594-40a8-b1d2-6d44a0da629f",
+									"2eb0c538-78cb-49b9-bea2-0993b966cffb",
+									"3e779c3a-1e36-4bfa-a892-0b758e0fc5c3",
+									"376ed6db-ac21-4be3-8b21-0eeaf8a97d15"
+								],
+								"primary_case_id": "e3df21ab-e594-40a8-b1d2-6d44a0da629f",
+								"primary_case_kind": "Motie",
+								"kind": "Motie",
+								"dossier_numbers": [
+									"36764",
+									"36765"
+								],
+								"vote_kind": "faction",
+								"tally": {
+									"Voor": 150
+								},
+								"voters": {
+									"Voor": 17
+								},
+								"passed": true,
+								"display_name": "Motie van het lid Van den Berg over geen meervoudige beboeting voor hetzelfde feitencomplex",
+								"dossier_short_title": "Cyberbeveiligingswet"
+							},
+							"edge_id": "00aef566493f540a1ed97763b9c3f1647f0b9918",
+							"relation": "ABOUT",
+							"direction": "inbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/stemmingen/decision_a64939c5_adf9_4ad9_a4a9_24323e10398b"
+						},
+						{
+							"id": "decisions/decision_6bc9ae43_2c1d_42f4_ad51_eb62cb9b1efa",
+							"key": "decision_6bc9ae43_2c1d_42f4_ad51_eb62cb9b1efa",
+							"collection": "decisions",
+							"type": "decision",
+							"display_name": "Motie van de leden El Boujdaini en Kathmann over een cybersecuritystelsel voor het Caribisch deel van het Koninkrijk dat aansluit bij het niveau in Europees Nederland ",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"decision_id": "6bc9ae43-2c1d-42f4-ad51-eb62cb9b1efa",
+								"agenda_item_id": "169d6746-6fb3-4b97-89a6-6a94c8a37f3b",
+								"date": "2026-03-31",
+								"subject": "Motie van de leden El Boujdaini en Kathmann over een cybersecuritystelsel voor het Caribisch deel van het Koninkrijk dat aansluit bij het niveau in Europees Nederland ",
+								"agenda_item_subject": "Moties ingediend bij het wetgevingsoverleg over de Cyberbeveiligingswet en de Wet weerbaarheid kritieke entiteiten",
+								"decision_text": "Aangenomen.",
+								"decision_kind": "Stemmen - aangenomen",
+								"decision_order": 2,
+								"meeting_kind": "",
+								"case_ids": [
+									"2eb0c538-78cb-49b9-bea2-0993b966cffb",
+									"3e779c3a-1e36-4bfa-a892-0b758e0fc5c3",
+									"376ed6db-ac21-4be3-8b21-0eeaf8a97d15",
+									"e3df21ab-e594-40a8-b1d2-6d44a0da629f"
+								],
+								"primary_case_id": "2eb0c538-78cb-49b9-bea2-0993b966cffb",
+								"primary_case_kind": "Motie",
+								"kind": "Motie",
+								"dossier_numbers": [
+									"36764",
+									"36765"
+								],
+								"vote_kind": "faction",
+								"tally": {
+									"Voor": 143,
+									"Tegen": 7
+								},
+								"voters": {
+									"Voor": 16,
+									"Tegen": 1
+								},
+								"passed": true,
+								"display_name": "Motie van de leden El Boujdaini en Kathmann over een cybersecuritystelsel voor het Caribisch deel van het Koninkrijk dat aansluit bij het niveau in Europees Nederland ",
+								"dossier_short_title": "Cyberbeveiligingswet"
+							},
+							"edge_id": "054a4fc04dbc946a6933ffaf333b63ec5698e4b3",
+							"relation": "ABOUT",
+							"direction": "inbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/stemmingen/decision_6bc9ae43_2c1d_42f4_ad51_eb62cb9b1efa"
+						},
+						{
+							"id": "decisions/decision_66e29347_5605_40c3_9281_d3811766e159",
+							"key": "decision_66e29347_5605_40c3_9281_d3811766e159",
+							"collection": "decisions",
+							"type": "decision",
+							"display_name": "Motie van het lid Van den Berg over verplichtingen, bewijslasten, auditlogica en verantwoordingsinformatie onder de Cbw en de Wwke zo veel mogelijk harmoniseren met BIO en ENSIA ",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"decision_id": "66e29347-5605-40c3-9281-d3811766e159",
+								"agenda_item_id": "169d6746-6fb3-4b97-89a6-6a94c8a37f3b",
+								"date": "2026-03-31",
+								"subject": "Motie van het lid Van den Berg over verplichtingen, bewijslasten, auditlogica en verantwoordingsinformatie onder de Cbw en de Wwke zo veel mogelijk harmoniseren met BIO en ENSIA ",
+								"agenda_item_subject": "Moties ingediend bij het wetgevingsoverleg over de Cyberbeveiligingswet en de Wet weerbaarheid kritieke entiteiten",
+								"decision_text": "Aangenomen.",
+								"decision_kind": "Stemmen - aangenomen",
+								"decision_order": 9,
+								"meeting_kind": "",
+								"case_ids": [
+									"c4454faf-5909-473c-b3ab-e7051d403b1c",
+									"2eb0c538-78cb-49b9-bea2-0993b966cffb",
+									"3e779c3a-1e36-4bfa-a892-0b758e0fc5c3",
+									"376ed6db-ac21-4be3-8b21-0eeaf8a97d15"
+								],
+								"primary_case_id": "c4454faf-5909-473c-b3ab-e7051d403b1c",
+								"primary_case_kind": "Motie",
+								"kind": "Motie",
+								"dossier_numbers": [
+									"36764",
+									"36765"
+								],
+								"vote_kind": "faction",
+								"tally": {
+									"Voor": 150
+								},
+								"voters": {
+									"Voor": 17
+								},
+								"passed": true,
+								"display_name": "Motie van het lid Van den Berg over verplichtingen, bewijslasten, auditlogica en verantwoordingsinformatie onder de Cbw en de Wwke zo veel mogelijk harmoniseren met BIO en ENSIA ",
+								"dossier_short_title": "Cyberbeveiligingswet"
+							},
+							"edge_id": "058661b2b0b4dc58c0f13d31983f49f8d3e1435e",
+							"relation": "ABOUT",
+							"direction": "inbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/stemmingen/decision_66e29347_5605_40c3_9281_d3811766e159"
+						},
+						{
+							"id": "decisions/decision_58fd750a_3ec7_41de_8473_35006656a75a",
+							"key": "decision_58fd750a_3ec7_41de_8473_35006656a75a",
+							"collection": "decisions",
+							"type": "decision",
+							"display_name": "Amendement van het lid Kathmann over de interventiebevoegdheid en de inspanningsplicht van de minister",
+							"labels": [
+								"TK"
+							],
+							"props": {
+								"decision_id": "58fd750a-3ec7-41de-8473-35006656a75a",
+								"agenda_item_id": "e2480902-eab6-4334-ae0a-e887fd6023f2",
+								"date": "2026-04-15",
+								"subject": "Amendement van het lid Kathmann over de interventiebevoegdheid en de inspanningsplicht van de minister",
+								"agenda_item_subject": "Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet)",
+								"decision_text": "Verworpen.",
+								"decision_kind": "Stemmen - verworpen",
+								"decision_order": 3,
+								"meeting_kind": "",
+								"case_ids": [
+									"3158cf50-f6d2-4733-9ca4-a7838971e1ae",
+									"b9511194-55ab-4449-8231-3228983fe9ba",
+									"3f68c835-c55a-48dd-8115-34c7bacb969d",
+									"5705430a-4cca-4830-b25c-3874e45eb0af"
+								],
+								"primary_case_id": "3158cf50-f6d2-4733-9ca4-a7838971e1ae",
+								"primary_case_kind": "Amendement",
+								"kind": "Amendement",
+								"dossier_numbers": [
+									"36764"
+								],
+								"vote_kind": "faction",
+								"tally": {
+									"Voor": 65,
+									"Tegen": 85
+								},
+								"voters": {
+									"Voor": 9,
+									"Tegen": 8
+								},
+								"passed": false,
+								"display_name": "Amendement van het lid Kathmann over de interventiebevoegdheid en de inspanningsplicht van de minister",
+								"dossier_short_title": "Cyberbeveiligingswet"
+							},
+							"edge_id": "06b7e61730b6fa2ab9e253f68252a86df9c2eb3d",
+							"relation": "ABOUT",
+							"direction": "inbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/stemmingen/decision_58fd750a_3ec7_41de_8473_35006656a75a"
+						}
+					]
+				},
+				{
+					"relation": "LEGISLATED_IN",
+					"direction": "inbound",
+					"collection": "instruments",
+					"type": "instrument",
+					"total": 2,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "instruments/stb_2026_187",
+							"key": "stb_2026_187",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Stb. 2026, 187",
+							"labels": [
+								"BWB",
+								"Publication"
+							],
+							"props": {
+								"article_count": 0,
+								"citation_title": "Stb. 2026, 187",
+								"date_published": "2026-07-10",
+								"date_signed": "2026-07-08",
+								"display_name": "Stb. 2026, 187",
+								"dossier_numbers": [
+									"36764"
+								],
+								"inbound_citation_count": 0,
+								"jurisdiction": "nl",
+								"kind": "publicatie",
+								"official_id": "stb-2026-187",
+								"publication_kind": "Stb",
+								"publication_number": "187",
+								"publication_year": 2026,
+								"source": "bwb",
+								"stub": false
+							},
+							"edge_id": "6dc132427ae4555c09068f634178df82fac9a017",
+							"relation": "LEGISLATED_IN",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"dossier_number": "36764"
+							},
+							"path": "/stb/2026/187"
+						},
+						{
+							"id": "instruments/bwbr0052872",
+							"key": "bwbr0052872",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Cyberbeveiligingswet",
+							"labels": [
+								"BWB"
+							],
+							"props": {
+								"abbreviation": "Cbw",
+								"aliases": [
+									"Cbw"
+								],
+								"article_count": 111,
+								"basis": [],
+								"bwb_id": "BWBR0052872",
+								"celex_refs": [
+									"31976L0769",
+									"31990L0385",
+									"31991L0155",
+									"31991L0271"
+								],
+								"citation_title": "Cyberbeveiligingswet",
+								"citation_titles": [
+									"Cyberbeveiligingswet"
+								],
+								"date_in_force": "2026-08-15",
+								"date_published": "2026-07-10",
+								"date_signed": "2026-07-08",
+								"display_name": "Cyberbeveiligingswet",
+								"dossier_numbers": [
+									"36764"
+								],
+								"enacted_publication": "stb-2026-187",
+								"implements_celex": [],
+								"inbound_citation_count": 348,
+								"jurisdiction": "nl",
+								"kind": "wet",
+								"legal_areas": [
+									{
+										"main": "Informatierecht",
+										"main_id": "c_5092de31",
+										"main_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_5092de31",
+										"main_slug": "informatierecht",
+										"specific": "ICT-recht",
+										"specific_id": "c_8fbe4664",
+										"specific_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_8fbe4664",
+										"specific_slug": "ict-recht"
+									},
+									{
+										"main": "Openbare orde en veiligheidsrecht",
+										"main_id": "c_c06fcca1",
+										"main_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_c06fcca1",
+										"main_slug": "openbare-orde-en-veiligheidsrecht",
+										"specific": null,
+										"specific_id": null,
+										"specific_uri": null,
+										"specific_slug": null
+									}
+								],
+								"official_title": "Wet van 8 juli 2026, houdende regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet)",
+								"policy_domains": [
+									{
+										"label": "Openbare orde en veiligheid",
+										"id": "c_e8ff69cb",
+										"uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_e8ff69cb",
+										"slug": "openbare-orde-en-veiligheid"
+									}
+								],
+								"short_title": "Cbw",
+								"source": "bwb",
+								"stub": false,
+								"title": "Cyberbeveiligingswet",
+								"version_date_in_force": "2026-08-15"
+							},
+							"edge_id": "88b4f4866b24b908c77c76dbf6ce4ca59c645e47",
+							"relation": "LEGISLATED_IN",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"dossier_number": "36764"
+							},
+							"path": "/wetten/BWBR0052872"
+						}
+					]
+				}
+			]
+		},
+		"title": "36764 Cyberbeveiligingswet",
+		"description": "Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog…",
+		"path": "/dossiers/36764",
+		"lid_counts_pending": false
+	},
+	"/api/nodes/{collection}/{key} {\"collection\":\"instruments\",\"key\":\"bwbr0009950\"} {\"direction\":\"inbound\",\"limit\":200,\"node_types\":\"judgment\",\"relations\":\"REFERS_TO\"}": {
+		"node": {
+			"id": "instruments/bwbr0009950",
+			"key": "bwbr0009950",
+			"collection": "instruments",
+			"type": "instrument",
+			"display_name": "Telecommunicatiewet",
+			"labels": [
+				"BWB"
+			],
+			"props": {
+				"aliases": [
+					"Tw"
+				],
+				"article_count": 379,
+				"basis": [],
+				"bwb_id": "BWBR0009950",
+				"celex_refs": [
+					"31998L0083",
+					"31999L0093",
+					"32002L0019",
+					"32002L0021"
+				],
+				"citation_title": "Telecommunicatiewet",
+				"citation_titles": [
+					"Telecommunicatiewet"
+				],
+				"date_in_force": "1998-12-15",
+				"date_published": "1998-11-05",
+				"date_signed": "1998-10-19",
+				"display_name": "Telecommunicatiewet",
+				"dossier_numbers": [
+					"25533"
+				],
+				"enacted_publication": "stb-1998-610",
+				"implements_celex": [],
+				"inbound_citation_count": 4220,
+				"jurisdiction": "nl",
+				"kind": "wet",
+				"legal_areas": [
+					{
+						"main": "Informatierecht",
+						"main_id": "c_5092de31",
+						"main_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_5092de31",
+						"main_slug": "informatierecht",
+						"specific": "Telecomrecht",
+						"specific_id": "c_4a3402ad",
+						"specific_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_4a3402ad",
+						"specific_slug": "telecomrecht"
+					}
+				],
+				"official_title": "Wet van 19 oktober 1998, houdende regels inzake de telecommunicatie (Telecommunicatiewet)",
+				"policy_domains": [
+					{
+						"label": "Economie en ondernemen",
+						"id": "c_9fbcfc19",
+						"uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_9fbcfc19",
+						"slug": "economie-en-ondernemen"
+					}
+				],
+				"source": "bwb",
+				"stub": false,
+				"title": "Telecommunicatiewet",
+				"version_date_in_force": "2026-08-15"
+			},
+			"path": "/wetten/BWBR0009950"
+		},
+		"neighbors": {
+			"total": 0,
+			"buckets": []
+		},
+		"title": "Telecommunicatiewet",
+		"description": "Telecommunicatiewet, geldend sinds 15 december 1998",
+		"path": "/wetten/BWBR0009950",
+		"lid_counts_pending": false
+	},
+	"/api/nodes/{collection}/{key} {\"collection\":\"instruments\",\"key\":\"bwbr0009950\"} {\"limit\":200,\"node_types\":\"instrument,article\",\"relations\":\"REFERS_TO,BASED_ON\"}": {
+		"node": {
+			"id": "instruments/bwbr0009950",
+			"key": "bwbr0009950",
+			"collection": "instruments",
+			"type": "instrument",
+			"display_name": "Telecommunicatiewet",
+			"labels": [
+				"BWB"
+			],
+			"props": {
+				"aliases": [
+					"Tw"
+				],
+				"article_count": 379,
+				"basis": [],
+				"bwb_id": "BWBR0009950",
+				"celex_refs": [
+					"31998L0083",
+					"31999L0093",
+					"32002L0019",
+					"32002L0021"
+				],
+				"citation_title": "Telecommunicatiewet",
+				"citation_titles": [
+					"Telecommunicatiewet"
+				],
+				"date_in_force": "1998-12-15",
+				"date_published": "1998-11-05",
+				"date_signed": "1998-10-19",
+				"display_name": "Telecommunicatiewet",
+				"dossier_numbers": [
+					"25533"
+				],
+				"enacted_publication": "stb-1998-610",
+				"implements_celex": [],
+				"inbound_citation_count": 4220,
+				"jurisdiction": "nl",
+				"kind": "wet",
+				"legal_areas": [
+					{
+						"main": "Informatierecht",
+						"main_id": "c_5092de31",
+						"main_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_5092de31",
+						"main_slug": "informatierecht",
+						"specific": "Telecomrecht",
+						"specific_id": "c_4a3402ad",
+						"specific_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_4a3402ad",
+						"specific_slug": "telecomrecht"
+					}
+				],
+				"official_title": "Wet van 19 oktober 1998, houdende regels inzake de telecommunicatie (Telecommunicatiewet)",
+				"policy_domains": [
+					{
+						"label": "Economie en ondernemen",
+						"id": "c_9fbcfc19",
+						"uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_9fbcfc19",
+						"slug": "economie-en-ondernemen"
+					}
+				],
+				"source": "bwb",
+				"stub": false,
+				"title": "Telecommunicatiewet",
+				"version_date_in_force": "2026-08-15"
+			},
+			"path": "/wetten/BWBR0009950"
+		},
+		"neighbors": {
+			"total": 10,
+			"buckets": [
+				{
+					"relation": "REFERS_TO",
+					"direction": "outbound",
+					"collection": "instruments",
+					"type": "instrument",
+					"total": 10,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "instruments/32009r1211",
+							"key": "32009r1211",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Verordening (EG) nr. 1211/2009",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 26,
+								"celex": "32009R1211",
+								"citation_title": "Verordening (EG) nr. 1211/2009",
+								"display_name": "Verordening (EG) nr. 1211/2009",
+								"inbound_citation_count": 9,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "32009R1211",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Verordening (EG) nr. 1211/2009 van het Europees Parlement en de Raad van 25 november 2009 tot oprichting van het Orgaan van Europese regelgevende instanties voor elektronische communicatie (BEREC) en het Bureau"
+							},
+							"edge_id": "2ab54011baf0787732cbb8d659129e7b8e5661a8",
+							"relation": "REFERS_TO",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "32009R1211"
+							},
+							"path": "/wetten/32009R1211"
+						},
+						{
+							"id": "instruments/31998l0083",
+							"key": "31998l0083",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Richtlijn 98/83/EG",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 0,
+								"celex": "31998L0083",
+								"citation_title": "Richtlijn 98/83/EG",
+								"display_name": "Richtlijn 98/83/EG",
+								"inbound_citation_count": 10,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "31998L0083",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Richtlijn 98/83/EG van de Raad van 3 november 1998 betreffende de kwaliteit van voor menselijke consumptie bestemd water"
+							},
+							"edge_id": "5e3c50e7c4a012eff609ee2a14b86590b461a39c",
+							"relation": "REFERS_TO",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "31998L0083"
+							},
+							"path": "/wetten/31998L0083"
+						},
+						{
+							"id": "instruments/32015l1535",
+							"key": "32015l1535",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Richtlijn (EU) 2015/1535",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 12,
+								"celex": "32015L1535",
+								"citation_title": "Richtlijn (EU) 2015/1535",
+								"display_name": "Richtlijn (EU) 2015/1535",
+								"inbound_citation_count": 98,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "32015L1535",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Richtlijn (EU) 2015/1535 van het Europees Parlement en de Raad van 9 september 2015 betreffende een informatieprocedure op het gebied van technische voorschriften en regels betreffende de diensten van de informatiemaatschappij (codificatie)"
+							},
+							"edge_id": "70aabc42db6b9bc69fffdc11ae0a358e344cc2bf",
+							"relation": "REFERS_TO",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "32015L1535"
+							},
+							"path": "/wetten/32015L1535"
+						},
+						{
+							"id": "instruments/32008l0063",
+							"key": "32008l0063",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Richtlijn 2008/63/EG",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 10,
+								"celex": "32008L0063",
+								"citation_title": "Richtlijn 2008/63/EG",
+								"display_name": "Richtlijn 2008/63/EG",
+								"inbound_citation_count": 3,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "32008L0063",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Richtlijn 2008/63/EG van de Commissie van 20 juni 2008 betreffende de mededinging op de markten van telecommunicatie-eindapparatuur"
+							},
+							"edge_id": "9c9d6e1bb8a50e4db96b69c175e1bb9fe027ea0d",
+							"relation": "REFERS_TO",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "32008L0063"
+							},
+							"path": "/wetten/32008L0063"
+						}
+					]
+				}
+			]
+		},
+		"title": "Telecommunicatiewet",
+		"description": "Telecommunicatiewet, geldend sinds 15 december 1998",
+		"path": "/wetten/BWBR0009950",
+		"lid_counts_pending": false
+	},
+	"/api/nodes/{collection}/{key} {\"collection\":\"instruments\",\"key\":\"bwbr0009950\"} {\"limit\":200,\"node_types\":\"instrument\",\"relations\":\"IMPLEMENTS\"}": {
+		"node": {
+			"id": "instruments/bwbr0009950",
+			"key": "bwbr0009950",
+			"collection": "instruments",
+			"type": "instrument",
+			"display_name": "Telecommunicatiewet",
+			"labels": [
+				"BWB"
+			],
+			"props": {
+				"aliases": [
+					"Tw"
+				],
+				"article_count": 379,
+				"basis": [],
+				"bwb_id": "BWBR0009950",
+				"celex_refs": [
+					"31998L0083",
+					"31999L0093",
+					"32002L0019",
+					"32002L0021"
+				],
+				"citation_title": "Telecommunicatiewet",
+				"citation_titles": [
+					"Telecommunicatiewet"
+				],
+				"date_in_force": "1998-12-15",
+				"date_published": "1998-11-05",
+				"date_signed": "1998-10-19",
+				"display_name": "Telecommunicatiewet",
+				"dossier_numbers": [
+					"25533"
+				],
+				"enacted_publication": "stb-1998-610",
+				"implements_celex": [],
+				"inbound_citation_count": 4220,
+				"jurisdiction": "nl",
+				"kind": "wet",
+				"legal_areas": [
+					{
+						"main": "Informatierecht",
+						"main_id": "c_5092de31",
+						"main_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_5092de31",
+						"main_slug": "informatierecht",
+						"specific": "Telecomrecht",
+						"specific_id": "c_4a3402ad",
+						"specific_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_4a3402ad",
+						"specific_slug": "telecomrecht"
+					}
+				],
+				"official_title": "Wet van 19 oktober 1998, houdende regels inzake de telecommunicatie (Telecommunicatiewet)",
+				"policy_domains": [
+					{
+						"label": "Economie en ondernemen",
+						"id": "c_9fbcfc19",
+						"uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_9fbcfc19",
+						"slug": "economie-en-ondernemen"
+					}
+				],
+				"source": "bwb",
+				"stub": false,
+				"title": "Telecommunicatiewet",
+				"version_date_in_force": "2026-08-15"
+			},
+			"path": "/wetten/BWBR0009950"
+		},
+		"neighbors": {
+			"total": 22,
+			"buckets": [
+				{
+					"relation": "IMPLEMENTS",
+					"direction": "outbound",
+					"collection": "instruments",
+					"type": "instrument",
+					"total": 22,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "instruments/32022l2555",
+							"key": "32022l2555",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Richtlijn (EU) 2022/2555",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 46,
+								"celex": "32022L2555",
+								"citation_title": "Richtlijn (EU) 2022/2555",
+								"display_name": "Richtlijn (EU) 2022/2555",
+								"inbound_citation_count": 55,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "32022L2555",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (NIS 2-richtlijn)"
+							},
+							"edge_id": "1fce8c55c02313ac2643eb6c929b8f5ba5382165",
+							"relation": "IMPLEMENTS",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "32022L2555",
+								"bases": [
+									"national_implementing_measure"
+								],
+								"publications": [
+									"stb-2026-187"
+								],
+								"measures": [
+									{
+										"publication": "stb-2026-187",
+										"citation": "Stb. 2026, 187",
+										"title": "Wet van 8 juli 2026, houdende regels terimplementatie van Richtlijn (EU) 2022/2555 vanhet Europees Parlement en de Raad van14 december 2022 betreffende maatregelenvoor een hoog gezamenlijk niveau vancyberbeveiliging in de Unie, tot wijziging vanVerordening (EU) nr. 910/2014 en Richtlijn (EU)2018/1972 en tot intrekking van Richtlijn (EU)2016/1148 (PbEU 2022, L 333)(Cyberbeveiligingswet)",
+										"type": "Wet"
+									}
+								]
+							},
+							"path": "/wetten/32022L2555"
+						},
+						{
+							"id": "instruments/32019l0882",
+							"key": "32019l0882",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Richtlijn (EU) 2019/882",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 35,
+								"celex": "32019L0882",
+								"citation_title": "Richtlijn (EU) 2019/882",
+								"display_name": "Richtlijn (EU) 2019/882",
+								"inbound_citation_count": 41,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "32019L0882",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Richtlijn (EU) 2019/882 van het Europees Parlement en de Raad van 17 april 2019 betreffende de toegankelijkheidsvoorschriften voor producten en diensten"
+							},
+							"edge_id": "202c4f47b284e4c92728c19ed28d0c7a7645a5c7",
+							"relation": "IMPLEMENTS",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "32019L0882",
+								"bases": [
+									"national_implementing_measure"
+								],
+								"publications": [
+									"stb-2024-87"
+								],
+								"measures": [
+									{
+										"publication": "stb-2024-87",
+										"citation": "Stb. 2024, 87",
+										"title": "Wijziging van diverse wetten ter implementatie van Richtlijn (EU) 2019/882 toegankelijkheidsvoorschriften",
+										"type": "Wet"
+									}
+								]
+							},
+							"path": "/wetten/32019L0882"
+						},
+						{
+							"id": "instruments/32023l1791",
+							"key": "32023l1791",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Richtlijn (EU) 2023/1791",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 40,
+								"celex": "32023L1791",
+								"citation_title": "Richtlijn (EU) 2023/1791",
+								"display_name": "Richtlijn (EU) 2023/1791",
+								"inbound_citation_count": 19,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "32023L1791",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Richtlijn (EU) 2023/1791 van het Europees Parlement en de Raad van 13 september 2023 betreffende energie-efficiëntie en tot wijziging van Verordening (EU) 2023/955 (herschikking)"
+							},
+							"edge_id": "335ab7c835ad7bb5ef2e82a4b7cfb8baa7430ad7",
+							"relation": "IMPLEMENTS",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "32023L1791",
+								"bases": [
+									"national_implementing_measure"
+								],
+								"publications": [
+									"stb-2025-12"
+								],
+								"measures": [
+									{
+										"publication": "stb-2025-12",
+										"citation": "Stb. 2025, 12",
+										"title": "Wet van 11 december 2024, houdende regels over energiemarkten en energiesystemen (Energiewet)",
+										"type": "Wet"
+									}
+								]
+							},
+							"path": "/wetten/32023L1791"
+						},
+						{
+							"id": "instruments/32023l2413",
+							"key": "32023l2413",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Richtlijn (EU) 2023/2413",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 7,
+								"celex": "32023L2413",
+								"citation_title": "Richtlijn (EU) 2023/2413",
+								"display_name": "Richtlijn (EU) 2023/2413",
+								"inbound_citation_count": 53,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "32023L2413",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Richtlijn (EU) 2023/2413 van het Europees Parlement en de Raad van 18 oktober 2023 tot wijziging van Richtlijn (EU) 2018/2001, Verordening (EU) 2018/1999 en Richtlijn 98/70/EG wat de bevordering van energie uit hernieuwbare bronnen betreft, en tot intrekking van Richtlijn (EU) 2015/652 van de Raad"
+							},
+							"edge_id": "3b7bf9bc2201cf66a925d144247da418cda3a415",
+							"relation": "IMPLEMENTS",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "32023L2413",
+								"bases": [
+									"national_implementing_measure"
+								],
+								"publications": [
+									"stb-2025-12"
+								],
+								"measures": [
+									{
+										"publication": "stb-2025-12",
+										"citation": "Stb. 2025, 12",
+										"title": "Wet van 11 december 2024, houdende regels over energiemarkten en energiesystemen (Energiewet)",
+										"type": "Wet"
+									}
+								]
+							},
+							"path": "/wetten/32023L2413"
+						}
+					]
+				}
+			]
+		},
+		"title": "Telecommunicatiewet",
+		"description": "Telecommunicatiewet, geldend sinds 15 december 1998",
+		"path": "/wetten/BWBR0009950",
+		"lid_counts_pending": false
+	},
+	"/api/nodes/{collection}/{key} {\"collection\":\"instruments\",\"key\":\"bwbr0041548\"} {\"direction\":\"inbound\",\"limit\":200,\"node_types\":\"judgment\",\"relations\":\"REFERS_TO\"}": {
+		"node": {
+			"id": "instruments/bwbr0041548",
+			"key": "bwbr0041548",
+			"collection": "instruments",
+			"type": "instrument",
+			"display_name": "Wet bekostiging financieel toezicht 2019",
+			"labels": [
+				"BWB"
+			],
+			"props": {
+				"article_count": 26,
+				"basis": [],
+				"bwb_id": "BWBR0041548",
+				"celex_refs": [
+					"32002L0047",
+					"32004L0025",
+					"32007L0036",
+					"32009R0924"
+				],
+				"citation_title": "Wet bekostiging financieel toezicht 2019",
+				"citation_titles": [
+					"Wet bekostiging financieel toezicht 2019"
+				],
+				"date_in_force": "2018-11-16",
+				"date_published": "2018-11-15",
+				"date_signed": "2018-10-17",
+				"display_name": "Wet bekostiging financieel toezicht 2019",
+				"dossier_numbers": [
+					"34870"
+				],
+				"enacted_publication": "stb-2018-409",
+				"implements_celex": [],
+				"inbound_citation_count": 94,
+				"jurisdiction": "nl",
+				"kind": "wet",
+				"legal_areas": [
+					{
+						"main": "Bank- en effectenrecht, financiering",
+						"main_id": "c_f381106e",
+						"main_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_f381106e",
+						"main_slug": "bank-en-effectenrecht-financiering",
+						"specific": "Toezicht bank- en kredietwezen",
+						"specific_id": "c_a93f5f66",
+						"specific_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_a93f5f66",
+						"specific_slug": "toezicht-bank-en-kredietwezen"
+					}
+				],
+				"official_title": "Wet van 17 oktober 2018, houdende regels met betrekking tot de begroting en verantwoording van de kosten van het toezicht van de Autoriteit Financiële Markten en de Nederlandsche Bank en de financiering van de toezichtkosten (Wet bekostiging financieel toezicht 2019)",
+				"policy_domains": [
+					{
+						"label": "Financiën",
+						"id": "c_dfcf3a97",
+						"uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_dfcf3a97",
+						"slug": "financien"
+					}
+				],
+				"source": "bwb",
+				"stub": false,
+				"title": "Wet bekostiging financieel toezicht 2019",
+				"version_date_in_force": "2026-08-15"
+			},
+			"path": "/wetten/BWBR0041548"
+		},
+		"neighbors": {
+			"total": 0,
+			"buckets": []
+		},
+		"title": "Wet bekostiging financieel toezicht 2019",
+		"description": "Wet bekostiging financieel toezicht 2019, geldend sinds 16 november 2018",
+		"path": "/wetten/BWBR0041548",
+		"lid_counts_pending": false
+	},
+	"/api/nodes/{collection}/{key} {\"collection\":\"instruments\",\"key\":\"bwbr0041548\"} {\"limit\":200,\"node_types\":\"instrument,article\",\"relations\":\"REFERS_TO,BASED_ON\"}": {
+		"node": {
+			"id": "instruments/bwbr0041548",
+			"key": "bwbr0041548",
+			"collection": "instruments",
+			"type": "instrument",
+			"display_name": "Wet bekostiging financieel toezicht 2019",
+			"labels": [
+				"BWB"
+			],
+			"props": {
+				"article_count": 26,
+				"basis": [],
+				"bwb_id": "BWBR0041548",
+				"celex_refs": [
+					"32002L0047",
+					"32004L0025",
+					"32007L0036",
+					"32009R0924"
+				],
+				"citation_title": "Wet bekostiging financieel toezicht 2019",
+				"citation_titles": [
+					"Wet bekostiging financieel toezicht 2019"
+				],
+				"date_in_force": "2018-11-16",
+				"date_published": "2018-11-15",
+				"date_signed": "2018-10-17",
+				"display_name": "Wet bekostiging financieel toezicht 2019",
+				"dossier_numbers": [
+					"34870"
+				],
+				"enacted_publication": "stb-2018-409",
+				"implements_celex": [],
+				"inbound_citation_count": 94,
+				"jurisdiction": "nl",
+				"kind": "wet",
+				"legal_areas": [
+					{
+						"main": "Bank- en effectenrecht, financiering",
+						"main_id": "c_f381106e",
+						"main_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_f381106e",
+						"main_slug": "bank-en-effectenrecht-financiering",
+						"specific": "Toezicht bank- en kredietwezen",
+						"specific_id": "c_a93f5f66",
+						"specific_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_a93f5f66",
+						"specific_slug": "toezicht-bank-en-kredietwezen"
+					}
+				],
+				"official_title": "Wet van 17 oktober 2018, houdende regels met betrekking tot de begroting en verantwoording van de kosten van het toezicht van de Autoriteit Financiële Markten en de Nederlandsche Bank en de financiering van de toezichtkosten (Wet bekostiging financieel toezicht 2019)",
+				"policy_domains": [
+					{
+						"label": "Financiën",
+						"id": "c_dfcf3a97",
+						"uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_dfcf3a97",
+						"slug": "financien"
+					}
+				],
+				"source": "bwb",
+				"stub": false,
+				"title": "Wet bekostiging financieel toezicht 2019",
+				"version_date_in_force": "2026-08-15"
+			},
+			"path": "/wetten/BWBR0041548"
+		},
+		"neighbors": {
+			"total": 12,
+			"buckets": [
+				{
+					"relation": "REFERS_TO",
+					"direction": "outbound",
+					"collection": "instruments",
+					"type": "instrument",
+					"total": 12,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "instruments/32010r1095",
+							"key": "32010r1095",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Verordening (EU) nr. 1095/2010",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 82,
+								"celex": "32010R1095",
+								"citation_title": "Verordening (EU) nr. 1095/2010",
+								"display_name": "Verordening (EU) nr. 1095/2010",
+								"inbound_citation_count": 46,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "32010R1095",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Verordening (EU) nr. 1095/2010 van het Europees Parlement en de Raad van 24 november 2010 tot oprichting van een Europese toezichthoudende autoriteit (Europese Autoriteit voor effecten en markten), tot wijziging van Besluit nr. 716/2009/EG en tot intrekking van Besluit 2009/77/EG van de Commissie"
+							},
+							"edge_id": "1d824219cad25a449c61757828c45dbf3fcf6a68",
+							"relation": "REFERS_TO",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "32010R1095"
+							},
+							"path": "/wetten/32010R1095"
+						},
+						{
+							"id": "instruments/32004l0025",
+							"key": "32004l0025",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Richtlijn 2004/25/EG",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 23,
+								"celex": "32004L0025",
+								"citation_title": "Richtlijn 2004/25/EG",
+								"display_name": "Richtlijn 2004/25/EG",
+								"inbound_citation_count": 54,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "32004L0025",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Richtlijn 2004/25/EG van het Europees Parlement en de Raad van 21 april 2004 betreffende het openbaar overnamebod"
+							},
+							"edge_id": "22a9e1e300f024f9db09984c0b0299556a4867cb",
+							"relation": "REFERS_TO",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "32004L0025"
+							},
+							"path": "/wetten/32004L0025"
+						},
+						{
+							"id": "instruments/32002l0047",
+							"key": "32002l0047",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Richtlijn 2002/47/EG",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 13,
+								"celex": "32002L0047",
+								"citation_title": "Richtlijn 2002/47/EG",
+								"display_name": "Richtlijn 2002/47/EG",
+								"inbound_citation_count": 56,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "32002L0047",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Richtlijn 2002/47/EG van het Europees Parlement en de Raad van 6 juni 2002 betreffende financiëlezekerheidsovereenkomsten"
+							},
+							"edge_id": "32db548a73d88aa48bd154a909a019e47267fb5b",
+							"relation": "REFERS_TO",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "32002L0047"
+							},
+							"path": "/wetten/32002L0047"
+						},
+						{
+							"id": "instruments/32009r0924",
+							"key": "32009r0924",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Verordening (EG) nr. 924/2009",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 17,
+								"celex": "32009R0924",
+								"citation_title": "Verordening (EG) nr. 924/2009",
+								"display_name": "Verordening (EG) nr. 924/2009",
+								"inbound_citation_count": 16,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "32009R0924",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Verordening (EG) nr. 924/2009 van het Europees Parlement en de Raad van 16 september 2009 betreffende grensoverschrijdende betalingen in de Gemeenschap en tot intrekking van Verordening (EG) nr. 2560/2001"
+							},
+							"edge_id": "405ecc9b13f4297e760a6c961b42b984aa56ced7",
+							"relation": "REFERS_TO",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "32009R0924"
+							},
+							"path": "/wetten/32009R0924"
+						}
+					]
+				}
+			]
+		},
+		"title": "Wet bekostiging financieel toezicht 2019",
+		"description": "Wet bekostiging financieel toezicht 2019, geldend sinds 16 november 2018",
+		"path": "/wetten/BWBR0041548",
+		"lid_counts_pending": false
+	},
+	"/api/nodes/{collection}/{key} {\"collection\":\"instruments\",\"key\":\"bwbr0041548\"} {\"limit\":200,\"node_types\":\"instrument\",\"relations\":\"IMPLEMENTS\"}": {
+		"node": {
+			"id": "instruments/bwbr0041548",
+			"key": "bwbr0041548",
+			"collection": "instruments",
+			"type": "instrument",
+			"display_name": "Wet bekostiging financieel toezicht 2019",
+			"labels": [
+				"BWB"
+			],
+			"props": {
+				"article_count": 26,
+				"basis": [],
+				"bwb_id": "BWBR0041548",
+				"celex_refs": [
+					"32002L0047",
+					"32004L0025",
+					"32007L0036",
+					"32009R0924"
+				],
+				"citation_title": "Wet bekostiging financieel toezicht 2019",
+				"citation_titles": [
+					"Wet bekostiging financieel toezicht 2019"
+				],
+				"date_in_force": "2018-11-16",
+				"date_published": "2018-11-15",
+				"date_signed": "2018-10-17",
+				"display_name": "Wet bekostiging financieel toezicht 2019",
+				"dossier_numbers": [
+					"34870"
+				],
+				"enacted_publication": "stb-2018-409",
+				"implements_celex": [],
+				"inbound_citation_count": 94,
+				"jurisdiction": "nl",
+				"kind": "wet",
+				"legal_areas": [
+					{
+						"main": "Bank- en effectenrecht, financiering",
+						"main_id": "c_f381106e",
+						"main_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_f381106e",
+						"main_slug": "bank-en-effectenrecht-financiering",
+						"specific": "Toezicht bank- en kredietwezen",
+						"specific_id": "c_a93f5f66",
+						"specific_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_a93f5f66",
+						"specific_slug": "toezicht-bank-en-kredietwezen"
+					}
+				],
+				"official_title": "Wet van 17 oktober 2018, houdende regels met betrekking tot de begroting en verantwoording van de kosten van het toezicht van de Autoriteit Financiële Markten en de Nederlandsche Bank en de financiering van de toezichtkosten (Wet bekostiging financieel toezicht 2019)",
+				"policy_domains": [
+					{
+						"label": "Financiën",
+						"id": "c_dfcf3a97",
+						"uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_dfcf3a97",
+						"slug": "financien"
+					}
+				],
+				"source": "bwb",
+				"stub": false,
+				"title": "Wet bekostiging financieel toezicht 2019",
+				"version_date_in_force": "2026-08-15"
+			},
+			"path": "/wetten/BWBR0041548"
+		},
+		"neighbors": {
+			"total": 1,
+			"buckets": [
+				{
+					"relation": "IMPLEMENTS",
+					"direction": "outbound",
+					"collection": "instruments",
+					"type": "instrument",
+					"total": 1,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "instruments/32022l2555",
+							"key": "32022l2555",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Richtlijn (EU) 2022/2555",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 46,
+								"celex": "32022L2555",
+								"citation_title": "Richtlijn (EU) 2022/2555",
+								"display_name": "Richtlijn (EU) 2022/2555",
+								"inbound_citation_count": 55,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "32022L2555",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (NIS 2-richtlijn)"
+							},
+							"edge_id": "5510a11195336045dcde48f8fe5adecb245a8f83",
+							"relation": "IMPLEMENTS",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "32022L2555",
+								"bases": [
+									"national_implementing_measure"
+								],
+								"publications": [
+									"stb-2026-187"
+								],
+								"measures": [
+									{
+										"publication": "stb-2026-187",
+										"citation": "Stb. 2026, 187",
+										"title": "Wet van 8 juli 2026, houdende regels terimplementatie van Richtlijn (EU) 2022/2555 vanhet Europees Parlement en de Raad van14 december 2022 betreffende maatregelenvoor een hoog gezamenlijk niveau vancyberbeveiliging in de Unie, tot wijziging vanVerordening (EU) nr. 910/2014 en Richtlijn (EU)2018/1972 en tot intrekking van Richtlijn (EU)2016/1148 (PbEU 2022, L 333)(Cyberbeveiligingswet)",
+										"type": "Wet"
+									}
+								]
+							},
+							"path": "/wetten/32022L2555"
+						}
+					]
+				}
+			]
+		},
+		"title": "Wet bekostiging financieel toezicht 2019",
+		"description": "Wet bekostiging financieel toezicht 2019, geldend sinds 16 november 2018",
+		"path": "/wetten/BWBR0041548",
+		"lid_counts_pending": false
+	},
+	"/api/nodes/{collection}/{key} {\"collection\":\"instruments\",\"key\":\"bwbr0052872\"} {\"direction\":\"inbound\",\"limit\":200,\"node_types\":\"judgment\",\"relations\":\"REFERS_TO\"}": {
+		"node": {
+			"id": "instruments/bwbr0052872",
+			"key": "bwbr0052872",
+			"collection": "instruments",
+			"type": "instrument",
+			"display_name": "Cyberbeveiligingswet",
+			"labels": [
+				"BWB"
+			],
+			"props": {
+				"abbreviation": "Cbw",
+				"aliases": [
+					"Cbw"
+				],
+				"article_count": 111,
+				"basis": [],
+				"bwb_id": "BWBR0052872",
+				"celex_refs": [
+					"31976L0769",
+					"31990L0385",
+					"31991L0155",
+					"31991L0271"
+				],
+				"citation_title": "Cyberbeveiligingswet",
+				"citation_titles": [
+					"Cyberbeveiligingswet"
+				],
+				"date_in_force": "2026-08-15",
+				"date_published": "2026-07-10",
+				"date_signed": "2026-07-08",
+				"display_name": "Cyberbeveiligingswet",
+				"dossier_numbers": [
+					"36764"
+				],
+				"enacted_publication": "stb-2026-187",
+				"implements_celex": [],
+				"inbound_citation_count": 348,
+				"jurisdiction": "nl",
+				"kind": "wet",
+				"legal_areas": [
+					{
+						"main": "Informatierecht",
+						"main_id": "c_5092de31",
+						"main_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_5092de31",
+						"main_slug": "informatierecht",
+						"specific": "ICT-recht",
+						"specific_id": "c_8fbe4664",
+						"specific_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_8fbe4664",
+						"specific_slug": "ict-recht"
+					},
+					{
+						"main": "Openbare orde en veiligheidsrecht",
+						"main_id": "c_c06fcca1",
+						"main_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_c06fcca1",
+						"main_slug": "openbare-orde-en-veiligheidsrecht",
+						"specific": null,
+						"specific_id": null,
+						"specific_uri": null,
+						"specific_slug": null
+					}
+				],
+				"official_title": "Wet van 8 juli 2026, houdende regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet)",
+				"policy_domains": [
+					{
+						"label": "Openbare orde en veiligheid",
+						"id": "c_e8ff69cb",
+						"uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_e8ff69cb",
+						"slug": "openbare-orde-en-veiligheid"
+					}
+				],
+				"short_title": "Cbw",
+				"source": "bwb",
+				"stub": false,
+				"title": "Cyberbeveiligingswet",
+				"version_date_in_force": "2026-08-15"
+			},
+			"path": "/wetten/BWBR0052872"
+		},
+		"neighbors": {
+			"total": 0,
+			"buckets": []
+		},
+		"title": "Cyberbeveiligingswet (Cbw)",
+		"description": "Cyberbeveiligingswet (Cbw), geldend sinds 15 augustus 2026",
+		"path": "/wetten/BWBR0052872",
+		"lid_counts_pending": false
+	},
+	"/api/nodes/{collection}/{key} {\"collection\":\"instruments\",\"key\":\"bwbr0052872\"} {\"limit\":200,\"node_types\":\"instrument,article\",\"relations\":\"REFERS_TO,BASED_ON\"}": {
+		"node": {
+			"id": "instruments/bwbr0052872",
+			"key": "bwbr0052872",
+			"collection": "instruments",
+			"type": "instrument",
+			"display_name": "Cyberbeveiligingswet",
+			"labels": [
+				"BWB"
+			],
+			"props": {
+				"abbreviation": "Cbw",
+				"aliases": [
+					"Cbw"
+				],
+				"article_count": 111,
+				"basis": [],
+				"bwb_id": "BWBR0052872",
+				"celex_refs": [
+					"31976L0769",
+					"31990L0385",
+					"31991L0155",
+					"31991L0271"
+				],
+				"citation_title": "Cyberbeveiligingswet",
+				"citation_titles": [
+					"Cyberbeveiligingswet"
+				],
+				"date_in_force": "2026-08-15",
+				"date_published": "2026-07-10",
+				"date_signed": "2026-07-08",
+				"display_name": "Cyberbeveiligingswet",
+				"dossier_numbers": [
+					"36764"
+				],
+				"enacted_publication": "stb-2026-187",
+				"implements_celex": [],
+				"inbound_citation_count": 348,
+				"jurisdiction": "nl",
+				"kind": "wet",
+				"legal_areas": [
+					{
+						"main": "Informatierecht",
+						"main_id": "c_5092de31",
+						"main_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_5092de31",
+						"main_slug": "informatierecht",
+						"specific": "ICT-recht",
+						"specific_id": "c_8fbe4664",
+						"specific_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_8fbe4664",
+						"specific_slug": "ict-recht"
+					},
+					{
+						"main": "Openbare orde en veiligheidsrecht",
+						"main_id": "c_c06fcca1",
+						"main_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_c06fcca1",
+						"main_slug": "openbare-orde-en-veiligheidsrecht",
+						"specific": null,
+						"specific_id": null,
+						"specific_uri": null,
+						"specific_slug": null
+					}
+				],
+				"official_title": "Wet van 8 juli 2026, houdende regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet)",
+				"policy_domains": [
+					{
+						"label": "Openbare orde en veiligheid",
+						"id": "c_e8ff69cb",
+						"uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_e8ff69cb",
+						"slug": "openbare-orde-en-veiligheid"
+					}
+				],
+				"short_title": "Cbw",
+				"source": "bwb",
+				"stub": false,
+				"title": "Cyberbeveiligingswet",
+				"version_date_in_force": "2026-08-15"
+			},
+			"path": "/wetten/BWBR0052872"
+		},
+		"neighbors": {
+			"total": 70,
+			"buckets": [
+				{
+					"relation": "REFERS_TO",
+					"direction": "outbound",
+					"collection": "instruments",
+					"type": "instrument",
+					"total": 70,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "instruments/32022r0123",
+							"key": "32022r0123",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Verordening (EU) 2022/123",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 38,
+								"celex": "32022R0123",
+								"citation_title": "Verordening (EU) 2022/123",
+								"display_name": "Verordening (EU) 2022/123",
+								"inbound_citation_count": 6,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "32022R0123",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Verordening (EU) 2022/123 van het Europees Parlement en de Raad van 25 januari 2022 betreffende een grotere rol van het Europees Geneesmiddelenbureau inzake crisisparaatheid en -beheersing op het gebied van geneesmiddelen en medische hulpmiddelen"
+							},
+							"edge_id": "009cda00b3dad3e062084e215caf1add094dc3d9",
+							"relation": "REFERS_TO",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "32022R0123"
+							},
+							"path": "/wetten/32022R0123"
+						},
+						{
+							"id": "instruments/32005l0065",
+							"key": "32005l0065",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Richtlijn 2005/65/EG",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 21,
+								"celex": "32005L0065",
+								"citation_title": "Richtlijn 2005/65/EG",
+								"display_name": "Richtlijn 2005/65/EG",
+								"inbound_citation_count": 15,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "32005L0065",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Richtlijn 2005/65/EG van het Europees Parlement en de Raad van 26 oktober 2005 betreffende het verhogen van de veiligheid van havens"
+							},
+							"edge_id": "045be0c4eecbf7973be4d853f72cf07bc43abb7b",
+							"relation": "REFERS_TO",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "32005L0065"
+							},
+							"path": "/wetten/32005L0065"
+						},
+						{
+							"id": "instruments/32019r0943",
+							"key": "32019r0943",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Verordening (EU) 2019/943",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 71,
+								"celex": "32019R0943",
+								"citation_title": "Verordening (EU) 2019/943",
+								"display_name": "Verordening (EU) 2019/943",
+								"inbound_citation_count": 61,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "32019R0943",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Verordening (EU) 2019/943 van het Europees Parlement en de Raad van 5 juni 2019 betreffende de interne markt voor elektriciteit"
+							},
+							"edge_id": "059e29f11cfcb549dc6752ab46b5017d1fd98a26",
+							"relation": "REFERS_TO",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "32019R0943"
+							},
+							"path": "/wetten/32019R0943"
+						},
+						{
+							"id": "instruments/32004r0552",
+							"key": "32004r0552",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Verordening (EG) nr. 552/2004",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 12,
+								"celex": "32004R0552",
+								"citation_title": "Verordening (EG) nr. 552/2004",
+								"display_name": "Verordening (EG) nr. 552/2004",
+								"inbound_citation_count": 15,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "32004R0552",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Verordening (EG) nr. 552/2004 van het Europees Parlement en de Raad van 10 maart 2004 betreffende de interoperabiliteit van het Europese netwerk voor luchtverkeersbeveiliging (\"de interoperabiliteitsverordening\") (Voor de EER relevante tekst)"
+							},
+							"edge_id": "07a7cfc5123eff1dfeb23a461bc3bbec15fec2e2",
+							"relation": "REFERS_TO",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "32004R0552"
+							},
+							"path": "/wetten/32004R0552"
+						}
+					]
+				}
+			]
+		},
+		"title": "Cyberbeveiligingswet (Cbw)",
+		"description": "Cyberbeveiligingswet (Cbw), geldend sinds 15 augustus 2026",
+		"path": "/wetten/BWBR0052872",
+		"lid_counts_pending": false
+	},
+	"/api/nodes/{collection}/{key} {\"collection\":\"instruments\",\"key\":\"bwbr0052872\"} {\"limit\":200,\"node_types\":\"instrument\",\"relations\":\"IMPLEMENTS\"}": {
+		"node": {
+			"id": "instruments/bwbr0052872",
+			"key": "bwbr0052872",
+			"collection": "instruments",
+			"type": "instrument",
+			"display_name": "Cyberbeveiligingswet",
+			"labels": [
+				"BWB"
+			],
+			"props": {
+				"abbreviation": "Cbw",
+				"aliases": [
+					"Cbw"
+				],
+				"article_count": 111,
+				"basis": [],
+				"bwb_id": "BWBR0052872",
+				"celex_refs": [
+					"31976L0769",
+					"31990L0385",
+					"31991L0155",
+					"31991L0271"
+				],
+				"citation_title": "Cyberbeveiligingswet",
+				"citation_titles": [
+					"Cyberbeveiligingswet"
+				],
+				"date_in_force": "2026-08-15",
+				"date_published": "2026-07-10",
+				"date_signed": "2026-07-08",
+				"display_name": "Cyberbeveiligingswet",
+				"dossier_numbers": [
+					"36764"
+				],
+				"enacted_publication": "stb-2026-187",
+				"implements_celex": [],
+				"inbound_citation_count": 348,
+				"jurisdiction": "nl",
+				"kind": "wet",
+				"legal_areas": [
+					{
+						"main": "Informatierecht",
+						"main_id": "c_5092de31",
+						"main_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_5092de31",
+						"main_slug": "informatierecht",
+						"specific": "ICT-recht",
+						"specific_id": "c_8fbe4664",
+						"specific_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_8fbe4664",
+						"specific_slug": "ict-recht"
+					},
+					{
+						"main": "Openbare orde en veiligheidsrecht",
+						"main_id": "c_c06fcca1",
+						"main_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_c06fcca1",
+						"main_slug": "openbare-orde-en-veiligheidsrecht",
+						"specific": null,
+						"specific_id": null,
+						"specific_uri": null,
+						"specific_slug": null
+					}
+				],
+				"official_title": "Wet van 8 juli 2026, houdende regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet)",
+				"policy_domains": [
+					{
+						"label": "Openbare orde en veiligheid",
+						"id": "c_e8ff69cb",
+						"uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_e8ff69cb",
+						"slug": "openbare-orde-en-veiligheid"
+					}
+				],
+				"short_title": "Cbw",
+				"source": "bwb",
+				"stub": false,
+				"title": "Cyberbeveiligingswet",
+				"version_date_in_force": "2026-08-15"
+			},
+			"path": "/wetten/BWBR0052872"
+		},
+		"neighbors": {
+			"total": 1,
+			"buckets": [
+				{
+					"relation": "IMPLEMENTS",
+					"direction": "outbound",
+					"collection": "instruments",
+					"type": "instrument",
+					"total": 1,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "instruments/32022l2555",
+							"key": "32022l2555",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Richtlijn (EU) 2022/2555",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 46,
+								"celex": "32022L2555",
+								"citation_title": "Richtlijn (EU) 2022/2555",
+								"display_name": "Richtlijn (EU) 2022/2555",
+								"inbound_citation_count": 55,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "32022L2555",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (NIS 2-richtlijn)"
+							},
+							"edge_id": "a6e5503b6fb38e86ddc717dd032f4a06c96cd001",
+							"relation": "IMPLEMENTS",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "32022L2555",
+								"bases": [
+									"national_implementing_measure"
+								],
+								"publications": [
+									"stb-2026-187"
+								],
+								"measures": [
+									{
+										"publication": "stb-2026-187",
+										"citation": "Stb. 2026, 187",
+										"title": "Wet van 8 juli 2026, houdende regels terimplementatie van Richtlijn (EU) 2022/2555 vanhet Europees Parlement en de Raad van14 december 2022 betreffende maatregelenvoor een hoog gezamenlijk niveau vancyberbeveiliging in de Unie, tot wijziging vanVerordening (EU) nr. 910/2014 en Richtlijn (EU)2018/1972 en tot intrekking van Richtlijn (EU)2016/1148 (PbEU 2022, L 333)(Cyberbeveiligingswet)",
+										"type": "Wet"
+									}
+								]
+							},
+							"path": "/wetten/32022L2555"
+						}
+					]
+				}
+			]
+		},
+		"title": "Cyberbeveiligingswet (Cbw)",
+		"description": "Cyberbeveiligingswet (Cbw), geldend sinds 15 augustus 2026",
+		"path": "/wetten/BWBR0052872",
+		"lid_counts_pending": false
+	}
+}

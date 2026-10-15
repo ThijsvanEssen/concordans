@@ -91,7 +91,7 @@ describe('the documents of a dossier', () => {
 			'/api/dossiers/{number}': { key: '36001', number: '36001', instruments: [], committees: [] },
 			'/api/dossiers/{number}/documents': { items: [], total: 0 }
 		});
-		await Promise.all([getDossierDocuments('36001'), loadDossierHub('36001', async () => [])]);
+		await Promise.all([getDossierDocuments('36001'), loadDossierHub('36001')]);
 		expect(fake.asked('/api/dossiers/{number}/documents')).toHaveLength(1);
 	});
 });

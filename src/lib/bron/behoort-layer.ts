@@ -5,7 +5,7 @@ import { naamVan } from '$lib/bron/menselijk';
 import type { Neighbor } from '$lib/api/nodes';
 import { refOf, type BronRef } from '$lib/bron/href';
 import { dossierLabel, dossierUitProps } from './dossier-naam';
-import { describe } from '$lib/verbonden/rows';
+import { describeBron } from '$lib/bron/describe';
 import type { Collection, Relation } from '$lib/vocabulary';
 
 /**
@@ -97,7 +97,7 @@ export function dossierNummer(props: Record<string, unknown>): string | null {
 export function laagVan(n: Neighbor, soort: string): Laag {
 	const props = (n.props ?? {}) as Record<string, unknown>;
 	const ref = refOf(n.collection as Collection, n.key, props);
-	const vol = describe(n.collection, n.key, n.display_name, props).title;
+	const vol = describeBron(n.collection, n.key, n.display_name, props).title;
 	if (n.collection === 'dossiers') {
 		// A dossier by its kind, number and the name of its bill, "Kamerstuk 36496 Wet
 		// betaalbare huur" (dossier-naam); its title runs to three lines.

@@ -50,7 +50,7 @@ describe('an r.o. read in place', () => {
 	});
 
 	it('is the r.o. of a row’s line in Verbonden: a BronLink, not a bare link', () => {
-		const v = bron('lib/verbonden/Verbonden.svelte');
+		const v = bron('lib/verbonden/VerbondenRow.svelte');
 		expect(v).toMatch(/<BronLink[\s\S]{0,200}at=\{hoe\.plaats\.at\}/);
 	});
 
@@ -75,7 +75,7 @@ describe('a Kamerstuk opened in place', () => {
 		expect(bron('lib/map/MapInhoud.svelte')).toMatch(/kernVan\(/);
 		// Verbonden and Bronnen open a stuk with RijInhoud, by the stuk's own kind.
 		for (const path of [
-			'lib/verbonden/Verbonden.svelte',
+			'lib/verbonden/VerbondenRow.svelte',
 			'lib/components/explore/index/rows/DocumentRows.svelte'
 		])
 			expect(bron(path)).toMatch(/<RijInhoud[\s\S]{0,300}als="kern"/);

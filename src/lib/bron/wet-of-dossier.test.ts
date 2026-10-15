@@ -14,7 +14,8 @@ import {
 	kamerstukNummer,
 	officialNumber
 } from './dossier-naam';
-import { describe as beschrijf, dossierVanRij, type Row } from '$lib/verbonden/rows';
+import { dossierVanRij, type Row } from '$lib/verbonden/rows';
+import { describeBron } from '$lib/bron/describe';
 import { previewFromNode } from './preview';
 import { tabTitle } from './tab-title';
 import { laagVan } from '$lib/bron/behoort-layer';
@@ -71,7 +72,7 @@ describe('wet and dossier of the same name', () => {
 	});
 
 	it('gives a dossier row its name, and "Kamerstuk" under it; a wet row its kind', () => {
-		const dossier = beschrijf('dossiers', '36764', null, {
+		const dossier = describeBron('dossiers', '36764', null, {
 			label: '36764',
 			title: LONG,
 			short_title: 'Cyberbeveiligingswet'
@@ -80,7 +81,7 @@ describe('wet and dossier of the same name', () => {
 			'Cyberbeveiligingswet',
 			'Kamerstuk 36764'
 		]);
-		const wet = beschrijf('instruments', 'bwbr0052872', null, {
+		const wet = describeBron('instruments', 'bwbr0052872', null, {
 			bwb_id: 'BWBR0052872',
 			citation_title: 'Cyberbeveiligingswet',
 			kind: 'wet'
@@ -138,7 +139,7 @@ describe('a dossier number in its official notation', () => {
 			dossierName(d),
 			kamerstukName({ dossier_number: '36600-VIII', number: 5 }),
 			kamerstukName({ dossier_number: '36600-VIII' }),
-			beschrijf('dossiers', '36600-VIII', null, props).identifier,
+			describeBron('dossiers', '36600-VIII', null, props).identifier,
 			previewFromNode('dossiers', null, props).kicker,
 			tabTitle({ collection: 'dossiers', label: '36600-VIII', raw: { display_name: null, props } }),
 			buildNodeLabel({ collection: 'dossiers', key: '36600-VIII', props } as never, 'dossier'),

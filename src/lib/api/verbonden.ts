@@ -113,6 +113,3 @@ export const getCommitteeActivities = (slug: string, limit: number) =>
 			})
 		)
 	);
-
-/** The list of committees: it changes rarely. */
-export const getCommittees = () => once('committees', () => unwrap(api.GET('/api/committees')));

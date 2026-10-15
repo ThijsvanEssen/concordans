@@ -1,70 +1,43 @@
 <script lang="ts">
+	// The panel Verbonden: the verbindingen of the selected bron, in the groups of the table in
+	// groups.ts, under the bronfilter. In the network each group can put its bronnen on the
+	// canvas or take them off.
 	import { ecliKey } from '$lib/bron/leesbaar';
-	import { capitalize, count, joinAnd, textOf } from '$lib/text/words';
+	import { capitalize, count, joinAnd } from '$lib/text/words';
 	import { meldNetwerk } from '$lib/stores/netwerk-melding';
 	import { report } from '$lib/api/errors';
-	import { goto } from '$app/navigation';
 	import { rijen } from '$lib/actions/rijen';
-	import { hoeVan, kleineLetter } from './hoe';
-
-	import Aanhaling from './Aanhaling.svelte';
-	import { zetMarkering } from '$lib/bron/markering.svelte';
-	import { itemVanRij } from '$lib/map/rij';
-	// The panel Verbonden: the verbindingen of the selected bron, in the groups of the
-	// table in groups.ts, under the bronfilter. In the network each group can put its
-	// bronnen on the canvas or take them off.
-	import Caret from '$lib/components/ui/Caret.svelte';
-	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import BronLink from '$lib/bron/BronLink.svelte';
-	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
-	import WetVerwijzingen from './WetVerwijzingen.svelte';
-	import StukUitslag from '$lib/components/parliamentary/StukUitslag.svelte';
-	import { stukUitslag } from '$lib/components/parliamentary/stuk-uitslag';
-	import { blockClick, terPlekke } from '$lib/actions/klik';
+	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { page } from '$app/state';
 	import { tick, untrack } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';
-	import { bronHref, openHref, refId } from '$lib/bron/href';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import { refId } from '$lib/bron/href';
 	import type { GraphStore } from '$lib/graph/store/types';
 	import type { CanvasRow } from '$lib/graph/store/types';
 	import type { GraphNode } from '$lib/graph/types';
-	import {
-		RECHTERS,
-		type Rechter,
-		kindCount,
-		BRON_KIND_NOUN,
-		withKind,
-		type VerbondenFilter
-	} from './filter';
+	import { kindCount, BRON_KIND_NOUN, withKind, type VerbondenFilter } from './filter';
 	import { formatCount } from '$lib/text/getal';
 	import { countLabel, groupCount, type Group } from './groups';
 	import { csvName, download, exportRows, rowsToCsv } from './export';
-	import {
-		ankerVanRij,
-		caseNumberOf,
-		dossierVanRij,
-		metaParts,
-		repeatedTitles,
-		rowKey,
-		type Row
-	} from './rows';
-	import DossierNaam from '$lib/bron/DossierNaam.svelte';
-	import { dossierName } from '$lib/bron/dossier-naam';
+	import { caseNumberOf, repeatedTitles, rowKey, type Row } from './rows';
 	import { LOAD_FAILED, type VerbondenState } from './source';
-	import LoadState from '$lib/components/ui/LoadState.svelte';
-	import PendingRows, { type PendingKind } from './PendingRows.svelte';
+	import PendingRows, { pendingKind } from './PendingRows.svelte';
+	import PendingGroup from './PendingGroup.svelte';
+	import GroupHead from './GroupHead.svelte';
+	import JudgmentOrderLine from './JudgmentOrderLine.svelte';
+	import VerbondenRow from './VerbondenRow.svelte';
 	import { VERBONDEN_BUCKET } from '$lib/api/records';
 	import { groupRequest } from './open-group';
 	import type { LoaderOptions } from './loaders';
-	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import { isInhoudGroep, isKernGroep, lazeKernIds } from '$lib/bron/behoort';
 	import {
 		GROUPINGS,
+		PREVIEW_ROWS,
 		countLine,
 		filterGroups,
 		hiddenLine,
@@ -74,7 +47,6 @@
 		yearHistogram,
 		type Grouping
 	} from './view';
-	import { withParams } from '$lib/util/address';
 
 	let {
 		verbonden,
@@ -121,21 +93,8 @@
 		onAlles?: () => Promise<void>;
 	} = $props();
 
-	/** The rows a closed group shows. */
-	const PREVIEW = 3;
-	/** The width of a row's glyph: the opened content of a row stands in from it. */
-	const ROW_GLYPH = 11;
 	/** "Toelichtingen en wijzigingen", the first word with a capital. */
 	const zin = (woorden: string[]) => capitalize(joinAnd(woorden));
-	// The kind of a waiting row, for its height: what a row of that group holds on this page.
-	const wachtSoort = (noun?: string): PendingKind => {
-		const wet = selection.collection === 'articles' || selection.collection === 'instruments';
-		if (noun === 'uitspraken') return wet ? 'passage' : 'uitspraak';
-		if (noun === 'artikelen')
-			return selection.collection === 'judgments' ? 'artikel' : wet ? 'verwijzing' : 'stuk';
-		if (wet && (noun === 'stukken' || noun === 'Kamerstukken')) return 'kamerstuk';
-		return 'stuk';
-	};
 
 	let grouping = $state<Grouping>('soort');
 	let expanded = $state(new Set<string>());
@@ -362,67 +321,7 @@
 		else meld(g.id, `Alle ${telling(rows)} stonden al in het netwerk.`, null);
 	}
 
-	// A row of an in-place group opens beside the selected bron, which stays selected.
-	const inPlaceHref = (row: Row) =>
-		withParams(page.url, { naast: refId(row.ref) }, { hash: row.at ?? '' });
-
-	// A row opens its bron as every link to a bron does (openHref): in Netwerk, a Kamerstuk on
-	// its text; a group read beside the text opens it there.
-	// A citing judgment opens at the note its citation stands in.
-	const rowHref = (g: Group, row: Row) =>
-		g.inPlace
-			? inPlaceHref({ ...row, at: ankerVanRij(row) })
-			: openHref(row.ref, { at: ankerVanRij(row) });
-	/** What its reader marks where a row opens it at a note: the citation in it. */
-	const rijMarkering = (row: Row) =>
-		inRij(row) && row.noot
-			? { bron: refId(row.ref), at: row.noot.id, doel: plaatsDoel(row), bereik: row.bereik ?? null }
-			: null;
-
-	// The r.o. of a passage opens the citing judgment's text there: the row's, or the selected
-	// one's where it cites the row's bron.
-	// The passage is the row's where its bron cites the selected one, else the selected one's.
-	const inRij = (row: Row) => row.direction === 'inbound';
-	const plaatsHref = (g: Group, row: Row, at: string) =>
-		inRij(row)
-			? g.inPlace
-				? inPlaceHref({ ...row, at })
-				: bronHref(row.ref, { at, keepMode: false, mode: 'read', paneel: 'tekst' })
-			: bronHref(selection.id, { at, keepMode: false, mode: 'read', paneel: 'tekst' });
-
-	// The r.o. of a passage is a reference to the judgment at it: its card is the overweging,
-	// the words that cite the article or judgment marked, in its note where the citation stands
-	// in one (OverwegingKaart). A note of a Kamerstuk opens the stuk there.
-	const plaatsRef = (row: Row) => (inRij(row) ? row.ref : selection.id);
-	const plaatsDoel = (row: Row) => {
-		const cited = inRij(row) ? selection : row.ref;
-		return cited.collection === 'articles' || cited.collection === 'judgments' ? cited.key : null;
-	};
-	// What the reader marks where the place opens it: the note opened, the citation in it.
-	const plaatsMarkering = (row: Row, plaats: { at: string; noot: string | null }) => ({
-		bron: inRij(row) ? refId(row.ref) : selection.id,
-		at: plaats.noot ?? plaats.at,
-		doel: plaatsDoel(row),
-		bereik: row.bereik ?? null
-	});
-
-	// A Kamerstuk opens in place under its row: its core text (a motie its dictum, an
-	// amendement its toelichting, another its opening), as in Actueel, Bronnen and Gemarkeerd
-	// (RijInhoud). The stuk is one step further: Lees verder, or the title with a modifier.
-	// A connected law opens on the references between the two laws' articles (Thijs, 14 Oct).
-	const wetVerband = (row: Row) => {
-		const van = row.edge?.van;
-		const naar = row.props?.bwb_id;
-		return row.ref.collection === 'instruments' &&
-			row.relation === 'REFERS_TO' &&
-			typeof van === 'string' &&
-			typeof naar === 'string'
-			? { van, naar, dit: typeof row.edge?.dit === 'string' ? row.edge.dit : undefined }
-			: null;
-	};
-	const opentTerPlekke = (row: Row) =>
-		(row.ref.collection === 'documents' || !!wetVerband(row)) && !row.missing;
-	/** A motie's dictum, an amendement's explanation, from the row's props: no request. */
+	/** The row opened in place: one at a time. */
 	let openRij = $state<string | null>(null);
 	const wisselRij = (row: Row) => (openRij = openRij === rowKey(row) ? null : rowKey(row));
 
@@ -450,7 +349,7 @@
 	}
 </script>
 
-<aside class="verbonden" aria-label="Verbonden" style:--row-glyph="{ROW_GLYPH}px" bind:this={root}>
+<aside class="verbonden" aria-label="Verbonden" bind:this={root}>
 	<div class="head">
 		<h2 class="head__title">Verbonden</h2>
 		<!-- A bron without verbindingen says so by its count, not by a sentence (R7, UX-toets
@@ -486,36 +385,7 @@
 				{#if p?.section && p.section !== verbonden.preview?.[i - 1]?.section}
 					<h3 class="section">{p.section}</h3>
 				{/if}
-				{#if p}
-					<!-- As the group will stand: its head, and its rows as blank rows (#1). -->
-					<section class="group group--voorlopig" aria-hidden="true">
-						<div class="group__head">
-							<!-- The head as the group's own (heading, button, caret), so its text stands
-							     where the group's will. -->
-							<h3 class="group__label">
-								<button type="button" class="group__knop" tabindex="-1"
-									>{p.label.replace(/\S+$/, '')}<span class="group__slot"
-										>{p.label.match(/\S+$/)?.[0] ?? ''}<Caret open side /></span
-									></button
-								>
-							</h3>
-							<span class="group__count">{p.count != null ? formatCount(p.count) : '…'}</span>
-						</div>
-						{#if p.count && isOpen(`verbonden:${p.id}`, true)}
-							{#if p.noun === 'uitspraken' && (p.count > VERBONDEN_BUCKET || p.ordered)}
-								<!-- The line of the judgments' order and years, as it will stand. -->
-								<div class="group__regel regel--wacht" aria-hidden="true"></div>
-							{/if}
-							<PendingRows count={p.count} shown={PREVIEW} kind={wachtSoort(p.noun)} />
-						{/if}
-					</section>
-				{:else}
-					<div class="voorlopig" aria-hidden="true">
-						<span class="balk balk--kop"></span>
-						<span class="balk"></span>
-						<span class="balk balk--kort"></span>
-					</div>
-				{/if}
+				<PendingGroup group={p} collection={selection.collection} />
 			{/each}
 			<p class="sr-only" role="status">Verbindingen laden</p>
 		{/if}
@@ -525,57 +395,43 @@
 			{@const bars = years(g)}
 			{@const count = groupCount(g)}
 			{@const toe = !isOpen(`verbonden:${g.id}`, true)}
-			{@const begin = g.label.replace(/\S+$/, '')}
-			{@const slot = g.label.match(/\S+$/)?.[0] ?? ''}
+			{@const zussen = repeatedTitles(g.rows)}
 			{#if g.section && g.section !== shown[i - 1]?.section}
 				<h3 class="section">{g.section}</h3>
 			{/if}
 			<section class="group" data-group={g.id}>
-				<div class="group__head" data-rij>
-					<!-- The heading opens and closes the group, remembered per group (Sectie's rule). -->
-					<!-- The last word keeps the caret with it: an SVG after text wraps alone (Thijs,
-					     10 Oct: "de nieuwe regel hier is niet mooi"). The count follows the heading;
-					     when the heading wraps, it stands on the first line's right, by the box. -->
-					<h3 class="group__label">
-						<button
-							type="button"
-							class="group__knop"
-							aria-expanded={!toe}
-							onclick={() => zetOpen(`verbonden:${g.id}`, toe)}
-							>{begin}<span class="group__slot">{slot}<Caret open={!toe} side /></span></button
-						>
-					</h3>
-					<!-- While its rows come, the count the node foretells, as the skeleton showed it (#1). -->
-					<span class="group__count"
-						>{g.laden
-							? verbonden.verwacht?.[g.id] != null
-								? formatCount(verbonden.verwacht[g.id])
-								: '…'
-							: g.failed && g.rows.length === 0
-								? ''
-								: countLabel(g)}</span
-					>
-					{#if network && drawable(g.rows).length > 0}
-						<span class="group__laag">
-							<RijActies
-								naam={g.label}
-								netwerk={{
-									aan: isLayerOn(g),
-									voegToe: () => toggleLayer(g),
-									haalWeg: () => toggleLayer(g)
-								}}
-							/>
-						</span>
-					{/if}
-				</div>
+				{#snippet laag()}
+					<RijActies
+						naam={g.label}
+						netwerk={{
+							aan: isLayerOn(g),
+							voegToe: () => toggleLayer(g),
+							haalWeg: () => toggleLayer(g)
+						}}
+					/>
+				{/snippet}
+				<!-- While its rows come, the count the node foretells, as the skeleton showed it (#1). -->
+				<GroupHead
+					label={g.label}
+					count={g.laden
+						? verbonden.verwacht?.[g.id] != null
+							? formatCount(verbonden.verwacht[g.id])
+							: '…'
+						: g.failed && g.rows.length === 0
+							? ''
+							: countLabel(g)}
+					open={!toe}
+					onToggle={() => zetOpen(`verbonden:${g.id}`, toe)}
+					actions={network && drawable(g.rows).length > 0 ? laag : undefined}
+				/>
 				{#if !toe}
 					{#if g.laden && verbonden.verwacht?.[g.id]}
 						<!-- Its place as it will be: blank rows as many as it will show, so the rows
-						     that come do not push down what stands below (#1). -->
+								 that come do not push down what stands below (#1). -->
 						<PendingRows
 							count={verbonden.verwacht[g.id]}
-							shown={PREVIEW}
-							kind={wachtSoort(g.noun)}
+							shown={PREVIEW_ROWS}
+							kind={pendingKind(g.noun, selection.collection)}
 						/>
 						<p class="sr-only">
 							{g.noun ? `${capitalize(g.noun)} laden…` : 'Laden…'}
@@ -603,202 +459,31 @@
 						</p>
 					{/if}
 					{#if g.orders || bars.length > 0}
-						<!-- One line of controls under the heading (docs/bediening.md): the order of the
-						     judgments, and the year and the court behind one text menu. -->
-						<div class="group__regel">
-							{#if g.orders}
-								<!-- Newest first, or the most cited first: the standard judgments on top (UX-15). -->
-								<Keuze
-									label="Volgorde"
-									klein
-									opties={g.orders.map((o) => ({ waarde: o.value, label: o.label }))}
-									waarde={verbonden.options.order}
-									onKies={(order) => {
-										if (order !== verbonden.options.order) onReloadGroup?.(g.id, { order });
-									}}
-								/>
-							{/if}
-							{#if bars.length > 0}
-								{@const rechter = RECHTERS.find((r) => r.id === filter.rechter)}
-								<TekstMenu
-									klein
-									rechts
-									label="Jaar en rechter"
-									tekst="{filter.jaar ?? 'Alle jaren'}, {rechter?.label.toLowerCase() ??
-										'alle rechters'}"
-								>
-									{#snippet inhoud(sluit)}
-										<div class="jaar-rechter">
-											<div class="jaar-rechter__lijst" role="group" aria-label="Jaar">
-												{#each [{ year: null, count: null }, ...[...bars]
-														.reverse()
-														.filter((x) => x.count)] as x (x.year ?? 'alle')}
-													<button
-														type="button"
-														role="menuitemradio"
-														class="tekstmenu__item jaar-rechter__item"
-														aria-checked={(filter.jaar ?? null) === x.year}
-														onclick={() => {
-															sluit();
-															onFilter({ ...filter, jaar: x.year });
-														}}
-														>{x.year ?? 'Alle jaren'}{#if x.count}<span class="jaar-rechter__tel"
-																>{formatCount(x.count)}</span
-															>{/if}</button
-													>
-												{/each}
-											</div>
-											<div class="jaar-rechter__lijst" role="group" aria-label="Rechter">
-												{#each [{ id: null, label: 'Alle rechters' }, ...RECHTERS] as r (r.id ?? 'alle')}
-													<button
-														type="button"
-														role="menuitemradio"
-														class="tekstmenu__item jaar-rechter__item"
-														aria-checked={(filter.rechter ?? null) === r.id}
-														onclick={() => {
-															sluit();
-															onFilter({ ...filter, rechter: (r.id as Rechter | null) ?? null });
-														}}>{r.label}</button
-													>
-												{/each}
-											</div>
-										</div>
-									{/snippet}
-								</TekstMenu>
-							{/if}
-						</div>
+						<JudgmentOrderLine
+							orders={g.orders}
+							order={verbonden.options.order}
+							onOrder={(order) => onReloadGroup?.(g.id, { order })}
+							years={bars}
+							{filter}
+							{onFilter}
+						/>
 					{/if}
 					<ul class="rows">
-						{#each all ? g.rows : g.rows.slice(0, PREVIEW) as row (rowKey(row))}
-							{@const sister = repeatedTitles(g.rows).has(row.title) ? caseNumberOf(row) : null}
-							{@const hoe = hoeVan(row, selection.collection)}
-							{@const href = rowHref(g, row)}
-							{@const dossier = dossierVanRij(row)}
-							<!-- A motie or amendement says how the Kamer decided, on every list (StukUitslag);
-							     the day of the vote then stands for the stuk's own. -->
-							{@const uitslag = row.ref.collection === 'documents' ? stukUitslag(row.props) : null}
-							{@const delen = metaParts(uitslag?.datum ? { ...row, date: null } : row, !!hoe)}
-							<li class="row" class:row--onder={!!row.onder}>
-								<!-- The row is the way to its bron: a click anywhere on it opens the bron in
-								     Netwerk, as its title does. -->
-								<div
-									class="row__main"
-									data-rij
-									class:is-open={openRij === rowKey(row)}
-									use:blockClick={row.missing
-										? null
-										: () => {
-												if (opentTerPlekke(row)) wisselRij(row);
-												else {
-													zetMarkering(rijMarkering(row));
-													goto(href, { noScroll: true });
-												}
-											}}
-								>
-									<KindGlyph
-										collection={row.ref.collection}
-										vorm={row.kind === 'wetsvoorstellen' ? 'voorstel' : undefined}
-										size={ROW_GLYPH}
-									/>
-									<span class="row__text">
-										{#if row.missing}
-											<span class="row__title row__title--missing">{row.title}</span>
-										{:else}
-											<a
-												class="row__title"
-												{href}
-												data-sveltekit-noscroll
-												aria-expanded={opentTerPlekke(row) ? openRij === rowKey(row) : undefined}
-												onclick={(e) => {
-													if (!opentTerPlekke(row)) zetMarkering(rijMarkering(row));
-													return opentTerPlekke(row) && terPlekke(e, () => wisselRij(row));
-												}}
-												>{#if dossier}<DossierNaam
-														{dossier}
-														vorm="naam"
-													/>{:else}{row.title}{/if}{#if sister}<span class="row__case"
-														>, {sister}</span
-													>{/if}</a
-											>
-										{/if}
-										{#if hoe && (hoe.werkwoord || hoe.rest)}
-											<span class="row__hoe" class:is-afgeleid={hoe.afgeleid}
-												>{#if hoe.werkwoord}<b>{hoe.werkwoord}</b
-													>{/if}{#if hoe.rest}{hoe.werkwoord && !/^[,:]/.test(hoe.rest)
-														? ' '
-														: ''}{#if hoe.plaats}{@const i = hoe.rest.indexOf(
-															hoe.plaats.text
-														)}{hoe.rest.slice(0, i)}<BronLink
-															ref={plaatsRef(row)}
-															at={hoe.plaats.at}
-															noot={hoe.plaats.noot}
-															doel={plaatsDoel(row)}
-															markering={plaatsMarkering(row, hoe.plaats)}
-															href={plaatsHref(g, row, hoe.plaats.noot ?? hoe.plaats.at)}
-															class="row__plaats">{hoe.plaats.text}</BronLink
-														>{hoe.rest.slice(
-															i + hoe.plaats.text.length
-														)}{:else}{hoe.rest}{/if}{/if}{#if hoe.afgeleid}, afgeleid{/if}</span
-											>
-										{/if}
-										{#if hoe?.citaat}
-											<span class="row__citaat"><Aanhaling passage={hoe.citaat} /></span>
-										{/if}
-										<span class="row__meta">
-											<!-- Where the verbinding comes from, in the line's own words (Thijs, 10 Oct:
-											     the box over the next row was "out of place"). -->
-											{#each delen as part, k (k)}
-												{#if k > 0}<span class="row__sep">,</span>{/if}
-												<span
-													class="row__part row__part--{part.kind}"
-													class:is-proposed={part.kind === 'proposed'}>{part.text}</span
-												>
-											{/each}{#if uitslag}{#if delen.length}<span class="row__sep">,</span
-													>{/if}<span class="row__part"><StukUitslag {uitslag} /></span
-												>{/if}{#if hoe?.herkomst}{#if delen.length || uitslag}<span class="row__sep"
-														>,</span
-													>{/if}<span class="row__part row__part--herkomst"
-													>{delen.length || uitslag
-														? kleineLetter(hoe.herkomst)
-														: hoe.herkomst}</span
-												>{/if}
-											{#if row.proposed && onProposedText}
-												<span class="row__sep">,</span>
-												<TekstLink onclick={() => onProposedText(row)}
-													>toon voorgestelde tekst</TekstLink
-												>
-											{/if}
-										</span>
-									</span>
-									<RijActies
-										naam={dossier ? dossierName(dossier) : row.title}
-										item={itemVanRij(row)}
-										netwerk={!row.missing && onAddToNetwerk
-											? { aan: inNetwerk?.(row) ?? false, voegToe: () => onAddToNetwerk(row) }
-											: null}
-									/>
-								</div>
-								{#if openRij === rowKey(row)}
-									{@const verband = wetVerband(row)}
-									<div class="row__inhoud">
-										{#if verband}
-											<WetVerwijzingen {...verband} />
-										{:else}
-											<RijInhoud
-												item={{
-													node: row.ref,
-													dictum: textOf(row.props?.dictum),
-													explanation: textOf(row.props?.explanation)
-												}}
-												als="kern"
-											/>
-										{/if}
-									</div>
-								{/if}
-							</li>
+						{#each all ? g.rows : g.rows.slice(0, PREVIEW_ROWS) as row (rowKey(row))}
+							<VerbondenRow
+								{row}
+								{selection}
+								inPlace={g.inPlace}
+								sister={zussen.has(row.title) ? caseNumberOf(row) : null}
+								open={openRij === rowKey(row)}
+								onToggle={() => wisselRij(row)}
+								{onProposedText}
+								{onAddToNetwerk}
+								{inNetwerk}
+							/>
 						{/each}
 					</ul>
-					{#if g.rows.length > PREVIEW}
+					{#if g.rows.length > PREVIEW_ROWS}
 						<p class="group__alle">
 							<AlleN
 								aantal={count}
@@ -913,41 +598,6 @@
 		overflow-y: auto;
 		padding-bottom: var(--s-6);
 	}
-	/* The groups while their rows load: their heads, and quiet bars where rows will be. */
-	.voorlopig {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-		padding: var(--s-3) var(--s-4);
-		border-bottom: 1px solid var(--rule);
-	}
-	.balk {
-		display: block;
-		height: var(--s-3);
-		width: 85%;
-		border-radius: var(--r-1);
-		/* The panel is paper-2 itself: the bars take the colour of its rules, faintly. */
-		background: var(--rule);
-		opacity: 0.6;
-	}
-	.balk--kop {
-		height: var(--s-4);
-		width: 45%;
-	}
-	.balk--kort {
-		width: 60%;
-	}
-	@media (prefers-reduced-motion: no-preference) {
-		.balk {
-			animation: ademen 1.6s ease-in-out infinite;
-		}
-	}
-	@keyframes ademen {
-		50% {
-			opacity: 0.3;
-		}
-	}
-
 	.note,
 	.hidden {
 		margin: 0;
@@ -966,46 +616,6 @@
 		font-style: italic;
 		color: var(--ink-3);
 	}
-	.group__head {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-2);
-		padding: var(--s-4) var(--s-4) var(--s-1);
-	}
-	.group__label {
-		flex: 0 1 auto;
-		min-width: 0;
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		font-weight: 600;
-		color: var(--ink);
-	}
-	/* A block, not inline: a button inline is an inline-block, whose baseline is its last
-	   line, and the count and the box would follow a wrapped heading down to it. The caret
-	   follows the last word in the slot. */
-	.group__knop {
-		display: block;
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		color: inherit;
-		cursor: pointer;
-		text-align: left;
-	}
-	.group__knop:hover {
-		color: var(--ink);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
-	}
-	.group__slot {
-		white-space: nowrap;
-	}
-	.group__count {
-		flex: none;
-		color: var(--ink-3);
-	}
 	/* What the last drawing of the group in the network did, under its head. */
 	.group__melding {
 		margin: 0;
@@ -1018,115 +628,6 @@
 		margin: 0;
 		padding: 0;
 	}
-	.row__main {
-		position: relative;
-		display: flex;
-		align-items: flex-start;
-		gap: var(--s-3);
-		padding: var(--s-2) var(--s-4);
-		cursor: pointer;
-	}
-	.row__main :global(.kind-glyph) {
-		margin-top: var(--s-1);
-	}
-	.row__main:hover,
-	.row__main:focus-within,
-	.row__main.is-open {
-		background: var(--paper-2);
-	}
-	.row__text {
-		flex: 1;
-		min-width: 0;
-		display: flex;
-		flex-direction: column;
-	}
-	.row__title {
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		line-height: 1.3;
-		color: var(--ink);
-	}
-	/* A law the title names that the dataset lacks: read, not followed. */
-	.row__title--missing {
-		color: var(--ink-3);
-	}
-	/* The case number that tells sister cases apart, in the title where the eye looks. */
-	.row__case {
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-	}
-	/* A comma against the word before it, a space after: whitespace in the markup is not kept
-	   at the start of an element. */
-	.row__sep {
-		margin-right: 0.3em;
-	}
-	.row__meta {
-		margin-top: 2px;
-		color: var(--ink-3);
-		line-height: 1.35;
-	}
-	.row__part--lid {
-		font-weight: 600;
-		color: var(--ink-2);
-	}
-	.row__part--derived {
-		font-style: italic;
-	}
-	/* The verbinding in words: the verb in weight, the rest as the source gives it. */
-	.row__hoe {
-		margin-top: 2px;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		line-height: 1.35;
-		color: var(--ink-2);
-	}
-	.row__hoe b {
-		font-weight: 600;
-		color: var(--ink);
-	}
-	.row__hoe.is-afgeleid {
-		font-style: italic;
-	}
-	/* A Kamerstuk opened under its row: its core text, in from the row's title. */
-	/* A regulation issued under the regulation above it: in from that one, on its rule. */
-	.row--onder .row__main {
-		margin-left: calc(var(--s-4) + 4px);
-		padding-left: var(--s-3);
-		border-left: 1px solid var(--rule);
-	}
-	.row__inhoud {
-		padding: 0 var(--s-4) var(--s-3) calc(var(--s-4) + var(--row-glyph) + var(--s-3));
-		background: var(--paper-2);
-	}
-	/* The r.o. of the passage: a reference whose card is the overweging, in the line's ink. */
-	.row__hoe :global(a.row__plaats) {
-		color: inherit;
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 3px;
-	}
-	.row__hoe :global(a.row__plaats:hover),
-	.row__hoe :global(a.row__plaats:focus-visible),
-	.row__hoe :global(a.row__plaats[aria-expanded='true']) {
-		text-decoration-color: currentColor;
-	}
-
-	/* The passage that carries the verbinding, the words that name the bron marked. */
-	.row__citaat {
-		margin-top: var(--s-1);
-		padding-left: var(--s-2);
-		border-left: 2px solid var(--rule-strong);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		line-height: 1.45;
-		color: var(--ink-2);
-		display: -webkit-box;
-		-webkit-line-clamp: 3;
-		line-clamp: 3;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-	}
 	/* The counts of the line, a comma between them. */
 	.ook > span + span::before {
 		content: ', ';
@@ -1136,48 +637,6 @@
 		gap: var(--s-4);
 		padding: var(--s-4);
 		font-size: var(--t-micro);
-	}
-
-	/* The network glyph at the right of a group's heading (RijActies). */
-	.group__laag {
-		margin-left: auto;
-		flex: none;
-		/* Outside the line: the head keeps one height with or without it, so the rows below do
-		   not move when it appears with the group's rows (UX-toets e7a2f95, #1: 9 px). */
-		align-self: center;
-		margin-block: calc(-1 * var(--s-2));
-	}
-	/* One line of controls under a group's heading: the order, the year and the court. */
-	.regel--wacht {
-		height: var(--s-6);
-	}
-	.group__regel {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: space-between;
-		gap: var(--s-2) var(--s-4);
-		padding: 0 var(--s-4) var(--s-2);
-	}
-	.jaar-rechter {
-		display: grid;
-		grid-template-columns: auto auto;
-		gap: 0 var(--s-2);
-		max-height: 60vh;
-		overflow-y: auto;
-	}
-	.jaar-rechter__lijst {
-		display: flex;
-		flex-direction: column;
-	}
-	.jaar-rechter__item {
-		display: flex;
-		justify-content: space-between;
-		gap: var(--s-3);
-		white-space: nowrap;
-	}
-	.jaar-rechter__tel {
-		color: var(--ink-3);
 	}
 
 	.group__alle {

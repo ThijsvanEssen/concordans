@@ -11,7 +11,9 @@
 			"session_year": "2025-2026",
 			"date": "2026-06-30",
 			"tk_url": null,
-			"display_name": "EK 36327, nr. P: Brief van de staatssecretaris en minister van J&V ter aanbieding van de beleidsreactie op het advies van het Adviescollege ICT-toetsing inzake de ICT-aanpassingen voor het nieuwe Wetb"
+			"display_name": "EK 36327, nr. P: Brief van de staatssecretaris en minister van J&V ter aanbieding van de beleidsreactie op het advies van het Adviescollege ICT-toetsing inzake de ICT-aanpassingen voor het nieuwe Wetb",
+			"chamber": "EK",
+			"is_explanatory": false
 		},
 		{
 			"id": "documents/ek_kst_36327_o",
@@ -22,7 +24,9 @@
 			"session_year": "2025-2026",
 			"date": "2026-06-04",
 			"tk_url": null,
-			"display_name": "EK 36327, nr. O: Brief aan het Adviescollege ICT-toetsing over het verrichten van de voorgestelde vervolgonderzoeken inzake de ICT-aanpassingen voor het nieuwe Wetboek van Strafvordering"
+			"display_name": "EK 36327, nr. O: Brief aan het Adviescollege ICT-toetsing over het verrichten van de voorgestelde vervolgonderzoeken inzake de ICT-aanpassingen voor het nieuwe Wetboek van Strafvordering",
+			"chamber": "EK",
+			"is_explanatory": false
 		},
 		{
 			"id": "documents/ek_kst_36327_n",
@@ -33,7 +37,9 @@
 			"session_year": "2025-2026",
 			"date": "2026-05-12",
 			"tk_url": null,
-			"display_name": "EK 36327, nr. N: Brief van de voorzitter van het Adviescollege ICT-toetsing ter aanbieding van het advies over de voorbereiding van publieke organen in de strafrechtketen op de ICT-aanpassingen voor h"
+			"display_name": "EK 36327, nr. N: Brief van de voorzitter van het Adviescollege ICT-toetsing ter aanbieding van het advies over de voorbereiding van publieke organen in de strafrechtketen op de ICT-aanpassingen voor h",
+			"chamber": "EK",
+			"is_explanatory": false
 		},
 		{
 			"id": "documents/ek_kst_36327_c",
@@ -44,7 +50,9 @@
 			"session_year": "2024-2025",
 			"date": "2025-04-01",
 			"tk_url": null,
-			"display_name": "EK 36327, nr. C: Gewijzigd voorstel van wet"
+			"display_name": "EK 36327, nr. C: Gewijzigd voorstel van wet",
+			"chamber": "EK",
+			"is_explanatory": false
 		},
 		{
 			"id": "documents/72ee49fa_0189_439d_a8c6_2dbbdc565d6b",
@@ -55,7 +63,9 @@
 			"session_year": "2022-2023",
 			"date": "2023-03-20",
 			"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2023D11282&did=2023D11282",
-			"display_name": "Kamerstuk 36327, nr. 2 — Voorstel van wet: Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)"
+			"display_name": "Kamerstuk 36327, nr. 2 — Voorstel van wet: Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+			"chamber": "TK",
+			"is_explanatory": false
 		},
 		{
 			"id": "documents/a572870e_709d_484c_872d_5d84d0829030",
@@ -66,7 +76,9 @@
 			"session_year": "2022-2023",
 			"date": "2023-03-20",
 			"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2023D11284&did=2023D11284",
-			"display_name": "Kamerstuk 36327, nr. 3 — Memorie van toelichting: Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)"
+			"display_name": "Kamerstuk 36327, nr. 3 — Memorie van toelichting: Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+			"chamber": "TK",
+			"is_explanatory": true
 		},
 		{
 			"id": "documents/ek_kst_36327_m",
@@ -77,7 +89,9 @@
 			"session_year": "2025-2026",
 			"date": "2026-02-10",
 			"tk_url": null,
-			"display_name": "EK 36327, nr. M: Motie van het lid Nicolaï c.s. over voorschriften van het Wetboek van Strafvordering bij ontbreken van rechtsbijstand"
+			"display_name": "EK 36327, nr. M: Motie van het lid Nicolaï c.s. over voorschriften van het Wetboek van Strafvordering bij ontbreken van rechtsbijstand",
+			"chamber": "EK",
+			"is_explanatory": false
 		},
 		{
 			"id": "documents/ek_kst_36327_l",
@@ -88,7 +102,9 @@
 			"session_year": "2025-2026",
 			"date": "2026-02-10",
 			"tk_url": null,
-			"display_name": "EK 36327, nr. L: Motie van het lid Dittrich c.s. over toetsen van onderzoeksbeslissingen van het Openbaar Ministerie"
+			"display_name": "EK 36327, nr. L: Motie van het lid Dittrich c.s. over toetsen van onderzoeksbeslissingen van het Openbaar Ministerie",
+			"chamber": "EK",
+			"is_explanatory": false
 		}
 	]
 }

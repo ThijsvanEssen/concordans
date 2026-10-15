@@ -3,7 +3,7 @@
 import { textOf } from '$lib/text/words';
 import type { InstrumentMeta } from '$lib/api/instrument-cache';
 import { lawIdOf, type GraphNode } from '$lib/graph/types';
-import { describe, UNNAMED } from '$lib/verbonden/rows';
+import { describeBron, UNNAMED } from '$lib/bron/describe';
 import { decisionOutcome } from '$lib/components/explore/index/decision-kind';
 import { isEkDecision } from '$lib/components/parliamentary/timeline-kind';
 import { chamberName } from '$lib/components/parliamentary/chamber';
@@ -32,7 +32,7 @@ export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): strin
 	// Anything else by the title Verbonden gives it: "Rechtbank Rotterdam, 2 juni 2022".
 	if (n.kind !== 'article') {
 		// The source's own name, not the short label of the canvas ("2026-09, Brief").
-		const title = describe(n.collection, n.key, n.raw?.display_name ?? n.label, p ?? {}).title;
+		const title = describeBron(n.collection, n.key, n.raw?.display_name ?? n.label, p ?? {}).title;
 		return title && title !== UNNAMED ? title : n.label;
 	}
 	const bwb = lawIdOf(p);

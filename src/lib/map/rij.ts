@@ -10,7 +10,8 @@ import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 import { lawIdOf } from '$lib/graph/types';
 import { kamerstukCitation } from '$lib/components/parliamentary/kamerstuk';
 
-import { dossierNumberOf, type Row } from '$lib/verbonden/rows';
+import { type Row } from '$lib/verbonden/rows';
+import { dossierNumberOf } from '$lib/bron/describe';
 import { BRON_KIND_LABEL } from '$lib/verbonden/filter';
 import { dossierLabel } from '$lib/bron/dossier-naam';
 import { keyEcli } from '$lib/bron/leesbaar';
