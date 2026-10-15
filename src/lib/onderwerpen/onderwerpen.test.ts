@@ -39,7 +39,7 @@ beforeEach(() => {
 });
 
 describe('onderwerpen', () => {
-	it('volgt een onderwerp één keer, ongeacht hoofdletters en spaties', () => {
+	it('follows a topic once, whatever its capitals and spaces', () => {
 		volg(['Kunstmatige  intelligentie', 'AI']);
 		volg(['ai']);
 		expect(lees()).toEqual([
@@ -50,7 +50,7 @@ describe('onderwerpen', () => {
 		expect(lees()).toEqual([]);
 	});
 
-	it('een nieuw bezoek telt vanaf de stand van het vorige, één keer per sessie', () => {
+	it('counts a new visit from where the one before stood, once per session', () => {
 		volg(['stikstof']);
 		zetGezien('stikstof', '2026-10-02');
 		zetGezien('stikstof', '2026-09-30');
@@ -59,7 +59,7 @@ describe('onderwerpen', () => {
 		expect(nieuwBezoek(lees())[0]).toMatchObject({ vorige: '2026-10-02', gezien: '2026-10-08' });
 	});
 
-	it('synoniemen met ; of , in één onderwerp, achteraf aan te vullen en in te korten', () => {
+	it('takes synonyms with ; or , in one topic, to add to and shorten later', () => {
 		volg(splitsTermen('AI; kunstmatige intelligentie, artificial intelligence; ai'));
 		expect(lees()[0].termen).toEqual([
 			'AI',
@@ -75,7 +75,7 @@ describe('onderwerpen', () => {
 		expect(uitParams(new URLSearchParams('onderwerp=AI|ki;KI'))).toEqual([['AI', 'ki']]);
 	});
 
-	it('een onderwerp van vandaag houdt in een nieuwe sessie zijn recente lijst', () => {
+	it('keeps the recent list of a topic of today in a new session', () => {
 		volg(['AI']);
 		zetGezien('AI', '2026-10-08');
 		sessionStorage.clear();
@@ -88,7 +88,7 @@ describe('onderwerpen', () => {
 		expect(isNieuw('2026-10-09', null)).toBe(false);
 	});
 
-	it('het adres draagt de onderwerpen heen en terug', () => {
+	it('carries the topics in the address there and back', () => {
 		const adres = deelAdres([
 			{ termen: ['kunstmatige intelligentie', 'AI'] },
 			{ termen: ['stikstof'] }
@@ -99,7 +99,7 @@ describe('onderwerpen', () => {
 		]);
 	});
 
-	it('volgt een wet of een artikel naast woorden, en draagt die in het adres', () => {
+	it('follows a law or an article beside words, and carries it in the address', () => {
 		const cbw = { bwb: 'bwbr0052872', titel: 'Cyberbeveiligingswet' };
 		volg(['Cyberbeveiligingswet']);
 		volgWet(cbw);

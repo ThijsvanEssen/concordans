@@ -27,7 +27,7 @@ describe('streepjes', () => {
 	});
 });
 
-describe('randen en periodeZin', () => {
+describe('randen and periodeZin', () => {
 	it('ends a running period on "nu"', () => {
 		expect(randen('2026-02-23', null, true)).toEqual({ begin: '23 feb. 2026', eind: 'nu' });
 		expect(randen('2024-07-02', '2026-02-23', false).eind).toBe('23 feb. 2026');

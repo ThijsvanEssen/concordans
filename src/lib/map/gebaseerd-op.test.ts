@@ -80,7 +80,7 @@ beforeEach(() => {
 	});
 });
 
-describe('Gebaseerd op deze wet', () => {
+describe('the list "Gebaseerd op deze wet"', () => {
 	it('names the articles a regulation rests on once each, with their leden', () => {
 		expect(grondslagArtikelen(cbw.items![0].articles)).toBe('art. 16 lid 1 en 7, 21 lid 5, 24');
 		// A BW article with its book.
@@ -147,7 +147,7 @@ describe('Gebaseerd op deze wet', () => {
 	});
 });
 
-describe('Gebaseerd op deze wet, under the AMvB and beside it', () => {
+describe('the list "Gebaseerd op deze wet", under the AMvB and beside it', () => {
 	const besluit = cbw.items![0];
 	const verwijzend = (n: string) => ({
 		id: `articles/bwbr0052875_${n}`,
