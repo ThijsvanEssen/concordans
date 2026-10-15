@@ -63,7 +63,13 @@ describe('wijzigingenVan', () => {
 });
 
 describe('vacantZonderFractie (UX #48)', () => {
-	const f = (seats: number, vacant: number, coalition: boolean) => ({ seats, vacant, coalition });
+	const f = (seats: number, vacant: number, coalition: boolean) => ({
+		key: null,
+		abbreviation: null,
+		seats,
+		vacant,
+		coalition
+	});
 
 	it('counts the vacant seats no fractie holds', () => {
 		// kabinet-Jetten, 23 Feb 2026: 65 + 84 seats, 11 vacant of which 10 are the fracties'.

@@ -6,16 +6,96 @@ import type { Ministry } from './government';
 // The ministries as /api/ministries gives them: protocol order, a renamed one under its
 // successor.
 const MINISTRIES: Ministry[] = [
-	{ key: 'az', name: 'Algemene Zaken' },
-	{ key: 'bz', name: 'Buitenlandse Zaken' },
-	{ key: 'jenv', name: 'Justitie en Veiligheid' },
-	{ key: 'venj', name: 'Veiligheid en Justitie', successor: 'jenv' },
-	{ key: 'justitie', name: 'Justitie', successor: 'venj' },
-	{ key: 'ezk', name: 'Economische Zaken en Klimaat' },
-	{ key: 'ez', name: 'Economische Zaken', successor: 'ezk' },
-	{ key: 'eli', name: 'Economische Zaken, Landbouw en Innovatie', successor: 'ez' },
-	{ key: 'lvvn', name: 'Landbouw, Visserij, Voedselzekerheid en Natuur' },
-	{ key: 'lnv', name: 'Landbouw, Natuur en Voedselkwaliteit', successor: 'lvvn' }
+	{
+		abbreviation: null,
+		tooi: null,
+		successor: null,
+		until: null,
+		periods: [],
+		key: 'az',
+		name: 'Algemene Zaken'
+	},
+	{
+		abbreviation: null,
+		tooi: null,
+		successor: null,
+		until: null,
+		periods: [],
+		key: 'bz',
+		name: 'Buitenlandse Zaken'
+	},
+	{
+		abbreviation: null,
+		tooi: null,
+		successor: null,
+		until: null,
+		periods: [],
+		key: 'jenv',
+		name: 'Justitie en Veiligheid'
+	},
+	{
+		abbreviation: null,
+		tooi: null,
+		until: null,
+		periods: [],
+		key: 'venj',
+		name: 'Veiligheid en Justitie',
+		successor: 'jenv'
+	},
+	{
+		abbreviation: null,
+		tooi: null,
+		until: null,
+		periods: [],
+		key: 'justitie',
+		name: 'Justitie',
+		successor: 'venj'
+	},
+	{
+		abbreviation: null,
+		tooi: null,
+		successor: null,
+		until: null,
+		periods: [],
+		key: 'ezk',
+		name: 'Economische Zaken en Klimaat'
+	},
+	{
+		abbreviation: null,
+		tooi: null,
+		until: null,
+		periods: [],
+		key: 'ez',
+		name: 'Economische Zaken',
+		successor: 'ezk'
+	},
+	{
+		abbreviation: null,
+		tooi: null,
+		until: null,
+		periods: [],
+		key: 'eli',
+		name: 'Economische Zaken, Landbouw en Innovatie',
+		successor: 'ez'
+	},
+	{
+		abbreviation: null,
+		tooi: null,
+		successor: null,
+		until: null,
+		periods: [],
+		key: 'lvvn',
+		name: 'Landbouw, Visserij, Voedselzekerheid en Natuur'
+	},
+	{
+		abbreviation: null,
+		tooi: null,
+		until: null,
+		periods: [],
+		key: 'lnv',
+		name: 'Landbouw, Natuur en Voedselkwaliteit',
+		successor: 'lvvn'
+	}
 ];
 
 type Detail = Schema<'CabinetDetailDTO'>;

@@ -29,6 +29,12 @@ const formule = (start: number, lid: string | null, kind: Delegatie['kind'] = 'a
 
 const besluit: Regeling = {
 	instrument: {
+		celex: null,
+		short_title: null,
+		abbreviation: null,
+		official_url: null,
+		judgment_count: null,
+		outbound_citation_count: null,
 		id: 'instruments/bwbr0052875',
 		key: 'bwbr0052875',
 		bwb_id: 'BWBR0052875',
@@ -41,6 +47,7 @@ const besluit: Regeling = {
 	},
 	kind: 'amvb',
 	date_in_force: '2026-08-15',
+	basis_kind: null,
 	text: '16, eerste en zevende lid',
 	leden: ['1', '7'],
 	onderdelen: [],
@@ -131,6 +138,12 @@ describe('the grondslag of a regulation', () => {
 			display_name: title,
 			article_count: 1,
 			inbound_citation_count: 0,
+			celex: null,
+			short_title: null,
+			abbreviation: null,
+			official_url: null,
+			judgment_count: null,
+			outbound_citation_count: null,
 			path: null
 		},
 		basis_kind

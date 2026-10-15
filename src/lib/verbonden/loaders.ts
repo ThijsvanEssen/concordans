@@ -294,8 +294,8 @@ const AARD_PAGES = 5;
  * when it took effect.
  */
 export function regelingRow(
-	r: Pick<Regeling, 'instrument' | 'kind' | 'date_in_force' | 'leden'> &
-		Partial<Pick<Regeling, 'basis_kind' | 'articles'>>
+	r: Pick<Regeling, 'instrument' | 'kind' | 'date_in_force'> &
+		Partial<Pick<Regeling, 'basis_kind' | 'articles' | 'leden'>>
 ): Row {
 	const i = r.instrument;
 	const props = {

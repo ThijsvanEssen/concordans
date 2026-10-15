@@ -11,7 +11,7 @@ import {
 	type BaseNode
 } from './types';
 
-const node = (collection: string, key: string, props: BaseNode['props'] = {}): BaseNode => ({
+const node = (collection: Collection, key: string, props: BaseNode['props'] = {}): BaseNode => ({
 	id: `${collection}/${key}`,
 	key,
 	path: null,
@@ -53,7 +53,7 @@ describe('node kinds', () => {
 	});
 
 	it('drops a node of an unknown collection', () => {
-		expect(nodeToGraphNode(node('commissies', 'x'))).toBeNull();
+		expect(nodeToGraphNode(node('commissies' as Collection, 'x'))).toBeNull();
 		expect(nodeToGraphNode(node('committees', 'x'))?.drawClass).toBe('committee');
 	});
 });

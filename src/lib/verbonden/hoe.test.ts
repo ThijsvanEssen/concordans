@@ -539,6 +539,8 @@ describe('the line of a reference', () => {
 		const wet = (inbound_count: number, outbound_count: number, dit?: string) => {
 			const r = wetRijVanRelated(
 				{
+					date_in_force: null,
+					basis: null,
 					id: 'instruments/bwbr0052875',
 					key: 'bwbr0052875',
 					bwb_id: 'BWBR0052875',
@@ -582,9 +584,16 @@ describe('the line of a reference', () => {
 			display_name: title,
 			article_count: 1,
 			inbound_citation_count: 0,
+			celex: null,
+			short_title: null,
+			abbreviation: null,
+			official_url: null,
+			judgment_count: null,
+			outbound_citation_count: null,
 			path: null
 		});
 		const art = (n: string, leden: string[] = []) => ({
+			basis_kind: null,
 			id: `articles/x_${n}`,
 			key: `x_${n}`,
 			article_number: n,
@@ -600,6 +609,7 @@ describe('the line of a reference', () => {
 		) => {
 			const r = wetRijVanRelated(
 				{
+					date_in_force: null,
 					id: 'instruments/bwbr0052900',
 					key: 'bwbr0052900',
 					bwb_id: 'BWBR0052900',
@@ -621,9 +631,9 @@ describe('the line of a reference', () => {
 			return [h?.werkwoord, h?.rest];
 		};
 		expect(
-			wet('amvb', { direction: 'inbound', articles: [art('3'), art('16', ['1', '7'])] })
+			wet('amvb', { direction: 'inbound', via: null, articles: [art('3'), art('16', ['1', '7'])] })
 		).toEqual(['AMvB op grond van', 'art. 3, 16 lid 1 en 7']);
-		expect(wet('wet', { direction: 'outbound', articles: [art('7')] })).toEqual([
+		expect(wet('wet', { direction: 'outbound', via: null, articles: [art('7')] })).toEqual([
 			'Op grond van',
 			'art. 7'
 		]);

@@ -6,7 +6,7 @@ describe('submitters', () => {
 		const list = fromDocument([
 			{ name: 'I. Kostić', faction: 'PvdD', member_key: 'k', role: 'indiener', path: null },
 			{ name: 'C. Teunissen', faction: 'PvdD', member_key: null, role: 'medeindiener', path: null },
-			{ name: 'F. Klos', faction: 'D66', role: 'medeindiener', path: null }
+			{ member_key: null, name: 'F. Klos', faction: 'D66', role: 'medeindiener', path: null }
 		]);
 		const { by, with: co } = groupSubmitters(list);
 		expect(by.map((s) => [s.name, s.memberKey, s.faction])).toEqual([['I. Kostić', 'k', 'PvdD']]);
@@ -17,13 +17,23 @@ describe('submitters', () => {
 		expect(
 			fromFeed([
 				{
+					surname: null,
+					function: null,
 					key: 'm',
 					name: 'Mohandis',
 					role: 'indiener',
 					faction: { key: 'pro', short: 'PRO', path: null },
 					path: null
 				},
-				{ key: 'b', name: 'Vijlbrief', role: 'bewindspersoon', path: null }
+				{
+					surname: null,
+					function: null,
+					faction: null,
+					key: 'b',
+					name: 'Vijlbrief',
+					role: 'bewindspersoon',
+					path: null
+				}
 			])
 		).toEqual([
 			{ name: 'Mohandis', memberKey: 'm', faction: 'PRO', factionKey: 'pro', role: 'indiener' }

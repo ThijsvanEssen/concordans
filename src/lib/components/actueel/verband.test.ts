@@ -28,18 +28,27 @@ const item = (extra: Record<string, unknown>): FeedItem =>
 describe('a publication', () => {
 	it('names the law it enacts, then the laws it changes with their articles (Stb. 2026, 187)', () => {
 		const v = publicatieVerbanden({
+			citation: null,
 			series: 'stb',
 			year: 2026,
 			number: '187',
 			instruments: [
 				{
+					official_url: null,
 					key: 'bwbr0052872',
 					title: 'Cyberbeveiligingswet',
 					effect: 'establishes',
 					article_count: 111
 				},
-				{ key: 'bwbr0009950', title: 'Telecommunicatiewet', effect: 'amends', article_count: 5 },
 				{
+					official_url: null,
+					key: 'bwbr0009950',
+					title: 'Telecommunicatiewet',
+					effect: 'amends',
+					article_count: 5
+				},
+				{
+					official_url: null,
 					key: 'bwbr0041548',
 					title: 'Wet bekostiging financieel toezicht 2019',
 					effect: 'amends',
@@ -58,12 +67,17 @@ describe('a publication', () => {
 describe('an inwerkingtreding', () => {
 	it('says what changed, by which publication, and under which law', () => {
 		const v = inwerkingVerbanden({
-			instrument: { key: 'bwbr0038456', title: 'Besluit energieprestatievergoeding huur' },
+			instrument: {
+				official_url: null,
+				key: 'bwbr0038456',
+				title: 'Besluit energieprestatievergoeding huur'
+			},
 			article_count: 9,
 			changed_articles: 1,
 			articles: ['2'],
 			new: false,
 			publication: {
+				citation: null,
 				key: 'stcrt_2026_17140',
 				series: 'stcrt',
 				year: 2026,
@@ -71,7 +85,11 @@ describe('an inwerkingtreding', () => {
 				path: '/stcrt/2026/17140'
 			},
 			based_on: {
-				instrument: { key: 'bwbr0014315', title: 'Uitvoeringswet huurprijzen woonruimte' },
+				instrument: {
+					official_url: null,
+					key: 'bwbr0014315',
+					title: 'Uitvoeringswet huurprijzen woonruimte'
+				},
 				kind: 'amvb',
 				articles: ['10', '19bis']
 			}
@@ -88,26 +106,30 @@ describe('an inwerkingtreding', () => {
 
 	it('names a new law by its articles and the publication that enacted it; many by their count', () => {
 		const nieuw = inwerkingVerbanden({
-			instrument: { key: 'bwbr0052872', title: 'Cyberbeveiligingswet' },
+			instrument: { official_url: null, key: 'bwbr0052872', title: 'Cyberbeveiligingswet' },
 			article_count: 111,
 			changed_articles: 111,
 			articles: [],
 			new: true,
 			publication: {
+				citation: null,
 				key: 'stb_2026_187',
 				series: 'stb',
 				year: 2026,
 				number: '187',
 				path: '/stb/2026/187'
-			}
+			},
+			based_on: null
 		});
 		expect(nieuw.map(zin)).toEqual(['111 artikelen, vastgesteld bij Stb. 2026, 187']);
 		const veel = inwerkingVerbanden({
-			instrument: { key: 'x', title: 'X' },
+			instrument: { official_url: null, key: 'x', title: 'X' },
 			article_count: 11,
 			changed_articles: 8,
 			articles: ['1', '2', '3', '4', '5', '6', '7', '8'],
-			new: false
+			new: false,
+			publication: null,
+			based_on: null
 		});
 		expect(veel.map(zin)).toEqual(['8 van 11 artikelen gewijzigd']);
 	});
@@ -120,6 +142,8 @@ describe('the papers and articles a row is tied to', () => {
 		number: '31',
 		dossier: '36764',
 		surname: 'Kathmann',
+		title: null,
+		date: null,
 		path: '/kamerstukken/36764/31'
 	};
 
@@ -147,6 +171,9 @@ describe('the papers and articles a row is tied to', () => {
 	it('names a letter by its day where it has no number, and a commitment by its number', () => {
 		expect(
 			stukNaam({
+				title: null,
+				number: null,
+				dossier: null,
 				id: 'documents/b',
 				kind: 'Brief regering',
 				date: '2026-10-07',
@@ -155,7 +182,16 @@ describe('the papers and articles a row is tied to', () => {
 			})
 		).toBe('brief van 7 okt. 2026');
 		expect(
-			stukNaam({ id: 'commitments/t', kind: 'toezegging', number: 'TZ202609-124', path: null })
+			stukNaam({
+				title: null,
+				date: null,
+				dossier: null,
+				surname: null,
+				id: 'commitments/t',
+				kind: 'toezegging',
+				number: 'TZ202609-124',
+				path: null
+			})
 		).toBe('toezegging TZ202609-124');
 		// Within its own dossier, the number alone.
 		expect(stukNaam(motie, '36764')).toBe('motie-Kathmann (nr. 31)');
@@ -207,27 +243,33 @@ describe('the papers and articles a row is tied to', () => {
 
 describe('how a row is tied to a followed law', () => {
 	it('says it in the words of the relation', () => {
-		expect(viaTekst({ relation: 'amends', article: '3' })).toBe('Wijzigt art. 3');
-		expect(viaTekst({ relation: 'based_on', article: '68' }, 'Cyberbeveiligingswet')).toBe(
-			'Krachtens art. 68 Cyberbeveiligingswet'
+		expect(viaTekst({ dossier: null, relation: 'amends', article: '3' })).toBe('Wijzigt art. 3');
+		expect(
+			viaTekst({ dossier: null, relation: 'based_on', article: '68' }, 'Cyberbeveiligingswet')
+		).toBe('Krachtens art. 68 Cyberbeveiligingswet');
+		expect(viaTekst({ article: null, dossier: null, relation: 'establishes' })).toBe(
+			'Stelt de wet vast'
 		);
-		expect(viaTekst({ relation: 'establishes' })).toBe('Stelt de wet vast');
-		expect(viaTekst({ relation: 'proposes', dossier: '36764' })).toBe('In dossier 36764');
+		expect(viaTekst({ article: null, relation: 'proposes', dossier: '36764' })).toBe(
+			'In dossier 36764'
+		);
 		expect(viaTekst(null)).toBeNull();
 	});
 
 	it('puts the verb of a change around what it changes', () => {
 		const wet = 'Cyberbeveiligingswet';
-		expect(viaTekst({ relation: 'introduces', article: '5' }, wet)).toBe(
+		expect(viaTekst({ dossier: null, relation: 'introduces', article: '5' }, wet)).toBe(
 			'Voegt art. 5 Cyberbeveiligingswet in'
 		);
-		expect(viaTekst({ relation: 'introduces' }, wet)).toBe(
+		expect(viaTekst({ article: null, dossier: null, relation: 'introduces' }, wet)).toBe(
 			'Voegt artikelen in Cyberbeveiligingswet in'
 		);
-		expect(viaTekst({ relation: 'repeals', article: '5' }, wet)).toBe(
+		expect(viaTekst({ dossier: null, relation: 'repeals', article: '5' }, wet)).toBe(
 			'Doet art. 5 Cyberbeveiligingswet vervallen'
 		);
-		expect(viaTekst({ relation: 'repeals' }, wet)).toBe('Trekt Cyberbeveiligingswet in');
+		expect(viaTekst({ article: null, dossier: null, relation: 'repeals' }, wet)).toBe(
+			'Trekt Cyberbeveiligingswet in'
+		);
 	});
 });
 
@@ -238,7 +280,14 @@ describe('the verbs of a change', () => {
 			series: 'stb',
 			year: 2026,
 			number: '1',
-			instruments: effecten.map((effect, n) => ({ key: `bwbr${n}`, title: `Wet ${n}`, effect }))
+			citation: null,
+			instruments: effecten.map((effect, n) => ({
+				key: `bwbr${n}`,
+				title: `Wet ${n}`,
+				official_url: null,
+				effect,
+				article_count: null
+			}))
 		});
 		expect(v.map((r) => r.label)).toEqual(
 			effecten.map((e) =>

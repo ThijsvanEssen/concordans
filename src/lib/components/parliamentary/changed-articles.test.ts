@@ -10,6 +10,7 @@ import {
 
 const change = (nr: string, stage: DossierChange['stage'], source: string): DossierChange => ({
 	article: {
+		display_name: null,
 		id: `articles/bwbr0001854_${nr}`,
 		key: `bwbr0001854_${nr}`,
 		article_number: nr,
@@ -18,7 +19,16 @@ const change = (nr: string, stage: DossierChange['stage'], source: string): Doss
 	},
 	relation: 'amends',
 	stage,
-	source: { id: source }
+	effective_date: null,
+	source: {
+		key: null,
+		display_name: null,
+		official_id: null,
+		kind: null,
+		sequence: null,
+		number: null,
+		id: source
+	}
 });
 
 describe('changed articles', () => {
@@ -37,14 +47,28 @@ describe('changed articles', () => {
 	it('names an article as cited in its law, a BW article with its book', () => {
 		expect(
 			articleLabel(
-				{ id: 'x', bwb_id: 'BWBR0001854' },
-				{ id: 'a', key: 'k', article_number: '21b', stub: false, judgment_total: 0 }
+				{ celex: null, display_name: null, id: 'x', bwb_id: 'BWBR0001854' },
+				{
+					id: 'a',
+					key: 'k',
+					article_number: '21b',
+					display_name: null,
+					stub: false,
+					judgment_total: 0
+				}
 			)
 		).toBe('Artikel 21b');
 		expect(
 			articleLabel(
-				{ id: 'x', bwb_id: 'BWBR0005289' },
-				{ id: 'a', key: 'k', article_number: '162', stub: false, judgment_total: 0 }
+				{ celex: null, display_name: null, id: 'x', bwb_id: 'BWBR0005289' },
+				{
+					id: 'a',
+					key: 'k',
+					article_number: '162',
+					display_name: null,
+					stub: false,
+					judgment_total: 0
+				}
 			)
 		).toBe('Artikel 6:162');
 	});
@@ -62,7 +86,7 @@ describe('changed articles', () => {
 			effective_date: '2026-09-01'
 		};
 		const law = {
-			law: { id: 'x' },
+			law: { id: 'x', bwb_id: null, celex: null, display_name: null },
 			total: 2,
 			changes: [a, { ...a, article: change('2', 'enacted', 'y').article }]
 		};
@@ -80,12 +104,35 @@ describe('zonderArtikelen', () => {
 			enacted: 2,
 			proposed: 0,
 			laws: [
-				{ law: { id: 'instruments/bwbr0005290', bwb_id: 'BWBR0005290' }, total: 2, changes: [] }
+				{
+					law: {
+						id: 'instruments/bwbr0005290',
+						bwb_id: 'BWBR0005290',
+						celex: null,
+						display_name: null
+					},
+					total: 2,
+					changes: []
+				}
 			]
 		};
 		const wijzigt = [
-			{ key: 'bwbr0005290', name: 'Burgerlijk Wetboek Boek 7', bwb_id: 'BWBR0005290' },
-			{ key: 'bwbr0045775', name: 'Wet goed verhuurderschap', bwb_id: 'BWBR0045775' }
+			{
+				key: 'bwbr0005290',
+				name: 'Burgerlijk Wetboek Boek 7',
+				bwb_id: 'BWBR0005290',
+				short: null,
+				celex: null,
+				basis: []
+			},
+			{
+				key: 'bwbr0045775',
+				name: 'Wet goed verhuurderschap',
+				bwb_id: 'BWBR0045775',
+				short: null,
+				celex: null,
+				basis: []
+			}
 		];
 		expect(zonderArtikelen(data, wijzigt).map((w) => w.name)).toEqual(['Wet goed verhuurderschap']);
 		expect(zonderArtikelen(data, [])).toEqual([]);

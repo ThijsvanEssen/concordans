@@ -16,6 +16,12 @@ let fake: ReturnType<typeof fakeApi>;
 const paths = () => fake.requests.map((r) => r.path);
 
 const instrument = (key: string, title: string): Schema<'InstrumentSummaryDTO'> => ({
+	judgment_count: null,
+	outbound_citation_count: null,
+	celex: null,
+	short_title: null,
+	abbreviation: null,
+	official_url: null,
 	id: `instruments/${key}`,
 	key,
 	bwb_id: key.toUpperCase(),
@@ -26,7 +32,10 @@ const instrument = (key: string, title: string): Schema<'InstrumentSummaryDTO'> 
 	inbound_citation_count: 0,
 	path: null
 });
-const artikel = (n: string, leden: string[] = []): Schema<'BasisArticleDTO'> => ({
+const artikel = (n: string, leden: string[] = []): Schema<'ImplementedBasisArticleDTO'> => ({
+	onderdelen: [],
+	basis_kind: null,
+	referring: [],
 	id: `articles/bwbr0052872_${n}`,
 	key: `bwbr0052872_${n}`,
 	article_number: n,
@@ -45,6 +54,9 @@ const cbw: Schema<'InstrumentDelegatedResponse'> = {
 			instrument: instrument('bwbr0052875', 'Cyberbeveiligingsbesluit'),
 			kind: 'amvb',
 			date_in_force: '2026-08-15',
+			basis_kind: null,
+			also_based_on: [],
+			sub_delegated: [],
 			articles: [
 				artikel('16', ['1', '7']),
 				artikel('16', ['1']),
@@ -56,6 +68,9 @@ const cbw: Schema<'InstrumentDelegatedResponse'> = {
 			instrument: instrument('bwbr0052900', 'Cyberbeveiligingsregeling voor de zorg'),
 			kind: 'ministeriele-regeling',
 			date_in_force: '2026-08-15',
+			basis_kind: null,
+			also_based_on: [],
+			sub_delegated: [],
 			articles: [artikel('68', ['1'])]
 		}
 	]
@@ -168,11 +183,13 @@ describe('the list "Gebaseerd op deze wet", under the AMvB and beside it', () =>
 			{
 				instrument: instrument('bwbr0026338', 'Drinkwaterwet'),
 				kind: 'wet',
+				basis_kind: null,
 				articles: [artikel('54a')]
 			},
 			{
 				instrument: instrument('bwbr0009950', 'Telecommunicatiewet'),
 				kind: 'wet',
+				basis_kind: null,
 				articles: [artikel('11a.1')]
 			}
 		],
@@ -181,6 +198,7 @@ describe('the list "Gebaseerd op deze wet", under the AMvB and beside it', () =>
 				instrument: instrument('bwbr0052878', 'Cyberbeveiligingsregeling IenW'),
 				kind: 'ministeriele-regeling',
 				date_in_force: '2026-08-15',
+				basis_kind: null,
 				articles: [artikel('19'), artikel('23'), artikel('28')]
 			}
 		]

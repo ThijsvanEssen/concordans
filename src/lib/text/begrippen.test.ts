@@ -12,6 +12,7 @@ import {
 
 const wet: Definitie = {
 	ref: 'bwbr0018450_1#a',
+	jci: null,
 	term: 'wet',
 	text: 'de Zorgverzekeringswet',
 	article_key: 'bwbr0018450_1',
@@ -25,6 +26,7 @@ const wet: Definitie = {
 // Cbb art. 2 uses "CSIRT" as art. 1 Cyberbeveiligingswet defines it: the Cbb is issued under it.
 const csirt: Definitie = {
 	ref: 'bwbr0051234_1#csirt',
+	jci: null,
 	term: 'CSIRT',
 	text: 'computer security incident response team',
 	article_key: 'bwbr0051234_1',
@@ -82,7 +84,18 @@ describe('begrippen', () => {
 				given_by: { ...g, citation_title: null, short_title: null, abbreviation: 'Cbw' }
 			})
 		).toBe('Cbw');
-		expect(gegevenDoor({ given_by: { key: g.key, path: null } })).toBeNull();
+		expect(
+			gegevenDoor({
+				given_by: {
+					bwb_id: null,
+					citation_title: null,
+					short_title: null,
+					abbreviation: null,
+					key: g.key,
+					path: null
+				}
+			})
+		).toBeNull();
 
 		expect(plaatsVan(csirt)).toBe('art. 1 Cyberbeveiligingswet');
 		expect(plaatsVan({ ...csirt, place: 'b' })).toBe('art. 1, onder b, Cyberbeveiligingswet');

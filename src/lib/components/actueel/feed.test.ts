@@ -1,4 +1,5 @@
 import { padOfFocus } from '$lib/bron/leesbaar';
+import { voteOf } from '$lib/components/open/rij-inhoud';
 import { describe, expect, it } from 'vitest';
 import {
 	artikelenGewijzigd,
@@ -34,7 +35,7 @@ const item = (date: string, kind: FeedItem['kind'], dossier: string | null): Fee
 		title: `${kind} ${n}`,
 		summary: null,
 		subkind: null,
-		node: { collection: 'documents', key: String(n) },
+		node: { collection: 'documents', key: String(n), id: `documents/${n}`, path: null },
 		dossier: dossier ? { key: dossier, number: dossier, title: null, short_title: null } : null,
 		persons: [],
 		ministry: null,
@@ -45,7 +46,18 @@ const item = (date: string, kind: FeedItem['kind'], dossier: string | null): Fee
 		commitment: null,
 		publication: null,
 		commencement: null,
-		headline: {}
+		headline: { surname: null, subject: null, short_title: null },
+		has_text: null,
+		dictum: null,
+		number: null,
+		judgment: null,
+		matched: [],
+		via: null,
+		answers: [],
+		answered_by: [],
+		amends_articles: [],
+		replaces: null,
+		cites: []
 	}) as FeedItem;
 
 describe('daysOf', () => {
@@ -79,9 +91,7 @@ describe('labels', () => {
 		expect(dayLabel('2026-09-29', '2026-09-29')).toBe('Vandaag');
 		expect(dayLabel('2026-09-28', '2026-09-29')).toBe('Gisteren');
 		expect(dayLabel('2026-09-22', '2026-09-29')).toBe('Dinsdag 22 september 2026');
-		expect(publicationCite({ series: 'stb', year: 2026, number: '204', instruments: [] })).toBe(
-			'Stb. 2026, 204'
-		);
+		expect(publicationCite({ series: 'stb', year: 2026, number: '204' })).toBe('Stb. 2026, 204');
 	});
 });
 
@@ -133,7 +143,7 @@ describe('the votes of a day', () => {
 		({
 			...item('2026-09-22', 'stemming', dossier),
 			subkind,
-			vote: { chamber: 'TK', passed: voor > tegen, tally: { Voor: voor, Tegen: tegen } }
+			vote: voteOf({ chamber: 'TK', passed: voor > tegen, tally: { Voor: voor, Tegen: tegen } })
 		}) as FeedItem;
 
 	it('fold into one line at the top, the bills and the close ones apart', () => {
@@ -180,7 +190,7 @@ describe('doorzochtVanaf', () => {
 	it('gives the day searched from only for a period searched in part', () => {
 		expect(doorzochtVanaf({ partial: true, searched_from: '2026-07-01' })).toBe('2026-07-01');
 		expect(doorzochtVanaf({ partial: true, searched_from: null })).toBeNull();
-		expect(doorzochtVanaf({ partial: false })).toBeNull();
+		expect(doorzochtVanaf({ searched_from: null, partial: false })).toBeNull();
 	});
 });
 
