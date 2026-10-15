@@ -1,0 +1,233 @@
+// The register of Bronnen: per list the request an address asks, its period and its filters.
+import { describe, expect, it } from 'vitest';
+import { activeFilters } from '../IndexFacets.svelte';
+import { INDEX_CATEGORIES, type IndexCategory } from '../categories';
+import { LISTS } from '.';
+import { forParams, type ListContext } from './list';
+import { readParams } from './params';
+
+const params = (query: string) => readParams(new URLSearchParams(query));
+
+/** The request of a list for an address, under the sort it names or the first. */
+function query(category: IndexCategory, address = '') {
+	const list = LISTS[category];
+	const p = params(address);
+	const sorts = forParams(list.sorts, p);
+	return JSON.parse(JSON.stringify(list.query(p, sorts.find((s) => s.id === p.sort) ?? sorts[0])));
+}
+
+/** The filters of a list for an address, as its chips name them. */
+function chips(category: IndexCategory, address: string, state = {}) {
+	const p = params(address);
+	const list = LISTS[category];
+	const sort = forParams(list.sorts, p)[0];
+	const ctx = {
+		p,
+		sort,
+		dir: sort.dir,
+		rows: [],
+		page: undefined,
+		state,
+		shared: { cabinets: [], ministries: [], coverage: null, parties: [] },
+		loading: false,
+		patch: () => {},
+		toggleOpen: () => {},
+		tabHref: () => '',
+		empty: (() => {}) as never
+	} satisfies ListContext<unknown, object>;
+	return activeFilters(list.facets(ctx)).map((c) => c.label);
+}
+
+describe('the register of Bronnen', () => {
+	it('holds a list for every tab', () => {
+		expect(Object.keys(LISTS).sort()).toEqual(INDEX_CATEGORIES.map((c) => c.key).sort());
+	});
+
+	it('names the period of every list by the date it is about', () => {
+		const p = params('');
+		expect(
+			Object.fromEntries(
+				INDEX_CATEGORIES.map(({ key }) => [key, LISTS[key].period(p)?.label ?? null])
+			)
+		).toEqual({
+			instruments: 'In werking getreden',
+			judgments: 'Periode',
+			dossiers: 'Geopend',
+			decisions: 'Datum',
+			documents: 'Datum',
+			members: 'Actief',
+			factions: 'Actief',
+			committees: 'Actief',
+			cabinets: 'Periode',
+			ministers: 'In functie',
+			commitments: 'Gedaan'
+		});
+		// Side by side the cabinets are the period (Tot en met).
+		expect(LISTS.ministers.period(params('weergave=naast'))).toBeNull();
+	});
+});
+
+describe('the request of a list', () => {
+	it('asks the laws with an article unless empty ones are asked for', () => {
+		expect(query('instruments')).toEqual({ article_count_min: 1, sort: 'title', limit: 100 });
+		expect(
+			query(
+				'instruments',
+				'q=huur&soort=verdrag&jurisdiction=eu&leeg=1&legal_area=x&sort=article_count'
+			)
+		).toEqual({
+			q: 'huur',
+			jurisdiction: 'eu',
+			kind: 'verdrag',
+			legal_area: 'x',
+			sort: 'article_count',
+			limit: 100
+		});
+	});
+
+	it('asks the judgments of the Rechtspraak unless the EHRM is chosen', () => {
+		expect(query('judgments')).toEqual({ source: 'rechtspraak', sort: 'date_desc', limit: 100 });
+		expect(
+			query(
+				'judgments',
+				'tier=rechtbank&court_kind=x&subject_area=Civiel+recht&from=2020-01-01&source=echr'
+			)
+		).toEqual({
+			tier: 'rechtbank',
+			subject_area: 'Civiel recht',
+			source: 'echr',
+			from: '2020-01-01',
+			sort: 'date_desc',
+			limit: 100
+		});
+	});
+
+	it('asks the open dossiers, all of them for a number searched for', () => {
+		expect(query('dossiers')).toEqual({ status: 'open', sort: 'opened_on', limit: 100 });
+		expect(query('dossiers', 'q=36600-VIII')).toMatchObject({
+			status: 'all',
+			subject: '36600-VIII'
+		});
+		expect(
+			query(
+				'dossiers',
+				'stand=closed&outcome=aangenomen&phase=Eindtekst,Verslag&track=Wetgeving&ministry=bzk&from=2020-01-01&sort=number'
+			)
+		).toEqual({
+			status: 'closed',
+			outcome: 'aangenomen',
+			phase: 'Eindtekst,Verslag',
+			kind: 'Wetgeving',
+			ministry: 'bzk',
+			opened_from: '2020-01-01',
+			sort: 'number',
+			limit: 100
+		});
+	});
+
+	it('asks the sitting members in one slice, all of them in a period', () => {
+		expect(query('members')).toEqual({
+			chamber: 'TK',
+			active: true,
+			include_all: false,
+			sort: 'family_name',
+			limit: 200
+		});
+		expect(query('members', 'kamer=EK&from=2020-01-01&party=VVD&sort=party')).toEqual({
+			chamber: 'EK',
+			party: 'VVD',
+			include_all: true,
+			active_from: '2020-01-01',
+			limit: 100
+		});
+	});
+
+	it('asks the fracties and commissies of the Kamer shown, sorted here', () => {
+		expect(query('factions', 'sort=name&q=pvv')).toEqual({ chamber: 'TK', q: 'pvv', active: true });
+		expect(query('factions', 'include_inactive=1')).toEqual({ chamber: 'TK' });
+		expect(query('committees', 'kamer=EK&q=x&to=2024-12-31')).toEqual({
+			chamber: 'EK',
+			active_to: '2024-12-31'
+		});
+	});
+
+	it('asks the stemmingen with one q and the outcome as a boolean', () => {
+		expect(query('decisions')).toEqual({ chamber: 'TK', limit: 200 });
+		expect(query('decisions', 'q=huur&passed=false&soort=Motie&dossier=36600&party=VVD')).toEqual({
+			chamber: 'TK',
+			kind: 'Motie',
+			passed: false,
+			q: ['huur'],
+			dossier: '36600',
+			party: 'VVD',
+			limit: 200
+		});
+	});
+
+	it('asks the stukken of one Kamer, a number searched for as their dossier', () => {
+		expect(query('documents', 'kamer=EK&q=36600&soort=Motie')).toEqual({
+			chamber: 'EK',
+			kind: 'Motie',
+			dossier: '36600',
+			limit: 100
+		});
+	});
+
+	it('asks the toezeggingen by their filters, the government lists by the cabinet', () => {
+		expect(
+			query('commitments', 'status=Openstaand&overdue=1&member=x&sort=expected_resolution')
+		).toEqual({
+			member: 'x',
+			overdue: true,
+			status: 'Openstaand',
+			sort: 'expected_resolution',
+			limit: 100
+		});
+		expect(query('ministers', 'cabinet=jetten&from=2026-01-01&post=minister')).toEqual({
+			cabinet: 'jetten',
+			from: '2026-01-01',
+			to: ''
+		});
+		expect(query('cabinets', 'q=rutte')).toBeNull();
+	});
+
+	it('leaves out a value the site does not know', () => {
+		expect(query('dossiers', 'track=x&phase=y&ministry=z&stand=q')).toEqual(query('dossiers'));
+		expect(query('judgments', 'tier=x&court_kind=y&source=z')).toEqual(query('judgments'));
+	});
+});
+
+describe('the filters of a list', () => {
+	it('names each filter in force, a default one not', () => {
+		expect(chips('dossiers', '')).toEqual([]);
+		expect(chips('dossiers', 'stand=closed&track=Wetgeving&phase=Eindtekst&ministry=bzk')).toEqual([
+			'Afgehandeld',
+			'Wetgeving',
+			'Eindtekst',
+			'bzk'
+		]);
+		expect(chips('decisions', 'passed=true&soort=Motie&dossier=36600')).toEqual([
+			'Motie',
+			'Aangenomen',
+			'Dossier: 36600'
+		]);
+		expect(chips('instruments', 'jurisdiction=nl&soort=verdrag&leeg=1&policy_domain=x')).toEqual([
+			'x',
+			'Nederland',
+			'Verdragen',
+			'Ook zonder artikelen'
+		]);
+		expect(chips('commitments', 'status=Afgedaan&overdue=1&member=x')).toEqual([
+			'Afgedaan',
+			'Open en over de verwachte datum',
+			'Gekozen bewindspersoon'
+		]);
+	});
+
+	it('leaves the history of the Eerste Kamer out: it is known from the first read on', () => {
+		expect(chips('members', 'include_inactive=1')).toEqual(['Ook historische leden']);
+		expect(chips('members', 'kamer=EK&include_inactive=1')).toEqual([]);
+		expect(chips('factions', 'kamer=EK&include_inactive=1')).toEqual([]);
+		expect(chips('committees', 'kamer=EK&only_active=1')).toEqual([]);
+	});
+});

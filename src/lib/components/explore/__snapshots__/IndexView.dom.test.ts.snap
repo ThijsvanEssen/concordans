@@ -1,0 +1,1938 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Bronnen, an empty list > cabinets ?q=zzz 1`] = `"0kabinetten Aantreden ↓ Geen kabinetten met deze filters. Zoek "zzz" in alle bronnen"`;
+
+exports[`Bronnen, an empty list > commitments ? 1`] = `"0toezeggingen Datum Geen toezeggingen."`;
+
+exports[`Bronnen, an empty list > committees ? 1`] = `"0commissies Actieve dossiers ↓ Geen commissies."`;
+
+exports[`Bronnen, an empty list > decisions ? 1`] = `"0stemmingen Datum ↓ Geen stemmingen."`;
+
+exports[`Bronnen, an empty list > documents ?soort=Motie 1`] = `"0stukken Geen stukken met deze filters."`;
+
+exports[`Bronnen, an empty list > dossiers ? 1`] = `"0dossiers Geopend (nieuw → oud) Geen lopende dossiers. Zoek ook in afgehandelde dossiers"`;
+
+exports[`Bronnen, an empty list > dossiers ?stand=all&q=x 1`] = `"0dossiers Geopend (nieuw → oud) Geen dossiers met deze filters. Zoek "x" in alle bronnen"`;
+
+exports[`Bronnen, an empty list > dossiers ?stand=closed 1`] = `"0dossiers Geopend (nieuw → oud) Geen afgehandelde dossiers met deze filters."`;
+
+exports[`Bronnen, an empty list > factions ?q=x 1`] = `"De zaal kon niet op tijd worden geladen. Opnieuw 0fracties Zetels ↓ Geen fracties met deze filters. Zoek "x" in alle bronnen"`;
+
+exports[`Bronnen, an empty list > instruments ? 1`] = `"0wetten Citeertitel Geen wetten."`;
+
+exports[`Bronnen, an empty list > instruments ?q=huur 1`] = `"0wetten Citeertitel Geen wetten met deze filters. Zoek "huur" in alle bronnen"`;
+
+exports[`Bronnen, an empty list > judgments ?tier=hoge_raad 1`] = `"0uitspraken Datum (nieuw → oud) Geen uitspraken met deze filters."`;
+
+exports[`Bronnen, an empty list > members ? 1`] = `"0kamerleden Achternaam Geen kamerleden."`;
+
+exports[`Bronnen, an empty list > ministers ?q=zzz 1`] = `"kabinet-Jetten sinds 2026, minister-president Rob Jetten, 28 bewindspersonen Geen bewindspersonen met deze filters. Zoek "zzz" in alle bronnen"`;
+
+exports[`Bronnen, list by list > cabinets ? > requests 1`] = `
+{
+  "/api/cabinets": [
+    {},
+  ],
+  "/api/ministries": [
+    {},
+  ],
+  "/api/parties/colors": [
+    {},
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > cabinets ? > view 1`] = `
+{
+  "facetten": "In de coalitie kabinetten VVD 4 D66 3 CDA 3 ChristenUnie 2",
+  "filters": [
+    "VVD 4",
+    "D66 3",
+    "CDA 3",
+    "ChristenUnie 2",
+  ],
+  "lijst": "4kabinetten Aantreden ↓ − + Rutte III Rutte IV Schoof Jetten 2017 nu Periode Kabinet Bewindspersonen sinds 2026 In functie kabinet-Jetten Minister-president Rob Jetten D66VVDCDA 28bewindspersonen 2024–2026 kabinet-Schoof Minister-president H.W.M. Schoof PVVVVDNSCBBB 45bewindspersonen 2022–2024 kabinet-Rutte IV Minister-president Mark Rutte VVDD66CDAChristenUnie 35bewindspersonen 2017–2022 kabinet-Rutte III Minister-president Mark Rutte VVDCDAD66ChristenUnie 36bewindspersonen",
+  "openbaar": 5,
+  "regel": "Zoeken Periode AllesMaandKwartaalJaarEigen",
+  "richting": "Aflopend; sorteer oplopend",
+  "rijen": [
+    "kabinet-Jetten -> /kabinetten/jetten?paneel=netwerk",
+    "kabinet-Schoof -> /kabinetten/schoof?paneel=netwerk",
+    "kabinet-Rutte IV -> /kabinetten/rutte_iv?paneel=netwerk",
+    "kabinet-Rutte III -> /kabinetten/rutte_iii?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Aantreden (gekozen)",
+    "Wetsvoorstellen",
+    "Naam",
+  ],
+  "zoek": {
+    "naam": "Zoek in kabinetten",
+    "placeholder": "Zoek op naam, minister-president of partij",
+    "waarde": "",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > cabinets ?coalition=VVD&from=2010-01-01&q=rutte&sort=name > requests 1`] = `
+{
+  "/api/cabinets": [
+    {},
+  ],
+  "/api/ministries": [
+    {},
+  ],
+  "/api/parties/colors": [
+    {},
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > cabinets ?coalition=VVD&from=2010-01-01&q=rutte&sort=name > view 1`] = `
+{
+  "facetten": "In de coalitie kabinetten VVD 4 D66 3 CDA 3 ChristenUnie 2 Wis alle filters",
+  "filters": [
+    "VVD 4 (aan)",
+    "D66 3",
+    "CDA 3",
+    "ChristenUnie 2",
+  ],
+  "lijst": "2kabinetten Naam ↑ Periode Kabinet Bewindspersonen 2017–2022 kabinet-Rutte III Minister-president Mark Rutte VVDCDAD66ChristenUnie 36bewindspersonen 2022–2024 kabinet-Rutte IV Minister-president Mark Rutte VVDD66CDAChristenUnie 35bewindspersonen",
+  "openbaar": 1,
+  "regel": "Zoeken Periode AllesMaandKwartaalJaarEigen van tot",
+  "richting": "Oplopend; sorteer aflopend",
+  "rijen": [
+    "kabinet-Rutte III -> /kabinetten/rutte_iii?paneel=netwerk",
+    "kabinet-Rutte IV -> /kabinetten/rutte_iv?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Aantreden",
+    "Wetsvoorstellen",
+    "Naam (gekozen)",
+  ],
+  "zoek": {
+    "naam": "Zoek in kabinetten",
+    "placeholder": "Zoek op naam, minister-president of partij",
+    "waarde": "rutte",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > commitments ? > requests 1`] = `
+{
+  "/api/cabinets": [
+    {},
+  ],
+  "/api/commitments": [
+    {
+      "facets": true,
+      "limit": 1,
+      "offset": 0,
+      "sort": "date",
+    },
+    {
+      "facets": false,
+      "limit": 100,
+      "offset": 0,
+      "sort": "date",
+    },
+  ],
+  "/api/ministries": [
+    {},
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > commitments ? > view 1`] = `
+{
+  "facetten": "Stand Openstaand 2.530 Afgedaan 4.046 Deels Afgedaan 66 Vervallen 32 Termijn Open en over de verwachte datum Kabinet Alle kabinetten Ministerie Alle ministeries",
+  "filters": [
+    "Openstaand 2.530",
+    "Afgedaan 4.046",
+    "Deels Afgedaan 66",
+    "Vervallen 32",
+    "Open en over de verwachte datum",
+  ],
+  "lijst": "6.674toezeggingen Datum Gedaan Toezegging Verwacht 14 okt. 2026 Openstaand De Kamer ontvangt aan het einde van het eerste kwartaal van 2027 een update over toegankelijk onderwijs voor studenten met een ondersteuningsbehoefte. R.M. Letschert, Minister van Onderwijs, Cultuur en Wetenschap, Kamerstuk 24724 Studiefinanciering, Kamerstuk 26643 ICT, Kamerstuk 29240 Veiligheid op school, Kamerstuk 31288 Hoger Onderwijs-, Onderzoek- en Wetenschapsbeleid, Kamerstuk 31524 Beroepsonderwijs en Volwassenen Educatie, Kamerstuk 36630 Brede Welvaart, Kamerstuk 36800 VIII Begroting Onderwijs, Cultuur en Wetenschap 2026 14 okt. 2026 Openstaand De Kamer ontvangt over een halfjaar concrete informatie over de manieren om de besteding van de bekostiging transparanter te maken. Judith Tielen, Staatssecretaris van Onderwijs, Cultuur en Wetenschap, Kamerstuk 31289 Voortgezet Onderwijs, Kamerstuk 31293 Primair Onderwijs, Kamerstuk 31497 Passend onderwijs, Kamerstuk 35050 Wet meer ruimte voor nieuwe scholen, Kamerstuk 36800 VIII Begroting Onderwijs, Cultuur en Wetenschap 2026 14 okt. 2026 Openstaand De staatssecretaris informeert in het voorjaar van 2027 de Kamer over de resultaten van de bereikbaarheidsanalyse en de uitkomsten van de gesprekken die gevoerd zijn met de sector en de verschillende regio's. A.W.H. Bertram, Staatssecretaris van Infrastructuur en Waterstaat Volgende toezeggingen, nog 6.671",
+  "openbaar": 4,
+  "regel": "Zoeken Gedaan AllesMaandKwartaalJaarEigen",
+  "richting": null,
+  "rijen": [
+    "De Kamer ontvangt aan het einde van het eerste kwartaal van 2027 een update over toegankelijk onderwijs voor studenten met een ondersteuningsbehoefte. -> /explore?focus=commitments/0ce0711d_0f70_4a6e_b863_ed7fa0948458&paneel=netwerk",
+    "De Kamer ontvangt over een halfjaar concrete informatie over de manieren om de besteding van de bekostiging transparanter te maken. -> /explore?focus=commitments/1764f942_f9c9_4a23_9da2_038e0abd2cad&paneel=netwerk",
+    "De staatssecretaris informeert in het voorjaar van 2027 de Kamer over de resultaten van de bereikbaarheidsanalyse en de uitkomsten van de gesprekken die gevoerd zijn met de sector en de verschillende regio's. -> /explore?focus=commitments/207e4c20_5f93_4b44_a37d_d4935b077790&paneel=netwerk",
+  ],
+  "volgorde": [
+    "Datum (gekozen)",
+    "Verwachte afdoening",
+  ],
+  "zoek": {
+    "naam": "Zoek in toezeggingen",
+    "placeholder": "Zoek in de tekst",
+    "waarde": "",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > commitments ?status=Openstaand&overdue=1&cabinet=jetten&ministry=bzk&member=x&q=brief&from=2026-01-01&sort=expected_resolution > requests 1`] = `
+{
+  "/api/cabinets": [
+    {},
+  ],
+  "/api/commitments": [
+    {
+      "cabinet": "jetten",
+      "facets": true,
+      "from": "2026-01-01",
+      "limit": 1,
+      "member": "x",
+      "ministry": "bzk",
+      "offset": 0,
+      "overdue": true,
+      "q": "brief",
+      "sort": "expected_resolution",
+      "status": "Openstaand",
+    },
+    {
+      "cabinet": "jetten",
+      "facets": false,
+      "from": "2026-01-01",
+      "limit": 100,
+      "member": "x",
+      "ministry": "bzk",
+      "offset": 0,
+      "overdue": true,
+      "q": "brief",
+      "sort": "expected_resolution",
+      "status": "Openstaand",
+    },
+  ],
+  "/api/ministries": [
+    {},
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > commitments ?status=Openstaand&overdue=1&cabinet=jetten&ministry=bzk&member=x&q=brief&from=2026-01-01&sort=expected_resolution > view 1`] = `
+{
+  "facetten": "Stand Openstaand 2.530 Afgedaan 4.046 Deels Afgedaan 66 Vervallen 32 Termijn Open en over de verwachte datum Kabinet kabinet-Jetten Ministerie bzk Bewindspersoon Gekozen bewindspersoon Wis alle filters",
+  "filters": [
+    "Openstaand 2.530 (aan)",
+    "Afgedaan 4.046",
+    "Deels Afgedaan 66",
+    "Vervallen 32",
+    "Open en over de verwachte datum (aan)",
+    "Gekozen bewindspersoon (aan)",
+  ],
+  "lijst": "6.674toezeggingen Verwachte afdoening Gedaan Toezegging Verwacht 14 okt. 2026 Openstaand De Kamer ontvangt aan het einde van het eerste kwartaal van 2027 een update over toegankelijk onderwijs voor studenten met een ondersteuningsbehoefte. R.M. Letschert, Minister van Onderwijs, Cultuur en Wetenschap, Kamerstuk 24724 Studiefinanciering, Kamerstuk 26643 ICT, Kamerstuk 29240 Veiligheid op school, Kamerstuk 31288 Hoger Onderwijs-, Onderzoek- en Wetenschapsbeleid, Kamerstuk 31524 Beroepsonderwijs en Volwassenen Educatie, Kamerstuk 36630 Brede Welvaart, Kamerstuk 36800 VIII Begroting Onderwijs, Cultuur en Wetenschap 2026 14 okt. 2026 Openstaand De Kamer ontvangt over een halfjaar concrete informatie over de manieren om de besteding van de bekostiging transparanter te maken. Judith Tielen, Staatssecretaris van Onderwijs, Cultuur en Wetenschap, Kamerstuk 31289 Voortgezet Onderwijs, Kamerstuk 31293 Primair Onderwijs, Kamerstuk 31497 Passend onderwijs, Kamerstuk 35050 Wet meer ruimte voor nieuwe scholen, Kamerstuk 36800 VIII Begroting Onderwijs, Cultuur en Wetenschap 2026 14 okt. 2026 Openstaand De staatssecretaris informeert in het voorjaar van 2027 de Kamer over de resultaten van de bereikbaarheidsanalyse en de uitkomsten van de gesprekken die gevoerd zijn met de sector en de verschillende regio's. A.W.H. Bertram, Staatssecretaris van Infrastructuur en Waterstaat Volgende toezeggingen, nog 6.671",
+  "openbaar": 4,
+  "regel": "Zoeken Gedaan AllesMaandKwartaalJaarEigen van tot",
+  "richting": null,
+  "rijen": [
+    "De Kamer ontvangt aan het einde van het eerste kwartaal van 2027 een update over toegankelijk onderwijs voor studenten met een ondersteuningsbehoefte. -> /explore?focus=commitments/0ce0711d_0f70_4a6e_b863_ed7fa0948458&paneel=netwerk&status=Openstaand",
+    "De Kamer ontvangt over een halfjaar concrete informatie over de manieren om de besteding van de bekostiging transparanter te maken. -> /explore?focus=commitments/1764f942_f9c9_4a23_9da2_038e0abd2cad&paneel=netwerk&status=Openstaand",
+    "De staatssecretaris informeert in het voorjaar van 2027 de Kamer over de resultaten van de bereikbaarheidsanalyse en de uitkomsten van de gesprekken die gevoerd zijn met de sector en de verschillende regio's. -> /explore?focus=commitments/207e4c20_5f93_4b44_a37d_d4935b077790&paneel=netwerk&status=Openstaand",
+  ],
+  "volgorde": [
+    "Datum",
+    "Verwachte afdoening (gekozen)",
+  ],
+  "zoek": {
+    "naam": "Zoek in toezeggingen",
+    "placeholder": "Zoek in de tekst",
+    "waarde": "brief",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > committees ? > requests 1`] = `
+{
+  "/api/committees": [
+    {
+      "chamber": "TK",
+    },
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > committees ? > view 1`] = `
+{
+  "facetten": "Weergave Alleen met lopende dossiers",
+  "filters": [
+    "Alleen met lopende dossiers",
+  ],
+  "lijst": "6commissies Actieve dossiers ↓ Afkorting Commissie Lopende dossiers WWI Algemene commissie voor Wonen, Wijken en Integratie lopende dossiers 74 JG Algemene commissie voor Jeugd en Gezin lopende dossiers 46 IA Algemene commissie voor Immigratie, Integratie en Asiel lopende dossiers 42 Zonder lopende dossiers BuHaOS Algemene commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking Geen lopende dossiers INT Algemene commissie voor Integratiebeleid Geen lopende dossiers BuHaOS Vaste commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking Geen lopende dossiers",
+  "openbaar": 1,
+  "regel": "Zoeken Actief AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
+  "richting": "Aflopend; sorteer oplopend",
+  "rijen": [
+    "Algemene commissie voor Wonen, Wijken en Integratie -> /commissies/wwi?paneel=netwerk",
+    "Algemene commissie voor Jeugd en Gezin -> /commissies/jg?paneel=netwerk",
+    "Algemene commissie voor Immigratie, Integratie en Asiel -> /commissies/ia?paneel=netwerk",
+    "Algemene commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking -> /commissies/buhaos-2021?paneel=netwerk",
+    "Algemene commissie voor Integratiebeleid -> /commissies/int?paneel=netwerk",
+    "Vaste commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking -> /commissies/buhaos?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Actieve dossiers (gekozen)",
+    "Afkorting",
+    "Naam",
+  ],
+  "zoek": {
+    "naam": "Zoek in commissies",
+    "placeholder": "Zoek op afkorting of naam",
+    "waarde": "",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > committees ?kamer=EK > requests 1`] = `
+{
+  "/api/committees": [
+    {
+      "chamber": "EK",
+    },
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > committees ?kamer=EK > view 1`] = `
+{
+  "facetten": "",
+  "filters": [],
+  "lijst": "6commissies Afkorting ↑ Afkorting Commissie BuHaOS Algemene commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking Geen lopende dossiers BuHaOS Vaste commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking Geen lopende dossiers IA Algemene commissie voor Immigratie, Integratie en Asiel lopende dossiers 42 INT Algemene commissie voor Integratiebeleid Geen lopende dossiers JG Algemene commissie voor Jeugd en Gezin lopende dossiers 46 WWI Algemene commissie voor Wonen, Wijken en Integratie lopende dossiers 74",
+  "openbaar": 1,
+  "regel": "Zoeken Actief AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
+  "richting": "Oplopend; sorteer aflopend",
+  "rijen": [
+    "Algemene commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking -> /commissies/buhaos-2021?paneel=netwerk",
+    "Vaste commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking -> /commissies/buhaos?paneel=netwerk",
+    "Algemene commissie voor Immigratie, Integratie en Asiel -> /commissies/ia?paneel=netwerk",
+    "Algemene commissie voor Integratiebeleid -> /commissies/int?paneel=netwerk",
+    "Algemene commissie voor Jeugd en Gezin -> /commissies/jg?paneel=netwerk",
+    "Algemene commissie voor Wonen, Wijken en Integratie -> /commissies/wwi?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Afkorting (gekozen)",
+    "Naam",
+  ],
+  "zoek": {
+    "naam": "Zoek in commissies",
+    "placeholder": "Zoek op afkorting of naam",
+    "waarde": "",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > committees ?only_active=1&q=wonen&sort=name&dir=desc > requests 1`] = `
+{
+  "/api/committees": [
+    {
+      "chamber": "TK",
+    },
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > committees ?only_active=1&q=wonen&sort=name&dir=desc > view 1`] = `
+{
+  "facetten": "Weergave Alleen met lopende dossiers Wis alle filters",
+  "filters": [
+    "Alleen met lopende dossiers (aan)",
+  ],
+  "lijst": "1commissie Naam ↓ Afkorting Commissie Lopende dossiers WWI Algemene commissie voor Wonen, Wijken en Integratie lopende dossiers 74",
+  "openbaar": 1,
+  "regel": "Zoeken Actief AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
+  "richting": "Aflopend; sorteer oplopend",
+  "rijen": [
+    "Algemene commissie voor Wonen, Wijken en Integratie -> /commissies/wwi?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Actieve dossiers",
+    "Afkorting",
+    "Naam (gekozen)",
+  ],
+  "zoek": {
+    "naam": "Zoek in commissies",
+    "placeholder": "Zoek op afkorting of naam",
+    "waarde": "wonen",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > decisions ? > requests 1`] = `
+{
+  "/api/decisions": [
+    {
+      "chamber": "TK",
+      "facets": true,
+      "limit": 1,
+      "offset": 0,
+    },
+    {
+      "chamber": "TK",
+      "facets": false,
+      "limit": 200,
+      "offset": 0,
+    },
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > decisions ? > view 1`] = `
+{
+  "facetten": "Soort Motie 52.847 Amendement 8.319 Wetgeving 2.408 Begroting 1.963 Uitslag Aangenomen 34.625 Verworpen 31.563 Dossier",
+  "filters": [
+    "Motie 52.847",
+    "Amendement 8.319",
+    "Wetgeving 2.408",
+    "Begroting 1.963",
+    "Aangenomen 34.625",
+    "Verworpen 31.563",
+  ],
+  "lijst": "66.188stemmingen Datum ↓ Soort Onderwerp Uitslag Woensdag 14 oktober 2026 32 stemmingen: 12 aangenomen, 20 verworpen Motie Kamerstuk 21501-20 Europese Raad Motie van het lid Van der Plas over bij de begrotingsonderhandelingen inzetten op een zelfstandig en geoormerkt landbouwbeleid Verworpen Motie Kamerstuk 21501-20 Europese Raad Motie van de leden Stöteler en Hoogeveen over uitdragen dat Nederland op geen enkel beleidsterrein bereid is tot afschaffing van unanimiteit Verworpen Motie Kamerstuk 21501-20 Europese Raad Motie van het lid Klos over zich inzetten voor meer investeringen in wetenschap, innovatie en concurrentievermogen Aangenomen Volgende stemmingen, nog 66.185",
+  "openbaar": 1,
+  "regel": "Zoeken Datum AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
+  "richting": "Aflopend; sorteer oplopend",
+  "rijen": [
+    "Motie van het lid Van der Plas over bij de begrotingsonderhandelingen inzetten op een zelfstandig en geoormerkt landbouwbeleid -> /stemmingen/decision_00043b49_6b27_4298_956c_06075d02224c?paneel=netwerk",
+    "Motie van de leden Stöteler en Hoogeveen over uitdragen dat Nederland op geen enkel beleidsterrein bereid is tot afschaffing van unanimiteit -> /stemmingen/decision_0d2d1e07_f145_465c_89c9_db2683a5b9d3?paneel=netwerk",
+    "Motie van het lid Klos over zich inzetten voor meer investeringen in wetenschap, innovatie en concurrentievermogen -> /stemmingen/decision_11e1b0c5_e7e5_408b_b513_23a2721d5a6e?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Datum (gekozen)",
+    "Uitslag",
+    "Onderwerp",
+  ],
+  "zoek": {
+    "naam": "Zoek in stemmingen",
+    "placeholder": "Zoek in onderwerp",
+    "waarde": "",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > decisions ?kamer=EK&sort=subject > requests 1`] = `
+{
+  "/api/decisions": [
+    {
+      "chamber": "EK",
+      "facets": true,
+      "limit": 1,
+      "offset": 0,
+    },
+    {
+      "chamber": "EK",
+      "facets": false,
+      "limit": 200,
+      "offset": 0,
+    },
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > decisions ?kamer=EK&sort=subject > view 1`] = `
+{
+  "facetten": "Soort Motie 52.847 Amendement 8.319 Wetgeving 2.408 Begroting 1.963 Uitslag Aangenomen 34.625 Verworpen 31.563 Dossier",
+  "filters": [
+    "Motie 52.847",
+    "Amendement 8.319",
+    "Wetgeving 2.408",
+    "Begroting 1.963",
+    "Aangenomen 34.625",
+    "Verworpen 31.563",
+  ],
+  "lijst": "66.188stemmingen Onderwerp ↑ Soort Onderwerp Uitslag 14 okt. 2026 Kamerstuk 21501-20 Europese Raad Motie van de leden Stöteler en Hoogeveen over uitdragen dat Nederland op geen enkel beleidsterrein bereid is tot afschaffing van unanimiteit Verworpen 14 okt. 2026 Kamerstuk 21501-20 Europese Raad Motie van het lid Klos over zich inzetten voor meer investeringen in wetenschap, innovatie en concurrentievermogen Aangenomen 14 okt. 2026 Kamerstuk 21501-20 Europese Raad Motie van het lid Van der Plas over bij de begrotingsonderhandelingen inzetten op een zelfstandig en geoormerkt landbouwbeleid Verworpen Volgende stemmingen, nog 66.185 Bron: Eerste Kamer der Staten-Generaal, www.eerstekamer.nl.",
+  "openbaar": 1,
+  "regel": "Zoeken Datum AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
+  "richting": "Oplopend; sorteer aflopend",
+  "rijen": [
+    "Motie van de leden Stöteler en Hoogeveen over uitdragen dat Nederland op geen enkel beleidsterrein bereid is tot afschaffing van unanimiteit -> /stemmingen/decision_0d2d1e07_f145_465c_89c9_db2683a5b9d3?paneel=netwerk",
+    "Motie van het lid Klos over zich inzetten voor meer investeringen in wetenschap, innovatie en concurrentievermogen -> /stemmingen/decision_11e1b0c5_e7e5_408b_b513_23a2721d5a6e?paneel=netwerk",
+    "Motie van het lid Van der Plas over bij de begrotingsonderhandelingen inzetten op een zelfstandig en geoormerkt landbouwbeleid -> /stemmingen/decision_00043b49_6b27_4298_956c_06075d02224c?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Datum",
+    "Uitslag",
+    "Onderwerp (gekozen)",
+  ],
+  "zoek": {
+    "naam": "Zoek in stemmingen",
+    "placeholder": "Zoek in onderwerp",
+    "waarde": "",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > decisions ?soort=Motie&passed=false&dossier=36600&party=VVD&q=huur&from=2026-01-01 > requests 1`] = `
+{
+  "/api/decisions": [
+    {
+      "chamber": "TK",
+      "dossier": "36600",
+      "facets": true,
+      "from": "2026-01-01",
+      "kind": "Motie",
+      "limit": 1,
+      "offset": 0,
+      "party": "VVD",
+      "passed": false,
+      "q": [
+        "huur",
+      ],
+    },
+    {
+      "chamber": "TK",
+      "dossier": "36600",
+      "facets": false,
+      "from": "2026-01-01",
+      "kind": "Motie",
+      "limit": 200,
+      "offset": 0,
+      "party": "VVD",
+      "passed": false,
+      "q": [
+        "huur",
+      ],
+    },
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > decisions ?soort=Motie&passed=false&dossier=36600&party=VVD&q=huur&from=2026-01-01 > view 1`] = `
+{
+  "facetten": "Soort Motie 52.847 Amendement 8.319 Wetgeving 2.408 Begroting 1.963 Uitslag Aangenomen 34.625 Verworpen 31.563 Dossier Wis alle filters",
+  "filters": [
+    "Motie 52.847 (aan)",
+    "Amendement 8.319",
+    "Wetgeving 2.408",
+    "Begroting 1.963",
+    "Aangenomen 34.625",
+    "Verworpen 31.563 (aan)",
+  ],
+  "lijst": "66.188stemmingen Datum ↓ Soort Onderwerp Uitslag Woensdag 14 oktober 2026 32 stemmingen: 12 aangenomen, 20 verworpen Motie Kamerstuk 21501-20 Europese Raad Motie van het lid Van der Plas over bij de begrotingsonderhandelingen inzetten op een zelfstandig en geoormerkt landbouwbeleid Verworpen Motie Kamerstuk 21501-20 Europese Raad Motie van de leden Stöteler en Hoogeveen over uitdragen dat Nederland op geen enkel beleidsterrein bereid is tot afschaffing van unanimiteit Verworpen Motie Kamerstuk 21501-20 Europese Raad Motie van het lid Klos over zich inzetten voor meer investeringen in wetenschap, innovatie en concurrentievermogen Aangenomen Volgende stemmingen, nog 66.185",
+  "openbaar": 1,
+  "regel": "Zoeken Datum AllesMaandKwartaalJaarEigen van tot Kamer Tweede KamerEerste Kamer",
+  "richting": "Aflopend; sorteer oplopend",
+  "rijen": [
+    "Motie van het lid Van der Plas over bij de begrotingsonderhandelingen inzetten op een zelfstandig en geoormerkt landbouwbeleid -> /stemmingen/decision_00043b49_6b27_4298_956c_06075d02224c?paneel=netwerk",
+    "Motie van de leden Stöteler en Hoogeveen over uitdragen dat Nederland op geen enkel beleidsterrein bereid is tot afschaffing van unanimiteit -> /stemmingen/decision_0d2d1e07_f145_465c_89c9_db2683a5b9d3?paneel=netwerk",
+    "Motie van het lid Klos over zich inzetten voor meer investeringen in wetenschap, innovatie en concurrentievermogen -> /stemmingen/decision_11e1b0c5_e7e5_408b_b513_23a2721d5a6e?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Datum (gekozen)",
+    "Uitslag",
+    "Onderwerp",
+  ],
+  "zoek": {
+    "naam": "Zoek in stemmingen",
+    "placeholder": "Zoek in onderwerp",
+    "waarde": "huur",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > documents ? > requests 1`] = `
+{
+  "/api/documents": [
+    {
+      "chamber": "TK",
+      "facets": true,
+      "limit": 1,
+      "offset": 0,
+    },
+    {
+      "chamber": "TK",
+      "facets": false,
+      "limit": 100,
+      "offset": 0,
+    },
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > documents ? > view 1`] = `
+{
+  "facetten": "Soort Bijlage 124.687 Brief regering 89.644 Motie 59.998 Schriftelijke vragen 47.322 Antwoord schriftelijke vragen 45.775 Convocatie commissieactiviteit 29.956",
+  "filters": [
+    "Bijlage 124.687",
+    "Brief regering 89.644",
+    "Motie 59.998",
+    "Schriftelijke vragen 47.322",
+    "Antwoord schriftelijke vragen 45.775",
+    "Convocatie commissieactiviteit 29.956",
+  ],
+  "lijst": "614.889stukken Kamerstuk Stuk Datum niet in de gegevens Uitstel beantwoording vragen van het lid Müller over het bericht "Trump overweegt exportverbod diesel, 'zou heel Europa veel last van hebben" Mededeling (uitstel antwoord) 15 okt. 2026 niet in de gegevens De voorgenomen tracékeuze voor de 380 kV-hoogspanningsverbinding Diemen–Ens ter hoogte van Muiderberg en de Hollandse Brug. Schriftelijke vragen 14 okt. 2026 37020 XVI, nr. 20 Begroting Volksgezondheid, Welzijn en Sport 2027 Amendement van het lid Van Brenk over middelen voor een 36-urige werkweek en betere arbeidsvoorwaarden voor het zorgpersoneel in Caribisch Nederland Amendement 14 okt. 2026 Volgende stukken, nog 614.886",
+  "openbaar": 3,
+  "regel": "Zoeken Datum AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
+  "richting": null,
+  "rijen": [
+    "Uitstel beantwoording vragen van het lid Müller over het bericht "Trump overweegt exportverbod diesel, 'zou heel Europa veel last van hebben" -> /explore?focus=documents/66bfe5c3_09ce_4112_a1ca_3c58f9905c6d&lezen=1&paneel=tekst",
+    "De voorgenomen tracékeuze voor de 380 kV-hoogspanningsverbinding Diemen–Ens ter hoogte van Muiderberg en de Hollandse Brug. -> /explore?focus=documents/00ad4623_3deb_4364_b9d7_2108441f6200&lezen=1&paneel=tekst",
+    "Amendement van het lid Van Brenk over middelen voor een 36-urige werkweek en betere arbeidsvoorwaarden voor het zorgpersoneel in Caribisch Nederland -> /kamerstukken/37020-XVI/20?lezen=1&paneel=tekst",
+  ],
+  "volgorde": null,
+  "zoek": {
+    "naam": "Zoek in stukken",
+    "placeholder": "Zoek op Kamerstuknummer",
+    "waarde": "",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > documents ?kamer=EK&soort=Motie&q=36600&from=2026-01-01&to=2026-06-30 > requests 1`] = `
+{
+  "/api/documents": [
+    {
+      "chamber": "EK",
+      "dossier": "36600",
+      "facets": true,
+      "from": "2026-01-01",
+      "kind": "Motie",
+      "limit": 1,
+      "offset": 0,
+      "to": "2026-06-30",
+    },
+    {
+      "chamber": "EK",
+      "dossier": "36600",
+      "facets": false,
+      "from": "2026-01-01",
+      "kind": "Motie",
+      "limit": 100,
+      "offset": 0,
+      "to": "2026-06-30",
+    },
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > documents ?kamer=EK&soort=Motie&q=36600&from=2026-01-01&to=2026-06-30 > view 1`] = `
+{
+  "facetten": "Soort Bijlage 124.687 Brief regering 89.644 Motie 59.998 Schriftelijke vragen 47.322 Antwoord schriftelijke vragen 45.775 Convocatie commissieactiviteit 29.956 Wis alle filters",
+  "filters": [
+    "Bijlage 124.687",
+    "Brief regering 89.644",
+    "Motie 59.998 (aan)",
+    "Schriftelijke vragen 47.322",
+    "Antwoord schriftelijke vragen 45.775",
+    "Convocatie commissieactiviteit 29.956",
+  ],
+  "lijst": "614.889stukken Kamerstuk Stuk Datum niet in de gegevens Uitstel beantwoording vragen van het lid Müller over het bericht "Trump overweegt exportverbod diesel, 'zou heel Europa veel last van hebben" Mededeling (uitstel antwoord) 15 okt. 2026 niet in de gegevens De voorgenomen tracékeuze voor de 380 kV-hoogspanningsverbinding Diemen–Ens ter hoogte van Muiderberg en de Hollandse Brug. Schriftelijke vragen 14 okt. 2026 37020 XVI, nr. 20 Begroting Volksgezondheid, Welzijn en Sport 2027 Amendement van het lid Van Brenk over middelen voor een 36-urige werkweek en betere arbeidsvoorwaarden voor het zorgpersoneel in Caribisch Nederland Amendement 14 okt. 2026 Volgende stukken, nog 614.886",
+  "openbaar": 3,
+  "regel": "Zoeken Datum AllesMaandKwartaalJaarEigen van tot Kamer Tweede KamerEerste Kamer",
+  "richting": null,
+  "rijen": [
+    "Uitstel beantwoording vragen van het lid Müller over het bericht "Trump overweegt exportverbod diesel, 'zou heel Europa veel last van hebben" -> /explore?focus=documents/66bfe5c3_09ce_4112_a1ca_3c58f9905c6d&lezen=1&paneel=tekst",
+    "De voorgenomen tracékeuze voor de 380 kV-hoogspanningsverbinding Diemen–Ens ter hoogte van Muiderberg en de Hollandse Brug. -> /explore?focus=documents/00ad4623_3deb_4364_b9d7_2108441f6200&lezen=1&paneel=tekst",
+    "Amendement van het lid Van Brenk over middelen voor een 36-urige werkweek en betere arbeidsvoorwaarden voor het zorgpersoneel in Caribisch Nederland -> /kamerstukken/37020-XVI/20?lezen=1&paneel=tekst",
+  ],
+  "volgorde": null,
+  "zoek": {
+    "naam": "Zoek in stukken",
+    "placeholder": "Zoek op Kamerstuknummer",
+    "waarde": "36600",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > dossiers ? > requests 1`] = `
+{
+  "/api/cabinets": [
+    {},
+  ],
+  "/api/dossiers": [
+    {
+      "facets": true,
+      "limit": 1,
+      "offset": 0,
+      "sort": "opened_on",
+      "status": "open",
+    },
+    {
+      "facets": false,
+      "limit": 100,
+      "offset": 0,
+      "sort": "opened_on",
+      "status": "open",
+    },
+  ],
+  "/api/ministries": [
+    {},
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > dossiers ? > view 1`] = `
+{
+  "facetten": "Stand Lopend 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Soort 1.997 overige dossiers, zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179",
+  "filters": [
+    "Lopend 3.728 (aan)",
+    "Afgehandeld 4.077",
+    "Alle dossiers 7.805",
+    "Begroting 716",
+    "Wetgeving 327",
+    "Initiatiefnota 248",
+    "Verdrag 236",
+    "Initiatiefwetgeving 189",
+    "Voorstel van wet 0",
+    "Memorie van toelichting 0",
+    "Advies Raad van State 104",
+    "Verslag 115",
+    "Nota n.a.v. het verslag 0",
+    "Nota van wijziging / Amendement 120",
+    "Stemmingen 315",
+    "Eindtekst 493",
+    "Buitenlandse Zaken 414",
+    "bzk 327",
+    "fin 259",
+    "ocw 182",
+    "vws 179",
+  ],
+  "lijst": "3.728dossiers Geopend (nieuw → oud) Nummer Titel Fase 17050 Misbruik en oneigenlijk gebruik op het gebied van belastingen, sociale zekerheid en subsidies szw, geopend 14 apr. 2008 17257 Assemblee van de West-Europese Unie Initiatief van Kamerleden, geopend 13 jul. 1995 36600 Nota over de toestand van ’s Rijks Financiën Toevoegingen I, IIA 3van 28 dossiers › Volgende dossiers, nog 3.723",
+  "openbaar": 2,
+  "regel": "Zoeken Geopend AllesMaandKwartaalJaarEigen",
+  "richting": null,
+  "rijen": [
+    "Misbruik en oneigenlijk gebruik op het gebied van belastingen, sociale zekerheid en subsidies -> /dossiers/17050?paneel=netwerk",
+    "Assemblee van de West-Europese Unie -> /dossiers/17257?paneel=netwerk",
+    "Nota over de toestand van ’s Rijks Financiën -> /dossiers/36600?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Geopend (nieuw → oud) (gekozen)",
+    "Laatste activiteit",
+    "Kamerstuknummer",
+    "Afgehandeld (nieuw → oud)",
+    "Titel",
+  ],
+  "zoek": {
+    "naam": "Zoek in dossiers",
+    "placeholder": "Zoek op nummer of in titel",
+    "waarde": "",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > dossiers ?q=36600 > requests 1`] = `
+{
+  "/api/cabinets": [
+    {},
+  ],
+  "/api/dossiers": [
+    {
+      "facets": true,
+      "limit": 1,
+      "offset": 0,
+      "sort": "opened_on",
+      "status": "all",
+      "subject": "36600",
+    },
+    {
+      "facets": false,
+      "limit": 100,
+      "offset": 0,
+      "sort": "opened_on",
+      "status": "all",
+      "subject": "36600",
+    },
+  ],
+  "/api/ministries": [
+    {},
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > dossiers ?q=36600 > view 1`] = `
+{
+  "facetten": "Stand Lopend 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Soort 1.997 overige dossiers, zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179",
+  "filters": [
+    "Lopend 3.728",
+    "Afgehandeld 4.077",
+    "Alle dossiers 7.805 (aan)",
+    "Begroting 716",
+    "Wetgeving 327",
+    "Initiatiefnota 248",
+    "Verdrag 236",
+    "Initiatiefwetgeving 189",
+    "Voorstel van wet 0",
+    "Memorie van toelichting 0",
+    "Advies Raad van State 104",
+    "Verslag 115",
+    "Nota n.a.v. het verslag 0",
+    "Nota van wijziging / Amendement 120",
+    "Stemmingen 315",
+    "Eindtekst 493",
+    "Buitenlandse Zaken 414",
+    "bzk 327",
+    "fin 259",
+    "ocw 182",
+    "vws 179",
+  ],
+  "lijst": "3.728dossiers Geopend (nieuw → oud) Nummer Titel Fase 17050 Misbruik en oneigenlijk gebruik op het gebied van belastingen, sociale zekerheid en subsidies szw, geopend 14 apr. 2008 17257 Assemblee van de West-Europese Unie Initiatief van Kamerleden, geopend 13 jul. 1995 36600 Nota over de toestand van ’s Rijks Financiën Toevoegingen I, IIA 3van 28 dossiers › Volgende dossiers, nog 3.723",
+  "openbaar": 2,
+  "regel": "Zoeken Geopend AllesMaandKwartaalJaarEigen",
+  "richting": null,
+  "rijen": [
+    "Misbruik en oneigenlijk gebruik op het gebied van belastingen, sociale zekerheid en subsidies -> /dossiers/17050?paneel=netwerk",
+    "Assemblee van de West-Europese Unie -> /dossiers/17257?paneel=netwerk",
+    "Nota over de toestand van ’s Rijks Financiën -> /dossiers/36600?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Geopend (nieuw → oud) (gekozen)",
+    "Laatste activiteit",
+    "Kamerstuknummer",
+    "Afgehandeld (nieuw → oud)",
+    "Titel",
+  ],
+  "zoek": {
+    "naam": "Zoek in dossiers",
+    "placeholder": "Zoek op nummer of in titel",
+    "waarde": "36600",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > dossiers ?stand=all&sort=last_activity > requests 1`] = `
+{
+  "/api/cabinets": [
+    {},
+  ],
+  "/api/dossiers": [
+    {
+      "facets": true,
+      "limit": 1,
+      "offset": 0,
+      "sort": "last_activity",
+      "status": "all",
+    },
+    {
+      "facets": false,
+      "limit": 100,
+      "offset": 0,
+      "sort": "last_activity",
+      "status": "all",
+    },
+  ],
+  "/api/ministries": [
+    {},
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > dossiers ?stand=all&sort=last_activity > view 1`] = `
+{
+  "facetten": "Stand Lopend 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Soort 1.997 overige dossiers, zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Wis alle filters",
+  "filters": [
+    "Lopend 3.728",
+    "Afgehandeld 4.077",
+    "Alle dossiers 7.805 (aan)",
+    "Begroting 716",
+    "Wetgeving 327",
+    "Initiatiefnota 248",
+    "Verdrag 236",
+    "Initiatiefwetgeving 189",
+    "Voorstel van wet 0",
+    "Memorie van toelichting 0",
+    "Advies Raad van State 104",
+    "Verslag 115",
+    "Nota n.a.v. het verslag 0",
+    "Nota van wijziging / Amendement 120",
+    "Stemmingen 315",
+    "Eindtekst 493",
+    "Buitenlandse Zaken 414",
+    "bzk 327",
+    "fin 259",
+    "ocw 182",
+    "vws 179",
+  ],
+  "lijst": "3.728dossiers Laatste activiteit Nummer Titel Fase 17050 Misbruik en oneigenlijk gebruik op het gebied van belastingen, sociale zekerheid en subsidies szw, laatste activiteit 24 sep. 2026 17257 Assemblee van de West-Europese Unie Initiatief van Kamerleden, laatste activiteit 6 sep. 2010 36600 Nota over de toestand van ’s Rijks Financiën Toevoegingen I, IIA 3van 28 dossiers › Volgende dossiers, nog 3.723",
+  "openbaar": 2,
+  "regel": "Zoeken Geopend AllesMaandKwartaalJaarEigen",
+  "richting": null,
+  "rijen": [
+    "Misbruik en oneigenlijk gebruik op het gebied van belastingen, sociale zekerheid en subsidies -> /dossiers/17050?paneel=netwerk",
+    "Assemblee van de West-Europese Unie -> /dossiers/17257?paneel=netwerk",
+    "Nota over de toestand van ’s Rijks Financiën -> /dossiers/36600?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Geopend (nieuw → oud)",
+    "Laatste activiteit (gekozen)",
+    "Kamerstuknummer",
+    "Afgehandeld (nieuw → oud)",
+    "Titel",
+  ],
+  "zoek": {
+    "naam": "Zoek in dossiers",
+    "placeholder": "Zoek op nummer of in titel",
+    "waarde": "",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > dossiers ?stand=closed&outcome=aangenomen&phase=Eerste+Kamer,Tweede+Kamer&has_phase=Raad+van+State&track=Wetsvoorstel&ministry=bzk&from=2020-01-01&sort=number > requests 1`] = `
+{
+  "/api/cabinets": [
+    {},
+  ],
+  "/api/dossiers": [
+    {
+      "facets": true,
+      "limit": 1,
+      "ministry": "bzk",
+      "offset": 0,
+      "opened_from": "2020-01-01",
+      "outcome": "aangenomen",
+      "sort": "number",
+      "status": "closed",
+    },
+    {
+      "facets": false,
+      "limit": 100,
+      "ministry": "bzk",
+      "offset": 0,
+      "opened_from": "2020-01-01",
+      "outcome": "aangenomen",
+      "sort": "number",
+      "status": "closed",
+    },
+  ],
+  "/api/ministries": [
+    {},
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > dossiers ?stand=closed&outcome=aangenomen&phase=Eerste+Kamer,Tweede+Kamer&has_phase=Raad+van+State&track=Wetsvoorstel&ministry=bzk&from=2020-01-01&sort=number > view 1`] = `
+{
+  "facetten": "Stand Lopend 3.728 Afgehandeld 4.077 Aangenomen 0 Alle dossiers 7.805 Soort 1.997 overige dossiers, zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Wis alle filters",
+  "filters": [
+    "Lopend 3.728",
+    "Afgehandeld 4.077",
+    "Aangenomen 0 (aan)",
+    "Alle dossiers 7.805",
+    "Begroting 716",
+    "Wetgeving 327",
+    "Initiatiefnota 248",
+    "Verdrag 236",
+    "Initiatiefwetgeving 189",
+    "Voorstel van wet 0",
+    "Memorie van toelichting 0",
+    "Advies Raad van State 104",
+    "Verslag 115",
+    "Nota n.a.v. het verslag 0",
+    "Nota van wijziging / Amendement 120",
+    "Stemmingen 315",
+    "Eindtekst 493",
+    "Buitenlandse Zaken 414",
+    "bzk 327 (aan)",
+    "fin 259",
+    "ocw 182",
+    "vws 179",
+  ],
+  "lijst": "3.728dossiers Kamerstuknummer Nummer Titel Fase 17050 Misbruik en oneigenlijk gebruik op het gebied van belastingen, sociale zekerheid en subsidies szw, geopend 14 apr. 2008 17257 Assemblee van de West-Europese Unie Initiatief van Kamerleden, geopend 13 jul. 1995 36600 Nota over de toestand van ’s Rijks Financiën Toevoegingen I, IIA 3van 28 dossiers › Volgende dossiers, nog 3.723",
+  "openbaar": 2,
+  "regel": "Zoeken Geopend AllesMaandKwartaalJaarEigen van tot",
+  "richting": null,
+  "rijen": [
+    "Misbruik en oneigenlijk gebruik op het gebied van belastingen, sociale zekerheid en subsidies -> /dossiers/17050?paneel=netwerk",
+    "Assemblee van de West-Europese Unie -> /dossiers/17257?paneel=netwerk",
+    "Nota over de toestand van ’s Rijks Financiën -> /dossiers/36600?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Geopend (nieuw → oud)",
+    "Laatste activiteit",
+    "Kamerstuknummer (gekozen)",
+    "Afgehandeld (nieuw → oud)",
+    "Titel",
+  ],
+  "zoek": {
+    "naam": "Zoek in dossiers",
+    "placeholder": "Zoek op nummer of in titel",
+    "waarde": "",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > factions ? > requests 1`] = `
+{
+  "/api/factions": [
+    {
+      "active": true,
+      "chamber": "TK",
+    },
+  ],
+  "/api/parliament/seats": [
+    {
+      "chamber": "TK",
+    },
+  ],
+  "/api/parties/colors": [
+    {},
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > factions ? > view 1`] = `
+{
+  "facetten": "Weergave Ook opgeheven fracties",
+  "filters": [
+    "Ook opgeheven fracties",
+  ],
+  "lijst": "De zaal kon niet op tijd worden geladen. Opnieuw 17fracties Zetels ↓ Fractie Naam Zetels D66 Democraten 66 17,3% van de zetels, 26 leden 26zetels VVD Volkspartij voor Vrijheid en Democratie 14,7% van de zetels, 22 leden 22zetels PRO Progressief Nederland 13,3% van de zetels, 20 leden 20zetels PVV Partij voor de Vrijheid 12,7% van de zetels, 19 leden 19zetels CDA Christen-Democratisch Appèl 12% van de zetels, 18 leden 18zetels JA21 JA21 6% van de zetels, 9 leden 9zetels FVD Forum voor Democratie 4,7% van de zetels, 7 leden 7zetels Groep Markuszower Groep Markuszower 4,7% van de zetels, 7 leden 7zetels BBB BoerBurgerBeweging 2% van de zetels, 3 leden 3zetels ChristenUnie ChristenUnie 2% van de zetels, 3 leden 3zetels DENK DENK 2% van de zetels, 3 leden 3zetels PvdD Partij voor de Dieren 2% van de zetels, 3 leden 3zetels SGP Staatkundig Gereformeerde Partij 2% van de zetels, 3 leden 3zetels SP Socialistische Partij 2% van de zetels, 3 leden 3zetels 50PLUS 50PLUS 1,3% van de zetels, 2 leden 2zetels Lid Keijzer Lid Keijzer 0,7% van de zetels, 1 lid 1zetel Volt Volt 0,7% van de zetels, 1 lid 1zetel",
+  "openbaar": 1,
+  "regel": "Zoeken Actief AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
+  "richting": "Aflopend; sorteer oplopend",
+  "rijen": [
+    "Democraten 66 -> /fracties/d66?paneel=netwerk",
+    "Volkspartij voor Vrijheid en Democratie -> /fracties/vvd?paneel=netwerk",
+    "Progressief Nederland -> /fracties/pro?paneel=netwerk",
+    "Partij voor de Vrijheid -> /fracties/pvv?paneel=netwerk",
+    "Christen-Democratisch Appèl -> /fracties/cda?paneel=netwerk",
+    "JA21 -> /fracties/ja21?paneel=netwerk",
+    "Forum voor Democratie -> /fracties/fvd?paneel=netwerk",
+    "Groep Markuszower -> /fracties/groep_markuszower?paneel=netwerk",
+    "BoerBurgerBeweging -> /fracties/bbb?paneel=netwerk",
+    "ChristenUnie -> /fracties/christenunie?paneel=netwerk",
+    "DENK -> /fracties/denk?paneel=netwerk",
+    "Partij voor de Dieren -> /fracties/pvdd?paneel=netwerk",
+    "Staatkundig Gereformeerde Partij -> /fracties/sgp?paneel=netwerk",
+    "Socialistische Partij -> /fracties/sp?paneel=netwerk",
+    "50PLUS -> /fracties/50plus?paneel=netwerk",
+    "Lid Keijzer -> /fracties/lid_keijzer?paneel=netwerk",
+    "Volt -> /fracties/volt?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Zetels (gekozen)",
+    "Afkorting",
+    "Naam",
+  ],
+  "zoek": {
+    "naam": "Zoek in fracties",
+    "placeholder": "Zoek op naam of afkorting",
+    "waarde": "",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > factions ?include_inactive=1&q=pvv&sort=abbreviation&dir=desc > requests 1`] = `
+{
+  "/api/factions": [
+    {
+      "chamber": "TK",
+      "q": "pvv",
+    },
+  ],
+  "/api/parliament/seats": [
+    {
+      "chamber": "TK",
+    },
+  ],
+  "/api/parties/colors": [
+    {},
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > factions ?include_inactive=1&q=pvv&sort=abbreviation&dir=desc > view 1`] = `
+{
+  "facetten": "Weergave Ook opgeheven fracties Wis alle filters",
+  "filters": [
+    "Ook opgeheven fracties (aan)",
+  ],
+  "lijst": "De zaal kon niet op tijd worden geladen. Opnieuw 17fracties Afkorting ↓ Fractie Naam Zetels VVD Volkspartij voor Vrijheid en Democratie 14,7% van de zetels, 22 leden 22zetels Volt Volt 0,7% van de zetels, 1 lid 1zetel SP Socialistische Partij 2% van de zetels, 3 leden 3zetels SGP Staatkundig Gereformeerde Partij 2% van de zetels, 3 leden 3zetels PVV Partij voor de Vrijheid 12,7% van de zetels, 19 leden 19zetels PvdD Partij voor de Dieren 2% van de zetels, 3 leden 3zetels PRO Progressief Nederland 13,3% van de zetels, 20 leden 20zetels Lid Keijzer Lid Keijzer 0,7% van de zetels, 1 lid 1zetel JA21 JA21 6% van de zetels, 9 leden 9zetels Groep Markuszower Groep Markuszower 4,7% van de zetels, 7 leden 7zetels FVD Forum voor Democratie 4,7% van de zetels, 7 leden 7zetels DENK DENK 2% van de zetels, 3 leden 3zetels D66 Democraten 66 17,3% van de zetels, 26 leden 26zetels ChristenUnie ChristenUnie 2% van de zetels, 3 leden 3zetels CDA Christen-Democratisch Appèl 12% van de zetels, 18 leden 18zetels BBB BoerBurgerBeweging 2% van de zetels, 3 leden 3zetels 50PLUS 50PLUS 1,3% van de zetels, 2 leden 2zetels",
+  "openbaar": 1,
+  "regel": "Zoeken Actief AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
+  "richting": "Aflopend; sorteer oplopend",
+  "rijen": [
+    "Volkspartij voor Vrijheid en Democratie -> /fracties/vvd?paneel=netwerk",
+    "Volt -> /fracties/volt?paneel=netwerk",
+    "Socialistische Partij -> /fracties/sp?paneel=netwerk",
+    "Staatkundig Gereformeerde Partij -> /fracties/sgp?paneel=netwerk",
+    "Partij voor de Vrijheid -> /fracties/pvv?paneel=netwerk",
+    "Partij voor de Dieren -> /fracties/pvdd?paneel=netwerk",
+    "Progressief Nederland -> /fracties/pro?paneel=netwerk",
+    "Lid Keijzer -> /fracties/lid_keijzer?paneel=netwerk",
+    "JA21 -> /fracties/ja21?paneel=netwerk",
+    "Groep Markuszower -> /fracties/groep_markuszower?paneel=netwerk",
+    "Forum voor Democratie -> /fracties/fvd?paneel=netwerk",
+    "DENK -> /fracties/denk?paneel=netwerk",
+    "Democraten 66 -> /fracties/d66?paneel=netwerk",
+    "ChristenUnie -> /fracties/christenunie?paneel=netwerk",
+    "Christen-Democratisch Appèl -> /fracties/cda?paneel=netwerk",
+    "BoerBurgerBeweging -> /fracties/bbb?paneel=netwerk",
+    "50PLUS -> /fracties/50plus?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Zetels",
+    "Afkorting (gekozen)",
+    "Naam",
+  ],
+  "zoek": {
+    "naam": "Zoek in fracties",
+    "placeholder": "Zoek op naam of afkorting",
+    "waarde": "pvv",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > factions ?kamer=EK > requests 1`] = `
+{
+  "/api/factions": [
+    {
+      "active": true,
+      "chamber": "EK",
+    },
+  ],
+  "/api/parliament/seats": [
+    {
+      "chamber": "EK",
+    },
+  ],
+  "/api/parties/colors": [
+    {},
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > factions ?kamer=EK > view 1`] = `
+{
+  "facetten": "",
+  "filters": [],
+  "lijst": "De zaal kon niet op tijd worden geladen. Opnieuw 17fracties Zetels ↓ Fractie Naam Zetels D66 Democraten 66 17,3% van de zetels, 26 leden 26zetels VVD Volkspartij voor Vrijheid en Democratie 14,7% van de zetels, 22 leden 22zetels PRO Progressief Nederland 13,3% van de zetels, 20 leden 20zetels PVV Partij voor de Vrijheid 12,7% van de zetels, 19 leden 19zetels CDA Christen-Democratisch Appèl 12% van de zetels, 18 leden 18zetels JA21 JA21 6% van de zetels, 9 leden 9zetels FVD Forum voor Democratie 4,7% van de zetels, 7 leden 7zetels Groep Markuszower Groep Markuszower 4,7% van de zetels, 7 leden 7zetels BBB BoerBurgerBeweging 2% van de zetels, 3 leden 3zetels ChristenUnie ChristenUnie 2% van de zetels, 3 leden 3zetels DENK DENK 2% van de zetels, 3 leden 3zetels PvdD Partij voor de Dieren 2% van de zetels, 3 leden 3zetels SGP Staatkundig Gereformeerde Partij 2% van de zetels, 3 leden 3zetels SP Socialistische Partij 2% van de zetels, 3 leden 3zetels 50PLUS 50PLUS 1,3% van de zetels, 2 leden 2zetels Lid Keijzer Lid Keijzer 0,7% van de zetels, 1 lid 1zetel Volt Volt 0,7% van de zetels, 1 lid 1zetel",
+  "openbaar": 1,
+  "regel": "Zoeken Actief AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
+  "richting": "Aflopend; sorteer oplopend",
+  "rijen": [
+    "Democraten 66 -> /fracties/d66?paneel=netwerk",
+    "Volkspartij voor Vrijheid en Democratie -> /fracties/vvd?paneel=netwerk",
+    "Progressief Nederland -> /fracties/pro?paneel=netwerk",
+    "Partij voor de Vrijheid -> /fracties/pvv?paneel=netwerk",
+    "Christen-Democratisch Appèl -> /fracties/cda?paneel=netwerk",
+    "JA21 -> /fracties/ja21?paneel=netwerk",
+    "Forum voor Democratie -> /fracties/fvd?paneel=netwerk",
+    "Groep Markuszower -> /fracties/groep_markuszower?paneel=netwerk",
+    "BoerBurgerBeweging -> /fracties/bbb?paneel=netwerk",
+    "ChristenUnie -> /fracties/christenunie?paneel=netwerk",
+    "DENK -> /fracties/denk?paneel=netwerk",
+    "Partij voor de Dieren -> /fracties/pvdd?paneel=netwerk",
+    "Staatkundig Gereformeerde Partij -> /fracties/sgp?paneel=netwerk",
+    "Socialistische Partij -> /fracties/sp?paneel=netwerk",
+    "50PLUS -> /fracties/50plus?paneel=netwerk",
+    "Lid Keijzer -> /fracties/lid_keijzer?paneel=netwerk",
+    "Volt -> /fracties/volt?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Zetels (gekozen)",
+    "Afkorting",
+    "Naam",
+  ],
+  "zoek": {
+    "naam": "Zoek in fracties",
+    "placeholder": "Zoek op naam of afkorting",
+    "waarde": "",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > instruments ? > requests 1`] = `
+{
+  "/api/instruments": [
+    {
+      "article_count_min": 1,
+      "facets": true,
+      "limit": 1,
+      "offset": 0,
+      "sort": "title",
+    },
+    {
+      "article_count_min": 1,
+      "facets": false,
+      "limit": 100,
+      "offset": 0,
+      "sort": "title",
+    },
+    {
+      "article_count_min": 1,
+      "facets": false,
+      "kind": "verdrag",
+      "limit": 1,
+      "offset": 0,
+      "sort": "title",
+    },
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > instruments ? > view 1`] = `
+{
+  "facetten": "Rechtsgebied Wonen, onroerend goed, bouwrecht 199 Belastingrecht 26 Contracten, schade en aansprakelijkheid 12 Arbeidsrecht en sociaal-zekerheidsrecht 11 Staats- en bestuursrecht 11 Thema Bouwen, wonen en leefomgeving 136 Subsidies, uitkeringen en toeslagen 77 Belastingen 26 Economie en ondernemen 25 Overheid, bestuur en koninkrijk 11 Rechtsorde Nederland Europese Unie Soort Verdragen 279 Weergave Ook zonder artikelen",
+  "filters": [
+    "Wonen, onroerend goed, bouwrecht 199",
+    "Belastingrecht 26",
+    "Contracten, schade en aansprakelijkheid 12",
+    "Arbeidsrecht en sociaal-zekerheidsrecht 11",
+    "Staats- en bestuursrecht 11",
+    "Bouwen, wonen en leefomgeving 136",
+    "Subsidies, uitkeringen en toeslagen 77",
+    "Belastingen 26",
+    "Economie en ondernemen 25",
+    "Overheid, bestuur en koninkrijk 11",
+    "Nederland",
+    "Europese Unie",
+    "Verdragen 279",
+    "Ook zonder artikelen",
+  ],
+  "lijst": "279wetten Citeertitel BWB of CELEX Wet Rechtsorde BWBR0039968 Aanwijzingsbesluit huurcommissie 3 artikelen NL BWBR0010609 Aanwijzingsbesluit Huursubsidiewet 3 artikelen NL BWBR0004975 Afkoop eigen risico bij autoverhuur geen artikelen in de gegevens NL Volgende wetten, nog 276",
+  "openbaar": 1,
+  "regel": "Zoeken In werking getreden AllesMaandKwartaalJaarEigen",
+  "richting": null,
+  "rijen": [
+    "Aanwijzingsbesluit huurcommissie -> /wetten/BWBR0039968?paneel=netwerk",
+    "Aanwijzingsbesluit Huursubsidiewet -> /wetten/BWBR0010609?paneel=netwerk",
+    "Afkoop eigen risico bij autoverhuur -> /wetten/BWBR0004975?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Citeertitel (gekozen)",
+    "Aantal artikelen",
+  ],
+  "zoek": {
+    "naam": "Zoek in wetten",
+    "placeholder": "Zoek in titel, BWB of citatie",
+    "waarde": "",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > instruments ?q=huur&sort=article_count&legal_area=bouwen-en-wonen&policy_domain=x > requests 1`] = `
+{
+  "/api/instruments": [
+    {
+      "article_count_min": 1,
+      "facets": true,
+      "legal_area": "bouwen-en-wonen",
+      "limit": 1,
+      "offset": 0,
+      "policy_domain": "x",
+      "q": "huur",
+      "sort": "article_count",
+    },
+    {
+      "article_count_min": 1,
+      "facets": false,
+      "legal_area": "bouwen-en-wonen",
+      "limit": 100,
+      "offset": 0,
+      "policy_domain": "x",
+      "q": "huur",
+      "sort": "article_count",
+    },
+    {
+      "article_count_min": 1,
+      "facets": false,
+      "kind": "verdrag",
+      "legal_area": "bouwen-en-wonen",
+      "limit": 1,
+      "offset": 0,
+      "policy_domain": "x",
+      "q": "huur",
+      "sort": "article_count",
+    },
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > instruments ?q=huur&sort=article_count&legal_area=bouwen-en-wonen&policy_domain=x > view 1`] = `
+{
+  "facetten": "Rechtsgebied bouwen-en-wonen 0 Wonen, onroerend goed, bouwrecht 199 Belastingrecht 26 Contracten, schade en aansprakelijkheid 12 Arbeidsrecht en sociaal-zekerheidsrecht 11 Staats- en bestuursrecht 11 Thema x 0 Bouwen, wonen en leefomgeving 136 Subsidies, uitkeringen en toeslagen 77 Belastingen 26 Economie en ondernemen 25 Overheid, bestuur en koninkrijk 11 Rechtsorde Nederland Europese Unie Soort Verdragen 279 Weergave Ook zonder artikelen Wis alle filters",
+  "filters": [
+    "bouwen-en-wonen 0 (aan)",
+    "Wonen, onroerend goed, bouwrecht 199",
+    "Belastingrecht 26",
+    "Contracten, schade en aansprakelijkheid 12",
+    "Arbeidsrecht en sociaal-zekerheidsrecht 11",
+    "Staats- en bestuursrecht 11",
+    "x 0 (aan)",
+    "Bouwen, wonen en leefomgeving 136",
+    "Subsidies, uitkeringen en toeslagen 77",
+    "Belastingen 26",
+    "Economie en ondernemen 25",
+    "Overheid, bestuur en koninkrijk 11",
+    "Nederland",
+    "Europese Unie",
+    "Verdragen 279",
+    "Ook zonder artikelen",
+  ],
+  "lijst": "279wetten Aantal artikelen BWB of CELEX Wet Rechtsorde BWBR0039968 Aanwijzingsbesluit huurcommissie 3 artikelen NL BWBR0010609 Aanwijzingsbesluit Huursubsidiewet 3 artikelen NL BWBR0004975 Afkoop eigen risico bij autoverhuur geen artikelen in de gegevens NL Volgende wetten, nog 276",
+  "openbaar": 1,
+  "regel": "Zoeken In werking getreden AllesMaandKwartaalJaarEigen",
+  "richting": null,
+  "rijen": [
+    "Aanwijzingsbesluit huurcommissie -> /wetten/BWBR0039968?paneel=netwerk",
+    "Aanwijzingsbesluit Huursubsidiewet -> /wetten/BWBR0010609?paneel=netwerk",
+    "Afkoop eigen risico bij autoverhuur -> /wetten/BWBR0004975?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Citeertitel",
+    "Aantal artikelen (gekozen)",
+  ],
+  "zoek": {
+    "naam": "Zoek in wetten",
+    "placeholder": "Zoek in titel, BWB of citatie",
+    "waarde": "huur",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > instruments ?soort=verdrag&jurisdiction=eu&leeg=1&from=2020-01-01&to=2024-12-31 > requests 1`] = `
+{
+  "/api/instruments": [
+    {
+      "facets": true,
+      "from": "2020-01-01",
+      "jurisdiction": "eu",
+      "kind": "verdrag",
+      "limit": 1,
+      "offset": 0,
+      "sort": "title",
+      "to": "2024-12-31",
+    },
+    {
+      "facets": false,
+      "from": "2020-01-01",
+      "jurisdiction": "eu",
+      "kind": "verdrag",
+      "limit": 100,
+      "offset": 0,
+      "sort": "title",
+      "to": "2024-12-31",
+    },
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > instruments ?soort=verdrag&jurisdiction=eu&leeg=1&from=2020-01-01&to=2024-12-31 > view 1`] = `
+{
+  "facetten": "Rechtsgebied Wonen, onroerend goed, bouwrecht 199 Belastingrecht 26 Contracten, schade en aansprakelijkheid 12 Arbeidsrecht en sociaal-zekerheidsrecht 11 Staats- en bestuursrecht 11 Thema Bouwen, wonen en leefomgeving 136 Subsidies, uitkeringen en toeslagen 77 Belastingen 26 Economie en ondernemen 25 Overheid, bestuur en koninkrijk 11 Rechtsorde Nederland Europese Unie Soort Verdragen 279 Weergave Ook zonder artikelen Wis alle filters",
+  "filters": [
+    "Wonen, onroerend goed, bouwrecht 199",
+    "Belastingrecht 26",
+    "Contracten, schade en aansprakelijkheid 12",
+    "Arbeidsrecht en sociaal-zekerheidsrecht 11",
+    "Staats- en bestuursrecht 11",
+    "Bouwen, wonen en leefomgeving 136",
+    "Subsidies, uitkeringen en toeslagen 77",
+    "Belastingen 26",
+    "Economie en ondernemen 25",
+    "Overheid, bestuur en koninkrijk 11",
+    "Nederland",
+    "Europese Unie (aan)",
+    "Verdragen 279 (aan)",
+    "Ook zonder artikelen (aan)",
+  ],
+  "lijst": "279wetten Citeertitel BWB of CELEX Wet Rechtsorde BWBR0039968 Aanwijzingsbesluit huurcommissie 3 artikelen NL BWBR0010609 Aanwijzingsbesluit Huursubsidiewet 3 artikelen NL BWBR0004975 Afkoop eigen risico bij autoverhuur geen artikelen in de gegevens NL Volgende wetten, nog 276",
+  "openbaar": 1,
+  "regel": "Zoeken In werking getreden AllesMaandKwartaalJaarEigen van tot",
+  "richting": null,
+  "rijen": [
+    "Aanwijzingsbesluit huurcommissie -> /wetten/BWBR0039968?paneel=netwerk",
+    "Aanwijzingsbesluit Huursubsidiewet -> /wetten/BWBR0010609?paneel=netwerk",
+    "Afkoop eigen risico bij autoverhuur -> /wetten/BWBR0004975?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Citeertitel (gekozen)",
+    "Aantal artikelen",
+  ],
+  "zoek": {
+    "naam": "Zoek in wetten",
+    "placeholder": "Zoek in titel, BWB of citatie",
+    "waarde": "",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > judgments ? > requests 1`] = `
+{
+  "/api/judgments": [
+    {
+      "facets": true,
+      "limit": 1,
+      "offset": 0,
+      "sort": "date_desc",
+      "source": "rechtspraak",
+    },
+    {
+      "facets": false,
+      "limit": 100,
+      "offset": 0,
+      "sort": "date_desc",
+      "source": "rechtspraak",
+    },
+  ],
+  "/api/stats/coverage": [
+    {},
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > judgments ? > view 1`] = `
+{
+  "facetten": "Hoogste rechters 865 Hoge Raad 243 Parket bij de Hoge Raad 236 Raad van State 162 Centrale Raad van Beroep 217 College van Beroep voor het bedrijfsleven 7 Feitenrechtspraak 7.272 Gerechtshoven 2.539 Rechtbanken 4.733 Kantongerechten 0 Caribisch deel 193 Gerechten in het Caribisch deel 193 Europees 3.232 EHRM 3.232 Hof van Justitie EU 0 Overig 1 Tuchtcolleges 0 Andere colleges 0 Kroon 0 Buitenlandse instanties 1 Rechtsgebied Civiel recht 7.243 Bestuursrecht 931 Strafrecht 164 Internationaal publiekrecht 1 Procedure Eerste aanleg - enkelvoudig 3.082 Hoger beroep 2.646 Kort geding 769 Bodemzaak 591 Eerste aanleg - meervoudig 245",
+  "filters": [
+    "Hoge Raad 243",
+    "Parket bij de Hoge Raad 236",
+    "Raad van State 162",
+    "Centrale Raad van Beroep 217",
+    "College van Beroep voor het bedrijfsleven 7",
+    "Gerechtshoven 2.539",
+    "Rechtbanken 4.733",
+    "Kantongerechten 0",
+    "Gerechten in het Caribisch deel 193",
+    "EHRM 3.232",
+    "Hof van Justitie EU 0",
+    "Tuchtcolleges 0",
+    "Andere colleges 0",
+    "Kroon 0",
+    "Buitenlandse instanties 1",
+    "Civiel recht 7.243",
+    "Bestuursrecht 931",
+    "Strafrecht 164",
+    "Internationaal publiekrecht 1",
+    "Eerste aanleg - enkelvoudig 3.082",
+    "Hoger beroep 2.646",
+    "Kort geding 769",
+    "Bodemzaak 591",
+    "Eerste aanleg - meervoudig 245",
+  ],
+  "lijst": "8.331uitspraken Datum (nieuw → oud) 20212026 Datum Uitspraak Aangehaald 14 okt. 2026 Raad van State ECLI:NL:RVS:2026:6087 Bij besluit van 21 juni 2023 heeft de raad van de gemeente Leeuwarden het bestemmingsplan "Leeuwarden - De Zuidlanden, plandeel De Hem" vastgesteld. In de toelichting bij het bestemmingsplan staat dat Leeuwarden groeit. Er is vraag naar meer woningen. Daarom wordt ten zuidoosten van het dorp Goutum een aantal buurtschappen gerealiseerd, met de overkoepelende naam "Zuidlanden". In de afgelopen jaren zijn de buurtschappen Goutum-Súd, Techum, Wiarda en De Klamp gebouwd. Buurtschap Unia is in voorbereiding. Buurtschap De Hem is het laatste te ontwikkelen buurtschap in Zuidlanden-Oost. In De Hem komen maximaal 395 woningen in verschillende typen en segmenten, variërend van rij- tot vrijstaande woningen en van dure koop tot sociale huur. De raad heeft het bestemmingsplan vastgesteld om deze ontwikkeling in juridisch-planologische zin mogelijk te maken. Dorpsbelang Goutum, [appellant sub 2] en It Fryske Gea en anderen kunnen zich alle niet verenigen met het bestemmingsplan en hebben daarom beroep ingesteld. 202304894/1/R3, Bestuursrecht 12 okt. 2026 Rechtbank Rotterdam ECLI:NL:RBROT:2026:13915 Kort geding. Huur bedrijfsruimte. Ontruimen vanwege herhaalde betalingsachterstand. 12347789 VV EXPL 26-479, Civiel recht 8 okt. 2026 Rechtbank Zeeland-West-Brabant ECLI:NL:RBZWB:2026:9751 Huur woning op terrein voormalige gasfabriek. Vordering huurder in kort geding op grond van gebreken (schimmel en vluchtige organische stoffen). Vordering afgewezen: gebreken onvoldoende onderbouwd, huurder werkt onvoldoende mee aan onderzoeken en eventueel verhelpen van gebreken door verhuuder. Huurder veroordeeld tot medewerking. 12345650 VV EXPL 26-49 (E), Civiel recht Volgende uitspraken, nog 8.328",
+  "openbaar": 1,
+  "regel": "Zoeken Periode AllesMaandKwartaalJaarEigen",
+  "richting": null,
+  "rijen": [
+    "ECLI:NL:RVS:2026:6087 -> /uitspraken/ECLI:NL:RVS:2026:6087?paneel=netwerk",
+    "ECLI:NL:RBROT:2026:13915 -> /uitspraken/ECLI:NL:RBROT:2026:13915?paneel=netwerk",
+    "ECLI:NL:RBZWB:2026:9751 -> /uitspraken/ECLI:NL:RBZWB:2026:9751?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Datum (nieuw → oud) (gekozen)",
+    "Datum (oud → nieuw)",
+    "Meest geciteerd",
+  ],
+  "zoek": {
+    "naam": "Zoek in uitspraken",
+    "placeholder": "Zoek in zaaknaam of ECLI",
+    "waarde": "",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > judgments ?q=huur&tier=rechtbank&court_kind=rechtbank&subject_area=Civiel+recht&procedure=Hoger+beroep&from=2020-01-01&to=2020-12-31&sort=date_asc > requests 1`] = `
+{
+  "/api/judgments": [
+    {
+      "court_kind": "rechtbank",
+      "facets": true,
+      "from": "2020-01-01",
+      "limit": 1,
+      "offset": 0,
+      "procedure": "Hoger beroep",
+      "q": "huur",
+      "sort": "date_asc",
+      "source": "rechtspraak",
+      "subject_area": "Civiel recht",
+      "tier": "rechtbank",
+      "to": "2020-12-31",
+    },
+    {
+      "court_kind": "rechtbank",
+      "facets": false,
+      "from": "2020-01-01",
+      "limit": 100,
+      "offset": 0,
+      "procedure": "Hoger beroep",
+      "q": "huur",
+      "sort": "date_asc",
+      "source": "rechtspraak",
+      "subject_area": "Civiel recht",
+      "tier": "rechtbank",
+      "to": "2020-12-31",
+    },
+  ],
+  "/api/stats/coverage": [
+    {},
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > judgments ?q=huur&tier=rechtbank&court_kind=rechtbank&subject_area=Civiel+recht&procedure=Hoger+beroep&from=2020-01-01&to=2020-12-31&sort=date_asc > view 1`] = `
+{
+  "facetten": "Hoogste rechters 865 Hoge Raad 243 Parket bij de Hoge Raad 236 Raad van State 162 Centrale Raad van Beroep 217 College van Beroep voor het bedrijfsleven 7 Feitenrechtspraak 7.272 Gerechtshoven 2.539 Rechtbanken 4.733 Kantongerechten 0 Caribisch deel 193 Gerechten in het Caribisch deel 193 Europees 0 EHRM 0 Hof van Justitie EU 0 Overig 1 Tuchtcolleges 0 Andere colleges 0 Kroon 0 Buitenlandse instanties 1 Rechtsgebied Civiel recht 7.243 Verbintenissenrecht 2.071 Insolventierecht 134 Burgerlijk procesrecht 54 Personen- en familierecht 28 Goederenrecht 11 Arbeidsrecht 5 Europees civiel recht 5 Ondernemingsrecht 3 Aanbestedingsrecht 2 Intellectueel-eigendomsrecht 1 Bestuursrecht 931 Strafrecht 164 Internationaal publiekrecht 1 Procedure Eerste aanleg - enkelvoudig 3.082 Hoger beroep 2.646 Kort geding 769 Bodemzaak 591 Eerste aanleg - meervoudig 245 Wis alle filters",
+  "filters": [
+    "Hoge Raad 243",
+    "Parket bij de Hoge Raad 236",
+    "Raad van State 162",
+    "Centrale Raad van Beroep 217",
+    "College van Beroep voor het bedrijfsleven 7",
+    "Gerechtshoven 2.539",
+    "Rechtbanken 4.733 (aan)",
+    "Kantongerechten 0",
+    "Gerechten in het Caribisch deel 193",
+    "EHRM 0",
+    "Hof van Justitie EU 0",
+    "Tuchtcolleges 0",
+    "Andere colleges 0",
+    "Kroon 0",
+    "Buitenlandse instanties 1",
+    "Civiel recht 7.243 (aan)",
+    "Verbintenissenrecht 2.071",
+    "Insolventierecht 134",
+    "Burgerlijk procesrecht 54",
+    "Personen- en familierecht 28",
+    "Goederenrecht 11",
+    "Arbeidsrecht 5",
+    "Europees civiel recht 5",
+    "Ondernemingsrecht 3",
+    "Aanbestedingsrecht 2",
+    "Intellectueel-eigendomsrecht 1",
+    "Bestuursrecht 931",
+    "Strafrecht 164",
+    "Internationaal publiekrecht 1",
+    "Eerste aanleg - enkelvoudig 3.082",
+    "Hoger beroep 2.646 (aan)",
+    "Kort geding 769",
+    "Bodemzaak 591",
+    "Eerste aanleg - meervoudig 245",
+  ],
+  "lijst": "8.331uitspraken Datum (oud → nieuw) 20212026 Datum Uitspraak Aangehaald 14 okt. 2026 Raad van State ECLI:NL:RVS:2026:6087 Bij besluit van 21 juni 2023 heeft de raad van de gemeente Leeuwarden het bestemmingsplan "Leeuwarden - De Zuidlanden, plandeel De Hem" vastgesteld. In de toelichting bij het bestemmingsplan staat dat Leeuwarden groeit. Er is vraag naar meer woningen. Daarom wordt ten zuidoosten van het dorp Goutum een aantal buurtschappen gerealiseerd, met de overkoepelende naam "Zuidlanden". In de afgelopen jaren zijn de buurtschappen Goutum-Súd, Techum, Wiarda en De Klamp gebouwd. Buurtschap Unia is in voorbereiding. Buurtschap De Hem is het laatste te ontwikkelen buurtschap in Zuidlanden-Oost. In De Hem komen maximaal 395 woningen in verschillende typen en segmenten, variërend van rij- tot vrijstaande woningen en van dure koop tot sociale huur. De raad heeft het bestemmingsplan vastgesteld om deze ontwikkeling in juridisch-planologische zin mogelijk te maken. Dorpsbelang Goutum, [appellant sub 2] en It Fryske Gea en anderen kunnen zich alle niet verenigen met het bestemmingsplan en hebben daarom beroep ingesteld. 202304894/1/R3, Bestuursrecht 12 okt. 2026 Rechtbank Rotterdam ECLI:NL:RBROT:2026:13915 Kort geding. Huur bedrijfsruimte. Ontruimen vanwege herhaalde betalingsachterstand. 12347789 VV EXPL 26-479, Civiel recht 8 okt. 2026 Rechtbank Zeeland-West-Brabant ECLI:NL:RBZWB:2026:9751 Huur woning op terrein voormalige gasfabriek. Vordering huurder in kort geding op grond van gebreken (schimmel en vluchtige organische stoffen). Vordering afgewezen: gebreken onvoldoende onderbouwd, huurder werkt onvoldoende mee aan onderzoeken en eventueel verhelpen van gebreken door verhuuder. Huurder veroordeeld tot medewerking. 12345650 VV EXPL 26-49 (E), Civiel recht Volgende uitspraken, nog 8.328",
+  "openbaar": 1,
+  "regel": "Zoeken Periode AllesMaandKwartaalJaarEigen van tot",
+  "richting": null,
+  "rijen": [
+    "ECLI:NL:RVS:2026:6087 -> /uitspraken/ECLI:NL:RVS:2026:6087?paneel=netwerk",
+    "ECLI:NL:RBROT:2026:13915 -> /uitspraken/ECLI:NL:RBROT:2026:13915?paneel=netwerk",
+    "ECLI:NL:RBZWB:2026:9751 -> /uitspraken/ECLI:NL:RBZWB:2026:9751?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Datum (nieuw → oud)",
+    "Datum (oud → nieuw) (gekozen)",
+    "Meest geciteerd",
+  ],
+  "zoek": {
+    "naam": "Zoek in uitspraken",
+    "placeholder": "Zoek in zaaknaam of ECLI",
+    "waarde": "huur",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > judgments ?source=echr&subject=Huurrecht&sort=citation_count > requests 1`] = `
+{
+  "/api/judgments": [
+    {
+      "facets": true,
+      "limit": 1,
+      "offset": 0,
+      "sort": "citation_count",
+      "source": "echr",
+      "subject": "Huurrecht",
+    },
+    {
+      "facets": false,
+      "limit": 100,
+      "offset": 0,
+      "sort": "citation_count",
+      "source": "echr",
+      "subject": "Huurrecht",
+    },
+  ],
+  "/api/stats/coverage": [
+    {},
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > judgments ?source=echr&subject=Huurrecht&sort=citation_count > view 1`] = `
+{
+  "facetten": "Hoogste rechters 296.126 Hoge Raad 57.506 Parket bij de Hoge Raad 34.665 Raad van State 100.193 Centrale Raad van Beroep 87.893 College van Beroep voor het bedrijfsleven 15.869 Feitenrechtspraak 678.574 Gerechtshoven 168.232 Rechtbanken 510.203 Kantongerechten 139 Caribisch deel 21.094 Gerechten in het Caribisch deel 21.094 Europees 3.527 EHRM 3.232 Hof van Justitie EU 295 Overig 1.824 Tuchtcolleges 1.669 Andere colleges 4 Kroon 4 Buitenlandse instanties 147 Rechtsgebied Civiel recht 7.243 Bestuursrecht 931 Strafrecht 164 Internationaal publiekrecht 1 Procedure Eerste aanleg - enkelvoudig 3.082 Hoger beroep 2.646 Kort geding 769 Bodemzaak 591 Eerste aanleg - meervoudig 245 Wis alle filters",
+  "filters": [
+    "Hoge Raad 57.506",
+    "Parket bij de Hoge Raad 34.665",
+    "Raad van State 100.193",
+    "Centrale Raad van Beroep 87.893",
+    "College van Beroep voor het bedrijfsleven 15.869",
+    "Gerechtshoven 168.232",
+    "Rechtbanken 510.203",
+    "Kantongerechten 139",
+    "Gerechten in het Caribisch deel 21.094",
+    "EHRM 3.232 (aan)",
+    "Hof van Justitie EU 295",
+    "Tuchtcolleges 1.669",
+    "Andere colleges 4",
+    "Kroon 4",
+    "Buitenlandse instanties 147",
+    "Civiel recht 7.243",
+    "Bestuursrecht 931",
+    "Strafrecht 164",
+    "Internationaal publiekrecht 1",
+    "Eerste aanleg - enkelvoudig 3.082",
+    "Hoger beroep 2.646",
+    "Kort geding 769",
+    "Bodemzaak 591",
+    "Eerste aanleg - meervoudig 245",
+  ],
+  "lijst": "8.331uitspraken Meest geciteerd 20212026 Datum Uitspraak Aangehaald 14 okt. 2026 Raad van State ECLI:NL:RVS:2026:6087 Bij besluit van 21 juni 2023 heeft de raad van de gemeente Leeuwarden het bestemmingsplan "Leeuwarden - De Zuidlanden, plandeel De Hem" vastgesteld. In de toelichting bij het bestemmingsplan staat dat Leeuwarden groeit. Er is vraag naar meer woningen. Daarom wordt ten zuidoosten van het dorp Goutum een aantal buurtschappen gerealiseerd, met de overkoepelende naam "Zuidlanden". In de afgelopen jaren zijn de buurtschappen Goutum-Súd, Techum, Wiarda en De Klamp gebouwd. Buurtschap Unia is in voorbereiding. Buurtschap De Hem is het laatste te ontwikkelen buurtschap in Zuidlanden-Oost. In De Hem komen maximaal 395 woningen in verschillende typen en segmenten, variërend van rij- tot vrijstaande woningen en van dure koop tot sociale huur. De raad heeft het bestemmingsplan vastgesteld om deze ontwikkeling in juridisch-planologische zin mogelijk te maken. Dorpsbelang Goutum, [appellant sub 2] en It Fryske Gea en anderen kunnen zich alle niet verenigen met het bestemmingsplan en hebben daarom beroep ingesteld. 202304894/1/R3, Bestuursrecht 12 okt. 2026 Rechtbank Rotterdam ECLI:NL:RBROT:2026:13915 Kort geding. Huur bedrijfsruimte. Ontruimen vanwege herhaalde betalingsachterstand. 12347789 VV EXPL 26-479, Civiel recht 8 okt. 2026 Rechtbank Zeeland-West-Brabant ECLI:NL:RBZWB:2026:9751 Huur woning op terrein voormalige gasfabriek. Vordering huurder in kort geding op grond van gebreken (schimmel en vluchtige organische stoffen). Vordering afgewezen: gebreken onvoldoende onderbouwd, huurder werkt onvoldoende mee aan onderzoeken en eventueel verhelpen van gebreken door verhuuder. Huurder veroordeeld tot medewerking. 12345650 VV EXPL 26-49 (E), Civiel recht Volgende uitspraken, nog 8.328",
+  "openbaar": 1,
+  "regel": "Zoeken Periode AllesMaandKwartaalJaarEigen",
+  "richting": null,
+  "rijen": [
+    "ECLI:NL:RVS:2026:6087 -> /uitspraken/ECLI:NL:RVS:2026:6087?paneel=netwerk",
+    "ECLI:NL:RBROT:2026:13915 -> /uitspraken/ECLI:NL:RBROT:2026:13915?paneel=netwerk",
+    "ECLI:NL:RBZWB:2026:9751 -> /uitspraken/ECLI:NL:RBZWB:2026:9751?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Datum (nieuw → oud)",
+    "Datum (oud → nieuw)",
+    "Meest geciteerd (gekozen)",
+  ],
+  "zoek": {
+    "naam": "Zoek in uitspraken",
+    "placeholder": "Zoek in zaaknaam of ECLI",
+    "waarde": "",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > members ? > requests 1`] = `
+{
+  "/api/factions": [
+    {
+      "active": true,
+      "chamber": "TK",
+    },
+    {},
+  ],
+  "/api/members": [
+    {
+      "active": true,
+      "chamber": "TK",
+      "include_all": false,
+      "limit": 200,
+      "offset": 0,
+      "sort": "family_name",
+    },
+  ],
+  "/api/parties/colors": [
+    {},
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > members ? > view 1`] = `
+{
+  "facetten": "Fractie zetels D66 26 VVD 22 PRO 20 PVV 19 CDA 18 JA21 9 FVD 7 Groep Markuszower 7 Alle 17Weergave Ook historische leden",
+  "filters": [
+    "D66 26",
+    "VVD 22",
+    "PRO 20",
+    "PVV 19",
+    "CDA 18",
+    "JA21 9",
+    "FVD 7",
+    "Groep Markuszower 7",
+    "Ook historische leden",
+  ],
+  "lijst": "3kamerleden Achternaam Fractie Naam PVV Alexander Kops VVD Alisha Müller SGP André Flach",
+  "openbaar": 1,
+  "regel": "Zoeken Actief AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
+  "richting": null,
+  "rijen": [
+    "Alexander Kops -> /leden/alexander-kops?paneel=netwerk",
+    "Alisha Müller -> /leden/alisha-muller?paneel=netwerk",
+    "André Flach -> /leden/andre-flach?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Achternaam (gekozen)",
+    "Fractie",
+  ],
+  "zoek": {
+    "naam": "Zoek in kamerleden",
+    "placeholder": "Zoek op naam",
+    "waarde": "",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > members ?include_inactive=1&party=VVD&q=kops&sort=party > requests 1`] = `
+{
+  "/api/factions": [
+    {
+      "active": true,
+      "chamber": "TK",
+    },
+    {},
+  ],
+  "/api/members": [
+    {
+      "chamber": "TK",
+      "include_all": true,
+      "limit": 100,
+      "offset": 0,
+      "party": "VVD",
+      "q": "kops",
+    },
+  ],
+  "/api/parties/colors": [
+    {},
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > members ?include_inactive=1&party=VVD&q=kops&sort=party > view 1`] = `
+{
+  "facetten": "Fractie D66 VVD PRO PVV CDA JA21 FVD Groep Markuszower Alle 17Weergave Ook historische leden Wis alle filters",
+  "filters": [
+    "D66",
+    "VVD (aan)",
+    "PRO",
+    "PVV",
+    "CDA",
+    "JA21",
+    "FVD",
+    "Groep Markuszower",
+    "Ook historische leden (aan)",
+  ],
+  "lijst": "3kamerleden Fractie ↑ Fractie Naam PVV Alexander Kops SGP André Flach VVD Alisha Müller",
+  "openbaar": 1,
+  "regel": "Zoeken Actief AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
+  "richting": "Oplopend; sorteer aflopend",
+  "rijen": [
+    "Alexander Kops -> /leden/alexander-kops?paneel=netwerk",
+    "André Flach -> /leden/andre-flach?paneel=netwerk",
+    "Alisha Müller -> /leden/alisha-muller?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Achternaam",
+    "Fractie (gekozen)",
+  ],
+  "zoek": {
+    "naam": "Zoek in kamerleden",
+    "placeholder": "Zoek op naam",
+    "waarde": "kops",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > members ?kamer=EK&from=2020-01-01 > requests 1`] = `
+{
+  "/api/factions": [
+    {
+      "active": true,
+      "chamber": "EK",
+    },
+    {},
+  ],
+  "/api/members": [
+    {
+      "active_from": "2020-01-01",
+      "chamber": "EK",
+      "include_all": true,
+      "limit": 100,
+      "offset": 0,
+      "sort": "family_name",
+    },
+  ],
+  "/api/parties/colors": [
+    {},
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > members ?kamer=EK&from=2020-01-01 > view 1`] = `
+{
+  "facetten": "Fractie zetels D66 26 VVD 22 PRO 20 PVV 19 CDA 18 JA21 9 FVD 7 Groep Markuszower 7 Alle 17 Wis alle filters",
+  "filters": [
+    "D66 26",
+    "VVD 22",
+    "PRO 20",
+    "PVV 19",
+    "CDA 18",
+    "JA21 9",
+    "FVD 7",
+    "Groep Markuszower 7",
+  ],
+  "lijst": "3kamerleden Achternaam Fractie Naam PVV Alexander Kops VVD Alisha Müller SGP André Flach",
+  "openbaar": 1,
+  "regel": "Zoeken Actief AllesMaandKwartaalJaarEigen van tot Kamer Tweede KamerEerste Kamer",
+  "richting": null,
+  "rijen": [
+    "Alexander Kops -> /leden/alexander-kops?paneel=netwerk",
+    "Alisha Müller -> /leden/alisha-muller?paneel=netwerk",
+    "André Flach -> /leden/andre-flach?paneel=netwerk",
+  ],
+  "volgorde": [
+    "Achternaam (gekozen)",
+    "Fractie",
+  ],
+  "zoek": {
+    "naam": "Zoek in kamerleden",
+    "placeholder": "Zoek op naam",
+    "waarde": "",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > ministers ? > requests 1`] = `
+{
+  "/api/cabinets": [
+    {},
+  ],
+  "/api/cabinets/{key}": [
+    {
+      "key": "jetten",
+    },
+  ],
+  "/api/ministries": [
+    {},
+  ],
+  "/api/parties/colors": [
+    {},
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > ministers ? > view 1`] = `
+{
+  "facetten": "Weergave Eén kabinetNaast elkaarKabinet kabinet-Jetten (in functie) Functie Minister-president 1 Minister 3 Staatssecretaris 1",
+  "filters": [
+    "Eén kabinet (aan)",
+    "Naast elkaar",
+    "Minister-president 1",
+    "Minister 3",
+    "Staatssecretaris 1",
+  ],
+  "lijst": "kabinet-Jetten sinds 2026, minister-president Rob Jetten, 28 bewindspersonen 23 feb. 2026 nu Algemene Zaken Minister-president Rob Jetten Buitenlandse Zaken Minister Buitenlandse Handel en Ontwikkelingssamenwerking Sjoerd Sjoerdsma Minister T.B.W. Berendsen Justitie en Veiligheid Minister D.M. van Weel Staatssecretaris K.T. van Bruggen",
+  "openbaar": 5,
+  "regel": "Zoeken In functie AllesMaandKwartaalJaarEigen",
+  "richting": null,
+  "rijen": [],
+  "volgorde": null,
+  "zoek": {
+    "naam": "Zoek in bewindspersonen",
+    "placeholder": "Zoek op naam",
+    "waarde": "",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > ministers ?cabinet=jetten&post=minister&q=a&from=2026-01-01 > requests 1`] = `
+{
+  "/api/cabinets": [
+    {},
+  ],
+  "/api/cabinets/{key}": [
+    {
+      "key": "jetten",
+    },
+  ],
+  "/api/ministries": [
+    {},
+  ],
+  "/api/parties/colors": [
+    {},
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > ministers ?cabinet=jetten&post=minister&q=a&from=2026-01-01 > view 1`] = `
+{
+  "facetten": "Weergave Eén kabinetNaast elkaarKabinet jetten Functie Minister-president 1 Minister 3 Staatssecretaris 1 Wis alle filters",
+  "filters": [
+    "Eén kabinet (aan)",
+    "Naast elkaar",
+    "Minister-president 1",
+    "Minister 3 (aan)",
+    "Staatssecretaris 1",
+  ],
+  "lijst": "kabinet-Jetten sinds 2026, minister-president Rob Jetten, 28 bewindspersonen 23 feb. 2026 nu Buitenlandse Zaken Minister Buitenlandse Handel en Ontwikkelingssamenwerking Sjoerd Sjoerdsma Justitie en Veiligheid Minister D.M. van Weel",
+  "openbaar": 2,
+  "regel": "Zoeken In functie AllesMaandKwartaalJaarEigen van tot",
+  "richting": null,
+  "rijen": [],
+  "volgorde": null,
+  "zoek": {
+    "naam": "Zoek in bewindspersonen",
+    "placeholder": "Zoek op naam",
+    "waarde": "a",
+  },
+}
+`;
+
+exports[`Bronnen, list by list > ministers ?weergave=naast > requests 1`] = `
+{
+  "/api/cabinets": [
+    {},
+  ],
+  "/api/cabinets/{key}": [
+    {
+      "key": "jetten",
+    },
+    {
+      "key": "schoof",
+    },
+    {
+      "key": "rutte_iv",
+    },
+    {
+      "key": "rutte_iii",
+    },
+  ],
+  "/api/ministries": [
+    {},
+  ],
+  "/api/parties/colors": [
+    {},
+  ],
+}
+`;
+
+exports[`Bronnen, list by list > ministers ?weergave=naast > view 1`] = `
+{
+  "facetten": "Weergave Eén kabinetNaast elkaarTot en met kabinet-Jetten (in functie)",
+  "filters": [
+    "Eén kabinet",
+    "Naast elkaar (aan)",
+  ],
+  "lijst": "Ministers sinds 2017, kabinet-Rutte III tot kabinet-Jetten Post Rutte III2017–2022Rutte IV2022–2024Schoof2024–2026Jettensinds 2026 Algemene Zaken, minister-president Rob Jetten D66 Rob Jetten D66 Rob Jetten D66 Rob Jetten D66 Buitenlandse Zaken T.B.W. Berendsen CDA T.B.W. Berendsen CDA T.B.W. Berendsen CDA T.B.W. Berendsen CDA Justitie en Veiligheid D.M. van Weel VVD D.M. van Weel VVD D.M. van Weel VVD D.M. van Weel VVD",
+  "openbaar": 12,
+  "regel": "Zoeken",
+  "richting": null,
+  "rijen": [],
+  "volgorde": null,
+  "zoek": {
+    "naam": "Zoek in bewindspersonen",
+    "placeholder": "Zoek op naam",
+    "waarde": "",
+  },
+}
+`;
+
+exports[`Bronnen, the address > drops the filters and the open row in a tab, the Kamer kept 1`] = `
+[
+  "/explore?kamer=EK&mode=index&kind=instruments",
+  "/explore?kamer=EK&mode=index&kind=judgments",
+  "/explore?kamer=EK&mode=index&kind=dossiers",
+  "/explore?kamer=EK&mode=index&kind=decisions",
+  "/explore?kamer=EK&mode=index&kind=documents",
+  "/explore?kamer=EK&mode=index&kind=members",
+  "/explore?kamer=EK&mode=index&kind=factions",
+  "/explore?kamer=EK&mode=index&kind=committees",
+  "/explore?kamer=EK&mode=index&kind=cabinets",
+  "/explore?kamer=EK&mode=index&kind=ministers",
+  "/explore?kamer=EK&mode=index&kind=commitments",
+]
+`;
+
+exports[`Bronnen, the address > switches the Kamer as a choice, dropping the fractie and the open row 1`] = `"?mode=index&kind=members&q=a&kamer=EK"`;
+
+exports[`Bronnen, the address > takes a filter on and off in one step, the open row and the sort kept 1`] = `"?mode=index&kind=dossiers&sort=title&open=dossiers/1&track=Begroting"`;
+
+exports[`Bronnen, the address > takes a filter on and off in one step, the open row and the sort kept 2`] = `"?mode=index&kind=dossiers&sort=title&open=dossiers/1"`;

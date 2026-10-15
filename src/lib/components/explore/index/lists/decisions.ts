@@ -1,0 +1,120 @@
+// Stemmingen of a Kamer by sitting day, newest first; their total and facets counted apart.
+import type { Schema } from '$lib/api/types';
+import { besluiten, geteld, nogTeTellen } from '$lib/api/decisions';
+import { EK_SOURCE } from '$lib/components/parliamentary/chamber';
+import { facetOptions } from '$lib/util/choice';
+import DecisionRows from '../rows/DecisionRows.svelte';
+import { defineList, facetMap, sorted, toggle } from './list';
+import type { IndexParams } from './params';
+
+type Row = Schema<'DecisionSummaryDTO'>;
+export type DecisionsState = {
+	facets: Schema<'DecisionFacets'> | null;
+	/** The stemmingen counted under the filters, from the facets asked apart (API 0.79.41). */
+	total: number | null;
+};
+
+const query = (p: IndexParams) => ({
+	chamber: p.kamer,
+	kind: p.soort || undefined,
+	passed: p.passed === undefined ? undefined : p.passed === 'true',
+	from: p.from || undefined,
+	to: p.to || undefined,
+	// One q, as the API takes several since 0.79.30 (all of them must match).
+	q: p.q ? [p.q] : undefined,
+	dossier: p.dossier || undefined,
+	party: p.party || undefined,
+	limit: 200
+});
+
+export const decisions = defineList<Row, DecisionsState, ReturnType<typeof query>>({
+	sorts: [
+		{ id: 'date', label: 'Datum', dir: 'desc' },
+		{ id: 'result', label: 'Uitslag', dir: 'asc' },
+		{ id: 'subject', label: 'Onderwerp', dir: 'asc' }
+	],
+	placeholder: 'Zoek in onderwerp',
+	columns: { lead: 'Soort', body: 'Onderwerp', aside: 'Uitslag', asideW: 180 },
+	noun: 'stemmingen',
+	chamber: true,
+	period: () => ({ label: 'Datum', unit: 'date' }),
+	query,
+	// The rows without counting (facets=false: total null); the total and facets from one
+	// row asked beside them, again later while still being counted.
+	load: async (query, offset, signal, apart, set) => {
+		if (!offset) {
+			set({ total: null });
+			apart(
+				() => geteld({ ...query, offset: 0, limit: 1, facets: true }, signal),
+				(t) => {
+					// Still counting after the last wait: the facets stay, the total quiet.
+					if (!nogTeTellen(t)) set({ facets: t.facets ?? null });
+					if (t.total !== null) set({ total: t.total });
+				},
+				signal
+			);
+		}
+		return besluiten({ ...query, offset, facets: false }, signal);
+	},
+	total: (state) => state.total ?? null,
+	shown: (rows, { sort, dir }) =>
+		sorted(
+			rows,
+			{
+				date: (s) => s.date ?? '',
+				result: (s) => Number(s.passed),
+				subject: (s) => s.subject ?? ''
+			},
+			sort,
+			dir
+		),
+	facets: ({ p, state, patch }) => {
+		const outcomes = facetMap(state.facets?.passed);
+		// The kinds the Kamer's decisions have, as the facet counts them; one without a zaak
+		// cannot be chosen. The Eerste Kamer's decisions have none yet: no group then.
+		const kinds = facetOptions(facetMap(state.facets?.kind), p.soort).map(([k, n]) => ({
+			id: k,
+			label: k,
+			count: n,
+			on: p.soort === k,
+			onClick: toggle(patch, 'soort', p.soort, k)
+		}));
+		return [
+			...(kinds.length || p.kamer === 'TK'
+				? [{ id: 'soort', label: 'Soort', kind: 'list' as const, options: kinds }]
+				: []),
+			{
+				id: 'passed',
+				label: 'Uitslag',
+				kind: 'list',
+				options: [
+					{
+						id: 'true',
+						label: 'Aangenomen',
+						count: outcomes.get('true') ?? 0,
+						on: p.passed === 'true',
+						onClick: toggle(patch, 'passed', p.passed, 'true')
+					},
+					{
+						id: 'false',
+						label: 'Verworpen',
+						count: outcomes.get('false') ?? 0,
+						on: p.passed === 'false',
+						onClick: toggle(patch, 'passed', p.passed, 'false')
+					}
+				]
+			},
+			{
+				id: 'dossier',
+				label: 'Dossier',
+				kind: 'text',
+				value: p.dossier,
+				placeholder: 'Kamerstuknummer',
+				onChange: (v) => patch({ dossier: v || null })
+			}
+		];
+	},
+	Rows: DecisionRows,
+	after: (p) =>
+		p.kamer === 'EK' ? { label: `${EK_SOURCE.name}, ${EK_SOURCE.site}`, href: EK_SOURCE.url } : null
+});

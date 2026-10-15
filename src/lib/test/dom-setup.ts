@@ -12,3 +12,20 @@ globalThis.ResizeObserver ??= class {
 	unobserve() {}
 	disconnect() {}
 };
+
+// jsdom scrolls nothing: a list that brings its tab or row into view goes on.
+Element.prototype.scrollIntoView ??= function () {};
+Element.prototype.scrollTo ??= function () {};
+
+// jsdom matches no media query: the page is as wide as a desktop's.
+window.matchMedia ??= (query: string) =>
+	({
+		matches: false,
+		media: query,
+		onchange: null,
+		addEventListener() {},
+		removeEventListener() {},
+		addListener() {},
+		removeListener() {},
+		dispatchEvent: () => false
+	}) as MediaQueryList;

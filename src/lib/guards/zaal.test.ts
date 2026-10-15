@@ -23,7 +23,7 @@ describe('the hall', () => {
 		// A hall drawn by fractie is marked by its date, alike on both pages of the hall.
 		for (const pad of [
 			'lib/components/explore/readers/KamerZetels.svelte',
-			'lib/components/explore/IndexView.svelte'
+			'lib/components/explore/index/rows/FactionsHall.svelte'
 		])
 			expect(bron(pad)).toContain('indelingMarkering(');
 	});

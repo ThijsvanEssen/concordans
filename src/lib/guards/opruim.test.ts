@@ -166,6 +166,10 @@ describe('nothing left over', () => {
 		const kindReader = BRONNEN.find(
 			(b) => b.path === 'lib/components/explore/KindReader.svelte'
 		)!.text;
+		// A list's views take their one prop, ctx, from IndexView through the register (F87).
+		const register = BRONNEN.filter((b) => b.path.startsWith('lib/components/explore/index/lists/'))
+			.map((b) => b.text)
+			.join('\n');
 		const found: { pad: string; wat: string }[] = [];
 		for (const { path, text } of BRONNEN) {
 			if (!path.endsWith('.svelte') || ROUTE.test(path)) continue;
@@ -176,11 +180,12 @@ describe('nothing left over', () => {
 			if (calls.some((c) => c.spread)) continue;
 			const names = new Set(calls.flatMap((c) => [...c.names]));
 			if (!calls.some((c) => c.calls)) {
-				if (!new RegExp(`\\b${name}\\b`).test(kindReader)) {
+				if (new RegExp(`\\b(Rows|Figure|Header): ${name}\\b`).test(register)) names.add('ctx');
+				else if (new RegExp(`\\b${name}\\b`).test(kindReader)) names.add('node');
+				else {
 					found.push({ pad: path, wat: 'no caller by tag' });
 					continue;
 				}
-				names.add('node');
 			}
 			for (const prop of props) if (!names.has(prop)) found.push({ pad: path, wat: prop });
 		}
