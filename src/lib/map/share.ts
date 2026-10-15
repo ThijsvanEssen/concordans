@@ -1,0 +1,84 @@
+// The link of a map: the map in the fragment (`/gemarkeerd#m=…`), as JSON deflated into
+// base64url. A fragment never leaves the browser, so its items and notes reach no server,
+// no /render and no log; only who has the link reads it.
+import type { Gedeeld, GroepNotities, Map, MapItem } from './map';
+import { readItem } from './map';
+
+/** The fragment's key: `#m=…`. */
+const KEY = 'm';
+
+/** What the fragment holds: the map's name, order, note, notes per group and items. */
+type Payload = {
+	naam: string;
+	volgorde?: 'eigen';
+	notitie?: string;
+	groepNotities?: GroepNotities;
+	items: MapItem[];
+};
+
+async function pipe(bytes: Uint8Array, stream: CompressionStream | DecompressionStream) {
+	const out = new Blob([bytes as BlobPart]).stream().pipeThrough(stream);
+	return new Uint8Array(await new Response(out).arrayBuffer());
+}
+
+function toBase64Url(bytes: Uint8Array): string {
+	let text = '';
+	for (let i = 0; i < bytes.length; i += 0x8000)
+		text += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+	return btoa(text).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '');
+}
+
+function fromBase64Url(text: string): Uint8Array {
+	const raw = atob(text.replaceAll('-', '+').replaceAll('_', '/'));
+	return Uint8Array.from(raw, (c) => c.charCodeAt(0));
+}
+
+/** The notes per group that are text, only of groups the map holds. */
+function groupNotes(notes: unknown, items: readonly MapItem[]): GroepNotities {
+	if (!notes || typeof notes !== 'object') return {};
+	const held = new Set(items.map((i) => i.groupKey));
+	return Object.fromEntries(
+		Object.entries(notes).flatMap(([k, v]) =>
+			held.has(k) && typeof v === 'string' && v.trim() ? [[k, v.trim()]] : []
+		)
+	);
+}
+
+/** The fragment of a map's link: `#m=…`. */
+export async function shareFragment(
+	m: Pick<Map, 'items' | 'naam' | 'volgorde' | 'notitie' | 'groepNotities'>
+): Promise<string> {
+	const payload: Payload = { naam: m.naam, items: [...m.items] };
+	if (m.volgorde === 'eigen') payload.volgorde = 'eigen';
+	if (m.notitie?.trim()) payload.notitie = m.notitie.trim();
+	const notes = groupNotes(m.groepNotities, m.items);
+	if (Object.keys(notes).length) payload.groepNotities = notes;
+	const bytes = new TextEncoder().encode(JSON.stringify(payload));
+	return `#${KEY}=${toBase64Url(await pipe(bytes, new CompressionStream('deflate-raw')))}`;
+}
+
+/**
+ * The map of a link's fragment; null where the fragment holds none, or none that reads. An
+ * item in a broken form is left out, and counted for the page.
+ */
+export async function sharedOfFragment(hash: string): Promise<Gedeeld | null> {
+	const value = new URLSearchParams(hash.replace(/^#/, '')).get(KEY);
+	if (!value) return null;
+	let payload: Partial<Payload>;
+	try {
+		const bytes = await pipe(fromBase64Url(value), new DecompressionStream('deflate-raw'));
+		payload = JSON.parse(new TextDecoder().decode(bytes));
+	} catch {
+		return null;
+	}
+	if (!payload || !Array.isArray(payload.items)) return null;
+	const items = payload.items.flatMap((v) => readItem(v) ?? []);
+	return {
+		naam: typeof payload.naam === 'string' && payload.naam.trim() ? payload.naam.trim() : null,
+		items,
+		volgorde: payload.volgorde === 'eigen' ? 'eigen' : 'groep',
+		notitie: typeof payload.notitie === 'string' && payload.notitie.trim() ? payload.notitie : null,
+		groepNotities: groupNotes(payload.groepNotities, items),
+		skipped: payload.items.length - items.length
+	};
+}

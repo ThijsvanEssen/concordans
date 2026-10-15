@@ -1,7 +1,8 @@
 // The maps as the page holds them, in this browser: each with a name, one active, where a box
-// keeps what is chosen; the panel open or not; a map someone shared (?map=) until it is kept
+// keeps what is chosen; the panel open or not; a map someone shared (a link, share.ts) until it is kept
 // or put aside.
 import {
+	readItem,
 	withItems,
 	itemKey,
 	verschuif,
@@ -34,18 +35,10 @@ const alleenTekst = (v: unknown): GroepNotities =>
 			)
 		: {};
 
-const isItem = (i: unknown): i is MapItem =>
-	!!i &&
-	typeof (i as MapItem).id === 'string' &&
-	typeof (i as MapItem).kort === 'string' &&
-	typeof (i as MapItem).groep === 'string' &&
-	typeof (i as MapItem).groupKey === 'string' &&
-	!!(i as MapItem).groupKey;
-
 /** The items kept in this browser that are whole; the rest left out, and said. */
 function heleItems(v: unknown): MapItem[] {
 	if (!Array.isArray(v)) return [];
-	const items = v.filter(isItem);
+	const items = v.flatMap((i) => readItem(i) ?? []);
 	const skipped = v.length - items.length;
 	if (skipped > 0)
 		console.warn(
@@ -201,7 +194,7 @@ class Kaarten {
 		if (!this.heeft(i)) this.wissel(i);
 	}
 
-	// ── A shared map (a link, ?map=) ─────────────────────────────────────────
+	// ── A shared map (a link) ─────────────────────────────────────────────
 	/** Into the active map, without doubles; its notes where the map has none. */
 	voegToe(g: Gedeeld) {
 		this.#werk((m) => ({

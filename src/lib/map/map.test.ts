@@ -6,23 +6,16 @@ import {
 	csv,
 	groepen,
 	itemHref,
-	mapParams,
-	itemsParam,
 	netwerkHref,
 	netwerkIds,
 	withItems,
 	itemKey,
-	readParam,
-	sharedMapOf,
 	verschuif,
 	type MapItem
 } from './map';
 import { itemVanRij } from './rij';
 import { remember } from '$lib/bron/address';
 import type { Row } from '$lib/verbonden/rows';
-
-/** The items a `map` param reads as. */
-const uitParam = (v: string | null): MapItem[] => readParam(v).items;
 
 const lid2: MapItem = {
 	id: 'articles/bwbr0005289_162',
@@ -73,16 +66,6 @@ describe('the map', () => {
 		]);
 	});
 
-	it('goes into a link and comes back the same, whatever its words hold', () => {
-		const terug = uitParam(itemsParam([lid2, ro]));
-		expect(terug).toEqual([
-			{ id: lid2.id, at: lid2.at, kort: lid2.kort, groep: lid2.groep, groupKey: lid2.groupKey },
-			{ id: ro.id, at: ro.at, kort: ro.kort, groep: ro.groep, groupKey: ro.groupKey }
-		]);
-		expect(uitParam('nonsense~~')).toEqual([]);
-		expect(uitParam(null)).toEqual([]);
-	});
-
 	it('adds a shared map to its own without doubles', () => {
 		expect(withItems([lid2], [lid2, ro]).map(itemKey)).toEqual([itemKey(lid2), itemKey(ro)]);
 	});
@@ -126,9 +109,8 @@ describe('the map', () => {
 		);
 	});
 
-	it('carries a note in the link, the citations and the CSV', () => {
+	it('carries a note in the citations and the CSV', () => {
 		const met = { ...lid2, notitie: 'Drie categorieën; ~ en ; erin' };
-		expect(uitParam(itemsParam([met]))[0].notitie).toBe(met.notitie);
 		expect(citaten([met])).toContain('\n   Drie categorieën; ~ en ; erin');
 		expect(csv([met], () => '')).toContain('Drie categorieën');
 	});
@@ -155,36 +137,6 @@ describe('the map', () => {
 		expect(verschuif(lijst, itemKey(lid2), -1, 'eigen')).toEqual(lijst);
 	});
 
-	it('carries the note of the map in its address, and reads one without it as before', () => {
-		const m = {
-			naam: 'Cyberbeveiligingswet',
-			items: [lid2, ro],
-			volgorde: 'eigen' as const,
-			notitie: 'Zorgplicht en training; ~ en ; erin\nTweede regel'
-		};
-		const terug = sharedMapOf(new URLSearchParams(mapParams(m).toString()));
-		expect(terug).toEqual({
-			naam: m.naam,
-			items: uitParam(itemsParam(m.items)),
-			volgorde: 'eigen',
-			notitie: m.notitie,
-			groepNotities: {},
-			skipped: 0
-		});
-		// A link of before: no note, no order.
-		const oud = new URLSearchParams({ map: itemsParam([lid2]), mapnaam: 'Oud' });
-		expect(sharedMapOf(oud)).toEqual({
-			naam: 'Oud',
-			items: uitParam(itemsParam([lid2])),
-			volgorde: 'groep',
-			notitie: null,
-			groepNotities: {},
-			skipped: 0
-		});
-		expect(mapParams({ ...m, volgorde: 'groep', notitie: '  ' }).has('mapnotitie')).toBe(false);
-		expect(sharedMapOf(new URLSearchParams('mapnotitie=x'))).toBeNull();
-	});
-
 	it('puts the note of the map above its citations', () => {
 		expect(citaten([lid2], 'eigen', 'Waarom deze map')).toBe(
 			'Waarom deze map\n\n1. artikel 6:162 lid 2 Burgerlijk Wetboek'
@@ -204,23 +156,6 @@ describe('the map', () => {
 		expect(n.tussen).toBe(false);
 		expect(n.uit.size).toBe(0);
 		expect(netwerkHref([])).toBeNull();
-	});
-
-	it('carries the notes per group in the address, only of groups the map holds', () => {
-		const groepNotities = {
-			'wet:bwbr0005289': 'De onrechtmatige daad; ~ en ; erin',
-			[ro.id]: 'Urgenda',
-			'wet:bwbr0000000': 'weg'
-		};
-		const p = mapParams({ naam: 'M', items: [lid2, ro], volgorde: 'groep', groepNotities });
-		const terug = sharedMapOf(new URLSearchParams(p.toString()))!;
-		expect(terug.groepNotities).toEqual({
-			'wet:bwbr0005289': 'De onrechtmatige daad; ~ en ; erin',
-			[ro.id]: 'Urgenda'
-		});
-		expect(mapParams({ naam: 'M', items: [lid2], volgorde: 'groep' }).has('mapgroepen')).toBe(
-			false
-		);
 	});
 
 	it("puts a group's note under its name in the citations", () => {
@@ -328,11 +263,6 @@ describe('keeping a bron', () => {
 		expect(bewaarItem('committees/x', { kort: 'x' }).groupKey).toBe('groep:Commissie');
 	});
 
-	it('carries the group key in the address', () => {
-		const i = bewaarItem(stuk, { kort: 'MvT' }, { dossier: '36889' });
-		expect(uitParam(itemsParam([i]))).toEqual([i]);
-	});
-
 	it('keeps the readable address of a bron, so its link needs no redirect (#57)', () => {
 		remember('/kamerstukken/34372/14', 'documents/093662ee');
 		const i = bewaarItem('documents/093662ee', {
@@ -341,32 +271,12 @@ describe('keeping a bron', () => {
 		});
 		expect(i.pad).toBe('/kamerstukken/34372/14');
 		expect(itemHref(i)).toBe('/kamerstukken/34372/14#s-3');
-		expect(uitParam(itemsParam([i]))).toEqual([i]);
 		// An EU article seen in a list: its own address, not /explore?focus=.
 		remember('/wetten/32022L2555/artikel/21', 'articles/32022l2555_21');
 		const eu = bewaarItem('articles/32022l2555_21', { kort: 'art. 21', at: 'lid-2' });
 		expect(itemHref(eu)).toBe('/wetten/32022L2555/artikel/21#lid-2');
-		// A link without the address reads as before, and opens through the network.
-		expect(uitParam(itemsParam([lid2]))[0].pad).toBeUndefined();
+		// Without the address it opens through the network.
 		expect(itemHref(lid2)).not.toContain('#lid-2#');
-	});
-
-	it('leaves out an item of an old or broken link, and counts it for the page (#53)', () => {
-		// A link of before 14 Oct: five fields, no group key.
-		const oud = `${stuk}~~MvT~Kamerstukken 36889~een notitie`;
-		expect(uitParam(oud)).toEqual([]);
-		expect(sharedMapOf(new URLSearchParams({ map: `${oud};${oud}`, mapnaam: 'Oud' }))).toEqual({
-			naam: 'Oud',
-			items: [],
-			volgorde: 'groep',
-			notitie: null,
-			groepNotities: {},
-			skipped: 2
-		});
-		const heel = itemsParam([lid2]);
-		const gemengd = sharedMapOf(new URLSearchParams({ map: `${heel};${stuk}~~MvT` }))!;
-		expect(gemengd.items).toEqual([{ ...lid2, voluit: undefined }]);
-		expect(gemengd.skipped).toBe(1);
 	});
 
 	it('moves an item among the items of its group by key, whatever its name', () => {

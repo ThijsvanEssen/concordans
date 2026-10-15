@@ -4,8 +4,8 @@
 	// totaal niet bij de rest"). The heading over both columns; the maps in the facet column, the
 	// active one (where Bewaar keeps) in weight; in the list column each map a group of the page
 	// (Sectie), its name the heading that opens and closes it, its ways to share it at the right,
-	// what it holds under it, its items as the rows of Bladeren. A map shared as a link (?map=)
-	// stands at the top as a group of its own until it is kept or put aside.
+	// what it holds under it, its items as the rows of Bladeren. A map shared as a link (its
+	// fragment, share.ts: never in a request) stands at the top as a group of its own until it is kept or put aside.
 	import { formatCount } from '$lib/text/getal';
 	import { page } from '$app/state';
 	import { navigate } from '$lib/util/address';
@@ -30,27 +30,39 @@
 		csv,
 		groepen,
 		itemHref,
-		mapParams,
 		netwerkHref,
 		itemKey,
-		sharedMapOf,
 		type Gedeeld,
 		type GroepNotities,
 		type Map,
 		type MapItem
 	} from '$lib/map/map';
 	import { kaart } from '$lib/map/map.svelte';
+	import { shareFragment, sharedOfFragment } from '$lib/map/share';
+	import { ignore } from '$lib/api/errors';
 	import MapInhoud from '$lib/map/MapInhoud.svelte';
 	import Aantekening from '$lib/map/Aantekening.svelte';
 	import MapRegelingen from '$lib/map/MapRegelingen.svelte';
 	import { onderWet, wetVanGroep } from '$lib/map/verbonden';
 	import Caret from '$lib/components/ui/Caret.svelte';
-	import { SvelteSet } from 'svelte/reactivity';
+	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
 	const copier = createCopier();
 
-	// ── A shared map, from the address ─────────────────────────────────────────
-	const gedeeld = $derived<Gedeeld | null>(sharedMapOf(page.url.searchParams));
+	// ── A shared map, from the address's fragment ──────────────────────────────
+	let gedeeld = $state<Gedeeld | null>(null);
+	$effect(() => {
+		const hash = page.url.hash;
+		let current = true;
+		sharedOfFragment(hash)
+			.then((shared) => {
+				if (current) gedeeld = shared;
+			})
+			.catch(ignore('gedeeld'));
+		return () => {
+			current = false;
+		};
+	});
 	/** A shared map kept or put aside: its link leaves the address, a reload asks no more. */
 	function gedeeldKlaar(hoe: 'map' | 'erbij' | 'niet') {
 		if (gedeeld && hoe === 'map') kaart.bewaarAlsMap(gedeeld);
@@ -61,11 +73,20 @@
 	const reeksen = (lijst: MapItem[], v: Map['volgorde']) =>
 		v === 'eigen' ? [{ groep: '', sleutel: '', items: [...lijst] }] : groepen(lijst);
 
-	const link = (m: Map) => {
-		const url = new URL('/gemarkeerd', page.url.origin);
-		url.search = mapParams(m).toString();
-		return url.toString();
-	};
+	// Each map's link, made when the map changes: deflating takes a moment, and a copy made
+	// after it would have lost the click that allows it (Safari).
+	const links = new SvelteMap<string, string>();
+	$effect(() => {
+		for (const m of kaart.mappen) {
+			const origin = page.url.origin;
+			shareFragment(m)
+				.then((hash) => {
+					// Only the map as it is now: an older one's link may come later.
+					if (kaart.mappen.includes(m)) links.set(m.id, `${origin}/gemarkeerd${hash}`);
+				})
+				.catch(ignore('gedeeld'));
+		}
+	});
 	const bestand = (m: Map) => safeFileName(m.naam) || 'Gemarkeerd';
 	const tel = (n: number) => `${formatCount(n)} ${plural(n, 'bron', 'bronnen')}`;
 	const dag = (iso: string) => korteDatum(vandaag(new Date(iso)));
@@ -246,11 +267,12 @@
 
 	<div class="inhoud">
 		{#if gedeeld}
+			{@const shared = gedeeld}
 			<Sectie title="Gedeelde map: {gedeeld.naam ?? 'zonder naam'}" niveau={2} inklapbaar={false}>
 				{#snippet naast()}
 					<span class="acties">
-						{#if gedeeld.items.length}
-							<TekstLink href={netwerkHref(gedeeld.items) ?? undefined}>Netwerk</TekstLink>
+						{#if shared.items.length}
+							<TekstLink href={netwerkHref(shared.items) ?? undefined}>Netwerk</TekstLink>
 							<TekstLink onclick={() => gedeeldKlaar('map')}>Bewaar als map</TekstLink>
 							<TekstLink onclick={() => gedeeldKlaar('erbij')}
 								>Voeg toe aan {kaart.actief.naam}</TekstLink
@@ -280,7 +302,9 @@
 							<TekstLink href={netwerkHref(m.items) ?? undefined} onclick={() => kaart.kies(m.id)}
 								>Netwerk</TekstLink
 							>
-							<TekstLink onclick={() => copier.copy(link(m), `link-${m.id}`)}
+							<TekstLink
+								disabled={!links.has(m.id)}
+								onclick={() => copier.copy(links.get(m.id) ?? '', `link-${m.id}`)}
 								>{copier.label(`link-${m.id}`, 'Kopieer link')}</TekstLink
 							>
 							<TekstLink

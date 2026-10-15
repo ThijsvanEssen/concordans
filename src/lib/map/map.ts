@@ -1,6 +1,6 @@
 // The map (concept ux-voorstel/13-map, variant 7, step 1): what a reader keeps while reading,
 // a lid of an article, an overweging of a judgment, a Kamerstuk, a motie, any bron. It lives
-// in this browser; a link (?map=) carries it to someone else, a list of citations to a memo,
+// in this browser; a link (share.ts, in the fragment) carries it to someone else, a list of citations to a memo,
 // a CSV to a spreadsheet. It replaces Verbonden's Verzamel.
 import { netwerkParams } from '$lib/selection/netwerk';
 import { dossierLabel } from '$lib/bron/dossier-naam';
@@ -140,97 +140,39 @@ export function groepen(
 	}));
 }
 
-// ── The link ────────────────────────────────────────────────────────────────
-// `?map=` holds the items one after another, each its six fields: the bron, its place, its
-// short citation, its group, its note (empty where none) and its group's key, and a seventh,
-// its readable address, where it was known; so a map opens
-// elsewhere without asking the API; an item without its six fields is left out, and the
-// page names how many. Its name goes beside it (`mapnaam=`).
-// Fields are separated by `~`, items by `;`; only those two and `%` are escaped here, the
-// address encodes the rest once.
-const veld = (s: string) => s.replaceAll('%', '%25').replaceAll('~', '%7E').replaceAll(';', '%3B');
-const terug = (s: string) => s.replaceAll('%7E', '~').replaceAll('%3B', ';').replaceAll('%25', '%');
+// ── Reading an item back ────────────────────────────────────────────────────
+/** A bron as a link names it: `articles/bwbr0005289_162`. */
+const NODE_ID = /^[a-z_]+\/[\w.:-]+$/i;
 
-export function itemsParam(items: readonly MapItem[]): string {
-	return items
-		.map((i) => {
-			const velden = [i.id, i.at, i.kort, i.groep, i.notitie ?? '', i.groupKey];
-			if (i.pad) velden.push(i.pad);
-			return velden.map(veld).join('~');
-		})
-		.join(';');
-}
-
-/** The items of a link, and how many it holds in an older or broken form (left out). */
-export function readParam(v: string | null): { items: MapItem[]; skipped: number } {
-	if (!v) return { items: [], skipped: 0 };
-	const delen = v.split(';');
-	const items = delen.flatMap((deel) => {
-		const [id, at, kort, groep, notitie, groupKey, pad] = deel.split('~').map(terug);
-		return id && /^[a-z_]+\/[\w.:-]+$/i.test(id) && kort && groep && groupKey
-			? [
-					{
-						id,
-						at: at ?? '',
-						kort,
-						groep,
-						...(notitie ? { notitie } : {}),
-						groupKey,
-						...(pad?.startsWith('/') ? { pad } : {})
-					}
-				]
-			: [];
-	});
-	return { items, skipped: delen.length - items.length };
-}
-
-/** The address params of a map: its items, its name, its order where its own, its note. */
-export function mapParams(
-	m: Pick<Map, 'items' | 'naam' | 'volgorde' | 'notitie' | 'groepNotities'>
-): URLSearchParams {
-	const p = new URLSearchParams({ map: itemsParam(m.items), mapnaam: m.naam });
-	if (m.volgorde === 'eigen') p.set('mapvolgorde', 'eigen');
-	if (m.notitie?.trim()) p.set('mapnotitie', m.notitie.trim());
-	const groep = naarGroepParam(m.groepNotities, m.items);
-	if (groep) p.set('mapgroepen', groep);
-	return p;
-}
-
-/** The notes per group as `sleutel~notitie;…`, only of groups the map holds. */
-function naarGroepParam(
-	notities: GroepNotities | null | undefined,
-	items: readonly MapItem[]
-): string {
-	const houdt = new Set(items.map((i) => i.groupKey));
-	return Object.entries(notities ?? {})
-		.filter(([k, v]) => houdt.has(k) && v.trim())
-		.map(([k, v]) => `${veld(k)}~${veld(v.trim())}`)
-		.join(';');
-}
-
-function uitGroepParam(v: string | null): GroepNotities {
-	const uit: GroepNotities = {};
-	for (const deel of (v ?? '').split(';')) {
-		const [k, n] = deel.split('~').map(terug);
-		if (k && n?.trim()) uit[k] = n.trim();
-	}
-	return uit;
-}
+/** A string field of a value read back, where it holds text. */
+const textOf = (o: Record<string, unknown>, k: string) =>
+	typeof o[k] === 'string' && o[k].trim() ? o[k] : null;
 
 /**
- * A map from an address; null where it holds nothing, read or left out. A link without a note
- * reads as before.
+ * An item as this browser or a link gives it back, its known fields only; null where it is
+ * in an older or broken form.
  */
-export function sharedMapOf(p: URLSearchParams): Gedeeld | null {
-	const { items, skipped } = readParam(p.get('map'));
-	if (!items.length && !skipped) return null;
+export function readItem(v: unknown): MapItem | null {
+	if (!v || typeof v !== 'object') return null;
+	const o = v as Record<string, unknown>;
+	const id = textOf(o, 'id');
+	const kort = textOf(o, 'kort');
+	const groep = textOf(o, 'groep');
+	const groupKey = textOf(o, 'groupKey');
+	if (!id || !NODE_ID.test(id) || !kort || !groep || !groupKey) return null;
+	const at = textOf(o, 'at') ?? '';
+	const voluit = textOf(o, 'voluit');
+	const notitie = textOf(o, 'notitie');
+	const pad = textOf(o, 'pad');
 	return {
-		naam: p.get('mapnaam'),
-		items,
-		volgorde: p.get('mapvolgorde') === 'eigen' ? 'eigen' : 'groep',
-		notitie: p.get('mapnotitie')?.trim() || null,
-		groepNotities: uitGroepParam(p.get('mapgroepen')),
-		skipped
+		id,
+		at,
+		kort,
+		...(voluit ? { voluit } : {}),
+		groep,
+		groupKey,
+		...(notitie ? { notitie } : {}),
+		...(pad?.startsWith('/') && !pad.startsWith('//') ? { pad } : {})
 	};
 }
 
