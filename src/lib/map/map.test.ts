@@ -18,7 +18,7 @@ import {
 	type MapItem
 } from './map';
 import { itemVanRij } from './rij';
-import { remember } from '$lib/bron/leesbaar';
+import { remember } from '$lib/bron/address';
 import type { Row } from '$lib/verbonden/rows';
 
 /** The items a `map` param reads as. */

@@ -82,14 +82,14 @@
 	import { AMENDING_RELATIONS, parseNodeId } from '$lib/vocabulary';
 	import { articleOf, kort, lawIdOf } from '$lib/graph/types';
 	import { bronNaam } from '$lib/bron/naam';
+	import { lookUp } from '$lib/bron/leesbaar';
 	import {
-		lookUp,
 		padOfFocus,
 		parsePad,
 		remember as rememberPad,
 		exploreHref,
 		exploreUrl
-	} from '$lib/bron/leesbaar';
+	} from '$lib/bron/address';
 	import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 	import NetwerkPanel from '$lib/selection/NetwerkPanel.svelte';
 	import { focusStap } from '$lib/graph/focus-stap';

@@ -149,7 +149,7 @@ export const BRON_LABEL: Record<Collection, readonly [singular: string, plural: 
 export const bronLabel = (collection: Collection) => BRON_LABEL[collection][0];
 export const bronPlural = (collection: Collection) => BRON_LABEL[collection][1];
 
-// What a verbinding is called (`haalt aan`, `bijlage bij`) has one source: $lib/verbonden/hoe.ts.
+// What a verbinding is called (`haalt aan`, `bijlage bij`) has one source: $lib/verbonden/relation-words.ts.
 
 /** The college of a judgment, as the API names it (`tier`): its Type in the Rechtspraak's list of Instanties. */
 export type Tier = Schema<'Tier'>;
@@ -222,3 +222,22 @@ export const statusLabel = (status: string | null | undefined) =>
 
 /** The three ways to look at the material: Lezen, Netwerk and Bronnen. */
 export type Mode = 'read' | 'graph' | 'index';
+
+// ── The kind of a bron ────────────────────────────────────────────────────
+
+// TODO(backend B9): nothing marks a bron as European or international. Until an
+// `eu-links` route exists, the jurisdiction is read from the id: a CELEX number, a
+// BWBV (verdrag) id, an ECLI of the EHRM.
+const INTERNATIONAL_KEY = /^(bwbv\d{7}|[0-9ce]\d{4}[a-z]{1,2}\d{4}|ecli_ce_echr_)/i;
+
+export const isInternational = (n: {
+	key: string;
+	props?: Record<string, unknown> | null;
+}): boolean =>
+	INTERNATIONAL_KEY.test(n.key) ||
+	n.props?.source === 'echr' ||
+	n.props?.jurisdiction === 'eu' ||
+	n.props?.jurisdiction === 'int';
+
+/** A document that proposes or enacts a change: a wetsvoorstel or an amendment to it. */
+export const BILL_KIND = /\b(voorstel van wet|wetsvoorstel|nota van wijziging|amendement)\b/i;

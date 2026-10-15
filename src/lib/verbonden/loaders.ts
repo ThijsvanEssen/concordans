@@ -9,9 +9,9 @@ import { geteld } from '$lib/api/decisions';
 import type { Schema } from '$lib/api/types';
 import { getCommittee } from '$lib/api/committees';
 import { numberOf } from '$lib/components/parliamentary/dossier-number';
-import { parseNodeId } from '$lib/vocabulary';
+import { isInternational, parseNodeId } from '$lib/vocabulary';
 import { refOf } from '$lib/bron/href';
-import { naastHetStuk, stukkenInDezelfdeZaak } from '$lib/bron/zaak';
+import { naastHetStuk, stukkenInDezelfdeZaak } from './zaak';
 import { loadDossierHub, type DossierHub } from './dossier-hub';
 import { explanatoryDocuments } from './explanatory-documents';
 import { rowsOfCitedBy } from './cited-by';
@@ -42,7 +42,7 @@ import {
 import { lawArticleList } from '$lib/api/law-articles';
 import { buildGroups, ditVan, EUROPEAN, matches, type Loader, type Match } from './groups';
 import { YEARS_IN_CHART } from './view';
-import { filterGroupOf, isInternational } from './filter';
+import { filterGroupOf } from './filter';
 import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 import { getJudgmentDetail } from '$lib/api/judgments';
 import { aanhalingIn } from './passage';
@@ -534,7 +534,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	}),
 
 	// The other dossiers of the number, in the order of the Kamer.
-	// The papers of the same zaak, the substance first ($lib/bron/zaak).
+	// The papers of the same zaak, the substance first (./zaak).
 	'document-same-case': async ({ node, buren, signal }) =>
 		naastHetStuk(
 			node.props?.kind,
@@ -1024,7 +1024,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				filterGroup: 'wetten' as const,
 				identifier: d.identifier && d.identifier !== d.key ? d.identifier : null,
 				date: d.first_effective_date ?? null,
-				// The publication that enacted the law: `Stelt vast` (hoe.ts).
+				// The publication that enacted the law: `Stelt vast` (relation-words.ts).
 				relation: (d.establishes ?? 0) > 0 ? ('ESTABLISHES' as const) : ('AMENDS' as const),
 				direction: 'inbound' as const,
 				edge: { establishes: d.establishes ?? 0 }

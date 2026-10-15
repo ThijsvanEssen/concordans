@@ -8,7 +8,7 @@
 	// leaves for nowhere does not (actions/menu.ts).
 	import { page } from '$app/state';
 	import type { Snippet } from 'svelte';
-	import { focusIn } from './leesbaar';
+	import { focusIn } from './address';
 	import { focusOf, openHref, type BronRef } from './href';
 	import type { Preview } from './preview';
 	import { isEscape } from '$lib/actions/keys';

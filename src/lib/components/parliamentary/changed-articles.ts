@@ -4,7 +4,7 @@ import { naamVanId } from '$lib/bron/menselijk';
 import type { Schema } from '$lib/api/types';
 import { bookNumber } from '$lib/text/bw';
 import { langeDatum } from '$lib/text/datum';
-import { CHANGE_HEAD } from '$lib/verbonden/hoe';
+import { CHANGE_HEAD } from '$lib/verbonden/relation-words';
 import { changeRelation } from '$lib/vocabulary';
 
 type ChangedArticle = Schema<'ChangedArticleRef'>;

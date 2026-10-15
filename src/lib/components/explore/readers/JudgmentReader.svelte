@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { ecliKey } from '$lib/bron/leesbaar';
+	import { ecliKey } from '$lib/bron/address';
 	import { capitalize, textOf } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
 	import { bevindingen, strekking } from './judgment-outcome';
-	import { keyEcli } from '$lib/bron/leesbaar';
+	import { keyEcli } from '$lib/bron/address';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { overwegingCitaat, uitspraakKop, zaakNaam } from '$lib/text/judgment-cite';
 	import { paragraphCite } from '$lib/text/ecli';

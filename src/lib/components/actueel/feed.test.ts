@@ -1,4 +1,4 @@
-import { padOfFocus } from '$lib/bron/leesbaar';
+import { padOfFocus } from '$lib/bron/address';
 import { voteOf } from '$lib/components/open/rij-inhoud';
 import { describe, expect, it } from 'vitest';
 import {

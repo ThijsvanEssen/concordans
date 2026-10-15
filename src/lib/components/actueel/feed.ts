@@ -7,7 +7,7 @@ import { DAY_MS, weekdag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 import { API_BASE_URL } from '$lib/api/base-url';
 import { isGeneriek } from '$lib/bron/generiek';
-import { padHref, parsePad, remember } from '$lib/bron/leesbaar';
+import { padHref, parsePad, remember } from '$lib/bron/address';
 import { dossierLabel } from '$lib/bron/dossier-naam';
 
 // Actueel: what happened, newest first, per day. A day's many items of one kind on one

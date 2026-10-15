@@ -17,6 +17,8 @@ import { hoeVan } from './hoe';
 import { metaParts, type Row } from './rows';
 import { exportRows, rowsToCsv } from './export';
 import { EMPTY_FILTER } from './filter';
+// The addresses the API gives are kept as they come in, as src/hooks.ts has it in the app.
+import '$lib/bron/kept-paths';
 
 const BRONNEN: { naam: string; collection: Collection; key: string }[] = [
 	{ naam: 'artikel', collection: 'articles', key: 'bwbr0005537_8_72' },

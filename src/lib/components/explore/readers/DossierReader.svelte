@@ -1,7 +1,7 @@
 <script lang="ts">
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { textOf } from '$lib/text/words';
-	import { changeVerb } from '$lib/verbonden/hoe';
+	import { changeVerb } from '$lib/verbonden/relation-words';
 	import { langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';

@@ -4,7 +4,7 @@
 // sigma; this module only says where, from a graph and a projection to the screen.
 import type Graph from 'graphology';
 import type { Collection, Relation } from '$lib/vocabulary';
-import { relationLabel } from '$lib/verbonden/hoe';
+import { relationLabel } from '$lib/verbonden/relation-words';
 import type { ContainerGroup } from '$lib/graph/container-membership';
 import { centroid, exitPoint, hullOutline, type Point } from '$lib/graph/hull';
 import type { DrawClass } from '$lib/graph/types';
@@ -280,7 +280,7 @@ export function layoutHulls(s: HullScene): HullLayout {
 	const { drawn, anchorHull } = drawHulls(s);
 
 	// One line per pair of hulls, from where it leaves the one to where it enters the other.
-	// It says every verbinding it stands for, each in the words of its own source (hoe.ts),
+	// It says every verbinding it stands for, each in the words of its own source (relation-words.ts),
 	// the most frequent first: `wijzigt, licht toe, noemt` between a dossier and a wet.
 	const pairs = new Map<
 		string,

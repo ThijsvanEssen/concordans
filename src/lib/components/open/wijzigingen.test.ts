@@ -25,7 +25,7 @@ const artikel = (
 });
 
 describe('what a publication changes, per law and verb', () => {
-	it('groups the articles per law and verb, in the law’s order, with the words of hoe.ts', () => {
+	it('groups the articles per law and verb, in the law’s order, with the words of relation-words.ts', () => {
 		const regels = wijzigingenVan([
 			artikel('t_11a_3', '11a.3', 'AMENDS', 'wijziging', 30),
 			artikel(

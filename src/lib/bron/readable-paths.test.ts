@@ -4,7 +4,7 @@
 // is in it (a bron the contract gives without props). A change goes into both at once.
 import { describe, expect, it } from 'vitest';
 import contract from './readable-paths.json';
-import { focusOfPad, keyEcli, padHref, padOfFocus, parsePad } from './leesbaar';
+import { focusOfPad, keyEcli, padHref, padOfFocus, parsePad } from './address';
 
 type Geval = { focus: string; props: Record<string, unknown>; path?: string };
 

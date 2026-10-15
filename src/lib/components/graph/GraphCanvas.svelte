@@ -28,7 +28,7 @@
 	import type SigmaType from 'sigma';
 	import type Graph from 'graphology';
 	import { edgeKey, readEdge } from '$lib/verbonden/edge-meta';
-	import { keyEcli } from '$lib/bron/leesbaar';
+	import { keyEcli } from '$lib/bron/address';
 	import { parseNodeId } from '$lib/vocabulary';
 	import type { GraphFilters } from '$lib/graph/store/types';
 	import type { NodeCounts } from '$lib/api/overlays';
@@ -41,7 +41,7 @@
 		type Rect as LabelRect
 	} from './label-place';
 	import type { Collection, Relation } from '$lib/vocabulary';
-	import { relationLabel } from '$lib/verbonden/hoe';
+	import { relationLabel } from '$lib/verbonden/relation-words';
 	import type { FilterGroup, Rechter } from '$lib/verbonden/filter';
 	import { getInstrumentMeta, lawName } from '$lib/api/instrument-cache';
 	import { isDrawnGroup, type ContainerGroup, type Period } from '$lib/graph/container-membership';
@@ -731,7 +731,7 @@
 	): string {
 		const relation = data.relation as Relation;
 		const meta = (data.meta ?? {}) as Record<string, unknown>;
-		// In the words of hoe.ts, read from the source: a member `diende in` or `ondertekende
+		// In the words of relation-words.ts, read from the source: a member `diende in` or `ondertekende
 		// als minister-president`; a bijlage is `bijlage bij` its letter.
 		const parts = [relationLabel(relation, sourceCollection, targetCollection, meta)];
 		// The source cites: the line says what the card and the row of its target say.

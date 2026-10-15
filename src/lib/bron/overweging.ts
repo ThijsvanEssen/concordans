@@ -13,7 +13,7 @@ import {
 import { overwegingVan } from '$lib/map/inhoud';
 import { uitspraakNoten, type Noot } from '$lib/text/voetnoten';
 import { paragraphAnchor, paragraphNumber } from '$lib/text/anchor';
-import { keyEcli } from './leesbaar';
+import { keyEcli } from './address';
 import { once } from '$lib/api/records';
 
 export type Uitspraak = {

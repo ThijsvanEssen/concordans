@@ -8,23 +8,21 @@ import {
 } from '$lib/vocabulary';
 import { capitalize } from '$lib/text/words';
 import catalogus from '$lib/api/relations.json';
+import { hoeVan, kleineLetter, publicatie } from './hoe';
 import {
 	CHANGE_HEAD,
 	changeAround,
 	changeVerb,
-	hoeVan,
-	kleineLetter,
-	publicatie,
 	relationLabel,
 	soortVan,
-	woordenVan
-} from './hoe';
+	relationWords
+} from './relation-words';
 import { wetRijVanRelated } from './loaders';
 import type { Row } from './rows';
 
 /**
  * The relations the API's catalogue has (lawgraph docs/data-model.md) that the reader never
- * sees as a verbinding, each with the reason. Every other relation has its words in hoe.ts, for
+ * sees as a verbinding, each with the reason. Every other relation has its words in relation-words.ts, for
  * every pair of collections the catalogue lets it join.
  */
 const ZONDER_WOORDEN: Partial<Record<Relation, string>> = {
@@ -351,7 +349,7 @@ describe('one source of words per relation, direction and collection', () => {
 	}
 
 	it.each(paren)('%s from %s to %s has its words both ways and its kind', (relation, van, naar) => {
-		const w = woordenVan(relation, van, naar);
+		const w = relationWords(relation, van, naar);
 		for (const woord of [w.actief, w.terug, w.soort]) {
 			expect(woord.trim()).not.toBe('');
 			// One preposition once: never "gedaan in in een Kamerstuk".
@@ -582,7 +580,7 @@ describe('the line of a reference', () => {
 
 	it('names the publication that enacted a law and the articles it set', () => {
 		expect(relationLabel('ESTABLISHES', 'instruments', 'articles')).toBe('stelt vast');
-		expect(woordenVan('ESTABLISHES', 'instruments', 'articles').terug).toBe('vastgesteld bij');
+		expect(relationWords('ESTABLISHES', 'instruments', 'articles').terug).toBe('vastgesteld bij');
 		expect(soortVan('ESTABLISHES', 'instruments', 'articles')).toBe('vaststelling van een artikel');
 		expect(relationLabel('AMENDS', 'instruments', 'articles', { effect: 'nieuwe-regeling' })).toBe(
 			'stelt vast'
@@ -617,7 +615,7 @@ describe('the line of a reference', () => {
 			'noemt in de aanhef'
 		);
 		expect(
-			woordenVan('BASED_ON', 'instruments', 'articles', { basis_kind: 'mentioned' }).terug
+			relationWords('BASED_ON', 'instruments', 'articles', { basis_kind: 'mentioned' }).terug
 		).toBe('genoemd in de aanhef van');
 		const h = hoeVan(
 			row({
@@ -686,7 +684,7 @@ describe('the words of a change', () => {
 
 	it('gives the verb of a verbinding, by the effect where the edge has one', () => {
 		expect(CHANGE_RELATIONS.map((r) => changeVerb(r))).toEqual(
-			CHANGE_RELATIONS.map((r) => capitalize(woordenVan(r, 'instruments', 'articles').actief))
+			CHANGE_RELATIONS.map((r) => capitalize(relationWords(r, 'instruments', 'articles').actief))
 		);
 		expect(changeVerb('AMENDS', 'articles', { effect: 'vervallen' })).toBe('Doet vervallen');
 		expect(changeVerb('AMENDS', 'articles', { effect: 'vernummering' })).toBe('Vernummert');

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { capitalize } from '$lib/text/words';
-import { woordenVan } from '$lib/verbonden/hoe';
+import { relationWords } from '$lib/verbonden/relation-words';
 import type { Relation } from '$lib/vocabulary';
 import { normalizeItem, type FeedItem } from './feed';
 import {
@@ -291,7 +291,7 @@ describe('the verbs of a change', () => {
 		});
 		expect(v.map((r) => r.label)).toEqual(
 			effecten.map((e) =>
-				capitalize(woordenVan(e.toUpperCase() as Relation, 'instruments', 'articles').actief)
+				capitalize(relationWords(e.toUpperCase() as Relation, 'instruments', 'articles').actief)
 			)
 		);
 		const a = relatieVerbanden(

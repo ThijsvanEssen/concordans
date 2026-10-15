@@ -185,7 +185,7 @@ describe('a dossier number in its official notation', () => {
 	it('joins a number and its suffix with a hyphen only for a URL or a key', () => {
 		const joins = /\}-\$\{[^}]*[sS]uffix\b/;
 		const forAddress = [
-			join('lib', 'bron', 'leesbaar.ts'),
+			join('lib', 'bron', 'address.ts'),
 			// dossierNummer: the number as the data and the URLs join it.
 			join('lib', 'bron', 'dossier-naam.ts')
 		];

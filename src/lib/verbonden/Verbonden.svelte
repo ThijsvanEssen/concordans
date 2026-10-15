@@ -2,7 +2,7 @@
 	// The panel Verbonden: the verbindingen of the selected bron, in the groups of the table in
 	// groups.ts, under the bronfilter. In the network each group can put its bronnen on the
 	// canvas or take them off.
-	import { ecliKey } from '$lib/bron/leesbaar';
+	import { ecliKey } from '$lib/bron/address';
 	import { capitalize, count, joinAnd } from '$lib/text/words';
 	import { meldNetwerk } from '$lib/stores/netwerk-melding';
 	import { report } from '$lib/api/errors';

@@ -7,7 +7,7 @@ import type { Schema } from '$lib/api/types';
 import type { BronRef } from '$lib/bron/href';
 import type { Collection } from '$lib/vocabulary';
 import { anchorOf, parseQualifier } from '$lib/text/qualifier';
-import { parsePad } from '$lib/bron/leesbaar';
+import { parsePad } from '$lib/bron/address';
 
 export type Notation = Schema<'NotationDTO'>;
 

@@ -42,11 +42,14 @@ describe('the parliamentary things said once (code-eenvoud F48–F62)', () => {
 		).toEqual([]);
 	});
 
-	it('reads the verbs of a change from woordenVan, in the order of CHANGE_HEAD (F60)', () => {
+	it('reads the verbs of a change from relationWords, in the order of CHANGE_HEAD (F60)', () => {
 		expect(
 			overtreders(
 				(t) => /['"](Stelt vast|Wijzigt|Voegt in|Doet vervallen|Trekt in|Vernummert)['"]/i.test(t),
-				[plek('lib/verbonden/hoe.ts')]
+				[
+					plek('lib/verbonden/relation-words.ts'),
+					plek('lib/verbonden/hoe.ts', 'a supplementary budget: Wijzigt deze wet')
+				]
 			)
 		).toEqual([]);
 	});

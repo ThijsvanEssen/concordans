@@ -2,7 +2,7 @@
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import type { PageData } from './$types';
 	import { RELATIONS } from '$lib/vocabulary';
-	import { relationLabel } from '$lib/verbonden/hoe';
+	import { relationLabel } from '$lib/verbonden/relation-words';
 
 	let { data }: { data: PageData } = $props();
 

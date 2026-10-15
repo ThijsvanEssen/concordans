@@ -4,7 +4,7 @@
 // network stays the network. From outside the Verkenner a bron opens to be read.
 import { page } from '$app/state';
 import { parseNodeId, type Collection, type Mode } from '$lib/vocabulary';
-import { isExplorePath, exploreHref, exploreUrl } from './leesbaar';
+import { isExplorePath, exploreHref, exploreUrl } from './address';
 import { dossierNummer } from './dossier-naam';
 import type { SharedParam } from '$lib/url/filters';
 

@@ -1,5 +1,5 @@
 // What a publication or an inwerkingtreding in Actueel opens on (RijInhoud): the changes, in
-// the words of a verbinding ($lib/verbonden/hoe, woordenVan). A publication its articles per
+// the words of a verbinding ($lib/verbonden/relation-words, relationWords). A publication its articles per
 // law and verb, from its own ESTABLISHES, AMENDS, INTRODUCES and REPEALS; an inwerkingtreding the
 // publication that brought the version, from the law's `/amended-by`. The feed gives neither
 // verb nor article (onderzoek samenhang, GGN 3.2 and 3.3: back-end B2, B3).
@@ -11,7 +11,7 @@ import {
 	type ChangeRelation,
 	type Relation
 } from '$lib/vocabulary';
-import { changeAround, changeByEffect, changeVerb } from '$lib/verbonden/hoe';
+import { changeAround, changeByEffect, changeVerb } from '$lib/verbonden/relation-words';
 import { naamVanId } from '$lib/bron/menselijk';
 
 /** A neighbour as the node response gives it: the part a change reads. */

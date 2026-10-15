@@ -2,7 +2,7 @@
 // the rows that pass, the counts, the groupings and the years of the judgments.
 import { capitalize, plural } from '$lib/text/words';
 import type { Collection } from '$lib/vocabulary';
-import { relationLabel } from './hoe';
+import { relationLabel } from './relation-words';
 import { sumLidCounts } from '$lib/api/nodes';
 import { hiddenByGroup, rowPasses, type FilterGroup, type VerbondenFilter } from './filter';
 import { formatCount } from '$lib/text/getal';
@@ -191,7 +191,7 @@ export function relationCounts(
 		.sort((a, b) => b.count - a.count);
 }
 
-/** The label of a row's verbinding, read from its source (hoe.ts). */
+/** The label of a row's verbinding, read from its source (relation-words.ts). */
 export function rowLabel(r: Row, selection: Collection): string {
 	if (!r.relation) return '';
 	const inbound = r.direction === 'inbound';

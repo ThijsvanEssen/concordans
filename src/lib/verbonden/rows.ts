@@ -4,7 +4,7 @@
 // of the source (`snippet`, with `match` marked) appears when the row is opened.
 import { escapeRegExp, lowerFirst, textOf } from '$lib/text/words';
 import { naamVanId } from '$lib/bron/menselijk';
-import { keyEcli } from '$lib/bron/leesbaar';
+import { keyEcli } from '$lib/bron/address';
 import { korteDatum } from '$lib/text/datum';
 import { refOf, type BronRef } from '$lib/bron/href';
 import { anchorLabel } from '$lib/text/anchor';
@@ -19,7 +19,7 @@ import { describeBron, UNNAMED } from '$lib/bron/describe';
 import { seatWord } from '$lib/components/parliamentary/career';
 import { MODERATE_CONFIDENCE, filterGroupOf, confidenceWord, type FilterGroup } from './filter';
 import { isDerived, positionsLabel, readEdge } from './edge-meta';
-import { woordenVan } from './hoe';
+import { relationWords } from './relation-words';
 import { periodLabel } from './lines';
 import type { Bereik } from '$lib/text/voetnoten';
 import type { Cite } from '$lib/text/judgment-cite';
@@ -412,7 +412,7 @@ export function historyRow(e: {
 		context:
 			[
 				proposed ? 'voorgesteld' : null,
-				change ? woordenVan(change, 'documents', 'articles').actief : null,
+				change ? relationWords(change, 'documents', 'articles').actief : null,
 				e.dossier_number ? kamerstukNummer(e.dossier_number) : null
 			]
 				.filter(Boolean)

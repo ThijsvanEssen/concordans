@@ -8,6 +8,8 @@ import { page, visit } from '$lib/test/page.svelte';
 import live from '$lib/test/bladeren.json';
 import IndexView from './IndexView.svelte';
 import type { IndexCategory } from './index/categories';
+// The addresses the API gives are kept as they come in, as src/hooks.ts has it in the app.
+import '$lib/bron/kept-paths';
 
 vi.mock('$app/state', async () => ({ page: (await import('$lib/test/page.svelte')).page }));
 vi.mock('$app/navigation', async () => ({
