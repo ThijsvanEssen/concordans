@@ -14,6 +14,13 @@ export const WACHTEN = [1500, 3000, 6000, 12000];
 export const besluiten = (query: Query, signal?: AbortSignal) =>
 	unwrap(api.GET('/api/decisions', { params: { query }, signal }));
 
+/**
+ * A page after the first, or a page of a list nobody counts: without facets, so the API
+ * counts nothing and never waits. Its total is null; a short page is the end.
+ */
+export const decisionsPage = (query: Query, offset: number, signal?: AbortSignal) =>
+	besluiten({ ...query, offset, facets: false }, signal);
+
 /** The total and facets were still being counted when this answer was made. */
 export const nogTeTellen = (r: Pick<Antwoord, 'total' | 'partial'>) =>
 	r.partial === true && r.total === null;
