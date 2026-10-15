@@ -13,7 +13,8 @@ import {
 	parsePad,
 	remember,
 	exploreHref,
-	focusUitPagina
+	focusUitPagina,
+	type Pad
 } from './leesbaar';
 
 describe('a readable address', () => {
@@ -362,5 +363,30 @@ describe('focusUitPagina', () => {
 		pagina('/leden/rob-jetten', 'members/49be3576', '/leden/rob-jetten');
 		expect(focusUitPagina({ soort: 'lid', slug: 'rob-jetten' })).toBe('members/49be3576');
 		expect(focusUitPagina({ soort: 'lid', slug: 'rob-jetten' })).toBeNull();
+	});
+});
+
+describe('every kind of address', () => {
+	// One of each, typed so that a new kind of address needs one here.
+	const ONE: { [S in Pad['soort']]: Extract<Pad, { soort: S }> } = {
+		uitspraak: { soort: 'uitspraak', ecli: 'ECLI:BE:CASS:2020:ARR.20201015.1F.6' },
+		artikel: { soort: 'artikel', wet: 'BWBR0005289', nummer: '6:162' },
+		wet: { soort: 'wet', wet: '32022L2555' },
+		dossier: { soort: 'dossier', nummer: '36455-(R2188)' },
+		kamerstuk: { soort: 'kamerstuk', dossier: '36600-VIII', nummer: 'AB' },
+		publicatie: { soort: 'publicatie', reeks: 'stcrt', jaar: '2026', nummer: '17140' },
+		lid: { soort: 'lid', slug: 'rob-jetten' },
+		kabinet: { soort: 'kabinet', key: 'rutte_iv' },
+		fractie: { soort: 'fractie', key: 'ek_democraten_1966' },
+		commissie: { soort: 'commissie', slug: 'buhaos-2021' },
+		toezegging: { soort: 'toezegging', nummer: 'TZ202609-124' },
+		stemming: { soort: 'stemming', key: 'decision_154df5db_64e5_414a_9cd1_3967aab7de58' },
+		zaak: { soort: 'zaak', nummer: '2025Z15468' },
+		activiteit: { soort: 'activiteit', nummer: '2026A01323' },
+		bijlage: { soort: 'bijlage', wet: 'BWBR0002741', label: '2.A' }
+	};
+
+	it.each(Object.values(ONE))('reads back the address it writes: %o', (pad) => {
+		expect(parsePad(padHref(pad))).toEqual(pad);
 	});
 });

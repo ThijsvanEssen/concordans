@@ -2,7 +2,18 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('$app/state', () => ({ page: { url: new URL('http://x/') } }));
 
-import { buildBronHref, buildOpenHref, exploreMode, indexHref, modeOf, refOf } from './href';
+import { readdirSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { isCollection } from '$lib/vocabulary';
+import {
+	buildBronHref,
+	buildOpenHref,
+	exploreMode,
+	focusOf,
+	indexHref,
+	modeOf,
+	refOf
+} from './href';
 
 const at = (path: string) => new URL(`http://localhost${path}`);
 
@@ -161,5 +172,34 @@ describe('modeOf', () => {
 		['/', null]
 	])('%s is %s', (path, mode) => {
 		expect(modeOf(new URL(path, 'https://concordans.nl'))).toBe(mode);
+	});
+});
+
+describe('the id a link names', () => {
+	/** Every bron the fixtures' answers name with its id beside its collection and key. */
+	function* bronnen(value: unknown): Generator<{ id: string; collection: string; key: string }> {
+		if (!value || typeof value !== 'object') return;
+		if (Array.isArray(value)) {
+			for (const v of value) yield* bronnen(v);
+			return;
+		}
+		const { id, collection, key } = value as Record<string, unknown>;
+		if (typeof id === 'string' && typeof key === 'string' && typeof collection === 'string')
+			yield { id, collection, key };
+		for (const v of Object.values(value)) yield* bronnen(v);
+	}
+	const dir = fileURLToPath(new URL('../fixtures/', import.meta.url));
+	const files = [
+		...readdirSync(dir).filter((f) => f.endsWith('.json')),
+		...readdirSync(`${dir}verbonden`).map((f) => `verbonden/${f}`)
+	];
+	const found = files.flatMap((f) => [...bronnen(JSON.parse(readFileSync(dir + f, 'utf8')))]);
+
+	it('is the id the API gives, for every bron but a dossier', () => {
+		expect(found.length).toBeGreaterThan(100);
+		for (const b of found) {
+			if (!isCollection(b.collection) || b.collection === 'dossiers') continue;
+			expect(focusOf(refOf(b.collection, b.key)), b.id).toBe(b.id);
+		}
 	});
 });

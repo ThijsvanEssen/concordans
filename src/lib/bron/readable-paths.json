@@ -21,6 +21,13 @@
       "path": "/uitspraken/ECLI:BE:CASS:2019:ARR.20190101.1"
     },
     {
+      "focus": "judgments/ecli_be_cass_2020_arr_20201015_1f_6",
+      "props": {
+        "ecli": "ECLI:BE:CASS:2020:ARR.20201015.1F.6"
+      },
+      "path": "/uitspraken/ECLI:BE:CASS:2020:ARR.20201015.1F.6"
+    },
+    {
       "focus": "instruments/bwbr0005289",
       "props": {},
       "path": "/wetten/BWBR0005289"
@@ -328,6 +335,8 @@
     "/wetten/32022L2555/bijlage/I",
     "/wetten/BWBR0005289/hoofdstuk/1",
     "/uitspraken/geen-ecli",
+    "/uitspraken/ECLI:NL:HR:2019:20_06",
+    "/uitspraken/ECLI:NLD:HR:2019:2006",
     "/dossiers/12",
     "/kamerstukken/36799/31/extra",
     "/kamerstukken/36799/ABCD",
@@ -352,6 +361,10 @@
     {
       "path": "/uitspraken/ECLI:BE:CASS:2019:ARR.20190101.1",
       "focus": "judgments/ecli_be_cass_2019_arr_20190101_1"
+    },
+    {
+      "path": "/uitspraken/ECLI:BE:CASS:2020:ARR.20201015.1F.6",
+      "focus": "judgments/ecli_be_cass_2020_arr_20201015_1f_6"
     },
     {
       "path": "/wetten/BWBR0005289",
