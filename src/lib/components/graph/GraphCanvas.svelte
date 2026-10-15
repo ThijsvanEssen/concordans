@@ -97,6 +97,7 @@
 		onStageClick,
 		onReady,
 		onCameraChange,
+		onDrawn,
 		externalHoveredId = null as string | null,
 		notitieIds = new Set() as ReadonlySet<string>,
 		avoid = null as Rect | null
@@ -129,6 +130,8 @@
 		/** The lid a line names, by its edge (`edgeKey`), where its row or card knows it: the
 		 *  light meta of the canvas names none where the source cites several places. */
 		lineLids?: ReadonlyMap<string, string>;
+		/** The bronnen drawn, after every change of what is hidden: what the Legenda counts. */
+		onDrawn?: (drawn: ReadonlySet<string>) => void;
 		inFluxMap?: NodeCounts;
 		heatMap?: NodeCounts;
 		heatActive?: boolean;
@@ -362,6 +365,7 @@
 		latestFilters = filters;
 		latestHiddenKinds = hiddenKinds;
 		void rechter;
+		void yearPeriod;
 		latestPinnedIds = pinnedIds;
 		latestCoreIds = coreIds;
 		recomputeStrays();
@@ -601,6 +605,20 @@
 		});
 		for (const id of leftOut) next.add(id);
 		strays = next;
+		reportDrawn();
+	}
+
+	let drawn: ReadonlySet<string> | null = null;
+	/** Tells `onDrawn` what is drawn now, when that changed. */
+	function reportDrawn() {
+		if (!onDrawn) return;
+		const now = new Set<string>();
+		graph.forEachNode((id, attrs) => {
+			if (!isHiddenNode(id, attrs)) now.add(id);
+		});
+		if (drawn && drawn.size === now.size && [...now].every((id) => drawn!.has(id))) return;
+		drawn = now;
+		onDrawn(now);
 	}
 
 	const outsideYears = (date: unknown) =>

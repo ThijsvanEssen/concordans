@@ -17,6 +17,7 @@
 	import CanvasKaart from './CanvasKaart.svelte';
 	import CanvasNodeList from './CanvasNodeList.svelte';
 	import { readingOrder } from './canvas-keys';
+	import { countCanvas, NO_COUNTS, type CanvasCounts } from './canvas-count';
 	import GraphSidebar from './GraphSidebar.svelte';
 	import type { ComponentProps, Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/store/types';
@@ -38,7 +39,7 @@
 	import { bronNaam } from '$lib/bron/naam';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
-	import { VORM_LABEL, VORM_VOLGORDE, vormVanBron, type Vorm } from '$lib/bron/vormen';
+	import { VORM_LABEL, VORM_VOLGORDE, vormVanBron } from '$lib/bron/vormen';
 	import {
 		containerIdFor,
 		isDrawnGroup,
@@ -155,17 +156,7 @@
 	let coreIds = $state<ReadonlySet<string> | null>(null);
 	let filters = $state<GraphFilters>(get(store.filters));
 	let hasNodes = $state(false);
-	let canvasCounts = $state<{
-		nodes: number;
-		edges: number;
-		kinds: Partial<Record<FilterGroup, number>>;
-		/** The shapes drawn, for the legend: every shape on the canvas has its line there. */
-		vormen: Partial<Record<Vorm, number>>;
-		/** Per kind, the bronnen hidden with a grouping switched off, and which groupings. */
-		metGroep: Partial<
-			Record<FilterGroup, { count: number; van: number; groepen: ContainerKind[] }>
-		>;
-	}>({ nodes: 0, edges: 0, kinds: {}, vormen: {}, metGroep: {} });
+	let canvasCounts = $state<CanvasCounts>(NO_COUNTS);
 	let containerGroups = $state<Map<string, ContainerGroup>>(new Map());
 	// When the selection is a container, there is no canvas node to focus around: its
 	// own children take that role in the dim/highlight pass instead (GraphCanvas).
@@ -205,65 +196,33 @@
 		zetOpen(FOLD.legend, v);
 	};
 
-	// What the filter leaves on the canvas.
-	function countCanvas() {
-		let nodes = 0;
-		let edges = 0;
-		const kinds: Partial<Record<FilterGroup, number>> = {};
-		const vormen: Partial<Record<Vorm, number>> = {};
-		const metGroep: Partial<
-			Record<FilterGroup, { count: number; van: number; groepen: ContainerKind[] }>
-		> = {};
-		const bronnen: Partial<Record<FilterGroup, number>> = {};
-		const visible = new Set<string>();
+	// What the canvas draws, as it says it (GraphCanvas `onDrawn`), counted for the Legenda,
+	// the sidebar and the keyboard's list.
+	let drawn: ReadonlySet<string> = new Set();
+	function telCanvas() {
 		const verborgen = metGroepVerborgen({
 			groups: containerGroups.values(),
 			uit: filters.hiddenGroups,
 			houd: (id) => id === selection?.id
 		});
 		onMetGroep?.(verborgen);
-		g.forEachNode((id, attrs) => {
-			// Per kind, before the filter: the sidebar says what the filter hides.
-			const kind = attrs.filterGroup as FilterGroup | undefined;
-			if (kind) kinds[kind] = (kinds[kind] ?? 0) + 1;
-			if (id !== selection?.id && hiddenKinds.has(kind as FilterGroup)) return;
-			if (
-				id !== selection?.id &&
-				filter.rechter &&
-				attrs.collection === 'judgments' &&
-				attrs.rechter !== filter.rechter
-			)
-				return;
-			if (kind && !attrs.anchor) bronnen[kind] = (bronnen[kind] ?? 0) + 1;
-			const groep = verborgen.get(id);
-			if (groep) {
-				if (kind && !attrs.anchor) {
-					const m = (metGroep[kind] ??= { count: 0, van: 0, groepen: [] });
-					m.count++;
-					if (!m.groepen.includes(groep)) m.groepen.push(groep);
-				}
-				return;
-			}
-			visible.add(id);
-			nodes++;
-			const vorm = attrs.vorm as Vorm | undefined;
-			if (vorm && !attrs.anchor) vormen[vorm] = (vormen[vorm] ?? 0) + 1;
+		const geteld = countCanvas({
+			graph: g,
+			drawn,
+			selectionId: selection?.id ?? null,
+			hiddenKinds,
+			rechter: filter.rechter,
+			verborgen,
+			hiddenRelations: filters.hiddenRelations
 		});
-		g.forEachEdge((_id, attrs, src, tgt) => {
-			if (attrs.layoutOnly) return;
-			if (!visible.has(src) || !visible.has(tgt)) return;
-			if (filters.hiddenRelations.has(attrs.relation as Relation)) return;
-			edges++;
-		});
-		for (const [k, m] of Object.entries(metGroep)) m.van = bronnen[k as FilterGroup] ?? 0;
-		canvasCounts = { nodes, edges, kinds, vormen, metGroep };
-		drawnIds = [...visible];
+		canvasCounts = geteld.counts;
+		drawnIds = geteld.drawnIds;
 	}
 
 	$effect(() => {
 		void hiddenKinds;
 		void filters;
-		countCanvas();
+		telCanvas();
 		canvas?.refresh();
 	});
 
@@ -489,7 +448,7 @@
 	}
 
 	function applyFilters() {
-		countCanvas();
+		telCanvas();
 		canvas?.refresh();
 	}
 
@@ -1384,6 +1343,10 @@
 					onStageClick={() => {
 						ontmarkeer();
 						onClear?.();
+					}}
+					onDrawn={(set) => {
+						drawn = set;
+						untrack(telCanvas);
 					}}
 					onReady={(api) => {
 						canvas = api;
