@@ -32,6 +32,8 @@ function chips(category: IndexCategory, address: string, state = {}) {
 		loading: false,
 		patch: () => {},
 		toggleOpen: () => {},
+		openGroups: new Set(),
+		toggleGroup: () => {},
 		tabHref: () => '',
 		empty: (() => {}) as never
 	} satisfies ListContext<unknown, object>;

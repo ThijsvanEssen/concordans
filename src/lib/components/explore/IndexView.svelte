@@ -124,14 +124,14 @@
 	function toPage(
 		previous: AnyPage | undefined,
 		{ items, total, of }: Answer<unknown>,
-		offset: number
+		offset: number,
+		size: number
 	): AnyPage {
 		// A page can repeat an item of the page before when the order has ties.
 		const all = offset && previous ? uniqueBy([...previous.items, ...items], idOf) : items;
-		// Without a total (one still being counted), a full page says there is more; a list can
-		// ask more than PAGE at a time (stemmingen: 200). A list without `total` (members) is
-		// over when a slice comes back short.
-		const more = total == null ? items.length >= PAGE : all.length < total;
+		// Without a total (one still being counted), a full page of the size asked says there is
+		// more: a list without `total` (members) is over when a slice comes back short.
+		const more = total == null ? items.length >= size : all.length < total;
 		return { items: all, total: total ?? (more ? null : all.length), more, of };
 	}
 
@@ -195,6 +195,9 @@
 		const cat = category;
 		const asked = untrack(() => LISTS[cat]);
 		const query = untrack(() => asked.query(p, sortDef));
+		// The rows asked at a time: the list's own limit, else a page.
+		const limit = (query as { limit?: unknown } | null)?.limit;
+		const size = typeof limit === 'number' ? limit : PAGE;
 		// A first page sets its state while this effect runs: read without depending on it.
 		const set = (patch: Record<string, unknown>) =>
 			untrack(() => {
@@ -202,7 +205,7 @@
 			});
 		fetchPage = async (offset, signal) => {
 			const answer = await asked.load(query, offset, signal, facettenApart, set);
-			if (!signal.aborted) pages[cat] = toPage(pages[cat], answer, offset);
+			if (!signal.aborted) pages[cat] = toPage(pages[cat], answer, offset, size);
 		};
 		const ac = new AbortController();
 		loadAbort = ac;
@@ -359,6 +362,13 @@
 	// ── The list as shown ───────────────────────────────────────────────────
 	// The open row is `?open=<collection>/<key>`, so it can be shared and Back finds it open.
 	const toggleOpen = (id: string) => patchUrl({ open: p.open === id ? null : id }, true);
+	// An opened group stays open when the reader goes to another list and comes back.
+	let openGroups = $state(new Set<string>());
+	const toggleGroup = (key: string) => {
+		const next = new Set(openGroups);
+		if (!next.delete(key)) next.add(key);
+		openGroups = next;
+	};
 
 	const base = $derived<Omit<ListContext<unknown, Record<string, unknown>>, 'rows'>>({
 		p,
@@ -370,6 +380,8 @@
 		loading,
 		patch: patchUrl,
 		toggleOpen,
+		openGroups,
+		toggleGroup,
 		tabHref,
 		empty
 	});

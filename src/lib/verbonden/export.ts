@@ -3,7 +3,8 @@ import { csvText } from '$lib/text/csv';
 import { korteDatum } from '$lib/text/datum';
 import { buildBronHref } from '$lib/bron/href';
 import type { Collection } from '$lib/vocabulary';
-import { allRows, filterGroups, rowLabel } from './view';
+import { formatCount } from '$lib/text/getal';
+import { allRows, filterGroups, rowLabel, shownCount, shownLabel } from './view';
 import { BRON_KIND_LABEL, type VerbondenFilter } from './filter';
 import type { Group } from './groups';
 import { mentionRows, type Row } from './rows';
@@ -82,6 +83,15 @@ export const TABLE_COLUMNS = COLUMNS.filter((c) => !c.csvOnly);
  *  the count of the panel and the table counts it; every mention its own row. */
 export const exportRows = (groups: Group[], filter: VerbondenFilter): Row[] =>
 	mentionRows(allRows(filterGroups(groups, filter)));
+
+/** The label of both Exporteer buttons: `Exporteer 672 van 9.065` where the rows loaded are
+ *  fewer than the verbindingen the count line names, as the count line writes a part. */
+export function exportLabel(groups: Group[], filter: VerbondenFilter): string {
+	const part = allRows(filterGroups(groups, filter)).length;
+	return part < shownCount(groups, filter)
+		? `Exporteer ${formatCount(part)} van ${shownLabel(groups, filter)}`
+		: 'Exporteer';
+}
 
 export function rowsToCsv(rows: Row[], selection: Collection, origin: string): string {
 	const ctx = { selection, origin };

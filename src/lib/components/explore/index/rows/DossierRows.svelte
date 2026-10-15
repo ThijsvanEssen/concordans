@@ -21,12 +21,6 @@
 	const entries = $derived(
 		ctx.sort.id === 'number' ? groupByNumber(ctx.rows ?? []) : groupRuns(ctx.rows ?? [])
 	);
-	let openNumbers = $state(new Set<string>());
-	const toggleNumber = (number: string) => {
-		const next = new Set(openNumbers);
-		if (!next.delete(number)) next.add(number);
-		openNumbers = next;
-	};
 </script>
 
 <ul class="list">
@@ -34,7 +28,7 @@
 		{#if entry.rows.length === 1}
 			{@render dossierRow(entry.rows[0], false)}
 		{:else}
-			{@const isOpen = openNumbers.has(entry.number)}
+			{@const isOpen = ctx.openGroups.has(entry.number)}
 			{@const own = entry.rows.find((d) => d.number === entry.number)}
 			{@const kinds = new Set(entry.rows.map((d) => d.kind))}
 			{@const [kind] = kinds}
@@ -44,7 +38,7 @@
 				title={own?.title ?? `Dossiers onder nummer ${officialNumber(entry.number)}`}
 				href={own ? openHref(`dossiers/${own.number}`) : undefined}
 				open={isOpen}
-				onToggle={() => toggleNumber(entry.number)}
+				onToggle={() => ctx.toggleGroup(entry.number)}
 			>
 				{#snippet lead()}
 					<span class="row-id-main">{officialNumber(entry.number)}</span>
