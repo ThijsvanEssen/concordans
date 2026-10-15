@@ -1,0 +1,1500 @@
+[
+	{
+		"id": "activities/1458fee0_6d30_4882_9d97_45cec936ba71",
+		"collection": "activities",
+		"key": "1458fee0_6d30_4882_9d97_45cec936ba71",
+		"display_name": "Procedurevergadering commissie Binnenlandse Zaken (2025-03-13)",
+		"title": "Procedurevergadering van 13 maart 2025: Procedurevergadering commissie Binnenlandse Zaken",
+		"path": "/activiteiten/2024A04523",
+		"props": {
+			"external_id": "1458fee0-6d30-4882-9d97-45cec936ba71",
+			"date": "2025-03-13",
+			"agenda_title": "Procedurevergadering commissie Binnenlandse Zaken",
+			"kind": "Procedurevergadering",
+			"status": "Uitgevoerd",
+			"committee_id": "177eb895-6307-4268-94f6-a0f80dc3e358",
+			"dossier_numbers": [
+				"35561",
+				"28844",
+				"36566",
+				"26643",
+				"28362",
+				"35851",
+				"29924",
+				"36600-VII",
+				"30950",
+				"30696",
+				"36600-III",
+				"22112",
+				"36600-B"
+			],
+			"case_kinds_by_dossier": {
+				"35561": ["Brief regering"],
+				"28844": ["Brief regering"],
+				"36566": ["Brief regering"],
+				"26643": ["Brief regering"],
+				"28362": ["Brief regering"],
+				"35851": ["Brief regering"],
+				"29924": ["Brief regering"],
+				"36600-VII": ["Brief regering"],
+				"30950": ["Brief regering"],
+				"30696": ["Brief regering"],
+				"36600-III": ["Brief regering"],
+				"22112": ["Brief regering"],
+				"36600-B": ["Brief regering"]
+			},
+			"display_name": "Procedurevergadering commissie Binnenlandse Zaken (2025-03-13)",
+			"number": "2024A04523",
+			"replaced_by": [],
+			"tk_url": "https://www.tweedekamer.nl/debat_en_vergadering/commissievergaderingen/details?id=2024A04523"
+		}
+	},
+	{
+		"id": "activities/3e394d68_06e1_4a3c_868a_61a2e714d934",
+		"collection": "activities",
+		"key": "3e394d68_06e1_4a3c_868a_61a2e714d934",
+		"display_name": "Regeling van werkzaamheden (2025-04-15)",
+		"title": "Regeling van werkzaamheden van 15 april 2025",
+		"path": "/activiteiten/2025A03169",
+		"props": {
+			"external_id": "3e394d68-06e1-4a3c-868a-61a2e714d934",
+			"date": "2025-04-15",
+			"agenda_title": "Regeling van werkzaamheden",
+			"kind": "Regeling van werkzaamheden",
+			"status": "Uitgevoerd",
+			"committee_id": null,
+			"dossier_numbers": [
+				"36730",
+				"36729",
+				"21501-02",
+				"32852",
+				"31936",
+				"30821",
+				"30486",
+				"22112",
+				"36564",
+				"24202",
+				"33578",
+				"30462",
+				"35334",
+				"33340",
+				"36600-XVI",
+				"21501-08",
+				"32847",
+				"27428",
+				"36502",
+				"21501-31",
+				"36600-XIII",
+				"36496",
+				"32336",
+				"28089",
+				"21501-07",
+				"36600-V",
+				"30950",
+				"26448",
+				"31765",
+				"29398",
+				"29628",
+				"33037",
+				"31322",
+				"36708",
+				"29984",
+				"33278",
+				"26150",
+				"32646",
+				"31288",
+				"25424",
+				"31839",
+				"36672",
+				"32716",
+				"36637",
+				"35207",
+				"28844",
+				"20043",
+				"36600-XII",
+				"28694",
+				"36592",
+				"29544",
+				"32813",
+				"28676",
+				"36600-XX",
+				"36600-IX",
+				"24587",
+				"27925",
+				"29911",
+				"33529",
+				"29362",
+				"36726"
+			],
+			"display_name": "Regeling van werkzaamheden (2025-04-15)",
+			"number": "2025A03169",
+			"replaced_by": [],
+			"tk_url": "https://www.tweedekamer.nl/debat_en_vergadering/plenaire_vergaderingen/details/activiteit?id=2025A03169"
+		}
+	},
+	{
+		"id": "activities/481df0ca_7e30_4797_b0d9_4d6b596835ba",
+		"collection": "activities",
+		"key": "481df0ca_7e30_4797_b0d9_4d6b596835ba",
+		"display_name": "Procedurevergadering commissie Binnenlandse Zaken (2025-09-25)",
+		"title": "Procedurevergadering van 25 september 2025: Procedurevergadering commissie Binnenlandse Zaken",
+		"path": "/activiteiten/2025A02136",
+		"props": {
+			"external_id": "481df0ca-7e30-4797-b0d9-4d6b596835ba",
+			"date": "2025-09-25",
+			"agenda_title": "Procedurevergadering commissie Binnenlandse Zaken",
+			"kind": "Procedurevergadering",
+			"status": "Uitgevoerd",
+			"committee_id": "177eb895-6307-4268-94f6-a0f80dc3e358",
+			"dossier_numbers": [
+				"36800-VII",
+				"36800-B",
+				"36820-I",
+				"36820-B",
+				"36820-IIA",
+				"33529",
+				"36820-III",
+				"36800-III",
+				"35867",
+				"36820-IIB",
+				"36800-IIA",
+				"28844",
+				"29614",
+				"36800-C",
+				"29362",
+				"31490",
+				"36800-I",
+				"36600-VII",
+				"36820-VII",
+				"29697",
+				"35165",
+				"36459",
+				"22112",
+				"32802",
+				"36800-IIB",
+				"36820-C",
+				"23530",
+				"36742",
+				"28362",
+				"36471"
+			],
+			"display_name": "Procedurevergadering commissie Binnenlandse Zaken (2025-09-25)",
+			"number": "2025A02136",
+			"replaced_by": [],
+			"tk_url": "https://www.tweedekamer.nl/debat_en_vergadering/commissievergaderingen/details?id=2025A02136"
+		}
+	},
+	{
+		"id": "annexes/bwbr0005537_annex_1",
+		"collection": "annexes",
+		"key": "bwbr0005537_annex_1",
+		"display_name": "Regeling rechtstreeks beroep (artikel 7:1, eerste lid, onderdeel g)",
+		"title": "Bijlage 1 Awb: regeling rechtstreeks beroep (artikel 7:1, eerste lid, onderdeel g)",
+		"path": "/wetten/BWBR0005537/bijlage/1",
+		"props": {
+			"bwb_id": "BWBR0005537",
+			"display_name": "Regeling rechtstreeks beroep (artikel 7:1, eerste lid, onderdeel g)",
+			"instrument_abbreviation": "Awb",
+			"instrument_citation_title": "Algemene wet bestuursrecht",
+			"instrument_id": "instruments/bwbr0005537",
+			"label": "1",
+			"source": "bwb",
+			"stub": false,
+			"title": "Regeling rechtstreeks beroep (artikel 7:1, eerste lid, onderdeel g)"
+		}
+	},
+	{
+		"id": "annexes/bwbr0005537_annex_2",
+		"collection": "annexes",
+		"key": "bwbr0005537_annex_2",
+		"display_name": "Bevoegdheidsregeling bestuursrechtspraak (artikelen 8:5, 8:6, 8:7, 8:105 en 8:106)",
+		"title": "Bijlage 2 Awb: bevoegdheidsregeling bestuursrechtspraak (artikelen 8:5, 8:6, 8:7, 8:105 en 8:106)",
+		"path": "/wetten/BWBR0005537/bijlage/2",
+		"props": {
+			"bwb_id": "BWBR0005537",
+			"display_name": "Bevoegdheidsregeling bestuursrechtspraak (artikelen 8:5, 8:6, 8:7, 8:105 en 8:106)",
+			"instrument_abbreviation": "Awb",
+			"instrument_citation_title": "Algemene wet bestuursrecht",
+			"instrument_id": "instruments/bwbr0005537",
+			"label": "2",
+			"source": "bwb",
+			"stub": false,
+			"title": "Bevoegdheidsregeling bestuursrechtspraak (artikelen 8:5, 8:6, 8:7, 8:105 en 8:106)"
+		}
+	},
+	{
+		"id": "annexes/bwbr0005537_annex_3",
+		"collection": "annexes",
+		"key": "bwbr0005537_annex_3",
+		"display_name": "Regeling verlaagd griffierecht (artikelen 8:41 en 8:109)",
+		"title": "Bijlage 3 Awb: regeling verlaagd griffierecht (artikelen 8:41 en 8:109)",
+		"path": "/wetten/BWBR0005537/bijlage/3",
+		"props": {
+			"bwb_id": "BWBR0005537",
+			"display_name": "Regeling verlaagd griffierecht (artikelen 8:41 en 8:109)",
+			"instrument_abbreviation": "Awb",
+			"instrument_citation_title": "Algemene wet bestuursrecht",
+			"instrument_id": "instruments/bwbr0005537",
+			"label": "3",
+			"source": "bwb",
+			"stub": false,
+			"title": "Regeling verlaagd griffierecht (artikelen 8:41 en 8:109)"
+		}
+	},
+	{
+		"id": "articles/bwbr0005289_162",
+		"collection": "articles",
+		"key": "bwbr0005289_162",
+		"display_name": "Artikel 162 Burgerlijk Wetboek Boek 6",
+		"title": "Art. 6:162 BW, Onrechtmatige daad",
+		"path": "/wetten/BWBR0005289/artikel/6:162",
+		"props": {
+			"article_number": "162",
+			"breadcrumb": [
+				{
+					"type": "boek",
+					"label": "Boek 6",
+					"title": "Algemeen gedeelte van het verbintenissenrecht"
+				},
+				{
+					"type": "titeldeel",
+					"label": "Titel 3",
+					"title": "Onrechtmatige daad"
+				},
+				{
+					"type": "afdeling",
+					"label": "Afdeling 1",
+					"title": "Algemene bepalingen"
+				}
+			],
+			"bwb_id": "BWBR0005289",
+			"caption": "Onrechtmatige daad",
+			"display_name": "Artikel 162 Burgerlijk Wetboek Boek 6",
+			"inbound_citation_count": 9064,
+			"instrument_abbreviation": "BW6",
+			"instrument_citation_title": "Burgerlijk Wetboek Boek 6",
+			"label": "Artikel 162",
+			"parts": [
+				{
+					"id": "lid-1",
+					"kind": "lid",
+					"number": "1",
+					"start": 3,
+					"end": 164
+				},
+				{
+					"id": "lid-2",
+					"kind": "lid",
+					"number": "2",
+					"start": 168,
+					"end": 444
+				},
+				{
+					"id": "lid-3",
+					"kind": "lid",
+					"number": "3",
+					"start": 448,
+					"end": 656
+				}
+			],
+			"position": 164,
+			"references": [],
+			"repealed": false,
+			"source_publication": "Stb.1991-600",
+			"stam_id": "2958403",
+			"stub": false,
+			"valid_from": "1992-01-01",
+			"versie_id": "4569802"
+		}
+	},
+	{
+		"id": "articles/bwbr0001840_21",
+		"collection": "articles",
+		"key": "bwbr0001840_21",
+		"display_name": "Artikel 21 Grondwet",
+		"title": "Art. 21 Gw, Grondrechten",
+		"path": "/wetten/BWBR0001840/artikel/21",
+		"props": {
+			"article_number": "21",
+			"breadcrumb": [
+				{
+					"type": "hoofdstuk",
+					"label": "Hoofdstuk 1",
+					"title": "Grondrechten"
+				}
+			],
+			"bwb_id": "BWBR0001840",
+			"caption": "Grondrechten",
+			"display_name": "Artikel 21 Grondwet",
+			"inbound_citation_count": 91,
+			"instrument_abbreviation": "Gw",
+			"instrument_citation_title": "Grondwet",
+			"label": "Artikel 21",
+			"parts": [],
+			"position": 21,
+			"references": [],
+			"repealed": false,
+			"source_publication": "Stb.2019-33",
+			"stam_id": "2990243",
+			"stub": false,
+			"valid_from": "2018-12-21",
+			"versie_id": "25689402"
+		}
+	},
+	{
+		"id": "articles/bwbr0005291_305a",
+		"collection": "articles",
+		"key": "bwbr0005291_305a",
+		"display_name": "Artikel 305a Burgerlijk Wetboek Boek 3",
+		"title": "Art. 3:305a BW, Rechtsvorderingen",
+		"path": "/wetten/BWBR0005291/artikel/3:305a",
+		"props": {
+			"article_number": "305a",
+			"breadcrumb": [
+				{
+					"type": "boek",
+					"label": "Boek 3",
+					"title": "Vermogensrecht in het algemeen"
+				},
+				{
+					"type": "titeldeel",
+					"label": "Titel 11",
+					"title": "Rechtsvorderingen"
+				}
+			],
+			"bwb_id": "BWBR0005291",
+			"caption": "Rechtsvorderingen",
+			"display_name": "Artikel 305a Burgerlijk Wetboek Boek 3",
+			"inbound_citation_count": 1265,
+			"instrument_abbreviation": "BW3",
+			"instrument_citation_title": "Burgerlijk Wetboek Boek 3",
+			"label": "Artikel 305a",
+			"position": 279,
+			"repealed": false,
+			"source_publication": "Stb.2025-124",
+			"stam_id": "2952513",
+			"stub": false,
+			"valid_from": "2025-07-01",
+			"versie_id": "30729352"
+		}
+	},
+	{
+		"id": "cabinets/schoof",
+		"collection": "cabinets",
+		"key": "schoof",
+		"display_name": "kabinet-Schoof",
+		"title": "Kabinet-Schoof (2024–2026)",
+		"path": "/kabinetten/schoof",
+		"props": {
+			"demissionary_from": "2025-06-03",
+			"display_name": "kabinet-Schoof",
+			"factions": ["pvv", "vvd", "nieuw_sociaal_contract", "bbb"],
+			"from_date": "2024-07-02",
+			"name": "kabinet-Schoof",
+			"origin": {
+				"name": "rijksoverheid",
+				"url": "https://www.rijksoverheid.nl/regering/over-de-regering/kabinetten-sinds-1945/kabinet-schoof",
+				"read_on": "2026-10-14"
+			},
+			"previous": "rutte_iv",
+			"prime_minister": "49b617db_cf37_4a99_91b9_210b4394fd81",
+			"to_date": "2026-02-23"
+		}
+	},
+	{
+		"id": "cases/2c668293_f1cb_49e8_987d_c6e4f53d37b2",
+		"collection": "cases",
+		"key": "2c668293_f1cb_49e8_987d_c6e4f53d37b2",
+		"display_name": "Amendement van het lid Grinwis c.s. ter vervanging van nr. 27 over specificering van de evaluatie",
+		"title": "Amendement Grinwis c.s. ter vervanging van nr. 27 over specificering van de evaluatie (2024Z07413)",
+		"path": "/zaken/2024Z07413",
+		"props": {
+			"citation_title": "Wet betaalbare huur",
+			"display_name": "Amendement van het lid Grinwis c.s. ter vervanging van nr. 27 over specificering van de evaluatie",
+			"done": true,
+			"dossier_numbers": ["36496"],
+			"external_id": "2c668293-f1cb-49e8-987d-c6e4f53d37b2",
+			"kind": "Amendement",
+			"number": "2024Z07413",
+			"related_cases": [
+				{
+					"id": "ede35b0b-8521-4d75-a6d5-7ac55a17598c",
+					"kind": "Wetgeving",
+					"dossier_numbers": ["36496"]
+				}
+			],
+			"replaces_cases": ["e63c8c48-18a8-4283-add0-b88ae5a59122"],
+			"source": "tk",
+			"started_on": "2024-04-24",
+			"title": "Amendement van het lid Grinwis c.s. ter vervanging van nr. 27 over specificering van de evaluatie"
+		}
+	},
+	{
+		"id": "cases/30a6eafe_5609_4587_a07b_ffe90c04c78e",
+		"collection": "cases",
+		"key": "30a6eafe_5609_4587_a07b_ffe90c04c78e",
+		"display_name": "Amendement van het lid de Hoop over een maximale huurverhoging gelijk aan de loonstijging of de inflatie",
+		"title": "Amendement de Hoop over een maximale huurverhoging gelijk aan de loonstijging of de inflatie (2024Z02193)",
+		"path": "/zaken/2024Z02193",
+		"props": {
+			"citation_title": "Wet betaalbare huur",
+			"display_name": "Amendement van het lid de Hoop over een maximale huurverhoging gelijk aan de loonstijging of de inflatie",
+			"done": true,
+			"dossier_numbers": ["36496"],
+			"external_id": "30a6eafe-5609-4587-a07b-ffe90c04c78e",
+			"kind": "Amendement",
+			"number": "2024Z02193",
+			"related_cases": [
+				{
+					"id": "ede35b0b-8521-4d75-a6d5-7ac55a17598c",
+					"kind": "Wetgeving",
+					"dossier_numbers": ["36496"]
+				}
+			],
+			"replaces_cases": [],
+			"source": "tk",
+			"started_on": "2024-02-09",
+			"title": "Amendement van het lid de Hoop over een maximale huurverhoging gelijk aan de loonstijging of de inflatie"
+		}
+	},
+	{
+		"id": "cases/81311fd5_88d6_4f10_b50e_49db18526e67",
+		"collection": "cases",
+		"key": "81311fd5_88d6_4f10_b50e_49db18526e67",
+		"display_name": "Motie van het lid Van Baarle over de Wet gedeeltelijk verbod gezichtsbedekkende kleding intrekken",
+		"title": "Motie Van Baarle over de Wet gedeeltelijk verbod gezichtsbedekkende kleding intrekken (2024Z15649)",
+		"path": "/zaken/2024Z15649",
+		"props": {
+			"display_name": "Motie van het lid Van Baarle over de Wet gedeeltelijk verbod gezichtsbedekkende kleding intrekken",
+			"done": true,
+			"dossier_numbers": ["36600-VII"],
+			"external_id": "81311fd5-88d6-4f10-b50e-49db18526e67",
+			"kind": "Motie",
+			"number": "2024Z15649",
+			"related_cases": [],
+			"replaces_cases": [],
+			"source": "tk",
+			"started_on": "2024-10-10",
+			"title": "Motie van het lid Van Baarle over de Wet gedeeltelijk verbod gezichtsbedekkende kleding intrekken"
+		}
+	},
+	{
+		"id": "commitments/2066a598_a0c9_49aa_ab44_a8f6f9594140",
+		"collection": "commitments",
+		"key": "2066a598_a0c9_49aa_ab44_a8f6f9594140",
+		"display_name": "De minister zegt toe in gesprek te gaan met de Nationaal Coördinator tegen…",
+		"title": "Toezegging TZ202503-040: De minister zegt toe in gesprek te gaan met de Nationaal Coördinator tegen Discriminatie en Racisme over geweld tegen vrouwelijke bestuurders en volksvertegenwoordigers en de Kamer hierover vóór het zomerreces van 2025 te informeren.",
+		"path": "/toezeggingen/TZ202503-040",
+		"props": {
+			"activity_number": "2023A06173",
+			"cabinet": "schoof",
+			"display_name": "De minister zegt toe in gesprek te gaan met de Nationaal Coördinator tegen…",
+			"expected_resolution": "2025-07-18",
+			"external_id": "2066a598-a0c9-49aa-ab44-a8f6f9594140",
+			"letter_ids": ["10c896ea-bf9b-4b92-a889-b9207423eb9d"],
+			"made_on": "2025-03-13",
+			"member_key": "3a24a34a_04ba_46ee_97a3_26267c000a8d",
+			"minister_name": "Uitermark, J.J.M.",
+			"minister_role": "Minister van Binnenlandse Zaken en Koninkrijksrelaties",
+			"ministry": "bzk",
+			"ministry_name": "Binnenlandse Zaken en Koninkrijksrelaties",
+			"number": "TZ202503-040",
+			"post": "minister",
+			"status": "Afgedaan"
+		}
+	},
+	{
+		"id": "commitments/23f6f72f_d46c_4b2b_a706_869facf02c63",
+		"collection": "commitments",
+		"key": "23f6f72f_d46c_4b2b_a706_869facf02c63",
+		"display_name": "De staatssecretaris van BZK zegt toe de Kamer in de verzamelbrief van juni…",
+		"title": "Toezegging TZ202504-150: De staatssecretaris van BZK zegt toe de Kamer in de verzamelbrief van juni 2025 te informeren over het punt genoemd door het lid Buijsse over de IP-sourcing strategie en waar hier op gestuurd zou moeten worden, en of dit ook voor gemeentes van toepassing is.",
+		"path": "/toezeggingen/TZ202504-150",
+		"props": {
+			"activity_number": "2025A01933",
+			"cabinet": "schoof",
+			"display_name": "De staatssecretaris van BZK zegt toe de Kamer in de verzamelbrief van juni…",
+			"expected_resolution": "0001-01-01",
+			"external_id": "23f6f72f-d46c-4b2b-a706-869facf02c63",
+			"letter_ids": [],
+			"made_on": "2025-04-25",
+			"member_key": "ae84ff71_2c47_4509_9daa_5a4c76981f6a",
+			"minister_name": "Szabó, F.Z.",
+			"minister_role": "Staatssecretaris Koninkrijksrelaties en Digitalisering",
+			"ministry": "bzk",
+			"ministry_name": "Binnenlandse Zaken en Koninkrijksrelaties",
+			"number": "TZ202504-150",
+			"post": "staatssecretaris",
+			"status": "Openstaand"
+		}
+	},
+	{
+		"id": "commitments/3ee787ef_401d_4a17_96fd_b94c0b9bdf76",
+		"collection": "commitments",
+		"key": "3ee787ef_401d_4a17_96fd_b94c0b9bdf76",
+		"display_name": "Voor de zomer ontvangt de Kamer een voortgangsbrief over de uitvoering van het…",
+		"title": "Toezegging TZ202603-105: Voor de zomer ontvangt de Kamer een voortgangsbrief over de uitvoering van het programma STOER. Hierin gaat de minister ook in op haar vereenvoudigingsplan voor regelgeving voor de fysieke leefomgeving.",
+		"path": "/toezeggingen/TZ202603-105",
+		"props": {
+			"activity_number": "2025A04175",
+			"cabinet": "jetten",
+			"display_name": "Voor de zomer ontvangt de Kamer een voortgangsbrief over de uitvoering van het…",
+			"expected_resolution": "2026-07-13",
+			"external_id": "3ee787ef-401d-4a17-96fd-b94c0b9bdf76",
+			"letter_ids": ["3e4088ff-6360-4864-9b65-05e9c01231ad"],
+			"made_on": "2026-03-17",
+			"member_key": "dcf84324_c8de_4b0a_905c_3106e1af17e2",
+			"minister_name": "Boekholt-O’Sullivan, E.F.",
+			"minister_role": "Minister van Volkshuisvesting en Ruimtelijke Ordening",
+			"ministry": "bzk",
+			"ministry_name": "Binnenlandse Zaken en Koninkrijksrelaties",
+			"number": "TZ202603-105",
+			"post": "minister",
+			"status": "Afgedaan"
+		}
+	},
+	{
+		"id": "decisions/ek_2025_04_15_36600_vii_i",
+		"collection": "decisions",
+		"key": "ek_2025_04_15_36600_vii_i",
+		"display_name": "Eerste Kamer 2025-04-15: Motie-Perin-Gopie (Volt) c.s. over onderzoek naar de maatschappelijk kosten van discriminatie en racisme in Nederland (36.600 VII, I)",
+		"title": "Stemming over Motie-Perin-Gopie (Volt) c.s. over onderzoek naar de maatschappelijk kosten van discriminatie en racisme in Nederland, 15 april 2025: verworpen",
+		"path": "/stemmingen/ek_2025_04_15_36600_vii_i",
+		"props": {
+			"kind": "Motie",
+			"letter": "I",
+			"motion_url": "https://www.eerstekamer.nl/motiedossier/36600_vii_i_motie_perin_gopie_volt",
+			"chamber": "EK",
+			"date": "2025-04-15",
+			"subject": "Motie-Perin-Gopie (Volt) c.s. over onderzoek naar de maatschappelijk kosten van discriminatie en racisme in Nederland",
+			"display_name": "Eerste Kamer 2025-04-15: Motie-Perin-Gopie (Volt) c.s. over onderzoek naar de maatschappelijk kosten van discriminatie en racisme in Nederland (36.600 VII, I)",
+			"dossier_numbers": ["36600-VII"],
+			"result": "Verworpen",
+			"passed": false,
+			"method": "Stemming bij zitten en opstaan, verworpen",
+			"factions_for": ["D66", "GroenLinks-PvdA", "OPNL", "PvdD", "SP", "Volt"],
+			"factions_against": [
+				"50PLUS",
+				"BBB",
+				"CDA",
+				"ChristenUnie",
+				"FVD",
+				"JA21",
+				"PVV",
+				"SGP",
+				"VVD"
+			],
+			"factions_noted": [],
+			"bill_url": null,
+			"source_url": "https://www.eerstekamer.nl/verslagdeel/20250415/motie_begroting_binnenlandse_zaken",
+			"retrieved_on": "2026-10-09"
+		}
+	},
+	{
+		"id": "decisions/decision_007f55ef_315a_43a3_9609_7ff58f054a09",
+		"collection": "decisions",
+		"key": "decision_007f55ef_315a_43a3_9609_7ff58f054a09",
+		"display_name": "Motie 2024Z19938: Gewijzigde motie van de leden Kathmann en Van Nispen over de subsidie voor Offlimits meerjarig verhogen in lijn met de stijging van het aantal meldingen van online kindermisbruik (t.v.v. 36600-VII-70)",
+		"title": "Stemming over Gewijzigde motie van de leden Kathmann en Van Nispen over de subsidie voor Offlimits meerjarig verhogen in lijn met de stijging van het aantal meldingen van online kindermisbruik (t.v.v. 36600-VII-70), 21 mei 2025: aangehouden",
+		"path": "/stemmingen/decision_007f55ef_315a_43a3_9609_7ff58f054a09",
+		"props": {
+			"decision_id": "007f55ef-315a-43a3-9609-7ff58f054a09",
+			"agenda_item_id": "04d38ae6-9289-4034-8b91-2ee2cb7f41b9",
+			"activity_id": "ffd7c7f9-cf06-4b97-9851-be8c7961df66",
+			"date": "2025-05-21",
+			"subject": "Gewijzigde motie van de leden Kathmann en Van Nispen over de subsidie voor Offlimits meerjarig verhogen in lijn met de stijging van het aantal meldingen van online kindermisbruik (t.v.v. 36600-VII-70)",
+			"agenda_item_subject": "Aanhouden moties:",
+			"decision_text": "Aangehouden.",
+			"decision_kind": "Stemmen - aangehouden",
+			"decision_order": 4,
+			"meeting_kind": "",
+			"case_ids": [
+				"a5221bbe-a97c-4bd4-83eb-b95e8280f6fd",
+				"c2b37291-9809-4c50-b3dd-04619a2b9012",
+				"2f4b3a65-4f31-485e-8582-201501b8fe23",
+				"56b5d45a-3ac6-4db4-a231-3ec681b0ea27",
+				"7df46e36-e935-4ac6-8a62-9816f1fe4a75"
+			],
+			"primary_case_id": "a5221bbe-a97c-4bd4-83eb-b95e8280f6fd",
+			"primary_case_kind": "Motie",
+			"kind": "Motie",
+			"dossier_numbers": ["36600-VII", "31936", "21501-30", "32849"],
+			"vote_kind": null,
+			"tally": {},
+			"voters": {},
+			"passed": null,
+			"display_name": "Motie 2024Z19938: Gewijzigde motie van de leden Kathmann en Van Nispen over de subsidie voor Offlimits meerjarig verhogen in lijn met de stijging van het aantal meldingen van online kindermisbruik (t.v.v. 36600-VII-70)"
+		}
+	},
+	{
+		"id": "decisions/decision_2479b686_83f0_4c5e_9874_c6ed2f7250a5",
+		"collection": "decisions",
+		"key": "decision_2479b686_83f0_4c5e_9874_c6ed2f7250a5",
+		"display_name": "Motie van het lid Beckerman over afzien van een extra huuropslag voor energielabels ",
+		"title": "Stemming over Motie van het lid Beckerman over afzien van een extra huuropslag voor energielabels, 25 april 2024: verworpen",
+		"path": "/stemmingen/decision_2479b686_83f0_4c5e_9874_c6ed2f7250a5",
+		"props": {
+			"decision_id": "2479b686-83f0-4c5e-9874-c6ed2f7250a5",
+			"agenda_item_id": "699f4bf5-775c-4f8f-8d71-6850b39c43d9",
+			"date": "2024-04-25",
+			"subject": "Motie van het lid Beckerman over afzien van een extra huuropslag voor energielabels ",
+			"agenda_item_subject": "Moties ingediend bij de Wet betaalbare huur",
+			"decision_text": "Verworpen.",
+			"decision_kind": "Stemmen - verworpen",
+			"decision_order": 2,
+			"meeting_kind": "",
+			"case_ids": [
+				"ebd5c098-8e8a-4259-9d39-06607380dd2c",
+				"8ed3cde8-b724-4562-98bc-20205e6cf159",
+				"32dd0a22-8f3e-4fa8-82b0-4c1a2dff82dd",
+				"d2f155dc-c707-4c23-8664-59234508ac4e",
+				"f8039fac-b96b-4e6b-81fd-8d6ec31cf56c",
+				"9f41113d-9b1e-4a8a-b063-ed3f0c04d6c0",
+				"e4aa3646-4884-4aac-99f2-f75e706de521",
+				"abea7494-f50a-4ad9-adc6-f92b2fb05011",
+				"c6a8dd86-a772-44c7-a7f7-fafd8b9b737d"
+			],
+			"primary_case_id": "ebd5c098-8e8a-4259-9d39-06607380dd2c",
+			"primary_case_kind": "Motie",
+			"kind": "Motie",
+			"dossier_numbers": ["36496"],
+			"vote_kind": "faction",
+			"tally": {
+				"Voor": 36,
+				"Tegen": 114
+			},
+			"voters": {
+				"Voor": 4,
+				"Tegen": 11
+			},
+			"passed": false,
+			"display_name": "Motie van het lid Beckerman over afzien van een extra huuropslag voor energielabels "
+		}
+	},
+	{
+		"id": "documents/stcrt_stcrt_2017_74288",
+		"collection": "documents",
+		"key": "stcrt_stcrt_2017_74288",
+		"display_name": "Stcrt. 2017/74288: STAATSCOURANT",
+		"title": "Ministeriële regeling: STAATSCOURANT",
+		"path": null,
+		"props": {
+			"source": "staatscourant",
+			"identifier": "stcrt-2017-74288",
+			"kind": "Ministeriële regeling",
+			"title": "STAATSCOURANT",
+			"year": "2017",
+			"number": "74288",
+			"display_name": "Stcrt. 2017/74288: STAATSCOURANT",
+			"bwb_id": "BWBR0005537"
+		}
+	},
+	{
+		"id": "documents/1e578723_e8ec_4c81_9bf3_92f533bb15c6",
+		"collection": "documents",
+		"key": "1e578723_e8ec_4c81_9bf3_92f533bb15c6",
+		"display_name": "Kamerstuk 36496, nr. 30. Amendement (gewijzigd/nader/vervangend): Gewijzigd amendement van het lid De Hoop ter vervanging van nr. 22 over puntenwaardering van lage…",
+		"title": "Gewijzigd amendement 36496-30 De Hoop ter vervanging van nr. 22 over puntenwaardering van lage energieprestatiecertificaten",
+		"path": "/kamerstukken/36496/30",
+		"props": {
+			"actors": [
+				{
+					"person_id": "e70c3ee3-cca2-4521-abea-b124dcec0952",
+					"faction_id": "0208097d-ef04-438a-8c29-eebb84956204",
+					"name": "H.E. de Hoop",
+					"faction": "GroenLinks-PvdA",
+					"role": "Eerste ondertekenaar",
+					"function": "Tweede Kamerlid",
+					"capacity": "kamerlid"
+				}
+			],
+			"budget": false,
+			"case_ids": ["140ebdfe-940b-47e7-a60d-9588275bc713"],
+			"case_kinds": ["Amendement"],
+			"date": "2024-04-22",
+			"decided_on": null,
+			"decision": null,
+			"display_name": "Kamerstuk 36496, nr. 30. Amendement (gewijzigd/nader/vervangend): Gewijzigd amendement van het lid De Hoop ter vervanging van nr. 22 over puntenwaardering van lage…",
+			"document_number": "2024D16274",
+			"dossier_number": "36496",
+			"dossier_numbers": ["36496"],
+			"dossier_suffix": null,
+			"dossier_title": "Wijziging van de Wet goed verhuurderschap, Boek 7 van het Burgerlijk Wetboek, de Uitvoeringswet huurprijzen woonruimte en enige andere wetten in verband met de regulering van huurprijzen en de bescherming van rechten van huurders (Wet betaalbare huur)",
+			"explanation": "De Wet betaalbare huur zorgt ervoor dat het isoleren van woningen door verhuurders wordt gestimuleerd. De fractie van GroenLinks-PvdA is echter van mening dat een goed geïsoleerde woning de norm zou moeten zijn. De energiekosten voor huurders zijn flink hoger wanneer een woning niet goed is geïsoleerd. Het is onrechtvaardig wanneer dit niet wordt gecompenseerd met een lagere huur.",
+			"external_id": "1e578723-e8ec-4c81-9bf3-92f533bb15c6",
+			"footnotes": [],
+			"kind": "Amendement (gewijzigd/nader/vervangend)",
+			"outcome": "vervangen",
+			"sections": [
+				{
+					"id": "s-1",
+					"heading": "Artikel 10c (energieprestatie)",
+					"level": 1,
+					"kind": "article",
+					"number": "10c",
+					"number_scheme": "arabic",
+					"article_refs": [
+						{
+							"number": "10c",
+							"of": "self"
+						}
+					],
+					"law": null,
+					"parent": null,
+					"char_start": 264,
+					"char_end": 1504
+				},
+				{
+					"id": "s-2",
+					"heading": "Toelichting",
+					"level": 2,
+					"kind": "other",
+					"number": null,
+					"number_scheme": null,
+					"article_refs": [],
+					"law": null,
+					"parent": "s-1",
+					"char_start": 648,
+					"char_end": 1504
+				}
+			],
+			"sequence": 30,
+			"session_year": "2023-2024",
+			"source": "tk",
+			"structure_quality": "implicit",
+			"subject": "Gewijzigd amendement van het lid De Hoop ter vervanging van nr. 22 over puntenwaardering van lage energieprestatiecertificaten",
+			"tally": null,
+			"text_source": "kst-xml",
+			"text_truncated": false,
+			"title": "Gewijzigd amendement van het lid De Hoop ter vervanging van nr. 22 over puntenwaardering van lage energieprestatiecertificaten",
+			"xml_dialect": "officiele-publicatie",
+			"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2024D16274&did=2024D16274",
+			"number": "30",
+			"sender": {
+				"name": "H.E. de Hoop",
+				"function": "Tweede Kamerlid",
+				"faction": "GroenLinks-PvdA",
+				"capacity": "kamerlid",
+				"member_key": "e70c3ee3_cca2_4521_abea_b124dcec0952",
+				"ministry": null
+			}
+		}
+	},
+	{
+		"id": "documents/2f36c6c3_0c2b_4fb9_b7e6_af956a25f11f",
+		"collection": "documents",
+		"key": "2f36c6c3_0c2b_4fb9_b7e6_af956a25f11f",
+		"display_name": "Kamerstuk 36314, nr. 3. Memorie van toelichting: Wijziging van de Wet op het financieel toezicht, de Algemene wet bestuursrecht en de Faillissementswet in verband met…",
+		"title": "Memorie van toelichting (36314-3)",
+		"path": "/kamerstukken/36314/3",
+		"props": {
+			"actors": [
+				{
+					"person_id": "64457f28-37b6-4948-860a-f28bc62b99ae",
+					"faction_id": null,
+					"name": "S.A.M. Kaag",
+					"faction": "",
+					"role": "Eerste ondertekenaar",
+					"function": "minister van Financiën",
+					"capacity": "bewindspersoon"
+				}
+			],
+			"budget": false,
+			"case_ids": ["1e5fc846-0297-49d4-b8fd-2fa187b89234"],
+			"case_kinds": ["Wetgeving"],
+			"date": "2023-02-23",
+			"display_name": "Kamerstuk 36314, nr. 3. Memorie van toelichting: Wijziging van de Wet op het financieel toezicht, de Algemene wet bestuursrecht en de Faillissementswet in verband met…",
+			"document_number": "2023D08520",
+			"dossier_number": "36314",
+			"dossier_numbers": ["36314"],
+			"dossier_suffix": null,
+			"dossier_title": null,
+			"external_id": "2f36c6c3-0c2b-4fb9-b7e6-af956a25f11f",
+			"kind": "Memorie van toelichting",
+			"sequence": 3,
+			"session_year": "2022-2023",
+			"source": "tk",
+			"structure_quality": "explicit",
+			"subject": "Memorie van toelichting",
+			"text_source": "kst-xml",
+			"text_truncated": false,
+			"title": "Wijziging van de Wet op het financieel toezicht, de Algemene wet bestuursrecht en de Faillissementswet in verband met de rechtsbescherming bij de afwikkeling van verzekeraars en enige andere verbeteringen in het kader voor herstel en afwikkeling van verzekeraars (Wijzigingswet herstel en afwikkeling van verzekeraars)",
+			"xml_dialect": "officiele-publicatie",
+			"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2023D08520&did=2023D08520",
+			"number": "3",
+			"sender": {
+				"name": "S.A.M. Kaag",
+				"function": "minister van Financiën",
+				"faction": null,
+				"capacity": "bewindspersoon",
+				"member_key": "64457f28_37b6_4948_860a_f28bc62b99ae",
+				"ministry": "fin"
+			}
+		}
+	},
+	{
+		"id": "dossiers/36600_vii",
+		"collection": "dossiers",
+		"key": "36600_vii",
+		"display_name": "Kamerstukdossier 36600-VII: Vaststelling van de begrotingsstaten van het Ministerie van Binnenlandse Zaken en Koninkrijksrelaties (VII) voor het jaar 2025",
+		"title": "36600 VII Begroting Binnenlandse Zaken en Koninkrijksrelaties 2025",
+		"path": "/dossiers/36600-VII",
+		"props": {
+			"cabinet": "schoof",
+			"case_kinds": [
+				"Amendement",
+				"Begroting",
+				"Brief regering",
+				"Motie",
+				"Rapport/brief Algemene Rekenkamer"
+			],
+			"closed": true,
+			"closed_on": "2025-04-15",
+			"current_phase": "Eindtekst",
+			"display_name": "Kamerstukdossier 36600-VII: Vaststelling van de begrotingsstaten van het Ministerie van Binnenlandse Zaken en Koninkrijksrelaties (VII) voor het jaar 2025",
+			"ek_outcome": {
+				"outcome": "Aangenomen",
+				"date": "2025-04-15",
+				"method": "Stemming bij zitten en opstaan, aangenomen",
+				"source_url": "https://www.eerstekamer.nl/verslagdeel/20250415/begroting_binnenlandse_zaken_en",
+				"retrieved_on": "2026-10-09"
+			},
+			"external_id": "b4d982d0-aead-4908-b716-a14bca966238",
+			"first_signed": {
+				"date": "2024-09-16",
+				"member": "a3b17348_54cf_4bca_82d4_e62bd46c2fbc",
+				"capacity": "bewindspersoon",
+				"function": "minister van Financiën",
+				"paper": "documents/8ecbd70d_825c_4226_ad60_170c7101474c"
+			},
+			"initiative": false,
+			"kind": "Begroting",
+			"kind_basis": "case",
+			"label": "36600-VII",
+			"last_activity": "2026-10-08",
+			"ministry": "fin",
+			"number": "36600",
+			"opened_on": "2024-09-17",
+			"opened_on_basis": "first_paper",
+			"order": "00036600.2.0007.",
+			"outcome": "aangenomen",
+			"phases": [
+				{
+					"name": "Voorstel van wet",
+					"done": true,
+					"date": "2024-09-17"
+				},
+				{
+					"name": "Memorie van toelichting",
+					"done": true,
+					"date": "2024-09-17"
+				},
+				{
+					"name": "Advies Raad van State",
+					"done": true,
+					"date": "2024-09-17"
+				},
+				{
+					"name": "Verslag",
+					"done": false,
+					"date": null
+				},
+				{
+					"name": "Nota n.a.v. het verslag",
+					"done": false,
+					"date": null
+				},
+				{
+					"name": "Nota van wijziging / Amendement",
+					"done": true,
+					"date": "2024-10-08"
+				},
+				{
+					"name": "Stemmingen",
+					"done": true,
+					"date": "2024-12-12"
+				},
+				{
+					"name": "Eindtekst",
+					"done": true,
+					"date": "2024-12-16"
+				}
+			],
+			"same_number_count": 27,
+			"source": "tk",
+			"submitted_on_tk": "2024-09-17",
+			"suffix": "VII",
+			"title": "Vaststelling van de begrotingsstaten van het Ministerie van Binnenlandse Zaken en Koninkrijksrelaties (VII) voor het jaar 2025",
+			"title_source": "dossier",
+			"tk_decision": {
+				"kind": "Stemmen - aangenomen",
+				"text": "Aangenomen.",
+				"date": "2024-12-12"
+			},
+			"official_short": null,
+			"short_title": "Begroting Binnenlandse Zaken en Koninkrijksrelaties 2025",
+			"short_title_basis": "title"
+		}
+	},
+	{
+		"id": "dossiers/27926",
+		"collection": "dossiers",
+		"key": "27926",
+		"display_name": "Kamerstukdossier 27926: Huurbeleid",
+		"title": "27926 Huurbeleid",
+		"path": "/dossiers/27926",
+		"props": {
+			"cabinet": "balkenende_iv",
+			"case_kinds": [
+				"Brief Kamer",
+				"Brief regering",
+				"Brief van lid/fractie/commissie",
+				"Motie",
+				"Overig"
+			],
+			"closed": false,
+			"closed_on": null,
+			"current_phase": null,
+			"display_name": "Kamerstukdossier 27926: Huurbeleid",
+			"ek_outcome": null,
+			"external_id": "c0ccc7b0-7c09-45cc-9e73-09f4a38063f2",
+			"first_signed": {
+				"date": "2008-06-04",
+				"member": "c9a2aae7_c474_453d_a4ff_a16a8ba156aa",
+				"capacity": "bewindspersoon",
+				"function": "minister voor Wonen, Wijken en Integratie",
+				"paper": "documents/c26f92f4_b144_411b_b471_ee26b2926d7c"
+			},
+			"initiative": false,
+			"kind": null,
+			"kind_basis": null,
+			"label": "27926",
+			"last_activity": "2026-10-13",
+			"ministry": "vrom",
+			"number": "27926",
+			"opened_on": "2005-05-12",
+			"opened_on_basis": "earliest_record",
+			"order": "00027926.0.0000.",
+			"outcome": null,
+			"phases": null,
+			"same_number_count": 0,
+			"source": "tk",
+			"submitted_on_tk": null,
+			"suffix": "",
+			"title": "Huurbeleid",
+			"title_source": "dossier",
+			"tk_decision": null,
+			"official_short": null,
+			"short_title": null,
+			"short_title_basis": null
+		}
+	},
+	{
+		"id": "dossiers/32761",
+		"collection": "dossiers",
+		"key": "32761",
+		"display_name": "Kamerstukdossier 32761: Verwerking en bescherming persoonsgegevens",
+		"title": "32761 Verwerking en bescherming persoonsgegevens",
+		"path": "/dossiers/32761",
+		"props": {
+			"cabinet": "rutte_verhagen",
+			"case_kinds": [
+				"Brief regering",
+				"Brief van lid/fractie/commissie",
+				"Motie",
+				"Overig",
+				"Rapport/brief Algemene Rekenkamer"
+			],
+			"closed": false,
+			"closed_on": null,
+			"current_phase": null,
+			"display_name": "Kamerstukdossier 32761: Verwerking en bescherming persoonsgegevens",
+			"ek_outcome": null,
+			"external_id": "b2f7a367-2dcf-4865-a78c-2789ac9f9959",
+			"first_signed": {
+				"date": "2011-04-29",
+				"member": "a3986ffd_c057_46cc_afd5_54846c9955ef",
+				"capacity": "bewindspersoon",
+				"function": "staatssecretaris van Veiligheid en Justitie",
+				"paper": "documents/e4041e04_5e28_4ed9_a2c4_1fbd60d80aa8"
+			},
+			"initiative": false,
+			"kind": null,
+			"kind_basis": null,
+			"label": "32761",
+			"last_activity": "2026-10-14",
+			"ministry": "venj",
+			"number": "32761",
+			"opened_on": "2011-04-29",
+			"opened_on_basis": "first_paper",
+			"order": "00032761.0.0000.",
+			"outcome": null,
+			"phases": null,
+			"same_number_count": 0,
+			"source": "tk",
+			"submitted_on_tk": null,
+			"suffix": "",
+			"title": "Verwerking en bescherming persoonsgegevens",
+			"title_source": "dossier",
+			"tk_decision": null,
+			"official_short": null,
+			"short_title": null,
+			"short_title_basis": null
+		}
+	},
+	{
+		"id": "factions/vvd",
+		"collection": "factions",
+		"key": "vvd",
+		"display_name": "VVD",
+		"title": "VVD, fractie in de Tweede Kamer",
+		"path": "/fracties/vvd",
+		"props": {
+			"abbreviation": "VVD",
+			"active": true,
+			"active_from": "1948-01-23",
+			"active_until": null,
+			"aliases": ["VVD", "Volkspartij voor Vrijheid en Democratie"],
+			"display_name": "VVD",
+			"external_id": "7476e97a-3243-4122-9df6-ba7d82a5279b",
+			"external_ids": ["7476e97a-3243-4122-9df6-ba7d82a5279b"],
+			"name": "Volkspartij voor Vrijheid en Democratie",
+			"seats": 22,
+			"seats_changed_on": "2026-09-02"
+		}
+	},
+	{
+		"id": "instrument_versions/bwbr0005537_2002_05_29",
+		"collection": "instrument_versions",
+		"key": "bwbr0005537_2002_05_29",
+		"display_name": null,
+		"title": "Algemene wet bestuursrecht, geldend van 29 mei 2002 tot 1 december 2002",
+		"path": null,
+		"props": {
+			"bwb_id": "BWBR0005537",
+			"valid_from": "2002-05-29",
+			"valid_until": "2002-12-01",
+			"current": false,
+			"state_url": "https://repository.officiele-overheidspublicaties.nl/bwb/BWBR0005537/2002-05-29_0/xml/BWBR0005537_2002-05-29_0.xml",
+			"instrument_citation_title": "Algemene wet bestuursrecht"
+		}
+	},
+	{
+		"id": "instrument_versions/bwbr0005537_2008_01_01",
+		"collection": "instrument_versions",
+		"key": "bwbr0005537_2008_01_01",
+		"display_name": null,
+		"title": "Algemene wet bestuursrecht, geldend van 1 januari 2008 tot 1 februari 2008",
+		"path": null,
+		"props": {
+			"bwb_id": "BWBR0005537",
+			"valid_from": "2008-01-01",
+			"valid_until": "2008-02-01",
+			"current": false,
+			"state_url": "https://repository.officiele-overheidspublicaties.nl/bwb/BWBR0005537/2008-01-01_0/xml/BWBR0005537_2008-01-01_0.xml",
+			"instrument_citation_title": "Algemene wet bestuursrecht"
+		}
+	},
+	{
+		"id": "instrument_versions/bwbr0005537_2022_05_01",
+		"collection": "instrument_versions",
+		"key": "bwbr0005537_2022_05_01",
+		"display_name": null,
+		"title": "Algemene wet bestuursrecht, geldend van 1 mei 2022 tot 1 augustus 2022",
+		"path": null,
+		"props": {
+			"bwb_id": "BWBR0005537",
+			"valid_from": "2022-05-01",
+			"valid_until": "2022-08-01",
+			"current": false,
+			"state_url": "https://repository.officiele-overheidspublicaties.nl/bwb/BWBR0005537/2022-05-01_0/xml/BWBR0005537_2022-05-01_0.xml",
+			"instrument_citation_title": "Algemene wet bestuursrecht"
+		}
+	},
+	{
+		"id": "instruments/stb_2026_187",
+		"collection": "instruments",
+		"key": "stb_2026_187",
+		"display_name": "Stb. 2026, 187",
+		"title": "Stb. 2026, 187: BEGRIPSBEPALING",
+		"path": "/stb/2026/187",
+		"props": {
+			"article_count": 0,
+			"citation_title": "Stb. 2026, 187",
+			"date_published": "2026-07-10",
+			"date_signed": "2026-07-08",
+			"display_name": "Stb. 2026, 187",
+			"dossier_numbers": ["36764"],
+			"inbound_citation_count": 0,
+			"jurisdiction": "nl",
+			"kind": "publicatie",
+			"official_id": "stb-2026-187",
+			"publication_kind": "Stb",
+			"publication_number": "187",
+			"publication_year": 2026,
+			"source": "bwb",
+			"stub": false
+		}
+	},
+	{
+		"id": "instruments/bwbr0005537",
+		"collection": "instruments",
+		"key": "bwbr0005537",
+		"display_name": "Algemene wet bestuursrecht",
+		"title": "Algemene wet bestuursrecht (Awb)",
+		"path": "/wetten/BWBR0005537",
+		"props": {
+			"abbreviation": "Awb",
+			"aliases": ["Awb"],
+			"article_count": 584,
+			"basis": [],
+			"bwb_id": "BWBR0005537",
+			"celex_refs": [
+				"32000L0031",
+				"32002L0047",
+				"32003L0071",
+				"32004L0025",
+				"32007L0036",
+				"32010R1095",
+				"32012R0648",
+				"32014L0059",
+				"32014R0600",
+				"32014R0806",
+				"32014R0910",
+				"32015R2365",
+				"32017L1132",
+				"32018R1724",
+				"32019L1937",
+				"32020L1828",
+				"32021R0023",
+				"32022R0868",
+				"32022R1925",
+				"32022R2065"
+			],
+			"citation_title": "Algemene wet bestuursrecht",
+			"citation_titles": ["Algemene wet bestuursrecht"],
+			"date_in_force": "1994-01-01",
+			"date_published": "1992-06-30",
+			"date_signed": "1992-06-04",
+			"display_name": "Algemene wet bestuursrecht",
+			"dossier_numbers": ["21221"],
+			"enacted_publication": "stb-1992-315",
+			"implements_celex": [],
+			"inbound_citation_count": 615364,
+			"jurisdiction": "nl",
+			"kind": "wet",
+			"legal_areas": [
+				{
+					"main": "Staats- en bestuursrecht",
+					"main_id": "c_da370768",
+					"main_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_da370768",
+					"main_slug": "staats-en-bestuursrecht",
+					"specific": "Bestuursrecht",
+					"specific_id": "c_052899f0",
+					"specific_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_052899f0",
+					"specific_slug": "bestuursrecht"
+				}
+			],
+			"official_title": "Wet van 4 juni 1992, houdende algemene regels van bestuursrecht (Algemene wet bestuursrecht)",
+			"policy_domains": [
+				{
+					"label": "Overheid, bestuur en koninkrijk",
+					"id": "c_fd285f2b",
+					"uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_fd285f2b",
+					"slug": "overheid-bestuur-en-koninkrijk"
+				}
+			],
+			"short_title": "Awb",
+			"source": "bwb",
+			"stub": false,
+			"title": "Algemene wet bestuursrecht",
+			"version_date_in_force": "2026-08-15"
+		}
+	},
+	{
+		"id": "instruments/31979l0409",
+		"collection": "instruments",
+		"key": "31979l0409",
+		"display_name": "Richtlijn 79/409/EEG",
+		"title": "Richtlijn 79/409/EEG",
+		"path": "/wetten/31979L0409",
+		"props": {
+			"article_count": 19,
+			"celex": "31979L0409",
+			"citation_title": "Richtlijn 79/409/EEG",
+			"display_name": "Richtlijn 79/409/EEG",
+			"inbound_citation_count": 315,
+			"jurisdiction": "eu",
+			"kind": null,
+			"lang": "NL",
+			"meta": {
+				"celex": "31979L0409",
+				"lang": "NL"
+			},
+			"short_title": null,
+			"source": "eurlex",
+			"stub": false,
+			"title": "Richtlijn 79/409/EEG van de Raad van 2 april 1979 inzake het behoud van de vogelstand"
+		}
+	},
+	{
+		"id": "judgments/ecli_nl_hr_2019_2006",
+		"collection": "judgments",
+		"key": "ecli_nl_hr_2019_2006",
+		"display_name": "Hoge Raad 2019-12-20 / 19/00135",
+		"title": "HR 20 december 2019 (Urgenda), ECLI:NL:HR:2019:2006",
+		"path": "/uitspraken/ECLI:NL:HR:2019:2006",
+		"props": {
+			"case_number": "19/00135",
+			"case_number_keys": ["19/00135"],
+			"conclusion_eclis": ["ECLI:NL:PHR:2019:887"],
+			"court": "Hoge Raad",
+			"court_code": "HR",
+			"court_kind": "hoge_raad",
+			"date": "2019-12-20",
+			"date_eff": "2019-12-20",
+			"decision_kind": "arrest",
+			"display_name": "Hoge Raad 2019-12-20 / 19/00135",
+			"ecli": "ECLI:NL:HR:2019:2006",
+			"inbound_citation_count": 72,
+			"meta": {
+				"ecli": "ECLI:NL:HR:2019:2006",
+				"updated": "2025-11-20T11:21:14+00:00"
+			},
+			"names": ["Urgenda"],
+			"outbound_citation_count": 13,
+			"published_on": "2019-12-20",
+			"related_eclis": ["ECLI:NL:GHDHA:2018:2591"],
+			"replaced_by": null,
+			"source": "rechtspraak",
+			"source_kind": "rs-content",
+			"stub": false,
+			"tier": "hoge_raad"
+		}
+	},
+	{
+		"id": "judgments/ecli_nl_ghdha_2018_2591",
+		"collection": "judgments",
+		"key": "ecli_nl_ghdha_2018_2591",
+		"display_name": "Gerechtshof Den Haag 2018-10-09 / 200.178.245/01",
+		"title": "Hof Den Haag 9 oktober 2018 (Urgenda), ECLI:NL:GHDHA:2018:2591",
+		"path": "/uitspraken/ECLI:NL:GHDHA:2018:2591",
+		"props": {
+			"case_number": "200.178.245/01",
+			"case_number_keys": ["200.178.245/01"],
+			"court": "Gerechtshof Den Haag",
+			"court_code": "GHDHA",
+			"court_kind": "gerechtshof",
+			"date": "2018-10-09",
+			"date_eff": "2018-10-09",
+			"decision_kind": "arrest",
+			"display_name": "Gerechtshof Den Haag 2018-10-09 / 200.178.245/01",
+			"ecli": "ECLI:NL:GHDHA:2018:2591",
+			"footnotes": null,
+			"inbound_citation_count": 10,
+			"later_eclis": ["ECLI:NL:HR:2019:2006"],
+			"meta": {
+				"ecli": "ECLI:NL:GHDHA:2018:2591",
+				"updated": "2025-03-22T16:59:34+00:00"
+			},
+			"names": ["Urgenda"],
+			"outbound_citation_count": 0,
+			"published_on": "2018-10-09",
+			"related_eclis": ["ECLI:NL:RBDHA:2015:7145"],
+			"replaced_by": null,
+			"source": "rechtspraak",
+			"source_kind": "rs-content",
+			"stub": false,
+			"summary": "Klimaatzaak Urgenda. Onrechtmatige daad. Schending zorgplicht ex artikelen 2 en 8 EVRM. Staat moet broeikasgassen nu verder terugdringen. Vonnis bekrachtigd",
+			"summary_en": "Disclaimer: The translation of this judgment on appeal is solely intended to provide information. The text of the translation is an unofficial translation. Liability cannot be claimed for possible errors and/or omissions in this translation. The Dutch text of the judgment is the only authentic and formal text (ECLI-number: ECLI:NL:GHDHA:2018:2591) \n       \n       Climate case Urgenda. Duty of care under Articles 2 and 8 ECHR. Reduction greenhouse gas emissions.",
+			"tier": "gerechtshof"
+		}
+	},
+	{
+		"id": "judgments/ecli_nl_hr_1965_ab7079",
+		"collection": "judgments",
+		"key": "ecli_nl_hr_1965_ab7079",
+		"display_name": "Hoge Raad 1965-11-05 / 9885",
+		"title": "HR 5 november 1965 (Kelderluik), ECLI:NL:HR:1965:AB7079",
+		"path": "/uitspraken/ECLI:NL:HR:1965:AB7079",
+		"props": {
+			"case_number": "9885",
+			"case_number_keys": ["9885"],
+			"conclusion_eclis": ["ECLI:NL:PHR:1965:AB7079"],
+			"court": "Hoge Raad",
+			"court_code": "HR",
+			"court_kind": "hoge_raad",
+			"date": "1965-11-05",
+			"date_eff": "1965-11-05",
+			"decision_kind": "arrest",
+			"display_name": "Hoge Raad 1965-11-05 / 9885",
+			"ecli": "ECLI:NL:HR:1965:AB7079",
+			"inbound_citation_count": 166,
+			"meta": {
+				"ecli": "ECLI:NL:HR:1965:AB7079",
+				"updated": "2025-03-22T09:54:04+00:00"
+			},
+			"names": ["Kelderluik"],
+			"outbound_citation_count": 0,
+			"published_on": "2019-09-24",
+			"replaced_by": null,
+			"source": "rechtspraak",
+			"source_kind": "rs-content",
+			"stub": false,
+			"summary": "Kelderluik-arrest. Onrechtmatige daad. Gevaarzetting. Maatstaven voor beoordeling.",
+			"tier": "hoge_raad"
+		}
+	},
+	{
+		"id": "members/0442fb6c_8441_4292_a275_5f701a223cfc",
+		"collection": "members",
+		"key": "0442fb6c_8441_4292_a275_5f701a223cfc",
+		"display_name": "Hayke Veldman (VVD)",
+		"title": "Hayke Veldman, oud-Kamerlid",
+		"path": "/leden/hayke-veldman",
+		"props": {
+			"birth_date": "1969-11-05",
+			"death_date": null,
+			"display_name": "Hayke Veldman (VVD)",
+			"external_id": "0442fb6c-8441-4292-a275-5f701a223cfc",
+			"faction_memberships": [
+				{
+					"faction_id": "factions/vvd",
+					"faction_key": "vvd",
+					"name": "Volkspartij voor Vrijheid en Democratie",
+					"abbreviation": "VVD",
+					"aliases": ["VVD", "Volkspartij voor Vrijheid en Democratie"],
+					"from_date": "2014-06-25",
+					"to_date": "2017-03-22",
+					"role": "Lid"
+				},
+				{
+					"faction_id": "factions/vvd",
+					"faction_key": "vvd",
+					"name": "Volkspartij voor Vrijheid en Democratie",
+					"abbreviation": "VVD",
+					"aliases": ["VVD", "Volkspartij voor Vrijheid en Democratie"],
+					"from_date": "2017-10-31",
+					"to_date": "2021-03-30",
+					"role": "Lid"
+				}
+			],
+			"family_name": "Veldman",
+			"full_name": "Habbo Siebold Veldman",
+			"initials": "H.S.",
+			"name": "Hayke Veldman",
+			"name_prefix": null,
+			"number": "2615",
+			"party": "VVD",
+			"slug": "hayke-veldman"
+		}
+	},
+	{
+		"id": "committees/e6291928_7ea0_46f9_aa6a_58b11ee069f2",
+		"collection": "committees",
+		"key": "e6291928_7ea0_46f9_aa6a_58b11ee069f2",
+		"display_name": "Algemene commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking",
+		"title": "Algemene commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking (BuHaOS)",
+		"path": "/commissies/buhaos-2021",
+		"props": {
+			"abbreviation": "BuHaOS",
+			"active_dossier_count": 0,
+			"display_name": "Algemene commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking",
+			"ended_on": "2021-03-31",
+			"external_id": "e6291928-7ea0-46f9-aa6a-58b11ee069f2",
+			"kind": "algemeen",
+			"name": "Algemene commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking",
+			"slug": "buhaos-2021",
+			"started_on": null
+		}
+	},
+	{
+		"id": "article_versions/bwbr0005289_av_2958403_4569802",
+		"collection": "article_versions",
+		"key": "bwbr0005289_av_2958403_4569802",
+		"display_name": "Artikel 162 Burgerlijk Wetboek Boek 6",
+		"title": "Artikel 162 Burgerlijk Wetboek Boek 6",
+		"path": null,
+		"props": {
+			"article_number": "162",
+			"breadcrumb": [
+				{
+					"type": "boek",
+					"label": "Boek 6",
+					"title": "Algemeen gedeelte van het verbintenissenrecht"
+				},
+				{
+					"type": "titeldeel",
+					"label": "Titel 3",
+					"title": "Onrechtmatige daad"
+				},
+				{
+					"type": "afdeling",
+					"label": "Afdeling 1",
+					"title": "Algemene bepalingen"
+				}
+			],
+			"breadcrumb_changes": null,
+			"bwb_id": "BWBR0005289",
+			"commencement_publication": {
+				"id": "stb-1991-600",
+				"url_identifier": null,
+				"kind": "Stb",
+				"year": 1991,
+				"number": "600",
+				"effect": "nieuwe-regeling",
+				"signed": "1991-11-22",
+				"published": "1991-12-18",
+				"dossiers": []
+			},
+			"content_digest": "f6090168ae1f445e",
+			"current": true,
+			"display_name": "Artikel 162 Burgerlijk Wetboek Boek 6",
+			"effect": "nieuwe-regeling",
+			"instrument_citation_title": "Burgerlijk Wetboek Boek 6",
+			"label": "Artikel 162",
+			"last_seen": "2026-07-16",
+			"origin_publication": {
+				"id": "stb-1991-600",
+				"url_identifier": null,
+				"kind": "Stb",
+				"year": 1991,
+				"number": "600",
+				"effect": "nieuwe-regeling",
+				"signed": "1991-11-22",
+				"published": "1991-12-18",
+				"dossiers": []
+			},
+			"parts": [
+				{
+					"id": "lid-1",
+					"kind": "lid",
+					"number": "1",
+					"start": 3,
+					"end": 164
+				},
+				{
+					"id": "lid-2",
+					"kind": "lid",
+					"number": "2",
+					"start": 168,
+					"end": 444
+				},
+				{
+					"id": "lid-3",
+					"kind": "lid",
+					"number": "3",
+					"start": 448,
+					"end": 656
+				}
+			],
+			"path": "/Boek6/Titeldeel3/Afdeling1/Artikel162",
+			"position": 179,
+			"source_publication": "Stb.1991-600",
+			"stam_id": "2958403",
+			"valid_from": "1992-01-01",
+			"valid_until": null,
+			"versie_id": "4569802"
+		}
+	}
+]
