@@ -316,15 +316,12 @@ export function createGraphContext() {
 			const relation = relationOf(neighbor.relation);
 			if (!relation) continue;
 			const other = drawable(neighbor);
-			const far = endOf(neighbor.collection, other);
+			const far = { ...endOf(neighbor.collection, other), ties: !!joins?.(id) };
 			const outbound = neighbor.direction === 'outbound';
 			const placement = placeConnection({
-				mode: 'node',
 				relation,
 				source: outbound ? near : far,
 				target: outbound ? far : near,
-				focus: outbound ? 'source' : 'target',
-				joins: !!far.hull && !!joins?.(id),
 				confidence: neighbor.confidence,
 				threshold: threshold()
 			});

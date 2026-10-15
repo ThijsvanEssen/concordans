@@ -226,7 +226,6 @@ describe('nothing left over', () => {
 			'End',
 			'GraphEdge',
 			'GraphNode',
-			'Mode',
 			'PAGE_SIZE',
 			'PREVIEW_CHARS',
 			'Regel',

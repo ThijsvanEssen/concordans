@@ -90,7 +90,8 @@ describe('a stuk onderdeel van a dossier', () => {
 			}
 		]);
 		expect(linesToDossier(store)).toEqual([]);
-		expect([...((await hull(store))?.parts ?? [])]).toEqual(['documents/6']);
+		// The dossier the row names is its anchor, as when it ties two chosen stukken.
+		expect([...((await hull(store))?.parts ?? [])]).toEqual([dossier.id, 'documents/6']);
 	});
 
 	it('stands in the hull on a path through the dossier', async () => {
@@ -113,6 +114,10 @@ describe('a stuk onderdeel van a dossier', () => {
 			]
 		} as unknown as Schema<'PathsResponse'>);
 		expect(linesToDossier(store)).toEqual([]);
-		expect([...((await hull(store))?.parts ?? [])]).toEqual(['documents/7', 'documents/8']);
+		expect([...((await hull(store))?.parts ?? [])]).toEqual([
+			dossier.id,
+			'documents/7',
+			'documents/8'
+		]);
 	});
 });
