@@ -158,12 +158,12 @@ class Kaarten {
 		this.#stand = { ...this.#stand, actief: id };
 		this.#bewaar();
 	}
-	/** A new map, active from now on; its name the next free `Map 2`, `Map 3` where none given. */
+	/** A new map, active from now on; its name the next free `Bundel 2`, `Bundel 3` where none given. */
 	nieuw(naam?: string, items: MapItem[] = []): Map {
 		const namen = new Set(this.#stand.mappen.map((m) => m.naam));
 		let n = this.#stand.mappen.length + 1;
-		while (!naam && namen.has(`Map ${n}`)) n++;
-		const m = { ...leeg(naam?.trim() || `Map ${n}`), items };
+		while (!naam && namen.has(`Bundel ${n}`)) n++;
+		const m = { ...leeg(naam?.trim() || `Bundel ${n}`), items };
 		this.#stand = { mappen: [...this.#stand.mappen, m], actief: m.id };
 		this.#bewaar();
 		return m;

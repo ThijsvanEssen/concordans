@@ -275,8 +275,8 @@
 	</header>
 
 	<!-- The maps, as Gevolgd lists its topics: a way to each; the active one in weight. -->
-	<nav class="opzij" aria-label="Mappen">
-		<h2 class="opzij__kop">Mappen</h2>
+	<nav class="opzij" aria-label="Bundels">
+		<h2 class="opzij__kop">Bundels</h2>
 		<ul>
 			{#each kaart.mappen as m (m.id)}
 				<li>
@@ -291,18 +291,22 @@
 				</li>
 			{/each}
 		</ul>
-		<p class="nieuw"><TekstLink onclick={nieuw}>Nieuwe map</TekstLink></p>
+		<p class="nieuw"><TekstLink onclick={nieuw}>Nieuwe bundel</TekstLink></p>
 	</nav>
 
 	<div class="inhoud">
 		{#if gedeeld}
 			{@const shared = gedeeld}
-			<Sectie title="Gedeelde map: {gedeeld.naam ?? 'zonder naam'}" niveau={2} inklapbaar={false}>
+			<Sectie
+				title="Gedeelde bundel: {gedeeld.naam ?? 'zonder naam'}"
+				niveau={2}
+				inklapbaar={false}
+			>
 				{#snippet naast()}
 					<span class="acties">
 						{#if shared.items.length}
 							<TekstLink href={netwerkHref(shared.items) ?? undefined}>Netwerk</TekstLink>
-							<TekstLink onclick={() => gedeeldKlaar('map')}>Bewaar als map</TekstLink>
+							<TekstLink onclick={() => gedeeldKlaar('map')}>Bewaar als bundel</TekstLink>
 							<TekstLink onclick={() => gedeeldKlaar('erbij')}
 								>Voeg toe aan {kaart.actief.naam}</TekstLink
 							>
@@ -310,7 +314,7 @@
 						<TekstLink onclick={() => gedeeldKlaar('niet')}>Niet bewaren</TekstLink>
 					</span>
 				{/snippet}
-				<Aantekening tekst={gedeeld.notitie} bij={gedeeld.naam ?? 'de map'} />
+				<Aantekening tekst={gedeeld.notitie} bij={gedeeld.naam ?? 'de bundel'} />
 				<p class="meta">
 					<span
 						>{tel(gedeeld.items.length)}{#if gedeeld.skipped}, {formatCount(gedeeld.skipped)} uit de link
@@ -351,7 +355,7 @@
 									)}>CSV</TekstLink
 							>
 						{/if}
-						<TekstMenu klein rechts label="Map {m.naam}" tekst="Map">
+						<TekstMenu klein rechts label="Bundel {m.naam}" tekst="Bundel">
 							{#snippet inhoud(dicht)}
 								{#if m.id !== kaart.actief.id}
 									<button
@@ -380,7 +384,7 @@
 									onclick={() => {
 										dicht();
 										mapNotitieVan = m.id;
-									}}>{m.notitie ? 'Wijzig aantekening' : 'Aantekening bij de map'}</button
+									}}>{m.notitie ? 'Wijzig aantekening' : 'Aantekening bij de bundel'}</button
 								>
 								<button
 									type="button"
@@ -389,7 +393,7 @@
 									onclick={() => {
 										dicht();
 										verwijderen = m.id;
-									}}>Verwijder map</button
+									}}>Verwijder bundel</button
 								>
 							{/snippet}
 						</TekstMenu>
@@ -411,7 +415,7 @@
 							name="naam"
 							autofocus
 							use:kiesAlles
-							aria-label="Naam van de map"
+							aria-label="Naam van de bundel"
 							value={m.naam}
 							onblur={(e) => {
 								kaart.hernoem(m.id, e.currentTarget.value);
@@ -449,7 +453,7 @@
 				/>
 				<p class="meta">
 					<span
-						>{m.id === kaart.actief.id ? 'Actieve map, ' : ''}{tel(m.items.length)}, gewijzigd
+						>{m.id === kaart.actief.id ? 'Actieve bundel, ' : ''}{tel(m.items.length)}, gewijzigd
 						{dag(m.gewijzigd)}</span
 					>
 					{#if m.items.length > 1}
@@ -486,7 +490,7 @@
 				{#if m.items.length}
 					<p class="voet">
 						<ConfirmButton
-							label="Wis de map"
+							label="Wis de bundel"
 							confirmLabel="Ja, alles uit {m.naam} halen"
 							class="wis raakvlak"
 							onConfirm={() => op(m, () => kaart.wis())}
@@ -758,7 +762,7 @@
 		text-decoration-line: underline;
 		text-underline-offset: 3px;
 	}
-	/* On a phone the maps stand above the groups: the column holds Nieuwe map. */
+	/* On a phone the maps stand above the groups: the column holds Nieuwe bundel. */
 	@media (max-width: 768px) {
 		.opzij {
 			padding-top: 0;

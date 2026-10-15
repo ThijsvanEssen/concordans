@@ -4,7 +4,7 @@
 
 | URL                                             | Purpose                                                                           |
 | ----------------------------------------------- | --------------------------------------------------------------------------------- |
-| `/gemarkeerd`                                   | The maps a reader keeps, and a shared map (`#m=`)                                 |
+| `/gemarkeerd`                                   | The bundels a reader keeps, and a shared bundel (`#m=`)                           |
 | `/onderwerpen`, `/onderwerpen/overzicht`        | Followed topics, and one topic's overview                                         |
 | `/`                                             | Start page: search with four scopes, each linking into Bladeren; Actueel in short |
 | `/actueel`                                      | What came in per day, with filters in the URL and an Atom feed                    |

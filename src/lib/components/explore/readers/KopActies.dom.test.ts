@@ -12,7 +12,7 @@ describe('KopActies', () => {
 		const knop = screen.getByRole('button', { name: 'Bewaar lid 2' });
 		expect(knop.classList.contains('btn')).toBe(true);
 		expect(knop.getAttribute('aria-pressed')).toBe('false');
-		expect(screen.getByRole('button', { name: /^Bewaar art\. 6:162 BW in map/ })).toBeTruthy();
+		expect(screen.getByRole('button', { name: /^Bewaar art\. 6:162 BW in bundel/ })).toBeTruthy();
 
 		await fireEvent.click(knop);
 		await tick();
