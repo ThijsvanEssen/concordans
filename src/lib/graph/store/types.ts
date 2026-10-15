@@ -61,8 +61,6 @@ export type GraphFilters = {
 type GraphExpansionOptions = {
 	/** Neighbours of the response that are drawn; the response itself is always whole. */
 	neighborLimit?: number;
-	/** Fetch again although the neighbours of the node are cached. */
-	force?: boolean;
 	/** A container drawn as its hull: only the buckets that hold its members (`getNodeHull`). */
 	hull?: boolean;
 };
@@ -91,11 +89,7 @@ export type GraphStore = {
 	/** The hulls of this canvas by container id: the bronnen each suppressed container holds. */
 	containers: Readable<Map<string, ContainerGroup>>;
 	/** The node response of a bron, from the cache or the API. Nothing is drawn. */
-	nodeResponse: (
-		collection: Collection,
-		key: string,
-		opts?: GraphExpansionOptions
-	) => Promise<Schema<'NodeGraphResponse'>>;
+	nodeResponse: (collection: Collection, key: string) => Promise<Schema<'NodeGraphResponse'>>;
 	expandNode: (
 		collection: Collection,
 		key: string,
