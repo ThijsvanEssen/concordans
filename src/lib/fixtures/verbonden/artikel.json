@@ -1,0 +1,2505 @@
+{
+	"/api/articles/{bwb_id}/{article_number} {\"article_number\":\"8:72\",\"bwb_id\":\"BWBR0005537\"} {}": {
+		"article": {
+			"id": "articles/bwbr0005537_8_72",
+			"key": "bwbr0005537_8_72",
+			"bwb_id": "BWBR0005537",
+			"article_number": "8:72",
+			"label": "Artikel 8:72",
+			"heading": null,
+			"address": "8:72",
+			"repealed": false,
+			"display_name": "Artikel 8:72 Algemene wet bestuursrecht",
+			"official_url": "https://wetten.overheid.nl/jci1.3:c:BWBR0005537&artikel=8:72",
+			"text": "1. Indien de bestuursrechter het beroep gegrond verklaart, vernietigt hij het bestreden besluit geheel of gedeeltelijk.\n2. De vernietiging van een besluit of een gedeelte van een besluit brengt vernietiging van de rechtsgevolgen van dat besluit of van het vernietigde gedeelte daarvan mee.\n3. De bestuursrechter kan bepalen dat:\na. de rechtsgevolgen van het vernietigde besluit of het vernietigde gedeelte daarvan geheel of gedeeltelijk in stand blijven, of\nb. zijn uitspraak in de plaats treedt van het vernietigde besluit of het vernietigde gedeelte daarvan.\n4. De bestuursrechter kan, indien toepassing van het derde lid niet mogelijk is, het bestuursorgaan opdragen een nieuw besluit te nemen of een andere handeling te verrichten met inachtneming van zijn aanwijzingen. Daarbij kan hij:\na. bepalen dat wettelijke voorschriften over de voorbereiding van het nieuwe besluit of de andere handeling geheel of gedeeltelijk buiten toepassing blijven;\nb. het bestuursorgaan een termijn stellen voor het nemen van het nieuwe besluit of het verrichten van de andere handeling.\n5. De bestuursrechter kan zo nodig een voorlopige voorziening treffen. Daarbij bepaalt hij het tijdstip waarop de voorlopige voorziening vervalt.\n6. De bestuursrechter kan bepalen dat, indien of zolang het bestuursorgaan niet voldoet aan een uitspraak, het bestuursorgaan aan een door hem aangewezen partij een in de uitspraak vast te stellen dwangsom verbeurt. De artikelen 611a, vierde lid, 611b tot en met 611d en 611g van het Wetboek van Burgerlijke Rechtsvordering zijn van overeenkomstige toepassing.",
+			"parts": [
+				{
+					"id": "lid-1",
+					"kind": "lid",
+					"number": "1",
+					"start": 3,
+					"end": 119,
+					"term": null,
+					"text": "Indien de bestuursrechter het beroep gegrond verklaart, vernietigt hij het bestreden besluit geheel of gedeeltelijk."
+				},
+				{
+					"id": "lid-2",
+					"kind": "lid",
+					"number": "2",
+					"start": 123,
+					"end": 289,
+					"term": null,
+					"text": "De vernietiging van een besluit of een gedeelte van een besluit brengt vernietiging van de rechtsgevolgen van dat besluit of van het vernietigde gedeelte daarvan mee."
+				},
+				{
+					"id": "lid-3",
+					"kind": "lid",
+					"number": "3",
+					"start": 293,
+					"end": 560,
+					"term": null,
+					"text": "De bestuursrechter kan bepalen dat:\na. de rechtsgevolgen van het vernietigde besluit of het vernietigde gedeelte daarvan geheel of gedeeltelijk in stand blijven, of\nb. zijn uitspraak in de plaats treedt van het vernietigde besluit of het vernietigde gedeelte daarvan."
+				},
+				{
+					"id": "lid-3-aanhef",
+					"kind": "aanhef",
+					"number": null,
+					"start": 293,
+					"end": 328,
+					"term": null,
+					"text": "De bestuursrechter kan bepalen dat:"
+				}
+			],
+			"path": "/wetten/BWBR0005537/artikel/8:72"
+		},
+		"instrument": {
+			"id": "instruments/bwbr0005537",
+			"key": "bwbr0005537",
+			"bwb_id": "BWBR0005537",
+			"celex": null,
+			"title": "Algemene wet bestuursrecht",
+			"citation_title": "Algemene wet bestuursrecht",
+			"short_title": "Awb",
+			"abbreviation": "Awb",
+			"display_name": "Algemene wet bestuursrecht",
+			"official_url": "https://wetten.overheid.nl/BWBR0005537",
+			"article_count": 584,
+			"inbound_citation_count": 615364,
+			"judgment_count": null,
+			"outbound_citation_count": null,
+			"path": "/wetten/BWBR0005537"
+		},
+		"citations": [
+			{
+				"leden": [
+					"4"
+				],
+				"onderdelen": [],
+				"aanhef": false,
+				"start": 1438,
+				"end": 1464,
+				"text": "artikelen 611a, vierde lid",
+				"target": {
+					"id": "articles/bwbr0001827_611a",
+					"key": "bwbr0001827_611a",
+					"collection": "articles",
+					"bwb_id": "BWBR0001827",
+					"article_number": "611a",
+					"display_name": "Artikel 611a Wetboek van Burgerlijke Rechtsvordering"
+				},
+				"kind": "article",
+				"reference_kind": "extref",
+				"confidence": 1,
+				"definition_ref": null
+			},
+			{
+				"leden": [],
+				"onderdelen": [],
+				"aanhef": false,
+				"start": 1466,
+				"end": 1486,
+				"text": "611b tot en met 611d",
+				"target": {
+					"id": "articles/bwbr0001827_611b",
+					"key": "bwbr0001827_611b",
+					"collection": "articles",
+					"bwb_id": "BWBR0001827",
+					"article_number": "611b",
+					"display_name": "Artikel 611b Wetboek van Burgerlijke Rechtsvordering"
+				},
+				"kind": "article",
+				"reference_kind": "extref",
+				"confidence": 1,
+				"definition_ref": null
+			},
+			{
+				"leden": [],
+				"onderdelen": [],
+				"aanhef": false,
+				"start": 1490,
+				"end": 1542,
+				"text": "611g van het Wetboek van Burgerlijke Rechtsvordering",
+				"target": {
+					"id": "articles/bwbr0001827_611g",
+					"key": "bwbr0001827_611g",
+					"collection": "articles",
+					"bwb_id": "BWBR0001827",
+					"article_number": "611g",
+					"display_name": "Artikel 611g Wetboek van Burgerlijke Rechtsvordering"
+				},
+				"kind": "article",
+				"reference_kind": "extref",
+				"confidence": 1,
+				"definition_ref": null
+			}
+		],
+		"term_spans": [],
+		"definitions": [],
+		"references": [
+			{
+				"leden": [
+					"4"
+				],
+				"onderdelen": [],
+				"aanhef": false,
+				"kind": "extref",
+				"bwb_id": "BWBR0001827",
+				"article": "611a",
+				"doc": "jci1.3:c:BWBR0001827&artikel=611a",
+				"text": "artikelen 611a, vierde lid",
+				"start": 1438,
+				"end": 1464
+			},
+			{
+				"leden": [],
+				"onderdelen": [],
+				"aanhef": false,
+				"kind": "extref",
+				"bwb_id": "BWBR0001827",
+				"article": "611b",
+				"doc": "jci1.3:c:BWBR0001827&artikel=611b",
+				"text": "611b tot en met 611d",
+				"start": 1466,
+				"end": 1486
+			},
+			{
+				"leden": [],
+				"onderdelen": [],
+				"aanhef": false,
+				"kind": "extref",
+				"bwb_id": "BWBR0001827",
+				"article": "611g",
+				"doc": "jci1.3:c:BWBR0001827&artikel=611g",
+				"text": "611g van het Wetboek van Burgerlijke Rechtsvordering",
+				"start": 1490,
+				"end": 1542
+			}
+		],
+		"delegations": [],
+		"metadata": {
+			"judgment_count": 21882
+		},
+		"upstream_dependencies": [
+			{
+				"leden": [
+					"4"
+				],
+				"onderdelen": [],
+				"aanhef": false,
+				"edge_id": "3d37e1162584ccf9055b3f82cc739eac63f5c0d4",
+				"relation": "REFERS_TO",
+				"target_article": {
+					"id": "articles/bwbr0001827_611a",
+					"key": "bwbr0001827_611a",
+					"display_name": "Artikel 611a Wetboek van Burgerlijke Rechtsvordering",
+					"bwb_id": "BWBR0001827",
+					"celex": null,
+					"article_number": "611a",
+					"instrument": {
+						"id": "instruments/bwbr0001827",
+						"key": "bwbr0001827",
+						"bwb_id": "BWBR0001827",
+						"celex": null,
+						"title": "Wetboek van Burgerlijke Rechtsvordering",
+						"citation_title": "Wetboek van Burgerlijke Rechtsvordering",
+						"short_title": null,
+						"abbreviation": null,
+						"display_name": "Wetboek van Burgerlijke Rechtsvordering",
+						"official_url": "https://wetten.overheid.nl/BWBR0001827",
+						"article_count": 1503,
+						"inbound_citation_count": 175079,
+						"judgment_count": null,
+						"outbound_citation_count": null,
+						"path": "/wetten/BWBR0001827"
+					},
+					"path": "/wetten/BWBR0001827/artikel/611a"
+				},
+				"semantic_type": "cross_reference",
+				"explanation": "Verwijzing zonder herkend juridisch beperkend patroon",
+				"confidence": 1,
+				"semantic_confidence": 0.5,
+				"semantic_pattern": "cross_reference_fallback",
+				"start": 1438,
+				"end": 1464,
+				"text": "artikelen 611a, vierde lid",
+				"reference_kind": "extref"
+			},
+			{
+				"leden": [],
+				"onderdelen": [],
+				"aanhef": false,
+				"edge_id": "4bb22a3e7a90f4a1bdf7eafce8b6412a7cabdab4",
+				"relation": "REFERS_TO",
+				"target_article": {
+					"id": "articles/bwbr0001827_611b",
+					"key": "bwbr0001827_611b",
+					"display_name": "Artikel 611b Wetboek van Burgerlijke Rechtsvordering",
+					"bwb_id": "BWBR0001827",
+					"celex": null,
+					"article_number": "611b",
+					"instrument": {
+						"id": "instruments/bwbr0001827",
+						"key": "bwbr0001827",
+						"bwb_id": "BWBR0001827",
+						"celex": null,
+						"title": "Wetboek van Burgerlijke Rechtsvordering",
+						"citation_title": "Wetboek van Burgerlijke Rechtsvordering",
+						"short_title": null,
+						"abbreviation": null,
+						"display_name": "Wetboek van Burgerlijke Rechtsvordering",
+						"official_url": "https://wetten.overheid.nl/BWBR0001827",
+						"article_count": 1503,
+						"inbound_citation_count": 175079,
+						"judgment_count": null,
+						"outbound_citation_count": null,
+						"path": "/wetten/BWBR0001827"
+					},
+					"path": "/wetten/BWBR0001827/artikel/611b"
+				},
+				"semantic_type": "cross_reference",
+				"explanation": "Verwijzing zonder herkend juridisch beperkend patroon",
+				"confidence": 1,
+				"semantic_confidence": 0.5,
+				"semantic_pattern": "cross_reference_fallback",
+				"start": 1466,
+				"end": 1486,
+				"text": "611b tot en met 611d",
+				"reference_kind": "extref"
+			},
+			{
+				"leden": [],
+				"onderdelen": [],
+				"aanhef": false,
+				"edge_id": "b2d0a3708eb7bef6582a93a2789d7c8462d6f1d3",
+				"relation": "REFERS_TO",
+				"target_article": {
+					"id": "articles/bwbr0001827_611g",
+					"key": "bwbr0001827_611g",
+					"display_name": "Artikel 611g Wetboek van Burgerlijke Rechtsvordering",
+					"bwb_id": "BWBR0001827",
+					"celex": null,
+					"article_number": "611g",
+					"instrument": {
+						"id": "instruments/bwbr0001827",
+						"key": "bwbr0001827",
+						"bwb_id": "BWBR0001827",
+						"celex": null,
+						"title": "Wetboek van Burgerlijke Rechtsvordering",
+						"citation_title": "Wetboek van Burgerlijke Rechtsvordering",
+						"short_title": null,
+						"abbreviation": null,
+						"display_name": "Wetboek van Burgerlijke Rechtsvordering",
+						"official_url": "https://wetten.overheid.nl/BWBR0001827",
+						"article_count": 1503,
+						"inbound_citation_count": 175079,
+						"judgment_count": null,
+						"outbound_citation_count": null,
+						"path": "/wetten/BWBR0001827"
+					},
+					"path": "/wetten/BWBR0001827/artikel/611g"
+				},
+				"semantic_type": "cross_reference",
+				"explanation": "Verwijzing zonder herkend juridisch beperkend patroon",
+				"confidence": 1,
+				"semantic_confidence": 0.5,
+				"semantic_pattern": "cross_reference_fallback",
+				"start": 1490,
+				"end": 1542,
+				"text": "611g van het Wetboek van Burgerlijke Rechtsvordering",
+				"reference_kind": "extref"
+			}
+		],
+		"downstream_implications": [
+			{
+				"leden": [
+					"2"
+				],
+				"onderdelen": [],
+				"aanhef": false,
+				"edge_id": "06886ae3484f581edf58d983794e426f363b50ff",
+				"relation": "REFERS_TO",
+				"target_article": {
+					"id": "articles/bwbr0003104_15",
+					"key": "bwbr0003104_15",
+					"display_name": "Artikel 15 Wedervergeldingswet zeescheepvaart",
+					"bwb_id": "BWBR0003104",
+					"celex": null,
+					"article_number": "15",
+					"instrument": {
+						"id": "instruments/bwbr0003104",
+						"key": "bwbr0003104",
+						"bwb_id": "BWBR0003104",
+						"celex": null,
+						"title": "Wedervergeldingswet zeescheepvaart",
+						"citation_title": "Wedervergeldingswet zeescheepvaart",
+						"short_title": null,
+						"abbreviation": null,
+						"display_name": "Wedervergeldingswet zeescheepvaart",
+						"official_url": "https://wetten.overheid.nl/BWBR0003104",
+						"article_count": 23,
+						"inbound_citation_count": 25,
+						"judgment_count": null,
+						"outbound_citation_count": null,
+						"path": "/wetten/BWBR0003104"
+					},
+					"path": "/wetten/BWBR0003104/artikel/15"
+				},
+				"semantic_type": "limiting_exception",
+				"explanation": "Patroon 'In afwijking van' direct vóór de verwijzing",
+				"confidence": 1,
+				"semantic_confidence": 0.85,
+				"semantic_pattern": "limiting_exception_adjacent",
+				"start": 17,
+				"end": 76,
+				"text": "artikel 8:72, tweede lid, van de Algemene wet bestuursrecht",
+				"reference_kind": "extref"
+			},
+			{
+				"leden": [
+					"3"
+				],
+				"onderdelen": [
+					"a"
+				],
+				"aanhef": false,
+				"edge_id": "271a0dc7871e05feee2680cc31bc1030e53d531f",
+				"relation": "REFERS_TO",
+				"target_article": {
+					"id": "articles/bwbr0020368_3a_146",
+					"key": "bwbr0020368_3a_146",
+					"display_name": "Artikel 3a:146 Wet op het financieel toezicht",
+					"bwb_id": "BWBR0020368",
+					"celex": null,
+					"article_number": "3a:146",
+					"instrument": {
+						"id": "instruments/bwbr0020368",
+						"key": "bwbr0020368",
+						"bwb_id": "BWBR0020368",
+						"celex": null,
+						"title": "Wet op het financieel toezicht",
+						"citation_title": "Wet op het financieel toezicht",
+						"short_title": "Wft",
+						"abbreviation": "Wft",
+						"display_name": "Wet op het financieel toezicht",
+						"official_url": "https://wetten.overheid.nl/BWBR0020368",
+						"article_count": 1619,
+						"inbound_citation_count": 18710,
+						"judgment_count": null,
+						"outbound_citation_count": null,
+						"path": "/wetten/BWBR0020368"
+					},
+					"path": "/wetten/BWBR0020368/artikel/3a:146"
+				},
+				"semantic_type": "cross_reference",
+				"explanation": "Verwijzing zonder herkend juridisch beperkend patroon",
+				"confidence": 1,
+				"semantic_confidence": 0.5,
+				"semantic_pattern": "cross_reference_fallback",
+				"start": 146,
+				"end": 217,
+				"text": "artikel 8:72, derde lid, onderdeel a, van de Algemene wet bestuursrecht",
+				"reference_kind": "extref"
+			},
+			{
+				"leden": [
+					"5"
+				],
+				"onderdelen": [],
+				"aanhef": false,
+				"edge_id": "2a244a119655c7c1ca7edf2afb71fa54702739dc",
+				"relation": "REFERS_TO",
+				"target_article": {
+					"id": "articles/bwbr0005537_8_87",
+					"key": "bwbr0005537_8_87",
+					"display_name": "Artikel 8:87 Algemene wet bestuursrecht",
+					"bwb_id": "BWBR0005537",
+					"celex": null,
+					"article_number": "8:87",
+					"instrument": {
+						"id": "instruments/bwbr0005537",
+						"key": "bwbr0005537",
+						"bwb_id": "BWBR0005537",
+						"celex": null,
+						"title": "Algemene wet bestuursrecht",
+						"citation_title": "Algemene wet bestuursrecht",
+						"short_title": "Awb",
+						"abbreviation": "Awb",
+						"display_name": "Algemene wet bestuursrecht",
+						"official_url": "https://wetten.overheid.nl/BWBR0005537",
+						"article_count": 584,
+						"inbound_citation_count": 615364,
+						"judgment_count": null,
+						"outbound_citation_count": null,
+						"path": "/wetten/BWBR0005537"
+					},
+					"path": "/wetten/BWBR0005537/artikel/8:87"
+				},
+				"semantic_type": "cross_reference",
+				"explanation": "Verwijzing zonder herkend juridisch beperkend patroon",
+				"confidence": 1,
+				"semantic_confidence": 0.5,
+				"semantic_pattern": "cross_reference_fallback",
+				"start": 141,
+				"end": 165,
+				"text": "artikel 8:72, vijfde lid",
+				"reference_kind": "intref"
+			},
+			{
+				"leden": [
+					"5"
+				],
+				"onderdelen": [],
+				"aanhef": false,
+				"edge_id": "2b4cc35cce54d1bec1e1887f73ba5982df72de75",
+				"relation": "REFERS_TO",
+				"target_article": {
+					"id": "articles/bwbr0005537_8_104",
+					"key": "bwbr0005537_8_104",
+					"display_name": "Artikel 8:104 Algemene wet bestuursrecht",
+					"bwb_id": "BWBR0005537",
+					"celex": null,
+					"article_number": "8:104",
+					"instrument": {
+						"id": "instruments/bwbr0005537",
+						"key": "bwbr0005537",
+						"bwb_id": "BWBR0005537",
+						"celex": null,
+						"title": "Algemene wet bestuursrecht",
+						"citation_title": "Algemene wet bestuursrecht",
+						"short_title": "Awb",
+						"abbreviation": "Awb",
+						"display_name": "Algemene wet bestuursrecht",
+						"official_url": "https://wetten.overheid.nl/BWBR0005537",
+						"article_count": 584,
+						"inbound_citation_count": 615364,
+						"judgment_count": null,
+						"outbound_citation_count": null,
+						"path": "/wetten/BWBR0005537"
+					},
+					"path": "/wetten/BWBR0005537/artikel/8:104"
+				},
+				"semantic_type": "definitional_reference",
+				"explanation": "Patroon 'bedoeld in' direct vóór de verwijzing",
+				"confidence": 1,
+				"semantic_confidence": 0.85,
+				"semantic_pattern": "definitional_reference_adjacent",
+				"start": 1261,
+				"end": 1285,
+				"text": "artikel 8:72, vijfde lid",
+				"reference_kind": "intref"
+			}
+		],
+		"scope_articles": []
+	},
+	"/api/articles/{bwb_id}/{article_number}/cited-by {\"article_number\":\"8:72\",\"bwb_id\":\"BWBR0005537\"} {\"limit\":200,\"offset\":0,\"sort\":\"date_desc\"}": {
+		"article_id": "articles/bwbr0005537_8_72",
+		"items": [
+			{
+				"leden": [
+					"3"
+				],
+				"onderdelen": [
+					"a"
+				],
+				"aanhef": true,
+				"judgment": {
+					"outcome": null,
+					"outcome_text": null,
+					"conclusion_outcome": null,
+					"conclusion_outcome_text": null,
+					"echr_findings": [],
+					"id": "judgments/ecli_nl_cbb_2026_489",
+					"key": "ecli_nl_cbb_2026_489",
+					"ecli": "ECLI:NL:CBB:2026:489",
+					"court": "CBB",
+					"tier": "college_van_beroep_bedrijfsleven",
+					"court_kind": "college_van_beroep_bedrijfsleven",
+					"date": "2026-10-13",
+					"display_name": "College van Beroep voor het bedrijfsleven 2026-10-13 / 23/1444 en 24/256",
+					"inbound_citation_count": 0,
+					"path": "/uitspraken/ECLI:NL:CBB:2026:489"
+				},
+				"paragraph_id": "rov-5.6",
+				"paragraph_number": "5.6",
+				"qualifier": "derde lid, aanhef en onder a",
+				"start": 658,
+				"end": 712,
+				"text": "artikel 8:72, derde lid, aanhef en onder a, van de Awb",
+				"snippet": "iten zijn dus gegrond wat betreft de motivering van deze besluiten en deze besluiten komen in zoverre voor vernietiging in aanmerking. Omdat de bezwaren van [naam 1] terecht niet-ontvankelijk zijn verklaard, ziet het College aanleiding de rechtsgevolgen van de bestreden besluiten in stand te laten (artikel 8:72, derde lid, aanhef en onder a, van de Awb).\n\n7 Het College zal de minister opdragen het in beroep betaalde griffierecht aan [naam 1] te vergoeden. In zaak 23/1444 bedroeg het griffierecht € 184,- en in zaak 24/256 bedroeg het griffierecht € 187,-, dus in totaal € 371,-.",
+				"confidence": 0.95
+			},
+			{
+				"leden": [
+					"6"
+				],
+				"onderdelen": [],
+				"aanhef": false,
+				"judgment": {
+					"outcome": "gegrond",
+					"outcome_text": "verklaart het beroep gegrond",
+					"conclusion_outcome": null,
+					"conclusion_outcome_text": null,
+					"echr_findings": [],
+					"id": "judgments/ecli_nl_rbdha_2026_30184",
+					"key": "ecli_nl_rbdha_2026_30184",
+					"ecli": "ECLI:NL:RBDHA:2026:30184",
+					"court": "RBDHA",
+					"tier": "rechtbank",
+					"court_kind": "rechtbank",
+					"date": "2026-10-13",
+					"display_name": "Rechtbank Den Haag 2026-10-13 / NL25.17904",
+					"inbound_citation_count": 0,
+					"path": "/uitspraken/ECLI:NL:RBDHA:2026:30184"
+				},
+				"paragraph_id": "rov-7",
+				"paragraph_number": "7",
+				"qualifier": "zesde lid",
+				"start": 161,
+				"end": 196,
+				"text": "artikel 8:72, zesde lid, van de Awb",
+				"snippet": "De rechtbank ziet verder aanleiding om aan de minister een dwangsom op te leggen vanwege de lange duur van de procedure. De rechtbank bepaalt met toepassing van artikel 8:72, zesde lid, van de Awb dat de minister een dwangsom verbeurt als hij de hiervoor genoemde termijn overschrijdt. De rechtbank stelt de hoogte van deze dwangsom vast op € 100,- per dag dat de termijn overschreden wordt, met een maximum van € 15.000,-. Naar het oordeel van de rechtbank volstaat deze dwangsom om de minister",
+				"confidence": 0.95
+			},
+			{
+				"leden": [
+					"4"
+				],
+				"onderdelen": [],
+				"aanhef": false,
+				"judgment": {
+					"outcome": "niet-ontvankelijk",
+					"outcome_text": "verklaart het beroep tegen het niet tijdig nemen van een besluit niet-ontvankelijk",
+					"conclusion_outcome": null,
+					"conclusion_outcome_text": null,
+					"echr_findings": [],
+					"id": "judgments/ecli_nl_rbdha_2026_30092",
+					"key": "ecli_nl_rbdha_2026_30092",
+					"ecli": "ECLI:NL:RBDHA:2026:30092",
+					"court": "RBDHA",
+					"tier": "rechtbank",
+					"court_kind": "rechtbank",
+					"date": "2026-10-12",
+					"display_name": "Rechtbank Den Haag 2026-10-12 / NL24.21369",
+					"inbound_citation_count": 0,
+					"path": "/uitspraken/ECLI:NL:RBDHA:2026:30092"
+				},
+				"paragraph_id": "rov-8",
+				"paragraph_number": "8",
+				"qualifier": "vierde lid",
+				"start": 273,
+				"end": 332,
+				"text": "artikel 8:72, vierde lid, van de Algemene wet bestuursrecht",
+				"snippet": "De rechtbank verklaart het beroep gegrond. De minister heeft ten onrechte eisers niet gehoord in de bezwaarfase en het bestreden besluit is onvoldoende zorgvuldig voorbereid en gemotiveerd. De rechtbank vernietigt daarom het bestreden besluit en bepaalt met toepassing van artikel 8:72, vierde lid, van de Algemene wet bestuursrecht dat de minister een nieuw besluit moet nemen met inachtneming van deze uitspraak. De rechtbank geeft de minister hiervoor acht weken.",
+				"confidence": 0.95
+			},
+			{
+				"leden": [
+					"4"
+				],
+				"onderdelen": [],
+				"aanhef": false,
+				"judgment": {
+					"outcome": "gegrond",
+					"outcome_text": "verklaart het beroep gegrond",
+					"conclusion_outcome": null,
+					"conclusion_outcome_text": null,
+					"echr_findings": [],
+					"id": "judgments/ecli_nl_rbdha_2026_30152",
+					"key": "ecli_nl_rbdha_2026_30152",
+					"ecli": "ECLI:NL:RBDHA:2026:30152",
+					"court": "RBDHA",
+					"tier": "rechtbank",
+					"court_kind": "rechtbank",
+					"date": "2026-10-12",
+					"display_name": "Rechtbank Den Haag 2026-10-12 / NL26.20569",
+					"inbound_citation_count": 0,
+					"path": "/uitspraken/ECLI:NL:RBDHA:2026:30152"
+				},
+				"paragraph_id": "rov-10.1",
+				"paragraph_number": "10.1",
+				"qualifier": "vierde lid",
+				"start": 40,
+				"end": 99,
+				"text": "artikel 8:72, vierde lid, van de Algemene wet bestuursrecht",
+				"snippet": "De rechtbank bepaalt met toepassing van artikel 8:72, vierde lid, van de Algemene wet bestuursrecht dat de minister een nieuw besluit moet nemen en daarbij rekening houdt met deze uitspraak. De rechtbank geeft de minister hiervoor een termijn van zes weken.",
+				"confidence": 0.95
+			}
+		],
+		"total": 26355,
+		"judgment_total": 21882,
+		"echr_judgment_total": 0
+	},
+	"/api/articles/{bwb_id}/{article_number}/delegated {\"article_number\":\"8:72\",\"bwb_id\":\"BWBR0005537\"} {}": {
+		"article_id": "articles/bwbr0005537_8_72",
+		"clauses": [],
+		"items": [],
+		"total": 0
+	},
+	"/api/articles/{bwb_id}/{article_number}/explained-by {\"article_number\":\"8:72\",\"bwb_id\":\"BWBR0005537\"} {\"limit\":50}": {
+		"article_id": "articles/bwbr0005537_8_72",
+		"total": 4,
+		"items": [
+			{
+				"document": {
+					"chamber": "TK",
+					"source": "tk",
+					"is_explanatory": true,
+					"id": "documents/5dc0ae43_e8e6_43fd_b0d8_63b9af0f9cbd",
+					"key": "5dc0ae43_e8e6_43fd_b0d8_63b9af0f9cbd",
+					"kind": "Memorie van toelichting",
+					"title": "Wijziging van de Algemene wet bestuursrecht en aanverwante wetten met het oog op enige verbeteringen en vereenvoudigingen van het bestuursprocesrecht (Wet aanpassing bestuursprocesrecht)",
+					"date": "2010-07-24",
+					"dossier_number": "32450",
+					"sequence": 3,
+					"path": "/kamerstukken/32450/3"
+				},
+				"target": "article_version",
+				"target_id": "article_versions/bwbr0005537_av_2868583_20009622",
+				"article_version_key": "bwbr0005537_av_2868583_20009622",
+				"confidence": 0.5,
+				"scope": "dossier",
+				"section_anchor": null,
+				"heading": null,
+				"char_start": null,
+				"char_end": null,
+				"excerpt": null
+			},
+			{
+				"document": {
+					"chamber": "TK",
+					"source": "tk",
+					"is_explanatory": false,
+					"id": "documents/7e59f350_a461_4556_8c81_250abfaaafd7",
+					"key": "7e59f350_a461_4556_8c81_250abfaaafd7",
+					"kind": "Amendement",
+					"title": "Amendement van het lid De Wit over het alleen buiten toepassing verklaren van uniforme openbare voorbereidingsprocedure bij wijzigingen van ondergeschikte aard",
+					"date": "2009-02-12",
+					"dossier_number": "31352",
+					"sequence": 12,
+					"path": "/kamerstukken/31352/12"
+				},
+				"target": "article_version",
+				"target_id": "article_versions/bwbr0005537_av_2868583_16990322",
+				"article_version_key": "bwbr0005537_av_2868583_16990322",
+				"confidence": 0.9,
+				"scope": "article",
+				"section_anchor": "s-1",
+				"heading": "Toelichting",
+				"char_start": 373,
+				"char_end": 1367,
+				"excerpt": "De beslissing van de rechtbank om afdeling 3.4 buiten toepassing te verklaren kan er voor zorgen dat er sneller en zonder procedureel oponthoud een nieuw besluit kan worden genomen. Voor wijzigingen van ondergeschikte aard kan dit zeer geschikt zijn. Het achterwege laten van de uniforme openbare…"
+			},
+			{
+				"document": {
+					"chamber": "TK",
+					"source": "tk",
+					"is_explanatory": true,
+					"id": "documents/07e0d298_11e6_4205_8ff2_fb087105a01e",
+					"key": "07e0d298_11e6_4205_8ff2_fb087105a01e",
+					"kind": "Memorie van toelichting (initiatiefvoorstel)",
+					"title": "Voorstel van wet van de leden Vermeij, Koopmans en Neppérus tot aanvulling van de Algemene wet bestuursrecht met een regeling voor herstel van gebreken in een besluit hangende beroep bij de bestuursrechter (Wet bestuurlijke lus Awb)",
+					"date": "2008-07-08",
+					"dossier_number": "31352",
+					"sequence": 6,
+					"path": "/kamerstukken/31352/6"
+				},
+				"target": "article_version",
+				"target_id": "article_versions/bwbr0005537_av_2868583_16990322",
+				"article_version_key": "bwbr0005537_av_2868583_16990322",
+				"confidence": 0.5,
+				"scope": "dossier",
+				"section_anchor": null,
+				"heading": null,
+				"char_start": null,
+				"char_end": null,
+				"excerpt": null
+			},
+			{
+				"document": {
+					"chamber": "TK",
+					"source": "tk",
+					"is_explanatory": true,
+					"id": "documents/65d31871_4e92_4627_922d_202fcec531cc",
+					"key": "65d31871_4e92_4627_922d_202fcec531cc",
+					"kind": "Memorie van toelichting (initiatiefvoorstel)",
+					"title": "Voorstel van wet van de leden Vermeij, Koopmans en Neppérus tot aanvulling van de Algemene wet bestuursrecht met een regeling voor herstel van gebreken in een besluit hangende beroep bij de bestuursrechter (Wet bestuurlijke lus Awb)",
+					"date": "2006-02-21",
+					"dossier_number": "31352",
+					"sequence": 3,
+					"path": "/kamerstukken/31352/3"
+				},
+				"target": "article_version",
+				"target_id": "article_versions/bwbr0005537_av_2868583_16990322",
+				"article_version_key": "bwbr0005537_av_2868583_16990322",
+				"confidence": 0.5,
+				"scope": "dossier",
+				"section_anchor": null,
+				"heading": null,
+				"char_start": null,
+				"char_end": null,
+				"excerpt": null
+			}
+		]
+	},
+	"/api/articles/{bwb_id}/{article_number}/legislative-history {\"article_number\":\"8:72\",\"bwb_id\":\"BWBR0005537\"} {}": {
+		"article_id": "articles/bwbr0005537_8_72",
+		"entries": [
+			{
+				"dossier_id": "dossiers/32450",
+				"dossier_number": "32450",
+				"dossier_title": "Wijziging van de Algemene wet bestuursrecht en aanverwante wetten met het oog op enige verbeteringen en vereenvoudigingen van het bestuursprocesrecht (Wet aanpassing bestuursprocesrecht) ",
+				"dossier_short_title": "Wet aanpassing bestuursprocesrecht",
+				"date": "2012-12-27",
+				"kind": "publicatie",
+				"change": "amends",
+				"status": "canoniek",
+				"summary": "Stb. 2012, 682",
+				"document_id": "instruments/stb_2012_682"
+			},
+			{
+				"dossier_id": "dossiers/31352",
+				"dossier_number": "31352",
+				"dossier_title": "Voorstel van wet van de leden Vermeij, Koopmans en Neppérus tot aanvulling van de Algemene wet bestuursrecht met een regeling voor herstel van gebreken in een besluit hangende beroep bij de bestuursrechter (Wet bestuurlijke lus Awb)",
+				"dossier_short_title": "Wet bestuurlijke lus Awb",
+				"date": "2009-12-24",
+				"kind": "publicatie",
+				"change": "amends",
+				"status": "canoniek",
+				"summary": "Stb. 2009, 570",
+				"document_id": "instruments/stb_2009_570"
+			},
+			{
+				"dossier_id": null,
+				"dossier_number": "29702",
+				"dossier_title": null,
+				"dossier_short_title": null,
+				"date": "2009-06-30",
+				"kind": "publicatie",
+				"change": "amends",
+				"status": "canoniek",
+				"summary": "Stb. 2009, 264",
+				"document_id": "instruments/stb_2009_264"
+			},
+			{
+				"dossier_id": null,
+				"dossier_number": "26523",
+				"dossier_title": null,
+				"dossier_short_title": null,
+				"date": "2002-02-12",
+				"kind": "publicatie",
+				"change": "amends",
+				"status": "canoniek",
+				"summary": "Stb. 2002, 53",
+				"document_id": "instruments/stb_2002_53"
+			}
+		],
+		"total": 4
+	},
+	"/api/nodes/{collection}/{key} {\"collection\":\"articles\",\"key\":\"bwbr0005537_8_72\"} {\"direction\":\"inbound\",\"limit\":200,\"node_types\":\"article\",\"relations\":\"REFERS_TO,BASED_ON\"}": {
+		"node": {
+			"id": "articles/bwbr0005537_8_72",
+			"key": "bwbr0005537_8_72",
+			"collection": "articles",
+			"type": "article",
+			"display_name": "Artikel 8:72 Algemene wet bestuursrecht",
+			"labels": [
+				"BWB",
+				"Article"
+			],
+			"props": {
+				"article_number": "8:72",
+				"breadcrumb": [
+					{
+						"type": "hoofdstuk",
+						"label": "Hoofdstuk 8",
+						"title": "Bijzondere bepalingen over de wijze van procederen bij de bestuursrechter"
+					},
+					{
+						"type": "titeldeel",
+						"label": "Titel 8.2",
+						"title": "Behandeling van het beroep in eerste aanleg"
+					},
+					{
+						"type": "afdeling",
+						"label": "Afdeling 8.2.6",
+						"title": "Uitspraak"
+					}
+				],
+				"bwb_id": "BWBR0005537",
+				"caption": "Uitspraak",
+				"display_name": "Artikel 8:72 Algemene wet bestuursrecht",
+				"inbound_citation_count": 21937,
+				"instrument_abbreviation": "Awb",
+				"instrument_citation_title": "Algemene wet bestuursrecht",
+				"label": "Artikel 8:72",
+				"parts": [
+					{
+						"id": "lid-1",
+						"kind": "lid",
+						"number": "1",
+						"start": 3,
+						"end": 119
+					},
+					{
+						"id": "lid-2",
+						"kind": "lid",
+						"number": "2",
+						"start": 123,
+						"end": 289
+					},
+					{
+						"id": "lid-3",
+						"kind": "lid",
+						"number": "3",
+						"start": 293,
+						"end": 560
+					},
+					{
+						"id": "lid-3-aanhef",
+						"kind": "aanhef",
+						"number": null,
+						"start": 293,
+						"end": 328
+					}
+				],
+				"position": 439,
+				"references": [
+					{
+						"kind": "extref",
+						"bwb_id": "BWBR0001827",
+						"article": "611a",
+						"doc": "jci1.3:c:BWBR0001827&artikel=611a",
+						"text": "artikelen 611a, vierde lid",
+						"start": 1438,
+						"end": 1464,
+						"leden": [
+							"4"
+						],
+						"onderdelen": [],
+						"aanhef": false
+					},
+					{
+						"kind": "extref",
+						"bwb_id": "BWBR0001827",
+						"article": "611b",
+						"doc": "jci1.3:c:BWBR0001827&artikel=611b",
+						"text": "611b tot en met 611d",
+						"start": 1466,
+						"end": 1486,
+						"leden": [],
+						"onderdelen": [],
+						"aanhef": false
+					},
+					{
+						"kind": "extref",
+						"bwb_id": "BWBR0001827",
+						"article": "611g",
+						"doc": "jci1.3:c:BWBR0001827&artikel=611g",
+						"text": "611g van het Wetboek van Burgerlijke Rechtsvordering",
+						"start": 1490,
+						"end": 1542,
+						"leden": [],
+						"onderdelen": [],
+						"aanhef": false
+					}
+				],
+				"repealed": false,
+				"source_publication": "Stb.2012-682",
+				"stam_id": "2868583",
+				"stub": false,
+				"valid_from": "2013-01-01",
+				"versie_id": "20009622"
+			},
+			"path": "/wetten/BWBR0005537/artikel/8:72"
+		},
+		"neighbors": {
+			"total": 20,
+			"buckets": [
+				{
+					"relation": "REFERS_TO",
+					"direction": "inbound",
+					"collection": "articles",
+					"type": "article",
+					"total": 20,
+					"next_offset": null,
+					"lid_counts": {
+						"2": 2,
+						"3": 6,
+						"4": 5,
+						"5": 6,
+						"6": 2,
+						"": 2
+					},
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "articles/bwbr0003104_15",
+							"key": "bwbr0003104_15",
+							"collection": "articles",
+							"type": "article",
+							"display_name": "Artikel 15 Wedervergeldingswet zeescheepvaart",
+							"labels": [
+								"BWB",
+								"Article"
+							],
+							"props": {
+								"article_number": "15",
+								"bwb_id": "BWBR0003104",
+								"display_name": "Artikel 15 Wedervergeldingswet zeescheepvaart",
+								"inbound_citation_count": 0,
+								"instrument_citation_title": "Wedervergeldingswet zeescheepvaart",
+								"label": "Artikel 15",
+								"position": 18,
+								"repealed": false,
+								"source_publication": "Stb.1993-650",
+								"stam_id": "1800933",
+								"stub": false,
+								"valid_from": "1994-01-01",
+								"versie_id": "2680422"
+							},
+							"edge_id": "06886ae3484f581edf58d983794e426f363b50ff",
+							"relation": "REFERS_TO",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"aanhef": false,
+								"end": 76,
+								"leden": [
+									"2"
+								],
+								"onderdelen": [],
+								"reason": "bwb_xml_ref",
+								"reference_kind": "extref",
+								"semantic_confidence": 0.85,
+								"semantic_pattern": "limiting_exception_adjacent",
+								"start": 17,
+								"text": "artikel 8:72, tweede lid, van de Algemene wet bestuursrecht"
+							},
+							"path": "/wetten/BWBR0003104/artikel/15"
+						},
+						{
+							"id": "articles/bwbr0020368_3a_146",
+							"key": "bwbr0020368_3a_146",
+							"collection": "articles",
+							"type": "article",
+							"display_name": "Artikel 3a:146 Wet op het financieel toezicht",
+							"labels": [
+								"BWB",
+								"Article"
+							],
+							"props": {
+								"article_number": "3a:146",
+								"bwb_id": "BWBR0020368",
+								"caption": "Afwikkeling van centrale tegenpartijen",
+								"display_name": "Artikel 3a:146 Wet op het financieel toezicht",
+								"heading": "Instandlating rechtsgevolgen",
+								"inbound_citation_count": 0,
+								"instrument_abbreviation": "Wft",
+								"instrument_citation_title": "Wet op het financieel toezicht",
+								"label": "Artikel 3a:146",
+								"position": 1159,
+								"repealed": false,
+								"source_publication": "Stb.2022-428",
+								"stam_id": "16552843",
+								"stub": false,
+								"valid_from": "2022-11-04",
+								"versie_id": "29015162"
+							},
+							"edge_id": "271a0dc7871e05feee2680cc31bc1030e53d531f",
+							"relation": "REFERS_TO",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"aanhef": false,
+								"end": 217,
+								"leden": [
+									"3"
+								],
+								"onderdelen": [
+									"a"
+								],
+								"reason": "bwb_xml_ref",
+								"reference_kind": "extref",
+								"semantic_confidence": 0.5,
+								"semantic_pattern": "cross_reference_fallback",
+								"start": 146,
+								"text": "artikel 8:72, derde lid, onderdeel a, van de Algemene wet bestuursrecht"
+							},
+							"path": "/wetten/BWBR0020368/artikel/3a:146"
+						},
+						{
+							"id": "articles/bwbr0005537_8_87",
+							"key": "bwbr0005537_8_87",
+							"collection": "articles",
+							"type": "article",
+							"display_name": "Artikel 8:87 Algemene wet bestuursrecht",
+							"labels": [
+								"BWB",
+								"Article"
+							],
+							"props": {
+								"article_number": "8:87",
+								"bwb_id": "BWBR0005537",
+								"caption": "Voorlopige voorziening en onmiddellijke uitspraak in de hoofdzaak",
+								"display_name": "Artikel 8:87 Algemene wet bestuursrecht",
+								"inbound_citation_count": 622,
+								"instrument_abbreviation": "Awb",
+								"instrument_citation_title": "Algemene wet bestuursrecht",
+								"label": "Artikel 8:87",
+								"position": 459,
+								"repealed": false,
+								"source_publication": "Stb.2012-682",
+								"stam_id": "2868763",
+								"stub": false,
+								"valid_from": "2013-01-01",
+								"versie_id": "20010682"
+							},
+							"edge_id": "2a244a119655c7c1ca7edf2afb71fa54702739dc",
+							"relation": "REFERS_TO",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"aanhef": false,
+								"end": 165,
+								"leden": [
+									"5"
+								],
+								"onderdelen": [],
+								"reason": "bwb_xml_ref",
+								"reference_kind": "intref",
+								"semantic_confidence": 0.5,
+								"semantic_pattern": "cross_reference_fallback",
+								"start": 141,
+								"text": "artikel 8:72, vijfde lid"
+							},
+							"path": "/wetten/BWBR0005537/artikel/8:87"
+						},
+						{
+							"id": "articles/bwbr0005537_8_104",
+							"key": "bwbr0005537_8_104",
+							"collection": "articles",
+							"type": "article",
+							"display_name": "Artikel 8:104 Algemene wet bestuursrecht",
+							"labels": [
+								"BWB",
+								"Article"
+							],
+							"props": {
+								"article_number": "8:104",
+								"bwb_id": "BWBR0005537",
+								"caption": "Hoger beroep",
+								"display_name": "Artikel 8:104 Algemene wet bestuursrecht",
+								"inbound_citation_count": 593,
+								"instrument_abbreviation": "Awb",
+								"instrument_citation_title": "Algemene wet bestuursrecht",
+								"label": "Artikel 8:104",
+								"position": 468,
+								"repealed": false,
+								"source_publication": "Stb.2014-540",
+								"stam_id": "12023053",
+								"stub": false,
+								"valid_from": "2015-01-01",
+								"versie_id": "21990052"
+							},
+							"edge_id": "2b4cc35cce54d1bec1e1887f73ba5982df72de75",
+							"relation": "REFERS_TO",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"aanhef": false,
+								"end": 1285,
+								"leden": [
+									"5"
+								],
+								"onderdelen": [],
+								"reason": "bwb_xml_ref",
+								"reference_kind": "intref",
+								"semantic_confidence": 0.85,
+								"semantic_pattern": "definitional_reference_adjacent",
+								"start": 1261,
+								"text": "artikel 8:72, vijfde lid"
+							},
+							"path": "/wetten/BWBR0005537/artikel/8:104"
+						}
+					]
+				}
+			]
+		},
+		"title": "Art. 8:72 Awb, Uitspraak",
+		"description": "1. Indien de bestuursrechter het beroep gegrond verklaart, vernietigt hij het bestreden besluit geheel of gedeeltelijk. 2. De vernietiging van een…",
+		"path": "/wetten/BWBR0005537/artikel/8:72",
+		"lid_counts_pending": false
+	},
+	"/api/nodes/{collection}/{key} {\"collection\":\"articles\",\"key\":\"bwbr0005537_8_72\"} {\"limit\":1}": {
+		"node": {
+			"id": "articles/bwbr0005537_8_72",
+			"key": "bwbr0005537_8_72",
+			"collection": "articles",
+			"type": "article",
+			"display_name": "Artikel 8:72 Algemene wet bestuursrecht",
+			"labels": [
+				"BWB",
+				"Article"
+			],
+			"props": {
+				"article_number": "8:72",
+				"breadcrumb": [
+					{
+						"type": "hoofdstuk",
+						"label": "Hoofdstuk 8",
+						"title": "Bijzondere bepalingen over de wijze van procederen bij de bestuursrechter"
+					},
+					{
+						"type": "titeldeel",
+						"label": "Titel 8.2",
+						"title": "Behandeling van het beroep in eerste aanleg"
+					},
+					{
+						"type": "afdeling",
+						"label": "Afdeling 8.2.6",
+						"title": "Uitspraak"
+					}
+				],
+				"bwb_id": "BWBR0005537",
+				"caption": "Uitspraak",
+				"display_name": "Artikel 8:72 Algemene wet bestuursrecht",
+				"inbound_citation_count": 21937,
+				"instrument_abbreviation": "Awb",
+				"instrument_citation_title": "Algemene wet bestuursrecht",
+				"label": "Artikel 8:72",
+				"parts": [
+					{
+						"id": "lid-1",
+						"kind": "lid",
+						"number": "1",
+						"start": 3,
+						"end": 119
+					},
+					{
+						"id": "lid-2",
+						"kind": "lid",
+						"number": "2",
+						"start": 123,
+						"end": 289
+					},
+					{
+						"id": "lid-3",
+						"kind": "lid",
+						"number": "3",
+						"start": 293,
+						"end": 560
+					},
+					{
+						"id": "lid-3-aanhef",
+						"kind": "aanhef",
+						"number": null,
+						"start": 293,
+						"end": 328
+					}
+				],
+				"position": 439,
+				"references": [
+					{
+						"kind": "extref",
+						"bwb_id": "BWBR0001827",
+						"article": "611a",
+						"doc": "jci1.3:c:BWBR0001827&artikel=611a",
+						"text": "artikelen 611a, vierde lid",
+						"start": 1438,
+						"end": 1464,
+						"leden": [
+							"4"
+						],
+						"onderdelen": [],
+						"aanhef": false
+					},
+					{
+						"kind": "extref",
+						"bwb_id": "BWBR0001827",
+						"article": "611b",
+						"doc": "jci1.3:c:BWBR0001827&artikel=611b",
+						"text": "611b tot en met 611d",
+						"start": 1466,
+						"end": 1486,
+						"leden": [],
+						"onderdelen": [],
+						"aanhef": false
+					},
+					{
+						"kind": "extref",
+						"bwb_id": "BWBR0001827",
+						"article": "611g",
+						"doc": "jci1.3:c:BWBR0001827&artikel=611g",
+						"text": "611g van het Wetboek van Burgerlijke Rechtsvordering",
+						"start": 1490,
+						"end": 1542,
+						"leden": [],
+						"onderdelen": [],
+						"aanhef": false
+					}
+				],
+				"repealed": false,
+				"source_publication": "Stb.2012-682",
+				"stam_id": "2868583",
+				"stub": false,
+				"valid_from": "2013-01-01",
+				"versie_id": "20009622"
+			},
+			"path": "/wetten/BWBR0005537/artikel/8:72"
+		},
+		"neighbors": {
+			"total": 21949,
+			"buckets": [
+				{
+					"relation": "AMENDS",
+					"direction": "inbound",
+					"collection": "instruments",
+					"type": "instrument",
+					"total": 4,
+					"next_offset": 1,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "instruments/stb_2012_682",
+							"key": "stb_2012_682",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Stb. 2012, 682",
+							"labels": [
+								"BWB",
+								"Publication"
+							],
+							"props": {
+								"article_count": 0,
+								"citation_title": "Stb. 2012, 682",
+								"date_published": "2012-12-27",
+								"date_signed": "2012-12-20",
+								"display_name": "Stb. 2012, 682",
+								"dossier_numbers": [
+									"32450"
+								],
+								"inbound_citation_count": 0,
+								"jurisdiction": "nl",
+								"kind": "publicatie",
+								"official_id": "stb-2012-682",
+								"publication_kind": "Stb",
+								"publication_number": "682",
+								"publication_year": 2012,
+								"source": "bwb",
+								"stub": false
+							},
+							"edge_id": "0635afd62e18ff92e0dc35ee1de5372de2bea471",
+							"relation": "AMENDS",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"effective_date": "2013-01-01",
+								"article_version": "bwbr0005537_av_2868583_20009622",
+								"effect": "wijziging",
+								"source_publication": "Stb.2012-682"
+							},
+							"path": "/stb/2012/682"
+						}
+					]
+				},
+				{
+					"relation": "PART_OF",
+					"direction": "outbound",
+					"collection": "instruments",
+					"type": "instrument",
+					"total": 1,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "instruments/bwbr0005537",
+							"key": "bwbr0005537",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Algemene wet bestuursrecht",
+							"labels": [
+								"BWB"
+							],
+							"props": {
+								"abbreviation": "Awb",
+								"aliases": [
+									"Awb"
+								],
+								"article_count": 584,
+								"basis": [],
+								"bwb_id": "BWBR0005537",
+								"celex_refs": [
+									"32000L0031",
+									"32002L0047",
+									"32003L0071",
+									"32004L0025"
+								],
+								"citation_title": "Algemene wet bestuursrecht",
+								"citation_titles": [
+									"Algemene wet bestuursrecht"
+								],
+								"date_in_force": "1994-01-01",
+								"date_published": "1992-06-30",
+								"date_signed": "1992-06-04",
+								"display_name": "Algemene wet bestuursrecht",
+								"dossier_numbers": [
+									"21221"
+								],
+								"enacted_publication": "stb-1992-315",
+								"implements_celex": [],
+								"inbound_citation_count": 615364,
+								"jurisdiction": "nl",
+								"kind": "wet",
+								"legal_areas": [
+									{
+										"main": "Staats- en bestuursrecht",
+										"main_id": "c_da370768",
+										"main_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_da370768",
+										"main_slug": "staats-en-bestuursrecht",
+										"specific": "Bestuursrecht",
+										"specific_id": "c_052899f0",
+										"specific_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_052899f0",
+										"specific_slug": "bestuursrecht"
+									}
+								],
+								"official_title": "Wet van 4 juni 1992, houdende algemene regels van bestuursrecht (Algemene wet bestuursrecht)",
+								"policy_domains": [
+									{
+										"label": "Overheid, bestuur en koninkrijk",
+										"id": "c_fd285f2b",
+										"uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_fd285f2b",
+										"slug": "overheid-bestuur-en-koninkrijk"
+									}
+								],
+								"short_title": "Awb",
+								"source": "bwb",
+								"stub": false,
+								"title": "Algemene wet bestuursrecht",
+								"version_date_in_force": "2026-08-15"
+							},
+							"edge_id": "8be546dafd9b7214f8aa8625e464a5b5e1154776",
+							"relation": "PART_OF",
+							"direction": "outbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/wetten/BWBR0005537"
+						}
+					]
+				},
+				{
+					"relation": "REFERS_TO",
+					"direction": "inbound",
+					"collection": "articles",
+					"type": "article",
+					"total": 20,
+					"next_offset": 1,
+					"lid_counts": {
+						"2": 2,
+						"3": 6,
+						"4": 5,
+						"5": 6,
+						"6": 2,
+						"": 2
+					},
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "articles/bwbr0003104_15",
+							"key": "bwbr0003104_15",
+							"collection": "articles",
+							"type": "article",
+							"display_name": "Artikel 15 Wedervergeldingswet zeescheepvaart",
+							"labels": [
+								"BWB",
+								"Article"
+							],
+							"props": {
+								"article_number": "15",
+								"bwb_id": "BWBR0003104",
+								"display_name": "Artikel 15 Wedervergeldingswet zeescheepvaart",
+								"inbound_citation_count": 0,
+								"instrument_citation_title": "Wedervergeldingswet zeescheepvaart",
+								"label": "Artikel 15",
+								"position": 18,
+								"repealed": false,
+								"source_publication": "Stb.1993-650",
+								"stam_id": "1800933",
+								"stub": false,
+								"valid_from": "1994-01-01",
+								"versie_id": "2680422"
+							},
+							"edge_id": "06886ae3484f581edf58d983794e426f363b50ff",
+							"relation": "REFERS_TO",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"aanhef": false,
+								"end": 76,
+								"leden": [
+									"2"
+								],
+								"onderdelen": [],
+								"reason": "bwb_xml_ref",
+								"reference_kind": "extref",
+								"semantic_confidence": 0.85,
+								"semantic_pattern": "limiting_exception_adjacent",
+								"start": 17,
+								"text": "artikel 8:72, tweede lid, van de Algemene wet bestuursrecht"
+							},
+							"path": "/wetten/BWBR0003104/artikel/15"
+						}
+					]
+				},
+				{
+					"relation": "REFERS_TO",
+					"direction": "inbound",
+					"collection": "documents",
+					"type": "document",
+					"total": 35,
+					"next_offset": 1,
+					"lid_counts": {
+						"1": 3,
+						"3": 11,
+						"4": 12,
+						"6": 5,
+						"": 4
+					},
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "documents/75f60705_af3c_4ff3_85b7_821228bcd1dd",
+							"key": "75f60705_af3c_4ff3_85b7_821228bcd1dd",
+							"collection": "documents",
+							"type": "document",
+							"display_name": "Kamerstuk 36704, nr. 19: Amendement van het lid Diederik van Dijk over het afschaffen van rechterlijke dwangsommen in vreemdelingenzaken",
+							"labels": [
+								"TK",
+								"Kamerstuk"
+							],
+							"props": {
+								"actors": [
+									{
+										"person_id": "dd85a3cc-916a-4f94-aaed-cb341eb6a036",
+										"faction_id": "77f9b6f1-b1a9-4d1b-a05e-9936e79d8fa5",
+										"name": "D.J.H. (Diederik) van Dijk",
+										"faction": "SGP",
+										"role": "Eerste ondertekenaar",
+										"function": "Tweede Kamerlid",
+										"capacity": "kamerlid"
+									}
+								],
+								"budget": false,
+								"case_ids": [
+									"1ea863aa-682f-4422-bac1-09c7b0e57d60"
+								],
+								"case_kinds": [
+									"Amendement"
+								],
+								"date": "2025-06-13",
+								"decided_on": null,
+								"decision": null,
+								"display_name": "Kamerstuk 36704, nr. 19: Amendement van het lid Diederik van Dijk over het afschaffen van rechterlijke dwangsommen in vreemdelingenzaken",
+								"document_number": "2025D27810",
+								"dossier_number": "36704",
+								"dossier_numbers": [
+									"36704"
+								],
+								"dossier_suffix": null,
+								"dossier_title": "Wijziging van de Vreemdelingenwet 2000 en de Algemene wet bestuursrecht in verband met maatregelen om de asielketen te ontlasten en de instroom van asielzoekers te verminderen (Asielnoodmaatregelenwet)",
+								"explanation": "Met dit amendement worden rechterlijke dwangsommen in vreemdelingenzaken afgeschaft om mede langs deze weg de Immigratie- en Naturalisatiedienst (IND) te ontlasten.",
+								"external_id": "75f60705-af3c-4ff3-85b7-821228bcd1dd",
+								"kind": "Amendement",
+								"outcome": "vervangen",
+								"sequence": 19,
+								"session_year": "2024-2025",
+								"source": "tk",
+								"structure_quality": "implicit",
+								"subject": "Amendement van het lid Diederik van Dijk over het afschaffen van rechterlijke dwangsommen in vreemdelingenzaken",
+								"tally": null,
+								"text_source": "kst-xml",
+								"text_truncated": false,
+								"title": "Amendement van het lid Diederik van Dijk over het afschaffen van rechterlijke dwangsommen in vreemdelingenzaken",
+								"xml_dialect": "officiele-publicatie",
+								"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2025D27810&did=2025D27810",
+								"number": "19",
+								"sender": {
+									"name": "D.J.H. (Diederik) van Dijk",
+									"function": "Tweede Kamerlid",
+									"faction": "SGP",
+									"capacity": "kamerlid",
+									"member_key": "dd85a3cc_916a_4f94_aaed_cb341eb6a036",
+									"ministry": null
+								},
+								"dossier_short_title": "Asielnoodmaatregelenwet"
+							},
+							"edge_id": "13ee5a72ecfc805eba58a125129619e30249456e",
+							"relation": "REFERS_TO",
+							"direction": "inbound",
+							"confidence": 0.95,
+							"status": "canoniek",
+							"meta": {
+								"raw_match": "artikel 8:72, vierde lid, aanhef en onder b, van de Algemene wet bestuursrecht",
+								"snippet": "Da\nIn artikel 71b wordt «en 8:55f» vervangen door «, 8:55d, 8:55f en 8:72, zesde lid».\nDDb\nNa artikel 71b wordt een artikel toegevoegd, luidende:\nArtikel 71c\nIndien de bestuursrechter vaststelt dat niet tijdig op een aanvraag of bezwaar op grond van deze wet is beslist, draagt hij, in afwijking van artikel 8:72, vierde lid, aanhef en onder b, van de Algemene wet bestuursrecht, Onze Minister op dit binnen een door hem te stellen redelijke termijn alsnog te doen.\nII\nAan artikel III wordt een lid toegevoegd, luidende:\n4.\nIndien Onze Minister van Asiel en Migratie vóór het tijdstip van inwerkingtreding van artikel I, onderdelen DDa en DDb, niet binnen de wettelijke termijn",
+								"reason": "bwb_article",
+								"qualifier": "vierde lid, aanhef en onder b",
+								"leden": [
+									"4"
+								],
+								"onderdelen": [
+									"b"
+								],
+								"aanhef": true
+							},
+							"path": "/kamerstukken/36704/19"
+						}
+					]
+				}
+			]
+		},
+		"title": "Art. 8:72 Awb, Uitspraak",
+		"description": "1. Indien de bestuursrechter het beroep gegrond verklaart, vernietigt hij het bestreden besluit geheel of gedeeltelijk. 2. De vernietiging van een…",
+		"path": "/wetten/BWBR0005537/artikel/8:72",
+		"lid_counts_pending": false
+	},
+	"/api/nodes/{collection}/{key} {\"collection\":\"articles\",\"key\":\"bwbr0005537_8_72\"} {\"limit\":5}": {
+		"node": {
+			"id": "articles/bwbr0005537_8_72",
+			"key": "bwbr0005537_8_72",
+			"collection": "articles",
+			"type": "article",
+			"display_name": "Artikel 8:72 Algemene wet bestuursrecht",
+			"labels": [
+				"BWB",
+				"Article"
+			],
+			"props": {
+				"article_number": "8:72",
+				"breadcrumb": [
+					{
+						"type": "hoofdstuk",
+						"label": "Hoofdstuk 8",
+						"title": "Bijzondere bepalingen over de wijze van procederen bij de bestuursrechter"
+					},
+					{
+						"type": "titeldeel",
+						"label": "Titel 8.2",
+						"title": "Behandeling van het beroep in eerste aanleg"
+					},
+					{
+						"type": "afdeling",
+						"label": "Afdeling 8.2.6",
+						"title": "Uitspraak"
+					}
+				],
+				"bwb_id": "BWBR0005537",
+				"caption": "Uitspraak",
+				"display_name": "Artikel 8:72 Algemene wet bestuursrecht",
+				"inbound_citation_count": 21937,
+				"instrument_abbreviation": "Awb",
+				"instrument_citation_title": "Algemene wet bestuursrecht",
+				"label": "Artikel 8:72",
+				"parts": [
+					{
+						"id": "lid-1",
+						"kind": "lid",
+						"number": "1",
+						"start": 3,
+						"end": 119
+					},
+					{
+						"id": "lid-2",
+						"kind": "lid",
+						"number": "2",
+						"start": 123,
+						"end": 289
+					},
+					{
+						"id": "lid-3",
+						"kind": "lid",
+						"number": "3",
+						"start": 293,
+						"end": 560
+					},
+					{
+						"id": "lid-3-aanhef",
+						"kind": "aanhef",
+						"number": null,
+						"start": 293,
+						"end": 328
+					}
+				],
+				"position": 439,
+				"references": [
+					{
+						"kind": "extref",
+						"bwb_id": "BWBR0001827",
+						"article": "611a",
+						"doc": "jci1.3:c:BWBR0001827&artikel=611a",
+						"text": "artikelen 611a, vierde lid",
+						"start": 1438,
+						"end": 1464,
+						"leden": [
+							"4"
+						],
+						"onderdelen": [],
+						"aanhef": false
+					},
+					{
+						"kind": "extref",
+						"bwb_id": "BWBR0001827",
+						"article": "611b",
+						"doc": "jci1.3:c:BWBR0001827&artikel=611b",
+						"text": "611b tot en met 611d",
+						"start": 1466,
+						"end": 1486,
+						"leden": [],
+						"onderdelen": [],
+						"aanhef": false
+					},
+					{
+						"kind": "extref",
+						"bwb_id": "BWBR0001827",
+						"article": "611g",
+						"doc": "jci1.3:c:BWBR0001827&artikel=611g",
+						"text": "611g van het Wetboek van Burgerlijke Rechtsvordering",
+						"start": 1490,
+						"end": 1542,
+						"leden": [],
+						"onderdelen": [],
+						"aanhef": false
+					}
+				],
+				"repealed": false,
+				"source_publication": "Stb.2012-682",
+				"stam_id": "2868583",
+				"stub": false,
+				"valid_from": "2013-01-01",
+				"versie_id": "20009622"
+			},
+			"path": "/wetten/BWBR0005537/artikel/8:72"
+		},
+		"neighbors": {
+			"total": 21949,
+			"buckets": [
+				{
+					"relation": "AMENDS",
+					"direction": "inbound",
+					"collection": "instruments",
+					"type": "instrument",
+					"total": 4,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "instruments/stb_2012_682",
+							"key": "stb_2012_682",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Stb. 2012, 682",
+							"labels": [
+								"BWB",
+								"Publication"
+							],
+							"props": {
+								"article_count": 0,
+								"citation_title": "Stb. 2012, 682",
+								"date_published": "2012-12-27",
+								"date_signed": "2012-12-20",
+								"display_name": "Stb. 2012, 682",
+								"dossier_numbers": [
+									"32450"
+								],
+								"inbound_citation_count": 0,
+								"jurisdiction": "nl",
+								"kind": "publicatie",
+								"official_id": "stb-2012-682",
+								"publication_kind": "Stb",
+								"publication_number": "682",
+								"publication_year": 2012,
+								"source": "bwb",
+								"stub": false
+							},
+							"edge_id": "0635afd62e18ff92e0dc35ee1de5372de2bea471",
+							"relation": "AMENDS",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"effective_date": "2013-01-01",
+								"article_version": "bwbr0005537_av_2868583_20009622",
+								"effect": "wijziging",
+								"source_publication": "Stb.2012-682"
+							},
+							"path": "/stb/2012/682"
+						},
+						{
+							"id": "instruments/stb_2002_53",
+							"key": "stb_2002_53",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Stb. 2002, 53",
+							"labels": [
+								"BWB",
+								"Publication"
+							],
+							"props": {
+								"article_count": 0,
+								"citation_title": "Stb. 2002, 53",
+								"date_published": "2002-02-12",
+								"date_signed": "2002-01-24",
+								"display_name": "Stb. 2002, 53",
+								"dossier_numbers": [
+									"26523"
+								],
+								"inbound_citation_count": 0,
+								"jurisdiction": "nl",
+								"kind": "publicatie",
+								"official_id": "stb-2002-53",
+								"publication_kind": "Stb",
+								"publication_number": "53",
+								"publication_year": 2002,
+								"source": "bwb",
+								"stub": false
+							},
+							"edge_id": "0cd627d1192f847b7c6407a3dc5a2a9846fe3efd",
+							"relation": "AMENDS",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"effective_date": "2002-04-01",
+								"article_version": "bwbr0005537_av_2868583_4489932",
+								"effect": "wijziging",
+								"source_publication": "Stb.2002-53"
+							},
+							"path": "/stb/2002/53"
+						},
+						{
+							"id": "instruments/stb_2009_264",
+							"key": "stb_2009_264",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Stb. 2009, 264",
+							"labels": [
+								"BWB",
+								"Publication"
+							],
+							"props": {
+								"article_count": 0,
+								"citation_title": "Stb. 2009, 264",
+								"date_published": "2009-06-30",
+								"date_signed": "2009-06-25",
+								"display_name": "Stb. 2009, 264",
+								"dossier_numbers": [
+									"29702"
+								],
+								"inbound_citation_count": 0,
+								"jurisdiction": "nl",
+								"kind": "publicatie",
+								"official_id": "stb-2009-264",
+								"publication_kind": "Stb",
+								"publication_number": "264",
+								"publication_year": 2009,
+								"source": "bwb",
+								"stub": false
+							},
+							"edge_id": "113ae4da818fd891ec42af52396c091cb40b6e03",
+							"relation": "AMENDS",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"effective_date": "2009-07-01",
+								"article_version": "bwbr0005537_av_2868583_16488742",
+								"effect": "wijziging",
+								"source_publication": "Stb.2009-264"
+							},
+							"path": "/stb/2009/264"
+						},
+						{
+							"id": "instruments/stb_2009_570",
+							"key": "stb_2009_570",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Stb. 2009, 570",
+							"labels": [
+								"BWB",
+								"Publication"
+							],
+							"props": {
+								"article_count": 0,
+								"citation_title": "Stb. 2009, 570",
+								"date_published": "2009-12-24",
+								"date_signed": "2009-12-14",
+								"display_name": "Stb. 2009, 570",
+								"dossier_numbers": [
+									"31352"
+								],
+								"inbound_citation_count": 0,
+								"jurisdiction": "nl",
+								"kind": "publicatie",
+								"official_id": "stb-2009-570",
+								"publication_kind": "Stb",
+								"publication_number": "570",
+								"publication_year": 2009,
+								"source": "bwb",
+								"stub": false
+							},
+							"edge_id": "ac1198489ef35436059eca9380be5935758b6494",
+							"relation": "AMENDS",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"effective_date": "2010-01-01",
+								"article_version": "bwbr0005537_av_2868583_16990322",
+								"effect": "wijziging",
+								"source_publication": "Stb.2009-570"
+							},
+							"path": "/stb/2009/570"
+						}
+					]
+				},
+				{
+					"relation": "PART_OF",
+					"direction": "outbound",
+					"collection": "instruments",
+					"type": "instrument",
+					"total": 1,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "instruments/bwbr0005537",
+							"key": "bwbr0005537",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Algemene wet bestuursrecht",
+							"labels": [
+								"BWB"
+							],
+							"props": {
+								"abbreviation": "Awb",
+								"aliases": [
+									"Awb"
+								],
+								"article_count": 584,
+								"basis": [],
+								"bwb_id": "BWBR0005537",
+								"celex_refs": [
+									"32000L0031",
+									"32002L0047",
+									"32003L0071",
+									"32004L0025"
+								],
+								"citation_title": "Algemene wet bestuursrecht",
+								"citation_titles": [
+									"Algemene wet bestuursrecht"
+								],
+								"date_in_force": "1994-01-01",
+								"date_published": "1992-06-30",
+								"date_signed": "1992-06-04",
+								"display_name": "Algemene wet bestuursrecht",
+								"dossier_numbers": [
+									"21221"
+								],
+								"enacted_publication": "stb-1992-315",
+								"implements_celex": [],
+								"inbound_citation_count": 615364,
+								"jurisdiction": "nl",
+								"kind": "wet",
+								"legal_areas": [
+									{
+										"main": "Staats- en bestuursrecht",
+										"main_id": "c_da370768",
+										"main_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_da370768",
+										"main_slug": "staats-en-bestuursrecht",
+										"specific": "Bestuursrecht",
+										"specific_id": "c_052899f0",
+										"specific_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_052899f0",
+										"specific_slug": "bestuursrecht"
+									}
+								],
+								"official_title": "Wet van 4 juni 1992, houdende algemene regels van bestuursrecht (Algemene wet bestuursrecht)",
+								"policy_domains": [
+									{
+										"label": "Overheid, bestuur en koninkrijk",
+										"id": "c_fd285f2b",
+										"uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_fd285f2b",
+										"slug": "overheid-bestuur-en-koninkrijk"
+									}
+								],
+								"short_title": "Awb",
+								"source": "bwb",
+								"stub": false,
+								"title": "Algemene wet bestuursrecht",
+								"version_date_in_force": "2026-08-15"
+							},
+							"edge_id": "8be546dafd9b7214f8aa8625e464a5b5e1154776",
+							"relation": "PART_OF",
+							"direction": "outbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/wetten/BWBR0005537"
+						}
+					]
+				},
+				{
+					"relation": "REFERS_TO",
+					"direction": "inbound",
+					"collection": "articles",
+					"type": "article",
+					"total": 20,
+					"next_offset": 5,
+					"lid_counts": {
+						"2": 2,
+						"3": 6,
+						"4": 5,
+						"5": 6,
+						"6": 2,
+						"": 2
+					},
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "articles/bwbr0003104_15",
+							"key": "bwbr0003104_15",
+							"collection": "articles",
+							"type": "article",
+							"display_name": "Artikel 15 Wedervergeldingswet zeescheepvaart",
+							"labels": [
+								"BWB",
+								"Article"
+							],
+							"props": {
+								"article_number": "15",
+								"bwb_id": "BWBR0003104",
+								"display_name": "Artikel 15 Wedervergeldingswet zeescheepvaart",
+								"inbound_citation_count": 0,
+								"instrument_citation_title": "Wedervergeldingswet zeescheepvaart",
+								"label": "Artikel 15",
+								"position": 18,
+								"repealed": false,
+								"source_publication": "Stb.1993-650",
+								"stam_id": "1800933",
+								"stub": false,
+								"valid_from": "1994-01-01",
+								"versie_id": "2680422"
+							},
+							"edge_id": "06886ae3484f581edf58d983794e426f363b50ff",
+							"relation": "REFERS_TO",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"aanhef": false,
+								"end": 76,
+								"leden": [
+									"2"
+								],
+								"onderdelen": [],
+								"reason": "bwb_xml_ref",
+								"reference_kind": "extref",
+								"semantic_confidence": 0.85,
+								"semantic_pattern": "limiting_exception_adjacent",
+								"start": 17,
+								"text": "artikel 8:72, tweede lid, van de Algemene wet bestuursrecht"
+							},
+							"path": "/wetten/BWBR0003104/artikel/15"
+						},
+						{
+							"id": "articles/bwbr0020368_3a_146",
+							"key": "bwbr0020368_3a_146",
+							"collection": "articles",
+							"type": "article",
+							"display_name": "Artikel 3a:146 Wet op het financieel toezicht",
+							"labels": [
+								"BWB",
+								"Article"
+							],
+							"props": {
+								"article_number": "3a:146",
+								"bwb_id": "BWBR0020368",
+								"caption": "Afwikkeling van centrale tegenpartijen",
+								"display_name": "Artikel 3a:146 Wet op het financieel toezicht",
+								"heading": "Instandlating rechtsgevolgen",
+								"inbound_citation_count": 0,
+								"instrument_abbreviation": "Wft",
+								"instrument_citation_title": "Wet op het financieel toezicht",
+								"label": "Artikel 3a:146",
+								"position": 1159,
+								"repealed": false,
+								"source_publication": "Stb.2022-428",
+								"stam_id": "16552843",
+								"stub": false,
+								"valid_from": "2022-11-04",
+								"versie_id": "29015162"
+							},
+							"edge_id": "271a0dc7871e05feee2680cc31bc1030e53d531f",
+							"relation": "REFERS_TO",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"aanhef": false,
+								"end": 217,
+								"leden": [
+									"3"
+								],
+								"onderdelen": [
+									"a"
+								],
+								"reason": "bwb_xml_ref",
+								"reference_kind": "extref",
+								"semantic_confidence": 0.5,
+								"semantic_pattern": "cross_reference_fallback",
+								"start": 146,
+								"text": "artikel 8:72, derde lid, onderdeel a, van de Algemene wet bestuursrecht"
+							},
+							"path": "/wetten/BWBR0020368/artikel/3a:146"
+						},
+						{
+							"id": "articles/bwbr0005537_8_87",
+							"key": "bwbr0005537_8_87",
+							"collection": "articles",
+							"type": "article",
+							"display_name": "Artikel 8:87 Algemene wet bestuursrecht",
+							"labels": [
+								"BWB",
+								"Article"
+							],
+							"props": {
+								"article_number": "8:87",
+								"bwb_id": "BWBR0005537",
+								"caption": "Voorlopige voorziening en onmiddellijke uitspraak in de hoofdzaak",
+								"display_name": "Artikel 8:87 Algemene wet bestuursrecht",
+								"inbound_citation_count": 622,
+								"instrument_abbreviation": "Awb",
+								"instrument_citation_title": "Algemene wet bestuursrecht",
+								"label": "Artikel 8:87",
+								"position": 459,
+								"repealed": false,
+								"source_publication": "Stb.2012-682",
+								"stam_id": "2868763",
+								"stub": false,
+								"valid_from": "2013-01-01",
+								"versie_id": "20010682"
+							},
+							"edge_id": "2a244a119655c7c1ca7edf2afb71fa54702739dc",
+							"relation": "REFERS_TO",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"aanhef": false,
+								"end": 165,
+								"leden": [
+									"5"
+								],
+								"onderdelen": [],
+								"reason": "bwb_xml_ref",
+								"reference_kind": "intref",
+								"semantic_confidence": 0.5,
+								"semantic_pattern": "cross_reference_fallback",
+								"start": 141,
+								"text": "artikel 8:72, vijfde lid"
+							},
+							"path": "/wetten/BWBR0005537/artikel/8:87"
+						},
+						{
+							"id": "articles/bwbr0005537_8_104",
+							"key": "bwbr0005537_8_104",
+							"collection": "articles",
+							"type": "article",
+							"display_name": "Artikel 8:104 Algemene wet bestuursrecht",
+							"labels": [
+								"BWB",
+								"Article"
+							],
+							"props": {
+								"article_number": "8:104",
+								"bwb_id": "BWBR0005537",
+								"caption": "Hoger beroep",
+								"display_name": "Artikel 8:104 Algemene wet bestuursrecht",
+								"inbound_citation_count": 593,
+								"instrument_abbreviation": "Awb",
+								"instrument_citation_title": "Algemene wet bestuursrecht",
+								"label": "Artikel 8:104",
+								"position": 468,
+								"repealed": false,
+								"source_publication": "Stb.2014-540",
+								"stam_id": "12023053",
+								"stub": false,
+								"valid_from": "2015-01-01",
+								"versie_id": "21990052"
+							},
+							"edge_id": "2b4cc35cce54d1bec1e1887f73ba5982df72de75",
+							"relation": "REFERS_TO",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"aanhef": false,
+								"end": 1285,
+								"leden": [
+									"5"
+								],
+								"onderdelen": [],
+								"reason": "bwb_xml_ref",
+								"reference_kind": "intref",
+								"semantic_confidence": 0.85,
+								"semantic_pattern": "definitional_reference_adjacent",
+								"start": 1261,
+								"text": "artikel 8:72, vijfde lid"
+							},
+							"path": "/wetten/BWBR0005537/artikel/8:104"
+						}
+					]
+				},
+				{
+					"relation": "REFERS_TO",
+					"direction": "inbound",
+					"collection": "documents",
+					"type": "document",
+					"total": 35,
+					"next_offset": 5,
+					"lid_counts": {
+						"1": 3,
+						"3": 11,
+						"4": 12,
+						"6": 5,
+						"": 4
+					},
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "documents/75f60705_af3c_4ff3_85b7_821228bcd1dd",
+							"key": "75f60705_af3c_4ff3_85b7_821228bcd1dd",
+							"collection": "documents",
+							"type": "document",
+							"display_name": "Kamerstuk 36704, nr. 19: Amendement van het lid Diederik van Dijk over het afschaffen van rechterlijke dwangsommen in vreemdelingenzaken",
+							"labels": [
+								"TK",
+								"Kamerstuk"
+							],
+							"props": {
+								"actors": [
+									{
+										"person_id": "dd85a3cc-916a-4f94-aaed-cb341eb6a036",
+										"faction_id": "77f9b6f1-b1a9-4d1b-a05e-9936e79d8fa5",
+										"name": "D.J.H. (Diederik) van Dijk",
+										"faction": "SGP",
+										"role": "Eerste ondertekenaar",
+										"function": "Tweede Kamerlid",
+										"capacity": "kamerlid"
+									}
+								],
+								"budget": false,
+								"case_ids": [
+									"1ea863aa-682f-4422-bac1-09c7b0e57d60"
+								],
+								"case_kinds": [
+									"Amendement"
+								],
+								"date": "2025-06-13",
+								"decided_on": null,
+								"decision": null,
+								"display_name": "Kamerstuk 36704, nr. 19: Amendement van het lid Diederik van Dijk over het afschaffen van rechterlijke dwangsommen in vreemdelingenzaken",
+								"document_number": "2025D27810",
+								"dossier_number": "36704",
+								"dossier_numbers": [
+									"36704"
+								],
+								"dossier_suffix": null,
+								"dossier_title": "Wijziging van de Vreemdelingenwet 2000 en de Algemene wet bestuursrecht in verband met maatregelen om de asielketen te ontlasten en de instroom van asielzoekers te verminderen (Asielnoodmaatregelenwet)",
+								"explanation": "Met dit amendement worden rechterlijke dwangsommen in vreemdelingenzaken afgeschaft om mede langs deze weg de Immigratie- en Naturalisatiedienst (IND) te ontlasten.",
+								"external_id": "75f60705-af3c-4ff3-85b7-821228bcd1dd",
+								"kind": "Amendement",
+								"outcome": "vervangen",
+								"sequence": 19,
+								"session_year": "2024-2025",
+								"source": "tk",
+								"structure_quality": "implicit",
+								"subject": "Amendement van het lid Diederik van Dijk over het afschaffen van rechterlijke dwangsommen in vreemdelingenzaken",
+								"tally": null,
+								"text_source": "kst-xml",
+								"text_truncated": false,
+								"title": "Amendement van het lid Diederik van Dijk over het afschaffen van rechterlijke dwangsommen in vreemdelingenzaken",
+								"xml_dialect": "officiele-publicatie",
+								"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2025D27810&did=2025D27810",
+								"number": "19",
+								"sender": {
+									"name": "D.J.H. (Diederik) van Dijk",
+									"function": "Tweede Kamerlid",
+									"faction": "SGP",
+									"capacity": "kamerlid",
+									"member_key": "dd85a3cc_916a_4f94_aaed_cb341eb6a036",
+									"ministry": null
+								},
+								"dossier_short_title": "Asielnoodmaatregelenwet"
+							},
+							"edge_id": "13ee5a72ecfc805eba58a125129619e30249456e",
+							"relation": "REFERS_TO",
+							"direction": "inbound",
+							"confidence": 0.95,
+							"status": "canoniek",
+							"meta": {
+								"raw_match": "artikel 8:72, vierde lid, aanhef en onder b, van de Algemene wet bestuursrecht",
+								"snippet": "Da\nIn artikel 71b wordt «en 8:55f» vervangen door «, 8:55d, 8:55f en 8:72, zesde lid».\nDDb\nNa artikel 71b wordt een artikel toegevoegd, luidende:\nArtikel 71c\nIndien de bestuursrechter vaststelt dat niet tijdig op een aanvraag of bezwaar op grond van deze wet is beslist, draagt hij, in afwijking van artikel 8:72, vierde lid, aanhef en onder b, van de Algemene wet bestuursrecht, Onze Minister op dit binnen een door hem te stellen redelijke termijn alsnog te doen.\nII\nAan artikel III wordt een lid toegevoegd, luidende:\n4.\nIndien Onze Minister van Asiel en Migratie vóór het tijdstip van inwerkingtreding van artikel I, onderdelen DDa en DDb, niet binnen de wettelijke termijn",
+								"reason": "bwb_article",
+								"qualifier": "vierde lid, aanhef en onder b",
+								"leden": [
+									"4"
+								],
+								"onderdelen": [
+									"b"
+								],
+								"aanhef": true
+							},
+							"path": "/kamerstukken/36704/19"
+						},
+						{
+							"id": "documents/6c33ccba_751d_4877_9b10_d38154461203",
+							"key": "6c33ccba_751d_4877_9b10_d38154461203",
+							"collection": "documents",
+							"type": "document",
+							"display_name": "Kamerstuk 32621, nr. 3. Memorie van toelichting: Aanvulling van de Algemene wet bestuursrecht met bepalingen over nadeelcompensatie en schadevergoeding bij…",
+							"labels": [
+								"TK",
+								"Kamerstuk"
+							],
+							"props": {
+								"actors": [
+									{
+										"person_id": "00e0e3d2-57b8-4775-84e4-49d18c017841",
+										"faction_id": null,
+										"name": "J.P.H. Donner",
+										"faction": "",
+										"role": "Mede ondertekenaar",
+										"function": "minister van Binnenlandse Zaken en Koninkrijksrelaties",
+										"capacity": "bewindspersoon"
+									},
+									{
+										"person_id": "b78cf103-6ba5-41b7-a3d7-3be724b3e24f",
+										"faction_id": null,
+										"name": "I.W. Opstelten",
+										"faction": "",
+										"role": "Eerste ondertekenaar",
+										"function": "minister van Veiligheid en Justitie",
+										"capacity": "bewindspersoon"
+									}
+								],
+								"budget": false,
+								"case_ids": [
+									"47d46990-2bee-4431-90e4-566c0bdacd3b"
+								],
+								"case_kinds": [
+									"Wetgeving"
+								],
+								"date": "2011-02-02",
+								"display_name": "Kamerstuk 32621, nr. 3. Memorie van toelichting: Aanvulling van de Algemene wet bestuursrecht met bepalingen over nadeelcompensatie en schadevergoeding bij…",
+								"document_number": "2011D05829",
+								"dossier_number": "32621",
+								"dossier_numbers": [
+									"32621"
+								],
+								"dossier_suffix": null,
+								"dossier_title": null,
+								"external_id": "6c33ccba-751d-4877-9b10-d38154461203",
+								"kind": "Memorie van toelichting",
+								"sequence": 3,
+								"session_year": "2010-2011",
+								"source": "tk",
+								"structure_quality": "explicit",
+								"subject": "Memorie van toelichting",
+								"text_source": "kst-xml",
+								"text_truncated": false,
+								"title": "Aanvulling van de Algemene wet bestuursrecht met bepalingen over nadeelcompensatie en schadevergoeding bij onrechtmatige overheidsdaad (Wet nadeelcompensatie en schadevergoeding bij onrechtmatige besluiten)",
+								"xml_dialect": "officiele-publicatie",
+								"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2011D05829&did=2011D05829",
+								"number": "3",
+								"sender": {
+									"name": "I.W. Opstelten",
+									"function": "minister van Veiligheid en Justitie",
+									"faction": null,
+									"capacity": "bewindspersoon",
+									"member_key": "b78cf103_6ba5_41b7_a3d7_3be724b3e24f",
+									"ministry": "venj"
+								},
+								"dossier_short_title": "Wet nadeelcompensatie en schadevergoeding bij onrechtmatige besluiten"
+							},
+							"edge_id": "16aae8ed7314f5b31861eb076363f8f099e4dd06",
+							"relation": "REFERS_TO",
+							"direction": "inbound",
+							"confidence": 0.95,
+							"status": "canoniek",
+							"meta": {
+								"raw_match": "artikel 8:72, vierde lid, van de Awb",
+								"snippet": "artikel 8:104 van de Wet aanpassing bestuursrecht worden ingesteld bij de Afdeling bestuursrechtspraak van de Raad van State (tenzij de schade is veroorzaakt door een besluit of handeling waarover in hoogste instantie het College van Beroep voor het bedrijfleven oordeelt; zie artikel V).\nIngevolge artikel 8:72, vierde lid, van de Awb kan de bestuursrechter, indien hij het beroep gegrond verklaart, bepalen dat zijn uitspraak in de plaats treedt van het vernietigde besluit of het vernietigde gedeelte daarvan. Vanwege de bijzondere aard van een op grond van artikel 4:126 genomen besluit, dat steeds een (voorlopige) beoordeling doo",
+								"reason": "bwb_article",
+								"qualifier": "vierde lid",
+								"leden": [
+									"4"
+								]
+							},
+							"path": "/kamerstukken/32621/3"
+						},
+						{
+							"id": "documents/0f058717_f090_45a5_8efa_4c8f68783c38",
+							"key": "0f058717_f090_45a5_8efa_4c8f68783c38",
+							"collection": "documents",
+							"type": "document",
+							"display_name": "Kamerstuk 36105, nr. 2. Voorstel van wet: Wijziging van de Wet op het financieel toezicht, de Faillissementswet en enige andere wetten ter uitvoering van…",
+							"labels": [
+								"TK",
+								"Kamerstuk"
+							],
+							"props": {
+								"actors": [],
+								"budget": false,
+								"case_ids": [
+									"bf9a8c12-554a-4753-9de6-59fae95ea55e"
+								],
+								"case_kinds": [
+									"Wetgeving"
+								],
+								"date": "2022-05-19",
+								"display_name": "Kamerstuk 36105, nr. 2. Voorstel van wet: Wijziging van de Wet op het financieel toezicht, de Faillissementswet en enige andere wetten ter uitvoering van…",
+								"document_number": "2022D20557",
+								"dossier_number": "36105",
+								"dossier_numbers": [
+									"36105"
+								],
+								"dossier_suffix": null,
+								"dossier_title": null,
+								"external_id": "0f058717-f090-45a5-8efa-4c8f68783c38",
+								"kind": "Voorstel van wet",
+								"sequence": 2,
+								"session_year": "2021-2022",
+								"source": "tk",
+								"structure_quality": "implicit",
+								"subject": "Voorstel van wet",
+								"text_source": "kst-xml",
+								"text_truncated": false,
+								"title": "Wijziging van de Wet op het financieel toezicht, de Faillissementswet en enige andere wetten ter uitvoering van Verordening (EU) 2021/23 betreffende een kader voor het herstel en de afwikkeling van centrale tegenpartijen (Uitvoeringswet verordening herstel en afwikkeling centrale tegenpartijen)",
+								"xml_dialect": "officiele-publicatie",
+								"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2022D20557&did=2022D20557",
+								"number": "2",
+								"dossier_short_title": "Uitvoeringswet verordening herstel en afwikkeling centrale tegenpartijen"
+							},
+							"edge_id": "17d169e6e9379bbdc0a1ab6941b0ac12875611ff",
+							"relation": "REFERS_TO",
+							"direction": "inbound",
+							"confidence": 0.95,
+							"status": "canoniek",
+							"meta": {
+								"raw_match": "artikel 8:72, derde lid, onderdeel a, van de Algemene wet bestuursrecht",
+								"snippet": "an het rechtsvermoeden dat opschorting van de uitvoering van het besluit tegen het algemeen belang indruist.\nArtikel 3A:146. Instandlating rechtsgevolgen\nDe bestuursrechter geeft, indien een beroep tegen een besluit tot het nemen van een afwikkelingsmaatregel gegrond wordt verklaard, toepassing aan artikel 8:72, derde lid, onderdeel a, van de Algemene wet bestuursrecht, indien dit noodzakelijk is ter bescherming van de belangen van te goeder trouw handelende derden die ingevolge het besluit andere eigendomsinstrumenten, activa, rechten of passiva van de centrale tegenpartij in afwikkeling hebben verkregen.\nG\nIn artikel 5:71, eerste lid, onderdeel l, wordt «bank o",
+								"reason": "bwb_article",
+								"qualifier": "derde lid, onderdeel a",
+								"leden": [
+									"3"
+								],
+								"onderdelen": [
+									"a"
+								]
+							},
+							"path": "/kamerstukken/36105/2"
+						},
+						{
+							"id": "documents/0bd1cf53_8117_4559_b0cd_7ec2f97571f9",
+							"key": "0bd1cf53_8117_4559_b0cd_7ec2f97571f9",
+							"collection": "documents",
+							"type": "document",
+							"display_name": "Kamerstuk 33219, nr. 11. Nota van wijziging: Nieuwe regels voor een basisregistratie personen (Wet basisregistratie personen)",
+							"labels": [
+								"TK",
+								"Kamerstuk"
+							],
+							"props": {
+								"actors": [
+									{
+										"person_id": "680a360e-c51c-44da-b26d-9cd290a979b2",
+										"faction_id": null,
+										"name": "R.H.A. Plasterk",
+										"faction": "",
+										"role": "Eerste ondertekenaar",
+										"function": "minister van Binnenlandse Zaken en Koninkrijksrelaties",
+										"capacity": "bewindspersoon"
+									}
+								],
+								"budget": false,
+								"case_ids": [
+									"d53bd315-6a35-4d18-baff-0414fe95c4d3",
+									"f8f6c7fd-b3e2-48d7-be14-50aafb81429a"
+								],
+								"case_kinds": [
+									"Nota van wijziging",
+									"Wetgeving"
+								],
+								"date": "2013-03-11",
+								"display_name": "Kamerstuk 33219, nr. 11. Nota van wijziging: Nieuwe regels voor een basisregistratie personen (Wet basisregistratie personen)",
+								"document_number": "2013D09781",
+								"dossier_number": "33219",
+								"dossier_numbers": [
+									"33219"
+								],
+								"dossier_suffix": null,
+								"dossier_title": null,
+								"external_id": "0bd1cf53-8117-4559-b0cd-7ec2f97571f9",
+								"kind": "Nota van wijziging",
+								"sequence": 11,
+								"session_year": "2012-2013",
+								"source": "tk",
+								"structure_quality": "implicit",
+								"subject": "Derde nota van wijziging ",
+								"text_source": "kst-xml",
+								"text_truncated": false,
+								"title": "Nieuwe regels voor een basisregistratie personen (Wet basisregistratie personen)",
+								"xml_dialect": "officiele-publicatie",
+								"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2013D09781&did=2013D09781",
+								"number": "11",
+								"sender": {
+									"name": "R.H.A. Plasterk",
+									"function": "minister van Binnenlandse Zaken en Koninkrijksrelaties",
+									"faction": null,
+									"capacity": "bewindspersoon",
+									"member_key": "680a360e_c51c_44da_b26d_9cd290a979b2",
+									"ministry": "bzk"
+								},
+								"dossier_short_title": "Wet basisregistratie personen"
+							},
+							"edge_id": "1e184dbe31bd1ae2926054573a68ee4b785acce8",
+							"relation": "REFERS_TO",
+							"direction": "inbound",
+							"confidence": 0.95,
+							"status": "canoniek",
+							"meta": {
+								"raw_match": "artikel 8:72 van de Algemene wet bestuursrecht",
+								"snippet": "eling van het bestuursorgaan aan de bijhoudingsgemeente op zijn plaats.\nDe wijzigingen in het tweede en derde lid zijn bedoeld om de tekst beter aan te laten sluiten op de redactie van het eerste lid.\nOnderdeel H, eerste lid\nAls gevolg van de Wet aanpassing bestuursprocesrecht is de verwijzing naar artikel 8:72 van de Algemene wet bestuursrecht (Awb) in artikel 2.61 van het wetsvoorstel in overeenstemming gebracht met de gewijzigde bepalingen in de Awb, overeenkomstig de wijziging die de Wet aanpassing bestuursprocesrecht heeft aangebracht in het met artikel 2.61 vergelijkbare artikel 86 van de Wet GBA.\nOnderdelen J, K en M\nIn deze onderd",
+								"reason": "bwb_article"
+							},
+							"path": "/kamerstukken/33219/11"
+						}
+					]
+				}
+			]
+		},
+		"title": "Art. 8:72 Awb, Uitspraak",
+		"description": "1. Indien de bestuursrechter het beroep gegrond verklaart, vernietigt hij het bestreden besluit geheel of gedeeltelijk. 2. De vernietiging van een…",
+		"path": "/wetten/BWBR0005537/artikel/8:72",
+		"lid_counts_pending": false
+	}
+}

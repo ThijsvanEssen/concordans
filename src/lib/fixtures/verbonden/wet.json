@@ -1,0 +1,2799 @@
+{
+	"/api/instruments/{bwb_id}/amended-by {\"bwb_id\":\"BWBR0005537\"} {\"limit\":500}": {
+		"bwb_id": "BWBR0005537",
+		"total": 114,
+		"items": [
+			{
+				"id": "instruments/stb_2026_94",
+				"key": "stb_2026_94",
+				"identifier": "stb_2026_94",
+				"display_name": "Stb. 2026, 94",
+				"kind": "Stb",
+				"year": 2026,
+				"number": "94",
+				"date_signed": "2026-04-08",
+				"date_published": "2026-04-23",
+				"official_url": "https://zoek.officielebekendmakingen.nl/stb-2026-94.html",
+				"dossiers": [
+					{
+						"number": "36824",
+						"key": "36824",
+						"title": "Wijziging van diverse wetten in verband met het overzetten van bepalingen uit de Vangnetregeling Omgevingswet naar de wet in formele zin, alsmede met het herstellen van wetstechnische gebreken en leemten",
+						"short_title": null,
+						"path": "/dossiers/36824"
+					}
+				],
+				"establishes": 0,
+				"amends": 2,
+				"introduces": 0,
+				"repeals": 0,
+				"articles_affected": 2,
+				"first_effective_date": "2026-06-04"
+			},
+			{
+				"id": "instruments/stcrt_2025_39855",
+				"key": "stcrt_2025_39855",
+				"identifier": "stcrt_2025_39855",
+				"display_name": "Stcrt. 2025, 39855",
+				"kind": "Stcrt",
+				"year": 2025,
+				"number": "39855",
+				"date_signed": "2025-11-14",
+				"date_published": "2025-11-24",
+				"official_url": "https://zoek.officielebekendmakingen.nl/stcrt-2025-39855.html",
+				"dossiers": [],
+				"establishes": 0,
+				"amends": 2,
+				"introduces": 0,
+				"repeals": 0,
+				"articles_affected": 2,
+				"first_effective_date": "2026-01-01"
+			},
+			{
+				"id": "instruments/stb_2025_333",
+				"key": "stb_2025_333",
+				"identifier": "stb_2025_333",
+				"display_name": "Stb. 2025, 333",
+				"kind": "Stb",
+				"year": 2025,
+				"number": "333",
+				"date_signed": "2025-10-29",
+				"date_published": "2025-11-10",
+				"official_url": "https://zoek.officielebekendmakingen.nl/stb-2025-333.html",
+				"dossiers": [
+					{
+						"number": "36463",
+						"key": "36463",
+						"title": "Wijziging van het Wetboek van Strafrecht en het Wetboek van Strafvordering en enige andere wetten in verband met verdere versterking van de strafrechtelijke aanpak van ondermijnende criminaliteit (versterking strafrechtelijke aanpak ondermijnende criminaliteit II)",
+						"short_title": "versterking strafrechtelijke aanpak ondermijnende criminaliteit II",
+						"path": "/dossiers/36463"
+					}
+				],
+				"establishes": 0,
+				"amends": 3,
+				"introduces": 0,
+				"repeals": 0,
+				"articles_affected": 3,
+				"first_effective_date": "2026-01-01"
+			},
+			{
+				"id": "instruments/stb_2025_124",
+				"key": "stb_2025_124",
+				"identifier": "stb_2025_124",
+				"display_name": "Stb. 2025, 124",
+				"kind": "Stb",
+				"year": 2025,
+				"number": "124",
+				"date_signed": "2025-04-23",
+				"date_published": "2025-05-14",
+				"official_url": "https://zoek.officielebekendmakingen.nl/stb-2025-124.html",
+				"dossiers": [
+					{
+						"number": "36638",
+						"key": "36638",
+						"title": "Wijziging van enkele wetten op het gebied van Justitie en Veiligheid en op het gebied van Asiel en Migratie in verband met aanpassingen van overwegend technische aard (Verzamelwet Justitie en Veiligheid en Asiel en Migratie 20XX)",
+						"short_title": "Verzamelwet Justitie en Veiligheid en Asiel en Migratie 20XX",
+						"path": "/dossiers/36638"
+					}
+				],
+				"establishes": 0,
+				"amends": 10,
+				"introduces": 0,
+				"repeals": 0,
+				"articles_affected": 10,
+				"first_effective_date": "2025-07-01"
+			}
+		],
+		"proposals_total": 0,
+		"proposals": []
+	},
+	"/api/instruments/{bwb_id}/articles {\"bwb_id\":\"BWBR0005537\"} {\"limit\":2000,\"text_preview_chars\":0}": {
+		"bwb_id": "BWBR0005537",
+		"total": 565,
+		"division": null,
+		"items": [
+			{
+				"id": "articles/bwbr0005537_1_1",
+				"key": "bwbr0005537_1_1",
+				"bwb_id": "BWBR0005537",
+				"celex": null,
+				"article_number": "1:1",
+				"label": "Artikel 1:1",
+				"heading": null,
+				"address": "1:1",
+				"display_name": "Artikel 1:1 Algemene wet bestuursrecht",
+				"official_url": "https://wetten.overheid.nl/jci1.3:c:BWBR0005537&artikel=1:1",
+				"breadcrumb": [
+					{
+						"type": "hoofdstuk",
+						"label": "Hoofdstuk 1",
+						"title": "Inleidende bepalingen"
+					},
+					{
+						"type": "titeldeel",
+						"label": "Titel 1.1",
+						"title": "Definities en reikwijdte"
+					}
+				],
+				"stub": false,
+				"repealed": false,
+				"last_article_number": null,
+				"text_preview": "",
+				"path": "/wetten/BWBR0005537/artikel/1:1"
+			},
+			{
+				"id": "articles/bwbr0005537_1_2",
+				"key": "bwbr0005537_1_2",
+				"bwb_id": "BWBR0005537",
+				"celex": null,
+				"article_number": "1:2",
+				"label": "Artikel 1:2",
+				"heading": null,
+				"address": "1:2",
+				"display_name": "Artikel 1:2 Algemene wet bestuursrecht",
+				"official_url": "https://wetten.overheid.nl/jci1.3:c:BWBR0005537&artikel=1:2",
+				"breadcrumb": [
+					{
+						"type": "hoofdstuk",
+						"label": "Hoofdstuk 1",
+						"title": "Inleidende bepalingen"
+					},
+					{
+						"type": "titeldeel",
+						"label": "Titel 1.1",
+						"title": "Definities en reikwijdte"
+					}
+				],
+				"stub": false,
+				"repealed": false,
+				"last_article_number": null,
+				"text_preview": "",
+				"path": "/wetten/BWBR0005537/artikel/1:2"
+			},
+			{
+				"id": "articles/bwbr0005537_1_3",
+				"key": "bwbr0005537_1_3",
+				"bwb_id": "BWBR0005537",
+				"celex": null,
+				"article_number": "1:3",
+				"label": "Artikel 1:3",
+				"heading": null,
+				"address": "1:3",
+				"display_name": "Artikel 1:3 Algemene wet bestuursrecht",
+				"official_url": "https://wetten.overheid.nl/jci1.3:c:BWBR0005537&artikel=1:3",
+				"breadcrumb": [
+					{
+						"type": "hoofdstuk",
+						"label": "Hoofdstuk 1",
+						"title": "Inleidende bepalingen"
+					},
+					{
+						"type": "titeldeel",
+						"label": "Titel 1.1",
+						"title": "Definities en reikwijdte"
+					}
+				],
+				"stub": false,
+				"repealed": false,
+				"last_article_number": null,
+				"text_preview": "",
+				"path": "/wetten/BWBR0005537/artikel/1:3"
+			},
+			{
+				"id": "articles/bwbr0005537_1_4",
+				"key": "bwbr0005537_1_4",
+				"bwb_id": "BWBR0005537",
+				"celex": null,
+				"article_number": "1:4",
+				"label": "Artikel 1:4",
+				"heading": null,
+				"address": "1:4",
+				"display_name": "Artikel 1:4 Algemene wet bestuursrecht",
+				"official_url": "https://wetten.overheid.nl/jci1.3:c:BWBR0005537&artikel=1:4",
+				"breadcrumb": [
+					{
+						"type": "hoofdstuk",
+						"label": "Hoofdstuk 1",
+						"title": "Inleidende bepalingen"
+					},
+					{
+						"type": "titeldeel",
+						"label": "Titel 1.1",
+						"title": "Definities en reikwijdte"
+					}
+				],
+				"stub": false,
+				"repealed": false,
+				"last_article_number": null,
+				"text_preview": "",
+				"path": "/wetten/BWBR0005537/artikel/1:4"
+			}
+		]
+	},
+	"/api/instruments/{bwb_id}/basis {\"bwb_id\":\"BWBR0005537\"} {}": {
+		"bwb_id": "BWBR0005537",
+		"total": 0,
+		"items": []
+	},
+	"/api/instruments/{bwb_id}/delegated {\"bwb_id\":\"BWBR0005537\"} {}": {
+		"bwb_id": "BWBR0005537",
+		"total": 845,
+		"items": [
+			{
+				"instrument": {
+					"id": "instruments/bwbr0038341",
+					"key": "bwbr0038341",
+					"bwb_id": "BWBR0038341",
+					"celex": null,
+					"title": "Aanpassingsbesluit vereenvoudiging en digitalisering procesrecht",
+					"citation_title": "Aanpassingsbesluit vereenvoudiging en digitalisering procesrecht",
+					"short_title": null,
+					"abbreviation": null,
+					"display_name": "Aanpassingsbesluit vereenvoudiging en digitalisering procesrecht",
+					"official_url": "https://wetten.overheid.nl/BWBR0038341",
+					"article_count": 12,
+					"inbound_citation_count": 5,
+					"judgment_count": null,
+					"outbound_citation_count": null,
+					"path": "/wetten/BWBR0038341"
+				},
+				"kind": "amvb",
+				"date_in_force": "2017-03-01",
+				"basis_kind": "delegates",
+				"articles": [
+					{
+						"leden": [
+							"1"
+						],
+						"onderdelen": [],
+						"aanhef": false,
+						"id": "articles/bwbr0005537_8_36f",
+						"key": "bwbr0005537_8_36f",
+						"article_number": "8:36f",
+						"display_name": "Artikel 8:36f Algemene wet bestuursrecht",
+						"text": "8:36f, eerste lid",
+						"basis_kind": "delegates",
+						"referring": []
+					}
+				],
+				"also_based_on": [
+					{
+						"instrument": {
+							"id": "instruments/bwbr0002656",
+							"key": "bwbr0002656",
+							"bwb_id": "BWBR0002656",
+							"celex": null,
+							"title": "Burgerlijk Wetboek Boek 1",
+							"citation_title": "Burgerlijk Wetboek Boek 1",
+							"short_title": "BW1",
+							"abbreviation": "BW1",
+							"display_name": "Burgerlijk Wetboek Boek 1",
+							"official_url": "https://wetten.overheid.nl/BWBR0002656",
+							"article_count": 623,
+							"inbound_citation_count": 62744,
+							"judgment_count": null,
+							"outbound_citation_count": null,
+							"path": "/wetten/BWBR0002656"
+						},
+						"kind": "wet",
+						"articles": [
+							{
+								"leden": [],
+								"onderdelen": [],
+								"aanhef": false,
+								"id": "articles/bwbr0002656_116",
+								"key": "bwbr0002656_116",
+								"article_number": "116",
+								"display_name": "Artikel 116 Burgerlijk Wetboek Boek 1",
+								"text": "116",
+								"basis_kind": "delegates"
+							}
+						]
+					},
+					{
+						"instrument": {
+							"id": "instruments/bwbr0005034",
+							"key": "bwbr0005034",
+							"bwb_id": "BWBR0005034",
+							"celex": null,
+							"title": "Burgerlijk Wetboek Boek 8",
+							"citation_title": "Burgerlijk Wetboek Boek 8",
+							"short_title": "BW8",
+							"abbreviation": "BW8",
+							"display_name": "Burgerlijk Wetboek Boek 8",
+							"official_url": "https://wetten.overheid.nl/BWBR0005034",
+							"article_count": 878,
+							"inbound_citation_count": 3281,
+							"judgment_count": null,
+							"outbound_citation_count": null,
+							"path": "/wetten/BWBR0005034"
+						},
+						"kind": "wet",
+						"articles": [
+							{
+								"leden": [],
+								"onderdelen": [],
+								"aanhef": false,
+								"id": "articles/bwbr0005034_231",
+								"key": "bwbr0005034_231",
+								"article_number": "231",
+								"display_name": "Artikel 231 Burgerlijk Wetboek Boek 8",
+								"text": "231",
+								"basis_kind": "delegates"
+							},
+							{
+								"leden": [],
+								"onderdelen": [],
+								"aanhef": false,
+								"id": "articles/bwbr0005034_841",
+								"key": "bwbr0005034_841",
+								"article_number": "841",
+								"display_name": "Artikel 841 Burgerlijk Wetboek Boek 8",
+								"text": "841",
+								"basis_kind": "delegates"
+							}
+						]
+					},
+					{
+						"instrument": {
+							"id": "instruments/bwbr0001860",
+							"key": "bwbr0001860",
+							"bwb_id": "BWBR0001860",
+							"celex": null,
+							"title": "Faillissementswet",
+							"citation_title": "Faillissementswet",
+							"short_title": "Fw",
+							"abbreviation": "Fw",
+							"display_name": "Faillissementswet",
+							"official_url": "https://wetten.overheid.nl/BWBR0001860",
+							"article_count": 638,
+							"inbound_citation_count": 31095,
+							"judgment_count": null,
+							"outbound_citation_count": null,
+							"path": "/wetten/BWBR0001860"
+						},
+						"kind": "wet",
+						"articles": [
+							{
+								"leden": [
+									"2"
+								],
+								"onderdelen": [],
+								"aanhef": false,
+								"id": "articles/bwbr0001860_294",
+								"key": "bwbr0001860_294",
+								"article_number": "294",
+								"display_name": "Artikel 294 Faillissementswet",
+								"text": "294, tweede lid",
+								"basis_kind": "delegates"
+							}
+						]
+					},
+					{
+						"instrument": {
+							"id": "instruments/bwbr0021912",
+							"key": "bwbr0021912",
+							"bwb_id": "BWBR0021912",
+							"celex": null,
+							"title": "Uitvoeringswet grondkamers",
+							"citation_title": "Uitvoeringswet grondkamers",
+							"short_title": "Uw gk",
+							"abbreviation": "Uw gk",
+							"display_name": "Uitvoeringswet grondkamers",
+							"official_url": "https://wetten.overheid.nl/BWBR0021912",
+							"article_count": 61,
+							"inbound_citation_count": 105,
+							"judgment_count": null,
+							"outbound_citation_count": null,
+							"path": "/wetten/BWBR0021912"
+						},
+						"kind": "wet",
+						"articles": [
+							{
+								"leden": [],
+								"onderdelen": [],
+								"aanhef": false,
+								"id": "articles/bwbr0021912_16",
+								"key": "bwbr0021912_16",
+								"article_number": "16",
+								"display_name": "Artikel 16 Uitvoeringswet grondkamers",
+								"text": "16",
+								"basis_kind": "delegates"
+							}
+						]
+					}
+				],
+				"sub_delegated": []
+			},
+			{
+				"instrument": {
+					"id": "instruments/bwbr0026012",
+					"key": "bwbr0026012",
+					"bwb_id": "BWBR0026012",
+					"celex": null,
+					"title": "Besluit buitengerechtelijke kosten",
+					"citation_title": "Besluit buitengerechtelijke kosten",
+					"short_title": null,
+					"abbreviation": null,
+					"display_name": "Besluit buitengerechtelijke kosten",
+					"official_url": "https://wetten.overheid.nl/BWBR0026012",
+					"article_count": 3,
+					"inbound_citation_count": 3,
+					"judgment_count": null,
+					"outbound_citation_count": null,
+					"path": "/wetten/BWBR0026012"
+				},
+				"kind": "amvb",
+				"date_in_force": "2009-07-01",
+				"basis_kind": "delegates",
+				"articles": [
+					{
+						"leden": [
+							"2"
+						],
+						"onderdelen": [],
+						"aanhef": false,
+						"id": "articles/bwbr0005537_4_120",
+						"key": "bwbr0005537_4_120",
+						"article_number": "4:120",
+						"display_name": "Artikel 4:120 Algemene wet bestuursrecht",
+						"text": "4:120, tweede lid",
+						"basis_kind": "delegates",
+						"referring": [
+							{
+								"leden": [],
+								"onderdelen": [],
+								"aanhef": false,
+								"id": "articles/bwbr0026012_1",
+								"key": "bwbr0026012_1",
+								"article_number": "1",
+								"display_name": "Artikel 1 Besluit buitengerechtelijke kosten"
+							}
+						]
+					}
+				],
+				"also_based_on": [],
+				"sub_delegated": []
+			},
+			{
+				"instrument": {
+					"id": "instruments/bwbr0011217",
+					"key": "bwbr0011217",
+					"bwb_id": "BWBR0011217",
+					"celex": null,
+					"title": "Besluit klachtencommissie vergunninghouders interlandelijke adoptie",
+					"citation_title": "Besluit klachtencommissie vergunninghouders interlandelijke adoptie",
+					"short_title": "Bkvia",
+					"abbreviation": "Bkvia",
+					"display_name": "Besluit klachtencommissie vergunninghouders interlandelijke adoptie",
+					"official_url": "https://wetten.overheid.nl/BWBR0011217",
+					"article_count": 10,
+					"inbound_citation_count": 2,
+					"judgment_count": null,
+					"outbound_citation_count": null,
+					"path": "/wetten/BWBR0011217"
+				},
+				"kind": "amvb",
+				"date_in_force": "2000-04-01",
+				"basis_kind": "delegates",
+				"articles": [
+					{
+						"leden": [],
+						"onderdelen": [],
+						"aanhef": false,
+						"id": "articles/bwbr0005537_9_13",
+						"key": "bwbr0005537_9_13",
+						"article_number": "9:13",
+						"display_name": "Artikel 9:13 Algemene wet bestuursrecht",
+						"text": "9:13",
+						"basis_kind": "delegates",
+						"referring": []
+					},
+					{
+						"leden": [],
+						"onderdelen": [],
+						"aanhef": false,
+						"id": "articles/bwbr0005537_9_14",
+						"key": "bwbr0005537_9_14",
+						"article_number": "9:14",
+						"display_name": "Artikel 9:14 Algemene wet bestuursrecht",
+						"text": "9:14",
+						"basis_kind": "delegates",
+						"referring": []
+					}
+				],
+				"also_based_on": [
+					{
+						"instrument": {
+							"id": "instruments/bwbr0009614",
+							"key": "bwbr0009614",
+							"bwb_id": "BWBR0009614",
+							"celex": null,
+							"title": "Uitvoeringswet Verdrag inzake de bescherming van kinderen en de samenwerking op het gebied van de interlandelijke adoptie",
+							"citation_title": "Uitvoeringswet Verdrag inzake de bescherming van kinderen en de samenwerking op het gebied van de interlandelijke adoptie",
+							"short_title": "Uw Hav",
+							"abbreviation": "Uw Hav",
+							"display_name": "Uitvoeringswet Verdrag inzake de bescherming van kinderen en de samenwerking op het gebied van de interlandelijke adoptie",
+							"official_url": "https://wetten.overheid.nl/BWBR0009614",
+							"article_count": 17,
+							"inbound_citation_count": 13,
+							"judgment_count": null,
+							"outbound_citation_count": null,
+							"path": "/wetten/BWBR0009614"
+						},
+						"kind": "wet",
+						"articles": [
+							{
+								"leden": [
+									"1"
+								],
+								"onderdelen": [],
+								"aanhef": false,
+								"id": "articles/bwbr0009614_17",
+								"key": "bwbr0009614_17",
+								"article_number": "17",
+								"display_name": "Artikel 17 Uitvoeringswet Verdrag inzake de bescherming van kinderen en de samenwerking op het gebied van de interlandelijke adoptie",
+								"text": "17, eerste lid",
+								"basis_kind": "delegates"
+							}
+						]
+					},
+					{
+						"instrument": {
+							"id": "instruments/bwbr0004447",
+							"key": "bwbr0004447",
+							"bwb_id": "BWBR0004447",
+							"celex": null,
+							"title": "Wet opneming buitenlandse kinderen ter adoptie",
+							"citation_title": "Wet opneming buitenlandse kinderen ter adoptie",
+							"short_title": "WOBP",
+							"abbreviation": "WOBP",
+							"display_name": "Wet opneming buitenlandse kinderen ter adoptie",
+							"official_url": "https://wetten.overheid.nl/BWBR0004447",
+							"article_count": 47,
+							"inbound_citation_count": 407,
+							"judgment_count": null,
+							"outbound_citation_count": null,
+							"path": "/wetten/BWBR0004447"
+						},
+						"kind": "wet",
+						"articles": [
+							{
+								"leden": [
+									"1"
+								],
+								"onderdelen": [],
+								"aanhef": false,
+								"id": "articles/bwbr0004447_24a",
+								"key": "bwbr0004447_24a",
+								"article_number": "24a",
+								"display_name": "Artikel 24a Wet opneming buitenlandse kinderen ter adoptie",
+								"text": "24a, eerste lid, tweede volzin",
+								"basis_kind": "delegates"
+							}
+						]
+					}
+				],
+				"sub_delegated": []
+			},
+			{
+				"instrument": {
+					"id": "instruments/bwbr0006358",
+					"key": "bwbr0006358",
+					"bwb_id": "BWBR0006358",
+					"celex": null,
+					"title": "Besluit proceskosten bestuursrecht",
+					"citation_title": "Besluit proceskosten bestuursrecht",
+					"short_title": "BPB",
+					"abbreviation": "BPB",
+					"display_name": "Besluit proceskosten bestuursrecht",
+					"official_url": "https://wetten.overheid.nl/BWBR0006358",
+					"article_count": 6,
+					"inbound_citation_count": 15191,
+					"judgment_count": null,
+					"outbound_citation_count": null,
+					"path": "/wetten/BWBR0006358"
+				},
+				"kind": "amvb",
+				"date_in_force": "1994-01-01",
+				"basis_kind": "delegates",
+				"articles": [
+					{
+						"leden": [],
+						"onderdelen": [],
+						"aanhef": false,
+						"id": "articles/bwbr0005537_8_75",
+						"key": "bwbr0005537_8_75",
+						"article_number": "8:75",
+						"display_name": "Artikel 8:75 Algemene wet bestuursrecht",
+						"text": "8:75",
+						"basis_kind": "delegates",
+						"referring": [
+							{
+								"leden": [],
+								"onderdelen": [],
+								"aanhef": false,
+								"id": "articles/bwbr0006358_1",
+								"key": "bwbr0006358_1",
+								"article_number": "1",
+								"display_name": "Artikel 1 Besluit proceskosten bestuursrecht"
+							}
+						]
+					}
+				],
+				"also_based_on": [],
+				"sub_delegated": []
+			}
+		]
+	},
+	"/api/instruments/{bwb_id}/dossiers {\"bwb_id\":\"BWBR0005537\"} {}": {
+		"bwb_id": "BWBR0005537",
+		"total": 47,
+		"items": [
+			{
+				"id": "dossiers/36824",
+				"key": "36824",
+				"dossier_number": "36824",
+				"title": "Wijziging van diverse wetten in verband met het overzetten van bepalingen uit de Vangnetregeling Omgevingswet naar de wet in formele zin, alsmede met het herstellen van wetstechnische gebreken en leemten",
+				"short_title": null,
+				"display_name": "Kamerstukdossier 36824: Wijziging van diverse wetten in verband met het overzetten van bepalingen uit de Vangnetregeling Omgevingswet naar de wet in formele zin, alsmede met het herstellen van wetstechnische gebreken en leemten",
+				"current_phase": "Eindtekst",
+				"opened_on": "2025-09-25",
+				"closed": true,
+				"via": "amending_publication",
+				"publication": "stb_2026_94",
+				"path": "/dossiers/36824"
+			},
+			{
+				"id": "dossiers/36638",
+				"key": "36638",
+				"dossier_number": "36638",
+				"title": "Wijziging van enkele wetten op het gebied van Justitie en Veiligheid en op het gebied van Asiel en Migratie in verband met aanpassingen van overwegend technische aard (Verzamelwet Justitie en Veiligheid en Asiel en Migratie 20XX)",
+				"short_title": "Verzamelwet Justitie en Veiligheid en Asiel en Migratie 20XX",
+				"display_name": "Kamerstukdossier 36638: Wijziging van enkele wetten op het gebied van Justitie en Veiligheid en op het gebied van Asiel en Migratie in verband met aanpassingen van overwegend technische aard (Verzamelwet Justitie en Veiligheid en Asiel en Migratie 20XX)",
+				"current_phase": "Eindtekst",
+				"opened_on": "2024-10-19",
+				"closed": true,
+				"via": "amending_publication",
+				"publication": "stb_2025_124",
+				"path": "/dossiers/36638"
+			},
+			{
+				"id": "dossiers/36463",
+				"key": "36463",
+				"dossier_number": "36463",
+				"title": "Wijziging van het Wetboek van Strafrecht en het Wetboek van Strafvordering en enige andere wetten in verband met verdere versterking van de strafrechtelijke aanpak van ondermijnende criminaliteit (versterking strafrechtelijke aanpak ondermijnende criminaliteit II)",
+				"short_title": "versterking strafrechtelijke aanpak ondermijnende criminaliteit II",
+				"display_name": "Kamerstukdossier 36463: Wijziging van het Wetboek van Strafrecht en het Wetboek van Strafvordering en enige andere wetten in verband met verdere versterking van de strafrechtelijke aanpak van ondermijnende criminaliteit (versterking strafrechtelijke aanpak ondermijnende criminaliteit II)",
+				"current_phase": "Eindtekst",
+				"opened_on": "2023-11-13",
+				"closed": true,
+				"via": "amending_publication",
+				"publication": "stb_2025_333",
+				"path": "/dossiers/36463"
+			},
+			{
+				"id": "dossiers/36367",
+				"key": "36367",
+				"dossier_number": "36367",
+				"title": "Wetstechnische wijzigingen en andere wijzigingen van ondergeschikte aard in de Omgevingswet en enkele wetten die daarmee verband houden (Verzamelwet Omgevingswet 20..)",
+				"short_title": "Verzamelwet Omgevingswet 20..",
+				"display_name": "Kamerstukdossier 36367: Wetstechnische wijzigingen en andere wijzigingen van ondergeschikte aard in de Omgevingswet en enkele wetten die daarmee verband houden (Verzamelwet Omgevingswet 20..)",
+				"current_phase": "Eindtekst",
+				"opened_on": "2023-05-24",
+				"closed": true,
+				"via": "amending_publication",
+				"publication": "stb_2023_376",
+				"path": "/dossiers/36367"
+			}
+		]
+	},
+	"/api/instruments/{bwb_id}/judgments {\"bwb_id\":\"BWBR0005537\"} {\"limit\":100,\"sort\":\"date\"}": {
+		"bwb_id": "BWBR0005537",
+		"total": 275336,
+		"year": null,
+		"sort": "date",
+		"facets": {
+			"year": [
+				{
+					"value": "1994",
+					"count": 23
+				},
+				{
+					"value": "1995",
+					"count": 56
+				},
+				{
+					"value": "1996",
+					"count": 79
+				},
+				{
+					"value": "1997",
+					"count": 107
+				}
+			]
+		},
+		"items": [
+			{
+				"outcome": "ongegrond",
+				"outcome_text": "verklaart het beroep ongegrond",
+				"conclusion_outcome": null,
+				"conclusion_outcome_text": null,
+				"echr_findings": [],
+				"id": "judgments/ecli_nl_rbdha_2026_30262",
+				"key": "ecli_nl_rbdha_2026_30262",
+				"ecli": "ECLI:NL:RBDHA:2026:30262",
+				"display_name": "Rechtbank Den Haag 2026-10-14 / NL26.58883",
+				"court": "RBDHA",
+				"tier": "rechtbank",
+				"court_kind": "rechtbank",
+				"date": "2026-10-14",
+				"advocate_general": null,
+				"advocate_general_role": null,
+				"cited_articles": [
+					{
+						"id": "articles/bwbr0005537_6_22",
+						"key": "bwbr0005537_6_22",
+						"article_number": "6:22",
+						"display_name": "Artikel 6:22 Algemene wet bestuursrecht"
+					}
+				],
+				"path": "/uitspraken/ECLI:NL:RBDHA:2026:30262"
+			},
+			{
+				"outcome": "bevestigd",
+				"outcome_text": "bevestigt de aangevallen uitspraak",
+				"conclusion_outcome": null,
+				"conclusion_outcome_text": null,
+				"echr_findings": [],
+				"id": "judgments/ecli_nl_rvs_2026_6065",
+				"key": "ecli_nl_rvs_2026_6065",
+				"ecli": "ECLI:NL:RVS:2026:6065",
+				"display_name": "Raad van State 2026-10-14 / 202403518/1/A3",
+				"court": "RVS",
+				"tier": "raad_van_state",
+				"court_kind": "raad_van_state",
+				"date": "2026-10-14",
+				"advocate_general": null,
+				"advocate_general_role": null,
+				"cited_articles": [
+					{
+						"id": "articles/bwbr0005537_4_84",
+						"key": "bwbr0005537_4_84",
+						"article_number": "4:84",
+						"display_name": "Artikel 4:84 Algemene wet bestuursrecht"
+					}
+				],
+				"path": "/uitspraken/ECLI:NL:RVS:2026:6065"
+			},
+			{
+				"outcome": "bevestigd",
+				"outcome_text": "bevestigt de aangevallen uitspraak",
+				"conclusion_outcome": null,
+				"conclusion_outcome_text": null,
+				"echr_findings": [],
+				"id": "judgments/ecli_nl_rvs_2026_6066",
+				"key": "ecli_nl_rvs_2026_6066",
+				"ecli": "ECLI:NL:RVS:2026:6066",
+				"display_name": "Raad van State 2026-10-14 / 202502552/1/A3",
+				"court": "RVS",
+				"tier": "raad_van_state",
+				"court_kind": "raad_van_state",
+				"date": "2026-10-14",
+				"advocate_general": null,
+				"advocate_general_role": null,
+				"cited_articles": [
+					{
+						"id": "articles/bwbr0005537_4_84",
+						"key": "bwbr0005537_4_84",
+						"article_number": "4:84",
+						"display_name": "Artikel 4:84 Algemene wet bestuursrecht"
+					},
+					{
+						"id": "articles/bwbr0005537_6_19",
+						"key": "bwbr0005537_6_19",
+						"article_number": "6:19",
+						"display_name": "Artikel 6:19 Algemene wet bestuursrecht"
+					},
+					{
+						"id": "articles/bwbr0005537_6_24",
+						"key": "bwbr0005537_6_24",
+						"article_number": "6:24",
+						"display_name": "Artikel 6:24 Algemene wet bestuursrecht"
+					}
+				],
+				"path": "/uitspraken/ECLI:NL:RVS:2026:6066"
+			},
+			{
+				"outcome": "bevestigd",
+				"outcome_text": "bevestigt de aangevallen uitspraak, voor zover aangevallen",
+				"conclusion_outcome": null,
+				"conclusion_outcome_text": null,
+				"echr_findings": [],
+				"id": "judgments/ecli_nl_rvs_2026_6068",
+				"key": "ecli_nl_rvs_2026_6068",
+				"ecli": "ECLI:NL:RVS:2026:6068",
+				"display_name": "Raad van State 2026-10-14 / 202403895/1/R1",
+				"court": "RVS",
+				"tier": "raad_van_state",
+				"court_kind": "raad_van_state",
+				"date": "2026-10-14",
+				"advocate_general": null,
+				"advocate_general_role": null,
+				"cited_articles": [
+					{
+						"id": "articles/bwbr0005537_3_9",
+						"key": "bwbr0005537_3_9",
+						"article_number": "3:9",
+						"display_name": "Artikel 3:9 Algemene wet bestuursrecht"
+					}
+				],
+				"path": "/uitspraken/ECLI:NL:RVS:2026:6068"
+			}
+		]
+	},
+	"/api/instruments/{bwb_id}/related-instruments {\"bwb_id\":\"BWBR0005537\"} {\"limit\":50}": {
+		"bwb_id": "BWBR0005537",
+		"total": 2579,
+		"items": [
+			{
+				"id": "instruments/bwbr0037885",
+				"key": "bwbr0037885",
+				"bwb_id": "BWBR0037885",
+				"celex": null,
+				"display_name": "Omgevingswet",
+				"citation_title": "Omgevingswet",
+				"kind": "wet",
+				"date_in_force": "2024-01-01",
+				"direction": "both",
+				"outbound_count": 2,
+				"outbound_cited_count": 36,
+				"inbound_count": 63,
+				"inbound_cited_count": 78,
+				"based_on": false,
+				"basis": null
+			},
+			{
+				"id": "instruments/bwbr0020368",
+				"key": "bwbr0020368",
+				"bwb_id": "BWBR0020368",
+				"celex": null,
+				"display_name": "Wet op het financieel toezicht",
+				"citation_title": "Wet op het financieel toezicht",
+				"kind": "wet",
+				"date_in_force": "2007-01-01",
+				"direction": "both",
+				"outbound_count": 5,
+				"outbound_cited_count": 9,
+				"inbound_count": 34,
+				"inbound_cited_count": 28,
+				"based_on": false,
+				"basis": null
+			},
+			{
+				"id": "instruments/bwbr0011823",
+				"key": "bwbr0011823",
+				"bwb_id": "BWBR0011823",
+				"celex": null,
+				"display_name": "Vreemdelingenwet 2000",
+				"citation_title": "Vreemdelingenwet 2000",
+				"kind": "wet",
+				"date_in_force": "2001-04-01",
+				"direction": "both",
+				"outbound_count": 2,
+				"outbound_cited_count": 2,
+				"inbound_count": 35,
+				"inbound_cited_count": 44,
+				"based_on": false,
+				"basis": null
+			},
+			{
+				"id": "instruments/bwbr0002320",
+				"key": "bwbr0002320",
+				"bwb_id": "BWBR0002320",
+				"celex": null,
+				"display_name": "Algemene wet inzake rijksbelastingen",
+				"citation_title": "Algemene wet inzake rijksbelastingen",
+				"kind": "wet",
+				"date_in_force": "1962-10-01",
+				"direction": "both",
+				"outbound_count": 2,
+				"outbound_cited_count": 1,
+				"inbound_count": 29,
+				"inbound_cited_count": 59,
+				"based_on": false,
+				"basis": null
+			}
+		]
+	},
+	"/api/instruments/{identifier}/eu-links {\"identifier\":\"bwbr0005537\"} {\"limit\":50}": {
+		"instrument": {
+			"id": "instruments/bwbr0005537",
+			"key": "bwbr0005537",
+			"bwb_id": "BWBR0005537",
+			"celex": null,
+			"title": "Algemene wet bestuursrecht",
+			"citation_title": "Algemene wet bestuursrecht",
+			"kind": "wet",
+			"jurisdiction": "nl",
+			"path": "/wetten/BWBR0005537"
+		},
+		"implements": [
+			{
+				"instrument": {
+					"id": "instruments/31979l0409",
+					"key": "31979l0409",
+					"bwb_id": null,
+					"celex": "31979L0409",
+					"title": "Richtlijn 79/409/EEG van de Raad van 2 april 1979 inzake het behoud van de vogelstand",
+					"citation_title": "Richtlijn 79/409/EEG",
+					"kind": null,
+					"jurisdiction": "eu",
+					"path": "/wetten/31979L0409"
+				},
+				"relation": "IMPLEMENTS",
+				"confidence": 1,
+				"bases": [
+					"national_implementing_measure"
+				],
+				"source": "bwb-implements",
+				"via": [
+					{
+						"publication": "stb-2005-282",
+						"citation": "Stb. 2005, 282",
+						"title": "Wet van 26 mei 2005 tot aanpassing van diverse wetten aan de Wet uniforme openbare voorbereidingsprocedure Awb (Aanpassingswet uniforme openbare voorbereidingsprocedure)",
+						"type": "Wet"
+					}
+				],
+				"meta": {
+					"celex": "31979L0409",
+					"bases": [
+						"national_implementing_measure"
+					],
+					"publications": [
+						"stb-2005-282"
+					],
+					"measures": [
+						{
+							"publication": "stb-2005-282",
+							"citation": "Stb. 2005, 282",
+							"title": "Wet van 26 mei 2005 tot aanpassing van diverse wetten aan de Wet uniforme openbare voorbereidingsprocedure Awb (Aanpassingswet uniforme openbare voorbereidingsprocedure)",
+							"type": "Wet"
+						}
+					]
+				}
+			},
+			{
+				"instrument": {
+					"id": "instruments/31992l0043",
+					"key": "31992l0043",
+					"bwb_id": null,
+					"celex": "31992L0043",
+					"title": "Richtlijn 92/43/EEG van de Raad van 21 mei 1992 inzake de instandhouding van de natuurlijke habitats en de wilde flora en fauna",
+					"citation_title": "Richtlijn 92/43/EEG",
+					"kind": null,
+					"jurisdiction": "eu",
+					"path": "/wetten/31992L0043"
+				},
+				"relation": "IMPLEMENTS",
+				"confidence": 1,
+				"bases": [
+					"national_implementing_measure"
+				],
+				"source": "bwb-implements",
+				"via": [
+					{
+						"publication": "stb-2005-282",
+						"citation": "Stb. 2005, 282",
+						"title": "Wet van 26 mei 2005 tot aanpassing van diverse wetten aan de Wet uniforme openbare voorbereidingsprocedure Awb (Aanpassingswet uniforme openbare voorbereidingsprocedure)",
+						"type": "Wet"
+					}
+				],
+				"meta": {
+					"celex": "31992L0043",
+					"bases": [
+						"national_implementing_measure"
+					],
+					"publications": [
+						"stb-2005-282"
+					],
+					"measures": [
+						{
+							"publication": "stb-2005-282",
+							"citation": "Stb. 2005, 282",
+							"title": "Wet van 26 mei 2005 tot aanpassing van diverse wetten aan de Wet uniforme openbare voorbereidingsprocedure Awb (Aanpassingswet uniforme openbare voorbereidingsprocedure)",
+							"type": "Wet"
+						}
+					]
+				}
+			},
+			{
+				"instrument": {
+					"id": "instruments/31993l0006",
+					"key": "31993l0006",
+					"bwb_id": null,
+					"celex": "31993L0006",
+					"title": "Richtlijn 93/6/EEG van de Raad van 15 maart 1993 inzake de kapitaaltoereikendheid van beleggingsondernemingen en kredietinstellingen",
+					"citation_title": "Richtlijn 93/6/EEG",
+					"kind": null,
+					"jurisdiction": "eu",
+					"path": "/wetten/31993L0006"
+				},
+				"relation": "IMPLEMENTS",
+				"confidence": 1,
+				"bases": [
+					"national_implementing_measure"
+				],
+				"source": "bwb-implements",
+				"via": [
+					{
+						"publication": "stb-1995-250",
+						"citation": "Stb. 1995, 250",
+						"title": "Regeling aanwijzing bevoegde autoriteiten wettoezicht effectenverkeer 1995, Staatscourant nummer 250 van 27/12/1995",
+						"type": "Wet"
+					}
+				],
+				"meta": {
+					"celex": "31993L0006",
+					"bases": [
+						"national_implementing_measure"
+					],
+					"publications": [
+						"stb-1995-250"
+					],
+					"measures": [
+						{
+							"publication": "stb-1995-250",
+							"citation": "Stb. 1995, 250",
+							"title": "Regeling aanwijzing bevoegde autoriteiten wettoezicht effectenverkeer 1995, Staatscourant nummer 250 van 27/12/1995",
+							"type": "Wet"
+						}
+					]
+				}
+			},
+			{
+				"instrument": {
+					"id": "instruments/31994l0063",
+					"key": "31994l0063",
+					"bwb_id": null,
+					"celex": "31994L0063",
+					"title": "Richtlijn 94/63/EG van het Europees Parlement en de Raad van 20 december 1994 betreffende de beheersing van de uitstoot van vluchtige organische stoffen (VOS) als gevolg van de opslag van benzine en de distributie van benzine vanaf terminals naar benzinestations",
+					"citation_title": "Richtlijn 94/63/EG",
+					"kind": null,
+					"jurisdiction": "eu",
+					"path": "/wetten/31994L0063"
+				},
+				"relation": "IMPLEMENTS",
+				"confidence": 1,
+				"bases": [
+					"national_implementing_measure"
+				],
+				"source": "bwb-implements",
+				"via": [
+					{
+						"publication": "stb-1995-250",
+						"citation": "Stb. 1995, 250",
+						"title": "Regeling aanwijzing bevoegde autoriteiten wettoezicht effectenverkeer 1995, Staatscourant nummer 250 van 27/12/1995",
+						"type": "Wet"
+					}
+				],
+				"meta": {
+					"celex": "31994L0063",
+					"bases": [
+						"national_implementing_measure"
+					],
+					"publications": [
+						"stb-1995-250"
+					],
+					"measures": [
+						{
+							"publication": "stb-1995-250",
+							"citation": "Stb. 1995, 250",
+							"title": "Regeling aanwijzing bevoegde autoriteiten wettoezicht effectenverkeer 1995, Staatscourant nummer 250 van 27/12/1995",
+							"type": "Wet"
+						}
+					]
+				}
+			}
+		],
+		"implements_total": 16,
+		"implemented_by": [],
+		"implemented_by_total": 0,
+		"mentions": [
+			{
+				"instrument": {
+					"id": "instruments/32000l0031",
+					"key": "32000l0031",
+					"bwb_id": null,
+					"celex": "32000L0031",
+					"title": "Richtlijn 2000/31/EG van het Europees Parlement en de Raad van 8 juni 2000 betreffende bepaalde juridische aspecten van de diensten van de informatiemaatschappij, met name de elektronische handel, in de interne markt (\"Richtlijn inzake elektronische handel\")",
+					"citation_title": "Richtlijn 2000/31/EG",
+					"kind": null,
+					"jurisdiction": "eu",
+					"path": "/wetten/32000L0031"
+				},
+				"relation": "REFERS_TO",
+				"confidence": 1,
+				"bases": [],
+				"source": "bwb-implements",
+				"via": [],
+				"meta": {
+					"celex": "32000L0031"
+				}
+			},
+			{
+				"instrument": {
+					"id": "instruments/32002l0047",
+					"key": "32002l0047",
+					"bwb_id": null,
+					"celex": "32002L0047",
+					"title": "Richtlijn 2002/47/EG van het Europees Parlement en de Raad van 6 juni 2002 betreffende financiëlezekerheidsovereenkomsten",
+					"citation_title": "Richtlijn 2002/47/EG",
+					"kind": null,
+					"jurisdiction": "eu",
+					"path": "/wetten/32002L0047"
+				},
+				"relation": "REFERS_TO",
+				"confidence": 1,
+				"bases": [],
+				"source": "bwb-implements",
+				"via": [],
+				"meta": {
+					"celex": "32002L0047"
+				}
+			},
+			{
+				"instrument": {
+					"id": "instruments/32003l0071",
+					"key": "32003l0071",
+					"bwb_id": null,
+					"celex": "32003L0071",
+					"title": "Richtlijn 2003/71/EG van het Europees Parlement en de Raad van 4 november 2003 betreffende het prospectus dat gepubliceerd moet worden wanneer effecten aan het publiek worden aangeboden of tot de handel worden toegelaten en tot wijziging van Richtlijn 2001/34/EG (Voor de EER relevante tekst)",
+					"citation_title": "Richtlijn 2003/71/EG",
+					"kind": null,
+					"jurisdiction": "eu",
+					"path": "/wetten/32003L0071"
+				},
+				"relation": "REFERS_TO",
+				"confidence": 1,
+				"bases": [],
+				"source": "bwb-implements",
+				"via": [],
+				"meta": {
+					"celex": "32003L0071"
+				}
+			},
+			{
+				"instrument": {
+					"id": "instruments/32004l0025",
+					"key": "32004l0025",
+					"bwb_id": null,
+					"celex": "32004L0025",
+					"title": "Richtlijn 2004/25/EG van het Europees Parlement en de Raad van 21 april 2004 betreffende het openbaar overnamebod",
+					"citation_title": "Richtlijn 2004/25/EG",
+					"kind": null,
+					"jurisdiction": "eu",
+					"path": "/wetten/32004L0025"
+				},
+				"relation": "REFERS_TO",
+				"confidence": 1,
+				"bases": [],
+				"source": "bwb-implements",
+				"via": [],
+				"meta": {
+					"celex": "32004L0025"
+				}
+			}
+		],
+		"mentions_total": 20,
+		"mentioned_by": [],
+		"mentioned_by_total": 0,
+		"international": [],
+		"international_total": 0
+	},
+	"/api/nodes/{collection}/{key} {\"collection\":\"instruments\",\"key\":\"bwbr0005537\"} {\"limit\":1}": {
+		"node": {
+			"id": "instruments/bwbr0005537",
+			"key": "bwbr0005537",
+			"collection": "instruments",
+			"type": "instrument",
+			"display_name": "Algemene wet bestuursrecht",
+			"labels": [
+				"BWB"
+			],
+			"props": {
+				"abbreviation": "Awb",
+				"aliases": [
+					"Awb"
+				],
+				"article_count": 584,
+				"basis": [],
+				"bwb_id": "BWBR0005537",
+				"celex_refs": [
+					"32000L0031",
+					"32002L0047",
+					"32003L0071",
+					"32004L0025"
+				],
+				"citation_title": "Algemene wet bestuursrecht",
+				"citation_titles": [
+					"Algemene wet bestuursrecht"
+				],
+				"date_in_force": "1994-01-01",
+				"date_published": "1992-06-30",
+				"date_signed": "1992-06-04",
+				"display_name": "Algemene wet bestuursrecht",
+				"dossier_numbers": [
+					"21221"
+				],
+				"enacted_publication": "stb-1992-315",
+				"implements_celex": [],
+				"inbound_citation_count": 615364,
+				"jurisdiction": "nl",
+				"kind": "wet",
+				"legal_areas": [
+					{
+						"main": "Staats- en bestuursrecht",
+						"main_id": "c_da370768",
+						"main_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_da370768",
+						"main_slug": "staats-en-bestuursrecht",
+						"specific": "Bestuursrecht",
+						"specific_id": "c_052899f0",
+						"specific_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_052899f0",
+						"specific_slug": "bestuursrecht"
+					}
+				],
+				"official_title": "Wet van 4 juni 1992, houdende algemene regels van bestuursrecht (Algemene wet bestuursrecht)",
+				"policy_domains": [
+					{
+						"label": "Overheid, bestuur en koninkrijk",
+						"id": "c_fd285f2b",
+						"uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_fd285f2b",
+						"slug": "overheid-bestuur-en-koninkrijk"
+					}
+				],
+				"short_title": "Awb",
+				"source": "bwb",
+				"stub": false,
+				"title": "Algemene wet bestuursrecht",
+				"version_date_in_force": "2026-08-15"
+			},
+			"path": "/wetten/BWBR0005537"
+		},
+		"neighbors": {
+			"total": 4554,
+			"buckets": [
+				{
+					"relation": "AMENDS",
+					"direction": "inbound",
+					"collection": "documents",
+					"type": "document",
+					"total": 306,
+					"next_offset": 1,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "documents/3de4970a_d147_45d8_a5c1_3bc83bb88814",
+							"key": "3de4970a_d147_45d8_a5c1_3bc83bb88814",
+							"collection": "documents",
+							"type": "document",
+							"display_name": "Kamerstuk 36512, nr. 91. Amendement (gewijzigd/nader/vervangend): Nader gewijzigd amendement van de leden Welzijn en Ceder ter vervanging van nr. 56 over onlosmakelijke activiteiten",
+							"labels": [
+								"TK",
+								"Kamerstuk"
+							],
+							"props": {
+								"actors": [
+									{
+										"person_id": "7cbb2d95-46b2-4fcb-b129-9505f56e7f07",
+										"faction_id": "d720f5af-0516-408a-b830-0b6ffb8a581c",
+										"name": "D.G.M. Ceder",
+										"faction": "ChristenUnie",
+										"role": "Mede ondertekenaar",
+										"function": "Tweede Kamerlid",
+										"capacity": "kamerlid"
+									},
+									{
+										"person_id": "e3f71155-7306-459e-82f8-0b93695b7f7c",
+										"faction_id": "ad182a43-bc8c-40b3-894d-4a92515e70e7",
+										"name": "R.M. Welzijn",
+										"faction": "NSC",
+										"role": "Eerste ondertekenaar",
+										"function": "Tweede Kamerlid",
+										"capacity": "kamerlid"
+									}
+								],
+								"budget": false,
+								"case_ids": [
+									"5170bdd4-51e1-42e4-a4dd-1ccf056858e2"
+								],
+								"case_kinds": [
+									"Amendement"
+								],
+								"date": "2025-06-27",
+								"decided_on": null,
+								"decision": null,
+								"display_name": "Kamerstuk 36512, nr. 91. Amendement (gewijzigd/nader/vervangend): Nader gewijzigd amendement van de leden Welzijn en Ceder ter vervanging van nr. 56 over onlosmakelijke activiteiten",
+								"document_number": "2025D30488",
+								"dossier_number": "36512",
+								"dossier_numbers": [
+									"36512"
+								],
+								"dossier_suffix": null,
+								"dossier_title": "Wijziging van de Algemene wet bestuursrecht, de Huisvestingswet 2014, de Omgevingswet, de Wet maatschappelijke ondersteuning 2015 en de Woningwet in verband met de versterking van de regie op de volkshuisvesting en met het oog op enkele andere met de volkshuisvesting samenhangende maatregelen (Wet versterking regie volkshuisvesting)",
+								"explanation": "Vergunningen die betrekking hebben op een en dezelfde activiteit en ter beoordeling aangeboden zijn aan de vergunningverlener moeten in één keer vergund kunnen worden. Dit kan door toepassing van de coördinatieregeling in afdeling 3.5 Awb.). Het in één keer vergunnen brengt verdere versnelling in de bouwopgave en kost minder tijd wat geld bespaard.",
+								"external_id": "3de4970a-d147-45d8-a5c1-3bc83bb88814",
+								"kind": "Amendement (gewijzigd/nader/vervangend)",
+								"outcome": "vervangen",
+								"sequence": 91,
+								"session_year": "2024-2025",
+								"source": "tk",
+								"structure_quality": "implicit",
+								"subject": "Nader gewijzigd amendement van de leden Welzijn en Ceder ter vervanging van nr. 56 over onlosmakelijke activiteiten",
+								"tally": null,
+								"text_source": "kst-xml",
+								"text_truncated": false,
+								"title": "Nader gewijzigd amendement van de leden Welzijn en Ceder ter vervanging van nr. 56 over onlosmakelijke activiteiten",
+								"xml_dialect": "officiele-publicatie",
+								"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2025D30488&did=2025D30488",
+								"number": "91",
+								"sender": {
+									"name": "R.M. Welzijn",
+									"function": "Tweede Kamerlid",
+									"faction": "NSC",
+									"capacity": "kamerlid",
+									"member_key": "e3f71155_7306_459e_82f8_0b93695b7f7c",
+									"ministry": null
+								},
+								"dossier_short_title": "Wet versterking regie volkshuisvesting"
+							},
+							"edge_id": "00184c81b87aefceb951711062fa8e47e6d01f5c",
+							"relation": "AMENDS",
+							"direction": "inbound",
+							"confidence": 0.85,
+							"status": "voorgesteld",
+							"meta": {
+								"title": "Wijziging van de Algemene wet bestuursrecht, de Huisvestingswet 2014, de Omgevingswet, de Wet maatschappelijke ondersteuning 2015 en de Woningwet in verband met de versterking van de regie op de volkshuisvesting en met het oog op enkele andere met de volkshuisvesting samenhangende maatregelen (Wet versterking regie volkshuisvesting)"
+							},
+							"path": "/kamerstukken/36512/91"
+						}
+					]
+				},
+				{
+					"relation": "EXPLAINS",
+					"direction": "inbound",
+					"collection": "documents",
+					"type": "document",
+					"total": 12,
+					"next_offset": 1,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "documents/stcrt_stcrt_2017_74288",
+							"key": "stcrt_stcrt_2017_74288",
+							"collection": "documents",
+							"type": "document",
+							"display_name": "Stcrt. 2017/74288: STAATSCOURANT",
+							"labels": [
+								"Staatscourant",
+								"Regeling"
+							],
+							"props": {
+								"source": "staatscourant",
+								"identifier": "stcrt-2017-74288",
+								"kind": "Ministeriële regeling",
+								"title": "STAATSCOURANT",
+								"year": "2017",
+								"number": "74288",
+								"display_name": "Stcrt. 2017/74288: STAATSCOURANT",
+								"bwb_id": "BWBR0005537",
+								"dossier_short_title": null
+							},
+							"edge_id": "016d55a35bcf068c8e3df471293d02d2053be05a",
+							"relation": "EXPLAINS",
+							"direction": "inbound",
+							"confidence": 0.92,
+							"status": "canoniek",
+							"meta": {
+								"match_type": "bwb_id"
+							},
+							"path": null
+						}
+					]
+				},
+				{
+					"relation": "IMPLEMENTS",
+					"direction": "outbound",
+					"collection": "instruments",
+					"type": "instrument",
+					"total": 16,
+					"next_offset": 1,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "instruments/32009l0031",
+							"key": "32009l0031",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Richtlijn 2009/31/EG",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 41,
+								"celex": "32009L0031",
+								"citation_title": "Richtlijn 2009/31/EG",
+								"display_name": "Richtlijn 2009/31/EG",
+								"inbound_citation_count": 65,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "32009L0031",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Richtlijn 2009/31/EG van het Europees Parlement en de Raad van 23 april 2009 betreffende de geologische opslag van kooldioxide en tot wijziging van Richtlijn 85/337/EEG van de Raad, de Richtlijnen 2000/60/EG, 2001/80/EG, 2004/35/EG, 2006/12/EG en 2008/1/EG en Verordening (EG) nr. 1013/2006 van het Europees Parlement en de Raad"
+							},
+							"edge_id": "337954e54fc08f978cc7a13d671ff634419c4c85",
+							"relation": "IMPLEMENTS",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "32009L0031",
+								"bases": [
+									"national_implementing_measure"
+								],
+								"publications": [
+									"stb-1992-315"
+								],
+								"measures": [
+									{
+										"publication": "stb-1992-315",
+										"citation": "Stb. 1992, 315",
+										"title": "Wet van 4 juni 1992, houdende algemene regels van bestuursrecht (Algemene wet bestuursrecht)",
+										"type": "Wet"
+									}
+								]
+							},
+							"path": "/wetten/32009L0031"
+						}
+					]
+				},
+				{
+					"relation": "PART_OF",
+					"direction": "inbound",
+					"collection": "annexes",
+					"type": "annex",
+					"total": 3,
+					"next_offset": 1,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "annexes/bwbr0005537_annex_2",
+							"key": "bwbr0005537_annex_2",
+							"collection": "annexes",
+							"type": "annex",
+							"display_name": "Bevoegdheidsregeling bestuursrechtspraak (artikelen 8:5, 8:6, 8:7, 8:105 en 8:106)",
+							"labels": [
+								"BWB",
+								"Annex"
+							],
+							"props": {
+								"bwb_id": "BWBR0005537",
+								"description": "Tegen een besluit, genomen op grond van een in dit artikel genoemd voorschrift of anderszins in dit artikel omschreven, kan geen beroep worden ingesteld.\nArchiefwet 1995:\nBekendmakingswet: artikel 21, indien overeenkomstige toepassing is gegeven artikel 121 van de Provinciewet, voor zover het beroep niet wordt ingesteld door het dagelijks bestuur of het algemeen bestuur van een waterschap\nBurgerlijk Wetboek:\nEnergiewet: de artikelen 6.1, derde lid, en 6.2, tweede lid\nFaillissementswet: artikel 285\nFinanciële-verhoudingswet: artikel 9\nGemeentewet:\nGeneesmiddelenwet: artikel 17, onderdeel a\nGerechtsdeurwaarderswet: artikel 3a, tweede lid\nInstellingswet Autoriteit Consument en Markt: artikel 12h, eerste lid, voor zover de aanvraag is afgewezen\nInvoeringswet Omgevingswet: artikel 4.45\nInvorderingswet 1990, met uitzondering van de artikelen 30, 49 en 62a\nJeugdwet:\nKaderwet zelfstandige bestuursorganen: artikel 21a, eerste en tweede lid\nKostenwet invordering rijksbelastingen, met uitzondering van artikel 7\nLeegstandwet:\nOmgevingswet:\nParticipatiewet: de artikelen 52 en 81 en paragraaf 6.5\nPensioenwet: de artikelen 150m, tweede lid, 150oa, eerste lid, en 150q, tweede lid, voor zover het beroep niet wordt ingesteld door het pensioenfonds\nPolitiewet 2012: de artikelen 18, 20, 34, 35, 36, eerste lid, 37, eerste lid, 39, derde en vijfde lid, en 52\nProvinciewet:\nRichtlijn 2008/50/EG van het Europees Parlement en de Raad van 21 mei 2008 betreffende de luchtkwaliteit en schonere lucht voor Europa (PbEU 2008, L 152): een kennisgeving als bedoeld in artikel 22, vierde lid\nRijkswet Onderzoeksraad voor veiligheid, met uitzondering van beslissingen ten aanzien van de algemeen secretaris en de medewerkers van het bureau\nTelecommunicatiewet: de artikelen 3.5, 3.5a, 3.5b, 3.22 en 18.9, eerste en tweede lid\nTijdelijke experimentenwet nieuwe stembiljetten: de artikelen 2 en 4\nTijdelijke wet Groningen:\nUitleveringswet\nUitvoeringswet huurprijzen woonruimte: de artikelen 7, tweede, derde, vij",
+								"display_name": "Bevoegdheidsregeling bestuursrechtspraak (artikelen 8:5, 8:6, 8:7, 8:105 en 8:106)",
+								"instrument_abbreviation": "Awb",
+								"instrument_citation_title": "Algemene wet bestuursrecht",
+								"instrument_id": "instruments/bwbr0005537",
+								"label": "2",
+								"source": "bwb",
+								"stub": false,
+								"title": "Bevoegdheidsregeling bestuursrechtspraak (artikelen 8:5, 8:6, 8:7, 8:105 en 8:106)"
+							},
+							"edge_id": "5468821fc83e139dab3ee18c25d0b2ed081c5fa6",
+							"relation": "PART_OF",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/wetten/BWBR0005537/bijlage/2"
+						}
+					]
+				}
+			]
+		},
+		"title": "Algemene wet bestuursrecht (Awb)",
+		"description": "Algemene wet bestuursrecht (Awb), geldend sinds 1 januari 1994",
+		"path": "/wetten/BWBR0005537",
+		"lid_counts_pending": false
+	},
+	"/api/nodes/{collection}/{key} {\"collection\":\"instruments\",\"key\":\"bwbr0005537\"} {\"limit\":5}": {
+		"node": {
+			"id": "instruments/bwbr0005537",
+			"key": "bwbr0005537",
+			"collection": "instruments",
+			"type": "instrument",
+			"display_name": "Algemene wet bestuursrecht",
+			"labels": [
+				"BWB"
+			],
+			"props": {
+				"abbreviation": "Awb",
+				"aliases": [
+					"Awb"
+				],
+				"article_count": 584,
+				"basis": [],
+				"bwb_id": "BWBR0005537",
+				"celex_refs": [
+					"32000L0031",
+					"32002L0047",
+					"32003L0071",
+					"32004L0025"
+				],
+				"citation_title": "Algemene wet bestuursrecht",
+				"citation_titles": [
+					"Algemene wet bestuursrecht"
+				],
+				"date_in_force": "1994-01-01",
+				"date_published": "1992-06-30",
+				"date_signed": "1992-06-04",
+				"display_name": "Algemene wet bestuursrecht",
+				"dossier_numbers": [
+					"21221"
+				],
+				"enacted_publication": "stb-1992-315",
+				"implements_celex": [],
+				"inbound_citation_count": 615364,
+				"jurisdiction": "nl",
+				"kind": "wet",
+				"legal_areas": [
+					{
+						"main": "Staats- en bestuursrecht",
+						"main_id": "c_da370768",
+						"main_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_da370768",
+						"main_slug": "staats-en-bestuursrecht",
+						"specific": "Bestuursrecht",
+						"specific_id": "c_052899f0",
+						"specific_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_052899f0",
+						"specific_slug": "bestuursrecht"
+					}
+				],
+				"official_title": "Wet van 4 juni 1992, houdende algemene regels van bestuursrecht (Algemene wet bestuursrecht)",
+				"policy_domains": [
+					{
+						"label": "Overheid, bestuur en koninkrijk",
+						"id": "c_fd285f2b",
+						"uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_fd285f2b",
+						"slug": "overheid-bestuur-en-koninkrijk"
+					}
+				],
+				"short_title": "Awb",
+				"source": "bwb",
+				"stub": false,
+				"title": "Algemene wet bestuursrecht",
+				"version_date_in_force": "2026-08-15"
+			},
+			"path": "/wetten/BWBR0005537"
+		},
+		"neighbors": {
+			"total": 4554,
+			"buckets": [
+				{
+					"relation": "AMENDS",
+					"direction": "inbound",
+					"collection": "documents",
+					"type": "document",
+					"total": 306,
+					"next_offset": 5,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "documents/3de4970a_d147_45d8_a5c1_3bc83bb88814",
+							"key": "3de4970a_d147_45d8_a5c1_3bc83bb88814",
+							"collection": "documents",
+							"type": "document",
+							"display_name": "Kamerstuk 36512, nr. 91. Amendement (gewijzigd/nader/vervangend): Nader gewijzigd amendement van de leden Welzijn en Ceder ter vervanging van nr. 56 over onlosmakelijke activiteiten",
+							"labels": [
+								"TK",
+								"Kamerstuk"
+							],
+							"props": {
+								"actors": [
+									{
+										"person_id": "7cbb2d95-46b2-4fcb-b129-9505f56e7f07",
+										"faction_id": "d720f5af-0516-408a-b830-0b6ffb8a581c",
+										"name": "D.G.M. Ceder",
+										"faction": "ChristenUnie",
+										"role": "Mede ondertekenaar",
+										"function": "Tweede Kamerlid",
+										"capacity": "kamerlid"
+									},
+									{
+										"person_id": "e3f71155-7306-459e-82f8-0b93695b7f7c",
+										"faction_id": "ad182a43-bc8c-40b3-894d-4a92515e70e7",
+										"name": "R.M. Welzijn",
+										"faction": "NSC",
+										"role": "Eerste ondertekenaar",
+										"function": "Tweede Kamerlid",
+										"capacity": "kamerlid"
+									}
+								],
+								"budget": false,
+								"case_ids": [
+									"5170bdd4-51e1-42e4-a4dd-1ccf056858e2"
+								],
+								"case_kinds": [
+									"Amendement"
+								],
+								"date": "2025-06-27",
+								"decided_on": null,
+								"decision": null,
+								"display_name": "Kamerstuk 36512, nr. 91. Amendement (gewijzigd/nader/vervangend): Nader gewijzigd amendement van de leden Welzijn en Ceder ter vervanging van nr. 56 over onlosmakelijke activiteiten",
+								"document_number": "2025D30488",
+								"dossier_number": "36512",
+								"dossier_numbers": [
+									"36512"
+								],
+								"dossier_suffix": null,
+								"dossier_title": "Wijziging van de Algemene wet bestuursrecht, de Huisvestingswet 2014, de Omgevingswet, de Wet maatschappelijke ondersteuning 2015 en de Woningwet in verband met de versterking van de regie op de volkshuisvesting en met het oog op enkele andere met de volkshuisvesting samenhangende maatregelen (Wet versterking regie volkshuisvesting)",
+								"explanation": "Vergunningen die betrekking hebben op een en dezelfde activiteit en ter beoordeling aangeboden zijn aan de vergunningverlener moeten in één keer vergund kunnen worden. Dit kan door toepassing van de coördinatieregeling in afdeling 3.5 Awb.). Het in één keer vergunnen brengt verdere versnelling in de bouwopgave en kost minder tijd wat geld bespaard.",
+								"external_id": "3de4970a-d147-45d8-a5c1-3bc83bb88814",
+								"kind": "Amendement (gewijzigd/nader/vervangend)",
+								"outcome": "vervangen",
+								"sequence": 91,
+								"session_year": "2024-2025",
+								"source": "tk",
+								"structure_quality": "implicit",
+								"subject": "Nader gewijzigd amendement van de leden Welzijn en Ceder ter vervanging van nr. 56 over onlosmakelijke activiteiten",
+								"tally": null,
+								"text_source": "kst-xml",
+								"text_truncated": false,
+								"title": "Nader gewijzigd amendement van de leden Welzijn en Ceder ter vervanging van nr. 56 over onlosmakelijke activiteiten",
+								"xml_dialect": "officiele-publicatie",
+								"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2025D30488&did=2025D30488",
+								"number": "91",
+								"sender": {
+									"name": "R.M. Welzijn",
+									"function": "Tweede Kamerlid",
+									"faction": "NSC",
+									"capacity": "kamerlid",
+									"member_key": "e3f71155_7306_459e_82f8_0b93695b7f7c",
+									"ministry": null
+								},
+								"dossier_short_title": "Wet versterking regie volkshuisvesting"
+							},
+							"edge_id": "00184c81b87aefceb951711062fa8e47e6d01f5c",
+							"relation": "AMENDS",
+							"direction": "inbound",
+							"confidence": 0.85,
+							"status": "voorgesteld",
+							"meta": {
+								"title": "Wijziging van de Algemene wet bestuursrecht, de Huisvestingswet 2014, de Omgevingswet, de Wet maatschappelijke ondersteuning 2015 en de Woningwet in verband met de versterking van de regie op de volkshuisvesting en met het oog op enkele andere met de volkshuisvesting samenhangende maatregelen (Wet versterking regie volkshuisvesting)"
+							},
+							"path": "/kamerstukken/36512/91"
+						},
+						{
+							"id": "documents/b1aa16ef_a483_4394_b8bb_2e41541bc2a5",
+							"key": "b1aa16ef_a483_4394_b8bb_2e41541bc2a5",
+							"collection": "documents",
+							"type": "document",
+							"display_name": "Kamerstuk 36512, nr. 23: Amendement van de leden Vijlbrief en Grinwis over het kunnen aanwijzen van een volkshuisvestingscommissaris",
+							"labels": [
+								"TK",
+								"Kamerstuk"
+							],
+							"props": {
+								"actors": [
+									{
+										"person_id": "19c8d0fb-66ca-4b45-be82-057cb36e1e61",
+										"faction_id": "4e9f6f5b-2544-4667-8134-6b85c4ebb4e0",
+										"name": "J.A. Vijlbrief",
+										"faction": "D66",
+										"role": "Eerste ondertekenaar",
+										"function": "Tweede Kamerlid",
+										"capacity": "kamerlid"
+									},
+									{
+										"person_id": "d38ca3cf-9803-48dc-8592-c67c4430168e",
+										"faction_id": "d720f5af-0516-408a-b830-0b6ffb8a581c",
+										"name": "P.A. Grinwis",
+										"faction": "ChristenUnie",
+										"role": "Mede ondertekenaar",
+										"function": "Tweede Kamerlid",
+										"capacity": "kamerlid"
+									}
+								],
+								"budget": false,
+								"case_ids": [
+									"54f7b40e-380a-4901-9c98-f04d125c1977"
+								],
+								"case_kinds": [
+									"Amendement"
+								],
+								"date": "2025-06-11",
+								"decided_on": "2025-07-01",
+								"decision": "decision_0861f34f_6fec_4cb3_bc8c_e83a1c5a8500",
+								"display_name": "Kamerstuk 36512, nr. 23: Amendement van de leden Vijlbrief en Grinwis over het kunnen aanwijzen van een volkshuisvestingscommissaris",
+								"document_number": "2025D27184",
+								"dossier_number": "36512",
+								"dossier_numbers": [
+									"36512"
+								],
+								"dossier_suffix": null,
+								"dossier_title": "Wijziging van de Algemene wet bestuursrecht, de Huisvestingswet 2014, de Omgevingswet, de Wet maatschappelijke ondersteuning 2015 en de Woningwet in verband met de versterking van de regie op de volkshuisvesting en met het oog op enkele andere met de volkshuisvesting samenhangende maatregelen (Wet versterking regie volkshuisvesting)",
+								"explanation": "Dit amendement strekt ertoe en volkshuisvestingscommissaris aan te stellen om te ondersteunen bij en doorbraken te realiseren in de totstandkoming en de uitvoering van het nationaal volkshuisvestingsprogramma te bewerkstelligen.",
+								"external_id": "b1aa16ef-a483-4394-b8bb-2e41541bc2a5",
+								"kind": "Amendement",
+								"outcome": "verworpen",
+								"sequence": 23,
+								"session_year": "2024-2025",
+								"source": "tk",
+								"structure_quality": "implicit",
+								"subject": "Amendement van de leden Vijlbrief en Grinwis over het kunnen aanwijzen van een volkshuisvestingscommissaris",
+								"tally": {
+									"Voor": 53,
+									"Tegen": 97
+								},
+								"text_source": "kst-xml",
+								"text_truncated": false,
+								"title": "Amendement van de leden Vijlbrief en Grinwis over het kunnen aanwijzen van een volkshuisvestingscommissaris",
+								"xml_dialect": "officiele-publicatie",
+								"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2025D27184&did=2025D27184",
+								"number": "23",
+								"sender": {
+									"name": "J.A. Vijlbrief",
+									"function": "Tweede Kamerlid",
+									"faction": "D66",
+									"capacity": "kamerlid",
+									"member_key": "19c8d0fb_66ca_4b45_be82_057cb36e1e61",
+									"ministry": null
+								},
+								"dossier_short_title": "Wet versterking regie volkshuisvesting"
+							},
+							"edge_id": "00de480465983cf0b2cda0ac077c5557f39c5272",
+							"relation": "AMENDS",
+							"direction": "inbound",
+							"confidence": 0.85,
+							"status": "voorgesteld",
+							"meta": {
+								"title": "Wijziging van de Algemene wet bestuursrecht, de Huisvestingswet 2014, de Omgevingswet, de Wet maatschappelijke ondersteuning 2015 en de Woningwet in verband met de versterking van de regie op de volkshuisvesting en met het oog op enkele andere met de volkshuisvesting samenhangende maatregelen (Wet versterking regie volkshuisvesting)"
+							},
+							"path": "/kamerstukken/36512/23"
+						},
+						{
+							"id": "documents/2f36c6c3_0c2b_4fb9_b7e6_af956a25f11f",
+							"key": "2f36c6c3_0c2b_4fb9_b7e6_af956a25f11f",
+							"collection": "documents",
+							"type": "document",
+							"display_name": "Kamerstuk 36314, nr. 3. Memorie van toelichting: Wijziging van de Wet op het financieel toezicht, de Algemene wet bestuursrecht en de Faillissementswet in verband met…",
+							"labels": [
+								"TK",
+								"Kamerstuk"
+							],
+							"props": {
+								"actors": [
+									{
+										"person_id": "64457f28-37b6-4948-860a-f28bc62b99ae",
+										"faction_id": null,
+										"name": "S.A.M. Kaag",
+										"faction": "",
+										"role": "Eerste ondertekenaar",
+										"function": "minister van Financiën",
+										"capacity": "bewindspersoon"
+									}
+								],
+								"budget": false,
+								"case_ids": [
+									"1e5fc846-0297-49d4-b8fd-2fa187b89234"
+								],
+								"case_kinds": [
+									"Wetgeving"
+								],
+								"date": "2023-02-23",
+								"display_name": "Kamerstuk 36314, nr. 3. Memorie van toelichting: Wijziging van de Wet op het financieel toezicht, de Algemene wet bestuursrecht en de Faillissementswet in verband met…",
+								"document_number": "2023D08520",
+								"dossier_number": "36314",
+								"dossier_numbers": [
+									"36314"
+								],
+								"dossier_suffix": null,
+								"dossier_title": null,
+								"external_id": "2f36c6c3-0c2b-4fb9-b7e6-af956a25f11f",
+								"kind": "Memorie van toelichting",
+								"sequence": 3,
+								"session_year": "2022-2023",
+								"source": "tk",
+								"structure_quality": "explicit",
+								"subject": "Memorie van toelichting",
+								"text_source": "kst-xml",
+								"text_truncated": false,
+								"title": "Wijziging van de Wet op het financieel toezicht, de Algemene wet bestuursrecht en de Faillissementswet in verband met de rechtsbescherming bij de afwikkeling van verzekeraars en enige andere verbeteringen in het kader voor herstel en afwikkeling van verzekeraars (Wijzigingswet herstel en afwikkeling van verzekeraars)",
+								"xml_dialect": "officiele-publicatie",
+								"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2023D08520&did=2023D08520",
+								"number": "3",
+								"sender": {
+									"name": "S.A.M. Kaag",
+									"function": "minister van Financiën",
+									"faction": null,
+									"capacity": "bewindspersoon",
+									"member_key": "64457f28_37b6_4948_860a_f28bc62b99ae",
+									"ministry": "fin"
+								},
+								"dossier_short_title": "Wijzigingswet herstel en afwikkeling van verzekeraars"
+							},
+							"edge_id": "010d1eef42ba7aed282bd20b3b901cf2f2fd0f40",
+							"relation": "AMENDS",
+							"direction": "inbound",
+							"confidence": 0.85,
+							"status": "voorgesteld",
+							"meta": {
+								"title": "Wijziging van de Wet op het financieel toezicht, de Algemene wet bestuursrecht en de Faillissementswet in verband met de rechtsbescherming bij de afwikkeling van verzekeraars en enige andere verbeteringen in het kader voor herstel en afwikkeling van verzekeraars (Wijzigingswet herstel en afwikkeling van verzekeraars)"
+							},
+							"path": "/kamerstukken/36314/3"
+						},
+						{
+							"id": "documents/9a1d06d4_3c88_47e7_97be_4242f06f7254",
+							"key": "9a1d06d4_3c88_47e7_97be_4242f06f7254",
+							"collection": "documents",
+							"type": "document",
+							"display_name": "Kamerstuk 36512, nr. 36: Amendement van het lid Peter de Groot over geen voorrang op sociale huurwoningen voor ex-gedetineerden",
+							"labels": [
+								"TK",
+								"Kamerstuk"
+							],
+							"props": {
+								"actors": [
+									{
+										"person_id": "a0b48551-42b7-4c55-9556-6b997d978ff2",
+										"faction_id": "7476e97a-3243-4122-9df6-ba7d82a5279b",
+										"name": "P.C. (Peter) de Groot",
+										"faction": "VVD",
+										"role": "Eerste ondertekenaar",
+										"function": "Tweede Kamerlid",
+										"capacity": "kamerlid"
+									}
+								],
+								"budget": false,
+								"case_ids": [
+									"113572d4-add2-4d0e-8ad2-46230fdc1d3f"
+								],
+								"case_kinds": [
+									"Amendement"
+								],
+								"date": "2025-06-23",
+								"decided_on": "2025-07-01",
+								"decision": "decision_8477f4bf_b395_4643_af9f_d8692ceb929a",
+								"display_name": "Kamerstuk 36512, nr. 36: Amendement van het lid Peter de Groot over geen voorrang op sociale huurwoningen voor ex-gedetineerden",
+								"document_number": "2025D29471",
+								"dossier_number": "36512",
+								"dossier_numbers": [
+									"36512"
+								],
+								"dossier_suffix": null,
+								"dossier_title": "Wijziging van de Algemene wet bestuursrecht, de Huisvestingswet 2014, de Omgevingswet, de Wet maatschappelijke ondersteuning 2015 en de Woningwet in verband met de versterking van de regie op de volkshuisvesting en met het oog op enkele andere met de volkshuisvesting samenhangende maatregelen (Wet versterking regie volkshuisvesting)",
+								"explanation": "De indiener van dit amendement beoogt ex-gedetineerden niet langer voorrang te geven op een sociale huurwoning. Deze voorrangsregeling voor ex-gedetineerden is niet rechtvaardig tegenover alle andere woningzoekenden. Bovendien gaat dit van een beeld uit waarbij ex-gedetineerden op voorhand niet zelf in een woning kunnen voorzien.",
+								"external_id": "9a1d06d4-3c88-47e7-97be-4242f06f7254",
+								"kind": "Amendement",
+								"outcome": "verworpen",
+								"sequence": 36,
+								"session_year": "2024-2025",
+								"source": "tk",
+								"structure_quality": "none",
+								"subject": "Amendement van het lid Peter de Groot over geen voorrang op sociale huurwoningen voor ex-gedetineerden",
+								"tally": {
+									"Voor": 68,
+									"Tegen": 82
+								},
+								"text_source": "kst-xml",
+								"text_truncated": false,
+								"title": "Amendement van het lid Peter de Groot over geen voorrang op sociale huurwoningen voor ex-gedetineerden",
+								"xml_dialect": "officiele-publicatie",
+								"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2025D29471&did=2025D29471",
+								"number": "36",
+								"sender": {
+									"name": "P.C. (Peter) de Groot",
+									"function": "Tweede Kamerlid",
+									"faction": "VVD",
+									"capacity": "kamerlid",
+									"member_key": "a0b48551_42b7_4c55_9556_6b997d978ff2",
+									"ministry": null
+								},
+								"dossier_short_title": "Wet versterking regie volkshuisvesting"
+							},
+							"edge_id": "028ba5befdfe763f2d56cb64dc5666f36e3a7d93",
+							"relation": "AMENDS",
+							"direction": "inbound",
+							"confidence": 0.85,
+							"status": "voorgesteld",
+							"meta": {
+								"title": "Wijziging van de Algemene wet bestuursrecht, de Huisvestingswet 2014, de Omgevingswet, de Wet maatschappelijke ondersteuning 2015 en de Woningwet in verband met de versterking van de regie op de volkshuisvesting en met het oog op enkele andere met de volkshuisvesting samenhangende maatregelen (Wet versterking regie volkshuisvesting)"
+							},
+							"path": "/kamerstukken/36512/36"
+						}
+					]
+				},
+				{
+					"relation": "EXPLAINS",
+					"direction": "inbound",
+					"collection": "documents",
+					"type": "document",
+					"total": 12,
+					"next_offset": 5,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "documents/stcrt_stcrt_2017_74288",
+							"key": "stcrt_stcrt_2017_74288",
+							"collection": "documents",
+							"type": "document",
+							"display_name": "Stcrt. 2017/74288: STAATSCOURANT",
+							"labels": [
+								"Staatscourant",
+								"Regeling"
+							],
+							"props": {
+								"source": "staatscourant",
+								"identifier": "stcrt-2017-74288",
+								"kind": "Ministeriële regeling",
+								"title": "STAATSCOURANT",
+								"year": "2017",
+								"number": "74288",
+								"display_name": "Stcrt. 2017/74288: STAATSCOURANT",
+								"bwb_id": "BWBR0005537",
+								"dossier_short_title": null
+							},
+							"edge_id": "016d55a35bcf068c8e3df471293d02d2053be05a",
+							"relation": "EXPLAINS",
+							"direction": "inbound",
+							"confidence": 0.92,
+							"status": "canoniek",
+							"meta": {
+								"match_type": "bwb_id"
+							},
+							"path": null
+						},
+						{
+							"id": "documents/stcrt_stcrt_2023_9392",
+							"key": "stcrt_stcrt_2023_9392",
+							"collection": "documents",
+							"type": "document",
+							"display_name": "Stcrt. 2023/9392: STAATSCOURANT",
+							"labels": [
+								"Staatscourant",
+								"Regeling"
+							],
+							"props": {
+								"source": "staatscourant",
+								"identifier": "stcrt-2023-9392",
+								"kind": "Ministeriële regeling",
+								"title": "STAATSCOURANT",
+								"year": "2023",
+								"number": "9392",
+								"display_name": "Stcrt. 2023/9392: STAATSCOURANT",
+								"bwb_id": "BWBR0005537",
+								"dossier_short_title": null
+							},
+							"edge_id": "190a3ebc73de4105bcf6f3c861beff2145cbd18e",
+							"relation": "EXPLAINS",
+							"direction": "inbound",
+							"confidence": 0.92,
+							"status": "canoniek",
+							"meta": {
+								"match_type": "bwb_id"
+							},
+							"path": null
+						},
+						{
+							"id": "documents/stcrt_stcrt_2023_9393",
+							"key": "stcrt_stcrt_2023_9393",
+							"collection": "documents",
+							"type": "document",
+							"display_name": "Stcrt. 2023/9393: STAATSCOURANT",
+							"labels": [
+								"Staatscourant",
+								"Regeling"
+							],
+							"props": {
+								"source": "staatscourant",
+								"identifier": "stcrt-2023-9393",
+								"kind": "Ministeriële regeling",
+								"title": "STAATSCOURANT",
+								"year": "2023",
+								"number": "9393",
+								"display_name": "Stcrt. 2023/9393: STAATSCOURANT",
+								"bwb_id": "BWBR0005537",
+								"dossier_short_title": null
+							},
+							"edge_id": "191665f3f302edb1b3921692b9b236156feb2937",
+							"relation": "EXPLAINS",
+							"direction": "inbound",
+							"confidence": 0.92,
+							"status": "canoniek",
+							"meta": {
+								"match_type": "bwb_id"
+							},
+							"path": null
+						},
+						{
+							"id": "documents/stcrt_stcrt_2020_28715",
+							"key": "stcrt_stcrt_2020_28715",
+							"collection": "documents",
+							"type": "document",
+							"display_name": "Stcrt. 2020/28715: STAATSCOURANT",
+							"labels": [
+								"Staatscourant",
+								"Regeling"
+							],
+							"props": {
+								"source": "staatscourant",
+								"identifier": "stcrt-2020-28715",
+								"kind": "Ministeriële regeling",
+								"title": "STAATSCOURANT",
+								"year": "2020",
+								"number": "28715",
+								"display_name": "Stcrt. 2020/28715: STAATSCOURANT",
+								"bwb_id": "BWBR0005537",
+								"dossier_short_title": null
+							},
+							"edge_id": "2f61d2be3f84634422baa725f1cf8e3c0aaa438b",
+							"relation": "EXPLAINS",
+							"direction": "inbound",
+							"confidence": 0.92,
+							"status": "canoniek",
+							"meta": {
+								"match_type": "bwb_id"
+							},
+							"path": null
+						}
+					]
+				},
+				{
+					"relation": "IMPLEMENTS",
+					"direction": "outbound",
+					"collection": "instruments",
+					"type": "instrument",
+					"total": 16,
+					"next_offset": 5,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "instruments/32009l0031",
+							"key": "32009l0031",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Richtlijn 2009/31/EG",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 41,
+								"celex": "32009L0031",
+								"citation_title": "Richtlijn 2009/31/EG",
+								"display_name": "Richtlijn 2009/31/EG",
+								"inbound_citation_count": 65,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "32009L0031",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Richtlijn 2009/31/EG van het Europees Parlement en de Raad van 23 april 2009 betreffende de geologische opslag van kooldioxide en tot wijziging van Richtlijn 85/337/EEG van de Raad, de Richtlijnen 2000/60/EG, 2001/80/EG, 2004/35/EG, 2006/12/EG en 2008/1/EG en Verordening (EG) nr. 1013/2006 van het Europees Parlement en de Raad"
+							},
+							"edge_id": "337954e54fc08f978cc7a13d671ff634419c4c85",
+							"relation": "IMPLEMENTS",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "32009L0031",
+								"bases": [
+									"national_implementing_measure"
+								],
+								"publications": [
+									"stb-1992-315"
+								],
+								"measures": [
+									{
+										"publication": "stb-1992-315",
+										"citation": "Stb. 1992, 315",
+										"title": "Wet van 4 juni 1992, houdende algemene regels van bestuursrecht (Algemene wet bestuursrecht)",
+										"type": "Wet"
+									}
+								]
+							},
+							"path": "/wetten/32009L0031"
+						},
+						{
+							"id": "instruments/31979l0409",
+							"key": "31979l0409",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Richtlijn 79/409/EEG",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 19,
+								"celex": "31979L0409",
+								"citation_title": "Richtlijn 79/409/EEG",
+								"display_name": "Richtlijn 79/409/EEG",
+								"inbound_citation_count": 315,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "31979L0409",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Richtlijn 79/409/EEG van de Raad van 2 april 1979 inzake het behoud van de vogelstand"
+							},
+							"edge_id": "53e89a733f7c9923dde8df34da8abd97db78fa22",
+							"relation": "IMPLEMENTS",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "31979L0409",
+								"bases": [
+									"national_implementing_measure"
+								],
+								"publications": [
+									"stb-2005-282"
+								],
+								"measures": [
+									{
+										"publication": "stb-2005-282",
+										"citation": "Stb. 2005, 282",
+										"title": "Wet van 26 mei 2005 tot aanpassing van diverse wetten aan de Wet uniforme openbare voorbereidingsprocedure Awb (Aanpassingswet uniforme openbare voorbereidingsprocedure)",
+										"type": "Wet"
+									}
+								]
+							},
+							"path": "/wetten/31979L0409"
+						},
+						{
+							"id": "instruments/31996l0079",
+							"key": "31996l0079",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Richtlijn 96/79/EG",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 7,
+								"celex": "31996L0079",
+								"citation_title": "Richtlijn 96/79/EG",
+								"display_name": "Richtlijn 96/79/EG",
+								"inbound_citation_count": 2,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "31996L0079",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Richtlijn 96/79/EG van het Europees Parlement en de Raad van 16 december 1996 betreffende de bescherming van de inzittenden van motorvoertuigen bij frontale botsingen en houdende wijziging van Richtlijn 70/156/EEG"
+							},
+							"edge_id": "5c37b90b448dee099983ea69ab51e2c33ef39e8d",
+							"relation": "IMPLEMENTS",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "31996L0079",
+								"bases": [
+									"national_implementing_measure"
+								],
+								"publications": [
+									"stb-1997-139"
+								],
+								"measures": [
+									{
+										"publication": "stb-1997-139",
+										"citation": "Stb. 1997, 139",
+										"title": "Regeling van de Minister van Verkeer en Waterstaat van 13/06/1997, nummer DGP V+V 722855, houdende wijziging van de Regeling van de Minister van Verkeer en Waterstaat van 30/11/1994, nummer RV 187208, Staatscourant nummer 135 van 18/07/1997, rectificatie in Staatscourant nummer 139 van 24/07/1997",
+										"type": "Regeling"
+									}
+								]
+							},
+							"path": "/wetten/31996L0079"
+						},
+						{
+							"id": "instruments/32018l2001",
+							"key": "32018l2001",
+							"collection": "instruments",
+							"type": "instrument",
+							"display_name": "Richtlijn (EU) 2018/2001",
+							"labels": [
+								"EU"
+							],
+							"props": {
+								"article_count": 39,
+								"celex": "32018L2001",
+								"citation_title": "Richtlijn (EU) 2018/2001",
+								"display_name": "Richtlijn (EU) 2018/2001",
+								"inbound_citation_count": 139,
+								"jurisdiction": "eu",
+								"kind": null,
+								"lang": "NL",
+								"meta": {
+									"celex": "32018L2001",
+									"lang": "NL"
+								},
+								"short_title": null,
+								"source": "eurlex",
+								"stub": false,
+								"title": "Richtlijn (EU) 2018/2001 van het Europees Parlement en de Raad van 11 december 2018 ter bevordering van het gebruik van energie uit hernieuwbare bronnen"
+							},
+							"edge_id": "6a8f8726b74e79915e9b23e707ec8183fa24fcfc",
+							"relation": "IMPLEMENTS",
+							"direction": "outbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {
+								"celex": "32018L2001",
+								"bases": [
+									"national_implementing_measure"
+								],
+								"publications": [
+									"stb-1992-315"
+								],
+								"measures": [
+									{
+										"publication": "stb-1992-315",
+										"citation": "Stb. 1992, 315",
+										"title": "Wet van 4 juni 1992, houdende algemene regels van bestuursrecht (Algemene wet bestuursrecht)",
+										"type": "Wet"
+									}
+								]
+							},
+							"path": "/wetten/32018L2001"
+						}
+					]
+				},
+				{
+					"relation": "PART_OF",
+					"direction": "inbound",
+					"collection": "annexes",
+					"type": "annex",
+					"total": 3,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "annexes/bwbr0005537_annex_2",
+							"key": "bwbr0005537_annex_2",
+							"collection": "annexes",
+							"type": "annex",
+							"display_name": "Bevoegdheidsregeling bestuursrechtspraak (artikelen 8:5, 8:6, 8:7, 8:105 en 8:106)",
+							"labels": [
+								"BWB",
+								"Annex"
+							],
+							"props": {
+								"bwb_id": "BWBR0005537",
+								"description": "Tegen een besluit, genomen op grond van een in dit artikel genoemd voorschrift of anderszins in dit artikel omschreven, kan geen beroep worden ingesteld.\nArchiefwet 1995:\nBekendmakingswet: artikel 21, indien overeenkomstige toepassing is gegeven artikel 121 van de Provinciewet, voor zover het beroep niet wordt ingesteld door het dagelijks bestuur of het algemeen bestuur van een waterschap\nBurgerlijk Wetboek:\nEnergiewet: de artikelen 6.1, derde lid, en 6.2, tweede lid\nFaillissementswet: artikel 285\nFinanciële-verhoudingswet: artikel 9\nGemeentewet:\nGeneesmiddelenwet: artikel 17, onderdeel a\nGerechtsdeurwaarderswet: artikel 3a, tweede lid\nInstellingswet Autoriteit Consument en Markt: artikel 12h, eerste lid, voor zover de aanvraag is afgewezen\nInvoeringswet Omgevingswet: artikel 4.45\nInvorderingswet 1990, met uitzondering van de artikelen 30, 49 en 62a\nJeugdwet:\nKaderwet zelfstandige bestuursorganen: artikel 21a, eerste en tweede lid\nKostenwet invordering rijksbelastingen, met uitzondering van artikel 7\nLeegstandwet:\nOmgevingswet:\nParticipatiewet: de artikelen 52 en 81 en paragraaf 6.5\nPensioenwet: de artikelen 150m, tweede lid, 150oa, eerste lid, en 150q, tweede lid, voor zover het beroep niet wordt ingesteld door het pensioenfonds\nPolitiewet 2012: de artikelen 18, 20, 34, 35, 36, eerste lid, 37, eerste lid, 39, derde en vijfde lid, en 52\nProvinciewet:\nRichtlijn 2008/50/EG van het Europees Parlement en de Raad van 21 mei 2008 betreffende de luchtkwaliteit en schonere lucht voor Europa (PbEU 2008, L 152): een kennisgeving als bedoeld in artikel 22, vierde lid\nRijkswet Onderzoeksraad voor veiligheid, met uitzondering van beslissingen ten aanzien van de algemeen secretaris en de medewerkers van het bureau\nTelecommunicatiewet: de artikelen 3.5, 3.5a, 3.5b, 3.22 en 18.9, eerste en tweede lid\nTijdelijke experimentenwet nieuwe stembiljetten: de artikelen 2 en 4\nTijdelijke wet Groningen:\nUitleveringswet\nUitvoeringswet huurprijzen woonruimte: de artikelen 7, tweede, derde, vij",
+								"display_name": "Bevoegdheidsregeling bestuursrechtspraak (artikelen 8:5, 8:6, 8:7, 8:105 en 8:106)",
+								"instrument_abbreviation": "Awb",
+								"instrument_citation_title": "Algemene wet bestuursrecht",
+								"instrument_id": "instruments/bwbr0005537",
+								"label": "2",
+								"source": "bwb",
+								"stub": false,
+								"title": "Bevoegdheidsregeling bestuursrechtspraak (artikelen 8:5, 8:6, 8:7, 8:105 en 8:106)"
+							},
+							"edge_id": "5468821fc83e139dab3ee18c25d0b2ed081c5fa6",
+							"relation": "PART_OF",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/wetten/BWBR0005537/bijlage/2"
+						},
+						{
+							"id": "annexes/bwbr0005537_annex_3",
+							"key": "bwbr0005537_annex_3",
+							"collection": "annexes",
+							"type": "annex",
+							"display_name": "Regeling verlaagd griffierecht (artikelen 8:41 en 8:109)",
+							"labels": [
+								"BWB",
+								"Annex"
+							],
+							"props": {
+								"bwb_id": "BWBR0005537",
+								"description": "Het tarief, genoemd in artikel 8:41, tweede lid, onderdeel a, dan wel genoemd in artikel 8:109, eerste lid, onderdeel a, geldt indien het beroep, dan wel hoger beroep, betreft:\nHet tarief, genoemd in artikel 8:41, tweede lid, onderdeel a, dan wel genoemd in artikel 8:109, eerste lid, onderdeel a, geldt voorts indien het beroep, dan wel hoger beroep, betreft een besluit, genomen op grond van een in dit artikel genoemd voorschrift of anderszins in dit artikel omschreven.\nDe volgende besluiten:\nAlgemene bijstandswet\nAlgemene Kinderbijslagwet\nAlgemene nabestaandenwet\nAlgemene Ouderdomswet\nAlgemene wet inkomensafhankelijke regelingen\nAlgemene wet inzake rijksbelastingen, tenzij het beroep of hoger beroep door een natuurlijke persoon is ingesteld tegen een uitspraak inzake een besluit met betrekking tot de toepassing van:\nBesluit van 20 juni 1984, houdende vaststelling van een algemene maatregel van bestuur regelende de vergoeding van motorrijtuigenbelasting voor oorlogsgetroffenen (Stb. 1984, 364)\nGarantiewet Burgerlijk Overheidspersoneel Indonesië, met inbegrip van een besluit op grond van de Algemene oorlogsongevallenregeling\nGarantiewet Militairen K.N.I.L.\nGarantiewet Surinaamse pensioenen\nKaderwet SZW-subsidies, voor zover het betreft een algemene maatregel van bestuur of een ministeriële regeling op grond van artikel 9\nLiquidatiewet Ongevallenwetten\nMijnbouwwet: de afdelingen 5.1.1, 5.1.2, 5.3, 5.4 en 5.5\nParticipatiewet, met uitzondering van de artikelen 52, 76, eerste en tweede lid, en 81 en paragraaf 6.5\nReglement eenmalige uitkering silicose-vergoeding oud-mijnwerkers, vastgesteld bij besluit van het bestuur van de Stichting Silicose Oud-Mijnwerkers van 18 april 1994\nde reglementen van de Stichting Maror-gelden Overheid, de Stichting Joods Humanitair Fonds, de Stichting Rechtsherstel Sinti en Roma en de Stichting Het Gebaar\nSamenloopregeling Indonesische pensioenen 1960\nTijdelijke vergoedingsregeling psychotherapie na-oorlogse generatie\nTijdelijke wet beperking ",
+								"display_name": "Regeling verlaagd griffierecht (artikelen 8:41 en 8:109)",
+								"instrument_abbreviation": "Awb",
+								"instrument_citation_title": "Algemene wet bestuursrecht",
+								"instrument_id": "instruments/bwbr0005537",
+								"label": "3",
+								"source": "bwb",
+								"stub": false,
+								"title": "Regeling verlaagd griffierecht (artikelen 8:41 en 8:109)"
+							},
+							"edge_id": "767ddb29f1f2a4a0eb35851b2b32d8d4b53adca5",
+							"relation": "PART_OF",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/wetten/BWBR0005537/bijlage/3"
+						},
+						{
+							"id": "annexes/bwbr0005537_annex_1",
+							"key": "bwbr0005537_annex_1",
+							"collection": "annexes",
+							"type": "annex",
+							"display_name": "Regeling rechtstreeks beroep (artikel 7:1, eerste lid, onderdeel g)",
+							"labels": [
+								"BWB",
+								"Annex"
+							],
+							"props": {
+								"bwb_id": "BWBR0005537",
+								"description": "Tegen een besluit, genomen op grond van een in deze regeling genoemd voorschrift dan wel anderszins in deze regeling omschreven, kan geen bezwaar worden gemaakt.\nArchiefwet 1995: artikel 38, indien overeenkomstige toepassing is gegeven aan de artikelen 124, 124a en hoofdstuk XVII van de Gemeentewet\nBekendmakingswet: artikel 21, indien overeenkomstige toepassing is gegeven aan artikel 121 van de Provinciewet\nEnergiewet: de artikelen 5.4 en 5.5\nGemeentewet:\nKaderwet dienstplicht: artikel 13\nKieswet:\nLandbouwkwaliteitswet: een besluit van een tuchtgerecht of een centraal tuchtgerecht, ingesteld door een controle-instelling als bedoeld in artikel 13\nMededingingswet: de artikelen 37, eerste lid, 44, eerste lid, en 47, eerste lid\nOmgevingswet:\nPostwet 2009: hoofdstuk 3A en artikel 58\nProvinciewet:\nSpoorwegwet: hoofdstuk 5, paragraaf 2, en artikel 71, tweede lid\nTelecommunicatiewet, voor zover het betreft een besluit van de Autoriteit Consument en Markt, genomen op grond van:\nTijdelijke experimentenwet nieuwe stembiljetten: de artikelen 5 tot en met 10\nTijdelijke wet bestuurlijke maatregelen terrorismebestrijding: de artikelen 2 tot en met 4\nUitvoeringswet EU-zeehavenverordening: artikel 7, voor zover het betreft een besluit van de Autoriteit Consument en Markt\nUitvoeringswet verordening Europees burgerinitiatief: artikel 2, aanhef en onder c\nVerordening (EU) nr. 806/2014 van het Europees parlement en de Raad van 15 juli 2014 tot vaststelling van eenvormige regels en een eenvormige procedure voor de afwikkeling van kredietinstellingen en bepaalde beleggingsondernemingen in het kader van een gemeenschappelijk afwikkelingsmechanisme en een gemeenschappelijk bankenafwikkelingsfonds en tot wijziging van Verordening (EU) nr. 1093/2010 van het Europees parlement en de Raad (PbEU 2014, L 225): de artikelen 16, 18 en 21\nVerordening (EU) nr. 2017/1129 van het Europees Parlement en de Raad van 14 juni 2017 betreffende het prospectus dat moet worden gepubliceerd wanneer effecten aan ",
+								"display_name": "Regeling rechtstreeks beroep (artikel 7:1, eerste lid, onderdeel g)",
+								"instrument_abbreviation": "Awb",
+								"instrument_citation_title": "Algemene wet bestuursrecht",
+								"instrument_id": "instruments/bwbr0005537",
+								"label": "1",
+								"source": "bwb",
+								"stub": false,
+								"title": "Regeling rechtstreeks beroep (artikel 7:1, eerste lid, onderdeel g)"
+							},
+							"edge_id": "e8af6fc98352e1a9f1cade8146aa9625399bdb77",
+							"relation": "PART_OF",
+							"direction": "inbound",
+							"confidence": 1,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/wetten/BWBR0005537/bijlage/1"
+						}
+					]
+				}
+			]
+		},
+		"title": "Algemene wet bestuursrecht (Awb)",
+		"description": "Algemene wet bestuursrecht (Awb), geldend sinds 1 januari 1994",
+		"path": "/wetten/BWBR0005537",
+		"lid_counts_pending": false
+	},
+	"/api/relationships/search {} {\"exclude_type\":\"cross_reference\",\"law\":\"BWBR0005537\",\"limit\":200,\"offset\":0}": {
+		"relationships": [
+			{
+				"edge_id": "005d22007ada0cd935a2eef89cca006b50b9affa",
+				"from_id": "articles/bwbr0005537_5_43",
+				"to_id": "articles/bwbr0005537_5_50",
+				"relation": "REFERS_TO",
+				"semantic_type": "definitional_reference",
+				"explanation": "Patroon 'als bedoeld in' direct vóór de verwijzing",
+				"confidence": 1,
+				"semantic_confidence": 0.85,
+				"semantic_pattern": "definitional_reference_adjacent",
+				"source_article": {
+					"id": "articles/bwbr0005537_5_43",
+					"key": "bwbr0005537_5_43",
+					"display_name": "Artikel 5:43 Algemene wet bestuursrecht",
+					"bwb_id": "BWBR0005537",
+					"celex": null,
+					"article_number": "5:43",
+					"instrument": null,
+					"path": "/wetten/BWBR0005537/artikel/5:43"
+				},
+				"target_article": {
+					"id": "articles/bwbr0005537_5_50",
+					"key": "bwbr0005537_5_50",
+					"display_name": "Artikel 5:50 Algemene wet bestuursrecht",
+					"bwb_id": "BWBR0005537",
+					"celex": null,
+					"article_number": "5:50",
+					"instrument": null,
+					"path": "/wetten/BWBR0005537/artikel/5:50"
+				}
+			},
+			{
+				"edge_id": "0077a763cc8ec06b2d631f40bdd10eaf236d9649",
+				"from_id": "articles/bwbr0005537_bijlage_2_artikel_11",
+				"to_id": "articles/bwbr0004365_27b",
+				"relation": "REFERS_TO",
+				"semantic_type": "limiting_exception",
+				"explanation": "Patroon 'met uitzondering van' elders in de zin van de verwijzing",
+				"confidence": 1,
+				"semantic_confidence": 0.65,
+				"semantic_pattern": "limiting_exception_window",
+				"source_article": {
+					"id": "articles/bwbr0005537_bijlage_2_artikel_11",
+					"key": "bwbr0005537_bijlage_2_artikel_11",
+					"display_name": "Artikel 11 van bijlage 2 Algemene wet bestuursrecht",
+					"bwb_id": "BWBR0005537",
+					"celex": null,
+					"article_number": "bijlage 2 artikel 11",
+					"instrument": null,
+					"path": null
+				},
+				"target_article": {
+					"id": "articles/bwbr0004365_27b",
+					"key": "bwbr0004365_27b",
+					"display_name": "Artikel 27b Loodsenwet",
+					"bwb_id": "BWBR0004365",
+					"celex": null,
+					"article_number": "27b",
+					"instrument": null,
+					"path": "/wetten/BWBR0004365/artikel/27b"
+				}
+			},
+			{
+				"edge_id": "0086c034db3a738d181577bd35f9f31aafa2bd3b",
+				"from_id": "articles/bwbr0005537_bijlage_2_artikel_1",
+				"to_id": "articles/bwbr0005416_124",
+				"relation": "REFERS_TO",
+				"semantic_type": "conditional_requirement",
+				"explanation": "Patroon 'voor zover' elders in de zin van de verwijzing",
+				"confidence": 1,
+				"semantic_confidence": 0.3,
+				"semantic_pattern": "conditional_requirement_window",
+				"source_article": {
+					"id": "articles/bwbr0005537_bijlage_2_artikel_1",
+					"key": "bwbr0005537_bijlage_2_artikel_1",
+					"display_name": "Artikel 1 van bijlage 2 Algemene wet bestuursrecht",
+					"bwb_id": "BWBR0005537",
+					"celex": null,
+					"article_number": "bijlage 2 artikel 1",
+					"instrument": null,
+					"path": null
+				},
+				"target_article": {
+					"id": "articles/bwbr0005416_124",
+					"key": "bwbr0005416_124",
+					"display_name": "Artikel 124 Gemeentewet",
+					"bwb_id": "BWBR0005416",
+					"celex": null,
+					"article_number": "124",
+					"instrument": null,
+					"path": "/wetten/BWBR0005416/artikel/124"
+				}
+			},
+			{
+				"edge_id": "008bf531ce9c6dca40a00de8aa11954e7ecda8a6",
+				"from_id": "articles/bwbr0005537_bijlage_2_artikel_1",
+				"to_id": "articles/bwbr0037885_2_21",
+				"relation": "REFERS_TO",
+				"semantic_type": "conditional_requirement",
+				"explanation": "Patroon 'voor zover' elders in de zin van de verwijzing",
+				"confidence": 1,
+				"semantic_confidence": 0.3,
+				"semantic_pattern": "conditional_requirement_window",
+				"source_article": {
+					"id": "articles/bwbr0005537_bijlage_2_artikel_1",
+					"key": "bwbr0005537_bijlage_2_artikel_1",
+					"display_name": "Artikel 1 van bijlage 2 Algemene wet bestuursrecht",
+					"bwb_id": "BWBR0005537",
+					"celex": null,
+					"article_number": "bijlage 2 artikel 1",
+					"instrument": null,
+					"path": null
+				},
+				"target_article": {
+					"id": "articles/bwbr0037885_2_21",
+					"key": "bwbr0037885_2_21",
+					"display_name": "Artikel 2.21 Omgevingswet",
+					"bwb_id": "BWBR0037885",
+					"celex": null,
+					"article_number": "2.21",
+					"instrument": null,
+					"path": "/wetten/BWBR0037885/artikel/2.21"
+				}
+			}
+		],
+		"total": 485,
+		"limit": 200,
+		"offset": 0
+	},
+	"/api/relationships/search {} {\"exclude_type\":\"cross_reference\",\"law\":\"BWBR0005537\",\"limit\":200,\"offset\":200}": {
+		"relationships": [
+			{
+				"edge_id": "634108c1120adb4d55cbcbf3d56baf891d422157",
+				"from_id": "articles/bwbr0005537_bijlage_2_artikel_4",
+				"to_id": "articles/bwbr0002392_18",
+				"relation": "REFERS_TO",
+				"semantic_type": "limiting_exception",
+				"explanation": "Patroon 'behoudens' direct vóór de verwijzing",
+				"confidence": 1,
+				"semantic_confidence": 0.85,
+				"semantic_pattern": "limiting_exception_adjacent",
+				"source_article": {
+					"id": "articles/bwbr0005537_bijlage_2_artikel_4",
+					"key": "bwbr0005537_bijlage_2_artikel_4",
+					"display_name": "Artikel 4 van bijlage 2 Algemene wet bestuursrecht",
+					"bwb_id": "BWBR0005537",
+					"celex": null,
+					"article_number": "bijlage 2 artikel 4",
+					"instrument": null,
+					"path": null
+				},
+				"target_article": {
+					"id": "articles/bwbr0002392_18",
+					"key": "bwbr0002392_18",
+					"display_name": "Artikel 18 Noodwet voedselvoorziening",
+					"bwb_id": "BWBR0002392",
+					"celex": null,
+					"article_number": "18",
+					"instrument": null,
+					"path": "/wetten/BWBR0002392/artikel/18"
+				}
+			},
+			{
+				"edge_id": "63672ea51495543dcdc332b8931ddc1eab52cc30",
+				"from_id": "articles/bwbr0005537_8_107",
+				"to_id": "articles/bwbr0005537_8_36e",
+				"relation": "REFERS_TO",
+				"semantic_type": "definitional_reference",
+				"explanation": "Patroon 'in … bedoelde' om de verwijzing",
+				"confidence": 1,
+				"semantic_confidence": 0.9,
+				"semantic_pattern": "definitional_reference_inverted_adjacent",
+				"source_article": {
+					"id": "articles/bwbr0005537_8_107",
+					"key": "bwbr0005537_8_107",
+					"display_name": "Artikel 8:107 Algemene wet bestuursrecht",
+					"bwb_id": "BWBR0005537",
+					"celex": null,
+					"article_number": "8:107",
+					"instrument": null,
+					"path": "/wetten/BWBR0005537/artikel/8:107"
+				},
+				"target_article": {
+					"id": "articles/bwbr0005537_8_36e",
+					"key": "bwbr0005537_8_36e",
+					"display_name": "Artikel 8:36e Algemene wet bestuursrecht",
+					"bwb_id": "BWBR0005537",
+					"celex": null,
+					"article_number": "8:36e",
+					"instrument": null,
+					"path": "/wetten/BWBR0005537/artikel/8:36e"
+				}
+			},
+			{
+				"edge_id": "645916075603d92f7187263d5094cdb0ab01e8fb",
+				"from_id": "articles/bwbr0005537_bijlage_2_artikel_7",
+				"to_id": "articles/bwbr0004365_27l",
+				"relation": "REFERS_TO",
+				"semantic_type": "limiting_exception",
+				"explanation": "Patroon 'met uitzondering van' elders in de zin van de verwijzing",
+				"confidence": 1,
+				"semantic_confidence": 0.65,
+				"semantic_pattern": "limiting_exception_window",
+				"source_article": {
+					"id": "articles/bwbr0005537_bijlage_2_artikel_7",
+					"key": "bwbr0005537_bijlage_2_artikel_7",
+					"display_name": "Artikel 7 van bijlage 2 Algemene wet bestuursrecht",
+					"bwb_id": "BWBR0005537",
+					"celex": null,
+					"article_number": "bijlage 2 artikel 7",
+					"instrument": null,
+					"path": null
+				},
+				"target_article": {
+					"id": "articles/bwbr0004365_27l",
+					"key": "bwbr0004365_27l",
+					"display_name": "Artikel 27l Loodsenwet",
+					"bwb_id": "BWBR0004365",
+					"celex": null,
+					"article_number": "27l",
+					"instrument": null,
+					"path": "/wetten/BWBR0004365/artikel/27l"
+				}
+			},
+			{
+				"edge_id": "64689c7e068c6f9b2c3dff5708ce42acf7780a75",
+				"from_id": "articles/bwbr0005537_bijlage_2_artikel_2",
+				"to_id": "articles/bwbr0005181_19",
+				"relation": "REFERS_TO",
+				"semantic_type": "conditional_requirement",
+				"explanation": "Patroon 'voor zover' elders in de zin van de verwijzing",
+				"confidence": 1,
+				"semantic_confidence": 0.3,
+				"semantic_pattern": "conditional_requirement_window",
+				"source_article": {
+					"id": "articles/bwbr0005537_bijlage_2_artikel_2",
+					"key": "bwbr0005537_bijlage_2_artikel_2",
+					"display_name": "Artikel 2 van bijlage 2 Algemene wet bestuursrecht",
+					"bwb_id": "BWBR0005537",
+					"celex": null,
+					"article_number": "bijlage 2 artikel 2",
+					"instrument": null,
+					"path": null
+				},
+				"target_article": {
+					"id": "articles/bwbr0005181_19",
+					"key": "bwbr0005181_19",
+					"display_name": "Artikel 19 Woningwet",
+					"bwb_id": "BWBR0005181",
+					"celex": null,
+					"article_number": "19",
+					"instrument": null,
+					"path": "/wetten/BWBR0005181/artikel/19"
+				}
+			}
+		],
+		"total": 485,
+		"limit": 200,
+		"offset": 200
+	},
+	"/api/relationships/search {} {\"exclude_type\":\"cross_reference\",\"law\":\"BWBR0005537\",\"limit\":200,\"offset\":400}": {
+		"relationships": [
+			{
+				"edge_id": "cf0d1778e73a854fe10f747b79c58de027aece10",
+				"from_id": "articles/bwbr0005537_8_94",
+				"to_id": "articles/bwbr0002320_26",
+				"relation": "REFERS_TO",
+				"semantic_type": "definitional_reference",
+				"explanation": "Patroon 'als bedoeld in' direct vóór de verwijzing",
+				"confidence": 1,
+				"semantic_confidence": 0.85,
+				"semantic_pattern": "definitional_reference_adjacent",
+				"source_article": {
+					"id": "articles/bwbr0005537_8_94",
+					"key": "bwbr0005537_8_94",
+					"display_name": "Artikel 8:94 Algemene wet bestuursrecht",
+					"bwb_id": "BWBR0005537",
+					"celex": null,
+					"article_number": "8:94",
+					"instrument": null,
+					"path": "/wetten/BWBR0005537/artikel/8:94"
+				},
+				"target_article": {
+					"id": "articles/bwbr0002320_26",
+					"key": "bwbr0002320_26",
+					"display_name": "Artikel 26 Algemene wet inzake rijksbelastingen",
+					"bwb_id": "BWBR0002320",
+					"celex": null,
+					"article_number": "26",
+					"instrument": null,
+					"path": "/wetten/BWBR0002320/artikel/26"
+				}
+			},
+			{
+				"edge_id": "cf3b2c955b6c8272dd94a9f6e4485efed5f576da",
+				"from_id": "articles/bwbr0005537_8_4",
+				"to_id": "articles/bwbr0005537_3_25",
+				"relation": "REFERS_TO",
+				"semantic_type": "definitional_reference",
+				"explanation": "Patroon 'als bedoeld in' elders in de zin van de verwijzing",
+				"confidence": 1,
+				"semantic_confidence": 0.25,
+				"semantic_pattern": "definitional_reference_window",
+				"source_article": {
+					"id": "articles/bwbr0005537_8_4",
+					"key": "bwbr0005537_8_4",
+					"display_name": "Artikel 8:4 Algemene wet bestuursrecht",
+					"bwb_id": "BWBR0005537",
+					"celex": null,
+					"article_number": "8:4",
+					"instrument": null,
+					"path": "/wetten/BWBR0005537/artikel/8:4"
+				},
+				"target_article": {
+					"id": "articles/bwbr0005537_3_25",
+					"key": "bwbr0005537_3_25",
+					"display_name": "Artikel 3:25 Algemene wet bestuursrecht",
+					"bwb_id": "BWBR0005537",
+					"celex": null,
+					"article_number": "3:25",
+					"instrument": null,
+					"path": "/wetten/BWBR0005537/artikel/3:25"
+				}
+			},
+			{
+				"edge_id": "cf72930c5d1999154d06b18800a7c7f1cb285933",
+				"from_id": "articles/bwbr0005537_8_36e",
+				"to_id": "articles/bwbr0005537_8_45a",
+				"relation": "REFERS_TO",
+				"semantic_type": "definitional_reference",
+				"explanation": "Patroon 'bedoeld in' direct vóór de verwijzing",
+				"confidence": 1,
+				"semantic_confidence": 0.85,
+				"semantic_pattern": "definitional_reference_adjacent",
+				"source_article": {
+					"id": "articles/bwbr0005537_8_36e",
+					"key": "bwbr0005537_8_36e",
+					"display_name": "Artikel 8:36e Algemene wet bestuursrecht",
+					"bwb_id": "BWBR0005537",
+					"celex": null,
+					"article_number": "8:36e",
+					"instrument": null,
+					"path": "/wetten/BWBR0005537/artikel/8:36e"
+				},
+				"target_article": {
+					"id": "articles/bwbr0005537_8_45a",
+					"key": "bwbr0005537_8_45a",
+					"display_name": "Artikel 8:45a Algemene wet bestuursrecht",
+					"bwb_id": "BWBR0005537",
+					"celex": null,
+					"article_number": "8:45a",
+					"instrument": null,
+					"path": "/wetten/BWBR0005537/artikel/8:45a"
+				}
+			},
+			{
+				"edge_id": "cfc230aeae7afd2c56cb5ca0eb10662307168e9a",
+				"from_id": "articles/bwbr0005537_4_20",
+				"to_id": "articles/bwbr0005537_4_18",
+				"relation": "REFERS_TO",
+				"semantic_type": "definitional_reference",
+				"explanation": "Patroon 'bedoeld in' direct vóór de verwijzing",
+				"confidence": 1,
+				"semantic_confidence": 0.85,
+				"semantic_pattern": "definitional_reference_adjacent",
+				"source_article": {
+					"id": "articles/bwbr0005537_4_20",
+					"key": "bwbr0005537_4_20",
+					"display_name": "Artikel 4:20 Algemene wet bestuursrecht",
+					"bwb_id": "BWBR0005537",
+					"celex": null,
+					"article_number": "4:20",
+					"instrument": null,
+					"path": "/wetten/BWBR0005537/artikel/4:20"
+				},
+				"target_article": {
+					"id": "articles/bwbr0005537_4_18",
+					"key": "bwbr0005537_4_18",
+					"display_name": "Artikel 4:18 Algemene wet bestuursrecht",
+					"bwb_id": "BWBR0005537",
+					"celex": null,
+					"article_number": "4:18",
+					"instrument": null,
+					"path": "/wetten/BWBR0005537/artikel/4:18"
+				}
+			}
+		],
+		"total": 485,
+		"limit": 200,
+		"offset": 400
+	}
+}
