@@ -1,113 +1,40 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
-	import { count, plural } from '$lib/text/words';
-	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
-	import ToezeggingInhoud from '$lib/components/open/ToezeggingInhoud.svelte';
-	import { inhoudVan, stemmingInhoud } from '$lib/components/open/rij-inhoud';
-	import StukUitslag from '$lib/components/parliamentary/StukUitslag.svelte';
-	import { stukUitslag } from '$lib/components/parliamentary/stuk-uitslag';
-	import { lijstDoel } from '$lib/stores/sprong';
-	import { fractieNaam, naamVan } from '$lib/bron/menselijk';
-	import { voteCitation } from '$lib/bron/naam';
-	import { korteDatum, langeDatum, vandaag, weekdag } from '$lib/text/datum';
-	import { formatDecimal } from '$lib/text/getal';
-	import DossierNaam from '$lib/bron/DossierNaam.svelte';
-	import { axisLabels } from './index/years-axis';
-	import { faceted, type Fetcher, type FacetsApart } from './index/faceted';
-	import { uniqueBy } from '$lib/util/unique';
-	import NameLink from '$lib/bron/NameLink.svelte';
-	import BronLink from '$lib/bron/BronLink.svelte';
-	import { isEscape } from '$lib/actions/keys';
-	import { rijen } from '$lib/actions/rijen';
 	// Index: browse one category at a time. Beside the list a column of filters, each
 	// option with the number of bronnen it holds under the other filters. A row says what
 	// the bron is in its own lines; its title opens it, and at its end stand the ways on in
 	// one click (Lezen, Netwerk; Openen for a bron read beside the network). No panel
 	// opens beneath a row (Thijs, 10 Oct).
 	//
-	// Every filter, the sort and the open row are in the URL, so a view can be shared.
-	// What the API can filter or sort is passed on as a query; the rest is done
-	// on the rows loaded so far.
+	// Each category is one definition in the register (index/lists): its sorts, field,
+	// columns, request, filters and rows. This view holds what every list shares: the
+	// address, the loading, the way back and the frame.
+	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
+	import { lijstDoel } from '$lib/stores/sprong';
 	import { afterTick } from '$lib/util/after-tick';
 	import { page } from '$app/state';
 	import { afterNavigate, beforeNavigate } from '$app/navigation';
-	import { bronHref, openHref } from '$lib/bron/href';
 	import { useSearchOpener } from '$lib/stores/search-trigger';
 	import { api, unwrap } from '$lib/api/client';
-	import { getCabinet, getParliamentSeats } from '$lib/api/records';
-	import { load } from '$lib/util/load.svelte';
 	import { isAborted, report } from '$lib/api/errors';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
-	import { besluiten, geteld, nogTeTellen } from '$lib/api/decisions';
-	import type { Schema } from '$lib/api/types';
-	import {
-		COURT_KINDS,
-		COURT_KIND_LABEL,
-		TIERS,
-		TIER_LABEL,
-		bronLabel,
-		type CourtKind,
-		type Tier
-	} from '$lib/vocabulary';
-	import { getCoverage, type Coverage } from '$lib/api/stats';
-	import {
-		NO_KIND_LABEL,
-		PHASES,
-		OUTCOME_LABEL,
-		isDossierKind,
-		isPhase,
-		type Outcome
-	} from '$lib/components/parliamentary/stages';
-	import {
-		chapterTitle,
-		groupByNumber,
-		groupRuns
-	} from '$lib/components/parliamentary/dossier-number';
-	import { partyColor } from '$lib/utils/party-color.svelte';
-	import { stand } from '$lib/components/parliamentary/stand';
-	import Hemicycle from './Hemicycle.svelte';
-	import ZaalTegenover from './ZaalTegenover.svelte';
-	import { indelingMarkering } from './zaaltegenover';
-	import ZaalLegenda from './ZaalLegenda.svelte';
-	import { kleurVan } from './partijkleuren.svelte';
+	import { bronLabel } from '$lib/vocabulary';
+	import { getCoverage } from '$lib/api/stats';
+	import { uniqueBy } from '$lib/util/unique';
+	import { isEscape } from '$lib/actions/keys';
+	import { rijen } from '$lib/actions/rijen';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import IconKnop from '$lib/components/ui/IconKnop.svelte';
 	import IndexFacets, { activeFilters, type FacetGroup } from './index/IndexFacets.svelte';
-	import { NO_DECISION_KIND, decisionMethod, decisionOutcome } from './index/decision-kind';
+	import type { FacetsApart } from './index/faceted';
 	import {
 		CHAMBER_OPTIONS,
-		EK_SOURCE,
 		ekListSource,
-		chamberFromParam,
 		type Chamber
 	} from '$lib/components/parliamentary/chamber';
-	import { kamerstukLabel } from '$lib/components/parliamentary/kamerstuk';
-	import { judgmentCaseNumber, judgmentCourt, judgmentRowTitle } from './index/judgment-kind';
-	import {
-		COMMITMENT_STATUSES,
-		OPEN_STATUS,
-		POSTS,
-		POST_LABEL,
-		currentCabinet,
-		inOffice,
-		getCabinets,
-		getMinistries,
-		period,
-		type Cabinet,
-		type Ministry
-	} from './index/government';
-	import { ministryName } from './index/ministries.svelte';
-	import { COURT_GROUPS, MIXED_TIERS } from './index/courts';
-	import CabinetOccupancy from './index/CabinetOccupancy.svelte';
-	import KabinettenStrook from './index/KabinettenStrook.svelte';
-	import NaastPosten from './index/NaastPosten.svelte';
-	import IndexRow from './index/IndexRow.svelte';
-	import Waarde from '$lib/components/ui/Waarde.svelte';
-	import { forAgainst, stemmingNaam, votesSentence } from '$lib/components/parliamentary/stemming';
-	import { dossierLabel, dossierOwnName, officialNumber } from '$lib/bron/dossier-naam';
+	import { getCabinets, getMinistries } from './index/government';
 	import {
 		INDEX_CATEGORIES,
 		INDEX_TABS,
@@ -116,133 +43,30 @@
 		type IndexCategory
 	} from './index/categories';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { PERIOD_LABEL, seatedOnly } from './index/period';
 	import { formatCount } from '$lib/text/getal';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
-	import { MINISTRY_KEYS, facetOptions, choiceOf } from '$lib/util/choice';
+	import { LISTS } from './index/lists';
+	import { FILTER_PARAMS, readParams } from './index/lists/params';
+	import {
+		PAGE,
+		forParams,
+		type Answer,
+		type ListContext,
+		type Page,
+		type Shared
+	} from './index/lists/list';
 
 	let { category }: { category: IndexCategory } = $props();
 
 	// ── URL-driven filter state ─────────────────────────────────────────────
-	const params = $derived(page.url.searchParams);
-	const q = $derived(params.get('q') ?? '');
-	// A dossier's phase and kind as the Kamer names them; a name it does not know is left
-	// out. The kind keeps the URL name `track`: `kind` is the tab.
-	// One phase or several: the dossiers whose current phase is one of them.
-	const phases = $derived((params.get('phase') ?? '').split(',').filter(isPhase));
-	// Phases a dossier must all have passed, comma-separated.
-	const hasPhase = $derived((params.get('has_phase') ?? '').split(',').filter(isPhase).join(','));
-	const trackParam = $derived(params.get('track') ?? '');
-	const track = $derived(isDossierKind(trackParam) ? trackParam : '');
-	/** A kind of besluit or stuk, as the Kamer writes it (`Motie`, `Brief regering`). */
-	const soort = $derived(params.get('soort') ?? '');
-	// The Kamer whose parliament is listed; no filter but a choice, so it stays across tabs.
-	const kamer = $derived<Chamber>(chamberFromParam(params.get('kamer')) ?? 'TK');
-	/** The tabs that list one Kamer at a time. */
-	const CHAMBER_CATEGORIES: readonly IndexCategory[] = [
-		'decisions',
-		'documents',
-		'members',
-		'factions',
-		'committees'
-	];
-	/** The Eerste Kamer is known from our first read on: no history to show or filter by. */
-	const ekComposition = $derived(
-		kamer === 'EK' && category !== 'decisions' && category !== 'documents'
-	);
-	const ministry = $derived(choiceOf(params.get('ministry'), MINISTRY_KEYS) ?? '');
-	const cabinetParam = $derived(params.get('cabinet') ?? '');
-	const memberParam = $derived(params.get('member') ?? '');
-	const post = $derived(choiceOf(params.get('post'), POSTS));
-	// Bewindspersonen: one cabinet's posts, or the ministers of six cabinets side by side.
-	const naast = $derived(params.get('weergave') === 'naast');
-	const commitmentStatus = $derived(choiceOf(params.get('status'), COMMITMENT_STATUSES));
-	const overdue = $derived(params.get('overdue') === '1');
-	const coalition = $derived(params.get('coalition') ?? '');
-	// Dossiers: the open ones unless asked otherwise; a number searched for is looked up in all.
-	const OUTCOMES = Object.keys(OUTCOME_LABEL) as Outcome[];
-	const DOSSIER_NUMBER = /^\d{5}(-[a-z0-9()]+)?$/i;
-	const dossierStatusParam = $derived(
-		choiceOf(params.get('stand'), ['open', 'closed', 'all'] as const)
-	);
-	const dossierScope = $derived(
-		dossierStatusParam ?? (DOSSIER_NUMBER.test(q.trim()) ? 'all' : 'open')
-	);
-	const outcome = $derived(choiceOf(params.get('outcome'), OUTCOMES));
-	const passed = $derived(choiceOf(params.get('passed'), ['true', 'false'] as const));
-	const dateFrom = $derived(params.get('from') ?? '');
-	const dateTo = $derived(params.get('to') ?? '');
-	const dossierFilter = $derived(params.get('dossier') ?? '');
-	const party = $derived(params.get('party') ?? '');
-	const jurisdiction = $derived(choiceOf(params.get('jurisdiction'), ['nl', 'eu'] as const));
-	// A kind of wet as the source names it; the treaties for now (Thijs, 10 Oct: "ook
-	// verdragen een plekje"): the BWBV and the Verdragenbank, kind `verdrag`.
-	const instrumentSoort = $derived(choiceOf(params.get('soort'), ['verdrag'] as const));
-	const court = $derived(params.get('court') ?? '');
-	// TODO(backend G14): the lists hold records without text or articles; until they can
-	// be left out by a parameter, a wet needs an article and a judgment a source.
-	const withEmpty = $derived(params.get('leeg') === '1');
-	const source = $derived(choiceOf(params.get('source'), ['echr'] as const));
-	const tier = $derived(choiceOf(params.get('tier'), TIERS));
-	const courtKind = $derived(choiceOf(params.get('court_kind'), COURT_KINDS));
-	// Rechtsgebied and procedure as rechtspraak.nl gives them (API 0.74, BE-44).
-	const subject = $derived(params.get('subject') ?? '');
-	// The main area of law (BE-57, API 0.75): `Bestuursrecht` holds `Bestuursrecht; Belastingrecht`.
-	const subjectArea = $derived(params.get('subject_area') ?? '');
-	// The registers of the BWB (TOOI): a legal area, main or specific, and a theme, by slug.
-	const legalArea = $derived(params.get('legal_area') ?? '');
-	const policyDomain = $derived(params.get('policy_domain') ?? '');
-	const procedure = $derived(params.get('procedure') ?? '');
-	const sort = $derived(params.get('sort'));
-	const dirParam = $derived(choiceOf(params.get('dir'), ['asc', 'desc'] as const));
-	const onlyActive = $derived(params.get('only_active') === '1');
-	// Members and factions are the sitting ones unless historical ones are asked for.
-	const includeInactive = $derived(params.get('include_inactive') === '1');
-
-	const FILTER_PARAMS = [
-		'q',
-		'phase',
-		'has_phase',
-		'track',
-		'soort',
-		'passed',
-		'from',
-		'to',
-		'dossier',
-		'party',
-		'jurisdiction',
-		'court',
-		'tier',
-		'court_kind',
-		'subject',
-		'subject_area',
-		'procedure',
-		'legal_area',
-		'policy_domain',
-		'leeg',
-		'source',
-		'sort',
-		'dir',
-		'only_active',
-		'include_inactive',
-		'ministry',
-		'cabinet',
-		'member',
-		'post',
-		'weergave',
-		'status',
-		'overdue',
-		'coalition',
-		'stand',
-		'outcome'
-	];
+	const list = $derived(LISTS[category]);
+	const p = $derived(readParams(page.url.searchParams));
+	const q = $derived(p.q);
+	const kamer = $derived(p.kamer);
 
 	/** A filter is a step in the history; the search text and the open row replace it. */
 	const patchUrl = (patch: ParamPatch, replaceState = false) =>
 		navigate(withParams(page.url, patch), { step: !replaceState });
-
-	const toggleParam = (name: string, current: string | undefined, value: string) =>
-		patchUrl({ [name]: current === value ? null : value });
 
 	// A tab drops the filters and the open row, so a stage filter of dossiers does not leak into decisions.
 	const tabHref = (k: IndexCategory, filters: ParamPatch = {}) =>
@@ -274,177 +98,46 @@
 	const clearFilters = () =>
 		patchUrl(
 			Object.fromEntries(
-				FILTER_PARAMS.filter((p) => p !== 'sort' && p !== 'dir').map((p) => [p, null])
+				FILTER_PARAMS.filter((name) => name !== 'sort' && name !== 'dir').map((name) => [
+					name,
+					null
+				])
 			)
 		);
 
 	// ── Sorting ─────────────────────────────────────────────────────────────
 	// The first option is the default. An option with `dir` is sorted here, with
 	// that direction unless the URL says otherwise; the others are sorted by the API.
-	type SortDef = { id: string; label: string; dir?: 'asc' | 'desc' };
-	const SORTS: Record<IndexCategory, SortDef[]> = {
-		instruments: [
-			{ id: 'title', label: 'Citeertitel' },
-			{ id: 'article_count', label: 'Aantal artikelen' }
-		],
-		judgments: [
-			{ id: 'date_desc', label: 'Datum (nieuw → oud)' },
-			{ id: 'date_asc', label: 'Datum (oud → nieuw)' },
-			{ id: 'citation_count', label: 'Meest geciteerd' }
-		],
-		// Sorted by the API, over all pages.
-		dossiers: [
-			{ id: 'opened_on', label: 'Geopend (nieuw → oud)' },
-			// The day of its newest paper, activity or decision (API 0.75).
-			{ id: 'last_activity', label: 'Laatste activiteit' },
-			{ id: 'number', label: 'Kamerstuknummer' },
-			{ id: 'closed_on', label: 'Afgehandeld (nieuw → oud)' },
-			{ id: 'title', label: 'Titel' }
-		],
-		committees: [
-			{ id: 'dossiers', label: 'Actieve dossiers', dir: 'desc' },
-			{ id: 'abbreviation', label: 'Afkorting', dir: 'asc' },
-			{ id: 'name', label: 'Naam', dir: 'asc' }
-		],
-		// By surname over all pages, as the API sorts it (BE-11): "Van der Lee" under L.
-		members: [
-			{ id: 'family_name', label: 'Achternaam' },
-			{ id: 'party', label: 'Fractie', dir: 'asc' }
-		],
-		factions: [
-			{ id: 'seats', label: 'Zetels', dir: 'desc' },
-			{ id: 'abbreviation', label: 'Afkorting', dir: 'asc' },
-			{ id: 'name', label: 'Naam', dir: 'asc' }
-		],
-		decisions: [
-			{ id: 'date', label: 'Datum', dir: 'desc' },
-			{ id: 'result', label: 'Uitslag', dir: 'asc' },
-			{ id: 'subject', label: 'Onderwerp', dir: 'asc' }
-		],
-		cabinets: [
-			{ id: 'date', label: 'Aantreden', dir: 'desc' },
-			{ id: 'bills', label: 'Wetsvoorstellen', dir: 'desc' },
-			{ id: 'name', label: 'Naam', dir: 'asc' }
-		],
-		// One order: the ministries in protocol order, as the chart draws them.
-		ministers: [{ id: 'protocol', label: 'Ministerie' }],
-		commitments: [
-			{ id: 'date', label: 'Datum' },
-			{ id: 'expected_resolution', label: 'Verwachte afdoening' }
-		],
-		// One order: newest first, as the API lists them.
-		documents: [{ id: 'date', label: 'Datum' }]
-	};
-	// The Eerste Kamer's committees are not yet linked to dossiers: no sort or column by them.
-	const noDossiers = $derived(ekComposition && category === 'committees');
-	const sorts = $derived(
-		noDossiers ? SORTS.committees.filter((o) => o.id !== 'dossiers') : SORTS[category]
-	);
-	const sortDef = $derived(sorts.find((s) => s.id === sort) ?? sorts[0]);
-	const dir = $derived(sortDef.dir && (dirParam ?? sortDef.dir));
-
-	type Keys<T> = Record<string, (row: T) => string | number>;
-	function sorted<T>(rows: T[], keys: Keys<T>): T[] {
-		// The list of the category just left recomputes once more with the sort of the
-		// next one; a sort it does not know leaves the order as the API gave it.
-		const key = keys[sortDef.id];
-		if (!key) return rows;
-		const sign = dir === 'asc' ? 1 : -1;
-		return [...rows].sort((a, b) => {
-			const [x, y] = [key(a), key(b)];
-			return (
-				(typeof x === 'number' ? x - (y as number) : x.localeCompare(y as string, 'nl')) * sign
-			);
-		});
-	}
+	const sorts = $derived(forParams(list.sorts, p));
+	const sortDef = $derived(sorts.find((s) => s.id === p.sort) ?? sorts[0]);
+	const dir = $derived(sortDef.dir && (p.dir ?? sortDef.dir));
 
 	// ── Data ────────────────────────────────────────────────────────────────
-	/** `total` is null when the API gives none and more items may follow. */
-	type Page<T> = { items: T[]; total: number | null; more: boolean };
 	type AnyPage = Page<unknown>;
-	type Pages = {
-		instruments?: Page<Schema<'InstrumentListItemDTO'>>;
-		judgments?: Page<Schema<'JudgmentListItemDTO'>>;
-		dossiers?: Page<Schema<'DossierSummaryDTO'>>;
-		committees?: Page<Schema<'CommitteeDTO'>>;
-		members?: Page<Schema<'MemberDTO'>>;
-		factions?: Page<Schema<'FactionDTO'>>;
-		decisions?: Page<Schema<'DecisionSummaryDTO'>>;
-		cabinets?: Page<Cabinet>;
-		ministers?: Page<MinisterRow>;
-		commitments?: Page<Schema<'CommitmentDTO'>>;
-		documents?: Page<Schema<'DocumentListItemDTO'>>;
-	};
-	/** One post in a cabinet, with the ministry it is under. */
-	type MinisterRow = Schema<'CabinetPostDTO'> & {
-		ministry: string | null;
-		ministryName: string | null;
-	};
 
-	const PAGE = 100;
-	// The sitting members of a Kamer in one slice: no Kamer has more than 150 seats, and
-	// a list without `total` can then count them.
-	const SEATED = 200;
-
-	// A list without `total` (members) is over when a slice comes back short.
 	/** An item's own id, or its key; null without either. */
 	const idOf = (item: unknown): string | null => {
 		const o = item as { id?: unknown; key?: unknown };
 		return typeof o?.id === 'string' ? o.id : typeof o?.key === 'string' ? o.key : null;
 	};
 
-	function toPage<T>(
-		previous: Page<T> | undefined,
-		items: T[],
-		offset: number,
-		total?: number
-	): Page<T> {
+	function toPage(
+		previous: AnyPage | undefined,
+		{ items, total, of }: Answer<unknown>,
+		offset: number
+	): AnyPage {
 		// A page can repeat an item of the page before when the order has ties.
 		const all = offset && previous ? uniqueBy([...previous.items, ...items], idOf) : items;
 		// Without a total (one still being counted), a full page says there is more; a list can
-		// ask more than PAGE at a time (stemmingen: 200).
-		const more = total === undefined ? items.length >= PAGE : all.length < total;
-		return { items: all, total: total ?? (more ? null : all.length), more };
+		// ask more than PAGE at a time (stemmingen: 200). A list without `total` (members) is
+		// over when a slice comes back short.
+		const more = total == null ? items.length >= PAGE : all.length < total;
+		return { items: all, total: total ?? (more ? null : all.length), more, of };
 	}
 
-	let pages = $state<Pages>({});
-	// Seats for the hemicycle, when the factions are opened (asked once per Kamer).
-	const hall = load(
-		() => (category === 'factions' ? kamer : null),
-		(chamber) => (chamber ? getParliamentSeats(chamber) : Promise.resolve(null)),
-		'Zaal van de Kamer'
-	);
-	const seats = $derived(hall.state.status === 'ready' ? hall.state.data : null);
-	// The cabinet in office on the day of the hall and its fracties (API 0.79.33): one line
-	// to the cabinet, whose reader shows its seats (Thijs, 10 Oct: the coalition is the
-	// cabinet's, not the Kamer's).
-	const coalitieRegel = $derived.by(() => {
-		const kabinet = seats?.cabinet;
-		if (!seats || !kabinet?.key) return null;
-		const fracties = [...seats.factions]
-			.filter((f) => f.coalition === true)
-			.sort((a, b) => b.seats - a.seats)
-			.map((f) => fractieNaam(f));
-		return {
-			naam: kabinet.name ?? naamVan('cabinets', kabinet),
-			href: bronHref(`cabinets/${kabinet.key}`, { keepMode: false, mode: 'read' }),
-			fracties
-		};
-	});
-	/** The sitting factions, to filter members by, with their seats. */
-	let parties = $state<{ abbreviation: string; seats: number | null }[]>([]);
-	// The counts per filter option the API gives with a list, under the other filters.
-	let dossierFacets = $state<Schema<'DossierFacetsDTO'> | null>(null);
-	let decisionFacets = $state<Schema<'DecisionFacets'> | null>(null);
-	/** The kinds of stukken under the other filters, as the list's facet counts them. */
-	let soorts = $state<Map<string, number>>(new Map());
-	let judgmentFacets = $state<Schema<'JudgmentFacets'> | null>(null);
-	let instrumentFacets = $state<Schema<'InstrumentFacets'> | null>(null);
-	/** The treaties under the filters chosen: asked apart, as the API counts no kinds yet. */
-	let verdragTotaal = $state<number | null>(null);
-	// The EHRM judgments under the same search and period: the EHRM is its own source, so
-	// the facet of the list does not count them.
-	let echrTotal = $state<number | null>(null);
+	let pages = $state<Partial<Record<IndexCategory, AnyPage>>>({});
+	/** Each list's own state beside its rows: its facets and counts, as they come. */
+	let states = $state<Partial<Record<IndexCategory, Record<string, unknown>>>>({});
 	/** The facets of the list asked apart from its first page, still on their way. */
 	let facettenLaden = $state(false);
 	/**
@@ -473,318 +166,44 @@
 				if (!signal.aborted) facettenLaden = false;
 			});
 	};
-	/** The stemmingen counted under the filters, from the facets asked apart (API 0.79.41). */
-	let decisionTotal = $state<number | null>(null);
-	/** The number of commitments in each state, under the other filters. */
-	let statusCounts = $state<Map<string, number> | null>(null);
-	let cabinets = $state<Cabinet[]>([]);
-	let ministries = $state<Ministry[]>([]);
-	/** The cabinet whose bewindspersonen are listed. */
-	let shownCabinet = $state<Schema<'CabinetDetailDTO'> | null>(null);
 	let loading = $state(false);
 	let loadingMore = $state(false);
 	let loadMoreFailed = $state(false);
 	let error = $state<string | null>(null);
 
-	// The request for the current category and filters. It is rebuilt only when
-	// one of the values it reads changes, and that is what triggers a new load.
-	const fetchPage = $derived.by<Fetcher>(() => {
-		const limit = PAGE;
-		switch (category) {
-			case 'instruments': {
-				const query = {
-					q: q || undefined,
-					jurisdiction,
-					kind: instrumentSoort,
-					article_count_min: withEmpty ? undefined : 1,
-					legal_area: legalArea || undefined,
-					policy_domain: policyDomain || undefined,
-					from: dateFrom || undefined,
-					to: dateTo || undefined,
-					sort: choiceOf(sortDef.id, ['title', 'article_count'] as const),
-					limit
-				};
-				return faceted(
-					'/api/instruments',
-					query,
-					facettenApart,
-					(f) => (instrumentFacets = f.facets ?? null),
-					(r, offset, signal) => {
-						pages.instruments = toPage(pages.instruments, r.items, offset, r.total);
-						if (offset) return;
-						// The count beside Verdragen: this list's own total where it is the treaties,
-						// else one row asked under the same filters.
-						// Beside the rows, not before them: the rows stood waiting for it (live, 10 Oct:
-						// rows in at 1.7 s, on screen at 4.1 s).
-						if (instrumentSoort) verdragTotaal = r.total;
-						else
-							void unwrap(
-								api.GET('/api/instruments', {
-									params: {
-										query: { ...query, kind: 'verdrag', limit: 1, offset: 0, facets: false }
-									},
-									signal
-								})
-							)
-								.then((v) => {
-									if (!signal.aborted) verdragTotaal = v.total;
-								})
-								.catch((e) => report('Aantal verdragen', e));
-					}
-				);
-			}
-			case 'judgments': {
-				const query = {
-					q: q || undefined,
-					court: court || undefined,
-					tier,
-					court_kind: courtKind,
-					subject: subject || undefined,
-					subject_area: subjectArea || undefined,
-					procedure: procedure || undefined,
-					// Without a source the list holds the cited judgments whose text is not loaded.
-					source: source ?? 'rechtspraak',
-					from: dateFrom || undefined,
-					to: dateTo || undefined,
-					sort: choiceOf(sortDef.id, ['date_desc', 'date_asc', 'citation_count'] as const),
-					limit
-				};
-				return faceted(
-					'/api/judgments',
-					query,
-					facettenApart,
-					(f) => {
-						judgmentFacets = f.facets ?? null;
-						// The source facet counts every source, whichever the list shows.
-						echrTotal =
-							query.q || query.from || query.to
-								? (f.facets?.source?.find((x) => x.value === 'echr')?.count ?? 0)
-								: null;
-					},
-					(r, offset) => {
-						pages.judgments = toPage(pages.judgments, r.items, offset, r.total);
-					}
-				);
-			}
-			case 'dossiers': {
-				const query = {
-					status: dossierScope,
-					outcome,
-					subject: q || undefined,
-					phase: phases.length ? phases.join(',') : undefined,
-					has_phase: hasPhase || undefined,
-					kind: track || undefined,
-					ministry: ministry || undefined,
-					opened_from: dateFrom || undefined,
-					opened_to: dateTo || undefined,
-					sort: choiceOf(sortDef.id, [
-						'number',
-						'opened_on',
-						'last_activity',
-						'closed_on',
-						'title'
-					] as const),
-					limit
-				};
-				return faceted(
-					'/api/dossiers',
-					query,
-					facettenApart,
-					(f) => (dossierFacets = f.facets ?? null),
-					(r, offset) => {
-						pages.dossiers = toPage(pages.dossiers, r.items, offset, r.total);
-					}
-				);
-			}
-			case 'committees': {
-				const query = {
-					chamber: kamer,
-					active_from: dateFrom || undefined,
-					active_to: dateTo || undefined
-				};
-				return async (_offset, signal) => {
-					const items = await unwrap(api.GET('/api/committees', { params: { query }, signal }));
-					pages.committees = toPage(undefined, items, 0, items.length);
-				};
-			}
-			case 'members': {
-				const seated = seatedOnly(includeInactive, dateFrom, dateTo);
-				const query = {
-					chamber: kamer,
-					q: q || undefined,
-					party: party || undefined,
-					active: seated || undefined,
-					include_all: !seated,
-					active_from: dateFrom || undefined,
-					active_to: dateTo || undefined,
-					sort: choiceOf(sortDef.id, ['family_name', 'name'] as const),
-					limit: seated ? SEATED : limit
-				};
-				return async (offset, signal) => {
-					const items = await unwrap(
-						api.GET('/api/members', { params: { query: { ...query, offset } }, signal })
-					);
-					pages.members = toPage(pages.members, items, offset);
-				};
-			}
-			case 'factions': {
-				const query = {
-					chamber: kamer,
-					q: q || undefined,
-					active: seatedOnly(includeInactive, dateFrom, dateTo) || undefined,
-					active_from: dateFrom || undefined,
-					active_to: dateTo || undefined
-				};
-				return async (_offset, signal) => {
-					const items = await unwrap(api.GET('/api/factions', { params: { query }, signal }));
-					pages.factions = toPage(undefined, items, 0, items.length);
-				};
-			}
-			case 'decisions': {
-				const query = {
-					chamber: kamer,
-					kind: soort || undefined,
-					passed: passed === undefined ? undefined : passed === 'true',
-					from: dateFrom || undefined,
-					to: dateTo || undefined,
-					// One q, as the API takes several since 0.79.30 (all of them must match).
-					q: q ? [q] : undefined,
-					dossier: dossierFilter || undefined,
-					party: party || undefined,
-					limit: 200
-				};
-				return async (offset, signal) => {
-					// The rows without counting (facets=false: total null); the total and facets
-					// from one row asked beside them, again later while still being counted.
-					const zetTotaal = () => {
-						if (decisionTotal !== null && pages.decisions)
-							pages.decisions = {
-								...pages.decisions,
-								total: decisionTotal,
-								more: pages.decisions.items.length < decisionTotal
-							};
-					};
-					if (!offset) {
-						decisionTotal = null;
-						facettenApart(
-							() => geteld({ ...query, offset: 0, limit: 1, facets: true }, signal),
-							(t) => {
-								// Still counting after the last wait: the facets stay, the total quiet.
-								if (!nogTeTellen(t)) decisionFacets = t.facets ?? null;
-								if (t.total !== null) {
-									decisionTotal = t.total;
-									zetTotaal();
-								}
-							},
-							signal
-						);
-					}
-					const r = await besluiten({ ...query, offset, facets: false }, signal);
-					pages.decisions = toPage(
-						pages.decisions,
-						r.items,
-						offset,
-						r.total ?? decisionTotal ?? undefined
-					);
-				};
-			}
-			case 'cabinets':
-				return async () => {
-					const items = await getCabinets();
-					pages.cabinets = toPage(undefined, items, 0, items.length);
-				};
-			case 'ministers': {
-				const key = cabinetParam;
-				const [from, to] = [dateFrom, dateTo];
-				return async (_offset, signal) => {
-					const all = await getCabinets();
-					const chosen = key || currentCabinet(all)?.key;
-					if (!chosen) {
-						pages.ministers = toPage(undefined, [], 0, 0);
-						return;
-					}
-					const detail = await getCabinet(chosen);
-					if (signal.aborted) return;
-					shownCabinet = detail;
-					const rows = (detail.ministries ?? []).flatMap((m) =>
-						m.seats.flatMap((seat) =>
-							seat.posts.map((p) => ({
-								...p,
-								ministry: m.ministry ?? null,
-								ministryName: m.name ?? null
-							}))
-						)
-					);
-					// A post in the period: its own days meet it (a source value of the cabinet).
-					const inPeriode = rows.filter(
-						(p) =>
-							(!from || !p.to_date || p.to_date >= from) &&
-							(!to || !p.from_date || p.from_date <= to)
-					);
-					pages.ministers = toPage(undefined, inPeriode, 0, inPeriode.length);
-				};
-			}
-			case 'documents': {
-				// Always one Kamer: without a filter the list is slow on the full database.
-				const query = {
-					chamber: kamer,
-					kind: soort || undefined,
-					dossier: q || undefined,
-					from: dateFrom || undefined,
-					to: dateTo || undefined,
-					limit
-				};
-				return faceted(
-					'/api/documents',
-					query,
-					facettenApart,
-					(f) => (soorts = facetMap(f.facets?.kind)),
-					(r, offset) => {
-						pages.documents = toPage(pages.documents, r.items, offset, r.total ?? undefined);
-					}
-				);
-			}
-			case 'commitments': {
-				const filters = {
-					cabinet: cabinetParam || undefined,
-					ministry: ministry || undefined,
-					member: memberParam || undefined,
-					overdue: overdue || undefined,
-					q: q || undefined,
-					from: dateFrom || undefined,
-					to: dateTo || undefined
-				};
-				const query = {
-					...filters,
-					status: commitmentStatus,
-					sort: choiceOf(sortDef.id, ['date', 'expected_resolution'] as const),
-					limit
-				};
-				// The number in each state under the other filters, from the facet asked apart.
-				return faceted(
-					'/api/commitments',
-					query,
-					facettenApart,
-					(f) =>
-						(statusCounts = new Map(
-							(f.facets?.status ?? []).flatMap((x) =>
-								x.value ? [[x.value, x.count] as const] : []
-							)
-						)),
-					(r, offset) => {
-						pages.commitments = toPage(pages.commitments, r.items, offset, r.total);
-					}
-				);
-			}
-		}
+	/** The page as shown: with the total its facets counted where its rows came without one. */
+	const shownPage = $derived.by(() => {
+		const loaded = pages[category];
+		const total = list.total?.(states[category] ?? {});
+		return loaded && loaded.total === null && total != null
+			? { ...loaded, total, more: loaded.items.length < total }
+			: loaded;
 	});
+
+	// The request of the list: rebuilt only when one of its values changes, and that is what
+	// triggers a new load (the open row, for one, is no part of it).
+	const queryKey = $derived(JSON.stringify(list.query(p, sortDef)));
+	/** Loads the page from `offset` of the list asked last; a newer load aborts `signal`. */
+	let fetchPage: (offset: number, signal: AbortSignal) => Promise<void> = async () => {};
 
 	let loadMoreAbort: AbortController | null = null;
 	/** The load in progress, which a list kept from before replaces (see Coming back). */
 	let loadAbort: AbortController | null = null;
 
 	$effect(() => {
-		const fetchFirst = fetchPage;
+		void queryKey;
+		const cat = category;
+		const asked = untrack(() => LISTS[cat]);
+		const query = untrack(() => asked.query(p, sortDef));
+		// A first page sets its state while this effect runs: read without depending on it.
+		const set = (patch: Record<string, unknown>) =>
+			untrack(() => {
+				states[cat] = { ...states[cat], ...patch };
+			});
+		fetchPage = async (offset, signal) => {
+			const answer = await asked.load(query, offset, signal, facettenApart, set);
+			if (!signal.aborted) pages[cat] = toPage(pages[cat], answer, offset);
+		};
 		const ac = new AbortController();
 		loadAbort = ac;
 		loading = true;
@@ -793,9 +212,9 @@
 		facettenFout = null;
 		error = null;
 		loadMoreFailed = false;
-		fetchFirst(0, ac.signal)
+		fetchPage(0, ac.signal)
 			.catch(() => {
-				if (!ac.signal.aborted) error = `De ${labelOf(category)} konden niet worden geladen.`;
+				if (!ac.signal.aborted) error = `De ${labelOf(cat)} konden niet worden geladen.`;
 			})
 			.finally(() => {
 				if (!ac.signal.aborted) loading = false;
@@ -846,12 +265,11 @@
 	}
 	function keep(url: URL) {
 		// While a list loads, the one shown is the previous one: nothing to keep.
-		const loaded = pages[category];
-		if (!loaded || !scroller || loading) return;
+		if (!shownPage || !scroller || loading) return;
 		const entry: Kept = {
 			url: keptUrl(url),
 			category,
-			page: $state.snapshot(loaded) as AnyPage,
+			page: $state.snapshot(shownPage) as AnyPage,
 			scroll: scroller.scrollTop
 		};
 		const rest = readKept().filter((k) => k.url !== entry.url);
@@ -878,26 +296,58 @@
 		const naar = to?.url;
 		const kept = type === 'popstate' && naar && readKept().find((k) => k.url === keptUrl(naar));
 		if (!kept || kept.category !== category) {
-			revealOpen = !!openId;
+			revealOpen = !!p.open;
 			return;
 		}
 		loadAbort?.abort();
 		loading = false;
-		(pages as Record<IndexCategory, AnyPage>)[category] = kept.page;
+		pages[category] = kept.page;
 		afterTick(() => scroller?.scrollTo({ top: kept.scroll }));
+	});
+
+	// ── What more than one list reads ───────────────────────────────────────
+	const needs = $derived(list.needs ?? []);
+	let shared = $state<Shared>({ cabinets: [], ministries: [], coverage: null, parties: [] });
+
+	// The cabinets and ministries fill the filters of the government's lists.
+	$effect(() => {
+		if (!needs.includes('government')) return;
+		if (!untrack(() => shared.cabinets.length))
+			getCabinets()
+				.then((c) => {
+					shared.cabinets = c;
+				})
+				.catch((e) => report('Kabinetten', e));
+		if (!untrack(() => shared.ministries.length))
+			getMinistries()
+				.then((m) => {
+					shared.ministries = m;
+				})
+				.catch((e) => report('Ministeries', e));
+	});
+
+	// The courts to filter judgments on: the colleges the dataset holds judgments of.
+	$effect(() => {
+		if (!needs.includes('coverage') || untrack(() => shared.coverage)) return;
+		getCoverage()
+			.then((c) => {
+				shared.coverage = c;
+			})
+			// Without coverage the filters are the usual colleges, without counts.
+			.catch((e) => report('Gerechten', e));
 	});
 
 	// The factions to filter members by, of the Kamer shown; the list is filtered by the API.
 	let partiesOf = $state<Chamber | null>(null);
 	$effect(() => {
-		if (category !== 'members' || partiesOf === kamer) return;
+		if (!needs.includes('parties') || partiesOf === kamer) return;
 		const ac = new AbortController();
 		const chamber = kamer;
 		unwrap(
 			api.GET('/api/factions', { params: { query: { active: true, chamber } }, signal: ac.signal })
 		)
 			.then((r) => {
-				parties = r
+				shared.parties = r
 					.flatMap((f) =>
 						f.abbreviation ? [{ abbreviation: f.abbreviation, seats: f.seats ?? null }] : []
 					)
@@ -908,1002 +358,56 @@
 		return () => ac.abort();
 	});
 
-	// ── What the API cannot filter or sort ──────────────────────────────────
-	function countBy<T, K>(rows: T[] | undefined, key: (row: T) => K): Map<K, number> {
-		const counts = new Map<K, number>();
-		for (const row of rows ?? []) counts.set(key(row), (counts.get(key(row)) ?? 0) + 1);
-		return counts;
-	}
+	// ── The list as shown ───────────────────────────────────────────────────
+	// The open row is `?open=<collection>/<key>`, so it can be shared and Back finds it open.
+	const toggleOpen = (id: string) => patchUrl({ open: p.open === id ? null : id }, true);
 
-	const includes = (text: string | null | undefined) =>
-		(text ?? '').toLowerCase().includes(q.toLowerCase());
-
-	/** A facet of the API as value → count; each dimension counted without its own filter. */
-	const facetMap = (facet: { value?: string | boolean | null; count: number }[] | undefined) =>
-		new Map((facet ?? []).map((f) => [String(f.value), f.count]));
-
-	const dossierKinds = $derived(facetMap(dossierFacets?.kind));
-	const dossierPhases = $derived(facetMap(dossierFacets?.phase));
-	const dossierMinistries = $derived(facetMap(dossierFacets?.ministry));
-
-	const dossiersShown = $derived(pages.dossiers?.items);
-
-	// The dossiers that share a number form one row that opens to them: all of them when
-	// sorted by number, neighbouring ones under another sort (a budget's chapters).
-	type DossierRow = Schema<'DossierSummaryDTO'>;
-	const dossierEntries = $derived.by(() =>
-		!dossiersShown
-			? undefined
-			: sortDef.id === 'number'
-				? groupByNumber(dossiersShown)
-				: groupRuns(dossiersShown)
-	);
-	let openNumbers = $state(new Set<string>());
-	const toggleNumber = (number: string) => {
-		const next = new Set(openNumbers);
-		if (!next.delete(number)) next.add(number);
-		openNumbers = next;
-	};
-
-	const committeesShown = $derived.by(() => {
-		const rows = pages.committees?.items.filter(
-			(c) =>
-				(!onlyActive || (c.active_dossier_count ?? 0) > 0) &&
-				(!q || includes(c.name) || includes(c.abbreviation) || includes(c.slug))
-		);
-		return (
-			rows &&
-			sorted(rows, {
-				dossiers: (c) => c.active_dossier_count ?? 0,
-				abbreviation: (c) => c.abbreviation ?? '',
-				name: (c) => c.name ?? ''
-			})
-		);
+	const base = $derived<Omit<ListContext<unknown, Record<string, unknown>>, 'rows'>>({
+		p,
+		sort: sortDef,
+		dir,
+		page: shownPage,
+		state: states[category] ?? {},
+		shared,
+		loading,
+		patch: patchUrl,
+		toggleOpen,
+		tabHref,
+		empty
 	});
-
-	const membersShown = $derived(
-		pages.members && sorted(pages.members.items, { party: (m) => m.party ?? '' })
+	/** The rows as shown: filtered and sorted here where the API does not. */
+	const rows = $derived(
+		shownPage && (list.shown ? list.shown(shownPage.items, base) : shownPage.items)
 	);
+	const ctx = $derived<ListContext<unknown, Record<string, unknown>>>({ ...base, rows });
 
-	const factionsShown = $derived(
-		pages.factions &&
-			sorted(pages.factions.items, {
-				seats: (f) => f.seats ?? 0,
-				abbreviation: (f) => f.abbreviation ?? '',
-				name: (f) => f.name ?? ''
-			})
-	);
-
-	type DecisionRow = Schema<'DecisionSummaryDTO'>;
-	const decisionKinds = $derived(facetMap(decisionFacets?.kind));
-	const decisionOutcomes = $derived(facetMap(decisionFacets?.passed));
-	/** Per sitting day, all its decisions under the filters, also those not yet loaded. */
-	const decisionDayCounts = $derived(
-		new Map((decisionFacets?.days ?? []).map((d) => [d.date, d] as const))
-	);
-
-	const decisionsShown = $derived(
-		pages.decisions &&
-			sorted(pages.decisions.items, {
-				date: (s) => s.date ?? '',
-				result: (s) => Number(s.passed),
-				subject: (s) => s.subject ?? ''
-			})
-	);
-
-	// Sorted by date, the decisions of one sitting day are one group: the Kamer votes in blocks.
-	const decisionDays = $derived.by(() => {
-		if (!decisionsShown) return undefined;
-		if (sortDef.id !== 'date')
-			return [{ date: null, rows: decisionsShown, count: decisionsShown.length, passed: 0 }];
-		const days: { date: string | null; rows: DecisionRow[]; passed: number }[] = [];
-		for (const s of decisionsShown) {
-			const last = days.at(-1);
-			const day = last && last.date === (s.date ?? null) ? last : null;
-			if (day) day.rows.push(s);
-			else days.push({ date: s.date ?? null, rows: [s], passed: 0 });
-		}
-		// The day's own numbers, from the facet; the rows loaded may be fewer.
-		return days.map((d) => {
-			const facet = d.date ? decisionDayCounts.get(d.date) : undefined;
-			return {
-				...d,
-				count: facet?.count ?? d.rows.length,
-				passed: facet?.passed ?? d.rows.filter((r) => r.passed).length
-			};
-		});
+	/** The period of a list, the date it is about named by its label. */
+	const periode = $derived.by(() => {
+		const period = list.period(p);
+		return period
+			? ({
+					id: 'period',
+					label: period.label,
+					kind: 'range',
+					unit: period.unit,
+					from: p.from,
+					to: p.to,
+					onChange: (from, to) => patchUrl({ from: from || null, to: to || null })
+				} satisfies FacetGroup)
+			: null;
 	});
-
-	// ── Regering ────────────────────────────────────────────────────────────
-	// The cabinets and ministries fill the filters of all three categories.
-	$effect(() => {
-		if (!['cabinets', 'ministers', 'commitments', 'dossiers'].includes(category)) return;
-		if (!cabinets.length)
-			getCabinets()
-				.then((c) => (cabinets = c))
-				.catch((e) => report('Kabinetten', e));
-		if (!ministries.length)
-			getMinistries()
-				.then((m) => (ministries = m))
-				.catch((e) => report('Ministeries', e));
-	});
-
-	/** Parties in a coalition, with the number of cabinets they were in. */
-	const coalitionParties = $derived(
-		[
-			...countBy(
-				cabinets.flatMap((c) => (c.parties ?? []).flatMap((p) => p.short ?? [])),
-				(p) => p
-			)
-		]
-			.filter(([, n]) => n > 1)
-			.sort((a, b) => b[1] - a[1])
-	);
-	const cabinetsShown = $derived.by(() => {
-		const rows = pages.cabinets?.items.filter(
-			(c) =>
-				(!coalition || (c.parties ?? []).some((p) => p.short === coalition)) &&
-				(!dateFrom || (c.to_date ?? (isOpen(c) ? '9999' : (c.from_date ?? ''))) >= dateFrom) &&
-				(!dateTo || (c.from_date ?? '') <= dateTo) &&
-				(!q ||
-					includes(c.name) ||
-					includes(c.prime_minister?.name) ||
-					(c.parties ?? []).some((p) => includes(p.short)))
-		);
-		return (
-			rows &&
-			sorted(rows, {
-				date: (c) => c.from_date ?? '',
-				bills: (c) => c.bills,
-				name: (c) => c.name
-			})
-		);
-	});
-	/** The cabinet in office; an older one without an end has an end no source gives. */
-	const isOpen = (c: Cabinet) => inOffice(c, cabinets);
-
-	/** Side by side: six cabinets, oldest first, ending at the one chosen or the one in office. */
-	const naastKabinetten = $derived.by(() => {
-		if (!naast) return [];
-		const rows = [...cabinets]
-			.filter((c) => c.from_date)
-			.sort((a, b) => a.from_date!.localeCompare(b.from_date!));
-		const i = rows.findIndex((c) => c.key === cabinetParam);
-		const eind = i < 0 ? rows.length : i + 1;
-		return rows.slice(Math.max(0, eind - 6), eind);
-	});
-	const ministerPostCounts = $derived(countBy(pages.ministers?.items, (m) => m.post ?? ''));
-	const ministersShown = $derived(
-		pages.ministers?.items.filter(
-			(m) => (!post || m.post === post) && (!q || includes(m.member.name))
-		)
-	);
-	/** The cabinet as the chart draws it: its seats with the posts the filters let through. */
-	const occupancyCabinet = $derived.by(() => {
-		if (!shownCabinet || (!post && !q)) return shownCabinet;
-		const keep = (p: Schema<'CabinetPostDTO'>) =>
-			(!post || p.post === post) && (!q || includes(p.member.name));
-		return {
-			...shownCabinet,
-			ministries: (shownCabinet.ministries ?? [])
-				.map((m) => ({
-					...m,
-					seats: m.seats
-						.map((seat) => ({ ...seat, posts: seat.posts.filter(keep) }))
-						.filter((seat) => seat.posts.length)
-				}))
-				.filter((m) => m.seats.length)
-		};
-	});
+	// The period stands in the choose-line (Bepaalregel), the other groups in the facet column.
+	const facetten = $derived(list.facets(ctx));
+	const chips = $derived(activeFilters(periode ? [...facetten, periode] : facetten));
+	let filtersOpen = $state(false);
 
 	// The Eerste Kamer's composition as read from its site: the day of the composition shown,
 	// and the first read, before which nothing is known. Each row carries the same source,
 	// with the page of that row; the list links the site (ekListSource).
 	const composition = $derived.by(() => {
-		if (!ekComposition) return null;
-		const source =
-			category === 'factions'
-				? factionsShown?.[0]?.source
-				: category === 'committees'
-					? committeesShown?.[0]?.source
-					: membersShown?.[0]?.ek?.source;
+		const source = kamer === 'EK' && rows ? list.composition?.(rows) : null;
 		return source ? ekListSource(source) : null;
 	});
-
-	const totalSeats = $derived(factionsShown?.reduce((sum, f) => sum + (f.seats ?? 0), 0) ?? 0);
-
-	// ── Toolbar ─────────────────────────────────────────────────────────────
-	/**
-	 * The courts to filter on: the colleges the dataset holds judgments of, from
-	 * `/api/stats/coverage`, and the EHRM. The EHRM is its own source (`echr`); the list
-	 * of a college holds the judgments of `rechtspraak` only.
-	 */
-	let coverage = $state<Coverage | null>(null);
-	$effect(() => {
-		if (category !== 'judgments' || coverage) return;
-		getCoverage()
-			.then((c) => (coverage = c))
-			// Without coverage the filters are the usual colleges, without counts.
-			.catch((e) => report('Gerechten', e));
-	});
-	// Counts per tier and for the EHRM. Which courts there are comes from the coverage; the
-	// counts under the period and search from the list's facet.
-	const courtCounts = $derived.by(() => {
-		if (!coverage) return null;
-		const counts = new Map<Tier, number>();
-		for (const t of coverage.tiers) if (t.tier) counts.set(t.tier as Tier, t.count);
-		// Under the other filters, from the list's facet; the EHRM is its own source.
-		if (judgmentFacets && source !== 'echr')
-			for (const t of TIERS) if (t !== 'ehrm') counts.set(t, 0);
-		if (source !== 'echr')
-			for (const f of judgmentFacets?.tier ?? [])
-				if (f.value && f.value !== 'ehrm') counts.set(f.value as Tier, f.count);
-		const echr = coverage.courts
-			.filter((c) => c.source === 'echr')
-			.reduce((n, c) => n + c.count, 0);
-		// Under a search or a period, the EHRM judgments that match it.
-		counts.set('ehrm', q || dateFrom || dateTo ? (echrTotal ?? 0) : echr);
-		return counts;
-	});
-	const USUAL: Tier[] = [
-		'hoge_raad',
-		'parket',
-		'raad_van_state',
-		'gerechtshof',
-		'rechtbank',
-		'ehrm'
-	];
-
-	/** The courts under their group; without coverage the usual ones, without counts. */
-	const courtOptions = $derived.by(() => {
-		const held = (t: Tier) =>
-			coverage
-				? coverage.tiers.some((c) => c.tier === t && c.count > 0) || t === 'ehrm' || t === tier
-				: USUAL.includes(t) || t === tier;
-		const named = new Set(COURT_GROUPS.flatMap((g) => g.tiers));
-		const groups = [
-			...COURT_GROUPS,
-			{ label: 'Overig', tiers: TIERS.filter((t) => !named.has(t)) }
-		];
-		// Each group of courts is a filter group of its own, under its own heading, as every
-		// other filter: no heading inside a list, and so no indent.
-		return groups.flatMap((g): FacetGroup[] => {
-			const tiers = g.tiers.filter(held);
-			if (!tiers.length) return [];
-			const count = courtCounts && tiers.reduce((n, t) => n + (courtCounts.get(t) ?? 0), 0);
-			const options = tiers.flatMap((t) => {
-				const ehrm = t === 'ehrm';
-				const on = ehrm ? source === 'echr' : source !== 'echr' && !court && tier === t;
-				return [
-					{
-						id: t,
-						label: TIER_LABEL[t],
-						count: courtCounts?.get(t),
-						on,
-						// One college or the EHRM at a time: the API takes one tier.
-						onClick: () =>
-							patchUrl({
-								tier: on || ehrm ? null : t,
-								court_kind: null,
-								court: null,
-								source: ehrm && !on ? 'echr' : null
-							})
-					},
-					...(on && MIXED_TIERS.includes(t) ? kindOptions() : [])
-				];
-			});
-			return [
-				{
-					id: `court-${g.label}`,
-					label: g.label,
-					note: count != null ? formatCount(count) : undefined,
-					kind: 'list',
-					options
-				}
-			];
-		});
-	});
-
-	/** The courts within the chosen tier, from the list's facet; one at a time. */
-	function kindOptions() {
-		const counts = new Map<CourtKind, number>();
-		for (const f of judgmentFacets?.court_kind ?? [])
-			if (f.value && COURT_KINDS.includes(f.value as CourtKind))
-				counts.set(f.value as CourtKind, f.count);
-		if (courtKind && !counts.has(courtKind)) counts.set(courtKind, 0);
-		return [...counts].map(([k, count]) => ({
-			id: `kind-${k}`,
-			label: COURT_KIND_LABEL[k],
-			count,
-			indent: true,
-			on: courtKind === k,
-			onClick: () => patchUrl({ court_kind: courtKind === k ? null : k })
-		}));
-	}
-
-	/** A main area with its specific areas, as a register gives them with their counts. */
-	type Area = { id: string; label: string; count: number; narrower: Omit<Area, 'narrower'>[] };
-
-	/**
-	 * A choice the register does not hold (an old link, a value with no bronnen under the
-	 * other filters) stays in the list with 0, so it can be seen and let go of.
-	 */
-	const keepChosen = (areas: Area[], key: string) => {
-		if (!areas.some((a) => a.id === key || a.narrower.some((n) => n.id === key)))
-			areas.unshift({ id: key, label: key, count: 0, narrower: [] });
-	};
-
-	/**
-	 * Rechtsgebied as a tree: the main areas with their counts, and under the chosen one its
-	 * specific areas, indented. A main area alone holds its specific areas; a specific area
-	 * narrows it. Both registers give the tree themselves (`narrower`): the Rechtspraak for
-	 * judgments, the TOOI thesaurus of the BWB for laws.
-	 */
-	function areaTree(
-		areas: Area[],
-		chosenMain: string,
-		chosenSub: string,
-		choose: (main: string | null, sub: string | null) => void,
-		/** A long register (the 27 of the BWB) shows this many main areas, then Alle N. */
-		preview?: number
-	): FacetGroup[] {
-		const options = areas.flatMap((a) => {
-			const on = chosenMain === a.id;
-			return [
-				{
-					id: `area-${a.id}`,
-					label: a.label,
-					count: a.count,
-					// Chosen while one of its specific areas narrows it; a click lets go of both.
-					on,
-					onClick: () => choose(on ? null : a.id, null)
-				},
-				...(on
-					? a.narrower.map((n) => ({
-							id: n.id,
-							label: n.label,
-							count: n.count,
-							indent: true as const,
-							on: chosenSub === n.id,
-							onClick: () => choose(a.id, chosenSub === n.id ? null : n.id)
-						}))
-					: [])
-			];
-		});
-		return options.length
-			? [{ id: 'area', label: 'Rechtsgebied', kind: 'list', preview, options }]
-			: [];
-	}
-
-	/** The Rechtspraak's rechtsgebieden: `subject_area` the main area, `subject` the source value. */
-	function judgmentAreas(): FacetGroup[] {
-		const areas: Area[] = (judgmentFacets?.subject_area ?? []).flatMap((f) =>
-			f.value
-				? [
-						{
-							id: f.value,
-							label: f.value,
-							count: f.count,
-							narrower: (f.narrower ?? []).flatMap((n) =>
-								n.value ? [{ id: n.value, label: n.label ?? n.value, count: n.count }] : []
-							)
-						}
-					]
-				: []
-		);
-		const main =
-			subjectArea || areas.find((a) => a.narrower.some((n) => n.id === subject))?.id || '';
-		if (main) keepChosen(areas, main);
-		return areaTree(areas, main, subject, (m, sub) => patchUrl({ subject_area: m, subject: sub }));
-	}
-
-	type Concept = { id?: string | null; slug?: string | null };
-	/** A TOOI concept in the URL: its slug, else its id. */
-	const conceptKey = (c: Concept | undefined) => c?.slug ?? c?.id ?? '';
-	/** Every concept of a register by slug and by id, so a link with either finds it. */
-	const byKey = <T extends Concept>(concepts: T[]) =>
-		new Map(concepts.flatMap((c) => [c.slug, c.id].flatMap((k) => (k ? [[k, c] as const] : []))));
-	const legalConcepts = $derived(
-		byKey((instrumentFacets?.legal_area ?? []).flatMap((f) => [f, ...(f.narrower ?? [])]))
-	);
-	const themeConcepts = $derived(byKey(instrumentFacets?.policy_domain ?? []));
-
-	/**
-	 * The BWB's rechtsgebieden (TOOI) for laws. One parameter holds the main or the specific
-	 * area, by slug; a link with the TOOI id finds it too.
-	 */
-	function lawAreas(): FacetGroup[] {
-		const areas: Area[] = (instrumentFacets?.legal_area ?? []).flatMap((f) =>
-			conceptKey(f)
-				? [
-						{
-							id: conceptKey(f),
-							label: f.label,
-							count: f.count,
-							narrower: (f.narrower ?? []).flatMap((n) =>
-								conceptKey(n) ? [{ id: conceptKey(n), label: n.label, count: n.count }] : []
-							)
-						}
-					]
-				: []
-		);
-		if (legalArea && !legalConcepts.has(legalArea)) keepChosen(areas, legalArea);
-		const chosen = (key: string) =>
-			legalArea !== '' && key === (conceptKey(legalConcepts.get(legalArea)) || legalArea);
-		const main = areas.find((a) => chosen(a.id) || a.narrower.some((n) => chosen(n.id)));
-		const sub = main?.narrower.find((n) => chosen(n.id));
-		return areaTree(
-			areas,
-			main?.id ?? '',
-			sub?.id ?? '',
-			(m, s) => patchUrl({ legal_area: s ?? m }),
-			8
-		);
-	}
-
-	/** The government themes of the BWB (TOOI), one at a time. */
-	function lawThemes(): FacetGroup[] {
-		const chosen = conceptKey(themeConcepts.get(policyDomain)) || policyDomain;
-		const themes = [...(instrumentFacets?.policy_domain ?? [])];
-		if (policyDomain && !themeConcepts.has(policyDomain))
-			themes.unshift({ slug: policyDomain, label: policyDomain, count: 0 });
-		const options = themes.flatMap((f) => {
-			const value = conceptKey(f);
-			if (!value) return [];
-			const on = value === chosen;
-			return [
-				{
-					id: value,
-					label: f.label,
-					count: f.count,
-					on,
-					onClick: () => patchUrl({ policy_domain: on ? null : value })
-				}
-			];
-		});
-		return options.length
-			? [{ id: 'theme', label: 'Thema', kind: 'list', preview: 6, options }]
-			: [];
-	}
-
-	/**
-	 * A facet of the list as the source names its values (rechtsgebied, procedure), most
-	 * judgments first; the API counts it without its own filter. A judgment without the
-	 * value cannot be chosen by it and is left out. One value at a time.
-	 */
-	function sourceFacet(
-		param: 'subject' | 'procedure',
-		label: string,
-		facet: { value?: string | null; count: number }[] | null | undefined,
-		current: string
-	): FacetGroup[] {
-		const options = (facet ?? []).flatMap((f) =>
-			f.value
-				? [
-						{
-							id: f.value,
-							label: f.value,
-							count: f.count,
-							on: current === f.value,
-							onClick: () => toggleParam(param, current, f.value!)
-						}
-					]
-				: []
-		);
-		if (current && !options.some((o) => o.on))
-			options.unshift({
-				id: current,
-				label: current,
-				count: 0,
-				on: true,
-				onClick: () => toggleParam(param, current, current)
-			});
-		// No counts yet, or an API without the facet: no group, rather than an empty heading.
-		return options.length ? [{ id: param, label, kind: 'list', preview: 6, options }] : [];
-	}
-
-	/** The width of the year axis, for the labels that fit (`axisLabels`). */
-	let yearsAxisWidth = $state(0);
-	// The years of the judgments under the filters, the last forty, as columns.
-	const judgmentYears = $derived(
-		(judgmentFacets?.year ?? [])
-			.flatMap((f) => (f.value ? [{ year: f.value, count: f.count }] : []))
-			.sort((a, b) => a.year.localeCompare(b.year))
-			.slice(-40)
-	);
-
-	const PLACEHOLDER: Record<IndexCategory, string> = {
-		instruments: 'Zoek in titel, BWB of citatie',
-		judgments: 'Zoek in zaaknaam of ECLI',
-		dossiers: 'Zoek op nummer of in titel',
-		committees: 'Zoek op afkorting of naam',
-		members: 'Zoek op naam',
-		factions: 'Zoek op naam of afkorting',
-		decisions: 'Zoek in onderwerp',
-		cabinets: 'Zoek op naam, minister-president of partij',
-		ministers: 'Zoek op naam',
-		commitments: 'Zoek in de tekst',
-		documents: 'Zoek op Kamerstuknummer'
-	};
-
-	const labelOf = (c: IndexCategory) =>
-		INDEX_CATEGORIES.find((cat) => cat.key === c)!.label.toLowerCase();
-	const noun1 = (c: IndexCategory) =>
-		c === 'ministers' ? 'bewindspersoon' : bronLabel(collectionOf(c)).toLowerCase();
-
-	const toggle = (name: string, current: string | undefined, value: string) => () =>
-		toggleParam(name, current, value);
-	const flag = (name: string, on: boolean) => () => patchUrl({ [name]: on ? null : '1' });
-
-	/** The period of a list, the date it is about named by `label`. */
-	const periodGroup = (label: string, unit: 'year' | 'date'): FacetGroup => ({
-		id: 'period',
-		label,
-		kind: 'range',
-		unit,
-		from: dateFrom,
-		to: dateTo,
-		onChange: (from, to) => patchUrl({ from: from || null, to: to || null })
-	});
-	const facetGroupsBasis = $derived.by<FacetGroup[]>(() => {
-		switch (category) {
-			case 'instruments':
-				return [
-					...lawAreas(),
-					...lawThemes(),
-					{
-						id: 'jurisdiction',
-						label: 'Rechtsorde',
-						kind: 'list',
-						options: [
-							{
-								id: 'nl',
-								label: 'Nederland',
-								on: jurisdiction === 'nl',
-								onClick: toggle('jurisdiction', jurisdiction, 'nl')
-							},
-							{
-								id: 'eu',
-								label: 'Europese Unie',
-								on: jurisdiction === 'eu',
-								onClick: toggle('jurisdiction', jurisdiction, 'eu')
-							}
-						]
-					},
-					{
-						id: 'soort',
-						label: 'Soort',
-						kind: 'list',
-						options: [
-							{
-								id: 'verdrag',
-								label: 'Verdragen',
-								count: verdragTotaal ?? undefined,
-								on: instrumentSoort === 'verdrag',
-								onClick: toggle('soort', instrumentSoort, 'verdrag')
-							}
-						]
-					},
-					{
-						id: 'leeg',
-						label: 'Weergave',
-						kind: 'list',
-						options: [
-							{
-								id: 'leeg',
-								label: 'Ook zonder artikelen',
-								on: withEmpty,
-								onClick: flag('leeg', withEmpty)
-							}
-						]
-					}
-				];
-			case 'judgments':
-				return [
-					// The groups of courts, each under its own heading; no heading Instantie above.
-					...courtOptions,
-					...judgmentAreas(),
-					...sourceFacet('procedure', 'Procedure', judgmentFacets?.procedure, procedure),
-					periodGroup('Periode', 'year')
-				];
-			case 'dossiers': {
-				// The kinds are the ones the API counts, in its order, the chosen one always. A
-				// dossier without a kind (letters and motions) cannot be chosen: it is counted.
-				const kinds = facetOptions(dossierKinds, track).map(([k]) => k);
-				const withoutKind = dossierKinds.get('null') ?? 0;
-				const statusCounts_ = facetMap(dossierFacets?.status);
-				const outcomes = facetMap(dossierFacets?.outcome);
-				const scope = (v: 'open' | 'closed' | 'all') => () =>
-					patchUrl({ stand: v === 'open' ? null : v, outcome: null });
-				return [
-					{
-						id: 'stand',
-						label: 'Stand',
-						kind: 'list',
-						options: [
-							{
-								id: 'open',
-								label: 'Lopend',
-								count: statusCounts_.get('open') ?? 0,
-								on: dossierScope === 'open',
-								default: !dossierStatusParam,
-								onClick: scope('open')
-							},
-							{
-								id: 'closed',
-								label: 'Afgehandeld',
-								count: statusCounts_.get('closed') ?? 0,
-								on: dossierScope === 'closed' && !outcome,
-								onClick: scope(dossierScope === 'closed' && !outcome ? 'open' : 'closed')
-							},
-							...OUTCOMES.filter((o) => (outcomes.get(o) ?? 0) > 0 || o === outcome).map((o) => ({
-								id: o,
-								label: OUTCOME_LABEL[o],
-								count: outcomes.get(o) ?? 0,
-								indent: true,
-								on: outcome === o,
-								onClick: () =>
-									patchUrl(outcome === o ? { outcome: null } : { outcome: o, stand: 'closed' })
-							})),
-							{
-								id: 'all',
-								label: 'Alle dossiers',
-								count: (statusCounts_.get('open') ?? 0) + (statusCounts_.get('closed') ?? 0),
-								on: dossierScope === 'all',
-								// Chosen by a number searched for, not by the reader.
-								default: !dossierStatusParam,
-								onClick: scope(dossierScope === 'all' ? 'open' : 'all')
-							}
-						]
-					},
-					{
-						id: 'track',
-						label: 'Soort',
-						note: withoutKind
-							? `${formatCount(withoutKind)} ${NO_KIND_LABEL.toLowerCase()}, zonder soort`
-							: undefined,
-						kind: 'list',
-						options: kinds.map((k) => ({
-							id: k,
-							label: k,
-							count: dossierKinds.get(k) ?? 0,
-							on: track === k,
-							onClick: toggle('track', track, k)
-						}))
-					},
-					{
-						id: 'phase',
-						label: 'Fase',
-						note: `${formatCount(PHASES.reduce((n, p) => n + (dossierPhases.get(p) ?? 0), 0))} met fase`,
-						kind: 'list',
-						options: PHASES.map((p) => ({
-							id: p,
-							label: p,
-							count: dossierPhases.get(p) ?? 0,
-							on: phases.includes(p),
-							onClick: () => {
-								const next = phases.includes(p) ? phases.filter((x) => x !== p) : [...phases, p];
-								patchUrl({ phase: next.length ? next.join(',') : null, stage: null });
-							}
-						}))
-					},
-					{
-						id: 'ministry',
-						label: 'Ministerie',
-						kind: 'list',
-						options: facetOptions(dossierMinistries, ministry)
-							.sort((a, b) => b[1] - a[1])
-							.map(([m, n]) => ({
-								id: m,
-								label: ministryName(m),
-								count: n,
-								on: ministry === m,
-								onClick: toggle('ministry', ministry, m)
-							}))
-					},
-					// When the dossier was opened (`opened_from`/`opened_to`), as every list with
-					// dates has its period (Thijs, 9 Oct).
-					periodGroup('Geopend', 'date')
-				];
-			}
-			case 'decisions': {
-				// The kinds the Kamer's decisions have, as the facet counts them; one without a zaak
-				// cannot be chosen. The Eerste Kamer's decisions have none yet: no group then.
-				const kinds = facetOptions(decisionKinds, soort).map(([k, n]) => ({
-					id: k,
-					label: k,
-					count: n,
-					on: soort === k,
-					onClick: toggle('soort', soort, k)
-				}));
-				return [
-					...(kinds.length || kamer === 'TK'
-						? [{ id: 'soort', label: 'Soort', kind: 'list' as const, options: kinds }]
-						: []),
-					{
-						id: 'passed',
-						label: 'Uitslag',
-						kind: 'list',
-						options: [
-							{
-								id: 'true',
-								label: 'Aangenomen',
-								count: decisionOutcomes.get('true') ?? 0,
-								on: passed === 'true',
-								onClick: toggle('passed', passed, 'true')
-							},
-							{
-								id: 'false',
-								label: 'Verworpen',
-								count: decisionOutcomes.get('false') ?? 0,
-								on: passed === 'false',
-								onClick: toggle('passed', passed, 'false')
-							}
-						]
-					},
-					periodGroup('Datum', 'date'),
-					{
-						id: 'dossier',
-						label: 'Dossier',
-						kind: 'text',
-						value: dossierFilter,
-						placeholder: 'Kamerstuknummer',
-						onChange: (v) => patchUrl({ dossier: v || null })
-					}
-				];
-			}
-			case 'documents':
-				return [
-					{
-						id: 'soort',
-						label: 'Soort',
-						kind: 'list',
-						options: facetOptions(soorts, soort)
-							.sort((a, b) => b[1] - a[1])
-							.map(([k, n]) => ({
-								id: k,
-								label: k,
-								count: n,
-								on: soort === k,
-								onClick: toggle('soort', soort, k)
-							}))
-					},
-					periodGroup('Datum', 'date')
-				];
-			case 'members':
-				return [
-					{
-						id: 'party',
-						label: 'Fractie',
-						note: includeInactive ? undefined : 'zetels',
-						kind: 'list',
-						options: parties.map((p) => ({
-							id: p.abbreviation,
-							label: p.abbreviation,
-							swatch: partyColor(p.abbreviation),
-							// The seats are the sitting members; with historical ones they no longer are.
-							count: includeInactive ? undefined : (p.seats ?? undefined),
-							on: party === p.abbreviation,
-							onClick: toggle('party', party, p.abbreviation)
-						}))
-					},
-					...(ekComposition
-						? []
-						: [
-								{
-									id: 'include_inactive',
-									label: 'Weergave',
-									kind: 'list' as const,
-									options: [
-										{
-											id: 'hist',
-											label: 'Ook historische leden',
-											on: includeInactive,
-											onClick: flag('include_inactive', includeInactive)
-										}
-									]
-								}
-							])
-				];
-			case 'factions':
-				return ekComposition
-					? []
-					: [
-							{
-								id: 'include_inactive',
-								label: 'Weergave',
-								kind: 'list',
-								options: [
-									{
-										id: 'hist',
-										label: 'Ook opgeheven fracties',
-										on: includeInactive,
-										onClick: flag('include_inactive', includeInactive)
-									}
-								]
-							}
-						];
-			case 'committees':
-				// The Eerste Kamer's committees are not yet linked to dossiers.
-				return ekComposition
-					? []
-					: [
-							{
-								id: 'only_active',
-								label: 'Weergave',
-								kind: 'list',
-								options: [
-									{
-										id: 'active',
-										label: 'Alleen met lopende dossiers',
-										on: onlyActive,
-										onClick: flag('only_active', onlyActive)
-									}
-								]
-							}
-						];
-			case 'cabinets':
-				return [
-					{
-						id: 'coalition',
-						label: 'In de coalitie',
-						note: 'kabinetten',
-						kind: 'list',
-						options: coalitionParties.map(([p, n]) => ({
-							id: p,
-							label: p,
-							count: n,
-							swatch: partyColor(p),
-							on: coalition === p,
-							onClick: toggle('coalition', coalition, p)
-						}))
-					},
-					periodGroup('Periode', 'year')
-				];
-			case 'ministers': {
-				// Weergave first: a choice, not a filter, as the Kamer.
-				const weergave: FacetGroup = {
-					id: 'weergave',
-					label: 'Weergave',
-					kind: 'keuze',
-					value: naast ? 'naast' : 'kabinet',
-					options: [
-						{ value: 'kabinet', label: 'Eén kabinet' },
-						{ value: 'naast', label: 'Naast elkaar', titel: 'De ministers van zes kabinetten' }
-					],
-					onChange: (v) =>
-						patchUrl({ weergave: v === 'naast' ? 'naast' : null, post: null, open: null })
-				};
-				const kabinetten = cabinets
-					.filter((c) => !isOpen(c))
-					.map((c) => ({
-						value: c.key,
-						label: `${c.name}, ${period(c.from_date, c.to_date, false)}`
-					}));
-				const inFunctie = currentCabinet(cabinets)
-					? `${currentCabinet(cabinets)!.name} (in functie)`
-					: 'Kabinet in functie';
-				// Side by side the six end at the cabinet chosen: further back is an older one.
-				if (naast)
-					return [
-						weergave,
-						{
-							id: 'cabinet',
-							label: 'Tot en met',
-							kind: 'select',
-							value: cabinetParam,
-							all: inFunctie,
-							options: kabinetten,
-							onChange: (v) => patchUrl({ cabinet: v || null, open: null })
-						}
-					];
-				return [
-					weergave,
-					{
-						id: 'cabinet',
-						label: 'Kabinet',
-						kind: 'select',
-						value: cabinetParam,
-						all: inFunctie,
-						options: kabinetten,
-						onChange: (v) => patchUrl({ cabinet: v || null, post: null })
-					},
-					{
-						id: 'post',
-						label: 'Functie',
-						kind: 'list',
-						options: POSTS.filter((p) => (ministerPostCounts.get(p) ?? 0) > 0 || p === post).map(
-							(p) => ({
-								id: p,
-								label: POST_LABEL[p],
-								count: ministerPostCounts.get(p) ?? 0,
-								on: post === p,
-								onClick: toggle('post', post, p)
-							})
-						)
-					}
-				];
-			}
-			case 'commitments':
-				return [
-					{
-						id: 'status',
-						label: 'Stand',
-						kind: 'list',
-						options: COMMITMENT_STATUSES.filter(
-							(st) => !statusCounts || (statusCounts.get(st) ?? 0) > 0 || st === commitmentStatus
-						).map((st) => ({
-							id: st,
-							label: st,
-							count: statusCounts?.get(st),
-							on: commitmentStatus === st,
-							onClick: toggle('status', commitmentStatus, st)
-						}))
-					},
-					{
-						id: 'overdue',
-						label: 'Termijn',
-						kind: 'list',
-						options: [
-							{
-								id: 'overdue',
-								label: 'Open en over de verwachte datum',
-								on: overdue,
-								onClick: flag('overdue', overdue)
-							}
-						]
-					},
-					{
-						id: 'cabinet',
-						label: 'Kabinet',
-						kind: 'select',
-						value: cabinetParam,
-						all: 'Alle kabinetten',
-						options: cabinets
-							.filter((c) => c.commitments > 0 || c.key === cabinetParam)
-							.map((c) => ({ value: c.key, label: c.name, count: c.commitments })),
-						onChange: (v) => patchUrl({ cabinet: v || null })
-					},
-					{
-						id: 'ministry',
-						label: 'Ministerie',
-						kind: 'select',
-						value: ministry,
-						all: 'Alle ministeries',
-						options: ministries
-							.filter((m) => !m.until || m.key === ministry)
-							.map((m) => ({ value: m.key, label: m.name })),
-						onChange: (v) => patchUrl({ ministry: v || null })
-					},
-					...(memberParam
-						? [
-								{
-									id: 'member',
-									label: 'Bewindspersoon',
-									kind: 'list' as const,
-									options: [
-										{
-											id: memberParam,
-											label:
-												pages.commitments?.items.find((c) => c.member?.key === memberParam)?.member
-													?.name ?? 'Gekozen bewindspersoon',
-											on: true,
-											onClick: () => patchUrl({ member: null })
-										}
-									]
-								}
-							]
-						: [])
-				];
-		}
-	});
-	const facetGroupsAll = $derived.by<FacetGroup[]>(() => {
-		// Side by side the cabinets are the period (Tot en met): no second one beside it.
-		const label = category === 'ministers' && naast ? undefined : PERIOD_LABEL[category];
-		return label ? [...facetGroupsBasis, periodGroup(label, 'date')] : facetGroupsBasis;
-	});
-	const chips = $derived(activeFilters(facetGroupsAll));
-	let filtersOpen = $state(false);
 
 	// On a phone the tab strip scrolls (wider, it wraps): the category on screen is scrolled into it,
 	// and an edge that hides tabs fades out.
@@ -1929,16 +433,12 @@
 	});
 
 	// ── Open row, Esc ───────────────────────────────────────────────────────
-	// The open row is `?open=<collection>/<key>`, so it can be shared and Back finds it open.
-	const openId = $derived(params.get('open'));
-	const toggleOpen = (id: string) => patchUrl({ open: openId === id ? null : id }, true);
-
 	// A shared link with an open row scrolls to it once the list is in.
 	let revealOpen = $state(false);
 	$effect(() => {
 		if (!revealOpen || loading || !pages[category]) return;
 		revealOpen = false;
-		const id = untrack(() => openId);
+		const id = untrack(() => p.open);
 		afterTick(() =>
 			scroller
 				?.querySelector(`[data-bron="${CSS.escape(id ?? '')}"]`)
@@ -1947,122 +447,31 @@
 	});
 
 	function handleKey(e: KeyboardEvent) {
-		if (isEscape(e) && openId) patchUrl({ open: null }, true);
+		if (isEscape(e) && p.open) patchUrl({ open: null }, true);
 	}
 
 	// ── Result count above the list ──────────────────
-	const resultRows = $derived.by(
-		() =>
-			({
-				instruments: pages.instruments?.items,
-				judgments: pages.judgments?.items,
-				dossiers: dossiersShown,
-				committees: committeesShown,
-				members: membersShown,
-				factions: factionsShown,
-				decisions: decisionsShown,
-				cabinets: cabinetsShown,
-				ministers: ministersShown,
-				commitments: pages.commitments?.items,
-				documents: pages.documents?.items
-			})[category] as unknown[] | undefined
-	);
 	// How many there are under the filters: the API's total, or the rows filtered here.
 	// Null while a list without a total has more to load: the rows loaded are not the count.
-	const listTotal = (rows: unknown[]): number | null => {
-		const page = pages[category];
-		return page ? page.total : rows.length;
-	};
 	const resultTotal = $derived.by(() => {
-		if (!resultRows) return null;
-		const clientFiltered = ['committees', 'cabinets', 'ministers'].includes(category);
-		return clientFiltered ? resultRows.length : listTotal(resultRows);
+		if (!rows) return null;
+		return list.countShown || !shownPage ? rows.length : shownPage.total;
 	});
 
+	const labelOf = (c: IndexCategory) =>
+		INDEX_CATEGORIES.find((cat) => cat.key === c)!.label.toLowerCase();
+	/** One bron of the list, as its count says it (a list without rows shows no count). */
+	const noun1 = (c: IndexCategory) => bronLabel(collectionOf(c)).toLowerCase();
+
 	// ── Columns ─────────────────────────────────────────────────────────────
-	// The heads over the three columns of a row, and the width of the aside (the lead's is
-	// --row-lead).
-	type Columns = {
-		lead: string;
-		body: string;
-		aside: string | string[];
-		asideW: number;
-	};
-	const COLUMNS: Record<IndexCategory, Columns> = {
-		instruments: {
-			lead: 'BWB of CELEX',
-			body: 'Wet',
-			aside: 'Rechtsorde',
-			asideW: 110
-		},
-		judgments: { lead: 'Datum', body: 'Uitspraak', aside: 'Aangehaald', asideW: 110 },
-		dossiers: { lead: 'Nummer', body: 'Titel', aside: 'Fase', asideW: 150 },
-		decisions: { lead: 'Soort', body: 'Onderwerp', aside: 'Uitslag', asideW: 180 },
-		members: { lead: 'Fractie', body: 'Naam', aside: '', asideW: 60 },
-		factions: { lead: 'Fractie', body: 'Naam', aside: 'Zetels', asideW: 110 },
-		committees: {
-			lead: 'Afkorting',
-			body: 'Commissie',
-			aside: 'Lopende dossiers',
-			asideW: 130
-		},
-		cabinets: {
-			lead: 'Periode',
-			body: 'Kabinet',
-			aside: 'Bewindspersonen',
-			asideW: 130
-		},
-		ministers: {
-			lead: 'Functie',
-			body: 'Bewindspersoon',
-			aside: ['Dossiers', 'Wetsvoorstellen', 'Open toezeggingen'],
-			asideW: 300
-		},
-		commitments: { lead: 'Gedaan', body: 'Toezegging', aside: 'Verwacht', asideW: 130 },
-		documents: { lead: 'Kamerstuk', body: 'Stuk', aside: 'Datum', asideW: 110 }
-	};
+	const columns = $derived(forParams(list.columns, p));
 	// The Kamer is a choice, not a filter: the first group of the filters, always one of the
-	// two, and no chip above the list (chips come from facetGroupsAll).
+	// two, and no chip above the list.
 	/** Another Kamer: its own list, without the filters that belonged to the other. */
 	const kiesKamer = (c: Chamber) =>
 		patchUrl({ kamer: c === 'TK' ? null : c, open: null, party: null });
-	// Kamer stands in the choose-line (Bepaalregel), with the search and the period.
-	// The period stands in the choose-line, the other groups in the facet column.
-	const periode = $derived(
-		facetGroupsAll.find((g): g is Extract<FacetGroup, { kind: 'range' }> => g.kind === 'range') ??
-			null
-	);
-	const facetten = $derived(facetGroupsAll.filter((g) => g.kind !== 'range'));
-	const columns = $derived(noDossiers ? { ...COLUMNS.committees, aside: '' } : COLUMNS[category]);
-
-	// ── Opening a source ────────────────────────────────────────────────────
-	// A row opens its bron as every link to a bron does (openHref): in the network (Thijs,
-	// 10 Oct: "laten we standaard navigeren naar Netwerk"), a Kamerstuk on its text (12 Oct).
-
-	// A wet that amends others is known from its Staatsblad number only: its own text
-	// was not downloaded, but the articles it changed point to it.
-	const isPublication = (w: Schema<'InstrumentListItemDTO'>) =>
-		!w.bwb_id && !w.celex && !w.jurisdiction && w.key.startsWith('stb_');
-	const jurisdictionTag = (w: Schema<'InstrumentListItemDTO'>) =>
-		w.jurisdiction === 'eu'
-			? 'EU'
-			: w.jurisdiction === 'int'
-				? 'Verdrag'
-				: isPublication(w)
-					? 'Stb.'
-					: 'NL';
-
-	/** The numbered places of each hall, as the Kamers' own plans name them. */
-	const PLAATSEN_EK = ['Voorzitter', 'Griffie', 'Regering', 'Verslag en redactie'];
-	const PLAATSEN_TK = [
-		'Voorzitter',
-		'Griffier',
-		'Kabinet (vak-K)',
-		'Verslag en redactie',
-		'Spreekgestoelte',
-		'Interruptiemicrofoons',
-		'Bodedienst'
-	];
+	const widen = $derived(list.widen?.(p) ?? null);
+	const after = $derived(list.after?.(p) ?? null);
 
 	const openSearch = useSearchOpener();
 </script>
@@ -2115,7 +524,7 @@
 					<Bepaalregel
 						zoek={{
 							waarde: qDraft ?? q,
-							placeholder: PLACEHOLDER[category],
+							placeholder: list.placeholder,
 							naam: `Zoek in ${labelOf(category)}`,
 							onInput: typeQuery
 						}}
@@ -2127,7 +536,7 @@
 									onChange: periode.onChange
 								}
 							: null}
-						kamer={CHAMBER_CATEGORIES.includes(category)
+						kamer={list.chamber
 							? {
 									waarde: kamer,
 									opties: CHAMBER_OPTIONS,
@@ -2165,6 +574,7 @@
 						{/if}
 					</div>
 				</aside>
+
 				<div
 					class="results"
 					use:lijstDoel
@@ -2172,64 +582,17 @@
 					aria-busy={loading}
 					style:--row-aside="{columns.asideW}px"
 				>
-					{#if category === 'factions' && hall.state.status === 'error'}
-						<LoadState state={hall.state} what="De zaal" retry={hall.retry} />
-					{:else if category === 'factions' && seats && seats.chamber === kamer}
-						<div class="hemi-card">
-							<div class="hemi-svg-wrap">
-								{#if seats.chamber === 'EK'}
-									<ZaalTegenover data={seats} />
-								{:else}
-									<Hemicycle
-										data={seats}
-										meubels
-										colorOf={(f, i) => kleurVan('TK', fractieNaam(f), i, f.color ?? null)}
-									/>
-								{/if}
-								<ZaalLegenda
-									data={seats}
-									kolommen={2}
-									rijen={10}
-									coalitie={coalitieRegel}
-									peil={[
-										`Samenstelling op ${langeDatum(
-											(seats.chamber === 'EK' ? composition?.composition_date : null) ??
-												seats.as_of ??
-												null
-										)}`,
-										indelingMarkering(seats)
-									]
-										.filter(Boolean)
-										.join('. ')}
-									bron={seats.chamber === 'EK'
-										? composition
-											? {
-													label: composition.attribution,
-													href: composition.url
-												}
-											: null
-										: seats.seating_plan
-											? {
-													label: seats.seating_plan.title ?? 'Zetelverdeling',
-													href: seats.seating_plan.page ?? seats.seating_plan.url ?? ''
-												}
-											: null}
-									plaatsen={seats.chamber === 'EK' ? PLAATSEN_EK : PLAATSEN_TK}
-									ruimte={seats.chamber === 'EK' ? PLAATSEN_TK : PLAATSEN_EK}
-								/>
-							</div>
-						</div>
-					{/if}
+					{#if list.Header}<list.Header {ctx} />{/if}
 
 					<!-- How many, under which filters; a click on a filter takes it off. -->
 					<div class="result-head">
-						{#if resultTotal !== null && category !== 'ministers'}
+						{#if list.Rows && resultTotal !== null}
 							<p class="result-count">
 								{formatCount(resultTotal)}<span class="result-noun"
 									>{resultTotal === 1 ? noun1(category) : labelOf(category)}</span
 								>
 							</p>
-						{:else if category !== 'ministers'}
+						{:else if list.Rows}
 							<!-- The count's own height before it is known, so nothing below it moves. -->
 							<p class="result-count" aria-hidden="true">&nbsp;</p>
 						{/if}
@@ -2257,98 +620,7 @@
 						{/if}
 					</div>
 
-					{#if category === 'judgments' && judgmentYears.length > 1}
-						{@const max = Math.max(...judgmentYears.map((y) => y.count))}
-						<!-- The judgments per year under the filters; a bar filters on its year. -->
-						<figure class="years">
-							<div class="years-bars">
-								{#each judgmentYears as { year, count } (year)}
-									{@const on = dateFrom === `${year}-01-01` && dateTo === `${year}-12-31`}
-									{@const inRange =
-										(!dateFrom || `${year}-12-31` >= dateFrom) &&
-										(!dateTo || `${year}-01-01` <= dateTo)}
-									<button
-										type="button"
-										class="years-bar"
-										class:years-bar--on={on}
-										class:years-bar--out={!inRange}
-										style:height="{Math.max(2, (count / max) * 100)}%"
-										title="{year}: {formatCount(count)} uitspraken"
-										aria-label="{year}: {formatCount(count)} uitspraken"
-										aria-pressed={on}
-										onclick={() =>
-											patchUrl({
-												from: on ? null : `${year}-01-01`,
-												to: on ? null : `${year}-12-31`
-											})}
-									></button>
-								{/each}
-							</div>
-							<figcaption class="years-axis" bind:clientWidth={yearsAxisWidth}>
-								{#each axisLabels( judgmentYears.map((y) => y.year), yearsAxisWidth ) as label, i (judgmentYears[i].year)}
-									<span>{label}</span>
-								{/each}
-							</figcaption>
-						</figure>
-					{/if}
-
-					{#if category === 'ministers' && naast}
-						<!-- Side by side: the ministers of six cabinets, a row per post. -->
-						{#if naastKabinetten.length}
-							{@const eerste = naastKabinetten[0]}
-							{@const laatste = naastKabinetten.at(-1)!}
-							<h2 class="gov-title">Ministers</h2>
-							<p class="gov-sub">
-								{period(eerste.from_date, laatste.to_date, isOpen(laatste))}, {eerste.name} tot {laatste.name}
-							</p>
-							<NaastPosten
-								kabinetten={naastKabinetten}
-								{openId}
-								onToggle={toggleOpen}
-								zoek={q}
-								commitmentsHref={(key) =>
-									tabHref('commitments', { member: key, status: OPEN_STATUS })}
-							/>
-						{/if}
-					{:else if category === 'ministers' && shownCabinet && occupancyCabinet}
-						<!-- One title line; the chart is the list: a block opens its details. -->
-						<h2 class="gov-title">
-							<a href={openHref(`cabinets/${shownCabinet.key}`)}>{shownCabinet.name}</a>
-						</h2>
-						<!-- "sinds 2026, minister-president Rob Jetten, 28 bewindspersonen": no space before a comma. -->
-						<p class="gov-sub">
-							{period(
-								shownCabinet.from_date,
-								shownCabinet.to_date,
-								isOpen(shownCabinet)
-							)}{#if shownCabinet.prime_minister?.name}, minister-president <NameLink
-									collection="members"
-									name={shownCabinet.prime_minister.name}
-									key={shownCabinet.prime_minister.key}
-								/>{/if}, {shownCabinet.members}
-							{plural(shownCabinet.members, 'bewindspersoon', 'bewindspersonen')}
-						</p>
-						{#if !ministersShown?.length && !loading}
-							{@render empty('bewindspersonen')}
-						{:else}
-							<CabinetOccupancy
-								cabinet={occupancyCabinet}
-								{openId}
-								onToggle={toggleOpen}
-								commitmentsHref={(key) =>
-									tabHref('commitments', { member: key, status: OPEN_STATUS })}
-							/>
-						{/if}
-					{/if}
-					{#if category === 'cabinets' && cabinetsShown?.length && sortDef.id === 'date'}
-						<!-- The cabinets in the time they governed; a cabinet opens in place. -->
-						<KabinettenStrook
-							cabinets={cabinetsShown}
-							all={cabinets}
-							openKey={openId?.startsWith('cabinets/') ? openId.slice('cabinets/'.length) : null}
-							onToggle={(key) => toggleOpen(`cabinets/${key}`)}
-						/>
-					{/if}
+					{#if list.Figure}<list.Figure {ctx} />{/if}
 
 					<!-- While the next result loads, the previous one stays, dimmed. -->
 					{#if loading && !pages[category]}
@@ -2363,574 +635,32 @@
 						<p class="status-line status-line--error stil">{error}</p>
 					{:else}
 						<div class="shown" class:shown--stale={loading}>
-							{#if resultRows?.length && category !== 'ministers'}
-								<div class="list-head" aria-hidden="true">
-									<span>{columns.lead}</span>
-									<span>{columns.body}</span>
-									{#if Array.isArray(columns.aside)}
-										<span class="nums">
-											{#each columns.aside as head (head)}<span>{head}</span>{/each}
-										</span>
-									{:else}
-										<span class="list-head__aside">{columns.aside}</span>
-									{/if}
-								</div>
-							{/if}
-							{#if category === 'instruments' && pages.instruments}
-								{#if pages.instruments.items.length === 0}
-									{@render empty('wetten')}
+							{#if list.Rows && rows}
+								{#if rows.length === 0}
+									{@render empty(list.emptyNoun?.(p) ?? list.noun)}
 								{:else}
-									<ul class="list">
-										{#each pages.instruments.items as w (w.id)}
-											{@const bron = `instruments/${w.key}`}
-											<IndexRow
-												{bron}
-												wet={w.bwb_id ?? w.celex}
-												title={w.citation_title ??
-													w.short_title ??
-													w.title ??
-													naamVan('instruments', w)}
-												href={openHref(bron)}
-												acties
-											>
-												{#snippet lead()}
-													<span class="row-id-main"
-														>{(w.bwb_id ?? w.celex ?? '').toUpperCase()}</span
-													>
-													{#if w.short_title && w.short_title !== w.title}
-														<span class="row-id-sub">{w.short_title}</span>
-													{/if}
-												{/snippet}
-												{#snippet body()}
-													<span class="row-sub"
-														>{w.article_count > 0
-															? `${w.article_count} artikelen`
-															: isPublication(w)
-																? 'Publicatie in het Staatsblad; tekst niet in de gegevens'
-																: 'geen artikelen in de gegevens'}</span
-													>
-												{/snippet}
-												{#snippet aside()}
-													<span class="tag">
-														{jurisdictionTag(w)}
-													</span>
-												{/snippet}
-											</IndexRow>
-										{/each}
-									</ul>
-									{@render loadMoreButton(pages.instruments, 'wetten')}
-								{/if}
-							{:else if category === 'judgments' && pages.judgments}
-								{#if pages.judgments.items.length === 0}
-									{@render empty('uitspraken')}
-								{:else}
-									<ul class="list">
-										{#each pages.judgments.items as j (j.id)}
-											{@const bron = `judgments/${j.key}`}
-											<IndexRow {bron} title={judgmentRowTitle(j)} href={openHref(bron)} acties>
-												{#snippet lead()}
-													<span class="row-id-main"><Waarde value={korteDatum(j.date)} /></span>
-													<span class="row-id-sub"
-														><Waarde value={judgmentCourt(j.display_name, j.court)} /></span
-													>
-												{/snippet}
-												{#snippet body()}
-													{#if j.summary}
-														<p class="row-summary">{j.summary}</p>
-													{/if}
-													<!-- The case number and the rechtsgebied, as rechtspraak.nl lists them;
-													     the ECLI is the title unless the case has a name. -->
-													{@const zaak = judgmentCaseNumber(j.display_name)}
-													{@const context = [
-														j.names?.length ? j.ecli : null,
-														zaak,
-														j.subjects?.join('; ')
-													].filter(Boolean)}
-													{#if context.length}
-														<span class="row-sub">{context.join(', ')}</span>
-													{/if}
-												{/snippet}
-												{#snippet aside()}
-													{#if j.inbound_citation_count}
-														<span class="num-strong"
-															>{j.inbound_citation_count}<span class="num-lbl"
-																>{plural(j.inbound_citation_count, 'citatie', 'citaties')}</span
-															></span
-														>
-													{/if}
-												{/snippet}
-											</IndexRow>
-										{/each}
-									</ul>
-									{@render loadMoreButton(pages.judgments, 'uitspraken')}
-								{/if}
-							{:else if category === 'dossiers' && dossierEntries}
-								{#if dossierEntries.length === 0}
-									{@render empty(
-										dossierScope === 'open'
-											? 'lopende dossiers'
-											: dossierScope === 'closed'
-												? 'afgehandelde dossiers'
-												: 'dossiers'
-									)}
-								{:else}
-									<ul class="list">
-										{#each dossierEntries as entry (entry.number + entry.rows[0].id)}
-											{#if entry.rows.length === 1}
-												{@render dossierRow(entry.rows[0], false)}
-											{:else}
-												{@const isOpen = openNumbers.has(entry.number)}
-												{@const own = entry.rows.find((d) => d.number === entry.number)}
-												{@const kinds = new Set(entry.rows.map((d) => d.kind))}
-												{@const [kind] = kinds}
-												<!-- A filter or an unloaded page can leave out dossiers of the number. -->
-												{@const all = (entry.rows[0].same_number_count ?? 0) + 1}
-												<IndexRow
-													title={own?.title ??
-														`Dossiers onder nummer ${officialNumber(entry.number)}`}
-													href={own ? openHref(`dossiers/${own.number}`) : undefined}
-													open={isOpen}
-													onToggle={() => toggleNumber(entry.number)}
-												>
-													{#snippet lead()}
-														<span class="row-id-main">{officialNumber(entry.number)}</span>
-														{#if kinds.size === 1 && kind}
-															<span class="row-id-sub">{kind}</span>
-														{/if}
-													{/snippet}
-													{#snippet body()}
-														<span class="row-sub">
-															Toevoegingen {entry.rows.flatMap((d) => d.suffix ?? []).join(', ')}
-														</span>
-													{/snippet}
-													{#snippet aside()}
-														<span class="num-strong"
-															>{entry.rows.length}<span class="num-lbl"
-																>{entry.rows.length < all
-																	? `van ${all} dossiers`
-																	: 'dossiers'}</span
-															></span
-														>
-														<span class="chevron" class:chevron--open={isOpen} aria-hidden="true"
-															>›</span
-														>
-													{/snippet}
-												</IndexRow>
-												{#if isOpen}
-													{#each entry.rows as d (d.id)}
-														{@render dossierRow(d, true)}
-													{/each}
-												{/if}
-											{/if}
-										{/each}
-									</ul>
-									{@render loadMoreButton(pages.dossiers, 'dossiers')}
-								{/if}
-							{:else if category === 'committees' && committeesShown}
-								{#if committeesShown.length === 0}
-									{@render empty('commissies')}
-								{:else}
-									<ul class="list">
-										{#each committeesShown as c, i (c.id)}
-											{@const bron = `committees/${c.key}`}
-											{@const count = c.active_dossier_count ?? 0}
-											<!-- Under the default sort, a divider where the committees without dossiers begin. -->
-											{#if !onlyActive && sortDef.id === 'dossiers' && dir === 'desc' && count === 0 && i > 0 && (committeesShown[i - 1].active_dossier_count ?? 0) > 0}
-												<li class="group-divider" aria-hidden="true">
-													<span>Zonder lopende dossiers</span>
-												</li>
-											{/if}
-											<IndexRow
-												{bron}
-												title={c.name ?? naamVan('committees', c)}
-												href={openHref(bron)}
-												acties
-											>
-												{#snippet lead()}
-													<span class="row-id-main"><Waarde value={c.abbreviation} /></span>
-												{/snippet}
-												{#snippet body()}
-													{#if c.chamber !== 'EK'}
-														<span class="row-sub">
-															{count > 0
-																? plural(count, 'lopend dossier', 'lopende dossiers')
-																: 'Geen lopende dossiers'}
-														</span>
-													{/if}
-												{/snippet}
-												{#snippet aside()}
-													{#if c.chamber === 'EK'}
-														<!-- Not yet linked to dossiers: no count to give. -->
-													{:else if count > 0}
-														<span class="num-strong">{count}</span>
-													{/if}
-												{/snippet}
-											</IndexRow>
-										{/each}
-									</ul>
-								{/if}
-							{:else if category === 'members' && membersShown}
-								{#if membersShown.length === 0}
-									{@render empty('kamerleden')}
-								{:else}
-									<ul class="list">
-										{#each membersShown as m (m.id)}
-											{@const bron = `members/${m.key}`}
-											<IndexRow
-												{bron}
-												title={m.name ?? naamVan('members', m)}
-												href={openHref(bron)}
-												acties
-											>
-												{#snippet lead()}
-													<!-- An Eerste Kamer member's fractie is the one it sits in there. -->
-													{@const ek = kamer === 'EK' ? m.ek : null}
-													{@const abbreviation = ek ? ek.abbreviation : m.party}
-													<span class="row-id-main row-id-main--inline">
-														<span
-															class="party-dot"
-															style:background={partyColor(abbreviation ?? '')}
-														></span>
-														{#if ek?.faction && ek.abbreviation}<BronLink
-																ref={{ collection: 'factions', key: ek.faction }}
-																>{ek.abbreviation}</BronLink
-															>{:else if m.party}<NameLink
-																collection="factions"
-																name={m.party}
-															/>{/if}
-													</span>
-												{/snippet}
-											</IndexRow>
-										{/each}
-									</ul>
-									{@render loadMoreButton(pages.members, 'kamerleden')}
-								{/if}
-							{:else if category === 'factions' && factionsShown}
-								{#if factionsShown.length === 0}
-									{@render empty('fracties')}
-								{:else}
-									<ul class="list">
-										{#each factionsShown as f (f.id)}
-											{@const bron = `factions/${f.key}`}
-											<IndexRow
-												{bron}
-												title={f.name ?? naamVan('factions', f)}
-												href={openHref(bron)}
-												acties
-											>
-												{#snippet lead()}
-													<span class="row-id-main row-id-main--inline">
-														<span
-															class="party-dot"
-															style:background={partyColor(f.abbreviation ?? '')}
-														></span>
-														{f.abbreviation ?? ''}
-													</span>
-												{/snippet}
-												{#snippet body()}
-													{#if (f.seats != null && totalSeats > 0) || f.member_count}
-														<span class="row-sub"
-															>{[
-																f.seats != null && totalSeats > 0
-																	? `${formatDecimal((f.seats / totalSeats) * 100)}% van de zetels`
-																	: null,
-																f.member_count ? count(f.member_count, 'lid', 'leden') : null
-															]
-																.filter(Boolean)
-																.join(', ')}</span
-														>
-													{/if}
-												{/snippet}
-												{#snippet aside()}
-													{#if f.seats != null}
-														<span class="num-strong"
-															>{f.seats}<span class="num-lbl"
-																>{plural(f.seats, 'zetel', 'zetels')}</span
-															></span
-														>
-													{/if}
-												{/snippet}
-											</IndexRow>
-										{/each}
-									</ul>
-								{/if}
-							{:else if category === 'decisions' && decisionsShown}
-								{#if decisionsShown.length === 0}
-									{@render empty('stemmingen')}
-								{:else}
-									{#each decisionDays ?? [] as day (day.date)}
-										{#if day.date}
-											{@const failed = day.count - day.passed}
-											<div class="day-head">
-												<h3 class="day-title">{weekdag(day.date)}</h3>
-												<span class="day-meta"
-													>{day.count}
-													{plural(day.count, 'stemming', 'stemmingen')}: {day.passed} aangenomen,
-													{failed}
-													verworpen</span
-												>
-												<span class="day-split" aria-hidden="true"
-													><span style:width="{(day.passed / day.count) * 100}%"></span></span
-												>
-											</div>
+									<div class="list-head" aria-hidden="true">
+										<span>{columns.lead}</span>
+										<span>{columns.body}</span>
+										{#if Array.isArray(columns.aside)}
+											<span class="nums">
+												{#each columns.aside as head (head)}<span>{head}</span>{/each}
+											</span>
+										{:else}
+											<span class="list-head__aside">{columns.aside}</span>
 										{/if}
-										<ul class="list">
-											{#each day.rows as s (s.id)}
-												{@const bron = `decisions/${s.key}`}
-												{@const { voor: inFavour, tegen: against } = forAgainst(s.tally)}
-												{@const inFavourPct = (inFavour / (inFavour + against)) * 100}
-												<!-- The Eerste Kamer's decisions carry no kind yet: their dossier leads. -->
-												{@const kindLabel =
-													s.kind ?? (s.chamber === 'EK' ? null : NO_DECISION_KIND)}
-												{@const inhoud = stemmingInhoud(s.key, s.tally)}
-												<IndexRow
-													{bron}
-													dossier={s.dossiers?.[0]?.number ?? s.dossier_numbers?.[0]}
-													title={stemmingNaam(s.subject, s.dossiers?.[0] ?? s.dossier_numbers?.[0])}
-													cite={voteCitation(s)}
-													href={openHref(bron)}
-													open={openId === bron}
-													onToggle={inhoudVan(inhoud) ? () => toggleOpen(bron) : undefined}
-												>
-													{#snippet lead()}
-														{#if !day.date || kindLabel}
-															<span class="row-id-main"
-																><Waarde value={day.date ? kindLabel : korteDatum(s.date)} /></span
-															>
-															{#if s.dossiers?.[0] ?? s.dossier_numbers?.[0]}
-																{@const d = s.dossiers?.[0] ?? { number: s.dossier_numbers![0] }}
-																<span class="row-id-sub row-id-naam" title={d.title ?? undefined}
-																	>{dossierLabel(d)}</span
-																>
-															{/if}
-														{:else if s.dossiers?.[0] ?? s.dossier_numbers?.[0]}
-															{@const d = s.dossiers?.[0] ?? { number: s.dossier_numbers![0] }}
-															<span class="row-id-main">{officialNumber(d.number)}</span>
-															{#if dossierOwnName(d)}
-																<span class="row-id-sub row-id-naam" title={d.title ?? undefined}
-																	>{dossierOwnName(d)}</span
-																>
-															{/if}
-														{/if}
-													{/snippet}
-													{#snippet body()}
-														{#if inFavour + against > 0}
-															<span
-																class="stem-mini"
-																title="Zetelverdeling: {votesSentence(s.voters) ??
-																	votesSentence(s.tally)} ({s.vote_kind === 'member'
-																	? 'leden'
-																	: 'fracties'})"
-															>
-																<span class="stem-mini__v">{inFavour}</span>
-																<span class="stem-mini__bar">
-																	<span class="stem-mini__bar-v" style:width="{inFavourPct}%"
-																	></span>
-																	<span class="stem-mini__bar-t" style:width="{100 - inFavourPct}%"
-																	></span>
-																</span>
-																<span class="stem-mini__t">{against}</span>
-																<span class="stem-mini__unit">zetels</span>
-															</span>
-														{:else if decisionMethod(s)}
-															<span class="row-method">{decisionMethod(s)}</span>
-														{/if}
-													{/snippet}
-													{#snippet aside()}
-														{#if decisionOutcome(s)}
-															<!-- A hamerstuk passes without a vote; a postponed one is no outcome. -->
-															<span
-																class="tag"
-																class:tag--passed={s.passed === true}
-																class:tag--rejected={s.passed === false}
-															>
-																{decisionOutcome(s)}
-															</span>
-														{/if}
-													{/snippet}
-													{#snippet detail()}
-														<RijInhoud item={inhoud} />
-													{/snippet}
-												</IndexRow>
-											{/each}
-										</ul>
-									{/each}
-									{@render loadMoreButton(pages.decisions, 'stemmingen')}
-									{#if kamer === 'EK'}
-										<BronRegel
-											afterList
-											label={`${EK_SOURCE.name}, ${EK_SOURCE.site}`}
-											href={EK_SOURCE.url}
-										/>
+									</div>
+									<list.Rows {ctx} />
+									{@render loadMoreButton(shownPage, list.noun)}
+									{#if after}
+										<BronRegel afterList label={after.label} href={after.href} />
 									{/if}
-								{/if}
-							{:else if category === 'cabinets' && cabinetsShown}
-								{#if cabinetsShown.length === 0}
-									{@render empty('kabinetten')}
-								{:else}
-									<ul class="list">
-										{#each cabinetsShown as c (c.key)}
-											{@const bron = `cabinets/${c.key}`}
-											{@const parties = c.parties ?? []}
-											<IndexRow {bron} title={c.name} href={openHref(bron)} acties>
-												{#snippet lead()}
-													<span class="row-id-main"
-														>{period(c.from_date, c.to_date, isOpen(c))}</span
-													>
-													{#if isOpen(c)}
-														<span class="row-id-sub">In functie</span>
-													{/if}
-												{/snippet}
-												{#snippet body()}
-													{#if c.prime_minister?.name}
-														<span class="row-sub"
-															>Minister-president <NameLink
-																collection="members"
-																name={c.prime_minister.name}
-																key={c.prime_minister.key}
-															/></span
-														>
-													{/if}
-													{#if parties.length}
-														<span class="party-list">
-															{#each parties as p, i (i)}
-																<span class="party-item"
-																	><span
-																		class="party-dot"
-																		style:background={partyColor(p.short ?? '')}
-																	></span><NameLink
-																		collection="factions"
-																		name={p.short ?? p.faction ?? ''}
-																		key={p.faction}
-																	/></span
-																>
-															{/each}
-														</span>
-													{/if}
-												{/snippet}
-												{#snippet aside()}
-													<span class="num-strong"
-														>{c.members}<span class="num-lbl">bewindspersonen</span></span
-													>
-												{/snippet}
-											</IndexRow>
-										{/each}
-									</ul>
-								{/if}
-							{:else if category === 'documents' && pages.documents}
-								{#if pages.documents.items.length === 0}
-									{@render empty('stukken')}
-								{:else}
-									<ul class="list">
-										{#each pages.documents.items as doc (doc.key)}
-											{@const bron = `documents/${doc.key}`}
-											{@const label = kamerstukLabel(doc)}
-											<!-- A Kamerstuk opens in place on its core text (RijInhoud), as in
-											     Actueel, Verbonden and Gemarkeerd; the stuk one step further. -->
-											<IndexRow
-												{bron}
-												dossier={doc.dossier_numbers?.[0]}
-												title={doc.title ?? doc.kind ?? naamVan('documents', doc)}
-												href={openHref(bron)}
-												open={openId === bron}
-												onToggle={() => toggleOpen(bron)}
-											>
-												{#snippet lead()}
-													<span class="row-id-main"><Waarde value={label} /></span>
-													<!-- The dossier by name under its number (API 0.79.30). -->
-													{#if doc.dossiers?.[0] && dossierOwnName(doc.dossiers[0])}
-														<span
-															class="row-id-sub row-id-naam"
-															title={doc.dossiers[0].title ?? undefined}
-															>{dossierOwnName(doc.dossiers[0])}</span
-														>
-													{/if}
-												{/snippet}
-												{#snippet body()}
-													{@const uitslag = stukUitslag(doc)}
-													{#if doc.kind || uitslag}<span class="row-sub"
-															>{doc.kind ?? ''}{#if uitslag}{doc.kind ? ', ' : ''}<StukUitslag
-																	{uitslag}
-																/>{/if}</span
-														>{/if}
-												{/snippet}
-												{#snippet aside()}
-													{#if doc.date}<span class="row-sub">{korteDatum(doc.date)}</span>{/if}
-												{/snippet}
-												{#snippet detail()}
-													<RijInhoud
-														item={{
-															node: { collection: 'documents', key: doc.key },
-															dictum: doc.dictum,
-															explanation: doc.explanation
-														}}
-														als="kern"
-													/>
-												{/snippet}
-											</IndexRow>
-										{/each}
-									</ul>
-									{@render loadMoreButton(pages.documents, 'stukken')}
-								{/if}
-							{:else if category === 'commitments' && pages.commitments}
-								{#if pages.commitments.items.length === 0}
-									{@render empty('toezeggingen')}
-								{:else}
-									<ul class="list">
-										{#each pages.commitments.items as t (t.key)}
-											{@const bron = `commitments/${t.key}`}
-											{@const late =
-												t.status === OPEN_STATUS &&
-												!!t.expected_resolution &&
-												t.expected_resolution < vandaag()}
-											<IndexRow
-												{bron}
-												title={t.text ?? 'Toezegging zonder tekst'}
-												href={openHref(bron)}
-												open={openId === bron}
-												onToggle={() => toggleOpen(bron)}
-											>
-												{#snippet lead()}
-													<span class="row-id-main"><Waarde value={korteDatum(t.date)} /></span>
-													{#if t.status}
-														<span class="row-id-sub">{t.status}</span>
-													{/if}
-												{/snippet}
-												{#snippet body()}
-													<span class="row-sub">
-														{#if t.member}
-															<NameLink
-																collection="members"
-																name={t.member.name ?? ''}
-																key={t.member.key}
-															/>{t.member.function ? `, ${t.member.function}` : ''}
-														{:else if t.minister_name}
-															{t.minister_name}
-														{/if}<!-- A dossier by number and name, the name asked once in view; no space before the comma. -->{#each t.dossiers?.flatMap( (d) => (d.number ? [{ ...d, number: d.number }] : []) ) ?? [] as d (d.number)},
-															<DossierNaam dossier={d} />{/each}
-													</span>
-												{/snippet}
-												{#snippet aside()}
-													{#if t.expected_resolution}
-														<span class="row-sub" class:row-sub--late={late}
-															>{late ? 'Verlopen sinds' : 'Verwacht'}
-															{korteDatum(t.expected_resolution)}</span
-														>
-													{/if}
-												{/snippet}
-												{#snippet detail()}
-													<ToezeggingInhoud toezegging={t} />
-												{/snippet}
-											</IndexRow>
-										{/each}
-									</ul>
-									{@render loadMoreButton(pages.commitments, 'toezeggingen')}
 								{/if}
 							{/if}
 						</div>
 					{/if}
 					<!-- Where the list comes from, under it: the source and its date close the list. -->
-					{#if composition && category !== 'factions' && !loading}
+					{#if composition && !loading}
 						<BronRegel
 							afterList
 							composedOn={composition.composition_date}
@@ -2945,71 +675,14 @@
 	</div>
 </div>
 
-{#snippet dossierRow(d: DossierRow, member: boolean)}
-	{@const bron = `dossiers/${d.number}`}
-	{@const st = stand(d)}
-	{@const who = d.initiative
-		? 'Initiatief van Kamerleden'
-		: d.ministry
-			? ministryName(d.ministry)
-			: ''}
-	<IndexRow
-		{bron}
-		{member}
-		title={member && d.title
-			? chapterTitle(d.title)
-			: (d.short_title ?? d.title ?? officialNumber(d.number))}
-		href={openHref(bron)}
-		acties
-	>
-		{#snippet lead()}
-			<span class="row-id-main">{officialNumber(d.number)}</span>
-			{#if d.kind && !member}
-				<span class="row-id-sub">{d.kind}</span>
-			{/if}
-		{/snippet}
-		{#snippet body()}
-			{#if st?.zin}
-				<span class="row-zin">{st.zin}</span>
-			{/if}
-			<!-- Sorted by its last activity, that day; else the day it was opened. -->
-			{@const laatst = sortDef.id === 'last_activity' ? d.last_activity : null}
-			{@const dag = laatst ?? d.opened_on}
-			<span class="row-sub"
-				>{who}{who && dag ? ', ' : ''}{#if dag}{laatst ? 'laatste activiteit' : 'geopend'}
-					{korteDatum(dag)}{/if}</span
-			>
-		{/snippet}
-		{#snippet aside()}
-			{#if st}
-				<span
-					class="stand"
-					aria-label="Stand: {st.bodies
-						.map(
-							(b) =>
-								`${b.name} ${b.state === 'done' ? 'klaar' : b.state === 'now' ? 'nu' : b.state === 'none' ? 'niet' : b.state === 'unknown' ? 'niet in de gegevens' : 'nog niet'}`
-						)
-						.join(', ')}"
-				>
-					{#each st.bodies as b (b.short)}
-						<span class="stand-body stand-body--{b.state}"
-							><abbr title={b.name}>{b.short}</abbr></span
-						>
-					{/each}
-				</span>
-			{/if}
-		{/snippet}
-	</IndexRow>
-{/snippet}
-
 <!-- Nothing to show: with filters on, they say why; a text searched for can be searched
      for in all bronnen. -->
 {#snippet empty(noun: string)}
 	<div class="empty">
 		<p class="stil">Geen {noun}{chips.length || q ? ' met deze filters' : ''}.</p>
-		{#if category === 'dossiers' && dossierScope === 'open'}
-			<button type="button" class="btn is-groot" onclick={() => patchUrl({ stand: 'all' })}
-				>Zoek ook in afgehandelde dossiers</button
+		{#if widen}
+			<button type="button" class="btn is-groot" onclick={() => patchUrl(widen.patch)}
+				>{widen.label}</button
 			>
 		{/if}
 		{#if q}
@@ -3172,67 +845,6 @@
 		min-width: 0;
 	}
 
-	/* The filters that are on, above the list; a click takes one off. */
-	/* Uitspraken per year: a column per year, the chosen one in ink, the ones outside the
-	   period pale. */
-	.years {
-		margin: 0 0 var(--s-4);
-	}
-	.years-bars {
-		display: flex;
-		align-items: flex-end;
-		gap: 2px;
-		height: 96px;
-		border-bottom: 1px solid var(--rule-strong);
-	}
-	.years-bar {
-		flex: 1;
-		min-width: 0;
-		padding: 0;
-		border: 0;
-		background: var(--indigo);
-		opacity: 0.55;
-		cursor: pointer;
-		transition: opacity var(--dur-1) var(--ease);
-	}
-	.years-bar:hover,
-	.years-bar--on {
-		opacity: 1;
-	}
-	.years-bar--out {
-		background: var(--rule-strong);
-		opacity: 1;
-	}
-	.years-bar:focus-visible {
-		outline: 2px solid var(--focus);
-		outline-offset: 1px;
-	}
-	.years-axis {
-		display: flex;
-		gap: 2px;
-		margin-top: var(--s-1);
-		font-family: var(--font-serif);
-		font-size: var(--t-label); /* a chart's own labels, below the ladder: docs/typografie.md */
-		color: var(--ink-3);
-	}
-	.years-axis span {
-		flex: 1;
-		min-width: 0;
-		overflow: visible;
-		white-space: nowrap;
-	}
-	/* The last year ends at the edge and runs inward, never past it. */
-	.years-axis span:last-child {
-		display: flex;
-		justify-content: flex-end;
-	}
-
-	.row-method {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-
 	/* Above the list: how many, then the filters that are on. */
 	.result-head {
 		display: flex;
@@ -3283,138 +895,6 @@
 		font-variant-numeric: tabular-nums;
 	}
 
-	.party-list {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--s-1) var(--s-3);
-		margin-top: var(--s-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-2);
-	}
-	.party-item {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-1);
-	}
-
-	/* Bewindspersonen: the cabinet as the title of its chart. */
-	.gov-title {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-h2);
-		font-weight: 600;
-	}
-	.gov-title a {
-		color: var(--ink);
-		text-decoration: none;
-	}
-	.gov-title a:hover {
-		color: var(--ink);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
-	}
-	.gov-sub {
-		margin: var(--s-1) 0 var(--s-4);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-	}
-	.row-sub--late {
-		color: var(--ink);
-		/* In ink, as everything at rest but "nee" (Thijs, 10 Oct); the weight keeps it seen. */
-		font-weight: 600;
-	}
-
-	/* Stemmingen: the sitting day over its votes, with the share that passed. */
-	.day-head {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-3);
-		padding: var(--s-4) var(--s-2) var(--s-2);
-		border-bottom: 1px solid var(--rule-strong);
-	}
-	.day-head:first-of-type {
-		padding-top: var(--s-1);
-	}
-	.day-title {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-h3);
-		font-weight: 800;
-	}
-	.day-title::first-letter {
-		text-transform: uppercase;
-	}
-	.day-meta {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	.day-split {
-		margin-left: auto;
-		align-self: center;
-		display: flex;
-		width: 120px;
-		height: 6px;
-		background: var(--rule);
-	}
-	.day-split span {
-		background: var(--ink);
-	}
-
-	/* ── Hemicycle card (factions only) ──────────────────────────────── */
-	/* De zaal zonder kader of vlak. */
-	/* The hall and its legend side by side, using the width of the list; under each other
-	   where the list is narrow. */
-	.hemi-card {
-		margin-bottom: var(--s-6);
-	}
-	.hemi-svg-wrap {
-		display: grid;
-		grid-template-columns: 456px minmax(0, 1fr);
-		column-gap: var(--s-7);
-		align-items: center;
-		justify-items: center;
-	}
-	.hemi-svg-wrap :global(.leg) {
-		margin: 0;
-		justify-self: stretch;
-	}
-	.hemi-svg-wrap :global(.hemicycle) {
-		justify-self: stretch;
-	}
-	/* Both halls exactly as high, whatever their shape; the width follows. */
-	.hemi-svg-wrap :global(.hemicycle svg),
-	.hemi-svg-wrap :global(.zaal svg) {
-		width: auto;
-		max-width: 100%;
-		height: 300px;
-		max-height: none;
-	}
-	@media (max-width: 1100px) {
-		.hemi-svg-wrap {
-			grid-template-columns: minmax(0, 1fr);
-			row-gap: var(--s-4);
-		}
-	}
-	/* On a phone both halls in the box of the Tweede Kamer's (440 by 291) as wide as the
-	   column: as high as each other, at one scale, no empty band. */
-	@media (max-width: 520px) {
-		.hemi-svg-wrap :global(.hemicycle svg),
-		.hemi-svg-wrap :global(.zaal svg) {
-			width: 100%;
-			height: auto;
-			aspect-ratio: 440 / 291;
-		}
-		.hemi-svg-wrap :global(.zaal) {
-			justify-self: stretch;
-		}
-	}
-	.hemi-svg-wrap :global(.hemicycle) {
-		background: transparent;
-	}
-
 	/* ── Status and empty states ─────────────────────────────────────── */
 	.status-line {
 		margin: var(--s-3) 0;
@@ -3458,22 +938,22 @@
 	}
 	/* One heavy rule per list, the count's above it (docs/bediening.md); the heads of the
 	   columns hang under it on a thin rule of their own. */
-	.list {
+	.results :global(.list) {
 		list-style: none;
 		padding: 0;
 		margin: 0;
 	}
 	/* What identifies the row (a number, a date, a kind): small and grey; the title is
 	   what is read. */
-	.row-id-main {
+	.results :global(.row-id-main) {
 		display: block;
 	}
-	.row-id-main--inline {
+	.results :global(.row-id-main--inline) {
 		display: inline-flex;
 		align-items: center;
 		gap: var(--s-2);
 	}
-	.row-id-sub {
+	.results :global(.row-id-sub) {
 		display: block;
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
@@ -3481,7 +961,7 @@
 		margin-top: 2px;
 	}
 	/* A dossier by name in the narrow lead: two lines at most, the whole on hover. */
-	.row-id-naam {
+	.results :global(.row-id-naam) {
 		display: -webkit-box;
 		-webkit-box-orient: vertical;
 		-webkit-line-clamp: 2;
@@ -3490,65 +970,16 @@
 		overflow-wrap: break-word;
 	}
 
-	.row-sub {
+	.results :global(.row-sub) {
 		display: block;
 		margin-top: var(--s-1);
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-	/* The inhoudsindicatie of a judgment, two lines at most. */
-	.row-summary {
-		margin: var(--s-1) 0 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		line-height: 1.45;
-		color: var(--ink-2);
-		display: -webkit-box;
-		-webkit-line-clamp: 2;
-		line-clamp: 2;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-	}
-	.row-zin {
-		display: block;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-		line-height: var(--lh-snug);
-		margin-top: var(--s-1);
-	}
-	.stand {
-		display: inline-grid;
-		grid-template-columns: repeat(3, var(--s-7));
-		gap: var(--s-1);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-	}
-	.stand-body {
-		padding-top: var(--s-1);
-		border-top: 4px solid var(--rule);
-		color: var(--ink-3);
-		text-align: left;
-	}
-	.stand-body abbr {
-		text-decoration: none;
-	}
-	.stand-body--done {
-		border-top-color: var(--ink-2);
-		color: var(--ink-2);
-	}
-	.stand-body--now {
-		border-top-color: var(--ink);
-		color: var(--ink);
-		font-weight: 600;
-	}
-	.stand-body--none {
-		border-top-style: dotted;
 	}
 
 	/* Qualities on a row are words: the outcome of a vote in ink-2, the rest in ink-3. */
-	.tag {
+	.results :global(.tag) {
 		display: inline-flex;
 		align-items: baseline;
 		gap: var(--s-1);
@@ -3558,95 +989,33 @@
 		white-space: nowrap;
 		line-height: 22px;
 	}
-	.tag--passed,
-	.tag--rejected {
+	.results :global(.tag--passed),
+	.results :global(.tag--rejected) {
 		color: var(--ink-2);
 		font-weight: 600;
 	}
 
-	.num-strong {
+	.results :global(.num-strong) {
 		font-family: var(--font-serif);
 		font-size: var(--t-body);
 		color: var(--ink);
 		font-feature-settings: 'lnum';
 		line-height: 1;
 	}
-	.num-lbl {
+	.results :global(.num-lbl) {
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		margin-left: var(--s-1);
 	}
 
-	.party-dot {
+	.results :global(.party-dot) {
 		display: inline-block;
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
 		flex-shrink: 0;
 		vertical-align: middle;
-	}
-
-	/* Seats for and against on a decision row; the numbers say which is which. */
-	.stem-mini {
-		display: inline-grid;
-		grid-template-columns: 32px 140px 32px auto;
-		gap: var(--s-2);
-		align-items: center;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-variant-numeric: tabular-nums;
-		margin-top: var(--s-2);
-	}
-	.stem-mini__v {
-		color: var(--ink-2);
-		text-align: right;
-		font-weight: 600;
-	}
-	.stem-mini__t {
-		color: var(--ink-2);
-		text-align: left;
-		font-weight: 600;
-	}
-	.stem-mini__unit {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	.stem-mini__bar {
-		height: 8px;
-		background: var(--paper-2);
-		border-radius: var(--r-1);
-		overflow: hidden;
-		display: flex;
-	}
-	.stem-mini__bar-v {
-		background: var(--ink-2);
-	}
-	.stem-mini__bar-t {
-		background: var(--rule-strong);
-	}
-
-	.chevron {
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		line-height: 1;
-		color: var(--ink-3);
-		transition: transform var(--dur-1) var(--ease);
-	}
-	.chevron--open {
-		transform: rotate(90deg);
-	}
-
-	/* Committees: where the ones without dossiers begin */
-	.group-divider {
-		list-style: none;
-		padding: var(--s-4) var(--s-2) var(--s-3);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-		border-bottom: 1px solid var(--rule);
 	}
 
 	/* Narrow viewports: the columns stack. */

@@ -37,14 +37,8 @@ describe('a faceted list', () => {
 				params.query?.facets ? answer([{ id: 'f' }], 'facets') : answer([{ id: 'a' }], 'rows')
 		});
 		const l = list();
-		const fetch = faceted(
-			path,
-			q as never,
-			l.apart,
-			(f) => l.facets.push(f.facets),
-			(r, offset) => l.rows.push({ items: r.items, offset })
-		);
-		await fetch(0, new AbortController().signal);
+		const fetch = faceted(path, q as never, l.apart, (f) => l.facets.push(f.facets));
+		l.rows.push({ items: (await fetch(0, new AbortController().signal)).items, offset: 0 });
 		await settle();
 		expect(api.asked(path)).toEqual([
 			{ query: { ...q, offset: 0, limit: 1, facets: true } },
@@ -57,14 +51,8 @@ describe('a faceted list', () => {
 	it.each(LISTS)('%s asks only its rows on a later page', async (path, q) => {
 		const api = fakeApi({ [path]: answer([{ id: 'b' }], 'rows') });
 		const l = list();
-		const fetch = faceted(
-			path,
-			q as never,
-			l.apart,
-			(f) => l.facets.push(f),
-			(r, offset) => l.rows.push({ items: r.items, offset })
-		);
-		await fetch(100, new AbortController().signal);
+		const fetch = faceted(path, q as never, l.apart, (f) => l.facets.push(f));
+		l.rows.push({ items: (await fetch(100, new AbortController().signal)).items, offset: 100 });
 		await settle();
 		expect(api.asked(path)).toEqual([{ query: { ...q, offset: 100, facets: false } }]);
 		expect(l.facets).toEqual([]);
@@ -82,14 +70,10 @@ describe('a faceted list', () => {
 			}
 		});
 		const l = list();
-		const fetch = faceted(
-			'/api/judgments',
-			{ limit: 100 },
-			l.apart,
-			(f) => l.facets.push(f.facets),
-			(r) => l.rows.push({ items: r.items, offset: 0 })
+		const fetch = faceted('/api/judgments', { limit: 100 }, l.apart, (f) =>
+			l.facets.push(f.facets)
 		);
-		await fetch(0, new AbortController().signal);
+		l.rows.push({ items: (await fetch(0, new AbortController().signal)).items, offset: 0 });
 		expect(l.rows).toHaveLength(1);
 		expect(l.facets).toEqual([]);
 		count();
@@ -103,13 +87,10 @@ describe('a faceted list', () => {
 				params.query?.facets ? answer([], 'facets') : answer([{ id: 'a' }], 'rows')
 		});
 		const l = list();
-		await faceted(
-			'/api/judgments',
-			{ from: '2025-10-14', limit: 100 },
-			l.apart,
-			() => {},
-			() => {}
-		)(0, new AbortController().signal);
+		await faceted('/api/judgments', { from: '2025-10-14', limit: 100 }, l.apart, () => {})(
+			0,
+			new AbortController().signal
+		);
 		expect(api.requests.map((r) => [r.client, r.params.query?.facets])).toEqual([
 			['slowApi', true],
 			['api', false]
@@ -122,13 +103,11 @@ describe('a faceted list', () => {
 				params.query?.facets ? fail(500) : answer([{ id: 'a' }], 'rows')
 		});
 		const l = list();
-		await faceted(
-			'/api/dossiers',
-			{ limit: 100 },
-			l.apart,
-			(f) => l.facets.push(f),
-			(r) => l.rows.push({ items: r.items, offset: 0 })
-		)(0, new AbortController().signal);
+		const r = await faceted('/api/dossiers', { limit: 100 }, l.apart, (f) => l.facets.push(f))(
+			0,
+			new AbortController().signal
+		);
+		l.rows.push({ items: r.items, offset: 0 });
 		await settle();
 		expect(l.rows).toHaveLength(1);
 		expect(l.failed).toHaveLength(1);
@@ -141,13 +120,7 @@ describe('a faceted list', () => {
 				params.query?.facets ? answer([], 'facets') : fail(500)
 		});
 		const l = list();
-		const load = faceted(
-			'/api/documents',
-			{ limit: 100 },
-			l.apart,
-			() => {},
-			() => {}
-		);
+		const load = faceted('/api/documents', { limit: 100 }, l.apart, () => {});
 		await expect(load(0, new AbortController().signal)).rejects.toThrow('answered 500');
 	});
 });

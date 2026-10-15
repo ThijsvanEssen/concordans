@@ -15,7 +15,7 @@ describe('the map', () => {
 		expect(kept).toEqual(
 			expect.arrayContaining([
 				'lib/components/explore/readers/DecisionReader.svelte',
-				'lib/components/explore/IndexView.svelte',
+				'lib/components/explore/index/rows/DecisionRows.svelte',
 				'lib/map/rij.ts'
 			])
 		);
