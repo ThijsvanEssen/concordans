@@ -10,9 +10,9 @@ import { mentionRows, type Row } from './rows';
 import { betrouwbaarheid } from './verbinding';
 
 /** What a cell needs besides its row: the kind of the selected bron, and the site for links. */
-export type ColumnContext = { selection: Collection; origin: string };
+type ColumnContext = { selection: Collection; origin: string };
 
-export type Column = {
+type Column = {
 	id: string;
 	/** The head in the table; lower case, the head in the CSV. */
 	label: string;

@@ -10,7 +10,7 @@ export type LoadState<T> =
 	| { status: 'error'; error: unknown }
 	| { status: 'ready'; data: T };
 
-export type Fetch<K, T> = (key: K, signal: AbortSignal) => Promise<T>;
+type Fetch<K, T> = (key: K, signal: AbortSignal) => Promise<T>;
 
 /** The loader without the runes: `load` starts a key, `retry` the last one, `stop` drops it. */
 export function createLoader<K, T>(

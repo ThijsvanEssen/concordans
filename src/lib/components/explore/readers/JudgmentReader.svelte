@@ -42,7 +42,8 @@
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { getNodeGraph, neighborsOf } from '$lib/api/nodes';
 	import { getNodeFirst, once } from '$lib/api/records';
-	import { conclusieVan, type Laag } from '$lib/bron/behoort';
+	import { conclusieVan } from '$lib/bron/behoort-procesgang';
+	import { type Laag } from '$lib/bron/behoort-layer';
 	import { paragraphNumber } from '$lib/text/anchor';
 	import { korteDatum, langeDatum } from '$lib/text/datum';
 	import { samenhangVan, type Samenhang } from './samenhang';

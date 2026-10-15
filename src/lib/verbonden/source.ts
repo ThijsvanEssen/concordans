@@ -1,7 +1,7 @@
 // One load of the verbindingen of the selected bron, read by the panel, the table,
 // the legend of the network and the margin of the reader. The groups come from the
 // group table; a group with a loader fills in as its request answers.
-import type { GraphStore } from '$lib/graph/graph-store';
+import type { GraphStore } from '$lib/graph/store/types';
 import type { GraphNode } from '$lib/graph/types';
 import { get, writable, type Readable } from 'svelte/store';
 import { getNodeFirst, getNodeVerbonden } from '$lib/api/records';
@@ -84,7 +84,7 @@ export type VerbondenState = {
 	options: LoaderOptions;
 };
 
-export type VerbondenSource = Readable<VerbondenState> & {
+type VerbondenSource = Readable<VerbondenState> & {
 	load: (selection: GraphNode | null) => void;
 	/** Load the same bron again, after a failed request. */
 	reload: () => void;

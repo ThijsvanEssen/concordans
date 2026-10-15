@@ -16,8 +16,6 @@ import {
 	MOTIE,
 	artikelenGewijzigd,
 	chamberOf,
-	dossierLabel,
-	dossierName,
 	isBillVote,
 	normalizeItem,
 	titleOf,
@@ -25,9 +23,8 @@ import {
 	type FeedItem,
 	type FeedKind
 } from './feed';
+import { dossierLabel, dossierName } from '$lib/bron/dossier-naam';
 import { queryHref } from '$lib/util/address';
-
-export { dossierName };
 
 // The homepage's Actueel: one stream, newest first, from `/api/feed/summary`. What matters
 // on a day stands on its own with a headline in plain words (a bill voted on or brought
@@ -139,7 +136,7 @@ function voteContext(i: FeedItem): string {
 // ── Lines ───────────────────────────────────────────────────────────────
 
 /** Actueel on one day and of some kinds, where a bundle leads. */
-export function actueelDayHref(date: string, kinds: FeedKind[], dossier?: string) {
+function actueelDayHref(date: string, kinds: FeedKind[], dossier?: string) {
 	const p = new URLSearchParams({ van: date, tot: date });
 	if (kinds.length) p.set('soort', kinds.join(','));
 	if (dossier) p.set('dossier', dossier);
@@ -521,7 +518,7 @@ export function timelineOf(summary: Schema<'FeedSummaryResponse'>, limit: number
 	return lines;
 }
 
-export type Headline = Pick<TimelineLine, 'label' | 'title' | 'major' | 'teken' | 'vorm'>;
+type Headline = Pick<TimelineLine, 'label' | 'title' | 'major' | 'teken' | 'vorm'>;
 
 /** The shape of an event's kind, as the network and Verbonden draw it (vormen.ts). */
 export function vormVanFeed(i: Pick<FeedItem, 'kind'>): Vorm {

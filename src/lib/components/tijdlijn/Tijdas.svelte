@@ -11,7 +11,6 @@
 		eind,
 		plaats,
 		fasen = [],
-		metStreepjes = true,
 		lijnen = false
 	}: {
 		periode: Periode;
@@ -19,7 +18,6 @@
 		eind: string;
 		plaats: 'boven' | 'onder';
 		fasen?: { at: number; label: string }[];
-		metStreepjes?: boolean;
 		/** Streepjes als lijnen door de figuur erboven (kabinetten): de hoogte geeft de ouder. */
 		lijnen?: boolean;
 	} = $props();
@@ -27,7 +25,7 @@
 	let breedte = $state(0);
 	// Een streepje blijft een half label plus lucht weg van de randen.
 	const ticks = $derived(
-		metStreepjes && breedte
+		breedte
 			? streepjes(periode, breedte, {
 					begin: labelBreedte(begin) + 24,
 					eind: labelBreedte(eind) + 24

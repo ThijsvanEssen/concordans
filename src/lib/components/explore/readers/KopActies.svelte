@@ -36,7 +36,7 @@
 </script>
 
 <span class="kop-acties">
-	{#if bewaar}<Bewaar item={bewaar} {wat} metMap knop />{/if}
+	{#if bewaar}<Bewaar item={bewaar} {wat} />{/if}
 	{#if cite.length > 0}
 		<CiteMenu items={cite} name={naam} align="right" caret>
 			{#snippet onder(dicht)}

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { fail, fakeApi, type FakeRequest } from '$lib/test/fakeApi';
 import { ApiError } from '$lib/api/client';
-import { lazeKernIds, procesgangIds } from './behoort';
+import { lazeKernIds } from './behoort';
+import { procesgangIds } from '$lib/bron/behoort-procesgang';
 
 // A judgment and the instance before it: `hr` was appealed from `hof`, `hof` from `rb`.
 const appealOf = (key: string, before: string | null) => ({

@@ -30,11 +30,20 @@ const read = (path: string) => {
 	return path.endsWith('.css') ? `<style>${text}</style>` : text;
 };
 
+const ALL = files(ROOT).map((path) => ({
+	path: relative(ROOT, path).split('\\').join('/'),
+	absolute: path
+}));
+
 /** Every .svelte, .ts and .css file under src, by its path from src. */
-export const BRONNEN: Bron[] = files(ROOT)
-	.map((path) => ({ path: relative(ROOT, path).split('\\').join('/'), absolute: path }))
-	.filter(({ path }) => !SKIP.test(path))
-	.map(({ path, absolute }) => ({ path, text: read(absolute) }));
+export const BRONNEN: Bron[] = ALL.filter(({ path }) => !SKIP.test(path)).map(
+	({ path, absolute }) => ({ path, text: read(absolute) })
+);
+
+/** Every test file under src, by its path from src: who uses a name counts its tests too. */
+export const TESTS: Bron[] = ALL.filter(({ path }) => path.endsWith('.test.ts')).map(
+	({ path, absolute }) => ({ path, text: read(absolute) })
+);
 
 const byPath = new Map(BRONNEN.map((b) => [b.path, b.text]));
 

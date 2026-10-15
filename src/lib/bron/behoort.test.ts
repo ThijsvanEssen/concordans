@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { behoort, conclusieVan, dossierNummer, heeftIets, metEersteKamer } from './behoort';
+import { behoort, heeftIets } from './behoort';
+import { conclusieVan } from '$lib/bron/behoort-procesgang';
+import { dossierNummer } from '$lib/bron/behoort-layer';
+import { metEersteKamer } from '$lib/bron/behoort-rules';
 
 type Item = {
 	key: string;

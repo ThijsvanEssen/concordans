@@ -4,13 +4,13 @@ import type { FeedItem } from './feed';
 import {
 	commitmentTitle,
 	dayLines,
-	dossierName,
 	headSurname,
 	headlineOf,
 	inWords,
 	timelineOf,
 	voteHow
 } from './timeline';
+import { dossierName } from '$lib/bron/dossier-naam';
 
 let n = 0;
 const item = (over: Partial<FeedItem>): FeedItem =>

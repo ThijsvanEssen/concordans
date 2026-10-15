@@ -130,7 +130,7 @@ export type HullScene = HullGroups & {
 	focusName: Rect | undefined;
 };
 
-export type HullLayout = { hulls: Hull[]; links: HullLink[]; hitAreas: HullHitArea[] };
+type HullLayout = { hulls: Hull[]; links: HullLink[]; hitAreas: HullHitArea[] };
 
 type Drawn = Hull & { polygon: Point[]; center: Point; members: ReadonlySet<string> };
 

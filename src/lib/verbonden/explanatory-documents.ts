@@ -6,7 +6,8 @@
 import { getExplainedBy } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
 import { isExplanatory } from './chamber';
-import { describe, type Neighbor, type Row } from './rows';
+import { describe, type Row } from './rows';
+import { type Neighbor } from '$lib/api/nodes';
 import { isDerived, readEdge } from './edge-meta';
 import type { Relation } from '$lib/vocabulary';
 

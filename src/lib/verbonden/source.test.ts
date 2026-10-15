@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { get } from 'svelte/store';
 import { fakeApi } from '$lib/test/fakeApi';
-import type { GraphStore } from '$lib/graph/graph-store';
+import type { GraphStore } from '$lib/graph/store/types';
 import type { GraphNode } from '$lib/graph/types';
 import { createVerbondenSource, luiTeLaden } from './source';
 

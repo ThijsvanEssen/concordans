@@ -2,40 +2,27 @@
 	import Periode from '$lib/components/ui/Periode.svelte';
 	import { rangeLabel } from './range';
 	// The filter column of the index: per dimension its options, each with the number of
-	// bronnen it holds under the other filters and a bar for its share. A dimension of
-	// ordered steps (the stages of a bill) is drawn as columns, a period as two fields.
+	// bronnen it holds under the other filters and a bar for its share; a period as two fields.
 
-	export type FacetOption = {
+	type FacetOption = {
 		id: string;
 		label: string;
 		on: boolean;
 		onClick: () => void;
 		count?: number;
 		swatch?: string;
-		/** Under a heading of the same group; `deep` under an option of it (a court in its tier). */
-		indent?: boolean | 'deep';
+		/** Under an option of the same group: a specific area under its rechtsgebied. */
+		indent?: boolean;
 		/** What holds without a choice (the open dossiers): on, but not shown as a filter. */
 		default?: boolean;
 	};
 
-	/** A heading within a list (a group of courts), not itself a filter. */
-	export type FacetHeading = { heading: string; count?: number };
-
 	export type FacetGroup = { id: string; label: string; note?: string } & (
 		| {
 				kind: 'list';
-				options: (FacetOption | FacetHeading)[];
+				options: FacetOption[];
 				/** A long list (the rechtsgebieden) shows this many, the chosen one too, then Alle N. */
 				preview?: number;
-		  }
-		| {
-				kind: 'steps';
-				options: FacetOption[];
-				ends: [string, string];
-				/** What the line under the columns says when none is chosen. */
-				none: string;
-				/** Many narrow columns (years): no number above each. */
-				compact?: boolean;
 		  }
 		| {
 				kind: 'select';
@@ -58,8 +45,6 @@
 				/** One of a few, always one chosen: a choice, not a filter (the Kamer). */
 				kind: 'keuze';
 				value: string;
-				/** The value that filters nothing (`beide`): any other is a filter that is on. */
-				geen?: string;
 				/** `titel` names the option in full where its label is short (Tweede: Tweede Kamer). */
 				options: { value: string; label: string; titel?: string }[];
 				onChange: (v: string) => void;
@@ -67,18 +52,15 @@
 	);
 
 	/** A filter that is on, as a chip above the list. */
-	export type ActiveFilter = { id: string; label: string; onRemove: () => void };
-
-	const isHeading = (o: FacetOption | FacetHeading): o is FacetHeading => 'heading' in o;
+	type ActiveFilter = { id: string; label: string; onRemove: () => void };
 
 	/** Every filter that is on in these groups, in their order. */
 	export function activeFilters(groups: FacetGroup[]): ActiveFilter[] {
 		return groups.flatMap((g): ActiveFilter[] => {
 			switch (g.kind) {
 				case 'list':
-				case 'steps':
 					return g.options.flatMap((o) =>
-						isHeading(o) || !o.on || o.default
+						!o.on || o.default
 							? []
 							: [{ id: `${g.id}:${o.id}`, label: o.label, onRemove: o.onClick }]
 					);
@@ -102,11 +84,9 @@
 					return g.value
 						? [{ id: g.id, label: `${g.label}: ${g.value}`, onRemove: () => g.onChange('') }]
 						: [];
-				case 'keuze': {
-					const on = g.geen !== undefined && g.value !== g.geen;
-					const label = g.options.find((o) => o.value === g.value)?.label ?? g.value;
-					return on ? [{ id: g.id, label, onRemove: () => g.onChange(g.geen!) }] : [];
-				}
+				// A choice, not a filter: no chip.
+				case 'keuze':
+					return [];
 			}
 		});
 	}
@@ -141,13 +121,12 @@
 		if (!n || alle[g.id]) return g.options;
 		let rank = 0;
 		return g.options.filter((o) => {
-			if (!isHeading(o) && o.indent) return true;
-			return rank++ < n || (!isHeading(o) && o.on);
+			if (o.indent) return true;
+			return rank++ < n || o.on;
 		});
 	};
 	/** The options a preview counts: all but the indented ones. */
-	const counted = (g: FacetGroup & { kind: 'list' }) =>
-		g.options.filter((o) => isHeading(o) || !o.indent).length;
+	const counted = (g: FacetGroup & { kind: 'list' }) => g.options.filter((o) => !o.indent).length;
 	/**
 	 * A list longer than LANG shows VOORPROEF, then Alle N, where its page set no `preview`:
 	 * the fifty fracties of Actueel were fifty stops of the keyboard before the first event
@@ -173,26 +152,18 @@
 
 			{#if g.kind === 'list'}
 				<ul class="options">
-					{#each shown(g) as o, i (isHeading(o) ? `h${i}` : o.id)}
-						{#if isHeading(o)}
-							<li class="subhead">
-								<span>{o.heading}</span>
-								{#if o.count !== undefined && !hidden}<span class="n">{formatCount(o.count)}</span
-									>{/if}
-							</li>
-						{:else}
-							<li>
-								<FilterOptie
-									label={o.label}
-									on={o.on}
-									onToggle={o.onClick}
-									count={hidden ? null : o.count}
-									bezig={pending && o.count !== undefined}
-									swatch={o.swatch}
-									indent={o.indent}
-								/>
-							</li>
-						{/if}
+					{#each shown(g) as o (o.id)}
+						<li>
+							<FilterOptie
+								label={o.label}
+								on={o.on}
+								onToggle={o.onClick}
+								count={hidden ? null : o.count}
+								bezig={pending && o.count !== undefined}
+								swatch={o.swatch}
+								indent={o.indent}
+							/>
+						</li>
 					{/each}
 				</ul>
 				{#if voorproef(g) && counted(g) > voorproef(g)!}
@@ -202,21 +173,6 @@
 						>
 					</p>
 				{/if}
-			{:else if g.kind === 'steps'}
-				<!-- De fasen als rijen, zoals elk ander filter; geen staafjes. -->
-				<ul class="options" aria-label={g.label}>
-					{#each g.options as o (o.id)}
-						<li>
-							<FilterOptie
-								label={o.label}
-								on={o.on}
-								onToggle={o.onClick}
-								count={hidden ? null : o.count}
-								bezig={pending && o.count !== undefined}
-							/>
-						</li>
-					{/each}
-				</ul>
 			{:else if g.kind === 'select'}
 				{@const sel = g}
 				<!-- One of many: a text menu (docs/bediening.md), the count beside each option. -->
@@ -296,25 +252,6 @@
 	.alle {
 		margin: var(--s-1) 0 0;
 		font-size: var(--t-meta);
-	}
-	.subhead {
-		display: flex;
-		justify-content: space-between;
-		padding: var(--s-2) 0 2px;
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-2);
-	}
-	.subhead:first-child {
-		padding-top: 0;
-	}
-	.n {
-		margin-left: auto;
-		padding-left: var(--s-2);
-		font-size: var(--t-micro);
-		font-weight: 400;
-		font-variant-numeric: tabular-nums;
-		color: var(--ink-3);
 	}
 
 	.text {

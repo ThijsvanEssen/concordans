@@ -9,9 +9,9 @@ import { partsOf } from './article-parts';
 export type Segment = { op: 'eq' | 'del' | 'ins'; text: string };
 
 /** One lid (or the whole text of an article without leden), with its onderdelen. */
-export type Unit = { number: string | null; text: string };
+type Unit = { number: string | null; text: string };
 
-export type RowKind = 'same' | 'changed' | 'rewritten' | 'added' | 'removed';
+type RowKind = 'same' | 'changed' | 'rewritten' | 'added' | 'removed';
 
 export type CompareRow = {
 	kind: RowKind;
@@ -22,7 +22,7 @@ export type CompareRow = {
 };
 
 /** Above this share of changed characters a lid is shown as old and new, unmarked. */
-export const REWRITTEN = 0.5;
+const REWRITTEN = 0.5;
 
 /** Pairs whose shared words fall below this are an insertion and a removal. */
 const PAIRED = 0.35;
@@ -127,7 +127,7 @@ function tidy(segments: Segment[]): Segment[] {
 }
 
 /** The share of the longer text that a change touches, 0 to 1. */
-export function changedShare(segments: Segment[]): number {
+function changedShare(segments: Segment[]): number {
 	let same = 0;
 	let old = 0;
 	let now = 0;
@@ -240,7 +240,7 @@ export const sameText = (a: string | null | undefined, b: string | null | undefi
 const lidName = (r: CompareRow) => (r.new ?? r.old)?.number ?? null;
 
 /** "lid 4", "leden 1, 3 en 5"; null when the article has no leden. */
-export function namedLeden(numbers: string[]): string | null {
+function namedLeden(numbers: string[]): string | null {
 	if (numbers.length === 0) return null;
 	if (numbers.length === 1) return `lid ${numbers[0]}`;
 	return `leden ${joinAnd(numbers)}`;
@@ -348,7 +348,7 @@ export type Formulation<V extends VersionLike = VersionLike> = {
 	segments: Segment[];
 };
 
-export type LidHistory<V extends VersionLike = VersionLike> = {
+type LidHistory<V extends VersionLike = VersionLike> = {
 	formulations: Formulation<V>[];
 	/** The tekstversie in which the lid no longer occurs, if it went. */
 	removedIn: Wording<V> | null;

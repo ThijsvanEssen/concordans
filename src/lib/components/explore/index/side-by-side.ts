@@ -7,7 +7,7 @@ import type { Ministry } from './government';
 // protocol order, the minister-president first.
 
 type Detail = Schema<'CabinetDetailDTO'>;
-export type CabinetMinistry = NonNullable<Detail['ministries']>[number];
+type CabinetMinistry = NonNullable<Detail['ministries']>[number];
 export type CabinetSeat = CabinetMinistry['seats'][number];
 
 export type SideBySideRow<Cell> = {

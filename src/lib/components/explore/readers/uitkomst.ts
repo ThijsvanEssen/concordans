@@ -6,7 +6,7 @@
 export const strekking = (outcome: string | null | undefined): string | null =>
 	outcome?.trim() ? `strekt tot ${outcome.trim()}` : null;
 
-export type Bevinding = {
+type Bevinding = {
 	article: string;
 	protocol?: string | null;
 	combined_with?: string | null;
@@ -16,7 +16,7 @@ export type Bevinding = {
 
 /** One finding: `schending van art. 13 in samenhang met art. 8`, `geen schending van art. 1
  *  van Protocol nr. 1`, `schending van art. 2 (procedureel)`. */
-export function bevinding(b: Bevinding): string {
+function bevinding(b: Bevinding): string {
 	const artikel = `art. ${b.article}${b.protocol ? ` van Protocol nr. ${b.protocol}` : ''}`;
 	const samen = b.combined_with ? ` in samenhang met art. ${b.combined_with}` : '';
 	const aspect = b.aspect ? ` (${b.aspect})` : '';

@@ -8,7 +8,7 @@ import type { Schema } from '$lib/api/types';
 type Entry = Schema<'AnnexEntryDTO'>;
 
 export type AnnexItem = { name: string; note: string | null; children: AnnexItem[] };
-export type AnnexGroup = { heading: string | null; items: AnnexItem[] };
+type AnnexGroup = { heading: string | null; items: AnnexItem[] };
 
 export function annexGroups(entries: readonly Entry[]): AnnexGroup[] {
 	const groups: AnnexGroup[] = [];

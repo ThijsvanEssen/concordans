@@ -63,7 +63,7 @@ export type Dienstregeling = {
 };
 
 /** Nodes asked at most: a budget with hundreds of amendments still fits. */
-export const CAP = 1000;
+const CAP = 1000;
 
 const str = (v: unknown) => (typeof v === 'string' ? v : v == null ? '' : String(v));
 const lijst = (v: unknown) => (Array.isArray(v) ? (v as unknown[]) : []);
@@ -129,7 +129,7 @@ const vroeger = (a: Stuk, b: Stuk) =>
 	a.datum.localeCompare(b.datum) || Number(a.nummer) - Number(b.nummer);
 
 /** Above this many days the columns are weeks, so a long dossier stays one screen wide. */
-export const MAX_DAGEN = 14;
+const MAX_DAGEN = 14;
 
 /** The Monday of the week of a day, as YYYY-MM-DD. */
 export function maandagVan(dag: string): string {
@@ -255,7 +255,7 @@ export const aantalAmendementen = (perSoort: Record<string, number> | null | und
 		.reduce((n, [, v]) => n + v, 0);
 
 /** One step of an amendment's route: what happened on a day, and the papers of it. */
-export type Stap = {
+type Stap = {
 	wat: 'ingediend' | 'gewijzigd' | 'samengevoegd';
 	datum: string;
 	stukken: Stuk[];

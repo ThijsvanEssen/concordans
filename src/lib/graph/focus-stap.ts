@@ -7,7 +7,7 @@
  * tab on a link to another bron (?paneel=netwerk) shows the canvas while the old bron is
  * still selected: that bron is no anchor for the new address (#48, 12 Oct 2026).
  */
-export type FocusStap = { soort: 'laden' } | { soort: 'verdiepen'; anker: string } | null;
+type FocusStap = { soort: 'laden' } | { soort: 'verdiepen'; anker: string } | null;
 
 export interface FocusStand {
 	focus: string;

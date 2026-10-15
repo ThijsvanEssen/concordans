@@ -17,7 +17,8 @@ import {
 } from '$lib/vocabulary';
 import { isInternational } from './filter';
 import { formatCount } from '$lib/text/getal';
-import { rowOfNeighbor, type Neighbor, type Row } from './rows';
+import { rowOfNeighbor, type Row } from './rows';
+import { type Neighbor } from '$lib/api/nodes';
 import type { JudgmentOrder } from './loaders';
 import { chamberOf } from './chamber';
 import { CHAMBER_NAME, type Chamber } from '$lib/components/parliamentary/chamber';
@@ -63,7 +64,7 @@ export type Loader =
 	| 'member-dossiers'
 	| 'faction-dossiers';
 
-export type GroupDef = {
+type GroupDef = {
 	id: string;
 	label: string;
 	/** The bronnen of the group in the plural, for "Alle 1.064 uitspraken". */

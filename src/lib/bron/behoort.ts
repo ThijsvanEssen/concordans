@@ -12,19 +12,6 @@ import { dossierNummer, laagVan, type Behoort, type Regel } from './behoort-laye
 import { procesgangIds } from './behoort-procesgang';
 import { BANDS, kernOf, type BucketLine, type Context } from './behoort-rules';
 
-export {
-	dossierNummer,
-	laagVan,
-	uitkomstVan,
-	type Bak,
-	type Behoort,
-	type Groep,
-	type Laag,
-	type Regel
-} from './behoort-layer';
-export { conclusieVan, procesgangIds } from './behoort-procesgang';
-export { metEersteKamer } from './behoort-rules';
-
 /** An ordinary line of the table: the first bron of its bucket, where it has one. */
 function bucketLine(line: BucketLine, c: Context): Regel[] {
 	const n = findBucket(c.light, line.bak)?.items?.[0];

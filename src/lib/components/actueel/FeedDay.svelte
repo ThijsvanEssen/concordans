@@ -26,7 +26,6 @@
 		KIND_LABEL,
 		countLine,
 		dayLabel,
-		dossierLabel,
 		foldTitle,
 		publicationCite,
 		summaryCounts,
@@ -36,6 +35,7 @@
 		type Fold,
 		type FeedItem
 	} from './feed';
+	import { dossierLabel } from '$lib/bron/dossier-naam';
 	import { headlineOf, voteHow, vormVanFeed } from './timeline';
 	import { getoondOnder, plekVan, termenVan, type Plek } from './treffer';
 	import {

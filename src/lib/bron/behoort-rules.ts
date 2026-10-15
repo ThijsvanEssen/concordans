@@ -50,9 +50,9 @@ export type BucketLine = {
 };
 
 /** A line of its own making; `kern` the buckets whose bronnen it names. */
-export type OwnLine = { kern: Bak[]; lines: (c: Context) => Regel[] };
+type OwnLine = { kern: Bak[]; lines: (c: Context) => Regel[] };
 
-export type Band = {
+type Band = {
 	lines: (BucketLine | OwnLine)[];
 	/** A bucket listed below the lines once it holds `atLeast` bronnen, its rows on opening. */
 	groups?: { id: string; label: string; bak: Bak; atLeast: number }[];

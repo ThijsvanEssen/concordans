@@ -124,7 +124,7 @@ export const isConclusion = (ecli: string | null | undefined): boolean =>
 	courtOf(ecli).code === 'PHR';
 
 /** What a judgment's detail gives to cite it and its overwegingen. */
-export type UitspraakVoorCitaat = {
+type UitspraakVoorCitaat = {
 	ecli?: string | null;
 	props?: Record<string, unknown> | null;
 	advocate_general?: string | null;

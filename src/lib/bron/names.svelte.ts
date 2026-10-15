@@ -9,7 +9,7 @@ import { onForget } from '$lib/util/forget';
 type Named = { key: string; names: (string | null | undefined)[] };
 
 /** `GrKÖ` and `grko`, `GroenLinks-PvdA` and `groenlinks pvda` compare equal. */
-export const normalName = (s: string) =>
+const normalName = (s: string) =>
 	s
 		.normalize('NFD')
 		.replace(/[̀-ͯ]/g, '')

@@ -33,11 +33,11 @@ import {
 } from './resolve-query';
 
 type Hit = Schema<'SearchResultItem'>;
-export type Hits = Partial<Record<SearchKind, Hit[]>>;
+type Hits = Partial<Record<SearchKind, Hit[]>>;
 type LaneId = Lane['id'];
 
 /** `slow`: it gave up on its own time (`slowApi`, 30 s), not on an error of the API. */
-export type LaneStatus = 'done' | 'loading' | 'failed' | 'slow';
+type LaneStatus = 'done' | 'loading' | 'failed' | 'slow';
 
 type LaneState = {
 	/** What it last answered: it stays while the next query runs. */
@@ -48,7 +48,7 @@ type LaneState = {
 };
 
 /** What the requests are asked for: the query, the kinds in scope, the period and the mode. */
-export type SearchRequest = {
+type SearchRequest = {
 	term: string;
 	kinds: readonly SearchKind[];
 	from: string;

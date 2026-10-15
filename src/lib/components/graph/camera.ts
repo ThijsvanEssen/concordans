@@ -3,8 +3,8 @@
 // narrower beside a reader (`compact`), so each width keeps its own camera.
 import { onForget } from '$lib/util/forget';
 
-export type Camera = { x: number; y: number; ratio: number };
-export type CameraWidth = 'full' | 'compact';
+type Camera = { x: number; y: number; ratio: number };
+type CameraWidth = 'full' | 'compact';
 
 const cameras = new Map<CameraWidth, Camera>();
 const drawn = new Map<CameraWidth, ReadonlySet<string>>();

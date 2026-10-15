@@ -108,9 +108,9 @@ export function lawHeadLine(
 }
 
 /** The same treaty elsewhere (`same_treaty`): the BWB text of a Verdragenbank record, or the other way. */
-export type TreatyRef = Pick<Schema<'LinkedInstrumentDTO'>, 'key' | 'bwb_id'>;
+type TreatyRef = Pick<Schema<'LinkedInstrumentDTO'>, 'key' | 'bwb_id'>;
 
-export type TreatyLink = {
+type TreatyLink = {
 	label: string;
 	/** A bron in Concordans, or the Verdragenbank itself where the dataset lacks the record. */
 	target: { kind: 'bron'; key: string } | { kind: 'url'; url: string };

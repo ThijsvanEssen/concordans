@@ -1,7 +1,7 @@
 // A period as a filter chip says it: one day or one year once, a period from and to.
 import { korteDatum } from '$lib/text/datum';
 
-export type RangeUnit = 'year' | 'date';
+type RangeUnit = 'year' | 'date';
 
 const shown = (value: string, unit: RangeUnit) =>
 	!value ? '' : unit === 'year' ? value.slice(0, 4) : korteDatum(value);

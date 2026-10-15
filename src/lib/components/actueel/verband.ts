@@ -15,7 +15,7 @@ import { headSurname } from './timeline';
 import { artikelenGewijzigd, publicationCite, type FeedItem } from './feed';
 
 /** A piece of a line: words, or a bron by its id and its readable address. */
-export type Schakel = { tekst: string; ref?: string; href?: string | null };
+type Schakel = { tekst: string; ref?: string; href?: string | null };
 
 /** A line: what it says (`Gaat in op`), then its pieces. */
 export type Verband = { label: string; delen: Schakel[] };
@@ -25,7 +25,7 @@ type Artikel = Schema<'FeedArticleDTO'>;
 type Wet = Schema<'FeedChangedInstrumentDTO'>;
 
 /** Bronnen named on one line; the rest counted. */
-export const GENOEMD = 6;
+const GENOEMD = 6;
 
 /** `A, B en C`, each piece a bron: the pieces between them words. */
 function opsomming(lijst: Schakel[][], max = GENOEMD): Schakel[] {

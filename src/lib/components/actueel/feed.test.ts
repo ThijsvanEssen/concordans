@@ -11,13 +11,13 @@ import {
 	publicationCite,
 	type FeedItem,
 	atomHref,
-	dossierLabel,
 	feedStand,
 	foldTitle,
 	kindFromParam,
 	standLine,
 	titleOf
 } from './feed';
+import { dossierLabel } from '$lib/bron/dossier-naam';
 
 describe('kindFromParam', () => {
 	it('reads a kind as the API names it, and one of before API 0.48 as the TK word', () => {

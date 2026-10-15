@@ -23,7 +23,7 @@ export const soortVan = (d: Pick<Besluit, 'kind'>) => d.kind?.trim() || NO_DECIS
 
 export type Filter = { soort?: string; uitkomst?: Uitkomst; jaar?: string; stem?: Stem };
 
-export type Telling = Record<Uitkomst, number> & { totaal: number; voor: number; tegen: number };
+type Telling = Record<Uitkomst, number> & { totaal: number; voor: number; tegen: number };
 
 const leeg = (): Telling => ({
 	totaal: 0,
@@ -130,7 +130,7 @@ const UITKOMST: Record<Uitkomst, string> = {
 };
 
 /** Per decision of a motie: the researcher's strekking, the dictum, indieners and fracties. */
-export type MotieVelden = ReadonlyMap<
+type MotieVelden = ReadonlyMap<
 	string,
 	{ strekking?: string; dictum?: string | null; indieners?: string; fracties?: string }
 >;
@@ -140,7 +140,7 @@ export const KOLOM_STREKKING = 'strekking (eigen codering)';
 export const kolomStem = (fractie: string) => `stem ${fractie}`;
 
 /** The export as rows of cells under a head: what the CSV writes. */
-export type CsvTabel = { kop: string[]; rijen: CsvCell[][] };
+type CsvTabel = { kop: string[]; rijen: CsvCell[][] };
 
 export function csvTabel(
 	lijst: readonly Besluit[],

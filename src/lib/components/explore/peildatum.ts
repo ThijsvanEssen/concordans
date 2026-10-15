@@ -59,7 +59,7 @@ export function versionsByYear<V extends Version>(versions: V[]): [string, V[]][
 	return out;
 }
 
-export type AtArticle = {
+type AtArticle = {
 	/** The version of the article: unique in the list. */
 	id: string;
 	/** The article as it is now, to link to; null when it is no longer in the law. */

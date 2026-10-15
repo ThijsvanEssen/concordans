@@ -5,7 +5,7 @@
 // TODO(backend B6): `parseArticleParts` goes when every article carries `parts`.
 import { lidAnchor, onderdeelAnchor, parentAnchor } from './anchor';
 
-export type ArticlePartKind = 'aanhef' | 'lid' | 'onderdeel' | 'tekst';
+type ArticlePartKind = 'aanhef' | 'lid' | 'onderdeel' | 'tekst';
 
 export type ArticlePart = {
 	/** Anchor: `aanhef`, `lid-2`, `lid-2-onder-a`, `onder-b`. Null for text no reference points at. */

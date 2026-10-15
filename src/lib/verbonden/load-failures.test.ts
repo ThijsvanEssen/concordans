@@ -4,14 +4,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { get } from 'svelte/store';
 import { aborted, fail, fakeApi, type FakeAnswer, type ApiPath } from '$lib/test/fakeApi';
-import type { GraphStore } from '$lib/graph/graph-store';
+import type { GraphStore } from '$lib/graph/store/types';
 import type { GraphNode } from '$lib/graph/types';
 import { createVerbondenSource } from './source';
 import { DEFAULT_LOADER_OPTIONS, LOADERS, type LoaderContext } from './loaders';
 import { loadDossierHub } from './dossier-hub';
 import { proposedTextOf } from './proposed-text';
 import type { Loader } from './groups';
-import type { Neighbor, Row } from './rows';
+import type { Row } from './rows';
+import type { Neighbor } from '$lib/api/nodes';
 import { filterGroups } from './view';
 import { EMPTY_FILTER } from './filter';
 

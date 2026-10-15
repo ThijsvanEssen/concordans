@@ -4,7 +4,7 @@
 // `data-zijscroll`.
 
 /** Up to this width a screen counts as narrow. */
-export const SMAL = 640;
+const SMAL = 640;
 
 /** The page or a scroll area wider than it is, each as `tag.class +Npx`. */
 export function zijscroll(root: Document = document): string[] {

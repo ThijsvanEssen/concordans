@@ -34,7 +34,7 @@ export const separatorBefore = (i: number, n: number, more = false): string =>
 	i === 0 ? '' : i === n - 1 && !more ? ' en ' : ', ';
 
 /** The others past a list, `en 3 andere`, counted with their own noun. */
-export type Others = { n: number; one: string; many: string };
+type Others = { n: number; one: string; many: string };
 
 /** `a`, `a en b`, `a, b en c`; with others, `a, b en 3 andere`. */
 export function joinAnd(parts: readonly string[], others?: Others): string {

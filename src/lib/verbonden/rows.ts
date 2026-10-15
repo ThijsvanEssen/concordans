@@ -29,7 +29,6 @@ import { isDerived, positionsLabel, readEdge } from './edge-meta';
 import { woordenVan } from './hoe';
 import type { Bereik } from '$lib/text/voetnoten';
 
-export type { Neighbor } from '$lib/api/nodes';
 import type { Neighbor } from '$lib/api/nodes';
 
 export type Row = {
@@ -711,7 +710,7 @@ export function historyRow(e: {
 }
 
 /** An article a judgment cites of a law the dataset lacks (`unresolved_citations`). */
-export type UnresolvedCitation = {
+type UnresolvedCitation = {
 	law: string;
 	article_number: string;
 	leden?: string[];
@@ -719,7 +718,7 @@ export type UnresolvedCitation = {
 };
 
 /** `Artikel 843a Rv`: the article as the judgment cites it, before its law. */
-export const unresolvedTitle = (c: UnresolvedCitation) => `Artikel ${c.article_number} ${c.law}`;
+const unresolvedTitle = (c: UnresolvedCitation) => `Artikel ${c.article_number} ${c.law}`;
 
 /**
  * The articles a judgment cites of laws outside the dataset, as rows without a link:

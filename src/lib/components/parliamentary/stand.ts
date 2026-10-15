@@ -12,9 +12,9 @@ type Dossier = Schema<'DossierSummaryDTO'>;
 type Detail = Schema<'DossierDetailResponse'>;
 
 /** `unknown`: the source gives no mark, which is not the same as not done. */
-export type BodyState = 'done' | 'now' | 'open' | 'none' | 'unknown';
+type BodyState = 'done' | 'now' | 'open' | 'none' | 'unknown';
 export type Body = { name: string; short: string; state: BodyState };
-export type StandGroup = 'ek' | 'tk' | 'ingediend' | 'afgehandeld' | 'geen';
+type StandGroup = 'ek' | 'tk' | 'ingediend' | 'afgehandeld' | 'geen';
 
 export type Stand = {
 	bodies: [Body, Body, Body];
@@ -95,7 +95,7 @@ export function stand(d: Dossier): Stand | null {
 }
 
 /** The mark of a box, as Uitkomst draws it. */
-export type Mark = 'ja' | 'nee' | 'nu' | 'open' | 'klaar';
+type Mark = 'ja' | 'nee' | 'nu' | 'open' | 'klaar';
 /** A box of the bar: the body, its mark and word, and a line with the day under it. */
 export type Box = { body: string; mark: Mark; word: string; line: string };
 

@@ -16,11 +16,20 @@ import {
 	publicatie,
 	relationLabel,
 	soortVan,
-	woordenVan,
-	ZONDER_WOORDEN
+	woordenVan
 } from './hoe';
 import { wetRijVanRelated } from './loaders';
 import type { Row } from './rows';
+
+/**
+ * The relations the API's catalogue has (lawgraph docs/data-model.md) that the reader never
+ * sees as a verbinding, each with the reason. Every other relation has its words in hoe.ts, for
+ * every pair of collections the catalogue lets it join.
+ */
+const ZONDER_WOORDEN: Partial<Record<Relation, string>> = {
+	VERSION_OF:
+		'Een versie is de bron zelf op een dag: de lezer bladert erdoor, Verbonden en het netwerk tonen haar niet als verbinding.'
+};
 
 const row = (r: Partial<Row>): Row =>
 	({

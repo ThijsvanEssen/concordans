@@ -33,12 +33,9 @@ describe('list pages and the feed', () => {
 		const day = bron('lib/components/actueel/FeedDay.svelte');
 		expect(day).toMatch(/\btermen: readonly string\[\]/);
 		expect(day).toMatch(/plekVan\(/);
-		// One rule for the words: woordIn and markeer live in treffer.ts alone.
+		// One rule for the words: markeer lives in treffer.ts alone.
 		expect(
-			overtreders(
-				(t) => /export function (woordIn|markeer)\b/.test(t),
-				[plek('lib/text/treffer.ts')]
-			)
+			overtreders((t) => /export function markeer\b/.test(t), [plek('lib/text/treffer.ts')])
 		).toEqual([]);
 	});
 

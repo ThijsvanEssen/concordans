@@ -2,7 +2,7 @@
 // no part. A vacant seat is nobody's vote: it shows none, whatever its fractie voted (UX-toets
 // 0.79.44, #39: the empty D66 seat on kabinet-Schoof read "tegen").
 
-export type Kant = 'voor' | 'tegen' | 'other';
+type Kant = 'voor' | 'tegen' | 'other';
 
 /** The side of a seat on the vote shown; null: no vote shown, or a vacant seat. */
 export function stemVanStoel(

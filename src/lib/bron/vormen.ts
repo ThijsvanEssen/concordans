@@ -22,7 +22,7 @@ export type Vorm =
 	| 'overig';
 
 /** Hoe een vorm getekend wordt: gevuld, gevuld met een gat, of als lijn. */
-export type Wijze = 'vul' | 'gat' | 'lijn';
+type Wijze = 'vul' | 'gat' | 'lijn';
 
 const HEX = 'M8 1 14.5 4.75v7.5L8 16 1.5 12.25v-7.5z';
 const HEX_O = 'M8 2.4 13.3 5.45v6.1L8 14.6 2.7 11.55v-6.1z';

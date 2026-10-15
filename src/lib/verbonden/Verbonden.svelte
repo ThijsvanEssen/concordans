@@ -30,7 +30,7 @@
 	import { afterTick } from '$lib/util/after-tick';
 	import { bronHref, openHref, refId } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import type { GraphStore } from '$lib/graph/graph-store';
+	import type { GraphStore } from '$lib/graph/store/types';
 	import type { CanvasRow } from '$lib/graph/store/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import {

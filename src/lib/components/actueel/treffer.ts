@@ -5,9 +5,8 @@
 // cyberbeveiligingsvereisten …`. Where in a text the word stands, and an item without
 // `matched` (a fold of many), the front end finds by the API's rule ($lib/text/treffer).
 import { markeer, rondTreffer, type Deel } from '$lib/text/treffer';
-import { dossierLabel, type FeedItem } from './feed';
-
-export type { Deel };
+import { type FeedItem } from './feed';
+import { dossierLabel } from '$lib/bron/dossier-naam';
 
 /** Where the words are, when the row does not show them: the place, and the words around. */
 export type Plek = { waar: 'In de titel' | 'In de tekst' | 'In dossier'; delen: Deel[] };

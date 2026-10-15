@@ -6,7 +6,7 @@ import type { Bereik } from './voetnoten';
 
 const KEY = Symbol('voetnoten');
 
-export class NootStand {
+class NootStand {
 	/** The anchor of the open note: `fn-35`. */
 	open = $state<string | null>(null);
 	/** The bron whose citations are marked in the open note: the article a row is read for. */

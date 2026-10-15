@@ -41,8 +41,5 @@ export const nrWoord = (nrs: readonly Nr[]) => (nrs.length > 1 ? 'nrs.' : 'nr.')
 export const nrsTekst = (nrs: readonly Nr[]) =>
 	`${nrWoord(nrs)} ${nrs.map((n, i) => separatorBefore(i, nrs.length) + n.nummer).join('')}`;
 
-/** A phrase as plain words: "Vervangt nrs. 26, 30 en 38". */
-export const alsTekst = (z: Zin) => `${z.woord} ${nrsTekst(z.nrs)}`;
-
 /** A replaced stuk was not voted on as itself: its vote, if any, is that of what replaced it. */
 export const eigenUitslag = (doc: Keten) => !(doc.replaced_by ?? []).length;

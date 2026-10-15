@@ -18,7 +18,6 @@ function rij() {
 		title: 'Wet betaalbare huur',
 		href: '/dossiers/36496',
 		onToggle,
-		bewaar: false,
 		body
 	});
 	return onToggle;

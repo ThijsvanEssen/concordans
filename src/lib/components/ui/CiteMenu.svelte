@@ -15,7 +15,6 @@
 		align = 'right',
 		buttonClass = 'btn',
 		caret = false,
-		onToggle,
 		onder
 	}: {
 		items: CiteItem[];
@@ -25,8 +24,6 @@
 		align?: 'left' | 'right';
 		buttonClass?: string;
 		caret?: boolean;
-		/** Told when the menu opens or closes: the row it belongs to can stay raised. */
-		onToggle?: (open: boolean) => void;
 		/** Under the forms, after a rule: Kopieer tekst, the official text (Thijs, 10 Oct: two
 		 *  actions in the head, the rest inside them). Given the function that closes it. */
 		onder?: Snippet<[() => void]>;
@@ -35,26 +32,22 @@
 	let open = $state(false);
 	let button = $state<HTMLElement | null>(null);
 	const copier = createCopier();
-	const setOpen = (value: boolean) => {
-		open = value;
-		onToggle?.(value);
-	};
 
 	function copy(text: string) {
 		copier.copy(text, 'cite').catch((e) => report('Citeren', e));
-		setOpen(false);
+		open = false;
 	}
 </script>
 
 {#if items.length > 0}
-	<span class="cite" use:menu={{ open, close: () => setOpen(false) }}>
+	<span class="cite" use:menu={{ open, close: () => (open = false) }}>
 		<button
 			type="button"
 			class={buttonClass}
 			bind:this={button}
 			aria-haspopup="menu"
 			aria-expanded={open}
-			onclick={() => setOpen(!open)}
+			onclick={() => (open = !open)}
 			>{copier.label('cite', 'Citeer')}{#if caret}<Caret {open} />{/if}</button
 		>
 		<span class="sr-only" aria-live="polite">{copier.announcement}</span>
@@ -63,7 +56,7 @@
 				class="tekstmenu__lijst is-breed pop"
 				role="menu"
 				aria-label="Citeer {name}"
-				use:topLayer={{ anchor: button, close: () => setOpen(false), align }}
+				use:topLayer={{ anchor: button, close: () => (open = false), align }}
 			>
 				<div class="pop__label">Kopieer als</div>
 				{#each items as item (item.kind)}
@@ -78,7 +71,7 @@
 					>
 				{/each}
 				{#if onder}
-					<div class="tekstmenu__onder">{@render onder(() => setOpen(false))}</div>
+					<div class="tekstmenu__onder">{@render onder(() => (open = false))}</div>
 				{/if}
 			</div>
 		{/if}

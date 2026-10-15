@@ -25,7 +25,7 @@ export const LEAVE_MS = 250;
 
 type Edges = Pick<DOMRect, 'top' | 'bottom' | 'left' | 'right'>;
 type Size = { width: number; height: number };
-export type Align = 'left' | 'right';
+type Align = 'left' | 'right';
 
 /**
  * Where a box goes by its anchor: `up` when it does not fit below and there is more room above,
@@ -76,7 +76,7 @@ function clippers(el: HTMLElement): HTMLElement[] {
 
 const popover = (el: HTMLElement) => typeof el.showPopover === 'function';
 
-export type TopLayer = {
+type TopLayer = {
 	/** What the box hangs from. */
 	anchor: HTMLElement;
 	/** Closes the box: its anchor has scrolled out of view. */

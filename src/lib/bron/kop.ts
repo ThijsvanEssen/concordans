@@ -26,7 +26,7 @@ export const kopVanDossier = (d: Schema<'DossierDetailResponse'>): GraphNode =>
 	syntheticNode('dossiers', d.key, d.title ?? d.number, { ...d, label: d.number });
 
 /** An article from its detail, with the names of its law the light node carries. */
-export const kopVanArtikel = (d: Schema<'ArticleDetailResponse'>): GraphNode =>
+const kopVanArtikel = (d: Schema<'ArticleDetailResponse'>): GraphNode =>
 	syntheticNode('articles', d.article.key, d.article.display_name, {
 		...d.article,
 		instrument_citation_title: d.instrument?.citation_title ?? undefined,

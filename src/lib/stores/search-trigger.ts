@@ -6,7 +6,7 @@ import { getContext, setContext } from 'svelte';
 const KEY = Symbol('search-opener');
 
 /** Opens the search; with a query, the field starts with that text. */
-export type SearchOpener = (query?: string) => void;
+type SearchOpener = (query?: string) => void;
 
 export function provideSearchOpener(open: SearchOpener): void {
 	setContext(KEY, open);

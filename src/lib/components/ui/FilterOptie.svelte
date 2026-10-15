@@ -20,8 +20,7 @@
 		wrap = false,
 		gedimd = false,
 		inline = false,
-		title,
-		naam
+		title
 	}: {
 		label: string;
 		on: boolean;
@@ -32,8 +31,8 @@
 		swatch?: string | null;
 		/** Before the label, after the box: the glyph of a kind, the line of a verbinding. */
 		voor?: Snippet;
-		/** Under a heading of the same group; `deep` under an option of it. */
-		indent?: boolean | 'deep';
+		/** Under an option of the same group: a specific area under its rechtsgebied. */
+		indent?: boolean;
 		/** Nothing of this kind: the option stays, quieter. */
 		empty?: boolean;
 		/** Its count is still being read: "…" in its place. */
@@ -45,8 +44,6 @@
 		/** On a line with other things, as wide as its label: "netwerk" in a group's heading. */
 		inline?: boolean;
 		title?: string;
-		/** The name a screen reader says, when the label is short for it: "netwerk". */
-		naam?: string;
 	} = $props();
 </script>
 
@@ -57,10 +54,8 @@
 	class:leeg={empty}
 	class:gedimd
 	class:in={indent}
-	class:diep={indent === 'deep'}
 	class:inline
 	aria-pressed={on}
-	aria-label={naam}
 	title={title ?? label}
 	onclick={onToggle}
 >
@@ -122,9 +117,6 @@
 	}
 	.in {
 		padding-left: var(--s-3);
-	}
-	.diep {
-		padding-left: var(--s-5);
 	}
 	.kleur {
 		width: var(--s-3);

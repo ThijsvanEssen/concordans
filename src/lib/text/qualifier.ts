@@ -5,7 +5,7 @@
 import { formatAnchor } from './anchor';
 import { ORDINAL_WORDS, ordinalNumber } from './getal';
 
-export type Qualifier = { lid?: string; onderdeel?: string; aanhef?: boolean };
+type Qualifier = { lid?: string; onderdeel?: string; aanhef?: boolean };
 
 const ORDINAL = `(${ORDINAL_WORDS.join('|')})`;
 

@@ -1,7 +1,7 @@
 import { render } from 'svelte/server';
 import { describe, expect, it, vi } from 'vitest';
 import type { GraphNode } from '$lib/graph/types';
-import type { GraphStore } from '$lib/graph/graph-store';
+import type { GraphStore } from '$lib/graph/store/types';
 import { EMPTY_FILTER } from './filter';
 import { GROUPS } from './groups';
 import { DEFAULT_LOADER_OPTIONS } from './loaders';

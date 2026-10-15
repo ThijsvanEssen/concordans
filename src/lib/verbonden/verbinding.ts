@@ -176,7 +176,7 @@ const ecliOf = (node: GraphNode) =>
  * (`edge_meta=passages`, asked when the card opens): the neighbour the citing judgment's
  * bucket gives for the edge's other end.
  */
-export function metPassages(v: Verbinding, source: GraphNode, n: Neighbor): Verbinding {
+function metPassages(v: Verbinding, source: GraphNode, n: Neighbor): Verbinding {
 	const p = plaatsVanEdge((n.meta ?? {}) as Record<string, unknown>, ecliOf(source));
 	if (!p.snippet) return v;
 	return {

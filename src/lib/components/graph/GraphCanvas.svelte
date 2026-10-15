@@ -29,7 +29,7 @@
 	import { edgeKey, readEdge } from '$lib/verbonden/edge-meta';
 	import { keyEcli } from '$lib/bron/leesbaar';
 	import { parseNodeId } from '$lib/vocabulary';
-	import type { GraphFilters } from '$lib/graph/graph-store';
+	import type { GraphFilters } from '$lib/graph/store/types';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import { EDGE_WEIGHT, type GraphNodeKind } from '$lib/graph/types';
 	import {

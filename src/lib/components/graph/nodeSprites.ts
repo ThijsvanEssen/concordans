@@ -12,7 +12,7 @@ import type { ContainerKind } from '$lib/graph/container-membership';
 import type { GraphNodeKind } from '$lib/graph/types';
 import { isAmendingRelation, type Relation } from '$lib/vocabulary';
 
-export type Tokens = {
+type Tokens = {
 	paper: string;
 	paper2: string;
 	rule: string;
@@ -220,7 +220,7 @@ export function hullDashFor(kind: ContainerKind): string | undefined {
 	}
 }
 
-export type EdgeStyle = 'solid' | 'dashed' | 'dotted';
+type EdgeStyle = 'solid' | 'dashed' | 'dotted';
 
 /** PART_OF and LED_BY are dotted; a change that is proposed, and a vote, are dashed. */
 export function edgeStyleFor(relation: Relation, status: string | null | undefined): EdgeStyle {

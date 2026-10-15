@@ -14,7 +14,8 @@ import { get } from 'svelte/store';
 import { chamberOf, isExplanatory } from './chamber';
 import { bronKindOf } from './filter';
 import { changeRelationOf, isChangeRelation } from '$lib/vocabulary';
-import { describe, type Neighbor, type Row } from './rows';
+import { describe, type Row } from './rows';
+import { type Neighbor } from '$lib/api/nodes';
 import { kindName } from '$lib/components/explore/law-head';
 
 export type DossierHub = {

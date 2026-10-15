@@ -33,7 +33,7 @@ export const refOf = (
 		? { collection, key, number: typeof props?.label === 'string' ? props.label : '' }
 		: { collection, key };
 
-export type BronHrefOptions = {
+type BronHrefOptions = {
 	/** Position inside the text: `lid-2`, `lid-2-onder-a`, `aanhef`, `rov-5.3`. */
 	at?: string | null;
 	/** False opens the bron in `mode` whatever the current view is. */
@@ -127,10 +127,10 @@ export function buildBronHref(
  * (`has_text` false) opens in the network, as every other bron does (Thijs, 10 Oct:
  * "standaard navigeren naar Netwerk").
  */
-export const opensOnText = (collection: Collection, hasText?: boolean | null) =>
+const opensOnText = (collection: Collection, hasText?: boolean | null) =>
 	collection === 'documents' && hasText !== false;
 
-export type OpenHrefOptions = {
+type OpenHrefOptions = {
 	/** Position inside the text: `lid-2`, `rov-5.3`. */
 	at?: string | null;
 	/** Whether the bron's text is in the data, where the payload says (`has_text`). */

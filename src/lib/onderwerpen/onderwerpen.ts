@@ -1,9 +1,8 @@
 // The API's word rule, and the mark that shows where a row was found: $lib/text/treffer.
 import { textOf } from '$lib/text/words';
 import { isDay } from '$lib/text/datum';
-import { normaal, woordIn } from '$lib/text/treffer';
+import { normaal } from '$lib/text/treffer';
 import { isFeedLaw } from '$lib/components/actueel/filters';
-export { normaal, woordIn };
 
 // A topic followed: the words of the user, looked for in the titles of Actueel. The source has
 // no theme of its own (the TK OData has none, Back-end #3, 9 Oct), so a topic is its words.
@@ -47,7 +46,7 @@ export const sleutelVan = (o: Pick<Onderwerp, 'termen' | 'wet'>) =>
 const wetSleutel = (w: GevolgdeWet) => sleutelVan({ termen: [], wet: w });
 
 /** Where the list follows this law or article; -1 where it does not. */
-export const wetIndex = (lijst: Onderwerp[], w: GevolgdeWet) =>
+const wetIndex = (lijst: Onderwerp[], w: GevolgdeWet) =>
 	lijst.findIndex((o) => o.wet && sleutelVan(o) === wetSleutel(w));
 
 const leesWet = (v: unknown): GevolgdeWet | null => {
@@ -131,12 +130,6 @@ export function volg(termen: string[]) {
 	bewaar([...lijst, { termen: schoon, vorige: null, gezien: null }]);
 }
 
-export function ontvolg(term: string) {
-	const lijst = lees();
-	const i = vindIndex(lijst, term);
-	if (i >= 0) bewaar(lijst.filter((_, j) => j !== i));
-}
-
 /** More words for the topic `term` is in; a word another topic has stays there. */
 export function voegTermenToe(term: string, nieuw: string[]) {
 	const lijst = lees();
@@ -148,7 +141,7 @@ export function voegTermenToe(term: string, nieuw: string[]) {
 	bewaar(lijst);
 }
 
-/** One word less; the last word of a topic stays, as dropping it is `ontvolg`. */
+/** One word less; the last word of a topic stays, as dropping it is `ontvolgOnderwerp`. */
 export function haalTermWeg(term: string) {
 	const lijst = lees();
 	const i = vindIndex(lijst, term);
@@ -223,7 +216,7 @@ export function deelAdres(lijst: Pick<Onderwerp, 'termen' | 'wet'>[]): string {
 }
 
 // `?wet=BWBR0052872` a law, `?wet=BWBR0052872/3` an article of it (a number may hold a `:`).
-export const naarWetParam = (w: GevolgdeWet) =>
+const naarWetParam = (w: GevolgdeWet) =>
 	`${w.bwb.toUpperCase()}${w.artikel ? `/${w.artikel}` : ''}`;
 
 /** The laws of an address; their names come with their first answer (`titel` the id). */

@@ -21,15 +21,6 @@ function patroon(term: string): RegExp | null {
 	return new RegExp(`${begin}${escapeRegExp(woord)}${eind}`, 'giu');
 }
 
-/**
- * Whether `tekst` holds the word: `algoritme` finds `algoritmes`, `AI` finds `AI-modellen` and
- * not `AIV-advies`.
- */
-export function woordIn(term: string, tekst: string | null | undefined): boolean {
-	if (!tekst) return false;
-	return !!patroon(term)?.test(tekst);
-}
-
 /** A piece of a text, the words found in it marked. */
 export type Deel = { tekst: string; mark: boolean };
 

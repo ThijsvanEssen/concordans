@@ -18,13 +18,13 @@ import {
 	metaParts,
 	openLabelOf,
 	passageOf,
-	type Neighbor,
 	type Row,
 	describe as describeBron,
 	caseNumberOf,
 	repeatedTitles,
 	UNNAMED
 } from './rows';
+import { type Neighbor } from '$lib/api/nodes';
 import { positionsLabel } from './edge-meta';
 
 const neighbors = (fixture: { neighbors: { all: unknown[] } }) =>

@@ -6,7 +6,6 @@
 	let {
 		label,
 		onclick,
-		aan = false,
 		disabled = false,
 		class: className = '',
 		children
@@ -14,8 +13,6 @@
 		/** What it does: `Aan het netwerk toevoegen`. */
 		label: string;
 		onclick?: (e: MouseEvent) => void;
-		/** A switch that is on (the bron is in the network): filled in ink. */
-		aan?: boolean;
 		disabled?: boolean;
 		class?: string;
 		children: Snippet;
@@ -25,9 +22,7 @@
 <button
 	type="button"
 	class="iconknop {className}"
-	class:aan
 	aria-label={label}
-	aria-pressed={aan || undefined}
 	title={label}
 	{disabled}
 	{onclick}>{@render children()}</button
@@ -54,11 +49,6 @@
 	.iconknop:focus-visible {
 		border-color: var(--ink);
 		color: var(--ink);
-	}
-	.iconknop.aan {
-		border-color: var(--ink);
-		background: var(--ink);
-		color: var(--paper);
 	}
 	.iconknop:disabled {
 		color: var(--rule);

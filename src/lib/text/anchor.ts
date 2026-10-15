@@ -4,7 +4,7 @@
 // in the whole law (`artikel-658`) and a division of it (`deel-hoofdstuk-3`).
 import { paragraphCite } from './judgment-cite';
 
-export type Anchor =
+type Anchor =
 	| { kind: 'paragraph'; number: string }
 	| {
 			kind: 'part';

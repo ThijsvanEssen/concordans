@@ -5,16 +5,13 @@
 		label,
 		confirmLabel,
 		onConfirm,
-		buttonClass = 'btn',
-		naam
+		buttonClass = 'btn'
 	}: {
 		label: string;
 		/** What the second click does, in words: `Ja, netwerk wissen`. */
 		confirmLabel: string;
 		onConfirm: () => void;
 		buttonClass?: string;
-		/** Its name for a screen reader where the words alone are one of many (`Verwijder Map 2`). */
-		naam?: string;
 	} = $props();
 
 	let asking = $state(false);
@@ -32,6 +29,4 @@
 	}
 </script>
 
-<button type="button" class={buttonClass} aria-label={asking ? undefined : naam} {onclick}
-	>{asking ? confirmLabel : label}</button
->
+<button type="button" class={buttonClass} {onclick}>{asking ? confirmLabel : label}</button>

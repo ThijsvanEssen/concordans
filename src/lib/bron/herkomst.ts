@@ -6,7 +6,7 @@ import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 const PUBLISHER_TERMS = 'Voorwaarden van de uitgever';
 const CC0 = 'CC0 1.0';
 
-export type Publisher = {
+type Publisher = {
 	name: string;
 	/** What it gives and from whom, as it starts the line (a site keeps its own case). */
 	gives: string;

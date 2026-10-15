@@ -13,7 +13,7 @@ type CoalitionFaction = Schema<'CoalitionFactionDTO'>;
 type Choice = NonNullable<CoalitionFaction['choice']>;
 
 /** A side the coalition took: the choice, its outcome box, its fracties by name, its seats. */
-export type CoalitionSide = {
+type CoalitionSide = {
 	choice: Choice;
 	outcome: 'ja' | 'nee';
 	names: string[];
@@ -21,7 +21,7 @@ export type CoalitionSide = {
 };
 
 /** The line under a vote: "Coalitie tegen", or "Coalitie verdeeld" with its sides. */
-export type CoalitionLine = {
+type CoalitionLine = {
 	/** The side of a coalition that voted as one; null where it split. */
 	together: CoalitionSide | null;
 	/** Where it split: each side with its fracties, or with its seats where none are known. */

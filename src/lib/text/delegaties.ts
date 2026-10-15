@@ -111,7 +111,7 @@ export function grondslagArtikelen(articles: readonly Deel[], bwb?: string | nul
 }
 
 /** `delegates`, `mentioned` or unknown: whether the article gives the power or is only named. */
-export type BasisKind = 'delegates' | 'mentioned' | string | null | undefined;
+type BasisKind = 'delegates' | 'mentioned' | string | null | undefined;
 
 /**
  * The verb of a regulation under its grondslag, by its kind: `AMvB op grond van`,
@@ -164,7 +164,7 @@ export function grondslagRegel(g: Grondslag): { werkwoord: string; rest: string 
 }
 
 /** How many articles that work a grondslag out a line names; the rest counted. */
-export const UITGEWERKT_GENOEMD = 6;
+const UITGEWERKT_GENOEMD = 6;
 
 /**
  * The articles of a regulation that work its grondslag out (`referring`): `uitgewerkt in

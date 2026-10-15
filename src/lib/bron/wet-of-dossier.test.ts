@@ -17,7 +17,7 @@ import {
 import { describe as beschrijf, dossierVanRij, type Row } from '$lib/verbonden/rows';
 import { previewFromNode } from './preview';
 import { tabTitle } from './tab-title';
-import { laagVan } from './behoort';
+import { laagVan } from '$lib/bron/behoort-layer';
 import { paarZin } from '$lib/verbonden/hoe';
 import { buildNodeLabel } from '$lib/graph/types';
 import { containerNames } from '$lib/graph/store/context';

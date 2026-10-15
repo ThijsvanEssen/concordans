@@ -4,8 +4,6 @@ import { createCompose } from './store/compose';
 import { createExpansion } from './store/expansion';
 import { createViewActions } from './store/view-actions';
 
-export type { GraphExpansionOptions, GraphFilters, GraphStore } from './store/types';
-
 export function createGraphStore(): GraphStore {
 	const ctx = createGraphContext();
 	const netwerk = createCompose(ctx);

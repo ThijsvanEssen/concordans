@@ -10,8 +10,7 @@ import { langeDatum } from '$lib/text/datum';
 import { CHANGE_HEAD } from '$lib/verbonden/hoe';
 import { changeRelation } from '$lib/vocabulary';
 
-export type ChangedArticle = Schema<'ChangedArticleRef'>;
-export type ChangeSource = Schema<'ChangeSource'>;
+type ChangedArticle = Schema<'ChangedArticleRef'>;
 export type DossierChange = Schema<'DossierChange'>;
 export type ChangedLaw = Schema<'DossierChangedLaw'>;
 export type ChangedArticles = Schema<'DossierChangedArticlesResponse'>;
@@ -47,7 +46,7 @@ export const getChangedArticles = (number: string): Promise<ChangedArticles | nu
 export const changeHead = (c: DossierChange) => CHANGE_HEAD[changeRelation(c.relation)];
 
 /** One article of a law with its changes, in the order the API gives (that of the law). */
-export type ArticleChanges = { article: ChangedArticle; changes: DossierChange[] };
+type ArticleChanges = { article: ChangedArticle; changes: DossierChange[] };
 
 export function byArticle(changes: DossierChange[]): ArticleChanges[] {
 	const out = new Map<string, ArticleChanges>();

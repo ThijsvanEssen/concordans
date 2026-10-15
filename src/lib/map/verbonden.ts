@@ -35,7 +35,7 @@ export type Regeling = {
 export type Regelingen = { titel: string; regelingen: Regeling[] };
 
 /** How many a law's list of connected laws shows: the closest, by the references between them. */
-export const WETTEN = 6;
+const WETTEN = 6;
 
 /** The line of a row of Verbonden, as one string: `AMvB op grond van art. 16 lid 1 en 7`. */
 export function regelVanRij(r: Row, op: 'instruments' | 'articles'): string | null {
@@ -44,7 +44,7 @@ export function regelVanRij(r: Row, op: 'instruments' | 'articles'): string | nu
 }
 
 /** A row of Verbonden as a map lists it, under a law or an article. */
-export const regelingVanRij = (r: Row, op: 'instruments' | 'articles'): Regeling => ({
+const regelingVanRij = (r: Row, op: 'instruments' | 'articles'): Regeling => ({
 	id: `instruments/${r.ref.key}`,
 	ident: textOf(r.props?.bwb_id) ?? textOf(r.props?.celex),
 	naam: r.title,
@@ -81,7 +81,7 @@ export async function onderWet(bwb: string): Promise<Regelingen> {
  * line of its row in Verbonden (`17 artikelen verwijzen naar deze wet`, its grondslag where one
  * is issued under the other; wetRijVanRelated).
  */
-export async function bijWet(bwb: string): Promise<Regeling[]> {
+async function bijWet(bwb: string): Promise<Regeling[]> {
 	const found = await unwrap(
 		api.GET('/api/instruments/{bwb_id}/related-instruments', {
 			params: { path: { bwb_id: bwb }, query: { limit: WETTEN } }

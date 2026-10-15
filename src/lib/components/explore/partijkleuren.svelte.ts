@@ -60,7 +60,7 @@ const zoek = <T>(map: Record<string, T>, naam: string): T | undefined => {
  * De kleuren van een fractie bij een Kamer, op haar naam of de alias daarvan (`CU` naar
  * `ChristenUnie`): die van de Tweede Kamer, anders die van de Eerste Kamer.
  */
-export const kamerKleuren = (naam: string): string[] | undefined => {
+const kamerKleuren = (naam: string): string[] | undefined => {
 	laad();
 	const alias = zoek(eigen.aliassen, naam);
 	const k =
@@ -95,7 +95,7 @@ export const fractieKleuren = (naam: string): string[] | undefined => {
 /** Een stoel of stip zonder kleur in de gegevens. */
 const GRIJS = '#a39d90';
 
-export type Patroon = 'vol' | 'arcering' | 'stippen' | 'strepen';
+type Patroon = 'vol' | 'arcering' | 'stippen' | 'strepen';
 
 /** Een kleur in CIE-Lab, voor de afstand tussen twee kleuren. */
 function lab(hex: string): [number, number, number] {

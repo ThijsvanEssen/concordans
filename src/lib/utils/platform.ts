@@ -37,7 +37,7 @@ function detectIsMac(): boolean {
 }
 
 /** True op macOS / iOS / iPadOS, anders false. */
-export const isMac: boolean = detectIsMac();
+const isMac: boolean = detectIsMac();
 
 /** Toets-label voor de "command"-toets — `⌘` op Mac, `Ctrl` op andere. */
 export const modKey: '⌘' | 'Ctrl' = isMac ? '⌘' : 'Ctrl';

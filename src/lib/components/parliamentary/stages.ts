@@ -19,7 +19,7 @@ export const DOSSIER_KINDS = [
 	'PKB/Structuurvisie'
 ] as const;
 
-export type DossierKind = (typeof DOSSIER_KINDS)[number];
+type DossierKind = (typeof DOSSIER_KINDS)[number];
 
 /**
  * The kinds of dossier that are a bill and run its procedure: a begroting is a bill too (a
@@ -76,7 +76,7 @@ type PhasePlace =
 	| { stage: 'tk'; phrase: string; step: TkStep }
 	| { stage: 'passed' };
 
-export const PHASE_PLACE: Record<PhaseName, PhasePlace> = {
+const PHASE_PLACE: Record<PhaseName, PhasePlace> = {
 	'Voorstel van wet': { stage: 'submitted' },
 	'Memorie van toelichting': { stage: 'submitted' },
 	'Advies Raad van State': { stage: 'submitted' },
@@ -118,7 +118,7 @@ export function stepsToCome(phase: string | null | undefined): string[] {
  * How a decision was taken, from the method of the Eerste Kamer's report or the kind of
  * the Tweede Kamer's decision (`Stemmen - zonder stemming aannemen`); null for a vote.
  */
-export type VoteMethod = 'hamerstuk' | 'zitten en opstaan' | 'zonder stemming';
+type VoteMethod = 'hamerstuk' | 'zitten en opstaan' | 'zonder stemming';
 
 export function voteMethod(
 	method: string | null | undefined,
@@ -151,7 +151,7 @@ export const OUTCOME_LABEL: Record<Outcome, string> = {
 export const isOutcome = (value: unknown): value is Outcome =>
 	typeof value === 'string' && Object.hasOwn(OUTCOME_LABEL, value);
 
-export const isPhase = (value: unknown): value is PhaseName =>
+const isPhase = (value: unknown): value is PhaseName =>
 	typeof value === 'string' && (PHASES as readonly string[]).includes(value);
 
 /** The track of API 0.51 and before, as a link from then names it in `?track=`. */

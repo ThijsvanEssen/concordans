@@ -81,10 +81,10 @@ export function placeCard(
 }
 
 /** The panel Netwerk as it stands over the canvas, measured. */
-export type PanelBox = { top: number; left: number; width: number; height: number };
+type PanelBox = { top: number; left: number; width: number; height: number };
 
 /** Where the Legenda stands, and how high it may grow. */
-export type LegendPlace = { top: number; right: number; width: number; max: number };
+type LegendPlace = { top: number; right: number; width: number; max: number };
 
 /**
  * The Legenda under the panel Netwerk, as wide as it and on its right edge (Thijs, 10 Oct:

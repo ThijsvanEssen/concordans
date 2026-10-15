@@ -59,7 +59,7 @@ type EdgePassage = {
 };
 
 /** Where an edge stands in the citing text, as far as its meta says. */
-export type EdgePlace = {
+type EdgePlace = {
 	snippet?: string | null;
 	match?: string | null;
 	/** The paragraph of the citing text the passage is in: `rov-3.4`. */
@@ -141,7 +141,7 @@ export function plaatsVanMeta(
 }
 
 /** What an edge's meta says of the verbinding, for its row, its card and its line. */
-export type EdgeReading = {
+type EdgeReading = {
 	/** The lid of the cited article: `2`. */
 	lid: string | null;
 	/** The phrase that cites: `artikel 3:2, tweede lid`. */

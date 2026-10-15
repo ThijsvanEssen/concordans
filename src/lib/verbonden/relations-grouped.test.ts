@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Collection, Relation } from '$lib/vocabulary';
 import { buildGroups, GROUPS } from './groups';
-import type { Neighbor } from './rows';
+import type { Neighbor } from '$lib/api/nodes';
 
 // The endpoints of each relation, as the API defines them (lawgraph core/relations.py), as
 // pairs of sources and targets where a relation joins only some of them. A bron of a kind

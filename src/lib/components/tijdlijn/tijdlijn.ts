@@ -84,5 +84,3 @@ export function enigJaar(regels: readonly TijdRegel[]): string | null {
 	const jaren = new Set(regels.flatMap((r) => (r.datum ? [r.datum.slice(0, 4)] : [])));
 	return jaren.size === 1 ? [...jaren][0] : null;
 }
-
-export { dagMaand } from '$lib/text/datum';

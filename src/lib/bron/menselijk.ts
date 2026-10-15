@@ -14,7 +14,7 @@ import { articleName } from '$lib/text/bw';
  * id in lowercase (the key; the BWB's own BWBR0005537 is an official id, as an ECLI is),
  * a uuid, a node id `collection/key`.
  */
-export const RAUW: readonly RegExp[] = [
+const RAUW: readonly RegExp[] = [
 	/\b[a-z0-9]+(?:_[a-z0-9]+){2,}\b/,
 	/\bbwb[rv]\d{7}\b/,
 	/\b[0-9a-f]{8}[_-][0-9a-f]{4}[_-][0-9a-f]{4}/i,

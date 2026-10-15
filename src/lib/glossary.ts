@@ -2,7 +2,7 @@
 // form and a one-line explanation, which GlossaryPill shows in a popover. Keep the explanation
 // under 140 characters.
 
-export interface GlossaryEntry {
+interface GlossaryEntry {
 	/** Full expansion of the term. */
 	full: string;
 	/** One-line plain-Dutch explanation. */

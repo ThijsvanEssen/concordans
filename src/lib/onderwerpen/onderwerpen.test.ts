@@ -5,7 +5,6 @@ import {
 	isNieuw,
 	lees,
 	nieuwBezoek,
-	ontvolg,
 	ontvolgOnderwerp,
 	sleutelVan,
 	splitsTermen,
@@ -17,7 +16,6 @@ import {
 	volgtWet,
 	volgWet,
 	wettenUitParams,
-	woordIn,
 	zetGezien
 } from './onderwerpen';
 
@@ -48,7 +46,7 @@ describe('onderwerpen', () => {
 			{ termen: ['Kunstmatige intelligentie', 'AI'], vorige: null, gezien: null }
 		]);
 		expect(volgt('kunstmatige intelligentie')).toBe(true);
-		ontvolg('AI');
+		ontvolgOnderwerp(lees()[0]);
 		expect(lees()).toEqual([]);
 	});
 
@@ -99,16 +97,6 @@ describe('onderwerpen', () => {
 			['kunstmatige intelligentie', 'AI'],
 			['stikstof']
 		]);
-	});
-
-	it('een woord begint waar een woord begint', () => {
-		expect(woordIn('AI', 'De inzet van AI bij de IND')).toBe(true);
-		expect(woordIn('AI', 'AI-verordening')).toBe(true);
-		expect(woordIn('AI', 'onderzoekers zonder universitaire aanstelling')).toBe(false);
-		expect(woordIn('AI', 'Kabinetsreactie AIV-advies EU-uitbreiding')).toBe(false);
-		expect(woordIn('AI', 'Groningen Airport Eelde')).toBe(false);
-		expect(woordIn('algoritme', 'Algoritmeregister')).toBe(true);
-		expect(woordIn('AI', null)).toBe(false);
 	});
 
 	it('volgt een wet of een artikel naast woorden, en draagt die in het adres', () => {
