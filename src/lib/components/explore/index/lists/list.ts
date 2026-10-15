@@ -55,6 +55,9 @@ export type ListContext<Row, State> = {
 	loading: boolean;
 	patch: (patch: ParamPatch) => void;
 	toggleOpen: (id: string) => void;
+	/** The groups of rows opened (a dossier number's dossiers), kept across the lists. */
+	openGroups: ReadonlySet<string>;
+	toggleGroup: (key: string) => void;
 	tabHref: (category: IndexCategory, filters?: ParamPatch) => string;
 	/** Nothing to show, in the list's words. */
 	empty: Snippet<[string]>;

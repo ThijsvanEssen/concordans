@@ -23,7 +23,7 @@
 	import { kindCount, BRON_KIND_NOUN, withKind, type VerbondenFilter } from './filter';
 	import { formatCount } from '$lib/text/getal';
 	import { countLabel, groupCount, type Group } from './groups';
-	import { csvName, download, exportRows, rowsToCsv } from './export';
+	import { csvName, download, exportLabel, exportRows, rowsToCsv } from './export';
 	import { caseNumberOf, repeatedTitles, rowKey, type Row } from './rows';
 	import { LOAD_FAILED, type VerbondenState } from './source';
 	import PendingRows, { pendingKind } from './PendingRows.svelte';
@@ -536,7 +536,13 @@
 		{#if verbonden.groups.length > 0}
 			<div class="foot">
 				<TekstLink href={tableHref}>Alle {total} in een tabel</TekstLink>
-				<TekstLink onclick={exportCsv}>Exporteer</TekstLink>
+				<!-- The part it exports is known once every row is in: asked on the way to the click. -->
+				<TekstLink
+					onclick={exportCsv}
+					onpointerenter={() => onAlles?.()}
+					onfocus={() => onAlles?.()}
+					>{verbonden.volledig ? exportLabel(verbonden.groups, filter) : 'Exporteer'}</TekstLink
+				>
 			</div>
 		{/if}
 	</div>

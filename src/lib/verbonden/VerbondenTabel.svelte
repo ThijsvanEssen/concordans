@@ -11,7 +11,7 @@
 	import { bronHref } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import type { GraphNode } from '$lib/graph/types';
-	import { TABLE_COLUMNS, csvName, download, exportRows, rowsToCsv } from './export';
+	import { TABLE_COLUMNS, csvName, download, exportLabel, exportRows, rowsToCsv } from './export';
 	import { type VerbondenFilter } from './filter';
 	import { formatCount } from '$lib/text/getal';
 	import { ankerVanRij, dossierVanRij, openLabelOf, rowKey, type Row } from './rows';
@@ -196,7 +196,9 @@
 				</div>
 			{/if}
 		</div>
-		<button type="button" class="btn" onclick={exportCsv}>Exporteer</button>
+		<button type="button" class="btn" onclick={exportCsv}
+			>{exportLabel(verbonden.groups, filter)}</button
+		>
 	</div>
 
 	<div class="scroll" aria-busy={verbonden.loading}>

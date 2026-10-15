@@ -231,6 +231,18 @@ describe('Bronnen, the address', () => {
 		});
 	});
 
+	it('offers no next page once all sitting members are in', async () => {
+		const [m] = live.members;
+		const seated = Array.from({ length: 150 }, (_, i) => ({
+			...m,
+			id: `members/${i}`,
+			key: `${i}`
+		}));
+		await open('members', '', { ...ROUTES, '/api/members': seated });
+		expect(document.querySelectorAll('.results a.row-title')).toHaveLength(150);
+		expect(screen.queryByText(/^Volgende kamerleden/)).toBeNull();
+	});
+
 	it('puts the text searched for in the address once the typing pauses', async () => {
 		await open('members');
 		const field = screen.getByRole('searchbox', { name: 'Zoek in kamerleden' });
@@ -259,5 +271,41 @@ describe('Bronnen, the address', () => {
 		expect(page.url.searchParams.get('open')).toMatch(/^documents\//);
 		await fireEvent.keyDown(window, { key: 'Escape' });
 		expect(page.url.searchParams.get('open')).toBeNull();
+	});
+});
+
+describe('Bronnen, the way back', () => {
+	// Two dossiers under one number: one row that opens to them.
+	const [d] = live.dossiers.items;
+	const group: Faceted = {
+		items: [
+			{ ...d, id: 'dossiers/37020', key: '37020', number: '37020', same_number_count: 1 },
+			{
+				...d,
+				id: 'dossiers/37020-II',
+				key: '37020-II',
+				number: '37020-II',
+				suffix: 'II',
+				same_number_count: 1
+			}
+		],
+		total: 2,
+		facets: {}
+	};
+
+	it('keeps a dossier group open across another list', async () => {
+		visit('/explore?mode=index&kind=dossiers');
+		fakeApi({ ...ROUTES, '/api/dossiers': list(group) });
+		const { rerender } = render(IndexView, { category: 'dossiers' });
+		await settled();
+		const toggle = () => document.querySelector<HTMLElement>('.results .row-toggle')!;
+		await fireEvent.click(toggle());
+		expect(toggle().getAttribute('aria-expanded')).toBe('true');
+		for (const category of ['decisions', 'dossiers'] as const) {
+			visit(`/explore?mode=index&kind=${category}`);
+			await rerender({ category });
+			await settled();
+		}
+		expect(toggle().getAttribute('aria-expanded')).toBe('true');
 	});
 });

@@ -1,7 +1,15 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { COLUMNS, TABLE_COLUMNS, csvName, exportRows, rowsToCsv, safeFileName } from './export';
+import {
+	COLUMNS,
+	TABLE_COLUMNS,
+	csvName,
+	exportLabel,
+	exportRows,
+	rowsToCsv,
+	safeFileName
+} from './export';
 import { EMPTY_FILTER } from './filter';
 import type { Group } from './groups';
 import type { Row } from './rows';
@@ -104,6 +112,16 @@ describe('exportRows', () => {
 		]);
 		const none = { ...EMPTY_FILTER, bronnen: new Set(['dossiers'] as const) };
 		expect(exportRows(groups, none)).toEqual([]);
+	});
+
+	it('says the part it exports where the rows loaded are fewer than the count', () => {
+		expect(exportLabel(groups, EMPTY_FILTER)).toBe('Exporteer');
+		const capped = [{ ...groups[1], total: 9065 }];
+		expect(exportLabel(capped, EMPTY_FILTER)).toBe('Exporteer 1 van 9.065');
+		for (const file of ['Verbonden.svelte', 'VerbondenTabel.svelte']) {
+			const src = readFileSync(join(import.meta.dirname, file), 'utf8');
+			expect(src, file).toContain('exportLabel(verbonden.groups, filter)');
+		}
 	});
 
 	it('is what both Exporteer buttons export: the panel and the table give the same rows', () => {
