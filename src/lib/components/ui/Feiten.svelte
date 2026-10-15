@@ -7,7 +7,7 @@
 		klein = false,
 		children
 	}: {
-		/** Labels as wide as their text and values in the sans, for a short list beside a portrait. */
+		/** Labels as wide as their text and values in the sans, for a short list. */
 		klein?: boolean;
 		children: Snippet;
 	} = $props();
