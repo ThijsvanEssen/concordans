@@ -81,6 +81,26 @@ export function syncGroupLinks(
 	return next;
 }
 
+/** Each bron tied to `id` by a drawn line, passing over the links of a hull (`syncGroupLinks`). */
+export function forEachRealNeighbor(g: Graph, id: string, fn: (neighbor: string) => void) {
+	const seen = new Set<string>();
+	g.forEachEdge(id, (_e, a, src, tgt) => {
+		const other = src === id ? tgt : src;
+		if (a.layoutOnly || seen.has(other)) return;
+		seen.add(other);
+		fn(other);
+	});
+}
+
+/** The number of drawn lines at `id`, without the links of a hull. */
+export function realDegree(g: Graph, id: string): number {
+	let n = 0;
+	g.forEachEdge(id, (_e, a) => {
+		if (!a.layoutOnly) n++;
+	});
+	return n;
+}
+
 const GROUP_GAP = 36;
 const GOLDEN_ANGLE = 2.399963229728653;
 const groupRadius = (memberCount: number) => Math.max(26, 14 + Math.sqrt(memberCount) * 10);

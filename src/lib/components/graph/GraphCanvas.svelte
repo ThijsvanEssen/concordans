@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { redundantAnchors } from '$lib/graph/redundant-anchors';
+	import { forEachRealNeighbor, realDegree } from '$lib/graph/layout';
 	import {
 		bundledInto,
 		inSameGroup,
@@ -259,7 +260,7 @@
 		hoveredId = next;
 		hoveredNeighbours = new Set();
 		if (hoveredId && graph.hasNode(hoveredId))
-			graph.forEachNeighbor(hoveredId, (n) => hoveredNeighbours.add(n));
+			forEachRealNeighbor(graph, hoveredId, (n) => hoveredNeighbours.add(n));
 		promoteEdgesForHover(hoveredId);
 		renderer?.refresh();
 	}
@@ -559,10 +560,7 @@
 		const next = new Set<string>();
 		const endsOf = (id: string) => {
 			const ends: string[] = [];
-			if (graph.hasNode(id))
-				graph.forEachEdge(id, (_e, a, src, tgt) => {
-					if (!a.layoutOnly) ends.push(src === id ? tgt : src);
-				});
+			if (graph.hasNode(id)) forEachRealNeighbor(graph, id, (n) => ends.push(n));
 			return ends;
 		};
 		// A grouping switched off takes along what is in it (the stukken of a dossier).
@@ -1142,7 +1140,7 @@
 
 				// Without a focus, a member with a hundred stukken draws a hundred lines: the
 				// fan pales by the size of its busier end, as the focus's own fan does.
-				const degree = Math.max(graph.degree(src), graph.degree(tgt));
+				const degree = Math.max(realDegree(graph, src), realDegree(graph, tgt));
 				return {
 					...data,
 					hidden: false,
@@ -1209,7 +1207,7 @@
 	function recomputeFocusLevel1() {
 		focusLevel1 = new Set();
 		if (!focusedId || !graph.hasNode(focusedId)) return;
-		graph.forEachNeighbor(focusedId, (n) => focusLevel1.add(n));
+		forEachRealNeighbor(graph, focusedId, (n) => focusLevel1.add(n));
 	}
 	$effect(() => {
 		void focusedId;
