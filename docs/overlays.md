@@ -4,28 +4,26 @@ Two overlays paint counts on the network: **Open dossiers** (open proposed chang
 
 ## URL
 
-`?overlay=` holds the overlay. Parsing and serialising are in `src/lib/netwerk/overlay.ts` (`parseOverlay`, `serializeOverlay`, type `Overlay` with kinds `none`, `open`, `dossier`, `heat`).
+`?overlay=` holds the overlay. Parsing and writing are in `src/lib/netwerk/overlay.ts` (`parseOverlay`, `overlayParam`, type `Overlay` with kinds `none`, `open`, `heat`).
 
-| Value              | Overlay                                                                                                   |
-| ------------------ | --------------------------------------------------------------------------------------------------------- |
-| `open`             | Open dossiers for all open dossiers                                                                       |
-| `dossier:{number}` | Open dossiers for one dossier                                                                             |
-| `heat:{months}`    | Verwijzingen per maand over a window of `months` (`HEAT_PERIODS`: 3, 6, 12, 24; `DEFAULT_HEAT_MONTHS` 12) |
-| absent             | none                                                                                                      |
+| Value           | Overlay                                                                                                   |
+| --------------- | --------------------------------------------------------------------------------------------------------- |
+| `open`          | Open dossiers for all open dossiers                                                                       |
+| `heat:{months}` | Verwijzingen per maand over a window of `months` (`HEAT_PERIODS`: 3, 6, 12, 24; `DEFAULT_HEAT_MONTHS` 12) |
+| absent          | none                                                                                                      |
 
-The switch sets `open` or `heat:12`, or clears the active overlay; clearing covers `dossier:{number}` too. `dossier:{number}` is entered by URL only: no page builds such a link. `bronHref` carries `overlay` along, so the overlay stays while moving between bronnen.
+The switch sets `open` or `heat:12`, or clears the active overlay. `bronHref` carries `overlay` along, so the overlay stays while moving between bronnen.
 
 ## Data
 
 `explore/+page.svelte` derives the overlay from the URL and fetches only the active overlay's data when the parameter changes. A request of an overlay that is left is aborted.
 
-| Overlay                    | Function in `src/lib/api/overlays.ts` | API                                |
-| -------------------------- | ------------------------------------- | ---------------------------------- |
-| Verwijzingen per maand     | `getHeat(months)`                     | `/api/nodes/heat` (`min_count` 2)  |
-| Open dossiers, `open`      | `getInFlux()`                         | `/api/nodes/in-flux`               |
-| Open dossiers, one dossier | `getDossierInFlux(number)`            | `/api/dossiers/{number}/mutations` |
+| Overlay                | Function in `src/lib/api/overlays.ts` | API                               |
+| ---------------------- | ------------------------------------- | --------------------------------- |
+| Verwijzingen per maand | `getHeat(months)`                     | `/api/nodes/heat` (`min_count` 2) |
+| Open dossiers          | `getInFlux()`                         | `/api/nodes/in-flux`              |
 
-All three return `NodeCounts`, a map from node id to count; `getDossierInFlux` counts the `to_id` of the edges. `GraphView` passes the maps and the active flags to `GraphCanvas`; the sidebar shows the number of bronnen in behandeling while that overlay is active.
+Both return `NodeCounts`, a map from node id to count. `GraphView` passes the maps and the active flags to `GraphCanvas`; the sidebar shows the number of bronnen in behandeling while that overlay is active.
 
 ## Rendering
 
@@ -39,7 +37,7 @@ Both need the drawn radius of a node, which is not the `size` attribute. See [`g
 
 ## Adding an overlay
 
-1. Extend `Overlay`, `parseOverlay` and `serializeOverlay`.
+1. Extend `Overlay`, `parseOverlay` and `overlayParam`.
 2. Add a fetcher to `src/lib/api/overlays.ts` that returns `NodeCounts`.
 3. Add it to the effect on `overlay` in `explore/+page.svelte`.
 4. Add a position to the switch in `GraphSidebar.svelte`. The switch assumes exclusion; overlays that stack need their own URL parameter.

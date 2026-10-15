@@ -30,13 +30,12 @@ describe('parseFilter', () => {
 	it('reads the bronnen and the other filters from the URL, and writes them back', () => {
 		const f = parseFilter(
 			new URLSearchParams(
-				'bronnen=artikelen,wetten,toelichtingen&lid=2&rechter=hof&van=2015&tot=2026'
+				'bronnen=artikelen,wetten,toelichtingen&lid=2&rechter=hof&van=2015-01-01&tot=2026-12-31'
 			)
 		);
 		expect([...f.bronnen!]).toEqual(['artikelen', 'wetten', 'toelichtingen']);
 		expect(f.lid).toBe('2');
 		expect(f.rechter).toBe('hof');
-		// An address from before, with years, reads as days (the period of every list).
 		expect(f.van).toBe('2015-01-01');
 		expect(f.tot).toBe('2026-12-31');
 		expect(filterParams(f)).toMatchObject({

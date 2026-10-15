@@ -61,13 +61,3 @@ export async function getHeat(
 	);
 	return new Map(answers.flatMap((counts) => [...toMap(counts)]));
 }
-
-/** Nodes a single dossier proposes to change, counted per target. */
-export async function getDossierInFlux(number: string, signal?: AbortSignal): Promise<NodeCounts> {
-	const { edges } = await unwrap(
-		api.GET('/api/dossiers/{number}/mutations', { params: { path: { number } }, signal })
-	);
-	const counts: NodeCounts = new Map();
-	for (const { to_id } of edges) if (to_id) counts.set(to_id, (counts.get(to_id) ?? 0) + 1);
-	return counts;
-}

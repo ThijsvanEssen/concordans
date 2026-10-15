@@ -239,7 +239,7 @@ export function presentHit(hit: Hit, query: string, neighbours: readonly Hit[] =
 		case 'instruments': {
 			// Regelingen of one title differ by their kind and day (UX-toets 0.79.47, #53):
 			// "Beleidsregel, 27 apr. 2007"; the BWB id only where those are the same too, or
-			// where the API gives neither (before 0.79.49).
+			// where the API gives neither.
 			const title = naamVan(hit);
 			const meta = instrumentMeta(hit);
 			const same =

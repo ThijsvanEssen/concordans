@@ -151,40 +151,12 @@ export const OUTCOME_LABEL: Record<Outcome, string> = {
 export const isOutcome = (value: unknown): value is Outcome =>
 	typeof value === 'string' && Object.hasOwn(OUTCOME_LABEL, value);
 
-const isPhase = (value: unknown): value is PhaseName =>
+export const isPhase = (value: unknown): value is PhaseName =>
 	typeof value === 'string' && (PHASES as readonly string[]).includes(value);
 
-/** The track of API 0.51 and before, as a link from then names it in `?track=`. */
-const OLD_TRACK: Record<string, string> = {
-	wetsvoorstel: 'Wetgeving',
-	initiatiefwetsvoorstel: 'Initiatiefwetgeving',
-	begroting: 'Begroting',
-	verdrag: 'Verdrag',
-	initiatiefnota: 'Initiatiefnota',
-	structuurvisie: 'PKB/Structuurvisie'
-};
-
-/** The stage of API 0.51 and before, as a link from then names it in `?stage=`. */
-const OLD_STAGE: Record<string, string> = {
-	wetsvoorstel: 'Voorstel van wet',
-	mvt: 'Memorie van toelichting',
-	advies_rvs: 'Advies Raad van State',
-	verslag: 'Verslag',
-	nota_naar_aanleiding_van_verslag: 'Nota n.a.v. het verslag',
-	amendementen: 'Nota van wijziging / Amendement',
-	stemming: 'Stemmingen'
-};
-
-/**
- * A kind from the URL: as the Kamer writes it, or by its track before API 0.52. A track the
- * Kamer has no kind for (`beleid`, `nota`, …) is left out, as the list would reject it.
- */
-export const kindFromParam = (value: string): string | null =>
-	(DOSSIER_KINDS as readonly string[]).includes(value) ? value : (OLD_TRACK[value] ?? null);
-
-/** A phase from the URL: its TK name, or its stage before API 0.52; `behandeling` has none. */
-export const phaseFromParam = (value: string): string | null =>
-	isPhase(value) ? value : (OLD_STAGE[value] ?? null);
+/** A dossier kind as the Kamer writes it (`Wetgeving`); anything else is no kind. */
+export const isDossierKind = (value: string): value is DossierKind =>
+	(DOSSIER_KINDS as readonly string[]).includes(value);
 
 /** Where a dossier stands, as a word: its outcome once decided, else its current phase. */
 export const dossierStatus = (d: {

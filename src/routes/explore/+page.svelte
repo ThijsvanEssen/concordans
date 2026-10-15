@@ -42,7 +42,7 @@
 	import LoadState, { failureText } from '$lib/components/ui/LoadState.svelte';
 	import { getNodeCanvas, getNodeFirst, getNodeHull } from '$lib/api/records';
 	import { kopNode } from '$lib/bron/kop';
-	import { getInFlux, getHeat, getDossierInFlux, type NodeCounts } from '$lib/api/overlays';
+	import { getInFlux, getHeat, type NodeCounts } from '$lib/api/overlays';
 	import { bronHref, focusOf, isReadable, refId, refOf } from '$lib/bron/href';
 	import { getDossierKey, getMemberVotes } from '$lib/components/parliamentary/data';
 	import { createGraphStore } from '$lib/graph/graph-store';
@@ -220,19 +220,17 @@
 		navigate(verkennerHref(logisch.searchParams, page.url.hash, props));
 	});
 	// The Verkenner is the network. A bron with a text of its own is read at full width
-	// (?lezen=1, once ?mode=read); its verbindingen as a table are read so too. Bladeren
+	// (?lezen=1); its verbindingen as a table are read so too. Bladeren
 	// is ?mode=index.
 	const readableFocus = $derived.by(() => {
 		const target = parseNodeId(param('focus') ?? '');
 		return target ? isReadable(target.collection) : false;
 	});
 	const mode = $derived.by<Mode>(() => {
-		const m = param('mode');
-		if (m === 'index') return 'index';
+		if (param('mode') === 'index') return 'index';
 		if (!param('focus')) return 'graph';
 		if (param('tabel') === '1') return 'read';
-		const wantsRead = param('lezen') === '1' || m === 'read';
-		return wantsRead && readableFocus ? 'read' : 'graph';
+		return param('lezen') === '1' && readableFocus ? 'read' : 'graph';
 	});
 	const focus = $derived(param('focus') ?? '');
 	// A toelichting or a citing judgment opened beside the article: the article stays the
@@ -1220,14 +1218,10 @@
 		const o = overlay;
 		inFluxMap = new Map();
 		heatMap = new Map();
-		if (o.kind === 'none') return;
-
-		if (o.kind === 'heat') return;
+		if (o.kind !== 'open') return;
 
 		const ctrl = new AbortController();
-		const request =
-			o.kind === 'open' ? getInFlux(ctrl.signal) : getDossierInFlux(o.id, ctrl.signal);
-		request
+		getInFlux(ctrl.signal)
 			.then((counts) => {
 				if (ctrl.signal.aborted) return;
 				inFluxMap = counts;
@@ -1277,9 +1271,7 @@
 		);
 	const setHeatPeriod = (months: number) => setOverlay({ kind: 'heat', months });
 	const toggleMutatie = () =>
-		setOverlay(
-			overlay.kind === 'open' || overlay.kind === 'dossier' ? { kind: 'none' } : { kind: 'open' }
-		);
+		setOverlay(overlay.kind === 'open' ? { kind: 'none' } : { kind: 'open' });
 
 	// ── Share ────────────────────────────────────────────────────────────────
 	const shareCopier = createCopier();

@@ -7,7 +7,7 @@ The schema of the API is the contract.
 | `src/lib/api/openapi.json`               | `npm run sync:api` | the `/api` page and the type generator        |
 | `src/lib/api/generated/openapi-types.ts` | `npm run sync:api` | the compiler, through `api` and `Schema<...>` |
 
-`npm run sync:api` fetches the schema from the API in `.env` (`PUBLIC_CONCORDANS_API_BASE_URL`, default `http://localhost:8000`) and regenerates the types. Neither file is edited by hand. The version is `info.version` in `openapi.json`.
+`npm run sync:api` fetches the schema from the API in `.env` (`PUBLIC_CONCORDANS_API_BASE_URL`) and regenerates the types. Neither file is edited by hand. The version is `info.version` in `openapi.json`.
 
 `npm run check:api` runs `sync:api` and fails when either file differs from what is committed. A change of the API then shows as a diff and, where a call or field is gone, as a compile error in `npm run check`.
 

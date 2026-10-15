@@ -12,7 +12,6 @@ describe('the overlay parameter', () => {
 		const overlays: Overlay[] = [
 			{ kind: 'none' },
 			{ kind: 'open' },
-			{ kind: 'dossier', id: '36410' },
 			...HEAT_PERIODS.map((months) => ({ kind: 'heat' as const, months }))
 		];
 		for (const o of overlays) expect(parseOverlay(overlayParam(o))).toEqual(o);

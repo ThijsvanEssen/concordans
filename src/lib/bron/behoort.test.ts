@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { behoort, heeftIets, lazeKernIds } from './behoort';
-import { conclusieVan } from '$lib/bron/behoort-procesgang';
 import { fail, fakeApi } from '$lib/test/fakeApi';
 import { ApiError } from '$lib/api/client';
 
@@ -186,29 +185,6 @@ describe('behoort', () => {
 			])
 		);
 		expect(conclusie.regels.map((r) => r.label)).toEqual(['Conclusie bij']);
-	});
-
-	it('gives the conclusie of a judgment for its status line, without the word Conclusie', () => {
-		const g = light([
-			{
-				relation: 'ADVISES_ON',
-				direction: 'inbound',
-				collection: 'judgments',
-				total: 1,
-				items: [
-					{
-						key: 'ecli_nl_phr_2019_887',
-						collection: 'judgments',
-						display_name: 'Conclusie P-G Langemeijer en Wissink, 13 september 2019'
-					}
-				]
-			}
-		]);
-		const c = conclusieVan(g);
-		expect(c?.naam).toBe('P-G Langemeijer en Wissink, 13 september 2019');
-		expect(c?.ref?.key).toBe('ecli_nl_phr_2019_887');
-		expect(conclusieVan(light([]))).toBeNull();
-		expect(conclusieVan(null)).toBeNull();
 	});
 
 	it('puts a stuk in its dossier, a lid in its one fractie, and leaves out what is missing', () => {

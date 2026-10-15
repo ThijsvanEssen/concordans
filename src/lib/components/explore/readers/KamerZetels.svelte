@@ -148,17 +148,14 @@
 	/** The seats of the Kamer (Grondwet art. 51): the stretches' sums run over it on a day a
 	 *  seat changes hands (Schoof, 25 July 2025: 152). */
 	const zetelsVanKamer = $derived(kamer === 'TK' ? 150 : 75);
-	/** The head figure: the coalition's seats on the day, of the Kamer's. */
-	/**
-	 * The coalition's vacant seats on the stretch (`coalition_vacant`, API 0.79.44, #526); an
-	 * API before it gives none, and then the sum of its fracties' own (`factions[].vacant`).
-	 */
-	const coalitieVacant = (s: Stuk) =>
-		s.coalition_vacant ??
-		(s.factions ?? []).reduce((n, f) => n + (f.coalition ? (f.vacant ?? 0) : 0), 0);
+	/** The head figure: the coalition's seats on the day, of the Kamer's, and its vacant ones. */
 	const kop = $derived.by(() => {
 		if (gekozen)
-			return { ja: gekozen.coalition, totaal: zetelsVanKamer, vacant: coalitieVacant(gekozen) };
+			return {
+				ja: gekozen.coalition,
+				totaal: zetelsVanKamer,
+				vacant: gekozen.coalition_vacant ?? 0
+			};
 		if (zaal) return { ja: zijden(zaal, null).jaZetels, totaal: zetelsVanKamer, vacant: 0 };
 		return null;
 	});

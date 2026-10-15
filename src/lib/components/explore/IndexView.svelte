@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { count, plural } from '$lib/text/words';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
@@ -28,7 +29,6 @@
 	// Every filter, the sort and the open row are in the URL, so a view can be shared.
 	// What the API can filter or sort is passed on as a query; the rest is done
 	// on the rows loaded so far.
-	import { untrack } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';
 	import { page } from '$app/state';
 	import { afterNavigate, beforeNavigate } from '$app/navigation';
@@ -44,7 +44,6 @@
 	import {
 		COURT_KINDS,
 		COURT_KIND_LABEL,
-		OLD_TIER,
 		TIERS,
 		TIER_LABEL,
 		bronLabel,
@@ -56,8 +55,8 @@
 		NO_KIND_LABEL,
 		PHASES,
 		OUTCOME_LABEL,
-		kindFromParam,
-		phaseFromParam,
+		isDossierKind,
+		isPhase,
 		type Outcome
 	} from '$lib/components/parliamentary/stages';
 	import {
@@ -77,12 +76,7 @@
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import IconKnop from '$lib/components/ui/IconKnop.svelte';
 	import IndexFacets, { activeFilters, type FacetGroup } from './index/IndexFacets.svelte';
-	import {
-		NO_DECISION_KIND,
-		decisionKindFromParam,
-		decisionMethod,
-		decisionOutcome
-	} from './index/decision-kind';
+	import { NO_DECISION_KIND, decisionMethod, decisionOutcome } from './index/decision-kind';
 	import {
 		CHAMBER_OPTIONS,
 		EK_SOURCE,
@@ -95,7 +89,6 @@
 	import {
 		COMMITMENT_STATUSES,
 		OPEN_STATUS,
-		statusFromParam,
 		POSTS,
 		POST_LABEL,
 		currentCabinet,
@@ -126,36 +119,23 @@
 	import { PERIOD_LABEL, seatedOnly } from './index/period';
 	import { formatCount } from '$lib/text/getal';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
+	import { MINISTRY_KEYS, facetOptions, choiceOf } from '$lib/util/choice';
 
 	let { category }: { category: IndexCategory } = $props();
-
-	const oneOf = <T extends string>(value: string | null, allowed: readonly T[]): T | undefined =>
-		allowed.find((a) => a === value);
 
 	// ── URL-driven filter state ─────────────────────────────────────────────
 	const params = $derived(page.url.searchParams);
 	const q = $derived(params.get('q') ?? '');
-	// A dossier's phase and kind as the Kamer names them (API 0.52). A link from before names
-	// them the old way (`?stage=mvt`, `?track=wetsvoorstel`): read as the Kamer's word, or left
-	// out where the Kamer has none. The kind keeps the URL name `track`: `kind` is the tab.
-	// One phase or several (API 0.75): the dossiers whose current phase is one of them.
-	const phases = $derived(
-		(params.get('phase') ?? params.get('stage') ?? '')
-			.split(',')
-			.flatMap((v) => phaseFromParam(v) ?? [])
-	);
+	// A dossier's phase and kind as the Kamer names them; a name it does not know is left
+	// out. The kind keeps the URL name `track`: `kind` is the tab.
+	// One phase or several: the dossiers whose current phase is one of them.
+	const phases = $derived((params.get('phase') ?? '').split(',').filter(isPhase));
 	// Phases a dossier must all have passed, comma-separated.
-	const hasPhase = $derived(
-		(params.get('has_phase') ?? params.get('has_stage') ?? '')
-			.split(',')
-			.flatMap((v) => phaseFromParam(v) ?? [])
-			.join(',')
-	);
-	const track = $derived(kindFromParam(params.get('track') ?? '') ?? '');
-	// A decision's kind as the Kamer writes it; an old link's `motie` is read as `Motie`.
-	const decisionKindParam = $derived(decisionKindFromParam(params.get('soort') ?? '') ?? '');
-	/** A kind of stuk, as the Kamer writes it (`Brief regering`). */
-	const documentKind = $derived(params.get('soort') ?? '');
+	const hasPhase = $derived((params.get('has_phase') ?? '').split(',').filter(isPhase).join(','));
+	const trackParam = $derived(params.get('track') ?? '');
+	const track = $derived(isDossierKind(trackParam) ? trackParam : '');
+	/** A kind of besluit or stuk, as the Kamer writes it (`Motie`, `Brief regering`). */
+	const soort = $derived(params.get('soort') ?? '');
 	// The Kamer whose parliament is listed; no filter but a choice, so it stays across tabs.
 	const kamer = $derived<Chamber>(chamberFromParam(params.get('kamer')) ?? 'TK');
 	/** The tabs that list one Kamer at a time. */
@@ -170,46 +150,41 @@
 	const ekComposition = $derived(
 		kamer === 'EK' && category !== 'decisions' && category !== 'documents'
 	);
-	const ministry = $derived(params.get('ministry') ?? '');
-	/** A ministry of the URL as the API types it; an unknown key is left to the API to refuse. */
-	const asMinistry = (key: string) => (key || undefined) as Schema<'MinistryKey'> | undefined;
+	const ministry = $derived(choiceOf(params.get('ministry'), MINISTRY_KEYS) ?? '');
 	const cabinetParam = $derived(params.get('cabinet') ?? '');
 	const memberParam = $derived(params.get('member') ?? '');
-	const post = $derived(oneOf(params.get('post'), POSTS));
+	const post = $derived(choiceOf(params.get('post'), POSTS));
 	// Bewindspersonen: one cabinet's posts, or the ministers of six cabinets side by side.
 	const naast = $derived(params.get('weergave') === 'naast');
-	// A link from before API 0.48 names a state the old way (`open`): read as the Kamer's word.
-	const commitmentStatus = $derived(
-		oneOf(statusFromParam(params.get('status')), COMMITMENT_STATUSES)
-	);
+	const commitmentStatus = $derived(choiceOf(params.get('status'), COMMITMENT_STATUSES));
 	const overdue = $derived(params.get('overdue') === '1');
 	const coalition = $derived(params.get('coalition') ?? '');
 	// Dossiers: the open ones unless asked otherwise; a number searched for is looked up in all.
 	const OUTCOMES = Object.keys(OUTCOME_LABEL) as Outcome[];
 	const DOSSIER_NUMBER = /^\d{5}(-[a-z0-9()]+)?$/i;
 	const dossierStatusParam = $derived(
-		oneOf(params.get('stand'), ['open', 'closed', 'all'] as const)
+		choiceOf(params.get('stand'), ['open', 'closed', 'all'] as const)
 	);
 	const dossierScope = $derived(
 		dossierStatusParam ?? (DOSSIER_NUMBER.test(q.trim()) ? 'all' : 'open')
 	);
-	const outcome = $derived(oneOf(params.get('outcome'), OUTCOMES));
-	const passed = $derived(oneOf(params.get('passed'), ['true', 'false'] as const));
+	const outcome = $derived(choiceOf(params.get('outcome'), OUTCOMES));
+	const passed = $derived(choiceOf(params.get('passed'), ['true', 'false'] as const));
 	const dateFrom = $derived(params.get('from') ?? '');
 	const dateTo = $derived(params.get('to') ?? '');
 	const dossierFilter = $derived(params.get('dossier') ?? '');
 	const party = $derived(params.get('party') ?? '');
-	const jurisdiction = $derived(oneOf(params.get('jurisdiction'), ['nl', 'eu'] as const));
+	const jurisdiction = $derived(choiceOf(params.get('jurisdiction'), ['nl', 'eu'] as const));
 	// A kind of wet as the source names it; the treaties for now (Thijs, 10 Oct: "ook
 	// verdragen een plekje"): the BWBV and the Verdragenbank, kind `verdrag`.
-	const instrumentSoort = $derived(oneOf(params.get('soort'), ['verdrag'] as const));
+	const instrumentSoort = $derived(choiceOf(params.get('soort'), ['verdrag'] as const));
 	const court = $derived(params.get('court') ?? '');
 	// TODO(backend G14): the lists hold records without text or articles; until they can
 	// be left out by a parameter, a wet needs an article and a judgment a source.
 	const withEmpty = $derived(params.get('leeg') === '1');
-	const source = $derived(oneOf(params.get('source'), ['echr'] as const));
-	const tier = $derived(oneOf(params.get('tier'), TIERS));
-	const courtKind = $derived(oneOf(params.get('court_kind'), COURT_KINDS));
+	const source = $derived(choiceOf(params.get('source'), ['echr'] as const));
+	const tier = $derived(choiceOf(params.get('tier'), TIERS));
+	const courtKind = $derived(choiceOf(params.get('court_kind'), COURT_KINDS));
 	// Rechtsgebied and procedure as rechtspraak.nl gives them (API 0.74, BE-44).
 	const subject = $derived(params.get('subject') ?? '');
 	// The main area of law (BE-57, API 0.75): `Bestuursrecht` holds `Bestuursrecht; Belastingrecht`.
@@ -219,7 +194,7 @@
 	const policyDomain = $derived(params.get('policy_domain') ?? '');
 	const procedure = $derived(params.get('procedure') ?? '');
 	const sort = $derived(params.get('sort'));
-	const dirParam = $derived(oneOf(params.get('dir'), ['asc', 'desc'] as const));
+	const dirParam = $derived(choiceOf(params.get('dir'), ['asc', 'desc'] as const));
 	const onlyActive = $derived(params.get('only_active') === '1');
 	// Members and factions are the sitting ones unless historical ones are asked for.
 	const includeInactive = $derived(params.get('include_inactive') === '1');
@@ -228,8 +203,6 @@
 		'q',
 		'phase',
 		'has_phase',
-		'stage',
-		'has_stage',
 		'track',
 		'soort',
 		'passed',
@@ -267,15 +240,6 @@
 	/** A filter is a step in the history; the search text and the open row replace it. */
 	const patchUrl = (patch: ParamPatch, replaceState = false) =>
 		navigate(withParams(page.url, patch), { step: !replaceState });
-
-	// A link from before API 0.30 may name a tier that is now a court within a wider tier:
-	// it opens that court. A tier the API does not know is left out, as the list would be.
-	$effect(() => {
-		const old = params.get('tier');
-		if (!old || TIERS.includes(old as Tier)) return;
-		const now = OLD_TIER[old];
-		untrack(() => patchUrl({ tier: now?.tier ?? null, court_kind: now?.courtKind ?? null }, true));
-	});
 
 	const toggleParam = (name: string, current: string | undefined, value: string) =>
 		patchUrl({ [name]: current === value ? null : value });
@@ -473,7 +437,7 @@
 	let dossierFacets = $state<Schema<'DossierFacetsDTO'> | null>(null);
 	let decisionFacets = $state<Schema<'DecisionFacets'> | null>(null);
 	/** The kinds of stukken under the other filters, as the list's facet counts them. */
-	let documentKinds = $state<Map<string, number>>(new Map());
+	let soorts = $state<Map<string, number>>(new Map());
 	let judgmentFacets = $state<Schema<'JudgmentFacets'> | null>(null);
 	let instrumentFacets = $state<Schema<'InstrumentFacets'> | null>(null);
 	/** The treaties under the filters chosen: asked apart, as the API counts no kinds yet. */
@@ -537,7 +501,7 @@
 					policy_domain: policyDomain || undefined,
 					from: dateFrom || undefined,
 					to: dateTo || undefined,
-					sort: oneOf(sortDef.id, ['title', 'article_count'] as const),
+					sort: choiceOf(sortDef.id, ['title', 'article_count'] as const),
 					limit
 				};
 				return faceted(
@@ -582,7 +546,7 @@
 					source: source ?? 'rechtspraak',
 					from: dateFrom || undefined,
 					to: dateTo || undefined,
-					sort: oneOf(sortDef.id, ['date_desc', 'date_asc', 'citation_count'] as const),
+					sort: choiceOf(sortDef.id, ['date_desc', 'date_asc', 'citation_count'] as const),
 					limit
 				};
 				return faceted(
@@ -610,10 +574,10 @@
 					phase: phases.length ? phases.join(',') : undefined,
 					has_phase: hasPhase || undefined,
 					kind: track || undefined,
-					ministry: asMinistry(ministry),
+					ministry: ministry || undefined,
 					opened_from: dateFrom || undefined,
 					opened_to: dateTo || undefined,
-					sort: oneOf(sortDef.id, [
+					sort: choiceOf(sortDef.id, [
 						'number',
 						'opened_on',
 						'last_activity',
@@ -653,7 +617,7 @@
 					include_all: !seated,
 					active_from: dateFrom || undefined,
 					active_to: dateTo || undefined,
-					sort: oneOf(sortDef.id, ['family_name', 'name'] as const),
+					sort: choiceOf(sortDef.id, ['family_name', 'name'] as const),
 					limit: seated ? SEATED : limit
 				};
 				return async (offset, signal) => {
@@ -679,7 +643,7 @@
 			case 'decisions': {
 				const query = {
 					chamber: kamer,
-					kind: decisionKindParam || undefined,
+					kind: soort || undefined,
 					passed: passed === undefined ? undefined : passed === 'true',
 					from: dateFrom || undefined,
 					to: dateTo || undefined,
@@ -764,7 +728,7 @@
 				// Always one Kamer: without a filter the list is slow on the full database.
 				const query = {
 					chamber: kamer,
-					kind: documentKind || undefined,
+					kind: soort || undefined,
 					dossier: q || undefined,
 					from: dateFrom || undefined,
 					to: dateTo || undefined,
@@ -774,7 +738,7 @@
 					'/api/documents',
 					query,
 					facettenApart,
-					(f) => (documentKinds = facetMap(f.facets?.kind)),
+					(f) => (soorts = facetMap(f.facets?.kind)),
 					(r, offset) => {
 						pages.documents = toPage(pages.documents, r.items, offset, r.total ?? undefined);
 					}
@@ -783,7 +747,7 @@
 			case 'commitments': {
 				const filters = {
 					cabinet: cabinetParam || undefined,
-					ministry: asMinistry(ministry),
+					ministry: ministry || undefined,
 					member: memberParam || undefined,
 					overdue: overdue || undefined,
 					q: q || undefined,
@@ -793,7 +757,7 @@
 				const query = {
 					...filters,
 					status: commitmentStatus,
-					sort: oneOf(sortDef.id, ['date', 'expected_resolution'] as const),
+					sort: choiceOf(sortDef.id, ['date', 'expected_resolution'] as const),
 					limit
 				};
 				// The number in each state under the other filters, from the facet asked apart.
@@ -1545,10 +1509,7 @@
 			case 'dossiers': {
 				// The kinds are the ones the API counts, in its order, the chosen one always. A
 				// dossier without a kind (letters and motions) cannot be chosen: it is counted.
-				const kinds = [...dossierKinds.keys()].filter(
-					(k) => k !== 'null' && ((dossierKinds.get(k) ?? 0) > 0 || k === track)
-				);
-				if (track && !kinds.includes(track)) kinds.push(track);
+				const kinds = facetOptions(dossierKinds, track).map(([k]) => k);
 				const withoutKind = dossierKinds.get('null') ?? 0;
 				const statusCounts_ = facetMap(dossierFacets?.status);
 				const outcomes = facetMap(dossierFacets?.outcome);
@@ -1630,8 +1591,7 @@
 						id: 'ministry',
 						label: 'Ministerie',
 						kind: 'list',
-						options: [...dossierMinistries]
-							.filter(([m, n]) => m !== 'null' && (n > 0 || m === ministry))
+						options: facetOptions(dossierMinistries, ministry)
 							.sort((a, b) => b[1] - a[1])
 							.map(([m, n]) => ({
 								id: m,
@@ -1649,17 +1609,13 @@
 			case 'decisions': {
 				// The kinds the Kamer's decisions have, as the facet counts them; one without a zaak
 				// cannot be chosen. The Eerste Kamer's decisions have none yet: no group then.
-				const kinds = [...decisionKinds.keys()]
-					.filter(
-						(k) => k !== 'null' && ((decisionKinds.get(k) ?? 0) > 0 || k === decisionKindParam)
-					)
-					.map((k) => ({
-						id: k,
-						label: k,
-						count: decisionKinds.get(k) ?? 0,
-						on: decisionKindParam === k,
-						onClick: toggle('soort', decisionKindParam, k)
-					}));
+				const kinds = facetOptions(decisionKinds, soort).map(([k, n]) => ({
+					id: k,
+					label: k,
+					count: n,
+					on: soort === k,
+					onClick: toggle('soort', soort, k)
+				}));
 				return [
 					...(kinds.length || kamer === 'TK'
 						? [{ id: 'soort', label: 'Soort', kind: 'list' as const, options: kinds }]
@@ -1702,15 +1658,14 @@
 						id: 'soort',
 						label: 'Soort',
 						kind: 'list',
-						options: [...documentKinds]
-							.filter(([k, n]) => k !== 'null' && (n > 0 || k === documentKind))
+						options: facetOptions(soorts, soort)
 							.sort((a, b) => b[1] - a[1])
 							.map(([k, n]) => ({
 								id: k,
 								label: k,
 								count: n,
-								on: documentKind === k,
-								onClick: toggle('soort', documentKind, k)
+								on: soort === k,
+								onClick: toggle('soort', soort, k)
 							}))
 					},
 					periodGroup('Datum', 'date')

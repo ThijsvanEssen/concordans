@@ -40,12 +40,9 @@ describe('buildBronHref', () => {
 		).toBe('/uitspraken/ECLI:NL:HR:2024:1769?overlay=open');
 	});
 
-	it('keeps reading, also under the old name mode=read', () => {
+	it('keeps reading', () => {
 		expect(buildBronHref(at('/explore?focus=articles/a&lezen=1'), 'judgments/j')).toBe(
 			'/explore?focus=judgments/j&lezen=1'
-		);
-		expect(buildBronHref(at('/explore?mode=read&focus=articles/a'), 'articles/b')).toBe(
-			'/explore?focus=articles/b&lezen=1'
 		);
 	});
 

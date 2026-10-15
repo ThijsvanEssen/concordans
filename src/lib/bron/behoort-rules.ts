@@ -310,7 +310,7 @@ export const BANDS: Partial<Record<Collection, Band>> = {
 		],
 		// More than one appeal against it: the line names the first, the group all.
 		groups: [{ id: 'beroep', label: 'Hoger beroep of cassatie', bak: LATER, atLeast: 2 }],
-		// The conclusie of the A-G or P-G (conclusieVan; concept 21, Thijs 10 Oct).
+		// The conclusie of the A-G or P-G (concept 21, Thijs 10 Oct).
 		statusLine: [CONCLUSION]
 	},
 	documents: {

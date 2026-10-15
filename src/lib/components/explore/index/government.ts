@@ -56,19 +56,6 @@ export const commitmentTeken = (status: string | null | undefined): Teken =>
 const isCommitmentStatus = (value: unknown): value is CommitmentStatus =>
 	(COMMITMENT_STATUSES as readonly unknown[]).includes(value);
 
-/** The states of API 0.47 and before, as a link from then names them in `?status=`. */
-const OLD_STATUS: Record<string, string> = {
-	open: 'Openstaand',
-	done: 'Afgedaan',
-	partly_done: 'Deels Afgedaan',
-	unfulfilled: 'Niet nagekomen',
-	lapsed: 'Vervallen'
-};
-
-/** A state from the URL: as the Kamer writes it, or by its name before API 0.48. */
-export const statusFromParam = (value: string | null): string | null =>
-	value ? (OLD_STATUS[value] ?? value) : null;
-
 function once<T>(load: () => Promise<T>): () => Promise<T> {
 	let request: Promise<T> | null = null;
 	onForget(() => (request = null));

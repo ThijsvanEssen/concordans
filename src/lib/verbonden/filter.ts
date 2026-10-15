@@ -148,8 +148,8 @@ export function parseFilter(params: URLSearchParams): VerbondenFilter {
 		bronnen: kinds.length > 0 ? new Set(kinds) : null,
 		lid: params.get('lid') || null,
 		rechter: isRechter(rechter) ? rechter : null,
-		van: alsDag(params.get('van'), false),
-		tot: alsDag(params.get('tot'), true),
+		van: alsDag(params.get('van')),
+		tot: alsDag(params.get('tot')),
 		geldendOp: isDay(geldendOp) ? geldendOp : null,
 		betrouwbaarheid:
 			betrouwbaarheid === 'bron' || betrouwbaarheid === 'afgeleid' ? betrouwbaarheid : null,

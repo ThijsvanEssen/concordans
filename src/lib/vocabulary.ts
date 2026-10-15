@@ -213,48 +213,6 @@ export const COURT_KIND_LABEL: Record<CourtKind, string> = {
 
 export const COURT_KINDS = Object.keys(COURT_KIND_LABEL) as CourtKind[];
 
-/**
- * The tiers of API 0.29 and before that are now a court within a wider tier, so a link
- * from before opens the same courts. `gemeenschappelijk_hof` also held the Hof van Justitie
- * of the Antilles, which is now a court of its own: it opens the whole tier.
- */
-export const OLD_TIER: Record<string, { tier: Tier; courtKind?: CourtKind }> = {
-	ambtenarengerecht: { tier: 'andere_instantie', courtKind: 'ambtenarengerecht' },
-	raad_van_beroep: { tier: 'andere_instantie', courtKind: 'raad_van_beroep' },
-	college_van_beroep_hoger_onderwijs: {
-		tier: 'andere_instantie',
-		courtKind: 'college_van_beroep_voor_het_hoger_onderwijs'
-	},
-	college_van_beroep_studiefinanciering: {
-		tier: 'andere_instantie',
-		courtKind: 'college_van_beroep_studiefinanciering'
-	},
-	tariefcommissie: { tier: 'andere_instantie', courtKind: 'tariefcommissie' },
-	raad_voor_strafrechtstoepassing_en_jeugdbescherming: {
-		tier: 'andere_instantie',
-		courtKind: 'raad_voor_strafrechtstoepassing_en_jeugdbescherming'
-	},
-	raad_van_arbitrage_in_bouwgeschillen: {
-		tier: 'andere_instantie',
-		courtKind: 'raad_van_arbitrage_in_bouwgeschillen'
-	},
-	gemeenschappelijk_hof: { tier: 'koninkrijksinstantie' },
-	gerecht_in_eerste_aanleg: { tier: 'koninkrijksinstantie', courtKind: 'gerecht_in_eerste_aanleg' },
-	gerecht_in_ambtenarenzaken: {
-		tier: 'koninkrijksinstantie',
-		courtKind: 'gerecht_in_ambtenarenzaken'
-	},
-	raad_van_beroep_in_ambtenarenzaken: {
-		tier: 'koninkrijksinstantie',
-		courtKind: 'raad_van_beroep_in_ambtenarenzaken'
-	},
-	raad_van_beroep_voor_belastingzaken: {
-		tier: 'koninkrijksinstantie',
-		courtKind: 'raad_van_beroep_voor_belastingzaken'
-	},
-	constitutioneel_hof: { tier: 'koninkrijksinstantie', courtKind: 'constitutioneel_hof' }
-};
-
 /** The status of a verbinding as the API writes it, and as the screen prints it. */
 export const statusLabel = (status: string | null | undefined) =>
 	status === 'voorgesteld' ? 'voorgesteld' : 'vastgesteld';

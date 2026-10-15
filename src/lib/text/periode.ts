@@ -27,13 +27,8 @@ export function gekozen(van: string, tot: string, vandaag: string): string | nul
 	return VOORKEUZEN.find((v) => maandenTerug(vandaag, v.maanden) === van)?.id ?? null;
 }
 
-/**
- * A bound as the URL holds it: a day as it is, a year as its first or last day (an
- * address from before, `van=2015`). Anything else is no bound.
- */
-export function alsDag(v: string | null | undefined, eind: boolean): string | null {
+/** A bound as the URL holds it: a day; anything else is no bound. */
+export function alsDag(v: string | null | undefined): string | null {
 	const s = (v ?? '').trim();
-	if (isDay(s)) return s;
-	if (/^\d{4}$/.test(s)) return `${s}-${eind ? '12-31' : '01-01'}`;
-	return null;
+	return isDay(s) ? s : null;
 }
