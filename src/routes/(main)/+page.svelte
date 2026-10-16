@@ -180,7 +180,7 @@
 			Concordans is een onderzoeksinstrument dat parlementaire informatie verbindt met wetgeving,
 			officiële publicaties en rechtspraak, om inzicht te geven in de samenhang rond een onderwerp.
 			Het dient als eenvoudige wettenlezer, met de geldende en eerdere versies van elk artikel, en
-			als werkplaats voor eigen onderzoek: wat gevonden is, kan in een bundel worden bewaard en
+			als werkplaats voor eigen onderzoek. Wat gevonden is, kan in een bundel worden bewaard en
 			geordend.
 		</p>
 	</header>
