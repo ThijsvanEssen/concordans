@@ -177,11 +177,11 @@
 	<header class="blad__kop intro">
 		<h1 class="blad__titel">Wetten, uitspraken en Kamerstukken in samenhang</h1>
 		<p class="lead">
-			Concordans legt de wetgeving, zoals zij geldt en zoals zij gold, naast de rechtspraak die haar
-			uitlegt en de parlementaire stukken waaruit zij voortkomt. Bij een artikel staan de uitspraken
-			die het aanhalen, de Kamerstukken die het noemen en zijn eerdere versies; bij een motie of
-			amendement de stemming per fractie. Wat gevonden is, wordt bewaard in een bundel voor eigen
-			onderzoek. De gegevens komen dagelijks uit de officiële bronnen.
+			Concordans is een onderzoeksinstrument dat parlementaire informatie verbindt met wetgeving,
+			officiële publicaties en rechtspraak, om inzicht te geven in de samenhang rond een onderwerp.
+			Het dient als eenvoudige wettenlezer, met de geldende en eerdere versies van elk artikel, en
+			als werkplaats voor eigen onderzoek: wat gevonden is, kan in een bundel worden bewaard en
+			geordend.
 		</p>
 	</header>
 	<div class="main">
