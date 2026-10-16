@@ -29,7 +29,7 @@
 		</div>
 
 		<div class="foot-col">
-			<h4>Concordans</h4>
+			<p class="foot-head">Concordans</p>
 			<ul>
 				<li><a href="/explore" class="no-underline">Samenhang</a></li>
 				<li><a href="/docs" class="no-underline">Documentatie</a></li>
@@ -39,7 +39,7 @@
 		</div>
 
 		<div class="foot-col">
-			<h4>Bronnen</h4>
+			<p class="foot-head">Bronnen</p>
 			<ul>
 				<li>
 					<a href="https://wetten.overheid.nl" target="_blank" rel="noopener" class="no-underline"
@@ -82,7 +82,7 @@
 		</div>
 
 		<div class="foot-col">
-			<h4>Over</h4>
+			<p class="foot-head">Over</p>
 			<ul>
 				<li><a href="/over" class="no-underline">Over Concordans</a></li>
 				<li><a href="/bronnen" class="no-underline">Bronnen en hergebruik</a></li>
@@ -140,7 +140,7 @@
 		max-width: 30ch;
 	}
 
-	.foot-col h4 {
+	.foot-head {
 		margin: 0 0 var(--s-4);
 		font-size: var(--t-micro);
 		font-weight: 600;

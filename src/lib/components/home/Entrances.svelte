@@ -3,8 +3,27 @@
 	// 16 Oct): an article with its reading, origin and text; a vote per party; a Bundel.
 	// Fixed, so they stand in the first paint without a request, as the server can show them.
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import Stem from '$lib/components/parliamentary/Stem.svelte';
-	import Uitkomst from '$lib/components/parliamentary/Uitkomst.svelte';
+	import VoteMark from '$lib/components/parliamentary/Stem.svelte';
+	import OutcomeMark from '$lib/components/parliamentary/Uitkomst.svelte';
+	import {
+		EXAMPLE_BUNDLE_HREF,
+		EXAMPLE_LINES,
+		EXAMPLE_NOTE,
+		EXAMPLE_TITLE
+	} from './example-bundle';
+
+	/** Art. 6:162 BW and the parts of its page, each row a link to its part (the filter of
+	 *  Verbonden, lib/verbonden/filter.ts). */
+	const ARTICLE = '/wetten/BWBR0005289/artikel/6:162';
+	const ARTICLE_PARTS = [
+		{ collection: 'judgments', label: 'Uitspraken die het aanhalen', bronnen: 'uitspraken' },
+		{
+			collection: 'documents',
+			label: 'Kamerstukken die het noemen',
+			bronnen: 'toelichtingen,wetsvoorstellen,dossiers'
+		},
+		{ collection: 'articles', label: 'Artikelen die ernaar verwijzen', bronnen: 'artikelen' }
+	] as const;
 
 	/** The motion of 16 June 2026 (decision_495fd69d…), its parties as the vote gave them. */
 	const VOTE = {
@@ -28,11 +47,14 @@
 <div class="entrances">
 	<section class="entrance" aria-labelledby="entrance-article">
 		<h2 id="entrance-article">Artikel</h2>
-		<a class="title" href="/wetten/BWBR0005289/artikel/6:162">Art. 6:162 BW, Onrechtmatige daad</a>
+		<a class="title" href={ARTICLE}>Art. 6:162 BW, Onrechtmatige daad</a>
 		<ul class="rows">
-			<li><KindGlyph collection="articles" /> Wat het zegt</li>
-			<li><KindGlyph collection="judgments" /> Hoe het is uitgelegd</li>
-			<li><KindGlyph collection="documents" /> Waar het vandaan komt</li>
+			{#each ARTICLE_PARTS as part (part.bronnen)}
+				<li>
+					<KindGlyph collection={part.collection} />
+					<a href="{ARTICLE}?bronnen={part.bronnen}">{part.label}</a>
+				</li>
+			{/each}
 		</ul>
 	</section>
 
@@ -40,10 +62,10 @@
 		<h2 id="entrance-vote">Stemming</h2>
 		<a class="title" href={VOTE.href}>{VOTE.title}</a>
 		<p class="meta">{VOTE.date}</p>
-		<p class="outcome"><Uitkomst tone="nee" woord="Verworpen" /> <span>{VOTE.tally}</span></p>
+		<p class="outcome"><OutcomeMark tone="nee" woord="Verworpen" /> <span>{VOTE.tally}</span></p>
 		<dl class="sides">
 			{#each VOTE.sides as side (side.choice)}
-				<dt><Stem keuze={side.choice} /></dt>
+				<dt><VoteMark keuze={side.choice} /></dt>
 				<dd>{side.parties}</dd>
 			{/each}
 		</dl>
@@ -51,17 +73,18 @@
 
 	<section class="entrance" aria-labelledby="entrance-bundle">
 		<h2 id="entrance-bundle">Bundel</h2>
-		<a class="title" href="/gemarkeerd">Aansprakelijkheid werkgever thuiswerk</a>
+		<a class="title" href={EXAMPLE_BUNDLE_HREF}>{EXAMPLE_TITLE}</a>
 		<ul class="rows">
-			<li>
-				<KindGlyph collection="articles" />
-				<a href="/wetten/BWBR0005290/artikel/7:658">Art. 7:658 BW</a>
+			{#each EXAMPLE_LINES as line (line.id)}
+				<li>
+					<KindGlyph collection={line.collection} />
+					<a href={line.href}>{line.label}</a>
+				</li>
+			{/each}
+			<li class="note">
+				<span class="note-label">Aantekening</span>
+				{EXAMPLE_NOTE}
 			</li>
-			<li>
-				<KindGlyph collection="judgments" />
-				<a href="/uitspraken/ECLI:NL:HR:2005:AU3313">HR 11 november 2005</a>
-			</li>
-			<li class="note"><span class="note-label">Aantekening</span> Zorgplicht, ook thuis?</li>
 		</ul>
 	</section>
 </div>
@@ -92,6 +115,12 @@
 		font-weight: 600;
 		color: var(--ink-3);
 	}
+	/* Links at least 24 px high, as Alles in Actueel. */
+	.title,
+	.rows a {
+		display: inline-block;
+		padding: var(--s-1) 0;
+	}
 	.title {
 		font-size: var(--t-body-2);
 		font-weight: 600;
@@ -111,7 +140,7 @@
 	.rows {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-1);
+		gap: 0;
 		margin: 0;
 		padding: 0;
 		list-style: none;

@@ -37,6 +37,26 @@
 		/>
 		<style>
 			@font-face {
+				font-family: 'Newsreader Fallback';
+				src: local('Georgia');
+				font-weight: 400 500;
+				font-style: normal;
+				size-adjust: 94%;
+				ascent-override: 79%;
+				descent-override: 28%;
+				line-gap-override: 0%;
+			}
+			@font-face {
+				font-family: 'Newsreader Fallback';
+				src: local('Georgia Bold'), local('Georgia-Bold');
+				font-weight: 600 800;
+				font-style: normal;
+				size-adjust: 83%;
+				ascent-override: 89%;
+				descent-override: 31%;
+				line-gap-override: 0%;
+			}
+			@font-face {
 				font-family: 'Newsreader';
 				src: url('/fonts/Newsreader-Variable.woff2') format('woff2');
 				font-weight: 400 600;
@@ -52,7 +72,7 @@
 				--ink: #161513;
 				--ink-2: #3b3834;
 				--ink-3: #5d5951;
-				--font-serif: 'Newsreader', Georgia, serif;
+				--font-serif: 'Newsreader', 'Newsreader Fallback', Georgia, serif;
 				--t-h1: 30px;
 				--t-h3: 20px;
 				--t-body: 17.5px;

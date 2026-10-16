@@ -208,15 +208,14 @@
 					{/snippet}
 				</Keuze>
 			</div>
-			{#key scope}
-				<Search
-					scope={chosen?.kinds ?? null}
-					initial={query}
-					placeholder={chosen
-						? `Zoek in ${chosen.label.toLowerCase()}`
-						: 'Zoek een artikel, uitspraak of motie'}
-				/>
-			{/key}
+			<!-- One field for every scope: a scope chosen asks the typed query again. -->
+			<Search
+				scope={chosen?.kinds ?? null}
+				initial={query}
+				placeholder={chosen
+					? `Zoek in ${chosen.label.toLowerCase()}`
+					: 'Zoek een artikel, uitspraak of motie'}
+			/>
 		</div>
 		{#if lawNetwork}<Wetsnetwerk schets={lawNetwork} />{:else if networkLoading}<div
 				class="wetsnetwerk-plek"
