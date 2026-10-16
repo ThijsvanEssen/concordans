@@ -45,10 +45,9 @@ describe('the frame of a page', () => {
 		expect(
 			menu.filter((path) => !/class="blad__kop"[\s\S]*?class="blad__titel"/.test(bron(path)))
 		).toEqual([]);
-		// Every h1 of a page is the one title (the home page's is the name of the site).
-		const anders = overtreders(
-			(t) => [...t.matchAll(/<h1\b[^>]*>/g)].some((m) => !/class="blad__titel"/.test(m[0])),
-			[plek('routes/(main)/+page.svelte', 'the name of the site')]
+		// Every h1 of a page is the one title, the start page's too.
+		const anders = overtreders((t) =>
+			[...t.matchAll(/<h1\b[^>]*>/g)].some((m) => !/class="blad__titel"/.test(m[0]))
 		).filter((p) => /^(routes\/|uitzondering )/.test(p));
 		expect(anders).toEqual([]);
 		const eigen = overtreders(
@@ -69,7 +68,7 @@ describe('the frame of a page', () => {
 		expect(bron('routes/(main)/+layout.svelte')).toMatch(
 			/class="blad-hoogte"[\s\S]*min-height: 100dvh/
 		);
-		expect(bron('routes/(main)/+page.svelte')).toMatch(/\{:else if wetsnetwerkLaden\}/);
+		expect(bron('routes/(main)/+page.svelte')).toMatch(/\{:else if networkLoading\}/);
 	});
 
 	it('names the page a subpage belongs to as a crumb: one link, as a reader’s band', () => {

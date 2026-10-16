@@ -19,51 +19,56 @@
 	import { tick } from 'svelte';
 	import { HOME_SUMMARY } from '$lib/api/first-pages';
 	import type { TijdGroep } from '$lib/components/tijdlijn/tijdlijn';
+	import { page } from '$app/state';
+	import Entrances from '$lib/components/home/Entrances.svelte';
 
 	// Four ways in to search, each with the glyphs of what it holds.
 	const SCOPES: {
 		id: string;
 		label: string;
 		kinds: string[];
-		tekens: Collection[];
+		marks: Collection[];
 	}[] = [
 		{
 			id: 'wetten',
 			label: 'Wetten',
 			kinds: ['instruments', 'articles'],
-			tekens: ['instruments', 'articles']
+			marks: ['instruments', 'articles']
 		},
 		{
 			id: 'uitspraken',
 			label: 'Uitspraken',
 			kinds: ['judgments'],
-			tekens: ['judgments']
+			marks: ['judgments']
 		},
 		{
 			id: 'parlement',
 			label: 'Parlement',
 			kinds: ['dossiers', 'documents', 'decisions', 'members', 'factions', 'committees'],
-			tekens: ['dossiers', 'documents', 'decisions', 'members']
+			marks: ['dossiers', 'documents', 'decisions', 'members']
 		},
 		{
 			id: 'kabinet',
 			label: 'Kabinet',
 			kinds: ['cabinets', 'members', 'commitments'],
-			tekens: ['cabinets', 'members', 'commitments']
+			marks: ['cabinets', 'members', 'commitments']
 		}
 	];
 	/** Alle bronnen: the first mark of each way in, in the same order. */
-	const ALLE: Collection[] = SCOPES.map((sc) => sc.tekens[0]);
+	const ALL_MARKS: Collection[] = SCOPES.map((sc) => sc.marks[0]);
 	let scope = $state<string | null>(null);
 	const chosen = $derived(SCOPES.find((x) => x.id === scope) ?? null);
 	/** On a phone the scopes a step smaller and without their marks: five words fit, as wide
 	 *  as the field under them. */
-	const smal = new MediaQuery('width <= 600px');
+	const narrow = new MediaQuery('width <= 600px');
 	/** Below a phone of 360: Alles for Alle bronnen, so Kabinet keeps its place in the row. */
-	const smalst = new MediaQuery('width < 360px');
+	const narrowest = new MediaQuery('width < 360px');
 
 	/** The lines of Actueel shown; the rest is in Actueel. */
-	const LINES_SHOWN = 10;
+	const LINES_SHOWN = 6;
+
+	/** The query in the field from ?q=: a shared search, the SearchAction of the server's page. */
+	const query = page.url.searchParams.get('q') ?? '';
 	/** The days the summary spans: enough for the lines on a quiet week (first-pages.json). */
 	const SUMMARY_DAYS = HOME_SUMMARY.days;
 	/**
@@ -77,19 +82,19 @@
 
 	let lines = $state<TimelineLine[]>([]);
 	/** Actueel's first answer: under way, in, or failed. A phone waits seconds for it. */
-	let actueelStaat = $state<'laden' | 'klaar' | 'fout'>('laden');
+	let feedState = $state<'laden' | 'klaar' | 'fout'>('laden');
 	/** The network of the last passed bill: after Actueel is on screen; none on an error. */
-	let wetsnetwerk = $state<Schets | null>(null);
+	let lawNetwork = $state<Schets | null>(null);
 	/** Its place stands while it is asked, so Actueel under it does not drop (0.16 of layout
 	 *  shift live, 10 Oct); it closes only where there is no bill to show. */
-	let wetsnetwerkLaden = $state(true);
+	let networkLoading = $state(true);
 
 	$effect(() => {
 		const ac = new AbortController();
 		loadLines(ac.signal).catch(() => {
 			if (!ac.signal.aborted) {
-				actueelStaat = 'fout';
-				wetsnetwerkLaden = false;
+				feedState = 'fout';
+				networkLoading = false;
 			}
 		});
 		return () => ac.abort();
@@ -108,16 +113,16 @@
 			signal
 		);
 		lines = timelineOf(summary, LINES_SHOWN);
-		actueelStaat = 'klaar';
+		feedState = 'klaar';
 		// The network waits until Actueel is drawn and the browser is idle.
 		await tick();
 		await idle();
 		if (signal.aborted) return;
-		wetsnetwerk = await laadWetsnetwerk(summary.items ?? [], today, signal).catch((e) => {
+		lawNetwork = await laadWetsnetwerk(summary.items ?? [], today, signal).catch((e) => {
 			report('Wetsnetwerk', e);
 			return null;
 		});
-		if (!signal.aborted) wetsnetwerkLaden = false;
+		if (!signal.aborted) networkLoading = false;
 	}
 
 	const idle = () =>
@@ -134,7 +139,7 @@
 	};
 	// Actueel in the shared timeline: days, newest first; a decision large with its outcome,
 	// a quiet day small.
-	const groepen = $derived<TijdGroep[]>(
+	const groups = $derived<TijdGroep[]>(
 		[...Map.groupBy(lines, (l) => l.date)].map(([date, ls]) => ({
 			id: date,
 			titel: dayHeading(date),
@@ -168,11 +173,17 @@
 	<link rel="alternate" type="application/atom+xml" title="Actueel" href={atomHref({})} />
 </svelte:head>
 
-<div class="home blad blad__indeling">
-	<aside class="side">
-		<h1>Concordans</h1>
-		<p class="what">Wetten, uitspraken en Kamerstukken met hun onderlinge verbindingen.</p>
-	</aside>
+<div class="home blad">
+	<header class="blad__kop intro">
+		<h1 class="blad__titel">Wetten, uitspraken en Kamerstukken in samenhang</h1>
+		<p class="lead">
+			Concordans is een onderzoeksinstrument dat parlementaire informatie verbindt met wetgeving,
+			officiële publicaties en rechtspraak, om inzicht te geven in de samenhang rond een onderwerp.
+			Het dient als eenvoudige wettenlezer, met de geldende en eerdere versies van elk artikel, en
+			als werkplaats voor eigen onderzoek. Wat gevonden is, kan in een bundel worden bewaard en
+			geordend.
+		</p>
+	</header>
 	<div class="main">
 		<div class="search">
 			<!-- Where to search: one choice of five, a Keuze as everywhere (Thijs, 10 Oct); Alle
@@ -182,39 +193,40 @@
 					label="Zoek in"
 					vol
 					opties={[
-						{ waarde: 'alles', label: smalst.current ? 'Alles' : 'Alle bronnen' },
+						{ waarde: 'alles', label: narrowest.current ? 'Alles' : 'Alle bronnen' },
 						...SCOPES.map((sc) => ({ waarde: sc.id, label: sc.label }))
 					]}
 					waarde={scope ?? 'alles'}
 					onSelect={(w) => (scope = w === 'alles' ? null : w)}
-					klein={smal.current}
+					klein={narrow.current}
 				>
 					{#snippet voor(w)}
-						{@const tekens = w === 'alles' ? ALLE : SCOPES.find((x) => x.id === w)?.tekens}
-						{#if tekens && !smal.current}<span class="glyphs"
-								>{#each tekens as c (c)}<KindGlyph collection={c} size={12} />{/each}</span
+						{@const marks = w === 'alles' ? ALL_MARKS : SCOPES.find((x) => x.id === w)?.marks}
+						{#if marks && !narrow.current}<span class="glyphs"
+								>{#each marks as c (c)}<KindGlyph collection={c} size={12} />{/each}</span
 							>{/if}
 					{/snippet}
 				</Keuze>
 			</div>
-			{#key scope}
-				<Search
-					scope={chosen?.kinds ?? null}
-					placeholder={chosen
-						? `Zoek in ${chosen.label.toLowerCase()}`
-						: 'Zoek een wet, uitspraak of dossier'}
-				/>
-			{/key}
+			<!-- One field for every scope: a scope chosen asks the typed query again. -->
+			<Search
+				scope={chosen?.kinds ?? null}
+				initial={query}
+				placeholder={chosen
+					? `Zoek in ${chosen.label.toLowerCase()}`
+					: 'Zoek een artikel, uitspraak of motie'}
+			/>
 		</div>
-		{#if wetsnetwerk}<Wetsnetwerk schets={wetsnetwerk} />{:else if wetsnetwerkLaden}<div
+		{#if lawNetwork}<Wetsnetwerk schets={lawNetwork} />{:else if networkLoading}<div
 				class="wetsnetwerk-plek"
 				aria-hidden="true"
 			></div>{/if}
+		<Entrances />
 		<section class="actueel" aria-labelledby="actueel-heading">
 			<header>
 				<h2 id="actueel-heading"><a href="/actueel">Actueel</a></h2>
 			</header>
-			{#if actueelStaat === 'laden'}
+			{#if feedState === 'laden'}
 				<div class="laden" aria-hidden="true">
 					{#each [0, 1, 2] as i (i)}
 						<div class="laden__regel">
@@ -224,17 +236,17 @@
 					{/each}
 				</div>
 				<p class="sr-only" role="status">Actueel laden</p>
-			{:else if actueelStaat === 'fout'}
+			{:else if feedState === 'fout'}
 				<p class="fout">Actueel kon niet worden geladen.</p>
 			{/if}
-			<Tijdlijn {groepen} datums={false} />
-			<a class="all" href="/actueel">Alles in Actueel →</a>
+			<Tijdlijn groepen={groups} datums={false} />
+			<p class="all"><a href="/actueel">Alles in Actueel →</a></p>
 		</section>
 	</div>
 </div>
 
 <style>
-	/* The band's height while it is asked (1440: 366 px; a phone: 274 px), its frame quiet. */
+	/* The band's height while it is asked (1440: 366 px; a phone: 264 px), its frame quiet. */
 	.wetsnetwerk-plek {
 		min-height: 366px;
 		border-radius: var(--r-1);
@@ -242,24 +254,17 @@
 	}
 	@media (max-width: 640px) {
 		.wetsnetwerk-plek {
-			min-height: 274px;
+			min-height: 264px;
 		}
 	}
-	/* The frame and grid of Bladeren (lib/styles/frame.css). */
-	.side {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-5);
-	}
-	.side h1 {
-		margin: 0;
-		font-size: var(--t-h1);
-		font-weight: 600;
-	}
-	.what {
-		margin: calc(-1 * var(--s-3)) 0 0;
+	/* The frame of Bladeren (lib/styles/frame.css), one column the full width. */
+	/* What Concordans is, in a reading width under the heading. */
+	.lead {
+		flex-basis: 100%;
+		max-width: var(--blad-tekst);
+		margin: calc(-1 * var(--s-2)) 0 0;
 		font-size: var(--t-body-2);
-		line-height: var(--lh-snug);
+		line-height: var(--lh-body);
 		color: var(--ink-2);
 	}
 	.search {
@@ -298,30 +303,19 @@
 		color: var(--ink);
 		text-decoration: none;
 	}
-	@media (max-width: 768px) {
-		.home {
-			row-gap: var(--s-6);
-		}
-	}
-
+	/* On a line of its own under the timeline, at the right, as Open in Samenhang. */
 	.all {
-		align-self: flex-start;
-		margin-top: var(--s-5);
+		display: flex;
+		justify-content: flex-end;
+		margin: var(--s-5) 0 0;
 		font-size: var(--t-meta);
+	}
+	.all a {
 		font-weight: 600;
 		color: var(--ink);
-		text-decoration: none;
-		border-bottom: 1px solid var(--ink);
 	}
-	.all:hover {
-		color: var(--ink);
-		border-color: var(--ink);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
-	}
-
 	@media (max-width: 640px) {
-		.all {
+		.all a {
 			padding: var(--s-2) 0;
 		}
 	}

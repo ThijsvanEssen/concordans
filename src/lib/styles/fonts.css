@@ -1,6 +1,29 @@
 /* Newsreader, variable (opsz 6..72, wght 400..600), roman and italic; Schibsted
    Grotesk, variable (wght 400..600). Both under the SIL Open Font License. The
    latin subset covers Dutch; latin-ext loads only for a page that needs it. */
+/* Georgia sized to Newsreader while the webfont loads, so the text does not move when it
+   swaps in (layout shift). Newsreader's optical sizes make it narrower at heading sizes:
+   the regular face is matched at the size of text, the bold one at the size of headings. */
+@font-face {
+	font-family: 'Newsreader Fallback';
+	src: local('Georgia');
+	font-weight: 400 500;
+	font-style: normal;
+	size-adjust: 94%;
+	ascent-override: 79%;
+	descent-override: 28%;
+	line-gap-override: 0%;
+}
+@font-face {
+	font-family: 'Newsreader Fallback';
+	src: local('Georgia Bold'), local('Georgia-Bold');
+	font-weight: 600 800;
+	font-style: normal;
+	size-adjust: 83%;
+	ascent-override: 89%;
+	descent-override: 31%;
+	line-gap-override: 0%;
+}
 @font-face {
 	font-family: 'Newsreader';
 	src: url('/fonts/Newsreader-Variable.woff2') format('woff2');

@@ -70,7 +70,7 @@
 
 	/* ─── Type ─── */
 	/* One text face, one interface face. */
-	--font-serif: 'Newsreader', Georgia, serif;
+	--font-serif: 'Newsreader', 'Newsreader Fallback', Georgia, serif;
 	/* One serif for all text, in 400, 600 and 800; the sans only for controls: buttons,
 	   choice rows, fields, keys and menus (Thijs, 10 Oct: "typografie is goed").
 	   docs/typografie.md. */

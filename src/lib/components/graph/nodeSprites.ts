@@ -61,8 +61,8 @@ export const FALLBACK: Tokens = {
 	groepFractie: '#944078',
 	groepCommissie: '#438365',
 	groepDossier: '#d3762d',
-	fontSerif: "'Newsreader', Georgia, serif",
-	fontLabel: "'Newsreader', Georgia, serif"
+	fontSerif: "'Newsreader', 'Newsreader Fallback', Georgia, serif",
+	fontLabel: "'Newsreader', 'Newsreader Fallback', Georgia, serif"
 };
 
 export const TOKEN_NAMES: Record<keyof Tokens, string> = {

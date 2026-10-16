@@ -94,7 +94,7 @@
 		{@const groepOpen = !inklapbaar || isOpen(sleutel, true)}
 		<section class="groep">
 			{#if g.titel}
-				<svelte:element this={niveau === 2 ? 'h2' : 'h4'} class="kop kop--{niveau}">
+				<svelte:element this={niveau === 2 ? 'h2' : 'h3'} class="kop kop--{niveau}">
 					{#if inklapbaar}
 						<FoldButton {sleutel} open={groepOpen}
 							>{g.titel}{#if g.sub}<span class="sub">{g.sub}</span>{/if}</FoldButton

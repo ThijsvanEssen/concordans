@@ -4,6 +4,7 @@
 	import { feedStand, standLine } from '$lib/text/stand';
 	import { report } from '$lib/api/errors';
 	import { inView } from '$lib/actions/in-view';
+	import { CONTACT_EMAIL, MAKER } from '$lib/site/contact';
 
 	// How current the data is, one line on every page (Thijs, 10 Oct: out of the page heads,
 	// docs/bediening.md, Bronregels): from /api/stats, asked once the footer comes into view.
@@ -21,11 +22,14 @@
 			<a href="/" class="foot-logo no-underline" aria-label="Concordans home">
 				<Wordmark size={17} />
 			</a>
-			<p>Werkomgeving voor juridisch onderzoek, op officiële bronnen.</p>
+			<p>
+				Werkomgeving voor juridisch onderzoek, op officiële bronnen. Gratis, zonder account en
+				zonder cookies.
+			</p>
 		</div>
 
 		<div class="foot-col">
-			<h4>Concordans</h4>
+			<p class="foot-head">Concordans</p>
 			<ul>
 				<li><a href="/explore" class="no-underline">Samenhang</a></li>
 				<li><a href="/docs" class="no-underline">Documentatie</a></li>
@@ -35,7 +39,7 @@
 		</div>
 
 		<div class="foot-col">
-			<h4>Bronnen</h4>
+			<p class="foot-head">Bronnen</p>
 			<ul>
 				<li>
 					<a href="https://wetten.overheid.nl" target="_blank" rel="noopener" class="no-underline"
@@ -78,7 +82,7 @@
 		</div>
 
 		<div class="foot-col">
-			<h4>Over</h4>
+			<p class="foot-head">Over</p>
 			<ul>
 				<li><a href="/over" class="no-underline">Over Concordans</a></li>
 				<li><a href="/bronnen" class="no-underline">Bronnen en hergebruik</a></li>
@@ -89,7 +93,7 @@
 	</div>
 
 	<div class="container foot-bottom" use:inView={askStand}>
-		<span>© 2026 Concordans</span>
+		<span>© 2026 {MAKER}, <a href="mailto:{CONTACT_EMAIL}">{CONTACT_EMAIL}</a></span>
 		{#if stand}<span class="stand">{standLine(stand)}</span>{/if}
 	</div>
 </footer>
@@ -136,7 +140,7 @@
 		max-width: 30ch;
 	}
 
-	.foot-col h4 {
+	.foot-head {
 		margin: 0 0 var(--s-4);
 		font-size: var(--t-micro);
 		font-weight: 600;
