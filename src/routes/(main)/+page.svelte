@@ -21,8 +21,6 @@
 	import type { TijdGroep } from '$lib/components/tijdlijn/tijdlijn';
 	import { page } from '$app/state';
 	import Entrances from '$lib/components/home/Entrances.svelte';
-	import CoverageLine from '$lib/components/home/CoverageLine.svelte';
-	import HOME from '$lib/seo/home.json';
 
 	// Four ways in to search, each with the glyphs of what it holds.
 	const SCOPES: {
@@ -178,7 +176,7 @@
 <div class="home blad">
 	<header class="blad__kop intro">
 		<h1 class="blad__titel">Wetten, uitspraken en Kamerstukken in samenhang</h1>
-		<p class="who">
+		<p class="lead">
 			Het geldende recht met zijn uitleg in de rechtspraak en zijn totstandkoming in het parlement,
 			uit de officiële bronnen.
 		</p>
@@ -242,17 +240,6 @@
 			<Tijdlijn groepen={groups} datums={false} />
 			<p class="all"><a href="/actueel">Alles in Actueel →</a></p>
 		</section>
-		<CoverageLine />
-		<nav class="laws" aria-label="Wetten en onderwerpen">
-			<p>
-				<span class="laws-label">Wetten</span>
-				{#each HOME.laws as law, n (law.href)}<a href={law.href}>{law.label}</a>{n <
-					HOME.laws.length - 1
-						? ', '
-						: ''}{/each}
-			</p>
-			<p><a class="laws-label" href="/onderwerpen">Onderwerpen</a></p>
-		</nav>
 	</div>
 </div>
 
@@ -269,38 +256,14 @@
 		}
 	}
 	/* The frame of Bladeren (lib/styles/frame.css), one column the full width. */
-	.who {
+	/* What Concordans is, in a reading width under the heading. */
+	.lead {
 		flex-basis: 100%;
+		max-width: var(--blad-tekst);
 		margin: calc(-1 * var(--s-2)) 0 0;
 		font-size: var(--t-body-2);
-		line-height: var(--lh-snug);
+		line-height: var(--lh-body);
 		color: var(--ink-2);
-	}
-	/* The laws and topics at the foot of the page: links to crawl, quiet. */
-	.laws {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-		font-size: var(--t-meta);
-		line-height: var(--lh-snug);
-		color: var(--ink-3);
-	}
-	.laws p {
-		margin: 0;
-	}
-	.laws a {
-		color: var(--ink-2);
-		text-decoration: none;
-	}
-	.laws a:hover {
-		color: var(--ink);
-		text-decoration: underline;
-		text-underline-offset: 3px;
-	}
-	.laws-label {
-		margin-right: var(--s-2);
-		font-weight: 600;
-		color: var(--ink-3);
 	}
 	.search {
 		display: flex;
