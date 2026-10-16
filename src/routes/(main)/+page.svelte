@@ -177,10 +177,11 @@
 	<header class="blad__kop intro">
 		<h1 class="blad__titel">Wetten, uitspraken en Kamerstukken in samenhang</h1>
 		<p class="lead">
-			Concordans legt de geldende wetgeving naast de rechtspraak die haar uitlegt en de
-			parlementaire stukken waaruit zij voortkomt. Bij een artikel staan de uitspraken die het
-			aanhalen en de Kamerstukken die het noemen; bij een motie of amendement de stemming per
-			fractie. De gegevens komen dagelijks uit de officiële bronnen.
+			Concordans legt de wetgeving, zoals zij geldt en zoals zij gold, naast de rechtspraak die haar
+			uitlegt en de parlementaire stukken waaruit zij voortkomt. Bij een artikel staan de uitspraken
+			die het aanhalen, de Kamerstukken die het noemen en zijn eerdere versies; bij een motie of
+			amendement de stemming per fractie. Wat gevonden is, wordt bewaard in een bundel voor eigen
+			onderzoek. De gegevens komen dagelijks uit de officiële bronnen.
 		</p>
 	</header>
 	<div class="main">
