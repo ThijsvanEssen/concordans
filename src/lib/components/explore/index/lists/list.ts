@@ -106,6 +106,8 @@ export type List<Row, State extends object, Query> = {
 	Figure?: Component<ViewProps<Row, State>>;
 	/** The rows, in their own <ul class="list">; a list without them shows its Figure only. */
 	Rows?: Component<ViewProps<Row, State>>;
+	/** Whether the rows show, where they can say no more than the Header (default: always). */
+	rowsShown?(p: IndexParams): boolean;
 	/** A line under the rows (the source of the Eerste Kamer's stemmingen). */
 	after?(p: IndexParams): { label: string; href: string } | null;
 };

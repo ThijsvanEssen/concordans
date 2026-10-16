@@ -25,8 +25,8 @@
 	import ReaderHead from './ReaderHead.svelte';
 	import {
 		judgmentParticipants,
-		forParties,
 		partiesByRole,
+		partyNote,
 		signatureStart,
 		bodyItems,
 		splitSummary
@@ -289,16 +289,14 @@
 							</th>
 							<td class="reader-parties-name">
 								{#each named as p, i (i)}
+									{@const note = partyNote(p)}
 									<span class="reader-party"
-										>{p.name}{#if p.alias}<span class="reader-parties-party">({p.alias})</span
-											>{/if}{#if p.alsoAs?.length}<span class="reader-parties-party"
-												>ook {p.alsoAs.map((r) => r.toLowerCase()).join(', ')}</span
-											>{/if}{#if p.place}<span class="reader-parties-party">te {p.place}</span
-											>{/if}{#if p.capacity}<span class="reader-parties-party">{p.capacity}</span
-											>{/if}{#if p.party}<span class="reader-parties-party"
-												>voor {forParties(p.party)}</span
+										>{p.name}{#if note}<span class="reader-parties-party">{` ${note}`}</span
 											>{/if}</span
 									>
+									{#each p.counsel as line (line)}
+										<span class="reader-parties-counsel">{line}</span>
+									{/each}
 								{/each}
 								{#if named.length < g.named.length}
 									<TekstLink onclick={() => (showAllParties = true)}
@@ -313,6 +311,9 @@
 											: 'partijen'}</span
 									>
 								{/if}
+								{#each g.counsel as line (line)}
+									<span class="reader-parties-counsel">{line}</span>
+								{/each}
 							</td>
 						</tr>
 					{/each}
@@ -561,12 +562,20 @@
 	}
 
 	.reader-parties-party {
-		margin-left: var(--s-2);
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-weight: 400;
 		color: var(--ink-3);
-		margin-top: 1px;
+	}
+	/* Who acts for a party, under it: "mr. J. Geelhoed, advocaat te Delft". */
+	.reader-parties-counsel {
+		display: block;
+		/* A hanging indent: a line that wraps goes on under the name, not under the party. */
+		padding-left: var(--s-6);
+		text-indent: calc(var(--s-4) - var(--s-6));
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
 	}
 
 	/* Body */

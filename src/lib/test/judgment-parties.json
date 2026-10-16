@@ -1,0 +1,483 @@
+{
+	"ECLI:NL:RVS:2026:6099": [
+		{
+			"name": "Trusthave Management B.V.",
+			"role": "Appellant",
+			"roles": ["Appellant"],
+			"role_stated": true,
+			"side": "first",
+			"alias": null,
+			"representatives": []
+		},
+		{
+			"name": "de raad van de gemeente Sluis",
+			"role": "Verweerder",
+			"roles": ["Verweerder"],
+			"role_stated": true,
+			"side": "second",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. J. Geelhoed",
+					"role": "advocaat",
+					"place": "Delft",
+					"capacity": null
+				},
+				{
+					"name": "D. den Hamer BSc",
+					"role": "gemachtigde",
+					"place": null,
+					"capacity": null
+				},
+				{
+					"name": "L.E.G. de Rooij",
+					"role": "gemachtigde",
+					"place": null,
+					"capacity": null
+				}
+			]
+		}
+	],
+	"ECLI:NL:HR:2025:1319": [
+		{
+			"name": "COBRASPEN VASTGOED ONTWIKKELING B.V.",
+			"role": "Eiser",
+			"roles": ["Eiser"],
+			"role_stated": true,
+			"side": "first",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "R.T. Wiegerink",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "STORM DUNE FILTERED WATER B.V.",
+			"role": "Eiser",
+			"roles": ["Eiser"],
+			"role_stated": true,
+			"side": "first",
+			"alias": "Cobraspen c.s.",
+			"representatives": [
+				{
+					"name": "R.T. Wiegerink",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "N.V. PWN WATERLEIDINGBEDRIJF NOORD-HOLLAND",
+			"role": "Verweerder",
+			"roles": ["Verweerder"],
+			"role_stated": true,
+			"side": "second",
+			"alias": "PWN",
+			"representatives": [
+				{
+					"name": "P.A. Fruytier",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				},
+				{
+					"name": "J.P. Jas",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "STICHTING VOLKSSTERRENWACHT COPERNICUS",
+			"role": "Belanghebbende",
+			"roles": ["Belanghebbende"],
+			"role_stated": true,
+			"side": "other",
+			"alias": null,
+			"representatives": []
+		}
+	],
+	"ECLI:NL:GHARL:2025:116": [
+		{
+			"name": "[appellant]",
+			"role": "Appellant",
+			"roles": ["Appellant"],
+			"role_stated": true,
+			"side": "first",
+			"alias": "[naam1]",
+			"representatives": [
+				{
+					"name": "mr. M.B. Bollen",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "[geïntimeerde]",
+			"role": "Geïntimeerde",
+			"roles": ["Geïntimeerde"],
+			"role_stated": true,
+			"side": "second",
+			"alias": "[geïntimeerde]",
+			"representatives": [
+				{
+					"name": "mr. A.A. Dooijeweerd",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		}
+	],
+	"ECLI:NL:GHAMS:2025:118": [
+		{
+			"name": "[appellant 1] en",
+			"role": "Appellant",
+			"roles": ["Appellant"],
+			"role_stated": true,
+			"side": "first",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. M.A. van der Lubbe",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "[appellant 2]",
+			"role": "Appellant",
+			"roles": ["Appellant"],
+			"role_stated": true,
+			"side": "first",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. M.A. van der Lubbe",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "[geïntimeerde 1]",
+			"role": "Geïntimeerde",
+			"roles": ["Geïntimeerde"],
+			"role_stated": true,
+			"side": "second",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. J. van de Riet",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "[geïntimeerde 2] en",
+			"role": "Geïntimeerde",
+			"roles": ["Geïntimeerde"],
+			"role_stated": true,
+			"side": "second",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. J. van de Riet",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "[geïntimeerde 3]",
+			"role": "Geïntimeerde",
+			"roles": ["Geïntimeerde"],
+			"role_stated": true,
+			"side": "second",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. J. van de Riet",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "[VvE]",
+			"role": "Geïntimeerde",
+			"roles": ["Geïntimeerde"],
+			"role_stated": true,
+			"side": "second",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. K. Kroon",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "[belanghebbende 1]",
+			"role": "Belanghebbende",
+			"roles": ["Belanghebbende"],
+			"role_stated": true,
+			"side": "other",
+			"alias": null,
+			"representatives": []
+		},
+		{
+			"name": "[belanghebbende 2] en",
+			"role": "Belanghebbende",
+			"roles": ["Belanghebbende"],
+			"role_stated": true,
+			"side": "other",
+			"alias": null,
+			"representatives": []
+		},
+		{
+			"name": "[belanghebbende 3]",
+			"role": "Belanghebbende",
+			"roles": ["Belanghebbende"],
+			"role_stated": true,
+			"side": "other",
+			"alias": null,
+			"representatives": []
+		}
+	],
+	"ECLI:NL:RBGEL:2025:117": [
+		{
+			"name": "de officier van justitie",
+			"role": "Officier van justitie",
+			"roles": ["Officier van justitie"],
+			"role_stated": false,
+			"side": "first",
+			"alias": null,
+			"representatives": []
+		},
+		{
+			"name": "[verdachte]",
+			"role": "Verdachte",
+			"roles": ["Verdachte"],
+			"role_stated": true,
+			"side": "second",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. S. Kriekaard, advocaat",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		}
+	],
+	"ECLI:NL:GHAMS:2025:109": [
+		{
+			"name": "[appellant]",
+			"role": "Appellant",
+			"roles": ["Appellant"],
+			"role_stated": true,
+			"side": "first",
+			"alias": null,
+			"representatives": []
+		},
+		{
+			"name": "[geïntimeerde]",
+			"role": "Geïntimeerde",
+			"roles": ["Geïntimeerde"],
+			"role_stated": true,
+			"side": "second",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. H.J. Delhaas, advocaat",
+					"role": "gemachtigde",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "notaris",
+			"role": "Geïntimeerde",
+			"roles": ["Geïntimeerde"],
+			"role_stated": true,
+			"side": "second",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. H.J. Delhaas, advocaat",
+					"role": "gemachtigde",
+					"place": null,
+					"capacity": null
+				}
+			]
+		}
+	],
+	"ECLI:NL:GHAMS:2025:122": [
+		{
+			"name": "[appellant 1]",
+			"role": "Appellant",
+			"roles": ["Appellant"],
+			"role_stated": true,
+			"side": "first",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. M. Steenhuis",
+					"role": "advocaat",
+					"place": "Den Bosch",
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "[appellant 2]",
+			"role": "Appellant",
+			"roles": ["Appellant"],
+			"role_stated": true,
+			"side": "first",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. M. Steenhuis",
+					"role": "advocaat",
+					"place": "Den Bosch",
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "SONY MUSIC ENTERTAINMENT NETHERLANDS B.V.",
+			"role": "Geïntimeerde",
+			"roles": ["Geïntimeerde"],
+			"role_stated": true,
+			"side": "second",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. R. van Dongen",
+					"role": "advocaat",
+					"place": "Amsterdam",
+					"capacity": null
+				}
+			]
+		}
+	],
+	"ECLI:NL:GHAMS:2025:121": [
+		{
+			"name": "[appellant]",
+			"role": "Appellant",
+			"roles": ["Appellant"],
+			"role_stated": true,
+			"side": "first",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. R.L.G.J. Eikelboom",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "de Stichting RAAD VAN ARBITRAGE IN BOUWGESCHILLEN",
+			"role": "Geïntimeerde",
+			"roles": ["Geïntimeerde"],
+			"role_stated": true,
+			"side": "second",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. O.B. Zwijnenberg",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "[geïntimeerde 1]",
+			"role": "Geïntimeerde",
+			"roles": ["Geïntimeerde"],
+			"role_stated": true,
+			"side": "second",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. O.B. Zwijnenberg",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "[geïntimeerde 2]",
+			"role": "Geïntimeerde",
+			"roles": ["Geïntimeerde"],
+			"role_stated": true,
+			"side": "second",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. O.B. Zwijnenberg",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "[geïntimeerde 3]",
+			"role": "Geïntimeerde",
+			"roles": ["Geïntimeerde"],
+			"role_stated": true,
+			"side": "second",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. O.B. Zwijnenberg",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		},
+		{
+			"name": "[geïntimeerde 4]",
+			"role": "Geïntimeerde",
+			"roles": ["Geïntimeerde"],
+			"role_stated": true,
+			"side": "second",
+			"alias": null,
+			"representatives": [
+				{
+					"name": "mr. O.B. Zwijnenberg",
+					"role": "advocaat",
+					"place": null,
+					"capacity": null
+				}
+			]
+		}
+	]
+}

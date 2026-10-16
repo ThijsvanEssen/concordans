@@ -109,6 +109,9 @@
 	// The first option is the default. An option with `dir` is sorted here, with
 	// that direction unless the URL says otherwise; the others are sorted by the API.
 	const sorts = $derived(forParams(list.sorts, p));
+	/** The rows under the Header, unless they show no more than it (the fracties under their
+	 *  hall): then no count, order or rule of a list either. */
+	const rowsShown = $derived(list.rowsShown?.(p) ?? true);
 	const sortDef = $derived(sorts.find((s) => s.id === p.sort) ?? sorts[0]);
 	const dir = $derived(sortDef.dir && (p.dir ?? sortDef.dir));
 
@@ -595,45 +598,45 @@
 					{#if list.Header}<list.Header {ctx} />{/if}
 
 					<!-- How many, under which filters; a click on a filter takes it off. -->
-					<div class="result-head">
-						{#if list.Rows && resultTotal !== null}
-							<p class="result-count">
-								{formatCount(resultTotal)}<span class="result-noun"
-									>{resultTotal === 1 ? noun1(category) : labelOf(category)}</span
-								>
-							</p>
-						{:else if list.Rows}
-							<!-- The count's own height before it is known, so nothing below it moves. -->
-							<p class="result-count" aria-hidden="true">&nbsp;</p>
-						{/if}
-						{#if sorts.length > 1}
-							<!-- The order of the list: one line under its count (docs/bediening.md). -->
-							<span class="volgorde">
-								<TekstMenu
-									klein
-									rechts
-									label="Volgorde"
-									waarde={sortDef.id}
-									opties={sorts.map((o) => ({ waarde: o.id, label: o.label }))}
-									onSelect={(v) => patchUrl({ sort: v || null })}
-								/>
-								{#if dir}
-									<IconButton
-										label={dir === 'asc'
-											? 'Oplopend; sorteer aflopend'
-											: 'Aflopend; sorteer oplopend'}
-										onclick={() => patchUrl({ dir: dir === 'asc' ? 'desc' : 'asc' })}
-										>{dir === 'asc' ? '↑' : '↓'}</IconButton
+					{#if rowsShown}<div class="result-head">
+							{#if list.Rows && resultTotal !== null}
+								<p class="result-count">
+									{formatCount(resultTotal)}<span class="result-noun"
+										>{resultTotal === 1 ? noun1(category) : labelOf(category)}</span
 									>
-								{/if}
-							</span>
-						{/if}
-					</div>
+								</p>
+							{:else if list.Rows}
+								<!-- The count's own height before it is known, so nothing below it moves. -->
+								<p class="result-count" aria-hidden="true">&nbsp;</p>
+							{/if}
+							{#if sorts.length > 1}
+								<!-- The order of the list: one line under its count (docs/bediening.md). -->
+								<span class="volgorde">
+									<TekstMenu
+										klein
+										rechts
+										label="Volgorde"
+										waarde={sortDef.id}
+										opties={sorts.map((o) => ({ waarde: o.id, label: o.label }))}
+										onSelect={(v) => patchUrl({ sort: v || null })}
+									/>
+									{#if dir}
+										<IconButton
+											label={dir === 'asc'
+												? 'Oplopend; sorteer aflopend'
+												: 'Aflopend; sorteer oplopend'}
+											onclick={() => patchUrl({ dir: dir === 'asc' ? 'desc' : 'asc' })}
+											>{dir === 'asc' ? '↑' : '↓'}</IconButton
+										>
+									{/if}
+								</span>
+							{/if}
+						</div>{/if}
 
 					{#if list.Figure}<list.Figure {ctx} />{/if}
 
 					<!-- While the next result loads, the previous one stays, dimmed. -->
-					{#if loading && !pages[category]}
+					{#if loading && !pages[category] && rowsShown}
 						<!-- The shape of a list while it loads: rows where rows will stand. -->
 						<p class="sr-only" role="status">Laden…</p>
 						<ul class="list skelet" aria-hidden="true">
@@ -645,7 +648,7 @@
 						<p class="status-line status-line--error stil">{error}</p>
 					{:else}
 						<div class="shown" class:shown--stale={loading}>
-							{#if list.Rows && rows}
+							{#if list.Rows && rowsShown && rows}
 								{#if rows.length === 0}
 									{@render empty(list.emptyNoun?.(p) ?? list.noun)}
 								{:else}
@@ -1009,7 +1012,7 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-body);
 		color: var(--ink);
-		font-feature-settings: 'lnum';
+		font-variant-numeric: lining-nums tabular-nums;
 		line-height: 1;
 	}
 	.results :global(.num-lbl) {

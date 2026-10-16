@@ -33,10 +33,9 @@
 		<div class="section">
 			<h2 class="section-title">Serverlogbestanden</h2>
 			<p>
-				De API registreert bij elk verzoek het IP-adres, het tijdstip en het opgevraagde adres,
-				inclusief zoektermen. Die gegevens dienen voor technisch beheer, beveiliging en de grens aan
-				het aantal verzoeken per IP-adres. Dit logboek wordt na 30 dagen verwijderd. De webserver
-				van de site zelf houdt geen bezoeken bij.
+				De server houdt per verzoek een ingekort IP-adres, het tijdstip en het opgevraagde adres
+				zonder zoektermen bij, voor beheer en beveiliging. Dit logboek wordt na hoogstens 30 dagen
+				verwijderd. Zoektermen worden alleen per dag geteld, zonder te bewaren wie zocht.
 			</p>
 		</div>
 

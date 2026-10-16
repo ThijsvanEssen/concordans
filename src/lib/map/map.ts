@@ -1,6 +1,6 @@
 // The map (concept ux-voorstel/13-map, variant 7, step 1): what a reader keeps while reading,
 // a lid of an article, an overweging of a judgment, a Kamerstuk, a motie, any bron. It lives
-// in this browser; a link (?map=) carries it to someone else, a list of citations to a memo,
+// in this browser; a link (share.ts, in the fragment) carries it to someone else, a list of citations to a memo,
 // a CSV to a spreadsheet. It replaces Verbonden's Verzamel.
 import { netwerkParams } from '$lib/selection/netwerk';
 import { dossierLabel } from '$lib/bron/dossier-naam';
@@ -30,7 +30,27 @@ export type MapItem = {
 	/** Its readable address where it was known when kept (`/kamerstukken/34372/14`): its link
 	 *  in Gemarkeerd and the CSV goes there, not through a redirect. */
 	pad?: string;
+	/** A source outside Concordans (`external:<id>`): what it is, as its label in the row. */
+	kind?: SourceKind;
+	/** Its address on the web, where the reader gave one. */
+	url?: string;
 };
+
+/** What a source outside Concordans is: its label in the row. */
+export const SOURCE_KINDS = {
+	book: 'Boek',
+	journal: 'Tijdschrift',
+	annotation: 'Annotatie',
+	webpage: 'Webpagina',
+	other: 'Overig'
+} as const satisfies Record<SourceKind, string>;
+export type SourceKind = 'book' | 'journal' | 'annotation' | 'webpage' | 'other';
+
+/** The group of a source outside Concordans where the reader chooses none of the map's. */
+export const OTHER_SOURCES = 'Andere bronnen';
+
+/** An item that is a source outside Concordans. */
+export const isExternal = (i: Pick<MapItem, 'id'>) => i.id.startsWith('external:');
 
 /** A map with a name: the items of one piece of research (step 2). */
 export type Map = {
@@ -78,7 +98,13 @@ const OWN_GROUP = new Set(['judgments', 'documents', 'decisions']);
  * What a bron belongs to, as the reader knows it from the API: the law of an article (its BWB
  * id or CELEX), the dossier of a Kamerstuk or a vote, and the group's name where it has one.
  */
-type BewaarContext = { groep?: string | null; dossier?: string | null; wet?: string | null };
+type BewaarContext = {
+	groep?: string | null;
+	dossier?: string | null;
+	wet?: string | null;
+	/** A group of the map chosen by the reader, by its key. */
+	groupKey?: string | null;
+};
 
 /**
  * A bron as the map keeps it: its citations as the reader gives them, its group from the
@@ -99,13 +125,15 @@ export function bewaarItem(
 		(collectie === 'members' ? bronLabel('members') : context.groep?.trim()) ||
 		(dossier ? dossierLabel({ number: dossier }) : null) ||
 		(collectie ? bronLabel(collectie) : cite.kort);
-	const groupKey = wet
-		? `wet:${wet}`
-		: dossier
-			? dossierSleutel(dossier)
-			: collectie && OWN_GROUP.has(collectie)
-				? id
-				: `groep:${groep}`;
+	const groupKey = context.groupKey
+		? context.groupKey
+		: wet
+			? `wet:${wet}`
+			: dossier
+				? dossierSleutel(dossier)
+				: collectie && OWN_GROUP.has(collectie)
+					? id
+					: `groep:${groep}`;
 	const pad = padOfFocus(id);
 	return {
 		id,
@@ -124,6 +152,59 @@ export function itemHref(i: Pick<MapItem, 'id' | 'at' | 'pad'>): string {
 	return i.at ? `${href.split('#')[0]}#${encodeURIComponent(i.at)}` : href;
 }
 
+/** A name no bundel has yet: the name itself, else numbered on (`Gemarkeerd 2`). */
+export function freeName(name: string, taken: ReadonlySet<string>): string {
+	if (!taken.has(name)) return name;
+	let n = 2;
+	while (taken.has(`${name} ${n}`)) n++;
+	return `${name} ${n}`;
+}
+
+/** What an item is, as the CSV names it: its kind of bron, or the kind of a source outside. */
+const kindLabel = (i: MapItem): string => {
+	if (isExternal(i)) return SOURCE_KINDS[i.kind ?? 'other'];
+	const collection = parseNodeId(i.id)?.collection;
+	return collection ? bronLabel(collection) : '';
+};
+
+/** An item's address in a CSV: the bron's in Concordans, a source outside it its own. */
+export const itemAddress = (i: MapItem, origin: string): string =>
+	isExternal(i) ? (i.url ?? '') : new URL(itemHref(i), origin).toString();
+
+/** A web address as the reader may give one: http or https, else none. */
+export function webAddress(text: string | null | undefined): string | null {
+	const typed = (text ?? '').trim();
+	// A domain without its scheme (`voorbeeld.nl/boek`) is read as https.
+	const full = /^[\w-]+(?:\.[\w-]+)+(?:[/?#:]|$)/.test(typed) ? `https://${typed}` : typed;
+	try {
+		const url = new URL(full);
+		return /^https?:$/.test(url.protocol) ? url.toString() : null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * A source outside Concordans, as the reader cites it: its citation, kept as typed, is its
+ * title in the map, its Citaten and its CSV; in a group of the map, else under Andere bronnen.
+ */
+export function externalItem(source: {
+	citation: string;
+	kind: SourceKind;
+	url?: string | null;
+	group?: { name: string; key: string } | null;
+}): MapItem {
+	const url = webAddress(source.url);
+	const item = bewaarItem(
+		`external:${Math.random().toString(36).slice(2, 10)}`,
+		{ kort: source.citation.trim() },
+		source.group
+			? { groep: source.group.name, groupKey: source.group.key }
+			: { groep: OTHER_SOURCES }
+	);
+	return { ...item, kind: source.kind, ...(url ? { url } : {}) };
+}
+
 /** The groups in the order their first item was kept, each with its items in that order. */
 export function groepen(
 	items: readonly MapItem[]
@@ -140,97 +221,48 @@ export function groepen(
 	}));
 }
 
-// ── The link ────────────────────────────────────────────────────────────────
-// `?map=` holds the items one after another, each its six fields: the bron, its place, its
-// short citation, its group, its note (empty where none) and its group's key, and a seventh,
-// its readable address, where it was known; so a map opens
-// elsewhere without asking the API; an item without its six fields is left out, and the
-// page names how many. Its name goes beside it (`mapnaam=`).
-// Fields are separated by `~`, items by `;`; only those two and `%` are escaped here, the
-// address encodes the rest once.
-const veld = (s: string) => s.replaceAll('%', '%25').replaceAll('~', '%7E').replaceAll(';', '%3B');
-const terug = (s: string) => s.replaceAll('%7E', '~').replaceAll('%3B', ';').replaceAll('%25', '%');
+// ── Reading an item back ────────────────────────────────────────────────────
+/** A bron as a link names it: `articles/bwbr0005289_162`. */
+const NODE_ID = /^[a-z_]+\/[\w.:-]+$/i;
+/** A source outside Concordans: `external:<id>`. */
+const EXTERNAL_ID = /^external:[a-z0-9]+$/;
 
-export function itemsParam(items: readonly MapItem[]): string {
-	return items
-		.map((i) => {
-			const velden = [i.id, i.at, i.kort, i.groep, i.notitie ?? '', i.groupKey];
-			if (i.pad) velden.push(i.pad);
-			return velden.map(veld).join('~');
-		})
-		.join(';');
-}
-
-/** The items of a link, and how many it holds in an older or broken form (left out). */
-export function readParam(v: string | null): { items: MapItem[]; skipped: number } {
-	if (!v) return { items: [], skipped: 0 };
-	const delen = v.split(';');
-	const items = delen.flatMap((deel) => {
-		const [id, at, kort, groep, notitie, groupKey, pad] = deel.split('~').map(terug);
-		return id && /^[a-z_]+\/[\w.:-]+$/i.test(id) && kort && groep && groupKey
-			? [
-					{
-						id,
-						at: at ?? '',
-						kort,
-						groep,
-						...(notitie ? { notitie } : {}),
-						groupKey,
-						...(pad?.startsWith('/') ? { pad } : {})
-					}
-				]
-			: [];
-	});
-	return { items, skipped: delen.length - items.length };
-}
-
-/** The address params of a map: its items, its name, its order where its own, its note. */
-export function mapParams(
-	m: Pick<Map, 'items' | 'naam' | 'volgorde' | 'notitie' | 'groepNotities'>
-): URLSearchParams {
-	const p = new URLSearchParams({ map: itemsParam(m.items), mapnaam: m.naam });
-	if (m.volgorde === 'eigen') p.set('mapvolgorde', 'eigen');
-	if (m.notitie?.trim()) p.set('mapnotitie', m.notitie.trim());
-	const groep = naarGroepParam(m.groepNotities, m.items);
-	if (groep) p.set('mapgroepen', groep);
-	return p;
-}
-
-/** The notes per group as `sleutel~notitie;…`, only of groups the map holds. */
-function naarGroepParam(
-	notities: GroepNotities | null | undefined,
-	items: readonly MapItem[]
-): string {
-	const houdt = new Set(items.map((i) => i.groupKey));
-	return Object.entries(notities ?? {})
-		.filter(([k, v]) => houdt.has(k) && v.trim())
-		.map(([k, v]) => `${veld(k)}~${veld(v.trim())}`)
-		.join(';');
-}
-
-function uitGroepParam(v: string | null): GroepNotities {
-	const uit: GroepNotities = {};
-	for (const deel of (v ?? '').split(';')) {
-		const [k, n] = deel.split('~').map(terug);
-		if (k && n?.trim()) uit[k] = n.trim();
-	}
-	return uit;
-}
+/** A string field of a value read back, where it holds text. */
+const textOf = (o: Record<string, unknown>, k: string) =>
+	typeof o[k] === 'string' && o[k].trim() ? o[k] : null;
 
 /**
- * A map from an address; null where it holds nothing, read or left out. A link without a note
- * reads as before.
+ * An item as this browser or a link gives it back, its known fields only; null where it is
+ * in an older or broken form.
  */
-export function sharedMapOf(p: URLSearchParams): Gedeeld | null {
-	const { items, skipped } = readParam(p.get('map'));
-	if (!items.length && !skipped) return null;
+export function readItem(v: unknown): MapItem | null {
+	if (!v || typeof v !== 'object') return null;
+	const o = v as Record<string, unknown>;
+	const id = textOf(o, 'id');
+	const kort = textOf(o, 'kort');
+	const groep = textOf(o, 'groep');
+	const groupKey = textOf(o, 'groupKey');
+	if (!id || !(NODE_ID.test(id) || EXTERNAL_ID.test(id)) || !kort || !groep || !groupKey)
+		return null;
+	const at = textOf(o, 'at') ?? '';
+	const voluit = textOf(o, 'voluit');
+	const notitie = textOf(o, 'notitie');
+	const pad = textOf(o, 'pad');
+	const kind = textOf(o, 'kind');
+	const url = webAddress(textOf(o, 'url'));
 	return {
-		naam: p.get('mapnaam'),
-		items,
-		volgorde: p.get('mapvolgorde') === 'eigen' ? 'eigen' : 'groep',
-		notitie: p.get('mapnotitie')?.trim() || null,
-		groepNotities: uitGroepParam(p.get('mapgroepen')),
-		skipped
+		id,
+		at,
+		kort,
+		...(voluit ? { voluit } : {}),
+		groep,
+		groupKey,
+		...(notitie ? { notitie } : {}),
+		...(pad?.startsWith('/') && !pad.startsWith('//') ? { pad } : {}),
+		...(EXTERNAL_ID.test(id)
+			? { kind: kind && kind in SOURCE_KINDS ? (kind as SourceKind) : 'other' }
+			: {}),
+		...(EXTERNAL_ID.test(id) && url ? { url } : {})
 	};
 }
 
@@ -302,10 +334,11 @@ export function csv(
 	const reeks = groepen(items);
 	const naamVan = new Map(reeks.map((g) => [g.sleutel, g.groep]));
 	return csvText(
-		['volgorde', 'groep', 'citaat', 'vindplaats', 'aantekening', 'adres'],
+		['volgorde', 'groep', 'soort', 'citaat', 'vindplaats', 'aantekening', 'adres'],
 		(volgorde === 'eigen' ? items : reeks.flatMap((g) => g.items)).map((i, n) => [
 			String(n + 1),
 			naamVan.get(i.groupKey) ?? i.groep,
+			kindLabel(i),
 			i.voluit || i.kort,
 			(i.at && anchorLabel(i.at, i.id)) || '',
 			i.notitie ?? '',
