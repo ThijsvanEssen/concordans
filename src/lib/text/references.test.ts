@@ -41,6 +41,7 @@ const cited = (start: number, end: number, key: string, bwb: string, nr: string)
 			key,
 			collection: 'articles',
 			bwb_id: bwb,
+			official_id: null,
 			article_number: nr,
 			display_name: null
 		}

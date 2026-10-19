@@ -73,6 +73,7 @@ const lawTarget = (bwb: string): Span['target'] => ({
 	key: bwb.toLowerCase(),
 	collection: 'instruments',
 	bwb_id: bwb,
+	official_id: null,
 	article_number: null,
 	display_name: null
 });
