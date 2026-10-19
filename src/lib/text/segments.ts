@@ -8,7 +8,11 @@ import type { Begrip, Definitie } from './begrippen';
 import type { DelegatieSpan } from './delegaties';
 import type { Bereik, NootMarker } from './voetnoten';
 
-export type Span = Schema<'ArticleCitationSpan'> & { definition_ref?: string | null };
+export type Span = Schema<'ArticleCitationSpan'> & {
+	definition_ref?: string | null;
+	/** The place in a target that is no article: a division of a law (`deel-hoofdstuk-iv`). */
+	at?: string | null;
+};
 
 export type Segment = {
 	content: string;
@@ -107,7 +111,7 @@ export function segmentsOf(
 						qualifierOfSpan(span) ??
 							parseQualifier(content, text.slice(span.end!, span.end! + FOLLOWING))
 					)
-				: null;
+				: (span.at ?? null);
 		out.push({ content, span, at });
 		cursor = span.end!;
 	}

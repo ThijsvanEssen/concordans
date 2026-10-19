@@ -266,6 +266,7 @@ describe('the text an article of the whole law shows', () => {
 		key: 'a',
 		article_number: '1',
 		label: null,
+		heading: null,
 		address: '1',
 		breadcrumb: [],
 		text: null,

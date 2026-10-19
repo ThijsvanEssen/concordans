@@ -36,6 +36,7 @@
 	import { load } from '$lib/util/load.svelte';
 	import WholeLawReaderArticle from './WholeLawReaderArticle.svelte';
 	import WholeLawReaderPeildatum from './WholeLawReaderPeildatum.svelte';
+	import { articleAtTop, lawPosition } from './law-position.svelte';
 
 	let { bwbId }: { bwbId: string } = $props();
 
@@ -215,6 +216,38 @@
 		);
 	}
 
+	// The article at the top of the text, for the table of contents (K3): read when the reader
+	// scrolls, once a frame, on a line a little under the top of what scrolls.
+	const POSITION_LINE = 80;
+	$effect(() => {
+		const el = lawEl;
+		const bwb = bwbId;
+		if (!el) return;
+		let frame = 0;
+		const read = (scroller: Element | null) => {
+			frame = 0;
+			const top = scroller instanceof HTMLElement ? scroller.getBoundingClientRect().top : 0;
+			const articles = [...el.querySelectorAll<HTMLElement>('.whole-article[data-artikel]')].map(
+				(a) => {
+					const r = a.getBoundingClientRect();
+					return { number: a.getAttribute('data-artikel')!, top: r.top, bottom: r.bottom };
+				}
+			);
+			lawPosition.set(bwb, articleAtTop(articles, top + POSITION_LINE));
+		};
+		const onScroll = (e: Event) => {
+			const scroller = e.target instanceof Element ? e.target : null;
+			if (scroller && !scroller.contains(el)) return;
+			if (!frame) frame = requestAnimationFrame(() => read(scroller));
+		};
+		addEventListener('scroll', onScroll, { capture: true, passive: true });
+		return () => {
+			removeEventListener('scroll', onScroll, { capture: true });
+			if (frame) cancelAnimationFrame(frame);
+			lawPosition.clear();
+		};
+	});
+
 	/** The page before the first article shown: the article looked at stays in place. */
 	const previous = () =>
 		lawList.loadPrevious(() => (lawEl ? keepInPlace(lawEl, '.whole-article') : () => {}));
@@ -381,7 +414,7 @@
 				row={a}
 				{bwbId}
 				{peildatum}
-				detail={a.address ? detailByNumber.get(a.address)?.article : undefined}
+				detail={a.address ? detailByNumber.get(a.address) : undefined}
 				{citationOf}
 				onNear={(n) => void ensureDetail(bwbId, n)}
 			/>

@@ -12,6 +12,7 @@
 	import { lawIdOf, type GraphNode } from '$lib/graph/types';
 	import { bronHref } from '$lib/bron/href';
 	import Caret from '$lib/components/ui/Caret.svelte';
+	import { lawPosition } from './law-position.svelte';
 
 	let { selection }: { selection: GraphNode | null } = $props();
 
@@ -125,13 +126,20 @@
 
 	let navEl = $state<HTMLElement | null>(null);
 
+	// The place marked stays in view in the column: scrolled within it, not the page.
 	$effect(() => {
 		void selectedKey;
 		void anker;
+		void hereNumber;
 		if (!navEl) return;
 		requestAnimationFrame(() => {
-			const active = navEl?.querySelector('.is-active, .is-hier');
-			active?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+			const nav = navEl;
+			const active = nav?.querySelector<HTMLElement>('.is-active, .is-hier');
+			if (!nav || !active) return;
+			const box = nav.getBoundingClientRect();
+			const at = active.getBoundingClientRect();
+			if (at.top < box.top + box.height / 4 || at.bottom > box.bottom - box.height / 4)
+				nav.scrollTop += at.top - box.top - box.height / 3;
 		});
 	});
 
@@ -175,8 +183,26 @@
 		const a = parseAnchor(anker);
 		return a?.kind === 'article' ? a.number : null;
 	});
+	// On the law the article at the top of the text (K3), else the one its anchor names.
+	const hereNumber = $derived(onLaw ? (lawPosition.of(currentBwb) ?? ankerArtikel) : null);
 	const isHier = (it: LawArticle) =>
-		it.key === selectedKey || (ankerArtikel !== null && it.articleNumber === ankerArtikel);
+		it.key === selectedKey || (hereNumber !== null && it.articleNumber === hereNumber);
+
+	// On the law an article opens in place, in the whole law (K3); from an article, its own.
+	const articleHref = (it: LawArticle) =>
+		onLaw
+			? `${page.url.pathname}${page.url.search}#${encodeURIComponent(artikelAnker(it.articleNumber))}`
+			: bronHref({ collection: 'articles', key: it.key });
+	/** The anchor already in the URL: the article is scrolled to again. */
+	function openArticle(e: MouseEvent, it: LawArticle) {
+		const id = artikelAnker(it.articleNumber);
+		if (!onLaw || decodeURIComponent(page.url.hash.slice(1)) !== id) return;
+		e.preventDefault();
+		const el = document.querySelector<HTMLElement>(
+			`[data-artikel="${CSS.escape(it.articleNumber)}"]`
+		);
+		if (el) scrollInReader(el);
+	}
 	const inDeel = (g: Group) => !!g.id && (anker === g.id || anker.startsWith(`${g.id}-`));
 
 	function containsSelected(g: Group): boolean {
@@ -192,8 +218,9 @@
 			class="nav-kolom__rij"
 			class:is-active={isHier(item)}
 			aria-current={item.key === selectedKey ? 'page' : isHier(item) ? 'location' : undefined}
-			href={bronHref({ collection: 'articles', key: item.key })}
-			data-sveltekit-noscroll>{item.label}</a
+			href={articleHref(item)}
+			data-sveltekit-noscroll
+			onclick={(e) => openArticle(e, item)}>{item.label}</a
 		>
 	</li>
 {/snippet}

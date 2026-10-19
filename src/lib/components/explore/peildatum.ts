@@ -12,6 +12,7 @@ type AtItem = Pick<
 	| 'key'
 	| 'article_number'
 	| 'label'
+	| 'heading'
 	| 'breadcrumb'
 	| 'text'
 	| 'text_preview'
@@ -66,6 +67,8 @@ type AtArticle = {
 	key: string | null;
 	article_number: string | null;
 	label: string | null;
+	/** Its opschrift that day: `Partner`. */
+	heading: string | null;
 	/** The divisions the article stood in on that day. */
 	breadcrumb: NonNullable<AtItem['breadcrumb']>;
 	text: string | null;
@@ -87,6 +90,7 @@ export function atArticles(items: AtItem[], current: Current[]): AtArticle[] {
 		key: (i.article_number && byNumber.get(i.article_number)) || null,
 		article_number: i.article_number ?? null,
 		label: i.label ?? null,
+		heading: i.heading ?? null,
 		breadcrumb: i.breadcrumb ?? [],
 		text: i.text ?? null,
 		parts: i.parts.length ? i.parts : null,
