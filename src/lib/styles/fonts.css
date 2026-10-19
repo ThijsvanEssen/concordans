@@ -24,6 +24,48 @@
 	descent-override: 31%;
 	line-gap-override: 0%;
 }
+/* Where Georgia is not (Android, Linux), Noto Serif or DejaVu Serif sized to Newsreader the
+   same way (UX-toets landing): measured against Newsreader at 16 and 30 px. */
+@font-face {
+	font-family: 'Newsreader Fallback Noto';
+	src: local('Noto Serif'), local('NotoSerif-Regular');
+	font-weight: 400 500;
+	font-style: normal;
+	size-adjust: 88%;
+	ascent-override: 84%;
+	descent-override: 30%;
+	line-gap-override: 0%;
+}
+@font-face {
+	font-family: 'Newsreader Fallback Noto';
+	src: local('Noto Serif Bold'), local('NotoSerif-Bold');
+	font-weight: 600 800;
+	font-style: normal;
+	size-adjust: 85%;
+	ascent-override: 87%;
+	descent-override: 31%;
+	line-gap-override: 0%;
+}
+@font-face {
+	font-family: 'Newsreader Fallback DejaVu';
+	src: local('DejaVu Serif'), local('DejaVuSerif');
+	font-weight: 400 500;
+	font-style: normal;
+	size-adjust: 81%;
+	ascent-override: 91%;
+	descent-override: 32%;
+	line-gap-override: 0%;
+}
+@font-face {
+	font-family: 'Newsreader Fallback DejaVu';
+	src: local('DejaVu Serif Bold'), local('DejaVuSerif-Bold');
+	font-weight: 600 800;
+	font-style: normal;
+	size-adjust: 76%;
+	ascent-override: 97%;
+	descent-override: 34%;
+	line-gap-override: 0%;
+}
 @font-face {
 	font-family: 'Newsreader';
 	src: url('/fonts/Newsreader-Variable.woff2') format('woff2');
