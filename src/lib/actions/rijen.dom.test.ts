@@ -30,4 +30,17 @@ describe('focusFirstNew', () => {
 		node.remove();
 		other.remove();
 	});
+
+	it('puts it on the first link or button of a row that is no control itself (Actueel, F3)', () => {
+		const node = document.createElement('ol');
+		node.innerHTML = Array.from(
+			{ length: 3 },
+			(_, i) => `<li class="regel"><span>dag</span><button type="button">${i}</button></li>`
+		).join('');
+		document.body.append(node);
+		(document.activeElement as HTMLElement | null)?.blur();
+		focusFirstNew(node, '.regel', 1);
+		expect(document.activeElement?.textContent).toBe('1');
+		node.remove();
+	});
 });

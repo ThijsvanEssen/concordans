@@ -28,7 +28,8 @@
 	import { getFeed, getFeedSummary } from '$lib/api/feed';
 	import { getFactions } from '$lib/api/factions';
 	import { report } from '$lib/api/errors';
-	import { untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
+	import { focusFirstNew } from '$lib/actions/rijen';
 	import type { Schema } from '$lib/api/types';
 	import { partyColor } from '$lib/components/explore/party-color.svelte';
 	import IndexFacets, {
@@ -291,15 +292,23 @@
 		}
 	}
 
+	/** A row of the timeline, for the focus after Volgende dagen. */
+	const ROW = '.regel';
+	let daysEl = $state<HTMLElement | null>(null);
+
 	async function loadMore() {
 		if (!cursor || loadingMore) return;
 		loadingMore = true;
 		error = null;
+		// The focus to the first row the page adds: the link gives way to "Laden…" (F3, as Bladeren).
+		const before = daysEl?.querySelectorAll(ROW).length ?? 0;
 		try {
 			const r = await getFeed({ ...query, cursor, facets: false });
 			items = uniqueBy([...items, ...r.items.map(normalizeItem)], (i) => i.id);
 			cursor = r.next_cursor ?? null;
 			doorzocht = doorzochtVanaf(r);
+			await tick();
+			if (daysEl) focusFirstNew(daysEl, ROW, before);
 		} catch (e) {
 			report('Actueel volgende dagen', e);
 			error = 'De volgende dagen konden niet worden geladen.';
@@ -649,7 +658,7 @@
 				{@render verder()}
 			</div>
 		{:else}
-			<div class="days" class:days--stale={loading}>
+			<div class="days" class:days--stale={loading} bind:this={daysEl}>
 				{#each days as day, n (day.date)}
 					<FeedDay
 						{day}
