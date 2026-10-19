@@ -30,6 +30,7 @@
 	import { isDay } from '$lib/text/datum';
 	import { nog, verderLabel, type Richting } from './law-paging';
 	import { EMPTY_LIST, createLawList, isDivisionAnchor, type LawList, type Row } from './law-list';
+	import { lawNodeKey } from '$lib/text/enacted-law';
 	import { kindName, lawFullTitle, lawHeadLine, lawKind, sourceName, treatyLink } from './law-head';
 	import { navigate, withParams } from '$lib/util/address';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -265,7 +266,7 @@
 			title={lawTitle}
 			acties={{
 				bewaar: bewaarItem(
-					`instruments/${bwbId.toLowerCase()}`,
+					`instruments/${lawNodeKey(bwbId)}`,
 					{ kort: lawTitle, voluit: fullTitle ?? lawTitle },
 					{ groep: lawTitle, wet: bwbId }
 				),

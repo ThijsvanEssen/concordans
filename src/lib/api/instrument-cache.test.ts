@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { fakeApi } from '$lib/test/fakeApi';
 import {
+	getInstrumentDetail,
 	getInstrumentMeta,
 	instrumentMetaStore,
 	lawName,
@@ -54,5 +56,22 @@ describe('what the cache tells its readers', () => {
 		expect(told).toBe(2);
 		expect(getInstrumentMeta('BWBR0005537')?.citationTitle).toBe('Awb 1992');
 		stop();
+	});
+});
+
+describe('a law of the Staatsblad the BWB does not hold yet', () => {
+	it('is asked by its node key, STB-2026-56 being its publication, and named by its law id', async () => {
+		const api = fakeApi({
+			'/api/instruments/{identifier}': {
+				key: 'wet_stb_2026_56',
+				bwb_id: null,
+				citation_title: 'Wetboek van Strafvordering'
+			}
+		});
+		await getInstrumentDetail('STB-2026-56');
+		expect(api.asked('/api/instruments/{identifier}')[0].path).toEqual({
+			identifier: 'wet_stb_2026_56'
+		});
+		expect(getInstrumentMeta('STB-2026-56')?.citationTitle).toBe('Wetboek van Strafvordering');
 	});
 });

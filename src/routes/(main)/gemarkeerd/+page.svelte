@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { lawNodeKey } from '$lib/text/enacted-law';
 	import { plural } from '$lib/text/words';
 	// Gemarkeerd: the reader's own collections, built as Gevolgd is (Thijs, 10 Oct: "past nu nog
 	// totaal niet bij de rest"). The heading over both columns; the maps in the facet column, the
@@ -262,7 +263,7 @@
 				<div class="wet-open">
 					<MapRegelingen laad={() => onderWet(wet)} />
 					<p class="verder">
-						<TekstLink href={buildBronHref(null, `instruments/${wet.toLowerCase()}`)}
+						<TekstLink href={buildBronHref(null, `instruments/${lawNodeKey(wet)}`)}
 							>Wet in de lezer</TekstLink
 						>
 					</p>
