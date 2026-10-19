@@ -40,6 +40,8 @@ const judgment = (over: Partial<Judgment> = {}): Judgment => ({
 	series_size: null,
 	same_as: null,
 	replaced_by: null,
+	withdrawn: null,
+	withdrawn_on: null,
 	published_on: null,
 	advocate_general: null,
 	advocate_general_role: null,
@@ -104,6 +106,7 @@ const target = {
 	key: 'x_1',
 	collection: 'articles' as const,
 	bwb_id: 'X',
+	official_id: null,
 	article_number: '1',
 	display_name: null
 };

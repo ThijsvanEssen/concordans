@@ -21,9 +21,33 @@ describe('the touch target', () => {
 	});
 
 	it("is on Gemarkeerd's own small buttons", () => {
-		const page = read('routes/(main)/gemarkeerd/+page.svelte');
-		for (const m of page.matchAll(/class="(notitie-knop[^"]*)"/g))
+		const groups = read('lib/map/MapGroups.svelte');
+		expect(groups).toMatch(/class="notitie-knop/);
+		for (const m of groups.matchAll(/class="(notitie-knop[^"]*)"/g))
 			expect(m[1]).toContain('raakvlak');
-		expect(page).toContain('class="wis raakvlak"');
+		expect(read('lib/map/MapView.svelte')).toContain('class="wis raakvlak"');
+	});
+
+	it('is at least 32 px high on every row and heading of a table of contents, on a touch screen', () => {
+		const kolom = read('lib/components/explore/NavKolom.svelte');
+		const coarse = kolom.slice(kolom.indexOf('@media (pointer: coarse)'));
+		expect(kolom).toContain('@media (pointer: coarse)');
+		expect(coarse).toMatch(/\.nav-kolom__rij\)[^{]*\{[^}]*min-height: var\(--s-6\)/);
+		const nav = read('lib/components/explore/LezenNav.svelte');
+		const navCoarse = nav.slice(nav.indexOf('@media (pointer: coarse)'));
+		expect(nav).toContain('@media (pointer: coarse)');
+		expect(navCoarse).toMatch(/\.group__head[^{]*\{[^}]*min-height: var\(--s-6\)/);
+	});
+
+	it("fills a heading's row with its link, and gives the sheet's close button 32 px (F5)", () => {
+		const nav = read('lib/components/explore/LezenNav.svelte');
+		const navCoarse = nav.slice(nav.indexOf('@media (pointer: coarse)'));
+		expect(navCoarse).toMatch(/\.group__head \{[^}]*padding-block: 0/);
+		const sheet = read('routes/explore/TocSheet.svelte');
+		const sheetCoarse = sheet.slice(sheet.indexOf('@media (pointer: coarse)'));
+		expect(sheet).toContain('@media (pointer: coarse)');
+		expect(sheetCoarse).toMatch(
+			/\.close \{[^}]*min-height: var\(--s-6\)[^}]*min-width: var\(--s-6\)/
+		);
 	});
 });

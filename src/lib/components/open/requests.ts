@@ -2,7 +2,8 @@
 // answer, "niet in de gegevens" where the API does not have it (a 404), or a failure that
 // rejects, so it is shown as one and never as an empty row or a 0.
 import { ifExists } from '$lib/api/errors';
-import { bucketTotals, getNodeGraph, getNodePage, neighborsOf, NODE_BUCKET } from '$lib/api/nodes';
+import { getNodeGraph, neighborsOf, NODE_BUCKET, type Neighbor } from '$lib/api/nodes';
+import { getMemberDocuments } from '$lib/api/members';
 import { getCommitments } from '$lib/api/commitments';
 import { abortable, getAmendedBy, getDocument } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
@@ -49,22 +50,19 @@ export async function changesOf(
 /** What an opened post shows: the newest toezeggingen and the stukken the person signed. */
 export type PostRecord = {
 	commitments: Schema<'CommitmentListResponse'>;
-	authored: ReturnType<typeof neighborsOf>;
-	/** The stukken signed, counted over every page. */
+	/** The newest stukken signed, newest first. */
+	authored: Neighbor[];
+	/** The stukken signed, every one. */
 	signed: number;
 };
 
+/** How many of each an opened post shows. */
+const NEWEST = 3;
+
 export async function postRecord(memberKey: string, signal: AbortSignal): Promise<PostRecord> {
-	const [commitments, node] = await Promise.all([
-		getCommitments({ member: memberKey, limit: 3, sort: 'date' }, signal),
-		getNodePage(
-			'members',
-			memberKey,
-			{ relations: 'AUTHORED', limit: 200, props: 'canvas' },
-			signal
-		)
+	const [commitments, documents] = await Promise.all([
+		getCommitments({ member: memberKey, limit: NEWEST, sort: 'date' }, signal),
+		getMemberDocuments(memberKey, NEWEST, signal)
 	]);
-	let signed = 0;
-	for (const [key, total] of bucketTotals(node)) if (key.startsWith('AUTHORED/')) signed += total;
-	return { commitments, authored: neighborsOf(node), signed };
+	return { commitments, authored: documents.items, signed: documents.total };
 }

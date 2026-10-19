@@ -69,53 +69,44 @@ describe('the record of an opened post', () => {
 		facets: { status: [{ value: 'Openstaand', count: 1 }] }
 	});
 	const authored = (n: number, total = n) => ({
-		node: { id: 'members/a', key: 'a', collection: 'members' },
-		neighbors: {
-			buckets: [
-				{
-					relation: 'AUTHORED',
-					direction: 'outbound',
-					collection: 'documents',
-					total,
-					items: Array.from({ length: n }, (_, i) => ({
-						id: `documents/d${i}`,
-						key: `d${i}`,
-						collection: 'documents',
-						props: { date: '2026-10-01' }
-					}))
-				}
-			]
-		}
+		total,
+		next_offset: null,
+		items: Array.from({ length: n }, (_, i) => ({
+			id: `documents/d${i}`,
+			key: `d${i}`,
+			collection: 'documents',
+			props: { date: '2026-10-01' }
+		}))
 	});
 
 	it('fails as a failure, never as "0 stukken ondertekend"', async () => {
 		fakeApi({
 			'/api/commitments': commitments(2),
-			'/api/nodes/{collection}/{key}': fail(500)
+			'/api/members/{key}/documents': fail(500)
 		});
 		await expect(postRecord('a', signal())).rejects.toBeInstanceOf(ApiError);
 	});
 
-	it('counts every stuk signed, past the first page, and asks for canvas props', async () => {
+	it('asks the newest three stukken signed, and counts them all (API 0.79.61)', async () => {
 		let query: Record<string, unknown> | undefined;
 		fakeApi({
 			'/api/commitments': commitments(0),
-			'/api/nodes/{collection}/{key}': ({ params }) => {
+			'/api/members/{key}/documents': ({ params }) => {
 				query = params.query;
-				return authored(200, 450);
+				return authored(3, 450);
 			}
 		});
 		const record = await postRecord('a', signal());
 		expect(record.signed).toBe(450);
-		expect(record.authored).toHaveLength(200);
-		expect(query).toMatchObject({ relations: 'AUTHORED', props: 'canvas' });
+		expect(record.authored).toHaveLength(3);
+		expect(query).toEqual({ limit: 3 });
 	});
 
 	it('shows no count of the bewindspersoon before when the next one fails', async () => {
 		fakeApi({
 			'/api/commitments': ({ params }) =>
 				params.query?.member === 'a' ? commitments(2) : fail(500),
-			'/api/nodes/{collection}/{key}': authored(4)
+			'/api/members/{key}/documents': authored(3, 4)
 		});
 		const states: LoadState<PostRecord>[] = [];
 		const post = createLoader(postRecord, (s) => states.push(s), 'post');

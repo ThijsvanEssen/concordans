@@ -3,6 +3,7 @@
 // 1 to 1.8 s on prod where their record took 0.4 s; a law's 2.2 s against 1 kB; a dossier's
 // 1.5 s against 0.1 s; an article's text came with the lookup, its node up to 1.1 s later.
 // The node, once in, takes its place under the same id.
+import { enactedLawOfKey } from '$lib/text/enacted-law';
 import type { Schema } from '$lib/api/types';
 import { getMember } from '$lib/api/records';
 import { getJudgmentDetail } from '$lib/api/judgments';
@@ -47,7 +48,7 @@ export function kopNode(collection: Collection, key: string): Promise<GraphNode>
 			return ecli ? getJudgmentDetail(ecli).then((d) => headOfJudgment(d.judgment)) : null;
 		}
 		case 'instruments':
-			return getInstrumentDetail(key.toUpperCase()).then(headOfLaw);
+			return getInstrumentDetail(enactedLawOfKey(key) ?? key.toUpperCase()).then(headOfLaw);
 		case 'dossiers':
 			return getDossier(key).then(headOfDossier);
 		case 'articles':

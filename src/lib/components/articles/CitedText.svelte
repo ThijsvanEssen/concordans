@@ -10,6 +10,8 @@
 	import GrondslagFormule from './GrondslagFormule.svelte';
 	import type { Bereik, NootMarker } from '$lib/text/voetnoten';
 	import { nootStand } from '$lib/text/voetnoten.svelte';
+	import { ownLawOf, ownArticleAnchor } from '$lib/text/own-article.svelte';
+	import { page } from '$app/state';
 	import { segmentsOf, withMarkers, type Segment, type Span } from '$lib/text/segments';
 
 	let {
@@ -44,6 +46,12 @@
 	} = $props();
 
 	const stand = nootStand();
+	// In the whole law an article of it is a jump in place, its card as elsewhere.
+	const ownLaw = ownLawOf();
+	const inPlace = (seg: Segment) => {
+		const anchor = ownArticleAnchor(seg.span!.target, ownLaw());
+		return anchor ? `${page.url.pathname}${page.url.search}#${encodeURIComponent(anchor)}` : null;
+	};
 
 	const stukken = $derived(
 		withMarkers(
@@ -79,6 +87,7 @@
 			>{:else}<BronLink
 				ref={refOfSpan(seg)!}
 				at={seg.at}
+				href={inPlace(seg)}
 				extra={seg.span.definition_ref && definities.get(seg.span.definition_ref)
 					? definitieRegel(definities.get(seg.span.definition_ref)!)
 					: null}

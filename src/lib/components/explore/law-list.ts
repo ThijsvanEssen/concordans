@@ -31,6 +31,8 @@ export type Row = {
 	key: string | null;
 	article_number: string | null;
 	label: string | null;
+	/** Its opschrift: `Uitbreiding en beperking partnerregeling`. */
+	heading: string | null;
 	address: string | null;
 	breadcrumb: Schema<'InstrumentArticleNodeDTO'>['breadcrumb'];
 	/** The whole text of an old version, which comes with the list. */
@@ -59,6 +61,14 @@ export function articleText(
 	if (detail?.text) return { text: detail.text, parts: detail.parts ?? null, cited: true };
 	return null;
 }
+
+/**
+ * The address an article of the whole law is asked alone by (for today's references, and its
+ * text where its page lacked it), or null where that would bring nothing: on a peildatum, for
+ * a text of an old version, or for an article no longer in the law.
+ */
+export const asksAlone = (row: Row, peildatum: string | null): string | null =>
+	peildatum || row.text || !row.key ? null : row.address;
 
 type ListStatus = 'loading' | 'loading-more' | 'loading-before' | 'ready' | 'error';
 
@@ -175,6 +185,7 @@ async function loadPage(
 				key: a.key,
 				article_number: a.article_number ?? null,
 				label: a.label ?? null,
+				heading: a.heading ?? null,
 				address: a.article_number ?? a.address ?? null,
 				breadcrumb: a.breadcrumb ?? [],
 				text: null,

@@ -4,7 +4,6 @@
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
-	import { MediaQuery } from 'svelte/reactivity';
 	import Search from '$lib/search/Search.svelte';
 	import { getFeedSummary } from '$lib/api/feed';
 	import { bronHref } from '$lib/bron/href';
@@ -58,11 +57,6 @@
 	const ALL_MARKS: Collection[] = SCOPES.map((sc) => sc.marks[0]);
 	let scope = $state<string | null>(null);
 	const chosen = $derived(SCOPES.find((x) => x.id === scope) ?? null);
-	/** On a phone the scopes a step smaller and without their marks: five words fit, as wide
-	 *  as the field under them. */
-	const narrow = new MediaQuery('width <= 600px');
-	/** Below a phone of 360: Alles for Alle bronnen, so Kabinet keeps its place in the row. */
-	const narrowest = new MediaQuery('width < 360px');
 
 	/** The lines of Actueel shown; the rest is in Actueel. */
 	const LINES_SHOWN = 6;
@@ -193,17 +187,19 @@
 					label="Zoek in"
 					vol
 					opties={[
-						{ waarde: 'alles', label: narrowest.current ? 'Alles' : 'Alle bronnen' },
+						// Its words in `voor`: Alles below a phone of 360 (CSS, from the first paint).
+						{ waarde: 'alles', label: '' },
 						...SCOPES.map((sc) => ({ waarde: sc.id, label: sc.label }))
 					]}
 					waarde={scope ?? 'alles'}
 					onSelect={(w) => (scope = w === 'alles' ? null : w)}
-					klein={narrow.current}
 				>
 					{#snippet voor(w)}
 						{@const marks = w === 'alles' ? ALL_MARKS : SCOPES.find((x) => x.id === w)?.marks}
-						{#if marks && !narrow.current}<span class="glyphs"
+						{#if marks}<span class="glyphs"
 								>{#each marks as c (c)}<KindGlyph collection={c} size={12} />{/each}</span
+							>{/if}{#if w === 'alles'}<span class="lang">Alle bronnen</span><span class="kort"
+								>Alles</span
 							>{/if}
 					{/snippet}
 				</Keuze>
@@ -278,6 +274,31 @@
 	.glyphs {
 		display: inline-flex;
 		gap: 3px;
+	}
+	.kort {
+		display: none;
+	}
+	/* On a phone the scopes a step smaller (Keuze klein) and without their marks: five words
+	   fit, as wide as the field under them. In CSS, so the first paint has it (UX-toets). */
+	@media (width <= 600px) {
+		.scopes :global(.keuze) {
+			height: var(--veld-h-klein);
+		}
+		.scopes :global(.keuze button) {
+			font-size: var(--t-ui-micro);
+		}
+		.glyphs {
+			display: none;
+		}
+	}
+	/* Below a phone of 360: Alles for Alle bronnen, so Kabinet keeps its place in the row. */
+	@media (width < 360px) {
+		.lang {
+			display: none;
+		}
+		.kort {
+			display: inline;
+		}
 	}
 	.main {
 		display: flex;

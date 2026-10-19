@@ -17,7 +17,12 @@ function files(dir: string): string[] {
 
 /** The custom properties a block of CSS declares, by name. */
 const tokens = (css: string) =>
-	new Map([...css.matchAll(/(--[\w-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
+	new Map(
+		[...css.matchAll(/(--[\w-]+):\s*([^;]+);/g)].map((m) => [
+			m[1],
+			m[2].trim().replace(/\s+/g, ' ')
+		])
+	);
 
 describe('the server HTML before the app', () => {
 	const style = /<style>([\s\S]*?)<\/style>/.exec(read('app.html'))?.[1] ?? '';
@@ -40,6 +45,20 @@ describe('the server HTML before the app', () => {
 		const face = (css: string) => /@font-face\s*\{[^}]*\}/.exec(css)?.[0].replace(/\s+/g, ' ');
 		expect(face(style)).toBeTruthy();
 		expect(face(style)).toEqual(face(read('lib/styles/fonts.css')));
+	});
+
+	it('has a fallback sized to Newsreader where Georgia is not (Android, Linux), in both', () => {
+		const faces = (css: string) =>
+			[...css.matchAll(/@font-face\s*\{[^}]*Newsreader Fallback[^}]*\}/g)].map((m) =>
+				m[0].replace(/\s+/g, ' ')
+			);
+		const app = faces(style);
+		expect(app.join()).toMatch(/local\('Noto Serif'\)/);
+		expect(app.join()).toMatch(/local\('DejaVu Serif'\)/);
+		expect(app).toEqual(faces(read('lib/styles/fonts.css')));
+		const stack = tokens(vooraf).get('--font-serif') ?? '';
+		expect(stack.indexOf('Newsreader Fallback Noto')).toBeGreaterThan(-1);
+		expect(stack.indexOf('Newsreader Fallback Noto')).toBeLessThan(stack.indexOf('Georgia,'));
 	});
 
 	it('stays hidden while the app comes, and shows when it does not', () => {

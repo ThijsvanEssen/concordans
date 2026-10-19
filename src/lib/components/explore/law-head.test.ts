@@ -99,6 +99,21 @@ describe('the head line', () => {
 			)
 		).toBe('99 artikelen.');
 	});
+	it('says of a law of the Staatsblad that it is enacted, not in force, and where it was published', () => {
+		const sv = {
+			date_in_force: null,
+			version_date_in_force: null,
+			article_count: 120,
+			inbound_citation_count: 0,
+			status: 'vastgesteld',
+			in_force: false,
+			official_id: 'stb-2026-56'
+		};
+		expect(lawHeadLine(sv, opts)).toBe(
+			'120 artikelen. Vastgesteld, nog niet in werking (Stb. 2026, 56).'
+		);
+		expect(lawHeadLine({ ...sv, in_force: true }, opts)).toBe('120 artikelen.');
+	});
 });
 
 describe('a treaty in the BWB and in the Verdragenbank', () => {

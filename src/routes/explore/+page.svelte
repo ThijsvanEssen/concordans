@@ -117,6 +117,7 @@
 		netwerkQuery as netwerkQueryOf
 	} from './explore-url';
 	import { PANELS, panelOfKey, type Panel } from './panels';
+	import { followServerMove, isEnactedLawPath } from '$lib/bron/moved-law';
 	import { ColumnWidths, type Column } from './column-widths.svelte';
 	import { NetwerkComposer } from './netwerk-compose.svelte';
 	import { OverlayCounts } from './overlay-counts.svelte';
@@ -174,6 +175,8 @@
 		untrack(() => lookUp(p, ac.signal))
 			.then((found) => {
 				if (found || ac.signal.aborted) return;
+				// A law of the Staatsblad the BWB now holds: the server sends it on.
+				if (followServerMove(page.url.pathname)) return;
 				padMissing = `${nameOfPad(p)} staat niet in de gegevens.`;
 				padOnbekend = true;
 			})
@@ -549,9 +552,12 @@
 
 	/** The message for a bron the dataset does not hold. */
 	function missing(key: string) {
+		if (followServerMove(page.url.pathname)) return;
 		wachtOp = null;
 		focusMissing = true;
-		focusError = `'${key}' staat niet in de gegevens.`;
+		// A law of the Staatsblad the server served itself is not in the data: by its publication.
+		const name = pad && isEnactedLawPath(page.url.pathname) ? nameOfPad(pad) : `'${key}'`;
+		focusError = `${name} staat niet in de gegevens.`;
 	}
 
 	async function loadFocus(id: string) {

@@ -30,14 +30,18 @@
 	import { isDay } from '$lib/text/datum';
 	import { nog, verderLabel, type Richting } from './law-paging';
 	import { EMPTY_LIST, createLawList, isDivisionAnchor, type LawList, type Row } from './law-list';
+	import { lawNodeKey } from '$lib/text/enacted-law';
+	import { setOwnLaw } from '$lib/text/own-article.svelte';
 	import { kindName, lawFullTitle, lawHeadLine, lawKind, sourceName, treatyLink } from './law-head';
 	import { navigate, withParams } from '$lib/util/address';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';
 	import WholeLawReaderArticle from './WholeLawReaderArticle.svelte';
 	import WholeLawReaderPeildatum from './WholeLawReaderPeildatum.svelte';
+	import { followPosition } from './law-position.svelte';
 
 	let { bwbId }: { bwbId: string } = $props();
+	setOwnLaw(() => bwbId);
 
 	// ?peildatum=2015-01-01: the law as it applied on that day.
 	const peildatum = $derived.by(() => {
@@ -207,6 +211,7 @@
 	/** Scrolls a heading or an article to the top of the reader; an article is marked. */
 	function landAt(el: HTMLElement) {
 		scrollInReader(el);
+		position?.read();
 		if (!el.matches('.whole-article')) return;
 		el.classList.add('is-landed');
 		// The click that brought the reader here has passed by the time this runs.
@@ -214,6 +219,25 @@
 			window.addEventListener('click', () => el.classList.remove('is-landed'), { once: true })
 		);
 	}
+
+	// The article at the top of the text, for the table of contents (K3): read when the reader
+	// scrolls, and at once after a jump or a new page of articles, where nothing scrolls (B4).
+	let position: ReturnType<typeof followPosition> | null = null;
+	$effect(() => {
+		const el = lawEl;
+		const bwb = bwbId;
+		if (!el) return;
+		const follow = followPosition(el, bwb);
+		position = follow;
+		return () => {
+			follow.stop();
+			if (position === follow) position = null;
+		};
+	});
+	$effect(() => {
+		void articles;
+		if (status === 'ready') position?.read();
+	});
 
 	/** The page before the first article shown: the article looked at stays in place. */
 	const previous = () =>
@@ -265,7 +289,7 @@
 			title={lawTitle}
 			acties={{
 				bewaar: bewaarItem(
-					`instruments/${bwbId.toLowerCase()}`,
+					`instruments/${lawNodeKey(bwbId)}`,
 					{ kort: lawTitle, voluit: fullTitle ?? lawTitle },
 					{ groep: lawTitle, wet: bwbId }
 				),
@@ -381,7 +405,7 @@
 				row={a}
 				{bwbId}
 				{peildatum}
-				detail={a.address ? detailByNumber.get(a.address)?.article : undefined}
+				detail={a.address ? detailByNumber.get(a.address) : undefined}
 				{citationOf}
 				onNear={(n) => void ensureDetail(bwbId, n)}
 			/>

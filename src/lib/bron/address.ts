@@ -3,6 +3,8 @@
 //   /uitspraken/ECLI:NL:HR:2019:2006     a judgment, by its ECLI (as rechtspraak.nl)
 //   /wetten/BWBR0005289                  a law, by its BWB id
 //   /wetten/32022L2555                   an EU act, by its CELEX number
+//   /wetten/STB-2026-56                  a law the BWB does not hold (yet), by the
+//                                        Staatsblad publication that enacted it
 //   /wetten/BWBR0005289/artikel/6:162    an article, by its law and number
 //   /dossiers/36600-VIII                 a dossier, by its number
 //   /kamerstukken/36799/31               a Kamerstuk, by its dossier and number
@@ -30,6 +32,7 @@ import type { QueryOf } from '$lib/api/types';
 import { readableQuery } from '$lib/util/address';
 import { parseNodeId } from '$lib/vocabulary';
 import { onForget } from '$lib/util/forget';
+import { enactedLawOfKey, lawNodeKey, STB_LAW } from '$lib/text/enacted-law';
 
 export type Pad =
 	| { soort: 'uitspraak'; ecli: string }
@@ -122,16 +125,19 @@ const ADDRESS_RULES: { [S in AddressKind]: AddressRule<S> } = {
 	},
 	wet: {
 		read: (p) => {
-			const wet = single(p, 'wetten', BWB) ?? single(p, 'wetten', CELEX);
+			const wet =
+				single(p, 'wetten', BWB) ?? single(p, 'wetten', CELEX) ?? single(p, 'wetten', STB_LAW);
 			return wet ? { soort: 'wet', wet: wet.toUpperCase() } : null;
 		},
 		write: (pad) => `/wetten/${e(pad.wet)}`,
-		lookup: (pad) => ({ kind: 'law', law: pad.wet }),
-		focus: (pad) => `instruments/${pad.wet.toLowerCase()}`,
-		fromKey: ({ collection, key }) =>
-			collection === 'instruments' && (BWB.test(key) || CELEX.test(key))
-				? { soort: 'wet', wet: key.toUpperCase() }
-				: null
+		lookup: (pad) => ({ kind: 'law', id: pad.wet }),
+		focus: (pad) => `instruments/${lawNodeKey(pad.wet)}`,
+		fromKey: ({ collection, key }) => {
+			if (collection !== 'instruments') return null;
+			if (BWB.test(key) || CELEX.test(key)) return { soort: 'wet', wet: key.toUpperCase() };
+			const enacted = enactedLawOfKey(key);
+			return enacted ? { soort: 'wet', wet: enacted } : null;
+		}
 	},
 	bijlage: {
 		read: ([first, wet, b, label, ...rest]) =>

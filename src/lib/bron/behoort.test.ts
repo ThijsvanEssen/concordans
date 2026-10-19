@@ -175,7 +175,7 @@ describe('behoort', () => {
 		// On a phone as the API cites them (F107).
 		expect(b.regels[0].lagen.map((l) => l.kort)).toEqual([
 			'Hof Den Haag 9 oktober 2018',
-			'deze',
+			undefined,
 			'HR 3 maart 2020'
 		]);
 		expect(b.onder.map((g) => [g.label, g.aantal])).toEqual([['Hoger beroep of cassatie', 2]]);

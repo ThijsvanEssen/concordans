@@ -24,7 +24,7 @@ const declared = new Map(
 		)
 			.replace(/\/\*[\s\S]*?\*\//g, '')
 			.matchAll(/(--[\w-]+):\s*([^;]+);/g)
-	].map((m) => [m[1], m[2].trim()])
+	].map((m) => [m[1], m[2].trim().replace(/\s+/g, ' ')])
 );
 
 /** A token's value, through the tokens it names. */

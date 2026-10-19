@@ -2,7 +2,7 @@
 // netwerkpaneel gelijk, en gelijk aan de titel in Verbonden. Een artikel draagt de korte titel van zijn wet ("Art. 3:4 Awb").
 import { textOf } from '$lib/text/words';
 import type { InstrumentMeta } from '$lib/api/instrument-cache';
-import { lawIdOf, type GraphNode } from '$lib/graph/types';
+import { instrumentLawId, lawIdOf, type GraphNode } from '$lib/graph/types';
 import { describeBron, UNNAMED } from '$lib/bron/describe';
 import { decisionOutcome } from '$lib/components/explore/index/decision-kind';
 import { isEkDecision } from '$lib/components/parliamentary/ek-decision';
@@ -14,7 +14,7 @@ import { dossierOwnName, dossierUitProps, kamerstukNummer } from './dossier-naam
 export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
 	const p = n.raw?.props ?? undefined;
 	if (n.drawClass === 'instrument') {
-		const m = meta.get(lawIdOf(p) ?? n.key.toUpperCase());
+		const m = meta.get(instrumentLawId(p, n.key));
 		return (
 			m?.shortTitle ??
 			m?.citationTitle ??

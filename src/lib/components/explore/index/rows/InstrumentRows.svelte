@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { formatCount } from '$lib/text/getal';
 	import type { Schema } from '$lib/api/types';
 	import { naamVan } from '$lib/bron/menselijk';
 	import { openHref } from '$lib/bron/href';
@@ -41,7 +42,7 @@
 			{#snippet body()}
 				<span class="row-sub"
 					>{w.article_count > 0
-						? `${w.article_count} artikelen`
+						? `${formatCount(w.article_count)} artikelen`
 						: isPublication(w)
 							? 'Publicatie in het Staatsblad; tekst niet in de gegevens'
 							: 'geen artikelen in de gegevens'}</span

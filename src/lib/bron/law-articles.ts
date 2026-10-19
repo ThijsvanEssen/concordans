@@ -6,6 +6,7 @@ import { lawArticleList } from '$lib/api/law-articles';
 import type { Schema } from '$lib/api/types';
 import { articleName } from '$lib/text/bw';
 import { layersOf, type Division } from '$lib/text/division';
+import type { Crumb } from '$lib/text/references';
 
 export type LawArticle = {
 	/** The number, or the address of an article without one (`stam_16464063`). */
@@ -33,6 +34,14 @@ export const lawArticles = (bwb: string): Promise<LawArticle[]> =>
 				breadcrumb: a.breadcrumb ?? []
 			}))
 	);
+
+/** Every division of the law `bwb` once, with its anchor in the whole law. */
+export const lawDivisions = (bwb: string): Promise<Crumb[]> =>
+	lawArticleList(bwb).then((resp) => [
+		...new Map(
+			resp.items.flatMap((a) => a.breadcrumb ?? []).map((c) => [c.anchor, c] as const)
+		).values()
+	]);
 
 /**
  * The articles with their place as layers. A layer that is the law itself (Boek 6 of BW

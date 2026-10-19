@@ -7,7 +7,7 @@
 	// shown by its dates, and the articles it changes are in the panel Verbonden.
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
-	import { lawIdOf, type GraphNode } from '$lib/graph/types';
+	import { instrumentLawId, type GraphNode } from '$lib/graph/types';
 	import WholeLawReader from '../WholeLawReader.svelte';
 	import { publicationName } from '../law-head';
 	import { citeItems } from '$lib/components/ui/cite-items';
@@ -17,7 +17,7 @@
 	let { node }: { node: GraphNode } = $props();
 
 	const p = $derived(node.raw?.props ?? {});
-	const bwbId = $derived(lawIdOf(p) ?? node.key.toUpperCase());
+	const bwbId = $derived(instrumentLawId(p, node.key));
 	const publication = $derived(textOf(p.publication_kind));
 </script>
 

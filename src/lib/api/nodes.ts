@@ -182,23 +182,6 @@ export const getNodeNeighborhood = (
 		})
 	);
 
-/**
- * A node by its key as given, under `query`, in the ordinary 10 s: whether a bron exists
- * (`limit: 1`), or one bucket of it.
- */
-export const getNodePage = (
-	collection: Collection,
-	key: string,
-	query: QueryOf<'/api/nodes/{collection}/{key}'>,
-	signal?: AbortSignal
-) =>
-	unwrap(
-		api.GET('/api/nodes/{collection}/{key}', {
-			params: { path: { collection, key }, query },
-			signal
-		})
-	);
-
 /** The paths between bronnen (`/api/paths`). */
 export const getPaths = (query: QueryOf<'/api/paths'>) =>
 	unwrap(api.GET('/api/paths', { params: { query } }));

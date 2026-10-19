@@ -69,6 +69,12 @@
 	font-size: var(--t-micro);
 	color: var(--ink-3);
 }
+/* On paper the page stands alone. */
+@media print {
+	.blad--tekst .stub-eyebrow {
+		display: none;
+	}
+}
 .blad--tekst .stub-eyebrow a {
 	color: var(--ink);
 	text-decoration: none;

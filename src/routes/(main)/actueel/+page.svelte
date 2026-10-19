@@ -28,7 +28,8 @@
 	import { getFeed, getFeedSummary } from '$lib/api/feed';
 	import { getFactions } from '$lib/api/factions';
 	import { report } from '$lib/api/errors';
-	import { untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
+	import { focusFirstNew } from '$lib/actions/rijen';
 	import type { Schema } from '$lib/api/types';
 	import { partyColor } from '$lib/components/explore/party-color.svelte';
 	import IndexFacets, {
@@ -59,6 +60,7 @@
 		KIND_LABEL,
 		atomHref,
 		daysOf,
+		wholeDays,
 		doorzochtVanaf,
 		errorPlace,
 		normalizeItem,
@@ -237,10 +239,14 @@
 		total = null;
 		tellen = true;
 		// Without the counts in 3 s the API answers `partial` (0.79.14) and counts on: asked
-		// once more after 30 s, or with the next filter. Then the filters stand without them.
+		// once more after 30 s past the browser's cache (which keeps the partial answer 60 s),
+		// or with the next filter. Then the filters stand without them.
 		let opnieuw: ReturnType<typeof setTimeout> | undefined;
 		const tel = (poging: number): void => {
-			getFeed({ ...q, limit: 1, facets: true }, { signal: ac.signal, wait: 'short' })
+			getFeed(
+				{ ...q, limit: 1, facets: true },
+				{ signal: ac.signal, wait: 'short', fresh: poging > 0 }
+			)
 				.then((r) => {
 					if (r.partial && !r.facets) {
 						if (poging === 0) opnieuw = setTimeout(() => tel(1), 30_000);
@@ -286,15 +292,23 @@
 		}
 	}
 
+	/** A row of the timeline, for the focus after Volgende dagen. */
+	const ROW = '.regel';
+	let daysEl = $state<HTMLElement | null>(null);
+
 	async function loadMore() {
 		if (!cursor || loadingMore) return;
 		loadingMore = true;
 		error = null;
+		// The focus to the first row the page adds: the link gives way to "Laden…" (F3, as Bladeren).
+		const before = daysEl?.querySelectorAll(ROW).length ?? 0;
 		try {
 			const r = await getFeed({ ...query, cursor, facets: false });
 			items = uniqueBy([...items, ...r.items.map(normalizeItem)], (i) => i.id);
 			cursor = r.next_cursor ?? null;
 			doorzocht = doorzochtVanaf(r);
+			await tick();
+			if (daysEl) focusFirstNew(daysEl, ROW, before);
 		} catch (e) {
 			report('Actueel volgende dagen', e);
 			error = 'De volgende dagen konden niet worden geladen.';
@@ -305,7 +319,10 @@
 
 	// Without a day asked, what lies ahead (an inwerkingtreding) waits for "komend".
 	const tot = $derived(until && until < today ? until : today);
-	const shown = $derived(ahead ? items : items.filter((i) => i.date <= tot));
+	// A day a page cut off waits for the next page, so its rows do not fold under the reader.
+	const shown = $derived(
+		wholeDays(ahead ? items : items.filter((i) => i.date <= tot), !!cursor && !doorzocht)
+	);
 	const days = $derived(daysOf(shown));
 
 	// The whole of each day loaded, under the same filters: a day a page cuts off is
@@ -641,7 +658,7 @@
 				{@render verder()}
 			</div>
 		{:else}
-			<div class="days" class:days--stale={loading}>
+			<div class="days" class:days--stale={loading} bind:this={daysEl}>
 				{#each days as day, n (day.date)}
 					<FeedDay
 						{day}

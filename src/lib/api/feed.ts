@@ -5,11 +5,23 @@ import type { QueryOf } from './types';
 /**
  * A page of the feed under `query`. It waits as long as the API does: a search of words or a
  * fractie can take seconds; `short` where the ordinary 10 s will do (a count, a short list).
+ * `fresh` asks past the browser's cache: a `partial` answer is kept there for 60 s.
  */
 export const getFeed = (
 	query: QueryOf<'/api/feed'>,
-	{ signal, wait = 'long' }: { signal?: AbortSignal; wait?: Wait } = {}
-) => unwrap(clientFor(wait).GET('/api/feed', { params: { query }, signal }));
+	{
+		signal,
+		wait = 'long',
+		fresh = false
+	}: { signal?: AbortSignal; wait?: Wait; fresh?: boolean } = {}
+) =>
+	unwrap(
+		clientFor(wait).GET('/api/feed', {
+			params: { query },
+			signal,
+			...(fresh ? { cache: 'reload' as const } : {})
+		})
+	);
 
 /** The days of the feed counted, with the events that stand alone. */
 export const getFeedSummary = (query: QueryOf<'/api/feed/summary'>, signal?: AbortSignal) =>

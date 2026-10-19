@@ -76,5 +76,10 @@ describe('nameOfPad', () => {
 			'Stb. 2026, 94'
 		);
 		expect(nameOfPad({ soort: 'lid', slug: 'rob-jetten' })).toBe('Lid rob-jetten');
+		// A law of the Staatsblad the BWB does not hold, and its article, by its publication.
+		expect(nameOfPad({ soort: 'wet', wet: 'STB-2026-56' })).toBe('Stb. 2026, 56');
+		expect(nameOfPad({ soort: 'artikel', wet: 'STB-2026-56', nummer: '2.8.6' })).toBe(
+			'Artikel 2.8.6 van Stb. 2026, 56'
+		);
 	});
 });

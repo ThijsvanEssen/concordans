@@ -68,11 +68,12 @@ describe('the days counted on Actueel', () => {
 		open('/actueel');
 		render(Page);
 		await settle();
-		expect(summaries()).toEqual([{ until: today, days: 2, soort: undefined }]);
+		// The last day of a page waits for the next one (wholeDays): one day counted.
+		expect(summaries()).toEqual([{ until: today, days: 1, soort: undefined }]);
 		await appNavigation.goto('/actueel?soort=Brief+regering');
 		await settle();
 		expect(summaries()).toHaveLength(2);
-		expect(summaries()[1]).toEqual({ until: today, days: 2, soort: 'Brief regering' });
+		expect(summaries()[1]).toEqual({ until: today, days: 1, soort: 'Brief regering' });
 	});
 
 	it('asks only the days a next page added', async () => {
@@ -81,9 +82,10 @@ describe('the days counted on Actueel', () => {
 		await settle();
 		await fireEvent.click(getByText('Volgende dagen'));
 		await settle();
+		// The day held back, with the days the page added.
 		expect(summaries()).toEqual([
-			{ until: today, days: 2, soort: undefined },
-			{ until: day(2), days: 2, soort: undefined }
+			{ until: today, days: 1, soort: undefined },
+			{ until: day(1), days: 3, soort: undefined }
 		]);
 	});
 });

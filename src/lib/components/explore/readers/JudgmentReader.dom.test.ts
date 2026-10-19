@@ -83,6 +83,27 @@ describe('JudgmentReader', () => {
 		expect(screen.getByRole('menu')).toBeTruthy();
 	});
 
+	it('closes the menu of an overweging without an error after a copy (F-anker)', async () => {
+		const errors: unknown[] = [];
+		const capture = (e: ErrorEvent) => {
+			e.preventDefault();
+			errors.push(e.error);
+		};
+		window.addEventListener('error', capture);
+		render(JudgmentReader, { node });
+		await settle();
+		await fireEvent.click(screen.getByRole('button', { name: /^Overweging 2\.1:/ }));
+		await settle();
+		// A copy closes the menu after 600 ms; Escape closed it before.
+		await fireEvent.click(screen.getByRole('menuitem', { name: 'Kopieer tekst' }));
+		await fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' });
+		await settle();
+		expect(screen.queryByRole('menu')).toBeNull();
+		await new Promise((r) => setTimeout(r, 700));
+		window.removeEventListener('error', capture);
+		expect(errors).toEqual([]);
+	});
+
 	it('cites each overweging as overwegingCitaat does, whatever overweging the address names', async () => {
 		const kort = overwegingCitaat(judgment, '2.1', 'r-2.1', '', null)?.kort;
 		expect(kort).toBeTruthy();
@@ -119,5 +140,50 @@ describe('the parties of a judgment', () => {
 			'P.A. Fruytier, advocaat',
 			'J.P. Jas, advocaat'
 		]);
+	});
+});
+
+describe('a withdrawn judgment', () => {
+	const stub = (over: Record<string, unknown>) => ({
+		...fixture.detail,
+		judgment: {
+			...judgment,
+			paragraphs: [],
+			footnotes: [],
+			summary: null,
+			parties: partiesFixture['ECLI:NL:HR:2025:1319'],
+			unresolved_citations: [],
+			...over
+		}
+	});
+
+	it('says the source withdrew it, without empty blocks of text or parties', async () => {
+		api = fakeApi({
+			'/api/judgments/{ecli}': stub({ withdrawn: 'doc', withdrawn_on: '2026-10-03' }),
+			'/api/nodes/{collection}/{key}': fixture.related
+		});
+		const { container } = render(JudgmentReader, { node });
+		await settle();
+		expect(container.textContent).toContain('Ingetrokken door de bron op 3 oktober 2026.');
+		expect(container.textContent).not.toContain('Tekst niet in de gegevens');
+		expect(container.querySelector('#parties')).toBeNull();
+	});
+
+	it('says an ECLI lapsed, with a link to the one that replaces it', async () => {
+		api = fakeApi({
+			'/api/judgments/{ecli}': stub({
+				withdrawn: 'ecli',
+				withdrawn_on: '2026-10-03',
+				replaced_by: 'ECLI:NL:RBROT:2026:99999',
+				replaced_by_id: null
+			}),
+			'/api/nodes/{collection}/{key}': fixture.related
+		});
+		const { container } = render(JudgmentReader, { node });
+		await settle();
+		expect(container.textContent).toContain('ECLI vervallen.');
+		const link = screen.getByRole('link', { name: 'ECLI:NL:RBROT:2026:99999' });
+		expect(link.getAttribute('href')).toContain('/uitspraken/ECLI:NL:RBROT:2026:99999');
+		expect(container.textContent).not.toContain('Vervangen publicatie');
 	});
 });

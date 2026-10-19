@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { formatCount } from '$lib/text/getal';
 	import { OPEN_STATUS } from '$lib/components/explore/index/government';
 	import { lowerFirst, plural } from '$lib/text/words';
 	import { korteDatum } from '$lib/text/datum';
@@ -91,7 +92,9 @@
 		<li>
 			<a href="#loopbaan"><b>{fns.length}</b> {plural(fns.length, 'post', 'posten')}</a>
 			<span class="s"
-				>{kabinetten.length === 1 ? kabinetten[0] : `${kabinetten.length} kabinetten`}</span
+				>{kabinetten.length === 1
+					? kabinetten[0]
+					: `${formatCount(kabinetten.length)} kabinetten`}</span
 			>
 		</li>
 	</ul>
