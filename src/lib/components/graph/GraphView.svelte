@@ -385,6 +385,13 @@
 			}
 		);
 	});
+	/** Escape on the bron in the list: its card closes, the focus stays (UX-toets B6). */
+	function closeCard() {
+		if (!keyNode || !hoverNode) return false;
+		stilNa = keyNode.id;
+		hoverNode = null;
+		return true;
+	}
 	function kaartUit(focus: 'lijst' | 'canvas', sluit = false) {
 		if (sluit) stilNa = keyNode?.id ?? null;
 		if (focus === 'canvas') {
@@ -1278,6 +1285,7 @@
 				isChosen={(id) => pinnedIds.has(id)}
 				onFocusNode={onKeyNode}
 				onTab={kaartIn}
+				onEscape={closeCard}
 				houdt={(el) => !!el && (!!citeEl?.contains(el) || el === canvasWrap)}
 				{onToggleChosen}
 				onOpenCluster={(n, opener) => openCluster(n.id, opener)}

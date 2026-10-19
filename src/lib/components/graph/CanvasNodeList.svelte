@@ -7,6 +7,7 @@
 	import { bronHref, refOf } from '$lib/bron/href';
 	import { bronLabel, isCollection } from '$lib/vocabulary';
 	import { moveIndex } from './canvas-keys';
+	import { isEscape } from '$lib/actions/keys';
 	import { articleTitle } from '$lib/text/bw';
 	import { bronNaam, stemmingNaam } from '$lib/bron/naam';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
@@ -19,6 +20,7 @@
 		onToggleChosen,
 		onOpenCluster,
 		onTab,
+		onEscape,
 		houdt
 	}: {
 		/** In reading order: the selected bron first. */
@@ -31,6 +33,8 @@
 		onOpenCluster?: (node: GraphNode, opener: HTMLElement) => void;
 		/** Tab from a bron: true where the focus went into its card. */
 		onTab?: (opener: HTMLElement) => boolean;
+		/** Escape on a bron: true where it closed the bron's card (the focus stays on the bron). */
+		onEscape?: () => boolean;
 		/** An element the focus may go to and the bron keep its card (the card itself). */
 		houdt?: (el: Node | null) => boolean;
 	} = $props();
@@ -94,6 +98,11 @@
 	}
 
 	function onkeydown(e: KeyboardEvent) {
+		if (isEscape(e) && onEscape?.()) {
+			e.preventDefault();
+			e.stopPropagation();
+			return;
+		}
 		if (e.key === 'Tab' && !e.shiftKey && onTab?.(e.currentTarget as HTMLElement)) {
 			e.preventDefault();
 			return;
