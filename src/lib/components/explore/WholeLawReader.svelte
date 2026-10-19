@@ -31,6 +31,7 @@
 	import { nog, verderLabel, type Richting } from './law-paging';
 	import { EMPTY_LIST, createLawList, isDivisionAnchor, type LawList, type Row } from './law-list';
 	import { lawNodeKey } from '$lib/text/enacted-law';
+	import { setOwnLaw } from '$lib/text/own-article.svelte';
 	import { kindName, lawFullTitle, lawHeadLine, lawKind, sourceName, treatyLink } from './law-head';
 	import { navigate, withParams } from '$lib/util/address';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -40,6 +41,7 @@
 	import { articleAtTop, lawPosition } from './law-position.svelte';
 
 	let { bwbId }: { bwbId: string } = $props();
+	setOwnLaw(() => bwbId);
 
 	// ?peildatum=2015-01-01: the law as it applied on that day.
 	const peildatum = $derived.by(() => {
