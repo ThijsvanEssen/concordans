@@ -121,3 +121,48 @@ describe('the parties of a judgment', () => {
 		]);
 	});
 });
+
+describe('a withdrawn judgment', () => {
+	const stub = (over: Record<string, unknown>) => ({
+		...fixture.detail,
+		judgment: {
+			...judgment,
+			paragraphs: [],
+			footnotes: [],
+			summary: null,
+			parties: partiesFixture['ECLI:NL:HR:2025:1319'],
+			unresolved_citations: [],
+			...over
+		}
+	});
+
+	it('says the source withdrew it, without empty blocks of text or parties', async () => {
+		api = fakeApi({
+			'/api/judgments/{ecli}': stub({ withdrawn: 'doc', withdrawn_on: '2026-10-03' }),
+			'/api/nodes/{collection}/{key}': fixture.related
+		});
+		const { container } = render(JudgmentReader, { node });
+		await settle();
+		expect(container.textContent).toContain('Ingetrokken door de bron op 3 oktober 2026.');
+		expect(container.textContent).not.toContain('Tekst niet in de gegevens');
+		expect(container.querySelector('#parties')).toBeNull();
+	});
+
+	it('says an ECLI lapsed, with a link to the one that replaces it', async () => {
+		api = fakeApi({
+			'/api/judgments/{ecli}': stub({
+				withdrawn: 'ecli',
+				withdrawn_on: '2026-10-03',
+				replaced_by: 'ECLI:NL:RBROT:2026:99999',
+				replaced_by_id: null
+			}),
+			'/api/nodes/{collection}/{key}': fixture.related
+		});
+		const { container } = render(JudgmentReader, { node });
+		await settle();
+		expect(container.textContent).toContain('ECLI vervallen.');
+		const link = screen.getByRole('link', { name: 'ECLI:NL:RBROT:2026:99999' });
+		expect(link.getAttribute('href')).toContain('/uitspraken/ECLI:NL:RBROT:2026:99999');
+		expect(container.textContent).not.toContain('Vervangen publicatie');
+	});
+});
