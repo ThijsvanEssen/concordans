@@ -80,6 +80,13 @@
 		.close:hover {
 			color: var(--ink);
 		}
+		/* A finger's target: 32 px at least. */
+		@media (pointer: coarse) {
+			.close {
+				min-height: var(--s-6);
+				min-width: var(--s-6);
+			}
+		}
 		.body {
 			flex: 1;
 			min-height: 0;

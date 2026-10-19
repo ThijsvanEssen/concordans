@@ -333,6 +333,7 @@
 		.group__head {
 			align-items: center;
 			min-height: var(--s-6);
+			padding-block: 0;
 		}
 		.group__head > a.group__label {
 			align-self: stretch;
