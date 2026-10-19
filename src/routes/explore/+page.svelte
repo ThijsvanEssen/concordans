@@ -116,7 +116,7 @@
 		nameOfPad,
 		netwerkQuery as netwerkQueryOf
 	} from './explore-url';
-	import { PANELS, panelOfKey, type Panel } from './panels';
+	import { PANELS, panelOfKey, verbondenInView, type Panel } from './panels';
 	import { followServerMove, isEnactedLawPath } from '$lib/bron/moved-law';
 	import { ColumnWidths, type Column } from './column-widths.svelte';
 	import { NetwerkComposer } from './netwerk-compose.svelte';
@@ -282,12 +282,11 @@
 	const source = createVerbondenSource(store);
 	let verbonden = $state<VerbondenState>(get(source));
 	source.subscribe((s) => (verbonden = s));
-	// Verbonden loads when it is in view (Thijs, 9 Oct: "alles zo lazy mogelijk"): beside the
-	// reader on a wide screen; on a phone when its tab is opened, or for an article, whose
-	// counts per lid stand in the text.
+	// Verbonden loads when it is in view (verbondenInView).
 	$effect(() => {
 		const node = mode === 'index' ? null : selectedNode;
-		if (node && telefoon && mobilePanel !== 'verbonden' && node.collection !== 'articles') return;
+		const view = { phone: telefoon, table: tableMode, panel: mobilePanel };
+		if (node && !verbondenInView(node.collection, view)) return;
 		source.load(node);
 	});
 	onDestroy(() => source.destroy());
