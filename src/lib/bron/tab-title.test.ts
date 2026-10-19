@@ -36,6 +36,16 @@ describe('pageName', () => {
 		);
 	});
 
+	it('names a law of the Staatsblad as the server does, with its place (F10)', () => {
+		const sv = {
+			...node('instruments', 'x', 'Wetboek van Strafvordering (Stb. 2026, 56)', {}),
+			id: 'instruments/wet_stb_2026_56'
+		} as GraphNode;
+		expect(pageName(sv, 'Wetboek van Strafvordering')).toBe(
+			'Wetboek van Strafvordering (Stb. 2026, 56)'
+		);
+	});
+
 	it('takes the API title for any other bron, cut at a word, without a heading in capitals', () => {
 		const wet = node('instruments', 'x', 'Wet', {});
 		expect(pageName(wet, 'Burgerlijk Wetboek Boek 6')).toBe('Burgerlijk Wetboek Boek 6');
