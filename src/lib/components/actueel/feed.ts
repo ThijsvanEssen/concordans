@@ -224,6 +224,17 @@ export type Day = {
 };
 
 /**
+ * The items of the whole days among `items` (newest first). With `more` a next page may hold
+ * more of the last day, and its rows would fold under the reader (FOLD_AT): that day waits
+ * for the next page, unless it is the only one.
+ */
+export function wholeDays<T extends { date: string }>(items: readonly T[], more: boolean): T[] {
+	const last = items.at(-1)?.date;
+	if (!more || !last || items[0].date === last) return [...items];
+	return items.filter((i) => i.date !== last);
+}
+
+/**
  * The items per day, in the order they came. Within a day, FOLD_AT or more votes that are
  * not on a bill and not close become one fold at the top; FOLD_AT or more other items of
  * one kind on one dossier become one fold where the first of them stood.

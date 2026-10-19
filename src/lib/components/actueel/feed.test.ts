@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	artikelenGewijzigd,
 	errorPlace,
+	wholeDays,
 	normalizeItem,
 	doorzochtVanaf,
 	countLine,
@@ -84,6 +85,23 @@ describe('daysOf', () => {
 		expect(countLine(first.counts)).toBe('4 moties, 1 brief regering');
 		// One of a kind on another day does not fold.
 		expect(days[1].entries).toHaveLength(1);
+	});
+});
+
+describe('wholeDays', () => {
+	const items = [
+		item('2026-09-04', 'Amendement', '36947'),
+		item('2026-09-03', 'Amendement', '36947'),
+		item('2026-09-03', 'Amendement', '36947')
+	];
+
+	it('holds back the day a page cut off: the next page would fold its rows (B3)', () => {
+		expect(wholeDays(items, true).map((i) => i.date)).toEqual(['2026-09-04']);
+		expect(wholeDays(items, false)).toHaveLength(3);
+	});
+
+	it('shows a day longer than a page as it is', () => {
+		expect(wholeDays(items.slice(1), true)).toHaveLength(2);
 	});
 });
 

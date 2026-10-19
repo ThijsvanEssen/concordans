@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tableTitle } from './table-title';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import Vinkje from '$lib/components/ui/Vinkje.svelte';
 	import { blockClick, terPlekke } from '$lib/actions/klik';
@@ -112,11 +113,7 @@
 		return `${col?.label ?? ''}, ${dir}`;
 	});
 
-	const title = $derived(
-		selection.collection === 'articles'
-			? `Verbindingen van ${selection.raw?.display_name?.replace(/^Artikel/, 'artikel') ?? selection.label}`
-			: `Verbindingen van ${selection.raw?.display_name ?? selection.label}`
-	);
+	const title = $derived(tableTitle(selection));
 
 	function exportCsv() {
 		download(

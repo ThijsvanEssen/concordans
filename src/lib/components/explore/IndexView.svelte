@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	// Index: browse one category at a time. Beside the list a column of filters, each
 	// option with the number of bronnen it holds under the other filters. A row says what
 	// the bron is in its own lines; its title opens it, and at its end stand the ways on in
@@ -22,7 +22,7 @@
 	import { getCoverage } from '$lib/api/stats';
 	import { uniqueBy } from '$lib/util/unique';
 	import { isEscape } from '$lib/actions/keys';
-	import { rijen } from '$lib/actions/rijen';
+	import { focusFirstNew, rijen } from '$lib/actions/rijen';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
@@ -231,14 +231,22 @@
 		};
 	});
 
+	/** The focusable element of a row, for J and K and for the focus after Volgende. */
+	const ROW = 'a.row-title';
+	let results = $state<HTMLElement | null>(null);
+
 	async function loadMore() {
 		const offset = pages[category]?.items.length;
 		if (loadingMore || !offset) return;
 		loadingMore = true;
 		loadMoreFailed = false;
 		const ac = (loadMoreAbort = new AbortController());
+		// The focus to the first row the page adds: the button gives way to "Laden…" (B2).
+		const before = results?.querySelectorAll(ROW).length ?? 0;
 		try {
 			await fetchPage(offset, ac.signal);
+			await tick();
+			if (results && !ac.signal.aborted) focusFirstNew(results, ROW, before);
 		} catch {
 			// The rows loaded so far stay; the button offers the next page again.
 			if (!ac.signal.aborted) loadMoreFailed = true;
@@ -591,7 +599,8 @@
 				<div
 					class="results"
 					use:lijstDoel
-					use:rijen={'a.row-title'}
+					bind:this={results}
+					use:rijen={ROW}
 					aria-busy={loading}
 					style:--row-aside="{columns.asideW}px"
 				>

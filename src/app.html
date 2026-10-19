@@ -57,6 +57,46 @@
 				line-gap-override: 0%;
 			}
 			@font-face {
+				font-family: 'Newsreader Fallback Noto';
+				src: local('Noto Serif'), local('NotoSerif-Regular');
+				font-weight: 400 500;
+				font-style: normal;
+				size-adjust: 88%;
+				ascent-override: 84%;
+				descent-override: 30%;
+				line-gap-override: 0%;
+			}
+			@font-face {
+				font-family: 'Newsreader Fallback Noto';
+				src: local('Noto Serif Bold'), local('NotoSerif-Bold');
+				font-weight: 600 800;
+				font-style: normal;
+				size-adjust: 85%;
+				ascent-override: 87%;
+				descent-override: 31%;
+				line-gap-override: 0%;
+			}
+			@font-face {
+				font-family: 'Newsreader Fallback DejaVu';
+				src: local('DejaVu Serif'), local('DejaVuSerif');
+				font-weight: 400 500;
+				font-style: normal;
+				size-adjust: 81%;
+				ascent-override: 91%;
+				descent-override: 32%;
+				line-gap-override: 0%;
+			}
+			@font-face {
+				font-family: 'Newsreader Fallback DejaVu';
+				src: local('DejaVu Serif Bold'), local('DejaVuSerif-Bold');
+				font-weight: 600 800;
+				font-style: normal;
+				size-adjust: 76%;
+				ascent-override: 97%;
+				descent-override: 34%;
+				line-gap-override: 0%;
+			}
+			@font-face {
 				font-family: 'Newsreader';
 				src: url('/fonts/Newsreader-Variable.woff2') format('woff2');
 				font-weight: 400 600;
@@ -72,7 +112,9 @@
 				--ink: #161513;
 				--ink-2: #3b3834;
 				--ink-3: #5d5951;
-				--font-serif: 'Newsreader', 'Newsreader Fallback', Georgia, serif;
+				--font-serif:
+					'Newsreader', 'Newsreader Fallback', 'Newsreader Fallback Noto',
+					'Newsreader Fallback DejaVu', Georgia, serif;
 				--t-h1: 30px;
 				--t-h3: 20px;
 				--t-body: 17.5px;

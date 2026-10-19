@@ -59,9 +59,17 @@
 		onClose();
 		if (focus) marker.focus();
 	}
+	// A copy closes the menu a moment later, unless it closed meanwhile (Escape, a click
+	// outside): then its props, the marker too, are gone (F-anker).
+	let gone = false;
+	let closing: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => () => {
+		gone = true;
+		clearTimeout(closing);
+	});
 	async function kopieer(wat: string, sleutel: string) {
 		await copier.copy(wat, sleutel);
-		setTimeout(() => sluit(), 600);
+		if (!gone) closing = setTimeout(() => sluit(), 600);
 	}
 </script>
 

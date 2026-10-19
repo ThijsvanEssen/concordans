@@ -51,3 +51,14 @@ export function rijen(node: HTMLElement, rij: string) {
 		}
 	};
 }
+
+/**
+ * After a next page: the focus to the first row it added (`index`), where the button that
+ * asked for it gave way to "Laden…" and left the focus on the body. Focus the reader put
+ * elsewhere meanwhile stays.
+ */
+export function focusFirstNew(node: HTMLElement, rij: string, index: number) {
+	const active = document.activeElement;
+	if (active && active !== document.body) return;
+	node.querySelectorAll<HTMLElement>(rij)[index]?.focus({ preventScroll: true });
+}
