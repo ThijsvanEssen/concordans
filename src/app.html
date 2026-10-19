@@ -11,7 +11,8 @@
 		     for what the app adds, so it is the first paint and the app takes its place
 		     without a shift (Thijs, 19 Oct, variant A). -->
 		<script>
-			document.documentElement.classList.add('js');
+			// js goes when the app does not come; scripts stays (the room of the start page).
+			document.documentElement.classList.add('js', 'scripts');
 			window.__seoTerug = setTimeout(function () {
 				document.documentElement.classList.remove('js');
 			}, 4000);
@@ -110,6 +111,17 @@
 				src: url('/fonts/Newsreader-Variable.woff2') format('woff2');
 				font-weight: 400 600;
 				font-style: normal;
+				font-display: swap;
+				unicode-range:
+					U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+					U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+			}
+			/* Its italic, for the placeholder and the note: as the app has it (fonts.css). */
+			@font-face {
+				font-family: 'Newsreader';
+				src: url('/fonts/Newsreader-VariableItalic.woff2') format('woff2');
+				font-weight: 400 600;
+				font-style: italic;
 				font-display: swap;
 				unicode-range:
 					U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
@@ -284,12 +296,15 @@
 				line-height: var(--lh-body);
 				color: var(--ink-2);
 			}
-			/* Over the field the room of the scopes (Keuze, small on a phone) and the gap under
-			   them; the field with its mark (Search); under it the room of the law network
-			   (.wetsnetwerk-plek), quiet as the app keeps it while it is asked. */
+			/* The field with its mark (Search); with scripts, over it the room of the scopes
+			   (Keuze, small on a phone) and the gap under them, under it the room of the law
+			   network (.wetsnetwerk-plek), quiet as the app keeps it while it is asked. Without
+			   scripts neither comes, and no room stands empty. */
 			#seo:has(> .entrances) > .search {
 				display: grid;
 				grid-template-columns: minmax(0, 1fr);
+			}
+			.scripts #seo:has(> .entrances) > .search {
 				padding-top: calc(var(--veld-h) + var(--s-3));
 			}
 			#seo:has(> .entrances) > .search::before {
@@ -305,7 +320,7 @@
 					center / 16px 16px no-repeat;
 				pointer-events: none;
 			}
-			#seo:has(> .entrances) > .search::after {
+			.scripts #seo:has(> .entrances) > .search::after {
 				content: '';
 				min-height: 366px;
 				margin-top: var(--s-6);
@@ -412,14 +427,14 @@
 			#seo:has(> .entrances) .entrance li:has(> a[href*='bronnen=toelichtingen'])::before {
 				mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 1h6.5l3 3v11H3.5z'/%3E%3C/svg%3E");
 			}
-			/* The note of the bundel: its label small, the note in italics. */
-			#seo:has(> .entrances) .entrance li:not(:has(> a)) {
-				font-size: var(--t-micro);
-				color: var(--ink-3);
+			/* The note of the bundel in italics, its label small. */
+			#seo:has(> .entrances) .entrance .note {
+				font-style: italic;
 			}
-			#seo:has(> .entrances) .entrance li em {
-				font-size: var(--t-meta);
-				color: var(--ink-2);
+			#seo:has(> .entrances) .entrance .note-label {
+				font-size: var(--t-micro);
+				font-style: normal;
+				color: var(--ink-3);
 			}
 			/* The outcome and the sides of the vote, each with its box (Uitkomst, Stem): Voor
 			   filled in moss, Tegen and Verworpen open in the accent. */
@@ -429,7 +444,15 @@
 				gap: var(--s-2);
 				font-size: var(--t-meta);
 			}
-			#seo:has(> .entrances) .entrance .outcome::before,
+			#seo:has(> .entrances) .entrance .uitkomst,
+			#seo:has(> .entrances) .entrance dt {
+				display: flex;
+				align-items: baseline;
+				gap: var(--s-2);
+				font-weight: 600;
+				color: var(--uitkomst-nee);
+			}
+			#seo:has(> .entrances) .entrance .uitkomst::before,
 			#seo:has(> .entrances) .entrance dt::before {
 				content: '';
 				flex: none;
@@ -445,13 +468,7 @@
 				font-size: var(--t-meta);
 				line-height: var(--lh-snug);
 			}
-			#seo:has(> .entrances) .entrance dt {
-				display: flex;
-				align-items: baseline;
-				gap: var(--s-2);
-				font-weight: 600;
-				color: var(--uitkomst-nee);
-			}
+			#seo:has(> .entrances) .entrance .uitkomst::before,
 			#seo:has(> .entrances) .entrance dt::before {
 				transform: translateY(1px);
 			}
@@ -473,7 +490,7 @@
 				}
 			}
 			@media (max-width: 640px) {
-				#seo:has(> .entrances) > .search::after {
+				.scripts #seo:has(> .entrances) > .search::after {
 					min-height: 264px;
 				}
 				#seo:has(> .entrances) input {
@@ -481,7 +498,7 @@
 				}
 			}
 			@media (width <= 600px) {
-				#seo:has(> .entrances) > .search {
+				.scripts #seo:has(> .entrances) > .search {
 					padding-top: calc(var(--veld-h-klein) + var(--s-3));
 				}
 			}

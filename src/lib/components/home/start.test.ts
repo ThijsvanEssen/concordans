@@ -61,7 +61,10 @@ describe('the start page of the server and of the app', () => {
 		const html = section('vote');
 		expect(links(html)).toEqual([{ href: vote.href, label: vote.title }]);
 		expect(text(all(html, 'p', 'meta')[0])).toBe(vote.date);
-		expect(text(all(html, 'p', 'outcome')[0])).toBe(`${vote.outcome}, ${vote.tally}`);
+		// As Entrances: the outcome word apart (app.html marks it), then the tally.
+		expect(all(html, 'p', 'outcome')[0]).toBe(
+			`<span class="uitkomst">${vote.outcome}</span> <span>${vote.tally}</span>`
+		);
 		// Voor first, then Tegen: app.html marks the sides in that order.
 		expect(all(html, 'dt').map(text)).toEqual(['Voor', 'Tegen']);
 		expect(all(html, 'dt').map(text)).toEqual(vote.sides.map((s) => s.choice));
@@ -75,7 +78,9 @@ describe('the start page of the server and of the app', () => {
 			{ href: bundle.href, label: bundle.title },
 			...bundle.lines.map(({ href, label }) => ({ href, label }))
 		]);
-		expect(html).toContain(`<li>${bundle.noteLabel}: <em>${bundle.note}</em></li>`);
+		expect(html).toContain(
+			`<li class="note"><span class="note-label">${bundle.noteLabel}</span> ${bundle.note}</li>`
+		);
 	});
 
 	it('marks each line with the kind of what it opens', () => {

@@ -68,13 +68,20 @@
 	 *  or what was typed in the server's field before the app came, with its focus. */
 	const typed = takeServerField();
 	const query = page.url.searchParams.get('q') || typed.query;
-	// After the first navigation, which sets the focus on the page itself.
+	// After the first navigation, which sets the focus on the page itself: on the field, or
+	// on the link the reader had reached in the server's page.
 	afterNavigate(() => {
-		if (!typed.focused) return;
+		const { focused, link } = typed;
 		typed.focused = false;
-		const field = document.querySelector<HTMLInputElement>('main [data-search-field]');
-		field?.focus();
-		field?.setSelectionRange(field.value.length, field.value.length);
+		typed.link = null;
+		if (link) {
+			const to = [...document.querySelectorAll<HTMLAnchorElement>('main a[href]')];
+			to.find((a) => a.getAttribute('href') === link)?.focus();
+		} else if (focused) {
+			const field = document.querySelector<HTMLInputElement>('main [data-search-field]');
+			field?.focus();
+			field?.setSelectionRange(field.value.length, field.value.length);
+		}
 	});
 	/** The days the summary spans: enough for the lines on a quiet week (first-pages.json). */
 	const SUMMARY_DAYS = HOME_SUMMARY.days;

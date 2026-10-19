@@ -63,7 +63,7 @@ describe('the server HTML before the app', () => {
 
 	it('stays hidden while the app comes, and shows when it does not', () => {
 		const head = read('app.html').split('</head>')[0];
-		const script = head.indexOf("classList.add('js')");
+		const script = head.indexOf("classList.add('js'");
 		expect(script).toBeGreaterThan(-1);
 		// Before the first style, so nothing paints the text first.
 		expect(script).toBeLessThan(head.indexOf('<style>'));
@@ -71,6 +71,15 @@ describe('the server HTML before the app', () => {
 		expect(head).toMatch(/\.js #seo:not\(:has\(> \.entrances\)\) \{\s*display: none;/);
 		expect(read('routes/+layout.svelte')).toContain('clearTimeout(window.__seoTerug)');
 		expect(read('routes/+layout.svelte')).toContain('removeServerText(document)');
+	});
+
+	it('declares the italic of Newsreader as the app does, for the placeholder and the note', () => {
+		const italic = (css: string) =>
+			/@font-face\s*\{[^}]*Newsreader-VariableItalic\.woff2[^}]*\}/
+				.exec(css)?.[0]
+				.replace(/\s+/g, ' ');
+		expect(italic(style)).toBeTruthy();
+		expect(italic(style)).toEqual(italic(read('lib/styles/fonts.css')));
 	});
 
 	it('loads its font from the head, before any script', () => {
@@ -103,29 +112,34 @@ describe('the start page: the server HTML as the first paint', () => {
 		expect(style).toContain('.js #seo:not(:has(> .entrances))');
 	});
 
-	it('keeps the room of what the app adds: the scopes over the field and the law network', () => {
+	it('keeps the room of what the app adds, with scripts only: the scopes and the law network', () => {
 		// Keuze is small on a phone (width <= 600px in +page.svelte).
 		expect(home).toMatch(
 			/@media \(width <= 600px\) \{\s*\.scopes :global\(\.keuze\) \{\s*height: var\(--veld-h-klein\);/
 		);
-		expect(rule('#seo:has(> .entrances) > .search')).toContain(
+		expect(rule('#seo:has(> .entrances) > .search')).not.toContain('padding-top');
+		// Not js, which goes when the app is 4 s late: the room would close under the reader.
+		expect(read('app.html')).toContain("classList.add('js', 'scripts')");
+		expect(rule('.scripts #seo:has(> .entrances) > .search')).toContain(
 			'padding-top: calc(var(--veld-h) + var(--s-3))'
 		);
 		expect(style).toMatch(
-			/@media \(width <= 600px\) \{\s*#seo:has\(> \.entrances\) > \.search \{\s*padding-top: calc\(var\(--veld-h-klein\) \+ var\(--s-3\)\);/
+			/@media \(width <= 600px\) \{\s*\.scripts #seo:has\(> \.entrances\) > \.search \{\s*padding-top: calc\(var\(--veld-h-klein\) \+ var\(--s-3\)\);/
 		);
 		// The band of the law network while it is asked: the same heights.
 		const plek = [...home.matchAll(/\.wetsnetwerk-plek \{[^}]*?min-height: (\d+px);/g)].map(
 			(m) => m[1]
 		);
-		const band = [...style.matchAll(/> \.search::after \{[^}]*?min-height: (\d+px);/g)].map(
-			(m) => m[1]
-		);
+		const band = [
+			...style.matchAll(
+				/\.scripts #seo:has\(> \.entrances\) > \.search::after \{[^}]*?min-height: (\d+px);/g
+			)
+		].map((m) => m[1]);
 		expect(plek.length).toBe(2);
 		expect(band).toEqual(plek);
 		expect(home).toMatch(/@media \(max-width: 640px\) \{\s*\.wetsnetwerk-plek/);
 		expect(style).toMatch(
-			/@media \(max-width: 640px\) \{\s*#seo:has\(> \.entrances\) > \.search::after/
+			/@media \(max-width: 640px\) \{\s*\.scripts #seo:has\(> \.entrances\) > \.search::after/
 		);
 	});
 

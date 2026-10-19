@@ -19,15 +19,27 @@ describe('the server text giving way to the app', () => {
 		field.focus();
 		removeServerText(document);
 		expect(document.getElementById('seo')).toBeNull();
-		expect(takeServerField()).toEqual({ query: '6:162 BW', focused: true });
-		expect(takeServerField()).toEqual({ query: '', focused: false });
+		expect(takeServerField()).toEqual({ query: '6:162 BW', focused: true, link: null });
+		expect(takeServerField()).toEqual({ query: '', focused: false, link: null });
+	});
+
+	it('hands over the link the reader had reached with Tab', () => {
+		document.body.innerHTML =
+			'<main id="seo"><a class="title" href="/kamerstukken/27926/413">Motie</a></main>';
+		document.querySelector<HTMLAnchorElement>('#seo a')!.focus();
+		removeServerText(document);
+		expect(takeServerField()).toEqual({
+			query: '',
+			focused: false,
+			link: '/kamerstukken/27926/413'
+		});
 	});
 
 	it('hands nothing over from an untouched field, or where there is no server text', () => {
 		serverPage();
 		removeServerText(document);
-		expect(takeServerField()).toEqual({ query: '', focused: false });
+		expect(takeServerField()).toEqual({ query: '', focused: false, link: null });
 		removeServerText(document);
-		expect(takeServerField()).toEqual({ query: '', focused: false });
+		expect(takeServerField()).toEqual({ query: '', focused: false, link: null });
 	});
 });
