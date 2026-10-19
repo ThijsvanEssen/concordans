@@ -18,11 +18,21 @@
 	import { spansWithin } from '$lib/text/spans';
 	import { definitiesOp, type Begrip, type Definitie } from '$lib/text/begrippen';
 	import { delegatiesWithin, type Delegatie, type Gedelegeerd } from '$lib/text/delegaties';
+	import {
+		namesOwnDivision,
+		referenceSpans,
+		type Crumb,
+		type Reference
+	} from '$lib/text/references';
+	import { lawDivisions } from '$lib/bron/law-articles';
+	import { report } from '$lib/api/errors';
 
 	let {
 		text,
 		parts: apiParts = null,
 		citations = [],
+		references = [],
+		law = null,
 		begrippen = [],
 		definities = [],
 		delegaties = [],
@@ -45,6 +55,11 @@
 		/** The parts the API delivers (0.5); without them they are read from the text. */
 		parts?: Schema<'ArticlePartSpanDTO'>[] | null;
 		citations?: Schema<'ArticleCitationSpan'>[];
+		/** Every reference the text makes (`references`): each mention a link where its
+		 *  target is known, besides the one citation per target. */
+		references?: Reference[];
+		/** The law of the article (BWB id), for a reference to a division of it. */
+		law?: string | null;
 		/** The terms the text uses that its regulation defines (`term_spans`). */
 		begrippen?: Begrip[];
 		/** The definitions they name (`definitions`). */
@@ -82,6 +97,21 @@
 	} = $props();
 
 	const source = $derived(text ?? '');
+
+	// The divisions of the law, asked only for a text that names one of its own.
+	let divisions = $state.raw<Crumb[]>([]);
+	$effect(() => {
+		const bwb = law;
+		divisions = [];
+		if (!bwb || !namesOwnDivision(references, bwb)) return;
+		lawDivisions(bwb).then(
+			(d) => {
+				if (bwb === law) divisions = d;
+			},
+			(e) => report('Indeling van de wet', e)
+		);
+	});
+	const links = $derived(referenceSpans(citations, references, { ownLaw: law, crumbs: divisions }));
 	const perRef = $derived(definitiesOp(definities));
 	const parts = $derived(partsOf(source, apiParts));
 	const marker = (number: string) => markerOf(number, mark);
@@ -105,7 +135,7 @@
 		const body = raw.trim();
 		return {
 			body,
-			citations: spansWithin(citations, part.textStart + lead, body.length),
+			citations: spansWithin(links, part.textStart + lead, body.length),
 			begrippen: spansWithin(begrippen, part.textStart + lead, body.length),
 			delegaties: delegatiesWithin(delegaties, part.textStart + lead, body.length)
 		};

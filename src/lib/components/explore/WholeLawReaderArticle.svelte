@@ -1,7 +1,7 @@
 <script lang="ts">
 	// One article of the whole law: its number as the link to the article, and its one text
-	// (articleText), else its preview. Today's text not on its page is asked once the article
-	// comes near the viewport.
+	// (articleText), else its preview. The article of today is asked alone once it comes near
+	// the viewport: its references link (K2), and its text stands where its page lacked it.
 	import { naamVanId } from '$lib/bron/menselijk';
 	import { bronHref } from '$lib/bron/href';
 	import { onderdeelMark } from '$lib/text/article-parts';
@@ -22,14 +22,20 @@
 		row: Row;
 		bwbId: string;
 		peildatum: string | null;
-		/** The article asked alone, of today. */
-		detail: { text: string | null; parts?: Schema<'ArticlePartSpanDTO'>[] | null } | undefined;
+		/** The article asked alone, of today: its text where the page lacks it, and the
+		 *  references in it. */
+		detail: Schema<'ArticleDetailResponse'> | undefined;
 		citationOf: (articleNumber: string | null, heading: string | null) => ArticleCitation | null;
-		/** Asks today's text of an article whose page did not bring it. */
+		/** Asks the article of today alone: its references, and its text where its page
+		 *  did not bring it. */
 		onNear: (articleNumber: string) => void;
 	} = $props();
 
-	const shown = $derived(articleText(row, peildatum ? undefined : detail));
+	const shown = $derived(articleText(row, peildatum ? undefined : detail?.article));
+	// The references are those of today's text: on its own offsets only (not a peildatum).
+	const linked = $derived(
+		!peildatum && shown?.cited && detail?.article.text === shown.text ? detail : null
+	);
 	const name = $derived(articleName(bwbId, row.article_number, row.label) ?? naamVanId(row.id));
 
 	/** How far below the viewport an article's full text is asked already. */
@@ -50,11 +56,7 @@
 	}
 </script>
 
-<section
-	class="whole-article"
-	data-artikel={row.address}
-	use:near={peildatum || row.textToday ? null : row.address}
->
+<section class="whole-article" data-artikel={row.address} use:near={peildatum ? null : row.address}>
 	<div class="whole-article-head">
 		<!-- The anchor of reading: Artikel 3:4, a BW article with its book (6:162). -->
 		{#if row.key}
@@ -76,6 +78,9 @@
 		<ArticleText
 			text={shown.text}
 			parts={shown.parts}
+			citations={linked?.citations ?? []}
+			references={linked?.references ?? []}
+			law={bwbId}
 			citation={shown.cited
 				? citationOf(row.address, row.article_number ? null : (row.label ?? null))
 				: null}

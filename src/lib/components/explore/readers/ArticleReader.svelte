@@ -668,6 +668,8 @@
 					text={shownVersion?.text ?? a.text}
 					parts={shownVersion?.parts ?? a.parts}
 					citations={shownVersion ? [] : d.citations}
+					references={shownVersion ? [] : (d.references ?? [])}
+					law={bwbId}
 					begrippen={shownVersion ? [] : (d.term_spans ?? [])}
 					definities={d.definitions ?? []}
 					delegaties={shownVersion ? [] : (d.delegations ?? [])}

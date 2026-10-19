@@ -381,7 +381,7 @@
 				row={a}
 				{bwbId}
 				{peildatum}
-				detail={a.address ? detailByNumber.get(a.address)?.article : undefined}
+				detail={a.address ? detailByNumber.get(a.address) : undefined}
 				{citationOf}
 				onNear={(n) => void ensureDetail(bwbId, n)}
 			/>
