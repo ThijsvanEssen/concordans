@@ -46,8 +46,8 @@ function chain(props: Record<string, unknown>, light: NodeGraph | null) {
 	const eigen = uitkomstVan(props.outcome, first(light, EARLIER)?.meta?.procedure_type);
 	const self: Laag = {
 		soort: 'Deze uitspraak',
+		// Whole on a phone too: "deze" alone read as cut off (UX-toets B4).
 		naam: 'deze uitspraak',
-		kort: 'deze',
 		huidig: true,
 		...(eigen ? { uitkomst: eigen } : {})
 	};

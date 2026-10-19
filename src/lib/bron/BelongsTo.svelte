@@ -428,6 +428,10 @@
 		.behoort:not(.uit) .lagen {
 			flex: 1 1 auto;
 		}
+		/* Folded, a layer that does not fit goes to the next line whole (UX-toets B4). */
+		.behoort:not(.uit) .lagen.gevouwen {
+			flex-wrap: wrap;
+		}
 		.behoort:not(.uit) li:has(.kort) .vol {
 			display: none;
 		}
