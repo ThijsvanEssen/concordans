@@ -117,6 +117,7 @@
 		netwerkQuery as netwerkQueryOf
 	} from './explore-url';
 	import { PANELS, panelOfKey, verbondenInView, type Panel } from './panels';
+	import { pathByName } from '$lib/bron/law-name';
 	import { followServerMove, isEnactedLawPath } from '$lib/bron/moved-law';
 	import { ColumnWidths, type Column } from './column-widths.svelte';
 	import { NetwerkComposer } from './netwerk-compose.svelte';
@@ -173,10 +174,14 @@
 		// remembers hundreds of addresses; that is no reason to ask again (Sv 143 was asked
 		// twice, 10 Oct).
 		untrack(() => lookUp(p, ac.signal))
-			.then((found) => {
+			.then(async (found) => {
 				if (found || ac.signal.aborted) return;
 				// A law of the Staatsblad the BWB now holds: the server sends it on.
 				if (followServerMove(page.url.pathname)) return;
+				// A law by its abbreviation (/wetten/wft/artikel/1:1): on to its own address.
+				const named = await pathByName(p, ac.signal).catch(() => null);
+				if (ac.signal.aborted) return;
+				if (named) return location.replace(named + location.search + location.hash);
 				padMissing = `${nameOfPad(p)} staat niet in de gegevens.`;
 				padOnbekend = true;
 			})

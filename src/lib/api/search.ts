@@ -17,3 +17,7 @@ export const search = (
 /** The bron at a readable address (`/api/lookup`). */
 export const lookup = (query: QueryOf<'/api/lookup'>, signal?: AbortSignal) =>
 	unwrap(api.GET('/api/lookup', { params: { query }, signal }));
+
+/** What a query cites, `art. 1:1 Wft` (`/api/resolve`); `kind` `none` where it cites nothing. */
+export const resolveQuery = (q: string, signal?: AbortSignal) =>
+	unwrap(api.GET('/api/resolve', { params: { query: { q } }, signal }));
