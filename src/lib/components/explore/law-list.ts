@@ -31,6 +31,8 @@ export type Row = {
 	key: string | null;
 	article_number: string | null;
 	label: string | null;
+	/** Its opschrift: `Uitbreiding en beperking partnerregeling`. */
+	heading: string | null;
 	address: string | null;
 	breadcrumb: Schema<'InstrumentArticleNodeDTO'>['breadcrumb'];
 	/** The whole text of an old version, which comes with the list. */
@@ -175,6 +177,7 @@ async function loadPage(
 				key: a.key,
 				article_number: a.article_number ?? null,
 				label: a.label ?? null,
+				heading: a.heading ?? null,
 				address: a.article_number ?? a.address ?? null,
 				breadcrumb: a.breadcrumb ?? [],
 				text: null,

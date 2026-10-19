@@ -1,5 +1,5 @@
 <script lang="ts">
-	// One article of the whole law: its number as the link to the article, and its one text
+	// One article of the whole law: its number and opschrift as the link to the article, and its one text
 	// (articleText), else its preview. The article of today is asked alone once it comes near
 	// the viewport: its references link (K2), and its text stands where its page lacked it.
 	import { naamVanId } from '$lib/bron/menselijk';
@@ -66,10 +66,14 @@
 					{ collection: 'articles', key: row.key },
 					{ params: peildatum ? { peildatum } : {} }
 				)}
-				data-sveltekit-noscroll><span class="whole-art-num">{name}</span></a
+				data-sveltekit-noscroll
+				><span class="whole-art-num">{name}</span>{#if row.heading}<span class="whole-art-heading"
+						>{row.heading}</span
+					>{/if}</a
 			>
 		{:else}
 			<span class="whole-art-num">{name}</span>
+			{#if row.heading}<span class="whole-art-heading">{row.heading}</span>{/if}
 			<span class="whole-art-note">niet meer in de geldende tekst</span>
 		{/if}
 	</div>
@@ -127,6 +131,13 @@
 		font-size: var(--t-body);
 		font-weight: 600;
 		color: var(--ink);
+	}
+
+	/* The opschrift beside the number, as the article's own title has it. */
+	.whole-art-heading {
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		color: var(--ink-2);
 	}
 
 	.whole-article-jump:hover .whole-art-num {

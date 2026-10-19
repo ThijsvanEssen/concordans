@@ -52,6 +52,7 @@ describe('atArticles', () => {
 		key: `v_${n}`,
 		article_number: n,
 		label: `Artikel ${n}`,
+		heading: null as string | null,
 		breadcrumb: [{ type: 'hoofdstuk', label: crumb, title: null, anchor: '' }],
 		text: 'tekst',
 		text_preview: 'tekst',
@@ -64,6 +65,11 @@ describe('atArticles', () => {
 		expect(a.key).toBe('bwbr0005537_1_1');
 		expect(a.breadcrumb[0].label).toBe('Hoofdstuk 1');
 		expect(a.label).toBe('Artikel 1:1');
+	});
+	it('keeps the opschrift of the article as it read that day', () => {
+		const [a] = atArticles([{ ...at('1:1', 'Hoofdstuk 1'), heading: 'Begrippen' }], current);
+		expect(a.heading).toBe('Begrippen');
+		expect(atArticles([at('1:1', 'Hoofdstuk 1')], current)[0].heading).toBeNull();
 	});
 	it('keeps the place of an article that lapsed since, without a link', () => {
 		const [a] = atArticles([at('4:3a', 'Hoofdstuk 4')], current);
