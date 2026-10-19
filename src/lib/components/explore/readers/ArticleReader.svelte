@@ -20,6 +20,7 @@
 	import { getDelegated } from '$lib/api/articles';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import type { Schema } from '$lib/api/types';
+	import type { LoadState as VersionsLoad } from '$lib/util/load.svelte';
 	import { articleOf, type GraphNode } from '$lib/graph/types';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
 	import { Lazy } from '$lib/util/lazy.svelte';
@@ -107,8 +108,23 @@
 	const articleKey = $derived(keyOfArticle(bwbId, articleNumber));
 	const article = load(() => articleKey, fetchArticle, 'Artikel');
 	const loaded = $derived(article.state.status === 'ready' ? article.state.data.detail : null);
+	// Tekstversies that came after the text (fetchArticle's `later`).
+	type VersionsState = VersionsLoad<Schema<'ArticleVersionDTO'>[]>;
+	let lateVersions = $state<VersionsState | null>(null);
+	$effect(() => {
+		const later = article.state.status === 'ready' ? article.state.data.later : null;
+		lateVersions = null;
+		if (!later) return;
+		let stale = false;
+		later.then((v) => {
+			if (!stale) lateVersions = v;
+		});
+		return () => {
+			stale = true;
+		};
+	});
 	const versionState = $derived(
-		article.state.status === 'ready' ? article.state.data.versions : null
+		lateVersions ?? (article.state.status === 'ready' ? article.state.data.versions : null)
 	);
 	const versions = $derived(versionState?.status === 'ready' ? versionState.data : []);
 	// A new article opens at its geldende tekst.
