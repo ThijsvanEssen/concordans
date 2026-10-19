@@ -125,6 +125,31 @@ const history = (...entries: [string, string | null, string[]][]) =>
 		...version(leden)
 	}));
 
+describe('alignUnits on a long article', () => {
+	// Art. 1:1 Wft: some 500 definitions, each version adds one or two (the page froze).
+	const definitions = (n: number) =>
+		Array.from({ length: n }, (_, i) => ({
+			number: null,
+			text: `begrip ${i}: een omschrijving van het begrip met nummer ${i} in de wet`
+		}));
+
+	it('pairs the same wording first and compares only what lies between', () => {
+		const a = definitions(500);
+		const b = [
+			...a.slice(0, 200),
+			{ number: null, text: 'nieuw begrip: geheel nieuw' },
+			...a.slice(200)
+		];
+		b[400] = { number: null, text: `${b[400].text}, en meer` };
+		const started = performance.now();
+		const pairs = alignUnits(a, b);
+		expect(performance.now() - started).toBeLessThan(1000);
+		expect(pairs).toHaveLength(501);
+		expect(pairs[200]).toEqual([null, b[200]]);
+		expect(pairs[400]).toEqual([a[399], b[400]]);
+	});
+});
+
 describe('wordingsOf', () => {
 	const versions = history(
 		['2002-03-21', '2006-04-06', ['Onderwijs is vrij.', 'Er zijn scholen.']],
