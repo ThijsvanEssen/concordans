@@ -260,7 +260,6 @@
 			>{m.id === kaart.actief.id ? 'Actieve bundel, ' : ''}{count(m.items.length)}, gewijzigd
 			{day(m.gewijzigd)}</span
 		>
-		{#if fresh?.any}<NewMark since={fresh.since} />{/if}
 		{#if m.items.length > 1}
 			<TekstMenu
 				klein
@@ -279,6 +278,11 @@
 			>
 		{/if}
 	</p>
+	<!-- What is new since the visit before: its line stands from the first paint, its words
+	     come in it (F1). -->
+	{#if fresh}<p class="nieuw-regel">
+			{#if fresh.any}<NewMark since={fresh.since} />{/if}
+		</p>{/if}
 	{#if !m.items.length}
 		<p class="leeg stil">Nog niets bewaard.</p>
 	{:else}
@@ -352,6 +356,12 @@
 		flex-wrap: wrap;
 		align-items: baseline;
 		gap: var(--s-1) var(--s-4);
+		margin: 0;
+		font-size: var(--t-meta);
+		color: var(--ink-3);
+	}
+	.nieuw-regel {
+		height: calc(var(--t-meta) * var(--lh-snug));
 		margin: 0;
 		font-size: var(--t-meta);
 		color: var(--ink-3);

@@ -112,4 +112,12 @@ describe('the map', () => {
 		const view = bron('lib/map/MapView.svelte');
 		expect(view).toMatch(/href=\{mapPageHref\(m\)\}>Open als pagina</);
 	});
+
+	it("keeps the line of what is new on a bundel's page before it comes: nothing moves (F1)", () => {
+		const view = bron('lib/map/MapView.svelte');
+		// The line stands as soon as the visit before is known, its words come in it later.
+		expect(view).toMatch(/\{#if fresh\}<p class="nieuw-regel">\s*\{#if fresh\.any\}<NewMark/);
+		expect(view.match(/<p class="meta">([\s\S]*?)<\/p>/)?.[1]).not.toContain('NewMark');
+		expect(view).toMatch(/\.nieuw-regel \{[^}]*height: /);
+	});
 });
