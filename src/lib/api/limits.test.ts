@@ -10,6 +10,7 @@ import { limitMaxima } from './limit-maxima';
 import { volledig } from './limits';
 import { LUS, SLOW_TIMEOUT_MS } from './client';
 import { CITED_BY_PAGE, CITED_BY_TOP } from './first-pages';
+import { QUERY_MAX_LENGTH } from './search';
 
 const maxima = limitMaxima(spec as never);
 const SRC = join(process.cwd(), 'src');
@@ -137,5 +138,19 @@ describe('the info of the schema', () => {
 		const { calls, period_seconds } = info['x-rate-limit'];
 		expect(LUS.max).toBeLessThan(calls);
 		expect(LUS.ms).toBeLessThanOrEqual(period_seconds * 1000);
+	});
+});
+
+describe('the longest query', () => {
+	it('is the q the search and the resolver take (API 0.79.61, E32)', () => {
+		const q = (path: '/api/search' | '/api/resolve') =>
+			(
+				spec.paths[path].get.parameters as {
+					name: string;
+					schema: { maxLength?: number };
+				}[]
+			).find((p) => p.name === 'q')?.schema.maxLength;
+		expect(q('/api/search')).toBe(QUERY_MAX_LENGTH);
+		expect(q('/api/resolve')).toBe(QUERY_MAX_LENGTH);
 	});
 });

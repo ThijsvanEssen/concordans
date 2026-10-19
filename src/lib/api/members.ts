@@ -4,6 +4,18 @@ import { once } from './records';
 import type { QueryOf } from './types';
 import { volledig } from './limits';
 
+/**
+ * The newest papers a member signed, newest first, and `total`, every one (API 0.79.61, #757):
+ * one page, not the whole AUTHORED bucket sorted here.
+ */
+export const getMemberDocuments = (key: string, limit: number, signal?: AbortSignal) =>
+	unwrap(
+		api.GET('/api/members/{key}/documents', {
+			params: { path: { key }, query: { limit } },
+			signal
+		})
+	);
+
 /** The votes of a member's reader; one request serves every mount of the same key. */
 // A person's votes take the API seconds (8.8 to 10 s on prod, 9 Oct): they wait as long as the
 // API does, not the 10 s of `api`, which cut them off.
