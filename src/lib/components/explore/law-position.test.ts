@@ -10,8 +10,11 @@ describe('articleAtTop', () => {
 	it('is the article across the line', () => {
 		expect(articleAtTop(articles, 100)).toBe('2');
 	});
-	it('is the last above the line where it falls between two', () => {
-		expect(articleAtTop(articles, 310)).toBe('2');
+	it('is the next where the line falls between two: under the heading of its division', () => {
+		expect(articleAtTop(articles, 310)).toBe('3');
+	});
+	it('is the last after the last', () => {
+		expect(articleAtTop(articles, 700)).toBe('3');
 	});
 	it('is none before the first', () => {
 		expect(articleAtTop(articles, -500)).toBeNull();

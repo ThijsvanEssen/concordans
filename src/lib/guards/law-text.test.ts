@@ -31,6 +31,9 @@ describe('the references in the text of a law (K2)', () => {
 describe('the contents of a law (K3)', () => {
 	it('follow the whole-law reader by lawPosition, set there only', () => {
 		expect(filesWith(/lawPosition\.set\(/)).toEqual([
+			'lib/components/explore/law-position.svelte.ts'
+		]);
+		expect(filesWith(/= followPosition\(/)).toEqual([
 			'lib/components/explore/WholeLawReader.svelte'
 		]);
 		expect(bron('lib/components/explore/LezenNav.svelte')).toMatch(/lawPosition\.of\(/);

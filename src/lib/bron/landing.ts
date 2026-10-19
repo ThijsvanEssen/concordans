@@ -65,7 +65,7 @@ export function keepInPlace(root: HTMLElement, selector: string): () => void {
 }
 
 /** The element a reader scrolls in: the nearest ancestor that scrolls. */
-function scrollerOf(el: HTMLElement): HTMLElement | null {
+export function scrollerOf(el: HTMLElement): HTMLElement | null {
 	for (let p = el.parentElement; p; p = p.parentElement) {
 		const y = getComputedStyle(p).overflowY;
 		if ((y === 'auto' || y === 'scroll') && p.scrollHeight > p.clientHeight) return p;
