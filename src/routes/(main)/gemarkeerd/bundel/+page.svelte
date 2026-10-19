@@ -2,6 +2,7 @@
 	// A bundel on a page of its own (`?id=`): the research on one page, its question at the
 	// top, what it holds under it, to read and to print (A4, MapView and MapGroups say what
 	// stays on paper). The bundel is read from this browser; another has none by this id.
+	import { browser } from '$app/environment';
 	import { page } from '$app/state';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import { siteTitle } from '$lib/seo/server-head.svelte';
@@ -17,7 +18,8 @@
 	<nav class="stub-eyebrow" aria-label="Hoort bij"><a href="/gemarkeerd">Gemarkeerd</a></nav>
 	{#if shown}
 		<MapView m={shown} standalone />
-	{:else}
+	{:else if browser}
+		<!-- Only where the browser's bundels are read: a page served without them says nothing. -->
 		<header class="blad__kop"><h1 class="blad__titel">Bundel</h1></header>
 		<p class="stil">Geen bundel met dit adres in deze browser.</p>
 	{/if}
@@ -30,11 +32,12 @@
 			size: A4;
 			margin: 20mm 18mm;
 		}
-		:global(.topbar),
-		:global(.foot) {
+		/* Above the bar's and the footer's own rule: the page that holds a bundel. */
+		:global(body:has(.bundel-blad) .topbar),
+		:global(body:has(.bundel-blad) .foot) {
 			display: none;
 		}
-		:global(.blad-hoogte) {
+		:global(body:has(.bundel-blad) .blad-hoogte) {
 			min-height: 0;
 		}
 		.bundel-blad {

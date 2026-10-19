@@ -340,6 +340,7 @@
 		font: inherit;
 		font-family: var(--font-serif);
 		color: var(--ink);
+		text-align: left;
 		text-decoration: underline;
 		text-decoration-color: var(--rule-strong);
 		text-underline-offset: 3px;
