@@ -96,4 +96,12 @@
 		background: var(--paper);
 		color: var(--ink);
 	}
+	/* A finger's target in the column and the sheet Inhoud: a row at least 32 px high. */
+	@media (pointer: coarse) {
+		:global(.nav-kolom__rij) {
+			display: flex;
+			align-items: center;
+			min-height: var(--s-6);
+		}
+	}
 </style>

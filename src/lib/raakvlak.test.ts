@@ -27,4 +27,15 @@ describe('the touch target', () => {
 			expect(m[1]).toContain('raakvlak');
 		expect(read('lib/map/MapView.svelte')).toContain('class="wis raakvlak"');
 	});
+
+	it('is at least 32 px high on every row and heading of a table of contents, on a touch screen', () => {
+		const kolom = read('lib/components/explore/NavKolom.svelte');
+		const coarse = kolom.slice(kolom.indexOf('@media (pointer: coarse)'));
+		expect(kolom).toContain('@media (pointer: coarse)');
+		expect(coarse).toMatch(/\.nav-kolom__rij\)[^{]*\{[^}]*min-height: var\(--s-6\)/);
+		const nav = read('lib/components/explore/LezenNav.svelte');
+		const navCoarse = nav.slice(nav.indexOf('@media (pointer: coarse)'));
+		expect(nav).toContain('@media (pointer: coarse)');
+		expect(navCoarse).toMatch(/\.group__head[^{]*\{[^}]*min-height: var\(--s-6\)/);
+	});
 });

@@ -328,6 +328,18 @@
 	.group__head:hover {
 		background: var(--paper);
 	}
+	/* A finger's target: a heading at least 32 px high, as the rows are (NavKolom). */
+	@media (pointer: coarse) {
+		.group__head {
+			align-items: center;
+			min-height: var(--s-6);
+		}
+		.group__head > a.group__label {
+			align-self: stretch;
+			display: flex;
+			align-items: center;
+		}
+	}
 
 	/* Depth carries the hierarchy: a boek reads as a heading, a paragraaf as a
 	   quiet sub-label — indentation alone (10px/level) is too faint a signal
