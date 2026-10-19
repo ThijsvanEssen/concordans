@@ -13,6 +13,7 @@ import {
 	type MapItem
 } from './map';
 import { keepStorage } from './persist';
+import { isDay } from '$lib/text/datum';
 
 const OPSLAG = 'concordans:mappen';
 const EERSTE = 'Gemarkeerd';
@@ -28,6 +29,22 @@ const leeg = (naam: string): Map => ({
 	volgorde: 'groep',
 	gewijzigd: nu()
 });
+
+/** A day as kept (`2026-10-12`), else none. */
+const day = (v: unknown) => (typeof v === 'string' && isDay(v) ? v : null);
+
+/** The bundels visited in this browser session, by id: a reload is no new visit. */
+const VISITED = 'concordans:bundels-bezocht';
+
+/** The bundels visited in this session; none where the browser keeps no session. */
+function visitedNow(): Set<string> {
+	try {
+		return new Set(JSON.parse(sessionStorage.getItem(VISITED) ?? '[]'));
+	} catch (e) {
+		if (import.meta.env.DEV) console.debug('sessionStorage (refused):', e);
+		return new Set();
+	}
+}
 
 /** The notes per group as kept, strings only. */
 const alleenTekst = (v: unknown): GroepNotities =>
@@ -66,7 +83,9 @@ function lees(): Stand {
 				volgorde: m.volgorde === 'eigen' ? 'eigen' : 'groep',
 				gewijzigd: String(m.gewijzigd || nu()),
 				notitie: typeof m.notitie === 'string' && m.notitie.trim() ? m.notitie : null,
-				groepNotities: alleenTekst(m.groepNotities)
+				groepNotities: alleenTekst(m.groepNotities),
+				since: day(m.since),
+				seen: day(m.seen)
 			}));
 			const actief = mappen.some((m) => m.id === raw.actief) ? raw.actief : mappen[0].id;
 			return { mappen, actief };
@@ -156,6 +175,31 @@ class Kaarten {
 	mapNotitie(tekst: string) {
 		const t = tekst.trim();
 		this.#werk(() => ({ notitie: t || null }));
+	}
+
+	/**
+	 * A visit to a bundel's own page, on `today`: once a browser session the day of the visit
+	 * before becomes the day new counts from, as Gevolgd counts a topic's. That day, or null
+	 * on the first visit. Not a change of the bundel: its day of change stays.
+	 */
+	visit(id: string, today: string): string | null {
+		const m = this.#stand.mappen.find((x) => x.id === id);
+		if (!m) return null;
+		const visited = visitedNow();
+		if (visited.has(id)) return m.since ?? null;
+		try {
+			sessionStorage.setItem(VISITED, JSON.stringify([...visited, id]));
+		} catch (e) {
+			// Without a session every load is a visit: what is new counts from the load before.
+			if (import.meta.env.DEV) console.debug('sessionStorage (refused):', e);
+		}
+		const since = m.seen ?? m.since ?? null;
+		this.#stand = {
+			...this.#stand,
+			mappen: this.#stand.mappen.map((x) => (x.id === id ? { ...x, since, seen: today } : x))
+		};
+		this.#bewaar();
+		return since;
 	}
 
 	// ── Maps ─────────────────────────────────────────────────────────────────

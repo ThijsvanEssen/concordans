@@ -28,13 +28,17 @@
 	import MapInhoud from './MapInhoud.svelte';
 	import MapRegelingen from './MapRegelingen.svelte';
 	import { onderWet, wetVanGroep } from './verbonden';
+	import NewMark from '$lib/components/ui/NewMark.svelte';
+	import FreshList from './FreshList.svelte';
+	import type { Fresh } from './fresh.svelte';
 
 	let {
 		map,
 		items,
 		order,
 		notes,
-		open
+		open,
+		fresh = null
 	}: {
 		/** The bundel of this browser; null for a shared one, read only. */
 		map: Map | null;
@@ -43,6 +47,8 @@
 		notes: GroepNotities;
 		/** The rows and laws open, by the item's key or `law:<group>`: Alles uitklappen sets them. */
 		open: SvelteSet<string>;
+		/** What is new since the visit before, as it comes in (the bundel's own page). */
+		fresh?: Fresh | null;
 	} = $props();
 
 	const groups = $derived(
@@ -76,7 +82,8 @@
 		{#snippet lead()}
 			{#if collection}<span class="row-id-main"
 					><KindGlyph {collection} size={12} />{bronLabel(collection)}</span
-				>{:else if external}<span class="row-id-main">{SOURCE_KINDS[i.kind ?? 'other']}</span>{/if}
+				>{:else if external}<span class="row-id-main">{SOURCE_KINDS[i.kind ?? 'other']}</span
+				>{/if}{#if fresh?.isNew(i)}<NewMark />{/if}
 		{/snippet}
 		{#snippet body()}
 			{#if i.voluit && i.voluit !== i.kort}<span class="row-sub">{i.voluit}</span>{/if}
@@ -130,6 +137,11 @@
 						<TekstLink href={i.url} target="_blank" rel="noopener noreferrer">{i.url}</TekstLink>
 					</p>{/if}
 			{:else}
+				{#if fresh?.isNew(i)}<FreshList
+						since={fresh.since}
+						lines={fresh.linesOf(i)}
+						citing={fresh.citingOf(i)}
+					/>{/if}
 				<MapInhoud item={i} href={itemHref(i)} />
 			{/if}
 		{/snippet}
@@ -141,6 +153,8 @@
 	{#if g.groep}
 		{@const law = wetVanGroep(g.items)}
 		{@const lawOpen = !!law && open.has(`law:${g.sleutel}`)}
+		{@const groupLines = fresh?.group(g.sleutel) ?? []}
+		{@const linesOpen = groupLines.length > 0 && open.has(`new:${g.sleutel}`)}
 		<div class="groep-kop">
 			<h3 class="groep">
 				{#if law}<button
@@ -149,7 +163,14 @@
 						aria-expanded={lawOpen}
 						onclick={() => toggle(`law:${g.sleutel}`)}
 						>{g.groep}<Caret open={lawOpen} side /></button
-					>{:else}{g.groep}{/if}<span class="aantal">{g.items.length}</span>
+					>{:else}{g.groep}{/if}<span class="aantal">{g.items.length}</span
+				>{#if groupLines.length}<button
+						type="button"
+						class="nieuw-knop raakvlak"
+						aria-expanded={linesOpen}
+						aria-label="Nieuw in {g.groep}"
+						onclick={() => toggle(`new:${g.sleutel}`)}><NewMark /></button
+					>{:else if fresh && g.items.some((i) => fresh.isNew(i))}<NewMark />{/if}
 			</h3>
 			{#if map && !note && groupNoteOpen !== g.sleutel}
 				<button
@@ -159,6 +180,9 @@
 				>
 			{/if}
 		</div>
+		{#if linesOpen && fresh}
+			<div class="wet-open"><FreshList since={fresh.since} lines={groupLines} /></div>
+		{/if}
 		{#if law && lawOpen}
 			<div class="wet-open">
 				<MapRegelingen laad={() => onderWet(law)} />
@@ -228,6 +252,14 @@
 		text-decoration: underline;
 		text-decoration-color: var(--rule-strong);
 		text-underline-offset: 3px;
+	}
+	/* The mark of a group with something new opens what came in, in place. */
+	.nieuw-knop {
+		padding: 0;
+		border: 0;
+		background: none;
+		line-height: 1;
+		cursor: pointer;
 	}
 	.wet-open {
 		display: flex;

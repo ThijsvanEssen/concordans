@@ -17,7 +17,7 @@
 	import { korteDatum, vandaag } from '$lib/text/datum';
 	import { afterTick } from '$lib/util/after-tick';
 	import { navigate } from '$lib/util/address';
-	import { ignore } from '$lib/api/errors';
+	import { ignore, report } from '$lib/api/errors';
 	import {
 		citaten,
 		csv,
@@ -35,6 +35,8 @@
 	import Aantekening from './Aantekening.svelte';
 	import AddSource from './AddSource.svelte';
 	import MapGroups from './MapGroups.svelte';
+	import NewMark from '$lib/components/ui/NewMark.svelte';
+	import { Fresh } from './fresh.svelte';
 
 	let {
 		m,
@@ -69,6 +71,27 @@
 		return () => {
 			current = false;
 		};
+	});
+
+	// ── What is new since the visit before: on its own page, after the first paint ──
+	let fresh = $state<Fresh | null>(null);
+	$effect(() => {
+		if (!standalone) return;
+		const id = m.id;
+		return untrack(() => {
+			const since = kaart.visit(id, vandaag());
+			if (!since) return;
+			const asking = new Fresh(since);
+			fresh = asking;
+			const ac = new AbortController();
+			const frame = requestAnimationFrame(() =>
+				setTimeout(() => asking.load(m.items, ac.signal).catch((e) => report('Nieuw sinds', e)))
+			);
+			return () => {
+				cancelAnimationFrame(frame);
+				ac.abort();
+			};
+		});
 	});
 
 	/** A change of this bundel: the store acts on the active one. */
@@ -237,6 +260,7 @@
 			>{m.id === kaart.actief.id ? 'Actieve bundel, ' : ''}{count(m.items.length)}, gewijzigd
 			{day(m.gewijzigd)}</span
 		>
+		{#if fresh?.any}<NewMark since={fresh.since} />{/if}
 		{#if m.items.length > 1}
 			<TekstMenu
 				klein
@@ -258,7 +282,14 @@
 	{#if !m.items.length}
 		<p class="leeg stil">Nog niets bewaard.</p>
 	{:else}
-		<MapGroups map={m} items={m.items} order={m.volgorde} notes={m.groepNotities ?? {}} {open} />
+		<MapGroups
+			map={m}
+			items={m.items}
+			order={m.volgorde}
+			notes={m.groepNotities ?? {}}
+			{open}
+			{fresh}
+		/>
 	{/if}
 	{#if adding}
 		<AddSource

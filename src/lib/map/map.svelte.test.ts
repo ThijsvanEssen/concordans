@@ -76,3 +76,34 @@ describe('the bundels of this browser', () => {
 		expect(persist).not.toHaveBeenCalled();
 	});
 });
+
+describe('a visit to a bundel’s own page', () => {
+	/** A browser session's storage. */
+	function session() {
+		const kept = new Map<string, string>();
+		vi.stubGlobal('sessionStorage', {
+			getItem: (k: string) => kept.get(k) ?? null,
+			setItem: (k: string, v: string) => kept.set(k, v)
+		});
+		return kept;
+	}
+
+	it('counts what is new from the visit before, once a session', async () => {
+		const { kaart } = await store();
+		const m = kaart.nieuw('Werkgever', [lid]);
+		const changed = kaart.mappen.find((x) => x.id === m.id)!.gewijzigd;
+		session();
+		// The first visit: nothing to count from.
+		expect(kaart.visit(m.id, '2026-10-12')).toBeNull();
+		// A reload in the same session counts from the same day.
+		expect(kaart.visit(m.id, '2026-10-12')).toBeNull();
+		// A new session: from the visit before.
+		session();
+		expect(kaart.visit(m.id, '2026-10-19')).toBe('2026-10-12');
+		expect(kaart.visit(m.id, '2026-10-19')).toBe('2026-10-12');
+		session();
+		expect(kaart.visit(m.id, '2026-10-20')).toBe('2026-10-19');
+		// A visit is no change of the bundel.
+		expect(kaart.mappen.find((x) => x.id === m.id)!.gewijzigd).toBe(changed);
+	});
+});

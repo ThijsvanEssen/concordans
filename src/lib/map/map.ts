@@ -65,6 +65,10 @@ export type Map = {
 	notitie?: string | null;
 	/** The reader's note per group (a law, a dossier, a judgment), by the group's key. */
 	groepNotities?: GroepNotities;
+	/** The day of the visit before to its own page: what is new came after it. */
+	since?: string | null;
+	/** The day of the last visit to its own page. */
+	seen?: string | null;
 };
 
 /** Notes per group, by the group's key. */
