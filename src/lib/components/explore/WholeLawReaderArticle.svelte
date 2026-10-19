@@ -68,7 +68,7 @@
 				)}
 				data-sveltekit-noscroll
 				><span class="whole-art-num">{name}</span>{#if row.heading}<span class="whole-art-heading"
-						>{row.heading}</span
+						>{` ${row.heading}`}</span
 					>{/if}</a
 			>
 		{:else}
@@ -120,9 +120,6 @@
 		border: 0;
 		padding: 0;
 		cursor: pointer;
-		display: inline-flex;
-		align-items: baseline;
-		gap: var(--s-2);
 		text-align: left;
 	}
 
@@ -134,7 +131,9 @@
 	}
 
 	/* The opschrift beside the number, as the article's own title has it. */
+	/* After the number a space and 4 px, as two words for a screen reader too. */
 	.whole-art-heading {
+		margin-left: var(--s-1);
 		font-family: var(--font-serif);
 		font-size: var(--t-body);
 		color: var(--ink-2);
