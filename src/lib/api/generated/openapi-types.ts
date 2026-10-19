@@ -53,9 +53,29 @@ export interface paths {
         };
         /**
          * Version history of an article
-         * @description Every version of one article, identified by the stable BWB `stam_id` so renumbering does not break the chain, oldest first. Each version carries its validity period, text, the kind of change (`change`: introduces / amends / repeals), the amending publication (`amended_by`) and the commencement publication (`commencement`) with their dossiers. 404 when the article is unknown.
+         * @description Every version of one article, identified by the stable BWB `stam_id` so renumbering does not break the chain, oldest first, without their text. Each version carries its validity period, the kind of change (`change`: introduces / amends / repeals), the amending publication (`amended_by`) and the commencement publication (`commencement`) with their dossiers, whether its text differs from the version before it (`text_changed`) and which parts it changed (`changes`). The text of a version is at `history/{key}`. 404 when the article is unknown.
          */
         get: operations["get_article_version_history_api_articles__bwb_id___article_number__history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/articles/{bwb_id}/{article_number}/history/{version_key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One version of an article with its text
+         * @description The version `version_key` (a `key` of `history`) with its text, its parts and tables as spans of the text, and the publications that made it. Two of them side by side are the difference between two versions. 404 when the article is unknown or the version is not one of it.
+         */
+        get: operations["get_article_version_text_api_articles__bwb_id___article_number__history__version_key__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -155,7 +175,7 @@ export interface paths {
          * Paginated list of judgments
          * @description A paginated list of judgments with filters on court (the ECLI court code), tier (the Type of the court in the Instanties value list of the Rechtspraak: hoge_raad, raad_van_state, gerechtshof, rechtbank, tuchtcollege, andere_instantie, koninkrijksinstantie, …), court_kind (the kind of court within the tier: ambtenarengerecht, raad_van_beroep, gerecht_in_eerste_aanleg, …), area of law (`subject`), source, date range and a minimum citation count. `facets` counts the judgments under the filters per `tier` (without the tier and court_kind filters), per `court_kind` (without its own filter), per `source` (without the source filter), per year of `date` (without `from` and `to`), per area of law (`subjects`, without `subject`) and per `procedure` (without its filter). `facets=false` leaves them out (null): the pages after the first need none.
          *
-         *     paged list, without the judgments known only because something cites them (stubs: no date, court or text) unless `include_stubs=true`, and without a publication of a decision that another publication replaces (`same_as`; `q` its exact ECLI finds it); `q` (a query that is the whole of an ECLI or of a case number, `18/04298`, gives the judgments with it and only those; other text is searched), `court` (ECLI code), `tier` (the `Type` of the court in the Instanties list, one of `core.courts.TIERS`: `hoge_raad`, `raad_van_state`, `centrale_raad_van_beroep`, `college_van_beroep_bedrijfsleven`, `parket` (the conclusions of the Parket bij de Hoge Raad), `gerechtshof`, `rechtbank`, `kantongerecht`, `tuchtcollege`, `andere_instantie`, `koninkrijksinstantie`, `kroon`, `buitenlandse_instantie`, `hvj_eu`, `ehrm`), `court_kind` (the kind of court within the tier, one of `core.courts.COURT_KINDS`: `ambtenarengerecht`, `raad_van_beroep`, `gerecht_in_eerste_aanleg`, …; a tier of one kind of court is its own; see pipelines (docs/pipelines.md#courts)), `source`, `subject` (an area of law, one of `subjects` as written: `Strafrecht`, `Bestuursrecht; Belastingrecht`), `subject_area` (a main area of law, the part of a subject before its first `;`: `Bestuursrecht` holds `Bestuursrecht` and `Bestuursrecht; Belastingrecht` alike), `from`, `to`, `cited_by_min`, `sort` (`date_desc`, `date_asc`, `citation_count`); each item has `tier`, `court_kind`, `subjects` (the areas of law of the source, empty when it gives none), `names` (what lawyers call it, `Haviltex`; empty for most), `decision_kind` (`arrest`, `vonnis`, `beschikking`, `uitspraak`, `conclusie`, `prejudiciële beslissing`, or null; see pipelines (docs/pipelines.md#rechtspraak)), `series_id` and `series_size`, `inbound_citation_count` (the judgments that cite it or a publication `SAME_AS` it) and `outbound_citation_count` (the judgments it cites); `q` also matches `names`. `facets` counts the judgments under the filters, each without its own: `tier` (`value`, `count`, most first; without the `tier` and `court_kind` filters), `court_kind` (the same, without the `court_kind` filter), `source` (`value` `rechtspraak`, `echr`, `count`, most first; without the `source` filter) `year` (`value` the year of `date`, `count`, oldest first after null, no date; without `from` and `to`), `subjects` (per area of law as written, `Strafrecht`, `Bestuursrecht; Belastingrecht`, most first; a judgment counts for each of its areas; without the `subject` filter), `subject_area` (per main area of law, most first; a judgment counts once for each of its main areas; with `narrower`, the subjects of the source under it, `value` as written for the `subject` filter, `label` the part after its first `;`, `count`; the whole tree without the `subject_area` and `subject` filters) and `procedure` (per Rechtspraak `psi:procedure` as written, `Hoger beroep`, `Cassatie`, null for none, most first; without the `procedure` filter, which filters on that value); the counts of `tier`, `court_kind`, `source` and `year` read an index, not the judgments; the facets and `total` are kept an hour whatever the data does (`db/version_cache.py`), the page itself is read fresh; `facets=false` gives `facets` null and counts nothing but `total`, the choice for the pages after the first
+         *     paged list, without the judgments known only because something cites them (stubs: no date, court or text) unless `include_stubs=true`, and without a publication of a decision that another publication replaces (`same_as`; `q` its exact ECLI finds it); `q` (a query that is the whole of an ECLI or of a case number, `18/04298`, gives the judgments with it and only those; other text is searched), `court` (ECLI code), `tier` (the `Type` of the court in the Instanties list, one of `core.courts.TIERS`: `hoge_raad`, `raad_van_state`, `centrale_raad_van_beroep`, `college_van_beroep_bedrijfsleven`, `parket` (the conclusions of the Parket bij de Hoge Raad), `gerechtshof`, `rechtbank`, `kantongerecht`, `tuchtcollege`, `andere_instantie`, `koninkrijksinstantie`, `kroon`, `buitenlandse_instantie`, `hvj_eu`, `ehrm`), `court_kind` (the kind of court within the tier, one of `core.courts.COURT_KINDS`: `ambtenarengerecht`, `raad_van_beroep`, `gerecht_in_eerste_aanleg`, …; a tier of one kind of court is its own; see pipelines (docs/pipelines.md#courts)), `source`, `subject` (an area of law, one of `subjects` as written: `Strafrecht`, `Bestuursrecht; Belastingrecht`), `subject_area` (a main area of law, the part of a subject before its first `;`: `Bestuursrecht` holds `Bestuursrecht` and `Bestuursrecht; Belastingrecht` alike), `from`, `to`, `cited_by_min`, `sort` (`date_desc`, `date_asc`, `citation_count`); each item has `tier`, `court_kind`, `subjects` (the areas of law of the source, empty when it gives none), `names` (what lawyers call it, `Haviltex`; empty for most), `decision_kind` (`arrest`, `vonnis`, `beschikking`, `uitspraak`, `conclusie`, `prejudiciële beslissing`, or null; see pipelines (docs/pipelines.md#rechtspraak)), `series_id` and `series_size`, `inbound_citation_count` (the judgments that cite it or a publication `SAME_AS` it) and `outbound_citation_count` (the judgments it cites); `q` also matches `names`. `facets` counts the judgments under the filters, each without its own: `tier` (`value`, `count`, most first; without the `tier` and `court_kind` filters), `court_kind` (the same, without the `court_kind` filter), `source` (`value` `rechtspraak`, `echr`, `cjeu`, `count`, most first; without the `source` filter) `year` (`value` the year of `date`, `count`, oldest first after null, no date; without `from` and `to`), `subjects` (per area of law as written, `Strafrecht`, `Bestuursrecht; Belastingrecht`, most first; a judgment counts for each of its areas; without the `subject` filter), `subject_area` (per main area of law, most first; a judgment counts once for each of its main areas; with `narrower`, the subjects of the source under it, `value` as written for the `subject` filter, `label` the part after its first `;`, `count`; the whole tree without the `subject_area` and `subject` filters) and `procedure` (per Rechtspraak `psi:procedure` as written, `Hoger beroep`, `Cassatie`, null for none, most first; without the `procedure` filter, which filters on that value); the counts of `tier`, `court_kind`, `source` and `year` read an index, not the judgments; the facets and `total` are kept an hour whatever the data does (`db/version_cache.py`), the page itself is read fresh; `facets=false` gives `facets` null and counts nothing but `total`, the choice for the pages after the first
          */
         get: operations["list_judgments_api_judgments_get"];
         put?: never;
@@ -177,7 +197,7 @@ export interface paths {
          * One judgment with the articles it cites
          * @description Looks a judgment up by ECLI, follows its REFERS_TO edges to articles and adds each article with its parent instrument.
          *
-         *     the judgment with its `official_url` (uitspraken.rechtspraak.nl by ECLI; HUDOC by item id, `external_id`, for an ECHR judgment; null for a stub of another court), its `paragraphs` (each with a `paragraph_id` for deep links, its printed `number`, its `kind` (`heading`, `subheading`, `body`, `toc`: a line of a table of contents, `signature`: the closing lines that sign a conclusion), of a paragraph without a number that goes on with a numbered consideration `continues` (its `paragraph_id`), and the `citations` in it of an article or a judgment, one per occurrence with `start` and `end`, `kind` `article` or `judgment` and `target.collection` to match; the first is the kop when the judgment has one), its `footnotes` (`label` as printed, `paragraph_id` the paragraph whose marker points to it, null when none does, `at` where that marker stands in the paragraph's `text`, null when not known, `text`, and the `citations` in that text as a paragraph has them), its `parties` (`name`, `role`, `roles` (every role the kop names, in its order: geïntimeerde and appellant in incidenteel hoger beroep), `role_stated` (a derived role is never the other side's for a public authority: the prosecution is `Officier van justitie`), `side` `first`/`second`/`other`, `alias` ("(hierna: X)", and "Partijen worden hierna A, B en C genoemd"), `representatives` (`name`, `role` `advocaat`, `gemachtigde` or, in a criminal case, `raadsman`, `place`, `capacity`: from the kop and the account of the procedure, data model (docs/data-model.md#judgment)); a party the procedure hears "als partij" that the kop does not name comes last, `side` `other`; null when the judgment was normalized before parties were read, empty when none are named), the articles its `REFERS_TO` edges point at with their parent instrument (`articles`), and the same articles as `cited_articles` with the paragraphs that cite them, the lid or onderdeel named and the snippet of the strongest mention: `snippet_paragraph_id` the paragraph it is from (of a citation in a footnote, the paragraph that refers to it, and `footnote` the footnote's `label`; null for a paragraph's own text), `text` the citation as written and `start`/`end` where the linker found it in the snippet (null when the judgment was normalized again since it was linked). Citations are read from the stored edges; nothing is detected per request. `judgment.names` and `decision_kind` as in the list; `summary` is the Dutch inhoudsindicatie and `summary_en` an English one: an English translation (its own ECLI, `translation_of` the ECLI of the Dutch judgment) has the Dutch `summary` of that judgment, and that judgment the English `summary_en` (see data-model (docs/data-model.md#judgment)). `judgment.series_id` and `series_size` name the series of parallel cases it is one of (the same court, day and text), `series` the other judgments of it. `conclusions` are the conclusions its metadata names (`conclusion_eclis`), in that order: `ecli`, `author` (the A-G or P-G), `role` and `date` as the conclusion's light node gives them (`lg_judgment_light`), so they read as the conclusion's own page; one the graph lacks is its `ecli` alone. `cited_judgments` are the judgments its text cites (`REFERS_TO`: by ECLI, LJN or application number), newest first, each with the places that cite it as `cited_articles` has them (`paragraph_ids`, `paragraph_numbers`, `snippet`, `snippet_paragraph_id`, `footnote`, `text`, `start`, `end`, `confidence`, `mention_count`; empty for an edge linked before places were kept); `judgment.same_as` is, for a replaced publication, the ECLI of the one kept (for a language version of an ECHR decision without an ECLI, the HUDOC item id of the version kept), and `same_as` the other publications of the decision (`SAME_AS`, either way); `related_to` the connected cases (`RELATED_TO`, as between dossiers, either way: those its summary names, "Samenhang met 24/03860 E", "Zie ook: ECLI:…", and those whose summary names it), each once with its `links`: per edge its `direction` (`outbound`: this judgment's summary names it, `inbound`: its summary names this one, outbound first), `basis` (`summary_text`) and `text`, the sentence that names it; `judgment.replaced_by` the ECLI `dcterms:isReplacedBy` names, loaded or not. `judgment.advocate_general` and `advocate_general_role` (the role it is signed in: `advocaat-generaal`, `waarnemend advocaat-generaal`, `plaatsvervangend procureur-generaal`, `plaatsvervangend advocaat-generaal`; null when not clear) is, for a conclusion, who wrote it (`T. Hartlief`; null for a judgment); `published_on`, the "Datum publicatie" of uitspraken.rechtspraak.nl (null for another source or without a published document). How it ended (data model (docs/data-model.md#judgment)): `judgment.outcome` (`verworpen`, `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`; of the ECHR `schending` or `geen schending`) with `outcome_text`, the clause of the decision that says it ("verwerpt het beroep"), and `outcome_paragraph_id`; of a conclusion `conclusion_outcome` (`verwerping`, `vernietiging`, `vernietiging en verwijzing`, `niet-ontvankelijkverklaring`, `gegrondverklaring`, `ongegrondverklaring`, `beantwoording`) with `conclusion_outcome_text` and `conclusion_outcome_paragraph_id`; of the ECHR `echr_findings`, per article `{article, protocol, combined_with, finding, aspect, text}`; null (empty) when the text does not say it. Each of `conclusions` has the `outcome` and `outcome_text` of that conclusion (what it proposes)
+         *     the judgment with its `official_url` (uitspraken.rechtspraak.nl by ECLI; HUDOC by item id, `external_id`, for an ECHR judgment; EUR-Lex by CELEX number, `external_id`, for one of a court of the EU; null for a stub of another court), its `paragraphs` (each with a `paragraph_id` for deep links, its printed `number`, its `kind` (`heading`, `subheading`, `body`, `toc`: a line of a table of contents, `signature`: the closing lines that sign a conclusion), of a paragraph without a number that goes on with a numbered consideration `continues` (its `paragraph_id`), and the `citations` in it of an article or a judgment, one per occurrence with `start` and `end`, `kind` `article` or `judgment` and `target.collection` to match; the first is the kop when the judgment has one), its `footnotes` (`label` as printed, `paragraph_id` the paragraph whose marker points to it, null when none does, `at` where that marker stands in the paragraph's `text`, null when not known, `text`, and the `citations` in that text as a paragraph has them), its `parties` (`name`, `role`, `roles` (every role the kop names, in its order: geïntimeerde and appellant in incidenteel hoger beroep), `role_stated` (a derived role is never the other side's for a public authority: the prosecution is `Officier van justitie`), `side` `first`/`second`/`other`, `alias` ("(hierna: X)", and "Partijen worden hierna A, B en C genoemd"), `representatives` (`name`, `role` `advocaat`, `gemachtigde` or, in a criminal case, `raadsman`, `place`, `capacity`: from the kop and the account of the procedure, data model (docs/data-model.md#judgment)); a party the procedure hears "als partij" that the kop does not name comes last, `side` `other`; null when the judgment was normalized before parties were read, empty when none are named), the articles its `REFERS_TO` edges point at with their parent instrument (`articles`), and the same articles as `cited_articles` with the paragraphs that cite them, the lid or onderdeel named and the snippet of the strongest mention: `snippet_paragraph_id` the paragraph it is from (of a citation in a footnote, the paragraph that refers to it, and `footnote` the footnote's `label`; null for a paragraph's own text), `text` the citation as written and `start`/`end` where the linker found it in the snippet (null when the judgment was normalized again since it was linked). Citations are read from the stored edges; nothing is detected per request. `judgment.names` and `decision_kind` as in the list; `summary` is the Dutch inhoudsindicatie and `summary_en` an English one: an English translation (its own ECLI, `translation_of` the ECLI of the Dutch judgment) has the Dutch `summary` of that judgment, and that judgment the English `summary_en` (see data-model (docs/data-model.md#judgment)). `judgment.series_id` and `series_size` name the series of parallel cases it is one of (the same court, day and text), `series` the other judgments of it. `conclusions` are the conclusions its metadata names (`conclusion_eclis`), in that order: `ecli`, `author` (the A-G or P-G), `role` and `date` as the conclusion's light node gives them (`lg_judgment_light`), so they read as the conclusion's own page; one the graph lacks is its `ecli` alone. `cited_judgments` are the judgments its text cites (`REFERS_TO`: by ECLI, LJN or application number), newest first, each with the places that cite it as `cited_articles` has them (`paragraph_ids`, `paragraph_numbers`, `snippet`, `snippet_paragraph_id`, `footnote`, `text`, `start`, `end`, `confidence`, `mention_count`; empty for an edge linked before places were kept); `judgment.same_as` is, for a replaced publication, the ECLI of the one kept (for a language version of an ECHR decision without an ECLI, the HUDOC item id of the version kept), and `same_as` the other publications of the decision (`SAME_AS`, either way); `related_to` the connected cases (`RELATED_TO`, as between dossiers, either way: those its summary names, "Samenhang met 24/03860 E", "Zie ook: ECLI:…", and those whose summary names it), each once with its `links`: per edge its `direction` (`outbound`: this judgment's summary names it, `inbound`: its summary names this one, outbound first), `basis` (`summary_text`) and `text`, the sentence that names it; `judgment.replaced_by` the ECLI `dcterms:isReplacedBy` names, loaded or not. `judgment.advocate_general` and `advocate_general_role` (the role it is signed in: `advocaat-generaal`, `waarnemend advocaat-generaal`, `plaatsvervangend procureur-generaal`, `plaatsvervangend advocaat-generaal`; null when not clear) is, for a conclusion, who wrote it (`T. Hartlief`; null for a judgment); `published_on`, the "Datum publicatie" of uitspraken.rechtspraak.nl (null for another source or without a published document). How it ended (data model (docs/data-model.md#judgment)): `judgment.outcome` (`verworpen`, `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`; of the ECHR `schending` or `geen schending`) with `outcome_text`, the clause of the decision that says it ("verwerpt het beroep"), and `outcome_paragraph_id`; of a conclusion `conclusion_outcome` (`verwerping`, `vernietiging`, `vernietiging en verwijzing`, `niet-ontvankelijkverklaring`, `gegrondverklaring`, `ongegrondverklaring`, `beantwoording`) with `conclusion_outcome_text` and `conclusion_outcome_paragraph_id`; of the ECHR `echr_findings`, per article `{article, protocol, combined_with, finding, aspect, text}`; null (empty) when the text does not say it. Each of `conclusions` has the `outcome` and `outcome_text` of that conclusion (what it proposes)
          */
         get: operations["get_judgment_detail_api_judgments__ecli__get"];
         put?: never;
@@ -2838,7 +2858,7 @@ export interface components {
              * Versions
              * @description All versions, oldest first.
              */
-            versions: components["schemas"]["ArticleVersionDTO"][];
+            versions: components["schemas"]["ArticleVersionListedDTO"][];
         };
         /**
          * ArticleLegislativeHistoryResponse
@@ -3221,10 +3241,14 @@ export interface components {
         };
         /**
          * ArticleVersionDTO
-         * @description One dated version of an article, with the publication that produced it.
+         * @description One dated version of an article with its text, and the publication that
+         *     produced it.
          */
         ArticleVersionDTO: {
-            /** Key */
+            /**
+             * Key
+             * @description Names the version: its text is at `history/{key}`.
+             */
             key: string;
             /** Article Number */
             article_number: string | null;
@@ -3250,18 +3274,6 @@ export interface components {
              * @description This version on wetten.overheid.nl: the JCI with ``g`` its ``valid_from``.
              */
             official_url: string | null;
-            /** Text */
-            text: string | null;
-            /**
-             * Parts
-             * @description As on the article: spans of `text`.
-             */
-            parts: components["schemas"]["ArticlePartDTO"][];
-            /**
-             * Tables
-             * @description As on the article: spans of `text`.
-             */
-            tables: components["schemas"]["ArticleTableDTO"][];
             /**
              * Effect
              * @description Raw BWB effect of this version.
@@ -3278,6 +3290,79 @@ export interface components {
             amended_by: components["schemas"]["PublicationDTO"] | null;
             /** @description Publication that brought this version into force. */
             commencement: components["schemas"]["PublicationDTO"] | null;
+            /** Text */
+            text: string | null;
+            /**
+             * Parts
+             * @description As on the article: spans of `text`.
+             */
+            parts: components["schemas"]["ArticlePartDTO"][];
+            /**
+             * Tables
+             * @description As on the article: spans of `text`.
+             */
+            tables: components["schemas"]["ArticleTableDTO"][];
+        };
+        /**
+         * ArticleVersionListedDTO
+         * @description One dated version of an article as the history lists it: without its text.
+         */
+        ArticleVersionListedDTO: {
+            /**
+             * Key
+             * @description Names the version: its text is at `history/{key}`.
+             */
+            key: string;
+            /** Article Number */
+            article_number: string | null;
+            /**
+             * Label
+             * @description `Artikel 287`, or the heading of an article without a number.
+             */
+            label: string | null;
+            /** Valid From */
+            valid_from: string | null;
+            /**
+             * Valid Until
+             * @description The first day the version is no longer in force, exclusive: the start of the next one. `2021-07-01` is in force up to and including 2021-06-30 (wetten.overheid.nl: "t/m 30-06-2021"). Null while it is in force.
+             */
+            valid_until: string | null;
+            /**
+             * Current
+             * @default false
+             */
+            current: boolean;
+            /**
+             * Official Url
+             * @description This version on wetten.overheid.nl: the JCI with ``g`` its ``valid_from``.
+             */
+            official_url: string | null;
+            /**
+             * Effect
+             * @description Raw BWB effect of this version.
+             */
+            effect: string | null;
+            /**
+             * Change
+             * @description Normalised effect: 'establishes' (the regulation as it was enacted), 'introduces', 'amends', 'repeals', 'republishes' (the text placed again, unchanged: a republication, as of the Grondwet) or null.
+             */
+            change: string | null;
+            /** Source Publication */
+            source_publication: string | null;
+            /** @description Publication that created this version. */
+            amended_by: components["schemas"]["PublicationDTO"] | null;
+            /** @description Publication that brought this version into force. */
+            commencement: components["schemas"]["PublicationDTO"] | null;
+            /**
+             * Text Changed
+             * @description Its text differs from that of the version before it (a non-breaking space counts as a space); true for the first. Versions that only moved the text in time have false.
+             */
+            text_changed: boolean;
+            /**
+             * Changes
+             * @description The parts it changed against the version before it, in the order of its text, the removed ones last. Empty for the first version and where either version has no parts.
+             */
+            changes: components["schemas"]["VersionPartChangeDTO"][];
         };
         /**
          * BaseNodeDTO
@@ -12799,6 +12884,34 @@ export interface components {
             ctx?: Record<string, never>;
         };
         /**
+         * VersionPartChangeDTO
+         * @description A part of the article that a version added, removed or worded otherwise than the
+         *     version before it. Parts are the outermost ones (a lid, not its onderdelen), paired
+         *     by their number, else the term they define, else their place (`aanhef`).
+         */
+        VersionPartChangeDTO: {
+            /**
+             * Change
+             * @enum {string}
+             */
+            change: "added" | "removed" | "changed";
+            /**
+             * Kind
+             * @description As `kind` of the part: `lid`, `tekst`, `aanhef`.
+             */
+            kind: string;
+            /**
+             * Number
+             * @description As printed: `2`, `2a`.
+             */
+            number: string | null;
+            /**
+             * Term
+             * @description The term a definition defines.
+             */
+            term: string | null;
+        };
+        /**
          * VoteDTO
          * @description One vote cast on a decision, by a faction or — on a roll-call — a member.
          */
@@ -12965,6 +13078,39 @@ export interface operations {
             };
         };
     };
+    get_article_version_text_api_articles__bwb_id___article_number__history__version_key__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_key: string;
+                bwb_id: string;
+                article_number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticleVersionDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_legislative_history_api_articles__bwb_id___article_number__legislative_history_get: {
         parameters: {
             query?: never;
@@ -13111,7 +13257,7 @@ export interface operations {
                 tier?: components["schemas"]["Tier"] | null;
                 /** @description The kind of court: `ambtenarengerecht`, `raad_van_beroep`, `hoge_raad`, … */
                 court_kind?: components["schemas"]["CourtKind"] | null;
-                /** @description The source, e.g. 'rechtspraak', 'echr'. */
+                /** @description The source: 'rechtspraak', 'echr' or 'cjeu'. */
                 source?: string | null;
                 /** @description Lower bound on judgment date, YYYY-MM-DD */
                 from?: string | null;

@@ -17,7 +17,7 @@
 	// comparison; a lid changed since the oldest tekstversie says so in the margin.
 	import { menu } from '$lib/actions/menu';
 	import { getDocumentPassages } from '$lib/api/documents';
-	import { getDelegated } from '$lib/api/articles';
+	import { getArticleVersion, getDelegated } from '$lib/api/articles';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import type { Schema } from '$lib/api/types';
 	import { articleOf, type GraphNode } from '$lib/graph/types';
@@ -263,7 +263,18 @@
 			shownIndex = w && w !== current && w !== lapse ? w.index : null;
 		});
 	});
-	const shownVersion = $derived(shown?.first ?? null);
+	// The text of an earlier tekstversie, asked when it is chosen: the history lists none.
+	const shownText = load(
+		() => (shown ? `${bwbId}/${articleNumber}/${shown.first.key}` : null),
+		(key) => {
+			if (!key || !shown) return Promise.resolve(null);
+			return getArticleVersion(bwbId, articleNumber, shown.first.key);
+		},
+		'Tekstversie'
+	);
+	const shownVersion = $derived(
+		shown && shownText.state.status === 'ready' ? shownText.state.data : null
+	);
 	/** The tekstversie whose text is on screen, and the dossier of the wet that made it. */
 	const onScreen = $derived(shown ?? current);
 	const wordingDossier = $derived(onScreen?.first.amended_by?.dossiers?.[0] ?? null);
@@ -351,7 +362,7 @@
 	// The official text of the version on screen: wetten.overheid.nl, EUR-Lex or the
 	// Verdragenbank, as the API names it.
 	const officialUrl = $derived(
-		loaded ? (shownVersion?.official_url ?? loaded.article.official_url ?? null) : null
+		loaded ? (shown?.first.official_url ?? loaded.article.official_url ?? null) : null
 	);
 	const officialName = $derived(
 		officialUrl ? new URL(officialUrl).hostname.replace(/^www\./, '') : null
@@ -414,8 +425,8 @@
 	// after the oldest tekstversie, leading to that lid's history.
 	const lidNotes = $derived.by(() => {
 		const notes = new Map<string, { label: string; href: string }>();
-		if (comparing || shown || !current || wordings.length < 2) return notes;
-		for (const unit of unitsOf(current.first.text, current.first.parts)) {
+		if (comparing || shown || !current || !loaded || wordings.length < 2) return notes;
+		for (const unit of unitsOf(loaded.article.text, loaded.article.parts)) {
 			if (!unit.number) continue;
 			const latest = lidHistory(wordings, unit.number)?.formulations.at(-1);
 			if (!latest || latest.since.index === 0) continue;
@@ -653,6 +664,8 @@
 					{@const VersionCompare = versionCompare.component}
 					<VersionCompare
 						{versions}
+						{bwbId}
+						{articleNumber}
 						param={compareParam ?? ''}
 						{layout}
 						{citation}
@@ -667,6 +680,8 @@
 						form="block"
 					/>
 				{/if}
+			{:else if shown && shownText.state.status !== 'ready'}
+				<LoadState state={shownText.state} what="De tekst" form="block" retry={shownText.retry} />
 			{:else}
 				<ArticleText
 					text={shownVersion?.text ?? a.text}
