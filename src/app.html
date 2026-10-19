@@ -245,13 +245,17 @@
 			#seo:has(> .entrances) > * {
 				max-width: none;
 			}
-			/* Newsreader where it was there for the first paint; else the fallback until the app
-			   takes the page's place, so the font that comes later does not reflow the text
-			   under the reader (the script at the top). */
-			.vaste-letter #seo:has(> .entrances) {
-				font-family:
+			/* Newsreader where it was there for the first paint; else the fallback, until the
+			   reader leaves the start page (routes/+layout.svelte): the font that comes later
+			   does not reflow the text under the reader, and the app's start page, in the same
+			   letter, takes the place of the server's to the pixel, its text no larger (the
+			   largest paint stays the first). The script at the top sets the class. */
+			.vaste-letter #seo:has(> .entrances),
+			.vaste-letter .home {
+				--font-serif:
 					'Newsreader Fallback', 'Newsreader Fallback Noto', 'Newsreader Fallback DejaVu', Georgia,
 					serif;
+				font-family: var(--font-serif);
 			}
 			/* The head of the page (.blad__kop, .blad__titel) and what Concordans is. */
 			#seo:has(> .entrances) > .blad__kop {

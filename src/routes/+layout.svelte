@@ -45,6 +45,8 @@
 		afterTick(stilAnnouncer);
 		if (!van || !naar || canonical(van) === canonical(naar)) return;
 		if (serverKop.actief) serverKop.clear();
+		// The letter of the first paint (app.html) holds on the page it was painted for.
+		document.documentElement.classList.remove('vaste-letter');
 		// An English judgment of the EHRM is served as lang="en"; the next page is Dutch.
 		document.documentElement.lang = 'nl';
 		kondigAan().catch((e) => report('Aankondiging', e));

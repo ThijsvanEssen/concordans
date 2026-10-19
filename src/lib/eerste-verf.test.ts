@@ -139,8 +139,10 @@ describe('the start page: the server HTML as the first paint', () => {
 		const stack = (css: string) => css.replace(/\s+/g, ' ').trim();
 		const app = stack(vooraf.get('--font-serif') ?? '');
 		expect(app.startsWith("'Newsreader', ")).toBe(true);
-		const vast =
-			/font-family:([^;]+);/.exec(rule('.vaste-letter #seo:has(> .entrances)'))?.[1] ?? '';
+		const vast = /--font-serif:([^;]+);/.exec(rule('.vaste-letter .home'))?.[1] ?? '';
+		expect(style).toContain('.vaste-letter #seo:has(> .entrances),\n\t\t\t.vaste-letter .home {');
+		// Until the reader leaves the start page.
+		expect(read('routes/+layout.svelte')).toContain("classList.remove('vaste-letter')");
 		expect(stack(vast)).toBe(app.replace("'Newsreader', ", ''));
 		const head = read('app.html').split('</head>')[0];
 		expect(head).toMatch(
