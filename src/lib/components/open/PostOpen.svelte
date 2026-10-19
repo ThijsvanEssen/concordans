@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { formatCount } from '$lib/text/getal';
 	// Een geopende post in Bewindspersonen, in de vorm
 	// van OpenRij. Wat de bewindspersoon deed staat er meteen: de laatste toezeggingen (met
 	// hun stand), de laatste stukken die hij of zij ondertekende, en de dossiers.
@@ -120,7 +121,9 @@
 	groepen={[{ id: 'recent', titel: 'Recent', regels }]}
 	links={[
 		{
-			label: tz ? `${tz.total} toezeggingen, ${tz.open} openstaand` : 'Toezeggingen',
+			label: tz
+				? `${formatCount(tz.total)} toezeggingen, ${formatCount(tz.open)} openstaand`
+				: 'Toezeggingen',
 			href: toezeggingenHref ?? indexHref('commitments', { persoon: memberKey })
 		},
 		...(record ? [{ label: `${record.signed} stukken ondertekend` }] : []),

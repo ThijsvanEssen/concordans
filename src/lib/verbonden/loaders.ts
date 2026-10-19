@@ -1,6 +1,7 @@
 // The groups of the panel Verbonden that no edge of the selected bron fills. One
 // function per `Loader` of the group table; each returns rows, and a total where
 // the API gives one.
+import { formatCount } from '$lib/text/getal';
 import { isBill, motionOrAmendment } from '$lib/text/document-kind';
 import { NL } from '$lib/text/collator';
 import { textOf } from '$lib/text/words';
@@ -245,7 +246,7 @@ async function touched(
 		rows: found.items.map((i) => ({
 			ref: { collection: 'instruments', key: i.key },
 			title: i.citation_title ?? i.title ?? naamVan('instruments', i),
-			context: `${i.count} stukken`,
+			context: `${formatCount(i.count)} stukken`,
 			filterGroup: filterGroupOf('instruments', i.key, { bwb_id: i.bwb_id })
 		}))
 	};

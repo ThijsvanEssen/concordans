@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { formatCount } from '$lib/text/getal';
 	import { capitalize } from '$lib/text/words';
 	import NavKolom from './NavKolom.svelte';
 	// The table of contents of the law in Lezen: the name of the law, the title of the
@@ -272,7 +273,7 @@
 		title={lawTitle}
 		titleHref={lawHref}
 		onder={selection?.collection !== 'articles' && items.length > 0
-			? `${items.length} artikelen`
+			? `${formatCount(items.length)} artikelen`
 			: null}
 		bind:el={navEl}
 	>

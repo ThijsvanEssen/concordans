@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { formatCount } from '$lib/text/getal';
 	// The list under the Kruiswoord: the decisions with their outcome, the fractie's vote and the
 	// researcher's strekking of a motie; or the amendments of a cell by their chains; or the
 	// feed's events of a cell.
@@ -209,7 +210,7 @@
 					<div class="rij__tekst">
 						<span class="rij__soort"
 							>Amendement{a.dossier ? `, ${a.dossier}` : ''}{a.papieren.length > 1
-								? `, ${a.papieren.length} stukken`
+								? `, ${formatCount(a.papieren.length)} stukken`
 								: ''}</span
 						>
 						<a class="rij__titel" href={buildOpenHref(null, a.id)}
