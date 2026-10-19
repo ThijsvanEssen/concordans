@@ -7,7 +7,7 @@ import { dossierOwnName, dossierUitProps, officialNumber } from '$lib/bron/dossi
 import { articleName } from '$lib/text/bw';
 import { isGeneriek } from '$lib/bron/generiek';
 import { maandJaar } from '$lib/text/datum';
-import { enactedLawId } from '$lib/text/enacted-law';
+import { enactedLawId, enactedLawOfKey } from '$lib/text/enacted-law';
 import { COLLECTION_ROLE } from './collection-role';
 import {
 	isCollection,
@@ -211,6 +211,16 @@ export const lawIdOf = (props: Record<string, unknown> | null | undefined): stri
 	textOf(props?.bwb_id) ??
 	textOf(props?.celex) ??
 	(props?.publication_kind ? null : enactedLawId(props?.official_id));
+
+/**
+ * The law of an instrument node as its address and the article routes write it: its own id
+ * (lawIdOf), else read from its key: a law of the Staatsblad by its publication (STB-2026-56,
+ * never WET_STB_2026_56), another by its key in capitals (BWBR0001840).
+ */
+export const instrumentLawId = (
+	props: Record<string, unknown> | null | undefined,
+	key: string
+): string => lawIdOf(props) ?? enactedLawOfKey(key) ?? key.toUpperCase();
 
 /**
  * The law and the address of an article in the article routes: its number, or for an

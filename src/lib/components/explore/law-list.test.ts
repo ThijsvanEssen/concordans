@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { lawArticleList } from '$lib/api/law-articles';
 import { fakeApi, fail, type FakeRequest } from '$lib/test/fakeApi';
-import { articleText, createLawList, type LawList, type Row } from './law-list';
+import { articleText, asksAlone, createLawList, type LawList, type Row } from './law-list';
 
 const TODAY = '2026-10-14';
 const LIST = '/api/instruments/{bwb_id}/articles';
@@ -294,5 +294,33 @@ describe('the text an article of the whole law shows', () => {
 
 	it('has no text where none came: the preview stands', () => {
 		expect(articleText(row({ text_preview: 'Begin' }), undefined)).toBeNull();
+	});
+});
+
+describe('the article of the whole law asked alone', () => {
+	const row = (r: Partial<Row>): Row => ({
+		id: 'a',
+		key: 'a',
+		article_number: '1',
+		label: null,
+		heading: null,
+		address: '1',
+		breadcrumb: [],
+		text: null,
+		parts: null,
+		text_preview: null,
+		...r
+	});
+
+	it('is asked for today: its references, and its text where the page lacked it', () => {
+		expect(asksAlone(row({ textToday: 'Nu.' }), null)).toBe('1');
+		expect(asksAlone(row({}), null)).toBe('1');
+	});
+
+	it('is not asked on a peildatum, for an old text, or for an article no longer in the law', () => {
+		expect(asksAlone(row({ textToday: 'Nu.' }), '2015-01-01')).toBeNull();
+		expect(asksAlone(row({ text: 'Oud.' }), null)).toBeNull();
+		expect(asksAlone(row({ key: null }), null)).toBeNull();
+		expect(asksAlone(row({ address: null }), null)).toBeNull();
 	});
 });

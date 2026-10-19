@@ -9,10 +9,11 @@
 	import { scrollInReader } from '$lib/bron/landing';
 	import { page } from '$app/state';
 	import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
-	import { lawIdOf, type GraphNode } from '$lib/graph/types';
+	import { instrumentLawId, lawIdOf, type GraphNode } from '$lib/graph/types';
 	import { bronHref } from '$lib/bron/href';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { lawPosition } from './law-position.svelte';
+	import { lawNodeKey } from '$lib/text/enacted-law';
 
 	let { selection }: { selection: GraphNode | null } = $props();
 
@@ -36,7 +37,7 @@
 	const currentBwb = $derived.by(() => {
 		if (selection?.collection === 'articles') return lawIdOf(selection.raw?.props);
 		if (selection?.collection === 'instruments')
-			return lawIdOf(selection.raw?.props) ?? selection.key.toUpperCase();
+			return instrumentLawId(selection.raw?.props, selection.key);
 		return null;
 	});
 
@@ -146,7 +147,7 @@
 	// A division opens in the whole law at its heading: on the law itself only the anchor
 	// changes (a peildatum stays); from an article the law opens there.
 	const lawRef = $derived(
-		currentBwb ? { collection: 'instruments' as const, key: currentBwb.toLowerCase() } : null
+		currentBwb ? { collection: 'instruments' as const, key: lawNodeKey(currentBwb) } : null
 	);
 	const onLaw = $derived(selection?.collection === 'instruments');
 	const deelHref = (id: string) =>

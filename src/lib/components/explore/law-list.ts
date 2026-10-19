@@ -62,6 +62,14 @@ export function articleText(
 	return null;
 }
 
+/**
+ * The address an article of the whole law is asked alone by (for today's references, and its
+ * text where its page lacked it), or null where that would bring nothing: on a peildatum, for
+ * a text of an old version, or for an article no longer in the law.
+ */
+export const asksAlone = (row: Row, peildatum: string | null): string | null =>
+	peildatum || row.text || !row.key ? null : row.address;
+
 type ListStatus = 'loading' | 'loading-more' | 'loading-before' | 'ready' | 'error';
 
 export type LawList = {

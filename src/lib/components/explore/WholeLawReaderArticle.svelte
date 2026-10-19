@@ -9,7 +9,7 @@
 	import type { ArticleCitation } from '$lib/text/cite';
 	import type { Schema } from '$lib/api/types';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
-	import { PREVIEW_CHARS, articleText, type Row } from './law-list';
+	import { PREVIEW_CHARS, articleText, asksAlone, type Row } from './law-list';
 
 	let {
 		row,
@@ -56,7 +56,7 @@
 	}
 </script>
 
-<section class="whole-article" data-artikel={row.address} use:near={peildatum ? null : row.address}>
+<section class="whole-article" data-artikel={row.address} use:near={asksAlone(row, peildatum)}>
 	<div class="whole-article-head">
 		<!-- The anchor of reading: Artikel 3:4, a BW article with its book (6:162). -->
 		{#if row.key}

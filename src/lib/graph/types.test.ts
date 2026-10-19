@@ -6,6 +6,7 @@ import {
 	kort,
 	edgeCategory,
 	drawClassOf,
+	instrumentLawId,
 	nodeToGraphNode,
 	relationOf,
 	type BaseNode
@@ -152,5 +153,17 @@ describe('node labels', () => {
 		expect(
 			buildNodeLabel(node('members', 'm', { name: 'Jan Jansen', party: 'VVD' }), 'member')
 		).toBe('Jan Jansen (VVD)');
+	});
+});
+
+describe('the law of an instrument', () => {
+	it('is its BWB id, CELEX number or the publication that enacted it', () => {
+		expect(instrumentLawId({ bwb_id: 'BWBR0005537' }, 'bwbr0005537')).toBe('BWBR0005537');
+		expect(instrumentLawId({ official_id: 'stb-2026-56' }, 'wet_stb_2026_56')).toBe('STB-2026-56');
+	});
+
+	it('is read from the key of a law of the Staatsblad, never the key in capitals', () => {
+		expect(instrumentLawId({}, 'wet_stb_2026_56')).toBe('STB-2026-56');
+		expect(instrumentLawId(undefined, 'bwbr0001840')).toBe('BWBR0001840');
 	});
 });
