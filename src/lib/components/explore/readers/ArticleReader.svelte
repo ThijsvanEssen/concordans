@@ -116,10 +116,13 @@
 		lateVersions = null;
 		if (!later) return;
 		let stale = false;
-		// It never fails: a failure is its error state.
-		void later.then((v) => {
-			if (!stale) lateVersions = v;
-		});
+		// A failure comes as its error state; the second handler is for the rules.
+		later.then(
+			(v) => {
+				if (!stale) lateVersions = v;
+			},
+			() => {}
+		);
 		return () => {
 			stale = true;
 		};
