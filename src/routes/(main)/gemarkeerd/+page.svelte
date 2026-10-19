@@ -27,6 +27,7 @@
 	import Aantekening from '$lib/map/Aantekening.svelte';
 	import MapGroups from '$lib/map/MapGroups.svelte';
 	import MapView from '$lib/map/MapView.svelte';
+	import { mapAfterFile } from '$lib/map/file-done';
 
 	const count = (n: number) => `${formatCount(n)} ${plural(n, 'bron', 'bronnen')}`;
 	const day = (iso: string) => korteDatum(vandaag(new Date(iso)));
@@ -98,6 +99,8 @@
 			const rest = opened.maps.filter((x) => x.map !== f);
 			opened = rest.length ? { ...opened, maps: rest } : null;
 		}
+		const made = kaart.mappen.find((m) => m.id === mapAfterFile(how, target, kaart.actief));
+		if (made) focusHead(made);
 	}
 
 	// ── The bundels ──────────────────────────────────────────────────────────
