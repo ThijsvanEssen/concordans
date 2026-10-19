@@ -298,6 +298,9 @@
 				grid-column: 2;
 				justify-content: flex-start;
 			}
+			.rijen :global(.naar-lezer) {
+				order: -1;
+			}
 		}
 	}
 	.row-id-main {
@@ -320,10 +323,17 @@
 		justify-content: flex-end;
 		opacity: 0;
 	}
-	/* The way to the reader, always in sight: the row's click opens it here. */
+	/* The way to the reader, always in sight: the row's click opens it here. At the right edge
+	   of a row; where the ways on stand under the citation, first, so it stands in one place
+	   in every row whatever buttons follow (F4). */
 	.rijen :global(.naar-lezer) {
 		font-size: var(--t-micro);
 		white-space: nowrap;
+	}
+	@media (max-width: 768px) {
+		.rijen :global(.naar-lezer) {
+			order: -1;
+		}
 	}
 	:global(.row-wrap:hover) .knoppen,
 	:global(.row-wrap:focus-within) .knoppen {

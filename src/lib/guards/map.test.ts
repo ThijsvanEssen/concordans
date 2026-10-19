@@ -10,6 +10,14 @@ describe('the map', () => {
 		expect(overtreders(metDeHand, [plek('lib/map/map.ts')])).toEqual([]);
 	});
 
+	it('puts In de lezer in one place in every row, on Gemarkeerd and the bundel’s page (F4)', () => {
+		// Where the ways on stand under the citation, the link goes first: the buttons after it
+		// (Aantekening only without a note) do not move it.
+		const groups = bron('lib/map/MapGroups.svelte');
+		const first = groups.match(/:global\(\.naar-lezer\) \{\s*order: -1;/g) ?? [];
+		expect(first).toHaveLength(2);
+	});
+
 	it('cites a kept vote as a vote, from its reader, a row of Bronnen and Verbonden (#54)', () => {
 		const kept = BRONNEN.filter(({ text }) => /\bvoteCitation\(/.test(text)).map((s) => s.path);
 		expect(kept).toEqual(
