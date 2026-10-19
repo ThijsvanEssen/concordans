@@ -71,7 +71,7 @@ export type Map = {
 export type GroepNotities = Record<string, string>;
 
 /** A map from a link: its name, items, order and note as the link gives them. */
-export type Gedeeld = {
+export type SharedMap = {
 	naam: string | null;
 	items: MapItem[];
 	volgorde: Map['volgorde'];

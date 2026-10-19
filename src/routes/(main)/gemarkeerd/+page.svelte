@@ -34,13 +34,14 @@
 		SOURCE_KINDS,
 		netwerkHref,
 		itemKey,
-		type Gedeeld,
+		type SharedMap,
 		type GroepNotities,
 		type Map,
 		type MapItem
 	} from '$lib/map/map';
 	import { kaart } from '$lib/map/map.svelte';
 	import { BROKEN, isOldLink, shareFragment, sharedOfFragment } from '$lib/map/share';
+	import { NEWER, mapFile, mapFileName, readMapFile, type FileMap } from '$lib/map/file';
 	import { ignore } from '$lib/api/errors';
 	import MapInhoud from '$lib/map/MapInhoud.svelte';
 	import AddSource from '$lib/map/AddSource.svelte';
@@ -53,7 +54,7 @@
 	const copier = createCopier();
 
 	// ── A shared map, from the address's fragment ──────────────────────────────
-	let gedeeld = $state<Gedeeld | typeof BROKEN | null>(null);
+	let gedeeld = $state<SharedMap | typeof BROKEN | null>(null);
 	/** A link of the older form (its map in the query) was opened: said as a broken one. */
 	let oldLink = $state(false);
 	$effect(() => {
@@ -79,6 +80,39 @@
 		oldLink = false;
 		navigate('/gemarkeerd');
 		focusHead(kaart.actief);
+	}
+
+	// ── Bundels from a file, each kept, added or put in place of one as the reader chooses ──
+	type Opened = { name: string; maps: FileMap[] } | { name: string; error: string };
+	let opened = $state<Opened | null>(null);
+	let fileField = $state<HTMLInputElement>();
+	const fileError = (name: string, read: typeof BROKEN | typeof NEWER) =>
+		read === NEWER
+			? `${name}: van een nieuwere versie van Concordans`
+			: `${name}: geen bundel of beschadigd`;
+	async function openFile(e: Event & { currentTarget: HTMLInputElement }) {
+		const file = e.currentTarget.files?.[0];
+		e.currentTarget.value = '';
+		if (!file) return;
+		const read = readMapFile(await file.text());
+		opened =
+			read === BROKEN || read === NEWER
+				? { name: file.name, error: fileError(file.name, read) }
+				: { name: file.name, maps: read };
+	}
+	/** The bundel of this browser a bundel from a file stands for: by its id, else its name. */
+	const targetOf = (f: FileMap) =>
+		kaart.mappen.find((m) => m.id === f.id) ?? kaart.mappen.find((m) => m.naam === f.naam);
+	/** A bundel from a file kept, added, put in place of one, or put aside. */
+	function fileDone(f: FileMap, how: 'map' | 'add' | 'replace' | 'none') {
+		const target = targetOf(f);
+		if (how === 'map') kaart.bewaarAlsMap(f);
+		else if (how === 'add') kaart.voegToe(f, (target ?? kaart.actief).id);
+		else if (how === 'replace' && target) kaart.replace(target.id, f);
+		if (opened && 'maps' in opened) {
+			const rest = opened.maps.filter((x) => x !== f);
+			opened = rest.length ? { ...opened, maps: rest } : null;
+		}
 	}
 
 	const reeksen = (lijst: MapItem[], v: Map['volgorde']) =>
@@ -304,6 +338,22 @@
 			{/each}
 		</ul>
 		<p class="nieuw"><TekstLink onclick={nieuw}>Nieuwe bundel</TekstLink></p>
+		<p class="bestand">
+			<TekstLink onclick={() => fileField?.click()}>Open een bestand</TekstLink>
+			<input
+				bind:this={fileField}
+				type="file"
+				accept=".json,application/json"
+				hidden
+				aria-label="Bestand met bundels"
+				onchange={openFile}
+			/>
+			<TekstLink
+				onclick={() =>
+					download(mapFileName(kaart.mappen), mapFile(kaart.mappen), 'application/json')}
+				>Bewaar alles als bestand</TekstLink
+			>
+		</p>
 	</nav>
 
 	<div class="inhoud">
@@ -343,6 +393,46 @@
 			</Sectie>
 		{/if}
 
+		{#if opened && 'error' in opened}
+			<p class="vraag" role="status">
+				<span>{opened.error}</span>
+				<TekstLink onclick={() => (opened = null)}>Sluiten</TekstLink>
+			</p>
+		{:else if opened}
+			{#each opened.maps as f, n (n)}
+				{@const target = targetOf(f)}
+				<Sectie title="Bundel uit bestand: {f.naam ?? 'zonder naam'}" niveau={2} inklapbaar={false}>
+					{#snippet naast()}
+						<span class="acties">
+							<TekstLink onclick={() => fileDone(f, 'map')}>Bewaar als nieuwe bundel</TekstLink>
+							{#if target}
+								<ConfirmButton
+									label="Vervang {target.naam}"
+									confirmLabel="Ja, {target.naam} vervangen"
+									class="raakvlak vervang"
+									onConfirm={() => fileDone(f, 'replace')}
+								/>
+							{/if}
+							{#if f.items.length}
+								<TekstLink onclick={() => fileDone(f, 'add')}
+									>Voeg toe aan {(target ?? kaart.actief).naam}</TekstLink
+								>
+							{/if}
+							<TekstLink onclick={() => fileDone(f, 'none')}>Niet openen</TekstLink>
+						</span>
+					{/snippet}
+					<Aantekening tekst={f.notitie} bij={f.naam ?? 'de bundel'} />
+					<p class="meta">
+						<span
+							>{tel(f.items.length)}{#if f.skipped}, {formatCount(f.skipped)} uit het bestand niet te
+								lezen{/if}</span
+						>
+					</p>
+					{@render lijst(f.items, f.volgorde, null, f.groepNotities)}
+				</Sectie>
+			{/each}
+		{/if}
+
 		{#each kaart.mappen as m (m.id)}
 			<Sectie title={m.naam} id={anker(m)} niveau={2} sleutel="map:{m.id}" standaardOpen>
 				{#snippet naast()}
@@ -370,6 +460,10 @@
 										`${bestand(m)}.csv`,
 										csv(m.items, (i) => itemAddress(i, page.url.origin), m.volgorde)
 									)}>CSV</TekstLink
+							>
+							<TekstLink
+								onclick={() => download(mapFileName([m]), mapFile([m]), 'application/json')}
+								>Bewaar als bestand</TekstLink
 							>
 						{/if}
 						<TekstMenu klein rechts label="Bundel {m.naam}" tekst="Bundel">
@@ -577,6 +671,32 @@
 	.opzij .nieuw {
 		margin: var(--s-2) 0 0;
 		font-size: var(--t-meta);
+	}
+	.opzij .bestand {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: var(--s-1);
+		margin: var(--s-3) 0 0;
+		font-size: var(--t-meta);
+	}
+	/* Vervang asks once (ConfirmButton), in the letter of the links beside it (TekstLink). */
+	.acties :global(.vervang) {
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		font-family: var(--font-serif);
+		color: var(--ink);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
+		cursor: pointer;
+	}
+	.acties :global(.vervang:hover),
+	.acties :global(.vervang:focus-visible) {
+		color: var(--ink);
+		text-decoration-color: currentColor;
 	}
 	.inhoud {
 		display: flex;

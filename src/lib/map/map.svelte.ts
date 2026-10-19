@@ -7,11 +7,12 @@ import {
 	withItems,
 	itemKey,
 	verschuif,
-	type Gedeeld,
+	type SharedMap,
 	type GroepNotities,
 	type Map,
 	type MapItem
 } from './map';
+import { keepStorage } from './persist';
 
 const OPSLAG = 'concordans:mappen';
 const EERSTE = 'Gemarkeerd';
@@ -99,7 +100,10 @@ class Kaarten {
 	}
 	/** Changes the active map and remembers. */
 	#werk(f: (m: Map) => Partial<Map>) {
-		const id = this.actief.id;
+		this.#change(this.actief.id, f);
+	}
+	/** Changes a map by its id and remembers. */
+	#change(id: string, f: (m: Map) => Partial<Map>) {
 		this.#stand = {
 			...this.#stand,
 			mappen: this.#stand.mappen.map((m) => (m.id === id ? { ...m, ...f(m), gewijzigd: nu() } : m))
@@ -111,6 +115,7 @@ class Kaarten {
 	/** Kept, or no longer: what a box beside a lid or a row does. */
 	wissel(i: MapItem) {
 		const k = itemKey(i);
+		if (!this.heeft(i)) keepStorage();
 		this.#werk((m) => ({
 			items: m.items.some((x) => itemKey(x) === k)
 				? m.items.filter((x) => itemKey(x) !== k)
@@ -166,6 +171,7 @@ class Kaarten {
 		while (!naam && namen.has(`Bundel ${n}`)) n++;
 		// A name a bundel has already is numbered on: `Gemarkeerd 2` beside `Gemarkeerd`.
 		const m = { ...leeg(naam?.trim() ? freeName(naam.trim(), namen) : `Bundel ${n}`), items };
+		if (items.length) keepStorage();
 		this.#stand = { mappen: [...this.#stand.mappen, m], actief: m.id };
 		this.#bewaar();
 		return m;
@@ -196,17 +202,30 @@ class Kaarten {
 		if (!this.heeft(i)) this.wissel(i);
 	}
 
-	// ── A shared map (a link) ─────────────────────────────────────────────
-	/** Into the active map, without doubles; its notes where the map has none. */
-	voegToe(g: Gedeeld) {
-		this.#werk((m) => ({
+	// ── A shared map (a link, a file) ─────────────────────────────────────
+	/** Into a map (the active one where none is named), without doubles; its notes where the
+	 *  map has none. */
+	voegToe(g: SharedMap, id = this.actief.id) {
+		keepStorage();
+		this.#change(id, (m) => ({
 			items: withItems(m.items, g.items),
 			notitie: m.notitie || g.notitie,
 			groepNotities: { ...g.groepNotities, ...m.groepNotities }
 		}));
 	}
+	/** In place of a map: its id kept, its name, items, order and notes the shared one's. */
+	replace(id: string, g: SharedMap) {
+		keepStorage();
+		this.#change(id, (m) => ({
+			naam: g.naam ?? m.naam,
+			items: [...g.items],
+			volgorde: g.volgorde,
+			notitie: g.notitie,
+			groepNotities: { ...g.groepNotities }
+		}));
+	}
 	/** As a map of its own, under its name, in its order, with its note. */
-	bewaarAlsMap(g: Gedeeld) {
+	bewaarAlsMap(g: SharedMap) {
 		this.nieuw(g.naam ?? undefined, g.items);
 		if (g.volgorde === 'eigen') this.ordening('eigen');
 		if (g.notitie) this.mapNotitie(g.notitie);

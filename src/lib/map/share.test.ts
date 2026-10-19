@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BRONNEN, bron } from '$lib/test/bronnen';
-import type { Gedeeld, MapItem } from './map';
+import type { SharedMap, MapItem } from './map';
 import { BROKEN, isOldLink, shareFragment, sharedOfFragment } from './share';
 
 const lid2: MapItem = {
@@ -86,7 +86,7 @@ describe('the link of a map', () => {
 		const broken = { ...ro, groupKey: '' };
 		const shared = (await sharedOfFragment(
 			await shareFragment({ ...map, items: [lid2, broken] })
-		)) as Gedeeld;
+		)) as SharedMap;
 		expect(shared?.items).toEqual([lid2]);
 		expect(shared?.skipped).toBe(1);
 	});
