@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	COLUMNS,
 	TABLE_COLUMNS,
+	columnLabel,
 	csvName,
 	exportLabel,
 	exportRows,
@@ -79,6 +80,33 @@ describe('the columns', () => {
 		expect(TABLE_COLUMNS.map((c) => c.id)).toEqual(
 			COLUMNS.filter((c) => !c.csvOnly).map((c) => c.id)
 		);
+	});
+});
+
+describe('the places on the page of a judgment', () => {
+	const column = (id: string) => TABLE_COLUMNS.find((c) => c.id === id)!;
+	const ctx = { selection: 'judgments' as const, origin: '' };
+	const cites: Row = {
+		ref: { collection: 'articles', key: 'bwbr0005290_6_162' },
+		title: 'Art. 6:162 BW',
+		context: null,
+		filterGroup: 'artikelen',
+		direction: 'outbound',
+		lid: '2',
+		position: 'r.o. 4.3'
+	};
+	const citedBy: Row = { ...cites, direction: 'inbound', lid: null, position: 'r.o. 2.1' };
+
+	it('names the judgment, not an article', () => {
+		expect(columnLabel(column('lid'), 'judgments')).toBe('Plaats in deze uitspraak');
+		expect(columnLabel(column('lid'), 'articles')).toBe('Plaats in dit artikel');
+	});
+
+	it('puts its own r.o. under the judgment and the lid it cites under the bron', () => {
+		expect(column('lid').value(cites, ctx)).toBe('r.o. 4.3');
+		expect(column('plaats').value(cites, ctx)).toBe('lid 2');
+		expect(column('lid').value(citedBy, ctx)).toBe('');
+		expect(column('plaats').value(citedBy, ctx)).toBe('r.o. 2.1');
 	});
 });
 
