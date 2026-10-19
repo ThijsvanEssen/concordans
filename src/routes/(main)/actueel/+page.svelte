@@ -237,10 +237,14 @@
 		total = null;
 		tellen = true;
 		// Without the counts in 3 s the API answers `partial` (0.79.14) and counts on: asked
-		// once more after 30 s, or with the next filter. Then the filters stand without them.
+		// once more after 30 s past the browser's cache (which keeps the partial answer 60 s),
+		// or with the next filter. Then the filters stand without them.
 		let opnieuw: ReturnType<typeof setTimeout> | undefined;
 		const tel = (poging: number): void => {
-			getFeed({ ...q, limit: 1, facets: true }, { signal: ac.signal, wait: 'short' })
+			getFeed(
+				{ ...q, limit: 1, facets: true },
+				{ signal: ac.signal, wait: 'short', fresh: poging > 0 }
+			)
 				.then((r) => {
 					if (r.partial && !r.facets) {
 						if (poging === 0) opnieuw = setTimeout(() => tel(1), 30_000);
