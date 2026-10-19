@@ -12,14 +12,19 @@ function courtOf(ecli: string | null | undefined): { country: string; code: stri
 /**
  * How a numbered paragraph is cited: `r.o. 3.1` (rechtsoverweging) in a Dutch judgment,
  * `onder 3.1` in a conclusion of the Parket, as the Hoge Raad refers to one, `§ 9` in a
- * judgment of the EHRM or the HvJ EU. Takes the ECLI or the key of the judgment
- * (`ecli_nl_phr_2020_453`).
+ * judgment of the EHRM, `punt 45` in one of the courts of the EU, as the Court cites itself in
+ * Dutch. Takes the ECLI or the key of the judgment (`ecli_nl_phr_2020_453`).
  */
 export function paragraphCite(ecli: string | null | undefined, number: string): string {
 	const { country, code } = courtOf(ecli);
-	if (country === 'CE' || country === 'EU') return `§ ${number}`;
+	if (country === 'CE') return `§ ${number}`;
+	if (country === 'EU') return `punt ${number}`;
 	return code === 'PHR' ? `onder ${number}` : `r.o. ${number}`;
 }
+
+/** Whether a judgment is one of the courts of the EU (the Hof, the Gerecht), by its ECLI or key. */
+export const isEuCourt = (ecli: string | null | undefined): boolean =>
+	courtOf(ecli).country === 'EU';
 
 /** Whether a judgment is a conclusion of the Parket bij de Hoge Raad, by its ECLI or key. */
 export const isConclusion = (ecli: string | null | undefined): boolean =>

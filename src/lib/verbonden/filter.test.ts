@@ -87,6 +87,9 @@ describe('filterGroupOf', () => {
 		expect(filterGroupOf('judgments', 'ecli_ce_echr_2026_0908jud000748123', {})).toBe(
 			'internationaal'
 		);
+		// The courts of the EU as the EHRM: by the key, or by the source of a node.
+		expect(filterGroupOf('judgments', 'ecli_eu_c_2023_494', {})).toBe('internationaal');
+		expect(filterGroupOf('judgments', 'x', { source: 'cjeu' })).toBe('internationaal');
 		expect(filterGroupOf('instruments', 'bwbr0001854', {})).toBe('wetten');
 	});
 
@@ -167,6 +170,9 @@ describe('rowPasses', () => {
 		);
 		expect(rechterOf(row({ ref: { collection: 'judgments', key: 'ecli_ce_echr_2026_1' } }))).toBe(
 			'ehrm'
+		);
+		expect(rechterOf(row({ ref: { collection: 'judgments', key: 'ecli_eu_t_2021_441' } }))).toBe(
+			'hvj'
 		);
 		expect(rechterOf(row({ identifier: 'ECLI:NL:CRVB:2020:1' }))).toBeNull();
 	});

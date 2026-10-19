@@ -91,7 +91,8 @@ export const RECHTERS = [
 	{ id: 'hof', label: 'Gerechtshoven' },
 	{ id: 'rechtbank', label: 'Rechtbanken' },
 	{ id: 'rvs', label: 'Raad van State' },
-	{ id: 'ehrm', label: 'EHRM' }
+	{ id: 'ehrm', label: 'EHRM' },
+	{ id: 'hvj', label: 'HvJ EU' }
 ] as const;
 
 export type Rechter = (typeof RECHTERS)[number]['id'];
@@ -276,7 +277,9 @@ const RECHTER_OF_TIER: Record<string, Rechter> = {
 	parket: 'hr',
 	gerechtshof: 'hof',
 	rechtbank: 'rechtbank',
-	raad_van_state: 'rvs'
+	raad_van_state: 'rvs',
+	ehrm: 'ehrm',
+	hvj_eu: 'hvj'
 };
 
 /** The country and the court of an ECLI, in its own form or as a key. */
@@ -296,6 +299,7 @@ export function rechterOf(row: Pick<Row, 'identifier' | 'props' | 'ref'>): Recht
 	if (!code) return null;
 	const [country, court] = [code[1].toUpperCase(), code[2].toUpperCase()];
 	if (country === 'CE') return 'ehrm';
+	if (country === 'EU') return 'hvj';
 	if (court === 'HR' || court === 'PHR') return 'hr';
 	if (court.startsWith('GH')) return 'hof';
 	if (court.startsWith('RB')) return 'rechtbank';

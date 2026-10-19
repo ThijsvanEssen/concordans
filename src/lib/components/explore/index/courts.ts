@@ -1,8 +1,8 @@
-import type { Tier } from '$lib/vocabulary';
+import type { EuropeanSource, Tier } from '$lib/vocabulary';
 
 // The courts in the order of the rechterlijke organisatie: the highest courts, the courts
 // of fact, the courts of the Caribbean part of the Kingdom and the European courts. A tier
-// not named here is under Overig. `ehrm` is its own source in the API (`source=echr`).
+// not named here is under Overig.
 
 export const COURT_GROUPS: { label: string; tiers: readonly Tier[] }[] = [
 	{
@@ -19,6 +19,16 @@ export const COURT_GROUPS: { label: string; tiers: readonly Tier[] }[] = [
 	{ label: 'Caribisch deel', tiers: ['koninkrijksinstantie'] },
 	{ label: 'Europees', tiers: ['ehrm', 'hvj_eu'] }
 ];
+
+/**
+ * The European courts, each its own source in the API: the EHRM (`source=echr`) and the Hof
+ * van Justitie EU with the Gerecht (`source=cjeu`). Chosen, the list holds their own
+ * judgments, not the Dutch records that name them as court.
+ */
+export const SOURCE_OF_TIER: Partial<Record<Tier, EuropeanSource>> = {
+	ehrm: 'echr',
+	hvj_eu: 'cjeu'
+};
 
 /** The tiers that hold several kinds of court: chosen, they list their courts beneath. */
 export const MIXED_TIERS: readonly Tier[] = ['andere_instantie', 'koninkrijksinstantie'];
