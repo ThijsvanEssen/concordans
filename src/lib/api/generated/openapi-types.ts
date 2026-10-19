@@ -818,6 +818,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/members/{key}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Papers a member signed
+         * @description The papers this member signed (``AUTHORED``: documents, cases and the other nodes they signed), the newest first by the date of the paper, an undated one last, then by the key of the edge; ``total`` counts every one, as the ``AUTHORED`` buckets of ``/api/nodes/members/{key}`` do. Each item is a neighbour as ``/api/nodes`` gives it with ``props=canvas``, with its edge.
+         */
+        get: operations["list_member_documents_api_members__key__documents_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/members/{key}/dossiers": {
         parameters: {
             query?: never;
@@ -1438,7 +1458,7 @@ export interface paths {
          * News feed
          * @description What was promised and proposed, as a stream of events, newest first: ``toezegging`` (a commitment made), ``Voorstel van wet``, ``Nota van wijziging``, ``Amendement``, ``Motie`` and ``Brief regering`` (a Tweede Kamer paper submitted, by its ``Document.Soort`` before `` (``), ``stemming`` (a vote with its outcome), ``publicatie`` (in the Staatsblad, Staatscourant or Tractatenblad) and ``inwerkingtreding`` (a new version of a law in force) and ``uitspraak`` (a judgment or conclusion, on the day it was published; only with ``kind=uitspraak`` or ``tier``, of the highest courts and the Parket unless ``tier`` asks for others). Ordered by date, then by ``id``, both descending; ``next_cursor`` gives the next page, which neither repeats nor skips an event. ``facets`` counts per ``kind``, ``ministry``, ``faction`` and ``cabinet`` the events under the other filters, with ``total``; ``facets=false`` leaves both out and reads only one page.
          *
-         *     `items`, `next_cursor`, `total`, `facets`, `partial`, `searched_from` and `data_as_of` (as in `/api/stats`). `total` and `facets` are counted over every event under the filters and kept an hour; a request waits for them 3 s at most: under filters not counted before (cold, a minute or more on the full graph) the page comes at once with both null and `partial` true, and a request after the count has them. Under `q`, `faction` or `coalition` (and not `member` or `tier`) both are counted from `lg_feed_events` instead (`/api/feed/periods`; as `lawgraph feed-events` last wrote it, after every poll), by the index on its words or factions, each facet as the feed counts it; before that table is ever written, from the events themselves. Filters: `kind` (comma-separated), `since`, `until` (YYYY-MM-DD, inclusive), `cabinet` (a key: the events from its beëdiging to that of the next cabinet), `ministry`, `dossier` (the start of a dossier label: `36600` holds `36600-VII`, `37020-` the chapters), `member` (a member key: the papers they signed, the votes on them, the commitments they made), `faction` (a faction key: the papers its Kamerleden signed for it and the votes on them; without `since` its page is read as under `q`), `q` (words of the title or of the title of the event's dossier, or of a publication the names of the laws it changes or enacts and the official title of a law it enacts (from `lg_feed_events`: a publication is found by them once `lawgraph feed-events` wrote it), any case; each word from the start of a word, one of at most four characters as a whole word (`ai`: the AI-verordening, not universitaire; `stikstof`: Stikstofbank, not natuurstikstof; repeated, at most ten times, any of them: `q=AI&q=kunstmatige intelligentie`, each event once); each kind finds them by index where it can (from three characters); without `since` the page is read once from the first day it reaches back to, the day of the (`limit` + 1)-th newest matching event in `lg_feed_events` (`/api/feed/periods`; no later than 14 days ago, what that table may still lack, nor than the day of the cursor), when that table is written and the filters are ones it keeps; else, or when that read finds less than the table counted, the events are searched back from `until`, the cursor or today in windows of 90 days, a year, three years and then the rest, newest first, until the page is full or 8 s are spent: then the page has what was found, `partial` true and `searched_from`, the first day searched, and a request with `until` the day before goes on; `searched_from` is null when every day was searched), `tier` (comma-separated tiers as in `/api/judgments`: keeps judgments alone, of those tiers; without it the feed's judgments are of the default tiers), `chamber` (`EK`: the votes of the Eerste Kamer, only the one that decided each bill; `TK`: the papers, votes and commitments of the Tweede Kamer; publications and commencements are of neither), `coalition` (what the coalition did on a vote of the Tweede Kamer, as `vote.coalition` says it: `together`, `split` (on both sides, a wisselmeerderheid too), `wissel`, `decisive`; keeps votes alone), `instrument` (a BWB id: the events tied to that law: the publications that enact it or change it or its articles, the papers that propose to (a `voorgesteld` change), the events of the dossiers it or such a publication was `LEGISLATED_IN` and of the dossiers of those papers, its new versions and those of the regulations `BASED_ON` it, the judgments that cite it; without `since` read as under `q`, in windows; its total and facets are counted from the events themselves), `article` (with `instrument`, an article number of that law, `3:2`: the events tied to that article, the versions of the law that changed it, the dossiers of the publications and papers that change it, not those of the law itself nor its enactment; 422 without `instrument`); `limit` (1-200, default 50), `cursor` (the `next_cursor` of the page before; 422 for a token the API did not hand out). Order: `date`, newest first; within a day by kind, in the order `Voorstel van wet`, `stemming`, `toezegging`, `inwerkingtreding`, `publicatie`, `Nota van wijziging`, `Amendement`, `Motie`, `Brief regering`; within a kind by `id`. The cursor holds the date, kind and id of the last event of its page, and a page starts after it, so pages neither repeat nor skip an event. `facets` (default true) counts per `kind`, `ministry`, `faction`, `cabinet`, `chamber` (`TK`, `EK`, null for a publication or a commencement) and `coalition` (the values of the filter; a vote counts for each that holds, `split` with every `wissel`, an event without a coalition vote for none) (`{value, count}`, the largest first, `value` null for none) the events under the other filters, and `total` under all of them, whatever the cursor; `facets=false` gives null for both and reads one page only, the choice for the pages after the first. Each item says what it is tied to, read for the items of the page alone: `matched` (with `q`, per word the event holds `{term, field}`, `term` as it was asked and `field` the first of `title` (its own title, of a bill not that of its dossier), `dossier_title` (the whole title of its first dossier) and `laws` (of a publication, the names of its laws) that holds it; empty without `q`), `via` (with `instrument`, how the event is tied to the law: `relation` `establishes`, `amends`, `introduces` or `repeals` (a publication), `proposes` (a paper with a `voorgesteld` change of it, or an event of the dossier of such a paper), `version_of` (a new version of the law), `based_on` (of a regulation issued under it), `refers_to` (a judgment), `legislated_in` (an event of a dossier the law or a publication of it was legislated in); `article` the number of the article of the law it touches, the first in the order of the law; `dossier` the label of the dossier it came through; the closest tie of all it has), `answers` (of a `Brief regering`: the motions and commitments it `ANSWERS`), `answered_by` (of a `toezegging`: the letters that fulfil it), `replaces` (of a changed `Motie` or `Amendement`: the paper it replaces, `REVISES`, "ter vervanging van nr. 19"), each such paper or commitment `{id, kind, title, date, number, dossier, surname, path}` (`kind` its `Document.Soort` or `toezegging`, `number` its nr. or the number of the commitment, `dossier` the label of its own dossier, `surname` its first signatory), at most twenty; `amends_articles` (of an `Amendement`: the articles it proposes to change, add or repeal, `effect` `amends`/`introduces`/`repeals`, in the order of their law, at most twenty) and `cites` (of an `uitspraak`: the articles it cites, the most mentioned first, at most five), each article `{key, bwb_id, number, law, law_short, effect, path}`; empty or null for the other kinds
+         *     `items`, `next_cursor`, `total`, `facets`, `partial`, `searched_from` and `data_as_of` (as in `/api/stats`). `total` and `facets` are counted from `lg_feed_events` (`/api/feed/periods`; as `lawgraph feed-events` last wrote it: the last 14 days after every poll, every event each night), by its indexes, each facet as the feed counts it, and kept an hour; under `member`, `tier` or `instrument`, or before that table is ever written, over every event under the filters itself. A request waits for them 3 s at most: under filters not counted before (cold, a minute or more on the full graph) the page comes at once with both null and `partial` true, and a request after the count has them. Filters: `kind` (comma-separated), `since`, `until` (YYYY-MM-DD, inclusive), `cabinet` (a key: the events from its beëdiging to that of the next cabinet), `ministry`, `dossier` (the start of a dossier label: `36600` holds `36600-VII`, `37020-` the chapters), `member` (a member key: the papers they signed, the votes on them, the commitments they made), `faction` (a faction key: the papers its Kamerleden signed for it and the votes on them; without `since` its page is read as under `q`), `q` (words of the title or of the title of the event's dossier, or of a publication the names of the laws it changes or enacts and the official title of a law it enacts (from `lg_feed_events`: a publication is found by them once `lawgraph feed-events` wrote it), any case; each word from the start of a word, one of at most four characters as a whole word (`ai`: the AI-verordening, not universitaire; `stikstof`: Stikstofbank, not natuurstikstof; repeated, at most ten times, any of them: `q=AI&q=kunstmatige intelligentie`, each event once); each kind finds them by index where it can (from three characters); without `since` the page is read once from the first day it reaches back to, the day of the (`limit` + 1)-th newest matching event in `lg_feed_events` (`/api/feed/periods`; no later than 14 days ago, what that table may still lack, nor than the day of the cursor), when that table is written and the filters are ones it keeps; else, or when that read finds less than the table counted, the events are searched back from `until`, the cursor or today in windows of 90 days, a year, three years and then the rest, newest first, until the page is full or 8 s are spent: then the page has what was found, `partial` true and `searched_from`, the first day searched, and a request with `until` the day before goes on; `searched_from` is null when every day was searched), `tier` (comma-separated tiers as in `/api/judgments`: keeps judgments alone, of those tiers; without it the feed's judgments are of the default tiers), `chamber` (`EK`: the votes of the Eerste Kamer, only the one that decided each bill; `TK`: the papers, votes and commitments of the Tweede Kamer; publications and commencements are of neither), `coalition` (what the coalition did on a vote of the Tweede Kamer, as `vote.coalition` says it: `together`, `split` (on both sides, a wisselmeerderheid too), `wissel`, `decisive`; keeps votes alone), `instrument` (a BWB id: the events tied to that law: the publications that enact it or change it or its articles, the papers that propose to (a `voorgesteld` change), the events of the dossiers it or such a publication was `LEGISLATED_IN` and of the dossiers of those papers, its new versions and those of the regulations `BASED_ON` it, the judgments that cite it; without `since` read as under `q`, in windows; its total and facets are counted from the events themselves), `article` (with `instrument`, an article number of that law, `3:2`: the events tied to that article, the versions of the law that changed it, the dossiers of the publications and papers that change it, not those of the law itself nor its enactment; 422 without `instrument`); `limit` (1-200, default 50), `cursor` (the `next_cursor` of the page before; 422 for a token the API did not hand out). Order: `date`, newest first; within a day by kind, in the order `Voorstel van wet`, `stemming`, `toezegging`, `inwerkingtreding`, `publicatie`, `Nota van wijziging`, `Amendement`, `Motie`, `Brief regering`; within a kind by `id`. The cursor holds the date, kind and id of the last event of its page, and a page starts after it, so pages neither repeat nor skip an event. `facets` (default true) counts per `kind`, `ministry`, `faction`, `cabinet`, `chamber` (`TK`, `EK`, null for a publication or a commencement) and `coalition` (the values of the filter; a vote counts for each that holds, `split` with every `wissel`, an event without a coalition vote for none) (`{value, count}`, the largest first, `value` null for none) the events under the other filters, and `total` under all of them, whatever the cursor; `facets=false` gives null for both and reads one page only, the choice for the pages after the first. Each item says what it is tied to, read for the items of the page alone: `matched` (with `q`, per word the event holds `{term, field}`, `term` as it was asked and `field` the first of `title` (its own title, of a bill not that of its dossier), `dossier_title` (the whole title of its first dossier) and `laws` (of a publication, the names of its laws) that holds it; empty without `q`), `via` (with `instrument`, how the event is tied to the law: `relation` `establishes`, `amends`, `introduces` or `repeals` (a publication), `proposes` (a paper with a `voorgesteld` change of it, or an event of the dossier of such a paper), `version_of` (a new version of the law), `based_on` (of a regulation issued under it), `refers_to` (a judgment), `legislated_in` (an event of a dossier the law or a publication of it was legislated in); `article` the number of the article of the law it touches, the first in the order of the law; `dossier` the label of the dossier it came through; the closest tie of all it has), `answers` (of a `Brief regering`: the motions and commitments it `ANSWERS`), `answered_by` (of a `toezegging`: the letters that fulfil it), `replaces` (of a changed `Motie` or `Amendement`: the paper it replaces, `REVISES`, "ter vervanging van nr. 19"), each such paper or commitment `{id, kind, title, date, number, dossier, surname, path}` (`kind` its `Document.Soort` or `toezegging`, `number` its nr. or the number of the commitment, `dossier` the label of its own dossier, `surname` its first signatory), at most twenty; `amends_articles` (of an `Amendement`: the articles it proposes to change, add or repeal, `effect` `amends`/`introduces`/`repeals`, in the order of their law, at most twenty) and `cites` (of an `uitspraak`: the articles it cites, the most mentioned first, at most five), each article `{key, bwb_id, number, law, law_short, effect, path}`; empty or null for the other kinds
          */
         get: operations["get_feed_route_api_feed_get"];
         put?: never;
@@ -2488,6 +2508,32 @@ export interface components {
             case_number: string | null;
         };
         /**
+         * ArticleCellSpanDTO
+         * @description A cell of a table that spans more than one column or row.
+         */
+        ArticleCellSpanDTO: {
+            /**
+             * Row
+             * @description Its row, counted from 0.
+             */
+            row: number;
+            /**
+             * Cell
+             * @description Its place among the cells of that row, from 0.
+             */
+            cell: number;
+            /**
+             * Cols
+             * @description How many columns it covers.
+             */
+            cols: number;
+            /**
+             * Rows
+             * @description How many rows it covers.
+             */
+            rows: number;
+        };
+        /**
          * ArticleCitationSpan
          * @description Character span for an internal citation inside the source article.
          */
@@ -2549,6 +2595,11 @@ export interface components {
             collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "annexes";
             /** Bwb Id */
             bwb_id: string | null;
+            /**
+             * Official Id
+             * @description Of an article of a law the BWB does not hold (yet): the id of the Staatsblad publication that enacted its law (`stb-2026-56`), which names the law in the article routes (`/api/articles/STB-2026-56/2.8.6`) and in its address.
+             */
+            official_id: string | null;
             /** Article Number */
             article_number: string | null;
             /** Display Name */
@@ -3085,6 +3136,11 @@ export interface components {
             /** Bwb Id */
             bwb_id: string | null;
             /**
+             * Official Id
+             * @description Of an article of a law the BWB does not hold (yet): the id of the Staatsblad publication that enacted its law (`stb-2026-56`), which names the law in the article routes (`/api/articles/STB-2026-56/2.8.6`) and in its address.
+             */
+            official_id: string | null;
+            /**
              * Article Number
              * @description Null for an article with only a heading, and for a repealed one.
              */
@@ -3124,10 +3180,44 @@ export interface components {
              */
             parts: components["schemas"]["ArticlePartDTO"][];
             /**
+             * Tables
+             * @description The tables in `text`, as spans of it.
+             */
+            tables: components["schemas"]["ArticleTableDTO"][];
+            /**
              * Path
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */
             readonly path: string | null;
+        };
+        /**
+         * ArticleTableDTO
+         * @description A table in the text of an article, as a span of its `text`: a row a line, its cells
+         *     separated by a tab (an empty cell an empty string).
+         */
+        ArticleTableDTO: {
+            /**
+             * Start
+             * @description Offset of its first row in the `text` of the article.
+             */
+            start: number;
+            /** End */
+            end: number;
+            /**
+             * Head Rows
+             * @description How many of its first rows are its header.
+             */
+            head_rows: number;
+            /**
+             * Columns
+             * @description How many columns it has; a row next to a cell that spans rows, or whose last cells are empty, has fewer cells.
+             */
+            columns: number;
+            /**
+             * Spans
+             * @description Its cells that span columns or rows.
+             */
+            spans: components["schemas"]["ArticleCellSpanDTO"][];
         };
         /**
          * ArticleVersionDTO
@@ -3167,6 +3257,11 @@ export interface components {
              * @description As on the article: spans of `text`.
              */
             parts: components["schemas"]["ArticlePartDTO"][];
+            /**
+             * Tables
+             * @description As on the article: spans of `text`.
+             */
+            tables: components["schemas"]["ArticleTableDTO"][];
             /**
              * Effect
              * @description Raw BWB effect of this version.
@@ -8112,6 +8207,11 @@ export interface components {
             /** Celex */
             celex: string | null;
             /**
+             * Official Id
+             * @description Of an article of a law the BWB does not hold (yet): the id of the Staatsblad publication that enacted its law (`stb-2026-56`), which names the law in the article routes (`/api/articles/STB-2026-56/2.8.6`) and in its address.
+             */
+            official_id: string | null;
+            /**
              * Article Number
              * @description Null for an article with only a heading, and for a repealed one.
              */
@@ -8222,6 +8322,12 @@ export interface components {
              * @default []
              */
             parts: components["schemas"]["ArticlePartSpanDTO"][];
+            /**
+             * Tables
+             * @description The tables in the text as spans of it; empty when the text was not asked for.
+             * @default []
+             */
+            tables: components["schemas"]["ArticleTableDTO"][];
             /**
              * Text Preview
              * @description The first ``text_preview_chars`` characters of the text.
@@ -8493,6 +8599,16 @@ export interface components {
             treaty_number: string | null;
             /** In Force */
             in_force: boolean | null;
+            /**
+             * Status
+             * @description Of a law of the Staatsblad the BWB does not hold (yet) `vastgesteld`: its text as the Staatsblad published it (`official_id`), not in force (`in_force` false); of a treaty of the Verdragenbank its status there.
+             */
+            status: string | null;
+            /**
+             * Official Id
+             * @description Of a publication its id at officielebekendmakingen.nl (`stb-2019-33`); of a law of the Staatsblad that of the publication that enacted it (`stb-2026-56`).
+             */
+            official_id: string | null;
             /** Dossier Numbers */
             dossier_numbers: string[];
             /**
@@ -9600,6 +9716,16 @@ export interface components {
              */
             replaced_by: string | null;
             /**
+             * Withdrawn
+             * @description How the Rechtspraak withdrew it: `doc` (the document is no longer published) or `ecli` (the ECLI was given in error; `replaced_by` the one the source names instead, null when it names none). It is then a stub with the facts of the decision that name no one (court, date, case number, kind, areas of law), without text, summary, parties or citations of its own; the lists, the search and the feed leave it out. Null while it is published.
+             */
+            withdrawn: string | null;
+            /**
+             * Withdrawn On
+             * @description The day it was withdrawn (YYYY-MM-DD); null with it.
+             */
+            withdrawn_on: string | null;
+            /**
              * Published On
              * @description The day it was published on uitspraken.rechtspraak.nl ("Datum publicatie", YYYY-MM-DD), as the source gives it; often weeks after the decision. Null for a judgment of another source or without a published document.
              */
@@ -10452,6 +10578,24 @@ export interface components {
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */
             readonly path: string | null;
+        };
+        /**
+         * MemberDocumentsResponse
+         * @description Response for GET /api/members/{key}/documents.
+         */
+        MemberDocumentsResponse: {
+            /**
+             * Total
+             * @description Every paper the member signed.
+             */
+            total: number;
+            /** Items */
+            items: components["schemas"]["NeighborDTO"][];
+            /**
+             * Next Offset
+             * @description The ``offset`` of the next page; null on the last.
+             */
+            next_offset: number | null;
         };
         /**
          * MemberVoteDTO
@@ -14173,6 +14317,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MemberVotesResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_member_documents_api_members__key__documents_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberDocumentsResponse"];
                 };
             };
             /** @description Validation Error */
