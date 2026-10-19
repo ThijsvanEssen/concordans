@@ -177,6 +177,18 @@ describe('rowPasses', () => {
 		expect(rechterOf(row({ identifier: 'ECLI:NL:CRVB:2020:1' }))).toBeNull();
 	});
 
+	it('knows the courts of the EU without a tier: by source, ECLI, or as the Rechtspraak publishes them (XX)', () => {
+		// A neighbour carries no tier (live: ECLI:NL:XX:2013:178 beside GHDHA:2015:950).
+		const xx = (props: Record<string, unknown>) =>
+			row({ ref: { collection: 'judgments', key: 'ecli_nl_xx_2013_178' }, props });
+		expect(rechterOf(xx({ court: 'Hof van Justitie van de Europese Unie' }))).toBe('hvj');
+		expect(rechterOf(xx({ court: 'Gerecht van de Europese Unie' }))).toBe('hvj');
+		expect(rechterOf(xx({ court: null, case_number: 'C-437/12' }))).toBe('hvj');
+		expect(rechterOf(xx({ court: 'Kroon' }))).toBeNull();
+		expect(rechterOf(row({ props: { source: 'cjeu' } }))).toBe('hvj');
+		expect(rechterOf(row({ props: { source: 'echr' } }))).toBe('ehrm');
+	});
+
 	it('reads the rechter from the tier the API gives, before the ECLI', () => {
 		const tier = (t: string) => row({ props: { tier: t } });
 		expect(rechterOf(tier('hoge_raad'))).toBe('hr');
