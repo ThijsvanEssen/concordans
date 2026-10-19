@@ -160,7 +160,7 @@
 		{#if standalone}
 			<TekstLink onclick={() => window.print()}>Afdrukken</TekstLink>
 		{:else}
-			<TekstLink href={mapPageHref(m)}>Pagina</TekstLink>
+			<TekstLink href={mapPageHref(m)}>Open als pagina</TekstLink>
 		{/if}
 		<TekstMenu klein rechts label="Bundel {m.naam}" tekst="Bundel">
 			{#snippet inhoud(close)}

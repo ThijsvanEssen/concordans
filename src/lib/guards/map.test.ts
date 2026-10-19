@@ -107,4 +107,9 @@ describe('the map', () => {
 		for (const t of [overview, own]) expect(t).not.toMatch(/<IndexRow\b|groepen\(/);
 		expect(bron('lib/map/MapView.svelte')).toContain('<MapGroups');
 	});
+
+	it('opens a bundel on its own page by a control that says so', () => {
+		const view = bron('lib/map/MapView.svelte');
+		expect(view).toMatch(/href=\{mapPageHref\(m\)\}>Open als pagina</);
+	});
 });
