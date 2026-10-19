@@ -116,7 +116,8 @@
 		lateVersions = null;
 		if (!later) return;
 		let stale = false;
-		later.then((v) => {
+		// It never fails: a failure is its error state.
+		void later.then((v) => {
 			if (!stale) lateVersions = v;
 		});
 		return () => {
