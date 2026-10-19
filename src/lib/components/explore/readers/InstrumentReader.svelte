@@ -9,6 +9,7 @@
 	import ReaderHead from './ReaderHead.svelte';
 	import { lawIdOf, type GraphNode } from '$lib/graph/types';
 	import WholeLawReader from '../WholeLawReader.svelte';
+	import { enactedLawOfKey } from '$lib/text/enacted-law';
 	import { publicationName } from '../law-head';
 	import { citeItems } from '$lib/components/ui/cite-items';
 	import { permalink } from '$lib/bron/landing';
@@ -17,7 +18,7 @@
 	let { node }: { node: GraphNode } = $props();
 
 	const p = $derived(node.raw?.props ?? {});
-	const bwbId = $derived(lawIdOf(p) ?? node.key.toUpperCase());
+	const bwbId = $derived(lawIdOf(p) ?? enactedLawOfKey(node.key) ?? node.key.toUpperCase());
 	const publication = $derived(textOf(p.publication_kind));
 </script>
 

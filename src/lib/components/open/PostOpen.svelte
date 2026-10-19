@@ -5,7 +5,7 @@
 	import { OPEN_STATUS, commitmentTeken } from '$lib/components/explore/index/government';
 	import { lowerFirst } from '$lib/text/words';
 	import { korteDatum } from '$lib/text/datum';
-	import { naamVanId } from '$lib/bron/menselijk';
+	import { menselijkeNaam } from '$lib/bron/menselijk';
 	import { parseNodeId } from '$lib/vocabulary';
 	import { bronHref, indexHref } from '$lib/bron/href';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -69,18 +69,16 @@
 			ref: `commitments/${t.key}`,
 			inhoud
 		}));
-		const recent = record.authored
-			.filter((x) => typeof x.props?.date === 'string')
-			.sort((a, b) => String(b.props?.date).localeCompare(String(a.props?.date)))
-			.slice(0, 3);
-		for (const x of recent)
+		// Newest first from the API (/members/{key}/documents); an undated one has no line.
+		for (const x of record.authored.filter((x) => typeof x.props?.date === 'string'))
 			out.push({
 				id: x.id,
 				datum: String(x.props?.date),
 				teken: 'stuk',
 				soort: (x.id.split('/')[0] as import('$lib/vocabulary').Collection) ?? 'documents',
 				label: 'Ondertekend',
-				zin: naamVanId(x.id, x.display_name),
+				// Its name from its props: the API gives no display_name for a paper (its title).
+				zin: menselijkeNaam({ ...x, props: x.props ?? {} }),
 				href: bronHref(x.id, { keepMode: false, mode: 'read' }),
 				ref: x.id,
 				// A paper opens its text in place; another bron (a besluit) is its title.

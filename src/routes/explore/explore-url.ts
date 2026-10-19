@@ -9,6 +9,7 @@
 // the netwerk of chosen bronnen (?netwerk, ?uit, ?tussen), ?paneel (a phone's tab, read once)
 // and the position inside the text as the fragment.
 import { keyEcli, padHref, type Pad } from '$lib/bron/address';
+import { stbCitation } from '$lib/text/enacted-law';
 import { kamerstukName } from '$lib/components/parliamentary/kamerstuk';
 import { isIndexCategory, type IndexCategory } from '$lib/components/explore/index/categories';
 import { isContainerKind } from '$lib/graph/container-membership';
@@ -99,7 +100,9 @@ const SERIES_NAME = { stb: 'Stb.', stcrt: 'Stcrt.', trb: 'Trb.' } as const;
 export function nameOfPad(p: Pad): string {
 	switch (p.soort) {
 		case 'artikel':
-			return `Artikel ${p.nummer} van ${p.wet}`;
+			return `Artikel ${p.nummer} van ${stbCitation(p.wet) ?? p.wet}`;
+		case 'wet':
+			return stbCitation(p.wet) ?? padHref(p);
 		case 'kamerstuk':
 			return (
 				kamerstukName({

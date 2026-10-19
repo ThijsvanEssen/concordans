@@ -32,6 +32,7 @@
 		splitSummary
 	} from './judgment-text';
 	import { sourceName } from '../law-head';
+	import { withdrawal } from './judgment-withdrawn';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { neighborsOf } from '$lib/api/nodes';
 	import { getRelatedCases } from '$lib/api/records';
@@ -152,11 +153,14 @@
 		<!-- With numbers, all text stands in one column and the numbers hang left of it. -->
 		{@const numbered = items.some((it) => it.kind === 'rov')}
 		{@const conclusion = j.decision_kind === 'conclusie'}
-		{@const replacedBy = j.same_as ?? null}
+		<!-- Withdrawn by the Rechtspraak (API 0.79.62): a stub; the reader says why, without the
+		     empty blocks of text, parties and citations. -->
+		{@const withdrawnNotice = withdrawal(j, langeDatum)}
+		{@const replacedBy = withdrawnNotice ? null : (j.same_as ?? null)}
 		<!-- A replacement the dataset lacks: named, without a link (`replaced_by`, API 0.72). -->
-		{@const replacedOutside = replacedBy ? null : (j.replaced_by ?? null)}
+		{@const replacedOutside = replacedBy || withdrawnNotice ? null : (j.replaced_by ?? null)}
 		{@const alsoAs = data.same_as ?? []}
-		{@const outside = j.unresolved_citations ?? []}
+		{@const outside = withdrawnNotice ? [] : (j.unresolved_citations ?? [])}
 		<!-- The status in one sentence: kind, date, case number; the conclusie after it. -->
 		{@const statusWoorden = [
 			j.decision_kind && !conclusion ? capitalize(j.decision_kind) : null,
@@ -226,7 +230,15 @@
 					>. De samenvatting hieronder is die van het origineel.
 				</p>
 			{/if}
-			{#if replacedBy}
+			{#if withdrawnNotice}
+				<p class="reader-translation">
+					{withdrawnNotice.text}.{#if withdrawnNotice.replacement}
+						De uitspraak staat onder
+						<BronLink ref={withdrawnNotice.replacement.ref}
+							>{withdrawnNotice.replacement.ecli}</BronLink
+						>.{/if}
+				</p>
+			{:else if replacedBy}
 				<p class="reader-translation">
 					Vervangen publicatie. De uitspraak staat onder
 					<BronLink ref={j.replaced_by_id ?? `judgments/${ecliKey(replacedBy)}`}
@@ -440,7 +452,7 @@
 				</p>
 			{/if}
 			<Voetnoten noten={losseNoten} marge={false} kop="Voetnoten" />
-			{#if paragraphs.length === 0 && !hasSummary && !replacedBy && !replacedOutside}
+			{#if paragraphs.length === 0 && !hasSummary && !replacedBy && !replacedOutside && !withdrawnNotice}
 				<p class="reader-empty-text">Tekst niet in de gegevens.</p>
 			{/if}
 			<!-- The terms of HUDOC ask for the source under a text of the Court. -->

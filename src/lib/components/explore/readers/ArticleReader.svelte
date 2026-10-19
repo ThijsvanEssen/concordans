@@ -34,6 +34,7 @@
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { filterParams, type VerbondenFilter } from '$lib/verbonden/filter';
 	import { formatCount } from '$lib/text/getal';
+	import { enactedLawId, enactedLawStatus } from '$lib/text/enacted-law';
 	import { proposedTextOf, type ProposedText } from '$lib/verbonden/proposed-text';
 	import type { Row } from '$lib/verbonden/rows';
 	import { untrack } from 'svelte';
@@ -292,6 +293,9 @@
 			const until = langeDatum(shown.until);
 			return `Eerdere tekst, ${from || '?'}${until ? ` tot ${until}` : ''}`;
 		}
+		// An article of a law of the Staatsblad the BWB does not hold yet: enacted, not in force.
+		const enacted = enactedLawId(loaded?.article.official_id);
+		if (enacted) return enactedLawStatus(enacted);
 		const from = langeDatum(validFrom);
 		// A repealed article has no geldende tekst: its last version only records the repeal.
 		if (loaded?.article.repealed) {

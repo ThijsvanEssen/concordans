@@ -2,6 +2,7 @@
 // a law name (citation formats, graph labels) reads it through
 // `instrumentMetaStore` or `getInstrumentMeta`.
 
+import { enactedLawOfKey, lawNodeKey, STB_LAW } from '$lib/text/enacted-law';
 import { textOf } from '$lib/text/words';
 import { lawShortName } from '$lib/text/bw';
 import { writable, type Readable } from 'svelte/store';
@@ -23,7 +24,8 @@ export type InstrumentMeta = {
 
 /** The id a law is grouped under: its BWB id, or its own key when it has none (EU). */
 export function instrumentContainerId(input: { bwb_id?: unknown; key?: unknown }): string | null {
-	return textOf(input.bwb_id) ?? textOf(input.key);
+	const key = textOf(input.key);
+	return textOf(input.bwb_id) ?? (key && enactedLawOfKey(key)) ?? key;
 }
 
 const cache = new Map<string, InstrumentMeta>();
@@ -145,9 +147,11 @@ onForget(() => {
 /**
  * One instrument in full (`/api/instruments/{identifier}`): its names, dates, article count
  * and citations, asked for once per identifier. What it says of the names goes into the
- * cache, so a law outside the 200 of `primeInstrumentNames` is named too.
+ * cache, so a law outside the 200 of `primeInstrumentNames` is named too. A law of the
+ * Staatsblad by its node key (wet_stb_2026_56): STB-2026-56 is its publication there.
  */
-export function getInstrumentDetail(identifier: string): Promise<Schema<'InstrumentDetailDTO'>> {
+export function getInstrumentDetail(id: string): Promise<Schema<'InstrumentDetailDTO'>> {
+	const identifier = STB_LAW.test(id) ? lawNodeKey(id) : id;
 	return once(`instruments/${identifier}/detail`, () =>
 		unwrap(api.GET('/api/instruments/{identifier}', { params: { path: { identifier } } })).then(
 			(detail) => {

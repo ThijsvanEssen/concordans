@@ -510,9 +510,11 @@ function fromApi(parties: JudgmentParty[]): Participant[] {
  * All named participants of a judgment: its parties with their advocaten and
  * gemachtigden, and the raadslieden and A-G named in its first body paragraphs.
  * The parties come from the API (`parties`); a judgment the API has not read them
- * for gets them from the opening of its full text, or else its first subheading.
+ * for gets them from the opening of its full text, or else its first subheading. A judgment
+ * the Rechtspraak withdrew names no one (`withdrawn`, API 0.79.62).
  */
 export function judgmentParticipants(judgment: Schema<'JudgmentDTO'>): Participant[] {
+	if (judgment.withdrawn) return [];
 	const paragraphs = judgment.paragraphs ?? [];
 	// Null for a judgment normalized before the API read parties; empty when the kop names none.
 	if (judgment.parties) return extractParticipants(paragraphs, fromApi(judgment.parties));

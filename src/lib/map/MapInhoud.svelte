@@ -40,6 +40,15 @@
 	import { kindName } from '$lib/components/explore/law-head';
 	import { korteDatum } from '$lib/text/datum';
 	import { parseNodeId } from '$lib/vocabulary';
+	import { isNotFound } from '$lib/api/errors';
+	import { lawIdOf } from '$lib/graph/types';
+	import {
+		enactedLawId,
+		enactedLawOfKey,
+		enactedLawStatus,
+		isEnactedLawItem
+	} from '$lib/text/enacted-law';
+	import { MOVED_LAW } from '$lib/bron/moved-law';
 	import { citaatUit, rondCitaat } from './inhoud';
 	import type { MapItem } from './map';
 	import MapRegelingen from './MapRegelingen.svelte';
@@ -53,6 +62,7 @@
 	type Inhoud =
 		| { soort: 'laden' }
 		| { soort: 'niets' }
+		| { soort: 'vervangen' }
 		| { soort: 'artikel'; d: Artikel }
 		| { soort: 'uitspraak'; u: Uitspraak; samenvatting: string | null }
 		| {
@@ -74,14 +84,19 @@
 		const bekend = getArticleDetailByKey(key);
 		if (bekend) {
 			const d = await bekend;
-			const bwb = d.article.bwb_id ?? d.instrument?.celex ?? d.instrument?.bwb_id ?? '';
+			const bwb =
+				d.article.bwb_id ??
+				d.instrument?.celex ??
+				d.instrument?.bwb_id ??
+				enactedLawId(d.article.official_id) ??
+				'';
 			return { ...d, bwb, eigen: null };
 		}
 		const props = ((await getNodeFirst('articles', key)).node.props ?? {}) as Record<
 			string,
 			unknown
 		>;
-		const bwb = textOf(props.bwb_id) ?? textOf(props.celex);
+		const bwb = lawIdOf(props);
 		const nummer = textOf(props.article_number);
 		return bwb && nummer
 			? {
@@ -106,13 +121,21 @@
 			return u ? { soort: 'uitspraak', u, samenvatting: textOf(u.j.summary) } : { soort: 'niets' };
 		}
 		if (doel.collection === 'instruments') {
-			const d = await getInstrumentDetail(doel.key.toUpperCase());
-			const bwb = d.bwb_id ?? d.celex ?? doel.key.toUpperCase();
+			const enacted = enactedLawOfKey(doel.key);
+			const d = await getInstrumentDetail(enacted ?? doel.key.toUpperCase());
+			const bwb = d.bwb_id ?? d.celex ?? enacted ?? doel.key.toUpperCase();
 			const sinds = d.date_in_force ?? d.version_date_in_force;
 			return {
 				soort: 'wet',
 				bwb,
-				bij: [kindName(d.kind), sinds ? `in werking ${korteDatum(sinds)}` : null]
+				bij: [
+					kindName(d.kind),
+					enacted && !d.in_force
+						? enactedLawStatus(enacted)?.toLowerCase()
+						: sinds
+							? `in werking ${korteDatum(sinds)}`
+							: null
+				]
 					.filter(Boolean)
 					.join(', ')
 			};
@@ -140,8 +163,12 @@
 			.then((x) => {
 				if (!stale) inhoud = x;
 			})
-			.catch(() => {
-				if (!stale) inhoud = { soort: 'niets' };
+			.catch((e) => {
+				if (stale) return;
+				// A law of the Staatsblad, or an article of it, that the BWB now holds: the API lets
+				// it go, and its address goes on to the BWB (the server's 301).
+				inhoud =
+					isNotFound(e) && isEnactedLawItem(i.id) ? { soort: 'vervangen' } : { soort: 'niets' };
 			});
 		return () => (stale = true);
 	});
@@ -248,6 +275,9 @@
 	{:else if inhoud.soort === 'regels'}
 		<p class="tekst">{inhoud.tekst}</p>
 		<p class="verder"><TekstLink {href}>Lees verder</TekstLink></p>
+	{:else if inhoud.soort === 'vervangen'}
+		<p class="stil">{MOVED_LAW}.</p>
+		<p class="verder"><TekstLink {href}>Geldende tekst</TekstLink></p>
 	{:else}
 		<p class="stil">Tekst niet in de gegevens.</p>
 		<p class="verder"><TekstLink {href}>Lees verder</TekstLink></p>

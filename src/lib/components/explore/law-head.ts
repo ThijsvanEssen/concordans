@@ -2,6 +2,7 @@
 // the official text is. A Dutch law is a Wet on wetten.overheid.nl; an act of the EU is a
 // Verordening or a Richtlijn on EUR-Lex.
 import type { Schema } from '$lib/api/types';
+import { enactedLawId, enactedLawStatus } from '$lib/text/enacted-law';
 
 type Detail = Pick<
 	Schema<'InstrumentDetailDTO'>,
@@ -10,7 +11,8 @@ type Detail = Pick<
 type Dates = Pick<
 	Schema<'InstrumentDetailDTO'>,
 	'date_in_force' | 'version_date_in_force' | 'article_count' | 'inbound_citation_count'
->;
+> &
+	Partial<Pick<Schema<'InstrumentDetailDTO'>, 'status' | 'in_force' | 'official_id'>>;
 
 // The kinds of regeling the BWB knows (its `soort-regeling`, as the API gives it in lower
 // case), as a lawyer names them. A kind of the Caribbean Netherlands says so.
@@ -78,7 +80,9 @@ export function sourceName(url: string | null | undefined): string | null {
 /**
  * The head in sentences: 587 artikelen. In werking sinds 1 januari 1994. Geldende tekst:
  * versie van 15 augustus 2026. 15.108 keer aangehaald. The law came into force once; its
- * text in force is that of its latest version. On a peildatum only the count of that day.
+ * text in force is that of its latest version. On a peildatum only the count of that day. A
+ * law of the Staatsblad the BWB does not hold yet: Vastgesteld, nog niet in werking (Stb.
+ * 2026, 56).
  */
 export function lawHeadLine(
 	d: Dates | null,
@@ -97,6 +101,7 @@ export function lawHeadLine(
 	const n = peildatum ? count : d?.article_count || count;
 	return [
 		n > 0 ? `${formatCount(n)} artikelen.` : null,
+		enactedStatus(d),
 		d?.date_in_force ? `In werking sinds ${longDate(d.date_in_force)}.` : null,
 		!peildatum && version && version !== d?.date_in_force
 			? `Geldende tekst: versie van ${longDate(version)}.`
@@ -105,6 +110,14 @@ export function lawHeadLine(
 	]
 		.filter(Boolean)
 		.join(' ');
+}
+
+/** Of a law of the Staatsblad not in force yet (`status` vastgesteld), its status as a sentence. */
+function enactedStatus(d: Dates | null): string | null {
+	const law =
+		d?.status === 'vastgesteld' && d.in_force !== true ? enactedLawId(d.official_id) : null;
+	const status = law ? enactedLawStatus(law) : null;
+	return status ? `${status}.` : null;
 }
 
 /** The same treaty elsewhere (`same_treaty`): the BWB text of a Verdragenbank record, or the other way. */

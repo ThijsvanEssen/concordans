@@ -7,6 +7,7 @@ import { dossierOwnName, dossierUitProps, officialNumber } from '$lib/bron/dossi
 import { articleName } from '$lib/text/bw';
 import { isGeneriek } from '$lib/bron/generiek';
 import { maandJaar } from '$lib/text/datum';
+import { enactedLawId } from '$lib/text/enacted-law';
 import { COLLECTION_ROLE } from './collection-role';
 import {
 	isCollection,
@@ -202,10 +203,14 @@ function stukLabel(props: Record<string, unknown>): string | null {
 
 /**
  * The law of an article or a wet: its BWB id, or the CELEX number of a European one.
- * Every article carries it since API 0.9, each boek of the Burgerlijk Wetboek its own.
+ * Every article carries it since API 0.9, each boek of the Burgerlijk Wetboek its own. A law
+ * the BWB does not hold (yet) by its Staatsblad publication, STB-2026-56 (`official_id`); a
+ * publication itself carries an `official_id` too, and is no law.
  */
 export const lawIdOf = (props: Record<string, unknown> | null | undefined): string | null =>
-	textOf(props?.bwb_id) ?? textOf(props?.celex);
+	textOf(props?.bwb_id) ??
+	textOf(props?.celex) ??
+	(props?.publication_kind ? null : enactedLawId(props?.official_id));
 
 /**
  * The law and the address of an article in the article routes: its number, or for an
