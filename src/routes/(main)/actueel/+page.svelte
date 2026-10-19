@@ -59,6 +59,7 @@
 		KIND_LABEL,
 		atomHref,
 		daysOf,
+		wholeDays,
 		doorzochtVanaf,
 		errorPlace,
 		normalizeItem,
@@ -309,7 +310,10 @@
 
 	// Without a day asked, what lies ahead (an inwerkingtreding) waits for "komend".
 	const tot = $derived(until && until < today ? until : today);
-	const shown = $derived(ahead ? items : items.filter((i) => i.date <= tot));
+	// A day a page cut off waits for the next page, so its rows do not fold under the reader.
+	const shown = $derived(
+		wholeDays(ahead ? items : items.filter((i) => i.date <= tot), !!cursor && !doorzocht)
+	);
 	const days = $derived(daysOf(shown));
 
 	// The whole of each day loaded, under the same filters: a day a page cuts off is
