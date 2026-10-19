@@ -7,11 +7,13 @@ import {
 	withItems,
 	itemKey,
 	verschuif,
-	type Gedeeld,
+	type SharedMap,
 	type GroepNotities,
 	type Map,
 	type MapItem
 } from './map';
+import { keepStorage } from './persist';
+import { isDay } from '$lib/text/datum';
 
 const OPSLAG = 'concordans:mappen';
 const EERSTE = 'Gemarkeerd';
@@ -27,6 +29,22 @@ const leeg = (naam: string): Map => ({
 	volgorde: 'groep',
 	gewijzigd: nu()
 });
+
+/** A day as kept (`2026-10-12`), else none. */
+const day = (v: unknown) => (typeof v === 'string' && isDay(v) ? v : null);
+
+/** The bundels visited in this browser session, by id: a reload is no new visit. */
+const VISITED = 'concordans:bundels-bezocht';
+
+/** The bundels visited in this session; none where the browser keeps no session. */
+function visitedNow(): Set<string> {
+	try {
+		return new Set(JSON.parse(sessionStorage.getItem(VISITED) ?? '[]'));
+	} catch (e) {
+		if (import.meta.env.DEV) console.debug('sessionStorage (refused):', e);
+		return new Set();
+	}
+}
 
 /** The notes per group as kept, strings only. */
 const alleenTekst = (v: unknown): GroepNotities =>
@@ -65,7 +83,9 @@ function lees(): Stand {
 				volgorde: m.volgorde === 'eigen' ? 'eigen' : 'groep',
 				gewijzigd: String(m.gewijzigd || nu()),
 				notitie: typeof m.notitie === 'string' && m.notitie.trim() ? m.notitie : null,
-				groepNotities: alleenTekst(m.groepNotities)
+				groepNotities: alleenTekst(m.groepNotities),
+				since: day(m.since),
+				seen: day(m.seen)
 			}));
 			const actief = mappen.some((m) => m.id === raw.actief) ? raw.actief : mappen[0].id;
 			return { mappen, actief };
@@ -99,7 +119,10 @@ class Kaarten {
 	}
 	/** Changes the active map and remembers. */
 	#werk(f: (m: Map) => Partial<Map>) {
-		const id = this.actief.id;
+		this.#change(this.actief.id, f);
+	}
+	/** Changes a map by its id and remembers. */
+	#change(id: string, f: (m: Map) => Partial<Map>) {
 		this.#stand = {
 			...this.#stand,
 			mappen: this.#stand.mappen.map((m) => (m.id === id ? { ...m, ...f(m), gewijzigd: nu() } : m))
@@ -111,6 +134,7 @@ class Kaarten {
 	/** Kept, or no longer: what a box beside a lid or a row does. */
 	wissel(i: MapItem) {
 		const k = itemKey(i);
+		if (!this.heeft(i)) keepStorage();
 		this.#werk((m) => ({
 			items: m.items.some((x) => itemKey(x) === k)
 				? m.items.filter((x) => itemKey(x) !== k)
@@ -153,6 +177,31 @@ class Kaarten {
 		this.#werk(() => ({ notitie: t || null }));
 	}
 
+	/**
+	 * A visit to a bundel's own page, on `today`: once a browser session the day of the visit
+	 * before becomes the day new counts from, as Gevolgd counts a topic's. That day, or null
+	 * on the first visit. Not a change of the bundel: its day of change stays.
+	 */
+	visit(id: string, today: string): string | null {
+		const m = this.#stand.mappen.find((x) => x.id === id);
+		if (!m) return null;
+		const visited = visitedNow();
+		if (visited.has(id)) return m.since ?? null;
+		try {
+			sessionStorage.setItem(VISITED, JSON.stringify([...visited, id]));
+		} catch (e) {
+			// Without a session every load is a visit: what is new counts from the load before.
+			if (import.meta.env.DEV) console.debug('sessionStorage (refused):', e);
+		}
+		const since = m.seen ?? m.since ?? null;
+		this.#stand = {
+			...this.#stand,
+			mappen: this.#stand.mappen.map((x) => (x.id === id ? { ...x, since, seen: today } : x))
+		};
+		this.#bewaar();
+		return since;
+	}
+
 	// ── Maps ─────────────────────────────────────────────────────────────────
 	kies(id: string) {
 		if (!this.#stand.mappen.some((m) => m.id === id)) return;
@@ -166,6 +215,7 @@ class Kaarten {
 		while (!naam && namen.has(`Bundel ${n}`)) n++;
 		// A name a bundel has already is numbered on: `Gemarkeerd 2` beside `Gemarkeerd`.
 		const m = { ...leeg(naam?.trim() ? freeName(naam.trim(), namen) : `Bundel ${n}`), items };
+		if (items.length) keepStorage();
 		this.#stand = { mappen: [...this.#stand.mappen, m], actief: m.id };
 		this.#bewaar();
 		return m;
@@ -196,17 +246,30 @@ class Kaarten {
 		if (!this.heeft(i)) this.wissel(i);
 	}
 
-	// ── A shared map (a link) ─────────────────────────────────────────────
-	/** Into the active map, without doubles; its notes where the map has none. */
-	voegToe(g: Gedeeld) {
-		this.#werk((m) => ({
+	// ── A shared map (a link, a file) ─────────────────────────────────────
+	/** Into a map (the active one where none is named), without doubles; its notes where the
+	 *  map has none. */
+	voegToe(g: SharedMap, id = this.actief.id) {
+		keepStorage();
+		this.#change(id, (m) => ({
 			items: withItems(m.items, g.items),
 			notitie: m.notitie || g.notitie,
 			groepNotities: { ...g.groepNotities, ...m.groepNotities }
 		}));
 	}
+	/** In place of a map: its id kept, its name, items, order and notes the shared one's. */
+	replace(id: string, g: SharedMap) {
+		keepStorage();
+		this.#change(id, (m) => ({
+			naam: g.naam ?? m.naam,
+			items: [...g.items],
+			volgorde: g.volgorde,
+			notitie: g.notitie,
+			groepNotities: { ...g.groepNotities }
+		}));
+	}
 	/** As a map of its own, under its name, in its order, with its note. */
-	bewaarAlsMap(g: Gedeeld) {
+	bewaarAlsMap(g: SharedMap) {
 		this.nieuw(g.naam ?? undefined, g.items);
 		if (g.volgorde === 'eigen') this.ordening('eigen');
 		if (g.notitie) this.mapNotitie(g.notitie);

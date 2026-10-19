@@ -21,9 +21,10 @@ describe('the touch target', () => {
 	});
 
 	it("is on Gemarkeerd's own small buttons", () => {
-		const page = read('routes/(main)/gemarkeerd/+page.svelte');
-		for (const m of page.matchAll(/class="(notitie-knop[^"]*)"/g))
+		const groups = read('lib/map/MapGroups.svelte');
+		expect(groups).toMatch(/class="notitie-knop/);
+		for (const m of groups.matchAll(/class="(notitie-knop[^"]*)"/g))
 			expect(m[1]).toContain('raakvlak');
-		expect(page).toContain('class="wis raakvlak"');
+		expect(read('lib/map/MapView.svelte')).toContain('class="wis raakvlak"');
 	});
 });

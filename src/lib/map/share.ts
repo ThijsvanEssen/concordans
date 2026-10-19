@@ -1,7 +1,7 @@
 // The link of a map: the map in the fragment (`/gemarkeerd#m=…`), as JSON deflated into
 // base64url. A fragment never leaves the browser, so its items and notes reach no server,
 // no /render and no log; only who has the link reads it.
-import type { Gedeeld, GroepNotities, Map, MapItem } from './map';
+import type { SharedMap, GroepNotities, Map, MapItem } from './map';
 import { readItem } from './map';
 
 /** The fragment's key: `#m=…`. */
@@ -51,37 +51,25 @@ function groupNotes(notes: unknown, items: readonly MapItem[]): GroepNotities {
 	);
 }
 
-/** The fragment of a map's link: `#m=…`. */
-export async function shareFragment(
+/** What a link or a file holds of a map: its name, order, note, notes per group and items. */
+export function payloadOf(
 	m: Pick<Map, 'items' | 'naam' | 'volgorde' | 'notitie' | 'groepNotities'>
-): Promise<string> {
+): Payload {
 	const payload: Payload = { naam: m.naam, items: [...m.items] };
 	if (m.volgorde === 'eigen') payload.volgorde = 'eigen';
 	if (m.notitie?.trim()) payload.notitie = m.notitie.trim();
 	const notes = groupNotes(m.groepNotities, m.items);
 	if (Object.keys(notes).length) payload.groepNotities = notes;
-	const bytes = new TextEncoder().encode(JSON.stringify(payload));
-	return `#${KEY}=${toBase64Url(await pipe(bytes, new CompressionStream('deflate-raw')))}`;
+	return payload;
 }
 
 /**
- * The map of a link's fragment; null where the fragment holds none, BROKEN where it holds
- * one that does not read. An item in a broken form is left out, and counted for the page.
+ * The map a link or a file holds; null where it holds none that reads. An item in a broken
+ * form is left out, and counted for the page.
  */
-export async function sharedOfFragment(hash: string): Promise<Gedeeld | typeof BROKEN | null> {
-	const params = new URLSearchParams(hash.replace(/^#/, ''));
-	if (!params.has(KEY)) return null;
-	let payload: Partial<Payload>;
-	try {
-		const bytes = await pipe(
-			fromBase64Url(params.get(KEY)!),
-			new DecompressionStream('deflate-raw')
-		);
-		payload = JSON.parse(new TextDecoder().decode(bytes));
-	} catch {
-		return BROKEN;
-	}
-	if (!payload || !Array.isArray(payload.items)) return BROKEN;
+export function readPayload(value: unknown): SharedMap | null {
+	const payload = value as Partial<Payload> | null;
+	if (!payload || typeof payload !== 'object' || !Array.isArray(payload.items)) return null;
 	const items = payload.items.flatMap((v) => readItem(v) ?? []);
 	return {
 		naam: typeof payload.naam === 'string' && payload.naam.trim() ? payload.naam.trim() : null,
@@ -91,4 +79,30 @@ export async function sharedOfFragment(hash: string): Promise<Gedeeld | typeof B
 		groepNotities: groupNotes(payload.groepNotities, items),
 		skipped: payload.items.length - items.length
 	};
+}
+
+/** The fragment of a map's link: `#m=…`. */
+export async function shareFragment(
+	m: Pick<Map, 'items' | 'naam' | 'volgorde' | 'notitie' | 'groepNotities'>
+): Promise<string> {
+	const bytes = new TextEncoder().encode(JSON.stringify(payloadOf(m)));
+	return `#${KEY}=${toBase64Url(await pipe(bytes, new CompressionStream('deflate-raw')))}`;
+}
+
+/**
+ * The map of a link's fragment; null where the fragment holds none, BROKEN where it holds
+ * one that does not read. An item in a broken form is left out, and counted for the page.
+ */
+export async function sharedOfFragment(hash: string): Promise<SharedMap | typeof BROKEN | null> {
+	const params = new URLSearchParams(hash.replace(/^#/, ''));
+	if (!params.has(KEY)) return null;
+	try {
+		const bytes = await pipe(
+			fromBase64Url(params.get(KEY)!),
+			new DecompressionStream('deflate-raw')
+		);
+		return readPayload(JSON.parse(new TextDecoder().decode(bytes))) ?? BROKEN;
+	} catch {
+		return BROKEN;
+	}
 }

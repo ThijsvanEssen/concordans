@@ -8,7 +8,8 @@
 	// before this one has a corner in ink. On a phone the grid pans, its labels stay.
 	import { formatCount } from '$lib/text/getal';
 	import Caret from '$lib/components/ui/Caret.svelte';
-	import { maandNaam, langeDatum } from '$lib/text/datum';
+	import NewMark from '$lib/components/ui/NewMark.svelte';
+	import { maandNaam } from '$lib/text/datum';
 	import { jaarVanVak, type Keuze, type Kolom, type Rij, type Vak } from './kruiswoord';
 
 	export type KolomKop = {
@@ -233,9 +234,7 @@
 {/if}
 {#if heeftNieuw && nieuwSinds}
 	<p class="legenda">
-		<span
-			><span class="nieuwteken" aria-hidden="true"></span>nieuw sinds {langeDatum(nieuwSinds)}</span
-		>
+		<NewMark since={nieuwSinds} />
 	</p>
 {/if}
 
@@ -420,13 +419,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-	.nieuwteken {
-		display: inline-block;
-		margin-right: var(--s-2);
-		border-style: solid;
-		border-width: 0 9px 9px 0;
-		border-color: transparent var(--ink) transparent transparent;
 	}
 	.kort {
 		display: none;
