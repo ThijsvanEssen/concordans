@@ -1,61 +1,43 @@
 <script lang="ts">
-	import { plural } from '$lib/text/words';
 	// Gemarkeerd: the reader's own collections, built as Gevolgd is (Thijs, 10 Oct: "past nu nog
-	// totaal niet bij de rest"). The heading over both columns; the maps in the facet column, the
-	// active one (where Bewaar keeps) in weight; in the list column each map a group of the page
-	// (Sectie), its name the heading that opens and closes it, its ways to share it at the right,
-	// what it holds under it, its items as the rows of Bladeren. A map shared as a link (its
-	// fragment, share.ts: never in a request) stands at the top as a group of its own until it is kept or put aside.
-	import { formatCount } from '$lib/text/getal';
+	// totaal niet bij de rest"). The heading over both columns; the bundels in the facet column,
+	// the active one (where Bewaar keeps) in weight, with a file to open and all of them to keep
+	// as one; in the list column each bundel a section of the page (MapView, as on its own
+	// page). A bundel shared as a link (its fragment, share.ts: never in a request) or opened
+	// from a file stands at the top as a section of its own until it is kept, added, put in
+	// place of one or put aside.
 	import { page } from '$app/state';
 	import { navigate } from '$lib/util/address';
 	import { tick } from 'svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 	import { afterTick } from '$lib/util/after-tick';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
-	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import ConfirmButton from '$lib/components/ui/ConfirmButton.svelte';
-	import IndexRow from '$lib/components/explore/index/IndexRow.svelte';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { createCopier } from '$lib/components/ui/copy.svelte';
-	import { buildBronHref } from '$lib/bron/href';
-	import { download, safeFileName } from '$lib/verbonden/export';
+	import { download } from '$lib/verbonden/export';
+	import { formatCount } from '$lib/text/getal';
+	import { plural } from '$lib/text/words';
 	import { korteDatum, vandaag } from '$lib/text/datum';
-	import { bronLabel, parseNodeId } from '$lib/vocabulary';
-	import {
-		citaten,
-		csv,
-		groepen,
-		itemHref,
-		itemAddress,
-		isExternal,
-		SOURCE_KINDS,
-		netwerkHref,
-		itemKey,
-		type SharedMap,
-		type GroepNotities,
-		type Map,
-		type MapItem
-	} from '$lib/map/map';
-	import { kaart } from '$lib/map/map.svelte';
-	import { BROKEN, isOldLink, shareFragment, sharedOfFragment } from '$lib/map/share';
-	import { NEWER, mapFile, mapFileName, readMapFile, type FileMap } from '$lib/map/file';
 	import { ignore } from '$lib/api/errors';
-	import MapInhoud from '$lib/map/MapInhoud.svelte';
-	import AddSource from '$lib/map/AddSource.svelte';
+	import { itemKey, netwerkHref, type Map, type SharedMap } from '$lib/map/map';
+	import { kaart } from '$lib/map/map.svelte';
+	import { BROKEN, isOldLink, sharedOfFragment } from '$lib/map/share';
+	import { NEWER, mapFile, mapFileName, readMapFile, type FileMap } from '$lib/map/file';
 	import Aantekening from '$lib/map/Aantekening.svelte';
-	import MapRegelingen from '$lib/map/MapRegelingen.svelte';
-	import { onderWet, wetVanGroep } from '$lib/map/verbonden';
-	import Caret from '$lib/components/ui/Caret.svelte';
-	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+	import MapGroups from '$lib/map/MapGroups.svelte';
+	import MapView from '$lib/map/MapView.svelte';
 
-	const copier = createCopier();
+	const count = (n: number) => `${formatCount(n)} ${plural(n, 'bron', 'bronnen')}`;
+	const day = (iso: string) => korteDatum(vandaag(new Date(iso)));
+	/** The focus on a bundel's name, once the page has drawn it. */
+	const focusHead = (m: Map) =>
+		afterTick(() => document.querySelector<HTMLElement>(`#map-${m.id} .kop button`)?.focus());
 
-	// ── A shared map, from the address's fragment ──────────────────────────────
-	let gedeeld = $state<SharedMap | typeof BROKEN | null>(null);
-	/** A link of the older form (its map in the query) was opened: said as a broken one. */
+	// ── A shared bundel, from the address's fragment ───────────────────────────
+	let shared = $state<SharedMap | typeof BROKEN | null>(null);
+	const sharedOpen = new SvelteSet<string>();
+	/** A link of the older form (its bundel in the query) was opened: said as a broken one. */
 	let oldLink = $state(false);
 	$effect(() => {
 		const hash = page.url.hash;
@@ -65,25 +47,28 @@
 		}
 		let current = true;
 		sharedOfFragment(hash)
-			.then((shared) => {
-				if (current) gedeeld = shared;
+			.then((read) => {
+				if (current) shared = read;
 			})
 			.catch(ignore('gedeeld'));
 		return () => {
 			current = false;
 		};
 	});
-	/** A shared map kept or put aside: its link leaves the address, a reload asks no more. */
-	function gedeeldKlaar(hoe: 'map' | 'erbij' | 'niet') {
-		if (gedeeld && gedeeld !== BROKEN && hoe === 'map') kaart.bewaarAlsMap(gedeeld);
-		else if (gedeeld && gedeeld !== BROKEN && hoe === 'erbij') kaart.voegToe(gedeeld);
+	/** A shared bundel kept or put aside: its link leaves the address, a reload asks no more. */
+	function sharedDone(how: 'map' | 'add' | 'none') {
+		if (shared && shared !== BROKEN && how === 'map') kaart.bewaarAlsMap(shared);
+		else if (shared && shared !== BROKEN && how === 'add') kaart.voegToe(shared);
 		oldLink = false;
 		navigate('/gemarkeerd');
 		focusHead(kaart.actief);
 	}
 
 	// ── Bundels from a file, each kept, added or put in place of one as the reader chooses ──
-	type Opened = { name: string; maps: FileMap[] } | { name: string; error: string };
+	/** The rows open, by their item's key. */
+	type OpenRows = SvelteSet<string>;
+	type FromFile = { map: FileMap; open: OpenRows };
+	type Opened = { name: string; maps: FromFile[] } | { name: string; error: string };
 	let opened = $state<Opened | null>(null);
 	let fileField = $state<HTMLInputElement>();
 	const fileError = (name: string, read: typeof BROKEN | typeof NEWER) =>
@@ -98,7 +83,7 @@
 		opened =
 			read === BROKEN || read === NEWER
 				? { name: file.name, error: fileError(file.name, read) }
-				: { name: file.name, maps: read };
+				: { name: file.name, maps: read.map((map) => ({ map, open: new SvelteSet<string>() })) };
 	}
 	/** The bundel of this browser a bundel from a file stands for: by its id, else its name. */
 	const targetOf = (f: FileMap) =>
@@ -110,209 +95,52 @@
 		else if (how === 'add') kaart.voegToe(f, (target ?? kaart.actief).id);
 		else if (how === 'replace' && target) kaart.replace(target.id, f);
 		if (opened && 'maps' in opened) {
-			const rest = opened.maps.filter((x) => x !== f);
+			const rest = opened.maps.filter((x) => x.map !== f);
 			opened = rest.length ? { ...opened, maps: rest } : null;
 		}
 	}
 
-	const reeksen = (lijst: MapItem[], v: Map['volgorde']) =>
-		v === 'eigen' ? [{ groep: '', sleutel: '', items: [...lijst] }] : groepen(lijst);
-
-	// Each map's link, made when the map changes: deflating takes a moment, and a copy made
-	// after it would have lost the click that allows it (Safari).
-	const links = new SvelteMap<string, string>();
-	$effect(() => {
-		for (const m of kaart.mappen) {
-			const origin = page.url.origin;
-			shareFragment(m)
-				.then((hash) => {
-					// Only the map as it is now: an older one's link may come later.
-					if (kaart.mappen.includes(m)) links.set(m.id, `${origin}/gemarkeerd${hash}`);
-				})
-				.catch(ignore('gedeeld'));
-		}
-	});
-	const bestand = (m: Map) => safeFileName(m.naam) || 'Gemarkeerd';
-	const tel = (n: number) => `${formatCount(n)} ${plural(n, 'bron', 'bronnen')}`;
-	const dag = (iso: string) => korteDatum(vandaag(new Date(iso)));
-	const anker = (m: Map) => `map-${m.id}`;
-	/** The focus back on a bundel's heading, once the page has drawn it. */
-	const focusHead = (m: Map) =>
-		afterTick(() => document.querySelector<HTMLElement>(`#${anker(m)} .kop button`)?.focus());
-	/** The focus back on Andere bron toevoegen of a bundel, once the form has gone. */
-	const focusAdd = (m: Map) => afterTick(() => document.getElementById(`erbij-${m.id}`)?.focus());
-
-	/** A map's actions on its own: the store acts on the active map. */
-	function op(m: Map, f: () => void) {
-		if (kaart.actief.id !== m.id) kaart.kies(m.id);
-		f();
+	// ── The bundels ──────────────────────────────────────────────────────────
+	/** A bundel just made: it is named at once. */
+	let newId = $state<string | null>(null);
+	function newMap() {
+		const m = kaart.nieuw();
+		newId = m.id;
+		afterTick(() => document.getElementById(`map-${m.id}`)?.scrollIntoView());
 	}
-	async function naarMap(m: Map) {
+	async function toMap(m: Map) {
 		kaart.kies(m.id);
 		await tick();
-		document.getElementById(anker(m))?.scrollIntoView({ block: 'start' });
+		document.getElementById(`map-${m.id}`)?.scrollIntoView({ block: 'start' });
 	}
-
-	// ── An item's content: a click on its row opens it in place ───────────────
-	/** The rows open, by map and item (`<map>:<sleutel>`, `gedeeld:<sleutel>`). */
-	const geopend = new SvelteSet<string>();
-	const rijSleutel = (m: Map | null, i: MapItem) => `${m?.id ?? 'gedeeld'}:${itemKey(i)}`;
-	function wisselOpen(k: string) {
-		if (!geopend.delete(k)) geopend.add(k);
-	}
-	const allesOpen = (m: Map | null, items: MapItem[]) =>
-		items.length > 0 && items.every((i) => geopend.has(rijSleutel(m, i)));
-	function allesWissel(m: Map | null, items: MapItem[]) {
-		const open = !allesOpen(m, items);
-		for (const i of items) {
-			if (open) geopend.add(rijSleutel(m, i));
-			else geopend.delete(rijSleutel(m, i));
-		}
-	}
-
-	// ── A name: renamed in place; a new map is named at once ───────────────────
-	let naamgeven = $state<string | null>(null);
-	let verwijderen = $state<string | null>(null);
-	/** The field takes the whole name on opening, to type over it. */
-	const kiesAlles = (veld: HTMLInputElement) => veld.select();
-	function nieuw() {
-		const m = kaart.nieuw();
-		naamgeven = m.id;
-		afterTick(() => document.getElementById(anker(m))?.scrollIntoView());
-	}
-
-	// ── The notes: an item's, a group's, the map's, opened in place (Aantekening) ──
-	/** The note open, by its row's, group's or map's key. */
-	let notitieVan = $state<string | null>(null);
-	let groepNotitieVan = $state<string | null>(null);
-	let mapNotitieVan = $state<string | null>(null);
-
-	// ── A source outside Concordans, added in place under a map's groups ───────
-	let addingTo = $state<string | null>(null);
 </script>
 
 <RouteKop />
 
-{#snippet rij(i: MapItem, m: Map | null)}
-	{@const k = rijSleutel(m, i)}
-	{@const collection = parseNodeId(i.id)?.collection}
-	{@const external = isExternal(i)}
-	<IndexRow
-		title={i.kort}
-		href={external ? undefined : itemHref(i)}
-		open={geopend.has(k)}
-		onToggle={external && !i.url ? undefined : () => wisselOpen(k)}
-	>
-		{#snippet lead()}
-			{#if collection}<span class="row-id-main"
-					><KindGlyph {collection} size={12} />{bronLabel(collection)}</span
-				>{:else if external}<span class="row-id-main">{SOURCE_KINDS[i.kind ?? 'other']}</span>{/if}
-		{/snippet}
-		{#snippet body()}
-			{#if i.voluit && i.voluit !== i.kort}<span class="row-sub">{i.voluit}</span>{/if}
-			<Aantekening
-				tekst={i.notitie}
-				bij={i.kort}
-				bind:open={() => notitieVan === k, (v) => (notitieVan = v ? k : null)}
-				onBewaar={m ? (t) => op(m, () => kaart.notitie(i, t)) : undefined}
-			/>
-		{/snippet}
-		{#snippet aside()}
-			{#if m}
-				<span class="knoppen">
-					{#if !i.notitie && notitieVan !== k}
-						<button type="button" class="notitie-knop raakvlak" onclick={() => (notitieVan = k)}
-							>Aantekening</button
-						>
-					{/if}
-					<IconButton
-						label="{i.kort} een plaats omhoog"
-						onclick={() => op(m, () => kaart.schuif(i, -1))}>↑</IconButton
-					>
-					<IconButton
-						label="{i.kort} een plaats omlaag"
-						onclick={() => op(m, () => kaart.schuif(i, 1))}>↓</IconButton
-					>
-					<IconButton label="{i.kort} uit {m.naam} halen" onclick={() => op(m, () => kaart.weg(i))}
-						>×</IconButton
-					>
-				</span>
-			{/if}
-			{#if external}
-				{#if i.url}<TekstLink
-						href={i.url}
-						target="_blank"
-						rel="noopener noreferrer"
-						class="naar-lezer"
-						aria-label="{i.kort}, de bron">Bron ↗</TekstLink
-					>{/if}
-			{:else}
-				<TekstLink href={itemHref(i)} class="naar-lezer" aria-label="{i.kort} in de lezer"
-					>In de lezer</TekstLink
-				>
-			{/if}
-		{/snippet}
-		{#snippet detail()}
-			{#if external}
-				{#if i.url}<p class="adres">
-						<TekstLink href={i.url} target="_blank" rel="noopener noreferrer">{i.url}</TekstLink>
-					</p>{/if}
-			{:else}
-				<MapInhoud item={i} href={itemHref(i)} />
-			{/if}
-		{/snippet}
-	</IndexRow>
-{/snippet}
-
-{#snippet alles(m: Map | null, items: MapItem[])}
-	<TekstLink onclick={() => allesWissel(m, items)} aria-pressed={allesOpen(m, items)}
-		>{allesOpen(m, items) ? 'Alles inklappen' : 'Alles uitklappen'}</TekstLink
+<!-- A shared bundel's rows, all open or none, as a bundel's own (MapView). -->
+{#snippet allOf(open: OpenRows, items: SharedMap['items'])}
+	{@const all = items.length > 0 && items.every((i) => open.has(itemKey(i)))}
+	<TekstLink
+		onclick={() => {
+			for (const i of items) {
+				if (all) open.delete(itemKey(i));
+				else open.add(itemKey(i));
+			}
+		}}
+		aria-pressed={all}>{all ? 'Alles inklappen' : 'Alles uitklappen'}</TekstLink
 	>
 {/snippet}
 
-{#snippet lijst(alle: MapItem[], v: Map['volgorde'], m: Map | null, notities: GroepNotities)}
-	{#each reeksen(alle, v) as g (g.sleutel)}
-		{@const k = `${m?.id ?? 'gedeeld'}:${g.sleutel}`}
-		{@const bij = notities[g.sleutel]}
-		{#if g.groep}
-			{@const wet = wetVanGroep(g.items)}
-			{@const wetOpen = !!wet && geopend.has(`wet:${k}`)}
-			<div class="groep-kop">
-				<h3 class="groep">
-					{#if wet}<button
-							type="button"
-							class="groep-knop"
-							aria-expanded={wetOpen}
-							onclick={() => wisselOpen(`wet:${k}`)}>{g.groep}<Caret open={wetOpen} side /></button
-						>{:else}{g.groep}{/if}<span class="aantal">{g.items.length}</span>
-				</h3>
-				{#if m && !bij && groepNotitieVan !== k}
-					<button type="button" class="notitie-knop raakvlak" onclick={() => (groepNotitieVan = k)}
-						>Aantekening</button
-					>
-				{/if}
-			</div>
-			{#if wet && wetOpen}
-				<div class="wet-open">
-					<MapRegelingen laad={() => onderWet(wet)} />
-					<p class="verder">
-						<TekstLink href={buildBronHref(null, `instruments/${wet.toLowerCase()}`)}
-							>Wet in de lezer</TekstLink
-						>
-					</p>
-				</div>
-			{/if}
-			<Aantekening
-				tekst={bij}
-				bij={g.groep}
-				bind:open={() => groepNotitieVan === k, (v) => (groepNotitieVan = v ? k : null)}
-				onBewaar={m ? (t) => op(m, () => kaart.groepNotitie(g.sleutel, t)) : undefined}
-			/>
-		{/if}
-		<ul class="rijen">
-			{#each g.items as i (itemKey(i))}{@render rij(i, m)}{/each}
-		</ul>
-	{/each}
+<!-- A bundel from a link or a file: read only, what it holds as a bundel shows it. -->
+{#snippet held(g: SharedMap, open: OpenRows, from: string)}
+	<Aantekening tekst={g.notitie} bij={g.naam ?? 'de bundel'} />
+	<p class="meta">
+		<span
+			>{count(g.items.length)}{#if g.skipped}, {formatCount(g.skipped)} uit {from} niet te lezen{/if}</span
+		>
+		{#if g.items.length}{@render allOf(open, g.items)}{/if}
+	</p>
+	<MapGroups map={null} items={g.items} order={g.volgorde} notes={g.groepNotities} {open} />
 {/snippet}
 
 <div class="gemarkeerd blad blad__indeling">
@@ -320,7 +148,7 @@
 		<h1 class="blad__titel">Gemarkeerd</h1>
 	</header>
 
-	<!-- The maps, as Gevolgd lists its topics: a way to each; the active one in weight. -->
+	<!-- The bundels, as Gevolgd lists its topics: a way to each; the active one in weight. -->
 	<nav class="opzij" aria-label="Bundels">
 		<h2 class="opzij__kop">Bundels</h2>
 		<ul>
@@ -331,65 +159,53 @@
 						class="raakvlak"
 						class:is-active={m.id === kaart.actief.id}
 						aria-current={m.id === kaart.actief.id ? 'true' : undefined}
-						title="{tel(m.items.length)}, gewijzigd {dag(m.gewijzigd)}"
-						onclick={() => naarMap(m)}>{m.naam}</button
+						title="{count(m.items.length)}, gewijzigd {day(m.gewijzigd)}"
+						onclick={() => toMap(m)}>{m.naam}</button
 					><span class="n">{m.items.length}</span>
 				</li>
 			{/each}
 		</ul>
-		<p class="nieuw"><TekstLink onclick={nieuw}>Nieuwe bundel</TekstLink></p>
-		<p class="bestand">
+		<p class="ook">
+			<TekstLink onclick={newMap}>Nieuwe bundel</TekstLink>
 			<TekstLink onclick={() => fileField?.click()}>Open een bestand</TekstLink>
-			<input
-				bind:this={fileField}
-				type="file"
-				accept=".json,application/json"
-				hidden
-				aria-label="Bestand met bundels"
-				onchange={openFile}
-			/>
 			<TekstLink
 				onclick={() =>
 					download(mapFileName(kaart.mappen), mapFile(kaart.mappen), 'application/json')}
 				>Bewaar alles als bestand</TekstLink
 			>
 		</p>
+		<input
+			bind:this={fileField}
+			type="file"
+			accept=".json,application/json"
+			hidden
+			aria-label="Bestand met bundels"
+			onchange={openFile}
+		/>
 	</nav>
 
 	<div class="inhoud">
-		{#if gedeeld === BROKEN || oldLink}
+		{#if shared === BROKEN || oldLink}
 			<p class="vraag" role="status">
 				<span>Link onvolledig of beschadigd</span>
-				<TekstLink onclick={() => gedeeldKlaar('niet')}>Niet bewaren</TekstLink>
+				<TekstLink onclick={() => sharedDone('none')}>Niet bewaren</TekstLink>
 			</p>
-		{:else if gedeeld}
-			{@const shared = gedeeld}
-			<Sectie
-				title="Gedeelde bundel: {gedeeld.naam ?? 'zonder naam'}"
-				niveau={2}
-				inklapbaar={false}
-			>
+		{:else if shared}
+			{@const g = shared}
+			<Sectie title="Gedeelde bundel: {g.naam ?? 'zonder naam'}" niveau={2} inklapbaar={false}>
 				{#snippet naast()}
 					<span class="acties">
-						{#if shared.items.length}
-							<TekstLink href={netwerkHref(shared.items) ?? undefined}>Netwerk</TekstLink>
-							<TekstLink onclick={() => gedeeldKlaar('map')}>Bewaar als bundel</TekstLink>
-							<TekstLink onclick={() => gedeeldKlaar('erbij')}
+						{#if g.items.length}
+							<TekstLink href={netwerkHref(g.items) ?? undefined}>Netwerk</TekstLink>
+							<TekstLink onclick={() => sharedDone('map')}>Bewaar als bundel</TekstLink>
+							<TekstLink onclick={() => sharedDone('add')}
 								>Voeg toe aan {kaart.actief.naam}</TekstLink
 							>
 						{/if}
-						<TekstLink onclick={() => gedeeldKlaar('niet')}>Niet bewaren</TekstLink>
+						<TekstLink onclick={() => sharedDone('none')}>Niet bewaren</TekstLink>
 					</span>
 				{/snippet}
-				<Aantekening tekst={gedeeld.notitie} bij={gedeeld.naam ?? 'de bundel'} />
-				<p class="meta">
-					<span
-						>{tel(gedeeld.items.length)}{#if gedeeld.skipped}, {formatCount(gedeeld.skipped)} uit de link
-							niet te lezen{/if}</span
-					>
-					{#if gedeeld.items.length}{@render alles(null, gedeeld.items)}{/if}
-				</p>
-				{@render lijst(gedeeld.items, gedeeld.volgorde, null, gedeeld.groepNotities)}
+				{@render held(g, sharedOpen, 'de link')}
 			</Sectie>
 		{/if}
 
@@ -399,7 +215,7 @@
 				<TekstLink onclick={() => (opened = null)}>Sluiten</TekstLink>
 			</p>
 		{:else if opened}
-			{#each opened.maps as f, n (n)}
+			{#each opened.maps as { map: f, open }, n (n)}
 				{@const target = targetOf(f)}
 				<Sectie title="Bundel uit bestand: {f.naam ?? 'zonder naam'}" niveau={2} inklapbaar={false}>
 					{#snippet naast()}
@@ -421,205 +237,15 @@
 							<TekstLink onclick={() => fileDone(f, 'none')}>Niet openen</TekstLink>
 						</span>
 					{/snippet}
-					<Aantekening tekst={f.notitie} bij={f.naam ?? 'de bundel'} />
-					<p class="meta">
-						<span
-							>{tel(f.items.length)}{#if f.skipped}, {formatCount(f.skipped)} uit het bestand niet te
-								lezen{/if}</span
-						>
-					</p>
-					{@render lijst(f.items, f.volgorde, null, f.groepNotities)}
+					{@render held(f, open, 'het bestand')}
 				</Sectie>
 			{/each}
 		{/if}
 
 		{#each kaart.mappen as m (m.id)}
-			<Sectie title={m.naam} id={anker(m)} niveau={2} sleutel="map:{m.id}" standaardOpen>
-				{#snippet naast()}
-					<span class="acties">
-						{#if m.items.length}
-							<!-- The network of a map shows its notes: it is the map worked in from now on. -->
-							<TekstLink href={netwerkHref(m.items) ?? undefined} onclick={() => kaart.kies(m.id)}
-								>Netwerk</TekstLink
-							>
-							<TekstLink
-								disabled={!links.has(m.id)}
-								onclick={() => copier.copy(links.get(m.id) ?? '', `link-${m.id}`)}
-								>{copier.label(`link-${m.id}`, 'Kopieer link')}</TekstLink
-							>
-							<TekstLink
-								onclick={() =>
-									copier.copy(
-										citaten(m.items, m.volgorde, m.notitie, m.groepNotities),
-										`cit-${m.id}`
-									)}>{copier.label(`cit-${m.id}`, 'Citaten')}</TekstLink
-							>
-							<TekstLink
-								onclick={() =>
-									download(
-										`${bestand(m)}.csv`,
-										csv(m.items, (i) => itemAddress(i, page.url.origin), m.volgorde)
-									)}>CSV</TekstLink
-							>
-							<TekstLink
-								onclick={() => download(mapFileName([m]), mapFile([m]), 'application/json')}
-								>Bewaar als bestand</TekstLink
-							>
-						{/if}
-						<TekstMenu klein rechts label="Bundel {m.naam}" tekst="Bundel">
-							{#snippet inhoud(dicht)}
-								{#if m.id !== kaart.actief.id}
-									<button
-										type="button"
-										role="menuitem"
-										class="tekstmenu__item"
-										onclick={() => {
-											dicht();
-											kaart.kies(m.id);
-										}}>Bewaar hierin</button
-									>
-								{/if}
-								<button
-									type="button"
-									role="menuitem"
-									class="tekstmenu__item"
-									onclick={() => {
-										dicht();
-										naamgeven = m.id;
-									}}>Hernoem</button
-								>
-								<button
-									type="button"
-									role="menuitem"
-									class="tekstmenu__item"
-									onclick={() => {
-										dicht();
-										mapNotitieVan = m.id;
-									}}>{m.notitie ? 'Wijzig aantekening' : 'Aantekening bij de bundel'}</button
-								>
-								<button
-									type="button"
-									role="menuitem"
-									class="tekstmenu__item"
-									onclick={() => {
-										dicht();
-										verwijderen = m.id;
-									}}>Verwijder bundel</button
-								>
-							{/snippet}
-						</TekstMenu>
-					</span>
-				{/snippet}
-
-				{#if naamgeven === m.id}
-					<form
-						class="hernoem"
-						onsubmit={(e) => {
-							e.preventDefault();
-							const veld = e.currentTarget.elements.namedItem('naam') as HTMLInputElement;
-							kaart.hernoem(m.id, veld.value);
-							naamgeven = null;
-							focusHead(m);
-						}}
-					>
-						<!-- svelte-ignore a11y_autofocus -->
-						<input
-							name="naam"
-							autofocus
-							use:kiesAlles
-							aria-label="Naam van de bundel"
-							value={m.naam}
-							onblur={(e) => {
-								kaart.hernoem(m.id, e.currentTarget.value);
-								naamgeven = null;
-							}}
-							onkeydown={(e) => {
-								// The field's own Escape (isEscape leaves a field alone).
-								if (e.key === 'Escape') {
-									e.currentTarget.value = m.naam;
-									naamgeven = null;
-									focusHead(m);
-								}
-							}}
-						/>
-					</form>
-				{/if}
-				{#if verwijderen === m.id}
-					<p class="vraag">
-						<span>{m.naam} verwijderen, met {tel(m.items.length)}?</span>
-						<button
-							type="button"
-							class="btn"
-							onclick={() => {
-								kaart.verwijder(m.id);
-								verwijderen = null;
-							}}>Verwijder</button
-						>
-						<TekstLink onclick={() => (verwijderen = null)}>Niet verwijderen</TekstLink>
-					</p>
-				{/if}
-
-				<Aantekening
-					tekst={m.notitie}
-					bij={m.naam}
-					bind:open={() => mapNotitieVan === m.id, (v) => (mapNotitieVan = v ? m.id : null)}
-					onBewaar={(t) => op(m, () => kaart.mapNotitie(t))}
-				/>
-				<p class="meta">
-					<span
-						>{m.id === kaart.actief.id ? 'Actieve bundel, ' : ''}{tel(m.items.length)}, gewijzigd
-						{dag(m.gewijzigd)}</span
-					>
-					{#if m.items.length > 1}
-						<TekstMenu
-							klein
-							label="Volgorde van {m.naam}"
-							opties={[
-								{ waarde: 'groep' as const, label: 'Per wet of dossier' },
-								{ waarde: 'eigen' as const, label: 'Eigen volgorde' }
-							]}
-							waarde={m.volgorde}
-							onSelect={(v) => op(m, () => kaart.ordening(v))}
-						/>
-					{/if}
-					{#if m.items.length}{@render alles(m, m.items)}{/if}
-				</p>
-				{#if !m.items.length}
-					<p class="leeg stil">Nog niets bewaard.</p>
-				{:else}
-					{@render lijst(m.items, m.volgorde, m, m.groepNotities ?? {})}
-				{/if}
-				{#if addingTo === m.id}
-					<AddSource
-						groups={groepen(m.items).map((g) => ({ key: g.sleutel, name: g.groep }))}
-						onAdd={(i) => op(m, () => kaart.wissel(i))}
-						onReader={() => kaart.kies(m.id)}
-						onClose={() => {
-							addingTo = null;
-							focusAdd(m);
-						}}
-					/>
-				{:else}
-					<p class="erbij">
-						<TekstLink id="erbij-{m.id}" onclick={() => (addingTo = m.id)}
-							>Andere bron toevoegen</TekstLink
-						>
-					</p>
-				{/if}
-				{#if m.items.length}
-					<p class="voet">
-						<ConfirmButton
-							label="Wis de bundel"
-							confirmLabel="Ja, alles uit {m.naam} halen"
-							class="wis raakvlak"
-							onConfirm={() => op(m, () => kaart.wis())}
-						/>
-					</p>
-				{/if}
-			</Sectie>
+			<MapView {m} named={m.id !== newId} />
 		{/each}
 	</div>
-	<p class="sr-only" aria-live="polite">{copier.announcement}</p>
 </div>
 
 <style>
@@ -668,35 +294,13 @@
 		color: var(--ink-3);
 		font-size: var(--t-micro);
 	}
-	.opzij .nieuw {
-		margin: var(--s-2) 0 0;
-		font-size: var(--t-meta);
-	}
-	.opzij .bestand {
+	.opzij .ook {
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
 		gap: var(--s-1);
-		margin: var(--s-3) 0 0;
+		margin: var(--s-2) 0 0;
 		font-size: var(--t-meta);
-	}
-	/* Vervang asks once (ConfirmButton), in the letter of the links beside it (TekstLink). */
-	.acties :global(.vervang) {
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		font-family: var(--font-serif);
-		color: var(--ink);
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 3px;
-		cursor: pointer;
-	}
-	.acties :global(.vervang:hover),
-	.acties :global(.vervang:focus-visible) {
-		color: var(--ink);
-		text-decoration-color: currentColor;
 	}
 	.inhoud {
 		display: flex;
@@ -720,157 +324,6 @@
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}
-	.leeg {
-		margin: 0;
-	}
-	/* A law, dossier or judgment over its rows, as a day over Actueel's. */
-	.groep {
-		margin: 0;
-		padding-bottom: var(--s-1);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		font-weight: 600;
-	}
-	/* The group's head with Aantekening at its right, on hover and focus; always on touch. */
-	.groep-kop {
-		display: flex;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: var(--s-2);
-		margin: var(--s-3) 0 0;
-		border-bottom: 1px solid var(--rule-strong);
-	}
-	.groep-kop .notitie-knop {
-		margin-right: 0;
-		opacity: 0;
-	}
-	.groep-kop:hover .notitie-knop,
-	.groep-kop:focus-within .notitie-knop {
-		opacity: 1;
-	}
-	@media (hover: none) {
-		.groep-kop .notitie-knop {
-			opacity: 1;
-		}
-	}
-	/* A law's name opens what is connected to it, in place, as a row opens. */
-	.groep-knop {
-		display: inline-flex;
-		align-items: baseline;
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		color: inherit;
-		text-align: left;
-		cursor: pointer;
-	}
-	.groep-knop:hover {
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 3px;
-	}
-	.wet-open {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-		padding: var(--s-2) var(--s-2) var(--s-3);
-		background: var(--paper-2);
-	}
-	.wet-open .verder {
-		margin: 0;
-		font-size: var(--t-meta);
-	}
-	.aantal {
-		margin-left: var(--s-2);
-		font-size: var(--t-micro);
-		font-weight: 400;
-		color: var(--ink-3);
-	}
-	/* Bladeren's rows: the kind in the lead, the place as the title, the citation under it. */
-	.rijen {
-		--row-aside: 280px;
-		container-type: inline-size;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-	/* Where the list is too narrow for the citation beside the ways on (802 px, UX-toets 14 Oct
-	   #61: one word per line), the ways on go under the citation; on a phone the row stacks. */
-	@media (min-width: 769px) {
-		@container (max-width: 760px) {
-			.rijen :global(.row) {
-				grid-template-columns: var(--row-lead) minmax(0, 1fr);
-			}
-			.rijen :global(.row-aside) {
-				grid-column: 2;
-				justify-content: flex-start;
-			}
-		}
-	}
-	.row-id-main {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-1);
-	}
-	.row-sub {
-		display: block;
-		margin-top: var(--s-1);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	/* Aantekening, up, down and out at the end of the row, on hover and focus; always on a
-	   touch screen. */
-	.knoppen {
-		display: inline-flex;
-		align-items: center;
-		justify-content: flex-end;
-		opacity: 0;
-	}
-	/* The way to the reader, always in sight: the row's click opens it here. */
-	.rijen :global(.naar-lezer) {
-		font-size: var(--t-micro);
-		white-space: nowrap;
-	}
-	:global(.row-wrap:hover) .knoppen,
-	:global(.row-wrap:focus-within) .knoppen {
-		opacity: 1;
-	}
-	@media (hover: none) {
-		.knoppen {
-			opacity: 1;
-		}
-	}
-	.notitie-knop {
-		margin-right: var(--s-2);
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-		text-decoration: underline;
-		text-underline-offset: 2px;
-		cursor: pointer;
-	}
-	.notitie-knop:hover {
-		color: var(--ink);
-	}
-	.hernoem {
-		margin: 0;
-	}
-	.hernoem input {
-		box-sizing: border-box;
-		width: 100%;
-		max-width: 480px;
-		padding: var(--s-1) var(--s-2);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-family: var(--font-serif);
-		font-size: var(--t-h3);
-		font-weight: 800;
-	}
 	.vraag {
 		display: flex;
 		flex-wrap: wrap;
@@ -879,35 +332,24 @@
 		margin: 0;
 		font-size: var(--t-meta);
 	}
-	.voet {
-		margin: var(--s-2) 0 0;
-	}
-	.erbij {
-		margin: var(--s-3) 0 0;
-		font-size: var(--t-meta);
-	}
-	.adres {
-		margin: 0;
-		font-size: var(--t-meta);
-		overflow-wrap: anywhere;
-	}
-	.voet :global(.wis) {
+	/* Vervang asks once (ConfirmButton), in the letter of the links beside it (TekstLink). */
+	.acties :global(.vervang) {
 		padding: 0;
 		border: 0;
 		background: none;
 		font: inherit;
-		font-size: var(--t-micro);
-		color: var(--ink-3);
+		font-family: var(--font-serif);
+		color: var(--ink);
 		text-decoration: underline;
-		text-underline-offset: 2px;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
 		cursor: pointer;
 	}
-	.voet :global(.wis:hover) {
-		color: var(--ink);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
+	.acties :global(.vervang:hover),
+	.acties :global(.vervang:focus-visible) {
+		text-decoration-color: currentColor;
 	}
-	/* On a phone the maps stand above the groups: the column holds Nieuwe bundel. */
+	/* On a phone the bundels stand above the groups: the column holds Nieuwe bundel. */
 	@media (max-width: 768px) {
 		.opzij {
 			padding-top: 0;

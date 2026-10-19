@@ -61,17 +61,20 @@ describe('the map', () => {
 	it('shows a note of the reader in one form, an item’s, a group’s and the map’s (Thijs, 12 Oct)', () => {
 		// Aantekening sets the reader's own words apart from the law: the page draws no note
 		// of its own, no italic and no field beside it.
+		const groups = bron('lib/map/MapGroups.svelte');
+		const view = bron('lib/map/MapView.svelte');
 		const pagina = bron('routes/(main)/gemarkeerd/+page.svelte');
-		for (const tekst of [
-			'tekst={i.notitie}',
-			'tekst={bij}',
-			'tekst={m.notitie}',
-			'tekst={gedeeld.notitie}'
+		for (const [t, tekst] of [
+			[groups, 'tekst={i.notitie}'],
+			[groups, 'tekst={note}'],
+			[view, 'tekst={m.notitie}'],
+			[pagina, 'tekst={g.notitie}']
 		])
-			expect(pagina).toContain(tekst);
-		expect(pagina).not.toMatch(
-			/<textarea\b|class="[^"]*\b(?:map-)?notitie(?:-veld)?(?=["\s])|font-style:\s*italic/
-		);
+			expect(t).toContain(tekst);
+		for (const t of [groups, view, pagina])
+			expect(t).not.toMatch(
+				/<textarea\b|class="[^"]*\b(?:map-)?notitie(?:-veld)?(?=["\s])|font-style:\s*italic/
+			);
 		expect(bron('lib/map/Aantekening.svelte')).not.toMatch(/font-style:\s*italic|var\(--accent/);
 		// The network's card shows the same notes in the same form, read only (Thijs, 12 Oct).
 		const kaart = bron('lib/components/graph/CanvasHoverCard.svelte');
@@ -90,8 +93,18 @@ describe('the map', () => {
 		expect(inhoud).not.toMatch(/>\s*Heel artikel\s*</);
 		// The row's own way to the reader, in sight and not on hover: outside .knoppen.
 		const aside = /\{#snippet aside\(\)\}([\s\S]*?)\{\/snippet\}/.exec(
-			bron('routes/(main)/gemarkeerd/+page.svelte')
+			bron('lib/map/MapGroups.svelte')
 		)![1];
 		expect(aside.slice(aside.lastIndexOf('</span>'))).toContain('>In de lezer</TekstLink');
+	});
+
+	it('shows a bundel alike on Gemarkeerd and on its own page: one MapView, one MapGroups', () => {
+		const overview = bron('routes/(main)/gemarkeerd/+page.svelte');
+		const own = bron('routes/(main)/gemarkeerd/bundel/+page.svelte');
+		expect(overview).toMatch(/<MapView \{m\}/);
+		expect(own).toMatch(/<MapView m=\{shown\} standalone/);
+		// What a bundel holds is drawn in one place: no page draws its rows or groups itself.
+		for (const t of [overview, own]) expect(t).not.toMatch(/<IndexRow\b|groepen\(/);
+		expect(bron('lib/map/MapView.svelte')).toContain('<MapGroups');
 	});
 });

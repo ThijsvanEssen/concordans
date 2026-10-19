@@ -26,6 +26,12 @@
 		"description": "De bundels met bewaarde artikelleden, overwegingen en bronnen, met aantekeningen, als citaten of CSV."
 	},
 	{
+		"path": "/gemarkeerd/bundel",
+		"index": false,
+		"title": "Bundel, Concordans",
+		"description": "Een bundel uit Gemarkeerd op één pagina: de aantekening, de groepen en de bronnen met hun citeervorm, om te lezen en af te drukken."
+	},
+	{
 		"path": "/onderwerpen/overzicht",
 		"title": "Overzicht, Concordans",
 		"description": "De besluiten van de Kamers over een onderwerp, per soort, uitkomst, jaar en fractie."

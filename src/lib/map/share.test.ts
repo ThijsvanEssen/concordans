@@ -95,6 +95,6 @@ describe('the link of a map', () => {
 		const query =
 			/[?&]map=|searchParams\.(?:get|has)\('map(?:naam|notitie|groepen|volgorde)?'\)|\bmapParams\(/;
 		expect(BRONNEN.filter(({ text }) => query.test(text)).map((s) => s.path)).toEqual([]);
-		expect(bron('routes/(main)/gemarkeerd/+page.svelte')).toContain('shareFragment(');
+		expect(bron('lib/map/MapView.svelte')).toContain('shareFragment(');
 	});
 });
