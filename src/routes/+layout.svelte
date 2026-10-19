@@ -15,18 +15,20 @@
 	import { meldZijscroll } from '$lib/dev/zijscroll';
 	import { canonical } from '$lib/seo/routes';
 	import { LADEN_TITEL, serverKop } from '$lib/seo/server-head.svelte';
+	import { removeServerText } from '$lib/seo/server-text';
 
 	let { children }: { children: Snippet } = $props();
 
 	// The server gives a readable address its content in <main id="seo"> and its head
 	// (title, description, canonical, og:*, JSON-LD), each tag marked data-seo
 	// (~/Development/seo-html-ontwerp.md). The content goes before the app's first paint:
-	// the app shows the same, and the page has it once.
+	// the app shows the same, and the page has it once. On the start page it is the first
+	// paint, set as the app sets it (app.html): the app takes its place unmoved.
 	if (browser) {
 		// The app is here: the server's text goes, and so does the timer that would show it
 		// when the app did not come (app.html).
 		clearTimeout(window.__seoTerug);
-		document.getElementById('seo')?.remove();
+		removeServerText(document);
 	}
 	// Without a head from the server (the plain index.html, when the API is down) the fixed
 	// description of app.html gives way to the page's own.

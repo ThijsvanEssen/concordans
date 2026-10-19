@@ -19,7 +19,10 @@
 	import { HOME_SUMMARY } from '$lib/api/first-pages';
 	import type { TijdGroep } from '$lib/components/tijdlijn/tijdlijn';
 	import { page } from '$app/state';
+	import { afterNavigate } from '$app/navigation';
 	import Entrances from '$lib/components/home/Entrances.svelte';
+	import { START } from '$lib/components/home/start';
+	import { takeServerField } from '$lib/seo/server-text';
 
 	// Four ways in to search, each with the glyphs of what it holds.
 	const SCOPES: {
@@ -61,8 +64,18 @@
 	/** The lines of Actueel shown; the rest is in Actueel. */
 	const LINES_SHOWN = 6;
 
-	/** The query in the field from ?q=: a shared search, the SearchAction of the server's page. */
-	const query = page.url.searchParams.get('q') ?? '';
+	/** The query in the field from ?q=: a shared search, the SearchAction of the server's page;
+	 *  or what was typed in the server's field before the app came, with its focus. */
+	const typed = takeServerField();
+	const query = page.url.searchParams.get('q') || typed.query;
+	// After the first navigation, which sets the focus on the page itself.
+	afterNavigate(() => {
+		if (!typed.focused) return;
+		typed.focused = false;
+		const field = document.querySelector<HTMLInputElement>('main [data-search-field]');
+		field?.focus();
+		field?.setSelectionRange(field.value.length, field.value.length);
+	});
 	/** The days the summary spans: enough for the lines on a quiet week (first-pages.json). */
 	const SUMMARY_DAYS = HOME_SUMMARY.days;
 	/**
@@ -169,14 +182,8 @@
 
 <div class="home blad">
 	<header class="blad__kop intro">
-		<h1 class="blad__titel">Wetten, uitspraken en Kamerstukken in samenhang</h1>
-		<p class="lead">
-			Concordans is een onderzoeksinstrument dat parlementaire informatie verbindt met wetgeving,
-			officiële publicaties en rechtspraak, om inzicht te geven in de samenhang rond een onderwerp.
-			Het dient als eenvoudige wettenlezer, met de geldende en eerdere versies van elk artikel, en
-			als werkplaats voor eigen onderzoek. Wat gevonden is, kan in een bundel worden bewaard en
-			geordend.
-		</p>
+		<h1 class="blad__titel">{START.heading}</h1>
+		<p class="lead">{START.lead}</p>
 	</header>
 	<div class="main">
 		<div class="search">
@@ -208,9 +215,7 @@
 			<Search
 				scope={chosen?.kinds ?? null}
 				initial={query}
-				placeholder={chosen
-					? `Zoek in ${chosen.label.toLowerCase()}`
-					: 'Zoek een artikel, uitspraak of motie'}
+				placeholder={chosen ? `Zoek in ${chosen.label.toLowerCase()}` : START.placeholder}
 			/>
 		</div>
 		{#if lawNetwork}<Wetsnetwerk schets={lawNetwork} />{:else if networkLoading}<div
