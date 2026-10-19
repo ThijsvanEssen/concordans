@@ -49,7 +49,11 @@ export function pageName(node: TitledNode, apiTitle: string | null): string {
 	if (document) return document;
 	// A law of the Staatsblad by its name with its place, as the server's page has it: the
 	// new Wetboek van Strafvordering beside the one of the BWB.
-	const enacted = node.id && isEnactedLawItem(node.id) ? textOf(node.raw?.display_name) : null;
+	// Its articles keep the API's title (Art. 2.8.6 Wetboek van Strafvordering), as the server.
+	const enacted =
+		node.collection === 'instruments' && node.id && isEnactedLawItem(node.id)
+			? textOf(node.raw?.display_name)
+			: null;
 	if (enacted) return cut(enacted);
 	const title = textOf(apiTitle) ?? textOf(node.raw?.title);
 	if (title) return cut(zonderKopInKapitalen(title));
