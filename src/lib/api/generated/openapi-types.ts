@@ -13,7 +13,7 @@ export interface paths {
         };
         /**
          * One article with its references
-         * @description Looks up an article by `bwb_id` and `article_number`, adds its parent instrument, the number of judgments that cite it (`metadata.judgment_count`; `/cited-by` pages them), and the article references recorded on the article itself.
+         * @description Looks up an article by `bwb_id` and `article_number`, adds its parent instrument, the number of judgments that cite it (`metadata.judgment_count`; `/cited-by` pages them), and the article references recorded on the article itself; `successors` and `predecessors` give its place in a recodification (`TRANSPOSED_TO`) both ways.
          */
         get: operations["get_article_detail_api_articles__bwb_id___article_number__get"];
         put?: never;
@@ -155,7 +155,7 @@ export interface paths {
          * Paginated list of judgments
          * @description A paginated list of judgments with filters on court (the ECLI court code), tier (the Type of the court in the Instanties value list of the Rechtspraak: hoge_raad, raad_van_state, gerechtshof, rechtbank, tuchtcollege, andere_instantie, koninkrijksinstantie, …), court_kind (the kind of court within the tier: ambtenarengerecht, raad_van_beroep, gerecht_in_eerste_aanleg, …), area of law (`subject`), source, date range and a minimum citation count. `facets` counts the judgments under the filters per `tier` (without the tier and court_kind filters), per `court_kind` (without its own filter), per `source` (without the source filter), per year of `date` (without `from` and `to`), per area of law (`subjects`, without `subject`) and per `procedure` (without its filter). `facets=false` leaves them out (null): the pages after the first need none.
          *
-         *     paged list, without the judgments known only because something cites them (stubs: no date, court or text) unless `include_stubs=true`, and without a publication of a decision that another publication replaces (`same_as`; `q` its exact ECLI finds it); `q` (a query that is the whole of an ECLI or of a case number, `18/04298`, gives the judgments with it and only those; other text is searched), `court` (ECLI code), `tier` (the `Type` of the court in the Instanties list, one of `core.courts.TIERS`: `hoge_raad`, `raad_van_state`, `centrale_raad_van_beroep`, `college_van_beroep_bedrijfsleven`, `parket` (the conclusions of the Parket bij de Hoge Raad), `gerechtshof`, `rechtbank`, `kantongerecht`, `tuchtcollege`, `andere_instantie`, `koninkrijksinstantie`, `kroon`, `buitenlandse_instantie`, `hvj_eu`, `ehrm`), `court_kind` (the kind of court within the tier, one of `core.courts.COURT_KINDS`: `ambtenarengerecht`, `raad_van_beroep`, `gerecht_in_eerste_aanleg`, …; a tier of one kind of court is its own; see pipelines (docs/pipelines.md#courts)), `source`, `subject` (an area of law, one of `subjects` as written: `Strafrecht`, `Bestuursrecht; Belastingrecht`), `subject_area` (a main area of law, the part of a subject before its first `;`: `Bestuursrecht` holds `Bestuursrecht` and `Bestuursrecht; Belastingrecht` alike), `from`, `to`, `cited_by_min`, `sort` (`date_desc`, `date_asc`, `citation_count`); each item has `tier`, `court_kind`, `subjects` (the areas of law of the source, empty when it gives none), `names` (what lawyers call it, `Haviltex`; empty for most), `decision_kind` (`arrest`, `vonnis`, `beschikking`, `uitspraak`, `conclusie`, `prejudiciële beslissing`, or null; see pipelines (docs/pipelines.md#rechtspraak)), `series_id` and `series_size`, `inbound_citation_count` (the judgments that cite it or a publication `SAME_AS` it) and `outbound_citation_count` (the judgments it cites); `q` also matches `names`. `facets` counts the judgments under the filters, each without its own: `tier` (`value`, `count`, most first; without the `tier` and `court_kind` filters), `court_kind` (the same, without the `court_kind` filter), `source` (`value` `rechtspraak`, `echr`, `count`, most first; without the `source` filter) `year` (`value` the year of `date`, `count`, oldest first after null, no date; without `from` and `to`), `subjects` (per area of law as written, `Strafrecht`, `Bestuursrecht; Belastingrecht`, most first; a judgment counts for each of its areas; without the `subject` filter), `subject_area` (per main area of law, most first; a judgment counts once for each of its main areas; with `narrower`, the subjects of the source under it, `value` as written for the `subject` filter, `label` the part after its first `;`, `count`; the whole tree without the `subject_area` and `subject` filters) and `procedure` (per Rechtspraak `psi:procedure` as written, `Hoger beroep`, `Cassatie`, null for none, most first; without the `procedure` filter, which filters on that value); the counts of `tier`, `court_kind`, `source` and `year` read an index, not the judgments; the facets and `total` are kept an hour whatever the data does (`db/version_cache.py`), the page itself is read fresh; `facets=false` gives `facets` null and counts nothing but `total`, the choice for the pages after the first
+         *     paged list, without the judgments known only because something cites them (stubs: no date, court or text) unless `include_stubs=true`, and without a publication of a decision that another publication replaces (`same_as`; `q` its exact ECLI finds it); `q` (a query that is the whole of an ECLI or of a case number, `18/04298`, gives the judgments with it and only those; other text is searched), `court` (ECLI code), `tier` (the `Type` of the court in the Instanties list, one of `core.courts.TIERS`: `hoge_raad`, `raad_van_state`, `centrale_raad_van_beroep`, `college_van_beroep_bedrijfsleven`, `parket` (the conclusions of the Parket bij de Hoge Raad), `gerechtshof`, `rechtbank`, `kantongerecht`, `tuchtcollege`, `andere_instantie`, `koninkrijksinstantie`, `kroon`, `buitenlandse_instantie`, `hvj_eu`, `ehrm`), `court_kind` (the kind of court within the tier, one of `core.courts.COURT_KINDS`: `ambtenarengerecht`, `raad_van_beroep`, `gerecht_in_eerste_aanleg`, …; a tier of one kind of court is its own; see pipelines (docs/pipelines.md#courts)), `source`, `subject` (an area of law, one of `subjects` as written: `Strafrecht`, `Bestuursrecht; Belastingrecht`), `subject_area` (a main area of law, the part of a subject before its first `;`: `Bestuursrecht` holds `Bestuursrecht` and `Bestuursrecht; Belastingrecht` alike), `from`, `to`, `cited_by_min`, `sort` (`date_desc`, `date_asc`, `citation_count`); each item has `tier`, `court_kind`, `subjects` (the areas of law of the source, empty when it gives none), `names` (what lawyers call it, `Haviltex`; empty for most), `decision_kind` (`arrest`, `vonnis`, `beschikking`, `uitspraak`, `conclusie`, `prejudiciële beslissing`, or null; see pipelines (docs/pipelines.md#rechtspraak)), `series_id` and `series_size`, `inbound_citation_count` (the judgments that cite it or a publication `SAME_AS` it) and `outbound_citation_count` (the judgments it cites); `q` also matches `names`. `facets` counts the judgments under the filters, each without its own: `tier` (`value`, `count`, most first; without the `tier` and `court_kind` filters), `court_kind` (the same, without the `court_kind` filter), `source` (`value` `rechtspraak`, `echr`, `cjeu`, `count`, most first; without the `source` filter) `year` (`value` the year of `date`, `count`, oldest first after null, no date; without `from` and `to`), `subjects` (per area of law as written, `Strafrecht`, `Bestuursrecht; Belastingrecht`, most first; a judgment counts for each of its areas; without the `subject` filter), `subject_area` (per main area of law, most first; a judgment counts once for each of its main areas; with `narrower`, the subjects of the source under it, `value` as written for the `subject` filter, `label` the part after its first `;`, `count`; the whole tree without the `subject_area` and `subject` filters) and `procedure` (per Rechtspraak `psi:procedure` as written, `Hoger beroep`, `Cassatie`, null for none, most first; without the `procedure` filter, which filters on that value); the counts of `tier`, `court_kind`, `source` and `year` read an index, not the judgments; the facets and `total` are kept an hour whatever the data does (`db/version_cache.py`), the page itself is read fresh; `facets=false` gives `facets` null and counts nothing but `total`, the choice for the pages after the first
          */
         get: operations["list_judgments_api_judgments_get"];
         put?: never;
@@ -177,7 +177,7 @@ export interface paths {
          * One judgment with the articles it cites
          * @description Looks a judgment up by ECLI, follows its REFERS_TO edges to articles and adds each article with its parent instrument.
          *
-         *     the judgment with its `official_url` (uitspraken.rechtspraak.nl by ECLI; HUDOC by item id, `external_id`, for an ECHR judgment; null for a stub of another court), its `paragraphs` (each with a `paragraph_id` for deep links, its printed `number`, its `kind` (`heading`, `subheading`, `body`, `toc`: a line of a table of contents, `signature`: the closing lines that sign a conclusion), of a paragraph without a number that goes on with a numbered consideration `continues` (its `paragraph_id`), and the `citations` in it of an article or a judgment, one per occurrence with `start` and `end`, `kind` `article` or `judgment` and `target.collection` to match; the first is the kop when the judgment has one), its `footnotes` (`label` as printed, `paragraph_id` the paragraph whose marker points to it, null when none does, `at` where that marker stands in the paragraph's `text`, null when not known, `text`, and the `citations` in that text as a paragraph has them), its `parties` (`name`, `role`, `roles` (every role the kop names, in its order: geïntimeerde and appellant in incidenteel hoger beroep), `role_stated` (a derived role is never the other side's for a public authority: the prosecution is `Officier van justitie`), `side` `first`/`second`/`other`, `alias` ("(hierna: X)", and "Partijen worden hierna A, B en C genoemd"), `representatives` (`name`, `role` `advocaat`, `gemachtigde` or, in a criminal case, `raadsman`, `place`, `capacity`: from the kop and the account of the procedure, data model (docs/data-model.md#judgment)); a party the procedure hears "als partij" that the kop does not name comes last, `side` `other`; null when the judgment was normalized before parties were read, empty when none are named), the articles its `REFERS_TO` edges point at with their parent instrument (`articles`), and the same articles as `cited_articles` with the paragraphs that cite them, the lid or onderdeel named and the snippet of the strongest mention: `snippet_paragraph_id` the paragraph it is from (of a citation in a footnote, the paragraph that refers to it, and `footnote` the footnote's `label`; null for a paragraph's own text), `text` the citation as written and `start`/`end` where the linker found it in the snippet (null when the judgment was normalized again since it was linked). Citations are read from the stored edges; nothing is detected per request. `judgment.names` and `decision_kind` as in the list; `summary` is the Dutch inhoudsindicatie and `summary_en` an English one: an English translation (its own ECLI, `translation_of` the ECLI of the Dutch judgment) has the Dutch `summary` of that judgment, and that judgment the English `summary_en` (see data-model (docs/data-model.md#judgment)). `judgment.series_id` and `series_size` name the series of parallel cases it is one of (the same court, day and text), `series` the other judgments of it. `conclusions` are the conclusions its metadata names (`conclusion_eclis`), in that order: `ecli`, `author` (the A-G or P-G), `role` and `date` as the conclusion's light node gives them (`lg_judgment_light`), so they read as the conclusion's own page; one the graph lacks is its `ecli` alone. `cited_judgments` are the judgments its text cites (`REFERS_TO`: by ECLI, LJN or application number), newest first, each with the places that cite it as `cited_articles` has them (`paragraph_ids`, `paragraph_numbers`, `snippet`, `snippet_paragraph_id`, `footnote`, `text`, `start`, `end`, `confidence`, `mention_count`; empty for an edge linked before places were kept); `judgment.same_as` is, for a replaced publication, the ECLI of the one kept (for a language version of an ECHR decision without an ECLI, the HUDOC item id of the version kept), and `same_as` the other publications of the decision (`SAME_AS`, either way); `related_to` the connected cases (`RELATED_TO`, as between dossiers, either way: those its summary names, "Samenhang met 24/03860 E", "Zie ook: ECLI:…", and those whose summary names it), each once with its `links`: per edge its `direction` (`outbound`: this judgment's summary names it, `inbound`: its summary names this one, outbound first), `basis` (`summary_text`) and `text`, the sentence that names it; `judgment.replaced_by` the ECLI `dcterms:isReplacedBy` names, loaded or not. `judgment.advocate_general` and `advocate_general_role` (the role it is signed in: `advocaat-generaal`, `waarnemend advocaat-generaal`, `plaatsvervangend procureur-generaal`, `plaatsvervangend advocaat-generaal`; null when not clear) is, for a conclusion, who wrote it (`T. Hartlief`; null for a judgment); `published_on`, the "Datum publicatie" of uitspraken.rechtspraak.nl (null for another source or without a published document). How it ended (data model (docs/data-model.md#judgment)): `judgment.outcome` (`verworpen`, `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`; of the ECHR `schending` or `geen schending`) with `outcome_text`, the clause of the decision that says it ("verwerpt het beroep"), and `outcome_paragraph_id`; of a conclusion `conclusion_outcome` (`verwerping`, `vernietiging`, `vernietiging en verwijzing`, `niet-ontvankelijkverklaring`, `gegrondverklaring`, `ongegrondverklaring`, `beantwoording`) with `conclusion_outcome_text` and `conclusion_outcome_paragraph_id`; of the ECHR `echr_findings`, per article `{article, protocol, combined_with, finding, aspect, text}`; null (empty) when the text does not say it. Each of `conclusions` has the `outcome` and `outcome_text` of that conclusion (what it proposes)
+         *     the judgment with its `official_url` (uitspraken.rechtspraak.nl by ECLI; HUDOC by item id, `external_id`, for an ECHR judgment; EUR-Lex by CELEX number, `external_id`, for one of a court of the EU; null for a stub of another court), its `paragraphs` (each with a `paragraph_id` for deep links, its printed `number`, its `kind` (`heading`, `subheading`, `body`, `toc`: a line of a table of contents, `signature`: the closing lines that sign a conclusion), of a paragraph without a number that goes on with a numbered consideration `continues` (its `paragraph_id`), and the `citations` in it of an article or a judgment, one per occurrence with `start` and `end`, `kind` `article` or `judgment` and `target.collection` to match; the first is the kop when the judgment has one), its `footnotes` (`label` as printed, `paragraph_id` the paragraph whose marker points to it, null when none does, `at` where that marker stands in the paragraph's `text`, null when not known, `text`, and the `citations` in that text as a paragraph has them), its `parties` (`name`, `role`, `roles` (every role the kop names, in its order: geïntimeerde and appellant in incidenteel hoger beroep), `role_stated` (a derived role is never the other side's for a public authority: the prosecution is `Officier van justitie`), `side` `first`/`second`/`other`, `alias` ("(hierna: X)", and "Partijen worden hierna A, B en C genoemd"), `representatives` (`name`, `role` `advocaat`, `gemachtigde` or, in a criminal case, `raadsman`, `place`, `capacity`: from the kop and the account of the procedure, data model (docs/data-model.md#judgment)); a party the procedure hears "als partij" that the kop does not name comes last, `side` `other`; null when the judgment was normalized before parties were read, empty when none are named), the articles its `REFERS_TO` edges point at with their parent instrument (`articles`), and the same articles as `cited_articles` with the paragraphs that cite them, the lid or onderdeel named and the snippet of the strongest mention: `snippet_paragraph_id` the paragraph it is from (of a citation in a footnote, the paragraph that refers to it, and `footnote` the footnote's `label`; null for a paragraph's own text), `text` the citation as written and `start`/`end` where the linker found it in the snippet (null when the judgment was normalized again since it was linked). Citations are read from the stored edges; nothing is detected per request. `judgment.names` and `decision_kind` as in the list; `summary` is the Dutch inhoudsindicatie and `summary_en` an English one: an English translation (its own ECLI, `translation_of` the ECLI of the Dutch judgment) has the Dutch `summary` of that judgment, and that judgment the English `summary_en` (see data-model (docs/data-model.md#judgment)). `judgment.series_id` and `series_size` name the series of parallel cases it is one of (the same court, day and text), `series` the other judgments of it. `conclusions` are the conclusions its metadata names (`conclusion_eclis`), in that order: `ecli`, `author` (the A-G or P-G), `role` and `date` as the conclusion's light node gives them (`lg_judgment_light`), so they read as the conclusion's own page; one the graph lacks is its `ecli` alone. `cited_judgments` are the judgments its text cites (`REFERS_TO`: by ECLI, LJN or application number), newest first, each with the places that cite it as `cited_articles` has them (`paragraph_ids`, `paragraph_numbers`, `snippet`, `snippet_paragraph_id`, `footnote`, `text`, `start`, `end`, `confidence`, `mention_count`; empty for an edge linked before places were kept); `judgment.same_as` is, for a replaced publication, the ECLI of the one kept (for a language version of an ECHR decision without an ECLI, the HUDOC item id of the version kept), and `same_as` the other publications of the decision (`SAME_AS`, either way); `related_to` the connected cases (`RELATED_TO`, as between dossiers, either way: those its summary names, "Samenhang met 24/03860 E", "Zie ook: ECLI:…", and those whose summary names it), each once with its `links`: per edge its `direction` (`outbound`: this judgment's summary names it, `inbound`: its summary names this one, outbound first), `basis` (`summary_text`) and `text`, the sentence that names it; `judgment.replaced_by` the ECLI `dcterms:isReplacedBy` names, loaded or not. `judgment.advocate_general` and `advocate_general_role` (the role it is signed in: `advocaat-generaal`, `waarnemend advocaat-generaal`, `plaatsvervangend procureur-generaal`, `plaatsvervangend advocaat-generaal`; null when not clear) is, for a conclusion, who wrote it (`T. Hartlief`; null for a judgment); `published_on`, the "Datum publicatie" of uitspraken.rechtspraak.nl (null for another source or without a published document). How it ended (data model (docs/data-model.md#judgment)): `judgment.outcome` (`verworpen`, `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`; of the ECHR `schending` or `geen schending`) with `outcome_text`, the clause of the decision that says it ("verwerpt het beroep"), and `outcome_paragraph_id`; of a conclusion `conclusion_outcome` (`verwerping`, `vernietiging`, `vernietiging en verwijzing`, `niet-ontvankelijkverklaring`, `gegrondverklaring`, `ongegrondverklaring`, `beantwoording`) with `conclusion_outcome_text` and `conclusion_outcome_paragraph_id`; of the ECHR `echr_findings`, per article `{article, protocol, combined_with, finding, aspect, text}`; null (empty) when the text does not say it. Each of `conclusions` has the `outcome` and `outcome_text` of that conclusion (what it proposes)
          */
         get: operations["get_judgment_detail_api_judgments__ecli__get"];
         put?: never;
@@ -2748,6 +2748,16 @@ export interface components {
             downstream_implications: components["schemas"]["ArticleRelationshipWithType"][];
             /** Scope Articles */
             scope_articles: components["schemas"]["ScopeArticleReference"][];
+            /**
+             * Successors
+             * @description In the new law: the articles that take this article's place in a recodification (`TRANSPOSED_TO`), as an official source gives them.
+             */
+            successors: components["schemas"]["ArticleSuccessionDTO"][];
+            /**
+             * Predecessors
+             * @description Formerly: the articles of the old law whose place this article takes (`TRANSPOSED_TO` read backwards).
+             */
+            predecessors: components["schemas"]["ArticleSuccessionDTO"][];
         };
         /**
          * ArticleExplanationDTO
@@ -3082,7 +3092,7 @@ export interface components {
              * Relation
              * @enum {string}
              */
-            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
+            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
             target_article: components["schemas"]["ArticleRelationDTO"];
             /** Semantic Type */
             semantic_type: string | null;
@@ -3123,6 +3133,44 @@ export interface components {
              * @description `intref` or `extref`, as on the reference itself.
              */
             reference_kind: string | null;
+        };
+        /**
+         * ArticleSuccessionDTO
+         * @description The other article of a recodification (``TRANSPOSED_TO``): the article of the new law
+         *     that takes this one's place, or the article of the old law whose place this one takes.
+         */
+        ArticleSuccessionDTO: {
+            article: components["schemas"]["ArticleRelationDTO"];
+            /**
+             * In Force
+             * @description Whether the law of `article` is in force: false for a new law that is enacted and not in force yet.
+             */
+            in_force: boolean | null;
+            /**
+             * Status
+             * @description The status of the law of `article`: `vastgesteld`, …
+             */
+            status: string | null;
+            /**
+             * Parts
+             * @description Each part of the old article the source places in the new article.
+             */
+            parts: components["schemas"]["SuccessionPartDTO"][];
+            /**
+             * Basis
+             * @description What the link rests on: `transposition_table`.
+             */
+            basis: string | null;
+            /**
+             * Source
+             * @description The identifier of the source: `blg-1081574`.
+             */
+            source: string | null;
+            /**
+             * Source Url
+             * @description The source on zoek.officielebekendmakingen.nl.
+             */
+            source_url: string | null;
         };
         /**
          * ArticleSummaryDTO
@@ -6050,7 +6098,7 @@ export interface components {
             /** To Id */
             to_id: string | null;
             /** Relation */
-            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
+            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
             /** Status */
             status: string | null;
             /** Meta */
@@ -6748,7 +6796,7 @@ export interface components {
              * @default IMPLEMENTS
              * @enum {string}
              */
-            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
+            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
             /** Confidence */
             confidence: number | null;
             /**
@@ -9334,7 +9382,7 @@ export interface components {
              * @default REFERS_TO
              * @enum {string}
              */
-            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
+            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
             /** Confidence */
             confidence: number | null;
             /**
@@ -10756,7 +10804,7 @@ export interface components {
          */
         NeighborBucketDTO: {
             /** Relation */
-            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
+            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
             /**
              * Direction
              * @enum {string}
@@ -10829,7 +10877,7 @@ export interface components {
             /** Edge Id */
             edge_id: string;
             /** Relation */
-            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
+            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
             /**
              * Direction
              * @enum {string}
@@ -10933,7 +10981,7 @@ export interface components {
             /** Target */
             target: string;
             /** Relation */
-            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
+            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
             /** Confidence */
             confidence: number | null;
             /** Status */
@@ -11296,7 +11344,7 @@ export interface components {
              * Relations
              * @description The relations the paths keep to, as asked; null for all.
              */
-            relations: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED")[] | null;
+            relations: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED")[] | null;
             /**
              * Through Laws
              * @description Whether a path may pass through a law by its articles (`PART_OF`).
@@ -11529,7 +11577,7 @@ export interface components {
              * Relation
              * @enum {string}
              */
-            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
+            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
             /** Semantic Type */
             semantic_type: string | null;
             /**
@@ -12078,6 +12126,22 @@ export interface components {
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */
             readonly path: string | null;
+        };
+        /**
+         * SuccessionPartDTO
+         * @description A part of the old article and its place in the new law, as the source writes it.
+         */
+        SuccessionPartDTO: {
+            /**
+             * Old Part
+             * @description The part of the old article: `2`, `2 a`; empty for the whole article.
+             */
+            old_part: string;
+            /**
+             * New Place
+             * @description Its place in the new law as the source writes it: `2.8.6, 1`, `algemene regeling 2.1.10`.
+             */
+            new_place: string;
         };
         /**
          * TermSpanDTO
@@ -13111,7 +13175,7 @@ export interface operations {
                 tier?: components["schemas"]["Tier"] | null;
                 /** @description The kind of court: `ambtenarengerecht`, `raad_van_beroep`, `hoge_raad`, … */
                 court_kind?: components["schemas"]["CourtKind"] | null;
-                /** @description The source, e.g. 'rechtspraak', 'echr'. */
+                /** @description The source: 'rechtspraak', 'echr' or 'cjeu'. */
                 source?: string | null;
                 /** @description Lower bound on judgment date, YYYY-MM-DD */
                 from?: string | null;

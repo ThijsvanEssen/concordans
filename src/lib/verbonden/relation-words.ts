@@ -79,6 +79,12 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 		naar === 'instruments'
 			? ['trekt in', 'trekt in', 'intrekking van een wet']
 			: ['doet vervallen', 'doet vervallen', 'vervallen van een artikel'],
+	// A recodification: the transposition table places the old article in the new law.
+	TRANSPOSED_TO: () => [
+		'overgebracht naar',
+		'in het nieuwe recht',
+		'overbrenging naar het nieuwe recht'
+	],
 	// A preamble that names an article without the power the regulation is made under in it
 	// (`basis_kind` mentioned, Awb 3:2 and 3:4) only names it.
 	BASED_ON: ({ meta }) =>

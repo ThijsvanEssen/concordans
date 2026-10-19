@@ -41,6 +41,7 @@
 	import { afterTick } from '$lib/util/after-tick';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
+	import ArticleSuccession from './ArticleSuccession.svelte';
 	import { articleKey as keyOfArticle, fetchArticle } from './article';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
 	import { load } from '$lib/util/load.svelte';
@@ -615,6 +616,14 @@
 					{/if}
 				</div>
 			{/if}
+			<ArticleSuccession
+				successors={d.successors}
+				predecessors={d.predecessors}
+				own={{
+					citationTitle: d.instrument?.citation_title ?? law?.citationTitle ?? null,
+					shortTitle: d.instrument?.abbreviation ?? law?.shortTitle ?? null
+				}}
+			/>
 		</ReaderHead>
 
 		{#if proposedMissing && proposedRow}

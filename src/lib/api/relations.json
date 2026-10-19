@@ -50,6 +50,11 @@
 			"targets": ["instruments", "articles"]
 		},
 		{
+			"name": "TRANSPOSED_TO",
+			"sources": ["articles"],
+			"targets": ["articles"]
+		},
+		{
 			"name": "BASED_ON",
 			"sources": ["instruments"],
 			"targets": ["articles"]
