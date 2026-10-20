@@ -17,7 +17,8 @@
 	import { useSearchOpener } from '$lib/stores/search-trigger';
 	import { getFactions } from '$lib/api/factions';
 	import { isAborted, report } from '$lib/api/errors';
-	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import LoadState, { failureText } from '$lib/components/ui/LoadState.svelte';
+	import Kenmerk from '$lib/components/ui/Kenmerk.svelte';
 	import { bronLabel } from '$lib/vocabulary';
 	import { getCoverage } from '$lib/api/stats';
 	import { uniqueBy } from '$lib/util/unique';
@@ -171,8 +172,12 @@
 	};
 	let loading = $state(false);
 	let loadingMore = $state(false);
-	let loadMoreFailed = $state(false);
-	let error = $state<string | null>(null);
+	/** Why the next page failed; the rows loaded so far stay. */
+	let loadMoreFout = $state.raw<{ error: unknown } | null>(null);
+	/** Why the list failed, in a box: any thrown value, also a falsy one. */
+	let error = $state.raw<{ error: unknown } | null>(null);
+	/** Opnieuw after a failure: the list asked again as it stands. */
+	let opnieuw = $state(0);
 
 	/** The page as shown: with the total its facets counted where its rows came without one. */
 	const shownPage = $derived.by(() => {
@@ -195,6 +200,7 @@
 
 	$effect(() => {
 		void queryKey;
+		void opnieuw;
 		const cat = category;
 		const asked = untrack(() => LISTS[cat]);
 		const query = untrack(() => asked.query(p, sortDef));
@@ -217,10 +223,12 @@
 		facettenLaden = false;
 		facettenFout = null;
 		error = null;
-		loadMoreFailed = false;
+		loadMoreFout = null;
 		fetchPage(0, ac.signal)
-			.catch(() => {
-				if (!ac.signal.aborted) error = `De ${labelOf(cat)} konden niet worden geladen.`;
+			.catch((e) => {
+				if (ac.signal.aborted || isAborted(e)) return;
+				report('Lijst', e);
+				error = { error: e };
 			})
 			.finally(() => {
 				if (!ac.signal.aborted) loading = false;
@@ -239,7 +247,7 @@
 		const offset = pages[category]?.items.length;
 		if (loadingMore || !offset) return;
 		loadingMore = true;
-		loadMoreFailed = false;
+		loadMoreFout = null;
 		const ac = (loadMoreAbort = new AbortController());
 		// The focus to the first row the page adds: the button gives way to "Laden…" (B2).
 		const before = results?.querySelectorAll(ROW).length ?? 0;
@@ -247,9 +255,11 @@
 			await fetchPage(offset, ac.signal);
 			await tick();
 			if (results && !ac.signal.aborted) focusFirstNew(results, ROW, before);
-		} catch {
+		} catch (e) {
 			// The rows loaded so far stay; the button offers the next page again.
-			if (!ac.signal.aborted) loadMoreFailed = true;
+			if (ac.signal.aborted || isAborted(e)) return;
+			report('Volgende', e);
+			loadMoreFout = { error: e };
 		} finally {
 			loadingMore = false;
 		}
@@ -654,7 +664,14 @@
 							{/each}
 						</ul>
 					{:else if error}
-						<p class="status-line status-line--error stil">{error}</p>
+						<div class="status-line">
+							<LoadState
+								state={{ status: 'error', error: error.error }}
+								what={`De ${labelOf(category)}`}
+								plural
+								retry={() => opnieuw++}
+							/>
+						</div>
 					{:else}
 						<div class="shown" class:shown--stale={loading}>
 							{#if list.Rows && rowsShown && rows}
@@ -719,11 +736,14 @@
 	{#if loaded?.more}
 		{@const remaining = (loaded.total ?? 0) - loaded.items.length}
 		<div class="volgende">
-			{#if loadMoreFailed}
-				<p class="volgende-fout" role="alert">De volgende {noun} konden niet worden geladen.</p>
+			{#if loadMoreFout}
+				<p class="volgende-fout" role="alert">
+					{failureText(`De volgende ${noun}`, loadMoreFout.error, true)}
+					<Kenmerk error={loadMoreFout.error} />
+				</p>
 			{/if}
 			{#if loadingMore}<span>Laden…</span>{:else}<TekstLink onclick={loadMore}
-					>{loadMoreFailed
+					>{loadMoreFout
 						? 'Opnieuw'
 						: `Volgende ${noun}${remaining > 0 ? `, nog ${formatCount(remaining)}` : ''}`}</TekstLink
 				>{/if}
@@ -920,9 +940,6 @@
 	/* ── Status and empty states ─────────────────────────────────────── */
 	.status-line {
 		margin: var(--s-3) 0;
-	}
-	.status-line--error {
-		color: var(--ink-2);
 	}
 	/* Nothing to show: the quiet line (.stil) where the rows would begin, its way on under it. */
 	.empty {

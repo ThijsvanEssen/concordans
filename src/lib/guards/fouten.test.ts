@@ -1,7 +1,12 @@
 // A failure is handled where its cause is known, or passed on ($lib/api/errors.ts,
 // $lib/util/load.svelte.ts, LoadState). Code-eenvoud F01, F05, F06.
 import { describe, expect, it } from 'vitest';
-import { BRONNEN, bron, overtreders } from '$lib/test/bronnen';
+import { BRONNEN, bron, overtreders, plek, regelOvertreders } from '$lib/test/bronnen';
+
+/** A failure in words of its own: "kon niet", "mislukt", "lukte niet", "Probeer opnieuw". */
+const EIGEN_FOUT =
+	/\b(?:[Kk]on(?:den)?\s+niet|lukte\s+niet|[Pp]robeer\s+opnieuw|ging\s+(?:iets\s+)?mis)\b|\p{Lu}\p{L}*\s+mislukt\b/u;
+const COMMENTAAR = /^\s*(?:\/\/|\/?\*|<!--)/;
 
 describe('errors that are not swallowed', () => {
 	it('has one catch-all, at the outer boundary, and one boundary per panel of the Verkenner', () => {
@@ -26,5 +31,32 @@ describe('errors that are not swallowed', () => {
 			(text.match(/\.GET\(/g) ?? []).length -
 			(text.match(/\bunwrap\(\s*[\w.()]+\.GET\(/g) ?? []).length;
 		expect(BRONNEN.filter(({ text }) => raw(text) > 0).map((s) => s.path)).toEqual([]);
+	});
+
+	it('says a failure through LoadState or failureText, with one word to ask again', () => {
+		// One sentence per failure, slow told from broken, Opnieuw where it can ask again and
+		// the kenmerk of a 500 (audit2 foutmeldingen, S1-S6). What is no load says its own.
+		for (const eigen of [
+			'<p class="stil">Kon niet worden geladen.</p>',
+			"error = 'De inhoudsopgave kon niet worden geladen.';",
+			"{search.failure.slow ? 'Zoeken duurt lang.' : 'Zoeken mislukt.'}",
+			'<TekstLink onclick={retry}>Probeer opnieuw</TekstLink>',
+			"error = 'Verder terug zoeken lukte niet.';"
+		])
+			expect(EIGEN_FOUT.test(eigen), eigen).toBe(true);
+		expect(EIGEN_FOUT.test('const mislukt = $derived(rijen.filter(isFout));')).toBe(false);
+		expect(
+			regelOvertreders(
+				(l) => EIGEN_FOUT.test(l) && !COMMENTAAR.test(l),
+				[
+					plek('lib/components/ui/copy.svelte.ts', 'a clipboard that refuses, on its button'),
+					plek(
+						'routes/(main)/onderwerpen/overzicht/+page.svelte',
+						'a CSV made here, not loaded; its button asks again'
+					),
+					plek('routes/+error.svelte', 'the title of the page that failed, with Opnieuw laden')
+				]
+			)
+		).toEqual([]);
 	});
 });

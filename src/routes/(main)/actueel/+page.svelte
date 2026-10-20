@@ -24,10 +24,10 @@
 	import { isEscape } from '$lib/actions/keys';
 	import { page } from '$app/state';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
-	import { ApiError, isTimeout } from '$lib/api/client';
 	import { getFeed, getFeedSummary } from '$lib/api/feed';
 	import { getFactions } from '$lib/api/factions';
-	import { report } from '$lib/api/errors';
+	import { isSlow, report } from '$lib/api/errors';
+	import { failureText } from '$lib/components/ui/LoadState.svelte';
 	import { tick, untrack } from 'svelte';
 	import { focusFirstNew } from '$lib/actions/rijen';
 	import type { Schema } from '$lib/api/types';
@@ -229,8 +229,8 @@
 				// No list under filters it does not answer.
 				items = [];
 				cursor = null;
-				teLang = (e instanceof ApiError && (e.status === 503 || e.status === 504)) || isTimeout(e);
-				error = teLang ? 'Zoeken duurt te lang.' : 'Actueel kon niet worden geladen.';
+				teLang = isSlow(e);
+				error = failureText('Actueel', e);
 			})
 			.finally(() => {
 				if (!ac.signal.aborted) loading = false;
@@ -286,7 +286,7 @@
 			doorzocht = doorzochtVanaf(r);
 		} catch (e) {
 			report('Actueel verder terug', e);
-			error = 'Verder terug zoeken lukte niet.';
+			error = failureText('De eerdere dagen', e, true);
 		} finally {
 			verderLaden = false;
 		}
@@ -311,7 +311,7 @@
 			if (daysEl) focusFirstNew(daysEl, ROW, before);
 		} catch (e) {
 			report('Actueel volgende dagen', e);
-			error = 'De volgende dagen konden niet worden geladen.';
+			error = failureText('De volgende dagen', e, true);
 		} finally {
 			loadingMore = false;
 		}
