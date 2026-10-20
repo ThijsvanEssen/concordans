@@ -143,7 +143,7 @@ const filterActive = (f: VerbondenFilter): boolean =>
 	Object.values(filterParams(f)).some((v) => v !== null);
 
 /** The line of an empty Verbonden: within the choice only where the reader made one. */
-export const geenVerbindingen = (f: VerbondenFilter): string =>
+export const emptyLine = (f: VerbondenFilter): string =>
 	filterActive(f)
 		? 'Geen verbindingen binnen de gekozen bronnen en filters.'
 		: 'Geen verbindingen.';

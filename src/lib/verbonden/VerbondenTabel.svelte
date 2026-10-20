@@ -21,7 +21,7 @@
 		exportRows,
 		rowsToCsv
 	} from './export';
-	import { geenVerbindingen, type VerbondenFilter } from './filter';
+	import { emptyLine, type VerbondenFilter } from './filter';
 	import { formatCount } from '$lib/text/getal';
 	import { ankerVanRij, dossierVanRij, openLabelOf, rowKey, type Row } from './rows';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
@@ -217,7 +217,7 @@
 			</div>
 		{:else if sorted.length === 0}
 			<p class="note">
-				{verbonden.loading ? 'Laden…' : geenVerbindingen(filter)}
+				{verbonden.loading ? 'Laden…' : emptyLine(filter)}
 			</p>
 		{:else}
 			<table>

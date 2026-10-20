@@ -9,7 +9,7 @@ import {
 	confidenceWord,
 	filterParams,
 	filterGroupCount,
-	geenVerbindingen,
+	emptyLine,
 	parseFilter,
 	rechterOf,
 	rowPasses,
@@ -226,11 +226,11 @@ describe('filterGroupCount', () => {
 
 describe('the line of an empty Verbonden', () => {
 	it('names the choice only where the reader made one', () => {
-		expect(geenVerbindingen(EMPTY_FILTER)).toBe('Geen verbindingen.');
-		expect(geenVerbindingen(parseFilter(new URLSearchParams('bronnen=uitspraken')))).toBe(
+		expect(emptyLine(EMPTY_FILTER)).toBe('Geen verbindingen.');
+		expect(emptyLine(parseFilter(new URLSearchParams('bronnen=uitspraken')))).toBe(
 			'Geen verbindingen binnen de gekozen bronnen en filters.'
 		);
-		expect(geenVerbindingen(parseFilter(new URLSearchParams('lid=2')))).toBe(
+		expect(emptyLine(parseFilter(new URLSearchParams('lid=2')))).toBe(
 			'Geen verbindingen binnen de gekozen bronnen en filters.'
 		);
 	});

@@ -19,7 +19,7 @@
 	import { getDocumentPassages } from '$lib/api/documents';
 	import { getArticleVersion, getDelegated } from '$lib/api/articles';
 	import { getInstrumentDetail, instrumentMetaStore } from '$lib/api/instrument-cache';
-	import Dekking from '$lib/components/ui/Dekking.svelte';
+	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import type { Schema } from '$lib/api/types';
 	import { articleOf, type GraphNode } from '$lib/graph/types';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
@@ -601,8 +601,8 @@
 			{/snippet}
 			{#snippet statusLine()}
 				{#if versionLabel === null}
-					<Dekking
-						dekking={{ onderdeel: 'versions', state: 'not_in_source', as_of: euAdopted }}
+					<Coverage
+						coverage={{ part: 'versions', state: 'not_in_source', as_of: euAdopted }}
 						bron={euSource}
 					/>
 				{:else}

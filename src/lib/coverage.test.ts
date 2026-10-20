@@ -5,7 +5,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { dekkingZin } from '$lib/components/ui/dekking';
+import { coverageLine } from '$lib/components/ui/coverage';
 
 const ROOT = join(process.cwd(), 'src');
 
@@ -24,10 +24,10 @@ const code = (text: string) =>
 		.replace(/\/\*[\s\S]*?\*\//g, '')
 		.replace(/(^|[^:'"`])\/\/.*$/gm, '$1');
 
-const OWN = new Set(['lib/components/ui/Waarde.svelte', 'lib/components/ui/dekking.ts']);
+const OWN = new Set(['lib/components/ui/Waarde.svelte', 'lib/components/ui/coverage.ts']);
 
 // The places that still say it in their own words: P4 moves them to Dekking.
-const NOG_EIGEN: Record<string, number> = {
+const STILL_OWN: Record<string, number> = {
 	'lib/bron/DossierLink.svelte': 1,
 	'lib/bron/OverwegingKaart.svelte': 1,
 	'lib/bron/behoort-procesgang.ts': 1,
@@ -67,15 +67,15 @@ describe('the mark of what is missing', () => {
 			].length;
 			if (n > 0) found[rel] = n;
 		}
-		expect(found).toEqual(NOG_EIGEN);
+		expect(found).toEqual(STILL_OWN);
 	});
 
 	it('says what is missing in one line, with a date where the API gives one', () => {
-		expect(dekkingZin({ onderdeel: 'text', state: 'none' })).toBe('Tekst niet ingelezen');
-		expect(dekkingZin({ onderdeel: 'versions', state: 'not_in_source', as_of: '2016-04-27' })).toBe(
+		expect(coverageLine({ part: 'text', state: 'none' })).toBe('Tekst niet ingelezen');
+		expect(coverageLine({ part: 'versions', state: 'not_in_source', as_of: '2016-04-27' })).toBe(
 			'Tekst zoals vastgesteld op 27 april 2016, latere wijzigingen niet verwerkt'
 		);
-		expect(dekkingZin({ onderdeel: 'versions', state: 'not_in_source', as_of: null })).toBe(
+		expect(coverageLine({ part: 'versions', state: 'not_in_source', as_of: null })).toBe(
 			'Tekst zoals vastgesteld, latere wijzigingen niet verwerkt'
 		);
 	});

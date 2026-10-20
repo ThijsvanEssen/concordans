@@ -38,7 +38,7 @@
 	import { load } from '$lib/util/load.svelte';
 	import WholeLawReaderArticle from './WholeLawReaderArticle.svelte';
 	import WholeLawReaderPeildatum from './WholeLawReaderPeildatum.svelte';
-	import Dekking from '$lib/components/ui/Dekking.svelte';
+	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { followPosition } from './law-position.svelte';
 
 	let { bwbId }: { bwbId: string } = $props();
@@ -321,13 +321,13 @@
 				<span>{headLine}</span>
 				{#if textNotRead}
 					<p class="whole-count">
-						<Dekking dekking={{ onderdeel: 'text', state: 'none' }} bron={officialSource} />
+						<Coverage coverage={{ part: 'text', state: 'none' }} bron={officialSource} />
 					</p>
 				{:else if isEu}
 					<p class="whole-count">
-						<Dekking
-							dekking={{
-								onderdeel: 'versions',
+						<Coverage
+							coverage={{
+								part: 'versions',
 								state: 'not_in_source',
 								as_of: lawDetail?.date_signed
 							}}

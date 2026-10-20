@@ -1,21 +1,21 @@
 <script lang="ts">
 	// The one mark for what the dataset lacks of a bron (besluit 23): one quiet line, grey and
 	// italic, never red, with the source that has it one step further. Its words come from
-	// dekking.ts; no reader writes its own.
-	import { dekkingZin, type DekkingStaat } from './dekking';
+	// coverage.ts; no reader writes its own.
+	import { coverageLine, type CoverageState } from './coverage';
 
 	let {
-		dekking,
+		coverage,
 		bron = null
 	}: {
-		dekking: DekkingStaat;
+		coverage: CoverageState;
 		/** The source that holds what is missing here: wetten.overheid.nl, EUR-Lex. */
 		bron?: { label: string; href: string } | null;
 	} = $props();
 </script>
 
 <span class="dekking"
-	>{dekkingZin(dekking)}{#if bron}, <a href={bron.href} target="_blank" rel="noopener"
+	>{coverageLine(coverage)}{#if bron}, <a href={bron.href} target="_blank" rel="noopener"
 			>{bron.label} ↗</a
 		>{/if}</span
 >
