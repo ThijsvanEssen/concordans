@@ -5,9 +5,13 @@
 import {
 	fieldsOf,
 	freeName,
+	annotationOn,
+	readAnnotations,
 	readItem,
 	unknownOf,
+	withAnnotations,
 	withItems,
+	withoutItem,
 	itemKey,
 	verschuif,
 	type SharedMap,
@@ -49,7 +53,8 @@ const MAP_FIELDS = fieldsOf<Map>({
 	notitie: true,
 	groepNotities: true,
 	since: true,
-	seen: true
+	seen: true,
+	aantekeningen: true
 });
 const ROOT_FIELDS = new Set(['mappen']);
 
@@ -87,30 +92,32 @@ const textsOnly = (v: unknown): GroepNotities =>
 			)
 		: {};
 
-/** The items of a bundel this version cannot read, by the bundel's id, as they were kept:
- *  written back with it unchanged, never thrown away (a newer version may read them). */
-let onleesbaar: Record<string, unknown[]> = {};
+/** The items and aantekeningen of a bundel this version cannot read, by the bundel's id, as
+ *  they were kept: written back with it unchanged, never thrown away (a newer version may
+ *  read them). */
+let onleesbaar: Record<string, { items: unknown[]; aantekeningen: unknown[] }> = {};
 let gemeld = false;
 
-/** The items kept in this browser that are whole; the rest kept aside for the write, and said. */
-function heleItems(id: string, v: unknown): MapItem[] {
-	if (!Array.isArray(v)) return [];
+/** A bundel as kept in this browser, read: what is whole, the rest kept aside for the write,
+ *  and said. */
+function heleMap(id: string, m: Record<string, unknown>): Pick<Map, 'items' | 'aantekeningen'> {
 	const items: MapItem[] = [];
 	const rest: unknown[] = [];
-	for (const i of v) {
+	for (const i of Array.isArray(m.items) ? m.items : []) {
 		const item = readItem(i);
 		if (item) items.push(item);
 		else rest.push(i);
 	}
-	if (rest.length) {
-		onleesbaar[id] = rest;
+	const a = readAnnotations(m.aantekeningen, items);
+	if (rest.length || a.rest.length) {
+		onleesbaar[id] = { items: rest, aantekeningen: a.rest };
 		if (!gemeld)
 			console.warn(
-				`Bundels: ${formatCount(rest.length)} item(s) in deze browser niet te lezen, wel bewaard.`
+				`Bundels: ${formatCount(rest.length + a.rest.length)} item(s) of aantekening(en) in deze browser niet te lezen, wel bewaard.`
 			);
 		gemeld = true;
 	}
-	return items;
+	return { items, ...(a.aantekeningen.length ? { aantekeningen: a.aantekeningen } : {}) };
 }
 
 /** The id of Losse markeringen where the browser keeps no bundels yet: one id, the same in
@@ -141,7 +148,7 @@ function lees(text = stored()): Stand | null {
 			...unknownOf(m, MAP_FIELDS),
 			id: String(m.id),
 			naam: n === 0 ? LOOSE_NAME : String(m.naam || 'Bundel'),
-			items: heleItems(String(m.id), m.items),
+			...heleMap(String(m.id), m),
 			volgorde: m.volgorde === 'eigen' ? 'eigen' : 'groep',
 			gewijzigd: String(m.gewijzigd || nu()),
 			notitie: typeof m.notitie === 'string' && m.notitie.trim() ? m.notitie : null,
@@ -198,9 +205,15 @@ class Kaarten {
 	heeft = (i: Pick<MapItem, 'id' | 'at'>) => this.holding(i).length > 0;
 
 	#bewaar() {
-		const mappen = this.#stand.mappen.map((m) =>
-			onleesbaar[m.id] ? { ...m, items: [...m.items, ...onleesbaar[m.id]] } : m
-		);
+		const mappen = this.#stand.mappen.map(({ aantekeningen, ...m }) => {
+			const rest = onleesbaar[m.id];
+			const all = [...(aantekeningen ?? []), ...(rest?.aantekeningen ?? [])];
+			return {
+				...m,
+				items: [...m.items, ...(rest?.items ?? [])],
+				...(all.length ? { aantekeningen: all } : {})
+			};
+		});
 		const text = JSON.stringify({ ...this.#stand.extra, mappen });
 		try {
 			localStorage.setItem(STORAGE_KEY, text);
@@ -255,13 +268,21 @@ class Kaarten {
 		keepStorage();
 		this.#change(id, (m) => ({ items: withItems(m.items, [i]) }));
 	}
+	/** Out of a bundel, with the aantekeningen on it (also those this version cannot read). */
 	weg(i: Pick<MapItem, 'id' | 'at'>, id: string) {
 		const k = itemKey(i);
-		this.#change(id, (m) => ({ items: m.items.filter((x) => itemKey(x) !== k) }));
+		this.#change(id, (m) => {
+			const rest = onleesbaar[id];
+			if (rest) rest.aantekeningen = rest.aantekeningen.filter((a) => !annotationOn(a, k));
+			return {
+				items: m.items.filter((x) => itemKey(x) !== k),
+				aantekeningen: withoutItem(m.aantekeningen ?? [], k)
+			};
+		});
 	}
-	/** All items out; the bundel stays. */
+	/** All items out, and their aantekeningen; the bundel stays. */
 	empty(id: string) {
-		this.#change(id, () => ({ items: [] }));
+		this.#change(id, () => ({ items: [], aantekeningen: [] }));
 	}
 	notitie(i: Pick<MapItem, 'id' | 'at'>, text: string, id: string) {
 		const k = itemKey(i);
@@ -357,6 +378,7 @@ class Kaarten {
 		keepStorage();
 		this.#change(id, (m) => ({
 			items: withItems(m.items, g.items),
+			aantekeningen: withAnnotations(m.aantekeningen ?? [], g.aantekeningen),
 			notitie: m.notitie || g.notitie,
 			groepNotities: { ...g.groepNotities, ...m.groepNotities }
 		}));
@@ -367,6 +389,7 @@ class Kaarten {
 		this.#change(id, (m) => ({
 			naam: g.naam ?? m.naam,
 			items: [...g.items],
+			aantekeningen: [...g.aantekeningen],
 			volgorde: g.volgorde,
 			notitie: g.notitie,
 			groepNotities: { ...g.groepNotities }
@@ -381,6 +404,7 @@ class Kaarten {
 		if (g.volgorde === 'eigen') this.ordening('eigen', m.id);
 		if (g.notitie) this.mapNotitie(g.notitie, m.id);
 		for (const [k, n] of Object.entries(g.groepNotities)) this.groepNotitie(k, n, m.id);
+		if (g.aantekeningen.length) this.#change(m.id, () => ({ aantekeningen: [...g.aantekeningen] }));
 		return m;
 	}
 }

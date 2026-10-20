@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { Map, MapItem } from './map';
-import { FILE_VERSION, NEWER, mapFile, mapFileName, readMapFile } from './file';
+import { itemKey, type Annotation, type Map, type MapItem } from './map';
+import { FILE_VERSION, NEWER, mapFile, mapFileName, readMapFile, type FileMap } from './file';
 import { BROKEN } from './share';
 
 const lid: MapItem = {
@@ -43,9 +43,24 @@ describe('a bundel as a file', () => {
 				volgorde: 'eigen',
 				notitie: map.notitie,
 				groepNotities: { 'wet:bwbr0005290': 'Arbeidsrecht' },
+				aantekeningen: [],
 				skipped: 0
 			}
 		]);
+	});
+
+	it('holds the aantekeningen and the version of a text kept, in the same version of the file', () => {
+		const metVersie = { ...lid, versie: '2024-01-01' };
+		const arcering: Annotation = {
+			id: 'a-4rc3r1ng',
+			op: itemKey(metVersie),
+			fragment: { waar: 'lid-1', exact: 'zorgplicht', start: 4 }
+		};
+		const text = mapFile([{ ...map, items: [metVersie, boek], aantekeningen: [arcering] }]);
+		expect(JSON.parse(text).versie).toBe(1);
+		const [read] = readMapFile(text) as FileMap[];
+		expect(read.items).toEqual([metVersie, boek]);
+		expect(read.aantekeningen).toEqual([arcering]);
 	});
 
 	it('holds several bundels in one file', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BRONNEN, bron } from '$lib/test/bronnen';
-import type { SharedMap, MapItem } from './map';
+import { itemKey, type Annotation, type SharedMap, type MapItem } from './map';
 import { BROKEN, isOldLink, shareFragment, sharedOfFragment } from './share';
 
 const lid2: MapItem = {
@@ -42,6 +42,7 @@ describe('the link of a map', () => {
 			volgorde: 'eigen',
 			notitie: map.notitie,
 			groepNotities: { 'wet:bwbr0005289': 'De onrechtmatige daad' },
+			aantekeningen: [],
 			skipped: 0
 		});
 	});
@@ -89,6 +90,32 @@ describe('the link of a map', () => {
 		)) as SharedMap;
 		expect(shared?.items).toEqual([lid2]);
 		expect(shared?.skipped).toBe(1);
+	});
+
+	it('carries the aantekeningen, and a field of a later version, and counts what does not read', async () => {
+		const koppeling: Annotation = {
+			id: 'a-k0pp3l1n',
+			op: itemKey(lid2),
+			fragment: { waar: 'lid-2', exact: 'onrechtmatige daad', prefix: 'een ', start: 12 },
+			bron: itemKey(ro),
+			tekst: 'Kern van de afweging'
+		};
+		const later = { ...lid2, toekomst: { iets: 1 } };
+		const zwevend = { id: 'a-zw3v3nd0', op: 'articles/bwbr0000000_1', tekst: 'Weg' };
+		const shared = (await sharedOfFragment(
+			await shareFragment({ ...map, items: [later, ro], aantekeningen: [koppeling] })
+		)) as SharedMap;
+		expect(shared.items).toEqual([later, ro]);
+		expect(shared.aantekeningen).toEqual([koppeling]);
+		expect(shared.skipped).toBe(0);
+		const met = (await sharedOfFragment(
+			await shareFragment({
+				...map,
+				aantekeningen: [koppeling, zwevend as Annotation]
+			})
+		)) as SharedMap;
+		expect(met.aantekeningen).toEqual([koppeling]);
+		expect(met.skipped).toBe(1);
 	});
 
 	it('is never put in the query: no page writes or reads ?map=', () => {

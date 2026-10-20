@@ -73,6 +73,38 @@ export type Map = {
 	since?: string | null;
 	/** The day of the last visit to its own page. */
 	seen?: string | null;
+	/** The reader's marks and notes on places in its items, and between them, in the order made. */
+	aantekeningen?: Annotation[];
+};
+
+/**
+ * Where in a kept text a mark lies: the smallest place that holds it (`lid-2`, `p-360a090c`),
+ * its words, as much of the text before and after as makes them one, and their position in
+ * the place's text (W3C TextQuoteSelector, the position deciding between equals).
+ */
+type Fragment = {
+	waar: string;
+	exact: string;
+	prefix?: string;
+	suffix?: string;
+	start: number;
+};
+
+/**
+ * A mark of the reader on an item of a bundel (by its key): on words in it (`fragment`), on a
+ * difference with another text (`tegen`), or towards another item of the bundel (`bron`, its
+ * words `bronFragment`), with the reader's note. Without any of these it is the item's own
+ * `notitie`, never an aantekening.
+ */
+export type Annotation = {
+	id: string;
+	op: string;
+	fragment?: Fragment;
+	/** The other text of a comparison: `articles/…`, or a day of a tekstversie. */
+	tegen?: string;
+	bron?: string;
+	bronFragment?: Fragment;
+	tekst?: string;
 };
 
 /** Notes per group, by the group's key. */
@@ -85,7 +117,9 @@ export type SharedMap = {
 	volgorde: Map['volgorde'];
 	notitie: string | null;
 	groepNotities: GroepNotities;
-	/** Items of the link in an older or broken form, left out: the page names how many. */
+	aantekeningen: Annotation[];
+	/** Items and aantekeningen of the link in an older or broken form, left out: the page
+	 *  names how many. */
 	skipped: number;
 };
 
@@ -412,6 +446,119 @@ export function readItem(v: unknown): MapItem | null {
 		...(EXTERNAL_ID.test(id) && url ? { url } : {}),
 		...(isDay(versie) ? { versie } : {})
 	};
+}
+
+// ── Aantekeningen ───────────────────────────────────────────────────────────
+const ANNOTATION_ID = /^a-[a-z0-9]+$/;
+const ANNOTATION_FIELDS = fieldsOf<Annotation>({
+	id: true,
+	op: true,
+	fragment: true,
+	tegen: true,
+	bron: true,
+	bronFragment: true,
+	tekst: true
+});
+const FRAGMENT_FIELDS = fieldsOf<Fragment>({
+	waar: true,
+	exact: true,
+	prefix: true,
+	suffix: true,
+	start: true
+});
+
+/** A fragment read back; null where it names no place, no words or no position. */
+function readFragment(v: unknown): Fragment | null {
+	if (!v || typeof v !== 'object') return null;
+	const o = v as Record<string, unknown>;
+	const waar = textOf(o, 'waar');
+	const exact = textOf(o, 'exact');
+	const start = o.start;
+	if (!waar || !exact || typeof start !== 'number' || !Number.isInteger(start) || start < 0)
+		return null;
+	const prefix = typeof o.prefix === 'string' && o.prefix ? o.prefix : null;
+	const suffix = typeof o.suffix === 'string' && o.suffix ? o.suffix : null;
+	return {
+		...unknownOf(o, FRAGMENT_FIELDS),
+		waar,
+		exact,
+		...(prefix ? { prefix } : {}),
+		...(suffix ? { suffix } : {}),
+		start
+	};
+}
+
+/**
+ * An aantekening as this browser or a link gives it back, on the items of its bundel (their
+ * keys); null where it is in a broken or later form: on no item of the bundel, towards none,
+ * or with a fragment that does not read. A field it does not know as it was kept.
+ */
+export function readAnnotation(v: unknown, keys: ReadonlySet<string>): Annotation | null {
+	if (!v || typeof v !== 'object') return null;
+	const o = v as Record<string, unknown>;
+	const id = textOf(o, 'id');
+	const op = textOf(o, 'op');
+	if (!id || !ANNOTATION_ID.test(id) || !op || !keys.has(op)) return null;
+	const field = <T>(k: string, read: (v: unknown) => T | null): T | null | undefined =>
+		o[k] === undefined || o[k] === null ? undefined : read(o[k]);
+	const fragment = field('fragment', readFragment);
+	const bron = field('bron', (b) => (typeof b === 'string' && keys.has(b) ? b : null));
+	const bronFragment = field('bronFragment', readFragment);
+	const tegen = field('tegen', (t) => (typeof t === 'string' && t.trim() ? t : null));
+	if (fragment === null || bron === null || bronFragment === null || tegen === null) return null;
+	if (bronFragment && !bron) return null;
+	const tekst = textOf(o, 'tekst');
+	return {
+		...unknownOf(o, ANNOTATION_FIELDS),
+		id,
+		op,
+		...(fragment ? { fragment } : {}),
+		...(tegen ? { tegen } : {}),
+		...(bron ? { bron } : {}),
+		...(bronFragment ? { bronFragment } : {}),
+		...(tekst ? { tekst } : {})
+	};
+}
+
+/** The aantekeningen of a bundel with these items that read, and the rest as they were. */
+export function readAnnotations(
+	v: unknown,
+	items: readonly MapItem[]
+): { aantekeningen: Annotation[]; rest: unknown[] } {
+	if (!Array.isArray(v)) return { aantekeningen: [], rest: [] };
+	const keys = new Set(items.map(itemKey));
+	const aantekeningen: Annotation[] = [];
+	const rest: unknown[] = [];
+	for (const a of v) {
+		const read = readAnnotation(a, keys);
+		if (read) aantekeningen.push(read);
+		else rest.push(a);
+	}
+	return { aantekeningen, rest };
+}
+
+/**
+ * The aantekeningen once an item is out of the bundel: its own go with it; one towards it
+ * keeps its note and fragment on its own item, without the item it pointed to (where it keeps
+ * nothing, it goes too).
+ */
+export function withoutItem(aantekeningen: readonly Annotation[], key: string): Annotation[] {
+	return aantekeningen.flatMap((a) => {
+		if (a.op === key) return [];
+		if (a.bron !== key) return [a];
+		const { bron: _bron, bronFragment: _bronFragment, ...rest } = a;
+		return rest.fragment || rest.tegen || rest.tekst ? [rest] : [];
+	});
+}
+
+/** An aantekening as kept, read or not, on the item of this key. */
+export const annotationOn = (a: unknown, key: string) =>
+	!!a && typeof a === 'object' && (a as Partial<Annotation>).op === key;
+
+/** The aantekeningen of `b` that `a` does not hold yet (by id), after `a`'s. */
+export function withAnnotations(a: readonly Annotation[], b: readonly Annotation[]): Annotation[] {
+	const al = new Set(a.map((x) => x.id));
+	return [...a, ...b.filter((x) => !al.has(x.id))];
 }
 
 // ── The network ─────────────────────────────────────────────────────────────
