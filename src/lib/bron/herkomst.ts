@@ -63,7 +63,7 @@ export const PUBLISHERS: readonly Publisher[] = [
 	},
 	{
 		name: 'Europees recht',
-		gives: 'EUR-Lex, op CELEX-nummer',
+		gives: 'EUR-Lex: handelingen op CELEX-nummer, uitspraken van het Hof en het Gerecht op ECLI',
 		licence: {
 			name: PUBLISHER_TERMS,
 			url: 'https://eur-lex.europa.eu/content/legal-notice/legal-notice.html'

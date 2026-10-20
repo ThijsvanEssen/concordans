@@ -25,6 +25,23 @@ type Column = {
 	csvOnly?: boolean;
 };
 
+const lidOf = (r: Row) => (r.lid ? `lid ${r.lid}` : '');
+
+/**
+ * Where the other bron is meant. A judgment cites in its own r.o. (`position`, outbound) the
+ * lid of an article (`lid`); a judgment that cites it, in its own r.o. (inbound).
+ */
+const placeInBron = (r: Row, selection: Collection) =>
+	selection === 'judgments' && r.direction === 'outbound' ? lidOf(r) : (r.position ?? '');
+
+/** Where the selected bron is meant: the lid of an article, the r.o. of a judgment. */
+const placeInSelection = (r: Row, selection: Collection) =>
+	selection === 'judgments' ? (r.direction === 'outbound' ? (r.position ?? '') : '') : lidOf(r);
+
+/** The head of a column on the page of a bron of this kind. */
+export const columnLabel = (c: Column, selection: Collection) =>
+	c.id === 'lid' && selection === 'judgments' ? 'Plaats in deze uitspraak' : c.label;
+
 /** The columns of the table and the CSV, in one order. */
 export const COLUMNS: readonly Column[] = [
 	{ id: 'bron', label: 'Bron', value: (r) => r.title, sort: (r) => r.title },
@@ -38,14 +55,14 @@ export const COLUMNS: readonly Column[] = [
 	{
 		id: 'plaats',
 		label: 'Plaats in de bron',
-		value: (r) => r.position ?? '',
-		sort: (r) => r.position ?? ''
+		value: (r, c) => placeInBron(r, c.selection),
+		sort: (r, c) => placeInBron(r, c.selection)
 	},
 	{
 		id: 'lid',
 		label: 'Plaats in dit artikel',
-		value: (r) => (r.lid ? `lid ${r.lid}` : ''),
-		sort: (r) => r.lid ?? 'zz'
+		value: (r, c) => placeInSelection(r, c.selection),
+		sort: (r, c) => placeInSelection(r, c.selection) || 'zz'
 	},
 	{ id: 'aard', label: 'Aard', value: (r) => r.aard ?? '', sort: (r) => r.aard ?? '' },
 	{
@@ -96,7 +113,7 @@ export function exportLabel(groups: Group[], filter: VerbondenFilter): string {
 export function rowsToCsv(rows: Row[], selection: Collection, origin: string): string {
 	const ctx = { selection, origin };
 	return csvText(
-		COLUMNS.map((c) => c.label.toLowerCase()),
+		COLUMNS.map((c) => columnLabel(c, selection).toLowerCase()),
 		rows.map((r) => COLUMNS.map((c) => (c.csv ? c.csv(r) : c.value(r, ctx))))
 	);
 }

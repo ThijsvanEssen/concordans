@@ -22,12 +22,28 @@ export const getArticleDetail = (bwbId: string, articleNumber: string) =>
 		})
 	);
 
-/** The tekstversies of an article, once per session: its address asks them beside its text. */
+/**
+ * The versions of an article without their text, once per session: its address asks them
+ * beside its text. Each says whether it changed the wording, and which parts.
+ */
 export const getArticleHistory = (bwbId: string, articleNumber: string) =>
 	once(`articles/${bwbId}/${articleNumber}/history`, () =>
 		unwrap(
 			api.GET('/api/articles/{bwb_id}/{article_number}/history', {
 				params: { path: { bwb_id: bwbId, article_number: articleNumber } }
+			})
+		)
+	);
+
+/**
+ * One version of an article with its text (`history/{key}`), once per session: the two a
+ * comparison holds, a formulation of a lid as it comes into view, an earlier text read.
+ */
+export const getArticleVersion = (bwbId: string, articleNumber: string, key: string) =>
+	once(`articles/${bwbId}/${articleNumber}/history/${key}`, () =>
+		unwrap(
+			api.GET('/api/articles/{bwb_id}/{article_number}/history/{version_key}', {
+				params: { path: { bwb_id: bwbId, article_number: articleNumber, version_key: key } }
 			})
 		)
 	);

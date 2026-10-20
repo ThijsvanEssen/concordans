@@ -72,7 +72,7 @@ describe('anchorLabel', () => {
 		expect(anchorLabel('rov-5.1', 'ECLI:NL:HR:2019:2006')).toBe('r.o. 5.1');
 		expect(anchorLabel('rov-5', 'ECLI:NL:PHR:2020:453')).toBe('onder 5');
 		expect(anchorLabel('rov-5', 'judgments/ecli_nl_phr_2020_453')).toBe('onder 5');
-		expect(anchorLabel('rov-5', 'ECLI:EU:C:2019:1')).toBe('§ 5');
+		expect(anchorLabel('rov-5', 'ECLI:EU:C:2019:1')).toBe('punt 5');
 	});
 
 	it('names no place for an anchor it cannot print', () => {

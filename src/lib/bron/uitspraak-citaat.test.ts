@@ -8,7 +8,7 @@ import type { Schema } from '$lib/api/types';
 import { buildNodeLabel, type BaseNode } from '$lib/graph/types';
 import { previewFromNode } from './preview';
 import { laagVan } from './behoort-layer';
-import { uitspraakKop } from '$lib/text/judgment-cite';
+import { headingCite } from '$lib/text/judgment-heading';
 
 type Cite = Schema<'JudgmentCiteDTO'>;
 
@@ -58,7 +58,7 @@ describe('a judgment cited one way', () => {
 	for (const n of [abrvs, pg]) {
 		const short = n.cite!.short;
 		it(`cites ${short} alike in the reader, the card, the canvas and Behoort bij`, () => {
-			expect(uitspraakKop(n)).toEqual(n.cite);
+			expect(headingCite(n)).toEqual(n.cite);
 			expect(previewFromNode('judgments', null, n.props!, n.cite).title).toBe(short);
 			expect(buildNodeLabel(n, 'judgment')).toBe(short);
 			const laag = laagVan(neighbor(n), 'Eerdere aanleg');

@@ -36,6 +36,24 @@ describe('pageName', () => {
 		);
 	});
 
+	it('names a law of the Staatsblad as the server does, with its place (F10)', () => {
+		const sv = {
+			...node('instruments', 'x', 'Wetboek van Strafvordering (Stb. 2026, 56)', {}),
+			id: 'instruments/wet_stb_2026_56'
+		} as GraphNode;
+		expect(pageName(sv, 'Wetboek van Strafvordering')).toBe(
+			'Wetboek van Strafvordering (Stb. 2026, 56)'
+		);
+		// Its articles keep the API's title, as the server's.
+		const art = {
+			...node('articles', 'x', 'Artikel 2.8.6 Wetboek van Strafvordering (Stb. 2026, 56)', {}),
+			id: 'articles/stb_2026_56_2_8_6'
+		} as GraphNode;
+		expect(pageName(art, 'Art. 2.8.6 Wetboek van Strafvordering')).toBe(
+			'Art. 2.8.6 Wetboek van Strafvordering'
+		);
+	});
+
 	it('takes the API title for any other bron, cut at a word, without a heading in capitals', () => {
 		const wet = node('instruments', 'x', 'Wet', {});
 		expect(pageName(wet, 'Burgerlijk Wetboek Boek 6')).toBe('Burgerlijk Wetboek Boek 6');

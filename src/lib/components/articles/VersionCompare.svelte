@@ -24,23 +24,39 @@
 	import { slide } from 'svelte/transition';
 	import {
 		byYear,
+		changedLeden,
+		compareUnits,
 		compareVersions,
 		lidHistory,
 		plainDiff,
-		sameText,
+		sortLeden,
+		unitsOf,
 		wordingOf,
 		wordingsOf,
 		type CompareRow,
 		type DiffSegment,
+		type Formulation as LidFormulation,
+		type Unit,
 		type Wording
 	} from '$lib/text/version-diff';
+	import { SvelteMap } from 'svelte/reactivity';
+	import { getArticleVersion } from '$lib/api/articles';
+	import { inView } from '$lib/actions/in-view';
+	import { isAborted } from '$lib/api/errors';
+	import type { LoadState } from '$lib/util/load.svelte';
+	import LoadStateView from '$lib/components/ui/LoadState.svelte';
 
-	type Version = Schema<'ArticleVersionDTO'>;
+	/** A version as the history lists it, without its text. */
+	type Version = Schema<'ArticleVersionListedDTO'>;
+	/** One version with its text, asked when it is read. */
+	type FullVersion = Schema<'ArticleVersionDTO'>;
 	type Params = Record<string, string | null>;
 	type VersionWording = Wording<Version>;
 
 	let {
 		versions,
+		bwbId,
+		articleNumber,
 		param,
 		layout = 'een',
 		citation = null,
@@ -50,6 +66,9 @@
 	}: {
 		/** Oldest first, as the API delivers them. */
 		versions: Version[];
+		/** The article, to ask the text of a version by its key. */
+		bwbId: string;
+		articleNumber: string;
 		/** `?versies`: `van..tot` (the dates tekstversies took effect), `lid-4`, or empty. */
 		param: string;
 		/** `?weergave`: the leden in one text, or the two versions side by side. */
@@ -116,6 +135,39 @@
 		return () => window.removeEventListener('keydown', onKey, { capture: true });
 	});
 
+	// ── The texts, asked as they are read ────────────────────────────────────────
+	// The history lists the versions without text: the two compared, and a formulation of a
+	// lid as it comes into view, are asked by their key, each once.
+
+	const texts = new SvelteMap<string, LoadState<FullVersion>>();
+	function ask(key: string, again = false) {
+		if (texts.has(key) && !again) return;
+		texts.set(key, { status: 'loading' });
+		getArticleVersion(bwbId, articleNumber, key).then(
+			(data) => texts.set(key, { status: 'ready', data }),
+			(error) => {
+				if (!isAborted(error)) texts.set(key, { status: 'error', error });
+			}
+		);
+	}
+	const textOf = (key: string): LoadState<FullVersion> => texts.get(key) ?? { status: 'loading' };
+	/** Ask again the texts of `keys` that failed. */
+	const retry = (keys: string[]) => () => {
+		for (const k of keys) if (textOf(k).status === 'error') ask(k, true);
+	};
+	/** Loading until every text of `keys` is in; a failure if one failed. */
+	const allOf = (keys: string[]): LoadState<FullVersion[]> => {
+		const states = keys.map(textOf);
+		const failed = states.find((s) => s.status === 'error');
+		if (failed) return failed;
+		const ready = states.flatMap((s) => (s.status === 'ready' ? [s.data] : []));
+		return ready.length === keys.length ? { status: 'ready', data: ready } : { status: 'loading' };
+	};
+	const unitsAt = (key: string): Unit[] | null => {
+		const t = texts.get(key);
+		return t?.status === 'ready' ? unitsOf(t.data.text, t.data.parts) : null;
+	};
+
 	// ── Wording ──────────────────────────────────────────────────────────────────
 
 	const date = (iso: string | null | undefined) => langeDatum(iso) || 'niet in de gegevens';
@@ -171,11 +223,16 @@
 	// ── The leden ────────────────────────────────────────────────────────────────
 
 	let showSame = $state(false);
-	const rows = $derived.by(() => {
-		// Adjacent tekstversies were compared already, to name the change.
-		if (adjacent && !reversed && to.rows) return to.rows;
-		return compareVersions(from.first, to.first);
+	$effect(() => {
+		ask(from.first.key);
+		ask(to.first.key);
 	});
+	const pairKeys = $derived([from.first.key, to.first.key]);
+	/** A and B with their text: loading until both are in, a failure if either fails. */
+	const pairState = $derived(allOf(pairKeys));
+	const rows = $derived(
+		pairState.status === 'ready' ? compareVersions(pairState.data[0], pairState.data[1]) : []
+	);
 
 	// The same wording in A and B: the text itself, not one fold that hides it.
 	const unchanged = $derived(rows.length > 0 && rows.every((r) => r.kind === 'same'));
@@ -220,14 +277,31 @@
 	// ── One lid through time ─────────────────────────────────────────────────────
 
 	const history = $derived(lidParam ? lidHistory(wordings, lidParam) : null);
-	const allLeden = $derived.by(() => {
-		const numbers: string[] = [];
-		for (const w of wordings)
-			for (const r of w.rows ?? [])
-				for (const n of [r.old?.number, r.new?.number])
-					if (n && !numbers.includes(n)) numbers.push(n);
-		return numbers.sort((a, b) => parseInt(a, 10) - parseInt(b, 10) || a.localeCompare(b));
-	});
+	/** The leden the history names a change of, and those of A and B. */
+	const allLeden = $derived(
+		sortLeden([
+			...changedLeden(wordings),
+			...[from, to].flatMap((w) =>
+				(unitsAt(w.first.key) ?? []).flatMap((u) => (u.number ? [u.number] : []))
+			)
+		])
+	);
+
+	/** The text of a formulation, and of the one before it where the words are marked. */
+	const formulationKeys = (f: Formulation, before: Formulation | undefined) => [
+		f.since.first.key,
+		...(before && f.kind === 'changed' ? [before.since.first.key] : [])
+	];
+	/** Asked as it comes into view. */
+	const askFormulation = (f: Formulation, before: Formulation | undefined) => () => {
+		for (const k of formulationKeys(f, before)) ask(k);
+	};
+	/** The lid in a formulation's text; null while it is on its way, or not in it. */
+	const lidIn = (f: Formulation) =>
+		unitsAt(f.since.first.key)?.find((u) => u.number === lidParam) ?? null;
+	/** A formulation against the one before it: the words marked, or the text in full. */
+	const formulationRow = (f: Formulation, before: Formulation | undefined) =>
+		f.kind === 'changed' && before ? compareUnits(lidIn(before), lidIn(f)) : null;
 
 	// ── Copying ──────────────────────────────────────────────────────────────────
 
@@ -242,7 +316,7 @@
 			`[-geschrapt-] [+ingevoegd+]\n\n${plainDiff(rows)}`
 	);
 
-	type Formulation = { since: Wording<Version>; through: Wording<Version> };
+	type Formulation = LidFormulation<Version>;
 	const formulationPeriod = (f: Formulation) =>
 		period({ from: f.since.from, until: f.through.until });
 	const formulationCite = (lid: string, f: Formulation) =>
@@ -336,7 +410,12 @@
 		{:else}
 			<ol class="formulations">
 				{#each history.formulations as f, i (i)}
-					<li class="formulation">
+					{@const before = history.formulations[i - 1]}
+					{@const keys = formulationKeys(f, before)}
+					{@const state = allOf(keys)}
+					{@const row = state.status === 'ready' ? formulationRow(f, before) : null}
+					{@const unit = state.status === 'ready' ? lidIn(f) : null}
+					<li class="formulation" use:inView={askFormulation(f, before)}>
 						<div class="formulation__head">
 							<span class="formulation__when">{capitalize(formulationPeriod(f))}</span>
 							{#if f.kind === 'first' && f.since.index === 0}
@@ -351,11 +430,19 @@
 								>{copier.label(`f${i}`, 'Kopieer citaat')}</button
 							>
 						</div>
-						{#if f.kind === 'rewritten'}<span class="row__label">herschreven</span>{/if}
-						<p class="text" class:text--added={f.kind === 'added'}>
-							{#if f.kind === 'changed'}{@render marked(f.segments, 'both')}{:else}{f.unit
-									.text}{/if}
-						</p>
+						{#if state.status !== 'ready'}
+							<LoadStateView {state} what="De tekst" retry={retry(keys)} />
+						{:else if !unit}
+							<p class="text text--none">Niet in deze tekst.</p>
+						{:else}
+							{#if row?.kind === 'rewritten'}<span class="row__label">herschreven</span>{/if}
+							<p class="text" class:text--added={f.kind === 'added'}>
+								{#if row?.kind === 'changed'}{@render marked(
+										row.segments,
+										'both'
+									)}{:else}{unit.text}{/if}
+							</p>
+						{/if}
 					</li>
 				{/each}
 				{#if history.removedIn}
@@ -497,7 +584,9 @@
 					>
 				</div>
 			{/if}
-			{#if unchanged}
+			{#if pairState.status !== 'ready'}
+				<LoadStateView state={pairState} what="De tekst" form="block" retry={retry(pairKeys)} />
+			{:else if unchanged}
 				<p class="unchanged">De tekst is in A en B gelijk.</p>
 			{/if}
 			{#each blocks as block, i (i)}
@@ -511,7 +600,7 @@
 					{@const n = numberOf(row)}
 					<div class="row row--{row.kind}">
 						<span class="row__no">
-							{#if n && allLeden.includes(n)}
+							{#if n}
 								<a
 									href={link({ versies: lidAnchor(n) })}
 									data-sveltekit-noscroll
@@ -600,7 +689,7 @@
 			</thead>
 			<tbody>
 				{#each versions as v, k (v.key)}
-					{@const changed = k === 0 || !sameText(versions[k - 1].text, v.text)}
+					{@const changed = k === 0 || v.text_changed}
 					{@const w = wordingOf(wordings, v.valid_from ?? v.key)}
 					<tr class:is-quiet={!changed}>
 						<td class="table__when"

@@ -9,7 +9,7 @@ import { partsOf } from './article-parts';
 export type DiffSegment = { op: 'eq' | 'del' | 'ins'; text: string };
 
 /** One lid (or the whole text of an article without leden), with its onderdelen. */
-type Unit = { number: string | null; text: string };
+export type Unit = { number: string | null; text: string };
 
 type RowKind = 'same' | 'changed' | 'rewritten' | 'added' | 'removed';
 
@@ -175,25 +175,79 @@ function similarity(a: string, b: string): number {
 	return 1 - changedShare(diffWords(a, b));
 }
 
+/** The characters a change is measured in: the text without its spaces. */
+const weight = (s: string) => s.replace(/\s+/g, '').length;
+
 /** A lid keeps its number unless something moved it; the number weighs a little. */
 const SAME_NUMBER = 0.2;
+
+/** Past this many pairs in one stretch, leden pair by place: the cost of a word diff each. */
+const MAX_PAIRS = 40_000;
 
 /**
  * The leden of two versions side by side: by content, in order, gaps where one has none.
  * Two leden with the same number pair however much the wording changed, unless a
- * closer match elsewhere says a lid was inserted or removed before them.
+ * closer match elsewhere says a lid was inserted or removed before them. Leden with the
+ * same wording pair first; only the stretches between them are compared word by word, so
+ * an article of hundreds of onderdelen (art. 1:1 Wft) with a few changes stays quick.
  */
 export function alignUnits(a: Unit[], b: Unit[]): [Unit | null, Unit | null][] {
+	const x = a.map((u) => normalize(u.text));
+	const y = b.map((u) => normalize(u.text));
 	const n = a.length;
 	const m = b.length;
-	const pair = a.map((x) =>
-		b.map((y) => {
-			const sim = similarity(x.text, y.text);
-			const same = x.number === y.number;
+	// The longest run of leden with the same wording, in order.
+	const lcs = new Uint32Array((n + 1) * (m + 1));
+	for (let i = n - 1; i >= 0; i--)
+		for (let j = m - 1; j >= 0; j--)
+			lcs[i * (m + 1) + j] =
+				x[i] === y[j]
+					? lcs[(i + 1) * (m + 1) + j + 1] + 1
+					: Math.max(lcs[(i + 1) * (m + 1) + j], lcs[i * (m + 1) + j + 1]);
+	const out: [Unit | null, Unit | null][] = [];
+	let i = 0;
+	let j = 0;
+	let fromI = 0;
+	let fromJ = 0;
+	const stretch = (toI: number, toJ: number) =>
+		out.push(...alignSimilar(a.slice(fromI, toI), b.slice(fromJ, toJ)));
+	while (i < n && j < m) {
+		if (x[i] === y[j]) {
+			stretch(i, j);
+			out.push([a[i++], b[j++]]);
+			fromI = i;
+			fromJ = j;
+		} else if (lcs[(i + 1) * (m + 1) + j] >= lcs[i * (m + 1) + j + 1]) i++;
+		else j++;
+	}
+	stretch(n, m);
+	return out;
+}
+
+/** One stretch of leden without a shared wording, paired by likeness (Needleman–Wunsch). */
+function alignSimilar(a: Unit[], b: Unit[]): [Unit | null, Unit | null][] {
+	const n = a.length;
+	const m = b.length;
+	if (n === 0 || m === 0)
+		return [...a.map((u) => [u, null]), ...b.map((u) => [null, u])] as [Unit | null, Unit | null][];
+	if (n * m > MAX_PAIRS) {
+		const out: [Unit | null, Unit | null][] = [];
+		for (let k = 0; k < Math.max(n, m); k++) out.push([a[k] ?? null, b[k] ?? null]);
+		return out;
+	}
+	const wa = a.map((u) => weight(u.text));
+	const wb = b.map((u) => weight(u.text));
+	const pair = a.map((p, i) =>
+		b.map((q, j) => {
+			const same = p.number === q.number;
+			// The shorter text can share no more than its own length.
+			const bound = Math.max(wa[i], wb[j]) ? Math.min(wa[i], wb[j]) / Math.max(wa[i], wb[j]) : 1;
+			if (!same && bound < PAIRED) return -1;
+			const sim = similarity(p.text, q.text);
 			return sim >= PAIRED || same ? sim + (same ? SAME_NUMBER : 0) : -1;
 		})
 	);
-	// Needleman–Wunsch: a pair scores its similarity, a gap nothing.
+	// A pair scores its similarity, a gap nothing.
 	const score = Array.from({ length: n + 1 }, () => new Float64Array(m + 1));
 	for (let i = n - 1; i >= 0; i--) {
 		for (let j = m - 1; j >= 0; j--) {
@@ -219,25 +273,24 @@ export function compareVersions(
 	from: { text?: string | null; parts?: Schema<'ArticlePartDTO'>[] | null },
 	to: { text?: string | null; parts?: Schema<'ArticlePartDTO'>[] | null }
 ): CompareRow[] {
-	return alignUnits(unitsOf(from.text, from.parts), unitsOf(to.text, to.parts)).map(
-		([old, now]) => {
-			if (!old) return { kind: 'added', old, new: now, segments: [] };
-			if (!now) return { kind: 'removed', old, new: now, segments: [] };
-			if (normalize(old.text) === normalize(now.text))
-				return { kind: 'same', old, new: now, segments: [] };
-			const segments = diffWords(old.text, now.text);
-			return changedShare(segments) > REWRITTEN
-				? { kind: 'rewritten', old, new: now, segments: [] }
-				: { kind: 'changed', old, new: now, segments };
-		}
+	return alignUnits(unitsOf(from.text, from.parts), unitsOf(to.text, to.parts)).map(([old, now]) =>
+		compareUnits(old, now)
 	);
 }
 
-/** Whether two versions have the same wording, whatever else the BWB changed. */
-export const sameText = (a: string | null | undefined, b: string | null | undefined) =>
-	normalize(a ?? '').trim() === normalize(b ?? '').trim();
+/** One lid against its earlier wording: the words marked, or old and new in full. */
+export function compareUnits(old: Unit | null, now: Unit | null): CompareRow {
+	if (!old) return { kind: 'added', old, new: now, segments: [] };
+	if (!now) return { kind: 'removed', old, new: now, segments: [] };
+	if (normalize(old.text) === normalize(now.text))
+		return { kind: 'same', old, new: now, segments: [] };
+	const segments = diffWords(old.text, now.text);
+	return changedShare(segments) > REWRITTEN
+		? { kind: 'rewritten', old, new: now, segments: [] }
+		: { kind: 'changed', old, new: now, segments };
+}
 
-const lidName = (r: CompareRow) => (r.new ?? r.old)?.number ?? null;
+type PartChange = Schema<'VersionPartChangeDTO'>;
 
 /** "lid 4", "leden 1, 3 en 5"; null when the article has no leden. */
 function namedLeden(numbers: string[]): string | null {
@@ -246,29 +299,35 @@ function namedLeden(numbers: string[]): string | null {
 	return `leden ${joinAnd(numbers)}`;
 }
 
-/** What changed between two versions, in one short phrase: "lid 4 gewijzigd". */
-export function summarize(rows: CompareRow[]): string {
-	const of = (kind: RowKind) => rows.filter((r) => r.kind === kind).map((r) => lidName(r) ?? '');
+/** The number of a lid the API names; null for another part (the aanhef, a definition). */
+const lidOf = (c: PartChange) => (c.kind === 'lid' ? c.number : null);
+
+/**
+ * What a version changed, in one short phrase, from the parts the API lists: "lid 4
+ * gewijzigd". A version that changed its text without parts to name changed the text.
+ */
+function summarizeChanges(changes: readonly PartChange[] | null | undefined): string {
 	const phrases: string[] = [];
-	const changed = [...of('changed'), ...of('rewritten')];
-	const verbs: [string[], string][] = [
-		[changed, 'gewijzigd'],
-		[of('added'), 'ingevoegd'],
-		[of('removed'), 'vervallen']
+	const verbs: [PartChange['change'], string][] = [
+		['changed', 'gewijzigd'],
+		['added', 'ingevoegd'],
+		['removed', 'vervallen']
 	];
-	for (const [numbers, verb] of verbs) {
-		if (numbers.length === 0) continue;
-		const named = namedLeden(numbers.filter(Boolean));
+	for (const [change, verb] of verbs) {
+		const of = (changes ?? []).filter((c) => c.change === change);
+		if (of.length === 0) continue;
+		const named = namedLeden(of.map(lidOf).filter((n): n is string => !!n));
 		phrases.push(named ? `${named} ${verb}` : `tekst ${verb}`);
 	}
-	if (phrases.length === 0) return 'tekst ongewijzigd';
-	return phrases.join(', ');
+	return phrases.join(', ') || 'tekst gewijzigd';
 }
 
 // ── Tekstversies ─────────────────────────────────────────────────────────────────
 // The BWB makes a new version of an article whenever the regeling around it changes;
 // most of them repeat the wording. A tekstversie is a run of versions with one wording,
-// dated from the version that introduced it.
+// dated from the version that introduced it. The history lists the versions without their
+// text: whether each changed the wording (`text_changed`) and which parts (`changes`). The
+// text of one is asked when it is read (`history/{key}`).
 
 type VersionLike = {
 	key: string;
@@ -276,8 +335,10 @@ type VersionLike = {
 	valid_until?: string | null;
 	/** The geldende tekst: the API marks the one version in force. */
 	current?: boolean;
-	text?: string | null;
-	parts?: Schema<'ArticlePartDTO'>[] | null;
+	/** Its wording differs from the version before it; true for the first. */
+	text_changed?: boolean;
+	/** The parts it changed against the version before it. */
+	changes?: readonly PartChange[] | null;
 };
 
 export type Wording<V extends VersionLike = VersionLike> = {
@@ -291,8 +352,6 @@ export type Wording<V extends VersionLike = VersionLike> = {
 	until: string | null;
 	/** The version that repealed the article: the API gives it no period (`until` equals `from`). */
 	lapsed: boolean;
-	/** Against the wording before; null for the oldest. */
-	rows: CompareRow[] | null;
 	summary: string;
 };
 
@@ -300,14 +359,13 @@ export function wordingsOf<V extends VersionLike>(versions: V[]): Wording<V>[] {
 	const out: Wording<V>[] = [];
 	for (const v of versions) {
 		const last = out.at(-1);
-		if (last && sameText(last.first.text, v.text)) {
+		if (last && !v.text_changed) {
 			last.versions.push(v);
 			last.until = v.current ? null : (v.valid_until ?? null);
 			continue;
 		}
 		const until = v.current ? null : (v.valid_until ?? null);
 		const lapsed = !!v.valid_from && v.valid_from === until;
-		const rows = last ? compareVersions(last.first, v) : null;
 		out.push({
 			index: out.length,
 			versions: [v],
@@ -315,8 +373,11 @@ export function wordingsOf<V extends VersionLike>(versions: V[]): Wording<V>[] {
 			from: v.valid_from ?? null,
 			until,
 			lapsed,
-			rows,
-			summary: lapsed ? 'vervallen' : rows ? summarize(rows) : 'oudste tekst in de gegevens'
+			summary: lapsed
+				? 'vervallen'
+				: last
+					? summarizeChanges(v.changes)
+					: 'oudste tekst in de gegevens'
 		});
 	}
 	return out;
@@ -338,14 +399,27 @@ export function byYear<W extends { from: string | null }>(wordings: W[]): [strin
 export const wordingOf = <V extends VersionLike>(wordings: Wording<V>[], id: string) =>
 	wordings.find((w) => w.versions.some((v) => (v.valid_from ?? v.key) === id)) ?? null;
 
+/** Every lid number the history names a change of, in the order of the law. */
+export function changedLeden(wordings: Wording[]): string[] {
+	const numbers = new Set<string>();
+	for (const w of wordings)
+		for (const c of w.index > 0 ? (w.first.changes ?? []) : []) {
+			const n = lidOf(c);
+			if (n) numbers.add(n);
+		}
+	return sortLeden([...numbers]);
+}
+
+/** Lid numbers in the order of the law: 2 before 2a before 10. */
+export const sortLeden = (numbers: string[]) =>
+	[...new Set(numbers)].sort((a, b) => parseInt(a, 10) - parseInt(b, 10) || a.localeCompare(b));
+
 export type Formulation<V extends VersionLike = VersionLike> = {
-	unit: Unit;
 	/** The first and the last tekstversie that carry this formulation of the lid. */
 	since: Wording<V>;
 	through: Wording<V>;
-	/** How it differs from the formulation before it; `added` when the lid was new. */
-	kind: 'first' | 'changed' | 'rewritten' | 'added';
-	segments: DiffSegment[];
+	/** How it came: the oldest in the data, a new wording, or a lid inserted. */
+	kind: 'first' | 'changed' | 'added';
 };
 
 type LidHistory<V extends VersionLike = VersionLike> = {
@@ -354,59 +428,36 @@ type LidHistory<V extends VersionLike = VersionLike> = {
 	removedIn: Wording<V> | null;
 };
 
-const sameUnit = (a: Unit | null, b: Unit) => !!a && a.number === b.number && a.text === b.text;
-
 /**
- * Every formulation of one lid, oldest first, followed back through renumbering. The
- * number is the lid's number in the latest tekstversie that has it.
+ * Every formulation of one lid, oldest first, from the changes the history lists by the
+ * lid's number. A lid the history names no change of has one formulation, the oldest; its
+ * text tells whether it is there at all.
  */
 export function lidHistory<V extends VersionLike>(
 	wordings: Wording<V>[],
 	number: string
 ): LidHistory<V> | null {
-	const unitsAt = (w: Wording<V>) => unitsOf(w.first.text, w.first.parts);
-	let at = wordings.length - 1;
-	let unit: Unit | undefined;
-	for (; at >= 0; at--) {
-		unit = unitsAt(wordings[at]).find((u) => u.number === number);
-		if (unit) break;
+	if (wordings.length === 0) return null;
+	const changeAt = (w: Wording<V>) =>
+		w.index === 0 ? null : (w.first.changes?.find((c) => lidOf(c) === number)?.change ?? null);
+	const firstChange = wordings.map(changeAt).find((c) => c !== null);
+	const formulations: Formulation<V>[] = [];
+	let removedIn: Wording<V> | null = null;
+	let open: Formulation<V> | null =
+		firstChange === 'added' ? null : { since: wordings[0], through: wordings[0], kind: 'first' };
+	if (open) formulations.push(open);
+	for (const w of wordings.slice(1)) {
+		const change = changeAt(w);
+		if (change === 'removed') {
+			open = null;
+			removedIn = w;
+		} else if (change === 'added' || change === 'changed') {
+			open = { since: w, through: w, kind: open ? 'changed' : 'added' };
+			formulations.push(open);
+			removedIn = null;
+		} else if (open) open.through = w;
 	}
-	if (!unit) return null;
-	const removedIn = wordings[at + 1] ?? null;
-
-	// Backwards: each step says how the lid in wording w came from wording w - 1.
-	const back: Formulation<V>[] = [];
-	let current: Formulation<V> = {
-		unit,
-		since: wordings[at],
-		through: wordings[at],
-		kind: 'first',
-		segments: []
-	};
-	for (let w = at; w > 0; w--) {
-		const row = wordings[w].rows?.find((r) => r.new && sameUnit(r.new, current.unit));
-		if (!row || row.kind === 'added' || !row.old) {
-			current.kind = 'added';
-			break;
-		}
-		if (row.kind === 'same') {
-			current.since = wordings[w - 1];
-			current.unit = row.old;
-			continue;
-		}
-		current.kind = row.kind === 'changed' ? 'changed' : 'rewritten';
-		current.segments = row.segments;
-		back.push(current);
-		current = {
-			unit: row.old,
-			since: wordings[w - 1],
-			through: wordings[w - 1],
-			kind: 'first',
-			segments: []
-		};
-	}
-	back.push(current);
-	return { formulations: back.reverse(), removedIn };
+	return formulations.length > 0 ? { formulations, removedIn } : null;
 }
 
 /**

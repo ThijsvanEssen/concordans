@@ -5,13 +5,7 @@ import VersionCompare from './VersionCompare.svelte';
 
 vi.mock('$app/state', () => ({ page: { url: new URL('http://x/') } }));
 
-type Version = Schema<'ArticleVersionDTO'>;
-
-/** One lid, as the API delivers an article text with its parts. */
-const lid = (text: string) => ({
-	text: `1. ${text}`,
-	parts: [{ id: 'lid-1', kind: 'lid', number: '1', start: 3, end: 3 + text.length, text }]
-});
+type Version = Schema<'ArticleVersionListedDTO'>;
 
 const versions = [
 	{
@@ -19,14 +13,16 @@ const versions = [
 		current: false,
 		valid_from: '2002-03-21',
 		valid_until: '2017-11-17',
-		...lid('Er zijn scholen.')
+		text_changed: true,
+		changes: []
 	},
 	{
 		key: 'v2',
 		current: true,
 		valid_from: '2017-11-17',
 		valid_until: null,
-		...lid('Er zijn openbare scholen.'),
+		text_changed: true,
+		changes: [{ change: 'changed', kind: 'lid', number: '1', term: null }],
 		amended_by: {
 			kind: 'Stb',
 			year: 2017,
@@ -41,7 +37,14 @@ const versions = [
 
 const html = (param: string) =>
 	render(VersionCompare, {
-		props: { versions, param, link: () => '#', go: () => {} }
+		props: {
+			versions,
+			bwbId: 'BWBR0001840',
+			articleNumber: '23',
+			param,
+			link: () => '#',
+			go: () => {}
+		}
 	}).body;
 
 /** The text of each herkomst block, tags and comments out, spaces folded. */

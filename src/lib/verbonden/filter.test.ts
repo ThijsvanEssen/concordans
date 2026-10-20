@@ -87,6 +87,9 @@ describe('filterGroupOf', () => {
 		expect(filterGroupOf('judgments', 'ecli_ce_echr_2026_0908jud000748123', {})).toBe(
 			'internationaal'
 		);
+		// The courts of the EU as the EHRM: by the key, or by the source of a node.
+		expect(filterGroupOf('judgments', 'ecli_eu_c_2023_494', {})).toBe('internationaal');
+		expect(filterGroupOf('judgments', 'x', { source: 'cjeu' })).toBe('internationaal');
 		expect(filterGroupOf('instruments', 'bwbr0001854', {})).toBe('wetten');
 	});
 
@@ -168,7 +171,22 @@ describe('rowPasses', () => {
 		expect(rechterOf(row({ ref: { collection: 'judgments', key: 'ecli_ce_echr_2026_1' } }))).toBe(
 			'ehrm'
 		);
+		expect(rechterOf(row({ ref: { collection: 'judgments', key: 'ecli_eu_t_2021_441' } }))).toBe(
+			'hvj'
+		);
 		expect(rechterOf(row({ identifier: 'ECLI:NL:CRVB:2020:1' }))).toBeNull();
+	});
+
+	it('knows the courts of the EU without a tier: by source, ECLI, or as the Rechtspraak publishes them (XX)', () => {
+		// A neighbour carries no tier (live: ECLI:NL:XX:2013:178 beside GHDHA:2015:950).
+		const xx = (props: Record<string, unknown>) =>
+			row({ ref: { collection: 'judgments', key: 'ecli_nl_xx_2013_178' }, props });
+		expect(rechterOf(xx({ court: 'Hof van Justitie van de Europese Unie' }))).toBe('hvj');
+		expect(rechterOf(xx({ court: 'Gerecht van de Europese Unie' }))).toBe('hvj');
+		expect(rechterOf(xx({ court: null, case_number: 'C-437/12' }))).toBe('hvj');
+		expect(rechterOf(xx({ court: 'Kroon' }))).toBeNull();
+		expect(rechterOf(row({ props: { source: 'cjeu' } }))).toBe('hvj');
+		expect(rechterOf(row({ props: { source: 'echr' } }))).toBe('ehrm');
 	});
 
 	it('reads the rechter from the tier the API gives, before the ECLI', () => {
