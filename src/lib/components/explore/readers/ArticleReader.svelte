@@ -382,9 +382,12 @@
 	);
 
 	// The official text of the version on screen: wetten.overheid.nl, EUR-Lex or the
-	// Verdragenbank, as the API names it.
+	// Verdragenbank, as the API names it. An article of the EU has no address of its own on
+	// EUR-Lex: its act's.
 	const officialUrl = $derived(
-		loaded ? (shown?.first.official_url ?? loaded.article.official_url ?? null) : null
+		loaded
+			? (shown?.first.official_url ?? loaded.article.official_url ?? euAct?.official_url ?? null)
+			: null
 	);
 	const officialName = $derived(
 		officialUrl ? new URL(officialUrl).hostname.replace(/^www\./, '') : null

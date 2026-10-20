@@ -394,8 +394,16 @@
 						>Naar de eerste versie</a
 					>
 				</p>
+			{:else if versionsLoaded && versions.length === 0 && isEu}
+				<!-- An act of the EU: its text as adopted, on any day. The head says so once
+				     (Dekking); here only the way back to it. -->
+				<p class="whole-before">
+					<a href={withParams(page.url, { peildatum: null })} data-sveltekit-noscroll
+						>Naar de tekst zoals vastgesteld</a
+					>
+				</p>
 			{:else if versionsLoaded && versions.length === 0}
-				<!-- An act of the EU: the dataset holds its text in force only. -->
+				<!-- A record without versions in the dataset: its text in force only. -->
 				<p class="whole-before">
 					Van deze regeling staat alleen de geldende tekst in de gegevens.
 					<a href={withParams(page.url, { peildatum: null })} data-sveltekit-noscroll
