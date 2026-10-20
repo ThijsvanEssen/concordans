@@ -103,10 +103,19 @@ const LOOSE_ID = 'losse-markeringen';
 /** Losse markeringen alone: where this browser keeps none, or none it can read. */
 const eersteStand = (): Stand => ({ mappen: [{ ...leeg(EERSTE), id: LOOSE_ID }] });
 
-/** The bundels as this browser keeps them now; null where it keeps none it can read. */
-function lees(): Stand | null {
+/** The bundels as this browser keeps them, as written; null where it keeps none. */
+function stored(): string | null {
 	try {
-		const raw = JSON.parse(localStorage.getItem(OPSLAG) ?? 'null');
+		return localStorage.getItem(OPSLAG);
+	} catch {
+		return null;
+	}
+}
+
+/** The bundels as this browser keeps them now; null where it keeps none it can read. */
+function lees(text = stored()): Stand | null {
+	try {
+		const raw = JSON.parse(text ?? 'null');
 		if (!raw || !Array.isArray(raw.mappen) || !raw.mappen.length) return null;
 		onleesbaar = {};
 		// The first is Losse markeringen by its place, whatever name it was kept under.
@@ -128,7 +137,11 @@ function lees(): Stand | null {
 }
 
 class Kaarten {
-	#stand = $state<Stand>((typeof window === 'undefined' ? null : lees()) ?? eersteStand());
+	/** What this tab last read or wrote: a read of the same leaves its copy as it is. */
+	#lastText = typeof window === 'undefined' ? null : stored();
+	#stand = $state<Stand>(
+		(typeof window === 'undefined' ? null : lees(this.#lastText)) ?? eersteStand()
+	);
 	constructor() {
 		// What another tab kept comes in at once (the browser's storage event).
 		if (typeof window !== 'undefined')
@@ -140,7 +153,12 @@ class Kaarten {
 	 *  opened before never undoes what another kept since (Thijs, 20 Oct: a bundel emptied). */
 	#vers() {
 		if (typeof window === 'undefined') return;
-		const kept = lees();
+		const text = stored();
+		// Unchanged since: no new copy, so a page that reads the bundels and visits one (MapView)
+		// does not run again on its own visit.
+		if (text === this.#lastText) return;
+		this.#lastText = text;
+		const kept = lees(text);
 		if (kept) this.#stand = kept;
 	}
 	mappen = $derived(this.#stand.mappen);
@@ -163,8 +181,10 @@ class Kaarten {
 		const mappen = this.#stand.mappen.map((m) =>
 			onleesbaar[m.id] ? { ...m, items: [...m.items, ...onleesbaar[m.id]] } : m
 		);
+		const text = JSON.stringify({ mappen });
 		try {
-			localStorage.setItem(OPSLAG, JSON.stringify({ mappen }));
+			localStorage.setItem(OPSLAG, text);
+			this.#lastText = text;
 		} catch {
 			/* geen opslag */
 		}
@@ -223,9 +243,9 @@ class Kaarten {
 	empty(id: string) {
 		this.#change(id, () => ({ items: [] }));
 	}
-	notitie(i: Pick<MapItem, 'id' | 'at'>, tekst: string, id: string) {
+	notitie(i: Pick<MapItem, 'id' | 'at'>, text: string, id: string) {
 		const k = itemKey(i);
-		const t = tekst.trim();
+		const t = text.trim();
 		this.#change(id, (m) => ({
 			items: m.items.map((x) => (itemKey(x) === k ? { ...x, notitie: t || null } : x))
 		}));
@@ -237,8 +257,8 @@ class Kaarten {
 		this.#change(id, () => ({ volgorde: v }));
 	}
 	/** The note on a group of the map, by its key; empty is none. */
-	groepNotitie(sleutel: string, tekst: string, id: string) {
-		const t = tekst.trim();
+	groepNotitie(sleutel: string, text: string, id: string) {
+		const t = text.trim();
 		this.#change(id, (m) => {
 			const rest = { ...m.groepNotities };
 			if (t) rest[sleutel] = t;
@@ -247,8 +267,8 @@ class Kaarten {
 		});
 	}
 	/** The note on the map as a whole; empty is none. */
-	mapNotitie(tekst: string, id: string) {
-		const t = tekst.trim();
+	mapNotitie(text: string, id: string) {
+		const t = text.trim();
 		this.#change(id, () => ({ notitie: t || null }));
 	}
 

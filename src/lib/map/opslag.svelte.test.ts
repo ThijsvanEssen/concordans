@@ -190,6 +190,22 @@ describe('a write', () => {
 		expect(oud.mappen[0].items).toHaveLength(2);
 	});
 
+	it('leaves its bundels as they are on a read of what it kept itself', async () => {
+		// A bundel's page visits it in an effect that reads the bundels: a new copy on every
+		// visit ran it again without end (effect_update_depth_exceeded, 20 Oct).
+		const b = browser();
+		b.data.set(OPSLAG, voorBundels);
+		const kaart = await tab(b);
+		kaart.visit('cbw', '2026-10-20');
+		const mappen = kaart.mappen;
+		kaart.visit('cbw', '2026-10-20');
+		expect(kaart.mappen).toBe(mappen);
+		// What another tab wrote since is read.
+		written(b, voorBundels);
+		kaart.visit('cbw', '2026-10-20');
+		expect(kaart.mappen).not.toBe(mappen);
+	});
+
 	it('in one tab never undoes what another tab kept, without being told', async () => {
 		// A browser that sends no storage event (or a tab asleep): the write starts from what
 		// is kept, not from the tab's copy.
