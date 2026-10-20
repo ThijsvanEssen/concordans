@@ -10,6 +10,7 @@ import { buildBronHref } from '$lib/bron/href';
 import { padOfFocus } from '$lib/bron/address';
 import { csvText } from '$lib/text/csv';
 import { anchorLabel } from '$lib/text/anchor';
+import { isDay } from '$lib/text/datum';
 
 /** One thing kept: a bron, or a place in it (`lid-2`, `rov-5.7.1`), with how it is cited. */
 export type MapItem = {
@@ -34,6 +35,9 @@ export type MapItem = {
 	kind?: SourceKind;
 	/** Its address on the web, where the reader gave one. */
 	url?: string;
+	/** The day the text kept took effect (an article's tekstversie, `2026-07-01`), where the
+	 *  reader read one when keeping it: a fragment in it is found again in a later text. */
+	versie?: string;
 };
 
 /** What a source outside Concordans is: its label in the row. */
@@ -113,6 +117,8 @@ const OWN_GROUP = new Set(['judgments', 'documents', 'decisions']);
  */
 type BewaarContext = {
 	groep?: string | null;
+	/** The day the text on screen took effect: an article's tekstversie. */
+	versie?: string | null;
 	dossier?: string | null;
 	wet?: string | null;
 	/** A group of the map chosen by the reader, by its key. */
@@ -155,7 +161,8 @@ export function bewaarItem(
 		...(cite.voluit ? { voluit: cite.voluit } : {}),
 		groep,
 		groupKey,
-		...(pad ? { pad } : {})
+		...(pad ? { pad } : {}),
+		...(isDay(context.versie) ? { versie: context.versie } : {})
 	};
 }
 
@@ -365,7 +372,8 @@ const ITEM_FIELDS = fieldsOf<MapItem>({
 	notitie: true,
 	pad: true,
 	kind: true,
-	url: true
+	url: true,
+	versie: true
 });
 
 /**
@@ -387,6 +395,7 @@ export function readItem(v: unknown): MapItem | null {
 	const pad = textOf(o, 'pad');
 	const kind = textOf(o, 'kind');
 	const url = webAddress(textOf(o, 'url'));
+	const versie = textOf(o, 'versie');
 	return {
 		...unknownOf(o, ITEM_FIELDS),
 		id,
@@ -400,7 +409,8 @@ export function readItem(v: unknown): MapItem | null {
 		...(EXTERNAL_ID.test(id)
 			? { kind: kind && kind in SOURCE_KINDS ? (kind as SourceKind) : 'other' }
 			: {}),
-		...(EXTERNAL_ID.test(id) && url ? { url } : {})
+		...(EXTERNAL_ID.test(id) && url ? { url } : {}),
+		...(isDay(versie) ? { versie } : {})
 	};
 }
 

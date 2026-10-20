@@ -547,10 +547,18 @@ describe('a dossier kept', () => {
 	});
 });
 
-describe('an item read back (onderzoeksflow stap 1)', () => {
+describe('an item read back (onderzoeksflow stap 1–2)', () => {
 	it('keeps a field of a later version as it was kept, and drops a known one that does not read', () => {
 		const later = { ...lid2, toekomst: { a: [1, 2] }, pad: '//elders' };
 		const { pad: _pad, ...zonderPad } = later;
 		expect(readItem(later)).toEqual(zonderPad);
+	});
+
+	it('keeps the day of the text kept, a day only', () => {
+		const kort = { kort: 'art. 6:162 BW' };
+		expect(bewaarItem(lid2.id, kort, { versie: '2024-01-01' }).versie).toBe('2024-01-01');
+		expect(bewaarItem(lid2.id, kort, { versie: null })).not.toHaveProperty('versie');
+		expect(readItem({ ...lid2, versie: '2024-01-01' })?.versie).toBe('2024-01-01');
+		expect(readItem({ ...lid2, versie: 'gisteren' })).not.toHaveProperty('versie');
 	});
 });

@@ -38,7 +38,7 @@ describe('the map', () => {
 			const tekst = /<ArticleText\b[\s\S]*?\/>/.exec(t)![0];
 			expect(tekst).toMatch(/\{citation\}/);
 			expect(tekst).toMatch(
-				/bewaar=\{[^}]*citation\s*\?\s*\{\s*id: [\w.]+, groep: citation\.citationTitle, wet: [\w.]+ \}/
+				/bewaar=\{[^}]*citation\s*\?\s*\{\s*id: [\w.]+, groep: citation\.citationTitle, wet: [\w.]+(?:, versie: [\w.]+)? \}/
 			);
 		}
 		// An overweging: one citation and one Bewaar (citeOverwegingen), in the reader's menu; a
