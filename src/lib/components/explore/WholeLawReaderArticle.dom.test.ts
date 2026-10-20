@@ -15,6 +15,7 @@ const row = (r: Partial<Row>): Row => ({
 	breadcrumb: [],
 	text: null,
 	parts: null,
+	tables: [],
 	text_preview: 'Tekst.',
 	...r
 });

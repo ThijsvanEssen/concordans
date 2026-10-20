@@ -6,6 +6,7 @@ import { isDay } from '$lib/text/datum';
 
 type Version = Pick<Schema<'InstrumentVersionDTO'>, 'valid_from' | 'valid_until' | 'current'>;
 type Part = Schema<'ArticlePartSpanDTO'>;
+type Table = Schema<'ArticleTableDTO'>;
 type Current = Pick<Schema<'InstrumentArticleNodeDTO'>, 'key' | 'article_number'>;
 type AtItem = Pick<
 	Schema<'InstrumentArticleVersionDTO'>,
@@ -19,6 +20,7 @@ type AtItem = Pick<
 	| 'valid_from'
 	| 'valid_until'
 	| 'parts'
+	| 'tables'
 >;
 
 type Period = { from: string | null | undefined; until: string | null | undefined };
@@ -74,6 +76,8 @@ type AtArticle = {
 	text: string | null;
 	/** Its aanhef, leden and onderdelen in that text; null from an API without them. */
 	parts: Part[] | null;
+	/** The tables in that text. */
+	tables: Table[];
 	text_preview: string | null;
 };
 
@@ -94,6 +98,7 @@ export function atArticles(items: AtItem[], current: Current[]): AtArticle[] {
 		breadcrumb: i.breadcrumb ?? [],
 		text: i.text ?? null,
 		parts: i.parts.length ? i.parts : null,
+		tables: i.tables ?? [],
 		text_preview: i.text_preview ?? null
 	}));
 }

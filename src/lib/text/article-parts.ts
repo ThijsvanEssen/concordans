@@ -1,9 +1,11 @@
 // An article's aanhef, leden and onderdelen (`partsOf`). The API delivers them as `parts`
 // (`partsFromApi` nests them by id); where it gives none they are read from the flat text,
 // in which a lid is a line that starts with `1. ` and an onderdeel one that starts
-// with `a. `, `1°. ` or a dash (`– `, the definitions of Cbw 1).
+// with `a. `, `1°. ` or a dash (`– `, the definitions of Cbw 1). A table (`tables`) is one
+// block of the part it stands in: its rows are no leden.
 // TODO(backend B6): `parseArticleParts` goes when every article carries `parts`.
 import { lidAnchor, onderdeelAnchor, parentAnchor } from './anchor';
+import type { Table } from './tables';
 
 type ArticlePartKind = 'aanhef' | 'lid' | 'onderdeel' | 'tekst';
 
@@ -28,14 +30,20 @@ export type ArticlePart = {
 const LID = /^(\d+[a-z]?)\.\s+/;
 const ONDERDEEL = /^(?:([a-z]{1,2})\.|(\d+)°\.?|(\d+)\.|([–—]))\s+/;
 
-type Line = { start: number; end: number; text: string };
+type Line = { start: number; end: number; text: string; table?: boolean };
 
-function linesOf(text: string): Line[] {
+/** The lines of `text` that hold anything; a table one line, its rows together. */
+function linesOf(text: string, tables: readonly Table[] = []): Line[] {
 	const lines: Line[] = [];
 	let start = 0;
 	for (const raw of text.split('\n')) {
-		if (raw.trim()) lines.push({ start, end: start + raw.length, text: raw });
-		start += raw.length + 1;
+		const end = start + raw.length;
+		const table = tables.find((t) => start >= t.start && end <= t.end);
+		const last = lines.at(-1);
+		if (table && last?.table && last.start >= table.start) last.end = end;
+		else if (table) lines.push({ start, end, text: raw, table: true });
+		else if (raw.trim()) lines.push({ start, end, text: raw });
+		start = end + 1;
 	}
 	return lines;
 }
@@ -79,7 +87,10 @@ const leaf = (
  * The aanhef, leden and onderdelen of an article, nested, with offsets into `text`
  * so that citation spans of the API still fit.
  */
-export function parseArticleParts(text: string | null | undefined): ArticlePart[] {
+export function parseArticleParts(
+	text: string | null | undefined,
+	tables: readonly Table[] = []
+): ArticlePart[] {
 	const parts: ArticlePart[] = [];
 	if (!text) return parts;
 
@@ -94,8 +105,8 @@ export function parseArticleParts(text: string | null | undefined): ArticlePart[
 		if (onderdeel) onderdeel.end = line.end;
 	};
 
-	for (const line of linesOf(text)) {
-		const lidMatch = LID.exec(line.text);
+	for (const line of linesOf(text, tables)) {
+		const lidMatch = line.table ? null : LID.exec(line.text);
 		if (lidMatch && isNextLid(lidMatch[1], lastLid)) {
 			lastLid = lidMatch[1];
 			lid = leaf('lid', lidAnchor(slug(lastLid)), lastLid, line, lidMatch[0].length);
@@ -105,7 +116,7 @@ export function parseArticleParts(text: string | null | undefined): ArticlePart[
 			continue;
 		}
 
-		const m = ONDERDEEL.exec(line.text);
+		const m = line.table ? null : ONDERDEEL.exec(line.text);
 		if (m) {
 			const style = m.slice(1).findIndex((g) => g !== undefined);
 			const number = m[1] ?? (m[2] ? `${m[2]}°` : (m[3] ?? m[4]));
@@ -147,7 +158,7 @@ export function parseArticleParts(text: string | null | undefined): ArticlePart[
 
 		// An indented line goes on with the onderdeel above it (Cbw 1, `– CER-richtlijn:` and
 		// the directive's name under it).
-		if (onderdeel && onderdeel.children.length === 0 && /^\s/.test(line.text)) {
+		if (onderdeel && onderdeel.children.length === 0 && !line.table && /^\s/.test(line.text)) {
 			onderdeel.textEnd = line.end;
 			extend(line);
 			continue;
@@ -236,9 +247,10 @@ export function partsFromApi(parts: readonly ApiPart[], text?: string): ArticleP
 /** An article's parts: those the API numbers, else those read from its text. */
 export function partsOf(
 	text: string | null | undefined,
-	apiParts: readonly ApiPart[] | null | undefined
+	apiParts: readonly ApiPart[] | null | undefined,
+	tables: readonly Table[] = []
 ): ArticlePart[] {
-	return apiParts?.length ? partsFromApi(apiParts, text ?? '') : parseArticleParts(text);
+	return apiParts?.length ? partsFromApi(apiParts, text ?? '') : parseArticleParts(text, tables);
 }
 
 /** Every part, depth first. */

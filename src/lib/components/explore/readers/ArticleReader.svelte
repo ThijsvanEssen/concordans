@@ -686,6 +686,7 @@
 				<ArticleText
 					text={shownVersion?.text ?? a.text}
 					parts={shownVersion?.parts ?? a.parts}
+					tables={shownVersion ? shownVersion.tables : a.tables}
 					citations={shownVersion ? [] : d.citations}
 					references={shownVersion ? [] : (d.references ?? [])}
 					law={bwbId}

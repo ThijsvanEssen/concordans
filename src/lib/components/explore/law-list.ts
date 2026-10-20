@@ -22,6 +22,7 @@ export const PAGE_SIZE = 100;
 const PAGES_AT_ONCE = 2;
 
 type Part = Schema<'ArticlePartSpanDTO'>;
+type Table = Schema<'ArticleTableDTO'>;
 type Division = Schema<'InstrumentDivisionDTO'>;
 
 /** An article as the list shows it, of today or of the peildatum. */
@@ -39,14 +40,17 @@ export type Row = {
 	text: string | null;
 	/** Its aanhef, leden and onderdelen; null from an API without them (read from the text). */
 	parts: Part[] | null;
+	/** The tables in that text. */
+	tables: Table[];
 	/** The whole text of today, from the list of the day (`include_text`), per page. */
 	textToday?: string | null;
 	partsToday?: Part[] | null;
+	tablesToday?: Table[];
 	text_preview: string | null;
 };
 
 /** The whole text an article shows, and whether Citeer names its places (not on a peildatum). */
-export type ArticleText = { text: string; parts: Part[] | null; cited: boolean };
+export type ArticleText = { text: string; parts: Part[] | null; tables: Table[]; cited: boolean };
 
 /**
  * The one text of a row: of the peildatum, else of today from its page, else of the article
@@ -54,11 +58,23 @@ export type ArticleText = { text: string; parts: Part[] | null; cited: boolean }
  */
 export function articleText(
 	row: Row,
-	detail: { text: string | null; parts?: Part[] | null } | undefined
+	detail: { text: string | null; parts?: Part[] | null; tables?: Table[] } | undefined
 ): ArticleText | null {
-	if (row.text) return { text: row.text, parts: row.parts, cited: false };
-	if (row.textToday) return { text: row.textToday, parts: row.partsToday ?? null, cited: true };
-	if (detail?.text) return { text: detail.text, parts: detail.parts ?? null, cited: true };
+	if (row.text) return { text: row.text, parts: row.parts, tables: row.tables, cited: false };
+	if (row.textToday)
+		return {
+			text: row.textToday,
+			parts: row.partsToday ?? null,
+			tables: row.tablesToday ?? [],
+			cited: true
+		};
+	if (detail?.text)
+		return {
+			text: detail.text,
+			parts: detail.parts ?? null,
+			tables: detail.tables ?? [],
+			cited: true
+		};
 	return null;
 }
 
@@ -163,14 +179,18 @@ async function loadPage(
 					new Map(
 						at.items.map((a) => [
 							a.article_number,
-							{ text: a.text ?? null, parts: a.parts?.length ? a.parts : null }
+							{
+								text: a.text ?? null,
+								parts: a.parts?.length ? a.parts : null,
+								tables: a.tables ?? []
+							}
 						])
 					)
 			)
 			.catch((e) => {
 				// Without them each article asks its text alone once it scrolls into view.
 				report('Teksten van vandaag', e);
-				return new Map<string, { text: string | null; parts: Part[] | null }>();
+				return new Map<string, { text: string | null; parts: Part[] | null; tables: Table[] }>();
 			})
 	]);
 	return {
@@ -181,6 +201,7 @@ async function loadPage(
 			return {
 				textToday: own?.text ?? null,
 				partsToday: own?.parts ?? null,
+				tablesToday: own?.tables ?? [],
 				id: a.id,
 				key: a.key,
 				article_number: a.article_number ?? null,
@@ -190,6 +211,7 @@ async function loadPage(
 				breadcrumb: a.breadcrumb ?? [],
 				text: null,
 				parts: null,
+				tables: [],
 				text_preview: a.text_preview ?? null
 			};
 		})
