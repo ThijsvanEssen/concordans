@@ -20,6 +20,14 @@ describe('the touch target', () => {
 		expect(coarse).toContain('.plaats-marker::before');
 	});
 
+	it('is 44 px around a framed button and a menu’s button, on a touch screen (A14 #11)', () => {
+		const basis = read('lib/styles/basis.css');
+		const coarse = basis.slice(basis.indexOf('@media (pointer: coarse)'));
+		expect(coarse).toMatch(
+			/\.btn::after,\s*\.tekstmenu__knop::after \{[^}]*inset: min\(0px, calc\(50% - \(var\(--s-6\) \+ var\(--s-3\)\) \/ 2\)\)/
+		);
+	});
+
 	it("is 44 px around a row's ⋯ on a touch screen (the bundels)", () => {
 		const acties = read('lib/components/ui/RijActies.svelte');
 		const coarse = acties.slice(acties.indexOf('@media (pointer: coarse)'));

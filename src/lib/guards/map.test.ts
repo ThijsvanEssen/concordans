@@ -89,7 +89,10 @@ describe('the map', () => {
 	it('names where a map’s way on goes: here, or in the reader (Thijs, 12 Oct)', () => {
 		const inhoud = bron('lib/map/MapInhoud.svelte');
 		expect(inhoud).toContain("'Heel artikel hier'");
-		expect(inhoud).toContain("'Heel artikel in de lezer'");
+		// One label to the reader, for an article and a judgment alike (UX-toets A14 #7).
+		expect(inhoud.match(/>In de lezer</g)?.length).toBeGreaterThanOrEqual(4);
+		expect(inhoud).not.toMatch(/Lees verder|Artikel in de lezer|Heel artikel in de lezer/);
+		expect(inhoud).toMatch(/@media print \{\s*\.verder \{\s*display: none/);
 		expect(inhoud).not.toMatch(/>\s*Heel artikel\s*</);
 	});
 

@@ -8,7 +8,7 @@
 	import { siteTitle } from '$lib/seo/server-head.svelte';
 	import { kaart } from '$lib/map/map.svelte';
 	import MapView from '$lib/map/MapView.svelte';
-	import { BUNDLES_PATH, takeUnnamed } from '$lib/map/page';
+	import { BUNDLES_PATH } from '$lib/map/page';
 
 	const shown = $derived(kaart.mappen.find((m) => m.id === page.params.id));
 </script>
@@ -19,7 +19,7 @@
 	<nav class="stub-eyebrow" aria-label="Hoort bij"><a href={BUNDLES_PATH}>Bundels</a></nav>
 	{#if shown}
 		{#key shown.id}
-			<MapView m={shown} named={!takeUnnamed(shown.id)} />
+			<MapView m={shown} />
 		{/key}
 	{:else if browser}
 		<!-- Only where the browser's bundels are read: a page served without them says nothing. -->

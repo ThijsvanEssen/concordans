@@ -12,13 +12,14 @@
 	import { topLayer } from '$lib/actions/top-layer';
 	import Picto from './Picto.svelte';
 	import { kaart } from '$lib/map/map.svelte';
-	import type { MapItem } from '$lib/map/map';
+	import { namesOf, type MapItem } from '$lib/map/map';
 
 	let {
 		naam,
 		item = null,
 		netwerk = null,
-		menu
+		menu,
+		onClose
 	}: {
 		/** The bron as the row names it, for the buttons' names. */
 		naam: string;
@@ -30,12 +31,20 @@
 		/** What the ⋯ holds, with the function that closes it; without it no ⋯. A row with a ⋯
 		 *  alone has no places for Bewaar and In netwerk. */
 		menu?: Snippet<[() => void]>;
+		/** After the ⋯ closes, however: a menu that changed what it shows goes back. */
+		onClose?: () => void;
 	} = $props();
 
-	const bewaard = $derived(!!item && kaart.heeft(item));
+	/** The bundels that hold the item: Bewaard takes it out of them, Bewaar keeps it in Losse
+	 *  markeringen. */
+	const held = $derived(item ? kaart.holding(item) : []);
+	const bewaard = $derived(held.length > 0);
 	let open = $state(false);
 	let button = $state<HTMLElement | null>(null);
-	const close = () => (open = false);
+	const close = () => {
+		open = false;
+		onClose?.();
+	};
 </script>
 
 <span class="rij-acties">
@@ -51,7 +60,7 @@
 				aria-expanded={open}
 				aria-label="{naam}: meer"
 				title="Meer"
-				onclick={() => (open = !open)}>⋯</button
+				onclick={() => (open ? close() : (open = true))}>⋯</button
 			>
 			{#if open && button}
 				<!-- A click in the list is the menu's, not the row's under it. -->
@@ -81,9 +90,9 @@
 				class:is-active={bewaard}
 				aria-pressed={bewaard}
 				aria-label={bewaard
-					? `${naam}: uit ${kaart.actief.naam} halen`
-					: `${naam}: bewaren in ${kaart.actief.naam}`}
-				title={bewaard ? `Uit ${kaart.actief.naam} halen` : `Bewaar in ${kaart.actief.naam}`}
+					? `${naam}: uit ${namesOf(held)} halen`
+					: `${naam}: bewaren in ${kaart.loose.naam}`}
+				title={bewaard ? `Uit ${namesOf(held)} halen` : `Bewaar in ${kaart.loose.naam}`}
 				onclick={() => kaart.wissel(kept)}><Picto naam={bewaard ? 'bewaard' : 'bewaar'} /></button
 			>
 		{/if}

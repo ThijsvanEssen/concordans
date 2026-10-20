@@ -42,6 +42,17 @@ export function notitiesPerBron(
 	return uit;
 }
 
+/** The notes of every bundel per bron, one after the other: the network shows them all,
+ *  for no bundel is chosen over another (decision 20A). */
+export function notesOfBundels(
+	maps: readonly Pick<Map, 'naam' | 'items' | 'notitie' | 'groepNotities'>[]
+): globalThis.Map<string, NodeNotitie[]> {
+	const all = new globalThis.Map<string, NodeNotitie[]>();
+	for (const m of maps)
+		for (const [id, notes] of notitiesPerBron(m)) all.set(id, [...(all.get(id) ?? []), ...notes]);
+	return all;
+}
+
 /** The bronnen whose card holds a note of their own or of their group: these carry a mark. */
 export const gemerkt = (per: ReadonlyMap<string, NodeNotitie[]>): Set<string> =>
 	new Set([...per].filter(([, n]) => n.some((x) => x.soort !== 'map')).map(([id]) => id));

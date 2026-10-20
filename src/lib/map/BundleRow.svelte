@@ -1,12 +1,10 @@
 <script lang="ts">
 	// One bundel in the overview (bundels-ux 2a): a row of Bladeren (IndexRow) that opens in
 	// place on what the bundel holds, per group by its citations, with Open bundel; its name a
-	// link to its page, so cmd-click opens it there. The bookmark of Bewaar marks the bundel
-	// Bewaar keeps in; at the right its number of bronnen as a plain mark and the day it
-	// changed. A bundel from a file is a row too, marked, its choices beside it (`choices`).
+	// link to its page, so cmd-click opens it there; at the right its number of bronnen as a
+	// plain mark and the day it changed. A bundel from a file is a row too, marked, its choices beside it (`choices`).
 	import type { Snippet } from 'svelte';
 	import IndexRow from '$lib/components/explore/index/IndexRow.svelte';
-	import Picto from '$lib/components/ui/Picto.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { formatCount } from '$lib/text/getal';
 	import { dagMaand, vandaag } from '$lib/text/datum';
@@ -17,15 +15,12 @@
 		bundle,
 		open,
 		onToggle,
-		target = false,
 		mark = null,
 		choices
 	}: {
 		bundle: Pick<Map, 'naam' | 'items' | 'notitie'> & Partial<Pick<Map, 'id' | 'gewijzigd'>>;
 		open: boolean;
 		onToggle: () => void;
-		/** Bewaar keeps in this bundel. */
-		target?: boolean;
 		/** What the row is besides a bundel of this browser: `uit bestand`. */
 		mark?: string | null;
 		/** The row's own choices at its right (a bundel from a file). */
@@ -47,11 +42,6 @@
 </script>
 
 <IndexRow title={bundle.naam} {href} {open} {onToggle}>
-	{#snippet lead()}
-		{#if target}<span class="doel" title="Bewaren gaat hierheen"
-				><Picto naam="bewaard" /><span class="sr-only">Bewaren gaat hierheen</span></span
-			>{/if}
-	{/snippet}
 	{#snippet body()}
 		{#if mark}<span class="merk">{mark}</span>{/if}
 		{#if question}<span class="vraag">{question}</span>{/if}
@@ -80,10 +70,6 @@
 </IndexRow>
 
 <style>
-	.doel {
-		display: inline-flex;
-		color: var(--ink);
-	}
 	.merk {
 		display: block;
 		font-family: var(--font-serif);

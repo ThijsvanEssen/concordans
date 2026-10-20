@@ -42,15 +42,13 @@ describe('the bundels of this browser', () => {
 	it('puts a bundel from a file in place of one: its id kept, the rest the file’s', async () => {
 		const { kaart } = await store();
 		const m = kaart.nieuw('Werkgever', [lid]);
-		const other = kaart.nieuw('Ander');
+		kaart.nieuw('Ander');
 		kaart.replace(m.id, fromFile);
 		const now = kaart.mappen.find((x) => x.id === m.id)!;
 		expect(now.items).toEqual([ro]);
 		expect(now.naam).toBe('Werkgever');
 		expect(now.volgorde).toBe('eigen');
 		expect(now.notitie).toBe('Uit het bestand');
-		// The bundel kept in stays where it was, not the active one.
-		expect(kaart.actief.id).toBe(other.id);
 	});
 
 	it('adds a bundel from a file to the one chosen, without doubles', async () => {
@@ -82,7 +80,7 @@ describe('Losse markeringen, the bundel every browser has (decision 19)', () => 
 		const { kaart } = await store();
 		expect(kaart.mappen.map((m) => m.naam)).toEqual(['Losse markeringen']);
 		expect(kaart.isDefault(kaart.mappen[0])).toBe(true);
-		expect(kaart.actief.id).toBe(kaart.mappen[0].id);
+		expect(kaart.loose.id).toBe(kaart.mappen[0].id);
 	});
 
 	it('cannot be deleted, only emptied and renamed', async () => {
@@ -102,7 +100,6 @@ describe('Losse markeringen, the bundel every browser has (decision 19)', () => 
 		const { kaart } = await store();
 		const first = kaart.mappen[0];
 		const other = kaart.nieuw('Thuiswerk', [lid, ro]);
-		kaart.kies(first.id);
 		kaart.notitie(lid, 'zorgplicht', other.id);
 		kaart.mapNotitie('Vraag', other.id);
 		kaart.groepNotitie('wet:bwbr0005290', 'Boek 7', other.id);
@@ -114,7 +111,36 @@ describe('Losse markeringen, the bundel every browser has (decision 19)', () => 
 		expect(now.notitie).toBe('Vraag');
 		expect(now.groepNotities).toEqual({ 'wet:bwbr0005290': 'Boek 7' });
 		expect(now.volgorde).toBe('eigen');
-		expect(kaart.actief.id).toBe(first.id);
+		expect(kaart.loose.id).toBe(first.id);
+	});
+
+	it('keeps with Bewaar in Losse markeringen, and Bewaard takes it out of every bundel', async () => {
+		const { kaart } = await store();
+		const other = kaart.nieuw('Thuiswerk');
+		kaart.wissel(lid);
+		expect(kaart.holding(lid).map((m) => m.naam)).toEqual(['Losse markeringen']);
+		// Into a second bundel only by its name, in Bewaar's menu.
+		kaart.toggleIn(other.id, lid);
+		expect(
+			kaart
+				.holding(lid)
+				.map((m) => m.id)
+				.sort()
+		).toEqual([kaart.loose.id, other.id].sort());
+		kaart.toggleIn(kaart.loose.id, lid);
+		expect(kaart.holding(lid).map((m) => m.id)).toEqual([other.id]);
+		// Bewaard stays Bewaard while any bundel holds it; a click takes it out of all.
+		expect(kaart.heeft(lid)).toBe(true);
+		kaart.wissel(lid);
+		expect(kaart.heeft(lid)).toBe(false);
+	});
+
+	it('receives a shared Losse markeringen under a name of its own', async () => {
+		const { kaart } = await store();
+		const shared = { ...fromFile, naam: 'Losse markeringen' };
+		expect(kaart.bewaarAlsMap(shared).naam).toBe('Gedeelde markeringen');
+		expect(kaart.bewaarAlsMap({ ...shared, naam: null }).naam).toBe('Gedeelde markeringen 2');
+		expect(kaart.bewaarAlsMap(fromFile).naam).toBe('Werkgever');
 	});
 
 	it('lists Losse markeringen first, then the bundels last changed first', async () => {

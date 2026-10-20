@@ -95,6 +95,15 @@ const dossierSleutel = (nr: string) =>
 		.replace(/[\s_]+/, '-')
 		.toUpperCase()}`;
 
+/** Bundels by name in a sentence: `Losse markeringen en Thuiswerk`. */
+export const namesOf = (maps: readonly Pick<Map, 'naam'>[]): string =>
+	maps.length < 2
+		? (maps[0]?.naam ?? '')
+		: `${maps
+				.slice(0, -1)
+				.map((m) => m.naam)
+				.join(', ')} en ${maps.at(-1)!.naam}`;
+
 /** What is its own group where no law or dossier holds it: never keyed by a name. */
 const OWN_GROUP = new Set(['judgments', 'documents', 'decisions']);
 
@@ -272,7 +281,8 @@ export function judgmentRows(items: readonly MapItem[]): JudgmentRow[] {
 /**
  * A row's citation on one line: the full form where it adds to the short one (an ECLI), the
  * short one where the full form only writes it out (`artikel 6:162 lid 2 Burgerlijk Wetboek`),
- * else the full form under it. A place under its judgment is named by the place alone.
+ * else the full form under it. A place under its judgment is named by the place alone, a
+ * dossier by its number (its group names it).
  */
 export function rowTitle(
 	i: Pick<MapItem, 'id' | 'at' | 'kort' | 'voluit'>,
@@ -280,10 +290,13 @@ export function rowTitle(
 ): { title: string; sub: string | null } {
 	const own = place ? /\br\.o\.\s.*$/.exec(i.kort)?.[0] : null;
 	if (own) return { title: own, sub: null };
+	const collection = parseNodeId(i.id)?.collection;
+	// A dossier kept whole stands under its group, which names it: its row cites it by number
+	// alone, not its title again (UX-toets A14 #6).
+	if (collection === 'dossiers') return { title: i.kort.replace(/\s*\(.*\)$/, ''), sub: null };
 	const full = i.voluit?.trim();
 	if (!full || full === i.kort) return { title: i.kort, sub: null };
 	if (full.startsWith(i.kort)) return { title: full, sub: null };
-	const collection = parseNodeId(i.id)?.collection;
 	if (collection === 'articles' || collection === 'instruments')
 		return { title: i.kort, sub: null };
 	return { title: i.kort, sub: full };

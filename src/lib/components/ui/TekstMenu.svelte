@@ -22,7 +22,8 @@
 		rechts = false,
 		inhoud,
 		onder,
-		knop
+		knop,
+		onClose
 	}: {
 		/** What the menu sets, for a screen reader: `Bronnen`, `Volgorde`. */
 		label: string;
@@ -41,11 +42,17 @@
 		onder?: Snippet<[() => void]>;
 		/** What the button shows where it is more than words (a badge and two dates). */
 		knop?: Snippet;
+		/** After it closes, however (a choice, Escape, Tab, a click outside): a menu that changed
+		 *  what it shows (a list of bundels in place of its items) goes back. */
+		onClose?: () => void;
 	} = $props();
 
 	let open = $state(false);
 	let button = $state<HTMLElement | null>(null);
-	const sluit = () => (open = false);
+	const sluit = () => {
+		open = false;
+		onClose?.();
+	};
 	const gekozen = $derived(opties.find((o) => o.waarde === waarde));
 	const woorden = $derived(tekst ?? gekozen?.label ?? label);
 </script>
@@ -58,7 +65,7 @@
 		aria-haspopup="menu"
 		aria-expanded={open}
 		aria-label="{label}: {woorden}"
-		onclick={() => (open = !open)}
+		onclick={() => (open ? sluit() : (open = true))}
 		>{#if knop}{@render knop()}{:else}{woorden}{/if}<Caret {open} /></button
 	>
 	{#if open && button}

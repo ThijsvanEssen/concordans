@@ -21,14 +21,11 @@
 	let {
 		groups,
 		onAdd,
-		onReader,
 		onClose
 	}: {
 		/** The map's groups a source may join, by their key and name. */
 		groups: { key: string; name: string }[];
 		onAdd: (item: MapItem) => void;
-		/** The reader of a recognized bron is opened: the map is where its Bewaar keeps. */
-		onReader: () => void;
 		onClose: () => void;
 	} = $props();
 
@@ -122,7 +119,7 @@
 	{#if known}
 		<p class="in-concordans">
 			<span>In Concordans: {knownLabel}</span>
-			<TekstLink href={known.path} onclick={onReader}>Bewaar vanuit de lezer</TekstLink>
+			<TekstLink href={known.path}>Bewaar vanuit de lezer</TekstLink>
 		</p>
 	{/if}
 	<p class="knoppen">

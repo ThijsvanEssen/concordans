@@ -24,6 +24,15 @@ export function nextIndex(key: string, i: number, n: number): number | null {
 	return null;
 }
 
+/**
+ * After a menu changed what it holds (a list of bundels in place of its items): the focus on
+ * its first item, so its keys (Escape, the arrows) go on working.
+ */
+export const focusFirstItem = () =>
+	afterTick(() =>
+		document.querySelector<HTMLElement>(`[role="menu"] :is(${ITEMS}):not(:disabled)`)?.focus()
+	);
+
 export const menu: Action<HTMLElement, Menu> = (node, params) => {
 	let { open, close, trigger: given } = params;
 

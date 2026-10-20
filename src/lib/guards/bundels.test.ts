@@ -34,7 +34,6 @@ describe('a bundel’s own page, the place to work (bundels-ux 2b)', () => {
 			'Download bestand',
 			'>PDF<',
 			'>Hernoem<',
-			'>Bewaar hierin<',
 			'>Verwijder bundel<',
 			'>Leegmaken<'
 		])
@@ -122,19 +121,31 @@ describe('the overview, a list that opens in place (bundels-ux 2a, decision 20A)
 		expect(overview()).toMatch(/kaart\.listed/);
 	});
 
-	it('marks where Bewaar keeps by its bookmark, not by words (no "actieve bundel")', () => {
-		const row = bron('lib/map/BundleRow.svelte');
-		expect(row).toMatch(/<Picto naam="bewaard"/);
-		expect(row).toContain('Bewaren gaat hierheen');
+	it('keeps no hidden bundel where Bewaar keeps (decision 20A, UX-toets A14 #2 and #3)', () => {
+		// Bewaar keeps in Losse markeringen; its menu ticks every bundel that holds the bron.
+		expect(overtreders((t) => /\bkaart\.(?:actief|kies|bewaarIn)\b/.test(t))).toEqual([]);
 		const bewaar = bron('lib/map/Bewaar.svelte');
 		expect(bewaar).toMatch(/<Picto naam="tick"/);
-		expect(bewaar).toContain('kaart.listed');
+		expect(bewaar).toContain('kaart.toggleIn(');
+		expect(bewaar).toContain('placeholder="Naam"');
+		expect(bron('lib/map/BundleRow.svelte')).not.toContain('Bewaren gaat hierheen');
+		expect(bron('lib/map/MapView.svelte')).not.toContain('Bewaar hierin');
+	});
+
+	it('asks a new bundel’s name in place, and says Sluiten for a broken link as for a file', () => {
+		const o = overview();
+		expect(o).toContain('placeholder="Naam"');
+		expect(o).not.toMatch(/Link onvolledig of beschadigd<\/span>\s*<TekstLink[^>]*>Niet bewaren/);
+		expect(o.match(/>Sluiten</g)).toHaveLength(2);
 	});
 
 	it('shows a bundel from a file as a row, marked, with Bewaar and its ⋯', () => {
 		const o = overview();
 		expect(o).toMatch(/<BundleRow\b[^>]*mark="uit bestand"/);
-		for (const label of ['Niet openen', 'Vervang ', 'Voeg toe aan ']) expect(o).toContain(label);
+		for (const label of ['Niet openen', 'Vervang ', 'Voeg toe aan ', 'Bewaar als nieuwe bundel'])
+			expect(o).toContain(label);
+		// One of this browser's bundels again (its id): Vervang is the choice in sight (A14 #5).
+		expect(o).toMatch(/\{#if sameId\(f\) && target\}\s*<button[\s\S]*?>Vervang<\/button/);
 	});
 });
 

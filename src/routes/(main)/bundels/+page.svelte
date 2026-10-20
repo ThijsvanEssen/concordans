@@ -22,7 +22,8 @@
 	import { NEWER, mapFile, mapFileName, readMapFile, type FileMap } from '$lib/map/file';
 	import BundleRow from '$lib/map/BundleRow.svelte';
 	import MapView from '$lib/map/MapView.svelte';
-	import { BUNDLES_PATH, bundlePageHref, markUnnamed } from '$lib/map/page';
+	import { BUNDLES_PATH, bundlePageHref } from '$lib/map/page';
+	import { focusFirstItem } from '$lib/actions/menu';
 
 	/** The rows open, by the bundel's id (a bundel from a file by `file:<n>`). */
 	const open = new SvelteSet<string>();
@@ -93,13 +94,12 @@
 		}
 	}
 
-	function newBundle() {
-		const m = kaart.nieuw();
-		markUnnamed(m.id);
-		goto(bundlePageHref(m));
-	}
-	/** The bundel to add to, chosen in a ⋯: its list in place of the ⋯'s own items. */
+	/** Nieuwe bundel asks its name in place; Enter makes it and opens its page. */
+	let naming = $state(false);
+	/** The bundel from a file whose ⋯ lists the bundels to add it to, in place of its items. */
 	let choosing = $state<FileMap | null>(null);
+	/** A bundel from a file that is one of this browser's (by its id): Vervang comes first. */
+	const sameId = (f: FileMap) => !!f.id && kaart.mappen.some((m) => m.id === f.id);
 </script>
 
 <RouteKop />
@@ -115,7 +115,32 @@
 		<header class="blad__kop">
 			<h1 class="blad__titel">Bundels</h1>
 			<span class="acties">
-				<button type="button" class="btn" onclick={newBundle}>Nieuwe bundel</button>
+				{#if naming}
+					<form
+						class="naam"
+						onsubmit={(e) => {
+							e.preventDefault();
+							const field = e.currentTarget.elements.namedItem('naam') as HTMLInputElement;
+							if (field.value.trim()) goto(bundlePageHref(kaart.nieuw(field.value)));
+						}}
+					>
+						<!-- svelte-ignore a11y_autofocus -->
+						<input
+							name="naam"
+							autofocus
+							placeholder="Naam"
+							aria-label="Naam van de nieuwe bundel"
+							onkeydown={(e) => {
+								if (e.key === 'Escape') naming = false;
+							}}
+							onblur={(e) => {
+								if (!e.currentTarget.value.trim()) naming = false;
+							}}
+						/>
+					</form>
+				{:else}
+					<button type="button" class="btn" onclick={() => (naming = true)}>Nieuwe bundel</button>
+				{/if}
 				<TekstMenu klein rechts label="Meer bij de bundels" tekst="Meer">
 					{#snippet inhoud(close)}
 						<button
@@ -152,7 +177,7 @@
 		{#if shared === BROKEN || oldLink}
 			<p class="melding" role="status">
 				<span>Link onvolledig of beschadigd</span>
-				<TekstLink onclick={() => sharedDone('none')}>Niet bewaren</TekstLink>
+				<TekstLink onclick={() => sharedDone('none')}>Sluiten</TekstLink>
 			</p>
 		{/if}
 		{#if opened && 'error' in opened}
@@ -173,8 +198,14 @@
 						onToggle={() => toggle(`file:${n}`)}
 					>
 						{#snippet choices()}
-							<button type="button" class="btn" onclick={() => fileDone(f, 'map')}>Bewaar</button>
-							<RijActies naam={f.naam ?? 'Bundel uit bestand'}>
+							{#if sameId(f) && target}
+								<button type="button" class="btn" onclick={() => fileDone(f, 'replace')}
+									>Vervang</button
+								>
+							{:else}
+								<button type="button" class="btn" onclick={() => fileDone(f, 'map')}>Bewaar</button>
+							{/if}
+							<RijActies naam={f.naam ?? 'Bundel uit bestand'} onClose={() => (choosing = null)}>
 								{#snippet menu(close)}
 									{#if choosing === f}
 										{#each kaart.listed as into (into.id)}
@@ -184,13 +215,22 @@
 												class="tekstmenu__item"
 												onclick={() => {
 													close();
-													choosing = null;
 													fileDone(f, 'add', into.id);
 												}}>{into.naam}</button
 											>
 										{/each}
 									{:else}
-										{#if target}
+										{#if sameId(f)}
+											<button
+												type="button"
+												role="menuitem"
+												class="tekstmenu__item"
+												onclick={() => {
+													close();
+													fileDone(f, 'map');
+												}}>Bewaar als nieuwe bundel</button
+											>
+										{:else if target}
 											<button
 												type="button"
 												role="menuitem"
@@ -207,7 +247,10 @@
 												role="menuitem"
 												class="tekstmenu__item"
 												aria-haspopup="menu"
-												onclick={() => (choosing = f)}>Voeg toe aan …</button
+												onclick={() => {
+													choosing = f;
+													focusFirstItem();
+												}}>Voeg toe aan …</button
 											>
 										{/if}
 										<button
@@ -227,12 +270,7 @@
 				{/each}
 			{/if}
 			{#each kaart.listed as m (m.id)}
-				<BundleRow
-					bundle={m}
-					target={m.id === kaart.actief.id}
-					open={open.has(m.id)}
-					onToggle={() => toggle(m.id)}
-				/>
+				<BundleRow bundle={m} open={open.has(m.id)} onToggle={() => toggle(m.id)} />
 			{/each}
 		</ul>
 	</div>
@@ -252,22 +290,46 @@
 		margin: 0 0 var(--s-3);
 		font-size: var(--t-meta);
 	}
-	/* The rows of Bladeren, the bookmark in a narrow lead, the number and the day at the right. */
+	/* The rows of Bladeren without a lead, the number and the day at the right. */
 	.lijst {
-		--row-lead: var(--s-4);
 		--row-aside: auto;
 		margin: 0;
 		padding: 0;
 		border-top: 1px solid var(--rule-strong);
 		list-style: none;
 	}
+	.lijst :global(.row) {
+		grid-template-columns: minmax(0, 1fr) auto;
+	}
+	.lijst :global(.row-id) {
+		display: none;
+	}
+	.lijst :global(.detail) {
+		padding-left: var(--s-2);
+	}
 	.lijst :global(.row-aside) {
 		flex-wrap: nowrap;
+	}
+	.naam {
+		margin: 0;
+	}
+	/* The field at 16px: below that a phone zooms in on focus. */
+	.naam input {
+		box-sizing: border-box;
+		width: 14rem;
+		max-width: 100%;
+		padding: var(--s-1) var(--s-2);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: var(--paper);
+		font-family: var(--font-serif);
+		font-size: var(--t-input);
+		color: var(--ink);
 	}
 	/* On a phone the row keeps its number at the right of the name. */
 	@media (max-width: 768px) {
 		.lijst :global(.row) {
-			grid-template-columns: var(--row-lead) minmax(0, 1fr) auto;
+			grid-template-columns: minmax(0, 1fr) auto;
 			gap: var(--s-2);
 		}
 		.lijst :global(.row-aside) {

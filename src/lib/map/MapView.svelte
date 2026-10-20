@@ -11,6 +11,7 @@
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
+	import { focusFirstItem } from '$lib/actions/menu';
 	import { download, safeFileName } from '$lib/verbonden/export';
 	import { formatCount } from '$lib/text/getal';
 	import { korteDatum, vandaag } from '$lib/text/datum';
@@ -41,8 +42,7 @@
 	let {
 		m = null,
 		shared = null,
-		onShared,
-		named = true
+		onShared
 	}: {
 		/** The bundel of this browser, to work in. */
 		m?: Map | null;
@@ -50,8 +50,6 @@
 		shared?: SharedMap | null;
 		/** The choice for a shared bundel: kept as a bundel, added to one, or put aside. */
 		onShared?: (how: 'map' | 'add' | 'none', into?: string) => void;
-		/** False for a bundel just made: it is named at once. */
-		named?: boolean;
 	} = $props();
 
 	/** What is shown: the bundel's own or the shared one. */
@@ -119,7 +117,7 @@
 	}
 
 	// ── Its name, Verwijder or Leegmaken, a source outside Concordans ─────────
-	let renaming = $state(untrack(() => !named));
+	let renaming = $state(false);
 	let asking = $state<'delete' | 'empty' | null>(null);
 	let adding = $state(false);
 	/** The list of bundels to add a shared one to, in place of Meer's own items. */
@@ -190,13 +188,7 @@
 {#snippet actions()}
 	<span class="acties">
 		{#if b.items.length}
-			<!-- The network of a bundel shows its notes: it is the bundel worked in from now on. -->
-			<TekstLink
-				href={netwerkHref(b.items) ?? undefined}
-				onclick={() => {
-					if (m) kaart.kies(m.id);
-				}}>Netwerk</TekstLink
-			>
+			<TekstLink href={netwerkHref(b.items) ?? undefined}>Netwerk</TekstLink>
 		{/if}
 		{#if m}
 			<TekstLink disabled={!link} onclick={() => copier.copy(link ?? '', 'link')}
@@ -205,7 +197,13 @@
 		{:else}
 			<button type="button" class="btn" onclick={() => onShared?.('map')}>Bewaar</button>
 		{/if}
-		<TekstMenu klein rechts label="Meer bij {b.naam}" tekst="Meer">
+		<TekstMenu
+			klein
+			rechts
+			label="Meer bij {b.naam}"
+			tekst="Meer"
+			onClose={() => (choosing = false)}
+		>
 			{#snippet inhoud(close)}
 				{#if choosing}
 					{#each kaart.listed as into (into.id)}
@@ -230,15 +228,6 @@
 								class="tekstmenu__item"
 								onclick={act(close, () => (renaming = true))}>Hernoem</button
 							>
-							{#if own.id !== kaart.actief.id}
-								<button
-									type="button"
-									role="menuitem"
-									class="tekstmenu__item"
-									title="Bewaren gaat hierheen"
-									onclick={act(close, () => kaart.kies(own.id))}>Bewaar hierin</button
-								>
-							{/if}
 							{#if kaart.isDefault(own)}
 								{#if own.items.length}
 									<button
@@ -266,7 +255,10 @@
 									role="menuitem"
 									class="tekstmenu__item"
 									aria-haspopup="menu"
-									onclick={() => (choosing = true)}>Voeg toe aan …</button
+									onclick={() => {
+										choosing = true;
+										focusFirstItem();
+									}}>Voeg toe aan …</button
 								>
 							{/if}
 							<button
@@ -390,7 +382,6 @@
 			<AddSource
 				groups={groepen(own.items).map((g) => ({ key: g.sleutel, name: g.groep }))}
 				onAdd={(i: MapItem) => kaart.add(i, own.id)}
-				onReader={() => kaart.kies(own.id)}
 				onClose={() => {
 					adding = false;
 					focusAdd();

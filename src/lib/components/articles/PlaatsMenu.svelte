@@ -23,7 +23,7 @@
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import type { CiteItem } from '$lib/components/ui/cite-items';
 	import { kaart } from '$lib/map/map.svelte';
-	import type { MapItem } from '$lib/map/map';
+	import { namesOf, type MapItem } from '$lib/map/map';
 	import { formatCount } from '$lib/text/getal';
 
 	let {
@@ -111,7 +111,10 @@
 				onclick={() => {
 					kaart.wissel(bewaar);
 					sluit();
-				}}>{aan ? `Uit ${kaart.actief.naam} halen` : `Bewaar in ${kaart.actief.naam}`}</button
+				}}
+				>{aan
+					? `Uit ${namesOf(kaart.holding(bewaar))} halen`
+					: `Bewaar in ${kaart.loose.naam}`}</button
 			>
 		</div>
 	{/if}

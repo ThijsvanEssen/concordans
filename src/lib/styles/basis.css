@@ -163,6 +163,18 @@ a:hover {
 	.plaats-marker::before {
 		inset: calc(-1 * var(--s-2));
 	}
+	/* A framed button and a menu's button: a finger's 44 px around them, whatever their size
+	   (UX-toets A14 #11). Without weight, so a button placed otherwise keeps its place. */
+	:where(.btn, .tekstmenu__knop) {
+		position: relative;
+	}
+	.btn::after,
+	.tekstmenu__knop::after {
+		content: '';
+		position: absolute;
+		/* Out to 44 px where the button is smaller, never inside it. */
+		inset: min(0px, calc(50% - (var(--s-6) + var(--s-3)) / 2));
+	}
 }
 /* A proposed change, in Verbonden's rows, its table and the card of a verbinding: in ink, as
    everything at rest but "nee" (Thijs, 10 Oct); the weight keeps it seen. */
