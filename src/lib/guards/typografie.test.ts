@@ -3,6 +3,69 @@
 import { describe, expect, it } from 'vitest';
 import { BRONNEN, bron, isControl, overtreders, plek, regels } from '$lib/test/bronnen';
 
+const VOID = new Set([
+	'area',
+	'base',
+	'br',
+	'col',
+	'embed',
+	'hr',
+	'img',
+	'input',
+	'link',
+	'meta',
+	'source',
+	'track',
+	'wbr'
+]);
+
+/** The classes of the element right around each Sectie in a component's markup: the parent
+ *  whose gap stands between two sections. A Sectie at the top of its file has none here. */
+function sectieOuders(text: string): string[][] {
+	const markup = text.replace(
+		/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<!--[\s\S]*?-->/g,
+		''
+	);
+	const stack: string[][] = [];
+	const found: string[][] = [];
+	let i = 0;
+	while (i < markup.length) {
+		if (markup[i] === '{') {
+			// An expression or a block tag: skipped whole, braces counted.
+			let depth = 0;
+			do {
+				if (markup[i] === '{') depth++;
+				else if (markup[i] === '}') depth--;
+				i++;
+			} while (depth > 0 && i < markup.length);
+			continue;
+		}
+		if (markup[i] !== '<') {
+			i++;
+			continue;
+		}
+		let j = i + 1;
+		let depth = 0;
+		while (j < markup.length && (depth > 0 || markup[j] !== '>')) {
+			if (markup[j] === '{') depth++;
+			else if (markup[j] === '}') depth--;
+			j++;
+		}
+		const tag = markup.slice(i + 1, j);
+		i = j + 1;
+		const closing = tag.startsWith('/');
+		const name = /^\/?([\w:.-]+)/.exec(tag)?.[1] ?? '';
+		if (!name || /^[A-Z]/.test(name)) {
+			if (name === 'Sectie' && !closing && stack.length) found.push(stack.at(-1)!);
+			continue;
+		}
+		if (closing) stack.pop();
+		else if (!tag.endsWith('/') && !VOID.has(name))
+			stack.push(/\bclass="([^"{]*)"/.exec(tag)?.[1].split(/\s+/).filter(Boolean) ?? []);
+	}
+	return found;
+}
+
 describe('typography', () => {
 	it('sets text in the serif and only controls in the sans (docs/typografie.md, 10 Oct 2026)', () => {
 		expect(overtreders((t) => t.includes('var(--font-sans)'))).toEqual([]);
@@ -81,6 +144,22 @@ describe('typography', () => {
 				]
 			)
 		).toEqual([]);
+		// Sectie makes up the step to --s-5 from the gap its parent names: a column of sections
+		// with a gap and no --lezer-stap would count both (A10, 20 Oct: 48 became 72px).
+		const zonderStap = BRONNEN.filter(({ text }) => text.includes('<Sectie')).flatMap(
+			({ path, text }) => {
+				const rules = regels(text);
+				return sectieOuders(text).flatMap((classes) => {
+					const own = rules.filter((r) =>
+						classes.some((c) => new RegExp(`\\.${c}(?=$|[\\s,:{])`).test(r.selector))
+					);
+					const gap = own.some((r) => /(^|[\s;])gap:/.test(r.body));
+					const stap = own.some((r) => r.body.includes('--lezer-stap:'));
+					return gap && !stap ? [`${path} .${classes.join('.')}`] : [];
+				});
+			}
+		);
+		expect(zonderStap).toEqual([]);
 	});
 
 	it('says a state where content would be in one quiet line (.stil)', () => {

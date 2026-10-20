@@ -308,7 +308,8 @@
 	.inhoud {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-7);
+		--lezer-stap: var(--s-7);
+		gap: var(--lezer-stap);
 		min-width: 0;
 	}
 	.acties {

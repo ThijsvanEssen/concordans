@@ -86,7 +86,8 @@
 	.groepen {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-7);
+		--lezer-stap: var(--s-7);
+		gap: var(--lezer-stap);
 		min-width: 0;
 	}
 	/* Each kind a row, as the rows of Bladeren: the glyph and the name, a rule under it. */
