@@ -160,6 +160,8 @@ describe('the alineas of a Kamerstuk, as the API numbers them (A28, #821)', () =
 		const lines = paperParagraphs({ text, paragraphs: [] });
 		expect(lines.length).toBeGreaterThan(5);
 		expect(lines.every((p) => p.n === null && p.at === null)).toBe(true);
+		// The API before 0.79.66 sends no `paragraphs` at all: read as none.
+		expect(paperParagraphs({ text })).toEqual(lines);
 		expect(paperParagraphs({ text: null })).toEqual([]);
 	});
 

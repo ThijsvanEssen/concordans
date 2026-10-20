@@ -55,6 +55,7 @@ describe('the notes of a judgment', () => {
 				{
 					number: null,
 					continues: null,
+					tables: [],
 					citations: [],
 					paragraph_id: 'rov-5.7.6',
 					kind: 'body',

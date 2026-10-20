@@ -66,6 +66,7 @@ const para = (kind: string, text: string, over: Partial<Paragraph> = {}): Paragr
 	text,
 	number: null,
 	continues: null,
+	tables: [],
 	citations: [],
 	...over
 });
