@@ -36,6 +36,7 @@ const RELATION_SET: Record<Relation, true> = {
 	AMENDS: true,
 	INTRODUCES: true,
 	REPEALS: true,
+	TRANSPOSED_TO: true,
 	BASED_ON: true,
 	IMPLEMENTS: true,
 	LEGISLATED_IN: true,

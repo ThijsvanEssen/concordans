@@ -1,7 +1,9 @@
-// Two versions of an article, lid by lid. The leden of both are paired by content, not
-// only by number, so a lid inserted before them does not make every later lid look
-// rewritten. A pair whose wording changed in a few words gets those words marked; a
-// pair that changed for the most part is shown as the old text and the new.
+// Two texts compared lid by lid, the old and the new: two tekstversies of one article, or an
+// article and the one that takes its place in a new law. The leden of both are paired by
+// content, not only by number, so a lid inserted before them does not make every later lid
+// look rewritten; where a source pairs leden (a transposition table), its pairing stands. A
+// pair whose wording changed in a few words gets those words marked; a pair that changed for
+// the most part is paired sentence by sentence first, the words marked within each pair.
 import { joinAnd } from './words';
 import type { Schema } from '$lib/api/types';
 import { partsOf } from './article-parts';
@@ -17,8 +19,10 @@ export type CompareRow = {
 	kind: RowKind;
 	old: Unit | null;
 	new: Unit | null;
-	/** Word-level, for `changed`; empty otherwise. */
+	/** Word-level, for `changed`; for `rewritten` by sentence, empty where none pair. */
 	segments: DiffSegment[];
+	/** The source (a transposition table) pairs these leden, not their likeness. */
+	bySource?: boolean;
 };
 
 /** Above this share of changed characters a lid is shown as old and new, unmarked. */
@@ -39,10 +43,18 @@ function push(out: DiffSegment[], op: DiffSegment['op'], text: string) {
 	else out.push({ op, text });
 }
 
+/** Past this many pairs of words, two texts are the old and the new, unmarked. */
+const MAX_WORD_PAIRS = 4_000_000;
+
 /** The longest common subsequence of the words of `a` and `b`, as segments. */
 export function diffWords(a: string, b: string): DiffSegment[] {
 	const x = tokenize(normalize(a));
 	const y = tokenize(normalize(b));
+	if (x.length * y.length > MAX_WORD_PAIRS)
+		return [
+			{ op: 'del', text: x.join('') },
+			{ op: 'ins', text: y.join('') }
+		];
 	// The common head and tail first: most amendments touch a few words in the middle.
 	let head = 0;
 	while (head < x.length && head < y.length && x[head] === y[head]) head++;
@@ -103,7 +115,11 @@ function tidy(segments: DiffSegment[]): DiffSegment[] {
 		}
 		push(out, s.op, s.text);
 	}
-	// Deletions before insertions within one change: the old wording, then the new.
+	return ordered(out);
+}
+
+/** Deletions before insertions within one change: the old wording, then the new. */
+function ordered(out: DiffSegment[]): DiffSegment[] {
 	const sorted: DiffSegment[] = [];
 	let run: DiffSegment[] = [];
 	const flush = () => {
@@ -269,25 +285,140 @@ function alignSimilar(a: Unit[], b: Unit[]): [Unit | null, Unit | null][] {
 	return out;
 }
 
-export function compareVersions(
-	from: { text?: string | null; parts?: Schema<'ArticlePartDTO'>[] | null },
-	to: { text?: string | null; parts?: Schema<'ArticlePartDTO'>[] | null }
+type TextLike = { text?: string | null; parts?: Schema<'ArticlePartDTO'>[] | null };
+
+/** Leden of the old text a source places together in leden of the new: `1, 2, 3 → 1`. */
+export type LidPairing = { old: string[]; new: string[] };
+
+/**
+ * The old text against the new, lid by lid: two tekstversies of one article, or an article
+ * against the one that takes its place. A pairing of the source holds where both texts have
+ * its leden and it keeps their order; the leden between are paired by content.
+ */
+export function compareTexts(
+	old: TextLike,
+	now: TextLike,
+	pairings: readonly LidPairing[] = []
 ): CompareRow[] {
-	return alignUnits(unitsOf(from.text, from.parts), unitsOf(to.text, to.parts)).map(([old, now]) =>
-		compareUnits(old, now)
-	);
+	const a = unitsOf(old.text, old.parts);
+	const b = unitsOf(now.text, now.parts);
+	const pinned = pinPairings(a, b, pairings);
+	const rows: CompareRow[] = [];
+	let i = 0;
+	let j = 0;
+	for (const pin of pinned) {
+		rows.push(
+			...alignUnits(a.slice(i, pin.i), b.slice(j, pin.j)).map(([x, y]) => compareUnits(x, y))
+		);
+		rows.push({ ...compareUnits(pin.old, pin.new), bySource: true });
+		i = pin.i + pin.oldCount;
+		j = pin.j + pin.newCount;
+	}
+	rows.push(...alignUnits(a.slice(i), b.slice(j)).map(([x, y]) => compareUnits(x, y)));
+	return rows;
 }
 
-/** One lid against its earlier wording: the words marked, or old and new in full. */
+type Pin = { i: number; j: number; oldCount: number; newCount: number; old: Unit; new: Unit };
+
+/**
+ * Leden taken together: one unit, each lid after the first with its number, so the text
+ * still reads whole and the first lid's words meet those of the lid it goes into.
+ */
+function joined(units: Unit[]): Unit {
+	if (units.length === 1) return units[0];
+	return {
+		number: joinAnd(units.map((u) => u.number ?? '')),
+		text: units.map((u, k) => (k === 0 ? u.text : `${u.number}. ${u.text}`)).join('\n')
+	};
+}
+
+/**
+ * The pairings both texts can hold, in order: each names leden that stand together in both
+ * (`1, 2, 3`, not `1, 3`) and comes after the one before it.
+ */
+function pinPairings(a: Unit[], b: Unit[], pairings: readonly LidPairing[]): Pin[] {
+	const run = (units: Unit[], numbers: string[]) => {
+		const at = units.findIndex((u) => u.number === numbers[0]);
+		if (at < 0) return null;
+		const slice = units.slice(at, at + numbers.length);
+		return slice.length === numbers.length && slice.every((u, k) => u.number === numbers[k])
+			? at
+			: null;
+	};
+	const pins: Pin[] = [];
+	for (const p of pairings) {
+		if (p.old.length === 0 || p.new.length === 0) continue;
+		const i = run(a, p.old);
+		const j = run(b, p.new);
+		if (i === null || j === null) continue;
+		pins.push({
+			i,
+			j,
+			oldCount: p.old.length,
+			newCount: p.new.length,
+			old: joined(a.slice(i, i + p.old.length)),
+			new: joined(b.slice(j, j + p.new.length))
+		});
+	}
+	pins.sort((x, y) => x.i - y.i);
+	const kept: Pin[] = [];
+	for (const pin of pins) {
+		const last = kept.at(-1);
+		if (!last || (pin.i >= last.i + last.oldCount && pin.j >= last.j + last.newCount))
+			kept.push(pin);
+	}
+	return kept;
+}
+
+/**
+ * One lid against its earlier wording: the words marked; for a lid rewritten for the most
+ * part, the sentences that stayed paired and their words marked, or old and new in full.
+ */
 export function compareUnits(old: Unit | null, now: Unit | null): CompareRow {
 	if (!old) return { kind: 'added', old, new: now, segments: [] };
 	if (!now) return { kind: 'removed', old, new: now, segments: [] };
 	if (normalize(old.text) === normalize(now.text))
 		return { kind: 'same', old, new: now, segments: [] };
 	const segments = diffWords(old.text, now.text);
-	return changedShare(segments) > REWRITTEN
-		? { kind: 'rewritten', old, new: now, segments: [] }
-		: { kind: 'changed', old, new: now, segments };
+	if (changedShare(segments) <= REWRITTEN) return { kind: 'changed', old, new: now, segments };
+	const bySentence = diffSentences(old.text, now.text);
+	return { kind: 'rewritten', old, new: now, segments: bySentence ?? [] };
+}
+
+// A sentence ends at a full stop before a capital (not at "art. 126ffa"), or at a semicolon
+// or colon, where an enumeration goes on.
+const SENTENCE_END = /(?<=[;:])\s+|(?<=\S\.)\s+(?=\p{Lu})/gu;
+
+/** The sentences of a text, each with the spaces after it: together they are the text. */
+export function splitSentences(text: string): string[] {
+	const out: string[] = [];
+	let at = 0;
+	for (const m of text.matchAll(SENTENCE_END)) {
+		const end = m.index + m[0].length;
+		out.push(text.slice(at, end));
+		at = end;
+	}
+	if (at < text.length) out.push(text.slice(at));
+	return out;
+}
+
+/**
+ * A rewritten text by sentence: the sentences paired by likeness, the words of each pair
+ * marked, a sentence without a pair struck or inserted whole. Null when no sentence pairs.
+ */
+function diffSentences(a: string, b: string): DiffSegment[] | null {
+	// Numbers of their own, so no two sentences pair because they share one.
+	const x = splitSentences(a).map((text, k) => ({ number: `a${k}`, text }));
+	const y = splitSentences(b).map((text, k) => ({ number: `b${k}`, text }));
+	const pairs = alignSimilar(x, y);
+	if (!pairs.some(([p, q]) => p && q)) return null;
+	const out: DiffSegment[] = [];
+	for (const [p, q] of pairs) {
+		if (p && q) for (const s of diffWords(p.text, q.text)) push(out, s.op, s.text);
+		else if (p) push(out, 'del', p.text);
+		else if (q) push(out, 'ins', q.text);
+	}
+	return ordered(out);
 }
 
 type PartChange = Schema<'VersionPartChangeDTO'>;

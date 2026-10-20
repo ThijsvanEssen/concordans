@@ -20,21 +20,21 @@
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
-	import Keuze from '$lib/components/ui/Keuze.svelte';
+	import Badge from './Badge.svelte';
+	import Marked from './Marked.svelte';
+	import TextCompare from './TextCompare.svelte';
 	import { slide } from 'svelte/transition';
 	import {
 		byYear,
 		changedLeden,
 		compareUnits,
-		compareVersions,
+		compareTexts,
 		lidHistory,
 		plainDiff,
 		sortLeden,
 		unitsOf,
 		wordingOf,
 		wordingsOf,
-		type CompareRow,
-		type DiffSegment,
 		type Formulation as LidFormulation,
 		type Unit,
 		type Wording
@@ -222,7 +222,6 @@
 
 	// ── The leden ────────────────────────────────────────────────────────────────
 
-	let showSame = $state(false);
 	$effect(() => {
 		ask(from.first.key);
 		ask(to.first.key);
@@ -231,44 +230,11 @@
 	/** A and B with their text: loading until both are in, a failure if either fails. */
 	const pairState = $derived(allOf(pairKeys));
 	const rows = $derived(
-		pairState.status === 'ready' ? compareVersions(pairState.data[0], pairState.data[1]) : []
+		pairState.status === 'ready' ? compareTexts(pairState.data[0], pairState.data[1]) : []
 	);
 
-	// The same wording in A and B: the text itself, not one fold that hides it.
-	const unchanged = $derived(rows.length > 0 && rows.every((r) => r.kind === 'same'));
-
-	type Block = { kind: 'row'; row: CompareRow } | { kind: 'same'; rows: CompareRow[] };
-	const blocks = $derived.by(() => {
-		const out: Block[] = [];
-		for (const row of rows) {
-			const prev = out.at(-1);
-			if (row.kind === 'same' && !showSame && !unchanged) {
-				if (prev?.kind === 'same') prev.rows.push(row);
-				else out.push({ kind: 'same', rows: [row] });
-			} else out.push({ kind: 'row', row });
-		}
-		return out;
-	});
-	const sameCount = $derived(rows.filter((r) => r.kind === 'same').length);
-
-	/** An article without leden has no numbers to keep a column for. */
-	const whole = $derived(rows.every((r) => !r.old?.number && !r.new?.number));
-
-	const numberOf = (row: CompareRow) => row.new?.number ?? row.old?.number ?? '';
-	const renumbered = (row: CompareRow) =>
-		row.old && row.new && row.old.number !== row.new.number ? row.old.number : null;
-
-	function foldedLabel(folded: CompareRow[]) {
-		const numbers = folded.map(numberOf).filter(Boolean);
-		if (numbers.length === 0) return 'Tekst ongewijzigd';
-		if (numbers.length === 1) return `Lid ${numbers[0]} ongewijzigd`;
-		return `Leden ${numbers[0]}–${numbers.at(-1)} ongewijzigd`;
-	}
-
 	// Read backwards, "ingevoegd" would claim an amendment that never was: B has it, A not.
-	const LABEL = $derived<Record<CompareRow['kind'], string>>({
-		same: '',
-		changed: '',
+	const LABEL = $derived({
 		rewritten: 'herschreven',
 		added: reversed ? 'alleen in B' : 'ingevoegd',
 		removed: reversed ? 'alleen in A' : 'vervallen'
@@ -323,17 +289,6 @@
 		`${cite(lid)} (tekst geldig ${f.through.until ? 'van ' : ''}${formulationPeriod(f)})`;
 </script>
 
-{#snippet marked(segments: DiffSegment[], side: 'both' | 'old' | 'new')}
-	{#each segments as s, i (i)}
-		{@const [, lead, core, trail] = /^(\s*)([\s\S]*?)(\s*)$/.exec(s.text) ?? ['', '', s.text, '']}
-		{#if s.op === 'eq'}{s.text}{:else if s.op === 'del' && side !== 'new'}{lead}<del
-				><span class="sr-only">geschrapt: </span>{core}</del
-			>{trail}{:else if s.op === 'ins' && side !== 'old'}{lead}<ins
-				><span class="sr-only">ingevoegd: </span>{core}</ins
-			>{trail}{/if}
-	{/each}
-{/snippet}
-
 <!-- Where a version came from: the publication that made it, the one that brought it into
      force where that is another, its dossiers; a comma between them. -->
 {#snippet herkomst(v: Version)}
@@ -358,8 +313,7 @@
 	<!-- Which text it is, as a text menu (docs/bediening.md): the badge and its dates, the
 	     versions under it per year; the one the other side shows cannot be chosen. -->
 	<TekstMenu label="Tekstversie {which}" tekst="Tekst sinds {date(w.from)}">
-		{#snippet knop()}<span class="badge badge--{which.toLowerCase()}">{which}</span><span
-				class="ab__text"
+		{#snippet knop()}<Badge {which} /><span class="ab__text"
 				>Tekst sinds {optionLabel(w)}, {w.until
 					? `tot ${korteDatum(w.until)}`
 					: 'geldend recht'}</span
@@ -437,10 +391,9 @@
 						{:else}
 							{#if row?.kind === 'rewritten'}<span class="row__label">herschreven</span>{/if}
 							<p class="text" class:text--added={f.kind === 'added'}>
-								{#if row?.kind === 'changed'}{@render marked(
-										row.segments,
-										'both'
-									)}{:else}{unit.text}{/if}
+								{#if row && row.segments.length > 0}<Marked
+										segments={row.segments}
+									/>{:else}{unit.text}{/if}
 							</p>
 						{/if}
 					</li>
@@ -493,9 +446,7 @@
 								></button
 							>
 							<span class="line__bar" aria-hidden="true"
-								>{#if isA}<span class="badge badge--a">A</span>{/if}{#if isB}<span
-										class="badge badge--b">B</span
-									>{/if}</span
+								>{#if isA}<Badge which="A" />{/if}{#if isB}<Badge which="B" />{/if}</span
 							>
 						</li>
 					{/each}
@@ -541,135 +492,28 @@
 					}
 				]}
 			/>
-
-			<!-- ── How it is shown ── -->
-			<div class="tools">
-				<span class="tools__keys" aria-label="Legenda">
-					<span class="text"><ins>{reversed ? 'alleen in B' : 'ingevoegd'}</ins></span>
-					<span class="text"><del>{reversed ? 'alleen in A' : 'geschrapt'}</del></span>
-				</span>
-				<span class="tools__acts">
-					<Keuze
-						klein
-						label="Weergave"
-						opties={[
-							{ waarde: 'een', label: 'In één tekst' },
-							{ waarde: 'naast', label: 'Naast elkaar' }
-						]}
-						waarde={layout}
-						onSelect={(w) => go({ weergave: w === 'naast' ? 'naast' : null })}
-					/>
-					{#if sameCount > 0}
-						<button type="button" class="btn is-text" onclick={() => (showSame = !showSame)}
-							>{showSame ? 'Alleen wijzigingen' : 'Alle leden'}</button
-						>
-					{/if}
-					<button type="button" class="btn is-text" onclick={() => copy(comparisonText, 'diff')}
-						>{copier.label('diff', 'Kopieer')}</button
-					>
-				</span>
-			</div>
 		</div>
 
-		<!-- ── The leden ── -->
-		<div class="compare compare--{layout}" class:is-whole={whole}>
-			{#if layout === 'naast'}
-				<div class="row row--head" aria-hidden="true">
-					<span></span>
-					<span class="side-head"
-						><span class="badge badge--a">A</span>Tekst sinds {date(from.from)}</span
-					>
-					<span class="side-head"
-						><span class="badge badge--b">B</span>Tekst sinds {date(to.from)}</span
-					>
-				</div>
-			{/if}
-			{#if pairState.status !== 'ready'}
-				<LoadStateView state={pairState} what="De tekst" form="block" retry={retry(pairKeys)} />
-			{:else if unchanged}
-				<p class="unchanged">De tekst is in A en B gelijk.</p>
-			{/if}
-			{#each blocks as block, i (i)}
-				{#if block.kind === 'same'}
-					<button type="button" class="fold" onclick={() => (showSame = true)}
-						>{foldedLabel(block.rows)}</button
-					>
-				{:else}
-					{@const row = block.row}
-					{@const was = renumbered(row)}
-					{@const n = numberOf(row)}
-					<div class="row row--{row.kind}">
-						<span class="row__no">
-							{#if n}
-								<a
-									href={link({ versies: lidAnchor(n) })}
-									data-sveltekit-noscroll
-									title="Geschiedenis van lid {n}">{n}</a
-								>
-							{:else}{n}{/if}
-							{#if was}<span class="row__was">was {was}</span>{/if}
-						</span>
-						{#if layout === 'een'}
-							<div class="row__body">
-								{#if row.kind === 'same'}
-									<p class="text">{row.new?.text}</p>
-								{:else if row.kind === 'changed'}
-									<p class="text">{@render marked(row.segments, 'both')}</p>
-								{:else if row.kind === 'rewritten'}
-									<div class="pair">
-										<div class="pair__old">
-											<span class="pair__when"
-												><span class="badge badge--a">A</span>Tekst sinds {date(from.from)}</span
-											>
-											<p class="text">{row.old?.text}</p>
-										</div>
-										<div class="pair__new">
-											<span class="pair__when"
-												><span class="badge badge--b">B</span>Tekst sinds {date(to.from)}</span
-											>
-											<p class="text">{row.new?.text}</p>
-										</div>
-									</div>
-								{:else if row.kind === 'added'}
-									<p class="text text--added">{row.new?.text}</p>
-								{:else}
-									<p class="text text--removed">{row.old?.text}</p>
-								{/if}
-							</div>
-							<!-- The margin, as in the article text: what happened to the lid. -->
-							<span class="row__aside">{LABEL[row.kind]}</span>
-						{:else}
-							<div class="row__side">
-								{#if row.kind === 'rewritten' || row.kind === 'removed'}<span class="row__label"
-										>{LABEL[row.kind]}</span
-									>{/if}
-								{#if row.old}
-									<p class="text" class:text--removed={row.kind === 'removed'}>
-										{#if row.kind === 'changed'}{@render marked(row.segments, 'old')}{:else}{row.old
-												.text}{/if}
-									</p>
-								{:else}
-									<p class="text text--none">Niet in deze tekst.</p>
-								{/if}
-							</div>
-							<div class="row__side">
-								{#if row.kind === 'rewritten' || row.kind === 'added'}<span class="row__label"
-										>{LABEL[row.kind]}</span
-									>{/if}
-								{#if row.new}
-									<p class="text" class:text--added={row.kind === 'added'}>
-										{#if row.kind === 'changed'}{@render marked(row.segments, 'new')}{:else}{row.new
-												.text}{/if}
-									</p>
-								{:else}
-									<p class="text text--none">Vervallen.</p>
-								{/if}
-							</div>
-						{/if}
-					</div>
-				{/if}
-			{/each}
-		</div>
+		<!-- ── The leden: the one comparison, A on the left and B on the right ── -->
+		<TextCompare
+			{rows}
+			textState={pairState}
+			retry={retry(pairKeys)}
+			{layout}
+			heads={{
+				old: { badge: 'A', label: `Tekst sinds ${date(from.from)}` },
+				new: { badge: 'B', label: `Tekst sinds ${date(to.from)}` }
+			}}
+			labels={LABEL}
+			legend={reversed
+				? { ins: 'alleen in B', del: 'alleen in A' }
+				: { ins: 'ingevoegd', del: 'geschrapt' }}
+			absent={{ old: 'Niet in deze tekst.', new: 'Vervallen.' }}
+			unchanged="De tekst is in A en B gelijk."
+			copyText={comparisonText}
+			lidHref={(n) => link({ versies: lidAnchor(n) })}
+			{go}
+		/>
 	{/if}
 
 	<!-- ── Every BWB version, for the record ── -->
@@ -775,6 +619,7 @@
 		background: var(--paper-2);
 		border: 1px solid var(--rule);
 		border-radius: var(--r-2);
+		--badge-ring: var(--paper-2);
 	}
 	.leden {
 		display: flex;
@@ -871,28 +716,8 @@
 	.is-b .line__bar {
 		background: var(--ink);
 	}
-	.line__bar .badge {
+	.line__bar :global(.badge) {
 		margin-left: var(--s-1);
-	}
-
-	/* A and B: the same marks on the line and at the lists. */
-	.badge {
-		flex: none;
-		display: inline-grid;
-		place-items: center;
-		width: 18px;
-		height: 18px;
-		border: 2px solid var(--paper-2);
-		border-radius: 50%;
-		background: var(--ink);
-		font-family: var(--font-serif);
-		font-size: var(--t-label);
-		font-weight: 600;
-		line-height: 1;
-		color: var(--paper);
-	}
-	.badge--a {
-		background: var(--ink-3);
 	}
 
 	.origin__what {
@@ -968,95 +793,7 @@
 		transform: rotate(90deg);
 	}
 
-	.tools {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: space-between;
-		gap: var(--s-2);
-		padding-top: var(--s-3);
-		border-top: 1px solid var(--rule);
-	}
-	.tools__keys {
-		display: flex;
-		gap: var(--s-3);
-		font-size: var(--t-micro);
-	}
-	.tools__keys .text {
-		font-family: var(--font-serif);
-	}
-	.tools__acts {
-		display: flex;
-		align-items: center;
-		gap: var(--s-1);
-	}
-
-	/* ── The leden, as in the article text: the number in the gutter ── */
-	.compare {
-		font-family: var(--font-serif);
-		font-size: var(--t-body);
-		line-height: var(--lh-body);
-		color: var(--ink);
-	}
-	/* The columns of the article text (ArticleText): the number, the text, a margin of
-	   150px. The text keeps its width when the comparison opens. */
-	.row {
-		display: grid;
-		grid-template-columns: 36px 1fr 150px;
-		gap: 0 var(--s-3);
-		padding: var(--s-2) var(--s-3) var(--s-2) 0;
-	}
-	.compare--naast .row {
-		grid-template-columns: 36px 1fr 1fr;
-		gap: 0 var(--s-5);
-	}
-	.row--head {
-		padding: 0 0 var(--s-1);
-		border-bottom: 1px solid var(--rule);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-	}
-	.row__no {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		padding-top: 7px;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-		line-height: 1.3;
-	}
-	.row__no a {
-		color: var(--ink-2);
-	}
-	.row__no a:hover {
-		color: var(--ink);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
-	}
-	/* Level with the old wording, under its date. */
-	.compare--een .row--rewritten .row__no,
-	.compare--een .row--rewritten .row__aside {
-		padding-top: 26px;
-	}
-	.row__aside {
-		padding-top: 7px;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-		text-align: right;
-	}
-	.row__was {
-		font-weight: 400;
-		white-space: nowrap;
-	}
-	.row__body,
-	.row__side {
-		min-width: 0;
-	}
+	/* A lid's history: what happened to it, and its text. */
 	.row__label {
 		display: block;
 		font-family: var(--font-serif);
@@ -1064,116 +801,20 @@
 		font-weight: 600;
 		color: var(--ink-3);
 	}
-	.row--same .text {
-		color: var(--ink-2);
-	}
 	.text {
 		margin: 0;
 		white-space: pre-line;
-	}
-	.text ins {
-		text-decoration: none;
-		background: var(--mark-ins);
-		box-shadow: inset 0 -1.5px 0 var(--mark-ins-rule);
-		box-decoration-break: clone;
-		-webkit-box-decoration-break: clone;
-		padding: 0 1px;
-	}
-	.text del {
-		color: var(--ink-3);
-		text-decoration: line-through;
-		text-decoration-color: var(--ink-2);
-		text-decoration-thickness: 1px;
 	}
 	.text--added {
 		padding-left: var(--s-3);
 		border-left: 3px solid var(--mark-ins-rule);
 	}
-	.text--removed {
-		padding-left: var(--s-3);
-		border-left: 3px solid var(--rule-strong);
-		color: var(--ink-3);
-		text-decoration: line-through;
-		text-decoration-color: var(--rule-strong);
-	}
 	.text--none {
-		padding-top: 7px;
+		padding-top: var(--s-2);
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-style: italic;
 		color: var(--ink-3);
-	}
-	.pair {
-		display: grid;
-		gap: var(--s-2);
-	}
-	.pair__old .text {
-		color: var(--ink-3);
-	}
-	.pair__old,
-	.pair__new {
-		padding-left: var(--s-3);
-		border-left: 3px solid var(--rule);
-	}
-	.pair__new {
-		border-left-color: var(--mark-ins-rule);
-	}
-	/* A and B at the head of their column, as on the line through time. */
-	.side-head {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-2);
-		color: var(--ink-2);
-	}
-	.row--head .badge,
-	.pair__when .badge {
-		border-color: var(--paper);
-	}
-	.pair__when {
-		display: flex;
-		align-items: center;
-		gap: var(--s-2);
-		margin-bottom: 2px;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-
-	.fold {
-		display: block;
-		width: calc(100% - 48px);
-		margin: var(--s-1) 0 var(--s-1) var(--s-7);
-		padding: var(--s-1) 0;
-		border: 0;
-		border-top: 1px dashed var(--rule);
-		border-bottom: 1px dashed var(--rule);
-		background: none;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-		text-align: left;
-		cursor: pointer;
-	}
-	.compare--een:not(.is-whole) .fold {
-		width: calc(100% - 48px - 172px);
-	}
-	.fold:hover {
-		color: var(--ink);
-	}
-
-	.compare.is-whole .row {
-		grid-template-columns: 1fr 150px;
-	}
-	.compare--naast.is-whole .row {
-		grid-template-columns: 1fr 1fr;
-	}
-	.compare.is-whole .row__no,
-	.compare.is-whole .row--head > span:first-child {
-		display: none;
-	}
-	.compare.is-whole .fold {
-		width: 100%;
-		margin-left: 0;
 	}
 
 	/* ── One lid through time ── */
@@ -1290,23 +931,8 @@
 
 	/* As the article text on a narrow screen: the margin goes under the text. */
 	@media (max-width: 900px) {
-		.compare--een .row {
-			grid-template-columns: 28px 1fr;
-		}
-		.compare--een.is-whole .row {
-			grid-template-columns: 1fr;
-		}
-		.row__aside {
-			grid-column: -2;
-			padding-top: 2px !important;
-			text-align: left;
-		}
 		.formulations {
 			margin: 0 0 0 23px;
-		}
-		.compare--naast .row {
-			grid-template-columns: 28px 1fr 1fr;
-			gap: 0 var(--s-3);
 		}
 	}
 	/* A over B, the swap beside both, where the two do not fit side by side in full. */
@@ -1334,15 +960,5 @@
 		.line__period {
 			min-width: 44px;
 		}
-		.compare--naast .row {
-			grid-template-columns: 28px 1fr 1fr;
-			gap: 0 var(--s-3);
-		}
-	}
-	.unchanged {
-		margin: 0 0 var(--s-3);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-3);
 	}
 </style>

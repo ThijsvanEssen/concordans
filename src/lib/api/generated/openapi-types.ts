@@ -13,7 +13,7 @@ export interface paths {
         };
         /**
          * One article with its references
-         * @description Looks up an article by `bwb_id` and `article_number`, adds its parent instrument, the number of judgments that cite it (`metadata.judgment_count`; `/cited-by` pages them), and the article references recorded on the article itself.
+         * @description Looks up an article by `bwb_id` and `article_number`, adds its parent instrument, the number of judgments that cite it (`metadata.judgment_count`; `/cited-by` pages them), and the article references recorded on the article itself; `successors` and `predecessors` give its place in a recodification (`TRANSPOSED_TO`) both ways.
          */
         get: operations["get_article_detail_api_articles__bwb_id___article_number__get"];
         put?: never;
@@ -53,7 +53,7 @@ export interface paths {
         };
         /**
          * Version history of an article
-         * @description Every version of one article, identified by the stable BWB `stam_id` so renumbering does not break the chain, oldest first, without their text. Each version carries its validity period, the kind of change (`change`: introduces / amends / repeals), the amending publication (`amended_by`) and the commencement publication (`commencement`) with their dossiers, whether its text differs from the version before it (`text_changed`) and which parts it changed (`changes`). The text of a version is at `history/{key}`. 404 when the article is unknown.
+         * @description Every version of one article, identified by the stable BWB `stam_id` so renumbering does not break the chain, oldest first, without their text. Each version carries its validity period, the kind of change (`change`: introduces / amends / repeals), the amending publication (`amended_by`) and the commencement publication (`commencement`) with their dossiers, whether its text differs from the version before it (`text_changed`) and which parts it changed (`changes`). The text of a version is at `history/{key}`. An article of a law of the Staatsblad the BWB does not hold has one version: its text as enacted, without a validity, made (`amended_by`) by the publication its text comes from. 404 when the article is unknown.
          */
         get: operations["get_article_version_history_api_articles__bwb_id___article_number__history_get"];
         put?: never;
@@ -2768,6 +2768,16 @@ export interface components {
             downstream_implications: components["schemas"]["ArticleRelationshipWithType"][];
             /** Scope Articles */
             scope_articles: components["schemas"]["ScopeArticleReference"][];
+            /**
+             * Successors
+             * @description In the new law: the articles that take this article's place in a recodification (`TRANSPOSED_TO`), as an official source gives them.
+             */
+            successors: components["schemas"]["ArticleSuccessionDTO"][];
+            /**
+             * Predecessors
+             * @description Formerly: the articles of the old law whose place this article takes (`TRANSPOSED_TO` read backwards).
+             */
+            predecessors: components["schemas"]["ArticleSuccessionDTO"][];
         };
         /**
          * ArticleExplanationDTO
@@ -2839,6 +2849,20 @@ export interface components {
             total: number;
             /** Items */
             items: components["schemas"]["ArticleExplanationDTO"][];
+        };
+        /**
+         * ArticleHeadingDTO
+         * @description A heading in the text of an article on a line of its own (a `<tussenkop>`, the title
+         *     of a table), as a span of its `text`.
+         */
+        ArticleHeadingDTO: {
+            /**
+             * Start
+             * @description Offset of the heading in the `text` of the article.
+             */
+            start: number;
+            /** End */
+            end: number;
         };
         /**
          * ArticleHistoryResponse
@@ -3113,7 +3137,7 @@ export interface components {
              * Relation
              * @enum {string}
              */
-            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
+            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
             target_article: components["schemas"]["ArticleRelationDTO"];
             /** Semantic Type */
             semantic_type: string | null;
@@ -3154,6 +3178,44 @@ export interface components {
              * @description `intref` or `extref`, as on the reference itself.
              */
             reference_kind: string | null;
+        };
+        /**
+         * ArticleSuccessionDTO
+         * @description The other article of a recodification (``TRANSPOSED_TO``): the article of the new law
+         *     that takes this one's place, or the article of the old law whose place this one takes.
+         */
+        ArticleSuccessionDTO: {
+            article: components["schemas"]["ArticleRelationDTO"];
+            /**
+             * In Force
+             * @description Whether the law of `article` is in force: false for a new law that is enacted and not in force yet.
+             */
+            in_force: boolean | null;
+            /**
+             * Status
+             * @description The status of the law of `article`: `vastgesteld`, …
+             */
+            status: string | null;
+            /**
+             * Parts
+             * @description Each part of the old article the source places in the new article.
+             */
+            parts: components["schemas"]["SuccessionPartDTO"][];
+            /**
+             * Basis
+             * @description What the link rests on: `transposition_table`.
+             */
+            basis: string | null;
+            /**
+             * Source
+             * @description The identifier of the source: `blg-1081574`, `kst-34986-3`.
+             */
+            source: string | null;
+            /**
+             * Source Url
+             * @description The source on zoek.officielebekendmakingen.nl.
+             */
+            source_url: string | null;
         };
         /**
          * ArticleSummaryDTO
@@ -3215,6 +3277,11 @@ export interface components {
              * @description The tables in `text`, as spans of it.
              */
             tables: components["schemas"]["ArticleTableDTO"][];
+            /**
+             * Headings
+             * @description The headings in `text`, as spans of it.
+             */
+            headings: components["schemas"]["ArticleHeadingDTO"][];
             /**
              * Path
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
@@ -3313,6 +3380,11 @@ export interface components {
              * @description As on the article: spans of `text`.
              */
             tables: components["schemas"]["ArticleTableDTO"][];
+            /**
+             * Headings
+             * @description As on the article: spans of `text`.
+             */
+            headings: components["schemas"]["ArticleHeadingDTO"][];
         };
         /**
          * ArticleVersionListedDTO
@@ -6146,7 +6218,7 @@ export interface components {
             /** To Id */
             to_id: string | null;
             /** Relation */
-            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
+            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
             /** Status */
             status: string | null;
             /** Meta */
@@ -6849,7 +6921,7 @@ export interface components {
              * @default IMPLEMENTS
              * @enum {string}
              */
-            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
+            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
             /** Confidence */
             confidence: number | null;
             /**
@@ -8430,6 +8502,12 @@ export interface components {
              */
             tables: components["schemas"]["ArticleTableDTO"][];
             /**
+             * Headings
+             * @description The headings in the text as spans of it; empty when the text was not asked for.
+             * @default []
+             */
+            headings: components["schemas"]["ArticleHeadingDTO"][];
+            /**
              * Text Preview
              * @description The first ``text_preview_chars`` characters of the text.
              */
@@ -9462,7 +9540,7 @@ export interface components {
              * @default REFERS_TO
              * @enum {string}
              */
-            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
+            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
             /** Confidence */
             confidence: number | null;
             /**
@@ -10884,7 +10962,7 @@ export interface components {
          */
         NeighborBucketDTO: {
             /** Relation */
-            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
+            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
             /**
              * Direction
              * @enum {string}
@@ -10957,7 +11035,7 @@ export interface components {
             /** Edge Id */
             edge_id: string;
             /** Relation */
-            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
+            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
             /**
              * Direction
              * @enum {string}
@@ -11061,7 +11139,7 @@ export interface components {
             /** Target */
             target: string;
             /** Relation */
-            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
+            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
             /** Confidence */
             confidence: number | null;
             /** Status */
@@ -11424,7 +11502,7 @@ export interface components {
              * Relations
              * @description The relations the paths keep to, as asked; null for all.
              */
-            relations: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED")[] | null;
+            relations: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED")[] | null;
             /**
              * Through Laws
              * @description Whether a path may pass through a law by its articles (`PART_OF`).
@@ -11677,7 +11755,7 @@ export interface components {
              * Relation
              * @enum {string}
              */
-            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
+            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
             /** Semantic Type */
             semantic_type: string | null;
             /**
@@ -12226,6 +12304,32 @@ export interface components {
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */
             readonly path: string | null;
+        };
+        /**
+         * SuccessionPartDTO
+         * @description A part of the old article and its place in the new law, as the source writes it.
+         */
+        SuccessionPartDTO: {
+            /**
+             * Old Part
+             * @description The part of the old article as the source writes it: `2`, `2 a`, `eerste lid`; empty for the whole article.
+             */
+            old_part: string;
+            /**
+             * New Place
+             * @description Its place in the new law as the source writes it: `2.8.6, 1`, `algemene regeling 2.1.10`.
+             */
+            new_place: string;
+            /**
+             * New Article
+             * @description The number of the article of the new law it is placed in (`2.8.6`): that of `article` of a successor, the article itself of a predecessor.
+             */
+            new_article: string | null;
+            /**
+             * New Leden
+             * @description The leden of that article `new_place` names (`2`); empty for the whole article.
+             */
+            new_leden: string[];
         };
         /**
          * TermSpanDTO

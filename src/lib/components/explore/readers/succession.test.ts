@@ -1,0 +1,118 @@
+import { describe, expect, it } from 'vitest';
+import {
+	compareTarget,
+	lidPairings,
+	ownSuccessionName,
+	partRows,
+	successionName,
+	successionSources,
+	successionStatus,
+	type Succession
+} from './succession';
+import { newSv, oldSv } from '$lib/fixtures/succession';
+
+const sv = { citationTitle: 'Wetboek van Strafvordering', shortTitle: 'Sv' };
+
+describe('successionName', () => {
+	it('cites the new code under the old title by the old short title, marked new', () => {
+		expect(successionName(newSv, sv, 'new')).toBe('art. 2.8.6 Sv (nieuw)');
+	});
+
+	it('cites the old article by its own short title', () => {
+		expect(
+			successionName(oldSv, { citationTitle: sv.citationTitle, shortTitle: null }, 'old')
+		).toBe('art. 126ffa Sv');
+	});
+
+	it('cites a law with a title of its own by that title', () => {
+		const other: Succession = {
+			...newSv,
+			article: {
+				...newSv.article,
+				instrument: { ...newSv.article.instrument!, citation_title: 'Omgevingswet' }
+			}
+		};
+		expect(successionName(other, sv, 'new')).toBe('art. 2.8.6 Omgevingswet');
+	});
+});
+
+describe('successionStatus', () => {
+	it('says a law that is not in force yet is not', () => {
+		expect(successionStatus(newSv)).toBe('vastgesteld, nog niet in werking');
+	});
+
+	it('says nothing of a law in force', () => {
+		expect(successionStatus(oldSv)).toBeNull();
+	});
+});
+
+describe('partRows', () => {
+	it('puts the leden that go to one place in one row', () => {
+		expect(partRows(newSv.parts)).toEqual([
+			{ old: 'leden 1, 2 en 3', place: '2.8.6, 1' },
+			{ old: 'lid 4', place: '2.8.6, 2' }
+		]);
+	});
+
+	it('has no rows for a whole article that goes to one place', () => {
+		expect(
+			partRows([{ old_part: '', new_place: '2.1.10', new_article: '2.1.10', new_leden: [] }])
+		).toEqual([]);
+	});
+});
+
+describe('successionSources', () => {
+	it('names each table once', () => {
+		expect(successionSources([newSv, newSv])).toEqual([
+			'https://zoek.officielebekendmakingen.nl/blg-1081574.html'
+		]);
+	});
+});
+
+describe('lidPairings', () => {
+	it('takes the leden the table places together as one pairing', () => {
+		expect(lidPairings(newSv.parts, '2.8.6')).toEqual([
+			{ old: ['1', '2', '3'], new: ['1'] },
+			{ old: ['4'], new: ['2'] }
+		]);
+	});
+
+	it('leaves out a part placed in another article, a whole article and an onderdeel', () => {
+		const parts = [
+			{ old_part: '1', new_place: '2.8.7, 1', new_article: '2.8.7', new_leden: ['1'] },
+			{ old_part: '', new_place: '2.8.6', new_article: '2.8.6', new_leden: [] },
+			{ old_part: '2 a', new_place: '2.8.6, 3', new_article: '2.8.6', new_leden: ['3'] }
+		];
+		expect(lidPairings(parts, '2.8.6')).toEqual([]);
+	});
+});
+
+describe('compareTarget', () => {
+	it('reads the old article on the left and the new on the right, whichever is on screen', () => {
+		const onOld = compareTarget('articles/stb_2026_56_2_8_6', [newSv], [], '126ffa');
+		expect(onOld).toMatchObject({
+			direction: 'new',
+			law: 'STB-2026-56',
+			number: '2.8.6',
+			pairings: [
+				{ old: ['1', '2', '3'], new: ['1'] },
+				{ old: ['4'], new: ['2'] }
+			]
+		});
+		const onNew = compareTarget('articles/bwbr0001903_126ffa', [], [oldSv], '2.8.6');
+		expect(onNew).toMatchObject({ direction: 'old', law: 'BWBR0001903', number: '126ffa' });
+		expect(onNew?.pairings).toHaveLength(2);
+	});
+
+	it("is null for an article the source does not pair with this one: the reader's own choice", () => {
+		expect(compareTarget('articles/bwbr0001854_287', [newSv], [], '126ffa')).toBeNull();
+	});
+});
+
+describe('ownSuccessionName', () => {
+	it('names the new article under the old title as the line names it', () => {
+		const own = { citationTitle: 'Wetboek van Strafvordering', shortTitle: null };
+		expect(ownSuccessionName(oldSv, own, '2.8.6', 'old')).toBe('art. 2.8.6 Sv (nieuw)');
+		expect(ownSuccessionName(newSv, sv, '126ffa', 'new')).toBeNull();
+	});
+});

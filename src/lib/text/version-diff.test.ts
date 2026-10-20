@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
 	alignUnits,
 	byYear,
-	compareVersions,
+	compareTexts,
+	splitSentences,
 	diffWords,
 	lidHistory,
 	plainDiff,
@@ -55,9 +56,9 @@ describe('diffWords', () => {
 	});
 });
 
-describe('compareVersions', () => {
+describe('compareTexts', () => {
 	it('marks the words in the one lid that changed and leaves the rest', () => {
-		const rows = compareVersions(
+		const rows = compareTexts(
 			version(['Het onderwijs is vrij.', 'Er zijn genoeg scholen.']),
 			version(['Het onderwijs is vrij.', 'Er zijn genoeg openbare scholen.'])
 		);
@@ -66,7 +67,7 @@ describe('compareVersions', () => {
 	});
 
 	it('shows a rewritten lid as old and new, without marks', () => {
-		const rows = compareVersions(
+		const rows = compareTexts(
 			version(['Het briefgeheim is onschendbaar, behalve op last van de rechter.']),
 			version(['Ieder heeft recht op eerbiediging van zijn brief- en telecommunicatiegeheim.'])
 		);
@@ -93,7 +94,7 @@ describe('compareVersions', () => {
 			[null, '2'],
 			['2', '3']
 		]);
-		const rows = compareVersions(
+		const rows = compareTexts(
 			version(['Eerste regel over de wet.', 'Tweede regel over de rechter.']),
 			version([
 				'Eerste regel over de wet.',
@@ -109,7 +110,7 @@ describe('compareVersions', () => {
 	});
 
 	it('compares an article without leden as one text', () => {
-		const rows = compareVersions(
+		const rows = compareTexts(
 			{ text: 'Allen worden gelijk behandeld.' },
 			{ text: 'Niemand wordt gediscrimineerd, nooit en nergens.' }
 		);
@@ -249,7 +250,7 @@ describe('wordingsOf', () => {
 
 describe('plainDiff', () => {
 	it('writes insertions and deletions in brackets, one lid per line', () => {
-		const rows = compareVersions(
+		const rows = compareTexts(
 			version(['Onderwijs is vrij.', 'Er zijn scholen.']),
 			version(['Onderwijs is vrij.', 'Er zijn openbare scholen.'])
 		);
@@ -257,7 +258,7 @@ describe('plainDiff', () => {
 	});
 });
 
-describe('compareVersions on a bijlage', () => {
+describe('compareTexts on a bijlage', () => {
 	// As the API gives Awb bijlage 2 artikel 4: parts for the aanhef and the onderdelen, and
 	// the laws listed between them outside every part.
 	const version = (law: string) => {
@@ -291,7 +292,7 @@ describe('compareVersions on a bijlage', () => {
 	};
 
 	it('sees a change in the text between the onderdelen', () => {
-		const rows = compareVersions(
+		const rows = compareTexts(
 			version('Elektriciteitswet 1998: artikel 36'),
 			version('Energiewet: artikel 3.37')
 		);
@@ -312,5 +313,94 @@ describe('byYear', () => {
 			['2026', 1],
 			['Zonder datum', 1]
 		]);
+	});
+});
+
+describe('compareTexts: a rewritten lid, by sentence and then by word', () => {
+	const old =
+		'De officier van justitie kan in het belang van het onderzoek een bevel geven. ' +
+		'Het bevel wordt schriftelijk gegeven en vermeldt de gronden. ' +
+		'Hij doet daarvan terstond mededeling aan de rechter-commissaris.';
+	const now =
+		'Een bevel als bedoeld in het eerste lid geldt voor ten hoogste vier weken en kan telkens worden verlengd. ' +
+		'Het bevel wordt schriftelijk gegeven en vermeldt de gronden waarop het berust. ' +
+		'Van elk bevel wordt proces-verbaal opgemaakt, waarin de verdachte wordt genoemd.';
+
+	it('pairs the sentences that stayed and marks their words; the rest is struck and inserted whole', () => {
+		const [row] = compareTexts({ text: old }, { text: now });
+		expect(row.kind).toBe('rewritten');
+		const ops = row.segments.map((s) => [s.op, s.text.trim()]);
+		expect(ops).toContainEqual([
+			'eq',
+			'Het bevel wordt schriftelijk gegeven en vermeldt de gronden'
+		]);
+		expect(ops).toContainEqual(['ins', 'waarop het berust']);
+		expect(ops).toContainEqual([
+			'del',
+			'De officier van justitie kan in het belang van het onderzoek een bevel geven.'
+		]);
+		// Each text reads whole from its own side.
+		const side = (op: 'del' | 'ins') =>
+			row.segments
+				.filter((s) => s.op !== op)
+				.map((s) => s.text)
+				.join('');
+		expect(side('ins')).toBe(old);
+		expect(side('del')).toBe(now);
+	});
+
+	it('keeps a lid without a sentence in common as the old text and the new', () => {
+		const [row] = compareTexts(
+			{ text: 'Het briefgeheim is onschendbaar, behalve op last van de rechter.' },
+			{ text: 'Ieder heeft recht op eerbiediging van zijn brief- en telecommunicatiegeheim.' }
+		);
+		expect(row.kind).toBe('rewritten');
+		expect(row.segments).toEqual([]);
+	});
+
+	it('does not end a sentence at a citation of an article', () => {
+		expect(splitSentences('Bedoeld in art. 126ffa lid 2. Dan geldt dit; en dat.')).toEqual([
+			'Bedoeld in art. 126ffa lid 2. ',
+			'Dan geldt dit; ',
+			'en dat.'
+		]);
+	});
+});
+
+describe('compareTexts across two laws, leden as the source pairs them', () => {
+	const old = version([
+		'De officier van justitie kan een bevel geven.',
+		'Het bevel is schriftelijk.',
+		'Het bevel vermeldt de gronden.',
+		'De rechter-commissaris kan het bevel opheffen.'
+	]);
+	const now = version([
+		'De officier van justitie kan een schriftelijk bevel geven, dat de gronden vermeldt.',
+		'De rechter-commissaris kan het bevel steeds opheffen.'
+	]);
+
+	it('pairs leden 1, 2 and 3 with lid 1, and lid 4 with lid 2, as the transposition table says', () => {
+		const rows = compareTexts(old, now, [
+			{ old: ['1', '2', '3'], new: ['1'] },
+			{ old: ['4'], new: ['2'] }
+		]);
+		expect(rows.map((r) => [r.old?.number, r.new?.number, r.bySource])).toEqual([
+			['1, 2 en 3', '1', true],
+			['4', '2', true]
+		]);
+		// The leden taken together keep their numbers in the text.
+		expect(rows[0].old?.text).toMatch(/^De officier.*\n2\. Het bevel is schriftelijk\./s);
+		expect(rows[1].kind).toBe('changed');
+	});
+
+	it('pairs by content where the source names no leden', () => {
+		const rows = compareTexts(old, now);
+		expect(rows.some((r) => r.bySource)).toBe(false);
+		expect(rows.at(-1)?.new?.number).toBe('2');
+	});
+
+	it('leaves a pairing out that names a lid the text does not have', () => {
+		const rows = compareTexts(old, now, [{ old: ['9'], new: ['1'] }]);
+		expect(rows.some((r) => r.bySource)).toBe(false);
 	});
 });
