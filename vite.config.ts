@@ -6,19 +6,21 @@ import { fileURLToPath } from 'node:url';
 import { apiDocs } from './src/lib/api/docs';
 import { limitMaxima } from './src/lib/api/limit-maxima';
 
-// The pages of the app with their title and description ($lib/seo/routes.ts), next to
-// index.html in the build: the server reads it for a page's head, and to tell a page from
-// a 404 (~/Development/seo-html-ontwerp.md).
-const spaRoutes: Plugin = {
-	name: 'spa-routes',
+// Beside index.html in the build, for the server (~/Development/seo-html-ontwerp.md): the
+// pages of the app with their title and description ($lib/seo/routes.ts), which it reads for
+// a page's head and to tell a page from a 404; and the fixed text of the start page
+// ($lib/components/home/start.ts), the one source of its HTML of `/`.
+const BESIDE_INDEX = {
+	'spa-routes.json': 'src/lib/seo/spa-routes.json',
+	'start.json': 'src/lib/components/home/start.json'
+};
+const besideIndex: Plugin = {
+	name: 'beside-index',
 	apply: 'build',
 	generateBundle() {
 		if (this.environment.config.build.ssr) return;
-		this.emitFile({
-			type: 'asset',
-			fileName: 'spa-routes.json',
-			source: readFileSync('src/lib/seo/spa-routes.json', 'utf8')
-		});
+		for (const [fileName, path] of Object.entries(BESIDE_INDEX))
+			this.emitFile({ type: 'asset', fileName, source: readFileSync(path, 'utf8') });
 	}
 };
 
@@ -59,7 +61,7 @@ const RUNES = 'src/**/*.svelte.test.ts';
 const DOM = 'src/**/*.dom.test.ts';
 
 export default defineConfig({
-	plugins: [sveltekit(), spaRoutes, apiDocsModule, apiLimitsModule],
+	plugins: [sveltekit(), besideIndex, apiDocsModule, apiLimitsModule],
 	// Safari can aggressively cache ESM modules in dev; force fresh loads.
 	server: {
 		headers: {

@@ -6,12 +6,22 @@
 		<!-- With scripts the server's text stays hidden: the paper and the bar, then the app,
 		     not a page that is shown and then replaced (Thijs, 10 Oct: "erg afleidend"). If
 		     the app has not mounted after 4 s (a chunk that fails), the text shows after all;
-		     the root layout stops the timer. Without scripts, and for a crawler, it is there. -->
+		     the root layout stops the timer. Without scripts, and for a crawler, it is there.
+		     The start page is the one exception: its text is set as the app sets it, with room
+		     for what the app adds, so it is the first paint and the app takes its place
+		     without a shift (Thijs, 19 Oct, variant A). -->
 		<script>
-			document.documentElement.classList.add('js');
+			// js goes when the app does not come; scripts stays (the room of the start page).
+			document.documentElement.classList.add('js', 'scripts');
 			window.__seoTerug = setTimeout(function () {
 				document.documentElement.classList.remove('js');
 			}, 4000);
+			// The start page's first paint keeps the letter it has: the fallback when Newsreader
+			// is not there yet (app.html, .vaste-letter).
+			requestAnimationFrame(function () {
+				if (!document.fonts.check("16px 'Newsreader'"))
+					document.documentElement.classList.add('vaste-letter');
+			});
 		</script>
 		<link rel="icon" href="%sveltekit.assets%/favicon.svg" type="image/svg+xml" />
 		<link rel="apple-touch-icon" href="%sveltekit.assets%/apple-touch-icon.png" />
@@ -106,22 +116,44 @@
 					U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
 					U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 			}
+			/* Its italic, for the placeholder and the note: as the app has it (fonts.css). */
+			@font-face {
+				font-family: 'Newsreader';
+				src: url('/fonts/Newsreader-VariableItalic.woff2') format('woff2');
+				font-weight: 400 600;
+				font-style: italic;
+				font-display: swap;
+				unicode-range:
+					U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+					U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+			}
 			:root:has(#seo) {
 				--paper: #faf8f3;
+				--paper-2: #ece7dc;
 				--rule: #b9b1a0;
+				--rule-strong: #6f6859;
 				--ink: #161513;
 				--ink-2: #3b3834;
 				--ink-3: #5d5951;
+				--accent: #8c2f28;
+				--moss: #456247;
+				--uitkomst-ja: var(--moss);
+				--uitkomst-nee: var(--accent);
 				--font-serif:
 					'Newsreader', 'Newsreader Fallback', 'Newsreader Fallback Noto',
 					'Newsreader Fallback DejaVu', Georgia, serif;
 				--t-h1: 30px;
 				--t-h3: 20px;
 				--t-body: 17.5px;
+				--t-body-2: 16px;
 				--t-meta: 14px;
+				--t-micro: 13px;
 				--lh-tight: 1.15;
+				--lh-snug: 1.35;
 				--lh-body: 1.6;
+				--s-1: 4px;
 				--s-2: 8px;
+				--s-3: 12px;
 				--s-4: 16px;
 				--s-5: 24px;
 				--s-6: 32px;
@@ -129,6 +161,10 @@
 				--topbar-h: 60px;
 				--blad-max: 1440px;
 				--blad-tekst: 720px;
+				--veld-h: 32px;
+				--veld-h-klein: 24px;
+				--r-1: 3px;
+				--r-2: 4px;
 				background: var(--paper);
 			}
 			body:has(#seo) {
@@ -144,10 +180,11 @@
 			body:has(#seo)::before {
 				content: '';
 				display: block;
+				box-sizing: border-box;
 				height: var(--topbar-h);
 				border-bottom: 1px solid var(--rule);
 			}
-			.js #seo {
+			.js #seo:not(:has(> .entrances)) {
 				display: none;
 			}
 			/* .blad with a reading width (.blad--tekst). */
@@ -200,6 +237,269 @@
 			@media (max-width: 768px) {
 				#seo {
 					padding: var(--s-4) var(--s-4) var(--s-8);
+				}
+			}
+			/* The start page (home.py of the API, the three ways in): set as the app sets it,
+			   each value its own (routes/(main)/+page.svelte, home/Entrances.svelte, Search,
+			   Keuze, KindGlyph, Uitkomst, frame.css), so the app takes its place unmoved. With
+			   scripts it shows too: it is the first paint. */
+			#seo:has(> .entrances) {
+				font-size: var(--t-meta);
+				line-height: var(--lh-snug);
+				overflow-wrap: normal;
+				text-rendering: optimizeLegibility;
+			}
+			#seo:has(> .entrances) *,
+			#seo:has(> .entrances) *::before,
+			#seo:has(> .entrances) *::after {
+				box-sizing: border-box;
+			}
+			#seo:has(> .entrances) > * {
+				max-width: none;
+			}
+			/* Newsreader where it was there for the first paint; else the fallback, until the
+			   reader leaves the start page (routes/+layout.svelte): the font that comes later
+			   does not reflow the text under the reader, and the app's start page, in the same
+			   letter, takes the place of the server's to the pixel, its text no larger (the
+			   largest paint stays the first). The script at the top sets the class. */
+			.vaste-letter #seo:has(> .entrances),
+			.vaste-letter .home {
+				--font-serif:
+					'Newsreader Fallback', 'Newsreader Fallback Noto', 'Newsreader Fallback DejaVu', Georgia,
+					serif;
+				font-family: var(--font-serif);
+			}
+			/* The head of the page (.blad__kop, .blad__titel) and what Concordans is. */
+			#seo:has(> .entrances) > .blad__kop {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: flex-start;
+				justify-content: space-between;
+				gap: var(--s-4) var(--s-3);
+				margin: 0 0 var(--s-4);
+			}
+			/* Its own face too when the app's stylesheet comes (.blad__titel names one). */
+			#seo:has(> .entrances) h1 {
+				margin: 0;
+				font-family: inherit;
+				font-size: var(--t-h1);
+				font-weight: 600;
+				line-height: var(--lh-snug);
+				color: var(--ink);
+				overflow-wrap: anywhere;
+			}
+			#seo:has(> .entrances) .lead {
+				flex-basis: 100%;
+				max-width: var(--blad-tekst);
+				margin: calc(-1 * var(--s-2)) 0 0;
+				font-size: var(--t-body-2);
+				line-height: var(--lh-body);
+				color: var(--ink-2);
+			}
+			/* The field with its mark (Search); with scripts, over it the room of the scopes
+			   (Keuze, small on a phone) and the gap under them, under it the room of the law
+			   network (.wetsnetwerk-plek), quiet as the app keeps it while it is asked. Without
+			   scripts neither comes, and no room stands empty. */
+			#seo:has(> .entrances) > .search {
+				display: grid;
+				grid-template-columns: minmax(0, 1fr);
+			}
+			.scripts #seo:has(> .entrances) > .search {
+				padding-top: calc(var(--veld-h) + var(--s-3));
+			}
+			#seo:has(> .entrances) > .search::before {
+				content: '';
+				grid-area: 1 / 1;
+				z-index: 1;
+				align-self: center;
+				width: 16px;
+				height: 16px;
+				margin-left: calc(var(--s-4) + 1px);
+				background: var(--ink-3);
+				mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E")
+					center / 16px 16px no-repeat;
+				pointer-events: none;
+			}
+			.scripts #seo:has(> .entrances) > .search::after {
+				content: '';
+				min-height: 366px;
+				margin-top: var(--s-6);
+				border-radius: var(--r-1);
+				background: var(--paper-2);
+			}
+			/* The field: its frame and padding, and the input's own pixel inside them. */
+			#seo:has(> .entrances) input {
+				grid-area: 1 / 1;
+				width: 100%;
+				margin: 0;
+				padding: calc(var(--s-3) + 1px) calc(var(--s-4) + 2px) calc(var(--s-3) + 1px)
+					calc(2 * var(--s-4) + var(--s-3) + 2px);
+				border: 1px solid var(--rule-strong);
+				border-radius: var(--r-2);
+				appearance: none;
+				background: var(--paper);
+				font-family: inherit;
+				font-size: var(--t-h3);
+				line-height: normal;
+				color: var(--ink);
+			}
+			#seo:has(> .entrances) input::-webkit-search-decoration,
+			#seo:has(> .entrances) input::-webkit-search-cancel-button {
+				appearance: none;
+			}
+			#seo:has(> .entrances) input::placeholder {
+				color: var(--ink-3);
+				font-style: italic;
+				opacity: 1;
+			}
+			#seo:has(> .entrances) input:focus {
+				border-color: var(--ink-3);
+				outline: 2px solid var(--ink);
+				outline-offset: 2px;
+			}
+			/* The three ways in (Entrances). */
+			#seo:has(> .entrances) > .entrances {
+				display: grid;
+				grid-template-columns: repeat(3, minmax(0, 1fr));
+				gap: var(--s-5);
+				margin-top: var(--s-6);
+			}
+			#seo:has(> .entrances) .entrance {
+				display: flex;
+				flex-direction: column;
+				gap: var(--s-2);
+				padding: var(--s-4);
+				border: 1px solid var(--rule);
+				border-radius: var(--r-2);
+			}
+			#seo:has(> .entrances) .entrance h2 {
+				margin: 0;
+				font-size: var(--t-meta);
+				font-weight: 600;
+				line-height: var(--lh-snug);
+				color: var(--ink-3);
+			}
+			#seo:has(> .entrances) .entrance .title,
+			#seo:has(> .entrances) .entrance li a {
+				display: inline-block;
+				padding: var(--s-1) 0;
+				color: var(--ink);
+			}
+			#seo:has(> .entrances) .entrance .title {
+				font-size: var(--t-body-2);
+				font-weight: 600;
+				line-height: var(--lh-snug);
+			}
+			#seo:has(> .entrances) .entrance p {
+				margin: 0;
+			}
+			#seo:has(> .entrances) .entrance .meta {
+				font-size: var(--t-micro);
+				color: var(--ink-3);
+			}
+			#seo:has(> .entrances) .entrance ul {
+				display: flex;
+				flex-direction: column;
+				font-size: var(--t-meta);
+				color: var(--ink-2);
+			}
+			#seo:has(> .entrances) .entrance li {
+				display: flex;
+				align-items: center;
+				gap: var(--s-2);
+				padding: 0;
+			}
+			/* Each line with the mark of what it opens (KindGlyph): an article, a judgment, a
+			   Kamerstuk. */
+			#seo:has(> .entrances) .entrance li:has(> a)::before {
+				content: '';
+				flex: none;
+				width: 12px;
+				height: 12px;
+				background: var(--ink);
+				mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 3h10v10H3z' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E")
+					center / 12px 12px no-repeat;
+			}
+			#seo:has(> .entrances) .entrance li:has(> a[href^='/uitspraken/'])::before,
+			#seo:has(> .entrances) .entrance li:has(> a[href$='bronnen=uitspraken'])::before {
+				mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M14.5 8a6.5 6.5 0 1 1-13 0a6.5 6.5 0 1 1 13 0z'/%3E%3C/svg%3E");
+			}
+			#seo:has(> .entrances) .entrance li:has(> a[href*='bronnen=toelichtingen'])::before {
+				mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 1h6.5l3 3v11H3.5z'/%3E%3C/svg%3E");
+			}
+			/* The note of the bundel in italics, its label small. */
+			#seo:has(> .entrances) .entrance .note {
+				font-style: italic;
+			}
+			#seo:has(> .entrances) .entrance .note-label {
+				font-size: var(--t-micro);
+				font-style: normal;
+				color: var(--ink-3);
+			}
+			/* The outcome and the sides of the vote, each with its box (Uitkomst, Stem): Voor
+			   filled in moss, Tegen and Verworpen open in the accent. */
+			#seo:has(> .entrances) .entrance .outcome {
+				display: flex;
+				align-items: center;
+				gap: var(--s-2);
+				font-size: var(--t-meta);
+			}
+			#seo:has(> .entrances) .entrance .uitkomst,
+			#seo:has(> .entrances) .entrance dt {
+				display: flex;
+				align-items: baseline;
+				gap: var(--s-2);
+				font-weight: 600;
+				color: var(--uitkomst-nee);
+			}
+			#seo:has(> .entrances) .entrance .uitkomst::before,
+			#seo:has(> .entrances) .entrance dt::before {
+				content: '';
+				flex: none;
+				width: 10px;
+				height: 10px;
+				border: 2px solid var(--uitkomst-nee);
+			}
+			#seo:has(> .entrances) .entrance .sides {
+				display: grid;
+				grid-template-columns: max-content minmax(0, 1fr);
+				gap: var(--s-1) var(--s-3);
+				margin: 0;
+				font-size: var(--t-meta);
+				line-height: var(--lh-snug);
+			}
+			#seo:has(> .entrances) .entrance .uitkomst::before,
+			#seo:has(> .entrances) .entrance dt::before {
+				transform: translateY(1px);
+			}
+			#seo:has(> .entrances) .entrance dt:first-of-type {
+				color: var(--uitkomst-ja);
+			}
+			#seo:has(> .entrances) .entrance dt:first-of-type::before {
+				border: 0;
+				background: var(--uitkomst-ja);
+			}
+			#seo:has(> .entrances) .entrance dd {
+				margin: 0;
+				color: var(--ink-2);
+			}
+			@media (max-width: 1024px) {
+				#seo:has(> .entrances) > .entrances {
+					grid-template-columns: minmax(0, 1fr);
+					gap: var(--s-4);
+				}
+			}
+			@media (max-width: 640px) {
+				.scripts #seo:has(> .entrances) > .search::after {
+					min-height: 264px;
+				}
+				#seo:has(> .entrances) input {
+					font-size: var(--t-body);
+				}
+			}
+			@media (width <= 600px) {
+				.scripts #seo:has(> .entrances) > .search {
+					padding-top: calc(var(--veld-h-klein) + var(--s-3));
 				}
 			}
 		</style>

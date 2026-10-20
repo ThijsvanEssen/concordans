@@ -1,0 +1,66 @@
+{
+	"heading": "Wetten, uitspraken en Kamerstukken in samenhang",
+	"lead": "Concordans is een onderzoeksinstrument dat parlementaire informatie verbindt met wetgeving, officiële publicaties en rechtspraak, om inzicht te geven in de samenhang rond een onderwerp. Het dient als eenvoudige wettenlezer, met de geldende en eerdere versies van elk artikel, en als werkplaats voor eigen onderzoek. Wat gevonden is, kan in een bundel worden bewaard en geordend.",
+	"placeholder": "Zoek een artikel, uitspraak of motie",
+	"article": {
+		"heading": "Artikel",
+		"title": "Art. 6:162 BW, Onrechtmatige daad",
+		"href": "/wetten/BWBR0005289/artikel/6:162",
+		"parts": [
+			{
+				"collection": "judgments",
+				"label": "Uitspraken die het aanhalen",
+				"bronnen": "uitspraken"
+			},
+			{
+				"collection": "documents",
+				"label": "Kamerstukken die het noemen",
+				"bronnen": "toelichtingen,wetsvoorstellen,dossiers"
+			},
+			{
+				"collection": "articles",
+				"label": "Artikelen die ernaar verwijzen",
+				"bronnen": "artikelen"
+			}
+		]
+	},
+	"vote": {
+		"heading": "Stemming",
+		"title": "Motie De Hoop en Grinwis over de WOZ-cap niet versoepelen",
+		"href": "/kamerstukken/27926/413",
+		"date": "16 juni 2026, Tweede Kamer",
+		"outcome": "Verworpen",
+		"tally": "54 voor, 96 tegen",
+		"sides": [
+			{ "choice": "Voor", "parties": "PRO, PVV, ChristenUnie, DENK, PvdD, SP, 50PLUS, Volt" },
+			{
+				"choice": "Tegen",
+				"parties": "D66, VVD, CDA, JA21, FVD, Groep Markuszower, BBB, SGP, Lid Keijzer"
+			}
+		]
+	},
+	"bundle": {
+		"heading": "Bundel",
+		"title": "Aansprakelijkheid werkgever thuiswerk",
+		"href": "/gemarkeerd#m=tZLRS8MwEMb_lSPPnW035jQvsomw4fBhogNFSroebdY0KWnaIWP_u1e66cZUfPElcPm-I78vd1umhSgYZ2Ohq9KKHJVc5xnKBDZo8xQbtOCyWlZtyTwmHRYV469bJhNqE9bJlcLKjzexDYJg2L8OosvhFTmFI13JpBdSkRvrOvsFjDgZgBQIYbIksTGqlntZEsGpo7Yp2pYKluhigy1Fag2W1HAuwqQ9Rp2nLu_xnWwbdPwIkERtnHQSSXsxNi2VXGXOA2PyLuwN23m_JgzDQ8LzcOEvscL_CfRJu66TtEDtKh9XSkZaRZmN-uSKRD0YhINz6ukCCEqbBouYZt16Pbi7nc_4w5xPF7y94OOnffOB85uuU8I_gJSiJfbpj7rN0_4Pz-7ejgf2bIVIOTRCOUDUsHic9XIlaIAQy_XXsoLRCaEdrdxkSXP9AA",
+		"lines": [
+			{
+				"collection": "articles",
+				"label": "art. 7:658 lid 1 BW",
+				"href": "/wetten/BWBR0005290/artikel/7:658#lid-1"
+			},
+			{
+				"collection": "articles",
+				"label": "art. 7:611 BW",
+				"href": "/wetten/BWBR0005290/artikel/7:611"
+			},
+			{
+				"collection": "judgments",
+				"label": "HR 11 november 2005, ECLI:NL:HR:2005:AU3313",
+				"href": "/uitspraken/ECLI:NL:HR:2005:AU3313"
+			}
+		],
+		"noteLabel": "Aantekening",
+		"note": "Zorgplicht, ook thuis?"
+	}
+}

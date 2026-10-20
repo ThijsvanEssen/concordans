@@ -15,7 +15,9 @@
 		"lint": "prettier --check . && eslint .",
 		"sync:api": "\"${LAWGRAPH_DIR:-../lawgraph}/.venv/bin/lawgraph\" openapi | python3 -c \"import json, sys; json.dump(json.load(sys.stdin), sys.stdout, ensure_ascii=False, separators=(',', ':'))\" > src/lib/api/openapi.json && prettier --ignore-path /dev/null --write src/lib/api/openapi.json && npm run types:api",
 		"types:api": "openapi-typescript src/lib/api/openapi.json -o src/lib/api/generated/openapi-types.ts",
-		"check:api": "npm run sync:api && git diff --exit-code -- src/lib/api/openapi.json src/lib/api/generated"
+		"check:api": "npm run sync:api && git diff --exit-code -- src/lib/api/openapi.json src/lib/api/generated",
+		"sync:start": "L=\"${LAWGRAPH_DIR:-../lawgraph}\" && T=\"$(mktemp -d)\" && git -C \"$L\" archive \"${LAWGRAPH_REF:-origin/develop}\" src | tar -x -C \"$T\" && PYTHONPATH=\"$T/src\" \"$L/.venv/bin/python\" -c \"from lawgraph.api.seo.pages.home import home_page; print(home_page('', '', True).body)\" > src/lib/components/home/start-server.html; S=$?; rm -rf \"$T\"; exit $S",
+		"check:start": "npm run sync:start && git diff --exit-code -- src/lib/components/home/start-server.html"
 	},
 	"dependencies": {
 		"@sigma/node-image": "^3.0.0",
