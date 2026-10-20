@@ -8,7 +8,7 @@
 		paperParagraphCite,
 		paperSectionCite
 	} from '$lib/components/parliamentary/paper-cite';
-	import { paperParagraphs, type PaperParagraph } from '$lib/text/anchor';
+	import { paperBlocks, paperParagraphs, type PaperBlock } from '$lib/text/anchor';
 	import PlaatsMenu, { placeMarker } from '$lib/components/articles/PlaatsMenu.svelte';
 	import { blockClick } from '$lib/actions/klik';
 	import { kaart } from '$lib/map/map.svelte';
@@ -26,6 +26,7 @@
 	import { page } from '$app/state';
 	import { anchorOfHash, landOn, permalink } from '$lib/bron/landing';
 	import CitedText from '$lib/components/articles/CitedText.svelte';
+	import TextBlocks from '$lib/components/articles/TextBlocks.svelte';
 	import Voetnoten from '$lib/components/articles/Voetnoten.svelte';
 	import { kantlijn } from '$lib/actions/kantlijn';
 	import { isNootAnker, regelVan, stukNoten, type Bereik } from '$lib/text/voetnoten';
@@ -110,6 +111,9 @@
 	// so that a passage can be found back; an alinea its number and anchor as the API gives
 	// them (`paragraphs`: `4`, `p-360a090c`), the head of the stuk and a motie's formula none.
 	const paragraphs = $derived(paperParagraphs(loaded ?? {}));
+	// An alinea with a table (its title and its rows) is one block, the table laid out
+	// (TextBlocks); every other line its own.
+	const blocks = $derived(paperBlocks(paragraphs, loaded ?? {}));
 	/** The words of an alinea, a table's every line: what Kopieer tekst copies. */
 	const alineaText = (at: string | null) =>
 		paragraphs
@@ -138,7 +142,7 @@
 
 	type Entry =
 		| { type: 'heading'; start: number; section: Section }
-		| { type: 'para'; start: number; para: PaperParagraph };
+		| { type: 'para'; start: number; end: number; block: PaperBlock };
 
 	// The footnotes (API 0.79.55): a marker in the paragraph that refers to a note, the note
 	// under it or in the margin; one without a marker at the end of its section, else of the stuk.
@@ -159,16 +163,34 @@
 		const p = paragraphs[i];
 		return { i, bereik: { start: b.start - p.start, end: b.end - p.start } };
 	});
+	/** The note markers of a block's lines, `at` in its text. */
+	const blockMarkers = (b: PaperBlock) => {
+		const all = b.lines.flatMap((l) =>
+			(voetnoten.markers.get(l.i) ?? []).map((m) => ({
+				...m,
+				at: m.at === null ? null : m.at + l.start - b.start
+			}))
+		);
+		return all.length ? all : undefined;
+	};
+	/** The marked words where they fall in a block, offsets in its text. */
+	const markedIn = (b: PaperBlock): Bereik | null => {
+		const l = tekstBereik ? b.lines.find((x) => x.i === tekstBereik.i) : undefined;
+		if (!l || !tekstBereik) return null;
+		const shift = l.start - b.start;
+		return { start: tekstBereik.bereik.start + shift, end: tekstBereik.bereik.end + shift };
+	};
 	const entries = $derived.by<Entry[]>(() => {
 		const out: Entry[] = sections.map((section) => ({
 			type: 'heading',
 			start: section.char_start,
 			section
 		}));
-		for (const para of paragraphs) {
+		for (const block of blocks) {
 			// The heading's own line is already drawn as the heading; skip its duplicate.
-			if (headingTexts.has(para.text.trim().toLowerCase())) continue;
-			out.push({ type: 'para', start: para.start, para });
+			if (block.lines.length === 1 && headingTexts.has(block.line.text.trim().toLowerCase()))
+				continue;
+			out.push({ type: 'para', start: block.start, end: block.start + block.text.length, block });
 		}
 		return out.sort((a, b) => a.start - b.start || (a.type === 'heading' ? -1 : 1));
 	});
@@ -223,10 +245,7 @@
 	const passageEntryIndex = $derived.by(() => {
 		if (!passage) return -1;
 		const containing = entries.findLastIndex(
-			(e) =>
-				e.type === 'para' &&
-				e.start <= passage.start &&
-				passage.start < e.start + e.para.text.length
+			(e) => e.type === 'para' && e.start <= passage.start && passage.start < e.end
 		);
 		if (containing >= 0) return containing;
 		const inside = entries.findIndex(
@@ -357,7 +376,7 @@
 
 			{#if doc.text}
 				<div class="body" bind:this={root} use:kantlijn>
-					{#each entries as entry, i (entry.type === 'heading' ? entry.section.id : `p${entry.para.start}`)}
+					{#each entries as entry, i (entry.type === 'heading' ? entry.section.id : `p${entry.start}`)}
 						{#if entry.type === 'heading'}
 							{@const s = entry.section}
 							{@const forms = sectionCite(s, permalink(page.url, s.id))}
@@ -397,10 +416,11 @@
 								{/if}
 							</div>
 						{:else}
-							{@const p = entry.para}
-							{@const markers = voetnoten.markers.get(p.i)}
-							{@const sluit = voetnoten.naSectie.get(p.i)}
-							{@const bereik = tekstBereik?.i === p.i ? tekstBereik.bereik : null}
+							{@const b = entry.block}
+							{@const p = b.line}
+							{@const markers = blockMarkers(b)}
+							{@const sluit = voetnoten.naSectie.get(b.lines[b.lines.length - 1].i)}
+							{@const bereik = markedIn(b)}
 							{@const n = p.n}
 							{@const at = p.at}
 							{@const forms =
@@ -445,12 +465,24 @@
 									class:is-klikbaar={!!forms}
 									use:blockClick={forms && at ? onText(at) : null}
 								>
-									<p>
-										{@render woorden()}{#if i === passageEntryIndex && passage?.possible}<span
+									{#snippet possibleLink()}{#if i === passageEntryIndex && passage?.possible}<span
 												class="derived"
 												title={passage.why ?? undefined}>mogelijk verband</span
-											>{/if}
-									</p>
+											>{/if}{/snippet}
+									{#if b.tables.length}
+										<!-- A table and its title: one alinea, one block. -->
+										<TextBlocks
+											text={b.text}
+											tables={b.tables}
+											notes={markers ?? []}
+											marked={bereik}
+										/>
+										{#if i === passageEntryIndex && passage?.possible}<p>
+												{@render possibleLink()}
+											</p>{/if}
+									{:else}
+										<p>{@render woorden()}{@render possibleLink()}</p>
+									{/if}
 									<Voetnoten noten={nootLijst(markers?.map((m) => m.id))} />
 									<Voetnoten noten={nootLijst(sluit)} marge={false} />
 								</div>

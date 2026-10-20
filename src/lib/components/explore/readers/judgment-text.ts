@@ -6,6 +6,7 @@ import { joinAnd } from '$lib/text/words';
 import { paragraphAnchor } from '$lib/text/anchor';
 import type { Schema } from '$lib/api/types';
 import { spansWithin } from '$lib/text/spans';
+import { tablesWithin, type Table } from '$lib/text/tables';
 import type { NootMarker } from '$lib/text/voetnoten';
 
 type Span = Schema<'ArticleCitationSpan'>;
@@ -530,30 +531,58 @@ export function judgmentParticipants(judgment: Schema<'JudgmentDTO'>): Participa
 
 const WHITESPACE = /[ \t]*(?:\n[ \t]*)+|[ \t]+/g;
 
+/** Trimmed of its spaces and line breaks, not of a tab: the empty cells at the edge of a
+ *  table (a row a line, its cells separated by a tab) stay. */
+const trimEnd = (s: string) => s.replace(/[^\S\t]+$/, '');
+const trimStart = (s: string) => s.replace(/^[^\S\t]+/, '');
+const trim = (s: string) => trimStart(trimEnd(s));
+
+/** The parts of `[from, to)` outside the tables and inside them, in order. */
+function cutAt(from: number, to: number, tables: readonly Table[]) {
+	const parts: { from: number; to: number; inside: boolean }[] = [];
+	let at = from;
+	for (const t of tables) {
+		if (t.end <= at || t.start >= to) continue;
+		if (t.start > at) parts.push({ from: at, to: t.start, inside: false });
+		parts.push({ from: Math.max(at, t.start), to: Math.min(to, t.end), inside: true });
+		at = Math.min(to, t.end);
+	}
+	if (to > at) parts.push({ from: at, to, inside: false });
+	return parts;
+}
+
 /**
  * Collapse runs of spaces to one, runs of line breaks to a line break or a blank
- * line, and trim. `at[i]` is where character `i` of `raw` ends up in the result,
- * so citation offsets (which count in the raw text) can follow.
+ * line, and trim; a table (`tables`) as it is. `at[i]` is where character `i` of `raw` ends up
+ * in the result, so citation offsets (which count in the raw text) can follow.
  */
-function normalize(raw: string): { text: string; at: number[] } {
+function normalize(raw: string, tables: readonly Table[] = []): { text: string; at: number[] } {
 	const at: number[] = new Array(raw.length + 1);
 	let text = '';
 	let last = 0;
 	const copy = (to: number) => {
 		for (let i = last; i < to; i++) at[i] = text.length + i - last;
 		text += raw.slice(last, to);
+		last = to;
 	};
+	const sorted = [...tables].sort((a, b) => a.start - b.start);
 	for (const m of raw.matchAll(WHITESPACE)) {
 		copy(m.index);
-		at.fill(text.length, m.index, m.index + m[0].length);
-		const breaks = m[0].split('\n').length - 1;
-		text += breaks > 1 ? '\n\n' : breaks ? '\n' : ' ';
-		last = m.index + m[0].length;
+		for (const part of cutAt(m.index, m.index + m[0].length, sorted)) {
+			if (part.inside) {
+				copy(part.to);
+				continue;
+			}
+			at.fill(text.length, part.from, part.to);
+			const breaks = raw.slice(part.from, part.to).split('\n').length - 1;
+			text += breaks > 1 ? '\n\n' : breaks ? '\n' : ' ';
+			last = part.to;
+		}
 	}
 	copy(raw.length);
 	at[raw.length] = text.length;
-	const lead = text.length - text.trimStart().length;
-	return { text: text.trim(), at: at.map((p) => Math.max(0, p - lead)) };
+	const lead = text.length - trimStart(text).length;
+	return { text: trim(text), at: at.map((p) => Math.max(0, p - lead)) };
 }
 
 const normalizeParagraphText = (text: string): string => normalize(text).text;
@@ -571,16 +600,18 @@ type ParsedBodyPara = {
 	citations?: Span[];
 	/** The footnote markers in `body`, `at` relative to it. */
 	noten?: NootMarker[];
+	/** The tables in `body`, offsets relative to it. */
+	tables?: Table[];
 };
 type ParsedHeading = { kind: 'heading'; text: string };
 type ParsedSegment = ParsedBodyPara | ParsedHeading;
 
 /** Parse a single (already-normalized) text chunk into a body paragraph. */
 function parseOnePara(text: string, chunkOffset: number): ParsedBodyPara {
-	const clean = text.trim();
+	const clean = trim(text);
 	// The body is always the tail of the trimmed chunk.
 	const at = (body: string) =>
-		chunkOffset + text.length - text.trimStart().length + clean.length - body.length;
+		chunkOffset + text.length - trimStart(text).length + clean.length - body.length;
 
 	// Match leading decimal number, e.g. "2.1" or "2.2.1"
 	const numMatch = clean.match(/^(\d+(?:\.\d+)*\.?)\s*\n([\s\S]*)/);
@@ -589,13 +620,13 @@ function parseOnePara(text: string, chunkOffset: number): ParsedBodyPara {
 
 	const num = numMatch[1].replace(/\.$/, ''); // strip trailing dot for display
 	const depth = (num.match(/\./g) ?? []).length - 1; // "2.1" → 0 dots-after-first → depth 0; "2.2.1" → 1
-	const rest = numMatch[2].replace(/^\s+/, '');
+	const rest = trimStart(numMatch[2]);
 
 	// Sub-title: short line before a blank line, not ending with sentence punctuation
 	const stMatch = rest.match(/^([^\n]{3,80})\n\n([\s\S]+)/);
 	if (stMatch) {
 		const candidate = stMatch[1].trim();
-		const body = stMatch[2].trim();
+		const body = trim(stMatch[2]);
 		if (
 			candidate.length < 80 &&
 			!candidate.endsWith('.') &&
@@ -606,7 +637,7 @@ function parseOnePara(text: string, chunkOffset: number): ParsedBodyPara {
 		}
 	}
 
-	const body = rest.trim();
+	const body = trim(rest);
 	return { kind: 'body', num, depth, subTitle: null, body, offset: at(body) };
 }
 
@@ -680,9 +711,12 @@ function extractParticipants(
 function splitBodyParagraph(
 	text: string,
 	citations: Span[] = [],
-	noten: NootMarker[] = []
+	noten: NootMarker[] = [],
+	tables: readonly Table[] = []
 ): ParsedSegment[] {
-	const { text: normalized, at } = normalize(text);
+	const { text: normalized, at } = normalize(text, tables);
+	// A table where the normalized text has it: its rows and cells as they were.
+	const inText = tables.map((t) => ({ ...t, start: at[t.start], end: at[t.end] }));
 	const spans = citations
 		.filter((c) => c.start != null && c.end != null)
 		.map((c) => ({ ...c, start: at[c.start!], end: at[c.end!] }));
@@ -725,7 +759,7 @@ function splitBodyParagraph(
 		const candidate = trailingMatch[2].replace(/\t+/g, ' ').trim();
 		// It's a heading if it's short and doesn't end with sentence punctuation
 		if (!candidate.endsWith('.') && !candidate.endsWith(',') && candidate.length < 100) {
-			mainText = trailingMatch[1].trim();
+			mainText = trim(trailingMatch[1]);
 			trailingHeadings.push({ kind: 'heading', text: candidate });
 		}
 	}
@@ -741,7 +775,12 @@ function splitBodyParagraph(
 	for (const chunk of chunks) {
 		if (chunk.trim()) {
 			const para = parseOnePara(chunk, chunkOffset);
-			result.push({ ...para, citations: spansWithin(spans, para.offset, para.body.length) });
+			const own = tablesWithin(inText, para.offset, para.body.length);
+			result.push({
+				...para,
+				citations: spansWithin(spans, para.offset, para.body.length),
+				...(own.length ? { tables: own } : {})
+			});
 		}
 		chunkOffset += chunk.length;
 	}
@@ -906,6 +945,8 @@ export type BodyItem =
 			body: string;
 			citations?: Span[];
 			noten?: NootMarker[];
+			/** The tables in `body`, offsets relative to it (TextBlocks). */
+			tables?: Table[];
 			/** The anchor of the overweging: `paragraph_id` of its paragraph, else `rov-<num>`. */
 			id: string;
 	  }
@@ -914,6 +955,7 @@ export type BodyItem =
 			body: string;
 			citations?: Span[];
 			noten?: NootMarker[];
+			tables?: Table[];
 			id?: string;
 			/** It continues the overweging above it: the API numbers only an overweging's first paragraph. */
 			within: boolean;
@@ -985,9 +1027,16 @@ export function bodyItems(
 		number: string | null | undefined,
 		paraId?: string,
 		/** The API marks a paragraph that continues an overweging (`continues`, BE-56). */
-		continues = false
+		continues = false,
+		/** The tables in `text` (`tables`, API 0.79.66). */
+		tables: readonly Table[] = []
 	) => {
-		const segs = splitBodyParagraph(text, citations ?? [], (paraId && noten.get(paraId)) || []);
+		const segs = splitBodyParagraph(
+			text,
+			citations ?? [],
+			(paraId && noten.get(paraId)) || [],
+			tables
+		);
 		if (continues) within = true;
 		segs.forEach((seg, i) => {
 			if (seg.kind === 'heading') {
@@ -1004,12 +1053,13 @@ export function bodyItems(
 					body: seg.body,
 					citations: seg.citations,
 					...(seg.noten ? { noten: seg.noten } : {}),
+					...(seg.tables ? { tables: seg.tables } : {}),
 					id: (i === 0 && paraId) || paragraphAnchor(num)
 				});
 				within = true;
 				return;
 			}
-			if (segs.length === 1 && !continues && !seg.noten && isTitleLine(seg.body)) {
+			if (segs.length === 1 && !continues && !seg.noten && !seg.tables && isTitleLine(seg.body)) {
 				items.push({ kind: 'subheading', text: seg.body });
 				within = false;
 				return;
@@ -1019,6 +1069,7 @@ export function bodyItems(
 				body: seg.body,
 				citations: seg.citations,
 				...(seg.noten ? { noten: seg.noten } : {}),
+				...(seg.tables ? { tables: seg.tables } : {}),
 				id: i === 0 ? paraId : undefined,
 				within
 			});
@@ -1049,7 +1100,7 @@ export function bodyItems(
 			// it, and its lines are no overwegingen.
 			return;
 		} else {
-			body(p.text, p.citations ?? [], p.number, p.paragraph_id, !!p.continues);
+			body(p.text, p.citations ?? [], p.number, p.paragraph_id, !!p.continues, p.tables ?? []);
 		}
 	});
 	return items;

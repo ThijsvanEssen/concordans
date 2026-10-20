@@ -8,7 +8,7 @@
 	// Citeer, Kopieer tekst and Bewaar (overwegingCitaat).
 	import PlaatsMenu, { placeMarker } from '$lib/components/articles/PlaatsMenu.svelte';
 	import { blockClick } from '$lib/actions/klik';
-	import CitedText from '$lib/components/articles/CitedText.svelte';
+	import TextBlocks from '$lib/components/articles/TextBlocks.svelte';
 	import { citeItems } from '$lib/components/ui/cite-items';
 	import { overwegingVan } from '$lib/map/inhoud';
 	import { overwegingCitaat } from '$lib/text/judgment-cite';
@@ -79,7 +79,13 @@
 						<span class="rov-num">{b.num}</span>
 					{/if}
 					<div class:is-klikbaar={!!forms} use:blockClick={forms ? opTekst(b.id) : null}>
-						<p><CitedText text={b.body} citations={b.citations} {doel} noten={b.noten} /></p>
+						<TextBlocks
+							text={b.body}
+							tables={b.tables ?? []}
+							citations={b.citations}
+							target={doel}
+							notes={b.noten}
+						/>
 						<Voetnoten noten={nootVan(b.noten)} ids={false} marge={false} />
 					</div>
 					{#if menu && menu.id === b.id && forms}
@@ -95,7 +101,13 @@
 				</div>
 			{:else if b.kind === 'prose'}
 				<div class="rov-verder" class:eigen={ruim && deel.eigen.has(k)}>
-					<p><CitedText text={b.body} citations={b.citations} {doel} noten={b.noten} /></p>
+					<TextBlocks
+						text={b.body}
+						tables={b.tables ?? []}
+						citations={b.citations}
+						target={doel}
+						notes={b.noten}
+					/>
 					<Voetnoten noten={nootVan(b.noten)} ids={false} marge={false} />
 				</div>
 			{:else}

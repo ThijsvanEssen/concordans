@@ -5,9 +5,12 @@ import {
 	judgmentParticipants,
 	partiesByRole,
 	partyNote,
-	signatureStart
+	signatureStart,
+	type BodyItem
 } from './judgment-text';
 import partiesFixture from '$lib/test/judgment-parties.json';
+import rbzwb from '$lib/fixtures/judgment-rbzwb-2019-1062-tables.json';
+import { rowsOf, type Table } from '$lib/text/tables';
 
 type Judgment = Schema<'JudgmentDTO'>;
 type Paragraph = Schema<'JudgmentParagraph'>;
@@ -1054,5 +1057,58 @@ describe('the body as the reader lays it out', () => {
 		expect(kind('w.g. Minderhoud lid van de enkelvoudige kamer')).toBe('prose');
 		expect(kind('932-1191')).toBe('prose');
 		expect(kind('Ten slotte is vonnis bepaald.')).toBe('prose');
+	});
+});
+
+describe('the tables in a judgment (A55, API #818)', () => {
+	// ECLI:NL:RBZWB:2019:1062 as the API gives it: r.o. 1.1 ends in a table of four columns,
+	// r.o. 2.5 is a sentence and a table of seven whose headers span two rows.
+	const paragraphs = rbzwb.paragraphs as Paragraph[];
+	const items = bodyItems(paragraphs);
+	const rov = (num: string) =>
+		items.find((i): i is Extract<BodyItem, { kind: 'rov' }> => i.kind === 'rov' && i.num === num)!;
+	const rows = (item: { body: string; tables?: Table[] }) =>
+		rowsOf(item.body, item.tables![0]).map((r) =>
+			r.cells.map((c) => item.body.slice(c.start, c.end))
+		);
+
+	it('keeps a table as the source lays it out: a row a line, its cells apart', () => {
+		const r = rov('2.5');
+		expect(r.body).toMatch(/^Het onder 1\.1 vermelde/);
+		expect(r.tables).toHaveLength(1);
+		const t = rows(r);
+		expect(t[0]).toEqual([
+			'Periode van – tot en met',
+			'Tijd- vak',
+			'Loonheffingen',
+			'Verzuim-boete',
+			'Kosten',
+			'Betaling / verrekening',
+			'Onbetaald'
+		]);
+		expect(t.at(-1)).toEqual([
+			'Totaal',
+			'',
+			'€ 435.760',
+			'€ 4.886',
+			'€ 30',
+			'-/- € 18.510',
+			'€ 422.166'
+		]);
+		// The empty cells at the end of a row stay: "Jaar 2014" and six empty ones.
+		expect(t[6]).toEqual(['Jaar 2014', '', '', '', '', '', '']);
+		expect(r.tables![0].spans).toContainEqual({ row: 0, cell: 1, cols: 1, rows: 2 });
+	});
+
+	it('collapses the whitespace around a table, not in it', () => {
+		const r = rov('1.1');
+		const t = r.tables![0];
+		expect(r.body.slice(0, t.start)).not.toMatch(/\t| {2}/);
+		expect(rows(r).every((row) => row.length === 4)).toBe(true);
+		expect(t.end).toBeLessThanOrEqual(r.body.length);
+	});
+
+	it('gives a paragraph without a table none', () => {
+		expect(items.filter((i) => 'tables' in i && i.tables).length).toBe(2);
 	});
 });

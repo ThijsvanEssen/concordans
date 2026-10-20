@@ -8,7 +8,8 @@
 	import { blockClick } from '$lib/actions/klik';
 	import { citeItems } from '$lib/components/ui/cite-items';
 	import { paperParagraphOf } from '$lib/map/inhoud';
-	import type { PaperSource } from '$lib/text/anchor';
+	import { paperBlocks, type PaperSource } from '$lib/text/anchor';
+	import TextBlocks from '$lib/components/articles/TextBlocks.svelte';
 	import { paperParagraphCite, type PaperCitation } from '$lib/components/parliamentary/paper-cite';
 
 	let {
@@ -32,6 +33,8 @@
 	} = $props();
 
 	const shown = $derived(paperParagraphOf(source, at, around));
+	// An alinea with a table is one block, as in the reader.
+	const blocks = $derived(shown ? paperBlocks(shown.items, source) : []);
 	const cite = $derived(paper ? paperParagraphCite(paper) : null);
 
 	/** The alinea whose menu is open, by its number, and the marker it hangs from. */
@@ -53,7 +56,8 @@
 
 {#if shown}
 	<div class="alineas">
-		{#each shown.items as a (a.i)}
+		{#each blocks as b (b.line.i)}
+			{@const a = b.line}
 			{@const n = a.n ?? 0}
 			{@const at = a.at ?? ''}
 			{@const forms = cite?.(n, at, link(at)) ?? null}
@@ -72,7 +76,13 @@
 						onclick={(e) => openMenu(at, e.currentTarget)}>{n}</button
 					>
 				{/if}
-				<p class:is-klikbaar={!!forms} use:blockClick={forms ? onText(at) : null}>{a.text}</p>
+				{#if b.tables.length}
+					<div class:is-klikbaar={!!forms} use:blockClick={forms ? onText(at) : null}>
+						<TextBlocks text={b.text} tables={b.tables} />
+					</div>
+				{:else}
+					<p class:is-klikbaar={!!forms} use:blockClick={forms ? onText(at) : null}>{a.text}</p>
+				{/if}
 				{#if menu && menu.at === at && forms && a.first}
 					<PlaatsMenu
 						anker={menu.marker}
