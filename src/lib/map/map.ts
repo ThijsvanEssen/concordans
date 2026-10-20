@@ -269,7 +269,7 @@ export function groepen(
 }
 
 /** The id of a group's heading on a bundel's page, from its key: `groep-wet-bwbr0052872`. */
-export const groepAnker = (sleutel: string) =>
+export const groupAnchor = (sleutel: string) =>
 	`groep-${sleutel.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 
 /** A citation without the place in it (`r.o. 5.1`, `alinea 4`, `§ Artikel 21`): `HR 20 december
