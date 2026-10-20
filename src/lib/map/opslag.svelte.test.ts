@@ -204,3 +204,31 @@ describe('a write', () => {
 		expect(kept.mappen[0].items.map((i: MapItem) => i.kort)).toEqual([ro.kort]);
 	});
 });
+
+describe('a browser that keeps no bundels yet', () => {
+	it('names Losse markeringen by one id: the same in every tab, the server’s page and after a reload', async () => {
+		// UX-toets A28: the row linked to /bundels/<id> while the browser kept another id.
+		const b = browser();
+		const een = await tab(b);
+		const ander = await tab(b);
+		expect(ander.loose.id).toBe(een.loose.id);
+		const link = een.loose.id;
+		een.keep(lid);
+		expect(JSON.parse(b.data.get(OPSLAG)!).mappen[0].id).toBe(link);
+		// The bundel's page opens on that id, before a write and after it.
+		const later = await tab(browser());
+		expect(later.mappen.some((m) => m.id === link)).toBe(true);
+		expect((await tab(b)).mappen.find((m) => m.id === link)?.items).toEqual([lid]);
+	});
+
+	it('keeps what two tabs keep in Losse markeringen, both', async () => {
+		const b = browser();
+		const een = await tab(b);
+		const ander = await tab(b);
+		een.keep(lid);
+		ander.keep(ro);
+		const kept = JSON.parse(b.data.get(OPSLAG)!);
+		expect(kept.mappen).toHaveLength(1);
+		expect(kept.mappen[0].items.map((i: MapItem) => i.kort)).toEqual([lid.kort, ro.kort]);
+	});
+});
