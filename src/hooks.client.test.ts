@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '$lib/api/client';
-import { handleError, moveAddress, onUnhandledRejection } from './hooks.client';
+import { handleError, keepFromAddress, moveAddress, onUnhandledRejection } from './hooks.client';
+import { kaart } from '$lib/map/map.svelte';
 import { reroute } from './hooks';
 
 afterEach(() => vi.restoreAllMocks());
@@ -67,5 +68,22 @@ describe('an address of the bundels of before (decision 19)', () => {
 		expect(to('/gemarkeerd')).toBe('/bundels');
 		expect(to('/gemarkeerd/bundel?id=k3j2')).toBe('/bundels/k3j2');
 		expect(to('/actueel')).toBeUndefined();
+	});
+});
+
+describe('a reader opened to keep in a bundel (UX-toets A21 #1, #2)', () => {
+	it('keeps there, and takes ?bundel= out of the address on loading', () => {
+		const replaceState = vi.fn();
+		const keepIn = vi.spyOn(kaart, 'keepIn').mockImplementation(() => {});
+		keepFromAddress(
+			new URL(
+				'https://concordans.nl/wetten/X/artikel/1?bundel=k3j2&lezen=1#lid-2'
+			) as unknown as Location,
+			{ state: null, replaceState } as unknown as History
+		);
+		expect(keepIn).toHaveBeenCalledWith('k3j2');
+		expect(replaceState.mock.calls[0][2]).toBe(
+			'https://concordans.nl/wetten/X/artikel/1?lezen=1#lid-2'
+		);
 	});
 });

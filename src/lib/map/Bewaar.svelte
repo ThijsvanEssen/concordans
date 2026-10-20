@@ -2,16 +2,18 @@
 	// Kept or not: a framed button in a reader's head, as Citeer beside it (Thijs, 10 Oct: "een
 	// kader"). Its glyph is the bookmark of RijActies, open or filled: an action, not a box.
 	// "Bewaar lid 3" where it names a place; "Bewaard" as soon as any bundel holds it. Bewaar
-	// keeps in Losse markeringen, or in the bundel the reader was opened from (`?bundel=`).
-	// Bewaard takes nothing out: it opens the caret's menu, the bundels with a tick at each
+	// keeps in Losse markeringen. A reader opened from a bundel (Andere bron toevoegen) keeps
+	// in that bundel for the session and says so: "Bewaar in <bundel>", with the way back to
+	// it and Klaar beside it, until the reader ends it (UX-toets A21 #1). Bewaard takes nothing out: it opens the caret's menu, the bundels with a tick at each
 	// that holds it, where a click puts it in or takes it out of that one (BundleChecklist,
 	// decision 20A, UX-toets A14).
-	import { page } from '$app/state';
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import { kaart } from './map.svelte';
 	import { namesOf, type MapItem } from './map';
 	import BundleChecklist from './BundleChecklist.svelte';
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import { bundlePageHref } from './page';
 
 	let {
 		item,
@@ -22,9 +24,11 @@
 		wat?: string;
 	} = $props();
 
+	const keeping = $derived(kaart.keeping);
 	const held = $derived(kaart.holding(item));
-	const aan = $derived(held.length > 0);
-	const into = $derived(kaart.keepsIn(page.url));
+	/** Kept: in the bundel a reader keeps in, else in any bundel. */
+	const aan = $derived(keeping ? held.some((m) => m.id === keeping.id) : held.length > 0);
+	const into = $derived(kaart.keepsIn);
 	const titel = $derived(
 		aan ? `${item.kort}: bewaard in ${namesOf(held)}` : `${item.kort}: in ${into.naam} bewaren`
 	);
@@ -41,14 +45,31 @@
 		onclick={() => (aan ? (open = true) : kaart.keep(item, into.id))}
 		><Picto naam={aan ? 'bewaard' : 'bewaar'} />{aan ? 'Bewaard' : 'Bewaar'}{wat
 			? ` ${wat}`
-			: ''}</button
+			: ''}{keeping ? ` in ${keeping.naam}` : ''}</button
 	>
 	<TekstMenu klein rechts label="Bewaar {item.kort} in bundel" tekst="" bind:open>
 		{#snippet inhoud(close)}<BundleChecklist {item} {close} />{/snippet}
 	</TekstMenu>
 </span>
+{#if keeping}
+	{@const k = keeping}
+	<span class="keeping">
+		<TekstLink href={bundlePageHref(k)}>Naar {k.naam}</TekstLink>
+		<TekstLink onclick={() => kaart.keepIn(null)} aria-label="Klaar met bewaren in {k.naam}"
+			>Klaar</TekstLink
+		>
+	</span>
+{/if}
 
 <style>
+	/* The bundel kept in: its way back and Klaar, beside Bewaar, on a touch screen too. */
+	.keeping {
+		display: inline-flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--s-1) var(--s-3);
+		font-size: var(--t-meta);
+	}
 	/* The framed pair: the box and its word, the caret of the map's choice joined to it. */
 	.splits {
 		display: inline-flex;
@@ -69,6 +90,13 @@
 		border-left: 0;
 		border-radius: 0 var(--r-1) var(--r-1) 0;
 		color: var(--ink-2);
+	}
+	/* The caret's 44 px for a finger grow to its right, never over Bewaar (UX-toets A21 #3). */
+	@media (pointer: coarse) {
+		.splits :global(.tekstmenu__knop::after) {
+			left: 0;
+			right: min(0px, calc(100% - (var(--s-6) + var(--s-3))));
+		}
 	}
 	.splits :global(.tekstmenu__knop:hover) {
 		background: var(--paper-2);

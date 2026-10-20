@@ -20,8 +20,18 @@ const OPSLAG = 'concordans:mappen';
 const EERSTE = 'Losse markeringen';
 /** The name a shared Losse markeringen gets with its receiver, beside their own. */
 const SHARED_LOOSE = 'Gedeelde markeringen';
-/** The address's parameter of the bundel a reader was opened from, to keep in. */
-export const BUNDLE_PARAM = 'bundel';
+/** The bundel the readers keep in this browser session, until it is ended (`keepIn`). */
+const KEEPING = 'concordans:bewaar-in';
+
+/** The bundel kept in this session; none where the browser keeps no session. */
+function keepingNow(): string | null {
+	try {
+		return typeof sessionStorage === 'undefined' ? null : sessionStorage.getItem(KEEPING);
+	} catch (e) {
+		if (import.meta.env.DEV) console.debug('sessionStorage (refused):', e);
+		return null;
+	}
+}
 
 type Stand = { mappen: Map[] };
 
@@ -137,10 +147,23 @@ class Kaarten {
 	keep(i: MapItem, id: string = this.loose.id) {
 		this.add(i, id);
 	}
-	/** Where Bewaar keeps on a page: the bundel the reader came from (`?bundel=`, Andere bron
-	 *  toevoegen on that bundel's page), else Losse markeringen. */
-	keepsIn = (url: URL): Map =>
-		this.#stand.mappen.find((m) => m.id === url.searchParams.get(BUNDLE_PARAM)) ?? this.loose;
+	#keeping = $state<string | null>(keepingNow());
+	/** The bundel the readers keep in, named on Bewaar with a way back to it, from Andere bron
+	 *  toevoegen on its page until the reader ends it or goes back to it (UX-toets A21 #1);
+	 *  null: Bewaar keeps in Losse markeringen. */
+	keeping = $derived(this.#stand.mappen.find((m) => m.id === this.#keeping) ?? null);
+	/** Where Bewaar keeps now. */
+	keepsIn = $derived(this.keeping ?? this.loose);
+	/** Keeps in a bundel from now on in this session; null ends it. */
+	keepIn(id: string | null) {
+		this.#keeping = id;
+		try {
+			if (id) sessionStorage.setItem(KEEPING, id);
+			else sessionStorage.removeItem(KEEPING);
+		} catch (e) {
+			if (import.meta.env.DEV) console.debug('sessionStorage (refused):', e);
+		}
+	}
 	/** In a bundel or out of it, by its id: the bundels of Bewaar's menu. */
 	toggleIn(id: string, i: MapItem) {
 		if (this.holding(i).some((m) => m.id === id)) this.weg(i, id);

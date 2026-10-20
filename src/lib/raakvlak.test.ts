@@ -14,6 +14,16 @@ describe('the touch target', () => {
 		for (const c of classes) expect(c).toContain('raakvlak');
 	});
 
+	it('is 44 px high around a text link on a touch screen (UX-toets A21 #3)', () => {
+		const basis = read('lib/styles/basis.css');
+		const coarse = basis.slice(basis.indexOf('@media (pointer: coarse)'));
+		expect(coarse).toMatch(
+			/\.raakvlak::after,[^{]*\{[^}]*inset: min\(calc\(-1 \* var\(--s-2\)\), calc\(50% - \(var\(--s-6\) \+ var\(--s-3\)\) \/ 2\)\)/
+		);
+		// Bewaar's caret grows to its right only, never over Bewaar.
+		expect(read('lib/map/Bewaar.svelte')).toMatch(/tekstmenu__knop::after\) \{\s*left: 0;/);
+	});
+
 	it("is around a place's number, before it, on a touch screen", () => {
 		const basis = read('lib/styles/basis.css');
 		const coarse = basis.slice(basis.indexOf('@media (pointer: coarse)'));

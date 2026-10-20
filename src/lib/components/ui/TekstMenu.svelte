@@ -66,7 +66,7 @@
 		bind:this={button}
 		aria-haspopup="menu"
 		aria-expanded={open}
-		aria-label="{label}: {woorden}"
+		aria-label={!woorden || label.includes(woorden) ? label : `${label}: ${woorden}`}
 		onclick={() => (open ? sluit() : (open = true))}
 		>{#if knop}{@render knop()}{:else}{woorden}{/if}<Caret {open} /></button
 	>

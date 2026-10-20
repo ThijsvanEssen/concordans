@@ -84,6 +84,14 @@
 		};
 	});
 
+	// Back on the bundel a reader kept in: that keeping ends here (UX-toets A21 #1).
+	$effect(() => {
+		const id = m?.id;
+		untrack(() => {
+			if (id && kaart.keeping?.id === id) kaart.keepIn(null);
+		});
+	});
+
 	// ── What is new since the visit before: on its own page, after the first paint ──
 	let fresh = $state<Fresh | null>(null);
 	$effect(() => {

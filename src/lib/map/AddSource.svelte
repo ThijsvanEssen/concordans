@@ -16,7 +16,8 @@
 		type SourceKind
 	} from './map';
 	import { recognize } from './recognize';
-	import { BUNDLE_PARAM } from './map.svelte';
+	import { articleCitation, citeArticle } from '$lib/text/cite';
+	import { BUNDLE_PARAM } from './page';
 	import { ensureInstrumentName, instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 
 	let {
@@ -68,9 +69,16 @@
 	);
 	const knownLabel = $derived.by(() => {
 		if (!known?.law) return known?.label ?? '';
-		const name = known.article ? (law?.shortTitle ?? lawName(law, null)) : lawName(law, null);
-		if (known.article) return `art. ${known.article}${name ? ` ${name}` : ', deze wet'}`;
-		return name ?? 'deze wet';
+		// An article in the reader's own short form (`art. 6:163 BW`, citeArticle), as Bewaar
+		// keeps it (UX-toets A21 #5).
+		if (known.article) {
+			const c = articleCitation(
+				{ bwb_id: known.law, article_number: known.article },
+				{ meta: law ?? null }
+			);
+			return c ? citeArticle(c).kort : `art. ${known.article}, deze wet`;
+		}
+		return lawName(law, null) ?? 'deze wet';
 	});
 
 	const focus = (field: HTMLInputElement) => field.focus();

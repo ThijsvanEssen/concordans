@@ -25,7 +25,6 @@
 	import { kaart } from '$lib/map/map.svelte';
 	import type { MapItem } from '$lib/map/map';
 	import BundleChecklist from '$lib/map/BundleChecklist.svelte';
-	import { page } from '$app/state';
 	import { formatCount } from '$lib/text/getal';
 
 	let {
@@ -110,7 +109,7 @@
 			{#if aan}
 				<BundleChecklist item={bewaar} close={sluit} />
 			{:else}
-				{@const into = kaart.keepsIn(page.url)}
+				{@const into = kaart.keepsIn}
 				<button
 					type="button"
 					class="tekstmenu__item"

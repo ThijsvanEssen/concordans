@@ -119,3 +119,24 @@ describe('Andere bron toevoegen on a bundel’s page (the coordinator’s choice
 		);
 	});
 });
+
+describe('a reader keeping in a bundel (UX-toets A21 #1)', () => {
+	it('says so on Bewaar, with the way back and Klaar, and keeps there until it ends', async () => {
+		const { kaart } = await import('./map.svelte');
+		const { default: Bewaar } = await import('./Bewaar.svelte');
+		const other = kaart.nieuw('Thuiswerk');
+		const art: MapItem = { ...lid, id: 'articles/bwbr0005290_611', at: '', kort: 'art. 7:611 BW' };
+		kaart.keepIn(other.id);
+		render(Bewaar, { item: art });
+		await fireEvent.click(screen.getByRole('button', { name: /^Bewaar in Thuiswerk/ }));
+		expect(kaart.holding(art).map((m) => m.naam)).toEqual(['Thuiswerk']);
+		expect(screen.getByRole('button', { name: /^Bewaard in Thuiswerk/ })).toBeTruthy();
+		expect(screen.getByRole('link', { name: 'Naar Thuiswerk' }).getAttribute('href')).toBe(
+			`/bundels/${other.id}`
+		);
+		await fireEvent.click(screen.getByRole('button', { name: 'Klaar met bewaren in Thuiswerk' }));
+		await settle();
+		expect(kaart.keeping).toBeNull();
+		expect(screen.queryByRole('link', { name: 'Naar Thuiswerk' })).toBeNull();
+	});
+});

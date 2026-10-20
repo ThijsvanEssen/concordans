@@ -173,3 +173,12 @@ describe('a shared link, read as a bundel’s page (bundels-ux 2c, decision 20A)
 		expect(bron('lib/map/MapView.svelte')).toMatch(/@page \{\s*size: A4/);
 	});
 });
+
+describe('a reader keeping in a bundel (UX-toets A21 #1, #2)', () => {
+	it('takes ?bundel= out of the address on arriving, and no link carries it', () => {
+		expect(bron('routes/+layout.svelte')).toMatch(
+			/kaart\.keepIn\(keepIn\);\s*replaceState\(withoutBundle\(naar\)/
+		);
+		expect(bron('lib/bron/landing.ts')).toContain('withoutBundle(url)');
+	});
+});

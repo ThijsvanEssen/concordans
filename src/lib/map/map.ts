@@ -311,7 +311,12 @@ export function rowTitle(
 	const collection = parseNodeId(i.id)?.collection;
 	// A dossier kept whole stands under its group, which names it: its row cites it by number
 	// alone, not its title again (UX-toets A14 #6).
-	if (collection === 'dossiers') return { title: i.kort.replace(/\s*\(.*\)$/, ''), sub: null };
+	// In the number of its group's head: `Kamerstuk 36600 VII` (dossierLabel, A21 #4).
+	if (collection === 'dossiers')
+		return {
+			title: i.kort.replace(/\s*\(.*\)$/, '').replace(/^Kamerstukken\b/, 'Kamerstuk'),
+			sub: null
+		};
 	const full = i.voluit?.trim();
 	if (!full || full === i.kort) return { title: i.kort, sub: null };
 	if (full.startsWith(i.kort)) return { title: full, sub: null };

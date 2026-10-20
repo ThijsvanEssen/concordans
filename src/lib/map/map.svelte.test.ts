@@ -129,13 +129,24 @@ describe('Losse markeringen, the bundel every browser has (decision 19)', () => 
 		expect(kaart.holding(lid).map((m) => m.id)).toEqual([other.id]);
 	});
 
-	it('keeps in the bundel a reader was opened from (?bundel=), else in Losse markeringen', async () => {
+	it('keeps in the bundel a reader was opened from, for the session, until it ends', async () => {
+		const kept = new Map<string, string>();
+		vi.stubGlobal('sessionStorage', {
+			getItem: (k: string) => kept.get(k) ?? null,
+			setItem: (k: string, v: string) => kept.set(k, v),
+			removeItem: (k: string) => kept.delete(k)
+		});
 		const { kaart } = await store();
 		const other = kaart.nieuw('Thuiswerk');
-		const at = (q: string) => kaart.keepsIn(new URL(`https://x.nl/wetten/a${q}`)).id;
-		expect(at(`?bundel=${other.id}`)).toBe(other.id);
-		expect(at('?bundel=onbekend')).toBe(kaart.loose.id);
-		expect(at('')).toBe(kaart.loose.id);
+		expect(kaart.keepsIn.id).toBe(kaart.loose.id);
+		kaart.keepIn(other.id);
+		expect(kaart.keeping?.naam).toBe('Thuiswerk');
+		expect(kaart.keepsIn.id).toBe(other.id);
+		// Kept for the session: a reload keeps there still.
+		expect([...kept.values()]).toEqual([other.id]);
+		kaart.keepIn(null);
+		expect(kaart.keepsIn.id).toBe(kaart.loose.id);
+		expect(kept.size).toBe(0);
 	});
 
 	it('receives a shared Losse markeringen under a name of its own', async () => {

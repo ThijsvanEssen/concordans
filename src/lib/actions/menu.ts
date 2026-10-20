@@ -36,7 +36,15 @@ export const focusFirstItem = () =>
 export const menu: Action<HTMLElement, Menu> = (node, params) => {
 	let { open, close, trigger: given } = params;
 
-	const trigger = () => given ?? node.querySelector<HTMLElement>('[aria-haspopup]');
+	/** What had the focus when the menu opened from outside it (Bewaard beside Bewaar's caret):
+	 *  the focus goes back there (UX-toets A21 #6). */
+	let opener: HTMLElement | null = null;
+	const own = () => given ?? node.querySelector<HTMLElement>('[aria-haspopup]');
+	const trigger = () => (opener?.isConnected ? opener : own());
+	const noteOpener = () => {
+		const at = document.activeElement as HTMLElement | null;
+		opener = at && at !== document.body && !node.contains(at) ? at : null;
+	};
 	const items = () =>
 		[...node.querySelectorAll<HTMLElement>(`[role="menu"] :is(${ITEMS})`)].filter(
 			(el) => !(el as HTMLButtonElement).disabled
@@ -85,14 +93,20 @@ export const menu: Action<HTMLElement, Menu> = (node, params) => {
 			: null;
 	};
 	watch();
-	if (open) afterTick(focusFirst);
+	if (open) {
+		noteOpener();
+		afterTick(focusFirst);
+	}
 
 	return {
 		update(next) {
 			const was = open;
 			({ open, close, trigger: given } = next);
 			if (open !== was) watch();
-			if (open && !was) afterTick(focusFirst);
+			if (open && !was) {
+				noteOpener();
+				afterTick(focusFirst);
+			}
 			if (!open && was) {
 				// An item that closed the menu took the focus with it: it returns to the button.
 				// A click elsewhere keeps the focus where it went. A menu whose button scrolled out of

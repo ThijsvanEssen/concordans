@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/svelte';
+import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import TekstMenu from './TekstMenu.svelte';
 
@@ -68,5 +68,13 @@ describe('TekstMenu', () => {
 		await fireEvent.click(item('Meest relevant'));
 		expect(onKies).toHaveBeenCalledWith('relevant');
 		expect(screen.queryByRole('menu')).toBeNull();
+	});
+
+	it('names its button once, without a colon and nothing after it (UX-toets A21 #6)', () => {
+		render(TekstMenu, { label: 'Bewaar art. 1 Sv in bundel', tekst: '' });
+		expect(screen.getByRole('button', { name: 'Bewaar art. 1 Sv in bundel' })).toBeTruthy();
+		cleanup();
+		render(TekstMenu, { label: 'Meer bij Thuiswerk', tekst: 'Meer' });
+		expect(screen.getByRole('button', { name: 'Meer bij Thuiswerk' })).toBeTruthy();
 	});
 });

@@ -458,10 +458,10 @@ describe('the citation of a row: one line (bundels-ux 2b.6)', () => {
 			groupKey: 'dossier:36327'
 		};
 		// Its group names it: the row cites it by its number, the title not twice (A14 #6).
-		expect(rowTitle(dossier)).toEqual({ title: 'Kamerstukken 36327', sub: null });
+		expect(rowTitle(dossier)).toEqual({ title: 'Kamerstuk 36327', sub: null });
 		expect(
 			rowTitle({ ...dossier, kort: 'Kamerstukken 36600 VII (Begroting BZK 2025)', voluit: null })
-		).toEqual({ title: 'Kamerstukken 36600 VII', sub: null });
+		).toEqual({ title: 'Kamerstuk 36600 VII', sub: null });
 	});
 
 	it('names a place under its judgment by the place alone', () => {

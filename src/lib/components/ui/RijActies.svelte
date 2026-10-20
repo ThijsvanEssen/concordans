@@ -11,7 +11,6 @@
 	import { menu as menuAction } from '$lib/actions/menu';
 	import { topLayer } from '$lib/actions/top-layer';
 	import Picto from './Picto.svelte';
-	import { page } from '$app/state';
 	import { kaart } from '$lib/map/map.svelte';
 	import { namesOf, type MapItem } from '$lib/map/map';
 	import BundleChecklist from '$lib/map/BundleChecklist.svelte';
@@ -41,7 +40,7 @@
 	 *  bundels with their ticks (BundleChecklist), and takes nothing out itself. */
 	const held = $derived(item ? kaart.holding(item) : []);
 	const bewaard = $derived(held.length > 0);
-	const into = $derived(kaart.keepsIn(page.url));
+	const into = $derived(kaart.keepsIn);
 	let open = $state(false);
 	let button = $state<HTMLElement | null>(null);
 	const close = () => {
