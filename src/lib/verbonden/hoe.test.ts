@@ -519,6 +519,7 @@ describe('the line of a reference', () => {
 			celex: null,
 			short_title: null,
 			abbreviation: null,
+			signed_on: null,
 			official_url: null,
 			judgment_count: null,
 			outbound_citation_count: null,

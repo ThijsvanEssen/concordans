@@ -109,6 +109,8 @@ export class SearchSession {
 	choicesFor = $state<{ term: string; items: Resolved[]; total: number } | null>(null);
 	/** A regeling named by its title that the API does not know ("Omgevingswet"). */
 	outside = $state('');
+	/** What the search of each kind reads, as the answers say it (`searched`, API 0.79.67). */
+	searched = $state<Partial<Record<SearchKind, Schema<'SearchedDTO'>>>>({});
 	/** The one hit above the groups, set once every answer is in (#52). */
 	best = $state<{ kind: SearchKind; hit: Hit } | null>(null);
 
@@ -435,6 +437,7 @@ export class SearchSession {
 			.then((r) => {
 				if (!current()) return;
 				const hits = r.results as Hits;
+				this.searched = { ...this.searched, ...r.searched };
 				// The live mode names the kinds it cut off at its time: more on "Meer …".
 				const cut = query.types.filter((k) => r.partial?.[k]);
 				this.lanes[lane.id] = { hits, status: 'done', partial: { term, kinds: cut } };

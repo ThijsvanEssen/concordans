@@ -18,7 +18,7 @@
 	import { menu } from '$lib/actions/menu';
 	import { getDocumentPassages } from '$lib/api/documents';
 	import { getArticleVersion, getDelegated } from '$lib/api/articles';
-	import { getInstrumentDetail, instrumentMetaStore } from '$lib/api/instrument-cache';
+	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import type { Schema } from '$lib/api/types';
 	import { articleOf, type GraphNode } from '$lib/graph/types';
@@ -301,19 +301,8 @@
 	const euAct = $derived(
 		loaded?.instrument?.celex && !loaded.instrument.bwb_id ? loaded.instrument : null
 	);
-	// The day it was adopted, from the act's own detail (asked once, shared with its law page).
-	let euAdopted = $state<string | null>(null);
-	$effect(() => {
-		euAdopted = null;
-		const celex = euAct?.celex;
-		if (!celex) return;
-		getInstrumentDetail(celex).then(
-			(d) => {
-				if (euAct?.celex === celex) euAdopted = d.date_signed ?? null;
-			},
-			(e) => report('Wet, gegevens', e)
-		);
-	});
+	// The day it was adopted, as the article's answer gives it (API 0.79.67).
+	const euAdopted = $derived(euAct?.signed_on ?? null);
 	const euSource = $derived(
 		euAct?.official_url ? { label: 'EUR-Lex', href: euAct.official_url } : null
 	);
@@ -604,12 +593,15 @@
 			{#snippet statusLine()}
 				{#if versionLabel === null}
 					<Coverage
-						coverage={{ part: 'versions', state: 'not_in_source', as_of: euAdopted }}
+						coverage={{ versions: { state: 'not_in_source', as_of: euAdopted } }}
 						bron={euSource}
 					/>
 				{:else}
 					<span class="head__stand" class:is-old={!!shown}>{versionLabel}</span>
 				{/if}
+				<!-- An article of a law of the Staatsblad: what of its references and its law's
+				     definitions is read. -->
+				<Coverage coverage={d.completeness} />
 				{#if wordings.length > 1}
 					<span class="menu" use:menu={{ open: versionMenu, close: () => (versionMenu = false) }}>
 						<button

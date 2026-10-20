@@ -108,6 +108,8 @@ export type List<Row, State extends object, Query> = {
 	Rows?: Component<ViewProps<Row, State>>;
 	/** Whether the rows show, where they can say no more than the Header (default: always). */
 	rowsShown?(p: IndexParams): boolean;
+	/** The source the rows come from alone, as `data_as_of` names it (the EHRM: `echr`). */
+	source?(p: IndexParams): string | null;
 	/** A line under the rows (the source of the Eerste Kamer's stemmingen). */
 	after?(p: IndexParams): { label: string; href: string } | null;
 };

@@ -39,6 +39,7 @@
 	import WholeLawReaderArticle from './WholeLawReaderArticle.svelte';
 	import WholeLawReaderPeildatum from './WholeLawReaderPeildatum.svelte';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
+	import { coverageLine } from '$lib/components/ui/coverage';
 	import { followPosition } from './law-position.svelte';
 
 	let { bwbId }: { bwbId: string } = $props();
@@ -321,19 +322,18 @@
 				<span>{headLine}</span>
 				{#if textNotRead}
 					<p class="whole-count">
-						<Coverage coverage={{ part: 'text', state: 'none' }} bron={officialSource} />
+						<Coverage coverage={{ text: { state: 'none' } }} bron={officialSource} />
 					</p>
 				{:else if isEu}
 					<p class="whole-count">
 						<Coverage
-							coverage={{
-								part: 'versions',
-								state: 'not_in_source',
-								as_of: lawDetail?.date_signed
-							}}
+							coverage={{ versions: { state: 'not_in_source', as_of: lawDetail?.date_signed } }}
 							bron={officialSource && { ...officialSource, label: 'EUR-Lex' }}
 						/>
 					</p>
+				{:else if coverageLine(lawDetail?.completeness)}
+					<!-- A law of the Staatsblad: what of its references and definitions is read. -->
+					<p class="whole-count"><Coverage coverage={lawDetail?.completeness} /></p>
 				{/if}
 				{#if detail.state.status === 'error'}
 					<LoadState state={detail.state} what="De gegevens van de wet" retry={detail.retry} />

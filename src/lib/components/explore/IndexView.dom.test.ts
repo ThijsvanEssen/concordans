@@ -51,6 +51,18 @@ const ROUTES: Partial<Record<ApiPath, FakeAnswer>> = {
 	'/api/commitments': list(live.commitments),
 	'/api/documents': list(live.documents),
 	'/api/stats/coverage': live.coverage,
+	// The EHRM off since 8 October: its list says how far it goes.
+	'/api/stats': {
+		data_as_of: {
+			echr: {
+				retrieved_at: '2026-10-08T20:53:06Z',
+				newest: null,
+				completeness: {
+					source: { state: 'paused', as_of: '2026-10-08T20:53:06Z', missing: null }
+				}
+			}
+		}
+	},
 	'/api/parties/colors': { colors: {}, aliases: {}, chambers: {} },
 	// The hall of the Kamer is a picture of its own (Hemicycle, ZaalTegenover).
 	'/api/parliament/seats': fail(503)
@@ -164,6 +176,22 @@ const SCENARIOS: [IndexCategory, string][] = [
 	['documents', ''],
 	['documents', 'kamer=EK&soort=Motie&q=36600&van=2026-01-01&tot=2026-06-30']
 ];
+
+describe('the stand of a source', () => {
+	it('says under the count of the EHRM that its source is paused, and how far it goes', async () => {
+		await open('judgments', 'source=echr');
+		await waitFor(() =>
+			expect(text(document.querySelector('.result-head .dekking'))).toBe(
+				'HUDOC gepauzeerd, bijgewerkt tot 8 oktober 2026'
+			)
+		);
+	});
+
+	it('is not asked for a list of every court', async () => {
+		const api = await open('judgments');
+		expect(api.requests.some((r) => r.path === '/api/stats')).toBe(false);
+	});
+});
 
 describe('Bronnen, list by list', () => {
 	it.each(SCENARIOS)('%s ?%s', async (category, query) => {
