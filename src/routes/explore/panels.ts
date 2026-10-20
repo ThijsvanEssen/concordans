@@ -11,3 +11,14 @@ export type Panel = (typeof PANELS)[number]['id'];
 
 /** The panel a key takes; undefined for any other key. */
 export const panelOfKey = (key: string): Panel | undefined => PANELS.find((p) => p.key === key)?.id;
+
+/**
+ * Whether Verbonden is in view and so loads (Thijs, 9 Oct: "alles zo lazy mogelijk"): beside
+ * the reader on a wide screen; on a phone when its tab or the table of all verbindingen is
+ * open (F8: ?tabel=1 loaded directly said 0), or for an article, whose counts per lid stand in
+ * its text.
+ */
+export const verbondenInView = (
+	collection: string,
+	o: { phone: boolean; table: boolean; panel: Panel }
+): boolean => !o.phone || o.table || o.panel === 'verbonden' || collection === 'articles';

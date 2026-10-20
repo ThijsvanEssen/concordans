@@ -227,15 +227,19 @@ export type Mode = 'read' | 'graph' | 'index';
 
 // TODO(backend B9): nothing marks a bron as European or international. Until an
 // `eu-links` route exists, the jurisdiction is read from the id: a CELEX number, a
-// BWBV (verdrag) id, an ECLI of the EHRM.
-const INTERNATIONAL_KEY = /^(bwbv\d{7}|[0-9ce]\d{4}[a-z]{1,2}\d{4}|ecli_ce_echr_)/i;
+// BWBV (verdrag) id, an ECLI of the EHRM or of a court of the EU.
+const INTERNATIONAL_KEY = /^(bwbv\d{7}|[0-9ce]\d{4}[a-z]{1,2}\d{4}|ecli_ce_echr_|ecli_eu_)/i;
+
+/** The sources of the European courts: the EHRM (HUDOC) and the courts of the EU (EUR-Lex). */
+export const EUROPEAN_SOURCES = ['echr', 'cjeu'] as const;
+export type EuropeanSource = (typeof EUROPEAN_SOURCES)[number];
 
 export const isInternational = (n: {
 	key: string;
 	props?: Record<string, unknown> | null;
 }): boolean =>
 	INTERNATIONAL_KEY.test(n.key) ||
-	n.props?.source === 'echr' ||
+	EUROPEAN_SOURCES.includes(n.props?.source as EuropeanSource) ||
 	n.props?.jurisdiction === 'eu' ||
 	n.props?.jurisdiction === 'int';
 

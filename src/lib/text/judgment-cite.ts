@@ -2,21 +2,12 @@
 // 0.79.60): HR 20 december 2019, ECLI:NL:HR:2019:2006; Conclusie A-G Hartlief 8 mei 2020.
 // The reader's head, the tab, the canvas and Behoort bij show that one form; an overweging
 // is cited after it.
-import type { Schema } from '$lib/api/types';
 import { bewaarItem, type MapItem } from '$lib/map/map';
 import { paragraphCite } from './ecli';
-
-export type Cite = Schema<'JudgmentCiteDTO'>;
+import { headingCite, type HeadingSource } from './judgment-heading';
 
 /** What a judgment gives to cite it and its overwegingen. */
-type UitspraakVoorCitaat = {
-	ecli?: string | null;
-	cite?: Cite | null;
-	names?: string[] | null;
-};
-
-/** The judgment as its heading cites it (HR 19 juli 2019, …); null where the API gives none. */
-export const uitspraakKop = (j: { cite?: Cite | null }): Cite | null => j.cite ?? null;
+type UitspraakVoorCitaat = HeadingSource & { names?: string[] | null };
 
 /** A judgment as Gemarkeerd groups under it: as its heading cites it, with its names. */
 export const zaakNaam = (kort: string, namen: string[] | null | undefined) =>
@@ -29,7 +20,7 @@ export const zaakNaam = (kort: string, namen: string[] | null | undefined) =>
  * citation.
  */
 export function citeOverwegingen(j: UitspraakVoorCitaat, bronId: string | null) {
-	const kop = uitspraakKop(j);
+	const kop = headingCite(j);
 	const ecli = j.ecli;
 	if (!kop || !ecli) return null;
 	const groep = zaakNaam(kop.short, j.names);

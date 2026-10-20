@@ -6,7 +6,7 @@ import { textOf } from '$lib/text/words';
 import { isRauw, menselijkeNaam } from '$lib/bron/menselijk';
 import { langeDatum } from '$lib/text/datum';
 import { articleTitle } from '$lib/text/bw';
-import type { Cite } from '$lib/text/judgment-cite';
+import { headingCite, type Cite } from '$lib/text/judgment-heading';
 import { courtName } from '$lib/text/court';
 import { isGeneriek } from '$lib/bron/generiek';
 import { dossierOwnName, dossierUitProps, kamerstukNummer } from '$lib/bron/dossier-naam';
@@ -144,7 +144,9 @@ export function describeBron(
 			// As the API cites it, as the head of its reader: "HR 20 december 2019 (Urgenda)",
 			// "Conclusie P-G Langemeijer en Wissink 13 september 2019".
 			return {
-				title: (cite?.short ?? (court ? (join(court, langeDatum(date)) ?? court) : name)) + known,
+				title:
+					(headingCite({ cite, props })?.short ??
+						(court ? (join(court, langeDatum(date)) ?? court) : name)) + known,
 				// A judgment known only as cited: its ECLI and court, nothing more. A translation
 				// the Rechtspraak published under its own ECLI says so (in its name, as the source
 				// gives it): HR Urgenda cites the English one of the Rechtbank, not its procesgang.

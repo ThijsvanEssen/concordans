@@ -11,7 +11,7 @@
 	import { EDGE } from '$lib/actions/top-layer';
 	import FloatingCard from '$lib/components/ui/FloatingCard.svelte';
 	import { anchorLabel } from '$lib/text/anchor';
-	import { uitspraakKop } from '$lib/text/judgment-cite';
+	import { headingCite } from '$lib/text/judgment-heading';
 	import { isConclusion } from '$lib/text/ecli';
 	import Overweging from './Overweging.svelte';
 	import { zetMarkering, type Markering } from './markering.svelte';
@@ -61,7 +61,7 @@
 
 	// The key carries the ECLI: `r.o. 5`, `onder 5` in a conclusion, `§ 5` in Strasbourg.
 	const plaats = $derived(anchorLabel(at, judgment) ?? at);
-	const kop = $derived(u && u !== 'laden' ? (uitspraakKop(u.j)?.short ?? null) : null);
+	const kop = $derived(u && u !== 'laden' ? (headingCite(u.j)?.short ?? null) : null);
 
 	// A long overweging scrolls within the card to the words that cite `doel`, so they show at
 	// once (its own scroll: the page stays). The card grows from Laden… to the overweging, and

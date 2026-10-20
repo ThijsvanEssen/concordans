@@ -6,6 +6,7 @@
 // reader, the canvas, the legend and the table read.
 import { isDay } from '$lib/text/datum';
 import { formatCount } from '$lib/text/getal';
+import { textOf } from '$lib/text/words';
 import { alsDag } from '$lib/text/periode';
 import { isExplanatory } from './document-chamber';
 import type { Row } from './rows';
@@ -91,7 +92,8 @@ export const RECHTERS = [
 	{ id: 'hof', label: 'Gerechtshoven' },
 	{ id: 'rechtbank', label: 'Rechtbanken' },
 	{ id: 'rvs', label: 'Raad van State' },
-	{ id: 'ehrm', label: 'EHRM' }
+	{ id: 'ehrm', label: 'EHRM' },
+	{ id: 'hvj', label: 'HvJ EU' }
 ] as const;
 
 export type Rechter = (typeof RECHTERS)[number]['id'];
@@ -276,8 +278,14 @@ const RECHTER_OF_TIER: Record<string, Rechter> = {
 	parket: 'hr',
 	gerechtshof: 'hof',
 	rechtbank: 'rechtbank',
-	raad_van_state: 'rvs'
+	raad_van_state: 'rvs',
+	ehrm: 'ehrm',
+	hvj_eu: 'hvj'
 };
+
+/** The name of a court of the EU, and its case numbers, as the Rechtspraak gives them. */
+const EU_COURT = /^(Hof van Justitie|Gerecht( voor ambtenarenzaken)?) van de Europese Unie\b/i;
+const EU_CASE = /^[CTF]-\d+\/\d{2}\b/;
 
 /** The country and the court of an ECLI, in its own form or as a key. */
 const ECLI_COURT = /^ECLI[:_]([A-Z]{2})[:_]([A-Z]+)[:_]/i;
@@ -290,12 +298,24 @@ export function rechterOf(row: Pick<Row, 'identifier' | 'props' | 'ref'>): Recht
 	const tier = row.props?.tier;
 	if (typeof tier === 'string' && Object.hasOwn(RECHTER_OF_TIER, tier))
 		return RECHTER_OF_TIER[tier];
+	const source = row.props?.source;
+	if (source === 'cjeu') return 'hvj';
+	if (source === 'echr') return 'ehrm';
 	const code = [row.identifier, row.ref.key]
 		.map((id) => (id ? ECLI_COURT.exec(id) : null))
 		.find((c) => c !== null);
 	if (!code) return null;
 	const [country, court] = [code[1].toUpperCase(), code[2].toUpperCase()];
 	if (country === 'CE') return 'ehrm';
+	if (country === 'EU') return 'hvj';
+	// A ruling of the courts of the EU the Rechtspraak publishes under code XX: by its court
+	// or its case number (C-437/12).
+	if (
+		court === 'XX' &&
+		(EU_COURT.test(textOf(row.props?.court) ?? '') ||
+			EU_CASE.test(textOf(row.props?.case_number) ?? ''))
+	)
+		return 'hvj';
 	if (court === 'HR' || court === 'PHR') return 'hr';
 	if (court.startsWith('GH')) return 'hof';
 	if (court.startsWith('RB')) return 'rechtbank';

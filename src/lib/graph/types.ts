@@ -8,6 +8,7 @@ import { articleName } from '$lib/text/bw';
 import { isGeneriek } from '$lib/bron/generiek';
 import { maandJaar } from '$lib/text/datum';
 import { enactedLawId, enactedLawOfKey } from '$lib/text/enacted-law';
+import { headingCite } from '$lib/text/judgment-heading';
 import { COLLECTION_ROLE } from './collection-role';
 import {
 	isCollection,
@@ -304,7 +305,7 @@ export function buildNodeLabel(node: BaseNode, drawClass: DrawClass): string {
 		}
 		// As the reader cites it: ABRvS 3 september 2026 (API `cite`).
 		case 'judgment':
-			return node.cite?.short ?? mens();
+			return headingCite(node)?.short ?? mens();
 	}
 	return mens();
 }

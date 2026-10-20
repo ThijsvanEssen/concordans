@@ -7,6 +7,7 @@
 	// headings — the same nav-column slot LezenNav fills for a wet. Shares the judgment
 	// request in flight with JudgmentReader (`getJudgmentDetail`'s own cache).
 	import { getJudgmentDetail } from '$lib/api/judgments';
+	import { headingCite } from '$lib/text/judgment-heading';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bodyItems, judgmentParticipants, signatureStart } from './readers/judgment-text';
 
@@ -35,7 +36,7 @@
 			.then((data) => {
 				if (stale) return;
 				const j = data.judgment;
-				ecliLabel = j.cite?.short ?? j.display_name ?? 'Uitspraak';
+				ecliLabel = headingCite(j)?.short ?? j.display_name ?? 'Uitspraak';
 				const paragraphs = j.paragraphs ?? [];
 				// The same condition under which JudgmentReader renders its table.
 				const hasParties = judgmentParticipants(j).length > 0;

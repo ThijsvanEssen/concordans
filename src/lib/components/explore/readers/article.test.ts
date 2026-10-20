@@ -5,7 +5,7 @@ const getArticleHistory = vi.fn();
 vi.mock('$lib/api/articles', () => ({ getArticleDetail, getArticleHistory }));
 vi.mock('$lib/api/instrument-cache', () => ({ recordArticleLaw: vi.fn() }));
 
-const { articleKey, fetchArticle } = await import('./article');
+const { articleKey, fetchArticle, HISTORY_WAIT } = await import('./article');
 const { createLoader } = await import('$lib/util/load.svelte');
 
 const settle = () => new Promise((r) => setTimeout(r));
@@ -30,5 +30,22 @@ describe('fetchArticle', () => {
 		const answer = await fetchArticle(articleKey('32022L2555', '7:1576'));
 		expect(getArticleDetail).toHaveBeenCalledWith('32022L2555', '7:1576');
 		expect(answer.versions).toEqual({ status: 'ready', data: [] });
+	});
+
+	it('gives the text without waiting long for its tekstversies (art. 1:1 Wft: 16 MB)', async () => {
+		vi.useFakeTimers();
+		try {
+			getArticleDetail.mockResolvedValue({ instrument: {} });
+			let answer: (v: unknown) => void = () => {};
+			getArticleHistory.mockReturnValue(new Promise((r) => (answer = r)));
+			const pending = fetchArticle(articleKey('BWBR0020368', '1:1'));
+			await vi.advanceTimersByTimeAsync(HISTORY_WAIT);
+			const got = await pending;
+			expect(got.versions).toEqual({ status: 'loading' });
+			answer({ versions: [] });
+			expect(await got.later).toEqual({ status: 'ready', data: [] });
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 });

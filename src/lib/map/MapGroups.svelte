@@ -96,14 +96,30 @@
 				onBewaar={map ? (t) => inMap(() => kaart.notitie(i, t)) : undefined}
 			/>
 		{/snippet}
+		<!-- In de lezer first: on screen as for Tab, in one place in every row (F4). -->
 		{#snippet aside()}
+			{#if external}
+				{#if i.url}<TekstLink
+						href={i.url}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="naar-lezer"
+						aria-label="{i.kort}, de bron">Bron ↗</TekstLink
+					>{/if}
+			{:else}
+				<TekstLink href={itemHref(i)} class="naar-lezer" aria-label="{i.kort} in de lezer"
+					>In de lezer</TekstLink
+				>
+			{/if}
 			{#if map}
 				<span class="knoppen">
-					{#if !i.notitie && noteOpen !== key}
-						<button type="button" class="notitie-knop raakvlak" onclick={() => (noteOpen = key)}
-							>Aantekening</button
-						>
-					{/if}
+					<!-- Kept in its place where the row has a note: In de lezer stays where it is. -->
+					<button
+						type="button"
+						class="notitie-knop raakvlak"
+						class:weg={!!i.notitie || noteOpen === key}
+						onclick={() => (noteOpen = key)}>Aantekening</button
+					>
 					<IconButton
 						label="{i.kort} een plaats omhoog"
 						onclick={() => inMap(() => kaart.schuif(i, -1))}>↑</IconButton
@@ -117,19 +133,6 @@
 						onclick={() => inMap(() => kaart.weg(i))}>×</IconButton
 					>
 				</span>
-			{/if}
-			{#if external}
-				{#if i.url}<TekstLink
-						href={i.url}
-						target="_blank"
-						rel="noopener noreferrer"
-						class="naar-lezer"
-						aria-label="{i.kort}, de bron">Bron ↗</TekstLink
-					>{/if}
-			{:else}
-				<TekstLink href={itemHref(i)} class="naar-lezer" aria-label="{i.kort} in de lezer"
-					>In de lezer</TekstLink
-				>
 			{/if}
 		{/snippet}
 		{#snippet detail()}
@@ -320,8 +323,13 @@
 		justify-content: flex-end;
 		opacity: 0;
 	}
-	/* The way to the reader, always in sight: the row's click opens it here. */
+	/* The way to the reader, always in sight: the row's click opens it here. At the right edge
+	   of a row; where the ways on stand under the citation, first, so it stands in one place
+	   in every row whatever buttons follow (F4). */
 	.rijen :global(.naar-lezer) {
+		display: inline-flex;
+		align-items: center;
+		min-height: var(--s-5);
 		font-size: var(--t-micro);
 		white-space: nowrap;
 	}
@@ -345,6 +353,9 @@
 		text-decoration: underline;
 		text-underline-offset: 2px;
 		cursor: pointer;
+	}
+	.notitie-knop.weg {
+		visibility: hidden;
 	}
 	.notitie-knop:hover {
 		color: var(--ink);

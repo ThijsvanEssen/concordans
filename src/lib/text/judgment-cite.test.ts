@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { overwegingCitaat, citeOverwegingen } from './judgment-cite';
+import { headingCite } from './judgment-heading';
 import { linkTo, permalink, viewLink } from '$lib/bron/landing';
 
 describe('overwegingCitaat', () => {
@@ -66,5 +67,48 @@ describe('the overwegingen of one judgment', () => {
 	it('link to the view without its hash: another overweging chosen is the same link', () => {
 		expect(viewLink(url)).toBe(permalink(url, ''));
 		expect(viewLink(new URL(url.href.replace('#rov-4.2', '#rov-9')))).toBe(viewLink(url));
+	});
+});
+
+describe('a judgment of the courts of the EU', () => {
+	// As the Court is cited in Dutch: "HvJ EU 22 juni 2023, C-160/20, ECLI:EU:C:2023:494".
+	const hof = {
+		ecli: 'ECLI:EU:C:2023:494',
+		cite: { short: 'HvJ EU 22 juni 2023', full: 'HvJ EU 22 juni 2023, ECLI:EU:C:2023:494' },
+		props: { case_number: 'C-160/20' }
+	};
+
+	it('is cited with its case number after the day', () => {
+		expect(headingCite(hof)).toEqual({
+			short: 'HvJ EU 22 juni 2023, C-160/20',
+			full: 'HvJ EU 22 juni 2023, C-160/20, ECLI:EU:C:2023:494'
+		});
+		const gerecht = {
+			ecli: 'ECLI:EU:T:2023:12',
+			cite: {
+				short: 'Gerecht EU 1 maart 2023',
+				full: 'Gerecht EU 1 maart 2023, ECLI:EU:T:2023:12'
+			},
+			case_number: 'T-441/21'
+		};
+		expect(headingCite(gerecht)?.short).toBe('Gerecht EU 1 maart 2023, T-441/21');
+	});
+
+	it('cites a point of it as punt, after the case number', () => {
+		expect(overwegingCitaat(hof, '45', 'rov-45', 'l', null)).toMatchObject({
+			kort: 'HvJ EU 22 juni 2023, C-160/20, punt 45',
+			voluit: 'HvJ EU 22 juni 2023, C-160/20, ECLI:EU:C:2023:494, punt 45'
+		});
+	});
+
+	it('adds nothing the API already cites, nor to a Dutch judgment', () => {
+		const given = { ...hof, cite: headingCite(hof) };
+		expect(headingCite(given)).toEqual(headingCite(hof));
+		const hr = {
+			ecli: 'ECLI:NL:HR:2019:2006',
+			cite: { short: 'HR 20 december 2019', full: 'HR 20 december 2019, ECLI:NL:HR:2019:2006' },
+			props: { case_number: '19/00135' }
+		};
+		expect(headingCite(hr)).toEqual(hr.cite);
 	});
 });

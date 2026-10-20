@@ -175,25 +175,79 @@ function similarity(a: string, b: string): number {
 	return 1 - changedShare(diffWords(a, b));
 }
 
+/** The characters a change is measured in: the text without its spaces. */
+const weight = (s: string) => s.replace(/\s+/g, '').length;
+
 /** A lid keeps its number unless something moved it; the number weighs a little. */
 const SAME_NUMBER = 0.2;
+
+/** Past this many pairs in one stretch, leden pair by place: the cost of a word diff each. */
+const MAX_PAIRS = 40_000;
 
 /**
  * The leden of two versions side by side: by content, in order, gaps where one has none.
  * Two leden with the same number pair however much the wording changed, unless a
- * closer match elsewhere says a lid was inserted or removed before them.
+ * closer match elsewhere says a lid was inserted or removed before them. Leden with the
+ * same wording pair first; only the stretches between them are compared word by word, so
+ * an article of hundreds of onderdelen (art. 1:1 Wft) with a few changes stays quick.
  */
 export function alignUnits(a: Unit[], b: Unit[]): [Unit | null, Unit | null][] {
+	const x = a.map((u) => normalize(u.text));
+	const y = b.map((u) => normalize(u.text));
 	const n = a.length;
 	const m = b.length;
-	const pair = a.map((x) =>
-		b.map((y) => {
-			const sim = similarity(x.text, y.text);
-			const same = x.number === y.number;
+	// The longest run of leden with the same wording, in order.
+	const lcs = new Uint32Array((n + 1) * (m + 1));
+	for (let i = n - 1; i >= 0; i--)
+		for (let j = m - 1; j >= 0; j--)
+			lcs[i * (m + 1) + j] =
+				x[i] === y[j]
+					? lcs[(i + 1) * (m + 1) + j + 1] + 1
+					: Math.max(lcs[(i + 1) * (m + 1) + j], lcs[i * (m + 1) + j + 1]);
+	const out: [Unit | null, Unit | null][] = [];
+	let i = 0;
+	let j = 0;
+	let fromI = 0;
+	let fromJ = 0;
+	const stretch = (toI: number, toJ: number) =>
+		out.push(...alignSimilar(a.slice(fromI, toI), b.slice(fromJ, toJ)));
+	while (i < n && j < m) {
+		if (x[i] === y[j]) {
+			stretch(i, j);
+			out.push([a[i++], b[j++]]);
+			fromI = i;
+			fromJ = j;
+		} else if (lcs[(i + 1) * (m + 1) + j] >= lcs[i * (m + 1) + j + 1]) i++;
+		else j++;
+	}
+	stretch(n, m);
+	return out;
+}
+
+/** One stretch of leden without a shared wording, paired by likeness (Needleman–Wunsch). */
+function alignSimilar(a: Unit[], b: Unit[]): [Unit | null, Unit | null][] {
+	const n = a.length;
+	const m = b.length;
+	if (n === 0 || m === 0)
+		return [...a.map((u) => [u, null]), ...b.map((u) => [null, u])] as [Unit | null, Unit | null][];
+	if (n * m > MAX_PAIRS) {
+		const out: [Unit | null, Unit | null][] = [];
+		for (let k = 0; k < Math.max(n, m); k++) out.push([a[k] ?? null, b[k] ?? null]);
+		return out;
+	}
+	const wa = a.map((u) => weight(u.text));
+	const wb = b.map((u) => weight(u.text));
+	const pair = a.map((p, i) =>
+		b.map((q, j) => {
+			const same = p.number === q.number;
+			// The shorter text can share no more than its own length.
+			const bound = Math.max(wa[i], wb[j]) ? Math.min(wa[i], wb[j]) / Math.max(wa[i], wb[j]) : 1;
+			if (!same && bound < PAIRED) return -1;
+			const sim = similarity(p.text, q.text);
 			return sim >= PAIRED || same ? sim + (same ? SAME_NUMBER : 0) : -1;
 		})
 	);
-	// Needleman–Wunsch: a pair scores its similarity, a gap nothing.
+	// A pair scores its similarity, a gap nothing.
 	const score = Array.from({ length: n + 1 }, () => new Float64Array(m + 1));
 	for (let i = n - 1; i >= 0; i--) {
 		for (let j = m - 1; j >= 0; j--) {

@@ -5,7 +5,9 @@
 	import { bevindingen, strekking } from './judgment-outcome';
 	import { keyEcli } from '$lib/bron/address';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import { citeOverwegingen, uitspraakKop, zaakNaam } from '$lib/text/judgment-cite';
+	import { citeOverwegingen, zaakNaam } from '$lib/text/judgment-cite';
+	import { headingCite } from '$lib/text/judgment-heading';
+	import { officialPage, sourceCredit } from './judgment-source';
 	import { paragraphCite } from '$lib/text/ecli';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
@@ -132,12 +134,9 @@
 		{@const caseNumber = textOf(j.props?.case_number)}
 		{@const judgmentDate = langeDatum(textOf(j.props?.date))}
 		<!-- The judgment on its official site, named by it as a law is (API 0.71):
-		     uitspraken.rechtspraak.nl, hudoc.echr.coe.int. -->
-		{@const deeplink =
-			j.official_url ??
-			(j.source === 'rechtspraak' && j.ecli
-				? `https://deeplink.rechtspraak.nl/uitspraak?id=${encodeURIComponent(j.ecli)}`
-				: null)}
+		     uitspraken.rechtspraak.nl, hudoc.echr.coe.int, eur-lex.europa.eu. -->
+		{@const deeplink = officialPage(j)}
+		{@const credit = paragraphs.length > 0 ? sourceCredit(j) : null}
 		{@const participants = judgmentParticipants(j)}
 		{@const hasSummary = !!j.summary?.trim()}
 		{@const signed = signatureStart(paragraphs)}
@@ -171,7 +170,7 @@
 		     september 2019), from the judgment's own detail, so they stand with the text. -->
 		{@const conclusies = (data.conclusions ?? []).map((c) => ({
 			ref: c.id,
-			naam: c.cite?.short ?? c.ecli,
+			naam: headingCite(c)?.short ?? c.ecli,
 			strekking: strekking(c.outcome)
 		}))}
 		<!-- How it ended, in its own words (API 0.79.55): what a conclusie proposes, what the
@@ -179,7 +178,7 @@
 		{@const eigenStrekking = conclusion ? strekking(j.conclusion_outcome) : null}
 		{@const echr = bevindingen(j.echr_findings)}
 		<!-- As the API cites it: HR 20 december 2019; Conclusie A-G Hartlief 8 mei 2020. -->
-		{@const kop = uitspraakKop(j)}
+		{@const kop = headingCite(j)}
 		{@const ro = paragraphNumber(anchor)}
 		{@const naamKort = kop?.short ?? j.display_name ?? 'Uitspraak'}
 		<ReaderHead
@@ -455,9 +454,9 @@
 			{#if paragraphs.length === 0 && !hasSummary && !replacedBy && !replacedOutside && !withdrawnNotice}
 				<p class="reader-empty-text">Tekst niet in de gegevens.</p>
 			{/if}
-			<!-- The terms of HUDOC ask for the source under a text of the Court. -->
-			{#if j.source === 'echr' && paragraphs.length > 0}
-				<p class="reader-attribution">Tekst: © ECHR-CEDH, uit HUDOC.</p>
+			<!-- The terms of HUDOC and EUR-Lex ask for the source under a text of the Court. -->
+			{#if credit}
+				<p class="reader-attribution">{credit}</p>
 			{/if}
 		</div>
 	{/snippet}

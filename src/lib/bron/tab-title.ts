@@ -7,6 +7,7 @@ import { isRauw, menselijkeNaam } from './menselijk';
 import { describeBron, UNNAMED } from './describe';
 import { zonderKopInKapitalen } from './titels.svelte';
 import { kamerstukLabel } from '$lib/components/parliamentary/kamerstuk';
+import { isEnactedLawItem } from '$lib/text/enacted-law';
 
 const MAX = 80;
 
@@ -14,6 +15,7 @@ const MAX = 80;
 export const cut = (name: string): string => truncate(name, MAX, { atWord: true });
 
 type TitledNode = Pick<GraphNode, 'collection' | 'label'> & {
+	id?: string;
 	raw?: Pick<BaseNode, 'display_name' | 'props'> & Partial<Pick<BaseNode, 'title' | 'cite'>>;
 };
 
@@ -45,6 +47,14 @@ export function documentTitle(node: TitledNode): string | null {
 export function pageName(node: TitledNode, apiTitle: string | null): string {
 	const document = documentTitle(node);
 	if (document) return document;
+	// A law of the Staatsblad by its name with its place, as the server's page has it: the
+	// new Wetboek van Strafvordering beside the one of the BWB.
+	// Its articles keep the API's title (Art. 2.8.6 Wetboek van Strafvordering), as the server.
+	const enacted =
+		node.collection === 'instruments' && node.id && isEnactedLawItem(node.id)
+			? textOf(node.raw?.display_name)
+			: null;
+	if (enacted) return cut(enacted);
 	const title = textOf(apiTitle) ?? textOf(node.raw?.title);
 	if (title) return cut(zonderKopInKapitalen(title));
 	const display = node.raw?.display_name ?? null;

@@ -4,6 +4,7 @@
 // Its links are made as from outside the Verkenner, where the band stands.
 import { isBill, motionOrAmendment, shortKind } from '$lib/text/document-kind';
 import { count } from '$lib/text/words';
+import { headingCite } from '$lib/text/judgment-heading';
 import { naamVanId } from '$lib/bron/menselijk';
 import { formatCount } from '$lib/text/getal';
 import { getChangedArticles } from '$lib/api/dossiers';
@@ -231,7 +232,7 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 			label: j.ecli ?? naamVanId(j.id, j.display_name),
 			sub: [
 				// The judgment as it is cited: `HR 27 oktober 2009`.
-				j.cite?.short,
+				headingCite(j)?.short,
 				j.inbound_citation_count ? `${j.inbound_citation_count}× aangehaald` : null
 			]
 				.filter(Boolean)
