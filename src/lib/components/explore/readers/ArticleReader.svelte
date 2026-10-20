@@ -18,7 +18,8 @@
 	import { menu } from '$lib/actions/menu';
 	import { getDocumentPassages } from '$lib/api/documents';
 	import { getArticleVersion, getDelegated } from '$lib/api/articles';
-	import { instrumentMetaStore } from '$lib/api/instrument-cache';
+	import { getInstrumentDetail, instrumentMetaStore } from '$lib/api/instrument-cache';
+	import Dekking from '$lib/components/ui/Dekking.svelte';
 	import type { Schema } from '$lib/api/types';
 	import { articleOf, type GraphNode } from '$lib/graph/types';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
@@ -296,6 +297,27 @@
 			: 'Niet in de gegevens.';
 	});
 
+	/** The act of the EU this article belongs to: CELLAR has its text as adopted, no later one. */
+	const euAct = $derived(
+		loaded?.instrument?.celex && !loaded.instrument.bwb_id ? loaded.instrument : null
+	);
+	// The day it was adopted, from the act's own detail (asked once, shared with its law page).
+	let euAdopted = $state<string | null>(null);
+	$effect(() => {
+		euAdopted = null;
+		const celex = euAct?.celex;
+		if (!celex) return;
+		getInstrumentDetail(celex).then(
+			(d) => {
+				if (euAct?.celex === celex) euAdopted = d.date_signed ?? null;
+			},
+			(e) => report('Wet, gegevens', e)
+		);
+	});
+	const euSource = $derived(
+		euAct?.official_url ? { label: 'EUR-Lex', href: euAct.official_url } : null
+	);
+
 	const versionLabel = $derived.by(() => {
 		if (stubLabel) return stubLabel;
 		if (shown) {
@@ -312,6 +334,8 @@
 			const date = langeDatum(lapse?.from);
 			return date ? `Vervallen per ${date}` : 'Vervallen';
 		}
+		// An act of the EU: the text as adopted; its consolidated versions are not fetched.
+		if (euAct) return null;
 		return from ? `Geldend recht, tekst sinds ${from}` : 'Geldend recht';
 	});
 
@@ -358,9 +382,12 @@
 	);
 
 	// The official text of the version on screen: wetten.overheid.nl, EUR-Lex or the
-	// Verdragenbank, as the API names it.
+	// Verdragenbank, as the API names it. An article of the EU has no address of its own on
+	// EUR-Lex: its act's.
 	const officialUrl = $derived(
-		loaded ? (shown?.first.official_url ?? loaded.article.official_url ?? null) : null
+		loaded
+			? (shown?.first.official_url ?? loaded.article.official_url ?? euAct?.official_url ?? null)
+			: null
 	);
 	const officialName = $derived(
 		officialUrl ? new URL(officialUrl).hostname.replace(/^www\./, '') : null
@@ -573,7 +600,14 @@
 				{/if}
 			{/snippet}
 			{#snippet statusLine()}
-				<span class="head__stand" class:is-old={!!shown}>{versionLabel}</span>
+				{#if versionLabel === null}
+					<Dekking
+						dekking={{ onderdeel: 'versions', state: 'not_in_source', as_of: euAdopted }}
+						bron={euSource}
+					/>
+				{:else}
+					<span class="head__stand" class:is-old={!!shown}>{versionLabel}</span>
+				{/if}
 				{#if wordings.length > 1}
 					<span class="menu" use:menu={{ open: versionMenu, close: () => (versionMenu = false) }}>
 						<button

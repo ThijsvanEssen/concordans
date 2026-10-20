@@ -138,6 +138,16 @@ const isFilterGroup = (v: string): v is FilterGroup =>
 const isRechter = (v: string | null): v is Rechter => RECHTERS.some((r) => r.id === v);
 const year = (v: string | null) => (v && /^\d{4}$/.test(v) ? Number(v) : null);
 
+/** Whether the reader narrowed the verbindingen: a choice of bronnen or any filter. */
+const filterActive = (f: VerbondenFilter): boolean =>
+	Object.values(filterParams(f)).some((v) => v !== null);
+
+/** The line of an empty Verbonden: within the choice only where the reader made one. */
+export const geenVerbindingen = (f: VerbondenFilter): string =>
+	filterActive(f)
+		? 'Geen verbindingen binnen de gekozen bronnen en filters.'
+		: 'Geen verbindingen.';
+
 /** The filter the URL holds. */
 export function parseFilter(params: URLSearchParams): VerbondenFilter {
 	const kinds = (params.get('bronnen') ?? '')

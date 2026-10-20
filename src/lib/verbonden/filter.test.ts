@@ -9,6 +9,7 @@ import {
 	confidenceWord,
 	filterParams,
 	filterGroupCount,
+	geenVerbindingen,
 	parseFilter,
 	rechterOf,
 	rowPasses,
@@ -220,5 +221,17 @@ describe('filterGroupCount', () => {
 		expect(filterGroupCount(1, 'wetten')).toBe('1 wet');
 		expect(filterGroupCount(3, 'artikelen')).toBe('3 artikelen');
 		expect(filterGroupCount(1_064, 'uitspraken')).toBe('1.064 uitspraken');
+	});
+});
+
+describe('the line of an empty Verbonden', () => {
+	it('names the choice only where the reader made one', () => {
+		expect(geenVerbindingen(EMPTY_FILTER)).toBe('Geen verbindingen.');
+		expect(geenVerbindingen(parseFilter(new URLSearchParams('bronnen=uitspraken')))).toBe(
+			'Geen verbindingen binnen de gekozen bronnen en filters.'
+		);
+		expect(geenVerbindingen(parseFilter(new URLSearchParams('lid=2')))).toBe(
+			'Geen verbindingen binnen de gekozen bronnen en filters.'
+		);
 	});
 });

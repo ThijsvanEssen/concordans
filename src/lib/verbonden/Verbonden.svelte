@@ -22,6 +22,7 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import {
 		filterGroupCount,
+		geenVerbindingen,
 		FILTER_GROUP_NOUN,
 		withFilterGroup,
 		type VerbondenFilter
@@ -522,7 +523,7 @@
 		{#if !verbonden.loading && !verbonden.failed && alleenKern}
 			<p class="note stil">Geen verbindingen buiten wat boven de tekst staat.</p>
 		{:else if !verbonden.loading && !verbonden.failed && shown.length === 0 && groepen.length > 0}
-			<p class="note stil">Geen verbindingen binnen de gekozen bronnen en filters.</p>
+			<p class="note stil">{geenVerbindingen(filter)}</p>
 		{/if}
 
 		{#if hidden.length > 0}
