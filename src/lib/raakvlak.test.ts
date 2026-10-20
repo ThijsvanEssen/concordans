@@ -20,12 +20,11 @@ describe('the touch target', () => {
 		expect(coarse).toContain('.plaats-marker::before');
 	});
 
-	it("is on Gemarkeerd's own small buttons", () => {
-		const groups = read('lib/map/MapGroups.svelte');
-		expect(groups).toMatch(/class="notitie-knop/);
-		for (const m of groups.matchAll(/class="(notitie-knop[^"]*)"/g))
-			expect(m[1]).toContain('raakvlak');
-		expect(read('lib/map/MapView.svelte')).toContain('class="wis raakvlak"');
+	it("is 44 px around a row's ⋯ on a touch screen (the bundels)", () => {
+		const acties = read('lib/components/ui/RijActies.svelte');
+		const coarse = acties.slice(acties.indexOf('@media (pointer: coarse)'));
+		expect(coarse).toMatch(/\.plek--menu \{[^}]*width: calc\(var\(--s-6\) \+ var\(--s-3\)\)/);
+		expect(read('lib/map/MapGroups.svelte')).not.toMatch(/class="notitie-knop/);
 	});
 
 	it('is at least 32 px high on every row and heading of a table of contents, on a touch screen', () => {

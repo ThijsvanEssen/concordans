@@ -17,6 +17,10 @@ import {
 	withItems,
 	itemKey,
 	verschuif,
+	groupKeyOf,
+	judgmentRows,
+	rowTitle,
+	JUDGMENTS_GROUP,
 	type MapItem
 } from './map';
 import { itemVanRij } from './rij';
@@ -49,7 +53,7 @@ describe('the map', () => {
 		const lid3 = { ...lid2, at: 'lid-3', kort: 'art. 6:162 lid 3 BW' };
 		expect(groepen([lid2, ro, lid3]).map((g) => [g.groep, g.items.length])).toEqual([
 			['Burgerlijk Wetboek Boek 6', 2],
-			['HR 20 december 2019 (Urgenda); a~b', 1]
+			['Rechtspraak', 1]
 		]);
 	});
 
@@ -78,7 +82,7 @@ describe('the map', () => {
 
 	it('cites per group, numbered, the full form where there is one', () => {
 		expect(citaten([lid2, ro])).toBe(
-			'Burgerlijk Wetboek Boek 6\n1. artikel 6:162 lid 2 Burgerlijk Wetboek\n\nHR 20 december 2019 (Urgenda); a~b\n2. HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1'
+			'Burgerlijk Wetboek Boek 6\n1. artikel 6:162 lid 2 Burgerlijk Wetboek\n\nRechtspraak\n2. HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1'
 		);
 	});
 
@@ -87,7 +91,7 @@ describe('the map', () => {
 		expect(t.startsWith('﻿volgorde;groep;soort;citaat;vindplaats;aantekening;adres\r\n')).toBe(
 			true
 		);
-		expect(t).toContain('"HR 20 december 2019 (Urgenda); a~b"');
+		expect(t).toContain(';Rechtspraak;');
 	});
 
 	it('writes the CSV per group, in the order of the groups, its places as printed (#56)', () => {
@@ -103,12 +107,12 @@ describe('the map', () => {
 		expect(regels(csv([lid2, ro, lid3a], adres))).toEqual([
 			'1;Burgerlijk Wetboek Boek 6;Artikel;artikel 6:162 lid 2 Burgerlijk Wetboek;lid 2;;',
 			'2;Burgerlijk Wetboek Boek 6;Artikel;art. 6:162 lid 3 BW;lid 3, onder a;;',
-			'3;"HR 20 december 2019 (Urgenda); a~b";Uitspraak;HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1;r.o. 5.7.1;;'
+			'3;Rechtspraak;Uitspraak;HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1;r.o. 5.7.1;;'
 		]);
 		// In the reader's own order: that order, each under its group's name.
 		expect(regels(csv([lid2, ro, lid3a], adres, 'eigen')).map((r) => r.split(';')[1])).toEqual([
 			'Burgerlijk Wetboek Boek 6',
-			'"HR 20 december 2019 (Urgenda)',
+			'Rechtspraak',
 			'Burgerlijk Wetboek Boek 6'
 		]);
 		// A place the reader cannot print stays out.
@@ -168,7 +172,7 @@ describe('the map', () => {
 
 	it("puts a group's note under its name in the citations", () => {
 		expect(citaten([lid2, ro], 'groep', null, { 'wet:bwbr0005289': 'Waarom deze wet' })).toBe(
-			'Burgerlijk Wetboek Boek 6\nWaarom deze wet\n1. artikel 6:162 lid 2 Burgerlijk Wetboek\n\nHR 20 december 2019 (Urgenda); a~b\n2. HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1'
+			'Burgerlijk Wetboek Boek 6\nWaarom deze wet\n1. artikel 6:162 lid 2 Burgerlijk Wetboek\n\nRechtspraak\n2. HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1'
 		);
 	});
 });
@@ -382,5 +386,86 @@ describe('the follow-ups of the UX test of 16 Oct', () => {
 		expect(kop.split(';')).toContain('soort');
 		expect(eerste.split(';')).toContain('Artikel');
 		expect(tweede.split(';')).toContain('Tijdschrift');
+	});
+});
+
+describe('the judgments of a bundel, one group Rechtspraak (decision 20A)', () => {
+	const hr = {
+		...ro,
+		at: '',
+		kort: 'HR 20 december 2019',
+		voluit: 'HR 20 december 2019, ECLI:NL:HR:2019:2006'
+	};
+	const ro2 = { ...ro, at: 'rov-2.1', kort: 'HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 2.1' };
+	const other: MapItem = {
+		id: 'judgments/ecli_nl_rbdha_2015_7196',
+		at: 'rov-4.1',
+		kort: 'Rb. Den Haag 24 juni 2015, ECLI:NL:RBDHA:2015:7196, r.o. 4.1',
+		groep: 'Rb. Den Haag 24 juni 2015 (Urgenda)',
+		groupKey: 'judgments/ecli_nl_rbdha_2015_7196'
+	};
+
+	it('puts every judgment in one group, whatever key it was kept under', () => {
+		expect(groupKeyOf(ro)).toBe(JUDGMENTS_GROUP);
+		expect(groupKeyOf(lid2)).toBe('wet:bwbr0005289');
+		expect(groepen([ro, lid2, other]).map((g) => [g.sleutel, g.groep, g.items.length])).toEqual([
+			[JUDGMENTS_GROUP, 'Rechtspraak', 2],
+			['wet:bwbr0005289', 'Burgerlijk Wetboek Boek 6', 1]
+		]);
+	});
+
+	it('shows the r.o.’s of one judgment as places under it, the judgment once', () => {
+		const rows = judgmentRows([ro, other, hr, ro2]);
+		expect(rows.map((r) => [r.head.kort, r.kept, r.places.map((p) => p.at)])).toEqual([
+			['HR 20 december 2019', true, ['rov-5.7.1', 'rov-2.1']],
+			['Rb. Den Haag 24 juni 2015, ECLI:NL:RBDHA:2015:7196, r.o. 4.1', true, []]
+		]);
+		// Two r.o.'s without the judgment itself: the judgment heads them, not kept.
+		const [only] = judgmentRows([ro, ro2]);
+		expect(only.kept).toBe(false);
+		expect(only.head).toMatchObject({ id: ro.id, at: '', notitie: null });
+		expect(only.head.kort).toBe('HR 20 december 2019, ECLI:NL:HR:2019:2006');
+		expect(only.places).toEqual([ro, ro2]);
+	});
+
+	it('moves and exports a judgment within Rechtspraak', () => {
+		expect(verschuif([ro, lid2, other], itemKey(other), -1, 'groep')).toEqual([other, lid2, ro]);
+		expect(csv([ro, lid2], () => '').split('\r\n')[1]).toContain('Rechtspraak');
+	});
+});
+
+describe('the citation of a row: one line (bundels-ux 2b.6)', () => {
+	it('leaves out the full form where it only writes out the short one', () => {
+		expect(rowTitle(lid2)).toEqual({ title: 'art. 6:162 lid 2 BW', sub: null });
+	});
+
+	it('takes the full form where it adds to the short one', () => {
+		const hr = {
+			...ro,
+			at: '',
+			kort: 'HR 20 december 2019',
+			voluit: 'HR 20 december 2019, ECLI:NL:HR:2019:2006'
+		};
+		expect(rowTitle(hr)).toEqual({ title: 'HR 20 december 2019, ECLI:NL:HR:2019:2006', sub: null });
+		expect(rowTitle({ ...ro })).toEqual({ title: ro.kort, sub: null });
+		const dossier: MapItem = {
+			id: 'dossiers/36327',
+			at: '',
+			kort: 'Kamerstukken 36327',
+			voluit: 'Wetboek van Strafvordering',
+			groep: 'Kamerstukken 36327',
+			groupKey: 'dossier:36327'
+		};
+		expect(rowTitle(dossier)).toEqual({
+			title: 'Kamerstukken 36327',
+			sub: 'Wetboek van Strafvordering'
+		});
+	});
+
+	it('names a place under its judgment by the place alone', () => {
+		expect(rowTitle(ro, true)).toEqual({
+			title: 'r.o. 5.7.1',
+			sub: null
+		});
 	});
 });

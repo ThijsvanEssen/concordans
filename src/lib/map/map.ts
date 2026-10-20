@@ -209,20 +209,84 @@ export function externalItem(source: {
 	return { ...item, kind: source.kind, ...(url ? { url } : {}) };
 }
 
+/** The one group of a bundel's judgments, whatever key each was kept under (decision 20A). */
+export const JUDGMENTS_GROUP = 'rechtspraak';
+const JUDGMENTS_NAME = 'Rechtspraak';
+
+/** A judgment, or a source outside Concordans the reader put in a judgment's group. */
+const inJudgments = (i: Pick<MapItem, 'id' | 'groupKey'>) =>
+	parseNodeId(i.id)?.collection === 'judgments' ||
+	parseNodeId(i.groupKey)?.collection === 'judgments';
+
+/** The group an item is shown in: a judgment under Rechtspraak, the rest by its own key. */
+export const groupKeyOf = (i: Pick<MapItem, 'id' | 'groupKey'>): string =>
+	inJudgments(i) ? JUDGMENTS_GROUP : i.groupKey;
+
 /** The groups in the order their first item was kept, each with its items in that order. */
 export function groepen(
 	items: readonly MapItem[]
 ): { groep: string; sleutel: string; items: MapItem[] }[] {
 	// By the group's key, so one dossier is one group whether a Kamerstuk of it or the dossier
 	// was kept ("Kamerstuk 36764", "Kamerstuk 36764 Cyberbeveiligingswet"); its name the one
-	// that says the most.
+	// that says the most. The judgments together, under Rechtspraak.
 	const m = new Map<string, MapItem[]>();
-	for (const i of items) m.set(i.groupKey, [...(m.get(i.groupKey) ?? []), i]);
+	for (const i of items) m.set(groupKeyOf(i), [...(m.get(groupKeyOf(i)) ?? []), i]);
 	return [...m].map(([sleutel, items]) => ({
-		groep: items.map((i) => i.groep).reduce((a, b) => (b.length > a.length ? b : a)),
+		groep:
+			sleutel === JUDGMENTS_GROUP
+				? JUDGMENTS_NAME
+				: items.map((i) => i.groep).reduce((a, b) => (b.length > a.length ? b : a)),
 		sleutel,
 		items
 	}));
+}
+
+/** A judgment's citation without the place in it: `HR 20 december 2019, ECLI:…`. */
+const judgmentCitation = (kort: string) => kort.replace(/,\s*r\.o\.\s.*$/, '');
+
+/** A judgment in a bundel: kept itself or not, with its places (r.o.'s) under it. */
+type JudgmentRow = { head: MapItem; kept: boolean; places: MapItem[] };
+
+/**
+ * The judgments of a group, each once, in the order first kept: the judgment where it is kept
+ * itself, its kept r.o.'s as places under it. One r.o. alone stands as the judgment's row; two
+ * or more stand under the judgment, which heads them without being kept.
+ */
+export function judgmentRows(items: readonly MapItem[]): JudgmentRow[] {
+	const byId = new Map<string, MapItem[]>();
+	for (const i of items) byId.set(i.id, [...(byId.get(i.id) ?? []), i]);
+	return [...byId.values()].map((all) => {
+		const whole = all.find((i) => !i.at);
+		const places = all.filter((i) => i.at);
+		if (whole) return { head: whole, kept: true, places };
+		if (places.length === 1) return { head: places[0], kept: true, places: [] };
+		const first = places[0];
+		return {
+			head: { ...first, at: '', kort: judgmentCitation(first.kort), voluit: null, notitie: null },
+			kept: false,
+			places
+		};
+	});
+}
+
+/**
+ * A row's citation on one line: the full form where it adds to the short one (an ECLI), the
+ * short one where the full form only writes it out (`artikel 6:162 lid 2 Burgerlijk Wetboek`),
+ * else the full form under it. A place under its judgment is named by the place alone.
+ */
+export function rowTitle(
+	i: Pick<MapItem, 'id' | 'at' | 'kort' | 'voluit'>,
+	place = false
+): { title: string; sub: string | null } {
+	const own = place ? /\br\.o\.\s.*$/.exec(i.kort)?.[0] : null;
+	if (own) return { title: own, sub: null };
+	const full = i.voluit?.trim();
+	if (!full || full === i.kort) return { title: i.kort, sub: null };
+	if (full.startsWith(i.kort)) return { title: full, sub: null };
+	const collection = parseNodeId(i.id)?.collection;
+	if (collection === 'articles' || collection === 'instruments')
+		return { title: i.kort, sub: null };
+	return { title: i.kort, sub: full };
 }
 
 // ── Reading an item back ────────────────────────────────────────────────────
@@ -341,7 +405,7 @@ export function csv(
 		['volgorde', 'groep', 'soort', 'citaat', 'vindplaats', 'aantekening', 'adres'],
 		(volgorde === 'eigen' ? items : reeks.flatMap((g) => g.items)).map((i, n) => [
 			String(n + 1),
-			naamVan.get(i.groupKey) ?? i.groep,
+			naamVan.get(groupKeyOf(i)) ?? i.groep,
 			kindLabel(i),
 			i.voluit || i.kort,
 			(i.at && anchorLabel(i.at, i.id)) || '',
@@ -363,10 +427,10 @@ export function verschuif(
 ): MapItem[] {
 	const i = items.findIndex((x) => itemKey(x) === sleutel);
 	if (i < 0) return [...items];
-	const groep = items[i].groupKey;
+	const groep = groupKeyOf(items[i]);
 	let j = i + richting;
 	if (volgorde === 'groep')
-		while (j >= 0 && j < items.length && items[j].groupKey !== groep) j += richting;
+		while (j >= 0 && j < items.length && groupKeyOf(items[j]) !== groep) j += richting;
 	if (j < 0 || j >= items.length) return [...items];
 	const uit = [...items];
 	[uit[i], uit[j]] = [uit[j], uit[i]];

@@ -4,7 +4,9 @@
 	// by a rule at its left and the label Aantekening with the sign of Bewaar, as the network
 	// marks a bron with a note; the note itself upright, in the reader's letter. Where it can
 	// be changed a click opens it in place: Enter keeps it, Escape leaves it, leaving the
-	// field keeps it. Read only, as on a network card, the label names its place.
+	// field keeps it. Read only, as on a network card, the label names its place. With a
+	// placeholder an empty note is an empty field that says what goes in it (a bundel's
+	// research question).
 	import Picto from '$lib/components/ui/Picto.svelte';
 
 	let {
@@ -13,6 +15,7 @@
 		waar = null,
 		compact = false,
 		open = $bindable(false),
+		placeholder = null,
 		onBewaar
 	}: {
 		tekst: string | null | undefined;
@@ -24,6 +27,8 @@
 		compact?: boolean;
 		/** The field open; without `onBewaar` it never opens. */
 		open?: boolean;
+		/** Where there is no note: an empty field with these words, in place of nothing. */
+		placeholder?: string | null;
 		/** Keeps the note; without it the note is read only (a shared map). */
 		onBewaar?: (tekst: string) => void;
 	} = $props();
@@ -48,9 +53,34 @@
 			open = false;
 		}
 	}
+	/** The empty field: Enter or leaving it keeps what was typed, Escape leaves it empty. */
+	function emptyKey(e: KeyboardEvent) {
+		const veld = e.currentTarget as HTMLTextAreaElement;
+		if (e.key === 'Enter' && !e.shiftKey) {
+			e.preventDefault();
+			veld.blur();
+		} else if (e.key === 'Escape') {
+			e.preventDefault();
+			veld.value = '';
+			veld.blur();
+		}
+	}
 </script>
 
-{#if (open && onBewaar) || tekst}
+{#if !tekst && !open && placeholder && onBewaar}
+	<div class="aantekening" class:compact>
+		<textarea
+			class="aantekening-veld"
+			rows="2"
+			aria-label="Aantekening bij {bij}"
+			{placeholder}
+			onkeydown={emptyKey}
+			onblur={(e) => {
+				if (e.currentTarget.value.trim()) onBewaar(e.currentTarget.value);
+			}}
+		></textarea>
+	</div>
+{:else if (open && onBewaar) || tekst}
 	<div class="aantekening" class:compact>
 		<span class="label"
 			><Picto naam="bewaard" size={10} />{waar ? `Aantekening bij ${waar}` : 'Aantekening'}</span

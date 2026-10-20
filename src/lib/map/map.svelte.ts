@@ -144,6 +144,11 @@ class Kaarten {
 				: [...m.items, i]
 		}));
 	}
+	/** Into a bundel by its id, once (a source added on its page). */
+	add(i: MapItem, id = this.actief.id) {
+		keepStorage();
+		this.#change(id, (m) => ({ items: withItems(m.items, [i]) }));
+	}
 	weg(i: Pick<MapItem, 'id' | 'at'>, id = this.actief.id) {
 		const k = itemKey(i);
 		this.#change(id, (m) => ({ items: m.items.filter((x) => itemKey(x) !== k) }));

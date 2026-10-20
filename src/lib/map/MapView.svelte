@@ -1,19 +1,18 @@
 <script lang="ts">
-	// One bundel, alike on Bundels (a section of the page, among the others) and on its own
-	// page (the research on one page, to read and to print): its ways to share it at the right
-	// of its name, its note at its top (the question it is about), what it holds (MapGroups),
-	// a source outside Concordans added in place, and Wis at its foot.
+	// One bundel on its own page, the place to work in it (bundels-ux 2b): its name with
+	// Netwerk, Kopieer link and one menu Meer; its research question as a field; one working
+	// line (the place for the view, the order, Alles uitklappen); what it holds (MapGroups);
+	// a source outside Concordans added at its foot. A shared bundel (a link) is the same page,
+	// read only, with Bewaar in place of Kopieer link and its choices in Meer. On paper (PDF,
+	// the print view, A4) the name, the question, the day it changed and what it holds.
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
-	import ConfirmButton from '$lib/components/ui/ConfirmButton.svelte';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import { download, safeFileName } from '$lib/verbonden/export';
-	import { formatCount } from '$lib/text/getal';
-	import { plural } from '$lib/text/words';
 	import { korteDatum, vandaag } from '$lib/text/datum';
 	import { afterTick } from '$lib/util/after-tick';
 	import { navigate } from '$lib/util/address';
@@ -31,7 +30,7 @@
 	import { kaart } from './map.svelte';
 	import { shareFragment } from './share';
 	import { mapFile, mapFileName } from './file';
-	import { BUNDLES_PATH, bundlePageHref } from './page';
+	import { BUNDLES_PATH } from './page';
 	import Aantekening from './Aantekening.svelte';
 	import AddSource from './AddSource.svelte';
 	import MapGroups from './MapGroups.svelte';
@@ -43,23 +42,25 @@
 		standalone = false,
 		named = true
 	}: {
+		/** The bundel of this browser, to work in. */
 		m: Map;
-		/** On its own page: its name the page's title, Afdrukken among its ways on. */
+		/** On its own page: its name the page's title. */
 		standalone?: boolean;
 		/** False for a bundel just made: it is named at once. */
 		named?: boolean;
 	} = $props();
 
+	/** What is shown: the bundel's own or the shared one. */
+	const b = $derived(m);
 	const copier = createCopier();
-	const anchor = $derived(`map-${m.id}`);
-	const count = (n: number) => `${formatCount(n)} ${plural(n, 'bron', 'bronnen')}`;
-	const day = (iso: string) => korteDatum(vandaag(new Date(iso)));
-	const fileBase = $derived(safeFileName(m.naam) || 'Bundels');
+	const anchor = $derived(m ? `map-${m.id}` : 'gedeeld');
+	const fileBase = $derived(safeFileName(b.naam) || 'Bundel');
 
 	// The link, made when the bundel changes: deflating takes a moment, and a copy made after
 	// it would have lost the click that allows it (Safari).
 	let link = $state<string | null>(null);
 	$effect(() => {
+		if (!m) return;
 		const shown = m;
 		const origin = page.url.origin;
 		let current = true;
@@ -76,16 +77,16 @@
 	// ── What is new since the visit before: on its own page, after the first paint ──
 	let fresh = $state<Fresh | null>(null);
 	$effect(() => {
-		if (!standalone) return;
-		const id = m.id;
+		if (!standalone || !m) return;
+		const own = m;
 		return untrack(() => {
-			const since = kaart.visit(id, vandaag());
+			const since = kaart.visit(own.id, vandaag());
 			if (!since) return;
 			const asking = new Fresh(since);
 			fresh = asking;
 			const ac = new AbortController();
 			const frame = requestAnimationFrame(() =>
-				setTimeout(() => asking.load(m.items, ac.signal).catch((e) => report('Nieuw sinds', e)))
+				setTimeout(() => asking.load(own.items, ac.signal).catch((e) => report('Nieuw sinds', e)))
 			);
 			return () => {
 				cancelAnimationFrame(frame);
@@ -94,115 +95,139 @@
 		});
 	});
 
-	/** A change of this bundel: the store acts on the active one. */
-	function inMap(change: () => void) {
-		if (kaart.actief.id !== m.id) kaart.kies(m.id);
-		change();
-	}
-
 	// ── The rows open: one by one, or all at once ────────────────────────────
 	const open = new SvelteSet<string>();
-	const allOpen = $derived(m.items.length > 0 && m.items.every((i) => open.has(itemKey(i))));
+	const allOpen = $derived(b.items.length > 0 && b.items.every((i) => open.has(itemKey(i))));
 	function toggleAll() {
 		const opening = !allOpen;
-		for (const i of m.items) {
+		for (const i of b.items) {
 			if (opening) open.add(itemKey(i));
 			else open.delete(itemKey(i));
 		}
 	}
 
-	// ── Its name, its note, Verwijder, a source outside Concordans ────────────
+	// ── Its name, Verwijder or Leegmaken, a source outside Concordans ─────────
 	let renaming = $state(untrack(() => !named));
-	let deleting = $state(false);
-	let noteOpen = $state(false);
+	let asking = $state<'delete' | 'empty' | null>(null);
 	let adding = $state(false);
 	/** The focus back on the bundel's name, once the page has drawn it. */
 	const focusHead = () =>
 		afterTick(() =>
 			document.querySelector<HTMLElement>(`#${anchor} .kop button, #${anchor} h1`)?.focus()
 		);
-	const focusAdd = () => afterTick(() => document.getElementById(`erbij-${m.id}`)?.focus());
+	const focusAdd = () => afterTick(() => document.getElementById(`erbij-${anchor}`)?.focus());
 	/** The field takes the whole name on opening, to type over it. */
 	const selectAll = (field: HTMLInputElement) => field.select();
-	function remove() {
-		kaart.verwijder(m.id);
-		deleting = false;
-		if (standalone) navigate(BUNDLES_PATH);
+	function confirm() {
+		if (!m) return;
+		if (asking === 'delete') {
+			kaart.verwijder(m.id);
+			navigate(BUNDLES_PATH);
+		} else if (asking === 'empty') kaart.empty(m.id);
+		asking = null;
 	}
+	/** One item of a menu: closes it, then acts. */
+	const act = (close: () => void, f: () => void) => () => {
+		close();
+		f();
+	};
 </script>
+
+<!-- What every bundel offers to take along: its citations, a CSV, a file, a PDF. -->
+{#snippet takeAlong(close: () => void)}
+	<button
+		type="button"
+		role="menuitem"
+		class="tekstmenu__item"
+		onclick={act(close, () =>
+			copier.copy(citaten(b.items, b.volgorde, b.notitie, b.groepNotities), 'citations')
+		)}>Kopieer citaten</button
+	>
+	<button
+		type="button"
+		role="menuitem"
+		class="tekstmenu__item"
+		onclick={act(close, () =>
+			download(
+				`${fileBase}.csv`,
+				csv(b.items, (i) => itemAddress(i, page.url.origin), b.volgorde)
+			)
+		)}>Download CSV</button
+	>
+	{#if m}
+		{@const own = m}
+		<button
+			type="button"
+			role="menuitem"
+			class="tekstmenu__item"
+			onclick={act(close, () => download(mapFileName([own]), mapFile([own]), 'application/json'))}
+			>Download bestand</button
+		>
+	{/if}
+	<button
+		type="button"
+		role="menuitem"
+		class="tekstmenu__item"
+		title="Als PDF bewaren of afdrukken"
+		onclick={act(close, () => window.print())}>PDF</button
+	>
+{/snippet}
 
 {#snippet actions()}
 	<span class="acties">
-		{#if m.items.length}
+		{#if b.items.length}
 			<!-- The network of a bundel shows its notes: it is the bundel worked in from now on. -->
-			<TekstLink href={netwerkHref(m.items) ?? undefined} onclick={() => kaart.kies(m.id)}
-				>Netwerk</TekstLink
+			<TekstLink
+				href={netwerkHref(b.items) ?? undefined}
+				onclick={() => {
+					if (m) kaart.kies(m.id);
+				}}>Netwerk</TekstLink
 			>
+		{/if}
+		{#if m}
 			<TekstLink disabled={!link} onclick={() => copier.copy(link ?? '', 'link')}
 				>{copier.label('link', 'Kopieer link')}</TekstLink
 			>
-			<TekstLink
-				onclick={() =>
-					copier.copy(citaten(m.items, m.volgorde, m.notitie, m.groepNotities), 'citations')}
-				>{copier.label('citations', 'Citaten')}</TekstLink
-			>
-			<TekstLink
-				onclick={() =>
-					download(
-						`${fileBase}.csv`,
-						csv(m.items, (i) => itemAddress(i, page.url.origin), m.volgorde)
-					)}>CSV</TekstLink
-			>
 		{/if}
-		<TekstLink onclick={() => download(mapFileName([m]), mapFile([m]), 'application/json')}
-			>Bewaar als bestand</TekstLink
-		>
-		{#if standalone}
-			<TekstLink onclick={() => window.print()}>Afdrukken</TekstLink>
-		{:else}
-			<TekstLink href={bundlePageHref(m)}>Open als pagina</TekstLink>
-		{/if}
-		<TekstMenu klein rechts label="Bundel {m.naam}" tekst="Bundel">
+		<TekstMenu klein rechts label="Meer bij {b.naam}" tekst="Meer">
 			{#snippet inhoud(close)}
-				{#if m.id !== kaart.actief.id}
-					<button
-						type="button"
-						role="menuitem"
-						class="tekstmenu__item"
-						onclick={() => {
-							close();
-							kaart.kies(m.id);
-						}}>Bewaar hierin</button
-					>
-				{/if}
-				<button
-					type="button"
-					role="menuitem"
-					class="tekstmenu__item"
-					onclick={() => {
-						close();
-						renaming = true;
-					}}>Hernoem</button
-				>
-				<button
-					type="button"
-					role="menuitem"
-					class="tekstmenu__item"
-					onclick={() => {
-						close();
-						noteOpen = true;
-					}}>{m.notitie ? 'Wijzig aantekening' : 'Aantekening bij de bundel'}</button
-				>
-				{#if !kaart.isDefault(m)}
-					<button
-						type="button"
-						role="menuitem"
-						class="tekstmenu__item"
-						onclick={() => {
-							close();
-							deleting = true;
-						}}>Verwijder bundel</button
-					>
+				{#if b.items.length}{@render takeAlong(close)}{/if}
+				{#if m}
+					{@const own = m}
+					<div class="tekstmenu__onder">
+						<button
+							type="button"
+							role="menuitem"
+							class="tekstmenu__item"
+							onclick={act(close, () => (renaming = true))}>Hernoem</button
+						>
+						{#if own.id !== kaart.actief.id}
+							<button
+								type="button"
+								role="menuitem"
+								class="tekstmenu__item"
+								title="Bewaren gaat hierheen"
+								onclick={act(close, () => kaart.kies(own.id))}>Bewaar hierin</button
+							>
+						{/if}
+						{#if kaart.isDefault(own)}
+							{#if own.items.length}
+								<button
+									type="button"
+									role="menuitem"
+									class="tekstmenu__item"
+									onclick={act(close, () => (asking = 'empty'))}>Leegmaken</button
+								>
+							{/if}
+						{:else}
+							<button
+								type="button"
+								role="menuitem"
+								class="tekstmenu__item"
+								onclick={act(close, () => (asking = 'delete'))}>Verwijder bundel</button
+							>
+						{/if}
+					</div>
 				{/if}
 			{/snippet}
 		</TekstMenu>
@@ -210,13 +235,14 @@
 {/snippet}
 
 {#snippet content()}
-	{#if renaming}
+	{#if renaming && m}
+		{@const own = m}
 		<form
 			class="hernoem"
 			onsubmit={(e) => {
 				e.preventDefault();
 				const field = e.currentTarget.elements.namedItem('naam') as HTMLInputElement;
-				kaart.hernoem(m.id, field.value);
+				kaart.hernoem(own.id, field.value);
 				renaming = false;
 				focusHead();
 			}}
@@ -227,15 +253,15 @@
 				autofocus
 				use:selectAll
 				aria-label="Naam van de bundel"
-				value={m.naam}
+				value={own.naam}
 				onblur={(e) => {
-					kaart.hernoem(m.id, e.currentTarget.value);
+					kaart.hernoem(own.id, e.currentTarget.value);
 					renaming = false;
 				}}
 				onkeydown={(e) => {
 					// The field's own Escape (isEscape leaves a field alone).
 					if (e.key === 'Escape') {
-						e.currentTarget.value = m.naam;
+						e.currentTarget.value = own.naam;
 						renaming = false;
 						focusHead();
 					}
@@ -243,84 +269,88 @@
 			/>
 		</form>
 	{/if}
-	{#if deleting}
+	{#if asking}
 		<p class="vraag">
-			<span>{m.naam} verwijderen, met {count(m.items.length)}?</span>
-			<button type="button" class="btn" onclick={remove}>Verwijder</button>
-			<TekstLink onclick={() => (deleting = false)}>Niet verwijderen</TekstLink>
+			<span>{b.naam} {asking === 'delete' ? 'verwijderen' : 'leegmaken'}?</span>
+			<button type="button" class="btn" onclick={confirm}
+				>{asking === 'delete' ? 'Verwijder' : 'Leegmaken'}</button
+			>
+			<TekstLink onclick={() => (asking = null)}
+				>{asking === 'delete' ? 'Niet verwijderen' : 'Niet leegmaken'}</TekstLink
+			>
 		</p>
 	{/if}
-
-	<Aantekening
-		tekst={m.notitie}
-		bij={m.naam}
-		bind:open={noteOpen}
-		onBewaar={(t) => inMap(() => kaart.mapNotitie(t))}
-	/>
-	<p class="meta">
-		<span
-			>{m.id === kaart.actief.id ? 'Actieve bundel, ' : ''}{count(m.items.length)}, gewijzigd
-			{day(m.gewijzigd)}</span
-		>
-		{#if m.items.length > 1}
+	{#if m}
+		{@const own = m}
+		<Aantekening
+			tekst={own.notitie}
+			bij={own.naam}
+			placeholder="Onderzoeksvraag of aantekening"
+			onBewaar={(t) => kaart.mapNotitie(t, own.id)}
+		/>
+	{:else}
+		<Aantekening tekst={b.notitie} bij={b.naam} />
+	{/if}
+	{#if m}<p class="papier">Gewijzigd {korteDatum(vandaag(new Date(m.gewijzigd)))}</p>{/if}
+	<div class="werkregel">
+		<!-- The place of the view, Lijst | Oud en nieuw, where a bundel holds a pair (O3). -->
+		{#if m && m.items.length > 1}
+			{@const own = m}
 			<TekstMenu
 				klein
-				label="Volgorde van {m.naam}"
+				label="Volgorde van {own.naam}"
 				opties={[
 					{ waarde: 'groep' as const, label: 'Per wet of dossier' },
 					{ waarde: 'eigen' as const, label: 'Eigen volgorde' }
 				]}
-				waarde={m.volgorde}
-				onSelect={(v) => inMap(() => kaart.ordening(v))}
+				waarde={own.volgorde}
+				onSelect={(v) => kaart.ordening(v, own.id)}
 			/>
 		{/if}
-		{#if m.items.length}
-			<TekstLink onclick={toggleAll} aria-pressed={allOpen}
-				>{allOpen ? 'Alles inklappen' : 'Alles uitklappen'}</TekstLink
-			>
+		{#if b.items.length}
+			<span class="rechts">
+				<TekstLink onclick={toggleAll} aria-pressed={allOpen}
+					>{allOpen ? 'Alles inklappen' : 'Alles uitklappen'}</TekstLink
+				>
+			</span>
 		{/if}
-	</p>
+	</div>
 	<!-- What is new since the visit before: its line stands from the first paint, its words
 	     come in it (F1). -->
 	{#if fresh}<p class="nieuw-regel">
 			{#if fresh.any}<NewMark since={fresh.since} />{/if}
 		</p>{/if}
-	{#if !m.items.length}
+	{#if !b.items.length}
 		<p class="leeg stil">Nog niets bewaard.</p>
 	{:else}
 		<MapGroups
 			map={m}
-			items={m.items}
-			order={m.volgorde}
-			notes={m.groepNotities ?? {}}
+			items={b.items}
+			order={b.volgorde}
+			notes={b.groepNotities ?? {}}
 			{open}
 			{fresh}
 		/>
 	{/if}
-	{#if adding}
-		<AddSource
-			groups={groepen(m.items).map((g) => ({ key: g.sleutel, name: g.groep }))}
-			onAdd={(i: MapItem) => inMap(() => kaart.wissel(i))}
-			onReader={() => kaart.kies(m.id)}
-			onClose={() => {
-				adding = false;
-				focusAdd();
-			}}
-		/>
-	{:else}
-		<p class="erbij">
-			<TekstLink id="erbij-{m.id}" onclick={() => (adding = true)}>Andere bron toevoegen</TekstLink>
-		</p>
-	{/if}
-	{#if m.items.length}
-		<p class="voet">
-			<ConfirmButton
-				label="Wis de bundel"
-				confirmLabel="Ja, alles uit {m.naam} halen"
-				class="wis raakvlak"
-				onConfirm={() => kaart.empty(m.id)}
+	{#if m}
+		{@const own = m}
+		{#if adding}
+			<AddSource
+				groups={groepen(own.items).map((g) => ({ key: g.sleutel, name: g.groep }))}
+				onAdd={(i: MapItem) => kaart.add(i, own.id)}
+				onReader={() => kaart.kies(own.id)}
+				onClose={() => {
+					adding = false;
+					focusAdd();
+				}}
 			/>
-		</p>
+		{:else}
+			<p class="erbij">
+				<TekstLink id="erbij-{anchor}" onclick={() => (adding = true)}
+					>Andere bron toevoegen</TekstLink
+				>
+			</p>
+		{/if}
 	{/if}
 	<p class="sr-only" aria-live="polite">{copier.announcement}</p>
 {/snippet}
@@ -328,13 +358,13 @@
 {#if standalone}
 	<article class="bundel" id={anchor}>
 		<header class="blad__kop">
-			<h1 class="blad__titel" tabindex="-1">{m.naam}</h1>
+			<h1 class="blad__titel" tabindex="-1">{b.naam}</h1>
 			{@render actions()}
 		</header>
 		<div class="inhoud">{@render content()}</div>
 	</article>
 {:else}
-	<Sectie title={m.naam} id={anchor} niveau={2} sleutel="map:{m.id}" standaardOpen>
+	<Sectie title={b.naam} id={anchor} niveau={2} sleutel="map:{anchor}" standaardOpen>
 		{#snippet naast()}{@render actions()}{/snippet}
 		{@render content()}
 	</Sectie>
@@ -349,18 +379,21 @@
 	.acties {
 		display: inline-flex;
 		flex-wrap: wrap;
-		align-items: baseline;
+		align-items: center;
 		gap: var(--s-1) var(--s-4);
 		font-size: var(--t-meta);
 	}
-	.meta {
+	/* One line: the view and the order at the left, Alles uitklappen at the right. */
+	.werkregel {
 		display: flex;
 		flex-wrap: wrap;
-		align-items: baseline;
+		align-items: center;
 		gap: var(--s-1) var(--s-4);
-		margin: 0;
+		margin-top: var(--s-2);
 		font-size: var(--t-meta);
-		color: var(--ink-3);
+	}
+	.werkregel .rechts {
+		margin-left: auto;
 	}
 	.nieuw-regel {
 		height: calc(var(--t-meta) * var(--lh-snug));
@@ -393,37 +426,29 @@
 		margin: 0;
 		font-size: var(--t-meta);
 	}
-	.voet {
-		margin: var(--s-2) 0 0;
-	}
 	.erbij {
 		margin: var(--s-3) 0 0;
 		font-size: var(--t-meta);
 	}
-	.voet :global(.wis) {
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-		text-decoration: underline;
-		text-underline-offset: 2px;
-		cursor: pointer;
+	/* The day it changed: on paper only. */
+	.papier {
+		display: none;
 	}
-	.voet :global(.wis:hover) {
-		color: var(--ink);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
-	}
-	/* On paper: the name, the question and what the bundel holds; no ways on. */
+	/* On paper: the name, the question, the day and what the bundel holds; no ways on. */
 	@media print {
 		.acties,
 		.erbij,
-		.voet,
-		.meta :global(.tekstmenu),
-		.meta :global(.tekstlink) {
+		.werkregel,
+		.vraag,
+		.nieuw-regel,
+		.inhoud :global(.aantekening:has(.aantekening-veld)) {
 			display: none;
+		}
+		.papier {
+			display: block;
+			margin: 0;
+			font-size: var(--t-micro);
+			color: var(--ink-3);
 		}
 	}
 </style>

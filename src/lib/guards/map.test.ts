@@ -10,16 +10,6 @@ describe('the map', () => {
 		expect(overtreders(metDeHand, [plek('lib/map/map.ts')])).toEqual([]);
 	});
 
-	it('puts In de lezer in one place in every row, on Gemarkeerd and the bundel’s page (F4)', () => {
-		// First in the row's ways on, in the DOM as on screen (Tab follows it); the buttons after
-		// it keep their width, so they do not move it. A tap target of 24 px at least.
-		const groups = bron('lib/map/MapGroups.svelte');
-		const aside = /\{#snippet aside\(\)\}([\s\S]*?)\{\/snippet\}/.exec(groups)![1];
-		expect(aside.indexOf('naar-lezer')).toBeLessThan(aside.indexOf('class="knoppen"'));
-		expect(groups).not.toMatch(/order: -1/);
-		expect(groups).toMatch(/:global\(\.naar-lezer\) \{[^}]*min-height: var\(--s-5\)/);
-	});
-
 	it('cites a kept vote as a vote, from its reader, a row of Bronnen and Verbonden (#54)', () => {
 		const kept = BRONNEN.filter(({ text }) => /\bvoteCitation\(/.test(text)).map((s) => s.path);
 		expect(kept).toEqual(
@@ -77,7 +67,7 @@ describe('the map', () => {
 		for (const [t, tekst] of [
 			[groups, 'tekst={i.notitie}'],
 			[groups, 'tekst={note}'],
-			[view, 'tekst={m.notitie}'],
+			[view, 'tekst={own.notitie}'],
 			[pagina, 'tekst={g.notitie}']
 		])
 			expect(t).toContain(tekst);
@@ -101,13 +91,6 @@ describe('the map', () => {
 		expect(inhoud).toContain("'Heel artikel hier'");
 		expect(inhoud).toContain("'Heel artikel in de lezer'");
 		expect(inhoud).not.toMatch(/>\s*Heel artikel\s*</);
-		// The row's own way to the reader, in sight and not on hover: outside .knoppen.
-		const aside = /\{#snippet aside\(\)\}([\s\S]*?)\{\/snippet\}/.exec(
-			bron('lib/map/MapGroups.svelte')
-		)![1];
-		const knoppen = /<span class="knoppen">[\s\S]*?<\/span>/.exec(aside)![0];
-		expect(aside).toContain('>In de lezer</TekstLink');
-		expect(knoppen).not.toContain('naar-lezer');
 	});
 
 	it('shows a bundel alike on Gemarkeerd and on its own page: one MapView, one MapGroups', () => {
@@ -120,16 +103,11 @@ describe('the map', () => {
 		expect(bron('lib/map/MapView.svelte')).toContain('<MapGroups');
 	});
 
-	it('opens a bundel on its own page by a control that says so', () => {
-		const view = bron('lib/map/MapView.svelte');
-		expect(view).toMatch(/href=\{bundlePageHref\(m\)\}>Open als pagina</);
-	});
-
 	it("keeps the line of what is new on a bundel's page before it comes: nothing moves (F1)", () => {
 		const view = bron('lib/map/MapView.svelte');
 		// The line stands as soon as the visit before is known, its words come in it later.
 		expect(view).toMatch(/\{#if fresh\}<p class="nieuw-regel">\s*\{#if fresh\.any\}<NewMark/);
-		expect(view.match(/<p class="meta">([\s\S]*?)<\/p>/)?.[1]).not.toContain('NewMark');
+		expect(view.match(/<div class="werkregel">([\s\S]*?)<\/div>/)?.[1]).not.toContain('NewMark');
 		expect(view).toMatch(/\.nieuw-regel \{[^}]*height: /);
 	});
 });
