@@ -38,6 +38,7 @@
 	import { load } from '$lib/util/load.svelte';
 	import WholeLawReaderArticle from './WholeLawReaderArticle.svelte';
 	import WholeLawReaderPeildatum from './WholeLawReaderPeildatum.svelte';
+	import Dekking from '$lib/components/ui/Dekking.svelte';
 	import { followPosition } from './law-position.svelte';
 
 	let { bwbId }: { bwbId: string } = $props();
@@ -159,6 +160,19 @@
 	const officialUrl = $derived(
 		(peildatum ? shownVersion?.official_url : null) ?? lawDetail?.official_url ?? null
 	);
+	const officialSource = $derived(
+		officialUrl ? { label: sourceName(officialUrl) ?? 'Officiële tekst', href: officialUrl } : null
+	);
+	// What the dataset lacks of the law, said once in the head (Dekking): an act of the EU has
+	// its text as adopted only; a regeling of the BWB without articles has no text read. A
+	// treaty of the BWB counts 0 articles but lists them, so the list decides.
+	const textNotRead = $derived(
+		!peildatum && lawDetail?.article_count === 0 && status === 'ready' && total === 0
+	);
+	const lacksArticles = $derived(
+		lawDetail?.article_count === 0 && (status !== 'ready' || total === 0)
+	);
+	const isEu = $derived(lawDetail?.jurisdiction === 'eu');
 
 	$effect(() => {
 		detailByNumber.clear();
@@ -295,9 +309,7 @@
 				),
 				cite: citeItems({ kort: lawTitle, voluit: fullTitle ?? lawTitle }, permalink(page.url, '')),
 				naam: lawTitle,
-				bron: officialUrl
-					? { label: sourceName(officialUrl) ?? 'Officiële tekst', href: officialUrl }
-					: null
+				bron: officialSource
 			}}
 		>
 			{#snippet kindLine()}<span>{kindLabel}</span>{/snippet}
@@ -307,6 +319,22 @@
 			<!-- What is on screen and which text: the count, a treaty, the peildatum. -->
 			{#snippet statusLine()}
 				<span>{headLine}</span>
+				{#if textNotRead}
+					<p class="whole-count">
+						<Dekking dekking={{ onderdeel: 'text', state: 'none' }} bron={officialSource} />
+					</p>
+				{:else if isEu}
+					<p class="whole-count">
+						<Dekking
+							dekking={{
+								onderdeel: 'versions',
+								state: 'not_in_source',
+								as_of: lawDetail?.date_signed
+							}}
+							bron={officialSource && { ...officialSource, label: 'EUR-Lex' }}
+						/>
+					</p>
+				{/if}
 				{#if detail.state.status === 'error'}
 					<LoadState state={detail.state} what="De gegevens van de wet" retry={detail.retry} />
 				{/if}
@@ -341,7 +369,7 @@
 						{/if}
 					</p>
 				{/if}
-				{#if versions.length > 0}
+				{#if versions.length > 0 && !lacksArticles}
 					<WholeLawReaderPeildatum {versions} {peildatum} {today} {choose} />
 				{/if}
 			{/snippet}

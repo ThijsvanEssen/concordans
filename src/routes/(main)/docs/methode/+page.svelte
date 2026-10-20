@@ -94,8 +94,9 @@
 				<a href="https://hudoc.echr.coe.int" class="cite">hudoc.echr.coe.int</a>.
 			</p>
 			<p>
-				Van de Eerste Kamer staan leden, fracties en commissies erin in hun huidige samenstelling,
-				zonder eerdere, en besluiten over wetsvoorstellen vanaf juli 2026.
+				Van de Eerste Kamer staat de zetelverdeling per zittingsperiode erin sinds 2003. Leden,
+				fracties en commissies staan erin zoals eerstekamer.nl ze toont sinds het eerste ophalen;
+				eerdere lidmaatschappen niet. Besluiten over wetsvoorstellen staan erin vanaf juli 2026.
 			</p>
 			<p>
 				Elke bron wordt afzonderlijk opgehaald; de stand per bron staat bij

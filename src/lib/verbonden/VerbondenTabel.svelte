@@ -21,7 +21,7 @@
 		exportRows,
 		rowsToCsv
 	} from './export';
-	import { type VerbondenFilter } from './filter';
+	import { geenVerbindingen, type VerbondenFilter } from './filter';
 	import { formatCount } from '$lib/text/getal';
 	import { ankerVanRij, dossierVanRij, openLabelOf, rowKey, type Row } from './rows';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
@@ -217,7 +217,7 @@
 			</div>
 		{:else if sorted.length === 0}
 			<p class="note">
-				{verbonden.loading ? 'Laden…' : 'Geen verbindingen binnen de gekozen bronnen en filters.'}
+				{verbonden.loading ? 'Laden…' : geenVerbindingen(filter)}
 			</p>
 		{:else}
 			<table>
