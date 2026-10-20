@@ -45,9 +45,10 @@ describe('the frame of a page', () => {
 		expect(
 			menu.filter((path) => !/class="blad__kop"[\s\S]*?class="blad__titel"/.test(bron(path)))
 		).toEqual([]);
-		// Every h1 of a page is the one title, the start page's too.
+		// Every h1 of a page is the one title, the start page's too; the network's for a screen
+		// reader only.
 		const anders = overtreders((t) =>
-			[...t.matchAll(/<h1\b[^>]*>/g)].some((m) => !/class="blad__titel"/.test(m[0]))
+			[...t.matchAll(/<h1\b[^>]*>/g)].some((m) => !/class="blad__titel( sr-only)?"/.test(m[0]))
 		).filter((p) => /^(routes\/|uitzondering )/.test(p));
 		expect(anders).toEqual([]);
 		const eigen = overtreders(

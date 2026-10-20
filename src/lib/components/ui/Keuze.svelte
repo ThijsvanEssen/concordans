@@ -96,13 +96,13 @@
 	/* The ends follow the frame's corners: no overflow to clip them, so a finger's target
 	   (.raakvlak-knop) reaches out of the frame. */
 	button:first-child {
-		border-radius: calc(var(--r-1) - 1px) 0 0 calc(var(--r-1) - 1px);
+		border-radius: var(--r-1) 0 0 var(--r-1);
 	}
 	button:last-child {
-		border-radius: 0 calc(var(--r-1) - 1px) calc(var(--r-1) - 1px) 0;
+		border-radius: 0 var(--r-1) var(--r-1) 0;
 	}
 	button:only-child {
-		border-radius: calc(var(--r-1) - 1px);
+		border-radius: var(--r-1);
 	}
 	button:hover:not(:disabled):not([aria-pressed='true']) {
 		background: var(--paper-2);

@@ -22,7 +22,7 @@ describe('the touch target', () => {
 		);
 		// Bewaar's caret is 44 px wide itself, so its target never reaches over Bewaar.
 		expect(read('lib/map/Bewaar.svelte')).toMatch(
-			/tekstmenu__knop\) \{\s*min-width: calc\(var\(--s-6\) \+ var\(--s-3\)\)/
+			/tekstmenu__knop\) \{\s*min-width: var\(--veld-h-raak\)/
 		);
 	});
 

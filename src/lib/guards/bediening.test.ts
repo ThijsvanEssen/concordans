@@ -75,10 +75,11 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 	});
 
 	it('sizes a control at the height of a page or of a panel', () => {
-		// 32 px on a page (--veld-h), 24 px in a panel or a group (--veld-h-klein).
+		// 32 px on a page (--veld-h), 24 px in a panel or a group (--veld-h-klein), 44 px for a
+		// finger on a touch screen (--veld-h-raak).
 		const hoog = (body: string) =>
 			[...body.matchAll(/(?<![-\w])height:\s*([^;]+);/g)].some(
-				(m) => !/^(var\(--veld-h(-klein)?\)|auto|100%)$/.test(m[1].trim())
+				(m) => !/^(var\(--veld-h(-klein|-raak)?\)|auto|100%)$/.test(m[1].trim())
 			);
 		expect(
 			overtreders((t) => regels(t).some((r) => isControl(r.selector) && hoog(r.body)))

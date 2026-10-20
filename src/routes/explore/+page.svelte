@@ -1315,7 +1315,7 @@
 			<p class="explore-empty stil">Laden…</p>
 		{:else if mode === 'graph'}
 			<!-- The network without a bron: its heading for a screen reader, as the title names it. -->
-			{#if !selectedNode}<h1 class="sr-only">Samenhang</h1>{/if}
+			{#if !selectedNode}<h1 class="blad__titel sr-only">Samenhang</h1>{/if}
 			{#if voorbeeldAan}<ExampleLine name={voorbeeld!.naam} />{/if}
 			<div
 				class="explore-graph"
@@ -1855,7 +1855,7 @@
 	/* A finger's 44 px on a touch screen: the tabs' own height, between the bar and the text. */
 	@media (pointer: coarse) {
 		.mobile-tabs {
-			height: calc(var(--s-6) + var(--s-3));
+			height: var(--veld-h-raak);
 		}
 	}
 	.mobile-tabs .mobile-tab {

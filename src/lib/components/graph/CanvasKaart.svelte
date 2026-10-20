@@ -113,7 +113,7 @@
 	   targets of two cards above each other do not meet. */
 	@media (pointer: coarse) {
 		.canvas-kaart__kop {
-			min-height: calc(var(--s-6) + var(--s-3));
+			min-height: var(--veld-h-raak);
 		}
 		.canvas-kaart__knop {
 			align-self: stretch;

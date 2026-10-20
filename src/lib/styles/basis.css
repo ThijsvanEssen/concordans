@@ -148,7 +148,7 @@ a:hover {
 	.verfijnen-knop {
 		display: inline-flex;
 		align-items: center;
-		min-height: calc(var(--s-6) + var(--s-3));
+		min-height: var(--veld-h-raak);
 	}
 }
 /* A finger's target around a small control or a link in a line of text (UX-toets 10 Oct:

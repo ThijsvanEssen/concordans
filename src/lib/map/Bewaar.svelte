@@ -99,7 +99,7 @@
 	/* The caret is 44 px wide for a finger, never reaching over Bewaar (UX-toets A21 #3). */
 	@media (pointer: coarse) {
 		.splits :global(.tekstmenu__knop) {
-			min-width: calc(var(--s-6) + var(--s-3));
+			min-width: var(--veld-h-raak);
 		}
 	}
 	.splits :global(.tekstmenu__knop:hover) {

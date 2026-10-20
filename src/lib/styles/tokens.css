@@ -121,6 +121,9 @@
 	   smaller one. */
 	--veld-h: 32px;
 	--veld-h-klein: 24px;
+	/* A finger's target on a touch screen: a control that has no wider target of its own
+	   (.raakvlak) is this high there. */
+	--veld-h-raak: calc(var(--s-6) + var(--s-3));
 	/* The cards over the network (Netwerk, Legenda, a cluster's card): one width, one right
 	   edge (Thijs, 10 Oct). */
 	--paneel-breed: 280px;
