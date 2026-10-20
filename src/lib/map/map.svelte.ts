@@ -3,8 +3,10 @@
 // markeringen; another bundel holds a bron only where the reader puts it there by name
 // (decision 20A: no hidden "active bundel"). A bundel is changed by its id.
 import {
+	fieldsOf,
 	freeName,
 	readItem,
+	unknownOf,
 	withItems,
 	itemKey,
 	verschuif,
@@ -17,8 +19,8 @@ import { keepStorage } from './persist';
 import { isDay } from '$lib/text/datum';
 import { formatCount } from '$lib/text/getal';
 
-const OPSLAG = 'concordans:mappen';
-const EERSTE = 'Losse markeringen';
+const STORAGE_KEY = 'concordans:mappen';
+const LOOSE_NAME = 'Losse markeringen';
 /** The name a shared Losse markeringen gets with its receiver, beside their own. */
 const SHARED_LOOSE = 'Gedeelde markeringen';
 /** The bundel the readers keep in this browser session, until it is ended (`keepIn`). */
@@ -34,12 +36,27 @@ function keepingNow(): string | null {
 	}
 }
 
-type Stand = { mappen: Map[] };
+/** The bundels, and what else a later version keeps beside them, as it was kept. */
+type Stand = { mappen: Map[]; extra?: Record<string, unknown> };
+
+/** The fields of a bundel this version knows: the rest it keeps as they were (`unknownOf`). */
+const MAP_FIELDS = fieldsOf<Map>({
+	id: true,
+	naam: true,
+	items: true,
+	volgorde: true,
+	gewijzigd: true,
+	notitie: true,
+	groepNotities: true,
+	since: true,
+	seen: true
+});
+const ROOT_FIELDS = new Set(['mappen']);
 
 const nu = () => new Date().toISOString();
-const nieuwId = () => Math.random().toString(36).slice(2, 10);
-const leeg = (naam: string): Map => ({
-	id: nieuwId(),
+const newId = () => Math.random().toString(36).slice(2, 10);
+const blank = (naam: string): Map => ({
+	id: newId(),
 	naam,
 	items: [],
 	volgorde: 'groep',
@@ -63,7 +80,7 @@ function visitedNow(): Set<string> {
 }
 
 /** The notes per group as kept, strings only. */
-const alleenTekst = (v: unknown): GroepNotities =>
+const textsOnly = (v: unknown): GroepNotities =>
 	v && typeof v === 'object'
 		? Object.fromEntries(
 				Object.entries(v).filter(([, n]) => typeof n === 'string' && n.trim()) as [string, string][]
@@ -101,12 +118,12 @@ function heleItems(id: string, v: unknown): MapItem[] {
 const LOOSE_ID = 'losse-markeringen';
 
 /** Losse markeringen alone: where this browser keeps none, or none it can read. */
-const eersteStand = (): Stand => ({ mappen: [{ ...leeg(EERSTE), id: LOOSE_ID }] });
+const firstState = (): Stand => ({ mappen: [{ ...blank(LOOSE_NAME), id: LOOSE_ID }] });
 
 /** The bundels as this browser keeps them, as written; null where it keeps none. */
 function stored(): string | null {
 	try {
-		return localStorage.getItem(OPSLAG);
+		return localStorage.getItem(STORAGE_KEY);
 	} catch {
 		return null;
 	}
@@ -118,19 +135,22 @@ function lees(text = stored()): Stand | null {
 		const raw = JSON.parse(text ?? 'null');
 		if (!raw || !Array.isArray(raw.mappen) || !raw.mappen.length) return null;
 		onleesbaar = {};
-		// The first is Losse markeringen by its place, whatever name it was kept under.
+		// The first is Losse markeringen by its place, whatever name it was kept under; a field
+		// of a later version as it was kept.
 		const mappen: Map[] = raw.mappen.map((m: Map, n: number) => ({
+			...unknownOf(m, MAP_FIELDS),
 			id: String(m.id),
-			naam: n === 0 ? EERSTE : String(m.naam || 'Bundel'),
+			naam: n === 0 ? LOOSE_NAME : String(m.naam || 'Bundel'),
 			items: heleItems(String(m.id), m.items),
 			volgorde: m.volgorde === 'eigen' ? 'eigen' : 'groep',
 			gewijzigd: String(m.gewijzigd || nu()),
 			notitie: typeof m.notitie === 'string' && m.notitie.trim() ? m.notitie : null,
-			groepNotities: alleenTekst(m.groepNotities),
+			groepNotities: textsOnly(m.groepNotities),
 			since: day(m.since),
 			seen: day(m.seen)
 		}));
-		return { mappen };
+		const extra = unknownOf(raw, ROOT_FIELDS);
+		return Object.keys(extra).length ? { mappen, extra } : { mappen };
 	} catch {
 		return null;
 	}
@@ -140,13 +160,13 @@ class Kaarten {
 	/** What this tab last read or wrote: a read of the same leaves its copy as it is. */
 	#lastText = typeof window === 'undefined' ? null : stored();
 	#stand = $state<Stand>(
-		(typeof window === 'undefined' ? null : lees(this.#lastText)) ?? eersteStand()
+		(typeof window === 'undefined' ? null : lees(this.#lastText)) ?? firstState()
 	);
 	constructor() {
 		// What another tab kept comes in at once (the browser's storage event).
 		if (typeof window !== 'undefined')
 			window.addEventListener('storage', (e) => {
-				if (e.key === OPSLAG || e.key === null) this.#vers();
+				if (e.key === STORAGE_KEY || e.key === null) this.#vers();
 			});
 	}
 	/** Every change starts from what this browser keeps now, not from this tab's copy: a tab
@@ -181,9 +201,9 @@ class Kaarten {
 		const mappen = this.#stand.mappen.map((m) =>
 			onleesbaar[m.id] ? { ...m, items: [...m.items, ...onleesbaar[m.id]] } : m
 		);
-		const text = JSON.stringify({ mappen });
+		const text = JSON.stringify({ ...this.#stand.extra, mappen });
 		try {
-			localStorage.setItem(OPSLAG, text);
+			localStorage.setItem(STORAGE_KEY, text);
 			this.#lastText = text;
 		} catch {
 			/* geen opslag */
@@ -306,9 +326,9 @@ class Kaarten {
 		let n = this.#stand.mappen.length + 1;
 		while (!naam && namen.has(`Bundel ${n}`)) n++;
 		// A name a bundel has already is numbered on: `Thuiswerk 2` beside `Thuiswerk`.
-		const m = { ...leeg(naam?.trim() ? freeName(naam.trim(), namen) : `Bundel ${n}`), items };
+		const m = { ...blank(naam?.trim() ? freeName(naam.trim(), namen) : `Bundel ${n}`), items };
 		if (items.length) keepStorage();
-		this.#stand = { mappen: [...this.#stand.mappen, m] };
+		this.#stand = { ...this.#stand, mappen: [...this.#stand.mappen, m] };
 		this.#bewaar();
 		return m;
 	}
@@ -327,7 +347,7 @@ class Kaarten {
 	verwijder(id: string) {
 		this.#vers();
 		if (this.isDefault({ id })) return;
-		this.#stand = { mappen: this.#stand.mappen.filter((m) => m.id !== id) };
+		this.#stand = { ...this.#stand, mappen: this.#stand.mappen.filter((m) => m.id !== id) };
 		this.#bewaar();
 	}
 
@@ -355,7 +375,8 @@ class Kaarten {
 	/** As a bundel of its own, under its name, in its order, with its note; a shared Losse
 	 *  markeringen (or a bundel without a name) as Gedeelde markeringen. */
 	bewaarAlsMap(g: SharedMap): Map {
-		const name = g.naam && g.naam !== EERSTE && g.naam !== this.loose.naam ? g.naam : SHARED_LOOSE;
+		const name =
+			g.naam && g.naam !== LOOSE_NAME && g.naam !== this.loose.naam ? g.naam : SHARED_LOOSE;
 		const m = this.nieuw(name, g.items);
 		if (g.volgorde === 'eigen') this.ordening('eigen', m.id);
 		if (g.notitie) this.mapNotitie(g.notitie, m.id);

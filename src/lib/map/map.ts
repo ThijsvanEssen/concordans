@@ -343,9 +343,34 @@ const EXTERNAL_ID = /^external:[a-z0-9]+$/;
 const textOf = (o: Record<string, unknown>, k: string) =>
 	typeof o[k] === 'string' && o[k].trim() ? o[k] : null;
 
+/** The fields of a form this version knows, by name: what else a stored value holds is a
+ *  later version's, kept as it was (`unknownOf`). */
+export const fieldsOf = <T>(fields: Record<keyof T, true>): ReadonlySet<string> =>
+	new Set(Object.keys(fields));
+
 /**
- * An item as this browser or a link gives it back, its known fields only; null where it is
- * in an older or broken form.
+ * What a value read back holds beyond the fields this version knows: written back with it
+ * unchanged, so a tab of an older version never throws away what a newer one kept.
+ */
+export const unknownOf = (o: object, known: ReadonlySet<string>): Record<string, unknown> =>
+	Object.fromEntries(Object.entries(o).filter(([k]) => !known.has(k)));
+
+const ITEM_FIELDS = fieldsOf<MapItem>({
+	id: true,
+	at: true,
+	kort: true,
+	voluit: true,
+	groep: true,
+	groupKey: true,
+	notitie: true,
+	pad: true,
+	kind: true,
+	url: true
+});
+
+/**
+ * An item as this browser or a link gives it back; null where it is in an older or broken
+ * form. Its known fields as read, a field it does not know as it was kept.
  */
 export function readItem(v: unknown): MapItem | null {
 	if (!v || typeof v !== 'object') return null;
@@ -363,6 +388,7 @@ export function readItem(v: unknown): MapItem | null {
 	const kind = textOf(o, 'kind');
 	const url = webAddress(textOf(o, 'url'));
 	return {
+		...unknownOf(o, ITEM_FIELDS),
 		id,
 		at,
 		kort,

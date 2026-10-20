@@ -3,7 +3,7 @@
 // version cannot read, not by a second tab that read the bundels before (Thijs, 20 Oct: a
 // bundel with items showed none).
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { MapItem } from './map';
+import { itemKey, type MapItem } from './map';
 import kept20Oct from './fixtures/opslag-20261020.json';
 
 vi.mock('$app/state', () => ({ page: { url: new URL('http://localhost/') } }));
@@ -246,5 +246,102 @@ describe('a browser that keeps no bundels yet', () => {
 		const kept = JSON.parse(b.data.get(OPSLAG)!);
 		expect(kept.mappen).toHaveLength(1);
 		expect(kept.mappen[0].items.map((i: MapItem) => i.kort)).toEqual([lid.kort, ro.kort]);
+	});
+});
+
+describe('a field of a later version (onderzoeksflow stap 1: lees vers, gooi niets weg)', () => {
+	/** Bundels as a later version keeps them: a field it adds beside the bundels, on a bundel,
+	 *  on an item, on an aantekening and its fragment. */
+	const later = () => ({
+		toekomst: 'stand',
+		mappen: [
+			{
+				id: 'eerste',
+				naam: 'Losse markeringen',
+				items: [{ ...ro, toekomst: 'los' }],
+				volgorde: 'groep',
+				gewijzigd: '2026-10-15T09:00:00.000Z',
+				toekomst: 'losse bundel'
+			},
+			{
+				id: 'cbw',
+				naam: 'Wet en dossier',
+				items: [{ ...artikel, toekomst: { versie: 2 } }, lid, stuk],
+				volgorde: 'groep',
+				gewijzigd: '2026-10-19T16:00:00.000Z',
+				toekomst: ['bundel'],
+				aantekeningen: [
+					{
+						id: 'a-12ab34cd',
+						op: itemKey(lid),
+						fragment: { waar: 'lid-2', exact: 'onrechtmatige daad', start: 4, toekomst: 'f' },
+						bron: itemKey(stuk),
+						tekst: 'Zie de MvT',
+						toekomst: 'aantekening'
+					}
+				]
+			}
+		]
+	});
+	/** Every field `toekomst` in what the browser keeps, by where it stands. */
+	const toekomst = (b: ReturnType<typeof browser>) => {
+		const kept = JSON.parse(b.data.get(OPSLAG)!);
+		const cbw = kept.mappen.find((m: { id: string }) => m.id === 'cbw');
+		return {
+			stand: kept.toekomst,
+			los: kept.mappen[0].toekomst,
+			losItem: kept.mappen[0].items.find((i: MapItem) => i.id === ro.id)?.toekomst,
+			bundel: cbw?.toekomst,
+			item: cbw?.items.find((i: MapItem) => itemKey(i) === itemKey(artikel))?.toekomst,
+			aantekening: cbw?.aantekeningen?.[0]?.toekomst,
+			fragment: cbw?.aantekeningen?.[0]?.fragment?.toekomst
+		};
+	};
+	const alles = {
+		stand: 'stand',
+		los: 'losse bundel',
+		losItem: 'los',
+		bundel: ['bundel'],
+		item: { versie: 2 },
+		aantekening: 'aantekening',
+		fragment: 'f'
+	};
+
+	it('survives every change of a tab, and a second tab writing in turn', async () => {
+		const b = browser();
+		b.data.set(OPSLAG, JSON.stringify(later()));
+		const een = await tab(b);
+		const ander = await tab(b);
+		const changes: (() => void)[] = [
+			() => een.keep(lid),
+			() => ander.add(uitspraak, 'cbw'),
+			() => een.notitie(artikel, 'Nieuwe notitie', 'cbw'),
+			() => ander.schuif(stuk, -1, 'cbw'),
+			() => een.ordening('eigen', 'cbw'),
+			() => ander.groepNotitie('dossier:36665', 'Zorgplicht', 'cbw'),
+			() => een.mapNotitie('Vraag', 'cbw'),
+			() => ander.hernoem('cbw', 'Wet, dossier en MvT'),
+			() => een.visit('cbw', '2026-10-21'),
+			() => ander.weg(uitspraak, 'cbw'),
+			() => een.nieuw('Derde'),
+			() => ander.weg(lid, 'eerste')
+		];
+		for (const change of changes) {
+			change();
+			expect(toekomst(b)).toEqual(alles);
+		}
+	});
+
+	it('survives a tab whose copy is older, told by the storage event or not', async () => {
+		const b = browser();
+		b.data.set(OPSLAG, voorBundels);
+		const oud = await tab(b);
+		// A later version writes its fields after this tab read the bundels.
+		written(b, JSON.stringify(later()));
+		oud.keep(dossier);
+		expect(toekomst(b)).toEqual(alles);
+		b.data.set(OPSLAG, JSON.stringify(later()));
+		oud.add(uitspraak, 'cbw');
+		expect(toekomst(b)).toEqual(alles);
 	});
 });

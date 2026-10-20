@@ -546,3 +546,11 @@ describe('a dossier kept', () => {
 		expect(netwerkIds([bewaarDossier(d)])).toEqual(['dossiers/36600-VII']);
 	});
 });
+
+describe('an item read back (onderzoeksflow stap 1)', () => {
+	it('keeps a field of a later version as it was kept, and drops a known one that does not read', () => {
+		const later = { ...lid2, toekomst: { a: [1, 2] }, pad: '//elders' };
+		const { pad: _pad, ...zonderPad } = later;
+		expect(readItem(later)).toEqual(zonderPad);
+	});
+});
