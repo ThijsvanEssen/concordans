@@ -317,7 +317,7 @@
 		}, 50);
 	}
 
-	// The reader's notes in the active map (Gemarkeerd), per bron: in its card, and a mark on
+	// The reader's notes in the active bundel, per bron: in its card, and a mark on
 	// the bronnen that hold one of their own. From this browser, so no request.
 	const notities = $derived(notitiesPerBron(kaart.actief));
 	const notitieIds = $derived(gemerkt(notities));

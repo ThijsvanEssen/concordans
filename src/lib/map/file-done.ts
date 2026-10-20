@@ -1,4 +1,4 @@
-// After a choice for a bundel from a file (Gemarkeerd), the focus goes to the head of the bundel
+// After a choice for a bundel from a file (Bundels), the focus goes to the head of the bundel
 // it made or changed, not to the page: the section of the file is gone (F2).
 
 /**

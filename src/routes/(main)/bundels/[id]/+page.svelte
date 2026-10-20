@@ -1,5 +1,5 @@
 <script lang="ts">
-	// A bundel on a page of its own (`?id=`): the research on one page, its question at the
+	// A bundel on a page of its own (/bundels/<id>): the research on one page, its question at the
 	// top, what it holds under it, to read and to print (A4, MapView and MapGroups say what
 	// stays on paper). The bundel is read from this browser; another has none by this id.
 	import { browser } from '$app/environment';
@@ -8,14 +8,15 @@
 	import { siteTitle } from '$lib/seo/server-head.svelte';
 	import { kaart } from '$lib/map/map.svelte';
 	import MapView from '$lib/map/MapView.svelte';
+	import { BUNDLES_PATH } from '$lib/map/page';
 
-	const shown = $derived(kaart.mappen.find((m) => m.id === page.url.searchParams.get('id')));
+	const shown = $derived(kaart.mappen.find((m) => m.id === page.params.id));
 </script>
 
 <RouteKop title={shown ? siteTitle(shown.naam) : undefined} />
 
 <div class="blad blad--tekst bundel-blad">
-	<nav class="stub-eyebrow" aria-label="Hoort bij"><a href="/gemarkeerd">Gemarkeerd</a></nav>
+	<nav class="stub-eyebrow" aria-label="Hoort bij"><a href={BUNDLES_PATH}>Bundels</a></nav>
 	{#if shown}
 		<MapView m={shown} standalone />
 	{:else if browser}

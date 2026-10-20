@@ -77,6 +77,61 @@ describe('the bundels of this browser', () => {
 	});
 });
 
+describe('Losse markeringen, the bundel every browser has (decision 19)', () => {
+	it('is the first bundel, under its own name, where Bewaar keeps at first', async () => {
+		const { kaart } = await store();
+		expect(kaart.mappen.map((m) => m.naam)).toEqual(['Losse markeringen']);
+		expect(kaart.isDefault(kaart.mappen[0])).toBe(true);
+		expect(kaart.actief.id).toBe(kaart.mappen[0].id);
+	});
+
+	it('cannot be deleted, only emptied and renamed', async () => {
+		const { kaart } = await store();
+		const first = kaart.mappen[0];
+		kaart.wissel(lid);
+		kaart.verwijder(first.id);
+		expect(kaart.mappen.map((m) => m.id)).toEqual([first.id]);
+		kaart.empty(first.id);
+		expect(kaart.mappen[0].items).toEqual([]);
+		kaart.hernoem(first.id, 'Los');
+		expect(kaart.mappen[0].naam).toBe('Los');
+		expect(kaart.isDefault(kaart.mappen[0])).toBe(true);
+	});
+
+	it('changes a bundel by its id, without moving where Bewaar keeps', async () => {
+		const { kaart } = await store();
+		const first = kaart.mappen[0];
+		const other = kaart.nieuw('Thuiswerk', [lid, ro]);
+		kaart.kies(first.id);
+		kaart.notitie(lid, 'zorgplicht', other.id);
+		kaart.mapNotitie('Vraag', other.id);
+		kaart.groepNotitie('wet:bwbr0005290', 'Boek 7', other.id);
+		kaart.schuif(ro, -1, other.id);
+		kaart.ordening('eigen', other.id);
+		kaart.weg(lid, other.id);
+		const now = kaart.mappen.find((m) => m.id === other.id)!;
+		expect(now.items).toEqual([ro]);
+		expect(now.notitie).toBe('Vraag');
+		expect(now.groepNotities).toEqual({ 'wet:bwbr0005290': 'Boek 7' });
+		expect(now.volgorde).toBe('eigen');
+		expect(kaart.actief.id).toBe(first.id);
+	});
+
+	it('lists Losse markeringen first, then the bundels last changed first', async () => {
+		const { kaart } = await store();
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-10-18T10:00:00Z'));
+		const a = kaart.nieuw('A');
+		vi.setSystemTime(new Date('2026-10-19T10:00:00Z'));
+		const b = kaart.nieuw('B');
+		vi.setSystemTime(new Date('2026-10-20T10:00:00Z'));
+		kaart.mapNotitie('nieuw', a.id);
+		vi.useRealTimers();
+		expect(kaart.listed.map((m) => m.naam)).toEqual(['Losse markeringen', 'A', 'B']);
+		expect(b.naam).toBe('B');
+	});
+});
+
 describe('a visit to a bundel’s own page', () => {
 	/** A browser session's storage. */
 	function session() {

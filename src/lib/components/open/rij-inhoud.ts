@@ -1,6 +1,6 @@
 // What an opened row shows, per kind (RijInhoud): the bron's content, or nothing, and then
 // the row does not open: its title goes to the reader. Actueel and Gevolgd by the feed's kind;
-// a Kamerstuk in Verbonden, Bronnen and Gemarkeerd by its own (kernSoort): one core text for
+// a Kamerstuk in Verbonden, Bronnen and Bundels by its own (kernSoort): one core text for
 // one stuk wherever its row opens.
 import { motionOrAmendment } from '$lib/text/document-kind';
 import { hasVotes } from '$lib/components/parliamentary/stemming';

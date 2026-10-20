@@ -53,7 +53,7 @@
 				class="tekstmenu__item"
 				onclick={() => {
 					dicht();
-					// A new map with the item, active from now on; named on Gemarkeerd.
+					// A new map with the item, active from now on; named on its page.
 					kaart.nieuw(undefined, [item]);
 				}}>Nieuwe bundel</button
 			>

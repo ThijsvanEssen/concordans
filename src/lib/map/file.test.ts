@@ -72,9 +72,9 @@ describe('a bundel as a file', () => {
 		).toBe(NEWER);
 	});
 
-	it('is named after its bundel, or after Gemarkeerd for all of them', () => {
+	it('is named after its bundel, or Bundels for all of them', () => {
 		expect(mapFileName([map])).toBe('Aansprakelijkheid werkgever.json');
-		expect(mapFileName([map, map])).toBe('Gemarkeerd.json');
+		expect(mapFileName([map, map])).toBe('Bundels.json');
 		expect(mapFileName([{ ...map, naam: 'a/b: c?' }])).toBe('a b c.json');
 	});
 });

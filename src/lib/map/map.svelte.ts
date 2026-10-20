@@ -1,6 +1,6 @@
-// The maps as the page holds them, in this browser: each with a name, one active, where a box
-// keeps what is chosen; the panel open or not; a map someone shared (a link, share.ts) until it is kept
-// or put aside.
+// The bundels as the page holds them, in this browser: each with a name; the first, Losse
+// markeringen, always there (it is emptied, never deleted); one where Bewaar keeps, the one
+// chosen last (`actief`). A bundel is changed by its id: working in one does not choose it.
 import {
 	freeName,
 	readItem,
@@ -16,7 +16,7 @@ import { keepStorage } from './persist';
 import { isDay } from '$lib/text/datum';
 
 const OPSLAG = 'concordans:mappen';
-const EERSTE = 'Gemarkeerd';
+const EERSTE = 'Losse markeringen';
 
 type Stand = { mappen: Map[]; actief: string };
 
@@ -61,7 +61,7 @@ function heleItems(v: unknown): MapItem[] {
 	const skipped = v.length - items.length;
 	if (skipped > 0)
 		console.warn(
-			`Gemarkeerd: ${skipped} item(s) in deze browser overgeslagen (oude of onvolledige vorm).`
+			`Bundels: ${skipped} item(s) in deze browser overgeslagen (oude of onvolledige vorm).`
 		);
 	return items;
 }
@@ -103,6 +103,13 @@ class Kaarten {
 		this.#stand.mappen.find((m) => m.id === this.#stand.actief) ?? this.#stand.mappen[0]
 	);
 	items = $derived(this.actief.items);
+	/** The bundels as the overview lists them: Losse markeringen first, then last changed first. */
+	listed = $derived([
+		this.#stand.mappen[0],
+		...this.#stand.mappen.slice(1).sort((a, b) => b.gewijzigd.localeCompare(a.gewijzigd))
+	]);
+	/** Losse markeringen: the first bundel, emptied but never deleted. */
+	isDefault = (m: Pick<Map, 'id'>) => m.id === this.#stand.mappen[0].id;
 	sleutels = $derived(new Set(this.items.map(itemKey)));
 
 	heeft = (i: Pick<MapItem, 'id' | 'at'>) => this.sleutels.has(itemKey(i));
@@ -116,10 +123,6 @@ class Kaarten {
 		} catch {
 			/* geen opslag */
 		}
-	}
-	/** Changes the active map and remembers. */
-	#werk(f: (m: Map) => Partial<Map>) {
-		this.#change(this.actief.id, f);
 	}
 	/** Changes a map by its id and remembers. */
 	#change(id: string, f: (m: Map) => Partial<Map>) {
@@ -135,36 +138,37 @@ class Kaarten {
 	wissel(i: MapItem) {
 		const k = itemKey(i);
 		if (!this.heeft(i)) keepStorage();
-		this.#werk((m) => ({
+		this.#change(this.actief.id, (m) => ({
 			items: m.items.some((x) => itemKey(x) === k)
 				? m.items.filter((x) => itemKey(x) !== k)
 				: [...m.items, i]
 		}));
 	}
-	weg(i: Pick<MapItem, 'id' | 'at'>) {
+	weg(i: Pick<MapItem, 'id' | 'at'>, id = this.actief.id) {
 		const k = itemKey(i);
-		this.#werk((m) => ({ items: m.items.filter((x) => itemKey(x) !== k) }));
+		this.#change(id, (m) => ({ items: m.items.filter((x) => itemKey(x) !== k) }));
 	}
-	wis() {
-		this.#werk(() => ({ items: [] }));
+	/** All items out; the bundel stays. */
+	empty(id = this.actief.id) {
+		this.#change(id, () => ({ items: [] }));
 	}
-	notitie(i: Pick<MapItem, 'id' | 'at'>, tekst: string) {
+	notitie(i: Pick<MapItem, 'id' | 'at'>, tekst: string, id = this.actief.id) {
 		const k = itemKey(i);
 		const t = tekst.trim();
-		this.#werk((m) => ({
+		this.#change(id, (m) => ({
 			items: m.items.map((x) => (itemKey(x) === k ? { ...x, notitie: t || null } : x))
 		}));
 	}
-	schuif(i: Pick<MapItem, 'id' | 'at'>, richting: -1 | 1) {
-		this.#werk((m) => ({ items: verschuif(m.items, itemKey(i), richting, m.volgorde) }));
+	schuif(i: Pick<MapItem, 'id' | 'at'>, richting: -1 | 1, id = this.actief.id) {
+		this.#change(id, (m) => ({ items: verschuif(m.items, itemKey(i), richting, m.volgorde) }));
 	}
-	ordening(v: Map['volgorde']) {
-		this.#werk(() => ({ volgorde: v }));
+	ordening(v: Map['volgorde'], id = this.actief.id) {
+		this.#change(id, () => ({ volgorde: v }));
 	}
 	/** The note on a group of the map, by its key; empty is none. */
-	groepNotitie(sleutel: string, tekst: string) {
+	groepNotitie(sleutel: string, tekst: string, id = this.actief.id) {
 		const t = tekst.trim();
-		this.#werk((m) => {
+		this.#change(id, (m) => {
 			const rest = { ...m.groepNotities };
 			if (t) rest[sleutel] = t;
 			else delete rest[sleutel];
@@ -172,9 +176,9 @@ class Kaarten {
 		});
 	}
 	/** The note on the map as a whole; empty is none. */
-	mapNotitie(tekst: string) {
+	mapNotitie(tekst: string, id = this.actief.id) {
 		const t = tekst.trim();
-		this.#werk(() => ({ notitie: t || null }));
+		this.#change(id, () => ({ notitie: t || null }));
 	}
 
 	/**
@@ -213,7 +217,7 @@ class Kaarten {
 		const namen = new Set(this.#stand.mappen.map((m) => m.naam));
 		let n = this.#stand.mappen.length + 1;
 		while (!naam && namen.has(`Bundel ${n}`)) n++;
-		// A name a bundel has already is numbered on: `Gemarkeerd 2` beside `Gemarkeerd`.
+		// A name a bundel has already is numbered on: `Thuiswerk 2` beside `Thuiswerk`.
 		const m = { ...leeg(naam?.trim() ? freeName(naam.trim(), namen) : `Bundel ${n}`), items };
 		if (items.length) keepStorage();
 		this.#stand = { mappen: [...this.#stand.mappen, m], actief: m.id };
@@ -229,10 +233,10 @@ class Kaarten {
 		};
 		this.#bewaar();
 	}
-	/** Gone for good; the last map stays, emptied. */
+	/** Gone for good; Losse markeringen stays (it is emptied instead). */
 	verwijder(id: string) {
-		const rest = this.#stand.mappen.filter((m) => m.id !== id);
-		const mappen = rest.length ? rest : [leeg(EERSTE)];
+		if (this.isDefault({ id })) return;
+		const mappen = this.#stand.mappen.filter((m) => m.id !== id);
 		const actief = mappen.some((m) => m.id === this.#stand.actief)
 			? this.#stand.actief
 			: mappen[0].id;
@@ -269,11 +273,12 @@ class Kaarten {
 		}));
 	}
 	/** As a map of its own, under its name, in its order, with its note. */
-	bewaarAlsMap(g: SharedMap) {
-		this.nieuw(g.naam ?? undefined, g.items);
-		if (g.volgorde === 'eigen') this.ordening('eigen');
-		if (g.notitie) this.mapNotitie(g.notitie);
-		for (const [k, n] of Object.entries(g.groepNotities)) this.groepNotitie(k, n);
+	bewaarAlsMap(g: SharedMap): Map {
+		const m = this.nieuw(g.naam ?? undefined, g.items);
+		if (g.volgorde === 'eigen') this.ordening('eigen', m.id);
+		if (g.notitie) this.mapNotitie(g.notitie, m.id);
+		for (const [k, n] of Object.entries(g.groepNotities)) this.groepNotitie(k, n, m.id);
+		return m;
 	}
 }
 

@@ -83,9 +83,9 @@
 		lidNotes?: Map<string, { label: string; href: string }>;
 		/** The mark after an onderdeel's letter or number: `a.` in Dutch law, `a)` in EU law. */
 		mark?: '.' | ')';
-		/** The article as Gemarkeerd keeps it: its id and its law; each lid then has Bewaar. */
+		/** The article as Bundels keeps it: its id and its law; each lid then has Bewaar. */
 		bewaar?: { id: string; groep: string; wet: string | null } | null;
-		/** A place marked as kept, whatever the active map (Gemarkeerd shows its own items). */
+		/** A place marked as kept, whatever the active map (Bundels shows its own items). */
 		gemarkeerd?: string | null;
 		/** Only the lid or onderdeel at this anchor, and what it holds; all where none matches. */
 		alleen?: string | null;

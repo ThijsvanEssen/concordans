@@ -28,7 +28,7 @@ export type MapItem = {
 	/** The reader's own note, shown in italics under the citation (step 2). */
 	notitie?: string | null;
 	/** Its readable address where it was known when kept (`/kamerstukken/34372/14`): its link
-	 *  in Gemarkeerd and the CSV goes there, not through a redirect. */
+	 *  in Bundels and the CSV goes there, not through a redirect. */
 	pad?: string;
 	/** A source outside Concordans (`external:<id>`): what it is, as its label in the row. */
 	kind?: SourceKind;
@@ -156,7 +156,7 @@ export function itemHref(i: Pick<MapItem, 'id' | 'at' | 'pad'>): string {
 	return i.at ? `${href.split('#')[0]}#${encodeURIComponent(i.at)}` : href;
 }
 
-/** A name no bundel has yet: the name itself, else numbered on (`Gemarkeerd 2`). */
+/** A name no bundel has yet: the name itself, else numbered on (`Thuiswerk 2`). */
 export function freeName(name: string, taken: ReadonlySet<string>): string {
 	if (!taken.has(name)) return name;
 	let n = 2;

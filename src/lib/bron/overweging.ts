@@ -1,6 +1,6 @@
 // An overweging read in place: the judgment's detail (asked once, shared with the reader and
 // Verbonden) laid out as its reader lays it out, and the overweging an anchor names in it.
-// Gemarkeerd opens a kept r.o. with it (MapInhoud), a reference to a judgment at an r.o.
+// Bundels opens a kept r.o. with it (MapInhoud), a reference to a judgment at an r.o.
 // shows it in its card (OverwegingKaart): one way to read an r.o. without the judgment.
 import { truncate } from '$lib/text/words';
 import { getJudgmentDetail } from '$lib/api/judgments';

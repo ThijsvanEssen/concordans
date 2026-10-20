@@ -1,5 +1,5 @@
 <script lang="ts">
-	// One bundel, alike on Gemarkeerd (a section of the page, among the others) and on its own
+	// One bundel, alike on Bundels (a section of the page, among the others) and on its own
 	// page (the research on one page, to read and to print): its ways to share it at the right
 	// of its name, its note at its top (the question it is about), what it holds (MapGroups),
 	// a source outside Concordans added in place, and Wis at its foot.
@@ -31,7 +31,7 @@
 	import { kaart } from './map.svelte';
 	import { shareFragment } from './share';
 	import { mapFile, mapFileName } from './file';
-	import { mapPageHref } from './page';
+	import { BUNDLES_PATH, bundlePageHref } from './page';
 	import Aantekening from './Aantekening.svelte';
 	import AddSource from './AddSource.svelte';
 	import MapGroups from './MapGroups.svelte';
@@ -54,7 +54,7 @@
 	const anchor = $derived(`map-${m.id}`);
 	const count = (n: number) => `${formatCount(n)} ${plural(n, 'bron', 'bronnen')}`;
 	const day = (iso: string) => korteDatum(vandaag(new Date(iso)));
-	const fileBase = $derived(safeFileName(m.naam) || 'Gemarkeerd');
+	const fileBase = $derived(safeFileName(m.naam) || 'Bundels');
 
 	// The link, made when the bundel changes: deflating takes a moment, and a copy made after
 	// it would have lost the click that allows it (Safari).
@@ -65,7 +65,7 @@
 		let current = true;
 		shareFragment(shown)
 			.then((hash) => {
-				if (current) link = `${origin}/gemarkeerd${hash}`;
+				if (current) link = `${origin}${BUNDLES_PATH}${hash}`;
 			})
 			.catch(ignore('gedeeld'));
 		return () => {
@@ -127,7 +127,7 @@
 	function remove() {
 		kaart.verwijder(m.id);
 		deleting = false;
-		if (standalone) navigate('/gemarkeerd');
+		if (standalone) navigate(BUNDLES_PATH);
 	}
 </script>
 
@@ -160,7 +160,7 @@
 		{#if standalone}
 			<TekstLink onclick={() => window.print()}>Afdrukken</TekstLink>
 		{:else}
-			<TekstLink href={mapPageHref(m)}>Open als pagina</TekstLink>
+			<TekstLink href={bundlePageHref(m)}>Open als pagina</TekstLink>
 		{/if}
 		<TekstMenu klein rechts label="Bundel {m.naam}" tekst="Bundel">
 			{#snippet inhoud(close)}
@@ -193,15 +193,17 @@
 						noteOpen = true;
 					}}>{m.notitie ? 'Wijzig aantekening' : 'Aantekening bij de bundel'}</button
 				>
-				<button
-					type="button"
-					role="menuitem"
-					class="tekstmenu__item"
-					onclick={() => {
-						close();
-						deleting = true;
-					}}>Verwijder bundel</button
-				>
+				{#if !kaart.isDefault(m)}
+					<button
+						type="button"
+						role="menuitem"
+						class="tekstmenu__item"
+						onclick={() => {
+							close();
+							deleting = true;
+						}}>Verwijder bundel</button
+					>
+				{/if}
 			{/snippet}
 		</TekstMenu>
 	</span>
@@ -316,7 +318,7 @@
 				label="Wis de bundel"
 				confirmLabel="Ja, alles uit {m.naam} halen"
 				class="wis raakvlak"
-				onConfirm={() => inMap(() => kaart.wis())}
+				onConfirm={() => kaart.empty(m.id)}
 			/>
 		</p>
 	{/if}

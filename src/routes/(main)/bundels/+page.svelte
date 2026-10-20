@@ -1,5 +1,5 @@
 <script lang="ts">
-	// Gemarkeerd: the reader's own collections, built as Gevolgd is (Thijs, 10 Oct: "past nu nog
+	// Bundels: the reader's own collections, built as Gevolgd is (Thijs, 10 Oct: "past nu nog
 	// totaal niet bij de rest"). The heading over both columns; the bundels in the facet column,
 	// the active one (where Bewaar keeps) in weight, with a file to open and all of them to keep
 	// as one; in the list column each bundel a section of the page (MapView, as on its own
@@ -28,6 +28,7 @@
 	import MapGroups from '$lib/map/MapGroups.svelte';
 	import MapView from '$lib/map/MapView.svelte';
 	import { mapAfterFile } from '$lib/map/file-done';
+	import { BUNDLES_PATH } from '$lib/map/page';
 
 	const count = (n: number) => `${formatCount(n)} ${plural(n, 'bron', 'bronnen')}`;
 	const day = (iso: string) => korteDatum(vandaag(new Date(iso)));
@@ -44,7 +45,7 @@
 		const hash = page.url.hash;
 		if (isOldLink(page.url.searchParams)) {
 			oldLink = true;
-			navigate(`/gemarkeerd${hash}`);
+			navigate(`${BUNDLES_PATH}${hash}`);
 		}
 		let current = true;
 		sharedOfFragment(hash)
@@ -61,7 +62,7 @@
 		if (shared && shared !== BROKEN && how === 'map') kaart.bewaarAlsMap(shared);
 		else if (shared && shared !== BROKEN && how === 'add') kaart.voegToe(shared);
 		oldLink = false;
-		navigate('/gemarkeerd');
+		navigate(BUNDLES_PATH);
 		focusHead(kaart.actief);
 	}
 
@@ -146,9 +147,9 @@
 	<MapGroups map={null} items={g.items} order={g.volgorde} notes={g.groepNotities} {open} />
 {/snippet}
 
-<div class="gemarkeerd blad blad__indeling">
+<div class="bundels blad blad__indeling">
 	<header class="blad__kop">
-		<h1 class="blad__titel">Gemarkeerd</h1>
+		<h1 class="blad__titel">Bundels</h1>
 	</header>
 
 	<!-- The bundels, as Gevolgd lists its topics: a way to each; the active one in weight. -->

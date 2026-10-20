@@ -1,5 +1,5 @@
 <script lang="ts">
-	// What a bundel holds, as Gemarkeerd and the bundel's own page show it alike: per law,
+	// What a bundel holds, as the overview and the bundel's own page show it alike: per law,
 	// dossier or judgment under its name (or in the reader's own order), each item a row of
 	// Bladeren. A click on a row opens what it keeps in place (MapInhoud); the reader is a
 	// step further. A law's name opens the regulations based on it. The reader's notes, an

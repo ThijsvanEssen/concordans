@@ -342,7 +342,7 @@
 					: [];
 
 	// An export holds every row: those not loaded yet are asked first. The same rows as the
-	// table's Exporteer, the kern included. Verzamel gave way to Gemarkeerd: a row's box keeps
+	// table's Exporteer, the kern included. Verzamel gave way to Bundels: a row's box keeps
 	// it in the map (src/lib/map).
 	async function exportCsv() {
 		await onAlles?.();

@@ -1,4 +1,4 @@
-// A row of Verbonden as Gemarkeerd keeps it: its citation as its reader gives it, its group per
+// A row of Verbonden as Bundels keeps it: its citation as its reader gives it, its group per
 // law or dossier (an article under its law, a Kamerstuk under its dossier, a judgment as its
 // own group, so its overwegingen join it, a vote under its dossier), the rest under its kind.
 import { langeDatum } from '$lib/text/datum';

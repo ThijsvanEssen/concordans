@@ -73,7 +73,7 @@ describe('the map', () => {
 		// of its own, no italic and no field beside it.
 		const groups = bron('lib/map/MapGroups.svelte');
 		const view = bron('lib/map/MapView.svelte');
-		const pagina = bron('routes/(main)/gemarkeerd/+page.svelte');
+		const pagina = bron('routes/(main)/bundels/+page.svelte');
 		for (const [t, tekst] of [
 			[groups, 'tekst={i.notitie}'],
 			[groups, 'tekst={note}'],
@@ -111,8 +111,8 @@ describe('the map', () => {
 	});
 
 	it('shows a bundel alike on Gemarkeerd and on its own page: one MapView, one MapGroups', () => {
-		const overview = bron('routes/(main)/gemarkeerd/+page.svelte');
-		const own = bron('routes/(main)/gemarkeerd/bundel/+page.svelte');
+		const overview = bron('routes/(main)/bundels/+page.svelte');
+		const own = bron('routes/(main)/bundels/[id]/+page.svelte');
 		expect(overview).toMatch(/<MapView \{m\}/);
 		expect(own).toMatch(/<MapView m=\{shown\} standalone/);
 		// What a bundel holds is drawn in one place: no page draws its rows or groups itself.
@@ -122,7 +122,7 @@ describe('the map', () => {
 
 	it('opens a bundel on its own page by a control that says so', () => {
 		const view = bron('lib/map/MapView.svelte');
-		expect(view).toMatch(/href=\{mapPageHref\(m\)\}>Open als pagina</);
+		expect(view).toMatch(/href=\{bundlePageHref\(m\)\}>Open als pagina</);
 	});
 
 	it("keeps the line of what is new on a bundel's page before it comes: nothing moves (F1)", () => {

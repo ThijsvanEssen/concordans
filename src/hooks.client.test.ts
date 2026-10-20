@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '$lib/api/client';
-import { handleError, onUnhandledRejection } from './hooks.client';
+import { handleError, moveAddress, onUnhandledRejection } from './hooks.client';
+import { reroute } from './hooks';
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -39,5 +40,32 @@ describe('the outer boundary', () => {
 		const notFound = { ...args, error: new Error('Not found'), status: 404, message: 'Not Found' };
 		expect(handleError(notFound)).toEqual({ message: 'Not Found' });
 		expect(warn).not.toHaveBeenCalled();
+	});
+});
+
+describe('an address of the bundels of before (decision 19)', () => {
+	const at = (href: string) => {
+		const replaceState = vi.fn();
+		moveAddress(
+			new URL(href, 'https://concordans.nl') as unknown as Location,
+			{ state: null, replaceState } as unknown as History
+		);
+		return replaceState.mock.calls.map((c) => c[2]);
+	};
+
+	it('puts the address of now in the bar on loading, a shared link’s fragment with it', () => {
+		expect(at('/gemarkeerd#m=abc')).toEqual(['/bundels#m=abc']);
+		expect(at('/gemarkeerd/bundel?id=k3j2')).toEqual(['/bundels/k3j2']);
+		expect(at('/bundels/k3j2')).toEqual([]);
+	});
+
+	it('serves an address of before by its page of now within the app', () => {
+		const to = (href: string) =>
+			reroute({ url: new URL(href, 'https://concordans.nl'), fetch } as Parameters<
+				typeof reroute
+			>[0]);
+		expect(to('/gemarkeerd')).toBe('/bundels');
+		expect(to('/gemarkeerd/bundel?id=k3j2')).toBe('/bundels/k3j2');
+		expect(to('/actueel')).toBeUndefined();
 	});
 });

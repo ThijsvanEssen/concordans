@@ -33,9 +33,9 @@ export const mapFile = (maps: readonly Map[]): string =>
 		'\t'
 	)}\n`;
 
-/** The file's name: its bundel's, or Gemarkeerd where it holds more. */
+/** The file's name: its bundel's, or Bundels where it holds more. */
 export const mapFileName = (maps: readonly Pick<Map, 'naam'>[]) =>
-	`${(maps.length === 1 && safeFileName(maps[0].naam)) || 'Gemarkeerd'}.json`;
+	`${(maps.length === 1 && safeFileName(maps[0].naam)) || 'Bundels'}.json`;
 
 /**
  * The bundels of a file; BROKEN where it is no file of bundels, NEWER where a later version
