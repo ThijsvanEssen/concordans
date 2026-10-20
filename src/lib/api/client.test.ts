@@ -99,3 +99,27 @@ describe('who reads the answers', () => {
 		expect(second).toEqual([{ a: 1 }, { a: 1 }]);
 	});
 });
+
+describe('a failed answer', () => {
+	afterEach(() => vi.restoreAllMocks());
+
+	it('keeps the request id the API gives a 500, from its body or its header', async () => {
+		const id = '1a2b3c4d-0000-4000-8000-000000000000';
+		vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+			new Response(JSON.stringify({ detail: 'Internal error.', request_id: id }), {
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			})
+		);
+		await expect(unwrap(api.GET('/api/health'))).rejects.toMatchObject({
+			status: 500,
+			requestId: id
+		});
+		vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+			new Response('Internal Server Error', { status: 500, headers: { 'X-Request-ID': id } })
+		);
+		await expect(unwrap(api.GET('/api/health'))).rejects.toMatchObject({ requestId: id });
+		vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('{}', { status: 404 }));
+		await expect(unwrap(api.GET('/api/health'))).rejects.toMatchObject({ requestId: null });
+	});
+});

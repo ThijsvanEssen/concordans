@@ -41,6 +41,11 @@ describe('the outer boundary', () => {
 		const notFound = { ...args, error: new Error('Not found'), status: 404, message: 'Not Found' };
 		expect(handleError(notFound)).toEqual({ message: 'Not Found' });
 		expect(warn).not.toHaveBeenCalled();
+		const logged = new ApiError(500, '/api/x', '1a2b3c4d-0000-4000-8000-000000000000');
+		expect(handleError({ ...args, error: logged, status: 500 })).toEqual({
+			message: 'Internal Error',
+			kenmerk: '1a2b3c4d'
+		});
 	});
 });
 

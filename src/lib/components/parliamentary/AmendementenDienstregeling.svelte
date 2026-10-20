@@ -11,7 +11,8 @@
 	// scrolls in its own box, the names standing.
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { inView } from '$lib/actions/in-view';
-	import { isAborted, report } from '$lib/api/errors';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { load } from '$lib/util/load.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Uitkomst from './Uitkomst.svelte';
 	import { maandNaam } from '$lib/text/datum';
@@ -26,28 +27,15 @@
 
 	let { dossierNumber }: { dossierNumber: string } = $props();
 
-	let regeling = $state<Dienstregeling | null>(null);
-	let fout = $state(false);
 	let zichtbaar = $state(false);
-
-	$effect(() => {
-		if (!zichtbaar) return;
-		const number = dossierNumber;
-		let weg = false;
-		regeling = null;
-		fout = false;
-		getAmendementen(number)
-			.then((r) => {
-				if (!weg) regeling = r;
-			})
-			.catch((e) => {
-				report('Amendementen', e);
-				if (!weg && !isAborted(e)) fout = true;
-			});
-		return () => {
-			weg = true;
-		};
-	});
+	// Asked once the section comes into view.
+	const amendementen = load(
+		() => (zichtbaar ? dossierNumber : null),
+		(number): Promise<Dienstregeling | null> =>
+			number ? getAmendementen(number) : Promise.resolve(null),
+		'Amendementen'
+	);
+	const regeling = $derived(amendementen.state.status === 'ready' ? amendementen.state.data : null);
 
 	/** The columns are weeks where the days are too many (amendementen.ts). */
 	const weken = $derived(
@@ -110,8 +98,13 @@
 		collection="documents"
 		aantal={regeling?.rijen.length ?? null}
 	>
-		{#if fout}
-			<p class="stand">De amendementen konden niet worden geladen.</p>
+		{#if amendementen.state.status === 'error'}
+			<LoadState
+				state={amendementen.state}
+				what="De amendementen"
+				plural
+				retry={amendementen.retry}
+			/>
 		{:else if !regeling}
 			<p class="stand">Amendementen laden…</p>
 		{:else}

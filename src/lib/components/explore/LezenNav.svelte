@@ -15,6 +15,8 @@
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { lawPosition } from './law-position.svelte';
 	import { lawNodeKey } from '$lib/text/enacted-law';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { load } from '$lib/util/load.svelte';
 
 	let { selection }: { selection: GraphNode | null } = $props();
 
@@ -30,10 +32,6 @@
 		items: Item[];
 		children: Group[];
 	};
-
-	let items = $state<LawArticle[]>([]);
-	let loading = $state(false);
-	let error = $state<string | null>(null);
 
 	const currentBwb = $derived.by(() => {
 		if (selection?.collection === 'articles') return lawIdOf(selection.raw?.props);
@@ -54,26 +52,12 @@
 
 	// The Lezen table of contents is always the whole law, whatever the graph holds; the
 	// list is the one the place line above the article reads ($lib/api/law-articles).
-	$effect(() => {
-		const bwb = currentBwb;
-		if (!bwb) return;
-		let current = true;
-		loading = true;
-		error = null;
-		lawArticles(bwb)
-			.then((list) => {
-				if (current) items = list;
-			})
-			.catch(() => {
-				if (current) error = 'De inhoudsopgave kon niet worden geladen.';
-			})
-			.finally(() => {
-				if (current) loading = false;
-			});
-		return () => {
-			current = false;
-		};
-	});
+	const artikelen = load(
+		() => currentBwb,
+		(bwb): Promise<LawArticle[]> => (bwb ? lawArticles(bwb) : Promise.resolve([])),
+		'Inhoudsopgave'
+	);
+	const items = $derived(artikelen.state.status === 'ready' ? artikelen.state.data : []);
 
 	// A tree of groups from each article's breadcrumb; articles without one go into "Overig".
 	function buildGroups(flat: Item[]): Group[] | null {
@@ -277,10 +261,8 @@
 			: null}
 		bind:el={navEl}
 	>
-		{#if loading && items.length === 0}
-			<p class="nav-kolom__note">Laden</p>
-		{:else if error}
-			<p class="nav-kolom__note">{error}</p>
+		{#if artikelen.state.status !== 'ready'}
+			<LoadState state={artikelen.state} what="De inhoudsopgave" retry={artikelen.retry} />
 		{:else if groups}
 			<div class="tree">
 				{#each groups as g, i (i)}
