@@ -1266,7 +1266,7 @@ export interface paths {
         };
         /**
          * Document text
-         * @description One document with its text, read from the XML of the paper, its `sections` (the headings of the paper with their offsets into `text`), the dossiers it belongs to and, for an explanatory document, the articles and laws it explains, and the votes taken on it (`decisions`, with the vote of every faction). `text` is null when `normalize tk-content` has not reached it.
+         * @description One document with its text, read from the XML of the paper, its `sections` (the headings of the paper with their offsets into `text`), its `paragraphs` (each line of `text` with a lasting id and its alinea number), the dossiers it belongs to and, for an explanatory document, the articles and laws it explains, and the votes taken on it (`decisions`, with the vote of every faction). `text` is null when `normalize tk-content` has not reached it.
          */
         get: operations["get_document_text_api_documents__key__get"];
         put?: never;
@@ -2745,7 +2745,7 @@ export interface components {
             citations: components["schemas"]["ArticleCitationSpan"][];
             /**
              * Term Spans
-             * @description Every place the text uses a term its regulation defines (where that definition holds: its regulation, or its chapter or paragraph), or a law or AMvB it is issued under defines for the regulations based on it (its own first), as `definitions`; not inside a citation, which names the definition itself (`definition_ref`) when it is the regulation cited.
+             * @description Every place the text uses a term its regulation defines (where that definition holds: its regulation, or its chapter or paragraph), or a law or AMvB it is issued under defines for the regulations based on it (its own first), as `definitions`; not inside a citation, which names the definition itself (`definition_ref`) when it is the regulation cited, nor in the header of a table, which names its columns.
              */
             term_spans: components["schemas"]["TermSpanDTO"][];
             /**
@@ -5470,6 +5470,12 @@ export interface components {
             section_id: string | null;
         };
         /**
+         * DocumentLineKind
+         * @description What a line of a Kamerstuk is (see the module docstring).
+         * @enum {string}
+         */
+        DocumentLineKind: "head" | "heading" | "formula" | "table" | "body";
+        /**
          * DocumentListItemDTO
          * @description A paper of a chamber in the list: its metadata, no text.
          */
@@ -5580,6 +5586,28 @@ export interface components {
              */
             items: components["schemas"]["DocumentListItemDTO"][];
             facets: components["schemas"]["DocumentFacetsDTO"] | null;
+        };
+        /**
+         * DocumentParagraphDTO
+         * @description A line of the text of a paper, `text[char_start:char_end]`, and its alinea.
+         */
+        DocumentParagraphDTO: {
+            /**
+             * Id
+             * @description `p-` and 8 hex of its text, `_<n>` for its n-th repeat: it stays when a line before it comes or goes.
+             */
+            id: string;
+            /**
+             * Number
+             * @description Its alinea, from 1, as a reader cites it (`alinea 4`): of a `body` line, and of a table (all its lines one number); null for any other kind.
+             */
+            number: number | null;
+            /** @description `head` (the title and date of the stuk), `heading`, `formula` (of a motion: `De Kamer, gehoord de beraadslaging,` and from `en gaat over tot de orde van de dag` on), `table` (its title or a row) or `body`. */
+            kind: components["schemas"]["DocumentLineKind"];
+            /** Char Start */
+            char_start: number;
+            /** Char End */
+            char_end: number;
         };
         /**
          * DocumentPassagesResponse
@@ -5700,6 +5728,11 @@ export interface components {
              * @description The footnotes, in their order, each with where its marker stands in `text`. A citation in one (a `REFERS_TO` edge whose `meta.place.part` is `footnote`) names it by `footnote_id`, its `start` and `end` offsets into its `text`.
              */
             footnotes: components["schemas"]["DocumentFootnoteDTO"][];
+            /**
+             * Paragraphs
+             * @description Each line of `text` in order, with its lasting `id` and its alinea `number` (`core/document_paragraphs.py`); empty without text.
+             */
+            paragraphs: components["schemas"]["DocumentParagraphDTO"][];
             /**
              * Replaces
              * @description The papers this amended amendment or motion replaces ("ter vervanging van nr. 8", ``Zaak.VervangenVanuit``, ``REVISES`` with the rule ``vervanging``), by number; empty for most.

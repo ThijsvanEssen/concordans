@@ -1,14 +1,16 @@
 // The grammar of a place in a bron, as the API names it in ids and URL fragments: an
-// overweging (`rov-5.7.1`), an alinea of a Kamerstuk (`alinea-4`, a line of its text), a
+// overweging (`rov-5.7.1`), a line of a Kamerstuk or an unnumbered paragraph of a judgment
+// (`p-360a090c`, `_2` for a repeat: from its text, it stays when a line before it comes or goes), a
 // section of it (`s-300`, a passage of a memorie), a part of an article (`lid-2-onder-a`, `onder-q_2`,
 // `onder-_39-onder-a`, `lid-3-aanhef`, `tekst-6-onder-a`), a note (`fn-35-2`), an article
 // in the whole law (`artikel-658`) and a division of it (`deel-hoofdstuk-3`).
-import { shortKind } from './document-kind';
 import { paragraphCite } from './ecli';
 
 type Anchor =
 	| { kind: 'paragraph'; number: string }
-	| { kind: 'alinea'; number: number }
+	/** A line of a Kamerstuk (an alinea by its first line) or an unnumbered paragraph of a
+	 *  judgment, by the id the API gives it. */
+	| { kind: 'line'; id: string }
 	/** A section of a paper as the API names it (`s-300`): a passage of a memorie. */
 	| { kind: 'section'; id: string }
 	| {
@@ -27,8 +29,8 @@ type Anchor =
 const PREFIXED: { prefix: string; read: (rest: string) => Anchor | null }[] = [
 	{ prefix: 'rov-', read: (number) => ({ kind: 'paragraph', number }) },
 	{
-		prefix: 'alinea-',
-		read: (n) => (/^[1-9]\d*$/.test(n) ? { kind: 'alinea', number: Number(n) } : null)
+		prefix: 'p-',
+		read: (h) => (/^[0-9a-f]{8}(?:_\d+)?$/.test(h) ? { kind: 'line', id: `p-${h}` } : null)
 	},
 	{ prefix: 's-', read: (n) => (/^\d+$/.test(n) ? { kind: 'section', id: `s-${n}` } : null) },
 	{ prefix: 'fn-', read: (label) => ({ kind: 'note', label }) },
@@ -73,8 +75,8 @@ export function formatAnchor(a: Anchor): string {
 	switch (a.kind) {
 		case 'paragraph':
 			return `rov-${a.number}`;
-		case 'alinea':
-			return `alinea-${a.number}`;
+		case 'line':
+			return a.id;
 		case 'section':
 			return a.id;
 		case 'note':
@@ -118,70 +120,77 @@ export const isOverwegingAnker = (at: string | null | undefined): at is string =
 export const isOverwegingRef = (ref: string | null, at: string | null | undefined) =>
 	!!ref && ref.startsWith('judgments/') && isOverwegingAnker(at);
 
-/** What a Kamerstuk gives to cut it into alineas: its text and the structure the API reads. */
+/** What a Kamerstuk gives to read its alineas: its text, its lines as the API numbers them
+ *  (`paragraphs`, API 0.79.66) and its sections. */
 export type PaperSource = {
 	text?: string | null;
-	kind?: string | null;
-	/** What a motie asks (`verzoekt de regering …`): where its text ends. */
-	dictum?: string | null;
-	/** Its headings: a line that starts one is a heading, not an alinea; a section is the
-	 *  text from its heading to `char_end`. */
+	/** Each line of the text (`text[char_start:char_end]`) with its lasting id and its alinea
+	 *  (`number`: of its text and of a table, null for its head, a heading or a formula). */
+	paragraphs?:
+		| readonly { id: string; number?: number | null; char_start: number; char_end: number }[]
+		| null;
+	/** Its sections: a passage is the text from its heading to `char_end`. */
 	sections?:
 		| readonly { id?: string; char_start: number; char_end?: number; heading: string }[]
 		| null;
 };
 
-/** A line of a Kamerstuk: `i` its place among the lines, `n` its alinea's number, from 1;
- *  null for the head of the stuk, a heading, or a motie's formula before and after. */
-export type PaperParagraph = { start: number; text: string; i: number; n: number | null };
-
-const plain = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
-/** A line as a dictum holds it: without the comma or semicolon that ends it in the text. */
-const bare = (s: string) => plain(s).replace(/[,;:.]$/, '');
+/**
+ * A line of a Kamerstuk: `i` its place among the lines, `id` its own lasting id (the API's),
+ * `n` its alinea's number and `at` its
+ * alinea's anchor (the id of its first line, so a table is one), `first` whether it is that
+ * line; `n` and `at` null for a line that is no alinea, and for every line of a paper the API
+ * has not numbered.
+ */
+export type PaperParagraph = {
+	start: number;
+	text: string;
+	i: number;
+	id: string | null;
+	n: number | null;
+	at: string | null;
+	first: boolean;
+};
 
 /**
- * The lines of a Kamerstuk (the source gives a paragraph per line), each with its words without
- * the space around them and where they start in the text (so an offset of the API, a passage
- * or a note's marker, falls in them), and the alineas among them numbered from 1: its text,
- * as a lawyer counts it. Not an alinea: the head of the stuk (its first line, naming its kind:
- * `MOTIE VAN HET LID …`, `MEMORIE VAN TOELICHTING`), a heading (a line that starts one of the
- * API's sections: `1. Leeswijzer`, the onderdelen `A`, `B` of a nota van wijziging), and of a
- * motie with its dictum the formula around what it holds: the lines before its first
- * overweging (one ending in `;`) or its dictum, and those after its dictum. The one place a
- * Kamerstuk's text is cut: its reader and a bundel number it alike.
+ * The lines of a Kamerstuk with its alineas as the API numbers them (`paragraphs`): each line
+ * with its words without the space around them and where they start in the text (so an
+ * offset of the API, a passage or a note's marker, falls in them). The site counts nothing:
+ * a paper without `paragraphs` has its lines and no alinea. The one place a Kamerstuk's text
+ * is cut: its reader and a bundel read it alike.
  */
 export function paperParagraphs(doc: PaperSource): PaperParagraph[] {
+	const text = doc.text ?? '';
+	const numbered = (doc.paragraphs ?? []).filter((p) => p.char_end <= text.length);
+	const ranges = numbered.length
+		? numbered
+		: [...text.matchAll(/[^\n]+/g)].map((m) => ({
+				id: null,
+				number: null,
+				char_start: m.index,
+				char_end: m.index + m[0].length
+			}));
+	const firstOf = new Map<number, string>();
 	const lines: PaperParagraph[] = [];
-	for (const m of (doc.text ?? '').matchAll(/[^\n]+/g)) {
-		const t = m[0].trim();
-		if (t) lines.push({ start: m.index + m[0].indexOf(t), text: t, i: lines.length, n: null });
+	for (const r of ranges) {
+		const raw = text.slice(r.char_start, r.char_end);
+		const t = raw.trim();
+		if (!t) continue;
+		const n = r.number ?? null;
+		const first = n !== null && r.id !== null && !firstOf.has(n);
+		if (first) firstOf.set(n, r.id!);
+		lines.push({
+			start: r.char_start + raw.indexOf(t),
+			text: t,
+			i: lines.length,
+			id: r.id,
+			n,
+			at: n !== null ? (firstOf.get(n) ?? null) : null,
+			first
+		});
 	}
-	const starts = new Set((doc.sections ?? []).map((s) => s.char_start));
-	const headings = new Set((doc.sections ?? []).map((s) => plain(s.heading)));
-	const isHeading = (l: PaperParagraph) => starts.has(l.start) || headings.has(plain(l.text));
-	const kind = plain(shortKind(doc.kind ?? ''));
-	const head = lines.length && kind && plain(lines[0].text).includes(kind) ? 1 : 0;
-	// A motie: from its first overweging (or its dictum) to the end of its dictum.
-	const dictum = plain(doc.dictum ?? '');
-	const asks = dictum
-		? lines.findIndex((l, i) => i >= head && dictum.startsWith(bare(l.text)))
-		: -1;
-	let from = head;
-	let to = lines.length;
-	if (asks >= 0) {
-		const first = lines.findIndex((l, i) => i >= head && i < asks && l.text.endsWith(';'));
-		from = first >= 0 ? first : asks;
-		to = asks + 1;
-		while (to < lines.length && dictum.includes(bare(lines[to].text))) to++;
-	}
-	let n = 0;
-	for (const l of lines.slice(from, to)) if (!isHeading(l)) l.n = ++n;
 	return lines;
 }
-
-/** The anchor of an alinea by its number: `alinea-4`. */
-export const paperParagraphAnchor = (n: number): string =>
-	formatAnchor({ kind: 'alinea', number: n });
 
 /** The anchor of a lid by its number: `lid-2`. */
 export const lidAnchor = (lid: string): string =>
@@ -222,14 +231,13 @@ export function parentAnchor(id: string): string | null {
 export const printedOnderdeel = (o: string): string => o.replace(/_\d+$/, '');
 
 /**
- * A place as the reader prints it: `lid 2, onder a`, `alinea 4`; an overweging as its judgment cites
+ * A place as the reader prints it: `lid 2, onder a`; an overweging as its judgment cites
  * it, by its ECLI or key (`r.o. 5.1`, `onder 5` in a conclusion, `§ 5` in Strasbourg or
  * Luxembourg). Null for a place it cannot print.
  */
 export function anchorLabel(id: string, judgment?: string | null): string | null {
 	const a = parseAnchor(id);
 	if (a?.kind === 'paragraph') return paragraphCite(judgment, a.number);
-	if (a?.kind === 'alinea') return `alinea ${a.number}`;
 	if (a?.kind !== 'part') return null;
 	const onderdelen = a.onderdelen.map(printedOnderdeel).filter(Boolean);
 	const onder = onderdelen.map((o, i) => (i === 0 ? `onder ${o}` : `sub ${o}`)).join(' ');

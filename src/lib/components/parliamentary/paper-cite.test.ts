@@ -28,16 +28,20 @@ describe('a Kamerstuk and its alineas as they are cited', () => {
 	});
 
 	it('cites an alinea after the paper, by its number from 1, and keeps it at its anchor', () => {
-		const a = paperParagraphCite(citePaper(motion, props))(4, 'https://x/#alinea-4');
+		const a = paperParagraphCite(citePaper(motion, props))(
+			4,
+			'p-360a090c',
+			'https://x/#p-360a090c'
+		);
 		expect(a.kort).toBe('Kamerstukken II 2025/26, 37020 XVI, nr. 57, alinea 4');
 		expect(a.voluit).toBe('Kamerstukken II 2025/26, 37020 XVI, nr. 57 (Motie), alinea 4');
-		expect(a.link).toBe('https://x/#alinea-4');
-		expect(a.bewaar).toMatchObject({ at: 'alinea-4', groupKey: 'dossier:37020-XVI' });
+		expect(a.link).toBe('https://x/#p-360a090c');
+		expect(a.bewaar).toMatchObject({ at: 'p-360a090c', groupKey: 'dossier:37020-XVI' });
 	});
 
 	it('cites a paper that is no Kamerstuk by its title', () => {
 		const letter = { key: 'b1', kind: 'Brief', title: 'Antwoord op vragen', number: null };
-		const a = paperParagraphCite(citePaper(letter))(1, '');
+		const a = paperParagraphCite(citePaper(letter))(1, 'p-00000000', '');
 		expect(a.kort).toBe('Antwoord op vragen, alinea 1');
 	});
 });

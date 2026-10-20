@@ -153,7 +153,7 @@
 			// A kept alinea or passage is cited as in the reader: with its light node (the
 			// vergaderjaar).
 			const place = parseAnchor(i.at)?.kind;
-			const kept = place === 'alinea' || place === 'section';
+			const kept = place === 'line' || place === 'section';
 			const [d, light] = await Promise.all([
 				getDocument(doel.key),
 				kept

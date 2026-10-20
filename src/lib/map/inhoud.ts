@@ -75,10 +75,10 @@ export function overwegingVan(
 }
 
 /**
- * The alineas of a Kamerstuk that show the place an item keeps: an alinea (`alinea-4`), or a
- * passage, a section of the API (`s-300`), as the alineas in it; with `rond`, a few alineas
- * before and after. `eigen` the numbers of the place's own. Null where the stuk has no such
- * place.
+ * The alineas of a Kamerstuk that show the place an item keeps: an alinea (by the lasting id
+ * of a line of it, `p-360a090c`), or a passage, a section of the API (`s-300`), as the
+ * alineas in it; with `rond`, a few alineas before and after. `eigen` the numbers of the
+ * place's own. Null where the stuk has no such place, or no alineas yet.
  */
 export function paperParagraphOf(
 	source: PaperSource,
@@ -89,18 +89,21 @@ export function paperParagraphOf(
 	const a = parseAnchor(at);
 	const section =
 		a?.kind === 'section' ? (source.sections ?? []).find((s) => s.id === a.id) : undefined;
-	const own =
-		a?.kind === 'alinea'
-			? alineas.filter((p) => p.n === a.number)
-			: section
-				? alineas.filter(
-						(p) => p.start >= section.char_start && p.start < (section.char_end ?? Infinity)
-					)
-				: [];
+	const line = a?.kind === 'line' ? alineas.find((p) => p.id === a.id) : undefined;
+	const own = line
+		? alineas.filter((p) => p.n === line.n)
+		: section
+			? alineas.filter(
+					(p) => p.start >= section.char_start && p.start < (section.char_end ?? Infinity)
+				)
+			: [];
 	if (!own.length) return null;
-	const first = alineas.indexOf(own[0]);
-	const last = alineas.indexOf(own.at(-1)!);
-	const van = rond ? Math.max(0, first - ROND) : first;
-	const tot = rond ? last + ROND + 1 : last + 1;
-	return { items: alineas.slice(van, tot), eigen: new Set(own.map((p) => p.n!)) };
+	const eigen = new Set(own.map((p) => p.n!));
+	const numbers = [...new Set(alineas.map((p) => p.n!))];
+	const first = numbers.indexOf(own[0].n!);
+	const last = numbers.indexOf(own.at(-1)!.n!);
+	const shown = new Set(
+		numbers.slice(rond ? Math.max(0, first - ROND) : first, (rond ? last + ROND : last) + 1)
+	);
+	return { items: alineas.filter((p) => shown.has(p.n!)), eigen };
 }

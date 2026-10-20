@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import papers from '$lib/fixtures/paper-paragraphs.json';
+import papers from '$lib/fixtures/paper-paragraphs-api.json';
 import {
-	paperParagraphAnchor,
 	paperParagraphs,
 	anchorLabel,
 	atPlace,
@@ -18,7 +17,8 @@ import {
 describe('the anchors the API gives', () => {
 	it.each([
 		'rov-5.7.1',
-		'alinea-4',
+		'p-360a090c',
+		'p-360a090c_2',
 		's-300',
 		'lid-2',
 		'lid-2-onder-a',
@@ -50,7 +50,7 @@ describe('the anchors the API gives', () => {
 	});
 
 	it('reads no anchor from what is none', () => {
-		for (const id of ['', 'p-12', 'alinea-0', 'alinea-4a', 'lid', 'onder-a-lid-2', 'aanhef-lid-2'])
+		for (const id of ['', 'p-12', 'p-360a090g', 'alinea-4', 'lid', 'onder-a-lid-2', 'aanhef-lid-2'])
 			expect(parseAnchor(id)).toBeNull();
 	});
 
@@ -118,42 +118,34 @@ describe('the anchors a reader builds', () => {
 	});
 });
 
-describe('the alineas of a Kamerstuk: its text alone, numbered from 1 (A32 #1)', () => {
-	const numbered = (doc: (typeof papers)[keyof typeof papers]) =>
-		paperParagraphs(doc).filter((p) => p.n !== null);
-	const own = (doc: (typeof papers)[keyof typeof papers]) =>
-		paperParagraphs(doc)
-			.filter((p) => p.n === null)
-			.map((p) => p.text);
+describe('the alineas of a Kamerstuk, as the API numbers them (A28, #821)', () => {
+	type Paper = (typeof papers)[keyof typeof papers];
+	const numbered = (doc: Paper) => paperParagraphs(doc).filter((p) => p.n !== null);
 
-	it('leaves out the head of a motie and its closing, by the dictum the API gives', () => {
-		const motie = papers['motie-37020-XVI-57'];
+	it('takes the number and the lasting id of each line from the API, and counts nothing itself', () => {
+		const motie = papers['kst_37020_57'];
+		const lines = paperParagraphs(motie);
 		const a = numbered(motie);
-		expect(a[0]).toMatchObject({ n: 1, text: expect.stringMatching(/^constaterende dat/) });
-		expect(a.at(-1)).toMatchObject({ n: 5, text: expect.stringMatching(/^verzoekt de regering/) });
-		expect(own(motie).slice(0, 3)).toEqual([
-			'MOTIE VAN HET LID TIJMSTRA C.S.',
-			'De Kamer,',
-			'gehoord de beraadslaging,'
-		]);
-		expect(own(motie)).toContain('en gaat over tot de orde van de dag.');
+		expect(a.map((p) => p.n)).toEqual([1, 2, 3, 4, 5, 6]);
+		expect(a[0].text).toMatch(/^constaterende dat/);
+		// The anchor of an alinea is the id of its line, as the API gives it.
+		const api = motie.paragraphs.find((p) => p.number === 1)!;
+		expect(a[0]).toMatchObject({ at: api.id, first: true });
+		expect(lines.filter((p) => p.n === null).map((p) => p.at)).toEqual(
+			lines.filter((p) => p.n === null).map(() => null)
+		);
 	});
 
-	it('leaves out the head of a memorie and its headings (sections)', () => {
-		const a = numbered(papers['mvt-37020-I-2']);
-		expect(a[0]).toMatchObject({ n: 1, text: expect.stringMatching(/^De begrotingsstaten/) });
-		expect(a.map((p) => p.text)).not.toContain('1. Leeswijzer');
+	it('makes a table one alinea: its lines one number, one anchor, the first its marker', () => {
+		const mvt = papers['kst_37020_i_2'];
+		const table = paperParagraphs(mvt).filter((p) => p.text.startsWith('Tabel 1 Belangrijkste'))[0];
+		const rows = paperParagraphs(mvt).filter((p) => p.n === table.n);
+		expect(rows.length).toBe(15);
+		expect(new Set(rows.map((p) => p.at))).toEqual(new Set([table.at]));
+		expect(rows.filter((p) => p.first)).toEqual([table]);
 	});
 
-	it('leaves out the onderdelen A, B, C of a nota van wijziging, keeps its opening sentence', () => {
-		const nota = papers['nota-36808-6'];
-		const a = numbered(nota);
-		expect(a[0]).toMatchObject({ n: 1, text: 'Het voorstel (nr. 2) wordt als volgt gewijzigd:' });
-		expect(a[1]).toMatchObject({ n: 2, text: expect.stringMatching(/^Aan het opschrift/) });
-		expect(own(nota)).toEqual(expect.arrayContaining(['TWEEDE NOTA VAN WIJZIGING', 'A', 'B', 'C']));
-	});
-
-	it('keeps every line in the order of the text, where its words start', () => {
+	it('keeps every line of the text where its words start, its place among the lines `i`', () => {
 		for (const doc of Object.values(papers)) {
 			const all = paperParagraphs(doc);
 			all.forEach((p, i) => {
@@ -163,14 +155,20 @@ describe('the alineas of a Kamerstuk: its text alone, numbered from 1 (A32 #1)',
 		}
 	});
 
-	it('names an alinea by its number: `alinea-4`', () => {
-		expect(paperParagraphAnchor(4)).toBe('alinea-4');
-		expect(parseAnchor('alinea-4')).toEqual({ kind: 'alinea', number: 4 });
+	it('numbers nothing in a paper the API has not numbered yet: no alinea, no anchor', () => {
+		const { text } = papers['kst_37020_57'];
+		const lines = paperParagraphs({ text, paragraphs: [] });
+		expect(lines.length).toBeGreaterThan(5);
+		expect(lines.every((p) => p.n === null && p.at === null)).toBe(true);
 		expect(paperParagraphs({ text: null })).toEqual([]);
 	});
 
-	it('prints an alinea as a citation names it', () => {
-		expect(anchorLabel('alinea-12')).toBe('alinea 12');
+	it('reads the anchor of a line, as a judgment names an unnumbered paragraph', () => {
+		expect(parseAnchor('p-360a090c')).toEqual({ kind: 'line', id: 'p-360a090c' });
+		expect(parseAnchor('p-360a090c_2')).toEqual({ kind: 'line', id: 'p-360a090c_2' });
+		expect(parseAnchor('alinea-4')).toBeNull();
+		// Its number is the paper's: the anchor alone prints nothing.
+		expect(anchorLabel('p-360a090c')).toBeNull();
 	});
 
 	it('reads a section of a paper (`s-300`), a passage as the API gives it, by its id', () => {

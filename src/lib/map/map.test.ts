@@ -446,7 +446,7 @@ describe('the alineas of a Kamerstuk in a bundel, under the stuk (A28)', () => {
 	};
 	const al = (n: number): MapItem => ({
 		...stuk,
-		at: `alinea-${n}`,
+		at: `p-${String(n).padStart(8, '0')}`,
 		kort: `${stuk.kort}, alinea ${n}`,
 		voluit: `${stuk.voluit}, alinea ${n}`
 	});
@@ -455,7 +455,7 @@ describe('the alineas of a Kamerstuk in a bundel, under the stuk (A28)', () => {
 		const [rij, ander] = placeRows([al(4), lid2, al(6)]);
 		expect(rij.kept).toBe(false);
 		expect(rij.head).toMatchObject({ id: stuk.id, at: '', kort: stuk.kort, voluit: null });
-		expect(rij.places.map((p) => p.at)).toEqual(['alinea-4', 'alinea-6']);
+		expect(rij.places.map((p) => p.at)).toEqual(['p-00000004', 'p-00000006']);
 		expect(ander).toEqual({ head: lid2, kept: true, places: [] });
 		expect(rowTitle(al(4), true)).toEqual({ title: 'alinea 4', sub: null });
 		// A passage (a section of the memorie) under its stuk, by its heading.

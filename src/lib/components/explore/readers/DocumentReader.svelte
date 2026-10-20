@@ -8,7 +8,7 @@
 		paperParagraphCite,
 		paperSectionCite
 	} from '$lib/components/parliamentary/paper-cite';
-	import { paperParagraphAnchor, paperParagraphs, type PaperParagraph } from '$lib/text/anchor';
+	import { paperParagraphs, type PaperParagraph } from '$lib/text/anchor';
 	import PlaatsMenu, { placeMarker } from '$lib/components/articles/PlaatsMenu.svelte';
 	import { blockClick } from '$lib/actions/klik';
 	import { kaart } from '$lib/map/map.svelte';
@@ -107,9 +107,15 @@
 	});
 
 	// The source gives a paragraph per line (paperParagraphs): each keeps its place in the text,
-	// so that a passage can be found back; an alinea of its text its number and anchor
-	// (`alinea-4`), the head of the stuk and a motie's formula none.
+	// so that a passage can be found back; an alinea its number and anchor as the API gives
+	// them (`paragraphs`: `4`, `p-360a090c`), the head of the stuk and a motie's formula none.
 	const paragraphs = $derived(paperParagraphs(loaded ?? {}));
+	/** The words of an alinea, a table's every line: what Kopieer tekst copies. */
+	const alineaText = (at: string | null) =>
+		paragraphs
+			.filter((p) => p.at === at)
+			.map((p) => p.text)
+			.join('\n');
 
 	// The menu of a place (as an overweging's, a lid's), by its anchor: of an alinea its marker
 	// in the margin opens it, and a click on its text, not on a link or a selection; of a
@@ -396,8 +402,9 @@
 							{@const sluit = voetnoten.naSectie.get(p.i)}
 							{@const bereik = tekstBereik?.i === p.i ? tekstBereik.bereik : null}
 							{@const n = p.n}
+							{@const at = p.at}
 							{@const forms =
-								n === null ? null : paragraphCite(n, permalink(page.url, paperParagraphAnchor(n)))}
+								n === null || at === null ? null : paragraphCite(n, at, permalink(page.url, at))}
 							<!-- A paragraph with notes or marked words: its words set as a judgment's are. -->
 							{#snippet woorden()}{#if markers || bereik}<CitedText
 										text={p.text}
@@ -405,39 +412,38 @@
 										{bereik}
 									/>{:else}{p.text}{/if}{/snippet}
 							<!-- An alinea is a place, as a lid or an overweging: its menu (PlaatsMenu) from the
-							     marker in the margin (its number) or a click on its text; its anchor `alinea-4`.
-							     The head of the stuk and a motie's formula are no place. -->
+							     marker in the margin (its number) or a click on its text; its anchor the lasting id
+							     of its first line (`p-360a090c`), a table one alinea. The head of the stuk, a
+							     heading and a motie's formula are no place, nor a line the API has not numbered. -->
 							<div
 								class="body-para"
 								class:body-para--passage={passageEntries.has(i)}
 								class:in-passage={passageEntries.has(i)}
 								class:in-passage--cont={passageEntries.has(i) && i > passageFirst}
 								class:body-para--plaats={!!forms}
-								class:is-open={n !== null && menu?.at === paperParagraphAnchor(n)}
+								class:is-open={at !== null && menu?.at === at}
 								class:plaats-bewaard={!!forms && kaart.heeft(forms.bewaar)}
 								id={i === passageEntryIndex
 									? 'passage'
 									: bereik
 										? 'markering'
-										: n !== null
-											? paperParagraphAnchor(n)
-											: undefined}
+										: (p.id ?? undefined)}
 								title={i === passageEntryIndex ? (passage?.why ?? undefined) : undefined}
 							>
-								{#if n !== null}
+								{#if forms && at && p.first}
 									<button
 										type="button"
 										class="plaats-marker"
 										aria-haspopup="menu"
-										aria-expanded={menu?.at === paperParagraphAnchor(n)}
+										aria-expanded={menu?.at === at}
 										aria-label="Alinea {n}: citeren, bewaren"
-										onclick={(e) => openMenu(paperParagraphAnchor(n), e.currentTarget)}>{n}</button
+										onclick={(e) => openMenu(at, e.currentTarget)}>{n}</button
 									>
 								{/if}
 								<div
 									class="body-para__tekst"
-									class:is-klikbaar={n !== null}
-									use:blockClick={n !== null ? onText(paperParagraphAnchor(n)) : null}
+									class:is-klikbaar={!!forms}
+									use:blockClick={forms && at ? onText(at) : null}
 								>
 									<p>
 										{@render woorden()}{#if i === passageEntryIndex && passage?.possible}<span
@@ -448,12 +454,12 @@
 									<Voetnoten noten={nootLijst(markers?.map((m) => m.id))} />
 									<Voetnoten noten={nootLijst(sluit)} marge={false} />
 								</div>
-								{#if forms && n !== null && menu && menu.at === paperParagraphAnchor(n)}
+								{#if forms && p.first && menu && menu.at === at}
 									<PlaatsMenu
 										anker={menu.marker}
 										title={forms.kort}
 										cite={citeItems(forms, forms.link)}
-										tekst={() => p.text}
+										tekst={() => alineaText(at)}
 										bewaar={forms.bewaar}
 										onClose={() => (menu = null)}
 									/>
@@ -723,6 +729,7 @@
 	.body-para.is-open > .plaats-marker::after,
 	.plaats-marker:focus-visible::after {
 		content: '▾';
+		font-size: var(--t-meta);
 		line-height: 1;
 		color: var(--ink-3);
 		text-decoration: none;
