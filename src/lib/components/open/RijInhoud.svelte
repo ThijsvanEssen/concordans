@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { forAgainst, votesSentence } from '$lib/components/parliamentary/stemming';
 	// What a row shows when it opens (Actueel, Gevolgd; a Kamerstuk in Verbonden, Bronnen and
 	// Bundels): the bron's own content, read in place, not a panel of actions (Thijs, 10 Oct: "doet niet zoveel behalve een extra klik
@@ -76,12 +77,12 @@
 				{#if t?.text}
 					<p class="tekst" class:dictum={t.as === 'dictum'}>{t.text}</p>
 				{:else}
-					<p class="stil">Tekst nog niet in de gegevens.</p>
+					<p class="stil"><Coverage noText /></p>
 				{/if}
 			{/snippet}
 		</LoadState>
 	{:else}
-		<p class="stil">Tekst nog niet in de gegevens.</p>
+		<p class="stil"><Coverage noText /></p>
 	{/if}
 	<p class="verder">
 		<TekstLink href={bronHref(ref, { keepMode: false, mode: 'read' })}>Lees verder</TekstLink>

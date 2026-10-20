@@ -2,6 +2,7 @@
 // title and one meta line: the lid it names, the position in the source, the
 // identifier or the date, and the betrouwbaarheid when it is not hoog. The passage
 // of the source (`snippet`, with `match` marked) appears when the row is opened.
+import { NOT_IN_DATA } from '$lib/text/coverage';
 import { escapeRegExp, lowerFirst, textOf } from '$lib/text/words';
 import { naamVanId } from '$lib/bron/menselijk';
 import { keyEcli } from '$lib/bron/address';
@@ -284,7 +285,7 @@ function metaPartsVan(
 ): { text: string; kind: 'lid' | 'proposed' | 'derived' | 'plain' }[] {
 	const parts: { text: string; kind: 'lid' | 'proposed' | 'derived' | 'plain' }[] = [];
 	if (verbinding) {
-		if (row.missing) parts.push({ text: 'niet in de gegevens', kind: 'plain' });
+		if (row.missing) parts.push({ text: NOT_IN_DATA, kind: 'plain' });
 		if (row.proposed) parts.push({ text: 'voorgesteld', kind: 'proposed' });
 		if (row.context && row.ref.collection !== 'decisions')
 			parts.push({ text: row.context, kind: 'plain' });
@@ -296,7 +297,7 @@ function metaPartsVan(
 		return parts;
 	}
 	if (row.lid) parts.push({ text: `lid ${row.lid}`, kind: 'lid' });
-	if (row.missing) parts.push({ text: 'niet in de gegevens', kind: 'plain' });
+	if (row.missing) parts.push({ text: NOT_IN_DATA, kind: 'plain' });
 	if (row.proposed) parts.push({ text: 'voorgesteld', kind: 'proposed' });
 	if (row.aard) parts.push({ text: row.aard, kind: 'plain' });
 	// A position that only names the lid (`lid 2`) is said once.

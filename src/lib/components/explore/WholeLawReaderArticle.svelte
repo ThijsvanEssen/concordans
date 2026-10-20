@@ -2,6 +2,7 @@
 	// One article of the whole law: its number and opschrift as the link to the article, and its one text
 	// (articleText), else its preview. The article of today is asked alone once it comes near
 	// the viewport: its references link (K2), and its text stands where its page lacked it.
+	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { naamVanId } from '$lib/bron/menselijk';
 	import { bronHref } from '$lib/bron/href';
 	import { onderdeelMark } from '$lib/text/article-parts';
@@ -97,7 +98,7 @@
 		</p>
 	{:else}
 		<p class="whole-text">
-			<span class="whole-empty-text stil">Tekst niet in de gegevens.</span>
+			<span class="whole-empty-text stil"><Coverage noText /></span>
 		</p>
 	{/if}
 </section>

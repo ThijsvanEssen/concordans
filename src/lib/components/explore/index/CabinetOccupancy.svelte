@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { lacks, NOT_IN_DATA, notHeld } from '$lib/text/coverage';
 	import { naamVan } from '$lib/bron/menselijk';
 	import { korteDatum, maandJaar } from '$lib/text/datum';
 	import CabinetPostOpen from './CabinetPostOpen.svelte';
@@ -75,7 +76,7 @@
 				'Zonder ministerie',
 				loose.filter((s) => !unknown(s))
 			),
-			row('Ministerie niet in de gegevens', loose.filter(unknown))
+			row(lacks('ministerie'), loose.filter(unknown))
 		].filter((r) => r.seats.length);
 	});
 
@@ -131,11 +132,11 @@
 {#if !term}
 	<p class="occ-note">
 		{rows.length === 0 && !(cabinet.ministries ?? []).length
-			? 'Posten van dit kabinet staan niet in de gegevens.'
-			: 'De periode van dit kabinet staat niet in de gegevens.'}
+			? `Posten van dit kabinet staan ${NOT_IN_DATA}.`
+			: `${notHeld('De periode van dit kabinet')}.`}
 	</p>
 {:else if rows.length === 0}
-	<p class="occ-note">Posten van dit kabinet staan niet in de gegevens.</p>
+	<p class="occ-note">Posten van dit kabinet staan {NOT_IN_DATA}.</p>
 {:else if scherm.smal}
 	<!-- Phone: per seat the holders one under the other, the phases in a line. -->
 	<div class="occ-text">

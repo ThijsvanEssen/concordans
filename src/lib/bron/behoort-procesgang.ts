@@ -1,6 +1,7 @@
 // The procesgang of a judgment in the band: eerdere aanleg › this uitspraak › hoger beroep or
 // cassatie, the instances before the eerdere aanleg asked one by one; for a translation its
 // original's; and the ids Verbonden leaves out.
+import { NOT_IN_DATA } from '$lib/text/coverage';
 import { capitalize, textOf } from '$lib/text/words';
 import { findBucket, type NodeGraph, type Neighbor } from '$lib/api/nodes';
 import { getNodeFirst } from '$lib/api/records';
@@ -33,7 +34,7 @@ function notInData(props: Record<string, unknown>): Laag[] {
 		]
 			.filter(Boolean)
 			.join(', ');
-		return { soort: 'Eerdere aanleg, niet in de gegevens', naam };
+		return { soort: `Eerdere aanleg, ${NOT_IN_DATA}`, naam };
 	});
 }
 

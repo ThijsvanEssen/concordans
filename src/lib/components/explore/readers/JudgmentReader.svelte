@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { NOT_IN_DATA } from '$lib/text/coverage';
+	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { ecliKey } from '$lib/bron/address';
 	import { capitalize, textOf } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
@@ -220,6 +222,8 @@
 									>{:else}{c.naam}{/if}{#if c.strekking}, {c.strekking}{/if}{/each}{/if}
 					</p>
 				{/if}
+				<!-- What of the references in its text is linked. -->
+				<Coverage coverage={data.completeness} />
 			{/snippet}
 			{#if j.translation_of}
 				<p class="reader-translation">
@@ -260,7 +264,7 @@
 			{#if outside.length > 0}
 				<!-- Articles of laws the dataset lacks (API 0.70): each to the place it is first cited. -->
 				<p class="reader-translation">
-					Haalt ook aan, niet in de gegevens: {#each outside.slice(0, OUTSIDE_SHOWN) as c, i (`${c.law}_${c.article_number}`)}{i >
+					Haalt ook aan, {NOT_IN_DATA}: {#each outside.slice(0, OUTSIDE_SHOWN) as c, i (`${c.law}_${c.article_number}`)}{i >
 						0
 							? ', '
 							: ''}{#if c.paragraph_ids?.[0]}<a href="#{c.paragraph_ids[0]}"
@@ -462,7 +466,7 @@
 			{/if}
 			<Voetnoten noten={losseNoten} marge={false} kop="Voetnoten" />
 			{#if paragraphs.length === 0 && !hasSummary && !replacedBy && !replacedOutside && !withdrawnNotice}
-				<p class="reader-empty-text">Tekst niet in de gegevens.</p>
+				<p class="reader-empty-text"><Coverage noText /></p>
 			{/if}
 			<!-- The terms of HUDOC and EUR-Lex ask for the source under a text of the Court. -->
 			{#if credit}

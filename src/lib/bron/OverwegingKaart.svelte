@@ -7,6 +7,7 @@
 	// letter of a line in italics runs into it); it scrolls within itself where it is long.
 	// The overweging as a bundel opens a kept one (Overweging), from the detail the reader
 	// shares.
+	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { afterTick } from '$lib/util/after-tick';
 	import { EDGE } from '$lib/actions/top-layer';
 	import FloatingCard from '$lib/components/ui/FloatingCard.svelte';
@@ -98,7 +99,7 @@
 	{:else if u && heeftOverweging(u, at)}
 		<div class="tekst"><Overweging uitspraak={u} {at} {doel} {noot} /></div>
 	{:else}
-		<p class="stil">Tekst niet in de gegevens.</p>
+		<p class="stil"><Coverage noText /></p>
 	{/if}
 	<p class="verder">
 		<a {href} data-sveltekit-noscroll onclick={() => markering && zetMarkering(markering)}
