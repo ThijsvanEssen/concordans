@@ -3,7 +3,8 @@
 import { defineConfig, devices } from '@playwright/test';
 import { API_ORIGIN } from './e2e/support/api';
 
-const PORT = 4317;
+// Another port (E2E_PORT) lets two suites run side by side.
+const PORT = Number(process.env.E2E_PORT ?? 4317);
 const CI = !!process.env.CI;
 
 export default defineConfig({

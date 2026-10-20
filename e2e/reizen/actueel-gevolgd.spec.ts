@@ -28,11 +28,13 @@ test('Actueel: a period and a kind narrow the days', async ({ page, touch }) => 
 	await expect(days.first()).toHaveText(/\d+ moties?$/);
 });
 
-test('Actueel: the Kamer narrows to the Eerste Kamer', async ({ page }) => {
+test('Actueel: the Kamer narrows to the Eerste Kamer, chosen before the days are in', async ({
+	page
+}) => {
 	await page.goto('/actueel');
-	await expect(page.getByText(/^[\d.]+\s*gebeurtenissen$/)).toBeVisible();
 	const kamer = page.getByRole('group', { name: 'Kamer' });
 	await kamer.getByRole('button', { name: 'Eerste Kamer' }).click();
+	await expect(page.getByText(/^[\d.]+\s*gebeurtenissen$/)).toBeVisible();
 	await expect(kamer.getByRole('button', { name: 'Eerste Kamer' })).toHaveAttribute(
 		'aria-pressed',
 		'true'
@@ -44,9 +46,11 @@ test('Gevolgd: a topic followed shows its days, keeps after a reload and can be 
 	page
 }) => {
 	await page.goto('/onderwerpen');
+	// Typed before the page has its first answer: kept.
+	await page.getByRole('textbox', { name: 'Onderwerp volgen' }).fill('huur');
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Gevolgde onderwerpen');
 	await expect(page.getByText('Nog geen onderwerpen.')).toBeVisible();
-	await page.getByRole('textbox', { name: 'Onderwerp volgen' }).fill('huur');
+	await expect(page.getByRole('textbox', { name: 'Onderwerp volgen' })).toHaveValue('huur');
 	await page.getByRole('button', { name: 'Volg' }).click();
 	const topic = page.getByRole('heading', { level: 2, name: /^huur/ });
 	await expect(topic).toBeVisible();

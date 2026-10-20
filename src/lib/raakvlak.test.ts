@@ -20,8 +20,10 @@ describe('the touch target', () => {
 		expect(coarse).toMatch(
 			/\.raakvlak::after,[^{]*\{[^}]*inset: min\(calc\(-1 \* var\(--s-2\)\), calc\(50% - \(var\(--s-6\) \+ var\(--s-3\)\) \/ 2\)\)/
 		);
-		// Bewaar's caret grows to its right only, never over Bewaar.
-		expect(read('lib/map/Bewaar.svelte')).toMatch(/tekstmenu__knop::after\) \{\s*left: 0;/);
+		// Bewaar's caret is 44 px wide itself, so its target never reaches over Bewaar.
+		expect(read('lib/map/Bewaar.svelte')).toMatch(
+			/tekstmenu__knop\) \{\s*min-width: calc\(var\(--s-6\) \+ var\(--s-3\)\)/
+		);
 	});
 
 	it("is around a place's number, before it, on a touch screen", () => {
@@ -34,14 +36,14 @@ describe('the touch target', () => {
 		const basis = read('lib/styles/basis.css');
 		const coarse = basis.slice(basis.indexOf('@media (pointer: coarse)'));
 		expect(coarse).toMatch(
-			/\.btn::after,\s*\.tekstmenu__knop::after \{[^}]*inset: min\(0px, calc\(50% - \(var\(--s-6\) \+ var\(--s-3\)\) \/ 2\)\)/
+			/\.btn::after,\s*\.tekstmenu__knop::after,\s*\.raakvlak-knop::after \{[^}]*inset: min\(0px, calc\(50% - \(var\(--s-6\) \+ var\(--s-3\)\) \/ 2\)\)/
 		);
 	});
 
-	it("is 44 px around a row's ⋯ on a touch screen (the bundels)", () => {
+	it("is 44 px around a row's ⋯ and its Bewaar on a touch screen (the bundels, Actueel)", () => {
 		const acties = read('lib/components/ui/RijActies.svelte');
 		const coarse = acties.slice(acties.indexOf('@media (pointer: coarse)'));
-		expect(coarse).toMatch(/\.plek--menu \{[^}]*width: calc\(var\(--s-6\) \+ var\(--s-3\)\)/);
+		expect(coarse).toMatch(/\.plek \{[^}]*width: calc\(var\(--s-6\) \+ var\(--s-3\)\)/);
 		expect(read('lib/map/MapGroups.svelte')).not.toMatch(/class="notitie-knop/);
 	});
 

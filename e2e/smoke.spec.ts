@@ -13,9 +13,6 @@ import { appendFileSync } from 'node:fs';
 /** The first paint (first-contentful-paint) after the navigation, with the API answered at once. */
 const FIRST_PAINT = 3_000;
 
-/** The Verkenner without a bron is the network: no heading of its own, its title names it. */
-const NO_H1 = new Set(['/explore']);
-
 /** A page with a parameter, as a reader reaches it. */
 const PARAMS: Record<string, string> = { '/bundels/[id]': '/bundels/lm000001' };
 
@@ -51,8 +48,7 @@ for (const path of pages) {
 	test(`${path} loads and keeps the house rules`, async ({ page, touch, guard }) => {
 		for (const known of KNOWN_CONSOLE_ERRORS[path] ?? []) guard.allow(known);
 		await page.goto(path);
-		const first = NO_H1.has(path) ? page.locator('main') : page.locator('h1').first();
-		await expect(first).toBeVisible();
+		await expect(page.locator('h1').first()).toBeVisible();
 		const paint = await page.evaluate(
 			() =>
 				new Promise<number>((done) => {

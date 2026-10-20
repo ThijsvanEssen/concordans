@@ -144,6 +144,12 @@
 		outline: 2px solid var(--focus);
 		outline-offset: 1px;
 	}
+	/* A finger's 44 px: a field has no target outside its box. */
+	@media (pointer: coarse) {
+		input {
+			height: calc(var(--s-6) + var(--s-3));
+		}
+	}
 	@media (max-width: 768px) {
 		.vak {
 			flex: 1 1 100%;

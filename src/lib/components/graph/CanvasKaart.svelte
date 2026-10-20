@@ -52,7 +52,12 @@
 		{#if kop}
 			{@render kop()}
 		{:else if onToggle}
-			<button type="button" class="canvas-kaart__knop" aria-expanded={open} onclick={onToggle}>
+			<button
+				type="button"
+				class="canvas-kaart__knop raakvlak-knop"
+				aria-expanded={open}
+				onclick={onToggle}
+			>
 				<span class="canvas-kaart__titel">{title}</span>
 				{#if samenvatting}{@render samenvatting()}{/if}
 				<Caret {open} />
@@ -103,6 +108,16 @@
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 		cursor: pointer;
+	}
+	/* On a touch screen the head is a finger's 44 px high and its button fills it: the
+	   targets of two cards above each other do not meet. */
+	@media (pointer: coarse) {
+		.canvas-kaart__kop {
+			min-height: calc(var(--s-6) + var(--s-3));
+		}
+		.canvas-kaart__knop {
+			align-self: stretch;
+		}
 	}
 	.canvas-kaart__knop:hover {
 		color: var(--ink);

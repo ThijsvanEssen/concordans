@@ -96,11 +96,10 @@
 		border-radius: 0 var(--r-1) var(--r-1) 0;
 		color: var(--ink-2);
 	}
-	/* The caret's 44 px for a finger grow to its right, never over Bewaar (UX-toets A21 #3). */
+	/* The caret is 44 px wide for a finger, never reaching over Bewaar (UX-toets A21 #3). */
 	@media (pointer: coarse) {
-		.splits :global(.tekstmenu__knop::after) {
-			left: 0;
-			right: min(0px, calc(100% - (var(--s-6) + var(--s-3))));
+		.splits :global(.tekstmenu__knop) {
+			min-width: calc(var(--s-6) + var(--s-3));
 		}
 	}
 	.splits :global(.tekstmenu__knop:hover) {

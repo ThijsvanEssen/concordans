@@ -61,7 +61,7 @@ test('Bronnen › Fracties: the seats of each Kamer add up to the whole Kamer', 
 		.getByRole('button', { name: 'Eerste Kamer' })
 		.click();
 	// The Eerste Kamer as it sits: a floor plan, the fracties facing each other.
-	const ek = page.getByRole('group', { name: /^Plattegrond van de Eerste Kamer/ });
+	const ek = page.getByRole('figure', { name: 'Zetelverdeling Eerste Kamer' });
 	await expect(ek).toBeVisible();
 	expect(await seatsIn(ek)).toBe(75);
 });

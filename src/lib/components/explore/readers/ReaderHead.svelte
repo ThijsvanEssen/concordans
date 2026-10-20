@@ -243,6 +243,16 @@
 		align-items: center;
 		gap: var(--s-2);
 	}
+	/* On a touch screen the lines of the status and of the actions stand apart enough that
+	   the 44 px of their controls (.btn, .tekstmenu__knop) do not meet. */
+	@media (pointer: coarse) {
+		.reader-status {
+			gap: var(--s-4);
+		}
+		.reader-status__acties {
+			row-gap: var(--s-5);
+		}
+	}
 	.reader-rijen {
 		display: grid;
 		gap: var(--s-2);

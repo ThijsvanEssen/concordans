@@ -142,18 +142,25 @@ a:hover {
 		display: inline-block;
 	}
 }
+/* On a touch screen its line is a finger's 44 px high: a box of its own, not a target over
+   the controls above it. */
+@media (max-width: 768px) and (pointer: coarse) {
+	.verfijnen-knop {
+		display: inline-flex;
+		align-items: center;
+		min-height: calc(var(--s-6) + var(--s-3));
+	}
+}
 /* A finger's target around a small control or a link in a line of text (UX-toets 10 Oct:
    "Verfijnen" 55 × 16, the band's "…" 13 × 19, names in a row 13 high): an invisible
    border of the target, at least 24 px high, that moves nothing. On a touch screen only.
    A place's number (.plaats-marker, 9 px wide in a conclusion, UX-toets 14 Oct #60) shows
    its ▾ after it, so its border goes before it, as wide as it is high. */
 @media (pointer: coarse) {
-	.verfijnen-knop,
 	.raakvlak,
 	.plaats-marker {
 		position: relative;
 	}
-	.verfijnen-knop::after,
 	.raakvlak::after,
 	.plaats-marker::before {
 		content: '';
@@ -165,13 +172,16 @@ a:hover {
 	.plaats-marker::before {
 		inset: calc(-1 * var(--s-2));
 	}
-	/* A framed button and a menu's button: a finger's 44 px around them, whatever their size
-	   (UX-toets A14 #11). Without weight, so a button placed otherwise keeps its place. */
-	:where(.btn, .tekstmenu__knop) {
+	/* A framed button, a menu's button and any other control with a box of its own
+	   (.raakvlak-knop: a tab, a segment, a zoom button): a finger's 44 px around them,
+	   whatever their size (UX-toets A14 #11). Without weight, so a button placed otherwise
+	   keeps its place. */
+	:where(.btn, .tekstmenu__knop, .raakvlak-knop) {
 		position: relative;
 	}
 	.btn::after,
-	.tekstmenu__knop::after {
+	.tekstmenu__knop::after,
+	.raakvlak-knop::after {
 		content: '';
 		position: absolute;
 		/* Out to 44 px where the button is smaller, never inside it. */

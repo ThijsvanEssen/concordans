@@ -29,7 +29,7 @@
 
 <button
 	type="button"
-	class="fold-knop"
+	class="fold-knop raakvlak"
 	class:quiet
 	aria-expanded={open}
 	aria-controls={open ? controls : undefined}

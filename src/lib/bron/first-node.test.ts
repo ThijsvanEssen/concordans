@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { headOfDossier, headOfMember, headOfJudgment, headOfLaw } from './first-node';
+import { lawIdOf } from '$lib/graph/types';
 
 describe('kop', () => {
 	it('builds a person under the id of their node', () => {
@@ -28,6 +29,17 @@ describe('kop', () => {
 		} as never);
 		expect(n.id).toBe('instruments/bwbr0005537');
 		expect(n.raw?.props?.bwb_id).toBe('BWBR0005537');
+	});
+
+	it('builds a publication as a publication, not as the law it enacted', () => {
+		const n = headOfLaw({
+			key: 'stb_2026_94',
+			kind: 'publicatie',
+			official_id: 'stb-2026-94',
+			display_name: 'Stb. 2026, 94'
+		} as never);
+		expect(n.raw?.props?.publication_kind).toBe('Stb');
+		expect(lawIdOf(n.raw?.props)).toBeNull();
 	});
 
 	it('builds a dossier with its number as label, as its reader and links read it', () => {

@@ -49,7 +49,7 @@
 </script>
 
 <span
-	class="glossary-pill"
+	class="glossary-pill raakvlak"
 	bind:this={pillEl}
 	onmouseenter={() => (open = true)}
 	onmouseleave={() => (open = false)}

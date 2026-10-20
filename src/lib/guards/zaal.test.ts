@@ -28,6 +28,15 @@ describe('the hall', () => {
 			expect(bron(pad)).toContain('indelingMarkering(');
 	});
 
+	it('names the figure of each Kamer’s hall alike: Zetelverdeling and the Kamer', () => {
+		expect(bron('lib/components/explore/Hemicycle.svelte')).toMatch(
+			/<figure[^>]*aria-label="Zetelverdeling \{kamer\}"/
+		);
+		expect(bron('lib/components/explore/ZaalTegenover.svelte')).toMatch(
+			/<figure[^>]*aria-label="Zetelverdeling Eerste Kamer"/
+		);
+	});
+
 	it('sets the places of a hall on one line at the left, in ZaalPlaatsen', () => {
 		expect(overtreders((t) => /<p class="(sleutel|pl)"/.test(t) && /Voorzitter/.test(t))).toEqual(
 			[]

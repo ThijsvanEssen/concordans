@@ -21,7 +21,7 @@
 
 <button
 	type="button"
-	class="iconknop {className}"
+	class="iconknop raakvlak-knop {className}"
 	aria-label={label}
 	title={label}
 	{disabled}

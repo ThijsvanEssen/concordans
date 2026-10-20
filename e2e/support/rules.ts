@@ -48,7 +48,9 @@ export const strayRed = (page: Page) =>
 /**
  * Controls on screen whose place to tap is under 44 by 44 px: the element itself or what
  * widens it (a ::after over the line) must answer a tap 22 px from its centre in each
- * direction. Inline links in running text are text, not controls, and are left out.
+ * direction. Inline links in running text are text, not controls, and are left out. A row's
+ * toggle (a button with aria-expanded in a [data-rij]) is widened by its row: a tap on the
+ * row's words opens it too ($lib/actions/klik.ts), so they count as its target.
  */
 export const smallTargets = (page: Page) =>
 	page.evaluate(() => {
@@ -71,6 +73,7 @@ export const smallTargets = (page: Page) =>
 				r.left > innerWidth
 			)
 				continue;
+			const row = el.matches('[aria-expanded]') ? el.closest('[data-rij]') : null;
 			const cx = r.left + r.width / 2;
 			const cy = r.top + r.height / 2;
 			const probes = [
@@ -82,7 +85,14 @@ export const smallTargets = (page: Page) =>
 			const ok = probes.every(([x, y]) => {
 				if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) return true;
 				const hit = document.elementFromPoint(x, y);
-				return !!hit && (el.contains(hit) || hit.contains(el));
+				// Nothing there (past the bottom of the screen): nothing takes the tap.
+				if (!hit) return true;
+				if (el.contains(hit) || hit.contains(el)) return true;
+				return (
+					!!row &&
+					hit.closest('[data-rij]') === row &&
+					!hit.closest('button, input, select, summary, [role="button"]')
+				);
 			});
 			if (ok) continue;
 			const label = (el.getAttribute('aria-label') || el.innerText || el.tagName)

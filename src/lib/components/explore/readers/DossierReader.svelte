@@ -116,7 +116,7 @@
 				{#snippet onderTitel()}
 					{#if d.short_title && d.title && d.title.trim() !== d.short_title}
 						<details class="full-title">
-							<summary>Volledige titel</summary>
+							<summary class="raakvlak">Volledige titel</summary>
 							<p>{d.title}</p>
 						</details>
 					{/if}

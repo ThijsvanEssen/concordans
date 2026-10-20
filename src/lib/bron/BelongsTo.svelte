@@ -328,6 +328,12 @@
 		color: var(--ink-3);
 		cursor: pointer;
 	}
+	/* The "…" between two links: 44 px wide for a finger, so its target is its own. */
+	@media (pointer: coarse) {
+		.vouw button {
+			min-width: calc(var(--s-6) + var(--s-3));
+		}
+	}
 	.vouw button:hover,
 	.vouw button:focus-visible {
 		color: var(--ink);

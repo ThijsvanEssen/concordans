@@ -33,9 +33,6 @@ test('the overview opens a bundel in place; its page groups what it keeps', asyn
 	await keepArticle(page);
 	await keepPlaces(page);
 	await page.goto('/bundels');
-	// Known (A56): in the first second after a load, a click on a title can go to the page
-	// of the bundel instead of opening its row (3 in 10 runs); the list is read anew then.
-	await page.waitForTimeout(1000);
 	await page.getByRole('link', { name: 'Losse markeringen' }).click();
 	await expect(page.getByRole('button', { name: 'Details van Losse markeringen' })).toHaveAttribute(
 		'aria-expanded',

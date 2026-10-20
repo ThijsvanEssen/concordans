@@ -19,8 +19,23 @@ export const headOfMember = (m: Schema<'MemberDetailDTO'>): GraphNode => memberT
 export const headOfJudgment = (j: Schema<'JudgmentDTO'>): GraphNode =>
 	syntheticNode('judgments', j.key, j.display_name, { ...(j.props ?? {}), ecli: j.ecli });
 
+/**
+ * A publication's series as its node names it (Stb, Stcrt), from its id (stb-2026-94): the
+ * detail does not carry it, and without it the head is taken for the law the publication
+ * enacted (STB-2026-94), which the API does not know.
+ */
+const publicationKind = (d: Schema<'InstrumentDetailDTO'>) => {
+	const series = d.kind === 'publicatie' ? /^([a-z]+)-/i.exec(d.official_id ?? '')?.[1] : null;
+	return series
+		? { publication_kind: series[0].toUpperCase() + series.slice(1).toLowerCase() }
+		: {};
+};
+
 export const headOfLaw = (d: Schema<'InstrumentDetailDTO'>): GraphNode =>
-	syntheticNode('instruments', d.key, d.display_name ?? d.citation_title ?? d.title, { ...d });
+	syntheticNode('instruments', d.key, d.display_name ?? d.citation_title ?? d.title, {
+		...d,
+		...publicationKind(d)
+	});
 
 /** A dossier's node carries its number as `label`, as its reader and its links read it. */
 export const headOfDossier = (d: Schema<'DossierDetailResponse'>): GraphNode =>

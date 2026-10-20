@@ -1540,6 +1540,12 @@
 		flex-direction: column;
 		gap: var(--s-1);
 	}
+	/* On a touch screen the buttons stand a finger's 44 px apart: their targets do not meet. */
+	@media (pointer: coarse) {
+		.zoom {
+			gap: calc(var(--s-6) + var(--s-3) - var(--veld-h-klein));
+		}
+	}
 
 	/* Takes the canvas's place for the panel it holds; only the panel takes the pointer. */
 	.canvas-overlay {

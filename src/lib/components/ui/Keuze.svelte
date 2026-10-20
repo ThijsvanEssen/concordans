@@ -32,6 +32,7 @@
 	{#each opties as o (o.waarde)}
 		<button
 			type="button"
+			class="raakvlak-knop"
 			aria-pressed={waarde === o.waarde}
 			disabled={o.uit}
 			title={o.titel}
@@ -49,7 +50,6 @@
 		height: var(--veld-h);
 		border: 1px solid var(--ink);
 		border-radius: var(--r-1);
-		overflow: hidden;
 	}
 	button {
 		display: inline-flex;
@@ -92,6 +92,17 @@
 	}
 	button + button {
 		border-left: 1px solid var(--ink);
+	}
+	/* The ends follow the frame's corners: no overflow to clip them, so a finger's target
+	   (.raakvlak-knop) reaches out of the frame. */
+	button:first-child {
+		border-radius: calc(var(--r-1) - 1px) 0 0 calc(var(--r-1) - 1px);
+	}
+	button:last-child {
+		border-radius: 0 calc(var(--r-1) - 1px) calc(var(--r-1) - 1px) 0;
+	}
+	button:only-child {
+		border-radius: calc(var(--r-1) - 1px);
 	}
 	button:hover:not(:disabled):not([aria-pressed='true']) {
 		background: var(--paper-2);

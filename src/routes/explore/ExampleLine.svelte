@@ -41,4 +41,10 @@
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
+	/* Room for the 44 px of its link (.raakvlak) inside the line, off the network under it. */
+	@media (pointer: coarse) {
+		.line {
+			padding-block: var(--s-3);
+		}
+	}
 </style>

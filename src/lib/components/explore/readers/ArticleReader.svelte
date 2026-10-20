@@ -554,11 +554,13 @@
 <!-- Vorig and Volgend, above the article and again under it. -->
 {#snippet steps(noun: string)}
 	{#if prevHref}
-		<a class="reader-nav-link" href={prevHref} data-sveltekit-noscroll>← Vorig{noun}</a>
+		<a class="reader-nav-link raakvlak" href={prevHref} data-sveltekit-noscroll>← Vorig{noun}</a>
 	{/if}
 	{#if nextHref}
-		<a class="reader-nav-link reader-nav-link--next" href={nextHref} data-sveltekit-noscroll
-			>Volgend{noun} →</a
+		<a
+			class="reader-nav-link reader-nav-link--next raakvlak"
+			href={nextHref}
+			data-sveltekit-noscroll>Volgend{noun} →</a
 		>
 	{/if}
 {/snippet}

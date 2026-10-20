@@ -115,7 +115,7 @@
 	const hoveredName = $derived(hovered?.replace(/^Fractie-/, '') ?? '');
 </script>
 
-<figure class="zaal">
+<figure class="zaal" aria-label="Zetelverdeling Eerste Kamer">
 	<svg
 		viewBox="0 0 {W * K} {H}"
 		role="group"

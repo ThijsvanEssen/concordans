@@ -192,13 +192,9 @@
 			opacity: 1;
 		}
 	}
+	/* A finger's target for each: 44 px. */
 	@media (pointer: coarse) {
 		.plek {
-			width: var(--veld-h);
-			height: var(--veld-h);
-		}
-		/* A finger's target for the ⋯: 44 px. */
-		.plek--menu {
 			width: calc(var(--s-6) + var(--s-3));
 			height: calc(var(--s-6) + var(--s-3));
 		}

@@ -245,6 +245,12 @@
 		align-items: baseline;
 	}
 	/* Rung 2 where the timeline is the page (a day of Actueel). */
+	/* The target of a folding heading (.raakvlak) stays above its rule, off the first row. */
+	@media (pointer: coarse) {
+		.kop {
+			padding-bottom: var(--s-3);
+		}
+	}
 	.kop--2 {
 		padding-top: var(--s-5);
 		font-size: var(--t-h3);
