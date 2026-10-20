@@ -2,8 +2,8 @@
 	// Kept in the map, or not: a framed button in a reader's head, as Citeer beside it (Thijs, 10
 	// Oct: "een kader"). Its glyph is the bookmark of RijActies, open or filled: an action, not a
 	// box. "Bewaar lid 3" where it names a place; "Bewaard" once kept. One control: the button
-	// keeps it at once, the caret beside it the choice of map (Thijs, 10 Oct: not a second menu
-	// beside it).
+	// keeps it at once, in the bundel chosen last (a tick in its menu); the caret beside it the choice
+	// of bundel (Thijs, 10 Oct: not a second menu beside it).
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import { kaart } from './map.svelte';
@@ -37,15 +37,27 @@
 			? ` ${wat}`
 			: ''}</button
 	>
-	<TekstMenu
-		klein
-		rechts
-		label="Bewaar {item.kort} in bundel"
-		tekst=""
-		opties={kaart.mappen.map((m) => ({ waarde: m.id, label: m.naam }))}
-		waarde={kaart.actief.id}
-		onSelect={(id) => kaart.bewaarIn(id, item)}
-	>
+	<TekstMenu klein rechts label="Bewaar {item.kort} in bundel" tekst="">
+		<!-- The bundels, Losse markeringen first; a tick where Bewaar keeps (no words "actieve bundel"). -->
+		{#snippet inhoud(dicht)}
+			{#each kaart.listed as m (m.id)}
+				{@const here = m.id === kaart.actief.id}
+				<button
+					type="button"
+					role="menuitemradio"
+					class="tekstmenu__item tekstmenu__item--paar"
+					aria-checked={here}
+					title={here ? 'Bewaren gaat hierheen' : undefined}
+					onclick={() => {
+						dicht();
+						kaart.bewaarIn(m.id, item);
+					}}
+					><span>{m.naam}</span><span class="vink"
+						>{#if here}<Picto naam="tick" size={12} />{/if}</span
+					></button
+				>
+			{/each}
+		{/snippet}
 		{#snippet onder(dicht)}
 			<button
 				type="button"
@@ -53,7 +65,7 @@
 				class="tekstmenu__item"
 				onclick={() => {
 					dicht();
-					// A new map with the item, active from now on; named on its page.
+					// A new bundel with the item, where Bewaar keeps from now on; named on its page.
 					kaart.nieuw(undefined, [item]);
 				}}>Nieuwe bundel</button
 			>
@@ -62,6 +74,11 @@
 </span>
 
 <style>
+	.vink {
+		display: inline-flex;
+		align-items: center;
+		color: var(--ink);
+	}
 	/* The framed pair: the box and its word, the caret of the map's choice joined to it. */
 	.splits {
 		display: inline-flex;

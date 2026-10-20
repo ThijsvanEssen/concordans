@@ -68,7 +68,7 @@ describe('the map', () => {
 			[groups, 'tekst={i.notitie}'],
 			[groups, 'tekst={note}'],
 			[view, 'tekst={own.notitie}'],
-			[pagina, 'tekst={g.notitie}']
+			[view, 'tekst={b.notitie}']
 		])
 			expect(t).toContain(tekst);
 		for (const t of [groups, view, pagina])
@@ -93,13 +93,13 @@ describe('the map', () => {
 		expect(inhoud).not.toMatch(/>\s*Heel artikel\s*</);
 	});
 
-	it('shows a bundel alike on Gemarkeerd and on its own page: one MapView, one MapGroups', () => {
+	it('shows a bundel alike on its own page and as a shared link: one MapView, one MapGroups', () => {
 		const overview = bron('routes/(main)/bundels/+page.svelte');
 		const own = bron('routes/(main)/bundels/[id]/+page.svelte');
-		expect(overview).toMatch(/<MapView \{m\}/);
-		expect(own).toMatch(/<MapView m=\{shown\} standalone/);
+		expect(overview).toMatch(/<MapView \{shared\}/);
+		expect(own).toMatch(/<MapView m=\{shown\}/);
 		// What a bundel holds is drawn in one place: no page draws its rows or groups itself.
-		for (const t of [overview, own]) expect(t).not.toMatch(/<IndexRow\b|groepen\(/);
+		for (const t of [overview, own]) expect(t).not.toMatch(/<IndexRow\b|<MapGroups\b/);
 		expect(bron('lib/map/MapView.svelte')).toContain('<MapGroups');
 	});
 

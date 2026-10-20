@@ -29,3 +29,12 @@ describe('the addresses of the bundels (decision 19)', () => {
 		expect(moved('/wetten/BWBR0005289/artikel/6:162')).toBeNull();
 	});
 });
+
+describe('a bundel just made', () => {
+	it('asks for its name once, on its page', async () => {
+		const { markUnnamed, takeUnnamed } = await import('./page');
+		markUnnamed('x1');
+		expect(takeUnnamed('x1')).toBe(true);
+		expect(takeUnnamed('x1')).toBe(false);
+	});
+});

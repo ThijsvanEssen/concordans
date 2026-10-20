@@ -93,3 +93,63 @@ describe('a bundel’s own page, the place to work (bundels-ux 2b)', () => {
 		expect(g).toMatch(/JUDGMENTS_GROUP/);
 	});
 });
+
+describe('the overview, a list that opens in place (bundels-ux 2a, decision 20A)', () => {
+	const overview = () => bron('routes/(main)/bundels/+page.svelte');
+
+	it('heads the page as the other menu pages, with Nieuwe bundel and one menu Meer', () => {
+		const o = overview();
+		expect(o).toMatch(/class="blad__kop"[\s\S]*?class="blad__titel">Bundels</);
+		expect(o).toContain('Nieuwe bundel');
+		expect(o).toMatch(/<TekstMenu\b[^>]*tekst="Meer"/);
+		for (const label of ['Bestand openen', 'Alle bundels downloaden']) expect(o).toContain(label);
+		// Gone: every bundel in full, the facet column, the words of before.
+		for (const gone of [
+			'<MapView {m}',
+			'class="opzij"',
+			'Open een bestand',
+			'Bewaar alles als bestand',
+			'Actieve bundel'
+		])
+			expect(o, gone).not.toContain(gone);
+	});
+
+	it('lists each bundel as a row of Bladeren that opens in place, its name a link to its page', () => {
+		const row = bron('lib/map/BundleRow.svelte');
+		expect(row).toContain('<IndexRow');
+		expect(row).toContain('bundlePageHref(');
+		expect(row).toContain('Open bundel');
+		expect(overview()).toMatch(/kaart\.listed/);
+	});
+
+	it('marks where Bewaar keeps by its bookmark, not by words (no "actieve bundel")', () => {
+		const row = bron('lib/map/BundleRow.svelte');
+		expect(row).toMatch(/<Picto naam="bewaard"/);
+		expect(row).toContain('Bewaren gaat hierheen');
+		const bewaar = bron('lib/map/Bewaar.svelte');
+		expect(bewaar).toMatch(/<Picto naam="tick"/);
+		expect(bewaar).toContain('kaart.listed');
+	});
+
+	it('shows a bundel from a file as a row, marked, with Bewaar and its ⋯', () => {
+		const o = overview();
+		expect(o).toMatch(/<BundleRow\b[^>]*mark="uit bestand"/);
+		for (const label of ['Niet openen', 'Vervang ', 'Voeg toe aan ']) expect(o).toContain(label);
+	});
+});
+
+describe('a shared link, read as a bundel’s page (bundels-ux 2c, decision 20A)', () => {
+	it('opens the bundel’s page read only, with Bewaar, Voeg toe aan … and Niet bewaren', () => {
+		expect(bron('routes/(main)/bundels/+page.svelte')).toMatch(
+			/<MapView\b[^>]*(\{shared\}|shared=)/
+		);
+		const v = bron('lib/map/MapView.svelte');
+		expect(v).toMatch(/>Bewaar<\/button/);
+		for (const label of ['Voeg toe aan …', 'Niet bewaren']) expect(v).toContain(label);
+	});
+
+	it('prints a bundel as a PDF through the print view, A4 (decision 20E)', () => {
+		expect(bron('lib/map/MapView.svelte')).toMatch(/window\.print\(\)\)\}>PDF</);
+		expect(bron('lib/map/MapView.svelte')).toMatch(/@page \{\s*size: A4/);
+	});
+});

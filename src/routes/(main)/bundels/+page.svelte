@@ -1,44 +1,35 @@
 <script lang="ts">
-	// Bundels: the reader's own collections, built as Gevolgd is (Thijs, 10 Oct: "past nu nog
-	// totaal niet bij de rest"). The heading over both columns; the bundels in the facet column,
-	// the active one (where Bewaar keeps) in weight, with a file to open and all of them to keep
-	// as one; in the list column each bundel a section of the page (MapView, as on its own
-	// page). A bundel shared as a link (its fragment, share.ts: never in a request) or opened
-	// from a file stands at the top as a section of its own until it is kept, added, put in
-	// place of one or put aside.
+	// Bundels (decision 19, bundels-ux 2a): the table of contents of the reader's bundels, a
+	// list like Bladeren's, built as Actueel and Gevolgd are headed. Each bundel a row that
+	// opens in place on what it holds (BundleRow); the work is on its own page. Losse
+	// markeringen first, then the bundels last changed first. A bundel shared as a link (its
+	// fragment, share.ts: never in a request) opens as that page, read only (MapView), until it
+	// is kept, added or put aside. A bundel from a file stands at the top as a row, marked.
+	// The page reads this browser's storage alone: no call to the API.
 	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import { navigate } from '$lib/util/address';
-	import { tick } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
-	import { afterTick } from '$lib/util/after-tick';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
-	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import ConfirmButton from '$lib/components/ui/ConfirmButton.svelte';
+	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
+	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import { download } from '$lib/verbonden/export';
-	import { formatCount } from '$lib/text/getal';
-	import { plural } from '$lib/text/words';
-	import { korteDatum, vandaag } from '$lib/text/datum';
 	import { ignore } from '$lib/api/errors';
-	import { itemKey, netwerkHref, type Map, type SharedMap } from '$lib/map/map';
+	import type { SharedMap } from '$lib/map/map';
 	import { kaart } from '$lib/map/map.svelte';
 	import { BROKEN, isOldLink, sharedOfFragment } from '$lib/map/share';
 	import { NEWER, mapFile, mapFileName, readMapFile, type FileMap } from '$lib/map/file';
-	import Aantekening from '$lib/map/Aantekening.svelte';
-	import MapGroups from '$lib/map/MapGroups.svelte';
+	import BundleRow from '$lib/map/BundleRow.svelte';
 	import MapView from '$lib/map/MapView.svelte';
-	import { mapAfterFile } from '$lib/map/file-done';
-	import { BUNDLES_PATH } from '$lib/map/page';
+	import { BUNDLES_PATH, bundlePageHref, markUnnamed } from '$lib/map/page';
 
-	const count = (n: number) => `${formatCount(n)} ${plural(n, 'bron', 'bronnen')}`;
-	const day = (iso: string) => korteDatum(vandaag(new Date(iso)));
-	/** The focus on a bundel's name, once the page has drawn it. */
-	const focusHead = (m: Map) =>
-		afterTick(() => document.querySelector<HTMLElement>(`#map-${m.id} .kop button`)?.focus());
+	/** The rows open, by the bundel's id (a bundel from a file by `file:<n>`). */
+	const open = new SvelteSet<string>();
+	const toggle = (key: string) => (open.delete(key) ? undefined : open.add(key));
 
 	// ── A shared bundel, from the address's fragment ───────────────────────────
 	let shared = $state<SharedMap | typeof BROKEN | null>(null);
-	const sharedOpen = new SvelteSet<string>();
 	/** A link of the older form (its bundel in the query) was opened: said as a broken one. */
 	let oldLink = $state(false);
 	$effect(() => {
@@ -57,20 +48,20 @@
 			current = false;
 		};
 	});
-	/** A shared bundel kept or put aside: its link leaves the address, a reload asks no more. */
-	function sharedDone(how: 'map' | 'add' | 'none') {
-		if (shared && shared !== BROKEN && how === 'map') kaart.bewaarAlsMap(shared);
-		else if (shared && shared !== BROKEN && how === 'add') kaart.voegToe(shared);
+	/** A shared bundel kept, added to one, or put aside: its link leaves the address. */
+	function sharedDone(how: 'map' | 'add' | 'none', into?: string) {
+		const g = shared && shared !== BROKEN ? shared : null;
 		oldLink = false;
+		if (g && how === 'map') return goto(bundlePageHref(kaart.bewaarAlsMap(g)));
+		if (g && how === 'add' && into) {
+			kaart.voegToe(g, into);
+			return goto(bundlePageHref({ id: into }));
+		}
 		navigate(BUNDLES_PATH);
-		focusHead(kaart.actief);
 	}
 
 	// ── Bundels from a file, each kept, added or put in place of one as the reader chooses ──
-	/** The rows open, by their item's key. */
-	type OpenRows = SvelteSet<string>;
-	type FromFile = { map: FileMap; open: OpenRows };
-	type Opened = { name: string; maps: FromFile[] } | { name: string; error: string };
+	type Opened = { name: string; maps: FileMap[] } | { name: string; error: string };
 	let opened = $state<Opened | null>(null);
 	let fileField = $state<HTMLInputElement>();
 	const fileError = (name: string, read: typeof BROKEN | typeof NEWER) =>
@@ -85,280 +76,202 @@
 		opened =
 			read === BROKEN || read === NEWER
 				? { name: file.name, error: fileError(file.name, read) }
-				: { name: file.name, maps: read.map((map) => ({ map, open: new SvelteSet<string>() })) };
+				: { name: file.name, maps: read };
 	}
 	/** The bundel of this browser a bundel from a file stands for: by its id, else its name. */
 	const targetOf = (f: FileMap) =>
 		kaart.mappen.find((m) => m.id === f.id) ?? kaart.mappen.find((m) => m.naam === f.naam);
-	/** A bundel from a file kept, added, put in place of one, or put aside. */
-	function fileDone(f: FileMap, how: 'map' | 'add' | 'replace' | 'none') {
+	/** A bundel from a file kept, added to one, put in place of one, or put aside. */
+	function fileDone(f: FileMap, how: 'map' | 'add' | 'replace' | 'none', into?: string) {
 		const target = targetOf(f);
 		if (how === 'map') kaart.bewaarAlsMap(f);
-		else if (how === 'add') kaart.voegToe(f, (target ?? kaart.actief).id);
+		else if (how === 'add' && into) kaart.voegToe(f, into);
 		else if (how === 'replace' && target) kaart.replace(target.id, f);
 		if (opened && 'maps' in opened) {
-			const rest = opened.maps.filter((x) => x.map !== f);
+			const rest = opened.maps.filter((x) => x !== f);
 			opened = rest.length ? { ...opened, maps: rest } : null;
 		}
-		const made = kaart.mappen.find((m) => m.id === mapAfterFile(how, target, kaart.actief));
-		if (made) focusHead(made);
 	}
 
-	// ── The bundels ──────────────────────────────────────────────────────────
-	/** A bundel just made: it is named at once. */
-	let newId = $state<string | null>(null);
-	function newMap() {
+	function newBundle() {
 		const m = kaart.nieuw();
-		newId = m.id;
-		afterTick(() => document.getElementById(`map-${m.id}`)?.scrollIntoView());
+		markUnnamed(m.id);
+		goto(bundlePageHref(m));
 	}
-	async function toMap(m: Map) {
-		kaart.kies(m.id);
-		await tick();
-		document.getElementById(`map-${m.id}`)?.scrollIntoView({ block: 'start' });
-	}
+	/** The bundel to add to, chosen in a ⋯: its list in place of the ⋯'s own items. */
+	let choosing = $state<FileMap | null>(null);
 </script>
 
 <RouteKop />
 
-<!-- A shared bundel's rows, all open or none, as a bundel's own (MapView). -->
-{#snippet allOf(open: OpenRows, items: SharedMap['items'])}
-	{@const all = items.length > 0 && items.every((i) => open.has(itemKey(i)))}
-	<TekstLink
-		onclick={() => {
-			for (const i of items) {
-				if (all) open.delete(itemKey(i));
-				else open.add(itemKey(i));
-			}
-		}}
-		aria-pressed={all}>{all ? 'Alles inklappen' : 'Alles uitklappen'}</TekstLink
-	>
-{/snippet}
+{#if shared && shared !== BROKEN && !oldLink}
+	<!-- A shared bundel: its page, read only, as the one who shared it sees it (2c). -->
+	<div class="blad blad--tekst">
+		<nav class="stub-eyebrow" aria-label="Hoort bij"><a href={BUNDLES_PATH}>Bundels</a></nav>
+		<MapView {shared} onShared={sharedDone} />
+	</div>
+{:else}
+	<div class="bundels blad blad--tekst">
+		<header class="blad__kop">
+			<h1 class="blad__titel">Bundels</h1>
+			<span class="acties">
+				<button type="button" class="btn" onclick={newBundle}>Nieuwe bundel</button>
+				<TekstMenu klein rechts label="Meer bij de bundels" tekst="Meer">
+					{#snippet inhoud(close)}
+						<button
+							type="button"
+							role="menuitem"
+							class="tekstmenu__item"
+							onclick={() => {
+								close();
+								fileField?.click();
+							}}>Bestand openen</button
+						>
+						<button
+							type="button"
+							role="menuitem"
+							class="tekstmenu__item"
+							onclick={() => {
+								close();
+								download(mapFileName(kaart.mappen), mapFile(kaart.mappen), 'application/json');
+							}}>Alle bundels downloaden</button
+						>
+					{/snippet}
+				</TekstMenu>
+			</span>
+			<input
+				bind:this={fileField}
+				type="file"
+				accept=".json,application/json"
+				hidden
+				aria-label="Bestand met bundels"
+				onchange={openFile}
+			/>
+		</header>
 
-<!-- A bundel from a link or a file: read only, what it holds as a bundel shows it. -->
-{#snippet held(g: SharedMap, open: OpenRows, from: string)}
-	<Aantekening tekst={g.notitie} bij={g.naam ?? 'de bundel'} />
-	<p class="meta">
-		<span
-			>{count(g.items.length)}{#if g.skipped}, {formatCount(g.skipped)} uit {from} niet te lezen{/if}</span
-		>
-		{#if g.items.length}{@render allOf(open, g.items)}{/if}
-	</p>
-	<MapGroups map={null} items={g.items} order={g.volgorde} notes={g.groepNotities} {open} />
-{/snippet}
-
-<div class="bundels blad blad__indeling">
-	<header class="blad__kop">
-		<h1 class="blad__titel">Bundels</h1>
-	</header>
-
-	<!-- The bundels, as Gevolgd lists its topics: a way to each; the active one in weight. -->
-	<nav class="opzij" aria-label="Bundels">
-		<h2 class="opzij__kop">Bundels</h2>
-		<ul>
-			{#each kaart.mappen as m (m.id)}
-				<li>
-					<button
-						type="button"
-						class="raakvlak"
-						class:is-active={m.id === kaart.actief.id}
-						aria-current={m.id === kaart.actief.id ? 'true' : undefined}
-						title="{count(m.items.length)}, gewijzigd {day(m.gewijzigd)}"
-						onclick={() => toMap(m)}>{m.naam}</button
-					><span class="n">{m.items.length}</span>
-				</li>
-			{/each}
-		</ul>
-		<p class="ook">
-			<TekstLink onclick={newMap}>Nieuwe bundel</TekstLink>
-			<TekstLink onclick={() => fileField?.click()}>Open een bestand</TekstLink>
-			<TekstLink
-				onclick={() =>
-					download(mapFileName(kaart.mappen), mapFile(kaart.mappen), 'application/json')}
-				>Bewaar alles als bestand</TekstLink
-			>
-		</p>
-		<input
-			bind:this={fileField}
-			type="file"
-			accept=".json,application/json"
-			hidden
-			aria-label="Bestand met bundels"
-			onchange={openFile}
-		/>
-	</nav>
-
-	<div class="inhoud">
 		{#if shared === BROKEN || oldLink}
-			<p class="vraag" role="status">
+			<p class="melding" role="status">
 				<span>Link onvolledig of beschadigd</span>
 				<TekstLink onclick={() => sharedDone('none')}>Niet bewaren</TekstLink>
 			</p>
-		{:else if shared}
-			{@const g = shared}
-			<Sectie title="Gedeelde bundel: {g.naam ?? 'zonder naam'}" niveau={2} inklapbaar={false}>
-				{#snippet naast()}
-					<span class="acties">
-						{#if g.items.length}
-							<TekstLink href={netwerkHref(g.items) ?? undefined}>Netwerk</TekstLink>
-							<TekstLink onclick={() => sharedDone('map')}>Bewaar als bundel</TekstLink>
-							<TekstLink onclick={() => sharedDone('add')}
-								>Voeg toe aan {kaart.actief.naam}</TekstLink
-							>
-						{/if}
-						<TekstLink onclick={() => sharedDone('none')}>Niet bewaren</TekstLink>
-					</span>
-				{/snippet}
-				{@render held(g, sharedOpen, 'de link')}
-			</Sectie>
 		{/if}
-
 		{#if opened && 'error' in opened}
-			<p class="vraag" role="status">
+			<p class="melding" role="status">
 				<span>{opened.error}</span>
 				<TekstLink onclick={() => (opened = null)}>Sluiten</TekstLink>
 			</p>
-		{:else if opened}
-			{#each opened.maps as { map: f, open }, n (n)}
-				{@const target = targetOf(f)}
-				<Sectie title="Bundel uit bestand: {f.naam ?? 'zonder naam'}" niveau={2} inklapbaar={false}>
-					{#snippet naast()}
-						<span class="acties">
-							<TekstLink onclick={() => fileDone(f, 'map')}>Bewaar als nieuwe bundel</TekstLink>
-							{#if target}
-								<ConfirmButton
-									label="Vervang {target.naam}"
-									confirmLabel="Ja, {target.naam} vervangen"
-									class="raakvlak vervang"
-									onConfirm={() => fileDone(f, 'replace')}
-								/>
-							{/if}
-							{#if f.items.length}
-								<TekstLink onclick={() => fileDone(f, 'add')}
-									>Voeg toe aan {(target ?? kaart.actief).naam}</TekstLink
-								>
-							{/if}
-							<TekstLink onclick={() => fileDone(f, 'none')}>Niet openen</TekstLink>
-						</span>
-					{/snippet}
-					{@render held(f, open, 'het bestand')}
-				</Sectie>
-			{/each}
 		{/if}
 
-		{#each kaart.mappen as m (m.id)}
-			<MapView {m} named={m.id !== newId} />
-		{/each}
+		<ul class="lijst">
+			{#if opened && 'maps' in opened}
+				{#each opened.maps as f, n (n)}
+					{@const target = targetOf(f)}
+					<BundleRow
+						bundle={{ naam: f.naam ?? 'Bundel', items: f.items, notitie: f.notitie }}
+						mark="uit bestand"
+						open={open.has(`file:${n}`)}
+						onToggle={() => toggle(`file:${n}`)}
+					>
+						{#snippet choices()}
+							<button type="button" class="btn" onclick={() => fileDone(f, 'map')}>Bewaar</button>
+							<RijActies naam={f.naam ?? 'Bundel uit bestand'}>
+								{#snippet menu(close)}
+									{#if choosing === f}
+										{#each kaart.listed as into (into.id)}
+											<button
+												type="button"
+												role="menuitem"
+												class="tekstmenu__item"
+												onclick={() => {
+													close();
+													choosing = null;
+													fileDone(f, 'add', into.id);
+												}}>{into.naam}</button
+											>
+										{/each}
+									{:else}
+										{#if target}
+											<button
+												type="button"
+												role="menuitem"
+												class="tekstmenu__item"
+												onclick={() => {
+													close();
+													fileDone(f, 'replace');
+												}}>Vervang {target.naam}</button
+											>
+										{/if}
+										{#if f.items.length}
+											<button
+												type="button"
+												role="menuitem"
+												class="tekstmenu__item"
+												aria-haspopup="menu"
+												onclick={() => (choosing = f)}>Voeg toe aan …</button
+											>
+										{/if}
+										<button
+											type="button"
+											role="menuitem"
+											class="tekstmenu__item"
+											onclick={() => {
+												close();
+												fileDone(f, 'none');
+											}}>Niet openen</button
+										>
+									{/if}
+								{/snippet}
+							</RijActies>
+						{/snippet}
+					</BundleRow>
+				{/each}
+			{/if}
+			{#each kaart.listed as m (m.id)}
+				<BundleRow
+					bundle={m}
+					target={m.id === kaart.actief.id}
+					open={open.has(m.id)}
+					onToggle={() => toggle(m.id)}
+				/>
+			{/each}
+		</ul>
 	</div>
-</div>
+{/if}
 
 <style>
-	/* The frame and grid of Bladeren (lib/styles/frame.css), as Gevolgd: the heading over both columns. */
-	/* The column's first heading on the line of the first group's heading, as on Gevolgd. */
-	.opzij {
-		padding-top: calc(var(--s-3) + 2px);
-	}
-	.opzij__kop {
-		margin: 0 0 var(--s-2);
-		font-size: var(--t-meta);
-		font-weight: 600;
-		color: var(--ink);
-	}
-	.opzij ul {
-		margin: 0;
-		padding: 0;
-		list-style: none;
-		font-size: var(--t-meta);
-	}
-	.opzij li {
-		display: flex;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: var(--s-2);
-		padding: var(--s-1) 0;
-	}
-	.opzij li button {
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		color: var(--ink-2);
-		text-align: left;
-		cursor: pointer;
-	}
-	.opzij li button:hover {
-		color: var(--ink);
-		text-decoration: underline;
-	}
-	.opzij li button.is-active {
-		color: var(--ink);
-		font-weight: 600;
-	}
-	.opzij .n {
-		color: var(--ink-3);
-		font-size: var(--t-micro);
-	}
-	.opzij .ook {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		gap: var(--s-1);
-		margin: var(--s-2) 0 0;
-		font-size: var(--t-meta);
-	}
-	.inhoud {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-7);
-		min-width: 0;
-	}
 	.acties {
 		display: inline-flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		gap: var(--s-1) var(--s-4);
-		font-size: var(--t-meta);
+		align-items: center;
+		gap: var(--s-4);
 	}
-	.meta {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		gap: var(--s-1) var(--s-4);
-		margin: 0;
-		font-size: var(--t-meta);
-		color: var(--ink-3);
-	}
-	.vraag {
+	.melding {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--s-2);
-		margin: 0;
+		margin: 0 0 var(--s-3);
 		font-size: var(--t-meta);
 	}
-	/* Vervang asks once (ConfirmButton), in the letter of the links beside it (TekstLink). */
-	.acties :global(.vervang) {
+	/* The rows of Bladeren, the bookmark in a narrow lead, the number and the day at the right. */
+	.lijst {
+		--row-lead: var(--s-4);
+		--row-aside: auto;
+		margin: 0;
 		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		font-family: var(--font-serif);
-		color: var(--ink);
-		text-align: left;
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 3px;
-		cursor: pointer;
+		border-top: 1px solid var(--rule-strong);
+		list-style: none;
 	}
-	.acties :global(.vervang:hover),
-	.acties :global(.vervang:focus-visible) {
-		text-decoration-color: currentColor;
+	.lijst :global(.row-aside) {
+		flex-wrap: nowrap;
 	}
-	/* On a phone the bundels stand above the groups: the column holds Nieuwe bundel. */
+	/* On a phone the row keeps its number at the right of the name. */
 	@media (max-width: 768px) {
-		.opzij {
+		.lijst :global(.row) {
+			grid-template-columns: var(--row-lead) minmax(0, 1fr) auto;
+			gap: var(--s-2);
+		}
+		.lijst :global(.row-aside) {
 			padding-top: 0;
-			margin-bottom: var(--s-5);
 		}
 	}
 </style>

@@ -8,11 +8,11 @@
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
-	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import { download, safeFileName } from '$lib/verbonden/export';
+	import { formatCount } from '$lib/text/getal';
 	import { korteDatum, vandaag } from '$lib/text/datum';
 	import { afterTick } from '$lib/util/after-tick';
 	import { navigate } from '$lib/util/address';
@@ -25,7 +25,8 @@
 		itemKey,
 		netwerkHref,
 		type Map,
-		type MapItem
+		type MapItem,
+		type SharedMap
 	} from './map';
 	import { kaart } from './map.svelte';
 	import { shareFragment } from './share';
@@ -38,20 +39,31 @@
 	import { Fresh } from './fresh.svelte';
 
 	let {
-		m,
-		standalone = false,
+		m = null,
+		shared = null,
+		onShared,
 		named = true
 	}: {
 		/** The bundel of this browser, to work in. */
-		m: Map;
-		/** On its own page: its name the page's title. */
-		standalone?: boolean;
+		m?: Map | null;
+		/** A bundel shared as a link, in place of `m`: read only. */
+		shared?: SharedMap | null;
+		/** The choice for a shared bundel: kept as a bundel, added to one, or put aside. */
+		onShared?: (how: 'map' | 'add' | 'none', into?: string) => void;
 		/** False for a bundel just made: it is named at once. */
 		named?: boolean;
 	} = $props();
 
 	/** What is shown: the bundel's own or the shared one. */
-	const b = $derived(m);
+	const b = $derived<Pick<Map, 'naam' | 'items' | 'volgorde' | 'notitie' | 'groepNotities'>>(
+		m ?? {
+			naam: shared?.naam ?? 'Gedeelde bundel',
+			items: shared?.items ?? [],
+			volgorde: shared?.volgorde ?? 'groep',
+			notitie: shared?.notitie ?? null,
+			groepNotities: shared?.groepNotities ?? {}
+		}
+	);
 	const copier = createCopier();
 	const anchor = $derived(m ? `map-${m.id}` : 'gedeeld');
 	const fileBase = $derived(safeFileName(b.naam) || 'Bundel');
@@ -77,7 +89,7 @@
 	// ── What is new since the visit before: on its own page, after the first paint ──
 	let fresh = $state<Fresh | null>(null);
 	$effect(() => {
-		if (!standalone || !m) return;
+		if (!m) return;
 		const own = m;
 		return untrack(() => {
 			const since = kaart.visit(own.id, vandaag());
@@ -110,6 +122,8 @@
 	let renaming = $state(untrack(() => !named));
 	let asking = $state<'delete' | 'empty' | null>(null);
 	let adding = $state(false);
+	/** The list of bundels to add a shared one to, in place of Meer's own items. */
+	let choosing = $state(false);
 	/** The focus back on the bundel's name, once the page has drawn it. */
 	const focusHead = () =>
 		afterTick(() =>
@@ -188,46 +202,81 @@
 			<TekstLink disabled={!link} onclick={() => copier.copy(link ?? '', 'link')}
 				>{copier.label('link', 'Kopieer link')}</TekstLink
 			>
+		{:else}
+			<button type="button" class="btn" onclick={() => onShared?.('map')}>Bewaar</button>
 		{/if}
 		<TekstMenu klein rechts label="Meer bij {b.naam}" tekst="Meer">
 			{#snippet inhoud(close)}
-				{#if b.items.length}{@render takeAlong(close)}{/if}
-				{#if m}
-					{@const own = m}
-					<div class="tekstmenu__onder">
+				{#if choosing}
+					{#each kaart.listed as into (into.id)}
 						<button
 							type="button"
 							role="menuitem"
 							class="tekstmenu__item"
-							onclick={act(close, () => (renaming = true))}>Hernoem</button
+							onclick={act(close, () => {
+								choosing = false;
+								onShared?.('add', into.id);
+							})}>{into.naam}</button
 						>
-						{#if own.id !== kaart.actief.id}
+					{/each}
+				{:else}
+					{#if b.items.length}{@render takeAlong(close)}{/if}
+					{#if m}
+						{@const own = m}
+						<div class="tekstmenu__onder">
 							<button
 								type="button"
 								role="menuitem"
 								class="tekstmenu__item"
-								title="Bewaren gaat hierheen"
-								onclick={act(close, () => kaart.kies(own.id))}>Bewaar hierin</button
+								onclick={act(close, () => (renaming = true))}>Hernoem</button
 							>
-						{/if}
-						{#if kaart.isDefault(own)}
-							{#if own.items.length}
+							{#if own.id !== kaart.actief.id}
 								<button
 									type="button"
 									role="menuitem"
 									class="tekstmenu__item"
-									onclick={act(close, () => (asking = 'empty'))}>Leegmaken</button
+									title="Bewaren gaat hierheen"
+									onclick={act(close, () => kaart.kies(own.id))}>Bewaar hierin</button
 								>
 							{/if}
-						{:else}
+							{#if kaart.isDefault(own)}
+								{#if own.items.length}
+									<button
+										type="button"
+										role="menuitem"
+										class="tekstmenu__item"
+										onclick={act(close, () => (asking = 'empty'))}>Leegmaken</button
+									>
+								{/if}
+							{:else}
+								<button
+									type="button"
+									role="menuitem"
+									class="tekstmenu__item"
+									onclick={act(close, () => (asking = 'delete'))}>Verwijder bundel</button
+								>
+							{/if}
+						</div>
+					{:else}
+						<div class="tekstmenu__onder">
+							{#if b.items.length}
+								<!-- Stays open: its list of bundels takes the place of these items. -->
+								<button
+									type="button"
+									role="menuitem"
+									class="tekstmenu__item"
+									aria-haspopup="menu"
+									onclick={() => (choosing = true)}>Voeg toe aan …</button
+								>
+							{/if}
 							<button
 								type="button"
 								role="menuitem"
 								class="tekstmenu__item"
-								onclick={act(close, () => (asking = 'delete'))}>Verwijder bundel</button
+								onclick={act(close, () => onShared?.('none'))}>Niet bewaren</button
 							>
-						{/if}
-					</div>
+						</div>
+					{/if}
 				{/if}
 			{/snippet}
 		</TekstMenu>
@@ -279,6 +328,9 @@
 				>{asking === 'delete' ? 'Niet verwijderen' : 'Niet leegmaken'}</TekstLink
 			>
 		</p>
+	{/if}
+	{#if shared?.skipped}
+		<p class="stil" role="status">{formatCount(shared.skipped)} uit de link niet te lezen</p>
 	{/if}
 	{#if m}
 		{@const own = m}
@@ -355,20 +407,13 @@
 	<p class="sr-only" aria-live="polite">{copier.announcement}</p>
 {/snippet}
 
-{#if standalone}
-	<article class="bundel" id={anchor}>
-		<header class="blad__kop">
-			<h1 class="blad__titel" tabindex="-1">{b.naam}</h1>
-			{@render actions()}
-		</header>
-		<div class="inhoud">{@render content()}</div>
-	</article>
-{:else}
-	<Sectie title={b.naam} id={anchor} niveau={2} sleutel="map:{anchor}" standaardOpen>
-		{#snippet naast()}{@render actions()}{/snippet}
-		{@render content()}
-	</Sectie>
-{/if}
+<article class="bundel" id={anchor}>
+	<header class="blad__kop">
+		<h1 class="blad__titel" tabindex="-1">{b.naam}</h1>
+		{@render actions()}
+	</header>
+	<div class="inhoud">{@render content()}</div>
+</article>
 
 <style>
 	.inhoud {
@@ -434,8 +479,35 @@
 	.papier {
 		display: none;
 	}
-	/* On paper: the name, the question, the day and what the bundel holds; no ways on. */
+	/* On paper, A4 (PDF, decision 20E): the bundel alone, without the bar and the footer; the
+	   name, the question, the day and what the bundel holds, no ways on. */
 	@media print {
+		@page {
+			size: A4;
+			margin: 20mm 18mm;
+		}
+		:global(body:has(.bundel) .topbar),
+		:global(body:has(.bundel) .foot),
+		:global(body:has(.bundel) .stub-eyebrow) {
+			display: none;
+		}
+		:global(body:has(.bundel) .blad-hoogte) {
+			min-height: 0;
+		}
+		:global(.blad:has(> .bundel)),
+		:global(.blad:has(> .bundel) > *) {
+			max-width: none;
+			padding: 0;
+		}
+		.bundel :global(a) {
+			color: inherit;
+			text-decoration: none;
+		}
+		.bundel :global(h1),
+		.bundel :global(h2),
+		.bundel :global(h3) {
+			break-after: avoid;
+		}
 		.acties,
 		.erbij,
 		.werkregel,

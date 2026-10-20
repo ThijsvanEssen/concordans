@@ -19,3 +19,12 @@ export function movedAddress(url: URL): string | null {
 	const id = url.searchParams.get('id');
 	return `${id ? bundlePageHref({ id }) : BUNDLES_PATH}${url.hash}`;
 }
+
+/** Bundels just made on the overview: their page opens with the name to type. */
+const unnamed = new Set<string>();
+
+/** A bundel made without a name: its page asks for one when it opens. */
+export const markUnnamed = (id: string) => void unnamed.add(id);
+
+/** Whether a bundel's page should ask for its name, once. */
+export const takeUnnamed = (id: string): boolean => unnamed.delete(id);
