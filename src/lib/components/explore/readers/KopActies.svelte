@@ -70,6 +70,12 @@
 		gap: var(--s-2);
 		margin-left: auto;
 	}
+	/* A finger's 44 px of Bewaar in … and of Naar … on the line below do not overlap. */
+	@media (pointer: coarse) {
+		.kop-acties {
+			row-gap: var(--s-5);
+		}
+	}
 	/* On a phone the pair starts at the text's edge, on a line of its own. */
 	@media (max-width: 768px) {
 		.kop-acties {

@@ -306,6 +306,37 @@ describe('lookUp', () => {
 		await expect(lookUp(artikel)).rejects.toBeDefined();
 	});
 
+	it('asks the stukken of the dossier of the text in force only where the data holds it', async () => {
+		const versie = (number: string, exists: boolean) => ({
+			versions: [
+				{
+					key: `v-${number}`,
+					valid_from: '1997-04-01',
+					valid_until: null,
+					current: true,
+					text_changed: true,
+					amended_by: { dossiers: [{ number, key: number, exists }] }
+				}
+			]
+		});
+		const fake = fakeApi({
+			...vooraf,
+			'/api/articles/{bwb_id}/{article_number}/history': (req) =>
+				String(req.params.path?.article_number).endsWith('611')
+					? versie('23438', false)
+					: versie('34372', true),
+			'/api/dossiers/{number}/documents': { items: [] },
+			'/api/lookup': fail(404)
+		});
+		await lookUp({ soort: 'artikel', wet: 'BWBR0005290', nummer: '7:611' });
+		await lookUp({ soort: 'artikel', wet: 'BWBR0005290', nummer: '7:612' });
+		await vi.waitFor(() =>
+			expect(fake.asked('/api/dossiers/{number}/documents')).toEqual([
+				{ path: { number: '34372' }, query: { limit: 100 } }
+			])
+		);
+	});
+
 	it('asks a Kamerstuk’s text as soon as the lookup names it', async () => {
 		const fake = fakeApi({
 			'/api/lookup': { collection: 'documents', key: 'kst-36600-vii-147' },

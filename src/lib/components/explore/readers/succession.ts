@@ -4,6 +4,7 @@
 import type { Schema } from '$lib/api/types';
 import { citeArticle } from '$lib/text/cite';
 import { lawShortName } from '$lib/text/bw';
+import { enactedLawOfKey } from '$lib/text/enacted-law';
 import { joinAnd, plural } from '$lib/text/words';
 import type { LidPairing } from '$lib/text/version-diff';
 
@@ -142,8 +143,25 @@ type CompareTarget = {
 	pairings: LidPairing[];
 };
 
-/** The law of an article's address, `/wetten/STB-2026-56/artikel/2.8.6`. */
-const lawOfPath = (path: string | null | undefined) => /^\/wetten\/([^/]+)\//.exec(path ?? '')?.[1];
+/** The law of an address: `/wetten/STB-2026-56/artikel/2.8.6`, `/wetten/STB-2026-56`. */
+const lawOfPath = (path: string | null | undefined) =>
+	/^\/wetten\/([^/?#]+)/.exec(path ?? '')?.[1] ?? null;
+
+/**
+ * The law of an article as the API asks it (`BWBR0001903`, `STB-2026-56`): its BWB id, else
+ * from its address, else from its law's. An article of a law of the Staatsblad has no
+ * address of its own (live 0.79.65); its law has, and its key names it too (wet_stb_2026_56).
+ */
+function lawOfArticle(a: Succession['article']): string | null {
+	const law = a.instrument;
+	return (
+		a.bwb_id ??
+		lawOfPath(a.path) ??
+		law?.bwb_id ??
+		lawOfPath(law?.path) ??
+		(law?.key ? enactedLawOfKey(law.key) : null)
+	);
+}
 
 /**
  * The article `?vergelijk=` names, where the source pairs it with the article on screen
@@ -161,7 +179,7 @@ export function compareTarget(
 	];
 	for (const [direction, list] of lists) {
 		const s = list.find((x) => x.article.id === id);
-		const law = s?.article.bwb_id ?? lawOfPath(s?.article.path);
+		const law = s ? lawOfArticle(s.article) : null;
 		const number = s?.article.article_number;
 		if (!s || !law || !number) continue;
 		const newArticle = direction === 'new' ? number : ownNumber;

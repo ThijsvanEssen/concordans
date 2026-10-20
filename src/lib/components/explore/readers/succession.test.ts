@@ -104,6 +104,18 @@ describe('compareTarget', () => {
 		expect(onNew?.pairings).toHaveLength(2);
 	});
 
+	it('finds the law of an article without an address by its law, its address or its key', () => {
+		const bare = {
+			...newSv,
+			article: {
+				...newSv.article,
+				path: null,
+				instrument: { ...newSv.article.instrument!, path: null }
+			}
+		};
+		expect(compareTarget(bare.article.id, [bare], [], '126ffa')?.law).toBe('STB-2026-56');
+	});
+
 	it("is null for an article the source does not pair with this one: the reader's own choice", () => {
 		expect(compareTarget('articles/bwbr0001854_287', [newSv], [], '126ffa')).toBeNull();
 	});

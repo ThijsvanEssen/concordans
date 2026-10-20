@@ -1,6 +1,7 @@
 // The one place that turns query params into an href and follows it. The address bar shows
 // a node id's slash and a list's comma as they are: /explore?focus=articles/bwbr1_2&fase=a,b.
 import { goto } from '$app/navigation';
+import { BUNDLE_PARAM } from '$lib/map/page';
 
 /** Params to set; `null`, `undefined`, `''` or `[]` removes the param, a list repeats it. */
 export type ParamPatch = Record<string, string | readonly string[] | null | undefined>;
@@ -32,12 +33,15 @@ export function patchParams(
 	return next;
 }
 
-/** The href of `url` with its params patched (patchParams); no fragment unless given. */
+/**
+ * The href of `url` with its params patched (patchParams); no fragment unless given. The
+ * bundel a reader keeps in (`?bundel=`) is this browser's: no href carries it on.
+ */
 export const withParams = (
 	url: URL,
 	patch: ParamPatch = {},
 	{ clear = [], hash = '' }: { clear?: readonly string[]; hash?: string } = {}
-) => queryHref(url.pathname, patchParams(url.searchParams, patch, clear), hash);
+) => queryHref(url.pathname, patchParams(url.searchParams, patch, [...clear, BUNDLE_PARAM]), hash);
 
 /**
  * Follow `href` in place. A step (a filter) takes a history entry; typing or opening replaces

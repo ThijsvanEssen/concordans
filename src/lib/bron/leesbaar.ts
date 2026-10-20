@@ -78,12 +78,14 @@ function askArticleAhead(pad: Pad, artikel: { wet: string; nummer: string }) {
 		})
 		.catch(ignore('leesbaar'));
 	// Where no EXPLAINS edge names its memorie, the reader looks in the dossier of the wet
-	// that gave its text in force: asked as soon as the tekstversies name it.
+	// that gave its text in force: asked as soon as the tekstversies name it, and only where
+	// the data holds that dossier (`exists`).
 	getArticleHistory(artikel.wet, artikel.nummer)
 		.then((h) => {
 			const w = wordingsOf(h.versions ?? []).at(-1);
-			const dossier = w && w.until === null ? w.first.amended_by?.dossiers?.[0]?.number : null;
-			if (dossier) getDossierDocuments(dossier).catch(ignore('leesbaar'));
+			const dossier = w && w.until === null ? w.first.amended_by?.dossiers?.[0] : null;
+			if (dossier && dossier.exists !== false)
+				getDossierDocuments(dossier.number).catch(ignore('leesbaar'));
 		})
 		.catch(ignore('leesbaar'));
 	lawArticleList(artikel.wet).catch(ignore('leesbaar'));

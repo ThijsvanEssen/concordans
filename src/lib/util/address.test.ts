@@ -39,6 +39,14 @@ describe('withParams', () => {
 		);
 	});
 
+	it('never carries on the bundel a reader keeps in, whatever page.url still holds (A27 #2)', () => {
+		const inBundle = at('/wetten/BWBR0005289/artikel/6:163?bundel=oo000001&lezen=1');
+		expect(withParams(inBundle, { naast: 'judgments/x' }, { hash: 'rov-5.5' })).toBe(
+			'/wetten/BWBR0005289/artikel/6:163?lezen=1&naast=judgments/x#rov-5.5'
+		);
+		expect(withParams(inBundle)).toBe('/wetten/BWBR0005289/artikel/6:163?lezen=1');
+	});
+
 	it('removes a param set to null, undefined or the empty string', () => {
 		expect(withParams(url, { fase: null, open: '', focus: undefined })).toBe('/explore');
 	});

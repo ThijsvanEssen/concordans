@@ -140,3 +140,18 @@ describe('a reader keeping in a bundel (UX-toets A21 #1)', () => {
 		expect(screen.queryByRole('link', { name: 'Naar Thuiswerk' })).toBeNull();
 	});
 });
+
+describe('Klaar beside Bewaar in a bundel', () => {
+	it('ends the keeping in the bundel and gives the focus back to Bewaar (UX-toets A27 #5)', async () => {
+		const { default: Bewaar } = await import('./Bewaar.svelte');
+		const { kaart } = await import('./map.svelte');
+		const bundel = kaart.nieuw('Onrechtmatige overheidsdaad');
+		kaart.keepIn(bundel.id);
+		render(Bewaar, { item: lid });
+		await settle();
+		await fireEvent.click(screen.getByLabelText(/^Klaar met bewaren in/));
+		await settle();
+		expect(screen.queryByText('Klaar')).toBeNull();
+		expect(document.activeElement).toBe(screen.getByRole('button', { pressed: false }));
+	});
+});

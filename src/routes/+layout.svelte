@@ -8,7 +8,7 @@
 	import { report } from '$lib/api/errors';
 	import type { Snippet } from 'svelte';
 	import { browser, dev } from '$app/environment';
-	import { afterNavigate, replaceState } from '$app/navigation';
+	import { afterNavigate, goto } from '$app/navigation';
 	import { kaart } from '$lib/map/map.svelte';
 	import { BUNDLE_PARAM, withoutBundle } from '$lib/map/page';
 	import { tick } from 'svelte';
@@ -44,11 +44,17 @@
 		const van = from?.url;
 		const naar = to?.url;
 		// A reader opened to keep in a bundel (Andere bron toevoegen): it keeps there from now
-		// on, said on Bewaar; the address goes on without it, so no link carries it.
+		// on, said on Bewaar; the address goes on without it, so no link carries it. A step in
+		// place, not a shallow replaceState: that leaves page.url, which links are made of.
 		const keepIn = naar?.searchParams.get(BUNDLE_PARAM);
 		if (naar && keepIn) {
 			kaart.keepIn(keepIn);
-			replaceState(withoutBundle(naar), page.state);
+			goto(withoutBundle(naar), {
+				replaceState: true,
+				keepFocus: true,
+				noScroll: true,
+				state: page.state
+			}).catch((e) => report('Bundel', e));
 		}
 		if (dev && naar) meldZijscroll(naar.pathname + naar.search);
 		afterTick(stilAnnouncer);

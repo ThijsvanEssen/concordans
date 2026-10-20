@@ -176,9 +176,13 @@ describe('a shared link, read as a bundel’s page (bundels-ux 2c, decision 20A)
 
 describe('a reader keeping in a bundel (UX-toets A21 #1, #2)', () => {
 	it('takes ?bundel= out of the address on arriving, and no link carries it', () => {
+		// A navigation, so page.url follows: a shallow replaceState leaves page.url, and every
+		// link made of it carried ?bundel= (UX-toets A27 #2).
 		expect(bron('routes/+layout.svelte')).toMatch(
-			/kaart\.keepIn\(keepIn\);\s*replaceState\(withoutBundle\(naar\)/
+			/kaart\.keepIn\(keepIn\);\s*goto\(withoutBundle\(naar\), \{\s*replaceState: true/
 		);
+		expect(bron('routes/+layout.svelte')).not.toMatch(/\breplaceState\(/);
+		expect(bron('lib/util/address.ts')).toContain('BUNDLE_PARAM');
 		expect(bron('lib/bron/landing.ts')).toContain('withoutBundle(url)');
 	});
 });

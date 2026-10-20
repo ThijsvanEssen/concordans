@@ -33,10 +33,17 @@
 		aan ? `${item.kort}: bewaard in ${namesOf(held)}` : `${item.kort}: in ${into.naam} bewaren`
 	);
 	let open = $state(false);
+	let knop = $state<HTMLButtonElement>();
+	/** Klaar ends the keeping in the bundel; the focus goes back to Bewaar, which stays. */
+	function klaar() {
+		kaart.keepIn(null);
+		knop?.focus();
+	}
 </script>
 
 <span class="splits">
 	<button
+		bind:this={knop}
 		type="button"
 		class="btn"
 		aria-pressed={aan}
@@ -55,9 +62,7 @@
 	{@const k = keeping}
 	<span class="keeping">
 		<TekstLink href={bundlePageHref(k)}>Naar {k.naam}</TekstLink>
-		<TekstLink onclick={() => kaart.keepIn(null)} aria-label="Klaar met bewaren in {k.naam}"
-			>Klaar</TekstLink
-		>
+		<TekstLink onclick={klaar} aria-label="Klaar met bewaren in {k.naam}">Klaar</TekstLink>
 	</span>
 {/if}
 

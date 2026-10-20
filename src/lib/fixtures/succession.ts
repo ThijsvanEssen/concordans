@@ -1,5 +1,6 @@
 // Art. 126ffa Sv and its place in the new Wetboek van Strafvordering (Stb. 2026, 56), as the
-// API gives them (lawgraph tests/integration/test_transposition_tables.py).
+// live API gives them (0.79.65): the article of a law of the Staatsblad has no `path` of its
+// own, only its instrument has one.
 import type { Schema } from '$lib/api/types';
 
 type Succession = Schema<'ArticleSuccessionDTO'>;
@@ -24,11 +25,11 @@ export const newSv: Succession = {
 	article: {
 		id: 'articles/stb_2026_56_2_8_6',
 		key: 'stb_2026_56_2_8_6',
-		display_name: 'Artikel 2.8.6 Wetboek van Strafvordering (Stb. 2026, 56)',
+		display_name: 'Art. 2.8.6 Wetboek van Strafvordering',
 		bwb_id: null,
 		celex: null,
 		article_number: '2.8.6',
-		path: '/wetten/STB-2026-56/artikel/2.8.6',
+		path: null,
 		instrument: {
 			id: 'instruments/wet_stb_2026_56',
 			key: 'wet_stb_2026_56',
@@ -41,7 +42,7 @@ export const newSv: Succession = {
 			display_name: 'Wetboek van Strafvordering (Stb. 2026, 56)',
 			official_url: 'https://zoek.officielebekendmakingen.nl/stb-2026-56.html',
 			article_count: 1230,
-			inbound_citation_count: 0,
+			inbound_citation_count: 1269,
 			judgment_count: null,
 			outbound_citation_count: null,
 			path: '/wetten/STB-2026-56'
