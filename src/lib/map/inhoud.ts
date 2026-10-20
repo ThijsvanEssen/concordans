@@ -2,7 +2,13 @@
 // An article its lid, the article around it a click further; a judgment its overweging, the
 // overwegingen around it a click further; a Kamerstuk its alinea, the alineas around it a
 // click further, else the words its note quotes, in the text around them, else its core text.
-import { paperParagraphNumber, paragraphAnchor, type PaperParagraph } from '$lib/text/anchor';
+import {
+	paperParagraphs,
+	paragraphAnchor,
+	parseAnchor,
+	type PaperParagraph,
+	type PaperSource
+} from '$lib/text/anchor';
 import type { BodyItem } from '$lib/components/explore/readers/judgment-text';
 
 /** The words a note quotes ("…", “…”), where it quotes at least a few words. */
@@ -69,19 +75,35 @@ export function overwegingVan(
 }
 
 /**
- * The alineas of a Kamerstuk that show the alinea an item keeps (`alinea-4`): it alone; with
- * `rond`, a few alineas before and after (no head or heading between them). Null where the
- * stuk has no such alinea.
+ * The alineas of a Kamerstuk that show the place an item keeps: an alinea (by the lasting id
+ * of a line of it, `p-360a090c`), or a passage, a section of the API (`s-300`), as the
+ * alineas in it; with `rond`, a few alineas before and after. `eigen` the numbers of the
+ * place's own. Null where the stuk has no such place, or no alineas yet.
  */
 export function paperParagraphOf(
-	all: PaperParagraph[],
+	source: PaperSource,
 	at: string,
 	rond = false
-): { items: PaperParagraph[]; eigen: number } | null {
-	const n = paperParagraphNumber(at);
-	const alineas = all.filter((p) => p.n !== null);
-	const i = alineas.findIndex((p) => p.n === n);
-	if (i < 0 || n === null) return null;
-	const van = rond ? Math.max(0, i - ROND) : i;
-	return { items: alineas.slice(van, rond ? i + ROND + 1 : i + 1), eigen: n };
+): { items: PaperParagraph[]; eigen: Set<number> } | null {
+	const alineas = paperParagraphs(source).filter((p) => p.n !== null);
+	const a = parseAnchor(at);
+	const section =
+		a?.kind === 'section' ? (source.sections ?? []).find((s) => s.id === a.id) : undefined;
+	const line = a?.kind === 'line' ? alineas.find((p) => p.id === a.id) : undefined;
+	const own = line
+		? alineas.filter((p) => p.n === line.n)
+		: section
+			? alineas.filter(
+					(p) => p.start >= section.char_start && p.start < (section.char_end ?? Infinity)
+				)
+			: [];
+	if (!own.length) return null;
+	const eigen = new Set(own.map((p) => p.n!));
+	const numbers = [...new Set(alineas.map((p) => p.n!))];
+	const first = numbers.indexOf(own[0].n!);
+	const last = numbers.indexOf(own.at(-1)!.n!);
+	const shown = new Set(
+		numbers.slice(rond ? Math.max(0, first - ROND) : first, (rond ? last + ROND : last) + 1)
+	);
+	return { items: alineas.filter((p) => shown.has(p.n!)), eigen };
 }

@@ -3,13 +3,16 @@
 	import { NL } from '$lib/text/collator';
 	import { korteDatum } from '$lib/text/datum';
 	import { naamVan } from '$lib/bron/menselijk';
-	import { citePaper, paperParagraphCite } from '$lib/components/parliamentary/paper-cite';
-	import { paperParagraphAnchor, paperParagraphs, type PaperParagraph } from '$lib/text/anchor';
+	import {
+		citePaper,
+		paperParagraphCite,
+		paperSectionCite
+	} from '$lib/components/parliamentary/paper-cite';
+	import { paperParagraphs, type PaperParagraph } from '$lib/text/anchor';
 	import PlaatsMenu, { placeMarker } from '$lib/components/articles/PlaatsMenu.svelte';
 	import { blockClick } from '$lib/actions/klik';
 	import { kaart } from '$lib/map/map.svelte';
 	import { getDocument } from '$lib/api/records';
-	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import { citeItems } from '$lib/components/ui/cite-items';
 	// Reader for a document (memorie van toelichting, verslag, nota, amendement, motie, ...):
 	// its text. Opened as the toelichting of an article, it lands on the passage for it.
@@ -104,19 +107,26 @@
 	});
 
 	// The source gives a paragraph per line (paperParagraphs): each keeps its place in the text,
-	// so that a passage can be found back; an alinea of its text its number and anchor
-	// (`alinea-4`), the head of the stuk and a motie's formula none.
+	// so that a passage can be found back; an alinea its number and anchor as the API gives
+	// them (`paragraphs`: `4`, `p-360a090c`), the head of the stuk and a motie's formula none.
 	const paragraphs = $derived(paperParagraphs(loaded ?? {}));
+	/** The words of an alinea, a table's every line: what Kopieer tekst copies. */
+	const alineaText = (at: string | null) =>
+		paragraphs
+			.filter((p) => p.at === at)
+			.map((p) => p.text)
+			.join('\n');
 
-	// The menu of an alinea (as an overweging's, a lid's): its marker in the margin opens it,
-	// and a click on its text, not on a link or a selection.
-	let menu = $state<{ n: number; marker: HTMLElement } | null>(null);
-	function openMenu(n: number, marker: HTMLElement) {
-		menu = menu?.n === n ? null : { n, marker };
+	// The menu of a place (as an overweging's, a lid's), by its anchor: of an alinea its marker
+	// in the margin opens it, and a click on its text, not on a link or a selection; of a
+	// passage (a section: the toelichting on an article) its heading.
+	let menu = $state<{ at: string; marker: HTMLElement } | null>(null);
+	function openMenu(at: string, marker: HTMLElement) {
+		menu = menu?.at === at ? null : { at, marker };
 	}
-	const onText = (n: number) => (e: MouseEvent) => {
+	const onText = (at: string) => (e: MouseEvent) => {
 		const marker = placeMarker(e, '.body-para');
-		if (marker) openMenu(n, marker);
+		if (marker) openMenu(at, marker);
 	};
 
 	// The headings of the paper (API 0.5): algemeen deel, artikelsgewijze toelichting per
@@ -277,6 +287,7 @@
 		{@const cite = paper.citation}
 		{@const naam = paper.name}
 		{@const paragraphCite = paperParagraphCite(paper)}
+		{@const sectionCite = paperSectionCite(paper)}
 		<!-- The kind of the case the stuk is in, where it adds to the stuk's own: a motie is in
 			     a case of the kind Motie, which "Motie, 7 sep. 2026, Motie" said twice. -->
 		{@const caseKinds = (doc.case_kinds ?? []).filter(
@@ -349,25 +360,41 @@
 					{#each entries as entry, i (entry.type === 'heading' ? entry.section.id : `p${entry.para.start}`)}
 						{#if entry.type === 'heading'}
 							{@const s = entry.section}
+							{@const forms = sectionCite(s, permalink(page.url, s.id))}
+							<!-- A heading opens the passage under it (the toelichting on an article) as a
+							     place: its menu (PlaatsMenu), as an alinea's; a heading for a screen reader. -->
 							<div
 								class="heading heading--lvl{Math.min(s.level, 3)}"
 								class:heading--active={s.id === activeSectionId}
 								class:in-passage={passageEntries.has(i)}
 								class:in-passage--cont={passageEntries.has(i) && i > passageFirst}
+								class:is-open={menu?.at === s.id}
+								class:plaats-bewaard={kaart.heeft(forms.bewaar)}
 								id={s.id}
 							>
-								<!-- A heading for a screen reader, Citeer beside it (UX-toets 10 Oct, #21). -->
 								<svelte:element this={`h${Math.min(s.level, 3) + 2}`} class="heading__text"
-									>{s.heading}{#if s.kind === 'article' && s.article_refs?.length}
-										<span class="heading__badge"
-											>{s.article_refs.map((r) => r.number).join(', ')}</span
-										>{/if}</svelte:element
+									><button
+										type="button"
+										class="heading__knop"
+										aria-haspopup="menu"
+										aria-expanded={menu?.at === s.id}
+										onclick={(e) => openMenu(s.id, e.currentTarget)}
+										>{s.heading}{#if s.kind === 'article' && s.article_refs?.length}
+											<span class="heading__badge"
+												>{s.article_refs.map((r) => r.number).join(', ')}</span
+											>{/if}</button
+									></svelte:element
 								>
-								<CiteMenu
-									items={citeItems(null, permalink(page.url, s.id))}
-									name={s.heading}
-									buttonClass="heading__link"
-								/>
+								{#if menu && menu.at === s.id}
+									<PlaatsMenu
+										anker={menu.marker}
+										title={forms.kort}
+										cite={citeItems(forms, forms.link)}
+										tekst={() => (doc.text ?? '').slice(s.char_start, s.char_end).trim()}
+										bewaar={forms.bewaar}
+										onClose={() => (menu = null)}
+									/>
+								{/if}
 							</div>
 						{:else}
 							{@const p = entry.para}
@@ -375,8 +402,9 @@
 							{@const sluit = voetnoten.naSectie.get(p.i)}
 							{@const bereik = tekstBereik?.i === p.i ? tekstBereik.bereik : null}
 							{@const n = p.n}
+							{@const at = p.at}
 							{@const forms =
-								n === null ? null : paragraphCite(n, permalink(page.url, paperParagraphAnchor(n)))}
+								n === null || at === null ? null : paragraphCite(n, at, permalink(page.url, at))}
 							<!-- A paragraph with notes or marked words: its words set as a judgment's are. -->
 							{#snippet woorden()}{#if markers || bereik}<CitedText
 										text={p.text}
@@ -384,39 +412,38 @@
 										{bereik}
 									/>{:else}{p.text}{/if}{/snippet}
 							<!-- An alinea is a place, as a lid or an overweging: its menu (PlaatsMenu) from the
-							     marker in the margin (its number) or a click on its text; its anchor `alinea-4`.
-							     The head of the stuk and a motie's formula are no place. -->
+							     marker in the margin (its number) or a click on its text; its anchor the lasting id
+							     of its first line (`p-360a090c`), a table one alinea. The head of the stuk, a
+							     heading and a motie's formula are no place, nor a line the API has not numbered. -->
 							<div
 								class="body-para"
 								class:body-para--passage={passageEntries.has(i)}
 								class:in-passage={passageEntries.has(i)}
 								class:in-passage--cont={passageEntries.has(i) && i > passageFirst}
 								class:body-para--plaats={!!forms}
-								class:is-open={n !== null && menu?.n === n}
+								class:is-open={at !== null && menu?.at === at}
 								class:plaats-bewaard={!!forms && kaart.heeft(forms.bewaar)}
 								id={i === passageEntryIndex
 									? 'passage'
 									: bereik
 										? 'markering'
-										: n !== null
-											? paperParagraphAnchor(n)
-											: undefined}
+										: (p.id ?? undefined)}
 								title={i === passageEntryIndex ? (passage?.why ?? undefined) : undefined}
 							>
-								{#if n !== null}
+								{#if forms && at && p.first}
 									<button
 										type="button"
 										class="plaats-marker"
 										aria-haspopup="menu"
-										aria-expanded={menu?.n === n}
+										aria-expanded={menu?.at === at}
 										aria-label="Alinea {n}: citeren, bewaren"
-										onclick={(e) => openMenu(n, e.currentTarget)}>{n}</button
+										onclick={(e) => openMenu(at, e.currentTarget)}>{n}</button
 									>
 								{/if}
 								<div
 									class="body-para__tekst"
-									class:is-klikbaar={n !== null}
-									use:blockClick={n !== null ? onText(n) : null}
+									class:is-klikbaar={!!forms}
+									use:blockClick={forms && at ? onText(at) : null}
 								>
 									<p>
 										{@render woorden()}{#if i === passageEntryIndex && passage?.possible}<span
@@ -427,12 +454,12 @@
 									<Voetnoten noten={nootLijst(markers?.map((m) => m.id))} />
 									<Voetnoten noten={nootLijst(sluit)} marge={false} />
 								</div>
-								{#if forms && menu && menu.n === n}
+								{#if forms && p.first && menu && menu.at === at}
 									<PlaatsMenu
 										anker={menu.marker}
 										title={forms.kort}
 										cite={citeItems(forms, forms.link)}
-										tekst={() => p.text}
+										tekst={() => alineaText(at)}
 										bewaar={forms.bewaar}
 										onClose={() => (menu = null)}
 									/>
@@ -543,31 +570,44 @@
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}
-	/* Hidden by opacity, not visibility: Tab still reaches the link, and shows it. */
-	:global(.heading__link) {
-		flex: none;
-		opacity: 0;
-		padding: 2px var(--s-2);
+	/* The heading is the menu of the passage under it: underlined with ▾ while it is pointed at,
+	   open or focused, as a lid's number. */
+	.heading__knop {
+		padding: 0;
 		border: 0;
 		background: none;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
+		font: inherit;
+		color: inherit;
+		text-align: inherit;
 		cursor: pointer;
 	}
-	:global(.heading__link):hover {
-		color: var(--ink);
-		text-decoration-line: underline;
+	.heading:hover .heading__knop,
+	.heading.is-open .heading__knop,
+	.heading__knop:focus-visible {
+		text-decoration: underline;
 		text-underline-offset: 3px;
 	}
-	.heading:hover :global(.heading__link),
-	.heading:focus-within :global(.heading__link) {
-		opacity: 1;
+	.heading:hover .heading__knop::after,
+	.heading.is-open .heading__knop::after,
+	.heading__knop:focus-visible::after {
+		content: ' ▾';
+		font-size: 0.7em;
+		color: var(--ink-3);
+		text-decoration: none;
 	}
-	@media (hover: none) {
-		:global(.heading__link) {
-			opacity: 1;
-		}
+	.heading__knop:focus-visible {
+		outline: 2px solid var(--focus);
+		outline-offset: 2px;
+	}
+	.heading {
+		position: relative;
+	}
+	.heading.is-open {
+		background: var(--paper-2);
+	}
+	/* A kept passage: the ink bar at its heading, where an in-passage rule stands. */
+	.heading.plaats-bewaard::before {
+		left: -6px;
 	}
 	.r-document {
 		display: flex;
@@ -656,21 +696,24 @@
 	.body-para__tekst.is-klikbaar {
 		cursor: pointer;
 	}
-	/* The marker is the alinea's menu: its number, nothing at rest; with ▾ while the alinea is
-	   pointed at, open or focused (as a lid's number, an overweging's), 4px before its text. A
-	   smaller letter in a line as high as the text's. */
+	/* The marker is the alinea's menu: its number, nothing at rest; while the alinea is
+	   pointed at, open or focused its number with ▾ under it (as a lid's number), in the
+	   margin 4px before its text: one column as wide as the number, in the letter of a count,
+	   so four figures fit in the 32px of the narrowest margin and the text never moves. */
 	.plaats-marker {
 		position: absolute;
 		top: 0;
 		right: calc(100% - var(--s-3));
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
 		padding: 0;
 		border: 0;
 		background: none;
 		font: inherit;
-		font-size: 0.8em;
-		line-height: calc(var(--lh-body) / 0.8);
+		font-size: var(--t-label);
+		line-height: calc(var(--lh-body) * var(--t-body));
 		color: transparent;
-		text-align: right;
 		white-space: nowrap;
 		user-select: none;
 		cursor: pointer;
@@ -685,8 +728,9 @@
 	.body-para:hover > .plaats-marker::after,
 	.body-para.is-open > .plaats-marker::after,
 	.plaats-marker:focus-visible::after {
-		content: ' ▾';
-		font-size: 0.7em;
+		content: '▾';
+		font-size: var(--t-meta);
+		line-height: 1;
 		color: var(--ink-3);
 		text-decoration: none;
 	}
@@ -694,15 +738,29 @@
 		outline: 2px solid var(--focus);
 		outline-offset: 2px;
 	}
-	/* On a phone the margin is the 16px the alinea stands out: its number alone, in it. */
+	/* On a phone there is no margin to hang it in: the number of an open alinea stands over
+	   its first line, as a tab of its grey, in the space between the alineas. */
 	@media (max-width: 768px) {
 		.plaats-marker {
-			right: calc(100% - var(--s-4) + 2px);
-			font-size: 0.7em;
-			line-height: calc(var(--lh-body) / 0.7);
+			top: auto;
+			right: auto;
+			bottom: 100%;
+			left: var(--s-4);
+			padding: 0 var(--s-1);
+			border-radius: var(--r-1) var(--r-1) 0 0;
+			font-size: var(--t-label);
+			line-height: var(--s-3);
+		}
+		.body-para.is-open > .plaats-marker,
+		.plaats-marker:focus-visible {
+			background: var(--paper-2);
 		}
 		.plaats-marker::after {
 			display: none;
+		}
+		/* Room for that tab under a heading too. */
+		.heading + .body-para {
+			margin-top: var(--s-3);
 		}
 	}
 	.body-para + .body-para {

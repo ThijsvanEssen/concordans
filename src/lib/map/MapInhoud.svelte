@@ -4,7 +4,7 @@
 	// map is read without going back and forth (Thijs, 12 Oct). An article its lid in the
 	// reader's own text (ArticleText: its references and defined terms as there), Heel artikel
 	// a click further; a judgment its overweging (Overweging, as a reference's card shows
-	// it), the overwegingen around it a click further; a Kamerstuk its kept alinea (PaperParagraph), the
+	// it), the overwegingen around it a click further; a Kamerstuk its kept alinea or passage (PaperParagraph), the
 	// alineas around it a click further, else the words its note quotes
 	// in the text around them, else its core text as its row opens anywhere (kernVan: a motie
 	// its dictum, an amendement its toelichting, another its opening); another bron the lines
@@ -29,7 +29,7 @@
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
 	import Overweging from '$lib/bron/Overweging.svelte';
 	import PaperParagraph from '$lib/bron/PaperParagraph.svelte';
-	import { paperParagraphNumber, paperParagraphs, type PaperSource } from '$lib/text/anchor';
+	import { parseAnchor, type PaperSource } from '$lib/text/anchor';
 	import { citePaper, type PaperCitation } from '$lib/components/parliamentary/paper-cite';
 	import { heeftOverweging, laadUitspraak, type Uitspraak } from '$lib/bron/overweging';
 	import { kernSoort, kernVan } from '$lib/components/open/rij-inhoud';
@@ -78,7 +78,7 @@
 				als: 'dictum' | 'toelichting' | 'opening';
 				/** Its text and structure, cut into alineas as its reader cuts them. */
 				source: PaperSource;
-				/** How it is cited, for the menu of a kept alinea; its path for the link. */
+				/** How it is cited, for the menu of a kept alinea or passage; its path for the link. */
 				paper: PaperCitation | null;
 				path: string | null;
 		  }
@@ -150,8 +150,10 @@
 			};
 		}
 		if (doel.collection === 'documents') {
-			// A kept alinea is cited as in the reader: with its light node (the vergaderjaar).
-			const kept = paperParagraphNumber(i.at) !== null;
+			// A kept alinea or passage is cited as in the reader: with its light node (the
+			// vergaderjaar).
+			const place = parseAnchor(i.at)?.kind;
+			const kept = place === 'line' || place === 'section';
 			const [d, light] = await Promise.all([
 				getDocument(doel.key),
 				kept
@@ -281,7 +283,7 @@
 	{:else if inhoud.soort === 'stuk'}
 		{@const rond = citaat ? rondCitaat(inhoud.tekst, citaat) : null}
 		{@const path = inhoud.path}
-		{@const kept = !!paperParagraphOf(paperParagraphs(inhoud.source), item.at)}
+		{@const kept = !!paperParagraphOf(inhoud.source, item.at)}
 		<!-- The row is the map's own (a citation and a note): the outcome stands here, as on
 		     the row of every other list of Kamerstukken. -->
 		{#if inhoud.uitslag}<p class="uitslag"><StukUitslag uitslag={inhoud.uitslag} /></p>{/if}
@@ -303,7 +305,9 @@
 		<p class="verder">
 			{#if kept}
 				<TekstLink onclick={() => (ruim = !ruim)} aria-pressed={ruim}
-					>{ruim ? `Alleen ${plaats ?? 'de alinea'}` : "Alinea's eromheen"}</TekstLink
+					>{ruim
+						? `Alleen ${plaats ?? (parseAnchor(item.at)?.kind === 'section' ? 'de passage' : 'de alinea')}`
+						: "Alinea's eromheen"}</TekstLink
 				>
 			{/if}
 			<TekstLink {href}>In de lezer</TekstLink>

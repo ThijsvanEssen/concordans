@@ -272,8 +272,9 @@ export function groepen(
 export const groepAnker = (sleutel: string) =>
 	`groep-${sleutel.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 
-/** A citation without the place in it: `HR 20 december 2019, ECLI:…`, `Kamerstukken II …, nr. 57`. */
-const withoutPlace = (kort: string) => kort.replace(/,\s*(?:r\.o\.|alinea)\s.*$/, '');
+/** A citation without the place in it (`r.o. 5.1`, `alinea 4`, `§ Artikel 21`): `HR 20 december
+ *  2019, ECLI:…`, `Kamerstukken II …, nr. 57`. */
+const withoutPlace = (kort: string) => kort.replace(/,\s*(?:r\.o\.|alinea|§)\s.*$/, '');
 
 /** The bronnen whose kept places stand under them: an r.o. its judgment's, an alinea its stuk's. */
 const PLACES_UNDER = new Set(['judgments', 'documents']);
@@ -317,7 +318,7 @@ export function rowTitle(
 	i: Pick<MapItem, 'id' | 'at' | 'kort' | 'voluit'>,
 	place = false
 ): { title: string; sub: string | null } {
-	const own = place ? /\b(?:r\.o\.|alinea)\s.*$/.exec(i.kort)?.[0] : null;
+	const own = place ? /(?:\br\.o\.|\balinea|§)\s.*$/.exec(i.kort)?.[0] : null;
 	if (own) return { title: own, sub: null };
 	const collection = parseNodeId(i.id)?.collection;
 	// A dossier kept whole stands under its group, which names it: its row cites it by number

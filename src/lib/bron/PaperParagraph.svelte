@@ -8,7 +8,7 @@
 	import { blockClick } from '$lib/actions/klik';
 	import { citeItems } from '$lib/components/ui/cite-items';
 	import { paperParagraphOf } from '$lib/map/inhoud';
-	import { paperParagraphAnchor, paperParagraphs, type PaperSource } from '$lib/text/anchor';
+	import type { PaperSource } from '$lib/text/anchor';
 	import { paperParagraphCite, type PaperCitation } from '$lib/components/parliamentary/paper-cite';
 
 	let {
@@ -20,7 +20,8 @@
 	}: {
 		/** The paper's text and structure, cut into alineas as its reader cuts them. */
 		source: PaperSource;
-		/** The alinea: `alinea-4`. */
+		/** The place: an alinea (by a line of it, `p-360a090c`) or a passage, a section of the
+		 *  API (`s-300`). */
 		at: string;
 		/** The alineas around it too. */
 		around?: boolean;
@@ -30,43 +31,54 @@
 		link: (anker: string) => string;
 	} = $props();
 
-	const shown = $derived(paperParagraphOf(paperParagraphs(source), at, around));
+	const shown = $derived(paperParagraphOf(source, at, around));
 	const cite = $derived(paper ? paperParagraphCite(paper) : null);
 
 	/** The alinea whose menu is open, by its number, and the marker it hangs from. */
-	let menu = $state<{ n: number; marker: HTMLElement } | null>(null);
-	function openMenu(n: number, marker: HTMLElement) {
-		menu = menu?.n === n ? null : { n, marker };
+	let menu = $state<{ at: string; marker: HTMLElement } | null>(null);
+	function openMenu(at: string, marker: HTMLElement) {
+		menu = menu?.at === at ? null : { at, marker };
 	}
-	const onText = (n: number) => (e: MouseEvent) => {
+	const onText = (at: string) => (e: MouseEvent) => {
 		const marker = placeMarker(e, '.alinea');
-		if (marker) openMenu(n, marker);
+		if (marker) openMenu(at, marker);
 	};
+	/** The words of an alinea, a table's every line: what Kopieer tekst copies. */
+	const alineaText = (at: string) =>
+		(shown?.items ?? [])
+			.filter((p) => p.at === at)
+			.map((p) => p.text)
+			.join('\n');
 </script>
 
 {#if shown}
 	<div class="alineas">
 		{#each shown.items as a (a.i)}
 			{@const n = a.n ?? 0}
-			{@const forms = cite?.(n, link(paperParagraphAnchor(n))) ?? null}
-			<div class="alinea" class:eigen={around && n === shown.eigen} class:is-open={menu?.n === n}>
-				{#if forms}
+			{@const at = a.at ?? ''}
+			{@const forms = cite?.(n, at, link(at)) ?? null}
+			<div
+				class="alinea"
+				class:eigen={around && shown.eigen.has(n)}
+				class:is-open={menu?.at === at}
+			>
+				{#if forms && a.first}
 					<button
 						type="button"
 						class="plaats-marker"
 						aria-haspopup="menu"
-						aria-expanded={menu?.n === n}
+						aria-expanded={menu?.at === at}
 						aria-label="Alinea {n}: citeren, bewaren"
-						onclick={(e) => openMenu(n, e.currentTarget)}>{n}</button
+						onclick={(e) => openMenu(at, e.currentTarget)}>{n}</button
 					>
 				{/if}
-				<p class:is-klikbaar={!!forms} use:blockClick={forms ? onText(n) : null}>{a.text}</p>
-				{#if menu && menu.n === n && forms}
+				<p class:is-klikbaar={!!forms} use:blockClick={forms ? onText(at) : null}>{a.text}</p>
+				{#if menu && menu.at === at && forms && a.first}
 					<PlaatsMenu
 						anker={menu.marker}
 						title={forms.kort}
 						cite={citeItems(forms, forms.link)}
-						tekst={() => a.text}
+						tekst={() => alineaText(at)}
 						bewaar={forms.bewaar}
 						onClose={() => (menu = null)}
 					/>
@@ -99,19 +111,23 @@
 	.alinea.is-open {
 		background: var(--paper-2);
 	}
-	/* The marker is the alinea's menu: its number with ▾, while it is pointed at, open or
-	   focused; nothing at rest. */
+	/* The marker is the alinea's menu: its number with ▾ under it while it is pointed at, open
+	   or focused, as in the reader; nothing at rest. */
 	.plaats-marker {
 		position: absolute;
 		top: 0;
 		left: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
 		width: var(--s-7);
 		padding: 0 var(--s-2) 0 0;
 		border: 0;
 		background: none;
 		font: inherit;
+		font-size: var(--t-micro);
+		line-height: calc(var(--lh-body) * var(--t-body));
 		color: transparent;
-		text-align: right;
 		white-space: nowrap;
 		user-select: none;
 		cursor: pointer;
@@ -126,8 +142,9 @@
 	.alinea:hover > .plaats-marker::after,
 	.alinea.is-open > .plaats-marker::after,
 	.plaats-marker:focus-visible::after {
-		content: ' ▾';
+		content: '▾';
 		font-size: 0.7em;
+		line-height: 1;
 		color: var(--ink-3);
 		text-decoration: none;
 	}

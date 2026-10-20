@@ -4,7 +4,6 @@
 import { naamVan } from '$lib/bron/menselijk';
 import { kamerstukCitation } from './kamerstuk';
 import { bewaarItem, type MapItem } from '$lib/map/map';
-import { paperParagraphAnchor } from '$lib/text/anchor';
 import { ownKind } from '$lib/text/document-kind';
 import { textOf } from '$lib/text/words';
 
@@ -52,12 +51,16 @@ export type PaperCitation = ReturnType<typeof citePaper>;
 /**
  * The alineas of a paper as their menu cites and keeps them: kort and voluit with `alinea 4`,
  * the link to its place, and the item Bewaar keeps, under the paper's dossier. Per alinea only
- * its number (`paperParagraphs`, from 1) and its link are added.
+ * its number and its anchor as the API gives them (`paperParagraphs`: `4`, `p-360a090c`) and
+ * its link are added.
  */
 export const paperParagraphCite =
 	(paper: PaperCitation) =>
-	(n: number, link: string): { kort: string; voluit: string; link: string; bewaar: MapItem } => {
-		const at = paperParagraphAnchor(n);
+	(
+		n: number,
+		at: string,
+		link: string
+	): { kort: string; voluit: string; link: string; bewaar: MapItem } => {
 		const place = `alinea ${n}`;
 		const kort = `${paper.name}, ${place}`;
 		const voluit = `${paper.full}, ${place}`;
@@ -66,5 +69,28 @@ export const paperParagraphCite =
 			voluit,
 			link,
 			bewaar: bewaarItem(paper.id, { at, kort, voluit }, paper.context)
+		};
+	};
+
+/**
+ * A passage of a paper, a section as the API gives it (a memorie's toelichting on an article),
+ * as its menu cites and keeps it: after the paper, `§` and its heading as the memorie prints it
+ * (`…, nr. 3, § Artikel X, onderdeel A (…)`), kept at its id (`s-300`). The form its row under
+ * the article keeps it in (map/rij.ts): one item, from either.
+ */
+export const paperSectionCite =
+	(paper: PaperCitation) =>
+	(
+		section: { id: string; heading: string },
+		link: string
+	): { kort: string; voluit: string; link: string; bewaar: MapItem } => {
+		const place = `§ ${section.heading.trim()}`;
+		const kort = `${paper.name}, ${place}`;
+		const voluit = `${paper.full}, ${place}`;
+		return {
+			kort,
+			voluit,
+			link,
+			bewaar: bewaarItem(paper.id, { at: section.id, kort, voluit }, paper.context)
 		};
 	};

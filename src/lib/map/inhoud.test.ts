@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { BodyItem } from '$lib/components/explore/readers/judgment-text';
-import { citaatUit, overwegingVan, rondCitaat } from './inhoud';
+import papers from '$lib/fixtures/paper-paragraphs-api.json';
+import { paperParagraphs } from '$lib/text/anchor';
+import { citaatUit, overwegingVan, paperParagraphOf, rondCitaat } from './inhoud';
 
 describe('the content of a kept item', () => {
 	it('reads the words a note quotes', () => {
@@ -77,5 +79,31 @@ describe('the content of a kept item', () => {
 		];
 		expect(overwegingVan(eigenId, 'p-3f2a9c1e')?.items).toHaveLength(1);
 		expect(overwegingVan(eigenId, 'rov-6')?.items).toHaveLength(1);
+	});
+});
+
+describe('a kept place of a Kamerstuk, read in place (A28)', () => {
+	const mvt = papers['kst_37020_i_2'];
+	const alinea = (n: number) => paperParagraphs(mvt).find((p) => p.n === n && p.first)!;
+
+	it('shows an alinea by its anchor, and the alineas around it a click further', () => {
+		const at = alinea(2).at!;
+		expect(paperParagraphOf(mvt, at)!.items.map((a) => a.n)).toEqual([2]);
+		const rond = paperParagraphOf(mvt, at, true)!;
+		expect([...new Set(rond.items.map((a) => a.n))]).toEqual([1, 2, 3, 4, 5]);
+		expect([...rond.eigen]).toEqual([2]);
+	});
+
+	it('shows a passage (a section of the API) as the alineas in it', () => {
+		const section = mvt.sections.find((s) => s.id === 's-3')!;
+		const c = paperParagraphOf(mvt, 's-3')!;
+		expect(c.items.length).toBeGreaterThan(0);
+		for (const a of c.items) {
+			expect(a.start).toBeGreaterThanOrEqual(section.char_start);
+			expect(a.start).toBeLessThan(section.char_end);
+		}
+		expect(paperParagraphOf(mvt, 's-999')).toBeNull();
+		expect(paperParagraphOf(mvt, 'rov-1')).toBeNull();
+		expect(paperParagraphOf({ ...mvt, paragraphs: [] }, alinea(2).at!)).toBeNull();
 	});
 });
