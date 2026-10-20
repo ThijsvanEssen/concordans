@@ -7,7 +7,7 @@ import { report } from '$lib/api/errors';
 import type { Schema } from '$lib/api/types';
 import type { LoadState } from '$lib/util/load.svelte';
 
-type Version = Schema<'ArticleVersionDTO'>;
+type Version = Schema<'ArticleVersionListedDTO'>;
 
 /** The key of an article, or null while the node does not name its law and number yet. */
 export const articleKey = (lawId: string, articleNumber: string) =>
