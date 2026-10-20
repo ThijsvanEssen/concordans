@@ -194,7 +194,7 @@
 {/snippet}
 
 {#snippet actions()}
-	<span class="acties">
+	<span class="acties blad__acties">
 		{#if b.items.length}
 			<TekstLink href={netwerkHref(b.items) ?? undefined}>Netwerk</TekstLink>
 		{/if}
@@ -203,7 +203,7 @@
 				>{copier.label('link', 'Kopieer link')}</TekstLink
 			>
 		{:else}
-			<button type="button" class="btn" onclick={() => onShared?.('map')}>Bewaar</button>
+			<button type="button" class="btn is-groot" onclick={() => onShared?.('map')}>Bewaar</button>
 		{/if}
 		<!-- An empty Losse markeringen has nothing to take along, to empty or to delete. -->
 		{#if b.items.length || !m || !kaart.isDefault(m)}
@@ -408,12 +408,14 @@
 	<p class="sr-only" aria-live="polite">{copier.announcement}</p>
 {/snippet}
 
-<article class="bundel" id={anchor}>
+<!-- In the frame of the other pages: the head over both columns, what the bundel holds in the
+     list column. -->
+<article class="bundel blad__indeling" id={anchor}>
 	<header class="blad__kop">
 		<h1 class="blad__titel" tabindex="-1">{b.naam}</h1>
 		{@render actions()}
 	</header>
-	<div class="inhoud">{@render content()}</div>
+	<div class="inhoud blad__lijst">{@render content()}</div>
 </article>
 
 <style>
@@ -421,13 +423,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-2);
-	}
-	.acties {
-		display: inline-flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: var(--s-1) var(--s-4);
-		font-size: var(--t-meta);
 	}
 	/* One line: the view and the order at the left, Alles uitklappen at the right. */
 	.werkregel {
@@ -499,6 +494,10 @@
 		:global(.blad:has(> .bundel) > *) {
 			max-width: none;
 			padding: 0;
+		}
+		/* On paper one column: the list column takes the width of the page. */
+		.bundel {
+			display: block;
 		}
 		.bundel :global(a) {
 			color: inherit;

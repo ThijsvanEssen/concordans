@@ -61,6 +61,24 @@ describe('the frame of a page', () => {
 		expect(eigen).toEqual([]);
 	});
 
+	it('lays the bundels in the frame of the menu pages, not as a text page (Thijs, 20 Oct)', () => {
+		// The overview, a bundel's page and a shared bundel: the head over both columns, its
+		// actions in .blad__acties at the right, what they list in the list column.
+		const paginas = [
+			'routes/(main)/bundels/+page.svelte',
+			'routes/(main)/bundels/[id]/+page.svelte'
+		];
+		for (const path of paginas) expect(bron(path), path).not.toContain('blad--tekst');
+		const overzicht = bron('routes/(main)/bundels/+page.svelte');
+		expect(overzicht).toMatch(/class="[^"]*\bblad blad__indeling"/);
+		expect(overzicht).toMatch(/class="blad__acties"/);
+		expect(overzicht).toMatch(/class="blad__lijst"/);
+		const view = bron('lib/map/MapView.svelte');
+		expect(view).toMatch(/<article class="bundel blad__indeling"/);
+		expect(view).toMatch(/class="[^"]*\bblad__acties\b/);
+		expect(view).toMatch(/class="inhoud blad__lijst"/);
+	});
+
 	it('keeps the footer under the fold and a late band in its place (no layout shift)', () => {
 		// Live, 10 Oct: the footer jumped into view on every page when the server's page gave
 		// way to the app (0.22 to 0.37 of layout shift), and Actueel dropped under the
