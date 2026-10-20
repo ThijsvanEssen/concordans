@@ -56,7 +56,7 @@
 		>{/if}
 {/snippet}
 
-<section class="sectie" class:is-dicht={!isOpen} {id}>
+<section class="sectie section-block" class:is-dicht={!isOpen} {id}>
 	<svelte:element this={`h${niveau}`} class="kop">
 		{#if inklapbaar}
 			<FoldButton sleutel={foldKey} open={isOpen} controls="{uid}-inhoud"
@@ -71,12 +71,20 @@
 </section>
 
 <style>
+	/* Air under the title and between sections, so each reads as a block of its own, open or
+	   closed (Thijs, 20 Oct: the seats of TK and EK stood too close). The step between two
+	   sections is --s-5 in all; a parent that spaces its column by a gap names it
+	   (--lezer-stap), and the margin makes up the rest. */
 	.sectie {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-2);
+		gap: var(--s-3);
 		padding-top: var(--s-3);
 		border-top: 2px solid var(--ink);
+	}
+	/* Global: the section before is another instance, which this one cannot see. */
+	:global(.section-block + .section-block) {
+		margin-top: max(0px, calc(var(--s-5) - var(--lezer-stap, 0px)));
 	}
 	.kop {
 		display: flex;

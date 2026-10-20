@@ -68,6 +68,21 @@ describe('typography', () => {
 		expect(overtreders((t) => /class="sec-title"|\.sec-title\b/.test(t))).toEqual([]);
 	});
 
+	it('spaces a section in Sectie alone, so every reader gives it the same air', () => {
+		expect(bron('lib/components/ui/Sectie.svelte')).toMatch(
+			/\.section-block \+ \.section-block\) \{/
+		);
+		expect(
+			overtreders(
+				(t) => /:global\(\.(sectie|section-block|inhoud)\b/.test(t),
+				[
+					plek('lib/components/ui/Sectie.svelte'),
+					plek('routes/(main)/onderwerpen/+page.svelte', 'a page of sections, a wider step')
+				]
+			)
+		).toEqual([]);
+	});
+
 	it('says a state where content would be in one quiet line (.stil)', () => {
 		// Round 2 of the consistency pass: "Laden…" was italic in the readers and roman on the
 		// pages. A row, a caption or the nav column keeps its own smaller line.
