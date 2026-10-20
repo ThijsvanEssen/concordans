@@ -19,7 +19,7 @@
 	const TOON = 50;
 	let open = $state(false);
 	let rijen = $state.raw<State<Laag[]> | null>(null);
-	const bijlagen = createLoader(
+	const attachments = createLoader(
 		(key: string, signal: AbortSignal) =>
 			getBuckets(
 				collection,
@@ -42,13 +42,13 @@
 		void bronKey;
 		open = false;
 		rijen = null;
-		return bijlagen.stop;
+		return attachments.stop;
 	});
 
 	function wissel() {
 		open = !open;
 		if (!open || (rijen && rijen.status !== 'error')) return;
-		bijlagen.load(bronKey);
+		attachments.load(bronKey);
 	}
 </script>
 
@@ -62,7 +62,7 @@
 				state={rijen ?? { status: 'loading' }}
 				what="De bijlagen"
 				plural
-				retry={bijlagen.retry}
+				retry={attachments.retry}
 			>
 				{#snippet children(rijen)}
 					<ul>

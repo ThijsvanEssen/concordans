@@ -52,12 +52,12 @@
 
 	// The Lezen table of contents is always the whole law, whatever the graph holds; the
 	// list is the one the place line above the article reads ($lib/api/law-articles).
-	const artikelen = load(
+	const articleList = load(
 		() => currentBwb,
 		(bwb): Promise<LawArticle[]> => (bwb ? lawArticles(bwb) : Promise.resolve([])),
 		'Inhoudsopgave'
 	);
-	const items = $derived(artikelen.state.status === 'ready' ? artikelen.state.data : []);
+	const items = $derived(articleList.state.status === 'ready' ? articleList.state.data : []);
 
 	// A tree of groups from each article's breadcrumb; articles without one go into "Overig".
 	function buildGroups(flat: Item[]): Group[] | null {
@@ -261,8 +261,8 @@
 			: null}
 		bind:el={navEl}
 	>
-		{#if artikelen.state.status !== 'ready'}
-			<LoadState state={artikelen.state} what="De inhoudsopgave" retry={artikelen.retry} />
+		{#if articleList.state.status !== 'ready'}
+			<LoadState state={articleList.state} what="De inhoudsopgave" retry={articleList.retry} />
 		{:else if groups}
 			<div class="tree">
 				{#each groups as g, i (i)}

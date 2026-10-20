@@ -1,12 +1,12 @@
 <script lang="ts">
 	// The kenmerk of a failure the API logged (a 500), small after its sentence, for a reader
-	// to pass on: the key to its line in the log ($lib/api/errors.ts, kenmerkVan). Nothing
+	// to pass on: the key to its line in the log ($lib/api/errors.ts, kenmerkOf). Nothing
 	// for any other failure.
-	import { kenmerkVan } from '$lib/api/errors';
+	import { kenmerkOf } from '$lib/api/errors';
 
 	let { error }: { error: unknown } = $props();
 
-	const kenmerk = $derived(kenmerkVan(error));
+	const kenmerk = $derived(kenmerkOf(error));
 </script>
 
 {#if kenmerk}<span class="kenmerk">kenmerk {kenmerk}</span>{/if}

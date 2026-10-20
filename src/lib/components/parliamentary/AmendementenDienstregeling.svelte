@@ -29,13 +29,13 @@
 
 	let zichtbaar = $state(false);
 	// Asked once the section comes into view.
-	const amendementen = load(
+	const timetable = load(
 		() => (zichtbaar ? dossierNumber : null),
 		(number): Promise<Dienstregeling | null> =>
 			number ? getAmendementen(number) : Promise.resolve(null),
 		'Amendementen'
 	);
-	const regeling = $derived(amendementen.state.status === 'ready' ? amendementen.state.data : null);
+	const regeling = $derived(timetable.state.status === 'ready' ? timetable.state.data : null);
 
 	/** The columns are weeks where the days are too many (amendementen.ts). */
 	const weken = $derived(
@@ -98,13 +98,8 @@
 		collection="documents"
 		aantal={regeling?.rijen.length ?? null}
 	>
-		{#if amendementen.state.status === 'error'}
-			<LoadState
-				state={amendementen.state}
-				what="De amendementen"
-				plural
-				retry={amendementen.retry}
-			/>
+		{#if timetable.state.status === 'error'}
+			<LoadState state={timetable.state} what="De amendementen" plural retry={timetable.retry} />
 		{:else if !regeling}
 			<p class="stand">Amendementen laden…</p>
 		{:else}

@@ -14,7 +14,7 @@
 		kop = true,
 		code = String(status),
 		children,
-		acties
+		actions
 	}: {
 		status?: number;
 		title?: string;
@@ -25,7 +25,7 @@
 		/** What is missing, in a sentence or two; for a 404 a default where none is given. */
 		children?: Snippet;
 		/** The ways on; by default the startpagina and Samenhang. */
-		acties?: Snippet;
+		actions?: Snippet;
 	} = $props();
 
 	const fout = $derived(status !== 404);
@@ -52,8 +52,8 @@
 			</div>
 		{/if}
 		<div class="acties">
-			{#if acties}
-				{@render acties()}
+			{#if actions}
+				{@render actions()}
 			{:else}
 				<a href="/" class="btn is-groot is-primary">Naar de startpagina</a>
 				<a href="/explore" class="btn is-groot">Open Samenhang</a>

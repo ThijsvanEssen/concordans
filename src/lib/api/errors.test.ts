@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from './client';
-import { ifExists, ignore, isAborted, isNotFound, isSlow, kenmerkVan, report } from './errors';
+import { ifExists, ignore, isAborted, isNotFound, isSlow, kenmerkOf, report } from './errors';
 
 const aborted = () => {
 	const controller = new AbortController();
@@ -71,9 +71,9 @@ describe('report and ignore', () => {
 describe('the kenmerk of a failure', () => {
 	it('is the first eight characters of the request id of a 500, and nothing else', () => {
 		const id = '1a2b3c4d-0000-4000-8000-000000000000';
-		expect(kenmerkVan(new ApiError(500, '/api/x', id))).toBe('1a2b3c4d');
-		expect(kenmerkVan(new ApiError(500, '/api/x'))).toBe(null);
-		expect(kenmerkVan(new ApiError(503, '/api/x', id))).toBe(null);
-		expect(kenmerkVan(timeout)).toBe(null);
+		expect(kenmerkOf(new ApiError(500, '/api/x', id))).toBe('1a2b3c4d');
+		expect(kenmerkOf(new ApiError(500, '/api/x'))).toBe(null);
+		expect(kenmerkOf(new ApiError(503, '/api/x', id))).toBe(null);
+		expect(kenmerkOf(timeout)).toBe(null);
 	});
 });

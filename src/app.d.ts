@@ -8,7 +8,7 @@ declare global {
 	namespace App {
 		interface Error {
 			message: string;
-			/** The kenmerk of a 500 the API logged ($lib/api/errors.ts, kenmerkVan). */
+			/** The kenmerk of a 500 the API logged ($lib/api/errors.ts, kenmerkOf). */
 			kenmerk?: string | null;
 		}
 		// interface Locals {}

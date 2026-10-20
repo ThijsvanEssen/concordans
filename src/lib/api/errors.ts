@@ -14,7 +14,7 @@ export const isSlow = (e: unknown) =>
  * The kenmerk of a failure the API logged (a 500 with its `request_id`): the first eight
  * characters, as its line in the log begins, for a reader to pass on. Null for any other.
  */
-export const kenmerkVan = (e: unknown): string | null =>
+export const kenmerkOf = (e: unknown): string | null =>
 	e instanceof ApiError && e.status === 500 && e.requestId ? e.requestId.slice(0, 8) : null;
 
 /** The API does not have it: "niet in de gegevens", not a failure. */

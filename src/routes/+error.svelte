@@ -10,15 +10,15 @@
 	const kenmerk = $derived(page.error?.kenmerk ?? null);
 
 	onMount(() => {
-		const zet = () => (offline = !navigator.onLine);
-		zet();
+		const sync = () => (offline = !navigator.onLine);
+		sync();
 		// A page that fails because a deploy removed its chunks loads again from the new release.
 		if (page.status >= 500 && !offline) reloadForNewVersion();
-		window.addEventListener('online', zet);
-		window.addEventListener('offline', zet);
+		window.addEventListener('online', sync);
+		window.addEventListener('offline', sync);
 		return () => {
-			window.removeEventListener('online', zet);
-			window.removeEventListener('offline', zet);
+			window.removeEventListener('online', sync);
+			window.removeEventListener('offline', sync);
 		};
 	});
 </script>
@@ -31,7 +31,7 @@
 		title={offline ? 'Geen verbinding' : 'Er ging iets mis'}
 		code={offline ? null : kenmerk ? `${page.status}, kenmerk ${kenmerk}` : String(page.status)}
 	>
-		{#snippet acties()}
+		{#snippet actions()}
 			<button type="button" class="btn is-groot is-primary" onclick={() => location.reload()}
 				>Opnieuw laden</button
 			>

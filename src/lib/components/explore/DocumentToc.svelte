@@ -32,7 +32,7 @@
 		},
 		'Inhoudsopgave'
 	);
-	const klaar = $derived(toc.state.status === 'ready' ? toc.state.data : null);
+	const loaded = $derived(toc.state.status === 'ready' ? toc.state.data : null);
 
 	// A link to the passage, so that it can be copied and opened elsewhere; a plain click
 	// scrolls smoothly and puts the passage in the address without a history entry.
@@ -47,8 +47,8 @@
 {#if key}
 	<NavKolom
 		label="Inhoud"
-		title={klaar?.title ?? null}
-		onder={klaar?.kind ? capitalize(klaar.kind) : null}
+		title={loaded?.title ?? null}
+		onder={loaded?.kind ? capitalize(loaded.kind) : null}
 	>
 		<LoadState state={toc.state} what="De inhoudsopgave" retry={toc.retry}>
 			{#snippet children(doc)}

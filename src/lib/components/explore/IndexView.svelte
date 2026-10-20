@@ -173,11 +173,11 @@
 	let loading = $state(false);
 	let loadingMore = $state(false);
 	/** Why the next page failed; the rows loaded so far stay. */
-	let loadMoreFout = $state.raw<{ error: unknown } | null>(null);
+	let loadMoreError = $state.raw<{ error: unknown } | null>(null);
 	/** Why the list failed, in a box: any thrown value, also a falsy one. */
 	let error = $state.raw<{ error: unknown } | null>(null);
 	/** Opnieuw after a failure: the list asked again as it stands. */
-	let opnieuw = $state(0);
+	let retries = $state(0);
 
 	/** The page as shown: with the total its facets counted where its rows came without one. */
 	const shownPage = $derived.by(() => {
@@ -200,7 +200,7 @@
 
 	$effect(() => {
 		void queryKey;
-		void opnieuw;
+		void retries;
 		const cat = category;
 		const asked = untrack(() => LISTS[cat]);
 		const query = untrack(() => asked.query(p, sortDef));
@@ -223,7 +223,7 @@
 		facettenLaden = false;
 		facettenFout = null;
 		error = null;
-		loadMoreFout = null;
+		loadMoreError = null;
 		fetchPage(0, ac.signal)
 			.catch((e) => {
 				if (ac.signal.aborted || isAborted(e)) return;
@@ -247,7 +247,7 @@
 		const offset = pages[category]?.items.length;
 		if (loadingMore || !offset) return;
 		loadingMore = true;
-		loadMoreFout = null;
+		loadMoreError = null;
 		const ac = (loadMoreAbort = new AbortController());
 		// The focus to the first row the page adds: the button gives way to "Laden…" (B2).
 		const before = results?.querySelectorAll(ROW).length ?? 0;
@@ -259,7 +259,7 @@
 			// The rows loaded so far stay; the button offers the next page again.
 			if (ac.signal.aborted || isAborted(e)) return;
 			report('Volgende', e);
-			loadMoreFout = { error: e };
+			loadMoreError = { error: e };
 		} finally {
 			loadingMore = false;
 		}
@@ -669,7 +669,7 @@
 								state={{ status: 'error', error: error.error }}
 								what={`De ${labelOf(category)}`}
 								plural
-								retry={() => opnieuw++}
+								retry={() => retries++}
 							/>
 						</div>
 					{:else}
@@ -736,14 +736,14 @@
 	{#if loaded?.more}
 		{@const remaining = (loaded.total ?? 0) - loaded.items.length}
 		<div class="volgende">
-			{#if loadMoreFout}
+			{#if loadMoreError}
 				<p class="volgende-fout" role="alert">
-					{failureText(`De volgende ${noun}`, loadMoreFout.error, true)}
-					<Kenmerk error={loadMoreFout.error} />
+					{failureText(`De volgende ${noun}`, loadMoreError.error, true)}
+					<Kenmerk error={loadMoreError.error} />
 				</p>
 			{/if}
 			{#if loadingMore}<span>Laden…</span>{:else}<TekstLink onclick={loadMore}
-					>{loadMoreFout
+					>{loadMoreError
 						? 'Opnieuw'
 						: `Volgende ${noun}${remaining > 0 ? `, nog ${formatCount(remaining)}` : ''}`}</TekstLink
 				>{/if}

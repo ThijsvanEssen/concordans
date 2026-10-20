@@ -99,9 +99,9 @@
 	/** Actueel's first answer: under way, in, or failed. A phone waits seconds for it. */
 	let feedState = $state<'laden' | 'klaar' | 'fout'>('laden');
 	/** Why Actueel failed: slow or broken, for LoadState. */
-	let feedFout = $state.raw<unknown>(null);
+	let feedError = $state.raw<unknown>(null);
 	/** Opnieuw after a failure: Actueel asked again. */
-	let opnieuw = $state(0);
+	let retries = $state(0);
 	/** The network of the last passed bill: after Actueel is on screen; none on an error. */
 	let lawNetwork = $state<Schets | null>(null);
 	/** Its place stands while it is asked, so Actueel under it does not drop (0.16 of layout
@@ -109,12 +109,12 @@
 	let networkLoading = $state(true);
 
 	$effect(() => {
-		void opnieuw;
+		void retries;
 		const ac = new AbortController();
 		loadLines(ac.signal).catch((e) => {
 			if (!ac.signal.aborted) {
 				report('Actueel', e);
-				feedFout = e;
+				feedError = e;
 				feedState = 'fout';
 				networkLoading = false;
 			}
@@ -254,11 +254,11 @@
 				<p class="sr-only" role="status">Actueel laden</p>
 			{:else if feedState === 'fout'}
 				<LoadState
-					state={{ status: 'error', error: feedFout }}
+					state={{ status: 'error', error: feedError }}
 					what="Actueel"
 					retry={() => {
 						feedState = 'laden';
-						opnieuw++;
+						retries++;
 					}}
 				/>
 			{/if}

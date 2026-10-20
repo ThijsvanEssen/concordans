@@ -101,7 +101,7 @@
 		/** Nothing in the period: the last lines before it. */
 		eerder: boolean;
 		/** Why it failed: slow or broken, for LoadState. */
-		fout?: unknown;
+		failure?: unknown;
 	};
 	let standen = $state<Record<string, Stand>>({});
 	let uitgeklapt = $state<Record<string, boolean>>({});
@@ -132,7 +132,7 @@
 			let meer = false;
 			let doorzocht: string | null = null;
 			let eerder = false;
-			let fout: unknown = null;
+			let failure: unknown = null;
 			const vraag = (query: Record<string, unknown>) =>
 				getFeed({ ...vraagVan(o), ...query, facets: false }, { signal });
 			try {
@@ -160,11 +160,11 @@
 			} catch (e) {
 				if (signal.aborted || isAborted(e)) return;
 				report('Onderwerp', e);
-				fout = e;
+				failure = e;
 			}
 			standen[k] = {
-				status: fout !== null && !items.size ? 'fout' : 'klaar',
-				fout,
+				status: failure !== null && !items.size ? 'fout' : 'klaar',
+				failure,
 				items: [...items.values()].sort(
 					(a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id)
 				),
@@ -201,7 +201,7 @@
 	let openId = $state<string | null>(null);
 
 	/** Opnieuw on a topic that failed: its window asked again. */
-	function opnieuw(o: Onderwerp) {
+	function retryTopic(o: Onderwerp) {
 		const s = standen[vak(o)];
 		if (s) standen[vak(o)] = { ...s, status: 'laden' };
 		laadAlles([o], ac.signal).catch((e) => report('Onderwerp', e));
@@ -425,9 +425,9 @@
 				{:else if s.status === 'fout'}
 					<div class="status">
 						<LoadState
-							state={{ status: 'error', error: s.fout }}
+							state={{ status: 'error', error: s.failure }}
 							what="Dit onderwerp"
-							retry={() => opnieuw(o)}
+							retry={() => retryTopic(o)}
 						/>
 					</div>
 				{:else if !s.items.length}

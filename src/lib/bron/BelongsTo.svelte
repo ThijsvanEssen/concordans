@@ -87,23 +87,23 @@
 	let open = $state<string | null>(null);
 	let rijen = $state<Record<string, State<Laag[]>>>({});
 	// The group whose rows are asked: one at a time, a new one aborts the last.
-	let gevraagd: string | null = null;
-	const groep = createLoader(
+	let askedId: string | null = null;
+	const groupLoader = createLoader(
 		(g: Groep, signal: AbortSignal) =>
 			getBuckets(node.collection, node.key, [g.bak], signal).then((ns) =>
 				ns.slice(0, TOON).map((n) => laagVan(n, g.label))
 			),
 		(s) => {
-			if (gevraagd) rijen = { ...rijen, [gevraagd]: s };
+			if (askedId) rijen = { ...rijen, [askedId]: s };
 		},
 		'Behoort bij'
 	);
-	$effect(() => groep.stop);
+	$effect(() => groupLoader.stop);
 	/** The most rows a group lists here; Verbonden has them all. */
 	const TOON = 50;
 	function laad(g: Groep) {
-		gevraagd = g.id;
-		groep.load(g);
+		askedId = g.id;
+		groupLoader.load(g);
 	}
 	function toggle(g: Groep) {
 		if (open === g.id) {
