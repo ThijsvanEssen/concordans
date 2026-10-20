@@ -22,6 +22,7 @@
 		citaten,
 		csv,
 		groepen,
+		groepAnker,
 		itemAddress,
 		itemKey,
 		netwerkHref,
@@ -37,6 +38,7 @@
 	import AddSource from './AddSource.svelte';
 	import MapGroups from './MapGroups.svelte';
 	import NewMark from '$lib/components/ui/NewMark.svelte';
+	import Inhoudsopgave from '$lib/components/ui/Inhoudsopgave.svelte';
 	import { Fresh } from './fresh.svelte';
 
 	let {
@@ -62,6 +64,8 @@
 			groepNotities: shared?.groepNotities ?? {}
 		}
 	);
+	/** The groups of what the bundel holds, as MapGroups heads them. */
+	const groups = $derived(groepen(b.items));
 	const copier = createCopier();
 	const anchor = $derived(m ? `map-${m.id}` : 'gedeeld');
 	const fileBase = $derived(safeFileName(b.naam) || 'Bundel');
@@ -390,7 +394,7 @@
 		{#if adding}
 			<AddSource
 				bundle={own.id}
-				groups={groepen(own.items).map((g) => ({ key: g.sleutel, name: g.groep }))}
+				groups={groups.map((g) => ({ key: g.sleutel, name: g.groep }))}
 				onAdd={(i: MapItem) => kaart.add(i, own.id)}
 				onClose={() => {
 					adding = false;
@@ -415,6 +419,14 @@
 		<h1 class="blad__titel" tabindex="-1">{b.naam}</h1>
 		{@render actions()}
 	</header>
+	<!-- The groups of the bundel, as Bronnen's column holds its groups: a way to each. -->
+	{#if b.volgorde === 'groep' && groups.length > 1}
+		<Inhoudsopgave
+			label="Groepen van {b.naam}"
+			items={groups.map((g) => ({ label: g.groep, id: groepAnker(g.sleutel) }))}
+			zonderAdres={!m}
+		/>
+	{/if}
 	<div class="inhoud blad__lijst">{@render content()}</div>
 </article>
 

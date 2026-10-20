@@ -79,6 +79,21 @@ describe('the frame of a page', () => {
 		expect(view).toMatch(/class="inhoud blad__lijst"/);
 	});
 
+	it('lists the groups of a page in its left column through one component (Inhoudsopgave)', () => {
+		// Bronnen, Gevolgd and a bundel's page (Thijs, 20 Oct: "zoals de indeling bij Bronnen").
+		expect(
+			overtreders((t) => /class="opzij\b/.test(t), [plek('lib/components/ui/Inhoudsopgave.svelte')])
+		).toEqual([]);
+		for (const path of [
+			'lib/components/explore/index/IndexOverzicht.svelte',
+			'routes/(main)/onderwerpen/+page.svelte',
+			'lib/map/MapView.svelte'
+		])
+			expect(bron(path), path).toContain('<Inhoudsopgave');
+		// The overview of the bundels has none: its rows are the bundels.
+		expect(bron('routes/(main)/bundels/+page.svelte')).not.toContain('<Inhoudsopgave');
+	});
+
 	it('keeps the footer under the fold and a late band in its place (no layout shift)', () => {
 		// Live, 10 Oct: the footer jumped into view on every page when the server's page gave
 		// way to the app (0.22 to 0.37 of layout shift), and Actueel dropped under the

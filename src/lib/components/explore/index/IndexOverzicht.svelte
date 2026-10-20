@@ -8,6 +8,7 @@
 	import { indexHref } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
+	import Inhoudsopgave from '$lib/components/ui/Inhoudsopgave.svelte';
 	import { collectionOf, INDEX_TABS } from './categories';
 	import { getStats } from '$lib/api/stats';
 	import { formatCount } from '$lib/text/getal';
@@ -33,13 +34,10 @@
 	</header>
 
 	<!-- The groups of the page, as a facet column holds its groups: a way to each. -->
-	<nav class="opzij" aria-label="Groepen van bronnen">
-		<ul>
-			{#each INDEX_TABS as groep (groep.label)}
-				<li><a href="#{anker(groep.label)}">{groep.label}</a></li>
-			{/each}
-		</ul>
-	</nav>
+	<Inhoudsopgave
+		label="Groepen van bronnen"
+		items={INDEX_TABS.map((groep) => ({ label: groep.label, id: anker(groep.label) }))}
+	/>
 
 	<div class="groepen">
 		{#each INDEX_TABS as groep (groep.label)}
@@ -61,28 +59,6 @@
 </div>
 
 <style>
-	/* The column's first line on the line of the first group's heading, under its rule
-	   (Sectie: 2 px and --s-3), as on Gevolgd. */
-	.opzij {
-		padding-top: calc(var(--s-3) + 2px);
-	}
-	.opzij ul {
-		margin: 0;
-		padding: 0;
-		list-style: none;
-		font-size: var(--t-meta);
-	}
-	.opzij li {
-		padding: 2px 0;
-	}
-	.opzij a {
-		color: var(--ink-2);
-		text-decoration: none;
-	}
-	.opzij a:hover {
-		color: var(--ink);
-		text-decoration: underline;
-	}
 	.groepen {
 		display: flex;
 		flex-direction: column;
@@ -118,10 +94,5 @@
 		font-size: var(--t-meta);
 		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
-	}
-	@media (max-width: 768px) {
-		.opzij {
-			display: none;
-		}
 	}
 </style>

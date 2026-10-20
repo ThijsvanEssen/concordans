@@ -17,6 +17,7 @@
 	import { bronLabel, parseNodeId } from '$lib/vocabulary';
 	import {
 		groepen,
+		groepAnker,
 		itemHref,
 		isExternal,
 		itemKey,
@@ -173,7 +174,7 @@
 		{@const lawOpen = !!law && open.has(`law:${g.sleutel}`)}
 		{@const groupLines = fresh?.group(g.sleutel) ?? []}
 		{@const linesOpen = groupLines.length > 0 && open.has(`new:${g.sleutel}`)}
-		<div class="groep-kop">
+		<div class="groep-kop" id={groepAnker(g.sleutel)}>
 			<h3 class="groep">
 				{g.groep}{#if groupLines.length}<button
 						type="button"
@@ -244,6 +245,8 @@
 <style>
 	/* A law, dossier or Rechtspraak over its rows, as a day over Actueel's; its ⋯ at the right. */
 	.groep-kop {
+		/* A jump from the column of groups lands under the sticky bar. */
+		scroll-margin-top: calc(var(--topbar-h) + var(--s-4));
 		display: flex;
 		align-items: center;
 		justify-content: space-between;

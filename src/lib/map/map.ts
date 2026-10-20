@@ -268,6 +268,10 @@ export function groepen(
 	}));
 }
 
+/** The id of a group's heading on a bundel's page, from its key: `groep-wet-bwbr0052872`. */
+export const groepAnker = (sleutel: string) =>
+	`groep-${sleutel.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+
 /** A citation without the place in it: `HR 20 december 2019, ECLI:…`, `Kamerstukken II …, nr. 57`. */
 const withoutPlace = (kort: string) => kort.replace(/,\s*(?:r\.o\.|alinea)\s.*$/, '');
 

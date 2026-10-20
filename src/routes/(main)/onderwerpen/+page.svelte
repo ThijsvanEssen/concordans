@@ -4,6 +4,7 @@
 	import { isAborted, report } from '$lib/api/errors';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
+	import Inhoudsopgave from '$lib/components/ui/Inhoudsopgave.svelte';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	// Gevolgde onderwerpen: per topic what came into Actueel since the visit before. A topic is
@@ -348,18 +349,15 @@
 		</div>
 	{/if}
 	<!-- The topics of the page, as a facet column holds its groups: a way to each. -->
-	<nav class="opzij" aria-label="Gevolgde onderwerpen op deze pagina">
-		{#if lijst.length > 1}
-			<h2 class="opzij__kop">Gevolgd</h2>
-			<ul>
-				{#each lijst as o, n (topicKey(o))}
-					<li><a href="#onderwerp-{n}">{naamVan(o)}</a></li>
-				{/each}
-			</ul>
-		{/if}
-	</nav>
+	{#if lijst.length > 1}
+		<Inhoudsopgave
+			label="Gevolgde onderwerpen op deze pagina"
+			kop="Gevolgd"
+			items={lijst.map((o, n) => ({ label: naamVan(o), id: `onderwerp-${n}` }))}
+		/>
+	{/if}
 
-	<div class="inhoud">
+	<div class="inhoud blad__lijst">
 		{#if geladen && !lijst.length}
 			<p class="status stil">Nog geen onderwerpen.</p>
 		{/if}
@@ -490,42 +488,6 @@
 	.regel {
 		grid-column: 1 / -1;
 		margin-bottom: var(--s-5);
-	}
-	/* The column's first heading on the line of the first topic's heading, under its rule
-	   (Sectie: 2 px and --s-3), as Bladeren's facets stand beside its list. */
-	.opzij {
-		padding-top: calc(var(--s-3) + 2px);
-	}
-	.opzij__kop {
-		margin: 0 0 var(--s-2);
-		font-size: var(--t-meta);
-		font-weight: 600;
-		color: var(--ink);
-	}
-	.opzij ul {
-		margin: 0;
-		padding: 0;
-		list-style: none;
-		font-size: var(--t-meta);
-	}
-	.opzij li {
-		padding: 2px 0;
-	}
-	.opzij a {
-		color: var(--ink-2);
-		text-decoration: none;
-	}
-	.opzij a:hover {
-		color: var(--ink);
-		text-decoration: underline;
-	}
-	@media (max-width: 768px) {
-		.opzij {
-			display: none;
-		}
-	}
-	.inhoud {
-		min-width: 0;
 	}
 	/* Actueel's rows, with Actueel's (and Bladeren's) columns. */
 	.dagen {
