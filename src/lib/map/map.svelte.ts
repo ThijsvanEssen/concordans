@@ -96,8 +96,12 @@ function heleItems(id: string, v: unknown): MapItem[] {
 	return items;
 }
 
+/** The id of Losse markeringen where the browser keeps no bundels yet: one id, the same in
+ *  every tab and on the server's page, so its link is its page before and after a write. */
+const LOOSE_ID = 'losse-markeringen';
+
 /** Losse markeringen alone: where this browser keeps none, or none it can read. */
-const eersteStand = (): Stand => ({ mappen: [leeg(EERSTE)] });
+const eersteStand = (): Stand => ({ mappen: [{ ...leeg(EERSTE), id: LOOSE_ID }] });
 
 /** The bundels as this browser keeps them now; null where it keeps none it can read. */
 function lees(): Stand | null {
@@ -178,8 +182,11 @@ class Kaarten {
 	// ── Items ─────────────────────────────────────────────────────────────────
 	/** Bewaar: into a bundel, Losse markeringen where none is named; never out of one. Taking
 	 *  a bron out is per bundel, by its tick (BundleChecklist), never all at once. */
-	keep(i: MapItem, id: string = this.loose.id) {
-		this.add(i, id);
+	keep(i: MapItem, id?: string) {
+		// Losse markeringen as the browser keeps it now, not as this tab read it.
+		this.#vers();
+		const loose = this.loose.id;
+		this.add(i, id ?? loose);
 	}
 	#keeping = $state<string | null>(keepingNow());
 	/** The bundel the readers keep in, named on Bewaar with a way back to it, from Andere bron
