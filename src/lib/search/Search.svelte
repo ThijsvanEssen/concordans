@@ -6,8 +6,7 @@
 	import { plural } from '$lib/text/words';
 	import { naamVanId } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import { failureText } from '$lib/components/ui/LoadState.svelte';
-	import Kenmerk from '$lib/components/ui/Kenmerk.svelte';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import Periode from '$lib/components/ui/Periode.svelte';
 	import { kamerLinks } from './kamer';
 	import { uniqueBy } from '$lib/util/unique';
@@ -346,20 +345,26 @@
 					<KindGlyph collection={lane.kinds[0]} />
 					{naam}
 				</div>
-				<p class="state state--group stil" role="alert">
-					{failureText(naam, search.lanes[lane.id].error, true)}
-					<TekstLink onclick={() => search.retry(lane.id)}>Opnieuw</TekstLink>
-					<Kenmerk error={search.lanes[lane.id].error} />
-				</p>
+				<div class="state state--group">
+					<LoadState
+						state={{ status: 'error', error: search.lanes[lane.id].error }}
+						what={naam}
+						plural
+						retry={() => search.retry(lane.id)}
+					/>
+				</div>
 			</div>
 		{/each}
 
 		{#if search.failure}
-			<p class="state stil" role="alert">
-				{failureText('De resultaten', search.failure.error, true)}
-				<TekstLink onclick={() => search.retrySearch()}>Opnieuw</TekstLink>
-				<Kenmerk error={search.failure.error} />
-			</p>
+			<div class="state">
+				<LoadState
+					state={{ status: 'error', error: search.failure.error }}
+					what="De resultaten"
+					plural
+					retry={() => search.retrySearch()}
+				/>
+			</div>
 		{:else if search.empty}
 			<p class="state stil" role="status">Geen resultaten</p>
 		{/if}

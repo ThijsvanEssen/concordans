@@ -9,11 +9,12 @@
 	const kenmerk = $derived(kenmerkOf(error));
 </script>
 
+<!-- No margin of its own, the space before it is the line's: on a line of its own it starts
+     where the sentence does. -->
 {#if kenmerk}<span class="kenmerk">kenmerk {kenmerk}</span>{/if}
 
 <style>
 	.kenmerk {
-		margin-left: var(--s-2);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		white-space: nowrap;

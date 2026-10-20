@@ -33,7 +33,7 @@
 
 <svelte:head>
 	{#if kop}
-		{#if !serverKop.actief}<title>{siteTitle(fout ? 'Fout' : 'Niet gevonden')}</title>{/if}
+		{#if !serverKop.actief}<title>{siteTitle(fout ? title : 'Niet gevonden')}</title>{/if}
 		{#if !fout}<meta name="robots" content="noindex" />{/if}
 	{/if}
 </svelte:head>

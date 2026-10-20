@@ -24,6 +24,7 @@
 	import type { Snippet } from 'svelte';
 	import type { LoadState } from '$lib/util/load.svelte';
 	import Kenmerk from './Kenmerk.svelte';
+	import TekstLink from './TekstLink.svelte';
 
 	let {
 		state,
@@ -60,7 +61,7 @@
 	<p class="stil failure" class:failure--block={form === 'block'} role="alert">
 		{failureText(what, state.error, plural)}
 		{#if retry}
-			<button type="button" class="btn is-text" onclick={retry}>Opnieuw</button>
+			<TekstLink onclick={retry}>Opnieuw</TekstLink>
 		{/if}
 		<Kenmerk error={state.error} />
 	</p>

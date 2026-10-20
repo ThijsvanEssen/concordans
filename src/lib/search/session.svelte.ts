@@ -187,16 +187,19 @@ export class SearchSession {
 				(h.display_name ?? '').toLowerCase().includes(this.q.toLowerCase())
 			)
 	);
-	/** The lanes that failed on their own: each says so in its group, the others stand. */
-	readonly failedLanes = $derived(
-		this.inScope.filter((l) => l.failsAlone && failed(this.lanes[l.id].status))
-	);
 	/** The search as a whole failed: its fast lane, or a citation that could not be opened. */
 	readonly failure = $derived.by((): { error: unknown } | null => {
 		const lane = this.inScope.find((l) => !l.failsAlone);
 		const state = lane ? this.lanes[lane.id] : null;
 		return state && failed(state.status) ? { error: state.error } : null;
 	});
+	/**
+	 * The lanes that failed on their own: each says so in its group, the others stand. Where
+	 * the search as a whole failed, its one line says it for all (retrySearch).
+	 */
+	readonly failedLanes = $derived(
+		this.failure ? [] : this.inScope.filter((l) => l.failsAlone && failed(this.lanes[l.id].status))
+	);
 	/** Kinds whose live answer left more out for this query, not yet asked in full. */
 	readonly moreKinds = $derived(
 		new Set(
@@ -303,9 +306,10 @@ export class SearchSession {
 		this.#schedule(LANES.find((l) => l.id === id)!);
 	}
 
-	/** Opnieuw under the search: the fast kinds and what the query cites. */
+	/** Opnieuw under the search: the fast kinds, what the query cites, and every lane that failed. */
 	retrySearch() {
-		for (const lane of LANES) if (!lane.failsAlone) this.#schedule(lane);
+		for (const lane of LANES)
+			if (!lane.failsAlone || failed(this.lanes[lane.id].status)) this.#schedule(lane);
 	}
 
 	/** "Meer …": the whole query again, in full. */

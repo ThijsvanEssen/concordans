@@ -11,8 +11,7 @@
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
-	import LoadState, { failureText } from '$lib/components/ui/LoadState.svelte';
-	import Kenmerk from '$lib/components/ui/Kenmerk.svelte';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { page } from '$app/state';
 	import { tick, untrack } from 'svelte';
@@ -444,15 +443,14 @@
 						</p>
 					{/if}
 					{#if g.failed && g.rows.length === 0}
-						<p class="note stil" role="alert">
-							{g.noun
-								? failureText(`De ${g.noun}`, g.error, true)
-								: failureText('Deze groep', g.error)}
-							{#if onRetry}
-								<TekstLink onclick={onRetry}>Opnieuw</TekstLink>
-							{/if}
-							<Kenmerk error={g.error} />
-						</p>
+						<div class="note">
+							<LoadState
+								state={{ status: 'error', error: g.error }}
+								what={g.noun ? `De ${g.noun}` : 'Deze groep'}
+								plural={!!g.noun}
+								retry={onRetry}
+							/>
+						</div>
 					{/if}
 					{#if melding?.groep === g.id}
 						<p class="group__melding" role="status">

@@ -10,6 +10,7 @@
 // and the position inside the text as the fragment.
 import { keyEcli, padHref, type Pad } from '$lib/bron/address';
 import { stbCitation } from '$lib/text/enacted-law';
+import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import { kamerstukName } from '$lib/components/parliamentary/kamerstuk';
 import { isIndexCategory, type IndexCategory } from '$lib/components/explore/index/categories';
 import { isContainerKind } from '$lib/graph/container-membership';
@@ -111,6 +112,10 @@ export function nameOfPad(p: Pad): string {
 					number: p.nummer
 				}) ?? padHref(p)
 			);
+		case 'dossier':
+			return kamerstukNummer(p.nummer);
+		case 'uitspraak':
+			return p.ecli;
 		case 'publicatie':
 			return `${SERIES_NAME[p.reeks]} ${p.jaar}, ${p.nummer}`;
 		case 'lid':

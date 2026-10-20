@@ -178,6 +178,25 @@ describe('the lanes of a search', () => {
 		stop();
 	});
 
+	it('says one failure once, with one Opnieuw that asks every failed lane again', async () => {
+		const { asked, of } = api();
+		const { s, stop } = session();
+		await type(s, 'huur');
+		of('instruments').answer(fail(500));
+		of('articles').answer(fail(500));
+		of('judgments').answer(fail(500));
+		await settle();
+		expect(s.failure).not.toBe(null);
+		expect(s.failedLanes).toEqual([]);
+		const before = asked.length;
+		s.retrySearch();
+		await vi.advanceTimersByTimeAsync(150);
+		expect(asked.slice(before).flatMap((a) => a.query.types)).toEqual(
+			expect.arrayContaining(['instruments', 'articles', 'judgments'])
+		);
+		stop();
+	});
+
 	it('says that the search took too long when the fast lane does, and asks it again', async () => {
 		const { asked, of } = api();
 		const { s, stop } = session();

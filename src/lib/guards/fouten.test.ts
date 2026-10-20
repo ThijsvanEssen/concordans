@@ -54,7 +54,28 @@ describe('errors that are not swallowed', () => {
 						'routes/(main)/onderwerpen/overzicht/+page.svelte',
 						'a CSV made here, not loaded; its button asks again'
 					),
-					plek('routes/+error.svelte', 'the title of the page that failed, with Opnieuw laden')
+					plek('routes/+error.svelte', 'the title of the page that failed, with Opnieuw laden'),
+					{
+						pad: 'routes/explore/+page.svelte',
+						reden: 'the tab of a bron that could not be loaded, as the failure page calls it',
+						regel: /siteTitle\('Er ging iets mis'\)/
+					}
+				]
+			)
+		).toEqual([]);
+	});
+
+	it('asks again with one Opnieuw, the one of LoadState, alike in reader, Verbonden and search', () => {
+		// One look and one finger's target (.raakvlak) for every Opnieuw (UX-toets A32 #5).
+		expect(
+			overtreders(
+				(t) => /[>'"]Opnieuw[<'"]/.test(t),
+				[
+					plek('lib/components/ui/LoadState.svelte'),
+					plek(
+						'lib/components/explore/IndexView.svelte',
+						'Volgende becomes Opnieuw in its own place under the rows loaded'
+					)
 				]
 			)
 		).toEqual([]);
