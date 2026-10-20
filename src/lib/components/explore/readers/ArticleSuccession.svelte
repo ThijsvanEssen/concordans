@@ -2,7 +2,10 @@
 	// One line under the head of an article in a recodification (`TRANSPOSED_TO`): on the
 	// old article the article of the new law that takes its place, In het nieuwe recht; on the
 	// new one the article whose place it takes, Voorheen. A click opens it where the reader
-	// is; the leden fold out under the line; the transposition table is one step further.
+	// is; the leden fold out under the line; Vergelijk opens the old text beside the new in
+	// place (`?vergelijk=`); the transposition table is one step further.
+	import { page } from '$app/state';
+	import { withParams } from '$lib/util/address';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import { bronHref } from '$lib/bron/href';
 	import Caret from '$lib/components/ui/Caret.svelte';
@@ -63,7 +66,23 @@
 	);
 
 	let unfolded = $state<Direction | null>(null);
+
+	// The comparison opens in the reader, in place of the text; the same link closes it.
+	const comparing = $derived(page.url.searchParams.get('vergelijk'));
+	const compareHref = (id: string) =>
+		comparing === id
+			? withParams(page.url, { vergelijk: null, weergave: null })
+			: withParams(page.url, { vergelijk: id, versies: null });
 </script>
+
+{#snippet compare(id: string)}
+	<a
+		class="succession__toggle"
+		href={compareHref(id)}
+		data-sveltekit-noscroll
+		aria-expanded={comparing === id}>Vergelijk</a
+	>
+{/snippet}
 
 {#each lines as line (line.direction)}
 	{@const open = unfolded === line.direction}
@@ -75,7 +94,11 @@
 					>{item.name}</BronLink
 				>{#if line.perItem && item.status}<span class="succession__status"
 						>&nbsp;({item.status})</span
-					>{/if}{/each}{#if line.shared}<span class="succession__status">, {line.shared}</span>{/if}
+					>{/if}{#if line.items.length > 1}{@render compare(
+						item.s.article.id
+					)}{/if}{/each}{#if line.shared}<span class="succession__status">, {line.shared}</span
+				>{/if}
+			{#if line.items.length === 1}{@render compare(line.items[0].s.article.id)}{/if}
 			{#if line.rows.length > 0}
 				<button
 					type="button"
@@ -89,7 +112,6 @@
 					>Transponeringstabel ↗</a
 				>
 			{/each}
-			<!-- Room for Vergelijk (onderzoeksflow O1): the old and the new text side by side. -->
 		</p>
 		{#if open}
 			<dl class="succession__parts">
@@ -136,6 +158,10 @@
 		font-weight: 500;
 		color: var(--ink);
 		cursor: pointer;
+	}
+	.succession__toggle[aria-expanded='true'] {
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.succession__toggle:hover {
 		text-decoration-line: underline;

@@ -45,6 +45,21 @@ describe('ArticleSuccession', () => {
 		expect(screen.getByText('2.8.6, 2')).toBeTruthy();
 	});
 
+	it('opens the comparison of the old and the new text in place, and closes it again', async () => {
+		render(ArticleSuccession, { successors: [newSv], predecessors: [], own: sv });
+		const compare = screen.getByRole('link', { name: 'Vergelijk' });
+		const href = new URL(compare.getAttribute('href')!, 'http://localhost');
+		expect(href.pathname).toBe('/wetten/BWBR0001903/artikel/126ffa');
+		expect(href.searchParams.get('vergelijk')).toBe('articles/stb_2026_56_2_8_6');
+		expect(compare.getAttribute('aria-expanded')).toBe('false');
+
+		open('/wetten/BWBR0001903/artikel/126ffa?vergelijk=articles/stb_2026_56_2_8_6&weergave=naast');
+		await tick();
+		expect(compare.getAttribute('aria-expanded')).toBe('true');
+		const closed = new URL(compare.getAttribute('href')!, 'http://localhost');
+		expect([...closed.searchParams.keys()]).toEqual([]);
+	});
+
 	it('names the old article on the new one, without a status for a law in force', () => {
 		const { container } = render(ArticleSuccession, {
 			successors: [],

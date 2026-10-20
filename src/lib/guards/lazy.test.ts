@@ -12,7 +12,7 @@ const LAZY: Record<string, RegExp> = {
 	'lib/components/explore/KindReader.svelte': /\/readers\/\w+Reader\.svelte$/,
 	'routes/explore/+page.svelte':
 		/\/readers\/\w+Reader\.svelte$|VerbondenTabel\.svelte$|FilterSheet\.svelte$/,
-	'lib/components/explore/readers/ArticleReader.svelte': /VersionCompare\.svelte$/,
+	'lib/components/explore/readers/ArticleReader.svelte': /(Version|Article)Compare\.svelte$/,
 	'lib/bron/BronLink.svelte': /OverwegingKaart\.svelte$|PreviewCard\.svelte$|\/overweging$/,
 	'lib/components/layout/SearchOverlay.svelte': /\/Search\.svelte$/
 };

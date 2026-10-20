@@ -10,12 +10,14 @@ const table = {
 	source_url: 'https://zoek.officielebekendmakingen.nl/blg-1081574.html'
 };
 
-const parts = [
-	{ old_part: '1', new_place: '2.8.6, 1' },
-	{ old_part: '2', new_place: '2.8.6, 1' },
-	{ old_part: '3', new_place: '2.8.6, 1' },
-	{ old_part: '4', new_place: '2.8.6, 2' }
-];
+const lid = (old: string, lid: string) => ({
+	old_part: old,
+	new_place: `2.8.6, ${lid}`,
+	new_article: '2.8.6',
+	new_leden: [lid]
+});
+
+const parts = [lid('1', '1'), lid('2', '1'), lid('3', '1'), lid('4', '2')];
 
 /** On art. 126ffa Sv: the article that takes its place. */
 export const newSv: Succession = {

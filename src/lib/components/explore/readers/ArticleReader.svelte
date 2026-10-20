@@ -42,6 +42,9 @@
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 	import ArticleSuccession from './ArticleSuccession.svelte';
+	import { compareTarget, ownSuccessionName, successionName } from './succession';
+	import { getNodeGraph } from '$lib/api/nodes';
+	import { parseNodeId } from '$lib/vocabulary';
 	import { articleKey as keyOfArticle, fetchArticle } from './article';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
 	import { load } from '$lib/util/load.svelte';
@@ -417,8 +420,74 @@
 	});
 	const layout = $derived(page.url.searchParams.get('weergave') === 'naast' ? 'naast' : 'een');
 	const compareHref = (from: number, to: number) =>
-		withParams(page.url, { versies: `${wordings[from].from ?? ''}..${wordings[to].from ?? ''}` });
+		withParams(page.url, {
+			versies: `${wordings[from].from ?? ''}..${wordings[to].from ?? ''}`,
+			vergelijk: null
+		});
 	const closeCompareHref = $derived(withParams(page.url, { versies: null, weergave: null }));
+	// The article against another (`?vergelijk=articles/…`): its successor or predecessor in
+	// a recodification, the leden paired as the source places them; any other article is the
+	// reader's own choice (from the bundel), paired by likeness alone. A chunk of its own too.
+	const otherParam = $derived(page.url.searchParams.get('vergelijk'));
+	const crossComparing = $derived(otherParam !== null && !comparing);
+	const articleCompare = new Lazy(
+		() => import('$lib/components/articles/ArticleCompare.svelte'),
+		'Vergelijken'
+	);
+	$effect(() => {
+		if (crossComparing) articleCompare.load();
+	});
+	const bySource = $derived(
+		otherParam && loaded
+			? compareTarget(
+					otherParam,
+					loaded.successors ?? [],
+					loaded.predecessors ?? [],
+					loaded.article.article_number ?? articleNumber
+				)
+			: null
+	);
+	/** The address of an article of the reader's own choice, from its node. */
+	const chosen = load(
+		() => (crossComparing && loaded && !bySource ? otherParam : null),
+		async (id, signal) => {
+			// Nothing to ask: the comparison is closed, or the source names the article.
+			if (id === null) return new Promise<never>(() => {});
+			const target = parseNodeId(id);
+			if (!target || target.collection !== 'articles') throw new Error(`Geen artikel: ${id}`);
+			const graph = await getNodeGraph('articles', target.key, { limit: 1, wait: 'short', signal });
+			const address = articleOf(graph.node?.props as Record<string, unknown> | undefined);
+			if (!address) throw new Error(`Geen adres voor ${id}`);
+			return { law: address.lawId, number: address.articleNumber };
+		},
+		'Vergelijking'
+	);
+	const otherArticle = $derived.by(() => {
+		if (bySource)
+			return {
+				target: {
+					law: bySource.law,
+					number: bySource.number,
+					name: successionName(bySource.succession, ownLaw, bySource.direction)
+				},
+				side: bySource.direction === 'new' ? ('old' as const) : ('new' as const),
+				basis: { url: bySource.succession.source_url, id: bySource.succession.source },
+				pairings: bySource.pairings
+			};
+		if (chosen.state.status !== 'ready') return null;
+		return {
+			target: { ...chosen.state.data, name: null },
+			side: 'old' as const,
+			basis: null,
+			pairings: []
+		};
+	});
+	/** The names of the law of the article on screen, for the line and the comparison. */
+	const ownLaw = $derived({
+		citationTitle: loaded?.instrument?.citation_title ?? law?.citationTitle ?? null,
+		shortTitle: loaded?.instrument?.abbreviation ?? law?.shortTitle ?? null
+	});
+
 	const link = (patch: ParamPatch) => withParams(page.url, patch);
 	const go = (patch: ParamPatch) => navigate(link(patch));
 
@@ -426,7 +495,8 @@
 	// after the oldest tekstversie, leading to that lid's history.
 	const lidNotes = $derived.by(() => {
 		const notes = new Map<string, { label: string; href: string }>();
-		if (comparing || shown || !current || !loaded || wordings.length < 2) return notes;
+		if (comparing || crossComparing || shown || !current || !loaded || wordings.length < 2)
+			return notes;
 		for (const unit of unitsOf(loaded.article.text, loaded.article.parts)) {
 			if (!unit.number) continue;
 			const latest = lidHistory(wordings, unit.number)?.formulations.at(-1);
@@ -539,8 +609,8 @@
 												versionMenu = false;
 												// Reading one text folds the comparison away; a text chosen here
 												// is no longer that of the peildatum.
-												if (comparing || peildatum)
-													go({ versies: null, weergave: null, peildatum: null });
+												if (comparing || crossComparing || peildatum)
+													go({ versies: null, vergelijk: null, weergave: null, peildatum: null });
 											}}
 											>{w.lapsed
 												? `Vervallen per ${langeDatum(w.from)}`
@@ -627,14 +697,7 @@
 					{/if}
 				</div>
 			{/if}
-			<ArticleSuccession
-				successors={d.successors}
-				predecessors={d.predecessors}
-				own={{
-					citationTitle: d.instrument?.citation_title ?? law?.citationTitle ?? null,
-					shortTitle: d.instrument?.abbreviation ?? law?.shortTitle ?? null
-				}}
-			/>
+			<ArticleSuccession successors={d.successors} predecessors={d.predecessors} own={ownLaw} />
 		</ReaderHead>
 
 		{#if proposedMissing && proposedRow}
@@ -667,8 +730,43 @@
 			</p>
 		{/if}
 
-		<div class="reader-body" class:reader-body--compare={comparing} bind:this={root}>
-			{#if comparing}
+		<div
+			class="reader-body"
+			class:reader-body--compare={comparing || crossComparing}
+			bind:this={root}
+		>
+			{#if crossComparing}
+				{#if chosen.state.status === 'error'}
+					<LoadState state={chosen.state} what="Het artikel" form="block" retry={chosen.retry} />
+				{:else if articleCompare.component && otherArticle}
+					{@const ArticleCompare = articleCompare.component}
+					<ArticleCompare
+						current={{
+							name:
+								(bySource &&
+									ownSuccessionName(
+										bySource.succession,
+										ownLaw,
+										a.article_number ?? articleNumber,
+										bySource.direction
+									)) ||
+								(forms?.kort ?? title(a)),
+							version: (current ?? wordings.at(-1))?.first ?? null,
+							text: a.text,
+							parts: a.parts
+						}}
+						{...otherArticle}
+						{layout}
+						{go}
+					/>
+				{:else if articleCompare.error}
+					<LoadState
+						state={{ status: 'error', error: articleCompare.error }}
+						what="De vergelijking"
+						form="block"
+					/>
+				{/if}
+			{:else if comparing}
 				{#if versionCompare.component}
 					{@const VersionCompare = versionCompare.component}
 					<VersionCompare
