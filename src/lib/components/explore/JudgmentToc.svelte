@@ -9,16 +9,13 @@
 	import { getJudgmentDetail } from '$lib/api/judgments';
 	import { headingCite } from '$lib/text/judgment-heading';
 	import type { GraphNode } from '$lib/graph/types';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { load } from '$lib/util/load.svelte';
 	import { bodyItems, judgmentParticipants, signatureStart } from './readers/judgment-text';
 
 	let { selection }: { selection: GraphNode | null } = $props();
 
 	type Item = { id: string; label: string; kind: 'summary' | 'parties' | 'heading' };
-
-	let ecliLabel = $state<string | null>(null);
-	let items = $state<Item[]>([]);
-	let loading = $state(false);
-	let error = $state<string | null>(null);
 
 	const ecli = $derived(
 		selection?.collection === 'judgments'
@@ -26,37 +23,26 @@
 			: null
 	);
 
-	$effect(() => {
-		const e = ecli;
-		if (!e) return;
-		let stale = false;
-		loading = true;
-		error = null;
-		getJudgmentDetail(e)
-			.then((data) => {
-				if (stale) return;
-				const j = data.judgment;
-				ecliLabel = headingCite(j)?.short ?? j.display_name ?? 'Uitspraak';
-				const paragraphs = j.paragraphs ?? [];
-				// The same condition under which JudgmentReader renders its table.
-				const hasParties = judgmentParticipants(j).length > 0;
+	const toc = load(
+		() => ecli,
+		async (e) => {
+			if (!e) return null;
+			const j = (await getJudgmentDetail(e)).judgment;
+			const paragraphs = j.paragraphs ?? [];
+			// The same condition under which JudgmentReader renders its table.
+			const hasParties = judgmentParticipants(j).length > 0;
 
-				const out: Item[] = [];
-				if (j.summary?.trim()) out.push({ id: 'summary', label: 'Samenvatting', kind: 'summary' });
-				if (hasParties) out.push({ id: 'parties', label: 'Partijen', kind: 'parties' });
-				// The headings as the reader lays the body out, the text left in the kop included.
-				for (const item of bodyItems(paragraphs.slice(0, signatureStart(paragraphs))))
-					if (item.kind === 'heading') out.push({ id: item.id, label: item.text, kind: 'heading' });
-				items = out;
-			})
-			.catch(() => {
-				if (!stale) error = 'De inhoudsopgave kon niet worden geladen.';
-			})
-			.finally(() => {
-				if (!stale) loading = false;
-			});
-		return () => (stale = true);
-	});
+			const items: Item[] = [];
+			if (j.summary?.trim()) items.push({ id: 'summary', label: 'Samenvatting', kind: 'summary' });
+			if (hasParties) items.push({ id: 'parties', label: 'Partijen', kind: 'parties' });
+			// The headings as the reader lays the body out, the text left in the kop included.
+			for (const item of bodyItems(paragraphs.slice(0, signatureStart(paragraphs))))
+				if (item.kind === 'heading') items.push({ id: item.id, label: item.text, kind: 'heading' });
+			return { label: headingCite(j)?.short ?? j.display_name ?? 'Uitspraak', items };
+		},
+		'Inhoudsopgave'
+	);
+	const ecliLabel = $derived(toc.state.status === 'ready' ? (toc.state.data?.label ?? null) : null);
 
 	// A link to the passage, so that it can be copied and opened elsewhere; a plain click
 	// scrolls smoothly and puts the passage in the address without a history entry.
@@ -70,23 +56,25 @@
 
 {#if ecli}
 	<NavKolom label="Inhoud" title={ecliLabel}>
-		{#if loading && items.length === 0}
-			<p class="nav-kolom__note">Laden…</p>
-		{:else if error}
-			<p class="nav-kolom__note">{error}</p>
-		{:else if items.length > 0}
-			<ol class="nav-kolom__lijst">
-				{#each items as it, i (i)}
-					<li>
-						<a class="nav-kolom__rij row--{it.kind}" href="#{it.id}" onclick={(e) => jump(e, it.id)}
-							>{it.label}</a
-						>
-					</li>
-				{/each}
-			</ol>
-		{:else if !loading}
-			<p class="nav-kolom__note">Geen indeling.</p>
-		{/if}
+		<LoadState state={toc.state} what="De inhoudsopgave" retry={toc.retry}>
+			{#snippet children(toc)}
+				{#if toc && toc.items.length > 0}
+					<ol class="nav-kolom__lijst">
+						{#each toc.items as it, i (i)}
+							<li>
+								<a
+									class="nav-kolom__rij row--{it.kind}"
+									href="#{it.id}"
+									onclick={(e) => jump(e, it.id)}>{it.label}</a
+								>
+							</li>
+						{/each}
+					</ol>
+				{:else}
+					<p class="nav-kolom__note">Geen indeling.</p>
+				{/if}
+			{/snippet}
+		</LoadState>
 	</NavKolom>
 {/if}
 

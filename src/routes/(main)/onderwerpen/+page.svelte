@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { twoAtATime } from '$lib/util/two-at-a-time';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import { report } from '$lib/api/errors';
+	import { isAborted, report } from '$lib/api/errors';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
@@ -99,6 +100,8 @@
 		doorzocht: string | null;
 		/** Nothing in the period: the last lines before it. */
 		eerder: boolean;
+		/** Why it failed: slow or broken, for LoadState. */
+		fout?: unknown;
 	};
 	let standen = $state<Record<string, Stand>>({});
 	let uitgeklapt = $state<Record<string, boolean>>({});
@@ -129,7 +132,7 @@
 			let meer = false;
 			let doorzocht: string | null = null;
 			let eerder = false;
-			let gelukt = true;
+			let fout: unknown = null;
 			const vraag = (query: Record<string, unknown>) =>
 				getFeed({ ...vraagVan(o), ...query, facets: false }, { signal });
 			try {
@@ -154,12 +157,14 @@
 				// Searched only from a day on: the rest is a question further back.
 				doorzocht = eerder ? null : doorzochtVanaf(r);
 				meer = !eerder && !doorzocht && !!r.next_cursor;
-			} catch {
-				if (signal.aborted) return;
-				gelukt = false;
+			} catch (e) {
+				if (signal.aborted || isAborted(e)) return;
+				report('Onderwerp', e);
+				fout = e;
 			}
 			standen[k] = {
-				status: !gelukt && !items.size ? 'fout' : 'klaar',
+				status: fout !== null && !items.size ? 'fout' : 'klaar',
+				fout,
 				items: [...items.values()].sort(
 					(a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id)
 				),
@@ -194,6 +199,13 @@
 
 	/** The row opened in place, as on Actueel. */
 	let openId = $state<string | null>(null);
+
+	/** Opnieuw on a topic that failed: its window asked again. */
+	function opnieuw(o: Onderwerp) {
+		const s = standen[vak(o)];
+		if (s) standen[vak(o)] = { ...s, status: 'laden' };
+		laadAlles([o], ac.signal).catch((e) => report('Onderwerp', e));
+	}
 
 	let verderBezig = $state<string | null>(null);
 	async function verderTerug(o: Onderwerp) {
@@ -411,7 +423,13 @@
 				{#if !s || s.status === 'laden'}
 					<p class="status stil">Laden…</p>
 				{:else if s.status === 'fout'}
-					<p class="status status--fout stil">Dit onderwerp kon niet worden geladen.</p>
+					<div class="status">
+						<LoadState
+							state={{ status: 'error', error: s.fout }}
+							what="Dit onderwerp"
+							retry={() => opnieuw(o)}
+						/>
+					</div>
 				{:else if !s.items.length}
 					<p class="status stil">Niets {periodeVan(o)}.</p>
 				{:else}
@@ -612,9 +630,6 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--s-1) var(--s-4);
-	}
-	.status--fout {
-		color: var(--ink-2);
 	}
 
 	@media (max-width: 640px) {

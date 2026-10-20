@@ -49,6 +49,16 @@ describe('LoadState', () => {
 		expect(slow).toContain('De tekstversies konden niet op tijd worden geladen.');
 	});
 
+	it('gives a 500 the API logged its kenmerk, small after the sentence', () => {
+		const id = '1a2b3c4d-0000-4000-8000-000000000000';
+		const logged = html({ status: 'error', error: new ApiError(500, '/api/x', id) });
+		expect(logged).toContain('kenmerk 1a2b3c4d');
+		expect(logged).not.toContain(id);
+		expect(html({ status: 'error', error: new ApiError(504, '/api/x', id) })).not.toContain(
+			'kenmerk'
+		);
+	});
+
 	it('says a slow answer apart from a broken one', () => {
 		const slow = html({ status: 'error', error: new ApiError(504, '/api/x') });
 		expect(slow).toContain('De fractie kon niet op tijd worden geladen.');

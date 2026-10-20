@@ -5,6 +5,7 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import Search from '$lib/search/Search.svelte';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { getFeedSummary } from '$lib/api/feed';
 	import { bronHref } from '$lib/bron/href';
 	import type { Collection } from '$lib/vocabulary';
@@ -97,6 +98,10 @@
 	let lines = $state<TimelineLine[]>([]);
 	/** Actueel's first answer: under way, in, or failed. A phone waits seconds for it. */
 	let feedState = $state<'laden' | 'klaar' | 'fout'>('laden');
+	/** Why Actueel failed: slow or broken, for LoadState. */
+	let feedFout = $state.raw<unknown>(null);
+	/** Opnieuw after a failure: Actueel asked again. */
+	let opnieuw = $state(0);
 	/** The network of the last passed bill: after Actueel is on screen; none on an error. */
 	let lawNetwork = $state<Schets | null>(null);
 	/** Its place stands while it is asked, so Actueel under it does not drop (0.16 of layout
@@ -104,9 +109,12 @@
 	let networkLoading = $state(true);
 
 	$effect(() => {
+		void opnieuw;
 		const ac = new AbortController();
-		loadLines(ac.signal).catch(() => {
+		loadLines(ac.signal).catch((e) => {
 			if (!ac.signal.aborted) {
+				report('Actueel', e);
+				feedFout = e;
 				feedState = 'fout';
 				networkLoading = false;
 			}
@@ -245,7 +253,14 @@
 				</div>
 				<p class="sr-only" role="status">Actueel laden</p>
 			{:else if feedState === 'fout'}
-				<p class="fout">Actueel kon niet worden geladen.</p>
+				<LoadState
+					state={{ status: 'error', error: feedFout }}
+					what="Actueel"
+					retry={() => {
+						feedState = 'laden';
+						opnieuw++;
+					}}
+				/>
 			{/if}
 			<Tijdlijn groepen={groups} datums={false} />
 			<p class="all"><a href="/actueel">Alles in Actueel →</a></p>
@@ -374,9 +389,5 @@
 	}
 	.balk--kort {
 		width: 30%;
-	}
-	.fout {
-		font-size: var(--t-meta);
-		color: var(--ink-2);
 	}
 </style>

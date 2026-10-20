@@ -20,6 +20,8 @@
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { behoort, heeftIets } from './behoort';
 	import { laagVan, type Groep, type Laag } from '$lib/bron/behoort-layer';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { createLoader, type LoadState as State } from '$lib/util/load.svelte';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -83,24 +85,33 @@
 
 	// A group's rows, asked when it is opened; one list open at a time.
 	let open = $state<string | null>(null);
-	let rijen = $state<Record<string, Laag[] | 'laden' | 'fout'>>({});
+	let rijen = $state<Record<string, State<Laag[]>>>({});
+	// The group whose rows are asked: one at a time, a new one aborts the last.
+	let gevraagd: string | null = null;
+	const groep = createLoader(
+		(g: Groep, signal: AbortSignal) =>
+			getBuckets(node.collection, node.key, [g.bak], signal).then((ns) =>
+				ns.slice(0, TOON).map((n) => laagVan(n, g.label))
+			),
+		(s) => {
+			if (gevraagd) rijen = { ...rijen, [gevraagd]: s };
+		},
+		'Behoort bij'
+	);
+	$effect(() => groep.stop);
 	/** The most rows a group lists here; Verbonden has them all. */
 	const TOON = 50;
+	function laad(g: Groep) {
+		gevraagd = g.id;
+		groep.load(g);
+	}
 	function toggle(g: Groep) {
 		if (open === g.id) {
 			open = null;
 			return;
 		}
 		open = g.id;
-		if (rijen[g.id] && rijen[g.id] !== 'fout') return;
-		rijen = { ...rijen, [g.id]: 'laden' };
-		getBuckets(node.collection, node.key, [g.bak])
-			.then((ns) => {
-				rijen = { ...rijen, [g.id]: ns.slice(0, TOON).map((n) => laagVan(n, g.label)) };
-			})
-			.catch(() => {
-				rijen = { ...rijen, [g.id]: 'fout' };
-			});
+		if (rijen[g.id]?.status !== 'ready') laad(g);
 	}
 
 	// A chain of more than two layers shows its first and last, the middle as "…" until it
@@ -211,28 +222,30 @@
 								>{/if}<Caret open={open === g.id} />
 						</button>
 						{#if open === g.id}
-							{@const r = rijen[g.id]}
-							{#if r === 'laden' || r === undefined}
-								<p class="stil">Laden…</p>
-							{:else if r === 'fout'}
-								<p class="stil">Kon niet worden geladen.</p>
-							{:else if r.length === 0}
-								<p class="stil">Niets in deze groep.</p>
-							{:else}
-								<ul class="rijen">
-									{#each r as laag, i (i)}
-										<li>
-											{#if laag.ref}<a href={bronHref(laag.ref)} title={laag.vol}>{laag.naam}</a
-												>{:else}{laag.naam}{/if}
-										</li>
-									{/each}
-								</ul>
-								{#if g.aantal != null && g.aantal > r.length}
-									<p class="stil">
-										{formatCount(r.length)} van {formatCount(g.aantal)}; alle in Verbonden.
-									</p>
-								{/if}
-							{/if}
+							<LoadState
+								state={rijen[g.id] ?? { status: 'loading' }}
+								what="Deze groep"
+								retry={() => laad(g)}
+							>
+								{#snippet empty()}
+									<p class="stil">Niets in deze groep.</p>
+								{/snippet}
+								{#snippet children(r)}
+									<ul class="rijen">
+										{#each r as laag, i (i)}
+											<li>
+												{#if laag.ref}<a href={bronHref(laag.ref)} title={laag.vol}>{laag.naam}</a
+													>{:else}{laag.naam}{/if}
+											</li>
+										{/each}
+									</ul>
+									{#if g.aantal != null && g.aantal > r.length}
+										<p class="stil">
+											{formatCount(r.length)} van {formatCount(g.aantal)}; alle in Verbonden.
+										</p>
+									{/if}
+								{/snippet}
+							</LoadState>
 						{/if}
 					</div>
 				{/each}

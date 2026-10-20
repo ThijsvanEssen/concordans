@@ -4,33 +4,21 @@
 	// #20). The reader stays one step further: Lees verder.
 	import { getDecision } from '$lib/api/records';
 	import RijInhoud from './RijInhoud.svelte';
-	import { stemmingInhoud, type MetInhoud } from './rij-inhoud';
+	import { stemmingInhoud } from './rij-inhoud';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { load } from '$lib/util/load.svelte';
 
 	let { decisionKey }: { decisionKey: string } = $props();
 
-	let item = $state<MetInhoud | null>(null);
-	let mislukt = $state(false);
-	$effect(() => {
-		const key = decisionKey;
-		item = null;
-		mislukt = false;
-		let stale = false;
-		getDecision(key)
-			.then((d) => {
-				if (stale) return;
-				item = stemmingInhoud(key, d.tally);
-			})
-			.catch(() => {
-				if (!stale) mislukt = true;
-			});
-		return () => (stale = true);
-	});
+	const stemming = load(
+		() => decisionKey,
+		async (key) => stemmingInhoud(key, (await getDecision(key)).tally),
+		'Stemming'
+	);
 </script>
 
-{#if item}
-	<RijInhoud {item} />
-{:else if mislukt}
-	<p class="stil">De stemming kon niet worden geladen.</p>
-{:else}
-	<p class="stil">Laden…</p>
-{/if}
+<LoadState state={stemming.state} what="De stemming" retry={stemming.retry}>
+	{#snippet children(item)}
+		<RijInhoud {item} />
+	{/snippet}
+</LoadState>

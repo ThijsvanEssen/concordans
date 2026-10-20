@@ -20,6 +20,7 @@
 	import { load } from '$lib/util/load.svelte';
 	import { getFeed } from '$lib/api/feed';
 	import { isAborted, report } from '$lib/api/errors';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import type { KolomKop } from '$lib/onderwerpen/Kruiswoord.svelte';
 	import OverviewFacets from '$lib/onderwerpen/OverviewFacets.svelte';
@@ -920,7 +921,9 @@
 			/>
 			<div class="inhoud">
 				{#if tellenFout && !feed.length}
-					<p class="status status--fout stil">Het overzicht kon niet worden geladen.</p>
+					<div class="status">
+						<LoadState state={counts.state} what="Het overzicht" retry={counts.retry} />
+					</div>
 				{:else if leegte}
 					<p class="status stil">
 						Geen gebeurtenissen met deze woorden in de titel{van || tot ? ' in deze periode' : ''}.
@@ -988,9 +991,6 @@
 	/* The facets at the left of the figures and the list, as Actueel and Bladeren. */
 	.inhoud {
 		min-width: 0;
-	}
-	.status--fout {
-		color: var(--ink-2);
 	}
 	@media (max-width: 768px) {
 		.regel {

@@ -30,7 +30,7 @@
 	import { reloadForNewVersion } from '$lib/util/reload';
 	import { readStored, writeStored } from '$lib/util/storage';
 	import PanelBoundary from '$lib/components/ui/PanelBoundary.svelte';
-	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import LoadState, { failureText } from '$lib/components/ui/LoadState.svelte';
 	import { Lazy } from '$lib/util/lazy.svelte';
 	import { getNodeCanvas, getNodeHull } from '$lib/api/records';
 	import { kopNode } from '$lib/bron/first-node';
@@ -193,8 +193,10 @@
 				padMissing = `${nameOfPad(p)} staat niet in de gegevens.`;
 				padOnbekend = true;
 			})
-			.catch(() => {
-				if (!ac.signal.aborted) padMissing = `${nameOfPad(p)} kon niet worden geladen.`;
+			.catch((e) => {
+				if (ac.signal.aborted || isAborted(e)) return;
+				report('Verkenner adres', e);
+				padMissing = failureText(nameOfPad(p), e);
 			});
 		return () => ac.abort();
 	});
@@ -683,7 +685,7 @@
 		if (isAborted(err)) return;
 		wachtOp = null;
 		report('Verkenner focus', err);
-		focusError = `'${key}' kon niet worden geladen.`;
+		focusError = failureText(`'${key}'`, err);
 		if (untrack(() => selectedNode)) meldNetwerk(focusError, null);
 	}
 
