@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseNetwerk } from '$lib/selection/netwerk';
 import {
+	bewaarDossier,
 	bewaarItem,
 	citaten,
 	csv,
@@ -468,5 +469,21 @@ describe('the citation of a row: one line (bundels-ux 2b.6)', () => {
 			title: 'r.o. 5.7.1',
 			sub: null
 		});
+	});
+});
+
+describe('a dossier kept', () => {
+	// The API addresses a dossier by its number; its node key (36600_vii) is no number (422).
+	const d = { key: '36600_vii', number: '36600-VII', title: 'Begroting BZK', short_title: null };
+
+	it('is named by its number, as a link names it', () => {
+		const item = bewaarDossier(d);
+		expect(item.id).toBe('dossiers/36600-VII');
+		expect(item.kort).toBe('Kamerstukken 36600 VII');
+		expect(item.groupKey).toBe('dossier:36600-VII');
+	});
+
+	it('goes into the network by its number', () => {
+		expect(netwerkIds([bewaarDossier(d)])).toEqual(['dossiers/36600-VII']);
 	});
 });

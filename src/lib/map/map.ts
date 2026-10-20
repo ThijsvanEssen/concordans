@@ -3,7 +3,7 @@
 // in this browser; a link (share.ts, in the fragment) carries it to someone else, a list of citations to a memo,
 // a CSV to a spreadsheet. It replaces Verbonden's Verzamel.
 import { netwerkParams } from '$lib/selection/netwerk';
-import { dossierLabel } from '$lib/bron/dossier-naam';
+import { dossierLabel, officialNumber } from '$lib/bron/dossier-naam';
 import { bronLabel, parseNodeId } from '$lib/vocabulary';
 import { queryHref } from '$lib/util/address';
 import { buildBronHref } from '$lib/bron/href';
@@ -157,6 +157,24 @@ export function bewaarItem(
 		groupKey,
 		...(pad ? { pad } : {})
 	};
+}
+
+/**
+ * A dossier as the map keeps it: by its number, as a link names it (`dossiers/36600-VII`,
+ * never its node key), in its own group.
+ */
+export function bewaarDossier(d: {
+	number: string;
+	title?: string | null;
+	short_title?: string | null;
+}): MapItem {
+	const nummer = officialNumber(d.number);
+	const naam = d.short_title ?? d.title;
+	return bewaarItem(
+		`dossiers/${d.number}`,
+		{ kort: `Kamerstukken ${nummer}`, voluit: `Kamerstukken ${nummer}${naam ? ` (${naam})` : ''}` },
+		{ groep: dossierLabel(d), dossier: d.number }
+	);
 }
 
 /** The place an item opens: its readable address, else the bron in Samenhang; at its place. */
