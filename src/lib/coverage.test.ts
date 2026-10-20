@@ -52,15 +52,33 @@ describe('the mark of what is missing', () => {
 	});
 
 	it('says why a Kamerstuk has no text, as the API knows it', () => {
-		const without = (state: 'pending' | 'not_in_source' | 'none', as_of: string | null = null) =>
+		type State = 'pending' | 'not_in_source' | 'none' | 'not_fetched';
+		type Reason = 'awaiting_normalize' | 'source_pdf_only';
+		const without = (state: State, as_of: string | null = null, reason: Reason | null = null) =>
 			coverageLine(
-				{ text: { state, as_of }, paragraphs: { state, as_of }, tables: { state, as_of } },
+				{
+					text: { state, as_of, reason },
+					paragraphs: { state, as_of, reason },
+					tables: { state, as_of, reason }
+				},
 				{ noText: true }
 			);
 		expect(without('pending')).toBe('Tekst nog niet opgehaald');
 		expect(without('pending', '2026-10-20T03:00:00Z')).toBe('Tekst nog niet beschikbaar');
 		expect(without('not_in_source')).toBe('Tekst niet in de gegevens, de bron levert geen tekst');
 		expect(without('none', '2026-10-20T03:00:00Z')).toBe('Tekst niet leesbaar in de bron');
+		// Why it is pending, where the API says so (from 0.79.68).
+		expect(without('pending', '2026-10-20T03:00:00Z', 'awaiting_normalize')).toBe(
+			'Tekst opgehaald op 20 oktober 2026, wordt nog verwerkt'
+		);
+		expect(without('pending', '2026-10-20T03:00:00Z', 'source_pdf_only')).toBe(
+			'Tekst nog niet beschikbaar, de bron heeft alleen de pdf'
+		);
+		// A paper of the Eerste Kamer, a publication: the source has it, the dataset not.
+		expect(without('not_fetched')).toBe('Tekst niet opgenomen, staat bij de bron');
+		expect(coverageLine({ text: { state: 'not_fetched' } }, { noText: true })).toBe(
+			'Tekst niet opgenomen, staat bij de bron'
+		);
 		// With its text, what of it is not read yet; paragraphs or tables it has none of, nothing.
 		expect(
 			coverageLine({
@@ -143,7 +161,7 @@ describe('the mark of what is missing', () => {
 	});
 
 	it('says what a search reads, in the order the API names it', () => {
-		const none = { state: 'none' as const, as_of: null, missing: null };
+		const none = { state: 'none' as const, as_of: null, missing: null, reason: null };
 		expect(searchedLine({ fields: ['title', 'number'], completeness: { text: none } })).toBe(
 			'Gezocht in titels en nummers, niet in de tekst'
 		);

@@ -165,7 +165,8 @@
 		officialUrl ? { label: sourceName(officialUrl) ?? 'Officiële tekst', href: officialUrl } : null
 	);
 	// What the dataset lacks of the law, said once in the head (Dekking): an act of the EU has
-	// its text as adopted only; a regeling of the BWB without articles has no text read. A
+	// its text as adopted only; a regeling of the BWB without articles has no text read, and a
+	// publication says its text is at its source (`completeness.text` not_fetched). A
 	// treaty of the BWB counts 0 articles but lists them, so the list decides.
 	const textNotRead = $derived(
 		!peildatum && lawDetail?.article_count === 0 && status === 'ready' && total === 0
@@ -322,7 +323,7 @@
 				<span>{headLine}</span>
 				{#if textNotRead}
 					<p class="whole-count">
-						<Coverage noText bron={officialSource} />
+						<Coverage noText coverage={lawDetail?.completeness} bron={officialSource} />
 					</p>
 				{:else if isEu}
 					<p class="whole-count">

@@ -61,13 +61,22 @@ function sourceLine(s: PartState | undefined): string | null {
 }
 
 /**
- * Of a text: why it is not there, as the API says it of a Kamerstuk; where a reader shows no
- * text and the API says nothing (`noText`), that the dataset lacks it. Null where it is there.
+ * Of a text: why it is not there, as the API says it of a Kamerstuk (with its `reason` where
+ * one state has two causes; an API without it gets the plainer line), of a paper of the Eerste
+ * Kamer and of a publication; where a reader shows no text and the API says nothing
+ * (`noText`), that the dataset lacks it. Null where it is there.
  */
 function textLine(t: PartState | undefined, noText: boolean): string | null {
+	if (t?.state === 'pending' && t.reason === 'awaiting_normalize')
+		return t.as_of
+			? `tekst opgehaald op ${day(t.as_of)}, wordt nog verwerkt`
+			: 'tekst opgehaald, wordt nog verwerkt';
+	if (t?.state === 'pending' && t.reason === 'source_pdf_only')
+		return 'tekst nog niet beschikbaar, de bron heeft alleen de pdf';
 	if (t?.state === 'pending')
 		return t.as_of ? 'tekst nog niet beschikbaar' : 'tekst nog niet opgehaald';
 	if (t?.state === 'not_in_source') return `tekst ${NOT_IN_DATA}, de bron levert geen tekst`;
+	if (t?.state === 'not_fetched') return 'tekst niet opgenomen, staat bij de bron';
 	if (t?.state === 'none') return 'tekst niet leesbaar in de bron';
 	return noText ? `tekst ${NOT_IN_DATA}` : null;
 }
@@ -85,7 +94,7 @@ function referencesLine(r: PartState | undefined): string | null {
 type CoverageOptions = { of?: string; noText?: boolean };
 
 /**
- * The line, in words: `Tekst nog niet opgehaald`, `12 verwijzingen niet gelegd, begrippen nog
+ * The line, in words: `Tekst nog niet opgehaald`, `Tekst niet opgenomen, staat bij de bron`, `12 verwijzingen niet gelegd, begrippen nog
  * niet verwerkt`, `Geen einde vastgelegd, laatste activiteit 3 maart 2019`, `HUDOC gepauzeerd,
  * …`. Null where nothing is known to lack.
  */

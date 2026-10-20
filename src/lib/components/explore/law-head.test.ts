@@ -49,6 +49,9 @@ describe('the head of a law', () => {
 	it('names the site of the official text', () => {
 		expect(sourceName(eu.official_url)).toBe('eur-lex.europa.eu');
 		expect(sourceName('https://wetten.overheid.nl/BWBR0005537')).toBe('wetten.overheid.nl');
+		expect(sourceName('https://zoek.officielebekendmakingen.nl/stb-2020-100.html')).toBe(
+			'officielebekendmakingen.nl'
+		);
 		expect(sourceName(null)).toBeNull();
 	});
 });

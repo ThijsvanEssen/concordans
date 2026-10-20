@@ -1266,7 +1266,7 @@ export interface paths {
         };
         /**
          * Document text
-         * @description One document with its text, read from the XML of the paper, its `sections` (the headings of the paper with their offsets into `text`), its `paragraphs` (each line of `text` with a lasting id and its alinea number), its `tables` (each a span of `text`, a row a line and its cells separated by a tab), the dossiers it belongs to and, for an explanatory document, the articles and laws it explains, and the votes taken on it (`decisions`, with the vote of every faction). `text` is null when `normalize tk-content` has not reached it.
+         * @description One document with its text, read from the XML of the paper, its `sections` (the headings of the paper with their offsets into `text`), its `paragraphs` (each line of `text` with a lasting id and its alinea number), its `tables` (each a span of `text`, a row a line and its cells separated by a tab), the dossiers it belongs to and, for an explanatory document, the articles and laws it explains, and the votes taken on it (`decisions`, with the vote of every faction). `text` is null when `normalize tk-content` has not reached it; `completeness.text` says why (pending, not in the source, not fetched, or read and empty).
          */
         get: operations["get_document_text_api_documents__key__get"];
         put?: never;
@@ -2062,7 +2062,7 @@ export interface components {
             closed_on: string | null;
             /**
              * Completeness
-             * @description `outcome`: what the graph knows of its end. `done` as of the day it closed; `pending` as of its last activity for an open bill or treaty, which may still be before a chamber or may have been withdrawn (the Tweede Kamer records no withdrawal), and without a day before `semantic tk-dossier-outcomes` reached it; `not_in_source` for an open dossier of another kind. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing}` (docs/api.md "Completeness").
+             * @description `outcome`: what the graph knows of its end. `done` as of the day it closed; `pending` as of its last activity for an open bill or treaty, which may still be before a chamber or may have been withdrawn (the Tweede Kamer records no withdrawal), and without a day before `semantic tk-dossier-outcomes` reached it; `not_in_source` for an open dossier of another kind. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing, reason}` (docs/api.md "Completeness").
              */
             completeness: {
                 [key: string]: components["schemas"]["PartStateDTO"];
@@ -2750,7 +2750,7 @@ export interface components {
             instrument: components["schemas"]["InstrumentSummaryDTO"] | null;
             /**
              * Completeness
-             * @description `references`: the article references of its text (`partial`: `missing` recognized and not linked: a law or an article not in the graph); of an article of a law of the Staatsblad the BWB does not hold (yet) also `definitions` of its law. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing}` (docs/api.md "Completeness"). Null for an article no step read the references of.
+             * @description `references`: the article references of its text (`partial`: `missing` recognized and not linked: a law or an article not in the graph); of an article of a law of the Staatsblad the BWB does not hold (yet) also `definitions` of its law. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing, reason}` (docs/api.md "Completeness"). Null for an article no step read the references of.
              */
             completeness: {
                 [key: string]: components["schemas"]["PartStateDTO"];
@@ -4638,7 +4638,7 @@ export interface components {
          * @description How far a part is complete.
          * @enum {string}
          */
-        Coverage: "done" | "partial" | "none" | "pending" | "paused" | "unavailable" | "not_in_source";
+        Coverage: "done" | "partial" | "none" | "pending" | "paused" | "unavailable" | "not_in_source" | "not_fetched";
         /**
          * CoverageCourtDTO
          * @description The judgments of one court in the graph.
@@ -4713,7 +4713,7 @@ export interface components {
             newest: string | null;
             /**
              * Completeness
-             * @description Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing}` (docs/api.md "Completeness"). Of a source its `source`: `done`, `paused` (off: no scheduled run asks it anything), `unavailable` (it refused the last run) or `pending` (nothing fetched yet), with `as_of`.
+             * @description Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing, reason}` (docs/api.md "Completeness"). Of a source its `source`: `done`, `paused` (off: no scheduled run asks it anything), `unavailable` (it refused the last run) or `pending` (nothing fetched yet), with `as_of`.
              */
             completeness: {
                 [key: string]: components["schemas"]["PartStateDTO"];
@@ -5782,7 +5782,7 @@ export interface components {
             decisions: components["schemas"]["DecisionDTO"][];
             /**
              * Completeness
-             * @description `references`: the article and law citations of its text (`partial`: `missing` recognized and not linked: a law or an article not in the graph). Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing}` (docs/api.md "Completeness"). Null for a paper `semantic tk` has not read.
+             * @description Of a paper of the Tweede Kamer `text`, `paragraphs` and `tables`: `done`, `pending` (not fetched or not read yet; `as_of` when its XML was fetched or last asked for, `reason` `awaiting_normalize` or `source_pdf_only`), `not_in_source` (no Kamerstuk, or the repository has no XML of it) or `none` (its XML read, and no text in it); `paragraphs` and `tables` `none` when its text has none. Of a paper of the Eerste Kamer all three `not_fetched`. `references`: the article and law citations of its text (`partial`: `missing` recognized and not linked: a law or an article not in the graph). Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing, reason}` (docs/api.md "Completeness"). Null when no step derived any part.
              */
             completeness: {
                 [key: string]: components["schemas"]["PartStateDTO"];
@@ -5978,7 +5978,7 @@ export interface components {
             closed_on: string | null;
             /**
              * Completeness
-             * @description `outcome`: what the graph knows of its end. `done` as of the day it closed; `pending` as of its last activity for an open bill or treaty, which may still be before a chamber or may have been withdrawn (the Tweede Kamer records no withdrawal), and without a day before `semantic tk-dossier-outcomes` reached it; `not_in_source` for an open dossier of another kind. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing}` (docs/api.md "Completeness").
+             * @description `outcome`: what the graph knows of its end. `done` as of the day it closed; `pending` as of its last activity for an open bill or treaty, which may still be before a chamber or may have been withdrawn (the Tweede Kamer records no withdrawal), and without a day before `semantic tk-dossier-outcomes` reached it; `not_in_source` for an open dossier of another kind. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing, reason}` (docs/api.md "Completeness").
              */
             completeness: {
                 [key: string]: components["schemas"]["PartStateDTO"];
@@ -6611,7 +6611,7 @@ export interface components {
             closed_on: string | null;
             /**
              * Completeness
-             * @description `outcome`: what the graph knows of its end. `done` as of the day it closed; `pending` as of its last activity for an open bill or treaty, which may still be before a chamber or may have been withdrawn (the Tweede Kamer records no withdrawal), and without a day before `semantic tk-dossier-outcomes` reached it; `not_in_source` for an open dossier of another kind. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing}` (docs/api.md "Completeness").
+             * @description `outcome`: what the graph knows of its end. `done` as of the day it closed; `pending` as of its last activity for an open bill or treaty, which may still be before a chamber or may have been withdrawn (the Tweede Kamer records no withdrawal), and without a day before `semantic tk-dossier-outcomes` reached it; `not_in_source` for an open dossier of another kind. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing, reason}` (docs/api.md "Completeness").
              */
             completeness: {
                 [key: string]: components["schemas"]["PartStateDTO"];
@@ -8926,7 +8926,7 @@ export interface components {
             treaty: components["schemas"]["TreatyRegisterDTO"] | null;
             /**
              * Completeness
-             * @description Of a law of the Staatsblad the BWB does not hold (yet): `references` of all its articles (`partial`: `missing` not linked) and `definitions`. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing}` (docs/api.md "Completeness"). Null for any other instrument.
+             * @description Of a law of the Staatsblad the BWB does not hold (yet): `references` of all its articles (`partial`: `missing` not linked) and `definitions`. Of a publication the BWB names (`kind` `publicatie`): `text` `not_fetched` (its text is on officielebekendmakingen.nl; what it changes is read from the BWB). Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing, reason}` (docs/api.md "Completeness"). Null for any other instrument.
              */
             completeness: {
                 [key: string]: components["schemas"]["PartStateDTO"];
@@ -10152,7 +10152,7 @@ export interface components {
             series: components["schemas"]["JudgmentSummaryDTO"][];
             /**
              * Completeness
-             * @description `references`: the article citations of its text (`partial`: `missing` recognized and not linked: a law or an article not in the graph, as `judgment.unresolved_citations` lists the first). Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing}` (docs/api.md "Completeness"). Null for a judgment `semantic rechtspraak` has not read.
+             * @description `references`: the article citations of its text (`partial`: `missing` recognized and not linked: a law or an article not in the graph, as `judgment.unresolved_citations` lists the first). Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing, reason}` (docs/api.md "Completeness"). Null for a judgment `semantic rechtspraak` has not read.
              */
             completeness: {
                 [key: string]: components["schemas"]["PartStateDTO"];
@@ -11461,11 +11461,11 @@ export interface components {
          * @description How far one part is complete.
          */
         PartStateDTO: {
-            /** @description `done` (the step ran and holds all it found), `partial` (it left some: `missing`), `none` (it ran and found nothing), `pending` (not reached yet), `paused` (the source or the step is off), `unavailable` (the source refused the last run), `not_in_source` (the source does not give it). */
+            /** @description `done` (the step ran and holds all it found), `partial` (it left some: `missing`), `none` (it ran and found nothing), `pending` (not reached yet), `paused` (the source or the step is off), `unavailable` (the source refused the last run), `not_in_source` (the source does not give it), `not_fetched` (the source gives it, the graph does not take it in). */
             state: components["schemas"]["Coverage"];
             /**
              * As Of
-             * @description Of a source: when its retrieves last all ended well (UTC, ISO 8601), else when its newest record was fetched. Of the `outcome` of a dossier: the day it closed (`done`), or of its last activity (`pending`).
+             * @description Of a source: when its retrieves last all ended well (UTC, ISO 8601), else when its newest record was fetched. Of the `outcome` of a dossier: the day it closed (`done`), or of its last activity (`pending`). Of the `text` of a paper: when its XML was fetched, or last asked for when the repository had none.
              */
             as_of: string | null;
             /**
@@ -11473,6 +11473,8 @@ export interface components {
              * @description With `partial`: how many are missing.
              */
             missing: number | null;
+            /** @description Why, where one state has more than one cause. Of the `text` of a Kamerstuk that is `pending` as of a day: `awaiting_normalize` (its XML is fetched, not read yet), `source_pdf_only` (the source has its PDF only; its XML follows). */
+            reason: components["schemas"]["Reason"] | null;
         };
         /**
          * PartyColorsResponse
@@ -11799,6 +11801,13 @@ export interface components {
             /** Dossiers */
             dossiers: components["schemas"]["DossierRefDTO"][];
         };
+        /**
+         * Reason
+         * @description Why a part is in its state, where one state has more than one cause: of the ``text``
+         *     of a Kamerstuk that is ``pending`` as of a day (``core.document_completeness``).
+         * @enum {string}
+         */
+        Reason: "awaiting_normalize" | "source_pdf_only";
         /**
          * ReferenceTargetDTO
          * @description The node a reference names, and whether the data holds it.

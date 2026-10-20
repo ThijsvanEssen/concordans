@@ -67,11 +67,14 @@ export function lawFullTitle(d: Detail | null, name: string | null): string | nu
 	return full && full !== name ? full : null;
 }
 
-/** The site of the official text, as the link says it: wetten.overheid.nl, eur-lex.europa.eu. */
+/**
+ * The site of the official text, as the link says it: wetten.overheid.nl, eur-lex.europa.eu,
+ * officielebekendmakingen.nl (its search, zoek., is the address, not the name).
+ */
 export function sourceName(url: string | null | undefined): string | null {
 	if (!url) return null;
 	try {
-		return new URL(url).hostname.replace(/^www\./, '');
+		return new URL(url).hostname.replace(/^(www|zoek)\./, '');
 	} catch {
 		return null;
 	}

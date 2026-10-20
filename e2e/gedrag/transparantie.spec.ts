@@ -3,8 +3,9 @@
 // text is not read in points to wetten.overheid.nl; a bron without verbindingen says so; a
 // law of the Staatsblad says what of it is not read yet; a group of search results says what
 // its search reads; a source the runs no longer fetch says so on Bronnen and in its list; a
-// text says how many of its references are not linked, a Kamerstuk without text why, and an
-// open bill that no end is recorded.
+// text says how many of its references are not linked, a Kamerstuk without text why, a paper
+// of the Eerste Kamer and a publication that their text is at the source, and an open bill
+// that no end is recorded.
 import { expect, test } from '../support/test';
 import { patchApi } from '../support/api';
 
@@ -105,12 +106,23 @@ test('the list of the EHRM says its source is paused', async ({ page }) => {
 	await expect(page.getByText('HUDOC gepauzeerd, bijgewerkt tot 8 oktober 2026')).toBeVisible();
 });
 
-// The parts the API gives from 0.79.68 (#840, #842, #846), patched in until it is live.
+// The parts the API gives from 0.79.68 (#840, #842, #846, #849), patched in until it is live.
 const DOCUMENT = /^\/api\/documents\/be1567ec_1ee5_42ce_a886_13d46d19c6b2$/;
-const part = (state: string, as_of: string | null = null, missing: number | null = null) => ({
-	state,
-	as_of,
-	missing
+const part = (
+	state: string,
+	as_of: string | null = null,
+	missing: number | null = null,
+	reason: string | null = null
+) => ({ state, as_of, missing, reason });
+/** A Kamerstuk without its text, its three parts in `state`. */
+const withoutText = (text: ReturnType<typeof part>) => (body: Record<string, unknown>) => ({
+	...body,
+	text: null,
+	sections: [],
+	paragraphs: [],
+	tables: [],
+	footnotes: [],
+	completeness: { text, paragraphs: text, tables: text }
 });
 
 test('an article, a judgment and a Kamerstuk say how many references are not linked', async ({
@@ -132,20 +144,61 @@ test('an article, a judgment and a Kamerstuk say how many references are not lin
 });
 
 test('a Kamerstuk without its text says why, and points to the original file', async ({ page }) => {
-	const pending = part('pending', '2026-10-20T03:12:00Z');
-	await patchApi(page, DOCUMENT, (body) => ({
-		...body,
-		text: null,
-		sections: [],
-		paragraphs: [],
-		tables: [],
-		footnotes: [],
-		completeness: { text: pending, paragraphs: pending, tables: pending }
-	}));
+	await patchApi(page, DOCUMENT, withoutText(part('pending', '2026-10-20T03:12:00Z')));
 	await page.goto('/kamerstukken/32467/14?lezen=1');
 	await expect(page.getByText('Tekst nog niet beschikbaar', { exact: true })).toBeVisible();
 	await expect(page.getByRole('link', { name: 'Origineel bestand ↗' })).toBeVisible();
 	await expect(page.getByText(/alinea's/i)).toHaveCount(0);
+});
+
+test('a Kamerstuk fetched and not read yet says when it was fetched', async ({ page }) => {
+	const fetched = part('pending', '2026-10-20T03:12:00Z', null, 'awaiting_normalize');
+	await patchApi(page, DOCUMENT, withoutText(fetched));
+	await page.goto('/kamerstukken/32467/14?lezen=1');
+	await expect(
+		page.getByText('Tekst opgehaald op 20 oktober 2026, wordt nog verwerkt', { exact: true })
+	).toBeVisible();
+});
+
+test('a new Kamerstuk with its PDF only says so, and points to the file', async ({ page }) => {
+	await patchApi(
+		page,
+		DOCUMENT,
+		withoutText(part('pending', '2026-10-20T03:12:00Z', null, 'source_pdf_only'))
+	);
+	await page.goto('/kamerstukken/32467/14?lezen=1');
+	await expect(
+		page.getByText('Tekst nog niet beschikbaar, de bron heeft alleen de pdf', { exact: true })
+	).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Origineel bestand ↗' })).toBeVisible();
+});
+
+test('a paper of the Eerste Kamer says its text is at the source, with a link', async ({
+	page
+}) => {
+	await patchApi(page, /^\/api\/documents\/ek_kst_1264285$/, withoutText(part('not_fetched')));
+	await page.goto('/kamerstukken/36600-VIII/AB?lezen=1');
+	const note = page.getByRole('paragraph').filter({ hasText: 'Tekst niet opgenomen' });
+	await expect(note).toHaveText(
+		'Tekst niet opgenomen, staat bij de bron, officielebekendmakingen.nl ↗'
+	);
+	await expect(note.getByRole('link')).toHaveAttribute(
+		'href',
+		'https://zoek.officielebekendmakingen.nl/kst-1264285'
+	);
+});
+
+test('a publication says its text is at the source, with a link', async ({ page }) => {
+	await patchApi(page, /^\/api\/instruments\/stb_2026_94$/i, (body) => ({
+		...body,
+		completeness: { text: part('not_fetched') }
+	}));
+	await page.goto('/stb/2026/94?lezen=1');
+	await expect(page.getByText(/^Tekst niet opgenomen, staat bij de bron, /)).toBeVisible();
+	await expect(page.getByRole('link', { name: 'officielebekendmakingen.nl ↗' })).toHaveAttribute(
+		'href',
+		/zoek\.officielebekendmakingen\.nl\/stb-2026-94/
+	);
 });
 
 test('an open bill says no end is recorded, with its last activity', async ({ page }) => {

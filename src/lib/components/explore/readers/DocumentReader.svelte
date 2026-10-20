@@ -48,6 +48,7 @@
 	import { fromDocument } from '$lib/bron/submitters';
 	import ReaderHead from './ReaderHead.svelte';
 	import DocumentAttachments from './DocumentAttachments.svelte';
+	import { documentSource } from './document-source';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import { getNodeFirst } from '$lib/api/records';
@@ -337,7 +338,7 @@
 							)
 						: [],
 					naam,
-					bron: doc.tk_url ? { label: 'tweedekamer.nl', href: doc.tk_url } : null,
+					bron: documentSource(doc),
 					tekst: doc.text ? () => doc.text ?? '' : undefined
 				}}
 			>
@@ -516,7 +517,14 @@
 					<Voetnoten noten={nootLijst(voetnoten.los)} marge={false} kop="Voetnoten" />
 				</div>
 			{:else}
-				<p class="empty"><Coverage noText coverage={doc.completeness} /></p>
+				<!-- A text the source has and the dataset does not take in: the source, at hand. -->
+				<p class="empty">
+					<Coverage
+						noText
+						coverage={doc.completeness}
+						bron={doc.completeness?.text?.state === 'not_fetched' ? documentSource(doc) : null}
+					/>
+				</p>
 			{/if}
 
 			{#if doc.file_url}
