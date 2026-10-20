@@ -2,10 +2,9 @@
 // of it (the rows, the Beste treffer, the states) with what Enter opens. Search.svelte draws
 // it; `connect` asks again whenever the query, the period or the scope changes.
 //
-// Each lane on its own (lanes.ts): its group waits or fails alone, and "Probeer opnieuw" asks
+// Each lane on its own (lanes.ts): its group waits or fails alone, and Opnieuw asks
 // it again without the rest. The first lane in scope also says what the query cites.
 import { untrack } from 'svelte';
-import { isTimeout } from '$lib/api/client';
 import { search } from '$lib/api/search';
 import type { Schema } from '$lib/api/types';
 import type { BronRef } from '$lib/bron/href';
@@ -34,13 +33,14 @@ type Hit = Schema<'SearchResultItem'>;
 type Hits = Partial<Record<SearchKind, Hit[]>>;
 type LaneId = Lane['id'];
 
-/** `slow`: it gave up on its own time (`slowApi`, 30 s), not on an error of the API. */
-type LaneStatus = 'done' | 'loading' | 'failed' | 'slow';
+type LaneStatus = 'done' | 'loading' | 'failed';
 
 type LaneState = {
 	/** What it last answered: it stays while the next query runs. */
 	hits: Hits;
 	status: LaneStatus;
+	/** Why it failed: slow or broken, for failureText. */
+	error?: unknown;
 	/** The kinds whose live answer to `term` left more out (`partial`). */
 	partial: { term: string; kinds: SearchKind[] };
 };
@@ -63,7 +63,7 @@ const LANE_OF = Object.fromEntries(
 
 const idle = (): LaneState => ({ hits: {}, status: 'done', partial: { term: '', kinds: [] } });
 
-const failed = (status: LaneStatus) => status === 'failed' || status === 'slow';
+const failed = (status: LaneStatus) => status === 'failed';
 
 /** A lane's request under way, and the one waiting for it. */
 type Run = {
@@ -187,16 +187,19 @@ export class SearchSession {
 				(h.display_name ?? '').toLowerCase().includes(this.q.toLowerCase())
 			)
 	);
-	/** The lanes that failed on their own: each says so in its group, the others stand. */
-	readonly failedLanes = $derived(
-		this.inScope.filter((l) => l.failsAlone && failed(this.lanes[l.id].status))
-	);
 	/** The search as a whole failed: its fast lane, or a citation that could not be opened. */
-	readonly failure = $derived.by((): { slow: boolean } | null => {
+	readonly failure = $derived.by((): { error: unknown } | null => {
 		const lane = this.inScope.find((l) => !l.failsAlone);
-		const status = lane ? this.lanes[lane.id].status : 'done';
-		return failed(status) ? { slow: status === 'slow' } : null;
+		const state = lane ? this.lanes[lane.id] : null;
+		return state && failed(state.status) ? { error: state.error } : null;
 	});
+	/**
+	 * The lanes that failed on their own: each says so in its group, the others stand. Where
+	 * the search as a whole failed, its one line says it for all (retrySearch).
+	 */
+	readonly failedLanes = $derived(
+		this.failure ? [] : this.inScope.filter((l) => l.failsAlone && failed(this.lanes[l.id].status))
+	);
 	/** Kinds whose live answer left more out for this query, not yet asked in full. */
 	readonly moreKinds = $derived(
 		new Set(
@@ -298,14 +301,15 @@ export class SearchSession {
 		for (const lane of LANES) this.#schedule(lane);
 	}
 
-	/** "Probeer opnieuw" in a lane's group: that lane is asked again, the rest not. */
+	/** Opnieuw in a lane's group: that lane is asked again, the rest not. */
 	retry(id: LaneId) {
 		this.#schedule(LANES.find((l) => l.id === id)!);
 	}
 
-	/** "Probeer opnieuw" under the search: the fast kinds and what the query cites. */
+	/** Opnieuw under the search: the fast kinds, what the query cites, and every lane that failed. */
 	retrySearch() {
-		for (const lane of LANES) if (!lane.failsAlone) this.#schedule(lane);
+		for (const lane of LANES)
+			if (!lane.failsAlone || failed(this.lanes[lane.id].status)) this.#schedule(lane);
 	}
 
 	/** "Meer …": the whole query again, in full. */
@@ -440,7 +444,7 @@ export class SearchSession {
 			})
 			.catch((e) => {
 				if (!current()) return;
-				this.lanes[lane.id] = { ...idle(), status: isTimeout(e) ? 'slow' : 'failed' };
+				this.lanes[lane.id] = { ...idle(), status: 'failed', error: e };
 				settled();
 				if (query.resolve) this.answered = term;
 			})

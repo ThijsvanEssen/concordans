@@ -17,12 +17,12 @@
 	import { bronLabel, parseNodeId } from '$lib/vocabulary';
 	import {
 		groepen,
+		groepAnker,
 		itemHref,
 		isExternal,
 		itemKey,
-		judgmentRows,
+		placeRows,
 		rowTitle,
-		JUDGMENTS_GROUP,
 		SOURCE_KINDS,
 		type GroepNotities,
 		type Map,
@@ -69,7 +69,8 @@
 </script>
 
 <!-- A row: the kind in the lead, the citation as its title; `place` an r.o. under its
-     judgment, `kept` false for a judgment that only heads its r.o.'s. -->
+     judgment or an alinea under its Kamerstuk, `kept` false for a bron that only heads its
+     places. -->
 {#snippet row(i: MapItem, place = false, kept = true)}
 	{@const key = itemKey(i)}
 	{@const collection = parseNodeId(i.id)?.collection}
@@ -173,7 +174,7 @@
 		{@const lawOpen = !!law && open.has(`law:${g.sleutel}`)}
 		{@const groupLines = fresh?.group(g.sleutel) ?? []}
 		{@const linesOpen = groupLines.length > 0 && open.has(`new:${g.sleutel}`)}
-		<div class="groep-kop">
+		<div class="groep-kop" id={groepAnker(g.sleutel)}>
 			<h3 class="groep">
 				{g.groep}{#if groupLines.length}<button
 						type="button"
@@ -234,20 +235,18 @@
 		/>
 	{/if}
 	<ul class="rijen">
-		{#if g.sleutel === JUDGMENTS_GROUP}
-			{#each judgmentRows(g.items) as r (itemKey(r.head))}
-				{@render row(r.head, false, r.kept)}
-				{#each r.places as p (itemKey(p))}{@render row(p, true)}{/each}
-			{/each}
-		{:else}
-			{#each g.items as i (itemKey(i))}{@render row(i)}{/each}
-		{/if}
+		{#each placeRows(g.items) as r (itemKey(r.head))}
+			{@render row(r.head, false, r.kept)}
+			{#each r.places as p (itemKey(p))}{@render row(p, true)}{/each}
+		{/each}
 	</ul>
 {/each}
 
 <style>
 	/* A law, dossier or Rechtspraak over its rows, as a day over Actueel's; its ⋯ at the right. */
 	.groep-kop {
+		/* A jump from the column of groups lands under the sticky bar. */
+		scroll-margin-top: calc(var(--topbar-h) + var(--s-4));
 		display: flex;
 		align-items: center;
 		justify-content: space-between;

@@ -8,7 +8,7 @@
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { formatCount } from '$lib/text/getal';
 	import { dagMaand, vandaag } from '$lib/text/datum';
-	import { groepen, judgmentRows, rowTitle, JUDGMENTS_GROUP, type Map, type MapItem } from './map';
+	import { groepen, placeRows, rowTitle, type Map, type MapItem } from './map';
 	import { bundlePageHref } from './page';
 
 	let {
@@ -28,16 +28,15 @@
 	} = $props();
 
 	const href = $derived(bundle.id && !mark ? bundlePageHref({ id: bundle.id }) : undefined);
-	/** A group's citations on one line; a judgment once, its r.o.'s after it. */
-	const citations = (key: string, items: MapItem[]) =>
-		(key === JUDGMENTS_GROUP
-			? judgmentRows(items).map(
-					(r) =>
-						rowTitle(r.head).title +
-						(r.places.length ? ` (${r.places.map((p) => rowTitle(p, true).title).join(', ')})` : '')
-				)
-			: items.map((i) => rowTitle(i).title)
-		).join(', ');
+	/** A group's citations on one line; a judgment or a Kamerstuk once, its places after it. */
+	const citations = (items: MapItem[]) =>
+		placeRows(items)
+			.map(
+				(r) =>
+					rowTitle(r.head).title +
+					(r.places.length ? ` (${r.places.map((p) => rowTitle(p, true).title).join(', ')})` : '')
+			)
+			.join(', ');
 	const question = $derived(bundle.notitie?.split('\n')[0]?.trim() || null);
 </script>
 
@@ -58,7 +57,7 @@
 				<dl>
 					{#each groepen(bundle.items) as g (g.sleutel)}
 						<dt>{g.groep}</dt>
-						<dd>{citations(g.sleutel, g.items)}</dd>
+						<dd>{citations(g.items)}</dd>
 					{/each}
 				</dl>
 			{:else}

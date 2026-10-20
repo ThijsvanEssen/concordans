@@ -46,9 +46,10 @@ Two things at one level do not differ in size. In a timeline (Actueel, Onderwerp
 
 Two kinds of page, no third.
 
-- **Full width**: lists, overviews, timelines and text: the home page, Bladeren and each of its categories, Actueel, Onderwerpen and its Overzicht, the API reference, /docs, /over, /bronnen, /voorwaarden, /privacy.
+- **Full width**: lists, overviews, timelines and text: the home page, Bladeren and each of its categories, Actueel, Onderwerpen and its Overzicht, Bundels and a bundel's page, the API reference, /docs, /over, /bronnen, /voorwaarden, /privacy.
   - Every one sits in the frame of Bladeren: `.blad` (at most 1440 px, gutter `--s-6`; on a phone `--s-4`), with `.blad__indeling` for a facet column of 240 px, a gap of 40 px and the rest.
   - The facet column is `.blad__facetten`: sticky, a quiet scroll bar clear of the counts, one right edge for controls and counts.
+  - The head is `.blad__kop` with the title and, at its right, the page's actions (`.blad__acties`). A page without facets lists in the list column all the same (`.blad__lijst`), on the edge of the other lists: Bundels and a bundel's page. Where the left column holds the groups of the page, a way to each, it is one component (`Inhoudsopgave`): Bronnen, Gevolgd and a bundel's page (its groups per wet of dossier; a jump on a shared bundel keeps its address). Not on a phone, not on paper.
   - A text page keeps a reading width of 720 px inside the frame, on the same left edge (`.blad--tekst`).
   - The classes live in `src/lib/styles/frame.css`; no page sets a width of its own. The footer stands on the same edge.
 - **Panels**: the Verkenner and its readers beside Netwerk and Verbonden, each column its own measure (`--reader-*`). Unchanged.

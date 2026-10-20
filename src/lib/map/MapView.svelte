@@ -22,6 +22,7 @@
 		citaten,
 		csv,
 		groepen,
+		groepAnker,
 		itemAddress,
 		itemKey,
 		netwerkHref,
@@ -37,6 +38,7 @@
 	import AddSource from './AddSource.svelte';
 	import MapGroups from './MapGroups.svelte';
 	import NewMark from '$lib/components/ui/NewMark.svelte';
+	import Inhoudsopgave from '$lib/components/ui/Inhoudsopgave.svelte';
 	import { Fresh } from './fresh.svelte';
 
 	let {
@@ -62,6 +64,8 @@
 			groepNotities: shared?.groepNotities ?? {}
 		}
 	);
+	/** The groups of what the bundel holds, as MapGroups heads them. */
+	const groups = $derived(groepen(b.items));
 	const copier = createCopier();
 	const anchor = $derived(m ? `map-${m.id}` : 'gedeeld');
 	const fileBase = $derived(safeFileName(b.naam) || 'Bundel');
@@ -194,7 +198,7 @@
 {/snippet}
 
 {#snippet actions()}
-	<span class="acties">
+	<span class="acties blad__acties">
 		{#if b.items.length}
 			<TekstLink href={netwerkHref(b.items) ?? undefined}>Netwerk</TekstLink>
 		{/if}
@@ -203,7 +207,7 @@
 				>{copier.label('link', 'Kopieer link')}</TekstLink
 			>
 		{:else}
-			<button type="button" class="btn" onclick={() => onShared?.('map')}>Bewaar</button>
+			<button type="button" class="btn is-groot" onclick={() => onShared?.('map')}>Bewaar</button>
 		{/if}
 		<!-- An empty Losse markeringen has nothing to take along, to empty or to delete. -->
 		{#if b.items.length || !m || !kaart.isDefault(m)}
@@ -390,7 +394,7 @@
 		{#if adding}
 			<AddSource
 				bundle={own.id}
-				groups={groepen(own.items).map((g) => ({ key: g.sleutel, name: g.groep }))}
+				groups={groups.map((g) => ({ key: g.sleutel, name: g.groep }))}
 				onAdd={(i: MapItem) => kaart.add(i, own.id)}
 				onClose={() => {
 					adding = false;
@@ -408,12 +412,22 @@
 	<p class="sr-only" aria-live="polite">{copier.announcement}</p>
 {/snippet}
 
-<article class="bundel" id={anchor}>
+<!-- In the frame of the other pages: the head over both columns, what the bundel holds in the
+     list column. -->
+<article class="bundel blad__indeling" id={anchor}>
 	<header class="blad__kop">
 		<h1 class="blad__titel" tabindex="-1">{b.naam}</h1>
 		{@render actions()}
 	</header>
-	<div class="inhoud">{@render content()}</div>
+	<!-- The groups of the bundel, as Bronnen's column holds its groups: a way to each. -->
+	{#if b.volgorde === 'groep' && groups.length > 1}
+		<Inhoudsopgave
+			label="Groepen van {b.naam}"
+			items={groups.map((g) => ({ label: g.groep, id: groepAnker(g.sleutel) }))}
+			zonderAdres={!m}
+		/>
+	{/if}
+	<div class="inhoud blad__lijst">{@render content()}</div>
 </article>
 
 <style>
@@ -421,13 +435,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-2);
-	}
-	.acties {
-		display: inline-flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: var(--s-1) var(--s-4);
-		font-size: var(--t-meta);
 	}
 	/* One line: the view and the order at the left, Alles uitklappen at the right. */
 	.werkregel {
@@ -499,6 +506,10 @@
 		:global(.blad:has(> .bundel) > *) {
 			max-width: none;
 			padding: 0;
+		}
+		/* On paper one column: the list column takes the width of the page. */
+		.bundel {
+			display: block;
 		}
 		.bundel :global(a) {
 			color: inherit;

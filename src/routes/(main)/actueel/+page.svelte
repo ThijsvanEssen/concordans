@@ -24,10 +24,10 @@
 	import { isEscape } from '$lib/actions/keys';
 	import { page } from '$app/state';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
-	import { ApiError, isTimeout } from '$lib/api/client';
 	import { getFeed, getFeedSummary } from '$lib/api/feed';
 	import { getFactions } from '$lib/api/factions';
-	import { report } from '$lib/api/errors';
+	import { isSlow, report } from '$lib/api/errors';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { tick, untrack } from 'svelte';
 	import { focusFirstNew } from '$lib/actions/rijen';
 	import type { Schema } from '$lib/api/types';
@@ -187,7 +187,10 @@
 	let facets = $state<Schema<'FeedFacetsDTO'> | null>(null);
 	let loading = $state(true);
 	let loadingMore = $state(false);
-	let error = $state<string | null>(null);
+	/** What failed and why, for LoadState: the list, the days before or the next days. */
+	let error = $state.raw<{ what: string; error: unknown; retry: () => void } | null>(null);
+	/** Opnieuw on the list: it is asked again as it stands. */
+	let retries = $state(0);
 	/** The API gave up on the words searched (30 s): a shorter period is quick. */
 	let teLang = $state(false);
 	/** A shorter period to offer, when the one asked is longer. */
@@ -205,6 +208,7 @@
 	let gezocht = untrack(() => q.join(' '));
 	$effect(() => {
 		const q = query;
+		void retries;
 		const ac = new AbortController();
 		loading = true;
 		error = null;
@@ -229,8 +233,8 @@
 				// No list under filters it does not answer.
 				items = [];
 				cursor = null;
-				teLang = (e instanceof ApiError && (e.status === 503 || e.status === 504)) || isTimeout(e);
-				error = teLang ? 'Zoeken duurt te lang.' : 'Actueel kon niet worden geladen.';
+				teLang = isSlow(e);
+				error = { what: 'Actueel', error: e, retry: () => retries++ };
 			})
 			.finally(() => {
 				if (!ac.signal.aborted) loading = false;
@@ -286,7 +290,7 @@
 			doorzocht = doorzochtVanaf(r);
 		} catch (e) {
 			report('Actueel verder terug', e);
-			error = 'Verder terug zoeken lukte niet.';
+			error = { what: 'De eerdere dagen', error: e, retry: verderTerug };
 		} finally {
 			verderLaden = false;
 		}
@@ -311,7 +315,7 @@
 			if (daysEl) focusFirstNew(daysEl, ROW, before);
 		} catch (e) {
 			report('Actueel volgende dagen', e);
-			error = 'De volgende dagen konden niet worden geladen.';
+			error = { what: 'De volgende dagen', error: e, retry: loadMore };
 		} finally {
 			loadingMore = false;
 		}
@@ -635,9 +639,14 @@
 
 		{#if loading && !items.length}
 			<p class="status stil">Laden…</p>
-		{:else if errorPlace(error, items.length) === 'instead'}
-			<div class="status status--error stil">
-				<p>{error}</p>
+		{:else if error && errorPlace(error.what, items.length) === 'instead'}
+			<div class="status">
+				<LoadState
+					state={{ status: 'error', error: error.error }}
+					what={error.what}
+					plural={error.what !== 'Actueel'}
+					retry={error.retry}
+				/>
 				{#if teLang && korter.length}
 					<p class="korter">
 						{#each korter as k (k.dagen)}
@@ -673,8 +682,13 @@
 					/>
 				{/each}
 			</div>
-			{#if errorPlace(error, items.length) === 'below'}
-				<p class="stil" role="alert">{error}</p>
+			{#if error && errorPlace(error.what, items.length) === 'below'}
+				<LoadState
+					state={{ status: 'error', error: error.error }}
+					what={error.what}
+					plural={error.what !== 'Actueel'}
+					retry={error.retry}
+				/>
 			{/if}
 			{@render verder()}
 		{/if}
@@ -733,13 +747,8 @@
 	.empty {
 		margin: var(--s-5) 0;
 	}
-	.status--error {
-		color: var(--accent);
-	}
-	.status--error p {
-		margin: 0 0 var(--s-2);
-	}
 	.korter {
+		margin: var(--s-2) 0 0;
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--s-2);

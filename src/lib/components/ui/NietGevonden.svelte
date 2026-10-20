@@ -3,6 +3,8 @@
 	// readable address of a bron the data lacks (the Verkenner). One page for both, with the
 	// title the server gives its 404 ("Niet gevonden, Concordans"), and noindex, so a search
 	// engine keeps no empty page. The SEO plan: ~/Development/marktonderzoek-seo.md, part 2.
+	// A page that failed (+error.svelte, 5xx or no connection) has the same frame: its title
+	// and its own way on, no text.
 	import type { Snippet } from 'svelte';
 	import { serverKop, siteTitle } from '$lib/seo/server-head.svelte';
 
@@ -10,14 +12,20 @@
 		status = 404,
 		title = 'Pagina niet gevonden',
 		kop = true,
-		children
+		code = String(status),
+		children,
+		actions
 	}: {
 		status?: number;
 		title?: string;
 		/** Whether this page sets the title; the Verkenner sets its own. */
 		kop?: boolean;
-		/** What is missing, in a sentence or two; a default where none is given. */
+		/** The small line above the title: the status, or nothing where there is none. */
+		code?: string | null;
+		/** What is missing, in a sentence or two; for a 404 a default where none is given. */
 		children?: Snippet;
+		/** The ways on; by default the startpagina and Samenhang. */
+		actions?: Snippet;
 	} = $props();
 
 	const fout = $derived(status !== 404);
@@ -25,25 +33,31 @@
 
 <svelte:head>
 	{#if kop}
-		{#if !serverKop.actief}<title>{siteTitle(fout ? 'Fout' : 'Niet gevonden')}</title>{/if}
+		{#if !serverKop.actief}<title>{siteTitle(fout ? title : 'Niet gevonden')}</title>{/if}
 		{#if !fout}<meta name="robots" content="noindex" />{/if}
 	{/if}
 </svelte:head>
 
 <div class="niet-gevonden">
 	<div class="inner">
-		<span class="code">{status}</span>
+		{#if code}<span class="code">{code}</span>{/if}
 		<h1>{title}</h1>
-		<div class="tekst">
-			{#if children}
-				{@render children()}
-			{:else}
-				<p>Deze pagina bestaat niet of is verplaatst.</p>
-			{/if}
-		</div>
+		{#if children || !fout}
+			<div class="tekst">
+				{#if children}
+					{@render children()}
+				{:else}
+					<p>Deze pagina bestaat niet of is verplaatst.</p>
+				{/if}
+			</div>
+		{/if}
 		<div class="acties">
-			<a href="/" class="btn is-groot is-primary">Naar de startpagina</a>
-			<a href="/explore" class="btn is-groot">Open Samenhang</a>
+			{#if actions}
+				{@render actions()}
+			{:else}
+				<a href="/" class="btn is-groot is-primary">Naar de startpagina</a>
+				<a href="/explore" class="btn is-groot">Open Samenhang</a>
+			{/if}
 		</div>
 	</div>
 </div>

@@ -18,11 +18,13 @@
 
 <script lang="ts" generics="T">
 	// The one view of a LoadState: loading, a failure that says what failed (role="alert",
-	// with Opnieuw where the caller can ask again) and the data. Empty is shown only from
+	// with Opnieuw where the caller can ask again, and the kenmerk of a 500) and the data. Empty is shown only from
 	// ready, so a failure never reads as "niet in de gegevens". `line` stands quietly in
 	// running text; `block` holds the place of a reader with a skeleton.
 	import type { Snippet } from 'svelte';
 	import type { LoadState } from '$lib/util/load.svelte';
+	import Kenmerk from './Kenmerk.svelte';
+	import TekstLink from './TekstLink.svelte';
 
 	let {
 		state,
@@ -59,8 +61,9 @@
 	<p class="stil failure" class:failure--block={form === 'block'} role="alert">
 		{failureText(what, state.error, plural)}
 		{#if retry}
-			<button type="button" class="btn is-text" onclick={retry}>Opnieuw</button>
+			<TekstLink onclick={retry}>Opnieuw</TekstLink>
 		{/if}
+		<Kenmerk error={state.error} />
 	</p>
 {:else if empty && isEmpty(state.data)}
 	{@render empty()}

@@ -30,7 +30,7 @@
 	import { reloadForNewVersion } from '$lib/util/reload';
 	import { readStored, writeStored } from '$lib/util/storage';
 	import PanelBoundary from '$lib/components/ui/PanelBoundary.svelte';
-	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import LoadState, { failureText } from '$lib/components/ui/LoadState.svelte';
 	import { Lazy } from '$lib/util/lazy.svelte';
 	import { getNodeCanvas, getNodeHull } from '$lib/api/records';
 	import { kopNode } from '$lib/bron/first-node';
@@ -149,6 +149,13 @@
 	});
 
 	let focusError = $state<string | null>(null);
+	/**
+	 * The bron asked could not be loaded (the address looked up, or the bron itself): said in
+	 * its place with LoadState, Opnieuw asking again; the bron shown before does not stay.
+	 */
+	let loadFailure = $state.raw<{ what: string; error: unknown; retry: () => void } | null>(null);
+	/** Opnieuw on an address that could not be looked up: it is looked up again. */
+	let padRetries = $state(0);
 	/** The focus is a bron the dataset does not hold: the page says so instead of an empty canvas. */
 	let focusMissing = $state(false);
 
@@ -166,8 +173,10 @@
 	let padOnbekend = $state(false);
 	$effect(() => {
 		const p = pad;
+		void padRetries;
 		padMissing = null;
 		padOnbekend = false;
+		loadFailure = null;
 		if (!p || untrack(() => params.get('focus'))) return;
 		const ac = new AbortController();
 		// Untracked: lookUp reads what is remembered (focusOfPad), and a list that comes in
@@ -193,8 +202,11 @@
 				padMissing = `${nameOfPad(p)} staat niet in de gegevens.`;
 				padOnbekend = true;
 			})
-			.catch(() => {
-				if (!ac.signal.aborted) padMissing = `${nameOfPad(p)} kon niet worden geladen.`;
+			.catch((e) => {
+				if (ac.signal.aborted || isAborted(e)) return;
+				report('Verkenner adres', e);
+				padMissing = failureText(nameOfPad(p), e);
+				loadFailure = { what: nameOfPad(p), error: e, retry: () => padRetries++ };
 			});
 		return () => ac.abort();
 	});
@@ -574,6 +586,7 @@
 
 	async function loadFocus(id: string) {
 		focusError = null;
+		loadFailure = null;
 		focusMissing = false;
 		const replace = replaceNext === id;
 		replaceNext = null;
@@ -677,14 +690,34 @@
 
 	/**
 	 * A focus or its neighbourhood that did not come: a newer focus (an abort) says nothing.
-	 * Over a bron already shown the canvas and the reader stay, and the network says it.
+	 * The focus itself shown, only its neighbourhood failed: the canvas and the reader stay,
+	 * and the network says it. Another bron shown (the one before): it goes, and the failure
+	 * stands in the new one's place, with Opnieuw (UX-toets A32 #2).
 	 */
 	function showFocusError(err: unknown, key: string) {
 		if (isAborted(err)) return;
 		wachtOp = null;
 		report('Verkenner focus', err);
-		focusError = `'${key}' kon niet worden geladen.`;
-		if (untrack(() => selectedNode)) meldNetwerk(focusError, null);
+		const name = pad ? nameOfPad(pad) : `'${key}'`;
+		focusError = failureText(name, err);
+		const huidig = untrack(() => selectedNode);
+		const asked = loadedFocus;
+		if (huidig && (huidig.id === asked || linkIdOf(huidig) === asked || huidig.key === key)) {
+			meldNetwerk(focusError, null);
+			return;
+		}
+		if (huidig) {
+			store.setSelection(null);
+			selectedNode = null;
+		}
+		loadFailure = { what: name, error: err, retry: () => retryFocus(asked) };
+	}
+
+	/** Opnieuw on a bron that could not be loaded: the same focus asked again. */
+	function retryFocus(id: string) {
+		if (!id || id !== focus) return;
+		loadedFocus = id;
+		loadFocus(id).catch((e) => showFocusError(e, id));
 	}
 
 	// Expand around `node` once per depth, or again when `force`d.
@@ -852,6 +885,7 @@
 		if (nietGevonden) return siteTitle('Niet gevonden');
 		// While the next bron is on its way the reader still holds the previous one: its name
 		// would be the new page's (a screen reader announces the title after each step).
+		if (loadFailure && !selectedNode) return siteTitle('Er ging iets mis');
 		if (wachtOp || (pad && !focus && !padMissing)) return LADEN_TITEL;
 		const name = selectedNode ? pageName(selectedNode, titelVan(selectedNode.id)) : null;
 		if (name) return siteTitle(name);
@@ -1264,6 +1298,14 @@
 				<p>{padMissing ?? focusError}</p>
 				<p><a href="/bronnen#dekking">Bronnen en dekking</a></p>
 			</NietGevonden>
+		{:else if loadFailure && !selectedNode && !netwerkActive}
+			<div class="explore-empty">
+				<LoadState
+					state={{ status: 'error', error: loadFailure.error }}
+					what={loadFailure.what}
+					retry={loadFailure.retry}
+				/>
+			</div>
 		{:else if padMissing && !selectedNode && !netwerkActive}
 			<p class="explore-empty stil">{padMissing}</p>
 		{:else if mode === 'graph' && (focus || pad) && !selectedNode && !netwerkActive && !focusError}

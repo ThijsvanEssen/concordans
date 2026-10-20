@@ -2,9 +2,12 @@
 	import { ownKind } from '$lib/text/document-kind';
 	import { NL } from '$lib/text/collator';
 	import { korteDatum } from '$lib/text/datum';
-	import { textOf } from '$lib/text/words';
-	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
+	import { citePaper, paperParagraphCite } from '$lib/components/parliamentary/paper-cite';
+	import { paperParagraphAnchor, paperParagraphs, type PaperParagraph } from '$lib/text/anchor';
+	import PlaatsMenu, { placeMarker } from '$lib/components/articles/PlaatsMenu.svelte';
+	import { blockClick } from '$lib/actions/klik';
+	import { kaart } from '$lib/map/map.svelte';
 	import { getDocument } from '$lib/api/records';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import { citeItems } from '$lib/components/ui/cite-items';
@@ -38,7 +41,6 @@
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import { getNodeFirst } from '$lib/api/records';
 	import type { NodeGraph } from '$lib/api/nodes';
-	import { kamerstukCitation } from '$lib/components/parliamentary/kamerstuk';
 	import { ensureInstrumentName, instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { load } from '$lib/util/load.svelte';
 
@@ -101,19 +103,21 @@
 		for (const w of toegelicht) ensureInstrumentName(w.bwbId);
 	});
 
-	// The source gives a paragraph per line. Each keeps its place in the text, so that
-	// a passage can be found back.
-	const paragraphs = $derived.by(() => {
-		const text = loaded?.text;
-		if (!text) return [];
-		const out: { start: number; text: string; i: number }[] = [];
-		for (const m of text.matchAll(/[^\n]+/g)) {
-			const t = m[0].trim();
-			// Where the words start, so an offset of the API (a note's marker) falls in them.
-			if (t) out.push({ start: m.index + m[0].indexOf(t), text: t, i: out.length });
-		}
-		return out;
-	});
+	// The source gives a paragraph per line (paperParagraphs): each keeps its place in the text,
+	// so that a passage can be found back; an alinea of its text its number and anchor
+	// (`alinea-4`), the head of the stuk and a motie's formula none.
+	const paragraphs = $derived(paperParagraphs(loaded ?? {}));
+
+	// The menu of an alinea (as an overweging's, a lid's): its marker in the margin opens it,
+	// and a click on its text, not on a link or a selection.
+	let menu = $state<{ n: number; marker: HTMLElement } | null>(null);
+	function openMenu(n: number, marker: HTMLElement) {
+		menu = menu?.n === n ? null : { n, marker };
+	}
+	const onText = (n: number) => (e: MouseEvent) => {
+		const marker = placeMarker(e, '.body-para');
+		if (marker) openMenu(n, marker);
+	};
 
 	// The headings of the paper (API 0.5): algemeen deel, artikelsgewijze toelichting per
 	// artikel, ... Rendered as the same anchored, leden-like structure ArticleText gives
@@ -124,7 +128,7 @@
 
 	type Entry =
 		| { type: 'heading'; start: number; section: Section }
-		| { type: 'para'; start: number; para: { start: number; text: string; i: number } };
+		| { type: 'para'; start: number; para: PaperParagraph };
 
 	// The footnotes (API 0.79.55): a marker in the paragraph that refers to a note, the note
 	// under it or in the margin; one without a marker at the end of its section, else of the stuk.
@@ -268,14 +272,11 @@
 		{@const term = termOfKind(doc.kind)}
 		<!-- Without the group of kinds the source files it under (#58): "Amendement". -->
 		{@const kind = ownKind(doc.kind)}
-		{@const cite = kamerstukCitation({
-			chamber: doc.chamber,
-			session_year: textOf(lichtProps.session_year),
-			dossier_number: textOf(lichtProps.dossier_number) ?? doc.dossier_numbers?.[0],
-			dossier_suffix: textOf(lichtProps.dossier_suffix),
-			number: doc.number
-		})}
-		{@const naam = cite ?? doc.title ?? naamVan('documents', doc)}
+		<!-- The paper as it is cited and kept, and each alinea after it (paper-cite). -->
+		{@const paper = citePaper(doc, lichtProps)}
+		{@const cite = paper.citation}
+		{@const naam = paper.name}
+		{@const paragraphCite = paperParagraphCite(paper)}
 		<!-- The kind of the case the stuk is in, where it adds to the stuk's own: a motie is in
 			     a case of the kind Motie, which "Motie, 7 sep. 2026, Motie" said twice. -->
 		{@const caseKinds = (doc.case_kinds ?? []).filter(
@@ -286,11 +287,7 @@
 				collection="documents"
 				title={doc.title ?? naamVan('documents', doc)}
 				acties={{
-					bewaar: bewaarItem(
-						`documents/${doc.key}`,
-						{ kort: naam, voluit: cite && kind ? `${cite} (${kind})` : naam },
-						doc.dossier_numbers?.[0] ? { dossier: doc.dossier_numbers[0] } : { groep: naam }
-					),
+					bewaar: paper.item,
 					cite: cite
 						? citeItems(
 								{ kort: cite, voluit: doc.title ? `${cite}, ${doc.title}` : cite },
@@ -377,29 +374,69 @@
 							{@const markers = voetnoten.markers.get(p.i)}
 							{@const sluit = voetnoten.naSectie.get(p.i)}
 							{@const bereik = tekstBereik?.i === p.i ? tekstBereik.bereik : null}
+							{@const n = p.n}
+							{@const forms =
+								n === null ? null : paragraphCite(n, permalink(page.url, paperParagraphAnchor(n)))}
 							<!-- A paragraph with notes or marked words: its words set as a judgment's are. -->
 							{#snippet woorden()}{#if markers || bereik}<CitedText
 										text={p.text}
 										noten={markers ?? []}
 										{bereik}
 									/>{:else}{p.text}{/if}{/snippet}
+							<!-- An alinea is a place, as a lid or an overweging: its menu (PlaatsMenu) from the
+							     marker in the margin (its number) or a click on its text; its anchor `alinea-4`.
+							     The head of the stuk and a motie's formula are no place. -->
 							<div
 								class="body-para"
-								class:body-para--noten={!!markers || !!sluit}
 								class:body-para--passage={passageEntries.has(i)}
 								class:in-passage={passageEntries.has(i)}
 								class:in-passage--cont={passageEntries.has(i) && i > passageFirst}
-								id={i === passageEntryIndex ? 'passage' : bereik ? 'markering' : undefined}
+								class:body-para--plaats={!!forms}
+								class:is-open={n !== null && menu?.n === n}
+								class:plaats-bewaard={!!forms && kaart.heeft(forms.bewaar)}
+								id={i === passageEntryIndex
+									? 'passage'
+									: bereik
+										? 'markering'
+										: n !== null
+											? paperParagraphAnchor(n)
+											: undefined}
 								title={i === passageEntryIndex ? (passage?.why ?? undefined) : undefined}
 							>
-								<p>
-									{@render woorden()}{#if i === passageEntryIndex && passage?.possible}<span
-											class="derived"
-											title={passage.why ?? undefined}>mogelijk verband</span
-										>{/if}
-								</p>
-								<Voetnoten noten={nootLijst(markers?.map((m) => m.id))} />
-								<Voetnoten noten={nootLijst(sluit)} marge={false} />
+								{#if n !== null}
+									<button
+										type="button"
+										class="plaats-marker"
+										aria-haspopup="menu"
+										aria-expanded={menu?.n === n}
+										aria-label="Alinea {n}: citeren, bewaren"
+										onclick={(e) => openMenu(n, e.currentTarget)}>{n}</button
+									>
+								{/if}
+								<div
+									class="body-para__tekst"
+									class:is-klikbaar={n !== null}
+									use:blockClick={n !== null ? onText(n) : null}
+								>
+									<p>
+										{@render woorden()}{#if i === passageEntryIndex && passage?.possible}<span
+												class="derived"
+												title={passage.why ?? undefined}>mogelijk verband</span
+											>{/if}
+									</p>
+									<Voetnoten noten={nootLijst(markers?.map((m) => m.id))} />
+									<Voetnoten noten={nootLijst(sluit)} marge={false} />
+								</div>
+								{#if forms && menu && menu.n === n}
+									<PlaatsMenu
+										anker={menu.marker}
+										title={forms.kort}
+										cite={citeItems(forms, forms.link)}
+										tekst={() => p.text}
+										bewaar={forms.bewaar}
+										onClose={() => (menu = null)}
+									/>
+								{/if}
 							</div>
 						{/if}
 					{/each}
@@ -440,6 +477,10 @@
 		left: -14px;
 		width: 2px;
 		background: var(--ink);
+	}
+	/* An alinea stands 16px out into the margin, for its marker. */
+	.body-para.in-passage::before {
+		left: 2px;
 	}
 	.in-passage--cont::before {
 		top: calc(-1 * var(--s-4));
@@ -580,18 +621,89 @@
 		padding: var(--s-3) 0;
 	}
 
+	/* A line of the text: its notes under it, or in the margin beside it. An alinea stands 16px
+	   out into the margin, its text at the column's edge, its number in the margin; on a phone
+	   16px out on either side, to the edges of the screen. */
 	.body-para {
-		margin: 0;
-	}
-	.body-para > p {
-		margin: 0;
-	}
-	/* Its notes under it, or in the margin beside it. */
-	.body-para--noten {
 		position: relative;
+		margin: 0 0 0 calc(-1 * var(--s-4));
+		padding-left: var(--s-4);
+		border-radius: var(--r-1);
+		scroll-margin: 20vh;
+	}
+	@media (max-width: 768px) {
+		.body-para {
+			margin: 0 calc(-1 * var(--s-4));
+			padding: 0 var(--s-4);
+			border-radius: 0;
+		}
+	}
+	.body-para p {
+		margin: 0;
+	}
+	.body-para--plaats:hover,
+	.body-para--plaats:focus-within,
+	.body-para.is-open {
+		background: var(--paper-2);
 	}
 	.body-para:global(.is-landed) {
 		background: var(--wassing);
+	}
+	/* A kept alinea: the ink bar at its own edge, in the margin it stands out into. */
+	.body-para.plaats-bewaard::before {
+		left: 0;
+	}
+	.body-para__tekst.is-klikbaar {
+		cursor: pointer;
+	}
+	/* The marker is the alinea's menu: its number, nothing at rest; with ▾ while the alinea is
+	   pointed at, open or focused (as a lid's number, an overweging's), 4px before its text. A
+	   smaller letter in a line as high as the text's. */
+	.plaats-marker {
+		position: absolute;
+		top: 0;
+		right: calc(100% - var(--s-3));
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		font-size: 0.8em;
+		line-height: calc(var(--lh-body) / 0.8);
+		color: transparent;
+		text-align: right;
+		white-space: nowrap;
+		user-select: none;
+		cursor: pointer;
+	}
+	.body-para:hover > .plaats-marker,
+	.body-para.is-open > .plaats-marker,
+	.plaats-marker:focus-visible {
+		color: var(--ink);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+	.body-para:hover > .plaats-marker::after,
+	.body-para.is-open > .plaats-marker::after,
+	.plaats-marker:focus-visible::after {
+		content: ' ▾';
+		font-size: 0.7em;
+		color: var(--ink-3);
+		text-decoration: none;
+	}
+	.plaats-marker:focus-visible {
+		outline: 2px solid var(--focus);
+		outline-offset: 2px;
+	}
+	/* On a phone the margin is the 16px the alinea stands out: its number alone, in it. */
+	@media (max-width: 768px) {
+		.plaats-marker {
+			right: calc(100% - var(--s-4) + 2px);
+			font-size: 0.7em;
+			line-height: calc(var(--lh-body) / 0.7);
+		}
+		.plaats-marker::after {
+			display: none;
+		}
 	}
 	.body-para + .body-para {
 		margin-top: var(--s-3);

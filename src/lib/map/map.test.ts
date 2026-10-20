@@ -19,7 +19,7 @@ import {
 	itemKey,
 	verschuif,
 	groupKeyOf,
-	judgmentRows,
+	placeRows,
 	rowTitle,
 	JUDGMENTS_GROUP,
 	type MapItem
@@ -416,13 +416,13 @@ describe('the judgments of a bundel, one group Rechtspraak (decision 20A)', () =
 	});
 
 	it('shows the r.o.’s of one judgment as places under it, the judgment once', () => {
-		const rows = judgmentRows([ro, other, hr, ro2]);
+		const rows = placeRows([ro, other, hr, ro2]);
 		expect(rows.map((r) => [r.head.kort, r.kept, r.places.map((p) => p.at)])).toEqual([
 			['HR 20 december 2019', true, ['rov-5.7.1', 'rov-2.1']],
 			['Rb. Den Haag 24 juni 2015, ECLI:NL:RBDHA:2015:7196, r.o. 4.1', true, []]
 		]);
 		// Two r.o.'s without the judgment itself: the judgment heads them, not kept.
-		const [only] = judgmentRows([ro, ro2]);
+		const [only] = placeRows([ro, ro2]);
 		expect(only.kept).toBe(false);
 		expect(only.head).toMatchObject({ id: ro.id, at: '', notitie: null });
 		expect(only.head.kort).toBe('HR 20 december 2019, ECLI:NL:HR:2019:2006');
@@ -432,6 +432,42 @@ describe('the judgments of a bundel, one group Rechtspraak (decision 20A)', () =
 	it('moves and exports a judgment within Rechtspraak', () => {
 		expect(verschuif([ro, lid2, other], itemKey(other), -1, 'groep')).toEqual([other, lid2, ro]);
 		expect(csv([ro, lid2], () => '').split('\r\n')[1]).toContain('Rechtspraak');
+	});
+});
+
+describe('the alineas of a Kamerstuk in a bundel, under the stuk (A28)', () => {
+	const stuk: MapItem = {
+		id: 'documents/0c0aab25',
+		at: '',
+		kort: 'Kamerstukken II 2025/26, 37020 XVI, nr. 57',
+		voluit: 'Kamerstukken II 2025/26, 37020 XVI, nr. 57 (Motie)',
+		groep: 'Kamerstuk 37020 XVI',
+		groupKey: 'dossier:37020-XVI'
+	};
+	const al = (n: number): MapItem => ({
+		...stuk,
+		at: `alinea-${n}`,
+		kort: `${stuk.kort}, alinea ${n}`,
+		voluit: `${stuk.voluit}, alinea ${n}`
+	});
+
+	it('shows two alineas under their stuk, the stuk heading them without being kept', () => {
+		const [rij, ander] = placeRows([al(4), lid2, al(6)]);
+		expect(rij.kept).toBe(false);
+		expect(rij.head).toMatchObject({ id: stuk.id, at: '', kort: stuk.kort, voluit: null });
+		expect(rij.places.map((p) => p.at)).toEqual(['alinea-4', 'alinea-6']);
+		expect(ander).toEqual({ head: lid2, kept: true, places: [] });
+		expect(rowTitle(al(4), true)).toEqual({ title: 'alinea 4', sub: null });
+	});
+
+	it('shows one alinea alone as the stuk’s row, and the alineas under a stuk kept itself', () => {
+		expect(placeRows([al(4)])).toEqual([{ head: al(4), kept: true, places: [] }]);
+		expect(placeRows([al(4), stuk])).toEqual([{ head: stuk, kept: true, places: [al(4)] }]);
+	});
+
+	it('keeps two leden of one article as rows of their own', () => {
+		const lid1 = { ...lid2, at: 'lid-1', kort: 'art. 6:162 lid 1 BW' };
+		expect(placeRows([lid1, lid2]).map((r) => r.head)).toEqual([lid1, lid2]);
 	});
 });
 

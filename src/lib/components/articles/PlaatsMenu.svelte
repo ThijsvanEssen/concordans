@@ -2,11 +2,15 @@
 	/**
 	 * The marker a click on a place's text opens the menu at: the first `.plaats-marker` of
 	 * the place (`place`, a selector) that is its own, not a nested place's; else the place.
+	 * The marker takes the focus, so Escape gives it back there, as after a click on the
+	 * marker itself (UX-toets A32 #8).
 	 */
 	export function placeMarker(e: MouseEvent, place: string): HTMLElement | null {
 		const own = (e.currentTarget as HTMLElement).closest<HTMLElement>(place);
 		const markers = own?.querySelectorAll<HTMLElement>('.plaats-marker') ?? [];
-		return [...markers].find((m) => m.closest(place) === own) ?? own;
+		const marker = [...markers].find((m) => m.closest(place) === own);
+		marker?.focus({ preventScroll: true });
+		return marker ?? own;
 	}
 </script>
 

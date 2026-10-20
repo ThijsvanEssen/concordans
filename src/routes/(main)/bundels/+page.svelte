@@ -106,15 +106,15 @@
 
 {#if shared && shared !== BROKEN && !oldLink}
 	<!-- A shared bundel: its page, read only, as the one who shared it sees it (2c). -->
-	<div class="blad blad--tekst">
+	<div class="blad">
 		<nav class="stub-eyebrow" aria-label="Hoort bij"><a href={BUNDLES_PATH}>Bundels</a></nav>
 		<MapView {shared} onShared={sharedDone} />
 	</div>
 {:else}
-	<div class="bundels blad blad--tekst">
+	<div class="bundels blad blad__indeling">
 		<header class="blad__kop">
 			<h1 class="blad__titel">Bundels</h1>
-			<span class="acties">
+			<span class="blad__acties">
 				{#if naming}
 					<form
 						class="naam"
@@ -139,7 +139,9 @@
 						/>
 					</form>
 				{:else}
-					<button type="button" class="btn" onclick={() => (naming = true)}>Nieuwe bundel</button>
+					<button type="button" class="btn is-groot" onclick={() => (naming = true)}
+						>Nieuwe bundel</button
+					>
 				{/if}
 				<TekstMenu klein rechts label="Meer bij de bundels" tekst="Meer">
 					{#snippet inhoud(close)}
@@ -174,114 +176,113 @@
 			/>
 		</header>
 
-		{#if shared === BROKEN || oldLink}
-			<p class="melding" role="status">
-				<span>Link onvolledig of beschadigd</span>
-				<TekstLink onclick={() => sharedDone('none')}>Sluiten</TekstLink>
-			</p>
-		{/if}
-		{#if opened && 'error' in opened}
-			<p class="melding" role="status">
-				<span>{opened.error}</span>
-				<TekstLink onclick={() => (opened = null)}>Sluiten</TekstLink>
-			</p>
-		{/if}
-
-		<ul class="lijst">
-			{#if opened && 'maps' in opened}
-				{#each opened.maps as f, n (n)}
-					{@const target = targetOf(f)}
-					<BundleRow
-						bundle={{ naam: f.naam ?? 'Bundel', items: f.items, notitie: f.notitie }}
-						mark="uit bestand"
-						open={open.has(`file:${n}`)}
-						onToggle={() => toggle(`file:${n}`)}
-					>
-						{#snippet choices()}
-							{#if sameId(f) && target}
-								<button type="button" class="btn" onclick={() => fileDone(f, 'replace')}
-									>Vervang</button
-								>
-							{:else}
-								<button type="button" class="btn" onclick={() => fileDone(f, 'map')}>Bewaar</button>
-							{/if}
-							<RijActies naam={f.naam ?? 'Bundel uit bestand'} onClose={() => (choosing = null)}>
-								{#snippet menu(close)}
-									{#if choosing === f}
-										{#each kaart.listed as into (into.id)}
-											<button
-												type="button"
-												role="menuitem"
-												class="tekstmenu__item"
-												onclick={() => {
-													close();
-													fileDone(f, 'add', into.id);
-												}}>{into.naam}</button
-											>
-										{/each}
-									{:else}
-										{#if sameId(f)}
-											<button
-												type="button"
-												role="menuitem"
-												class="tekstmenu__item"
-												onclick={() => {
-													close();
-													fileDone(f, 'map');
-												}}>Bewaar als nieuwe bundel</button
-											>
-										{:else if target}
-											<button
-												type="button"
-												role="menuitem"
-												class="tekstmenu__item"
-												onclick={() => {
-													close();
-													fileDone(f, 'replace');
-												}}>Vervang {target.naam}</button
-											>
-										{/if}
-										{#if f.items.length}
-											<button
-												type="button"
-												role="menuitem"
-												class="tekstmenu__item"
-												aria-haspopup="menu"
-												onclick={() => {
-													choosing = f;
-													focusFirstItem();
-												}}>Voeg toe aan …</button
-											>
-										{/if}
-										<button
-											type="button"
-											role="menuitem"
-											class="tekstmenu__item"
-											onclick={() => {
-												close();
-												fileDone(f, 'none');
-											}}>Niet openen</button
-										>
-									{/if}
-								{/snippet}
-							</RijActies>
-						{/snippet}
-					</BundleRow>
-				{/each}
+		<div class="blad__lijst">
+			{#if shared === BROKEN || oldLink}
+				<p class="melding" role="status">
+					<span>Link onvolledig of beschadigd</span>
+					<TekstLink onclick={() => sharedDone('none')}>Sluiten</TekstLink>
+				</p>
 			{/if}
-			{#each kaart.listed as m (m.id)}
-				<BundleRow bundle={m} open={open.has(m.id)} onToggle={() => toggle(m.id)} />
-			{/each}
-		</ul>
+			{#if opened && 'error' in opened}
+				<p class="melding" role="status">
+					<span>{opened.error}</span>
+					<TekstLink onclick={() => (opened = null)}>Sluiten</TekstLink>
+				</p>
+			{/if}
+
+			<ul class="lijst">
+				{#if opened && 'maps' in opened}
+					{#each opened.maps as f, n (n)}
+						{@const target = targetOf(f)}
+						<BundleRow
+							bundle={{ naam: f.naam ?? 'Bundel', items: f.items, notitie: f.notitie }}
+							mark="uit bestand"
+							open={open.has(`file:${n}`)}
+							onToggle={() => toggle(`file:${n}`)}
+						>
+							{#snippet choices()}
+								{#if sameId(f) && target}
+									<button type="button" class="btn" onclick={() => fileDone(f, 'replace')}
+										>Vervang</button
+									>
+								{:else}
+									<button type="button" class="btn" onclick={() => fileDone(f, 'map')}
+										>Bewaar</button
+									>
+								{/if}
+								<RijActies naam={f.naam ?? 'Bundel uit bestand'} onClose={() => (choosing = null)}>
+									{#snippet menu(close)}
+										{#if choosing === f}
+											{#each kaart.listed as into (into.id)}
+												<button
+													type="button"
+													role="menuitem"
+													class="tekstmenu__item"
+													onclick={() => {
+														close();
+														fileDone(f, 'add', into.id);
+													}}>{into.naam}</button
+												>
+											{/each}
+										{:else}
+											{#if sameId(f)}
+												<button
+													type="button"
+													role="menuitem"
+													class="tekstmenu__item"
+													onclick={() => {
+														close();
+														fileDone(f, 'map');
+													}}>Bewaar als nieuwe bundel</button
+												>
+											{:else if target}
+												<button
+													type="button"
+													role="menuitem"
+													class="tekstmenu__item"
+													onclick={() => {
+														close();
+														fileDone(f, 'replace');
+													}}>Vervang {target.naam}</button
+												>
+											{/if}
+											{#if f.items.length}
+												<button
+													type="button"
+													role="menuitem"
+													class="tekstmenu__item"
+													aria-haspopup="menu"
+													onclick={() => {
+														choosing = f;
+														focusFirstItem();
+													}}>Voeg toe aan …</button
+												>
+											{/if}
+											<button
+												type="button"
+												role="menuitem"
+												class="tekstmenu__item"
+												onclick={() => {
+													close();
+													fileDone(f, 'none');
+												}}>Niet openen</button
+											>
+										{/if}
+									{/snippet}
+								</RijActies>
+							{/snippet}
+						</BundleRow>
+					{/each}
+				{/if}
+				{#each kaart.listed as m (m.id)}
+					<BundleRow bundle={m} open={open.has(m.id)} onToggle={() => toggle(m.id)} />
+				{/each}
+			</ul>
+		</div>
 	</div>
 {/if}
 
 <style>
-	.acties {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-4);
-	}
 	.melding {
 		display: flex;
 		flex-wrap: wrap;

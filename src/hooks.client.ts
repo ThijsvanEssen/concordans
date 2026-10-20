@@ -2,7 +2,7 @@
 // here ($lib/api/errors.ts), an abort says nothing. A page that fails is +error.svelte's; a
 // panel that fails to draw is PanelBoundary's.
 import type { ClientInit, HandleClientError } from '@sveltejs/kit';
-import { report } from '$lib/api/errors';
+import { kenmerkOf, report } from '$lib/api/errors';
 import { BUNDLE_PARAM, movedAddress, withoutBundle } from '$lib/map/page';
 import { kaart } from '$lib/map/map.svelte';
 
@@ -39,8 +39,12 @@ export const init: ClientInit = () => {
 	keepFromAddress(window.location, window.history);
 };
 
-/** A page or its load that threw; a path that is no page is +error.svelte's 404. */
+/**
+ * A page or its load that threw; a path that is no page is +error.svelte's 404. A 500 the
+ * API logged gives the page its kenmerk.
+ */
 export const handleError: HandleClientError = ({ error, status, message }) => {
 	if (status !== 404) report('Pagina', error);
-	return { message };
+	const kenmerk = kenmerkOf(error);
+	return kenmerk ? { message, kenmerk } : { message };
 };

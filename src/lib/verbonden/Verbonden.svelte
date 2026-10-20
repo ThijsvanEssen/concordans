@@ -443,12 +443,14 @@
 						</p>
 					{/if}
 					{#if g.failed && g.rows.length === 0}
-						<p class="note stil">
-							Kon niet worden geladen.
-							{#if onRetry}
-								<TekstLink onclick={onRetry}>Opnieuw</TekstLink>
-							{/if}
-						</p>
+						<div class="note">
+							<LoadState
+								state={{ status: 'error', error: g.error }}
+								what={g.noun ? `De ${g.noun}` : 'Deze groep'}
+								plural={!!g.noun}
+								retry={onRetry}
+							/>
+						</div>
 					{/if}
 					{#if melding?.groep === g.id}
 						<p class="group__melding" role="status">

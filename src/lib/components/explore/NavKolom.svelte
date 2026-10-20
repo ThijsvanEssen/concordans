@@ -70,9 +70,12 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
+	/* A note where the rows would be, its own or LoadState's (loading, a failure). */
+	.nav-kolom > :global(.stil),
 	:global(.nav-kolom__note) {
 		margin: 0;
 		padding: var(--s-4);
+		font-size: inherit;
 		color: var(--ink-3);
 	}
 	:global(.nav-kolom__lijst) {

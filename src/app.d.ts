@@ -6,7 +6,11 @@ declare global {
 		__seoTerug?: ReturnType<typeof setTimeout>;
 	}
 	namespace App {
-		// interface Error {}
+		interface Error {
+			message: string;
+			/** The kenmerk of a 500 the API logged ($lib/api/errors.ts, kenmerkOf). */
+			kenmerk?: string | null;
+		}
 		// interface Locals {}
 		// interface PageData {}
 		// interface PageState {}

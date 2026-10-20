@@ -31,6 +31,41 @@ describe('the readers', () => {
 		expect(overtreders((t) => /\.before\}<mark>|\{p\.before\}/.test(t))).toEqual([]);
 	});
 
+	it('gives a place in every text one menu, PlaatsMenu: a lid, an overweging, an alinea (A28)', () => {
+		// A lid, an r.o. and an alinea of a Kamerstuk, in their reader and read in place in a
+		// bundel: one menu (Citeer, Kopieer tekst, Bewaar with BundleChecklist), opened from the
+		// place's marker or a click on its text (placeMarker, blockClick); no menu of their own.
+		const plaatsen = [
+			'lib/components/articles/ArticleText.svelte',
+			'lib/components/explore/readers/JudgmentReader.svelte',
+			'lib/components/explore/readers/DocumentReader.svelte',
+			'lib/bron/Overweging.svelte',
+			'lib/bron/PaperParagraph.svelte'
+		];
+		for (const p of plaatsen) {
+			const t = bron(p);
+			expect(t, p).toMatch(
+				/import PlaatsMenu, \{ placeMarker \} from '(?:\$lib\/components\/articles|\.)\/PlaatsMenu\.svelte'/
+			);
+			expect(t, p).toMatch(/<PlaatsMenu\b[\s\S]*?bewaar=\{[^}]*\}[\s\S]*?\/>/);
+			expect(t, p).toContain('use:blockClick=');
+			expect(t, p).toMatch(/class="[^"]*\bplaats-marker\b/);
+		}
+		expect(bron('lib/components/articles/PlaatsMenu.svelte')).toContain('<BundleChecklist');
+		// An alinea is cited and kept one way, in its reader and in a bundel (paper-cite), and
+		// cut from its text in one place (paperParagraphs, text/anchor.ts).
+		for (const p of [
+			'lib/components/explore/readers/DocumentReader.svelte',
+			'lib/bron/PaperParagraph.svelte'
+		]) {
+			expect(bron(p), p).toContain('paperParagraphCite(');
+			expect(bron(p), p).toContain('paperParagraphs(');
+		}
+		expect(
+			overtreders((t) => /matchAll\(\/\[\^\\n\]\+\/g\)/.test(t), [plek('lib/text/anchor.ts')])
+		).toEqual([]);
+	});
+
 	it('heads every reader with ReaderHead, Bewaar in its place (Thijs, 10 Oct: gelijke pagina’s)', () => {
 		// The head of a reader is one form: kind or place, title, status, and the actions at its
 		// right (KopActies through ReaderHead, Bewaar always). No reader lays out actions itself.

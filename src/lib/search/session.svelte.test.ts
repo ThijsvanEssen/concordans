@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fail, fakeApi, slow, type FakeRequest } from '$lib/test/fakeApi';
 import type { BronRef } from '$lib/bron/href';
 import type { SearchKind } from './lanes';
+import { isSlow } from '$lib/api/errors';
 import { SearchSession } from './session.svelte';
 
 type Query = { q: string; types: SearchKind[]; resolve?: boolean; mode: string };
@@ -177,13 +178,32 @@ describe('the lanes of a search', () => {
 		stop();
 	});
 
+	it('says one failure once, with one Opnieuw that asks every failed lane again', async () => {
+		const { asked, of } = api();
+		const { s, stop } = session();
+		await type(s, 'huur');
+		of('instruments').answer(fail(500));
+		of('articles').answer(fail(500));
+		of('judgments').answer(fail(500));
+		await settle();
+		expect(s.failure).not.toBe(null);
+		expect(s.failedLanes).toEqual([]);
+		const before = asked.length;
+		s.retrySearch();
+		await vi.advanceTimersByTimeAsync(150);
+		expect(asked.slice(before).flatMap((a) => a.query.types)).toEqual(
+			expect.arrayContaining(['instruments', 'articles', 'judgments'])
+		);
+		stop();
+	});
+
 	it('says that the search took too long when the fast lane does, and asks it again', async () => {
 		const { asked, of } = api();
 		const { s, stop } = session();
 		await type(s, 'hu');
 		of('instruments').answer(slow());
 		await settle();
-		expect(s.failure).toEqual({ slow: true });
+		expect(isSlow(s.failure?.error)).toBe(true);
 		expect(s.answered).toBe('hu');
 		s.retrySearch();
 		flushSync();

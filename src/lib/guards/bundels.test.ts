@@ -85,11 +85,12 @@ describe('a bundel’s own page, the place to work (bundels-ux 2b)', () => {
 		expect(bron('lib/components/ui/RijActies.svelte')).toMatch(/menu\?: Snippet/);
 	});
 
-	it('cites a row on one line and its judgments under Rechtspraak, an r.o. under its judgment', () => {
+	it('cites a row on one line, a place under its bron: an r.o. under its judgment, an alinea under its Kamerstuk', () => {
+		// The judgments under Rechtspraak (groepen); every group's places by one placeRows.
 		const g = groups();
 		expect(g).toContain('rowTitle(');
-		expect(g).toContain('judgmentRows(');
-		expect(g).toMatch(/JUDGMENTS_GROUP/);
+		expect(g).toMatch(/\{#each placeRows\(g\.items\) as r/);
+		expect(bron('lib/map/BundleRow.svelte')).toContain('placeRows(');
 	});
 });
 

@@ -35,6 +35,21 @@
 .blad__indeling > .blad__kop {
 	grid-column: 1 / -1;
 }
+/* The page's actions at the right of its title, on every page in the frame the same. */
+.blad__acties {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-2) var(--s-3);
+	font-family: var(--font-serif);
+	font-size: var(--t-meta);
+}
+/* What a page lists where it has no facets: in the list column, on the edge of the lists of
+   the other pages (Bundels). */
+.blad__lijst {
+	grid-column: 2;
+	min-width: 0;
+}
 /* A state where content would be: loading, nothing, could not. One quiet line everywhere
    (round 2 of the consistency pass: italic in the readers, roman on the pages); a row's
    own line keeps its smaller size. */
@@ -61,7 +76,7 @@
 /* The page a subpage belongs to, as a reader's band names its place (ReaderFrame
    .kop-rij): one line over the title, its rule under it, the parent a link in ink
    (Thijs, 10 Oct: "als kruimel, zoals de band van een lezer"). */
-.blad--tekst .stub-eyebrow {
+.blad .stub-eyebrow {
 	margin: 0 0 var(--s-4);
 	padding-bottom: var(--s-2);
 	border-bottom: 1px solid var(--rule);
@@ -71,15 +86,15 @@
 }
 /* On paper the page stands alone. */
 @media print {
-	.blad--tekst .stub-eyebrow {
+	.blad .stub-eyebrow {
 		display: none;
 	}
 }
-.blad--tekst .stub-eyebrow a {
+.blad .stub-eyebrow a {
 	color: var(--ink);
 	text-decoration: none;
 }
-.blad--tekst .stub-eyebrow a:hover {
+.blad .stub-eyebrow a:hover {
 	text-decoration: underline;
 	text-underline-offset: 3px;
 }
@@ -154,5 +169,8 @@
 	}
 	.blad__indeling {
 		grid-template-columns: minmax(0, 1fr);
+	}
+	.blad__lijst {
+		grid-column: 1;
 	}
 }

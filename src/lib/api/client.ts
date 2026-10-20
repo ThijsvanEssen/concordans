@@ -60,11 +60,19 @@ export const isTimeout = (e: unknown) => e instanceof DOMException && e.name ===
 export class ApiError extends Error {
 	constructor(
 		readonly status: number,
-		url: string
+		url: string,
+		/** The id the API gives a 500 (`request_id`), the key to its line in the log. */
+		readonly requestId: string | null = null
 	) {
 		super(`${url} answered ${status}`);
 	}
 }
+
+/** The `request_id` of an error body, where the API gave one (a 500). */
+const requestIdOf = (body: unknown, response: Response): string | null => {
+	const id = (body as { request_id?: unknown } | undefined)?.request_id;
+	return typeof id === 'string' ? id : response.headers.get('X-Request-ID');
+};
 
 const readers = new Set<(data: unknown) => void>();
 
@@ -78,9 +86,11 @@ export function onAnswer(read: (data: unknown) => void): () => void {
 }
 
 /** The body of a successful call; any other status throws an ApiError. */
-export async function unwrap<T>(call: Promise<{ data?: T; response: Response }>): Promise<T> {
-	const { data, response } = await call;
-	if (!response.ok) throw new ApiError(response.status, response.url);
+export async function unwrap<T>(
+	call: Promise<{ data?: T; error?: unknown; response: Response }>
+): Promise<T> {
+	const { data, error, response } = await call;
+	if (!response.ok) throw new ApiError(response.status, response.url, requestIdOf(error, response));
 	for (const read of readers) read(data);
 	return data as T;
 }

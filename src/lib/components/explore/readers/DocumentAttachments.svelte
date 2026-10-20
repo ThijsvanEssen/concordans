@@ -9,6 +9,8 @@
 	import { bronHref } from '$lib/bron/href';
 	import { formatCount } from '$lib/text/getal';
 	import type { Collection } from '$lib/vocabulary';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { createLoader, type LoadState as State } from '$lib/util/load.svelte';
 
 	let { collection, bronKey, aantal }: { collection: Collection; bronKey: string; aantal: number } =
 		$props();
@@ -16,34 +18,37 @@
 	/** The most rows listed here. */
 	const TOON = 50;
 	let open = $state(false);
-	let rijen = $state<Laag[] | 'laden' | 'fout' | null>(null);
+	let rijen = $state.raw<State<Laag[]> | null>(null);
+	const attachments = createLoader(
+		(key: string, signal: AbortSignal) =>
+			getBuckets(
+				collection,
+				key,
+				[{ relation: 'ACCOMPANIES', direction: 'inbound', collection: 'documents' }],
+				signal
+			).then((ns) =>
+				// A bijlage carries the title of its bill; its own name is its subject ("Advies
+				// Politie"), as the source gives it.
+				ns.slice(0, TOON).map((n) => {
+					const l = laagVan(n, 'Bijlage');
+					const onderwerp = textOf((n.props as Record<string, unknown> | undefined)?.subject);
+					return onderwerp ? { ...l, naam: onderwerp, vol: l.vol ?? l.naam } : l;
+				})
+			),
+		(s) => (rijen = s),
+		'Bijlagen'
+	);
 	$effect(() => {
 		void bronKey;
 		open = false;
 		rijen = null;
+		return attachments.stop;
 	});
 
 	function wissel() {
 		open = !open;
-		if (!open || (rijen && rijen !== 'fout')) return;
-		rijen = 'laden';
-		const voor = bronKey;
-		getBuckets(collection, bronKey, [
-			{ relation: 'ACCOMPANIES', direction: 'inbound', collection: 'documents' }
-		])
-			.then((ns) => {
-				if (voor !== bronKey) return;
-				// A bijlage carries the title of its bill; its own name is its subject ("Advies
-				// Politie"), as the source gives it.
-				rijen = ns.slice(0, TOON).map((n) => {
-					const l = laagVan(n, 'Bijlage');
-					const onderwerp = textOf((n.props as Record<string, unknown> | undefined)?.subject);
-					return onderwerp ? { ...l, naam: onderwerp, vol: l.vol ?? l.naam } : l;
-				});
-			})
-			.catch(() => {
-				if (voor === bronKey) rijen = 'fout';
-			});
+		if (!open || (rijen && rijen.status !== 'error')) return;
+		attachments.load(bronKey);
 	}
 </script>
 
@@ -53,24 +58,27 @@
 	>
 	{#if open}
 		<div class="lijst">
-			{#if rijen === 'laden' || rijen === null}
-				<p class="stil">Laden…</p>
-			{:else if rijen === 'fout'}
-				<p class="stil">Kon niet worden geladen.</p>
-			{:else}
-				<ul>
-					{#each rijen as r, i (i)}
-						<li>
-							{#if r.ref}<a href={bronHref(r.ref)} title={r.vol}>{r.naam}</a>{:else}{r.naam}{/if}
-						</li>
-					{/each}
-				</ul>
-				{#if aantal > rijen.length}
-					<p class="stil">
-						{formatCount(rijen.length)} van {formatCount(aantal)}; alle in Verbonden.
-					</p>
-				{/if}
-			{/if}
+			<LoadState
+				state={rijen ?? { status: 'loading' }}
+				what="De bijlagen"
+				plural
+				retry={attachments.retry}
+			>
+				{#snippet children(rijen)}
+					<ul>
+						{#each rijen as r, i (i)}
+							<li>
+								{#if r.ref}<a href={bronHref(r.ref)} title={r.vol}>{r.naam}</a>{:else}{r.naam}{/if}
+							</li>
+						{/each}
+					</ul>
+					{#if aantal > rijen.length}
+						<p class="stil">
+							{formatCount(rijen.length)} van {formatCount(aantal)}; alle in Verbonden.
+						</p>
+					{/if}
+				{/snippet}
+			</LoadState>
 		</div>
 	{/if}
 </span>

@@ -356,7 +356,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 							if (stale() || isAborted(e)) return;
 							// It keeps its place, with "kon niet laden" and Opnieuw.
 							report(`Verbonden ${load}`, e);
-							groups = groups.map((g) => (g.id === id ? { ...g, failed: true } : g));
+							groups = groups.map((g) => (g.id === id ? { ...g, failed: true, error: e } : g));
 						})
 						.finally(() => {
 							if (stale()) return;

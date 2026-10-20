@@ -11,39 +11,28 @@
 	import { getDocument } from '$lib/api/records';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { load } from '$lib/util/load.svelte';
 
 	let { selection }: { selection: GraphNode | null } = $props();
 
 	type Section = Schema<'SectionDTO'>;
 
-	let title = $state<string | null>(null);
-	let kind = $state<string | null>(null);
-	let sections = $state<Section[]>([]);
-	let loading = $state(false);
-	let error = $state<string | null>(null);
-
 	const key = $derived(selection?.collection === 'documents' ? selection.key : null);
-
-	$effect(() => {
-		const k = key;
-		if (!k) return;
-		const ac = new AbortController();
-		loading = true;
-		error = null;
-		getDocument(k)
-			.then((doc) => {
-				title = doc.title ?? naamVan('documents', doc);
-				kind = doc.kind ?? null;
-				sections = doc.sections ?? [];
-			})
-			.catch(() => {
-				if (!ac.signal.aborted) error = 'De inhoudsopgave kon niet worden geladen.';
-			})
-			.finally(() => {
-				if (!ac.signal.aborted) loading = false;
-			});
-		return () => ac.abort();
-	});
+	const toc = load(
+		() => key,
+		async (k) => {
+			if (!k) return null;
+			const doc = await getDocument(k);
+			return {
+				title: doc.title ?? naamVan('documents', doc),
+				kind: doc.kind ?? null,
+				sections: (doc.sections ?? []) as Section[]
+			};
+		},
+		'Inhoudsopgave'
+	);
+	const loaded = $derived(toc.state.status === 'ready' ? toc.state.data : null);
 
 	// A link to the passage, so that it can be copied and opened elsewhere; a plain click
 	// scrolls smoothly and puts the passage in the address without a history entry.
@@ -56,26 +45,30 @@
 </script>
 
 {#if key}
-	<NavKolom label="Inhoud" {title} onder={kind ? capitalize(kind) : null}>
-		{#if loading && sections.length === 0}
-			<p class="nav-kolom__note">Laden…</p>
-		{:else if error}
-			<p class="nav-kolom__note">{error}</p>
-		{:else if sections.length > 0}
-			<ol class="nav-kolom__lijst">
-				{#each sections as s (s.id)}
-					<li>
-						<a
-							class="nav-kolom__rij level-{Math.min(s.level, 3)}"
-							href="#{s.id}"
-							onclick={(e) => jump(e, s.id)}>{s.heading}</a
-						>
-					</li>
-				{/each}
-			</ol>
-		{:else if !loading}
-			<p class="nav-kolom__note">Geen indeling.</p>
-		{/if}
+	<NavKolom
+		label="Inhoud"
+		title={loaded?.title ?? null}
+		onder={loaded?.kind ? capitalize(loaded.kind) : null}
+	>
+		<LoadState state={toc.state} what="De inhoudsopgave" retry={toc.retry}>
+			{#snippet children(doc)}
+				{#if doc && doc.sections.length > 0}
+					<ol class="nav-kolom__lijst">
+						{#each doc.sections as s (s.id)}
+							<li>
+								<a
+									class="nav-kolom__rij level-{Math.min(s.level, 3)}"
+									href="#{s.id}"
+									onclick={(e) => jump(e, s.id)}>{s.heading}</a
+								>
+							</li>
+						{/each}
+					</ol>
+				{:else}
+					<p class="nav-kolom__note">Geen indeling.</p>
+				{/if}
+			{/snippet}
+		</LoadState>
 	</NavKolom>
 {/if}
 

@@ -103,6 +103,8 @@ export type Group = GroupDef & {
 	laden?: boolean;
 	/** Its loader failed: the group keeps its place with "kon niet laden" and Opnieuw. */
 	failed?: boolean;
+	/** Why its loader failed: slow or broken, for failureText. */
+	error?: unknown;
 };
 
 const national = (n: Neighbor) => !isInternational(n);
