@@ -48,3 +48,22 @@ describe('the contents of a law (K3)', () => {
 			expect(bron(path), path).not.toMatch(/BWBR/);
 	});
 });
+
+describe('the tables in a text (A20)', () => {
+	it('are passed by every reader of an article to ArticleText', () => {
+		for (const path of [
+			'lib/components/explore/readers/ArticleReader.svelte',
+			'lib/components/explore/WholeLawReaderArticle.svelte',
+			'lib/map/MapInhoud.svelte'
+		])
+			expect(bron(path), path).toMatch(/<ArticleText\b[^>]*\btables=/);
+	});
+
+	it('are laid out by TextTable only', () => {
+		expect(filesWith(/\bhead_rows\b|\browsOf\(/)).toEqual([
+			'lib/components/articles/TextTable.svelte',
+			'lib/text/tables.ts'
+		]);
+		expect(filesWith(/<TextTable\b/)).toEqual(['lib/components/articles/ArticleText.svelte']);
+	});
+});

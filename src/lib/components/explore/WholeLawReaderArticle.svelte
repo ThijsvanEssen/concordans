@@ -82,6 +82,7 @@
 		<ArticleText
 			text={shown.text}
 			parts={shown.parts}
+			tables={shown.tables}
 			citations={linked?.citations ?? []}
 			references={linked?.references ?? []}
 			law={bwbId}

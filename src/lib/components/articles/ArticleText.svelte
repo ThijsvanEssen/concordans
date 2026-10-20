@@ -15,6 +15,8 @@
 	import { citeArticle, placeCitation, type ArticleCitation } from '$lib/text/cite';
 	import type { ProposedText } from '$lib/verbonden/proposed-text';
 	import CitedText from './CitedText.svelte';
+	import TextTable from './TextTable.svelte';
+	import { piecesOf, type Table } from '$lib/text/tables';
 	import { spansWithin } from '$lib/text/spans';
 	import { definitiesOp, type Begrip, type Definitie } from '$lib/text/begrippen';
 	import { delegatiesWithin, type Delegatie, type Gedelegeerd } from '$lib/text/delegaties';
@@ -30,6 +32,7 @@
 	let {
 		text,
 		parts: apiParts = null,
+		tables: apiTables = [],
 		citations = [],
 		references = [],
 		law = null,
@@ -54,6 +57,8 @@
 		text: string | null | undefined;
 		/** The parts the API delivers (0.5); without them they are read from the text. */
 		parts?: Schema<'ArticlePartSpanDTO'>[] | null;
+		/** The tables in the text (`tables`), laid out by TextTable. */
+		tables?: Table[] | null;
 		citations?: Schema<'ArticleCitationSpan'>[];
 		/** Every reference the text makes (`references`): each mention a link where its
 		 *  target is known, besides the one citation per target. */
@@ -113,7 +118,8 @@
 	});
 	const links = $derived(referenceSpans(citations, references, { ownLaw: law, crumbs: divisions }));
 	const perRef = $derived(definitiesOp(definities));
-	const parts = $derived(partsOf(source, apiParts));
+	const tables = $derived(apiTables ?? []);
+	const parts = $derived(partsOf(source, apiParts, tables));
 	const marker = (number: string) => markerOf(number, mark);
 	/** Every part, for the place a citation names: a definition by its term. */
 	const allParts = $derived([...walkParts(parts)]);
@@ -129,17 +135,22 @@
 		!!part.id &&
 		(part.id === gemarkeerd || (!!bewaar && kaart.heeft({ id: bewaar.id, at: part.id })));
 
-	const own = (part: ArticlePart) => {
-		const raw = source.slice(part.textStart, part.textEnd);
-		const lead = raw.length - raw.trimStart().length;
-		const body = raw.trim();
-		return {
-			body,
-			citations: spansWithin(links, part.textStart + lead, body.length),
-			begrippen: spansWithin(begrippen, part.textStart + lead, body.length),
-			delegaties: delegatiesWithin(delegaties, part.textStart + lead, body.length)
-		};
-	};
+	/** What the text `[start, end)` marks, offsets relative to `start`. */
+	const marks = (start: number, end: number) => ({
+		citations: spansWithin(links, start, end - start),
+		begrippen: spansWithin(begrippen, start, end - start),
+		delegaties: delegatiesWithin(delegaties, start, end - start)
+	});
+
+	/** A part's own text: its paragraphs (trimmed, none empty) and its tables. */
+	const own = (part: ArticlePart) =>
+		piecesOf(part.textStart, part.textEnd, tables).flatMap((piece) => {
+			if (piece.table) return [piece];
+			const raw = source.slice(piece.start, piece.end);
+			const start = piece.start + raw.length - raw.trimStart().length;
+			const end = start + raw.trim().length;
+			return end > start ? [{ start, end, table: null }] : [];
+		});
 
 	/** The place's text with its onderdelen, as Kopieer tekst puts it on the clipboard; the
 	 *  article's whole text when the place is the article. */
@@ -178,8 +189,29 @@
 		citation ? citeArticle({ ...citation, ...placeCitation(part?.id ?? null, allParts) }) : null;
 </script>
 
+{#snippet cited(start: number, end: number)}
+	{@const m = marks(start, end)}
+	<CitedText
+		text={source.slice(start, end)}
+		citations={m.citations}
+		begrippen={m.begrippen}
+		definities={perRef}
+		delegaties={m.delegaties}
+		{grondslag}
+	/>
+{/snippet}
+
+{#snippet tekst(part: ArticlePart)}
+	{#each own(part) as piece (piece.start)}
+		{#if piece.table}
+			<TextTable text={source} table={piece.table} cell={cited} />
+		{:else}
+			<p>{@render cited(piece.start, piece.end)}</p>
+		{/if}
+	{/each}
+{/snippet}
+
 {#snippet render(part: ArticlePart, top: boolean)}
-	{@const { body, citations: spans, begrippen: termen, delegaties: formules } = own(part)}
 	{@const showProposed = proposed && part.kind === 'lid' && proposed.lid === part.number}
 	{#if top}
 		<div
@@ -200,16 +232,7 @@
 			>
 			<div class="lid__body" class:lid__body--pair={showProposed}>
 				<div class="lid__text" use:blockClick={opTekst(part)}>
-					{#if body}<p>
-							<CitedText
-								text={body}
-								citations={spans}
-								begrippen={termen}
-								definities={perRef}
-								delegaties={formules}
-								{grondslag}
-							/>
-						</p>{/if}
+					{@render tekst(part)}
 					{#each part.children as child (child.start)}
 						{@render render(child, false)}
 					{/each}
@@ -251,16 +274,7 @@
 				>
 			{/if}
 			<div class="part__body" use:blockClick={opTekst(part)}>
-				{#if body}<p>
-						<CitedText
-							text={body}
-							citations={spans}
-							begrippen={termen}
-							definities={perRef}
-							delegaties={formules}
-							{grondslag}
-						/>
-					</p>{/if}
+				{@render tekst(part)}
 				{#each part.children as child (child.start)}
 					{@render render(child, false)}
 				{/each}

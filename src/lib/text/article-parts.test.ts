@@ -100,6 +100,21 @@ describe('parseArticleParts', () => {
 	});
 });
 
+describe('parseArticleParts with tables', () => {
+	it('keeps a table one block of the text, its rows no leden', () => {
+		const text = 'De tarieven zijn:\n1.\tlaag\t5%\n2.\thoog\t10%\nSlot.';
+		const start = text.indexOf('1.');
+		const end = text.indexOf('\nSlot');
+		const parts = parseArticleParts(text, [{ start, end, head_rows: 0, columns: 3, spans: [] }]);
+		expect(parts.map((p) => [p.kind, text.slice(p.start, p.end)])).toEqual([
+			['tekst', 'De tarieven zijn:'],
+			['tekst', text.slice(start, end)],
+			['tekst', 'Slot.']
+		]);
+		expect(parseArticleParts(text).filter((p) => p.kind === 'lid')).toHaveLength(2);
+	});
+});
+
 describe('partsFromApi', () => {
 	// BW 7:3 lid 3: the lid and its aanhef start at the same offset.
 	const part = (id: string, kind: string, number: string | null, start: number, end: number) => ({

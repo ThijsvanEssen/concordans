@@ -1,0 +1,111 @@
+{
+	"article": {
+		"key": "bwbr0045077_2",
+		"bwb_id": "BWBR0045077",
+		"article_number": "2",
+		"label": "Artikel 2",
+		"text": "Als aanbieders van een essentiële dienst of categorieën van zodanige aanbieders worden aangewezen:\nSector\tAanbieder\tEssentiële dienst\nDigitale infrastructuur\tEen aanbieder van een internetknooppunt als bedoeld in artikel 4, onder 13, van Richtlijn (EU) 2016/1148 waarop meer dan 300 autonome systemen zijn aangesloten\tHet faciliteren van het internet- en dataverkeer\nEen beheerder van een register voor topleveldomeinnamen die bij de Internet Assigned Number Authority (IANA) is geregistreerd en die meer dan 1.000.000 geregistreerde domeinnamen in beheer heeft\tHet beheren en registreren van domeinnamen onder een topleveldomein\nEen aanbieder van DNS-diensten als bedoeld in artikel 4, onder 14 en 15, van Richtlijn (EU) 2016/1148 die ten behoeve van meer dan 400.000 geregistreerde .nl- domeinnamen authoritative DNS-diensten verleent. Indien een aanbieder een of meer partnerondernemingen of verbonden ondernemingen als bedoeld in artikel 3, tweede onderscheidenlijk derde lid, van de bijlage bij de Aanbeveling van de Commissie van 6 mei 2003 betreffende de definitie van kleine, middelgrote en micro-ondernemingen (PbEU 2003, L 124) heeft, wordt uitgegaan van het totale aantal .nl-domeinnamen van de partnerondernemingen of verbonden ondernemingen.\tHet verlenen van DNS-diensten\nEnergie: aardolie\tEen beheerder of exploitant van een buisleiding als bedoeld in artikel 1 van het Besluit externe veiligheid buisleidingen, die door middel van de volgende pijpleidingen ruwe aardolie of aardolieproducten vervoert: – van Rotterdam naar Antwerpen, – van Rotterdam naar Vlissingen, – van Rotterdam naar het Ruhrgebied in Duitsland, of – van Amsterdam naar de luchthaven Schiphol.\tBeheer van oliepijpleidingen\n\tEen exploitant van een raffinaderij met een integratie met een chemische unit op locaties in Pernis, Rotterdam en Vlissingen-Oost\tProductie, opslag, transport, raffinage, of behandeling van olie\nEen exploitant van een inrichting voor het verwerken van dierlijke of plantaardige oliën of vetten als bedoeld in bijlage 1, onderdeel C, categorie 6, eerste lid, van het Besluit omgevingsrecht\t\nEen exploitant van: – een opslagterminal voor aardolieproducten met een opslag capaciteit van ten minste 600.000 m3, of – een opslagterminal voor ruwe aardolie met een opslagcapaciteit van ten minste 600.000 m3 ruwe aardolie.\tOpslag of behandeling van olie\nEnergie: gas\tEen LNG-bedrijf als bedoeld in artikel 1, eerste lid, onderdeel i, van de Gaswet.\tHet vloeibaar maken van aardgas of de invoer, de verlading en de hervergassing van LNG\nEen gasopslagbedrijf als bedoeld in artikel 1, eerste lid, onderdeel g, van de Gaswet voor gasopslagen te Bergermeer, Grijpskerk en Alkmaar\tOpslag van gas",
+		"parts": [],
+		"tables": [
+			{
+				"start": 99,
+				"end": 2693,
+				"head_rows": 1,
+				"columns": 3,
+				"spans": [
+					{
+						"row": 1,
+						"cell": 0,
+						"cols": 1,
+						"rows": 3
+					},
+					{
+						"row": 5,
+						"cell": 0,
+						"cols": 1,
+						"rows": 3
+					},
+					{
+						"row": 8,
+						"cell": 0,
+						"cols": 1,
+						"rows": 2
+					}
+				]
+			}
+		]
+	},
+	"term_spans": [
+		{
+			"start": 162,
+			"end": 171,
+			"term": "aanbieder",
+			"definition_ref": "bwbr0041515_1:aanbieder"
+		},
+		{
+			"start": 634,
+			"end": 643,
+			"term": "aanbieder",
+			"definition_ref": "bwbr0041515_1:aanbieder"
+		},
+		{
+			"start": 849,
+			"end": 858,
+			"term": "aanbieder",
+			"definition_ref": "bwbr0041515_1:aanbieder"
+		},
+		{
+			"start": 1489,
+			"end": 1506,
+			"term": "aardolieproducten",
+			"definition_ref": "bwbr0045077_1:aardolieproducten"
+		},
+		{
+			"start": 2146,
+			"end": 2163,
+			"term": "aardolieproducten",
+			"definition_ref": "bwbr0045077_1:aardolieproducten"
+		}
+	],
+	"definitions": [
+		{
+			"ref": "bwbr0041515_1:aanbieder",
+			"term": "aanbieder",
+			"text": "overheidsorganisatie of privaatrechtelijke rechtspersoon die een dienst exploiteert, beheert of beschikbaar stelt",
+			"article_key": "bwbr0041515_1",
+			"article_number": "1",
+			"place": null,
+			"jci": null,
+			"scope": {
+				"kind": "wet",
+				"path": "",
+				"reach": "own_and_based"
+			},
+			"refers_to": null,
+			"given_by": {
+				"key": "bwbr0041515",
+				"bwb_id": "BWBR0041515",
+				"citation_title": "Wet beveiliging netwerk- en informatiesystemen",
+				"short_title": "Wbni",
+				"abbreviation": "Wbni",
+				"path": "/wetten/BWBR0041515"
+			}
+		},
+		{
+			"ref": "bwbr0045077_1:aardolieproducten",
+			"term": "aardolieproducten",
+			"text": "kerosine, diesel of benzine",
+			"article_key": "bwbr0045077_1",
+			"article_number": "1",
+			"place": null,
+			"jci": null,
+			"scope": {
+				"kind": "regeling",
+				"path": "",
+				"reach": "own"
+			},
+			"refers_to": null,
+			"given_by": null
+		}
+	]
+}

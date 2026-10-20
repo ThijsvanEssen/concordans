@@ -271,6 +271,7 @@ describe('the text an article of the whole law shows', () => {
 		breadcrumb: [],
 		text: null,
 		parts: null,
+		tables: [],
 		text_preview: null,
 		...r
 	});
@@ -280,6 +281,7 @@ describe('the text an article of the whole law shows', () => {
 		expect(articleText(row({ text: 'Oud.', textToday: 'Nu.' }), detail)).toEqual({
 			text: 'Oud.',
 			parts: null,
+			tables: [],
 			cited: false
 		});
 	});
@@ -290,6 +292,12 @@ describe('the text an article of the whole law shows', () => {
 			cited: true
 		});
 		expect(articleText(row({}), detail)).toMatchObject({ text: 'Uit het artikel.', cited: true });
+	});
+
+	it('brings the tables of the text it takes', () => {
+		const t = { start: 0, end: 3, head_rows: 1, columns: 2, spans: [] };
+		expect(articleText(row({ textToday: 'a\tb', tablesToday: [t] }), detail)?.tables).toEqual([t]);
+		expect(articleText(row({}), { ...detail, tables: [t] })?.tables).toEqual([t]);
 	});
 
 	it('has no text where none came: the preview stands', () => {
@@ -308,6 +316,7 @@ describe('the article of the whole law asked alone', () => {
 		breadcrumb: [],
 		text: null,
 		parts: null,
+		tables: [],
 		text_preview: null,
 		...r
 	});
