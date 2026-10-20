@@ -1799,6 +1799,12 @@
 	.explore-empty {
 		margin: var(--s-6);
 	}
+	/* On a phone the page's own margin, as the reader's and the logo's (A53 #7). */
+	@media (max-width: 768px) {
+		.explore-empty {
+			margin: var(--s-5) var(--s-4);
+		}
+	}
 
 	/* A hairline until touched, not a constant grey bar: the 5px track is the hit
 	   area, drawn as a thin centred line that only widens under the pointer. */

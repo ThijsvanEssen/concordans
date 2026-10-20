@@ -42,5 +42,8 @@ describe('rowsOfExplanations', () => {
 		expect(rows.map((r) => r.ref.key)).toEqual(['first']);
 		// `s-40` is the id of a section: the reader opens there, but it is no § number.
 		expect(rows[0]).toMatchObject({ at: 's-40', position: null });
+		// A lasting id (#831) names no § number either, its hex digits none.
+		const [lasting] = rowsOfExplanations([item('first', 'article', 's-3f2a9c1e')]);
+		expect(lasting).toMatchObject({ at: 's-3f2a9c1e', position: null });
 	});
 });

@@ -18,7 +18,8 @@
 	import { ignore } from '$lib/api/errors';
 	import type { SharedMap } from '$lib/map/map';
 	import { kaart } from '$lib/map/map.svelte';
-	import { BROKEN, isOldLink, sharedOfFragment } from '$lib/map/share';
+	import { BROKEN, isOldLink, sharedMapName, sharedOfFragment } from '$lib/map/share';
+	import { siteTitle } from '$lib/seo/server-head.svelte';
 	import { NEWER, mapFile, mapFileName, readMapFile, type FileMap } from '$lib/map/file';
 	import BundleRow from '$lib/map/BundleRow.svelte';
 	import MapView from '$lib/map/MapView.svelte';
@@ -102,7 +103,10 @@
 	const sameId = (f: FileMap) => !!f.id && kaart.mappen.some((m) => m.id === f.id);
 </script>
 
-<RouteKop />
+<!-- A shared bundel's tab carries its name, as a bundel of this browser's does (A53 #4). -->
+<RouteKop
+	title={shared && shared !== BROKEN && !oldLink ? siteTitle(sharedMapName(shared)) : undefined}
+/>
 
 {#if shared && shared !== BROKEN && !oldLink}
 	<!-- A shared bundel: its page, read only, as the one who shared it sees it (2c). -->

@@ -106,3 +106,7 @@ export async function sharedOfFragment(hash: string): Promise<SharedMap | typeof
 		return BROKEN;
 	}
 }
+
+/** A shared bundel's name, as its page heads it and its tab names it. */
+export const sharedMapName = (shared: Pick<SharedMap, 'naam'>): string =>
+	shared.naam ?? 'Gedeelde bundel';

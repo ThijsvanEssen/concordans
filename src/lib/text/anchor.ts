@@ -32,7 +32,12 @@ const PREFIXED: { prefix: string; read: (rest: string) => Anchor | null }[] = [
 		prefix: 'p-',
 		read: (h) => (/^[0-9a-f]{8}(?:_\d+)?$/.test(h) ? { kind: 'line', id: `p-${h}` } : null)
 	},
-	{ prefix: 's-', read: (n) => (/^\d+$/.test(n) ? { kind: 'section', id: `s-${n}` } : null) },
+	{
+		// `s-24` before #831 (its place), `s-3f2a9c1e` since (its heading and the line after it).
+		prefix: 's-',
+		read: (n) =>
+			/^(?:\d+|[0-9a-f]{8}(?:_\d+)?)$/.test(n) ? { kind: 'section', id: `s-${n}` } : null
+	},
 	{ prefix: 'fn-', read: (label) => ({ kind: 'note', label }) },
 	{ prefix: 'artikel-', read: (number) => ({ kind: 'article', number }) },
 	{ prefix: 'deel-', read: (path) => ({ kind: 'division', path }) }
@@ -119,6 +124,21 @@ export const isOverwegingAnker = (at: string | null | undefined): at is string =
 /** Whether a reference is to a judgment at an overweging: its card is the overweging. */
 export const isOverwegingRef = (ref: string | null, at: string | null | undefined) =>
 	!!ref && ref.startsWith('judgments/') && isOverwegingAnker(at);
+
+/**
+ * The section an anchor names (`s-…`): the one with that id; an anchor of before #831 (`s-24`,
+ * its place) that no section has as its id, the section at that place. Else undefined.
+ */
+export function paperSectionOf<S extends { id?: string }>(
+	sections: readonly S[] | null | undefined,
+	at: string
+): S | undefined {
+	const all = sections ?? [];
+	const exact = all.find((s) => s.id === at);
+	if (exact) return exact;
+	const place = /^s-(\d+)$/.exec(at);
+	return place ? all[Number(place[1]) - 1] : undefined;
+}
 
 /** What a Kamerstuk gives to read its alineas: its text, its lines as the API numbers them
  *  (`paragraphs`, API 0.79.66) and its sections. */

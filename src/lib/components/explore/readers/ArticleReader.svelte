@@ -372,7 +372,9 @@
 			? articleCitation(loaded.article, {
 					own: ownCitationTitle,
 					meta: law,
-					displayName: loaded.instrument?.display_name
+					displayName: loaded.instrument?.display_name,
+					// An act of the EU: its text as adopted, dated on that day (A53 #2).
+					adopted: euAct ? { on: euAdopted } : null
 				})
 			: null
 	);

@@ -91,7 +91,7 @@ describe('a kept place of a Kamerstuk, read in place (A28)', () => {
 		expect(paperParagraphOf(mvt, at)!.items.map((a) => a.n)).toEqual([2]);
 		const rond = paperParagraphOf(mvt, at, true)!;
 		expect([...new Set(rond.items.map((a) => a.n))]).toEqual([1, 2, 3, 4, 5]);
-		expect([...rond.eigen]).toEqual([2]);
+		expect(rond.items.filter((p) => rond.eigen.has(p.i)).map((p) => p.n)).toEqual([2]);
 	});
 
 	it('shows a passage (a section of the API) as the alineas in it', () => {
@@ -105,5 +105,37 @@ describe('a kept place of a Kamerstuk, read in place (A28)', () => {
 		expect(paperParagraphOf(mvt, 's-999')).toBeNull();
 		expect(paperParagraphOf(mvt, 'rov-1')).toBeNull();
 		expect(paperParagraphOf({ ...mvt, paragraphs: [] }, alinea(2).at!)).toBeNull();
+	});
+
+	it('shows a passage by its own text where the API has not numbered the paper (A53 #1)', () => {
+		// Without `paragraphs` the passage is still its section: its lines, never the opening
+		// of the paper.
+		const section = mvt.sections.find((s) => s.id === 's-3')!;
+		const bare = { ...mvt, paragraphs: [] };
+		const c = paperParagraphOf(bare, 's-3')!;
+		const own = mvt.text.slice(section.char_start, section.char_end);
+		expect(c.items.map((a) => a.text).join('\n')).toBe(
+			own
+				.split('\n')
+				.slice(1)
+				.map((l) => l.trim())
+				.filter(Boolean)
+				.join('\n')
+		);
+		expect(c.items.every((a) => a.n === null)).toBe(true);
+		expect(c.items[0].text).not.toBe(paperParagraphs(bare)[0].text);
+	});
+
+	it('opens an old anchor `s-N` at the N-th section where no section has that id (#831)', () => {
+		const lasting = mvt.sections.map((s, k) => ({
+			...s,
+			id: `s-${(0xa0000000 + k).toString(16)}`
+		}));
+		const now = { ...mvt, sections: lasting };
+		expect(paperParagraphOf(now, 's-3')!.items).toEqual(paperParagraphOf(mvt, 's-3')!.items);
+		expect(paperParagraphOf(now, lasting[2].id)!.items).toEqual(
+			paperParagraphOf(mvt, 's-3')!.items
+		);
+		expect(paperParagraphOf(now, 's-999')).toBeNull();
 	});
 });

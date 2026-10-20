@@ -244,8 +244,9 @@
 		.row-aside:has(:global(.num-strong)) {
 			justify-content: flex-end;
 		}
+		/* The detail as far in as the row's title, its kept bar inside it (A53 #8). */
 		.detail {
-			padding-left: 0;
+			padding-left: var(--s-2);
 		}
 	}
 </style>

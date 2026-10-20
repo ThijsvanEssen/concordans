@@ -176,6 +176,9 @@ describe('the alineas of a Kamerstuk, as the API numbers them (A28, #821)', () =
 	it('reads a section of a paper (`s-300`), a passage as the API gives it, by its id', () => {
 		expect(parseAnchor('s-300')).toEqual({ kind: 'section', id: 's-300' });
 		expect(parseAnchor('s-x')).toBeNull();
+		// A lasting id (#831): `s-` and 8 hex of its heading and the line after it.
+		expect(parseAnchor('s-3f2a9c1e')).toEqual({ kind: 'section', id: 's-3f2a9c1e' });
+		expect(parseAnchor('s-3f2a9c1e_2')).toEqual({ kind: 'section', id: 's-3f2a9c1e_2' });
 		// Its heading is the paper's, not the anchor's: the anchor alone prints nothing.
 		expect(anchorLabel('s-300')).toBeNull();
 	});

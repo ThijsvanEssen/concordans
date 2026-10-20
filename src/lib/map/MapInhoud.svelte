@@ -216,7 +216,9 @@
 			? articleCitation(inhoud.d.article, {
 					own: inhoud.d.eigen,
 					meta: $instrumentMetaStore.get(inhoud.d.bwb) ?? null,
-					displayName: inhoud.d.instrument?.display_name
+					displayName: inhoud.d.instrument?.display_name,
+					// An act of the EU, its text as adopted: never "geldend" (its day is the reader's).
+					adopted: inhoud.d.instrument?.celex && !inhoud.d.instrument.bwb_id ? { on: null } : null
 				})
 			: null
 	);

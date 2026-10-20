@@ -457,7 +457,7 @@ describe('the alineas of a Kamerstuk in a bundel, under the stuk (A28)', () => {
 		expect(rij.head).toMatchObject({ id: stuk.id, at: '', kort: stuk.kort, voluit: null });
 		expect(rij.places.map((p) => p.at)).toEqual(['p-00000004', 'p-00000006']);
 		expect(ander).toEqual({ head: lid2, kept: true, places: [] });
-		expect(rowTitle(al(4), true)).toEqual({ title: 'alinea 4', sub: null });
+		expect(rowTitle(al(4), true)).toEqual({ title: 'alinea 4' });
 		// A passage (a section of the memorie) under its stuk, by its heading.
 		const passage = {
 			...stuk,
@@ -465,7 +465,7 @@ describe('the alineas of a Kamerstuk in a bundel, under the stuk (A28)', () => {
 			kort: `${stuk.kort}, § Artikel X, onderdeel A`,
 			voluit: null
 		};
-		expect(rowTitle(passage, true)).toEqual({ title: '§ Artikel X, onderdeel A', sub: null });
+		expect(rowTitle(passage, true)).toEqual({ title: '§ Artikel X, onderdeel A' });
 		expect(placeRows([passage, al(4)])[0].head.kort).toBe(stuk.kort);
 	});
 
@@ -481,8 +481,25 @@ describe('the alineas of a Kamerstuk in a bundel, under the stuk (A28)', () => {
 });
 
 describe('the citation of a row: one line (bundels-ux 2b.6)', () => {
+	it('never puts the full form under the short one: one line, the full form where it adds an ECLI (A53 #6)', () => {
+		const rb = {
+			id: 'judgments/ecli_nl_rbdha_2015_7196',
+			at: '',
+			kort: 'Rb. Den Haag 24 juni 2015 (Urgenda)',
+			voluit: 'Rb. Den Haag 24 juni 2015, ECLI:NL:RBDHA:2015:7196'
+		};
+		expect(rowTitle(rb)).toEqual({ title: rb.voluit });
+		const passage = {
+			id: 'documents/8c1a3474',
+			at: 's-300',
+			kort: 'Kamerstukken II 2025/26, 36812, nr. 3, § Artikel X',
+			voluit: 'Kamerstukken II 2025/26, 36812, nr. 3 (Memorie van toelichting), § Artikel X'
+		};
+		expect(rowTitle(passage)).toEqual({ title: passage.kort });
+	});
+
 	it('leaves out the full form where it only writes out the short one', () => {
-		expect(rowTitle(lid2)).toEqual({ title: 'art. 6:162 lid 2 BW', sub: null });
+		expect(rowTitle(lid2)).toEqual({ title: 'art. 6:162 lid 2 BW' });
 	});
 
 	it('takes the full form where it adds to the short one', () => {
@@ -492,8 +509,8 @@ describe('the citation of a row: one line (bundels-ux 2b.6)', () => {
 			kort: 'HR 20 december 2019',
 			voluit: 'HR 20 december 2019, ECLI:NL:HR:2019:2006'
 		};
-		expect(rowTitle(hr)).toEqual({ title: 'HR 20 december 2019, ECLI:NL:HR:2019:2006', sub: null });
-		expect(rowTitle({ ...ro })).toEqual({ title: ro.kort, sub: null });
+		expect(rowTitle(hr)).toEqual({ title: 'HR 20 december 2019, ECLI:NL:HR:2019:2006' });
+		expect(rowTitle({ ...ro })).toEqual({ title: ro.kort });
 		const dossier: MapItem = {
 			id: 'dossiers/36327',
 			at: '',
@@ -503,17 +520,14 @@ describe('the citation of a row: one line (bundels-ux 2b.6)', () => {
 			groupKey: 'dossier:36327'
 		};
 		// Its group names it: the row cites it by its number, the title not twice (A14 #6).
-		expect(rowTitle(dossier)).toEqual({ title: 'Kamerstuk 36327', sub: null });
+		expect(rowTitle(dossier)).toEqual({ title: 'Kamerstuk 36327' });
 		expect(
 			rowTitle({ ...dossier, kort: 'Kamerstukken 36600 VII (Begroting BZK 2025)', voluit: null })
-		).toEqual({ title: 'Kamerstuk 36600 VII', sub: null });
+		).toEqual({ title: 'Kamerstuk 36600 VII' });
 	});
 
 	it('names a place under its judgment by the place alone', () => {
-		expect(rowTitle(ro, true)).toEqual({
-			title: 'r.o. 5.7.1',
-			sub: null
-		});
+		expect(rowTitle(ro, true)).toEqual({ title: 'r.o. 5.7.1' });
 	});
 });
 

@@ -8,7 +8,12 @@
 		paperParagraphCite,
 		paperSectionCite
 	} from '$lib/components/parliamentary/paper-cite';
-	import { paperParagraphs, type PaperParagraph } from '$lib/text/anchor';
+	import {
+		paperParagraphs,
+		parseAnchor,
+		paperSectionOf,
+		type PaperParagraph
+	} from '$lib/text/anchor';
 	import PlaatsMenu, { placeMarker } from '$lib/components/articles/PlaatsMenu.svelte';
 	import { blockClick } from '$lib/actions/klik';
 	import { kaart } from '$lib/map/map.svelte';
@@ -272,7 +277,12 @@
 		if (!loaded || article || !anchor || !root) return;
 		const container = root;
 		if (isNootAnker(anchor)) noten.toon(anchor, { bereik: markering?.bereik });
-		const doelwit = tekstBereik ? 'markering' : anchor;
+		// A section by its id; an old anchor (`s-24`, before #831) at its place (paperSectionOf).
+		const doelwit = tekstBereik
+			? 'markering'
+			: parseAnchor(anchor)?.kind === 'section'
+				? (paperSectionOf(sections, anchor)?.id ?? anchor)
+				: anchor;
 		afterTick(() => landOn(container, doelwit));
 	});
 </script>

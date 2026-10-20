@@ -116,6 +116,37 @@ describe('citeArticle', () => {
 	});
 });
 
+describe('citing an article of an act of the EU, its text as adopted (A53 #2)', () => {
+	const avg = {
+		articleNumber: '6',
+		shortTitle: null,
+		citationTitle: 'Verordening (EU) 2016/679',
+		date: new Date(2026, 9, 20)
+	};
+
+	it('dates it on the day it was adopted, never as the text in force today', () => {
+		const forms = citeArticle({ ...avg, adopted: { on: '2016-04-27' } });
+		expect(forms.metDatum).toBe(
+			'art. 6 Verordening (EU) 2016/679 (tekst zoals vastgesteld op 27 april 2016)'
+		);
+		expect(forms.metDatum).not.toMatch(/geldend/);
+	});
+
+	it('gives no dated form where the day it was adopted is not known', () => {
+		expect(citeArticle({ ...avg, adopted: { on: null } }).metDatum).toBeNull();
+	});
+
+	it('carries the act’s day from the reader into every place of the article', () => {
+		const c = articleCitation(
+			{ article_number: '6' },
+			{ own: 'Verordening (EU) 2016/679', adopted: { on: '2016-04-27' } }
+		)!;
+		expect(citeArticle({ ...c, lid: '1' }).metDatum).toBe(
+			'art. 6 lid 1 Verordening (EU) 2016/679 (tekst zoals vastgesteld op 27 april 2016)'
+		);
+	});
+});
+
 describe('articleCitation', () => {
 	const meta = { citationTitle: 'Algemene wet bestuursrecht', title: null, shortTitle: 'Awb' };
 	it('cites by the name the article gives its law, the short title from the law', () => {

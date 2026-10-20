@@ -6,6 +6,7 @@ import {
 	paperParagraphs,
 	paragraphAnchor,
 	parseAnchor,
+	paperSectionOf,
 	type PaperParagraph,
 	type PaperSource
 } from '$lib/text/anchor';
@@ -76,34 +77,40 @@ export function overwegingVan(
 
 /**
  * The alineas of a Kamerstuk that show the place an item keeps: an alinea (by the lasting id
- * of a line of it, `p-360a090c`), or a passage, a section of the API (`s-300`), as the
- * alineas in it; with `rond`, a few alineas before and after. `eigen` the numbers of the
- * place's own. Null where the stuk has no such place, or no alineas yet.
+ * of a line of it, `p-360a090c`), or a passage, a section of the API (`s-24`, `s-3f2a9c1e`),
+ * as the lines of its own text under its heading, numbered or not; with `rond`, a few alineas
+ * before and after. `eigen` the places among the lines (`i`) of the place's own. Null where
+ * the stuk has no such place; an alinea also where the API has not numbered the paper.
  */
 export function paperParagraphOf(
 	source: PaperSource,
 	at: string,
 	rond = false
 ): { items: PaperParagraph[]; eigen: Set<number> } | null {
-	const alineas = paperParagraphs(source).filter((p) => p.n !== null);
+	const lines = paperParagraphs(source);
+	const alineas = lines.filter((p) => p.n !== null);
 	const a = parseAnchor(at);
-	const section =
-		a?.kind === 'section' ? (source.sections ?? []).find((s) => s.id === a.id) : undefined;
+	const section = a?.kind === 'section' ? paperSectionOf(source.sections, a.id) : undefined;
 	const line = a?.kind === 'line' ? alineas.find((p) => p.id === a.id) : undefined;
 	const own = line
 		? alineas.filter((p) => p.n === line.n)
 		: section
-			? alineas.filter(
-					(p) => p.start >= section.char_start && p.start < (section.char_end ?? Infinity)
+			? lines.filter(
+					(p) => p.start > section.char_start && p.start < (section.char_end ?? Infinity)
 				)
 			: [];
 	if (!own.length) return null;
-	const eigen = new Set(own.map((p) => p.n!));
-	const numbers = [...new Set(alineas.map((p) => p.n!))];
-	const first = numbers.indexOf(own[0].n!);
-	const last = numbers.indexOf(own.at(-1)!.n!);
-	const shown = new Set(
-		numbers.slice(rond ? Math.max(0, first - ROND) : first, (rond ? last + ROND : last) + 1)
+	const eigen = new Set(own.map((p) => p.i));
+	if (!rond) return { items: own, eigen };
+	// A few alineas before and after, by their numbers: a table is one.
+	const before = [...new Set(alineas.filter((p) => p.i < own[0].i).map((p) => p.n))].slice(-ROND);
+	const after = [...new Set(alineas.filter((p) => p.i > own.at(-1)!.i).map((p) => p.n))].slice(
+		0,
+		ROND
 	);
-	return { items: alineas.filter((p) => shown.has(p.n!)), eigen };
+	const around = new Set([...before, ...after]);
+	return {
+		items: lines.filter((p) => eigen.has(p.i) || (p.n !== null && around.has(p.n))),
+		eigen
+	};
 }

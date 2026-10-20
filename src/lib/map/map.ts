@@ -309,32 +309,28 @@ export function placeRows(items: readonly MapItem[]): PlaceRow[] {
 }
 
 /**
- * A row's citation on one line: the full form where it adds to the short one (an ECLI), the
- * short one where the full form only writes it out (`artikel 6:162 lid 2 Burgerlijk Wetboek`),
- * else the full form under it. A place under its bron is named by the place alone, a
- * dossier by its number (its group names it).
+ * A row's citation on one line, never a second under it (A53 #6): the full form where it
+ * adds to the short one (it writes it out further, or adds an ECLI the short one lacks),
+ * else the short one. A place under its bron is named by the place alone, a dossier by its
+ * number (its group names it).
  */
 export function rowTitle(
 	i: Pick<MapItem, 'id' | 'at' | 'kort' | 'voluit'>,
 	place = false
-): { title: string; sub: string | null } {
+): { title: string } {
 	const own = place ? /(?:\br\.o\.|\balinea|§)\s.*$/.exec(i.kort)?.[0] : null;
-	if (own) return { title: own, sub: null };
+	if (own) return { title: own };
 	const collection = parseNodeId(i.id)?.collection;
 	// A dossier kept whole stands under its group, which names it: its row cites it by number
 	// alone, not its title again (UX-toets A14 #6).
 	// In the number of its group's head: `Kamerstuk 36600 VII` (dossierLabel, A21 #4).
 	if (collection === 'dossiers')
-		return {
-			title: i.kort.replace(/\s*\(.*\)$/, '').replace(/^Kamerstukken\b/, 'Kamerstuk'),
-			sub: null
-		};
+		return { title: i.kort.replace(/\s*\(.*\)$/, '').replace(/^Kamerstukken\b/, 'Kamerstuk') };
 	const full = i.voluit?.trim();
-	if (!full || full === i.kort) return { title: i.kort, sub: null };
-	if (full.startsWith(i.kort)) return { title: full, sub: null };
-	if (collection === 'articles' || collection === 'instruments')
-		return { title: i.kort, sub: null };
-	return { title: i.kort, sub: full };
+	if (!full || full === i.kort) return { title: i.kort };
+	if (collection === 'articles' || collection === 'instruments') return { title: i.kort };
+	if (full.startsWith(i.kort)) return { title: full };
+	return { title: /\bECLI:/.test(full) && !/\bECLI:/.test(i.kort) ? full : i.kort };
 }
 
 // ── Reading an item back ────────────────────────────────────────────────────

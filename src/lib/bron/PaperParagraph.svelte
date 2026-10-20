@@ -56,10 +56,10 @@
 		{#each shown.items as a (a.i)}
 			{@const n = a.n ?? 0}
 			{@const at = a.at ?? ''}
-			{@const forms = cite?.(n, at, link(at)) ?? null}
+			{@const forms = at ? (cite?.(n, at, link(at)) ?? null) : null}
 			<div
 				class="alinea"
-				class:eigen={around && shown.eigen.has(n)}
+				class:eigen={around && shown.eigen.has(a.i)}
 				class:is-open={menu?.at === at}
 			>
 				{#if forms && a.first}

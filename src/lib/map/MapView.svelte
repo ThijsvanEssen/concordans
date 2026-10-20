@@ -31,7 +31,7 @@
 		type SharedMap
 	} from './map';
 	import { kaart } from './map.svelte';
-	import { shareFragment } from './share';
+	import { shareFragment, sharedMapName } from './share';
 	import { mapFile, mapFileName } from './file';
 	import { BUNDLES_PATH } from './page';
 	import Aantekening from './Aantekening.svelte';
@@ -57,7 +57,7 @@
 	/** What is shown: the bundel's own or the shared one. */
 	const b = $derived<Pick<Map, 'naam' | 'items' | 'volgorde' | 'notitie' | 'groepNotities'>>(
 		m ?? {
-			naam: shared?.naam ?? 'Gedeelde bundel',
+			naam: sharedMapName(shared ?? { naam: null }),
 			items: shared?.items ?? [],
 			volgorde: shared?.volgorde ?? 'groep',
 			notitie: shared?.notitie ?? null,

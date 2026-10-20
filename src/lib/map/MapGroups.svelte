@@ -90,7 +90,6 @@
 				>{/if}{#if fresh?.isNew(i)}<NewMark />{/if}
 		{/snippet}
 		{#snippet body()}
-			{#if cite.sub}<span class="row-sub">{cite.sub}</span>{/if}
 			{#if external && i.url}<span class="row-sub alleen-print">{i.url}</span>{/if}
 			{#if kept}
 				<Aantekening

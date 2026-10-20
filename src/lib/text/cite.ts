@@ -27,9 +27,12 @@ export type Citation = {
 	definitie?: string | null;
 	/** The date the citation is dated on. */
 	date?: Date;
+	/** An act of the EU, whose text is as adopted (no later changes): dated on the day it was
+	 *  adopted (`on`, ISO), never as in force; without that day, no dated form. */
+	adopted?: { on: string | null } | null;
 };
 
-type CitationForms = { kort: string; voluit: string; metDatum: string };
+type CitationForms = { kort: string; voluit: string; metDatum: string | null };
 
 /** What an article is cited by, before the place in it: ArticleText's `citation`. */
 export type ArticleCitation = Omit<
@@ -53,6 +56,8 @@ export function articleCitation(
 		own?: string | null;
 		meta?: { citationTitle: string | null; title: string | null; shortTitle: string | null } | null;
 		displayName?: string | null;
+		/** Of an act of the EU: its text as adopted, on that day where known. */
+		adopted?: { on: string | null } | null;
 	}
 ): ArticleCitation | null {
 	const address = article.article_number ?? article.address;
@@ -65,7 +70,8 @@ export function articleCitation(
 		// An article without a number is cited by its heading: "Algemene bepaling Gw".
 		heading: article.article_number ? null : (article.label ?? null),
 		shortTitle: law.meta?.shortTitle ?? null,
-		citationTitle: title
+		citationTitle: title,
+		...(law.adopted ? { adopted: law.adopted } : {})
 	};
 }
 
@@ -124,8 +130,13 @@ export function citeArticle(c: Citation): CitationForms {
 	const of = `van ${lawWithArticle(citationTitle)}`;
 	const voluit = parts.length > 1 ? `${parts.join(', ')}, ${of}` : `${parts[0]} ${of}`;
 
-	// Lower case like the short form: a citation is pasted into a sentence.
-	const dated = `${kort} (tekst geldend op ${langeDatum(vandaag(c.date ?? new Date()))})`;
+	// Lower case like the short form: a citation is pasted into a sentence. The text of an act
+	// of the EU is as adopted (the source has no later versions): dated on that day, or not.
+	const dated = c.adopted
+		? c.adopted.on
+			? `${kort} (tekst zoals vastgesteld op ${langeDatum(c.adopted.on)})`
+			: null
+		: `${kort} (tekst geldend op ${langeDatum(vandaag(c.date ?? new Date()))})`;
 	return { kort, voluit, metDatum: dated };
 }
 
