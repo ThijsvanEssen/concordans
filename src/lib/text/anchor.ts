@@ -1,5 +1,6 @@
 // The grammar of a place in a bron, as the API names it in ids and URL fragments: an
-// overweging (`rov-5.7.1`), an alinea of a Kamerstuk (`alinea-4`, a line of its text), a part of an article (`lid-2-onder-a`, `onder-q_2`,
+// overweging (`rov-5.7.1`), an alinea of a Kamerstuk (`alinea-4`, a line of its text), a
+// section of it (`s-300`, a passage of a memorie), a part of an article (`lid-2-onder-a`, `onder-q_2`,
 // `onder-_39-onder-a`, `lid-3-aanhef`, `tekst-6-onder-a`), a note (`fn-35-2`), an article
 // in the whole law (`artikel-658`) and a division of it (`deel-hoofdstuk-3`).
 import { shortKind } from './document-kind';
@@ -8,6 +9,8 @@ import { paragraphCite } from './ecli';
 type Anchor =
 	| { kind: 'paragraph'; number: string }
 	| { kind: 'alinea'; number: number }
+	/** A section of a paper as the API names it (`s-300`): a passage of a memorie. */
+	| { kind: 'section'; id: string }
 	| {
 			kind: 'part';
 			lid: string | null;
@@ -27,6 +30,7 @@ const PREFIXED: { prefix: string; read: (rest: string) => Anchor | null }[] = [
 		prefix: 'alinea-',
 		read: (n) => (/^[1-9]\d*$/.test(n) ? { kind: 'alinea', number: Number(n) } : null)
 	},
+	{ prefix: 's-', read: (n) => (/^\d+$/.test(n) ? { kind: 'section', id: `s-${n}` } : null) },
 	{ prefix: 'fn-', read: (label) => ({ kind: 'note', label }) },
 	{ prefix: 'artikel-', read: (number) => ({ kind: 'article', number }) },
 	{ prefix: 'deel-', read: (path) => ({ kind: 'division', path }) }
@@ -71,6 +75,8 @@ export function formatAnchor(a: Anchor): string {
 			return `rov-${a.number}`;
 		case 'alinea':
 			return `alinea-${a.number}`;
+		case 'section':
+			return a.id;
 		case 'note':
 			return `fn-${a.label}`;
 		case 'article':
@@ -118,8 +124,11 @@ export type PaperSource = {
 	kind?: string | null;
 	/** What a motie asks (`verzoekt de regering …`): where its text ends. */
 	dictum?: string | null;
-	/** Its headings: a line that starts one is a heading, not an alinea. */
-	sections?: readonly { char_start: number; heading: string }[] | null;
+	/** Its headings: a line that starts one is a heading, not an alinea; a section is the
+	 *  text from its heading to `char_end`. */
+	sections?:
+		| readonly { id?: string; char_start: number; char_end?: number; heading: string }[]
+		| null;
 };
 
 /** A line of a Kamerstuk: `i` its place among the lines, `n` its alinea's number, from 1;
@@ -173,12 +182,6 @@ export function paperParagraphs(doc: PaperSource): PaperParagraph[] {
 /** The anchor of an alinea by its number: `alinea-4`. */
 export const paperParagraphAnchor = (n: number): string =>
 	formatAnchor({ kind: 'alinea', number: n });
-
-/** The number of the alinea an anchor names: 4 for `alinea-4`; else null. */
-export function paperParagraphNumber(id: string | null | undefined): number | null {
-	const a = id ? parseAnchor(id) : null;
-	return a?.kind === 'alinea' ? a.number : null;
-}
 
 /** The anchor of a lid by its number: `lid-2`. */
 export const lidAnchor = (lid: string): string =>

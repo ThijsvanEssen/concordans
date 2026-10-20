@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { citePaper, paperParagraphCite } from './paper-cite';
+import type { Schema } from '$lib/api/types';
+import { itemKey } from '$lib/map/map';
+import { itemVanRij } from '$lib/map/rij';
+import { rowsOfExplanations } from '$lib/verbonden/explanatory-documents';
+import { citePaper, paperParagraphCite, paperSectionCite } from './paper-cite';
 
 describe('a Kamerstuk and its alineas as they are cited', () => {
 	const motion = {
@@ -35,5 +39,55 @@ describe('a Kamerstuk and its alineas as they are cited', () => {
 		const letter = { key: 'b1', kind: 'Brief', title: 'Antwoord op vragen', number: null };
 		const a = paperParagraphCite(citePaper(letter))(1, '');
 		expect(a.kort).toBe('Antwoord op vragen, alinea 1');
+	});
+});
+
+describe('a passage of a memorie as it is cited and kept (A28, Thijs 20 Oct)', () => {
+	// Art. 11 SW, explained by the MvT Belastingplan 2026 at its section s-300 (live, 20 Oct).
+	const explanation = {
+		document: {
+			chamber: 'TK',
+			key: '8c1a3474',
+			kind: 'Memorie van toelichting',
+			title: 'Wijziging van enkele belastingwetten en enige andere wetten (Belastingplan 2026)',
+			date: '2025-09-16',
+			dossier_number: '36812',
+			sequence: 3
+		},
+		scope: 'article',
+		target: 'article_version',
+		section_anchor: 's-300',
+		heading: 'Artikel X, onderdeel A (artikel 11 van de Successiewet 1956)',
+		confidence: 0.95
+	} as unknown as Schema<'ArticleExplanationDTO'>;
+	const mvt = {
+		key: '8c1a3474',
+		kind: 'Memorie van toelichting',
+		title: explanation.document.title,
+		chamber: 'TK',
+		number: '3',
+		dossier_numbers: ['36812']
+	};
+	const passage = paperSectionCite(citePaper(mvt, { session_year: '2025-2026' }))(
+		{ id: 's-300', heading: ' Artikel X, onderdeel A (artikel 11 van de Successiewet 1956) ' },
+		'https://x/#s-300'
+	);
+
+	it('cites the passage by its heading, as the memorie prints it', () => {
+		expect(passage.kort).toBe(
+			'Kamerstukken II 2025/26, 36812, nr. 3, § Artikel X, onderdeel A (artikel 11 van de Successiewet 1956)'
+		);
+		expect(passage.voluit).toBe(
+			'Kamerstukken II 2025/26, 36812, nr. 3 (Memorie van toelichting), § Artikel X, onderdeel A (artikel 11 van de Successiewet 1956)'
+		);
+		expect(passage.bewaar).toMatchObject({ at: 's-300', groupKey: 'dossier:36812' });
+	});
+
+	it('keeps the passage as one item, from the memorie and from its row under the article', () => {
+		const [row] = rowsOfExplanations([explanation]);
+		const item = itemVanRij(row)!;
+		expect(itemKey(item)).toBe(itemKey(passage.bewaar));
+		expect(item.kort).toBe(passage.kort);
+		expect(item.groupKey).toBe(passage.bewaar.groupKey);
 	});
 });

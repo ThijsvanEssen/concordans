@@ -68,3 +68,26 @@ export const paperParagraphCite =
 			bewaar: bewaarItem(paper.id, { at, kort, voluit }, paper.context)
 		};
 	};
+
+/**
+ * A passage of a paper, a section as the API gives it (a memorie's toelichting on an article),
+ * as its menu cites and keeps it: after the paper, `§` and its heading as the memorie prints it
+ * (`…, nr. 3, § Artikel X, onderdeel A (…)`), kept at its id (`s-300`). The form its row under
+ * the article keeps it in (map/rij.ts): one item, from either.
+ */
+export const paperSectionCite =
+	(paper: PaperCitation) =>
+	(
+		section: { id: string; heading: string },
+		link: string
+	): { kort: string; voluit: string; link: string; bewaar: MapItem } => {
+		const place = `§ ${section.heading.trim()}`;
+		const kort = `${paper.name}, ${place}`;
+		const voluit = `${paper.full}, ${place}`;
+		return {
+			kort,
+			voluit,
+			link,
+			bewaar: bewaarItem(paper.id, { at: section.id, kort, voluit }, paper.context)
+		};
+	};

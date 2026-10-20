@@ -458,6 +458,15 @@ describe('the alineas of a Kamerstuk in a bundel, under the stuk (A28)', () => {
 		expect(rij.places.map((p) => p.at)).toEqual(['alinea-4', 'alinea-6']);
 		expect(ander).toEqual({ head: lid2, kept: true, places: [] });
 		expect(rowTitle(al(4), true)).toEqual({ title: 'alinea 4', sub: null });
+		// A passage (a section of the memorie) under its stuk, by its heading.
+		const passage = {
+			...stuk,
+			at: 's-300',
+			kort: `${stuk.kort}, § Artikel X, onderdeel A`,
+			voluit: null
+		};
+		expect(rowTitle(passage, true)).toEqual({ title: '§ Artikel X, onderdeel A', sub: null });
+		expect(placeRows([passage, al(4)])[0].head.kort).toBe(stuk.kort);
 	});
 
 	it('shows one alinea alone as the stuk’s row, and the alineas under a stuk kept itself', () => {

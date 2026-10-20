@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { BodyItem } from '$lib/components/explore/readers/judgment-text';
-import { citaatUit, overwegingVan, rondCitaat } from './inhoud';
+import papers from '$lib/fixtures/paper-paragraphs.json';
+import { citaatUit, overwegingVan, paperParagraphOf, rondCitaat } from './inhoud';
 
 describe('the content of a kept item', () => {
 	it('reads the words a note quotes', () => {
@@ -77,5 +78,26 @@ describe('the content of a kept item', () => {
 		];
 		expect(overwegingVan(eigenId, 'p-3f2a9c1e')?.items).toHaveLength(1);
 		expect(overwegingVan(eigenId, 'rov-6')?.items).toHaveLength(1);
+	});
+});
+
+describe('a kept place of a Kamerstuk, read in place (A28)', () => {
+	const nota = papers['nota-36808-6'];
+
+	it('shows an alinea, and the alineas around it a click further', () => {
+		expect(paperParagraphOf(nota, 'alinea-2')!.items.map((a) => a.n)).toEqual([2]);
+		const rond = paperParagraphOf(nota, 'alinea-2', true)!;
+		expect(rond.items.map((a) => a.n)).toEqual([1, 2, 3, 4, 5]);
+		expect([...rond.eigen]).toEqual([2]);
+	});
+
+	it('shows a passage (a section of the API) as the alineas in it', () => {
+		const c = paperParagraphOf(nota, 's-1')!;
+		expect(c.items.map((a) => a.text)).toEqual([
+			'Aan het opschrift wordt toegevoegd «en het beperken van commissievergaderingen».'
+		]);
+		expect([...c.eigen]).toEqual([2]);
+		expect(paperParagraphOf(nota, 's-99')).toBeNull();
+		expect(paperParagraphOf(nota, 'rov-1')).toBeNull();
 	});
 });

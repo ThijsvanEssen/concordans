@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import papers from '$lib/fixtures/paper-paragraphs.json';
 import {
 	paperParagraphAnchor,
-	paperParagraphNumber,
 	paperParagraphs,
 	anchorLabel,
 	atPlace,
@@ -20,6 +19,7 @@ describe('the anchors the API gives', () => {
 	it.each([
 		'rov-5.7.1',
 		'alinea-4',
+		's-300',
 		'lid-2',
 		'lid-2-onder-a',
 		'lid-1-onder-d-onder-i',
@@ -165,12 +165,18 @@ describe('the alineas of a Kamerstuk: its text alone, numbered from 1 (A32 #1)',
 
 	it('names an alinea by its number: `alinea-4`', () => {
 		expect(paperParagraphAnchor(4)).toBe('alinea-4');
-		expect(paperParagraphNumber('alinea-4')).toBe(4);
-		expect(paperParagraphNumber('rov-4')).toBeNull();
+		expect(parseAnchor('alinea-4')).toEqual({ kind: 'alinea', number: 4 });
 		expect(paperParagraphs({ text: null })).toEqual([]);
 	});
 
 	it('prints an alinea as a citation names it', () => {
 		expect(anchorLabel('alinea-12')).toBe('alinea 12');
+	});
+
+	it('reads a section of a paper (`s-300`), a passage as the API gives it, by its id', () => {
+		expect(parseAnchor('s-300')).toEqual({ kind: 'section', id: 's-300' });
+		expect(parseAnchor('s-x')).toBeNull();
+		// Its heading is the paper's, not the anchor's: the anchor alone prints nothing.
+		expect(anchorLabel('s-300')).toBeNull();
 	});
 });

@@ -8,7 +8,7 @@
 	import { blockClick } from '$lib/actions/klik';
 	import { citeItems } from '$lib/components/ui/cite-items';
 	import { paperParagraphOf } from '$lib/map/inhoud';
-	import { paperParagraphAnchor, paperParagraphs, type PaperSource } from '$lib/text/anchor';
+	import { paperParagraphAnchor, type PaperSource } from '$lib/text/anchor';
 	import { paperParagraphCite, type PaperCitation } from '$lib/components/parliamentary/paper-cite';
 
 	let {
@@ -20,7 +20,7 @@
 	}: {
 		/** The paper's text and structure, cut into alineas as its reader cuts them. */
 		source: PaperSource;
-		/** The alinea: `alinea-4`. */
+		/** The place: an alinea (`alinea-4`) or a passage, a section of the API (`s-300`). */
 		at: string;
 		/** The alineas around it too. */
 		around?: boolean;
@@ -30,7 +30,7 @@
 		link: (anker: string) => string;
 	} = $props();
 
-	const shown = $derived(paperParagraphOf(paperParagraphs(source), at, around));
+	const shown = $derived(paperParagraphOf(source, at, around));
 	const cite = $derived(paper ? paperParagraphCite(paper) : null);
 
 	/** The alinea whose menu is open, by its number, and the marker it hangs from. */
@@ -49,7 +49,7 @@
 		{#each shown.items as a (a.i)}
 			{@const n = a.n ?? 0}
 			{@const forms = cite?.(n, link(paperParagraphAnchor(n))) ?? null}
-			<div class="alinea" class:eigen={around && n === shown.eigen} class:is-open={menu?.n === n}>
+			<div class="alinea" class:eigen={around && shown.eigen.has(n)} class:is-open={menu?.n === n}>
 				{#if forms}
 					<button
 						type="button"
@@ -99,19 +99,23 @@
 	.alinea.is-open {
 		background: var(--paper-2);
 	}
-	/* The marker is the alinea's menu: its number with ▾, while it is pointed at, open or
-	   focused; nothing at rest. */
+	/* The marker is the alinea's menu: its number with ▾ under it while it is pointed at, open
+	   or focused, as in the reader; nothing at rest. */
 	.plaats-marker {
 		position: absolute;
 		top: 0;
 		left: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
 		width: var(--s-7);
 		padding: 0 var(--s-2) 0 0;
 		border: 0;
 		background: none;
 		font: inherit;
+		font-size: var(--t-micro);
+		line-height: calc(var(--lh-body) * var(--t-body));
 		color: transparent;
-		text-align: right;
 		white-space: nowrap;
 		user-select: none;
 		cursor: pointer;
@@ -126,8 +130,9 @@
 	.alinea:hover > .plaats-marker::after,
 	.alinea.is-open > .plaats-marker::after,
 	.plaats-marker:focus-visible::after {
-		content: ' ▾';
+		content: '▾';
 		font-size: 0.7em;
+		line-height: 1;
 		color: var(--ink-3);
 		text-decoration: none;
 	}

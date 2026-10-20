@@ -52,6 +52,13 @@ describe('the readers', () => {
 			expect(t, p).toMatch(/class="[^"]*\bplaats-marker\b/);
 		}
 		expect(bron('lib/components/articles/PlaatsMenu.svelte')).toContain('<BundleChecklist');
+		// A passage of a memorie (a section: the toelichting on an article, read beside it) is
+		// a place too: its heading opens the same PlaatsMenu, cited and kept as its row under
+		// the article keeps it (paperSectionCite); no Citeer of its own (Thijs, 20 Oct).
+		const stuk = bron('lib/components/explore/readers/DocumentReader.svelte');
+		expect(stuk).toContain('paperSectionCite(');
+		expect(stuk.match(/<PlaatsMenu\b/g)).toHaveLength(2);
+		expect(stuk).not.toMatch(/<CiteMenu\b/);
 		// An alinea is cited and kept one way, in its reader and in a bundel (paper-cite), and
 		// cut from its text in one place (paperParagraphs, text/anchor.ts).
 		for (const p of [
@@ -59,8 +66,13 @@ describe('the readers', () => {
 			'lib/bron/PaperParagraph.svelte'
 		]) {
 			expect(bron(p), p).toContain('paperParagraphCite(');
-			expect(bron(p), p).toContain('paperParagraphs(');
 		}
+		// The reader cuts with paperParagraphs, a bundel by the place it keeps (paperParagraphOf).
+		expect(bron('lib/components/explore/readers/DocumentReader.svelte')).toContain(
+			'paperParagraphs('
+		);
+		expect(bron('lib/bron/PaperParagraph.svelte')).toContain('paperParagraphOf(');
+		expect(bron('lib/map/inhoud.ts')).toContain('paperParagraphs(');
 		expect(
 			overtreders((t) => /matchAll\(\/\[\^\\n\]\+\/g\)/.test(t), [plek('lib/text/anchor.ts')])
 		).toEqual([]);
