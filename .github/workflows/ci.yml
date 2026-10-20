@@ -1,6 +1,9 @@
 # Every pull request and every push to main runs the checks. The deploy of a commit waits for
-# a green run of this workflow on it (deploy.yml) and runs none of them again.
-# Lint is prettier --check over the whole repository (Markdown included) and ESLint.
+# a green run of this workflow on it (deploy.yml): the run is green only when all three jobs
+# are, and deploy runs none of them again.
+# Three jobs side by side, each on node_modules from one shared cache (.github/actions/setup):
+# lint (prettier --check over the whole repository, Markdown included, and ESLint), types and
+# build, and the tests.
 name: ci
 
 on:
@@ -17,26 +20,32 @@ permissions:
   contents: read
 
 jobs:
-  check:
+  lint:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: npm
-
-      - run: npm ci
+      - uses: ./.github/actions/setup
       # The types are made from the schema in the repository (npm run sync:api dumps it from
       # lawgraph): types that differ from it were edited by hand or not made again.
       - name: Types from openapi.json
         run: npm run types:api && git diff --exit-code -- src/lib/api/generated
       - name: Lint (prettier --check, eslint)
         run: npm run lint
+
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
       - name: Type check (svelte-check)
         run: npm run check
-      - name: Tests (vitest)
-        run: npm test
       - name: Build
         run: npm run build
+
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - name: Tests (vitest)
+        run: npm test

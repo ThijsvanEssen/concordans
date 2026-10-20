@@ -12,15 +12,18 @@ cp .env.example .env    # PUBLIC_CONCORDANS_API_BASE_URL: the API
 npm run dev             # http://localhost:5173
 ```
 
-| Command             | Purpose                                                                                                      |
-| ------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `npm run check`     | Type check, including every API call against the schema                                                      |
-| `npm run lint`      | Prettier and ESLint                                                                                          |
-| `npm test`          | Vitest                                                                                                       |
-| `npm run build`     | Static build in `build/`                                                                                     |
-| `npm run sync:api`  | Dump the schema with `lawgraph openapi` (in `$LAWGRAPH_DIR`, default `../lawgraph`) and regenerate the types |
-| `npm run types:api` | Regenerate `src/lib/api/generated/openapi-types.ts` from the committed schema                                |
-| `npm run check:api` | `sync:api`, then fail when the committed schema or types differ                                              |
+| Command                | Purpose                                                                                                      |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `npm run check`        | Type check, including every API call against the schema                                                      |
+| `npm run lint`         | Prettier and ESLint                                                                                          |
+| `npm run lint:changed` | Prettier and ESLint (cached) over the files changed against `origin/main`                                    |
+| `npm run test:related` | The tests that import a file under `src/` changed against `origin/main`                                      |
+| `npm run gates`        | Every gate before a merge, stopping at the first that fails                                                  |
+| `npm test`             | Vitest                                                                                                       |
+| `npm run build`        | Static build in `build/`                                                                                     |
+| `npm run sync:api`     | Dump the schema with `lawgraph openapi` (in `$LAWGRAPH_DIR`, default `../lawgraph`) and regenerate the types |
+| `npm run types:api`    | Regenerate `src/lib/api/generated/openapi-types.ts` from the committed schema                                |
+| `npm run check:api`    | `sync:api`, then fail when the committed schema or types differ                                              |
 
 The test database holds every relation of the model. Run the API on it and point `.env` at it:
 
@@ -33,7 +36,7 @@ LAWGRAPH_DB_NAME=lawgraph_small LAWGRAPH_API_PORT=8001 .venv/bin/lawgraph-api
 
 The app is a static build (adapter-static) that fetches everything in the browser. A readable address such as `/dossiers/36799` is no file, so the web server answers every unknown path with `index.html` (`fallback` in `svelte.config.js`).
 
-A push to the branch `release` deploys that commit (`.github/workflows/deploy.yml`); `release` follows main fast-forward, so the commit deployed is one `ci` checked on main. The workflow waits for a green `ci` run of that commit (`.github/workflows/ci.yml`, run on every push to main), then builds against the API at the repository variable `CONCORDANS_API_BASE_URL`, copies the build to `/srv/lawgraph/concordans/releases/<commit>` and points `/srv/lawgraph/concordans/current` at it. The five newest builds stay; going back is `ln -sfn /srv/lawgraph/concordans/releases/<commit> /srv/lawgraph/concordans/current` on the server.
+A push to the branch `release` deploys that commit (`.github/workflows/deploy.yml`); `release` follows main fast-forward, so the commit deployed is one `ci` checked on main. The workflow waits for a green `ci` run of that commit (`.github/workflows/ci.yml`, run on every push to main: lint, type check and build, and tests as three jobs side by side), then builds against the API at the repository variable `CONCORDANS_API_BASE_URL`, copies the build to `/srv/lawgraph/concordans/releases/<commit>` and points `/srv/lawgraph/concordans/current` at it. The five newest builds stay; going back is `ln -sfn /srv/lawgraph/concordans/releases/<commit> /srv/lawgraph/concordans/current` on the server.
 
 Secrets: `DEPLOY_SSH_KEY`, `DEPLOY_HOST`, `DEPLOY_USER` and `DEPLOY_KNOWN_HOSTS` (the server's host key line; a changed key stops the deploy).
 

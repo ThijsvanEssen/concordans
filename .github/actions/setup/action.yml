@@ -1,0 +1,25 @@
+# Node and node_modules for a job of ci.yml. The jobs share one cache of node_modules, keyed on
+# the lock file: the first job of a new lock file installs and saves it, the others restore it.
+# `npm ci` runs `prepare` (svelte-kit sync); a restored node_modules runs that sync itself.
+name: setup
+description: Node 22 and node_modules from the lock file
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v7
+      with:
+        node-version: 22
+
+    - id: modules
+      uses: actions/cache@v4
+      with:
+        path: node_modules
+        key: node-modules-${{ runner.os }}-node22-${{ hashFiles('package-lock.json') }}
+
+    - if: steps.modules.outputs.cache-hit != 'true'
+      shell: bash
+      run: npm ci
+
+    - if: steps.modules.outputs.cache-hit == 'true'
+      shell: bash
+      run: npx svelte-kit sync
