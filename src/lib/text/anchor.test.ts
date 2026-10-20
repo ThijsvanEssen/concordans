@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+	paperParagraphAnchor,
+	paperParagraphIndex,
+	paperParagraphs,
 	anchorLabel,
 	atPlace,
 	formatAnchor,
@@ -15,6 +18,7 @@ import {
 describe('the anchors the API gives', () => {
 	it.each([
 		'rov-5.7.1',
+		'alinea-4',
 		'lid-2',
 		'lid-2-onder-a',
 		'lid-1-onder-d-onder-i',
@@ -45,7 +49,7 @@ describe('the anchors the API gives', () => {
 	});
 
 	it('reads no anchor from what is none', () => {
-		for (const id of ['', 'p-12', 'lid', 'onder-a-lid-2', 'aanhef-lid-2'])
+		for (const id of ['', 'p-12', 'alinea-0', 'alinea-4a', 'lid', 'onder-a-lid-2', 'aanhef-lid-2'])
 			expect(parseAnchor(id)).toBeNull();
 	});
 
@@ -110,5 +114,22 @@ describe('the anchors a reader builds', () => {
 		expect(onderdeelAnchor('lid-2', 'a')).toBe('lid-2-onder-a');
 		expect(onderdeelAnchor('onder-_39', 'a')).toBe('onder-_39-onder-a');
 		expect(onderdeelAnchor('lid-1-onder-d', 'i')).toBe('lid-1-onder-d-onder-i');
+	});
+});
+
+describe('the alineas of a Kamerstuk', () => {
+	it('cuts its text per line, each where its words start, numbered from 1', () => {
+		const text = 'De Kamer,\n\n  overwegende dat;\nverzoekt de regering \n';
+		const a = paperParagraphs(text);
+		expect(a.map((x) => x.text)).toEqual(['De Kamer,', 'overwegende dat;', 'verzoekt de regering']);
+		for (const x of a) expect(text.slice(x.start, x.start + x.text.length)).toBe(x.text);
+		expect(paperParagraphAnchor(a[2].i)).toBe('alinea-3');
+		expect(paperParagraphIndex('alinea-3')).toBe(2);
+		expect(paperParagraphIndex('rov-3')).toBeNull();
+		expect(paperParagraphs(null)).toEqual([]);
+	});
+
+	it('prints an alinea as a citation names it', () => {
+		expect(anchorLabel('alinea-12')).toBe('alinea 12');
 	});
 });

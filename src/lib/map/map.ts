@@ -268,20 +268,27 @@ export function groepen(
 	}));
 }
 
-/** A judgment's citation without the place in it: `HR 20 december 2019, ECLI:…`. */
-const judgmentCitation = (kort: string) => kort.replace(/,\s*r\.o\.\s.*$/, '');
+/** A citation without the place in it: `HR 20 december 2019, ECLI:…`, `Kamerstukken II …, nr. 57`. */
+const withoutPlace = (kort: string) => kort.replace(/,\s*(?:r\.o\.|alinea)\s.*$/, '');
 
-/** A judgment in a bundel: kept itself or not, with its places (r.o.'s) under it. */
-type JudgmentRow = { head: MapItem; kept: boolean; places: MapItem[] };
+/** The bronnen whose kept places stand under them: an r.o. its judgment's, an alinea its stuk's. */
+const PLACES_UNDER = new Set(['judgments', 'documents']);
+
+/** A bron in a bundel: kept itself or not, with its places (r.o.'s, alineas) under it. */
+type PlaceRow = { head: MapItem; kept: boolean; places: MapItem[] };
 
 /**
- * The judgments of a group, each once, in the order first kept: the judgment where it is kept
- * itself, its kept r.o.'s as places under it. One r.o. alone stands as the judgment's row; two
- * or more stand under the judgment, which heads them without being kept.
+ * The rows of a group, each bron once, in the order first kept: a judgment or a Kamerstuk
+ * where it is kept itself, its kept r.o.'s or alineas as places under it. One place alone
+ * stands as its bron's row; two or more stand under the bron, which heads them without being
+ * kept. Every other item is a row of its own.
  */
-export function judgmentRows(items: readonly MapItem[]): JudgmentRow[] {
+export function placeRows(items: readonly MapItem[]): PlaceRow[] {
 	const byId = new Map<string, MapItem[]>();
-	for (const i of items) byId.set(i.id, [...(byId.get(i.id) ?? []), i]);
+	for (const i of items) {
+		const key = PLACES_UNDER.has(parseNodeId(i.id)?.collection ?? '') ? i.id : itemKey(i);
+		byId.set(key, [...(byId.get(key) ?? []), i]);
+	}
 	return [...byId.values()].map((all) => {
 		const whole = all.find((i) => !i.at);
 		const places = all.filter((i) => i.at);
@@ -289,7 +296,7 @@ export function judgmentRows(items: readonly MapItem[]): JudgmentRow[] {
 		if (places.length === 1) return { head: places[0], kept: true, places: [] };
 		const first = places[0];
 		return {
-			head: { ...first, at: '', kort: judgmentCitation(first.kort), voluit: null, notitie: null },
+			head: { ...first, at: '', kort: withoutPlace(first.kort), voluit: null, notitie: null },
 			kept: false,
 			places
 		};
@@ -299,14 +306,14 @@ export function judgmentRows(items: readonly MapItem[]): JudgmentRow[] {
 /**
  * A row's citation on one line: the full form where it adds to the short one (an ECLI), the
  * short one where the full form only writes it out (`artikel 6:162 lid 2 Burgerlijk Wetboek`),
- * else the full form under it. A place under its judgment is named by the place alone, a
+ * else the full form under it. A place under its bron is named by the place alone, a
  * dossier by its number (its group names it).
  */
 export function rowTitle(
 	i: Pick<MapItem, 'id' | 'at' | 'kort' | 'voluit'>,
 	place = false
 ): { title: string; sub: string | null } {
-	const own = place ? /\br\.o\.\s.*$/.exec(i.kort)?.[0] : null;
+	const own = place ? /\b(?:r\.o\.|alinea)\s.*$/.exec(i.kort)?.[0] : null;
 	if (own) return { title: own, sub: null };
 	const collection = parseNodeId(i.id)?.collection;
 	// A dossier kept whole stands under its group, which names it: its row cites it by number

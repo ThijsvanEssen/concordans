@@ -20,9 +20,8 @@
 		itemHref,
 		isExternal,
 		itemKey,
-		judgmentRows,
+		placeRows,
 		rowTitle,
-		JUDGMENTS_GROUP,
 		SOURCE_KINDS,
 		type GroepNotities,
 		type Map,
@@ -69,7 +68,8 @@
 </script>
 
 <!-- A row: the kind in the lead, the citation as its title; `place` an r.o. under its
-     judgment, `kept` false for a judgment that only heads its r.o.'s. -->
+     judgment or an alinea under its Kamerstuk, `kept` false for a bron that only heads its
+     places. -->
 {#snippet row(i: MapItem, place = false, kept = true)}
 	{@const key = itemKey(i)}
 	{@const collection = parseNodeId(i.id)?.collection}
@@ -234,14 +234,10 @@
 		/>
 	{/if}
 	<ul class="rijen">
-		{#if g.sleutel === JUDGMENTS_GROUP}
-			{#each judgmentRows(g.items) as r (itemKey(r.head))}
-				{@render row(r.head, false, r.kept)}
-				{#each r.places as p (itemKey(p))}{@render row(p, true)}{/each}
-			{/each}
-		{:else}
-			{#each g.items as i (itemKey(i))}{@render row(i)}{/each}
-		{/if}
+		{#each placeRows(g.items) as r (itemKey(r.head))}
+			{@render row(r.head, false, r.kept)}
+			{#each r.places as p (itemKey(p))}{@render row(p, true)}{/each}
+		{/each}
 	</ul>
 {/each}
 

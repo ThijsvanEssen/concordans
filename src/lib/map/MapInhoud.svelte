@@ -4,7 +4,8 @@
 	// map is read without going back and forth (Thijs, 12 Oct). An article its lid in the
 	// reader's own text (ArticleText: its references and defined terms as there), Heel artikel
 	// a click further; a judgment its overweging (Overweging, as a reference's card shows
-	// it), the overwegingen around it a click further; a Kamerstuk the words its note quotes
+	// it), the overwegingen around it a click further; a Kamerstuk its kept alinea (PaperParagraph), the
+	// alineas around it a click further, else the words its note quotes
 	// in the text around them, else its core text as its row opens anywhere (kernVan: a motie
 	// its dictum, an amendement its toelichting, another its opening); another bron the lines
 	// of its card. Asked when the row opens, once
@@ -15,7 +16,7 @@
 	// Thijs, 13 Oct) and the regulations based on it, else the laws connected to it
 	// (MapRegelingen).
 	// A place's menu is the reader's own (PlaatsMenu): Citeer, Kopieer tekst and Bewaar, from
-	// the same citation (articleCitation, overwegingCitaat; Thijs, 12 Oct).
+	// the same citation (articleCitation, overwegingCitaat, paperParagraphCite; Thijs, 12 Oct).
 	import type { Schema } from '$lib/api/types';
 	import { getArticleDetail, getArticleDetailByKey } from '$lib/api/articles';
 	import { instrumentMetaStore, recordArticleLaw } from '$lib/api/instrument-cache';
@@ -27,6 +28,9 @@
 	import { loadPreview } from '$lib/bron/preview';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
 	import Overweging from '$lib/bron/Overweging.svelte';
+	import PaperParagraph from '$lib/bron/PaperParagraph.svelte';
+	import { paperParagraphIndex, paperParagraphs } from '$lib/text/anchor';
+	import { citePaper, type PaperCitation } from '$lib/components/parliamentary/paper-cite';
 	import { heeftOverweging, laadUitspraak, type Uitspraak } from '$lib/bron/overweging';
 	import { kernSoort, kernVan } from '$lib/components/open/rij-inhoud';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
@@ -40,7 +44,7 @@
 	import { kindName } from '$lib/components/explore/law-head';
 	import { korteDatum } from '$lib/text/datum';
 	import { parseNodeId } from '$lib/vocabulary';
-	import { isNotFound } from '$lib/api/errors';
+	import { isNotFound, report } from '$lib/api/errors';
 	import { lawIdOf } from '$lib/graph/types';
 	import {
 		enactedLawId,
@@ -72,6 +76,9 @@
 				tekst: string | null;
 				kern: string | null;
 				als: 'dictum' | 'toelichting' | 'opening';
+				/** How it is cited, for the menu of a kept alinea; its path for the link. */
+				paper: PaperCitation | null;
+				path: string | null;
 		  }
 		| { soort: 'wet'; bwb: string; bij: string }
 		| { soort: 'regels'; tekst: string };
@@ -141,14 +148,27 @@
 			};
 		}
 		if (doel.collection === 'documents') {
-			const d = await getDocument(doel.key);
+			// A kept alinea is cited as in the reader: with its light node (the vergaderjaar).
+			const kept = paperParagraphIndex(i.at) !== null;
+			const [d, light] = await Promise.all([
+				getDocument(doel.key),
+				kept
+					? getNodeFirst('documents', doel.key).catch((e) => {
+							// The paper is then cited without its vergaderjaar.
+							report('Lichte bron van het stuk', e);
+							return null;
+						})
+					: null
+			]);
 			const als = kernSoort(d.kind);
 			return {
 				soort: 'stuk',
 				uitslag: stukUitslag(d),
 				tekst: d.text ?? null,
 				kern: kernVan(als, d),
-				als
+				als,
+				paper: kept ? citePaper(d, (light?.node.props ?? {}) as Record<string, unknown>) : null,
+				path: light?.path ?? null
 			};
 		}
 		const p = await loadPreview(i.id, i.at || null);
@@ -257,17 +277,38 @@
 		</p>
 	{:else if inhoud.soort === 'stuk'}
 		{@const rond = citaat ? rondCitaat(inhoud.tekst, citaat) : null}
+		{@const path = inhoud.path}
+		{@const paperText =
+			inhoud.tekst &&
+			(paperParagraphIndex(item.at) ?? Infinity) < paperParagraphs(inhoud.tekst).length
+				? inhoud.tekst
+				: null}
 		<!-- The row is the map's own (a citation and a note): the outcome stands here, as on
 		     the row of every other list of Kamerstukken. -->
 		{#if inhoud.uitslag}<p class="uitslag"><StukUitslag uitslag={inhoud.uitslag} /></p>{/if}
-		{#if rond}
+		{#if paperText}
+			<PaperParagraph
+				text={paperText}
+				at={item.at}
+				around={ruim}
+				paper={inhoud.paper}
+				link={(anchor) => linkNaar(path, anchor)}
+			/>
+		{:else if rond}
 			<p class="tekst">{rond.voor}<mark>{rond.citaat}</mark>{rond.na}</p>
 		{:else if inhoud.kern}
 			<p class="tekst" class:dictum={inhoud.als === 'dictum'}>{inhoud.kern}</p>
 		{:else}
 			<p class="stil">Tekst nog niet in de gegevens.</p>
 		{/if}
-		<p class="verder"><TekstLink {href}>In de lezer</TekstLink></p>
+		<p class="verder">
+			{#if paperText}
+				<TekstLink onclick={() => (ruim = !ruim)} aria-pressed={ruim}
+					>{ruim ? `Alleen ${plaats ?? 'de alinea'}` : "Alinea's eromheen"}</TekstLink
+				>
+			{/if}
+			<TekstLink {href}>In de lezer</TekstLink>
+		</p>
 	{:else if inhoud.soort === 'wet'}
 		{@const bwb = inhoud.bwb}
 		{#if inhoud.bij}<p class="stil">{inhoud.bij}</p>{/if}

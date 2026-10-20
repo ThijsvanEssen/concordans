@@ -1,11 +1,12 @@
 // The grammar of a place in a bron, as the API names it in ids and URL fragments: an
-// overweging (`rov-5.7.1`), a part of an article (`lid-2-onder-a`, `onder-q_2`,
+// overweging (`rov-5.7.1`), an alinea of a Kamerstuk (`alinea-4`, a line of its text), a part of an article (`lid-2-onder-a`, `onder-q_2`,
 // `onder-_39-onder-a`, `lid-3-aanhef`, `tekst-6-onder-a`), a note (`fn-35-2`), an article
 // in the whole law (`artikel-658`) and a division of it (`deel-hoofdstuk-3`).
 import { paragraphCite } from './ecli';
 
 type Anchor =
 	| { kind: 'paragraph'; number: string }
+	| { kind: 'alinea'; number: number }
 	| {
 			kind: 'part';
 			lid: string | null;
@@ -19,8 +20,12 @@ type Anchor =
 	| { kind: 'article'; number: string }
 	| { kind: 'division'; path: string };
 
-const PREFIXED: { prefix: string; read: (rest: string) => Anchor }[] = [
+const PREFIXED: { prefix: string; read: (rest: string) => Anchor | null }[] = [
 	{ prefix: 'rov-', read: (number) => ({ kind: 'paragraph', number }) },
+	{
+		prefix: 'alinea-',
+		read: (n) => (/^[1-9]\d*$/.test(n) ? { kind: 'alinea', number: Number(n) } : null)
+	},
 	{ prefix: 'fn-', read: (label) => ({ kind: 'note', label }) },
 	{ prefix: 'artikel-', read: (number) => ({ kind: 'article', number }) },
 	{ prefix: 'deel-', read: (path) => ({ kind: 'division', path }) }
@@ -63,6 +68,8 @@ export function formatAnchor(a: Anchor): string {
 	switch (a.kind) {
 		case 'paragraph':
 			return `rov-${a.number}`;
+		case 'alinea':
+			return `alinea-${a.number}`;
 		case 'note':
 			return `fn-${a.label}`;
 		case 'article':
@@ -104,6 +111,32 @@ export const isOverwegingAnker = (at: string | null | undefined): at is string =
 export const isOverwegingRef = (ref: string | null, at: string | null | undefined) =>
 	!!ref && ref.startsWith('judgments/') && isOverwegingAnker(at);
 
+/**
+ * The alineas of a Kamerstuk: each line of its text (the source gives a paragraph per line),
+ * its words without the space around them, where they start in the text (so an offset of the
+ * API, a passage or a note's marker, falls in them) and its number, from 1. The one place a
+ * Kamerstuk's text is cut: its reader and a bundel number them alike.
+ */
+export function paperParagraphs(text: string | null | undefined): PaperParagraph[] {
+	const out: PaperParagraph[] = [];
+	for (const m of (text ?? '').matchAll(/[^\n]+/g)) {
+		const t = m[0].trim();
+		if (t) out.push({ start: m.index + m[0].indexOf(t), text: t, i: out.length });
+	}
+	return out;
+}
+export type PaperParagraph = { start: number; text: string; i: number };
+
+/** The anchor of an alinea by its place in the list (`paperParagraphs`, from 0): `alinea-4`. */
+export const paperParagraphAnchor = (i: number): string =>
+	formatAnchor({ kind: 'alinea', number: i + 1 });
+
+/** The place in the list of the alinea an anchor names: 3 for `alinea-4`; else null. */
+export function paperParagraphIndex(id: string | null | undefined): number | null {
+	const a = id ? parseAnchor(id) : null;
+	return a?.kind === 'alinea' ? a.number - 1 : null;
+}
+
 /** The anchor of a lid by its number: `lid-2`. */
 export const lidAnchor = (lid: string): string =>
 	formatAnchor({ kind: 'part', lid, text: null, onderdelen: [], aanhef: false });
@@ -143,13 +176,14 @@ export function parentAnchor(id: string): string | null {
 export const printedOnderdeel = (o: string): string => o.replace(/_\d+$/, '');
 
 /**
- * A place as the reader prints it: `lid 2, onder a`; an overweging as its judgment cites
+ * A place as the reader prints it: `lid 2, onder a`, `alinea 4`; an overweging as its judgment cites
  * it, by its ECLI or key (`r.o. 5.1`, `onder 5` in a conclusion, `§ 5` in Strasbourg or
  * Luxembourg). Null for a place it cannot print.
  */
 export function anchorLabel(id: string, judgment?: string | null): string | null {
 	const a = parseAnchor(id);
 	if (a?.kind === 'paragraph') return paragraphCite(judgment, a.number);
+	if (a?.kind === 'alinea') return `alinea ${a.number}`;
 	if (a?.kind !== 'part') return null;
 	const onderdelen = a.onderdelen.map(printedOnderdeel).filter(Boolean);
 	const onder = onderdelen.map((o, i) => (i === 0 ? `onder ${o}` : `sub ${o}`)).join(' ');

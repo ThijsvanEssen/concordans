@@ -1,8 +1,8 @@
 // What an item of a map shows when it opens (MapInhoud): the place it keeps, read in place.
 // An article its lid, the article around it a click further; a judgment its overweging, the
-// overwegingen around it a click further; a Kamerstuk the words its note quotes, in the text
-// around them, else the opening of its text.
-import { paragraphAnchor } from '$lib/text/anchor';
+// overwegingen around it a click further; a Kamerstuk its alinea, the alineas around it a
+// click further, else the words its note quotes, in the text around them, else its core text.
+import { paperParagraphIndex, paragraphAnchor, type PaperParagraph } from '$lib/text/anchor';
 import type { BodyItem } from '$lib/components/explore/readers/judgment-text';
 
 /** The words a note quotes ("…", “…”), where it quotes at least a few words. */
@@ -66,4 +66,19 @@ export function overwegingVan(
 	const eigen = new Set<number>();
 	for (let k = begin; k < eind; k++) eigen.add(k - van);
 	return { items: items.slice(van, tot), eigen };
+}
+
+/**
+ * The alineas of a Kamerstuk that show the alinea an item keeps (`alinea-4`): it alone; with
+ * `rond`, a few before and after. Null where the stuk has no such alinea.
+ */
+export function paperParagraphOf(
+	all: PaperParagraph[],
+	at: string,
+	rond = false
+): { items: PaperParagraph[]; eigen: number } | null {
+	const i = paperParagraphIndex(at);
+	if (i === null || i >= all.length) return null;
+	const van = rond ? Math.max(0, i - ROND) : i;
+	return { items: all.slice(van, rond ? i + ROND + 1 : i + 1), eigen: i };
 }
