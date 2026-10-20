@@ -2,6 +2,7 @@
 // overweging (`rov-5.7.1`), an alinea of a Kamerstuk (`alinea-4`, a line of its text), a part of an article (`lid-2-onder-a`, `onder-q_2`,
 // `onder-_39-onder-a`, `lid-3-aanhef`, `tekst-6-onder-a`), a note (`fn-35-2`), an article
 // in the whole law (`artikel-658`) and a division of it (`deel-hoofdstuk-3`).
+import { shortKind } from './document-kind';
 import { paragraphCite } from './ecli';
 
 type Anchor =
@@ -111,30 +112,72 @@ export const isOverwegingAnker = (at: string | null | undefined): at is string =
 export const isOverwegingRef = (ref: string | null, at: string | null | undefined) =>
 	!!ref && ref.startsWith('judgments/') && isOverwegingAnker(at);
 
+/** What a Kamerstuk gives to cut it into alineas: its text and the structure the API reads. */
+export type PaperSource = {
+	text?: string | null;
+	kind?: string | null;
+	/** What a motie asks (`verzoekt de regering …`): where its text ends. */
+	dictum?: string | null;
+	/** Its headings: a line that starts one is a heading, not an alinea. */
+	sections?: readonly { char_start: number; heading: string }[] | null;
+};
+
+/** A line of a Kamerstuk: `i` its place among the lines, `n` its alinea's number, from 1;
+ *  null for the head of the stuk, a heading, or a motie's formula before and after. */
+export type PaperParagraph = { start: number; text: string; i: number; n: number | null };
+
+const plain = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
+/** A line as a dictum holds it: without the comma or semicolon that ends it in the text. */
+const bare = (s: string) => plain(s).replace(/[,;:.]$/, '');
+
 /**
- * The alineas of a Kamerstuk: each line of its text (the source gives a paragraph per line),
- * its words without the space around them, where they start in the text (so an offset of the
- * API, a passage or a note's marker, falls in them) and its number, from 1. The one place a
- * Kamerstuk's text is cut: its reader and a bundel number them alike.
+ * The lines of a Kamerstuk (the source gives a paragraph per line), each with its words without
+ * the space around them and where they start in the text (so an offset of the API, a passage
+ * or a note's marker, falls in them), and the alineas among them numbered from 1: its text,
+ * as a lawyer counts it. Not an alinea: the head of the stuk (its first line, naming its kind:
+ * `MOTIE VAN HET LID …`, `MEMORIE VAN TOELICHTING`), a heading (a line that starts one of the
+ * API's sections: `1. Leeswijzer`, the onderdelen `A`, `B` of a nota van wijziging), and of a
+ * motie with its dictum the formula around what it holds: the lines before its first
+ * overweging (one ending in `;`) or its dictum, and those after its dictum. The one place a
+ * Kamerstuk's text is cut: its reader and a bundel number it alike.
  */
-export function paperParagraphs(text: string | null | undefined): PaperParagraph[] {
-	const out: PaperParagraph[] = [];
-	for (const m of (text ?? '').matchAll(/[^\n]+/g)) {
+export function paperParagraphs(doc: PaperSource): PaperParagraph[] {
+	const lines: PaperParagraph[] = [];
+	for (const m of (doc.text ?? '').matchAll(/[^\n]+/g)) {
 		const t = m[0].trim();
-		if (t) out.push({ start: m.index + m[0].indexOf(t), text: t, i: out.length });
+		if (t) lines.push({ start: m.index + m[0].indexOf(t), text: t, i: lines.length, n: null });
 	}
-	return out;
+	const starts = new Set((doc.sections ?? []).map((s) => s.char_start));
+	const headings = new Set((doc.sections ?? []).map((s) => plain(s.heading)));
+	const isHeading = (l: PaperParagraph) => starts.has(l.start) || headings.has(plain(l.text));
+	const kind = plain(shortKind(doc.kind ?? ''));
+	const head = lines.length && kind && plain(lines[0].text).includes(kind) ? 1 : 0;
+	// A motie: from its first overweging (or its dictum) to the end of its dictum.
+	const dictum = plain(doc.dictum ?? '');
+	const asks = dictum
+		? lines.findIndex((l, i) => i >= head && dictum.startsWith(bare(l.text)))
+		: -1;
+	let from = head;
+	let to = lines.length;
+	if (asks >= 0) {
+		const first = lines.findIndex((l, i) => i >= head && i < asks && l.text.endsWith(';'));
+		from = first >= 0 ? first : asks;
+		to = asks + 1;
+		while (to < lines.length && dictum.includes(bare(lines[to].text))) to++;
+	}
+	let n = 0;
+	for (const l of lines.slice(from, to)) if (!isHeading(l)) l.n = ++n;
+	return lines;
 }
-export type PaperParagraph = { start: number; text: string; i: number };
 
-/** The anchor of an alinea by its place in the list (`paperParagraphs`, from 0): `alinea-4`. */
-export const paperParagraphAnchor = (i: number): string =>
-	formatAnchor({ kind: 'alinea', number: i + 1 });
+/** The anchor of an alinea by its number: `alinea-4`. */
+export const paperParagraphAnchor = (n: number): string =>
+	formatAnchor({ kind: 'alinea', number: n });
 
-/** The place in the list of the alinea an anchor names: 3 for `alinea-4`; else null. */
-export function paperParagraphIndex(id: string | null | undefined): number | null {
+/** The number of the alinea an anchor names: 4 for `alinea-4`; else null. */
+export function paperParagraphNumber(id: string | null | undefined): number | null {
 	const a = id ? parseAnchor(id) : null;
-	return a?.kind === 'alinea' ? a.number - 1 : null;
+	return a?.kind === 'alinea' ? a.number : null;
 }
 
 /** The anchor of a lid by its number: `lid-2`. */

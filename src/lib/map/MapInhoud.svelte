@@ -29,7 +29,7 @@
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
 	import Overweging from '$lib/bron/Overweging.svelte';
 	import PaperParagraph from '$lib/bron/PaperParagraph.svelte';
-	import { paperParagraphIndex, paperParagraphs } from '$lib/text/anchor';
+	import { paperParagraphNumber, paperParagraphs, type PaperSource } from '$lib/text/anchor';
 	import { citePaper, type PaperCitation } from '$lib/components/parliamentary/paper-cite';
 	import { heeftOverweging, laadUitspraak, type Uitspraak } from '$lib/bron/overweging';
 	import { kernSoort, kernVan } from '$lib/components/open/rij-inhoud';
@@ -53,7 +53,7 @@
 		isEnactedLawItem
 	} from '$lib/text/enacted-law';
 	import { MOVED_LAW } from '$lib/bron/moved-law';
-	import { citaatUit, rondCitaat } from './inhoud';
+	import { citaatUit, paperParagraphOf, rondCitaat } from './inhoud';
 	import type { MapItem } from './map';
 	import MapRegelingen from './MapRegelingen.svelte';
 	import { onderWet, opArtikel } from './verbonden';
@@ -76,6 +76,8 @@
 				tekst: string | null;
 				kern: string | null;
 				als: 'dictum' | 'toelichting' | 'opening';
+				/** Its text and structure, cut into alineas as its reader cuts them. */
+				source: PaperSource;
 				/** How it is cited, for the menu of a kept alinea; its path for the link. */
 				paper: PaperCitation | null;
 				path: string | null;
@@ -149,7 +151,7 @@
 		}
 		if (doel.collection === 'documents') {
 			// A kept alinea is cited as in the reader: with its light node (the vergaderjaar).
-			const kept = paperParagraphIndex(i.at) !== null;
+			const kept = paperParagraphNumber(i.at) !== null;
 			const [d, light] = await Promise.all([
 				getDocument(doel.key),
 				kept
@@ -167,6 +169,7 @@
 				tekst: d.text ?? null,
 				kern: kernVan(als, d),
 				als,
+				source: d,
 				paper: kept ? citePaper(d, (light?.node.props ?? {}) as Record<string, unknown>) : null,
 				path: light?.path ?? null
 			};
@@ -278,17 +281,13 @@
 	{:else if inhoud.soort === 'stuk'}
 		{@const rond = citaat ? rondCitaat(inhoud.tekst, citaat) : null}
 		{@const path = inhoud.path}
-		{@const paperText =
-			inhoud.tekst &&
-			(paperParagraphIndex(item.at) ?? Infinity) < paperParagraphs(inhoud.tekst).length
-				? inhoud.tekst
-				: null}
+		{@const kept = !!paperParagraphOf(paperParagraphs(inhoud.source), item.at)}
 		<!-- The row is the map's own (a citation and a note): the outcome stands here, as on
 		     the row of every other list of Kamerstukken. -->
 		{#if inhoud.uitslag}<p class="uitslag"><StukUitslag uitslag={inhoud.uitslag} /></p>{/if}
-		{#if paperText}
+		{#if kept}
 			<PaperParagraph
-				text={paperText}
+				source={inhoud.source}
 				at={item.at}
 				around={ruim}
 				paper={inhoud.paper}
@@ -302,7 +301,7 @@
 			<p class="stil">Tekst nog niet in de gegevens.</p>
 		{/if}
 		<p class="verder">
-			{#if paperText}
+			{#if kept}
 				<TekstLink onclick={() => (ruim = !ruim)} aria-pressed={ruim}
 					>{ruim ? `Alleen ${plaats ?? 'de alinea'}` : "Alinea's eromheen"}</TekstLink
 				>

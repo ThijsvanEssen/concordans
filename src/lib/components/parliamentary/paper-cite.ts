@@ -52,13 +52,13 @@ export type PaperCitation = ReturnType<typeof citePaper>;
 /**
  * The alineas of a paper as their menu cites and keeps them: kort and voluit with `alinea 4`,
  * the link to its place, and the item Bewaar keeps, under the paper's dossier. Per alinea only
- * its place in the list (`paperParagraphs`, from 0) and its link are added.
+ * its number (`paperParagraphs`, from 1) and its link are added.
  */
 export const paperParagraphCite =
 	(paper: PaperCitation) =>
-	(i: number, link: string): { kort: string; voluit: string; link: string; bewaar: MapItem } => {
-		const at = paperParagraphAnchor(i);
-		const place = `alinea ${i + 1}`;
+	(n: number, link: string): { kort: string; voluit: string; link: string; bewaar: MapItem } => {
+		const at = paperParagraphAnchor(n);
+		const place = `alinea ${n}`;
 		const kort = `${paper.name}, ${place}`;
 		const voluit = `${paper.full}, ${place}`;
 		return {

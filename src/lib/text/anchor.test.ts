@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import papers from '$lib/fixtures/paper-paragraphs.json';
 import {
 	paperParagraphAnchor,
-	paperParagraphIndex,
+	paperParagraphNumber,
 	paperParagraphs,
 	anchorLabel,
 	atPlace,
@@ -117,16 +118,56 @@ describe('the anchors a reader builds', () => {
 	});
 });
 
-describe('the alineas of a Kamerstuk', () => {
-	it('cuts its text per line, each where its words start, numbered from 1', () => {
-		const text = 'De Kamer,\n\n  overwegende dat;\nverzoekt de regering \n';
-		const a = paperParagraphs(text);
-		expect(a.map((x) => x.text)).toEqual(['De Kamer,', 'overwegende dat;', 'verzoekt de regering']);
-		for (const x of a) expect(text.slice(x.start, x.start + x.text.length)).toBe(x.text);
-		expect(paperParagraphAnchor(a[2].i)).toBe('alinea-3');
-		expect(paperParagraphIndex('alinea-3')).toBe(2);
-		expect(paperParagraphIndex('rov-3')).toBeNull();
-		expect(paperParagraphs(null)).toEqual([]);
+describe('the alineas of a Kamerstuk: its text alone, numbered from 1 (A32 #1)', () => {
+	const numbered = (doc: (typeof papers)[keyof typeof papers]) =>
+		paperParagraphs(doc).filter((p) => p.n !== null);
+	const own = (doc: (typeof papers)[keyof typeof papers]) =>
+		paperParagraphs(doc)
+			.filter((p) => p.n === null)
+			.map((p) => p.text);
+
+	it('leaves out the head of a motie and its closing, by the dictum the API gives', () => {
+		const motie = papers['motie-37020-XVI-57'];
+		const a = numbered(motie);
+		expect(a[0]).toMatchObject({ n: 1, text: expect.stringMatching(/^constaterende dat/) });
+		expect(a.at(-1)).toMatchObject({ n: 5, text: expect.stringMatching(/^verzoekt de regering/) });
+		expect(own(motie).slice(0, 3)).toEqual([
+			'MOTIE VAN HET LID TIJMSTRA C.S.',
+			'De Kamer,',
+			'gehoord de beraadslaging,'
+		]);
+		expect(own(motie)).toContain('en gaat over tot de orde van de dag.');
+	});
+
+	it('leaves out the head of a memorie and its headings (sections)', () => {
+		const a = numbered(papers['mvt-37020-I-2']);
+		expect(a[0]).toMatchObject({ n: 1, text: expect.stringMatching(/^De begrotingsstaten/) });
+		expect(a.map((p) => p.text)).not.toContain('1. Leeswijzer');
+	});
+
+	it('leaves out the onderdelen A, B, C of a nota van wijziging, keeps its opening sentence', () => {
+		const nota = papers['nota-36808-6'];
+		const a = numbered(nota);
+		expect(a[0]).toMatchObject({ n: 1, text: 'Het voorstel (nr. 2) wordt als volgt gewijzigd:' });
+		expect(a[1]).toMatchObject({ n: 2, text: expect.stringMatching(/^Aan het opschrift/) });
+		expect(own(nota)).toEqual(expect.arrayContaining(['TWEEDE NOTA VAN WIJZIGING', 'A', 'B', 'C']));
+	});
+
+	it('keeps every line in the order of the text, where its words start', () => {
+		for (const doc of Object.values(papers)) {
+			const all = paperParagraphs(doc);
+			all.forEach((p, i) => {
+				expect(p.i).toBe(i);
+				expect(doc.text.slice(p.start, p.start + p.text.length)).toBe(p.text);
+			});
+		}
+	});
+
+	it('names an alinea by its number: `alinea-4`', () => {
+		expect(paperParagraphAnchor(4)).toBe('alinea-4');
+		expect(paperParagraphNumber('alinea-4')).toBe(4);
+		expect(paperParagraphNumber('rov-4')).toBeNull();
+		expect(paperParagraphs({ text: null })).toEqual([]);
 	});
 
 	it('prints an alinea as a citation names it', () => {
