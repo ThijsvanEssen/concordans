@@ -20,7 +20,9 @@
 	import LoadState, { failureText } from '$lib/components/ui/LoadState.svelte';
 	import Kenmerk from '$lib/components/ui/Kenmerk.svelte';
 	import { bronLabel } from '$lib/vocabulary';
-	import { getCoverage } from '$lib/api/stats';
+	import { getCoverage, getStats, type Stats } from '$lib/api/stats';
+	import Coverage from '$lib/components/ui/Coverage.svelte';
+	import { SOURCE_LABEL } from '$lib/bron/herkomst';
 	import { uniqueBy } from '$lib/util/unique';
 	import { isEscape } from '$lib/actions/keys';
 	import { focusFirstNew, rijen } from '$lib/actions/rijen';
@@ -361,6 +363,19 @@
 			.catch((e) => report('Gerechten', e));
 	});
 
+	// The stand of the one source a list shows (the EHRM): from the stats, asked once it is chosen.
+	const listSource = $derived(list.source?.(p) ?? null);
+	let dataAsOf = $state<Stats['data_as_of'] | null>(null);
+	$effect(() => {
+		if (!listSource || untrack(() => dataAsOf)) return;
+		getStats()
+			.then((s) => {
+				dataAsOf = s.data_as_of ?? {};
+			})
+			.catch((e) => report('Stand van de bron', e));
+	});
+	const sourceCompleteness = $derived(listSource ? dataAsOf?.[listSource]?.completeness : null);
+
 	// The factions to filter members by, of the Kamer shown; the list is filtered by the API.
 	let partiesOf = $state<Chamber | null>(null);
 	$effect(() => {
@@ -627,6 +642,12 @@
 							{:else if list.Rows}
 								<!-- The count's own height before it is known, so nothing below it moves. -->
 								<p class="result-count" aria-hidden="true">&nbsp;</p>
+							{/if}
+							{#if listSource}
+								<Coverage
+									coverage={sourceCompleteness}
+									of={SOURCE_LABEL[listSource] ?? listSource}
+								/>
 							{/if}
 							{#if sorts.length > 1}
 								<!-- The order of the list: one line under its count (docs/bediening.md). -->

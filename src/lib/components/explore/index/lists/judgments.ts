@@ -218,6 +218,8 @@ export const judgments = defineList<Row, JudgmentsState, ReturnType<typeof query
 			ctx.p.procedure
 		)
 	],
+	// A European court chosen: its own source, whose stand the list says when it is not current.
+	source: (p) => p.source ?? null,
 	Figure: JudgmentYears,
 	Rows: JudgmentRows
 });

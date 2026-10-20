@@ -1,6 +1,8 @@
 <script lang="ts">
 	import KeyList from '$lib/components/ui/KeyList.svelte';
 	import KeyRow from '$lib/components/ui/KeyRow.svelte';
+	import CoverageLine from '$lib/components/ui/Coverage.svelte';
+	import { coverageLine } from '$lib/components/ui/coverage';
 	import { langeDatum } from '$lib/text/datum';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	// Bronnen en hergebruik: the one place for where the data comes from, how far it goes, and
@@ -18,12 +20,13 @@
 	/** How current each source is (`data_as_of`): the last date in its data, and when it was fetched. */
 	const asOfIn = (stats: Stats) =>
 		Object.entries(stats.data_as_of ?? {}).flatMap(([source, d]) =>
-			d?.retrieved_at
+			d?.retrieved_at || d?.completeness
 				? [
 						{
 							source: SOURCE_LABEL[source] ?? source,
 							newest: d.newest ?? null,
-							fetched: d.retrieved_at.slice(0, 10)
+							fetched: d.retrieved_at?.slice(0, 10) ?? null,
+							completeness: d.completeness
 						}
 					]
 				: []
@@ -96,10 +99,13 @@
 						</p>
 						<KeyList>
 							{#each asOf as a (a.source)}
+								<!-- A source the runs no longer fetch from says so, with the day it reached. -->
 								<KeyRow key={a.source}
-									>{a.newest ? `tot en met ${langeDatum(a.newest)}, ` : ''}opgehaald op {langeDatum(
-										a.fetched
-									)}</KeyRow
+									>{#if coverageLine(a.completeness)}<CoverageLine
+											coverage={a.completeness}
+										/>{:else}{a.newest ? `tot en met ${langeDatum(a.newest)}, ` : ''}opgehaald op {langeDatum(
+											a.fetched
+										)}{/if}</KeyRow
 								>
 							{/each}
 						</KeyList>

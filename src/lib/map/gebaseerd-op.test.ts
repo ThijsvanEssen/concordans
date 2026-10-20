@@ -21,6 +21,7 @@ const instrument = (key: string, title: string): Schema<'InstrumentSummaryDTO'> 
 	celex: null,
 	short_title: null,
 	abbreviation: null,
+	signed_on: null,
 	official_url: null,
 	id: `instruments/${key}`,
 	key,

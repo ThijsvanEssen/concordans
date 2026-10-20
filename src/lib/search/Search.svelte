@@ -14,6 +14,8 @@
 	import { FAST_MIN_CHARS, SEARCH_KINDS } from './lanes';
 	import { bronHref, focusOf, type BronRef } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import Coverage from '$lib/components/ui/Coverage.svelte';
+	import { searchedLine } from '$lib/components/ui/coverage';
 	import { groupLabel, hitName, presentHit, sectionOf } from './present';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 	import { bronLabel, nodeId } from '$lib/vocabulary';
@@ -295,6 +297,10 @@
 						{groupLabel(group.kind)}{/if}
 					{#if search.loadingKinds.has(group.kind)}<span class="laden">laden…</span>{/if}
 				</div>
+				{#if !group.best && searchedLine(search.searched[group.kind])}
+					<!-- What its search reads, so a hit not found is not taken for one not there. -->
+					<p class="gezocht"><Coverage searched={search.searched[group.kind]} /></p>
+				{/if}
 				{#each uniqueBy(group.hits, (x) => x.id) as hit, h (hit.id)}
 					{@const i = search.rowOfHit.get(hit.id) ?? search.offset}
 					{@const shown = presentHit(hit, search.q, buren)}
@@ -549,6 +555,12 @@
 		margin: 0 var(--s-4) var(--s-2);
 		font-size: var(--t-meta);
 	}
+	.gezocht {
+		margin: 0;
+		padding: 0 var(--s-4) var(--s-1);
+		line-height: var(--lh-snug);
+	}
+
 	.group-label .laden {
 		margin-left: var(--s-2);
 		color: var(--ink-3);
