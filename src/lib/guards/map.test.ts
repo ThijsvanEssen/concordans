@@ -10,6 +10,16 @@ describe('the map', () => {
 		expect(overtreders(metDeHand, [plek('lib/map/map.ts')])).toEqual([]);
 	});
 
+	it('puts In de lezer in one place in every row, on Gemarkeerd and the bundel’s page (F4)', () => {
+		// First in the row's ways on, in the DOM as on screen (Tab follows it); the buttons after
+		// it keep their width, so they do not move it. A tap target of 24 px at least.
+		const groups = bron('lib/map/MapGroups.svelte');
+		const aside = /\{#snippet aside\(\)\}([\s\S]*?)\{\/snippet\}/.exec(groups)![1];
+		expect(aside.indexOf('naar-lezer')).toBeLessThan(aside.indexOf('class="knoppen"'));
+		expect(groups).not.toMatch(/order: -1/);
+		expect(groups).toMatch(/:global\(\.naar-lezer\) \{[^}]*min-height: var\(--s-5\)/);
+	});
+
 	it('cites a kept vote as a vote, from its reader, a row of Bronnen and Verbonden (#54)', () => {
 		const kept = BRONNEN.filter(({ text }) => /\bvoteCitation\(/.test(text)).map((s) => s.path);
 		expect(kept).toEqual(
@@ -95,7 +105,9 @@ describe('the map', () => {
 		const aside = /\{#snippet aside\(\)\}([\s\S]*?)\{\/snippet\}/.exec(
 			bron('lib/map/MapGroups.svelte')
 		)![1];
-		expect(aside.slice(aside.lastIndexOf('</span>'))).toContain('>In de lezer</TekstLink');
+		const knoppen = /<span class="knoppen">[\s\S]*?<\/span>/.exec(aside)![0];
+		expect(aside).toContain('>In de lezer</TekstLink');
+		expect(knoppen).not.toContain('naar-lezer');
 	});
 
 	it('shows a bundel alike on Gemarkeerd and on its own page: one MapView, one MapGroups', () => {

@@ -17,7 +17,13 @@ function query(category: IndexCategory, address = '') {
 }
 
 /** The filter groups of a list for an address, under its state and the courts' coverage. */
-function facetGroups(category: IndexCategory, address: string, state = {}, coverage = null) {
+function facetGroups(
+	category: IndexCategory,
+	address: string,
+	state = {},
+	coverage = null,
+	patch: (p: object) => void = () => {}
+) {
 	const p = params(address);
 	const list = LISTS[category];
 	const sort = forParams(list.sorts, p)[0];
@@ -30,7 +36,7 @@ function facetGroups(category: IndexCategory, address: string, state = {}, cover
 		state,
 		shared: { cabinets: [], ministries: [], coverage, parties: [] },
 		loading: false,
-		patch: () => {},
+		patch,
 		toggleOpen: () => {},
 		openGroups: new Set(),
 		toggleGroup: () => {},
@@ -249,34 +255,62 @@ describe('the courts of the judgments', () => {
 		tiers: [
 			{ tier: 'hoge_raad', count: 57506 },
 			{ tier: 'rechtbank', count: 510203 },
-			{ tier: 'ehrm', count: 3480 }
+			{ tier: 'ehrm', count: 3480 },
+			{ tier: 'hvj_eu', count: 2410 }
 		],
 		courts: [
 			{ source: 'rechtspraak', count: 998280 },
-			{ source: 'echr', count: 3232 }
+			{ source: 'echr', count: 3232 },
+			{ source: 'cjeu', count: 2100 }
 		]
 	} as never;
 	const facets = {
 		tier: [
 			{ value: 'rechtbank', count: 510203 },
 			{ value: 'hoge_raad', count: 57506 },
-			{ value: 'ehrm', count: 3480 }
+			{ value: 'ehrm', count: 3480 },
+			{ value: 'hvj_eu', count: 2410 }
 		],
 		source: [
 			{ value: 'rechtspraak', count: 998280 },
-			{ value: 'echr', count: 3232 }
+			{ value: 'echr', count: 3232 },
+			{ value: 'cjeu', count: 2100 }
 		]
 	};
-	const counts = (address: string) =>
-		Object.fromEntries(
-			facetGroups('judgments', address, { facets }, coverage)
-				.flatMap((g) => (g.kind === 'list' ? g.options : []))
-				.map((o) => [o.id, o.count])
+	const options = (address: string, patch: (p: object) => void = () => {}) =>
+		facetGroups('judgments', address, { facets }, coverage, patch).flatMap((g) =>
+			g.kind === 'list' ? g.options : []
 		);
+	const counts = (address: string) =>
+		Object.fromEntries(options(address).map((o) => [o.id, o.count]));
 
 	it('counts each court as the list it chooses holds', () => {
 		// The EHRM is `source=echr`: its own judgments, not the Dutch ones that name it as court.
 		expect(counts('')).toMatchObject({ hoge_raad: 57506, rechtbank: 510203, ehrm: 3232 });
 		expect(counts('q=huur')).toMatchObject({ hoge_raad: 57506, ehrm: 3232 });
+	});
+
+	it('takes the Hof van Justitie EU as its own source, as the EHRM', () => {
+		// The courts of the EU are `source=cjeu`, not the Dutch records that name the Court.
+		expect(counts('')).toMatchObject({ hvj_eu: 2100, ehrm: 3232 });
+		const on = (address: string) => Object.fromEntries(options(address).map((o) => [o.id, o.on]));
+		expect(on('source=cjeu')).toMatchObject({ hvj_eu: true, ehrm: false, hoge_raad: false });
+		expect(on('source=echr')).toMatchObject({ hvj_eu: false, ehrm: true });
+		const patched: object[] = [];
+		const hof = options('', (p) => patched.push(p)).find((o) => o.id === 'hvj_eu')!;
+		hof.onClick?.();
+		expect(patched).toEqual([{ tier: null, court_kind: null, court: null, source: 'cjeu' }]);
+		expect(query('judgments', 'source=cjeu')).toMatchObject({ source: 'cjeu' });
+	});
+
+	it('keeps the Hof van Justitie EU a tier while the data holds none of its own judgments', () => {
+		const before = {
+			...(coverage as object),
+			courts: [{ source: 'rechtspraak', count: 998280 }]
+		} as never;
+		const hof = facetGroups('judgments', '', { facets }, before)
+			.flatMap((g) => (g.kind === 'list' ? g.options : []))
+			.find((o) => o.id === 'hvj_eu');
+		expect(hof?.count).toBe(2410);
 	});
 });

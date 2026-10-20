@@ -17,10 +17,12 @@ const ref = (
 	kind: 'extref',
 	bwb_id: bwb,
 	article,
+	celex: null,
 	doc,
 	text: '',
 	start,
 	end,
+	target: null,
 	...over
 });
 

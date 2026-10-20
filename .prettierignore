@@ -17,3 +17,6 @@ src/lib/bron/readable-paths.json
 
 # Recorded from the API, written by src/lib/test/opname.ts
 /src/lib/fixtures/verbonden/
+
+# The server's HTML of the start page (home.py of the API), byte for byte (npm run sync:start).
+src/lib/components/home/start-server.html

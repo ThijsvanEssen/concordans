@@ -12,7 +12,15 @@
 	import { bronHref } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import type { GraphNode } from '$lib/graph/types';
-	import { TABLE_COLUMNS, csvName, download, exportLabel, exportRows, rowsToCsv } from './export';
+	import {
+		TABLE_COLUMNS,
+		columnLabel,
+		csvName,
+		download,
+		exportLabel,
+		exportRows,
+		rowsToCsv
+	} from './export';
 	import { type VerbondenFilter } from './filter';
 	import { formatCount } from '$lib/text/getal';
 	import { ankerVanRij, dossierVanRij, openLabelOf, rowKey, type Row } from './rows';
@@ -110,7 +118,7 @@
 				: sortDir === 'asc'
 					? 'oplopend'
 					: 'aflopend';
-		return `${col?.label ?? ''}, ${dir}`;
+		return `${col ? columnLabel(col, selection.collection) : ''}, ${dir}`;
 	});
 
 	const title = $derived(tableTitle(selection));
@@ -148,7 +156,10 @@
 		<TekstMenu
 			label="Volgorde"
 			tekst={sortLabel}
-			opties={TABLE_COLUMNS.map((c) => ({ waarde: c.id, label: c.label }))}
+			opties={TABLE_COLUMNS.map((c) => ({
+				waarde: c.id,
+				label: columnLabel(c, selection.collection)
+			}))}
 			waarde={sortBy}
 			onSelect={(id) => {
 				sortBy = id;
@@ -187,7 +198,8 @@
 							role="menuitemcheckbox"
 							aria-checked={on}
 							class="tekstmenu__item menu__vink"
-							onclick={() => toggleColumn(c.id)}><Vinkje aan={on} />{c.label}</button
+							onclick={() => toggleColumn(c.id)}
+							><Vinkje aan={on} />{columnLabel(c, selection.collection)}</button
 						>
 					{/each}
 				</div>
@@ -220,7 +232,9 @@
 									: 'none'}
 							>
 								<button type="button" class="th" onclick={() => sortOn(c.id)}>
-									{c.label}{#if sortBy === c.id}<span aria-hidden="true">
+									{columnLabel(c, selection.collection)}{#if sortBy === c.id}<span
+											aria-hidden="true"
+										>
 											{sortDir === 'asc' ? '↑' : '↓'}</span
 										>{/if}
 								</button>

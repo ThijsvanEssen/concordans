@@ -71,6 +71,9 @@ const DOSSIER = /^\d{4,6}(-[A-Z0-9()]+)*$/i;
 const BWB = /^BWBR\d{7}$/i;
 /** An EU act by its CELEX number, its node key too: sector 3, year, kind, number (32022L2555). */
 const CELEX = /^3\d{4}[CDFLR]\d+$/i;
+/** Whether a law in an address is named by its id (BWB, CELEX, Staatsblad), not a name. */
+export const isLawId = (wet: string): boolean =>
+	BWB.test(wet) || CELEX.test(wet) || STB_LAW.test(wet);
 /** A key or slug as the API gives it: `rutte_iv`, `ek_democraten_1966`, `buhaos-2021`. */
 const KEY = /^[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
 /** The slug of a lid: words joined by hyphens, `rob-jetten`. */

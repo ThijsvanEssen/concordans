@@ -22,7 +22,7 @@ import { isDerived, positionsLabel, readEdge } from './edge-meta';
 import { relationWords } from './relation-words';
 import { periodLabel } from './lines';
 import type { Bereik } from '$lib/text/voetnoten';
-import type { Cite } from '$lib/text/judgment-cite';
+import type { Cite } from '$lib/text/judgment-heading';
 
 import type { Neighbor } from '$lib/api/nodes';
 

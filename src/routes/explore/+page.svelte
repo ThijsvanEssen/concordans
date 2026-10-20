@@ -116,7 +116,8 @@
 		nameOfPad,
 		netwerkQuery as netwerkQueryOf
 	} from './explore-url';
-	import { PANELS, panelOfKey, type Panel } from './panels';
+	import { PANELS, panelOfKey, verbondenInView, type Panel } from './panels';
+	import { citedByName, pathByName } from '$lib/bron/law-name';
 	import { followServerMove, isEnactedLawPath } from '$lib/bron/moved-law';
 	import { ColumnWidths, type Column } from './column-widths.svelte';
 	import { NetwerkComposer } from './netwerk-compose.svelte';
@@ -172,7 +173,19 @@
 		// Untracked: lookUp reads what is remembered (focusOfPad), and a list that comes in
 		// remembers hundreds of addresses; that is no reason to ask again (Sv 143 was asked
 		// twice, 10 Oct).
-		untrack(() => lookUp(p, ac.signal))
+		// A law by its abbreviation (/wetten/wft/artikel/1:1): on to its own address, without
+		// asking the data for a law id it has not.
+		const byName = citedByName(p)
+			? pathByName(p, ac.signal).then(
+					(named) => {
+						if (named && !ac.signal.aborted)
+							location.replace(named + location.search + location.hash);
+						return named ? 'elders' : null;
+					},
+					() => null
+				)
+			: untrack(() => lookUp(p, ac.signal));
+		byName
 			.then((found) => {
 				if (found || ac.signal.aborted) return;
 				// A law of the Staatsblad the BWB now holds: the server sends it on.
@@ -282,12 +295,11 @@
 	const source = createVerbondenSource(store);
 	let verbonden = $state<VerbondenState>(get(source));
 	source.subscribe((s) => (verbonden = s));
-	// Verbonden loads when it is in view (Thijs, 9 Oct: "alles zo lazy mogelijk"): beside the
-	// reader on a wide screen; on a phone when its tab is opened, or for an article, whose
-	// counts per lid stand in the text.
+	// Verbonden loads when it is in view (verbondenInView).
 	$effect(() => {
 		const node = mode === 'index' ? null : selectedNode;
-		if (node && telefoon && mobilePanel !== 'verbonden' && node.collection !== 'articles') return;
+		const view = { phone: telefoon, table: tableMode, panel: mobilePanel };
+		if (node && !verbondenInView(node.collection, view)) return;
 		source.load(node);
 	});
 	onDestroy(() => source.destroy());

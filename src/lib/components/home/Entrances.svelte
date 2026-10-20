@@ -1,70 +1,40 @@
 <script lang="ts">
 	// The three ways in on the start page, each shown by one example (product decision of
 	// 16 Oct): an article with its reading, origin and text; a vote per party; a Bundel.
-	// Fixed, so they stand in the first paint without a request, as the server can show them.
+	// Fixed (start.json), so they stand in the first paint without a request, as the
+	// server's HTML of `/` shows them before the app (app.html sets them alike).
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import VoteMark from '$lib/components/parliamentary/Stem.svelte';
 	import OutcomeMark from '$lib/components/parliamentary/Uitkomst.svelte';
-	import {
-		EXAMPLE_BUNDLE_HREF,
-		EXAMPLE_LINES,
-		EXAMPLE_NOTE,
-		EXAMPLE_TITLE
-	} from './example-bundle';
+	import { START } from './start';
 
-	/** Art. 6:162 BW and the parts of its page, each row a link to its part (the filter of
-	 *  Verbonden, lib/verbonden/filter.ts). */
-	const ARTICLE = '/wetten/BWBR0005289/artikel/6:162';
-	const ARTICLE_PARTS = [
-		{ collection: 'judgments', label: 'Uitspraken die het aanhalen', bronnen: 'uitspraken' },
-		{
-			collection: 'documents',
-			label: 'Kamerstukken die het noemen',
-			bronnen: 'toelichtingen,wetsvoorstellen,dossiers'
-		},
-		{ collection: 'articles', label: 'Artikelen die ernaar verwijzen', bronnen: 'artikelen' }
-	] as const;
-
-	/** The motion of 16 June 2026 (decision_495fd69d…), its parties as the vote gave them. */
-	const VOTE = {
-		title: 'Motie De Hoop en Grinwis over de WOZ-cap niet versoepelen',
-		href: '/kamerstukken/27926/413',
-		date: '16 juni 2026, Tweede Kamer',
-		tally: '54 voor, 96 tegen',
-		sides: [
-			{
-				choice: 'Voor',
-				parties: 'PRO, PVV, ChristenUnie, DENK, PvdD, SP, 50PLUS, Volt'
-			},
-			{
-				choice: 'Tegen',
-				parties: 'D66, VVD, CDA, JA21, FVD, Groep Markuszower, BBB, SGP, Lid Keijzer'
-			}
-		]
-	};
+	// Art. 6:162 BW and the parts of its page, each row a link to its part (the filter of
+	// Verbonden, lib/verbonden/filter.ts); the motion of 16 June 2026 (decision_495fd69d…),
+	// its parties as the vote gave them; the bundel of example-bundle.test.ts.
+	const { article, vote, bundle } = START;
 </script>
 
 <div class="entrances">
 	<section class="entrance" aria-labelledby="entrance-article">
-		<h2 id="entrance-article">Artikel</h2>
-		<a class="title" href={ARTICLE}>Art. 6:162 BW, Onrechtmatige daad</a>
+		<h2 id="entrance-article">{article.heading}</h2>
+		<a class="title" href={article.href}>{article.title}</a>
 		<ul class="rows">
-			{#each ARTICLE_PARTS as part (part.bronnen)}
+			{#each article.parts as part (part.bronnen)}
 				<li>
 					<KindGlyph collection={part.collection} />
-					<a href="{ARTICLE}?bronnen={part.bronnen}">{part.label}</a>
+					<a href="{article.href}?bronnen={part.bronnen}">{part.label}</a>
 				</li>
 			{/each}
 		</ul>
 	</section>
 
 	<section class="entrance" aria-labelledby="entrance-vote">
-		<h2 id="entrance-vote">Stemming</h2>
-		<a class="title" href={VOTE.href}>{VOTE.title}</a>
-		<p class="meta">{VOTE.date}</p>
-		<p class="outcome"><OutcomeMark tone="nee" woord="Verworpen" /> <span>{VOTE.tally}</span></p>
+		<h2 id="entrance-vote">{vote.heading}</h2>
+		<a class="title" href={vote.href}>{vote.title}</a>
+		<p class="meta">{vote.date}</p>
+		<p class="outcome"><OutcomeMark tone="nee" woord={vote.outcome} /> <span>{vote.tally}</span></p>
 		<dl class="sides">
-			{#each VOTE.sides as side (side.choice)}
+			{#each vote.sides as side (side.choice)}
 				<dt><VoteMark keuze={side.choice} /></dt>
 				<dd>{side.parties}</dd>
 			{/each}
@@ -72,18 +42,18 @@
 	</section>
 
 	<section class="entrance" aria-labelledby="entrance-bundle">
-		<h2 id="entrance-bundle">Bundel</h2>
-		<a class="title" href={EXAMPLE_BUNDLE_HREF}>{EXAMPLE_TITLE}</a>
+		<h2 id="entrance-bundle">{bundle.heading}</h2>
+		<a class="title" href={bundle.href}>{bundle.title}</a>
 		<ul class="rows">
-			{#each EXAMPLE_LINES as line (line.id)}
+			{#each bundle.lines as line (line.href)}
 				<li>
 					<KindGlyph collection={line.collection} />
 					<a href={line.href}>{line.label}</a>
 				</li>
 			{/each}
 			<li class="note">
-				<span class="note-label">Aantekening</span>
-				{EXAMPLE_NOTE}
+				<span class="note-label">{bundle.noteLabel}</span>
+				{bundle.note}
 			</li>
 		</ul>
 	</section>

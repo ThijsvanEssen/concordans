@@ -1,7 +1,7 @@
 // The address of Bronnen as the lists read it: every filter, the sort and the open row are in
 // the URL, so a view can be shared. A value the site does not know is left out, so the list
 // shows as without it.
-import { COURT_KINDS, TIERS } from '$lib/vocabulary';
+import { COURT_KINDS, EUROPEAN_SOURCES, TIERS } from '$lib/vocabulary';
 import {
 	OUTCOME_LABEL,
 	isDossierKind,
@@ -113,7 +113,7 @@ export function readParams(params: URLSearchParams) {
 		// TODO(backend G14): the lists hold records without text or articles; until they can
 		// be left out by a parameter, a wet needs an article and a judgment a source.
 		withEmpty: params.get('leeg') === '1',
-		source: choiceOf(params.get('source'), ['echr'] as const),
+		source: choiceOf(params.get('source'), EUROPEAN_SOURCES),
 		tier: choiceOf(params.get('tier'), TIERS),
 		courtKind: choiceOf(params.get('court_kind'), COURT_KINDS),
 		// Rechtsgebied and procedure as rechtspraak.nl gives them (API 0.74, BE-44).

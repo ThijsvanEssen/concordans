@@ -86,8 +86,8 @@
 			</p>
 			<p>
 				Een Europese richtlijn of verordening staat erin voor zover een Nederlandse regeling ernaar
-				verwijst. Van het EHRM staat een selectie uitspraken in het netwerk, van het Hof van
-				Justitie vrijwel niets. Zie <a href="https://eur-lex.europa.eu" class="cite"
+				verwijst. Van het EHRM en van het Hof van Justitie en het Gerecht van de EU staat een
+				selectie uitspraken in het netwerk. Zie <a href="https://eur-lex.europa.eu" class="cite"
 					>eur-lex.europa.eu</a
 				>
 				en

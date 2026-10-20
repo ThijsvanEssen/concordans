@@ -447,11 +447,11 @@ exports[`Verbonden of a 'kamerstuk' > keeps its groups, rows, kern and export > 
 `;
 
 exports[`Verbonden of a 'uitspraak' > keeps its groups, rows, kern and export > csv 1`] = `
-"﻿bron;soort;verbinding;plaats in de bron;plaats in dit artikel;aard;status;betrouwbaarheid;datum;identificatie;link
+"﻿bron;soort;verbinding;plaats in de bron;plaats in deze uitspraak;aard;status;betrouwbaarheid;datum;identificatie;link
 Artikel 81 RO;Artikelen;haalt aan;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001830/artikel/81?lezen=1
-Artikel 29 Sv;Artikelen;haalt aan;r.o. 2.2.3, 2.3.1 en 1 meer;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/29?lezen=1
-Artikel 27c Sv;Artikelen;haalt aan;r.o. 2.2.3 en 2.3.3;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/27c?lezen=1
-Artikel 28 Sv;Artikelen;haalt aan;r.o. 2.2.3 en 2.3.3;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/28?lezen=1
+Artikel 29 Sv;Artikelen;haalt aan;;r.o. 2.2.3, 2.3.1 en 1 meer;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/29?lezen=1
+Artikel 27c Sv;Artikelen;haalt aan;;r.o. 2.2.3 en 2.3.3;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/27c?lezen=1
+Artikel 28 Sv;Artikelen;haalt aan;;r.o. 2.2.3 en 2.3.3;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/28?lezen=1
 Conclusie A-G Paridaens 1 oktober 2024;Uitspraken;conclusie bij;;;;vastgesteld;hoog;2024-10-01;ECLI:NL:PHR:2024:994;https://concordans.nl/uitspraken/ECLI:NL:PHR:2024:994?lezen=1
 Gerechtshof Arnhem-Leeuwarden, 24 juni 2022, 21-004903-20;Uitspraken;;;;;vastgesteld;hoog;;;https://concordans.nl/explore?focus=judgments/unresolved%3Agerechtshof+Arnhem-Leeuwarden%3A2022-06-24%3A21-004903-20&lezen=1
 HR 20 maart 2018;Uitspraken;haalt aan;;;;vastgesteld;hoog;2018-03-20;ECLI:NL:HR:2018:368;https://concordans.nl/uitspraken/ECLI:NL:HR:2018:368?lezen=1
