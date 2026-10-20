@@ -79,8 +79,6 @@
 	/** The tekstversie on screen, when it is not geldend recht. */
 	let shownIndex = $state<number | null>(null);
 	let versionMenu = $state(false);
-	/** Dossiers the API does not know: named, but not linked. */
-	let missingDossiers = $state<ReadonlySet<string>>(new Set());
 
 	// The toelichting (MvT) that explains this article, if any: a quick popup here, so
 	// the panel on the right can stay reserved for verwijzingen (Verbonden). Its own
@@ -138,7 +136,8 @@
 		explanatory = null;
 		const bwb = bwbId;
 		const num = articleNumber;
-		const dossier = wordingDossier?.number ?? null;
+		// A dossier the data lacks (`exists: false`) has no stukken to ask for.
+		const dossier = wordingDossier?.exists === false ? null : (wordingDossier?.number ?? null);
 		const since = onScreen?.from ?? null;
 		const versionKeys = onScreen?.versions.map((v) => v.key) ?? [];
 		if (!bwb || !num) return;
@@ -177,11 +176,7 @@
 			}
 			if (!dossier) return;
 			const papers = await getDossierDocuments(dossier);
-			if (ac.signal.aborted) return;
-			if (!papers) {
-				missingDossiers = new Set([...missingDossiers, dossier]);
-				return;
-			}
+			if (!papers || ac.signal.aborted) return;
 			const mvt = papers.items.find((d) => /memorie van toelichting/i.test(d.kind ?? ''));
 			if (!mvt || ac.signal.aborted) return;
 			explanatory = {
@@ -322,8 +317,7 @@
 
 	// The dossier(s) whose wetgeving the version on screen made: the fastest way to its
 	// memorie van toelichting and to the behandeling it was in.
-	// TODO(backend B13): a version from before the dossier collection's coverage names a
-	// dossier the API 404s on (e.g. a pre-1990s Kamerstuknummer); the link still renders.
+	// A dossier the data lacks (`exists: false`) is named, not linked (DossierLink).
 	const versionDossiers = $derived(
 		uniqueBy(onScreen?.first.amended_by?.dossiers ?? [], (d) => d.key)
 	);
@@ -689,10 +683,7 @@
 						<span class="head__item"
 							>{originVerb}
 							{#each versionDossiers as dossier, i (dossier.key)}{#if i > 0},
-								{/if}<DossierLink
-									{dossier}
-									missing={missingDossiers.has(dossier.number)}
-								/>{/each}</span
+								{/if}<DossierLink {dossier} />{/each}</span
 						>
 					{/if}
 				</div>
@@ -778,7 +769,6 @@
 						{citation}
 						{link}
 						{go}
-						{missingDossiers}
 					/>
 				{:else if versionCompare.error}
 					<LoadState

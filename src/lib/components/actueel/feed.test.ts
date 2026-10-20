@@ -32,6 +32,7 @@ const item = (date: string, kind: FeedItem['kind'], dossier: string | null): Fee
 	({
 		id: `x/${++n}`,
 		path: null,
+		kind_group: null,
 		kind,
 		date,
 		title: `${kind} ${n}`,

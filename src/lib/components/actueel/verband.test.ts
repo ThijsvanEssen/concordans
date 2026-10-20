@@ -144,7 +144,8 @@ describe('the papers and articles a row is tied to', () => {
 		surname: 'Kathmann',
 		title: null,
 		date: null,
-		path: '/kamerstukken/36764/31'
+		path: '/kamerstukken/36764/31',
+		kind_group: 'motie' as const
 	};
 
 	it('names a motion a letter answers by its submitter and place', () => {
@@ -178,7 +179,8 @@ describe('the papers and articles a row is tied to', () => {
 				kind: 'Brief regering',
 				date: '2026-10-07',
 				surname: 'Karremans',
-				path: null
+				path: null,
+				kind_group: 'brief'
 			})
 		).toBe('brief van 7 okt. 2026');
 		expect(
@@ -190,7 +192,8 @@ describe('the papers and articles a row is tied to', () => {
 				id: 'commitments/t',
 				kind: 'toezegging',
 				number: 'TZ202609-124',
-				path: null
+				path: null,
+				kind_group: null
 			})
 		).toBe('toezegging TZ202609-124');
 		// Within its own dossier, the number alone.

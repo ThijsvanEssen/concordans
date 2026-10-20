@@ -2,7 +2,7 @@
 // a law name (citation formats, graph labels) reads it through
 // `instrumentMetaStore` or `getInstrumentMeta`.
 
-import { enactedLawOfKey, lawNodeKey, STB_LAW } from '$lib/text/enacted-law';
+import { enactedLawOfKey } from '$lib/text/enacted-law';
 import { textOf } from '$lib/text/words';
 import { lawShortName } from '$lib/text/bw';
 import { writable, type Readable } from 'svelte/store';
@@ -147,11 +147,10 @@ onForget(() => {
 /**
  * One instrument in full (`/api/instruments/{identifier}`): its names, dates, article count
  * and citations, asked for once per identifier. What it says of the names goes into the
- * cache, so a law outside the 200 of `primeInstrumentNames` is named too. A law of the
- * Staatsblad by its node key (wet_stb_2026_56): STB-2026-56 is its publication there.
+ * cache, so a law outside the 200 of `primeInstrumentNames` is named too. The API knows a
+ * law of the Staatsblad by its id (STB-2026-56) as well.
  */
-export function getInstrumentDetail(id: string): Promise<Schema<'InstrumentDetailDTO'>> {
-	const identifier = STB_LAW.test(id) ? lawNodeKey(id) : id;
+export function getInstrumentDetail(identifier: string): Promise<Schema<'InstrumentDetailDTO'>> {
 	return once(`instruments/${identifier}/detail`, () =>
 		unwrap(api.GET('/api/instruments/{identifier}', { params: { path: { identifier } } })).then(
 			(detail) => {

@@ -7,16 +7,20 @@
 	import { kamerstukNummer } from './dossier-naam';
 
 	let {
-		dossier,
-		missing = false
+		dossier
 	}: {
-		dossier: { key: string; number: string; title?: string | null; short_title?: string | null };
-		/** The API answered 404 for it: an older Kamerstuknummer the dataset lacks. */
-		missing?: boolean;
+		/** `exists: false`: the data lacks it (an older Kamerstuknummer), so it is not linked. */
+		dossier: {
+			key: string;
+			number: string;
+			title?: string | null;
+			short_title?: string | null;
+			exists?: boolean;
+		};
 	} = $props();
 </script>
 
-{#if missing}<span title="Dit dossier staat niet in de gegevens"
+{#if dossier.exists === false}<span title="Dit dossier staat niet in de gegevens"
 		>{kamerstukNummer(dossier.number)}</span
 	>{:else}<BronLink
 		ref={{ collection: 'dossiers', key: dossier.key, number: dossier.number }}

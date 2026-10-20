@@ -61,8 +61,7 @@
 		layout = 'een',
 		citation = null,
 		link,
-		go,
-		missingDossiers = new Set()
+		go
 	}: {
 		/** Oldest first, as the API delivers them. */
 		versions: Version[];
@@ -79,8 +78,6 @@
 		link: (params: Params) => string;
 		/** Go there, replacing the entry: a choice in a list is not a step back. */
 		go: (params: Params) => void;
-		/** Dossiers the API does not hold: named, not linked. */
-		missingDossiers?: ReadonlySet<string>;
 	} = $props();
 
 	const wordings = $derived(wordingsOf(versions));
@@ -299,7 +296,7 @@
 			>{/if}{#if inForce && inForce !== pub}<span title={signedAndPublished(v.commencement)}
 				>in werking bij {inForce}</span
 			>{/if}{#each uniqueBy(v.amended_by?.dossiers ?? [], (d) => d.key) as dossier (dossier.key)}<span
-				><DossierLink {dossier} missing={missingDossiers.has(dossier.number)} /></span
+				><DossierLink {dossier} /></span
 			>{/each}</span
 	>
 {/snippet}

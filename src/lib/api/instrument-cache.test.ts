@@ -60,7 +60,7 @@ describe('what the cache tells its readers', () => {
 });
 
 describe('a law of the Staatsblad the BWB does not hold yet', () => {
-	it('is asked by its node key, STB-2026-56 being its publication, and named by its law id', async () => {
+	it('asks a law of the Staatsblad by its law id and names it by that id', async () => {
 		const api = fakeApi({
 			'/api/instruments/{identifier}': {
 				key: 'wet_stb_2026_56',
@@ -70,7 +70,7 @@ describe('a law of the Staatsblad the BWB does not hold yet', () => {
 		});
 		await getInstrumentDetail('STB-2026-56');
 		expect(api.asked('/api/instruments/{identifier}')[0].path).toEqual({
-			identifier: 'wet_stb_2026_56'
+			identifier: 'STB-2026-56'
 		});
 		expect(getInstrumentMeta('STB-2026-56')?.citationTitle).toBe('Wetboek van Strafvordering');
 	});
