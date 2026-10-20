@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { clickOutside } from '$lib/actions/top-layer';
-	import { kaart } from '$lib/map/map.svelte';
+	import { BUNDLES_PATH } from '$lib/map/page';
 	import { page } from '$app/stores';
 	import { modeOf } from '$lib/bron/href';
 	import { goto } from '$app/navigation';
@@ -15,7 +15,7 @@
 	const isIndex = $derived(mode === 'index');
 	const isExplore = $derived(mode !== null && mode !== 'index');
 	const isActueel = $derived($page.url.pathname.startsWith('/actueel'));
-	const isGemarkeerd = $derived($page.url.pathname.startsWith('/gemarkeerd'));
+	const isBundles = $derived($page.url.pathname.startsWith(BUNDLES_PATH));
 	const isOnderwerpen = $derived($page.url.pathname.startsWith('/onderwerpen'));
 
 	let mobileMenuOpen = $state(false);
@@ -33,7 +33,7 @@
 	}
 
 	/**
-	 * The focus leaves the sheet (Tab past Gemarkeerd, a click outside): it closes and the
+	 * The focus leaves the sheet (Tab past Bundels, a click outside): it closes and the
 	 * focus goes on where it went, as a menu does (actions/menu.ts). It stood over the page
 	 * while Tab went on behind it (audit 3).
 	 */
@@ -114,13 +114,12 @@
 			class:is-active={isOnderwerpen}
 			aria-current={isOnderwerpen ? 'page' : undefined}>Gevolgd</a
 		>
-		<!-- Gemarkeerd: a page as the others, the active map's count beside it, kept live. -->
+		<!-- Bundels: a page as the others, without a count (Bewaar says per bron what is kept). -->
 		<a
-			href="/gemarkeerd"
+			href={BUNDLES_PATH}
 			class="nav-link"
-			class:is-active={isGemarkeerd}
-			aria-current={isGemarkeerd ? 'page' : undefined}
-			>Gemarkeerd{#if kaart.items.length}<span class="nav-tel">{kaart.items.length}</span>{/if}</a
+			class:is-active={isBundles}
+			aria-current={isBundles ? 'page' : undefined}>Bundels</a
 		>
 	</nav>
 
@@ -199,9 +198,7 @@
 			<a href="/explore?mode=index" class="mobile-nav-link" class:is-active={isIndex}>Bronnen</a>
 			<a href="/actueel" class="mobile-nav-link" class:is-active={isActueel}>Actueel</a>
 			<a href="/onderwerpen" class="mobile-nav-link" class:is-active={isOnderwerpen}>Gevolgd</a>
-			<a href="/gemarkeerd" class="mobile-nav-link" class:is-active={isGemarkeerd}
-				>Gemarkeerd{#if kaart.items.length}<span class="nav-tel">{kaart.items.length}</span>{/if}</a
-			>
+			<a href={BUNDLES_PATH} class="mobile-nav-link" class:is-active={isBundles}>Bundels</a>
 		</div>
 	{/if}
 
@@ -275,11 +272,6 @@
 		text-decoration-line: underline;
 		text-underline-offset: 3px;
 	}
-	.nav-tel {
-		margin-left: var(--s-1);
-		color: var(--ink-3);
-	}
-
 	.nav-link.is-active {
 		color: var(--ink);
 	}

@@ -8,7 +8,9 @@
 	import { report } from '$lib/api/errors';
 	import type { Snippet } from 'svelte';
 	import { browser, dev } from '$app/environment';
-	import { afterNavigate } from '$app/navigation';
+	import { afterNavigate, replaceState } from '$app/navigation';
+	import { kaart } from '$lib/map/map.svelte';
+	import { BUNDLE_PARAM, withoutBundle } from '$lib/map/page';
 	import { tick } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';
 	import { page } from '$app/state';
@@ -41,6 +43,13 @@
 	afterNavigate(({ from, to }) => {
 		const van = from?.url;
 		const naar = to?.url;
+		// A reader opened to keep in a bundel (Andere bron toevoegen): it keeps there from now
+		// on, said on Bewaar; the address goes on without it, so no link carries it.
+		const keepIn = naar?.searchParams.get(BUNDLE_PARAM);
+		if (naar && keepIn) {
+			kaart.keepIn(keepIn);
+			replaceState(withoutBundle(naar), page.state);
+		}
 		if (dev && naar) meldZijscroll(naar.pathname + naar.search);
 		afterTick(stilAnnouncer);
 		if (!van || !naar || canonical(van) === canonical(naar)) return;

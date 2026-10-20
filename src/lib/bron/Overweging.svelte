@@ -3,7 +3,7 @@
 	// its text with the citations as links, the paragraphs that continue it and its
 	// sub-overwegingen; with `ruim`, the overwegingen around it, the kept one barred. The words
 	// that cite `doel` are marked. One component for every place an r.o. is read without its
-	// judgment: an opened item of Gemarkeerd (MapInhoud) and the card of a reference to an r.o.
+	// judgment: an opened item of a bundel (MapInhoud) and the card of a reference to an r.o.
 	// (OverwegingKaart). With `bewaar`, a number is the overweging's menu, as in the reader:
 	// Citeer, Kopieer tekst and Bewaar (overwegingCitaat).
 	import PlaatsMenu, { placeMarker } from '$lib/components/articles/PlaatsMenu.svelte';

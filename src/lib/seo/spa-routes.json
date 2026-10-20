@@ -20,16 +20,16 @@
 		"description": "Moties, amendementen, wetsvoorstellen en uitspraken per onderwerp, met een Atom-feed per onderwerp."
 	},
 	{
-		"path": "/gemarkeerd",
+		"path": "/bundels",
 		"index": false,
-		"title": "Gemarkeerd, Concordans",
-		"description": "De bundels met bewaarde artikelleden, overwegingen en bronnen, met aantekeningen, als citaten of CSV."
+		"title": "Bundels, Concordans",
+		"description": "De bundels met bewaarde artikelleden, overwegingen en bronnen, met aantekeningen, als citaten, CSV of PDF."
 	},
 	{
-		"path": "/gemarkeerd/bundel",
+		"path": "/bundels/[id]",
 		"index": false,
 		"title": "Bundel, Concordans",
-		"description": "Een bundel uit Gemarkeerd op één pagina: de aantekening, de groepen en de bronnen met hun citeervorm, om te lezen en af te drukken."
+		"description": "Een bundel op één pagina: de onderzoeksvraag, de groepen en de bronnen met hun citeervorm, om te lezen en als PDF te bewaren."
 	},
 	{
 		"path": "/onderwerpen/overzicht",

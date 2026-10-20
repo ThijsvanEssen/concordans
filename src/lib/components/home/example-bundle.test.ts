@@ -1,5 +1,5 @@
 // The Bundel of the start page: a research question kept with an article, a judgment and
-// a note, as a shared link (`/gemarkeerd#m=…`, $lib/map/share). The card shows the link and
+// a note, as a shared link (/bundels#m=…, $lib/map/share). The card shows the link and
 // lines of start.json; this keeps them equal to the bundel the link holds.
 import { describe, expect, it } from 'vitest';
 import { sharedOfFragment } from '$lib/map/share';

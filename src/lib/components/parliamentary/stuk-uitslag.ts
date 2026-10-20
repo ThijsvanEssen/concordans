@@ -1,5 +1,5 @@
 // How the Kamer decided on a motie or amendement, on its row wherever a Kamerstuk is listed
-// (Verbonden on a dossier, an article or a lid; Bronnen; Gemarkeerd): the API's `outcome`,
+// (Verbonden on a dossier, an article or a lid; Bronnen; Bundels): the API's `outcome`,
 // with the day (`decided_on`) and the seats voor and tegen of that vote (`tally`), a link to
 // the stemming (`decision`). A stuk another replaced names the one that did (`replaced_by`).
 // Source values only: nothing is read from a title, and a stuk without an outcome shows none.

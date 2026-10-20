@@ -16,23 +16,31 @@
 		type SourceKind
 	} from './map';
 	import { recognize } from './recognize';
+	import { articleCitation, citeArticle } from '$lib/text/cite';
+	import { BUNDLE_PARAM } from './page';
 	import { ensureInstrumentName, instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 
 	let {
+		bundle,
 		groups,
 		onAdd,
-		onReader,
 		onClose
 	}: {
+		/** The bundel it is added to: the reader of a recognized bron keeps there (`?bundel=`). */
+		bundle: string;
 		/** The map's groups a source may join, by their key and name. */
 		groups: { key: string; name: string }[];
 		onAdd: (item: MapItem) => void;
-		/** The reader of a recognized bron is opened: the map is where its Bewaar keeps. */
-		onReader: () => void;
 		onClose: () => void;
 	} = $props();
 
 	const uid = $props.id();
+	/** A reader's address that keeps in this bundel: Bewaar there knows where it was opened. */
+	const inBundle = (path: string) => {
+		const url = new URL(path, page.url);
+		url.searchParams.set(BUNDLE_PARAM, bundle);
+		return `${url.pathname}${url.search}${url.hash}`;
+	};
 	let citation = $state('');
 	let url = $state('');
 	let kind = $state<SourceKind>('book');
@@ -61,9 +69,16 @@
 	);
 	const knownLabel = $derived.by(() => {
 		if (!known?.law) return known?.label ?? '';
-		const name = known.article ? (law?.shortTitle ?? lawName(law, null)) : lawName(law, null);
-		if (known.article) return `art. ${known.article}${name ? ` ${name}` : ', deze wet'}`;
-		return name ?? 'deze wet';
+		// An article in the reader's own short form (`art. 6:163 BW`, citeArticle), as Bewaar
+		// keeps it (UX-toets A21 #5).
+		if (known.article) {
+			const c = articleCitation(
+				{ bwb_id: known.law, article_number: known.article },
+				{ meta: law ?? null }
+			);
+			return c ? citeArticle(c).kort : `art. ${known.article}, deze wet`;
+		}
+		return lawName(law, null) ?? 'deze wet';
 	});
 
 	const focus = (field: HTMLInputElement) => field.focus();
@@ -122,7 +137,7 @@
 	{#if known}
 		<p class="in-concordans">
 			<span>In Concordans: {knownLabel}</span>
-			<TekstLink href={known.path} onclick={onReader}>Bewaar vanuit de lezer</TekstLink>
+			<TekstLink href={inBundle(known.path)}>Bewaar vanuit de lezer</TekstLink>
 		</p>
 	{/if}
 	<p class="knoppen">

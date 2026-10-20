@@ -99,7 +99,7 @@
 	);
 
 	// A Kamerstuk opens in place under its row: its core text (a motie its dictum, an
-	// amendement its toelichting, another its opening), as in Actueel, Bronnen and Gemarkeerd
+	// amendement its toelichting, another its opening), as in Actueel, Bronnen and Bundels
 	// (RijInhoud). The stuk is one step further: Lees verder, or the title with a modifier. A
 	// connected law opens on the references between the two laws' articles (Thijs, 14 Oct).
 	const wetVerband = $derived.by(() => {

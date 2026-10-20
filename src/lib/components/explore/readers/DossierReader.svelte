@@ -3,12 +3,12 @@
 	import { textOf } from '$lib/text/words';
 	import { changeVerb } from '$lib/verbonden/relation-words';
 	import { langeDatum } from '$lib/text/datum';
-	import { bewaarItem } from '$lib/map/map';
+	import { bewaarDossier } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
-	import { dossierLabel, kamerstukNummer, officialNumber } from '$lib/bron/dossier-naam';
+	import { kamerstukNummer, officialNumber } from '$lib/bron/dossier-naam';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -105,14 +105,7 @@
 				title={d.short_title ?? d.title ?? officialNumber(d.number)}
 				acties={{
 					// One group per dossier in a map, as a Kamerstuk of it is grouped (map.ts).
-					bewaar: bewaarItem(
-						node.id,
-						{
-							kort: `Kamerstukken ${officialNumber(d.number)}`,
-							voluit: `Kamerstukken ${officialNumber(d.number)}${d.title ? ` (${d.short_title ?? d.title})` : ''}`
-						},
-						{ groep: dossierLabel(d), dossier: d.number }
-					)
+					bewaar: bewaarDossier(d)
 				}}
 			>
 				{#snippet kindLine()}

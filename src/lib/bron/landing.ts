@@ -1,5 +1,6 @@
 // Landing on a position inside a text: the part named by the URL fragment is scrolled
 // into view and marked. The mark goes at the next click.
+import { withoutBundle } from '$lib/map/page';
 
 const MARK = 'is-landed';
 
@@ -75,7 +76,8 @@ export function scrollerOf(el: HTMLElement): HTMLElement | null {
 
 /** The address of a position in the current view, for the clipboard. */
 export function permalink(url: URL, id: string): string {
-	const link = new URL(url);
+	// The bundel a reader keeps in is this browser's, never part of a link (UX-toets A21 #2).
+	const link = withoutBundle(url);
 	link.hash = id;
 	return link.toString();
 }

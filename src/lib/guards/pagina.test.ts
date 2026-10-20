@@ -39,7 +39,7 @@ describe('the frame of a page', () => {
 		const menu = [
 			'routes/(main)/actueel/+page.svelte',
 			'routes/(main)/onderwerpen/+page.svelte',
-			'routes/(main)/gemarkeerd/+page.svelte',
+			'routes/(main)/bundels/+page.svelte',
 			'lib/components/explore/index/IndexOverzicht.svelte'
 		];
 		expect(
@@ -82,7 +82,10 @@ describe('the frame of a page', () => {
 		expect(kruimels.length).toBeGreaterThan(0);
 		expect(
 			kruimels
-				.filter((k) => k.tag !== 'nav' || !/^<a href="[^"]+">[^<]+<\/a>$/.test(k.inhoud.trim()))
+				.filter(
+					(k) =>
+						k.tag !== 'nav' || !/^<a href=(?:"[^"]+"|\{[\w.]+\})>[^<]+<\/a>$/.test(k.inhoud.trim())
+				)
 				.map((k) => k.path)
 		).toEqual([]);
 	});

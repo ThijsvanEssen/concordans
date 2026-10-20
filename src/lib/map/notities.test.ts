@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { MapItem } from './map';
-import { gemerkt, notitiesPerBron } from './notities';
+import { gemerkt, notesOfBundels, notitiesPerBron } from './notities';
 
 const cbw = 'Cyberbeveiligingswet (Cbw)';
 const lid3: MapItem = {
@@ -86,5 +86,15 @@ describe('the notes of a map per bron', () => {
 		const per = notitiesPerBron(map([art22], { notitie: ' De vraag. ' }));
 		expect(per.get(art22.id)).toEqual([{ waar: 'Cbw', tekst: 'De vraag.', soort: 'map' }]);
 		expect(gemerkt(per).size).toBe(0);
+	});
+
+	it('shows the notes of every bundel, one after the other (decision 20A)', () => {
+		const a = map([{ ...art22, notitie: 'Eerste.' }]);
+		const b = { ...map([{ ...art22, notitie: 'Tweede.' }]), naam: 'Andere' };
+		expect(
+			notesOfBundels([a, b])
+				.get(art22.id)
+				?.map((n) => n.tekst)
+		).toEqual(['Eerste.', 'Tweede.']);
 	});
 });

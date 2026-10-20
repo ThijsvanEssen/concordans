@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { forAgainst, votesSentence } from '$lib/components/parliamentary/stemming';
 	// What a row shows when it opens (Actueel, Gevolgd; a Kamerstuk in Verbonden, Bronnen and
-	// Gemarkeerd): the bron's own content, read in place, not a panel of actions (Thijs, 10 Oct: "doet niet zoveel behalve een extra klik
+	// Bundels): the bron's own content, read in place, not a panel of actions (Thijs, 10 Oct: "doet niet zoveel behalve een extra klik
 	// toevoegen"). Nothing the row says already comes back. A motie its dictum, an amendement
 	// its toelichting, another stuk the opening of its text, a stemming its bar, a uitspraak its
 	// inhoudsindicatie, a publication its changes, an inwerkingtreding the publication that

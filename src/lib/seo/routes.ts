@@ -8,7 +8,8 @@ type SpaRoute = {
 	path: string;
 	title: string;
 	description: string;
-	/** `false`: a page of this browser alone (Gemarkeerd), noindex and not in the sitemap. */
+	/** `false`: a page of this browser alone (the bundels), noindex and not in the sitemap. A
+	 *  `[param]` in the path stands for any one segment (a bundel's id). */
 	index?: boolean;
 };
 

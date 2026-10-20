@@ -5,7 +5,7 @@
 	// that cite `doel` marked, and the way on: Open de uitspraak bij r.o. N. It stands in the
 	// top layer by the link that opened it (BronLink), outside the text that holds the link (no
 	// letter of a line in italics runs into it); it scrolls within itself where it is long.
-	// The overweging as Gemarkeerd opens a kept one (Overweging), from the detail the reader
+	// The overweging as a bundel opens a kept one (Overweging), from the detail the reader
 	// shares.
 	import { afterTick } from '$lib/util/after-tick';
 	import { EDGE } from '$lib/actions/top-layer';

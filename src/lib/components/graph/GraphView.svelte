@@ -76,7 +76,7 @@
 	import { FOLD, isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { netwerkMelding } from '$lib/stores/netwerk-melding';
 	import { kaart } from '$lib/map/map.svelte';
-	import { gemerkt, notitiesPerBron } from '$lib/map/notities';
+	import { gemerkt, notesOfBundels } from '$lib/map/notities';
 	import { keepsCamera, saveCamera, savedCamera } from './camera';
 
 	/** What the legend (GraphSidebar) asks of the page, handed through as one. */
@@ -317,9 +317,9 @@
 		}, 50);
 	}
 
-	// The reader's notes in the active map (Gemarkeerd), per bron: in its card, and a mark on
+	// The reader's notes in every bundel, per bron: in its card, and a mark on
 	// the bronnen that hold one of their own. From this browser, so no request.
-	const notities = $derived(notitiesPerBron(kaart.actief));
+	const notities = $derived(notesOfBundels(kaart.mappen));
 	const notitieIds = $derived(gemerkt(notities));
 
 	// Hover panel state (only in the full canvas)

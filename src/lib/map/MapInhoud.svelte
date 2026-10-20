@@ -9,7 +9,7 @@
 	// its dictum, an amendement its toelichting, another its opening); another bron the lines
 	// of its card. Asked when the row opens, once
 	// (the readers share the requests). The bron itself stays one step further, by a link that
-	// says where it goes: Heel artikel in de lezer, beside Heel artikel hier, which widens the
+	// says where it goes: In de lezer, beside Heel artikel hier, which widens the
 	// lid to its article in place (Thijs, 12 Oct). An article opens with the regulations based
 	// on it, a law with its kind and its day (its name and title stand in the row: not again,
 	// Thijs, 13 Oct) and the regulations based on it, else the laws connected to it
@@ -229,7 +229,7 @@
 					>{ruim ? `Alleen ${plaats ?? 'de plaats'}` : 'Heel artikel hier'}</TekstLink
 				>
 			{/if}
-			<TekstLink {href}>{item.at ? 'Heel artikel in de lezer' : 'Artikel in de lezer'}</TekstLink>
+			<TekstLink {href}>In de lezer</TekstLink>
 		</p>
 	{:else if inhoud.soort === 'uitspraak'}
 		{@const u = inhoud.u}
@@ -252,7 +252,7 @@
 					>{ruim ? `Alleen ${plaats ?? 'de overweging'}` : 'Overwegingen eromheen'}</TekstLink
 				>
 			{/if}
-			<TekstLink {href}>Lees verder</TekstLink>
+			<TekstLink {href}>In de lezer</TekstLink>
 		</p>
 	{:else if inhoud.soort === 'stuk'}
 		{@const rond = citaat ? rondCitaat(inhoud.tekst, citaat) : null}
@@ -266,21 +266,21 @@
 		{:else}
 			<p class="stil">Tekst nog niet in de gegevens.</p>
 		{/if}
-		<p class="verder"><TekstLink {href}>Lees verder</TekstLink></p>
+		<p class="verder"><TekstLink {href}>In de lezer</TekstLink></p>
 	{:else if inhoud.soort === 'wet'}
 		{@const bwb = inhoud.bwb}
 		{#if inhoud.bij}<p class="stil">{inhoud.bij}</p>{/if}
 		<MapRegelingen laad={() => onderWet(bwb)} />
-		<p class="verder"><TekstLink {href}>Wet in de lezer</TekstLink></p>
+		<p class="verder"><TekstLink {href}>In de lezer</TekstLink></p>
 	{:else if inhoud.soort === 'regels'}
 		<p class="tekst">{inhoud.tekst}</p>
-		<p class="verder"><TekstLink {href}>Lees verder</TekstLink></p>
+		<p class="verder"><TekstLink {href}>In de lezer</TekstLink></p>
 	{:else if inhoud.soort === 'vervangen'}
 		<p class="stil">{MOVED_LAW}.</p>
 		<p class="verder"><TekstLink {href}>Geldende tekst</TekstLink></p>
 	{:else}
 		<p class="stil">Tekst niet in de gegevens.</p>
-		<p class="verder"><TekstLink {href}>Lees verder</TekstLink></p>
+		<p class="verder"><TekstLink {href}>In de lezer</TekstLink></p>
 	{/if}
 </div>
 
@@ -332,5 +332,11 @@
 		gap: var(--s-1) var(--s-4);
 		margin: 0;
 		font-size: var(--t-meta);
+	}
+	/* The way on, one label for every bron (UX-toets A14 #7); not on paper. */
+	@media print {
+		.verder {
+			display: none;
+		}
 	}
 </style>

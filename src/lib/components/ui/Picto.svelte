@@ -1,6 +1,14 @@
 <script lang="ts">
 	// Kleine beelden voor de verkenner, in inkt.
-	type PictoNaam = 'netwerk' | 'netwerk-o' | 'bewaar' | 'bewaard' | 'tekst' | 'plus' | 'omgeving';
+	type PictoNaam =
+		| 'netwerk'
+		| 'netwerk-o'
+		| 'bewaar'
+		| 'bewaard'
+		| 'tekst'
+		| 'plus'
+		| 'omgeving'
+		| 'tick';
 	let { naam, size = 14 }: { naam: PictoNaam; size?: number } = $props();
 </script>
 
@@ -31,6 +39,9 @@
 		<path d="M3.5 1.5h6l3 3v10h-9z" fill="none" />
 		<path d="M9.5 1.5v3h3" fill="none" />
 		<path d="M5.7 8h4.6M5.7 10.5h4.6M5.7 13h2.8" fill="none" stroke-width="1.2" />
+	{:else if naam === 'tick'}
+		<!-- The choice made in a menu: the bundel Bewaar keeps in. -->
+		<path d="M3.5 8.4 6.6 11.4 12.5 4.8" fill="none" />
 	{:else if naam === 'plus'}
 		<circle cx="8" cy="8" r="6.3" fill="none" /><path d="M8 5v6M5 8h6" fill="none" />
 	{:else}

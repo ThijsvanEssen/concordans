@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { separatorBefore } from '$lib/text/words';
 	// The outcome of a motie or amendement on its row, the same on every list of Kamerstukken
-	// (Verbonden, Bronnen, Gemarkeerd): "aangenomen 150–0 op 31 mrt. 2026", a link to the
+	// (Verbonden, Bronnen, Bundels): "aangenomen 150–0 op 31 mrt. 2026", a link to the
 	// stemming; "vervangen door nr. 31", a link to that stuk. Only "verworpen" in red, as every
 	// "nee" at rest (Thijs, 10 Oct). Words from stuk-uitslag.ts.
 	import BronLink from '$lib/bron/BronLink.svelte';

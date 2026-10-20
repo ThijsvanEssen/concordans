@@ -1,4 +1,4 @@
-// The link of a map: the map in the fragment (`/gemarkeerd#m=…`), as JSON deflated into
+// The link of a map: the map in the fragment (/bundels#m=…), as JSON deflated into
 // base64url. A fragment never leaves the browser, so its items and notes reach no server,
 // no /render and no log; only who has the link reads it.
 import type { SharedMap, GroepNotities, Map, MapItem } from './map';

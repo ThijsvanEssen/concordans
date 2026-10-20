@@ -1,16 +1,17 @@
 <script lang="ts">
-	// What a bundel holds, as Gemarkeerd and the bundel's own page show it alike: per law,
-	// dossier or judgment under its name (or in the reader's own order), each item a row of
-	// Bladeren. A click on a row opens what it keeps in place (MapInhoud); the reader is a
-	// step further. A law's name opens the regulations based on it. The reader's notes, an
-	// item's and a group's, in the one form (Aantekening). A shared bundel (a link, a file)
-	// is read only: no notes to change, no order, nothing to take out.
+	// What a bundel holds, on its own page and as a shared one: per law or dossier under its
+	// name, the judgments together under Rechtspraak (an r.o. under its judgment), or in the
+	// reader's own order; each item a row of Bladeren on one line of citation. A click on a
+	// row opens what it keeps in place (MapInhoud); the reader is a step further, from there.
+	// What else a row or a group's head does is in its ⋯ (RijActies, as Bladeren's rows):
+	// Aantekening, Omhoog and Omlaag, Haal uit bundel; a law the regulations based on it. The
+	// reader's notes, an item's and a group's, in the one form (Aantekening). A shared bundel
+	// (a link, a file) is read only: no notes to change, no order, nothing to take out.
 	import type { SvelteSet } from 'svelte/reactivity';
-	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import IndexRow from '$lib/components/explore/index/IndexRow.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import Caret from '$lib/components/ui/Caret.svelte';
 	import { buildBronHref } from '$lib/bron/href';
 	import { lawNodeKey } from '$lib/text/enacted-law';
 	import { bronLabel, parseNodeId } from '$lib/vocabulary';
@@ -19,6 +20,9 @@
 		itemHref,
 		isExternal,
 		itemKey,
+		judgmentRows,
+		rowTitle,
+		JUDGMENTS_GROUP,
 		SOURCE_KINDS,
 		type GroepNotities,
 		type Map,
@@ -58,87 +62,97 @@
 	function toggle(key: string) {
 		if (!open.delete(key)) open.add(key);
 	}
-	/** A bundel's change: the store acts on the active bundel. */
-	function inMap(change: () => void) {
-		if (!map) return;
-		if (kaart.actief.id !== map.id) kaart.kies(map.id);
-		change();
-	}
 
 	/** The note open, by its item's or its group's key. */
 	let noteOpen = $state<string | null>(null);
 	let groupNoteOpen = $state<string | null>(null);
 </script>
 
-{#snippet row(i: MapItem)}
+<!-- A row: the kind in the lead, the citation as its title; `place` an r.o. under its
+     judgment, `kept` false for a judgment that only heads its r.o.'s. -->
+{#snippet row(i: MapItem, place = false, kept = true)}
 	{@const key = itemKey(i)}
 	{@const collection = parseNodeId(i.id)?.collection}
 	{@const external = isExternal(i)}
+	{@const cite = rowTitle(i, place)}
 	<IndexRow
-		title={i.kort}
+		title={cite.title}
 		href={external ? undefined : itemHref(i)}
 		open={open.has(key)}
+		member={place}
 		onToggle={external && !i.url ? undefined : () => toggle(key)}
 	>
 		{#snippet lead()}
-			{#if collection}<span class="row-id-main"
+			{#if place}<span class="row-id-main"></span>{:else if collection}<span class="row-id-main"
 					><KindGlyph {collection} size={12} />{bronLabel(collection)}</span
 				>{:else if external}<span class="row-id-main">{SOURCE_KINDS[i.kind ?? 'other']}</span
 				>{/if}{#if fresh?.isNew(i)}<NewMark />{/if}
 		{/snippet}
 		{#snippet body()}
-			{#if i.voluit && i.voluit !== i.kort}<span class="row-sub">{i.voluit}</span>{/if}
+			{#if cite.sub}<span class="row-sub">{cite.sub}</span>{/if}
 			{#if external && i.url}<span class="row-sub alleen-print">{i.url}</span>{/if}
-			<Aantekening
-				tekst={i.notitie}
-				bij={i.kort}
-				bind:open={() => noteOpen === key, (v) => (noteOpen = v ? key : null)}
-				onBewaar={map ? (t) => inMap(() => kaart.notitie(i, t)) : undefined}
-			/>
-		{/snippet}
-		<!-- In de lezer first: on screen as for Tab, in one place in every row (F4). -->
-		{#snippet aside()}
-			{#if external}
-				{#if i.url}<TekstLink
-						href={i.url}
-						target="_blank"
-						rel="noopener noreferrer"
-						class="naar-lezer"
-						aria-label="{i.kort}, de bron">Bron ↗</TekstLink
-					>{/if}
-			{:else}
-				<TekstLink href={itemHref(i)} class="naar-lezer" aria-label="{i.kort} in de lezer"
-					>In de lezer</TekstLink
-				>
+			{#if kept}
+				<Aantekening
+					tekst={i.notitie}
+					bij={i.kort}
+					bind:open={() => noteOpen === key, (v) => (noteOpen = v ? key : null)}
+					onBewaar={map ? (t) => kaart.notitie(i, t, map.id) : undefined}
+				/>
 			{/if}
-			{#if map}
-				<span class="knoppen">
-					<!-- Kept in its place where the row has a note: In de lezer stays where it is. -->
-					<button
-						type="button"
-						class="notitie-knop raakvlak"
-						class:weg={!!i.notitie || noteOpen === key}
-						onclick={() => (noteOpen = key)}>Aantekening</button
-					>
-					<IconButton
-						label="{i.kort} een plaats omhoog"
-						onclick={() => inMap(() => kaart.schuif(i, -1))}>↑</IconButton
-					>
-					<IconButton
-						label="{i.kort} een plaats omlaag"
-						onclick={() => inMap(() => kaart.schuif(i, 1))}>↓</IconButton
-					>
-					<IconButton
-						label="{i.kort} uit {map.naam} halen"
-						onclick={() => inMap(() => kaart.weg(i))}>×</IconButton
-					>
-				</span>
+		{/snippet}
+		{#snippet aside()}
+			{#if map && kept}
+				{@const m = map}
+				<RijActies naam={cite.title}>
+					{#snippet menu(close)}
+						{#if !i.notitie}
+							<button
+								type="button"
+								role="menuitem"
+								class="tekstmenu__item"
+								onclick={() => {
+									close();
+									noteOpen = key;
+								}}>Aantekening</button
+							>
+						{/if}
+						{#if order === 'eigen'}
+							<button
+								type="button"
+								role="menuitem"
+								class="tekstmenu__item"
+								onclick={() => {
+									close();
+									kaart.schuif(i, -1, m.id);
+								}}>Omhoog</button
+							>
+							<button
+								type="button"
+								role="menuitem"
+								class="tekstmenu__item"
+								onclick={() => {
+									close();
+									kaart.schuif(i, 1, m.id);
+								}}>Omlaag</button
+							>
+						{/if}
+						<button
+							type="button"
+							role="menuitem"
+							class="tekstmenu__item"
+							onclick={() => {
+								close();
+								kaart.weg(i, m.id);
+							}}>Haal uit bundel</button
+						>
+					{/snippet}
+				</RijActies>
 			{/if}
 		{/snippet}
 		{#snippet detail()}
 			{#if external}
 				{#if i.url}<p class="adres">
-						<TekstLink href={i.url} target="_blank" rel="noopener noreferrer">{i.url}</TekstLink>
+						<TekstLink href={i.url} target="_blank" rel="noopener noreferrer">Bron ↗</TekstLink>
 					</p>{/if}
 			{:else}
 				{#if fresh?.isNew(i)}<FreshList
@@ -161,14 +175,7 @@
 		{@const linesOpen = groupLines.length > 0 && open.has(`new:${g.sleutel}`)}
 		<div class="groep-kop">
 			<h3 class="groep">
-				{#if law}<button
-						type="button"
-						class="groep-knop"
-						aria-expanded={lawOpen}
-						onclick={() => toggle(`law:${g.sleutel}`)}
-						>{g.groep}<Caret open={lawOpen} side /></button
-					>{:else}{g.groep}{/if}<span class="aantal">{g.items.length}</span
-				>{#if groupLines.length}<button
+				{g.groep}{#if groupLines.length}<button
 						type="button"
 						class="nieuw-knop raakvlak"
 						aria-expanded={linesOpen}
@@ -176,12 +183,34 @@
 						onclick={() => toggle(`new:${g.sleutel}`)}><NewMark /></button
 					>{:else if fresh && g.items.some((i) => fresh.isNew(i))}<NewMark />{/if}
 			</h3>
-			{#if map && !note && groupNoteOpen !== g.sleutel}
-				<button
-					type="button"
-					class="notitie-knop raakvlak"
-					onclick={() => (groupNoteOpen = g.sleutel)}>Aantekening</button
-				>
+			{#if law || (map && !note)}
+				<RijActies naam={g.groep}>
+					{#snippet menu(close)}
+						{#if law}
+							<button
+								type="button"
+								role="menuitemcheckbox"
+								class="tekstmenu__item"
+								aria-checked={lawOpen}
+								onclick={() => {
+									close();
+									toggle(`law:${g.sleutel}`);
+								}}>Regelingen gebaseerd op</button
+							>
+						{/if}
+						{#if map && !note}
+							<button
+								type="button"
+								role="menuitem"
+								class="tekstmenu__item"
+								onclick={() => {
+									close();
+									groupNoteOpen = g.sleutel;
+								}}>Aantekening</button
+							>
+						{/if}
+					{/snippet}
+				</RijActies>
 			{/if}
 		</div>
 		{#if linesOpen && fresh}
@@ -201,64 +230,46 @@
 			tekst={note}
 			bij={g.groep}
 			bind:open={() => groupNoteOpen === g.sleutel, (v) => (groupNoteOpen = v ? g.sleutel : null)}
-			onBewaar={map ? (t) => inMap(() => kaart.groepNotitie(g.sleutel, t)) : undefined}
+			onBewaar={map ? (t) => kaart.groepNotitie(g.sleutel, t, map.id) : undefined}
 		/>
 	{/if}
 	<ul class="rijen">
-		{#each g.items as i (itemKey(i))}{@render row(i)}{/each}
+		{#if g.sleutel === JUDGMENTS_GROUP}
+			{#each judgmentRows(g.items) as r (itemKey(r.head))}
+				{@render row(r.head, false, r.kept)}
+				{#each r.places as p (itemKey(p))}{@render row(p, true)}{/each}
+			{/each}
+		{:else}
+			{#each g.items as i (itemKey(i))}{@render row(i)}{/each}
+		{/if}
 	</ul>
 {/each}
 
 <style>
-	/* A law, dossier or judgment over its rows, as a day over Actueel's. */
-	.groep {
-		margin: 0;
-		padding-bottom: var(--s-1);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		font-weight: 600;
-	}
-	/* The group's head with Aantekening at its right, on hover and focus; always on touch. */
+	/* A law, dossier or Rechtspraak over its rows, as a day over Actueel's; its ⋯ at the right. */
 	.groep-kop {
 		display: flex;
-		align-items: baseline;
+		align-items: center;
 		justify-content: space-between;
 		gap: var(--s-2);
 		margin: var(--s-3) 0 0;
 		border-bottom: 1px solid var(--rule-strong);
 	}
-	.groep-kop .notitie-knop {
-		margin-right: 0;
-		opacity: 0;
+	.groep {
+		margin: 0;
+		padding: var(--s-1) 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		font-weight: 600;
 	}
-	.groep-kop:hover .notitie-knop,
-	.groep-kop:focus-within .notitie-knop {
+	/* The ⋯ of a group's head shows on its hover and focus, as a row's on the row's. */
+	.groep-kop:hover :global(.rij-knop),
+	.groep-kop:focus-within :global(.rij-knop) {
 		opacity: 1;
-	}
-	@media (hover: none) {
-		.groep-kop .notitie-knop {
-			opacity: 1;
-		}
-	}
-	/* A law's name opens what is connected to it, in place, as a row opens. */
-	.groep-knop {
-		display: inline-flex;
-		align-items: baseline;
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		color: inherit;
-		text-align: left;
-		cursor: pointer;
-	}
-	.groep-knop:hover {
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 3px;
 	}
 	/* The mark of a group with something new opens what came in, in place. */
 	.nieuw-knop {
+		margin-left: var(--s-2);
 		padding: 0;
 		border: 0;
 		background: none;
@@ -276,31 +287,25 @@
 		margin: 0;
 		font-size: var(--t-meta);
 	}
-	.aantal {
-		margin-left: var(--s-2);
-		font-size: var(--t-micro);
-		font-weight: 400;
-		color: var(--ink-3);
-	}
-	/* Bladeren's rows: the kind in the lead, the place as the title, the citation under it. */
+	/* Bladeren's rows: the kind in the lead, the citation as the title; the ⋯ at the end. */
 	.rijen {
-		--row-aside: 280px;
-		container-type: inline-size;
+		--row-aside: var(--s-7);
 		margin: 0;
 		padding: 0;
 		list-style: none;
 	}
-	/* Where the list is too narrow for the citation beside the ways on (802 px, UX-toets 14 Oct
-	   #61: one word per line), the ways on go under the citation; on a phone the row stacks. */
-	@media (min-width: 769px) {
-		@container (max-width: 760px) {
-			.rijen :global(.row) {
-				grid-template-columns: var(--row-lead) minmax(0, 1fr);
-			}
-			.rijen :global(.row-aside) {
-				grid-column: 2;
-				justify-content: flex-start;
-			}
+	/* On a phone the row stacks: its ⋯ stays at the right, beside the citation. */
+	@media (max-width: 768px) {
+		.rijen :global(.row) {
+			grid-template-columns: minmax(0, 1fr) auto;
+		}
+		.rijen :global(.row-id) {
+			grid-column: 1 / -1;
+		}
+		.rijen :global(.row-aside) {
+			grid-column: 2;
+			grid-row: 2;
+			padding-top: 0;
 		}
 	}
 	.row-id-main {
@@ -315,53 +320,9 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	/* Aantekening, up, down and out at the end of the row, on hover and focus; always on a
-	   touch screen. */
-	.knoppen {
-		display: inline-flex;
-		align-items: center;
-		justify-content: flex-end;
-		opacity: 0;
-	}
-	/* The way to the reader, always in sight: the row's click opens it here. At the right edge
-	   of a row; where the ways on stand under the citation, first, so it stands in one place
-	   in every row whatever buttons follow (F4). */
-	.rijen :global(.naar-lezer) {
-		display: inline-flex;
-		align-items: center;
-		min-height: var(--s-5);
-		font-size: var(--t-micro);
-		white-space: nowrap;
-	}
-	:global(.row-wrap:hover) .knoppen,
-	:global(.row-wrap:focus-within) .knoppen {
-		opacity: 1;
-	}
-	@media (hover: none) {
-		.knoppen {
-			opacity: 1;
-		}
-	}
-	.notitie-knop {
-		margin-right: var(--s-2);
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-		text-decoration: underline;
-		text-underline-offset: 2px;
-		cursor: pointer;
-	}
-	.notitie-knop.weg {
-		visibility: hidden;
-	}
-	.notitie-knop:hover {
-		color: var(--ink);
-	}
 	.adres {
 		margin: 0;
+		padding: var(--s-2) 0 var(--s-4);
 		font-size: var(--t-meta);
 		overflow-wrap: anywhere;
 	}
@@ -369,11 +330,14 @@
 		display: none;
 	}
 	/* On paper (the bundel's own page): the research as text. Each row and a group's head
-	   with what follows; the ways on, the buttons and the hover's grey left out; the
-	   citation in full under the short one, the address of a source outside it. */
+	   with what follows; the ⋯ and the hover's grey left out; the address of a source
+	   outside it. */
 	@media print {
 		.groep-kop {
 			break-after: avoid;
+		}
+		.groep-kop :global(.rij-acties) {
+			display: none;
 		}
 		.rijen :global(.row-wrap) {
 			break-inside: avoid;
@@ -382,9 +346,7 @@
 			grid-template-columns: var(--row-lead) minmax(0, 1fr);
 			background: none;
 		}
-		.rijen :global(.row-aside),
-		.notitie-knop,
-		.groep-knop :global(.caret) {
+		.rijen :global(.row-aside) {
 			display: none;
 		}
 		.rijen :global(.row-title) {

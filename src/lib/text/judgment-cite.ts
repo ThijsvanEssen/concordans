@@ -9,7 +9,7 @@ import { headingCite, type HeadingSource } from './judgment-heading';
 /** What a judgment gives to cite it and its overwegingen. */
 type UitspraakVoorCitaat = HeadingSource & { names?: string[] | null };
 
-/** A judgment as Gemarkeerd groups under it: as its heading cites it, with its names. */
+/** A judgment as Bundels groups under it: as its heading cites it, with its names. */
 export const zaakNaam = (kort: string, namen: string[] | null | undefined) =>
 	namen?.length ? `${kort} (${namen.join(', ')})` : kort;
 

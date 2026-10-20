@@ -20,7 +20,7 @@
 		{@const bron = `documents/${doc.key}`}
 		{@const label = kamerstukLabel(doc)}
 		<!-- A Kamerstuk opens in place on its core text (RijInhoud), as in
-		     Actueel, Verbonden and Gemarkeerd; the stuk one step further. -->
+		     Actueel, Verbonden and Bundels; the stuk one step further. -->
 		<IndexRow
 			{bron}
 			dossier={doc.dossier_numbers?.[0]}

@@ -147,7 +147,7 @@
 		onCameraChange?: (state: { x: number; y: number; ratio: number }) => void;
 		/** Keeps the dim/highlight pass alive while the hover panel is open. */
 		externalHoveredId?: string | null;
-		/** The bronnen with a note of the reader's (Gemarkeerd): a quiet mark beside each. */
+		/** The bronnen with a note of the reader's (Bundels): a quiet mark beside each. */
 		notitieIds?: ReadonlySet<string>;
 		/** A panel floating over the canvas, in canvas pixels: hull labels keep clear of it. */
 		avoid?: Rect | null;

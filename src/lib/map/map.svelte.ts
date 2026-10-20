@@ -1,6 +1,7 @@
-// The maps as the page holds them, in this browser: each with a name, one active, where a box
-// keeps what is chosen; the panel open or not; a map someone shared (a link, share.ts) until it is kept
-// or put aside.
+// The bundels as the page holds them, in this browser: each with a name; the first, Losse
+// markeringen, always there (it is emptied, never deleted). Bewaar keeps in Losse
+// markeringen; another bundel holds a bron only where the reader puts it there by name
+// (decision 20A: no hidden "active bundel"). A bundel is changed by its id.
 import {
 	freeName,
 	readItem,
@@ -16,9 +17,23 @@ import { keepStorage } from './persist';
 import { isDay } from '$lib/text/datum';
 
 const OPSLAG = 'concordans:mappen';
-const EERSTE = 'Gemarkeerd';
+const EERSTE = 'Losse markeringen';
+/** The name a shared Losse markeringen gets with its receiver, beside their own. */
+const SHARED_LOOSE = 'Gedeelde markeringen';
+/** The bundel the readers keep in this browser session, until it is ended (`keepIn`). */
+const KEEPING = 'concordans:bewaar-in';
 
-type Stand = { mappen: Map[]; actief: string };
+/** The bundel kept in this session; none where the browser keeps no session. */
+function keepingNow(): string | null {
+	try {
+		return typeof sessionStorage === 'undefined' ? null : sessionStorage.getItem(KEEPING);
+	} catch (e) {
+		if (import.meta.env.DEV) console.debug('sessionStorage (refused):', e);
+		return null;
+	}
+}
+
+type Stand = { mappen: Map[] };
 
 const nu = () => new Date().toISOString();
 const nieuwId = () => Math.random().toString(36).slice(2, 10);
@@ -61,16 +76,13 @@ function heleItems(v: unknown): MapItem[] {
 	const skipped = v.length - items.length;
 	if (skipped > 0)
 		console.warn(
-			`Gemarkeerd: ${skipped} item(s) in deze browser overgeslagen (oude of onvolledige vorm).`
+			`Bundels: ${skipped} item(s) in deze browser overgeslagen (oude of onvolledige vorm).`
 		);
 	return items;
 }
 
-/** One empty map, active: where this browser keeps none, or none it can read. */
-function eersteStand(): Stand {
-	const eerste = leeg(EERSTE);
-	return { mappen: [eerste], actief: eerste.id };
-}
+/** Losse markeringen alone: where this browser keeps none, or none it can read. */
+const eersteStand = (): Stand => ({ mappen: [leeg(EERSTE)] });
 
 function lees(): Stand {
 	try {
@@ -87,8 +99,7 @@ function lees(): Stand {
 				since: day(m.since),
 				seen: day(m.seen)
 			}));
-			const actief = mappen.some((m) => m.id === raw.actief) ? raw.actief : mappen[0].id;
-			return { mappen, actief };
+			return { mappen };
 		}
 		return eersteStand();
 	} catch {
@@ -99,16 +110,20 @@ function lees(): Stand {
 class Kaarten {
 	#stand = $state<Stand>(typeof window === 'undefined' ? eersteStand() : lees());
 	mappen = $derived(this.#stand.mappen);
-	actief = $derived(
-		this.#stand.mappen.find((m) => m.id === this.#stand.actief) ?? this.#stand.mappen[0]
-	);
-	items = $derived(this.actief.items);
-	sleutels = $derived(new Set(this.items.map(itemKey)));
-
-	heeft = (i: Pick<MapItem, 'id' | 'at'>) => this.sleutels.has(itemKey(i));
-	/** The item as the active map holds it, with its note. */
-	vind = (i: Pick<MapItem, 'id' | 'at'>) =>
-		this.items.find((x) => itemKey(x) === itemKey(i)) ?? null;
+	/** Losse markeringen, where Bewaar keeps. */
+	loose = $derived(this.#stand.mappen[0]);
+	/** The bundels as the overview lists them: Losse markeringen first, then last changed first. */
+	listed = $derived([
+		this.#stand.mappen[0],
+		...this.#stand.mappen.slice(1).sort((a, b) => b.gewijzigd.localeCompare(a.gewijzigd))
+	]);
+	/** Losse markeringen: the first bundel, emptied but never deleted. */
+	isDefault = (m: Pick<Map, 'id'>) => m.id === this.#stand.mappen[0].id;
+	/** The bundels that hold an item, in the order of the list. */
+	holding = (i: Pick<MapItem, 'id' | 'at'>): Map[] =>
+		this.listed.filter((m) => m.items.some((x) => itemKey(x) === itemKey(i)));
+	/** Kept in any bundel. */
+	heeft = (i: Pick<MapItem, 'id' | 'at'>) => this.holding(i).length > 0;
 
 	#bewaar() {
 		try {
@@ -116,10 +131,6 @@ class Kaarten {
 		} catch {
 			/* geen opslag */
 		}
-	}
-	/** Changes the active map and remembers. */
-	#werk(f: (m: Map) => Partial<Map>) {
-		this.#change(this.actief.id, f);
 	}
 	/** Changes a map by its id and remembers. */
 	#change(id: string, f: (m: Map) => Partial<Map>) {
@@ -130,41 +141,64 @@ class Kaarten {
 		this.#bewaar();
 	}
 
-	// ── Items in the active map ───────────────────────────────────────────────
-	/** Kept, or no longer: what a box beside a lid or a row does. */
-	wissel(i: MapItem) {
+	// ── Items ─────────────────────────────────────────────────────────────────
+	/** Bewaar: into a bundel, Losse markeringen where none is named; never out of one. Taking
+	 *  a bron out is per bundel, by its tick (BundleChecklist), never all at once. */
+	keep(i: MapItem, id: string = this.loose.id) {
+		this.add(i, id);
+	}
+	#keeping = $state<string | null>(keepingNow());
+	/** The bundel the readers keep in, named on Bewaar with a way back to it, from Andere bron
+	 *  toevoegen on its page until the reader ends it or goes back to it (UX-toets A21 #1);
+	 *  null: Bewaar keeps in Losse markeringen. */
+	keeping = $derived(this.#stand.mappen.find((m) => m.id === this.#keeping) ?? null);
+	/** Where Bewaar keeps now. */
+	keepsIn = $derived(this.keeping ?? this.loose);
+	/** Keeps in a bundel from now on in this session; null ends it. */
+	keepIn(id: string | null) {
+		this.#keeping = id;
+		try {
+			if (id) sessionStorage.setItem(KEEPING, id);
+			else sessionStorage.removeItem(KEEPING);
+		} catch (e) {
+			if (import.meta.env.DEV) console.debug('sessionStorage (refused):', e);
+		}
+	}
+	/** In a bundel or out of it, by its id: the bundels of Bewaar's menu. */
+	toggleIn(id: string, i: MapItem) {
+		if (this.holding(i).some((m) => m.id === id)) this.weg(i, id);
+		else this.add(i, id);
+	}
+	/** Into a bundel by its id, once. */
+	add(i: MapItem, id: string) {
+		keepStorage();
+		this.#change(id, (m) => ({ items: withItems(m.items, [i]) }));
+	}
+	weg(i: Pick<MapItem, 'id' | 'at'>, id: string) {
 		const k = itemKey(i);
-		if (!this.heeft(i)) keepStorage();
-		this.#werk((m) => ({
-			items: m.items.some((x) => itemKey(x) === k)
-				? m.items.filter((x) => itemKey(x) !== k)
-				: [...m.items, i]
-		}));
+		this.#change(id, (m) => ({ items: m.items.filter((x) => itemKey(x) !== k) }));
 	}
-	weg(i: Pick<MapItem, 'id' | 'at'>) {
-		const k = itemKey(i);
-		this.#werk((m) => ({ items: m.items.filter((x) => itemKey(x) !== k) }));
+	/** All items out; the bundel stays. */
+	empty(id: string) {
+		this.#change(id, () => ({ items: [] }));
 	}
-	wis() {
-		this.#werk(() => ({ items: [] }));
-	}
-	notitie(i: Pick<MapItem, 'id' | 'at'>, tekst: string) {
+	notitie(i: Pick<MapItem, 'id' | 'at'>, tekst: string, id: string) {
 		const k = itemKey(i);
 		const t = tekst.trim();
-		this.#werk((m) => ({
+		this.#change(id, (m) => ({
 			items: m.items.map((x) => (itemKey(x) === k ? { ...x, notitie: t || null } : x))
 		}));
 	}
-	schuif(i: Pick<MapItem, 'id' | 'at'>, richting: -1 | 1) {
-		this.#werk((m) => ({ items: verschuif(m.items, itemKey(i), richting, m.volgorde) }));
+	schuif(i: Pick<MapItem, 'id' | 'at'>, richting: -1 | 1, id: string) {
+		this.#change(id, (m) => ({ items: verschuif(m.items, itemKey(i), richting, m.volgorde) }));
 	}
-	ordening(v: Map['volgorde']) {
-		this.#werk(() => ({ volgorde: v }));
+	ordening(v: Map['volgorde'], id: string) {
+		this.#change(id, () => ({ volgorde: v }));
 	}
 	/** The note on a group of the map, by its key; empty is none. */
-	groepNotitie(sleutel: string, tekst: string) {
+	groepNotitie(sleutel: string, tekst: string, id: string) {
 		const t = tekst.trim();
-		this.#werk((m) => {
+		this.#change(id, (m) => {
 			const rest = { ...m.groepNotities };
 			if (t) rest[sleutel] = t;
 			else delete rest[sleutel];
@@ -172,9 +206,9 @@ class Kaarten {
 		});
 	}
 	/** The note on the map as a whole; empty is none. */
-	mapNotitie(tekst: string) {
+	mapNotitie(tekst: string, id: string) {
 		const t = tekst.trim();
-		this.#werk(() => ({ notitie: t || null }));
+		this.#change(id, () => ({ notitie: t || null }));
 	}
 
 	/**
@@ -203,20 +237,15 @@ class Kaarten {
 	}
 
 	// ── Maps ─────────────────────────────────────────────────────────────────
-	kies(id: string) {
-		if (!this.#stand.mappen.some((m) => m.id === id)) return;
-		this.#stand = { ...this.#stand, actief: id };
-		this.#bewaar();
-	}
-	/** A new map, active from now on; its name the next free `Bundel 2`, `Bundel 3` where none given. */
+	/** A new bundel; its name the next free `Bundel 2`, `Bundel 3` where none is given. */
 	nieuw(naam?: string, items: MapItem[] = []): Map {
 		const namen = new Set(this.#stand.mappen.map((m) => m.naam));
 		let n = this.#stand.mappen.length + 1;
 		while (!naam && namen.has(`Bundel ${n}`)) n++;
-		// A name a bundel has already is numbered on: `Gemarkeerd 2` beside `Gemarkeerd`.
+		// A name a bundel has already is numbered on: `Thuiswerk 2` beside `Thuiswerk`.
 		const m = { ...leeg(naam?.trim() ? freeName(naam.trim(), namen) : `Bundel ${n}`), items };
 		if (items.length) keepStorage();
-		this.#stand = { mappen: [...this.#stand.mappen, m], actief: m.id };
+		this.#stand = { mappen: [...this.#stand.mappen, m] };
 		this.#bewaar();
 		return m;
 	}
@@ -229,27 +258,16 @@ class Kaarten {
 		};
 		this.#bewaar();
 	}
-	/** Gone for good; the last map stays, emptied. */
+	/** Gone for good; Losse markeringen stays (it is emptied instead). */
 	verwijder(id: string) {
-		const rest = this.#stand.mappen.filter((m) => m.id !== id);
-		const mappen = rest.length ? rest : [leeg(EERSTE)];
-		const actief = mappen.some((m) => m.id === this.#stand.actief)
-			? this.#stand.actief
-			: mappen[0].id;
-		this.#stand = { mappen, actief };
+		if (this.isDefault({ id })) return;
+		this.#stand = { mappen: this.#stand.mappen.filter((m) => m.id !== id) };
 		this.#bewaar();
 	}
 
-	/** Kept in another map (`in …` beside Bewaar): that map active from now on, the item in it. */
-	bewaarIn(id: string, i: MapItem) {
-		this.kies(id);
-		if (!this.heeft(i)) this.wissel(i);
-	}
-
 	// ── A shared map (a link, a file) ─────────────────────────────────────
-	/** Into a map (the active one where none is named), without doubles; its notes where the
-	 *  map has none. */
-	voegToe(g: SharedMap, id = this.actief.id) {
+	/** Into a bundel, without doubles; its notes where the bundel has none. */
+	voegToe(g: SharedMap, id: string) {
 		keepStorage();
 		this.#change(id, (m) => ({
 			items: withItems(m.items, g.items),
@@ -268,12 +286,15 @@ class Kaarten {
 			groepNotities: { ...g.groepNotities }
 		}));
 	}
-	/** As a map of its own, under its name, in its order, with its note. */
-	bewaarAlsMap(g: SharedMap) {
-		this.nieuw(g.naam ?? undefined, g.items);
-		if (g.volgorde === 'eigen') this.ordening('eigen');
-		if (g.notitie) this.mapNotitie(g.notitie);
-		for (const [k, n] of Object.entries(g.groepNotities)) this.groepNotitie(k, n);
+	/** As a bundel of its own, under its name, in its order, with its note; a shared Losse
+	 *  markeringen (or a bundel without a name) as Gedeelde markeringen. */
+	bewaarAlsMap(g: SharedMap): Map {
+		const name = g.naam && g.naam !== EERSTE && g.naam !== this.loose.naam ? g.naam : SHARED_LOOSE;
+		const m = this.nieuw(name, g.items);
+		if (g.volgorde === 'eigen') this.ordening('eigen', m.id);
+		if (g.notitie) this.mapNotitie(g.notitie, m.id);
+		for (const [k, n] of Object.entries(g.groepNotities)) this.groepNotitie(k, n, m.id);
+		return m;
 	}
 }
 

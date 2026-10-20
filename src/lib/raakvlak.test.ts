@@ -14,18 +14,35 @@ describe('the touch target', () => {
 		for (const c of classes) expect(c).toContain('raakvlak');
 	});
 
+	it('is 44 px high around a text link on a touch screen (UX-toets A21 #3)', () => {
+		const basis = read('lib/styles/basis.css');
+		const coarse = basis.slice(basis.indexOf('@media (pointer: coarse)'));
+		expect(coarse).toMatch(
+			/\.raakvlak::after,[^{]*\{[^}]*inset: min\(calc\(-1 \* var\(--s-2\)\), calc\(50% - \(var\(--s-6\) \+ var\(--s-3\)\) \/ 2\)\)/
+		);
+		// Bewaar's caret grows to its right only, never over Bewaar.
+		expect(read('lib/map/Bewaar.svelte')).toMatch(/tekstmenu__knop::after\) \{\s*left: 0;/);
+	});
+
 	it("is around a place's number, before it, on a touch screen", () => {
 		const basis = read('lib/styles/basis.css');
 		const coarse = basis.slice(basis.indexOf('@media (pointer: coarse)'));
 		expect(coarse).toContain('.plaats-marker::before');
 	});
 
-	it("is on Gemarkeerd's own small buttons", () => {
-		const groups = read('lib/map/MapGroups.svelte');
-		expect(groups).toMatch(/class="notitie-knop/);
-		for (const m of groups.matchAll(/class="(notitie-knop[^"]*)"/g))
-			expect(m[1]).toContain('raakvlak');
-		expect(read('lib/map/MapView.svelte')).toContain('class="wis raakvlak"');
+	it('is 44 px around a framed button and a menu’s button, on a touch screen (A14 #11)', () => {
+		const basis = read('lib/styles/basis.css');
+		const coarse = basis.slice(basis.indexOf('@media (pointer: coarse)'));
+		expect(coarse).toMatch(
+			/\.btn::after,\s*\.tekstmenu__knop::after \{[^}]*inset: min\(0px, calc\(50% - \(var\(--s-6\) \+ var\(--s-3\)\) \/ 2\)\)/
+		);
+	});
+
+	it("is 44 px around a row's ⋯ on a touch screen (the bundels)", () => {
+		const acties = read('lib/components/ui/RijActies.svelte');
+		const coarse = acties.slice(acties.indexOf('@media (pointer: coarse)'));
+		expect(coarse).toMatch(/\.plek--menu \{[^}]*width: calc\(var\(--s-6\) \+ var\(--s-3\)\)/);
+		expect(read('lib/map/MapGroups.svelte')).not.toMatch(/class="notitie-knop/);
 	});
 
 	it('is at least 32 px high on every row and heading of a table of contents, on a touch screen', () => {

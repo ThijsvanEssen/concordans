@@ -53,7 +53,7 @@
 		/** Tab past its last action, and Shift+Tab before its first. */
 		onVerder?: () => void;
 		onBack?: () => void;
-		/** The reader's notes on this bron in the active map (Gemarkeerd), under the card's lines. */
+		/** The reader's notes on this bron in every bundel, under the card's lines. */
 		notities?: readonly NodeNotitie[];
 		el?: HTMLElement | null;
 	} = $props();
@@ -168,7 +168,7 @@
 		<p class="snippet">{snippet}</p>
 	{/if}
 
-	<!-- The reader's notes, as on Gemarkeerd (Aantekening), read only: changed there. -->
+	<!-- The reader's notes, as on Bundels (Aantekening), read only: changed there. -->
 	{#each notities as n, i (i)}
 		<Aantekening tekst={n.tekst} bij={n.waar ?? 'deze bron'} waar={n.waar} compact />
 	{/each}
