@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { ownKind } from '$lib/text/document-kind';
 	import { NL } from '$lib/text/collator';
 	import { korteDatum } from '$lib/text/datum';
@@ -363,6 +364,8 @@
 							bronKey={doc.key}
 							aantal={bijlagen}
 						/>{/if}
+					<!-- What of its references is linked; without text, the text says why. -->
+					{#if doc.text}<Coverage coverage={doc.completeness} />{/if}
 				{/snippet}
 			</ReaderHead>
 
@@ -513,7 +516,7 @@
 					<Voetnoten noten={nootLijst(voetnoten.los)} marge={false} kop="Voetnoten" />
 				</div>
 			{:else}
-				<p class="empty">Tekst niet in de gegevens.</p>
+				<p class="empty"><Coverage noText coverage={doc.completeness} /></p>
 			{/if}
 
 			{#if doc.file_url}

@@ -5,7 +5,7 @@
 import type { Schema } from '$lib/api/types';
 import { langeDatum } from '$lib/text/datum';
 import { formatCount } from '$lib/text/getal';
-import { capitalize, joinAnd } from '$lib/text/words';
+import { capitalize, joinAnd, plural } from '$lib/text/words';
 
 type Part = Schema<'Part'>;
 /** How far a part is complete: its state, and where the API gives them a date and a count. */
@@ -26,8 +26,18 @@ const PART: Record<Part, string> = {
 	definitions: 'begrippen',
 	versions: 'versies',
 	succession: 'opvolging',
+	outcome: 'uitkomst',
 	source: 'bron'
 };
+
+/** What the dataset lacks of a value: a date, a name, an advice. Waarde says it of an empty cell. */
+export const NOT_IN_DATA = 'niet in de gegevens';
+
+/** A part of a bron the dataset lacks, as a line: `Tekst niet in de gegevens`. */
+export const lacks = (what: string) => `${capitalize(what)} ${NOT_IN_DATA}`;
+
+/** A bron the dataset does not hold, as a sentence: `Wet X staat niet in de gegevens`. */
+export const notHeld = (name: string) => `${name} staat ${NOT_IN_DATA}`;
 
 /** What a search reads, as the API names it: `title` → titels. */
 const SEARCHED: Record<Schema<'Searched'>, string> = {
@@ -51,27 +61,62 @@ function sourceLine(s: PartState | undefined): string | null {
 }
 
 /**
- * The line, in words: `Tekst niet ingelezen`, `Verwijzingen naar andere wetten deels gelegd,
- * 12 niet herkend, begrippen nog niet verwerkt`. `of` names the source a line about a source
- * is of (`HUDOC gepauzeerd, …`). Null where nothing is known to lack.
+ * Of a text: why it is not there, as the API says it of a Kamerstuk; where a reader shows no
+ * text and the API says nothing (`noText`), that the dataset lacks it. Null where it is there.
  */
-export function coverageLine(c: Completeness | null | undefined, of?: string): string | null {
-	if (!c) return null;
+function textLine(t: PartState | undefined, noText: boolean): string | null {
+	if (t?.state === 'pending')
+		return t.as_of ? 'tekst nog niet beschikbaar' : 'tekst nog niet opgehaald';
+	if (t?.state === 'not_in_source') return `tekst ${NOT_IN_DATA}, de bron levert geen tekst`;
+	if (t?.state === 'none') return 'tekst niet leesbaar in de bron';
+	return noText ? `tekst ${NOT_IN_DATA}` : null;
+}
+
+/** Of the references in a text: how many are not linked. */
+function referencesLine(r: PartState | undefined): string | null {
+	if (r?.state !== 'partial') return null;
+	const n = r.missing;
+	return n
+		? `${formatCount(n)} ${plural(n, 'verwijzing', 'verwijzingen')} niet gelegd`
+		: 'verwijzingen deels niet gelegd';
+}
+
+/** What a line says: `of` the source a line about a source is of, `noText` a reader without text. */
+type CoverageOptions = { of?: string; noText?: boolean };
+
+/**
+ * The line, in words: `Tekst nog niet opgehaald`, `12 verwijzingen niet gelegd, begrippen nog
+ * niet verwerkt`, `Geen einde vastgelegd, laatste activiteit 3 maart 2019`, `HUDOC gepauzeerd,
+ * …`. Null where nothing is known to lack.
+ */
+export function coverageLine(
+	completeness: Completeness | null | undefined,
+	{ of, noText = false }: CoverageOptions = {}
+): string | null {
+	const c = completeness ?? {};
 	const said: string[] = [];
-	if (c.text?.state === 'none') said.push('tekst niet ingelezen');
+	const text = textLine(c.text, noText);
+	if (text) said.push(text);
 	if (c.versions?.state === 'not_in_source') {
 		const on = c.versions.as_of ? ` op ${day(c.versions.as_of)}` : '';
 		said.push(`tekst zoals vastgesteld${on}, latere wijzigingen niet verwerkt`);
 	}
-	if (c.references?.state === 'partial') {
-		const missing = c.references.missing;
-		const count = missing ? `, ${formatCount(missing)} niet herkend` : '';
-		said.push(`verwijzingen naar andere wetten deels gelegd${count}`);
-	}
+	const references = referencesLine(c.references);
+	if (references) said.push(references);
+	// A text not there takes its paragraphs and tables with it: the text line says it.
+	const withText = !c.text || c.text.state === 'done';
+	const outcomeOn = c.outcome?.state === 'pending' ? c.outcome.as_of : null;
 	const pending = (Object.keys(PART) as Part[]).filter(
-		(p) => p !== 'source' && c[p]?.state === 'pending'
+		(p) =>
+			c[p]?.state === 'pending' &&
+			p !== 'source' &&
+			p !== 'text' &&
+			(withText || (p !== 'paragraphs' && p !== 'tables')) &&
+			(p !== 'outcome' || !outcomeOn)
 	);
 	if (pending.length) said.push(`${joinAnd(pending.map((p) => PART[p]))} nog niet verwerkt`);
+	// An open bill: the Kamer records no withdrawal, so it is not known to run still.
+	if (outcomeOn) said.push(`geen einde vastgelegd, laatste activiteit ${day(outcomeOn)}`);
 	const source = sourceLine(c.source);
 	if (source) said.push(of ? `${of} ${source}` : source);
 	return said.length ? capitalize(said.join(', ')) : null;

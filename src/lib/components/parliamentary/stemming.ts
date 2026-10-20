@@ -1,3 +1,4 @@
+import { NOT_IN_DATA } from '$lib/text/coverage';
 import { dossierLabel, type DossierNaamBron } from '$lib/bron/dossier-naam';
 
 // The name of a stemming in a list, where its title is a link and cannot be empty. The
@@ -10,7 +11,7 @@ export function stemmingNaam(
 	if (subject?.trim()) return subject;
 	if (dossier)
 		return `Stemming over ${dossierLabel(typeof dossier === 'string' ? { number: dossier } : dossier)}`;
-	return 'Stemming, onderwerp niet in de gegevens';
+	return `Stemming, onderwerp ${NOT_IN_DATA}`;
 }
 
 /** The two choices of a stemming as the API counts them, in the order they are said. */

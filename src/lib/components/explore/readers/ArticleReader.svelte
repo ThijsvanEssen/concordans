@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { plural } from '$lib/text/words';
+	import { NOT_IN_DATA, notHeld } from '$lib/text/coverage';
+	import { capitalize, plural } from '$lib/text/words';
 	import { langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -293,8 +294,8 @@
 		if (!stub && !empty) return null;
 		const cited = Number(d.metadata?.judgment_count ?? 0);
 		return cited > 0
-			? `Niet in de gegevens. Genoemd in ${formatCount(cited)} ${plural(cited, 'uitspraak', 'uitspraken')}.`
-			: 'Niet in de gegevens.';
+			? `${capitalize(NOT_IN_DATA)}. Genoemd in ${formatCount(cited)} ${plural(cited, 'uitspraak', 'uitspraken')}.`
+			: `${capitalize(NOT_IN_DATA)}.`;
 	});
 
 	/** The act of the EU this article belongs to: CELLAR has its text as adopted, no later one. */
@@ -599,8 +600,8 @@
 				{:else}
 					<span class="head__stand" class:is-old={!!shown}>{versionLabel}</span>
 				{/if}
-				<!-- An article of a law of the Staatsblad: what of its references and its law's
-				     definitions is read. -->
+				<!-- What of its references is linked; of a law of the Staatsblad also what of its
+				     law's definitions is read. -->
 				<Coverage coverage={d.completeness} />
 				{#if wordings.length > 1}
 					<span class="menu" use:menu={{ open: versionMenu, close: () => (versionMenu = false) }}>
@@ -721,7 +722,7 @@
 
 		{#if proposedMissing && proposedRow}
 			<p class="note">
-				De voorgestelde tekst van {proposedRow.title} is niet in de gegevens opgenomen.
+				{notHeld(`De voorgestelde tekst van ${proposedRow.title}`)}.
 				{#if onCloseProposed}<button type="button" class="note__close" onclick={onCloseProposed}
 						>Sluiten</button
 					>{/if}

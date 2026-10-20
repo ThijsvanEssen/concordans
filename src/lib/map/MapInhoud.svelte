@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { textOf } from '$lib/text/words';
 	// What an item of a map shows when its row opens: the place it keeps, read in place, so a
 	// map is read without going back and forth (Thijs, 12 Oct). An article its lid in the
@@ -272,7 +273,7 @@
 		{:else if inhoud.samenvatting}
 			<p class="tekst">{inhoud.samenvatting}</p>
 		{:else}
-			<p class="stil">Tekst niet in de gegevens.</p>
+			<p class="stil"><Coverage noText /></p>
 		{/if}
 		<p class="verder">
 			{#if deel}
@@ -302,7 +303,7 @@
 		{:else if inhoud.kern}
 			<p class="tekst" class:dictum={inhoud.als === 'dictum'}>{inhoud.kern}</p>
 		{:else}
-			<p class="stil">Tekst nog niet in de gegevens.</p>
+			<p class="stil"><Coverage noText /></p>
 		{/if}
 		<p class="verder">
 			{#if kept}
@@ -326,7 +327,7 @@
 		<p class="stil">{MOVED_LAW}.</p>
 		<p class="verder"><TekstLink {href}>Geldende tekst</TekstLink></p>
 	{:else}
-		<p class="stil">Tekst niet in de gegevens.</p>
+		<p class="stil"><Coverage noText /></p>
 		<p class="verder"><TekstLink {href}>In de lezer</TekstLink></p>
 	{/if}
 </div>

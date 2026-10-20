@@ -34,6 +34,8 @@
 	import AmendementenDienstregeling from '$lib/components/parliamentary/AmendementenDienstregeling.svelte';
 	import { aantalAmendementen } from '$lib/components/parliamentary/amendementen';
 	import { getChangedArticles } from '$lib/api/dossiers';
+	import Coverage from '$lib/components/ui/Coverage.svelte';
+	import { coverageLine } from '$lib/text/coverage';
 	import type { ChangedArticles } from '$lib/components/parliamentary/changed-articles';
 	let metOverig = $state(false);
 
@@ -155,6 +157,10 @@
 					{/if}
 				{/snippet}
 				<StandBalk {d} />
+				<!-- An open bill: the Kamer records no withdrawal, so no end is not "still running". -->
+				{#if coverageLine(d.completeness)}<p class="reading">
+						<Coverage coverage={d.completeness} />
+					</p>{/if}
 				{#if d.ek_outcome}
 					{@const ek = d.ek_outcome}
 					<!-- The Eerste Kamer's decision stands in the bar; its source is named here. -->

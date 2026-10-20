@@ -541,7 +541,7 @@ export interface paths {
          * Explore a node and its neighbors
          * @description Fetches a node from the given collection and returns its neighbors from the unified edge collection in buckets, one per relation, direction and neighbor collection. Each neighbor carries the edge that leads to it: `edge_id`, `status`, `confidence` and `meta`. A bucket holds one page (`limit` neighbors from `offset`, in the same order on every request), its `total`, and the `next_offset` of the following page (null on the last). `relations`, `node_types`, `direction` and `status` narrow the edges; the totals count what remains.
          *
-         *     a node (any node collection) with its neighbours in buckets of one relation, direction and neighbour collection, a page of `limit` (at most 200; 500 with `props=canvas`) from `offset` in each. An article's `lid_counts` are waited for only on the first page with every prop: a further page or a page of the canvas gives those counted before, or none while they are being counted. Every neighbour carries its edge: `edge_id` (the edge `key`), `status`, `confidence`, `meta`. The node, every neighbour and every node of a neighbourhood or path has `title`, the `<title>` of its page (`core.names.title_of`; of a publication with the title of its nota van toelichting; with `props=canvas` too, which keeps what it reads), and a judgment `cite` (as on `/api/judgments/{ecli}`); a dossier has in its props `short_title` and `short_title_basis` as the feed gives them, a decision `short_subject` (the name what was voted on goes by: `Wet AI-toezicht`, `Begroting Defensie 2027`; null without one), a paper or a case `kind_group`. `props=canvas` gives a neighbour only what the canvas of the explorer draws: of its props those of its collection and those its title reads (`_rows.canvas_keys`; of each of its `actors` the role, name and faction; an instrument its `kind` (`wet`, as `/api/instruments/{identifier}` gives it), an annex its `label` and `title`, an instrument version the citation title of its law, `instrument_citation_title`, from the columns of `instruments`; a motion, an amendment or a judgment its `outcome` alone of how it ended), of its edge's `meta` the keys the canvas reads (null when none, never `{}`); the node itself stays whole. A bucket has `type`, `total` (its edges), `next_offset` (null on the last page), `lid_counts`, `capacity_counts` and `items`; `capacity_counts`, of a member's `AUTHORED` (outbound): per capacity they signed in (`meta.capacity`: `kamerlid`, `bewindspersoon`, `overig`; `""` for none), how many of the whole bucket and not only of its page (`{"kamerlid": 980, "bewindspersoon": 503}`), from `lg_authored`; null for every other bucket and with a `status` filter; `lid_counts`, of an article: per lid the edges of the whole bucket cite (in their `meta`: `lid`, `leden`, and the `leden` of each of a judgment's `mentions`), how many do (only the leden the article has: a citation can give it the lid of another article it names), `""` for those that cite none and an edge that cites two counted for each (`{"1": 28, "2": 174, "": 12}`); with `limit=1` (the light node) an article whose lid counts are not kept yet waits for them 0.5 s at most, then answers with every `lid_counts` null and `lid_counts_pending` true while they are counted (a larger `limit` waits for them), so that a reader can show them without reading every page (counted over the meta of every edge of the article, so kept an hour whatever the data does, a newer count made in the background after that; those of the 20 most cited articles warmed); null for a bucket that cites no lid and for a node that is no article; `limit` (default 30, max 200) and `offset` page inside every bucket. Bucket and page order are the same on every request. A neighbour is light: its `props` leave out besides those the text of a paper (`sections`, `footnotes`), the structure of an article (`parts`, `references`, `breadcrumb`) and the rollups of an activity (`case_ids`, `case_kinds_by_dossier`; the node itself keeps them); a judgment carries `ecli`, `display_name`, `names`, `summary`, `date`, `court`, `court_code`, `case_number`, `source`, `stub`, `translation_of`, `advocate_general`, `advocate_general_role`, `outcome`, `outcome_text`, `conclusion_outcome`, `conclusion_outcome_text` and `echr_findings` alone (`lg_judgment_light`), and its `tier` (`hoge_raad`, `hvj_eu`, `ehrm`: by its court code, of code XX by the court it names) and its `source` (by its ECLI) where those lack them; its `summary` is cut at 400 characters (with `…`), and the `meta` of its edge leaves out `mentions` (each place a judgment cites the article or the judgment; `/api/judgments/{ecli}` has them), which the node itself, `/api/documents/{key}` and `/api/articles/...` carry. The answer has the `title` and `description` of the node's page (as `/render` gives them, from the node's own props: without the outcome of a motion or the counts of an article; `title` is the page's `<title>` without `, Concordans`, never cut, the title the app's tab shows: `Art. 6:162 BW, Onrechtmatige daad` (an article with its heading, else its `caption`), `Motie 36496-71 Bolhuis over een AI-killswitch` (a motion or an amendment by its number, then every word of its subject), `HR 20 december 2019 (Urgenda), ECLI:NL:HR:2019:2006`, `36600-VII Begroting Binnenlandse Zaken en Koninkrijksrelaties 2025`; a day in a title or a description as `20 december 2019`) and its readable `path` (null for a node without one, an activity). The `meta` of a neighbour's edge holds `paragraphs` where a judgment cites: the numbers of the paragraphs it cites in ("4.3", as the judgment prints them), stored on an edge to a cited judgment and taken from the mentions of an edge to a cited article, so a list of citing judgments shows where each cites without a request per row. With `edge_meta=passages` (also with `props=canvas`) it holds `passages` too, from the mentions of the edge: the first place in each of its first three paragraphs (a footnote counts apart), each `paragraph_id`, `paragraph_number`, `footnote` (its label, null in the paragraph itself), `snippet`, `text` (the citation as written) and `start`, `end` (`snippet[start:end]` is `text`), so a row or a card shows the passage without the judgment; none of a mention linked before it kept `snippet_start`. `light` (the default) leaves them out: they weigh about 0.9 kB an edge. The `meta` of an edge from a Tweede Kamer paper holds `place`, where its citation stands in what `/api/documents/{key}` serves (`part` `title`, `text` with `section_id`, or `footnote` with `footnote_id`; `start` and `end` in that part; see data-model (docs/data-model.md#judgment))
+         *     a node (any node collection) with its neighbours in buckets of one relation, direction and neighbour collection, a page of `limit` (at most 200; 500 with `props=canvas`) from `offset` in each. An article's `lid_counts` are waited for only on the first page with every prop: a further page or a page of the canvas gives those counted before, or none while they are being counted. Every neighbour carries its edge: `edge_id` (the edge `key`), `status`, `confidence`, `meta`. The node, every neighbour and every node of a neighbourhood or path has `title`, the `<title>` of its page (`core.names.title_of`; of a publication with the title of its nota van toelichting; with `props=canvas` too, which keeps what it reads), and a judgment `cite` (as on `/api/judgments/{ecli}`); a dossier has in its props `short_title` and `short_title_basis` as the feed gives them, a decision `short_subject` (the name what was voted on goes by: `Wet AI-toezicht`, `Begroting Defensie 2027`; null without one), a paper or a case `kind_group`. `props=canvas` gives a neighbour only what the canvas of the explorer draws: of its props those of its collection and those its title reads (`_rows.canvas_keys`; of each of its `actors` the role, name and faction; an instrument its `kind` (`wet`, as `/api/instruments/{identifier}` gives it), an annex its `label` and `title`, an instrument version the citation title of its law, `instrument_citation_title`, from the columns of `instruments`; a motion, an amendment or a judgment its `outcome` alone of how it ended), of its edge's `meta` the keys the canvas reads (null when none, never `{}`); the node itself stays whole. A bucket has `type`, `total` (its edges), `next_offset` (null on the last page), `lid_counts`, `capacity_counts` and `items`; `capacity_counts`, of a member's `AUTHORED` (outbound): per capacity they signed in (`meta.capacity`: `kamerlid`, `bewindspersoon`, `overig`; `""` for none), how many of the whole bucket and not only of its page (`{"kamerlid": 980, "bewindspersoon": 503}`), from `lg_authored`; null for every other bucket and with a `status` filter; `lid_counts`, of an article: per lid the edges of the whole bucket cite (in their `meta`: `leden`, and the `leden` of each of a judgment's `mentions`), how many do (only the leden the article has: a citation can give it the lid of another article it names), `""` for those that cite none and an edge that cites two counted for each (`{"1": 28, "2": 174, "": 12}`); with `limit=1` (the light node) an article whose lid counts are not kept yet waits for them 0.5 s at most, then answers with every `lid_counts` null and `lid_counts_pending` true while they are counted (a larger `limit` waits for them), so that a reader can show them without reading every page (counted over the meta of every edge of the article, so kept an hour whatever the data does, a newer count made in the background after that; those of the 20 most cited articles warmed); null for a bucket that cites no lid and for a node that is no article; `limit` (default 30, max 200) and `offset` page inside every bucket. Bucket and page order are the same on every request. A neighbour is light: its `props` leave out besides those the text of a paper (`sections`, `footnotes`), the structure of an article (`parts`, `references`, `breadcrumb`) and the rollups of an activity (`case_ids`, `case_kinds_by_dossier`; the node itself keeps them); a judgment carries `ecli`, `display_name`, `names`, `summary`, `date`, `court`, `court_code`, `case_number`, `source`, `stub`, `translation_of`, `advocate_general`, `advocate_general_role`, `outcome`, `outcome_text`, `conclusion_outcome`, `conclusion_outcome_text` and `echr_findings` alone (`lg_judgment_light`), and its `tier` (`hoge_raad`, `hvj_eu`, `ehrm`: by its court code, of code XX by the court it names) and its `source` (by its ECLI) where those lack them; its `summary` is cut at 400 characters (with `…`), and the `meta` of its edge leaves out `mentions` (each place a judgment cites the article or the judgment; `/api/judgments/{ecli}` has them), which the node itself, `/api/documents/{key}` and `/api/articles/...` carry. The answer has the `title` and `description` of the node's page (as `/render` gives them, from the node's own props: without the outcome of a motion or the counts of an article; `title` is the page's `<title>` without `, Concordans`, never cut, the title the app's tab shows: `Art. 6:162 BW, Onrechtmatige daad` (an article with its heading, else its `caption`), `Motie 36496-71 Bolhuis over een AI-killswitch` (a motion or an amendment by its number, then every word of its subject), `HR 20 december 2019 (Urgenda), ECLI:NL:HR:2019:2006`, `36600-VII Begroting Binnenlandse Zaken en Koninkrijksrelaties 2025`; a day in a title or a description as `20 december 2019`) and its readable `path` (null for a node without one, an activity). The `meta` of a neighbour's edge holds `paragraphs` where a judgment cites: the numbers of the paragraphs it cites in ("4.3", as the judgment prints them), stored on an edge to a cited judgment and taken from the mentions of an edge to a cited article, so a list of citing judgments shows where each cites without a request per row. With `edge_meta=passages` (also with `props=canvas`) it holds `passages` too, from the mentions of the edge: the first place in each of its first three paragraphs (a footnote counts apart), each `paragraph_id`, `paragraph_number`, `footnote` (its label, null in the paragraph itself), `snippet`, `text` (the citation as written) and `start`, `end` (`snippet[start:end]` is `text`), so a row or a card shows the passage without the judgment; none of a mention linked before it kept `snippet_start`. `light` (the default) leaves them out: they weigh about 0.9 kB an edge. The `meta` of an edge from a Tweede Kamer paper holds `place`, where its citation stands in what `/api/documents/{key}` serves (`part` `title`, `text` with `section_id`, or `footnote` with `footnote_id`; `start` and `end` in that part; see data-model (docs/data-model.md#judgment))
          */
         get: operations["get_node_graph_api_nodes__collection___key__get"];
         put?: never;
@@ -2060,6 +2060,13 @@ export interface components {
             last_activity: string | null;
             /** Closed On */
             closed_on: string | null;
+            /**
+             * Completeness
+             * @description `outcome`: what the graph knows of its end. `done` as of the day it closed; `pending` as of its last activity for an open bill or treaty, which may still be before a chamber or may have been withdrawn (the Tweede Kamer records no withdrawal), and without a day before `semantic tk-dossier-outcomes` reached it; `not_in_source` for an open dossier of another kind. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing}` (docs/api.md "Completeness").
+             */
+            completeness: {
+                [key: string]: components["schemas"]["PartStateDTO"];
+            };
             /** @description The ministry (``GET /api/ministries``) of the bewindspersoon who signed the earliest signed document of the dossier first; null for an initiative or when nobody in government or parliament signed first. */
             ministry: components["schemas"]["MinistryKey"] | null;
             /**
@@ -2743,7 +2750,7 @@ export interface components {
             instrument: components["schemas"]["InstrumentSummaryDTO"] | null;
             /**
              * Completeness
-             * @description Of an article of a law of the Staatsblad the BWB does not hold (yet): `references` of this article (`partial`: `missing` not linked) and `definitions` of its law. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `source`) `{state, as_of, missing}` (docs/api.md "Completeness"). Null for any other article.
+             * @description `references`: the article references of its text (`partial`: `missing` recognized and not linked: a law or an article not in the graph); of an article of a law of the Staatsblad the BWB does not hold (yet) also `definitions` of its law. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing}` (docs/api.md "Completeness"). Null for an article no step read the references of.
              */
             completeness: {
                 [key: string]: components["schemas"]["PartStateDTO"];
@@ -4706,7 +4713,7 @@ export interface components {
             newest: string | null;
             /**
              * Completeness
-             * @description Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `source`) `{state, as_of, missing}` (docs/api.md "Completeness"). Of a source its `source`: `done`, `paused` (off: no scheduled run asks it anything), `unavailable` (it refused the last run) or `pending` (nothing fetched yet), with `as_of`.
+             * @description Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing}` (docs/api.md "Completeness"). Of a source its `source`: `done`, `paused` (off: no scheduled run asks it anything), `unavailable` (it refused the last run) or `pending` (nothing fetched yet), with `as_of`.
              */
             completeness: {
                 [key: string]: components["schemas"]["PartStateDTO"];
@@ -5774,6 +5781,13 @@ export interface components {
              */
             decisions: components["schemas"]["DecisionDTO"][];
             /**
+             * Completeness
+             * @description `references`: the article and law citations of its text (`partial`: `missing` recognized and not linked: a law or an article not in the graph). Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing}` (docs/api.md "Completeness"). Null for a paper `semantic tk` has not read.
+             */
+            completeness: {
+                [key: string]: components["schemas"]["PartStateDTO"];
+            } | null;
+            /**
              * Kind Group
              * @description What the paper or case is, by its Soort (`kind`): `motie` or `amendement` (also a changed one), `wetsvoorstel`, `brief` (a Soort beginning with Brief), `overig`; null without a Soort.
              */
@@ -5962,6 +5976,13 @@ export interface components {
             last_activity: string | null;
             /** Closed On */
             closed_on: string | null;
+            /**
+             * Completeness
+             * @description `outcome`: what the graph knows of its end. `done` as of the day it closed; `pending` as of its last activity for an open bill or treaty, which may still be before a chamber or may have been withdrawn (the Tweede Kamer records no withdrawal), and without a day before `semantic tk-dossier-outcomes` reached it; `not_in_source` for an open dossier of another kind. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing}` (docs/api.md "Completeness").
+             */
+            completeness: {
+                [key: string]: components["schemas"]["PartStateDTO"];
+            };
             /** @description The ministry (``GET /api/ministries``) of the bewindspersoon who signed the earliest signed document of the dossier first; null for an initiative or when nobody in government or parliament signed first. */
             ministry: components["schemas"]["MinistryKey"] | null;
             /**
@@ -6588,6 +6609,13 @@ export interface components {
             last_activity: string | null;
             /** Closed On */
             closed_on: string | null;
+            /**
+             * Completeness
+             * @description `outcome`: what the graph knows of its end. `done` as of the day it closed; `pending` as of its last activity for an open bill or treaty, which may still be before a chamber or may have been withdrawn (the Tweede Kamer records no withdrawal), and without a day before `semantic tk-dossier-outcomes` reached it; `not_in_source` for an open dossier of another kind. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing}` (docs/api.md "Completeness").
+             */
+            completeness: {
+                [key: string]: components["schemas"]["PartStateDTO"];
+            };
             /** @description The ministry (``GET /api/ministries``) of the bewindspersoon who signed the earliest signed document of the dossier first; null for an initiative or when nobody in government or parliament signed first. */
             ministry: components["schemas"]["MinistryKey"] | null;
             /**
@@ -7004,7 +7032,7 @@ export interface components {
             via: components["schemas"]["ImplementingMeasureDTO"][];
             /**
              * Meta
-             * @description Edge evidence as stored (`celex`, `bases`, `publications`, `measures`).
+             * @description Edge evidence as stored (`bases`, `publications`, `measures`).
              */
             meta: {
                 [key: string]: unknown;
@@ -8898,7 +8926,7 @@ export interface components {
             treaty: components["schemas"]["TreatyRegisterDTO"] | null;
             /**
              * Completeness
-             * @description Of a law of the Staatsblad the BWB does not hold (yet): `references` of all its articles (`partial`: `missing` not linked) and `definitions`. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `source`) `{state, as_of, missing}` (docs/api.md "Completeness"). Null for any other instrument.
+             * @description Of a law of the Staatsblad the BWB does not hold (yet): `references` of all its articles (`partial`: `missing` not linked) and `definitions`. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing}` (docs/api.md "Completeness"). Null for any other instrument.
              */
             completeness: {
                 [key: string]: components["schemas"]["PartStateDTO"];
@@ -10122,6 +10150,13 @@ export interface components {
              * @description The other judgments of its series (`judgment.series_id`), in the order of their ECLI numbers; empty outside a series.
              */
             series: components["schemas"]["JudgmentSummaryDTO"][];
+            /**
+             * Completeness
+             * @description `references`: the article citations of its text (`partial`: `missing` recognized and not linked: a law or an article not in the graph, as `judgment.unresolved_citations` lists the first). Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing}` (docs/api.md "Completeness"). Null for a judgment `semantic rechtspraak` has not read.
+             */
+            completeness: {
+                [key: string]: components["schemas"]["PartStateDTO"];
+            } | null;
             /** Metadata */
             metadata: {
                 [key: string]: unknown;
@@ -11420,7 +11455,7 @@ export interface components {
          * @description What of a record or a source a state is about.
          * @enum {string}
          */
-        Part: "text" | "paragraphs" | "tables" | "references" | "definitions" | "versions" | "succession" | "source";
+        Part: "text" | "paragraphs" | "tables" | "references" | "definitions" | "versions" | "succession" | "outcome" | "source";
         /**
          * PartStateDTO
          * @description How far one part is complete.
@@ -11430,7 +11465,7 @@ export interface components {
             state: components["schemas"]["Coverage"];
             /**
              * As Of
-             * @description Of a source: when its retrieves last all ended well (UTC, ISO 8601), else when its newest record was fetched.
+             * @description Of a source: when its retrieves last all ended well (UTC, ISO 8601), else when its newest record was fetched. Of the `outcome` of a dossier: the day it closed (`done`), or of its last activity (`pending`).
              */
             as_of: string | null;
             /**

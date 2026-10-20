@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { NOT_IN_DATA } from '$lib/text/coverage';
 	import type { Schema } from '$lib/api/types';
 	import { openHref } from '$lib/bron/href';
 	import { officialNumber } from '$lib/bron/dossier-naam';
@@ -111,7 +112,7 @@
 					aria-label="Stand: {st.bodies
 						.map(
 							(b) =>
-								`${b.name} ${b.state === 'done' ? 'klaar' : b.state === 'now' ? 'nu' : b.state === 'none' ? 'niet' : b.state === 'unknown' ? 'niet in de gegevens' : 'nog niet'}`
+								`${b.name} ${b.state === 'done' ? 'klaar' : b.state === 'now' ? 'nu' : b.state === 'none' ? 'niet' : b.state === 'unknown' ? NOT_IN_DATA : 'nog niet'}`
 						)
 						.join(', ')}"
 				>

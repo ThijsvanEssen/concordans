@@ -2,7 +2,7 @@
 	import KeyList from '$lib/components/ui/KeyList.svelte';
 	import KeyRow from '$lib/components/ui/KeyRow.svelte';
 	import CoverageLine from '$lib/components/ui/Coverage.svelte';
-	import { coverageLine } from '$lib/components/ui/coverage';
+	import { coverageLine } from '$lib/text/coverage';
 	import { langeDatum } from '$lib/text/datum';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	// Bronnen en hergebruik: the one place for where the data comes from, how far it goes, and

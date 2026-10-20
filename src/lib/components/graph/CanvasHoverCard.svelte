@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { textOf, truncate } from '$lib/text/words';
+	import { NOT_IN_DATA } from '$lib/text/coverage';
+	import { capitalize, textOf, truncate } from '$lib/text/words';
 	import { naamVanId } from '$lib/bron/menselijk';
 	// The hover panel of the canvas: what the bron is, a preview, and two actions: open
 	// it, and add it to the netwerk or take it out.
@@ -161,7 +162,7 @@
 	</h4>
 
 	{#if node.stub}
-		<p class="snippet stub-note">Niet in de gegevens.</p>
+		<p class="snippet stub-note">{capitalize(NOT_IN_DATA)}.</p>
 	{:else if identity && article.state.status !== 'ready'}
 		<div class="cite-loading"><LoadState state={article.state} what="De tekst" /></div>
 	{:else if snippet}
