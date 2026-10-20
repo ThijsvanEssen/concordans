@@ -19,7 +19,7 @@
 	// Text restructuring lives in judgment-text.ts.
 	import { getJudgmentDetail } from '$lib/api/judgments';
 	import type { GraphNode } from '$lib/graph/types';
-	import CitedText from '$lib/components/articles/CitedText.svelte';
+	import TextBlocks from '$lib/components/articles/TextBlocks.svelte';
 	import { page } from '$app/state';
 	import { anchorOfHash, landOn, linkTo, viewLink } from '$lib/bron/landing';
 	import { afterTick } from '$lib/util/after-tick';
@@ -413,9 +413,14 @@
 							{#if item.subTitle}
 								<p class="reader-para-subtitle">{item.subTitle}</p>
 							{/if}
-							<p class="reader-para">
-								<CitedText text={item.body} citations={item.citations} noten={item.noten} />
-							</p>
+							<div class="reader-para">
+								<TextBlocks
+									text={item.body}
+									tables={item.tables ?? []}
+									citations={item.citations}
+									notes={item.noten}
+								/>
+							</div>
 							<Voetnoten noten={nootVan(voetnoten.noten, item.noten)} />
 						</div>
 					</div>
@@ -428,19 +433,24 @@
 							class:reader-para--within={item.within}
 							id={item.id}
 						>
-							<p class="reader-para">
-								<CitedText text={item.body} citations={item.citations} noten={item.noten} />
-							</p>
+							<div class="reader-para">
+								<TextBlocks
+									text={item.body}
+									tables={item.tables ?? []}
+									citations={item.citations}
+									notes={item.noten}
+								/>
+							</div>
 							<Voetnoten noten={nootVan(voetnoten.noten, item.noten)} />
 						</div>
 					{:else}
-						<p
+						<div
 							class="reader-para reader-para--prose"
 							class:reader-para--within={item.within}
 							id={item.id}
 						>
-							<CitedText text={item.body} citations={item.citations} />
-						</p>
+							<TextBlocks text={item.body} tables={item.tables ?? []} citations={item.citations} />
+						</div>
 					{/if}
 				{/if}
 			{/each}

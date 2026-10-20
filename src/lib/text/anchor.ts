@@ -5,6 +5,7 @@
 // `onder-_39-onder-a`, `lid-3-aanhef`, `tekst-6-onder-a`), a note (`fn-35-2`), an article
 // in the whole law (`artikel-658`) and a division of it (`deel-hoofdstuk-3`).
 import { paragraphCite } from './ecli';
+import { tablesWithin, type Table } from './tables';
 
 type Anchor =
 	| { kind: 'paragraph'; number: string }
@@ -152,7 +153,8 @@ export type PaperSource = {
 	/** Its sections: a passage is the text from its heading to `char_end`. */
 	sections?:
 		| readonly { id?: string; char_start: number; char_end?: number; heading: string }[]
-		| null;
+		| null; /** The tables in its text (`tables`): a row a line, its cells separated by a tab. */
+	tables?: readonly Table[] | null;
 };
 
 /**
@@ -210,6 +212,63 @@ export function paperParagraphs(doc: PaperSource): PaperParagraph[] {
 		});
 	}
 	return lines;
+}
+
+/**
+ * The lines of a Kamerstuk as the reader sets them: a line a block, an alinea with a table
+ * (its title and its rows, kind `table`) one block, its `text` the words from its first line to
+ * its last and its `tables` in them. The lines of a table no alinea holds are one block too.
+ */
+export type PaperBlock = {
+	/** Its first line: its alinea, its anchor and its marker. */
+	line: PaperParagraph;
+	lines: PaperParagraph[];
+	start: number;
+	text: string;
+	tables: Table[];
+};
+
+export function paperBlocks(
+	lines: readonly PaperParagraph[],
+	doc: Pick<PaperSource, 'text' | 'tables'>
+): PaperBlock[] {
+	const text = doc.text ?? '';
+	const tables = doc.tables ?? [];
+	// The table a line is a row of, and the table of each alinea that holds one.
+	const rowOf = new Map<PaperParagraph, Table>();
+	const ofParagraph = new Map<string, Table>();
+	for (const q of lines) {
+		const t = tables.find((t) => q.start + q.text.length > t.start && q.start < t.end);
+		if (!t) continue;
+		rowOf.set(q, t);
+		if (q.at) ofParagraph.set(q.at, t);
+	}
+	const blocks: PaperBlock[] = [];
+	for (let k = 0; k < lines.length; ) {
+		const p = lines[k];
+		const table = rowOf.get(p) ?? (p.at ? ofParagraph.get(p.at) : undefined);
+		let last = k;
+		while (
+			table &&
+			last + 1 < lines.length &&
+			((!!p.at && lines[last + 1].at === p.at) || rowOf.get(lines[last + 1]) === table)
+		)
+			last++;
+		const own = lines.slice(k, last + 1);
+		const tail = own[own.length - 1];
+		// A row keeps its empty cells at either end, which its line is trimmed of.
+		const start = table ? Math.min(p.start, table.start) : p.start;
+		const end = Math.max(tail.start + tail.text.length, table?.end ?? 0);
+		blocks.push({
+			line: p,
+			lines: own,
+			start,
+			text: text.slice(start, end),
+			tables: table ? tablesWithin([table], start, end - start) : []
+		});
+		k = last + 1;
+	}
+	return blocks;
 }
 
 /** The anchor of a lid by its number: `lid-2`. */

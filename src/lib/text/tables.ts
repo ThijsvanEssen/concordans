@@ -55,3 +55,33 @@ export function piecesOf(from: number, to: number, tables: readonly Table[]): Ta
 	if (to > at) pieces.push({ start: at, end: to, table: null });
 	return pieces;
 }
+
+/** `text[from, to)` as blocks: its tables, and the text around them trimmed, none empty. */
+export function blocksOf(
+	text: string,
+	from: number,
+	to: number,
+	tables: readonly Table[]
+): TablePiece[] {
+	return piecesOf(from, to, tables).flatMap((piece) => {
+		if (piece.table) return [piece];
+		const raw = text.slice(piece.start, piece.end);
+		const start = piece.start + raw.length - raw.trimStart().length;
+		const end = start + raw.trim().length;
+		return end > start ? [{ start, end, table: null }] : [];
+	});
+}
+
+/** The tables that start in `text[from, from + length)`, offsets relative to `from`; a table
+ *  that runs past it (its last empty cells trimmed off) ends there. */
+export function tablesWithin(
+	tables: readonly Table[] | null | undefined,
+	from: number,
+	length: number
+): Table[] {
+	return (tables ?? []).flatMap((t) =>
+		t.start >= from && t.start < from + length
+			? [{ ...t, start: t.start - from, end: Math.min(t.end, from + length) - from }]
+			: []
+	);
+}

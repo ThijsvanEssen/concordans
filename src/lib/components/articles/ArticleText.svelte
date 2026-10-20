@@ -16,7 +16,7 @@
 	import type { ProposedText } from '$lib/verbonden/proposed-text';
 	import CitedText from './CitedText.svelte';
 	import TextTable from './TextTable.svelte';
-	import { piecesOf, type Table } from '$lib/text/tables';
+	import { blocksOf, type Table } from '$lib/text/tables';
 	import { spansWithin } from '$lib/text/spans';
 	import { definitiesOp, type Begrip, type Definitie } from '$lib/text/begrippen';
 	import { delegatiesWithin, type Delegatie, type Gedelegeerd } from '$lib/text/delegaties';
@@ -143,14 +143,7 @@
 	});
 
 	/** A part's own text: its paragraphs (trimmed, none empty) and its tables. */
-	const own = (part: ArticlePart) =>
-		piecesOf(part.textStart, part.textEnd, tables).flatMap((piece) => {
-			if (piece.table) return [piece];
-			const raw = source.slice(piece.start, piece.end);
-			const start = piece.start + raw.length - raw.trimStart().length;
-			const end = start + raw.trim().length;
-			return end > start ? [{ start, end, table: null }] : [];
-		});
+	const own = (part: ArticlePart) => blocksOf(source, part.textStart, part.textEnd, tables);
 
 	/** The place's text with its onderdelen, as Kopieer tekst puts it on the clipboard; the
 	 *  article's whole text when the place is the article. */

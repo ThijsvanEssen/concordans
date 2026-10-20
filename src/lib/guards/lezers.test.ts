@@ -5,7 +5,8 @@ import { BRONNEN, bron, overtreders, plek, regels } from '$lib/test/bronnen';
 describe('the readers', () => {
 	it('sets footnotes by one component in every reader (Voetnoten, CitedText `noten`)', () => {
 		// A judgment, a Kamerstuk and an overweging read in place (its card, Gemarkeerd) show
-		// their notes alike: the marker in CitedText, the notes in Voetnoten, one open note.
+		// their notes alike: the marker in CitedText (in TextBlocks where a text has tables), the
+		// notes in Voetnoten, one open note.
 		const lezers = [
 			'lib/components/explore/readers/JudgmentReader.svelte',
 			'lib/components/explore/readers/DocumentReader.svelte',
@@ -14,7 +15,7 @@ describe('the readers', () => {
 		for (const pad of lezers) {
 			const t = bron(pad);
 			expect(t, pad).toMatch(/<Voetnoten\b/);
-			expect(t, pad).toMatch(/<CitedText\b[^>]*\bnoten=/);
+			expect(t, pad).toMatch(/<CitedText\b[^>]*\bnoten=|<TextBlocks\b[^>]*\bnotes=/);
 			expect(t, pad).toMatch(/zetNootStand\(\)/);
 		}
 		// No other place draws a note or its marker of its own.

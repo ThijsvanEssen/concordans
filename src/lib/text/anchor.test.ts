@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import papers from '$lib/fixtures/paper-paragraphs-api.json';
+import paper33478 from '$lib/fixtures/paper-kst-33478-3-tables.json';
+import { rowsOf, type Table } from './tables';
 import {
+	paperBlocks,
 	paperParagraphs,
+	type PaperSource,
 	anchorLabel,
 	atPlace,
 	formatAnchor,
@@ -181,5 +185,60 @@ describe('the alineas of a Kamerstuk, as the API numbers them (A28, #821)', () =
 		expect(parseAnchor('s-3f2a9c1e_2')).toEqual({ kind: 'section', id: 's-3f2a9c1e_2' });
 		// Its heading is the paper's, not the anchor's: the anchor alone prints nothing.
 		expect(anchorLabel('s-300')).toBeNull();
+	});
+});
+
+describe('the blocks of a Kamerstuk: an alinea with a table one block (A55, API #818)', () => {
+	// kst-33478-3 as the API gives it: a transposition table at its end, alinea 48, whose first
+	// cell spans two rows.
+	const doc = paper33478 as unknown as PaperSource & { text: string; tables: Table[] };
+	const lines = paperParagraphs(doc);
+	const blocks = paperBlocks(lines, doc);
+
+	it('makes the lines of the table one block, its alinea marked on the first', () => {
+		const withTable = blocks.filter((b) => b.tables.length);
+		expect(withTable).toHaveLength(1);
+		const [b] = withTable;
+		expect(b.line).toMatchObject({ n: 48, first: true });
+		expect(new Set(b.lines.map((l) => l.at))).toEqual(new Set([b.line.at]));
+		expect(b.lines.length).toBe(lines.filter((l) => l.n === 48).length);
+		const rows = rowsOf(b.text, b.tables[0]).map((r) =>
+			r.cells.map((c) => b.text.slice(c.start, c.end))
+		);
+		expect(rows[0][0]).toBe('I. 1');
+		expect(rows[0][2]).toBe('Algemeen van aard.');
+		expect(rows[1]).toHaveLength(2);
+		expect(rowsOf(b.text, b.tables[0])[0].cells[0].rowspan).toBe(2);
+	});
+
+	it('leaves every other line a block of its own', () => {
+		expect(blocks.length).toBe(
+			lines.length - blocks.find((b) => b.tables.length)!.lines.length + 1
+		);
+		expect(paperBlocks(lines, { ...doc, tables: [] })).toHaveLength(lines.length);
+	});
+
+	it('takes the title of a table into its block, and the empty cells at the edge of a row', () => {
+		const text = 'Inleiding.\nTabel 1 Uitgaven\n\tA\tB\nx\t1\t\n';
+		const start = text.indexOf('\tA');
+		const table: Table = { start, end: text.length - 1, head_rows: 1, columns: 3, spans: [] };
+		const paragraphs = [
+			{ id: 'p-00000001', number: 1, char_start: 0, char_end: 10 },
+			{ id: 'p-00000002', number: 2, char_start: 11, char_end: start - 1 },
+			{ id: 'p-00000003', number: 2, char_start: start, char_end: text.indexOf('\nx') },
+			{ id: 'p-00000004', number: 2, char_start: text.indexOf('x'), char_end: text.length - 1 }
+		];
+		const source = { text, paragraphs, tables: [table] };
+		const [eerste, tweede] = paperBlocks(paperParagraphs(source), source);
+		expect(eerste.tables).toEqual([]);
+		expect(tweede.text).toBe('Tabel 1 Uitgaven\n\tA\tB\nx\t1\t');
+		expect(
+			rowsOf(tweede.text, tweede.tables[0]).map((r) =>
+				r.cells.map((c) => tweede.text.slice(c.start, c.end))
+			)
+		).toEqual([
+			['', 'A', 'B'],
+			['x', '1', '']
+		]);
 	});
 });

@@ -64,6 +64,47 @@ describe('the tables in a text (A20)', () => {
 			'lib/components/articles/TextTable.svelte',
 			'lib/text/tables.ts'
 		]);
-		expect(filesWith(/<TextTable\b/)).toEqual(['lib/components/articles/ArticleText.svelte']);
+		// An article's text (ArticleText) and every other text with tables (TextBlocks).
+		expect(filesWith(/<TextTable\b/)).toEqual([
+			'lib/components/articles/ArticleText.svelte',
+			'lib/components/articles/TextBlocks.svelte'
+		]);
+	});
+});
+
+describe('the tables in a judgment and a Kamerstuk (A55)', () => {
+	// Their readers and a bundel's rows read a table as an article's reader does: TextBlocks,
+	// TextTable in it; none sets the text of a paragraph without its tables.
+	const lezers = [
+		'lib/components/explore/readers/JudgmentReader.svelte',
+		'lib/components/explore/readers/DocumentReader.svelte',
+		'lib/bron/Overweging.svelte',
+		'lib/bron/PaperParagraph.svelte'
+	];
+
+	it('are read by TextBlocks in every reader of their text, which passes the tables', () => {
+		expect(filesWith(/<TextBlocks\b/)).toEqual(lezers.toSorted());
+		for (const path of lezers) {
+			const blocks = bron(path).match(/<TextBlocks\b[^>]*>/g) ?? [];
+			expect(blocks.length, path).toBeGreaterThan(0);
+			for (const b of blocks) expect(b, path).toMatch(/\btables=/);
+		}
+	});
+
+	it('come with the paragraphs of a judgment and the alineas of a Kamerstuk', () => {
+		// A judgment's paragraph gives its tables to the body the reader lays out (bodyItems).
+		expect(bron('lib/components/explore/readers/judgment-text.ts')).toMatch(/\bp\.tables\b/);
+		// A Kamerstuk's alinea with a table is one block (paperBlocks), in its reader and a bundel.
+		for (const path of [
+			'lib/components/explore/readers/DocumentReader.svelte',
+			'lib/bron/PaperParagraph.svelte'
+		])
+			expect(bron(path), path).toMatch(/paperBlocks\(/);
+		// Neither sets the words of a Kamerstuk's line as a judgment's without its blocks.
+		expect(filesWith(/paperBlocks\(/)).toEqual([
+			'lib/bron/PaperParagraph.svelte',
+			'lib/components/explore/readers/DocumentReader.svelte',
+			'lib/text/anchor.ts'
+		]);
 	});
 });
