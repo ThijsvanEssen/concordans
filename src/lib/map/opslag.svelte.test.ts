@@ -3,7 +3,7 @@
 // version cannot read, not by a second tab that read the bundels before (Thijs, 20 Oct: a
 // bundel with items showed none).
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { itemKey, type MapItem } from './map';
+import { itemKey, type Annotation, type MapItem } from './map';
 import kept20Oct from './fixtures/opslag-20261020.json';
 
 vi.mock('$app/state', () => ({ page: { url: new URL('http://localhost/') } }));
@@ -330,6 +330,10 @@ describe('a field of a later version (onderzoeksflow stap 1: lees vers, gooi nie
 			change();
 			expect(toekomst(b)).toEqual(alles);
 		}
+		// What the tabs show is what they read: the aantekening on its item, its bron with it.
+		expect(een.mappen.find((m) => m.id === 'cbw')?.aantekeningen?.map((a) => a.tekst)).toEqual([
+			'Zie de MvT'
+		]);
 	});
 
 	it('survives a tab whose copy is older, told by the storage event or not', async () => {
@@ -343,5 +347,60 @@ describe('a field of a later version (onderzoeksflow stap 1: lees vers, gooi nie
 		b.data.set(OPSLAG, JSON.stringify(later()));
 		oud.add(uitspraak, 'cbw');
 		expect(toekomst(b)).toEqual(alles);
+	});
+
+	it('keeps an aantekening this version cannot read as it was kept, until its item goes', async () => {
+		const stand = later();
+		const vreemd = { id: 'a-ffffffff', op: itemKey(stuk), fragment: { waar: 'p-1' } };
+		stand.mappen[1].aantekeningen!.push(vreemd as never);
+		const b = browser();
+		b.data.set(OPSLAG, JSON.stringify(stand));
+		const kaart = await tab(b);
+		expect(kaart.mappen[1].aantekeningen).toHaveLength(1);
+		kaart.add(uitspraak, 'cbw');
+		const kept = () => JSON.parse(b.data.get(OPSLAG)!).mappen[1].aantekeningen;
+		expect(kept()).toHaveLength(2);
+		expect(kept()[1]).toEqual(vreemd);
+		// Its item out: both go, the one on it and the one towards it keeps its note on its own.
+		kaart.weg(stuk, 'cbw');
+		expect(kept()).toEqual([
+			{
+				id: 'a-12ab34cd',
+				op: itemKey(lid),
+				fragment: { waar: 'lid-2', exact: 'onrechtmatige daad', start: 4, toekomst: 'f' },
+				tekst: 'Zie de MvT',
+				toekomst: 'aantekening'
+			}
+		]);
+		kaart.weg(lid, 'cbw');
+		expect(kept()).toBeUndefined();
+	});
+
+	it('takes the aantekeningen of a link or a file into a bundel', async () => {
+		const b = browser();
+		const kaart = await tab(b);
+		const a: Annotation = {
+			id: 'a-11112222',
+			op: itemKey(lid),
+			fragment: { waar: 'lid-2', exact: 'daad', start: 0 }
+		};
+		const shared = {
+			naam: 'Gedeeld',
+			items: [lid],
+			volgorde: 'groep' as const,
+			notitie: null,
+			groepNotities: {},
+			aantekeningen: [a],
+			skipped: 0
+		};
+		const eigen = kaart.bewaarAlsMap(shared);
+		expect(kaart.mappen.find((m) => m.id === eigen.id)?.aantekeningen).toEqual([a]);
+		kaart.voegToe(shared, kaart.loose.id);
+		kaart.voegToe(shared, kaart.loose.id);
+		expect(kaart.loose.aantekeningen).toEqual([a]);
+		kaart.empty(kaart.loose.id);
+		expect(kaart.loose.aantekeningen).toEqual([]);
+		kaart.replace(kaart.loose.id, shared);
+		expect(kaart.loose.aantekeningen).toEqual([a]);
 	});
 });

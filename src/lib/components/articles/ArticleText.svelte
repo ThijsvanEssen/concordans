@@ -88,8 +88,9 @@
 		lidNotes?: Map<string, { label: string; href: string }>;
 		/** The mark after an onderdeel's letter or number: `a.` in Dutch law, `a)` in EU law. */
 		mark?: '.' | ')';
-		/** The article as Bundels keeps it: its id and its law; each lid then has Bewaar. */
-		bewaar?: { id: string; groep: string; wet: string | null } | null;
+		/** The article as Bundels keeps it: its id, its law and the day its text on screen took
+		 *  effect; each lid then has Bewaar. */
+		bewaar?: { id: string; groep: string; wet: string | null; versie?: string | null } | null;
 		/** A place marked as kept, whatever the active map (Bundels shows its own items). */
 		gemarkeerd?: string | null;
 		/** Only the lid or onderdeel at this anchor, and what it holds; all where none matches. */
@@ -330,7 +331,7 @@
 			? bewaarItem(
 					bewaar.id,
 					{ at: p?.id, kort: forms.kort, voluit: forms.voluit },
-					{ groep: bewaar.groep, wet: bewaar.wet }
+					{ groep: bewaar.groep, wet: bewaar.wet, versie: bewaar.versie }
 				)
 			: null}
 		verbindingen={lid && count != null && lidHref

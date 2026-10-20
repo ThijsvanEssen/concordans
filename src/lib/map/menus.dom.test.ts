@@ -24,6 +24,7 @@ const shared = {
 	volgorde: 'groep' as const,
 	notitie: null,
 	groepNotities: {},
+	aantekeningen: [],
 	skipped: 0
 };
 

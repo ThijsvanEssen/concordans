@@ -24,6 +24,7 @@ const fromFile: SharedMap = {
 	volgorde: 'eigen',
 	notitie: 'Uit het bestand',
 	groepNotities: {},
+	aantekeningen: [],
 	skipped: 0
 };
 

@@ -22,6 +22,10 @@ import {
 	placeRows,
 	rowTitle,
 	JUDGMENTS_GROUP,
+	readAnnotation,
+	readAnnotations,
+	withoutItem,
+	type Annotation,
 	type MapItem
 } from './map';
 import { itemVanRij } from './rij';
@@ -547,10 +551,66 @@ describe('a dossier kept', () => {
 	});
 });
 
-describe('an item read back (onderzoeksflow stap 1)', () => {
+describe('an item read back (onderzoeksflow stap 1–2)', () => {
 	it('keeps a field of a later version as it was kept, and drops a known one that does not read', () => {
 		const later = { ...lid2, toekomst: { a: [1, 2] }, pad: '//elders' };
 		const { pad: _pad, ...zonderPad } = later;
 		expect(readItem(later)).toEqual(zonderPad);
+	});
+
+	it('keeps the day of the text kept, a day only', () => {
+		const kort = { kort: 'art. 6:162 BW' };
+		expect(bewaarItem(lid2.id, kort, { versie: '2024-01-01' }).versie).toBe('2024-01-01');
+		expect(bewaarItem(lid2.id, kort, { versie: null })).not.toHaveProperty('versie');
+		expect(readItem({ ...lid2, versie: '2024-01-01' })?.versie).toBe('2024-01-01');
+		expect(readItem({ ...lid2, versie: 'gisteren' })).not.toHaveProperty('versie');
+	});
+});
+
+describe('an aantekening (onderzoeksflow stap 3)', () => {
+	const keys = new Set([itemKey(lid2), itemKey(ro)]);
+	const fragment = { waar: 'lid-2', exact: 'onrechtmatige daad', suffix: ' jegens', start: 9 };
+	const arcering: Annotation = { id: 'a-12ab34cd', op: itemKey(lid2), fragment, tekst: 'Kern' };
+	const koppeling: Annotation = {
+		id: 'a-56ef78gh',
+		op: itemKey(lid2),
+		fragment,
+		bron: itemKey(ro),
+		bronFragment: { waar: 'rov-5.7.1', exact: 'zorgplicht', start: 0 }
+	};
+
+	it('reads back as it was written, with a field of a later version', () => {
+		expect(readAnnotation(JSON.parse(JSON.stringify(arcering)), keys)).toEqual(arcering);
+		expect(readAnnotation(koppeling, keys)).toEqual(koppeling);
+		const later = { ...arcering, toekomst: 1, fragment: { ...fragment, toekomst: 2 } };
+		expect(readAnnotation(later, keys)).toEqual(later);
+		expect(readAnnotation({ ...arcering, tegen: '2020-01-01' }, keys)?.tegen).toBe('2020-01-01');
+	});
+
+	it('does not read on no item of the bundel, towards none, or with a fragment without words', () => {
+		const onleesbaar = [
+			{ ...arcering, op: 'articles/bwbr0000000_1' },
+			{ ...koppeling, bron: 'articles/bwbr0000000_1' },
+			{ ...arcering, fragment: { ...fragment, exact: '' } },
+			{ ...arcering, fragment: { ...fragment, start: -1 } },
+			{ ...arcering, fragment: 'lid-2' },
+			{ ...arcering, id: 'x' },
+			{ ...arcering, bron: undefined, bronFragment: fragment },
+			null,
+			'a-12ab34cd'
+		];
+		for (const a of onleesbaar) expect(readAnnotation(a, keys)).toBeNull();
+		expect(readAnnotations([arcering, ...onleesbaar], [lid2, ro])).toEqual({
+			aantekeningen: [arcering],
+			rest: onleesbaar
+		});
+		expect(readAnnotations(undefined, [lid2])).toEqual({ aantekeningen: [], rest: [] });
+	});
+
+	it('goes with its item out of the bundel; one towards it stays on its own item', () => {
+		const leeg: Annotation = { id: 'a-00000000', op: itemKey(lid2), bron: itemKey(ro) };
+		expect(withoutItem([arcering, koppeling, leeg], itemKey(lid2))).toEqual([]);
+		const { bron: _b, bronFragment: _f, ...zonderBron } = koppeling;
+		expect(withoutItem([arcering, koppeling, leeg], itemKey(ro))).toEqual([arcering, zonderBron]);
 	});
 });

@@ -403,7 +403,7 @@
 			item: bewaarItem(
 				node.id,
 				{ at: plaats, kort: f.kort, voluit: f.voluit },
-				{ groep: citation.citationTitle, wet: bwbId }
+				{ groep: citation.citationTitle, wet: bwbId, versie: validFrom }
 			),
 			wat: deel?.lid ? `lid ${deel.lid}` : ''
 		};
@@ -823,7 +823,9 @@
 					tellend={!shown && lidTellend}
 					{lidHref}
 					{citation}
-					bewaar={citation ? { id: node.id, groep: citation.citationTitle, wet: bwbId } : null}
+					bewaar={citation
+						? { id: node.id, groep: citation.citationTitle, wet: bwbId, versie: validFrom }
+						: null}
 					{proposed}
 					{onCloseProposed}
 					{lidNotes}
