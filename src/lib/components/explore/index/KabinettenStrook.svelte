@@ -5,6 +5,7 @@
 	// at the present or at the cabinet opened. A click opens the cabinet in place under the
 	// strip (OpenRij); the bron is one step further, Kabinet lezen. An end no source gives is
 	// a dotted frame, as a stand-in on a post.
+	import { NOT_IN_DATA } from '$lib/text/coverage';
 	import { untrack } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
@@ -101,7 +102,7 @@
 	const zin = (c: Cabinet) =>
 		`${c.name}, ${
 			onbekend(c)
-				? `vanaf ${korteDatum(c.from_date)}, eind niet in de gegevens`
+				? `vanaf ${korteDatum(c.from_date)}, eind ${NOT_IN_DATA}`
 				: periodeZin(c.from_date, c.to_date, korteDatum)
 		}${c.prime_minister?.name ? `, minister-president ${c.prime_minister.name}` : ''}${
 			c.parties?.length ? `, ${c.parties.map((p) => p.short ?? p.faction).join(', ')}` : ''

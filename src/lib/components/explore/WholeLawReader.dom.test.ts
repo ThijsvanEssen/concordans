@@ -91,7 +91,7 @@ describe('WholeLawReader, what the dataset lacks', () => {
 		const { container } = render(WholeLawReader, { bwbId: 'BWBR0038996' });
 		await settle();
 		expect([...container.querySelectorAll('.dekking')].map((d) => d.textContent)).toEqual([
-			'Tekst niet ingelezen, wetten.overheid.nl ↗'
+			'Tekst niet in de gegevens, wetten.overheid.nl ↗'
 		]);
 		expect(container.textContent).not.toContain('Tekst geldend op');
 	});

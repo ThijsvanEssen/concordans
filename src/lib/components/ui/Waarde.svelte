@@ -6,6 +6,7 @@
 </script>
 
 <script lang="ts">
+	import { NOT_IN_DATA } from '$lib/text/coverage';
 	// The one form for a value that can be missing. No sign fills the gap: a missing value
 	// stays empty, with "niet in de gegevens" for a screen reader, so an empty cell is not
 	// read out as nothing. Where the absence is what the reader looks for (an outcome, an
@@ -20,8 +21,9 @@
 	} = $props();
 </script>
 
-{#if !ontbreekt(value)}{value}{:else if nodig}<span class="leeg">niet in de gegevens</span
-	>{:else}<span class="sr-only">niet in de gegevens</span>{/if}
+{#if !ontbreekt(value)}{value}{:else if nodig}<span class="leeg">{NOT_IN_DATA}</span>{:else}<span
+		class="sr-only">{NOT_IN_DATA}</span
+	>{/if}
 
 <style>
 	.leeg {

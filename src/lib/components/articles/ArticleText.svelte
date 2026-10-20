@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { bewaarItem } from '$lib/map/map';
 	// The text of an article as its aanhef, leden and onderdelen. Every part has an
 	// anchor, so a reference can point at it and the address can be shared. Nothing stands
@@ -278,7 +279,7 @@
 {/snippet}
 
 {#if parts.length === 0}
-	<p class="article-text__empty">Tekst niet in de gegevens.</p>
+	<p class="article-text__empty"><Coverage noText /></p>
 {:else}
 	<!-- The text measures its own width: in a narrow column (beside the network) the margin
 	     folds under each lid, as it does on a phone. -->

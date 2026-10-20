@@ -1,3 +1,4 @@
+import { NOT_IN_DATA } from '$lib/text/coverage';
 import { capitalize } from '$lib/text/words';
 import { korteDatum } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
@@ -125,7 +126,7 @@ export function boxesOf(d: Dossier | Detail): Box[] {
 					korteDatum(dateOf(d, 'Advies Raad van State'))
 				)
 			: // No mark in the source: not in the data, which is not "not yet".
-				box(rvs.name, 'open', 'Advies', 'Niet in de gegevens');
+				box(rvs.name, 'open', 'Advies', capitalize(NOT_IN_DATA));
 
 	const tweede = d.tk_decision
 		? box(

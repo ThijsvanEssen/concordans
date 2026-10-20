@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { lacks } from '$lib/text/coverage';
 	import { count, separatorBefore } from '$lib/text/words';
 	// What a publication or an inwerkingtreding opens on in Actueel and Gevolgd (RijInhoud):
 	// a publication its changes per law, `Wijzigt Telecommunicatiewet, art. 11a.3 en 11a.4`;
@@ -31,9 +32,7 @@
 >
 	{#snippet empty()}
 		<p class="stil">
-			{variant === 'wijzigingen'
-				? 'Wijzigingen niet in de gegevens.'
-				: 'Publicatie niet in de gegevens.'}
+			{variant === 'wijzigingen' ? `${lacks('wijzigingen')}.` : `${lacks('publicatie')}.`}
 		</p>
 	{/snippet}
 	{#snippet children(regels: WetRegel[] | Brenger[])}

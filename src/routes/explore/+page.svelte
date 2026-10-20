@@ -6,6 +6,7 @@
 	//
 	// A click on the canvas selects a bron: the reader follows, the canvas stays. A double
 	// click replaces the canvas with the bron's own neighbourhood.
+	import { notHeld } from '$lib/text/coverage';
 	import { onDestroy, onMount, setContext, untrack } from 'svelte';
 	import { get } from 'svelte/store';
 	import { page } from '$app/state';
@@ -199,7 +200,7 @@
 				if (found || ac.signal.aborted) return;
 				// A law of the Staatsblad the BWB now holds: the server sends it on.
 				if (followServerMove(page.url.pathname)) return;
-				padMissing = `${nameOfPad(p)} staat niet in de gegevens.`;
+				padMissing = `${notHeld(nameOfPad(p))}.`;
 				padOnbekend = true;
 			})
 			.catch((e) => {
@@ -581,7 +582,7 @@
 		focusMissing = true;
 		// A law of the Staatsblad the server served itself is not in the data: by its publication.
 		const name = pad && isEnactedLawPath(page.url.pathname) ? nameOfPad(pad) : `'${key}'`;
-		focusError = `${name} staat niet in de gegevens.`;
+		focusError = `${notHeld(name)}.`;
 	}
 
 	async function loadFocus(id: string) {

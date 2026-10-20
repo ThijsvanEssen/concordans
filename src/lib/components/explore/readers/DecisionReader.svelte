@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { lacks } from '$lib/text/coverage';
+	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { shortKind } from '$lib/text/document-kind';
 	import { CHOICE, forAgainst } from '$lib/components/parliamentary/stemming';
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
@@ -128,7 +130,7 @@
 		<div class="r-decision">
 			<ReaderHead
 				collection="decisions"
-				title={d.subject ?? doc?.title ?? 'Onderwerp niet in de gegevens'}
+				title={d.subject ?? doc?.title ?? lacks('onderwerp')}
 				acties={{
 					bewaar: bewaarItem(node.id, voteCitation({ date: d.date, chamber, subject: onderwerp }), {
 						dossier: eigen[0]?.number
@@ -187,7 +189,7 @@
 								<p class="document-text">{doc.text}</p>
 							</Sectie>
 						{:else if chamber !== 'EK'}
-							<p class="document-unavailable">Tekst niet in de gegevens.</p>
+							<p class="document-unavailable"><Coverage noText coverage={doc?.completeness} /></p>
 						{/if}
 					{/snippet}
 				</LoadState>

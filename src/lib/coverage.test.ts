@@ -1,11 +1,10 @@
 // One mark for what the dataset lacks (besluit 23): the words "niet ingelezen" and "niet in de
-// gegevens" live in Waarde and Dekking. The places that still write their own are counted
-// here, per file, until they move to Dekking (transparantie P4); the count only goes down,
-// and a new place fails.
+// gegevens" live in coverage.ts, the one vocabulary of Dekking and Waarde. A place that writes
+// them in its own words fails; the count of those left only goes down.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { coverageLine, searchedLine } from '$lib/components/ui/coverage';
+import { coverageLine, lacks, notHeld, searchedLine } from '$lib/text/coverage';
 
 const ROOT = join(process.cwd(), 'src');
 
@@ -24,36 +23,12 @@ const code = (text: string) =>
 		.replace(/\/\*[\s\S]*?\*\//g, '')
 		.replace(/(^|[^:'"`])\/\/.*$/gm, '$1');
 
-const OWN = new Set(['lib/components/ui/Waarde.svelte', 'lib/components/ui/coverage.ts']);
+const OWN = new Set(['lib/text/coverage.ts']);
 
-// The places that still say it in their own words: P4 moves them to Dekking.
+// The places that keep their own words, each for a reason of its own.
 const STILL_OWN: Record<string, number> = {
-	'lib/bron/DossierLink.svelte': 1,
-	'lib/bron/OverwegingKaart.svelte': 1,
-	'lib/bron/behoort-procesgang.ts': 1,
-	'lib/bron/describe.ts': 2,
-	'lib/components/articles/ArticleText.svelte': 1,
-	'lib/components/articles/VersionCompare.svelte': 1,
-	'lib/components/explore/WholeLawReaderArticle.svelte': 1,
-	'lib/components/explore/index/CabinetOccupancy.svelte': 4,
-	'lib/components/explore/index/KabinettenStrook.svelte': 1,
-	'lib/components/explore/index/rows/DossierRows.svelte': 1,
-	'lib/components/explore/index/rows/InstrumentRows.svelte': 1,
-	'lib/components/explore/readers/ArticleReader.svelte': 3,
-	'lib/components/explore/readers/DecisionReader.svelte': 2,
-	'lib/components/explore/readers/DocumentReader.svelte': 1,
-	'lib/components/explore/readers/JudgmentReader.svelte': 2,
-	'lib/components/graph/CanvasHoverCard.svelte': 1,
-	'lib/components/open/RijInhoud.svelte': 2,
-	'lib/components/open/Wijzigingen.svelte': 2,
-	'lib/components/parliamentary/stand.ts': 1,
-	'lib/components/parliamentary/stemming.ts': 1,
-	'lib/components/tijdlijn/tijdas.ts': 1,
-	'lib/map/MapInhoud.svelte': 3,
-	'lib/search/Search.svelte': 1,
-	'lib/verbonden/rows.ts': 2,
-	'routes/(main)/docs/+page.svelte': 1,
-	'routes/explore/+page.svelte': 2
+	// Prose that explains the open mark of the network to the reader, not the mark itself.
+	'routes/(main)/docs/+page.svelte': 1
 };
 
 describe('the mark of what is missing', () => {
@@ -70,8 +45,63 @@ describe('the mark of what is missing', () => {
 		expect(found).toEqual(STILL_OWN);
 	});
 
+	it('says a part or a bron the dataset lacks in the same words everywhere', () => {
+		expect(lacks('onderwerp')).toBe('Onderwerp niet in de gegevens');
+		expect(notHeld('Dit dossier')).toBe('Dit dossier staat niet in de gegevens');
+		expect(coverageLine(null, { noText: true })).toBe('Tekst niet in de gegevens');
+	});
+
+	it('says why a Kamerstuk has no text, as the API knows it', () => {
+		const without = (state: 'pending' | 'not_in_source' | 'none', as_of: string | null = null) =>
+			coverageLine(
+				{ text: { state, as_of }, paragraphs: { state, as_of }, tables: { state, as_of } },
+				{ noText: true }
+			);
+		expect(without('pending')).toBe('Tekst nog niet opgehaald');
+		expect(without('pending', '2026-10-20T03:00:00Z')).toBe('Tekst nog niet beschikbaar');
+		expect(without('not_in_source')).toBe('Tekst niet in de gegevens, de bron levert geen tekst');
+		expect(without('none', '2026-10-20T03:00:00Z')).toBe('Tekst niet leesbaar in de bron');
+		// With its text, what of it is not read yet; paragraphs or tables it has none of, nothing.
+		expect(
+			coverageLine({
+				text: { state: 'done' },
+				paragraphs: { state: 'pending' },
+				tables: { state: 'pending' }
+			})
+		).toBe("Alinea's en tabellen nog niet verwerkt");
+		expect(
+			coverageLine({
+				text: { state: 'done' },
+				paragraphs: { state: 'done' },
+				tables: { state: 'none' }
+			})
+		).toBe(null);
+	});
+
+	it('says how many references of a text are not linked, and nothing where all are', () => {
+		expect(coverageLine({ references: { state: 'partial', missing: 3 } })).toBe(
+			'3 verwijzingen niet gelegd'
+		);
+		expect(coverageLine({ references: { state: 'partial', missing: 1 } })).toBe(
+			'1 verwijzing niet gelegd'
+		);
+		expect(coverageLine({ references: { state: 'done' } })).toBe(null);
+	});
+
+	it('says of an open bill that no end is recorded, not that it runs', () => {
+		expect(coverageLine({ outcome: { state: 'pending', as_of: '2019-03-05' } })).toBe(
+			'Geen einde vastgelegd, laatste activiteit 5 maart 2019'
+		);
+		expect(coverageLine({ outcome: { state: 'pending', as_of: null } })).toBe(
+			'Uitkomst nog niet verwerkt'
+		);
+		expect(coverageLine({ outcome: { state: 'not_in_source' } })).toBe(null);
+		expect(coverageLine({ outcome: { state: 'done', as_of: '2019-03-05' } })).toBe(null);
+		// A dossier from an API without the part: nothing, no failure.
+		expect(coverageLine({})).toBe(null);
+	});
+
 	it('says what is missing in one line, with a date where the API gives one', () => {
-		expect(coverageLine({ text: { state: 'none' } })).toBe('Tekst niet ingelezen');
 		expect(coverageLine({ versions: { state: 'not_in_source', as_of: '2016-04-27' } })).toBe(
 			'Tekst zoals vastgesteld op 27 april 2016, latere wijzigingen niet verwerkt'
 		);
@@ -82,7 +112,7 @@ describe('the mark of what is missing', () => {
 
 	it('says what of a law of the Staatsblad is read, and nothing where all is', () => {
 		expect(coverageLine({ references: { state: 'partial', missing: 1234 } })).toBe(
-			'Verwijzingen naar andere wetten deels gelegd, 1.234 niet herkend'
+			'1.234 verwijzingen niet gelegd'
 		);
 		expect(coverageLine({ definitions: { state: 'pending' } })).toBe('Begrippen nog niet verwerkt');
 		expect(
@@ -93,9 +123,7 @@ describe('the mark of what is missing', () => {
 				references: { state: 'partial', missing: 12 },
 				definitions: { state: 'pending' }
 			})
-		).toBe(
-			'Verwijzingen naar andere wetten deels gelegd, 12 niet herkend, begrippen nog niet verwerkt'
-		);
+		).toBe('12 verwijzingen niet gelegd, begrippen nog niet verwerkt');
 		expect(coverageLine({ references: { state: 'done' }, definitions: { state: 'done' } })).toBe(
 			null
 		);
@@ -107,11 +135,11 @@ describe('the mark of what is missing', () => {
 		expect(coverageLine({ source: { state: 'paused', as_of: at } })).toBe(
 			'Gepauzeerd, bijgewerkt tot 8 oktober 2026'
 		);
-		expect(coverageLine({ source: { state: 'unavailable', as_of: at } }, 'HUDOC')).toBe(
+		expect(coverageLine({ source: { state: 'unavailable', as_of: at } }, { of: 'HUDOC' })).toBe(
 			'HUDOC onbereikbaar, bijgewerkt tot 8 oktober 2026'
 		);
 		expect(coverageLine({ source: { state: 'pending', as_of: null } })).toBe('Nog niet opgehaald');
-		expect(coverageLine({ source: { state: 'done', as_of: at } }, 'HUDOC')).toBe(null);
+		expect(coverageLine({ source: { state: 'done', as_of: at } }, { of: 'HUDOC' })).toBe(null);
 	});
 
 	it('says what a search reads, in the order the API names it', () => {

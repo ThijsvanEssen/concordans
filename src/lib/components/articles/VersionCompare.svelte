@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { NOT_IN_DATA } from '$lib/text/coverage';
 	import { capitalize } from '$lib/text/words';
 	import { hasModifier, isTyping } from '$lib/actions/keys';
 	import { lidAnchor, lidNumber } from '$lib/text/anchor';
@@ -167,7 +168,7 @@
 
 	// ── Wording ──────────────────────────────────────────────────────────────────
 
-	const date = (iso: string | null | undefined) => langeDatum(iso) || 'niet in de gegevens';
+	const date = (iso: string | null | undefined) => langeDatum(iso) || NOT_IN_DATA;
 	const year = (iso: string | null | undefined) => (iso ? iso.slice(0, 4) : '');
 
 	const period = (w: { from: string | null; until: string | null }) =>

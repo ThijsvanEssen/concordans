@@ -1,6 +1,7 @@
 // A bron in words, from what a list or a node response says of it: its title, the line under
 // it, its identifier, date and court. Every list names a bron through here: Verbonden, the
 // band, a map, Actueel.
+import { lacks, NOT_IN_DATA } from '$lib/text/coverage';
 import { carriesBillTitle, shortKind } from '$lib/text/document-kind';
 import { textOf } from '$lib/text/words';
 import { isRauw, menselijkeNaam } from '$lib/bron/menselijk';
@@ -111,7 +112,7 @@ function activityName(
 }
 
 /** A bron the data gives no name: said so, never shown by its database key. */
-export const UNNAMED = 'Naam niet in de gegevens';
+export const UNNAMED = lacks('naam');
 
 /**
  * Title, context, identifier, date and court of a bron, from what a list or node
@@ -152,7 +153,7 @@ export function describeBron(
 				// gives it): HR Urgenda cites the English one of the Rechtbank, not its procesgang.
 				context:
 					props.stub === true
-						? 'niet in de gegevens'
+						? NOT_IN_DATA
 						: textOf(props.translation_of) || /\(English translation\)\s*$/i.test(name ?? '')
 							? 'Engelse vertaling'
 							: null,
