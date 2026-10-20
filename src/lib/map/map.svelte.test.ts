@@ -83,7 +83,7 @@ describe('Losse markeringen, the bundel every browser has (decision 19)', () => 
 		expect(kaart.loose.id).toBe(kaart.mappen[0].id);
 	});
 
-	it('cannot be deleted, only emptied and renamed', async () => {
+	it('cannot be deleted or renamed, only emptied', async () => {
 		const { kaart } = await store();
 		const first = kaart.mappen[0];
 		kaart.keep(lid);
@@ -92,7 +92,7 @@ describe('Losse markeringen, the bundel every browser has (decision 19)', () => 
 		kaart.empty(first.id);
 		expect(kaart.mappen[0].items).toEqual([]);
 		kaart.hernoem(first.id, 'Los');
-		expect(kaart.mappen[0].naam).toBe('Los');
+		expect(kaart.mappen[0].naam).toBe('Losse markeringen');
 		expect(kaart.isDefault(kaart.mappen[0])).toBe(true);
 	});
 

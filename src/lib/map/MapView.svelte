@@ -205,81 +205,82 @@
 		{:else}
 			<button type="button" class="btn" onclick={() => onShared?.('map')}>Bewaar</button>
 		{/if}
-		<TekstMenu
-			klein
-			rechts
-			label="Meer bij {b.naam}"
-			tekst="Meer"
-			onClose={() => (choosing = false)}
-		>
-			{#snippet inhoud(close)}
-				{#if choosing}
-					{#each kaart.listed as into (into.id)}
-						<button
-							type="button"
-							role="menuitem"
-							class="tekstmenu__item"
-							onclick={act(close, () => {
-								choosing = false;
-								onShared?.('add', into.id);
-							})}>{into.naam}</button
-						>
-					{/each}
-				{:else}
-					{#if b.items.length}{@render takeAlong(close)}{/if}
-					{#if m}
-						{@const own = m}
-						<div class="tekstmenu__onder">
+		<!-- An empty Losse markeringen has nothing to take along, to empty or to delete. -->
+		{#if b.items.length || !m || !kaart.isDefault(m)}
+			<TekstMenu
+				klein
+				rechts
+				label="Meer bij {b.naam}"
+				tekst="Meer"
+				onClose={() => (choosing = false)}
+			>
+				{#snippet inhoud(close)}
+					{#if choosing}
+						{#each kaart.listed as into (into.id)}
 							<button
 								type="button"
 								role="menuitem"
 								class="tekstmenu__item"
-								onclick={act(close, () => (renaming = true))}>Hernoem</button
+								onclick={act(close, () => {
+									choosing = false;
+									onShared?.('add', into.id);
+								})}>{into.naam}</button
 							>
-							{#if kaart.isDefault(own)}
-								{#if own.items.length}
+						{/each}
+					{:else}
+						{#if b.items.length}{@render takeAlong(close)}{/if}
+						{#if m}
+							{@const own = m}
+							<div class="tekstmenu__onder">
+								{#if kaart.isDefault(own)}
 									<button
 										type="button"
 										role="menuitem"
 										class="tekstmenu__item"
 										onclick={act(close, () => (asking = 'empty'))}>Leegmaken</button
 									>
+								{:else}
+									<button
+										type="button"
+										role="menuitem"
+										class="tekstmenu__item"
+										onclick={act(close, () => (renaming = true))}>Hernoem</button
+									>
+									<button
+										type="button"
+										role="menuitem"
+										class="tekstmenu__item"
+										onclick={act(close, () => (asking = 'delete'))}>Verwijder bundel</button
+									>
 								{/if}
-							{:else}
+							</div>
+						{:else}
+							<div class="tekstmenu__onder">
+								{#if b.items.length}
+									<!-- Stays open: its list of bundels takes the place of these items. -->
+									<button
+										type="button"
+										role="menuitem"
+										class="tekstmenu__item"
+										aria-haspopup="menu"
+										onclick={() => {
+											choosing = true;
+											focusFirstItem();
+										}}>Voeg toe aan …</button
+									>
+								{/if}
 								<button
 									type="button"
 									role="menuitem"
 									class="tekstmenu__item"
-									onclick={act(close, () => (asking = 'delete'))}>Verwijder bundel</button
+									onclick={act(close, () => onShared?.('none'))}>Niet bewaren</button
 								>
-							{/if}
-						</div>
-					{:else}
-						<div class="tekstmenu__onder">
-							{#if b.items.length}
-								<!-- Stays open: its list of bundels takes the place of these items. -->
-								<button
-									type="button"
-									role="menuitem"
-									class="tekstmenu__item"
-									aria-haspopup="menu"
-									onclick={() => {
-										choosing = true;
-										focusFirstItem();
-									}}>Voeg toe aan …</button
-								>
-							{/if}
-							<button
-								type="button"
-								role="menuitem"
-								class="tekstmenu__item"
-								onclick={act(close, () => onShared?.('none'))}>Niet bewaren</button
-							>
-						</div>
+							</div>
+						{/if}
 					{/if}
-				{/if}
-			{/snippet}
-		</TekstMenu>
+				{/snippet}
+			</TekstMenu>
+		{/if}
 	</span>
 {/snippet}
 
