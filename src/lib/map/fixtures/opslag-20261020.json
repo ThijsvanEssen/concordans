@@ -1,0 +1,94 @@
+{
+	"mappen": [
+		{
+			"id": "lbb3nfc4",
+			"naam": "Gemarkeerd",
+			"items": [],
+			"volgorde": "groep",
+			"gewijzigd": "2026-10-20T18:18:43.827Z",
+			"notitie": null,
+			"groepNotities": {},
+			"since": null,
+			"seen": "2026-10-20"
+		},
+		{
+			"id": "o1v26d7t",
+			"naam": "Twee wetten en een memorie van toelichting",
+			"items": [
+				{
+					"id": "articles/bwbr0052872_21",
+					"at": "",
+					"kort": "art. 21 Cbw",
+					"voluit": "artikel 21 van de Cyberbeveiligingswet",
+					"groep": "Cyberbeveiligingswet",
+					"groupKey": "wet:bwbr0052872",
+					"pad": "/wetten/BWBR0052872/artikel/21"
+				},
+				{
+					"id": "articles/bwbr0052872_24",
+					"at": "",
+					"kort": "art. 24 Cbw",
+					"voluit": "artikel 24 van de Cyberbeveiligingswet",
+					"groep": "Cyberbeveiligingswet",
+					"groupKey": "wet:bwbr0052872",
+					"pad": "/wetten/BWBR0052872/artikel/24"
+				},
+				{
+					"id": "articles/bwbr0052875_20",
+					"at": "",
+					"kort": "art. 20 Cbb",
+					"voluit": "artikel 20 van de Cyberbeveiligingsbesluit",
+					"groep": "Cyberbeveiligingsbesluit",
+					"groupKey": "wet:bwbr0052875",
+					"pad": "/wetten/BWBR0052875/artikel/20"
+				},
+				{
+					"id": "articles/bwbr0052871_15",
+					"at": "",
+					"kort": "art. 15 Wwke",
+					"voluit": "artikel 15 van de Wet weerbaarheid kritieke entiteiten",
+					"groep": "Wet weerbaarheid kritieke entiteiten",
+					"groupKey": "wet:bwbr0052871",
+					"pad": "/wetten/BWBR0052871/artikel/15"
+				},
+				{
+					"id": "documents/3befbdfa_30de_48d9_b0da_b0572504b962",
+					"at": "",
+					"kort": "Kamerstukken II 2024/25, 36764, nr. 3",
+					"voluit": "Kamerstukken II 2024/25, 36764, nr. 3 (Memorie van toelichting)",
+					"groep": "Kamerstuk 36764",
+					"groupKey": "dossier:36764",
+					"notitie": "Aantekening bij het Kamerstuk.",
+					"pad": "/kamerstukken/36764/3"
+				}
+			],
+			"volgorde": "groep",
+			"gewijzigd": "2026-10-20T18:17:35.932Z",
+			"notitie": "Onderzoeksvraag bij de bundel.",
+			"groepNotities": {},
+			"since": null,
+			"seen": "2026-10-20"
+		},
+		{
+			"id": "kbs5lv7k",
+			"naam": "Een artikel",
+			"items": [
+				{
+					"id": "articles/bwbr0001903_126ffa",
+					"at": "",
+					"kort": "art. 126ffa Sv",
+					"voluit": "artikel 126ffa van het Wetboek van Strafvordering",
+					"groep": "Wetboek van Strafvordering",
+					"groupKey": "wet:bwbr0001903",
+					"pad": "/wetten/BWBR0001903/artikel/126ffa"
+				}
+			],
+			"volgorde": "groep",
+			"gewijzigd": "2026-10-16T07:36:50.903Z",
+			"notitie": null,
+			"groepNotities": {},
+			"since": null,
+			"seen": "2026-10-19"
+		}
+	]
+}

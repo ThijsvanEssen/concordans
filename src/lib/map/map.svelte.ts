@@ -1,5 +1,5 @@
 // The bundels as the page holds them, in this browser: each with a name; the first, Losse
-// markeringen, always there (it is emptied, never deleted). Bewaar keeps in Losse
+// markeringen, always there and always so named (it is emptied, never deleted or renamed). Bewaar keeps in Losse
 // markeringen; another bundel holds a bron only where the reader puts it there by name
 // (decision 20A: no hidden "active bundel"). A bundel is changed by its id.
 import {
@@ -15,6 +15,7 @@ import {
 } from './map';
 import { keepStorage } from './persist';
 import { isDay } from '$lib/text/datum';
+import { formatCount } from '$lib/text/getal';
 
 const OPSLAG = 'concordans:mappen';
 const EERSTE = 'Losse markeringen';
@@ -69,46 +70,75 @@ const alleenTekst = (v: unknown): GroepNotities =>
 			)
 		: {};
 
-/** The items kept in this browser that are whole; the rest left out, and said. */
-function heleItems(v: unknown): MapItem[] {
+/** The items of a bundel this version cannot read, by the bundel's id, as they were kept:
+ *  written back with it unchanged, never thrown away (a newer version may read them). */
+let onleesbaar: Record<string, unknown[]> = {};
+let gemeld = false;
+
+/** The items kept in this browser that are whole; the rest kept aside for the write, and said. */
+function heleItems(id: string, v: unknown): MapItem[] {
 	if (!Array.isArray(v)) return [];
-	const items = v.flatMap((i) => readItem(i) ?? []);
-	const skipped = v.length - items.length;
-	if (skipped > 0)
-		console.warn(
-			`Bundels: ${skipped} item(s) in deze browser overgeslagen (oude of onvolledige vorm).`
-		);
+	const items: MapItem[] = [];
+	const rest: unknown[] = [];
+	for (const i of v) {
+		const item = readItem(i);
+		if (item) items.push(item);
+		else rest.push(i);
+	}
+	if (rest.length) {
+		onleesbaar[id] = rest;
+		if (!gemeld)
+			console.warn(
+				`Bundels: ${formatCount(rest.length)} item(s) in deze browser niet te lezen, wel bewaard.`
+			);
+		gemeld = true;
+	}
 	return items;
 }
 
 /** Losse markeringen alone: where this browser keeps none, or none it can read. */
 const eersteStand = (): Stand => ({ mappen: [leeg(EERSTE)] });
 
-function lees(): Stand {
+/** The bundels as this browser keeps them now; null where it keeps none it can read. */
+function lees(): Stand | null {
 	try {
 		const raw = JSON.parse(localStorage.getItem(OPSLAG) ?? 'null');
-		if (raw && Array.isArray(raw.mappen) && raw.mappen.length) {
-			const mappen: Map[] = raw.mappen.map((m: Map) => ({
-				id: String(m.id),
-				naam: String(m.naam || EERSTE),
-				items: heleItems(m.items),
-				volgorde: m.volgorde === 'eigen' ? 'eigen' : 'groep',
-				gewijzigd: String(m.gewijzigd || nu()),
-				notitie: typeof m.notitie === 'string' && m.notitie.trim() ? m.notitie : null,
-				groepNotities: alleenTekst(m.groepNotities),
-				since: day(m.since),
-				seen: day(m.seen)
-			}));
-			return { mappen };
-		}
-		return eersteStand();
+		if (!raw || !Array.isArray(raw.mappen) || !raw.mappen.length) return null;
+		onleesbaar = {};
+		// The first is Losse markeringen by its place, whatever name it was kept under.
+		const mappen: Map[] = raw.mappen.map((m: Map, n: number) => ({
+			id: String(m.id),
+			naam: n === 0 ? EERSTE : String(m.naam || 'Bundel'),
+			items: heleItems(String(m.id), m.items),
+			volgorde: m.volgorde === 'eigen' ? 'eigen' : 'groep',
+			gewijzigd: String(m.gewijzigd || nu()),
+			notitie: typeof m.notitie === 'string' && m.notitie.trim() ? m.notitie : null,
+			groepNotities: alleenTekst(m.groepNotities),
+			since: day(m.since),
+			seen: day(m.seen)
+		}));
+		return { mappen };
 	} catch {
-		return eersteStand();
+		return null;
 	}
 }
 
 class Kaarten {
-	#stand = $state<Stand>(typeof window === 'undefined' ? eersteStand() : lees());
+	#stand = $state<Stand>((typeof window === 'undefined' ? null : lees()) ?? eersteStand());
+	constructor() {
+		// What another tab kept comes in at once (the browser's storage event).
+		if (typeof window !== 'undefined')
+			window.addEventListener('storage', (e) => {
+				if (e.key === OPSLAG || e.key === null) this.#vers();
+			});
+	}
+	/** Every change starts from what this browser keeps now, not from this tab's copy: a tab
+	 *  opened before never undoes what another kept since (Thijs, 20 Oct: a bundel emptied). */
+	#vers() {
+		if (typeof window === 'undefined') return;
+		const kept = lees();
+		if (kept) this.#stand = kept;
+	}
 	mappen = $derived(this.#stand.mappen);
 	/** Losse markeringen, where Bewaar keeps. */
 	loose = $derived(this.#stand.mappen[0]);
@@ -126,14 +156,18 @@ class Kaarten {
 	heeft = (i: Pick<MapItem, 'id' | 'at'>) => this.holding(i).length > 0;
 
 	#bewaar() {
+		const mappen = this.#stand.mappen.map((m) =>
+			onleesbaar[m.id] ? { ...m, items: [...m.items, ...onleesbaar[m.id]] } : m
+		);
 		try {
-			localStorage.setItem(OPSLAG, JSON.stringify(this.#stand));
+			localStorage.setItem(OPSLAG, JSON.stringify({ mappen }));
 		} catch {
 			/* geen opslag */
 		}
 	}
 	/** Changes a map by its id and remembers. */
 	#change(id: string, f: (m: Map) => Partial<Map>) {
+		this.#vers();
 		this.#stand = {
 			...this.#stand,
 			mappen: this.#stand.mappen.map((m) => (m.id === id ? { ...m, ...f(m), gewijzigd: nu() } : m))
@@ -217,6 +251,7 @@ class Kaarten {
 	 * on the first visit. Not a change of the bundel: its day of change stays.
 	 */
 	visit(id: string, today: string): string | null {
+		this.#vers();
 		const m = this.#stand.mappen.find((x) => x.id === id);
 		if (!m) return null;
 		const visited = visitedNow();
@@ -239,6 +274,7 @@ class Kaarten {
 	// ── Maps ─────────────────────────────────────────────────────────────────
 	/** A new bundel; its name the next free `Bundel 2`, `Bundel 3` where none is given. */
 	nieuw(naam?: string, items: MapItem[] = []): Map {
+		this.#vers();
 		const namen = new Set(this.#stand.mappen.map((m) => m.naam));
 		let n = this.#stand.mappen.length + 1;
 		while (!naam && namen.has(`Bundel ${n}`)) n++;
@@ -249,9 +285,11 @@ class Kaarten {
 		this.#bewaar();
 		return m;
 	}
+	/** A new name; Losse markeringen keeps its own. */
 	hernoem(id: string, naam: string) {
+		this.#vers();
 		const t = naam.trim();
-		if (!t) return;
+		if (!t || this.isDefault({ id })) return;
 		this.#stand = {
 			...this.#stand,
 			mappen: this.#stand.mappen.map((m) => (m.id === id ? { ...m, naam: t, gewijzigd: nu() } : m))
@@ -260,6 +298,7 @@ class Kaarten {
 	}
 	/** Gone for good; Losse markeringen stays (it is emptied instead). */
 	verwijder(id: string) {
+		this.#vers();
 		if (this.isDefault({ id })) return;
 		this.#stand = { mappen: this.#stand.mappen.filter((m) => m.id !== id) };
 		this.#bewaar();
