@@ -62,14 +62,14 @@ describe('the bundels of this browser', () => {
 	it('asks the browser to keep its storage when something is first kept, not on loading', async () => {
 		const { kaart, persist } = await store();
 		expect(persist).not.toHaveBeenCalled();
-		kaart.wissel(lid);
-		kaart.wissel(ro);
+		kaart.keep(lid);
+		kaart.keep(ro);
 		await vi.waitFor(() => expect(persist).toHaveBeenCalledTimes(1));
 	});
 
 	it('does not ask again where the storage is kept already', async () => {
 		const { kaart, persist } = await store(true);
-		kaart.wissel(lid);
+		kaart.keep(lid);
 		await new Promise((r) => setTimeout(r));
 		expect(persist).not.toHaveBeenCalled();
 	});
@@ -86,7 +86,7 @@ describe('Losse markeringen, the bundel every browser has (decision 19)', () => 
 	it('cannot be deleted, only emptied and renamed', async () => {
 		const { kaart } = await store();
 		const first = kaart.mappen[0];
-		kaart.wissel(lid);
+		kaart.keep(lid);
 		kaart.verwijder(first.id);
 		expect(kaart.mappen.map((m) => m.id)).toEqual([first.id]);
 		kaart.empty(first.id);
@@ -114,25 +114,28 @@ describe('Losse markeringen, the bundel every browser has (decision 19)', () => 
 		expect(kaart.loose.id).toBe(first.id);
 	});
 
-	it('keeps with Bewaar in Losse markeringen, and Bewaard takes it out of every bundel', async () => {
+	it('keeps with Bewaar in Losse markeringen, and takes out only per bundel', async () => {
 		const { kaart } = await store();
 		const other = kaart.nieuw('Thuiswerk');
-		kaart.wissel(lid);
+		kaart.keep(lid);
 		expect(kaart.holding(lid).map((m) => m.naam)).toEqual(['Losse markeringen']);
-		// Into a second bundel only by its name, in Bewaar's menu.
+		// Bewaar again takes nothing out (UX-toets A14: nothing destructive in one click).
+		kaart.keep(lid);
+		expect(kaart.holding(lid)).toHaveLength(1);
+		// Into a second bundel and out of one only by its tick.
 		kaart.toggleIn(other.id, lid);
-		expect(
-			kaart
-				.holding(lid)
-				.map((m) => m.id)
-				.sort()
-		).toEqual([kaart.loose.id, other.id].sort());
+		expect(kaart.holding(lid)).toHaveLength(2);
 		kaart.toggleIn(kaart.loose.id, lid);
 		expect(kaart.holding(lid).map((m) => m.id)).toEqual([other.id]);
-		// Bewaard stays Bewaard while any bundel holds it; a click takes it out of all.
-		expect(kaart.heeft(lid)).toBe(true);
-		kaart.wissel(lid);
-		expect(kaart.heeft(lid)).toBe(false);
+	});
+
+	it('keeps in the bundel a reader was opened from (?bundel=), else in Losse markeringen', async () => {
+		const { kaart } = await store();
+		const other = kaart.nieuw('Thuiswerk');
+		const at = (q: string) => kaart.keepsIn(new URL(`https://x.nl/wetten/a${q}`)).id;
+		expect(at(`?bundel=${other.id}`)).toBe(other.id);
+		expect(at('?bundel=onbekend')).toBe(kaart.loose.id);
+		expect(at('')).toBe(kaart.loose.id);
 	});
 
 	it('receives a shared Losse markeringen under a name of its own', async () => {

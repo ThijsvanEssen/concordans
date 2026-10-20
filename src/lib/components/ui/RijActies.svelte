@@ -11,8 +11,10 @@
 	import { menu as menuAction } from '$lib/actions/menu';
 	import { topLayer } from '$lib/actions/top-layer';
 	import Picto from './Picto.svelte';
+	import { page } from '$app/state';
 	import { kaart } from '$lib/map/map.svelte';
 	import { namesOf, type MapItem } from '$lib/map/map';
+	import BundleChecklist from '$lib/map/BundleChecklist.svelte';
 
 	let {
 		naam,
@@ -35,16 +37,20 @@
 		onClose?: () => void;
 	} = $props();
 
-	/** The bundels that hold the item: Bewaard takes it out of them, Bewaar keeps it in Losse
-	 *  markeringen. */
+	/** The bundels that hold the item: Bewaar keeps it in Losse markeringen; Bewaard opens the
+	 *  bundels with their ticks (BundleChecklist), and takes nothing out itself. */
 	const held = $derived(item ? kaart.holding(item) : []);
 	const bewaard = $derived(held.length > 0);
+	const into = $derived(kaart.keepsIn(page.url));
 	let open = $state(false);
 	let button = $state<HTMLElement | null>(null);
 	const close = () => {
 		open = false;
 		onClose?.();
 	};
+	let bundlesOpen = $state(false);
+	let keptButton = $state<HTMLElement | null>(null);
+	const closeBundles = () => (bundlesOpen = false);
 </script>
 
 <span class="rij-acties">
@@ -81,20 +87,37 @@
 </span>
 
 {#snippet places()}
-	<span class="plek">
+	<span class="plek" use:menuAction={{ open: bundlesOpen, close: closeBundles }}>
 		{#if item}
 			{@const kept = item}
 			<button
 				type="button"
 				class="rij-knop"
 				class:is-active={bewaard}
+				bind:this={keptButton}
 				aria-pressed={bewaard}
+				aria-haspopup={bewaard ? 'menu' : undefined}
+				aria-expanded={bewaard ? bundlesOpen : undefined}
 				aria-label={bewaard
-					? `${naam}: uit ${namesOf(held)} halen`
-					: `${naam}: bewaren in ${kaart.loose.naam}`}
-				title={bewaard ? `Uit ${namesOf(held)} halen` : `Bewaar in ${kaart.loose.naam}`}
-				onclick={() => kaart.wissel(kept)}><Picto naam={bewaard ? 'bewaard' : 'bewaar'} /></button
+					? `${naam}: bewaard in ${namesOf(held)}`
+					: `${naam}: bewaren in ${into.naam}`}
+				title={bewaard ? `Bewaard in ${namesOf(held)}` : `Bewaar in ${into.naam}`}
+				onclick={() => (bewaard ? (bundlesOpen = !bundlesOpen) : kaart.keep(kept, into.id))}
+				><Picto naam={bewaard ? 'bewaard' : 'bewaar'} /></button
 			>
+			{#if bundlesOpen && keptButton}
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<div
+					class="tekstmenu__lijst"
+					role="menu"
+					tabindex="-1"
+					aria-label="{naam}: bundels"
+					use:topLayer={{ anchor: keptButton, close: closeBundles, align: 'right' }}
+					onclick={(e) => e.stopPropagation()}
+				>
+					<BundleChecklist item={kept} close={closeBundles} />
+				</div>
+			{/if}
 		{/if}
 	</span>
 	<span class="plek">

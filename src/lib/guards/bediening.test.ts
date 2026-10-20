@@ -107,7 +107,7 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 		// Thijs, 10 Oct: "toch wat raar met de verschillen in hoe ze weergegeven worden".
 		const t = bron('lib/components/ui/RijActies.svelte');
 		expect(t).not.toMatch(/IconButton/);
-		expect(t.match(/<span class="plek">/g)).toHaveLength(2);
+		expect(t.match(/<span class="plek"[\s>]/g)).toHaveLength(2);
 		expect(regels(t).some((r) => /(?<![-\w])border:\s*(?!\s|0)/.test(r.body))).toBe(false);
 		// Where a verbinding comes from is words in the row's meta line, not a box over the
 		// next row ("Herkend in de tekst" was "out of place").

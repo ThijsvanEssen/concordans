@@ -380,6 +380,7 @@
 		{@const own = m}
 		{#if adding}
 			<AddSource
+				bundle={own.id}
 				groups={groepen(own.items).map((g) => ({ key: g.sleutel, name: g.groep }))}
 				onAdd={(i: MapItem) => kaart.add(i, own.id)}
 				onClose={() => {

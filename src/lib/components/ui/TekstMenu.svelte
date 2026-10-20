@@ -23,7 +23,8 @@
 		inhoud,
 		onder,
 		knop,
-		onClose
+		onClose,
+		open = $bindable(false)
 	}: {
 		/** What the menu sets, for a screen reader: `Bronnen`, `Volgorde`. */
 		label: string;
@@ -45,9 +46,10 @@
 		/** After it closes, however (a choice, Escape, Tab, a click outside): a menu that changed
 		 *  what it shows (a list of bundels in place of its items) goes back. */
 		onClose?: () => void;
+		/** Open; bound, so another control opens the menu too (Bewaard beside Bewaar's caret). */
+		open?: boolean;
 	} = $props();
 
-	let open = $state(false);
 	let button = $state<HTMLElement | null>(null);
 	const sluit = () => {
 		open = false;

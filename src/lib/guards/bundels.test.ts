@@ -124,10 +124,19 @@ describe('the overview, a list that opens in place (bundels-ux 2a, decision 20A)
 	it('keeps no hidden bundel where Bewaar keeps (decision 20A, UX-toets A14 #2 and #3)', () => {
 		// Bewaar keeps in Losse markeringen; its menu ticks every bundel that holds the bron.
 		expect(overtreders((t) => /\bkaart\.(?:actief|kies|bewaarIn)\b/.test(t))).toEqual([]);
-		const bewaar = bron('lib/map/Bewaar.svelte');
-		expect(bewaar).toMatch(/<Picto naam="tick"/);
-		expect(bewaar).toContain('kaart.toggleIn(');
-		expect(bewaar).toContain('placeholder="Naam"');
+		const list = bron('lib/map/BundleChecklist.svelte');
+		expect(list).toMatch(/<Picto naam="tick"/);
+		expect(list).toContain('kaart.toggleIn(');
+		expect(list).toContain('placeholder="Naam"');
+		// Nothing out of every bundel in one click: Bewaard, a row's bookmark and a place's menu
+		// open the bundels with their ticks (UX-toets A14, the coordinator's choice 1).
+		expect(overtreders((t) => /\bkaart\.wissel\(/.test(t))).toEqual([]);
+		for (const path of [
+			'lib/map/Bewaar.svelte',
+			'lib/components/ui/RijActies.svelte',
+			'lib/components/articles/PlaatsMenu.svelte'
+		])
+			expect(bron(path), path).toContain('<BundleChecklist');
 		expect(bron('lib/map/BundleRow.svelte')).not.toContain('Bewaren gaat hierheen');
 		expect(bron('lib/map/MapView.svelte')).not.toContain('Bewaar hierin');
 	});

@@ -20,6 +20,8 @@ const OPSLAG = 'concordans:mappen';
 const EERSTE = 'Losse markeringen';
 /** The name a shared Losse markeringen gets with its receiver, beside their own. */
 const SHARED_LOOSE = 'Gedeelde markeringen';
+/** The address's parameter of the bundel a reader was opened from, to keep in. */
+export const BUNDLE_PARAM = 'bundel';
 
 type Stand = { mappen: Map[] };
 
@@ -130,13 +132,15 @@ class Kaarten {
 	}
 
 	// ── Items ─────────────────────────────────────────────────────────────────
-	/** Bewaar, or Bewaard: kept in Losse markeringen where no bundel holds it, else taken out
-	 *  of every bundel that holds it (Bewaard names them). */
-	wissel(i: MapItem) {
-		const held = this.holding(i);
-		if (!held.length) return this.add(i, this.loose.id);
-		for (const m of held) this.weg(i, m.id);
+	/** Bewaar: into a bundel, Losse markeringen where none is named; never out of one. Taking
+	 *  a bron out is per bundel, by its tick (BundleChecklist), never all at once. */
+	keep(i: MapItem, id: string = this.loose.id) {
+		this.add(i, id);
 	}
+	/** Where Bewaar keeps on a page: the bundel the reader came from (`?bundel=`, Andere bron
+	 *  toevoegen on that bundel's page), else Losse markeringen. */
+	keepsIn = (url: URL): Map =>
+		this.#stand.mappen.find((m) => m.id === url.searchParams.get(BUNDLE_PARAM)) ?? this.loose;
 	/** In a bundel or out of it, by its id: the bundels of Bewaar's menu. */
 	toggleIn(id: string, i: MapItem) {
 		if (this.holding(i).some((m) => m.id === id)) this.weg(i, id);

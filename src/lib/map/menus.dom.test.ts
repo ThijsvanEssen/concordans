@@ -83,3 +83,39 @@ describe('the ⋯ of a bundel from a file', () => {
 		expect(items()).toContain('Niet openen');
 	});
 });
+
+describe('Bewaard in a reader (the coordinator’s choice 1)', () => {
+	it('opens the bundels with their ticks, and takes nothing out', async () => {
+		const { kaart } = await import('./map.svelte');
+		const { default: Bewaar } = await import('./Bewaar.svelte');
+		kaart.keep(lid);
+		render(Bewaar, { item: lid });
+		const bewaard = screen.getByRole('button', { name: /Bewaard/ });
+		await fireEvent.click(bewaard);
+		await settle();
+		expect(
+			screen
+				.getByRole('menuitemcheckbox', { name: 'Losse markeringen' })
+				.getAttribute('aria-checked')
+		).toBe('true');
+		expect(kaart.heeft(lid)).toBe(true);
+		// Out per bundel, by its tick.
+		await fireEvent.click(screen.getByRole('menuitemcheckbox', { name: 'Losse markeringen' }));
+		expect(kaart.heeft(lid)).toBe(false);
+	});
+});
+
+describe('Andere bron toevoegen on a bundel’s page (the coordinator’s choice 2)', () => {
+	it('opens the reader of a recognized bron with the bundel to keep in', async () => {
+		const { default: AddSource } = await import('./AddSource.svelte');
+		render(AddSource, { bundle: 'k3j2', groups: [], onAdd: vi.fn(), onClose: vi.fn() });
+		await fireEvent.input(screen.getByLabelText(/Citeervorm/), {
+			target: { value: 'ECLI:NL:HR:2019:1715' }
+		});
+		await settle();
+		const link = screen.getByRole('link', { name: 'Bewaar vanuit de lezer' });
+		expect(new URL(link.getAttribute('href')!, 'https://x.nl').searchParams.get('bundel')).toBe(
+			'k3j2'
+		);
+	});
+});

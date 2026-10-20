@@ -16,13 +16,17 @@
 		type SourceKind
 	} from './map';
 	import { recognize } from './recognize';
+	import { BUNDLE_PARAM } from './map.svelte';
 	import { ensureInstrumentName, instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 
 	let {
+		bundle,
 		groups,
 		onAdd,
 		onClose
 	}: {
+		/** The bundel it is added to: the reader of a recognized bron keeps there (`?bundel=`). */
+		bundle: string;
 		/** The map's groups a source may join, by their key and name. */
 		groups: { key: string; name: string }[];
 		onAdd: (item: MapItem) => void;
@@ -30,6 +34,12 @@
 	} = $props();
 
 	const uid = $props.id();
+	/** A reader's address that keeps in this bundel: Bewaar there knows where it was opened. */
+	const inBundle = (path: string) => {
+		const url = new URL(path, page.url);
+		url.searchParams.set(BUNDLE_PARAM, bundle);
+		return `${url.pathname}${url.search}${url.hash}`;
+	};
 	let citation = $state('');
 	let url = $state('');
 	let kind = $state<SourceKind>('book');
@@ -119,7 +129,7 @@
 	{#if known}
 		<p class="in-concordans">
 			<span>In Concordans: {knownLabel}</span>
-			<TekstLink href={known.path}>Bewaar vanuit de lezer</TekstLink>
+			<TekstLink href={inBundle(known.path)}>Bewaar vanuit de lezer</TekstLink>
 		</p>
 	{/if}
 	<p class="knoppen">

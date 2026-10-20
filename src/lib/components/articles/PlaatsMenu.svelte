@@ -23,7 +23,9 @@
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import type { CiteItem } from '$lib/components/ui/cite-items';
 	import { kaart } from '$lib/map/map.svelte';
-	import { namesOf, type MapItem } from '$lib/map/map';
+	import type { MapItem } from '$lib/map/map';
+	import BundleChecklist from '$lib/map/BundleChecklist.svelte';
+	import { page } from '$app/state';
 	import { formatCount } from '$lib/text/getal';
 
 	let {
@@ -103,19 +105,22 @@
 	>
 	{#if bewaar}
 		<div class="regel">
-			<button
-				type="button"
-				class="tekstmenu__item"
-				role="menuitemcheckbox"
-				aria-checked={aan}
-				onclick={() => {
-					kaart.wissel(bewaar);
-					sluit();
-				}}
-				>{aan
-					? `Uit ${namesOf(kaart.holding(bewaar))} halen`
-					: `Bewaar in ${kaart.loose.naam}`}</button
-			>
+			<!-- Kept: the bundels with their ticks, as Bewaar's menu (BundleChecklist); nothing
+			     is taken out of all at once. -->
+			{#if aan}
+				<BundleChecklist item={bewaar} close={sluit} />
+			{:else}
+				{@const into = kaart.keepsIn(page.url)}
+				<button
+					type="button"
+					class="tekstmenu__item"
+					role="menuitem"
+					onclick={() => {
+						kaart.keep(bewaar, into.id);
+						sluit();
+					}}>Bewaar in {into.naam}</button
+				>
+			{/if}
 		</div>
 	{/if}
 	{#if verbindingen || geschiedenis}
