@@ -18,6 +18,10 @@ vite.config.ts.timestamp-*
 !.env.example
 !.env.test
 
+# Browser suite: its report and its traces (npm run e2e)
+/playwright-report/
+/test-results/
+
 # Logs
 *.log
 npm-debug.log*

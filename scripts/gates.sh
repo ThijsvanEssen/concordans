@@ -8,4 +8,7 @@ npx eslint --cache .
 git ls-files -z -- . ':!.claude/launch.json' | xargs -0 npx prettier --check --ignore-unknown
 npx vitest run
 npm run check
+npm run check:e2e
 npm run build
+# The browser suite builds and serves the app itself (playwright.config.ts).
+npm run e2e

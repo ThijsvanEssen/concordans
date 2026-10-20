@@ -1,0 +1,91 @@
+// Samenhang: the network of a bron, its legend, the bronnen in it as a list, the Verbonden
+// table and its export.
+import { expect, test } from '../support/test';
+
+const ARTICLE = '/wetten/BWBR0005289/artikel/6:162';
+
+/** The bronnen drawn, as the list beside the canvas counts them. */
+const drawn = (page: import('@playwright/test').Page) =>
+	page.getByRole('list', { name: /^Bronnen in het netwerk, \d+/ });
+
+test('the network draws a bron with its neighbours and lists them', async ({ page, touch }) => {
+	await page.goto(ARTICLE);
+	if (touch)
+		await page
+			.getByRole('navigation', { name: 'Panelen' })
+			.getByRole('button', { name: 'Netwerk' })
+			.click();
+	await expect(page.locator('canvas').first()).toBeAttached();
+	await expect(drawn(page)).toBeAttached();
+	await expect(drawn(page).getByRole('link', { name: 'Art. 6:162 BW, Artikel' })).toBeAttached();
+	expect(await drawn(page).getByRole('listitem').count()).toBeGreaterThan(5);
+});
+
+test('the legend switches a kind of bron off and on', async ({ page, touch }) => {
+	await page.goto(ARTICLE);
+	if (touch)
+		await page
+			.getByRole('navigation', { name: 'Panelen' })
+			.getByRole('button', { name: 'Netwerk' })
+			.click();
+	// The network fills in steps; the count is read once it has.
+	await page.waitForLoadState('networkidle');
+	await page.getByRole('button', { name: /^Legenda/ }).click();
+	const legend = page.getByRole('region', { name: 'Legenda' });
+	const judgments = legend.getByRole('button', { name: /^Uitspraken [\d.]+$/ });
+	await expect(judgments).toHaveAttribute('aria-pressed', 'true');
+	const before = await drawn(page).getAttribute('aria-label');
+	await judgments.click();
+	await expect(judgments).toHaveAttribute('aria-pressed', 'false');
+	await expect(drawn(page)).not.toHaveAttribute('aria-label', before!);
+	await judgments.click();
+	await expect(drawn(page)).toHaveAttribute('aria-label', before!);
+});
+
+test('Verbonden as a table, exported as CSV', async ({ page, touch }) => {
+	await page.goto(ARTICLE);
+	if (touch)
+		await page
+			.getByRole('navigation', { name: 'Panelen' })
+			.getByRole('button', { name: 'Verbonden' })
+			.click();
+	await page.getByRole('link', { name: /^Alle [\d.]+ in een tabel$/ }).click();
+	await expect(page).toHaveURL(/tabel=1/);
+	await expect(page.getByRole('heading', { name: 'Verbindingen van Art. 6:162 BW' })).toBeVisible();
+	const table = page.getByRole('table');
+	for (const column of ['Bron', 'Verbinding', 'Plaats in de bron', 'Datum'])
+		await expect(table.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+	await expect(table.getByRole('row').nth(1)).toContainText('haalt aan');
+
+	const download = page.waitForEvent('download');
+	await page.getByRole('button', { name: /^Exporteer/ }).click();
+	expect((await download).suggestedFilename()).toMatch(/\.csv$/);
+});
+
+test('Samenhang opens with an example network that can be cleared', async ({ page, touch }) => {
+	await page.goto('/explore');
+	await page.waitForLoadState('networkidle');
+	const network = page.getByRole('region', { name: 'Netwerk' });
+	// At 375 the chosen bronnen fold under the bar of the network.
+	if (touch) await network.getByRole('button', { name: /^Netwerk \d+ bronnen$/ }).click();
+	await expect(network.getByRole('button', { pressed: true }).first()).toBeVisible();
+	await network.getByRole('button', { name: 'Wissen' }).click();
+	await expect(network.getByRole('button', { name: 'Wissen' })).toHaveCount(0);
+});
+
+test('a bron in the network becomes the focus, and Samenhang follows it', async ({
+	page,
+	touch
+}) => {
+	test.skip(touch, 'the list of the network is the keyboard way at 1440');
+	await page.goto(ARTICLE);
+	const stuk = drawn(page)
+		.getByRole('link', { name: /, Stuk$/ })
+		.first();
+	const name = (await stuk.getAttribute('aria-label')) ?? (await stuk.textContent())!;
+	await stuk.focus();
+	await page.keyboard.press('Enter');
+	await expect(page).toHaveURL(/\/kamerstukken\//);
+	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+	expect(name).toContain('Kamerstuk');
+});

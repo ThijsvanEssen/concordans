@@ -1,9 +1,9 @@
 # Every pull request and every push to main runs the checks. The deploy of a commit waits for
-# a green run of this workflow on it (deploy.yml): the run is green only when all three jobs
+# a green run of this workflow on it (deploy.yml): the run is green only when all four jobs
 # are, and deploy runs none of them again.
-# Three jobs side by side, each on node_modules from one shared cache (.github/actions/setup):
+# Four jobs side by side, each on node_modules from one shared cache (.github/actions/setup):
 # lint (prettier --check over the whole repository, Markdown included, and ESLint), types and
-# build, and the tests.
+# build, the tests, and the browser suite (e2e/).
 name: ci
 
 on:
@@ -37,8 +37,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
-      - name: Type check (svelte-check)
-        run: npm run check
+      - name: Type check (svelte-check, and tsc over e2e/)
+        run: npm run check && npm run check:e2e
       - name: Build
         run: npm run build
 
@@ -49,3 +49,29 @@ jobs:
       - uses: ./.github/actions/setup
       - name: Tests (vitest)
         run: npm test
+
+  # The browser suite (e2e/, README): the production build under `vite preview`, its API from
+  # the recorded fixtures, at 1440 and at 375 with touch, in three shards side by side (a
+  # runner of a private repository has two cores). In the Playwright image of the pinned
+  # version, which carries its browsers and is the one the visual baseline is made in
+  # (npm run e2e:update), so the pixels compare. The report of a failing shard stays a week.
+  e2e:
+    runs-on: ubuntu-24.04
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+      options: --ipc=host
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1/3, 2/3, 3/3]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - name: Browser suite (Playwright), shard ${{ matrix.shard }}
+        run: npm run e2e -- --shard=${{ matrix.shard }}
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ strategy.job-index }}
+          path: playwright-report/
+          retention-days: 7

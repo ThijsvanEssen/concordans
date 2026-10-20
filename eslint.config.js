@@ -40,7 +40,8 @@ export default defineConfig(
 		files: ['**/*.ts', '**/*.svelte', '**/*.svelte.js'],
 		languageOptions: {
 			parserOptions: {
-				projectService: true,
+				// The config of the browser suite stands beside the app, outside its tsconfig.
+				projectService: { allowDefaultProject: ['playwright.config.ts'] },
 				extraFileExtensions: ['.svelte'],
 				parser: ts.parser,
 				svelteConfig
