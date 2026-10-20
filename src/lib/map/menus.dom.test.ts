@@ -1,7 +1,7 @@
 // The menus of the bundels that change what they hold: Meer › Voeg toe aan … on a shared
 // bundel's page, and the ⋯ of a bundel from a file. Their list of bundels takes the focus, so
 // Escape closes it, and the menu opens again on its own items (UX-toets A14 #1).
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import type { MapItem } from './map';
@@ -36,6 +36,19 @@ const settle = async () => {
 };
 
 afterEach(() => cleanup());
+
+// The components compile on their first import: under load that took longer than one test's
+// time. Compiled once here, with time of its own, each test finds them in the module cache.
+beforeAll(async () => {
+	await Promise.all([
+		import('./MapView.svelte'),
+		import('../../routes/(main)/bundels/+page.svelte'),
+		import('./file'),
+		import('./map.svelte'),
+		import('./Bewaar.svelte'),
+		import('./AddSource.svelte')
+	]);
+}, 60_000);
 
 describe('Meer › Voeg toe aan … on a shared bundel', () => {
 	it('puts the focus on the first bundel, closes on Escape and opens again on its items', async () => {

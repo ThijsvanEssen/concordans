@@ -131,3 +131,21 @@ test('Meer › PDF opens the print dialog', async ({ page }) => {
 		true
 	);
 });
+
+test('an article kept keeps the day of its text; a judgment keeps none', async ({ page }) => {
+	await keepArticle(page);
+	await keepPlaces(page);
+	const items = await page.evaluate(() => {
+		const stand = JSON.parse(localStorage.getItem('concordans:mappen') ?? '{}') as {
+			mappen?: { items?: { kort?: string; versie?: string }[] }[];
+		};
+		return (stand.mappen ?? []).flatMap((m) => m.items ?? []);
+	});
+	const versie = (kort: string | RegExp) =>
+		items.find((i) => (typeof kort === 'string' ? i.kort === kort : kort.test(i.kort ?? '')))
+			?.versie;
+	// Geldend recht, tekst sinds 1 januari 1992 (gedrag/transparantie.spec.ts).
+	expect(versie('art. 6:162 BW')).toBe('1992-01-01');
+	expect(versie('art. 6:162 lid 2 BW')).toBe('1992-01-01');
+	expect(versie(/^HR 20 december 2019/)).toBeUndefined();
+});
