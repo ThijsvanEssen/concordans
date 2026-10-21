@@ -251,6 +251,12 @@ describe('dayLines', () => {
 describe('timelineOf', () => {
 	const summary = (days: Day[], items: FeedItem[]): Schema<'FeedSummaryResponse'> => ({
 		data_as_of: {},
+		chamber_schedule: {
+			last_sitting: null,
+			last_votes: null,
+			next_sitting: null,
+			next_votes: null
+		},
 		since: '2026-09-15',
 		until: '2026-09-29',
 		margin: 10,

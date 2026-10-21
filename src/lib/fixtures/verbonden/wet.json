@@ -107,7 +107,7 @@
 		"proposals_total": 0,
 		"proposals": []
 	},
-	"/api/instruments/{bwb_id}/articles {\"bwb_id\":\"BWBR0005537\"} {\"limit\":2000,\"text_preview_chars\":0}": {
+	"/api/instruments/{bwb_id}/articles {\"bwb_id\":\"BWBR0005537\"} {\"limit\":2000,\"text_preview_chars\":1}": {
 		"bwb_id": "BWBR0005537",
 		"total": 565,
 		"division": null,

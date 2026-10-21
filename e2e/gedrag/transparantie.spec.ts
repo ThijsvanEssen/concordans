@@ -140,11 +140,28 @@ test('an article, a judgment and a Kamerstuk say how many references are not lin
 	await patchApi(page, /^\/api\/judgments\/ECLI(:|%3A)NL(:|%3A)HR(:|%3A)2019(:|%3A)2006$/, partial);
 	await patchApi(page, DOCUMENT, partial);
 	await page.goto('/wetten/BWBR0005289/artikel/6:162?lezen=1');
-	await expect(page.getByText('3 verwijzingen niet gelegd')).toBeVisible();
+	await expect(
+		page.getByText('3 verwijzingen niet gelegd of naar niet geladen tekst')
+	).toBeVisible();
 	await page.goto('/uitspraken/ECLI:NL:HR:2019:2006?lezen=1');
-	await expect(page.getByText('3 verwijzingen niet gelegd')).toBeVisible();
+	await expect(
+		page.getByText('3 verwijzingen niet gelegd of naar niet geladen tekst')
+	).toBeVisible();
 	await page.goto('/kamerstukken/32467/14?lezen=1');
-	await expect(page.getByText('3 verwijzingen niet gelegd')).toBeVisible();
+	await expect(
+		page.getByText('3 verwijzingen niet gelegd of naar niet geladen tekst')
+	).toBeVisible();
+});
+
+test('an article whose missing references point to a text not loaded yet says so', async ({
+	page
+}) => {
+	await patchApi(page, /^\/api\/articles\/BWBR0005289\/162$/, (body) => ({
+		...body,
+		completeness: { references: part('partial', null, 2, 'target_not_loaded') }
+	}));
+	await page.goto('/wetten/BWBR0005289/artikel/6:162?lezen=1');
+	await expect(page.getByText('2 verwijzingen naar tekst die nog niet geladen is')).toBeVisible();
 });
 
 test('a Kamerstuk without its text says why, and points to the original file', async ({ page }) => {

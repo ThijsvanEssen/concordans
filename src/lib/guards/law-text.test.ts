@@ -54,7 +54,8 @@ describe('the tables in a text (A20)', () => {
 		for (const path of [
 			'lib/components/explore/readers/ArticleReader.svelte',
 			'lib/components/explore/WholeLawReaderArticle.svelte',
-			'lib/map/MapInhoud.svelte'
+			'lib/map/MapInhoud.svelte',
+			'lib/components/explore/readers/AnnexReader.svelte'
 		])
 			expect(bron(path), path).toMatch(/<ArticleText\b[^>]*\btables=/);
 	});
@@ -69,6 +70,14 @@ describe('the tables in a text (A20)', () => {
 			'lib/components/articles/ArticleText.svelte',
 			'lib/components/articles/TextBlocks.svelte'
 		]);
+	});
+});
+
+describe('the text of a bijlage (#870)', () => {
+	it('reads as the text of an article: ArticleText with its tables, headings and links', () => {
+		const t = bron('lib/components/explore/readers/AnnexReader.svelte');
+		for (const prop of ['tables', 'headings', 'parts', 'references', 'law'])
+			expect(t, prop).toMatch(new RegExp(`<ArticleText\\b[^>]*\\b${prop}=`));
 	});
 });
 

@@ -13,7 +13,7 @@ import {
 import type { Schema } from '$lib/api/types';
 import { containerIdFor, containerKindOf } from '../container-membership';
 import { foldVersions } from '../paths';
-import { withoutDetours } from '../neighborhood';
+import { ACTORS, withoutDetours } from '../neighborhood';
 import {
 	isTranspositionOutcome,
 	NODE_TYPES,
@@ -319,11 +319,14 @@ export function createExpansion(
 
 		expandNeighborhood: async (collection, key, opts = {}) => {
 			// The canvas draws only its nodes' names and kinds: the light props (CANVAS_PROPS, audited
-			// 10 Oct). The amendments timetable asks the same route with every prop.
+			// 10 Oct). The amendments timetable asks the same route with every prop. A full
+			// neighbourhood stops at a lid, fractie, commissie or kabinet: its cap goes to what
+			// the focus itself touches (#871).
 			const response = await getNodeNeighborhood(collection, key, {
 				...opts,
 				nodeTypes: opts.nodeTypes ?? drawnTypes(collection),
 				props: 'canvas',
+				stopAt: opts.relations ? undefined : ACTORS,
 				signal: signal()
 			});
 			const additive = !!opts.relations || !!opts.additive;
@@ -338,7 +341,7 @@ export function createExpansion(
 					buckets: behoudenBuckets(response.buckets ?? [], soortenGeladen, response.focal_id)
 				});
 
-			// A full neighbourhood without detours through a law or a person (`withoutDetours`); one
+			// A full neighbourhood without detours through a law (`withoutDetours`); one
 			// narrowed to some relations is drawn as asked.
 			const shown = opts.relations
 				? response

@@ -90,12 +90,15 @@ export function menselijkeNaam(b: Bron, wet?: (bwb: string) => string | null | u
 			return nummer ? `Toezegging ${nummer}` : withDay(soort, p);
 		}
 		case 'annexes': {
-			// "Bijlage 2" with its title where the data gives them.
+			// "Bijlage 2", "Lijst I" as its heading prints it (API 0.80.1), with its title where
+			// the data gives them.
 			const label = naam(p.label);
+			const heading = (t: string | null) => (t && /^(bijlage|lijst)\b/i.test(t) ? t : null);
+			const printed = heading(naam(b.display_name)) ?? heading(naam(p.display_name));
 			// "Annex II" is the data's word for the bijlage, not a heading of its own (#30).
 			const eigen = (t: string | null) => (t && !/^annex\b/i.test(t) ? t : null);
-			const titel = naam(p.title) ?? eigen(naam(b.display_name));
-			const kop = label ? `Bijlage ${label}` : 'Bijlage';
+			const titel = naam(p.title) ?? (printed ? null : eigen(naam(b.display_name)));
+			const kop = printed ?? (label ? `Bijlage ${label}` : 'Bijlage');
 			return titel ? `${kop}: ${titel}` : kop;
 		}
 		case 'activities': {

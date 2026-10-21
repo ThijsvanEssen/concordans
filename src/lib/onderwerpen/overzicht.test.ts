@@ -30,6 +30,7 @@ const b = (
 	voters: {},
 	dictum: null,
 	motion: null,
+	motion_kind: null,
 	coalition: null,
 	kind_group: null,
 	id: `decisions/${key}`,

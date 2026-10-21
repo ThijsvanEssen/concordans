@@ -88,6 +88,30 @@ describe('referenceSpans', () => {
 		);
 	});
 
+	it('links an EU act or a bijlage the API names and holds, and leaves one it lacks as text', () => {
+		const target = (key: string, exists: boolean, collection: 'instruments' | 'annexes') => ({
+			collection,
+			key,
+			exists,
+			id: `${collection}/${key}`
+		});
+		const eu = ref(124, 147, null, null, '32019L0944', {
+			celex: '32019L0944',
+			target: target('32019l0944', true, 'instruments')
+		});
+		const annex = ref(200, 210, null, null, '/Bijlage_1', {
+			kind: 'intref',
+			target: target('bwbr0052872_annex_1', true, 'annexes')
+		});
+		const lacking = ref(300, 320, null, null, '32019R0943', {
+			target: target('32019r0943', false, 'instruments')
+		});
+		expect(referenceSpans([], [eu, annex, lacking]).map((s) => [s.start, s.target.id])).toEqual([
+			[124, 'instruments/32019l0944'],
+			[200, 'annexes/bwbr0052872_annex_1']
+		]);
+	});
+
 	it('opens a division of its own law at the heading, of another law the law', () => {
 		const crumbs = [
 			{ type: 'hoofdstuk', label: 'Hoofdstuk 3A.2', anchor: 'deel-3a-hoofdstuk-3a.2' },

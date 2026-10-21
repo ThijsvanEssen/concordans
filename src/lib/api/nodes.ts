@@ -163,6 +163,8 @@ export const getNodeNeighborhood = (
 		/** `canvas`: the other nodes with only what the canvas draws (API 0.79.41, #472); an
 		 *  API that does not know it gives every prop, as `full`. */
 		props?: 'full' | 'canvas';
+		/** Collections the walk reaches but does not go through (API 0.80.1, #871). */
+		stopAt?: readonly Collection[];
 		signal?: AbortSignal;
 	} = {}
 ) =>
@@ -175,7 +177,8 @@ export const getNodeNeighborhood = (
 					cap: opts.cap ?? 200,
 					relations: opts.relations?.join(','),
 					node_types: opts.nodeTypes?.join(','),
-					props: opts.props
+					props: opts.props,
+					stop_at: opts.stopAt?.join(',')
 				}
 			},
 			signal: opts.signal

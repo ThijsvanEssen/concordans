@@ -10,37 +10,24 @@
 //
 // Through a person or a body. Two steps from a motie lead through its indiener (AUTHORED) to
 // every stemming the lid cast and every stuk the lid signed: the motie 36799 nr. 31 showed
-// the asylum votes of July 2025 its indiener took part in, and a brief of the minister of
-// Defensie her toezeggingen on other matters (productcheck 0.80, punt 3). A lid, fractie,
-// commissie or kabinet met on the way is drawn, with the fractie or kabinet it sits in, but
-// nothing is reached through it; as the focus it reaches all it touches.
+// the asylum votes of July 2025 its indiener took part in (productcheck 0.80, punt 3). The API
+// stops its walk at a lid, fractie, commissie or kabinet (`stop_at=ACTORS`, 0.80.1, #871):
+// it draws them, with the fractie or kabinet a lid sits in, and reaches nothing through them.
 
-import { isTranspositionOutcome, type Collection, type Relation } from '$lib/vocabulary';
+import { isTranspositionOutcome, type Collection } from '$lib/vocabulary';
 import { edgesByNode } from './adjacency';
 
 type Node = { id: string; collection: string };
 type Edge = { source: string; target: string; relation: string | null };
 
 /** The persons and bodies of parliament and government: hubs, never a way through. */
-const ACTORS: ReadonlySet<string> = new Set<Collection>([
-	'members',
-	'factions',
-	'committees',
-	'cabinets'
-]);
-
-/** From an actor met on the way, the one step still taken: to the group it sits in. */
-const SEAT: Partial<Record<Relation, Collection>> = {
-	MEMBER_OF: 'factions',
-	SERVED_IN: 'cabinets'
-};
+export const ACTORS: readonly Collection[] = ['members', 'factions', 'committees', 'cabinets'];
 
 /**
  * The part of `nodes` and `edges` reachable from `focal` within `depth` steps without a
- * detour: not through a law (PART_OF to an instrument), unless the law is the focus, not
- * through a lid, fractie, commissie or kabinet, unless it is the focus, and without what
- * became of an old article (`isTranspositionOutcome`). An edge between two bronnen that stay
- * is kept, whichever way they were reached.
+ * detour: not through a law (PART_OF to an instrument), unless the law is the focus, and
+ * without what became of an old article (`isTranspositionOutcome`). An edge between two
+ * bronnen that stay is kept, whichever way they were reached.
  */
 export function withoutDetours<N extends Node, E extends Edge>(
 	nodes: readonly N[],
@@ -54,13 +41,6 @@ export function withoutDetours<N extends Node, E extends Edge>(
 	const outcome = (e: Edge) => isTranspositionOutcome(e.relation, collection.get(e.target));
 	const walked = edges.filter((e) => !outcome(e));
 	const ties = edgesByNode(walked.filter((e) => !throughLaw(e)));
-	/** Whether a step from `from` along `e` is no detour. */
-	const mayStep = (from: string, e: Edge) =>
-		from === focal ||
-		!ACTORS.has(collection.get(from) ?? '') ||
-		(e.source === from &&
-			!!e.relation &&
-			SEAT[e.relation as Relation] === collection.get(e.target));
 	const steps = new Map<string, number>([[focal, 0]]);
 	const queue = [focal];
 	while (queue.length) {
@@ -68,7 +48,6 @@ export function withoutDetours<N extends Node, E extends Edge>(
 		const step = steps.get(id)!;
 		if (step >= depth) continue;
 		for (const e of ties.get(id) ?? []) {
-			if (!mayStep(id, e)) continue;
 			const other = e.source === id ? e.target : e.source;
 			if (steps.has(other)) continue;
 			steps.set(other, step + 1);

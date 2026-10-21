@@ -52,6 +52,7 @@ const item = (date: string, kind: FeedItem['kind'], dossier: string | null): Fee
 		headline: { surname: null, subject: null, short_title: null },
 		has_text: null,
 		dictum: null,
+		motion_kind: null,
 		number: null,
 		judgment: null,
 		matched: [],

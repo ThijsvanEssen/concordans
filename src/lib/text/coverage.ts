@@ -14,8 +14,10 @@ type PartState = Pick<Schema<'PartStateDTO'>, 'state'> & Partial<Schema<'PartSta
 /** What the API says of a record or a source, per part; a part left out lacks nothing known. */
 export type Completeness = Partial<Record<Part, PartState>>;
 
-/** What a search reads of a type (`searched.<type>` of /api/search). */
-export type Searched = Schema<'SearchedDTO'>;
+/** What a search reads of a type (`searched.<type>` of /api/search); an API before 0.80.1
+ *  gives no `signed_for`. */
+export type Searched = Omit<Schema<'SearchedDTO'>, 'signed_for'> &
+	Partial<Pick<Schema<'SearchedDTO'>, 'signed_for'>>;
 
 /** A part as the reader names it, in a line that starts with it. */
 const PART: Record<Part, string> = {
@@ -92,13 +94,20 @@ function textLine(t: PartState | undefined, noText: boolean): string | null {
 	return noText ? `tekst ${NOT_IN_DATA}` : null;
 }
 
-/** Of the references in a text: how many are not linked. */
+/**
+ * Of the references in a text: how many are not linked. With `target_not_loaded` each one
+ * missing points to a text the dataset does not hold yet; without a reason some may not have
+ * been laid at all.
+ */
 function referencesLine(r: PartState | undefined): string | null {
 	if (r?.state !== 'partial') return null;
 	const n = r.missing;
-	return n
-		? `${formatCount(n)} ${plural(n, 'verwijzing', 'verwijzingen')} niet gelegd`
-		: 'verwijzingen deels niet gelegd';
+	const what = n
+		? `${formatCount(n)} ${plural(n, 'verwijzing', 'verwijzingen')}`
+		: 'verwijzingen deels';
+	return r.reason === 'target_not_loaded'
+		? `${what} naar tekst die nog niet geladen is`
+		: `${what} niet gelegd of naar niet geladen tekst`;
 }
 
 /**
@@ -112,8 +121,8 @@ type CoverageOptions = { of?: string; noText?: boolean; shown?: Shown };
 export type Shown = Partial<Record<Part, number>>;
 
 /**
- * The line, in words: `Tekst nog niet opgehaald`, `Tekst niet opgenomen, staat bij de bron`, `12 verwijzingen niet gelegd, begrippen nog
- * niet verwerkt`, `Geen einde vastgelegd, laatste activiteit 3 maart 2019`, `HUDOC gepauzeerd,
+ * The line, in words: `Tekst nog niet opgehaald`, `Tekst niet opgenomen, staat bij de bron`, `12 verwijzingen niet gelegd of naar
+ * niet geladen tekst, begrippen nog niet verwerkt`, `Geen einde vastgelegd, laatste activiteit 3 maart 2019`, `HUDOC gepauzeerd,
  * …`. Null where nothing is known to lack.
  */
 export function coverageLine(
@@ -152,11 +161,16 @@ export function coverageLine(
 	return said.length ? capitalize(said.join(', ')) : null;
 }
 
-/** What a search of a type reads: `Gezocht in titels en nummers, niet in de tekst`. */
+/**
+ * What a search of a type reads: `Gezocht in titels en nummers, niet in de tekst`; of stukken
+ * and stemmingen kept to the fracties the query names (`signed_for`), by whom: `Gezocht in
+ * titels en de tekst, door VVD`.
+ */
 export function searchedLine(s: Searched | null | undefined): string | null {
 	if (!s?.fields.length) return null;
+	const by = s.signed_for?.length ? `, door ${joinAnd(s.signed_for.map((f) => f.name))}` : '';
 	const unread = s.completeness.text?.state === 'none' ? ', niet in de tekst' : '';
-	return `Gezocht in ${joinAnd(s.fields.map((f) => SEARCHED[f]))}${unread}`;
+	return `Gezocht in ${joinAnd(s.fields.map((f) => SEARCHED[f]))}${by}${unread}`;
 }
 
 /** Where an arcering's words are now, where they no longer stand where they were kept. */

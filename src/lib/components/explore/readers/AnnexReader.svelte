@@ -6,9 +6,11 @@
 	import { citeItems } from '$lib/components/ui/cite-items';
 	import ReaderHead from './ReaderHead.svelte';
 	import { uniqueBy } from '$lib/util/unique';
-	// Reader for a bijlage: its title, the law it belongs to, its text, its entries in order
-	// and the articles that refer to it.
+	// Reader for a bijlage: its title, the law it belongs to, the articles that refer to it and
+	// its text as the text of an article reads (ArticleText: its tables, headings and links).
+	// A bijlage the data holds no text of yet reads by its description and entries.
 	import ReaderFrame from './ReaderFrame.svelte';
+	import ArticleText from '$lib/components/articles/ArticleText.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { getAnnex } from '$lib/api/documents';
@@ -33,6 +35,10 @@
 		'Bijlage'
 	);
 
+	/** Its heading as printed, without its title: `Bijlage 1`, `Lijst I`. */
+	const headingOf = (a: { key: string; display_name: string | null; label: string | null }) =>
+		naamVan('annexes', Object.assign({}, a, { title: null }));
+
 	const nameOf = (bwbId: string) => lawName($instrumentMetaStore.get(bwbId), bwbId);
 
 	// The text line by line. A line ending in a colon heads the entries of one law.
@@ -49,11 +55,10 @@
 		{@const a = detail.annex}
 		{@const entries = a.entries ?? []}
 		{@const refs = detail.referenced_by ?? []}
-		{@const titel = a.title ?? naamVan('annexes', a)}
-		{@const kort =
-			[a.label ? `${bronLabel('annexes')} ${a.label}` : null, a.bwb_id ? nameOf(a.bwb_id) : null]
-				.filter(Boolean)
-				.join(', ') || titel}
+		<!-- Its heading as printed (Bijlage 1, Lijst I), and its title where it has one. -->
+		{@const heading = headingOf(a)}
+		{@const titel = a.title ?? heading}
+		{@const kort = [heading, a.bwb_id ? nameOf(a.bwb_id) : null].filter(Boolean).join(', ')}
 		<div class="r-annex">
 			<ReaderHead
 				collection="annexes"
@@ -71,12 +76,11 @@
 					naam: kort
 				}}
 			>
-				<!-- The bijlage names itself once (UX-toets 0.79.43, #30): its number in the kind line
-				     only where the title is a heading of its own; its law stands in the band. -->
+				<!-- The bijlage names itself once (UX-toets 0.79.43, #30): its heading (Bijlage 1,
+				     Lijst I) in the kind line only where the title is one of its own; its law stands
+				     in the band. -->
 				{#snippet kindLine()}
-					<KindGlyph collection="annexes" />{bronLabel('annexes')}{a.title && a.label
-						? ` ${a.label}`
-						: ''}
+					<KindGlyph collection="annexes" />{a.title ? heading : bronLabel('annexes')}
 				{/snippet}
 			</ReaderHead>
 
@@ -99,7 +103,16 @@
 				</section>
 			{/if}
 
-			{#if a.description}
+			{#if a.text}
+				<ArticleText
+					text={a.text}
+					parts={a.parts}
+					tables={a.tables}
+					headings={a.headings}
+					references={detail.references ?? []}
+					law={a.bwb_id}
+				/>
+			{:else if a.description}
 				<div class="text">
 					{#each linesOf(a.description) as { line, heading }, i (i)}
 						<p class:heading>{line}</p>
@@ -107,7 +120,7 @@
 				</div>
 			{/if}
 
-			{#if entries.length}
+			{#if !a.text && entries.length}
 				<!-- The entries in the bijlage's own order: per line they stand under, nested. -->
 				<details class="entries">
 					<summary>{formatCount(entries.length)} onderdelen</summary>

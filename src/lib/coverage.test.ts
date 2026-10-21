@@ -114,12 +114,24 @@ describe('the mark of what is missing', () => {
 
 	it('says how many references of a text are not linked, and nothing where all are', () => {
 		expect(coverageLine({ references: { state: 'partial', missing: 3 } })).toBe(
-			'3 verwijzingen niet gelegd'
+			'3 verwijzingen niet gelegd of naar niet geladen tekst'
 		);
 		expect(coverageLine({ references: { state: 'partial', missing: 1 } })).toBe(
-			'1 verwijzing niet gelegd'
+			'1 verwijzing niet gelegd of naar niet geladen tekst'
 		);
 		expect(coverageLine({ references: { state: 'done' } })).toBe(null);
+	});
+
+	it('says of references to a text not loaded yet that they wait for it (target_not_loaded)', () => {
+		expect(
+			coverageLine({ references: { state: 'partial', missing: 4, reason: 'target_not_loaded' } })
+		).toBe('4 verwijzingen naar tekst die nog niet geladen is');
+		expect(
+			coverageLine({ references: { state: 'partial', missing: 1, reason: 'target_not_loaded' } })
+		).toBe('1 verwijzing naar tekst die nog niet geladen is');
+		expect(coverageLine({ references: { state: 'partial', reason: 'target_not_loaded' } })).toBe(
+			'Verwijzingen deels naar tekst die nog niet geladen is'
+		);
 	});
 
 	it('says of an open bill that no end is recorded, not that it runs', () => {
@@ -146,7 +158,7 @@ describe('the mark of what is missing', () => {
 
 	it('says what of a law of the Staatsblad is read, and nothing where all is', () => {
 		expect(coverageLine({ references: { state: 'partial', missing: 1234 } })).toBe(
-			'1.234 verwijzingen niet gelegd'
+			'1.234 verwijzingen niet gelegd of naar niet geladen tekst'
 		);
 		expect(coverageLine({ definitions: { state: 'pending' } })).toBe('Begrippen nog niet verwerkt');
 		expect(
@@ -157,7 +169,7 @@ describe('the mark of what is missing', () => {
 				references: { state: 'partial', missing: 12 },
 				definitions: { state: 'pending' }
 			})
-		).toBe('12 verwijzingen niet gelegd, begrippen nog niet verwerkt');
+		).toBe('12 verwijzingen niet gelegd of naar niet geladen tekst, begrippen nog niet verwerkt');
 		expect(coverageLine({ references: { state: 'done' }, definitions: { state: 'done' } })).toBe(
 			null
 		);
@@ -213,5 +225,22 @@ describe('the mark of what is missing', () => {
 			'Gezocht in namen'
 		);
 		expect(searchedLine(undefined)).toBe(null);
+	});
+
+	it('says by whom the stukken and stemmingen of a query naming a fractie are (signed_for)', () => {
+		const vvd = { words: 'vvd', name: 'VVD', factions: ['vvd'] };
+		expect(searchedLine({ fields: ['title', 'text'], completeness: {}, signed_for: [vvd] })).toBe(
+			'Gezocht in titels en de tekst, door VVD'
+		);
+		expect(
+			searchedLine({
+				fields: ['title'],
+				completeness: {},
+				signed_for: [vvd, { words: 'bbb', name: 'BBB', factions: ['bbb'] }]
+			})
+		).toBe('Gezocht in titels, door VVD en BBB');
+		expect(searchedLine({ fields: ['title'], completeness: {}, signed_for: [] })).toBe(
+			'Gezocht in titels'
+		);
 	});
 });

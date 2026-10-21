@@ -1,8 +1,10 @@
 // From the list of laws to a law, an article, its leden and versions: Bronnen › Wetten with
 // its filters, the text of a law with its overview and a date, an article with its leden,
 // its neighbours and its earlier texts, and what is based on the law (delegations).
+import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
 import { showText } from '../support/panes';
+import { bijlagenGelezen } from '../support/bijlagen';
 
 test('Bronnen › Wetten: a filter narrows the list, a search finds a law that opens', async ({
 	page,
@@ -92,4 +94,43 @@ test('an earlier text of an article says so, and leads back to the law in force'
 	await page.getByRole('button', { name: 'Geldend recht lezen' }).click();
 	await expect(page.getByText('Geldend recht, tekst sinds 17 november 2017')).toBeVisible();
 	await expect(page.getByText(/Niet de geldende tekst/)).toHaveCount(0);
+});
+
+/** The overview of a law: beside the text from 1440, under Inhoud on a phone. */
+async function overview(page: Page, touch: boolean) {
+	if (!touch) return page.getByRole('complementary', { name: 'Overzicht' });
+	await page.getByRole('button', { name: 'Inhoud', exact: true }).click();
+	return page.getByRole('dialog', { name: 'Inhoud' });
+}
+
+test('a law lists its bijlagen after its articles; a bijlage reads its table', async ({
+	page,
+	touch
+}) => {
+	await bijlagenGelezen(page, 'BWBR0052872', ['bwbr0052872_annex_1']);
+	await page.goto('/wetten/BWBR0052872?lezen=1');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Cyberbeveiligingswet');
+	const bijlagen = (await overview(page, touch)).getByRole('list', { name: 'Bijlagen' });
+	await bijlagen.getByRole('link', { name: 'Bijlage 1', exact: true }).click();
+	await expect(page).toHaveURL(/\/wetten\/BWBR0052872\/bijlage\/1/);
+	const table = page.getByRole('table').first();
+	await expect(table.getByRole('columnheader')).toHaveText([
+		'Sector',
+		'Subsector',
+		'Soort entiteit'
+	]);
+	await expect(table.getByRole('cell', { name: 'Energie', exact: true })).toBeVisible();
+});
+
+test('a list of the Opiumwet reads as its table', async ({ page, touch }) => {
+	await bijlagenGelezen(page, 'BWBR0001941', ['bwbr0001941_annex_i']);
+	await page.goto('/wetten/BWBR0001941?lezen=1');
+	const bijlagen = (await overview(page, touch)).getByRole('list', { name: 'Bijlagen' });
+	await bijlagen.getByRole('link', { name: 'Lijst I', exact: true }).click();
+	await expect(page).toHaveURL(/\/wetten\/BWBR0001941\/bijlage\/I$/);
+	const table = page.getByRole('table').first();
+	await expect(table.getByRole('columnheader').first()).toContainText(
+		'International Non-proprietary Name'
+	);
+	await expect(table.getByRole('cell', { name: '25B-NBOMe', exact: true })).toBeVisible();
 });

@@ -18,6 +18,7 @@
 	import CitedText from './CitedText.svelte';
 	import TextTable from './TextTable.svelte';
 	import { blocksOf, type Table } from '$lib/text/tables';
+	import { withHeadings, type Heading } from '$lib/text/headings';
 	import { spansWithin } from '$lib/text/spans';
 	import { definitiesOp, type Begrip, type Definitie } from '$lib/text/begrippen';
 	import { delegatiesWithin, type Delegatie, type Gedelegeerd } from '$lib/text/delegaties';
@@ -56,6 +57,7 @@
 		text,
 		parts: apiParts = null,
 		tables: apiTables = [],
+		headings = [],
 		citations = [],
 		references = [],
 		law = null,
@@ -84,6 +86,9 @@
 		parts?: Schema<'ArticlePartSpanDTO'>[] | null;
 		/** The tables in the text (`tables`), laid out by TextTable. */
 		tables?: Table[] | null;
+		/** The headings in the text on a line of their own (`headings`: of a bijlage, a
+		 *  tussenkop), set apart from the paragraphs. */
+		headings?: Heading[] | null;
 		citations?: Schema<'ArticleCitationSpan'>[];
 		/** Every reference the text makes (`references`): each mention a link where its
 		 *  target is known, besides the one citation per target. */
@@ -181,8 +186,11 @@
 		delegaties: delegatiesWithin(delegaties, start, end - start)
 	});
 
-	/** A part's own text: its paragraphs (trimmed, none empty) and its tables. */
-	const own = (part: ArticlePart) => blocksOf(source, part.textStart, part.textEnd, tables);
+	/** A part's own text: its paragraphs (trimmed, none empty), its headings and its tables. */
+	const own = (part: ArticlePart) =>
+		blocksOf(source, part.textStart, part.textEnd, tables).flatMap((piece) =>
+			piece.table ? [{ ...piece, heading: false }] : withHeadings(source, piece, headings ?? [])
+		);
 
 	/** The place's text with its onderdelen, as Kopieer tekst puts it on the clipboard; the
 	 *  article's whole text when the place is the article. */
@@ -427,6 +435,8 @@
 	{#each own(part) as piece (piece.start)}
 		{#if piece.table}
 			<TextTable text={source} table={piece.table} cell={cited} />
+		{:else if piece.heading}
+			<p class="tussenkop">{@render cited(piece.start, piece.end)}</p>
 		{:else}
 			<p>{@render cited(piece.start, piece.end)}</p>
 		{/if}
@@ -788,6 +798,14 @@
 	}
 	.part__body p {
 		margin: 0;
+	}
+	/* A heading in the text (a tussenkop, the heading of a part of a bijlage): the head of
+	   what follows, as a division heads its articles. */
+	.lid__body p.tussenkop,
+	.part__body p.tussenkop {
+		margin-top: var(--s-3);
+		font-weight: 600;
+		color: var(--ink);
 	}
 
 	/* An arcering whose words no longer stand where they were kept (besluit 23): its line under

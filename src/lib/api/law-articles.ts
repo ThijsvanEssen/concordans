@@ -2,7 +2,8 @@
 // shared by the table of contents (LezenNav) and by the place line with Vorig and Volgend
 // above an article, in Netwerk as in Tekst. The whole Awb is 584 articles, 16 kB gzipped
 // (about 0.1 s on PostgreSQL); a route per division (BE-6) would make it smaller. Their
-// labels and places: $lib/bron/law-articles.
+// labels and places: $lib/bron/law-articles. A preview of one character tells a bijlage with
+// a text of its own from one of articles only (`annexes`, API 0.80.1).
 import { api, unwrap } from './client';
 import { volledig } from './limits';
 import { once } from './records';
@@ -20,7 +21,7 @@ export function lawArticleList(bwb: string): Promise<Schema<'InstrumentArticlesR
 	return once(`instruments/${bwb}/articles`, () =>
 		unwrap(
 			api.GET('/api/instruments/{bwb_id}/articles', {
-				params: { path: { bwb_id: bwb }, query: { text_preview_chars: 0, limit: WHOLE_LIST } }
+				params: { path: { bwb_id: bwb }, query: { text_preview_chars: 1, limit: WHOLE_LIST } }
 			})
 		)
 	);

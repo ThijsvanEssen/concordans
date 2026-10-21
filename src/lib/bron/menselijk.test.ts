@@ -116,6 +116,17 @@ describe('the name of a bron for a reader', () => {
 				props: { bwb_id: 'BWBR0002741', label: 'II', title: null }
 			} as never)
 		).toBe('Bijlage II');
+		// As its heading prints it (API 0.80.1): its name once, a list of the Opiumwet a Lijst.
+		const printed = (display_name: string, title: string | null = null) =>
+			menselijkeNaam({
+				collection: 'annexes',
+				key: 'x',
+				display_name,
+				props: { label: 'I', title }
+			} as never);
+		expect(printed('Bijlage 1')).toBe('Bijlage 1');
+		expect(printed('Lijst I')).toBe('Lijst I');
+		expect(printed('Bijlage 2', 'Bevoegdheidsregeling')).toBe('Bijlage 2: Bevoegdheidsregeling');
 	});
 });
 

@@ -2,6 +2,8 @@
 // (`Artikel 1`, a BW article by its book number) and its place as layers, from the list the
 // API gives once per law ($lib/api/law-articles).
 import { naamVan } from './menselijk';
+import { remember } from './address';
+import { nodeId } from '$lib/vocabulary';
 import { lawArticleList } from '$lib/api/law-articles';
 import type { Schema } from '$lib/api/types';
 import { articleName } from '$lib/text/bw';
@@ -33,6 +35,33 @@ export const lawArticles = (bwb: string): Promise<LawArticle[]> =>
 				key: a.key,
 				breadcrumb: a.breadcrumb ?? []
 			}))
+	);
+
+/** A bijlage of a law with a text of its own, as the table of contents lists it. */
+export type LawAnnex = {
+	key: string;
+	/** As its heading prints it: `Bijlage 1`, `Lijst I`. */
+	name: string;
+	title: string | null;
+};
+
+/**
+ * The bijlagen of the law `bwb` with a text of their own, in its order, each address kept
+ * for its link. A bijlage of articles only has no text (`text_preview` null): its articles
+ * stand in the list already, under it.
+ */
+export const lawAnnexes = (bwb: string): Promise<LawAnnex[]> =>
+	lawArticleList(bwb).then((resp) =>
+		(resp.annexes ?? [])
+			.filter((a) => a.text_preview !== null)
+			.map((a) => {
+				if (a.path) remember(a.path, nodeId('annexes', a.key));
+				return {
+					key: a.key,
+					name: a.display_name ?? (a.label ? `Bijlage ${a.label}` : 'Bijlage'),
+					title: a.title
+				};
+			})
 	);
 
 /** Every division of the law `bwb` once, with its anchor in the whole law. */

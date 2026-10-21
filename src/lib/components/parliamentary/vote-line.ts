@@ -29,7 +29,7 @@ type VoteLineParts = {
 	sides: VoteSide[];
 };
 
-const TONE = { aangenomen: 'ja', verworpen: 'nee' } as const;
+const TONE = { aangenomen: 'ja', verworpen: 'nee', ingetrokken: 'open' } as const;
 
 /** `120 voor, 30 tegen, 1 niet deelgenomen`: every choice the tally counts, voor first. */
 function tallyWords(tally: Record<string, number> | null | undefined): string | null {

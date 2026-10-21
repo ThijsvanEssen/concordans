@@ -3,8 +3,9 @@
 	import { capitalize } from '$lib/text/words';
 	import NavKolom from './NavKolom.svelte';
 	// The table of contents of the law in Lezen: the name of the law, the title of the
-	// current section under it, and the articles, the active one marked.
-	import { lawArticles, type LawArticle } from '$lib/bron/law-articles';
+	// current section under it, and the articles, the active one marked; after them its
+	// bijlagen with a text of their own.
+	import { lawAnnexes, lawArticles, type LawAnnex, type LawArticle } from '$lib/bron/law-articles';
 	import { parseAnchor } from '$lib/text/anchor';
 	import { artikelAnker, layersOf } from '$lib/text/division';
 	import { scrollInReader } from '$lib/bron/landing';
@@ -54,10 +55,15 @@
 	// list is the one the place line above the article reads ($lib/api/law-articles).
 	const articleList = load(
 		() => currentBwb,
-		(bwb): Promise<LawArticle[]> => (bwb ? lawArticles(bwb) : Promise.resolve([])),
+		async (bwb): Promise<{ articles: LawArticle[]; annexes: LawAnnex[] }> =>
+			bwb
+				? { articles: await lawArticles(bwb), annexes: await lawAnnexes(bwb) }
+				: { articles: [], annexes: [] },
 		'Inhoudsopgave'
 	);
-	const items = $derived(articleList.state.status === 'ready' ? articleList.state.data : []);
+	const ready = $derived(articleList.state.status === 'ready' ? articleList.state.data : null);
+	const items = $derived(ready?.articles ?? []);
+	const annexes = $derived(ready?.annexes ?? []);
 
 	// A tree of groups from each article's breadcrumb; articles without one go into "Overig".
 	function buildGroups(flat: Item[]): Group[] | null {
@@ -276,6 +282,17 @@
 				{/each}
 			</ol>
 		{/if}
+		{#if articleList.state.status === 'ready' && annexes.length > 0}
+			<ol class="list annexes" aria-label="Bijlagen">
+				{#each annexes as annex (annex.key)}
+					<li>
+						<a class="nav-kolom__rij" href={bronHref({ collection: 'annexes', key: annex.key })}
+							>{annex.title ? `${annex.name} ${annex.title}` : annex.name}</a
+						>
+					</li>
+				{/each}
+			</ol>
+		{/if}
 	</NavKolom>
 {/if}
 
@@ -288,6 +305,20 @@
 
 	.tree {
 		padding-bottom: var(--s-5);
+	}
+	/* The bijlagen after the articles, each a part of the law as a hoofdstuk is: set off as
+	   one part is from the next, its name as theirs, in line with their names past the caret. */
+	.annexes {
+		margin-top: var(--s-3);
+		border-top: 1px solid var(--rule);
+		padding-top: var(--s-2);
+	}
+	.annexes :global(.nav-kolom__rij) {
+		padding-left: calc(var(--s-4) + var(--s-2) + 10px);
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		font-weight: 600;
+		color: var(--ink);
 	}
 
 	.group {

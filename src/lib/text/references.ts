@@ -2,7 +2,8 @@
 // citation per target (`citations`); the text names a target again, or names only a law or a
 // division of it, in `references`. Each such mention becomes a span to the same target: the
 // article a citation already resolved, the law by its BWB id, a division of the law where its
-// list of articles names it. A mention whose target is unknown stays text: no dead link.
+// list of articles names it, an EU act or a bijlage the API names as its `target` and holds.
+// A mention whose target is unknown stays text: no dead link.
 import type { Schema } from '$lib/api/types';
 import type { Span } from './segments';
 
@@ -78,6 +79,16 @@ const lawTarget = (bwb: string): Span['target'] => ({
 	display_name: null
 });
 
+const heldTarget = (t: NonNullable<Reference['target']>): Span['target'] => ({
+	id: t.id,
+	key: t.key,
+	collection: t.collection,
+	bwb_id: null,
+	official_id: null,
+	article_number: null,
+	display_name: null
+});
+
 /** Whether a reference names a division of the law `law` (its list is needed to place it). */
 export const namesOwnDivision = (references: readonly Reference[], law: string | null) =>
 	!!law &&
@@ -117,6 +128,12 @@ export function referenceSpans(
 		const article = resolvedArticle(ref, citations);
 		if (article) {
 			added.push({ ...base, target: article });
+			continue;
+		}
+		// An EU act or a bijlage, where the data holds it (`target.exists`).
+		const held = !ref.bwb_id && ref.target?.exists ? ref.target : null;
+		if (held) {
+			added.push({ ...base, kind: 'instrument', target: heldTarget(held) });
 			continue;
 		}
 		if (!ref.bwb_id || ref.article) continue;
