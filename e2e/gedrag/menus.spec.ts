@@ -83,8 +83,13 @@ for (const c of MENUS) {
 		const menu = page.getByRole('menu', { name: c.menu });
 		await expect(menu).toBeVisible();
 		const url = page.url();
-		// The heading of the page: outside the menu, and nothing that a tap would follow.
-		await page.getByRole('heading', { level: 1 }).tap();
+		// Outside the menu, in the page's left margin (nothing that a tap would follow): under
+		// the menu, or above it where it stands up to the bottom of the screen. Not the
+		// heading: a menu that opens upwards can stand over it.
+		const box = (await menu.boundingBox())!;
+		const below = box.y + box.height + 20;
+		const height = page.viewportSize()!.height;
+		await page.touchscreen.tap(8, below < height ? below : box.y - 20);
 		await expect(menu).toBeHidden();
 		expect(page.url()).toBe(url);
 	});
