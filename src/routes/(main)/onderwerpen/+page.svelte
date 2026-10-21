@@ -363,9 +363,9 @@
 	<header class="blad__kop">
 		<h1 class="blad__titel">Gevolgde onderwerpen</h1>
 		{#if gedeeld.length}
-			<div class="acties">
+			<div class="blad__acties">
 				{#if alGevolgd}
-					<a href="/onderwerpen">Gevolgd. Naar de eigen onderwerpen</a>
+					<TekstLink href="/onderwerpen">Gevolgd. Naar de eigen onderwerpen</TekstLink>
 				{:else}
 					<button type="button" class="btn is-groot" onclick={volgGedeeld}
 						>Volg deze onderwerpen</button
@@ -373,8 +373,8 @@
 				{/if}
 			</div>
 		{:else if eigen.length}
-			<div class="acties">
-				<a href={deelAdres(eigen)}>Adres van deze onderwerpen</a>
+			<div class="blad__acties">
+				<TekstLink href={deelAdres(eigen)}>Adres van deze onderwerpen</TekstLink>
 				<TekstLink onclick={kopieer}>{gekopieerd ? 'Gekopieerd' : 'Kopieer'}</TekstLink>
 			</div>
 		{/if}
@@ -422,7 +422,7 @@
 				standaardOpen
 			>
 				{#snippet naast()}
-					<span class="acties">
+					<span class="onderwerp-acties">
 						{#if !gedeeld.length}
 							{#if isWords(o)}
 								<TekstLink
@@ -566,7 +566,8 @@
 		margin: var(--s-2) 0 0;
 		font-size: var(--t-meta);
 	}
-	.acties {
+	/* A topic's own actions, at the right of its heading. */
+	.onderwerp-acties {
 		display: inline-flex;
 		flex-wrap: wrap;
 		align-items: baseline;
@@ -574,7 +575,7 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
-	.acties a,
+	.onderwerp-acties a,
 	.verder a {
 		color: var(--ink-2);
 		text-decoration: underline;

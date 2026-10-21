@@ -76,8 +76,35 @@ describe('the frame of a page', () => {
 		expect(overzicht).toMatch(/class="blad__lijst"/);
 		const view = bron('lib/map/MapView.svelte');
 		expect(view).toMatch(/<article class="bundel blad__indeling"/);
-		expect(view).toMatch(/class="[^"]*\bblad__acties\b/);
+		expect(view).toMatch(/class="blad__acties"/);
 		expect(view).toMatch(/class="inhoud blad__lijst"/);
+	});
+
+	it('puts the actions of a head in .blad__acties, none in a bar of its own', () => {
+		// After A38: Actueel and Gevolgd had their own .acties; the head's actions are one form.
+		const eigen = /class="(?:[^"]*\s)?acties[\s"]/;
+		expect(
+			overtreders(
+				(t) =>
+					t.includes('blad__kop') &&
+					(eigen.test(t) ||
+						regels(t).some((r) => r.selector.split(',').some((s) => /\.acties\b/.test(s))))
+			)
+		).toEqual([]);
+		for (const path of [
+			'routes/(main)/actueel/+page.svelte',
+			'routes/(main)/onderwerpen/+page.svelte',
+			'routes/(main)/bundels/+page.svelte',
+			'lib/map/MapView.svelte'
+		])
+			expect(bron(path), path).toMatch(/class="blad__acties"/);
+	});
+
+	it('starts the Inhoudsopgave of a bundel on its first group, not on what stands over it', () => {
+		// As Bronnen and Gevolgd: what stands over the groups is a row of its own.
+		expect(bron('lib/map/MapView.svelte')).toMatch(
+			/class="voor blad__lijst"[\s\S]*<Inhoudsopgave[\s\S]*class="inhoud blad__lijst"/
+		);
 	});
 
 	it('lists the groups of a page in its left column through one component (Inhoudsopgave)', () => {

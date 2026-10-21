@@ -74,6 +74,26 @@ test('the overview opens a bundel in place; its page groups what it keeps', asyn
 	).toHaveAttribute('aria-expanded', 'true');
 });
 
+test('the Inhoudsopgave of a bundel starts on its first group, as Bronnen’s', async ({
+	page,
+	touch
+}) => {
+	test.skip(touch, 'a phone has no Inhoudsopgave');
+	await keepArticle(page);
+	await keepPlaces(page);
+	await page.goto('/bundels/losse-markeringen');
+	const eersteLink = page
+		.getByRole('navigation', { name: 'Groepen van Losse markeringen' })
+		.getByRole('link')
+		.first();
+	const eerste = page.getByRole('heading', { level: 3, name: 'Burgerlijk Wetboek Boek 6' });
+	await expect(eersteLink).toBeVisible();
+	await expect(eerste).toBeVisible();
+	const lijn = (await eersteLink.boundingBox())!;
+	const kop = (await eerste.boundingBox())!;
+	expect(Math.abs(lijn.y + lijn.height / 2 - (kop.y + kop.height / 2))).toBeLessThan(8);
+});
+
 test('two tabs keep at the same time and each sees what the other kept', async ({ context }) => {
 	const one = await context.newPage();
 	const two = await context.newPage();

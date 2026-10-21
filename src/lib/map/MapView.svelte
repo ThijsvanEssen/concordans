@@ -198,7 +198,7 @@
 {/snippet}
 
 {#snippet actions()}
-	<span class="acties blad__acties">
+	<span class="blad__acties">
 		{#if b.items.length}
 			<TekstLink href={netwerkHref(b.items) ?? undefined}>Netwerk</TekstLink>
 		{/if}
@@ -288,7 +288,7 @@
 	</span>
 {/snippet}
 
-{#snippet content()}
+{#snippet voor()}
 	{#if renaming && m}
 		{@const own = m}
 		<form
@@ -377,6 +377,9 @@
 	{#if fresh}<p class="nieuw-regel">
 			{#if fresh.any}<NewMark since={fresh.since} />{/if}
 		</p>{/if}
+{/snippet}
+
+{#snippet content()}
 	{#if !b.items.length}
 		<p class="leeg stil">Nog niets bewaard.</p>
 	{:else}
@@ -419,7 +422,10 @@
 		<h1 class="blad__titel" tabindex="-1">{b.naam}</h1>
 		{@render actions()}
 	</header>
-	<!-- The groups of the bundel, as Bronnen's column holds its groups: a way to each. -->
+	<!-- The name, the question and the working line over the groups; the groups of the bundel
+	     in the next row, as Bronnen's column holds its groups: a way to each, its first line on
+	     the first group's (Inhoudsopgave). -->
+	<div class="voor blad__lijst">{@render voor()}</div>
 	{#if b.volgorde === 'groep' && groups.length > 1}
 		<Inhoudsopgave
 			label="Groepen van {b.naam}"
@@ -431,10 +437,14 @@
 </article>
 
 <style>
+	.voor,
 	.inhoud {
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-2);
+	}
+	.voor {
+		margin-bottom: var(--s-2);
 	}
 	/* One line: the view and the order at the left, Alles uitklappen at the right. */
 	.werkregel {
@@ -520,12 +530,12 @@
 		.bundel :global(h3) {
 			break-after: avoid;
 		}
-		.acties,
+		.blad__acties,
 		.erbij,
 		.werkregel,
 		.vraag,
 		.nieuw-regel,
-		.inhoud :global(.aantekening:has(.aantekening-veld)) {
+		.voor :global(.aantekening:has(.aantekening-veld)) {
 			display: none;
 		}
 		.papier {

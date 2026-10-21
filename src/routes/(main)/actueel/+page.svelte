@@ -561,7 +561,7 @@
 		<div>
 			<h1 class="blad__titel">Actueel</h1>
 		</div>
-		<div class="acties">
+		<div class="blad__acties">
 			<a class="btn is-groot" href={atom} rel="alternate" type="application/atom+xml">Atom-feed</a>
 			{#if q.length}
 				{#if gevolgd}
@@ -715,11 +715,6 @@
 		margin: var(--s-1) 0 0;
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-	.acties {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--s-2);
 	}
 	/* The field and the period on one line, without rules around it. */
 	.regel {
