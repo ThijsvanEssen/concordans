@@ -1,6 +1,6 @@
 // The parliamentary record: a dossier with its stand and procedure, a stuk opened in place, a
-// Kamerstuk with its indiener, a vote with its outcome per fractie, and a memorie van
-// toelichting beside the article it explains.
+// Kamerstuk with its indiener and its vote at rest, a vote with its outcome per fractie, a
+// passed bill with its law, and a memorie van toelichting beside the article it explains.
 import { expect, test } from '../support/test';
 
 test('a dossier shows where it stands and opens a stuk of its procedure in place', async ({
@@ -37,6 +37,34 @@ test('a Kamerstuk names its indiener and its dossier, and folds out its vote', a
 	const vote = page.getByRole('button', { name: 'Stemming', exact: true });
 	await vote.click();
 	await expect(vote).toHaveAttribute('aria-expanded', 'true');
+	// The vote the head already says is not said again: the section has the earlier one.
+	const sectie = page
+		.locator('section')
+		.filter({ has: page.getByRole('heading', { name: 'Stemming', exact: true }) });
+	await expect(sectie).toContainText('Uitstellen op 22 september 2026');
+	await expect(sectie).not.toContainText('Aangenomen');
+});
+
+test('a motie says at rest how the Kamer voted on it, and which fracties', async ({ page }) => {
+	await page.goto('/kamerstukken/36799/31?lezen=1');
+	await expect(page.getByText('Aangenomen op 29 september 2026, 120 voor, 30 tegen')).toBeVisible();
+	await expect(page.getByText(/^D66, VVD, PVV/)).toBeVisible();
+	await expect(page.getByText('PRO, Groep Markuszower, PvdD')).toBeVisible();
+	// The stemming itself is one step further, by its day.
+	await expect(page.getByRole('link', { name: '29 september 2026' })).toHaveAttribute(
+		'href',
+		/\/stemmingen\/decision_1b1d379a_01c9_495c_a25e_108e9b87ab2e/
+	);
+});
+
+test('a passed bill names the law it made and the day it came into force', async ({ page }) => {
+	await page.goto('/dossiers/36496');
+	await expect(
+		page.getByText('Vastgesteld als Wet betaalbare huur; in werking getreden op 1 juli 2024.')
+	).toBeVisible();
+	await expect(
+		page.getByRole('link', { name: 'Wet betaalbare huur', exact: true }).first()
+	).toHaveAttribute('href', /\/wetten\/BWBR0049889/);
 });
 
 test('a vote gives its outcome and the vote of each fractie', async ({ page }) => {

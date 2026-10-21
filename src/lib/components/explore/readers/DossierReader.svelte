@@ -25,6 +25,7 @@
 	import { getDossier } from '$lib/api/dossiers';
 
 	import StandBalk from '$lib/components/parliamentary/StandBalk.svelte';
+	import PassedLaw from '$lib/components/parliamentary/PassedLaw.svelte';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
 	import CoalitieRegel from '$lib/components/parliamentary/CoalitieRegel.svelte';
 	import type { CoalitieBij } from '$lib/components/parliamentary/coalitie';
@@ -157,6 +158,8 @@
 					{/if}
 				{/snippet}
 				<StandBalk {d} />
+				<!-- Where it ended: the law it made and its day in force (productcheck 0.80, 4). -->
+				<PassedLaw dossier={d} />
 				<!-- An open bill: the Kamer records no withdrawal, so no end is not "still running". -->
 				{#if coverageLine(d.completeness)}<p class="reading">
 						<Coverage coverage={d.completeness} />

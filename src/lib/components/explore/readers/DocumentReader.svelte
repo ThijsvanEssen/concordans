@@ -44,6 +44,8 @@
 	import { afterTick } from '$lib/util/after-tick';
 	import SubmitterLine from '$lib/bron/SubmitterLine.svelte';
 	import StemmingUitslag from '$lib/components/parliamentary/StemmingUitslag.svelte';
+	import VoteLine from '$lib/components/parliamentary/VoteLine.svelte';
+	import { decidingVote } from '$lib/components/parliamentary/vote-line';
 	import Vervanging from '$lib/components/parliamentary/Vervanging.svelte';
 	import { eigenUitslag, vervanging } from '$lib/components/parliamentary/vervanging';
 	import { fromDocument } from '$lib/bron/submitters';
@@ -369,6 +371,10 @@
 					<!-- What of its references is linked; without text, the text says why. -->
 					{#if doc.text}<Coverage coverage={doc.completeness} />{/if}
 				{/snippet}
+				<!-- The vote that settled it, at rest: what a reader comes for (productcheck 0.80, 4).
+				     A replaced stuk was not voted on as itself. -->
+				{@const deciding = eigenUitslag(doc) ? decidingVote(doc.decisions, doc.decision) : null}
+				{#if deciding}<VoteLine decision={deciding} />{/if}
 			</ReaderHead>
 
 			{#if toegelicht.length > 0}
@@ -388,7 +394,10 @@
 			{/if}
 
 			<!-- A replaced stuk has no outcome of its own: the stuk that replaced it came to the vote. -->
-			<StemmingUitslag decisions={eigenUitslag(doc) ? (doc.decisions ?? []) : []} />
+			<StemmingUitslag
+				decisions={eigenUitslag(doc) ? (doc.decisions ?? []) : []}
+				except={decidingVote(doc.decisions, doc.decision)?.key}
+			/>
 
 			{#if doc.text}
 				<div class="body" bind:this={root} use:kantlijn use:placeColumn={entries}>

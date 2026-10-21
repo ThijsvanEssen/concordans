@@ -4,7 +4,7 @@
 	// What a row shows when it opens (Actueel, Gevolgd; a Kamerstuk in Verbonden, Bronnen and
 	// Bundels): the bron's own content, read in place, not a panel of actions (Thijs, 10 Oct: "doet niet zoveel behalve een extra klik
 	// toevoegen"). Nothing the row says already comes back. A motie its dictum, an amendement
-	// its toelichting, another stuk the opening of its text, a stemming its bar, a uitspraak its
+	// its toelichting, another stuk the opening of its text, a stemming its bar and its fracties, a uitspraak its
 	// inhoudsindicatie, a publication its changes, an inwerkingtreding the publication that
 	// brought it (Wijzigingen); asked when the row opens (one request, shared with the reader), a motie's
 	// dictum from the feed itself where it has one. A paper the feed says has no text yet does
@@ -14,6 +14,7 @@
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';
 	import Wijzigingen from './Wijzigingen.svelte';
+	import VoteLine from '$lib/components/parliamentary/VoteLine.svelte';
 	import { rowText } from './requests';
 	import { inhoudVan, kernUitLijst, type Inhoud, type MetInhoud } from './rij-inhoud';
 
@@ -64,6 +65,11 @@
 		<div class="balk" role="img" aria-label={tallySentence} title={tallySentence}>
 			<div class="voor" style:width="{(tally.voor / (tally.voor + tally.tegen)) * 100}%"></div>
 		</div>
+		<!-- And the fracties on each side, asked as the row opens: the line of the stuk's head. -->
+		{#if item.node.collection === 'decisions'}<VoteLine
+				decisionKey={item.node.key}
+				head={false}
+			/>{/if}
 	{:else if content === 'samenvatting'}
 		<p class="tekst">{item.summary}</p>
 	{:else if content === 'wijzigingen' || content === 'inwerkingtreding'}

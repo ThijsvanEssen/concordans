@@ -66,7 +66,7 @@ const zinsdeel = (t: string) =>
 		.replace(/[.;,:]+$/, '');
 
 /** A kind as a label, for every kind the API names (SeatEventKind): a new kind is a type error. */
-export const SOORT: Record<Schema<'SeatEventKind'>, string> = {
+const SOORT: Record<Schema<'SeatEventKind'>, string> = {
 	verkiezing: 'Verkiezing',
 	afsplitsing: 'Afsplitsing',
 	overstap: 'Overstap',

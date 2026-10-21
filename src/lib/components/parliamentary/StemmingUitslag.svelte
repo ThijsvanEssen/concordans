@@ -1,143 +1,34 @@
 <script lang="ts">
-	import { choiceRank } from '$lib/components/parliamentary/stemming';
-	// The vote on a motie or an amendement, on the page of the stuk itself (API 0.73, BE-33):
-	// the outcome and the day, the seats for and against, and the fracties on each side. The
-	// stuk names its decisions; the fracties of the Tweede Kamer are in the decision's votes,
-	// those of the Eerste Kamer in its own lists. The outcome stands first, in shape, colour and
-	// word, the seats beside it, so it reads at once without scrolling, on a phone too (Thijs,
-	// 9 Oct: "De uitslag moet duidelijk zijn"); docs/typografie.md.
+	// Every vote taken on a motie or an amendement, on the page of the stuk itself (API 0.73,
+	// BE-33), each in the one form of a vote's outcome (VoteLine): an earlier
+	// "Uitstellen" too. The vote that settled it stands in the head, at rest, and not again
+	// here (`except`): each vote is said once.
 	import type { Schema } from '$lib/api/types';
-	import { abortable, getDecision } from '$lib/api/records';
-	import LoadState from '$lib/components/ui/LoadState.svelte';
-	import { load } from '$lib/util/load.svelte';
-	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
-	import { decisionOutcome, decisionResult } from '$lib/components/explore/index/decision-kind';
-	import { ekFactionGroups } from '$lib/components/explore/readers/voters';
-	import { langeDatum } from '$lib/text/datum';
-	import Uitkomst from './Uitkomst.svelte';
-	import Stem from './Stem.svelte';
+	import VoteLine from './VoteLine.svelte';
 
-	type Decision = Schema<'DecisionDTO'>;
+	let {
+		decisions,
+		except = null
+	}: {
+		decisions: Schema<'DecisionDTO'>[];
+		/** The key of the vote the head already says. */
+		except?: string | null;
+	} = $props();
 
-	let { decisions }: { decisions: Decision[] } = $props();
-
-	// The fracties of the Tweede Kamer are in each decision's votes; the outcome and the tally
-	// stand without them.
-	const tkKeys = $derived(decisions.filter((d) => d.chamber !== 'EK').map((d) => d.key));
-	const votes = load(
-		() => tkKeys.join(','),
-		(_, signal) =>
-			Promise.all(
-				tkKeys.map((key) => abortable(getDecision(key), signal).then((d) => [key, d] as const))
-			).then((found) => new Map(found)),
-		'Stemming'
-	);
-	const details = $derived(
-		votes.state.status === 'ready' ? votes.state.data : new Map<string, Decision>()
-	);
-
-	/** The fracties per side: Voor, Tegen, and any other choice the source gives. */
-	function sides(d: Decision): { label: string; names: string[] }[] {
-		if (d.chamber === 'EK') return ekFactionGroups(d);
-		const full = details.get(d.key);
-		const by = Map.groupBy(full?.votes ?? [], (v) => v.choice);
-		return [...by.keys()]
-			.sort((a, b) => choiceRank(a) - choiceRank(b))
-			.map((c) => ({ label: c, names: by.get(c)!.map((v) => v.name?.trim() || v.voter_id) }));
-	}
-
-	/** Aangenomen (also without a vote) a filled box, verworpen an open one, else dashed. */
-	const SOORT = { aangenomen: 'ja', verworpen: 'nee' } as const;
-	const soortVan = (d: Decision) => {
-		const result = decisionResult(d);
-		return result ? SOORT[result] : 'open';
-	};
-
-	/** "120 voor, 30 tegen" from the tally; empty for a decision without votes. */
-	function telling(d: Decision): string {
-		const tally = details.get(d.key)?.tally ?? d.tally ?? {};
-		return Object.entries(tally)
-			.map(([keuze, zetels]) => `${zetels} ${keuze.toLowerCase()}`)
-			.join(', ');
-	}
+	const rest = $derived(decisions.filter((d) => d.key !== except));
 </script>
 
-{#if decisions.length > 0}
+{#if rest.length > 0}
 	<Sectie title="Stemming" collection="decisions">
-		{#each decisions as d (d.key)}
-			{@const uitslag = decisionOutcome(d)}
-			{@const tally = telling(d)}
-			<div class="stemming">
-				<p class="uitslag">
-					<Uitkomst tone={soortVan(d)} woord={uitslag ?? 'Stemming'} />{#if tally}<span
-							class="telling">{tally}</span
-						>{/if}
-				</p>
-				{#if d.date}
-					<p class="wanneer">
-						<BronLink ref={`decisions/${d.key}`}>Stemming op {langeDatum(d.date)}</BronLink>
-					</p>
-				{/if}
-				{#each sides(d) as side (side.label)}
-					{#if side.names.length > 0}
-						<p class="kant">
-							<span class="kant-naam"><Stem keuze={side.label} /></span>
-							{side.names.join(', ')}
-						</p>
-					{/if}
-				{/each}
-			</div>
+		{#each rest as d (d.key)}
+			<div class="stemming"><VoteLine decision={d} /></div>
 		{/each}
-		{#if votes.state.status === 'error'}
-			<LoadState state={votes.state} what="De stemming per fractie" retry={votes.retry} />
-		{/if}
 	</Sectie>
 {/if}
 
 <style>
-	.stemming {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-1);
-	}
 	.stemming + .stemming {
 		margin-top: var(--s-3);
-	}
-	/* The outcome at the size of a section heading, the seats beside it. */
-	.uitslag {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		gap: var(--s-1) var(--s-3);
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-h3);
-		color: var(--ink);
-	}
-	.telling {
-		font-size: var(--t-body);
-		color: var(--ink-2);
-	}
-	.wanneer {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	/* Voor and Tegen in the margin column, the fracties at the text edge, wrapping there. */
-	.kant {
-		display: grid;
-		grid-template-columns: minmax(var(--reader-term, var(--s-8)), max-content) minmax(0, 1fr);
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		line-height: var(--lh-snug);
-		color: var(--ink-2);
-	}
-	.kant-naam {
-		padding-right: var(--s-2);
-		font-weight: 600;
-		color: var(--ink);
 	}
 </style>

@@ -1,6 +1,6 @@
 // The parliamentary small things said once (code-eenvoud F48–F62).
 import { describe, expect, it } from 'vitest';
-import { overtreders, plek } from '$lib/test/bronnen';
+import { bron, overtreders, plek } from '$lib/test/bronnen';
 
 describe('the parliamentary things said once (code-eenvoud F48–F62)', () => {
 	it('takes the ministries, their order and their renamings from the API (F48)', () => {
@@ -81,6 +81,28 @@ describe('the parliamentary things said once (code-eenvoud F48–F62)', () => {
 			overtreders(
 				(t) => /['"]Openstaand['"]/.test(t),
 				[plek('lib/components/explore/index/government.ts')]
+			)
+		).toEqual([]);
+	});
+
+	it('reads the outcome of a vote in one form, VoteLine, wherever it stands at rest or opens', () => {
+		// The head of a motie or amendement, its Stemming section and the opened row of a stemming
+		// (Stemmingen, Actueel, a lid's votes) say the outcome and the fracties alike (A98).
+		for (const pad of [
+			'lib/components/explore/readers/DocumentReader.svelte',
+			'lib/components/parliamentary/StemmingUitslag.svelte',
+			'lib/components/open/RijInhoud.svelte'
+		])
+			expect(bron(pad), pad).toMatch(/<VoteLine\b/);
+		// The fracties per side are drawn there only, and on the stemming's own page in full.
+		expect(
+			overtreders(
+				(t) => /\bekFactionGroups\(|Map\.groupBy\([^)]*\.choice\)/.test(t),
+				[
+					plek('lib/components/parliamentary/vote-line.ts'),
+					plek('lib/components/explore/readers/voters.ts'),
+					plek('lib/components/explore/readers/DecisionReader.svelte', 'the stemming in full')
+				]
 			)
 		).toEqual([]);
 	});
