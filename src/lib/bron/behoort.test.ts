@@ -335,6 +335,12 @@ describe('the lines of every kind of bron', () => {
 			expect(lines(behoort(c, {}, light([one('ABOUT', 'dossiers')])))).toEqual([
 				['dossier', 'Over', ['Dossier'], false, false]
 			]);
+		// A toezegging's dossier by the letter that fulfils it is its dossier; one only on the
+		// agenda of its debate is not (the reader names it under Besproken).
+		const about = (basis: string) =>
+			lines(behoort('commitments', {}, light([one('ABOUT', 'dossiers', {}, { basis })])));
+		expect(about('nakoming')).toEqual([['dossier', 'Over', ['Dossier'], false, false]]);
+		expect(about('agenda')).toEqual([]);
 		expect(lines(behoort('instruments', {}, light([one('LEGISLATED_IN', 'dossiers')])))).toEqual([
 			['wetsvoorstel', 'Wetsvoorstel', ['Dossier'], false, false]
 		]);

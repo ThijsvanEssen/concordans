@@ -22,6 +22,7 @@ import { passageOf, type Row } from './rows';
 import { uitsnede, type PassageParts } from './passage';
 import { confidenceWord } from './filter';
 import { votesSentence } from '$lib/components/parliamentary/stemming';
+import { onAgendaOnly, DISCUSSED_IN_DEBATE } from '$lib/text/toezegging';
 
 /**
  * A word of the line in the meta letter: `Herkend in de tekst` reads `herkend in de tekst`
@@ -307,7 +308,10 @@ const HOE: Partial<Record<Relation, (c: HoeContext) => Hoe | null | undefined>> 
 		const wat = textOf(edge.description);
 		return wat ? regel(null, wat, 'Verdragenbank') : undefined;
 	},
-	ABOUT: ({ other, props, regel }) => {
+	ABOUT: ({ other, edge, props, regel }) => {
+		// A toezegging on the agenda of its debate only: discussed there, perhaps not about it.
+		if (other === 'commitments')
+			return onAgendaOnly(edge.basis) ? regel(DISCUSSED_IN_DEBATE, null, null) : undefined;
 		if (other !== 'decisions') return undefined;
 		const besluit =
 			textOf(props.decision_text)?.replace(/\.$/, '') ??

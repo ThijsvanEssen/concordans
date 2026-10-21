@@ -18,7 +18,7 @@
 	import { ministryName } from '$lib/components/explore/index/ministries.svelte';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
-	import { nagekomenIn, toegezegdIn } from '$lib/components/parliamentary/toezegging';
+	import { discussedIn, dossiersByBasis, nagekomenIn, toegezegdIn } from '$lib/text/toezegging';
 	import { load } from '$lib/util/load.svelte';
 	import { report } from '$lib/api/errors';
 	import { officialNumber } from '$lib/bron/dossier-naam';
@@ -43,6 +43,12 @@
 
 	const today = vandaag();
 </script>
+
+{#snippet dossier(d: { key: string; number: string | null; title: string | null })}
+	<BronLink ref={{ collection: 'dossiers', key: d.key, number: d.number ?? d.key }}
+		>{d.number ? officialNumber(d.number) : ''}{d.title ? ` ${d.title}` : ''}</BronLink
+	>
+{/snippet}
 
 <ReaderFrame state={commitment.state} what="Toezegging" retry={commitment.retry}>
 	{#snippet children(c)}
@@ -109,15 +115,29 @@
 				<Veld label="Verwacht" value={c.expected_resolution} nodig>
 					<span class="nums">{langeDatum(c.expected_resolution)}</span>
 				</Veld>
-				<Veld label={plural(c.dossiers?.length ?? 0, 'Dossier', 'Dossiers')} value={c.dossiers}>
+				<!-- The dossier it is about (by the letter that fulfils it); a dossier only on the
+				     agenda of its debate under "Besproken", never as its dossier (toezegging.ts). -->
+				{@const { own, agenda } = dossiersByBasis(uniqueBy(c.dossiers ?? [], (d) => d.key))}
+				<Veld label={plural(own.length, 'Dossier', 'Dossiers')} value={own}>
 					<span class="dossiers">
-						{#each uniqueBy(c.dossiers ?? [], (d) => d.key) as d (d.key)}
-							<BronLink ref={{ collection: 'dossiers', key: d.key, number: d.number ?? d.key }}
-								>{d.number ? officialNumber(d.number) : ''}{d.title ? ` ${d.title}` : ''}</BronLink
-							>
-						{/each}
+						{#each own as d (d.key)}{@render dossier(d)}{/each}
 					</span>
 				</Veld>
+				{#if agenda.length}
+					{@const discussed = discussedIn(c.activity)}
+					<Veld label={discussed.label} value={agenda}>
+						<span class="dossiers">
+							<span
+								>{#if discussed.link && c.activity}{discussed.before}
+									<BronLink ref={`activities/${c.activity.key}`}>{discussed.link}</BronLink
+									>{:else}{discussed.before}{/if}</span
+							>
+							<span class="dossiers agenda">
+								{#each agenda as d (d.key)}{@render dossier(d)}{/each}
+							</span>
+						</span>
+					</Veld>
+				{/if}
 			</Feiten>
 
 			{#if c.member}
@@ -164,6 +184,11 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-1);
+	}
+	/* The agenda of the debate under its line, a step in: its dossiers, not the toezegging's. */
+	.agenda {
+		padding-left: var(--s-4);
+		font-size: var(--t-meta);
 	}
 	.alle {
 		margin: var(--s-3) 0 0;

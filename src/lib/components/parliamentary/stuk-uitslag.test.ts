@@ -2,7 +2,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { stukUitslag, uitslagTekst } from './stuk-uitslag';
-import { nagekomenIn, toegezegdIn } from './toezegging';
+import { nagekomenIn, toegezegdIn } from '$lib/text/toezegging';
 
 describe('the outcome of a motie or amendement', () => {
 	it('reads the outcome, the seats and the day, and links the stemming', () => {

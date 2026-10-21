@@ -161,3 +161,117 @@ test('a memorie van toelichting opens beside its article and closes again', asyn
 	await expect(page).not.toHaveURL(/naast=/);
 	await expect(page.getByText('Kamerstukken II 2016/17, 34702, nr. 3.')).toHaveCount(0);
 });
+
+/** The shape of #888: why a toezegging is about a dossier, on the record and on its edge. */
+const TZ_NAKOMING = '02bd9062_c94a_429d_a6c9_0ff2218640f4'; // TZ202603-117, kept by 29389 nr. 186
+const TZ_AGENDA = 'b354a773_4df6_4f02_bc4e_5d24e784b458'; // TZ202603-106, open
+const TZ_ROW_NAKOMING = '293d314e_184d_4f69_b698_3d233772d590'; // TZ202603-121
+type Rec = Record<string, unknown>;
+/** Every `ABOUT` edge of a toezegging or a dossier with its basis, by the key at its far end. */
+const metBasis = (v: unknown, basis: (key: string) => string): unknown => {
+	if (Array.isArray(v)) return v.map((x) => metBasis(x, basis));
+	if (!v || typeof v !== 'object') return v;
+	const o = v as Rec;
+	const rand =
+		o.relation === 'ABOUT' && typeof o.key === 'string'
+			? { ...o, meta: { ...(o.meta as Rec), basis: basis(o.key) } }
+			: o;
+	return Object.fromEntries(Object.entries(rand).map(([k, x]) => [k, metBasis(x, basis)]));
+};
+
+test('a toezegging names its dossier by the letter that fulfils it, else the debate it was discussed in', async ({
+	page
+}) => {
+	await patchApi(page, /^\/api\/commitments\/[0-9a-f_]+$/, (t) => ({
+		...t,
+		dossiers:
+			t.key === TZ_NAKOMING
+				? [
+						{
+							key: '29389',
+							number: '29389',
+							title: 'Vergrijzing en het integrale ouderenbeleid',
+							short_title: null,
+							basis: 'nakoming',
+							path: '/dossiers/29389'
+						}
+					]
+				: (t.dossiers as Rec[]).map((d) => ({ ...d, basis: 'agenda' }))
+	}));
+	await patchApi(
+		page,
+		new RegExp(`^/api/nodes/commitments/${TZ_AGENDA}`),
+		(n) => metBasis(n, () => 'agenda') as Rec
+	);
+
+	await page.goto('/toezeggingen/TZ202603-117');
+	const feiten = page.locator('dl');
+	await expect(feiten.getByRole('link', { name: /^29389 Vergrijzing/ })).toBeVisible();
+	await expect(feiten.getByText('Besproken', { exact: true })).toHaveCount(0);
+
+	await page.goto('/toezeggingen/TZ202603-106');
+	await expect(feiten.getByText('Besproken', { exact: true })).toBeVisible();
+	await expect(feiten.getByRole('link', { name: 'Staat van de Volkshuisvesting' })).toHaveAttribute(
+		'href',
+		/\/activiteiten\/2025A04175/
+	);
+	await expect(feiten.getByRole('link', { name: /^27926 Huurbeleid/ })).toBeVisible();
+	// The agenda of its debate is not its dossier: not as a field, not in the band above.
+	await expect(feiten.getByText(/^Dossiers?$/)).toHaveCount(0);
+	await expect(page.getByText('Over', { exact: true })).toHaveCount(0);
+});
+
+test('a dossier marks a toezegging it only had on the agenda of the debate', async ({
+	page,
+	touch
+}) => {
+	await patchApi(
+		page,
+		/^\/api\/nodes\/dossiers\/36512/,
+		(n) => metBasis(n, (key) => (key === TZ_ROW_NAKOMING ? 'nakoming' : 'agenda')) as Rec
+	);
+	await page.goto('/dossiers/36512');
+	if (touch)
+		await page
+			.getByRole('navigation', { name: 'Panelen' })
+			.getByRole('button', { name: 'Verbonden' })
+			.click();
+	const groep = page.locator('section[data-group="commitments"]');
+	const rij = (begin: RegExp) =>
+		groep.getByRole('listitem').filter({ has: page.getByRole('link', { name: begin }) });
+	await expect(rij(/^Voor de zomer ontvangt de Kamer een brief van de minister/)).toContainText(
+		'Besproken in het debat'
+	);
+	await expect(rij(/^Voor de zomer ontvangt de Kamer de inzet/)).not.toContainText('Besproken');
+});
+
+test('a toezegging in the list names the debate its agenda came from, opened in place too', async ({
+	page
+}) => {
+	await patchApi(page, /^\/api\/commitments\?/, (l) => ({
+		...l,
+		items: (l.items as Rec[]).map((t) => ({
+			...t,
+			dossiers: (t.dossiers as Rec[]).map((d) => ({ ...d, basis: 'agenda' }))
+		}))
+	}));
+	await page.goto('/explore?mode=index');
+	await page
+		.getByRole('main')
+		.getByRole('link', { name: /^Toezeggingen [\d.]+$/ })
+		.click();
+	const rij = page
+		.getByRole('main')
+		.getByRole('listitem')
+		.filter({ hasText: 'De staatssecretaris informeert de Kamer in de voor' })
+		.first();
+	await expect(rij).toContainText(
+		'besproken in het debat over Arbitrage, mediation en herstelrecht'
+	);
+	await expect(rij).not.toContainText('Kamerstuk');
+	await rij.getByRole('link').first().click();
+	await expect(rij.getByText(/^Besproken in het debat over/)).toBeVisible();
+	await expect(
+		rij.getByRole('link', { name: 'Arbitrage, mediation en herstelrecht' })
+	).toBeVisible();
+});

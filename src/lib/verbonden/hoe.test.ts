@@ -314,6 +314,34 @@ describe('hoeVan', () => {
 		expect(h?.citaat?.after).toBe('Artikel 21 Cbw ziet op de zorgplicht.');
 	});
 
+	it('marks a toezegging on the agenda of its debate only as discussed there', () => {
+		const commitment = (basis?: string) =>
+			hoeVan(
+				row({
+					ref: { collection: 'commitments', key: 't' },
+					relation: 'ABOUT',
+					direction: 'inbound',
+					edge: basis ? { basis } : {}
+				}),
+				'dossiers'
+			);
+		expect([commitment('agenda')?.werkwoord, commitment('agenda')?.rest]).toEqual([
+			'Besproken in het debat',
+			null
+		]);
+		// About the dossier (the letter that fulfils it is in it), or no basis yet: its group says so.
+		expect(commitment('nakoming')).toBeNull();
+		expect(commitment()).toBeNull();
+		expect(relationWords('ABOUT', 'commitments', 'dossiers', { basis: 'agenda' })).toEqual({
+			actief: 'besproken in het debat over',
+			terug: 'op de agenda bij',
+			soort: 'toezegging besproken in een debat over een dossier'
+		});
+		expect(relationWords('ABOUT', 'commitments', 'dossiers', { basis: 'nakoming' }).actief).toBe(
+			'over'
+		);
+	});
+
 	it('leaves a letter that fulfils a toezegging to its group', () => {
 		const brief = row({
 			ref: { collection: 'documents', key: 'b' },

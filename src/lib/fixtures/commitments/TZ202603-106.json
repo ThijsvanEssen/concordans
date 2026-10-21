@@ -1,0 +1,95 @@
+{
+	"key": "b354a773_4df6_4f02_bc4e_5d24e784b458",
+	"number": "TZ202603-106",
+	"text": "Dit najaar ontvangt de Kamer een brief over het gesprek dat minister voert met de provincie Zuid-Holland over de uitvoering van de motie-Mooiman (36800-XXII, nr. 18) over woningbouw in Koudekerk doorgang te laten vinden.",
+	"status": "Openstaand",
+	"date": "2026-03-17",
+	"made_on": "2026-03-11",
+	"expected_resolution": null,
+	"minister_name": "Boekholt-O’Sullivan, E.F.",
+	"member": {
+		"key": "dcf84324_c8de_4b0a_905c_3106e1af17e2",
+		"name": "E. Boekholt-O’Sullivan",
+		"function": "Minister van Volkshuisvesting en Ruimtelijke Ordening",
+		"path": "/leden/e-boekholt-osullivan"
+	},
+	"post": "minister",
+	"ministry": "bzk",
+	"cabinet": "jetten",
+	"dossiers": [
+		{
+			"key": "22112",
+			"number": "22112",
+			"title": "Nieuwe Commissievoorstellen en initiatieven van de lidstaten van de Europese Unie",
+			"short_title": null,
+			"basis": "agenda",
+			"path": "/dossiers/22112"
+		},
+		{
+			"key": "27926",
+			"number": "27926",
+			"title": "Huurbeleid",
+			"short_title": null,
+			"basis": "agenda",
+			"path": "/dossiers/27926"
+		},
+		{
+			"key": "29453",
+			"number": "29453",
+			"title": "Woningcorporaties",
+			"short_title": null,
+			"basis": "agenda",
+			"path": "/dossiers/29453"
+		},
+		{
+			"key": "29861",
+			"number": "29861",
+			"title": "Arbeidsmigratie en sociale zekerheid",
+			"short_title": null,
+			"basis": "agenda",
+			"path": "/dossiers/29861"
+		},
+		{
+			"key": "32847",
+			"number": "32847",
+			"title": "Integrale visie op de woningmarkt",
+			"short_title": null,
+			"basis": "agenda",
+			"path": "/dossiers/32847"
+		},
+		{
+			"key": "33104",
+			"number": "33104",
+			"title": "Studentenhuisvesting",
+			"short_title": null,
+			"basis": "agenda",
+			"path": "/dossiers/33104"
+		},
+		{
+			"key": "36496",
+			"number": "36496",
+			"title": "Wijziging van de Wet goed verhuurderschap, Boek 7 van het Burgerlijk Wetboek, de Uitvoeringswet huurprijzen woonruimte en enige andere wetten in verband met de regulering van huurprijzen en de bescherming van rechten van huurders (Wet betaalbare huur)",
+			"short_title": "Wet betaalbare huur",
+			"basis": "agenda",
+			"path": "/dossiers/36496"
+		},
+		{
+			"key": "36512",
+			"number": "36512",
+			"title": "Wijziging van de Algemene wet bestuursrecht, de Huisvestingswet 2014, de Omgevingswet, de Wet maatschappelijke ondersteuning 2015 en de Woningwet in verband met de versterking van de regie op de volkshuisvesting en met het oog op enkele andere met de volkshuisvesting samenhangende maatregelen (Wet versterking regie volkshuisvesting)",
+			"short_title": "Wet versterking regie volkshuisvesting",
+			"basis": "agenda",
+			"path": "/dossiers/36512"
+		}
+	],
+	"activity": {
+		"key": "5df23796_fa6b_4740_8a23_be7308f5e251",
+		"date": "2026-03-11",
+		"number": "2025A04175",
+		"kind": "Commissiedebat",
+		"agenda_title": "Staat van de Volkshuisvesting",
+		"path": "/activiteiten/2025A04175"
+	},
+	"fulfilled_by": [],
+	"path": "/toezeggingen/TZ202603-106"
+}

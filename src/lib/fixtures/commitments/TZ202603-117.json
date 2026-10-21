@@ -1,0 +1,52 @@
+{
+	"key": "02bd9062_c94a_429d_a6c9_0ff2218640f4",
+	"number": "TZ202603-117",
+	"text": "Voor de zomer ontvangt de Kamer de aanpak voor ouderenhuisvesting en doorstroming.",
+	"status": "Afgedaan",
+	"date": "2026-03-17",
+	"made_on": "2026-03-11",
+	"expected_resolution": "2026-07-06",
+	"minister_name": "Boekholt-O’Sullivan, E.F.",
+	"member": {
+		"key": "dcf84324_c8de_4b0a_905c_3106e1af17e2",
+		"name": "E. Boekholt-O’Sullivan",
+		"function": "Minister van Volkshuisvesting en Ruimtelijke Ordening",
+		"path": "/leden/e-boekholt-osullivan"
+	},
+	"post": "minister",
+	"ministry": "bzk",
+	"cabinet": "jetten",
+	"dossiers": [
+		{
+			"key": "29389",
+			"number": "29389",
+			"title": "Vergrijzing en het integrale ouderenbeleid",
+			"short_title": null,
+			"basis": "nakoming",
+			"path": "/dossiers/29389"
+		}
+	],
+	"activity": {
+		"key": "5df23796_fa6b_4740_8a23_be7308f5e251",
+		"date": "2026-03-11",
+		"number": "2025A04175",
+		"kind": "Commissiedebat",
+		"agenda_title": "Staat van de Volkshuisvesting",
+		"path": "/activiteiten/2025A04175"
+	},
+	"fulfilled_by": [
+		{
+			"id": "documents/8e50861e_22cc_40cc_bb17_c0c92c75ee21",
+			"key": "8e50861e_22cc_40cc_bb17_c0c92c75ee21",
+			"kind": "Brief regering",
+			"date": "2026-07-06",
+			"title": "Voortgang ouderenhuisvesting",
+			"dossier_number": "29389",
+			"dossier_suffix": null,
+			"sequence": 186,
+			"path": "/kamerstukken/29389/186",
+			"kind_group": "brief"
+		}
+	],
+	"path": "/toezeggingen/TZ202603-117"
+}

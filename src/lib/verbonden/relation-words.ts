@@ -3,7 +3,8 @@
 // two hulls, the legend, the table, the CSV and the card Verbinding all read them, so one
 // verbinding is never called two things (onderzoek samenhang, 14 Oct). Only words: a page that
 // names a relation does not load the rows of Verbonden.
-import { capitalize, textOf } from '$lib/text/words';
+import { capitalize, lowerFirst, textOf } from '$lib/text/words';
+import { onAgendaOnly, DISCUSSED_IN_DEBATE } from '$lib/text/toezegging';
 import { parseOutcome, type TableOutcome, type OutcomeKind } from './edge-meta';
 import {
 	isChangeRelation,
@@ -151,12 +152,20 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 						? ['tekst van', 'tekst in het BWB', 'zelfde verdrag']
 						: ['zelfde bron als', 'zelfde bron als', 'zelfde bron'],
 	SCOPED_BY: () => ['begrensd door', 'begrenst', 'reikwijdte in een bijlage'],
-	ABOUT: ({ van }) =>
+	// A toezegging is about the dossier of the letter that fulfils it; one on the agenda of its
+	// debate only was discussed there (`meta.basis` `agenda`, toezegging.ts).
+	ABOUT: ({ van, meta }) =>
 		van === 'decisions'
 			? ['over', 'onderwerp van', 'stemming over een zaak']
-			: van === 'commitments'
-				? ['over', 'onderwerp van', 'toezegging in een dossier']
-				: ['over', 'onderwerp van', 'activiteit over een zaak'],
+			: van === 'commitments' && onAgendaOnly(meta.basis)
+				? [
+						`${lowerFirst(DISCUSSED_IN_DEBATE)} over`,
+						'op de agenda bij',
+						'toezegging besproken in een debat over een dossier'
+					]
+				: van === 'commitments'
+					? ['over', 'onderwerp van', 'toezegging in een dossier']
+					: ['over', 'onderwerp van', 'activiteit over een zaak'],
 	LED_BY: () => ['onder leiding van', 'voortouw bij', 'voortouwcommissie'],
 	// A motie is `MADE_IN` the debate it was submitted in (`reason` `ingediend`), a stenogram
 	// the debate it records.

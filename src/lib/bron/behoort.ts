@@ -16,7 +16,7 @@ import { BANDS, kernOf, type BucketLine, type Context } from './behoort-rules';
 /** An ordinary line of the table: the first bron of its bucket, where it has one. */
 function bucketLine(line: BucketLine, c: Context): Regel[] {
 	const n = findBucket(c.light, line.bak)?.items?.[0];
-	if (!n) return [];
+	if (!n || (line.holds && !line.holds(n))) return [];
 	const label = typeof line.label === 'string' ? line.label : line.label(n);
 	return [{ id: line.id, label, lagen: [laagVan(n, line.soort)] }];
 }

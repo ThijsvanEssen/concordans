@@ -4430,6 +4430,11 @@ export interface components {
              */
             short_title: string | null;
             /**
+             * Basis
+             * @description Why it is this dossier: `nakoming`, the dossier of a letter that fulfils it (`Toezegging.KamerbriefNakoming`); `agenda`, a dossier on the agenda of the debate it was made in, where it was discussed (a commitment no letter in a dossier fulfils yet).
+             */
+            basis: ("nakoming" | "agenda") | null;
+            /**
              * Path
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */

@@ -8,6 +8,7 @@
 	import { korteDatum, vandaag } from '$lib/text/datum';
 	import IndexRow from '../IndexRow.svelte';
 	import { OPEN_STATUS } from '../government';
+	import { discussedPhrase, dossiersByBasis } from '$lib/text/toezegging';
 	import type { ViewProps } from '../lists/list';
 
 	let { ctx }: ViewProps<Schema<'CommitmentDTO'>, object> = $props();
@@ -16,6 +17,7 @@
 <ul class="list">
 	{#each ctx.rows ?? [] as t (t.key)}
 		{@const bron = `commitments/${t.key}`}
+		{@const ds = dossiersByBasis(t.dossiers)}
 		{@const late =
 			t.status === OPEN_STATUS && !!t.expected_resolution && t.expected_resolution < vandaag()}
 		<IndexRow
@@ -40,8 +42,12 @@
 							: ''}
 					{:else if t.minister_name}
 						{t.minister_name}
-					{/if}<!-- A dossier by number and name, the name asked once in view; no space before the comma. -->{#each t.dossiers?.flatMap( (d) => (d.number ? [{ ...d, number: d.number }] : []) ) ?? [] as d (d.number)},
-						<DossierNaam dossier={d} />{/each}
+					{/if}<!-- A dossier by number and name, the name asked once in view; no space before the comma. A
+					     dossier only on its debate's agenda is not its dossier: the debate instead. -->{#each ds.own as d (d.key)}{#if d.number},
+							<DossierNaam
+								dossier={{ ...d, number: d.number }}
+							/>{/if}{/each}{#if ds.agenda.length},
+						{discussedPhrase(t.activity, korteDatum)}{/if}
 				</span>
 			{/snippet}
 			{#snippet aside()}

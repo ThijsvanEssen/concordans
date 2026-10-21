@@ -55,3 +55,57 @@ export function nagekomenIn(brieven: readonly Brief[] | null | undefined): {
 		}))
 	};
 }
+
+/**
+ * Why a toezegging is about a dossier (`CommitmentDossierDTO.basis`, the `meta.basis` of its
+ * `ABOUT`): `nakoming`, the dossier of the letter that fulfils it, from the source; `agenda`, a
+ * dossier on the agenda of the debate it was made in. A debate takes its agenda together: a
+ * dossier there is where the toezegging was discussed, not what it is about.
+ */
+type Basis = 'nakoming' | 'agenda';
+
+/** The words of a dossier on the agenda of that debate: on its row, the reader, Verbonden. */
+export const DISCUSSED_IN_DEBATE = 'Besproken in het debat';
+
+/** Whether a toezegging is about this dossier only by the agenda of its debate. */
+export const onAgendaOnly = (basis: unknown) => basis === 'agenda';
+
+/**
+ * The dossiers of a toezegging by why: `own` those it is about (by the letter that fulfils
+ * it, or every one where the API gives no basis), `agenda` those of its debate's agenda.
+ */
+export function dossiersByBasis<D extends { basis?: Basis | null }>(
+	dossiers: readonly D[] | null | undefined
+): { own: D[]; agenda: D[] } {
+	const all = dossiers ?? [];
+	return {
+		own: all.filter((d) => !onAgendaOnly(d.basis)),
+		agenda: all.filter((d) => onAgendaOnly(d.basis))
+	};
+}
+
+/**
+ * "Besproken in het debat over Staat van de Volkshuisvesting", in three parts: the label
+ * (`Besproken`), the words before the link (`in het debat over`) and the link's own (its
+ * subject, else its day: `in het debat van` `11 maart 2026`). The link is null without either.
+ */
+export function discussedIn(
+	activity: { agenda_title?: string | null; date?: string | null } | null | undefined,
+	formatDate: (iso: string | null) => string = (iso) => langeDatum(iso)
+): { label: string; before: string; link: string | null } {
+	const [label, ...rest] = DISCUSSED_IN_DEBATE.split(' ');
+	const inDebate = rest.join(' ');
+	const subject = activity?.agenda_title?.trim();
+	const day = formatDate(activity?.date ?? null);
+	return subject
+		? { label, before: `${inDebate} over`, link: subject }
+		: day
+			? { label, before: `${inDebate} van`, link: day }
+			: { label, before: inDebate, link: null };
+}
+
+/** The same as one phrase in a line of text: `besproken in het debat over Staat van de …`. */
+export function discussedPhrase(...args: Parameters<typeof discussedIn>): string {
+	const d = discussedIn(...args);
+	return [d.label.toLowerCase(), d.before, d.link].filter(Boolean).join(' ');
+}

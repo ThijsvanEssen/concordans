@@ -18,6 +18,7 @@ import { kindName } from '$lib/components/explore/law-head';
 import { lawShortName } from '$lib/text/bw';
 import { fractiePeriodes } from './fractie-periode';
 import { kernVanZaak, stukkenInDezelfdeZaak } from '$lib/verbonden/zaak';
+import { onAgendaOnly } from '$lib/text/toezegging';
 import type { Collection } from '$lib/vocabulary';
 import { dossierNummer } from './dossier-naam';
 import {
@@ -47,6 +48,8 @@ export type BucketLine = {
 	label: string | ((first: Neighbor) => string);
 	bak: Bak;
 	soort: string;
+	/** Whether the first bron makes the line; without, every first bron does. */
+	holds?: (first: Neighbor) => boolean;
 };
 
 /** A line of its own making; `kern` the buckets whose bronnen it names. */
@@ -356,7 +359,12 @@ export const BANDS: Partial<Record<Collection, Band>> = {
 	decisions: { lines: [aboutDossier] },
 	// Where it was made stands in the reader's status line, in the Kamer's words ("Toegezegd
 	// in het wetgevingsoverleg van 23 maart 2026"): once, not here too.
-	commitments: { lines: [aboutDossier], statusLine: [outbound('MADE_IN', 'activities')] },
+	// A dossier only on the agenda of the debate is not its dossier: the reader names it under
+	// "Besproken" (toezegging.ts), the band leaves it out.
+	commitments: {
+		lines: [{ ...aboutDossier, holds: (n) => !onAgendaOnly(n.meta?.basis) }],
+		statusLine: [outbound('MADE_IN', 'activities')]
+	},
 	instruments: {
 		lines: [
 			{
