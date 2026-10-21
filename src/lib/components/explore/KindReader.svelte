@@ -68,5 +68,10 @@
 	{@const Reader = other.component}
 	<Reader node={selection} />
 {:else if chosen.error}
-	<LoadState state={{ status: 'error', error: chosen.error }} what="De bron" form="block" />
+	<LoadState
+		state={{ status: 'error', error: chosen.error }}
+		what="De bron"
+		retry={chosen.retry}
+		form="block"
+	/>
 {/if}

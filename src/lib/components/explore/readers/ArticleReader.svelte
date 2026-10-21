@@ -827,6 +827,7 @@
 					<LoadState
 						state={{ status: 'error', error: articleCompare.error }}
 						what="De vergelijking"
+						retry={articleCompare.retry}
 						form="block"
 					/>
 				{/if}
@@ -847,6 +848,7 @@
 					<LoadState
 						state={{ status: 'error', error: versionCompare.error }}
 						what="De vergelijking"
+						retry={versionCompare.retry}
 						form="block"
 					/>
 				{/if}

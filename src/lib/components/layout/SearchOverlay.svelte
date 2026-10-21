@@ -65,7 +65,11 @@
 				{@const Search = search.component}
 				<Search overlay initial={query} onOpen={onClose} />
 			{:else if search.error}
-				<LoadState state={{ status: 'error', error: search.error }} what="Zoeken" />
+				<LoadState
+					state={{ status: 'error', error: search.error }}
+					what="Zoeken"
+					retry={search.retry}
+				/>
 			{/if}
 		</div>
 	</div>

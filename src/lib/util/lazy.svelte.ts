@@ -1,6 +1,7 @@
 // A component in a chunk of its own, asked once, when it is first needed or ahead of that.
 // A chunk that does not come (a deploy removed it) is reported and kept as the failure to say
-// in its place, and the page loads again once from the new release ($lib/util/reload.ts).
+// in its place with Opnieuw (`retry`, a new import), and the page loads again once from the new
+// release ($lib/util/reload.ts).
 import { report } from '$lib/api/errors';
 import { reloadForNewVersion } from '$lib/util/reload';
 
@@ -35,4 +36,7 @@ export class Lazy<T> {
 			}
 		);
 	}
+
+	/** Opnieuw after a failure: the chunk asked again. */
+	retry = (): void => this.load();
 }

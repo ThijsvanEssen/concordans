@@ -98,4 +98,17 @@ describe('errors that are not swallowed', () => {
 			)
 		).toEqual([]);
 	});
+
+	it('gives every failure Opnieuw: each LoadState that can fail has its retry', () => {
+		// A chunk that did not come (Verkenner, search, a reader, a comparison) and the card's
+		// text stood without a way to ask again (A121). What is only loading needs none.
+		const zonder = (t: string) =>
+			[...t.matchAll(/<LoadState\s[\s\S]*?\/?>/g)].some(
+				([tag]) =>
+					!/\bretry=|\{retry\}/.test(tag) && !/state=\{\{\s*status:\s*'loading'\s*\}\}/.test(tag)
+			);
+		expect(zonder('<LoadState state={x.state} what="De tekst" />')).toBe(true);
+		expect(zonder('<LoadState state={{ status: \'loading\' }} what="De wet" />')).toBe(false);
+		expect(overtreders(zonder)).toEqual([]);
+	});
 });

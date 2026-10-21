@@ -28,7 +28,6 @@
 	import { pageName } from '$lib/bron/tab-title';
 	import { titelVan } from '$lib/bron/titels.svelte';
 	import { ignore, isAborted, isNotFound, report } from '$lib/api/errors';
-	import { reloadForNewVersion } from '$lib/util/reload';
 	import { readStored, writeStored } from '$lib/util/storage';
 	import PanelBoundary from '$lib/components/ui/PanelBoundary.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -970,26 +969,17 @@
 	// The canvas and the lists of Bronnen are chunks of their own, asked at once beside the
 	// bron's first requests: the Verkenner's own chunk was 213 kB gz with them, and every
 	// request waited for it (first visit after a deploy, 10 Oct: the first request at 2.6 s).
-	let GraphViewC = $state<typeof GraphView | null>(null);
-	let IndexViewC = $state<typeof IndexView | null>(null);
-	/** A chunk that did not come (a deploy removed it): said in its place, the page loaded
-	 *  again once from the new release ($lib/util/reload.ts). */
-	let chunkError = $state<unknown>(null);
-	function chunkFailed(e: unknown) {
-		report('Verkenner onderdeel', e);
-		chunkError = e;
-		reloadForNewVersion();
-	}
+	const graphChunk = new Lazy<typeof GraphView>(
+		() => import('$lib/components/graph/GraphView.svelte'),
+		'Verkenner onderdeel'
+	);
+	const indexChunk = new Lazy<typeof IndexView>(
+		() => import('$lib/components/explore/IndexView.svelte'),
+		'Verkenner onderdeel'
+	);
+	$effect(() => graphChunk.load());
 	$effect(() => {
-		import('$lib/components/graph/GraphView.svelte')
-			.then((m) => (GraphViewC = m.default))
-			.catch(chunkFailed);
-	});
-	$effect(() => {
-		if (mode === 'index' && !IndexViewC)
-			import('$lib/components/explore/IndexView.svelte')
-				.then((m) => (IndexViewC = m.default))
-				.catch(chunkFailed);
+		if (mode === 'index') indexChunk.load();
 	});
 
 	// The table of all verbindingen, the filter sheet and a reader beside the article come
@@ -1162,9 +1152,15 @@
 	{#if nietGevonden}<meta name="robots" content="noindex" />{/if}
 </svelte:head>
 
-<!-- A part whose chunk did not come (a deploy removed it): said in its place. -->
-{#snippet chunkMissing(error: unknown)}
-	<LoadState state={{ status: 'error', error }} what="Dit onderdeel" form="block" />
+<!-- A part whose chunk did not come (a deploy removed it): said in its place, Opnieuw asks
+     the chunk again. -->
+{#snippet chunkMissing(part: { error: unknown; retry: () => void }, what = 'Dit onderdeel')}
+	<LoadState
+		state={{ status: 'error', error: part.error }}
+		{what}
+		retry={part.retry}
+		form="block"
+	/>
 {/snippet}
 
 {#snippet reader()}
@@ -1199,11 +1195,11 @@
 							{#if judgmentReader.component}
 								{@const JudgmentReader = judgmentReader.component}
 								<JudgmentReader node={besideJudgmentNode} />
-							{:else if judgmentReader.error}{@render chunkMissing(judgmentReader.error)}{/if}
+							{:else if judgmentReader.error}{@render chunkMissing(judgmentReader)}{/if}
 						{:else if documentReader.component}
 							{@const DocumentReader = documentReader.component}
 							<DocumentReader node={beside} article={besideArticle} />
-						{:else if documentReader.error}{@render chunkMissing(documentReader.error)}{/if}
+						{:else if documentReader.error}{@render chunkMissing(documentReader)}{/if}
 					</div>
 				{/if}
 			</div>
@@ -1290,11 +1286,14 @@
 			{#if params.get('kind') === null}
 				<!-- The overview scrolls in its own field: the shell does not scroll. -->
 				<div class="index-rol"><IndexOverzicht /></div>
-			{:else if IndexViewC}<IndexViewC category={indexKind} />{:else if chunkError}<LoadState
-					state={{ status: 'error', error: chunkError }}
-					what="De lijst"
-					form="block"
-				/>{:else}<p class="explore-empty stil" role="status">Laden…</p>{/if}
+			{:else if indexChunk.component}{@const IndexViewC = indexChunk.component}<IndexViewC
+					category={indexKind}
+				/>{:else if indexChunk.error}{@render chunkMissing(indexChunk, 'De lijst')}{:else}<p
+					class="explore-empty stil"
+					role="status"
+				>
+					Laden…
+				</p>{/if}
 		{:else if nietGevonden}
 			<NietGevonden title="Bron niet gevonden" kop={false}>
 				<p>{padNotHeld ?? focusNotHeld}</p>
@@ -1358,7 +1357,8 @@
 						naast: BESIDE
 					}}
 				>
-					{#if GraphViewC}
+					{#if graphChunk.component}
+						{@const GraphViewC = graphChunk.component}
 						<PanelBoundary what="Het netwerk" resetOn={focus}>
 							<GraphViewC
 								bind:this={graphView}
@@ -1442,12 +1442,8 @@
 								{/snippet}
 							</GraphViewC>
 						</PanelBoundary>
-					{:else if chunkError}
-						<LoadState
-							state={{ status: 'error', error: chunkError }}
-							what="Het netwerk"
-							form="block"
-						/>
+					{:else if graphChunk.error}
+						{@render chunkMissing(graphChunk, 'Het netwerk')}
 					{/if}
 					{#if card}
 						<VerbindingCard
@@ -1472,7 +1468,7 @@
 						onRow={openRowCard}
 						backHref={readHref}
 					/>
-				{:else if connectionsTable.error}{@render chunkMissing(connectionsTable.error)}{:else}<p
+				{:else if connectionsTable.error}{@render chunkMissing(connectionsTable)}{:else}<p
 						class="explore-empty stil"
 						role="status"
 					>

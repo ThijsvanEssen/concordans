@@ -164,7 +164,9 @@
 	{#if node.stub}
 		<p class="snippet stub-note">{capitalize(NOT_IN_DATA)}.</p>
 	{:else if identity && article.state.status !== 'ready'}
-		<div class="cite-loading"><LoadState state={article.state} what="De tekst" /></div>
+		<div class="cite-loading">
+			<LoadState state={article.state} what="De tekst" retry={article.retry} />
+		</div>
 	{:else if snippet}
 		<p class="snippet">{snippet}</p>
 	{/if}

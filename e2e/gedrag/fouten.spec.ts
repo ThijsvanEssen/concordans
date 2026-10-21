@@ -2,6 +2,7 @@
 // Opnieuw that asks again; slow told from broken; the rest of the page goes on. Rood only
 // for the failure itself.
 import { failApi, REQUEST_ID } from '../support/api';
+import { failChunk } from '../support/chunks';
 import { expect, test } from '../support/test';
 
 const ARTICLE = '/wetten/BWBR0005289/artikel/6:162?lezen=1';
@@ -204,4 +205,41 @@ test('a network that cannot be drawn says so on the canvas, the bron stays, Opni
 			.getByRole('list', { name: /^Bronnen in het netwerk, \d+/ })
 			.getByRole('link', { name: 'Art. 6:162 BW, Artikel' })
 	).toBeAttached();
+});
+
+test('a part whose chunk did not come says so in its place, and Opnieuw asks it again', async ({
+	page,
+	guard
+}) => {
+	// The comparison is a chunk of its own; one that does not come (a deploy removed it, the
+	// connection dropped it) stands as a failure with Opnieuw, as a failing request does.
+	guard.allow(/dynamically imported module|net::ERR_FAILED|Importing a module script failed/);
+	await failChunk(page, 'src/lib/components/articles/VersionCompare.svelte');
+	await page.goto('/wetten/BWBR0001840/artikel/23?lezen=1');
+	await page.getByRole('link', { name: 'Vergelijken', exact: true }).click();
+	const alert = page
+		.getByRole('alert')
+		.filter({ hasText: 'De vergelijking kon niet worden geladen.' });
+	await expect(alert).toBeVisible();
+
+	await page.unrouteAll({ behavior: 'ignoreErrors' });
+	await alert.getByRole('button', { name: 'Opnieuw' }).click();
+	await expect(page.getByRole('insertion').first()).toBeVisible();
+	await expect(alert).toHaveCount(0);
+});
+
+test('a list of Bronnen whose chunk did not come says so, and Opnieuw shows it', async ({
+	page,
+	guard
+}) => {
+	guard.allow(/dynamically imported module|net::ERR_FAILED|Importing a module script failed/);
+	await failChunk(page, 'src/lib/components/explore/IndexView.svelte');
+	await page.goto('/explore?mode=index&kind=judgments');
+	const alert = page.getByRole('alert').filter({ hasText: 'De lijst kon niet worden geladen.' });
+	await expect(alert).toBeVisible();
+
+	await page.unrouteAll({ behavior: 'ignoreErrors' });
+	await alert.getByRole('button', { name: 'Opnieuw' }).click();
+	await expect(alert).toHaveCount(0);
+	await expect(page.getByRole('link', { name: /ECLI:NL:/ }).first()).toBeVisible();
 });

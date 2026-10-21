@@ -1,7 +1,7 @@
 // KindReader gives each bron the reader of its collection, each reader a chunk of its own: the
 // right one comes, and a chunk that does not come (a deploy removed it) is said in its place.
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import type { GraphNode } from '$lib/graph/types';
 import type { Collection } from '$lib/vocabulary';
@@ -18,8 +18,11 @@ vi.mock('./readers/ArticleReader.svelte', () => stub('ArticleReader'));
 vi.mock('./readers/JudgmentReader.svelte', () => stub('JudgmentReader'));
 vi.mock('./readers/MemberReader.svelte', () => stub('MemberReader'));
 vi.mock('./readers/FallbackReader.svelte', () => stub('FallbackReader'));
+/** The stemming's chunk fails the first time it is asked, and comes at Opnieuw. */
+const decisionAsked = vi.hoisted(() => ({ times: 0 }));
 vi.mock('./readers/DecisionReader.svelte', () => {
-	throw new Error('Failed to fetch dynamically imported module');
+	if (decisionAsked.times++ === 0) throw new Error('Failed to fetch dynamically imported module');
+	return stub('DecisionReader');
 });
 
 const node = (collection: Collection, key = 'k1'): GraphNode => ({
@@ -49,11 +52,17 @@ describe('KindReader', () => {
 		expect(container.textContent).toContain(`lezer:${reader}`);
 	});
 
-	it('says a reader whose chunk did not come, and loads the page again for a new release', async () => {
+	it('says a reader whose chunk did not come, with Opnieuw, and loads the page again for a new release', async () => {
 		vi.spyOn(console, 'error').mockImplementation(() => {});
 		render(KindReader, { selection: node('decisions') });
 		await settle();
 		expect(screen.getByRole('alert').textContent).toContain('niet worden geladen');
 		expect(reload).toHaveBeenCalled();
+
+		// Opnieuw asks the chunk again: the reader comes in the failure's place.
+		await fireEvent.click(screen.getByRole('button', { name: 'Opnieuw' }));
+		await settle();
+		expect(screen.queryByRole('alert')).toBeNull();
+		expect(document.body.textContent).toContain('lezer:DecisionReader');
 	});
 });
