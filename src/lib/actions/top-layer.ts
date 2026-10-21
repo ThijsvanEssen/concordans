@@ -99,6 +99,14 @@ type TopLayer = {
 export const topLayer: Action<HTMLElement, TopLayer> = (el, params) => {
 	let { anchor, close, align = 'left', rect = null, below = false } = params;
 	let around = clippers(anchor);
+	// Closed after the moment it is placed in: an anchor out of view as the box opens (a click
+	// a script gives a marker scrolled away) closes it while what holds it is still putting it
+	// up, and would read its props once they are gone.
+	let gone = false;
+	const shut = () =>
+		queueMicrotask(() => {
+			if (!gone) close();
+		});
 	if (params.detach) document.body.appendChild(el);
 	if (popover(el)) {
 		if (!el.hasAttribute('popover')) el.setAttribute('popover', 'manual');
@@ -109,7 +117,7 @@ export const topLayer: Action<HTMLElement, TopLayer> = (el, params) => {
 		const a = rect ? rect() : anchor.getBoundingClientRect();
 		const view = { width: innerWidth, height: innerHeight };
 		const shown = { top: 0, left: 0, bottom: view.height, right: view.width };
-		if (outOfView(a, [shown, ...around.map((c) => c.getBoundingClientRect())])) return close();
+		if (outOfView(a, [shown, ...around.map((c) => c.getBoundingClientRect())])) return shut();
 		// Its whole height, borders too, however much of it its cap now shows.
 		const height = el.scrollHeight + el.offsetHeight - el.clientHeight;
 		const gap = below ? systemBar() : GAP;
@@ -138,6 +146,7 @@ export const topLayer: Action<HTMLElement, TopLayer> = (el, params) => {
 			place();
 		},
 		destroy() {
+			gone = true;
 			cancelAnimationFrame(frame);
 			grows.disconnect();
 			removeEventListener('scroll', place, { capture: true });

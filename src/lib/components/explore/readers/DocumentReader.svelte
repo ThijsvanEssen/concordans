@@ -17,6 +17,7 @@
 		type PaperBlock
 	} from '$lib/text/anchor';
 	import PlaatsMenu, { placeMarker } from '$lib/components/articles/PlaatsMenu.svelte';
+	import PlaceNumber, { placeColumn } from '$lib/bron/PlaceNumber.svelte';
 	import { blockClick } from '$lib/actions/klik';
 	import { kaart } from '$lib/map/map.svelte';
 	import { getDocument } from '$lib/api/records';
@@ -390,7 +391,7 @@
 			<StemmingUitslag decisions={eigenUitslag(doc) ? (doc.decisions ?? []) : []} />
 
 			{#if doc.text}
-				<div class="body" bind:this={root} use:kantlijn>
+				<div class="body" bind:this={root} use:kantlijn use:placeColumn={entries}>
 					{#each entries as entry, i (entry.type === 'heading' ? entry.section.id : `p${entry.start}`)}
 						{#if entry.type === 'heading'}
 							{@const s = entry.section}
@@ -451,7 +452,7 @@
 							     of its first line (`p-360a090c`), a table one alinea. The head of the stuk, a
 							     heading and a motie's formula are no place, nor a line the API has not numbered. -->
 							<div
-								class="body-para"
+								class="body-para plaats-blok"
 								class:body-para--passage={passageEntries.has(i)}
 								class:in-passage={passageEntries.has(i)}
 								class:in-passage--cont={passageEntries.has(i) && i > passageFirst}
@@ -466,14 +467,13 @@
 								title={i === passageEntryIndex ? (passage?.why ?? undefined) : undefined}
 							>
 								{#if forms && at && p.first}
-									<button
-										type="button"
-										class="plaats-marker"
-										aria-haspopup="menu"
-										aria-expanded={menu?.at === at}
-										aria-label="Alinea {n}: citeren, bewaren"
-										onclick={(e) => openMenu(at, e.currentTarget)}>{n}</button
-									>
+									<PlaceNumber
+										number={n ?? ''}
+										label="Alinea {n}"
+										open={menu?.at === at}
+										quiet
+										onopen={(marker) => openMenu(at, marker)}
+									/>
 								{/if}
 								<div
 									class="body-para__tekst"
@@ -721,7 +721,7 @@
 	.body-para {
 		position: relative;
 		margin: 0 0 0 calc(-1 * var(--s-4));
-		padding-left: var(--s-4);
+		padding-left: calc(var(--s-4) + var(--alinea-meer));
 		border-radius: var(--r-1);
 		scroll-margin: 20vh;
 	}
@@ -750,66 +750,42 @@
 	.body-para__tekst.is-klikbaar {
 		cursor: pointer;
 	}
-	/* The marker is the alinea's menu: its number, nothing at rest; while the alinea is
-	   pointed at, open or focused its number with ▾ under it (as a lid's number), in the
-	   margin 4px before its text: one column as wide as the number, in the letter of a count,
-	   so four figures fit in the 32px of the narrowest margin and the text never moves. */
-	.plaats-marker {
+	/* The marker is the alinea's menu (PlaceNumber): its number, nothing at rest, in the margin
+	   4px before its text, in the letter of a count. A number wider than the margin (alinea
+	   10000 in a narrow frame) moves the text of every alinea as far as it needs (placeColumn). */
+	.body {
+		--alinea-meer: max(
+			0px,
+			var(--plaats-num, 0px) + var(--s-1) - var(--reader-pad-left, var(--s-6))
+		);
+	}
+	.body-para > :global(.plaats-marker) {
 		position: absolute;
 		top: 0;
-		right: calc(100% - var(--s-3));
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
+		right: calc(100% - var(--s-3) - var(--alinea-meer));
 		font-size: var(--t-label);
 		line-height: calc(var(--lh-body) * var(--t-body));
-		color: transparent;
-		white-space: nowrap;
-		user-select: none;
-		cursor: pointer;
-	}
-	.body-para:hover > .plaats-marker,
-	.body-para.is-open > .plaats-marker,
-	.plaats-marker:focus-visible {
-		color: var(--ink);
-		text-decoration: underline;
-		text-underline-offset: 3px;
-	}
-	.body-para:hover > .plaats-marker::after,
-	.body-para.is-open > .plaats-marker::after,
-	.plaats-marker:focus-visible::after {
-		content: '▾';
-		font-size: var(--t-meta);
-		line-height: 1;
-		color: var(--ink-3);
-		text-decoration: none;
-	}
-	.plaats-marker:focus-visible {
-		outline: 2px solid var(--focus);
-		outline-offset: 2px;
 	}
 	/* On a phone there is no margin to hang it in: the number of an open alinea stands over
 	   its first line, as a tab of its grey, in the space between the alineas. */
 	@media (max-width: 768px) {
-		.plaats-marker {
+		.body {
+			--alinea-meer: 0px;
+		}
+		.body-para > :global(.plaats-marker) {
 			top: auto;
 			right: auto;
 			bottom: 100%;
 			left: var(--s-4);
 			padding: 0 var(--s-1);
 			border-radius: var(--r-1) var(--r-1) 0 0;
-			font-size: var(--t-label);
 			line-height: var(--s-3);
 		}
-		.body-para.is-open > .plaats-marker,
-		.plaats-marker:focus-visible {
+		.body-para.is-open > :global(.plaats-marker),
+		.body-para > :global(.plaats-marker:focus-visible) {
 			background: var(--paper-2);
 		}
-		.plaats-marker::after {
+		.body-para > :global(.plaats-marker::after) {
 			display: none;
 		}
 		/* Room for that tab under a heading too. */

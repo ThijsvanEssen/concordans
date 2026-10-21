@@ -14,6 +14,7 @@
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import PlaatsMenu, { placeMarker } from '$lib/components/articles/PlaatsMenu.svelte';
+	import PlaceNumber, { placeColumn } from '$lib/bron/PlaceNumber.svelte';
 	import { blockClick } from '$lib/actions/klik';
 	import { kaart } from '$lib/map/map.svelte';
 	import { citeItems } from '$lib/components/ui/cite-items';
@@ -359,7 +360,13 @@
 			</Sectie>
 		{/if}
 
-		<div class="reader-body" class:reader-body--numbered={numbered} bind:this={root} use:kantlijn>
+		<div
+			class="reader-body"
+			class:reader-body--numbered={numbered}
+			bind:this={root}
+			use:kantlijn
+			use:placeColumn={items}
+		>
 			{#each items as item, k (k)}
 				{#if item.kind === 'subheading'}
 					<p class="reader-subheading">{item.text}</p>
@@ -381,23 +388,17 @@
 					     overweging's menu, so the text is as wide as the prose around it. -->
 					<div
 						id={item.id}
-						class="reader-para-block"
+						class="reader-para-block plaats-blok"
 						class:is-open={menuFor === item.id}
 						class:plaats-bewaard={!!bewaarItem && kaart.heeft(bewaarItem)}
 					>
 						<div class="reader-para-num">
-							{#if forms}
-								<button
-									type="button"
-									class="plaats-marker"
-									aria-haspopup="menu"
-									aria-expanded={menuFor === item.id}
-									aria-label="{conclusion ? 'Punt' : 'Overweging'} {item.num}: citeren, bewaren"
-									onclick={(e) => openMenu(item.id, e.currentTarget)}>{item.num}</button
-								>
-							{:else}
-								<span>{item.num}</span>
-							{/if}
+							<PlaceNumber
+								number={item.num}
+								label="{conclusion ? 'Punt' : 'Overweging'} {item.num}"
+								open={menuFor === item.id}
+								onopen={forms ? (marker) => openMenu(item.id, marker) : null}
+							/>
 						</div>
 						{#if menu && menu.id === item.id && forms}
 							<PlaatsMenu
@@ -690,7 +691,7 @@
 	   with numbers stands in the text column, so an overweging and what continues it
 	   start at one edge. */
 	.reader-body {
-		--rov-num: 3.4em;
+		--rov-num: max(3.4em, var(--plaats-num, 0px));
 		--rov-gap: var(--s-3);
 	}
 	/* On a desktop the number hangs in the frame's margin and the text of an overweging
@@ -698,7 +699,7 @@
 	   reaches: in a narrow frame (32 px) the text gives way, so "2.3.2" is never cut off. */
 	@media (min-width: 769px) {
 		.reader-body {
-			--rov-num: 3em;
+			--rov-num: max(3em, var(--plaats-num, 0px));
 			--rov-hang: min(var(--rov-num) + var(--rov-gap), var(--reader-pad-left, var(--s-6)));
 		}
 		.reader-body.reader-body--numbered .reader-para--prose {
@@ -764,7 +765,7 @@
 			6px 0 0 var(--wassing);
 	}
 
-	/* The number, and under it Citeer. */
+	/* The number (PlaceNumber), as wide as the widest of the judgment (placeColumn). */
 	.reader-para-num {
 		display: flex;
 		flex-direction: column;
@@ -784,36 +785,6 @@
 		min-width: 0;
 	}
 
-	/* The number is the overweging's menu: underlined with ▾ while the overweging is pointed
-	   at or focused (as a lid's number, ArticleText). */
-	.plaats-marker {
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		color: inherit;
-		text-align: inherit;
-		cursor: pointer;
-	}
-	.reader-para-block:hover .plaats-marker,
-	.reader-para-block.is-open .plaats-marker,
-	.plaats-marker:focus-visible {
-		color: var(--ink);
-		text-decoration: underline;
-		text-underline-offset: 3px;
-	}
-	.reader-para-block:hover .plaats-marker::after,
-	.reader-para-block.is-open .plaats-marker::after,
-	.plaats-marker:focus-visible::after {
-		content: ' ▾';
-		font-size: 0.7em;
-		color: var(--ink-3);
-		text-decoration: none;
-	}
-	.plaats-marker:focus-visible {
-		outline: 2px solid var(--focus);
-		outline-offset: 2px;
-	}
 	.is-klikbaar {
 		cursor: pointer;
 	}

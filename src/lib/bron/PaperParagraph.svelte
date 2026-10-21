@@ -5,6 +5,7 @@
 	// (DocumentReader): Citeer, Kopieer tekst and Bewaar (paperParagraphCite). Read where an
 	// alinea is shown without its stuk: an opened item of a bundel (MapInhoud).
 	import PlaatsMenu, { placeMarker } from '$lib/components/articles/PlaatsMenu.svelte';
+	import PlaceNumber, { placeColumn } from './PlaceNumber.svelte';
 	import { blockClick } from '$lib/actions/klik';
 	import { citeItems } from '$lib/components/ui/cite-items';
 	import { paperParagraphOf } from '$lib/map/inhoud';
@@ -55,26 +56,25 @@
 </script>
 
 {#if shown}
-	<div class="alineas">
+	<div class="alineas" use:placeColumn={blocks}>
 		{#each blocks as b (b.line.i)}
 			{@const a = b.line}
 			{@const n = a.n ?? 0}
 			{@const at = a.at ?? ''}
 			{@const forms = at ? (cite?.(n, at, link(at)) ?? null) : null}
 			<div
-				class="alinea"
+				class="alinea plaats-blok"
 				class:eigen={around && shown.eigen.has(a.i)}
 				class:is-open={menu?.at === at}
 			>
 				{#if forms && a.first}
-					<button
-						type="button"
-						class="plaats-marker"
-						aria-haspopup="menu"
-						aria-expanded={menu?.at === at}
-						aria-label="Alinea {n}: citeren, bewaren"
-						onclick={(e) => openMenu(at, e.currentTarget)}>{n}</button
-					>
+					<PlaceNumber
+						number={n}
+						label="Alinea {n}"
+						open={menu?.at === at}
+						quiet
+						onopen={(marker) => openMenu(at, marker)}
+					/>
 				{/if}
 				{#if b.tables.length}
 					<div class:is-klikbaar={!!forms} use:blockClick={forms ? onText(at) : null}>
@@ -107,59 +107,33 @@
 		font-size: var(--t-body);
 		line-height: var(--lh-body);
 		color: var(--ink);
+		/* Its number (PlaceNumber) in the column before its text, as an overweging's
+		   (Overweging): as wide as the widest number with 8px after it, 48px at least. */
+		--alinea-num: max(var(--s-7), var(--plaats-num, 0px) + var(--s-2));
 	}
-	/* Its number in the column before its text, as an overweging's (Overweging). */
 	.alinea {
 		position: relative;
-		padding: 0 var(--s-2) 0 var(--s-7);
+		padding: 0 var(--s-2) 0 var(--alinea-num);
 		border-radius: var(--r-1);
 	}
 	.alinea p {
 		margin: 0;
 	}
-	.alinea:has(.plaats-marker):hover,
+	.alinea:has(:global(.plaats-marker)):hover,
 	.alinea.is-open {
 		background: var(--paper-2);
 	}
-	/* The marker is the alinea's menu: its number with ▾ under it while it is pointed at, open
-	   or focused, as in the reader; nothing at rest. */
-	.plaats-marker {
+	.alinea > :global(.plaats-marker) {
 		position: absolute;
 		top: 0;
 		left: 0;
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		width: var(--s-7);
-		padding: 0 var(--s-2) 0 0;
-		border: 0;
-		background: none;
-		font: inherit;
+		width: var(--alinea-num);
+		padding-right: var(--s-2);
 		font-size: var(--t-micro);
 		line-height: calc(var(--lh-body) * var(--t-body));
-		color: transparent;
-		white-space: nowrap;
-		user-select: none;
-		cursor: pointer;
 	}
-	.alinea:hover > .plaats-marker,
-	.alinea.is-open > .plaats-marker,
-	.plaats-marker:focus-visible {
-		color: var(--ink);
-		text-decoration: underline;
-		text-underline-offset: 3px;
-	}
-	.alinea:hover > .plaats-marker::after,
-	.alinea.is-open > .plaats-marker::after,
-	.plaats-marker:focus-visible::after {
-		content: '▾';
-		font-size: 0.7em;
-		line-height: 1;
-		color: var(--ink-3);
-		text-decoration: none;
-	}
-	.plaats-marker:focus-visible {
-		outline: 2px solid var(--focus);
+	/* Its ring inside the column: the bundel's pane cuts what stands outside it. */
+	.alinea > :global(.plaats-marker:focus-visible) {
 		outline-offset: -2px;
 	}
 	.is-klikbaar {

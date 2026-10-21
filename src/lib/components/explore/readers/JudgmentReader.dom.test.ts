@@ -104,6 +104,26 @@ describe('JudgmentReader', () => {
 		expect(errors).toEqual([]);
 	});
 
+	it('takes a click a script gives a marker scrolled out of view without an error', async () => {
+		const errors: unknown[] = [];
+		const capture = (e: ErrorEvent) => {
+			e.preventDefault();
+			errors.push(e.error);
+		};
+		window.addEventListener('error', capture);
+		render(JudgmentReader, { node });
+		await settle();
+		const nummer = screen.getByRole('button', { name: /^Overweging 2\.1:/ });
+		// Above the window: the menu that opens by it closes at once.
+		vi.spyOn(nummer, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, -500, 24, 20));
+		nummer.click();
+		await settle();
+		window.removeEventListener('error', capture);
+		expect(errors).toEqual([]);
+		expect(screen.queryByRole('menu')).toBeNull();
+		expect(nummer.getAttribute('aria-expanded')).toBe('false');
+	});
+
 	it('cites each overweging as overwegingCitaat does, whatever overweging the address names', async () => {
 		const kort = overwegingCitaat(judgment, '2.1', 'r-2.1', '', null)?.kort;
 		expect(kort).toBeTruthy();

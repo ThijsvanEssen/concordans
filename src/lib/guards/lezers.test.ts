@@ -50,8 +50,23 @@ describe('the readers', () => {
 			);
 			expect(t, p).toMatch(/<PlaatsMenu\b[\s\S]*?bewaar=\{[^}]*\}[\s\S]*?\/>/);
 			expect(t, p).toContain('use:blockClick=');
-			expect(t, p).toMatch(/class="[^"]*\bplaats-marker\b/);
+			// A lid's number in the article's own layout (ArticleText); an overweging's and an
+			// alinea's by PlaceNumber.
+			expect(t, p).toMatch(
+				p.endsWith('ArticleText.svelte') ? /class="[^"]*\bplaats-marker\b/ : /<PlaceNumber\b/
+			);
 		}
+		// The number of a place in running text, its marker and its margin, is PlaceNumber's
+		// alone (A93): no reader sets one of its own.
+		expect(
+			overtreders(
+				(t) => /class="[^"]*\bplaats-(?:marker|nummer)\b/.test(t),
+				[
+					plek('lib/bron/PlaceNumber.svelte'),
+					plek('lib/components/articles/ArticleText.svelte', "a lid's number, in its own layout")
+				]
+			)
+		).toEqual([]);
 		expect(bron('lib/components/articles/PlaatsMenu.svelte')).toContain('<BundleChecklist');
 		// A passage of a memorie (a section: the toelichting on an article, read beside it) is
 		// a place too: its heading opens the same PlaatsMenu, cited and kept as its row under

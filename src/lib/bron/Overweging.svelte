@@ -7,6 +7,7 @@
 	// (OverwegingKaart). With `bewaar`, a number is the overweging's menu, as in the reader:
 	// Citeer, Kopieer tekst and Bewaar (overwegingCitaat).
 	import PlaatsMenu, { placeMarker } from '$lib/components/articles/PlaatsMenu.svelte';
+	import PlaceNumber, { placeColumn } from './PlaceNumber.svelte';
 	import { blockClick } from '$lib/actions/klik';
 	import TextBlocks from '$lib/components/articles/TextBlocks.svelte';
 	import { citeItems } from '$lib/components/ui/cite-items';
@@ -59,25 +60,23 @@
 </script>
 
 {#if deel}
-	<div class="overweging">
+	<div class="overweging" use:placeColumn={deel.items}>
 		{#each deel.items as b, k (k)}
 			{#if b.kind === 'rov'}
 				{@const forms = bewaar
 					? overwegingCitaat(uitspraak.j, b.num, b.id, bewaar.link(b.id), bewaar.id)
 					: null}
-				<div class="rov" class:eigen={ruim && deel.eigen.has(k)} class:is-open={menu?.id === b.id}>
-					{#if forms}
-						<button
-							type="button"
-							class="rov-num plaats-marker"
-							aria-haspopup="menu"
-							aria-expanded={menu?.id === b.id}
-							aria-label="Overweging {b.num}: citeren, bewaren"
-							onclick={(e) => openMenu(b.id, e.currentTarget)}>{b.num}</button
-						>
-					{:else}
-						<span class="rov-num">{b.num}</span>
-					{/if}
+				<div
+					class="rov plaats-blok"
+					class:eigen={ruim && deel.eigen.has(k)}
+					class:is-open={menu?.id === b.id}
+				>
+					<PlaceNumber
+						number={b.num}
+						label="Overweging {b.num}"
+						open={menu?.id === b.id}
+						onopen={forms ? (marker) => openMenu(b.id, marker) : null}
+					/>
 					<div class:is-klikbaar={!!forms} use:blockClick={forms ? opTekst(b.id) : null}>
 						<TextBlocks
 							text={b.body}
@@ -118,7 +117,9 @@
 {/if}
 
 <style>
+	/* Its number in a column as wide as the widest (PlaceNumber, placeColumn). */
 	.overweging {
+		--rov-num: max(3em, var(--plaats-num, 0px));
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-2);
@@ -133,53 +134,19 @@
 	.rov {
 		position: relative;
 		display: grid;
-		grid-template-columns: 3em minmax(0, 1fr);
+		grid-template-columns: var(--rov-num) minmax(0, 1fr);
 		gap: 0 var(--s-3);
 	}
-	.rov-num {
-		color: var(--ink-3);
-		text-align: right;
-	}
-	.rov:has(.plaats-marker):hover,
+	.rov:has(:global(.plaats-marker)):hover,
 	.rov.is-open {
 		background: var(--paper-2);
-	}
-	/* The number is the overweging's menu, as in the reader (JudgmentReader): underlined with
-	   ▾ while the overweging is pointed at, open or focused. */
-	.plaats-marker {
-		align-self: start;
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		color: var(--ink-3);
-		cursor: pointer;
-	}
-	.rov:hover .plaats-marker,
-	.rov.is-open .plaats-marker,
-	.plaats-marker:focus-visible {
-		color: var(--ink);
-		text-decoration: underline;
-		text-underline-offset: 3px;
-	}
-	.rov:hover .plaats-marker::after,
-	.rov.is-open .plaats-marker::after,
-	.plaats-marker:focus-visible::after {
-		content: ' ▾';
-		font-size: 0.7em;
-		color: var(--ink-3);
-		text-decoration: none;
-	}
-	.plaats-marker:focus-visible {
-		outline: 2px solid var(--focus);
-		outline-offset: 2px;
 	}
 	.is-klikbaar {
 		cursor: pointer;
 	}
 	.rov-verder {
 		position: relative;
-		margin-left: calc(3em + var(--s-3));
+		margin-left: calc(var(--rov-num) + var(--s-3));
 	}
 	.rov-kop {
 		font-weight: 600;

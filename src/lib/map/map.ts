@@ -313,9 +313,16 @@ export function groepen(
 export const groupAnchor = (sleutel: string) =>
 	`groep-${sleutel.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 
-/** A citation without the place in it (`r.o. 5.1`, `alinea 4`, `§ Artikel 21`): `HR 20 december
- *  2019, ECLI:…`, `Kamerstukken II …, nr. 57`. */
-const withoutPlace = (kort: string) => kort.replace(/,\s*(?:r\.o\.|alinea|§)\s.*$/, '');
+/** The place a citation ends in, as its menu writes it after the bron: an overweging
+ *  (`r.o. 5.1`, `onder 5`, `punt 12`, `§ 5`: paragraphCite), an alinea (`alinea 4`) or a
+ *  passage (`§ Artikel 21`) of a Kamerstuk (paperParagraphCite, paperSectionCite). */
+const PLACE_IN_CITATION = /,\s*((?:r\.o\.|onder|punt|alinea|§)\s.*)$/;
+
+/** The place a citation names: `alinea 4` of `Kamerstukken II …, nr. 57, alinea 4`; else null. */
+const placeInCitation = (kort: string): string | null => PLACE_IN_CITATION.exec(kort)?.[1] ?? null;
+
+/** A citation without the place in it: `HR 20 december 2019, ECLI:…`, `Kamerstukken II …, nr. 57`. */
+const withoutPlace = (kort: string) => kort.replace(PLACE_IN_CITATION, '');
 
 /** The bronnen whose kept places stand under them: an r.o. its judgment's, an alinea its stuk's. */
 const PLACES_UNDER = new Set(['judgments', 'documents']);
@@ -359,7 +366,7 @@ export function rowTitle(
 	i: Pick<MapItem, 'id' | 'at' | 'kort' | 'voluit'>,
 	place = false
 ): { title: string } {
-	const own = place ? /(?:\br\.o\.|\balinea|§)\s.*$/.exec(i.kort)?.[0] : null;
+	const own = place ? placeInCitation(i.kort) : null;
 	if (own) return { title: own };
 	const collection = parseNodeId(i.id)?.collection;
 	// A dossier kept whole stands under its group, which names it: its row cites it by number
@@ -651,7 +658,8 @@ export function citaten(
 
 /**
  * The map as a CSV, its rows as the map shows them: per group in the order of the groups, or
- * in the reader's own order; each under its group's name, its place as the reader prints it.
+ * in the reader's own order; each under its group's name, its place as the reader prints it
+ * (`lid 2`, `r.o. 5.1`), an alinea or a passage as its citation names it (`alinea 4`).
  */
 export function csv(
 	items: readonly MapItem[],
@@ -667,7 +675,7 @@ export function csv(
 			naamVan.get(groupKeyOf(i)) ?? i.groep,
 			kindLabel(i),
 			i.voluit || i.kort,
-			(i.at && anchorLabel(i.at, i.id)) || '',
+			(i.at && (anchorLabel(i.at, i.id) ?? placeInCitation(i.kort))) || '',
 			i.notitie ?? '',
 			adres(i)
 		])

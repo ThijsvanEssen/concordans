@@ -28,6 +28,11 @@ import {
 	type Annotation,
 	type MapItem
 } from './map';
+import {
+	citePaper,
+	paperParagraphCite,
+	paperSectionCite
+} from '$lib/components/parliamentary/paper-cite';
 import { itemVanRij } from './rij';
 import { remember } from '$lib/bron/address';
 import type { Row } from '$lib/verbonden/rows';
@@ -124,6 +129,31 @@ describe('the map', () => {
 		expect(regels(csv([{ ...lid2, at: 'p-54bd15c1' }], adres))[0]).toBe(
 			'1;Burgerlijk Wetboek Boek 6;Artikel;artikel 6:162 lid 2 Burgerlijk Wetboek;;;'
 		);
+	});
+
+	it('writes the place of a kept alinea, passage or overweging as its menu cites it', () => {
+		const paper = citePaper(
+			{ key: 'mvt', kind: 'Memorie van toelichting', chamber: 'TK', number: '60' },
+			{ session_year: '2025-2026', dossier_number: '37020', dossier_suffix: 'XVI' }
+		);
+		const alinea = paperParagraphCite(paper)(3, 'p-54bd15c1', '').bewaar;
+		const passage = paperSectionCite(paper)({ id: 's-3f2a9c1e', heading: 'Artikel 21' }, '').bewaar;
+		const overweging = bewaarItem('judgments/ecli_nl_hr_2019_2006', {
+			at: 'p-0a1b2c3d',
+			kort: 'HR 20 december 2019, r.o. 5.3.2.1'
+		});
+		const places = (t: string) =>
+			t
+				.slice(1)
+				.split('\r\n')
+				.slice(1)
+				.map((r) => r.split(';')[4]);
+		expect(alinea.kort).toMatch(/, alinea 3$/);
+		expect(places(csv([alinea, passage, overweging], () => ''))).toEqual([
+			'alinea 3',
+			'§ Artikel 21',
+			'r.o. 5.3.2.1'
+		]);
 	});
 
 	it('carries a note in the citations and the CSV', () => {
