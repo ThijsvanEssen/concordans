@@ -5,8 +5,9 @@
 	// is; the leden fold out under the line; Vergelijk opens the old text beside the new in
 	// place (`?vergelijk=`); the transposition table is one step further. An old article no
 	// new article takes the place of says what became of it (`outcomes`): vervallen bij,
-	// niet overgenomen in, blijft in, or that the table places it nowhere (besluit 23); a part
-	// with an outcome of its own stands in the fold-out.
+	// niet overgenomen in, blijft in or naar the law the table names (a link where the API knows
+	// that law, NamedLaw), or that the table places it nowhere (besluit 23); a part with an
+	// outcome of its own stands in the fold-out.
 	import { page } from '$app/state';
 	import { withParams } from '$lib/util/address';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -14,6 +15,7 @@
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { OUTCOME_WORD } from '$lib/verbonden/relation-words';
+	import NamedLaw from './NamedLaw.svelte';
 	import {
 		outcomeParts,
 		partRows,
@@ -65,7 +67,8 @@
 					...items.flatMap((i) =>
 						partRows(i.s.parts).map((r) => ({
 							old: direction === 'old' && items.length > 1 ? `${i.name}, ${r.old}` : r.old,
-							place: r.place
+							place: r.place,
+							law: r.law
 						}))
 					),
 					// Beside a successor, the parts of an outcome stand in the fold-out alone.
@@ -108,11 +111,12 @@
 {#snippet outcome(o: OutcomeEdge)}
 	{@const kind = o.reading.outcome?.kind}
 	{@const word = kind && kind !== 'gat' ? `${OUTCOME_WORD[kind]} ` : ''}
-	{#if kind === 'gat'}<Coverage lack="successor" />{:else if kind === 'blijft_in'}{word}{o.reading
-			.outcome?.law ?? own.citationTitle}{:else}{word}<BronLink
-			ref={o.law.id}
-			href={bronHref(o.law.id)}>{o.law.name}</BronLink
-		>{/if}
+	{@const named = o.reading.outcome?.law ?? (kind === 'blijft_in' ? own.citationTitle : null)}
+	{#if kind === 'gat'}<Coverage
+			lack="successor"
+		/>{:else if (kind === 'blijft_in' || kind === 'naar') && named}{word}<NamedLaw
+			name={named}
+		/>{:else}{word}<BronLink ref={o.law.id} href={bronHref(o.law.id)}>{o.law.name}</BronLink>{/if}
 {/snippet}
 
 {#each lines as line (line.direction)}
@@ -150,7 +154,9 @@
 			<dl class="succession__parts">
 				{#each line.rows as row (`${row.old}|${row.place}`)}
 					<dt>{row.old}</dt>
-					<dd>{row.place}</dd>
+					<dd>
+						{#if row.law}{row.law.word} <NamedLaw name={row.law.name} />{:else}{row.place}{/if}
+					</dd>
 				{/each}
 			</dl>
 		{/if}

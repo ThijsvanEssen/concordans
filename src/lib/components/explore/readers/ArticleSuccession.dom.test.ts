@@ -1,7 +1,7 @@
 // The line under the head of an article in a recodification: In het nieuwe recht on the old
 // article, Voorheen on the new one, the leden in a fold and the table it rests on.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { open } from '$lib/test/navigation.svelte';
 import ArticleSuccession from './ArticleSuccession.svelte';
@@ -10,6 +10,19 @@ import { outcomesOf } from './succession';
 
 vi.mock('$app/state', async () => (await import('$lib/test/navigation.svelte')).appState);
 vi.mock('$app/navigation', async () => (await import('$lib/test/navigation.svelte')).appNavigation);
+// A law the table names by its title: the API knows the Gratiewet, not the Wet X.
+vi.mock('$lib/api/search', () => ({
+	resolveQuery: async (q: string) => ({
+		q,
+		kind: q === 'Gratiewet' ? 'instrument' : 'none',
+		confidence: q === 'Gratiewet' ? 0.9 : 0,
+		match:
+			q === 'Gratiewet'
+				? { id: 'instruments/bwbr0004257', kind: 'instrument', confidence: 0.9 }
+				: null,
+		alternatives: []
+	})
+}));
 
 const sv = { citationTitle: 'Wetboek van Strafvordering', shortTitle: 'Sv' };
 
@@ -97,7 +110,8 @@ describe('ArticleSuccession with an outcome', () => {
 	it.each([
 		['vervallen', /^In het nieuwe recht:\s*vervallen bij Omgevingswet\s*Transponeringstabel/],
 		['niet_overgenomen', /^In het nieuwe recht:\s*niet overgenomen in Omgevingswet/],
-		['blijft_in:Waterwet', /^In het nieuwe recht:\s*blijft in Waterwet\s*Transponeringstabel/]
+		['blijft_in:Waterwet', /^In het nieuwe recht:\s*blijft in Waterwet\s*Transponeringstabel/],
+		['naar:Gratiewet', /^In het nieuwe recht:\s*naar Gratiewet\s*Transponeringstabel/]
 	])('says %s in place of a successor', (outcome, text) => {
 		const el = line({ outcome, parts: [{ from: '', to: 'x', outcome }] });
 		expect(el.textContent).toMatch(text);
@@ -111,6 +125,36 @@ describe('ArticleSuccession with an outcome', () => {
 		expect(screen.getByRole('link', { name: 'Omgevingswet' }).getAttribute('href')).toBe(
 			'/wetten/BWBR0037885'
 		);
+	});
+
+	it('links the other law a part goes to where the API knows it, and keeps an unknown one as text', async () => {
+		line({
+			outcome: 'naar:Gratiewet',
+			parts: [{ from: '', to: 'later', outcome: 'naar:Gratiewet' }]
+		});
+		await waitFor(() =>
+			expect(screen.getByRole('link', { name: 'Gratiewet' }).getAttribute('href')).toBe(
+				'/wetten/BWBR0004257'
+			)
+		);
+		expect(screen.queryByRole('link', { name: 'Omgevingswet' })).toBeNull();
+	});
+
+	it('says per lid the other law it goes to in the fold-out', async () => {
+		const el = line({
+			parts: [
+				{ from: '1', to: 'vervallen', outcome: 'vervallen' },
+				{ from: '2', to: 'later', outcome: 'naar:Wet X' },
+				{ from: '3', to: 'later', outcome: 'naar:Gratiewet' }
+			]
+		});
+		await fireEvent.click(screen.getByRole('button', { name: /Leden/ }));
+		await tick();
+		const parts = el.querySelector('.succession__parts')!;
+		expect(parts.textContent).toContain('naar Wet X');
+		expect(parts.textContent).toContain('naar Gratiewet');
+		await waitFor(() => expect(screen.getByRole('link', { name: 'Gratiewet' })).toBeTruthy());
+		expect(screen.queryByRole('link', { name: 'Wet X' })).toBeNull();
 	});
 
 	it('says a gap in the quiet line of what the dataset lacks', () => {

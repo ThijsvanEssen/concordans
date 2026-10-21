@@ -102,3 +102,47 @@ test('art. 2 Sv folds out the lid that lapses beside its successor', async ({ pa
 	await expect(parts.getByRole('term').filter({ hasText: /^lid 2$/ })).toBeVisible();
 	await expect(parts.getByRole('definition').filter({ hasText: /^vervallen$/ })).toBeVisible();
 });
+
+// A part the source sends to another law it names, without an article (lawgraph #879): naar
+// that law, a link where the API knows it by that name.
+test('art. 10 Sv goes to the Gratiewet the table names', async ({ page }) => {
+	await patchApi(
+		page,
+		/^\/api\/nodes\/articles\/bwbr0001903_10\?/,
+		metOpvolging(
+			opvolging([
+				{ from: '1', to: 'later', outcome: 'naar:Gratiewet' },
+				{ from: '2', to: 'later', outcome: 'naar:Gratiewet' }
+			])
+		)
+	);
+	await page.goto('/wetten/BWBR0001903/artikel/10?lezen=1');
+	const line = page.locator('.succession');
+	await expect(line).toContainText(/In het nieuwe recht:\s*naar Gratiewet/);
+	await expect(line).not.toContainText('zonder opvolger');
+	await expect(line.getByRole('link', { name: 'Gratiewet' })).toHaveAttribute(
+		'href',
+		/\/wetten\/BWBR0004257/
+	);
+});
+
+test('art. 2 Sv folds out the lid that goes to the Wetboek van Strafrecht', async ({ page }) => {
+	await patchApi(
+		page,
+		/^\/api\/nodes\/articles\/bwbr0001903_2\?/,
+		metOpvolging(opvolging([{ from: '2', to: 'later', outcome: 'naar:Wetboek van Strafrecht' }]))
+	);
+	await page.goto('/wetten/BWBR0001903/artikel/2?lezen=1');
+	const line = page.locator('.succession');
+	await expect(line).toContainText(/In het nieuwe recht:\s*art\. 1\.2\.9 Sv \(nieuw\)/);
+	await line.getByRole('button', { name: /Leden/ }).click();
+	const parts = page.locator('.succession__parts');
+	await expect(parts.getByRole('term').filter({ hasText: /^lid 2$/ })).toBeVisible();
+	await expect(
+		parts.getByRole('definition').filter({ hasText: /^naar Wetboek van Strafrecht$/ })
+	).toBeVisible();
+	await expect(parts.getByRole('link', { name: 'Wetboek van Strafrecht' })).toHaveAttribute(
+		'href',
+		/\/wetten\/BWBR0001854/
+	);
+});

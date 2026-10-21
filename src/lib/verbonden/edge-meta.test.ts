@@ -151,6 +151,21 @@ describe('readTranspositionOutcome (lawgraph #860)', () => {
 		expect(parseOutcome('blijft_in:Waterwet')).toEqual({ kind: 'blijft_in', law: 'Waterwet' });
 		expect(parseOutcome('gat')).toEqual({ kind: 'gat', law: null });
 		expect(parseOutcome('iets nieuws')).toBeNull();
+	});
+
+	it('reads the other law a part goes to without an article (lawgraph #879)', () => {
+		expect(parseOutcome('naar:Gratiewet')).toEqual({ kind: 'naar', law: 'Gratiewet' });
+		expect(parseOutcome('naar:Wetboek van Strafrecht')).toEqual({
+			kind: 'naar',
+			law: 'Wetboek van Strafrecht'
+		});
+		expect(parseOutcome('naar:')).toBeNull();
+		expect(
+			readTranspositionOutcome({
+				outcome: 'naar:Omgevingswet',
+				parts: [{ from: '', to: 'later', outcome: 'naar:Omgevingswet' }]
+			}).parts
+		).toEqual([{ from: '', to: 'later', outcome: { kind: 'naar', law: 'Omgevingswet' } }]);
 		expect(parseOutcome(undefined)).toBeNull();
 	});
 

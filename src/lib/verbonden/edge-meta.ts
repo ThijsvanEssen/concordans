@@ -190,21 +190,29 @@ export function readEdge(
 }
 
 /** What a transposition table says of an old article it places in no new article. */
-export type OutcomeKind = 'vervallen' | 'niet_overgenomen' | 'blijft_in' | 'gat';
+export type OutcomeKind = 'vervallen' | 'niet_overgenomen' | 'blijft_in' | 'naar' | 'gat';
 
-/** An outcome: `blijft_in` with the law it stays in, as the source writes it (`Waterwet`). */
+/**
+ * An outcome: `blijft_in` with the law it stays in, `naar` with the law the source sends it to
+ * without an article, each as the source writes it (`Waterwet`, `Gratiewet`).
+ */
 export type TableOutcome = { kind: OutcomeKind; law: string | null };
 
 const OUTCOME_KINDS: readonly string[] = ['vervallen', 'niet_overgenomen', 'gat'];
 
 /**
  * An outcome as the API writes it: `vervallen`, `niet_overgenomen`, `gat`,
- * `blijft_in:Waterwet`. Null for none, and for one this app does not know yet.
+ * `blijft_in:Waterwet`, `naar:Gratiewet`. Null for none, for `naar` without a law, and for one
+ * this app does not know yet.
  */
 export function parseOutcome(value: unknown): TableOutcome | null {
 	const s = textOf(value);
 	if (!s) return null;
 	if (s.startsWith('blijft_in:')) return { kind: 'blijft_in', law: s.slice(10).trim() || null };
+	if (s.startsWith('naar:')) {
+		const law = s.slice(5).trim();
+		return law ? { kind: 'naar', law } : null;
+	}
 	return OUTCOME_KINDS.includes(s) ? { kind: s as OutcomeKind, law: null } : null;
 }
 

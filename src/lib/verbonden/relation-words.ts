@@ -86,8 +86,11 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 		if (naar !== 'instruments')
 			return ['overgebracht naar', 'in het nieuwe recht', 'overbrenging naar het nieuwe recht'];
 		const o = parseOutcome(meta.outcome);
-		const word = o && o.kind !== 'blijft_in' && o.kind !== 'gat' ? OUTCOME_WORD[o.kind] : null;
-		const w = word ?? (o?.kind === 'blijft_in' ? 'niet overgebracht naar' : 'zonder opvolger in');
+		// An article that stays in its law or goes to another one the source names is not
+		// brought to the new law.
+		const elsewhere = o?.kind === 'blijft_in' || o?.kind === 'naar';
+		const word = o && !elsewhere && o.kind !== 'gat' ? OUTCOME_WORD[o.kind] : null;
+		const w = word ?? (elsewhere ? 'niet overgebracht naar' : 'zonder opvolger in');
 		return [w, w, 'uitkomst in het nieuwe recht'];
 	},
 	// A preamble that names an article without the power the regulation is made under in it
@@ -220,22 +223,25 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 
 /**
  * What a recodification did with an old article, before the law it names: `vervallen bij` and
- * `niet overgenomen in` the new law, `blijft in` the law the source names (`Waterwet`).
+ * `niet overgenomen in` the new law, `blijft in` the law the source names (`Waterwet`), `naar`
+ * the other law it sends the article to (`Gratiewet`).
  */
 export const OUTCOME_WORD: Record<Exclude<OutcomeKind, 'gat'>, string> = {
 	vervallen: 'vervallen bij',
 	niet_overgenomen: 'niet overgenomen in',
-	blijft_in: 'blijft in'
+	blijft_in: 'blijft in',
+	naar: 'naar'
 };
 
 /**
  * A part's outcome on its own, where the new law goes without saying: `vervallen`, `niet
- * overgenomen`, `blijft in Waterwet`. Null for a part no source places (`gat`).
+ * overgenomen`, `blijft in Waterwet`, `naar Gratiewet`. Null for a part no source places (`gat`).
  */
 export function outcomePlace(o: TableOutcome): string | null {
 	if (o.kind === 'vervallen') return 'vervallen';
 	if (o.kind === 'niet_overgenomen') return 'niet overgenomen';
 	if (o.kind === 'blijft_in') return o.law ? `${OUTCOME_WORD.blijft_in} ${o.law}` : 'blijft';
+	if (o.kind === 'naar') return `${OUTCOME_WORD.naar} ${o.law}`;
 	return null;
 }
 

@@ -163,7 +163,8 @@ describe('outcomesOf (lawgraph #860)', () => {
 					{ from: '1', to: 'vervallen (mvt)', outcome: 'vervallen' },
 					{ from: '2', to: 'Besluit B2', outcome: 'gat' },
 					{ from: '3', to: 'Besluit B2', outcome: 'gat' },
-					{ from: '4', to: 'Blijft in Waterwet', outcome: 'blijft_in:Waterwet' }
+					{ from: '4', to: 'Blijft in Waterwet', outcome: 'blijft_in:Waterwet' },
+					{ from: '5', to: 'later', outcome: 'naar:Gratiewet' }
 				]
 			}),
 			sv
@@ -171,7 +172,12 @@ describe('outcomesOf (lawgraph #860)', () => {
 		expect(partRows(outcomeParts(outcomes))).toEqual([
 			{ old: 'lid 1', place: 'vervallen' },
 			{ old: 'leden 2 en 3', place: 'Besluit B2' },
-			{ old: 'lid 4', place: 'blijft in Waterwet' }
+			{
+				old: 'lid 4',
+				place: 'blijft in Waterwet',
+				law: { word: 'blijft in', name: 'Waterwet' }
+			},
+			{ old: 'lid 5', place: 'naar Gratiewet', law: { word: 'naar', name: 'Gratiewet' } }
 		]);
 	});
 

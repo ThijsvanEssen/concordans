@@ -16,7 +16,7 @@ import {
 	type OutcomePart,
 	type TranspositionOutcome
 } from '$lib/verbonden/edge-meta';
-import { outcomePlace } from '$lib/verbonden/relation-words';
+import { OUTCOME_WORD, outcomePlace } from '$lib/verbonden/relation-words';
 
 export type Succession = Schema<'ArticleSuccessionDTO'>;
 
@@ -80,11 +80,17 @@ export function successionStatus(s: Succession): string | null {
 	return `${s.status ?? 'vastgesteld'}, nog niet in werking`;
 }
 
+/**
+ * A law a part goes to or stays in, named by the table (`naar Gratiewet`): the word before it
+ * and its name, which the fold-out links where the API knows it (`NamedLaw`).
+ */
+type PlaceLaw = { word: string; name: string };
+
 /** One row of the leden: the leden of the old article and their place in the new law. */
-type PartRow = { old: string; place: string };
+type PartRow = { old: string; place: string; law?: PlaceLaw };
 
 /** A part of the old article and its place in the new law, or what became of it. */
-type Placed = Pick<Succession['parts'][number], 'old_part' | 'new_place'>;
+type Placed = Pick<Succession['parts'][number], 'old_part' | 'new_place'> & { law?: PlaceLaw };
 
 /**
  * The leden of the old article by their place in the new law, as the table writes it; the
@@ -97,10 +103,13 @@ export function partRows(
 	{ whole = false }: { whole?: boolean } = {}
 ): PartRow[] {
 	const byPlace = new Map<string, string[]>();
+	// The same place names the same law.
+	const laws = new Map<string, PlaceLaw>();
 	for (const p of parts) {
 		const olds = byPlace.get(p.new_place) ?? [];
 		if (!olds.includes(p.old_part)) olds.push(p.old_part);
 		byPlace.set(p.new_place, olds);
+		if (p.law) laws.set(p.new_place, p.law);
 	}
 	const rows = [...byPlace].map(([place, olds]) => {
 		const leden = olds.filter(Boolean);
@@ -109,7 +118,8 @@ export function partRows(
 			...(whole ? ['het artikel'] : []),
 			...(leden.length ? [`${plural(leden.length, 'lid', 'leden')} ${joinAnd(leden)}`] : [])
 		]);
-		return { old, place };
+		const law = laws.get(place);
+		return law ? { old, place, law } : { old, place };
 	});
 	return !whole && rows.length === 1 && rows[0].old === 'het artikel' ? [] : rows;
 }
@@ -171,13 +181,20 @@ export function outcomesOf(response: NodeGraph | null | undefined, own: OwnLaw):
 }
 
 /**
- * A part's place in the fold-out: what became of it (`vervallen`, `blijft in Waterwet`), or for
+ * A part's place in the fold-out: what became of it (`vervallen`, `blijft in Waterwet`, `naar
+ * Gratiewet`, with the law it names), or for
  * a part no source places, the place as the table writes it (`Besluit B2`).
  */
-const outcomePart = (p: OutcomePart): Placed => ({
-	old_part: p.from,
-	new_place: (p.outcome && outcomePlace(p.outcome)) || p.to || 'niet gevonden'
-});
+const outcomePart = (p: OutcomePart): Placed => {
+	const placed = {
+		old_part: p.from,
+		new_place: (p.outcome && outcomePlace(p.outcome)) || p.to || 'niet gevonden'
+	};
+	const o = p.outcome;
+	if ((o?.kind === 'blijft_in' || o?.kind === 'naar') && o.law)
+		return { ...placed, law: { word: OUTCOME_WORD[o.kind], name: o.law } };
+	return placed;
+};
 
 /** Whether two outcomes say the same: `blijft in` the same law. */
 const same = (a: TableOutcome | null, b: TableOutcome | null) =>

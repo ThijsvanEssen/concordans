@@ -404,6 +404,10 @@ describe('one source of words per relation, direction and collection', () => {
 		expect(
 			relationLabel('TRANSPOSED_TO', 'articles', 'instruments', { outcome: 'niet_overgenomen' })
 		).toBe('niet overgenomen in');
+		// Sent to another law the source names (lawgraph #879): not brought to the new one.
+		expect(
+			relationLabel('TRANSPOSED_TO', 'articles', 'instruments', { outcome: 'naar:Gratiewet' })
+		).toBe('niet overgebracht naar');
 		// A stenogram is the record of its debate; no "in in".
 		expect(relationLabel('MADE_IN', 'documents', 'activities')).toBe('verslag van');
 		expect(soortVan('MADE_IN', 'documents', 'activities')).toBe('verslag van een debat');
