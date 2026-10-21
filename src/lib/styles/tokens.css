@@ -104,6 +104,9 @@
 	--s-6: 32px;
 	--s-7: 48px;
 	--s-8: 64px;
+	/* The phone's own bar under words selected (iOS: Kopieer, Selectie voor zoekopdracht), with
+	   room around it: a menu of the words opens past it (A92). */
+	--systeembalk: 56px;
 
 	/* ─── Size ─── */
 	/* The frame: the top bar, a page at most this wide, the text of a text page this wide, the

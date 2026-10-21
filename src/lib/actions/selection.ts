@@ -3,7 +3,7 @@
 // an r.o., an alinea) and their position in its text as the reader shows it (`walkText`, the
 // words `placeText` counts: no place's own marker, nothing marked `data-geen-tekst`). With a
 // mouse or keys at once; on touch once the finger has let go and the selection rests (the
-// handles move it on, and the phone shows its own bar over it), so the menu opens under it;
+// handles move it on), and the menu opens under it past the phone's own bar there (iOS 26);
 // while a finger is down nothing scrolls and no menu opens, or iOS would drag the selection
 // on (A92). The DOM is never changed: the words are drawn with the CSS Custom Highlight API
 // (shading.ts).
@@ -121,7 +121,7 @@ export type TextSelection = {
 	text: string;
 	/** The smallest place that holds it; null where it reaches past the text (two articles). */
 	place: { id: string; el: HTMLElement; start: number; end: number; walk: Walk } | null;
-	/** Made with a finger: the phone's own bar stands above it. */
+	/** Made with a finger: the phone shows its own bar under it. */
 	touch: boolean;
 };
 
@@ -152,7 +152,7 @@ const scrolls = (el: Element) =>
 
 /**
  * Words selected on a phone up to a fifth of the screen, where they stand below its upper
- * part: the menu opens below them (the phone's bar stands above), with room for it. In the
+ * part: the menu opens below them (past the phone's bar there), with room for it. In the
  * column the text scrolls in, else the page.
  */
 export function wordsUp(range: Range, from: Element) {
@@ -165,8 +165,16 @@ export function wordsUp(range: Range, from: Element) {
 	else scrollBy({ top: by, behavior: 'instant' });
 }
 
+/** Where a selection stands, in its place's text: the same words set again open no second
+ *  menu, however the browser gives their nodes back. */
+const keyOf = (s: TextSelection) =>
+	s.place ? `${s.place.id}:${s.place.start}:${s.place.end}` : `:${s.text}`;
+
 /** How long a selection on touch rests, the finger off the glass, before its menu opens. */
 const REST_MS = 400;
+/** How long after its menu opens a selection on touch is set again: by then the menu holds
+ *  the focus and iOS has stopped drawing the selection, its handles too. */
+const REDRAW_MS = 150;
 
 type Params = {
 	open: (s: TextSelection) => void;
@@ -183,13 +191,29 @@ export const selection: Action<HTMLElement, Params> = (node, params) => {
 	let held = false;
 	/** The selection moved on touch since its menu last opened. */
 	let moved = false;
+	/** Where the selection stood when its menu last opened on touch, till a finger is down
+	 *  again: the words set again then open no second menu. */
+	let opened: string | null = null;
 	let timer: ReturnType<typeof setTimeout> | undefined;
+	let redraw: ReturnType<typeof setTimeout> | undefined;
 	const check = () => {
 		clearTimeout(timer);
+		clearTimeout(redraw);
 		moved = false;
 		if (current.off) return;
 		const s = selectionIn(node, touch);
-		if (s) current.open(s);
+		if (!s) return;
+		// The words set again once their menu opened: it is open already.
+		if (touch && opened === keyOf(s)) return;
+		opened = touch ? keyOf(s) : null;
+		current.open(s);
+		if (!touch) return;
+		const range = s.range.cloneRange();
+		redraw = setTimeout(() => {
+			const sel = getSelection();
+			sel?.removeAllRanges();
+			sel?.addRange(range);
+		}, REDRAW_MS);
 	};
 	// After the click that ends a drag: that click is the text's, the menu opens after it.
 	const afterClick = () => {
@@ -213,7 +237,9 @@ export const selection: Action<HTMLElement, Params> = (node, params) => {
 	const onTouchStart = () => {
 		touch = true;
 		held = true;
+		opened = null;
 		clearTimeout(timer);
+		clearTimeout(redraw);
 	};
 	const onTouchEnd = (e: TouchEvent) => {
 		if (e.touches.length) return;
@@ -249,6 +275,7 @@ export const selection: Action<HTMLElement, Params> = (node, params) => {
 		},
 		destroy() {
 			clearTimeout(timer);
+			clearTimeout(redraw);
 			node.removeEventListener('pointerdown', onDown);
 			removeEventListener('pointerup', onUp);
 			node.removeEventListener('keyup', onKey);

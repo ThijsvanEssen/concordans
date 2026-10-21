@@ -36,9 +36,10 @@ export function placement(
 	box: Size,
 	view: Size,
 	align: Align = 'left',
-	downOnly = false
+	downOnly = false,
+	gap = GAP
 ): { up: boolean; room: number; left: number } {
-	const below = view.height - anchor.bottom - GAP - EDGE;
+	const below = view.height - anchor.bottom - gap - EDGE;
 	const above = anchor.top - GAP - EDGE;
 	const up = !downOnly && box.height > below && above > below;
 	const start = align === 'right' ? anchor.right - box.width : anchor.left;
@@ -50,8 +51,12 @@ export function placement(
 }
 
 /** The top of a box of `height` shown below its anchor, or above it. */
-export const topOf = (anchor: Edges, up: boolean, height: number): number =>
-	up ? anchor.top - GAP - height : anchor.bottom + GAP;
+export const topOf = (anchor: Edges, up: boolean, height: number, gap = GAP): number =>
+	up ? anchor.top - GAP - height : anchor.bottom + gap;
+
+/** The room the phone's own bar takes under words selected (`--systeembalk`), in pixels. */
+const systemBar = () =>
+	parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--systeembalk')) || GAP;
 
 /**
  * Whether an anchor is out of what shows of the boxes that clip it (its scrolling columns and
@@ -87,7 +92,7 @@ type TopLayer = {
 	detach?: boolean;
 	/** Where it hangs from, where not the anchor's box: the words a reader selected. */
 	rect?: (() => Edges) | null;
-	/** Below its anchor always: above words selected on a phone stands the phone's own bar. */
+	/** Words selected on a phone: below them always, past the phone's own bar under them. */
 	below?: boolean;
 };
 
@@ -107,9 +112,11 @@ export const topLayer: Action<HTMLElement, TopLayer> = (el, params) => {
 		if (outOfView(a, [shown, ...around.map((c) => c.getBoundingClientRect())])) return close();
 		// Its whole height, borders too, however much of it its cap now shows.
 		const height = el.scrollHeight + el.offsetHeight - el.clientHeight;
-		const { up, room, left } = placement(a, { width: el.offsetWidth, height }, view, align, below);
+		const gap = below ? systemBar() : GAP;
+		const box = { width: el.offsetWidth, height };
+		const { up, room, left } = placement(a, box, view, align, below, gap);
 		el.style.setProperty('--room', `${Math.round(room)}px`);
-		el.style.top = `${Math.round(topOf(a, up, el.offsetHeight))}px`;
+		el.style.top = `${Math.round(topOf(a, up, el.offsetHeight, gap))}px`;
 		el.style.left = `${Math.round(left)}px`;
 	};
 

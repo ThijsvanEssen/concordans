@@ -17,6 +17,13 @@ describe('placement', () => {
 		expect(topOf(a, p.up, 300)).toBe(120 + GAP);
 	});
 
+	it('leaves the room a gap takes: words selected on a phone, its own bar under them (A92)', () => {
+		const a = anchor(100);
+		const p = placement(a, { width: 200, height: 300 }, view, 'left', true, 56);
+		expect(p.room).toBe(900 - 120 - 56 - EDGE);
+		expect(topOf(a, p.up, 300, 56)).toBe(120 + 56);
+	});
+
 	it('puts it above where it does not fit below and there is more room above', () => {
 		const a = anchor(700);
 		const p = placement(a, { width: 200, height: 400 }, view);

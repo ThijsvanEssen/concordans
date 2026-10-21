@@ -257,8 +257,8 @@
 		})();
 		const part = p && p.id !== WHOLE_ARTICLE ? partAt(p.id) : null;
 		const range = s.range.cloneRange();
-		// On a phone the menu opens below the words, its bar above them: the words go up first
-		// where the menu would find too little room under them.
+		// On a phone the menu opens below the words, past the phone's own bar under them: the
+		// words go up first where the menu would find too little room there.
 		if (s.touch) wordsUp(range, box!);
 		menu = {
 			below: s.touch,
