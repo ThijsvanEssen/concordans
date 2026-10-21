@@ -137,3 +137,26 @@ export function searchedLine(s: Searched | null | undefined): string | null {
 	const unread = s.completeness.text?.state === 'none' ? ', niet in de tekst' : '';
 	return `Gezocht in ${joinAnd(s.fields.map((f) => SEARCHED[f]))}${unread}`;
 }
+
+/** Where an arcering's words are now, where they no longer stand where they were kept. */
+export type AnchorState =
+	| { state: 'moved'; place: string }
+	| { state: 'changed' | 'lapsed'; since: string }
+	| { state: 'lost' };
+
+/**
+ * The line of an arcering whose anchor no longer holds (besluit 23): `Nu in lid 3`, `Tekst
+ * gewijzigd per 1 juli 2026`, `Vervallen per 1 juli 2026`, `Fragment niet teruggevonden`.
+ */
+export function anchorLine(a: AnchorState): string {
+	switch (a.state) {
+		case 'moved':
+			return `Nu in ${a.place}`;
+		case 'changed':
+			return `Tekst gewijzigd per ${langeDatum(a.since)}`;
+		case 'lapsed':
+			return `Vervallen per ${langeDatum(a.since)}`;
+		case 'lost':
+			return 'Fragment niet teruggevonden';
+	}
+}

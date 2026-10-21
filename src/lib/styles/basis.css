@@ -252,6 +252,13 @@ a:hover {
 	color: var(--ink);
 }
 
+/* An arcering of the reader (O4): the grey of the pencil, drawn over the text without
+   changing it (CSS Custom Highlight API, $lib/text/arcering.ts). */
+::highlight(arcering) {
+	background-color: var(--wassing);
+	color: var(--ink);
+}
+
 :focus-visible {
 	outline: 2px solid var(--focus);
 	outline-offset: 2px;

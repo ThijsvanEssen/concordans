@@ -122,6 +122,12 @@ const TEST_HOOKS: Uitzondering[] = [
 		pad: 'lib/api/limit-maxima.ts',
 		regel: /^limitMaxima$/,
 		reden: 'read by vite.config.ts, which makes virtual:api-limits of it'
+	},
+	{
+		pad: 'lib/text/fragment.ts',
+		regel: /^paperPlaces$/,
+		reden:
+			'the places of a Kamerstuk (O4 step 4), tested on the papers of A28; its reader takes it in step 7'
 	}
 ];
 

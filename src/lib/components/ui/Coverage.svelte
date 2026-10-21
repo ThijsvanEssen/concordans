@@ -2,14 +2,22 @@
 	// The one mark for what the dataset lacks of a bron (besluit 23): one quiet line, grey and
 	// italic, never red, with the source that has it one step further. Its words come from
 	// coverage.ts; no reader writes its own. Nothing known to lack, no line.
-	import { coverageLine, searchedLine, type Completeness, type Searched } from '$lib/text/coverage';
+	import {
+		anchorLine,
+		coverageLine,
+		searchedLine,
+		type AnchorState,
+		type Completeness,
+		type Searched
+	} from '$lib/text/coverage';
 
 	let {
 		coverage = null,
 		searched = null,
 		of,
 		noText = false,
-		bron = null
+		bron = null,
+		anchor = null
 	}: {
 		/** The API's `completeness` of a record or a source. */
 		coverage?: Completeness | null;
@@ -21,9 +29,17 @@
 		noText?: boolean;
 		/** The source that holds what is missing here: wetten.overheid.nl, EUR-Lex. */
 		bron?: { label: string; href: string } | null;
+		/** An arcering whose words no longer stand where they were kept, in place of the rest. */
+		anchor?: AnchorState | null;
 	} = $props();
 
-	const line = $derived(searched ? searchedLine(searched) : coverageLine(coverage, { of, noText }));
+	const line = $derived(
+		anchor
+			? anchorLine(anchor)
+			: searched
+				? searchedLine(searched)
+				: coverageLine(coverage, { of, noText })
+	);
 </script>
 
 {#if line}<span class="dekking"

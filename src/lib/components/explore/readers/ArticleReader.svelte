@@ -438,6 +438,20 @@
 			vergelijk: null
 		});
 	const closeCompareHref = $derived(withParams(page.url, { versies: null, weergave: null }));
+	/** The tekstversie that took effect on a day, by any of its BWB versions. */
+	const wordingOn = (day: string) =>
+		wordings.find((w) => w.from === day || w.versions.some((v) => v.valid_from === day)) ?? null;
+	/** The text of an earlier tekstversie, for an arcering kept in it (besluit 23). */
+	const earlier = (day: string) => {
+		const w = wordingOn(day);
+		return w ? getArticleVersion(bwbId, articleNumber, w.first.key) : Promise.resolve(null);
+	};
+	/** The text kept against the text on screen, in place. */
+	const compareKept = (day: string) =>
+		withParams(page.url, {
+			versies: `${wordingOn(day)?.from ?? day}..${validFrom ?? ''}`,
+			vergelijk: null
+		});
 	// The article against another (`?vergelijk=articles/…`): its successor or predecessor in
 	// a recodification, the leden paired as the source places them; any other article is the
 	// reader's own choice (from the bundel), paired by likeness alone. A chunk of its own too.
@@ -833,6 +847,8 @@
 					{onCloseProposed}
 					{lidNotes}
 					mark={onderdeelMark(bwbId)}
+					{earlier}
+					{compareKept}
 				/>
 			{/if}
 		</div>

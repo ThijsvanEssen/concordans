@@ -36,3 +36,40 @@ export async function catchClipboard(context: BrowserContext) {
 	return (page: Page) =>
 		page.evaluate(() => (window as unknown as { __copied: string[] }).__copied.at(-1));
 }
+
+/**
+ * Selects `words` in a place of the text as a reader does: a drag with the mouse; on touch
+ * the selection a long press and its handles leave (made in the page: a browser under test
+ * cannot long-press) and the finger lifted, after which the menu opens once it rests.
+ */
+export async function selectWords(page: Page, place: string, words: string, touch: boolean) {
+	const box = await page.evaluate(
+		({ place, words, touch }) => {
+			const el = document.querySelector(`[data-plaats="${place}"]`)!;
+			const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+			for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+				const i = (n as Text).data.indexOf(words);
+				if (i < 0) continue;
+				const range = document.createRange();
+				range.setStart(n, i);
+				range.setEnd(n, i + words.length);
+				const r = range.getBoundingClientRect();
+				if (touch) {
+					n.parentElement!.dispatchEvent(
+						new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch' })
+					);
+					getSelection()!.removeAllRanges();
+					getSelection()!.addRange(range);
+				}
+				return { x: r.x, y: r.y + r.height / 2, w: r.width };
+			}
+			throw new Error(`${words} not in ${place}`);
+		},
+		{ place, words, touch }
+	);
+	if (touch) return;
+	await page.mouse.move(box.x + 1, box.y);
+	await page.mouse.down();
+	await page.mouse.move(box.x + box.w - 1, box.y, { steps: 6 });
+	await page.mouse.up();
+}

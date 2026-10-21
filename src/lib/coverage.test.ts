@@ -4,7 +4,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { coverageLine, lacks, notHeld, searchedLine } from '$lib/text/coverage';
+import { anchorLine, coverageLine, lacks, notHeld, searchedLine } from '$lib/text/coverage';
 
 const ROOT = join(process.cwd(), 'src');
 
@@ -43,6 +43,22 @@ describe('the mark of what is missing', () => {
 			if (n > 0) found[rel] = n;
 		}
 		expect(found).toEqual(STILL_OWN);
+	});
+
+	it('says where an arcering is now, in one line, never silently', () => {
+		expect(anchorLine({ state: 'moved', place: 'lid 3' })).toBe('Nu in lid 3');
+		expect(anchorLine({ state: 'changed', since: '2026-07-01' })).toBe(
+			'Tekst gewijzigd per 1 juli 2026'
+		);
+		expect(anchorLine({ state: 'lapsed', since: '2026-07-01' })).toBe('Vervallen per 1 juli 2026');
+		expect(anchorLine({ state: 'lost' })).toBe('Fragment niet teruggevonden');
+		// Its words live here alone: no other file writes them.
+		const found = files(ROOT).filter(
+			(path) =>
+				!OWN.has(relative(ROOT, path)) &&
+				/Fragment niet teruggevonden|Tekst gewijzigd per/.test(code(readFileSync(path, 'utf8')))
+		);
+		expect(found).toEqual([]);
 	});
 
 	it('says a part or a bron the dataset lacks in the same words everywhere', () => {
