@@ -85,6 +85,7 @@
 			parts={shown.parts}
 			tables={shown.tables}
 			headings={shown.headings}
+			footnoteMarks={shown.footnoteMarks}
 			citations={linked?.citations ?? []}
 			references={linked?.references ?? []}
 			law={bwbId}

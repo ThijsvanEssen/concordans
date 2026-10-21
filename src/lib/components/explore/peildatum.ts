@@ -16,6 +16,7 @@ type AtItem = Pick<
 	| 'heading'
 	| 'breadcrumb'
 	| 'text'
+	| 'footnote_marks'
 	| 'text_preview'
 	| 'valid_from'
 	| 'valid_until'
@@ -80,6 +81,8 @@ type AtArticle = {
 	/** The tables in that text, and its headings. */
 	tables: Table[];
 	headings: NonNullable<AtItem['headings']>;
+	/** Where the markers of its footnotes stood in that text. */
+	footnoteMarks: Schema<'FootnoteMarkDTO'>[];
 	text_preview: string | null;
 };
 
@@ -102,6 +105,7 @@ export function atArticles(items: AtItem[], current: Current[]): AtArticle[] {
 		parts: i.parts.length ? i.parts : null,
 		tables: i.tables ?? [],
 		headings: i.headings ?? [],
+		footnoteMarks: i.footnote_marks ?? [],
 		text_preview: i.text_preview ?? null
 	}));
 }

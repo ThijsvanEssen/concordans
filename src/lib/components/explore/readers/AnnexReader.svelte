@@ -109,6 +109,7 @@
 					parts={a.parts}
 					tables={a.tables}
 					headings={a.headings}
+					footnoteMarks={a.footnote_marks}
 					references={detail.references ?? []}
 					law={a.bwb_id}
 				/>

@@ -15,8 +15,14 @@ const read = (key: string): Annex =>
 		readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'bijlagen', `${key}.json`), 'utf8')
 	);
 
-/** The bijlagen of `bwb` read anew: in its table of contents and in their reader. */
-export async function bijlagenGelezen(page: Page, bwb: string, keys: string[]) {
+/** The bijlagen of `bwb` read anew: in its table of contents and in their reader; `change`
+ *  makes of a bijlage's answer what a later API gives (its footnotes, #875). */
+export async function bijlagenGelezen(
+	page: Page,
+	bwb: string,
+	keys: string[],
+	change: (body: Record<string, unknown>) => Record<string, unknown> = (body) => body
+) {
 	const read_ = new Map(keys.map((k) => [k, read(k)]));
 	await patchApi(page, new RegExp(`^/api/instruments/${bwb}/articles\\?`), (body) => ({
 		...body,
@@ -33,9 +39,11 @@ export async function bijlagenGelezen(page: Page, bwb: string, keys: string[]) {
 		})
 	}));
 	for (const [key, own] of read_)
-		await patchApi(page, new RegExp(`^/api/annexes/${key}$`), (body) => ({
-			...body,
-			annex: { ...(body.annex as object), ...own.annex },
-			references: own.references
-		}));
+		await patchApi(page, new RegExp(`^/api/annexes/${key}$`), (body) =>
+			change({
+				...body,
+				annex: { ...(body.annex as object), ...own.annex },
+				references: own.references
+			})
+		);
 }

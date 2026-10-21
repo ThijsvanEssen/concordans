@@ -2500,6 +2500,11 @@ export interface components {
              * @description The headings in `text` (of a division, a table), as spans of it.
              */
             headings: components["schemas"]["ArticleHeadingDTO"][];
+            /**
+             * Footnote Marks
+             * @description Where the markers of its footnotes stood in `text`, as on an article.
+             */
+            footnote_marks: components["schemas"]["FootnoteMarkDTO"][];
             /** Entries */
             entries: components["schemas"]["AnnexEntryDTO"][];
             /**
@@ -3345,6 +3350,11 @@ export interface components {
              */
             headings: components["schemas"]["ArticleHeadingDTO"][];
             /**
+             * Footnote Marks
+             * @description Where the markers of its footnotes stood in `text`, in text order.
+             */
+            footnote_marks: components["schemas"]["FootnoteMarkDTO"][];
+            /**
              * Path
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */
@@ -3447,6 +3457,11 @@ export interface components {
              * @description As on the article: spans of `text`.
              */
             headings: components["schemas"]["ArticleHeadingDTO"][];
+            /**
+             * Footnote Marks
+             * @description As on the article: offsets into `text`.
+             */
+            footnote_marks: components["schemas"]["FootnoteMarkDTO"][];
         };
         /**
          * ArticleVersionListedDTO
@@ -7284,6 +7299,11 @@ export interface components {
              */
             dossier_number: string | null;
             /**
+             * Dossier Short Title
+             * @description The name that dossier goes by (``Cyberbeveiligingswet``), as ``/api/dossiers`` gives it; null without one.
+             */
+            dossier_short_title: string | null;
+            /**
              * Sequence
              * @description Its number in its own dossier (nr. 3); null for none.
              */
@@ -8364,6 +8384,24 @@ export interface components {
             coalition_factions: components["schemas"]["CoalitionFactionDTO"][];
         };
         /**
+         * FootnoteMarkDTO
+         * @description The marker of a footnote in the text of an article (``<sup>1</sup>`` after
+         *     "Richtlijn (EU) 2019/944"): no character of `text`, but where it stood. The footnote
+         *     itself is a paragraph of `text` that opens with its number.
+         */
+        FootnoteMarkDTO: {
+            /**
+             * At
+             * @description Offset into `text` where the marker stood: `text[:at]` the words before it.
+             */
+            at: number;
+            /**
+             * Number
+             * @description Its number, without brackets: `1`.
+             */
+            number: string;
+        };
+        /**
          * GovernmentFunctionDTO
          * @description A post held in a cabinet, as Rijksoverheid names it, and normalised.
          */
@@ -8831,6 +8869,12 @@ export interface components {
              * @default []
              */
             headings: components["schemas"]["ArticleHeadingDTO"][];
+            /**
+             * Footnote Marks
+             * @description Where the markers of its footnotes stood in the text; empty when the text was not asked for.
+             * @default []
+             */
+            footnote_marks: components["schemas"]["FootnoteMarkDTO"][];
             /**
              * Text Preview
              * @description The first ``text_preview_chars`` characters of the text.

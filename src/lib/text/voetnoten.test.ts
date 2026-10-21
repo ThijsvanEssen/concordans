@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { Schema } from '$lib/api/types';
 import {
+	articleMarkers,
+	articleNotes,
 	metVoetnoot,
 	regelVan,
 	stukNoten,
 	stukPlaats,
 	uitspraakNoten,
+	withNotes,
 	type NootMarker
 } from './voetnoten';
 import { bodyItems } from '$lib/components/explore/readers/judgment-text';
@@ -254,5 +257,67 @@ describe('notes in the margin', () => {
 				{ top: 400, height: 10 }
 			])
 		).toEqual([0, 58, 0]);
+	});
+});
+
+describe('the notes of an article (#875)', () => {
+	// Successiewet art. 24 lid 1: the marker in the head of the table, the note under it.
+	const text =
+		'1. De belasting wordt geheven naar het volgende tarief.\n' +
+		'Gedeelte\ten\tI. indien verkregen in de rechte lijn\tII. in overige gevallen\n' +
+		'€ 0\t€ 158.669\t10%\t30%\n' +
+		'1 Voor afstammelingen in de tweede of verdere graad, vermeerderd met 80% daarvan.\n' +
+		'2. De overdrachtsbelasting strekt in mindering.';
+	const at = text.indexOf('lijn') + 'lijn'.length;
+	const table = { start: text.indexOf('Gedeelte'), end: text.indexOf('\n1 Voor') };
+	const marks = [{ at, number: '1' }];
+
+	it('finds the line that opens with the number after its marker, not a lid or a cell', () => {
+		const notes = articleNotes(text, marks, [table]);
+		const note = notes.get('1')!;
+		expect(text.slice(note.start, note.end)).toBe(
+			'1 Voor afstammelingen in de tweede of verdere graad, vermeerderd met 80% daarvan.'
+		);
+		expect(text.slice(note.body, note.body + 5)).toBe(' Voor');
+		expect(note.anchor).toBe('fn-1');
+	});
+
+	it('has no note for a number no line opens with', () => {
+		expect(articleNotes(text, [{ at, number: '7' }], [table]).size).toBe(0);
+		expect(articleNotes(text, null).size).toBe(0);
+	});
+
+	it('links each marker to its note, the first the place the note links back to', () => {
+		const notes = articleNotes(text, [...marks, { at: 10, number: '1' }], [table]);
+		const markers = articleMarkers([...marks, { at: 10, number: '1' }], notes, 0, 60, true);
+		expect(markers).toEqual([
+			{ id: 'fnref-1', label: '1', at: 10, href: '#fn-1', anchor: 'fnref-1' }
+		]);
+		const later = articleMarkers(
+			[...marks, { at: 10, number: '1' }],
+			notes,
+			table.start,
+			table.end,
+			true
+		);
+		expect(later).toEqual([
+			{ id: 'fnref-1', label: '1', at: at - table.start, href: '#fn-1', anchor: null }
+		]);
+	});
+
+	it('leaves a marker text where the text has no anchors or no note', () => {
+		const notes = articleNotes(text, marks, [table]);
+		expect(articleMarkers(marks, notes, 0, text.length, false)[0].href).toBeNull();
+		expect(articleMarkers(marks, new Map(), 0, text.length, true)[0].href).toBeNull();
+	});
+
+	it('cuts a block at its notes, the text around them trimmed', () => {
+		const notes = articleNotes(text, marks, [table]);
+		const blocks = withNotes(text, [{ start: table.end, end: text.length }], notes);
+		expect(blocks.map((b) => [text.slice(b.start, b.end).slice(0, 10), !!b.note])).toEqual([
+			['1 Voor afs', true],
+			['2. De over', false]
+		]);
+		expect(withNotes(text, [{ start: 0, end: 10, heading: true }], notes)[0].note).toBeNull();
 	});
 });

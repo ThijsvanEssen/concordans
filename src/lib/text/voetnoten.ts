@@ -1,8 +1,9 @@
 // The footnotes of a judgment and of a Kamerstuk, as the readers set them: a marker (its
 // label) at the place in the text that refers to the note, and the note under its
-// overweging or paragraph, in the margin where there is room (Voetnoten.svelte). Pure
-// functions, no Svelte.
-import { textOf } from '$lib/text/words';
+// overweging or paragraph, in the margin where there is room (Voetnoten.svelte). The notes
+// of an article and a bijlage are lines of its own text, each marker a link to its line
+// (ArticleText). Pure functions, no Svelte.
+import { escapeRegExp, textOf } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import { formatAnchor, parseAnchor } from './anchor';
 
@@ -17,8 +18,16 @@ export type Noot = {
 	citations: Span[];
 };
 
-/** Where a marker stands: `at` in the text that refers to the note; null at its end. */
-export type NootMarker = { id: string; label: string; at: number | null };
+/** Where a marker stands: `at` in the text that refers to the note; null at its end. A marker
+ *  of an article's note links to the note in the same text (`href`, `#fn-1`), and the first
+ *  marker of a note is where the note links back to (`anchor`, `fnref-1`). */
+export type NootMarker = {
+	id: string;
+	label: string;
+	at: number | null;
+	href?: string | null;
+	anchor?: string | null;
+};
 
 /** A range to mark in a text: the words a verbinding names. */
 export type Bereik = { start: number; end: number };
@@ -153,3 +162,119 @@ export const voetnootWoord = (label: string) => `voetnoot ${label}`;
 /** `r.o. 5.7.6 (voetnoot 35)`: a place, and the note in it where the citation stands there. */
 export const metVoetnoot = (plaats: string | null, label: string | null | undefined) =>
 	label ? (plaats ? `${plaats} (${voetnootWoord(label)})` : voetnootWoord(label)) : plaats;
+
+type FootnoteMark = Schema<'FootnoteMarkDTO'>;
+
+/**
+ * A note of an article or a bijlage (API 0.80.2): a line of its text that opens with its
+ * number (`1 Richtlijn (EU) 2019/944 …`), `start`..`end` the line, `body` where the words
+ * after the number begin.
+ */
+type ArticleNote = {
+	number: string;
+	start: number;
+	end: number;
+	body: number;
+	/** Its anchor, a judgment's note's: `fn-1`. */
+	anchor: string;
+};
+
+/** The anchor of the first marker that refers to an article's note: `fnref-1`. */
+export const markerAnchor = (number: string) => `fnref-${number}`;
+
+/**
+ * The notes the markers of a text refer to (`footnote_marks`): per number the first line
+ * after its first marker that opens with that number and a space, outside the tables; else
+ * the first such line anywhere. A number without such a line has no note: its marker stays
+ * text.
+ */
+export function articleNotes(
+	text: string,
+	marks: readonly FootnoteMark[] | null | undefined,
+	tables: readonly { start: number; end: number }[] = []
+): Map<string, ArticleNote> {
+	const out = new Map<string, ArticleNote>();
+	const inTable = (at: number) => tables.some((t) => at >= t.start && at < t.end);
+	for (const m of [...(marks ?? [])].sort((a, b) => a.at - b.at)) {
+		if (out.has(m.number)) continue;
+		const line = new RegExp(`(^|\\n)[ \\u00a0]*(${escapeRegExp(m.number)})[ \\u00a0]+\\S`, 'g');
+		const found = [...text.matchAll(line)]
+			.map((r) => r.index + r[0].indexOf(r[2], r[1].length))
+			.filter((at) => !inTable(at));
+		const start = found.find((at) => at >= m.at) ?? found[0];
+		if (start === undefined) continue;
+		const nl = text.indexOf('\n', start);
+		const end = start + text.slice(start, nl < 0 ? undefined : nl).trimEnd().length;
+		out.set(m.number, {
+			number: m.number,
+			start,
+			end,
+			body: start + m.number.length,
+			anchor: nootAnker(m.number)
+		});
+	}
+	return out;
+}
+
+/**
+ * The markers in `text[start, end]`, `at` relative to `start`: each a link to its note
+ * where it has one and the text has anchors (`anchors`), the first of a number the place its
+ * note links back to.
+ */
+export function articleMarkers(
+	marks: readonly FootnoteMark[] | null | undefined,
+	notes: ReadonlyMap<string, ArticleNote>,
+	start: number,
+	end: number,
+	anchors: boolean
+): NootMarker[] {
+	const sorted = [...(marks ?? [])].sort((a, b) => a.at - b.at);
+	const first = new Map<string, number>();
+	for (const m of sorted) if (!first.has(m.number)) first.set(m.number, m.at);
+	return sorted
+		.filter((m) => m.at >= start && m.at <= end)
+		.map((m) => {
+			const note = anchors ? notes.get(m.number) : undefined;
+			return {
+				id: markerAnchor(m.number),
+				label: m.number,
+				at: m.at - start,
+				href: note ? `#${note.anchor}` : null,
+				anchor: note && first.get(m.number) === m.at ? markerAnchor(m.number) : null
+			};
+		});
+}
+
+/**
+ * Blocks of a text cut at the notes in them: each note a block of its own (`note`), the
+ * text before and after it trimmed, none empty. A table or a heading is left as it is.
+ */
+export function withNotes<
+	B extends { start: number; end: number; table?: unknown; heading?: boolean }
+>(
+	text: string,
+	blocks: readonly B[],
+	notes: ReadonlyMap<string, ArticleNote>
+): (B & { note: ArticleNote | null })[] {
+	const all = [...notes.values()].sort((a, b) => a.start - b.start);
+	return blocks.flatMap((b) => {
+		const inside =
+			b.table || b.heading ? [] : all.filter((n) => n.start >= b.start && n.end <= b.end);
+		if (!inside.length) return [{ ...b, note: null }];
+		const out: (B & { note: ArticleNote | null })[] = [];
+		const plain = (from: number, to: number) => {
+			const raw = text.slice(from, to);
+			const s = from + raw.length - raw.trimStart().length;
+			const e = s + raw.trim().length;
+			if (e > s) out.push({ ...b, start: s, end: e, note: null });
+		};
+		let at = b.start;
+		for (const n of inside) {
+			plain(at, n.start);
+			out.push({ ...b, start: n.start, end: n.end, note: n });
+			at = n.end;
+		}
+		plain(at, b.end);
+		return out;
+	});
+}

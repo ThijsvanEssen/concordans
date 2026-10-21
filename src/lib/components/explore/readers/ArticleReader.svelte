@@ -858,6 +858,7 @@
 					parts={shownVersion?.parts ?? a.parts}
 					tables={shownVersion ? shownVersion.tables : a.tables}
 					headings={shownVersion ? shownVersion.headings : a.headings}
+					footnoteMarks={shownVersion ? shownVersion.footnote_marks : a.footnote_marks}
 					citations={shownVersion ? [] : d.citations}
 					references={shownVersion ? [] : (d.references ?? [])}
 					law={bwbId}

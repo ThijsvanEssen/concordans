@@ -45,6 +45,18 @@ describe('a row of Verbonden kept in the map', () => {
 		expect(item.groep).toBe('Kamerstuk 34372');
 	});
 
+	it('names the dossier of a Toelichting row by the name explained-by gives it (#875)', () => {
+		const [row] = rowsOfExplanations([
+			{
+				...amendement,
+				document: { ...amendement.document, dossier_short_title: 'Wet gegevensverwerking' }
+			}
+		]);
+		const item = itemVanRij(row)!;
+		expect(item.groep).toBe('Kamerstuk 34372 Wet gegevensverwerking');
+		expect(item.groupKey).toBe('dossier:34372');
+	});
+
 	it('cites a Kamerstuk row as its reader does, with its vergaderjaar (#48, #67)', () => {
 		const [row] = rowsOfExplanations([amendement]);
 		const { kort } = itemVanRij(row)!;

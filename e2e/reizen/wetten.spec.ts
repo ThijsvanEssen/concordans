@@ -5,6 +5,8 @@ import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
 import { showText } from '../support/panes';
 import { bijlagenGelezen } from '../support/bijlagen';
+import { patchApi } from '../support/api';
+import { metVoetnoten } from '../support/voetnoten';
 
 test('Bronnen › Wetten: a filter narrows the list, a search finds a law that opens', async ({
 	page,
@@ -131,6 +133,44 @@ test('a law lists its bijlagen after its articles; a bijlage reads its table', a
 	const column = await width(touch ? '.article-text' : '.lid__text');
 	expect(await width('.text-table')).toBeGreaterThanOrEqual(column - 1);
 	await expect(box).not.toHaveAttribute('data-more-right');
+});
+
+test('a footnote of a bijlage: its marker goes to the note, the note back (#875)', async ({
+	page
+}) => {
+	await bijlagenGelezen(page, 'BWBR0052872', ['bwbr0052872_annex_1'], (body) =>
+		metVoetnoten(body, 'annex', [{ after: 'Richtlijn (EU) 2019/944', number: '1' }])
+	);
+	await page.goto('/wetten/BWBR0052872/bijlage/1?lezen=1');
+	const marker = page.getByRole('link', { name: 'Voetnoot 1', exact: true });
+	await expect(marker).toHaveAttribute('href', '#fn-1');
+	await expect(page.getByRole('cell').filter({ has: marker })).toContainText(
+		'Richtlijn (EU) 2019/9441, die de functie'
+	);
+	await marker.click();
+	const note = page.locator('#fn-1');
+	await expect(note).toHaveClass(/is-landed/);
+	await expect(note).toBeInViewport();
+	await expect(note).toContainText('1 Richtlijn (EU) 2019/944 van het Europees Parlement');
+	await note.getByRole('link', { name: 'Terug naar de tekst bij voetnoot 1' }).click();
+	await expect(page.locator('#fnref-1')).toHaveClass(/is-landed/);
+	await expect(marker).toBeInViewport();
+});
+
+test('a footnote in the head of a table of an article (Successiewet art. 24, #875)', async ({
+	page
+}) => {
+	await patchApi(page, /^\/api\/articles\/BWBR0002226\/24$/, (body) =>
+		metVoetnoten(body, 'article', [{ after: 'rechte lijn', number: '1', printed: '1)' }])
+	);
+	await page.goto('/wetten/BWBR0002226/artikel/24?lezen=1');
+	const marker = page.getByRole('link', { name: 'Voetnoot 1', exact: true });
+	await expect(page.getByRole('columnheader').filter({ has: marker })).toContainText(
+		'in de rechte lijn1'
+	);
+	await marker.click();
+	await expect(page.locator('#fn-1')).toHaveClass(/is-landed/);
+	await expect(page.locator('#fn-1')).toContainText('1 Voor afstammelingen in de tweede');
 });
 
 test('a list of the Opiumwet reads as its table', async ({ page, touch }) => {

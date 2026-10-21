@@ -6,11 +6,12 @@
 	// beside the text: a place's own marker ("1.", "a.") is its menu (PlaatsMenu), and so is
 	// a click on its text, the innermost place clicked (concept 21, variant B, Thijs 10 Oct).
 	import PlaatsMenu, { placeMarker } from './PlaatsMenu.svelte';
-	import { blockClick } from '$lib/actions/klik';
+	import { blockClick, gewoneKlik } from '$lib/actions/klik';
 	import { kaart } from '$lib/map/map.svelte';
 	import { citeItems } from '$lib/components/ui/cite-items';
 	import { page } from '$app/state';
-	import { permalink } from '$lib/bron/landing';
+	import { landOn, permalink } from '$lib/bron/landing';
+	import { markerAnchor, articleMarkers, articleNotes, withNotes } from '$lib/text/voetnoten';
 	import type { Schema } from '$lib/api/types';
 	import { markerOf, partsOf, placeOf, walkParts, type ArticlePart } from '$lib/text/article-parts';
 	import { citeArticle, placeCitation, type ArticleCitation } from '$lib/text/cite';
@@ -58,6 +59,7 @@
 		parts: apiParts = null,
 		tables: apiTables = [],
 		headings = [],
+		footnoteMarks = [],
 		citations = [],
 		references = [],
 		law = null,
@@ -89,6 +91,9 @@
 		/** The headings in the text on a line of their own (`headings`: of a bijlage, a
 		 *  tussenkop), set apart from the paragraphs. */
 		headings?: Heading[] | null;
+		/** Where the markers of its footnotes stood (`footnote_marks`): each a superscript
+		 *  linked to its note, a line of the text that opens with its number. */
+		footnoteMarks?: Schema<'FootnoteMarkDTO'>[] | null;
 		citations?: Schema<'ArticleCitationSpan'>[];
 		/** Every reference the text makes (`references`): each mention a link where its
 		 *  target is known, besides the one citation per target. */
@@ -162,6 +167,8 @@
 	const perRef = $derived(definitiesOp(definities));
 	const tables = $derived(apiTables ?? []);
 	const parts = $derived(partsOf(source, apiParts, tables));
+	/** The notes the markers refer to, by their number. */
+	const notes = $derived(articleNotes(source, footnoteMarks, tables));
 	const marker = (number: string) => markerOf(number, mark);
 	/** Every part, for the place a citation names: a definition by its term. */
 	const allParts = $derived([...walkParts(parts)]);
@@ -186,11 +193,34 @@
 		delegaties: delegatiesWithin(delegaties, start, end - start)
 	});
 
-	/** A part's own text: its paragraphs (trimmed, none empty), its headings and its tables. */
+	/** A part's own text: its paragraphs (trimmed, none empty), its headings, its tables and
+	 *  its footnotes. */
 	const own = (part: ArticlePart) =>
-		blocksOf(source, part.textStart, part.textEnd, tables).flatMap((piece) =>
-			piece.table ? [{ ...piece, heading: false }] : withHeadings(source, piece, headings ?? [])
+		withNotes(
+			source,
+			blocksOf(source, part.textStart, part.textEnd, tables).flatMap((piece) =>
+				piece.table ? [{ ...piece, heading: false }] : withHeadings(source, piece, headings ?? [])
+			),
+			notes
 		);
+
+	/** A footnote marker or a note's number goes to the other in place: the reader lands
+	 *  there, as on an address with its anchor. */
+	$effect(() => {
+		const el = box;
+		if (!el || !notes.size) return;
+		const jump = (e: MouseEvent) => {
+			const link = (e.target as Element | null)?.closest<HTMLAnchorElement>(
+				'a.noot-ref__knop, a.voetnoot__terug'
+			);
+			const id = link?.hash.slice(1);
+			if (!id || !link || !gewoneKlik(e) || !el.contains(link)) return;
+			e.preventDefault();
+			landOn(el, decodeURIComponent(id));
+		};
+		el.addEventListener('click', jump);
+		return () => el.removeEventListener('click', jump);
+	});
 
 	/** The place's text with its onderdelen, as Kopieer tekst puts it on the clipboard; the
 	 *  article's whole text when the place is the article. */
@@ -412,6 +442,7 @@
 		definities={perRef}
 		delegaties={m.delegaties}
 		{grondslag}
+		noten={notes.size ? articleMarkers(footnoteMarks, notes, start, end, ankers) : []}
 	/>
 {/snippet}
 
@@ -437,6 +468,15 @@
 			<TextTable text={source} table={piece.table} cell={cited} />
 		{:else if piece.heading}
 			<p class="tussenkop">{@render cited(piece.start, piece.end)}</p>
+		{:else if piece.note}
+			{@const n = piece.note.number}
+			<p class="voetnoot" id={ankers ? piece.note.anchor : undefined}>
+				{#if ankers}<a
+						class="voetnoot__terug"
+						href="#{markerAnchor(n)}"
+						aria-label="Terug naar de tekst bij voetnoot {n}">{n}</a
+					>{:else}{n}{/if}{@render cited(piece.note.body, piece.end)}
+			</p>
 		{:else}
 			<p>{@render cited(piece.start, piece.end)}</p>
 		{/if}
@@ -805,6 +845,31 @@
 	.part__body p.tussenkop {
 		margin-top: var(--s-3);
 		font-weight: 600;
+		color: var(--ink);
+	}
+
+	/* A footnote: a line of the text that opens with its number, in the letter of a note; the
+	   number goes back to its marker. */
+	.lid__body p.voetnoot,
+	.part__body p.voetnoot {
+		margin-top: var(--s-2);
+		font-size: var(--t-meta);
+		line-height: var(--lh-snug);
+		color: var(--ink-2);
+		border-radius: var(--r-1);
+		scroll-margin: 20vh;
+	}
+	.voetnoot:global(.is-landed) {
+		background: var(--wassing);
+	}
+	.voetnoot__terug {
+		margin-right: var(--s-1);
+		color: inherit;
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 2px;
+	}
+	.voetnoot__terug:hover {
 		color: var(--ink);
 	}
 

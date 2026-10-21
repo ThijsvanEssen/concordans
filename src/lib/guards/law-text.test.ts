@@ -85,6 +85,13 @@ describe('the headings in a text (A110)', () => {
 	});
 });
 
+describe('the footnotes in a text (#875)', () => {
+	it('are passed by every reader of an article or a bijlage to ArticleText', () => {
+		for (const path of articleReaders)
+			expect(bron(path), path).toMatch(/<ArticleText\b[^>]*\bfootnoteMarks=/);
+	});
+});
+
 describe('the text of a bijlage (#870)', () => {
 	it('reads as the text of an article: ArticleText with its tables, headings and links', () => {
 		const t = bron('lib/components/explore/readers/AnnexReader.svelte');

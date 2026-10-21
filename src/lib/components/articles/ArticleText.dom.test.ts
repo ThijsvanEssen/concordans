@@ -49,3 +49,52 @@ describe('a table in the text of an article', () => {
 		expect([...cell.querySelectorAll('.begrip')].map((a) => a.textContent)).toEqual(['aanbieder']);
 	});
 });
+
+describe('the footnotes of an article (#875)', () => {
+	// Successiewet art. 24 lid 1: the marker in the head of the table, the note under it.
+	const text =
+		'1. De belasting wordt geheven naar het volgende tarief.\n' +
+		'Gedeelte\ten\tI. indien verkregen in de rechte lijn\tII. in overige gevallen\n' +
+		'€ 0\t€ 158.669\t10%\t30%\n' +
+		'1 Voor afstammelingen in de tweede of verdere graad, vermeerderd met 80% daarvan.\n' +
+		'2. De overdrachtsbelasting strekt in mindering.';
+	const tables: Table[] = [
+		{
+			start: text.indexOf('Gedeelte'),
+			end: text.indexOf('\n1 Voor'),
+			head_rows: 1,
+			columns: 4,
+			spans: []
+		}
+	];
+	const footnoteMarks = [{ at: text.indexOf('lijn') + 4, number: '1' }];
+
+	it('raises the marker, a link to its note, and the note links back', () => {
+		const { container } = render(ArticleText, { text, tables, footnoteMarks });
+		const marker = container.querySelector<HTMLAnchorElement>('thead sup a')!;
+		expect([marker.textContent, marker.getAttribute('href')]).toEqual(['1', '#fn-1']);
+		expect(marker.closest('sup')!.id).toBe('fnref-1');
+		expect(marker.closest('th')!.textContent).toBe('I. indien verkregen in de rechte lijn1');
+		const note = container.querySelector<HTMLElement>('#fn-1')!;
+		expect(note.textContent?.trim()).toMatch(/^1 Voor afstammelingen/);
+		expect(note.querySelector('a')!.getAttribute('href')).toBe('#fnref-1');
+	});
+
+	it('lands on the note at a click on its marker, and back', () => {
+		// jsdom has neither CSS.escape nor scrolling.
+		vi.stubGlobal('CSS', { escape: (s: string) => s });
+		Element.prototype.scrollIntoView = vi.fn();
+		const { container } = render(ArticleText, { text, tables, footnoteMarks });
+		container.querySelector<HTMLAnchorElement>('thead sup a')!.click();
+		expect(container.querySelector('#fn-1')!.classList).toContain('is-landed');
+		container.querySelector<HTMLAnchorElement>('#fn-1 a')!.click();
+		expect(container.querySelector('#fnref-1')!.classList).toContain('is-landed');
+		vi.unstubAllGlobals();
+	});
+
+	it('stays as it was without footnote_marks', () => {
+		const { container } = render(ArticleText, { text, tables });
+		expect(container.querySelector('sup')).toBeNull();
+		expect(container.querySelector('#fn-1')).toBeNull();
+	});
+});

@@ -24,6 +24,7 @@ const PAGES_AT_ONCE = 2;
 type Part = Schema<'ArticlePartSpanDTO'>;
 type Table = Schema<'ArticleTableDTO'>;
 type Heading = Schema<'ArticleHeadingDTO'>;
+type FootnoteMark = Schema<'FootnoteMarkDTO'>;
 type Division = Schema<'InstrumentDivisionDTO'>;
 
 /** An article as the list shows it, of today or of the peildatum. */
@@ -44,11 +45,14 @@ export type Row = {
 	/** The tables in that text, and its headings. */
 	tables: Table[];
 	headings?: Heading[];
+	/** Where the markers of its footnotes stood in that text. */
+	footnoteMarks: FootnoteMark[];
 	/** The whole text of today, from the list of the day (`include_text`), per page. */
 	textToday?: string | null;
 	partsToday?: Part[] | null;
 	tablesToday?: Table[];
 	headingsToday?: Heading[];
+	footnoteMarksToday?: FootnoteMark[];
 	text_preview: string | null;
 };
 
@@ -58,6 +62,7 @@ export type ArticleText = {
 	parts: Part[] | null;
 	tables: Table[];
 	headings: Heading[];
+	footnoteMarks: FootnoteMark[];
 	cited: boolean;
 };
 
@@ -68,7 +73,13 @@ export type ArticleText = {
 export function articleText(
 	row: Row,
 	detail:
-		| { text: string | null; parts?: Part[] | null; tables?: Table[]; headings?: Heading[] }
+		| {
+				text: string | null;
+				parts?: Part[] | null;
+				tables?: Table[];
+				headings?: Heading[];
+				footnote_marks?: FootnoteMark[] | null;
+		  }
 		| undefined
 ): ArticleText | null {
 	if (row.text)
@@ -77,6 +88,7 @@ export function articleText(
 			parts: row.parts,
 			tables: row.tables,
 			headings: row.headings ?? [],
+			footnoteMarks: row.footnoteMarks,
 			cited: false
 		};
 	if (row.textToday)
@@ -85,6 +97,7 @@ export function articleText(
 			parts: row.partsToday ?? null,
 			tables: row.tablesToday ?? [],
 			headings: row.headingsToday ?? [],
+			footnoteMarks: row.footnoteMarksToday ?? [],
 			cited: true
 		};
 	if (detail?.text)
@@ -93,6 +106,7 @@ export function articleText(
 			parts: detail.parts ?? null,
 			tables: detail.tables ?? [],
 			headings: detail.headings ?? [],
+			footnoteMarks: detail.footnote_marks ?? [],
 			cited: true
 		};
 	return null;
@@ -203,7 +217,8 @@ async function loadPage(
 								text: a.text ?? null,
 								parts: a.parts?.length ? a.parts : null,
 								tables: a.tables ?? [],
-								headings: a.headings ?? []
+								headings: a.headings ?? [],
+								footnoteMarks: a.footnote_marks ?? []
 							}
 						])
 					)
@@ -213,7 +228,13 @@ async function loadPage(
 				report('Teksten van vandaag', e);
 				return new Map<
 					string,
-					{ text: string | null; parts: Part[] | null; tables: Table[]; headings: Heading[] }
+					{
+						text: string | null;
+						parts: Part[] | null;
+						tables: Table[];
+						headings: Heading[];
+						footnoteMarks: FootnoteMark[];
+					}
 				>();
 			})
 	]);
@@ -227,6 +248,7 @@ async function loadPage(
 				partsToday: own?.parts ?? null,
 				tablesToday: own?.tables ?? [],
 				headingsToday: own?.headings ?? [],
+				footnoteMarksToday: own?.footnoteMarks ?? [],
 				id: a.id,
 				key: a.key,
 				article_number: a.article_number ?? null,
@@ -237,6 +259,7 @@ async function loadPage(
 				text: null,
 				parts: null,
 				tables: [],
+				footnoteMarks: [],
 				text_preview: a.text_preview ?? null
 			};
 		})

@@ -272,6 +272,7 @@ describe('the text an article of the whole law shows', () => {
 		text: null,
 		parts: null,
 		tables: [],
+		footnoteMarks: [],
 		text_preview: null,
 		...r
 	});
@@ -283,6 +284,7 @@ describe('the text an article of the whole law shows', () => {
 			parts: null,
 			tables: [],
 			headings: [],
+			footnoteMarks: [],
 			cited: false
 		});
 	});
@@ -327,6 +329,7 @@ describe('the article of the whole law asked alone', () => {
 		text: null,
 		parts: null,
 		tables: [],
+		footnoteMarks: [],
 		text_preview: null,
 		...r
 	});

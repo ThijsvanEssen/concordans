@@ -53,7 +53,7 @@
 		return anchor ? `${page.url.pathname}${page.url.search}#${encodeURIComponent(anchor)}` : null;
 	};
 
-	const stukken = $derived(
+	const shownSegments = $derived(
 		withMarkers(
 			segmentsOf(text, {
 				citations,
@@ -93,8 +93,14 @@
 					: null}
 				class="cited">{seg.content}</BronLink
 			>{/if}{:else}{seg.content}{/if}{/snippet}
-{#each stukken as seg, i (i)}{#if seg.noot}<sup class="noot-ref"
-			>{#if stand}<button
+{#each shownSegments as seg, i (i)}{#if seg.noot}<sup
+			class="noot-ref"
+			id={seg.noot.anchor ?? undefined}
+			>{#if seg.noot.href}<a
+					class="noot-ref__knop"
+					href={seg.noot.href}
+					aria-label="Voetnoot {seg.noot.label}">{seg.noot.label}</a
+				>{:else if stand}<button
 					type="button"
 					class="noot-ref__knop"
 					class:is-open={stand.open === seg.noot.id}
@@ -117,7 +123,8 @@
 		background: var(--wassing);
 		color: inherit;
 	}
-	/* A footnote marker: its label raised, a tap opens the note in place. */
+	/* A footnote marker: its label raised, a tap opens the note in place (a judgment, a
+	   Kamerstuk) or goes to its line (an article). */
 	.noot-ref {
 		font-size: 0.7em;
 		line-height: 0;
@@ -134,6 +141,7 @@
 		text-decoration-color: var(--rule-strong);
 		text-underline-offset: 2px;
 	}
+	.noot-ref:global(.is-landed) .noot-ref__knop,
 	.noot-ref__knop:hover,
 	.noot-ref__knop.is-open {
 		color: var(--ink);

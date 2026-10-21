@@ -16,6 +16,7 @@ const row = (r: Partial<Row>): Row => ({
 	text: null,
 	parts: null,
 	tables: [],
+	footnoteMarks: [],
 	text_preview: 'Tekst.',
 	...r
 });

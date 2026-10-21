@@ -18,13 +18,18 @@ describe('the readers', () => {
 			expect(t, pad).toMatch(/<CitedText\b[^>]*\bnoten=|<TextBlocks\b[^>]*\bnotes=/);
 			expect(t, pad).toMatch(/zetNootStand\(\)/);
 		}
-		// No other place draws a note or its marker of its own.
+		// No other place draws a note or its marker of its own. The note of an article or a
+		// bijlage is a line of its own text (#875): ArticleText sets it, its marker CitedText's.
 		expect(
 			overtreders(
 				(t) => /class="voetnoot"|class="noot-ref/.test(t),
 				[
 					plek('lib/components/articles/Voetnoten.svelte'),
-					plek('lib/components/articles/CitedText.svelte')
+					plek('lib/components/articles/CitedText.svelte'),
+					plek(
+						'lib/components/articles/ArticleText.svelte',
+						"an article's note, a line of its text"
+					)
 				]
 			)
 		).toEqual([]);

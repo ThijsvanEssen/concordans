@@ -13,6 +13,7 @@ const item = (key: string, scope: Item['scope'], section_anchor: string | null):
 			title: 'Verklaring dat er grond bestaat een voorstel in overweging te nemen',
 			kind: 'Memorie van toelichting',
 			dossier_number: '33989',
+			dossier_short_title: null,
 			chamber: null,
 			source: null,
 			date: null,
