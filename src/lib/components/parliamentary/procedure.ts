@@ -5,6 +5,7 @@
 import { carriesBillTitle, motionOrAmendment, shortKind } from '$lib/text/document-kind';
 import { forAgainst } from './stemming';
 import { capitalize, count, joinAnd, lowerFirst } from '$lib/text/words';
+import { noneHeld } from '$lib/text/coverage';
 import type { Schema } from '$lib/api/types';
 import { bronHref } from '$lib/bron/href';
 import { parseNodeId } from '$lib/vocabulary';
@@ -211,7 +212,7 @@ function regelsVan(
 				label: groep === 'ek' ? 'Stemming Eerste Kamer' : 'Stemming Tweede Kamer',
 				zin:
 					uitslag === null
-						? 'Geen uitslag in de gegevens'
+						? capitalize(noneHeld('uitslag'))
 						: [uitslag ? 'Aangenomen' : 'Verworpen', how].filter(Boolean).join(' '),
 				href: bronHref(e.node_id, { keepMode: false, mode: 'read' }),
 				ref: e.node_id,
@@ -399,7 +400,7 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 							zin:
 								d.kind === INITIATIVE_BILL
 									? 'Het advies kan nog volgen.'
-									: 'Geen advies in de gegevens.'
+									: `${capitalize(noneHeld('advies'))}.`
 						}
 					]
 		});

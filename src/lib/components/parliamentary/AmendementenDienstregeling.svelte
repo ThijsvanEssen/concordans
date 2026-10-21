@@ -16,6 +16,7 @@
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Uitkomst from './Uitkomst.svelte';
 	import { maandNaam } from '$lib/text/datum';
+	import { noneHeld } from '$lib/text/coverage';
 	import {
 		getAmendementen,
 		inStemming,
@@ -83,7 +84,7 @@
 			? {
 					soort: 'open' as const,
 					woord: r.uitslag?.soort ?? (r.nogNiet ? 'nog niet gestemd' : null),
-					titel: r.uitslag ? 'geen uitslag in de gegevens' : 'geen stemming'
+					titel: r.uitslag ? noneHeld('uitslag') : 'geen stemming'
 				}
 			: r.uitslag.aangenomen
 				? { soort: 'ja' as const, woord: null, titel: 'aangenomen' }

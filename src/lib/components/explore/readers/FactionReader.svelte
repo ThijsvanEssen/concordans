@@ -1,6 +1,7 @@
 <script lang="ts">
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
-	import { plural, textOf } from '$lib/text/words';
+	import { capitalize, plural, textOf } from '$lib/text/words';
+	import { noneHeld } from '$lib/text/coverage';
 	import { korteDatum, langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
@@ -142,7 +143,7 @@
 					aantal={leden.state.status === 'ready' ? lijst.length : null}
 				>
 					<LoadState state={leden.state} what="De ledenlijst" retry={leden.retry}>
-						{#snippet empty()}<p class="stil">Geen leden in de gegevens.</p>{/snippet}
+						{#snippet empty()}<p class="stil">{capitalize(noneHeld('leden'))}.</p>{/snippet}
 						{#snippet children(lijst)}
 							<ul class="leden">
 								{#each lijst as m (m.key)}

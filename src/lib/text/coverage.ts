@@ -33,7 +33,8 @@ const PART: Record<Part, string> = {
 };
 
 /** What the dataset lacks of a value: a date, a name, an advice. Waarde says it of an empty cell. */
-export const NOT_IN_DATA = 'niet in de gegevens';
+const IN_DATA = 'in de gegevens';
+export const NOT_IN_DATA = `niet ${IN_DATA}`;
 
 /** A part of a bron the dataset lacks, as a line: `Tekst niet in de gegevens`. */
 export const lacks = (what: string) => `${capitalize(what)} ${NOT_IN_DATA}`;
@@ -48,6 +49,9 @@ export type Lack = 'successor';
 export const LACK: Record<Lack, string> = {
 	successor: 'Opvolger niet gevonden in de transponeringstabel'
 };
+
+/** A part of which the dataset holds none, in a line: `geen artikelen in de gegevens`. */
+export const noneHeld = (what: string) => `geen ${what} ${IN_DATA}`;
 
 /** A bron the dataset does not hold, as a sentence: `Wet X staat niet in de gegevens`. */
 export const notHeld = (name: string) => `${name} staat ${NOT_IN_DATA}`;

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { NOT_IN_DATA } from '$lib/text/coverage';
+	import { NOT_IN_DATA, noneHeld } from '$lib/text/coverage';
 	import { formatCount } from '$lib/text/getal';
 	import type { Schema } from '$lib/api/types';
 	import { naamVan } from '$lib/bron/menselijk';
@@ -46,7 +46,7 @@
 						? `${formatCount(w.article_count)} artikelen`
 						: isPublication(w)
 							? `Publicatie in het Staatsblad, tekst ${NOT_IN_DATA}`
-							: 'geen artikelen in de gegevens'}</span
+							: noneHeld('artikelen')}</span
 				>
 			{/snippet}
 			{#snippet aside()}

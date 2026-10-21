@@ -12,6 +12,8 @@
 	import ZaalPlaatsen from '../ZaalPlaatsen.svelte';
 	import { achtergrondVan, kleurVan } from '../partijkleuren.svelte';
 	import { DAY_MS, korteDatum, langeDatum, vandaag } from '$lib/text/datum';
+	import { noneHeld } from '$lib/text/coverage';
+	import { capitalize } from '$lib/text/words';
 	import { hallOfDay, vacantZonderFractie, wijzigingenVan, zetelHoogte } from './zetels';
 	import { load } from '$lib/util/load.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -314,7 +316,7 @@
 		{:else if !zaal}
 			<p class="onderschrift">
 				{stretches.length
-					? `Geen samenstelling in de gegevens op ${langeDatum(dag)}.`
+					? `${capitalize(noneHeld('samenstelling'))} op ${langeDatum(dag)}.`
 					: `Geen samenstelling van de ${kamer === 'TK' ? 'Tweede' : 'Eerste'} Kamer voor dit kabinet in de gegevens.`}
 			</p>
 		{:else}

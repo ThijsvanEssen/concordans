@@ -1,10 +1,17 @@
-// One mark for what the dataset lacks (besluit 23): the words "niet ingelezen" and "niet in de
-// gegevens" live in coverage.ts, the one vocabulary of Dekking and Waarde. A place that writes
+// One mark for what the dataset lacks (besluit 23): the words "niet ingelezen", "niet in de
+// gegevens" and "geen … in de gegevens" live in coverage.ts, the one vocabulary of Dekking and Waarde. A place that writes
 // them in its own words fails; the count of those left only goes down.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { anchorLine, coverageLine, lacks, notHeld, searchedLine } from '$lib/text/coverage';
+import {
+	anchorLine,
+	coverageLine,
+	lacks,
+	noneHeld,
+	notHeld,
+	searchedLine
+} from '$lib/text/coverage';
 
 const ROOT = join(process.cwd(), 'src');
 
@@ -38,7 +45,9 @@ describe('the mark of what is missing', () => {
 			const rel = relative(ROOT, path);
 			if (OWN.has(rel)) continue;
 			const n = [
-				...code(readFileSync(path, 'utf8')).matchAll(/niet ingelezen|niet in de gegevens/gi)
+				...code(readFileSync(path, 'utf8')).matchAll(
+					/niet ingelezen|(?:niet|geen [a-z']+) in de gegevens/gi
+				)
 			].length;
 			if (n > 0) found[rel] = n;
 		}
@@ -64,6 +73,7 @@ describe('the mark of what is missing', () => {
 	it('says a part or a bron the dataset lacks in the same words everywhere', () => {
 		expect(lacks('onderwerp')).toBe('Onderwerp niet in de gegevens');
 		expect(notHeld('Dit dossier')).toBe('Dit dossier staat niet in de gegevens');
+		expect(noneHeld('artikelen')).toBe('geen artikelen in de gegevens');
 		expect(coverageLine(null, { noText: true })).toBe('Tekst niet in de gegevens');
 	});
 
