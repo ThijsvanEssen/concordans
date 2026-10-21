@@ -72,6 +72,26 @@ for (const { stuk, own } of [
 	});
 }
 
+// The Legenda counts what is drawn, with the focus selected too, open as closed (besluit 29):
+// the focus's direct verbindingen are in Verbonden, not here ("Stemmingen 0" beside 49 drawn).
+test('the open legend counts the stemmingen drawn, the focus selected', async ({ page, touch }) => {
+	await page.goto('/kamerstukken/36799/31');
+	if (touch)
+		await page
+			.getByRole('navigation', { name: 'Panelen' })
+			.getByRole('button', { name: 'Netwerk' })
+			.click();
+	await page.waitForLoadState('networkidle');
+	const items = await drawn(page).getByRole('listitem').allInnerTexts();
+	const stemmingen = items.filter((t) => t.endsWith(', Stemming')).length;
+	expect(stemmingen).toBeGreaterThan(0);
+	await page.getByRole('button', { name: /^Legenda/ }).click();
+	const legend = page.getByRole('region', { name: 'Legenda' });
+	await expect(legend.getByRole('button', { name: /^Stemmingen [\d.]+$/ })).toHaveAccessibleName(
+		`Stemmingen ${stemmingen}`
+	);
+});
+
 test('Verbonden as a table, exported as CSV', async ({ page, touch }) => {
 	await page.goto(ARTICLE);
 	if (touch)

@@ -1,6 +1,6 @@
 // A list page: its choose-line, its facets and its period, and the feed of Actueel and Gevolgd.
 import { describe, expect, it } from 'vitest';
-import { BRONNEN, bron, overtreders, plek } from '$lib/test/bronnen';
+import { BRONNEN, bron, overtreders, plek, regels } from '$lib/test/bronnen';
 
 describe('list pages and the feed', () => {
 	it('sets the choose-line of a list page with Bepaalregel (docs/bediening.md)', () => {
@@ -10,6 +10,27 @@ describe('list pages and the feed', () => {
 			'routes/(main)/onderwerpen/overzicht/+page.svelte'
 		];
 		expect(lijsten.filter((p) => !bron(p).includes('<Bepaalregel'))).toEqual([]);
+	});
+
+	it('runs a line that sets the page over both columns, and keeps what belongs to the list in its column (besluit 29)', () => {
+		// docs/bediening.md, Layout: the choose-line of Actueel and Gevolgd spans the frame; a
+		// bundel's research question is its content and stands over its groups, in the list column.
+		for (const path of [
+			'routes/(main)/actueel/+page.svelte',
+			'routes/(main)/onderwerpen/+page.svelte'
+		]) {
+			const text = bron(path);
+			expect(text, path).toMatch(/class="regel"[\s\S]*?<Bepaalregel/);
+			expect(
+				regels(text).some((r) => r.selector === '.regel' && /grid-column:\s*1 \/ -1/.test(r.body)),
+				path
+			).toBe(true);
+		}
+		const view = bron('lib/map/MapView.svelte');
+		const voor = /\{#snippet voor\(\)\}([\s\S]*?)\{\/snippet\}/.exec(view)?.[1] ?? '';
+		expect(voor).toMatch(/<Aantekening[^>]*placeholder="Onderzoeksvraag of aantekening"/);
+		expect(view).toMatch(/class="voor blad__lijst">\{@render voor\(\)\}/);
+		expect(regels(view).filter((r) => /grid-column/.test(r.body))).toEqual([]);
 	});
 
 	it('asks the facets of an index list by faceted, and builds its period once (code-eenvoud F47)', () => {

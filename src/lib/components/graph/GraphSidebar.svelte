@@ -21,7 +21,7 @@
 		type VerbondenFilter
 	} from '$lib/verbonden/filter';
 	import type { VerbondenState } from '$lib/verbonden/data-source';
-	import { allRows, groupTotals, lidCounts, relationCounts } from '$lib/verbonden/view';
+	import { allRows, lidCounts, relationCounts } from '$lib/verbonden/view';
 	import {
 		edgeColorFor,
 		edgeStyleFor,
@@ -104,11 +104,9 @@
 		reach?: NeighborhoodReach | null;
 	} = $props();
 
-	// With nothing selected, the kinds count what is on the canvas; with a selection, its
-	// verbindingen. While those load the counts say so ("…"), not a column of zeros.
-	const fromCanvas = $derived(!selectionCollection);
-	const totals = $derived(fromCanvas ? (canvasCounts.kinds ?? {}) : groupTotals(verbonden.groups));
-	const counting = $derived(!fromCanvas && verbonden.loading && verbonden.groups.length === 0);
+	// The kinds count what is on the canvas, with a selection too: the legend is the key to
+	// the drawing, open as closed; the focus's direct verbindingen are in Verbonden (besluit 29).
+	const totals = $derived(canvasCounts.kinds ?? {});
 
 	// Diepte: the steps that add nothing, as the API cut the neighbourhood off at its cap.
 	const DEPTHS = [1, 2, 3];
@@ -234,9 +232,8 @@
 						groepen
 							? groepen.forEach((g) => onToggleGroup?.(g))
 							: onFilter(toggleFilterGroup(filter, k))}
-					count={counting ? null : n}
-					loading={counting}
-					empty={!counting && n === 0}
+					count={n}
+					empty={n === 0}
 					gedimd={!!groepen}
 				>
 					{#snippet voor()}<KindGlyph vorm={FILTER_GROUP_VORM[k]} size={11} />{/snippet}
@@ -292,8 +289,7 @@
 					label={GROUP_LABEL[kind]}
 					title={`${GROUP_LABEL[kind]}: ${CONTAINER_KIND_HINT[kind]}${kind === 'instrument' ? '; uit verbergt ook de artikelen' : ''}`}
 					on={kind === 'instrument' ? isOn('artikelen') : !hiddenGroups.has(kind)}
-					count={kind === 'instrument' && !counting ? (totals.artikelen ?? 0) : null}
-					loading={kind === 'instrument' && counting}
+					count={kind === 'instrument' ? (totals.artikelen ?? 0) : null}
 					onToggle={() =>
 						kind === 'instrument'
 							? onFilter(toggleFilterGroup(filter, 'artikelen'))
