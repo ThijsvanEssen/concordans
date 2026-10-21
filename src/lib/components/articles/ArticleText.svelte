@@ -11,7 +11,14 @@
 	import { citeItems } from '$lib/components/ui/cite-items';
 	import { page } from '$app/state';
 	import { landOn, permalink } from '$lib/bron/landing';
-	import { markerAnchor, articleMarkers, articleNotes, withNotes } from '$lib/text/voetnoten';
+	import {
+		markerAnchor,
+		articleMarkers,
+		articleNotes,
+		listedNotes,
+		withNotes,
+		type FootnoteMark
+	} from '$lib/text/voetnoten';
 	import type { Schema } from '$lib/api/types';
 	import { markerOf, partsOf, placeOf, walkParts, type ArticlePart } from '$lib/text/article-parts';
 	import { citeArticle, placeCitation, type ArticleCitation } from '$lib/text/cite';
@@ -61,6 +68,8 @@
 		tables: apiTables = [],
 		headings = [],
 		footnoteMarks = [],
+		footnotes = [],
+		footnoteReferences = [],
 		citations = [],
 		references = [],
 		law = null,
@@ -93,8 +102,13 @@
 		 *  tussenkop), set apart from the paragraphs. */
 		headings?: Heading[] | null;
 		/** Where the markers of its footnotes stood (`footnote_marks`): each a superscript
-		 *  linked to its note, a line of the text that opens with its number. */
-		footnoteMarks?: Schema<'FootnoteMarkDTO'>[] | null;
+		 *  linked to its note, a line of the text that opens with its number or one of
+		 *  `footnotes` (its `footnote`). */
+		footnoteMarks?: FootnoteMark[] | null;
+		/** The footnotes not in the text (`footnotes`, API 0.81): listed under it. */
+		footnotes?: Schema<'FootnoteDTO'>[] | null;
+		/** The references in them (`footnote_references`), each by its `footnote`. */
+		footnoteReferences?: Reference[] | null;
 		citations?: Schema<'ArticleCitationSpan'>[];
 		/** Every reference the text makes (`references`): each mention a link where its
 		 *  target is known, besides the one citation per target. */
@@ -156,7 +170,7 @@
 	$effect(() => {
 		const bwb = law;
 		divisions = [];
-		if (!bwb || !namesOwnDivision(references, bwb)) return;
+		if (!bwb || !namesOwnDivision([...references, ...(footnoteReferences ?? [])], bwb)) return;
 		lawDivisions(bwb).then(
 			(d) => {
 				if (bwb === law) divisions = d;
@@ -164,12 +178,34 @@
 			(e) => report('Indeling van de wet', e)
 		);
 	});
-	const links = $derived(referenceSpans(citations, references, { ownLaw: law, crumbs: divisions }));
+	const links = $derived(
+		referenceSpans(
+			citations,
+			references.filter((r) => r.footnote == null),
+			{ ownLaw: law, crumbs: divisions }
+		)
+	);
 	const perRef = $derived(definitiesOp(definities));
 	const tables = $derived(apiTables ?? []);
 	const parts = $derived(partsOf(source, apiParts, tables));
 	/** The notes the markers refer to, by their number. */
 	const notes = $derived(articleNotes(source, footnoteMarks, tables));
+	/** The notes of their own (`footnotes`), listed under the text. */
+	const listed = $derived(
+		listedNotes(
+			footnotes,
+			footnoteMarks,
+			[...notes.values()].map((n) => n.anchor)
+		)
+	);
+	/** The links in a listed note: its references, as those of the text. */
+	const noteLinks = (index: number) =>
+		referenceSpans(
+			[],
+			(footnoteReferences ?? []).filter((r) => r.footnote === index),
+			{ ownLaw: law, crumbs: divisions }
+		);
+	const hasNotes = $derived(notes.size > 0 || listed.length > 0);
 	const marker = (number: string) => markerOf(number, mark);
 	/** Every part, for the place a citation names: a definition by its term. */
 	const allParts = $derived([...walkParts(parts)]);
@@ -180,6 +216,17 @@
 		const at = alleen;
 		const deel = at ? parts.filter((p) => holds(p, at)) : [];
 		return deel.length ? deel : parts;
+	});
+	/** The listed notes of what is shown: all for the whole text, else those a marker in it
+	 *  refers to. */
+	const shownNotes = $derived.by(() => {
+		if (shown === parts) return listed;
+		const from = shown[0]?.start ?? 0;
+		const to = shown.at(-1)?.end ?? 0;
+		const inside = new Set(
+			(footnoteMarks ?? []).filter((m) => m.at >= from && m.at <= to).map((m) => m.footnote)
+		);
+		return listed.filter((n) => inside.has(n.index));
 	});
 	const isKept = (part: ArticlePart) =>
 		!!part.id &&
@@ -209,7 +256,7 @@
 	 *  there, as on an address with its anchor. */
 	$effect(() => {
 		const el = box;
-		if (!el || !notes.size) return;
+		if (!el || !hasNotes) return;
 		const jump = (e: MouseEvent) => {
 			const link = (e.target as Element | null)?.closest<HTMLAnchorElement>(
 				'a.noot-ref__knop, a.voetnoot__terug'
@@ -469,7 +516,7 @@
 		definities={perRef}
 		delegaties={m.delegaties}
 		{grondslag}
-		noten={notes.size ? articleMarkers(footnoteMarks, notes, start, end, ankers) : []}
+		noten={hasNotes ? articleMarkers(footnoteMarks, notes, start, end, ankers, listed) : []}
 	/>
 {/snippet}
 
@@ -643,6 +690,23 @@
 			{/if}
 			{@render annotationsOf(WHOLE_ARTICLE)}
 			{@render anchorLines(WHOLE_ARTICLE)}
+			{#if shownNotes.length}
+				<!-- The notes of their own, under the text, the number back to its marker. -->
+				<div class="voetnoten" data-geen-tekst>
+					{#each shownNotes as n (n.anchor)}
+						<p class="voetnoot voetnoot--eigen" id={ankers ? n.anchor : undefined}>
+							{#if n.number}{#if ankers && n.back}<a
+										class="voetnoot__terug"
+										href="#{n.back}"
+										aria-label="Terug naar de tekst bij voetnoot {n.number}">{n.number}</a
+									>{:else}<span class="voetnoot__nummer">{n.number}</span>{/if}{/if}<CitedText
+								text={n.text}
+								citations={noteLinks(n.index)}
+							/>
+						</p>
+					{/each}
+				</div>
+			{/if}
 		</div>
 	</div>
 {/if}
@@ -719,6 +783,8 @@
 		/* No further than the frame's margin: beside the network it is 32, not 64 (the
 		   numbers were cut off there), as the judgment's numbers do (--rov-hang). */
 		margin-left: calc(-1 * min(var(--s-7), var(--reader-pad-left, var(--s-6))));
+		/* The column of a lid's number. */
+		--lid-no: 36px;
 	}
 
 	/* A lid: 36px for the number (in the frame's margin), the text to the column's right
@@ -728,7 +794,7 @@
 	.lid {
 		position: relative;
 		display: grid;
-		grid-template-columns: 36px minmax(0, 1fr);
+		grid-template-columns: var(--lid-no) minmax(0, 1fr);
 		gap: 0 var(--s-3);
 		align-items: start;
 		padding: var(--s-1) var(--s-3) var(--s-1) 0;
@@ -896,7 +962,8 @@
 	/* A footnote: a line of the text that opens with its number, in the letter of a note; the
 	   number goes back to its marker. */
 	.lid__body p.voetnoot,
-	.part__body p.voetnoot {
+	.part__body p.voetnoot,
+	.voetnoten p.voetnoot {
 		margin-top: var(--s-2);
 		font-size: var(--t-meta);
 		line-height: var(--lh-snug);
@@ -907,7 +974,17 @@
 	.voetnoot:global(.is-landed) {
 		background: var(--wassing);
 	}
-	.voetnoot__terug {
+	/* The notes of their own, under the text: in its column, past the numbers of the leden. */
+	.voetnoten {
+		margin-top: var(--s-3);
+		padding-left: calc(var(--lid-no) + var(--s-3));
+	}
+	.voetnoten p.voetnoot {
+		margin-bottom: 0;
+		white-space: pre-line;
+	}
+	.voetnoot__terug,
+	.voetnoot__nummer {
 		margin-right: var(--s-1);
 		color: inherit;
 		text-decoration: underline;
@@ -952,14 +1029,11 @@
 	   the article column is 590 at 1440 since the contents take the network's width (one
 	   title column, 10 Oct), and its numbers hang there as at 1920. */
 	@container (max-width: 579px) {
+		/* A narrower column for a lid's number (the lid's grid: minmax(0, …), the text wraps,
+		   not widens the column past the screen). */
 		.article-text {
 			margin-left: 0;
-		}
-		/* minmax(0, …): the text wraps, not widens the column past the screen. A tap on the
-		   number (or the text) opens the place's menu, as a click does. */
-		.lid {
 			--lid-no: 28px;
-			grid-template-columns: var(--lid-no) minmax(0, 1fr);
 		}
 		/* A table of a lid takes the column's whole width: from under the number to the
 		   lid's right edge (a bijlage's table of three columns was pressed into 290 px). */

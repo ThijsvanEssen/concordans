@@ -92,6 +92,19 @@ describe('the footnotes in a text (#875)', () => {
 	});
 });
 
+describe('the footnotes of their own (#881)', () => {
+	// A note that is no text of the article (`footnotes`) stands under it in every reader,
+	// its links (`footnote_references`) wherever the reader has the text's references.
+	it('are passed by every reader of an article or a bijlage to ArticleText', () => {
+		for (const path of articleReaders) {
+			const t = bron(path);
+			expect(t, path).toMatch(/<ArticleText\b[^>]*\bfootnotes=/);
+			if (/<ArticleText\b[^>]*\breferences=/.test(t))
+				expect(t, path).toMatch(/<ArticleText\b[^>]*\bfootnoteReferences=/);
+		}
+	});
+});
+
 describe('the text of a bijlage (#870)', () => {
 	it('reads as the text of an article: ArticleText with its tables, headings and links', () => {
 		const t = bron('lib/components/explore/readers/AnnexReader.svelte');

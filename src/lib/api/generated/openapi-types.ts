@@ -2505,6 +2505,11 @@ export interface components {
              * @description Where the markers of its footnotes stood in `text`, as on an article.
              */
             footnote_marks: components["schemas"]["FootnoteMarkDTO"][];
+            /**
+             * Footnotes
+             * @description Its footnotes, not in `text`, as on an article.
+             */
+            footnotes: components["schemas"]["FootnoteDTO"][];
             /** Entries */
             entries: components["schemas"]["AnnexEntryDTO"][];
             /**
@@ -2524,6 +2529,11 @@ export interface components {
              * @description The links of its `text` to a regulation, an article, an annex or an EU act, in text order, as those of an article.
              */
             references: components["schemas"]["ArticleReferenceDTO"][];
+            /**
+             * Footnote References
+             * @description The links of its footnotes (`annex.footnotes`), as those of an article.
+             */
+            footnote_references: components["schemas"]["ArticleReferenceDTO"][];
             /** Referenced By */
             referenced_by: components["schemas"]["AnnexReferencedByItem"][];
         };
@@ -2820,6 +2830,11 @@ export interface components {
              * @description Every reference the text of the article makes, as stored on it, whether or not the target is in the graph. `citations` holds the resolved ones, one per target.
              */
             references: components["schemas"]["ArticleReferenceDTO"][];
+            /**
+             * Footnote References
+             * @description The references its footnotes (`article.footnotes`) make, as `references`: each with its `footnote`, offsets into the text of that footnote.
+             */
+            footnote_references: components["schemas"]["ArticleReferenceDTO"][];
             /**
              * Delegations
              * @description The delegation formulas in the text, in text order; empty when the article delegates nothing. `.../delegated` lists the regulations issued under the article, per formula.
@@ -3145,11 +3160,16 @@ export interface components {
             text: string;
             /**
              * Start
-             * @description Offset of `text` in the text of the article.
+             * @description Offset of `text` in the text of the article, or in that of its `footnote`.
              */
             start: number;
             /** End */
             end: number;
+            /**
+             * Footnote
+             * @description The footnote it stands in, its place in `footnotes`; null for a reference of the text itself.
+             */
+            footnote: number | null;
             /** @description What the link names: the article; the regulation of a link to a chapter or a title; the annex; the EU act. Null when it names none of these. */
             target: components["schemas"]["ReferenceTargetDTO"] | null;
         };
@@ -3355,6 +3375,11 @@ export interface components {
              */
             footnote_marks: components["schemas"]["FootnoteMarkDTO"][];
             /**
+             * Footnotes
+             * @description The footnotes the source writes where their marker stands, not in `text`, in text order; those of `heading` (without a marker) first.
+             */
+            footnotes: components["schemas"]["FootnoteDTO"][];
+            /**
              * Path
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */
@@ -3462,6 +3487,11 @@ export interface components {
              * @description As on the article: offsets into `text`.
              */
             footnote_marks: components["schemas"]["FootnoteMarkDTO"][];
+            /**
+             * Footnotes
+             * @description As on the article.
+             */
+            footnotes: components["schemas"]["FootnoteDTO"][];
         };
         /**
          * ArticleVersionListedDTO
@@ -8384,10 +8414,28 @@ export interface components {
             coalition_factions: components["schemas"]["CoalitionFactionDTO"][];
         };
         /**
+         * FootnoteDTO
+         * @description A footnote the source writes where its marker stands (a BWB ``<noot>``): not in
+         *     `text`, but its own.
+         */
+        FootnoteDTO: {
+            /**
+             * Number
+             * @description Its number as printed, without brackets: `1`; empty without one. Numbers can repeat (an annex of forms numbers per form).
+             */
+            number: string;
+            /**
+             * Text
+             * @description Its text, a paragraph a line.
+             */
+            text: string;
+        };
+        /**
          * FootnoteMarkDTO
          * @description The marker of a footnote in the text of an article (``<sup>1</sup>`` after
          *     "Richtlijn (EU) 2019/944"): no character of `text`, but where it stood. The footnote
-         *     itself is a paragraph of `text` that opens with its number.
+         *     itself is a paragraph of `text` that opens with its number, or the one of `footnotes`
+         *     at `footnote`.
          */
         FootnoteMarkDTO: {
             /**
@@ -8400,6 +8448,11 @@ export interface components {
              * @description Its number, without brackets: `1`.
              */
             number: string;
+            /**
+             * Footnote
+             * @description The footnote it marks, its place in `footnotes`; null for one that is a paragraph of `text`.
+             */
+            footnote: number | null;
         };
         /**
          * GovernmentFunctionDTO
@@ -8876,6 +8929,12 @@ export interface components {
              */
             footnote_marks: components["schemas"]["FootnoteMarkDTO"][];
             /**
+             * Footnotes
+             * @description Its footnotes, not in the text, as on the article; empty when the text was not asked for.
+             * @default []
+             */
+            footnotes: components["schemas"]["FootnoteDTO"][];
+            /**
              * Text Preview
              * @description The first ``text_preview_chars`` characters of the text.
              */
@@ -8885,6 +8944,11 @@ export interface components {
              * @description With ``include=references``: the references of the article, as ``/api/articles/{bwb_id}/{article_number}`` gives them; null when not asked for, and for a version that is not the current one of its article (they are spans of the current text).
              */
             references: components["schemas"]["ArticleReferenceDTO"][] | null;
+            /**
+             * Footnote References
+             * @description With ``include=references``: the references of its footnotes, as the article gives them; null as ``references``.
+             */
+            footnote_references: components["schemas"]["ArticleReferenceDTO"][] | null;
             /**
              * Citations
              * @description With ``include=references``: the citations of the article, as the article gives them without ``definition_ref``; null as ``references``.

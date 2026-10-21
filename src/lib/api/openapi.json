@@ -6842,6 +6842,12 @@
 						"title": "Footnote Marks",
 						"description": "Where the markers of its footnotes stood in `text`, as on an article."
 					},
+					"footnotes": {
+						"items": { "$ref": "#/components/schemas/FootnoteDTO" },
+						"type": "array",
+						"title": "Footnotes",
+						"description": "Its footnotes, not in `text`, as on an article."
+					},
 					"entries": {
 						"items": { "$ref": "#/components/schemas/AnnexEntryDTO" },
 						"type": "array",
@@ -6864,6 +6870,7 @@
 					"tables",
 					"headings",
 					"footnote_marks",
+					"footnotes",
 					"entries",
 					"stub"
 				],
@@ -6879,6 +6886,12 @@
 						"title": "References",
 						"description": "The links of its `text` to a regulation, an article, an annex or an EU act, in text order, as those of an article."
 					},
+					"footnote_references": {
+						"items": { "$ref": "#/components/schemas/ArticleReferenceDTO" },
+						"type": "array",
+						"title": "Footnote References",
+						"description": "The links of its footnotes (`annex.footnotes`), as those of an article."
+					},
 					"referenced_by": {
 						"items": { "$ref": "#/components/schemas/AnnexReferencedByItem" },
 						"type": "array",
@@ -6887,7 +6900,7 @@
 				},
 				"additionalProperties": false,
 				"type": "object",
-				"required": ["annex", "references", "referenced_by"],
+				"required": ["annex", "references", "footnote_references", "referenced_by"],
 				"title": "AnnexDetailResponse",
 				"description": "Response for GET /api/annexes/{key}."
 			},
@@ -7257,6 +7270,12 @@
 						"title": "References",
 						"description": "Every reference the text of the article makes, as stored on it, whether or not the target is in the graph. `citations` holds the resolved ones, one per target."
 					},
+					"footnote_references": {
+						"items": { "$ref": "#/components/schemas/ArticleReferenceDTO" },
+						"type": "array",
+						"title": "Footnote References",
+						"description": "The references its footnotes (`article.footnotes`) make, as `references`: each with its `footnote`, offsets into the text of that footnote."
+					},
 					"delegations": {
 						"items": { "$ref": "#/components/schemas/DelegationClauseDTO" },
 						"type": "array",
@@ -7305,6 +7324,7 @@
 					"term_spans",
 					"definitions",
 					"references",
+					"footnote_references",
 					"delegations",
 					"metadata",
 					"upstream_dependencies",
@@ -7661,9 +7681,14 @@
 					"start": {
 						"type": "integer",
 						"title": "Start",
-						"description": "Offset of `text` in the text of the article."
+						"description": "Offset of `text` in the text of the article, or in that of its `footnote`."
 					},
 					"end": { "type": "integer", "title": "End" },
+					"footnote": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Footnote",
+						"description": "The footnote it stands in, its place in `footnotes`; null for a reference of the text itself."
+					},
 					"target": {
 						"anyOf": [{ "$ref": "#/components/schemas/ReferenceTargetDTO" }, { "type": "null" }],
 						"description": "What the link names: the article; the regulation of a link to a chapter or a title; the annex; the EU act. Null when it names none of these."
@@ -7683,6 +7708,7 @@
 					"text",
 					"start",
 					"end",
+					"footnote",
 					"target"
 				],
 				"title": "ArticleReferenceDTO",
@@ -7955,6 +7981,12 @@
 						"title": "Footnote Marks",
 						"description": "Where the markers of its footnotes stood in `text`, in text order."
 					},
+					"footnotes": {
+						"items": { "$ref": "#/components/schemas/FootnoteDTO" },
+						"type": "array",
+						"title": "Footnotes",
+						"description": "The footnotes the source writes where their marker stands, not in `text`, in text order; those of `heading` (without a marker) first."
+					},
 					"path": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Path",
@@ -7981,6 +8013,7 @@
 					"tables",
 					"headings",
 					"footnote_marks",
+					"footnotes",
 					"path"
 				],
 				"title": "ArticleSummaryDTO",
@@ -8094,6 +8127,12 @@
 						"type": "array",
 						"title": "Footnote Marks",
 						"description": "As on the article: offsets into `text`."
+					},
+					"footnotes": {
+						"items": { "$ref": "#/components/schemas/FootnoteDTO" },
+						"type": "array",
+						"title": "Footnotes",
+						"description": "As on the article."
 					}
 				},
 				"additionalProperties": false,
@@ -8115,7 +8154,8 @@
 					"parts",
 					"tables",
 					"headings",
-					"footnote_marks"
+					"footnote_marks",
+					"footnotes"
 				],
 				"title": "ArticleVersionDTO",
 				"description": "One dated version of an article with its text, and the publication that\nproduced it."
@@ -14722,6 +14762,25 @@
 				"title": "FeedVoteDTO",
 				"description": "The outcome of a ``stemming``."
 			},
+			"FootnoteDTO": {
+				"properties": {
+					"number": {
+						"type": "string",
+						"title": "Number",
+						"description": "Its number as printed, without brackets: `1`; empty without one. Numbers can repeat (an annex of forms numbers per form)."
+					},
+					"text": {
+						"type": "string",
+						"title": "Text",
+						"description": "Its text, a paragraph a line."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["number", "text"],
+				"title": "FootnoteDTO",
+				"description": "A footnote the source writes where its marker stands (a BWB ``<noot>``): not in\n`text`, but its own."
+			},
 			"FootnoteMarkDTO": {
 				"properties": {
 					"at": {
@@ -14733,13 +14792,18 @@
 						"type": "string",
 						"title": "Number",
 						"description": "Its number, without brackets: `1`."
+					},
+					"footnote": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Footnote",
+						"description": "The footnote it marks, its place in `footnotes`; null for one that is a paragraph of `text`."
 					}
 				},
 				"additionalProperties": false,
 				"type": "object",
-				"required": ["at", "number"],
+				"required": ["at", "number", "footnote"],
 				"title": "FootnoteMarkDTO",
-				"description": "The marker of a footnote in the text of an article (``<sup>1</sup>`` after\n\"Richtlijn (EU) 2019/944\"): no character of `text`, but where it stood. The footnote\nitself is a paragraph of `text` that opens with its number."
+				"description": "The marker of a footnote in the text of an article (``<sup>1</sup>`` after\n\"Richtlijn (EU) 2019/944\"): no character of `text`, but where it stood. The footnote\nitself is a paragraph of `text` that opens with its number, or the one of `footnotes`\nat `footnote`."
 			},
 			"GovernmentFunctionDTO": {
 				"properties": {
@@ -15290,6 +15354,13 @@
 						"description": "Where the markers of its footnotes stood in the text; empty when the text was not asked for.",
 						"default": []
 					},
+					"footnotes": {
+						"items": { "$ref": "#/components/schemas/FootnoteDTO" },
+						"type": "array",
+						"title": "Footnotes",
+						"description": "Its footnotes, not in the text, as on the article; empty when the text was not asked for.",
+						"default": []
+					},
 					"text_preview": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Text Preview",
@@ -15302,6 +15373,14 @@
 						],
 						"title": "References",
 						"description": "With ``include=references``: the references of the article, as ``/api/articles/{bwb_id}/{article_number}`` gives them; null when not asked for, and for a version that is not the current one of its article (they are spans of the current text)."
+					},
+					"footnote_references": {
+						"anyOf": [
+							{ "items": { "$ref": "#/components/schemas/ArticleReferenceDTO" }, "type": "array" },
+							{ "type": "null" }
+						],
+						"title": "Footnote References",
+						"description": "With ``include=references``: the references of its footnotes, as the article gives them; null as ``references``."
 					},
 					"citations": {
 						"anyOf": [
@@ -15330,8 +15409,10 @@
 					"tables",
 					"headings",
 					"footnote_marks",
+					"footnotes",
 					"text_preview",
 					"references",
+					"footnote_references",
 					"citations"
 				],
 				"title": "InstrumentArticleVersionDTO",

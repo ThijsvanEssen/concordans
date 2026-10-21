@@ -67,8 +67,8 @@ const segment = (s: string) => {
 
 const ECLI = /^ECLI:[A-Z]{2}:[A-Z0-9]+:\d{4}:[A-Z0-9.]+$/i;
 const DOSSIER = /^\d{4,6}(-[A-Z0-9()]+)*$/i;
-/** A law in the BWB by its id, which is its node key too: BWBR0005290. */
-const BWB = /^BWBR\d{7}$/i;
+/** A law or a treaty in the BWB by its id, which is its node key too: BWBR0005290, BWBV0007162. */
+const BWB = /^BWB[RV]\d{7}$/i;
 /** An EU act by its CELEX number, its node key too: sector 3, year, kind, number (32022L2555). */
 const CELEX = /^3\d{4}[CDFLR]\d+$/i;
 /** Whether an identifier is a CELEX number of an EU act: `32017R1001`. */

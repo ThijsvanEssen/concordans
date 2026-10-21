@@ -861,6 +861,8 @@
 					tables={shownVersion ? shownVersion.tables : a.tables}
 					headings={shownVersion ? shownVersion.headings : a.headings}
 					footnoteMarks={shownVersion ? shownVersion.footnote_marks : a.footnote_marks}
+					footnotes={shownVersion ? shownVersion.footnotes : a.footnotes}
+					footnoteReferences={shownVersion ? [] : d.footnote_references}
 					citations={shownVersion ? [] : d.citations}
 					references={shownVersion ? [] : (d.references ?? [])}
 					law={bwbId}

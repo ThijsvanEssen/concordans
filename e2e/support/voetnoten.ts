@@ -2,6 +2,11 @@
 // (`<sup>1</sup>`) no character of the text but `footnote_marks: [{at, number}]`, every offset
 // behind it one marker shorter. Until that release is live the recorded answers still hold the
 // marker as text (`2019/9441`); these patch them into the new form, and go with the release.
+import type { Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { patchApi } from './api';
 
 type Json = Record<string, unknown>;
 
@@ -43,4 +48,30 @@ export function metVoetnoten(body: Json, holder: string, markers: Marker[]): Jso
 		marks.push({ at: cut, number: m.number });
 	}
 	return { ...out, [holder]: { ...(out[holder] as Json), footnote_marks: marks } };
+}
+
+/**
+ * The answer of `path` as API 0.81 gives it (#881): the footnotes of a `<noot>` are no
+ * text but `footnotes`, each marker naming its own (`footnote`), and the links in them
+ * `footnote_references`. What the parser of that release makes of the toestand stands in
+ * `noten/<file>.json` (its text, parts, markers and notes); it replaces the recorded text and
+ * whatever pointed into it, and goes when that release is live and the BWB read anew.
+ */
+export async function eigenVoetnoten(
+	page: Page,
+	path: RegExp,
+	holder: 'article' | 'annex',
+	file: string
+) {
+	const own = JSON.parse(
+		readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'noten', `${file}.json`), 'utf8')
+	) as Json;
+	await patchApi(page, path, (body) => ({
+		...body,
+		[holder]: { ...(body[holder] as Json), ...(own[holder] as Json) },
+		// What pointed into the recorded text points nowhere in this one.
+		...(holder === 'article' ? { citations: [], term_spans: [], delegations: [] } : {}),
+		references: [],
+		footnote_references: own.footnote_references ?? []
+	}));
 }

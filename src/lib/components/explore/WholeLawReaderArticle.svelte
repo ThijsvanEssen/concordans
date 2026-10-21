@@ -86,8 +86,10 @@
 			tables={shown.tables}
 			headings={shown.headings}
 			footnoteMarks={shown.footnoteMarks}
+			footnotes={shown.footnotes}
 			citations={linked?.citations ?? []}
 			references={linked?.references ?? []}
+			footnoteReferences={linked?.footnote_references}
 			law={bwbId}
 			citation={shown.cited
 				? citationOf(row.address, row.article_number ? null : (row.label ?? null))

@@ -12,6 +12,7 @@ import { plekVan } from '$lib/text/division';
 import { uniqueBy } from '$lib/util/unique';
 import { volgendeBladzijden, vorigeBladzijde, type Richting } from './law-paging';
 import { atArticles } from './peildatum';
+import type { FootnoteMark } from '$lib/text/voetnoten';
 
 // The overview lists every article of the law with a preview only: at full text and parts
 // per article, 810 articles would balloon the payload. The full text of an article of today
@@ -24,7 +25,7 @@ const PAGES_AT_ONCE = 2;
 type Part = Schema<'ArticlePartSpanDTO'>;
 type Table = Schema<'ArticleTableDTO'>;
 type Heading = Schema<'ArticleHeadingDTO'>;
-type FootnoteMark = Schema<'FootnoteMarkDTO'>;
+type Footnote = Schema<'FootnoteDTO'>;
 type Division = Schema<'InstrumentDivisionDTO'>;
 
 /** An article as the list shows it, of today or of the peildatum. */
@@ -47,12 +48,15 @@ export type Row = {
 	headings?: Heading[];
 	/** Where the markers of its footnotes stood in that text. */
 	footnoteMarks: FootnoteMark[];
+	/** Its footnotes not in that text. */
+	footnotes?: Footnote[];
 	/** The whole text of today, from the list of the day (`include_text`), per page. */
 	textToday?: string | null;
 	partsToday?: Part[] | null;
 	tablesToday?: Table[];
 	headingsToday?: Heading[];
 	footnoteMarksToday?: FootnoteMark[];
+	footnotesToday?: Footnote[];
 	text_preview: string | null;
 };
 
@@ -63,6 +67,7 @@ export type ArticleText = {
 	tables: Table[];
 	headings: Heading[];
 	footnoteMarks: FootnoteMark[];
+	footnotes: Footnote[];
 	cited: boolean;
 };
 
@@ -79,6 +84,7 @@ export function articleText(
 				tables?: Table[];
 				headings?: Heading[];
 				footnote_marks?: FootnoteMark[] | null;
+				footnotes?: Footnote[] | null;
 		  }
 		| undefined
 ): ArticleText | null {
@@ -89,6 +95,7 @@ export function articleText(
 			tables: row.tables,
 			headings: row.headings ?? [],
 			footnoteMarks: row.footnoteMarks,
+			footnotes: row.footnotes ?? [],
 			cited: false
 		};
 	if (row.textToday)
@@ -98,6 +105,7 @@ export function articleText(
 			tables: row.tablesToday ?? [],
 			headings: row.headingsToday ?? [],
 			footnoteMarks: row.footnoteMarksToday ?? [],
+			footnotes: row.footnotesToday ?? [],
 			cited: true
 		};
 	if (detail?.text)
@@ -107,6 +115,7 @@ export function articleText(
 			tables: detail.tables ?? [],
 			headings: detail.headings ?? [],
 			footnoteMarks: detail.footnote_marks ?? [],
+			footnotes: detail.footnotes ?? [],
 			cited: true
 		};
 	return null;
@@ -218,7 +227,8 @@ async function loadPage(
 								parts: a.parts?.length ? a.parts : null,
 								tables: a.tables ?? [],
 								headings: a.headings ?? [],
-								footnoteMarks: a.footnote_marks ?? []
+								footnoteMarks: a.footnote_marks ?? [],
+								footnotes: a.footnotes ?? []
 							}
 						])
 					)
@@ -234,6 +244,7 @@ async function loadPage(
 						tables: Table[];
 						headings: Heading[];
 						footnoteMarks: FootnoteMark[];
+						footnotes: Footnote[];
 					}
 				>();
 			})
@@ -249,6 +260,7 @@ async function loadPage(
 				tablesToday: own?.tables ?? [],
 				headingsToday: own?.headings ?? [],
 				footnoteMarksToday: own?.footnoteMarks ?? [],
+				footnotesToday: own?.footnotes ?? [],
 				id: a.id,
 				key: a.key,
 				article_number: a.article_number ?? null,
@@ -260,6 +272,7 @@ async function loadPage(
 				parts: null,
 				tables: [],
 				footnoteMarks: [],
+				footnotes: [],
 				text_preview: a.text_preview ?? null
 			};
 		})

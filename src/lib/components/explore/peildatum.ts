@@ -3,9 +3,11 @@
 // place in the law as it was that day.
 import type { Schema } from '$lib/api/types';
 import { isDay } from '$lib/text/datum';
+import type { FootnoteMark } from '$lib/text/voetnoten';
 
 type Version = Pick<Schema<'InstrumentVersionDTO'>, 'valid_from' | 'valid_until' | 'current'>;
 type Part = Schema<'ArticlePartSpanDTO'>;
+type Footnote = Schema<'FootnoteDTO'>;
 type Table = Schema<'ArticleTableDTO'>;
 type Current = Pick<Schema<'InstrumentArticleNodeDTO'>, 'key' | 'article_number'>;
 type AtItem = Pick<
@@ -23,7 +25,9 @@ type AtItem = Pick<
 	| 'parts'
 	| 'tables'
 	| 'headings'
->;
+> &
+	/** Since API 0.81. */
+	Partial<Pick<Schema<'InstrumentArticleVersionDTO'>, 'footnotes'>>;
 
 type Period = { from: string | null | undefined; until: string | null | undefined };
 
@@ -82,7 +86,9 @@ type AtArticle = {
 	tables: Table[];
 	headings: NonNullable<AtItem['headings']>;
 	/** Where the markers of its footnotes stood in that text. */
-	footnoteMarks: Schema<'FootnoteMarkDTO'>[];
+	footnoteMarks: FootnoteMark[];
+	/** Its footnotes not in that text. */
+	footnotes: Footnote[];
 	text_preview: string | null;
 };
 
@@ -106,6 +112,7 @@ export function atArticles(items: AtItem[], current: Current[]): AtArticle[] {
 		tables: i.tables ?? [],
 		headings: i.headings ?? [],
 		footnoteMarks: i.footnote_marks ?? [],
+		footnotes: i.footnotes ?? [],
 		text_preview: i.text_preview ?? null
 	}));
 }

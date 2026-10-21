@@ -247,6 +247,7 @@
 				tables={a.tables}
 				headings={a.headings}
 				footnoteMarks={a.footnote_marks}
+				footnotes={a.footnotes}
 				citations={inhoud.d.citations}
 				begrippen={inhoud.d.term_spans ?? []}
 				definities={inhoud.d.definitions ?? []}

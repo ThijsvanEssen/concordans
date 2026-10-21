@@ -9,6 +9,8 @@ describe('a law named by its abbreviation in the address', () => {
 		expect(citedByName({ soort: 'artikel', wet: 'WFT', nummer: '1:1' })).toBe('art. 1:1 WFT');
 		expect(citedByName({ soort: 'wet', wet: 'AWB' } as never)).toBe('AWB');
 		expect(citedByName({ soort: 'artikel', wet: 'BWBR0020368', nummer: '1:1' })).toBeNull();
+		// A treaty's id is an id too: its own address no name to resolve (a loop before).
+		expect(citedByName({ soort: 'artikel', wet: 'BWBV0007162', nummer: '15' })).toBeNull();
 		expect(citedByName({ soort: 'artikel', wet: 'STB-2026-56', nummer: '2.8.6' })).toBeNull();
 		expect(citedByName({ soort: 'uitspraak', ecli: 'ECLI:NL:HR:2019:2006' } as never)).toBeNull();
 	});

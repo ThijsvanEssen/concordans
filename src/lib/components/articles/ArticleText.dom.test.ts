@@ -98,3 +98,91 @@ describe('the footnotes of an article (#875)', () => {
 		expect(container.querySelector('#fn-1')).toBeNull();
 	});
 });
+
+describe('the footnotes of their own of an article (#881)', () => {
+	// BWBV0007162 art. 15: the note's marker after "de Raad", the note no text but its own,
+	// with a link to the regulation it names; a note of the heading has no marker.
+	const text = '1. Verordening (EU) 2016/1953 van het Europees Parlement en de Raad, of een ander.';
+	const at = text.indexOf(', of');
+	const footnoteMarks = [{ at, number: '1', footnote: 1 }];
+	const footnotes = [
+		{ number: '4', text: 'Ter verduidelijking: geen van de bepalingen.' },
+		{ number: '1', text: 'Verordening (EU) 2016/1953 van het Europees Parlement (PB EU L 311).' }
+	];
+	const reference = (start: number, end: number, exists: boolean, footnote: number | null) => ({
+		leden: [],
+		onderdelen: [],
+		aanhef: false,
+		kind: 'extref',
+		bwb_id: null,
+		article: null,
+		celex: '32016R1953',
+		doc: '32016R1953',
+		text: 'Verordening (EU) 2016/1953',
+		start,
+		end,
+		footnote,
+		target: {
+			collection: 'instruments' as const,
+			key: '32016r1953',
+			exists,
+			id: 'instruments/32016r1953'
+		}
+	});
+
+	it('lists the notes under the text, the marker a link to its own, the note back', () => {
+		const { container } = render(ArticleText, {
+			text,
+			footnoteMarks,
+			footnotes,
+			footnoteReferences: [reference(0, 26, true, 1)]
+		});
+		expect(container.querySelector('.lid')!.textContent).not.toContain('PB EU L 311');
+		const marker = container.querySelector<HTMLAnchorElement>('sup a')!;
+		expect([marker.textContent, marker.getAttribute('href')]).toEqual(['1', '#fn-1']);
+		expect(marker.closest('sup')!.id).toBe('fnref-1');
+		const notes = [...container.querySelectorAll<HTMLElement>('.voetnoten .voetnoot')];
+		expect(notes.map((n) => [n.id, n.textContent?.trim().slice(0, 12)])).toEqual([
+			['fn-4', '4Ter verduid'],
+			['fn-1', '1Verordening']
+		]);
+		// The note of the heading has no marker to go back to.
+		expect(notes[0].querySelector('a')).toBeNull();
+		expect(notes[1].querySelector('a.voetnoot__terug')!.getAttribute('href')).toBe('#fnref-1');
+		expect(notes[1].querySelector('a.cited')!.textContent).toBe('Verordening (EU) 2016/1953');
+	});
+
+	it('leaves a link to what the data does not hold, and one of the text, plain', () => {
+		const { container } = render(ArticleText, {
+			text,
+			footnoteMarks,
+			footnotes,
+			footnoteReferences: [reference(0, 26, false, 1)],
+			references: [reference(3, 29, true, null)]
+		});
+		expect(container.querySelector('#fn-1 a.cited')).toBeNull();
+		expect(container.querySelector('.lid a.cited')!.textContent).toBe('Verordening (EU) 2016/1953');
+	});
+
+	it('lands on the note at a click on its marker, and back', () => {
+		vi.stubGlobal('CSS', { escape: (s: string) => s });
+		Element.prototype.scrollIntoView = vi.fn();
+		const { container } = render(ArticleText, { text, footnoteMarks, footnotes });
+		container.querySelector<HTMLAnchorElement>('sup a')!.click();
+		expect(container.querySelector('#fn-1')!.classList).toContain('is-landed');
+		container.querySelector<HTMLAnchorElement>('#fn-1 a')!.click();
+		expect(container.querySelector('#fnref-1')!.classList).toContain('is-landed');
+		vi.unstubAllGlobals();
+	});
+
+	it('shows only the notes of the lid shown alone', () => {
+		const two = `${text}\n2. Een tweede lid.`;
+		const { container } = render(ArticleText, {
+			text: two,
+			footnoteMarks,
+			footnotes,
+			alleen: 'lid-2'
+		});
+		expect(container.querySelector('.voetnoten')).toBeNull();
+	});
+});

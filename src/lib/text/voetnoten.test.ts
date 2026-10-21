@@ -3,6 +3,7 @@ import type { Schema } from '$lib/api/types';
 import {
 	articleMarkers,
 	articleNotes,
+	listedNotes,
 	metVoetnoot,
 	regelVan,
 	stukNoten,
@@ -319,5 +320,47 @@ describe('the notes of an article (#875)', () => {
 			['2. De over', false]
 		]);
 		expect(withNotes(text, [{ start: 0, end: 10, heading: true }], notes)[0].note).toBeNull();
+	});
+});
+
+describe('the footnotes of their own of an article and a bijlage (#881)', () => {
+	// Meststoffenwet bijlage I: a note 1 at Dalfsen and another at Breda; the heading's note
+	// (without a marker) first, as the API gives them.
+	const text = 'Dalfsen\nBreda\nDongen';
+	const marks = [
+		{ at: 7, number: '1', footnote: 1 },
+		{ at: 13, number: '1', footnote: 2 },
+		{ at: 20, number: '2', footnote: 3 }
+	];
+	const footnotes = [
+		{ number: '4', text: 'Ter verduidelijking.' },
+		{ number: '1', text: 'Tot het grondgebied van de gemeente Dalfsen …' },
+		{ number: '1', text: 'Tot het grondgebied van de gemeente Breda …' },
+		{ number: '2', text: 'Tot het grondgebied van de gemeente Dongen …' },
+		{ number: '5', text: '  ' }
+	];
+
+	it('lists each note in its order, a repeated number apart, its first marker its way back', () => {
+		expect(listedNotes(footnotes, marks).map((n) => [n.anchor, n.back, n.at])).toEqual([
+			['fn-4', null, null],
+			['fn-1', 'fnref-1', 7],
+			['fn-1-2', 'fnref-1-2', 13],
+			['fn-2', 'fnref-2', 20]
+		]);
+		// An anchor a note in the text has already is not taken twice.
+		expect(listedNotes(footnotes, marks, ['fn-1'])[1].anchor).toBe('fn-1-2');
+		expect(listedNotes(null, marks)).toEqual([]);
+	});
+
+	it('links each marker to its own note, not to a line of the text', () => {
+		expect(articleNotes(text, marks).size).toBe(0);
+		const listed = listedNotes(footnotes, marks);
+		expect(articleMarkers(marks, new Map(), 8, text.length, true, listed)).toEqual([
+			{ id: 'fnref-1-2', label: '1', at: 5, href: '#fn-1-2', anchor: 'fnref-1-2' },
+			{ id: 'fnref-2', label: '2', at: 12, href: '#fn-2', anchor: 'fnref-2' }
+		]);
+		// Without anchors (a map) the marker is text; a note that is not there leaves it so too.
+		expect(articleMarkers(marks, new Map(), 0, 7, false, listed)[0].href).toBeNull();
+		expect(articleMarkers(marks, new Map(), 0, 7, true)[0].href).toBeNull();
 	});
 });

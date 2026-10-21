@@ -285,6 +285,7 @@ describe('the text an article of the whole law shows', () => {
 			tables: [],
 			headings: [],
 			footnoteMarks: [],
+			footnotes: [],
 			cited: false
 		});
 	});
@@ -310,6 +311,16 @@ describe('the text an article of the whole law shows', () => {
 			h
 		]);
 		expect(articleText(row({}), { ...detail, headings: [h] })?.headings).toEqual([h]);
+	});
+
+	it('brings the footnotes of their own of the text it takes (#881)', () => {
+		const f = { number: '1', text: 'Noot.' };
+		expect(articleText(row({ text: 'Oud', footnotes: [f] }), detail)?.footnotes).toEqual([f]);
+		expect(articleText(row({ textToday: 'Nu', footnotesToday: [f] }), detail)?.footnotes).toEqual([
+			f
+		]);
+		expect(articleText(row({}), { ...detail, footnotes: [f] })?.footnotes).toEqual([f]);
+		expect(articleText(row({}), detail)?.footnotes).toEqual([]);
 	});
 
 	it('has no text where none came: the preview stands', () => {

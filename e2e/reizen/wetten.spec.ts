@@ -6,7 +6,7 @@ import { expect, test } from '../support/test';
 import { showText } from '../support/panes';
 import { bijlagenGelezen } from '../support/bijlagen';
 import { patchApi } from '../support/api';
-import { metVoetnoten } from '../support/voetnoten';
+import { eigenVoetnoten, metVoetnoten } from '../support/voetnoten';
 
 test('Bronnen › Wetten: a filter narrows the list, a search finds a law that opens', async ({
 	page,
@@ -171,6 +171,45 @@ test('a footnote in the head of a table of an article (Successiewet art. 24, #87
 	await marker.click();
 	await expect(page.locator('#fn-1')).toHaveClass(/is-landed/);
 	await expect(page.locator('#fn-1')).toContainText('1 Voor afstammelingen in de tweede');
+});
+
+test('the footnotes of a bijlage of their own, a number twice (Meststoffenwet bijlage I, #881)', async ({
+	page
+}) => {
+	await eigenVoetnoten(
+		page,
+		/^\/api\/annexes\/bwbr0004054_annex_i$/,
+		'annex',
+		'bwbr0004054_annex_i'
+	);
+	await page.goto('/wetten/BWBR0004054/bijlage/I?lezen=1');
+	// No note stands in the text: they are listed under it, in their order.
+	const notes = page.locator('.voetnoten .voetnoot');
+	await expect(notes).toHaveCount(5);
+	await expect(notes.first()).toContainText('1Tot het grondgebied van de gemeente Dalfsen');
+	await expect(page.locator('.article-text')).not.toContainText('Dalfsen 1)');
+	// The second note numbered 1 is its own: Breda's marker goes there, and back.
+	const breda = page.locator('#fnref-1-2').getByRole('link', { name: 'Voetnoot 1' });
+	await expect(breda).toHaveAttribute('href', '#fn-1-2');
+	await breda.click();
+	const note = page.locator('#fn-1-2');
+	await expect(note).toHaveClass(/is-landed/);
+	await expect(note).toBeInViewport();
+	await expect(note).toContainText('gemeente Breda');
+	await note.getByRole('link', { name: 'Terug naar de tekst bij voetnoot 1' }).click();
+	await expect(page.locator('#fnref-1-2')).toHaveClass(/is-landed/);
+});
+
+test('a link in a footnote of an article (BWBV0007162 art. 15, #881)', async ({ page }) => {
+	await eigenVoetnoten(page, /^\/api\/articles\/BWBV0007162\/15$/, 'article', 'bwbv0007162_15');
+	await page.goto('/wetten/BWBV0007162/artikel/15?lezen=1');
+	const marker = page.getByRole('link', { name: 'Voetnoot 1', exact: true });
+	await expect(marker).toHaveAttribute('href', '#fn-1');
+	await marker.click();
+	const note = page.locator('#fn-1');
+	await expect(note).toHaveClass(/is-landed/);
+	// The regulation it names is a link, as in the text.
+	await expect(note.getByRole('link', { name: 'Verordening (EU) 2016/1953' })).toBeVisible();
 });
 
 test('a list of the Opiumwet reads as its table', async ({ page, touch }) => {

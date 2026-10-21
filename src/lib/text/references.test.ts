@@ -22,6 +22,7 @@ const ref = (
 	text: '',
 	start,
 	end,
+	footnote: null,
 	target: null,
 	...over
 });

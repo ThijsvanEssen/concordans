@@ -110,6 +110,8 @@
 					tables={a.tables}
 					headings={a.headings}
 					footnoteMarks={a.footnote_marks}
+					footnotes={a.footnotes}
+					footnoteReferences={detail.footnote_references}
 					references={detail.references ?? []}
 					law={a.bwb_id}
 				/>
