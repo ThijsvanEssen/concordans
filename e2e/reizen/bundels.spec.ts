@@ -2,7 +2,14 @@
 // tabs writing at once, a shared link (#m=), the PDF, and words of a lid arceerd in the reader
 // and seen again in the bundel.
 import { expect, test } from '../support/test';
-import { ARTICLE, catchClipboard, keepArticle, keepPlaces, selectWords } from '../support/bundels';
+import {
+	ARTICLE,
+	catchClipboard,
+	keepArticle,
+	keepPlaces,
+	letGo,
+	selectWords
+} from '../support/bundels';
 
 test('Bewaar keeps in Losse markeringen; the check in its list takes it out again', async ({
 	page
@@ -154,6 +161,15 @@ test('arceer words of a lid and see them again in the bundel', async ({ page, to
 	await selectWords(page, 'lid-2', 'ongeschreven recht', touch);
 	// The menu of the place, by the words: Arceer keeps them, in Losse markeringen.
 	const menu = page.getByRole('menu', { name: 'art. 6:162 lid 2 BW, "ongeschreven recht"' });
+	if (touch) {
+		// While the finger is down nothing opens and nothing scrolls: iOS would drag the
+		// selection on under it (A92). Once it lets go, the menu opens below the words.
+		const top = await page.evaluate(() => scrollY);
+		await page.waitForTimeout(1000);
+		await expect(menu).toBeHidden();
+		expect(await page.evaluate(() => scrollY)).toBe(top);
+		await letGo(page);
+	}
 	await expect(menu).toBeVisible();
 	await menu.getByRole('menuitem', { name: 'Arceer' }).click();
 	await expect(menu).toBeHidden();

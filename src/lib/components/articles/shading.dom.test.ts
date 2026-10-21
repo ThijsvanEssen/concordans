@@ -197,6 +197,88 @@ describe('words selected in a lid', () => {
 	});
 });
 
+describe('words selected with a finger (A92)', () => {
+	const range = (container: HTMLElement, waar: string, words: string) => {
+		const el = container.querySelector(`[${PLACE}="${waar}"]`)!;
+		const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+		for (let n = tw.nextNode() as Text | null; n; n = tw.nextNode() as Text | null) {
+			const i = n.data.indexOf(words);
+			if (i < 0) continue;
+			const r = document.createRange();
+			r.setStart(n, i);
+			r.setEnd(n, i + words.length);
+			return r;
+		}
+		throw new Error(`${words} not in ${waar}`);
+	};
+	const choose = (r: Range) => {
+		getSelection()!.removeAllRanges();
+		getSelection()!.addRange(r);
+		document.dispatchEvent(new Event('selectionchange'));
+	};
+	const finger = (type: 'touchstart' | 'touchend') =>
+		document.dispatchEvent(Object.assign(new Event(type, { bubbles: true }), { touches: [] }));
+	const menu = () => screen.queryByRole('menu', { name: /^art\. 6:162/ });
+
+	it('open nothing and scroll nothing while the finger is down; on letting go, its menu', async () => {
+		vi.useFakeTimers();
+		// The words low on the screen: on letting go they go up, the menu below them.
+		const low = vi
+			.spyOn(Range.prototype, 'getBoundingClientRect')
+			.mockReturnValue(new DOMRect(0, innerHeight - 40, 100, 20));
+		const scrolled = vi.fn();
+		vi.stubGlobal('scrollBy', scrolled);
+		Element.prototype.scrollBy ??= () => {};
+		const columns = vi.spyOn(Element.prototype, 'scrollBy').mockImplementation(scrolled);
+		try {
+			const { container } = open();
+			finger('touchstart');
+			choose(range(container, 'lid-2', 'ongeschreven'));
+			await vi.advanceTimersByTimeAsync(2000);
+			expect(menu()).toBeNull();
+			expect(scrolled).not.toHaveBeenCalled();
+
+			finger('touchend');
+			await vi.advanceTimersByTimeAsync(400);
+			expect(
+				screen.getByRole('menu', { name: /^art\. 6:162 lid 2 .*, "ongeschreven"$/ })
+			).toBeTruthy();
+			expect(scrolled).toHaveBeenCalled();
+		} finally {
+			low.mockRestore();
+			columns.mockRestore();
+			vi.useRealTimers();
+		}
+	});
+
+	it('close the menu while the handles drag them on, and open it again with the new words', async () => {
+		vi.useFakeTimers();
+		try {
+			const { container } = open();
+			finger('touchstart');
+			choose(range(container, 'lid-2', 'ongeschreven'));
+			finger('touchend');
+			await vi.advanceTimersByTimeAsync(400);
+			expect(menu()).toBeTruthy();
+
+			finger('touchstart');
+			choose(range(container, 'lid-2', 'ongeschreven recht'));
+			await vi.advanceTimersByTimeAsync(0);
+			expect(menu()).toBeNull();
+			await vi.advanceTimersByTimeAsync(2000);
+			expect(menu()).toBeNull();
+
+			finger('touchend');
+			await vi.advanceTimersByTimeAsync(400);
+			expect(
+				screen.getByRole('menu', { name: /^art\. 6:162 lid 2 .*, "ongeschreven recht"$/ })
+			).toBeTruthy();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+});
+
 describe('an anchor that no longer holds', () => {
 	const kept = (fragment: object) => ({
 		mappen: [

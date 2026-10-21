@@ -518,7 +518,7 @@
 			class="article-text"
 			bind:this={box}
 			data-plaats={shown === parts ? WHOLE_ARTICLE : undefined}
-			use:selection={{ open: selected }}
+			use:selection={{ open: selected, close: () => (menu = null) }}
 		>
 			{#each shown as part (part.start)}
 				{@render render(part, true)}

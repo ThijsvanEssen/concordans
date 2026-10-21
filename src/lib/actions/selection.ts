@@ -2,9 +2,11 @@
 // reader has selected words, with the smallest place that holds them (`data-plaats` on a lid,
 // an r.o., an alinea) and their position in its text as the reader shows it (`walkText`, the
 // words `placeText` counts: no place's own marker, nothing marked `data-geen-tekst`). With a
-// mouse or keys at once; on touch after the selection rests (the handles move it on, and the
-// phone shows its own bar over it), so the menu opens under it. The DOM is never changed: the
-// words are drawn with the CSS Custom Highlight API (shading.ts).
+// mouse or keys at once; on touch once the finger has let go and the selection rests (the
+// handles move it on, and the phone shows its own bar over it), so the menu opens under it;
+// while a finger is down nothing scrolls and no menu opens, or iOS would drag the selection
+// on (A92). The DOM is never changed: the words are drawn with the CSS Custom Highlight API
+// (shading.ts).
 import type { Action } from 'svelte/action';
 
 /** The attribute that names a place: its anchor, `lid-2`, `rov-5.1`, `p-360a090c`. */
@@ -163,18 +165,28 @@ export function wordsUp(range: Range, from: Element) {
 	else scrollBy({ top: by, behavior: 'instant' });
 }
 
-/** How long a selection on touch rests before its menu opens. */
+/** How long a selection on touch rests, the finger off the glass, before its menu opens. */
 const REST_MS = 400;
 
-type Params = { open: (s: TextSelection) => void; off?: boolean };
+type Params = {
+	open: (s: TextSelection) => void;
+	/** Closes the menu: the reader moves the selection on with a finger (A92). */
+	close?: () => void;
+	off?: boolean;
+};
 
 export const selection: Action<HTMLElement, Params> = (node, params) => {
 	let current = params;
 	let down = false;
 	let touch = false;
+	/** A finger on the glass: nothing scrolls and no menu opens until it lets go (A92). */
+	let held = false;
+	/** The selection moved on touch since its menu last opened. */
+	let moved = false;
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	const check = () => {
 		clearTimeout(timer);
+		moved = false;
 		if (current.off) return;
 		const s = selectionIn(node, touch);
 		if (s) current.open(s);
@@ -196,15 +208,40 @@ export const selection: Action<HTMLElement, Params> = (node, params) => {
 	const onKey = (e: KeyboardEvent) => {
 		if (e.shiftKey || e.key === 'Shift') afterClick();
 	};
-	// On touch the handles move the selection on: its menu opens once it rests.
+	// A finger down, on the text or a handle of its selection: a scroll or a menu now would
+	// drag the selection on under it (iOS), so both wait for it to let go.
+	const onTouchStart = () => {
+		touch = true;
+		held = true;
+		clearTimeout(timer);
+	};
+	const onTouchEnd = (e: TouchEvent) => {
+		if (e.touches.length) return;
+		held = false;
+		clearTimeout(timer);
+		if (moved) timer = setTimeout(check, REST_MS);
+	};
+	// On touch the handles move the selection on: its menu closes while they do, and opens
+	// again once the finger has let go and the selection rests.
 	const onChange = () => {
 		if (down || !touch) return;
 		clearTimeout(timer);
+		if (held) {
+			if (!current.off && selectionIn(node, true)) {
+				moved = true;
+				current.close?.();
+			}
+			return;
+		}
+		moved = true;
 		timer = setTimeout(check, REST_MS);
 	};
 	node.addEventListener('pointerdown', onDown);
 	addEventListener('pointerup', onUp);
 	node.addEventListener('keyup', onKey);
+	document.addEventListener('touchstart', onTouchStart, { capture: true, passive: true });
+	document.addEventListener('touchend', onTouchEnd, { capture: true, passive: true });
+	document.addEventListener('touchcancel', onTouchEnd, { capture: true, passive: true });
 	document.addEventListener('selectionchange', onChange);
 	return {
 		update(next) {
@@ -215,6 +252,9 @@ export const selection: Action<HTMLElement, Params> = (node, params) => {
 			node.removeEventListener('pointerdown', onDown);
 			removeEventListener('pointerup', onUp);
 			node.removeEventListener('keyup', onKey);
+			document.removeEventListener('touchstart', onTouchStart, { capture: true });
+			document.removeEventListener('touchend', onTouchEnd, { capture: true });
+			document.removeEventListener('touchcancel', onTouchEnd, { capture: true });
 			document.removeEventListener('selectionchange', onChange);
 		}
 	};

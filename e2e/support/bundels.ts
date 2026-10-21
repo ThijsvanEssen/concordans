@@ -39,8 +39,9 @@ export async function catchClipboard(context: BrowserContext) {
 
 /**
  * Selects `words` in a place of the text as a reader does: a drag with the mouse; on touch
- * the selection a long press and its handles leave (made in the page: a browser under test
- * cannot long-press) and the finger lifted, after which the menu opens once it rests.
+ * the selection a long press leaves (made in the page: a browser under test cannot
+ * long-press), the finger still down: `letGo` lifts it, after which the menu opens once the
+ * selection rests.
  */
 export async function selectWords(page: Page, place: string, words: string, touch: boolean) {
 	const box = await page.evaluate(
@@ -58,6 +59,7 @@ export async function selectWords(page: Page, place: string, words: string, touc
 					n.parentElement!.dispatchEvent(
 						new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch' })
 					);
+					n.parentElement!.dispatchEvent(new TouchEvent('touchstart', { bubbles: true }));
 					getSelection()!.removeAllRanges();
 					getSelection()!.addRange(range);
 				}
@@ -73,3 +75,7 @@ export async function selectWords(page: Page, place: string, words: string, touc
 	await page.mouse.move(box.x + box.w - 1, box.y, { steps: 6 });
 	await page.mouse.up();
 }
+
+/** The finger that selected words lifted from the glass. */
+export const letGo = (page: Page) =>
+	page.evaluate(() => document.dispatchEvent(new TouchEvent('touchend', { bubbles: true })));
