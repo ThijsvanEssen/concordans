@@ -3,7 +3,7 @@ import type { Schema } from '$lib/api/types';
 import { itemKey } from '$lib/map/map';
 import { itemVanRij } from '$lib/map/rij';
 import { rowsOfExplanations } from '$lib/verbonden/explanatory-documents';
-import { citePaper, paperParagraphCite, paperSectionCite } from './paper-cite';
+import { citePaper, dossierInLight, paperParagraphCite, paperSectionCite } from './paper-cite';
 
 describe('a Kamerstuk and its alineas as they are cited', () => {
 	const motion = {
@@ -93,5 +93,59 @@ describe('a passage of a memorie as it is cited and kept (A28, Thijs 20 Oct)', (
 		expect(itemKey(item)).toBe(itemKey(passage.bewaar));
 		expect(item.kort).toBe(passage.kort);
 		expect(item.groupKey).toBe(passage.bewaar.groupKey);
+	});
+});
+
+describe('a paper kept under its dossier by the name of the dossier (A53)', () => {
+	// The MvT of Kamerstuk 32621, nr. 3, its light node as the API gives it (live, 21 Oct): the
+	// paper's props lack the dossier's name, its PART_OF neighbour has it.
+	const mvt = {
+		key: '6c33ccba',
+		kind: 'Memorie van toelichting',
+		title: 'Aanvulling van de Algemene wet bestuursrecht (…)',
+		chamber: 'TK',
+		number: '3',
+		dossier_numbers: ['32621']
+	};
+	const props = { session_year: '2010-2011', dossier_number: '32621', dossier_title: null };
+	const light = {
+		neighbors: {
+			total: 1,
+			buckets: [
+				{
+					relation: 'PART_OF',
+					direction: 'outbound',
+					collection: 'dossiers',
+					items: [
+						{
+							id: 'dossiers/32621',
+							key: '32621',
+							collection: 'dossiers',
+							display_name:
+								'Kamerstukdossier 32621: Aanvulling van de Algemene wet bestuursrecht (…)',
+							props: {
+								number: '32621',
+								title: 'Aanvulling van de Algemene wet bestuursrecht (…)',
+								short_title: 'Wet nadeelcompensatie en schadevergoeding bij onrechtmatige besluiten'
+							}
+						}
+					]
+				}
+			]
+		}
+	} as unknown as Parameters<typeof dossierInLight>[0];
+
+	it('names the group of a kept passage as the dossier, not by its number alone', () => {
+		const paper = citePaper(mvt, props, dossierInLight(light));
+		const passage = paperSectionCite(paper)({ id: 's-24', heading: 'Artikel 3:4' }, '').bewaar;
+		expect(passage.groep).toBe(
+			'Kamerstuk 32621 Wet nadeelcompensatie en schadevergoeding bij onrechtmatige besluiten'
+		);
+		expect(passage.groupKey).toBe('dossier:32621');
+		expect(paper.item.groep).toBe(passage.groep);
+	});
+
+	it('keeps the number as the name where the dossier is not known', () => {
+		expect(citePaper(mvt, {}, dossierInLight(null)).item.groep).toBe('Kamerstuk 32621');
 	});
 });

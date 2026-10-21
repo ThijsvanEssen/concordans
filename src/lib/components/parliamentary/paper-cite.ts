@@ -2,6 +2,8 @@
 // of it after that (…, nr. 57, alinea 4). Its reader's head and menus, and a bundel that
 // shows a kept alinea, cite it from here, so a paper is kept and cited alike everywhere.
 import { naamVan } from '$lib/bron/menselijk';
+import { dossierLabel, dossierUitProps, type DossierNaamBron } from '$lib/bron/dossier-naam';
+import type { NodeGraph } from '$lib/api/nodes';
 import { kamerstukCitation } from './kamerstuk';
 import { bewaarItem, type MapItem } from '$lib/map/map';
 import { ownKind } from '$lib/text/document-kind';
@@ -18,11 +20,33 @@ type CitedPaper = {
 };
 
 /**
+ * The dossier of a paper with its name, from the paper's light node: its PART_OF neighbour, as
+ * the paper's own props do not name it. Null where the node has none.
+ */
+export function dossierInLight(
+	light: Pick<NodeGraph, 'neighbors'> | null | undefined
+): DossierNaamBron | null {
+	const item = light?.neighbors.buckets
+		?.find(
+			(b) => b.relation === 'PART_OF' && b.direction === 'outbound' && b.collection === 'dossiers'
+		)
+		?.items.at(0);
+	return item
+		? dossierUitProps({ display_name: item.display_name, ...(item.props ?? {}) }, item.key)
+		: null;
+}
+
+/**
  * A paper as it is cited and kept: `citation` its Kamerstuk (null for a paper that is none),
  * `name` that or its title, `full` with its kind (`… nr. 57 (Motie)`), and the `item` Bewaar
- * keeps, under its dossier.
+ * keeps, under its dossier, named as the dossier (`dossier`, from dossierInLight) where known:
+ * "Kamerstuk 32621 Wet nadeelcompensatie …", not its number alone beside one kept by its name.
  */
-export function citePaper(doc: CitedPaper, props: Record<string, unknown> = {}) {
+export function citePaper(
+	doc: CitedPaper,
+	props: Record<string, unknown> = {},
+	dossier: DossierNaamBron | null = null
+) {
 	const kind = ownKind(doc.kind);
 	const citation = kamerstukCitation({
 		chamber: doc.chamber,
@@ -33,8 +57,13 @@ export function citePaper(doc: CitedPaper, props: Record<string, unknown> = {}) 
 	});
 	const name = citation ?? doc.title ?? naamVan('documents', doc);
 	const full = citation && kind ? `${citation} (${kind})` : name;
-	const dossier = doc.dossier_numbers?.[0] ?? null;
-	const context = dossier ? { dossier } : { groep: name };
+	const number = doc.dossier_numbers?.[0] ?? null;
+	const context = number
+		? {
+				dossier: number,
+				groep: dossierLabel(dossier?.number === number ? dossier : { number })
+			}
+		: { groep: name };
 	const id = `documents/${doc.key}`;
 	return {
 		id,

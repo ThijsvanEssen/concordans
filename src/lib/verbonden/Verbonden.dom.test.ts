@@ -66,8 +66,9 @@ const selection = {
 	label: 'Artikel 6:162 BW'
 } as GraphNode;
 
-function state(): VerbondenState {
-	const rows: Record<string, Row[]> = { judgments: [uitspraak], documents: [motie], law: [wet] };
+const ROWS: Record<string, Row[]> = { judgments: [uitspraak], documents: [motie], law: [wet] };
+
+function state(rows: Record<string, Row[]> = ROWS): VerbondenState {
 	return {
 		id: selection.id,
 		groups: buildGroups('articles', []).map((g) => ({
@@ -81,10 +82,10 @@ function state(): VerbondenState {
 	};
 }
 
-function paneel() {
+function paneel(rows: Record<string, Row[]> = ROWS) {
 	const onAlles = vi.fn(async () => {});
 	render(Verbonden, {
-		verbonden: state(),
+		verbonden: state(rows),
 		selection,
 		filter: EMPTY_FILTER,
 		store: { nodes: readable([]) } as unknown as GraphStore,
@@ -169,5 +170,16 @@ describe('Verbonden', () => {
 		expect(csv).toContain('Hoge Raad, 20 december 2019');
 		expect(csv).toContain('Motie van het lid Kathmann over een meldportaal');
 		expect(csv).toContain('Burgerlijk Wetboek Boek 6');
+	});
+
+	// The artikel, the uitspraak and the Kamerstuk share this panel: one guard for all three.
+	it('says of a bron without verbindingen only that, with no count, table or export', () => {
+		paneel({});
+		const paneelEl = screen.getByRole('complementary', { name: 'Verbonden' });
+		expect(paneelEl.textContent).toContain('Geen verbindingen.');
+		expect(paneelEl.textContent).not.toMatch(/\b0 verbindingen/);
+		expect(screen.queryByText(/in een tabel/)).toBeNull();
+		expect(screen.queryByRole('button', { name: /Exporteer/ })).toBeNull();
+		expect(screen.queryByRole('button', { name: 'Filter' })).toBeNull();
 	});
 });

@@ -49,12 +49,16 @@ test('a regeling without its text read in points to wetten.overheid.nl', async (
 	);
 });
 
-test('a bron without verbindingen says so', async ({ page, touch }) => {
+test('a bron without verbindingen says so, and offers no count, table or export', async ({
+	page,
+	touch
+}) => {
 	test.skip(touch, 'Verbonden stands beside the text from 1440');
 	await page.goto('/wetten/BWBR0038996');
-	await expect(
-		page.getByRole('complementary', { name: 'Verbonden' }).getByText('Geen verbindingen.')
-	).toBeVisible();
+	const verbonden = page.getByRole('complementary', { name: 'Verbonden' });
+	await expect(verbonden.getByText('Geen verbindingen.')).toBeVisible();
+	await expect(verbonden.getByText(/\b0 verbindingen|in een tabel|Exporteer/)).toHaveCount(0);
+	await expect(verbonden.getByRole('button', { name: 'Filter' })).toHaveCount(0);
 });
 
 test('each group of results says what its search reads', async ({ page }) => {

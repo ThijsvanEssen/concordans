@@ -23,6 +23,7 @@
 	import {
 		filterGroupCount,
 		emptyLine,
+		EMPTY_FILTER,
 		FILTER_GROUP_NOUN,
 		withFilterGroup,
 		type VerbondenFilter
@@ -49,6 +50,7 @@
 		hiddenLine,
 		regroup,
 		shownLabel,
+		totalCount,
 		vasteGroepen,
 		yearHistogram,
 		type Grouping
@@ -239,6 +241,17 @@
 		vasteGroepen(verbonden.groups, verbonden.wachtend ?? [], verbonden.verwacht ?? {})
 	);
 	const wachtSet = $derived(new Set(verbonden.wachtend ?? []));
+	// A bron with no verbinding at all, every group in: one line says so, and nothing offers to
+	// count, group, filter, tabulate or export what is not there (A53).
+	const empty = $derived(
+		!!verbonden.id &&
+			!verbonden.loading &&
+			!verbonden.failed &&
+			wachtSet.size === 0 &&
+			verbonden.groups.every((g) => !g.failed && !g.laden) &&
+			vast != null &&
+			totalCount(vast) === 0
+	);
 	const total = $derived(shownLabel(vast ?? verbonden.groups, filter, wachtSet));
 
 	function toggle(set: Set<string>, id: string) {
@@ -358,25 +371,25 @@
 <aside class="verbonden" aria-label="Verbonden" bind:this={root}>
 	<div class="head">
 		<h2 class="head__title">Verbonden</h2>
-		<!-- A bron without verbindingen says so by its count, not by a sentence (R7, UX-toets
-		     0.79.43: "Deze bron heeft geen verbindingen in de gegevens."). -->
-		{#if verbonden.groups.length > 0 || (!verbonden.loading && !verbonden.failed && verbonden.id)}
+		<!-- A bron without verbindingen has no count: its one line says so below (A53), not a
+		     sentence of explanation (R7, UX-toets 0.79.43). -->
+		{#if !empty && (verbonden.groups.length > 0 || (!verbonden.loading && !verbonden.failed && verbonden.id))}
 			<span class="head__count">{vast ? countLine(vast, filter, wachtSet) : ''}</span>
 		{/if}
 	</div>
 	<!-- The choose-line of the panel (docs/bediening.md): how grouped, the filter. No menu of
 	     the bronnen: the groups below are the kinds chosen, and the presets and kinds are in
 	     the filter (Thijs, 11 Oct). -->
-	<div class="regel">
-		<TekstMenu
-			klein
-			label="Indeling"
-			waarde={grouping}
-			opties={GROUPINGS.map((g) => ({ waarde: g.id, label: g.label }))}
-			onSelect={(id) => (grouping = id)}
-		/>
-		<button type="button" class="regel__knop" onclick={onOpenFilter}>Filter</button>
-	</div>
+	{#if !empty}<div class="regel">
+			<TekstMenu
+				klein
+				label="Indeling"
+				waarde={grouping}
+				opties={GROUPINGS.map((g) => ({ waarde: g.id, label: g.label }))}
+				onSelect={(id) => (grouping = id)}
+			/>
+			<button type="button" class="regel__knop" onclick={onOpenFilter}>Filter</button>
+		</div>{/if}
 
 	<div class="body" use:rijen={'a.row__title'} aria-busy={verbonden.loading}>
 		{#if verbonden.failed}
@@ -520,7 +533,9 @@
 			</p>
 		{/if}
 
-		{#if !verbonden.loading && !verbonden.failed && alleenKern}
+		{#if empty}
+			<p class="note stil">{emptyLine(EMPTY_FILTER)}</p>
+		{:else if !verbonden.loading && !verbonden.failed && alleenKern}
 			<p class="note stil">Geen verbindingen buiten wat boven de tekst staat.</p>
 		{:else if !verbonden.loading && !verbonden.failed && shown.length === 0 && groepen.length > 0}
 			<p class="note stil">{emptyLine(filter)}</p>
@@ -541,7 +556,7 @@
 			</p>
 		{/if}
 
-		{#if verbonden.groups.length > 0}
+		{#if verbonden.groups.length > 0 && !empty}
 			<div class="foot">
 				<TekstLink href={tableHref}>Alle {total} in een tabel</TekstLink>
 				<!-- The part it exports is known once every row is in: asked on the way to the click. -->

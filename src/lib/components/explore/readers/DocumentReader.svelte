@@ -6,6 +6,7 @@
 	import { naamVan } from '$lib/bron/menselijk';
 	import {
 		citePaper,
+		dossierInLight,
 		paperParagraphCite,
 		paperSectionCite
 	} from '$lib/components/parliamentary/paper-cite';
@@ -318,7 +319,7 @@
 		<!-- Without the group of kinds the source files it under (#58): "Amendement". -->
 		{@const kind = ownKind(doc.kind)}
 		<!-- The paper as it is cited and kept, and each alinea after it (paper-cite). -->
-		{@const paper = citePaper(doc, lichtProps)}
+		{@const paper = citePaper(doc, lichtProps, dossierInLight(licht))}
 		{@const cite = paper.citation}
 		{@const naam = paper.name}
 		{@const paragraphCite = paperParagraphCite(paper)}

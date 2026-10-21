@@ -31,7 +31,11 @@
 	import Overweging from '$lib/bron/Overweging.svelte';
 	import PaperParagraph from '$lib/bron/PaperParagraph.svelte';
 	import { parseAnchor, type PaperSource } from '$lib/text/anchor';
-	import { citePaper, type PaperCitation } from '$lib/components/parliamentary/paper-cite';
+	import {
+		citePaper,
+		dossierInLight,
+		type PaperCitation
+	} from '$lib/components/parliamentary/paper-cite';
 	import { heeftOverweging, laadUitspraak, type Uitspraak } from '$lib/bron/overweging';
 	import { kernSoort, kernVan } from '$lib/components/open/rij-inhoud';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
@@ -173,7 +177,13 @@
 				kern: kernVan(als, d),
 				als,
 				source: d,
-				paper: kept ? citePaper(d, (light?.node.props ?? {}) as Record<string, unknown>) : null,
+				paper: kept
+					? citePaper(
+							d,
+							(light?.node.props ?? {}) as Record<string, unknown>,
+							dossierInLight(light)
+						)
+					: null,
 				path: light?.path ?? null
 			};
 		}
