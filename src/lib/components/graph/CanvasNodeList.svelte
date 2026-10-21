@@ -5,7 +5,8 @@
 	// takes it out. The canvas itself draws; this list is how it is reached without one.
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronHref, refOf } from '$lib/bron/href';
-	import { bronLabel, isCollection } from '$lib/vocabulary';
+	import { isCollection } from '$lib/vocabulary';
+	import { bronKind } from '$lib/components/graph/bron-kind';
 	import { moveIndex } from './canvas-keys';
 	import { isEscape } from '$lib/actions/keys';
 	import { articleTitle } from '$lib/text/bw';
@@ -56,7 +57,11 @@
 	});
 
 	const kindOf = (n: GraphNode) =>
-		isClusterId(n.id) ? 'groep' : isCollection(n.collection) ? bronLabel(n.collection) : '';
+		isClusterId(n.id)
+			? 'groep'
+			: isCollection(n.collection)
+				? bronKind(n.collection, n.raw?.props)
+				: '';
 	/**
 	 * The full name, where the canvas shows a short one (`2011-07, Memorie`): the name the
 	 * chips and Verbonden give (bronNaam: "Hoge Raad, 20 december 2019", an article with its

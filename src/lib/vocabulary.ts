@@ -161,6 +161,9 @@ export const BRON_LABEL: Record<Collection, readonly [singular: string, plural: 
 export const bronLabel = (collection: Collection) => BRON_LABEL[collection][0];
 export const bronPlural = (collection: Collection) => BRON_LABEL[collection][1];
 
+/** A Dutch regeling of any kind, as a legend names its square and its articles' hull. */
+export const REGULATION_LABEL = 'Wet of regeling';
+
 // What a verbinding is called (`haalt aan`, `bijlage bij`) has one source: $lib/verbonden/relation-words.ts.
 
 /** The college of a judgment, as the API names it (`tier`): its Type in the Rechtspraak's list of Instanties. */

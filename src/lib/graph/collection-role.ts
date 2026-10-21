@@ -2,7 +2,7 @@
 // it is drawn as instead of a bron (a wet, fractie, commissie or dossier; a cabinet holds its
 // bewindspersonen as a commissie its leden), whether it is asked and drawn as a neighbour of
 // a focus, and its column in a netwerk's first layout (0 parliament, 1 law, 2 judgments).
-import { bronLabel, type Collection, type Relation } from '$lib/vocabulary';
+import { bronLabel, REGULATION_LABEL, type Collection, type Relation } from '$lib/vocabulary';
 import type { ContainerKind } from './container-membership';
 import type { DrawClass } from './types';
 
@@ -38,9 +38,12 @@ export const COLLECTION_ROLE: Record<Collection, Role> = {
 	cabinets: { drawClass: 'committee', hull: 'committee', neighbour: true, column: 0 }
 };
 
-/** A hull by the name of the collection it stands for. */
+/**
+ * A hull by the name of the collection it stands for; the articles' hull of any regeling, as
+ * a beleidsregel's articles stand in it too.
+ */
 export const GROUP_LABEL: Record<ContainerKind, string> = {
-	instrument: bronLabel('instruments'),
+	instrument: REGULATION_LABEL,
 	faction: bronLabel('factions'),
 	committee: bronLabel('committees'),
 	dossier: bronLabel('dossiers')

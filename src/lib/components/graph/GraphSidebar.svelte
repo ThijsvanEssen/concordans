@@ -134,7 +134,7 @@
 			: []
 	);
 	const CONTAINER_KIND_HINT: Record<ContainerKind, string> = {
-		instrument: 'een omtrek om de artikelen van een wet',
+		instrument: 'een omtrek om de artikelen van een wet of regeling',
 		faction: 'een omtrek om de leden van een fractie',
 		committee: 'een omtrek om de leden van een commissie',
 		dossier: 'een omtrek om de stukken van een dossier'

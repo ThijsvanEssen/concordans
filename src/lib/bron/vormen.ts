@@ -1,7 +1,13 @@
 // De tekens van Concordans. De vorm zegt wat een bron
 // is; alle tekens staan in inkt, er is geen kleur te onthouden. Eén tabel voor de tekens
 // in de tekst (KindGlyph) en op het canvas (nodeSprites), getekend in een vak van 16.
-import { BILL_KIND, isCollection, isInternational, type Collection } from '$lib/vocabulary';
+import {
+	BILL_KIND,
+	isCollection,
+	isInternational,
+	REGULATION_LABEL,
+	type Collection
+} from '$lib/vocabulary';
 import type { FilterGroup } from '$lib/verbonden/filter';
 
 export type Vorm =
@@ -131,7 +137,8 @@ export const VORM_VOLGORDE: Vorm[] = [
 
 /** What a shape stands for, as a legend names it. */
 export const VORM_LABEL: Record<Vorm, string> = {
-	regel: 'Wet of verdrag',
+	// Every Dutch regeling, not only a wet: a beleidsregel or an AMvB has the same square.
+	regel: REGULATION_LABEL,
 	'regel-int': 'Europese of internationale regeling',
 	'regel-o': 'Artikel',
 	uitspraak: 'Uitspraak',

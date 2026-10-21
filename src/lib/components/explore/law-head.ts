@@ -32,7 +32,9 @@ const KIND: Record<string, string> = {
 	reglement: 'Reglement',
 	verdrag: 'Verdrag',
 	bilateraalverdrag: 'Bilateraal verdrag',
-	multilateraalverdrag: 'Multilateraal verdrag'
+	multilateraalverdrag: 'Multilateraal verdrag',
+	// Not a BWB kind: the API's for a publication in the Staatsblad or Staatscourant.
+	publicatie: 'Publicatie'
 };
 
 /** The name of a kind the BWB gives, or null for one it does not know. */
@@ -44,7 +46,9 @@ export function kindName(kind: string | null | undefined): string | null {
 }
 
 /** Wet, Verdrag, Beleidsregel; for an act of the EU the first word of its citation: Verordening, Richtlijn. */
-export function lawKind(d: Detail | null): string {
+export function lawKind(
+	d: Pick<Detail, 'kind' | 'jurisdiction' | 'citation_title'> | null
+): string {
 	const named = kindName(d?.kind);
 	if (named) return named;
 	if (d?.jurisdiction === 'eu') {

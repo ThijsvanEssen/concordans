@@ -13,7 +13,7 @@ import {
 import type { Schema } from '$lib/api/types';
 import { containerIdFor, containerKindOf } from '../container-membership';
 import { foldVersions } from '../paths';
-import { withoutLawHops } from '../neighborhood';
+import { withoutDetours } from '../neighborhood';
 import {
 	isTranspositionOutcome,
 	NODE_TYPES,
@@ -82,7 +82,7 @@ export function createExpansion(
 	// The neighbourhood without the kinds the canvas does not draw around a focus (a zaak,
 	// a version: COLLECTION_ROLE): they would take the cap. A member's 1,019 zaken
 	// filled all 150 places and the canvas showed the member alone (UX test 10 Oct, #11).
-	const getekend = (focus: Collection) =>
+	const drawnTypes = (focus: Collection) =>
 		(Object.keys(NODE_TYPES) as Collection[])
 			.filter((c) => c === focus || COLLECTION_ROLE[c].neighbour)
 			.map((c) => NODE_TYPES[c]);
@@ -276,7 +276,7 @@ export function createExpansion(
 
 		neighborhood: { subscribe: neighborhoodStore.subscribe },
 
-		laadSoort: async (collection, key, soort, opts = {}) => {
+		laadSoort: async (collection, key, kind, opts = {}) => {
 			const grens = opts.grens ?? LOAD_ALL_CAP;
 			const focus = nodeId(collection, key.toLowerCase());
 			const ids = new Set<string>();
@@ -285,7 +285,7 @@ export function createExpansion(
 				const response = await getNodeGraph(collection, key, {
 					limit: LOAD_ALL_PAGE,
 					offset,
-					nodeTypes: NODE_TYPES[soort],
+					nodeTypes: NODE_TYPES[kind],
 					props: 'canvas',
 					signal: opts.signal ?? signal()
 				});
@@ -295,7 +295,7 @@ export function createExpansion(
 					if (isTranspositionOutcome(n.relation, target)) continue;
 					ids.add(nodeId(n.collection, n.key));
 				}
-				soortenGeladen = meldSoort(soortenGeladen, focus, soort, ids);
+				soortenGeladen = meldSoort(soortenGeladen, focus, kind, ids);
 				// The same bronnen as the neighbourhood's on their id: drawn once.
 				mergeResponse(response);
 				neighborhoodStore.update((r) =>
@@ -303,16 +303,16 @@ export function createExpansion(
 						? {
 								...r,
 								buckets: r.buckets.map((b) =>
-									b.collection === soort ? { ...b, kept: Math.max(b.kept, ids.size) } : b
+									b.collection === kind ? { ...b, kept: Math.max(b.kept, ids.size) } : b
 								)
 							}
 						: r
 				);
-				const volgende = (response.neighbors.buckets ?? [])
+				const nextOffsets = (response.neighbors.buckets ?? [])
 					.map((b) => b.next_offset)
 					.filter((n): n is number => typeof n === 'number');
-				if (!volgende.length || ids.size >= grens) break;
-				offset = Math.min(...volgende);
+				if (!nextOffsets.length || ids.size >= grens) break;
+				offset = Math.min(...nextOffsets);
 			}
 			return ids.size;
 		},
@@ -322,7 +322,7 @@ export function createExpansion(
 			// 10 Oct). The amendments timetable asks the same route with every prop.
 			const response = await getNodeNeighborhood(collection, key, {
 				...opts,
-				nodeTypes: opts.nodeTypes ?? getekend(collection),
+				nodeTypes: opts.nodeTypes ?? drawnTypes(collection),
 				props: 'canvas',
 				signal: signal()
 			});
@@ -338,11 +338,11 @@ export function createExpansion(
 					buckets: behoudenBuckets(response.buckets ?? [], soortenGeladen, response.focal_id)
 				});
 
-			// A full neighbourhood without the detour through a law (`withoutLawHops`); one
+			// A full neighbourhood without detours through a law or a person (`withoutDetours`); one
 			// narrowed to some relations is drawn as asked.
 			const shown = opts.relations
 				? response
-				: withoutLawHops(
+				: withoutDetours(
 						response.nodes,
 						response.edges,
 						response.focal_id,

@@ -38,7 +38,7 @@ describe('the role of a collection', () => {
 
 	it('names a hull as its collection is named', () => {
 		expect(GROUP_LABEL).toEqual({
-			instrument: 'Wet',
+			instrument: 'Wet of regeling',
 			faction: 'Fractie',
 			committee: 'Commissie',
 			dossier: 'Dossier'

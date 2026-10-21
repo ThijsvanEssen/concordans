@@ -42,6 +42,36 @@ test('the legend switches a kind of bron off and on', async ({ page, touch }) =>
 	await expect(drawn(page)).toHaveAttribute('aria-label', before!);
 });
 
+// The network of a stuk holds what its own verbindingen reach: its dossier with the dossier's
+// stukken and stemmingen, its indiener, never what the indiener voted on or signed elsewhere
+// (productcheck 0.80, punt 3: votes of July 2025 on another matter around a motie of 2026).
+for (const { stuk, own } of [
+	{
+		stuk: '/kamerstukken/36799/31',
+		own: /29 september 2026: Motie van het lid De Beer over bij proactieve dienstverlening/
+	},
+	{ stuk: '/kamerstukken/37020-X/53', own: /Beslisnota bij Kamerbrief over incident/ }
+]) {
+	test(`the network of ${stuk} draws no stemming of its indiener elsewhere`, async ({
+		page,
+		touch
+	}) => {
+		await page.goto(stuk);
+		if (touch)
+			await page
+				.getByRole('navigation', { name: 'Panelen' })
+				.getByRole('button', { name: 'Netwerk' })
+				.click();
+		await expect(drawn(page).getByRole('link', { name: own })).toBeAttached();
+		await page.waitForLoadState('networkidle');
+		const items = await drawn(page).getByRole('listitem').allInnerTexts();
+		const stemmingen = items.filter((t) => t.endsWith(', Stemming'));
+		expect(stemmingen.length).toBeGreaterThan(0);
+		// Each stemming in the network is of the stuk's own dossier, all of the autumn of 2026.
+		expect(stemmingen.filter((t) => !/ (september|oktober) 2026: /.test(t))).toEqual([]);
+	});
+}
+
 test('Verbonden as a table, exported as CSV', async ({ page, touch }) => {
 	await page.goto(ARTICLE);
 	if (touch)

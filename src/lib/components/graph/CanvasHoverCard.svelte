@@ -12,7 +12,7 @@
 	import { load } from '$lib/util/load.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronHref, refOf } from '$lib/bron/href';
-	import { bronLabel } from '$lib/vocabulary';
+	import { bronKind } from '$lib/components/graph/bron-kind';
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import { bronNaam } from '$lib/bron/naam';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
@@ -153,7 +153,7 @@
 >
 	<div class="head">
 		<KindGlyph collection={node.collection} />
-		<span class="kind caps">{bronLabel(node.collection)}</span>
+		<span class="kind caps">{bronKind(node.collection, nodeProps)}</span>
 		{#if cite}<span class="cite">{cite}</span>{/if}
 	</div>
 
