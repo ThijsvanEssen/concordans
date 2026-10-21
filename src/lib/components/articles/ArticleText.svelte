@@ -484,7 +484,7 @@
 	</div>
 {/snippet}
 
-{#snippet notes(place: string)}
+{#snippet annotationsOf(place: string)}
 	{#each notesAt.get(place) ?? [] as a (a.annotation.id)}{@render note(a)}{/each}
 {/snippet}
 
@@ -553,7 +553,7 @@
 						{@render render(child, false)}
 					{/each}
 				</div>
-				{#if part.id}{@render notes(part.id)}{@render anchorLines(part.id)}{/if}
+				{#if part.id}{@render annotationsOf(part.id)}{@render anchorLines(part.id)}{/if}
 				{#if showProposed && proposed}
 					<div class="lid__proposed" data-geen-tekst>
 						<div class="lid__proposed-head">
@@ -596,7 +596,7 @@
 				{#each part.children as child (child.start)}
 					{@render render(child, false)}
 				{/each}
-				{#if part.id}{@render notes(part.id)}{/if}
+				{#if part.id}{@render annotationsOf(part.id)}{/if}
 			</div>
 		</div>
 	{/if}
@@ -641,7 +641,7 @@
 					</div>
 				</div>
 			{/if}
-			{@render notes(WHOLE_ARTICLE)}
+			{@render annotationsOf(WHOLE_ARTICLE)}
 			{@render anchorLines(WHOLE_ARTICLE)}
 		</div>
 	</div>
