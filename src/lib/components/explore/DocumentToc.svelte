@@ -33,6 +33,7 @@
 		'Inhoudsopgave'
 	);
 	const loaded = $derived(toc.state.status === 'ready' ? toc.state.data : null);
+	// While the contents load, or after they failed, the column keeps the name of the stuk.
 
 	// A link to the passage, so that it can be copied and opened elsewhere; a plain click
 	// scrolls smoothly and puts the passage in the address without a history entry.
@@ -47,7 +48,7 @@
 {#if key}
 	<NavKolom
 		label="Inhoud"
-		title={loaded?.title ?? null}
+		title={loaded?.title ?? selection?.label ?? null}
 		onder={loaded?.kind ? capitalize(loaded.kind) : null}
 	>
 		<LoadState state={toc.state} what="De inhoudsopgave" retry={toc.retry}>

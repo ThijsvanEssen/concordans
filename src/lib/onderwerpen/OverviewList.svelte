@@ -10,7 +10,7 @@
 	import StemTeken from '$lib/components/parliamentary/Stem.svelte';
 	import { votesSentence } from '$lib/components/parliamentary/stemming';
 	import UitkomstTeken from '$lib/components/parliamentary/Uitkomst.svelte';
-	import { failureText } from '$lib/components/ui/LoadState.svelte';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import { korteDatum } from '$lib/text/datum';
@@ -70,7 +70,8 @@
 		onLoadCoding: (file: File) => void;
 		/** The next rows, where there are more. */
 		more: { label: string; loading: boolean; onclick: () => void } | null;
-		error: unknown;
+		/** What the list could not load, with Opnieuw asking exactly that again. */
+		error: { error: unknown; retry: () => void } | null;
 		loading: boolean;
 	} = $props();
 
@@ -248,7 +249,11 @@
 		</p>
 	{/if}
 	{#if error}
-		<p class="status stil" role="alert">{failureText('De lijst', error)}</p>
+		<LoadState
+			state={{ status: 'error', error: error.error }}
+			what="De lijst"
+			retry={error.retry}
+		/>
 	{:else if loading}<p class="status stil">Laden…</p>{/if}
 </section>
 

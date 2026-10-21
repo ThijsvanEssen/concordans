@@ -20,7 +20,7 @@ const html = (state: State<string[]>, extra: Record<string, unknown> = {}) =>
 
 describe('LoadState', () => {
 	it('says Laden… in a quiet line, or holds the place with a skeleton', () => {
-		expect(html({ status: 'loading' })).toMatch(/<p class="stil[^"]*">Laden…<\/p>/);
+		expect(html({ status: 'loading' })).toMatch(/<p class="stil[^"]*">Laden…(?:<!---->)?<\/p>/);
 		const block = html({ status: 'loading' }, { form: 'block' });
 		expect(block).toContain('skeleton');
 		expect(block).not.toContain('Laden…');
@@ -57,6 +57,14 @@ describe('LoadState', () => {
 		expect(html({ status: 'error', error: new ApiError(504, '/api/x', id) })).not.toContain(
 			'kenmerk'
 		);
+	});
+
+	it('stands as a span inside running text or a card that is one', () => {
+		const error = { status: 'error', error: new ApiError(500, '/api/x') } as const;
+		const span = html(error, { tag: 'span', retry: () => {} });
+		expect(span).toMatch(/<span class="stil failure[^"]*" role="alert">/);
+		expect(span).toContain('Opnieuw');
+		expect(span).not.toContain('<p');
 	});
 
 	it('says a slow answer apart from a broken one', () => {

@@ -8,11 +8,10 @@ import { getNodeFirst } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
 import { getDossierKey } from '$lib/api/dossiers';
-import { failureText } from '$lib/components/ui/LoadState.svelte';
 import type { GraphStore } from '$lib/graph/store/types';
 import { nodeToGraphNode } from '$lib/graph/types';
 import { deelVan, isOn, type Netwerk, type NetwerkEntry } from '$lib/selection/netwerk';
-import { meldNetwerk } from '$lib/stores/netwerk-melding';
+import { showNetworkFailure } from '$lib/stores/netwerk-melding';
 import { parseNodeId } from '$lib/vocabulary';
 
 /** The most bronnen `/api/paths` takes in one request. */
@@ -100,13 +99,13 @@ export class NetwerkComposer {
 		this.entries = [];
 	}
 
-	/** Draw `n`; a later call wins. A failure leaves the canvas and says so in the network. */
+	/** Draw `n`; a later call wins. A failure leaves the canvas and says so in the network, with Opnieuw. */
 	compose(n: Netwerk): void {
 		this.#compose(n).catch((e) => {
 			if (isAborted(e)) return;
 			report('Netwerk samenstellen', e);
 			this.loading = false;
-			meldNetwerk(failureText('Het netwerk', e), null);
+			showNetworkFailure({ what: 'Het netwerk', error: e, retry: () => this.compose(n) });
 		});
 	}
 

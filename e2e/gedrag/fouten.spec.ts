@@ -131,3 +131,77 @@ test('a page that cannot load without a connection says Geen verbinding', async 
 	await expect(page).toHaveTitle('Geen verbinding, Concordans');
 	await expect(page.getByRole('button', { name: 'Opnieuw laden' })).toBeVisible();
 });
+
+test('Actueel that cannot load says so under its heading, and Opnieuw asks the list again', async ({
+	page,
+	guard
+}) => {
+	guard.allow(FAILED);
+	await failApi(page, /^\/api\/feed\?/, 503);
+	await page.goto('/actueel');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Actueel');
+	const alert = page
+		.getByRole('alert')
+		.filter({ hasText: 'Actueel kon niet op tijd worden geladen.' });
+	await expect(alert).toBeVisible();
+
+	await page.unrouteAll({ behavior: 'ignoreErrors' });
+	await alert.getByRole('button', { name: 'Opnieuw' }).click();
+	await expect(page.getByRole('heading', { level: 2, name: /^Vandaag/ })).toBeVisible();
+	await expect(alert).toHaveCount(0);
+});
+
+test('Actueel keeps its days when the next ones fail, and says so below them with Opnieuw', async ({
+	page,
+	guard
+}) => {
+	guard.allow(FAILED);
+	await page.goto('/actueel');
+	const days = page.getByRole('heading', { level: 2, name: /^Vandaag/ });
+	await expect(days).toBeVisible();
+	let asked = 0;
+	await failApi(page, /^\/api\/feed\?.*cursor=/, 503);
+	page.on('request', (r) => {
+		if (/\/api\/feed\?.*cursor=/.test(r.url())) asked++;
+	});
+	await page.getByRole('button', { name: 'Volgende dagen' }).click();
+	const alert = page
+		.getByRole('alert')
+		.filter({ hasText: 'De volgende dagen konden niet op tijd worden geladen.' });
+	await expect(alert).toBeVisible();
+	await expect(days).toBeVisible();
+	// Opnieuw takes the place of Volgende dagen: one way to ask again.
+	await expect(page.getByRole('button', { name: 'Volgende dagen' })).toHaveCount(0);
+	await alert.getByRole('button', { name: 'Opnieuw' }).click();
+	await expect.poll(() => asked).toBe(2);
+	await expect(alert).toBeVisible();
+});
+
+test('a network that cannot be drawn says so on the canvas, the bron stays, Opnieuw draws it', async ({
+	page,
+	guard,
+	touch
+}) => {
+	guard.allow(FAILED);
+	await failApi(page, /^\/api\/nodes\/articles\/bwbr0005289_162\/neighborhood/, 503);
+	await page.goto('/wetten/BWBR0005289/artikel/6:162');
+	if (touch)
+		await page
+			.getByRole('navigation', { name: 'Panelen' })
+			.getByRole('button', { name: 'Netwerk' })
+			.click();
+	const alert = page
+		.getByRole('alert')
+		.filter({ hasText: 'Het netwerk kon niet op tijd worden geladen.' });
+	await expect(alert).toBeVisible();
+	await expect(page).toHaveTitle(/6:162/);
+
+	await page.unrouteAll({ behavior: 'ignoreErrors' });
+	await alert.getByRole('button', { name: 'Opnieuw' }).click();
+	await expect(alert).toHaveCount(0);
+	await expect(
+		page
+			.getByRole('list', { name: /^Bronnen in het netwerk, \d+/ })
+			.getByRole('link', { name: 'Art. 6:162 BW, Artikel' })
+	).toBeAttached();
+});

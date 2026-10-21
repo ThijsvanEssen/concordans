@@ -75,6 +75,7 @@
 	} from '$lib/selection/card-place';
 	import { FOLD, isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { netwerkMelding } from '$lib/stores/netwerk-melding';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { kaart } from '$lib/map/map.svelte';
 	import { gemerkt, notesOfBundels } from '$lib/map/notities';
 	import { keepsCamera, saveCamera, savedCamera } from './camera';
@@ -1436,7 +1437,17 @@
 
 				<!-- On a phone, what the last action on the network did, with the way back: the
 			     place it was done from (Verbonden) is out of sight on the Netwerk tab. -->
-				{#if $netwerkMelding}
+				{#if $netwerkMelding?.failure}
+					{@const failure = $netwerkMelding.failure}
+					<div class="netwerk-melding netwerk-melding--failure">
+						<LoadState
+							state={{ status: 'error', error: failure.error }}
+							what={failure.what}
+							plural={failure.plural}
+							retry={failure.retry}
+						/>
+					</div>
+				{:else if $netwerkMelding}
 					<p class="netwerk-melding" role="status">
 						{$netwerkMelding.tekst}
 						{#if $netwerkMelding.terug}
@@ -1634,27 +1645,34 @@
 		}
 	}
 	.netwerk-melding {
+		position: absolute;
+		left: var(--s-3);
+		right: calc(var(--s-3) + 40px + var(--s-2));
+		bottom: calc(var(--s-3) + 48px);
+		z-index: var(--z-float);
 		display: none;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: var(--s-1) var(--s-2);
+		margin: 0;
+		padding: var(--s-2) var(--s-3);
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		background: var(--paper);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-2);
+		box-shadow: var(--shadow-pop);
+	}
+	/* A network that could not be drawn is said on every screen, beside the zoom. */
+	.netwerk-melding--failure {
+		display: flex;
+	}
+	.netwerk-melding--failure :global(.failure) {
+		margin: 0;
 	}
 	@media (max-width: 768px) {
 		.netwerk-melding {
-			position: absolute;
-			left: var(--s-3);
-			right: calc(var(--s-3) + 40px + var(--s-2));
-			bottom: calc(var(--s-3) + 48px);
-			z-index: var(--z-float);
 			display: flex;
-			flex-wrap: wrap;
-			align-items: baseline;
-			gap: var(--s-1) var(--s-2);
-			margin: 0;
-			padding: var(--s-2) var(--s-3);
-			font-family: var(--font-serif);
-			font-size: var(--t-meta);
-			background: var(--paper);
-			border: 1px solid var(--rule-strong);
-			border-radius: var(--r-2);
-			box-shadow: var(--shadow-pop);
 		}
 		/* Narrow: the Netwerk panel takes the top; the legend stays at the bottom left and
 		   leaves room for it. */

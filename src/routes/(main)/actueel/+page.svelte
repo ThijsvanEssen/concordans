@@ -29,6 +29,7 @@
 	import { getFactions } from '$lib/api/factions';
 	import { isSlow, report } from '$lib/api/errors';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import type { LoadFailure } from '$lib/util/load.svelte';
 	import { tick, untrack } from 'svelte';
 	import { focusFirstNew } from '$lib/actions/rijen';
 	import type { Schema } from '$lib/api/types';
@@ -191,7 +192,7 @@
 	let loading = $state(true);
 	let loadingMore = $state(false);
 	/** What failed and why, for LoadState: the list, the days before or the next days. */
-	let error = $state.raw<{ what: string; error: unknown; retry: () => void } | null>(null);
+	let error = $state.raw<LoadFailure | null>(null);
 	/** Opnieuw on the list: it is asked again as it stands. */
 	let retries = $state(0);
 	/** The API gave up on the words searched (30 s): a shorter period is quick. */
@@ -293,7 +294,7 @@
 			doorzocht = doorzochtVanaf(r);
 		} catch (e) {
 			report('Actueel verder terug', e);
-			error = { what: 'De eerdere dagen', error: e, retry: verderTerug };
+			error = { what: 'De eerdere dagen', plural: true, error: e, retry: verderTerug };
 		} finally {
 			verderLaden = false;
 		}
@@ -318,7 +319,7 @@
 			if (daysEl) focusFirstNew(daysEl, ROW, before);
 		} catch (e) {
 			report('Actueel volgende dagen', e);
-			error = { what: 'De volgende dagen', error: e, retry: loadMore };
+			error = { what: 'De volgende dagen', plural: true, error: e, retry: loadMore };
 		} finally {
 			loadingMore = false;
 		}
@@ -542,9 +543,10 @@
 <RouteKop />
 
 <!-- Under the last day, in the text column of the timeline. -->
+<!-- Next days that did not come: Opnieuw under the days takes the link's place, as in Bladeren. -->
 {#snippet volgende()}
-	{#if loadingMore}<span class="stil">Laden…</span>{:else}<TekstLink onclick={loadMore}
-			>Volgende dagen</TekstLink
+	{#if loadingMore}<span class="stil">Laden…</span>{:else if error?.retry !== loadMore}<TekstLink
+			onclick={loadMore}>Volgende dagen</TekstLink
 		>{/if}
 {/snippet}
 {#snippet verder()}
@@ -653,7 +655,7 @@
 				<LoadState
 					state={{ status: 'error', error: error.error }}
 					what={error.what}
-					plural={error.what !== 'Actueel'}
+					plural={error.plural}
 					retry={error.retry}
 				/>
 				{#if teLang && korter.length}
@@ -695,7 +697,7 @@
 				<LoadState
 					state={{ status: 'error', error: error.error }}
 					what={error.what}
-					plural={error.what !== 'Actueel'}
+					plural={error.plural}
 					retry={error.retry}
 				/>
 			{/if}

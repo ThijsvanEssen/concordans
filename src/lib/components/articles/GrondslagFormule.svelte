@@ -6,7 +6,7 @@
 	// or the focus first comes to a formula. Hover shows the card; a click or a tap holds it
 	// open. Escape, a tap outside or a second click close it.
 	import BronLink from '$lib/bron/BronLink.svelte';
-	import { failureText } from '$lib/components/ui/LoadState.svelte';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';
 	import { isEscape } from '$lib/actions/keys';
 	import { clickOutside, HOVER_MS, LEAVE_MS } from '$lib/actions/top-layer';
@@ -57,7 +57,7 @@
 			: null
 	);
 
-	/** Asked once; after a failure again on the next hover or tap. */
+	/** Asked once; after a failure again on the next hover or tap, or on Opnieuw in the card. */
 	function vraag() {
 		if (!gevraagd) gevraagd = true;
 		else if (antwoord.state.status === 'error') antwoord.retry();
@@ -134,8 +134,14 @@
 		onclick={(e) => e.stopPropagation()}
 		onkeydown={toets}
 		><span class="kaart__kop">{grondslagKop(formule)}</span
-		>{#if antwoord.state.status === 'error'}<span class="kaart__stil" role="alert"
-				>{failureText('De regelingen', antwoord.state.error)}</span
+		>{#if antwoord.state.status === 'error'}<span class="kaart__stil"
+				><LoadState
+					state={antwoord.state}
+					what="De regelingen"
+					plural
+					retry={antwoord.retry}
+					tag="span"
+				/></span
 			>{:else if regelingen === null}<span class="kaart__stil">Regelingen laden…</span
 			>{:else if regelingen.length === 0}<span class="kaart__leeg">{nogGeen(formule)}</span
 			>{:else}{#each regelingen as r (r.instrument.key)}{@const regel = regelingRegel(r)}<span

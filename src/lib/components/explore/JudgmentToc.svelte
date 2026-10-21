@@ -42,7 +42,10 @@
 		},
 		'Inhoudsopgave'
 	);
-	const ecliLabel = $derived(toc.state.status === 'ready' ? (toc.state.data?.label ?? null) : null);
+	// While the contents load, or after they failed, the column keeps the name of the uitspraak.
+	const ecliLabel = $derived(
+		(toc.state.status === 'ready' ? toc.state.data?.label : null) ?? selection?.label ?? null
+	);
 
 	// A link to the passage, so that it can be copied and opened elsewhere; a plain click
 	// scrolls smoothly and puts the passage in the address without a history entry.

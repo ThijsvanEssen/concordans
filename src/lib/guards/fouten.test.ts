@@ -65,6 +65,24 @@ describe('errors that are not swallowed', () => {
 		).toEqual([]);
 	});
 
+	it('says a failure only through LoadState, so it never stands without Opnieuw and kenmerk', () => {
+		// failureText as a string of its own (state as text, a toast) lost Opnieuw and the
+		// kenmerk (Actueel, the Verkenner's address and focus, the network; F6-rest). A failure
+		// kept beside a list is a LoadFailure, shown by LoadState.
+		expect(
+			overtreders(
+				(t) => /\bfailureText\(/.test(t),
+				[
+					plek('lib/components/ui/LoadState.svelte'),
+					plek(
+						'lib/components/explore/IndexView.svelte',
+						'Volgende becomes Opnieuw in its own place under the rows loaded'
+					)
+				]
+			)
+		).toEqual([]);
+	});
+
 	it('asks again with one Opnieuw, the one of LoadState, alike in reader, Verbonden and search', () => {
 		// One look and one finger's target (.raakvlak) for every Opnieuw (UX-toets A32 #5).
 		expect(

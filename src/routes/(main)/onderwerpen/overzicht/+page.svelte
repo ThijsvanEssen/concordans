@@ -566,11 +566,11 @@
 
 	/** The next page of a list, asked on Volgende. */
 	let meerLaden = $state(false);
-	/** The next page of a list did not come: said under it. */
-	let meerFout = $state<unknown>(null);
-	const meerMislukt = (e: unknown) => {
+	/** The next page of a list, or its count, did not come: said under it, with Opnieuw. */
+	let meerFout = $state.raw<{ error: unknown; retry: () => void } | null>(null);
+	const meerMislukt = (retry: () => void) => (e: unknown) => {
 		report('Overzicht lijst', e);
-		if (!isAborted(e)) meerFout = e;
+		if (!isAborted(e)) meerFout = { error: e, retry };
 	};
 
 	let apiLijst = $state<Besluit[]>([]);
@@ -592,7 +592,7 @@
 				.then((t) => {
 					if (t) lijstTotaal = t.total;
 				})
-				.catch(meerMislukt);
+				.catch(meerMislukt(() => decisionList.retry()));
 		},
 		'Overzicht lijst'
 	);
@@ -604,7 +604,7 @@
 			const r = await decisionsPage({ ...lijstVraag, limit: STEP }, apiLijst.length);
 			apiLijst = [...apiLijst, ...r.items];
 		} catch (e) {
-			meerMislukt(e);
+			meerMislukt(volgendeBesluiten)(e);
 		} finally {
 			meerLaden = false;
 		}
@@ -645,7 +645,7 @@
 			feedLijst = [...feedLijst, ...r.items.map(normalizeItem)];
 			feedCursor = r.next_cursor ?? null;
 		} catch (e) {
-			meerMislukt(e);
+			meerMislukt(volgendeStukken)(e);
 		} finally {
 			meerLaden = false;
 		}
@@ -689,11 +689,11 @@
 	);
 	/** What the list could not load: its first page, its next, or the amendments of a cell. */
 	const lijstFout = $derived.by(() => {
-		const fout = (s: { status: string; error?: unknown }) =>
-			s.status === 'error' ? s.error : null;
-		if (lijstSoort === 'besluiten') return fout(decisionList.state) ?? meerFout;
-		if (lijstSoort === 'feed') return fout(feedList.state) ?? meerFout;
-		if (lijstSoort === 'amendementen') return fout(cellLoad.state) ?? fout(chains.state);
+		const fout = (l: { state: { status: string; error?: unknown }; retry: () => void }) =>
+			l.state.status === 'error' ? { error: l.state.error, retry: l.retry } : null;
+		if (lijstSoort === 'besluiten') return fout(decisionList) ?? meerFout;
+		if (lijstSoort === 'feed') return fout(feedList) ?? meerFout;
+		if (lijstSoort === 'amendementen') return fout(cellLoad) ?? fout(chains);
 		return null;
 	});
 	const besluitRijen = $derived(lokaal ? lokaal.slice(0, lokaalGetoond) : apiLijst);

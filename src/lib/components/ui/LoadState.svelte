@@ -32,6 +32,7 @@
 		plural = false,
 		retry,
 		form = 'line',
+		tag = 'p',
 		empty,
 		children
 	}: {
@@ -42,6 +43,8 @@
 		plural?: boolean;
 		retry?: () => void;
 		form?: 'line' | 'block';
+		/** The element of a line: `span` inside running text or a card that is a span. */
+		tag?: 'p' | 'span';
 		empty?: Snippet;
 		children?: Snippet<[T]>;
 	} = $props();
@@ -55,16 +58,21 @@
 			<div class="skeleton__line skeleton__line--short"></div>
 		</div>
 	{:else}
-		<p class="stil">Laden…</p>
+		<svelte:element this={tag} class="stil">Laden…</svelte:element>
 	{/if}
 {:else if state.status === 'error'}
-	<p class="stil failure" class:failure--block={form === 'block'} role="alert">
+	<svelte:element
+		this={tag}
+		class="stil failure"
+		class:failure--block={form === 'block'}
+		role="alert"
+	>
 		{failureText(what, state.error, plural)}
 		{#if retry}
 			<TekstLink onclick={retry}>Opnieuw</TekstLink>
 		{/if}
 		<Kenmerk error={state.error} />
-	</p>
+	</svelte:element>
 {:else if empty && isEmpty(state.data)}
 	{@render empty()}
 {:else}

@@ -10,6 +10,13 @@ export type LoadState<T> =
 	| { status: 'error'; error: unknown }
 	| { status: 'ready'; data: T };
 
+/**
+ * A load that failed, held where a LoadState cannot be (a list kept while its next page fails,
+ * a message on the network): what failed, why, and how to ask exactly that again. Shown by
+ * `<LoadState state={{ status: 'error', error }} {what} {plural} {retry} />`.
+ */
+export type LoadFailure = { what: string; plural?: boolean; error: unknown; retry: () => void };
+
 type Ask<K, T> = (key: K, signal: AbortSignal) => Promise<T>;
 
 /** The loader without the runes: `load` starts a key, `retry` the last one, `stop` drops it. */

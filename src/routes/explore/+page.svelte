@@ -16,7 +16,7 @@
 	import { BESIDE, PHONE, READ_BESIDE } from '$lib/util/breakpoints';
 	import { laadWetsnetwerk } from '$lib/components/actueel/wetsnetwerk';
 	import { vandaag } from '$lib/text/datum';
-	import { meldNetwerk } from '$lib/stores/netwerk-melding';
+	import { meldNetwerk, showNetworkFailure } from '$lib/stores/netwerk-melding';
 	import {
 		DEFAULT_FILTERS,
 		NEIGHBORHOOD_CAP,
@@ -31,7 +31,8 @@
 	import { reloadForNewVersion } from '$lib/util/reload';
 	import { readStored, writeStored } from '$lib/util/storage';
 	import PanelBoundary from '$lib/components/ui/PanelBoundary.svelte';
-	import LoadState, { failureText } from '$lib/components/ui/LoadState.svelte';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import type { LoadFailure } from '$lib/util/load.svelte';
 	import { Lazy } from '$lib/util/lazy.svelte';
 	import { getNodeCanvas, getNodeHull } from '$lib/api/records';
 	import { kopNode } from '$lib/bron/first-node';
@@ -149,12 +150,13 @@
 		canvasIds = ns.map((n) => n.id).filter((id) => !id.startsWith('synth:'));
 	});
 
-	let focusError = $state<string | null>(null);
+	/** The focus names a bron the data does not hold: said in words, no failure. */
+	let focusNotHeld = $state<string | null>(null);
 	/**
 	 * The bron asked could not be loaded (the address looked up, or the bron itself): said in
 	 * its place with LoadState, Opnieuw asking again; the bron shown before does not stay.
 	 */
-	let loadFailure = $state.raw<{ what: string; error: unknown; retry: () => void } | null>(null);
+	let loadFailure = $state.raw<LoadFailure | null>(null);
 	/** Opnieuw on an address that could not be looked up: it is looked up again. */
 	let padRetries = $state(0);
 	/** The focus is a bron the dataset does not hold: the page says so instead of an empty canvas. */
@@ -169,13 +171,14 @@
 	// An article or a Kamerstuk is looked up once; a judgment or a dossier needs no request.
 	// What the data lacks is said, not opened as a neighbour (a dossier for its stuk).
 	const pad = $derived(parsePad(page.url.pathname));
-	let padMissing = $state<string | null>(null);
+	/** The address names a bron the data does not hold: said in words, no failure. */
+	let padNotHeld = $state<string | null>(null);
 	/** The address names a bron the data lacks: a 404, as the server gives it. */
 	let padOnbekend = $state(false);
 	$effect(() => {
 		const p = pad;
 		void padRetries;
-		padMissing = null;
+		padNotHeld = null;
 		padOnbekend = false;
 		loadFailure = null;
 		if (!p || untrack(() => params.get('focus'))) return;
@@ -200,13 +203,12 @@
 				if (found || ac.signal.aborted) return;
 				// A law of the Staatsblad the BWB now holds: the server sends it on.
 				if (followServerMove(page.url.pathname)) return;
-				padMissing = `${notHeld(nameOfPad(p))}.`;
+				padNotHeld = `${notHeld(nameOfPad(p))}.`;
 				padOnbekend = true;
 			})
 			.catch((e) => {
 				if (ac.signal.aborted || isAborted(e)) return;
 				report('Verkenner adres', e);
-				padMissing = failureText(nameOfPad(p), e);
 				loadFailure = { what: nameOfPad(p), error: e, retry: () => padRetries++ };
 			});
 		return () => ac.abort();
@@ -547,7 +549,7 @@
 		void alles;
 		const withNetwerk = netwerkActive;
 		if (!focus) {
-			focusError = null;
+			focusNotHeld = null;
 			// The selection goes, so the focus does too: Back to it loads it again (#135).
 			loadedFocus = '';
 			if (selectedNode) store.setSelection(null);
@@ -582,11 +584,11 @@
 		focusMissing = true;
 		// A law of the Staatsblad the server served itself is not in the data: by its publication.
 		const name = pad && isEnactedLawPath(page.url.pathname) ? nameOfPad(pad) : `'${key}'`;
-		focusError = `${notHeld(name)}.`;
+		focusNotHeld = `${notHeld(name)}.`;
 	}
 
 	async function loadFocus(id: string) {
-		focusError = null;
+		focusNotHeld = null;
 		loadFailure = null;
 		focusMissing = false;
 		const replace = replaceNext === id;
@@ -596,7 +598,7 @@
 		lichtGeladen = null;
 		const target = parseNodeId(id);
 		if (!target) {
-			focusError = `Bron '${id}' niet gevonden.`;
+			focusNotHeld = `Bron '${id}' niet gevonden.`;
 			return;
 		}
 		// A bron already on the canvas (a click on it) needs no wait: it is there.
@@ -700,11 +702,10 @@
 		wachtOp = null;
 		report('Verkenner focus', err);
 		const name = pad ? nameOfPad(pad) : `'${key}'`;
-		focusError = failureText(name, err);
 		const huidig = untrack(() => selectedNode);
 		const asked = loadedFocus;
 		if (huidig && (huidig.id === asked || linkIdOf(huidig) === asked || huidig.key === key)) {
-			meldNetwerk(focusError, null);
+			showNetworkFailure({ what: 'Het netwerk', error: err, retry: () => retryFocus(asked) });
 			return;
 		}
 		if (huidig) {
@@ -887,7 +888,7 @@
 		// While the next bron is on its way the reader still holds the previous one: its name
 		// would be the new page's (a screen reader announces the title after each step).
 		if (loadFailure && !selectedNode) return siteTitle('Er ging iets mis');
-		if (wachtOp || (pad && !focus && !padMissing)) return LADEN_TITEL;
+		if (wachtOp || (pad && !focus && !padNotHeld)) return LADEN_TITEL;
 		const name = selectedNode ? pageName(selectedNode, titelVan(selectedNode.id)) : null;
 		if (name) return siteTitle(name);
 		if (netwerkActive) return siteTitle('Netwerk');
@@ -1296,7 +1297,7 @@
 				/>{:else}<p class="explore-empty stil" role="status">Laden…</p>{/if}
 		{:else if nietGevonden}
 			<NietGevonden title="Bron niet gevonden" kop={false}>
-				<p>{padMissing ?? focusError}</p>
+				<p>{padNotHeld ?? focusNotHeld}</p>
 				<p><a href="/bronnen#dekking">Bronnen en dekking</a></p>
 			</NietGevonden>
 		{:else if loadFailure && !selectedNode && !netwerkActive}
@@ -1307,9 +1308,9 @@
 					retry={loadFailure.retry}
 				/>
 			</div>
-		{:else if padMissing && !selectedNode && !netwerkActive}
-			<p class="explore-empty stil">{padMissing}</p>
-		{:else if mode === 'graph' && (focus || pad) && !selectedNode && !netwerkActive && !focusError}
+		{:else if padNotHeld && !selectedNode && !netwerkActive}
+			<p class="explore-empty stil">{padNotHeld}</p>
+		{:else if mode === 'graph' && (focus || pad) && !selectedNode && !netwerkActive && !focusNotHeld && !loadFailure}
 			<!-- A bron on its way: its place, not the empty network with its start card (UX test
 			     10 Oct, #24). -->
 			<p class="explore-empty stil">Laden…</p>
@@ -1534,8 +1535,16 @@
 			{#if withContents && tocOpen}
 				<TocSheet onClose={() => (tocOpen = false)}>{@render toc()}</TocSheet>
 			{/if}
-		{:else if focusError}
-			<p class="explore-empty stil">{focusError}</p>
+		{:else if loadFailure}
+			<div class="explore-empty">
+				<LoadState
+					state={{ status: 'error', error: loadFailure.error }}
+					what={loadFailure.what}
+					retry={loadFailure.retry}
+				/>
+			</div>
+		{:else if focusNotHeld}
+			<p class="explore-empty stil">{focusNotHeld}</p>
 		{:else if focus || pad}
 			<!-- The bron is on its way: said, not left as an empty page. -->
 			<p class="explore-empty stil" role="status">Laden…</p>
