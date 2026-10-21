@@ -4,6 +4,7 @@
 	// reader of a text with tables renders them here and gives the text of a cell (`cell`).
 	import type { Snippet } from 'svelte';
 	import { rowsOf, type Table, type TableCell } from '$lib/text/tables';
+	import { sideScroll } from '$lib/actions/side-scroll';
 
 	let {
 		text,
@@ -39,8 +40,9 @@
 	</tr>
 {/snippet}
 
-<!-- A wide table pans in its own box on a phone, not the page. -->
-<div class="text-table" data-zijscroll>
+<!-- A table its column cannot hold pans in its own box, not the page; the edge that hides
+     more fades (use:sideScroll), and the box takes the keyboard. -->
+<div class="text-table" data-zijscroll use:sideScroll={{ focus: true }}>
 	<table>
 		{#if head.length}
 			<thead>
@@ -61,16 +63,19 @@
 	.text-table {
 		max-width: 100%;
 		overflow-x: auto;
+		overscroll-behavior-x: contain;
 		margin: var(--s-2) 0;
 	}
-	/* The column's width, its cells wrapping; a table that will not fit at a word a column
-	   pans. A step smaller than the text, as a table in print. */
+	/* The column's width, its cells wrapping: a long word (the name of a substance in a list
+	   of the Opiumwet) breaks at its syllables before the table pans. A step smaller than the
+	   text, as a table in print. */
 	table {
 		width: 100%;
 		border-collapse: collapse;
 		font-size: var(--t-meta);
 		line-height: var(--lh-snug);
 		color: inherit;
+		hyphens: auto;
 	}
 	th,
 	td {
@@ -83,12 +88,8 @@
 		font-weight: 600;
 		border-bottom-color: var(--rule-strong);
 	}
-	/* In a narrow column (a phone, beside the network) a long word breaks at its syllables
-	   rather than the table panning. */
+	/* In a narrow column (a phone, beside the network) the cells sit closer. */
 	@container (max-width: 579px) {
-		table {
-			hyphens: auto;
-		}
 		th,
 		td {
 			padding: var(--s-1) var(--s-2);

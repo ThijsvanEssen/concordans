@@ -277,3 +277,23 @@ a:hover {
 [tabindex='-1']:focus:not(:focus-visible) {
 	outline: none;
 }
+
+/* A box that pans sideways in itself (use:sideScroll): the edge that hides more fades out, so it
+   is seen that the box goes on there (a wide table, the categories of the index). */
+[data-zijscroll]:is([data-more-left], [data-more-right]) {
+	--fade-left: 0px;
+	--fade-right: 0px;
+	mask-image: linear-gradient(
+		to right,
+		transparent 0,
+		black var(--fade-left),
+		black calc(100% - var(--fade-right)),
+		transparent 100%
+	);
+}
+[data-zijscroll][data-more-left] {
+	--fade-left: var(--s-6);
+}
+[data-zijscroll][data-more-right] {
+	--fade-right: var(--s-6);
+}

@@ -49,14 +49,18 @@ describe('the contents of a law (K3)', () => {
 	});
 });
 
+/** Every reader of the text of an article or a bijlage. */
+const articleReaders = [
+	'lib/components/explore/readers/ArticleReader.svelte',
+	'lib/components/explore/WholeLawReaderArticle.svelte',
+	'lib/map/MapInhoud.svelte',
+	'lib/components/explore/readers/AnnexReader.svelte'
+];
+
 describe('the tables in a text (A20)', () => {
 	it('are passed by every reader of an article to ArticleText', () => {
-		for (const path of [
-			'lib/components/explore/readers/ArticleReader.svelte',
-			'lib/components/explore/WholeLawReaderArticle.svelte',
-			'lib/map/MapInhoud.svelte',
-			'lib/components/explore/readers/AnnexReader.svelte'
-		])
+		expect(filesWith(/<ArticleText\b/).toSorted()).toEqual(articleReaders.toSorted());
+		for (const path of articleReaders)
 			expect(bron(path), path).toMatch(/<ArticleText\b[^>]*\btables=/);
 	});
 
@@ -70,6 +74,14 @@ describe('the tables in a text (A20)', () => {
 			'lib/components/articles/ArticleText.svelte',
 			'lib/components/articles/TextBlocks.svelte'
 		]);
+	});
+});
+
+describe('the headings in a text (A110)', () => {
+	// An article reads its tussenkoppen as a bijlage does (gelijke pagina's).
+	it('are passed by every reader of an article or a bijlage to ArticleText', () => {
+		for (const path of articleReaders)
+			expect(bron(path), path).toMatch(/<ArticleText\b[^>]*\bheadings=/);
 	});
 });
 

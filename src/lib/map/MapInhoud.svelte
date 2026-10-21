@@ -245,6 +245,7 @@
 				text={a.text}
 				parts={a.parts}
 				tables={a.tables}
+				headings={a.headings}
 				citations={inhoud.d.citations}
 				begrippen={inhoud.d.term_spans ?? []}
 				definities={inhoud.d.definitions ?? []}

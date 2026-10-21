@@ -23,6 +23,7 @@ const PAGES_AT_ONCE = 2;
 
 type Part = Schema<'ArticlePartSpanDTO'>;
 type Table = Schema<'ArticleTableDTO'>;
+type Heading = Schema<'ArticleHeadingDTO'>;
 type Division = Schema<'InstrumentDivisionDTO'>;
 
 /** An article as the list shows it, of today or of the peildatum. */
@@ -40,17 +41,25 @@ export type Row = {
 	text: string | null;
 	/** Its aanhef, leden and onderdelen; null from an API without them (read from the text). */
 	parts: Part[] | null;
-	/** The tables in that text. */
+	/** The tables in that text, and its headings. */
 	tables: Table[];
+	headings?: Heading[];
 	/** The whole text of today, from the list of the day (`include_text`), per page. */
 	textToday?: string | null;
 	partsToday?: Part[] | null;
 	tablesToday?: Table[];
+	headingsToday?: Heading[];
 	text_preview: string | null;
 };
 
 /** The whole text an article shows, and whether Citeer names its places (not on a peildatum). */
-export type ArticleText = { text: string; parts: Part[] | null; tables: Table[]; cited: boolean };
+export type ArticleText = {
+	text: string;
+	parts: Part[] | null;
+	tables: Table[];
+	headings: Heading[];
+	cited: boolean;
+};
 
 /**
  * The one text of a row: of the peildatum, else of today from its page, else of the article
@@ -58,14 +67,24 @@ export type ArticleText = { text: string; parts: Part[] | null; tables: Table[];
  */
 export function articleText(
 	row: Row,
-	detail: { text: string | null; parts?: Part[] | null; tables?: Table[] } | undefined
+	detail:
+		| { text: string | null; parts?: Part[] | null; tables?: Table[]; headings?: Heading[] }
+		| undefined
 ): ArticleText | null {
-	if (row.text) return { text: row.text, parts: row.parts, tables: row.tables, cited: false };
+	if (row.text)
+		return {
+			text: row.text,
+			parts: row.parts,
+			tables: row.tables,
+			headings: row.headings ?? [],
+			cited: false
+		};
 	if (row.textToday)
 		return {
 			text: row.textToday,
 			parts: row.partsToday ?? null,
 			tables: row.tablesToday ?? [],
+			headings: row.headingsToday ?? [],
 			cited: true
 		};
 	if (detail?.text)
@@ -73,6 +92,7 @@ export function articleText(
 			text: detail.text,
 			parts: detail.parts ?? null,
 			tables: detail.tables ?? [],
+			headings: detail.headings ?? [],
 			cited: true
 		};
 	return null;
@@ -182,7 +202,8 @@ async function loadPage(
 							{
 								text: a.text ?? null,
 								parts: a.parts?.length ? a.parts : null,
-								tables: a.tables ?? []
+								tables: a.tables ?? [],
+								headings: a.headings ?? []
 							}
 						])
 					)
@@ -190,7 +211,10 @@ async function loadPage(
 			.catch((e) => {
 				// Without them each article asks its text alone once it scrolls into view.
 				report('Teksten van vandaag', e);
-				return new Map<string, { text: string | null; parts: Part[] | null; tables: Table[] }>();
+				return new Map<
+					string,
+					{ text: string | null; parts: Part[] | null; tables: Table[]; headings: Heading[] }
+				>();
 			})
 	]);
 	return {
@@ -202,6 +226,7 @@ async function loadPage(
 				textToday: own?.text ?? null,
 				partsToday: own?.parts ?? null,
 				tablesToday: own?.tables ?? [],
+				headingsToday: own?.headings ?? [],
 				id: a.id,
 				key: a.key,
 				article_number: a.article_number ?? null,

@@ -282,6 +282,7 @@ describe('the text an article of the whole law shows', () => {
 			text: 'Oud.',
 			parts: null,
 			tables: [],
+			headings: [],
 			cited: false
 		});
 	});
@@ -298,6 +299,15 @@ describe('the text an article of the whole law shows', () => {
 		const t = { start: 0, end: 3, head_rows: 1, columns: 2, spans: [] };
 		expect(articleText(row({ textToday: 'a\tb', tablesToday: [t] }), detail)?.tables).toEqual([t]);
 		expect(articleText(row({}), { ...detail, tables: [t] })?.tables).toEqual([t]);
+	});
+
+	it('brings the headings of the text it takes, as a bijlage does', () => {
+		const h = { start: 0, end: 3 };
+		expect(articleText(row({ text: 'Kop', headings: [h] }), detail)?.headings).toEqual([h]);
+		expect(articleText(row({ textToday: 'Kop', headingsToday: [h] }), detail)?.headings).toEqual([
+			h
+		]);
+		expect(articleText(row({}), { ...detail, headings: [h] })?.headings).toEqual([h]);
 	});
 
 	it('has no text where none came: the preview stands', () => {

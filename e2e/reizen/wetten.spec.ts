@@ -120,6 +120,17 @@ test('a law lists its bijlagen after its articles; a bijlage reads its table', a
 		'Soort entiteit'
 	]);
 	await expect(table.getByRole('cell', { name: 'Energie', exact: true })).toBeVisible();
+	// The table takes the text's whole width: beside the contents that of a lid's text, on a
+	// phone the column's, from under the numbers (A110). It fits: nothing pans.
+	const box = page.locator('.text-table').first();
+	const width = (sel: string) =>
+		page
+			.locator(sel)
+			.first()
+			.evaluate((e) => e.clientWidth);
+	const column = await width(touch ? '.article-text' : '.lid__text');
+	expect(await width('.text-table')).toBeGreaterThanOrEqual(column - 1);
+	await expect(box).not.toHaveAttribute('data-more-right');
 });
 
 test('a list of the Opiumwet reads as its table', async ({ page, touch }) => {
@@ -133,4 +144,12 @@ test('a list of the Opiumwet reads as its table', async ({ page, touch }) => {
 		'International Non-proprietary Name'
 	);
 	await expect(table.getByRole('cell', { name: '25B-NBOMe', exact: true })).toBeVisible();
+	// Beside the contents it fits the column; on a phone its names of substances do not, and
+	// the table pans in its own box, its right edge faded (A110). The page never pans.
+	const box = page.locator('.text-table').first();
+	if (touch) await expect(box).toHaveAttribute('data-more-right');
+	else await expect(box).not.toHaveAttribute('data-more-right');
+	expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+		true
+	);
 });

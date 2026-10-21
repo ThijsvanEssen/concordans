@@ -84,6 +84,7 @@
 			text={shown.text}
 			parts={shown.parts}
 			tables={shown.tables}
+			headings={shown.headings}
 			citations={linked?.citations ?? []}
 			references={linked?.references ?? []}
 			law={bwbId}

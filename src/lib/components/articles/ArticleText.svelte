@@ -845,7 +845,15 @@
 		/* minmax(0, …): the text wraps, not widens the column past the screen. A tap on the
 		   number (or the text) opens the place's menu, as a click does. */
 		.lid {
-			grid-template-columns: 28px minmax(0, 1fr);
+			--lid-no: 28px;
+			grid-template-columns: var(--lid-no) minmax(0, 1fr);
+		}
+		/* A table of a lid takes the column's whole width: from under the number to the
+		   lid's right edge (a bijlage's table of three columns was pressed into 290 px). */
+		.lid__text > :global(.text-table) {
+			max-width: none;
+			margin-right: calc(-1 * var(--s-3));
+			margin-left: calc(-1 * (var(--lid-no) + var(--s-3)));
 		}
 		.lid__body--pair {
 			grid-template-columns: 1fr;

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { sideScroll } from '$lib/actions/side-scroll';
 	import { tick, untrack } from 'svelte';
 	// Index: browse one category at a time. Beside the list a column of filters, each
 	// option with the number of bronnen it holds under the other filters. A row says what
@@ -456,21 +457,8 @@
 	});
 
 	// On a phone the tab strip scrolls (wider, it wraps): the category on screen is scrolled into it,
-	// and an edge that hides tabs fades out.
+	// and an edge that hides tabs fades out (use:sideScroll).
 	let catbar = $state<HTMLElement | null>(null);
-	let catMore = $state({ left: false, right: false });
-	const measureCatbar = () => {
-		if (!catbar) return;
-		const { scrollLeft, scrollWidth, clientWidth } = catbar;
-		catMore = { left: scrollLeft > 1, right: scrollLeft + clientWidth < scrollWidth - 1 };
-	};
-	$effect(() => {
-		if (!catbar) return;
-		measureCatbar();
-		const observer = new ResizeObserver(measureCatbar);
-		observer.observe(catbar);
-		return () => observer.disconnect();
-	});
 	$effect(() => {
 		void category;
 		catbar
@@ -527,15 +515,7 @@
 <div class="index-view">
 	<!-- The categories in three groups, each named above its tabs: the law and the
 	     courts, how the Kamer deals with a subject, and who does it. -->
-	<nav
-		class="catbar"
-		data-zijscroll
-		class:catbar--more-left={catMore.left}
-		class:catbar--more-right={catMore.right}
-		aria-label="Categorieën"
-		bind:this={catbar}
-		onscroll={measureCatbar}
-	>
+	<nav class="catbar" data-zijscroll use:sideScroll aria-label="Categorieën" bind:this={catbar}>
 		{#each INDEX_TABS as group, g (g)}
 			<div class="catgroup" role="group" aria-labelledby="catgroup-{g}">
 				<span class="catgroup__label" id="catgroup-{g}">{group.label}</span>
@@ -792,22 +772,6 @@
 		flex-shrink: 0;
 		overflow-x: auto;
 		scrollbar-width: thin;
-		--fade-left: 0px;
-		--fade-right: 0px;
-		mask-image: linear-gradient(
-			to right,
-			transparent 0,
-			black var(--fade-left),
-			black calc(100% - var(--fade-right)),
-			transparent 100%
-		);
-	}
-	/* A hidden tab is announced by the edge that fades. */
-	.catbar--more-left {
-		--fade-left: 40px;
-	}
-	.catbar--more-right {
-		--fade-right: 40px;
 	}
 	/* A group: its name over its tabs, a hairline between groups. */
 	.catgroup {

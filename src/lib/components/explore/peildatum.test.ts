@@ -59,7 +59,8 @@ describe('atArticles', () => {
 		valid_from: '2011-02-23',
 		valid_until: '2018-05-01',
 		parts: [],
-		tables: []
+		tables: [],
+		headings: []
 	});
 	it('places an article as it stood that day, and links it to the article of today', () => {
 		const [a] = atArticles([at('1:1', 'Hoofdstuk 1')], current);

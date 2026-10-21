@@ -21,6 +21,7 @@ type AtItem = Pick<
 	| 'valid_until'
 	| 'parts'
 	| 'tables'
+	| 'headings'
 >;
 
 type Period = { from: string | null | undefined; until: string | null | undefined };
@@ -76,8 +77,9 @@ type AtArticle = {
 	text: string | null;
 	/** Its aanhef, leden and onderdelen in that text; null from an API without them. */
 	parts: Part[] | null;
-	/** The tables in that text. */
+	/** The tables in that text, and its headings. */
 	tables: Table[];
+	headings: NonNullable<AtItem['headings']>;
 	text_preview: string | null;
 };
 
@@ -99,6 +101,7 @@ export function atArticles(items: AtItem[], current: Current[]): AtArticle[] {
 		text: i.text ?? null,
 		parts: i.parts.length ? i.parts : null,
 		tables: i.tables ?? [],
+		headings: i.headings ?? [],
 		text_preview: i.text_preview ?? null
 	}));
 }
