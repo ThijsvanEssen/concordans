@@ -253,10 +253,14 @@ a:hover {
 }
 
 /* An arcering of the reader (O4): the grey of the pencil, drawn over the text without
-   changing it (CSS Custom Highlight API, $lib/text/arcering.ts). */
+   changing it (CSS Custom Highlight API, $lib/text/shading.ts). The wash alone is lost on
+   --paper-2 (1.15:1: an opened bundel row, a lid pointed at), so a pencil line under it marks
+   it on both (--rule-strong: 5.2:1 on paper, 4.5:1 on paper-2), and sets it apart from words
+   merely selected. */
 ::highlight(arcering) {
 	background-color: var(--wassing);
 	color: var(--ink);
+	text-decoration: underline 2px var(--rule-strong);
 }
 
 :focus-visible {

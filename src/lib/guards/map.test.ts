@@ -86,6 +86,25 @@ describe('the map', () => {
 			expect(s.text, s.path).not.toMatch(/>\s*\{[\w.?]*\b(?:notitie|n\.tekst)\}/);
 	});
 
+	it('shows an arcering’s note under its place, and the arcering on paper-2 too (O4 step 6, 8)', () => {
+		// The note of an arcering is an Aantekening whose click opens the arcering's menu, in the
+		// reader and in an opened bundel row alike: ArticleText draws both, no second markup.
+		const tekst = bron('lib/components/articles/ArticleText.svelte');
+		expect(tekst).toMatch(/<Aantekening\b[^>]*tekst=\{a\.annotation\.tekst\}[^>]*onOpen=/);
+		expect(tekst).not.toMatch(/<Aantekening\b[^>]*onBewaar/);
+		expect(bron('lib/map/MapInhoud.svelte')).toContain('<ArticleText');
+		// The wash alone is lost on paper-2 (an opened row): a pencil line in the tokens marks
+		// the arcering, and the words a note quotes, on both papers; never the accent.
+		const css = bron('lib/styles/basis.css');
+		const rule = css.match(/::highlight\(arcering\)\s*\{([^}]*)\}/)?.[1] ?? '';
+		const mark = bron('lib/map/MapInhoud.svelte').match(/\bmark\s*\{([^}]*)\}/)?.[1] ?? '';
+		for (const r of [rule, mark]) {
+			expect(r).toMatch(/background(?:-color)?:\s*var\(--wassing\)/);
+			expect(r).toMatch(/text-decoration:\s*underline 2px var\(--rule-strong\)/);
+			expect(r).not.toMatch(/#[0-9a-f]{3,6}\b|var\(--accent/i);
+		}
+	});
+
 	it('names where a map’s way on goes: here, or in the reader (Thijs, 12 Oct)', () => {
 		const inhoud = bron('lib/map/MapInhoud.svelte');
 		expect(inhoud).toContain("'Heel artikel hier'");

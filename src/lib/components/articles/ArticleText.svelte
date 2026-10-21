@@ -17,6 +17,7 @@
 	import { citeArticle, placeCitation, type ArticleCitation } from '$lib/text/cite';
 	import type { ProposedText } from '$lib/verbonden/proposed-text';
 	import CitedText from './CitedText.svelte';
+	import Aantekening from '$lib/map/Aantekening.svelte';
 	import TextTable from './TextTable.svelte';
 	import { blocksOf, type Table } from '$lib/text/tables';
 	import { withHeadings, type Heading } from '$lib/text/headings';
@@ -252,6 +253,8 @@
 	/** A click on a place's text opens its menu, at its marker (blockClick: the innermost); a
 	 *  click on an arcering the arcering's. */
 	const onText = (part: ArticlePart) => (e: MouseEvent) => {
+		// A note under the place is no text of it: its own button opens its menu.
+		if (e.target instanceof Element && e.target.closest('[data-geen-tekst]')) return;
 		const at = shadingAt(e.clientX, e.clientY, drawn);
 		if (at && 'start' in at.shading.hit) {
 			const { range, shading } = at;
@@ -392,6 +395,30 @@
 		};
 	});
 
+	/** The notes of the arceringen whose words stand where they were kept, by their place: each
+	 *  under it at rest (O4 step 6). A note of one that moved or lost its words stands under its
+	 *  line (anchorLines). */
+	const notesAt = $derived.by(() => {
+		const out = new Map<string, Shading[]>();
+		for (const a of resolved) {
+			if (!a.annotation.tekst || a.hit.state !== 'found') continue;
+			out.set(a.hit.place, [...(out.get(a.hit.place) ?? []), a]);
+		}
+		return out;
+	});
+	/** The notes come from more than one bundel: each label names its own. */
+	const manyMaps = $derived(
+		new Set(resolved.filter((a) => a.annotation.tekst).map((a) => a.map.id)).size > 1
+	);
+	/** A note clicked opens the menu of its arcering, at the note; again closes it. */
+	function openNote(a: Shading, anker: HTMLElement) {
+		if (menu?.shading?.annotation.id === a.annotation.id && menu.anker === anker) {
+			menu = null;
+			return;
+		}
+		menu = { part: partAt(a.hit.place), anker, shading: a };
+	}
+
 	/** A place as a line names it: `lid 3`, `lid 2, onder a`; the article itself. */
 	const placeName = (place: string) => anchorLabel(place) ?? 'het artikel';
 	/** The arceringen whose words no longer stand where they were kept, by the top part their
@@ -446,6 +473,21 @@
 	/>
 {/snippet}
 
+{#snippet note(a: Shading)}
+	<div class="noot" data-geen-tekst>
+		<Aantekening
+			tekst={a.annotation.tekst}
+			bij={`"${a.annotation.fragment.exact}"`}
+			bundel={manyMaps ? a.map.naam : null}
+			onOpen={(button) => openNote(a, button)}
+		/>
+	</div>
+{/snippet}
+
+{#snippet notes(place: string)}
+	{#each notesAt.get(place) ?? [] as a (a.annotation.id)}{@render note(a)}{/each}
+{/snippet}
+
 {#snippet anchorLines(place: string)}
 	{#each stale.get(place) ?? [] as r (r.a.annotation.id)}
 		{@const href =
@@ -459,6 +501,7 @@
 					anchor={r.state}
 				/>{/if}
 		</p>
+		{#if r.a.annotation.tekst}{@render note(r.a)}{/if}
 	{/each}
 {/snippet}
 
@@ -510,7 +553,7 @@
 						{@render render(child, false)}
 					{/each}
 				</div>
-				{#if part.id}{@render anchorLines(part.id)}{/if}
+				{#if part.id}{@render notes(part.id)}{@render anchorLines(part.id)}{/if}
 				{#if showProposed && proposed}
 					<div class="lid__proposed" data-geen-tekst>
 						<div class="lid__proposed-head">
@@ -553,6 +596,7 @@
 				{#each part.children as child (child.start)}
 					{@render render(child, false)}
 				{/each}
+				{#if part.id}{@render notes(part.id)}{/if}
 			</div>
 		</div>
 	{/if}
@@ -597,6 +641,7 @@
 					</div>
 				</div>
 			{/if}
+			{@render notes(WHOLE_ARTICLE)}
 			{@render anchorLines(WHOLE_ARTICLE)}
 		</div>
 	</div>
@@ -872,7 +917,10 @@
 	.voetnoot__terug:hover {
 		color: var(--ink);
 	}
-
+	/* The note of an arcering under its place, its words' own (Aantekening). */
+	.noot {
+		margin-bottom: var(--s-1);
+	}
 	/* An arcering whose words no longer stand where they were kept (besluit 23): its line under
 	   the place, the words kept as a quote where none stands now. */
 	.anchor-line {

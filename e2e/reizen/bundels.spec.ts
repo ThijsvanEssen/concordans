@@ -191,10 +191,29 @@ test('arceer words of a lid and see them again in the bundel', async ({ page, to
 	if (touch) await page.touchscreen.tap(at.x, at.y);
 	else await page.mouse.click(at.x, at.y);
 	await expect(page.getByRole('menuitem', { name: 'Arcering weg' })).toBeVisible();
+	// Its note, written in the menu, stands under the lid at rest (O4 step 6).
+	await page.getByRole('menuitem', { name: 'Aantekening', exact: true }).click();
+	await page.getByRole('textbox', { name: /^Aantekening bij/ }).fill('Ook ongeschreven recht');
+	await page.getByRole('button', { name: 'Bewaar aantekening' }).click();
+	const note = page.locator('[data-plaats="lid-2"] .noot').getByRole('button', {
+		name: 'Ook ongeschreven recht'
+	});
+	await expect(note).toBeVisible();
+	// A click (a tap) on the note opens the menu of its arcering, where it is changed.
+	if (touch) await note.tap();
+	else await note.click();
+	await expect(page.getByRole('menuitem', { name: 'Wijzig aantekening' })).toBeVisible();
 	await page.keyboard.press('Escape');
+	await expect(page.getByRole('menuitem', { name: 'Wijzig aantekening' })).toBeHidden();
 
+	// In the bundel the opened row shows the arcering and its note under the lid (step 8).
 	await page.goto('/bundels/losse-markeringen');
 	await page.getByRole('link', { name: 'art. 6:162 lid 2 BW' }).click();
 	await expect(page.getByText(/Als onrechtmatige daad worden aangemerkt/)).toBeVisible();
 	await expect.poll(drawn).toEqual(['ongeschreven recht']);
+	await expect(
+		page.locator('[data-plaats="lid-2"] .noot').getByRole('button', {
+			name: 'Ook ongeschreven recht'
+		})
+	).toBeVisible();
 });

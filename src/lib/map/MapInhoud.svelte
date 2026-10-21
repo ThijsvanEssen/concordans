@@ -367,9 +367,12 @@
 		line-height: var(--lh-body);
 		color: var(--ink);
 	}
+	/* The words a note quotes, as an arcering is drawn (basis.css): on the row's paper-2 the
+	   pencil line marks them, the wash alone is too faint there. */
 	mark {
 		background: var(--wassing);
 		color: inherit;
+		text-decoration: underline 2px var(--rule-strong);
 	}
 	.dictum {
 		font-style: italic;

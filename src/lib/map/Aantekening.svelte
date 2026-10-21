@@ -6,23 +6,28 @@
 	// be changed a click opens it in place: Enter keeps it, Escape leaves it, leaving the
 	// field keeps it. Read only, as on a network card, the label names its place. With a
 	// placeholder an empty note is an empty field that says what goes in it (a bundel's
-	// research question).
+	// research question). The note of an arcering (O4) stands under its place in the text, and
+	// a click opens the menu of its arcering (`onOpen`), where it is changed.
 	import Picto from '$lib/components/ui/Picto.svelte';
 
 	let {
 		tekst,
 		bij,
 		waar = null,
+		bundel = null,
 		compact = false,
 		open = $bindable(false),
 		placeholder = null,
-		onBewaar
+		onBewaar,
+		onOpen
 	}: {
 		tekst: string | null | undefined;
 		/** What it is a note on, for the field's name: `art. 21 lid 3 Cbw`, `Cyberbeveiligingswet`. */
 		bij: string;
 		/** Its place in the label, where the note stands apart from it: `lid 3`, a law, a map. */
 		waar?: string | null;
+		/** The bundel it is kept in, in the label, where the text shows notes of more than one. */
+		bundel?: string | null;
 		/** Without its own margin and measure, in a card that spaces its lines itself. */
 		compact?: boolean;
 		/** The field open; without `onBewaar` it never opens. */
@@ -31,38 +36,44 @@
 		placeholder?: string | null;
 		/** Keeps the note; without it the note is read only (a shared map). */
 		onBewaar?: (tekst: string) => void;
+		/** A click on the note opens this menu (an arcering's), the note its button. */
+		onOpen?: (button: HTMLElement) => void;
 	} = $props();
 
-	/** The field takes the focus on opening. */
-	const focus = (veld: HTMLTextAreaElement) => veld.focus();
+	const label = $derived(
+		bundel ? `Aantekening, ${bundel}` : waar ? `Aantekening bij ${waar}` : 'Aantekening'
+	);
 
-	function klaar(waarde: string) {
+	/** The field takes the focus on opening. */
+	const focus = (field: HTMLTextAreaElement) => field.focus();
+
+	function done(value: string) {
 		if (!open) return;
-		onBewaar?.(waarde);
+		onBewaar?.(value);
 		open = false;
 	}
-	function toets(e: KeyboardEvent) {
-		const veld = e.currentTarget as HTMLTextAreaElement;
+	function onKey(e: KeyboardEvent) {
+		const field = e.currentTarget as HTMLTextAreaElement;
 		if (e.key === 'Enter' && !e.shiftKey) {
 			e.preventDefault();
-			klaar(veld.value);
+			done(field.value);
 		} else if (e.key === 'Escape') {
 			// The field's own Escape (isEscape leaves a field alone): the note as it was.
 			e.preventDefault();
-			veld.value = tekst ?? '';
+			field.value = tekst ?? '';
 			open = false;
 		}
 	}
 	/** The empty field: Enter or leaving it keeps what was typed, Escape leaves it empty. */
 	function emptyKey(e: KeyboardEvent) {
-		const veld = e.currentTarget as HTMLTextAreaElement;
+		const field = e.currentTarget as HTMLTextAreaElement;
 		if (e.key === 'Enter' && !e.shiftKey) {
 			e.preventDefault();
-			veld.blur();
+			field.blur();
 		} else if (e.key === 'Escape') {
 			e.preventDefault();
-			veld.value = '';
-			veld.blur();
+			field.value = '';
+			field.blur();
 		}
 	}
 </script>
@@ -82,10 +93,18 @@
 	</div>
 {:else if (open && onBewaar) || tekst}
 	<div class="aantekening" class:compact>
-		<span class="label"
-			><Picto naam="bewaard" size={10} />{waar ? `Aantekening bij ${waar}` : 'Aantekening'}</span
-		>
-		{#if open && onBewaar}
+		<span class="label"><Picto naam="bewaard" size={10} />{label}</span>
+		{#if onOpen}
+			<button
+				type="button"
+				class="tekst"
+				aria-haspopup="menu"
+				onclick={(e) => {
+					e.stopPropagation();
+					onOpen(e.currentTarget);
+				}}>{tekst}</button
+			>
+		{:else if open && onBewaar}
 			<textarea
 				class="aantekening-veld"
 				rows="2"
@@ -93,8 +112,8 @@
 				placeholder="Aantekening bij {bij}"
 				value={tekst ?? ''}
 				use:focus
-				onkeydown={toets}
-				onblur={(e) => klaar(e.currentTarget.value)}
+				onkeydown={onKey}
+				onblur={(e) => done(e.currentTarget.value)}
 			></textarea>
 		{:else if onBewaar}
 			<button
@@ -151,6 +170,9 @@
 	}
 	button.tekst {
 		cursor: text;
+	}
+	button.tekst[aria-haspopup] {
+		cursor: pointer;
 	}
 	button.tekst:focus-visible {
 		outline: 2px solid var(--focus);

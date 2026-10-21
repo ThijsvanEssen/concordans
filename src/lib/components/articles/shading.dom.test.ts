@@ -316,3 +316,77 @@ describe('an anchor that no longer holds', () => {
 		expect(line.textContent).toContain('Fragment niet teruggevonden');
 	});
 });
+
+describe('the note of an arcering (O4 step 6)', () => {
+	const bron = articlePlaces(art162.article.text, partsOf(art162.article.text, null));
+	const words = 'ongeschreven recht';
+	const start = placeText(bron, 'lid-2')!.indexOf(words);
+	const map = (id: string, naam: string, fragment: object, tekst = 'Ook ongeschreven') => ({
+		id,
+		naam,
+		items: [
+			{ id: ID, at: 'lid-2', kort: 'art. 6:162 lid 2 BW', groep: 'BW', groupKey: 'wet:bwbr0005289' }
+		],
+		volgorde: 'groep',
+		gewijzigd: '2026-10-01T00:00:00Z',
+		aantekeningen: [
+			{ id: id === 'onderzoek' ? 'a-00000002' : 'a-00000001', op: `${ID}#lid-2`, fragment, tekst }
+		]
+	});
+	const here = { waar: 'lid-2', exact: words, start };
+
+	it('stands under its place at rest, no word of it, in the form of Aantekening', () => {
+		const { container } = open({ mappen: [map('losse-markeringen', 'Losse markeringen', here)] });
+		const lid2 = container.querySelector(`[${PLACE}="lid-2"]`)!;
+		const note = lid2.querySelector('.noot .aantekening')!;
+		expect(note.textContent).toContain('Ook ongeschreven');
+		expect(note.querySelector('.label')?.textContent).toBe('Aantekening');
+		expect(walkText(lid2).text).toBe(placeText(bron, 'lid-2'));
+		expect(container.querySelectorAll('.noot')).toHaveLength(1);
+	});
+
+	it('opens the menu of its arcering on a click, where it is changed', async () => {
+		const { container, kaart } = open({
+			mappen: [map('losse-markeringen', 'Losse markeringen', here)]
+		});
+		const button = container.querySelector<HTMLElement>('.noot button')!;
+		expect(button.getAttribute('aria-haspopup')).toBe('menu');
+		await fireEvent.click(button);
+		expect(screen.getByRole('menu', { name: /, "ongeschreven recht"$/ })).toBeTruthy();
+		await fireEvent.click(screen.getByRole('menuitem', { name: 'Wijzig aantekening' }));
+		const field = screen.getByRole('textbox', { name: /^Aantekening bij/ });
+		expect((field as HTMLTextAreaElement).value).toBe('Ook ongeschreven');
+		await fireEvent.input(field, { target: { value: 'Ongeschreven recht telt mee' } });
+		await fireEvent.submit(field.closest('form')!);
+		expect(kaart.mappen[0].aantekeningen?.[0].tekst).toBe('Ongeschreven recht telt mee');
+		await tick();
+		expect(container.querySelector('.noot')?.textContent).toContain('Ongeschreven recht telt mee');
+	});
+
+	it('names its bundel where the notes come from more than one', () => {
+		const { container } = open({
+			mappen: [
+				map('losse-markeringen', 'Losse markeringen', here),
+				map('onderzoek', 'Onderzoek art. 6:162 BW', here, 'Zie ook lid 3')
+			]
+		});
+		expect(
+			[...container.querySelectorAll('.noot .label')].map((l) => l.textContent).sort()
+		).toEqual(['Aantekening, Losse markeringen', 'Aantekening, Onderzoek art. 6:162 BW']);
+	});
+
+	it('stands under the line of an arcering whose words are no longer found', () => {
+		const { container } = open({
+			mappen: [
+				map('losse-markeringen', 'Losse markeringen', {
+					waar: 'lid-2',
+					exact: 'zwaarwegend belang',
+					start: 4
+				})
+			]
+		});
+		const line = container.querySelector(`[${PLACE}="lid-2"] .anchor-line`)!;
+		expect(line.nextElementSibling?.classList.contains('noot')).toBe(true);
+		expect(container.querySelectorAll('.noot')).toHaveLength(1);
+	});
+});
