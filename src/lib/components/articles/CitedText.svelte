@@ -8,6 +8,7 @@
 	import { definitieKaart, definitieRegel, type Begrip, type Definitie } from '$lib/text/begrippen';
 	import type { DelegatieSpan, Gedelegeerd } from '$lib/text/delegaties';
 	import GrondslagFormule from './GrondslagFormule.svelte';
+	import FootnoteLink from './FootnoteLink.svelte';
 	import type { Bereik, NootMarker } from '$lib/text/voetnoten';
 	import { nootStand } from '$lib/text/voetnoten.svelte';
 	import { ownLawOf, ownArticleAnchor } from '$lib/text/own-article.svelte';
@@ -96,11 +97,9 @@
 {#each shownSegments as seg, i (i)}{#if seg.noot}<sup
 			class="noot-ref"
 			id={seg.noot.anchor ?? undefined}
-			>{#if seg.noot.href}<a
-					class="noot-ref__knop"
-					href={seg.noot.href}
-					aria-label="Voetnoot {seg.noot.label}">{seg.noot.label}</a
-				>{:else if stand}<button
+			>{#if seg.noot.href}<FootnoteLink
+					marker={{ ...seg.noot, href: seg.noot.href }}
+				/>{:else if stand}<button
 					type="button"
 					class="noot-ref__knop"
 					class:is-open={stand.open === seg.noot.id}
@@ -124,12 +123,12 @@
 		color: inherit;
 	}
 	/* A footnote marker: its label raised, a tap opens the note in place (a judgment, a
-	   Kamerstuk) or goes to its line (an article). */
+	   Kamerstuk) or shows it in a card (an article, FootnoteLink). */
 	.noot-ref {
 		font-size: 0.7em;
 		line-height: 0;
 	}
-	.noot-ref__knop {
+	.noot-ref :global(.noot-ref__knop) {
 		padding: 0 var(--s-1);
 		border: 0;
 		border-radius: var(--r-1);
@@ -141,13 +140,19 @@
 		text-decoration-color: var(--rule-strong);
 		text-underline-offset: 2px;
 	}
-	.noot-ref:global(.is-landed) .noot-ref__knop,
-	.noot-ref__knop:hover,
-	.noot-ref__knop.is-open {
+	.noot-ref:global(.is-landed) :global(.noot-ref__knop),
+	.noot-ref :global(.noot-ref__knop.is-open) {
 		color: var(--ink);
 		background: var(--wassing);
 	}
-	.noot-ref__knop:focus-visible {
+	/* Only for a pointer that hovers: a tap leaves no hover behind on a phone. */
+	@media (hover: hover) {
+		.noot-ref :global(.noot-ref__knop:hover) {
+			color: var(--ink);
+			background: var(--wassing);
+		}
+	}
+	.noot-ref :global(.noot-ref__knop:focus-visible) {
 		outline: 2px solid var(--focus);
 		outline-offset: 1px;
 	}

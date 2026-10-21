@@ -151,6 +151,8 @@ describe('exploreMode', () => {
 		['focus=articles/a_1', 'graph'],
 		['focus=articles/a_1&lezen=1', 'read'],
 		['focus=judgments/ecli_nl_hr_2019_1&lezen=1', 'read'],
+		// A bijlage reads at full width as a law and its articles do (besluit 29).
+		['focus=annexes/bwbr0052872_annex_1&lezen=1', 'read'],
 		['focus=members/m1&lezen=1', 'graph'],
 		['focus=members/m1&tabel=1', 'read'],
 		['tabel=1', 'graph'],

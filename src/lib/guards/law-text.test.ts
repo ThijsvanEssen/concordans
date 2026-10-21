@@ -149,3 +149,41 @@ describe('the tables in a judgment and a Kamerstuk (A55)', () => {
 		]);
 	});
 });
+
+describe('the card of a footnote (besluit 29)', () => {
+	// The marker of a note of an article or a bijlage is one component in every reader of their
+	// text (ArticleText, CitedText in it): its card, its click and its tap alike.
+	it('is shown by FootnoteLink only, from CitedText', () => {
+		expect(filesWith(/<FootnoteLink\b/)).toEqual(['lib/components/articles/CitedText.svelte']);
+		expect(filesWith(/\.\/FootnoteCard\.svelte/)).toEqual([
+			'lib/components/articles/FootnoteLink.svelte'
+		]);
+		expect(filesWith(/class="noot-ref__knop"/)).toEqual([
+			'lib/components/articles/CitedText.svelte',
+			'lib/components/articles/FootnoteLink.svelte'
+		]);
+	});
+
+	it('closes as the card of a reference does (cardCloser)', () => {
+		expect(filesWith(/\bcardCloser\(/).toSorted()).toEqual(
+			[
+				'lib/actions/hover-card.svelte.ts',
+				'lib/bron/BronLink.svelte',
+				'lib/components/articles/FootnoteLink.svelte'
+			].toSorted()
+		);
+	});
+});
+
+describe('a bijlage in Tekst (besluit 29)', () => {
+	// It reads at full width with the contents of its law beside it, as the law and its articles.
+	it('is readable and has the contents of its law', () => {
+		const list = (path: string, name: string) =>
+			bron(path).match(new RegExp(`${name}[^=]*= new Set\\(\\[([^\\]]*)\\]`))?.[1] ?? '';
+		for (const c of ['articles', 'instruments', 'annexes']) {
+			expect(list('lib/bron/href.ts', 'READABLE'), c).toContain(`'${c}'`);
+			expect(list('routes/explore/+page.svelte', 'WITH_CONTENTS'), c).toContain(`'${c}'`);
+		}
+		expect(bron('lib/components/explore/LezenNav.svelte')).toMatch(/collection === 'annexes'/);
+	});
+});

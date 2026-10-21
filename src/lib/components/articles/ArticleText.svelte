@@ -17,8 +17,11 @@
 		articleNotes,
 		listedNotes,
 		withNotes,
-		type FootnoteMark
+		type FootnoteMark,
+		type Note,
+		type NoteMarker
 	} from '$lib/text/voetnoten';
+	import { setNoteJump } from '$lib/text/voetnoten.svelte';
 	import type { Schema } from '$lib/api/types';
 	import { markerOf, partsOf, placeOf, walkParts, type ArticlePart } from '$lib/text/article-parts';
 	import { citeArticle, placeCitation, type ArticleCitation } from '$lib/text/cite';
@@ -206,6 +209,34 @@
 			{ ownLaw: law, crumbs: divisions }
 		);
 	const hasNotes = $derived(notes.size > 0 || listed.length > 0);
+	/** Each note by its anchor, as its marker's card shows it: its words and their links. */
+	const cards = $derived.by(() => {
+		const out = new Map<string, Note>();
+		for (const n of notes.values()) {
+			const raw = source.slice(n.body, n.end);
+			const from = n.body + raw.length - raw.trimStart().length;
+			out.set(n.anchor, {
+				id: n.anchor,
+				label: n.number,
+				text: source.slice(from, n.end),
+				citations: spansWithin(links, from, n.end - from)
+			});
+		}
+		for (const n of listed)
+			out.set(n.anchor, {
+				id: n.anchor,
+				label: n.number,
+				text: n.text.trim(),
+				citations: noteLinks(n.index)
+			});
+		return out;
+	});
+	/** The markers in `text[start, end]`, each with the note its card shows. */
+	const markersIn = (start: number, end: number): NoteMarker[] =>
+		articleMarkers(footnoteMarks, notes, start, end, ankers, listed).map((m) => ({
+			...m,
+			note: m.href ? (cards.get(decodeURIComponent(m.href.slice(1))) ?? null) : null
+		}));
 	const marker = (number: string) => markerOf(number, mark);
 	/** Every part, for the place a citation names: a definition by its term. */
 	const allParts = $derived([...walkParts(parts)]);
@@ -252,15 +283,16 @@
 			notes
 		);
 
-	/** A footnote marker or a note's number goes to the other in place: the reader lands
-	 *  there, as on an address with its anchor. */
+	/** A footnote marker (FootnoteLink) or a note's number goes to the other in place: the reader
+	 *  lands there, as on an address with its anchor. */
+	setNoteJump((id) => {
+		if (box) landOn(box, id);
+	});
 	$effect(() => {
 		const el = box;
 		if (!el || !hasNotes) return;
 		const jump = (e: MouseEvent) => {
-			const link = (e.target as Element | null)?.closest<HTMLAnchorElement>(
-				'a.noot-ref__knop, a.voetnoot__terug'
-			);
+			const link = (e.target as Element | null)?.closest<HTMLAnchorElement>('a.voetnoot__terug');
 			const id = link?.hash.slice(1);
 			if (!id || !link || !gewoneKlik(e) || !el.contains(link)) return;
 			e.preventDefault();
@@ -516,7 +548,7 @@
 		definities={perRef}
 		delegaties={m.delegaties}
 		{grondslag}
-		noten={hasNotes ? articleMarkers(footnoteMarks, notes, start, end, ankers, listed) : []}
+		noten={hasNotes ? markersIn(start, end) : []}
 	/>
 {/snippet}
 
@@ -802,7 +834,6 @@
 		scroll-margin: 20vh;
 		transition: background var(--dur-2) var(--ease);
 	}
-	.lid:hover:not(:has(.part--onderdeel:hover)),
 	.lid:has(> .lid__no:focus-visible),
 	.lid.is-open {
 		background: var(--paper-2);
@@ -880,20 +911,13 @@
 	.part:global(.is-landed) {
 		background: var(--wassing);
 	}
-	/* The onderdeel the pointer is on, and not one inside it. */
-	/* A tinted block with a bar at the left, a few pixels beyond the text on every side. */
-	.part--onderdeel:hover:not(:has(.part--onderdeel:hover)),
+	/* The onderdeel whose menu is open (and the one the pointer is on, below): a tinted block
+	   with a bar at the left, a few pixels beyond the text on every side. */
 	.part.is-open {
 		background: var(--paper-2);
 		box-shadow:
 			0 0 0 4px var(--paper-2),
 			-3px 0 0 3px var(--ink);
-	}
-	.part--onderdeel:hover:not(:has(.part--onderdeel:hover)) > .part__number,
-	.part.is-open > .part__number {
-		color: var(--ink);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
 	}
 	/* A place's marker is its menu: a quiet button, underlined with ▾ while the place is
 	   pointed at or focused, so it is clear what the menu acts on. */
@@ -905,18 +929,14 @@
 		text-align: inherit;
 		cursor: pointer;
 	}
-	.lid:hover:not(:has(.part--onderdeel:hover)) > .lid__no,
 	.lid.is-open > .lid__no,
-	.part--onderdeel:hover:not(:has(.part--onderdeel:hover)) > .part__number,
 	.part.is-open > .part__number,
 	.plaats-marker:focus-visible {
 		color: var(--ink);
 		text-decoration: underline;
 		text-underline-offset: 3px;
 	}
-	.lid:hover:not(:has(.part--onderdeel:hover)) > .lid__no::after,
 	.lid.is-open > .lid__no::after,
-	.part--onderdeel:hover:not(:has(.part--onderdeel:hover)) > .part__number::after,
 	.part.is-open > .part__number::after,
 	.plaats-marker:focus-visible::after {
 		content: ' ▾';
@@ -938,10 +958,36 @@
 		min-width: 1.6em;
 		color: var(--ink-3);
 	}
-	.part__number:hover {
-		color: var(--ink);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
+	/* The lid or onderdeel the pointer is on, and not one inside it, as the one whose menu is
+	   open; only for a pointer that hovers: on a phone a tap leaves its hover on what comes
+	   under the finger after it (a jump to a note), which would mark the next onderdeel. */
+	@media (hover: hover) {
+		.lid:hover:not(:has(.part--onderdeel:hover)) {
+			background: var(--paper-2);
+		}
+		.part--onderdeel:hover:not(:has(.part--onderdeel:hover)) {
+			background: var(--paper-2);
+			box-shadow:
+				0 0 0 4px var(--paper-2),
+				-3px 0 0 3px var(--ink);
+		}
+		.lid:hover:not(:has(.part--onderdeel:hover)) > .lid__no,
+		.part--onderdeel:hover:not(:has(.part--onderdeel:hover)) > .part__number,
+		.part__number:hover {
+			color: var(--ink);
+			text-decoration: underline;
+			text-underline-offset: 3px;
+		}
+		.lid:hover:not(:has(.part--onderdeel:hover)) > .lid__no::after,
+		.part--onderdeel:hover:not(:has(.part--onderdeel:hover)) > .part__number::after {
+			content: ' ▾';
+			font-size: 0.7em;
+			color: var(--ink-3);
+			text-decoration: none;
+		}
+		.voetnoot__terug:hover {
+			color: var(--ink);
+		}
 	}
 	.part__body {
 		flex: 1;
@@ -990,9 +1036,6 @@
 		text-decoration: underline;
 		text-decoration-color: var(--rule-strong);
 		text-underline-offset: 2px;
-	}
-	.voetnoot__terug:hover {
-		color: var(--ink);
 	}
 	/* The note of an arcering under its place, its words' own (Aantekening). */
 	.noot {

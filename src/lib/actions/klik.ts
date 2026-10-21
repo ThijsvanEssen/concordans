@@ -7,6 +7,9 @@
 export const gewoneKlik = (e: MouseEvent): boolean =>
 	e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
 
+/** gewoneKlik by its English name, as new code names it. */
+export const plainClick = gewoneKlik;
+
 /**
  * For the onclick of a link that stands for a bron in a row or a list: a plain click
  * opens in place and goes nowhere; any other click is left to the link.

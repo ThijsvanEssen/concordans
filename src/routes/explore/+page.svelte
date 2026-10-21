@@ -23,7 +23,7 @@
 		NEIGHBORHOOD_CAP_PHONE,
 		type NeighborhoodReach
 	} from '$lib/graph/store/types';
-	import { lawArticles, lawNav, type LawNavItem } from '$lib/bron/law-articles';
+	import { annexHasText, lawArticles, lawNav, type LawNavItem } from '$lib/bron/law-articles';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import { pageName } from '$lib/bron/tab-title';
 	import { titelVan } from '$lib/bron/titels.svelte';
@@ -225,9 +225,27 @@
 		rememberPad(path, f);
 		navigate(exploreHref(logisch.searchParams, page.url.hash, given));
 	});
-	const readableFocus = $derived(hasReadableFocus(params));
-	const mode = $derived(exploreMode(params));
+	// A bijlage without a text of its own keeps Tekst out of reach, as every bron without one:
+	// it is known from the list of its law (annexHasText), the one its contents ask.
+	let annexWithoutText = $state<string | null>(null);
+	$effect(() => {
+		const node = selectedNode;
+		const bwb = node?.collection === 'annexes' ? lawIdOf(node.raw?.props) : null;
+		if (!node || !bwb) return;
+		annexHasText(bwb, node.key).then(
+			(has) => {
+				if (!has) annexWithoutText = node.id;
+			},
+			(e) => report('Bijlage', e)
+		);
+	});
 	const focus = $derived(params.get('focus') ?? '');
+	const withoutText = $derived(!!focus && annexWithoutText === focus);
+	const readableFocus = $derived(hasReadableFocus(params) && !withoutText);
+	const mode = $derived.by(() => {
+		const m = exploreMode(params);
+		return m === 'read' && withoutText && params.get('tabel') !== '1' ? 'graph' : m;
+	});
 	// A toelichting or a citing judgment opened beside the article: the article stays the
 	// selected bron.
 	const besideId = $derived(params.get('naast'));
@@ -1055,6 +1073,7 @@
 	const WITH_CONTENTS: ReadonlySet<Collection> = new Set([
 		'articles',
 		'instruments',
+		'annexes',
 		'documents',
 		'judgments'
 	]);

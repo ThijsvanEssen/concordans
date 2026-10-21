@@ -4,7 +4,7 @@
 	import NavKolom from './NavKolom.svelte';
 	// The table of contents of the law in Lezen: the name of the law, the title of the
 	// current section under it, and the articles, the active one marked; after them its
-	// bijlagen with a text of their own.
+	// bijlagen with a text of their own; on a bijlage the same, the bijlage marked.
 	import { lawAnnexes, lawArticles, type LawAnnex, type LawArticle } from '$lib/bron/law-articles';
 	import { parseAnchor } from '$lib/text/anchor';
 	import { artikelAnker, layersOf } from '$lib/text/division';
@@ -35,7 +35,8 @@
 	};
 
 	const currentBwb = $derived.by(() => {
-		if (selection?.collection === 'articles') return lawIdOf(selection.raw?.props);
+		if (selection?.collection === 'articles' || selection?.collection === 'annexes')
+			return lawIdOf(selection.raw?.props);
 		if (selection?.collection === 'instruments')
 			return instrumentLawId(selection.raw?.props, selection.key);
 		return null;
@@ -121,6 +122,7 @@
 	// The place marked stays in view in the column: scrolled within it, not the page.
 	$effect(() => {
 		void selectedKey;
+		void ready;
 		void anker;
 		void hereNumber;
 		if (!navEl) return;
@@ -153,8 +155,13 @@
 			? (items.find((it) => it.key === selectedKey)?.articleNumber ?? null)
 			: null
 	);
+	// From a bijlage it opens the whole law.
 	const lawHref = $derived(
-		lawRef && selectedNumber ? bronHref(lawRef, { at: artikelAnker(selectedNumber) }) : null
+		lawRef && selectedNumber
+			? bronHref(lawRef, { at: artikelAnker(selectedNumber) })
+			: lawRef && selection?.collection === 'annexes'
+				? bronHref(lawRef)
+				: null
 	);
 
 	/** The group opens with its link; the anchor already in the URL scrolls there again. */
@@ -262,9 +269,7 @@
 		label="Overzicht"
 		title={lawTitle}
 		titleHref={lawHref}
-		onder={selection?.collection !== 'articles' && items.length > 0
-			? `${formatCount(items.length)} artikelen`
-			: null}
+		onder={onLaw && items.length > 0 ? `${formatCount(items.length)} artikelen` : null}
 		bind:el={navEl}
 	>
 		{#if articleList.state.status !== 'ready'}
@@ -286,7 +291,11 @@
 			<ol class="list annexes" aria-label="Bijlagen">
 				{#each annexes as annex (annex.key)}
 					<li>
-						<a class="nav-kolom__rij" href={bronHref({ collection: 'annexes', key: annex.key })}
+						<a
+							class="nav-kolom__rij"
+							class:is-active={annex.key === selectedKey}
+							aria-current={annex.key === selectedKey ? 'page' : undefined}
+							href={bronHref({ collection: 'annexes', key: annex.key })}
 							>{annex.title ? `${annex.name} ${annex.title}` : annex.name}</a
 						>
 					</li>

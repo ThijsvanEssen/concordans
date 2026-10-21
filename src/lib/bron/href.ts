@@ -8,10 +8,13 @@ import { isExplorePath, exploreHref, exploreUrl } from './address';
 import { dossierNummer } from './dossier-naam';
 import type { SharedParam } from '$lib/url/filters';
 
-/** Bronnen with a text long enough to read at full width; the rest reads beside the network. */
+/** Bronnen with a text long enough to read at full width; the rest reads beside the network.
+ *  A bijlage reads as a law and its articles do (besluit 29); one without a text of its own
+ *  keeps Tekst out of reach in the Verkenner (annexHasText). */
 const READABLE: ReadonlySet<Collection> = new Set([
 	'articles',
 	'instruments',
+	'annexes',
 	'judgments',
 	'documents'
 ]);

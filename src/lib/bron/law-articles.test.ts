@@ -31,7 +31,7 @@ describe('the bijlagen of a law in its table of contents (#870)', () => {
 		]);
 		expect(
 			buildBronHref(new URL('https://concordans.nl/'), { collection: 'annexes', key: list[0].key })
-		).toBe('/wetten/BWBR0001941/bijlage/I');
+		).toBe('/wetten/BWBR0001941/bijlage/I?lezen=1');
 	});
 
 	it('asks the list with a preview of one character, to tell a bijlage of articles only', async () => {

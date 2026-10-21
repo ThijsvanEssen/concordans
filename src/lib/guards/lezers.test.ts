@@ -27,6 +27,10 @@ describe('the readers', () => {
 					plek('lib/components/articles/Voetnoten.svelte'),
 					plek('lib/components/articles/CitedText.svelte'),
 					plek(
+						'lib/components/articles/FootnoteLink.svelte',
+						"the marker of an article's note, its card (besluit 29)"
+					),
+					plek(
 						'lib/components/articles/ArticleText.svelte',
 						"an article's note, a line of its text"
 					)

@@ -18,6 +18,9 @@ export type Noot = {
 	citations: Span[];
 };
 
+/** A footnote by its English name, as new code names it. */
+export type Note = Noot;
+
 /** Where a marker stands: `at` in the text that refers to the note; null at its end. A marker
  *  of an article's note links to the note in the same text (`href`, `#fn-1`), and the first
  *  marker of a note is where the note links back to (`anchor`, `fnref-1`). */
@@ -27,7 +30,12 @@ export type NootMarker = {
 	at: number | null;
 	href?: string | null;
 	anchor?: string | null;
+	/** The note `href` goes to, which its card shows (FootnoteLink): an article's and a bijlage's. */
+	note?: Noot | null;
 };
+
+/** A marker by its English name, as new code names it. */
+export type NoteMarker = NootMarker;
 
 /** A range to mark in a text: the words a verbinding names. */
 export type Bereik = { start: number; end: number };

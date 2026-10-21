@@ -20,9 +20,7 @@
 	import { focusIn } from './address';
 	import { focusOf, openHref, type BronRef } from './href';
 	import type { Preview } from './preview';
-	import { isEscape } from '$lib/actions/keys';
-	import { clickOutside } from '$lib/actions/top-layer';
-	import { HoverCard } from '$lib/actions/hover-card.svelte';
+	import { HoverCard, cardCloser } from '$lib/actions/hover-card.svelte';
 	import { isOverwegingRef } from '$lib/text/anchor';
 	import { zetMarkering, type Markering } from './markering.svelte';
 
@@ -77,34 +75,15 @@
 	const binnen = (t: EventTarget | null) =>
 		t instanceof Node && (!!anker?.contains(t) || !!kaart?.contains(t));
 
-	// Open: Escape closes it wherever the focus is (after a tap it is on neither link nor card),
-	// before what holds the link reacts (capture phase), and puts a focus in the card back on the
-	// link. A scroll of the page or a resize moves the link away; a scroll within the card does
-	// not. A tap or click outside closes a card to read, before what was hit reacts.
+	// Open: what closes a card closes it (cardCloser), a tap outside only a card to read.
 	$effect(() => {
 		if (!hover.open) return;
-		const esc = (e: KeyboardEvent) => {
-			// Only a card that shows: a glance that could not be loaded leaves Escape to the page.
-			if (!isEscape(e) || !kaart) return;
-			hover.close();
-			e.preventDefault();
-			e.stopPropagation();
-			if (binnen(document.activeElement)) anker?.focus();
-		};
-		const weg = (e: Event) => {
-			if (!binnen(e.target)) hover.close();
-		};
-		const close = () => hover.close();
-		const stop = ro ? clickOutside(() => [anker, kaart], close) : null;
-		document.addEventListener('keydown', esc, true);
-		addEventListener('scroll', weg, { capture: true, passive: true });
-		addEventListener('resize', close);
-		return () => {
-			stop?.();
-			document.removeEventListener('keydown', esc, true);
-			removeEventListener('scroll', weg, { capture: true });
-			removeEventListener('resize', close);
-		};
+		return cardCloser({
+			anchor: () => anker,
+			card: () => kaart,
+			close: () => hover.close(),
+			readable: ro
+		});
 	});
 
 	const loadCard = () => (ro ? overwegingCard : previewCard).load();

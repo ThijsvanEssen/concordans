@@ -1,7 +1,7 @@
 // From the list of laws to a law, an article, its leden and versions: Bronnen › Wetten with
 // its filters, the text of a law with its overview and a date, an article with its leden,
 // its neighbours and its earlier texts, and what is based on the law (delegations).
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { expect, test } from '../support/test';
 import { showText } from '../support/panes';
 import { bijlagenGelezen } from '../support/bijlagen';
@@ -105,6 +105,16 @@ async function overview(page: Page, touch: boolean) {
 	return page.getByRole('dialog', { name: 'Inhoud' });
 }
 
+/** A footnote's marker followed to its note: a click, or on a phone a second tap (the first
+ *  shows the note in a card, besluit 29). */
+async function toNote(page: Page, marker: Locator, touch: boolean) {
+	if (touch) {
+		await marker.tap();
+		await expect(page.getByRole('dialog', { name: /^Voetnoot / })).toBeVisible();
+		await marker.tap();
+	} else await marker.click();
+}
+
 test('a law lists its bijlagen after its articles; a bijlage reads its table', async ({
 	page,
 	touch
@@ -114,7 +124,15 @@ test('a law lists its bijlagen after its articles; a bijlage reads its table', a
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Cyberbeveiligingswet');
 	const bijlagen = (await overview(page, touch)).getByRole('list', { name: 'Bijlagen' });
 	await bijlagen.getByRole('link', { name: 'Bijlage 1', exact: true }).click();
-	await expect(page).toHaveURL(/\/wetten\/BWBR0052872\/bijlage\/1/);
+	// A bijlage with a text of its own reads as the law does (besluit 29): still Tekst, the
+	// bijlage marked in the contents.
+	await expect(page).toHaveURL(/\/wetten\/BWBR0052872\/bijlage\/1\?lezen=1$/);
+	if (!touch)
+		await expect(
+			(await overview(page, touch))
+				.getByRole('list', { name: 'Bijlagen' })
+				.getByRole('link', { name: 'Bijlage 1', exact: true })
+		).toHaveAttribute('aria-current', 'page');
 	const table = page.getByRole('table').first();
 	await expect(table.getByRole('columnheader')).toHaveText([
 		'Sector',
@@ -136,7 +154,8 @@ test('a law lists its bijlagen after its articles; a bijlage reads its table', a
 });
 
 test('a footnote of a bijlage: its marker goes to the note, the note back (#875)', async ({
-	page
+	page,
+	touch
 }) => {
 	await bijlagenGelezen(page, 'BWBR0052872', ['bwbr0052872_annex_1'], (body) =>
 		metVoetnoten(body, 'annex', [{ after: 'Richtlijn (EU) 2019/944', number: '1' }])
@@ -147,7 +166,7 @@ test('a footnote of a bijlage: its marker goes to the note, the note back (#875)
 	await expect(page.getByRole('cell').filter({ has: marker })).toContainText(
 		'Richtlijn (EU) 2019/9441, die de functie'
 	);
-	await marker.click();
+	await toNote(page, marker, touch);
 	const note = page.locator('#fn-1');
 	await expect(note).toHaveClass(/is-landed/);
 	await expect(note).toBeInViewport();
@@ -158,7 +177,8 @@ test('a footnote of a bijlage: its marker goes to the note, the note back (#875)
 });
 
 test('a footnote in the head of a table of an article (Successiewet art. 24, #875)', async ({
-	page
+	page,
+	touch
 }) => {
 	await patchApi(page, /^\/api\/articles\/BWBR0002226\/24$/, (body) =>
 		metVoetnoten(body, 'article', [{ after: 'rechte lijn', number: '1', printed: '1)' }])
@@ -168,13 +188,14 @@ test('a footnote in the head of a table of an article (Successiewet art. 24, #87
 	await expect(page.getByRole('columnheader').filter({ has: marker })).toContainText(
 		'in de rechte lijn1'
 	);
-	await marker.click();
+	await toNote(page, marker, touch);
 	await expect(page.locator('#fn-1')).toHaveClass(/is-landed/);
 	await expect(page.locator('#fn-1')).toContainText('1 Voor afstammelingen in de tweede');
 });
 
 test('the footnotes of a bijlage of their own, a number twice (Meststoffenwet bijlage I, #881)', async ({
-	page
+	page,
+	touch
 }) => {
 	await eigenVoetnoten(
 		page,
@@ -191,7 +212,7 @@ test('the footnotes of a bijlage of their own, a number twice (Meststoffenwet bi
 	// The second note numbered 1 is its own: Breda's marker goes there, and back.
 	const breda = page.locator('#fnref-1-2').getByRole('link', { name: 'Voetnoot 1' });
 	await expect(breda).toHaveAttribute('href', '#fn-1-2');
-	await breda.click();
+	await toNote(page, breda, touch);
 	const note = page.locator('#fn-1-2');
 	await expect(note).toHaveClass(/is-landed/);
 	await expect(note).toBeInViewport();
@@ -200,12 +221,12 @@ test('the footnotes of a bijlage of their own, a number twice (Meststoffenwet bi
 	await expect(page.locator('#fnref-1-2')).toHaveClass(/is-landed/);
 });
 
-test('a link in a footnote of an article (BWBV0007162 art. 15, #881)', async ({ page }) => {
+test('a link in a footnote of an article (BWBV0007162 art. 15, #881)', async ({ page, touch }) => {
 	await eigenVoetnoten(page, /^\/api\/articles\/BWBV0007162\/15$/, 'article', 'bwbv0007162_15');
 	await page.goto('/wetten/BWBV0007162/artikel/15?lezen=1');
 	const marker = page.getByRole('link', { name: 'Voetnoot 1', exact: true });
 	await expect(marker).toHaveAttribute('href', '#fn-1');
-	await marker.click();
+	await toNote(page, marker, touch);
 	const note = page.locator('#fn-1');
 	await expect(note).toHaveClass(/is-landed/);
 	// The regulation it names is a link, as in the text.
@@ -217,7 +238,7 @@ test('a list of the Opiumwet reads as its table', async ({ page, touch }) => {
 	await page.goto('/wetten/BWBR0001941?lezen=1');
 	const bijlagen = (await overview(page, touch)).getByRole('list', { name: 'Bijlagen' });
 	await bijlagen.getByRole('link', { name: 'Lijst I', exact: true }).click();
-	await expect(page).toHaveURL(/\/wetten\/BWBR0001941\/bijlage\/I$/);
+	await expect(page).toHaveURL(/\/wetten\/BWBR0001941\/bijlage\/I\?lezen=1$/);
 	const table = page.getByRole('table').first();
 	await expect(table.getByRole('columnheader').first()).toContainText(
 		'International Non-proprietary Name'
@@ -231,4 +252,50 @@ test('a list of the Opiumwet reads as its table', async ({ page, touch }) => {
 	expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
 		true
 	);
+});
+
+test('a footnote comes to the reader: its card on hover or a tap, with its links (besluit 29)', async ({
+	page,
+	touch
+}) => {
+	await eigenVoetnoten(page, /^\/api\/articles\/BWBV0007162\/15$/, 'article', 'bwbv0007162_15');
+	await page.goto('/wetten/BWBV0007162/artikel/15?lezen=1');
+	const marker = page.getByRole('link', { name: 'Voetnoot 1', exact: true });
+	const card = page.getByRole('dialog', { name: 'Voetnoot 1' });
+	if (touch) await marker.tap();
+	else await marker.hover();
+	// The note's text, its regulation a link as in the text; the reader stays where they are.
+	await expect(card.getByRole('link', { name: 'Verordening (EU) 2016/1953' })).toBeVisible();
+	await expect(page.locator('#fn-1')).not.toHaveClass(/is-landed/);
+	// Escape closes it, as the pointer leaving does.
+	if (touch) {
+		await page.keyboard.press('Escape');
+		await expect(card).toBeHidden();
+	} else {
+		await page.mouse.move(0, 0);
+		await expect(card).toBeHidden();
+	}
+	// Its own link goes to the note.
+	if (touch) await marker.tap();
+	else await marker.focus();
+	await card.getByRole('link', { name: 'Naar de voetnoot' }).click();
+	await expect(card).toBeHidden();
+	await expect(page.locator('#fn-1')).toHaveClass(/is-landed/);
+});
+
+test('a footnote of a bijlage of its own shows in a card at its marker (Meststoffenwet, #881)', async ({
+	page,
+	touch
+}) => {
+	await eigenVoetnoten(
+		page,
+		/^\/api\/annexes\/bwbr0004054_annex_i$/,
+		'annex',
+		'bwbr0004054_annex_i'
+	);
+	await page.goto('/wetten/BWBR0004054/bijlage/I?lezen=1');
+	const breda = page.locator('#fnref-1-2').getByRole('link', { name: 'Voetnoot 1' });
+	if (touch) await breda.tap();
+	else await breda.hover();
+	await expect(page.getByRole('dialog', { name: 'Voetnoot 1' })).toContainText('gemeente Breda');
 });

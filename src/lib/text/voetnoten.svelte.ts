@@ -34,3 +34,13 @@ export function zetNootStand(stand = new NootStand()): NootStand {
 
 /** The state of the text around, or null where a text has no notes. */
 export const nootStand = (): NootStand | null => getContext<NootStand | undefined>(KEY) ?? null;
+
+export const NOTE_JUMP = Symbol('naar de noot');
+
+/** How a marker in a text goes to its note: the text of an article or a bijlage lands on it
+ *  within itself (ArticleText), where a whole law holds the same anchor once per article. */
+export const setNoteJump = (go: (id: string) => void) => setContext(NOTE_JUMP, go);
+
+/** The way to a note in the text around, or null outside one. */
+export const noteJump = (): ((id: string) => void) | null =>
+	getContext<((id: string) => void) | undefined>(NOTE_JUMP) ?? null;

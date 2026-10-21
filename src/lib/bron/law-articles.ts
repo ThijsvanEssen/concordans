@@ -64,6 +64,13 @@ export const lawAnnexes = (bwb: string): Promise<LawAnnex[]> =>
 			})
 	);
 
+/** Whether the bijlage `key` of the law `bwb` has a text of its own: one of its list with a
+ *  preview (lawAnnexes). The list is the one the contents ask, once per law. */
+export const annexHasText = (bwb: string, key: string): Promise<boolean> =>
+	lawArticleList(bwb).then((resp) =>
+		(resp.annexes ?? []).some((a) => a.key === key && a.text_preview !== null)
+	);
+
 /** Every division of the law `bwb` once, with its anchor in the whole law. */
 export const lawDivisions = (bwb: string): Promise<Crumb[]> =>
 	lawArticleList(bwb).then((resp) => [
