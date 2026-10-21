@@ -171,10 +171,11 @@
 		background: var(--paper-2);
 		outline: none;
 	}
-	/* A finger's row on a touch screen. */
+	/* A finger's row on a touch screen: a line of text 44 px high (--veld-h-raak), as every
+	   other target there; a mouse keeps the denser row. */
 	@media (pointer: coarse) {
 		:global(.tekstmenu__item) {
-			padding-block: var(--s-2);
+			padding-block: calc((var(--veld-h-raak) - 1lh) / 2);
 		}
 	}
 	:global(.tekstmenu__item:disabled) {

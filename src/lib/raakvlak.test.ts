@@ -69,4 +69,18 @@ describe('the touch target', () => {
 			/\.close \{[^}]*min-height: var\(--s-6\)[^}]*min-width: var\(--s-6\)/
 		);
 	});
+
+	it("is a row of 44 px for a menu's item and a line of Behoort bij, on a touch screen", () => {
+		const menu = read('lib/components/ui/TekstMenu.svelte');
+		const menuCoarse = menu.slice(menu.indexOf('@media (pointer: coarse)'));
+		expect(menuCoarse).toMatch(
+			/\.tekstmenu__item\) \{\s*padding-block: calc\(\(var\(--veld-h-raak\) - 1lh\) \/ 2\)/
+		);
+		const band = read('lib/bron/BelongsTo.svelte');
+		const bandCoarse = band.slice(band.indexOf('@media (pointer: coarse)'));
+		expect(bandCoarse).toMatch(
+			/\.lagen,\s*\.groepen \{\s*row-gap: calc\(var\(--veld-h-raak\) - 1lh\)/
+		);
+		for (const a of band.matchAll(/<a\b[^>]*>/g)) expect(a[0]).toContain('raakvlak');
+	});
 });

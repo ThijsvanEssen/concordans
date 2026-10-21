@@ -2,6 +2,7 @@
 // rechtsoverweging, and an article it cites.
 import { expect, test } from '../support/test';
 import { showText } from '../support/panes';
+import { smallTargets, withoutSize } from '../support/rules';
 
 const URGENDA = '/uitspraken/ECLI:NL:HR:2019:2006?lezen=1';
 
@@ -46,4 +47,45 @@ test('a cited article opens at the lid the judgment names', async ({ page, touch
 	await expect(page).toHaveURL(/\/wetten\/BWBR0005289\/artikel\/6:162/);
 	await showText(page, touch);
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162');
+});
+
+test('the lines of Behoort bij, unfolded, stand a finger’s target apart', async ({
+	page,
+	touch
+}) => {
+	test.skip(!touch, 'a finger’s target');
+	await page.goto(URGENDA);
+	const band = page.getByRole('navigation', { name: 'Behoort bij' });
+	await band.getByRole('button', { name: /^Alle lagen tonen/ }).click();
+	await expect(band.getByRole('link', { name: /^Hof Den Haag 9 oktober 2018/ })).toBeVisible();
+	expect(await smallTargets(page), 'tap targets under 44 px').toEqual([]);
+});
+
+test('the items of a menu are a finger’s 44 px high', async ({ page, touch }) => {
+	test.skip(!touch, 'a finger’s target');
+	await page.goto(URGENDA);
+	const menus = [
+		// A place's menu (PlaatsMenu) and a menu of the head (TekstMenu): one item, one row.
+		['Overweging 5.3.2: citeren, bewaren', 'HR 20 december 2019, r.o. 5.3.2'],
+		['Citeer', undefined]
+	] as const;
+	for (const [knop, naam] of menus) {
+		await page.getByRole('button', { name: knop, exact: true }).first().click();
+		const items = page.getByRole('menu', { name: naam }).getByRole('menuitem');
+		await expect(items.first()).toBeVisible();
+		const labels = await items.evaluateAll((els) =>
+			els.map((e) => e.getAttribute('aria-label') ?? e.textContent ?? '')
+		);
+		for (const h of await items.evaluateAll((els) =>
+			els.map((e) => e.getBoundingClientRect().height)
+		))
+			expect(h, `${knop}: an item's height`).toBeGreaterThanOrEqual(44);
+		const small = (await smallTargets(page)).map(withoutSize);
+		expect(
+			small.filter((s) => labels.includes(s)),
+			'items under 44 px'
+		).toEqual([]);
+		await page.keyboard.press('Escape');
+		await expect(items).toHaveCount(0);
+	}
 });

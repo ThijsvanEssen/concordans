@@ -188,6 +188,7 @@
 									{#if !gevouwen(r) || j === 0 || j === r.lagen.length - 1}
 										<li class:huidig={laag.huidig} class:laatst={j === r.lagen.length - 1}>
 											{#if laag.ref}<a
+													class="raakvlak"
 													href={bronHref(laag.ref, { at: laag.at })}
 													title={`${laag.soort}: ${laag.vol ?? laag.naam}`}>{@render naam(laag)}</a
 												>{:else}<span title={laag.soort}>{@render naam(laag)}</span
@@ -214,7 +215,7 @@
 					<div class="groep">
 						<button
 							type="button"
-							class="groep-kop"
+							class="groep-kop raakvlak"
 							aria-expanded={open === g.id}
 							onclick={() => toggle(g)}
 						>
@@ -234,7 +235,8 @@
 									<ul class="rijen">
 										{#each r as laag, i (i)}
 											<li>
-												{#if laag.ref}<a href={bronHref(laag.ref)} title={laag.vol}>{laag.naam}</a
+												{#if laag.ref}<a class="raakvlak" href={bronHref(laag.ref)} title={laag.vol}
+														>{laag.naam}</a
 													>{:else}{laag.naam}{/if}
 											</li>
 										{/each}
@@ -317,7 +319,8 @@
 	}
 	.lagen.gevouwen .laatst {
 		min-width: 0;
-		overflow: hidden;
+		overflow-x: clip;
+		overflow-y: visible;
 		text-overflow: ellipsis;
 	}
 	.vouw button {
@@ -332,6 +335,24 @@
 	@media (pointer: coarse) {
 		.vouw button {
 			min-width: var(--veld-h-raak);
+		}
+	}
+	/* On a touch screen every link and button of the band has the shared target (.raakvlak,
+	   lib/styles/basis.css), and its lines stand a finger's 44 px apart (--veld-h-raak), so
+	   those targets do not meet: a line's height and the gap under it make the row. Between
+	   lines of two sizes (a line and the groups, a group and its rows) the next step. */
+	@media (pointer: coarse) {
+		.regels,
+		.rijen {
+			gap: calc(var(--veld-h-raak) - 1lh);
+		}
+		.lagen,
+		.groepen {
+			row-gap: calc(var(--veld-h-raak) - 1lh);
+		}
+		.groepen,
+		.rijen {
+			margin-top: var(--s-6);
 		}
 	}
 	.vouw button:hover,
