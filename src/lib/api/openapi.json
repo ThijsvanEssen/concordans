@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the PostgreSQL knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.79.67",
+		"version": "0.79.68",
 		"x-request-timeout-ms": 30000,
 		"x-rate-limit": { "calls": 200, "period_seconds": 60 }
 	},
@@ -7787,12 +7787,12 @@
 					"source": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Source",
-						"description": "The identifier of the source: `blg-1081574`, `kst-34986-3`."
+						"description": "The identifier of the source: `blg-1081574`, `kst-34986-3`, the CELEX number of an EU act: `32017R1001`."
 					},
 					"source_url": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Source Url",
-						"description": "The source on zoek.officielebekendmakingen.nl."
+						"description": "The source on zoek.officielebekendmakingen.nl, an EU act on EUR-Lex."
 					}
 				},
 				"additionalProperties": false,
@@ -11129,6 +11129,11 @@
 						"title": "File Url",
 						"description": "The original file of a Tweede Kamer document (Word or PDF), from the Gegevensmagazijn."
 					},
+					"official_url": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Official Url",
+						"description": "The document on zoek.officielebekendmakingen.nl: of the Eerste Kamer the page its record names; of the Staatsblad or the Staatscourant (from 1995) by its identifier; a Kamerstuk of the Tweede Kamer by its address (``kst-37020-X-53``) once its text was read from there. Null for any other."
+					},
 					"text": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Text" },
 					"submitters": {
 						"items": { "$ref": "#/components/schemas/SubmitterDTO" },
@@ -11234,6 +11239,7 @@
 					"external_id",
 					"tk_url",
 					"file_url",
+					"official_url",
 					"text",
 					"submitters",
 					"dossier_numbers",

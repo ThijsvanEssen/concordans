@@ -184,7 +184,7 @@ test('a paper of the Eerste Kamer says its text is at the source, with a link', 
 	);
 	await expect(note.getByRole('link')).toHaveAttribute(
 		'href',
-		'https://zoek.officielebekendmakingen.nl/kst-1264285'
+		'https://zoek.officielebekendmakingen.nl/kst-1264285.html'
 	);
 });
 

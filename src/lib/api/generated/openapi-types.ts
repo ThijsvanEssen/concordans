@@ -3227,12 +3227,12 @@ export interface components {
             basis: string | null;
             /**
              * Source
-             * @description The identifier of the source: `blg-1081574`, `kst-34986-3`.
+             * @description The identifier of the source: `blg-1081574`, `kst-34986-3`, the CELEX number of an EU act: `32017R1001`.
              */
             source: string | null;
             /**
              * Source Url
-             * @description The source on zoek.officielebekendmakingen.nl.
+             * @description The source on zoek.officielebekendmakingen.nl, an EU act on EUR-Lex.
              */
             source_url: string | null;
         };
@@ -5738,6 +5738,11 @@ export interface components {
              * @description The original file of a Tweede Kamer document (Word or PDF), from the Gegevensmagazijn.
              */
             file_url: string | null;
+            /**
+             * Official Url
+             * @description The document on zoek.officielebekendmakingen.nl: of the Eerste Kamer the page its record names; of the Staatsblad or the Staatscourant (from 1995) by its identifier; a Kamerstuk of the Tweede Kamer by its address (``kst-37020-X-53``) once its text was read from there. Null for any other.
+             */
+            official_url: string | null;
             /** Text */
             text: string | null;
             /** Submitters */
