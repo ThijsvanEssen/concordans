@@ -9,7 +9,7 @@ import type { Schema } from '$lib/api/types';
 import { kindName } from '$lib/components/explore/law-head';
 import { langeDatum } from '$lib/text/datum';
 import { naamVan } from '$lib/bron/menselijk';
-import { bookNumber } from '$lib/text/bw';
+import { articleRef, bookNumber } from '$lib/text/bw';
 
 export type Delegatie = Schema<'DelegationClauseDTO'>;
 export type Gedelegeerd = Schema<'ArticleDelegatedResponse'>;
@@ -57,7 +57,7 @@ export const regelingRegel = (r: Regeling): string | null =>
 
 /** An article of the regulation that refers here, as the card names it: `art. 2`. */
 export const artikelKort = (a: Schema<'DelegatedArticleDTO'>): string =>
-	a.article_number ? `art. ${a.article_number}` : naamVan('articles', a);
+	a.article_number ? articleRef(null, a.article_number) : naamVan('articles', a);
 
 /** A regulation issued under a law, with the articles of the law its `Gelet op` names. */
 export type WetRegeling = Schema<'InstrumentDelegatedItem'>;

@@ -4,6 +4,7 @@
 // names it too (`definition_ref`: "artikel 11 van de wet"). Nothing is read from the text.
 // A regulation issued under a law takes that law's definitions where they reach it
 // (`scope.reach`); such a definition names the law that gives it (`given_by`).
+import { articleRef } from '$lib/text/bw';
 import { truncate } from './words';
 import type { Schema } from '$lib/api/types';
 import { PREVIEW_CHARS, type Preview } from '$lib/bron/preview';
@@ -32,7 +33,7 @@ export function plaatsVan(
 	const wet = gegevenDoor(d);
 	if (!d.article_number) return wet;
 	const place = d.place?.trim();
-	const artikel = `art. ${d.article_number}`;
+	const artikel = articleRef(null, d.article_number);
 	if (place && /[\p{L}\p{N}]/u.test(place))
 		return wet ? `${artikel}, onder ${place}, ${wet}` : `${artikel}, onder ${place}`;
 	return wet ? `${artikel} ${wet}` : artikel;

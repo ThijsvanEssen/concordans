@@ -1,4 +1,5 @@
 // The API's word rule, and the mark that shows where a row was found: $lib/text/treffer.
+import { articleRef } from '$lib/text/bw';
 import { textOf } from '$lib/text/words';
 import { isDay } from '$lib/text/datum';
 import { normaal } from '$lib/text/treffer';
@@ -35,7 +36,7 @@ export const vindIndex = (lijst: Onderwerp[], term: string) =>
 
 /** `artikel 3 Cyberbeveiligingswet`, `Cyberbeveiligingswet`: a law followed by its name. */
 export const wetNaam = (w: GevolgdeWet) =>
-	w.artikel ? `artikel ${w.artikel} ${w.titel}` : w.titel;
+	w.artikel ? `${articleRef(null, w.artikel, { form: 'artikel' })} ${w.titel}` : w.titel;
 
 /**
  * A topic by what it follows: its law and article, or its words, lowercase and sorted, so

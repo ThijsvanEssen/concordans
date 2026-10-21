@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { articleRef } from '$lib/text/bw';
 	import { BOTH_CHAMBERS, CHAMBER_CHOICES } from '$lib/components/parliamentary/chamber';
 	import { plural } from '$lib/text/words';
 	import { lijstDoel } from '$lib/stores/sprong';
@@ -522,7 +523,7 @@
 	const chips = $derived(activeFilters(groups));
 	/** `Cyberbeveiligingswet`, `art. 3 Cyberbeveiligingswet`: the law chosen, as a filter names it. */
 	function wetNaamKort(w: GevolgdeWet) {
-		return w.artikel ? `art. ${w.artikel} ${w.titel}` : w.titel;
+		return w.artikel ? `${articleRef(null, w.artikel)} ${w.titel}` : w.titel;
 	}
 	let filtersOpen = $state(false);
 

@@ -2,7 +2,7 @@
 // 0.74.0): what the dossier reader shows under "Gewijzigde artikelen".
 import { naamVanId } from '$lib/bron/menselijk';
 import type { Schema } from '$lib/api/types';
-import { bookNumber } from '$lib/text/bw';
+import { articleName } from '$lib/text/bw';
 import { langeDatum } from '$lib/text/datum';
 import { CHANGE_HEAD } from '$lib/verbonden/relation-words';
 import { changeRelation } from '$lib/vocabulary';
@@ -50,8 +50,10 @@ export function byArticle(changes: DossierChange[]): ArticleChanges[] {
 /** The name of an article inside its law's group: "Artikel 21b", "Artikel 6:162". */
 export function articleLabel(law: ChangedLaw['law'], a: ChangedArticle): string {
 	const nr = a.article_number?.trim();
-	if (nr && !/\s/.test(nr)) return `Artikel ${bookNumber(law.bwb_id ?? law.celex, nr)}`;
-	return naamVanId(a.id, a.display_name);
+	return (
+		(nr && !/\s/.test(nr) ? articleName(law.bwb_id ?? law.celex, nr) : null) ??
+		naamVanId(a.id, a.display_name)
+	);
 }
 
 /** What stands before the publication or paper on a change's line, its own spaces included. */

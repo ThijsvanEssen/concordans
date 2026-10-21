@@ -178,6 +178,23 @@ describe('articleCitation', () => {
 		});
 		expect(articleCitation({ article_number: '1' }, {})).toBeNull();
 	});
+	it('cites the sole article of a law by its label, never by the number the BWB gives it', () => {
+		// BWBR0007846: `enig-artikel`, labelled "Enig artikel".
+		const c = articleCitation(
+			{ article_number: 'enig-artikel', label: 'Enig artikel' },
+			{ displayName: 'Aanpassing bedragen reis- en verblijfkosten leden Eerste Kamer' }
+		);
+		expect(c?.heading).toBe('Enig artikel');
+		const forms = citeArticle({ ...c!, date: new Date(2026, 9, 21) });
+		expect(forms.kort).toBe(
+			'Enig artikel Aanpassing bedragen reis- en verblijfkosten leden Eerste Kamer'
+		);
+		expect(forms.voluit).not.toContain('enig-artikel');
+		// Without a label at hand, the name its number spells.
+		expect(
+			citeArticle({ articleNumber: 'enig-artikel', shortTitle: 'X', citationTitle: 'Wet X' }).kort
+		).toBe('Enig artikel X');
+	});
 });
 
 describe('placeCitation', () => {

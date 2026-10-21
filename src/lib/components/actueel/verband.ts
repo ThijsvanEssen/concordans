@@ -4,6 +4,7 @@
 // the letters that answer it, an amendment the articles it changes, a changed paper the one
 // it replaces, a judgment the articles it cites; of a followed law, how the row is tied to it
 // (`via`). Each a line of words with its bronnen as links, so each opens in place.
+import { articleRef } from '$lib/text/bw';
 import { capitalize, count, joinAnd, separatorBefore } from '$lib/text/words';
 import { korteDatum } from '$lib/text/datum';
 import { isLetter, motionOrAmendment } from '$lib/text/document-kind';
@@ -228,7 +229,9 @@ export function relatieVerbanden(i: FeedItem): Verband[] {
 export function viaTekst(via: FeedItem['via'], wet?: string | null): string | null {
 	if (!via) return null;
 	const naam = wet?.trim() || 'de wet';
-	const doel = via.article ? `art. ${via.article}${wet?.trim() ? ` ${wet.trim()}` : ''}` : naam;
+	const doel = via.article
+		? `${articleRef(null, via.article)}${wet?.trim() ? ` ${wet.trim()}` : ''}`
+		: naam;
 	if (via.dossier) return `In dossier ${via.dossier}`;
 	switch (via.relation) {
 		case 'establishes':

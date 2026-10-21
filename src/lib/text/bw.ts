@@ -2,6 +2,8 @@
 // BWB. Lawyers cite an article with its book before the number: art. 6:162 BW, not
 // "artikel 162 Burgerlijk Wetboek Boek 6".
 
+import { capitalize } from './words';
+
 /** The boeken of the Burgerlijk Wetboek and their BWB ids. */
 export const BW_BOOKS: Record<string, string> = {
 	'1': 'BWBR0002656',
@@ -61,9 +63,31 @@ export function apiNumber(bwbId: string, number: string): string {
 		: number;
 }
 
+/** Whether a number is a name, not a number: the BWB's `enig-artikel`, a law's sole article. */
+export const isNamedNumber = (number: string): boolean => /^\p{L}+(?:-\p{L}+)+$/u.test(number);
+
+/** Whether an article goes by its label, not its number: a number that is a name or a place. */
+const byLabel = (number: string): boolean => isNamedNumber(number) || /\s/.test(number);
+
+/**
+ * An article as it is cited: `art. 6:162` (a BW one with its book), `Artikel I` in the form
+ * asked. One whose number is a name goes by its label, "Enig artikel": the API's, else the
+ * name its number spells. The one place a number becomes `art. …`.
+ */
+export function articleRef(
+	bwbId: string | null | undefined,
+	number: string,
+	{ label, form = 'art.' }: { label?: string | null; form?: 'art.' | 'artikel' | 'Artikel' } = {}
+): string {
+	const n = number.trim();
+	if (isNamedNumber(n)) return label?.trim() || capitalize(n.replace(/-/g, ' '));
+	return `${form} ${bookNumber(bwbId, n)}`;
+}
+
 /**
  * An article by its number, a BW one with its book: "Artikel 6:162". A number that is a
- * place ("bijlage 2 artikel 4") goes by the label of the API: "Artikel 4 van bijlage 2".
+ * place ("bijlage 2 artikel 4") or a name (`enig-artikel`) goes by the label of the API:
+ * "Artikel 4 van bijlage 2", "Enig artikel".
  */
 export function articleName(
 	bwbId: string | null | undefined,
@@ -71,7 +95,8 @@ export function articleName(
 	label?: string | null
 ): string | null {
 	const n = number?.trim();
-	if (n && !/\s/.test(n)) return `Artikel ${bookNumber(bwbId, n)}`;
+	if (n && !byLabel(n)) return articleRef(bwbId, n, { form: 'Artikel' });
+	if (n && isNamedNumber(n)) return articleRef(bwbId, n, { label });
 	return label?.trim() || (n ? `Artikel ${n}` : null);
 }
 
@@ -101,7 +126,7 @@ export function articleTitle(
 		!/^BW\d/i.test(abbreviation) &&
 		typeof number === 'string' &&
 		number.trim() &&
-		!/\s/.test(number.trim())
+		!byLabel(number.trim())
 	)
 		return `Artikel ${number.trim()} ${abbreviation.trim()}`;
 	return withBook(name);

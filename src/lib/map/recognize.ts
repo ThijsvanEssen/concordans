@@ -2,6 +2,7 @@
 // the official source it reads (rechtspraak.nl, wetten.overheid.nl, officielebekendmakingen.nl,
 // EUR-Lex), or an ECLI in the citation. Read from the text alone, in the browser: nothing is
 // fetched. The map proposes the bron's reader; it never makes the item on its own.
+import { articleRef } from '$lib/text/bw';
 import { padHref, parsePad } from '$lib/bron/address';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
 
@@ -21,7 +22,8 @@ function labelOf(path: string): string {
 	const parts = path.split('/').filter(Boolean).map(decodeURIComponent);
 	const [kind, first, second, third] = parts;
 	if (kind === 'uitspraken') return first.toUpperCase();
-	if (kind === 'wetten' && second === 'artikel') return `art. ${third}, ${first.toUpperCase()}`;
+	if (kind === 'wetten' && second === 'artikel')
+		return `${articleRef(first, third)}, ${first.toUpperCase()}`;
 	if (kind === 'wetten' && parts.length === 2) return first.toUpperCase();
 	if (kind === 'kamerstukken') return `${kamerstukNummer(first)}, nr. ${second}`;
 	if (kind in SERIES) return `${SERIES[kind]} ${first}, ${second}`;

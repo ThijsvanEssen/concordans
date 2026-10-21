@@ -164,6 +164,20 @@ describe('the mark of what is missing', () => {
 		expect(coverageLine(null)).toBe(null);
 	});
 
+	it('says a part the reader already shows some of is read in part, not yet at all', () => {
+		// Sv 2.8.6 (Stb. 2026, 56): references pending, and one laid to 2.8.16 in its text.
+		const sv = { references: { state: 'pending' }, definitions: { state: 'pending' } } as const;
+		expect(coverageLine(sv, { shown: { references: 1 } })).toBe(
+			'Verwijzingen deels verwerkt, begrippen nog niet verwerkt'
+		);
+		expect(coverageLine(sv, { shown: { references: 1, definitions: 2 } })).toBe(
+			'Verwijzingen en begrippen deels verwerkt'
+		);
+		expect(coverageLine(sv, { shown: { references: 0 } })).toBe(
+			'Verwijzingen en begrippen nog niet verwerkt'
+		);
+	});
+
 	it('says of a source the runs no longer fetch from how far it goes', () => {
 		const at = '2026-10-08T20:53:06Z';
 		expect(coverageLine({ source: { state: 'paused', as_of: at } })).toBe(

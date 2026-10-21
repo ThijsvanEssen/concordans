@@ -54,7 +54,7 @@ import { bucketKey, getBuckets } from '$lib/api/nodes';
 import { lawIdOf } from '$lib/graph/types';
 import { get } from 'svelte/store';
 import { paragraphCite } from '$lib/text/ecli';
-import { articleName, bookNumber, withBook } from '$lib/text/bw';
+import { articleName, articleRef, withBook } from '$lib/text/bw';
 import { korteDatum } from '$lib/text/datum';
 import { anchorLabel, lidAnchor, parseAnchor } from '$lib/text/anchor';
 import { anchorOf, parseQualifier } from '$lib/text/qualifier';
@@ -923,11 +923,11 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			// `art. 6:214 BW` (hoe.ts: `Verwijst naar art. 7:50a, als voorwaarde`).
 			const target = to
 				? sameLaw && to.article_number
-					? `art. ${bookNumber(to.bwb_id, to.article_number)}`
+					? articleRef(to.bwb_id, to.article_number)
 					: to.display_name
 						? withBook(to.display_name).replace(/^Artikel /, 'art. ')
 						: to.article_number
-							? `art. ${bookNumber(to.bwb_id, to.article_number)}`
+							? articleRef(to.bwb_id, to.article_number)
 							: null
 				: null;
 			rows.set(r.edge_id, {

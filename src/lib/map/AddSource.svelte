@@ -4,6 +4,7 @@
 	// the address or the citation names a bron Concordans holds (recognize.ts), the form
 	// proposes its reader, where Bewaar keeps it as an item of Concordans; it never turns it
 	// into one on its own.
+	import { articleRef } from '$lib/text/bw';
 	import { page } from '$app/state';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
@@ -76,7 +77,7 @@
 				{ bwb_id: known.law, article_number: known.article },
 				{ meta: law ?? null }
 			);
-			return c ? citeArticle(c).kort : `art. ${known.article}, deze wet`;
+			return c ? citeArticle(c).kort : `${articleRef(known.law, known.article)}, deze wet`;
 		}
 		return lawName(law, null) ?? 'deze wet';
 	});

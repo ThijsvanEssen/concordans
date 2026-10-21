@@ -1,5 +1,5 @@
 import { parentAnchor, parseAnchor, printedOnderdeel } from './anchor';
-import { bookNumber, bwCode } from './bw';
+import { articleRef, bookNumber, bwCode, isNamedNumber } from './bw';
 import { langeDatum, vandaag } from './datum';
 import { ordinalWord } from './getal';
 // The three forms in which an article, a lid or an onderdeel is cited.
@@ -67,8 +67,12 @@ export function articleCitation(
 	return {
 		bwbId: article.bwb_id ?? null,
 		articleNumber: address,
-		// An article without a number is cited by its heading: "Algemene bepaling Gw".
-		heading: article.article_number ? null : (article.label ?? null),
+		// An article without a number is cited by its heading: "Algemene bepaling Gw"; the sole
+		// article of a law (`enig-artikel`) by its label: "Enig artikel".
+		heading:
+			article.article_number && !isNamedNumber(article.article_number)
+				? null
+				: (article.label ?? null),
 		shortTitle: law.meta?.shortTitle ?? null,
 		citationTitle: title,
 		...(law.adopted ? { adopted: law.adopted } : {})
@@ -105,7 +109,7 @@ export function citeArticle(c: Citation): CitationForms {
 	const law = shortTitle ?? citationTitle;
 	const onderdelen = c.onderdelen ?? [];
 
-	const head = [c.heading ?? `art. ${articleNumber}`, c.lid ? `lid ${c.lid}` : null];
+	const head = [c.heading ?? articleRef(null, articleNumber), c.lid ? `lid ${c.lid}` : null];
 	const rest = [
 		c.aanhef ? 'aanhef' : null,
 		...onderdelen.map((o, i) => (i === 0 ? `onder ${o}` : `sub ${o}`))
@@ -119,7 +123,7 @@ export function citeArticle(c: Citation): CitationForms {
 
 	const ordinal = c.lid ? ordinalWord(c.lid) : null;
 	const parts = [
-		c.heading ?? `artikel ${articleNumber}`,
+		c.heading ?? articleRef(null, articleNumber, { form: 'artikel' }),
 		c.lid ? (ordinal ? `${ordinal} lid` : `lid ${c.lid}`) : null,
 		c.definitie ? `definitie van '${c.definitie}'` : null,
 		c.aanhef ? 'aanhef' : null,

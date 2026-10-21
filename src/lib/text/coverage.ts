@@ -101,8 +101,15 @@ function referencesLine(r: PartState | undefined): string | null {
 		: 'verwijzingen deels niet gelegd';
 }
 
-/** What a line says: `of` the source a line about a source is of, `noText` a reader without text. */
-type CoverageOptions = { of?: string; noText?: boolean };
+/**
+ * What a line says: `of` the source a line about a source is of, `noText` a reader without
+ * text, `shown` how many of a part the reader shows: a part still pending of which it shows
+ * some is read in part (`Verwijzingen deels verwerkt`), not yet at all.
+ */
+type CoverageOptions = { of?: string; noText?: boolean; shown?: Shown };
+
+/** How many of each part the reader shows. */
+export type Shown = Partial<Record<Part, number>>;
 
 /**
  * The line, in words: `Tekst nog niet opgehaald`, `Tekst niet opgenomen, staat bij de bron`, `12 verwijzingen niet gelegd, begrippen nog
@@ -111,7 +118,7 @@ type CoverageOptions = { of?: string; noText?: boolean };
  */
 export function coverageLine(
 	completeness: Completeness | null | undefined,
-	{ of, noText = false }: CoverageOptions = {}
+	{ of, noText = false, shown = {} }: CoverageOptions = {}
 ): string | null {
 	const c = completeness ?? {};
 	const said: string[] = [];
@@ -134,7 +141,10 @@ export function coverageLine(
 			(withText || (p !== 'paragraphs' && p !== 'tables')) &&
 			(p !== 'outcome' || !outcomeOn)
 	);
-	if (pending.length) said.push(`${joinAnd(pending.map((p) => PART[p]))} nog niet verwerkt`);
+	const begun = pending.filter((p) => (shown[p] ?? 0) > 0);
+	const notYet = pending.filter((p) => !begun.includes(p));
+	if (begun.length) said.push(`${joinAnd(begun.map((p) => PART[p]))} deels verwerkt`);
+	if (notYet.length) said.push(`${joinAnd(notYet.map((p) => PART[p]))} nog niet verwerkt`);
 	// An open bill: the Kamer records no withdrawal, so it is not known to run still.
 	if (outcomeOn) said.push(`geen einde vastgelegd, laatste activiteit ${day(outcomeOn)}`);
 	const source = sourceLine(c.source);

@@ -7,7 +7,7 @@
 	// article of a law of the Staatsblad has before it takes effect.
 	import { getArticleDetail, getArticleHistory, getArticleVersion } from '$lib/api/articles';
 	import type { Schema } from '$lib/api/types';
-	import { lawShortName } from '$lib/text/bw';
+	import { articleRef, lawShortName } from '$lib/text/bw';
 	import { citeArticle, citePublication } from '$lib/text/cite';
 	import { langeDatum } from '$lib/text/datum';
 	import { compareTexts, plainDiff, type LidPairing } from '$lib/text/version-diff';
@@ -67,7 +67,7 @@
 						citationTitle: detail.instrument?.citation_title ?? detail.instrument?.title ?? ''
 					}).kort
 				: null;
-			return { version, name: name ?? cited ?? `art. ${number}` };
+			return { version, name: name ?? cited ?? articleRef(law, number) };
 		},
 		'Vergelijking'
 	);

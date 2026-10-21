@@ -1,5 +1,15 @@
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { apiNumber, articleName, articleTitle, bookNumber, lawShortName, withBook } from './bw';
+import {
+	apiNumber,
+	articleName,
+	articleRef,
+	articleTitle,
+	bookNumber,
+	lawShortName,
+	withBook
+} from './bw';
 
 describe('BW article numbers', () => {
 	it('gives the number the API gives a BW article, without its book', () => {
@@ -45,6 +55,20 @@ describe('articleName', () => {
 	});
 });
 
+describe('articleRef', () => {
+	it('cites an article by its number, a BW one with its book', () => {
+		expect(articleRef('BWBR0005289', '162')).toBe('art. 6:162');
+		expect(articleRef(null, 'I', { form: 'Artikel' })).toBe('Artikel I');
+	});
+	it('names the sole article of a law by its label, else the name its number spells', () => {
+		expect(articleRef('BWBR0007846', 'enig-artikel', { label: 'Enig artikel' })).toBe(
+			'Enig artikel'
+		);
+		expect(articleRef('BWBR0007846', 'enig-artikel')).toBe('Enig artikel');
+		expect(articleName('BWBR0007846', 'enig-artikel', 'Enig artikel')).toBe('Enig artikel');
+	});
+});
+
 describe('articleTitle', () => {
 	it('names an article by the abbreviation of its law', () => {
 		const evrm = { instrument_abbreviation: 'EVRM', article_number: '8' };
@@ -76,5 +100,24 @@ describe('lawShortName', () => {
 		expect(lawShortName('bwbr0005289', 'BW6')).toBe('Boek 6 BW');
 		expect(lawShortName('BWBR0005537', 'Awb')).toBe('Awb');
 		expect(lawShortName('BWBR0005537', null)).toBeNull();
+	});
+});
+
+describe('one way to cite an article by its number', () => {
+	// `art. ${x.article_number}` printed "art. enig-artikel": every number from the API goes
+	// through articleRef or articleName, which name the sole article of a law by its label.
+	const root = join(process.cwd(), 'src');
+	const files = (dir: string): string[] =>
+		readdirSync(dir).flatMap((name) => {
+			const path = join(dir, name);
+			if (statSync(path).isDirectory()) return name === 'generated' ? [] : files(path);
+			return /\.(svelte|ts)$/.test(name) && !/\.test\.ts$/.test(name) ? [path] : [];
+		});
+	it('leaves no template that prints an article_number after "art." or "Artikel"', () => {
+		const raw = /(?:art\.|[Aa]rtikel) \$?\{[^}]*article_number/;
+		const offenders = files(root)
+			.filter((f) => raw.test(readFileSync(f, 'utf8')))
+			.map((f) => relative(root, f));
+		expect(offenders).toEqual([]);
 	});
 });

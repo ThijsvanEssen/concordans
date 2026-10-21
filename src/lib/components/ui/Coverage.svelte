@@ -10,6 +10,7 @@
 		type AnchorState,
 		type Completeness,
 		type Lack,
+		type Shown,
 		type Searched
 	} from '$lib/text/coverage';
 
@@ -18,6 +19,7 @@
 		searched = null,
 		of,
 		noText = false,
+		shown = {},
 		bron = null,
 		anchor = null,
 		lack = null
@@ -30,6 +32,8 @@
 		of?: string;
 		/** The reader shows no text here: say why, or that the dataset lacks it. */
 		noText?: boolean;
+		/** How many of a part the reader shows: a pending part with some is read in part. */
+		shown?: Shown;
 		/** The source that holds what is missing here: wetten.overheid.nl, EUR-Lex. */
 		bron?: { label: string; href: string } | null;
 		/** An arcering whose words no longer stand where they were kept, in place of the rest. */
@@ -45,7 +49,7 @@
 				? anchorLine(anchor)
 				: searched
 					? searchedLine(searched)
-					: coverageLine(coverage, { of, noText })
+					: coverageLine(coverage, { of, noText, shown })
 	);
 </script>
 

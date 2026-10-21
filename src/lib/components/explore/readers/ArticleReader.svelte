@@ -635,7 +635,13 @@
 				{/if}
 				<!-- What of its references is linked; of a law of the Staatsblad also what of its
 				     law's definitions is read. -->
-				<Coverage coverage={d.completeness} />
+				<Coverage
+					coverage={d.completeness}
+					shown={{
+						references: d.citations.filter((c) => c.target).length + (d.references?.length ?? 0),
+						definitions: d.definitions?.length ?? 0
+					}}
+				/>
 				{#if wordings.length > 1}
 					<span class="menu" use:menu={{ open: versionMenu, close: () => (versionMenu = false) }}>
 						<button

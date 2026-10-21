@@ -2,6 +2,7 @@
 // title and one meta line: the lid it names, the position in the source, the
 // identifier or the date, and the betrouwbaarheid when it is not hoog. The passage
 // of the source (`snippet`, with `match` marked) appears when the row is opened.
+import { articleRef } from '$lib/text/bw';
 import { NOT_IN_DATA } from '$lib/text/coverage';
 import { escapeRegExp, lowerFirst, textOf } from '$lib/text/words';
 import { naamVanId } from '$lib/bron/menselijk';
@@ -435,7 +436,8 @@ type UnresolvedCitation = {
 };
 
 /** `Artikel 843a Rv`: the article as the judgment cites it, before its law. */
-const unresolvedTitle = (c: UnresolvedCitation) => `Artikel ${c.article_number} ${c.law}`;
+const unresolvedTitle = (c: UnresolvedCitation) =>
+	`${articleRef(null, c.article_number, { form: 'Artikel' })} ${c.law}`;
 
 /**
  * The articles a judgment cites of laws outside the dataset, as rows without a link:

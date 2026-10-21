@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { articleRef } from '$lib/text/bw';
 	import { NOT_IN_DATA } from '$lib/text/coverage';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { ecliKey } from '$lib/bron/address';
@@ -269,8 +270,9 @@
 						0
 							? ', '
 							: ''}{#if c.paragraph_ids?.[0]}<a href="#{c.paragraph_ids[0]}"
-								>art. {c.article_number} {c.law}</a
-							>{:else}art. {c.article_number} {c.law}{/if}{/each}{outside.length > OUTSIDE_SHOWN
+								>{articleRef(null, c.article_number)} {c.law}</a
+							>{:else}{articleRef(null, c.article_number)} {c.law}{/if}{/each}{outside.length >
+					OUTSIDE_SHOWN
 						? ` en ${outside.length - OUTSIDE_SHOWN} meer`
 						: ''}.
 				</p>

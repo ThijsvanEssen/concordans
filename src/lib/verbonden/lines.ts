@@ -2,7 +2,7 @@
 // articles a judgment cites, what an activity was, what a lid was in a dossier.
 import { count, joinAnd, lowerFirst } from '$lib/text/words';
 import { vandaag } from '$lib/text/datum';
-import { bookNumber } from '$lib/text/bw';
+import { articleRef, bookNumber } from '$lib/text/bw';
 import { dossierLabel, kamerstukNummer, type DossierNaamBron } from '$lib/bron/dossier-naam';
 import type { Row } from './rows';
 
@@ -37,6 +37,8 @@ export function citedLine(
 		a.article_number ? [bookNumber(bwb, a.article_number)] : []
 	);
 	if (!numbers.length) return null;
+	// The sole article of a law (`enig-artikel`) is cited alone, by its name.
+	if (numbers.length === 1) return articleRef(bwb, numbers[0]);
 	const shown = numbers.slice(0, 2).join(', ');
 	const rest = numbers.length - 2;
 	return `art. ${shown}${rest > 0 ? ` en ${count(rest, 'ander', 'andere')}` : ''}`;
