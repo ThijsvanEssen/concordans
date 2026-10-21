@@ -1,7 +1,8 @@
 // Bundels: Bewaar and its checks, a new bundel, the overview and the page of a bundel, two
-// tabs writing at once, a shared link (#m=) and the PDF.
+// tabs writing at once, a shared link (#m=), the PDF, and words of a lid arceerd in the reader
+// and seen again in the bundel.
 import { expect, test } from '../support/test';
-import { ARTICLE, catchClipboard, keepArticle, keepPlaces } from '../support/bundels';
+import { ARTICLE, catchClipboard, keepArticle, keepPlaces, selectWords } from '../support/bundels';
 
 test('Bewaar keeps in Losse markeringen; the check in its list takes it out again', async ({
 	page
@@ -145,4 +146,39 @@ test('an article kept keeps the day of its text; a judgment keeps none', async (
 	expect(versie('art. 6:162 BW')).toBe('1992-01-01');
 	expect(versie('art. 6:162 lid 2 BW')).toBe('1992-01-01');
 	expect(versie(/^HR 20 december 2019/)).toBeUndefined();
+});
+
+test('arceer words of a lid and see them again in the bundel', async ({ page, touch }) => {
+	await page.goto(ARTICLE);
+	await expect(page.getByText(/ongeschreven recht/)).toBeVisible();
+	await selectWords(page, 'lid-2', 'ongeschreven recht', touch);
+	// The menu of the place, by the words: Arceer keeps them, in Losse markeringen.
+	const menu = page.getByRole('menu', { name: 'art. 6:162 lid 2 BW, "ongeschreven recht"' });
+	await expect(menu).toBeVisible();
+	await menu.getByRole('menuitem', { name: 'Arceer' }).click();
+	await expect(menu).toBeHidden();
+	const drawn = () =>
+		page.evaluate(() =>
+			[...((CSS.highlights.get('arcering') as unknown as Set<Range> | undefined) ?? [])].map((r) =>
+				r.toString()
+			)
+		);
+	await expect.poll(drawn).toEqual(['ongeschreven recht']);
+
+	// A click (a tap) on the arcering opens its own menu.
+	const at = await page.evaluate(() => {
+		const r = [
+			...(CSS.highlights.get('arcering') as unknown as Set<Range>)
+		][0].getBoundingClientRect();
+		return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+	});
+	if (touch) await page.touchscreen.tap(at.x, at.y);
+	else await page.mouse.click(at.x, at.y);
+	await expect(page.getByRole('menuitem', { name: 'Arcering weg' })).toBeVisible();
+	await page.keyboard.press('Escape');
+
+	await page.goto('/bundels/losse-markeringen');
+	await page.getByRole('link', { name: 'art. 6:162 lid 2 BW' }).click();
+	await expect(page.getByText(/Als onrechtmatige daad worden aangemerkt/)).toBeVisible();
+	await expect.poll(drawn).toEqual(['ongeschreven recht']);
 });

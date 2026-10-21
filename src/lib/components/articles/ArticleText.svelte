@@ -29,6 +29,28 @@
 	} from '$lib/text/references';
 	import { lawDivisions } from '$lib/bron/law-articles';
 	import { report } from '$lib/api/errors';
+	import { anchorLabel } from '$lib/text/anchor';
+	import type { Fragment } from '$lib/map/map';
+	import {
+		WHOLE_ARTICLE,
+		articlePlaces,
+		fragmentOf,
+		placeText,
+		resolve,
+		type Places
+	} from '$lib/text/fragment';
+	import { draw, shadingAt, shadingsOf, type Shading } from '$lib/text/shading';
+	import type { AnchorState } from '$lib/text/coverage';
+	import {
+		PLACE,
+		carry,
+		clearSelection,
+		rangeOf,
+		selection,
+		walkText,
+		wordsUp,
+		type TextSelection
+	} from '$lib/actions/selection';
 
 	let {
 		text,
@@ -53,7 +75,9 @@
 		gemarkeerd = null,
 		alleen = null,
 		ankers = true,
-		adres = null
+		adres = null,
+		earlier = null,
+		compareKept = null
 	}: {
 		text: string | null | undefined;
 		/** The parts the API delivers (0.5); without them they are read from the text. */
@@ -101,6 +125,17 @@
 		/** The article's own address, where the page is not its reader (a map): the link Citeer
 		 *  copies points there. */
 		adres?: string | null;
+		/** The text of an earlier tekstversie by the day it took effect: an arcering kept in it
+		 *  is followed into the text on screen (besluit 23). */
+		earlier?:
+			| ((day: string) => Promise<{
+					text?: string | null;
+					parts?: Schema<'ArticlePartSpanDTO'>[] | null;
+					tables?: Table[] | null;
+			  } | null>)
+			| null;
+		/** Where the text kept and the text on screen are compared, by the day of the one kept. */
+		compareKept?: ((day: string) => string) | null;
 	} = $props();
 
 	const source = $derived(text ?? '');
@@ -126,16 +161,18 @@
 	/** Every part, for the place a citation names: a definition by its term. */
 	const allParts = $derived([...walkParts(parts)]);
 	/** The place `alleen` names: a lid with its onderdelen (`lid-2-onder-a` is in `lid-2`). */
-	const bevat = (part: ArticlePart, at: string) =>
+	const holds = (part: ArticlePart, at: string) =>
 		!!part.id && (at === part.id || at.startsWith(`${part.id}-`));
-	const getoond = $derived.by(() => {
+	const shown = $derived.by(() => {
 		const at = alleen;
-		const deel = at ? parts.filter((p) => bevat(p, at)) : [];
+		const deel = at ? parts.filter((p) => holds(p, at)) : [];
 		return deel.length ? deel : parts;
 	});
-	const isBewaard = (part: ArticlePart) =>
+	const isKept = (part: ArticlePart) =>
 		!!part.id &&
-		(part.id === gemarkeerd || (!!bewaar && kaart.heeft({ id: bewaar.id, at: part.id })));
+		(part.id === gemarkeerd ||
+			(!!bewaar && kaart.heeft({ id: bewaar.id, at: part.id })) ||
+			resolved.some((a) => 'start' in a.hit && a.hit.place === part.id));
 
 	/** What the text `[start, end)` marks, offsets relative to `start`. */
 	const marks = (start: number, end: number) => ({
@@ -156,19 +193,193 @@
 	 *  lid's, or the article's (an article without leden). */
 	const keyOf = (part: ArticlePart) => placeOf(parts, part)?.id ?? 'artikel';
 
-	/** The place whose menu is open (null: the article), and the marker it hangs from. */
-	let menu = $state<{ part: ArticlePart | null; anker: HTMLElement } | null>(null);
-	const menuFor = $derived(menu ? (menu.part?.id ?? 'artikel') : null);
+	/** The place whose menu is open (null: the article), and the marker it hangs from; words
+	 *  selected in it (`words`, their fragment where they can be kept) or an arcering clicked,
+	 *  with where the menu hangs then. */
+	type Menu = {
+		part: ArticlePart | null;
+		anker: HTMLElement;
+		words?: { exact: string; fragment: Fragment | null };
+		shading?: Shading;
+		rect?: () => DOMRect;
+		below?: boolean;
+	};
+	let menu = $state<Menu | null>(null);
+	const menuFor = $derived(
+		menu && !menu.words && !menu.shading ? (menu.part?.id ?? 'artikel') : null
+	);
 	function openMenu(part: ArticlePart, anker: HTMLElement) {
 		menu = menuFor === keyOf(part) ? null : { part: placeOf(parts, part), anker };
 	}
-	/** A click on a place's text opens its menu, at its marker (blockClick: the innermost). */
-	const opTekst = (part: ArticlePart) => (e: MouseEvent) => {
+	/** A click on a place's text opens its menu, at its marker (blockClick: the innermost); a
+	 *  click on an arcering the arcering's. */
+	const onText = (part: ArticlePart) => (e: MouseEvent) => {
+		const at = shadingAt(e.clientX, e.clientY, drawn);
+		if (at && 'start' in at.shading.hit) {
+			const { range, shading } = at;
+			const place = at.shading.hit.place;
+			menu = {
+				part: partAt(place),
+				anker: ownMarker(place) ?? (e.currentTarget as HTMLElement),
+				shading,
+				rect: () => range.getBoundingClientRect()
+			};
+			return;
+		}
 		const anker = placeMarker(e, '.lid, .part');
 		if (anker) openMenu(part, anker);
 	};
+
+	// ── Arceren (O4) ────────────────────────────────────────────────────────
+	/** The text as places: what a fragment is anchored in and found again in. */
+	const places = $derived(articlePlaces(source, parts));
+	const partAt = (place: string) => allParts.find((p) => p.id === place) ?? null;
+	let box = $state<HTMLElement | null>(null);
+	/** The element of a place on the page: the text as a whole for the article. */
+	const placeEl = (place: string): HTMLElement | null =>
+		box?.getAttribute(PLACE) === place
+			? box
+			: ([...(box?.querySelectorAll<HTMLElement>(`[${PLACE}]`) ?? [])].find(
+					(el) => el.getAttribute(PLACE) === place
+				) ?? null);
+	/** A place's own marker (`2.`, `a.`), where its menu returns the focus. */
+	const ownMarker = (place: string) =>
+		placeEl(place)?.querySelector<HTMLElement>(':scope > .plaats-marker') ?? null;
+
+	/** Words selected: the menu of the smallest place that holds them, by the words. */
+	function selected(s: TextSelection) {
+		const p = s.place;
+		const fragment = (() => {
+			if (!p) return null;
+			const own = placeText(places, p.id);
+			const at = own === null ? null : carry(p.walk.text, own, p.start, p.end);
+			return at ? fragmentOf(places, p.id, at[0], at[1]) : null;
+		})();
+		const part = p && p.id !== WHOLE_ARTICLE ? partAt(p.id) : null;
+		const range = s.range.cloneRange();
+		// On a phone the menu opens below the words, its bar above them: the words go up first
+		// where the menu would find too little room under them.
+		if (s.touch) wordsUp(range, box!);
+		menu = {
+			below: s.touch,
+			part,
+			anker: (p && ownMarker(p.id)) ?? p?.el ?? box!,
+			words: { exact: fragment?.exact ?? s.text.trim(), fragment },
+			rect: () => range.getBoundingClientRect()
+		};
+	}
+
+	/** The arceringen of the bundels in this article. */
+	const shadings = $derived(bewaar ? shadingsOf(kaart.listed, bewaar.id) : []);
+	/** Earlier tekstversies asked, by their day: an arcering kept in one is followed from it. */
+	let earlierTexts = $state<Record<string, Places | null>>({});
+	const asked = new Set<string>();
+	const since = $derived(bewaar?.versie ?? null);
+	/** Each arcering where its words are now. */
+	const resolved = $derived(
+		shadings.map((a): Shading => {
+			const day = a.item.versie;
+			const old = day && since && day !== since ? earlierTexts[day] : null;
+			return {
+				...a,
+				hit: resolve(places, a.annotation.fragment, old && since ? { places: old, since } : null)
+			};
+		})
+	);
+	$effect(() => {
+		const load = earlier;
+		const now = since;
+		if (!load || !now) return;
+		for (const a of resolved) {
+			const day = a.item.versie;
+			if (a.hit.state !== 'lost' || !day || day === now || asked.has(day)) continue;
+			asked.add(day);
+			load(day).then(
+				(d) => {
+					const t = d?.text ?? '';
+					earlierTexts = {
+						...earlierTexts,
+						[day]: t ? articlePlaces(t, partsOf(t, d?.parts, d?.tables ?? [])) : null
+					};
+				},
+				(e) => report('Eerdere tekstversie', e)
+			);
+		}
+	});
+
+	/** What is drawn, each range with its arcering: a click on one opens its menu. */
+	let drawn: { range: Range; shading: Shading }[] = [];
+	const owner = {};
+	/** The arceringen drawn in the text as it stands; again when its text changes (a link
+	 *  that comes, a definition marked). */
+	function drawAll() {
+		const out: typeof drawn = [];
+		for (const shading of resolved) {
+			const hit = shading.hit;
+			if (!('start' in hit)) continue;
+			const el = placeEl(hit.place);
+			const own = placeText(places, hit.place);
+			if (!el || own === null) continue;
+			const walk = walkText(el);
+			const at = carry(own, walk.text, hit.start, hit.end);
+			const range = at && rangeOf(walk, at[0], at[1]);
+			if (range) out.push({ range, shading });
+		}
+		drawn = out;
+		draw(
+			owner,
+			out.map((d) => d.range)
+		);
+	}
+	$effect(() => {
+		const el = box;
+		void shown;
+		// Nothing to draw: no observer either.
+		if (!el || !resolved.length) {
+			drawn = [];
+			draw(owner, []);
+			return;
+		}
+		drawAll();
+		let frame = 0;
+		const changes = new MutationObserver(() => {
+			cancelAnimationFrame(frame);
+			frame = requestAnimationFrame(drawAll);
+		});
+		changes.observe(el, { childList: true, subtree: true, characterData: true });
+		return () => {
+			cancelAnimationFrame(frame);
+			changes.disconnect();
+			draw(owner, []);
+		};
+	});
+
+	/** A place as a line names it: `lid 3`, `lid 2, onder a`; the article itself. */
+	const placeName = (place: string) => anchorLabel(place) ?? 'het artikel';
+	/** The arceringen whose words no longer stand where they were kept, by the top part their
+	 *  line stands under (the whole article: at the end of the text). */
+	const stale = $derived.by(() => {
+		const out = new Map<string, { a: Shading; state: AnchorState; quote: boolean }[]>();
+		for (const a of resolved) {
+			const t = a.hit;
+			if (t.state === 'found') continue;
+			const state: AnchorState =
+				t.state === 'moved'
+					? { state: 'moved', place: placeName(t.place) }
+					: t.state === 'changed' || t.state === 'lapsed'
+						? { state: t.state, since: t.since }
+						: { state: 'lost' };
+			const top =
+				shown.find((p) => p.id && (t.place === p.id || t.place.startsWith(`${p.id}-`)))?.id ??
+				WHOLE_ARTICLE;
+			const list = out.get(top) ?? [];
+			list.push({ a, state, quote: !('start' in t) });
+			out.set(top, list);
+		}
+		return out;
+	});
 	/** The place as the menu names it: its short citation, else `Lid 2`. */
-	const naamVan = (part: ArticlePart | null) =>
+	const placeTitle = (part: ArticlePart | null) =>
 		formsOf(part)?.kort ??
 		(part?.kind === 'lid'
 			? `Lid ${part.number}`
@@ -196,6 +407,22 @@
 	/>
 {/snippet}
 
+{#snippet anchorLines(place: string)}
+	{#each stale.get(place) ?? [] as r (r.a.annotation.id)}
+		{@const href =
+			r.state.state === 'changed' && r.a.item.versie && compareKept
+				? compareKept(r.a.item.versie)
+				: null}
+		<p class="anchor-line" data-geen-tekst>
+			{#if r.quote}<q class:struck={r.state.state === 'lapsed'}>{r.a.annotation.fragment.exact}</q
+				>{/if}
+			{#if href}<a {href} data-sveltekit-noscroll><Coverage anchor={r.state} /></a>{:else}<Coverage
+					anchor={r.state}
+				/>{/if}
+		</p>
+	{/each}
+{/snippet}
+
 {#snippet tekst(part: ArticlePart)}
 	{#each own(part) as piece (piece.start)}
 		{#if piece.table}
@@ -212,8 +439,9 @@
 		<div
 			class="lid lid--{part.kind}"
 			id={ankers ? part.id : undefined}
+			data-plaats={part.id ?? undefined}
 			class:is-open={menuFor === keyOf(part)}
-			class:plaats-bewaard={isBewaard(part)}
+			class:plaats-bewaard={isKept(part)}
 		>
 			<!-- The number is the lid's menu: citeren, bewaren, verbindingen. -->
 			<button
@@ -221,19 +449,20 @@
 				class="lid__no plaats-marker"
 				aria-haspopup="menu"
 				aria-expanded={menuFor === keyOf(part)}
-				aria-label="{naamVan(placeOf(parts, part))}: citeren, bewaren"
+				aria-label="{placeTitle(placeOf(parts, part))}: citeren, bewaren"
 				onclick={(e) => openMenu(part, e.currentTarget)}
 				>{part.kind === 'lid' ? `${part.number}.` : part.number ? marker(part.number) : ''}</button
 			>
 			<div class="lid__body" class:lid__body--pair={showProposed}>
-				<div class="lid__text" use:blockClick={opTekst(part)}>
+				<div class="lid__text" use:blockClick={onText(part)}>
 					{@render tekst(part)}
 					{#each part.children as child (child.start)}
 						{@render render(child, false)}
 					{/each}
 				</div>
+				{#if part.id}{@render anchorLines(part.id)}{/if}
 				{#if showProposed && proposed}
-					<div class="lid__proposed">
+					<div class="lid__proposed" data-geen-tekst>
 						<div class="lid__proposed-head">
 							<span class="proposed">voorgesteld</span>
 							<span class="lid__proposed-source">{proposed.source}</span>
@@ -255,8 +484,9 @@
 		<div
 			class="part part--{part.kind}"
 			id={ankers ? part.id : undefined}
+			data-plaats={part.id ?? undefined}
 			class:is-open={!!part.id && menuFor === part.id}
-			class:plaats-bewaard={isBewaard(part)}
+			class:plaats-bewaard={isKept(part)}
 		>
 			{#if part.number && part.id}
 				<button
@@ -264,11 +494,11 @@
 					class="part__number plaats-marker"
 					aria-haspopup="menu"
 					aria-expanded={menuFor === part.id}
-					aria-label="{naamVan(part)}: citeren, bewaren"
+					aria-label="{placeTitle(part)}: citeren, bewaren"
 					onclick={(e) => openMenu(part, e.currentTarget)}>{marker(part.number)}</button
 				>
 			{/if}
-			<div class="part__body" use:blockClick={opTekst(part)}>
+			<div class="part__body" use:blockClick={onText(part)}>
 				{@render tekst(part)}
 				{#each part.children as child (child.start)}
 					{@render render(child, false)}
@@ -284,12 +514,17 @@
 	<!-- The text measures its own width: in a narrow column (beside the network) the margin
 	     folds under each lid, as it does on a phone. -->
 	<div class="article-text-box">
-		<div class="article-text">
-			{#each getoond as part (part.start)}
+		<div
+			class="article-text"
+			bind:this={box}
+			data-plaats={shown === parts ? WHOLE_ARTICLE : undefined}
+			use:selection={{ open: selected }}
+		>
+			{#each shown as part (part.start)}
 				{@render render(part, true)}
 			{/each}
 			{#if proposed && !parts.some((p) => p.kind === 'lid' && p.number === proposed!.lid)}
-				<div class="lid lid--proposed-only">
+				<div class="lid lid--proposed-only" data-geen-tekst>
 					<span class="lid__no"></span>
 					<div class="lid__body">
 						<div class="lid__proposed">
@@ -312,29 +547,59 @@
 					</div>
 				</div>
 			{/if}
+			{@render anchorLines(WHOLE_ARTICLE)}
 		</div>
 	</div>
 {/if}
 
 {#if menu}
-	{@const p = menu.part}
+	{@const m = menu}
+	{@const p = m.part}
 	{@const forms = formsOf(p)}
-	{@const lid = p?.kind === 'lid' ? p.number : null}
+	{@const plain = !m.words && !m.shading}
+	{@const lid = plain && p?.kind === 'lid' ? p.number : null}
 	{@const count = lid ? counts.get(lid) : undefined}
-	<PlaatsMenu
-		anker={menu.anker}
-		title={naamVan(p)}
-		cite={forms
-			? citeItems(forms, permalink(adres ? new URL(adres, page.url) : page.url, p?.id ?? ''))
-			: []}
-		tekst={() => fullText(p)}
-		bewaar={bewaar && forms
+	{@const across = !!m.words && !m.words.fragment}
+	{@const place =
+		bewaar && forms
 			? bewaarItem(
 					bewaar.id,
 					{ at: p?.id, kort: forms.kort, voluit: forms.voluit },
 					{ groep: bewaar.groep, wet: bewaar.wet, versie: bewaar.versie }
 				)
 			: null}
+	{@const fragment = m.words?.fragment ?? null}
+	{@const a = m.shading ?? null}
+	<PlaatsMenu
+		anker={m.anker}
+		title={placeTitle(p)}
+		cite={forms && !across
+			? citeItems(forms, permalink(adres ? new URL(adres, page.url) : page.url, p?.id ?? ''))
+			: []}
+		tekst={() => m.words?.exact ?? a?.annotation.fragment.exact ?? fullText(p)}
+		bewaar={across ? null : a ? a.item : place}
+		fragment={m.words
+			? {
+					exact: m.words.exact,
+					shade:
+						place && fragment
+							? (note) => {
+									kaart.shade(place, fragment, note);
+									clearSelection();
+								}
+							: null
+				}
+			: null}
+		shading={a
+			? {
+					exact: a.annotation.fragment.exact,
+					note: a.annotation.tekst ?? null,
+					annotate: (note) => kaart.annotate(a.annotation.id, note, a.map.id),
+					remove: () => kaart.unshade(a.annotation.id, a.map.id)
+				}
+			: null}
+		rect={m.rect ?? null}
+		below={m.below ?? false}
 		verbindingen={lid && count != null && lidHref
 			? { n: count, href: lidHref(lid) }
 			: lid && tellend
@@ -525,6 +790,26 @@
 		margin: 0;
 	}
 
+	/* An arcering whose words no longer stand where they were kept (besluit 23): its line under
+	   the place, the words kept as a quote where none stands now. */
+	.anchor-line {
+		margin: var(--s-1) 0 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-3);
+	}
+	.anchor-line q {
+		margin-right: var(--s-2);
+		font-style: normal;
+		color: var(--ink-2);
+	}
+	.anchor-line q.struck {
+		text-decoration: line-through;
+	}
+	.anchor-line a {
+		color: inherit;
+		text-decoration-color: var(--rule-strong);
+	}
 	.article-text__empty {
 		font-style: italic;
 		color: var(--ink-3);

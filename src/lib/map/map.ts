@@ -82,7 +82,7 @@ export type Map = {
  * its words, as much of the text before and after as makes them one, and their position in
  * the place's text (W3C TextQuoteSelector, the position deciding between equals).
  */
-type Fragment = {
+export type Fragment = {
 	waar: string;
 	exact: string;
 	prefix?: string;
@@ -585,6 +585,38 @@ export function netwerkHref(items: readonly MapItem[]): string | null {
 export function withItems(a: readonly MapItem[], b: readonly MapItem[]): MapItem[] {
 	const al = new Set(a.map(itemKey));
 	return [...a, ...b.filter((i) => !al.has(itemKey(i)))];
+}
+
+/**
+ * The item of a bundel words in a place of a bron hang on (`waar`): the place kept itself,
+ * else the kept place around it, the nearest (`lid-2` for `lid-2-onder-a`), else the bron as a
+ * whole; none where the bundel keeps nothing of it that holds the place.
+ */
+export function holderOf(
+	items: readonly MapItem[],
+	bron: string,
+	waar: string
+): MapItem | undefined {
+	const holds = (at: string) => !at || at === waar || waar.startsWith(`${at}-`);
+	return items
+		.filter((i) => i.id === bron && holds(i.at))
+		.sort((a, b) => b.at.length - a.at.length)[0];
+}
+
+/** A new aantekening's id: `a-` and eight signs. */
+const annotationId = () => `a-${Math.random().toString(36).slice(2, 10).padEnd(8, '0')}`;
+
+/** A new arcering on the item of this key: its words, with the reader's note where given. */
+export function newShading(key: string, fragment: Fragment, note = ''): Annotation {
+	const t = note.trim();
+	return { id: annotationId(), op: key, fragment, ...(t ? { tekst: t } : {}) };
+}
+
+/** An aantekening with another note; an empty one takes it away (the arcering stays). */
+export function withNote(a: Annotation, note: string): Annotation {
+	const { tekst: _old, ...rest } = a;
+	const t = note.trim();
+	return t ? { ...rest, tekst: t } : rest;
 }
 
 // ── Citations and CSV ───────────────────────────────────────────────────────

@@ -203,3 +203,31 @@ describe('a visit to a bundel’s own page', () => {
 		expect(kaart.mappen.find((x) => x.id === m.id)!.gewijzigd).toBe(changed);
 	});
 });
+
+describe('an arcering (O4, decision 24-1)', () => {
+	const fragment = { waar: 'lid-1', exact: 'ernstige schade', start: 12 };
+
+	it('keeps its place in the bundel of Bewaar, the bundel that holds it first', async () => {
+		const { kaart } = await store();
+		const ander = kaart.nieuw('Werkgever', [lid]);
+		kaart.shade(lid, fragment);
+		// The bundel that holds the lid, not Losse markeringen.
+		expect(kaart.loose.items).toEqual([]);
+		const m = kaart.mappen.find((x) => x.id === ander.id)!;
+		expect(m.aantekeningen).toEqual([
+			{ id: expect.stringMatching(/^a-/), op: `${lid.id}#lid-1`, fragment }
+		]);
+	});
+
+	it('takes a note, changes it, and goes away; its place stays kept', async () => {
+		const { kaart } = await store();
+		const a = kaart.shade(lid, fragment, 'Zorgplicht');
+		const id = kaart.loose.id;
+		expect(kaart.loose.aantekeningen?.[0].tekst).toBe('Zorgplicht');
+		kaart.annotate(a, '', id);
+		expect(kaart.loose.aantekeningen?.[0]).not.toHaveProperty('tekst');
+		kaart.unshade(a, id);
+		expect(kaart.loose.aantekeningen).toEqual([]);
+		expect(kaart.loose.items).toEqual([lid]);
+	});
+});

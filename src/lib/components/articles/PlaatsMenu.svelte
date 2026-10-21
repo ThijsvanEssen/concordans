@@ -22,6 +22,9 @@
 	// the place, then the forms to copy, Kopieer tekst, Bewaar, and where the place leads on
 	// (its verbindingen, its history). In the top layer by its marker, with the keys of a menu:
 	// Escape gives the focus back to the marker, a click outside closes it.
+	// Words selected in the text open the same menu (O4, besluit 24), by the words: the place
+	// with the start of its quote, the forms with the quote after them, Arceer and Aantekening;
+	// a click on an arcering opens it with its aantekening and Arcering weg.
 	import { menu } from '$lib/actions/menu';
 	import { topLayer } from '$lib/actions/top-layer';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
@@ -39,6 +42,10 @@
 		bewaar = null,
 		verbindingen = null,
 		geschiedenis = null,
+		fragment = null,
+		shading = null,
+		rect = null,
+		below = false,
 		onClose
 	}: {
 		/** The marker the menu hangs from, and gets the focus back. */
@@ -52,8 +59,38 @@
 		/** Where its verbindingen are; `tellend` while they are counted. */
 		verbindingen?: { n: number; href: string } | 'tellend' | null;
 		geschiedenis?: { label: string; href: string } | null;
+		/** Words selected in the place; `shade` keeps them, with a note where given; null
+		 *  where they cannot be kept (over two articles): then only Kopieer. */
+		fragment?: { exact: string; shade: ((note: string) => void) | null } | null;
+		/** An arcering clicked: its note, and the way to change it or take it away. */
+		shading?: {
+			exact: string;
+			note: string | null;
+			annotate: (note: string) => void;
+			remove: () => void;
+		} | null;
+		/** Where the menu hangs from, where not the marker: the words selected. */
+		rect?: (() => DOMRect) | null;
+		/** Below the words always: on a phone its own bar stands above them. */
+		below?: boolean;
 		onClose: () => void;
 	} = $props();
+
+	/** The words the menu is of, their start in the head. */
+	const words = $derived(fragment?.exact ?? shading?.exact ?? null);
+	const QUOTE = 32;
+	const head = $derived(
+		words
+			? `${title}, "${words.length > QUOTE ? `${words.slice(0, QUOTE).trimEnd()}…` : words}"`
+			: title
+	);
+	/** A form to copy with the words after it, as a memo quotes them; a link as it is. */
+	const withWords = (c: CiteItem) =>
+		words && c.kind !== 'link' ? `${c.text}, "${words}"` : c.text;
+	/** The field of the aantekening, open in place in the menu. */
+	let writing = $state(false);
+	let note = $state('');
+	const focus = (field: HTMLTextAreaElement) => field.focus();
 
 	const copier = createCopier();
 	const aan = $derived(!!bewaar && kaart.heeft(bewaar));
@@ -81,12 +118,12 @@
 <div
 	class="tekstmenu__lijst is-breed plaatsmenu"
 	role="menu"
-	aria-label={title}
+	aria-label={head}
 	tabindex="-1"
-	use:topLayer={{ anchor: anker, close: onClose }}
+	use:topLayer={{ anchor: anker, close: onClose, rect, below }}
 	use:menu={{ open: true, close: onClose, trigger: anker }}
 >
-	<p class="kop">{title}</p>
+	<p class="kop">{head}</p>
 	{#if cite.length}
 		<p class="label">Kopieer als</p>
 		{#each cite as c (c.kind)}
@@ -94,7 +131,7 @@
 				type="button"
 				class="tekstmenu__item tekstmenu__item--paar"
 				role="menuitem"
-				onclick={() => kopieer(c.text, c.kind)}
+				onclick={() => kopieer(withWords(c), c.kind)}
 				><span class="vorm" class:link={c.kind === 'link'}>{copier.label(c.kind, c.text)}</span
 				><span class="soort">{c.kind}</span></button
 			>
@@ -106,6 +143,71 @@
 		role="menuitem"
 		onclick={() => kopieer(tekst(), 'tekst')}>{copier.label('tekst', 'Kopieer tekst')}</button
 	>
+	{#if writing && (fragment?.shade || shading)}
+		<form
+			class="aantekening"
+			onsubmit={(e) => {
+				e.preventDefault();
+				if (shading) shading.annotate(note);
+				else fragment?.shade?.(note);
+				sluit();
+			}}
+		>
+			<textarea
+				bind:value={note}
+				rows="3"
+				placeholder="Aantekening"
+				aria-label="Aantekening bij {head}"
+				use:focus
+				onkeydown={(e) => {
+					// The arrows move in the note, not to the menu's items; Escape still closes it.
+					if (/^(Arrow(Up|Down)|Home|End)$/.test(e.key)) e.stopPropagation();
+					if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) e.currentTarget.form?.requestSubmit();
+				}}
+			></textarea>
+			<button type="submit" class="tekstmenu__item">Bewaar aantekening</button>
+		</form>
+	{:else if fragment?.shade}
+		{@const shade = fragment.shade}
+		<button
+			type="button"
+			class="tekstmenu__item"
+			role="menuitem"
+			onclick={() => {
+				shade('');
+				sluit();
+			}}>Arceer</button
+		>
+		<button
+			type="button"
+			class="tekstmenu__item"
+			role="menuitem"
+			onclick={() => {
+				note = '';
+				writing = true;
+			}}>Aantekening</button
+		>
+	{:else if shading}
+		{@const a = shading}
+		<button
+			type="button"
+			class="tekstmenu__item"
+			role="menuitem"
+			onclick={() => {
+				note = a.note ?? '';
+				writing = true;
+			}}>{a.note ? 'Wijzig aantekening' : 'Aantekening'}</button
+		>
+		<button
+			type="button"
+			class="tekstmenu__item"
+			role="menuitem"
+			onclick={() => {
+				a.remove();
+				sluit();
+			}}>Arcering weg</button
+		>
+	{/if}
 	{#if bewaar}
 		<div class="regel">
 			<!-- Kept: the bundels with their ticks, as Bewaar's menu (BundleChecklist); nothing
@@ -188,6 +290,28 @@
 	.soort {
 		flex: none;
 		color: var(--ink-3);
+	}
+	.aantekening {
+		display: grid;
+		gap: var(--s-1);
+		margin: 0;
+		padding: var(--s-1) var(--s-3);
+	}
+	/* The field at 16px: below that a phone zooms in on focus. */
+	.aantekening textarea {
+		box-sizing: border-box;
+		width: 100%;
+		padding: var(--s-1) var(--s-2);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: var(--paper);
+		font-family: var(--font-serif);
+		font-size: var(--t-input);
+		color: var(--ink);
+		resize: vertical;
+	}
+	.aantekening .tekstmenu__item {
+		padding-inline: 0;
 	}
 	.regel {
 		margin-top: var(--s-1);

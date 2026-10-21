@@ -35,11 +35,12 @@ export function placement(
 	anchor: Edges,
 	box: Size,
 	view: Size,
-	align: Align = 'left'
+	align: Align = 'left',
+	downOnly = false
 ): { up: boolean; room: number; left: number } {
 	const below = view.height - anchor.bottom - GAP - EDGE;
 	const above = anchor.top - GAP - EDGE;
-	const up = box.height > below && above > below;
+	const up = !downOnly && box.height > below && above > below;
 	const start = align === 'right' ? anchor.right - box.width : anchor.left;
 	return {
 		up,
@@ -84,10 +85,14 @@ type TopLayer = {
 	align?: Align;
 	/** Moved to the end of the body first: out of a text whose style it would inherit. */
 	detach?: boolean;
+	/** Where it hangs from, where not the anchor's box: the words a reader selected. */
+	rect?: (() => Edges) | null;
+	/** Below its anchor always: above words selected on a phone stands the phone's own bar. */
+	below?: boolean;
 };
 
 export const topLayer: Action<HTMLElement, TopLayer> = (el, params) => {
-	let { anchor, close, align = 'left' } = params;
+	let { anchor, close, align = 'left', rect = null, below = false } = params;
 	let around = clippers(anchor);
 	if (params.detach) document.body.appendChild(el);
 	if (popover(el)) {
@@ -96,13 +101,13 @@ export const topLayer: Action<HTMLElement, TopLayer> = (el, params) => {
 	}
 
 	const place = () => {
-		const a = anchor.getBoundingClientRect();
+		const a = rect ? rect() : anchor.getBoundingClientRect();
 		const view = { width: innerWidth, height: innerHeight };
 		const shown = { top: 0, left: 0, bottom: view.height, right: view.width };
 		if (outOfView(a, [shown, ...around.map((c) => c.getBoundingClientRect())])) return close();
 		// Its whole height, borders too, however much of it its cap now shows.
 		const height = el.scrollHeight + el.offsetHeight - el.clientHeight;
-		const { up, room, left } = placement(a, { width: el.offsetWidth, height }, view, align);
+		const { up, room, left } = placement(a, { width: el.offsetWidth, height }, view, align, below);
 		el.style.setProperty('--room', `${Math.round(room)}px`);
 		el.style.top = `${Math.round(topOf(a, up, el.offsetHeight))}px`;
 		el.style.left = `${Math.round(left)}px`;
@@ -121,7 +126,7 @@ export const topLayer: Action<HTMLElement, TopLayer> = (el, params) => {
 
 	return {
 		update(next) {
-			({ anchor, close, align = 'left' } = next);
+			({ anchor, close, align = 'left', rect = null, below = false } = next);
 			around = clippers(anchor);
 			place();
 		},

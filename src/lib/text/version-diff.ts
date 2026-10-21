@@ -621,3 +621,44 @@ export function plainDiff(rows: CompareRow[]): string {
 		})
 		.join('\n');
 }
+
+/**
+ * Where the words `[start, end)` of `a` stand in `b`, followed through their comparison: the
+ * part of `b` that holds what stands of them and what was put in their place; `struck` where
+ * every word of them was struck. An arcering kept in an earlier tekstversie is found so.
+ */
+export function followWords(
+	a: string,
+	b: string,
+	start: number,
+	end: number
+): [number, number] | 'struck' {
+	let o = 0;
+	let n = 0;
+	let from = Infinity;
+	let to = -Infinity;
+	for (const seg of diffWords(a, b)) {
+		const len = seg.text.length;
+		if (seg.op === 'eq') {
+			const s = Math.max(o, start);
+			const e = Math.min(o + len, end);
+			if (s < e && seg.text.slice(s - o, e - o).trim()) {
+				from = Math.min(from, n + s - o);
+				to = Math.max(to, n + e - o);
+			}
+			o += len;
+			n += len;
+		} else if (seg.op === 'del') o += len;
+		else {
+			// Words put in within them, or in place of their last words.
+			if (o > start && o < end && seg.text.trim()) {
+				from = Math.min(from, n);
+				to = Math.max(to, n + len);
+			} else if ((o === start || o === end) && seg.text.trim() && from !== Infinity) {
+				to = Math.max(to, n + len);
+			}
+			n += len;
+		}
+	}
+	return from === Infinity ? 'struck' : [from, to];
+}

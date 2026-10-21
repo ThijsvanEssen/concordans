@@ -7,6 +7,9 @@ import {
 	freeName,
 	annotationOn,
 	readAnnotations,
+	holderOf,
+	newShading,
+	withNote,
 	readItem,
 	unknownOf,
 	withAnnotations,
@@ -14,6 +17,7 @@ import {
 	withoutItem,
 	itemKey,
 	verschuif,
+	type Fragment,
 	type SharedMap,
 	type GroepNotities,
 	type Map,
@@ -337,6 +341,44 @@ class Kaarten {
 		};
 		this.#bewaar();
 		return since;
+	}
+
+	// ── Arceringen ───────────────────────────────────────────────────────────
+	/**
+	 * Arceer: words of a place kept as a fragment, with the reader's note where given (decision
+	 * 24-1: arceren is bewaren). Into the bundel named; else the one of Bewaar where it holds the
+	 * place (or the bron), else the first that does, else the bundel of Bewaar with the place
+	 * kept in it. Its id.
+	 */
+	shade(place: MapItem, fragment: Fragment, note = '', id?: string): string {
+		this.#vers();
+		const holdsIt = (m: Map) => !!holderOf(m.items, place.id, place.at);
+		const target =
+			id ?? (holdsIt(this.keepsIn) ? this.keepsIn : (this.listed.find(holdsIt) ?? this.keepsIn)).id;
+		let made = '';
+		keepStorage();
+		this.#change(target, (m) => {
+			const holder = holderOf(m.items, place.id, place.at);
+			const a = newShading(itemKey(holder ?? place), fragment, note);
+			made = a.id;
+			return {
+				items: holder ? m.items : withItems(m.items, [place]),
+				aantekeningen: [...(m.aantekeningen ?? []), a]
+			};
+		});
+		return made;
+	}
+	/** The note of an aantekening, by its id; empty is none (the arcering stays). */
+	annotate(a: string, note: string, id: string) {
+		this.#change(id, (m) => ({
+			aantekeningen: (m.aantekeningen ?? []).map((x) => (x.id === a ? withNote(x, note) : x))
+		}));
+	}
+	/** An arcering away, with its note; the item it was kept on stays. */
+	unshade(a: string, id: string) {
+		this.#change(id, (m) => ({
+			aantekeningen: (m.aantekeningen ?? []).filter((x) => x.id !== a)
+		}));
 	}
 
 	// ── Maps ─────────────────────────────────────────────────────────────────
