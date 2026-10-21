@@ -61,8 +61,7 @@ const item = (date: string, kind: FeedItem['kind'], dossier: string | null): Fee
 		answered_by: [],
 		amends_articles: [],
 		replaces: null,
-		cites: [],
-		motion_kind: null
+		cites: []
 	}) as FeedItem;
 
 describe('daysOf', () => {

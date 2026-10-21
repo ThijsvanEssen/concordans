@@ -260,12 +260,6 @@ describe('timelineOf', () => {
 		since: '2026-09-15',
 		until: '2026-09-29',
 		margin: 10,
-		chamber_schedule: {
-			last_sitting: null,
-			last_votes: null,
-			next_sitting: null,
-			next_votes: null
-		},
 		days,
 		items,
 		items_truncated: false
