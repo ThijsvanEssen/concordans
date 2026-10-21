@@ -75,7 +75,8 @@ export function voteLineOf(d: Decision): VoteLineParts {
 			: (tally ?? (isHammer(d) ? null : methodPhrase(d.method, d.decision_kind)));
 	return {
 		word: decisionOutcome(d) ?? 'Stemming',
-		tone: result ? TONE[result] : 'open',
+		// A vote is aangenomen or verworpen; ingetrokken ends a bill by letter, never a vote.
+		tone: result && result !== 'ingetrokken' ? TONE[result] : 'open',
 		how,
 		date: d.date ?? null,
 		decision: d.key,

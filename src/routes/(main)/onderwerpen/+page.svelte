@@ -27,7 +27,10 @@
 	import { feedStand } from '$lib/text/stand';
 	import {
 		deelAdres,
+		dossiersFromParams,
+		followedDossierName,
 		isNieuw,
+		isWords,
 		lees,
 		nieuwBezoek,
 		haalTermWeg,
@@ -40,6 +43,7 @@
 		vensterVan,
 		voegTermenToe,
 		volg,
+		followDossier,
 		volgWet,
 		wetNaam,
 		wettenUitParams,
@@ -48,6 +52,8 @@
 	} from '$lib/onderwerpen/onderwerpen';
 	import { normaal } from '$lib/text/treffer';
 	import { getInstrumentDetail } from '$lib/api/instrument-cache';
+	import { getDossier } from '$lib/api/dossiers';
+	import { dossierName } from '$lib/bron/dossier-naam';
 	import { addDays, korteDatum, vandaag } from '$lib/text/datum';
 
 	/** Lines per topic, as the feed gives at most in one page. */
@@ -62,6 +68,12 @@
 		...wettenUitParams(page.url.searchParams).map((wet) => ({
 			termen: [wetNaam(wet)],
 			wet,
+			vorige: null,
+			gezien: null
+		})),
+		...dossiersFromParams(page.url.searchParams).map((dossier) => ({
+			termen: [followedDossierName(dossier)],
+			dossier,
 			vorige: null,
 			gezien: null
 		}))
@@ -89,9 +101,31 @@
 				.catch((e) => report('Gevolgd wet', e));
 		}
 	});
-	/** What a topic is called: its words, or the law (and article) it follows. */
+	// The name of a dossier an address names by its number alone, asked once.
+	let dossierNames = $state<Record<string, string>>({});
+	$effect(() => {
+		for (const o of lijst) {
+			const n = o.dossier?.number;
+			if (!n || o.dossier?.title !== n || n in dossierNames) continue;
+			dossierNames[n] = n;
+			getDossier(n)
+				.then((d) => {
+					dossierNames[n] = dossierName(d);
+				})
+				// The topic keeps the dossier's number as its name.
+				.catch((e) => report('Gevolgd dossier', e));
+		}
+	});
+	/** What a topic is called: its words, or the law (and article) or dossier it follows. */
 	const naamVan = (o: Onderwerp) =>
-		o.wet ? wetNaam({ ...o.wet, titel: wetNamen[o.wet.bwb] ?? o.wet.titel }) : o.termen.join('; ');
+		o.dossier
+			? followedDossierName({
+					...o.dossier,
+					title: dossierNames[o.dossier.number] ?? o.dossier.title
+				})
+			: o.wet
+				? wetNaam({ ...o.wet, titel: wetNamen[o.wet.bwb] ?? o.wet.titel })
+				: o.termen.join('; ');
 
 	type Stand = {
 		status: 'laden' | 'klaar' | 'fout';
@@ -107,13 +141,15 @@
 	let standen = $state<Record<string, Stand>>({});
 	let uitgeklapt = $state<Record<string, boolean>>({});
 	// A shared topic asks another window than an own one with the same words.
-	const vak = (o: Pick<Onderwerp, 'termen' | 'wet'>) =>
+	const vak = (o: Pick<Onderwerp, 'termen' | 'wet' | 'dossier'>) =>
 		(gedeeld.length ? 'gedeeld:' : '') + topicKey(o);
-	/** What the feed is asked for a topic: its words, or its law and article. */
+	/** What the feed is asked for a topic: its words, its law and article, or its dossier. */
 	const vraagVan = (o: Onderwerp) =>
-		o.wet
-			? { instrument: o.wet.bwb, ...(o.wet.artikel ? { article: o.wet.artikel } : {}) }
-			: { q: o.termen };
+		o.dossier
+			? { dossier: o.dossier.number }
+			: o.wet
+				? { instrument: o.wet.bwb, ...(o.wet.artikel ? { article: o.wet.artikel } : {}) }
+				: { q: o.termen };
 	const recent = addDays(today, -RECENT_DAGEN);
 	const vanaf = (o: Onderwerp) => vensterVan(o.vorige, recent);
 
@@ -193,7 +229,12 @@
 				eerder: false
 			};
 		laadAlles(
-			nieuw.map((o) => ({ ...o, termen: [...o.termen], wet: o.wet ? { ...o.wet } : undefined })),
+			nieuw.map((o) => ({
+				...o,
+				termen: [...o.termen],
+				wet: o.wet ? { ...o.wet } : undefined,
+				dossier: o.dossier ? { ...o.dossier } : undefined
+			})),
 			ac.signal
 		).catch((e) => report('Gevolgd', e));
 	});
@@ -289,7 +330,12 @@
 	}
 	function volgGedeeld() {
 		for (const o of gedeeld)
-			if (o.wet) volgWet({ ...o.wet, titel: wetNamen[o.wet.bwb] ?? o.wet.titel });
+			if (o.dossier)
+				followDossier(
+					{ ...o.dossier, title: dossierNames[o.dossier.number] ?? o.dossier.title },
+					today
+				);
+			else if (o.wet) volgWet({ ...o.wet, titel: wetNamen[o.wet.bwb] ?? o.wet.titel });
 			else volg(o.termen);
 		eigen = lees();
 	}
@@ -378,7 +424,7 @@
 				{#snippet naast()}
 					<span class="acties">
 						{#if !gedeeld.length}
-							{#if !o.wet}
+							{#if isWords(o)}
 								<TekstLink
 									aria-expanded={bewerkt === topicKey(o)}
 									onclick={() => (bewerkt = bewerkt === topicKey(o) ? null : topicKey(o))}
@@ -387,7 +433,7 @@
 							{/if}
 							<TekstLink onclick={() => verwijder(o)}>Niet meer volgen</TekstLink>
 						{/if}
-						{#if !o.wet}<a class="naar-overzicht" href={overzichtHref(o)}>Overzicht</a>{/if}
+						{#if isWords(o)}<a class="naar-overzicht" href={overzichtHref(o)}>Overzicht</a>{/if}
 					</span>
 				{/snippet}
 				<p class="sinds">{telRegel(o, s)}</p>
@@ -442,7 +488,7 @@
 								onToggle={(id) => (openId = openId === id ? null : id)}
 								filterHref={(patch) => `/actueel?${new URLSearchParams(patch)}`}
 								nieuwSinds={o.vorige}
-								termen={o.wet ? [] : o.termen}
+								termen={isWords(o) ? o.termen : []}
 								wet={o.wet ? { bwb: o.wet.bwb, titel: wetNamen[o.wet.bwb] ?? o.wet.titel } : null}
 							/>
 						{/each}
@@ -465,7 +511,9 @@
 					/>
 				{/if}
 				<p class="verder">
-					{#if o.wet}
+					{#if o.dossier}
+						<a href="/actueel?{new URLSearchParams({ dossier: o.dossier.number })}">In Actueel</a>
+					{:else if o.wet}
 						<a href={actueelWetHref(o)}>In Actueel</a>
 					{:else}
 						{#each o.termen as term (term)}

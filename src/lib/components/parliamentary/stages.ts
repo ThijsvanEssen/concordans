@@ -144,7 +144,9 @@ export function methodPhrase(method: string | null | undefined, kind?: string | 
 
 export const OUTCOME_LABEL: Record<Outcome, string> = {
 	aangenomen: 'Aangenomen',
-	verworpen: 'Verworpen'
+	verworpen: 'Verworpen',
+	// Withdrawn by letter (API 0.80.1, #857): `withdrawal_letter`, its day `closed_on`.
+	ingetrokken: 'Ingetrokken'
 };
 
 export const isOutcome = (value: unknown): value is Outcome =>

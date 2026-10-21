@@ -76,3 +76,49 @@ test('the overview of a topic sorts its decisions by kind and outcome', async ({
 	await expect(page).toHaveURL(/\/onderwerpen\/overzicht/);
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('huur');
 });
+
+test('Actueel: the days without a sitting and the open motions of no confidence come first', async ({
+	page
+}) => {
+	await page.goto('/actueel');
+	await expect(page.getByText(/^Geen vergaderingen tot 27 oktober 2026/)).toBeVisible();
+	const open = page.getByRole('list', { name: /niet in stemming geweest/ });
+	await expect(open.getByText('Motie van afkeuring, nog niet in stemming').first()).toBeVisible();
+	await expect(open.getByRole('link').first()).toHaveAttribute(
+		'href',
+		/\/kamerstukken\/37020-XVI\/60/
+	);
+});
+
+test('Gevolgd: a dossier followed from its page, with what is new since the visit before', async ({
+	page
+}) => {
+	await page.goto('/dossiers/36496');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Wet betaalbare huur');
+	await expect(page.locator('link[rel="alternate"][type="application/atom+xml"]')).toHaveAttribute(
+		'href',
+		/\/api\/feed\.atom\?dossier=36496$/
+	);
+	await page.getByRole('button', { name: 'Volg', exact: true }).click();
+	// Followed: Volg became Gevolgd, as Bewaar becomes Bewaard, a way to Gevolgd.
+	await expect(
+		page.locator('#main-content').getByRole('link', { name: 'Gevolgd', exact: true })
+	).toHaveAttribute('href', '/onderwerpen');
+
+	// The visit before lies back: what came in since is marked, a link to those days.
+	await page.evaluate(() => {
+		const list = JSON.parse(localStorage.getItem('concordans:onderwerpen') ?? '[]');
+		list[0].gezien = '2024-01-01';
+		localStorage.setItem('concordans:onderwerpen', JSON.stringify(list));
+	});
+	await page.reload();
+	await expect(page.getByRole('link', { name: /nieuw sinds 1 januari 2024/ })).toHaveAttribute(
+		'href',
+		'/actueel?dossier=36496&van=2024-01-01'
+	);
+
+	await page.goto('/onderwerpen');
+	await expect(
+		page.getByRole('heading', { level: 2, name: /^Kamerstuk 36496 Wet betaalbare huur/ })
+	).toBeVisible();
+});

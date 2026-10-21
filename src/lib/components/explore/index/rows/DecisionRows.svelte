@@ -10,6 +10,7 @@
 	import { korteDatum, weekdag } from '$lib/text/datum';
 	import { plural } from '$lib/text/words';
 	import IndexRow from '../IndexRow.svelte';
+	import { motionKindLabel } from '$lib/components/parliamentary/motion-kind';
 	import { NO_DECISION_KIND, decisionMethod, decisionOutcome } from '../decision-kind';
 	import type { DecisionsState } from '../lists/decisions';
 	import type { ViewProps } from '../lists/list';
@@ -66,8 +67,9 @@
 			{@const { voor: inFavour, tegen: against } = forAgainst(s.tally)}
 			{@const inFavourPct = (inFavour / (inFavour + against)) * 100}
 			<!-- The Eerste Kamer's decisions carry no kind yet: their dossier leads. -->
-			{@const kindLabel = s.kind ?? (s.chamber === 'EK' ? null : NO_DECISION_KIND)}
-			{@const inhoud = stemmingInhoud(s.key, s.tally)}
+			{@const kindLabel =
+				motionKindLabel(s.motion_kind) ?? s.kind ?? (s.chamber === 'EK' ? null : NO_DECISION_KIND)}
+			{@const content = stemmingInhoud(s.key, s.tally)}
 			<IndexRow
 				{bron}
 				dossier={s.dossiers?.[0]?.number ?? s.dossier_numbers?.[0]}
@@ -75,7 +77,7 @@
 				cite={voteCitation(s)}
 				href={openHref(bron)}
 				open={ctx.p.open === bron}
-				onToggle={inhoudVan(inhoud) ? () => ctx.toggleOpen(bron) : undefined}
+				onToggle={inhoudVan(content) ? () => ctx.toggleOpen(bron) : undefined}
 			>
 				{#snippet lead()}
 					{#if !day.date || kindLabel}
@@ -130,7 +132,7 @@
 					{/if}
 				{/snippet}
 				{#snippet detail()}
-					<RijInhoud item={inhoud} />
+					<RijInhoud item={content} />
 				{/snippet}
 			</IndexRow>
 		{/each}

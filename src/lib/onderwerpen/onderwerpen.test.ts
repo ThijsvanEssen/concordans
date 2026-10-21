@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+	visitDossier,
 	deelAdres,
+	dossiersFromParams,
+	followDossier,
+	followsDossier,
 	haalTermWeg,
 	isNieuw,
 	lees,
@@ -145,5 +149,44 @@ describe('onderwerpen', () => {
 		expect(wettenUitParams(new URLSearchParams('wet=bwbv0001000'))).toEqual([
 			{ bwb: 'BWBV0001000', titel: 'BWBV0001000', artikel: null }
 		]);
+	});
+});
+
+describe('a dossier followed (API 0.80.1, #866)', () => {
+	const cbw = { number: '36764', title: 'Cyberbeveiligingswet' };
+
+	it('keeps the dossier with its number, its name and the day it was followed', () => {
+		expect(followsDossier('36764')).toBe(false);
+		followDossier(cbw, '2026-10-21');
+		followDossier(cbw, '2026-10-22');
+		expect(followsDossier('36764')).toBe(true);
+		expect(lees()).toEqual([
+			{
+				termen: ['Kamerstuk 36764 Cyberbeveiligingswet'],
+				dossier: cbw,
+				vorige: null,
+				gezien: '2026-10-21'
+			}
+		]);
+		// A topic of its own: neither a word nor a law.
+		expect(volgt('Cyberbeveiligingswet')).toBe(false);
+		expect(topicKey(lees()[0])).toBe('dossier:36764');
+	});
+
+	it('gives the visit before and makes today the visit', () => {
+		followDossier(cbw, '2026-10-19');
+		expect(visitDossier('36764', '2026-10-21')).toBe('2026-10-19');
+		expect(visitDossier('36764', '2026-10-21')).toBe('2026-10-21');
+		expect(visitDossier('36600-VII', '2026-10-21')).toBeNull();
+	});
+
+	it('is shared by its number and stops being followed like any topic', () => {
+		followDossier({ number: '36600-VII', title: 'Begroting' }, '2026-10-21');
+		expect(deelAdres(lees())).toBe('/onderwerpen?dossier=36600-VII');
+		expect(
+			dossiersFromParams(new URLSearchParams('dossier=36600-VII&dossier=36600-vii&dossier=x'))
+		).toEqual([{ number: '36600-VII', title: '36600-VII' }]);
+		ontvolgOnderwerp(lees()[0]);
+		expect(lees()).toEqual([]);
 	});
 });

@@ -1,4 +1,5 @@
 import { votesSentence } from '$lib/components/parliamentary/stemming';
+import { motionKindLabel } from '$lib/components/parliamentary/motion-kind';
 import { capitalize, joinAnd, truncate } from '$lib/text/words';
 import { bewindspersoonVan, eersteIndiener } from '$lib/bron/submitters';
 import type { BronRef } from '$lib/bron/href';
@@ -162,7 +163,8 @@ function voteLine(i: FeedItem): TimelineLine {
 	return {
 		id: i.id,
 		date: i.date,
-		label: `Stemming, ${outcomeWord(passed)}`,
+		// A motion of censure or of no confidence by its name (API 0.80): the vote is in the line.
+		label: `${motionKindLabel(i.motion_kind) ?? 'Stemming'}, ${outcomeWord(passed)}`,
 		vorm: 'besluit',
 		title: cut(
 			`${decides(chamberOfVote(i), passed, paperOf(nounOf(i), i))}${subject ? ` over ${subject}` : ''}`
@@ -580,6 +582,11 @@ function kopVan(i: FeedItem): Omit<Headline, 'vorm'> {
 			};
 		}
 		default:
-			return { label: KIND_LABEL[i.kind].one, title: titleOf(i), major: false, teken: 'stuk' };
+			return {
+				label: motionKindLabel(i.motion_kind) ?? KIND_LABEL[i.kind].one,
+				title: titleOf(i),
+				major: !!i.motion_kind,
+				teken: 'stuk'
+			};
 	}
 }

@@ -254,6 +254,12 @@ describe('timelineOf', () => {
 		since: '2026-09-15',
 		until: '2026-09-29',
 		margin: 10,
+		chamber_schedule: {
+			last_sitting: null,
+			last_votes: null,
+			next_sitting: null,
+			next_votes: null
+		},
 		days,
 		items,
 		items_truncated: false
@@ -343,6 +349,14 @@ describe('headlineOf', () => {
 			major: false,
 			teken: 'stuk'
 		});
+	});
+
+	it('names a motion of censure or of no confidence, and the vote on one (API 0.80)', () => {
+		const motie = item({ kind: 'Motie', title: 'Motie van het lid X', motion_kind: 'censure' });
+		expect(headlineOf(motie)).toMatchObject({ label: 'Motie van afkeuring', major: true });
+		expect(headlineOf(vote(20, 130, { motion_kind: 'no_confidence' })).label).toBe(
+			'Motie van wantrouwen, verworpen'
+		);
 	});
 });
 

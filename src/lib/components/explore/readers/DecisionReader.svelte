@@ -2,6 +2,7 @@
 	import { lacks } from '$lib/text/coverage';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { shortKind } from '$lib/text/document-kind';
+	import { motionKindLabel } from '$lib/components/parliamentary/motion-kind';
 	import { CHOICE, forAgainst } from '$lib/components/parliamentary/stemming';
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { langeDatum } from '$lib/text/datum';
@@ -151,7 +152,7 @@
 								class:uitslag--passed={d.passed === true}
 								class:uitslag--failed={d.passed === false}>{uitkomst}</span
 							>{/if}{#if d.primary_case_kind}{uitkomst ? ', ' : ''}<span class="zaaksoort"
-								>{d.primary_case_kind}</span
+								>{motionKindLabel(d.motion_kind) ?? d.primary_case_kind}</span
 							>{/if}{#each verder as dossier, i (dossier.number)}{uitkomst ||
 							d.primary_case_kind ||
 							i > 0

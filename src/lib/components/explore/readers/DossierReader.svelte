@@ -8,7 +8,8 @@
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
-	import { kamerstukNummer, officialNumber } from '$lib/bron/dossier-naam';
+	import { dossierName, kamerstukNummer, officialNumber } from '$lib/bron/dossier-naam';
+	import { atomHref } from '$lib/components/actueel/feed';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -38,7 +39,7 @@
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { coverageLine } from '$lib/text/coverage';
 	import type { ChangedArticles } from '$lib/components/parliamentary/changed-articles';
-	let metOverig = $state(false);
+	let withOther = $state(false);
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -100,6 +101,16 @@
 		>{/each}
 {/snippet}
 
+<!-- The dossier as an Atom feed, for a reader that follows it elsewhere (#866). -->
+<svelte:head>
+	{#if dossierNumber}<link
+			rel="alternate"
+			type="application/atom+xml"
+			title="Actueel in {kamerstukNummer(dossierNumber)}"
+			href={atomHref({ dossier: dossierNumber })}
+		/>{/if}
+</svelte:head>
+
 <ReaderFrame state={dossier.state} what="Dossier" retry={dossier.retry}>
 	{#snippet children(d)}
 		<div class="r-dossier">
@@ -108,7 +119,9 @@
 				title={d.short_title ?? d.title ?? officialNumber(d.number)}
 				acties={{
 					// One group per dossier in a map, as a Kamerstuk of it is grouped (map.ts).
-					bewaar: bewaarDossier(d)
+					bewaar: bewaarDossier(d),
+					// Volg: the dossier under Gevolgd, what is new in it since the visit before.
+					follow: { number: d.number, title: dossierName(d) }
 				}}
 			>
 				{#snippet kindLine()}
@@ -127,16 +140,16 @@
 				     it amends and the EU acts it implements (`legal_effect`), as links. -->
 					{#if (d.legal_effect?.amends ?? []).length || (d.legal_effect?.implements ?? []).length}
 						<p class="effect">
-							{#each [[changeVerb('AMENDS', 'instruments'), d.legal_effect?.amends ?? []], ['Implementeert', d.legal_effect?.implements ?? []]] as const as [term, wetten], i (term)}
-								{#if wetten.length}<span class="effect__regel"
+							{#each [[changeVerb('AMENDS', 'instruments'), d.legal_effect?.amends ?? []], ['Implementeert', d.legal_effect?.implements ?? []]] as const as [term, laws], i (term)}
+								{#if laws.length}<span class="effect__regel"
 										>{i > 0 && (d.legal_effect?.amends ?? []).length ? '; ' : ''}<span
 											class="effect__term"
 											>{i > 0 && (d.legal_effect?.amends ?? []).length
 												? term.toLowerCase()
 												: term}</span
 										>
-										{#each wetten as w, j (w.key)}{j > 0
-												? j === wetten.length - 1
+										{#each laws as w, j (w.key)}{j > 0
+												? j === laws.length - 1
 													? ' en '
 													: ', '
 												: ''}<a
@@ -190,7 +203,7 @@
 			{:else if timeline.state.status === 'error'}
 				<LoadState state={timeline.state} what="De procedure" retry={timeline.retry} />
 			{:else if timeline.state.data}
-				{@const p = procedure(d, timeline.state.data.entries, metOverig)}
+				{@const p = procedure(d, timeline.state.data.entries, withOther)}
 				<!-- A paper opens its text in place, the vote on the bill its bar, a day's papers of
 				     the bill their list; the bron is one step further (Thijs, 11 Oct). -->
 				{#snippet inhoud(id: string)}
@@ -217,8 +230,8 @@
 								fracties={c.fracties}
 							/>{/snippet}
 						{#snippet meer()}
-							{#if p.overig}<TekstLink onclick={() => (metOverig = !metOverig)}
-									>{metOverig
+							{#if p.overig}<TekstLink onclick={() => (withOther = !withOther)}
+									>{withOther
 										? 'Alleen de procedure'
 										: `Toon ook de ${p.overig} andere items`}</TekstLink
 								>{/if}

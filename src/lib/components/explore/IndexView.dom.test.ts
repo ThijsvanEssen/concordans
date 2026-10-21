@@ -50,6 +50,10 @@ const ROUTES: Partial<Record<ApiPath, FakeAnswer>> = {
 	'/api/ministries': live.ministries,
 	'/api/commitments': list(live.commitments),
 	'/api/documents': list(live.documents),
+	// The Tweede Kamer meets: the Stemmingen say no days without a sitting.
+	'/api/feed/summary': {
+		chamber_schedule: { last_sitting: null, last_votes: null, next_sitting: null, next_votes: null }
+	},
 	'/api/stats/coverage': live.coverage,
 	// The EHRM off since 8 October: its list says how far it goes.
 	'/api/stats': {

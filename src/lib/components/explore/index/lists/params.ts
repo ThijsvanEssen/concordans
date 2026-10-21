@@ -9,6 +9,7 @@ import {
 	type Outcome
 } from '$lib/components/parliamentary/stages';
 import { chamberFromParam } from '$lib/components/parliamentary/chamber';
+import { motionKindFromParam } from '$lib/components/parliamentary/motion-kind';
 import { COMMITMENT_STATUSES, POSTS } from '../government';
 import { MINISTRY_KEYS, choiceOf } from '$lib/util/choice';
 import { PARAM } from '$lib/url/filters';
@@ -25,6 +26,7 @@ export const INDEX_FILTER_PARAMS = [
 	'track',
 	PARAM.kind,
 	'passed',
+	'motie',
 	PARAM.since,
 	PARAM.until,
 	PARAM.dossier,
@@ -101,6 +103,8 @@ export function readParams(params: URLSearchParams) {
 		dossierScope: dossierStatus ?? (DOSSIER_NUMBER.test(q.trim()) ? 'all' : 'open'),
 		outcome: choiceOf(params.get(PARAM.outcome), OUTCOMES),
 		passed: choiceOf(params.get('passed'), ['true', 'false'] as const),
+		/** A motion of censure or of no confidence (`?motie=wantrouwen`, API 0.80). */
+		motionKind: motionKindFromParam(params.get('motie')),
 		from: get(PARAM.since),
 		to: get(PARAM.until),
 		dossier: get(PARAM.dossier),

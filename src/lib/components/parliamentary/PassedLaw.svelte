@@ -1,34 +1,47 @@
 <script lang="ts">
-	// Where a passed bill ended, under its stand: the law it made, a link to it, and the day
-	// that law came into force, asked of the law after the first paint (one law only: of more,
-	// each says its own day). Words from passed-law.ts.
+	// Where a passed bill ended, under its stand: per publication its law was enacted in, the
+	// law (a link), the Staatsblad (a link) and the first day in force, from the dossier itself
+	// (`enacted`, API 0.80.1): no request of its own. A part the source lacks is left out. A
+	// passed dossier without `enacted` names the laws it made (`instruments`), without a day. Words
+	// from passed-law.ts.
 	import type { Schema } from '$lib/api/types';
-	import { getInstrumentDetail } from '$lib/api/instrument-cache';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import { langeDatum } from '$lib/text/datum';
 	import { separatorBefore } from '$lib/text/words';
-	import { load } from '$lib/util/load.svelte';
-	import { inForceWords, lawsMade } from './passed-law';
+	import { inForceWords, lawsMade, enactments } from './passed-law';
 
-	let { dossier }: { dossier: Pick<Schema<'DossierDetailResponse'>, 'instruments'> } = $props();
+	let {
+		dossier
+	}: { dossier: Pick<Schema<'DossierDetailResponse'>, 'instruments' | 'enacted' | 'outcome'> } =
+		$props();
 
-	const laws = $derived(lawsMade(dossier));
-	const only = $derived(laws.length === 1 ? laws[0].key : null);
-	const law = load(
-		() => only,
-		(key) => (key ? getInstrumentDetail(key) : Promise.resolve(null)),
-		'Wet van het dossier'
-	);
-	const inForce = $derived(
-		law.state.status === 'ready' ? (law.state.data?.date_in_force ?? null) : null
+	/** The words before the law, or before the Staatsblad of a publication without one. */
+	const LEAD = { law: 'Vastgesteld als ', cite: 'Bekendgemaakt in ' };
+	const enacted = $derived(enactments(dossier));
+	// Without `enacted`, the laws a passed bill made; a bill rejected or withdrawn made none.
+	const laws = $derived(
+		enacted.length || dossier.outcome !== 'aangenomen' ? [] : lawsMade(dossier)
 	);
 </script>
 
+{#each enacted as v, i (i)}
+	<p class="passed-law">
+		{#if v.law}{LEAD.law}<BronLink
+				ref={{ collection: 'instruments', key: v.law.key }}
+				href={v.law.href}>{v.law.name}</BronLink
+			>{v.cite ? ', ' : ''}{:else if v.cite}{LEAD.cite}{/if}{#if v.cite}<BronLink
+				ref={{ collection: 'instruments', key: v.cite.key }}
+				href={v.cite.href}
+				title={v.issued ? `Uitgegeven op ${langeDatum(v.issued)}` : undefined}
+				>{v.cite.text}</BronLink
+			>{/if}{#if v.inForce}{`; ${inForceWords(v.inForce)} ${langeDatum(v.inForce)}`}{/if}.
+	</p>
+{/each}
 {#if laws.length}
 	<p class="passed-law">
 		Vastgesteld als {#each laws as l, i (l.key)}{separatorBefore(i, laws.length)}<BronLink
 				ref={{ collection: 'instruments', key: l.key }}>{l.name}</BronLink
-			>{/each}{#if inForce}; {inForceWords(inForce)} {langeDatum(inForce)}{/if}.
+			>{/each}.
 	</p>
 {/if}
 

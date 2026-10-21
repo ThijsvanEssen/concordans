@@ -7,6 +7,7 @@ import { naamVan } from '$lib/bron/menselijk';
 import { vandaag } from '$lib/text/datum';
 
 type Instrument = Schema<'DossierInstrumentDTO'>;
+type Enacted = Schema<'EnactedPublicationDTO'>;
 
 /** A law the dossier made: its key and its name. */
 type MadeLaw = { key: string; name: string };
@@ -28,3 +29,34 @@ export function lawsMade(d: { instruments?: Instrument[] | null }): MadeLaw[] {
 /** `in werking getreden op`, or `treedt in werking op` for a day still to come. */
 export const inForceWords = (iso: string, today = vandaag()): string =>
 	iso > today ? 'treedt in werking op' : 'in werking getreden op';
+
+/**
+ * A publication the dossier's law was enacted in, as the head says it (API 0.80.1, #868): the
+ * law it enacted, its citation, the day it was issued and the first day of what it enacted in
+ * force. A part the source lacks is left out, not guessed.
+ */
+type Enactment = {
+	/** The law it enacted; null for a publication that only changes other laws. */
+	law: { key: string; name: string; href: string | null } | null;
+	/** `Stb. 2024, 193`, a link to the publication; null without a citation. */
+	cite: { key: string; text: string; href: string | null } | null;
+	/** The day it was issued (ISO), for the citation's title. */
+	issued: string | null;
+	/** The first day in force (ISO); null where the source gives none. */
+	inForce: string | null;
+};
+
+/** The publications of `enacted`, the earliest first, as the API gives them. */
+export const enactments = (d: { enacted?: Enacted[] | null }): Enactment[] =>
+	(d.enacted ?? []).map((e) => ({
+		law: e.instrument
+			? {
+					key: e.instrument.key,
+					name: e.instrument.title?.trim() || naamVan('instruments', e.instrument),
+					href: e.instrument.path ?? null
+				}
+			: null,
+		cite: e.cite ? { key: e.key, text: e.cite, href: e.path ?? null } : null,
+		issued: e.published_on ?? null,
+		inForce: e.first_effective_date ?? null
+	}));

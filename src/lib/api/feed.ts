@@ -30,3 +30,7 @@ export const getFeedSummary = (query: QueryOf<'/api/feed/summary'>, signal?: Abo
 /** The feed counted per period. */
 export const getFeedPeriods = (query: QueryOf<'/api/feed/periods'>, signal?: AbortSignal) =>
 	unwrap(api.GET('/api/feed/periods', { params: { query }, signal }));
+
+/** When the Tweede Kamer last met and meets next, as of today: the summary's smallest answer. */
+export const getChamberSchedule = (signal?: AbortSignal) =>
+	getFeedSummary({ days: 1, limit: 1 }, signal).then((r) => r.chamber_schedule ?? null);

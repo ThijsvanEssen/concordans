@@ -3,7 +3,13 @@ import type { Schema } from '$lib/api/types';
 import { decisionsPage, geteld, nogTeTellen } from '$lib/api/decisions';
 import { EK_SOURCE } from '$lib/components/parliamentary/chamber';
 import { facetOptions } from '$lib/util/choice';
+import {
+	MOTION_KINDS,
+	MOTION_KIND_LABEL,
+	MOTION_KIND_PARAM
+} from '$lib/components/parliamentary/motion-kind';
 import DecisionRows from '../rows/DecisionRows.svelte';
+import ChamberRest from '../rows/ChamberRest.svelte';
 import { defineList, facetMap, sorted, toggle } from './list';
 import type { IndexParams } from './params';
 
@@ -24,6 +30,7 @@ const query = (p: IndexParams) => ({
 	q: p.q ? [p.q] : undefined,
 	dossier: p.dossier || undefined,
 	party: p.party || undefined,
+	motion_kind: p.motionKind,
 	limit: 200
 });
 
@@ -79,9 +86,29 @@ export const decisions = defineList<Row, DecisionsState, ReturnType<typeof query
 			on: p.decisionKind === k,
 			onClick: toggle(patch, 'soort', p.decisionKind, k)
 		}));
+		// The motions of censure and of no confidence, where the votes under the filters hold
+		// one; a chosen kind stays to be undone.
+		const motionKinds = facetMap(state.facets?.motion_kind);
+		const motions = MOTION_KINDS.filter((k) => motionKinds.has(k) || p.motionKind === k).map(
+			(k) => ({
+				id: k,
+				label: MOTION_KIND_LABEL[k],
+				count: motionKinds.get(k) ?? 0,
+				on: p.motionKind === k,
+				onClick: toggle(
+					patch,
+					'motie',
+					p.motionKind && MOTION_KIND_PARAM[p.motionKind],
+					MOTION_KIND_PARAM[k]
+				)
+			})
+		);
 		return [
 			...(kinds.length || p.kamer === 'TK'
 				? [{ id: 'soort', label: 'Soort', kind: 'list' as const, options: kinds }]
+				: []),
+			...(motions.length
+				? [{ id: 'motie', label: 'Motie', kind: 'list' as const, options: motions }]
 				: []),
 			{
 				id: 'passed',
@@ -115,6 +142,8 @@ export const decisions = defineList<Row, DecisionsState, ReturnType<typeof query
 		];
 	},
 	Rows: DecisionRows,
+	// When the Tweede Kamer meets and votes next, where it does not meet for days (API 0.80).
+	Header: ChamberRest,
 	after: (p) =>
 		p.kamer === 'EK' ? { label: `${EK_SOURCE.name}, ${EK_SOURCE.site}`, href: EK_SOURCE.url } : null
 });

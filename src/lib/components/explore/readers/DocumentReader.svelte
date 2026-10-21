@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { motionKindLabel } from '$lib/components/parliamentary/motion-kind';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { ownKind } from '$lib/text/document-kind';
 	import { NL } from '$lib/text/collator';
@@ -317,7 +318,7 @@
 	{#snippet children(doc)}
 		{@const term = termOfKind(doc.kind)}
 		<!-- Without the group of kinds the source files it under (#58): "Amendement". -->
-		{@const kind = ownKind(doc.kind)}
+		{@const kind = motionKindLabel(doc.motion_kind) ?? ownKind(doc.kind)}
 		<!-- The paper as it is cited and kept, and each alinea after it (paper-cite). -->
 		{@const paper = citePaper(doc, lichtProps, dossierInLight(licht))}
 		{@const cite = paper.citation}

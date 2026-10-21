@@ -376,6 +376,12 @@ exports[`Bronnen, list by list > decisions ? > requests 1`] = `
       "offset": 0,
     },
   ],
+  "/api/feed/summary": [
+    {
+      "days": 1,
+      "limit": 1,
+    },
+  ],
 }
 `;
 
@@ -494,6 +500,12 @@ exports[`Bronnen, list by list > decisions ?soort=Motie&passed=false&dossier=366
       "q": [
         "huur",
       ],
+    },
+  ],
+  "/api/feed/summary": [
+    {
+      "days": 1,
+      "limit": 1,
     },
   ],
 }

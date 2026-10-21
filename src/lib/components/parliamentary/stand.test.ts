@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Schema } from '$lib/api/types';
-import { boxesOf, stand } from './stand';
+import { boxesOf, stand, withdrawalLetter } from './stand';
 
 const dossier = (phases: { name: string; done: boolean; date?: string }[], over: object = {}) =>
 	({
@@ -184,5 +184,42 @@ describe('boxesOf: the three boxes of the bar', () => {
 
 	it('has no boxes without a stand', () => {
 		expect(boxesOf(dossier([], { current_phase: null }))).toEqual([]);
+	});
+});
+
+describe('stand: a bill withdrawn (API 0.80.1, #857)', () => {
+	const d = dossier([{ name: 'Voorstel van wet', done: true }], {
+		closed: true,
+		closed_on: '2025-06-02',
+		outcome: 'ingetrokken',
+		withdrawal_letter: 'documents/abc'
+	});
+
+	it('says it was withdrawn, on the day of the letter, and closes the Eerste Kamer', () => {
+		expect(stand(d)).toMatchObject({
+			zin: 'Ingetrokken op 2 jun. 2025.',
+			group: 'afgehandeld',
+			date: '2025-06-02'
+		});
+		expect(stand(d)?.bodies.map((b) => b.state)).toEqual(['unknown', 'done', 'none']);
+	});
+
+	it('marks the Tweede Kamer box withdrawn, never as a no', () => {
+		const [, tk, ek] = boxesOf(d);
+		expect(tk).toMatchObject({ mark: 'klaar', word: 'Ingetrokken', line: '2 jun. 2025' });
+		expect(ek).toMatchObject({ mark: 'open', word: 'Niet aan de orde', line: 'Ingetrokken' });
+	});
+});
+
+describe('withdrawalLetter', () => {
+	it('gives the key of the letter of a withdrawn bill, from its key or its id', () => {
+		expect(withdrawalLetter({ outcome: 'ingetrokken', withdrawal_letter: 'abc_1' })).toBe('abc_1');
+		expect(withdrawalLetter({ outcome: 'ingetrokken', withdrawal_letter: 'documents/abc_1' })).toBe(
+			'abc_1'
+		);
+	});
+	it('gives none for a bill not withdrawn, or without the letter', () => {
+		expect(withdrawalLetter({ outcome: 'verworpen', withdrawal_letter: 'abc_1' })).toBeNull();
+		expect(withdrawalLetter({ outcome: 'ingetrokken', withdrawal_letter: null })).toBeNull();
 	});
 });

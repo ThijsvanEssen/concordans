@@ -22,6 +22,7 @@ const b = (
 	external_id: null,
 	dossiers: [],
 	primary_case_kind: null,
+	motion_kind: null,
 	result: null,
 	method: null,
 	bill_decision: null,

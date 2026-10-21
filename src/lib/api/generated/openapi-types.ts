@@ -297,7 +297,7 @@ export interface paths {
         };
         /**
          * All articles of an instrument
-         * @description The articles in force of this instrument (BWB id or CELEX number), in the order of the document: an article with only a heading (the Algemene bepaling of the Grondwet) where it stands, an annex after the regulation. `include_repealed` adds the repealed identities (last). The text is a short preview; /api/articles/{bwb_id}/{address} has the full content. ``division`` cuts the list to the articles of one division (``total`` and the pages count those), with the division itself in ``division``; 404 when no article stands in it.
+         * @description The articles in force of this instrument (BWB id or CELEX number), in the order of the document: an article with only a heading (the Algemene bepaling of the Grondwet) where it stands, an article of an annex after the regulation; the annexes themselves in ``annexes``. `include_repealed` adds the repealed identities (last). The text is a short preview; /api/articles/{bwb_id}/{address} has the full content. ``division`` cuts the list to the articles of one division (``total`` and the pages count those), with the division itself in ``division``; 404 when no article stands in it.
          */
         get: operations["list_articles_api_instruments__bwb_id__articles_get"];
         put?: never;
@@ -561,7 +561,7 @@ export interface paths {
         };
         /**
          * BFS neighborhood around a node
-         * @description Returns every node and edge within `depth` hops of the focal node in a single traversal query. `relations` and `status` restrict the edges the traversal follows, `direction` restricts it to edges leaving (`outbound`) or reaching (`inbound`) each node on the way, and `node_types` to paths through nodes of those types (the focal node is always included).
+         * @description Returns every node and edge within `depth` hops of the focal node in a single traversal query. `relations` and `status` restrict the edges the traversal follows, `direction` restricts it to edges leaving (`outbound`) or reaching (`inbound`) each node on the way, and `node_types` to paths through nodes of those types (the focal node is always included). `stop_at` names collections the walk reaches but does not go through (but from the focal node, and from a member to the faction and the cabinet it sits in, `MEMBER_OF` and `SERVED_IN`), so the cap goes to what the node itself touches: `stop_at=members,factions,committees,cabinets` keeps the papers of a paper's dossier, not those its signers signed elsewhere.
          */
         get: operations["get_node_neighborhood_route_api_nodes__collection___key__neighborhood_get"];
         put?: never;
@@ -603,7 +603,7 @@ export interface paths {
         };
         /**
          * Dossier detail
-         * @description One dossier: its title, stage, how many documents, activities, decisions and commitments it holds, and what it links to: the instruments it legislated, amends, introduces or repeals (one item per instrument, relation and status), the committees that lead its activities, its documents per kind, its Eerste Kamer papers, and the dossiers it revises, accompanies or is related to (and those that revise, accompany or relate to it).
+         * @description One dossier: its title, stage, how many documents, activities, decisions and commitments it holds, and what it links to: the instruments it legislated, amends, introduces or repeals (one item per instrument, relation and status), the committees that lead its activities, the publications its law was enacted in (`enacted`: `Stb. 2024, 193`), its documents per kind, its Eerste Kamer papers, and the dossiers it revises, accompanies or is related to (and those that revise, accompany or relate to it).
          */
         get: operations["get_dossier_api_dossiers__number__get"];
         put?: never;
@@ -1226,7 +1226,7 @@ export interface paths {
         };
         /**
          * Annex detail
-         * @description One annex with its entries and every article referring to it.
+         * @description One annex with its text, its tables, its links, its entries and every article referring to it.
          */
         get: operations["get_annex_detail_api_annexes__key__get"];
         put?: never;
@@ -1246,7 +1246,7 @@ export interface paths {
         };
         /**
          * The papers of the chambers
-         * @description The papers of the Tweede Kamer and the Eerste Kamer, newest first, with their metadata (no text): ``chamber``, ``kind``, ``dossier_number`` (the dossier it is numbered in), ``number`` (the nr., or the letter of the Eerste Kamer), ``date``, ``title`` and ``session_year``. ``facets`` counts per ``kind`` and ``chamber``, each without its own filter; ``facets=false`` reads one page only.
+         * @description The papers of the Tweede Kamer and the Eerste Kamer, newest first, with their metadata (no text): ``chamber``, ``kind``, ``dossier_number`` (the dossier it is numbered in), ``number`` (the nr., or the letter of the Eerste Kamer), ``date``, ``title`` and ``session_year``; of a motion or an amendment how it ended (``outcome``) and of a motion of censure or of no confidence ``motion_kind``. ``motion_kind=censure,no_confidence`` keeps those motions: one open while its ``outcome`` is null. ``facets`` counts per ``kind`` and ``chamber``, each without its own filter; ``facets=false`` reads one page only.
          */
         get: operations["list_chamber_documents_api_documents_get"];
         put?: never;
@@ -1330,7 +1330,7 @@ export interface paths {
          * Search across several entity types
          * @description Searches articles, judgments, dossiers and documents. Use `types` to restrict the search to specific collections and `kind` to facet on document or dossier kinds. Every hit has a `score` between 0 and 1, its rank tier for the query: the query is an identifier of the hit (1), its whole name (0.75), the start of its name (0.5), part of its name (0.25) or the hit matched on words only (0.1). Hits of a type come best score first. With `resolve=true` the answer also holds `resolved`, what `/api/resolve` answers for `q`: one request for a search box that goes to the node a citation names and lists the hits otherwise.
          *
-         *     text search over `types` (`articles`, `cabinets`, `commitments`, `committees`, `decisions`, `documents`, `dossiers`, `factions`, `instruments`, `judgments`, `members`; all by default), `kind`, `limit`, and a period `from`, `to` (YYYY-MM-DD, both days in it, either open; 422 for `from` after `to`): each hit by a date of its own, in full and live search alike: a judgment the day of its decision (`date_eff`), a paper its date, a dossier the day it was opened, a vote its date, a commitment the day it was made, a law the day it came into force (`date_in_force`), an article the day its law came into force; a type without a date of its own (a member, a faction, a committee, a cabinet) finds nothing within a period. A citation in `q` (`art. 6:162 BW`, `artikel 287 Sr`, `Sr 287`, a full ECLI) puts its article or judgment first, and so does the whole name of a judgment (`Urgenda`, `Lindenbaum/Cohen`: one of its `names`, any case). Every hit has a `score`, its rank tier for `q`: an identifier of the hit (1), its whole name (0.75), the start of its name (0.5), every word of `q` in its name (0.25), a match on words only (0.1), compared in lower case and without accents (`yesilgoz` is part of `Yeşilgöz-Zegerius`); a type lists its hits best first, ties in database order. The names of a hit are its `display_name`, citation title, the `heading` of an article and the `aliases` of an instrument (`BW`, `Boek 6 BW`, `6 BW`: 0.75, before the words); `q` inside the title of a division an article stands in counts as part of its name (0.25). Scores compare across types: a heading or alias that is `q` (0.75) outranks a judgment that only holds its words (0.1). A word of `q` also finds its plural or singular where the last consonant changes between them, which stem apart (`huurprijs` and `huurprijzen`, `brief` and `brieven`). Within a type the database orders by BM25 before the `limit` (on a large table its statistics, the number of rows and the mean length of a field, are an estimate from a fixed sample, at most 6 hours old; the number of rows that hold a common word is the planner's estimate from its statistics, a rare word is counted, and a count that takes over 5 s weighs its terms as held by every row; a word matches the start of a value or a part of it from three characters, the start in any case and, in a name or title, without accents), with a word in a heading (x4), a division title (x1.5), a display name (x2), an alias or short title (x3) weighing more than one in a text; an instrument whose alias or short title is the whole of `q` is always fetched. An article is also found by its terms, what the judgments that cite it call it (`noodweer`: art. 41 Sr, whose words do not hold it; `lg_article_terms`), as a match on words (0.1), ranked above those that only hold the word; such a hit has `extra.terms`, the words of `q` it was found by, which come from the case law, not from the law. An article of which every word of `q` is a strong term (a good share of the judgments that use the word cite it, and few judgments cite it at all: `verjaring`, art. 3:310 BW) scores as a whole name (0.75), the best by its words first. A word of `q` that is the short title or an alias of a law (as the instrument has it, whole, any case and without accents: `Cbw`, `Sr`, `BW` of every book) also matches each of its articles, as the name of the law in its `display_name` does (`zorgplicht cbw`: art. 21 of the Cyberbeveiligingswet), and each dossier the law is `LEGISLATED_IN` (`cbw`: dossier 36764, the bill that became it; ranked above a dossier that only holds the word), in full and live search alike. `dossier` and `dossiers` name the type and are left out of a search of dossiers unless they are all of `q` (`cbw dossier` asks for the dossier of the Cbw). `extra` of an article carries `instrument_title` (its law), `instrument_abbreviation`, `heading` and `division_titles` (its `display_name` the article as it is cited: `Art. 6:162 BW`), of an instrument `short_title`, `aliases`, `kind` and the dates `date_published`, `date_in_force` and `version_date_in_force` (as `/api/instruments/{identifier}` gives them; regulations of one title told apart by them), of a judgment `ecli`, `appno`, `names` and `cite` (as `/api/judgments` gives it; and `person` when it was found by one), of a document `dossier_number`, of a dossier `number`, `kind`, `current_phase`, `closed`, `outcome` and `short_title` (the name it goes by, as `/api/dossiers` gives it: `Wet betaalbare huur`; null without one). A judgment is also found by a person it names (`lg_judgment_persons`: a party not anonymised, whoever acts for a party) when every word of `q` is a word of that one name, whole (while typing, `mode=live`, the last word by its start): `R. van Gelder`, `Van Gelder` and `mr. drs. R. van Gelder` find `mr. drs. R. van Gelder`, `Vermeulen` finds `mr. I.T.F. Vermeulen`, `college van gedeputeerde staten van Zuid-Holland` finds that party; at least one word of three characters or more that is no title, article or particle (`van`, `mr`); the newest first of the first 2,000 names found. Such a hit has `extra.person` (`name` as written, `role`: the party's role, or `advocaat`, `gemachtigde`, `raadsman` of who acts for one, and `party`: the alias or name of the party they act for, null for a party) and scores 0.25 when `q` is all of the name but its titles, initials, articles and particles, else 0.1 after the judgments found by their words. A member is found by every word of its names (its name, party and the factions of its timeline), a faction by its name, abbreviation and aliases; a word without accents or in capitals finds a name with them (`yesilgoz`: Yeşilgöz; of a member in its own name only; a member without a role, `extra.has_role` false, after every member with one, whatever its score). A cabinet is found by every word of its name (`Rutte`, `kabinet Schoof`), newest first, with `from_date` and `to_date` in `extra`; a commitment by every word of its text or its number (`TZ202609-011`), newest first, with `number`, `made_on`, `status`, `minister_name`, `cabinet` and `ministry` in `extra`. A vote (`decisions`) by every word of what was voted on (`subject`) or its `kind` (`Motie`, `Wetgeving`), newest first, with `date`, `kind`, `passed`, `chamber` and `dossier_numbers` in `extra`; `stemming`, `stemmingen`, `besluit` and `besluiten` name the type and are left out (`stemming abortus` asks for the votes on abortion). A document hit has in `extra` its `kind`, `external_id`, `dossier_number`, `sequence` (its number in the dossier: nr. 12), `number` (as above: `12`, the letter `A` of an Eerste Kamer paper), `date` (as the source gives it; null when it has none), `chamber` (`TK`, `EK`, null for Staatsblad and Staatscourant, as in `/api/documents`) and `dossier_short_title` (the name its dossier goes by, as `/api/dossiers` gives it; null without one); with `resolve=true` also `resolved`, what `/api/resolve` answers for `q` (kind `none` for a query over 200 characters), null without it: a search box resolves and searches in one request. `mode=live` (while typing; `full` is the default) answers all types within 250 ms together (a type that waited for a thread has what is left): a type not done by then is empty and named in `partial` (`{"judgments": true}`; a type not cut off is not in it); nothing is ranked by its words (no BM25): each word of `q` is a word of a field (every word it holds: `20/325` both 20 and 325), a whole value (a number, an identifier) or, from three characters, the start of a word of a name or title (`stik`: Stikstofwet; not `tikst`, which the full search finds), and of the first 2,000 rows found those whose name or title starts with `q` come first, then the most cited articles, the laws with the most articles, the dossiers with the latest activity and the newest papers; the judgments are found without ranking their summaries: by ECLI, by a part of a name (`Urgenda`), or by every word of three characters or more in the display name (court, date, case number), the most cited first, and when none does (a subject, `onrechtmatige daad`) the newest that hold the words (summary, name, display name; of the first 2,000 found, without a rank); a query of fewer than three characters finds no judgment. The full search ranks each type within 3 s: a type that takes longer answers what its live search finds (within 1 s more; for judgments that no name or display name holds: the newest that hold the words, of the first 2,000 found, without a rank) and is named in `partial` too, instead of the request answering 503 at its deadline; the next search of the same terms finds what it counted meanwhile. `searched` says per type of `types` what its search reads: `fields` (`title`, `name`, `number`, `summary`, `text`, `kind`) and `completeness.text`, `none` for a type whose text it does not read (judgments, documents)
+         *     text search over `types` (`articles`, `cabinets`, `commitments`, `committees`, `decisions`, `documents`, `dossiers`, `factions`, `instruments`, `judgments`, `members`; all by default), `kind`, `limit`, and a period `from`, `to` (YYYY-MM-DD, both days in it, either open; 422 for `from` after `to`): each hit by a date of its own, in full and live search alike: a judgment the day of its decision (`date_eff`), a paper its date, a dossier the day it was opened, a vote its date, a commitment the day it was made, a law the day it came into force (`date_in_force`), an article the day its law came into force; a type without a date of its own (a member, a faction, a committee, a cabinet) finds nothing within a period. A citation in `q` (`art. 6:162 BW`, `artikel 287 Sr`, `Sr 287`, a full ECLI) puts its article or judgment first, and so does the whole name of a judgment (`Urgenda`, `Lindenbaum/Cohen`: one of its `names`, any case). Every hit has a `score`, its rank tier for `q`: an identifier of the hit (1), its whole name (0.75), the start of its name (0.5), every word of `q` in its name (0.25), a match on words only (0.1), compared in lower case and without accents (`yesilgoz` is part of `Yeşilgöz-Zegerius`); a type lists its hits best first, ties in database order. The names of a hit are its `display_name`, citation title, the `heading` of an article and the `aliases` of an instrument (`BW`, `Boek 6 BW`, `6 BW`: 0.75, before the words); `q` inside the title of a division an article stands in counts as part of its name (0.25). Scores compare across types: a heading or alias that is `q` (0.75) outranks a judgment that only holds its words (0.1). A word of `q` also finds its plural or singular where the last consonant changes between them, which stem apart (`huurprijs` and `huurprijzen`, `brief` and `brieven`). Within a type the database orders by BM25 before the `limit` (on a large table its statistics, the number of rows and the mean length of a field, are an estimate from a fixed sample, at most 6 hours old; the number of rows that hold a common word is the planner's estimate from its statistics, a rare word is counted, and a count that takes over 5 s weighs its terms as held by every row; a word matches the start of a value or a part of it from three characters, the start in any case and, in a name or title, without accents), with a word in a heading (x4), a division title (x1.5), a display name (x2), an alias or short title (x3) weighing more than one in a text; an instrument whose alias or short title is the whole of `q` is always fetched. Of the articles the database orders by their tier before BM25, as far as the article says it (named by its terms, a heading or display name that starts with `q`, every word of `q` in its heading or the title of a division it stands in), so that the best tiers are among the hits however few are asked, while typing too (`onrechtmatige daad`: art. 6:162 BW, in the title Onrechtmatige daad, before the articles of the Wet conflictenrecht onrechtmatige daad). An article is also found by its terms, what the judgments that cite it call it (`noodweer`: art. 41 Sr, whose words do not hold it; `lg_article_terms`), as a match on words (0.1), ranked above those that only hold the word; such a hit has `extra.terms`, the words of `q` it was found by, which come from the case law, not from the law. An article of which every word of `q` is a strong term (a good share of the judgments that use the word cite it, and few judgments cite it at all: `verjaring`, art. 3:310 BW) scores as a whole name (0.75), the best by its words first; a word in more than one in 50 summaries names no article and is left out of that (`ontslag op staande voet`: art. 7:677 BW, named by its other words). A word of `q` that is the short title or an alias of a law (as the instrument has it, whole, any case and without accents: `Cbw`, `Sr`, `BW` of every book) also matches each of its articles, as the name of the law in its `display_name` does (`zorgplicht cbw`: art. 21 of the Cyberbeveiligingswet), and each dossier the law is `LEGISLATED_IN` (`cbw`: dossier 36764, the bill that became it; ranked above a dossier that only holds the word), in full and live search alike. `dossier` and `dossiers` name the type and are left out of a search of dossiers unless they are all of `q` (`cbw dossier` asks for the dossier of the Cbw). `extra` of an article carries `instrument_title` (its law), `instrument_abbreviation`, `heading` and `division_titles` (its `display_name` the article as it is cited: `Art. 6:162 BW`), of an instrument `short_title`, `aliases`, `kind` and the dates `date_published`, `date_in_force` and `version_date_in_force` (as `/api/instruments/{identifier}` gives them; regulations of one title told apart by them), of a judgment `ecli`, `appno`, `names` and `cite` (as `/api/judgments` gives it; and `person` when it was found by one), of a document `dossier_number`, of a dossier `number`, `kind`, `current_phase`, `closed`, `outcome` and `short_title` (the name it goes by, as `/api/dossiers` gives it: `Wet betaalbare huur`; null without one). A judgment is also found by a person it names (`lg_judgment_persons`: a party not anonymised, whoever acts for a party) when every word of `q` is a word of that one name, whole (while typing, `mode=live`, the last word by its start): `R. van Gelder`, `Van Gelder` and `mr. drs. R. van Gelder` find `mr. drs. R. van Gelder`, `Vermeulen` finds `mr. I.T.F. Vermeulen`, `college van gedeputeerde staten van Zuid-Holland` finds that party; at least one word of three characters or more that is no title, article or particle (`van`, `mr`); the newest first of the first 2,000 names found. Such a hit has `extra.person` (`name` as written, `role`: the party's role, or `advocaat`, `gemachtigde`, `raadsman` of who acts for one, and `party`: the alias or name of the party they act for, null for a party) and scores 0.25 when `q` is all of the name but its titles, initials, articles and particles, else 0.1 after the judgments found by their words. A member is found by every word of its names (its name, party and the factions of its timeline), a faction by its name, abbreviation and aliases; a word without accents or in capitals finds a name with them (`yesilgoz`: Yeşilgöz; of a member in its own name only; a member without a role, `extra.has_role` false, after every member with one, whatever its score). A cabinet is found by every word of its name (`Rutte`, `kabinet Schoof`), newest first, with `from_date` and `to_date` in `extra`; a commitment by every word of its text or its number (`TZ202609-011`), newest first, with `number`, `made_on`, `status`, `minister_name`, `cabinet` and `ministry` in `extra`. A vote (`decisions`) by every word of what was voted on (`subject`) or its `kind` (`Motie`, `Wetgeving`), newest first, with `date`, `kind`, `passed`, `chamber` and `dossier_numbers` in `extra`; `stemming`, `stemmingen`, `besluit` and `besluiten` name the type and are left out (`stemming abortus` asks for the votes on abortion). Words of `q` that are the abbreviation, name or alias of a faction (of either chamber, past ones too; not when they are part of the name of a member, nor all of `q`) are no words of the search of the papers and the votes: their hits are signed for it (a paper by one of its Kamerleden for it, a vote on such a paper), and `searched.<type>.signed_for` names it (`motie stikstof VVD`). A document hit has in `extra` its `kind`, `external_id`, `dossier_number`, `sequence` (its number in the dossier: nr. 12), `number` (as above: `12`, the letter `A` of an Eerste Kamer paper), `date` (as the source gives it; null when it has none), `chamber` (`TK`, `EK`, null for Staatsblad and Staatscourant, as in `/api/documents`) and `dossier_short_title` (the name its dossier goes by, as `/api/dossiers` gives it; null without one); with `resolve=true` also `resolved`, what `/api/resolve` answers for `q` (kind `none` for a query over 200 characters), null without it: a search box resolves and searches in one request. `mode=live` (while typing; `full` is the default) answers all types within 250 ms together (a type that waited for a thread has what is left): a type not done by then is empty and named in `partial` (`{"judgments": true}`; a type not cut off is not in it); nothing is ranked by its words (no BM25): each word of `q` is a word of a field (every word it holds: `20/325` both 20 and 325), a whole value (a number, an identifier) or, from three characters, the start of a word of a name or title (`stik`: Stikstofwet; not `tikst`, which the full search finds), and of the first 2,000 rows found those whose name or title starts with `q` come first, then the most cited articles, the laws with the most articles, the dossiers with the latest activity and the newest papers; the judgments are found without ranking their summaries: by ECLI, by a part of a name (`Urgenda`), or by every word of three characters or more in the display name (court, date, case number), the most cited first, and when none does (a subject, `onrechtmatige daad`) the newest that hold the words (summary, name, display name; of the first 2,000 found, without a rank); a query of fewer than three characters finds no judgment. The full search ranks each type within 3 s: a type that takes longer answers what its live search finds (within 1 s more; for judgments that no name or display name holds: the newest that hold the words, of the first 2,000 found, without a rank) and is named in `partial` too, instead of the request answering 503 at its deadline; the next search of the same terms finds what it counted meanwhile. `searched` says per type of `types` what its search reads: `fields` (`title`, `name`, `number`, `summary`, `text`, `kind`) and `completeness.text`, `none` for a type whose text it does not read (judgments, documents)
          */
         get: operations["search_api_search_get"];
         put?: never;
@@ -1394,7 +1394,7 @@ export interface paths {
          * Decision browser
          * @description A page of decisions — one per Besluit — newest first, optionally filtered by kind, outcome, party (and how it voted), chamber, dossier, date and subject. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the decisions under the filters: per ``kind`` (without the kind filter; with how many carried and did not), per outcome ``passed`` (without the passed filter), per day and per year (under all filters), and with ``party_votes`` how the factions asked voted on them. ``facets=false`` gives null for ``total`` and ``facets`` and counts nothing: the pages after the first need neither.
          *
-         *     decisions with every vote cast — per member on a roll-call, per faction otherwise; the decided motion, amendment or bill with text. The list filters on `kind` (comma-separated: the `Zaak.Soort` of the case decided as the Kamer writes it, `Motie`, `Amendement`, `Wetgeving`, `Begroting`, …; see data model (docs/data-model.md)), `passed`, `party` (the decisions its faction voted on; with `vote` `voor`/`tegen` the ones it voted that way on; a roll-call has no faction vote), `chamber` `TK`/`EK` (the votes of the Eerste Kamer: a decision per vote of its list, with `result` `Aangenomen`/`Verworpen` as it shows it, `method` as its report names it, `bill_decision` (whether it is the vote that decided the bill: the list names a vote on a motion by its bill too), `kind` (of the vote that decided the bill: the kind of its dossier, `Wetgeving`, …; null for a vote on a motion, which the list names no kind of), and in the detail `factions_for`, `factions_against`, `factions_noted`, `bill_url`, `source_url`, `retrieved_on`; no votes per faction, so no `tally`), `dossier` number, `from` and `to` (the date of the vote, YYYY-MM-DD) and `q` (words of the subject, in any case, as the feed matches them: each from the start of a word, one of at most four characters as a whole word: `ai` finds AI-modellen, not AIV or universitaire; `algoritme` algoritmes, not rekenalgoritme; repeated, any of them: `q=AI&q=kunstmatige intelligentie`, each decision once). The list holds the decisions with an outcome (`passed` set), and its facets count those; `unvoted=true` also those that never came to a vote: a motion or amendment withdrawn, postponed, held or lapsed (`decision_kind` `Stemmen - ingetrokken`, `- uitstellen`, `- aangehouden`, `- vervallen`), `passed` null. Each item has `kind` and `decision_kind` (the `BesluitSoort`: `Stemmen - aangenomen`, `Stemmen - zonder stemming aannemen` for a hamerstuk without votes, `Stemmen - uitstellen`, whose `passed` is null); `total` is the matches, independent of `limit`. `facets` counts the decisions under the filters: `kind` (`value`, `count`, how many `passed` and `rejected` (the rest have no outcome), most first; without the `kind` filter), `passed` (`value` `true`/`false`/null, `count`; without the `passed` filter), `days` (`date`, `count`, how many `passed`, oldest first) and `years` (`year`, `count`, `passed`, `rejected`, oldest first) under every filter, and `party_votes`: with `party_votes` (comma-separated faction keys, or `all` for every faction that voted on one of them; it keeps no decision out, unlike `party`), per faction by key (`party`, `name` its abbreviation) how it voted on the decisions under every filter, `voor`, `tegen` and `none` (another choice, or no vote of the faction: a roll-call vote is one of members), in all, per `kind` and per `years`; `[]` without it. They are counted on demand and kept an hour under each filter, whatever the data does; a request waits for them 3 s at most, then the page comes with `[]` and `partial` true, and a request after the count has them. The page is read first and alone (in the order of the list, as far as it goes: `decisions_list_date`); `total` and the other facets are counted per filter and kept until the decisions change (an hour at most): a request waits for them 3 s at most, then the page comes whole with `total` null, empty facets and `partial` true, and a request after the count has them (the lists the explorer opens, of both Kamers and of the Tweede Kamer, are counted in the warm-up); `facets=false` gives null for `total` and `facets` and counts nothing (not `party_votes` either), the choice for the pages after the first. An item has `display_name` (the heading of the vote, distinct per motion on one agenda item: `Motie 2024Z17945: …`); list and detail have `primary_case_kind`, `dossier_numbers` and `chamber` A vote on a motion has `dictum`, what the motion asks or says as it writes it (from `verzoekt`, `roept … op`, `spreekt uit`, `draagt … op` or `vraagt` to `en gaat over tot de orde van de dag`), in the list and the detail; null for any other vote and for a motion without text. List and detail have `motion` (`collection`, `key`, `path`), the motion or amendment the vote was taken on: the oldest paper of the case the vote singled out (`primary_case_kind` `Motie` or `Amendement`; the paper `/{key}/document` and the dictum come from), else, for a vote whose `kind` is one, the Kamerstuk it is `ABOUT` (a vote of the Eerste Kamer on a motion); null for any other vote and for a case without a paper. The detail has `primary_document` (`id`, `key`, `kind`, `title`, `number`, `dossier_number`, `date`, `path`), the Kamerstuk the vote was taken on as `/{key}/document` finds it (of the case it singled out, then of its other cases, the oldest paper; else the Kamerstuk it is `ABOUT`): the motion, the amendment or the bill; null without one. A vote of the Tweede Kamer under a cabinet carries `coalition` (on the list and the detail; `semantic tk-coalition-votes`): the `cabinet`, the seats `coalition_for`, `coalition_against`, `opposition_for`, `opposition_against` (a faction with its seats that day, a member of a roll call as one), `pattern` (`together`, `split`, `wissel`: split, and the side with the most coalition seats lost, a wisselmeerderheid), `carried` (passed with the coalition's seats alone more than half cast) and `decisive` (the opposition alone would have decided otherwise); null without a cabinet or a coalition vote and in the Eerste Kamer. `coalition=together|split|wissel|carried|decisive` filters on it, and `facets.coalition` counts each under every filter but its own; `facets.coalition_cabinets` gives per cabinet (`cabinet`, `name`, newest first) under every filter, a topic of the Overzicht being its words, Kamer and period, its `votes` and how many were `together`, `split`, `wissel`, `carried` and `decisive`
+         *     decisions with every vote cast — per member on a roll-call, per faction otherwise; the decided motion, amendment or bill with text. The list filters on `kind` (comma-separated: the `Zaak.Soort` of the case decided as the Kamer writes it, `Motie`, `Amendement`, `Wetgeving`, `Begroting`, …; see data model (docs/data-model.md)), `passed`, `party` (the decisions its faction voted on; with `vote` `voor`/`tegen` the ones it voted that way on; a roll-call has no faction vote), `chamber` `TK`/`EK` (the votes of the Eerste Kamer: a decision per vote of its list, with `result` `Aangenomen`/`Verworpen` as it shows it, `method` as its report names it, `bill_decision` (whether it is the vote that decided the bill: the list names a vote on a motion by its bill too), `kind` (of the vote that decided the bill: the kind of its dossier, `Wetgeving`, …; null for a vote on a motion, which the list names no kind of), and in the detail `factions_for`, `factions_against`, `factions_noted`, `bill_url`, `source_url`, `retrieved_on`; no votes per faction, so no `tally`), `dossier` number, `from` and `to` (the date of the vote, YYYY-MM-DD) and `q` (words of the subject, in any case, as the feed matches them: each from the start of a word, one of at most four characters as a whole word: `ai` finds AI-modellen, not AIV or universitaire; `algoritme` algoritmes, not rekenalgoritme; repeated, any of them: `q=AI&q=kunstmatige intelligentie`, each decision once). The list holds the decisions with an outcome (`passed` set), and its facets count those; `unvoted=true` also those that never came to a vote: a motion or amendment withdrawn, postponed, held or lapsed (`decision_kind` `Stemmen - ingetrokken`, `- uitstellen`, `- aangehouden`, `- vervallen`), `passed` null. Each item has `kind` and `decision_kind` (the `BesluitSoort`: `Stemmen - aangenomen`, `Stemmen - zonder stemming aannemen` for a hamerstuk without votes, `Stemmen - uitstellen`, whose `passed` is null); `total` is the matches, independent of `limit`. `facets` counts the decisions under the filters: `kind` (`value`, `count`, how many `passed` and `rejected` (the rest have no outcome), most first; without the `kind` filter), `passed` (`value` `true`/`false`/null, `count`; without the `passed` filter), `days` (`date`, `count`, how many `passed`, oldest first) and `years` (`year`, `count`, `passed`, `rejected`, oldest first) under every filter, and `party_votes`: with `party_votes` (comma-separated faction keys, or `all` for every faction that voted on one of them; it keeps no decision out, unlike `party`), per faction by key (`party`, `name` its abbreviation) how it voted on the decisions under every filter, `voor`, `tegen` and `none` (another choice, or no vote of the faction: a roll-call vote is one of members), in all, per `kind` and per `years`; `[]` without it. They are counted on demand and kept an hour under each filter, whatever the data does; a request waits for them 3 s at most, then the page comes with `[]` and `partial` true, and a request after the count has them. The page is read first and alone (in the order of the list, as far as it goes: `decisions_list_date`); `total` and the other facets are counted per filter and kept until the decisions change (an hour at most): a request waits for them 3 s at most, then the page comes whole with `total` null, empty facets and `partial` true, and a request after the count has them (the lists the explorer opens, of both Kamers and of the Tweede Kamer, are counted in the warm-up); `facets=false` gives null for `total` and `facets` and counts nothing (not `party_votes` either), the choice for the pages after the first. An item has `display_name` (the heading of the vote, distinct per motion on one agenda item: `Motie 2024Z17945: …`); list and detail have `primary_case_kind`, `dossier_numbers` and `chamber` A vote on a motion has `dictum`, what the motion asks or says as it writes it (from `verzoekt`, `roept … op`, `spreekt uit`, `draagt … op` or `vraagt` to `en gaat over tot de orde van de dag`), in the list and the detail; null for any other vote and for a motion without text. List and detail have `motion` (`collection`, `key`, `path`), the motion or amendment the vote was taken on: the oldest paper of the case the vote singled out (`primary_case_kind` `Motie` or `Amendement`; the paper `/{key}/document` and the dictum come from), else, for a vote whose `kind` is one, the Kamerstuk it is `ABOUT` (a vote of the Eerste Kamer on a motion); null for any other vote and for a case without a paper. The detail has `primary_document` (`id`, `key`, `kind`, `title`, `number`, `dossier_number`, `date`, `path`), the Kamerstuk the vote was taken on as `/{key}/document` finds it (of the case it singled out, then of its other cases, the oldest paper; else the Kamerstuk it is `ABOUT`): the motion, the amendment or the bill; null without one. A vote of the Tweede Kamer under a cabinet carries `coalition` (on the list and the detail; `semantic tk-coalition-votes`): the `cabinet`, the seats `coalition_for`, `coalition_against`, `opposition_for`, `opposition_against` (a faction with its seats that day, a member of a roll call as one), `pattern` (`together`, `split`, `wissel`: split, and the side with the most coalition seats lost, a wisselmeerderheid), `carried` (passed with the coalition's seats alone more than half cast) and `decisive` (the opposition alone would have decided otherwise); null without a cabinet or a coalition vote and in the Eerste Kamer. `coalition=together|split|wissel|carried|decisive` filters on it, and `facets.coalition` counts each under every filter but its own; `facets.coalition_cabinets` gives per cabinet (`cabinet`, `name`, newest first) under every filter, a topic of the Overzicht being its words, Kamer and period, its `votes` and how many were `together`, `split`, `wissel`, `carried` and `decisive`. A vote on a motion of censure (motie van afkeuring) or of no confidence (motie van wantrouwen) has `motion_kind` `censure` or `no_confidence` (on the list and the detail; `semantic tk-motion-kinds`, from the fixed wording of its subject), null for any other; `motion_kind=censure,no_confidence` keeps those votes, and `facets.motion_kind` counts them per kind (`value`, `count`, `passed`, `rejected`) under every filter but its own
          */
         get: operations["list_decisions_api_decisions_get"];
         put?: never;
@@ -1478,7 +1478,7 @@ export interface paths {
          * News feed
          * @description What was promised and proposed, as a stream of events, newest first: ``toezegging`` (a commitment made), ``Voorstel van wet``, ``Nota van wijziging``, ``Amendement``, ``Motie`` and ``Brief regering`` (a Tweede Kamer paper submitted, by its ``Document.Soort`` before `` (``), ``stemming`` (a vote with its outcome), ``publicatie`` (in the Staatsblad, Staatscourant or Tractatenblad) and ``inwerkingtreding`` (a new version of a law in force) and ``uitspraak`` (a judgment or conclusion, on the day it was published; only with ``kind=uitspraak`` or ``tier``, of the highest courts and the Parket unless ``tier`` asks for others). Ordered by date, then by ``id``, both descending; ``next_cursor`` gives the next page, which neither repeats nor skips an event. ``facets`` counts per ``kind``, ``ministry``, ``faction`` and ``cabinet`` the events under the other filters, with ``total``; ``facets=false`` leaves both out and reads only one page.
          *
-         *     `items`, `next_cursor`, `total`, `facets`, `partial`, `searched_from` and `data_as_of` (as in `/api/stats`). `total` and `facets` are counted from `lg_feed_events` (`/api/feed/periods`; as `lawgraph feed-events` last wrote it: the last 14 days after every poll, every event each night), by its indexes, each facet as the feed counts it, and kept an hour; under `member`, `tier` or `instrument`, or before that table is ever written, over every event under the filters itself. A request waits for them 3 s at most: under filters not counted before (cold, a minute or more on the full graph) the page comes at once with both null and `partial` true, and a request after the count has them. Filters: `kind` (comma-separated), `since`, `until` (YYYY-MM-DD, inclusive), `cabinet` (a key: the events from its beëdiging to that of the next cabinet), `ministry`, `dossier` (the start of a dossier label: `36600` holds `36600-VII`, `37020-` the chapters), `member` (a member key: the papers they signed, the votes on them, the commitments they made), `faction` (a faction key: the papers its Kamerleden signed for it and the votes on them; without `since` its page is read as under `q`), `q` (words of the title or of the title of the event's dossier, or of a publication the names of the laws it changes or enacts and the official title of a law it enacts (from `lg_feed_events`: a publication is found by them once `lawgraph feed-events` wrote it), any case; each word from the start of a word, one of at most four characters as a whole word (`ai`: the AI-verordening, not universitaire; `stikstof`: Stikstofbank, not natuurstikstof; repeated, at most ten times, any of them: `q=AI&q=kunstmatige intelligentie`, each event once); each kind finds them by index where it can (from three characters); without `since` the page is read once from the first day it reaches back to, the day of the (`limit` + 1)-th newest matching event in `lg_feed_events` (`/api/feed/periods`; no later than 14 days ago, what that table may still lack, nor than the day of the cursor), when that table is written and the filters are ones it keeps; else, or when that read finds less than the table counted, the events are searched back from `until`, the cursor or today in windows of 90 days, a year, three years and then the rest, newest first, until the page is full or 8 s are spent: then the page has what was found, `partial` true and `searched_from`, the first day searched, and a request with `until` the day before goes on; `searched_from` is null when every day was searched), `tier` (comma-separated tiers as in `/api/judgments`: keeps judgments alone, of those tiers; without it the feed's judgments are of the default tiers), `chamber` (`EK`: the votes of the Eerste Kamer, only the one that decided each bill; `TK`: the papers, votes and commitments of the Tweede Kamer; publications and commencements are of neither), `coalition` (what the coalition did on a vote of the Tweede Kamer, as `vote.coalition` says it: `together`, `split` (on both sides, a wisselmeerderheid too), `wissel`, `decisive`; keeps votes alone), `instrument` (a BWB id: the events tied to that law: the publications that enact it or change it or its articles, the papers that propose to (a `voorgesteld` change), the events of the dossiers it or such a publication was `LEGISLATED_IN` and of the dossiers of those papers, its new versions and those of the regulations `BASED_ON` it, the judgments that cite it; without `since` read as under `q`, in windows; its total and facets are counted from the events themselves), `article` (with `instrument`, an article number of that law, `3:2`: the events tied to that article, the versions of the law that changed it, the dossiers of the publications and papers that change it, not those of the law itself nor its enactment; 422 without `instrument`); `limit` (1-200, default 50), `cursor` (the `next_cursor` of the page before; 422 for a token the API did not hand out). Order: `date`, newest first; within a day by kind, in the order `Voorstel van wet`, `stemming`, `toezegging`, `inwerkingtreding`, `publicatie`, `Nota van wijziging`, `Amendement`, `Motie`, `Brief regering`; within a kind by `id`. The cursor holds the date, kind and id of the last event of its page, and a page starts after it, so pages neither repeat nor skip an event. `facets` (default true) counts per `kind`, `ministry`, `faction`, `cabinet`, `chamber` (`TK`, `EK`, null for a publication or a commencement) and `coalition` (the values of the filter; a vote counts for each that holds, `split` with every `wissel`, an event without a coalition vote for none) (`{value, count}`, the largest first, `value` null for none) the events under the other filters, and `total` under all of them, whatever the cursor; `facets=false` gives null for both and reads one page only, the choice for the pages after the first. Each item says what it is tied to, read for the items of the page alone: `matched` (with `q`, per word the event holds `{term, field}`, `term` as it was asked and `field` the first of `title` (its own title, of a bill not that of its dossier), `dossier_title` (the whole title of its first dossier) and `laws` (of a publication, the names of its laws) that holds it; empty without `q`), `via` (with `instrument`, how the event is tied to the law: `relation` `establishes`, `amends`, `introduces` or `repeals` (a publication), `proposes` (a paper with a `voorgesteld` change of it, or an event of the dossier of such a paper), `version_of` (a new version of the law), `based_on` (of a regulation issued under it), `refers_to` (a judgment), `legislated_in` (an event of a dossier the law or a publication of it was legislated in); `article` the number of the article of the law it touches, the first in the order of the law; `dossier` the label of the dossier it came through; the closest tie of all it has), `answers` (of a `Brief regering`: the motions and commitments it `ANSWERS`), `answered_by` (of a `toezegging`: the letters that fulfil it), `replaces` (of a changed `Motie` or `Amendement`: the paper it replaces, `REVISES`, "ter vervanging van nr. 19"), each such paper or commitment `{id, kind, title, date, number, dossier, surname, path}` (`kind` its `Document.Soort` or `toezegging`, `number` its nr. or the number of the commitment, `dossier` the label of its own dossier, `surname` its first signatory), at most twenty; `amends_articles` (of an `Amendement`: the articles it proposes to change, add or repeal, `effect` `amends`/`introduces`/`repeals`, in the order of their law, at most twenty) and `cites` (of an `uitspraak`: the articles it cites, the most mentioned first, at most five), each article `{key, bwb_id, number, law, law_short, effect, path}`; empty or null for the other kinds
+         *     `items`, `next_cursor`, `total`, `facets`, `partial`, `searched_from` and `data_as_of` (as in `/api/stats`). `total` and `facets` are counted from `lg_feed_events` (`/api/feed/periods`; as `lawgraph feed-events` last wrote it: the last 14 days after every poll, every event each night), by its indexes, each facet as the feed counts it, and kept an hour; under `member`, `tier` or `instrument`, or before that table is ever written, over every event under the filters itself. A request waits for them 3 s at most: under filters not counted before (cold, a minute or more on the full graph) the page comes at once with both null and `partial` true, and a request after the count has them. Filters: `kind` (comma-separated), `since`, `until` (YYYY-MM-DD, inclusive), `cabinet` (a key: the events from its beëdiging to that of the next cabinet), `ministry`, `dossier` (the start of a dossier label: `36600` holds `36600-VII`, `37020-` the chapters; each kind with dossiers finds its events of them by the index on their dossier numbers, under the labels of the dossiers that start with it and itself; a kind without, a judgment or a commencement, has none), `member` (a member key: the papers they signed, the votes on them, the commitments they made), `faction` (a faction key: the papers its Kamerleden signed for it and the votes on them; without `since` its page is read as under `q`), `q` (words of the title or of the title of the event's dossier, or of a publication the names of the laws it changes or enacts and the official title of a law it enacts (from `lg_feed_events`: a publication is found by them once `lawgraph feed-events` wrote it), any case; each word from the start of a word, one of at most four characters as a whole word (`ai`: the AI-verordening, not universitaire; `stikstof`: Stikstofbank, not natuurstikstof; repeated, at most ten times, any of them: `q=AI&q=kunstmatige intelligentie`, each event once); each kind finds them by index where it can (from three characters); without `since` the page is read once from the first day it reaches back to, the day of the (`limit` + 1)-th newest matching event in `lg_feed_events` (`/api/feed/periods`; no later than 14 days ago, what that table may still lack, nor than the day of the cursor), when that table is written and the filters are ones it keeps; else, or when that read finds less than the table counted, the events are searched back from `until`, the cursor or today in windows of 90 days, a year, three years and then the rest, newest first, until the page is full or 8 s are spent: then the page has what was found, `partial` true and `searched_from`, the first day searched, and a request with `until` the day before goes on; `searched_from` is null when every day was searched), `tier` (comma-separated tiers as in `/api/judgments`: keeps judgments alone, of those tiers; without it the feed's judgments are of the default tiers), `chamber` (`EK`: the votes of the Eerste Kamer, only the one that decided each bill; `TK`: the papers, votes and commitments of the Tweede Kamer; publications and commencements are of neither), `coalition` (what the coalition did on a vote of the Tweede Kamer, as `vote.coalition` says it: `together`, `split` (on both sides, a wisselmeerderheid too), `wissel`, `decisive`; keeps votes alone), `instrument` (a BWB id: the events tied to that law: the publications that enact it or change it or its articles, the papers that propose to (a `voorgesteld` change), the events of the dossiers it or such a publication was `LEGISLATED_IN` and of the dossiers of those papers, its new versions and those of the regulations `BASED_ON` it, the judgments that cite it; without `since` read as under `q`, in windows; its total and facets are counted from the events themselves), `article` (with `instrument`, an article number of that law, `3:2`: the events tied to that article, the versions of the law that changed it, the dossiers of the publications and papers that change it, not those of the law itself nor its enactment; 422 without `instrument`); `limit` (1-200, default 50), `cursor` (the `next_cursor` of the page before; 422 for a token the API did not hand out). Order: `date`, newest first; within a day by kind, in the order `Voorstel van wet`, `stemming`, `toezegging`, `inwerkingtreding`, `publicatie`, `Nota van wijziging`, `Amendement`, `Motie`, `Brief regering`; within a kind by `id`. The cursor holds the date, kind and id of the last event of its page, and a page starts after it, so pages neither repeat nor skip an event. `facets` (default true) counts per `kind`, `ministry`, `faction`, `cabinet`, `chamber` (`TK`, `EK`, null for a publication or a commencement) and `coalition` (the values of the filter; a vote counts for each that holds, `split` with every `wissel`, an event without a coalition vote for none) (`{value, count}`, the largest first, `value` null for none) the events under the other filters, and `total` under all of them, whatever the cursor; `facets=false` gives null for both and reads one page only, the choice for the pages after the first. Each item says what it is tied to, read for the items of the page alone: `matched` (with `q`, per word the event holds `{term, field}`, `term` as it was asked and `field` the first of `title` (its own title, of a bill not that of its dossier), `dossier_title` (the whole title of its first dossier) and `laws` (of a publication, the names of its laws) that holds it; empty without `q`), `via` (with `instrument`, how the event is tied to the law: `relation` `establishes`, `amends`, `introduces` or `repeals` (a publication), `proposes` (a paper with a `voorgesteld` change of it, or an event of the dossier of such a paper), `version_of` (a new version of the law), `based_on` (of a regulation issued under it), `refers_to` (a judgment), `legislated_in` (an event of a dossier the law or a publication of it was legislated in); `article` the number of the article of the law it touches, the first in the order of the law; `dossier` the label of the dossier it came through; the closest tie of all it has), `answers` (of a `Brief regering`: the motions and commitments it `ANSWERS`), `answered_by` (of a `toezegging`: the letters that fulfil it), `replaces` (of a changed `Motie` or `Amendement`: the paper it replaces, `REVISES`, "ter vervanging van nr. 19"), each such paper or commitment `{id, kind, title, date, number, dossier, surname, path}` (`kind` its `Document.Soort` or `toezegging`, `number` its nr. or the number of the commitment, `dossier` the label of its own dossier, `surname` its first signatory), at most twenty; `amends_articles` (of an `Amendement`: the articles it proposes to change, add or repeal, `effect` `amends`/`introduces`/`repeals`, in the order of their law, at most twenty) and `cites` (of an `uitspraak`: the articles it cites, the most mentioned first, at most five), each article `{key, bwb_id, number, law, law_short, effect, path}`; empty or null for the other kinds
          */
         get: operations["get_feed_route_api_feed_get"];
         put?: never;
@@ -1498,7 +1498,7 @@ export interface paths {
         };
         /**
          * News feed summary
-         * @description The days up to ``until`` (default today, ``days`` of them) in one small answer, under the filters of ``GET /api/feed``: per day the events per kind, per dossier and, of the votes, per subkind and outcome; and the events a timeline shows one by one, as feed items in the order of the feed: bills submitted, votes on a bill, votes decided by at most ``margin`` seats, commitments and commencements.
+         * @description The days up to ``until`` (default today, ``days`` of them) in one small answer, under the filters of ``GET /api/feed``: per day the events per kind, per dossier and, of the votes, per subkind and outcome; and the events a timeline shows one by one, as feed items in the order of the feed: bills submitted, votes on a bill, votes decided by at most ``margin`` seats, commitments and commencements; and ``chamber_schedule``: when the Tweede Kamer last met and voted in the plenary hall and when it meets and votes next (``last_sitting``, ``last_votes``, ``next_sitting``, ``next_votes``), as of today, from its activities (``Activiteit``): the latest held (``Uitgevoerd``) and the first planned (``Gepland``), a sitting any plenary kind, the votes ``Stemmingen``; of a week the one planned for a day before one planned for the week (``precision`` ``Weeknummer``, dated on its Monday); each null when there is none. The Kamer publishes no recess as data: no sitting planned for days is what tells.
          */
         get: operations["get_feed_summary_route_api_feed_summary_get"];
         put?: never;
@@ -1580,9 +1580,9 @@ export interface paths {
         };
         /**
          * News feed as Atom
-         * @description A page of ``GET /api/feed`` under the same filters as an Atom 1.0 feed, for a feed reader, named after its filters (``Concordans: moties``): an ``alternate`` link to the same view on Concordans (``LAWGRAPH_SITE_URL``/actueel), per entry an ``alternate`` link to the event there and a ``related`` link to its official page, and a ``next`` link to the next page.
+         * @description A page of ``GET /api/feed`` under the same filters as an Atom 1.0 feed, for a feed reader, named after its filters (``Concordans: moties``): an ``alternate`` link to the same view on Concordans (``LAWGRAPH_SITE_URL``/actueel), per entry an ``alternate`` link to the event there and a ``related`` link to its official page, and a ``next`` link to the next page. ``dossier`` follows one dossier.
          *
-         *     the same page under the same parameters (without `facets`) as an Atom 1.0 feed (`application/atom+xml`), named after its filters (`Concordans`, `Concordans: moties`, `Concordans: dossier 36600`), with an `alternate` link to the same view on Concordans (`<LAWGRAPH_SITE_URL>/actueel?soort=Motie`: `soort`, `van`, `tot`, `kabinet`, `ministerie`, `dossier`, `persoon`, `fractie`, `q` once per word, `kamer`, `coalitie`, `wet`, `artikel`; not the tier) and a `next` link with the cursor; an entry per event (`id` `tag:lawgraph,2026:<id>`, `title`, `updated` the date, an `alternate` link to the event on Concordans (`/explore?focus=<id>`) and a `related` one to its `official_url` or `tk_url`, `category` its kind, an `author` per person, `summary` its summary and dossier)
+         *     the same page under the same parameters (without `facets`) as an Atom 1.0 feed (`application/atom+xml`), named after its filters (`Concordans`, `Concordans: moties`, `Concordans: dossier 36600`), with an `alternate` link to the same view on Concordans (`<LAWGRAPH_SITE_URL>/actueel?soort=Motie`: `soort`, `van`, `tot`, `kabinet`, `ministerie`, `dossier`, `persoon`, `fractie`, `q` once per word, `kamer`, `coalitie`, `wet`, `artikel`; not the tier) and a `next` link with the cursor; an entry per event (`id` `tag:lawgraph,2026:<id>`, `title`, `updated` the date, an `alternate` link to the event on Concordans (its `path`, else `/explore?focus=<id>`) and a `related` one to its `official_url` or `tk_url`, `category` its kind, an `author` per person, `summary` its summary and dossier)
          */
         get: operations["get_feed_atom_api_feed_atom_get"];
         put?: never;
@@ -2038,7 +2038,12 @@ export interface components {
              */
             closed: boolean;
             /** Outcome */
-            outcome: ("aangenomen" | "verworpen") | null;
+            outcome: ("aangenomen" | "verworpen" | "ingetrokken") | null;
+            /**
+             * Withdrawal Letter
+             * @description Of a withdrawn bill (``outcome`` ``ingetrokken``): the key of the letter that withdrew it (``GET /api/documents/{key}``), a ``Brief regering`` whose subject is the Tweede Kamer's fixed title ``Brief houdende intrekking van het wetsvoorstel``; its date is ``closed_on``.
+             */
+            withdrawal_letter: string | null;
             tk_decision: components["schemas"]["TkDecisionDTO"] | null;
             ek_outcome: components["schemas"]["EkOutcomeDTO"] | null;
             /**
@@ -2062,7 +2067,7 @@ export interface components {
             closed_on: string | null;
             /**
              * Completeness
-             * @description `outcome`: what the graph knows of its end. `done` as of the day it closed; `pending` as of its last activity for an open bill or treaty, which may still be before a chamber or may have been withdrawn (the Tweede Kamer records no withdrawal), and without a day before `semantic tk-dossier-outcomes` reached it; `not_in_source` for an open dossier of another kind. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing, reason}` (docs/api.md "Completeness").
+             * @description `outcome`: what the graph knows of its end. `done` as of the day it closed (withdrawn too); `pending` as of its last activity for an open bill or treaty, which may still be before a chamber or may have ended in a way no record says, and without a day before `semantic tk-dossier-outcomes` reached it; `not_in_source` for an open dossier of another kind. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing, reason}` (docs/api.md "Completeness").
              */
             completeness: {
                 [key: string]: components["schemas"]["PartStateDTO"];
@@ -2445,7 +2450,8 @@ export interface components {
         };
         /**
          * AnnexDTO
-         * @description Annex metadata plus structured entries.
+         * @description An annex: its heading, its text as that of an article (paragraphs, lists, tables,
+         *     headings) and its list as entries.
          */
         AnnexDTO: {
             /** Id */
@@ -2454,14 +2460,46 @@ export interface components {
             key: string;
             /** Bwb Id */
             bwb_id: string | null;
-            /** Label */
+            /**
+             * Label
+             * @description As article text cites it: `1`, `I`, `Ia`.
+             */
             label: string | null;
-            /** Display Name */
+            /**
+             * Display Name
+             * @description As its heading prints it: `Bijlage 1`, `Lijst Ia`.
+             */
             display_name: string | null;
-            /** Title */
+            /**
+             * Title
+             * @description The title of its heading; null where it prints none.
+             */
             title: string | null;
-            /** Description */
+            /**
+             * Description
+             * @description Its paragraphs outside its lists, a line each and cut at 2,000 characters, a table flat; `text` has them whole.
+             */
             description: string | null;
+            /**
+             * Text
+             * @description Its text as that of an article: a paragraph a line, a list item on a line of its own, a table a row a line (its cells separated by a tab), the heading of a division on a line of its own. Without its articles, which are articles of their own (`bijlage 2 artikel 9`); null for an annex of articles only.
+             */
+            text: string | null;
+            /**
+             * Parts
+             * @description Its onderdelen and the paragraphs outside them, as spans of `text`.
+             */
+            parts: components["schemas"]["ArticlePartDTO"][];
+            /**
+             * Tables
+             * @description The tables in `text`, as spans of it.
+             */
+            tables: components["schemas"]["ArticleTableDTO"][];
+            /**
+             * Headings
+             * @description The headings in `text` (of a division, a table), as spans of it.
+             */
+            headings: components["schemas"]["ArticleHeadingDTO"][];
             /** Entries */
             entries: components["schemas"]["AnnexEntryDTO"][];
             /**
@@ -2476,6 +2514,11 @@ export interface components {
          */
         AnnexDetailResponse: {
             annex: components["schemas"]["AnnexDTO"];
+            /**
+             * References
+             * @description The links of its `text` to a regulation, an article, an annex or an EU act, in text order, as those of an article.
+             */
+            references: components["schemas"]["ArticleReferenceDTO"][];
             /** Referenced By */
             referenced_by: components["schemas"]["AnnexReferencedByItem"][];
         };
@@ -3952,6 +3995,21 @@ export interface components {
             source: components["schemas"]["ColorSourceDTO"];
         };
         /**
+         * ChamberScheduleDTO
+         * @description When the Tweede Kamer last met and voted in the plenary hall, and when it meets and
+         *     votes next, as its activities say (``Activiteit``); each null when it has none.
+         */
+        ChamberScheduleDTO: {
+            /** @description The latest plenary activity held, on or before today. */
+            last_sitting: components["schemas"]["ScheduledActivityDTO"] | null;
+            /** @description The latest ``Stemmingen`` held, on or before today. */
+            last_votes: components["schemas"]["ScheduledActivityDTO"] | null;
+            /** @description The first plenary activity planned (``Gepland``) on or after today. */
+            next_sitting: components["schemas"]["ScheduledActivityDTO"] | null;
+            /** @description The first ``Stemmingen`` planned on or after today. */
+            next_votes: components["schemas"]["ScheduledActivityDTO"] | null;
+        };
+        /**
          * ChangeSource
          * @description What makes the change: the publication that enacts it, or the paper that proposes
          *     it (the bill, an amendment).
@@ -4791,6 +4849,11 @@ export interface components {
              */
             kind: string | null;
             /**
+             * Motion Kind
+             * @description Of a vote on a motion of censure (motie van afkeuring) ``censure``, of no confidence (motie van wantrouwen) ``no_confidence``, as the fixed wording of its subject says (``core/motion_kinds.py``); null for any other vote.
+             */
+            motion_kind: ("censure" | "no_confidence") | null;
+            /**
              * Decision Kind
              * @description ``BesluitSoort`` as the Kamer writes it: ``Stemmen - aangenomen``, ``Stemmen - verworpen``, ``Stemmen - zonder stemming aannemen`` (a hamerstuk: no votes), ``Stemmen - uitstellen``, ...
              */
@@ -4953,6 +5016,11 @@ export interface components {
              * @description Under every filter (a topic of the Overzicht: its words, Kamer and period): per cabinet, newest first, what its coalition did on those votes.
              */
             coalition_cabinets: components["schemas"]["DecisionCabinetCoalition"][];
+            /**
+             * Motion Kind
+             * @description Under every filter but `motion_kind`: the votes on a motion of censure or of no confidence per kind, and how many carried and did not; most first.
+             */
+            motion_kind: components["schemas"]["DecisionMotionKindCount"][];
         };
         /**
          * DecisionKindCount
@@ -5009,6 +5077,30 @@ export interface components {
             key: string;
             /** Path */
             path: string | null;
+        };
+        /**
+         * DecisionMotionKindCount
+         * @description How many of the decisions are votes on a motion of one kind, and how many of those
+         *     carried and did not.
+         */
+        DecisionMotionKindCount: {
+            /**
+             * Value
+             * @enum {string}
+             */
+            value: "censure" | "no_confidence";
+            /** Count */
+            count: number;
+            /**
+             * Passed
+             * @default 0
+             */
+            passed: number;
+            /**
+             * Rejected
+             * @default 0
+             */
+            rejected: number;
         };
         /**
          * DecisionOutcomeCount
@@ -5097,6 +5189,11 @@ export interface components {
              * @description What was decided on: the ``Zaak.Soort`` of the case it decided (``primary_case_kind``), or the one Soort of the cases on its agenda item, as the Kamer writes it: ``Motie``, ``Amendement``, ``Wetgeving``, ``Begroting``, ...; null when neither tells.
              */
             kind: string | null;
+            /**
+             * Motion Kind
+             * @description Of a vote on a motion of censure (motie van afkeuring) ``censure``, of no confidence (motie van wantrouwen) ``no_confidence``, as the fixed wording of its subject says (``core/motion_kinds.py``); null for any other vote.
+             */
+            motion_kind: ("censure" | "no_confidence") | null;
             /**
              * Primary Case Kind
              * @description The ``Zaak.Soort`` of the case the vote singled out (``Motie``, ``Amendement``, ``Wetgeving``); null when it singled out none.
@@ -5539,6 +5636,11 @@ export interface components {
              * @description The key of that decision (``/api/decisions/{key}``); null without one.
              */
             decision: string | null;
+            /**
+             * Motion Kind
+             * @description Of a motion of censure (motie van afkeuring) ``censure``, of no confidence (motie van wantrouwen) ``no_confidence``, as the fixed wording of its subject says (``semantic tk-motion-kinds``, ``core/motion_kinds.py``); null for any other paper. Open while ``outcome`` is null.
+             */
+            motion_kind: ("censure" | "no_confidence") | null;
             /** Id */
             id: string;
             /** Key */
@@ -5709,6 +5811,11 @@ export interface components {
              * @description The key of that decision (``/api/decisions/{key}``); null without one.
              */
             decision: string | null;
+            /**
+             * Motion Kind
+             * @description Of a motion of censure (motie van afkeuring) ``censure``, of no confidence (motie van wantrouwen) ``no_confidence``, as the fixed wording of its subject says (``semantic tk-motion-kinds``, ``core/motion_kinds.py``); null for any other paper. Open while ``outcome`` is null.
+             */
+            motion_kind: ("censure" | "no_confidence") | null;
             /** Key */
             key: string;
             /** Document Id */
@@ -5959,7 +6066,12 @@ export interface components {
              */
             closed: boolean;
             /** Outcome */
-            outcome: ("aangenomen" | "verworpen") | null;
+            outcome: ("aangenomen" | "verworpen" | "ingetrokken") | null;
+            /**
+             * Withdrawal Letter
+             * @description Of a withdrawn bill (``outcome`` ``ingetrokken``): the key of the letter that withdrew it (``GET /api/documents/{key}``), a ``Brief regering`` whose subject is the Tweede Kamer's fixed title ``Brief houdende intrekking van het wetsvoorstel``; its date is ``closed_on``.
+             */
+            withdrawal_letter: string | null;
             tk_decision: components["schemas"]["TkDecisionDTO"] | null;
             ek_outcome: components["schemas"]["EkOutcomeDTO"] | null;
             /**
@@ -5983,7 +6095,7 @@ export interface components {
             closed_on: string | null;
             /**
              * Completeness
-             * @description `outcome`: what the graph knows of its end. `done` as of the day it closed; `pending` as of its last activity for an open bill or treaty, which may still be before a chamber or may have been withdrawn (the Tweede Kamer records no withdrawal), and without a day before `semantic tk-dossier-outcomes` reached it; `not_in_source` for an open dossier of another kind. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing, reason}` (docs/api.md "Completeness").
+             * @description `outcome`: what the graph knows of its end. `done` as of the day it closed (withdrawn too); `pending` as of its last activity for an open bill or treaty, which may still be before a chamber or may have ended in a way no record says, and without a day before `semantic tk-dossier-outcomes` reached it; `not_in_source` for an open dossier of another kind. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing, reason}` (docs/api.md "Completeness").
              */
             completeness: {
                 [key: string]: components["schemas"]["PartStateDTO"];
@@ -6027,6 +6139,11 @@ export interface components {
             instruments: components["schemas"]["DossierInstrumentDTO"][];
             /** @description What the dossier's law changes and implements: from its bills (proposed) and its publications and act (enacted), the order its title names them. */
             legal_effect: components["schemas"]["LegalEffectDTO"];
+            /**
+             * Enacted
+             * @description The publications its law was enacted in (`Stb. 2024, 193`), the earliest published first: the same `legislated_in` edges as `instruments`.
+             */
+            enacted: components["schemas"]["EnactedPublicationDTO"][];
             /**
              * Laws Named
              * @description The laws the title names (`Wetboek van Strafrecht`, `Vreemdelingenwet 2000`), each with whether the graph holds it: a law the dossier changes that is not loaded has no instrument above.
@@ -6146,6 +6263,11 @@ export interface components {
              * @description The key of that decision (``/api/decisions/{key}``); null without one.
              */
             decision: string | null;
+            /**
+             * Motion Kind
+             * @description Of a motion of censure (motie van afkeuring) ``censure``, of no confidence (motie van wantrouwen) ``no_confidence``, as the fixed wording of its subject says (``semantic tk-motion-kinds``, ``core/motion_kinds.py``); null for any other paper. Open while ``outcome`` is null.
+             */
+            motion_kind: ("censure" | "no_confidence") | null;
             /** Display Name */
             display_name: string | null;
             /**
@@ -6525,9 +6647,10 @@ export interface components {
          *     ``phases``: every phase of the curated list in its order, each done when a paper, an
          *     activity or a decision of the Kamer marks it; ``current_phase`` is the furthest done
          *     phase in that order. A closed dossier has an ``outcome``: ``aangenomen`` (its law was
-         *     published, or the Eerste Kamer adopted it) or ``verworpen`` (a chamber voted the bill
-         *     down); ``tk_decision`` is the last decision of the Tweede Kamer on the bill and
-         *     ``ek_outcome`` its outcome in the Eerste Kamer.
+         *     published, or the Eerste Kamer adopted it), ``verworpen`` (a chamber voted the bill
+         *     down) or ``ingetrokken`` (the government withdrew it by letter, ``withdrawal_letter``);
+         *     ``tk_decision`` is the last decision of the Tweede Kamer on the bill and ``ek_outcome``
+         *     its outcome in the Eerste Kamer.
          */
         DossierSummaryDTO: {
             /** Id */
@@ -6592,7 +6715,12 @@ export interface components {
              */
             closed: boolean;
             /** Outcome */
-            outcome: ("aangenomen" | "verworpen") | null;
+            outcome: ("aangenomen" | "verworpen" | "ingetrokken") | null;
+            /**
+             * Withdrawal Letter
+             * @description Of a withdrawn bill (``outcome`` ``ingetrokken``): the key of the letter that withdrew it (``GET /api/documents/{key}``), a ``Brief regering`` whose subject is the Tweede Kamer's fixed title ``Brief houdende intrekking van het wetsvoorstel``; its date is ``closed_on``.
+             */
+            withdrawal_letter: string | null;
             tk_decision: components["schemas"]["TkDecisionDTO"] | null;
             ek_outcome: components["schemas"]["EkOutcomeDTO"] | null;
             /**
@@ -6616,7 +6744,7 @@ export interface components {
             closed_on: string | null;
             /**
              * Completeness
-             * @description `outcome`: what the graph knows of its end. `done` as of the day it closed; `pending` as of its last activity for an open bill or treaty, which may still be before a chamber or may have been withdrawn (the Tweede Kamer records no withdrawal), and without a day before `semantic tk-dossier-outcomes` reached it; `not_in_source` for an open dossier of another kind. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing, reason}` (docs/api.md "Completeness").
+             * @description `outcome`: what the graph knows of its end. `done` as of the day it closed (withdrawn too); `pending` as of its last activity for an open bill or treaty, which may still be before a chamber or may have ended in a way no record says, and without a day before `semantic tk-dossier-outcomes` reached it; `not_in_source` for an open dossier of another kind. Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing, reason}` (docs/api.md "Completeness").
              */
             completeness: {
                 [key: string]: components["schemas"]["PartStateDTO"];
@@ -6997,6 +7125,54 @@ export interface components {
             state: string | null;
             /** Papers */
             papers: components["schemas"]["EkPaperDTO"][];
+        };
+        /**
+         * EnactedInstrumentDTO
+         * @description The law a publication enacted: the instrument whose articles it ``ESTABLISHES``.
+         */
+        EnactedInstrumentDTO: {
+            /** Key */
+            key: string;
+            /**
+             * Title
+             * @description The citation title, else the title: `Wet betaalbare huur`.
+             */
+            title: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
+         * EnactedPublicationDTO
+         * @description A publication the dossier's law was enacted in: one ``LEGISLATED_IN`` the dossier.
+         */
+        EnactedPublicationDTO: {
+            /** Key */
+            key: string;
+            /**
+             * Cite
+             * @description As it is cited: `Stb. 2024, 193`.
+             */
+            cite: string | null;
+            /**
+             * Published On
+             * @description The day it was published.
+             */
+            published_on: string | null;
+            /**
+             * First Effective Date
+             * @description The earliest effective date of what it enacted (the `effective_date` of its `establishes`, `amends`, `introduces` and `repeals` edges, as the BWB gives it); null where its source gives none, as for a law of the Staatsblad the BWB does not hold.
+             */
+            first_effective_date: string | null;
+            /** @description The law it enacted, whose articles it established; null for a publication that only changes other laws. */
+            instrument: components["schemas"]["EnactedInstrumentDTO"] | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * EuLinkDTO
@@ -7635,6 +7811,11 @@ export interface components {
              */
             dictum: string | null;
             /**
+             * Motion Kind
+             * @description Of a motion of censure (motie van afkeuring) ``censure``, of no confidence (motie van wantrouwen) ``no_confidence``, and of a vote on one, as ``GET /api/documents/{key}`` and ``GET /api/decisions/{key}`` give it; null for the other events.
+             */
+            motion_kind: ("censure" | "no_confidence") | null;
+            /**
              * Subkind
              * @description What the source calls it: the document kind (``Motie (gewijzigd/nader)``), for a vote what was voted on (the ``Zaak.Soort``: ``Motie``, ``Amendement``, ``Wetgeving``, ...); null for the other kinds.
              */
@@ -8093,6 +8274,8 @@ export interface components {
             data_as_of: {
                 [key: string]: components["schemas"]["DataAsOfDTO"];
             };
+            /** @description When the Tweede Kamer last met and voted and when it meets and votes next, as of today whatever ``until`` and the filters. */
+            chamber_schedule: components["schemas"]["ChamberScheduleDTO"];
         };
         /**
          * FeedViaDTO
@@ -8449,6 +8632,41 @@ export interface components {
             readonly path: string | null;
         };
         /**
+         * InstrumentAnnexDTO
+         * @description An annex (``<bijlage>``) of a law in its table of contents.
+         */
+        InstrumentAnnexDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /**
+             * Label
+             * @description As article text cites it: `1`, `I`, `Ia`; null for the one annex of a regulation, which has no address of its own.
+             */
+            label: string | null;
+            /**
+             * Display Name
+             * @description As its heading prints it: `Bijlage 1`, `Lijst Ia`.
+             */
+            display_name: string | null;
+            /**
+             * Title
+             * @description The title of its heading (`Bevoegdheidsregeling bestuursrechtspraak (artikelen 8:5, ...)`); null where it prints none.
+             */
+            title: string | null;
+            /**
+             * Text Preview
+             * @description The start of its own text (`/api/annexes/{key}` has the whole); null for an annex whose content is articles (in ``items``, their breadcrumb names it).
+             */
+            text_preview: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
          * InstrumentArticleBreadcrumbDTO
          * @description One division an article stands in, outermost first: ``type`` is the element of the
          *     BWB XML (``boek``, ``titeldeel``, ``hoofdstuk``, ``afdeling``, ``paragraaf``, ...),
@@ -8672,6 +8890,11 @@ export interface components {
             division: components["schemas"]["InstrumentDivisionDTO"] | null;
             /** Items */
             items: components["schemas"]["InstrumentArticleNodeDTO"][];
+            /**
+             * Annexes
+             * @description The annexes of the law, in the order of the toestand, which puts them after its articles: each in full, whatever ``limit``, ``offset`` or ``division``; empty for a law without one and for an EU act.
+             */
+            annexes: components["schemas"]["InstrumentAnnexDTO"][];
         };
         /**
          * InstrumentBasisItem
@@ -11466,7 +11689,7 @@ export interface components {
          * @description How far one part is complete.
          */
         PartStateDTO: {
-            /** @description `done` (the step ran and holds all it found), `partial` (it left some: `missing`), `none` (it ran and found nothing), `pending` (not reached yet), `paused` (the source or the step is off), `unavailable` (the source refused the last run), `not_in_source` (the source does not give it), `not_fetched` (the source gives it, the graph does not take it in). */
+            /** @description `done` (the step ran and holds all it found), `partial` (it left some: `missing`), `none` (it ran and found nothing), `pending` (not reached yet: what it lacks is not known, though links laid before may show), `paused` (the source or the step is off), `unavailable` (the source refused the last run), `not_in_source` (the source does not give it), `not_fetched` (the source gives it, the graph does not take it in). */
             state: components["schemas"]["Coverage"];
             /**
              * As Of
@@ -11475,10 +11698,10 @@ export interface components {
             as_of: string | null;
             /**
              * Missing
-             * @description With `partial`: how many are missing.
+             * @description With `partial`: how many are missing. Of `references`: those the step could not link, and those linked to a stub (a target the graph has not loaded).
              */
             missing: number | null;
-            /** @description Why, where one state has more than one cause. Of the `text` of a Kamerstuk that is `pending` as of a day: `awaiting_normalize` (its XML is fetched, not read yet), `source_pdf_only` (the source has its PDF only; its XML follows). */
+            /** @description Why, where one state has more than one cause. Of the `text` of a Kamerstuk that is `pending` as of a day: `awaiting_normalize` (its XML is fetched, not read yet), `source_pdf_only` (the source has its PDF only; its XML follows). Of `references` that are `partial`: `target_not_loaded` (every one missing is linked to a stub; without a reason, some could not be linked). */
             reason: components["schemas"]["Reason"] | null;
         };
         /**
@@ -11809,10 +12032,11 @@ export interface components {
         /**
          * Reason
          * @description Why a part is in its state, where one state has more than one cause: of the ``text``
-         *     of a Kamerstuk that is ``pending`` as of a day (``core.document_completeness``).
+         *     of a Kamerstuk that is ``pending`` as of a day (``core.document_completeness``), of the
+         *     ``references`` of a record that are ``partial`` (``references_part``).
          * @enum {string}
          */
-        Reason: "awaiting_normalize" | "source_pdf_only";
+        Reason: "awaiting_normalize" | "source_pdf_only" | "target_not_loaded";
         /**
          * ReferenceTargetDTO
          * @description The node a reference names, and whether the data holds it.
@@ -12048,6 +12272,48 @@ export interface components {
             notation: components["schemas"]["NotationDTO"] | null;
         };
         /**
+         * ScheduledActivityDTO
+         * @description A plenary activity of the Tweede Kamer, held or planned.
+         */
+        ScheduledActivityDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /**
+             * Number
+             * @description ``Activiteit.Nummer``.
+             */
+            number: string | null;
+            /**
+             * Kind
+             * @description ``Activiteit.Soort``: ``Stemmingen``, ``Vragenuur``.
+             */
+            kind: string | null;
+            /** Date */
+            date: string | null;
+            /**
+             * Precision
+             * @description ``Activiteit.DatumSoort``, how precise ``date`` is: ``Dag``; ``Weeknummer``, planned for the week of that Monday, not yet for a day; ``Meerdaags``, its first day.
+             */
+            precision: string | null;
+            /**
+             * Agenda Title
+             * @description ``Activiteit.Onderwerp``: ``Stemmingen over alle begrotingen``.
+             */
+            agenda_title: string | null;
+            /**
+             * Tk Url
+             * @description Its page on tweedekamer.nl.
+             */
+            tk_url: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
          * ScopeArticleReference
          * @description Annex that scopes the applicability of an article.
          */
@@ -12158,6 +12424,11 @@ export interface components {
             completeness: {
                 [key: string]: components["schemas"]["PartStateDTO"];
             };
+            /**
+             * Signed For
+             * @description Of the papers and the votes: the factions `q` names, whose words are not searched; each hit is signed for every one of them (a paper by one of its Kamerleden for it, a vote on such a paper). Empty when `q` names none, or is no more than a faction.
+             */
+            signed_for: components["schemas"]["SignedForDTO"][];
         };
         /**
          * SeatEventBasis
@@ -12348,6 +12619,27 @@ export interface components {
             member_key: string | null;
             /** @description Of a bewindspersoon the ministry their function names. */
             ministry: components["schemas"]["MinistryKey"] | null;
+        };
+        /**
+         * SignedForDTO
+         * @description A faction the query names, which the hits of a type are signed for.
+         */
+        SignedForDTO: {
+            /**
+             * Words
+             * @description The words of `q` that name it, in lower case.
+             */
+            words: string;
+            /**
+             * Name
+             * @description Its abbreviation (`VVD`), else its name: of the Tweede Kamer's faction of that name first.
+             */
+            name: string;
+            /**
+             * Factions
+             * @description The keys of the factions of that name (`vvd`, and `ek_…` of the Eerste Kamer).
+             */
+            factions: string[];
         };
         /**
          * SourceRefDTO
@@ -14314,6 +14606,8 @@ export interface operations {
                 props?: "full" | "canvas";
                 /** @description `passages`: an edge that keeps where a judgment cites (its `meta.mentions`) has its passages (`paragraph_id`, `paragraph_number`, `footnote`, `snippet`, `text`, `start`, `end`: `snippet[start:end]` is `text`), the first place in each of its first three paragraphs; `light` (the default) none. */
                 edge_meta?: "light" | "passages";
+                /** @description Comma-separated collections the walk reaches but does not go through (`members,factions,committees,cabinets`). */
+                stop_at?: string | null;
                 /** @description Comma-separated relations to keep (`REFERS_TO,PART_OF`). */
                 relations?: string | null;
                 /** @description Comma-separated node types to keep (`article,judgment`). */
@@ -14357,7 +14651,7 @@ export interface operations {
             query?: {
                 /** @description Open dossiers, closed ones (with an outcome) or both. */
                 status?: "open" | "closed" | "all";
-                outcome?: ("aangenomen" | "verworpen") | null;
+                outcome?: ("aangenomen" | "verworpen" | "ingetrokken") | null;
                 /** @description Comma-separated kinds (``Zaak.Soort``), e.g. ``Wetgeving,Begroting``; one of Wetgeving, Initiatiefwetgeving, Begroting, Verdrag, Initiatiefnota, PKB/Structuurvisie. */
                 kind?: string | null;
                 /** @description The start of the number: ``36264`` (that number and its chapters), ``37020-`` (the chapters of 37020). */
@@ -15494,6 +15788,8 @@ export interface operations {
                 from?: string | null;
                 /** @description On or before, YYYY-MM-DD. */
                 to?: string | null;
+                /** @description Comma-separated kinds of motion: ``censure`` (motie van afkeuring), ``no_confidence`` (motie van wantrouwen). Only those motions. */
+                motion_kind?: string | null;
                 /** @description Count per kind and chamber. */
                 facets?: boolean;
                 limit?: number;
@@ -15734,6 +16030,8 @@ export interface operations {
                 party_votes?: string | null;
                 /** @description Only the votes of the Tweede Kamer on which the coalition voted `together`, `split` (no wisselmeerderheid) or as a `wissel`, or which it `carried` or was `decisive` on. */
                 coalition?: ("together" | "split" | "wissel" | "carried" | "decisive") | null;
+                /** @description Comma-separated kinds of motion: ``censure`` (motie van afkeuring), ``no_confidence`` (motie van wantrouwen). Only the votes on such a motion. */
+                motion_kind?: string | null;
                 /** @description Also the decisions that never came to a vote (withdrawn, postponed, held, lapsed: ``passed`` null, the reason in ``decision_kind``); without it only those with an outcome, and the facets count those. */
                 unvoted?: boolean;
                 limit?: number;

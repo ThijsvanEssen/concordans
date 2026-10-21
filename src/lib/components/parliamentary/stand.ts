@@ -37,17 +37,18 @@ export function stand(d: Dossier): Stand | null {
 	// A phase is done where the source marks it so, and only there: a later phase does not
 	// stand in for an earlier one (Thijs, BE-27). A phase without a mark is not in the data.
 	const done = (name: PhaseName) => !!phaseOf(d, name)?.done;
-	if (!d.current_phase && !d.tk_decision && !d.ek_outcome) return null;
+	const withdrawn = d.outcome === 'ingetrokken';
+	if (!d.current_phase && !d.tk_decision && !d.ek_outcome && !withdrawn) return null;
 
 	const rvs: BodyState = done('Advies Raad van State') ? 'done' : 'unknown';
 	const tkDone = !!d.tk_decision || done('Eindtekst') || (d.closed && d.outcome === 'aangenomen');
 	const ekDone = !!d.ek_outcome;
 	const rejected = d.outcome === 'verworpen';
 
-	const tk: BodyState = tkDone || rejected ? 'done' : 'now';
+	const tk: BodyState = tkDone || rejected || withdrawn ? 'done' : 'now';
 	const ek: BodyState = ekDone
 		? 'done'
-		: rejected
+		: rejected || withdrawn
 			? 'none'
 			: tkDone && !d.closed
 				? 'now'
@@ -68,11 +69,13 @@ export function stand(d: Dossier): Stand | null {
 		const zin = `${outcome} door de Eerste Kamer${spaced(methodPhrase(method))}, ${korteDatum(date)}.`;
 		return { bodies, zin, group: 'afgehandeld', phase: null, date: date ?? null };
 	}
-	if (rejected || d.closed) {
+	if (rejected || withdrawn || d.closed) {
 		const date = d.closed_on ?? null;
 		const zin = rejected
 			? `Verworpen door de Tweede Kamer${on(date, ', ')}.`
-			: `Afgehandeld${on(date, ' ')}.`;
+			: withdrawn
+				? `Ingetrokken${on(date, ' op ')}.`
+				: `Afgehandeld${on(date, ' ')}.`;
 		return { bodies, zin, group: 'afgehandeld', phase: null, date };
 	}
 	if (tkDone) {
@@ -128,7 +131,7 @@ export function boxesOf(d: Dossier | Detail): Box[] {
 			: // No mark in the source: not in the data, which is not "not yet".
 				box(rvs.name, 'open', 'Advies', capitalize(NOT_IN_DATA));
 
-	const tweede = d.tk_decision
+	const tkBox = d.tk_decision
 		? box(
 				tk.name,
 				'ja',
@@ -138,27 +141,41 @@ export function boxesOf(d: Dossier | Detail): Box[] {
 			)
 		: d.outcome === 'verworpen'
 			? box(tk.name, 'nee', 'Verworpen', korteDatum(d.closed_on))
-			: tk.state === 'done'
-				? box(tk.name, 'ja', 'Aangenomen', korteDatum(dateOf(d, 'Eindtekst')))
-				: st.group === 'ingediend'
-					? box(tk.name, 'nu', 'Ingediend', korteDatum(st.date))
-					: box(tk.name, 'nu', 'In behandeling', capitalize(st.phase ?? ''), korteDatum(st.date));
+			: d.outcome === 'ingetrokken'
+				? // Withdrawn, not voted down: no "nee" (red only for no and errors).
+					box(tk.name, 'klaar', 'Ingetrokken', korteDatum(d.closed_on))
+				: tk.state === 'done'
+					? box(tk.name, 'ja', 'Aangenomen', korteDatum(dateOf(d, 'Eindtekst')))
+					: st.group === 'ingediend'
+						? box(tk.name, 'nu', 'Ingediend', korteDatum(st.date))
+						: box(tk.name, 'nu', 'In behandeling', capitalize(st.phase ?? ''), korteDatum(st.date));
 
-	let eerste: Box;
+	let ekBox: Box;
 	if (d.ek_outcome) {
 		const { outcome, date, method } = d.ek_outcome;
 		const mark = outcome === 'Verworpen' ? 'nee' : 'ja';
-		eerste = box(ek.name, mark, outcome, korteDatum(date), voteMethod(method));
+		ekBox = box(ek.name, mark, outcome, korteDatum(date), voteMethod(method));
 	} else if (ek.state === 'now') {
 		// Where the bill is, as eerstekamer.nl heads its list (API 0.76); else its step.
 		const senate = 'senate' in d ? d.senate : null;
 		const step = senate?.progress?.find((s) => s.state === 'geblokt')?.phase;
 		const where = senate?.status ?? step ?? 'Sinds aanneming door de Tweede Kamer';
-		eerste = box(ek.name, 'nu', 'In behandeling', where);
+		ekBox = box(ek.name, 'nu', 'In behandeling', where);
 	} else if (ek.state === 'none') {
-		eerste = box(ek.name, 'open', 'Niet aan de orde', 'Verworpen door de Tweede Kamer');
+		const why = d.outcome === 'ingetrokken' ? 'Ingetrokken' : 'Verworpen door de Tweede Kamer';
+		ekBox = box(ek.name, 'open', 'Niet aan de orde', why);
 	} else {
-		eerste = box(ek.name, 'open', 'Nog niet', 'Na de Tweede Kamer');
+		ekBox = box(ek.name, 'open', 'Nog niet', 'Na de Tweede Kamer');
 	}
-	return [advice, tweede, eerste];
+	return [advice, tkBox, ekBox];
+}
+
+/** The key of the letter that withdrew a bill; null for a bill not withdrawn or without it. */
+export function withdrawalLetter(d: {
+	outcome?: string | null;
+	withdrawal_letter?: string | null;
+}): string | null {
+	if (d.outcome !== 'ingetrokken' || !d.withdrawal_letter) return null;
+	// The key, as the API names it; its id (`documents/…`) gives the same.
+	return d.withdrawal_letter.replace(/^documents\//, '');
 }

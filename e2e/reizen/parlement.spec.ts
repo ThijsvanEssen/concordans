@@ -1,6 +1,7 @@
 // The parliamentary record: a dossier with its stand and procedure, a stuk opened in place, a
 // Kamerstuk with its indiener and its vote at rest, a vote with its outcome per fractie, a
 // passed bill with its law, and a memorie van toelichting beside the article it explains.
+import { patchApi } from '../support/api';
 import { expect, test } from '../support/test';
 
 test('a dossier shows where it stands and opens a stuk of its procedure in place', async ({
@@ -57,14 +58,77 @@ test('a motie says at rest how the Kamer voted on it, and which fracties', async
 	);
 });
 
-test('a passed bill names the law it made and the day it came into force', async ({ page }) => {
+test('a passed bill names the law it made, its Staatsblad and the day it came into force', async ({
+	page
+}) => {
 	await page.goto('/dossiers/36496');
 	await expect(
-		page.getByText('Vastgesteld als Wet betaalbare huur; in werking getreden op 1 juli 2024.')
+		page.getByText(
+			'Vastgesteld als Wet betaalbare huur, Stb. 2024, 193; in werking getreden op 1 juli 2024.'
+		)
 	).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Stb. 2024, 193' })).toHaveAttribute(
+		'href',
+		'/stb/2024/193'
+	);
 	await expect(
 		page.getByRole('link', { name: 'Wet betaalbare huur', exact: true }).first()
 	).toHaveAttribute('href', /\/wetten\/BWBR0049889/);
+});
+
+test('a withdrawn bill says so in its stand, with the letter that withdrew it', async ({
+	page
+}) => {
+	// The shape of API 0.80.1 (#857) on a dossier the fixtures hold.
+	await patchApi(page, /^\/api\/dossiers\/36496(\?|$)/, (d) => ({
+		...d,
+		outcome: 'ingetrokken',
+		closed: true,
+		closed_on: '2025-06-02',
+		withdrawal_letter: 'documents/brief_intrekking',
+		tk_decision: null,
+		ek_outcome: null,
+		enacted: []
+	}));
+	await page.goto('/dossiers/36496');
+	const stand = page.getByRole('region', { name: 'Stand van zaken' });
+	await expect(stand).toContainText('Ingetrokken bij brief van 2 juni 2025.');
+	await expect(stand.getByRole('link', { name: 'brief van 2 juni 2025' })).toHaveAttribute(
+		'href',
+		/brief_intrekking/
+	);
+	await expect(stand.getByText('Niet aan de orde')).toBeVisible();
+	// A bill withdrawn made no law.
+	await expect(page.getByText(/^Vastgesteld als/)).toHaveCount(0);
+});
+
+test('a motion of censure is named so in its head', async ({ page }) => {
+	await page.goto('/kamerstukken/37020-XVI/60?lezen=1');
+	await expect(page.getByRole('heading', { level: 1 })).toContainText('afkeuring');
+	// The kind as the glossary names it, with its explanation on hover.
+	await expect(page.getByRole('button', { name: /^Motie van afkeuring/ })).toBeVisible();
+});
+
+test('the Stemmingen narrow to the motions of no confidence and say when the Kamer meets', async ({
+	page,
+	touch
+}) => {
+	await page.goto('/explore?mode=index&kind=decisions&motie=wantrouwen');
+	await expect(
+		page.getByText(
+			/^Geen vergaderingen tot 27 oktober 2026; volgende stemmingen dinsdag 27 oktober 2026$/
+		)
+	).toBeVisible();
+	await expect(
+		page.getByText('Motie van wantrouwen', { exact: true }).filter({ visible: true }).first()
+	).toBeVisible();
+	if (touch) await page.getByRole('button', { name: /^Verfijnen/ }).click();
+	const kind = page
+		.getByRole('region', { name: 'Motie' })
+		.getByRole('button', { name: /^Motie van wantrouwen/ });
+	await expect(kind).toHaveAttribute('aria-pressed', 'true');
+	await kind.click();
+	await expect(page).not.toHaveURL(/motie=/);
 });
 
 test('a vote gives its outcome and the vote of each fractie', async ({ page }) => {

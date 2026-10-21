@@ -192,22 +192,26 @@ describe('the mark of what is missing', () => {
 
 	it('says what a search reads, in the order the API names it', () => {
 		const none = { state: 'none' as const, as_of: null, missing: null, reason: null };
-		expect(searchedLine({ fields: ['title', 'number'], completeness: { text: none } })).toBe(
-			'Gezocht in titels en nummers, niet in de tekst'
-		);
+		expect(
+			searchedLine({ fields: ['title', 'number'], signed_for: [], completeness: { text: none } })
+		).toBe('Gezocht in titels en nummers, niet in de tekst');
 		expect(
 			searchedLine({
 				fields: ['title', 'name', 'number', 'summary'],
+				signed_for: [],
 				completeness: { text: none }
 			})
 		).toBe('Gezocht in titels, namen, nummers en inhoudsindicaties, niet in de tekst');
 		expect(
 			searchedLine({
 				fields: ['title', 'number', 'text'],
+				signed_for: [],
 				completeness: { text: { ...none, state: 'done' } }
 			})
 		).toBe('Gezocht in titels, nummers en de tekst');
-		expect(searchedLine({ fields: ['name'], completeness: {} })).toBe('Gezocht in namen');
+		expect(searchedLine({ fields: ['name'], signed_for: [], completeness: {} })).toBe(
+			'Gezocht in namen'
+		);
 		expect(searchedLine(undefined)).toBe(null);
 	});
 });

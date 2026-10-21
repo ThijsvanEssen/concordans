@@ -4,20 +4,28 @@ import { textOf } from '$lib/text/words';
 import { isDay } from '$lib/text/datum';
 import { normaal } from '$lib/text/treffer';
 import { isFeedLaw } from '$lib/components/actueel/filters';
+import { dossierLabel } from '$lib/bron/dossier-naam';
 
 // A topic followed: the words of the user, looked for in the titles of Actueel. The source has
 // no theme of its own (the TK OData has none, Back-end #3, 9 Oct), so a topic is its words.
-// Or a law, or an article of one: what Actueel ties to it (`instrument`, API 0.79.55).
+// Or a law, or an article of one: what Actueel ties to it (`instrument`, API 0.79.55). Or a
+// dossier, followed from its page: what Actueel holds of it (`dossier`), `gezien` the day of
+// the visit before (API 0.80.1, #866).
 // Kept in this browser only; an address carries the same topics to someone else.
 
 /** A law followed, or one of its articles. */
 export type GevolgdeWet = { bwb: string; titel: string; artikel?: string | null };
+
+/** A dossier followed: its number as the Kamer writes it (`36600-VII`) and its name. */
+export type FollowedDossier = { number: string; title: string };
 
 export type Onderwerp = {
 	/** The words, each looked for apart: `kunstmatige intelligentie`, `AI`. Of a law its name. */
 	termen: string[];
 	/** A law or article followed instead of words. */
 	wet?: GevolgdeWet;
+	/** A dossier followed instead of words. */
+	dossier?: FollowedDossier;
 	/** The day the data reached at the visit before this one: new is from there on. */
 	vorige: string | null;
 	/** The day the data reached at this visit. */
@@ -30,9 +38,12 @@ const SESSIE = 'concordans:onderwerpen-bezocht';
 
 const gelijk = (a: string, b: string) => normaal(a).toLowerCase() === normaal(b).toLowerCase();
 
+/** A topic of words, not a law or a dossier followed. */
+export const isWords = (o: Pick<Onderwerp, 'wet' | 'dossier'>) => !o.wet && !o.dossier;
+
 /** The topic is the same if one of its words is; a law's name is not a word followed. */
 export const vindIndex = (lijst: Onderwerp[], term: string) =>
-	lijst.findIndex((o) => !o.wet && o.termen.some((t) => gelijk(t, term)));
+	lijst.findIndex((o) => isWords(o) && o.termen.some((t) => gelijk(t, term)));
 
 /** `artikel 3 Cyberbeveiligingswet`, `Cyberbeveiligingswet`: a law followed by its name. */
 export const wetNaam = (w: GevolgdeWet) =>
@@ -42,10 +53,16 @@ export const wetNaam = (w: GevolgdeWet) =>
  * A topic by what it follows: its law and article, or its words, lowercase and sorted, so
  * `Huur; huurtoeslag` and `huurtoeslag;Huur` are one topic, with one coding (strekking).
  */
-export const topicKey = (o: Pick<Onderwerp, 'termen'> & Partial<Pick<Onderwerp, 'wet'>>) =>
-	o.wet
-		? `wet:${o.wet.bwb.toUpperCase()}${o.wet.artikel ? `:${o.wet.artikel}` : ''}`
-		: [...new Set(o.termen.map((t) => normaal(t).toLowerCase()).filter(Boolean))].sort().join('|');
+export const topicKey = (
+	o: Pick<Onderwerp, 'termen'> & Partial<Pick<Onderwerp, 'wet' | 'dossier'>>
+) =>
+	o.dossier
+		? `dossier:${o.dossier.number.toUpperCase()}`
+		: o.wet
+			? `wet:${o.wet.bwb.toUpperCase()}${o.wet.artikel ? `:${o.wet.artikel}` : ''}`
+			: [...new Set(o.termen.map((t) => normaal(t).toLowerCase()).filter(Boolean))]
+					.sort()
+					.join('|');
 
 const wetSleutel = (w: GevolgdeWet) => topicKey({ termen: [], wet: w });
 
@@ -64,12 +81,36 @@ const leesWet = (v: unknown): GevolgdeWet | null => {
 	};
 };
 
+/** A dossier number as the API takes it: `36764`, `36600-VII`, `23908-(R1519)`. */
+const DOSSIER = /^\d+(-[A-Za-z0-9()]+)?$/;
+
+const readDossier = (v: unknown): FollowedDossier | null => {
+	if (!v || typeof v !== 'object') return null;
+	const { number, title } = v as Record<string, unknown>;
+	if (typeof number !== 'string' || !DOSSIER.test(number.trim())) return null;
+	return { number: number.trim(), title: textOf(title) ?? number.trim() };
+};
+
+/** `Kamerstuk 36764 Cyberbeveiligingswet`: a dossier followed by its number and name. */
+export const followedDossierName = (d: FollowedDossier) =>
+	dossierLabel({ number: d.number, title: d.title === d.number ? null : d.title });
+
 export function lees(): Onderwerp[] {
 	try {
 		const raw = JSON.parse(localStorage.getItem(SLEUTEL) ?? '[]');
 		if (!Array.isArray(raw)) return [];
 		return raw.flatMap((o) => {
 			const dag = (v: unknown) => (typeof v === 'string' && isDay(v) ? v : null);
+			const dossier = readDossier(o?.dossier);
+			if (dossier)
+				return [
+					{
+						termen: [followedDossierName(dossier)],
+						dossier,
+						vorige: dag(o.vorige),
+						gezien: dag(o.gezien)
+					}
+				];
 			const wet = leesWet(o?.wet);
 			if (wet)
 				return [{ termen: [wetNaam(wet)], wet, vorige: dag(o.vorige), gezien: dag(o.gezien) }];
@@ -106,8 +147,43 @@ export function volgWet(w: GevolgdeWet) {
 	bewaar([...lijst, { termen: [wetNaam(wet)], wet, vorige: null, gezien: null }]);
 }
 
-/** Stop following a topic, of words or of a law. */
-export function ontvolgOnderwerp(o: Pick<Onderwerp, 'termen' | 'wet'>) {
+const indexOfDossier = (list: Onderwerp[], number: string) =>
+	list.findIndex(
+		(o) => o.dossier && topicKey(o) === topicKey({ termen: [], dossier: { number, title: '' } })
+	);
+
+/** Whether this browser follows the dossier. */
+export const followsDossier = (number: string) => indexOfDossier(lees(), number) >= 0;
+
+/** Follow a dossier; from today on, what comes in is new. */
+export function followDossier(d: FollowedDossier, today: string) {
+	const list = lees();
+	if (indexOfDossier(list, d.number) >= 0) return;
+	const dossier = { number: d.number, title: d.title };
+	bewaar([
+		...list,
+		{ termen: [followedDossierName(dossier)], dossier, vorige: null, gezien: today }
+	]);
+}
+
+/**
+ * A visit to a followed dossier's page: the day of the visit before, and from now on today.
+ * Null for a dossier not followed, or never seen.
+ */
+export function visitDossier(number: string, today: string): string | null {
+	const list = lees();
+	const i = indexOfDossier(list, number);
+	if (i < 0) return null;
+	const before = list[i].gezien;
+	if (!before || before < today) {
+		list[i] = { ...list[i], gezien: today };
+		bewaar(list);
+	}
+	return before;
+}
+
+/** Stop following a topic, of words, of a law or of a dossier. */
+export function ontvolgOnderwerp(o: Pick<Onderwerp, 'termen' | 'wet' | 'dossier'>) {
 	const k = topicKey(o);
 	bewaar(lees().filter((x) => topicKey(x) !== k));
 }
@@ -171,7 +247,10 @@ export function nieuwBezoek(lijst: Onderwerp[]): Onderwerp[] {
 }
 
 /** The day the data reached, kept per topic for the next visit: by a word of it, or itself. */
-export function zetGezien(term: string | Pick<Onderwerp, 'termen' | 'wet'>, dag: string) {
+export function zetGezien(
+	term: string | Pick<Onderwerp, 'termen' | 'wet' | 'dossier'>,
+	dag: string
+) {
 	const lijst = lees();
 	const i =
 		typeof term === 'string'
@@ -215,10 +294,11 @@ export function topicsOf(params: URLSearchParams): string[][] {
 	return onceEach(topics, (termen) => topicKey({ termen }));
 }
 
-export function deelAdres(lijst: Pick<Onderwerp, 'termen' | 'wet'>[]): string {
+export function deelAdres(lijst: Pick<Onderwerp, 'termen' | 'wet' | 'dossier'>[]): string {
 	const p = new URLSearchParams();
 	for (const o of lijst)
-		if (o.wet) p.append('wet', naarWetParam(o.wet));
+		if (o.dossier) p.append('dossier', o.dossier.number);
+		else if (o.wet) p.append('wet', naarWetParam(o.wet));
 		else p.append('onderwerp', topicParam(o.termen));
 	return `/onderwerpen?${p}`;
 }
@@ -235,4 +315,13 @@ export function wettenUitParams(params: URLSearchParams): GevolgdeWet[] {
 		return w ? [w] : [];
 	});
 	return onceEach(laws, wetSleutel);
+}
+
+/** The dossiers of an address (`?dossier=36764`); their names come with their first answer. */
+export function dossiersFromParams(params: URLSearchParams): FollowedDossier[] {
+	const dossiers = params.getAll('dossier').flatMap((v) => {
+		const d = readDossier({ number: v });
+		return d ? [d] : [];
+	});
+	return onceEach(dossiers, (d) => d.number.toUpperCase());
 }

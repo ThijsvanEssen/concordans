@@ -104,6 +104,7 @@
 				naam={acties.naam ?? ''}
 				bron={acties.bron ?? null}
 				tekst={acties.tekst}
+				follow={acties.follow ?? null}
 			/>
 		</span>
 	</div>

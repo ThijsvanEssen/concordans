@@ -4,6 +4,7 @@
 import type { CiteItem } from '$lib/components/ui/cite-items';
 import type { MapItem } from '$lib/map/map';
 import type { Collection } from '$lib/vocabulary';
+import type { FollowedDossier } from '$lib/onderwerpen/onderwerpen';
 
 /** What a reader gives its head's actions: data, not their layout. */
 export type Acties = {
@@ -19,6 +20,8 @@ export type Acties = {
 	bron?: { label: string; href: string } | null;
 	/** The text Kopieer tekst copies, asked when chosen. */
 	tekst?: () => string;
+	/** What Volg follows under Gevolgd: a dossier. */
+	follow?: FollowedDossier | null;
 };
 
 /** Per kind: is it cited (Citeer)? Bewaar is on every reader and needs no entry. */

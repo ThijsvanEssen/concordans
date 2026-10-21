@@ -5,13 +5,18 @@
 	// gestippeld. Onder elk vak één zin met de datum. Werkt op een lijstitem en op het detail.
 	import type { Schema } from '$lib/api/types';
 	import { boxesOf, stand } from './stand';
-	import Uitkomst from './Uitkomst.svelte';
+	import OutcomeMark from './Uitkomst.svelte';
+	import BronLink from '$lib/bron/BronLink.svelte';
+	import { langeDatum } from '$lib/text/datum';
+	import { withdrawalLetter } from './stand';
 
 	type Item = Schema<'DossierSummaryDTO'> | Schema<'DossierDetailResponse'>;
 	let { d }: { d: Item } = $props();
 
 	const st = $derived(stand(d));
 	const boxes = $derived(boxesOf(d));
+	/** Withdrawn: the letter that withdrew it, the proof (API 0.80.1, #857). */
+	const letter = $derived(withdrawalLetter(d));
 </script>
 
 {#if d.source === 'eerstekamer'}
@@ -22,13 +27,21 @@
 	</p>
 {:else if st}
 	<section class="stand" aria-label="Stand van zaken">
-		<p class="zin">{st.zin}</p>
+		{#if letter}
+			<p class="zin">
+				Ingetrokken bij <BronLink ref={{ collection: 'documents', key: letter }}
+					>brief{d.closed_on ? ` van ${langeDatum(d.closed_on)}` : ''}</BronLink
+				>.
+			</p>
+		{:else}
+			<p class="zin">{st.zin}</p>
+		{/if}
 		<ol class="balk">
 			{#each boxes as box (box.body)}
 				<li class="vak vak--{box.mark}">
 					<span class="naam">{box.body}</span>
 					<span class="streep" aria-hidden="true"></span>
-					<Uitkomst tone={box.mark} woord={box.word} />
+					<OutcomeMark tone={box.mark} woord={box.word} />
 					<span class="wanneer">{box.line}</span>
 				</li>
 			{/each}
@@ -53,6 +66,12 @@
 		font-size: var(--t-h3);
 		line-height: var(--lh-snug);
 		color: var(--ink);
+	}
+	.zin :global(a) {
+		color: inherit;
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
 	}
 	.balk {
 		list-style: none;

@@ -9,6 +9,8 @@
 	import Bewaar from '$lib/map/Bewaar.svelte';
 	import type { MapItem } from '$lib/map/map';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
+	import FollowDossier from '$lib/components/parliamentary/FollowDossier.svelte';
+	import type { FollowedDossier } from '$lib/onderwerpen/onderwerpen';
 
 	let {
 		bewaar = null,
@@ -16,7 +18,8 @@
 		cite = [],
 		naam = '',
 		bron = null,
-		tekst
+		tekst,
+		follow = null
 	}: {
 		/** What Bewaar keeps; without it no Bewaar. */
 		bewaar?: MapItem | null;
@@ -30,16 +33,19 @@
 		bron?: { label: string; href: string } | null;
 		/** The text Kopieer tekst copies, asked when chosen. */
 		tekst?: () => string;
+		/** What Volg follows under Gevolgd (a dossier); without it no Volg. */
+		follow?: FollowedDossier | null;
 	} = $props();
 
 	const copier = createCopier();
 </script>
 
 <span class="kop-acties">
+	{#if follow}<FollowDossier dossier={follow} />{/if}
 	{#if bewaar}<Bewaar item={bewaar} {wat} />{/if}
 	{#if cite.length > 0}
 		<CiteMenu items={cite} name={naam} align="right" caret>
-			{#snippet onder(dicht)}
+			{#snippet onder(close)}
 				{#if tekst}
 					<button
 						type="button"
@@ -47,7 +53,7 @@
 						class="tekstmenu__item"
 						onclick={() => {
 							copier.copy(tekst(), 'tekst').catch((e) => report('Kopiëren', e));
-							dicht();
+							close();
 						}}>{copier.label('tekst', 'Kopieer tekst')}</button
 					>
 				{/if}

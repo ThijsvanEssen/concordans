@@ -46,6 +46,8 @@
 	import { ministryName } from '$lib/components/explore/index/ministries.svelte';
 	import FeedDay from '$lib/components/actueel/FeedDay.svelte';
 	import Doorzocht from '$lib/components/actueel/Doorzocht.svelte';
+	import OpenMotions from '$lib/components/actueel/OpenMotions.svelte';
+	import NextSitting from '$lib/components/parliamentary/NextSitting.svelte';
 	import {
 		COALITION,
 		FEED_FILTER_PARAMS,
@@ -521,6 +523,8 @@
 		];
 	});
 	const chips = $derived(activeFilters(groups));
+	/** Actueel as it opens, without a filter, a word or a period: what is first comes first. */
+	const unfiltered = $derived(!chips.length && !q.length && !since && !until && !chamber);
 	/** `Cyberbeveiligingswet`, `art. 3 Cyberbeveiligingswet`: the law chosen, as a filter names it. */
 	function wetNaamKort(w: GevolgdeWet) {
 		return w.artikel ? `${articleRef(null, w.artikel)} ${w.titel}` : w.titel;
@@ -637,6 +641,10 @@
 				<p class="count"><span class="noun">tellen…</span></p>
 			{/if}
 		</div>
+		<!-- The Tweede Kamer's days without a sitting, and first the motions of censure and of no
+		     confidence not yet voted on (API 0.80): both after the first paint. -->
+		{#if chamber !== 'EK'}<NextSitting />{/if}
+		{#if unfiltered}<OpenMotions />{/if}
 
 		{#if loading && !items.length}
 			<p class="status stil">Laden…</p>

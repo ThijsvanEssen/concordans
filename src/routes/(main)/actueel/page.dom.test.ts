@@ -45,6 +45,7 @@ beforeEach(() => {
 				counts: []
 			}))
 		}),
+		'/api/documents': { items: [] },
 		'/api/cabinets': [],
 		'/api/factions': []
 	});
@@ -58,9 +59,11 @@ async function settle() {
 	}
 }
 
+// The days counted, not the chamber's schedule (NextSitting), which names no day.
 const summaries = () =>
 	api
 		.asked('/api/feed/summary')
+		.filter(({ query }) => query?.until)
 		.map(({ query }) => ({ until: query?.until, days: query?.days, soort: query?.kind }));
 
 describe('the days counted on Actueel', () => {
