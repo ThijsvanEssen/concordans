@@ -36,6 +36,17 @@ export const NOT_IN_DATA = 'niet in de gegevens';
 /** A part of a bron the dataset lacks, as a line: `Tekst niet in de gegevens`. */
 export const lacks = (what: string) => `${capitalize(what)} ${NOT_IN_DATA}`;
 
+/**
+ * What one place of a bron lacks that the source should give: `successor`, an old article the
+ * transposition table places nowhere (`TRANSPOSED_TO` to the new law with outcome `gat`).
+ */
+export type Lack = 'successor';
+
+/** The line of a Lack: `Opvolger niet gevonden in de transponeringstabel`. */
+export const LACK: Record<Lack, string> = {
+	successor: 'Opvolger niet gevonden in de transponeringstabel'
+};
+
 /** A bron the dataset does not hold, as a sentence: `Wet X staat niet in de gegevens`. */
 export const notHeld = (name: string) => `${name} staat ${NOT_IN_DATA}`;
 

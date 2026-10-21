@@ -45,6 +45,16 @@ describe('where a verbinding lands', () => {
 			{ place: 'none', anchor: 'source' }
 		],
 		[
+			'what became of an old article, to the new law in focus: nothing drawn',
+			at(bron('article'), 'TRANSPOSED_TO', hull('instrument', true)),
+			{ place: 'none' }
+		],
+		[
+			'an old article in the place of a new one: a line',
+			at(bron('article'), 'TRANSPOSED_TO', bron('article')),
+			{ place: 'line', meta: true }
+		],
+		[
 			'a stuk that refers to a wet: no member of its hull, and no line',
 			at(bron('document'), 'REFERS_TO', hull('instrument')),
 			{ place: 'none' }

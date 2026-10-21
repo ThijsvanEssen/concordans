@@ -5,8 +5,18 @@ import type { Schema } from '$lib/api/types';
 import { citeArticle } from '$lib/text/cite';
 import { lawShortName } from '$lib/text/bw';
 import { enactedLawOfKey } from '$lib/text/enacted-law';
-import { joinAnd, plural } from '$lib/text/words';
+import { joinAnd, plural, textOf } from '$lib/text/words';
 import type { LidPairing } from '$lib/text/version-diff';
+import { neighborsOf, type Neighbor, type NodeGraph } from '$lib/api/nodes';
+import { isTranspositionOutcome } from '$lib/vocabulary';
+import { isCelex } from '$lib/bron/address';
+import {
+	readTranspositionOutcome,
+	type TableOutcome,
+	type OutcomePart,
+	type TranspositionOutcome
+} from '$lib/verbonden/edge-meta';
+import { outcomePlace } from '$lib/verbonden/relation-words';
 
 export type Succession = Schema<'ArticleSuccessionDTO'>;
 
@@ -73,12 +83,19 @@ export function successionStatus(s: Succession): string | null {
 /** One row of the leden: the leden of the old article and their place in the new law. */
 type PartRow = { old: string; place: string };
 
+/** A part of the old article and its place in the new law, or what became of it. */
+type Placed = Pick<Succession['parts'][number], 'old_part' | 'new_place'>;
+
 /**
  * The leden of the old article by their place in the new law, as the table writes it; the
  * leden that go to one place in one row: `leden 1, 2 en 3`, `2.8.6, 1`. Nothing for a whole
- * article that goes to one place: the line says that already.
+ * article that goes to one place: the line says that already, unless `whole` (the line names
+ * another place).
  */
-export function partRows(parts: Succession['parts']): PartRow[] {
+export function partRows(
+	parts: readonly Placed[],
+	{ whole = false }: { whole?: boolean } = {}
+): PartRow[] {
 	const byPlace = new Map<string, string[]>();
 	for (const p of parts) {
 		const olds = byPlace.get(p.new_place) ?? [];
@@ -94,13 +111,91 @@ export function partRows(parts: Succession['parts']): PartRow[] {
 		]);
 		return { old, place };
 	});
-	return rows.length === 1 && rows[0].old === 'het artikel' ? [] : rows;
+	return !whole && rows.length === 1 && rows[0].old === 'het artikel' ? [] : rows;
 }
 
 /** The tables the line rests on, each once, in the order of the list. */
-export function successionSources(list: readonly Succession[]): string[] {
-	return [...new Set(list.map((s) => s.source_url).filter((u): u is string => !!u))];
+export function successionSources(
+	list: readonly Succession[],
+	outcomes: readonly OutcomeEdge[] = []
+): string[] {
+	return [
+		...new Set(
+			[
+				...list.map((s) => s.source_url),
+				...outcomes.map((o) => o.reading.source && sourceUrl(o.reading.source))
+			].filter((u): u is string => !!u)
+		)
+	];
 }
+
+/**
+ * The page of the source a table is (`meta.source`), as the API makes `source_url`: an EU act
+ * by its CELEX number on EUR-Lex, a paper (`kst-34986-3`) on zoek.officielebekendmakingen.nl.
+ */
+export const sourceUrl = (id: string): string =>
+	isCelex(id)
+		? `https://eur-lex.europa.eu/legal-content/NL/TXT/?uri=CELEX:${id}`
+		: `https://zoek.officielebekendmakingen.nl/${id}.html`;
+
+/**
+ * What a recodification did with an old article no new article takes the place of (an edge
+ * TRANSPOSED_TO the new law, `isTranspositionOutcome`): the new law and what the table says.
+ */
+export type OutcomeEdge = {
+	law: { id: string; name: string };
+	reading: TranspositionOutcome;
+};
+
+/**
+ * The new law as the line names it: by its title; a new code under the old one's title by the
+ * old one's short title, marked (`Sv (nieuw)`), as `successionName` does an article of it.
+ */
+function outcomeLawName(n: Neighbor, own: OwnLaw): string {
+	const p = (n.props ?? {}) as Record<string, unknown>;
+	const title = textOf(p.citation_title) ?? textOf(p.title) ?? textOf(n.display_name);
+	const short = lawShortName(textOf(p.bwb_id), textOf(p.abbreviation) ?? textOf(p.short_title));
+	if (title && title === own.citationTitle) return `${short ?? own.shortTitle ?? title} (nieuw)`;
+	return title ?? short ?? 'de nieuwe wet';
+}
+
+/** The outcomes of the old article on screen, from its node (the light one serves). */
+export function outcomesOf(response: NodeGraph | null | undefined, own: OwnLaw): OutcomeEdge[] {
+	if (!response) return [];
+	return neighborsOf(response)
+		.filter((n) => n.direction === 'outbound' && isTranspositionOutcome(n.relation, n.collection))
+		.map((n) => ({
+			law: { id: n.id, name: outcomeLawName(n, own) },
+			reading: readTranspositionOutcome(n.meta)
+		}));
+}
+
+/**
+ * A part's place in the fold-out: what became of it (`vervallen`, `blijft in Waterwet`), or for
+ * a part no source places, the place as the table writes it (`Besluit B2`).
+ */
+const outcomePart = (p: OutcomePart): Placed => ({
+	old_part: p.from,
+	new_place: (p.outcome && outcomePlace(p.outcome)) || p.to || 'niet gevonden'
+});
+
+/** Whether two outcomes say the same: `blijft in` the same law. */
+const same = (a: TableOutcome | null, b: TableOutcome | null) =>
+	!!a && !!b && a.kind === b.kind && a.law === b.law;
+
+/**
+ * The parts of the outcomes, as the fold-out lists them beside the parts of the successors.
+ * `inLine`: the line says the outcome the parts share, so a part with that outcome adds
+ * nothing; a gap keeps them all, each with the place as the table writes it.
+ */
+export const outcomeParts = (
+	outcomes: readonly OutcomeEdge[],
+	{ inLine = false }: { inLine?: boolean } = {}
+): Placed[] =>
+	outcomes.flatMap((o) => {
+		const told = inLine && o.reading.outcome?.kind !== 'gat' ? o.reading.outcome : null;
+		return o.reading.parts.filter((p) => !same(p.outcome, told)).map(outcomePart);
+	});
 
 /** A lid as the table names it: `4`, `2a`; not `2 a` (an onderdeel) or the whole article. */
 const LID = /^\d+[a-z]?$/;

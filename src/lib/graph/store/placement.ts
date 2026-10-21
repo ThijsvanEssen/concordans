@@ -58,6 +58,9 @@ const SIDES: Side[] = ['target', 'source'];
 
 export function placeConnection(c: Connection): Placement {
 	const { relation, source, target } = c;
+	// What became of an old article, to the new law (`isTranspositionOutcome`): the head of
+	// the article says it; on the canvas a law would gather some 1.300 of them.
+	if (relation === 'TRANSPOSED_TO' && target.hull === 'instrument') return { place: 'none' };
 	const end = (side: Side) => (side === 'source' ? source : target);
 	/** The first side, target before source, for which `test` holds with the other end drawn. */
 	const sideWhere = (test: (side: Side) => boolean) =>

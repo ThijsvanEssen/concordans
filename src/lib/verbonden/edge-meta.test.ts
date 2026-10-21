@@ -5,7 +5,7 @@ import type { GraphEdge, GraphNode } from '$lib/graph/types';
 import { rowOfNeighbor } from './rows';
 import { type Neighbor } from '$lib/api/nodes';
 import { verbindingOfEdge, verbindingOfRow } from './verbinding';
-import { readEdge } from './edge-meta';
+import { parseOutcome, readEdge, readTranspositionOutcome } from './edge-meta';
 
 const artikel: GraphNode = {
 	id: 'articles/bwbr0005537_3_2',
@@ -141,5 +141,38 @@ describe('one edge, read alike by the row and the canvas card', () => {
 			{ direction: 'inbound', citingEcli: 'ECLI:NL:HR:2019:2006' }
 		);
 		expect([e.position, e.at]).toEqual(['r.o. 6 en 7', 'rov-6']);
+	});
+});
+
+describe('readTranspositionOutcome (lawgraph #860)', () => {
+	it('reads what the table says of an old article it places in no article', () => {
+		expect(parseOutcome('vervallen')).toEqual({ kind: 'vervallen', law: null });
+		expect(parseOutcome('niet_overgenomen')).toEqual({ kind: 'niet_overgenomen', law: null });
+		expect(parseOutcome('blijft_in:Waterwet')).toEqual({ kind: 'blijft_in', law: 'Waterwet' });
+		expect(parseOutcome('gat')).toEqual({ kind: 'gat', law: null });
+		expect(parseOutcome('iets nieuws')).toBeNull();
+		expect(parseOutcome(undefined)).toBeNull();
+	});
+
+	it('reads the parts, each with its own outcome, and the source', () => {
+		expect(
+			readTranspositionOutcome({
+				basis: 'transposition_table',
+				source: 'blg-1081574',
+				outcome: 'gat',
+				parts: [
+					{ from: '1', to: 'vervallen (mvt)', outcome: 'vervallen' },
+					{ from: '2', to: 'Besluit B2', outcome: 'gat' }
+				]
+			})
+		).toEqual({
+			outcome: { kind: 'gat', law: null },
+			parts: [
+				{ from: '1', to: 'vervallen (mvt)', outcome: { kind: 'vervallen', law: null } },
+				{ from: '2', to: 'Besluit B2', outcome: { kind: 'gat', law: null } }
+			],
+			source: 'blg-1081574'
+		});
+		expect(readTranspositionOutcome(null)).toEqual({ outcome: null, parts: [], source: null });
 	});
 });

@@ -4,7 +4,13 @@
 	import { langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { getDossierDocuments, getExplainedBy, getExplanations } from '$lib/api/records';
+	import {
+		abortable,
+		getDossierDocuments,
+		getExplainedBy,
+		getExplanations,
+		getNodeFirst
+	} from '$lib/api/records';
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
 	import { citeItems } from '$lib/components/ui/cite-items';
@@ -44,7 +50,7 @@
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 	import ArticleSuccession from './ArticleSuccession.svelte';
-	import { compareTarget, ownSuccessionName, successionName } from './succession';
+	import { compareTarget, outcomesOf, ownSuccessionName, successionName } from './succession';
 	import { getNodeGraph } from '$lib/api/nodes';
 	import { parseNodeId } from '$lib/vocabulary';
 	import { articleKey as keyOfArticle, fetchArticle } from './article';
@@ -515,6 +521,17 @@
 		shortTitle: loaded?.instrument?.abbreviation ?? law?.shortTitle ?? null
 	});
 
+	// What became of an old article no new article takes the place of (TRANSPOSED_TO the new
+	// law): read from its light node, which the panel and the canvas ask for too.
+	const light = load(
+		() => node.key,
+		(key, signal) => abortable(getNodeFirst('articles', key), signal),
+		'Opvolging'
+	);
+	const outcomes = $derived(
+		light.state.status === 'ready' ? outcomesOf(light.state.data, ownLaw) : []
+	);
+
 	const link = (patch: ParamPatch) => withParams(page.url, patch);
 	const go = (patch: ParamPatch) => navigate(link(patch));
 
@@ -733,7 +750,12 @@
 					{/if}
 				</div>
 			{/if}
-			<ArticleSuccession successors={d.successors} predecessors={d.predecessors} own={ownLaw} />
+			<ArticleSuccession
+				successors={d.successors}
+				predecessors={d.predecessors}
+				{outcomes}
+				own={ownLaw}
+			/>
 		</ReaderHead>
 
 		{#if proposedMissing && proposedRow}

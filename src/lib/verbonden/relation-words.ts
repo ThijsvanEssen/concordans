@@ -4,6 +4,7 @@
 // verbinding is never called two things (onderzoek samenhang, 14 Oct). Only words: a page that
 // names a relation does not load the rows of Verbonden.
 import { capitalize, textOf } from '$lib/text/words';
+import { parseOutcome, type TableOutcome, type OutcomeKind } from './edge-meta';
 import {
 	isChangeRelation,
 	type ChangeRelation,
@@ -79,12 +80,16 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 		naar === 'instruments'
 			? ['trekt in', 'trekt in', 'intrekking van een wet']
 			: ['doet vervallen', 'doet vervallen', 'vervallen van een artikel'],
-	// A recodification: the transposition table places the old article in the new law.
-	TRANSPOSED_TO: () => [
-		'overgebracht naar',
-		'in het nieuwe recht',
-		'overbrenging naar het nieuwe recht'
-	],
+	// A recodification: the transposition table places the old article in the new law; to the
+	// new law itself, what it says of an old article it places in no article (its outcome).
+	TRANSPOSED_TO: ({ naar, meta }) => {
+		if (naar !== 'instruments')
+			return ['overgebracht naar', 'in het nieuwe recht', 'overbrenging naar het nieuwe recht'];
+		const o = parseOutcome(meta.outcome);
+		const word = o && o.kind !== 'blijft_in' && o.kind !== 'gat' ? OUTCOME_WORD[o.kind] : null;
+		const w = word ?? (o?.kind === 'blijft_in' ? 'niet overgebracht naar' : 'zonder opvolger in');
+		return [w, w, 'uitkomst in het nieuwe recht'];
+	},
 	// A preamble that names an article without the power the regulation is made under in it
 	// (`basis_kind` mentioned, Awb 3:2 and 3:4) only names it.
 	BASED_ON: ({ meta }) =>
@@ -212,6 +217,27 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 				: ['verbonden met', 'verbonden met', 'verband'],
 	SECOND_READING_OF: () => ['tweede lezing van', 'tweede lezing van', 'tweede lezing']
 };
+
+/**
+ * What a recodification did with an old article, before the law it names: `vervallen bij` and
+ * `niet overgenomen in` the new law, `blijft in` the law the source names (`Waterwet`).
+ */
+export const OUTCOME_WORD: Record<Exclude<OutcomeKind, 'gat'>, string> = {
+	vervallen: 'vervallen bij',
+	niet_overgenomen: 'niet overgenomen in',
+	blijft_in: 'blijft in'
+};
+
+/**
+ * A part's outcome on its own, where the new law goes without saying: `vervallen`, `niet
+ * overgenomen`, `blijft in Waterwet`. Null for a part no source places (`gat`).
+ */
+export function outcomePlace(o: TableOutcome): string | null {
+	if (o.kind === 'vervallen') return 'vervallen';
+	if (o.kind === 'niet_overgenomen') return 'niet overgenomen';
+	if (o.kind === 'blijft_in') return o.law ? `${OUTCOME_WORD.blijft_in} ${o.law}` : 'blijft';
+	return null;
+}
 
 /**
  * The words of a verbinding: the relation, the collection of its source (`van`) and of its

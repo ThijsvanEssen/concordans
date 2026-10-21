@@ -52,7 +52,7 @@
 		{
 			"name": "TRANSPOSED_TO",
 			"sources": ["articles"],
-			"targets": ["articles"]
+			"targets": ["articles", "instruments"]
 		},
 		{
 			"name": "BASED_ON",

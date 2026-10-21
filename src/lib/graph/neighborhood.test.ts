@@ -37,3 +37,19 @@ describe('withoutLawHops (art. 126ffa Sv)', () => {
 		expect(kept.map((x) => x.id)).toContain('articles/126x');
 	});
 });
+
+describe('withoutLawHops (Omgevingswet)', () => {
+	const ow = 'instruments/ow';
+	const nodes = [n(ow), n('articles/ow_2_6'), n('articles/wm_1_2'), n('articles/wm_2_42')];
+	const edges = [
+		e('articles/ow_2_6', ow, 'PART_OF'),
+		e('articles/wm_1_2', 'articles/ow_2_6', 'TRANSPOSED_TO'),
+		e('articles/wm_2_42', ow, 'TRANSPOSED_TO')
+	];
+
+	it('leaves out what became of an old article: no step to the new law', () => {
+		const { nodes: kept, edges: kept_e } = withoutLawHops(nodes, edges, ow, 2);
+		expect(kept.map((x) => x.id).sort()).toEqual([ow, 'articles/ow_2_6', 'articles/wm_1_2'].sort());
+		expect(kept_e.some((x) => x.source === 'articles/wm_2_42')).toBe(false);
+	});
+});

@@ -4,6 +4,7 @@
 import type { Schema } from '$lib/api/types';
 
 type Succession = Schema<'ArticleSuccessionDTO'>;
+type NodeGraph = Schema<'NodeGraphResponse'>;
 
 const table = {
 	basis: 'transposition_table',
@@ -89,3 +90,44 @@ export const oldSv: Succession = {
 	parts,
 	...table
 };
+
+/**
+ * The light node of an old article no new article takes the place of: TRANSPOSED_TO the new
+ * law with what the table says (lawgraph #860, `meta.outcome`): art. 3.14 of the Waterwet not
+ * taken over in the Omgevingswet (kst-34986-3), art. 3.6a "Blijft in Waterwet".
+ */
+export const outcomeNode = (
+	meta: Record<string, unknown>,
+	law: { key: string; citation_title: string; abbreviation?: string } = {
+		key: 'bwbr0037885',
+		citation_title: 'Omgevingswet'
+	}
+): NodeGraph =>
+	({
+		node: { id: 'articles/bwbr0025458_3.14', key: 'bwbr0025458_3.14', collection: 'articles' },
+		neighbors: {
+			buckets: [
+				{
+					relation: 'TRANSPOSED_TO',
+					direction: 'outbound',
+					collection: 'instruments',
+					type: 'instrument',
+					total: 1,
+					items: [
+						{
+							id: `instruments/${law.key}`,
+							key: law.key,
+							collection: 'instruments',
+							type: 'instrument',
+							display_name: law.citation_title,
+							props: { ...law, bwb_id: law.key.toUpperCase() },
+							relation: 'TRANSPOSED_TO',
+							direction: 'outbound',
+							confidence: 1,
+							meta: { basis: 'transposition_table', source: 'kst-34986-3', ...meta }
+						}
+					]
+				}
+			]
+		}
+	}) as unknown as NodeGraph;

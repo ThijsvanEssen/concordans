@@ -104,6 +104,17 @@ export const changeRelationOf = (code: string | null | undefined): ChangeRelatio
 	return isChangeRelation(relation) ? relation : null;
 };
 
+/**
+ * What a recodification did with an old article no new article takes the place of: an edge
+ * TRANSPOSED_TO the new law, with its outcome in `meta` (vervallen, niet overgenomen, blijft
+ * in, or not found). No verbinding between two bronnen: the head of the old article says it,
+ * the canvas and the new law do not draw it (a law has some 1.300 of them).
+ */
+export const isTranspositionOutcome = (
+	relation: string | null | undefined,
+	target: string | null | undefined
+): boolean => relation === 'TRANSPOSED_TO' && target === 'instruments';
+
 export const isCollection = (value: string | null | undefined): value is Collection =>
 	value != null && Object.hasOwn(NODE_TYPES, value);
 

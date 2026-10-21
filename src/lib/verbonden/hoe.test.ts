@@ -396,6 +396,14 @@ describe('one source of words per relation, direction and collection', () => {
 				function: 'minister van Justitie en Veiligheid'
 			})
 		).toBe('ondertekende als minister van Justitie en Veiligheid');
+		// What became of an old article, to the new law (lawgraph #860); to an article, its place.
+		expect(relationLabel('TRANSPOSED_TO', 'articles', 'articles')).toBe('overgebracht naar');
+		expect(
+			relationLabel('TRANSPOSED_TO', 'articles', 'instruments', { outcome: 'vervallen' })
+		).toBe('vervallen bij');
+		expect(
+			relationLabel('TRANSPOSED_TO', 'articles', 'instruments', { outcome: 'niet_overgenomen' })
+		).toBe('niet overgenomen in');
 		// A stenogram is the record of its debate; no "in in".
 		expect(relationLabel('MADE_IN', 'documents', 'activities')).toBe('verslag van');
 		expect(soortVan('MADE_IN', 'documents', 'activities')).toBe('verslag van een debat');

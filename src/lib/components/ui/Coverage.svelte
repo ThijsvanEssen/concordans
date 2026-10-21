@@ -5,9 +5,11 @@
 	import {
 		anchorLine,
 		coverageLine,
+		LACK,
 		searchedLine,
 		type AnchorState,
 		type Completeness,
+		type Lack,
 		type Searched
 	} from '$lib/text/coverage';
 
@@ -17,7 +19,8 @@
 		of,
 		noText = false,
 		bron = null,
-		anchor = null
+		anchor = null,
+		lack = null
 	}: {
 		/** The API's `completeness` of a record or a source. */
 		coverage?: Completeness | null;
@@ -31,14 +34,18 @@
 		bron?: { label: string; href: string } | null;
 		/** An arcering whose words no longer stand where they were kept, in place of the rest. */
 		anchor?: AnchorState | null;
+		/** One thing the source should give and does not, in place of the rest. */
+		lack?: Lack | null;
 	} = $props();
 
 	const line = $derived(
-		anchor
-			? anchorLine(anchor)
-			: searched
-				? searchedLine(searched)
-				: coverageLine(coverage, { of, noText })
+		lack
+			? LACK[lack]
+			: anchor
+				? anchorLine(anchor)
+				: searched
+					? searchedLine(searched)
+					: coverageLine(coverage, { of, noText })
 	);
 </script>
 

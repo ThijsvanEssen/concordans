@@ -14,7 +14,13 @@ import type { Schema } from '$lib/api/types';
 import { containerIdFor, containerKindOf } from '../container-membership';
 import { foldVersions } from '../paths';
 import { withoutLawHops } from '../neighborhood';
-import { NODE_TYPES, nodeId, parseNodeId, type Collection } from '$lib/vocabulary';
+import {
+	isTranspositionOutcome,
+	NODE_TYPES,
+	nodeId,
+	parseNodeId,
+	type Collection
+} from '$lib/vocabulary';
 import { get, writable } from 'svelte/store';
 import { nodeToGraphNode, relationOf } from '../types';
 import { COLLECTION_ROLE } from '../collection-role';
@@ -283,7 +289,12 @@ export function createExpansion(
 					props: 'canvas',
 					signal: opts.signal ?? signal()
 				});
-				for (const n of neighborsOf(response)) ids.add(nodeId(n.collection, n.key));
+				for (const n of neighborsOf(response)) {
+					// An old article to a new law is no bron of it (`isTranspositionOutcome`).
+					const target = n.direction === 'inbound' ? collection : n.collection;
+					if (isTranspositionOutcome(n.relation, target)) continue;
+					ids.add(nodeId(n.collection, n.key));
+				}
 				soortenGeladen = meldSoort(soortenGeladen, focus, soort, ids);
 				// The same bronnen as the neighbourhood's on their id: drawn once.
 				mergeResponse(response);

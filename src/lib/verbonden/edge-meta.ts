@@ -188,3 +188,56 @@ export function readEdge(
 		reason: textOf(m.reason)
 	};
 }
+
+/** What a transposition table says of an old article it places in no new article. */
+export type OutcomeKind = 'vervallen' | 'niet_overgenomen' | 'blijft_in' | 'gat';
+
+/** An outcome: `blijft_in` with the law it stays in, as the source writes it (`Waterwet`). */
+export type TableOutcome = { kind: OutcomeKind; law: string | null };
+
+const OUTCOME_KINDS: readonly string[] = ['vervallen', 'niet_overgenomen', 'gat'];
+
+/**
+ * An outcome as the API writes it: `vervallen`, `niet_overgenomen`, `gat`,
+ * `blijft_in:Waterwet`. Null for none, and for one this app does not know yet.
+ */
+export function parseOutcome(value: unknown): TableOutcome | null {
+	const s = textOf(value);
+	if (!s) return null;
+	if (s.startsWith('blijft_in:')) return { kind: 'blijft_in', law: s.slice(10).trim() || null };
+	return OUTCOME_KINDS.includes(s) ? { kind: s as OutcomeKind, law: null } : null;
+}
+
+/** A part of the old article with what the source says of it. */
+export type OutcomePart = {
+	/** The part: `2`, `eerste lid`; empty for the whole article. */
+	from: string;
+	outcome: TableOutcome | null;
+	/** The place as the source writes it: `vervallen (mvt)`, `Besluit B2`. */
+	to: string;
+};
+
+/** The meta of a TRANSPOSED_TO edge to the new law (`isTranspositionOutcome`), read once. */
+export type TranspositionOutcome = {
+	/** The outcome its parts share; `gat` where no source places the old article. */
+	outcome: TableOutcome | null;
+	parts: OutcomePart[];
+	/** The paper or act that gives the table: `kst-34986-3`, `32017R1001`. */
+	source: string | null;
+};
+
+export function readTranspositionOutcome(
+	meta: Record<string, unknown> | null | undefined
+): TranspositionOutcome {
+	const m = meta ?? {};
+	const parts = Array.isArray(m.parts) ? (m.parts as Record<string, unknown>[]) : [];
+	return {
+		outcome: parseOutcome(m.outcome),
+		parts: parts.map((p) => ({
+			from: textOf(p?.from) ?? '',
+			outcome: parseOutcome(p?.outcome),
+			to: textOf(p?.to) ?? ''
+		})),
+		source: textOf(m.source)
+	};
+}

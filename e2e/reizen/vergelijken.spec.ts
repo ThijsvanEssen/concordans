@@ -2,6 +2,8 @@
 // to its successor in the new one and back, along the transponeringstabel; and two versions
 // of one article.
 import { expect, test } from '../support/test';
+import { patchApi } from '../support/api';
+import { metOpvolging, opvolging } from '../support/opvolging';
 
 test('126ffa Sv compares with 2.8.6 Sv (nieuw) along the transponeringstabel', async ({ page }) => {
 	await page.goto('/wetten/BWBR0001903/artikel/126ffa?lezen=1');
@@ -54,4 +56,49 @@ test('two versions of an article compare in one text', async ({ page }) => {
 		'aria-pressed',
 		'true'
 	);
+});
+
+// What became of an old article no new article takes the place of (lawgraph #860): said in
+// the line where a successor would stand, a part of its own in the fold-out.
+test('art. 10 Sv says it lapses in the new code, not where it went', async ({ page }) => {
+	await patchApi(
+		page,
+		/^\/api\/nodes\/articles\/bwbr0001903_10\?/,
+		metOpvolging(
+			opvolging([
+				{ from: '1', to: 'vervalllen', outcome: 'vervallen' },
+				{ from: '2', to: 'vervallen', outcome: 'vervallen' }
+			])
+		)
+	);
+	await page.goto('/wetten/BWBR0001903/artikel/10?lezen=1');
+	const line = page.locator('.succession');
+	await expect(line).toContainText(/In het nieuwe recht:\s*vervallen bij Sv \(nieuw\)/);
+	await expect(line).not.toContainText('overgebracht');
+	// Each lid lapses: the line says it, there is nothing to fold out.
+	await expect(line.getByRole('button', { name: /Leden/ })).toHaveCount(0);
+	await expect(line.getByRole('link', { name: 'Sv (nieuw)' })).toHaveAttribute(
+		'href',
+		/\/wetten\/STB-2026-56/
+	);
+	await expect(line.getByRole('link', { name: /Transponeringstabel/ })).toHaveAttribute(
+		'href',
+		'https://zoek.officielebekendmakingen.nl/blg-1081574.html'
+	);
+});
+
+test('art. 2 Sv folds out the lid that lapses beside its successor', async ({ page }) => {
+	await patchApi(
+		page,
+		/^\/api\/nodes\/articles\/bwbr0001903_2\?/,
+		metOpvolging(opvolging([{ from: '2', to: 'vervallen (mvt)', outcome: 'vervallen' }]))
+	);
+	await page.goto('/wetten/BWBR0001903/artikel/2?lezen=1');
+	const line = page.locator('.succession');
+	await expect(line).toContainText(/In het nieuwe recht:\s*art\. 1\.2\.9 Sv \(nieuw\)/);
+	await expect(line).not.toContainText('vervallen bij');
+	await line.getByRole('button', { name: /Leden/ }).click();
+	const parts = page.locator('.succession__parts');
+	await expect(parts.getByRole('term').filter({ hasText: /^lid 2$/ })).toBeVisible();
+	await expect(parts.getByRole('definition').filter({ hasText: /^vervallen$/ })).toBeVisible();
 });
