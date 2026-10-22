@@ -1,6 +1,6 @@
 // The contents beside a law, a stuk and a uitspraak keep to the principles of a digital
 // table of contents (GOV.UK contents list, NN/g, W3C on landmarks): one nav called Inhoud,
-// two levels at most, one tab stop for every item, and no counts or meta in the list.
+// every level reachable, one tab stop for every item, and no counts or meta in the list.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/svelte';
 import { tick } from 'svelte';
@@ -11,7 +11,6 @@ import fixture from '$lib/test/judgment.json';
 import DocumentToc from './DocumentToc.svelte';
 import JudgmentToc from './JudgmentToc.svelte';
 import LezenNav from './LezenNav.svelte';
-import { MAX_NIVEAUS, niveaus } from './toc-niveaus';
 
 vi.mock('$app/state', async () => (await import('$lib/test/navigation.svelte')).appState);
 vi.mock('$app/navigation', async () => (await import('$lib/test/navigation.svelte')).appNavigation);
@@ -42,17 +41,8 @@ const node = (collection: string, key: string, raw: object = {}): GraphNode =>
 beforeEach(() => open('/'));
 afterEach(() => vi.restoreAllMocks());
 
-describe('niveaus', () => {
-	it('numbers the levels from the top of the stuk and leaves out what lies below the second', () => {
-		const rows = [2, 3, 4, 3, 5, 2].map((level, i) => ({ id: `s${i}`, level }));
-		const shown = niveaus(rows);
-		expect(shown.map((r) => r.niveau)).toEqual([1, 2, 2, 1]);
-		expect(Math.max(...shown.map((r) => r.niveau))).toBeLessThanOrEqual(MAX_NIVEAUS);
-	});
-});
-
 describe('the contents of a stuk', () => {
-	it('is one nav, two levels, one tab stop a row, and no kind or count', async () => {
+	it('is one nav, every level a row, one tab stop a row, and no kind or count', async () => {
 		fakeApi({
 			'/api/documents/{key}': {
 				title: 'Memorie van toelichting',
@@ -70,7 +60,7 @@ describe('the contents of a stuk', () => {
 		expect(navs).toHaveLength(1);
 		expect(navs[0].getAttribute('aria-label')).toBe('Inhoud');
 		const rows = [...container.querySelectorAll('li')];
-		expect(rows).toHaveLength(4);
+		expect(rows).toHaveLength(6);
 		for (const li of rows) expect(stops(li)).toHaveLength(1);
 		expect(container.textContent).not.toMatch(/Memorie van toelichting|artikelen|\d+ /);
 	});
@@ -107,7 +97,7 @@ describe('the contents of a law', () => {
 		breadcrumb: bc
 	});
 
-	it('shows two levels of divisions and one tab stop for each', async () => {
+	it('keeps every division a row of its own, one tab stop for each', async () => {
 		const boek = crumb('boek', 'Boek 1', 'deel-boek-1');
 		const titel = crumb('titel', 'Titel 1', 'deel-boek-1-titel-1');
 		const afdeling = crumb('afdeling', 'Afdeling 1', 'deel-boek-1-titel-1-afdeling-1');
@@ -124,12 +114,7 @@ describe('the contents of a law', () => {
 		const navs = container.querySelectorAll('nav');
 		expect(navs).toHaveLength(1);
 		expect(navs[0].getAttribute('aria-label')).toBe('Inhoud');
-		const depths = [...container.querySelectorAll('details')].map(
-			(d) => Number(/depth-(\d)/.exec(d.className)?.[1]) + 1
-		);
-		expect(depths).toContain(2);
-		expect(Math.max(...depths)).toBeLessThanOrEqual(MAX_NIVEAUS);
-		expect(container.textContent).not.toContain('Afdeling 1');
+		expect(container.textContent).toContain('Afdeling 1');
 		for (const head of container.querySelectorAll('summary')) {
 			expect(stops(head.parentElement!.firstElementChild!)).toHaveLength(1);
 		}

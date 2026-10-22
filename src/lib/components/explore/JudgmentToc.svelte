@@ -152,7 +152,7 @@
 	}
 	.ro__nr:hover,
 	.ro__nr.is-active {
-		background: var(--paper);
+		background: var(--paper-2);
 		color: var(--ink);
 	}
 	.ro__nr.is-active {

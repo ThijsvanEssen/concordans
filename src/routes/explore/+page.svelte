@@ -1627,7 +1627,6 @@
 					<div class="col col--nav toc-column">
 						{@render toc()}
 					</div>
-					{@render handle('nav')}
 				{/if}
 				<div class="col col--reader col--measure">
 					{@render reader()}
@@ -1812,7 +1811,7 @@
 	}
 
 	.explore-read--with-nav {
-		grid-template-columns: var(--nav-w, var(--nav-w-auto)) 5px minmax(0, 1fr) 5px var(--panel);
+		grid-template-columns: calc(var(--nav-w, var(--nav-w-auto)) + 5px) minmax(0, 1fr) 5px var(--panel);
 	}
 
 	.col {
@@ -1826,12 +1825,8 @@
 		position: relative;
 	}
 
-	/* Reader is the page; the nav is its margin, a shade darker. The panel (Verbonden) stays
-	   on paper with a rule, so the text wins at a glance (A154). */
-	.col--nav {
-		background: var(--paper-2);
-	}
-
+	/* Reader is the page; the contents float at its left on the same paper, no column of
+	   their own (A173). The panel (Verbonden) stays on paper with a rule (A154). */
 	.col--panel {
 		box-shadow: inset 1px 0 0 var(--rule);
 	}
@@ -1848,10 +1843,6 @@
 	}
 	.explore-read .resize-handle--panel::before {
 		background: transparent;
-	}
-
-	.col--nav {
-		box-shadow: inset -1px 0 0 var(--rule);
 	}
 
 	.panel {

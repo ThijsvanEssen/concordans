@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { capitalize } from '$lib/text/words';
 	import NavKolom from './NavKolom.svelte';
-	import { MAX_NIVEAUS } from './toc-niveaus';
 	// The table of contents of the law in Lezen: the name of the law, the title of the
 	// current section under it, and the articles, the active one marked; after them its
 	// bijlagen with a text of their own; on a bijlage the same, the bijlage marked.
@@ -118,9 +117,7 @@
 				continue;
 			}
 			let parent = root;
-			// Two levels of divisions at most: the articles of a deeper one stand under the
-			// division above it (its name is in the line above the article).
-			bc.slice(0, MAX_NIVEAUS).forEach((seg) => {
+			bc.forEach((seg) => {
 				parent = findOrAdd(
 					parent,
 					seg.type ?? 'sectie',
@@ -253,8 +250,9 @@
 {#snippet groupBlock(g: Group, depth: number)}
 	{@const selected = containsSelected(g)}
 	{@const shouldOpen = selectedKey ? selected : depth > 0}
+	{@const level = Math.min(depth, 3)}
 	{@const href = g.id ? deelHref(g.id) : null}
-	<details class="group depth-{depth}" open={shouldOpen}>
+	<details class="group depth-{level}" open={shouldOpen}>
 		<!-- The division's link is the one tab stop; the summary only answers a click on the caret. -->
 		<summary class="group__head" tabindex={href ? -1 : undefined}>
 			<Caret side />
@@ -361,7 +359,7 @@
 		color: var(--ink-3);
 	}
 	.group__head:hover {
-		background: var(--paper);
+		background: var(--paper-2);
 	}
 	/* A finger's target: a heading at least 32 px high, as the rows are (NavKolom). */
 	@media (pointer: coarse), (max-width: 768px) {
@@ -377,7 +375,9 @@
 		}
 	}
 
-	/* Two levels: a division reads as a heading, the one under it as a quiet sub-label. */
+	/* Depth carries the hierarchy: a boek reads as a heading, a paragraaf as a
+	   quiet sub-label — indentation alone (10px/level) is too faint a signal
+	   in a column this narrow. */
 	.group.depth-0 + .group.depth-0 {
 		margin-top: var(--s-3);
 		border-top: 1px solid var(--rule);
@@ -390,8 +390,20 @@
 		color: var(--ink);
 	}
 	.group.depth-1 > .group__head {
+		font-size: var(--t-meta);
+		font-weight: 600;
+		color: var(--ink-2);
+	}
+	.group.depth-2 > .group__head {
+		font-size: var(--t-micro);
 		font-weight: 600;
 		color: var(--ink-3);
+	}
+	.group.depth-3 > .group__head {
+		font-size: var(--t-micro);
+		font-weight: 400;
+		color: var(--ink-3);
+		font-style: italic;
 	}
 
 	/* The first line of the label is 1.3 high; the caret sits on its middle. */
@@ -410,7 +422,7 @@
 	}
 	/* The division the law is opened at (#deel-…), marked as the article chosen is. */
 	.group__head:has(.is-hier) {
-		background: var(--paper);
+		background: var(--paper-2);
 		color: var(--ink);
 	}
 	a.group__label:hover {
@@ -423,7 +435,7 @@
 	}
 
 	.is-active {
-		background: var(--paper);
+		background: var(--paper-2);
 		color: var(--ink);
 		font-weight: 600;
 		border-left-color: var(--ink);

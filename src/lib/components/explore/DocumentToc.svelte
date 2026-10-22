@@ -13,7 +13,6 @@
 	import { load } from '$lib/util/load.svelte';
 	import { keepMarkedInView } from './nav-column';
 	import { followSections } from './toc-position.svelte';
-	import { niveaus } from './toc-niveaus';
 
 	let { selection }: { selection: GraphNode | null } = $props();
 
@@ -26,7 +25,7 @@
 			if (!k) return null;
 			const doc = await getDocument(k);
 			return {
-				sections: niveaus((doc.sections ?? []) as Section[])
+				sections: (doc.sections ?? []) as Section[]
 			};
 		},
 		'Inhoudsopgave'
@@ -59,7 +58,7 @@
 						{#each doc.sections as s (s.id)}
 							<li>
 								<a
-									class="nav-kolom__rij level-{s.niveau}"
+									class="nav-kolom__rij level-{Math.min(s.level, 3)}"
 									class:is-active={position.current === s.id}
 									aria-current={position.current === s.id ? 'location' : undefined}
 									href="#{s.id}"
@@ -77,13 +76,24 @@
 {/if}
 
 <style>
-	/* Two levels: the heads of the stuk, and what stands under each. */
+	/* Heads a group of the contents: rung 3 of docs/typografie.md. */
 	.level-1 {
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		font-weight: 600;
+		color: var(--ink);
+		margin-top: var(--s-3);
+	}
+
+	.level-2 {
+		font-family: var(--font-serif);
 		font-weight: 600;
 		color: var(--ink);
 	}
 
-	.level-2 {
+	.level-3 {
 		padding-left: calc(var(--s-4) + var(--s-3));
+		color: var(--ink-3);
+		font-style: italic;
 	}
 </style>

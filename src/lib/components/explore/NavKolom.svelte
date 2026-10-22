@@ -1,9 +1,11 @@
 <script lang="ts">
 	// The navigation column beside a reader, one form for the three that stood apart
 	// (LezenNav for a law, DocumentToc for a stuk, JudgmentToc for a uitspraak; audit
-	// 23-opruimen): a `nav` called Inhoud, the paper-2 column with its caption and the rows,
+	// 23-opruimen): a `nav` called Inhoud, with its caption and the rows,
 	// notes and lists of what it holds (`nav-kolom__rij`, `__note`, `__lijst`). No counts or
-	// meta in it; each adds only the steps of its own hierarchy (toc-niveaus.ts).
+	// meta in it; each adds only the steps of its own hierarchy. Beside the text it is no column
+	// of its own but a list that floats on the page (sticky, as the scroller it is), like "op
+	// deze pagina": light type, no ground, no rule.
 	import type { Snippet } from 'svelte';
 
 	let {
@@ -36,7 +38,6 @@
 		height: 100%;
 		overflow-y: auto;
 		padding-top: var(--s-5);
-		background: var(--paper-2);
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 	}
@@ -83,18 +84,18 @@
 		border: 0;
 		background: none;
 		text-align: left;
-		color: var(--ink-2);
+		color: var(--ink-3);
 		line-height: 1.3;
 		cursor: pointer;
 		text-decoration: none;
 	}
 	:global(.nav-kolom__rij:hover) {
-		background: var(--paper);
+		background: var(--paper-2);
 		color: var(--ink);
 	}
 	/* The place the text stands at, in the lists that follow the scroll (DocumentToc, JudgmentToc). */
 	:global(.nav-kolom__rij.is-active) {
-		background: var(--paper);
+		background: var(--paper-2);
 		color: var(--ink);
 		box-shadow: inset 2px 0 0 var(--ink);
 	}
