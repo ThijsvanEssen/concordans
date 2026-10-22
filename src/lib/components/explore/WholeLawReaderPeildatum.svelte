@@ -11,13 +11,16 @@
 		versions,
 		peildatum,
 		today,
-		choose
+		choose,
+		verlopen = false
 	}: {
 		versions: Schema<'InstrumentVersionDTO'>[];
 		peildatum: string | null;
 		today: string;
 		/** Opens the text of a day; '' for today's. */
 		choose: (day: string) => void;
+		/** The law has expired: no text holds today, the last one is the newest version. */
+		verlopen?: boolean;
 	} = $props();
 
 	const oldest = $derived(
@@ -26,26 +29,39 @@
 			.filter(Boolean)
 			.sort()[0]
 	);
+	const newest = $derived(
+		versions
+			.map((v) => v.valid_from ?? '')
+			.filter(Boolean)
+			.sort()
+			.at(-1)
+	);
+	// An expired law has no text of today: its last one is named by the day it began to hold.
+	const lastText = $derived(verlopen && !peildatum);
+	const label = $derived(lastText ? 'Laatste tekst geldend sinds' : 'Tekst geldend op');
+	const shown = $derived(langeDatum(peildatum ?? (lastText ? newest : today)));
 </script>
 
 <div class="whole-peil">
-	<span>Tekst geldend op</span>
-	<TekstMenu label="Tekst geldend op" tekst={langeDatum(peildatum ?? today)}>
-		{#snippet inhoud(sluit)}
+	<span>{label}</span>
+	<TekstMenu {label} tekst={shown}>
+		{#snippet inhoud(close)}
 			<div class="peil-lijst">
 				<span class="peil-noot"
 					>{formatCount(versions.length)} versies sinds {langeDatum(oldest ?? null)}</span
 				>
-				<button
-					type="button"
-					role="menuitemradio"
-					class="tekstmenu__item peil-menuitem"
-					aria-checked={!peildatum}
-					onclick={() => {
-						sluit();
-						choose('');
-					}}>{langeDatum(today)}, vandaag</button
-				>
+				{#if !verlopen}
+					<button
+						type="button"
+						role="menuitemradio"
+						class="tekstmenu__item peil-menuitem"
+						aria-checked={!peildatum}
+						onclick={() => {
+							close();
+							choose('');
+						}}>{langeDatum(today)}, vandaag</button
+					>
+				{/if}
 				{#each versionsByYear(versions) as [year, list] (year)}
 					<span class="peil-jaar" aria-hidden="true">{year}</span>
 					{#each list as v (v.valid_from)}
@@ -53,11 +69,16 @@
 							type="button"
 							role="menuitemradio"
 							class="tekstmenu__item peil-menuitem"
-							aria-checked={peildatum === v.valid_from}
+							aria-checked={peildatum ? peildatum === v.valid_from : verlopen && !!v.current}
 							onclick={() => {
-								sluit();
+								close();
 								choose(v.valid_from ?? '');
-							}}>{langeDatum(v.valid_from)}{v.current ? ', geldend' : ''}</button
+							}}
+							>{langeDatum(v.valid_from)}{v.current
+								? verlopen
+									? ', laatste'
+									: ', geldend'
+								: ''}</button
 						>
 					{/each}
 				{/each}

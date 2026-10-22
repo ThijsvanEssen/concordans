@@ -96,3 +96,59 @@ describe('WholeLawReader, what the dataset lacks', () => {
 		expect(container.textContent).not.toContain('Tekst geldend op');
 	});
 });
+
+describe('WholeLawReader, whether the law holds (besluit 30)', () => {
+	const successor = {
+		id: 'instruments/bwbr0099',
+		key: 'bwbr0099',
+		bwb_id: 'BWBR0099',
+		celex: null,
+		official_id: null,
+		title: 'Nieuwe wet',
+		citation_title: 'Nieuwe wet',
+		articles: 5,
+		path: '/wetten/BWBR0099'
+	};
+	const versions = [
+		{ key: 'v2', valid_from: '2015-01-01', valid_until: null, current: true },
+		{ key: 'v1', valid_from: '2000-01-01', valid_until: '2015-01-01', current: false }
+	];
+	const law = (validity: unknown) =>
+		instrument({
+			key: 'bwbr0001',
+			bwb_id: 'BWBR0001',
+			title: 'Oude wet',
+			kind: 'wet',
+			article_count: 3,
+			date_in_force: '2000-01-01',
+			version_date_in_force: '2015-01-01',
+			...(validity === 'absent' ? {} : { validity })
+		});
+
+	it('says vervallen with the successor and never Geldende tekst or today', async () => {
+		open('/wetten/BWBR0001');
+		routes(
+			law({ state: 'expired', date: '2020-01-01', as_of: '2026-10-21', successors: [successor] }),
+			versions
+		);
+		const { container } = render(WholeLawReader, { bwbId: 'BWBR0001' });
+		await settle();
+		const stand = container.querySelector('.validity')!;
+		expect(stand.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+			'Vervallen per 1 januari 2020, opvolger: Nieuwe wet'
+		);
+		const text = container.textContent ?? '';
+		expect(text).not.toContain('Geldende tekst');
+		expect(text).not.toContain('Tekst geldend op');
+		expect(text).toContain('Laatste tekst geldend sinds');
+	});
+
+	it('changes nothing on an API without validity', async () => {
+		open('/wetten/BWBR0001');
+		routes(law('absent'), versions);
+		const { container } = render(WholeLawReader, { bwbId: 'BWBR0001' });
+		await settle();
+		expect(container.querySelector('.validity')).toBeNull();
+		expect(container.textContent).toContain('Tekst geldend op');
+	});
+});

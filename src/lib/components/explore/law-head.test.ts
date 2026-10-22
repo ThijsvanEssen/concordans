@@ -1,3 +1,4 @@
+import type { Validity } from '$lib/api/validity';
 import { describe, expect, it } from 'vitest';
 import {
 	lawFullTitle,
@@ -84,6 +85,13 @@ describe('the head line', () => {
 			'Geldende tekst'
 		);
 	});
+	it('leaves the stand to the line Validity once the API says it: no Geldende tekst of a law that expired', () => {
+		const expired: Validity = { state: 'expired', date: '2020-01-01', as_of: null, successors: [] };
+		expect(lawHeadLine(awb, { ...opts, validity: expired })).not.toContain('Geldende tekst');
+		expect(lawHeadLine(awb, { ...opts, validity: null })).not.toContain('Geldende tekst');
+		const holds: Validity = { ...expired, state: 'in_force' };
+		expect(lawHeadLine(awb, { ...opts, validity: holds })).toContain('Geldende tekst');
+	});
 	it('gives on a peildatum the count of that day, without the text in force', () => {
 		const line = lawHeadLine(awb, { ...opts, count: 530, peildatum: '2015-01-01' });
 		expect(line).toContain('530 artikelen.');
@@ -161,5 +169,16 @@ describe('the count in the head', () => {
 		};
 		expect(lawHeadLine(d, { ...opts, count: 66 })).toBe('66 artikelen.');
 		expect(lawHeadLine(d, { ...opts, count: 0 })).toBe('');
+	});
+});
+
+describe('publicationTitle (B36)', () => {
+	it('gives the title a publication has beyond its name', async () => {
+		const { publicationTitle } = await import('./law-head');
+		expect(
+			publicationTitle('Stb. 2018, 100: Besluit van 23 maart 2018, houdende X', 'Stb. 2018, 100')
+		).toBe('Besluit van 23 maart 2018, houdende X');
+		expect(publicationTitle('Stb. 2018, 100', 'Stb. 2018, 100')).toBeNull();
+		expect(publicationTitle(null, 'Stb. 2018, 100')).toBeNull();
 	});
 });

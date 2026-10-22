@@ -46,4 +46,13 @@ describe('the heading of an article in the whole law', () => {
 			/^Artikel 1\.2 Uitbreiding en beperking partnerregeling /
 		);
 	});
+
+	it('names an article without a number once (B9, Algemene bepaling of the Grondwet)', () => {
+		const { container } = render(
+			WholeLawReaderArticle,
+			props(row({ article_number: null, label: 'Algemene bepaling', heading: 'Algemene bepaling' }))
+		);
+		const head = container.querySelector('.whole-article-head')!;
+		expect(head.textContent?.replace(/\s+/g, ' ').trim()).toBe('Algemene bepaling');
+	});
 });

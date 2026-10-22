@@ -274,14 +274,22 @@
 
 	/** A part's own text: its paragraphs (trimmed, none empty), its headings, its tables and
 	 *  its footnotes. */
-	const own = (part: ArticlePart) =>
+	const piecesBetween = (start: number, end: number) =>
 		withNotes(
 			source,
-			blocksOf(source, part.textStart, part.textEnd, tables).flatMap((piece) =>
+			blocksOf(source, start, end, tables).flatMap((piece) =>
 				piece.table ? [{ ...piece, heading: false }] : withHeadings(source, piece, headings ?? [])
 			),
 			notes
 		);
+	type Pieces = ReturnType<typeof piecesBetween>;
+	const own = (part: ArticlePart) => piecesBetween(part.textStart, part.textEnd);
+	/** What a part says after its last child: the slotzin of a lid after its onderdelen (B10,
+	 *  Drinkwaterbesluit art. 47 lid 1), which stands where the law prints it. */
+	const tail = (part: ArticlePart) =>
+		part.children.length > 0
+			? piecesBetween(Math.max(...part.children.map((c) => c.end)), part.end)
+			: [];
 
 	/** A footnote marker (FootnoteLink) or a note's number goes to the other in place: the reader
 	 *  lands there, as on an address with its anchor. */
@@ -584,8 +592,8 @@
 	{/each}
 {/snippet}
 
-{#snippet tekst(part: ArticlePart)}
-	{#each own(part) as piece (piece.start)}
+{#snippet tekst(pieces: Pieces)}
+	{#each pieces as piece (piece.start)}
 		{#if piece.table}
 			<TextTable text={source} table={piece.table} cell={cited} />
 		{:else if piece.heading}
@@ -627,10 +635,11 @@
 			>
 			<div class="lid__body" class:lid__body--pair={showProposed}>
 				<div class="lid__text" use:blockClick={onText(part)}>
-					{@render tekst(part)}
+					{@render tekst(own(part))}
 					{#each part.children as child (child.start)}
 						{@render render(child, false)}
 					{/each}
+					{@render tekst(tail(part))}
 				</div>
 				{#if part.id}{@render annotationsOf(part.id)}{@render anchorLines(part.id)}{/if}
 				{#if showProposed && proposed}
@@ -671,10 +680,11 @@
 				>
 			{/if}
 			<div class="part__body" use:blockClick={onText(part)}>
-				{@render tekst(part)}
+				{@render tekst(own(part))}
 				{#each part.children as child (child.start)}
 					{@render render(child, false)}
 				{/each}
+				{@render tekst(tail(part))}
 				{#if part.id}{@render annotationsOf(part.id)}{/if}
 			</div>
 		</div>

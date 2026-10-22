@@ -491,3 +491,24 @@ describe('a judgment found by a person', () => {
 		expect(tekst(presentHit(gevonden({}), 'x').snippet)).toBe('Inhoudsindicatie.');
 	});
 });
+
+describe('a hit that has expired (besluit 30)', () => {
+	const law = (extra: Record<string, unknown>) =>
+		({
+			id: 'instruments/bwbr0001',
+			collection: 'instruments',
+			display_name: 'Oude wet',
+			extra
+		}) as unknown as Parameters<typeof presentHit>[0];
+
+	it('says vervallen once its day has passed', () => {
+		const shown = presentHit(law({ expired_on: '2020-01-01' }), 'wet', [], new Date(2026, 9, 22));
+		expect(shown.expired).toBe('Vervallen per 1 januari 2020');
+	});
+	it('says nothing of a law that holds, or lapses later', () => {
+		expect(presentHit(law({}), 'wet', [], new Date(2026, 9, 22)).expired).toBeUndefined();
+		expect(
+			presentHit(law({ expired_on: '2027-01-01' }), 'wet', [], new Date(2026, 9, 22)).expired
+		).toBeUndefined();
+	});
+});

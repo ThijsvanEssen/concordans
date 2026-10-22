@@ -1,0 +1,50 @@
+{
+	"text": "1. Een verstorings-risicoanalyse omvat het inventariseren en analyseren van de voor het leveringsgebied van een drinkwaterbedrijf bestaande en te verwachten dreigingen voor de openbare drinkwatervoorziening. Van de verstorings-risicoanalyse maken in elk geval deel uit:\na. de risicobeoordeling, bedoeld in artikel 14 van de Wet weerbaarheid kritieke entiteiten;\nb. de benadering die alle gevaren omvat, bedoeld in artikel 21, derde lid, van de Cyberbeveiligingswet;\nc. nationale dreigingen en scenario’s als bedoeld in het tweede lid.\nDe verstorings-risicoanalyse wordt met het oog op goedkeuring van het leveringsplan, bedoeld in artikel 37, derde lid, van de wet, voorafgaand aan de indiening van het leveringsplan aan de inspecteur ter beoordeling voorgelegd.",
+	"parts": [
+		{
+			"id": "lid-1",
+			"kind": "lid",
+			"number": "1",
+			"start": 3,
+			"end": 762,
+			"term": null,
+			"text": "Een verstorings-risicoanalyse omvat het inventariseren en analyseren van de voor het leveringsgebied van een drinkwaterbedrijf bestaande en te verwachten dreigingen voor de openbare drinkwatervoorziening. Van de verstorings-risicoanalyse maken in elk geval deel uit:\na. de risicobeoordeling, bedoeld in artikel 14 van de Wet weerbaarheid kritieke entiteiten;\nb. de benadering die alle gevaren omvat, bedoeld in artikel 21, derde lid, van de Cyberbeveiligingswet;\nc. nationale dreigingen en scenario’s als bedoeld in het tweede lid.\nDe verstorings-risicoanalyse wordt met het oog op goedkeuring van het leveringsplan, bedoeld in artikel 37, derde lid, van de wet, voorafgaand aan de indiening van het leveringsplan aan de inspecteur ter beoordeling voorgelegd."
+		},
+		{
+			"id": "lid-1-aanhef",
+			"kind": "aanhef",
+			"number": null,
+			"start": 3,
+			"end": 269,
+			"term": null,
+			"text": "Een verstorings-risicoanalyse omvat het inventariseren en analyseren van de voor het leveringsgebied van een drinkwaterbedrijf bestaande en te verwachten dreigingen voor de openbare drinkwatervoorziening. Van de verstorings-risicoanalyse maken in elk geval deel uit:"
+		},
+		{
+			"id": "lid-1-onder-a",
+			"kind": "onderdeel",
+			"number": "a",
+			"start": 273,
+			"end": 361,
+			"term": null,
+			"text": "de risicobeoordeling, bedoeld in artikel 14 van de Wet weerbaarheid kritieke entiteiten;"
+		},
+		{
+			"id": "lid-1-onder-b",
+			"kind": "onderdeel",
+			"number": "b",
+			"start": 365,
+			"end": 465,
+			"term": null,
+			"text": "de benadering die alle gevaren omvat, bedoeld in artikel 21, derde lid, van de Cyberbeveiligingswet;"
+		},
+		{
+			"id": "lid-1-onder-c",
+			"kind": "onderdeel",
+			"number": "c",
+			"start": 469,
+			"end": 534,
+			"term": null,
+			"text": "nationale dreigingen en scenario’s als bedoeld in het tweede lid."
+		}
+	]
+}

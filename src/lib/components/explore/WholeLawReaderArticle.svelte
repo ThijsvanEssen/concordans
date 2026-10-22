@@ -38,6 +38,9 @@
 		!peildatum && shown?.cited && detail?.article.text === shown.text ? detail : null
 	);
 	const name = $derived(articleName(bwbId, row.article_number, row.label) ?? naamVanId(row.id));
+	// An article without a number is named by its heading (Algemene bepaling of the Grondwet):
+	// said once, as ArticleReader does.
+	const showHeading = $derived(!!row.heading && !!row.article_number);
 
 	/** How far below the viewport an article's full text is asked already. */
 	const PRELOAD_MARGIN = '600px 0px';
@@ -68,13 +71,13 @@
 					{ params: peildatum ? { peildatum } : {} }
 				)}
 				data-sveltekit-noscroll
-				><span class="whole-art-num">{name}</span>{#if row.heading}<span class="whole-art-heading"
+				><span class="whole-art-num">{name}</span>{#if showHeading}<span class="whole-art-heading"
 						>{` ${row.heading}`}</span
 					>{/if}</a
 			>
 		{:else}
 			<span class="whole-art-num">{name}</span>
-			{#if row.heading}<span class="whole-art-heading">{row.heading}</span>{/if}
+			{#if showHeading}<span class="whole-art-heading">{row.heading}</span>{/if}
 			<span class="whole-art-note">niet meer in de geldende tekst</span>
 		{/if}
 	</div>

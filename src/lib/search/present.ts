@@ -10,7 +10,7 @@ import { kindName } from '$lib/components/explore/law-head';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { articleName } from '$lib/text/bw';
-import { korteDatum, langeDatum } from '$lib/text/datum';
+import { hasPassed, korteDatum, langeDatum } from '$lib/text/datum';
 import { bronPlural, type Collection } from '$lib/vocabulary';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
 
@@ -26,6 +26,8 @@ type Presented = {
 	snippet: HitSegment[] | null;
 	/** The Kamer of a stuk: the same kind of stuk exists in both. */
 	chamber?: Chamber;
+	/** Set for a law or an article that no longer holds (`extra.expired_on`): its title in words. */
+	expired?: string;
 };
 
 /** The Kamer a stuk was published in, as the API gives it (0.73, BE-39). */
@@ -192,8 +194,26 @@ function instrumentMeta(hit: Hit): string {
 	return [kindName(extra(hit, 'kind')), day].filter(Boolean).join(', ');
 }
 
-/** `neighbours`: the hits listed with it, which its context tells it from. */
-export function presentHit(hit: Hit, query: string, neighbours: readonly Hit[] = []): Presented {
+/**
+ * `neighbours`: the hits listed with it, which its context tells it from. A law or article
+ * that has expired says so (API 0.80.4, `extra.expired_on`): a hit stays, marked.
+ */
+export function presentHit(
+	hit: Hit,
+	query: string,
+	neighbours: readonly Hit[] = [],
+	now = new Date()
+): Presented {
+	const shown = presentBase(hit, query, neighbours);
+	const day = extra(hit, 'expired_on').slice(0, 10);
+	return day &&
+		hasPassed(day, now) &&
+		(hit.collection === 'instruments' || hit.collection === 'articles')
+		? { ...shown, expired: `Vervallen per ${langeDatum(day)}` }
+		: shown;
+}
+
+function presentBase(hit: Hit, query: string, neighbours: readonly Hit[]): Presented {
 	const snippet = typeof hit.snippet === 'string' ? hit.snippet.trim() : '';
 	switch (hit.collection) {
 		case 'articles': {

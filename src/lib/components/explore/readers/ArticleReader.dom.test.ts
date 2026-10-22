@@ -101,3 +101,93 @@ describe('ArticleReader, an article of the EU', () => {
 		expect(bron.getAttribute('href')).toBe(EURLEX);
 	});
 });
+
+describe('ArticleReader, whether the article holds (besluit 30)', () => {
+	const bw = (validity: unknown, repealed = false) => {
+		const art = {
+			...detail.article,
+			bwb_id: 'BWBR0001',
+			article_number: '1',
+			address: '1',
+			repealed,
+			...(validity === 'absent' ? {} : { validity })
+		};
+		fakeApi({
+			'/api/articles/{bwb_id}/{article_number}': {
+				...detail,
+				article: art,
+				instrument: { ...instrument, bwb_id: 'BWBR0001', celex: null }
+			},
+			'/api/articles/{bwb_id}/{article_number}/history': { versions: [] },
+			'/api/instruments/{identifier}': { ...instrument, bwb_id: 'BWBR0001', celex: null }
+		});
+	};
+	const bwNode = {
+		...node,
+		raw: { props: { bwb_id: 'BWBR0001', article_number: '1' } }
+	} as unknown as GraphNode;
+	const expired = {
+		state: 'expired',
+		date: '2020-01-01',
+		as_of: '2026-10-21',
+		successors: [
+			{
+				id: 'instruments/bwbr0002',
+				key: 'bwbr0002',
+				bwb_id: 'BWBR0002',
+				celex: null,
+				official_id: null,
+				title: 'Nieuwe wet',
+				citation_title: 'Nieuwe wet',
+				articles: 3,
+				path: '/wetten/BWBR0002'
+			}
+		]
+	};
+
+	it('says vervallen, once, with the successor, and never Geldend recht', async () => {
+		bw(expired);
+		const { container } = render(ArticleReader, { node: bwNode });
+		await settle();
+		const stand = container.querySelector('.validity')!;
+		expect(stand.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+			'Vervallen per 1 januari 2020, opvolger: Nieuwe wet'
+		);
+		expect(stand.querySelector('.validity__no')?.textContent).toBe('Vervallen per 1 januari 2020');
+		expect(container.textContent).not.toContain('Geldend recht');
+		expect(container.querySelectorAll('.head__stand')).toHaveLength(0);
+	});
+
+	it('dates the citation on the day the data stands on, the last day of what expired', async () => {
+		bw({ ...expired, state: 'in_force', date: null });
+		render(ArticleReader, { node: bwNode });
+		await settle();
+		await fireEvent.click(screen.getByRole('button', { name: /^Citeer/ }));
+		expect(document.body.textContent).toContain('tekst geldend op 21 oktober 2026');
+	});
+
+	it('says nog niet in werking with its day', async () => {
+		bw({ state: 'not_in_force_yet', date: '2027-01-01', as_of: '2026-10-21', successors: [] });
+		const { container } = render(ArticleReader, { node: bwNode });
+		await settle();
+		expect(container.querySelector('.validity')?.textContent).toBe(
+			'Nog niet in werking (per 1 januari 2027)'
+		);
+		expect(container.querySelector('.validity__no')).toBeNull();
+	});
+
+	it('labels nothing Geldend where the API does not know', async () => {
+		bw(null);
+		const { container } = render(ArticleReader, { node: bwNode });
+		await settle();
+		expect(container.textContent).not.toContain('Geldend recht');
+	});
+
+	it('changes nothing on an API without validity', async () => {
+		bw('absent');
+		const { container } = render(ArticleReader, { node: bwNode });
+		await settle();
+		expect(container.querySelector('.validity')).toBeNull();
+		expect(container.querySelector('.head__stand')?.textContent).toMatch(/^Geldend recht/);
+	});
+});

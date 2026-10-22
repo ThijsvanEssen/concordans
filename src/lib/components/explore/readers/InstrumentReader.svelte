@@ -10,7 +10,7 @@
 	import ReaderHead from './ReaderHead.svelte';
 	import { instrumentLawId, type GraphNode } from '$lib/graph/types';
 	import WholeLawReader from '../WholeLawReader.svelte';
-	import { publicationName, sourceName } from '../law-head';
+	import { publicationName, publicationTitle, sourceName } from '../law-head';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { getInstrumentDetail } from '$lib/api/instrument-cache';
 	import { load } from '$lib/util/load.svelte';
@@ -40,6 +40,7 @@
 <ReaderFrame>
 	{#if publication}
 		{@const titel = textOf(p.display_name) ?? node.label}
+		{@const fullTitle = publicationTitle(node.raw?.title, titel)}
 		<ReaderHead
 			collection="instruments"
 			title={titel}
@@ -51,6 +52,9 @@
 				bron: official
 			}}
 		>
+			{#snippet onderTitel()}
+				{#if fullTitle}<p class="publicatie-titel">{fullTitle}</p>{/if}
+			{/snippet}
 			{#snippet statusLine()}
 				{#if textOf(p.date_signed)}<span>Ondertekend {langeDatum(textOf(p.date_signed))}.</span
 					>{/if}
@@ -66,3 +70,15 @@
 		<WholeLawReader {bwbId} />
 	{/if}
 </ReaderFrame>
+
+<style>
+	/* The official title under the name, as a law's (WholeLawReader). */
+	.publicatie-titel {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-body-2);
+		font-style: italic;
+		color: var(--ink-2);
+		max-width: 68ch;
+	}
+</style>

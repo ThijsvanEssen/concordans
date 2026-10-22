@@ -39,6 +39,8 @@
 	import WholeLawReaderArticle from './WholeLawReaderArticle.svelte';
 	import WholeLawReaderPeildatum from './WholeLawReaderPeildatum.svelte';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
+	import Validity from '$lib/components/ui/Validity.svelte';
+	import { validityOf } from '$lib/api/validity';
 	import { coverageLine } from '$lib/text/coverage';
 	import { followPosition } from './law-position.svelte';
 
@@ -99,6 +101,9 @@
 	// A failure is a line in the head; the list stands on its own call.
 	const detail = load(() => bwbId, getInstrumentDetail, 'Wet, gegevens');
 	const lawDetail = $derived(detail.state.status === 'ready' ? detail.state.data : null);
+	// Whether it holds, once, in the line of the head (undefined: an API without it).
+	const validity = $derived(validityOf(lawDetail));
+	const verlopen = $derived(validity?.state === 'expired');
 	const kindLabel = $derived(lawKind(lawDetail));
 	const fullTitle = $derived(lawFullTitle(lawDetail, lawTitle));
 	// A treaty: its record in the Verdragenbank, or from there its text in the BWB.
@@ -124,7 +129,7 @@
 		if (!peildatum) return '';
 		const v = shownVersion;
 		const of = v?.current
-			? ', de geldende tekst'
+			? `, de ${verlopen ? 'laatste' : 'geldende'} tekst`
 			: v?.valid_from
 				? `, versie van ${langeDatum(v.valid_from)}${v.valid_until ? ` tot ${langeDatum(v.valid_until)}` : ''}`
 				: '';
@@ -155,7 +160,8 @@
 			peildatum,
 			currentFrom: currentVersion?.valid_from,
 			longDate: (day) => langeDatum(day),
-			formatCount
+			formatCount,
+			validity
 		})
 	);
 	const officialUrl = $derived(
@@ -320,6 +326,7 @@
 			{/snippet}
 			<!-- What is on screen and which text: the count, a treaty, the peildatum. -->
 			{#snippet statusLine()}
+				<Validity {validity} />
 				<span>{headLine}</span>
 				{#if textNotRead}
 					<p class="whole-count">
@@ -371,14 +378,14 @@
 					</p>
 				{/if}
 				{#if versions.length > 0 && !lacksArticles}
-					<WholeLawReaderPeildatum {versions} {peildatum} {today} {choose} />
+					<WholeLawReaderPeildatum {versions} {peildatum} {today} {choose} {verlopen} />
 				{/if}
 			{/snippet}
 			{#if peildatum && !(versionsLoaded && versions.length === 0)}
 				<p class="whole-hist">
 					{histLine}
 					<a href={withParams(page.url, { peildatum: null })} data-sveltekit-noscroll
-						>Naar de geldende tekst</a
+						>Naar de {verlopen ? 'laatste' : 'geldende'} tekst</a
 					>
 				</p>
 			{/if}

@@ -326,9 +326,14 @@
 								>
 							{/if}
 						</span>
-						{#if shown.chamber || shown.context}<span class="row-context"
+						{#if shown.chamber || shown.context || shown.expired}<span class="row-context"
 								>{#if shown.chamber}<abbr title={CHAMBER_NAME[shown.chamber]}>{shown.chamber}</abbr
-									>{/if}{shown.chamber && shown.context ? ` ${shown.context}` : shown.context}</span
+									>{/if}{shown.chamber && shown.context
+									? ` ${shown.context}`
+									: shown.context}{#if shown.expired}{shown.context ? ', ' : ''}<span
+										class="row-expired"
+										title={shown.expired}>vervallen</span
+									>{/if}</span
 							>{/if}
 					</SearchOption>
 				{/each}
@@ -583,6 +588,9 @@
 	}
 	.search--compact .group-label {
 		padding: var(--s-1) var(--s-3) 0;
+	}
+	.row-expired {
+		color: var(--uitkomst-nee);
 	}
 	.row-context abbr {
 		text-decoration: none;

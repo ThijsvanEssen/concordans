@@ -2,6 +2,7 @@
 // the official text is. A Dutch law is a Wet on wetten.overheid.nl; an act of the EU is a
 // Verordening or a Richtlijn on EUR-Lex.
 import type { Schema } from '$lib/api/types';
+import type { Validity } from '$lib/api/validity';
 import { enactedLawId, enactedLawStatus } from '$lib/text/enacted-law';
 
 type Detail = Pick<
@@ -65,6 +66,17 @@ export function publicationName(kind: string): string {
 	return PUBLICATION[kind] ?? kind;
 }
 
+/**
+ * What the API's `title` of a publication says beyond its name: "Stb. 2018, 100: Besluit van
+ * 23 maart 2018, houdende …" under "Stb. 2018, 100" (B36). Null where it says nothing more.
+ */
+export function publicationTitle(title: string | null | undefined, name: string): string | null {
+	const t = title?.trim();
+	if (!t) return null;
+	const rest = t.startsWith(`${name}:`) ? t.slice(name.length + 1).trim() : t;
+	return rest && rest !== name ? rest : null;
+}
+
 /** The full title under the name, where it says more than the name. */
 export function lawFullTitle(d: Detail | null, name: string | null): string | null {
 	const full = d?.official_title ?? d?.title ?? null;
@@ -100,17 +112,24 @@ export function lawHeadLine(
 		currentFrom?: string | null;
 		longDate: (day: string) => string;
 		formatCount: (n: number) => string;
+		/**
+		 * What the API says of whether the law holds (undefined: an API without it). The line
+		 * Validity says it then, once: no Vastgesteld, nog niet in werking beside it, and no
+		 * Geldende tekst where the law does not hold or is not known to.
+		 */
+		validity?: Validity | null;
 	}
 ): string {
-	const { count, peildatum, currentFrom, longDate, formatCount } = opts;
+	const { count, peildatum, currentFrom, longDate, formatCount, validity } = opts;
+	const saysHolds = validity === undefined || validity?.state === 'in_force';
 	const version = d?.version_date_in_force ?? currentFrom ?? null;
 	// The list is the count where the law says 0 (a BWB treaty); a record without text none.
 	const n = peildatum ? count : d?.article_count || count;
 	return [
 		n > 0 ? `${formatCount(n)} artikelen.` : null,
-		enactedStatus(d),
+		validity === undefined ? enactedStatus(d) : null,
 		d?.date_in_force ? `In werking sinds ${longDate(d.date_in_force)}.` : null,
-		!peildatum && version && version !== d?.date_in_force
+		saysHolds && !peildatum && version && version !== d?.date_in_force
 			? `Geldende tekst: versie van ${longDate(version)}.`
 			: null,
 		d?.inbound_citation_count ? `${formatCount(d.inbound_citation_count)} keer aangehaald.` : null

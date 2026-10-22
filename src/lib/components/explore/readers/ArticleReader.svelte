@@ -50,6 +50,9 @@
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 	import ArticleSuccession from './ArticleSuccession.svelte';
+	import Validity from '$lib/components/ui/Validity.svelte';
+	import { citeDate, validityOf } from '$lib/api/validity';
+	import { statusOf } from '$lib/text/validity';
 	import { compareTarget, outcomesOf, ownSuccessionName, successionName } from './succession';
 	import { getNodeGraph } from '$lib/api/nodes';
 	import { parseNodeId } from '$lib/vocabulary';
@@ -327,6 +330,12 @@
 		euAct?.official_url ? { label: 'EUR-Lex', href: euAct.official_url } : null
 	);
 
+	// Whether it holds, as the API says (undefined: an API without it). Where it does not, one
+	// line says so in the place of the other statements of the stand (besluit 30).
+	const validity = $derived(validityOf(loaded?.article));
+	const showStatus = $derived(!shown && !stubLabel && statusOf(validity) !== null);
+	const expired = $derived(validity?.state === 'expired');
+
 	const versionLabel = $derived.by(() => {
 		if (stubLabel) return stubLabel;
 		if (shown) {
@@ -334,17 +343,20 @@
 			const until = langeDatum(shown.until);
 			return `Eerdere tekst, ${from || '?'}${until ? ` tot ${until}` : ''}`;
 		}
+		if (showStatus) return '';
 		// An article of a law of the Staatsblad the BWB does not hold yet: enacted, not in force.
 		const enacted = enactedLawId(loaded?.article.official_id);
-		if (enacted) return enactedLawStatus(enacted);
+		if (enacted && validity === undefined) return enactedLawStatus(enacted);
 		const from = langeDatum(validFrom);
 		// A repealed article has no geldende tekst: its last version only records the repeal.
-		if (loaded?.article.repealed) {
+		if (loaded?.article.repealed && validity === undefined) {
 			const date = langeDatum(lapse?.from);
 			return date ? `Vervallen per ${date}` : 'Vervallen';
 		}
 		// An act of the EU: the text as adopted; its consolidated versions are not fetched.
 		if (euAct) return null;
+		// Where the API does not know whether it holds, no "Geldend": only the day of the text.
+		if (validity === null) return from ? `Tekst sinds ${from}` : '';
 		return from ? `Geldend recht, tekst sinds ${from}` : 'Geldend recht';
 	});
 
@@ -404,12 +416,10 @@
 		officialUrl ? new URL(officialUrl).hostname.replace(/^www\./, '') : null
 	);
 
-	// An earlier text is cited as geldend on the day it took effect.
-	const forms = $derived(
-		citation
-			? citeArticle({ ...citation, date: shown?.from ? new Date(shown.from) : undefined })
-			: null
-	);
+	// An earlier text is cited as geldend on the day it took effect; the text of today on the
+	// day the data stands on (`validity.as_of`), else today.
+	const citeOn = $derived(shown?.from ? new Date(shown.from) : citeDate(validity));
+	const forms = $derived(citation ? citeArticle({ ...citation, date: citeOn }) : null);
 
 	// Bewaar and Citeer in the head follow the place chosen (#lid-3): that lid, else the whole
 	// article. Both name the same place.
@@ -419,8 +429,7 @@
 		const parts = shownVersion?.parts ?? loaded?.article.parts ?? [];
 		const deel = anchor ? placeCitation(anchor, parts) : null;
 		const plaats = deel && (deel.lid || deel.onderdelen?.length || deel.definitie) ? anchor! : '';
-		const date = shown?.from ? new Date(shown.from) : undefined;
-		return { plaats, deel, forms: plaats ? citeArticle({ ...citation, ...deel, date }) : forms };
+		return { plaats, deel, forms: plaats ? citeArticle({ ...citation, ...deel, date: citeOn }) : forms };
 	});
 	const bewaarHier = $derived.by(() => {
 		if (!citation || !hier) return null;
@@ -660,12 +669,14 @@
 				{/if}
 			{/snippet}
 			{#snippet statusLine()}
-				{#if versionLabel === null}
+				{#if showStatus}
+					<Validity {validity} opvolger={!d.successors?.length} />
+				{:else if versionLabel === null}
 					<Coverage
 						coverage={{ versions: { state: 'not_in_source', as_of: euAdopted } }}
 						bron={euSource}
 					/>
-				{:else}
+				{:else if versionLabel}
 					<span class="head__stand" class:is-old={!!shown}>{versionLabel}</span>
 				{/if}
 				<!-- What of its references is linked; of a law of the Staatsblad also what of its
@@ -824,7 +835,7 @@
 						onclick={() => {
 							shownIndex = null;
 							if (peildatum) go({ peildatum: null });
-						}}>Geldend recht lezen</button
+						}}>{expired ? 'Laatste tekst lezen' : 'Geldend recht lezen'}</button
 					>
 				{/if}
 			</p>
