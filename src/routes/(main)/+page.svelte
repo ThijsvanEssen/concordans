@@ -202,7 +202,6 @@
 <div class="home blad">
 	<header class="blad__kop intro">
 		<h1 class="blad__titel">{START.heading}</h1>
-		<p class="lead">{START.lead}</p>
 	</header>
 	<div class="main">
 		<div class="search">
@@ -247,6 +246,7 @@
 		<section class="actueel" aria-labelledby="actueel-heading">
 			<header>
 				<h2 id="actueel-heading"><a href="/actueel">Actueel</a></h2>
+				<p class="volger">Wat de Kamer en de rechter met de wet doen</p>
 			</header>
 			{#if feedState === 'laden'}
 				<div class="laden" aria-hidden="true">
@@ -287,15 +287,6 @@
 		}
 	}
 	/* The frame of Bladeren (lib/styles/frame.css), one column the full width. */
-	/* What Concordans is, in a reading width under the heading. */
-	.lead {
-		flex-basis: 100%;
-		max-width: var(--blad-tekst);
-		margin: calc(-1 * var(--s-2)) 0 0;
-		font-size: var(--t-body-2);
-		line-height: var(--lh-body);
-		color: var(--ink-2);
-	}
 	.search {
 		display: flex;
 		flex-direction: column;
@@ -355,6 +346,11 @@
 		margin: 0;
 		font-size: var(--t-h2);
 		font-weight: 600;
+	}
+	.volger {
+		margin: 0;
+		font-size: var(--t-meta);
+		color: var(--ink-3);
 	}
 	.actueel h2 a {
 		color: var(--ink);

@@ -1,8 +1,8 @@
 [
 	{
 		"path": "/",
-		"title": "Wetten, uitspraken en Kamerstukken in samenhang, Concordans",
-		"description": "Onderzoeksinstrument dat parlementaire informatie verbindt met wetgeving, officiële publicaties en rechtspraak; een wettenlezer en bundels voor eigen onderzoek."
+		"title": "Het artikel, en de uitspraken en Kamerstukken die ernaar verwijzen, Concordans",
+		"description": "Het artikel, en de uitspraken en Kamerstukken die ernaar verwijzen."
 	},
 	{
 		"path": "/explore",
@@ -59,7 +59,7 @@
 	{
 		"path": "/over",
 		"title": "Over Concordans",
-		"description": "Concordans als onafhankelijk onderzoeksproject naar de structuur van het Nederlandse recht."
+		"description": "Waar de naam Concordans vandaan komt, wie er verantwoordelijk voor is en hoe u contact opneemt."
 	},
 	{
 		"path": "/bronnen",

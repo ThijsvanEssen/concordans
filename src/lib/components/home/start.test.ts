@@ -32,9 +32,8 @@ const section = (key: string) =>
 	)?.[1] ?? '';
 
 describe('the start page of the server and of the app', () => {
-	it('has the heading, the lead and the search field of start.json', () => {
+	it('has the heading and the search field of start.json', () => {
 		expect(text(all(SERVER, 'h1')[0])).toBe(START.heading);
-		expect(text(all(SERVER, 'p', 'lead')[0])).toBe(START.lead);
 		expect(SERVER).toContain(`placeholder="${START.placeholder}"`);
 		// A form that works without scripts: /?q=, which the app reads into its field.
 		expect(SERVER).toMatch(/<form action="\/" method="get"[^>]*><input type="search" name="q"/);

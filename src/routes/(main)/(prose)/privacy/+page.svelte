@@ -1,6 +1,6 @@
 <script lang="ts">
 	import RouteKop from '$lib/seo/RouteKop.svelte';
-	import { CONTACT_EMAIL, MAKER } from '$lib/site/contact';
+	import { CONTACT_EMAIL } from '$lib/site/contact';
 </script>
 
 <RouteKop />
@@ -14,7 +14,7 @@
 		<div class="section">
 			<h2 class="section-title">Verwerkingsverantwoordelijke</h2>
 			<p>
-				{MAKER}, de maker van Concordans. Vragen over de verwerking van persoonsgegevens gaan naar
+				Concordans. Vragen over de verwerking van persoonsgegevens gaan naar
 				<a href="mailto:{CONTACT_EMAIL}" class="cite">{CONTACT_EMAIL}</a>.
 			</p>
 		</div>

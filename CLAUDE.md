@@ -2,7 +2,7 @@
 
 ## Platform en doelgroep
 
-Concordans is een werkomgeving voor juridisch onderzoek die de structuur van het Nederlandse recht zichtbaar maakt — de relaties tussen wetten, artikelen en uitspraken die officiële bronnen verbergen. De documentatie bedient juridische wetenschappers, studenten, onderzoekers en journalisten. Ze zijn niet op zoek naar uitleg van vanzelfsprekende dingen. Ze willen weten wat er is en hoe het werkt.
+Concordans is het artikel, en de uitspraken en Kamerstukken die ernaar verwijzen: de relaties tussen wetten, artikelen en uitspraken die officiële bronnen verbergen. De documentatie bedient juridische wetenschappers, studenten, onderzoekers en journalisten. Ze zijn niet op zoek naar uitleg van vanzelfsprekende dingen. Ze willen weten wat er is en hoe het werkt.
 
 ## Toon en stem
 

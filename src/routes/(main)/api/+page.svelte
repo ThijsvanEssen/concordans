@@ -182,8 +182,8 @@
 
 		<div class="api-footer">
 			<p>
-				De werkomgeving staat in de <a href="/docs">documentatie</a>, de herkomst van de gegevens in
-				de <a href="/docs/methode">methode</a>. Voor grootschalig gebruik:
+				De uitleg staat in de <a href="/docs">documentatie</a>, de herkomst van de gegevens in de
+				<a href="/docs/methode">methode</a>. Voor grootschalig gebruik:
 				<a href="/over#contact">contact</a>.
 			</p>
 		</div>

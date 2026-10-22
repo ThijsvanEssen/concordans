@@ -4,7 +4,7 @@
 	import { feedStand, standLine } from '$lib/text/stand';
 	import { report } from '$lib/api/errors';
 	import { inView } from '$lib/actions/in-view';
-	import { CONTACT_EMAIL, MAKER } from '$lib/site/contact';
+	import { CONTACT_EMAIL } from '$lib/site/contact';
 
 	// How current the data is, one line on every page (Thijs, 10 Oct: out of the page heads,
 	// docs/bediening.md, Bronregels): from /api/stats, asked once the footer comes into view.
@@ -23,8 +23,8 @@
 				<Wordmark size={17} />
 			</a>
 			<p>
-				Werkomgeving voor juridisch onderzoek, op officiële bronnen. Gratis, zonder account en
-				zonder cookies.
+				Het artikel, en de uitspraken en Kamerstukken die ernaar verwijzen. Zonder account, zonder
+				cookies.
 			</p>
 		</div>
 
@@ -93,7 +93,7 @@
 	</div>
 
 	<div class="container foot-bottom" use:inView={askStand}>
-		<span>© 2026 {MAKER}, <a href="mailto:{CONTACT_EMAIL}">{CONTACT_EMAIL}</a></span>
+		<span>© 2026 Concordans, <a href="mailto:{CONTACT_EMAIL}">{CONTACT_EMAIL}</a></span>
 		{#if stand}<span class="stand">{standLine(stand)}</span>{/if}
 	</div>
 </footer>
@@ -137,7 +137,7 @@
 		font-size: var(--t-meta);
 		line-height: 1.55;
 		color: var(--ink-3);
-		max-width: 30ch;
+		max-width: 36ch;
 	}
 
 	.foot-head {

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import RouteKop from '$lib/seo/RouteKop.svelte';
-	import { CONTACT_EMAIL, MAKER } from '$lib/site/contact';
+	import { CONTACT_EMAIL } from '$lib/site/contact';
 </script>
 
 <RouteKop />
@@ -8,15 +8,25 @@
 <div class="page-wrap">
 	<div class="container blad blad--tekst">
 		<header class="blad__kop"><h1 class="blad__titel">Over Concordans</h1></header>
-		<p class="stub-lede">
-			Concordans is een onafhankelijk onderzoeksproject naar de structuur van het Nederlandse recht.
-		</p>
+		<p class="stub-lede">Het artikel, en de uitspraken en Kamerstukken die ernaar verwijzen.</p>
 
 		<div class="section">
-			<h2 class="section-title">Maker</h2>
+			<h2 class="section-title">De naam</h2>
 			<p>
-				{MAKER} is maker van Concordans en verwerkingsverantwoordelijke. Het project is niet gelieerd
-				aan een juridische instelling, rechtbank of overheidsorgaan.
+				Concordans komt van concordantie: een register van de woorden uit een werk, met de plaatsen
+				waar ze voorkomen (<a
+					href="https://www.ensie.nl/oosthoek/concordantie-konkordantie"
+					target="_blank"
+					rel="noopener"
+					class="cite">Oosthoek Encyclopedie</a
+				>).
+			</p>
+		</div>
+
+		<div class="section">
+			<h2 class="section-title">Zelfstandig</h2>
+			<p>
+				Concordans is niet gelieerd aan een juridische instelling, rechtbank of overheidsorgaan.
 			</p>
 		</div>
 
