@@ -39,15 +39,21 @@ export function filterGroups(
 	wachtend: ReadonlySet<string> = new Set()
 ): Group[] {
 	const cut = cutsRows(f);
-	// The year alone, where the API asked for that year (a wet's judgments, BE-51): its total
-	// is the year's, and holds.
-	const yearOnly = cut && !cutsRows({ ...f, jaar: null });
 	return groups
 		.map((g) => {
 			const rows = g.rows.filter((r) => rowPasses(r, f));
 			// A name that follows its rows follows the rows the filter leaves.
 			const label = g.labelOf ? g.labelOf(rows) : g.label;
-			const holds = !cut || (yearOnly && !!g.years?.length);
+			// What the loader asked of the API itself (the year of a wet's judgments, BE-51; the
+			// year and the rechter of an article's): its total is that of the cut, and holds.
+			const holds =
+				!cut ||
+				(!!g.cutBy?.length &&
+					!cutsRows({
+						...f,
+						jaar: g.cutBy.includes('jaar') ? null : f.jaar,
+						rechter: g.cutBy.includes('rechter') ? null : f.rechter
+					}));
 			return {
 				...g,
 				label,

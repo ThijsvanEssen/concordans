@@ -59,6 +59,32 @@ describe('the dossier of a toezegging in its reader', () => {
 	});
 });
 
+describe('the days of a toezegging (B34)', () => {
+	// The debate on 14 October, the Kamer registered it on 21 October.
+	const registered = (v: Record<string, HTMLElement | undefined>) =>
+		v.Geregistreerd?.textContent?.trim();
+
+	it('reads Geregistreerd from registered_on, `date` being the day of the debate', async () => {
+		const v = await read({ ...NAKOMING, date: '2026-10-14', registered_on: '2026-10-21' });
+		expect(registered(v)).toBe('21 oktober 2026');
+	});
+
+	it('has no Geregistreerd where the Kamer named no day', async () => {
+		const v = await read({ ...NAKOMING, date: '2026-10-14', registered_on: null });
+		expect(v.Geregistreerd).toBeUndefined();
+	});
+
+	it('still reads the registration from `date` on an API before registered_on', async () => {
+		const { registered_on: _, ...legacy } = {
+			...NAKOMING,
+			registered_on: null,
+			date: '2026-10-21'
+		};
+		const v = await read(legacy);
+		expect(registered(v)).toBe('21 oktober 2026');
+	});
+});
+
 describe('the dossier of a toezegging opened in place', () => {
 	const openInPlace = (toezegging: object) => {
 		fakeApi({});

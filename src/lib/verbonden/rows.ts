@@ -75,6 +75,8 @@ export type Row = {
 	court?: string | null;
 	/** A judgment as the API cites it. */
 	cite?: Cite | null;
+	/** How often the judgment itself is cited (`inbound_citation_count`), where the order asks for it. */
+	cited?: number | null;
 	/** Props the canvas needs to draw a bron not on it yet. */
 	props?: Record<string, unknown>;
 	/** The meta of the edge, as the API gives it: what the row's line reads (`hoe.ts`). */

@@ -26,7 +26,7 @@
 <script lang="ts">
 	import { articleRef } from '$lib/text/bw';
 	import { BOTH_CHAMBERS, CHAMBER_CHOICES } from '$lib/components/parliamentary/chamber';
-	import { plural } from '$lib/text/words';
+	import { capitalize, plural } from '$lib/text/words';
 	import { lijstDoel } from '$lib/stores/sprong';
 	import { fractieNaam } from '$lib/bron/menselijk';
 	import { addDays, daysBetween, vandaag } from '$lib/text/datum';
@@ -79,11 +79,13 @@
 	import {
 		COALITION,
 		FEED_FILTER_PARAMS,
+		VOTES,
 		feedQuery,
 		readFilters,
 		summaryQuery,
 		type CoalitionWord,
-		type FeedQuery
+		type FeedQuery,
+		type VoteWord
 	} from '$lib/components/actueel/filters';
 	import {
 		CLOSE_VOTE,
@@ -120,6 +122,8 @@
 		dossier,
 		member,
 		faction,
+		voted,
+		vote,
 		coalition,
 		q,
 		chamber,
@@ -462,7 +466,9 @@
 			},
 			{
 				id: 'fractie',
-				label: 'Fractie',
+				// Who submitted it; who voted on it is `Stemde`.
+				label: 'Ingediend door',
+				chip: 'Ingediend door',
 				kind: 'list',
 				options: factionCounts.map(([key, count]) => {
 					const short = factionNames[key] ?? key;
@@ -476,6 +482,34 @@
 					};
 				})
 			},
+			// The votes a fraction voted on, and how: not what it signed (`Ingediend door`).
+			{
+				id: 'stemde',
+				label: 'Stemde',
+				kind: 'select',
+				value: voted,
+				all: 'Alle fracties',
+				options: [...new Set([...Object.keys(factionNames), ...(voted ? [voted] : [])])]
+					.map((key) => ({ value: key, label: factionNames[key] ?? key }))
+					.sort((a, b) => a.label.localeCompare(b.label, 'nl')),
+				onChange: (v) => patchUrl({ stemde: v || null, stem: v ? vote || null : null })
+			},
+			...(voted
+				? [
+						{
+							id: 'stem',
+							label: 'Stem',
+							kind: 'select' as const,
+							value: vote,
+							all: 'Voor en tegen',
+							options: (Object.keys(VOTES) as VoteWord[]).map((k) => ({
+								value: k,
+								label: capitalize(k)
+							})),
+							onChange: (v: string) => patchUrl({ stem: v || null })
+						}
+					]
+				: []),
 			// Only where the votes of the view have a coalition (the Tweede Kamer, a cabinet in
 			// office); a chosen value stays to be undone.
 			...(coalitionCounts.size || coalition
@@ -737,6 +771,7 @@
 						summary={summaries.get(day.date)}
 						termen={q}
 						wet={gevolgdeWet}
+						stemde={voted ? (factionNames[voted] ?? voted) : null}
 						meer={n === days.length - 1 && cursor && !doorzocht ? volgende : undefined}
 					/>
 				{/each}

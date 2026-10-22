@@ -67,6 +67,7 @@
 		nieuwSinds = null,
 		termen,
 		wet = null,
+		stemde = null,
 		meer
 	}: {
 		day: Day;
@@ -83,6 +84,8 @@
 		termen: readonly string[];
 		/** The law followed: how each row is tied to it (`via`), where the row does not say it. */
 		wet?: Gevolgd | null;
+		/** The fractie whose votes are asked for (`party`): each vote says how it voted. */
+		stemde?: string | null;
 		/** Under the day, in the text column: the next days, on the last day loaded. */
 		meer?: import('svelte').Snippet;
 	} = $props();
@@ -229,6 +232,7 @@
 				<!-- The outcome is in the label; the tally beside it, or how it was decided. -->
 				{@const how = votesSentence(i.vote.tally) ?? voteHow(i)}
 				{#if how}<span>{how}</span>{/if}
+				{@render stem(i)}
 			{:else if i.commitment}
 				<span
 					>{i.commitment.status ?? ''}{i.commitment.expected_resolution
@@ -240,6 +244,13 @@
 			{/if}
 			{#each relatieVerbanden(i) as v (v.label)}{@render verband(v, woorden, true)}{/each}
 		</span>
+	{/if}
+{/snippet}
+
+<!-- How the fractie asked for voted on a vote: "VVD stemde voor". -->
+{#snippet stem(i: FeedItem)}
+	{#if stemde && i.vote?.party_choice}
+		<span class="meta">{stemde} stemde {i.vote.party_choice.toLowerCase()}</span>
 	{/if}
 {/snippet}
 
@@ -309,6 +320,7 @@
 							>{/if}{@render persons(i)}</span
 					>
 				{/if}
+				{@render stem(i)}
 				{#if i.vote?.coalition}
 					<CoalitieRegel coalitie={i.vote.coalition} fracties={i.vote.coalition_factions ?? []} />
 				{/if}

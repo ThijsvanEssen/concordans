@@ -9,7 +9,11 @@ import { isInternational } from '$lib/vocabulary';
 import { bundleMentions, type Row } from './rows';
 import { describeBron } from '$lib/bron/describe';
 
-export function rowsOfCitedBy(items: Schema<'ArticleCitedByItem'>[]): Row[] {
+/**
+ * One row per judgment. With `withCount` (the order Meest aangehaald) a row says how often the
+ * judgment itself is cited, not how often it names the article.
+ */
+export function rowsOfCitedBy(items: Schema<'ArticleCitedByItem'>[], withCount = false): Row[] {
 	const mentions = new Map<string, Map<string, Row>>();
 	for (const item of items) {
 		const j = item.judgment;
@@ -24,6 +28,7 @@ export function rowsOfCitedBy(items: Schema<'ArticleCitedByItem'>[]): Row[] {
 			ref: { collection: 'judgments', key: j.key },
 			...describeBron('judgments', j.key, j.display_name, { ...j }, j.cite),
 			filterGroup: 'uitspraken',
+			cited: withCount ? (j.inbound_citation_count ?? null) : null,
 			at,
 			lid: item.leden?.[0] ?? lidOfMatch(item.qualifier ?? item.text),
 			position: item.paragraph_number ? paragraphCite(j.key, item.paragraph_number) : null,

@@ -18,7 +18,13 @@
 	import { ministryName } from '$lib/components/explore/index/ministries.svelte';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
-	import { discussedIn, dossiersByBasis, nagekomenIn, toegezegdIn } from '$lib/text/toezegging';
+	import {
+		discussedIn,
+		dossiersByBasis,
+		nagekomenIn,
+		registeredOn,
+		toegezegdIn
+	} from '$lib/text/toezegging';
 	import { load } from '$lib/util/load.svelte';
 	import { report } from '$lib/api/errors';
 	import { officialNumber } from '$lib/bron/dossier-naam';
@@ -104,8 +110,8 @@
 				<Veld label="Kabinet" value={c.cabinet}>
 					<BronLink ref={`cabinets/${c.cabinet}`}>{cabinetName(c.cabinet ?? '')}</BronLink>
 				</Veld>
-				<Veld label="Geregistreerd" value={c.date}>
-					<span class="nums">{langeDatum(c.date)}</span>
+				<Veld label="Geregistreerd" value={registeredOn(c)}>
+					<span class="nums">{langeDatum(registeredOn(c))}</span>
 				</Veld>
 				<Veld label="Stand" value={c.status} nodig>
 					<span class:late

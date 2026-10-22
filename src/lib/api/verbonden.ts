@@ -43,7 +43,7 @@ export const getCitedBy = (
 	query: QueryOf<'/api/articles/{bwb_id}/{article_number}/cited-by'>
 ) =>
 	once(
-		`articles/${bwbId}/${articleNumber}/cited-by/${query.sort ?? ''}/${query.offset ?? 0}/${query.limit ?? ''}`,
+		`articles/${bwbId}/${articleNumber}/cited-by/${query.sort ?? ''}/${query.offset ?? 0}/${query.limit ?? ''}/${query.court ?? ''}/${(query.tier ?? []).join(',')}/${query.year ?? ''}`,
 		() =>
 			unwrap(
 				api.GET('/api/articles/{bwb_id}/{article_number}/cited-by', {

@@ -106,7 +106,7 @@ describe('the request of a list', () => {
 				'tier=rechtbank&court_kind=x&subject_area=Civiel+recht&van=2020-01-01&source=echr'
 			)
 		).toEqual({
-			tier: 'rechtbank',
+			tier: ['rechtbank'],
 			subject_area: 'Civiel recht',
 			source: 'echr',
 			from: '2020-01-01',

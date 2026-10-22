@@ -38,6 +38,7 @@ const vote = (voor: number, tegen: number, over: Partial<FeedItem> = {}) =>
 			decision_kind: null,
 			coalition: null,
 			coalition_factions: [],
+			party_choice: null,
 			chamber: 'TK',
 			passed: voor > tegen,
 			outcome: voor > tegen ? 'aangenomen' : 'verworpen',

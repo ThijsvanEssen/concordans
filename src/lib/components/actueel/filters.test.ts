@@ -16,6 +16,8 @@ describe('readFilters: every filter of Actueel by its name in the address', () =
 			dossier: '',
 			member: '',
 			faction: '',
+			voted: '',
+			vote: '',
 			coalition: '',
 			q: [],
 			chamber: '',
@@ -42,6 +44,21 @@ describe('readFilters: every filter of Actueel by its name in the address', () =
 			member: 'p1',
 			faction: 'd66'
 		});
+	});
+
+	it('reads who voted (Stemde) apart from who submitted (Fractie), and how in the words of the site', () => {
+		const f = read('fractie=vvd&stemde=d66&stem=tegen');
+		expect(f).toMatchObject({ faction: 'vvd', voted: 'd66', vote: 'tegen' });
+		expect(read('stem=maybe').vote).toBe('');
+	});
+
+	it('asks the votes of a fractie as `party`, with `vote` only beside it (B5)', () => {
+		expect(feedQuery(read('stemde=d66&stem=voor'), TODAY)).toEqual({ party: 'd66', vote: 'voor' });
+		expect(feedQuery(read('stemde=d66'), TODAY)).toEqual({ party: 'd66' });
+		// A stem without a fractie would be a 422.
+		expect(feedQuery(read('stem=voor'), TODAY)).toEqual({});
+		// Submitted by is still `faction`.
+		expect(feedQuery(read('fractie=d66'), TODAY)).toEqual({ faction: 'd66' });
 	});
 
 	it('reads the coalition in the words of the site, and nothing else', () => {
@@ -84,6 +101,8 @@ describe('FEED_FILTER_PARAMS: the names a shared link keeps', () => {
 			'dossier',
 			'persoon',
 			'fractie',
+			'stemde',
+			'stem',
 			'coalitie',
 			'q',
 			'kamer',

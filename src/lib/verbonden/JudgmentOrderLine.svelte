@@ -13,6 +13,7 @@
 		order,
 		onOrder,
 		years,
+		rechters,
 		filter,
 		onFilter
 	}: {
@@ -22,11 +23,17 @@
 		onOrder: (order: JudgmentOrder) => void;
 		/** The judgments per year; none where the group cannot be cut by year. */
 		years: { year: number; count: number }[];
+		/** The judgments per rechter over the whole group, where the API counts them. */
+		rechters?: Partial<Record<Rechter, number>>;
 		filter: VerbondenFilter;
 		onFilter: (f: VerbondenFilter) => void;
 	} = $props();
 
 	const rechter = $derived(RECHTERS.find((r) => r.id === filter.rechter));
+	// Where the API counts the courts, only those that have judgments (and the one chosen).
+	const opties = $derived(
+		RECHTERS.filter((r) => !rechters || rechters[r.id] || filter.rechter === r.id)
+	);
 </script>
 
 <div class="regel">
@@ -71,7 +78,7 @@
 						{/each}
 					</div>
 					<div class="jaar-rechter__lijst" role="group" aria-label="Rechter">
-						{#each [{ id: null, label: 'Alle rechters' }, ...RECHTERS] as r (r.id ?? 'alle')}
+						{#each [{ id: null, label: 'Alle rechters' }, ...opties] as r (r.id ?? 'alle')}
 							<button
 								type="button"
 								role="menuitemradio"
@@ -80,7 +87,10 @@
 								onclick={() => {
 									sluit();
 									onFilter({ ...filter, rechter: (r.id as Rechter | null) ?? null });
-								}}>{r.label}</button
+								}}
+								>{r.label}{#if r.id && rechters?.[r.id]}<span class="jaar-rechter__tel"
+										>{formatCount(rechters[r.id] ?? 0)}</span
+									>{/if}</button
 							>
 						{/each}
 					</div>

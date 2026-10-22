@@ -5,6 +5,7 @@
 	import { naamVan } from '$lib/bron/menselijk';
 	import { openHref } from '$lib/bron/href';
 	import IndexRow from '../IndexRow.svelte';
+	import { euKind, instrumentKenmerk } from '../instrument-row';
 	import type { ViewProps } from '../lists/list';
 
 	type Row = Schema<'InstrumentListItemDTO'>;
@@ -16,7 +17,7 @@
 		!w.bwb_id && !w.celex && !w.jurisdiction && w.key.startsWith('stb_');
 	const jurisdictionTag = (w: Row) =>
 		w.jurisdiction === 'eu'
-			? 'EU'
+			? (euKind(w) ?? 'EU')
 			: w.jurisdiction === 'int'
 				? 'Verdrag'
 				: isPublication(w)
@@ -35,7 +36,7 @@
 			acties
 		>
 			{#snippet lead()}
-				<span class="row-id-main">{(w.bwb_id ?? w.celex ?? '').toUpperCase()}</span>
+				<span class="row-id-main">{instrumentKenmerk(w)}</span>
 				{#if w.short_title && w.short_title !== w.title}
 					<span class="row-id-sub">{w.short_title}</span>
 				{/if}

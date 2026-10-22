@@ -62,6 +62,7 @@
 		type Page,
 		type Shared
 	} from './index/lists/list';
+	import { requestFrom } from './index/deep';
 
 	let { category }: { category: IndexCategory } = $props();
 
@@ -219,8 +220,17 @@
 				states[cat] = { ...states[cat], ...patch };
 			});
 		fetchPage = async (offset, signal) => {
-			const answer = await asked.load(query, offset, signal, facettenApart, set);
-			if (!signal.aborted) pages[cat] = toPage(pages[cat], answer, offset, size);
+			// Past what the API pages to (the Stukken: 10.000), the list goes on in a window of
+			// dates; its total counts the rows before the window as well.
+			const next = requestFrom(asked, query, offset, (pages[cat]?.items ?? []) as never[]);
+			if (!next) {
+				const kept = pages[cat];
+				if (kept) pages[cat] = { ...kept, more: false };
+				return;
+			}
+			const answer = await asked.load(next.query, next.offset, signal, facettenApart, set);
+			const total = answer.total == null ? answer.total : answer.total + next.behind;
+			if (!signal.aborted) pages[cat] = toPage(pages[cat], { ...answer, total }, offset, size);
 		};
 		const ac = new AbortController();
 		loadAbort = ac;

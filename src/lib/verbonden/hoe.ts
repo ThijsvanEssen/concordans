@@ -10,6 +10,7 @@ import { atPlace, paragraphNumber } from '$lib/text/anchor';
 import type { Collection, Relation } from '$lib/vocabulary';
 import { changeByEffect, changeVerb, relationWords, type RelationWords } from './relation-words';
 import { langeDatum } from '$lib/text/datum';
+import { formatCount } from '$lib/text/getal';
 import {
 	grondslagRegel,
 	grondslagWerkwoord,
@@ -386,7 +387,14 @@ function verwijzing(c: HoeContext): Hoe {
 	// 6:214 BW, als voorwaarde`.
 	const doel = textOf(edge.doel);
 	if (doel) return regel('Verwijst naar', join(doel, aard), uitReden);
-	const vaak = keer(num(edge.mention_count) ?? (row.mentions?.length || null));
+	// Meest aangehaald says how often the judgment is cited itself; the places it names the
+	// selected bron are in the line already, and their number says nothing of its authority.
+	const vaak =
+		row.cited != null
+			? row.cited > 0
+				? `zelf ${formatCount(row.cited)} keer aangehaald`
+				: null
+			: keer(num(edge.mention_count) ?? (row.mentions?.length || null));
 	// The words of the source, where they are not the passage under the line.
 	const eigen = !citaat && textOf(edge.text) ? `‘${textOf(edge.text)}’` : null;
 	const herkomst =

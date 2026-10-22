@@ -109,3 +109,12 @@ export function discussedPhrase(...args: Parameters<typeof discussedIn>): string
 	const d = discussedIn(...args);
 	return [d.label.toLowerCase(), d.before, d.link].filter(Boolean).join(' ');
 }
+
+/**
+ * The day the Kamer registered a toezegging (`registered_on`; `date` is the day of the debate).
+ * An API before 0.81 gave the registration as `date` and has no `registered_on`.
+ */
+export const registeredOn = (c: {
+	date?: string | null;
+	registered_on?: string | null;
+}): string | null => ('registered_on' in c ? (c.registered_on ?? null) : (c.date ?? null));

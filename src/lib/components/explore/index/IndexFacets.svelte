@@ -20,6 +20,8 @@
 	export type FacetGroup = { id: string; label: string; note?: string } & (
 		| {
 				kind: 'list';
+				/** Names what a chosen option is in its chip, where its label alone is ambiguous. */
+				chip?: string;
 				options: FacetOption[];
 				/** A long list (the rechtsgebieden) shows this many, the chosen one too, then Alle N. */
 				preview?: number;
@@ -75,7 +77,13 @@
 					return g.options.flatMap((o) =>
 						!o.on || o.default
 							? []
-							: [{ id: `${g.id}:${o.id}`, label: o.label, onRemove: o.onClick }]
+							: [
+									{
+										id: `${g.id}:${o.id}`,
+										label: g.chip ? `${g.chip}: ${o.label}` : o.label,
+										onRemove: o.onClick
+									}
+								]
 					);
 				case 'range':
 					return g.from || g.to

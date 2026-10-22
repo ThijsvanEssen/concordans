@@ -109,5 +109,61 @@ describe('Back to Actueel', () => {
 		await settle();
 		expect(again.getByText('d')).toBeTruthy();
 		expect(api.asked('/api/feed').filter(({ query }) => !query?.facets)).toHaveLength(asked);
+});
+
+describe('the votes of a fractie on Actueel (B5)', () => {
+	const vote = {
+		id: 'decisions/s1',
+		node: { collection: 'decisions', key: 's1' },
+		kind: 'stemming',
+		date: today,
+		title: 'Motie over de huur',
+		persons: [],
+		vote: {
+			chamber: 'TK',
+			passed: true,
+			outcome: 'aangenomen',
+			tally: { Voor: 80, Tegen: 70 },
+			coalition_factions: [],
+			party_choice: 'Tegen'
+		}
+	};
+
+	beforeEach(() => {
+		api = fakeApi({
+			'/api/feed': (r) =>
+				r.params.query?.facets
+					? { items: [], total: 1, facets: { faction: [{ value: 'vvd', count: 3 }] } }
+					: { items: [vote], next_cursor: null, data_as_of: {} },
+			'/api/feed/summary': { days: [] },
+			'/api/documents': { items: [] },
+			'/api/cabinets': [],
+			'/api/factions': [
+				{ key: 'vvd', abbreviation: 'VVD' },
+				{ key: 'd66', abbreviation: 'D66' }
+			]
+		});
+	});
+
+	it('asks them as `party` with `vote`, and says what the fractie chose on each', async () => {
+		open('/actueel?stemde=d66&stem=tegen');
+		const { findByText } = render(Page);
+		await findByText('D66 stemde tegen');
+		const asked = api.asked('/api/feed').map((p) => p.query);
+		expect(asked.every((q) => q?.party === 'd66' && q?.vote === 'tegen')).toBe(true);
+	});
+
+	it('keeps who submitted apart from who voted, each under its own name', async () => {
+		open('/actueel');
+		const { findAllByText, getAllByText } = render(Page);
+		await findAllByText('Ingediend door');
+		expect(getAllByText('Stemde').length).toBeGreaterThan(0);
+		// The fractie submitted-by is still `faction`.
+		open('/actueel?fractie=vvd');
+		await appNavigation.goto('/actueel?fractie=vvd');
+		await settle();
+		expect(api.asked('/api/feed').some((p) => p.query?.faction === 'vvd' && !p.query?.party)).toBe(
+			true
+		);
 	});
 });

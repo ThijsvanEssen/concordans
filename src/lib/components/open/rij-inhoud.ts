@@ -27,6 +27,7 @@ export const voteOf = (v: Pick<Vote, 'chamber' | 'tally'> & Partial<Vote>): Vote
 	decision_kind: null,
 	coalition: null,
 	coalition_factions: [],
+	party_choice: null,
 	...v
 });
 

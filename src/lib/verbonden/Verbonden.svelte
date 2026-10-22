@@ -154,12 +154,18 @@
 		);
 	}
 
-	// The year of the bronfilter, for a wet asked of the API itself (BE-51): its judgments
-	// of that year are loaded, not filtered out of the first page.
+	// The year of the bronfilter, for a wet asked of the API itself (BE-51), and the year and
+	// the rechter for an article: its judgments of that year and court are loaded, not
+	// filtered out of the first page.
 	$effect(() => {
-		const year = selection.collection === 'instruments' ? (filter.jaar ?? null) : null;
-		if (year === untrack(() => verbonden.options.year)) return;
-		onReloadGroup?.('judgments', { year });
+		const year =
+			selection.collection === 'instruments' || selection.collection === 'articles'
+				? (filter.jaar ?? null)
+				: null;
+		const rechter = selection.collection === 'articles' ? (filter.rechter ?? null) : null;
+		const now = untrack(() => verbonden.options);
+		if (year === now.year && rechter === now.rechter) return;
+		onReloadGroup?.('judgments', { year, rechter });
 	});
 
 	// A new bron starts closed; the same bron with more rows (a group opened) stays as it is.
@@ -613,6 +619,7 @@
 							order={verbonden.options.order}
 							onOrder={(order) => onReloadGroup?.(g.id, { order })}
 							years={bars}
+							rechters={g.rechters}
 							{filter}
 							{onFilter}
 						/>

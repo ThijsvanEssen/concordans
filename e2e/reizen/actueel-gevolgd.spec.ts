@@ -54,6 +54,19 @@ test('Actueel: Back finds the earlier days loaded and the place read', async ({ 
 	await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(y - 50);
 });
 
+test('Actueel: who submitted and who voted are two filters, each under its own name', async ({
+	page,
+	touch
+}) => {
+	await page.goto('/actueel');
+	await expect(page.getByRole('heading', { level: 2, name: /^Vandaag/ })).toBeVisible();
+	if (touch) await page.getByRole('button', { name: 'Verfijnen' }).click();
+	await expect(page.getByRole('region', { name: 'Ingediend door' })).toBeVisible();
+	await expect(page.getByRole('region', { name: 'Stemde' })).toBeVisible();
+	// How a fractie voted is asked only once a fractie is chosen.
+	await expect(page.getByRole('region', { name: 'Stem', exact: true })).toHaveCount(0);
+});
+
 test('Actueel: the Kamer narrows to the Eerste Kamer, chosen before the days are in', async ({
 	page
 }) => {

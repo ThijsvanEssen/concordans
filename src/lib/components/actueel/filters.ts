@@ -17,6 +17,10 @@ export const COALITION = {
 } as const;
 export type CoalitionWord = keyof typeof COALITION;
 
+/** How a faction voted (API: `vote` with `party`): the site's word is the API's. */
+export const VOTES = { voor: 'Voor', tegen: 'Tegen' } as const;
+export type VoteWord = keyof typeof VOTES;
+
 /** A law the feed follows by its BWB id: a law or a regulation (BWBR), or a treaty (BWBV). */
 export const isFeedLaw = (value: string) => /^BWB[RV]\d+$/i.test(value);
 
@@ -28,7 +32,11 @@ type ActueelFilters = {
 	ministry: string;
 	dossier: string;
 	member: string;
+	/** Who submitted it (`faction`: what its Kamerleden signed). */
 	faction: string;
+	/** Who voted on it (`party`: how the fraction voted), with `vote` how it voted. */
+	voted: string;
+	vote: VoteWord | '';
 	coalition: CoalitionWord | '';
 	/** Every word searched, each a `q` of its own: any of them counts. */
 	q: string[];
@@ -77,6 +85,16 @@ const FILTERS: { [K in keyof ActueelFilters]: Filter<ActueelFilters[K]> } = {
 	dossier: plain(PARAM.dossier, 'dossier'),
 	member: plain(PARAM.member, 'member'),
 	faction: plain(PARAM.party, 'faction'),
+	voted: plain('stemde', 'party'),
+	// How it voted counts only for a faction (the API answers 422 for a vote alone).
+	vote: {
+		param: 'stem',
+		read: (p) => {
+			const v = p.get('stem') ?? '';
+			return Object.hasOwn(VOTES, v) ? (v as VoteWord) : '';
+		},
+		ask: (v) => (v ? { vote: v === 'voor' ? 'voor' : 'tegen' } : {})
+	},
 	coalition: {
 		param: PARAM.coalition,
 		read: (p) => {
@@ -123,8 +141,15 @@ export const readFilters = (params: URLSearchParams): ActueelFilters =>
 	Object.fromEntries(ENTRIES.map(([k, f]) => [k, f.read(params)])) as ActueelFilters;
 
 /** The filters as the feed asks them, in the words of the API; none chosen asks nothing. */
-export const feedQuery = (filters: ActueelFilters, today: string): FeedQuery =>
-	Object.assign({}, ...ENTRIES.map(([k, f]) => f.ask?.(filters[k], today) ?? {}));
+export function feedQuery(filters: ActueelFilters, today: string): FeedQuery {
+	const query: FeedQuery = Object.assign(
+		{},
+		...ENTRIES.map(([k, f]) => f.ask?.(filters[k], today) ?? {})
+	);
+	// How it voted is asked of a faction only.
+	if (!filters.voted) delete query.vote;
+	return query;
+}
 
 /** The filters of a feed query for its day counts, which ask a period of their own. */
 export function summaryQuery(query: FeedQuery) {

@@ -18,6 +18,7 @@ import {
 import { atLeast, formatCount } from '$lib/text/getal';
 import { rowOfNeighbor, type Row } from './rows';
 import { type Neighbor } from '$lib/api/nodes';
+import type { Rechter } from './filter';
 import type { JudgmentOrder } from './loaders';
 import { chamberOfDocument } from './document-chamber';
 import { CHAMBER_NAME, type Chamber } from '$lib/components/parliamentary/chamber';
@@ -97,6 +98,10 @@ export type Group = GroupDef & {
 	mentions?: number;
 	/** The years of all its bronnen, as the API counts them; else counted from the rows. */
 	years?: { year: number; count: number }[];
+	/** The judgments per rechter over the whole group, where the API counts them. */
+	rechters?: Partial<Record<Rechter, number>>;
+	/** The criteria of the filter its loader asked of the API: its total holds under them. */
+	cutBy?: ('jaar' | 'rechter')[];
 	/** Rows are missing that the API has (a bucket split over groups, a page that failed): `30+`. */
 	capped: boolean;
 	/** Its loader is still under way: the group keeps its place with "laden…". */

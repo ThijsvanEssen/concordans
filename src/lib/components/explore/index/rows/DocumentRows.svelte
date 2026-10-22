@@ -30,7 +30,8 @@
 			onToggle={() => ctx.toggleOpen(bron)}
 		>
 			{#snippet lead()}
-				<span class="row-id-main"><Waarde value={label} /></span>
+				<!-- A paper that is no Kamerstuk has its own number (2026D41234). -->
+				<span class="row-id-main"><Waarde value={label ?? doc.document_number} /></span>
 				<!-- The dossier by name under its number (API 0.79.30). -->
 				{#if doc.dossiers?.[0] && dossierOwnName(doc.dossiers[0])}
 					<span class="row-id-sub row-id-naam" title={doc.dossiers[0].title ?? undefined}

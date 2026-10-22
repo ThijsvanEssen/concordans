@@ -91,6 +91,13 @@ export type List<Row, State extends object, Query> = {
 		apart: FacetsApart,
 		set: SetState<State>
 	): Promise<Answer<Row>>;
+	/** The deepest `offset` the API pages to (422 beyond it); further, `beyond` asks a window of dates. */
+	reach?: number;
+	/**
+	 * The request that goes on from the rows loaded when they pass `reach`: the same list from
+	 * the last day it showed, and the offset into that day. Null where it cannot go on.
+	 */
+	beyond?(query: Query, loaded: Row[]): { query: Query; offset: number } | null;
 	/** The total where the rows come without it (the stemmingen: from their facets). */
 	total?(state: Partial<State>): number | null;
 	/** The rows as shown, where the API cannot filter or sort them. */

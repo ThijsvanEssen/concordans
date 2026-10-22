@@ -29,7 +29,7 @@ type Context = ListContext<Row, JudgmentsState>;
 const query = (p: IndexParams, sort: SortDef) => ({
 	q: p.q || undefined,
 	court: p.court || undefined,
-	tier: p.tier,
+	tier: p.tier ? [p.tier] : undefined,
 	court_kind: p.courtKind,
 	subject: p.subject || undefined,
 	subject_area: p.subjectArea || undefined,
@@ -146,7 +146,7 @@ function courtGroups(ctx: Context): FacetGroup[] {
 					label: TIER_LABEL[t],
 					count: counts?.get(t),
 					on,
-					// One college or European court at a time: the API takes one tier.
+					// One college or European court at a time: the address holds one tier (the API takes a list).
 					onClick: () =>
 						patch({
 							tier: on || source ? null : t,

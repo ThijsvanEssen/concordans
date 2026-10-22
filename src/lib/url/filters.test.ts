@@ -20,7 +20,7 @@ describe('the filters in the address', () => {
 
 	it('name each filter Actueel shares with Bronnen alike', () => {
 		const shared = Object.values(PARAM) as string[];
-		const own = ['wet', 'artikel', 'komend'];
+		const own = ['wet', 'artikel', 'komend', 'stemde', 'stem'];
 		for (const name of ACTUEEL) expect([...shared, ...own]).toContain(name);
 	});
 

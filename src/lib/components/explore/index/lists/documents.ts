@@ -19,7 +19,21 @@ const query = (p: IndexParams) => ({
 	limit: PAGE
 });
 
+/** The deepest page the API reads (`OFFSET_MAX`): further back it is a window of dates. */
+const REACH = 10_000;
+
 export const documents = defineList<Row, State, ReturnType<typeof query>>({
+	reach: REACH,
+	// From the last day shown: its date as `to` (inclusive), and the papers of that day already
+	// shown as the offset into it.
+	beyond: (q, loaded) => {
+		const day = loaded.at(-1)?.date?.slice(0, 10);
+		if (!day) return null;
+		return {
+			query: { ...q, to: day },
+			offset: loaded.filter((d) => d.date?.slice(0, 10) === day).length
+		};
+	},
 	// One order: newest first, as the API lists them.
 	sorts: [{ id: 'date', label: 'Datum' }],
 	placeholder: 'Zoek op Kamerstuknummer',

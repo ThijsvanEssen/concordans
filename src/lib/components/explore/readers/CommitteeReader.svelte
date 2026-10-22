@@ -1,6 +1,7 @@
 <script lang="ts">
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { capitalize, joinParts, textOf } from '$lib/text/words';
+	import { NOT_IN_DATA } from '$lib/text/coverage';
 	import { bewaarItem } from '$lib/map/map';
 	import ReaderHead from './ReaderHead.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
@@ -73,6 +74,7 @@
 		{@const openDossiers = dossiers.filter((d) => !d.closed)}
 		{@const outcomes = Object.keys(OUTCOME_LABEL) as Outcome[]}
 		{@const ek = c.chamber === 'EK'}
+		{@const complete = c.dossier_total == null || dossiers.length >= c.dossier_total}
 		<!-- The members with a role, in the word of a member's page (seatWord): the
 			     voorzitter first, then the ondervoorzitter, the leden and the plaatsvervangers. -->
 		{@const officers = (c.members ?? [])
@@ -83,19 +85,24 @@
 		<div class="r-committee">
 			<ul class="stats">
 				<li>
-					<span class="stat-num">{(c.members ?? []).length}</span><span class="stat-label"
-						>Leden</span
-					>
+					<!-- No seat in the data at all is not "0 Leden": it is not known. -->
+					{#if c.members == null}
+						<span class="stat-num stat-num--gat">{NOT_IN_DATA}</span>
+					{:else}
+						<span class="stat-num">{c.members.length}</span>
+					{/if}<span class="stat-label">Leden</span>
 				</li>
 				{#if !ek}
-					<!-- The Eerste Kamer's committees are not yet linked to dossiers. -->
+					<!-- The Eerste Kamer's committees are not yet linked to dossiers. The count is
+					     the API's, the one of the list, not what the page of dossiers holds. -->
 					<li>
-						<span class="stat-num">{openDossiers.length}</span><span class="stat-label"
-							>Open dossiers</span
+						<span class="stat-num">{c.active_dossier_count ?? openDossiers.length}</span><span
+							class="stat-label">Open dossiers</span
 						>
 					</li>
 				{/if}
-				{#each outcomes as outcome (outcome)}
+				<!-- The outcomes are counted from the dossiers loaded: only where they are all. -->
+				{#each complete ? outcomes : [] as outcome (outcome)}
 					{@const count = dossiers.filter((d) => d.outcome === outcome).length}
 					{#if count > 0}
 						<li>
@@ -194,6 +201,12 @@
 		font-size: var(--t-body);
 		font-weight: 600;
 		color: var(--ink);
+	}
+	/* A gap in the data is said in words, quiet beside the numbers. */
+	.stat-num--gat {
+		font-size: var(--t-micro);
+		font-weight: 400;
+		color: var(--ink-3);
 	}
 	.stat-label {
 		font-family: var(--font-serif);

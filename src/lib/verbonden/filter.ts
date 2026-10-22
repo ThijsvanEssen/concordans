@@ -293,6 +293,14 @@ const RECHTER_OF_TIER: Record<string, Rechter> = {
 	hvj_eu: 'hvj'
 };
 
+/** The tiers of a rechter, as the API takes them (`tier`, repeated): the inverse of RECHTER_OF_TIER. */
+export const tiersOfRechter = (rechter: Rechter): string[] =>
+	Object.entries(RECHTER_OF_TIER).flatMap(([tier, r]) => (r === rechter ? [tier] : []));
+
+/** The rechter of a tier, or null for a tier no filter names (`andere_instantie`). */
+export const rechterOfTier = (tier: string | null | undefined): Rechter | null =>
+	tier && Object.hasOwn(RECHTER_OF_TIER, tier) ? RECHTER_OF_TIER[tier] : null;
+
 /** The name of a court of the EU, and its case numbers, as the Rechtspraak gives them. */
 const EU_COURT = /^(Hof van Justitie|Gerecht( voor ambtenarenzaken)?) van de Europese Unie\b/i;
 const EU_CASE = /^[CTF]-\d+\/\d{2}\b/;
