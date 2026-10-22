@@ -59,7 +59,7 @@ export const getCitingJudgmentsOfTier = (bwbId: string, articleNumber: string, t
 			api.GET('/api/articles/{bwb_id}/{article_number}/cited-by', {
 				params: {
 					path: { bwb_id: bwbId, article_number: articleNumber },
-					query: { tier, limit: 1 }
+					query: { tier: [tier], limit: 1 }
 				}
 			})
 		)
