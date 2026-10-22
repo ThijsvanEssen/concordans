@@ -13,9 +13,9 @@ describe('movedAddress', () => {
 		expect(at('/stemmingen?q=stikstof')).toBe('/explore?mode=index&kind=decisions&q=stikstof');
 	});
 
-	it('sends /zoeken to the field on the start page, its words with it', () => {
-		expect(at('/zoeken')).toBe('/#zoeken');
-		expect(at('/zoeken?q=huur')).toBe('/?q=huur#zoeken');
+	it('leaves /zoeken alone: the page of results (besluit 31)', () => {
+		expect(at('/zoeken')).toBeNull();
+		expect(at('/zoeken?q=huur')).toBeNull();
 	});
 
 	it('leaves a bron and any other address alone; moves the bundels of before', () => {

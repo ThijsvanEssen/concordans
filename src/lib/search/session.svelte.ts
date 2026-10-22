@@ -20,6 +20,7 @@ import {
 	type SearchKind
 } from './lanes';
 import { bestHit, bySection, hitName, slots } from './present';
+import { narrowerWords } from './results';
 import {
 	keuzesOf,
 	lawAbbreviation,
@@ -200,12 +201,7 @@ export class SearchSession {
 		this.partialKinds.size === 0 ? [] : [...new Set(this.answers.flatMap((a) => a.leftOut))]
 	);
 	/** Words of the query to try alone where it found nothing: the longer ones, at most three. */
-	readonly narrower = $derived(
-		(() => {
-			const words = [...new Set(this.q.split(/\s+/).filter((w) => w.length >= 4))];
-			return words.length > 1 ? words.slice(0, 3) : [];
-		})()
-	);
+	readonly narrower = $derived(narrowerWords(this.q));
 	readonly bestComing = $derived(!this.best && !this.allIn && this.groups.length > 0);
 	/** The kinds whose group says "laden…" while their lane waits. */
 	readonly loadingKinds = $derived(
@@ -327,9 +323,18 @@ export class SearchSession {
 	// it, else the first row once every answer is in and the Beste treffer stands above.
 	readonly #earlyEnter = new EarlyEnter(() => this.enter());
 
-	/** `open` opens a bron, or a hit by the name a link uses. */
-	constructor(open: (ref: BronRef | string, at: string | null) => void) {
+	readonly #results?: (q: string, from: string, to: string) => void;
+
+	/**
+	 * `open` opens a bron, or a hit by the name a link uses; `results` goes to the page of
+	 * results of a query that names nothing exactly.
+	 */
+	constructor(
+		open: (ref: BronRef | string, at: string | null) => void,
+		results?: (q: string, from: string, to: string) => void
+	) {
 		this.#open = open;
+		this.#results = results;
 	}
 
 	/** The hits a kind's lane last answered. */
@@ -431,11 +436,15 @@ export class SearchSession {
 			this.hits[active - offset]
 		)
 			this.#open(hitName(this.hits[active - offset]), null);
-		// Words name nothing: Enter keeps the list and chooses its first row, a second Enter
-		// opens it (besluit 30).
+		// Words name nothing: Enter goes to the page of results (besluit 31); where there is none
+		// (a panel that picks, a scope) it keeps the list and chooses its first row, a second
+		// Enter opens it (besluit 30).
 		else if (this.answered === this.q && this.allIn && this.hits.length > 0) {
-			this.active = offset;
-			this.#moved = true;
+			if (this.#results) this.#results(this.q, this.from, this.to);
+			else {
+				this.active = offset;
+				this.#moved = true;
+			}
 		} else if (
 			this.answered === this.q &&
 			this.allIn &&

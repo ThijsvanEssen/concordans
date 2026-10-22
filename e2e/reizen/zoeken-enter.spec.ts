@@ -2,7 +2,7 @@
 // an identifier, a law by its name. Words keep the list open. The API that says so (`best`,
 // `exact`, `matched`, 0.80.5) is not live yet: its fields are added to the recorded answers.
 import type { Page } from '@playwright/test';
-import { patchApi } from '../support/api';
+import { apiPath, CORS, patchApi } from '../support/api';
 import { expect, test } from '../support/test';
 
 type Body = Record<string, unknown>;
@@ -42,14 +42,21 @@ test('an exact article: Enter opens it', async ({ page }) => {
 	await expect(page).toHaveURL(/\/wetten\/BWBR0005289\/artikel\/6:162/);
 });
 
-test('words name nothing: Enter opens nothing and chooses the first row', async ({ page }) => {
+test('words name nothing: Enter goes to the page of results (besluit 31)', async ({ page }) => {
 	await patchApi(page, /\/api\/search/, (body) => named(body));
 	const { field, results } = await searchFor(page, 'huurverhoging');
 	await expect(results.getByRole('option', { selected: true })).toHaveCount(0);
 	await expect(results.getByText('Beste treffer')).toHaveCount(0);
+	// The page of results asks the whole query in full: nothing recorded, so it is answered here.
+	await page.route(apiPath(/limit=50/), (route) =>
+		route.fulfill({
+			status: 200,
+			headers: { ...CORS, 'content-type': 'application/json' },
+			body: JSON.stringify(named({ q: '', types: [], total: 0, results: {}, searched: {} }))
+		})
+	);
 	await field.press('Enter');
-	await expect(results.getByRole('option', { selected: true })).toHaveCount(1);
-	await expect(page).toHaveURL(/\/$/);
+	await expect(page).toHaveURL(/\/zoeken\?q=huurverhoging/);
 });
 
 test('hits with only some of the words say so', async ({ page }) => {

@@ -14,7 +14,7 @@ export function onUnhandledRejection(event: PromiseRejectionEvent) {
 }
 
 /**
- * An address that moved ($lib/seo/moved.ts: a bare collection, /zoeken, the bundels of
+ * An address that moved ($lib/seo/moved.ts: a bare collection, the bundels of
  * before) replaced in the bar by the one of now, its fragment (a shared bundel) with it,
  * before the app reads it: as a 301 would.
  */

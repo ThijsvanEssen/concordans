@@ -15,6 +15,12 @@
 		"description": "Nieuwe wetten, uitspraken, Kamerstukken en stemmingen, per dag."
 	},
 	{
+		"path": "/zoeken",
+		"index": false,
+		"title": "Zoeken, Concordans",
+		"description": "De resultaten van een zoekopdracht, per soort, met instantie en jaar bij uitspraken."
+	},
+	{
 		"path": "/onderwerpen",
 		"title": "Gevolgde onderwerpen, Concordans",
 		"description": "Moties, amendementen, wetsvoorstellen en uitspraken per onderwerp, met een Atom-feed per onderwerp."

@@ -36,13 +36,17 @@ function api(routes: Parameters<typeof fakeApi>[0] = {}) {
 }
 
 /** A search with its effects, that records what it opened. */
-function session(kinds?: SearchKind[]) {
+function session(kinds?: SearchKind[], toResults = false) {
 	const opened: (BronRef | string)[] = [];
-	const s = new SearchSession((ref) => opened.push(ref));
+	const results: string[] = [];
+	const s = new SearchSession(
+		(ref) => opened.push(ref),
+		toResults ? (q) => results.push(q) : undefined
+	);
 	if (kinds) s.kinds = kinds;
 	const stop = $effect.root(() => s.connect());
 	flushSync();
-	return { s, opened, stop };
+	return { s, opened, results, stop };
 }
 
 /** Typing, then the pause every request waits for. */
@@ -556,6 +560,34 @@ describe('Enter and the best the API names (besluit 30)', () => {
 		expect(s.best?.hit.id).toBe(article.id);
 		s.pressEnter();
 		expect(opened).toEqual([article.id]);
+		stop();
+	});
+
+	it('goes to the page of results for words that name nothing, where the field has one (besluit 31)', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, 'huurverhoging');
+		await answerAll(
+			of,
+			{ instruments: [hit('instruments', 'huurwet')] },
+			{ best: null, matched: 'all' },
+			{ articles: [hit('articles', 'reparatiewet_ix')] }
+		);
+		s.pressEnter();
+		expect(results).toEqual(['huurverhoging']);
+		expect(opened).toEqual([]);
+		stop();
+	});
+
+	it('still opens the best the API names, with a page of results at hand', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, 'artikel 6:162 BW');
+		const article = { ...hit('articles', 'bwbr0005289_boek6_art162'), exact: true };
+		await answerAll(of, { instruments: [] }, { best: article.id }, { articles: [article] });
+		s.pressEnter();
+		expect(opened).toEqual([article.id]);
+		expect(results).toEqual([]);
 		stop();
 	});
 

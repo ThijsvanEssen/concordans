@@ -17,6 +17,7 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { searchedLine } from '$lib/text/coverage';
+	import { resultsHref } from './results';
 	import { groupLabel, hitName, presentHit, sectionOf } from './present';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 	import { bronLabel, nodeId } from '$lib/vocabulary';
@@ -65,7 +66,14 @@
 		goto(href);
 	}
 
-	const search = new SearchSession(open);
+	/** Words name nothing exactly: Enter goes to the page of results (besluit 31). */
+	function toResults(q: string, from: string, to: string) {
+		onOpen?.();
+		goto(resultsHref(q, from, to));
+	}
+
+	// A panel that picks, and a field in a scope, keep their list.
+	const search = new SearchSession(open, onSelect || scope ? undefined : toResults);
 	$effect.pre(() => {
 		search.kinds = scope ? SEARCH_KINDS.filter((k) => scope.includes(k)) : SEARCH_KINDS;
 	});

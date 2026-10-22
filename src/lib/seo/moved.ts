@@ -1,6 +1,6 @@
 // Addresses with no page of their own that a reader types: the bare collections of the
 // readable addresses (/wetten, /uitspraken; /wetten/BWBR… is a bron) go to their list in
-// Bladeren, /zoeken to the field on the start page. One list for two readers, as
+// Bladeren. One list for two readers, as
 // spa-routes.json: the server reads the built copy, moved.json beside index.html, and answers
 // a 301 (B17); the app moves the address in the bar before it reads it, when the server did not.
 import moved from './moved.json';
