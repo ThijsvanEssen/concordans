@@ -10,7 +10,7 @@ import { buildBronHref } from '$lib/bron/href';
 import { padOfFocus } from '$lib/bron/address';
 import { csvText } from '$lib/text/csv';
 import { anchorLabel } from '$lib/text/anchor';
-import { isDay } from '$lib/text/datum';
+import { isDay, langeDatum } from '$lib/text/datum';
 
 /** One thing kept: a bron, or a place in it (`lid-2`, `rov-5.7.1`), with how it is cited. */
 export type MapItem = {
@@ -127,7 +127,7 @@ export type SharedMap = {
 export const itemKey = (i: Pick<MapItem, 'id' | 'at'>) => (i.at ? `${i.id}#${i.at}` : i.id);
 
 /** A dossier's number as a key: `36600-XV` for `36600 XV`, `36600_xv` or `36600-XV`. */
-const dossierSleutel = (nr: string) =>
+const dossierKey = (nr: string) =>
 	`dossier:${nr
 		.trim()
 		.replace(/[\s_]+/, '-')
@@ -183,7 +183,7 @@ export function bewaarItem(
 		: wet
 			? `wet:${wet}`
 			: dossier
-				? dossierSleutel(dossier)
+				? dossierKey(dossier)
 				: collectie && OWN_GROUP.has(collectie)
 					? id
 					: `groep:${groep}`;
@@ -628,29 +628,44 @@ export function withNote(a: Annotation, note: string): Annotation {
 
 // ── Citations and CSV ───────────────────────────────────────────────────────
 
-const citaat = (i: MapItem, n: number) =>
-	`${n}. ${i.voluit || i.kort}${i.notitie ? `\n   ${i.notitie}` : ''}`;
+/** Where a citation was taken from and when: its link, and the day it was consulted. */
+type Attribution = { address: (i: MapItem) => string; consulted: string };
+
+const attributionOf = (i: MapItem, v: Attribution) => {
+	const address = v.address(i);
+	return ` (${address ? `${address}, ` : ''}geraadpleegd ${langeDatum(v.consulted)})`;
+};
+
+const citation = (i: MapItem, n: number, v?: Attribution) =>
+	`${n}. ${i.voluit || i.kort}${v ? attributionOf(i, v) : ''}${i.notitie ? `\n   ${i.notitie}` : ''}`;
 
 /**
  * The map as a list of citations for a memo: numbered, the full form where kept, a note as
  * an indented line under its citation; per group, or in the reader's own order. The map's
- * own note goes above, as its first paragraph; a group's note under the group's name.
+ * own note goes above, as its first paragraph; a group's note under the group's name. With
+ * `attribution` each citation ends in its link and the day it was consulted.
  */
 export function citaten(
 	items: readonly MapItem[],
 	volgorde: Map['volgorde'] = 'groep',
 	notitie?: string | null,
-	groepNotities?: GroepNotities | null
+	groepNotities?: GroepNotities | null,
+	attribution?: Attribution
 ): string {
-	const kop = notitie?.trim() ? `${notitie.trim()}\n\n` : '';
-	if (volgorde === 'eigen') return kop + items.map((i, n) => citaat(i, n + 1)).join('\n');
+	const head = notitie?.trim() ? `${notitie.trim()}\n\n` : '';
+	if (volgorde === 'eigen')
+		return head + items.map((i, n) => citation(i, n + 1, attribution)).join('\n');
 	let n = 0;
 	return (
-		kop +
+		head +
 		groepen(items)
 			.map(({ groep, sleutel, items }) => {
 				const bij = groepNotities?.[sleutel]?.trim();
-				return [groep, ...(bij ? [bij] : []), ...items.map((i) => citaat(i, ++n))].join('\n');
+				return [
+					groep,
+					...(bij ? [bij] : []),
+					...items.map((i) => citation(i, ++n, attribution))
+				].join('\n');
 			})
 			.join('\n\n')
 	);
@@ -659,25 +674,37 @@ export function citaten(
 /**
  * The map as a CSV, its rows as the map shows them: per group in the order of the groups, or
  * in the reader's own order; each under its group's name, its place as the reader prints it
- * (`lid 2`, `r.o. 5.1`), an alinea or a passage as its citation names it (`alinea 4`).
+ * (`lid 2`, `r.o. 5.1`), an alinea or a passage as its citation names it (`alinea 4`). With
+ * `consulted` (a day) a last column holds the day the citations were consulted.
  */
 export function csv(
 	items: readonly MapItem[],
 	adres: (i: MapItem) => string,
-	volgorde: Map['volgorde'] = 'groep'
+	volgorde: Map['volgorde'] = 'groep',
+	consulted?: string
 ): string {
 	const reeks = groepen(items);
-	const naamVan = new Map(reeks.map((g) => [g.sleutel, g.groep]));
+	const nameOf = new Map(reeks.map((g) => [g.sleutel, g.groep]));
 	return csvText(
-		['volgorde', 'groep', 'soort', 'citaat', 'vindplaats', 'aantekening', 'adres'],
+		[
+			'volgorde',
+			'groep',
+			'soort',
+			'citaat',
+			'vindplaats',
+			'aantekening',
+			'adres',
+			...(consulted ? ['geraadpleegd'] : [])
+		],
 		(volgorde === 'eigen' ? items : reeks.flatMap((g) => g.items)).map((i, n) => [
 			String(n + 1),
-			naamVan.get(groupKeyOf(i)) ?? i.groep,
+			nameOf.get(groupKeyOf(i)) ?? i.groep,
 			kindLabel(i),
 			i.voluit || i.kort,
 			(i.at && (anchorLabel(i.at, i.id) ?? placeInCitation(i.kort))) || '',
 			i.notitie ?? '',
-			adres(i)
+			adres(i),
+			...(consulted ? [consulted] : [])
 		])
 	);
 }

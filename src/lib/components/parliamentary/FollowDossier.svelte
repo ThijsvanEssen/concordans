@@ -1,11 +1,14 @@
 <script lang="ts">
-	// Volg in a dossier's head, beside Bewaar: the dossier kept under Gevolgd in this browser
-	// (onderwerpen.ts), as a law is followed from Actueel. Followed, the button leads to Gevolgd,
+	// Volg in a dossier's head, beside Bewaar: its Atom link, and the dossier kept under Gevolgd
+	// in this browser (onderwerpen.ts), as a law is followed from Actueel. Followed, a link
+	// leads to Gevolgd and Volg keeps the Atom link,
 	// and what Actueel holds of the dossier since the visit before is marked beside it, a link
 	// to those days; the visit is then today's (API 0.80.1, #866). Asked after the first paint.
 	import { getFeed } from '$lib/api/feed';
 	import { report } from '$lib/api/errors';
 	import NewMark from '$lib/components/ui/NewMark.svelte';
+	import Volg from '$lib/components/ui/Volg.svelte';
+	import { atomHref } from '$lib/components/actueel/feed';
 	import { vandaag } from '$lib/text/datum';
 	import {
 		followDossier,
@@ -18,6 +21,7 @@
 
 	const today = vandaag();
 	const number = $derived(dossier.number);
+	const atom = $derived(atomHref({ dossier: number }));
 	let followed = $state(false);
 	/** The visit before, where Actueel has something of the dossier since. */
 	let newSince = $state<string | null>(null);
@@ -57,10 +61,22 @@
 				['van', newSince]
 			])}"><NewMark since={newSince} /></a
 		>{/if}
+	<Volg href={atom} />
 {:else}
-	<button type="button" class="btn" title="Volg dit dossier onder Gevolgd" onclick={follow}
-		>Volg</button
-	>
+	<Volg href={atom}>
+		{#snippet lokaal(close)}
+			<button
+				type="button"
+				role="menuitem"
+				class="tekstmenu__item"
+				title="Volg dit dossier onder Gevolgd"
+				onclick={() => {
+					close();
+					follow();
+				}}>Bewaar bij Gevolgd</button
+			>
+		{/snippet}
+	</Volg>
 {/if}
 
 <style>

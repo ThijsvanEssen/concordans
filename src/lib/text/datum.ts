@@ -10,7 +10,8 @@
 
 import { capitalize } from './words';
 
-const MAAND = [
+/** The months, lower case, January first. */
+export const MONTHS = [
 	'januari',
 	'februari',
 	'maart',
@@ -66,7 +67,7 @@ export const dagMaand = (iso: string | null | undefined): string => {
 /** The month alone, `september` or, `kort`, `sep.`: over the days of a timetable. */
 export const maandNaam = (iso: string | null | undefined, kort = false): string => {
 	const t = dagVan(iso);
-	return t ? (kort ? MAAND_KORT : MAAND)[t.m - 1] : '';
+	return t ? (kort ? MAAND_KORT : MONTHS)[t.m - 1] : '';
 };
 
 /** `sep. 2026`; empty without a date. */
@@ -78,7 +79,7 @@ export const maandJaar = (iso: string | null | undefined): string => {
 /** `28 september 2026`; empty without a date. */
 export const langeDatum = (iso: string | null | undefined): string => {
 	const t = dagVan(iso);
-	return t ? `${t.d} ${MAAND[t.m - 1]} ${t.j}` : '';
+	return t ? `${t.d} ${MONTHS[t.m - 1]} ${t.j}` : '';
 };
 
 /** `Dinsdag 28 september 2026`; empty without a date. */

@@ -35,6 +35,18 @@ export const commitments = defineList<Row, State, ReturnType<typeof query>>({
 	needs: ['government'],
 	period: () => ({ label: 'Gedaan', unit: 'date' }),
 	query,
+	follow: (p) =>
+		p.overdue || p.commitmentStatus
+			? null
+			: {
+					kind: 'toezegging',
+					cabinet: p.cabinet || undefined,
+					ministry: p.ministry || undefined,
+					member: p.member || undefined,
+					q: p.q ? [p.q] : undefined,
+					since: p.from || undefined,
+					until: p.to || undefined
+				},
 	load: (q, offset, signal, apart, set) =>
 		faceted('/api/commitments', q, apart, (f) => set({ facets: f.facets ?? null }))(offset, signal),
 	facets: ({ p, state, page, shared, patch }) => {

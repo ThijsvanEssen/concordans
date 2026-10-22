@@ -2,11 +2,11 @@
 
 exports[`Bronnen, an empty list > cabinets ?q=zzz 1`] = `"0kabinetten Aantreden ↓ Geen kabinetten met deze filters. Zoek "zzz" in alle bronnen"`;
 
-exports[`Bronnen, an empty list > commitments ? 1`] = `"0toezeggingen Datum Geen toezeggingen."`;
+exports[`Bronnen, an empty list > commitments ? 1`] = `"0toezeggingen Volg Datum Geen toezeggingen."`;
 
 exports[`Bronnen, an empty list > committees ? 1`] = `"0commissies Actieve dossiers ↓ Geen commissies."`;
 
-exports[`Bronnen, an empty list > decisions ? 1`] = `"0stemmingen Datum ↓ Geen stemmingen."`;
+exports[`Bronnen, an empty list > decisions ? 1`] = `"0stemmingen Volg Datum ↓ Geen stemmingen."`;
 
 exports[`Bronnen, an empty list > documents ?soort=Motie 1`] = `"0stukken Geen stukken met deze filters."`;
 
@@ -153,7 +153,7 @@ exports[`Bronnen, list by list > commitments ? > view 1`] = `
     "Vervallen 32",
     "Open en over de verwachte datum",
   ],
-  "lijst": "6.674toezeggingen Datum Gedaan Toezegging Verwacht 14 okt. 2026 Openstaand De Kamer ontvangt aan het einde van het eerste kwartaal van 2027 een update over toegankelijk onderwijs voor studenten met een ondersteuningsbehoefte. R.M. Letschert, Minister van Onderwijs, Cultuur en Wetenschap, Kamerstuk 24724 Studiefinanciering, Kamerstuk 26643 ICT, Kamerstuk 29240 Veiligheid op school, Kamerstuk 31288 Hoger Onderwijs-, Onderzoek- en Wetenschapsbeleid, Kamerstuk 31524 Beroepsonderwijs en Volwassenen Educatie, Kamerstuk 36630 Brede Welvaart, Kamerstuk 36800 VIII Begroting Onderwijs, Cultuur en Wetenschap 2026 14 okt. 2026 Openstaand De Kamer ontvangt over een halfjaar concrete informatie over de manieren om de besteding van de bekostiging transparanter te maken. Judith Tielen, Staatssecretaris van Onderwijs, Cultuur en Wetenschap, Kamerstuk 31289 Voortgezet Onderwijs, Kamerstuk 31293 Primair Onderwijs, Kamerstuk 31497 Passend onderwijs, Kamerstuk 35050 Wet meer ruimte voor nieuwe scholen, Kamerstuk 36800 VIII Begroting Onderwijs, Cultuur en Wetenschap 2026 14 okt. 2026 Openstaand De staatssecretaris informeert in het voorjaar van 2027 de Kamer over de resultaten van de bereikbaarheidsanalyse en de uitkomsten van de gesprekken die gevoerd zijn met de sector en de verschillende regio's. A.W.H. Bertram, Staatssecretaris van Infrastructuur en Waterstaat Volgende toezeggingen, nog 6.671",
+  "lijst": "6.674toezeggingen Volg Datum Gedaan Toezegging Verwacht 14 okt. 2026 Openstaand De Kamer ontvangt aan het einde van het eerste kwartaal van 2027 een update over toegankelijk onderwijs voor studenten met een ondersteuningsbehoefte. R.M. Letschert, Minister van Onderwijs, Cultuur en Wetenschap, Kamerstuk 24724 Studiefinanciering, Kamerstuk 26643 ICT, Kamerstuk 29240 Veiligheid op school, Kamerstuk 31288 Hoger Onderwijs-, Onderzoek- en Wetenschapsbeleid, Kamerstuk 31524 Beroepsonderwijs en Volwassenen Educatie, Kamerstuk 36630 Brede Welvaart, Kamerstuk 36800 VIII Begroting Onderwijs, Cultuur en Wetenschap 2026 14 okt. 2026 Openstaand De Kamer ontvangt over een halfjaar concrete informatie over de manieren om de besteding van de bekostiging transparanter te maken. Judith Tielen, Staatssecretaris van Onderwijs, Cultuur en Wetenschap, Kamerstuk 31289 Voortgezet Onderwijs, Kamerstuk 31293 Primair Onderwijs, Kamerstuk 31497 Passend onderwijs, Kamerstuk 35050 Wet meer ruimte voor nieuwe scholen, Kamerstuk 36800 VIII Begroting Onderwijs, Cultuur en Wetenschap 2026 14 okt. 2026 Openstaand De staatssecretaris informeert in het voorjaar van 2027 de Kamer over de resultaten van de bereikbaarheidsanalyse en de uitkomsten van de gesprekken die gevoerd zijn met de sector en de verschillende regio's. A.W.H. Bertram, Staatssecretaris van Infrastructuur en Waterstaat Volgende toezeggingen, nog 6.671",
   "openbaar": 4,
   "regel": "Zoeken Gedaan AllesMaandKwartaalJaarEigen",
   "richting": null,
@@ -396,7 +396,7 @@ exports[`Bronnen, list by list > decisions ? > view 1`] = `
     "Aangenomen 34.625",
     "Verworpen 31.563",
   ],
-  "lijst": "66.188stemmingen Datum ↓ Soort Onderwerp Uitslag Woensdag 14 oktober 2026 32 stemmingen: 12 aangenomen, 20 verworpen Motie Kamerstuk 21501-20 Europese Raad Motie van het lid Van der Plas over bij de begrotingsonderhandelingen inzetten op een zelfstandig en geoormerkt landbouwbeleid Verworpen Motie Kamerstuk 21501-20 Europese Raad Motie van de leden Stöteler en Hoogeveen over uitdragen dat Nederland op geen enkel beleidsterrein bereid is tot afschaffing van unanimiteit Verworpen Motie Kamerstuk 21501-20 Europese Raad Motie van het lid Klos over zich inzetten voor meer investeringen in wetenschap, innovatie en concurrentievermogen Aangenomen Volgende stemmingen, nog 66.185",
+  "lijst": "66.188stemmingen, 34.625 aangenomen Volg Datum ↓ Soort Onderwerp Uitslag Woensdag 14 oktober 2026 32 stemmingen: 12 aangenomen, 20 verworpen Motie Kamerstuk 21501-20 Europese Raad Motie van het lid Van der Plas over bij de begrotingsonderhandelingen inzetten op een zelfstandig en geoormerkt landbouwbeleid Verworpen Motie Kamerstuk 21501-20 Europese Raad Motie van de leden Stöteler en Hoogeveen over uitdragen dat Nederland op geen enkel beleidsterrein bereid is tot afschaffing van unanimiteit Verworpen Motie Kamerstuk 21501-20 Europese Raad Motie van het lid Klos over zich inzetten voor meer investeringen in wetenschap, innovatie en concurrentievermogen Aangenomen Volgende stemmingen, nog 66.185",
   "openbaar": 1,
   "regel": "Zoeken Datum AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
   "richting": "Aflopend; sorteer oplopend",
@@ -448,7 +448,7 @@ exports[`Bronnen, list by list > decisions ?kamer=EK&sort=subject > view 1`] = `
     "Aangenomen 34.625",
     "Verworpen 31.563",
   ],
-  "lijst": "66.188stemmingen Onderwerp ↑ Soort Onderwerp Uitslag 14 okt. 2026 Kamerstuk 21501-20 Europese Raad Motie van de leden Stöteler en Hoogeveen over uitdragen dat Nederland op geen enkel beleidsterrein bereid is tot afschaffing van unanimiteit Verworpen 14 okt. 2026 Kamerstuk 21501-20 Europese Raad Motie van het lid Klos over zich inzetten voor meer investeringen in wetenschap, innovatie en concurrentievermogen Aangenomen 14 okt. 2026 Kamerstuk 21501-20 Europese Raad Motie van het lid Van der Plas over bij de begrotingsonderhandelingen inzetten op een zelfstandig en geoormerkt landbouwbeleid Verworpen Volgende stemmingen, nog 66.185 Bron: Eerste Kamer der Staten-Generaal, www.eerstekamer.nl.",
+  "lijst": "66.188stemmingen, 34.625 aangenomen Volg Onderwerp ↑ Soort Onderwerp Uitslag 14 okt. 2026 Kamerstuk 21501-20 Europese Raad Motie van de leden Stöteler en Hoogeveen over uitdragen dat Nederland op geen enkel beleidsterrein bereid is tot afschaffing van unanimiteit Verworpen 14 okt. 2026 Kamerstuk 21501-20 Europese Raad Motie van het lid Klos over zich inzetten voor meer investeringen in wetenschap, innovatie en concurrentievermogen Aangenomen 14 okt. 2026 Kamerstuk 21501-20 Europese Raad Motie van het lid Van der Plas over bij de begrotingsonderhandelingen inzetten op een zelfstandig en geoormerkt landbouwbeleid Verworpen Volgende stemmingen, nog 66.185 Bron: Eerste Kamer der Staten-Generaal, www.eerstekamer.nl.",
   "openbaar": 1,
   "regel": "Zoeken Datum AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
   "richting": "Oplopend; sorteer aflopend",

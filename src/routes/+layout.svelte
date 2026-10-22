@@ -4,6 +4,7 @@
 	import '$lib/styles/tokens.css';
 	import '$lib/styles/basis.css';
 	import '$lib/styles/frame.css';
+	import '$lib/styles/print.css';
 	import AppShell from '$lib/components/layout/AppShell.svelte';
 	import { report } from '$lib/api/errors';
 	import type { Snippet } from 'svelte';

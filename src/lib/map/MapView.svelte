@@ -33,6 +33,7 @@
 	import { kaart } from './map.svelte';
 	import { shareFragment, sharedMapName } from './share';
 	import { mapFile, mapFileName } from './file';
+	import { cslJson } from './csl';
 	import { BUNDLES_PATH } from './page';
 	import Aantekening from './Aantekening.svelte';
 	import AddSource from './AddSource.svelte';
@@ -172,11 +173,37 @@
 		role="menuitem"
 		class="tekstmenu__item"
 		onclick={act(close, () =>
+			copier.copy(
+				citaten(b.items, b.volgorde, b.notitie, b.groepNotities, {
+					address: (i) => itemAddress(i, page.url.origin),
+					consulted: vandaag()
+				}),
+				'citations'
+			)
+		)}>Kopieer citaten met link</button
+	>
+	<button
+		type="button"
+		role="menuitem"
+		class="tekstmenu__item"
+		onclick={act(close, () =>
 			download(
 				`${fileBase}.csv`,
-				csv(b.items, (i) => itemAddress(i, page.url.origin), b.volgorde)
+				csv(b.items, (i) => itemAddress(i, page.url.origin), b.volgorde, vandaag())
 			)
 		)}>Download CSV</button
+	>
+	<button
+		type="button"
+		role="menuitem"
+		class="tekstmenu__item"
+		onclick={act(close, () =>
+			download(
+				`${fileBase}.csl.json`,
+				cslJson(b.items, (i) => itemAddress(i, page.url.origin), b.volgorde, vandaag()),
+				'application/json'
+			)
+		)}>Download CSL-JSON</button
 	>
 	{#if m}
 		{@const own = m}

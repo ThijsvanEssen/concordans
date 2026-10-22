@@ -130,6 +130,7 @@ test('Gevolgd: a dossier followed from its page, with what is new since the visi
 		/\/api\/feed\.atom\?dossier=36496$/
 	);
 	await page.getByRole('button', { name: 'Volg', exact: true }).click();
+	await page.getByRole('menuitem', { name: 'Bewaar bij Gevolgd' }).click();
 	// Followed: Volg became Gevolgd, as Bewaar becomes Bewaard, a way to Gevolgd.
 	await expect(
 		page.locator('#main-content').getByRole('link', { name: 'Gevolgd', exact: true })
@@ -151,4 +152,27 @@ test('Gevolgd: a dossier followed from its page, with what is new since the visi
 	await expect(
 		page.getByRole('heading', { level: 2, name: /^Kamerstuk 36496 Wet betaalbare huur/ })
 	).toBeVisible();
+});
+
+test('Volg copies the Atom link of the view: on Actueel, in a list and in a dossier', async ({
+	page,
+	context
+}) => {
+	await context.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
+	const copied = () => page.evaluate(() => navigator.clipboard.readText());
+
+	await page.goto('/actueel?kamer=EK');
+	await page.getByRole('button', { name: 'Volg', exact: true }).click();
+	await expect(page.getByRole('button', { name: 'Gekopieerd' })).toBeVisible();
+	expect(await copied()).toMatch(/\/api\/feed\.atom\?.*chamber=EK/);
+
+	await page.goto('/explore?mode=index&kind=decisions');
+	await page.getByRole('button', { name: 'Volg', exact: true }).click();
+	await expect(page.getByRole('button', { name: 'Gekopieerd' })).toBeVisible();
+	expect(await copied()).toMatch(/\/api\/feed\.atom\?.*kind=stemming/);
+
+	await page.goto('/dossiers/36496');
+	await page.getByRole('button', { name: 'Volg', exact: true }).click();
+	await page.getByRole('menuitem', { name: 'Kopieer Atom-link' }).click();
+	expect(await copied()).toMatch(/\/api\/feed\.atom\?dossier=36496$/);
 });

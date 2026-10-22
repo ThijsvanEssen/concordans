@@ -96,6 +96,27 @@ describe('the map', () => {
 		);
 	});
 
+	it('cites with the link and the day consulted', () => {
+		const attribution = {
+			address: (i: MapItem) => `https://concordans.nl/${i.id}`,
+			consulted: '2026-10-22'
+		};
+		expect(citaten([ro], 'groep', null, null, attribution)).toBe(
+			'Rechtspraak\n1. HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1 (https://concordans.nl/' +
+				`${ro.id}, geraadpleegd 22 oktober 2026)`
+		);
+		// A source without an address keeps the day.
+		expect(citaten([ro], 'eigen', null, null, { address: () => '', consulted: '2026-10-22' })).toBe(
+			'1. HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1 (geraadpleegd 22 oktober 2026)'
+		);
+	});
+
+	it('adds the day consulted to the CSV', () => {
+		const t = csv([ro], () => '/x', 'groep', '2026-10-22');
+		expect(t).toContain(';adres;geraadpleegd\r\n');
+		expect(t.trimEnd().endsWith(';/x;2026-10-22')).toBe(true);
+	});
+
 	it('writes a CSV as Excel reads it', () => {
 		const t = csv([ro], (i) => `/x#${i.at}`);
 		expect(t.startsWith('﻿volgorde;groep;soort;citaat;vindplaats;aantekening;adres\r\n')).toBe(

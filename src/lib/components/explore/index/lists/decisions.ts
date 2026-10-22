@@ -3,6 +3,7 @@ import type { Schema } from '$lib/api/types';
 import { decisionsPage, geteld, nogTeTellen } from '$lib/api/decisions';
 import { EK_SOURCE } from '$lib/components/parliamentary/chamber';
 import { facetOptions } from '$lib/util/choice';
+import { formatCount } from '$lib/text/getal';
 import {
 	MOTION_KINDS,
 	MOTION_KIND_LABEL,
@@ -64,6 +65,22 @@ export const decisions = defineList<Row, DecisionsState, ReturnType<typeof query
 		return decisionsPage(query, offset, signal);
 	},
 	total: (state) => state.total ?? null,
+	// How many of the votes passed, from the facets that count the votes beside the rows.
+	summary: ({ p, state }) => {
+		const passed = p.passed === undefined ? facetMap(state.facets?.passed).get('true') : undefined;
+		return passed == null ? null : `${formatCount(passed)} aangenomen`;
+	},
+	follow: (p) =>
+		p.decisionKind || p.passed !== undefined || p.motionKind || p.party
+			? null
+			: {
+					kind: 'stemming',
+					chamber: p.kamer,
+					since: p.from || undefined,
+					until: p.to || undefined,
+					q: p.q ? [p.q] : undefined,
+					dossier: p.dossier || undefined
+				},
 	shown: (rows, { sort, dir }) =>
 		sorted(
 			rows,

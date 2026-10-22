@@ -29,6 +29,8 @@
 	import { focusFirstNew, rijen } from '$lib/actions/rijen';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
+	import Volg from '$lib/components/ui/Volg.svelte';
+	import { atomHref } from '$lib/components/actueel/feed';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import IndexFacets, { activeFilters, type FacetGroup } from './index/IndexFacets.svelte';
@@ -512,6 +514,10 @@
 	const kiesKamer = (c: Chamber) =>
 		patchUrl({ kamer: c === 'TK' ? null : c, open: null, fractie: null });
 	const widen = $derived(list.widen?.(p) ?? null);
+	/** After the count: what the counts the list has already say (`12 aangenomen`). */
+	const summary = $derived(list.summary?.(ctx) ?? null);
+	/** The list as a feed, where the feed has a word for every filter chosen. */
+	const follow = $derived(list.follow?.(p) ?? null);
 	const after = $derived(list.after?.(p) ?? null);
 
 	const openSearch = useSearchOpener();
@@ -623,7 +629,8 @@
 							{:else if list.Rows && resultTotal !== null && !error}
 								<p class="result-count">
 									{formatCount(resultTotal)}<span class="result-noun"
-										>{resultTotal === 1 ? noun1(category) : labelOf(category)}</span
+										>{resultTotal === 1 ? noun1(category) : labelOf(category)}{#if summary},
+											{summary}{/if}</span
 									>
 								</p>
 							{:else if list.Rows}
@@ -635,6 +642,10 @@
 									coverage={sourceCompleteness}
 									of={SOURCE_LABEL[listSource] ?? listSource}
 								/>
+							{/if}
+							{#if follow}
+								<!-- The list as a feed: its filters in one Atom link. -->
+								<span class="volg-plek"><Volg href={atomHref(follow)} /></span>
 							{/if}
 							{#if sorts.length > 1}
 								<!-- The order of the list: one line under its count (docs/bediening.md). -->
@@ -1116,6 +1127,12 @@
 		font-size: var(--t-meta);
 	}
 	/* The order at the right of the count, on the ink rule that opens the list. */
+	.volg-plek {
+		margin-left: auto;
+	}
+	.volg-plek + .volgorde {
+		margin-left: 0;
+	}
 	.volgorde {
 		display: inline-flex;
 		align-items: center;

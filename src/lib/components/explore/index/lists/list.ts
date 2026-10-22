@@ -104,10 +104,17 @@ export type List<Row, State extends object, Query> = {
 	Header?: Component<ViewProps<Row, State>>;
 	/** Between the count and the rows (the years, the cabinets in time, the posts). */
 	Figure?: Component<ViewProps<Row, State>>;
+	/** After the count, from the counts the list has already (`12 aangenomen`); null where it has none. */
+	summary?(ctx: ListContext<Row, State>): string | null;
 	/** The rows, in their own <ul class="list">; a list without them shows its Figure only. */
 	Rows?: Component<ViewProps<Row, State>>;
 	/** Whether the rows show, where they can say no more than the Header (default: always). */
 	rowsShown?(p: IndexParams): boolean;
+	/**
+	 * The list as a feed (`/api/feed.atom`): its filters in the feed's words. Null where a filter
+	 * is chosen the feed has no word for; there the list offers no Volg.
+	 */
+	follow?(p: IndexParams): Record<string, string | readonly string[] | undefined> | null;
 	/** The source the rows come from alone, as `data_as_of` names it (the EHRM: `echr`). */
 	source?(p: IndexParams): string | null;
 	/** A line under the rows (the source of the Eerste Kamer's stemmingen). */

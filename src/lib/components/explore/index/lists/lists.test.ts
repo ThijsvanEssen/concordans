@@ -314,3 +314,39 @@ describe('the courts of the judgments', () => {
 		expect(hof?.count).toBe(2410);
 	});
 });
+
+describe('a list as a feed', () => {
+	it('names the filters of the votes in the words of the feed', () => {
+		expect(
+			LISTS.decisions.follow?.(params('kamer=EK&dossier=36600&q=huur&van=2026-01-01'))
+		).toEqual({
+			kind: 'stemming',
+			chamber: 'EK',
+			since: '2026-01-01',
+			until: undefined,
+			q: ['huur'],
+			dossier: '36600'
+		});
+	});
+
+	it('offers no Volg where a filter has no word in the feed', () => {
+		expect(LISTS.decisions.follow?.(params('passed=false'))).toBeNull();
+		expect(LISTS.commitments.follow?.(params('overdue=1'))).toBeNull();
+		expect(LISTS.commitments.follow?.(params(''))).toMatchObject({ kind: 'toezegging' });
+	});
+
+	it('says how many votes passed from the counts it has, unless passing is the filter', () => {
+		const ctx = (address: string, passed: { value: boolean; count: number }[] | undefined) =>
+			({
+				p: params(address),
+				state: { facets: passed ? { passed } : null }
+			}) as never;
+		const counts = [
+			{ value: true, count: 12 },
+			{ value: false, count: 43 }
+		];
+		expect(LISTS.decisions.summary?.(ctx('', counts))).toBe('12 aangenomen');
+		expect(LISTS.decisions.summary?.(ctx('passed=true', counts))).toBeNull();
+		expect(LISTS.decisions.summary?.(ctx('', undefined))).toBeNull();
+	});
+});

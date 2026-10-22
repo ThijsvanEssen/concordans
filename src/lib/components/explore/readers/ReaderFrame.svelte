@@ -16,6 +16,8 @@
 	import { WEERGAVE_KEY, type Weergave } from '../weergave';
 	import SearchInText from '../SearchInText.svelte';
 	import { SearchState } from '../search-state.svelte';
+	import { page } from '$app/state';
+	import { langeDatum, vandaag } from '$lib/text/datum';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { LoadState as State } from '$lib/util/load.svelte';
 
@@ -102,10 +104,17 @@
 			</LoadState>
 		{/if}
 		{@render foot?.()}
+		<!-- On paper only (lib/styles/print.css): where the text was read and when. -->
+		<p class="papier-bron">
+			{page.url.origin}{page.url.pathname}{page.url.search}, geraadpleegd {langeDatum(vandaag())}
+		</p>
 	</div>
 </div>
 
 <style>
+	.papier-bron {
+		display: none;
+	}
 	.reader-frame {
 		height: 100%;
 		overflow-y: auto;
