@@ -612,11 +612,11 @@
 		if (followServerMove(page.url.pathname)) return;
 		wachtOp = null;
 		focusMissing = true;
-		focusNotHeld = `${notHeld(naamVanAdres(id))}.`;
+		focusNotHeld = `${notHeld(nameOfAddress(id))}.`;
 	}
 
 	/** A bron as its address names it (an ECLI, a law's id, a law by its name), never by the key of the data. */
-	function naamVanAdres(id: string | null): string {
+	function nameOfAddress(id: string | null): string {
 		const named = pad ?? parsePad(padOfFocus(id ?? '') ?? '');
 		return named ? nameOfPad(named, lawNameOf) : 'Deze bron';
 	}
@@ -737,7 +737,7 @@
 		report('Verkenner focus', err);
 		const huidig = untrack(() => selectedNode);
 		const asked = loadedFocus;
-		const name = naamVanAdres(asked);
+		const name = nameOfAddress(asked);
 		if (huidig && (huidig.id === asked || linkIdOf(huidig) === asked || huidig.key === key)) {
 			showNetworkFailure({ what: 'Het netwerk', error: err, retry: () => retryFocus(asked) });
 			return;
