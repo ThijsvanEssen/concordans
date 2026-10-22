@@ -4,7 +4,7 @@
 import { MONTHS } from '$lib/text/datum';
 import { parseNodeId } from '$lib/vocabulary';
 import { anchorLabel } from '$lib/text/anchor';
-import { isExternal, groepen, type MapItem, type SourceKind } from './map';
+import { isExternal, inGroupOrder, type MapItem, type SourceKind } from './map';
 
 type DateParts = { 'date-parts': [number[]] };
 
@@ -108,7 +108,7 @@ export function cslJson(
 	order: 'groep' | 'eigen',
 	consulted: string
 ): string {
-	const ordered = order === 'eigen' ? items : groepen(items).flatMap((g) => g.items);
+	const ordered = order === 'eigen' ? items : inGroupOrder(items);
 	return `${JSON.stringify(
 		ordered.map((i, n) => cslItem(i, n + 1, address(i), consulted)),
 		null,

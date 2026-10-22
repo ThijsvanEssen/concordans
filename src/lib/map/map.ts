@@ -290,6 +290,10 @@ const inJudgments = (i: Pick<MapItem, 'id' | 'groupKey'>) =>
 export const groupKeyOf = (i: Pick<MapItem, 'id' | 'groupKey'>): string =>
 	inJudgments(i) ? JUDGMENTS_GROUP : i.groupKey;
 
+/** The items in the order of their groups: each group's items together, the groups as `groepen` gives them. */
+export const inGroupOrder = (items: readonly MapItem[]): MapItem[] =>
+	groepen(items).flatMap((g) => g.items);
+
 /** The groups in the order their first item was kept, each with its items in that order. */
 export function groepen(
 	items: readonly MapItem[]
