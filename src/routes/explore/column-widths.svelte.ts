@@ -1,30 +1,28 @@
-// The columns of the Verkenner beside the text: the contents (nav), Verbonden (panel) and the
+// The columns of the Verkenner beside the text: Verbonden (panel) and the
 // network (graph). A width the reader dragged is kept in this browser and wins; until then a
-// column follows the screen (--nav-w-auto, --panel-w-auto, --graph-w-auto in the page's style).
+// column follows the screen (--panel-w-auto, --graph-w-auto in the page's style).
 import { readStored, writeStored } from '$lib/util/storage';
 
-export type Column = 'nav' | 'panel' | 'graph';
+export type Column = 'panel' | 'graph';
 
 /**
  * How narrow and how wide a dragged column can be, and which way it grows: Verbonden stands
  * right of the text, so it grows as the handle moves left.
  */
 export const COLUMN_BOUNDS: Record<Column, { min: number; max: number; grows: 1 | -1 }> = {
-	nav: { min: 140, max: 480, grows: 1 },
 	panel: { min: 240, max: 560, grows: -1 },
 	graph: { min: 200, max: 1400, grows: 1 }
 };
 
 /** The selector of each column, to measure the width it is shown at. */
 const SELECTOR: Record<Column, string> = {
-	nav: '.col--nav',
 	panel: '.col--panel',
 	graph: '.col--graph'
 };
 
 const KEY = 'concordans:panel-widths';
 /** The names the widths are kept under. */
-const SAVED: Record<Column, string> = { nav: 'navW', panel: 'panelW', graph: 'graphW' };
+const SAVED: Record<Column, string> = { panel: 'panelW', graph: 'graphW' };
 
 export function clampWidth(column: Column, width: number): number {
 	const { min, max } = COLUMN_BOUNDS[column];

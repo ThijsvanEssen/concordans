@@ -49,9 +49,9 @@ describe('ColumnWidths', () => {
 		});
 		const widths = new ColumnWidths();
 		widths.load();
-		widths.start(pointer(0), 'nav');
-		widths.move(pointer(500));
+		widths.start(pointer(0), 'graph');
+		widths.move(pointer(2000));
 		widths.end();
-		expect(widths.css('nav')).toBe('480px');
+		expect(widths.css('graph')).toBe('1400px');
 	});
 });

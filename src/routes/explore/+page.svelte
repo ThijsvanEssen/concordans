@@ -1607,7 +1607,6 @@
 				class="explore-read"
 				class:explore-read--with-nav={withContents}
 				class:is-resizing={!!widths.drag}
-				style:--nav-w={widths.css('nav')}
 				style:--panel-w={widths.css('panel')}
 			>
 				<!-- Narrow, the text and Verbonden stand under each other in one scroll (V1-a-375);
