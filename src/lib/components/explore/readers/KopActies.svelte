@@ -65,7 +65,6 @@
 			{/snippet}
 		</CiteMenu>
 	{/if}
-	<span class="sr-only" aria-live="polite">{copier.announcement}</span>
 </span>
 
 <style>

@@ -234,7 +234,6 @@
 			{/if}
 		{/each}
 	</div>
-	<p class="sr-only" aria-live="polite">{copier.announcement}</p>
 </div>
 
 <style>

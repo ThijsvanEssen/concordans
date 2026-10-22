@@ -5,6 +5,7 @@ import { isDay } from '$lib/text/datum';
 import { normaal } from '$lib/text/treffer';
 import { isFeedLaw } from '$lib/components/actueel/filters';
 import { dossierLabel } from '$lib/bron/dossier-naam';
+import { followedAt } from '$lib/bevestig/bevestig.svelte';
 
 // A topic followed: the words of the user, looked for in the titles of Actueel. The source has
 // no theme of its own (the TK OData has none, Back-end #3, 9 Oct), so a topic is its words.
@@ -145,6 +146,7 @@ export function volgWet(w: GevolgdeWet) {
 	if (wetIndex(lijst, w) >= 0) return;
 	const wet = { bwb: w.bwb.toUpperCase(), titel: w.titel, artikel: w.artikel ?? null };
 	bewaar([...lijst, { termen: [wetNaam(wet)], wet, vorige: null, gezien: null }]);
+	followedAt();
 }
 
 const indexOfDossier = (list: Onderwerp[], number: string) =>
@@ -164,6 +166,7 @@ export function followDossier(d: FollowedDossier, today: string) {
 		...list,
 		{ termen: [followedDossierName(dossier)], dossier, vorige: null, gezien: today }
 	]);
+	followedAt();
 }
 
 /**
@@ -208,6 +211,7 @@ export function volg(termen: string[]) {
 	const lijst = lees();
 	if (schoon.some((t) => vindIndex(lijst, t) >= 0)) return;
 	bewaar([...lijst, { termen: schoon, vorige: null, gezien: null }]);
+	followedAt();
 }
 
 /** More words for the topic `term` is in; a word another topic has stays there. */

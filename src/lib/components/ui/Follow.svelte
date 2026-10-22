@@ -64,7 +64,6 @@
 		onclick={copy}>{copier.label('atom', 'Volg')}</button
 	>
 {/if}
-<span class="sr-only" aria-live="polite">{copier.announcement}</span>
 
 <style>
 	.volg {

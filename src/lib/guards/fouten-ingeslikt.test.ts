@@ -32,8 +32,7 @@ const PLACES: Record<string, number> = {
 	'lib/components/ui/dicht.svelte.ts': 1,
 	'lib/map/map.svelte.ts': 1,
 	'lib/onderwerpen/onderwerpen.ts': 1,
-	'lib/onderwerpen/strekking.ts': 1,
-	'routes/(main)/onderwerpen/+page.svelte': 1
+	'lib/onderwerpen/strekking.ts': 1
 };
 
 describe('errors swallowed', () => {

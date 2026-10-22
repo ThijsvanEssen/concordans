@@ -6,6 +6,8 @@
 	import { goto } from '$app/navigation';
 	import { modKey } from '$lib/util/platform';
 	import Wordmark from './Wordmark.svelte';
+	import NewMark from '$lib/components/ui/NewMark.svelte';
+	import { sign } from '$lib/bevestig/bevestig.svelte';
 
 	let { onSearchOpen }: { onSearchOpen?: () => void } = $props();
 
@@ -19,6 +21,10 @@
 	const isActueel = $derived($page.url.pathname.startsWith('/actueel'));
 	const isBundles = $derived($page.url.pathname.startsWith(BUNDLES_PATH));
 	const isOnderwerpen = $derived($page.url.pathname.startsWith('/onderwerpen'));
+
+	// Something kept or followed shows a sign at Bundels or Gevolgd until the reader has been
+	// there (the ritual of Bewaar and Volg, bevestig.svelte.ts).
+	$effect(() => sign.visited($page.url.pathname));
 
 	let mobileMenuOpen = $state(false);
 	let toggleBtnEl: HTMLButtonElement | null = $state(null);
@@ -114,14 +120,16 @@
 			href="/onderwerpen"
 			class="nav-link"
 			class:is-active={isOnderwerpen}
-			aria-current={isOnderwerpen ? 'page' : undefined}>Gevolgd</a
+			aria-current={isOnderwerpen ? 'page' : undefined}
+			>Gevolgd{#if sign.has('gevolgd')}<NewMark />{/if}</a
 		>
 		<!-- Bundels: a page as the others, without a count (Bewaar says per bron what is kept). -->
 		<a
 			href={BUNDLES_PATH}
 			class="nav-link"
 			class:is-active={isBundles}
-			aria-current={isBundles ? 'page' : undefined}>Bundels</a
+			aria-current={isBundles ? 'page' : undefined}
+			>Bundels{#if sign.has('bundels')}<NewMark />{/if}</a
 		>
 	</nav>
 
@@ -185,6 +193,7 @@
 				/>
 			</svg>
 		{/if}
+		{#if !mobileMenuOpen && (sign.has('bundels') || sign.has('gevolgd'))}<NewMark />{/if}
 	</button>
 
 	{#if mobileMenuOpen}
@@ -199,8 +208,12 @@
 			<a href="/explore" class="mobile-nav-link" class:is-active={isExplore}>Samenhang</a>
 			<a href="/explore?mode=index" class="mobile-nav-link" class:is-active={isIndex}>Bronnen</a>
 			<a href="/actueel" class="mobile-nav-link" class:is-active={isActueel}>Actueel</a>
-			<a href="/onderwerpen" class="mobile-nav-link" class:is-active={isOnderwerpen}>Gevolgd</a>
-			<a href={BUNDLES_PATH} class="mobile-nav-link" class:is-active={isBundles}>Bundels</a>
+			<a href="/onderwerpen" class="mobile-nav-link" class:is-active={isOnderwerpen}
+				>Gevolgd{#if sign.has('gevolgd')}<NewMark />{/if}</a
+			>
+			<a href={BUNDLES_PATH} class="mobile-nav-link" class:is-active={isBundles}
+				>Bundels{#if sign.has('bundels')}<NewMark />{/if}</a
+			>
 		</div>
 	{/if}
 

@@ -563,7 +563,6 @@
 			</tbody>
 		</table>
 	</details>
-	<p class="sr-only" aria-live="polite">{copier.announcement}</p>
 </section>
 
 <style>

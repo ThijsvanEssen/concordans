@@ -1,8 +1,10 @@
 // Copying to the clipboard, the same everywhere: the button that copied says
-// Gekopieerd, or Kopiëren mislukt where the clipboard refuses, for two seconds, and a
-// live region says the same to a screen reader.
+// Gekopieerd, or Kopiëren mislukt where the clipboard refuses, for two seconds, and the
+// ritual's live region says the same to a screen reader (bevestig.svelte.ts).
 
-export const COPY_MS = 2000;
+import { BEVESTIG_MS, announce } from '$lib/bevestig/bevestig.svelte';
+
+export const COPY_MS = BEVESTIG_MS;
 
 type Write = (text: string) => Promise<void>;
 
@@ -22,6 +24,7 @@ export function createCopier(write: Write = clipboard) {
 				ok = false;
 			}
 			last = { key, ok };
+			announce(ok ? 'Gekopieerd' : 'Kopiëren mislukt');
 			clearTimeout(timer);
 			timer = setTimeout(() => (last = null), COPY_MS);
 			return ok;
@@ -29,10 +32,6 @@ export function createCopier(write: Write = clipboard) {
 		/** The label of the button `key`: its own word, or what its last copy did. */
 		label(key: string, idle: string) {
 			return last?.key === key ? (last.ok ? 'Gekopieerd' : 'Kopiëren mislukt') : idle;
-		},
-		/** For an aria-live region. */
-		get announcement() {
-			return last ? (last.ok ? 'Gekopieerd' : 'Kopiëren mislukt') : '';
 		}
 	};
 }

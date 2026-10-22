@@ -254,7 +254,6 @@
 			{/if}
 		</div>
 	{/if}
-	<span class="sr-only" aria-live="polite">{copier.announcement}</span>
 </div>
 
 <style>

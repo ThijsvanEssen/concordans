@@ -24,6 +24,8 @@ import {
 	type MapItem
 } from './map';
 import { keepStorage } from './persist';
+import { keptIn, removedFrom } from '$lib/bevestig/bevestig.svelte';
+import { bundlePageHref } from './page';
 import { isDay } from '$lib/text/datum';
 import { formatCount } from '$lib/text/getal';
 
@@ -264,13 +266,18 @@ class Kaarten {
 	}
 	/** In a bundel or out of it, by its id: the bundels of Bewaar's menu. */
 	toggleIn(id: string, i: MapItem) {
-		if (this.holding(i).some((m) => m.id === id)) this.weg(i, id);
-		else this.add(i, id);
+		if (this.holding(i).some((m) => m.id === id)) {
+			this.weg(i, id);
+			const m = this.#stand.mappen.find((x) => x.id === id);
+			if (m) removedFrom(m.naam);
+		} else this.add(i, id);
 	}
 	/** Into a bundel by its id, once. */
 	add(i: MapItem, id: string) {
 		keepStorage();
 		this.#change(id, (m) => ({ items: withItems(m.items, [i]) }));
+		const m = this.#stand.mappen.find((x) => x.id === id);
+		if (m) keptIn(m.naam, bundlePageHref(m));
 	}
 	/** Out of a bundel, with the aantekeningen on it (also those this version cannot read). */
 	weg(i: Pick<MapItem, 'id' | 'at'>, id: string) {
@@ -393,6 +400,7 @@ class Kaarten {
 		if (items.length) keepStorage();
 		this.#stand = { ...this.#stand, mappen: [...this.#stand.mappen, m] };
 		this.#bewaar();
+		if (items.length) keptIn(m.naam, bundlePageHref(m));
 		return m;
 	}
 	/** A new name; Losse markeringen keeps its own. */

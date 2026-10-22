@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { twoAtATime } from '$lib/util/two-at-a-time';
+	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { isAborted, report } from '$lib/api/errors';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -345,16 +346,10 @@
 		gedeeld.length > 0 && gedeeld.every((t) => eigen.some((o) => topicKey(o) === topicKey(t)))
 	);
 
-	let gekopieerd = $state(false);
-	async function kopieer() {
+	const copier = createCopier();
+	function kopieer() {
 		const adres = new URL(deelAdres(eigen), page.url.origin).href;
-		try {
-			await navigator.clipboard.writeText(adres);
-			gekopieerd = true;
-			setTimeout(() => (gekopieerd = false), 2000);
-		} catch {
-			/* geen klembord: het adres staat in de link */
-		}
+		copier.copy(adres, 'deel').catch((e) => report('Kopiëren', e));
 	}
 </script>
 
@@ -375,7 +370,7 @@
 		{:else if eigen.length}
 			<div class="blad__acties">
 				<TekstLink href={deelAdres(eigen)}>Adres van deze onderwerpen</TekstLink>
-				<TekstLink onclick={kopieer}>{gekopieerd ? 'Gekopieerd' : 'Kopieer'}</TekstLink>
+				<TekstLink onclick={kopieer}>{copier.label('deel', 'Kopieer')}</TekstLink>
 			</div>
 		{/if}
 	</header>

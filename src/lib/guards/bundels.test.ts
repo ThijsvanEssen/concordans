@@ -12,7 +12,7 @@ describe('the name and the address of the bundels (decision 19)', () => {
 
 	it('names the menu item Bundels, without a count', () => {
 		const bar = bron('lib/components/layout/TopBar.svelte');
-		expect(bar.match(/>Bundels</g)).toHaveLength(2);
+		expect(bar.match(/>Bundels(?:<|\{#if)/g)).toHaveLength(2);
 		expect(bar).not.toContain('nav-tel');
 	});
 

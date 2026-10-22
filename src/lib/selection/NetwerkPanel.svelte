@@ -36,7 +36,6 @@
 		onVoorbeeld,
 		telefoon = false,
 		deelLabel = 'Deel',
-		deelMelding = '',
 		onDeel,
 		omgeving = null,
 		onOmgeving
@@ -51,8 +50,6 @@
 		joiningCount: number;
 		/** Deel: the address of this view, the netwerk and its filters in it ("Gekopieerd" once copied). */
 		deelLabel?: string;
-		/** Read out once copied. */
-		deelMelding?: string;
 		onDeel?: () => void;
 		/** The selected bron whose surroundings alone the line below shows (O; Thijs, 10 Oct). */
 		omgeving?: string | null;
@@ -134,7 +131,6 @@
 			     bron's own address is this netwerk. -->
 			{#if onDeel}
 				<TekstLink onclick={onDeel}>{deelLabel}</TekstLink>
-				<span class="sr-only" aria-live="polite">{deelMelding}</span>
 			{/if}
 			{#if open && entries.length > 0}
 				<TekstLink onclick={onClear} title="Leeg het netwerk en het canvas; Terug zet het terug"

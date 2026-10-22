@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { COPY_MS, createCopier } from './copy.svelte';
+import { confirmation } from '$lib/bevestig/bevestig.svelte';
 
 describe('createCopier', () => {
 	beforeEach(() => vi.useFakeTimers());
@@ -10,10 +11,10 @@ describe('createCopier', () => {
 		await copier.copy('art. 6:162 BW', 'kort');
 		expect(copier.label('kort', 'kort')).toBe('Gekopieerd');
 		expect(copier.label('voluit', 'voluit')).toBe('voluit');
-		expect(copier.announcement).toBe('Gekopieerd');
+		expect(confirmation.now?.text).toBe('Gekopieerd');
 		vi.advanceTimersByTime(COPY_MS);
 		expect(copier.label('kort', 'kort')).toBe('kort');
-		expect(copier.announcement).toBe('');
+		expect(confirmation.now).toBeNull();
 	});
 
 	it('says Kopiëren mislukt where the clipboard refuses', async () => {

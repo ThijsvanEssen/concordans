@@ -432,7 +432,6 @@
 			</p>
 		{/if}
 	{/if}
-	<p class="sr-only" aria-live="polite">{copier.announcement}</p>
 {/snippet}
 
 <!-- In the frame of the other pages: the head over both columns, what the bundel holds in the

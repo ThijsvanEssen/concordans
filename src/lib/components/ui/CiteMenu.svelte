@@ -50,7 +50,6 @@
 			onclick={() => (open = !open)}
 			>{copier.label('cite', 'Citeer')}{#if caret}<Caret {open} />{/if}</button
 		>
-		<span class="sr-only" aria-live="polite">{copier.announcement}</span>
 		{#if open && button}
 			<div
 				class="tekstmenu__lijst is-breed pop"

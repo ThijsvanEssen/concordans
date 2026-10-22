@@ -5,6 +5,7 @@
 	import '$lib/styles/basis.css';
 	import '$lib/styles/frame.css';
 	import '$lib/styles/print.css';
+	import Bevestiging from '$lib/components/ui/Bevestiging.svelte';
 	import AppShell from '$lib/components/layout/AppShell.svelte';
 	import { report } from '$lib/api/errors';
 	import type { Snippet } from 'svelte';
@@ -122,6 +123,7 @@
 <AppShell>
 	{@render children()}
 </AppShell>
+<Bevestiging />
 <!-- Fixed at the top: after the shell it stood below the screen's height and the page scrolled (#35). -->
 <p class="sr-only aankondiging" aria-live="polite" aria-atomic="true">{aankondiging}</p>
 

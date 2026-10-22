@@ -1550,7 +1550,6 @@
 										onClearContext={() => store.clearContext()}
 										onClear={wisAlles}
 										deelLabel={shareCopier.label('share', 'Deel')}
-										deelMelding={shareCopier.announcement}
 										onDeel={handleShareView}
 									/>
 								{/snippet}
