@@ -147,6 +147,7 @@
 	@media (pointer: coarse), (max-width: 768px) {
 		:global(.tekstmenu__item) {
 			padding-block: calc((var(--veld-h-raak) - 1lh) / 2);
+			min-height: var(--veld-h-raak);
 		}
 	}
 	:global(.tekstmenu__item:disabled) {
