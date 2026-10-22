@@ -46,7 +46,7 @@
 	} from '$lib/components/parliamentary/stuk-uitslag';
 	import { onderdeelMark } from '$lib/text/article-parts';
 	import { getInstrumentDetail } from '$lib/api/instrument-cache';
-	import { kindName } from '$lib/components/explore/law-head';
+	import { kindName } from '$lib/text/law-kind';
 	import { korteDatum } from '$lib/text/datum';
 	import { parseNodeId } from '$lib/vocabulary';
 	import { isNotFound, report } from '$lib/api/errors';

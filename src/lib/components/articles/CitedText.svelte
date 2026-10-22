@@ -168,19 +168,23 @@
 	:global(a.begrip:focus-visible) {
 		text-decoration-color: var(--ink);
 	}
-	/* The link lives in BronLink; its look is the text's own. */
+	/* The link lives in BronLink; its look is the text's own. It takes no room of its own: a
+	   text with its links breaks its lines where the text without them does (the first paint
+	   of an article's address, $lib/first-paint); the tint on hover reaches past it. */
 	:global(a.cited) {
 		color: var(--ink);
 		text-decoration: underline;
 		text-decoration-style: dotted;
 		text-underline-offset: 3px;
-		padding: 0 1px;
 		border-radius: var(--r-1);
-		transition: background var(--dur-1) var(--ease);
+		transition:
+			background var(--dur-1) var(--ease),
+			box-shadow var(--dur-1) var(--ease);
 	}
 	:global(a.cited:hover),
 	:global(a.cited:focus-visible) {
 		background: var(--wassing);
+		box-shadow: 0 0 0 1px var(--wassing);
 		text-decoration-style: solid;
 	}
 </style>

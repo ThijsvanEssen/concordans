@@ -27,7 +27,7 @@ import {
 	type Regeling,
 	type WetRegeling
 } from '$lib/text/delegaties';
-import { kindName } from '$lib/components/explore/law-head';
+import { kindName } from '$lib/text/law-kind';
 import { abortable, getAmendedBy, getDecision, getMemberDossiers, once } from '$lib/api/records';
 import {
 	getCitedBy,

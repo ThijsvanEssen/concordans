@@ -44,7 +44,9 @@ export default defineConfig(
 				projectService: { allowDefaultProject: ['playwright.config.ts'] },
 				extraFileExtensions: ['.svelte'],
 				parser: ts.parser,
-				svelteConfig
+				// Without the compiler's options: its cssHash is a function, which the cache of
+				// ESLint cannot keep, and linting reads no styles.
+				svelteConfig: { ...svelteConfig, compilerOptions: undefined }
 			}
 		},
 		rules: {

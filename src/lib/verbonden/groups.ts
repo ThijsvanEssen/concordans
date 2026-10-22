@@ -6,7 +6,8 @@
 // direction, collection) or, where no edge says it, by a named loader (`load`).
 import { capitalize, joinAnd } from '$lib/text/words';
 import { langeDatum } from '$lib/text/datum';
-import { kindName, lawKind } from '$lib/components/explore/law-head';
+import { lawKind } from '$lib/components/explore/law-head';
+import { kindName } from '$lib/text/law-kind';
 import { bucketKey, type Bucket } from '$lib/api/nodes';
 import {
 	CHANGE_RELATIONS,

@@ -10,7 +10,7 @@ import type { Cite } from '$lib/text/judgment-heading';
 import { courtName } from '$lib/text/court';
 import { isGeneriek } from '$lib/bron/generiek';
 import { dossierOwnName, dossierUitProps, kamerstukNummer } from '$lib/bron/dossier-naam';
-import { kindName } from '$lib/components/explore/law-head';
+import { kindName } from '$lib/text/law-kind';
 import { withoutKamerstuk } from '$lib/text/kamerstuk';
 import { articleTitle, citationRecord } from '$lib/text/citation-record';
 

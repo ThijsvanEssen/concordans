@@ -6,7 +6,7 @@
 import { joinAnd } from './words';
 import { spansWithin } from './spans';
 import type { Schema } from '$lib/api/types';
-import { kindName } from '$lib/components/explore/law-head';
+import { kindName } from '$lib/text/law-kind';
 import { langeDatum } from '$lib/text/datum';
 import { naamVan } from '$lib/bron/menselijk';
 import { articleRef, bookNumber } from '$lib/text/bw';

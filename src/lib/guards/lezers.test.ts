@@ -28,7 +28,7 @@ describe('the readers', () => {
 		expect(
 			overtreders(
 				(t) => /Tekst geldend op/.test(t),
-				[plek('lib/components/explore/WholeLawReaderPeildatum.svelte')]
+				[plek('lib/text/peildatum-label.ts', 'the words of the line, for it and the first paint')]
 			)
 		).toEqual([]);
 	});

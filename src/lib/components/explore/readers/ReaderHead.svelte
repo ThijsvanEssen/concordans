@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { joinParts } from '$lib/text/words';
-	import { titleParts } from './title-parts';
+	import { titleParts } from '$lib/text/title-parts';
 	// The head of every reader, one form (Thijs, 10 Oct: "gelijke experience op gelijke
 	// pagina's"): the line of the kind or the place of the bron, the title, what stands under
 	// the title, and the status line with the actions at its right, in that order and with the

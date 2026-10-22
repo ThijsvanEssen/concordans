@@ -3,12 +3,12 @@ import { describe, expect, it } from 'vitest';
 import {
 	lawFullTitle,
 	lawHeadLine,
-	kindName,
 	lawKind,
 	publicationName,
 	sourceName,
 	treatyLink
 } from './law-head';
+import { kindName } from '$lib/text/law-kind';
 
 const eu = {
 	kind: null,

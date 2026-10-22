@@ -27,7 +27,6 @@
 	import { getArticleVersion, getDelegated } from '$lib/api/articles';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
-	import type { Schema } from '$lib/api/types';
 	import { articleOf, type GraphNode } from '$lib/graph/types';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
 	import { Lazy } from '$lib/util/lazy.svelte';
@@ -36,7 +35,6 @@
 	import { refId } from '$lib/bron/href';
 	import { articleCitation, placeCitation } from '$lib/text/cite';
 	import { citationRecord } from '$lib/text/citation-record';
-	import { articleName } from '$lib/text/bw';
 	import { placeOf, type Division } from '$lib/text/division';
 	import { lidHistory, unitsOf, wordingsOf } from '$lib/text/version-diff';
 	import { inForceOn, peildatumVersions } from '../peildatum';
@@ -44,7 +42,6 @@
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { filterParams, type VerbondenFilter } from '$lib/verbonden/filter';
 	import { atLeast, formatCount } from '$lib/text/getal';
-	import { enactedLawId, enactedLawStatus } from '$lib/text/enacted-law';
 	import { proposedTextOf, type ProposedText } from '$lib/verbonden/proposed-text';
 	import type { Row } from '$lib/verbonden/rows';
 	import { untrack } from 'svelte';
@@ -52,6 +49,15 @@
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 	import ArticleSuccession from './ArticleSuccession.svelte';
+	import {
+		dossierExplanation,
+		explanatoryLabel,
+		headTitle,
+		originVerbOf,
+		ownExplanation,
+		versionLabelOf,
+		type Explanatory
+	} from '$lib/text/article-head';
 	import Validity from '$lib/components/ui/Validity.svelte';
 	import { citeDate, validityOf } from '$lib/api/validity';
 	import { statusOf } from '$lib/text/validity';
@@ -113,20 +119,7 @@
 	// full reading view is still the existing "open naast het artikel" (`?naast=`).
 	// `artikel`: the API links the document to this article. `wijziging`: the memorie
 	// van toelichting of the wet that made the tekstversie on screen.
-	type Explanatory = {
-		key: string;
-		title: string | null;
-		kind: string | null;
-		at: string | null;
-		basis: 'artikel' | 'wijziging';
-		dossier: string | null;
-		since: string | null;
-		/** The memorie of the verklaringswet: the first reading of a change in the Grondwet. */
-		firstReading: boolean;
-	};
 	let explanatory = $state<Explanatory | null>(null);
-	// The title every verklaringswet (art. 137 lid 1 Gw) opens with.
-	const FIRST_READING = /^(wijziging van de wet houdende )?verklaring dat er grond bestaat/i;
 
 	// Primitives, so that a new node object for the same article does not reload it.
 	const identity = $derived(articleOf(node.raw?.props));
@@ -174,32 +167,11 @@
 			// Asked once per article: this runs again when the tekstversies arrive.
 			const data = await getExplainedBy(bwb, num);
 			if (ac.signal.aborted) return;
-			// An explanation of the instrument is no evidence about this article (API docs).
-			// Of the rest, the one that explains the tekstversie on screen comes first, and of
-			// those the one that names a passage about this article. A change in the Grondwet
-			// has its memorie in the first reading; the second's is `dossier` scope.
-			// TODO(backend): the docs name an `instrument` target the enum of `target` lacks.
-			const items = (data?.items ?? []).filter((i) => (i.target as string) !== 'instrument');
-			const onScreenItems = items.filter(
-				(i) => i.article_version_key && versionKeys.includes(i.article_version_key)
-			);
-			const own =
-				onScreenItems.find((i) => i.scope === 'article') ??
-				onScreenItems[0] ??
-				items.find((i) => i.target === 'article');
+			// Of its explanations the one that explains the tekstversie on screen (article-head);
+			// a change in the Grondwet has its memorie in the first reading.
+			const own = ownExplanation(data?.items ?? [], versionKeys, since);
 			if (own) {
-				// `dossier` scope: the memorie explains every change of its wet, not this article.
-				const perDossier = own.scope === 'dossier';
-				explanatory = {
-					key: own.document.key,
-					title: own.document.title ?? null,
-					kind: own.document.kind ?? null,
-					at: own.section_anchor ?? null,
-					basis: perDossier ? 'wijziging' : 'artikel',
-					dossier: own.document.dossier_number ?? null,
-					since: perDossier ? since : null,
-					firstReading: FIRST_READING.test(own.document.title ?? '')
-				};
+				explanatory = own;
 				return;
 			}
 			if (!dossier) return;
@@ -207,16 +179,7 @@
 			if (!papers || ac.signal.aborted) return;
 			const mvt = papers.items.find((d) => /memorie van toelichting/i.test(d.kind ?? ''));
 			if (!mvt || ac.signal.aborted) return;
-			explanatory = {
-				key: mvt.key,
-				title: mvt.title ?? null,
-				kind: mvt.kind ?? null,
-				at: null,
-				basis: 'wijziging',
-				dossier,
-				since,
-				firstReading: FIRST_READING.test(mvt.title ?? '')
-			};
+			explanatory = dossierExplanation(mvt, dossier, since);
 		};
 		// No button without a confirmed toelichting.
 		find()
@@ -238,14 +201,14 @@
 		if (!e || e.at || !bwbId || !articleNumber) return;
 		// The article's own explanations first (one request for every paper); a paper they
 		// do not list is asked on its own.
-		const uitleg = await getExplanations(bwbId, articleNumber).catch(orNone('Toelichtingen'));
-		const hier = uitleg?.items.find((i) => i.document.key === e.key)?.passages[0]?.section_id;
+		const explanations = await getExplanations(bwbId, articleNumber).catch(orNone('Toelichtingen'));
+		const here = explanations?.items.find((i) => i.document.key === e.key)?.passages[0]?.section_id;
 		if (signal.aborted || explanatory?.key !== e.key) return;
-		if (hier) {
-			explanatory = { ...explanatory, at: hier };
+		if (here) {
+			explanatory = { ...explanatory, at: here };
 			return;
 		}
-		if (uitleg) return;
+		if (explanations) return;
 		const r = await getDocumentPassages(
 			e.key,
 			{ bwb_id: bwbId, article: articleNumber },
@@ -357,29 +320,19 @@
 	const showStatus = $derived(!shown && !stubLabel && statusOf(validity) !== null);
 	const expired = $derived(validity?.state === 'expired');
 
-	const versionLabel = $derived.by(() => {
-		if (stubLabel) return stubLabel;
-		if (shown) {
-			const from = langeDatum(shown.from);
-			const until = langeDatum(shown.until);
-			return `Eerdere tekst, ${from || '?'}${until ? ` tot ${until}` : ''}`;
-		}
-		if (showStatus) return '';
-		// An article of a law of the Staatsblad the BWB does not hold yet: enacted, not in force.
-		const enacted = enactedLawId(loaded?.article.official_id);
-		if (enacted && validity === undefined) return enactedLawStatus(enacted);
-		const from = langeDatum(validFrom);
-		// A repealed article has no geldende tekst: its last version only records the repeal.
-		if (loaded?.article.repealed && validity === undefined) {
-			const date = langeDatum(lapse?.from);
-			return date ? `Vervallen per ${date}` : 'Vervallen';
-		}
-		// An act of the EU: the text as adopted; its consolidated versions are not fetched.
-		if (euAct) return null;
-		// Where the API does not know whether it holds, no "Geldend": only the day of the text.
-		if (validity === null) return from ? `Tekst sinds ${from}` : '';
-		return from ? `Geldend recht, tekst sinds ${from}` : 'Geldend recht';
-	});
+	const versionLabel = $derived(
+		versionLabelOf({
+			stubLabel,
+			shown,
+			showStatus,
+			officialId: loaded?.article.official_id,
+			validity,
+			repealed: !!loaded?.article.repealed,
+			lapseFrom: lapse?.from,
+			euAct: !!euAct,
+			validFrom
+		})
+	);
 
 	// The dossier(s) whose wetgeving the version on screen made: the fastest way to its
 	// memorie van toelichting and to the behandeling it was in.
@@ -388,17 +341,7 @@
 		uniqueBy(onScreen?.first.amended_by?.dossiers ?? [], (d) => d.key)
 	);
 	/** How the wet named under the text relates to it. */
-	const originVerb = $derived(
-		!onScreen
-			? ''
-			: onScreen.index > 0
-				? 'Gewijzigd bij'
-				: onScreen.first.change === 'establishes'
-					? 'Vastgesteld bij'
-					: onScreen.first.change === 'introduces'
-						? 'Ingevoerd bij'
-						: 'Tekst uit'
-	);
+	const originVerb = $derived(originVerbOf(onScreen));
 
 	// The law's names for the citation forms.
 	const law = $derived($instrumentMetaStore.get(bwbId) ?? null);
@@ -446,7 +389,7 @@
 
 	// Bewaar and Citeer in the head follow the place chosen (#lid-3): that lid, else the whole
 	// article. Both name the same place.
-	const hier = $derived.by(() => {
+	const here = $derived.by(() => {
 		if (!citation || !forms) return null;
 		// A definition without a letter is a place too, named by its term (Cbw 1).
 		const parts = shownVersion?.parts ?? loaded?.article.parts ?? [];
@@ -461,8 +404,8 @@
 		};
 	});
 	const keepHere = $derived.by(() => {
-		if (!citation || !hier) return null;
-		const { plaats, deel, forms: f } = hier;
+		if (!citation || !here) return null;
+		const { plaats, deel, forms: f } = here;
 		return {
 			item: bewaarItem(
 				node.id,
@@ -631,19 +574,8 @@
 		return () => ac.abort();
 	});
 
-	// The article with its heading where the law gives one: "Artikel 22. Verwerking van
-	// persoonsgegevens".
-	const title = (a: Schema<'ArticleSummaryDTO'>) => {
-		// As its record names it, with its law's abbreviation (Artikel 6:162 BW); before the law's
-		// names are in, a BW article with its book (Artikel 6:162), one without a number by its
-		// label.
-		const name =
-			forms?.heading ??
-			articleName(a.bwb_id, a.article_number, a.label) ??
-			a.display_name ??
-			'Artikel';
-		return a.heading && a.article_number ? `${name}. ${a.heading}` : name;
-	};
+	// The article with its heading where the law gives one (article-head).
+	const title = (a: Parameters<typeof headTitle>[0]) => headTitle(a, forms?.heading);
 </script>
 
 <!-- Vorig and Volgend, above the article and again under it: the next article's text is asked
@@ -691,8 +623,8 @@
 			acties={{
 				bewaar: keepHere?.item ?? null,
 				wat: keepHere?.wat ?? '',
-				cite: hier ? citeItems(hier.forms, readLink) : [],
-				naam: hier?.forms.short ?? '',
+				cite: here ? citeItems(here.forms, readLink) : [],
+				naam: here?.forms.short ?? '',
 				bron: officialUrl && officialName ? { label: officialName, href: officialUrl } : null,
 				tekst: () => a.text ?? ''
 			}}
@@ -791,11 +723,7 @@
 						title={explanatoryOpen
 							? 'Sluiten'
 							: `${explanatory.title ?? explanatory.kind ?? 'Toelichting'}: onder het artikel lezen`}
-						>{explanatory.basis === 'wijziging'
-							? 'Memorie van toelichting'
-							: (explanatory.kind ?? 'Toelichting')}{explanatory.firstReading
-							? ', eerste lezing'
-							: ''}<span class="head__mvt-mark" aria-hidden="true"
+						>{explanatoryLabel(explanatory)}<span class="head__mvt-mark" aria-hidden="true"
 							>{explanatoryOpen ? '×' : '↓'}</span
 						></a
 					>

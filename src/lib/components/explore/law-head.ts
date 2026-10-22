@@ -6,6 +6,7 @@ import type { Validity } from '$lib/api/validity';
 import { enactedLawId, enactedLawStatus } from '$lib/text/enacted-law';
 import { lawName, type InstrumentMeta } from '$lib/api/instrument-cache';
 import { citationRecord, type CitationRecord } from '$lib/text/citation-record';
+import { kindName } from '$lib/text/law-kind';
 
 type Detail = Pick<
 	Schema<'InstrumentDetailDTO'>,
@@ -19,35 +20,6 @@ type Dates = Pick<
 
 // The kinds of regeling the BWB knows (its `soort-regeling`, as the API gives it in lower
 // case), as a lawyer names them. A kind of the Caribbean Netherlands says so.
-const KIND: Record<string, string> = {
-	wet: 'Wet',
-	rijkswet: 'Rijkswet',
-	amvb: 'AMvB',
-	rijksamvb: 'Rijks-AMvB',
-	kb: 'Koninklijk besluit',
-	rijkskb: 'Rijksbesluit',
-	'ministeriele-regeling': 'Ministeriële regeling',
-	'ministeriele-regeling-archiefselectielijst': 'Archiefselectielijst',
-	beleidsregel: 'Beleidsregel',
-	circulaire: 'Circulaire',
-	zbo: 'Regeling van een zbo',
-	pbo: 'Regeling van een pbo',
-	reglement: 'Reglement',
-	verdrag: 'Verdrag',
-	bilateraalverdrag: 'Bilateraal verdrag',
-	multilateraalverdrag: 'Multilateraal verdrag',
-	// Not a BWB kind: the API's for a publication in the Staatsblad or Staatscourant.
-	publicatie: 'Publicatie'
-};
-
-/** The name of a kind the BWB gives, or null for one it does not know. */
-export function kindName(kind: string | null | undefined): string | null {
-	const k = (kind ?? '').toLowerCase();
-	if (KIND[k]) return KIND[k];
-	const bes = /^(.+)-bes$/.exec(k);
-	return bes && KIND[bes[1]] ? `${KIND[bes[1]]} BES` : null;
-}
-
 /** Wet, Verdrag, Beleidsregel; for an act of the EU the first word of its citation: Verordening, Richtlijn. */
 export function lawKind(
 	d: Pick<Detail, 'kind' | 'jurisdiction' | 'citation_title'> | null

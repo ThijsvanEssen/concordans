@@ -20,6 +20,8 @@
 	import { consultedOn } from '$lib/text/datum';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { LoadState as State } from '$lib/util/load.svelte';
+	import { afterTick } from '$lib/util/after-tick';
+	import { readerReady } from '$lib/first-paint/takeover';
 
 	let {
 		state = { status: 'ready', data: undefined as T },
@@ -70,6 +72,12 @@
 	const rowShown = $derived(band.has === true || bandHeld || !!w || find);
 
 	const search = new SearchState();
+
+	// The text is here: the first paint of the address gives the column to the reader once
+	// it stands in its place (lib/first-paint/takeover.ts).
+	$effect(() => {
+		if (state.status === 'ready') afterTick(readerReady);
+	});
 </script>
 
 <div class="reader-frame">

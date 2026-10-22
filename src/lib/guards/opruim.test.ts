@@ -124,6 +124,11 @@ const TEST_HOOKS: Uitzondering[] = [
 		reden: 'read by vite.config.ts, which makes virtual:api-limits of it'
 	},
 	{
+		pad: 'lib/first-paint/classes.ts',
+		regel: /^COMPONENTS$/,
+		reden: 'read by vite.config.ts, which gives the first paint their classes and stylesheets'
+	},
+	{
 		pad: 'lib/text/fragment.ts',
 		regel: /^paperPlaces$/,
 		reden:

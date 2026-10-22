@@ -11,7 +11,7 @@ import { changeRelationOf } from '$lib/vocabulary';
 import { type Row } from './rows';
 import { describeBron } from '$lib/bron/describe';
 import { type Neighbor } from '$lib/api/nodes';
-import { kindName } from '$lib/components/explore/law-head';
+import { kindName } from '$lib/text/law-kind';
 
 export type DossierHub = {
 	laws: Row[];

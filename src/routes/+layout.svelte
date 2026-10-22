@@ -20,6 +20,7 @@
 	import { canonical } from '$lib/seo/routes';
 	import { LADEN_TITEL, serverKop } from '$lib/seo/server-head.svelte';
 	import { removeServerText } from '$lib/seo/server-text';
+	import { releaseFirstPaint, startTakeover } from '$lib/first-paint/takeover';
 
 	let { children }: { children: Snippet } = $props();
 
@@ -33,6 +34,9 @@
 		// when the app did not come (app.html).
 		clearTimeout(window.__seoTerug);
 		removeServerText(document);
+		// A reader's address painted first (lib/first-paint): its paint stays over the app
+		// until the app's reader has the text.
+		startTakeover(document);
 	}
 	// Without a head from the server (the plain index.html, when the API is down) the fixed
 	// description of app.html gives way to the page's own.
@@ -61,6 +65,7 @@
 		if (dev && naar) meldZijscroll(naar.pathname + naar.search);
 		afterTick(stilAnnouncer);
 		if (!van || !naar || canonical(van) === canonical(naar)) return;
+		releaseFirstPaint();
 		if (serverKop.actief) serverKop.clear();
 		// The letter of the first paint (app.html) holds on the page it was painted for.
 		document.documentElement.classList.remove('vaste-letter');

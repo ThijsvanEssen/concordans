@@ -20,7 +20,7 @@ import { articleTitle, citationRecord } from '$lib/text/citation-record';
 import { chamberName } from '$lib/components/parliamentary/chamber';
 import { shortDossierTitle } from '$lib/graph/types';
 import { votesSentence } from '$lib/components/parliamentary/stemming';
-import { kindName } from '$lib/components/explore/law-head';
+import { kindName } from '$lib/text/law-kind';
 import {
 	dossierLabel,
 	dossierOwnName,

@@ -7,7 +7,7 @@ import { menselijkeNaam } from '$lib/bron/menselijk';
 // lawyer checks it by, and where the API gives one, a line of the text with the words
 // searched for marked. Stukken of one dossier stand under that dossier.
 import type { Schema } from '$lib/api/types';
-import { kindName } from '$lib/components/explore/law-head';
+import { kindName } from '$lib/text/law-kind';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { articleName } from '$lib/text/bw';

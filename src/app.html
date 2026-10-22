@@ -169,6 +169,7 @@
 				--blad-tekst: 720px;
 				--veld-h: 32px;
 				--tik-h: 24px;
+				--z-float: 40;
 				--r-1: 3px;
 				--r-2: 4px;
 				background: var(--paper);
@@ -502,6 +503,63 @@
 				#seo:has(> .entrances) input {
 					font-size: var(--t-body);
 				}
+			}
+			/* The first paint of a reader's address (lib/first-paint): the Verkenner in the app's
+			   own elements and stylesheets, where the app's main stands, over the app until its
+			   reader stands as the paint does (lib/first-paint/takeover.ts); shown once the
+			   stylesheets are in. What the app shows only once it has come takes its room
+			   unseen. */
+			html:has(#first-paint) #seo {
+				display: none;
+			}
+			.ev {
+				position: fixed;
+				inset: var(--topbar-h) 0 0;
+				z-index: var(--z-float);
+				background: var(--paper);
+			}
+			.ev:not(.ev--ready),
+			.ev [data-later] {
+				visibility: hidden;
+			}
+			/* The actions of the head (KopActies): Bewaar and Citeer, one row of controls. */
+			.ev .ev-actions {
+				display: inline-block;
+				width: 219px;
+				height: var(--veld-h);
+				vertical-align: middle;
+			}
+			/* The number of a place is its menu in the reader (.plaats-marker, a button): in the
+			   letter and the alignment of its place. A formula of delegation is a control there
+			   (GrondslagFormule): its words break as one. */
+			.ev .lid__no,
+			.ev .part__number {
+				text-align: inherit;
+			}
+			.ev .ev-formula {
+				display: inline-block;
+			}
+			/* The app is here: its frame shows through, the paint keeps the reader's column
+			   until the reader has its text. */
+			.ev--app {
+				pointer-events: none;
+				background: none;
+			}
+			.ev--app .col:not(.col--reader),
+			.ev--app .mobile-tabs,
+			.ev--app .resize-handle {
+				visibility: hidden;
+			}
+			.ev--app .col--reader {
+				pointer-events: auto;
+			}
+			/* The letter of the first paint holds on the page it was painted for (as the start
+			   page's): the reader's column of the app too. */
+			.vaste-letter.first-paint .ev,
+			.vaste-letter.first-paint .col--reader {
+				--font-serif:
+					'Newsreader Fallback', 'Newsreader Fallback Noto', 'Newsreader Fallback DejaVu', Georgia,
+					serif;
 			}
 		</style>
 		%sveltekit.head%

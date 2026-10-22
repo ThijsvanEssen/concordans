@@ -6,6 +6,7 @@
 	import type { Schema } from '$lib/api/types';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import { versionsByYear } from './peildatum';
+	import { peildatumLabel } from '$lib/text/peildatum-label';
 
 	let {
 		versions,
@@ -39,7 +40,7 @@
 	);
 	// An expired law has no text of today: its last one is named by the day it began to hold.
 	const lastText = $derived(verlopen && !peildatum);
-	const label = $derived(lastText ? 'Laatste tekst geldend sinds' : 'Tekst geldend op');
+	const label = $derived(peildatumLabel(lastText));
 	const shown = $derived(langeDatum(peildatum ?? (lastText ? newest : today)));
 </script>
 

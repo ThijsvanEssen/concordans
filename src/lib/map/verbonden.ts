@@ -10,7 +10,7 @@ import { textOf } from '$lib/text/words';
 import { getRelatedInstruments } from '$lib/api/verbonden';
 import { getDelegated } from '$lib/api/articles';
 import { getInstrumentDetail } from '$lib/api/instrument-cache';
-import { kindName } from '$lib/components/explore/law-head';
+import { kindName } from '$lib/text/law-kind';
 import { regelingRow, wetRegelingen, wetRijVanRelated } from '$lib/verbonden/loaders';
 import type { Row } from '$lib/verbonden/rows';
 import { hoeVan } from '$lib/verbonden/hoe';

@@ -12,10 +12,9 @@ import { getDossier } from '$lib/api/dossiers';
 import { CHAMBER_NAME, chamberFromParam } from '$lib/components/parliamentary/chamber';
 import { refOf } from '$lib/bron/href';
 import { dossierLabel } from './dossier-naam';
-import { artikelAnker, deelIds, layersOf } from '$lib/text/division';
+import { artikelAnker } from '$lib/text/division';
 import { langeDatum } from '$lib/text/datum';
-import { kindName } from '$lib/components/explore/law-head';
-import { lawShortName } from '$lib/text/bw';
+import { lawLineWords, type LawLayer } from './law-line';
 import { fractiePeriodes } from './fractie-periode';
 import { kernVanZaak, stukkenInDezelfdeZaak } from '$lib/verbonden/zaak';
 import { onAgendaOnly } from '$lib/text/toezegging';
@@ -81,33 +80,21 @@ const firstOf = (c: Context, bak: Bak, soort: string): Laag[] => {
  * heading (WholeLawReader, `deelIds`), and the law at the article (`#artikel-658`).
  */
 function lawLine(c: Context, withPlace: boolean): Regel[] {
-	const law = findBucket(c.light, TO_LAW)?.items?.[0]?.props;
-	const soort = kindName(textOf(law?.kind)) ?? 'Wet';
-	const afk = lawShortName(textOf(law?.bwb_id), textOf(law?.abbreviation));
-	const nummer = withPlace ? textOf(c.props.article_number) : null;
-	const wet = firstOf(c, TO_LAW, soort).map((l) => ({
-		...l,
-		...(afk ? { kort: afk } : {}),
-		...(nummer ? { at: artikelAnker(nummer) } : {})
-	}));
-	if (!withPlace) return regel('wet', soort, wet);
-	// Wet › hoofdstuk › titel › afdeling: the division by name (in props, `breadcrumb`); a
-	// layer that is the law itself is no layer.
-	const crumbs = Array.isArray(c.props.breadcrumb)
-		? (c.props.breadcrumb as { type?: string; label?: string; title?: string }[])
-		: [];
-	const lagen = layersOf(crumbs, textOf(c.props.instrument_citation_title));
-	const ids = deelIds(crumbs).slice(crumbs.length - lagen.length);
-	const deel = lagen
-		.map((d, i) => ({
-			soort: textOf(d.type) ?? 'Deel',
-			naam: [textOf(d.label), textOf(d.title)].filter(Boolean).join(' '),
-			kort: textOf(d.label) ?? undefined,
-			ref: wet[0]?.ref,
-			at: wet[0]?.ref ? ids[i] : undefined
-		}))
-		.filter((l) => l.kort);
-	return regel('wet', soort, [...wet, ...deel]);
+	const n = findBucket(c.light, TO_LAW)?.items?.[0];
+	const { term, law, divisions } = lawLineWords(n, c.props, withPlace);
+	const ref = n ? laagVan(n, term).ref : undefined;
+	const layer = ({ kind, name, short }: LawLayer, at?: string): Laag => ({
+		soort: kind,
+		naam: name,
+		...(short ? { kort: short } : {}),
+		ref,
+		...(at ? { at } : {})
+	});
+	const number = withPlace ? textOf(c.props.article_number) : null;
+	const wet = law ? [layer(law, number ? artikelAnker(number) : undefined)] : [];
+	if (!withPlace) return regel('wet', term, wet);
+	const deel = divisions.map((d) => layer(d, ref ? d.anchor : undefined));
+	return regel('wet', term, [...wet, ...deel]);
 }
 
 /**

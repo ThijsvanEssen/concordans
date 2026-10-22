@@ -31,7 +31,6 @@
 	import { lawNodeKey } from '$lib/text/enacted-law';
 	import { setOwnLaw } from '$lib/text/own-article.svelte';
 	import {
-		kindName,
 		lawCitationRecord,
 		lawFullTitle,
 		lawHeadLine,
@@ -39,6 +38,7 @@
 		sourceName,
 		treatyLink
 	} from './law-head';
+	import { kindName } from '$lib/text/law-kind';
 	import { navigate, withParams } from '$lib/util/address';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';

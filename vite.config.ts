@@ -1,8 +1,12 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vitest/config';
-import type { Plugin } from 'vite';
+import type { Plugin, Rollup } from 'vite';
 import { readFileSync } from 'node:fs';
+import { build as esbuild } from 'esbuild';
 import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
+import { cssHashOf } from './svelte-css-hash.js';
+import { COMPONENTS, type Build, type Classes } from './src/lib/first-paint/classes';
 import { apiDocs } from './src/lib/api/docs';
 import { limitMaxima } from './src/lib/api/limit-maxima';
 
@@ -16,13 +20,56 @@ const BESIDE_INDEX = {
 	'moved.json': 'src/lib/seo/moved.json',
 	'start.json': 'src/lib/components/home/start.json'
 };
+// And the script of the first paint of a reader's address ($lib/first-paint), on its own:
+// the server inlines it after the bron it puts in the page, so it runs before the browser
+// paints, long before the app's chunks are in. It sets the app's own classes (each
+// component's scoping class, svelte-css-hash.js) and loads the app's own stylesheets of those
+// components, the layout's first: those it is given here.
+const FIRST_PAINT = 'src/lib/first-paint/entry.ts';
+const LAYOUT = 'src/routes/+layout.svelte';
+export async function firstPaintScript(build: Build): Promise<string> {
+	const out = await esbuild({
+		entryPoints: [FIRST_PAINT],
+		bundle: true,
+		write: false,
+		minify: true,
+		format: 'iife',
+		target: 'es2022',
+		alias: { $lib: fileURLToPath(new URL('./src/lib', import.meta.url)) },
+		define: { __FIRST_PAINT__: JSON.stringify(build) },
+		logLevel: 'silent'
+	});
+	return out.outputFiles[0].text;
+}
+/** The stylesheets of the chunks that hold `files`, in that order, each once. */
+function stylesheetsOf(bundle: Rollup.OutputBundle, files: string[]): string[] {
+	const css: string[] = [];
+	for (const file of files.map((f) => resolve(f)))
+		for (const chunk of Object.values(bundle))
+			if (chunk.type === 'chunk' && chunk.moduleIds.includes(file))
+				for (const name of chunk.viteMetadata?.importedCss ?? [])
+					if (!css.includes(`/${name}`)) css.push(`/${name}`);
+	return css;
+}
 const besideIndex: Plugin = {
 	name: 'beside-index',
 	apply: 'build',
-	generateBundle() {
+	async generateBundle(_options, bundle) {
 		if (this.environment.config.build.ssr) return;
 		for (const [fileName, path] of Object.entries(BESIDE_INDEX))
 			this.emitFile({ type: 'asset', fileName, source: readFileSync(path, 'utf8') });
+		const files = Object.values(COMPONENTS);
+		const build: Build = {
+			classes: Object.fromEntries(
+				Object.entries(COMPONENTS).map(([name, file]) => [name, cssHashOf(file)])
+			) as Classes,
+			css: stylesheetsOf(bundle, [LAYOUT, ...files])
+		};
+		this.emitFile({
+			type: 'asset',
+			fileName: 'first-paint.js',
+			source: await firstPaintScript(build)
+		});
 	}
 };
 
