@@ -46,11 +46,11 @@
 				de panelen, het laatst samengestelde netwerk en of de legenda open staat. Ook de gevolgde
 				onderwerpen staan daar, met de dag van het vorige bezoek, en de bundels met hun
 				aantekeningen. Die blijven in de browser en gaan niet naar een server. Concordans vraagt de
-				browser die opslag niet zelf te wissen. Een bundel als bestand of als link maakt u zelf; de
-				link draagt de bundel in het deel na het hekje, dat de browser niet meestuurt. Om nieuwe
-				stukken bij een onderwerp te vinden, gaan de woorden als zoekterm naar de API; voor wat er
-				nieuw is bij een bundel gaan de wetten, dossiers en artikelen erin als vraag naar de API,
-				zonder de aantekeningen.
+				browser die opslag niet zelf te wissen. Een bundel als bestand of als link maakt u zelf, net
+				als een link naar de gevolgde onderwerpen; zo'n link draagt de bundel of de onderwerpen in
+				het deel na het hekje, dat de browser niet meestuurt. Om nieuwe stukken bij een onderwerp te
+				vinden, gaan de woorden als zoekterm naar de API; voor wat er nieuw is bij een bundel gaan
+				de wetten, dossiers en artikelen erin als vraag naar de API, zonder de aantekeningen.
 			</p>
 		</div>
 

@@ -4,7 +4,7 @@
 import { formatCount } from '$lib/text/getal';
 import { isBill, motionOrAmendment } from '$lib/text/document-kind';
 import { NL } from '$lib/text/collator';
-import { textOf } from '$lib/text/words';
+import { plural, textOf } from '$lib/text/words';
 import { naamVan, naamVanId } from '$lib/bron/menselijk';
 import { ifExists, report } from '$lib/api/errors';
 import { geteld } from '$lib/api/decisions';
@@ -246,7 +246,7 @@ async function touched(
 		rows: found.items.map((i) => ({
 			ref: { collection: 'instruments', key: i.key },
 			title: i.citation_title ?? i.title ?? naamVan('instruments', i),
-			context: `${formatCount(i.count)} stukken`,
+			context: `${formatCount(i.count)} ${plural(i.count, 'stuk', 'stukken')}`,
 			filterGroup: filterGroupOf('instruments', i.key, { bwb_id: i.bwb_id })
 		}))
 	};

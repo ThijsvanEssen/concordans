@@ -72,7 +72,11 @@
 		font-size: var(--t-body);
 		line-height: var(--lh-snug);
 		color: var(--ink);
-		text-decoration: underline;
+		text-decoration: none;
+	}
+	/* As the lines of Actueel under it: underlined where the pointer is, not at rest (B38). */
+	.open-motions :global(a:hover) {
+		text-decoration-line: underline;
 		text-decoration-color: var(--rule-strong);
 		text-underline-offset: 3px;
 	}

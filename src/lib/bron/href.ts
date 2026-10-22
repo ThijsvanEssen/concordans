@@ -42,6 +42,12 @@ export function exploreMode(params: URLSearchParams): Mode {
 export const modeOf = (url: URL): Mode | null =>
 	isExplorePath(url.pathname) ? exploreMode(exploreUrl(url).searchParams) : null;
 
+/** The address opens a bron: its readable address, or /explore with ?focus. */
+export const hasFocus = (url: URL): boolean =>
+	url.pathname === '/explore'
+		? Boolean(url.searchParams.get('focus'))
+		: isExplorePath(url.pathname);
+
 /**
  * A bron as the interface holds it: its node key, and for a dossier also its number
  * (`37020-XV`, the node's `label`), which the API takes and a link carries.

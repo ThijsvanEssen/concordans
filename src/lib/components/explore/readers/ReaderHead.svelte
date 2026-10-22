@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { joinParts } from '$lib/text/words';
+	import { titleParts } from './title-parts';
 	// The head of every reader, one form (Thijs, 10 Oct: "gelijke experience op gelijke
 	// pagina's"): the line of the kind or the place of the bron, the title, what stands under
 	// the title, and the status line with the actions at its right, in that order and with the
@@ -86,7 +87,7 @@
 	<!-- A break may fall after a colon (an ECLI); copying keeps the text as it is. -->
 	<!-- The page's one h1: the bron (UX-toets 10 Oct, #21). -->
 	<h1 class="reader-title">
-		{#each title.split(/(?<=:)/) as part, i (i)}{#if i}<wbr />{/if}{part}{/each}
+		{#each titleParts(title) as part, i (i)}{#if i}<wbr />{/if}{part}{/each}
 	</h1>
 	{#if onderTitel}<div class="reader-onder">{@render onderTitel()}</div>{/if}
 	<!-- The status, then the actions on a row of their own: the words have the column's width,

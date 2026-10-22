@@ -3,6 +3,13 @@
 /** A count: `1.104`. */
 export const formatCount = (n: number): string => n.toLocaleString('nl-NL');
 
+/** A count the list holds more than: `meer dan 250`, never `250+` (B33); else `250`. */
+export const atLeast = (n: number, more: boolean): string =>
+	more ? `meer dan ${formatCount(n)}` : formatCount(n);
+
+/** Whether a count says more than it holds (`atLeast`): "Alle meer dan 30" reads wrong. */
+export const isAtLeast = (label: string): boolean => label.startsWith('meer dan ');
+
 /** A share or a measure with at most `decimals` decimals: `12,5`. */
 export const formatDecimal = (n: number, decimals = 1): string =>
 	n.toLocaleString('nl-NL', { maximumFractionDigits: decimals });

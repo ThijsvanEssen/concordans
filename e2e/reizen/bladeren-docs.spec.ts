@@ -33,6 +33,13 @@ for (const kind of ['Uitspraken', 'Stemmingen', 'Kamerleden', 'Toezeggingen'])
 		).toBeVisible();
 	});
 
+test('a bare collection typed in the bar opens its list, named as its kind', async ({ page }) => {
+	await page.goto('/uitspraken');
+	await expect(page).toHaveURL(/\/explore\?mode=index&kind=judgments$/);
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Bronnen: Uitspraken');
+	await expect(page).toHaveTitle('Uitspraken, Concordans');
+});
+
 test('the documentation leads to the method and the keys', async ({ page }) => {
 	await page.goto('/docs');
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Documentatie');

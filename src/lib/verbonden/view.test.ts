@@ -99,7 +99,7 @@ describe('the panel under the filter', () => {
 			...groups,
 			{ ...groups[groups.length - 1], id: 'x', total: undefined, capped: true }
 		];
-		expect(countLine(afgekapt, EMPTY_FILTER)).toBe('1.099+ verbindingen');
+		expect(countLine(afgekapt, EMPTY_FILTER)).toBe('meer dan 1.099 verbindingen');
 		expect(filterGroups(groups, f).map((g) => g.id)).toEqual(['cited-by']);
 		expect(
 			hiddenByGroup(

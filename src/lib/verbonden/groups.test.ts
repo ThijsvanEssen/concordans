@@ -107,7 +107,7 @@ describe('buildGroups', () => {
 		})) as unknown as Neighbor[];
 		const group = buildGroups('articles', many).find((g) => g.id === 'refers-to')!;
 		expect(countLabel(group)).toBe('30');
-		expect(countLabel({ ...group, capped: true })).toBe('30+');
+		expect(countLabel({ ...group, capped: true })).toBe('meer dan 30');
 		const totals = new Map([['REFERS_TO/articles/outbound', 1412]]);
 		const counted = buildGroups('articles', many, totals).find((g) => g.id === 'refers-to')!;
 		expect(counted.capped).toBe(false);

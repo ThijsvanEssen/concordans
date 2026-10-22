@@ -24,6 +24,7 @@
 	import Entrances from '$lib/components/home/Entrances.svelte';
 	import { START } from '$lib/components/home/start';
 	import { takeServerField } from '$lib/seo/server-text';
+	import { SEARCH_FRAGMENT } from '$lib/seo/moved';
 
 	// Four ways in to search, each with the glyphs of what it holds.
 	const SCOPES: {
@@ -70,9 +71,11 @@
 	const typed = takeServerField();
 	const query = page.url.searchParams.get('q') || typed.query;
 	// After the first navigation, which sets the focus on the page itself: on the field, or
-	// on the link the reader had reached in the server's page.
+	// on the link the reader had reached in the server's page; on the field too for `/#zoeken`
+	// (where /zoeken goes, $lib/seo/moved.ts).
 	afterNavigate(() => {
-		const { focused, link } = typed;
+		const { link } = typed;
+		const focused = typed.focused || page.url.hash === `#${SEARCH_FRAGMENT}`;
 		typed.focused = false;
 		typed.link = null;
 		if (link) {

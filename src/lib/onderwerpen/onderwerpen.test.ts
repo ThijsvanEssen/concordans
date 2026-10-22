@@ -3,6 +3,7 @@ import {
 	visitDossier,
 	deelAdres,
 	dossiersFromParams,
+	gedeeldeParams,
 	followDossier,
 	followsDossier,
 	haalTermWeg,
@@ -102,14 +103,24 @@ describe('onderwerpen', () => {
 		expect(isNieuw('2026-10-09', null)).toBe(false);
 	});
 
-	it('carries the topics in the address there and back', () => {
-		const adres = deelAdres([
-			{ termen: ['kunstmatige intelligentie', 'AI'] },
-			{ termen: ['stikstof'] }
-		]);
-		expect(topicsOf(new URL(adres, 'https://x').searchParams)).toEqual([
+	it('carries the topics in the fragment of the address there and back (B19)', () => {
+		const adres = new URL(
+			deelAdres([{ termen: ['kunstmatige intelligentie', 'AI'] }, { termen: ['stikstof'] }]),
+			'https://x'
+		);
+		// The words never reach the server: no query, only the fragment.
+		expect(adres.search).toBe('');
+		expect(topicsOf(gedeeldeParams(adres))).toEqual([
 			['kunstmatige intelligentie', 'AI'],
 			['stikstof']
+		]);
+	});
+
+	it('reads a link of before, with the topics in its query', () => {
+		const oud = new URL('https://x/onderwerpen?onderwerp=stikstof&dossier=36600-VII');
+		expect(topicsOf(gedeeldeParams(oud))).toEqual([['stikstof']]);
+		expect(dossiersFromParams(gedeeldeParams(oud))).toEqual([
+			{ number: '36600-VII', title: '36600-VII' }
 		]);
 	});
 
@@ -136,8 +147,8 @@ describe('onderwerpen', () => {
 		expect(volgtWet(cbw)).toBe(false);
 		expect(volgtWet({ ...cbw, artikel: '3' })).toBe(true);
 		const adres = new URL(deelAdres(lees()), 'https://x');
-		expect(adres.search).toBe('?onderwerp=Cyberbeveiligingswet&wet=BWBR0052872%2F3');
-		expect(wettenUitParams(adres.searchParams)).toEqual([
+		expect(adres.hash).toBe('#onderwerp=Cyberbeveiligingswet&wet=BWBR0052872%2F3');
+		expect(wettenUitParams(gedeeldeParams(adres))).toEqual([
 			{ bwb: 'BWBR0052872', titel: 'BWBR0052872', artikel: '3' }
 		]);
 		expect(wettenUitParams(new URLSearchParams('wet=BWBR0005289/6:162&wet=onzin'))).toEqual([
@@ -182,7 +193,7 @@ describe('a dossier followed (API 0.80.1, #866)', () => {
 
 	it('is shared by its number and stops being followed like any topic', () => {
 		followDossier({ number: '36600-VII', title: 'Begroting' }, '2026-10-21');
-		expect(deelAdres(lees())).toBe('/onderwerpen?dossier=36600-VII');
+		expect(deelAdres(lees())).toBe('/onderwerpen#dossier=36600-VII');
 		expect(
 			dossiersFromParams(new URLSearchParams('dossier=36600-VII&dossier=36600-vii&dossier=x'))
 		).toEqual([{ number: '36600-VII', title: '36600-VII' }]);

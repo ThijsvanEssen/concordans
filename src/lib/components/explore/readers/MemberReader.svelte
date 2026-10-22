@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { atLeast } from '$lib/text/getal';
 	import { choiceRank } from '$lib/components/parliamentary/stemming';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
@@ -368,7 +369,7 @@
 				<Sectie
 					title={(m.government_functions ?? []).length > 0 ? 'Als Kamerlid' : 'Stemgeschiedenis'}
 					collection="decisions"
-					aantal={apart ? `${alle.length}${inOffice!.next != null ? '+' : ''}` : stemmen.count}
+					aantal={apart ? atLeast(alle.length, inOffice!.next != null) : stemmen.count}
 				>
 					{#each groups as group (`${group.party}|${group.ambt}`)}
 						{#if groups.length > 1 || group.ambt}
@@ -383,7 +384,7 @@
 											>, als {group.ambt} en Kamerlid</span
 										>{/if}</span
 								>
-								<span class="party-total">{group.total}{group.meer ? '+' : ''} stemmen</span>
+								<span class="party-total">{atLeast(group.total, !!group.meer)} stemmen</span>
 							</div>
 						{/if}
 						{#each group.byChoice as [choice, rows] (choice)}

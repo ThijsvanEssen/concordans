@@ -7,6 +7,7 @@
 	// A click on the canvas selects a bron: the reader follows, the canvas stays. A double
 	// click replaces the canvas with the bron's own neighbourhood.
 	import { notHeld } from '$lib/text/coverage';
+	import { categoryLabel } from '$lib/components/explore/index/categories';
 	import { onDestroy, onMount, setContext, untrack } from 'svelte';
 	import { get } from 'svelte/store';
 	import { page } from '$app/state';
@@ -121,7 +122,7 @@
 	} from './explore-url';
 	import { PANELS, panelOfKey, verbondenInView, type Panel } from './panels';
 	import { citedByName, pathByName } from '$lib/bron/law-name';
-	import { followServerMove, isEnactedLawPath } from '$lib/bron/moved-law';
+	import { followServerMove } from '$lib/bron/moved-law';
 	import { ColumnWidths, type Column } from './column-widths.svelte';
 	import { NetwerkComposer } from './netwerk-compose.svelte';
 	import { OverlayCounts } from './overlay-counts.svelte';
@@ -607,14 +608,17 @@
 	});
 
 	/** The message for a bron the dataset does not hold. */
-	function missing(key: string) {
+	function missing(id: string) {
 		if (followServerMove(page.url.pathname)) return;
 		wachtOp = null;
 		focusMissing = true;
-		// A law of the Staatsblad the server served itself is not in the data: by its publication.
-		const name =
-			pad && isEnactedLawPath(page.url.pathname) ? nameOfPad(pad, lawNameOf) : `'${key}'`;
-		focusNotHeld = `${notHeld(name)}.`;
+		focusNotHeld = `${notHeld(naamVanAdres(id))}.`;
+	}
+
+	/** A bron as its address names it (an ECLI, a law's id, a law by its name), never by the key of the data. */
+	function naamVanAdres(id: string | null): string {
+		const named = pad ?? parsePad(padOfFocus(id ?? '') ?? '');
+		return named ? nameOfPad(named, lawNameOf) : 'Deze bron';
 	}
 
 	async function loadFocus(id: string) {
@@ -628,7 +632,7 @@
 		lichtGeladen = null;
 		const target = parseNodeId(id);
 		if (!target) {
-			focusNotHeld = `Bron '${id}' niet gevonden.`;
+			focusNotHeld = `${notHeld('Deze bron')}.`;
 			return;
 		}
 		// A bron already on the canvas (a click on it) needs no wait: it is there.
@@ -663,7 +667,7 @@
 				const first = await store.peekNode(target.collection, target.key);
 				if (id !== loadedFocus) return;
 				if (!first) {
-					missing(target.key);
+					missing(id);
 					return;
 				}
 				store.focusNode(first.id);
@@ -681,7 +685,7 @@
 				if (node) {
 					store.focusNode(node.id);
 					graphView?.inBeeld();
-				} else missing(target.key);
+				} else missing(id);
 				return;
 			}
 			// A wet, fractie, commissie or dossier is a hull, not a scattered handful of
@@ -710,13 +714,13 @@
 			});
 			if (id !== loadedFocus) return;
 			if (!node) {
-				missing(target.key);
+				missing(id);
 				return;
 			}
 			store.focusNode(node.id);
 			if (inGraph) await deepen(node, replace);
 		} catch (err) {
-			if (isNotFound(err)) missing(target.key);
+			if (isNotFound(err)) missing(id);
 			else showFocusError(err, target.key);
 		}
 	}
@@ -731,9 +735,9 @@
 		if (isAborted(err)) return;
 		wachtOp = null;
 		report('Verkenner focus', err);
-		const name = pad ? nameOfPad(pad, lawNameOf) : `'${key}'`;
 		const huidig = untrack(() => selectedNode);
 		const asked = loadedFocus;
+		const name = naamVanAdres(asked);
 		if (huidig && (huidig.id === asked || linkIdOf(huidig) === asked || huidig.key === key)) {
 			showNetworkFailure({ what: 'Het netwerk', error: err, retry: () => retryFocus(asked) });
 			return;
@@ -913,7 +917,7 @@
 	);
 
 	const pageTitle = $derived.by(() => {
-		if (mode === 'index') return siteTitle('Bronnen');
+		if (mode === 'index') return siteTitle(categoryLabel(indexKind));
 		if (nietGevonden) return siteTitle('Niet gevonden');
 		// While the next bron is on its way the reader still holds the previous one: its name
 		// would be the new page's (a screen reader announces the title after each step).

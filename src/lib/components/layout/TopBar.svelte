@@ -2,7 +2,7 @@
 	import { clickOutside } from '$lib/actions/top-layer';
 	import { BUNDLES_PATH } from '$lib/map/page';
 	import { page } from '$app/stores';
-	import { modeOf } from '$lib/bron/href';
+	import { hasFocus, modeOf } from '$lib/bron/href';
 	import { goto } from '$app/navigation';
 	import { modKey } from '$lib/util/platform';
 	import Wordmark from './Wordmark.svelte';
@@ -10,10 +10,12 @@
 	let { onSearchOpen }: { onSearchOpen?: () => void } = $props();
 
 	const isHome = $derived($page.url.pathname === '/');
-	// The network and the index share the route /explore; `mode=index` tells them apart.
+	// The network, the index and the page of a bron share the route /explore. A bron's page
+	// is one of the bronnen, its network beside it or not; Samenhang is the network alone.
 	const mode = $derived(modeOf($page.url));
-	const isIndex = $derived(mode === 'index');
-	const isExplore = $derived(mode !== null && mode !== 'index');
+	const isBron = $derived(mode !== null && hasFocus($page.url));
+	const isIndex = $derived(mode === 'index' || isBron);
+	const isExplore = $derived(mode !== null && !isIndex);
 	const isActueel = $derived($page.url.pathname.startsWith('/actueel'));
 	const isBundles = $derived($page.url.pathname.startsWith(BUNDLES_PATH));
 	const isOnderwerpen = $derived($page.url.pathname.startsWith('/onderwerpen'));

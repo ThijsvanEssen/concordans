@@ -9,7 +9,7 @@
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	// Gevolgde onderwerpen: per topic what came into Actueel since the visit before. A topic is
 	// words, or a law or an article of one (`?wet=`, API 0.79.55). The topics are kept in this
-	// browser; an address with `?onderwerp=` shows someone else's without touching the own
+	// browser; an address with `#onderwerp=` shows someone else's without touching the own
 	// list, and can be followed in one step. A topic with nothing in its period shows the last
 	// that came in before it, as the API finds them (`huur`: nothing since September).
 	import { page } from '$app/state';
@@ -28,6 +28,7 @@
 	import {
 		deelAdres,
 		dossiersFromParams,
+		gedeeldeParams,
 		followedDossierName,
 		isNieuw,
 		isWords,
@@ -63,15 +64,16 @@
 
 	const today = vandaag();
 
+	const gedeeldeP = $derived(gedeeldeParams(page.url));
 	const gedeeld = $derived<Onderwerp[]>([
-		...topicsOf(page.url.searchParams).map((termen) => ({ termen, vorige: null, gezien: null })),
-		...wettenUitParams(page.url.searchParams).map((wet) => ({
+		...topicsOf(gedeeldeP).map((termen) => ({ termen, vorige: null, gezien: null })),
+		...wettenUitParams(gedeeldeP).map((wet) => ({
 			termen: [wetNaam(wet)],
 			wet,
 			vorige: null,
 			gezien: null
 		})),
-		...dossiersFromParams(page.url.searchParams).map((dossier) => ({
+		...dossiersFromParams(gedeeldeP).map((dossier) => ({
 			termen: [followedDossierName(dossier)],
 			dossier,
 			vorige: null,

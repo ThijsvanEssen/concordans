@@ -15,7 +15,7 @@ import {
 	isRelation,
 	type Collection
 } from '$lib/vocabulary';
-import { formatCount } from '$lib/text/getal';
+import { atLeast, formatCount } from '$lib/text/getal';
 import { rowOfNeighbor, type Row } from './rows';
 import { type Neighbor } from '$lib/api/nodes';
 import type { JudgmentOrder } from './loaders';
@@ -1053,11 +1053,11 @@ export function buildGroups(
 export const groupCount = (group: Pick<Group, 'rows' | 'total'>) =>
 	group.total != null && group.total >= group.rows.length ? group.total : group.rows.length;
 
-/** `12`, `1.064`, or `30+` for a group the API cut off. */
+/** `12`, `1.064`, or `meer dan 30` for a group the API cut off. */
 export const countLabel = (group: Pick<Group, 'rows' | 'capped' | 'total'>) =>
 	group.total != null && group.total >= group.rows.length
 		? formatCount(group.total)
-		: `${formatCount(group.rows.length)}${group.capped ? '+' : ''}`;
+		: atLeast(group.rows.length, !!group.capped);
 
 /** A de-word and a het-word: "deze richtlijn", "dit verdrag". */
 const DIT: Record<string, string> = {

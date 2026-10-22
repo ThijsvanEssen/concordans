@@ -3,7 +3,8 @@
 // panel that fails to draw is PanelBoundary's.
 import type { ClientInit, HandleClientError } from '@sveltejs/kit';
 import { kenmerkOf, report } from '$lib/api/errors';
-import { BUNDLE_PARAM, movedAddress, withoutBundle } from '$lib/map/page';
+import { BUNDLE_PARAM, withoutBundle } from '$lib/map/page';
+import { movedAddress } from '$lib/seo/moved';
 import { kaart } from '$lib/map/map.svelte';
 
 /** A promise rejected with no one to handle it: reported once, in our words. */
@@ -13,8 +14,9 @@ export function onUnhandledRejection(event: PromiseRejectionEvent) {
 }
 
 /**
- * An address of the bundels of before ($lib/map/page.ts) replaced in the bar by the one
- * of now, its fragment (a shared bundel) with it, before the app reads it: as a 301 would.
+ * An address that moved ($lib/seo/moved.ts: a bare collection, /zoeken, the bundels of
+ * before) replaced in the bar by the one of now, its fragment (a shared bundel) with it,
+ * before the app reads it: as a 301 would.
  */
 export function moveAddress(location: Location, history: History) {
 	const moved = movedAddress(new URL(location.href));

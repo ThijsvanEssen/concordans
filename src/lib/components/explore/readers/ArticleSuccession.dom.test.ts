@@ -59,6 +59,23 @@ describe('ArticleSuccession', () => {
 		expect(screen.getByText('2.8.6, 2')).toBeTruthy();
 	});
 
+	it('puts several new articles each on a line of their own, with their Vergelijk (B30)', () => {
+		const second = {
+			...newSv,
+			article: { ...newSv.article, id: 'articles/stb_2026_56_1_4_1', article_number: '1.4.1' }
+		};
+		const { container } = render(ArticleSuccession, {
+			successors: [newSv, second],
+			predecessors: [],
+			own: sv
+		});
+		const items = container.querySelectorAll('.succession__items li');
+		expect(items).toHaveLength(2);
+		for (const li of items) expect(li.textContent).toMatch(/Vergelijk$/);
+		expect(container.querySelector('.succession__line')!.textContent).not.toContain('Vergelijk');
+		expect(container.textContent).not.toMatch(/Vergelijk,/);
+	});
+
 	it('opens the comparison of the old and the new text in place, and closes it again', async () => {
 		render(ArticleSuccession, { successors: [newSv], predecessors: [], own: sv });
 		const compare = screen.getByRole('link', { name: 'Vergelijk' });

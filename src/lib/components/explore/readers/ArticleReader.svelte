@@ -411,14 +411,20 @@
 			: null
 	);
 
-	// Bewaar in the head follows the place chosen (#lid-3): that lid, else the whole article.
-	const bewaarHier = $derived.by(() => {
+	// Bewaar and Citeer in the head follow the place chosen (#lid-3): that lid, else the whole
+	// article. Both name the same place.
+	const hier = $derived.by(() => {
 		if (!citation || !forms) return null;
 		// A definition without a letter is a place too, named by its term (Cbw 1).
 		const parts = shownVersion?.parts ?? loaded?.article.parts ?? [];
 		const deel = anchor ? placeCitation(anchor, parts) : null;
 		const plaats = deel && (deel.lid || deel.onderdelen?.length || deel.definitie) ? anchor! : '';
-		const f = plaats ? citeArticle({ ...citation, ...deel }) : forms;
+		const date = shown?.from ? new Date(shown.from) : undefined;
+		return { plaats, deel, forms: plaats ? citeArticle({ ...citation, ...deel, date }) : forms };
+	});
+	const bewaarHier = $derived.by(() => {
+		if (!citation || !hier) return null;
+		const { plaats, deel, forms: f } = hier;
 		return {
 			item: bewaarItem(
 				node.id,
@@ -641,8 +647,8 @@
 			acties={{
 				bewaar: bewaarHier?.item ?? null,
 				wat: bewaarHier?.wat ?? '',
-				cite: forms ? citeItems(forms, readLink) : [],
-				naam: forms?.kort ?? '',
+				cite: hier ? citeItems(hier.forms, readLink) : [],
+				naam: hier?.forms.kort ?? '',
 				bron: officialUrl && officialName ? { label: officialName, href: officialUrl } : null,
 				tekst: () => a.text ?? ''
 			}}

@@ -1,0 +1,13 @@
+{
+	"/wetten": "/explore?mode=index&kind=instruments",
+	"/uitspraken": "/explore?mode=index&kind=judgments",
+	"/dossiers": "/explore?mode=index&kind=dossiers",
+	"/kamerstukken": "/explore?mode=index&kind=documents",
+	"/stemmingen": "/explore?mode=index&kind=decisions",
+	"/leden": "/explore?mode=index&kind=members",
+	"/fracties": "/explore?mode=index&kind=factions",
+	"/commissies": "/explore?mode=index&kind=committees",
+	"/kabinetten": "/explore?mode=index&kind=cabinets",
+	"/toezeggingen": "/explore?mode=index&kind=commitments",
+	"/zoeken": "/#zoeken"
+}

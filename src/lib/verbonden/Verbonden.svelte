@@ -28,7 +28,7 @@
 		withFilterGroup,
 		type VerbondenFilter
 	} from './filter';
-	import { formatCount } from '$lib/text/getal';
+	import { formatCount, isAtLeast } from '$lib/text/getal';
 	import { countLabel, groupCount, type Group } from './groups';
 	import { csvName, download, exportLabel, exportRows, rowsToCsv } from './export';
 	import { caseNumberOf, repeatedTitles, rowKey, type Row } from './rows';
@@ -558,7 +558,9 @@
 
 		{#if verbonden.groups.length > 0 && !empty}
 			<div class="foot">
-				<TekstLink href={tableHref}>Alle {total} in een tabel</TekstLink>
+				<TekstLink href={tableHref}
+					>{isAtLeast(total) ? 'Alle verbindingen' : `Alle ${total}`} in een tabel</TekstLink
+				>
 				<!-- The part it exports is known once every row is in: asked on the way to the click. -->
 				<TekstLink
 					onclick={exportCsv}

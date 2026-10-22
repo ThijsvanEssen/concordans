@@ -106,7 +106,7 @@ export function nameOfPad(p: Pad, lawNameOf: (bwb: string) => string | null = ()
 		case 'artikel':
 			return `Artikel ${p.nummer} van ${stbCitation(p.wet) ?? lawNameOf(p.wet) ?? p.wet}`;
 		case 'wet':
-			return stbCitation(p.wet) ?? lawNameOf(p.wet) ?? padHref(p);
+			return stbCitation(p.wet) ?? lawNameOf(p.wet) ?? `Wet ${p.wet}`;
 		case 'kamerstuk':
 			return (
 				kamerstukName({
@@ -131,6 +131,14 @@ export function nameOfPad(p: Pad, lawNameOf: (bwb: string) => string | null = ()
 			return `Zaak ${p.nummer}`;
 		case 'bijlage':
 			return `Bijlage ${p.label} van ${p.wet}`;
+		case 'activiteit':
+			return `Activiteit ${p.nummer}`;
+		case 'kabinet':
+			return `Kabinet ${p.key}`;
+		case 'fractie':
+			return `Fractie ${p.key}`;
+		case 'stemming':
+			return 'Deze stemming';
 		default:
 			return padHref(p);
 	}

@@ -10,6 +10,7 @@ import {
 	buildOpenHref,
 	exploreMode,
 	focusOf,
+	hasFocus,
 	indexHref,
 	modeOf,
 	refOf
@@ -174,6 +175,20 @@ describe('modeOf', () => {
 		['/', null]
 	])('%s is %s', (path, mode) => {
 		expect(modeOf(new URL(path, 'https://concordans.nl'))).toBe(mode);
+	});
+});
+
+describe('hasFocus', () => {
+	// The page of a bron is one of the bronnen in the menu, not Samenhang (B27).
+	it.each([
+		['/dossiers/36799', true],
+		['/leden/rob-jetten', true],
+		['/explore?focus=articles/a_1', true],
+		['/explore', false],
+		['/explore?netwerk=a', false],
+		['/actueel', false]
+	])('%s is %s', (path, bron) => {
+		expect(hasFocus(new URL(path, 'https://concordans.nl'))).toBe(bron);
 	});
 });
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { BUNDLES_PATH, bundlePageHref, movedAddress } from './page';
+import { BUNDLES_PATH, bundlePageHref, movedBundleAddress } from './page';
 
-const moved = (href: string) => movedAddress(new URL(href, 'https://concordans.nl'));
+const moved = (href: string) => movedBundleAddress(new URL(href, 'https://concordans.nl'));
 
 describe('the addresses of the bundels (decision 19)', () => {
 	it('gives the overview and a bundel’s own page under /bundels', () => {

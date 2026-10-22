@@ -26,7 +26,7 @@ const OLD_OVERVIEW = /^\/gemarkeerd\/?$/;
 const OLD_PAGE = /^\/gemarkeerd\/bundel\/?$/;
 
 /** Where an address of before now is, with its fragment; null for any other address. */
-export function movedAddress(url: URL): string | null {
+export function movedBundleAddress(url: URL): string | null {
 	if (OLD_OVERVIEW.test(url.pathname)) return `${BUNDLES_PATH}${url.search}${url.hash}`;
 	if (!OLD_PAGE.test(url.pathname)) return null;
 	const id = url.searchParams.get('id');

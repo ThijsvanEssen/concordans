@@ -275,8 +275,10 @@ export const vensterVan = (vorige: string | null, recent: string) =>
 export const isNieuw = (datum: string, vorige: string | null) => !!vorige && datum > vorige;
 
 // ── The address ────────────────────────────────────────────────────────────
-// `?onderwerp=kunstmatige intelligentie|AI&onderwerp=stikstof`: one parameter per topic, its
-// words apart by `|`, which a title rarely holds.
+// `#onderwerp=kunstmatige intelligentie|AI&onderwerp=stikstof`: one parameter per topic, its
+// words apart by `|`, which a title rarely holds. In the fragment, as a bundel's link has
+// its bundel (`#m=`): the browser does not send it, so the words stay out of the server's
+// log (B19). A link of before, with them in the query, opens the same.
 
 export const topicParam = (termen: string[]) => termen.map(normaal).join('|');
 
@@ -300,7 +302,14 @@ export function deelAdres(lijst: Pick<Onderwerp, 'termen' | 'wet' | 'dossier'>[]
 		if (o.dossier) p.append('dossier', o.dossier.number);
 		else if (o.wet) p.append('wet', naarWetParam(o.wet));
 		else p.append('onderwerp', topicParam(o.termen));
-	return `/onderwerpen?${p}`;
+	return `/onderwerpen#${p}`;
+}
+
+/** The topics an address shares: in its fragment, or in its query (a link of before). */
+export function gedeeldeParams(url: URL): URLSearchParams {
+	const p = new URLSearchParams(url.search);
+	for (const [k, v] of new URLSearchParams(url.hash.slice(1))) p.append(k, v);
+	return p;
 }
 
 // `?wet=BWBR0052872` a law, `?wet=BWBR0052872/3` an article of it (a number may hold a `:`).

@@ -4,7 +4,7 @@
 // loading, hooks.client.ts puts the address of now in the bar.
 import type { Reroute } from '@sveltejs/kit';
 import { parsePad } from '$lib/bron/address';
-import { movedAddress } from '$lib/map/page';
+import { movedAddress } from '$lib/seo/moved';
 // Every answer of the API keeps the addresses and titles it gives, on every page.
 import '$lib/bron/kept-paths';
 

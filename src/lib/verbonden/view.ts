@@ -6,7 +6,7 @@ import type { Collection } from '$lib/vocabulary';
 import { relationLabel } from './relation-words';
 import { sumLidCounts } from '$lib/api/nodes';
 import { hiddenByGroup, rowPasses, type FilterGroup, type VerbondenFilter } from './filter';
-import { formatCount } from '$lib/text/getal';
+import { atLeast, formatCount } from '$lib/text/getal';
 import { groupCount, type Group } from './groups';
 import type { Row } from './rows';
 
@@ -124,24 +124,23 @@ export function countLine(
 	const total = totalCount(groups);
 	const shown = shownCount(groups, f, wachtend);
 	const noun = plural(total, 'verbinding', 'verbindingen');
-	const heel = `${formatCount(total)}${minstens(groups)}`;
+	const heel = atLeast(total, minstens(groups));
 	return shown === total
 		? `${heel} ${noun}`
 		: `${shownLabel(groups, f, wachtend)} van ${heel} ${noun}`;
 }
 
-// A group the API cut off counts what it holds: the sum is at least, as its own `30+`.
-const minstens = (gs: Group[]) => (gs.some(afgekapt) ? '+' : '');
+// A group the API cut off counts what it holds: the sum is more, as its own `meer dan 30`.
+const minstens = (gs: Group[]) => gs.some(afgekapt);
 
-/** The number after the filter as the count line writes it: `164`, or `164+`. */
+/** The number after the filter as the count line writes it: `164`, or `meer dan 164`. */
 export const shownLabel = (
 	groups: Group[],
 	f: VerbondenFilter,
 	wachtend: ReadonlySet<string> = new Set()
-) =>
-	`${formatCount(shownCount(groups, f, wachtend))}${minstens(filterGroups(groups, f, wachtend))}`;
+) => atLeast(shownCount(groups, f, wachtend), minstens(filterGroups(groups, f, wachtend)));
 
-/** A group with more rows than it holds and no total from the API (`30+`). */
+/** A group with more rows than it holds and no total from the API (`meer dan 30`). */
 const afgekapt = (g: Group) => !!g.capped && !(g.total != null && g.total >= g.rows.length);
 
 /** Per kind of bron, the number of verbindingen, the API's totals where they hold. */

@@ -171,7 +171,7 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--s-1) var(--s-5);
-		justify-content: flex-start;
+		justify-content: space-between;
 		align-items: center;
 		padding: var(--s-5) var(--s-6);
 		font-family: var(--font-serif);
@@ -187,8 +187,9 @@
 	}
 
 	@media (max-width: 640px) {
+		/* The sides alone: the rows keep their own room above and below (B29). */
 		.container {
-			padding: 0 var(--s-5);
+			padding-inline: var(--s-5);
 		}
 		.foot-grid {
 			grid-template-columns: 1fr;

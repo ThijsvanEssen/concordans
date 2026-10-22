@@ -443,8 +443,10 @@
 		border-left: 2px solid var(--rule-strong);
 		cursor: auto;
 	}
+	/* Its rule runs on from the text's through the gap between them: one line under the row. */
 	.acties {
-		padding-top: var(--s-2);
+		margin-left: calc(-1 * var(--s-2));
+		padding: var(--s-2) 0 0 var(--s-2);
 		border-bottom: 1px solid var(--rule);
 	}
 	.noot,
@@ -497,7 +499,8 @@
 		}
 		.acties {
 			grid-column: 3;
-			padding-top: 0;
+			margin-left: 0;
+			padding: 0;
 		}
 		.met-acties .tekst {
 			border-bottom: 0;

@@ -119,23 +119,30 @@
 		/>{:else}{word}<BronLink ref={o.law.id} href={bronHref(o.law.id)}>{o.law.name}</BronLink>{/if}
 {/snippet}
 
+{#snippet item(
+	item: (typeof lines)[number]['items'][number],
+	line: (typeof lines)[number]
+)}<BronLink ref={item.s.article.id} href={bronHref(item.s.article.id)}>{item.name}</BronLink
+	>{#if line.perItem && item.status}<span class="succession__status">&nbsp;({item.status})</span
+		>{/if}
+{/snippet}
+
 {#each lines as line (line.direction)}
 	{@const open = unfolded === line.direction}
+	<!-- More than one: each on a line of its own, its Vergelijk beside it; one stays in the line. -->
+	{@const several = line.items.length + line.outcomes.length > 1}
 	<div class="succession">
 		<p class="succession__line">
 			<span class="succession__label">{LABEL[line.direction]}:</span>
-			{#each line.items as item, i (item.s.article.id)}{#if i > 0},
-				{/if}<BronLink ref={item.s.article.id} href={bronHref(item.s.article.id)}
-					>{item.name}</BronLink
-				>{#if line.perItem && item.status}<span class="succession__status"
-						>&nbsp;({item.status})</span
-					>{/if}{#if line.items.length > 1}{@render compare(
-						item.s.article.id
-					)}{/if}{/each}{#each line.outcomes as o, i (o.law.id)}{#if i > 0},
-				{/if}{@render outcome(o)}{/each}{#if line.shared}<span class="succession__status"
-					>, {line.shared}</span
-				>{/if}
-			{#if line.items.length === 1}{@render compare(line.items[0].s.article.id)}{/if}
+			{#if several}{#if line.shared}<span class="succession__status">{line.shared}</span>{/if}
+			{:else}{#each line.items as it (it.s.article.id)}{@render item(
+						it,
+						line
+					)}{/each}{#each line.outcomes as o (o.law.id)}{@render outcome(
+						o
+					)}{/each}{#if line.shared}<span class="succession__status">, {line.shared}</span>{/if}
+				{#each line.items as it (it.s.article.id)}{@render compare(it.s.article.id)}{/each}
+			{/if}
 			{#if line.rows.length > 0}
 				<button
 					type="button"
@@ -150,6 +157,14 @@
 				>
 			{/each}
 		</p>
+		{#if several}
+			<ul class="succession__items">
+				{#each line.items as it (it.s.article.id)}<li>
+						{@render item(it, line)}{@render compare(it.s.article.id)}
+					</li>{/each}
+				{#each line.outcomes as o (o.law.id)}<li>{@render outcome(o)}</li>{/each}
+			</ul>
+		{/if}
 		{#if open}
 			<dl class="succession__parts">
 				{#each line.rows as row (`${row.old}|${row.place}`)}
@@ -213,6 +228,17 @@
 	}
 	.succession__line .succession__source {
 		color: var(--ink-2);
+	}
+	.succession__items {
+		list-style: none;
+		margin: var(--s-1) 0 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-1);
+	}
+	.succession__items :global(a) {
+		color: var(--ink);
 	}
 	.succession__parts {
 		display: grid;

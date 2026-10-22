@@ -87,6 +87,9 @@ describe('nameOfPad', () => {
 		expect(nameOfPad({ soort: 'artikel', wet: 'BWBR0005289', nummer: '6:163' }, bw6)).toBe(
 			'Artikel 6:163 van Burgerlijk Wetboek Boek 6'
 		);
+		// Never a path or a key of the data (B28).
+		expect(nameOfPad({ soort: 'wet', wet: 'BWBR9999999' })).toBe('Wet BWBR9999999');
+		expect(nameOfPad({ soort: 'stemming', key: 'decision_154df5db' })).toBe('Deze stemming');
 		expect(nameOfPad({ soort: 'artikel', wet: 'STB-2026-56', nummer: '2.8.6' })).toBe(
 			'Artikel 2.8.6 van Stb. 2026, 56'
 		);
