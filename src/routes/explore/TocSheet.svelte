@@ -82,6 +82,10 @@
 			min-width: var(--s-6);
 		}
 	}
+	/* The sheet is called Inhoud already: the column's own caption would say it twice. */
+	.body :global(.nav-kolom__label) {
+		display: none;
+	}
 	.body {
 		flex: 1;
 		min-height: 0;

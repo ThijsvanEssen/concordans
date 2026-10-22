@@ -7,7 +7,6 @@
 	// headings — the same nav-column slot LezenNav fills for a wet. Shares the judgment
 	// request in flight with JudgmentReader (`getJudgmentDetail`'s own cache).
 	import { getJudgmentDetail } from '$lib/api/judgments';
-	import { citationRecord } from '$lib/text/citation-record';
 	import type { GraphNode } from '$lib/graph/types';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';
@@ -17,7 +16,7 @@
 
 	let { selection }: { selection: GraphNode | null } = $props();
 
-	type Item = { id: string; label: string; kind: 'summary' | 'parties' | 'heading' };
+	type Item = { id: string; label: string };
 	/** An overweging (r.o.) by its number, for the list to jump to. */
 	type Ro = { id: string; num: string };
 
@@ -37,16 +36,15 @@
 			const hasParties = judgmentParticipants(j).length > 0;
 
 			const items: Item[] = [];
-			if (j.summary?.trim()) items.push({ id: 'summary', label: 'Samenvatting', kind: 'summary' });
-			if (hasParties) items.push({ id: 'parties', label: 'Partijen', kind: 'parties' });
+			if (j.summary?.trim()) items.push({ id: 'summary', label: 'Samenvatting' });
+			if (hasParties) items.push({ id: 'parties', label: 'Partijen' });
 			// The headings as the reader lays the body out, the text left in the kop included.
 			const ro: Ro[] = [];
 			for (const item of bodyItems(paragraphs.slice(0, signatureStart(paragraphs)))) {
-				if (item.kind === 'heading') items.push({ id: item.id, label: item.text, kind: 'heading' });
+				if (item.kind === 'heading') items.push({ id: item.id, label: item.text });
 				else if (item.kind === 'rov' && item.id) ro.push({ id: item.id, num: item.num });
 			}
 			return {
-				label: citationRecord({ ...j, kind: 'judgment' })?.short ?? j.display_name ?? 'Uitspraak',
 				items,
 				ro,
 				// A conclusion numbers its punten, a judgment its overwegingen (JudgmentReader).
@@ -55,11 +53,6 @@
 		},
 		'Inhoudsopgave'
 	);
-	// While the contents load, or after they failed, the column keeps the name of the uitspraak.
-	const ecliLabel = $derived(
-		(toc.state.status === 'ready' ? toc.state.data?.label : null) ?? selection?.label ?? null
-	);
-
 	const loaded = $derived(toc.state.status === 'ready' ? toc.state.data : null);
 	// The heading and the overweging at the top of the text, marked in the lists and kept in
 	// view in the column.
@@ -83,7 +76,7 @@
 </script>
 
 {#if ecli}
-	<NavKolom label="Inhoud" title={ecliLabel} bind:el={navEl}>
+	<NavKolom bind:el={navEl}>
 		<LoadState state={toc.state} what="De inhoudsopgave" retry={toc.retry}>
 			{#snippet children(toc)}
 				{#if toc && toc.items.length > 0}
@@ -91,7 +84,7 @@
 						{#each toc.items as it, i (i)}
 							<li>
 								<a
-									class="nav-kolom__rij row--{it.kind}"
+									class="nav-kolom__rij"
 									class:is-active={headingAt.current === it.id}
 									aria-current={headingAt.current === it.id ? 'location' : undefined}
 									href="#{it.id}"
@@ -102,7 +95,7 @@
 					</ol>
 					{#if toc.ro.length > 0}
 						<!-- The springlijst: every overweging by its number. -->
-						<nav class="ro" aria-label={toc.roLabel}>
+						<div class="ro" role="group" aria-label={toc.roLabel}>
 							<span class="ro__label">{toc.roLabel}</span>
 							<ol class="ro__lijst">
 								{#each toc.ro as r (r.id)}
@@ -117,7 +110,7 @@
 									</li>
 								{/each}
 							</ol>
-						</nav>
+						</div>
 					{/if}
 				{:else}
 					<p class="nav-kolom__note">Geen indeling.</p>
@@ -174,19 +167,5 @@
 			justify-content: center;
 			min-height: var(--s-6);
 		}
-	}
-
-	.row--summary,
-	.row--parties {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 400;
-		color: var(--ink-3);
-	}
-
-	.row--heading {
-		font-family: var(--font-serif);
-		font-weight: 600;
-		color: var(--ink);
 	}
 </style>

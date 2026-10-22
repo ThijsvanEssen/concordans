@@ -1,7 +1,5 @@
 <script lang="ts">
 	import { gewoneKlik } from '$lib/actions/klik';
-	import { capitalize } from '$lib/text/words';
-	import { naamVan } from '$lib/bron/menselijk';
 	import NavKolom from './NavKolom.svelte';
 	import { replaceState } from '$app/navigation';
 	import { page } from '$app/state';
@@ -15,6 +13,7 @@
 	import { load } from '$lib/util/load.svelte';
 	import { keepMarkedInView } from './nav-column';
 	import { followSections } from './toc-position.svelte';
+	import { niveaus } from './toc-niveaus';
 
 	let { selection }: { selection: GraphNode | null } = $props();
 
@@ -27,15 +26,12 @@
 			if (!k) return null;
 			const doc = await getDocument(k);
 			return {
-				title: doc.title ?? naamVan('documents', doc),
-				kind: doc.kind ?? null,
-				sections: (doc.sections ?? []) as Section[]
+				sections: niveaus((doc.sections ?? []) as Section[])
 			};
 		},
 		'Inhoudsopgave'
 	);
 	const loaded = $derived(toc.state.status === 'ready' ? toc.state.data : null);
-	// While the contents load, or after they failed, the column keeps the name of the stuk.
 
 	// The section at the top of the text, marked in the list and kept in view in the column.
 	const position = followSections(() => loaded?.sections.map((s) => s.id) ?? []);
@@ -55,12 +51,7 @@
 </script>
 
 {#if key}
-	<NavKolom
-		label="Inhoud"
-		title={loaded?.title ?? selection?.label ?? null}
-		onder={loaded?.kind ? capitalize(loaded.kind) : null}
-		bind:el={navEl}
-	>
+	<NavKolom bind:el={navEl}>
 		<LoadState state={toc.state} what="De inhoudsopgave" retry={toc.retry}>
 			{#snippet children(doc)}
 				{#if doc && doc.sections.length > 0}
@@ -68,7 +59,7 @@
 						{#each doc.sections as s (s.id)}
 							<li>
 								<a
-									class="nav-kolom__rij level-{Math.min(s.level, 3)}"
+									class="nav-kolom__rij level-{s.niveau}"
 									class:is-active={position.current === s.id}
 									aria-current={position.current === s.id ? 'location' : undefined}
 									href="#{s.id}"
@@ -86,24 +77,13 @@
 {/if}
 
 <style>
-	/* Heads a group of the contents: rung 3 of docs/typografie.md. */
+	/* Two levels: the heads of the stuk, and what stands under each. */
 	.level-1 {
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
 		font-weight: 600;
 		color: var(--ink);
-		margin-top: var(--s-3);
 	}
 
 	.level-2 {
-		font-family: var(--font-serif);
-		font-weight: 600;
-		color: var(--ink);
-	}
-
-	.level-3 {
 		padding-left: calc(var(--s-4) + var(--s-3));
-		color: var(--ink-3);
-		font-style: italic;
 	}
 </style>

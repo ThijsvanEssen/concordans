@@ -105,7 +105,7 @@ test('an earlier text of an article says so, and leads back to the law in force'
 
 /** The overview of a law: beside the text from 1440, under Inhoud on a phone. */
 async function overview(page: Page, touch: boolean) {
-	if (!touch) return page.getByRole('complementary', { name: 'Overzicht' });
+	if (!touch) return page.getByRole('navigation', { name: 'Inhoud' });
 	await page.getByRole('button', { name: 'Inhoud', exact: true }).click();
 	return page.getByRole('dialog', { name: 'Inhoud' });
 }

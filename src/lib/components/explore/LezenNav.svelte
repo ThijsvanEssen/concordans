@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { formatCount } from '$lib/text/getal';
 	import { capitalize } from '$lib/text/words';
 	import NavKolom from './NavKolom.svelte';
+	import { MAX_NIVEAUS } from './toc-niveaus';
 	// The table of contents of the law in Lezen: the name of the law, the title of the
 	// current section under it, and the articles, the active one marked; after them its
 	// bijlagen with a text of their own; on a bijlage the same, the bijlage marked.
@@ -118,7 +118,9 @@
 				continue;
 			}
 			let parent = root;
-			bc.forEach((seg) => {
+			// Two levels of divisions at most: the articles of a deeper one stand under the
+			// division above it (its name is in the line above the article).
+			bc.slice(0, MAX_NIVEAUS).forEach((seg) => {
 				parent = findOrAdd(
 					parent,
 					seg.type ?? 'sectie',
@@ -251,10 +253,10 @@
 {#snippet groupBlock(g: Group, depth: number)}
 	{@const selected = containsSelected(g)}
 	{@const shouldOpen = selectedKey ? selected : depth > 0}
-	{@const level = Math.min(depth, 3)}
 	{@const href = g.id ? deelHref(g.id) : null}
-	<details class="group depth-{level}" open={shouldOpen}>
-		<summary class="group__head">
+	<details class="group depth-{depth}" open={shouldOpen}>
+		<!-- The division's link is the one tab stop; the summary only answers a click on the caret. -->
+		<summary class="group__head" tabindex={href ? -1 : undefined}>
 			<Caret side />
 			{#if href}
 				<a
@@ -287,15 +289,9 @@
 {/snippet}
 
 {#if currentBwb}
-	<!-- Under the name the count for the law only: the place of an article is in the line
-	     above its title. -->
-	<NavKolom
-		label="Overzicht"
-		title={navTitle}
-		titleHref={lawHref}
-		onder={onLaw && items.length > 0 ? `${formatCount(items.length)} artikelen` : null}
-		bind:el={navEl}
-	>
+	<!-- The name of the law only where it leads to the whole law (from an article or a
+	     bijlage): the place of an article is in the line above its title. -->
+	<NavKolom title={navTitle} titleHref={lawHref} bind:el={navEl}>
 		{#if articleList.state.status !== 'ready'}
 			<LoadState state={articleList.state} what="De inhoudsopgave" retry={articleList.retry} />
 		{:else if groups}
@@ -339,19 +335,11 @@
 	.tree {
 		padding-bottom: var(--s-5);
 	}
-	/* The bijlagen after the articles, each a part of the law as a hoofdstuk is: set off as
-	   one part is from the next, its name as theirs, in line with their names past the caret. */
+	/* The bijlagen after the articles, set off as one part is from the next. */
 	.annexes {
 		margin-top: var(--s-3);
 		border-top: 1px solid var(--rule);
 		padding-top: var(--s-2);
-	}
-	.annexes :global(.nav-kolom__rij) {
-		padding-left: calc(var(--s-4) + var(--s-2) + 10px);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		font-weight: 600;
-		color: var(--ink);
 	}
 
 	.group {
@@ -389,9 +377,7 @@
 		}
 	}
 
-	/* Depth carries the hierarchy: a boek reads as a heading, a paragraaf as a
-	   quiet sub-label — indentation alone (10px/level) is too faint a signal
-	   in a column this narrow. */
+	/* Two levels: a division reads as a heading, the one under it as a quiet sub-label. */
 	.group.depth-0 + .group.depth-0 {
 		margin-top: var(--s-3);
 		border-top: 1px solid var(--rule);
@@ -404,20 +390,8 @@
 		color: var(--ink);
 	}
 	.group.depth-1 > .group__head {
-		font-size: var(--t-meta);
-		font-weight: 600;
-		color: var(--ink-2);
-	}
-	.group.depth-2 > .group__head {
-		font-size: var(--t-micro);
 		font-weight: 600;
 		color: var(--ink-3);
-	}
-	.group.depth-3 > .group__head {
-		font-size: var(--t-micro);
-		font-weight: 400;
-		color: var(--ink-3);
-		font-style: italic;
 	}
 
 	/* The first line of the label is 1.3 high; the caret sits on its middle. */

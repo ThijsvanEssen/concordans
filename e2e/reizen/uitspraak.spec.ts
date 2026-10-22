@@ -22,7 +22,7 @@ test('a judgment shows its court, its course and its parts', async ({ page, touc
 
 	if (touch) return; // the overview of parts stands beside the text from 1440
 	await page
-		.getByRole('complementary', { name: 'Inhoud' })
+		.getByRole('navigation', { name: 'Inhoud' })
 		.getByRole('link', { name: '9. Beslissing' })
 		.click();
 	await expect(page.getByRole('heading', { level: 3, name: '9. Beslissing' })).toBeInViewport();

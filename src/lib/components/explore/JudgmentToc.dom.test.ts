@@ -35,7 +35,7 @@ describe('JudgmentToc', () => {
 			await new Promise((r) => setTimeout(r, 0));
 			await tick();
 		}
-		const nav = container.querySelector('nav.ro');
+		const nav = container.querySelector('.ro');
 		expect(nav?.getAttribute('aria-label')).toBe('Rechtsoverwegingen');
 		const links = [...container.querySelectorAll<HTMLAnchorElement>('.ro__nr')];
 		expect(links.length).toBeGreaterThan(0);

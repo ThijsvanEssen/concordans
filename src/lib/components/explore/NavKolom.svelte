@@ -1,41 +1,35 @@
 <script lang="ts">
 	// The navigation column beside a reader, one form for the three that stood apart
 	// (LezenNav for a law, DocumentToc for a stuk, JudgmentToc for a uitspraak; audit
-	// 23-opruimen): the paper-2 column, its head (the name of the bron, a line under it), and
-	// the rows, notes and lists of what it holds (`nav-kolom__rij`, `__note`, `__lijst`). Each
-	// adds only the steps of its own hierarchy.
+	// 23-opruimen): a `nav` called Inhoud, the paper-2 column with its caption and the rows,
+	// notes and lists of what it holds (`nav-kolom__rij`, `__note`, `__lijst`). No counts or
+	// meta in it; each adds only the steps of its own hierarchy (toc-niveaus.ts).
 	import type { Snippet } from 'svelte';
 
 	let {
-		label,
-		title,
+		title = null,
 		titleHref = null,
-		onder = null,
 		el = $bindable(null),
 		children
 	}: {
-		/** What the column is, for a screen reader: `Overzicht`, `Inhoud`. */
-		label: string;
-		title: string | null;
-		/** Where the name leads: the whole law, from one of its articles. */
+		/** The name of the whole, only where it leads somewhere: the law, from one of its articles. */
+		title?: string | null;
 		titleHref?: string | null;
-		/** The line under the name: `128 artikelen`, the kind of a stuk. */
-		onder?: string | null;
 		/** The column itself, for a reader that scrolls it to the bron chosen. */
 		el?: HTMLElement | null;
 		children: Snippet;
 	} = $props();
 </script>
 
-<aside class="nav-kolom" aria-label={label} bind:this={el}>
+<nav class="nav-kolom" aria-label="Inhoud" bind:this={el}>
 	<header class="kop">
-		{#if title}<h3 class="titel">
-				{#if titleHref}<a href={titleHref} data-sveltekit-noscroll>{title}</a>{:else}{title}{/if}
+		<div class="onder nav-kolom__label" aria-hidden="true">Inhoud</div>
+		{#if title && titleHref}<h3 class="titel">
+				<a href={titleHref} data-sveltekit-noscroll>{title}</a>
 			</h3>{/if}
-		{#if onder}<div class="onder">{onder}</div>{/if}
 	</header>
 	{@render children()}
-</aside>
+</nav>
 
 <style>
 	.nav-kolom {
@@ -50,7 +44,7 @@
 		padding: 0 var(--s-4) var(--s-3);
 	}
 	.titel {
-		margin: 0;
+		margin: var(--s-1) 0 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		font-weight: 600;
@@ -66,7 +60,6 @@
 		text-underline-offset: 3px;
 	}
 	.onder {
-		margin-top: var(--s-1);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
