@@ -22,7 +22,7 @@ export const isRateLimited = (e: unknown): e is ApiError =>
 	e instanceof ApiError && e.status === 429;
 
 /** The wait a 429 asks without `Retry-After` (the API sends it; a proxy may not). */
-export const RATE_LIMIT_WAIT_S = 30;
+const RATE_LIMIT_WAIT_S = 30;
 
 /** When a 429 may be asked again, as a time in ms: its `Retry-After` from its arrival. */
 export const retryAt = (e: ApiError) => e.at + (e.retryAfter ?? RATE_LIMIT_WAIT_S) * 1000;

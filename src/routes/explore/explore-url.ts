@@ -99,14 +99,14 @@ const SERIES_NAME = { stb: 'Stb.', stcrt: 'Stcrt.', trb: 'Trb.' } as const;
 
 /**
  * What a readable address names, as the page says it when the data lacks it or it failed: a
- * law by its name where the page knows it (`wetNaam`), not by its BWB id.
+ * law by its name where the page knows it (`lawNameOf`), not by its BWB id.
  */
-export function nameOfPad(p: Pad, wetNaam: (bwb: string) => string | null = () => null): string {
+export function nameOfPad(p: Pad, lawNameOf: (bwb: string) => string | null = () => null): string {
 	switch (p.soort) {
 		case 'artikel':
-			return `Artikel ${p.nummer} van ${stbCitation(p.wet) ?? wetNaam(p.wet) ?? p.wet}`;
+			return `Artikel ${p.nummer} van ${stbCitation(p.wet) ?? lawNameOf(p.wet) ?? p.wet}`;
 		case 'wet':
-			return stbCitation(p.wet) ?? wetNaam(p.wet) ?? padHref(p);
+			return stbCitation(p.wet) ?? lawNameOf(p.wet) ?? padHref(p);
 		case 'kamerstuk':
 			return (
 				kamerstukName({

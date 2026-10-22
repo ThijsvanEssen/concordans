@@ -6,41 +6,41 @@ import { goto } from '$app/navigation';
 import { isAborted, report } from '$lib/api/errors';
 import type { LoadFailure } from '$lib/util/load.svelte';
 
-export type Stap = {
+export type Step = {
 	href: string;
 	/** As the failure names it: "Artikel 6:163". */
-	naam: string;
+	name: string;
 	/** What the bron needs to stand (its text), asked before the address changes. */
-	laad: () => Promise<unknown>;
+	load: () => Promise<unknown>;
 };
 
 /** A click that opens elsewhere (a new tab, a download): the browser's, not ours. */
-const elders = (e: MouseEvent) =>
+const elsewhere = (e: MouseEvent) =>
 	e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
 
-export class Stappen {
+export class Steps {
 	/** The step on its way. */
-	bezig = $state<string | null>(null);
+	pending = $state<string | null>(null);
 	/** The step that failed, for LoadState. */
-	fout = $state.raw<LoadFailure | null>(null);
+	failure = $state.raw<LoadFailure | null>(null);
 
-	/** Follows `stap` once its text is in; a click elsewhere goes as it would. */
-	volg = (stap: Stap, e?: MouseEvent): void => {
-		if (e && elders(e)) return;
+	/** Follows `step` once its text is in; a click elsewhere goes as it would. */
+	follow = (step: Step, e?: MouseEvent): void => {
+		if (e && elsewhere(e)) return;
 		e?.preventDefault();
-		this.bezig = stap.href;
-		this.fout = null;
-		stap.laad().then(
+		this.pending = step.href;
+		this.failure = null;
+		step.load().then(
 			() => {
-				if (this.bezig !== stap.href) return;
-				this.bezig = null;
-				goto(stap.href, { noScroll: true }).catch((error) => report('Stap', error));
+				if (this.pending !== step.href) return;
+				this.pending = null;
+				goto(step.href, { noScroll: true }).catch((error) => report('Step', error));
 			},
 			(error) => {
-				if (this.bezig !== stap.href || isAborted(error)) return;
-				report('Stap', error);
-				this.bezig = null;
-				this.fout = { what: stap.naam, error, retry: () => this.volg(stap) };
+				if (this.pending !== step.href || isAborted(error)) return;
+				report('Step', error);
+				this.pending = null;
+				this.failure = { what: step.name, error, retry: () => this.follow(step) };
 			}
 		);
 	};

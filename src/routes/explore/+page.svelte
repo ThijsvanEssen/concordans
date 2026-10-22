@@ -25,7 +25,7 @@
 	} from '$lib/graph/store/types';
 	import { annexHasText, lawArticles, lawNav, type LawNavItem } from '$lib/bron/law-articles';
 	import { getArticleDetail } from '$lib/api/articles';
-	import type { Stap } from '$lib/bron/stap.svelte';
+	import type { Step } from '$lib/bron/step.svelte';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import { pageName } from '$lib/bron/tab-title';
 	import { titelVan } from '$lib/bron/titels.svelte';
@@ -173,7 +173,7 @@
 	// What the data lacks is said, not opened as a neighbour (a dossier for its stuk).
 	const pad = $derived(parsePad(page.url.pathname));
 	/** A law by its name where it is known, for what the page says of an address. */
-	const wetNaam = (bwb: string) => lawName($instrumentMetaStore.get(bwb), null);
+	const lawNameOf = (bwb: string) => lawName($instrumentMetaStore.get(bwb), null);
 	/** The address names a bron the data does not hold: said in words, no failure. */
 	let padNotHeld = $state<string | null>(null);
 	/** The address names a bron the data lacks: a 404, as the server gives it. */
@@ -206,13 +206,13 @@
 				if (found || ac.signal.aborted) return;
 				// A law of the Staatsblad the BWB now holds: the server sends it on.
 				if (followServerMove(page.url.pathname)) return;
-				padNotHeld = `${notHeld(nameOfPad(p, wetNaam))}.`;
+				padNotHeld = `${notHeld(nameOfPad(p, lawNameOf))}.`;
 				padOnbekend = true;
 			})
 			.catch((e) => {
 				if (ac.signal.aborted || isAborted(e)) return;
 				report('Verkenner adres', e);
-				loadFailure = { what: nameOfPad(p, wetNaam), error: e, retry: () => padRetries++ };
+				loadFailure = { what: nameOfPad(p, lawNameOf), error: e, retry: () => padRetries++ };
 			});
 		return () => ac.abort();
 	});
@@ -514,15 +514,15 @@
 	const articleIndex = $derived(
 		selectedNode ? navItems.findIndex((it) => it.key === selectedNode!.key) : -1
 	);
-	/** Vorig or Volgend: the article's text asked before its address (Stappen). */
-	const articleStep = (i: number): Stap | undefined => {
+	/** Vorig or Volgend: the article's text asked before its address (Steps). */
+	const articleStep = (i: number): Step | undefined => {
 		const item = i >= 0 ? navItems[i] : undefined;
 		const bwb = navLaw;
 		return item && bwb
 			? {
 					href: bronHref({ collection: 'articles', key: item.key }),
-					naam: item.label,
-					laad: () => getArticleDetail(bwb, item.articleNumber)
+					name: item.label,
+					load: () => getArticleDetail(bwb, item.articleNumber)
 				}
 			: undefined;
 	};
@@ -612,7 +612,8 @@
 		wachtOp = null;
 		focusMissing = true;
 		// A law of the Staatsblad the server served itself is not in the data: by its publication.
-		const name = pad && isEnactedLawPath(page.url.pathname) ? nameOfPad(pad, wetNaam) : `'${key}'`;
+		const name =
+			pad && isEnactedLawPath(page.url.pathname) ? nameOfPad(pad, lawNameOf) : `'${key}'`;
 		focusNotHeld = `${notHeld(name)}.`;
 	}
 
@@ -730,7 +731,7 @@
 		if (isAborted(err)) return;
 		wachtOp = null;
 		report('Verkenner focus', err);
-		const name = pad ? nameOfPad(pad, wetNaam) : `'${key}'`;
+		const name = pad ? nameOfPad(pad, lawNameOf) : `'${key}'`;
 		const huidig = untrack(() => selectedNode);
 		const asked = loadedFocus;
 		if (huidig && (huidig.id === asked || linkIdOf(huidig) === asked || huidig.key === key)) {
@@ -1196,7 +1197,7 @@
 
 <!-- A bron on its way: the frame of its text, a skeleton where the head and the text will
      stand, so the page does not jump from empty to full (E3 T1). -->
-{#snippet bronLaden()}
+{#snippet bronPending()}
 	<div class="explore-laden">
 		<p class="sr-only" role="status">Laden…</p>
 		<LoadState state={{ status: 'loading' }} what="De bron" form="block" />
@@ -1352,7 +1353,7 @@
 		{:else if mode === 'graph' && (focus || pad) && !selectedNode && !netwerkActive && !focusNotHeld && !loadFailure}
 			<!-- A bron on its way: its place, not the empty network with its start card (UX test
 			     10 Oct, #24). -->
-			{@render bronLaden()}
+			{@render bronPending()}
 		{:else if mode === 'graph'}
 			<!-- The network without a bron: its heading for a screen reader, as the title names it. -->
 			{#if !selectedNode}<h1 class="blad__titel sr-only">Samenhang</h1>{/if}
@@ -1583,7 +1584,7 @@
 			<p class="explore-empty stil">{focusNotHeld}</p>
 		{:else if focus || pad}
 			<!-- The bron is on its way: its frame, not an empty page. -->
-			{@render bronLaden()}
+			{@render bronPending()}
 		{/if}
 	</div>
 </div>

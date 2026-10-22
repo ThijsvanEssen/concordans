@@ -67,7 +67,9 @@ function go(delta: number) {
 	navigating.type = 'popstate';
 	page.url = entries[at];
 	notify('popstate', from, page.url);
-	setTimeout(() => (navigating.type = null));
+	setTimeout(() => {
+		navigating.type = null;
+	});
 }
 
 /** Back, as the browser's button. */

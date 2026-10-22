@@ -70,7 +70,25 @@
 		<svelte:element this={tag} class="stil">Laden…</svelte:element>
 	{/if}
 {:else if state.status === 'error' && isRateLimited(state.error)}
-	<RateLimit error={state.error} {what} {retry} {tag} block={form === 'block'} />
+	<!-- A 429: the seconds for the eye; a screen reader hears the sentence once. -->
+	<RateLimit error={state.error} {what} {retry}>
+		{#snippet children(wait, auto)}
+			<svelte:element
+				this={tag}
+				class="stil failure"
+				class:failure--block={form === 'block'}
+				role="status"
+			>
+				{#if wait > 0}
+					<span aria-hidden="true">{RATE_LIMIT_TEXT}, opnieuw over {wait} s.</span>
+					<span class="sr-only">{RATE_LIMIT_TEXT}{auto ? ', zo meteen opnieuw' : ''}.</span>
+				{:else}
+					{RATE_LIMIT_TEXT}.
+					{#if retry}<TekstLink onclick={retry}>Opnieuw</TekstLink>{/if}
+				{/if}
+			</svelte:element>
+		{/snippet}
+	</RateLimit>
 {:else if state.status === 'error'}
 	<svelte:element
 		this={tag}

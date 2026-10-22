@@ -10,7 +10,7 @@
 	import { articleReader, readerOf } from './readers';
 	import { setContext } from 'svelte';
 	import { BEHOORT_KEY } from '$lib/bron/behoort';
-	import type { Stap } from '$lib/bron/stap.svelte';
+	import type { Step } from '$lib/bron/step.svelte';
 
 	let {
 		selection,
@@ -26,8 +26,8 @@
 	}: {
 		selection: GraphNode;
 		/** The article before and after the selected one, in Lezen. */
-		prev?: Stap;
-		next?: Stap;
+		prev?: Step;
+		next?: Step;
 		/** The layers of an article's place in its law: hoofdstuk, afdeling. */
 		place?: Division[];
 		/** Verbindingen per lid of the article, under the bronfilter. */

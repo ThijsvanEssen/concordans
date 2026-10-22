@@ -3,42 +3,42 @@ import { ApiError } from '$lib/api/client';
 
 const goto = vi.fn(() => Promise.resolve());
 vi.mock('$app/navigation', () => ({ goto }));
-const { Stappen } = await import('./stap.svelte');
+const { Steps } = await import('./step.svelte');
 
 const settle = () => new Promise((r) => setTimeout(r, 0));
 
 describe('a step to the next article', () => {
 	it('moves the address only once its text is in', async () => {
-		const stappen = new Stappen();
-		let klaar: (v: unknown) => void = () => {};
-		stappen.volg({ href: '/a/2', naam: 'Artikel 2', laad: () => new Promise((r) => (klaar = r)) });
-		expect(stappen.bezig).toBe('/a/2');
+		const steps = new Steps();
+		let done: (v: unknown) => void = () => {};
+		steps.follow({ href: '/a/2', name: 'Artikel 2', load: () => new Promise((r) => (done = r)) });
+		expect(steps.pending).toBe('/a/2');
 		expect(goto).not.toHaveBeenCalled();
-		klaar(null);
+		done(null);
 		await settle();
 		expect(goto).toHaveBeenCalledWith('/a/2', { noScroll: true });
-		expect(stappen.bezig).toBeNull();
+		expect(steps.pending).toBeNull();
 	});
 
 	it('stays where it is when the text fails, and says which, with a way to ask again', async () => {
 		vi.spyOn(console, 'warn').mockImplementation(() => {});
 		goto.mockClear();
-		const stappen = new Stappen();
-		const laad = vi.fn(() => Promise.reject(new ApiError(500, '/api/x')));
-		stappen.volg({ href: '/a/3', naam: 'Artikel 3', laad });
+		const steps = new Steps();
+		const load = vi.fn(() => Promise.reject(new ApiError(500, '/api/x')));
+		steps.follow({ href: '/a/3', name: 'Artikel 3', load });
 		await settle();
 		expect(goto).not.toHaveBeenCalled();
-		expect(stappen.fout?.what).toBe('Artikel 3');
-		stappen.fout?.retry();
-		expect(laad).toHaveBeenCalledTimes(2);
+		expect(steps.failure?.what).toBe('Artikel 3');
+		steps.failure?.retry();
+		expect(load).toHaveBeenCalledTimes(2);
 	});
 
 	it('leaves a click for a new tab to the browser', () => {
-		const stappen = new Stappen();
-		const laad = vi.fn(() => Promise.resolve());
+		const steps = new Steps();
+		const load = vi.fn(() => Promise.resolve());
 		const e = { defaultPrevented: false, button: 0, metaKey: true, preventDefault: vi.fn() };
-		stappen.volg({ href: '/a/4', naam: 'Artikel 4', laad }, e as unknown as MouseEvent);
-		expect(laad).not.toHaveBeenCalled();
+		steps.follow({ href: '/a/4', name: 'Artikel 4', load }, e as unknown as MouseEvent);
+		expect(load).not.toHaveBeenCalled();
 		expect(e.preventDefault).not.toHaveBeenCalled();
 	});
 });

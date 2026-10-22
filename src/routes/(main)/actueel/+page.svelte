@@ -1,25 +1,25 @@
 <script lang="ts" module>
-	import type { DaySummary, FeedItem as Item, SummarySpan } from '$lib/components/actueel/feed';
-	import type { feedStand as Stand } from '$lib/text/stand';
+	import type { DaySummary, FeedItem, SummarySpan } from '$lib/components/actueel/feed';
+	import { feedStand } from '$lib/text/stand';
 
 	/** The days loaded under a query, as they stood: Back finds them again (B26). */
-	type Geladen = {
-		items: Item[];
+	type Kept = {
+		items: FeedItem[];
 		cursor: string | null;
 		doorzocht: string | null;
 		feedFilters: string | null;
-		stand: ReturnType<typeof Stand>;
+		stand: ReturnType<typeof feedStand>;
 		/** The days counted, and of which span under which filters. */
 		summaries: Map<string, DaySummary>;
 		counted: { filters: string; span: SummarySpan } | null;
 	};
-	const geladen = new Map<string, Geladen>();
+	const kept = new Map<string, Kept>();
 	/** The views kept for Back: the last few, the most recent last. */
-	const GELADEN_MAX = 4;
-	function bewaar(query: string, view: Geladen) {
-		geladen.delete(query);
-		geladen.set(query, view);
-		if (geladen.size > GELADEN_MAX) geladen.delete(geladen.keys().next().value!);
+	const KEPT_MAX = 4;
+	function keep(query: string, view: Kept) {
+		kept.delete(query);
+		kept.set(query, view);
+		if (kept.size > KEPT_MAX) kept.delete(kept.keys().next().value!);
 	}
 </script>
 
@@ -94,10 +94,9 @@
 		errorPlace,
 		normalizeItem,
 		summaryAsk,
-		type FeedItem,
 		type FeedKind
 	} from '$lib/components/actueel/feed';
-	import { feedStand, standLine } from '$lib/text/stand';
+	import { standLine } from '$lib/text/stand';
 	import { FEED_PAGE } from '$lib/api/first-pages';
 
 	const today = vandaag();
@@ -248,11 +247,11 @@
 		}
 		// Back to a view read before: its days as they stood, Eerdere dagen included, so the
 		// browser finds its place in them again.
-		const terug = untrack(() => navigating.type === 'popstate')
-			? geladen.get(JSON.stringify(q))
+		const back = untrack(() => navigating.type === 'popstate')
+			? kept.get(JSON.stringify(q))
 			: undefined;
-		const lijst = terug
-			? Promise.resolve(terug)
+		const answer = back
+			? Promise.resolve(back)
 			: getFeed({ ...q, facets: false }, { signal: ac.signal }).then((r) => {
 					return {
 						items: r.items.map(normalizeItem),
@@ -262,11 +261,11 @@
 						stand: feedStand(r.data_as_of) ?? untrack(() => stand)
 					};
 				});
-		if (terug) {
-			({ items, cursor, doorzocht, feedFilters, stand, summaries, counted } = terug);
+		if (back) {
+			({ items, cursor, doorzocht, feedFilters, stand, summaries, counted } = back);
 			loading = false;
 		}
-		lijst
+		answer
 			.then((view) => {
 				({ items, cursor, doorzocht, feedFilters, stand } = view);
 			})
@@ -332,7 +331,7 @@
 			cursor = r.next_cursor ?? null;
 			doorzocht = doorzochtVanaf(r);
 		} catch (e) {
-			report('Actueel verder terug', e);
+			report('Actueel verder back', e);
 			error = { what: 'De eerdere dagen', plural: true, error: e, retry: verderTerug };
 		} finally {
 			verderLaden = false;
@@ -368,7 +367,7 @@
 	$effect(() => {
 		if (loading || error || !items.length) return;
 		const view = { items, cursor, doorzocht, feedFilters, stand, summaries, counted };
-		untrack(() => bewaar(JSON.stringify(query), view));
+		untrack(() => keep(JSON.stringify(query), view));
 	});
 
 	// Without a day asked, what lies ahead (an inwerkingtreding) waits for "komend".

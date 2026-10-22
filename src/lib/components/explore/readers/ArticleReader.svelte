@@ -58,7 +58,7 @@
 	import { load } from '$lib/util/load.svelte';
 	import { report } from '$lib/api/errors';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
-	import { Stappen, type Stap } from '$lib/bron/stap.svelte';
+	import { Steps, type Step } from '$lib/bron/step.svelte';
 
 	let {
 		node,
@@ -74,8 +74,8 @@
 	}: {
 		node: GraphNode;
 		/** The article before and after this one in its law: asked before the address moves. */
-		prev?: Stap;
-		next?: Stap;
+		prev?: Step;
+		next?: Step;
 		place?: Division[];
 		lidCounts?: Map<string, number>;
 		/** The counts per lid are still on their way. */
@@ -87,12 +87,14 @@
 	} = $props();
 
 	/** Vorig and Volgend: the next article asked before its address. */
-	const stappen = new Stappen();
+	const stepper = new Steps();
 	/** Where the step was taken, above the article or under it: its failure stands there. */
-	let stapWaar = $state<'kop' | 'voet'>('kop');
+	let stepAt = $state<'kop' | 'voet'>('kop');
 	$effect(() => {
 		void node.id;
-		untrack(() => (stappen.fout = null));
+		untrack(() => {
+			stepper.failure = null;
+		});
 	});
 
 	/** The tekstversie on screen, when it is not geldend recht. */
@@ -596,30 +598,29 @@
 
 <!-- Vorig and Volgend, above the article and again under it: the next article's text is asked
      first; a step that fails leaves this one standing, with a line under the step taken. -->
-{#snippet step(stap: Stap, label: string, cls: string, waar: 'kop' | 'voet')}
+{#snippet stepLink(step: Step, label: string, cls: string, at: 'kop' | 'voet')}
 	<a
 		class="reader-nav-link raakvlak {cls}"
-		class:is-bezig={stappen.bezig === stap.href}
-		aria-busy={stappen.bezig === stap.href}
-		href={stap.href}
+		aria-busy={stepper.pending === step.href}
+		href={step.href}
 		onclick={(e) => {
-			stapWaar = waar;
-			stappen.volg(stap, e);
+			stepAt = at;
+			stepper.follow(step, e);
 		}}
 		data-sveltekit-noscroll>{label}</a
 	>
 {/snippet}
-{#snippet steps(noun: string, waar: 'kop' | 'voet')}
-	{#if prev}{@render step(prev, `← Vorig${noun}`, '', waar)}{/if}
-	{#if next}{@render step(next, `Volgend${noun} →`, 'reader-nav-link--next', waar)}{/if}
+{#snippet steps(noun: string, at: 'kop' | 'voet')}
+	{#if prev}{@render stepLink(prev, `← Vorig${noun}`, '', at)}{/if}
+	{#if next}{@render stepLink(next, `Volgend${noun} →`, 'reader-nav-link--next', at)}{/if}
 {/snippet}
-{#snippet stapFout(waar: 'kop' | 'voet')}
-	{#if stappen.fout && stapWaar === waar}
-		<div class="stap-fout">
+{#snippet stepFailure(at: 'kop' | 'voet')}
+	{#if stepper.failure && stepAt === at}
+		<div class="step-failure">
 			<LoadState
-				state={{ status: 'error', error: stappen.fout.error }}
-				what={stappen.fout.what}
-				retry={stappen.fout.retry}
+				state={{ status: 'error', error: stepper.failure.error }}
+				what={stepper.failure.what}
+				retry={stepper.failure.retry}
 			/>
 		</div>
 	{/if}
@@ -791,7 +792,7 @@
 				own={ownLaw}
 			/>
 		</ReaderHead>
-		{@render stapFout('kop')}
+		{@render stepFailure('kop')}
 
 		{#if proposedMissing && proposedRow}
 			<p class="note">
@@ -920,7 +921,7 @@
 			<nav class="reader-nav-footer" aria-label="Artikelen">
 				{@render steps(' artikel', 'voet')}
 			</nav>
-			{@render stapFout('voet')}
+			{@render stepFailure('voet')}
 		{/if}
 	{/snippet}
 </ReaderFrame>
@@ -1138,12 +1139,12 @@
 	.reader-nav-link:hover {
 		color: var(--ink);
 	}
-	.reader-nav-link.is-bezig {
+	.reader-nav-link[aria-busy='true'] {
 		opacity: 0.6;
 		cursor: progress;
 	}
 
-	.stap-fout {
+	.step-failure {
 		margin-top: var(--s-3);
 	}
 
