@@ -3660,6 +3660,10 @@ exports[`the rows of Verbonden of the 'artikel' > land on the canvas per group 1
 
 exports[`the rows of Verbonden of the 'dossier' > land on the canvas per group 1`] = `
 {
+  "activities (verbonden)": [
+    "nodes: activities/6b2fc9b6_fdcc_45de_9a11_4b945c94fc01, activities/79e697e9_eeb6_4d20_a039_f9b8aadb7b70, activities/de3463ac_47a2_421c_918e_17e202134e47, activities/f3b8d88e_d71a_4acb_a6e1_c14e8c8d4fcd, dossiers/36764*",
+    "hulls: dossiers/36764 dossier "36764" [activities/6b2fc9b6_fdcc_45de_9a11_4b945c94fc01, activities/79e697e9_eeb6_4d20_a039_f9b8aadb7b70, activities/de3463ac_47a2_421c_918e_17e202134e47, activities/f3b8d88e_d71a_4acb_a6e1_c14e8c8d4fcd, dossiers/36764 part]",
+  ],
   "commitments (verbonden)": [
     "nodes: commitments/8d7acc0e_a2a0_47be_b535_104ea97cf7b5, commitments/9439054f_6f6f_4642_84b6_eccd1bb12646, commitments/b2492759_9424_4277_86e9_f105dfe02a9c, commitments/f79ef0b3_cd6f_4ea1_8f2d_9d0ccc25fa2f, dossiers/36764*",
     "hulls: dossiers/36764 dossier "36764" [commitments/8d7acc0e_a2a0_47be_b535_104ea97cf7b5, commitments/9439054f_6f6f_4642_84b6_eccd1bb12646, commitments/b2492759_9424_4277_86e9_f105dfe02a9c, commitments/f79ef0b3_cd6f_4ea1_8f2d_9d0ccc25fa2f, dossiers/36764 part]",

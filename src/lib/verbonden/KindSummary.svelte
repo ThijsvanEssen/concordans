@@ -230,8 +230,8 @@
 	}
 	.pending {
 		display: block;
-		height: 14px;
-		margin: 5px 0;
+		height: var(--s-3);
+		margin: var(--s-1) 0;
 		width: 80%;
 		background: var(--wassing);
 	}
