@@ -14,12 +14,12 @@ async function landed(page: Page, id: string) {
 }
 
 test('#lid-2 opens the article at its second lid', async ({ page }) => {
-	await page.goto('/wetten/BWBR0005289/artikel/6:162?lezen=1#lid-2');
+	await page.goto('/wetten/BWBR0005289/artikel/6:162#lid-2');
 	await landed(page, 'lid-2');
 });
 
 test('#rov-5.3.2 opens the judgment at that rechtsoverweging', async ({ page }) => {
-	await page.goto('/uitspraken/ECLI:NL:HR:2019:2006?lezen=1#rov-5.3.2');
+	await page.goto('/uitspraken/ECLI:NL:HR:2019:2006#rov-5.3.2');
 	await landed(page, 'rov-5.3.2');
 });
 
@@ -29,7 +29,7 @@ test('#s-24 opens the memorie van toelichting beside the article at its section'
 }) => {
 	test.skip(touch, 'a toelichting stands beside the article from 1440');
 	await page.goto(
-		'/wetten/BWBR0005537/artikel/3:4?lezen=1&naast=documents/6c33ccba_751d_4877_9b10_d38154461203#s-24'
+		'/wetten/BWBR0005537/artikel/3:4?naast=documents/6c33ccba_751d_4877_9b10_d38154461203#s-24'
 	);
 	// The anchor of a section is a point in the text: its top within the screen.
 	await expect
@@ -52,7 +52,7 @@ test('#p- opens a Kamerstuk at the alinea, by the number the API gives it', asyn
 		sections: paper.sections,
 		paragraphs: paper.paragraphs
 	}));
-	await page.goto('/kamerstukken/32467/14?lezen=1#p-094a828f');
+	await page.goto('/kamerstukken/32467/14#p-094a828f');
 	await landed(page, 'p-094a828f');
 	await expect(
 		page.getByRole('button', { name: /^Alinea \d+: citeren, bewaren$/ }).first()
@@ -60,7 +60,7 @@ test('#p- opens a Kamerstuk at the alinea, by the number the API gives it', asyn
 });
 
 test('the link a lid menu gives out opens at that lid', async ({ page }) => {
-	await page.goto('/wetten/BWBR0005289/artikel/6:162?lezen=1');
+	await page.goto('/wetten/BWBR0005289/artikel/6:162');
 	await page.getByRole('button', { name: 'art. 6:162 lid 3 BW: citeren, bewaren' }).click();
 	const link = page.getByRole('menu').getByRole('menuitem', { name: / link$/ });
 	const href = (await link.textContent())!.replace(/\s*link$/, '').trim();

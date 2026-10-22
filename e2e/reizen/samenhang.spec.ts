@@ -1,4 +1,4 @@
-// Samenhang: the network of a bron, its legend, the bronnen in it as a list, the Verbonden
+// Samenhang: the network of a bron on the canvas (?mode=netwerk), its legend, the bronnen in it as a list, the Verbonden
 // table and its export.
 import { expect, test } from '../support/test';
 
@@ -9,7 +9,7 @@ const drawn = (page: import('@playwright/test').Page) =>
 	page.getByRole('list', { name: /^Bronnen in het netwerk, \d+/ });
 
 test('the network draws a bron with its neighbours and lists them', async ({ page, touch }) => {
-	await page.goto(ARTICLE);
+	await page.goto(`${ARTICLE}?mode=netwerk`);
 	if (touch)
 		await page
 			.getByRole('navigation', { name: 'Panelen' })
@@ -22,7 +22,7 @@ test('the network draws a bron with its neighbours and lists them', async ({ pag
 });
 
 test('the legend switches a kind of bron off and on', async ({ page, touch }) => {
-	await page.goto(ARTICLE);
+	await page.goto(`${ARTICLE}?mode=netwerk`);
 	if (touch)
 		await page
 			.getByRole('navigation', { name: 'Panelen' })
@@ -56,7 +56,7 @@ for (const { stuk, own } of [
 		page,
 		touch
 	}) => {
-		await page.goto(stuk);
+		await page.goto(`${stuk}?mode=netwerk`);
 		if (touch)
 			await page
 				.getByRole('navigation', { name: 'Panelen' })
@@ -75,7 +75,7 @@ for (const { stuk, own } of [
 // The Legenda counts what is drawn, with the focus selected too, open as closed (besluit 29):
 // the focus's direct verbindingen are in Verbonden, not here ("Stemmingen 0" beside 49 drawn).
 test('the open legend counts the stemmingen drawn, the focus selected', async ({ page, touch }) => {
-	await page.goto('/kamerstukken/36799/31');
+	await page.goto('/kamerstukken/36799/31?mode=netwerk');
 	if (touch)
 		await page
 			.getByRole('navigation', { name: 'Panelen' })
@@ -92,13 +92,8 @@ test('the open legend counts the stemmingen drawn, the focus selected', async ({
 	);
 });
 
-test('Verbonden as a table, exported as CSV', async ({ page, touch }) => {
+test('Verbonden as a table, exported as CSV', async ({ page }) => {
 	await page.goto(ARTICLE);
-	if (touch)
-		await page
-			.getByRole('navigation', { name: 'Panelen' })
-			.getByRole('button', { name: 'Verbonden' })
-			.click();
 	await page.getByRole('link', { name: /^Alle [\d.]+ in een tabel$/ }).click();
 	await expect(page).toHaveURL(/tabel=1/);
 	await expect(page.getByRole('heading', { name: 'Verbindingen van Art. 6:162 BW' })).toBeVisible();
@@ -128,7 +123,7 @@ test('a bron in the network becomes the focus, and Samenhang follows it', async 
 	touch
 }) => {
 	test.skip(touch, 'the list of the network is the keyboard way at 1440');
-	await page.goto(ARTICLE);
+	await page.goto(`${ARTICLE}?mode=netwerk`);
 	const stuk = drawn(page)
 		.getByRole('link', { name: /, Stuk$/ })
 		.first();

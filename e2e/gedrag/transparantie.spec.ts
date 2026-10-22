@@ -10,12 +10,12 @@ import { expect, test } from '../support/test';
 import { patchApi } from '../support/api';
 
 test('Dutch law says it is the law in force, since when', async ({ page }) => {
-	await page.goto('/wetten/BWBR0005289/artikel/6:162?lezen=1');
+	await page.goto('/wetten/BWBR0005289/artikel/6:162');
 	await expect(page.getByText('Geldend recht, tekst sinds 1 januari 1992')).toBeVisible();
 });
 
 test('an EU article is the text as adopted, dated so, and sourced to EUR-Lex', async ({ page }) => {
-	await page.goto('/wetten/32016R0679/artikel/6?lezen=1');
+	await page.goto('/wetten/32016R0679/artikel/6');
 	await expect(
 		page.getByText(/^Tekst zoals vastgesteld op 27 april 2016, latere wijzigingen niet verwerkt/)
 	).toBeVisible();
@@ -39,7 +39,7 @@ test('an EU article is the text as adopted, dated so, and sourced to EUR-Lex', a
 });
 
 test('a regeling without its text read in points to wetten.overheid.nl', async ({ page }) => {
-	await page.goto('/wetten/BWBR0038996?lezen=1');
+	await page.goto('/wetten/BWBR0038996');
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Aanwijzing afpakken');
 	const note = page.getByRole('paragraph').filter({ hasText: 'Tekst niet in de gegevens' });
 	await expect(note).toBeVisible();
@@ -74,9 +74,9 @@ test('each group of results says what its search reads', async ({ page }) => {
 test('a law of the Staatsblad says what of it is not read yet, and so do its articles', async ({
 	page
 }) => {
-	await page.goto('/wetten/STB-2026-56?lezen=1');
+	await page.goto('/wetten/STB-2026-56');
 	await expect(page.getByText('Verwijzingen en begrippen nog niet beschikbaar')).toBeVisible();
-	await page.goto('/wetten/STB-2026-56/artikel/2.8.6?lezen=1');
+	await page.goto('/wetten/STB-2026-56/artikel/2.8.6');
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('2.8.6');
 	await expect(page.getByText(/nog niet beschikbaar$/)).toBeVisible();
 });
@@ -141,11 +141,11 @@ test('an article, a judgment and a Kamerstuk say how many references are not lin
 	await patchApi(page, /^\/api\/articles\/BWBR0005289\/162$/, partial);
 	await patchApi(page, /^\/api\/judgments\/ECLI(:|%3A)NL(:|%3A)HR(:|%3A)2019(:|%3A)2006$/, partial);
 	await patchApi(page, DOCUMENT, partial);
-	await page.goto('/wetten/BWBR0005289/artikel/6:162?lezen=1');
+	await page.goto('/wetten/BWBR0005289/artikel/6:162');
 	await expect(page.getByText('3 verwijzingen nog niet gekoppeld')).toBeVisible();
-	await page.goto('/uitspraken/ECLI:NL:HR:2019:2006?lezen=1');
+	await page.goto('/uitspraken/ECLI:NL:HR:2019:2006');
 	await expect(page.getByText('3 verwijzingen nog niet gekoppeld')).toBeVisible();
-	await page.goto('/kamerstukken/32467/14?lezen=1');
+	await page.goto('/kamerstukken/32467/14');
 	await expect(page.getByText('3 verwijzingen nog niet gekoppeld')).toBeVisible();
 });
 
@@ -156,7 +156,7 @@ test('an article whose missing references point to a text not loaded yet says so
 		...body,
 		completeness: { references: part('partial', null, 2, 'target_not_loaded') }
 	}));
-	await page.goto('/wetten/BWBR0005289/artikel/6:162?lezen=1');
+	await page.goto('/wetten/BWBR0005289/artikel/6:162');
 	await expect(
 		page.getByText('2 verwijzingen naar tekst die niet in de gegevens staat')
 	).toBeVisible();
@@ -164,7 +164,7 @@ test('an article whose missing references point to a text not loaded yet says so
 
 test('a Kamerstuk without its text says why, and points to the original file', async ({ page }) => {
 	await patchApi(page, DOCUMENT, withoutText(part('pending', '2026-10-20T03:12:00Z')));
-	await page.goto('/kamerstukken/32467/14?lezen=1');
+	await page.goto('/kamerstukken/32467/14');
 	await expect(page.getByText('Tekst nog niet beschikbaar', { exact: true })).toBeVisible();
 	await expect(page.getByRole('link', { name: 'Origineel bestand ↗' })).toBeVisible();
 	await expect(page.getByText(/alinea's/i)).toHaveCount(0);
@@ -173,7 +173,7 @@ test('a Kamerstuk without its text says why, and points to the original file', a
 test('a Kamerstuk fetched and not read yet says when it was fetched', async ({ page }) => {
 	const fetched = part('pending', '2026-10-20T03:12:00Z', null, 'awaiting_normalize');
 	await patchApi(page, DOCUMENT, withoutText(fetched));
-	await page.goto('/kamerstukken/32467/14?lezen=1');
+	await page.goto('/kamerstukken/32467/14');
 	await expect(
 		page.getByText('Tekst nog niet beschikbaar, ontvangen op 20 oktober 2026', { exact: true })
 	).toBeVisible();
@@ -185,7 +185,7 @@ test('a new Kamerstuk with its PDF only says so, and points to the file', async 
 		DOCUMENT,
 		withoutText(part('pending', '2026-10-20T03:12:00Z', null, 'source_pdf_only'))
 	);
-	await page.goto('/kamerstukken/32467/14?lezen=1');
+	await page.goto('/kamerstukken/32467/14');
 	await expect(
 		page.getByText('Tekst nog niet beschikbaar, de bron heeft alleen de pdf', { exact: true })
 	).toBeVisible();
@@ -196,7 +196,7 @@ test('a paper of the Eerste Kamer says its text is at the source, with a link', 
 	page
 }) => {
 	await patchApi(page, /^\/api\/documents\/ek_kst_1264285$/, withoutText(part('not_fetched')));
-	await page.goto('/kamerstukken/36600-VIII/AB?lezen=1');
+	await page.goto('/kamerstukken/36600-VIII/AB');
 	const note = page.getByRole('paragraph').filter({ hasText: 'Tekst alleen bij de bron' });
 	await expect(note).toHaveText('Tekst alleen bij de bron, officielebekendmakingen.nl ↗');
 	await expect(note.getByRole('link')).toHaveAttribute(
@@ -210,7 +210,7 @@ test('a publication says its text is at the source, with a link', async ({ page 
 		...body,
 		completeness: { text: part('not_fetched') }
 	}));
-	await page.goto('/stb/2026/94?lezen=1');
+	await page.goto('/stb/2026/94');
 	await expect(page.getByText(/^Tekst alleen bij de bron, /)).toBeVisible();
 	await expect(page.getByRole('link', { name: 'officielebekendmakingen.nl ↗' })).toHaveAttribute(
 		'href',

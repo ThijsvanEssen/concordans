@@ -1,10 +1,9 @@
 // A judgment: its heading and course of proceedings, the overview of its parts, the menu of a
 // rechtsoverweging, and an article it cites.
 import { expect, test } from '../support/test';
-import { showText } from '../support/panes';
 import { smallTargets, withoutSize } from '../support/rules';
 
-const URGENDA = '/uitspraken/ECLI:NL:HR:2019:2006?lezen=1';
+const URGENDA = '/uitspraken/ECLI:NL:HR:2019:2006';
 
 test('a judgment shows its court, its course and its parts', async ({ page, touch }) => {
 	await page.goto(URGENDA);
@@ -41,11 +40,10 @@ test('a rechtsoverweging cites short, in full and as a link to its place', async
 	await expect(menu.getByRole('menuitem', { name: 'Bewaar in Losse markeringen' })).toBeVisible();
 });
 
-test('a cited article opens at the lid the judgment names', async ({ page, touch }) => {
+test('a cited article opens at the lid the judgment names', async ({ page }) => {
 	await page.goto(URGENDA);
 	await page.getByRole('link', { name: 'art. 6:162 BW', exact: true }).first().click();
 	await expect(page).toHaveURL(/\/wetten\/BWBR0005289\/artikel\/6:162/);
-	await showText(page, touch);
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162');
 });
 

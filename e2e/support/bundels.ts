@@ -4,8 +4,8 @@
 import type { BrowserContext, Page } from '@playwright/test';
 import { expect } from './test';
 
-export const ARTICLE = '/wetten/BWBR0005289/artikel/6:162?lezen=1';
-export const JUDGMENT = '/uitspraken/ECLI:NL:HR:2019:2006?lezen=1';
+export const ARTICLE = '/wetten/BWBR0005289/artikel/6:162';
+export const JUDGMENT = '/uitspraken/ECLI:NL:HR:2019:2006';
 
 /** Bewaar on the article 6:162 BW: into Losse markeringen. */
 export async function keepArticle(page: Page) {

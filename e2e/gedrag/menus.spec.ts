@@ -5,7 +5,7 @@ import type { Page } from '@playwright/test';
 import { keepArticle } from '../support/bundels';
 import { expect, test } from '../support/test';
 
-const ARTICLE = '/wetten/BWBR0005289/artikel/6:162?lezen=1';
+const ARTICLE = '/wetten/BWBR0005289/artikel/6:162';
 
 type Case = {
 	name: string;
@@ -31,13 +31,13 @@ const MENUS: Case[] = [
 	},
 	{
 		name: 'a rechtsoverweging',
-		url: '/uitspraken/ECLI:NL:HR:2019:2006?lezen=1',
+		url: '/uitspraken/ECLI:NL:HR:2019:2006',
 		opener: 'Overweging 5.3.2: citeren, bewaren',
 		menu: /r\.o\. 5\.3\.2$/
 	},
 	{
 		name: 'the versions of an article',
-		url: '/wetten/BWBR0001840/artikel/23?lezen=1',
+		url: '/wetten/BWBR0001840/artikel/23',
 		opener: '3 tekstversies',
 		menu: /^Tekstversies$/
 	},

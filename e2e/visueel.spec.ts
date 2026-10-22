@@ -8,9 +8,9 @@ import { expect, test } from './support/test';
 test.skip(process.platform !== 'linux', 'the baseline is made on Linux (npm run e2e:update)');
 
 const PAGES = {
-	artikel: '/wetten/BWBR0005289/artikel/6:162?lezen=1',
-	uitspraak: '/uitspraken/ECLI:NL:HR:2019:2006?lezen=1',
-	kamerstuk: '/kamerstukken/36799/31?lezen=1',
+	artikel: '/wetten/BWBR0005289/artikel/6:162',
+	uitspraak: '/uitspraken/ECLI:NL:HR:2019:2006',
+	kamerstuk: '/kamerstukken/36799/31',
 	bronnen: '/explore?mode=index',
 	methode: '/docs/methode'
 };

@@ -5,7 +5,7 @@ import { failApi, REQUEST_ID } from '../support/api';
 import { failChunk } from '../support/chunks';
 import { expect, test } from '../support/test';
 
-const ARTICLE = '/wetten/BWBR0005289/artikel/6:162?lezen=1';
+const ARTICLE = '/wetten/BWBR0005289/artikel/6:162';
 const FAILED = /status of (500|503)|ERR_INTERNET_DISCONNECTED|net::ERR_FAILED/;
 
 test('a 500 on the article says so, and Opnieuw loads it once the API answers', async ({
@@ -208,7 +208,7 @@ test('a network that cannot be drawn says so on the canvas, the bron stays, Opni
 }) => {
 	guard.allow(FAILED);
 	await failApi(page, /^\/api\/nodes\/articles\/bwbr0005289_162\/neighborhood/, 503);
-	await page.goto('/wetten/BWBR0005289/artikel/6:162');
+	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk');
 	if (touch)
 		await page
 			.getByRole('navigation', { name: 'Panelen' })
@@ -238,7 +238,7 @@ test('a part whose chunk did not come says so in its place, and Opnieuw asks it 
 	// connection dropped it) stands as a failure with Opnieuw, as a failing request does.
 	guard.allow(/dynamically imported module|net::ERR_FAILED|Importing a module script failed/);
 	await failChunk(page, 'src/lib/components/articles/VersionCompare.svelte');
-	await page.goto('/wetten/BWBR0001840/artikel/23?lezen=1');
+	await page.goto('/wetten/BWBR0001840/artikel/23');
 	await page.getByRole('link', { name: 'Vergelijken', exact: true }).click();
 	const alert = page
 		.getByRole('alert')

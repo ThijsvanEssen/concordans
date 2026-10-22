@@ -6,7 +6,7 @@ import { patchApi } from '../support/api';
 import { metOpvolging, opvolging } from '../support/opvolging';
 
 test('126ffa Sv compares with 2.8.6 Sv (nieuw) along the transponeringstabel', async ({ page }) => {
-	await page.goto('/wetten/BWBR0001903/artikel/126ffa?lezen=1');
+	await page.goto('/wetten/BWBR0001903/artikel/126ffa');
 	await expect(page.getByText('In het nieuwe recht:')).toBeVisible();
 	await expect(page.getByRole('link', { name: 'art. 2.8.6 Sv (nieuw)' })).toHaveAttribute(
 		'href',
@@ -36,7 +36,7 @@ test('126ffa Sv compares with 2.8.6 Sv (nieuw) along the transponeringstabel', a
 });
 
 test('2.8.6 Sv (nieuw) compares back with what it replaces', async ({ page }) => {
-	await page.goto('/wetten/STB-2026-56/artikel/2.8.6?lezen=1');
+	await page.goto('/wetten/STB-2026-56/artikel/2.8.6');
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('2.8.6');
 	await page.getByRole('link', { name: 'Vergelijk', exact: true }).first().click();
 	const compare = page.getByRole('region', { name: 'Oud en nieuw vergelijken' });
@@ -48,7 +48,7 @@ test('2.8.6 Sv (nieuw) compares back with what it replaces', async ({ page }) =>
 });
 
 test('two versions of an article compare in one text', async ({ page }) => {
-	await page.goto('/wetten/BWBR0001840/artikel/23?lezen=1');
+	await page.goto('/wetten/BWBR0001840/artikel/23');
 	await page.getByRole('link', { name: 'Vergelijken', exact: true }).click();
 	await expect(page).toHaveURL(/versies=/);
 	await expect(page.getByRole('insertion').first()).toBeVisible();
@@ -71,7 +71,7 @@ test('art. 10 Sv says it lapses in the new code, not where it went', async ({ pa
 			])
 		)
 	);
-	await page.goto('/wetten/BWBR0001903/artikel/10?lezen=1');
+	await page.goto('/wetten/BWBR0001903/artikel/10');
 	const line = page.locator('.succession');
 	await expect(line).toContainText(/In het nieuwe recht:\s*vervallen bij Sv \(nieuw\)/);
 	await expect(line).not.toContainText('overgebracht');
@@ -93,7 +93,7 @@ test('art. 2 Sv folds out the lid that lapses beside its successor', async ({ pa
 		/^\/api\/nodes\/articles\/bwbr0001903_2\?/,
 		metOpvolging(opvolging([{ from: '2', to: 'vervallen (mvt)', outcome: 'vervallen' }]))
 	);
-	await page.goto('/wetten/BWBR0001903/artikel/2?lezen=1');
+	await page.goto('/wetten/BWBR0001903/artikel/2');
 	const line = page.locator('.succession');
 	await expect(line).toContainText(/In het nieuwe recht:\s*art\. 1\.2\.9 Sv \(nieuw\)/);
 	await expect(line).not.toContainText('vervallen bij');
@@ -116,7 +116,7 @@ test('art. 10 Sv goes to the Gratiewet the table names', async ({ page }) => {
 			])
 		)
 	);
-	await page.goto('/wetten/BWBR0001903/artikel/10?lezen=1');
+	await page.goto('/wetten/BWBR0001903/artikel/10');
 	const line = page.locator('.succession');
 	await expect(line).toContainText(/In het nieuwe recht:\s*naar Gratiewet/);
 	await expect(line).not.toContainText('zonder opvolger');
@@ -132,7 +132,7 @@ test('art. 2 Sv folds out the lid that goes to the Wetboek van Strafrecht', asyn
 		/^\/api\/nodes\/articles\/bwbr0001903_2\?/,
 		metOpvolging(opvolging([{ from: '2', to: 'later', outcome: 'naar:Wetboek van Strafrecht' }]))
 	);
-	await page.goto('/wetten/BWBR0001903/artikel/2?lezen=1');
+	await page.goto('/wetten/BWBR0001903/artikel/2');
 	const line = page.locator('.succession');
 	await expect(line).toContainText(/In het nieuwe recht:\s*art\. 1\.2\.9 Sv \(nieuw\)/);
 	await line.getByRole('button', { name: /Leden/ }).click();

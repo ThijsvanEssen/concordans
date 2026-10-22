@@ -73,6 +73,16 @@
 		cursor: pointer;
 		text-align: left;
 	}
+	/* A finger's 44 px on a touch screen and below 768: the heading's place to tap takes the
+	   room above it. */
+	@media (pointer: coarse), (max-width: 768px) {
+		.group__head {
+			padding-top: var(--s-1);
+		}
+		.group__knop {
+			padding: var(--s-3) 0;
+		}
+	}
 	.group__knop:hover {
 		color: var(--ink);
 		text-decoration-line: underline;

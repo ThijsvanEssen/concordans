@@ -28,7 +28,7 @@ test('a dossier shows where it stands and opens a stuk of its procedure in place
 });
 
 test('a Kamerstuk names its indiener and its dossier, and folds out its vote', async ({ page }) => {
-	await page.goto('/kamerstukken/36799/31?lezen=1');
+	await page.goto('/kamerstukken/36799/31');
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('Motie van het lid De Beer');
 	await expect(page.getByText('Kamerstukken II 2025/26, 36799, nr. 31.')).toBeVisible();
 	await expect(page.getByRole('link', { name: 'M.E.E. de Beer' })).toBeVisible();
@@ -47,7 +47,7 @@ test('a Kamerstuk names its indiener and its dossier, and folds out its vote', a
 });
 
 test('a motie says at rest how the Kamer voted on it, and which fracties', async ({ page }) => {
-	await page.goto('/kamerstukken/36799/31?lezen=1');
+	await page.goto('/kamerstukken/36799/31');
 	await expect(page.getByText('Aangenomen op 29 september 2026, 120 voor, 30 tegen')).toBeVisible();
 	await expect(page.getByText(/^D66, VVD, PVV/)).toBeVisible();
 	await expect(page.getByText('PRO, Groep Markuszower, PvdD')).toBeVisible();
@@ -103,7 +103,7 @@ test('a withdrawn bill says so in its stand, with the letter that withdrew it', 
 });
 
 test('a motion of censure is named so in its head', async ({ page }) => {
-	await page.goto('/kamerstukken/37020-XVI/60?lezen=1');
+	await page.goto('/kamerstukken/37020-XVI/60');
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('afkeuring');
 	// The kind as the glossary names it, with its explanation on hover.
 	await expect(page.getByRole('button', { name: /^Motie van afkeuring/ })).toBeVisible();
@@ -150,7 +150,7 @@ test('a vote gives its outcome and the vote of each fractie', async ({ page }) =
 });
 
 test('a memorie van toelichting opens beside its article and closes again', async ({ page }) => {
-	await page.goto('/wetten/BWBR0001840/artikel/23?lezen=1');
+	await page.goto('/wetten/BWBR0001840/artikel/23');
 	const mvt = page.getByRole('link', { name: 'Memorie van toelichting', exact: true }).first();
 	await mvt.click();
 	await expect(page).toHaveURL(/naast=documents\//);
@@ -229,21 +229,13 @@ test('a toezegging names its dossier by the letter that fulfils it, else the deb
 	await expect(page.getByText('Over', { exact: true })).toHaveCount(0);
 });
 
-test('a dossier marks a toezegging it only had on the agenda of the debate', async ({
-	page,
-	touch
-}) => {
+test('a dossier marks a toezegging it only had on the agenda of the debate', async ({ page }) => {
 	await patchApi(
 		page,
 		/^\/api\/nodes\/dossiers\/36512/,
 		(n) => metBasis(n, (key) => (key === TZ_ROW_NAKOMING ? 'nakoming' : 'agenda')) as Rec
 	);
 	await page.goto('/dossiers/36512');
-	if (touch)
-		await page
-			.getByRole('navigation', { name: 'Panelen' })
-			.getByRole('button', { name: 'Verbonden' })
-			.click();
 	const groep = page.locator('section[data-group="commitments"]');
 	const rij = (begin: RegExp) =>
 		groep.getByRole('listitem').filter({ has: page.getByRole('link', { name: begin }) });
