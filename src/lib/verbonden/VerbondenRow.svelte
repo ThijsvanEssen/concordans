@@ -61,8 +61,8 @@
 	const inPlaceHref = (at: string | null) =>
 		withParams(page.url, { naast: refId(row.ref) }, { hash: at ?? '' });
 
-	// A row opens its bron as every link to a bron does (openHref): in Netwerk, a Kamerstuk on
-	// its text; a group read beside the text opens it there. A citing judgment opens at the
+	// A row opens its bron as every link to a bron does (openHref): in Tekst; a group read
+	// beside the text opens it there. A citing judgment opens at the
 	// note its citation stands in.
 	const href = $derived(
 		inPlace ? inPlaceHref(ankerVanRij(row)) : openHref(row.ref, { at: ankerVanRij(row) })
@@ -82,8 +82,8 @@
 		inRij
 			? inPlace
 				? inPlaceHref(at)
-				: bronHref(row.ref, { at, keepMode: false, mode: 'read', paneel: 'tekst' })
-			: bronHref(selection.id, { at, keepMode: false, mode: 'read', paneel: 'tekst' });
+				: bronHref(row.ref, { at, keepMode: false, mode: 'read' })
+			: bronHref(selection.id, { at, keepMode: false, mode: 'read' });
 	// What the reader marks where the place opens it: the note opened, the citation in it.
 	const plaatsMarkering = (plaats: { at: string; noot: string | null }) => ({
 		bron: inRij ? refId(row.ref) : selection.id,

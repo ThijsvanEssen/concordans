@@ -19,13 +19,10 @@ import {
 const at = (path: string) => new URL(`http://localhost${path}`);
 
 describe('buildBronHref', () => {
-	it('opens a bron to read from outside the Verkenner', () => {
+	it('opens every bron in Tekst, at its bare address (besluit 32)', () => {
 		expect(buildBronHref(at('/'), 'articles/bwbr0001854_287')).toBe(
-			'/explore?focus=articles/bwbr0001854_287&lezen=1'
+			'/explore?focus=articles/bwbr0001854_287'
 		);
-	});
-
-	it('opens a bron without a text of its own in the network', () => {
 		expect(buildBronHref(at('/'), 'dossiers/36327')).toBe('/dossiers/36327');
 		expect(buildBronHref(at('/'), 'members/x')).toBe('/explore?focus=members/x');
 	});
@@ -52,35 +49,38 @@ describe('buildBronHref', () => {
 		).toBe('/uitspraken/ECLI:NL:HR:2024:1769?overlay=open');
 	});
 
-	it('keeps reading', () => {
-		expect(buildBronHref(at('/explore?focus=articles/a&lezen=1'), 'judgments/j')).toBe(
-			'/explore?focus=judgments/j&lezen=1'
+	it('keeps reading, and keeps the canvas of Samenhang', () => {
+		expect(buildBronHref(at('/explore?focus=articles/a'), 'judgments/j')).toBe(
+			'/explore?focus=judgments/j'
+		);
+		expect(buildBronHref(at('/explore?focus=articles/a&mode=netwerk'), 'judgments/j')).toBe(
+			'/explore?focus=judgments/j&mode=netwerk'
+		);
+		expect(buildBronHref(at('/explore'), 'judgments/j')).toBe(
+			'/explore?focus=judgments/j&mode=netwerk'
 		);
 	});
 
 	it('reads a bron that is opened from Bladeren', () => {
 		expect(buildBronHref(at('/explore?mode=index&kind=judgments'), 'judgments/j')).toBe(
-			'/explore?focus=judgments/j&lezen=1'
+			'/explore?focus=judgments/j'
 		);
 	});
 
 	it('leaves the filters of Bladeren behind', () => {
 		const bladeren = '/explore?mode=index&kind=commitments&van=2020-01-01&tot=2020-12-31&status=x';
-		expect(buildBronHref(at(bladeren), 'judgments/j')).toBe('/explore?focus=judgments/j&lezen=1');
+		expect(buildBronHref(at(bladeren), 'judgments/j')).toBe('/explore?focus=judgments/j');
 	});
 
 	it('carries the position as a fragment', () => {
 		expect(buildBronHref(null, 'articles/bwbr0001903_27c', { at: 'lid-2' })).toBe(
-			'/explore?focus=articles/bwbr0001903_27c&lezen=1#lid-2'
+			'/explore?focus=articles/bwbr0001903_27c#lid-2'
 		);
 	});
 
 	it('keeps the view of a readable address, and gives one where the bron has it', () => {
 		expect(
-			buildBronHref(
-				at('/uitspraken/ECLI:NL:HR:2019:2006?lezen=1&bronnen=artikelen'),
-				'dossiers/36799'
-			)
+			buildBronHref(at('/uitspraken/ECLI:NL:HR:2019:2006?bronnen=artikelen'), 'dossiers/36799')
 		).toBe('/dossiers/36799?bronnen=artikelen');
 		expect(
 			buildBronHref(at('/dossiers/36799'), 'judgments/ecli_nl_hr_2019_2006', { at: 'rov-5.3' })
@@ -89,11 +89,11 @@ describe('buildBronHref', () => {
 
 	it('can force the network, and tells a phone to open its Netwerk tab', () => {
 		expect(
-			buildBronHref(at('/explore?focus=articles/a&lezen=1'), 'articles/b', {
+			buildBronHref(at('/explore?focus=articles/a'), 'articles/b', {
 				keepMode: false,
 				mode: 'graph'
 			})
-		).toBe('/explore?focus=articles/b&paneel=netwerk');
+		).toBe('/explore?focus=articles/b&mode=netwerk&paneel=netwerk');
 	});
 
 	it('leaves the netwerk behind when asked', () => {
@@ -101,37 +101,28 @@ describe('buildBronHref', () => {
 			buildBronHref(at('/explore?focus=articles/a&netwerk=members/x'), 'articles/b', {
 				keepNetwerk: false
 			})
-		).toBe('/explore?focus=articles/b');
+		).toBe('/explore?focus=articles/b&mode=netwerk');
 	});
 
 	it('carries extra params, such as the peildatum of the law it was opened from', () => {
 		expect(
 			buildBronHref(at('/'), 'articles/bwbr0001854_287', { params: { peildatum: '2015-01-01' } })
-		).toBe('/explore?focus=articles/bwbr0001854_287&lezen=1&peildatum=2015-01-01');
+		).toBe('/explore?focus=articles/bwbr0001854_287&peildatum=2015-01-01');
 	});
 });
 
 describe('buildOpenHref', () => {
-	const netwerk = at('/explore?focus=documents/a');
+	const netwerk = at('/explore?focus=documents/a&mode=netwerk');
 
-	it('opens a Kamerstuk on its text, and tells a phone to open its Tekst tab', () => {
+	it('opens every bron in Tekst, also from the canvas', () => {
 		expect(buildOpenHref(netwerk, 'documents/kst-36764-3')).toBe(
-			'/explore?focus=documents/kst-36764-3&lezen=1&paneel=tekst'
+			'/explore?focus=documents/kst-36764-3'
 		);
 		expect(buildOpenHref(at('/'), 'documents/kst-36764-3', { at: 'p-2' })).toBe(
-			'/explore?focus=documents/kst-36764-3&lezen=1&paneel=tekst#p-2'
+			'/explore?focus=documents/kst-36764-3#p-2'
 		);
-	});
-
-	it('opens a Kamerstuk whose text is not in the data yet in the network', () => {
-		expect(buildOpenHref(netwerk, 'documents/kst-36764-3', { hasText: false })).toBe(
-			'/explore?focus=documents/kst-36764-3&paneel=netwerk'
-		);
-	});
-
-	it('opens every other bron in the network, an article and a vote too', () => {
-		expect(buildOpenHref(netwerk, 'articles/b')).toBe('/explore?focus=articles/b&paneel=netwerk');
-		expect(buildOpenHref(netwerk, 'decisions/d')).toBe('/stemmingen/d?paneel=netwerk');
+		expect(buildOpenHref(netwerk, 'articles/b')).toBe('/explore?focus=articles/b');
+		expect(buildOpenHref(netwerk, 'decisions/d')).toBe('/stemmingen/d');
 	});
 });
 
@@ -148,16 +139,17 @@ describe('exploreMode', () => {
 	it.each([
 		['', 'graph'],
 		['mode=index', 'index'],
-		['mode=index&focus=articles/a_1&lezen=1', 'index'],
-		['focus=articles/a_1', 'graph'],
-		['focus=articles/a_1&lezen=1', 'read'],
-		['focus=judgments/ecli_nl_hr_2019_1&lezen=1', 'read'],
-		// A bijlage reads at full width as a law and its articles do (besluit 29).
-		['focus=annexes/bwbr0052872_annex_1&lezen=1', 'read'],
-		['focus=members/m1&lezen=1', 'graph'],
-		['focus=members/m1&tabel=1', 'read'],
+		['mode=index&focus=articles/a_1', 'index'],
+		// Every bron opens in Tekst (besluit 32); the canvas is ?mode=netwerk or a netwerk.
+		['focus=articles/a_1', 'read'],
+		['focus=judgments/ecli_nl_hr_2019_1', 'read'],
+		['focus=annexes/bwbr0052872_annex_1', 'read'],
+		['focus=members/m1', 'read'],
+		['focus=members/m1&mode=netwerk', 'graph'],
+		['focus=members/m1&netwerk=articles/a_1', 'graph'],
+		['focus=members/m1&mode=netwerk&tabel=1', 'read'],
 		['tabel=1', 'graph'],
-		['lezen=1', 'graph']
+		['mode=netwerk', 'graph']
 	])('?%s is %s', (query, mode) => {
 		expect(exploreMode(new URLSearchParams(query))).toBe(mode);
 	});
@@ -168,9 +160,10 @@ describe('modeOf', () => {
 		['/explore', 'graph'],
 		['/explore?mode=index', 'index'],
 		['/explore?mode=index&kind=judgments', 'index'],
-		['/explore?focus=articles/a_1&lezen=1', 'read'],
-		['/dossiers/36799', 'graph'],
-		['/uitspraken/ECLI:NL:HR:2019:1?lezen=1', 'read'],
+		['/explore?focus=articles/a_1', 'read'],
+		['/dossiers/36799', 'read'],
+		['/dossiers/36799?mode=netwerk', 'graph'],
+		['/uitspraken/ECLI:NL:HR:2019:1', 'read'],
 		['/actueel', null],
 		['/', null]
 	])('%s is %s', (path, mode) => {

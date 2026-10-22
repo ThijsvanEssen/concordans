@@ -3,7 +3,7 @@
 	// groups.ts, under the bronfilter. In the network each group can put its bronnen on the
 	// canvas or take them off.
 	import { ecliKey } from '$lib/bron/address';
-	import { capitalize, count, joinAnd } from '$lib/text/words';
+	import { capitalize, count, joinAnd, truncate } from '$lib/text/words';
 	import { meldNetwerk } from '$lib/stores/netwerk-melding';
 	import { report } from '$lib/api/errors';
 	import { rijen } from '$lib/actions/rijen';
@@ -40,6 +40,12 @@
 	import VerbondenRow from './VerbondenRow.svelte';
 	import { VERBONDEN_BUCKET } from '$lib/api/records';
 	import { groupRequest } from './open-group';
+	import Picto from '$lib/components/ui/Picto.svelte';
+	import NetworkSketch from './NetworkSketch.svelte';
+	import { sketch as drawSketch, LABEL_MAX, type SketchGroup } from './sketch';
+	import { citingTiers, type TierCount } from './tiers';
+	import { importanceOf, byImportance } from './importance';
+	import type { Collection } from '$lib/vocabulary';
 	import type { LoaderOptions } from './loaders';
 	import { isInhoudGroep, isKernGroep, lazeKernIds } from '$lib/bron/behoort';
 	import {
@@ -72,7 +78,11 @@
 		onRetry,
 		onReloadGroup,
 		onMeer,
-		onAlles
+		onAlles,
+		showNetwork,
+		onShowNetwork,
+		networkHref,
+		networkName
 	}: {
 		verbonden: VerbondenState;
 		selection: GraphNode;
@@ -99,6 +109,14 @@
 		onMeer?: (groupId: string) => void | Promise<void>;
 		/** Every row, before a copy or an export. */
 		onAlles?: () => Promise<void>;
+		/** In Tekst: whether the network is drawn above the groups (Netwerk tonen, besluit 32). */
+		showNetwork?: boolean;
+		/** Netwerk tonen or verbergen; without it the panel has no such button (on the canvas). */
+		onShowNetwork?: (on: boolean) => void;
+		/** The bron on the canvas of Samenhang, from the middle of the network. */
+		networkHref?: string;
+		/** The name of the bron in the middle of the network, its citeertitel. */
+		networkName?: string;
 	} = $props();
 
 	/** "Toelichtingen en wijzigingen", the first word with a capital. */
@@ -121,17 +139,20 @@
 			const best = [...shown].sort((a, b) => count(b) - count(a))[0];
 			groupRequest.set(null);
 			if (!best || count(best) === 0) return;
-			expanded = new Set([...expanded, best.id]);
-			// A group closed in this browser opens for it.
-			zetOpen(`verbonden:${best.id}`, true);
-			// Once its rows are drawn: a smooth scroll is cut off while they render.
-			afterTick(() =>
-				root
-					?.querySelector(`[data-group="${CSS.escape(best.id)}"]`)
-					?.scrollIntoView({ block: 'start' })
-			);
+			showGroup(best.id);
 		})
 	);
+
+	/** A group opened and in view: from the network, or "Bekijk in Verbonden". */
+	function showGroup(id: string) {
+		expanded = new Set([...expanded, id]);
+		// A group closed in this browser opens for it.
+		zetOpen(`verbonden:${id}`, true);
+		// Once its rows are drawn: a smooth scroll is cut off while they render.
+		afterTick(() =>
+			root?.querySelector(`[data-group="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'start' })
+		);
+	}
 
 	// The year of the bronfilter, for a wet asked of the API itself (BE-51): its judgments
 	// of that year are loaded, not filtered out of the first page.
@@ -193,11 +214,14 @@
 					)
 			)
 			.map((g) => {
-				const rows = g.rows.filter(
+				const own = g.rows.filter(
 					(r) => !kernIds.has(refId(r.ref)) && !kernIds.has(vertalingVan(r) ?? '')
 				);
-				const weg = g.rows.length - rows.length;
-				return weg ? { ...g, rows, total: g.total != null ? g.total - weg : g.total } : g;
+				const weg = g.rows.length - own.length;
+				// The most important first where the API does not rank them (importance.ts).
+				const rank = g.orders ? null : importanceOf(selection.collection, g.id);
+				const rows = rank ? byImportance(own, rank) : own;
+				return weg || rank ? { ...g, rows, total: g.total != null ? g.total - weg : g.total } : g;
 			})
 	);
 	const alleenKern = $derived(
@@ -253,6 +277,70 @@
 			totalCount(vast) === 0
 	);
 	const total = $derived(shownLabel(vast ?? verbonden.groups, filter, wachtSet));
+
+	// The judgments that cite an article per instantie, counted by the API over all of them:
+	// the bar of the group and its circles in the network. Asked once the group's total is in.
+	const citingJudgments = $derived(
+		selection.collection === 'articles'
+			? groepen.find((g) => g.id === 'judgments' && !g.laden && (g.total ?? 0) > 0)
+			: undefined
+	);
+	const citingTotal = $derived(citingJudgments?.total ?? 0);
+	let tierCounts = $state<{ id: string; parts: TierCount[] } | null>(null);
+	$effect(() => {
+		const all = citingTotal;
+		const { id } = selection;
+		const props = selection.raw?.props ?? {};
+		const bwb = typeof props.bwb_id === 'string' ? props.bwb_id : null;
+		const number = typeof props.article_number === 'string' ? props.article_number : null;
+		if (!all || !bwb || !number) return;
+		const ac = new AbortController();
+		citingTiers(bwb, number, all, ac.signal).then(
+			(parts) => {
+				if (!ac.signal.aborted) tierCounts = { id, parts };
+			},
+			(e) => {
+				if (!ac.signal.aborted) report('Verbonden tierCounts', e);
+			}
+		);
+		return () => ac.abort();
+	});
+	const parts = $derived(tierCounts?.id === selection.id ? tierCounts.parts : null);
+	/** The share of the largest part: the bar's parts are as wide as their counts. */
+	const SHADES = [1, 0.7, 0.45, 0.22];
+
+	// The network on request: the groups as the panel shows them, each with its count.
+	const collectionOf = (g: Group): Collection | null => {
+		const fromMatch = g.match?.[0]?.collection;
+		const c =
+			g.rows[0]?.ref.collection ??
+			(Array.isArray(fromMatch) ? fromMatch[0] : fromMatch) ??
+			g.bakken?.[0]?.collection ??
+			null;
+		return (c as Collection | null) ?? null;
+	};
+	const sketchGroups = $derived.by<SketchGroup[]>(() => {
+		if (!showNetwork) return [];
+		const drawn = shown.filter((g) => !g.laden && !(g.failed && g.rows.length === 0));
+		const noun = (g: Group) => capitalize(g.noun ?? g.label);
+		// Two groups of one noun (the stukken of each Kamer) are told apart by their Kamer.
+		const twice = (g: Group) => drawn.filter((x) => noun(x) === noun(g)).length > 1;
+		return drawn.map((g) => ({
+			id: g.id,
+			name: truncate(twice(g) && g.section ? `${noun(g)}, ${g.section}` : noun(g), LABEL_MAX, {
+				atWord: true
+			}),
+			collection: collectionOf(g),
+			count: groupCount(g),
+			rows: g.rows,
+			capped: g.capped,
+			parts: g.id === citingJudgments?.id ? parts : null
+		}));
+	});
+	const sketched = $derived(showNetwork ? drawSketch(sketchGroups) : null);
+	const centerName = $derived(
+		sketched ? truncate(networkName ?? selection.label ?? '', LABEL_MAX, { atWord: true }) : ''
+	);
 
 	function toggle(set: Set<string>, id: string) {
 		const next = new Set(set);
@@ -329,12 +417,12 @@
 		// Before the network has drawn the bron itself there is nothing to draw beside; say so
 		// rather than claim it was drawn.
 		if (!store.showRows(selection.id, rows as CanvasRow[])) {
-			meld(g.id, 'Het netwerk laadt nog; niets getekend.', null);
+			meld(g.id, 'Het netwerk laadt nog; niets drawn.', null);
 			return;
 		}
 		onNaarNetwerk?.();
 		if (nieuw.length)
-			meld(g.id, `${telling(nieuw)} getekend in het netwerk.`, () =>
+			meld(g.id, `${telling(nieuw)} drawn in het netwerk.`, () =>
 				store.hideRows(nieuw.map((r) => refId(r.ref)))
 			);
 		else meld(g.id, `Alle ${telling(rows)} stonden al in het netwerk.`, null);
@@ -371,6 +459,17 @@
 <aside class="verbonden" aria-label="Verbonden" bind:this={root}>
 	<div class="head">
 		<h2 class="head__title">Verbonden</h2>
+		{#if onShowNetwork && !empty}
+			<button
+				type="button"
+				class="btn head__netwerk"
+				aria-pressed={!!showNetwork}
+				onclick={() => onShowNetwork(!showNetwork)}
+				><Picto naam="netwerk-o" size={13} />{showNetwork
+					? 'Netwerk verbergen'
+					: 'Netwerk tonen'}</button
+			>
+		{/if}
 		<!-- A bron without verbindingen has no count: its one line says so below (A53), not a
 		     sentence of explanation (R7, UX-toets 0.79.43). -->
 		{#if !empty && (verbonden.groups.length > 0 || (!verbonden.loading && !verbonden.failed && verbonden.id))}
@@ -392,6 +491,14 @@
 		</div>{/if}
 
 	<div class="body" use:rijen={'a.row__title'} aria-busy={verbonden.loading}>
+		{#if sketched && (sketched.singles.length > 0 || sketched.clusters.length > 0)}
+			<NetworkSketch
+				sketch={sketched}
+				name={centerName}
+				networkHref={networkHref ?? '/explore'}
+				onGroup={showGroup}
+			/>
+		{/if}
 		{#if verbonden.failed}
 			<div class="note">
 				<LoadState state={LOAD_FAILED} what="De verbindingen" plural retry={onRetry} />
@@ -478,6 +585,27 @@
 								>
 							{/if}
 						</p>
+					{/if}
+					{#if g.id === citingJudgments?.id && grouping === 'soort'}
+						<!-- Per instantie, over all of them; its place kept while the counts come. -->
+						<div class="tiers" aria-hidden={!parts}>
+							{#if parts}
+								<div class="balk">
+									{#each parts as d, j (d.label)}
+										<i style:flex="{d.count} 1 0" style:opacity={SHADES[j] ?? 0.22}></i>
+									{/each}
+								</div>
+								<ul class="verdeling">
+									{#each parts as d, j (d.label)}
+										<li>
+											<span
+												><span class="sw" style:opacity={SHADES[j] ?? 0.22}></span>{d.label}</span
+											><span class="c">{formatCount(d.count)}</span>
+										</li>
+									{/each}
+								</ul>
+							{/if}
+						</div>
 					{/if}
 					{#if g.orders || bars.length > 0}
 						<JudgmentOrderLine
@@ -585,7 +713,7 @@
 		display: flex;
 		align-items: baseline;
 		flex-wrap: wrap;
-		gap: var(--s-2);
+		gap: var(--s-1) var(--s-2);
 		padding: var(--s-4) var(--s-4) 0;
 	}
 	/* The choose-line: one height (24 px), one baseline, under the heading. */
@@ -614,6 +742,57 @@
 		text-decoration-line: underline;
 		text-underline-offset: 3px;
 	}
+	/* Netwerk tonen at the right of the heading; the count on the line under it. */
+	.head__netwerk {
+		margin-left: auto;
+	}
+	/* A finger's 44 px on a touch screen and below 768. */
+	@media (pointer: coarse), (max-width: 768px) {
+		.head__netwerk {
+			min-height: var(--veld-h-raak);
+		}
+	}
+	.tiers {
+		min-height: calc(var(--s-2) + var(--s-2) + 40px);
+		padding: var(--s-1) var(--s-4) var(--s-2);
+	}
+	.balk {
+		display: flex;
+		gap: 2px;
+		height: var(--s-2);
+		margin: 0 0 var(--s-2);
+	}
+	.balk i {
+		display: block;
+		height: 100%;
+		background: var(--indigo);
+	}
+	.verdeling {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0 var(--s-4);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		font-size: var(--t-micro);
+		line-height: 20px;
+		color: var(--ink-3);
+	}
+	.verdeling li {
+		display: flex;
+		justify-content: space-between;
+		gap: var(--s-2);
+	}
+	.sw {
+		display: inline-block;
+		width: var(--s-2);
+		height: var(--s-2);
+		margin-right: var(--s-2);
+		background: var(--indigo);
+	}
+	.c {
+		color: var(--ink);
+	}
 	.head__title {
 		margin: 0;
 		font-family: var(--font-serif);
@@ -622,6 +801,7 @@
 		color: var(--ink);
 	}
 	.head__count {
+		flex-basis: 100%;
 		color: var(--ink-3);
 	}
 	.body {

@@ -22,7 +22,7 @@ src/routes/
 src/lib/
   vocabulary.ts               collections, relations, node ids, BRON_LABEL, MODES
   bron/                       bronHref (every link to a bron), pad (readable addresses), leesbaar
-                              (their lookup), anchor, BronLink (opens in Netwerk, card on hover),
+                              (their lookup), anchor, BronLink (opens in Tekst, card on hover),
                               names, tab titles, KindGlyph
   api/                        client, generated types, records (once), helpers
   graph/                      GraphNode/GraphEdge types, GraphStore (store/*), hulls, anchors
@@ -43,11 +43,11 @@ The API's names are the code's names: collections, relations, fields. Dutch appe
 
 | View     | URL                  | Shows                                                                                                             |
 | -------- | -------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Netwerk  | default              | The canvas; with a bron, the canvas, its reader and Verbonden side by side                                        |
-| Tekst    | `?lezen=1`           | The reader at full width, for an article, law, judgment or document; Verbonden beside it                          |
+| Tekst    | a bron's address     | The reader of any bron, Verbonden beside it; Netwerk tonen draws its network in Verbonden (`?toon=netwerk`)       |
+| Netwerk  | `?mode=netwerk`      | Samenhang: the canvas; without a bron or with chosen bronnen always; with a bron, its reader and Verbonden beside |
 | Bladeren | `?mode=index&kind=…` | `IndexView`: one category with filters, defined in `index/lists`; without `kind`, `IndexOverzicht` lists them all |
 
-Every other kind of bron reads beside the network. The groups of Verbonden are the layers of the canvas. Column widths are kept in `localStorage`; a narrow screen shows one column at a time.
+Every bron opens in Tekst, also at its bare address (besluit 32). The groups of Verbonden are the layers of the canvas. Column widths are kept in `localStorage`; a narrow screen shows one column at a time.
 
 ## Data flow
 

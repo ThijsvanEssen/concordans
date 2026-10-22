@@ -11,9 +11,9 @@
 
 	const isHome = $derived($page.url.pathname === '/');
 	// The network, the index and the page of a bron share the route /explore. A bron's page
-	// is one of the bronnen, its network beside it or not; Samenhang is the network alone.
+	// (Tekst) is one of the bronnen; Samenhang is the canvas, with a bron selected on it or not.
 	const mode = $derived(modeOf($page.url));
-	const isBron = $derived(mode !== null && hasFocus($page.url));
+	const isBron = $derived(mode === 'read' && hasFocus($page.url));
 	const isIndex = $derived(mode === 'index' || isBron);
 	const isExplore = $derived(mode !== null && !isIndex);
 	const isActueel = $derived($page.url.pathname.startsWith('/actueel'));

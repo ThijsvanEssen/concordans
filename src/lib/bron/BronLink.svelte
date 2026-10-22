@@ -8,9 +8,8 @@
 </script>
 
 <script lang="ts">
-	// A reference to a bron, the same everywhere. A click opens the bron in the Verkenner with
-	// its network (Thijs, 10 Oct: "laten we standaard navigeren naar Netwerk"), a Kamerstuk on
-	// its text (12 Oct); the other is one step from there, the Netwerk/Tekst switch (openHref).
+	// A reference to a bron, the same everywhere. A click opens the bron in Tekst, its reader
+	// with Verbonden beside it (besluit 32, openHref); its network is one step further.
 	// Hover or focus shows its card after a moment (HoverCard): a glance (PreviewCard), or for a
 	// judgment at an r.o. (`at` rov-…) the overweging itself, a card to read (OverwegingKaart,
 	// Thijs 14 Oct). Escape closes either; a tap outside closes the card to read, a focus that

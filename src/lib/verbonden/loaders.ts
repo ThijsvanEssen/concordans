@@ -114,6 +114,17 @@ export type LoaderOptions = { order: JudgmentOrder; year: number | null };
 
 export const DEFAULT_LOADER_OPTIONS: LoaderOptions = { order: 'date', year: null };
 
+/**
+ * The order a bron's groups start in: the judgments that cite an article the most cited first,
+ * so the three a closed group shows are the standard judgments (besluit 32). A law's stay
+ * newest first: the API's other order of a law (by the articles cited) takes over 30 s for
+ * the Awb.
+ */
+export const startOptions = (collection: string): LoaderOptions =>
+	collection === 'articles'
+		? { ...DEFAULT_LOADER_OPTIONS, order: 'cited' }
+		: DEFAULT_LOADER_OPTIONS;
+
 export type LoaderContext = {
 	node: Schema<'BaseNodeDTO'>;
 	neighbors: Neighbor[];

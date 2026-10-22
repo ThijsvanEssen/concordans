@@ -28,7 +28,13 @@ import {
 	type Loader,
 	type Match
 } from './groups';
-import { DEFAULT_LOADER_OPTIONS, LOADERS, type Loaded, type LoaderOptions } from './loaders';
+import {
+	DEFAULT_LOADER_OPTIONS,
+	LOADERS,
+	startOptions,
+	type Loaded,
+	type LoaderOptions
+} from './loaders';
 import { isInhoudGroep, isKernGroep } from '$lib/bron/behoort';
 import type { LoadState } from '$lib/util/load.svelte';
 
@@ -177,6 +183,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		}
 		const ac = new AbortController();
 		controller = ac;
+		options = startOptions(selection.collection);
 		put({ id: selection.id, groups: [], loading: true, failed: false });
 		const { collection, key } = selection;
 		let perBak: Map<string, Map<string, number>> | null = null;

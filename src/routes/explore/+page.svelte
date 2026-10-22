@@ -14,6 +14,7 @@
 	import { afterNavigate, goto } from '$app/navigation';
 	import type { Collection } from '$lib/vocabulary';
 	import { sprongDoel } from '$lib/stores/sprong';
+	import { inView } from '$lib/actions/in-view';
 	import { BESIDE, PHONE, READ_BESIDE } from '$lib/util/breakpoints';
 	import { laadWetsnetwerk } from '$lib/components/actueel/wetsnetwerk';
 	import { vandaag } from '$lib/text/datum';
@@ -24,7 +25,7 @@
 		NEIGHBORHOOD_CAP_PHONE,
 		type NeighborhoodReach
 	} from '$lib/graph/store/types';
-	import { annexHasText, lawArticles, lawNav, type LawNavItem } from '$lib/bron/law-articles';
+	import { lawArticles, lawNav, type LawNavItem } from '$lib/bron/law-articles';
 	import { getArticleDetail } from '$lib/api/articles';
 	import type { Step } from '$lib/bron/step.svelte';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
@@ -38,7 +39,7 @@
 	import { Lazy } from '$lib/util/lazy.svelte';
 	import { getNodeCanvas, getNodeHull } from '$lib/api/records';
 	import { kopNode } from '$lib/bron/first-node';
-	import { bronHref, exploreMode, focusOf, hasReadableFocus, refId, refOf } from '$lib/bron/href';
+	import { bronHref, exploreMode, focusOf, NETWORK_MODE, refId, refOf } from '$lib/bron/href';
 	import { getDossierKey } from '$lib/api/dossiers';
 	import { getMemberVotes } from '$lib/api/members';
 	import { createGraphStore } from '$lib/graph/graph-store';
@@ -230,27 +231,12 @@
 		rememberPad(path, f);
 		navigate(exploreHref(logisch.searchParams, page.url.hash, given));
 	});
-	// A bijlage without a text of its own keeps Tekst out of reach, as every bron without one:
-	// it is known from the list of its law (annexHasText), the one its contents ask.
-	let annexWithoutText = $state<string | null>(null);
-	$effect(() => {
-		const node = selectedNode;
-		const bwb = node?.collection === 'annexes' ? lawIdOf(node.raw?.props) : null;
-		if (!node || !bwb) return;
-		annexHasText(bwb, node.key).then(
-			(has) => {
-				if (!has) annexWithoutText = node.id;
-			},
-			(e) => report('Bijlage', e)
-		);
-	});
 	const focus = $derived(params.get('focus') ?? '');
-	const withoutText = $derived(!!focus && annexWithoutText === focus);
-	const readableFocus = $derived(hasReadableFocus(params) && !withoutText);
-	const mode = $derived.by(() => {
-		const m = exploreMode(params);
-		return m === 'read' && withoutText && params.get('tabel') !== '1' ? 'graph' : m;
-	});
+	// Every bron opens in Tekst, its reader with Verbonden beside it; the canvas is Samenhang
+	// (besluit 32). Netwerk tonen draws the network in Verbonden (?toon=netwerk).
+	const mode = $derived(exploreMode(params));
+	const SHOW = 'toon';
+	const showNetwork = $derived(params.get(SHOW) === 'netwerk');
 	// A toelichting or a citing judgment opened beside the article: the article stays the
 	// selected bron.
 	const besideId = $derived(params.get('naast'));
@@ -332,10 +318,14 @@
 	const source = createVerbondenSource(store);
 	let verbonden = $state<VerbondenState>(get(source));
 	source.subscribe((s) => (verbonden = s));
+	/** Verbonden came in view, under the text on a narrow screen: it loads (laad lui). */
+	let panelSeen = $state(false);
 	// Verbonden loads when it is in view (verbondenInView).
 	$effect(() => {
 		const node = mode === 'index' ? null : selectedNode;
-		const view = { phone: telefoon, table: tableMode, panel: mobilePanel };
+		// In Tekst on a phone Verbonden stands under the text: it loads once it comes in view.
+		const panel = mode === 'read' && panelSeen ? 'verbonden' : mobilePanel;
+		const view = { phone: telefoon, table: tableMode, panel };
 		if (node && !verbondenInView(node.collection, view)) return;
 		source.load(node);
 	});
@@ -905,7 +895,7 @@
 		deepenedId = '';
 		writeStored(NETWERK_KEY, null);
 		setUrl(
-			{ netwerk: null, uit: null, tussen: null, focus: null, lezen: null, open: null, mode: null },
+			{ netwerk: null, uit: null, tussen: null, focus: null, [SHOW]: null, open: null, mode: null },
 			{ push: true }
 		);
 	}
@@ -944,7 +934,7 @@
 		const from = van ? exploreUrl(van).searchParams : null;
 		const to = naar ? exploreUrl(naar).searchParams : null;
 		const changed = (name: string) => (from?.get(name) ?? null) !== (to?.get(name) ?? null);
-		if (nav.type === 'link' || nav.type === 'popstate' || changed('focus') || changed('lezen'))
+		if (nav.type === 'link' || nav.type === 'popstate' || changed('focus') || changed('mode'))
 			steppedIn = true;
 	});
 	const goBack = () => (steppedIn ? history.back() : goto('/'));
@@ -955,7 +945,7 @@
 	 */
 	function setUrl(patch: ParamPatch, { push = false } = {}) {
 		const next = patchParams(logisch.searchParams, patch);
-		// The readable address of the focus where it has one: /dossiers/36799?lezen=1. An
+		// The readable address of the focus where it has one: /dossiers/36799?mode=netwerk. An
 		// address still looked up has no focus yet: it keeps its path, or a step (?paneel
 		// dropped) would land on the empty /explore or the remembered netwerk.
 		const f = next.get('focus');
@@ -967,9 +957,14 @@
 		navigate(href, { step: push });
 	}
 
-	// Reading at full width, or the network with the text beside it.
+	// Tekst, or the bron on the canvas of Samenhang with its text beside it.
 	const setReading = (on: boolean) =>
-		setUrl({ lezen: on ? '1' : null, mode: null, naast: null, tabel: null }, { push: true });
+		setUrl(
+			{ mode: on ? null : NETWORK_MODE, [SHOW]: null, naast: null, tabel: null },
+			{ push: true }
+		);
+	// Netwerk tonen and Netwerk verbergen in Verbonden: one step each, so Back undoes it.
+	const setShowNetwork = (on: boolean) => setUrl({ [SHOW]: on ? 'netwerk' : null }, { push: true });
 	// Always explicit: an unset diepte means 1 for a container and 2 for every other bron,
 	// so a plain "2" click does not remove the param.
 	// With a netwerk a depth adds context around the selection; the netwerk stays.
@@ -1153,35 +1148,33 @@
 		mobilePanel = id;
 	}
 
-	/** What the switch Netwerk / Tekst does: read the bron, or go back to the network. */
+	/** What the key L does: read the bron, or show it on the canvas of Samenhang. */
 	const readAction = $derived<'read' | 'network' | null>(
 		// The table has its own way back to the text.
 		tableMode
 			? null
 			: mode === 'read'
 				? 'network'
-				: mode === 'graph' && readableFocus && selectedNode
+				: mode === 'graph' && selectedNode
 					? 'read'
 					: null
 	);
 
-	// The switch stands in the reader's frame, beside the band (ReaderFrame). A bron without
-	// a text of its own shows it with Tekst out of reach.
+	// On the canvas the switch Netwerk / Tekst stands in the reader's frame, beside the band
+	// (ReaderFrame), the way back to Tekst. In Tekst the network is Netwerk tonen in Verbonden.
 	const weergave = $derived<Weergave | null>(
-		readAction
+		readAction === 'read'
 			? {
-					stand: readAction === 'read' ? 'netwerk' : 'tekst',
+					stand: 'netwerk',
 					onKies: (k) => setReading(k === 'tekst'),
 					tekstMogelijk: true,
 					// Beside the network the contents have no column: they open over the reader.
 					contents:
-						readAction === 'read' && selectedNode && WITH_CONTENTS.has(selectedNode.collection)
+						selectedNode && WITH_CONTENTS.has(selectedNode.collection)
 							? () => (tocOpen = true)
 							: undefined
 				}
-			: mode === 'graph' && selectedNode && !tableMode
-				? { stand: 'netwerk', onKies: () => {}, tekstMogelijk: false }
-				: null
+			: null
 	);
 	setContext(WEERGAVE_KEY, () => weergave);
 
@@ -1356,6 +1349,13 @@
 					inNetwerk={(row) => netwerk.ids.includes(focusOf(row.ref) ?? '')}
 					onProposedText={(row) => (proposedRow = row)}
 					{tableHref}
+					showNetwork={network ? undefined : showNetwork}
+					onShowNetwork={network ? undefined : setShowNetwork}
+					networkName={bronNaam(selectedNode, $instrumentMetaStore)}
+					networkHref={bronHref(
+						refOf(selectedNode.collection, selectedNode.key, selectedNode.raw?.props),
+						{ keepMode: false, mode: 'graph' }
+					)}
 				/>
 			</PanelBoundary>
 			{#if card && !network}
@@ -1382,12 +1382,11 @@
 	></div>
 {/snippet}
 
-{#snippet tabs(read: boolean)}
+{#snippet tabs()}
 	{#each PANELS as { id, label } (id)}
 		<button
 			type="button"
 			class="mobile-tab"
-			class:mobile-tab--phone={read && id === 'graph'}
 			class:is-active={mobilePanel === id}
 			aria-pressed={mobilePanel === id}
 			onclick={() => kiesPaneel(id)}>{label}</button
@@ -1440,7 +1439,7 @@
 				style:--panel-w={widths.css('panel')}
 			>
 				{#if selectedNode}
-					<nav class="mobile-tabs" aria-label="Panelen">{@render tabs(false)}</nav>
+					<nav class="mobile-tabs" aria-label="Panelen">{@render tabs()}</nav>
 				{/if}
 				<!-- The text and Verbonden come before the network in the page, so a screen reader
 				     reads the bron before the list of the network; the grid places them. -->
@@ -1612,9 +1611,10 @@
 				style:--nav-w={widths.css('nav')}
 				style:--panel-w={widths.css('panel')}
 			>
-				<nav class="mobile-tabs" aria-label="Panelen">
-					{@render tabs(true)}
-					{#if withContents}
+				<!-- Narrow, the text and Verbonden stand under each other in one scroll (V1-a-375);
+				     only the contents open as a sheet. -->
+				{#if withContents}
+					<nav class="mobile-tabs" aria-label="Panelen">
 						<button
 							type="button"
 							class="mobile-tab mobile-tab--toc"
@@ -1622,21 +1622,21 @@
 							aria-expanded={tocOpen}
 							onclick={() => (tocOpen = true)}>Inhoud</button
 						>
-					{/if}
-				</nav>
+					</nav>
+				{/if}
 				{#if withContents}
 					<div class="col col--nav toc-column">
 						{@render toc()}
 					</div>
 					{@render handle('nav')}
 				{/if}
-				<div class="col col--reader col--measure" class:mobile-hidden={mobilePanel === 'verbonden'}>
+				<div class="col col--reader col--measure">
 					{@render reader()}
 				</div>
 				{@render handle('panel')}
 				<div
 					class="col col--panel"
-					class:mobile-hidden={mobilePanel !== 'verbonden'}
+					use:inView={() => (panelSeen = true)}
 					use:sprongDoel={{
 						id: 'verbonden',
 						label: 'Naar Verbonden',
@@ -2021,16 +2021,6 @@
 		font-weight: 500;
 	}
 
-	/* Netwerk in the tabs of Tekst: on a phone the tabs replace the switch in the bar. */
-	.mobile-tab--phone {
-		display: none;
-	}
-	@media (max-width: 768px) {
-		.explore-read .mobile-tab--phone {
-			display: block;
-		}
-	}
-
 	.mobile-tab--toc {
 		flex: none;
 		margin-left: auto;
@@ -2038,25 +2028,40 @@
 	}
 
 	/* The nav column (LezenNav/DocumentToc/JudgmentToc) is a permanent column above
-	   1100px; below it, Inhoud opens the same content as a sheet (TocSheet). */
+	   1100px; below it, Inhoud opens the same content as a sheet (TocSheet). The text and
+	   Verbonden stand under each other in one scroll, Verbonden after the text (V1-a-375). */
 	@media (max-width: 1100px) {
 		.explore-read,
 		.explore-read--with-nav {
-			grid-template-columns: 1fr;
-			grid-template-rows: auto 1fr;
+			display: block;
+			overflow-y: auto;
+			-webkit-overflow-scrolling: touch;
 		}
 		.explore-read .mobile-tabs {
 			display: flex;
-			grid-column: 1;
-			grid-row: 1;
 		}
 		.explore-read .col {
-			grid-row: 2;
-			grid-column: 1;
+			height: auto;
+			overflow: visible;
+		}
+		.explore-read .col--panel {
+			background: none;
+			box-shadow: none;
+		}
+		.explore-read :global(.reader),
+		.explore-read :global(.reader__main),
+		.explore-read :global(.reader-frame),
+		.explore-read .panel,
+		.explore-read :global(.verbonden),
+		.explore-read :global(.verbonden .body) {
+			height: auto;
+			overflow: visible;
+		}
+		.explore-read .col--panel {
+			border-top: 1px solid var(--rule);
 		}
 		.explore-read .toc-column,
-		.explore-read .resize-handle,
-		.explore-read .mobile-hidden {
+		.explore-read .resize-handle {
 			display: none;
 		}
 	}

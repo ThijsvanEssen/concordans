@@ -83,8 +83,7 @@
 		const doel = id ? parseNodeId(id) : null;
 		return id && doel ? bewaarItem(id, { kort: r.zin, voluit: r.zin }) : null;
 	};
-	const bronVan = (r: TijdRegel<B>) =>
-		r.href ?? (r.ref ? openHref(r.ref, { hasText: r.heeftTekst }) : null);
+	const bronVan = (r: TijdRegel<B>) => r.href ?? (r.ref ? openHref(r.ref) : null);
 	const uid = $props.id();
 </script>
 

@@ -5,6 +5,7 @@
 import { api, unwrap } from './client';
 import { once } from './records';
 import type { QueryOf } from './types';
+import type { Tier } from '$lib/vocabulary';
 
 /** The laws a member or a fractie has worked on, with the number of their documents. */
 export const getTouchedInstruments = (who: 'members' | 'factions', key: string) =>
@@ -50,6 +51,19 @@ export const getCitedBy = (
 				})
 			)
 	);
+
+/** The judgments that cite an article from one tier (`judgment_total`), over all of them. */
+export const getCitingJudgmentsOfTier = (bwbId: string, articleNumber: string, tier: Tier) =>
+	once(`articles/${bwbId}/${articleNumber}/cited-by/tier/${tier}`, () =>
+		unwrap(
+			api.GET('/api/articles/{bwb_id}/{article_number}/cited-by', {
+				params: {
+					path: { bwb_id: bwbId, article_number: articleNumber },
+					query: { tier, limit: 1 }
+				}
+			})
+		)
+	).then((d) => d.judgment_total);
 
 /** The changes of an article, enacted and proposed, each with its dossier and date. */
 export const getLegislativeHistory = (bwbId: string, articleNumber: string) =>

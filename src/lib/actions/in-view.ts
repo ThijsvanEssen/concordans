@@ -6,6 +6,11 @@ export const IN_VIEW_MARGIN = '200px';
 
 export function inView(el: HTMLElement, onSeen: () => void) {
 	let seen = onSeen;
+	// A browser without the observer shows the part at once.
+	if (typeof IntersectionObserver === 'undefined') {
+		onSeen();
+		return { update: () => {}, destroy: () => {} };
+	}
 	const observer = new IntersectionObserver(
 		([entry]) => {
 			if (!entry.isIntersecting) return;

@@ -2,30 +2,30 @@
 
 exports[`Verbonden of a 'artikel' > keeps its groups, rows, kern and export > csv 1`] = `
 "﻿bron;soort;verbinding;plaats in de bron;plaats in dit artikel;aard;status;betrouwbaarheid;datum;identificatie;link
-CBb 13 oktober 2026;Uitspraken;haalt aan;r.o. 5.6;lid 3;;vastgesteld;hoog;2026-10-13;ECLI:NL:CBB:2026:489;https://concordans.nl/uitspraken/ECLI:NL:CBB:2026:489?lezen=1#rov-5.6
-Rb. Den Haag 13 oktober 2026;Uitspraken;haalt aan;r.o. 7;lid 6;;vastgesteld;hoog;2026-10-13;ECLI:NL:RBDHA:2026:30184;https://concordans.nl/uitspraken/ECLI:NL:RBDHA:2026:30184?lezen=1#rov-7
-Rb. Den Haag 12 oktober 2026;Uitspraken;haalt aan;r.o. 8;lid 4;;vastgesteld;hoog;2026-10-12;ECLI:NL:RBDHA:2026:30092;https://concordans.nl/uitspraken/ECLI:NL:RBDHA:2026:30092?lezen=1#rov-8
-Rb. Den Haag 12 oktober 2026;Uitspraken;haalt aan;r.o. 10.1;lid 4;;vastgesteld;hoog;2026-10-12;ECLI:NL:RBDHA:2026:30152;https://concordans.nl/uitspraken/ECLI:NL:RBDHA:2026:30152?lezen=1#rov-10.1
-Artikel 15 Wedervergeldingswet zeescheepvaart;Artikelen;verwijst naar;;lid 2;uitzondering;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0003104/artikel/15?lezen=1
-Artikel 3a:146 Wft;Artikelen;verwijst naar;;lid 3;mogelijk verwijzing;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0020368/artikel/3a:146?lezen=1
-Artikel 8:87 Awb;Artikelen;verwijst naar;;lid 5;mogelijk verwijzing;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/8:87?lezen=1
-Artikel 8:104 Awb;Artikelen;verwijst naar;;lid 5;definitie;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/8:104?lezen=1
-Amendement van het lid De Wit over het alleen buiten toepassing verklaren van uniforme openbare voorbereidingsprocedure bij wijzigingen van ondergeschikte aard;Toelichtingen;licht toe;§ Toelichting;;;vastgesteld;hoog;2009-02-12;;https://concordans.nl/kamerstukken/31352/12?lezen=1#s-1
-Wet aanpassing bestuursprocesrecht;Wetten;wijzigt;;;;vastgesteld;hoog;2012-12-27;Stb. 2012, 682;https://concordans.nl/stb/2012/682?lezen=1
-Wet bestuurlijke lus Awb;Wetten;wijzigt;;;;vastgesteld;hoog;2009-12-24;Stb. 2009, 570;https://concordans.nl/stb/2009/570?lezen=1
-Kamerstuk 29702;Wetten;wijzigt;;;;vastgesteld;hoog;2009-06-30;Stb. 2009, 264;https://concordans.nl/stb/2009/264?lezen=1
-Kamerstuk 26523;Wetten;wijzigt;;;;vastgesteld;hoog;2002-02-12;Stb. 2002, 53;https://concordans.nl/stb/2002/53?lezen=1
-Amendement van het lid Diederik van Dijk over het afschaffen van rechterlijke dwangsommen in vreemdelingenzaken;Wetsvoorstellen;noemt;;lid 4;;vastgesteld;hoog;2025-06-13;;https://concordans.nl/kamerstukken/36704/19?lezen=1
-Memorie van toelichting, Kamerstuk 32621, nr. 3;Toelichtingen;noemt;;lid 4;;vastgesteld;hoog;2011-02-02;;https://concordans.nl/kamerstukken/32621/3?lezen=1
-Voorstel van wet, Kamerstuk 36105, nr. 2;Wetsvoorstellen;noemt;;lid 3;;vastgesteld;hoog;2022-05-19;;https://concordans.nl/kamerstukken/36105/2?lezen=1
-Nota van wijziging, Kamerstuk 33219, nr. 11;Wetsvoorstellen;noemt;;;;vastgesteld;hoog;2013-03-11;;https://concordans.nl/kamerstukken/33219/11?lezen=1
-Algemene wet bestuursrecht;Wetten;artikel van;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537?lezen=1"
+ABRvS 30 november 2022;Uitspraken;haalt aan;r.o. 1.1;lid 6;;vastgesteld;hoog;2022-11-30;ECLI:NL:RVS:2022:3352;https://concordans.nl/uitspraken/ECLI:NL:RVS:2022:3352#rov-1.1
+ABRvS 30 november 2022;Uitspraken;haalt aan;r.o. 1.2;lid 6;;vastgesteld;hoog;2022-11-30;ECLI:NL:RVS:2022:3352;https://concordans.nl/uitspraken/ECLI:NL:RVS:2022:3352#rov-1.2
+ABRvS 30 november 2022;Uitspraken;haalt aan;;lid 6;;vastgesteld;hoog;2022-11-30;ECLI:NL:RVS:2022:3352;https://concordans.nl/uitspraken/ECLI:NL:RVS:2022:3352#p-6a25da75
+ABRvS 30 november 2022;Uitspraken;haalt aan;r.o. 1.1;lid 6;;vastgesteld;hoog;2022-11-30;ECLI:NL:RVS:2022:3353;https://concordans.nl/uitspraken/ECLI:NL:RVS:2022:3353#rov-1.1
+Art. 15 Wedervergeldingswet zeescheepvaart;Artikelen;verwijst naar;;lid 2;uitzondering;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0003104/artikel/15
+Artikel 3a:146 Wft;Artikelen;verwijst naar;;lid 3;mogelijk verwijzing;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0020368/artikel/3a:146
+Artikel 8:87 Awb;Artikelen;verwijst naar;;lid 5;mogelijk verwijzing;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/8:87
+Artikel 8:104 Awb;Artikelen;verwijst naar;;lid 5;definitie;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/8:104
+Amendement van het lid De Wit over het alleen buiten toepassing verklaren van uniforme openbare voorbereidingsprocedure bij wijzigingen van ondergeschikte aard;Toelichtingen;licht toe;§ Toelichting;;;vastgesteld;hoog;2009-02-12;;https://concordans.nl/kamerstukken/31352/12#s-5c411835
+Wet aanpassing bestuursprocesrecht;Wetten;wijzigt;;;;vastgesteld;hoog;2012-12-27;Stb. 2012, 682;https://concordans.nl/stb/2012/682
+Wet bestuurlijke lus Awb;Wetten;wijzigt;;;;vastgesteld;hoog;2009-12-24;Stb. 2009, 570;https://concordans.nl/stb/2009/570
+Kamerstuk 29702;Wetten;wijzigt;;;;vastgesteld;hoog;2009-06-30;Stb. 2009, 264;https://concordans.nl/stb/2009/264
+Kamerstuk 26523;Wetten;wijzigt;;;;vastgesteld;hoog;2002-02-12;Stb. 2002, 53;https://concordans.nl/stb/2002/53
+Advies Afdeling advisering Raad van State en Nader rapport, Kamerstuk 35476, nr. 4;Dossiers;noemt;;lid 4;;vastgesteld;hoog;2020-05-27;;https://concordans.nl/kamerstukken/35476/4
+Amendement van het lid Diederik van Dijk over het afschaffen van rechterlijke dwangsommen in vreemdelingenzaken;Wetsvoorstellen;noemt;;lid 4;;vastgesteld;hoog;2025-06-13;;https://concordans.nl/kamerstukken/36704/19
+Advies Afdeling advisering Raad van State en Nader rapport, Kamerstuk 32450, nr. 4;Dossiers;noemt;;lid 4;;vastgesteld;hoog;2010-07-24;;https://concordans.nl/kamerstukken/32450/4
+Memorie van toelichting, Kamerstuk 32621, nr. 3;Toelichtingen;noemt;;lid 4;;vastgesteld;hoog;2011-02-02;;https://concordans.nl/kamerstukken/32621/3
+Algemene wet bestuursrecht;Wetten;artikel van;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537"
 `;
 
 exports[`Verbonden of a 'artikel' > keeps its groups, rows, kern and export > groups 1`] = `
 [
   {
-    "count": "21.882",
+    "count": "24.575",
     "id": "judgments",
     "label": "Uitspraken die dit artikel aanhalen",
     "plaats": "verbonden",
@@ -64,7 +64,7 @@ exports[`Verbonden of a 'artikel' > keeps its groups, rows, kern and export > gr
     "label": "Toelichting",
     "plaats": "verbonden",
     "rows": [
-      "documents/7e59f350_a461_4556_8c81_250abfaaafd7 | Amendement van het lid De Wit over het alleen buiten toepassing verklaren van uniforme openbare voorbereidingsprocedure bij wijzigingen van ondergeschikte aard | nr. 12, § Toelichting | Amendement, Kamerstuk 31352, nr. 12, 12 feb. 2009",
+      "documents/7e59f350_a461_4556_8c81_250abfaaafd7 | Amendement van het lid De Wit over het alleen buiten toepassing verklaren van uniforme openbare voorbereidingsprocedure bij wijzigingen van ondergeschikte aard | nr. 12, § Toelichting | Amendement, Kamerstuk 31352, nr. 12, Wet bestuurlijke lus Awb, 12 feb. 2009",
     ],
     "section": null,
   },
@@ -90,7 +90,7 @@ exports[`Verbonden of a 'artikel' > keeps its groups, rows, kern and export > gr
     "section": null,
   },
   {
-    "count": "35",
+    "count": "47",
     "id": "documents",
     "label": "Kamerstukken die dit artikel noemen",
     "plaats": "verbonden",
@@ -125,19 +125,19 @@ exports[`Verbonden of a 'artikel' > keeps its groups, rows, kern and export > gr
 
 exports[`Verbonden of a 'dossier' > keeps its groups, rows, kern and export > csv 1`] = `
 "﻿bron;soort;verbinding;plaats in de bron;plaats in dit artikel;aard;status;betrouwbaarheid;datum;identificatie;link
-Cyberbeveiligingswet;Wetten;tot stand gekomen in;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0052872?lezen=1
+Cyberbeveiligingswet;Wetten;tot stand gekomen in;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0052872
 Vaste commissie voor Defensie;Dossiers;onder leiding van;;;;vastgesteld;hoog;;;https://concordans.nl/commissies/def
 Vaste commissie voor Digitale Zaken;Dossiers;onder leiding van;;;;vastgesteld;hoog;;;https://concordans.nl/commissies/diza
 Vaste commissie voor Justitie en Veiligheid;Dossiers;onder leiding van;;;;vastgesteld;hoog;;;https://concordans.nl/commissies/j_v
-Publicatie van het samenwerkingsprotocol inzake toezicht op de Cyberbeveiligingswet (Cbw) en de Wet weerbaarheid kritieke entiteiten (Wwke) in de Staatscourant;Dossiers;stuk in;;;;vastgesteld;hoog;2026-09-01;;https://concordans.nl/kamerstukken/36764/34?lezen=1
-Besluit Eerste Kamer inzake Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet);Dossiers;stuk in;;;;vastgesteld;hoog;2026-07-07;;https://concordans.nl/explore?focus=documents/b529da85_8dc7_436c_abae_d2b317723250&lezen=1
+Publicatie van het samenwerkingsprotocol inzake toezicht op de Cyberbeveiligingswet (Cbw) en de Wet weerbaarheid kritieke entiteiten (Wwke) in de Staatscourant;Dossiers;stuk in;;;;vastgesteld;hoog;2026-09-01;;https://concordans.nl/kamerstukken/36764/34
+Besluit Eerste Kamer inzake Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet);Dossiers;stuk in;;;;vastgesteld;hoog;2026-07-07;;https://concordans.nl/explore?focus=documents/b529da85_8dc7_436c_abae_d2b317723250
 Gewijzigde motie van de leden Kathmann en Dassen over het inrichten van één centraal meldportaal voor organisaties (t.v.v. 36764-19);Stemmingen;over;;;;vastgesteld;hoog;2026-04-15;;https://concordans.nl/stemmingen/decision_c94c4b61_f72a_46bc_8cda_266eb0e48052
 De staatssecretaris Digitale Economie en Soevereiniteit en de minister van…;Dossiers;over;;;;vastgesteld;hoog;;;https://concordans.nl/toezeggingen/TZ202604-068
 De minister van JenV zegt toe, voor de inwerktreding van de wet, een…;Dossiers;over;;;;vastgesteld;hoog;;;https://concordans.nl/toezeggingen/TZ202604-062
 De minister van JenV zegt toe het door het lid Van den Berg gevraagde tijdspad…;Dossiers;over;;;;vastgesteld;hoog;;;https://concordans.nl/toezeggingen/TZ202604-067
 De minister van JenV zegt toe voor de zomer schriftelijk terug te komen op de…;Dossiers;over;;;;vastgesteld;hoog;;;https://concordans.nl/toezeggingen/TZ202604-065
-Nota naar aanleiding van het tweede verslag, Kamerstuk I 36764, E;Dossiers;stuk in;;;;vastgesteld;hoog;2026-06-29;;https://concordans.nl/kamerstukken/36764/E?lezen=1
-Tweede verslag, Kamerstuk I 36764, D;Dossiers;stuk in;;;;vastgesteld;hoog;2026-06-26;;https://concordans.nl/kamerstukken/36764/D?lezen=1"
+Nota naar aanleiding van het tweede verslag, Kamerstuk I 36764, E;Dossiers;stuk in;;;;vastgesteld;hoog;2026-06-29;;https://concordans.nl/kamerstukken/36764/E
+Tweede verslag, Kamerstuk I 36764, D;Dossiers;stuk in;;;;vastgesteld;hoog;2026-06-26;;https://concordans.nl/kamerstukken/36764/D"
 `;
 
 exports[`Verbonden of a 'dossier' > keeps its groups, rows, kern and export > groups 1`] = `
@@ -448,14 +448,14 @@ exports[`Verbonden of a 'kamerstuk' > keeps its groups, rows, kern and export > 
 
 exports[`Verbonden of a 'uitspraak' > keeps its groups, rows, kern and export > csv 1`] = `
 "﻿bron;soort;verbinding;plaats in de bron;plaats in deze uitspraak;aard;status;betrouwbaarheid;datum;identificatie;link
-Artikel 81 RO;Artikelen;haalt aan;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001830/artikel/81?lezen=1
-Artikel 29 Sv;Artikelen;haalt aan;;r.o. 2.2.3, 2.3.1 en 1 meer;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/29?lezen=1
-Artikel 27c Sv;Artikelen;haalt aan;;r.o. 2.2.3 en 2.3.3;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/27c?lezen=1
-Artikel 28 Sv;Artikelen;haalt aan;;r.o. 2.2.3 en 2.3.3;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/28?lezen=1
-Conclusie A-G Paridaens 1 oktober 2024;Uitspraken;conclusie bij;;;;vastgesteld;hoog;2024-10-01;ECLI:NL:PHR:2024:994;https://concordans.nl/uitspraken/ECLI:NL:PHR:2024:994?lezen=1
-Gerechtshof Arnhem-Leeuwarden, 24 juni 2022, 21-004903-20;Uitspraken;;;;;vastgesteld;hoog;;;https://concordans.nl/explore?focus=judgments/unresolved%3Agerechtshof+Arnhem-Leeuwarden%3A2022-06-24%3A21-004903-20&lezen=1
-HR 20 maart 2018;Uitspraken;haalt aan;;;;vastgesteld;hoog;2018-03-20;ECLI:NL:HR:2018:368;https://concordans.nl/uitspraken/ECLI:NL:HR:2018:368?lezen=1
-HR 6 november 2018;Uitspraken;haalt aan;;;;vastgesteld;hoog;2018-11-06;ECLI:NL:HR:2018:2056;https://concordans.nl/uitspraken/ECLI:NL:HR:2018:2056?lezen=1"
+Artikel 81 RO;Artikelen;haalt aan;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001830/artikel/81
+Artikel 29 Sv;Artikelen;haalt aan;;r.o. 2.2.3, 2.3.1 en 1 meer;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/29
+Artikel 27c Sv;Artikelen;haalt aan;;r.o. 2.2.3 en 2.3.3;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/27c
+Artikel 28 Sv;Artikelen;haalt aan;;r.o. 2.2.3 en 2.3.3;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/28
+Conclusie A-G Paridaens 1 oktober 2024;Uitspraken;conclusie bij;;;;vastgesteld;hoog;2024-10-01;ECLI:NL:PHR:2024:994;https://concordans.nl/uitspraken/ECLI:NL:PHR:2024:994
+Gerechtshof Arnhem-Leeuwarden, 24 juni 2022, 21-004903-20;Uitspraken;;;;;vastgesteld;hoog;;;https://concordans.nl/explore?focus=judgments/unresolved%3Agerechtshof+Arnhem-Leeuwarden%3A2022-06-24%3A21-004903-20
+HR 20 maart 2018;Uitspraken;haalt aan;;r.o. 2.3.3;;vastgesteld;hoog;2018-03-20;ECLI:NL:HR:2018:368;https://concordans.nl/uitspraken/ECLI:NL:HR:2018:368
+HR 6 november 2018;Uitspraken;haalt aan;;r.o. 2.2.3 en 2.3.2;;vastgesteld;hoog;2018-11-06;ECLI:NL:HR:2018:2056;https://concordans.nl/uitspraken/ECLI:NL:HR:2018:2056"
 `;
 
 exports[`Verbonden of a 'uitspraak' > keeps its groups, rows, kern and export > groups 1`] = `
@@ -601,46 +601,46 @@ Wijziging van diverse wetten in verband met het overzetten van bepalingen uit d�
 Verzamelwet Justitie en Veiligheid en Asiel en Migratie 20XX;Dossiers;tot stand gekomen in;;;;vastgesteld;hoog;;Kamerstuk 36638;https://concordans.nl/dossiers/36638
 versterking strafrechtelijke aanpak ondermijnende criminaliteit II;Dossiers;tot stand gekomen in;;;;vastgesteld;hoog;;Kamerstuk 36463;https://concordans.nl/dossiers/36463
 Verzamelwet Omgevingswet 20..;Dossiers;tot stand gekomen in;;;;vastgesteld;hoog;;Kamerstuk 36367;https://concordans.nl/dossiers/36367
-Artikel 1:1;Artikelen;artikel van;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/1:1?lezen=1
-Artikel 1:2;Artikelen;artikel van;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/1:2?lezen=1
-Artikel 1:3;Artikelen;artikel van;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/1:3?lezen=1
-Artikel 1:4;Artikelen;artikel van;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/1:4?lezen=1
-Aanpassingsbesluit vereenvoudiging en digitalisering procesrecht;Wetten;gebaseerd op;art. 8:36f lid 1;;;vastgesteld;hoog;2017-03-01;in werking 1 mrt. 2017;https://concordans.nl/wetten/BWBR0038341?lezen=1
-Besluit buitengerechtelijke kosten;Wetten;gebaseerd op;art. 4:120 lid 2;;;vastgesteld;hoog;2009-07-01;in werking 1 jul. 2009;https://concordans.nl/wetten/BWBR0026012?lezen=1
-Besluit klachtencommissie vergunninghouders interlandelijke adoptie;Wetten;gebaseerd op;art. 9:13, 9:14;;;vastgesteld;hoog;2000-04-01;in werking 1 apr. 2000;https://concordans.nl/wetten/BWBR0011217?lezen=1
-Besluit proceskosten bestuursrecht;Wetten;gebaseerd op;art. 8:75;;;vastgesteld;hoog;1994-01-01;in werking 1 jan. 1994;https://concordans.nl/wetten/BWBR0006358?lezen=1
-Richtlijn 79/409/EEG;Europees en internationaal;implementeert;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/31979L0409?lezen=1
-Richtlijn 92/43/EEG;Europees en internationaal;implementeert;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/31992L0043?lezen=1
-Richtlijn 93/6/EEG;Europees en internationaal;implementeert;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/31993L0006?lezen=1
-Richtlijn 94/63/EG;Europees en internationaal;implementeert;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/31994L0063?lezen=1
-Richtlijn 2000/31/EG;Europees en internationaal;noemt;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/32000L0031?lezen=1
-Richtlijn 2002/47/EG;Europees en internationaal;noemt;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/32002L0047?lezen=1
-Richtlijn 2003/71/EG;Europees en internationaal;noemt;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/32003L0071?lezen=1
-Richtlijn 2004/25/EG;Europees en internationaal;noemt;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/32004L0025?lezen=1
-Stb. 2026, 94;Wetten;wijzigt;;;;vastgesteld;hoog;2026-06-04;;https://concordans.nl/stb/2026/94?lezen=1
-Stcrt. 2025, 39855;Wetten;wijzigt;;;;vastgesteld;hoog;2026-01-01;;https://concordans.nl/stcrt/2025/39855?lezen=1
-Stb. 2025, 333;Wetten;wijzigt;;;;vastgesteld;hoog;2026-01-01;;https://concordans.nl/stb/2025/333?lezen=1
-Stb. 2025, 124;Wetten;wijzigt;;;;vastgesteld;hoog;2025-07-01;;https://concordans.nl/stb/2025/124?lezen=1
-Artikel 4:20;Artikelen;noemt;;;definitie;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/4:20?lezen=1
-Artikel 5:43;Artikelen;noemt;;;definitie;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/5:43?lezen=1
-Artikel 8:36e;Artikelen;noemt;;;definitie;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/8:36e?lezen=1
-Artikel 8:94;Artikelen;noemt;;;definitie;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/8:94?lezen=1
-Artikel 8:107;Artikelen;noemt;;;definitie;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/8:107?lezen=1
-Artikel 8:4;Artikelen;noemt;;;mogelijk definitie;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/8:4?lezen=1
-Artikel bijlage 2 artikel 1;Artikelen;noemt;;;mogelijk voorwaarde;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_1&lezen=1
-Artikel bijlage 2 artikel 1;Artikelen;noemt;;;mogelijk voorwaarde;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_1&lezen=1
-Artikel bijlage 2 artikel 2;Artikelen;noemt;;;mogelijk voorwaarde;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_2&lezen=1
-Artikel bijlage 2 artikel 4;Artikelen;noemt;;;uitzondering;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_4&lezen=1
-Artikel bijlage 2 artikel 7;Artikelen;noemt;;;uitzondering;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_7&lezen=1
-Artikel bijlage 2 artikel 11;Artikelen;noemt;;;uitzondering;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_11&lezen=1
-Omgevingswet;Wetten;noemt;;;;vastgesteld;hoog;2024-01-01;in werking 1 jan. 2024;https://concordans.nl/wetten/BWBR0037885?lezen=1
-Wet op het financieel toezicht;Wetten;noemt;;;;vastgesteld;hoog;2007-01-01;in werking 1 jan. 2007;https://concordans.nl/wetten/BWBR0020368?lezen=1
-Vreemdelingenwet 2000;Wetten;noemt;;;;vastgesteld;hoog;2001-04-01;in werking 1 apr. 2001;https://concordans.nl/wetten/BWBR0011823?lezen=1
-Algemene wet inzake rijksbelastingen;Wetten;noemt;;;;vastgesteld;hoog;1962-10-01;in werking 1 okt. 1962;https://concordans.nl/wetten/BWBR0002320?lezen=1
-Rb. Den Haag 14 oktober 2026;Uitspraken;haalt aan;;;;vastgesteld;hoog;2026-10-14;ECLI:NL:RBDHA:2026:30262;https://concordans.nl/uitspraken/ECLI:NL:RBDHA:2026:30262?lezen=1
-ABRvS 14 oktober 2026;Uitspraken;haalt aan;;;;vastgesteld;hoog;2026-10-14;ECLI:NL:RVS:2026:6065;https://concordans.nl/uitspraken/ECLI:NL:RVS:2026:6065?lezen=1
-ABRvS 14 oktober 2026;Uitspraken;haalt aan;;;;vastgesteld;hoog;2026-10-14;ECLI:NL:RVS:2026:6066;https://concordans.nl/uitspraken/ECLI:NL:RVS:2026:6066?lezen=1
-ABRvS 14 oktober 2026;Uitspraken;haalt aan;;;;vastgesteld;hoog;2026-10-14;ECLI:NL:RVS:2026:6068;https://concordans.nl/uitspraken/ECLI:NL:RVS:2026:6068?lezen=1"
+Artikel 1:1;Artikelen;artikel van;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/1:1
+Artikel 1:2;Artikelen;artikel van;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/1:2
+Artikel 1:3;Artikelen;artikel van;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/1:3
+Artikel 1:4;Artikelen;artikel van;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/1:4
+Aanpassingsbesluit vereenvoudiging en digitalisering procesrecht;Wetten;gebaseerd op;art. 8:36f lid 1;;;vastgesteld;hoog;2017-03-01;in werking 1 mrt. 2017;https://concordans.nl/wetten/BWBR0038341
+Besluit buitengerechtelijke kosten;Wetten;gebaseerd op;art. 4:120 lid 2;;;vastgesteld;hoog;2009-07-01;in werking 1 jul. 2009;https://concordans.nl/wetten/BWBR0026012
+Besluit klachtencommissie vergunninghouders interlandelijke adoptie;Wetten;gebaseerd op;art. 9:13, 9:14;;;vastgesteld;hoog;2000-04-01;in werking 1 apr. 2000;https://concordans.nl/wetten/BWBR0011217
+Besluit proceskosten bestuursrecht;Wetten;gebaseerd op;art. 8:75;;;vastgesteld;hoog;1994-01-01;in werking 1 jan. 1994;https://concordans.nl/wetten/BWBR0006358
+Richtlijn 79/409/EEG;Europees en internationaal;implementeert;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/31979L0409
+Richtlijn 92/43/EEG;Europees en internationaal;implementeert;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/31992L0043
+Richtlijn 93/6/EEG;Europees en internationaal;implementeert;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/31993L0006
+Richtlijn 94/63/EG;Europees en internationaal;implementeert;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/31994L0063
+Richtlijn 2000/31/EG;Europees en internationaal;noemt;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/32000L0031
+Richtlijn 2002/47/EG;Europees en internationaal;noemt;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/32002L0047
+Richtlijn 2003/71/EG;Europees en internationaal;noemt;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/32003L0071
+Richtlijn 2004/25/EG;Europees en internationaal;noemt;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/32004L0025
+Stb. 2026, 94;Wetten;wijzigt;;;;vastgesteld;hoog;2026-06-04;;https://concordans.nl/stb/2026/94
+Stcrt. 2025, 39855;Wetten;wijzigt;;;;vastgesteld;hoog;2026-01-01;;https://concordans.nl/stcrt/2025/39855
+Stb. 2025, 333;Wetten;wijzigt;;;;vastgesteld;hoog;2026-01-01;;https://concordans.nl/stb/2025/333
+Stb. 2025, 124;Wetten;wijzigt;;;;vastgesteld;hoog;2025-07-01;;https://concordans.nl/stb/2025/124
+Artikel 5:43;Artikelen;noemt;;;definitie;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/5:43
+Artikel 7:26;Artikelen;noemt;;;definitie;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/7:26
+Artikel 8:107;Artikelen;noemt;;;definitie;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/8:107
+Artikel bijlage 2 artikel 1;Artikelen;noemt;;;mogelijk voorwaarde;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_1
+Artikel bijlage 2 artikel 1;Artikelen;noemt;;;mogelijk voorwaarde;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_1
+Artikel bijlage 2 artikel 1;Artikelen;noemt;;;mogelijk voorwaarde;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_1
+Artikel bijlage 2 artikel 1;Artikelen;noemt;;;mogelijk voorwaarde;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_1
+Artikel bijlage 2 artikel 2;Artikelen;noemt;;;mogelijk voorwaarde;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_2
+Artikel bijlage 2 artikel 11;Artikelen;noemt;;;mogelijk voorwaarde;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_11
+Artikel bijlage 2 artikel 1;Artikelen;noemt;;;uitzondering;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_1
+Artikel bijlage 2 artikel 4;Artikelen;noemt;;;uitzondering;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_4
+Artikel bijlage 2 artikel 11;Artikelen;noemt;;;uitzondering;vastgesteld;hoog;;;https://concordans.nl/explore?focus=articles/bwbr0005537_bijlage_2_artikel_11
+Omgevingswet;Wetten;noemt;;;;vastgesteld;hoog;2024-01-01;in werking 1 jan. 2024;https://concordans.nl/wetten/BWBR0037885
+Wet op het financieel toezicht;Wetten;noemt;;;;vastgesteld;hoog;2007-01-01;in werking 1 jan. 2007;https://concordans.nl/wetten/BWBR0020368
+Vreemdelingenwet 2000;Wetten;noemt;;;;vastgesteld;hoog;2001-04-01;in werking 1 apr. 2001;https://concordans.nl/wetten/BWBR0011823
+Algemene wet inzake rijksbelastingen;Wetten;noemt;;;;vastgesteld;hoog;1962-10-01;in werking 1 okt. 1962;https://concordans.nl/wetten/BWBR0002320
+Rb. Den Haag 19 oktober 2026;Uitspraken;haalt aan;;;;vastgesteld;hoog;2026-10-19;ECLI:NL:RBDHA:2026:30730;https://concordans.nl/uitspraken/ECLI:NL:RBDHA:2026:30730
+Rb. Den Haag 19 oktober 2026;Uitspraken;haalt aan;;;;vastgesteld;hoog;2026-10-19;ECLI:NL:RBDHA:2026:30762;https://concordans.nl/uitspraken/ECLI:NL:RBDHA:2026:30762
+Rb. Den Haag 19 oktober 2026;Uitspraken;haalt aan;;;;vastgesteld;hoog;2026-10-19;ECLI:NL:RBDHA:2026:30773;https://concordans.nl/uitspraken/ECLI:NL:RBDHA:2026:30773
+Rb. Den Haag 17 oktober 2026;Uitspraken;haalt aan;;;;vastgesteld;hoog;2026-10-17;ECLI:NL:RBDHA:2026:30758;https://concordans.nl/uitspraken/ECLI:NL:RBDHA:2026:30758"
 `;
 
 exports[`Verbonden of a 'wet' > keeps its groups, rows, kern and export > groups 1`] = `
@@ -747,28 +747,28 @@ exports[`Verbonden of a 'wet' > keeps its groups, rows, kern and export > groups
     "section": null,
   },
   {
-    "count": "485",
+    "count": "491",
     "id": "aard",
     "label": "Verwijzingen vanuit deze wet, naar aard",
     "plaats": "verbonden",
     "rows": [
-      "articles/bwbr0005537_4_20 | Artikel 4:20 | Verwijst naar art. 4:18, als definitie | ",
       "articles/bwbr0005537_5_43 | Artikel 5:43 | Verwijst naar art. 5:50, als definitie | ",
-      "articles/bwbr0005537_8_36e | Artikel 8:36e | Verwijst naar art. 8:45a, als definitie | ",
-      "articles/bwbr0005537_8_94 | Artikel 8:94 | Verwijst naar art. 26 Algemene wet inzake rijksbelastingen, als definitie | ",
+      "articles/bwbr0005537_7_26 | Artikel 7:26 | Verwijst naar art. 6:23, als definitie | ",
       "articles/bwbr0005537_8_107 | Artikel 8:107 | Verwijst naar art. 8:36e, als definitie | ",
-      "articles/bwbr0005537_8_4 | Artikel 8:4 | Verwijst naar art. 3:25, mogelijk als definitie | ",
-      "articles/bwbr0005537_bijlage_2_artikel_1 | Artikel bijlage 2 artikel 1 | Verwijst naar art. 124 Gemeentewet, mogelijk als voorwaarde | ",
-      "articles/bwbr0005537_bijlage_2_artikel_1 | Artikel bijlage 2 artikel 1 | Verwijst naar art. 2.21 Omgevingswet, mogelijk als voorwaarde | ",
-      "articles/bwbr0005537_bijlage_2_artikel_2 | Artikel bijlage 2 artikel 2 | Verwijst naar art. 19 Woningwet, mogelijk als voorwaarde | ",
-      "articles/bwbr0005537_bijlage_2_artikel_4 | Artikel bijlage 2 artikel 4 | Verwijst naar art. 18 Noodwet voedselvoorziening, als uitzondering | ",
-      "articles/bwbr0005537_bijlage_2_artikel_7 | Artikel bijlage 2 artikel 7 | Verwijst naar art. 27l Loodsenwet, als uitzondering | ",
-      "articles/bwbr0005537_bijlage_2_artikel_11 | Artikel bijlage 2 artikel 11 | Verwijst naar art. 27b Loodsenwet, als uitzondering | ",
+      "articles/bwbr0005537_bijlage_2_artikel_1 | Artikel bijlage 2 artikel 1 | Verwijst naar Art. 124 Gemw, mogelijk als voorwaarde | ",
+      "articles/bwbr0005537_bijlage_2_artikel_1 | Artikel bijlage 2 artikel 1 | Verwijst naar Art. 2.21 Omgevingswet, mogelijk als voorwaarde | ",
+      "articles/bwbr0005537_bijlage_2_artikel_1 | Artikel bijlage 2 artikel 1 | Verwijst naar Art. 18e Zorgverzekeringswet, mogelijk als voorwaarde | ",
+      "articles/bwbr0005537_bijlage_2_artikel_1 | Artikel bijlage 2 artikel 1 | Verwijst naar Art. 281 Gemw, mogelijk als voorwaarde | ",
+      "articles/bwbr0005537_bijlage_2_artikel_2 | Artikel bijlage 2 artikel 2 | Verwijst naar Art. 278a Gemw, mogelijk als voorwaarde | ",
+      "articles/bwbr0005537_bijlage_2_artikel_11 | Artikel bijlage 2 artikel 11 | Verwijst naar Art. IX Wijzigingswet financiële markten 2012, mogelijk als voorwaarde | ",
+      "articles/bwbr0005537_bijlage_2_artikel_1 | Artikel bijlage 2 artikel 1 | Verwijst naar Art. 7 Kw Inv. Rb, als uitzondering | ",
+      "articles/bwbr0005537_bijlage_2_artikel_4 | Artikel bijlage 2 artikel 4 | Verwijst naar Art. 18 Noodwet voedselvoorziening, als uitzondering | ",
+      "articles/bwbr0005537_bijlage_2_artikel_11 | Artikel bijlage 2 artikel 11 | Verwijst naar Art. 27b Loodsenwet, als uitzondering | ",
     ],
     "section": null,
   },
   {
-    "count": "2.579",
+    "count": "2.582",
     "id": "related",
     "label": "Wetten die met deze wet verbonden zijn",
     "plaats": "verbonden",
@@ -781,15 +781,15 @@ exports[`Verbonden of a 'wet' > keeps its groups, rows, kern and export > groups
     "section": null,
   },
   {
-    "count": "275.336",
+    "count": "289.629",
     "id": "judgments",
     "label": "Uitspraken die deze wet aanhalen",
     "plaats": "verbonden",
     "rows": [
-      "judgments/ecli_nl_rbdha_2026_30262 | Rb. Den Haag 14 oktober 2026 | Haalt aan | art. 6:22, ECLI:NL:RBDHA:2026:30262",
-      "judgments/ecli_nl_rvs_2026_6065 | ABRvS 14 oktober 2026 | Haalt aan | art. 4:84, ECLI:NL:RVS:2026:6065",
-      "judgments/ecli_nl_rvs_2026_6066 | ABRvS 14 oktober 2026 | Haalt aan | art. 4:84, 6:19 en 1 ander, ECLI:NL:RVS:2026:6066",
-      "judgments/ecli_nl_rvs_2026_6068 | ABRvS 14 oktober 2026 | Haalt aan | art. 3:9, ECLI:NL:RVS:2026:6068",
+      "judgments/ecli_nl_rbdha_2026_30730 | Rb. Den Haag 19 oktober 2026 | Haalt aan | art. 3:2, 3:46 en 1 ander, ECLI:NL:RBDHA:2026:30730",
+      "judgments/ecli_nl_rbdha_2026_30762 | Rb. Den Haag 19 oktober 2026 | Haalt aan | art. 4:6, ECLI:NL:RBDHA:2026:30762",
+      "judgments/ecli_nl_rbdha_2026_30773 | Rb. Den Haag 19 oktober 2026 | Haalt aan | art. 3:2, 3:46, ECLI:NL:RBDHA:2026:30773",
+      "judgments/ecli_nl_rbdha_2026_30758 | Rb. Den Haag 17 oktober 2026 | Haalt aan | art. 8:81, ECLI:NL:RBDHA:2026:30758",
     ],
     "section": null,
   },

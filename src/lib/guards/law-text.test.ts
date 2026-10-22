@@ -176,14 +176,13 @@ describe('the card of a footnote (besluit 29)', () => {
 });
 
 describe('a bijlage in Tekst (besluit 29)', () => {
-	// It reads at full width with the contents of its law beside it, as the law and its articles.
+	// It reads in Tekst with the contents of its law beside it, as the law and its articles; every
+	// bron opens in Tekst (besluit 32, exploreMode).
 	it('is readable and has the contents of its law', () => {
 		const list = (path: string, name: string) =>
 			bron(path).match(new RegExp(`${name}[^=]*= new Set\\(\\[([^\\]]*)\\]`))?.[1] ?? '';
-		for (const c of ['articles', 'instruments', 'annexes']) {
-			expect(list('lib/bron/href.ts', 'READABLE'), c).toContain(`'${c}'`);
+		for (const c of ['articles', 'instruments', 'annexes'])
 			expect(list('routes/explore/+page.svelte', 'WITH_CONTENTS'), c).toContain(`'${c}'`);
-		}
 		expect(bron('lib/components/explore/LezenNav.svelte')).toMatch(/collection === 'annexes'/);
 	});
 });

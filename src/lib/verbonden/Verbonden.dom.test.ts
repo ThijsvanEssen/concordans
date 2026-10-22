@@ -82,9 +82,10 @@ function state(rows: Record<string, Row[]> = ROWS): VerbondenState {
 	};
 }
 
-function paneel(rows: Record<string, Row[]> = ROWS) {
+function paneel(rows: Record<string, Row[]> = ROWS, extra: Record<string, unknown> = {}) {
 	const onAlles = vi.fn(async () => {});
 	render(Verbonden, {
+		...extra,
 		verbonden: state(rows),
 		selection,
 		filter: EMPTY_FILTER,
@@ -181,5 +182,32 @@ describe('Verbonden', () => {
 		expect(screen.queryByText(/in een tabel/)).toBeNull();
 		expect(screen.queryByRole('button', { name: /Exporteer/ })).toBeNull();
 		expect(screen.queryByRole('button', { name: 'Filter' })).toBeNull();
+	});
+
+	it('has Netwerk tonen in Tekst, and draws the network above the groups with a legend of one line', async () => {
+		const onShowNetwork = vi.fn();
+		paneel(ROWS, { onShowNetwork, showNetwork: false });
+		await fireEvent.click(screen.getByRole('button', { name: 'Netwerk tonen' }));
+		expect(onShowNetwork).toHaveBeenCalledWith(true);
+		expect(screen.queryByTestId('network-sketch')).toBeNull();
+	});
+
+	it('draws each bron on its own up to forty, counted in the legend', () => {
+		paneel(ROWS, { onShowNetwork: () => {}, showNetwork: true, networkHref: '/x' });
+		expect(screen.getByRole('button', { name: 'Netwerk verbergen' })).toBeTruthy();
+		const figuur = screen.getByTestId('network-sketch');
+		expect(figuur.querySelector('figcaption')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+			'2 afzonderlijk'
+		);
+		const namen = [...figuur.querySelectorAll('a.single title')].map((t) => t.textContent);
+		expect(namen).toEqual([
+			'Hoge Raad, 20 december 2019',
+			'Motie van het lid Kathmann over een meldportaal'
+		]);
+	});
+
+	it('has no Netwerk tonen beside the canvas', () => {
+		paneel();
+		expect(screen.queryByRole('button', { name: /Netwerk tonen/ })).toBeNull();
 	});
 });

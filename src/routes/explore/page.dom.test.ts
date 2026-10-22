@@ -163,20 +163,39 @@ const key = async (k: string) => {
 const param = (name: string) => new URL(address(), 'http://localhost').searchParams.get(name);
 
 describe('the Verkenner reads its state from the address', () => {
-	it('opens a bron in the network, its text beside it', async () => {
-		const { container } = await openAt(`/explore?focus=${ARTICLE}`);
-		expect(view(container)).toBe('graph');
-		expect(seen.KindReader).toBeDefined();
+	it('opens every bron in Tekst at its bare address, a lid too (besluit 32)', async () => {
+		const read = await openAt(`/explore?focus=${ARTICLE}`);
+		expect(view(read.container)).toBe('read');
 		expect((seen.KindReader.selection as { id: string }).id).toBe(ARTICLE);
-		expect(seen.GraphView.compact).toBe(true);
+		expect(seen.GraphView).toBeUndefined();
+		read.unmount();
+		const member = await openAt(`/explore?focus=${MEMBER}`);
+		expect(view(member.container)).toBe('read');
 	});
 
-	it('reads a bron with a text at full width with ?lezen=1, one without stays in the network', async () => {
-		const read = await openAt(`/explore?focus=${ARTICLE}&lezen=1`);
-		expect(view(read.container)).toBe('read');
-		read.unmount();
-		const member = await openAt(`/explore?focus=${MEMBER}&lezen=1`);
-		expect(view(member.container)).toBe('graph');
+	it('shows a bron on the canvas of Samenhang with ?mode=netwerk, its text beside it', async () => {
+		const { container } = await openAt(`/explore?focus=${ARTICLE}&mode=netwerk`);
+		expect(view(container)).toBe('graph');
+		expect((seen.KindReader.selection as { id: string }).id).toBe(ARTICLE);
+		expect(seen.GraphView.compact).toBe(true);
+		expect(seen.Verbonden.onShowNetwork).toBeUndefined();
+	});
+
+	it('draws the network in Verbonden with ?toon=netwerk; Netwerk tonen and verbergen are steps', async () => {
+		const { container } = await openAt(`/explore?focus=${ARTICLE}`);
+		expect(seen.Verbonden.showNetwork).toBe(false);
+		(seen.Verbonden.onShowNetwork as (on: boolean) => void)(true);
+		await settle();
+		expect(param('toon')).toBe('netwerk');
+		expect(seen.Verbonden.showNetwork).toBe(true);
+		expect(view(container)).toBe('read');
+		(seen.Verbonden.onShowNetwork as (on: boolean) => void)(false);
+		await settle();
+		expect(param('toon')).toBeNull();
+		expect(history().entries).toHaveLength(3);
+		back();
+		await settle();
+		expect(seen.Verbonden.showNetwork).toBe(true);
 	});
 
 	it('shows all verbindingen as a table with ?tabel=1, also for a bron without a text', async () => {
@@ -205,65 +224,63 @@ describe('the Verkenner reads its state from the address', () => {
 			['&alles=1&diepte=3', 1]
 		];
 		for (const [query, depth] of cases) {
-			const v = await openAt(`/explore?focus=${ARTICLE}${query}`);
+			const v = await openAt(`/explore?focus=${ARTICLE}&mode=netwerk${query}`);
 			expect(seen.GraphView.depth, query).toBe(depth);
 			v.unmount();
 		}
 	});
 
 	it('draws one step around a group', async () => {
-		await openAt(`/explore?focus=${FACTION}`);
+		await openAt(`/explore?focus=${FACTION}&mode=netwerk`);
 		expect(seen.GraphView.depth).toBe(1);
 	});
 
 	it('hands the overlay and the bronfilter of the address to the network', async () => {
-		await openAt(`/explore?focus=${ARTICLE}&overlay=open&lid=2`);
+		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk&overlay=open&lid=2`);
 		expect(seen.GraphView.overlay).toEqual({ kind: 'open' });
 		expect((seen.GraphView.filter as { lid: string | null }).lid).toBe('2');
 	});
 
 	it('opens a toelichting beside the article with ?naast', async () => {
-		const { container } = await openAt(
-			`/explore?focus=${ARTICLE}&lezen=1&naast=documents/kst-36327-3`
-		);
+		const { container } = await openAt(`/explore?focus=${ARTICLE}&naast=documents/kst-36327-3`);
 		expect(container.querySelector('.reader__beside')).not.toBeNull();
 		expect(seen.DocumentReader).toBeDefined();
 	});
 });
 
 describe('the Verkenner writes its state to the address', () => {
-	it('reads with L and goes back to the network with L, each a step Back undoes', async () => {
+	it('goes to the canvas with L and back to Tekst with L, each a step Back undoes', async () => {
 		const { container } = await openAt(`/explore?focus=${ARTICLE}`);
 		await key('l');
-		expect(param('lezen')).toBe('1');
-		expect(view(container)).toBe('read');
+		expect(param('mode')).toBe('netwerk');
+		expect(view(container)).toBe('graph');
 		await key('L');
-		expect(param('lezen')).toBeNull();
-		expect(view(container)).toBe('graph');
-		back();
-		await settle();
+		expect(param('mode')).toBeNull();
 		expect(view(container)).toBe('read');
 		back();
 		await settle();
 		expect(view(container)).toBe('graph');
+		back();
+		await settle();
+		expect(view(container)).toBe('read');
 		forward();
 		await settle();
-		expect(view(container)).toBe('read');
+		expect(view(container)).toBe('graph');
 	});
 
-	it('takes the layers with 1, 2 and 3: Tekst reads, Netwerk goes back', async () => {
+	it('takes the layers with 1, 2 and 3: Netwerk the canvas, Tekst back', async () => {
 		const { container } = await openAt(`/explore?focus=${ARTICLE}`);
-		await key('1');
-		expect(view(container)).toBe('read');
 		await key('2');
 		expect(view(container)).toBe('graph');
+		await key('1');
+		expect(view(container)).toBe('read');
 		await key('3');
-		expect(view(container)).toBe('graph');
+		expect(view(container)).toBe('read');
 		expect(history().entries).toHaveLength(3);
 	});
 
 	it('writes the depth, the overlay and the filter in place: no step', async () => {
-		await openAt(`/explore?focus=${ARTICLE}`);
+		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk`);
 		const props = seen.GraphView as {
 			onDepth: (d: number) => void;
 			onToggleMutatie: () => void;
@@ -288,7 +305,7 @@ describe('the Verkenner writes its state to the address', () => {
 	});
 
 	it('loads every neighbour as a step, without a depth', async () => {
-		await openAt(`/explore?focus=${ARTICLE}&diepte=3`);
+		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk&diepte=3`);
 		(seen.GraphView.onAllesLaden as () => void)();
 		await settle();
 		expect(param('alles')).toBe('1');
@@ -305,7 +322,7 @@ describe('the Verkenner writes its state to the address', () => {
 		expect(history().entries).toHaveLength(1);
 	});
 
-	it('keeps the fragment, the place in the text, when it reads at full width', async () => {
+	it('keeps the fragment, the place in the text, on the way to the canvas', async () => {
 		await openAt(`/explore?focus=${ARTICLE}#lid-2`);
 		await key('l');
 		expect(address()).toMatch(/#lid-2$/);
@@ -318,7 +335,7 @@ describe('the readable address', () => {
 		expect(address()).toBe('/wetten/BWBR0005537/artikel/3:2?diepte=3');
 		expect(history().entries).toHaveLength(1);
 		await key('l');
-		expect(address()).toBe('/wetten/BWBR0005537/artikel/3:2?diepte=3&lezen=1');
+		expect(address()).toBe('/wetten/BWBR0005537/artikel/3:2?diepte=3&mode=netwerk');
 		back();
 		await settle();
 		expect(address()).toBe('/wetten/BWBR0005537/artikel/3:2?diepte=3');
@@ -356,7 +373,7 @@ describe('the netwerk of chosen bronnen', () => {
 	};
 
 	it('adds a bron in place, removes it as a step, and remembers it', async () => {
-		await openAt(`/explore?focus=${ARTICLE}`);
+		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk`);
 		const toggle = (id: string) =>
 			(seen.GraphView.onToggleChosen as (n: ReturnType<typeof graphNode>) => void)(graphNode(id));
 		toggle(ARTICLE);
@@ -389,7 +406,7 @@ describe('the netwerk of chosen bronnen', () => {
 describe('the columns', () => {
 	it('keep the widths that were dragged', async () => {
 		localStorage.setItem('concordans:panel-widths', JSON.stringify({ panelW: 300, graphW: 500 }));
-		const { container } = await openAt(`/explore?focus=${ARTICLE}`);
+		const { container } = await openAt(`/explore?focus=${ARTICLE}&mode=netwerk`);
 		const grid = container.querySelector<HTMLElement>('.explore-graph')!;
 		expect(grid.style.getPropertyValue('--panel-w')).toBe('300px');
 		expect(grid.style.getPropertyValue('--graph-w')).toBe('500px');
@@ -401,8 +418,16 @@ describe('the Verkenner on a phone', () => {
 		phone.matches = true;
 	});
 
-	it('shows one panel at a time; the tabs read the text or go back to the network', async () => {
-		const { container } = await openAt(`/explore?focus=${ARTICLE}`);
+	it('reads the text and Verbonden under it in Tekst, without tabs', async () => {
+		const { container } = await openAt(`/explore?focus=${MEMBER}`);
+		expect(view(container)).toBe('read');
+		expect(container.querySelectorAll('.mobile-tab')).toHaveLength(0);
+		expect(container.querySelector('.col--reader.mobile-hidden')).toBeNull();
+		expect(container.querySelector('.col--panel.mobile-hidden')).toBeNull();
+	});
+
+	it('shows one panel at a time on the canvas; the tab Tekst reads the text', async () => {
+		const { container } = await openAt(`/explore?focus=${ARTICLE}&mode=netwerk`);
 		const tabs = () =>
 			[...container.querySelectorAll<HTMLButtonElement>('.mobile-tab')].map((b) => [
 				b.textContent,
@@ -422,6 +447,6 @@ describe('the Verkenner on a phone', () => {
 		await fireEvent.click(tekst);
 		await settle();
 		expect(view(container)).toBe('read');
-		expect(param('lezen')).toBe('1');
+		expect(param('mode')).toBeNull();
 	});
 });

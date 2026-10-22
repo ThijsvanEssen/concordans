@@ -52,3 +52,26 @@ export function ownKind(kind: unknown): string | null {
 	const k = kindText(kind).replace(/\s*\([^()]*\/[^()]*\)$/, '');
 	return k && !k.includes('/') ? k : null;
 }
+
+/** The kinds of Kamerstuk in the order of the making of a law; the rest after them. */
+const KIND_ORDER: readonly RegExp[] = [
+	/voorstel van wet|wetsvoorstel/i,
+	/memorie van toelichting/i,
+	/nota van wijziging/i,
+	/nota naar aanleiding van het verslag|memorie van antwoord/i,
+	/verslag/i,
+	/^amendement/i,
+	/^motie/i,
+	/^brief/i
+];
+
+/**
+ * The place of a kind in the making of a law (voorstel van wet, memorie van toelichting, nota
+ * van wijziging, nota naar aanleiding van het verslag, verslag, amendement, motie, brief):
+ * lower comes first, any other kind after them all.
+ */
+export function kindRank(kind: unknown): number {
+	const k = kindText(kind);
+	const i = KIND_ORDER.findIndex((re) => re.test(k));
+	return i < 0 ? KIND_ORDER.length : i;
+}

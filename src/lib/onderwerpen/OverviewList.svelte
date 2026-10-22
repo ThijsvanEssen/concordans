@@ -87,7 +87,7 @@
 	};
 	const isMotie = (d: Besluit) => motionOrAmendment(soortVan(d)) === 'motie';
 	const feedHref = (i: FeedItem) =>
-		i.path ?? buildOpenHref(null, `${i.node.collection}/${i.node.key}`, { hasText: i.has_text });
+		i.path ?? buildOpenHref(null, `${i.node.collection}/${i.node.key}`);
 
 	/** The dictum of a row opens in place, from the decision itself: no request. */
 	let dictumOpen = $state<Set<string>>(new Set());

@@ -66,12 +66,16 @@ describe('the order of the judgments that cite an article', () => {
 			expect(st.loading).toBe(false);
 		});
 		const before = api.requests.length;
-		source.reloadGroup('judgments', { order: 'cited' });
-		expect(get(source).options.order).toBe('cited');
+		// The most cited first is where the group starts (besluit 32); the newest is the other order.
+		expect(
+			api.asked('/api/articles/{bwb_id}/{article_number}/cited-by').at(-1)?.query
+		).toMatchObject({ sort: 'citation_count' });
+		source.reloadGroup('judgments', { order: 'date' });
+		expect(get(source).options.order).toBe('date');
 		await vi.waitFor(() =>
 			expect(
 				api.asked('/api/articles/{bwb_id}/{article_number}/cited-by').at(-1)?.query
-			).toMatchObject({ sort: 'citation_count' })
+			).toMatchObject({ sort: 'date_desc' })
 		);
 		await vi.waitFor(() => expect(get(source).loading).toBe(false));
 		expect(api.requests.slice(before).map((r) => r.path)).toEqual([
