@@ -205,6 +205,14 @@ describe('Bronnen, list by list', () => {
 	});
 });
 
+describe('Bronnen, the first page', () => {
+	it('is asked once, whatever the rows that come', async () => {
+		const api = await open('documents');
+		const rows = api.asked('/api/documents').filter((p) => p.query?.facets === false);
+		expect(rows).toHaveLength(1);
+	});
+});
+
 describe('Bronnen, an empty list', () => {
 	const none: Partial<Record<ApiPath, FakeAnswer>> = {
 		...ROUTES,

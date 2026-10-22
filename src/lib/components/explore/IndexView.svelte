@@ -222,7 +222,13 @@
 		fetchPage = async (offset, signal) => {
 			// Past what the API pages to (the Stukken: 10.000), the list goes on in a window of
 			// dates; its total counts the rows before the window as well.
-			const next = requestFrom(asked, query, offset, (pages[cat]?.items ?? []) as never[]);
+			const next = requestFrom(
+				asked,
+				query,
+				offset,
+				// Not a dependency of the effect that loads the first page.
+				untrack(() => (pages[cat]?.items ?? []) as never[])
+			);
 			if (!next) {
 				const kept = pages[cat];
 				if (kept) pages[cat] = { ...kept, more: false };
