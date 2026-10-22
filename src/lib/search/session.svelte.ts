@@ -35,9 +35,30 @@ type LaneId = Lane['id'];
 
 type LaneStatus = 'done' | 'loading' | 'failed';
 
+/** What a lane's answer says beside its hits (API 0.80.5; absent on an older API). */
+type Answer = {
+	term: string;
+	/** The API names a `best` at all: an older API does not, and the Enter stays as it was. */
+	named: boolean;
+	best: string | null;
+	/** `any`: no hit held every word, the hits hold some of them. */
+	matched: 'all' | 'any';
+	/** The stop words of the query that were left out. */
+	leftOut: string[];
+};
+
+const noAnswer = (): Answer => ({
+	term: '',
+	named: false,
+	best: null,
+	matched: 'all',
+	leftOut: []
+});
+
 type LaneState = {
 	/** What it last answered: it stays while the next query runs. */
 	hits: Hits;
+	answer: Answer;
 	status: LaneStatus;
 	/** Why it failed: slow or broken, for failureText. */
 	error?: unknown;
@@ -61,7 +82,12 @@ const LANE_OF = Object.fromEntries(
 	LANES.flatMap((lane) => lane.kinds.map((kind) => [kind, lane.id]))
 ) as Record<SearchKind, LaneId>;
 
-const idle = (): LaneState => ({ hits: {}, status: 'done', partial: { term: '', kinds: [] } });
+const idle = (): LaneState => ({
+	hits: {},
+	answer: noAnswer(),
+	status: 'done',
+	partial: { term: '', kinds: [] }
+});
 
 const failed = (status: LaneStatus) => status === 'failed';
 
@@ -111,7 +137,8 @@ export class SearchSession {
 	outside = $state('');
 	/** What the search of each kind reads, as the answers say it (`searched`, API 0.79.67). */
 	searched = $state<Partial<Record<SearchKind, Schema<'SearchedDTO'>>>>({});
-	/** The one hit above the groups, set once every answer is in (#52). */
+	/** The one hit above the groups, set once every answer is in (#52). With an API that names
+	 * the `best`, only that hit; else the best by score. */
 	best = $state<{ kind: SearchKind; hit: Hit } | null>(null);
 
 	readonly q = $derived(this.query.trim());
@@ -139,6 +166,46 @@ export class SearchSession {
 	);
 	/** Every answer to this query is in: every lane. */
 	readonly allIn = $derived(this.answered === this.q && LANES.every((l) => !this.waiting[l.id]));
+	/** The answers to this query. */
+	readonly answers = $derived(
+		LANES.map((l) => this.lanes[l.id].answer).filter((a) => a.term === this.q)
+	);
+	/** The API says what the query names (`best`); else the older Enter stands. */
+	readonly names = $derived(this.answers.some((a) => a.named));
+	/**
+	 * The id Enter may open: the best of the lane that resolves, else of another lane, else
+	 * the one hit the query names exactly (`exact`) over the lanes; none for words.
+	 */
+	readonly bestId = $derived.by((): string | null => {
+		const lane = LANES.find((l) => l.kinds.some((k) => this.kinds.includes(k)));
+		const own = lane ? this.lanes[lane.id].answer : null;
+		if (own?.term === this.q && own.best) return own.best;
+		const other = this.answers.find((a) => a.best);
+		if (other?.best) return other.best;
+		const exact = this.groups.flatMap((g) => g.hits).filter((h) => h.exact);
+		return exact.length === 1 ? exact[0].id : null;
+	});
+	/** The kinds whose hits hold only some of the words. */
+	readonly partialKinds = $derived(
+		new Set(
+			LANES.flatMap((l) =>
+				this.lanes[l.id].answer.term === this.q && this.lanes[l.id].answer.matched === 'any'
+					? l.kinds
+					: []
+			)
+		)
+	);
+	/** The stop words left out of the query, said where some hits hold only some words. */
+	readonly leftOut = $derived(
+		this.partialKinds.size === 0 ? [] : [...new Set(this.answers.flatMap((a) => a.leftOut))]
+	);
+	/** Words of the query to try alone where it found nothing: the longer ones, at most three. */
+	readonly narrower = $derived(
+		(() => {
+			const words = [...new Set(this.q.split(/\s+/).filter((w) => w.length >= 4))];
+			return words.length > 1 ? words.slice(0, 3) : [];
+		})()
+	);
 	readonly bestComing = $derived(!this.best && !this.allIn && this.groups.length > 0);
 	/** The kinds whose group says "laden…" while their lane waits. */
 	readonly loadingKinds = $derived(
@@ -174,6 +241,8 @@ export class SearchSession {
 	/** Rows the keys move over: the choices or the citation first, then every hit. */
 	readonly offset = $derived(this.choices.length || (this.citation || this.bare ? 1 : 0));
 	readonly rowCount = $derived(this.offset + this.hits.length);
+	/** A row stands chosen before a key: the Beste treffer, a citation, or the older API's first. */
+	readonly preselects = $derived(!this.names || this.best !== null || this.offset > 0);
 
 	/** A citation the API does not know: said where its row was, not dropped without a word. */
 	readonly notFound = $derived(this.unresolved !== '' && this.unresolved === this.q);
@@ -253,7 +322,7 @@ export class SearchSession {
 		fullFor: ''
 	};
 	/** The first ↓ confirms the preselected row instead of skipping it. */
-	#moved = false;
+	#moved = $state(false);
 	// An Enter before the answer waits for it (#79): the article the moment the API confirms
 	// it, else the first row once every answer is in and the Beste treffer stands above.
 	readonly #earlyEnter = new EarlyEnter(() => this.enter());
@@ -278,7 +347,7 @@ export class SearchSession {
 		// answer clears it. Only once every answer is in, so the top does not change under the
 		// pointer.
 		$effect(() => {
-			if (this.allIn) this.best = bestHit(this.groups);
+			if (this.allIn) this.best = this.#bestOf(this.groups);
 			else if (this.groups.length === 0) this.best = null;
 		});
 		$effect(() => {
@@ -290,7 +359,10 @@ export class SearchSession {
 		$effect(() =>
 			this.#earlyEnter.answer(
 				this.q,
-				this.bare !== null || !!this.#ofQuery(this.resolvedWith)?.target || this.allIn
+				this.bare !== null ||
+					(!!this.#ofQuery(this.resolvedWith)?.target &&
+						!!this.#ofQuery(this.resolvedWith)?.notation) ||
+					this.allIn
 			)
 		);
 		$effect(() => () => this.stop());
@@ -329,6 +401,22 @@ export class SearchSession {
 		}
 	}
 
+	/** The Beste treffer: the hit the API names, else (an older API) the best by score. */
+	#bestOf(groups: { kind: SearchKind; hits: Hit[] }[]): { kind: SearchKind; hit: Hit } | null {
+		if (!this.names) return bestHit(groups);
+		const id = this.bestId;
+		for (const g of groups) {
+			const hit = g.hits.find((h) => h.id === id);
+			if (hit) return { kind: g.kind, hit };
+		}
+		return null;
+	}
+
+	/** Is the row the one a key now acts on? Not before a key, where nothing is preselected. */
+	isActive(row: number): boolean {
+		return this.active === row && (this.#moved || this.preselects);
+	}
+
 	/** What Enter opens now, the active row; false where there is nothing to open yet. */
 	enter(): boolean {
 		const { active, choices, citation, bare, offset } = this;
@@ -337,9 +425,26 @@ export class SearchSession {
 		else if (bare && active === 0) this.#open(bare.ref, bare.at);
 		// A hit opens only when the list answers what is typed: the first row once every answer
 		// is in (#118), a row the reader chose at once.
-		else if (this.answered === this.q && (this.allIn || this.#moved) && this.hits[active - offset])
+		else if (
+			this.answered === this.q &&
+			(this.#moved || (this.allIn && this.preselects)) &&
+			this.hits[active - offset]
+		)
 			this.#open(hitName(this.hits[active - offset]), null);
-		else return false;
+		// Words name nothing: Enter keeps the list and chooses its first row, a second Enter
+		// opens it (besluit 30).
+		else if (this.answered === this.q && this.allIn && this.hits.length > 0) {
+			this.active = offset;
+			this.#moved = true;
+		} else if (
+			this.answered === this.q &&
+			this.allIn &&
+			searchMode(this.q, this.fullFor) === 'live'
+		) {
+			// Nothing in the live list: the whole query in full, which also tries any word of it.
+			this.askInFull();
+			return false;
+		} else return false;
 		return true;
 	}
 
@@ -440,7 +545,14 @@ export class SearchSession {
 				this.searched = { ...this.searched, ...r.searched };
 				// The live mode names the kinds it cut off at its time: more on "Meer …".
 				const cut = query.types.filter((k) => r.partial?.[k]);
-				this.lanes[lane.id] = { hits, status: 'done', partial: { term, kinds: cut } };
+				const answer: Answer = {
+					term,
+					named: 'best' in r,
+					best: r.best ?? null,
+					matched: r.matched ?? 'all',
+					leftOut: r.left_out ?? []
+				};
+				this.lanes[lane.id] = { hits, answer, status: 'done', partial: { term, kinds: cut } };
 				settled();
 				this.#askInFullIfNothing(term, cut, hits);
 				if (query.resolve) this.#resolved(term, r.resolved, lane.namesLaws);

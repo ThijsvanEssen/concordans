@@ -527,3 +527,111 @@ describe('Enter and the citations', () => {
 		stop();
 	});
 });
+
+describe('Enter and the best the API names (besluit 30)', () => {
+	/** Every lane answers: the fast kinds `fast`, the others nothing, each with `more`. */
+	async function answerAll(
+		of: (kind: SearchKind) => Asked,
+		fast: Record<string, unknown>,
+		more: Record<string, unknown>,
+		text: Record<string, unknown> = {}
+	) {
+		of('instruments').answer(answer(fast, more));
+		of('articles').answer(answer(text, more));
+		of('judgments').answer(answer({ judgments: [] }, more));
+		await settle();
+	}
+
+	it('opens the best the API names: a citation of an article is exact', async () => {
+		const { of } = api();
+		const { s, opened, stop } = session();
+		await type(s, 'artikel 6:162 BW');
+		const article = { ...hit('articles', 'bwbr0005289_boek6_art162'), exact: true };
+		await answerAll(
+			of,
+			{ instruments: [hit('instruments', 'bw')] },
+			{ best: article.id },
+			{ articles: [article] }
+		);
+		expect(s.best?.hit.id).toBe(article.id);
+		s.pressEnter();
+		expect(opened).toEqual([article.id]);
+		stop();
+	});
+
+	it('opens nothing for words that name nothing: Enter chooses the first row, a second opens it', async () => {
+		const { of } = api();
+		const { s, opened, stop } = session();
+		await type(s, 'huurverhoging');
+		await answerAll(
+			of,
+			{ instruments: [hit('instruments', 'huurwet')] },
+			{ best: null, matched: 'all' },
+			{ articles: [hit('articles', 'reparatiewet_ix')] }
+		);
+		expect(s.best).toBeNull();
+		expect(s.isActive(0)).toBe(false);
+		s.pressEnter();
+		expect(opened).toEqual([]);
+		expect(s.isActive(0)).toBe(true);
+		s.pressEnter();
+		expect(opened).toEqual(['instruments/huurwet']);
+		stop();
+	});
+
+	it('takes the one exact hit over the lanes where no lane names a best', async () => {
+		const { of } = api();
+		const { s, opened, stop } = session();
+		await type(s, 'kelderluik');
+		await answerAll(
+			of,
+			{ instruments: [] },
+			{ best: null },
+			{ articles: [{ ...hit('articles', 'a'), exact: true }, hit('articles', 'b')] }
+		);
+		expect(s.bestId).toBe('articles/a');
+		s.pressEnter();
+		expect(opened).toEqual(['articles/a']);
+		stop();
+	});
+
+	it('keeps the older Enter where the API names no best at all', async () => {
+		const { of } = api();
+		const { s, opened, stop } = session();
+		await type(s, 'huur');
+		await answerAll(of, { instruments: [hit('instruments', 'huurwet')] }, {});
+		s.pressEnter();
+		expect(opened).toEqual(['instruments/huurwet']);
+		stop();
+	});
+
+	it('asks in full for an Enter on an empty live list, and says the words it matched in part', async () => {
+		const { asked, of } = api();
+		const { s, stop } = session();
+		await type(s, 'toezeggingen pensioenen');
+		await answerAll(of, { commitments: [] }, { best: null });
+		s.pressEnter();
+		await vi.advanceTimersByTimeAsync(150);
+		expect(s.fullFor).toBe('toezeggingen pensioenen');
+		const full = asked.filter((a) => a.query.mode === 'full');
+		expect(full.length).toBeGreaterThan(0);
+		await answerAll(
+			of,
+			{ commitments: [hit('commitments', 'tz1')] },
+			{ best: null, matched: 'any', left_out: ['de'] }
+		);
+		expect(s.partialKinds.has('commitments')).toBe(true);
+		expect(s.leftOut).toEqual(['de']);
+		stop();
+	});
+
+	it('offers the longer words of a query that found nothing, one at a time', async () => {
+		const { of } = api();
+		const { s, stop } = session();
+		await type(s, 'pensioenen verzamelwoord');
+		await answerAll(of, {}, { best: null });
+		expect(s.empty).toBe(true);
+		expect(s.narrower).toEqual(['pensioenen', 'verzamelwoord']);
+		stop();
+	});
+});

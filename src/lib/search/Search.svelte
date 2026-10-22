@@ -31,6 +31,7 @@
 		initial = '',
 		onOpen,
 		onSelect,
+		onWiden,
 		scope = null
 	}: {
 		/** Alleen deze soorten doorzoeken (een ingang op de startpagina). */
@@ -46,6 +47,8 @@
 		onOpen?: () => void;
 		/** Given, a result is not opened but handed over by the name a link uses; the field empties. */
 		onSelect?: (id: string) => void;
+		/** Given with a scope: where nothing is found, the same query in every kind. */
+		onWiden?: () => void;
 	} = $props();
 
 	// A result chosen here starts a network of its own, as a double click does (Thijs, 8 Oct);
@@ -75,6 +78,7 @@
 	const uid = $props.id();
 	const rowId = (row: number) => `${uid}-row-${row}`;
 	let listEl = $state<HTMLElement | null>(null);
+	let fieldEl = $state<HTMLInputElement | null>(null);
 
 	$effect(() => {
 		if (search.rowCount === 0) return;
@@ -138,6 +142,7 @@
 		{/if}
 		<input
 			bind:value={search.query}
+			bind:this={fieldEl}
 			use:focusOnMount
 			{onkeydown}
 			data-search-field
@@ -148,7 +153,9 @@
 			aria-expanded={search.rowCount > 0}
 			aria-controls="{uid}-list"
 			aria-autocomplete="list"
-			aria-activedescendant={search.rowCount > 0 ? rowId(search.active) : undefined}
+			aria-activedescendant={search.rowCount > 0 && search.isActive(search.active)
+				? rowId(search.active)
+				: undefined}
 			{placeholder}
 			autocomplete="off"
 			spellcheck="false"
@@ -178,6 +185,9 @@
 		aria-label="Resultaten"
 		bind:this={listEl}
 	>
+		{#if search.leftOut.length > 0}
+			<p class="state state--group stil weggelaten">Weggelaten: {search.leftOut.join(', ')}</p>
+		{/if}
 		{#if search.outsideLaw}
 			<p class="state stil" role="status">
 				"{search.q}" staat niet in Concordans.
@@ -209,7 +219,7 @@
 				{#each search.choices as keuze, i (keuze.ref.key)}
 					<SearchOption
 						id={rowId(i)}
-						active={search.active === i}
+						active={search.isActive(i)}
 						citation
 						{compact}
 						href={bronHref(keuze.ref, { at: keuze.at, keepNetwerk: false })}
@@ -297,6 +307,9 @@
 						{bronLabel(group.kind)}{:else}<KindGlyph collection={group.kind} />
 						{groupLabel(group.kind)}{/if}
 					{#if search.loadingKinds.has(group.kind)}<span class="laden">laden…</span>{/if}
+					{#if !group.best && search.partialKinds.has(group.kind)}
+						<span class="deel">treffers met een deel van de woorden</span>
+					{/if}
 				</div>
 				{#if !group.best && searchedLine(search.searched[group.kind])}
 					<!-- What its search reads, so a hit not found is not taken for one not there. -->
@@ -311,7 +324,7 @@
 					{/if}
 					<SearchOption
 						id={rowId(i)}
-						active={search.active === i}
+						active={search.isActive(i)}
 						{compact}
 						href={bronHref(hitName(hit), { keepNetwerk: false })}
 						onchoose={() => open(hitName(hit), null)}
@@ -378,7 +391,26 @@
 				/>
 			</div>
 		{:else if search.empty}
-			<p class="state stil" role="status">Geen resultaten</p>
+			<div class="state stil" role="status">
+				<span>Geen resultaten voor "{search.q}"</span>
+				<span class="verder">
+					<TekstLink onclick={() => fieldEl?.select()}>Pas de zoekterm aan</TekstLink>
+					{#each search.narrower as word (word)}
+						<TekstLink onclick={() => (search.query = word)}>Zoek "{word}"</TekstLink>
+					{/each}
+					{#if search.from || search.to}
+						<TekstLink
+							onclick={() => {
+								search.from = '';
+								search.to = '';
+							}}>Zonder periode</TekstLink
+						>
+					{/if}
+					{#if scope && onWiden}
+						<TekstLink onclick={() => onWiden()}>Zoek in alle bronnen</TekstLink>
+					{/if}
+				</span>
+			</div>
 		{/if}
 	</div>
 </div>
@@ -570,6 +602,20 @@
 	.group-label .laden {
 		margin-left: var(--s-2);
 		color: var(--ink-3);
+	}
+	.deel {
+		margin-left: var(--s-2);
+		font-weight: 400;
+		font-style: italic;
+	}
+	.verder {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--s-1) var(--s-4);
+		margin-top: var(--s-1);
+	}
+	.weggelaten {
+		padding-bottom: var(--s-1);
 	}
 	.state--group {
 		padding-top: 0;

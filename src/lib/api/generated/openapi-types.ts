@@ -11691,7 +11691,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "ecli" | "bwb" | "celex" | "dossier" | "document" | "article" | "commitment" | "publication";
+            kind: "ecli" | "ljn" | "bwb" | "celex" | "dossier" | "document" | "article" | "commitment" | "publication";
             parts: components["schemas"]["NotationPartsDTO"];
         };
         /**
@@ -12478,6 +12478,28 @@ export interface components {
             };
             /** @description With `resolve=true`: what `/api/resolve` answers for `q`, in the same request (kind `none` when nothing fits). Null without it. */
             resolved: components["schemas"]["ResolveResponse"] | null;
+            /**
+             * Words
+             * @description The words of `q` searched for, in lower case: without its stop words (`left_out`).
+             */
+            words?: string[];
+            /**
+             * Left Out
+             * @description The stop words of `q` left out of the search (`wat`, `de`, `van`, `mijn`: the Dutch stop words of PostgreSQL's Snowball dictionary); none when they are all of `q`.
+             */
+            left_out?: string[];
+            /**
+             * Matched
+             * @description `all`: every hit holds every word of `words`; `any`: no hit held them all, and the hits are those that hold one at least (of a ranked type those with more of them first). Only of the full search: while typing (`mode=live`) always `all`.
+             * @default all
+             * @enum {string}
+             */
+            matched: "all" | "any";
+            /**
+             * Best
+             * @description The id of what `q` names exactly, for a search box to open on Enter: the match of `resolved` when its confidence is 0.9 or more (a citation, an identifier, a law, faction or member by its whole name or abbreviation), else the one hit of `results` that is `exact`. Null when none is, or more than one (`BW`: each book), however well words match (`huurverhoging`).
+             */
+            best?: string | null;
         };
         /**
          * SearchResultItem
@@ -12513,6 +12535,12 @@ export interface components {
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */
             readonly path: string | null;
+            /**
+             * Exact
+             * @description Whether the hit is the one thing the query names: by its citation (an article of the law it names), its ECLI or LJN, its number or identifier, the abbreviation or whole title of a law, the name of a judgment, the whole name of a member, faction, committee or cabinet. Never by a heading or words of its text, however well they score.
+             * @default false
+             */
+            exact: boolean;
         };
         /**
          * Searched
@@ -16051,6 +16079,8 @@ export interface operations {
                 from?: string | null;
                 /** @description Hits dated on or before this day, YYYY-MM-DD. */
                 to?: string | null;
+                /** @description Comma-separated kinds of motion: `censure` (motie van afkeuring), `no_confidence` (motie van wantrouwen). Of the papers and the votes only those motions and the votes on them. */
+                motion_kind?: string | null;
             };
             header?: never;
             path?: never;

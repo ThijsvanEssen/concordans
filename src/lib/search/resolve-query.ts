@@ -42,6 +42,7 @@ export function lawTitle(query: string): string | null {
 /** What a citation row is marked as before the API names its bron: the kind of its notation. */
 export const NOTATION_COLLECTION: Record<Notation['kind'], Collection> = {
 	ecli: 'judgments',
+	ljn: 'judgments',
 	bwb: 'instruments',
 	celex: 'instruments',
 	publication: 'instruments',

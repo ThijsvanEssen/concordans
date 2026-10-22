@@ -56,6 +56,15 @@ export const extra = (hit: Hit, name: string): string => {
 	return typeof value === 'string' ? value : '';
 };
 
+/** The kinds of motion the API tells apart (`extra.motion_kind`, API 0.80.5). */
+const MOTION_KIND: Record<string, string> = {
+	censure: 'Motie van afkeuring',
+	no_confidence: 'Motie van wantrouwen'
+};
+
+/** "Motie van wantrouwen" for such a motion, else ''. */
+export const motionName = (hit: Hit): string => MOTION_KIND[extra(hit, 'motion_kind')] ?? '';
+
 /** What a link to the hit names: its node id, and a dossier's number (`37020-XV`). */
 export const hitName = (hit: Hit): string =>
 	hit.collection === 'dossiers' ? `dossiers/${extra(hit, 'number')}` : hit.id;
@@ -274,7 +283,7 @@ function presentBase(hit: Hit, query: string, neighbours: readonly Hit[]): Prese
 			// The name of a Kamerstuk is its dossier's title, the heading it stands under; its
 			// kind and number tell stukken apart. A stuk outside a dossier (a stenogram) has
 			// its own name: `Stikstof en natuur`, with its kind beside it.
-			const kind = extra(hit, 'kind') || nameOf(hit);
+			const kind = motionName(hit) || extra(hit, 'kind') || nameOf(hit);
 			const chamber = chamberOfHit(hit);
 			// The day it was published (BE-1): stukken of one kind differ by it.
 			const date = korteDatum(extra(hit, 'date'));
@@ -343,6 +352,7 @@ function presentBase(hit: Hit, query: string, neighbours: readonly Hit[]): Prese
 			return {
 				title: subject || name,
 				context: [
+					motionName(hit).toLowerCase(),
 					passed === true ? 'aangenomen' : passed === false ? 'verworpen' : '',
 					korteDatum(extra(hit, 'date'))
 				]

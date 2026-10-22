@@ -232,6 +232,7 @@
 			<!-- One field for every scope: a scope chosen asks the typed query again. -->
 			<Search
 				scope={chosen?.kinds ?? null}
+				onWiden={() => (scope = null)}
 				initial={query}
 				placeholder={chosen ? `Zoek in ${chosen.label.toLowerCase()}` : START.placeholder}
 			/>

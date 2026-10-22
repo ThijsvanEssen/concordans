@@ -512,3 +512,25 @@ describe('a hit that has expired (besluit 30)', () => {
 		).toBeUndefined();
 	});
 });
+
+describe('a motion of censure or no confidence (API 0.80.5)', () => {
+	const motie = (motion_kind?: string) =>
+		hit({
+			collection: 'documents',
+			key: 'm1',
+			display_name: 'Motie van het lid Wilders',
+			extra: { kind: 'Motie', motion_kind, date: '2026-10-01' }
+		});
+
+	it('is told by its kind, whatever the source calls it', () => {
+		expect(presentHit(motie('no_confidence'), 'wantrouwen', []).context).toContain(
+			'Motie van wantrouwen'
+		);
+		expect(presentHit(motie('censure'), 'afkeuring', []).context).toContain('Motie van afkeuring');
+	});
+
+	it('stays a Motie without a kind', () => {
+		expect(presentHit(motie(), 'motie', []).context).toContain('Motie');
+		expect(presentHit(motie(), 'motie', []).context).not.toContain('wantrouwen');
+	});
+});
