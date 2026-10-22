@@ -63,11 +63,12 @@ test('hits with only some of the words say so', async ({ page }) => {
 
 test('nothing found offers a way on instead of bare text', async ({ page }) => {
 	await patchApi(page, /\/api\/search/, (body) =>
-		named(body, { results: {}, resolved: null, searched: {} })
+		named(body, { results: {}, resolved: null, searched: {}, partial: {} })
 	);
 	const { results } = await searchFor(page, 'xqzvbnm qwertzpl');
 	await expect(results.getByText('Geen resultaten voor "xqzvbnm qwertzpl"')).toBeVisible();
 	await expect(results.getByRole('button', { name: 'Pas de zoekterm aan' })).toBeVisible();
 	await results.getByRole('button', { name: 'Zoek "qwertzpl"' }).click();
 	await expect(page.getByRole('combobox', { name: 'Zoeken' })).toHaveValue('qwertzpl');
+	await expect(results.getByText('Geen resultaten voor "qwertzpl"')).toBeVisible();
 });
