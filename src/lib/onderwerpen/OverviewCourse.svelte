@@ -62,7 +62,7 @@
 	.sectie h2 {
 		margin: 0 0 var(--s-2);
 		font-size: var(--t-h3);
-		font-weight: 800;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	/* A state line under a heading, with its quiet actions (rung 6). */

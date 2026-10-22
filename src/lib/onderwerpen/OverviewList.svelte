@@ -264,7 +264,7 @@
 	.lijst h2 {
 		margin: 0;
 		font-size: var(--t-h3);
-		font-weight: 800;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	.lijst__kop {

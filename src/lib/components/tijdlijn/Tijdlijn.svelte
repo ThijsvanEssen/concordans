@@ -254,7 +254,7 @@
 	.kop--2 {
 		padding-top: var(--s-5);
 		font-size: var(--t-h3);
-		font-weight: 800;
+		font-weight: 600;
 		border-bottom-width: 1px;
 		border-bottom-color: var(--rule-strong);
 	}

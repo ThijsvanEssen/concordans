@@ -820,7 +820,7 @@
 		margin: var(--s-2) 0 var(--s-4);
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
-		font-weight: 800;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	.empty {

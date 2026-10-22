@@ -161,7 +161,7 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
-		font-weight: 800;
+		font-weight: 600;
 	}
 	.day-title::first-letter {
 		text-transform: uppercase;

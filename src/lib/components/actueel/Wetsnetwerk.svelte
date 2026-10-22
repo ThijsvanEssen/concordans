@@ -155,7 +155,7 @@
 	h2 {
 		margin: 0 0 var(--s-3);
 		font-size: var(--t-h3);
-		font-weight: 800;
+		font-weight: 600;
 		line-height: var(--lh-snug);
 	}
 	.keten,

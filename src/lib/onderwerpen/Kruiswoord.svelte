@@ -314,7 +314,7 @@
 	.som-groot {
 		font-family: var(--font-serif);
 		font-size: var(--t-h2);
-		font-weight: 800;
+		font-weight: 600;
 		line-height: 1.1;
 		color: var(--ink);
 		text-align: center;

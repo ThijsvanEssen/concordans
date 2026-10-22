@@ -301,6 +301,15 @@
 	.scopes {
 		max-width: 100%;
 	}
+	/* The field is the first aim of the page, so it is the heaviest frame on it: 2 px of ink
+	   (a border and an inset line, so the height stays as the server's page has it). */
+	.search :global(.field) {
+		border-color: var(--ink);
+		box-shadow: inset 0 0 0 1px var(--ink);
+	}
+	.search :global(.field:focus-within) {
+		border-color: var(--ink);
+	}
 	.glyphs {
 		display: inline-flex;
 		gap: 3px;
@@ -348,7 +357,7 @@
 	.actueel h2 {
 		margin: 0;
 		font-size: var(--t-h2);
-		font-weight: 800;
+		font-weight: 600;
 	}
 	.actueel h2 a {
 		color: var(--ink);

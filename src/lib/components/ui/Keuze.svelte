@@ -1,7 +1,8 @@
 <script lang="ts" generics="T extends string">
-	// One choice among a few, as a joined row of buttons: the chosen one filled in ink, the
-	// others with a border. The one form for every segmented choice in Concordans (the
-	// Netwerk and Tekst switch, the Kamer, the depth of a network).
+	// One choice among a few, as a joined row of buttons: the chosen one on paper-2 with an ink
+	// line under it, the others on paper (ink is filled only for a screen's one action). The
+	// one form for every segmented choice in Concordans (the Netwerk and Tekst switch, the Kamer,
+	// the depth of a network).
 	import type { Option } from './option';
 	import type { Snippet } from 'svelte';
 
@@ -65,8 +66,7 @@
 		color: var(--ink);
 		cursor: pointer;
 	}
-	/* A mark in an option (a KindGlyph) is in the option's own colour: paper on the chosen
-	   one, which is filled in ink (Thijs, 10 Oct: the marks vanished there). */
+	/* A mark in an option (a KindGlyph) is in the option's own colour. */
 	button :global(.kind-glyph),
 	button :global(.picto) {
 		color: currentColor;
@@ -107,9 +107,11 @@
 	button:hover:not(:disabled):not([aria-pressed='true']) {
 		background: var(--paper-2);
 	}
+	/* The chosen one is not filled in ink (that is for the one action of a screen): paper-2
+	   with an ink line under it. */
 	button[aria-pressed='true'] {
-		background: var(--ink);
-		color: var(--paper);
+		background: var(--paper-2);
+		box-shadow: inset 0 -2px 0 var(--ink);
 		cursor: default;
 	}
 	/* An option that does not apply here (Tekst for a dossier): plainly out of reach, word

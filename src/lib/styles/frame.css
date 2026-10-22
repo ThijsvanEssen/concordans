@@ -67,11 +67,8 @@
 }
 .blad__titel {
 	margin: 0;
-	font-family: var(--font-serif);
-	font-size: var(--t-h1);
-	font-weight: 600;
-	line-height: var(--lh-snug);
-	color: var(--ink);
+	font: var(--niveau-1-pagina);
+	color: var(--kleur-1);
 	overflow-wrap: anywhere;
 }
 /* The parts of a text page (/over, /bronnen, /privacy, /voorwaarden, /docs and its pages):
@@ -114,10 +111,8 @@
 }
 .blad--tekst .section-title {
 	margin: 0 0 var(--s-3);
-	font-family: var(--font-serif);
-	font-size: var(--t-h3);
-	font-weight: 800;
-	color: var(--ink);
+	font: var(--niveau-1-sectie);
+	color: var(--kleur-1);
 }
 .blad--tekst .cite {
 	text-decoration: underline;

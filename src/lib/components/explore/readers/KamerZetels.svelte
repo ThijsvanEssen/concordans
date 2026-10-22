@@ -398,7 +398,7 @@
 	}
 	.kopgetal b {
 		font-size: var(--t-h2);
-		font-weight: 800;
+		font-weight: 600;
 		line-height: var(--lh-tight);
 		color: var(--ink);
 	}
@@ -501,7 +501,7 @@
 	/* The head figure leads to the course: ink, underlined on hover as every link. */
 	.kopgetal__getal {
 		font-size: var(--t-h2);
-		font-weight: 800;
+		font-weight: 600;
 		line-height: var(--lh-tight);
 		color: var(--ink);
 		text-decoration: none;

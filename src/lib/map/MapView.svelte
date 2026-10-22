@@ -479,7 +479,7 @@
 		border-radius: var(--r-1);
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
-		font-weight: 800;
+		font-weight: 600;
 	}
 	.vraag {
 		display: flex;

@@ -643,7 +643,7 @@
 		padding: 0 var(--s-4);
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-		font-weight: 600;
+		font-weight: 400;
 		font-style: italic;
 		color: var(--ink-3);
 	}

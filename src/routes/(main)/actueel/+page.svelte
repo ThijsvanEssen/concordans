@@ -783,7 +783,7 @@
 	.count {
 		margin: 0;
 		font-size: var(--t-h2);
-		font-weight: 800;
+		font-weight: 600;
 	}
 	.noun {
 		margin-left: var(--s-2);

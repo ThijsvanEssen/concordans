@@ -75,9 +75,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-2);
-		padding: var(--s-4);
-		border: 1px solid var(--rule);
-		border-radius: var(--r-2);
+		padding: var(--s-3) 0 0;
+		border-top: 1px solid var(--ink);
 	}
 	h2 {
 		margin: 0;

@@ -78,7 +78,7 @@
 	   docs/typografie.md. */
 	--font-ui: 'Schibsted Grotesk', system-ui, sans-serif;
 
-	--t-h1: 30px; /* page titles, weight 500 */
+	--t-h1: 30px; /* page titles, weight 600 */
 	--t-h2: 24px;
 	--t-h3: 20px;
 	--t-body: 17.5px; /* reading text, line-height 1.6 */
@@ -90,6 +90,13 @@
 	--t-label: 11px; /* labels over a group: the sans at 500, as written, without spacing */
 	--t-glyph: 10px; /* a mark inside a box: a tick, a caret, a badge */
 	--t-input: 16px; /* text fields: below 16px a phone zooms in on focus */
+
+	/* Three levels, no fourth (A154, E2). 1 Ding: what you look at, the only weight 600
+	   (800 is the wordmark's alone). 2 Inhoud: what it says. 3 Omgeving: the date, the kind,
+	   the count, the source. Line heights in whole pixels on the 4px grid. */
+	--niveau-1-pagina: 600 var(--t-h1) / 36px var(--font-serif);
+	--niveau-1-sectie: 600 var(--t-h3) / 28px var(--font-serif);
+	--kleur-1: var(--ink);
 
 	--lh-tight: 1.15;
 	--lh-snug: 1.35;

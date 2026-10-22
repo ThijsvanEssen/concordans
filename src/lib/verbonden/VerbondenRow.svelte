@@ -286,7 +286,7 @@
 		line-height: 1.35;
 	}
 	.row__part--lid {
-		font-weight: 600;
+		font-weight: 400;
 		color: var(--ink-2);
 	}
 	.row__part--derived {
@@ -301,8 +301,8 @@
 		color: var(--ink-2);
 	}
 	.row__hoe b {
-		font-weight: 600;
-		color: var(--ink);
+		font-weight: 400;
+		color: var(--ink-2);
 	}
 	.row__hoe.is-afgeleid {
 		font-style: italic;

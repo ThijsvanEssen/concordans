@@ -1819,10 +1819,9 @@
 		position: relative;
 	}
 
-	/* Reader is the page; nav and panel are its margins — a shade darker, the way a
-	   margin note sits apart from the text without a hard rule doing all the work. */
-	.col--nav,
-	.col--panel {
+	/* Reader is the page; the nav is its margin, a shade darker. The panel (Verbonden) stays
+	   on paper with a rule, so the text wins at a glance (A154). */
+	.col--nav {
 		background: var(--paper-2);
 	}
 

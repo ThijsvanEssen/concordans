@@ -314,7 +314,7 @@
 	}
 	.api-tag-title {
 		font-size: var(--t-h2);
-		font-weight: 800;
+		font-weight: 600;
 		color: var(--ink);
 		margin: 0;
 	}

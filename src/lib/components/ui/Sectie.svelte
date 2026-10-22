@@ -91,10 +91,8 @@
 		align-items: center;
 		gap: var(--s-2);
 		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-h3);
-		font-weight: 800;
-		color: var(--ink);
+		font: var(--niveau-1-sectie);
+		color: var(--kleur-1);
 	}
 	.inhoud {
 		display: flex;
