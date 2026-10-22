@@ -27,7 +27,7 @@ export const strayRed = (page: Page) =>
 		const red = getComputedStyle(probe).color;
 		probe.remove();
 		const allowed =
-			'[class*="nee"], [class*="tegen"], [class*="fout"], [class*="failure"], [class*="error"], ' +
+			'[class*="nee"], [class*="tegen"], [class*="against"], [class*="fout"], [class*="failure"], [class*="error"], ' +
 			'[class*="verworpen"], [role="alert"], [aria-invalid="true"], .paragraaf, [class*="logo"], [class*="merk"]';
 		const out: string[] = [];
 		for (const el of document.body.querySelectorAll<HTMLElement>('*')) {
