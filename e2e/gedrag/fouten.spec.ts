@@ -75,12 +75,14 @@ test('a 429 says so with its wait, and asks again by itself once the wait is ove
 	guard
 }) => {
 	guard.allow(/status of 429/);
-	await failApi(page, /^\/api\/factions/, 429, 1);
+	await failApi(page, /^\/api\/factions/, 429);
 	await page.goto('/explore?mode=index&kind=factions');
 	const wacht = page.getByRole('status').filter({ hasText: 'Even te veel verzoeken' });
 	await expect(wacht).toBeVisible();
 	await expect(wacht.getByText(/^Even te veel verzoeken, opnieuw over \d s\.$/)).toBeVisible();
 	await expect(page.getByRole('alert')).toHaveCount(0);
+	// The wait over, the API answers again: the list comes by itself.
+	await page.unrouteAll({ behavior: 'ignoreErrors' });
 	await expect(wacht).toHaveCount(0, { timeout: 8000 });
 	await expect(page.getByRole('figure', { name: 'Zetelverdeling Tweede Kamer' })).toBeVisible();
 });
