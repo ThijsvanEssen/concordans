@@ -144,10 +144,13 @@ test('Gevolgd: a dossier followed from its page, with what is new since the visi
 	);
 	await page.getByRole('button', { name: 'Volg', exact: true }).click();
 	await page.getByRole('menuitem', { name: 'Bewaar bij Gevolgd' }).click();
-	// Followed: Volg became Gevolgd, as Bewaar becomes Bewaard, a way to Gevolgd.
-	await expect(
-		page.locator('#main-content').getByRole('link', { name: 'Gevolgd', exact: true })
-	).toHaveAttribute('href', '/onderwerpen');
+	// Followed: Volg became Gevolgd, as Bewaar becomes Bewaard, a way to Gevolgd in its menu.
+	await page.locator('#main-content').getByRole('button', { name: 'Gevolgd', exact: true }).click();
+	await expect(page.getByRole('menuitem', { name: 'Open Gevolgd' })).toHaveAttribute(
+		'href',
+		'/onderwerpen'
+	);
+	await page.keyboard.press('Escape');
 
 	// The visit before lies back: what came in since is marked, a link to those days.
 	await page.evaluate(() => {

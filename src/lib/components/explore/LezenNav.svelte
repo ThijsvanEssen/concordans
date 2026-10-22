@@ -22,6 +22,9 @@
 
 	let { selection }: { selection: GraphNode | null } = $props();
 
+	/** A law of the BWB (a wet, a verdrag): its names come with its articles. */
+	const BWB_ID = /^BWB[RV]\d+$/;
+
 	/** An article with the anchor of each layer of its place in the whole law. */
 	type Item = LawArticle;
 
@@ -49,22 +52,24 @@
 	});
 
 	// The name over the contents is the heading of the law's own page (the citation record, E6),
-	// never its id: the law is asked (once, as its head asks it) and the column waits without a name.
+	// never its id. A law of the BWB has its name from the answers that came before; an act of the
+	// EU or a publication is asked (once, as its head asks it), and the column waits without a name.
+	const asked = $derived(currentBwb && !BWB_ID.test(currentBwb) ? currentBwb : null);
 	const lawDetail = load(
-		() => currentBwb,
-		(bwb) => (bwb ? getInstrumentDetail(bwb) : Promise.resolve(null)),
+		() => asked,
+		(id) => (id ? getInstrumentDetail(id) : Promise.resolve(null)),
 		'Wet, gegevens'
 	);
-	const navTitle = $derived(
-		currentBwb && lawDetail.state.status === 'ready'
-			? lawCitationRecord(
-					currentBwb,
-					lawDetail.state.data,
-					// An act of the EU or a publication is kept under its node key, lower case.
-					$instrumentMetaStore.get(currentBwb) ?? $instrumentMetaStore.get(currentBwb.toLowerCase())
-				).heading
-			: null
-	);
+	const navTitle = $derived.by(() => {
+		if (!currentBwb) return null;
+		// An act of the EU or a publication is kept under its node key, lower case.
+		const meta =
+			$instrumentMetaStore.get(currentBwb) ?? $instrumentMetaStore.get(currentBwb.toLowerCase());
+		if (!asked) return lawName(meta, null);
+		return lawDetail.state.status === 'ready'
+			? lawCitationRecord(currentBwb, lawDetail.state.data, meta).heading
+			: null;
+	});
 
 	const groupLabel = (g: Group) => {
 		const label = g.label.trim() || (g.type && g.type !== 'sectie' ? capitalize(g.type) : '');

@@ -4,7 +4,10 @@
 import { expect, test } from '../support/test';
 
 test('Actueel draws the bar of a vote, not a sentence of its counts', async ({ page }) => {
+	// The days counted come after the days: waited for, so each run asks the same.
+	const counted = page.waitForResponse((r) => /\/api\/feed\/summary\?.*until=/.test(r.url()));
 	await page.goto('/actueel?soort=stemming&kamer=TK');
+	await counted;
 	const feed = page.locator('.feed');
 	await expect(feed.getByRole('figure', { name: 'Stemuitslag' }).first()).toBeVisible();
 	await expect(feed.getByText(/^\d+ voor, \d+ tegen$/)).toHaveCount(0);

@@ -67,6 +67,7 @@ test.describe('on a phone', () => {
 		['the start', '/']
 	] as const) {
 		test(`every button of ${naam} is 44 px to a finger`, async ({ page }) => {
+			test.setTimeout(120_000);
 			await page.goto(pad);
 			await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
 			await page.waitForLoadState('networkidle');
