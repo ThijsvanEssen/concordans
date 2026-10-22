@@ -429,7 +429,11 @@
 		const parts = shownVersion?.parts ?? loaded?.article.parts ?? [];
 		const deel = anchor ? placeCitation(anchor, parts) : null;
 		const plaats = deel && (deel.lid || deel.onderdelen?.length || deel.definitie) ? anchor! : '';
-		return { plaats, deel, forms: plaats ? citeArticle({ ...citation, ...deel, date: citeOn }) : forms };
+		return {
+			plaats,
+			deel,
+			forms: plaats ? citeArticle({ ...citation, ...deel, date: citeOn }) : forms
+		};
 	});
 	const bewaarHier = $derived.by(() => {
 		if (!citation || !hier) return null;
