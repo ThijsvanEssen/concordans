@@ -1,8 +1,9 @@
 <script lang="ts">
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import { CONTACT_EMAIL } from '$lib/site/contact';
+	import { BUNDLES_PATH } from '$lib/map/page';
 
-	const meldAdres = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Fout in Concordans')}`;
+	const reportHref = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Fout in Concordans')}`;
 </script>
 
 <RouteKop />
@@ -37,7 +38,7 @@
 			<p>
 				Bundels, aantekeningen en gevolgde onderwerpen staan alleen in de browser waarin ze zijn
 				gemaakt. Concordans maakt er geen back-up van: wie de gegevens van de browser wist, is ze
-				kwijt. Wat moet blijven, gaat als bestand mee: <a href="/bundels" class="cite"
+				kwijt. Wat moet blijven, gaat als bestand mee: <a href={BUNDLES_PATH} class="cite"
 					>Alle bundels downloaden</a
 				>. Van de gegevens op de server maakt Concordans evenmin back-ups; na verlies worden ze
 				opnieuw uit de officiële bronnen opgebouwd.
@@ -48,7 +49,7 @@
 			<h2 class="section-title">Fouten melden</h2>
 			<p>
 				Een fout in een tekst, een verbinding, een datum of een stand gaat naar
-				<a href={meldAdres} class="cite">{CONTACT_EMAIL}</a>, met het adres van de pagina.
+				<a href={reportHref} class="cite">{CONTACT_EMAIL}</a>, met het adres van de pagina.
 			</p>
 		</div>
 

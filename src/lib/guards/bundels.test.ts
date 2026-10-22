@@ -35,7 +35,7 @@ describe('a bundel’s own page, the place to work (bundels-ux 2b)', () => {
 			'>PDF<',
 			'>Hernoem<',
 			'>Verwijder bundel<',
-			'>Leegmaken<'
+			'>Wissen<'
 		])
 			expect(v, label).toContain(label);
 		// Gone: the six links beside a second menu, and the words of before.
