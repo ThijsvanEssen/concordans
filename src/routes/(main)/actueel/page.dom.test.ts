@@ -1,10 +1,10 @@
 // Actueel asks the days counted (/api/feed/summary) once the feed has answered the filters
 // shown, once per change of the filters; a next page asks only the days it added.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render } from '@testing-library/svelte';
+import { cleanup, fireEvent, render } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { fakeApi, type FakeRequest } from '$lib/test/fakeApi';
-import { appNavigation, open } from '$lib/test/navigation.svelte';
+import { appNavigation, back, open } from '$lib/test/navigation.svelte';
 import { addDays, vandaag } from '$lib/text/datum';
 import Page from './+page.svelte';
 
@@ -83,12 +83,31 @@ describe('the days counted on Actueel', () => {
 		open('/actueel');
 		const { getByText } = render(Page);
 		await settle();
-		await fireEvent.click(getByText('Volgende dagen'));
+		await fireEvent.click(getByText('Eerdere dagen'));
 		await settle();
 		// The day held back, with the days the page added.
 		expect(summaries()).toEqual([
 			{ until: today, days: 1, soort: undefined },
 			{ until: day(1), days: 3, soort: undefined }
 		]);
+	});
+});
+
+describe('Back to Actueel', () => {
+	it('finds the days as they stood, Eerdere dagen included, without asking them again', async () => {
+		open('/actueel?soort=Motie');
+		const first = render(Page);
+		await settle();
+		await fireEvent.click(first.getByText('Eerdere dagen'));
+		await settle();
+		expect(first.getByText('d')).toBeTruthy();
+		const asked = api.asked('/api/feed').filter(({ query }) => !query?.facets).length;
+		cleanup();
+		await appNavigation.goto('/dossiers/36000');
+		back();
+		const again = render(Page);
+		await settle();
+		expect(again.getByText('d')).toBeTruthy();
+		expect(api.asked('/api/feed').filter(({ query }) => !query?.facets)).toHaveLength(asked);
 	});
 });

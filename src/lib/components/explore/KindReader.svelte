@@ -10,11 +10,12 @@
 	import { articleReader, readerOf } from './readers';
 	import { setContext } from 'svelte';
 	import { BEHOORT_KEY } from '$lib/bron/behoort';
+	import type { Stap } from '$lib/bron/stap.svelte';
 
 	let {
 		selection,
-		prevHref,
-		nextHref,
+		prev,
+		next,
 		place = [],
 		lidCounts = new Map(),
 		lidTellend = false,
@@ -25,8 +26,8 @@
 	}: {
 		selection: GraphNode;
 		/** The article before and after the selected one, in Lezen. */
-		prevHref?: string;
-		nextHref?: string;
+		prev?: Stap;
+		next?: Stap;
 		/** The layers of an article's place in its law: hoofdstuk, afdeling. */
 		place?: Division[];
 		/** Verbindingen per lid of the article, under the bronfilter. */
@@ -54,8 +55,8 @@
 	{@const ArticleReader = articleReader.component}
 	<ArticleReader
 		node={selection}
-		{prevHref}
-		{nextHref}
+		{prev}
+		{next}
 		{place}
 		{lidCounts}
 		{lidTellend}

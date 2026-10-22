@@ -97,13 +97,16 @@ export function besideJudgment(beside: ReturnType<typeof parseNodeId>): GraphNod
 
 const SERIES_NAME = { stb: 'Stb.', stcrt: 'Stcrt.', trb: 'Trb.' } as const;
 
-/** What a readable address names, as the page says it when the data lacks it. */
-export function nameOfPad(p: Pad): string {
+/**
+ * What a readable address names, as the page says it when the data lacks it or it failed: a
+ * law by its name where the page knows it (`wetNaam`), not by its BWB id.
+ */
+export function nameOfPad(p: Pad, wetNaam: (bwb: string) => string | null = () => null): string {
 	switch (p.soort) {
 		case 'artikel':
-			return `Artikel ${p.nummer} van ${stbCitation(p.wet) ?? p.wet}`;
+			return `Artikel ${p.nummer} van ${stbCitation(p.wet) ?? wetNaam(p.wet) ?? p.wet}`;
 		case 'wet':
-			return stbCitation(p.wet) ?? padHref(p);
+			return stbCitation(p.wet) ?? wetNaam(p.wet) ?? padHref(p);
 		case 'kamerstuk':
 			return (
 				kamerstukName({

@@ -20,7 +20,13 @@ export type LawArticle = {
 };
 
 /** An article with the layers of its place (book, title), as the reader shows them. */
-export type LawNavItem = { key: string; label: string; breadcrumb: Division[] };
+export type LawNavItem = {
+	key: string;
+	label: string;
+	/** As its address has it (LawArticle.articleNumber). */
+	articleNumber: string;
+	breadcrumb: Division[];
+};
 
 /** The articles of the law `bwb`, from its list. */
 export const lawArticles = (bwb: string): Promise<LawArticle[]> =>
@@ -87,5 +93,6 @@ export const lawNav = (articles: LawArticle[], lawName: string | null): LawNavIt
 	articles.map((a) => ({
 		key: a.key,
 		label: a.label,
+		articleNumber: a.articleNumber,
 		breadcrumb: layersOf(a.breadcrumb, lawName)
 	}));

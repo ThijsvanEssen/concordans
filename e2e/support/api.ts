@@ -108,7 +108,7 @@ export const apiPath = (path: string | RegExp) =>
 export async function failApi(
 	target: Page | BrowserContext,
 	path: string | RegExp,
-	how: 500 | 503 | 'offline',
+	how: 500 | 503 | 429 | 'offline',
 	times?: number
 ) {
 	const fail = (route: Route) =>
@@ -116,11 +116,19 @@ export async function failApi(
 			? route.abort('internetdisconnected')
 			: route.fulfill({
 					status: how,
-					headers: { ...CORS, 'content-type': 'application/json', 'x-request-id': REQUEST_ID },
+					headers: {
+						...CORS,
+						'content-type': 'application/json',
+						'x-request-id': REQUEST_ID,
+						// The API's limit asks a wait; two seconds keeps a test short.
+						...(how === 429 ? { 'retry-after': '2' } : {})
+					},
 					body: JSON.stringify(
 						how === 500
 							? { detail: 'Internal Server Error', request_id: REQUEST_ID }
-							: { detail: 'Service Unavailable' }
+							: how === 429
+								? { detail: 'Rate limit exceeded. Try again later.' }
+								: { detail: 'Service Unavailable' }
 					)
 				});
 	await target.route(apiPath(path), fail, times ? { times } : undefined);

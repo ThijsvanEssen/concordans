@@ -56,7 +56,7 @@
 		onToggle?: (id: string) => void;
 		/** Eén stille regel waar niets is. */
 		leeg?: string | null;
-		/** Onder de laatste groep, in de tekstkolom: Volgende dagen, Alle 9 openstaande toezeggingen. */
+		/** Onder de laatste groep, in de tekstkolom: Eerdere dagen, Alle 9 openstaande toezeggingen. */
 		meer?: Snippet;
 		/** Under a line with `bij`, after its meta: what the caller draws of it (CoalitieRegel). */
 		onderRegel?: Snippet<[B]>;

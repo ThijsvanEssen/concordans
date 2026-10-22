@@ -613,7 +613,10 @@
 
 					<!-- How many, under which filters; a click on a filter takes it off. -->
 					{#if rowsShown}<div class="result-head">
-							{#if list.Rows && resultTotal !== null}
+							{#if list.Rows && loading && pages[category]}
+								<!-- A filter on its way: the count it will have, not the one before (B24). -->
+								<p class="result-count"><span class="result-noun">tellen…</span></p>
+							{:else if list.Rows && resultTotal !== null && !error}
 								<p class="result-count">
 									{formatCount(resultTotal)}<span class="result-noun"
 										>{resultTotal === 1 ? noun1(category) : labelOf(category)}</span
@@ -653,7 +656,8 @@
 							{/if}
 						</div>{/if}
 
-					{#if list.Figure}<list.Figure {ctx} />{/if}
+					<!-- A list that failed shows no figure of the one before. -->
+					{#if list.Figure && !error}<list.Figure {ctx} />{/if}
 
 					<!-- While the next result loads, the previous one stays, dimmed. -->
 					{#if loading && !pages[category] && rowsShown}
@@ -895,6 +899,9 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
+	}
+	.result-noun:first-child {
+		margin-left: 0;
 	}
 
 	/* The heads of the columns, over the rows in the same grid. */

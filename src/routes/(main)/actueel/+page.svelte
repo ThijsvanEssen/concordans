@@ -1,3 +1,28 @@
+<script lang="ts" module>
+	import type { DaySummary, FeedItem as Item, SummarySpan } from '$lib/components/actueel/feed';
+	import type { feedStand as Stand } from '$lib/text/stand';
+
+	/** The days loaded under a query, as they stood: Back finds them again (B26). */
+	type Geladen = {
+		items: Item[];
+		cursor: string | null;
+		doorzocht: string | null;
+		feedFilters: string | null;
+		stand: ReturnType<typeof Stand>;
+		/** The days counted, and of which span under which filters. */
+		summaries: Map<string, DaySummary>;
+		counted: { filters: string; span: SummarySpan } | null;
+	};
+	const geladen = new Map<string, Geladen>();
+	/** The views kept for Back: the last few, the most recent last. */
+	const GELADEN_MAX = 4;
+	function bewaar(query: string, view: Geladen) {
+		geladen.delete(query);
+		geladen.set(query, view);
+		if (geladen.size > GELADEN_MAX) geladen.delete(geladen.keys().next().value!);
+	}
+</script>
+
 <script lang="ts">
 	import { articleRef } from '$lib/text/bw';
 	import { BOTH_CHAMBERS, CHAMBER_CHOICES } from '$lib/components/parliamentary/chamber';
@@ -23,7 +48,7 @@
 	// filter and the line opened are in the URL, so a view can be shared; the same view is an
 	// Atom feed. Beside it, the day of the newest event: how current the data is.
 	import { isEscape } from '$lib/actions/keys';
-	import { page } from '$app/state';
+	import { navigating, page } from '$app/state';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
 	import { getFeed, getFeedSummary } from '$lib/api/feed';
 	import { getFactions } from '$lib/api/factions';
@@ -69,10 +94,8 @@
 		errorPlace,
 		normalizeItem,
 		summaryAsk,
-		type DaySummary,
 		type FeedItem,
-		type FeedKind,
-		type SummarySpan
+		type FeedKind
 	} from '$lib/components/actueel/feed';
 	import { feedStand, standLine } from '$lib/text/stand';
 	import { FEED_PAGE } from '$lib/api/first-pages';
@@ -223,13 +246,29 @@
 			items = [];
 			cursor = null;
 		}
-		getFeed({ ...q, facets: false }, { signal: ac.signal })
-			.then((r) => {
-				items = r.items.map(normalizeItem);
-				cursor = r.next_cursor ?? null;
-				feedFilters = JSON.stringify(summaryQuery(q));
-				stand = feedStand(r.data_as_of) ?? stand;
-				doorzocht = doorzochtVanaf(r);
+		// Back to a view read before: its days as they stood, Eerdere dagen included, so the
+		// browser finds its place in them again.
+		const terug = untrack(() => navigating.type === 'popstate')
+			? geladen.get(JSON.stringify(q))
+			: undefined;
+		const lijst = terug
+			? Promise.resolve(terug)
+			: getFeed({ ...q, facets: false }, { signal: ac.signal }).then((r) => {
+					return {
+						items: r.items.map(normalizeItem),
+						cursor: r.next_cursor ?? null,
+						doorzocht: doorzochtVanaf(r),
+						feedFilters: JSON.stringify(summaryQuery(q)),
+						stand: feedStand(r.data_as_of) ?? untrack(() => stand)
+					};
+				});
+		if (terug) {
+			({ items, cursor, doorzocht, feedFilters, stand, summaries, counted } = terug);
+			loading = false;
+		}
+		lijst
+			.then((view) => {
+				({ items, cursor, doorzocht, feedFilters, stand } = view);
 			})
 			.catch((e) => {
 				if (ac.signal.aborted) return;
@@ -300,7 +339,7 @@
 		}
 	}
 
-	/** A row of the timeline, for the focus after Volgende dagen. */
+	/** A row of the timeline, for the focus after Eerdere dagen. */
 	const ROW = '.regel';
 	let daysEl = $state<HTMLElement | null>(null);
 
@@ -318,12 +357,19 @@
 			await tick();
 			if (daysEl) focusFirstNew(daysEl, ROW, before);
 		} catch (e) {
-			report('Actueel volgende dagen', e);
-			error = { what: 'De volgende dagen', plural: true, error: e, retry: loadMore };
+			report('Actueel eerdere dagen', e);
+			error = { what: 'De eerdere dagen', plural: true, error: e, retry: loadMore };
 		} finally {
 			loadingMore = false;
 		}
 	}
+
+	// What stands is kept for Back, Eerdere dagen included.
+	$effect(() => {
+		if (loading || error || !items.length) return;
+		const view = { items, cursor, doorzocht, feedFilters, stand, summaries, counted };
+		untrack(() => bewaar(JSON.stringify(query), view));
+	});
 
 	// Without a day asked, what lies ahead (an inwerkingtreding) waits for "komend".
 	const tot = $derived(until && until < today ? until : today);
@@ -543,10 +589,10 @@
 <RouteKop />
 
 <!-- Under the last day, in the text column of the timeline. -->
-<!-- Next days that did not come: Opnieuw under the days takes the link's place, as in Bladeren. -->
+<!-- Earlier days that did not come: Opnieuw under the days takes the link's place, as in Bladeren. -->
 {#snippet volgende()}
 	{#if loadingMore}<span class="stil">Laden…</span>{:else if error?.retry !== loadMore}<TekstLink
-			onclick={loadMore}>Volgende dagen</TekstLink
+			onclick={loadMore}>Eerdere dagen</TekstLink
 		>{/if}
 {/snippet}
 {#snippet verder()}

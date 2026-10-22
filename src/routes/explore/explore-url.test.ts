@@ -82,6 +82,11 @@ describe('nameOfPad', () => {
 		);
 		// A law of the Staatsblad the BWB does not hold, and its article, by its publication.
 		expect(nameOfPad({ soort: 'wet', wet: 'STB-2026-56' })).toBe('Stb. 2026, 56');
+		// A law the page knows by its name, not by its BWB id (B23).
+		const bw6 = (bwb: string) => (bwb === 'BWBR0005289' ? 'Burgerlijk Wetboek Boek 6' : null);
+		expect(nameOfPad({ soort: 'artikel', wet: 'BWBR0005289', nummer: '6:163' }, bw6)).toBe(
+			'Artikel 6:163 van Burgerlijk Wetboek Boek 6'
+		);
 		expect(nameOfPad({ soort: 'artikel', wet: 'STB-2026-56', nummer: '2.8.6' })).toBe(
 			'Artikel 2.8.6 van Stb. 2026, 56'
 		);

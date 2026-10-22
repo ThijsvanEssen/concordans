@@ -12,6 +12,8 @@ type NavigationType = 'enter' | 'goto' | 'popstate';
 type Navigation = { type: NavigationType; from: { url: URL } | null; to: { url: URL } | null };
 
 const page = $state({ url: new URL('/', ORIGIN) });
+/** The navigation under way, as SvelteKit's `navigating`: Back is one until the page reacted. */
+const navigating = $state<{ type: NavigationType | null }>({ type: null });
 let entries: URL[] = [page.url];
 let at = 0;
 const listeners = new Set<(nav: Navigation) => void>();
@@ -62,8 +64,10 @@ function go(delta: number) {
 	if (next < 0 || next >= entries.length) return;
 	const from = page.url;
 	at = next;
+	navigating.type = 'popstate';
 	page.url = entries[at];
 	notify('popstate', from, page.url);
+	setTimeout(() => (navigating.type = null));
 }
 
 /** Back, as the browser's button. */
@@ -79,7 +83,7 @@ function afterNavigate(listener: (nav: Navigation) => void) {
 	onDestroy(() => listeners.delete(listener));
 }
 
-export const appState = { page, updated: { current: false, check: async () => false } };
+export const appState = { page, navigating, updated: { current: false, check: async () => false } };
 
 export const appNavigation = {
 	goto,

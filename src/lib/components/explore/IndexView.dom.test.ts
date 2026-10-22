@@ -256,6 +256,31 @@ describe('Bronnen, the address', () => {
 		expect(page.url.search).toMatchSnapshot();
 	});
 
+	it('says tellen… while a filter loads, and no count beside a list that failed (B24)', async () => {
+		let answer: (value: unknown) => void = () => {};
+		let failing = false;
+		await open('dossiers', '', {
+			...ROUTES,
+			'/api/dossiers': (r) =>
+				failing
+					? fail(500)
+					: r.params.query?.kind
+						? new Promise((resolve) => (answer = resolve))
+						: list(live.dossiers)(r)
+		});
+		const count = () => document.querySelector('.result-count')?.textContent?.trim();
+		const before = count();
+		expect(before).toMatch(/\d/);
+		await fireEvent.click(screen.getByRole('button', { name: /^Begroting/ }));
+		await waitFor(() => expect(count()).toBe('tellen…'));
+		failing = true;
+		answer(fail(500));
+		await settled();
+		expect(screen.getByRole('alert').textContent).toContain('konden niet worden geladen');
+		expect(count()).not.toBe(before);
+		expect(document.querySelector('.result-count')?.textContent ?? '').not.toMatch(/\d/);
+	});
+
 	it('asks the next page from the rows it has', async () => {
 		const api = await open('instruments');
 		await fireEvent.click(screen.getByText(/^Volgende wetten/));

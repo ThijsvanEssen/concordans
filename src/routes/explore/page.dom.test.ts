@@ -338,12 +338,14 @@ describe('Back and Forward to a bron', () => {
 		await settle();
 		expect(address()).toBe('/kabinetten/schoof');
 		expect(container.querySelector('.explore-empty')?.textContent ?? '').not.toMatch(/Laden/);
+		expect(container.querySelector('.explore-laden')).toBeNull();
 		expect(view(container)).toBe(opened);
 		forward();
 		await settle();
 		back();
 		await settle();
 		expect(container.querySelector('.explore-empty')?.textContent ?? '').not.toMatch(/Laden/);
+		expect(container.querySelector('.explore-laden')).toBeNull();
 	});
 });
 

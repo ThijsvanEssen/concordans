@@ -28,6 +28,32 @@ test('Actueel: a period and a kind narrow the days', async ({ page, touch }) => 
 	await expect(days.first()).toHaveText(/\d+ moties?$/);
 });
 
+test('Actueel: Back finds the earlier days loaded and the place read', async ({ page }) => {
+	// The days counted come after the days: waited for, so each step asks the same.
+	const counted = () => page.waitForResponse((r) => /\/api\/feed\/summary\?.*until=/.test(r.url()));
+	let telling = counted();
+	await page.goto('/actueel');
+	const days = page.getByRole('heading', { level: 2, name: /\d{4}|^Vandaag|^Gisteren/ });
+	await expect(days.first()).toBeVisible();
+	await telling;
+	const first = await days.count();
+	telling = counted();
+	await page.getByRole('button', { name: 'Eerdere dagen' }).click();
+	await expect.poll(() => days.count()).toBeGreaterThan(first);
+	await telling;
+	const loaded = await days.count();
+	await days.last().scrollIntoViewIfNeeded();
+	const y = await page.evaluate(() => scrollY);
+	expect(y).toBeGreaterThan(0);
+
+	await page.getByRole('link', { name: 'Bronnen' }).first().click();
+	await expect(page).not.toHaveURL(/\/actueel/);
+	await page.goBack();
+	await expect(page).toHaveURL(/\/actueel/);
+	await expect.poll(() => days.count()).toBe(loaded);
+	await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(y - 50);
+});
+
 test('Actueel: the Kamer narrows to the Eerste Kamer, chosen before the days are in', async ({
 	page
 }) => {

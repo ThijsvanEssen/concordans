@@ -46,7 +46,7 @@ test('without a connection the page says what it could not load', async ({ page,
 	).toBeVisible();
 });
 
-test('a failing step to the next article keeps the page and says what failed', async ({
+test('a failing step to the next article keeps this one and its address, and says which failed', async ({
 	page,
 	guard
 }) => {
@@ -54,14 +54,35 @@ test('a failing step to the next article keeps the page and says what failed', a
 	await page.goto(ARTICLE);
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162');
 	await failApi(page, /^\/api\/articles\/BWBR0005289\/163$/, 500);
-	await page.getByRole('link', { name: 'Volgend artikel →' }).click();
-	await expect(page).toHaveURL(/6:163/);
-	await expect(
-		page.getByRole('alert').filter({ hasText: 'kon niet worden geladen' }).first()
-	).toBeVisible();
-	await expect(page.getByRole('banner')).toBeVisible();
-	await page.goBack();
+	const volgend = page.getByRole('link', { name: 'Volgend artikel →' });
+	await volgend.click();
+	const alert = page
+		.getByRole('alert')
+		.filter({ hasText: 'Artikel 6:163 kon niet worden geladen.' });
+	await expect(alert).toBeVisible();
+	await expect(page).toHaveURL(/6:162/);
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162');
+
+	await page.unrouteAll({ behavior: 'ignoreErrors' });
+	await alert.getByRole('button', { name: 'Opnieuw' }).click();
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:163');
+	await expect(page).toHaveURL(/6:163/);
+	await expect(alert).toHaveCount(0);
+});
+
+test('a 429 says so with its wait, and asks again by itself once the wait is over', async ({
+	page,
+	guard
+}) => {
+	guard.allow(/status of 429/);
+	await failApi(page, /^\/api\/factions/, 429, 1);
+	await page.goto('/explore?mode=index&kind=factions');
+	const wacht = page.getByRole('status').filter({ hasText: 'Even te veel verzoeken' });
+	await expect(wacht).toBeVisible();
+	await expect(wacht.getByText(/^Even te veel verzoeken, opnieuw over \d s\.$/)).toBeVisible();
+	await expect(page.getByRole('alert')).toHaveCount(0);
+	await expect(wacht).toHaveCount(0, { timeout: 8000 });
+	await expect(page.getByRole('figure', { name: 'Zetelverdeling Tweede Kamer' })).toBeVisible();
 });
 
 test('one failing group of Verbonden leaves the others and the text standing', async ({
@@ -165,14 +186,14 @@ test('Actueel keeps its days when the next ones fail, and says so below them wit
 	page.on('request', (r) => {
 		if (/\/api\/feed\?.*cursor=/.test(r.url())) asked++;
 	});
-	await page.getByRole('button', { name: 'Volgende dagen' }).click();
+	await page.getByRole('button', { name: 'Eerdere dagen' }).click();
 	const alert = page
 		.getByRole('alert')
-		.filter({ hasText: 'De volgende dagen konden niet op tijd worden geladen.' });
+		.filter({ hasText: 'De eerdere dagen konden niet op tijd worden geladen.' });
 	await expect(alert).toBeVisible();
 	await expect(days).toBeVisible();
-	// Opnieuw takes the place of Volgende dagen: one way to ask again.
-	await expect(page.getByRole('button', { name: 'Volgende dagen' })).toHaveCount(0);
+	// Opnieuw takes the place of Eerdere dagen: one way to ask again.
+	await expect(page.getByRole('button', { name: 'Eerdere dagen' })).toHaveCount(0);
 	await alert.getByRole('button', { name: 'Opnieuw' }).click();
 	await expect.poll(() => asked).toBe(2);
 	await expect(alert).toBeVisible();

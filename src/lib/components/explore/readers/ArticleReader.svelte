@@ -58,11 +58,12 @@
 	import { load } from '$lib/util/load.svelte';
 	import { report } from '$lib/api/errors';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { Stappen, type Stap } from '$lib/bron/stap.svelte';
 
 	let {
 		node,
-		prevHref,
-		nextHref,
+		prev,
+		next,
 		place = [],
 		lidCounts = new Map(),
 		lidTellend = false,
@@ -72,8 +73,9 @@
 		onCloseProposed
 	}: {
 		node: GraphNode;
-		prevHref?: string;
-		nextHref?: string;
+		/** The article before and after this one in its law: asked before the address moves. */
+		prev?: Stap;
+		next?: Stap;
 		place?: Division[];
 		lidCounts?: Map<string, number>;
 		/** The counts per lid are still on their way. */
@@ -83,6 +85,15 @@
 		proposedRow?: Row | null;
 		onCloseProposed?: () => void;
 	} = $props();
+
+	/** Vorig and Volgend: the next article asked before its address. */
+	const stappen = new Stappen();
+	/** Where the step was taken, above the article or under it: its failure stands there. */
+	let stapWaar = $state<'kop' | 'voet'>('kop');
+	$effect(() => {
+		void node.id;
+		untrack(() => (stappen.fout = null));
+	});
 
 	/** The tekstversie on screen, when it is not geldend recht. */
 	let shownIndex = $state<number | null>(null);
@@ -583,17 +594,34 @@
 	};
 </script>
 
-<!-- Vorig and Volgend, above the article and again under it. -->
-{#snippet steps(noun: string)}
-	{#if prevHref}
-		<a class="reader-nav-link raakvlak" href={prevHref} data-sveltekit-noscroll>← Vorig{noun}</a>
-	{/if}
-	{#if nextHref}
-		<a
-			class="reader-nav-link reader-nav-link--next raakvlak"
-			href={nextHref}
-			data-sveltekit-noscroll>Volgend{noun} →</a
-		>
+<!-- Vorig and Volgend, above the article and again under it: the next article's text is asked
+     first; a step that fails leaves this one standing, with a line under the step taken. -->
+{#snippet step(stap: Stap, label: string, cls: string, waar: 'kop' | 'voet')}
+	<a
+		class="reader-nav-link raakvlak {cls}"
+		class:is-bezig={stappen.bezig === stap.href}
+		aria-busy={stappen.bezig === stap.href}
+		href={stap.href}
+		onclick={(e) => {
+			stapWaar = waar;
+			stappen.volg(stap, e);
+		}}
+		data-sveltekit-noscroll>{label}</a
+	>
+{/snippet}
+{#snippet steps(noun: string, waar: 'kop' | 'voet')}
+	{#if prev}{@render step(prev, `← Vorig${noun}`, '', waar)}{/if}
+	{#if next}{@render step(next, `Volgend${noun} →`, 'reader-nav-link--next', waar)}{/if}
+{/snippet}
+{#snippet stapFout(waar: 'kop' | 'voet')}
+	{#if stappen.fout && stapWaar === waar}
+		<div class="stap-fout">
+			<LoadState
+				state={{ status: 'error', error: stappen.fout.error }}
+				what={stappen.fout.what}
+				retry={stappen.fout.retry}
+			/>
+		</div>
 	{/if}
 {/snippet}
 
@@ -620,8 +648,8 @@
 			laterPlek
 		>
 			{#snippet nav()}
-				{#if prevHref || nextHref}
-					<nav class="reader-nav" aria-label="Artikelen">{@render steps('')}</nav>
+				{#if prev || next}
+					<nav class="reader-nav" aria-label="Artikelen">{@render steps('', 'kop')}</nav>
 				{/if}
 			{/snippet}
 			{#snippet statusLine()}
@@ -763,6 +791,7 @@
 				own={ownLaw}
 			/>
 		</ReaderHead>
+		{@render stapFout('kop')}
 
 		{#if proposedMissing && proposedRow}
 			<p class="note">
@@ -887,8 +916,11 @@
 			{/if}
 		</div>
 
-		{#if prevHref || nextHref}
-			<nav class="reader-nav-footer" aria-label="Artikelen">{@render steps(' artikel')}</nav>
+		{#if prev || next}
+			<nav class="reader-nav-footer" aria-label="Artikelen">
+				{@render steps(' artikel', 'voet')}
+			</nav>
+			{@render stapFout('voet')}
 		{/if}
 	{/snippet}
 </ReaderFrame>
@@ -1105,6 +1137,14 @@
 	}
 	.reader-nav-link:hover {
 		color: var(--ink);
+	}
+	.reader-nav-link.is-bezig {
+		opacity: 0.6;
+		cursor: progress;
+	}
+
+	.stap-fout {
+		margin-top: var(--s-3);
 	}
 
 	@media (max-width: 900px) {
