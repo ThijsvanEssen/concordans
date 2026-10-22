@@ -58,14 +58,26 @@ export const clientFor = (wait: Wait = 'long') => (wait === 'short' ? api : slow
 export const isTimeout = (e: unknown) => e instanceof DOMException && e.name === 'TimeoutError';
 
 export class ApiError extends Error {
+	/** When the answer came, for the wait a 429 asks (`retryAfter`) to count from. */
+	readonly at = Date.now();
 	constructor(
 		readonly status: number,
 		url: string,
 		/** The id the API gives a 500 (`request_id`), the key to its line in the log. */
-		readonly requestId: string | null = null
+		readonly requestId: string | null = null,
+		/** The seconds a 429 or 503 asks to wait (`Retry-After`), where it says so. */
+		readonly retryAfter: number | null = null
 	) {
 		super(`${url} answered ${status}`);
 	}
+}
+
+/** `Retry-After` in seconds: a number, or a date from now; null without one. */
+export function retryAfterOf(value: string | null, now = Date.now()): number | null {
+	if (!value) return null;
+	if (/^\d+$/.test(value.trim())) return Number(value.trim());
+	const at = Date.parse(value);
+	return Number.isNaN(at) ? null : Math.max(0, Math.ceil((at - now) / 1000));
 }
 
 /** The `request_id` of an error body, where the API gave one (a 500). */
@@ -90,7 +102,13 @@ export async function unwrap<T>(
 	call: Promise<{ data?: T; error?: unknown; response: Response }>
 ): Promise<T> {
 	const { data, error, response } = await call;
-	if (!response.ok) throw new ApiError(response.status, response.url, requestIdOf(error, response));
+	if (!response.ok)
+		throw new ApiError(
+			response.status,
+			response.url,
+			requestIdOf(error, response),
+			retryAfterOf(response.headers.get('Retry-After'))
+		);
 	for (const read of readers) read(data);
 	return data as T;
 }

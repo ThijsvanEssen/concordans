@@ -1,6 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from './client';
-import { ifExists, ignore, isAborted, isNotFound, isSlow, kenmerkOf, report } from './errors';
+import { ApiError as E, retryAfterOf } from './client';
+import {
+	ifExists,
+	ignore,
+	isAborted,
+	isNotFound,
+	isRateLimited,
+	isSlow,
+	kenmerkOf,
+	report,
+	retryAt
+} from './errors';
 
 const aborted = () => {
 	const controller = new AbortController();
@@ -25,6 +36,19 @@ describe('what a failure means', () => {
 		expect(isSlow(status(504))).toBe(true);
 		expect(isSlow(status(500))).toBe(false);
 		expect(isSlow(aborted())).toBe(false);
+	});
+
+	it('knows a 429 by itself, and when it may be asked again', () => {
+		expect(isRateLimited(status(429))).toBe(true);
+		expect(isRateLimited(status(503))).toBe(false);
+		expect(isSlow(status(429))).toBe(false);
+		const e = new E(429, '/api/x', null, 60);
+		expect(retryAt(e)).toBe(e.at + 60_000);
+		expect(retryAt(status(429))).toBe(status(429).at + 30_000);
+		expect(retryAfterOf('60')).toBe(60);
+		expect(retryAfterOf(null)).toBeNull();
+		expect(retryAfterOf(new Date(10_000).toUTCString(), 0)).toBe(10);
+		expect(retryAfterOf('zo')).toBeNull();
 	});
 
 	it('knows a 404 and nothing else as not found', () => {

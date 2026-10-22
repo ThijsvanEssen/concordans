@@ -72,6 +72,19 @@ describe('LoadState', () => {
 		expect(slow).toContain('De fractie kon niet op tijd worden geladen.');
 	});
 
+	it('says a 429 apart, with its wait, and Opnieuw only once the wait is over', () => {
+		const waiting = html({ status: 'error', error: new ApiError(429, '/api/x', null, 12) });
+		expect(waiting).toContain('Even te veel verzoeken, opnieuw over 12 s.');
+		expect(waiting).toContain('role="status"');
+		expect(waiting).not.toContain('kon niet');
+		const over = html(
+			{ status: 'error', error: new ApiError(429, '/api/x', null, 0) },
+			{ retry: () => {} }
+		);
+		expect(over).toContain('Even te veel verzoeken.');
+		expect(over).toContain('Opnieuw');
+	});
+
 	it('shows empty only from ready with nothing in it', () => {
 		const leeg = html({ status: 'ready', data: [] });
 		expect(leeg).toContain('Geen leden.');

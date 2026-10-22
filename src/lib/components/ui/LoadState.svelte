@@ -1,12 +1,14 @@
 <script lang="ts" module>
-	import { isSlow } from '$lib/api/errors';
+	import { isRateLimited, isSlow } from '$lib/api/errors';
+	import { RATE_LIMIT_TEXT } from './RateLimit.svelte';
 
 	/**
 	 * The one sentence for a failure of `what` ("De inhoudsopgave", or with `plural` "De
-	 * tekstversies"), slow or broken.
+	 * tekstversies"), slow, broken or asked too often.
 	 */
 	export function failureText(what: string, error: unknown, plural = false) {
 		const verb = plural ? 'konden' : 'kon';
+		if (isRateLimited(error)) return `${RATE_LIMIT_TEXT}.`;
 		return isSlow(error)
 			? `${what} ${verb} niet op tijd worden geladen.`
 			: `${what} ${verb} niet worden geladen.`;
@@ -20,8 +22,10 @@
 	// The one view of a LoadState: loading, a failure that says what failed (role="alert",
 	// with Opnieuw where the caller can ask again, and the kenmerk of a 500) and the data. Empty is shown only from
 	// ready, so a failure never reads as "niet in de gegevens". `line` stands quietly in
-	// running text; `block` holds the place of a reader with a skeleton.
-	import type { Snippet } from 'svelte';
+	// running text; `block` holds the place of a reader with a skeleton. A 429 counts down
+	// its Retry-After and asks once again by itself; after that Opnieuw, once the wait is over.
+	import { untrack, type Snippet } from 'svelte';
+	import RateLimit, { answered } from './RateLimit.svelte';
 	import type { LoadState } from '$lib/util/load.svelte';
 	import Kenmerk from './Kenmerk.svelte';
 	import TekstLink from './TekstLink.svelte';
@@ -48,6 +52,11 @@
 		empty?: Snippet;
 		children?: Snippet<[T]>;
 	} = $props();
+
+	// A 429 asks again by itself once per subject; an answer gives that back.
+	$effect(() => {
+		if (state.status === 'ready') answered(untrack(() => what));
+	});
 </script>
 
 {#if state.status === 'loading'}
@@ -60,6 +69,8 @@
 	{:else}
 		<svelte:element this={tag} class="stil">Laden…</svelte:element>
 	{/if}
+{:else if state.status === 'error' && isRateLimited(state.error)}
+	<RateLimit error={state.error} {what} {retry} {tag} block={form === 'block'} />
 {:else if state.status === 'error'}
 	<svelte:element
 		this={tag}
