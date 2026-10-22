@@ -128,12 +128,10 @@
 {/each}
 
 <style>
+	/* A soort between two rules, on the panel's own edges (mockups V1: `.soort`). */
 	.kind {
-		padding: var(--s-4);
+		padding: var(--s-4) 0;
 		border-top: 1px solid var(--rule);
-	}
-	.kind:first-child {
-		border-top: 0;
 	}
 	.kind__head {
 		display: flex;

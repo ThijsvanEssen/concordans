@@ -176,10 +176,10 @@
 </figure>
 
 <style>
+	/* Under the count, above the first soort and its rule (mockup V1-b `.netwerk`). */
 	.sketch {
 		margin: var(--s-3) 0 var(--s-2);
-		padding: 0 var(--s-4) var(--s-3);
-		border-bottom: 1px solid var(--rule);
+		padding: 0;
 	}
 	.sketch svg {
 		display: block;

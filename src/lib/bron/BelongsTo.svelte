@@ -114,11 +114,12 @@
 		if (rijen[g.id]?.status !== 'ready') laad(g);
 	}
 
-	// A chain of more than two layers shows its first and last, the middle as "…" until it
-	// is opened (Thijs, 10 Oct: the band "te groot", over three lines).
+	// A chain of more than three layers shows its first and last, the middle as "…" until it
+	// is opened (Thijs, 10 Oct: the band "te groot", over three lines); three stand whole, as
+	// the kruimelpad of the mockups V1 (Thijs, 22 Oct).
 	let ontvouwd = $state<Record<string, boolean>>({});
 	const gevouwen = (r: { id: string; los?: boolean; lagen: Laag[] }) =>
-		!r.los && r.lagen.length > 2 && !ontvouwd[r.id];
+		!r.los && r.lagen.length > 3 && !ontvouwd[r.id];
 
 	// On a phone the band is its first line until it is opened.
 	let uit = $state(false);
@@ -304,9 +305,11 @@
 		padding: 0;
 		list-style: none;
 		min-width: 0;
+		/* The kruimelpad of the mockups V1: small, quiet, its links in ink without a line. */
 		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
+		font-size: var(--t-micro);
+		line-height: 20px;
+		color: var(--ink-3);
 	}
 	/* Folded: one line, the last layer cut at the right rather than wrapping. */
 	/* Cut at the side only (clip): a finger's target of the "…" stands above and below the
@@ -388,7 +391,16 @@
 		color: var(--ink-2);
 		font-style: italic;
 	}
-	.lagen a,
+	.lagen a {
+		color: var(--ink);
+		text-decoration: none;
+		overflow-wrap: anywhere;
+	}
+	.lagen a:hover,
+	.lagen a:focus-visible {
+		text-decoration-line: underline;
+		text-underline-offset: var(--underline-offset);
+	}
 	.rijen a {
 		color: var(--ink-2);
 		text-decoration: underline;
@@ -396,7 +408,6 @@
 		text-underline-offset: var(--underline-offset-tight);
 		overflow-wrap: anywhere;
 	}
-	.lagen a:hover,
 	.rijen a:hover {
 		text-decoration-color: var(--ink);
 	}

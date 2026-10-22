@@ -1835,6 +1835,20 @@
 	.col--panel {
 		box-shadow: inset 1px 0 0 var(--rule);
 	}
+	/* In Tekst the column of Verbonden scrolls as a page column: no rule of its own, its rule is
+	   Verbonden's, as long as its content (mockups V1: 32 px above, 32 px at the right). The
+	   handle between them keeps its drag and shows its line only under the pointer. */
+	.explore-read .col--panel {
+		box-shadow: none;
+		overflow-y: auto;
+		padding: var(--s-6) var(--s-6) var(--s-8) 0;
+	}
+	.explore-read .panel {
+		height: auto;
+	}
+	.explore-read .resize-handle--panel::before {
+		background: transparent;
+	}
 
 	.col--nav {
 		box-shadow: inset -1px 0 0 var(--rule);
@@ -1920,9 +1934,10 @@
 		--reader-col-left: auto;
 	}
 	.col--measure {
-		--reader-pad-top: 40px;
+		/* 32 px above the text and 64 px to the rule of Verbonden, as the mockups V1. */
+		--reader-pad-top: var(--s-6);
 		--reader-pad-left: 64px;
-		--reader-pad-right: 48px;
+		--reader-pad-right: var(--s-8);
 		--reader-max: 790px;
 	}
 	/* One title column for every reader (round 2 of the consistency pass, 10 Oct): a reader
@@ -2058,6 +2073,7 @@
 		}
 		.explore-read .col--panel {
 			border-top: 1px solid var(--rule);
+			padding: var(--s-5) var(--s-4) var(--s-7);
 		}
 		.explore-read .toc-column,
 		.explore-read .resize-handle {

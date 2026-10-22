@@ -471,7 +471,12 @@
 	}
 </script>
 
-<aside class="verbonden" aria-label="Verbonden" bind:this={root}>
+<aside
+	class="verbonden"
+	class:verbonden--tekst={!!onShowNetwork}
+	aria-label="Verbonden"
+	bind:this={root}
+>
 	<div class="head">
 		<h2 class="head__title">Verbonden</h2>
 		{#if onShowNetwork && !empty}
@@ -815,6 +820,43 @@
 	}
 	.c {
 		color: var(--ink);
+	}
+	/* In Tekst Verbonden is a column of the page, as the mockups V1 lay it out: a rule at its left
+	   as long as what it holds, 32 px to its words, its heading at the size of a section, and
+	   its soorten on their own edges. Beside the canvas it stays a panel with its own scroll. */
+	.verbonden--tekst {
+		height: auto;
+		padding-left: var(--s-6);
+		border-left: 1px solid var(--rule);
+	}
+	.verbonden--tekst .head {
+		padding: 0;
+		margin-bottom: var(--s-4);
+	}
+	.verbonden--tekst .head__title {
+		font-size: var(--t-h3);
+		line-height: var(--lh-snug);
+	}
+	.verbonden--tekst .regel,
+	.verbonden--tekst .note,
+	.verbonden--tekst .hidden {
+		padding-inline: 0;
+	}
+	.verbonden--tekst .body {
+		overflow: visible;
+		padding-bottom: 0;
+	}
+	.verbonden--tekst .foot {
+		padding: var(--s-4) 0 0;
+		border-top: 1px solid var(--rule);
+		font-size: var(--t-meta);
+	}
+	/* Under the text on a narrow screen: the rule above it is the column's (explore/+page). */
+	@media (max-width: 1100px) {
+		.verbonden--tekst {
+			padding-left: 0;
+			border-left: 0;
+		}
 	}
 	.head__title {
 		margin: 0;
