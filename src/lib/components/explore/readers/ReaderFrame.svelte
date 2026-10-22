@@ -185,6 +185,8 @@
 	@media (max-width: 768px) {
 		.kop-rij {
 			flex-wrap: wrap;
+			/* Room for a finger's 44 px around the band's links and the controls below. */
+			row-gap: var(--s-6);
 		}
 		.kop-rij__band {
 			flex-basis: 100%;
