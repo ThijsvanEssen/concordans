@@ -78,7 +78,7 @@
 		{/each}
 
 		<a href={networkHref} class="focus">
-			<title>{name} in Samenhang</title>
+			<title>{name} in het netwerk</title>
 			<circle cx={m.x} cy={m.y} r="22" class="hit" />
 			<rect x={m.x - 11} y={m.y - 11} width="22" height="22" fill="var(--ink)" />
 			<rect
