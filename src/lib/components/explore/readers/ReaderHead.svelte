@@ -245,9 +245,9 @@
 		align-items: center;
 		gap: var(--s-2);
 	}
-	/* On a touch screen the lines of the status and of the actions stand apart enough that
+	/* On a touch screen and below 768 the lines of the status and of the actions stand apart enough that
 	   the 44 px of their controls (.btn, .tekstmenu__knop) do not meet. */
-	@media (pointer: coarse) {
+	@media (pointer: coarse), (max-width: 768px) {
 		.reader-status {
 			gap: var(--s-4);
 		}

@@ -924,6 +924,7 @@
 		if (loadFailure && !selectedNode) return siteTitle('Er ging iets mis');
 		if (wachtOp || (pad && !focus && !padNotHeld)) return LADEN_TITEL;
 		const name = selectedNode ? pageName(selectedNode, titelVan(selectedNode.id)) : null;
+		if (name && beside && besideTitle) return siteTitle(`${besideTitle} naast ${name}`);
 		if (name) return siteTitle(name);
 		if (netwerkActive) return siteTitle('Netwerk');
 		return routeKop('/explore').title;
@@ -1110,6 +1111,13 @@
 		if (e.metaKey || e.ctrlKey || e.altKey) return;
 		const el = document.activeElement as HTMLElement | null;
 		if (el?.tagName === 'INPUT' || el?.tagName === 'TEXTAREA' || el?.isContentEditable) return;
+		if (e.key === 'Escape' && beside && !e.defaultPrevented) {
+			e.preventDefault();
+			goto(closeBesideHref, { noScroll: true, keepFocus: true }).catch((err) =>
+				report('Sluiten', err)
+			);
+			return;
+		}
 		// 1, 2 and 3: the layers of a bron, Tekst, Netwerk and Verbonden (Thijs, 10 Oct), as the
 		// tabs on a phone; 3 puts the focus on Verbonden's first row, for J and K.
 		const panel = panelOfKey(e.key);
@@ -1179,6 +1187,63 @@
 		selectedNode?.collection === 'articles' ? articleOf(selectedNode.raw?.props) : null
 	);
 	const closeBesideHref = $derived(withParams(page.url, { naast: null }));
+
+	// What opens beside the article is announced as opened (B32): the focus goes to its
+	// heading once it is there, the tab names it, Escape closes it, and the focus goes back to
+	// the row that opened it.
+	let besideEl = $state<HTMLElement | null>(null);
+	let besideTitle = $state('');
+	let besideOpener: HTMLElement | null = null;
+	let besideWasOpen = false;
+	$effect(() => {
+		const el = besideEl;
+		void besideId;
+		if (!el) return;
+		untrack(() => {
+			besideTitle = '';
+			besideWasOpen = true;
+			const opener = document.activeElement;
+			if (opener instanceof HTMLElement && opener !== document.body && !el.contains(opener))
+				besideOpener = opener;
+		});
+		const heading = () => el.querySelector<HTMLElement>('h1');
+		const take = (h: HTMLElement) => {
+			besideTitle = h.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+			if (serverKop.actief) serverKop.clear();
+			h.setAttribute('tabindex', '-1');
+			h.focus({ preventScroll: true });
+		};
+		const now = heading();
+		if (now) {
+			take(now);
+			return;
+		}
+		const watch = new MutationObserver(() => {
+			const h = heading();
+			if (!h) return;
+			watch.disconnect();
+			take(h);
+		});
+		watch.observe(el, { childList: true, subtree: true });
+		return () => watch.disconnect();
+	});
+	$effect(() => {
+		if (besideId || !besideWasOpen) return;
+		untrack(() => {
+			besideWasOpen = false;
+			besideTitle = '';
+			const opener = besideOpener;
+			besideOpener = null;
+			if (opener?.isConnected) {
+				opener.focus({ preventScroll: true });
+				return;
+			}
+			// Opened from a link elsewhere: back to the article's heading.
+			const own = document.querySelector<HTMLElement>('.reader__main h1');
+			own?.setAttribute('tabindex', '-1');
+			own?.focus({ preventScroll: true });
+		});
+	});
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -1229,7 +1294,7 @@
 					/>
 				</div>
 				{#if beside}
-					<div class="reader__beside">
+					<div class="reader__beside" bind:this={besideEl}>
 						<a
 							class="reader__close"
 							href={closeBesideHref}
@@ -1808,11 +1873,17 @@
 		background: var(--paper-2);
 	}
 
+	/* A finger's target: 24 px on a desktop, 44 px below 768 (a phone, 200% zoom). */
 	.reader__close {
 		position: absolute;
-		top: var(--s-2);
-		right: var(--s-3);
+		top: var(--s-1);
+		right: var(--s-2);
 		z-index: var(--z-raised);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: var(--veld-h-klein);
+		min-height: var(--veld-h-klein);
 		font-family: var(--font-serif);
 		font-size: var(--t-body);
 		line-height: 1;
@@ -1822,6 +1893,14 @@
 
 	.reader__close:hover {
 		color: var(--ink);
+	}
+	@media (max-width: 768px) {
+		.reader__close {
+			min-width: var(--veld-h-raak);
+			min-height: var(--veld-h-raak);
+			top: 0;
+			right: 0;
+		}
 	}
 
 	/* The measure of every reader, set by the column it stands in (ReaderFrame reads
@@ -1911,8 +1990,8 @@
 		border-bottom: 1px solid var(--rule);
 		background: var(--paper-2);
 	}
-	/* A finger's 44 px on a touch screen: the tabs' own height, between the bar and the text. */
-	@media (pointer: coarse) {
+	/* A finger's 44 px on a touch screen and below 768: the tabs' own height, between the bar and the text. */
+	@media (pointer: coarse), (max-width: 768px) {
 		.mobile-tabs {
 			height: var(--veld-h-raak);
 		}

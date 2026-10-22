@@ -332,16 +332,16 @@
 		cursor: pointer;
 	}
 	/* The "…" between two links: 44 px wide for a finger, so its target is its own. */
-	@media (pointer: coarse) {
+	@media (pointer: coarse), (max-width: 768px) {
 		.vouw button {
 			min-width: var(--veld-h-raak);
 		}
 	}
-	/* On a touch screen every link and button of the band has the shared target (.raakvlak,
+	/* On a touch screen and below 768 every link and button of the band has the shared target (.raakvlak,
 	   lib/styles/basis.css), and its lines stand a finger's 44 px apart (--veld-h-raak), so
 	   those targets do not meet: a line's height and the gap under it make the row. Between
 	   lines of two sizes (a line and the groups, a group and its rows) the next step. */
-	@media (pointer: coarse) {
+	@media (pointer: coarse), (max-width: 768px) {
 		.regels,
 		.rijen {
 			gap: calc(var(--veld-h-raak) - 1lh);

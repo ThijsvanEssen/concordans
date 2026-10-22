@@ -100,7 +100,7 @@
 		color: var(--ink);
 	}
 	/* A finger's target in the column and the sheet Inhoud: a row at least 32 px high. */
-	@media (pointer: coarse) {
+	@media (pointer: coarse), (max-width: 768px) {
 		:global(.nav-kolom__rij) {
 			display: flex;
 			align-items: center;

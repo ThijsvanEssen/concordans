@@ -3,6 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { overtreders } from '$lib/test/bronnen';
 
 const read = (path: string) => readFileSync(join(process.cwd(), 'src', path), 'utf8');
 
@@ -82,5 +83,27 @@ describe('the touch target', () => {
 			/\.lagen,\s*\.groepen \{\s*row-gap: calc\(var\(--veld-h-raak\) - 1lh\)/
 		);
 		for (const a of band.matchAll(/<a\b[^>]*>/g)) expect(a[0]).toContain('raakvlak');
+	});
+
+	it('is 44 px below 768 too, without a touch screen (a window zoomed to 200%)', () => {
+		expect(
+			overtreders((t) => /@media \(pointer: coarse\)(?!, \(max-width: 768px\))/.test(t))
+		).toEqual([]);
+	});
+
+	it('is 44 px around the bar’s Menu and Zoeken, and a heading’s Citeer in a judgment', () => {
+		const bar = read('lib/components/layout/TopBar.svelte');
+		expect(bar).toContain('class="mobile-menu-btn raakvlak-knop"');
+		expect(bar).toContain('class="search-trigger raakvlak-knop"');
+		expect(read('lib/components/explore/readers/JudgmentReader.svelte')).toContain(
+			'buttonClass="reader-heading__link raakvlak-knop"'
+		);
+	});
+
+	it('closes what opens beside the article with a 44 px button below 768 (B32)', () => {
+		const explore = read('routes/explore/+page.svelte');
+		expect(explore).toMatch(
+			/@media \(max-width: 768px\) \{\s*\.reader__close \{\s*min-width: var\(--veld-h-raak\);\s*min-height: var\(--veld-h-raak\)/
+		);
 	});
 });

@@ -48,6 +48,7 @@
 	} from './index/categories';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { formatCount } from '$lib/text/getal';
+	import Verfijnen from '$lib/components/ui/Verfijnen.svelte';
 	import { navigate, withParams } from '$lib/util/address';
 	import { LISTS } from './index/lists';
 	import { INDEX_FILTER_PARAMS, readParams, type IndexPatch } from './index/lists/params';
@@ -496,6 +497,12 @@
 		INDEX_CATEGORIES.find((cat) => cat.key === c)!.label.toLowerCase();
 	/** One bron of the list, as its count says it (a list without rows shows no count). */
 	const noun1 = (c: IndexCategory) => bronLabel(collectionOf(c)).toLowerCase();
+	/** Toon at the foot of the open filters on a phone: what the list holds under them. */
+	const showLabel = $derived(
+		resultTotal === null
+			? `Toon ${labelOf(category)}`
+			: `Toon ${formatCount(resultTotal)} ${resultTotal === 1 ? noun1(category) : labelOf(category)}`
+	);
 
 	// ── Columns ─────────────────────────────────────────────────────────────
 	const columns = $derived(forParams(list.columns, p));
@@ -572,16 +579,13 @@
 					/>
 				</div>
 				<aside class="facet-col blad__facetten" aria-label="Verfijnen">
-					<!-- On a phone the facets behind one quiet line, opened in place. -->
-					<button
-						type="button"
-						class="verfijnen-knop"
-						aria-expanded={filtersOpen}
-						aria-controls="bladeren-facetten"
-						onclick={() => (filtersOpen = !filtersOpen)}
-						>Verfijnen{chips.length ? ` (${chips.length})` : ''}</button
+					<Verfijnen
+						id="bladeren-facetten"
+						active={chips.length}
+						label={showLabel}
+						list={() => results}
+						bind:open={filtersOpen}
 					>
-					<div class="facet-body" id="bladeren-facetten" class:facet-body--open={filtersOpen}>
 						<IndexFacets
 							groups={facetten}
 							pending={(!pages[category] && !error) || facettenLaden}
@@ -598,7 +602,7 @@
 						{#if chips.length}
 							<p class="wis"><TekstLink onclick={clearFilters}>Wis alle filters</TekstLink></p>
 						{/if}
-					</div>
+					</Verfijnen>
 				</aside>
 
 				<div
@@ -1073,12 +1077,11 @@
 			padding: 0 var(--s-4);
 			background: var(--paper);
 		}
-		.facet-body {
-			display: none;
-			padding-top: var(--s-3);
+		/* Toon brings the list up to just under the line of Verfijnen, which stays. */
+		.results {
+			scroll-margin-top: calc(var(--veld-h-raak) + var(--s-4));
 		}
-		.facet-body--open {
-			display: block;
+		.facet-col :global(.verfijnen.is-open) {
 			max-height: 60dvh;
 			overflow-y: auto;
 			overscroll-behavior: contain;
@@ -1137,9 +1140,6 @@
 	@media (max-width: 768px) {
 		.regel {
 			margin-bottom: var(--s-3);
-		}
-		.verfijnen-knop {
-			padding: var(--s-2) 0;
 		}
 	}
 </style>

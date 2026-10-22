@@ -379,7 +379,7 @@
 						<CiteMenu
 							items={citeItems(null, linkTo(view, item.id))}
 							name={item.text}
-							buttonClass="reader-heading__link"
+							buttonClass="reader-heading__link raakvlak-knop"
 						/>
 					</div>
 				{:else if item.kind === 'rov'}

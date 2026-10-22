@@ -137,14 +137,9 @@ a:hover {
 	text-underline-offset: 4px;
 	cursor: pointer;
 }
+/* Below 768 its line is a finger's 44 px high: a box of its own, not a target over the
+   controls above it. */
 @media (max-width: 768px) {
-	.verfijnen-knop {
-		display: inline-block;
-	}
-}
-/* On a touch screen its line is a finger's 44 px high: a box of its own, not a target over
-   the controls above it. */
-@media (max-width: 768px) and (pointer: coarse) {
 	.verfijnen-knop {
 		display: inline-flex;
 		align-items: center;
@@ -153,10 +148,11 @@ a:hover {
 }
 /* A finger's target around a small control or a link in a line of text (UX-toets 10 Oct:
    "Verfijnen" 55 × 16, the band's "…" 13 × 19, names in a row 13 high): an invisible
-   border of the target, at least 24 px high, that moves nothing. On a touch screen only.
+   border of the target, 44 px high, that moves nothing. On a touch screen and below 768
+   (a phone, a window zoomed to 200%); a desktop keeps its density.
    A place's number (.plaats-marker, 9 px wide in a conclusion, UX-toets 14 Oct #60) shows
    its ▾ after it, so its border goes before it, as wide as it is high. */
-@media (pointer: coarse) {
+@media (pointer: coarse), (max-width: 768px) {
 	.raakvlak,
 	.plaats-marker {
 		position: relative;
@@ -170,7 +166,7 @@ a:hover {
 			calc(-1 * var(--s-1));
 	}
 	.plaats-marker::before {
-		inset: calc(-1 * var(--s-2));
+		inset: min(calc(-1 * var(--s-2)), calc(50% - (var(--s-6) + var(--s-3)) / 2));
 	}
 	/* A framed button, a menu's button and any other control with a box of its own
 	   (.raakvlak-knop: a tab, a segment, a zoom button): a finger's 44 px around them,

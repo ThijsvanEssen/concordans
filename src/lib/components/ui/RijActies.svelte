@@ -193,7 +193,7 @@
 		}
 	}
 	/* A finger's target for each: 44 px. */
-	@media (pointer: coarse) {
+	@media (pointer: coarse), (max-width: 768px) {
 		.plek {
 			width: calc(var(--s-6) + var(--s-3));
 			height: calc(var(--s-6) + var(--s-3));

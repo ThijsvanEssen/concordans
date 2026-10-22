@@ -352,7 +352,7 @@
 		background: var(--paper);
 	}
 	/* A finger's target: a heading at least 32 px high, as the rows are (NavKolom). */
-	@media (pointer: coarse) {
+	@media (pointer: coarse), (max-width: 768px) {
 		.group__head {
 			align-items: center;
 			min-height: var(--s-6);

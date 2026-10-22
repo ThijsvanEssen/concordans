@@ -109,9 +109,9 @@
 		color: var(--ink-2);
 		cursor: pointer;
 	}
-	/* On a touch screen the head is a finger's 44 px high and its button fills it: the
+	/* On a touch screen and below 768 the head is a finger's 44 px high and its button fills it: the
 	   targets of two cards above each other do not meet. */
-	@media (pointer: coarse) {
+	@media (pointer: coarse), (max-width: 768px) {
 		.canvas-kaart__kop {
 			min-height: var(--veld-h-raak);
 		}

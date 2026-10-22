@@ -50,6 +50,10 @@
 	grid-column: 2;
 	min-width: 0;
 }
+/* The list beside the filters, brought into view by Toon (Verfijnen): just under the top bar. */
+.blad__indeling > :not(.blad__facetten) {
+	scroll-margin-top: calc(var(--topbar-h) + var(--s-4));
+}
 /* A state where content would be: loading, nothing, could not. One quiet line everywhere
    (round 2 of the consistency pass: italic in the readers, roman on the pages); a row's
    own line keeps its smaller size. */

@@ -153,10 +153,20 @@ test('a vote gives its outcome and the vote of each fractie', async ({ page }) =
 
 test('a memorie van toelichting opens beside its article and closes again', async ({ page }) => {
 	await page.goto('/wetten/BWBR0001840/artikel/23?lezen=1');
-	await page.getByRole('link', { name: 'Memorie van toelichting', exact: true }).first().click();
+	const mvt = page.getByRole('link', { name: 'Memorie van toelichting', exact: true }).first();
+	await mvt.click();
 	await expect(page).toHaveURL(/naast=documents\//);
 	await expect(page.getByText('Kamerstukken II 2016/17, 34702, nr. 3.')).toBeVisible();
 	await expect(page.getByRole('heading', { level: 1, name: 'Artikel 23' })).toBeAttached();
+	// Announced as opened (B32): the focus on its heading, its name in the tab; Escape closes
+	// it and the focus goes back to the link that opened it.
+	await expect(page.locator('.reader__beside h1')).toBeFocused();
+	await expect(page).toHaveTitle(/ naast Art\. 23 /);
+	await page.keyboard.press('Escape');
+	await expect(page).not.toHaveURL(/naast=/);
+	await expect(mvt).toBeFocused();
+	await mvt.click();
+	await expect(page).toHaveURL(/naast=documents\//);
 	await page.getByRole('link', { name: 'Sluiten' }).click();
 	await expect(page).not.toHaveURL(/naast=/);
 	await expect(page.getByText('Kamerstukken II 2016/17, 34702, nr. 3.')).toHaveCount(0);

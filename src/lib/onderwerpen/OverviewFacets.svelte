@@ -6,17 +6,21 @@
 	import { fractieNaam } from '$lib/bron/menselijk';
 	import type { Chamber } from '$lib/components/parliamentary/chamber';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
+	import Verfijnen from '$lib/components/ui/Verfijnen.svelte';
 	import { load } from '$lib/util/load.svelte';
 
 	let {
 		faction,
 		chamber,
+		list,
 		onChoose
 	}: {
 		/** The fractie chosen, by its name; '' for none. */
 		faction: string;
 		/** The Kamer chosen: its fracties, and those of both Kamers; '' for every fractie. */
 		chamber: Chamber | '';
+		/** The figures and the list the fractie counts, brought into view by Toon. */
+		list: () => HTMLElement | null | undefined;
 		onChoose: (faction: string | null) => void;
 	} = $props();
 
@@ -41,14 +45,13 @@
 </script>
 
 <aside class="facetten blad__facetten" aria-label="Verfijnen">
-	<button
-		type="button"
-		class="verfijnen-knop"
-		aria-expanded={open}
-		aria-controls="overzicht-facetten"
-		onclick={() => (open = !open)}>Verfijnen{faction ? ' (1)' : ''}</button
+	<Verfijnen
+		id="overzicht-facetten"
+		active={faction ? 1 : 0}
+		label="Toon het overzicht"
+		{list}
+		bind:open
 	>
-	<div class="facet-lijst" id="overzicht-facetten" class:is-open={open}>
 		<section class="facet" aria-labelledby="f-fractie">
 			<h2 class="facet__kop" id="f-fractie">Fractie</h2>
 			<TekstMenu klein label="Fractie" tekst={faction || 'Geen fractie'}>
@@ -83,7 +86,7 @@
 				{/snippet}
 			</TekstMenu>
 		</section>
-	</div>
+	</Verfijnen>
 </aside>
 
 <style>
@@ -114,13 +117,6 @@
 		.facetten {
 			position: static;
 			margin-bottom: var(--s-4);
-		}
-		.facet-lijst {
-			display: none;
-			padding-top: var(--s-3);
-		}
-		.facet-lijst.is-open {
-			display: block;
 		}
 	}
 </style>

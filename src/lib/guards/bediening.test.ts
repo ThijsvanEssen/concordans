@@ -74,6 +74,16 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 		).toEqual([]);
 	});
 
+	it('puts the filters of a phone behind one Verfijnen, with Toon (besluit 30, X4)', () => {
+		expect(
+			overtreders(
+				(t) => /class="verfijnen-knop/.test(t),
+				[plek('lib/components/ui/Verfijnen.svelte', 'the one Verfijnen')]
+			)
+		).toEqual([]);
+		expect(bron('lib/components/ui/Verfijnen.svelte')).toMatch(/onclick=\{showList\}/);
+	});
+
 	it('sizes a control at the height of a page or of a panel', () => {
 		// 32 px on a page (--veld-h), 24 px in a panel or a group (--veld-h-klein), 44 px for a
 		// finger on a touch screen (--veld-h-raak).

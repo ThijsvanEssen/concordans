@@ -1149,6 +1149,18 @@
 		opacity: 0.6;
 		cursor: progress;
 	}
+	/* 24 px for a mouse too (besluit 30), as an invisible border that moves nothing; on a
+	   touch screen and below 768 the 44 px of .raakvlak (lib/styles/basis.css). */
+	@media (min-width: 769px) and (pointer: fine) {
+		.reader-nav-link {
+			position: relative;
+		}
+		.reader-nav-link::after {
+			content: '';
+			position: absolute;
+			inset: min(0px, calc(50% - var(--veld-h-klein) / 2)) 0;
+		}
+	}
 
 	.step-failure {
 		margin-top: var(--s-3);

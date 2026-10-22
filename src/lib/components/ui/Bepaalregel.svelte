@@ -145,7 +145,7 @@
 		outline-offset: 1px;
 	}
 	/* A finger's 44 px: a field has no target outside its box. */
-	@media (pointer: coarse) {
+	@media (pointer: coarse), (max-width: 768px) {
 		input {
 			height: var(--veld-h-raak);
 		}

@@ -81,7 +81,7 @@
 			color: var(--ink);
 		}
 		/* A finger's target: 32 px at least. */
-		@media (pointer: coarse) {
+		@media (pointer: coarse), (max-width: 768px) {
 			.close {
 				min-height: var(--s-6);
 				min-width: var(--s-6);

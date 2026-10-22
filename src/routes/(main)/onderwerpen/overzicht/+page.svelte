@@ -175,6 +175,7 @@
 	// it comes. Where the pages run out first, the months before the last event counted are not
 	// counted, and the page says so. The feed's own fractie (what its members signed) is not
 	// the fractie's vote: these columns stay unfiltered by fractie.
+	let contentEl = $state<HTMLElement | null>(null);
 	let feed = $state<FeedItem[]>([]);
 	let periods = $state<PeriodCounts | null>(null);
 	/** The day of the last event counted, where the feed has more than was asked. */
@@ -917,9 +918,10 @@
 			<OverviewFacets
 				faction={fractie}
 				chamber={kamer}
+				list={() => contentEl}
 				onChoose={(x) => zet({ fractie: x, stem: null, cel: null })}
 			/>
-			<div class="inhoud">
+			<div class="inhoud" bind:this={contentEl}>
 				{#if tellenFout && !feed.length}
 					<div class="status">
 						<LoadState state={counts.state} what="Het overzicht" retry={counts.retry} />

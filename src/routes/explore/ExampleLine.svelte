@@ -42,7 +42,7 @@
 		color: var(--ink-2);
 	}
 	/* Room for the 44 px of its link (.raakvlak) inside the line, off the network under it. */
-	@media (pointer: coarse) {
+	@media (pointer: coarse), (max-width: 768px) {
 		.line {
 			padding-block: var(--s-3);
 		}

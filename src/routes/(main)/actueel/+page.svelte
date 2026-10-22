@@ -34,6 +34,7 @@
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import Verfijnen from '$lib/components/ui/Verfijnen.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import {
 		splitsTermen,
@@ -576,6 +577,7 @@
 		return w.artikel ? `${articleRef(null, w.artikel)} ${w.titel}` : w.titel;
 	}
 	let filtersOpen = $state(false);
+	let feedEl = $state<HTMLElement | null>(null);
 
 	/** The same view as an Atom feed: the filters chosen, so a subscribed feed keeps coming. */
 	const atom = $derived(atomHref(query));
@@ -660,24 +662,24 @@
 	</div>
 
 	<aside class="filters blad__facetten" aria-label="Verfijnen">
-		<button
-			type="button"
-			class="verfijnen-knop"
-			aria-expanded={filtersOpen}
-			aria-controls="actueel-facetten"
-			onclick={() => (filtersOpen = !filtersOpen)}
-			>Verfijnen{chips.length ? ` (${chips.length})` : ''}</button
+		<Verfijnen
+			id="actueel-facetten"
+			active={chips.length}
+			label={total === null
+				? 'Toon de gebeurtenissen'
+				: `Toon ${formatCount(total)} ${plural(total, 'gebeurtenis', 'gebeurtenissen')}`}
+			list={() => feedEl}
+			bind:open={filtersOpen}
 		>
-		<div class="filters-body" id="actueel-facetten" class:filters-body--open={filtersOpen}>
 			<IndexFacets {groups} pending={tellen} />
 			{#if chips.length}
 				<p class="wis"><TekstLink onclick={clearFilters}>Wis alle filters</TekstLink></p>
 			{/if}
-		</div>
+		</Verfijnen>
 	</aside>
 
 	<!-- A div: the page has one main, AppShell's. -->
-	<div class="feed" aria-busy={loading} use:lijstDoel>
+	<div class="feed" aria-busy={loading} use:lijstDoel bind:this={feedEl}>
 		<div class="head">
 			{#if total !== null}
 				<p class="count">
@@ -817,13 +819,6 @@
 			max-height: none;
 			overflow: visible;
 			margin-bottom: var(--s-4);
-		}
-		.filters-body {
-			display: none;
-			padding-top: var(--s-3);
-		}
-		.filters-body--open {
-			display: block;
 		}
 	}
 </style>

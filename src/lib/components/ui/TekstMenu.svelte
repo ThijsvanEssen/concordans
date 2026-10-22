@@ -171,9 +171,9 @@
 		background: var(--paper-2);
 		outline: none;
 	}
-	/* A finger's row on a touch screen: a line of text 44 px high (--veld-h-raak), as every
+	/* A finger's row on a touch screen and below 768: a line of text 44 px high (--veld-h-raak), as every
 	   other target there; a mouse keeps the denser row. */
-	@media (pointer: coarse) {
+	@media (pointer: coarse), (max-width: 768px) {
 		:global(.tekstmenu__item) {
 			padding-block: calc((var(--veld-h-raak) - 1lh) / 2);
 		}

@@ -127,7 +127,7 @@
 
 	<button
 		bind:this={toggleBtnEl}
-		class="mobile-menu-btn"
+		class="mobile-menu-btn raakvlak-knop"
 		aria-label="Menu"
 		aria-expanded={mobileMenuOpen}
 		aria-controls="mobile-nav"
@@ -208,7 +208,7 @@
 	{#if !isHome}
 		<div class="topbar-right">
 			<button
-				class="search-trigger"
+				class="search-trigger raakvlak-knop"
 				onclick={() => onSearchOpen?.()}
 				aria-label="Zoeken ({modKey} K)"
 			>

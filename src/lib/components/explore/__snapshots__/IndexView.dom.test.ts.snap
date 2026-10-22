@@ -44,7 +44,7 @@ exports[`Bronnen, list by list > cabinets ? > requests 1`] = `
 
 exports[`Bronnen, list by list > cabinets ? > view 1`] = `
 {
-  "facetten": "In de coalitie kabinetten VVD 4 D66 3 CDA 3 ChristenUnie 2",
+  "facetten": "In de coalitie kabinetten VVD 4 D66 3 CDA 3 ChristenUnie 2 Toon 4 kabinetten",
   "filters": [
     "VVD 4",
     "D66 3",
@@ -90,7 +90,7 @@ exports[`Bronnen, list by list > cabinets ?coalitie=VVD&van=2010-01-01&q=rutte&s
 
 exports[`Bronnen, list by list > cabinets ?coalitie=VVD&van=2010-01-01&q=rutte&sort=name > view 1`] = `
 {
-  "facetten": "In de coalitie kabinetten VVD 4 D66 3 CDA 3 ChristenUnie 2 Wis alle filters",
+  "facetten": "In de coalitie kabinetten VVD 4 D66 3 CDA 3 ChristenUnie 2 Wis alle filters Toon 2 kabinetten",
   "filters": [
     "VVD 4 (aan)",
     "D66 3",
@@ -145,7 +145,7 @@ exports[`Bronnen, list by list > commitments ? > requests 1`] = `
 
 exports[`Bronnen, list by list > commitments ? > view 1`] = `
 {
-  "facetten": "Stand Openstaand 2.530 Afgedaan 4.046 Deels Afgedaan 66 Vervallen 32 Termijn Open en over de verwachte datum Kabinet Alle kabinetten Ministerie Alle ministeries",
+  "facetten": "Stand Openstaand 2.530 Afgedaan 4.046 Deels Afgedaan 66 Vervallen 32 Termijn Open en over de verwachte datum Kabinet Alle kabinetten Ministerie Alle ministeries Toon 6.674 toezeggingen",
   "filters": [
     "Openstaand 2.530",
     "Afgedaan 4.046",
@@ -215,7 +215,7 @@ exports[`Bronnen, list by list > commitments ?status=Openstaand&overdue=1&kabine
 
 exports[`Bronnen, list by list > commitments ?status=Openstaand&overdue=1&kabinet=jetten&ministerie=bzk&persoon=x&q=brief&van=2026-01-01&sort=expected_resolution > view 1`] = `
 {
-  "facetten": "Stand Openstaand 2.530 Afgedaan 4.046 Deels Afgedaan 66 Vervallen 32 Termijn Open en over de verwachte datum Kabinet kabinet-Jetten Ministerie bzk Bewindspersoon Gekozen bewindspersoon Wis alle filters",
+  "facetten": "Stand Openstaand 2.530 Afgedaan 4.046 Deels Afgedaan 66 Vervallen 32 Termijn Open en over de verwachte datum Kabinet kabinet-Jetten Ministerie bzk Bewindspersoon Gekozen bewindspersoon Wis alle filters Toon 6.674 toezeggingen",
   "filters": [
     "Openstaand 2.530 (aan)",
     "Afgedaan 4.046",
@@ -257,7 +257,7 @@ exports[`Bronnen, list by list > committees ? > requests 1`] = `
 
 exports[`Bronnen, list by list > committees ? > view 1`] = `
 {
-  "facetten": "Weergave Alleen met lopende dossiers",
+  "facetten": "Weergave Alleen met lopende dossiers Toon 6 commissies",
   "filters": [
     "Alleen met lopende dossiers",
   ],
@@ -298,7 +298,7 @@ exports[`Bronnen, list by list > committees ?kamer=EK > requests 1`] = `
 
 exports[`Bronnen, list by list > committees ?kamer=EK > view 1`] = `
 {
-  "facetten": "",
+  "facetten": "Toon 6 commissies",
   "filters": [],
   "lijst": "6commissies Afkorting ↑ Afkorting Commissie BuHaOS Algemene commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking Geen lopende dossiers BuHaOS Vaste commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking Geen lopende dossiers IA Algemene commissie voor Immigratie, Integratie en Asiel lopende dossiers 42 INT Algemene commissie voor Integratiebeleid Geen lopende dossiers JG Algemene commissie voor Jeugd en Gezin lopende dossiers 46 WWI Algemene commissie voor Wonen, Wijken en Integratie lopende dossiers 74",
   "openbaar": 1,
@@ -336,7 +336,7 @@ exports[`Bronnen, list by list > committees ?only_active=1&q=wonen&sort=name&dir
 
 exports[`Bronnen, list by list > committees ?only_active=1&q=wonen&sort=name&dir=desc > view 1`] = `
 {
-  "facetten": "Weergave Alleen met lopende dossiers Wis alle filters",
+  "facetten": "Weergave Alleen met lopende dossiers Wis alle filters Toon 1 commissie",
   "filters": [
     "Alleen met lopende dossiers (aan)",
   ],
@@ -387,7 +387,7 @@ exports[`Bronnen, list by list > decisions ? > requests 1`] = `
 
 exports[`Bronnen, list by list > decisions ? > view 1`] = `
 {
-  "facetten": "Soort Motie 52.847 Amendement 8.319 Wetgeving 2.408 Begroting 1.963 Uitslag Aangenomen 34.625 Verworpen 31.563 Dossier",
+  "facetten": "Soort Motie 52.847 Amendement 8.319 Wetgeving 2.408 Begroting 1.963 Uitslag Aangenomen 34.625 Verworpen 31.563 Dossier Toon 66.188 stemmingen",
   "filters": [
     "Motie 52.847",
     "Amendement 8.319",
@@ -439,7 +439,7 @@ exports[`Bronnen, list by list > decisions ?kamer=EK&sort=subject > requests 1`]
 
 exports[`Bronnen, list by list > decisions ?kamer=EK&sort=subject > view 1`] = `
 {
-  "facetten": "Soort Motie 52.847 Amendement 8.319 Wetgeving 2.408 Begroting 1.963 Uitslag Aangenomen 34.625 Verworpen 31.563 Dossier",
+  "facetten": "Soort Motie 52.847 Amendement 8.319 Wetgeving 2.408 Begroting 1.963 Uitslag Aangenomen 34.625 Verworpen 31.563 Dossier Toon 66.188 stemmingen",
   "filters": [
     "Motie 52.847",
     "Amendement 8.319",
@@ -513,7 +513,7 @@ exports[`Bronnen, list by list > decisions ?soort=Motie&passed=false&dossier=366
 
 exports[`Bronnen, list by list > decisions ?soort=Motie&passed=false&dossier=36600&fractie=VVD&q=huur&van=2026-01-01 > view 1`] = `
 {
-  "facetten": "Soort Motie 52.847 Amendement 8.319 Wetgeving 2.408 Begroting 1.963 Uitslag Aangenomen 34.625 Verworpen 31.563 Dossier Wis alle filters",
+  "facetten": "Soort Motie 52.847 Amendement 8.319 Wetgeving 2.408 Begroting 1.963 Uitslag Aangenomen 34.625 Verworpen 31.563 Dossier Wis alle filters Toon 66.188 stemmingen",
   "filters": [
     "Motie 52.847 (aan)",
     "Amendement 8.319",
@@ -565,7 +565,7 @@ exports[`Bronnen, list by list > documents ? > requests 1`] = `
 
 exports[`Bronnen, list by list > documents ? > view 1`] = `
 {
-  "facetten": "Soort Bijlage 124.687 Brief regering 89.644 Motie 59.998 Schriftelijke vragen 47.322 Antwoord schriftelijke vragen 45.775 Convocatie commissieactiviteit 29.956",
+  "facetten": "Soort Bijlage 124.687 Brief regering 89.644 Motie 59.998 Schriftelijke vragen 47.322 Antwoord schriftelijke vragen 45.775 Convocatie commissieactiviteit 29.956 Toon 614.889 stukken",
   "filters": [
     "Bijlage 124.687",
     "Brief regering 89.644",
@@ -621,7 +621,7 @@ exports[`Bronnen, list by list > documents ?kamer=EK&soort=Motie&q=36600&van=202
 
 exports[`Bronnen, list by list > documents ?kamer=EK&soort=Motie&q=36600&van=2026-01-01&tot=2026-06-30 > view 1`] = `
 {
-  "facetten": "Soort Bijlage 124.687 Brief regering 89.644 Motie 59.998 Schriftelijke vragen 47.322 Antwoord schriftelijke vragen 45.775 Convocatie commissieactiviteit 29.956 Wis alle filters",
+  "facetten": "Soort Bijlage 124.687 Brief regering 89.644 Motie 59.998 Schriftelijke vragen 47.322 Antwoord schriftelijke vragen 45.775 Convocatie commissieactiviteit 29.956 Wis alle filters Toon 614.889 stukken",
   "filters": [
     "Bijlage 124.687",
     "Brief regering 89.644",
@@ -677,7 +677,7 @@ exports[`Bronnen, list by list > dossiers ? > requests 1`] = `
 
 exports[`Bronnen, list by list > dossiers ? > view 1`] = `
 {
-  "facetten": "Stand Lopend 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Soort 1.997 overige dossiers, zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179",
+  "facetten": "Stand Lopend 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Soort 1.997 overige dossiers, zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Toon 3.728 dossiers",
   "filters": [
     "Lopend 3.728 (aan)",
     "Afgehandeld 4.077",
@@ -756,7 +756,7 @@ exports[`Bronnen, list by list > dossiers ?q=36600 > requests 1`] = `
 
 exports[`Bronnen, list by list > dossiers ?q=36600 > view 1`] = `
 {
-  "facetten": "Stand Lopend 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Soort 1.997 overige dossiers, zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179",
+  "facetten": "Stand Lopend 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Soort 1.997 overige dossiers, zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Toon 3.728 dossiers",
   "filters": [
     "Lopend 3.728",
     "Afgehandeld 4.077",
@@ -833,7 +833,7 @@ exports[`Bronnen, list by list > dossiers ?stand=all&sort=last_activity > reques
 
 exports[`Bronnen, list by list > dossiers ?stand=all&sort=last_activity > view 1`] = `
 {
-  "facetten": "Stand Lopend 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Soort 1.997 overige dossiers, zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Wis alle filters",
+  "facetten": "Stand Lopend 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Soort 1.997 overige dossiers, zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Wis alle filters Toon 3.728 dossiers",
   "filters": [
     "Lopend 3.728",
     "Afgehandeld 4.077",
@@ -916,7 +916,7 @@ exports[`Bronnen, list by list > dossiers ?stand=closed&uitkomst=aangenomen&phas
 
 exports[`Bronnen, list by list > dossiers ?stand=closed&uitkomst=aangenomen&phase=Eerste+Kamer,Tweede+Kamer&has_phase=Raad+van+State&track=Wetsvoorstel&ministerie=bzk&van=2020-01-01&sort=number > view 1`] = `
 {
-  "facetten": "Stand Lopend 3.728 Afgehandeld 4.077 Aangenomen 0 Alle dossiers 7.805 Soort 1.997 overige dossiers, zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Wis alle filters",
+  "facetten": "Stand Lopend 3.728 Afgehandeld 4.077 Aangenomen 0 Alle dossiers 7.805 Soort 1.997 overige dossiers, zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Wis alle filters Toon 3.728 dossiers",
   "filters": [
     "Lopend 3.728",
     "Afgehandeld 4.077",
@@ -983,7 +983,7 @@ exports[`Bronnen, list by list > factions ? > requests 1`] = `
 
 exports[`Bronnen, list by list > factions ? > view 1`] = `
 {
-  "facetten": "Weergave Ook opgeheven fracties",
+  "facetten": "Weergave Ook opgeheven fracties Toon 17 fracties",
   "filters": [
     "Ook opgeheven fracties",
   ],
@@ -1022,7 +1022,7 @@ exports[`Bronnen, list by list > factions ?include_inactive=1&q=pvv&sort=abbrevi
 
 exports[`Bronnen, list by list > factions ?include_inactive=1&q=pvv&sort=abbreviation&dir=desc > view 1`] = `
 {
-  "facetten": "Weergave Ook opgeheven fracties Wis alle filters",
+  "facetten": "Weergave Ook opgeheven fracties Wis alle filters Toon 17 fracties",
   "filters": [
     "Ook opgeheven fracties (aan)",
   ],
@@ -1080,7 +1080,7 @@ exports[`Bronnen, list by list > factions ?kamer=EK > requests 1`] = `
 
 exports[`Bronnen, list by list > factions ?kamer=EK > view 1`] = `
 {
-  "facetten": "",
+  "facetten": "Toon 17 fracties",
   "filters": [],
   "lijst": "De zaal kon niet op tijd worden geladen. Opnieuw",
   "openbaar": 0,
@@ -1127,7 +1127,7 @@ exports[`Bronnen, list by list > instruments ? > requests 1`] = `
 
 exports[`Bronnen, list by list > instruments ? > view 1`] = `
 {
-  "facetten": "Rechtsgebied Wonen, onroerend goed, bouwrecht 199 Belastingrecht 26 Contracten, schade en aansprakelijkheid 12 Arbeidsrecht en sociaal-zekerheidsrecht 11 Staats- en bestuursrecht 11 Thema Bouwen, wonen en leefomgeving 136 Subsidies, uitkeringen en toeslagen 77 Belastingen 26 Economie en ondernemen 25 Overheid, bestuur en koninkrijk 11 Rechtsorde Nederland Europese Unie Soort Verdragen 279 Weergave Ook zonder artikelen",
+  "facetten": "Rechtsgebied Wonen, onroerend goed, bouwrecht 199 Belastingrecht 26 Contracten, schade en aansprakelijkheid 12 Arbeidsrecht en sociaal-zekerheidsrecht 11 Staats- en bestuursrecht 11 Thema Bouwen, wonen en leefomgeving 136 Subsidies, uitkeringen en toeslagen 77 Belastingen 26 Economie en ondernemen 25 Overheid, bestuur en koninkrijk 11 Rechtsorde Nederland Europese Unie Soort Verdragen 279 Weergave Ook zonder artikelen Toon 279 wetten",
   "filters": [
     "Wonen, onroerend goed, bouwrecht 199",
     "Belastingrecht 26",
@@ -1205,7 +1205,7 @@ exports[`Bronnen, list by list > instruments ?q=huur&sort=article_count&legal_ar
 
 exports[`Bronnen, list by list > instruments ?q=huur&sort=article_count&legal_area=bouwen-en-wonen&policy_domain=x > view 1`] = `
 {
-  "facetten": "Rechtsgebied bouwen-en-wonen 0 Wonen, onroerend goed, bouwrecht 199 Belastingrecht 26 Contracten, schade en aansprakelijkheid 12 Arbeidsrecht en sociaal-zekerheidsrecht 11 Staats- en bestuursrecht 11 Thema x 0 Bouwen, wonen en leefomgeving 136 Subsidies, uitkeringen en toeslagen 77 Belastingen 26 Economie en ondernemen 25 Overheid, bestuur en koninkrijk 11 Rechtsorde Nederland Europese Unie Soort Verdragen 279 Weergave Ook zonder artikelen Wis alle filters",
+  "facetten": "Rechtsgebied bouwen-en-wonen 0 Wonen, onroerend goed, bouwrecht 199 Belastingrecht 26 Contracten, schade en aansprakelijkheid 12 Arbeidsrecht en sociaal-zekerheidsrecht 11 Staats- en bestuursrecht 11 Thema x 0 Bouwen, wonen en leefomgeving 136 Subsidies, uitkeringen en toeslagen 77 Belastingen 26 Economie en ondernemen 25 Overheid, bestuur en koninkrijk 11 Rechtsorde Nederland Europese Unie Soort Verdragen 279 Weergave Ook zonder artikelen Wis alle filters Toon 279 wetten",
   "filters": [
     "bouwen-en-wonen 0 (aan)",
     "Wonen, onroerend goed, bouwrecht 199",
@@ -1274,7 +1274,7 @@ exports[`Bronnen, list by list > instruments ?soort=verdrag&jurisdiction=eu&leeg
 
 exports[`Bronnen, list by list > instruments ?soort=verdrag&jurisdiction=eu&leeg=1&van=2020-01-01&tot=2024-12-31 > view 1`] = `
 {
-  "facetten": "Rechtsgebied Wonen, onroerend goed, bouwrecht 199 Belastingrecht 26 Contracten, schade en aansprakelijkheid 12 Arbeidsrecht en sociaal-zekerheidsrecht 11 Staats- en bestuursrecht 11 Thema Bouwen, wonen en leefomgeving 136 Subsidies, uitkeringen en toeslagen 77 Belastingen 26 Economie en ondernemen 25 Overheid, bestuur en koninkrijk 11 Rechtsorde Nederland Europese Unie Soort Verdragen 279 Weergave Ook zonder artikelen Wis alle filters",
+  "facetten": "Rechtsgebied Wonen, onroerend goed, bouwrecht 199 Belastingrecht 26 Contracten, schade en aansprakelijkheid 12 Arbeidsrecht en sociaal-zekerheidsrecht 11 Staats- en bestuursrecht 11 Thema Bouwen, wonen en leefomgeving 136 Subsidies, uitkeringen en toeslagen 77 Belastingen 26 Economie en ondernemen 25 Overheid, bestuur en koninkrijk 11 Rechtsorde Nederland Europese Unie Soort Verdragen 279 Weergave Ook zonder artikelen Wis alle filters Toon 279 wetten",
   "filters": [
     "Wonen, onroerend goed, bouwrecht 199",
     "Belastingrecht 26",
@@ -1336,7 +1336,7 @@ exports[`Bronnen, list by list > judgments ? > requests 1`] = `
 
 exports[`Bronnen, list by list > judgments ? > view 1`] = `
 {
-  "facetten": "Hoogste rechters 865 Hoge Raad 243 Parket bij de Hoge Raad 236 Raad van State 162 Centrale Raad van Beroep 217 College van Beroep voor het bedrijfsleven 7 Feitenrechtspraak 7.272 Gerechtshoven 2.539 Rechtbanken 4.733 Kantongerechten 0 Caribisch deel 193 Gerechten in het Caribisch deel 193 Europees 3.232 EHRM 3.232 Hof van Justitie EU 0 Overig 1 Tuchtcolleges 0 Andere colleges 0 Kroon 0 Buitenlandse instanties 1 Rechtsgebied Civiel recht 7.243 Bestuursrecht 931 Strafrecht 164 Internationaal publiekrecht 1 Procedure Eerste aanleg - enkelvoudig 3.082 Hoger beroep 2.646 Kort geding 769 Bodemzaak 591 Eerste aanleg - meervoudig 245",
+  "facetten": "Hoogste rechters 865 Hoge Raad 243 Parket bij de Hoge Raad 236 Raad van State 162 Centrale Raad van Beroep 217 College van Beroep voor het bedrijfsleven 7 Feitenrechtspraak 7.272 Gerechtshoven 2.539 Rechtbanken 4.733 Kantongerechten 0 Caribisch deel 193 Gerechten in het Caribisch deel 193 Europees 3.232 EHRM 3.232 Hof van Justitie EU 0 Overig 1 Tuchtcolleges 0 Andere colleges 0 Kroon 0 Buitenlandse instanties 1 Rechtsgebied Civiel recht 7.243 Bestuursrecht 931 Strafrecht 164 Internationaal publiekrecht 1 Procedure Eerste aanleg - enkelvoudig 3.082 Hoger beroep 2.646 Kort geding 769 Bodemzaak 591 Eerste aanleg - meervoudig 245 Toon 8.331 uitspraken",
   "filters": [
     "Hoge Raad 243",
     "Parket bij de Hoge Raad 236",
@@ -1423,7 +1423,7 @@ exports[`Bronnen, list by list > judgments ?q=huur&tier=rechtbank&court_kind=rec
 
 exports[`Bronnen, list by list > judgments ?q=huur&tier=rechtbank&court_kind=rechtbank&subject_area=Civiel+recht&procedure=Hoger+beroep&van=2020-01-01&tot=2020-12-31&sort=date_asc > view 1`] = `
 {
-  "facetten": "Hoogste rechters 865 Hoge Raad 243 Parket bij de Hoge Raad 236 Raad van State 162 Centrale Raad van Beroep 217 College van Beroep voor het bedrijfsleven 7 Feitenrechtspraak 7.272 Gerechtshoven 2.539 Rechtbanken 4.733 Kantongerechten 0 Caribisch deel 193 Gerechten in het Caribisch deel 193 Europees 0 EHRM 0 Hof van Justitie EU 0 Overig 1 Tuchtcolleges 0 Andere colleges 0 Kroon 0 Buitenlandse instanties 1 Rechtsgebied Civiel recht 7.243 Verbintenissenrecht 2.071 Insolventierecht 134 Burgerlijk procesrecht 54 Personen- en familierecht 28 Goederenrecht 11 Arbeidsrecht 5 Europees civiel recht 5 Ondernemingsrecht 3 Aanbestedingsrecht 2 Intellectueel-eigendomsrecht 1 Bestuursrecht 931 Strafrecht 164 Internationaal publiekrecht 1 Procedure Eerste aanleg - enkelvoudig 3.082 Hoger beroep 2.646 Kort geding 769 Bodemzaak 591 Eerste aanleg - meervoudig 245 Wis alle filters",
+  "facetten": "Hoogste rechters 865 Hoge Raad 243 Parket bij de Hoge Raad 236 Raad van State 162 Centrale Raad van Beroep 217 College van Beroep voor het bedrijfsleven 7 Feitenrechtspraak 7.272 Gerechtshoven 2.539 Rechtbanken 4.733 Kantongerechten 0 Caribisch deel 193 Gerechten in het Caribisch deel 193 Europees 0 EHRM 0 Hof van Justitie EU 0 Overig 1 Tuchtcolleges 0 Andere colleges 0 Kroon 0 Buitenlandse instanties 1 Rechtsgebied Civiel recht 7.243 Verbintenissenrecht 2.071 Insolventierecht 134 Burgerlijk procesrecht 54 Personen- en familierecht 28 Goederenrecht 11 Arbeidsrecht 5 Europees civiel recht 5 Ondernemingsrecht 3 Aanbestedingsrecht 2 Intellectueel-eigendomsrecht 1 Bestuursrecht 931 Strafrecht 164 Internationaal publiekrecht 1 Procedure Eerste aanleg - enkelvoudig 3.082 Hoger beroep 2.646 Kort geding 769 Bodemzaak 591 Eerste aanleg - meervoudig 245 Wis alle filters Toon 8.331 uitspraken",
   "filters": [
     "Hoge Raad 243",
     "Parket bij de Hoge Raad 236",
@@ -1513,7 +1513,7 @@ exports[`Bronnen, list by list > judgments ?source=echr&subject=Huurrecht&sort=c
 
 exports[`Bronnen, list by list > judgments ?source=echr&subject=Huurrecht&sort=citation_count > view 1`] = `
 {
-  "facetten": "Hoogste rechters 296.126 Hoge Raad 57.506 Parket bij de Hoge Raad 34.665 Raad van State 100.193 Centrale Raad van Beroep 87.893 College van Beroep voor het bedrijfsleven 15.869 Feitenrechtspraak 678.574 Gerechtshoven 168.232 Rechtbanken 510.203 Kantongerechten 139 Caribisch deel 21.094 Gerechten in het Caribisch deel 21.094 Europees 3.527 EHRM 3.232 Hof van Justitie EU 295 Overig 1.824 Tuchtcolleges 1.669 Andere colleges 4 Kroon 4 Buitenlandse instanties 147 Rechtsgebied Civiel recht 7.243 Bestuursrecht 931 Strafrecht 164 Internationaal publiekrecht 1 Procedure Eerste aanleg - enkelvoudig 3.082 Hoger beroep 2.646 Kort geding 769 Bodemzaak 591 Eerste aanleg - meervoudig 245 Wis alle filters",
+  "facetten": "Hoogste rechters 296.126 Hoge Raad 57.506 Parket bij de Hoge Raad 34.665 Raad van State 100.193 Centrale Raad van Beroep 87.893 College van Beroep voor het bedrijfsleven 15.869 Feitenrechtspraak 678.574 Gerechtshoven 168.232 Rechtbanken 510.203 Kantongerechten 139 Caribisch deel 21.094 Gerechten in het Caribisch deel 21.094 Europees 3.527 EHRM 3.232 Hof van Justitie EU 295 Overig 1.824 Tuchtcolleges 1.669 Andere colleges 4 Kroon 4 Buitenlandse instanties 147 Rechtsgebied Civiel recht 7.243 Bestuursrecht 931 Strafrecht 164 Internationaal publiekrecht 1 Procedure Eerste aanleg - enkelvoudig 3.082 Hoger beroep 2.646 Kort geding 769 Bodemzaak 591 Eerste aanleg - meervoudig 245 Wis alle filters Toon 8.331 uitspraken",
   "filters": [
     "Hoge Raad 57.506",
     "Parket bij de Hoge Raad 34.665",
@@ -1589,7 +1589,7 @@ exports[`Bronnen, list by list > members ? > requests 1`] = `
 
 exports[`Bronnen, list by list > members ? > view 1`] = `
 {
-  "facetten": "Fractie zetels D66 26 VVD 22 PRO 20 PVV 19 CDA 18 JA21 9 FVD 7 Groep Markuszower 7 Alle 17Weergave Ook historische leden",
+  "facetten": "Fractie zetels D66 26 VVD 22 PRO 20 PVV 19 CDA 18 JA21 9 FVD 7 Groep Markuszower 7 Alle 17Weergave Ook historische leden Toon 3 kamerleden",
   "filters": [
     "D66 26",
     "VVD 22",
@@ -1649,7 +1649,7 @@ exports[`Bronnen, list by list > members ?include_inactive=1&fractie=VVD&q=kops&
 
 exports[`Bronnen, list by list > members ?include_inactive=1&fractie=VVD&q=kops&sort=party > view 1`] = `
 {
-  "facetten": "Fractie D66 VVD PRO PVV CDA JA21 FVD Groep Markuszower Alle 17Weergave Ook historische leden Wis alle filters",
+  "facetten": "Fractie D66 VVD PRO PVV CDA JA21 FVD Groep Markuszower Alle 17Weergave Ook historische leden Wis alle filters Toon 3 kamerleden",
   "filters": [
     "D66",
     "VVD (aan)",
@@ -1709,7 +1709,7 @@ exports[`Bronnen, list by list > members ?kamer=EK&van=2020-01-01 > requests 1`]
 
 exports[`Bronnen, list by list > members ?kamer=EK&van=2020-01-01 > view 1`] = `
 {
-  "facetten": "Fractie zetels D66 26 VVD 22 PRO 20 PVV 19 CDA 18 JA21 9 FVD 7 Groep Markuszower 7 Alle 17 Wis alle filters",
+  "facetten": "Fractie zetels D66 26 VVD 22 PRO 20 PVV 19 CDA 18 JA21 9 FVD 7 Groep Markuszower 7 Alle 17 Wis alle filters Toon 3 kamerleden",
   "filters": [
     "D66 26",
     "VVD 22",
@@ -1762,7 +1762,7 @@ exports[`Bronnen, list by list > ministers ? > requests 1`] = `
 
 exports[`Bronnen, list by list > ministers ? > view 1`] = `
 {
-  "facetten": "Weergave Eén kabinetNaast elkaarKabinet kabinet-Jetten (in functie) Functie Minister-president 1 Minister 3 Staatssecretaris 1",
+  "facetten": "Weergave Eén kabinetNaast elkaarKabinet kabinet-Jetten (in functie) Functie Minister-president 1 Minister 3 Staatssecretaris 1 Toon 5 bewindspersonen",
   "filters": [
     "Eén kabinet (aan)",
     "Naast elkaar",
@@ -1805,7 +1805,7 @@ exports[`Bronnen, list by list > ministers ?kabinet=jetten&post=minister&q=a&van
 
 exports[`Bronnen, list by list > ministers ?kabinet=jetten&post=minister&q=a&van=2026-01-01 > view 1`] = `
 {
-  "facetten": "Weergave Eén kabinetNaast elkaarKabinet jetten Functie Minister-president 1 Minister 3 Staatssecretaris 1 Wis alle filters",
+  "facetten": "Weergave Eén kabinetNaast elkaarKabinet jetten Functie Minister-president 1 Minister 3 Staatssecretaris 1 Wis alle filters Toon 2 bewindspersonen",
   "filters": [
     "Eén kabinet (aan)",
     "Naast elkaar",
@@ -1857,7 +1857,7 @@ exports[`Bronnen, list by list > ministers ?weergave=naast > requests 1`] = `
 
 exports[`Bronnen, list by list > ministers ?weergave=naast > view 1`] = `
 {
-  "facetten": "Weergave Eén kabinetNaast elkaarTot en met kabinet-Jetten (in functie)",
+  "facetten": "Weergave Eén kabinetNaast elkaarTot en met kabinet-Jetten (in functie) Toon 5 bewindspersonen",
   "filters": [
     "Eén kabinet",
     "Naast elkaar (aan)",

@@ -115,8 +115,8 @@
 
 <style>
 	/* The links in a row's lines (indieners, a dossier) a finger can hit: the shared target of
-	   lib/styles/basis.css (.raakvlak), on a touch screen only. */
-	@media (pointer: coarse) {
+	   lib/styles/basis.css (.raakvlak), on a touch screen and below 768. */
+	@media (pointer: coarse), (max-width: 768px) {
 		.row-body :global(a:not(.row-title)) {
 			position: relative;
 		}

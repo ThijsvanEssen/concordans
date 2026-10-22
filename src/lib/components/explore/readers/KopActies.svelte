@@ -77,7 +77,7 @@
 		margin-left: auto;
 	}
 	/* A finger's 44 px of Bewaar in … and of Naar … on the line below do not overlap. */
-	@media (pointer: coarse) {
+	@media (pointer: coarse), (max-width: 768px) {
 		.kop-acties {
 			row-gap: var(--s-5);
 		}

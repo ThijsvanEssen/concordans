@@ -26,6 +26,15 @@ test('Bronnen › Wetten: a filter narrows the list, a search finds a law that o
 	await expect(filter).toHaveAttribute('aria-pressed', 'true');
 	await expect(page).toHaveURL(/kind=instruments.*&/);
 	await expect(count).not.toHaveText(before!);
+	// Toon closes the filters on a phone and brings the list into view (besluit 30, X4).
+	if (touch) {
+		await page.getByRole('button', { name: /^Toon [\d.]+ wetten$/ }).click();
+		await expect(page.getByRole('button', { name: /^Verfijnen/ })).toHaveAttribute(
+			'aria-expanded',
+			'false'
+		);
+		await expect(count).toBeInViewport();
+	}
 
 	await page.goto('/explore?mode=index&kind=instruments');
 	await page.getByRole('searchbox', { name: 'Zoek in wetten' }).fill('Burgerlijk Wetboek Boek 6');
