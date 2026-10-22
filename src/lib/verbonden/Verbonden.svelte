@@ -723,8 +723,11 @@
 
 		{#if verbonden.groups.length > 0 && !empty}
 			<div class="foot">
+				<!-- At a glance as the mockups word it; with a soort open, with the count it lists. -->
 				<TekstLink href={tableHref}
-					>{isAtLeast(total) ? 'Alle verbindingen' : `Alle ${total}`} in een tabel</TekstLink
+					>{overview
+						? 'Alles in een tabel'
+						: `${isAtLeast(total) ? 'Alle verbindingen' : `Alle ${total}`} in een tabel`}</TekstLink
 				>
 				<!-- The part it exports is known once every row is in: asked on the way to the click. -->
 				<TekstLink

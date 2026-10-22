@@ -94,7 +94,7 @@ test('the open legend counts the stemmingen drawn, the focus selected', async ({
 
 test('Verbonden as a table, exported as CSV', async ({ page }) => {
 	await page.goto(ARTICLE);
-	await page.getByRole('link', { name: /^Alle [\d.]+ in een tabel$/ }).click();
+	await page.getByRole('link', { name: 'Alles in een tabel' }).click();
 	await expect(page).toHaveURL(/tabel=1/);
 	await expect(page.getByRole('heading', { name: 'Verbindingen van Art. 6:162 BW' })).toBeVisible();
 	const table = page.getByRole('table');
