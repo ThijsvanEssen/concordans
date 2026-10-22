@@ -99,6 +99,13 @@
 		flex-direction: column;
 		gap: var(--s-2);
 	}
+	/* Under a folding heading another one may follow at once (a group of a timeline): the two
+	   targets of a finger (.raakvlak, up to 12 px past each) meet instead of overlapping. */
+	@media (pointer: coarse), (max-width: 768px) {
+		.sectie {
+			gap: var(--s-5);
+		}
+	}
 	.is-dicht {
 		padding-bottom: var(--s-1);
 	}

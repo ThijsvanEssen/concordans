@@ -169,8 +169,10 @@
 										href={r.href}
 										rel={/^https?:/.test(r.href) ? 'external' : undefined}
 										class="zin">{@render zinVan(r)}</a
-									>{:else if r.actie}<button type="button" class="zin zin--actie" onclick={r.actie}
-										>{@render zinVan(r)}</button
+									>{:else if r.actie}<button
+										type="button"
+										class="zin zin--actie raakvlak"
+										onclick={r.actie}>{@render zinVan(r)}</button
 									>{:else}<span class="zin">{@render zinVan(r)}</span>{/if}
 								{#if r.meta}<span class="meta">{r.meta}</span>{/if}
 								{#if r.onder}<span class="meta">{@render r.onder(r.id)}</span>{/if}
@@ -363,6 +365,14 @@
 	}
 	.kan-open .tekst {
 		cursor: pointer;
+	}
+	/* On a phone a row that opens or acts is a finger's target high (48 px, the scale's step above 44). */
+	@media (pointer: coarse), (max-width: 768px) {
+		.kan-open .tekst,
+		.tekst:has(.zin--actie) {
+			min-height: var(--s-7);
+			justify-content: center;
+		}
 	}
 	.kan-open .tekst:hover .zin {
 		text-decoration-line: underline;
