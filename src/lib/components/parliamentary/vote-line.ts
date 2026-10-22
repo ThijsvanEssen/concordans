@@ -12,8 +12,13 @@ import { choiceRank, hasVotes } from './stemming';
 
 type Decision = Schema<'DecisionDTO'>;
 
-/** A side of the vote: its choice as the source writes it, and the fracties that made it. */
-type VoteSide = { choice: string; names: string[] };
+/** A side of the vote: its choice as the source writes it, and the fracties that made it, with their seats. */
+type VoteSide = {
+	choice: string;
+	names: string[];
+	/** The seats of each name, in step with `names`; null where the vote gives none. */
+	seats: (number | null)[];
+};
 
 type VoteLineParts = {
 	/** `Aangenomen`, `Verworpen`, `Zonder stemming aangenomen`, `Uitstellen`. */
@@ -44,15 +49,23 @@ function tallyWords(tally: Record<string, number> | null | undefined): string | 
 /** The fracties per side, voor first; none for a roll-call, whose voters are members. */
 export function sidesOf(d: Decision): VoteSide[] {
 	if (d.chamber === 'EK')
-		return ekFactionGroups(d).map((g) => ({ choice: g.label, names: g.names }));
+		return ekFactionGroups(d).map((g) => ({
+			choice: g.label,
+			names: g.names,
+			seats: g.names.map(() => null)
+		}));
 	if (d.vote_kind === 'member') return [];
 	const by = Map.groupBy(d.votes ?? [], (v) => v.choice);
 	return [...by.keys()]
 		.sort((a, b) => choiceRank(a) - choiceRank(b))
-		.map((choice) => ({
-			choice,
-			names: by.get(choice)!.map((v) => v.name?.trim() || v.voter_key)
-		}));
+		.map((choice) => {
+			const votes = by.get(choice)!;
+			return {
+				choice,
+				names: votes.map((v) => v.name?.trim() || v.voter_key),
+				seats: votes.map((v) => (typeof v.seats === 'number' && v.seats > 0 ? v.seats : null))
+			};
+		});
 }
 
 /**

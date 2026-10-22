@@ -3,7 +3,9 @@
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { shortKind } from '$lib/text/document-kind';
 	import { motionKindLabel } from '$lib/components/parliamentary/motion-kind';
-	import { CHOICE, forAgainst } from '$lib/components/parliamentary/stemming';
+	import { CHOICE } from '$lib/components/parliamentary/stemming';
+	import Stembalk from '$lib/components/parliamentary/Stembalk.svelte';
+	import { voteBarOf } from '$lib/components/parliamentary/stembalk';
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { langeDatum } from '$lib/text/datum';
 	import { joinParts } from '$lib/text/words';
@@ -103,13 +105,7 @@
 
 <ReaderFrame state={decision.state} what="Stemming" retry={decision.retry}>
 	{#snippet children(d)}
-		{@const tally = d.tally ?? {}}
-		{@const { voor: inFavour, tegen: against } = forAgainst(tally)}
-		{@const inFavourPct =
-			inFavour + against > 0 ? Math.round((inFavour / (inFavour + against)) * 100) : 50}
-		{@const others = Object.entries(tally).filter(
-			([choice]) => choice !== CHOICE.for && choice !== CHOICE.against
-		)}
+		{@const bar = voteBarOf(d)}
 		<!-- The dossiers by number and name (API 0.79.30); the node's numbers before it. -->
 		{@const dossiers = d.dossiers?.length
 			? d.dossiers
@@ -197,20 +193,8 @@
 			{/if}
 
 			<!-- Seats of 0 are unknown (an older Eerste Kamer vote), not a tally of 0. -->
-			{#if d.vote_kind && inFavour + against > 0}
-				<div class="vote-summary">
-					<div class="vote-bar">
-						<div class="vote-bar-for" style="width: {inFavourPct}%"></div>
-					</div>
-					<!-- A sentence: 33 voor, 116 tegen, 1 niet deelgenomen. -->
-					<p class="vote-totals">
-						<span class="vote-total vote-total--for">{inFavour} voor</span>,
-						<span class="vote-total vote-total--against">{against} tegen</span
-						>{#each others as [choice, seats] (choice)}, <span class="vote-total vote-total--other"
-								>{seats} {choice.toLowerCase()}</span
-							>{/each}
-					</p>
-				</div>
+			{#if d.vote_kind && bar}
+				<Stembalk model={bar} members={d.vote_kind === 'member'} />
 			{:else if chamber === 'EK' && decisionMethod(d)}
 				<p class="vote-totals">{decisionMethod(d)}</p>
 			{:else if d.decision_kind}
@@ -374,38 +358,12 @@
 		margin: 0;
 	}
 
-	.vote-summary {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-1);
-	}
-	/* Seats for and against are told apart by the word; the bar shows the share only. */
-	.vote-bar {
-		height: 14px;
-		background: var(--rule);
-		border-radius: var(--r-2);
-		overflow: hidden;
-	}
-	.vote-bar-for {
-		height: 100%;
-		background: var(--ink-2);
-		transition: width var(--dur-2) var(--ease);
-	}
 	.vote-totals {
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	.vote-total--for,
-	.vote-total--against {
-		color: var(--ink-2);
-		font-weight: 600;
-	}
-	.vote-total--other {
-		color: var(--ink-3);
-	}
-
 	.voter-list {
 		list-style: none;
 		margin: 0;

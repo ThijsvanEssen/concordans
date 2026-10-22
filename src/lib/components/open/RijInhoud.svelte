@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Coverage from '$lib/components/ui/Coverage.svelte';
-	import { forAgainst, votesSentence } from '$lib/components/parliamentary/stemming';
+	import Stembalk from '$lib/components/parliamentary/Stembalk.svelte';
+	import { voteBarOf } from '$lib/components/parliamentary/stembalk';
 	// What a row shows when it opens (Actueel, Gevolgd; a Kamerstuk in Verbonden, Bronnen and
 	// Bundels): the bron's own content, read in place, not a panel of actions (Thijs, 10 Oct: "doet niet zoveel behalve een extra klik
 	// toevoegen"). Nothing the row says already comes back. A motie its dictum, an amendement
@@ -55,21 +56,19 @@
 		'Rij'
 	);
 
-	const tally = $derived(forAgainst(item.vote?.tally));
-	const tallySentence = $derived(votesSentence(item.vote?.tally));
+	const bar = $derived(item.vote ? voteBarOf(item.vote) : null);
 </script>
 
 <div class="inhoud">
 	{#if content === 'stemming'}
-		<!-- The tally is in the row; here its picture: the share voor. -->
-		<div class="balk" role="img" aria-label={tallySentence} title={tallySentence}>
-			<div class="voor" style:width="{(tally.voor / (tally.voor + tally.tegen)) * 100}%"></div>
-		</div>
-		<!-- And the fracties on each side, asked as the row opens: the line of the stuk's head. -->
+		<!-- The tally is in the row; here its picture, and the fracties on each side, asked as
+		     the row opens: the line of the stuk's head. -->
 		{#if item.node.collection === 'decisions'}<VoteLine
 				decisionKey={item.node.key}
+				tally={item.vote?.tally}
+				chamber={item.vote?.chamber}
 				head={false}
-			/>{/if}
+			/>{:else if bar}<Stembalk model={bar} />{/if}
 	{:else if content === 'samenvatting'}
 		<p class="tekst">{item.summary}</p>
 	{:else if content === 'wijzigingen' || content === 'inwerkingtreding'}
@@ -115,16 +114,5 @@
 	.verder {
 		margin: 0;
 		font-size: var(--t-meta);
-	}
-	.balk {
-		height: var(--s-3);
-		max-width: 320px;
-		background: var(--rule);
-		border-radius: var(--r-2);
-		overflow: hidden;
-	}
-	.voor {
-		height: 100%;
-		background: var(--ink-2);
 	}
 </style>

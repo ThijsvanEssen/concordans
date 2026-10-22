@@ -5,7 +5,9 @@
 	import { dossierLabel, dossierOwnName, officialNumber } from '$lib/bron/dossier-naam';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
 	import { inhoudVan, stemmingInhoud } from '$lib/components/open/rij-inhoud';
-	import { forAgainst, stemmingNaam, votesSentence } from '$lib/components/parliamentary/stemming';
+	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
+	import Stembalk from '$lib/components/parliamentary/Stembalk.svelte';
+	import { voteBarOf } from '$lib/components/parliamentary/stembalk';
 	import Waarde from '$lib/components/ui/Waarde.svelte';
 	import { korteDatum, weekdag } from '$lib/text/datum';
 	import { plural } from '$lib/text/words';
@@ -56,16 +58,12 @@
 				{failed}
 				verworpen</span
 			>
-			<span class="day-split" aria-hidden="true"
-				><span style:width="{(day.passed / day.count) * 100}%"></span></span
-			>
 		</div>
 	{/if}
 	<ul class="list">
 		{#each day.rows as s (s.id)}
 			{@const bron = `decisions/${s.key}`}
-			{@const { voor: inFavour, tegen: against } = forAgainst(s.tally)}
-			{@const inFavourPct = (inFavour / (inFavour + against)) * 100}
+			{@const bar = voteBarOf(s)}
 			<!-- The Eerste Kamer's decisions carry no kind yet: their dossier leads. -->
 			{@const kindLabel =
 				motionKindLabel(s.motion_kind) ?? s.kind ?? (s.chamber === 'EK' ? null : NO_DECISION_KIND)}
@@ -101,20 +99,10 @@
 					{/if}
 				{/snippet}
 				{#snippet body()}
-					{#if inFavour + against > 0}
-						<span
-							class="stem-mini"
-							title="Zetelverdeling: {votesSentence(s.voters) ??
-								votesSentence(s.tally)} ({s.vote_kind === 'member' ? 'leden' : 'fracties'})"
+					{#if bar}
+						<span class="stem-mini"
+							><Stembalk model={bar} compact members={s.vote_kind === 'member'} /></span
 						>
-							<span class="stem-mini__v">{inFavour}</span>
-							<span class="stem-mini__bar">
-								<span class="stem-mini__bar-v" style:width="{inFavourPct}%"></span>
-								<span class="stem-mini__bar-t" style:width="{100 - inFavourPct}%"></span>
-							</span>
-							<span class="stem-mini__t">{against}</span>
-							<span class="stem-mini__unit">zetels</span>
-						</span>
 					{:else if decisionMethod(s)}
 						<span class="row-method">{decisionMethod(s)}</span>
 					{/if}
@@ -146,7 +134,7 @@
 		color: var(--ink-3);
 	}
 
-	/* Stemmingen: the sitting day over its votes, with the share that passed. */
+	/* Stemmingen: the sitting day over its votes, said in words. */
 	.day-head {
 		display: flex;
 		align-items: baseline;
@@ -171,55 +159,9 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	.day-split {
-		margin-left: auto;
-		align-self: center;
-		display: flex;
-		width: 120px;
-		height: 6px;
-		background: var(--rule);
-	}
-	.day-split span {
-		background: var(--ink);
-	}
-
-	/* Seats for and against on a decision row; the numbers say which is which. */
+	/* The vote's bar, under the name of the stemming. */
 	.stem-mini {
-		display: inline-grid;
-		grid-template-columns: 32px 140px 32px auto;
-		gap: var(--s-2);
-		align-items: center;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-variant-numeric: tabular-nums;
+		display: block;
 		margin-top: var(--s-2);
-	}
-	.stem-mini__v {
-		color: var(--ink-2);
-		text-align: right;
-		font-weight: 600;
-	}
-	.stem-mini__t {
-		color: var(--ink-2);
-		text-align: left;
-		font-weight: 600;
-	}
-	.stem-mini__unit {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	.stem-mini__bar {
-		height: 8px;
-		background: var(--paper-2);
-		border-radius: var(--r-1);
-		overflow: hidden;
-		display: flex;
-	}
-	.stem-mini__bar-v {
-		background: var(--ink-2);
-	}
-	.stem-mini__bar-t {
-		background: var(--rule-strong);
 	}
 </style>

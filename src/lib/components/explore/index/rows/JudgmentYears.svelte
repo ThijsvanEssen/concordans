@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Schema } from '$lib/api/types';
 	import { formatCount } from '$lib/text/getal';
+	import { korteDatum } from '$lib/text/datum';
 	import { axisLabels } from '../years-axis';
 	import type { ViewProps } from '../lists/list';
 	import type { JudgmentsState } from '../lists/judgments';
@@ -15,6 +16,12 @@
 			.sort((a, b) => a.year.localeCompare(b.year))
 			.slice(-40)
 	);
+	/** The running year is not whole: dashed, with the day it runs to in its title. */
+	const today = new Date();
+	const running = String(today.getFullYear());
+	const upTo = `t/m ${korteDatum(today.toISOString().slice(0, 10))}`;
+	const nameOf = (year: string, count: number) =>
+		`${year}${year === running ? `, ${upTo}` : ''}: ${formatCount(count)} uitspraken`;
 	/** The width of the year axis, for the labels that fit (`axisLabels`). */
 	let axisWidth = $state(0);
 </script>
@@ -32,9 +39,10 @@
 					class="years-bar"
 					class:years-bar--on={on}
 					class:years-bar--out={!inRange}
+					class:years-bar--running={year === running}
 					style:height="{Math.max(2, (count / max) * 100)}%"
-					title="{year}: {formatCount(count)} uitspraken"
-					aria-label="{year}: {formatCount(count)} uitspraken"
+					title={nameOf(year, count)}
+					aria-label={nameOf(year, count)}
 					aria-pressed={on}
 					onclick={() =>
 						ctx.patch({
@@ -79,6 +87,10 @@
 	}
 	.years-bar--out {
 		background: var(--rule-strong);
+		opacity: 1;
+	}
+	.years-bar--running {
+		background: repeating-linear-gradient(135deg, var(--indigo) 0 2px, transparent 2px 4px);
 		opacity: 1;
 	}
 	.years-bar:focus-visible {

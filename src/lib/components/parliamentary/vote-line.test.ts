@@ -33,8 +33,8 @@ describe('voteLineOf', () => {
 			date: '2026-09-29',
 			decision: 'decision_1',
 			sides: [
-				{ choice: 'Voor', names: ['D66', 'VVD'] },
-				{ choice: 'Tegen', names: ['PRO'] }
+				{ choice: 'Voor', names: ['D66', 'VVD'], seats: [26, 22] },
+				{ choice: 'Tegen', names: ['PRO'], seats: [20] }
 			]
 		});
 	});
@@ -78,8 +78,8 @@ describe('voteLineOf', () => {
 		);
 		expect(u.how).toBe('bij zitten en opstaan');
 		expect(u.sides).toEqual([
-			{ choice: 'Voor', names: ['VVD', 'CDA'] },
-			{ choice: 'Tegen', names: ['PVV'] }
+			{ choice: 'Voor', names: ['VVD', 'CDA'], seats: [null, null] },
+			{ choice: 'Tegen', names: ['PVV'], seats: [null] }
 		]);
 	});
 
@@ -103,7 +103,7 @@ describe('hasSides', () => {
 describe('sidesOf', () => {
 	it('falls back to the voter key for a fractie without a name', () => {
 		expect(sidesOf(decision({ votes: [{ ...stem('X', 'Voor'), name: null }] }))).toEqual([
-			{ choice: 'Voor', names: ['x'] }
+			{ choice: 'Voor', names: ['x'], seats: [1] }
 		]);
 	});
 });

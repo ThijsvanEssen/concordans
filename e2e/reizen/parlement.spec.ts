@@ -49,8 +49,11 @@ test('a Kamerstuk names its indiener and its dossier, and folds out its vote', a
 test('a motie says at rest how the Kamer voted on it, and which fracties', async ({ page }) => {
 	await page.goto('/kamerstukken/36799/31');
 	await expect(page.getByText('Aangenomen op 29 september 2026, 120 voor, 30 tegen')).toBeVisible();
-	await expect(page.getByText(/^D66, VVD, PVV/)).toBeVisible();
-	await expect(page.getByText('PRO, Groep Markuszower, PvdD')).toBeVisible();
+	// The bar above the names: one sentence for a screen reader, the majority marked.
+	await expect(page.getByRole('img', { name: 'Aangenomen, 120 voor, 30 tegen' })).toBeVisible();
+	await expect(page.getByText('meerderheid 76')).toBeVisible();
+	await expect(page.getByText(/^D66.26, VVD.22, PVV.19/)).toBeVisible();
+	await expect(page.getByText(/^PRO.\d+, Groep Markuszower.\d+, PvdD.\d+/)).toBeVisible();
 	// The stemming itself is one step further, by its day.
 	await expect(page.getByRole('link', { name: '29 september 2026' })).toHaveAttribute(
 		'href',

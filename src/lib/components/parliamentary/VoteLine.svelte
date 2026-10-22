@@ -12,6 +12,8 @@
 	import { langeDatum } from '$lib/text/datum';
 	import { load } from '$lib/util/load.svelte';
 	import Stem from './Stem.svelte';
+	import Stembalk from './Stembalk.svelte';
+	import { voteBarOf } from './stembalk';
 	import Uitkomst from './Uitkomst.svelte';
 	import { hasSides, voteLineOf } from './vote-line';
 
@@ -20,7 +22,9 @@
 	let {
 		decision = null,
 		decisionKey = null,
-		head = true
+		head = true,
+		tally = null,
+		chamber = null
 	}: {
 		/** The decision as the page has it (a stuk's `decisions`). */
 		decision?: Decision | null;
@@ -28,6 +32,9 @@
 		decisionKey?: string | null;
 		/** The outcome, the seats and the day; off where the row already says them. */
 		head?: boolean;
+		/** The tally and chamber the row already has: the bar is drawn from them at first paint. */
+		tally?: unknown;
+		chamber?: string | null;
 	} = $props();
 
 	/** The key to ask: none while the decision as given is whole. */
@@ -42,8 +49,19 @@
 	);
 	const shown = $derived((full.state.status === 'ready' ? full.state.data : null) ?? decision);
 	const line = $derived(shown ? voteLineOf(shown) : null);
+	/** The bar: the fracties as segments once the decision is whole, the row's tally before. */
+	const bar = $derived(
+		shown
+			? voteBarOf(shown, line?.word ?? null)
+			: tally
+				? voteBarOf({ tally, chamber }, null)
+				: null
+	);
 </script>
 
+{#if bar && !line}
+	<Stembalk model={bar} />
+{/if}
 {#if line}
 	<div class="vote-line">
 		{#if head}
@@ -55,11 +73,17 @@
 					>{/if}{#if line.how}<span>, {line.how}</span>{/if}
 			</p>
 		{/if}
+		{#if bar}<Stembalk model={bar} members={shown?.vote_kind === 'member'} />{/if}
 		{#each line.sides as side (side.choice)}
 			{#if side.names.length}
 				<p class="side">
 					<span class="choice"><Stem keuze={side.choice} /></span>
-					<span>{side.names.join(', ')}</span>
+					<span
+						>{#each side.names as name, i (name)}{i > 0
+								? ', '
+								: ''}{name}{#if side.seats[i]}&nbsp;<span class="zetels">{side.seats[i]}</span
+								>{/if}{/each}</span
+					>
 				</p>
 			{/if}
 		{/each}
@@ -100,6 +124,9 @@
 		font-size: var(--t-meta);
 		line-height: var(--lh-snug);
 		color: var(--ink-2);
+	}
+	.zetels {
+		color: var(--ink-3);
 	}
 	.choice {
 		padding-right: var(--s-2);
