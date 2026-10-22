@@ -47,14 +47,11 @@ test('a cited article opens at the lid the judgment names', async ({ page }) => 
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162 BW');
 });
 
-test('the lines of Behoort bij, unfolded, stand a finger’s target apart', async ({
-	page,
-	touch
-}) => {
+test('the lines of Behoort bij stand a finger’s target apart', async ({ page, touch }) => {
 	test.skip(!touch, 'a finger’s target');
 	await page.goto(URGENDA);
 	const band = page.getByRole('navigation', { name: 'Behoort bij' });
-	await band.getByRole('button', { name: /^Alle lagen tonen/ }).click();
+	// Three layers stand whole, as the kruimelpad of the mockups V1.
 	await expect(band.getByRole('link', { name: /^Hof Den Haag 9 oktober 2018/ })).toBeVisible();
 	expect(await smallTargets(page), 'tap targets under 44 px').toEqual([]);
 });
