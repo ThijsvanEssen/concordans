@@ -445,6 +445,10 @@
 		new Map((list ?? []).flatMap((f) => (f.value ? [[f.value, f.count] as const] : [])));
 
 	const coalitionCounts = $derived(facetMap(facets?.coalition));
+	/** Only a vote has a coalition: before the counts are in, room is kept for it where votes may be. */
+	const votesPossible = $derived(kinds.length === 0 || kinds.includes('stemming'));
+	/** The fracties of a view, about: the room the list keeps while its counts are on their way. */
+	const PENDING_FACTIONS = 9;
 	const groups = $derived.by<FacetGroup[]>(() => {
 		const kindCounts = facetMap(facets?.kind);
 		// Every fraction, as on Kamerleden; the chosen one also when this view has none of it.
@@ -471,6 +475,7 @@
 				label: 'Ingediend door',
 				chip: 'Ingediend door',
 				kind: 'list',
+				rijen: PENDING_FACTIONS,
 				options: factionCounts.map(([key, count]) => {
 					const short = factionNames[key] ?? key;
 					return {
@@ -514,12 +519,13 @@
 				: []),
 			// Only where the votes of the view have a coalition (the Tweede Kamer, a cabinet in
 			// office); a chosen value stays to be undone.
-			...(coalitionCounts.size || coalition
+			...(coalitionCounts.size || coalition || (tellen && !facets && votesPossible)
 				? [
 						{
 							id: 'coalitie',
 							label: 'Coalitie',
 							kind: 'list' as const,
+							rijen: Object.keys(COALITION).length,
 							options: (Object.keys(COALITION) as CoalitionWord[]).map((k) => ({
 								id: k,
 								label: COALITION[k].label,

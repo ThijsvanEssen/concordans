@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Schema } from '$lib/api/types';
-import { decidingVote, hasSides, sidesOf, voteLineOf } from './vote-line';
+import { decidingVote, hasSides, outcomeTone, sidesOf, voteLineOf } from './vote-line';
 
 type Decision = Schema<'DecisionDTO'>;
 const decision = (d: Partial<Decision>): Decision => ({ key: 'k', ...d }) as Decision;
@@ -11,6 +11,14 @@ const stem = (name: string, choice: string, seats = 1) => ({
 	choice,
 	seats,
 	path: null
+});
+
+describe('outcomeTone', () => {
+	it('is one reading for the motie, the stemming and the list: ja, nee, else open', () => {
+		expect(outcomeTone(decision({ passed: true }))).toBe('ja');
+		expect(outcomeTone(decision({ passed: false }))).toBe('nee');
+		expect(outcomeTone(decision({}))).toBe('open');
+	});
 });
 
 describe('voteLineOf', () => {

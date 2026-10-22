@@ -10,6 +10,7 @@ import {
 	korteDatum,
 	langeDatum,
 	maandJaar,
+	vandaag,
 	weekdag
 } from './datum';
 
@@ -23,6 +24,14 @@ describe('datum', () => {
 	it('reads the day of a moment as written, whatever the time zone', () => {
 		expect(korteDatum('2026-09-28T23:30:00Z')).toBe('28 sep. 2026');
 		expect(langeDatum('2026-01-01T00:00:00+02:00')).toBe('1 januari 2026');
+	});
+
+	it('says today in Europe/Amsterdam, whatever the time zone of the reader (T5)', () => {
+		// 22:30 UTC on 21 October is half past midnight of the 22nd in the Netherlands.
+		expect(vandaag(new Date('2026-10-21T22:30:00Z'))).toBe('2026-10-22');
+		expect(vandaag(new Date('2026-10-21T21:30:00Z'))).toBe('2026-10-21');
+		// Winter time: 23:30 UTC is half past midnight too.
+		expect(vandaag(new Date('2026-12-31T23:30:00Z'))).toBe('2027-01-01');
 	});
 
 	it('has a short form without the year, and one with month and year', () => {

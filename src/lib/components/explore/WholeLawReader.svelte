@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { bewaarItem } from '$lib/map/map';
-	import { citationRecord } from '$lib/text/citation-record';
 	import { langeDatum, vandaag } from '$lib/text/datum';
 	import { report } from '$lib/api/errors';
 	import { untrack } from 'svelte';
@@ -31,7 +30,15 @@
 	import { EMPTY_LIST, createLawList, isDivisionAnchor, type LawList, type Row } from './law-list';
 	import { lawNodeKey } from '$lib/text/enacted-law';
 	import { setOwnLaw } from '$lib/text/own-article.svelte';
-	import { kindName, lawFullTitle, lawHeadLine, lawKind, sourceName, treatyLink } from './law-head';
+	import {
+		kindName,
+		lawCitationRecord,
+		lawFullTitle,
+		lawHeadLine,
+		lawKind,
+		sourceName,
+		treatyLink
+	} from './law-head';
 	import { navigate, withParams } from '$lib/util/address';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';
@@ -107,16 +114,7 @@
 	const fullTitle = $derived(lawFullTitle(lawDetail, lawTitle));
 	// Its heading and its citations: the name it goes by with the abbreviation it is cited by
 	// (`Algemene verordening gegevensbescherming (AVG)`), Citeer short and in full.
-	const record = $derived(
-		citationRecord({
-			kind: 'law',
-			bwbId,
-			citationTitle: lawTitle,
-			abbreviation: lawDetail?.abbreviation ?? $instrumentMetaStore.get(bwbId)?.abbreviation,
-			shortTitle: lawDetail?.short_title,
-			fullTitle
-		})
-	);
+	const record = $derived(lawCitationRecord(bwbId, lawDetail, $instrumentMetaStore.get(bwbId)));
 	// A treaty: its record in the Verdragenbank, or from there its text in the BWB.
 	const treaty = $derived(treatyLink(lawDetail, lawDetail?.same_treaty ?? []));
 	// The versions of the law, for the peildatum; the current one dates the text in force

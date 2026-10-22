@@ -105,11 +105,18 @@ export const daysBetween = (a: string, b: string): number =>
 export const addDays = (iso: string, n: number): string =>
 	new Date(Date.parse(`${iso.slice(0, 10)}T00:00:00Z`) + n * DAY_MS).toISOString().slice(0, 10);
 
-/** Today as an ISO day, in the reader's own time zone. */
-export const vandaag = (now = new Date()): string =>
-	`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+/** The day of a moment in the Netherlands, where the law and the Kamer date their days. */
+const AMSTERDAM = new Intl.DateTimeFormat('en-CA', {
+	timeZone: 'Europe/Amsterdam',
+	year: 'numeric',
+	month: '2-digit',
+	day: '2-digit'
+});
 
-/** Whether the ISO day has come: today or before (in the reader's own time zone). */
+/** Today as an ISO day, in Europe/Amsterdam: the day the page, a citation and a peildatum say. */
+export const vandaag = (now = new Date()): string => AMSTERDAM.format(now);
+
+/** Whether the ISO day has come: today or before (in Europe/Amsterdam). */
 export const hasPassed = (iso: string, now = new Date()): boolean => iso <= vandaag(now);
 
 /** `2017–2026`, `2026`, `2025–` while it lasts: a year first, so a column of them aligns. */

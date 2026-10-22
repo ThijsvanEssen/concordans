@@ -1,7 +1,7 @@
 <script lang="ts">
 	// Volg in a dossier's head, beside Bewaar: its Atom link, and the dossier kept under Gevolgd
-	// in this browser (onderwerpen.ts), as a law is followed from Actueel. Followed, a link
-	// leads to Gevolgd and Volg keeps the Atom link,
+	// in this browser (onderwerpen.ts), as a law is followed from Actueel. Followed, the one
+	// button says Gevolgd and its menu leads to Gevolgd and keeps the Atom link,
 	// and what Actueel holds of the dossier since the visit before is marked beside it, a link
 	// to those days; the visit is then today's (API 0.80.1, #866). Asked after the first paint.
 	import { getFeed } from '$lib/api/feed';
@@ -53,7 +53,12 @@
 </script>
 
 {#if followed}
-	<a class="btn" href="/onderwerpen">Gevolgd</a>
+	<Follow href={atom} label="Gevolgd">
+		{#snippet local(close)}
+			<a role="menuitem" class="tekstmenu__item" href="/onderwerpen" onclick={close}>Open Gevolgd</a
+			>
+		{/snippet}
+	</Follow>
 	{#if newSince}<a
 			class="new-since"
 			href="/actueel?{new URLSearchParams([
@@ -61,7 +66,6 @@
 				['van', newSince]
 			])}"><NewMark since={newSince} /></a
 		>{/if}
-	<Follow href={atom} />
 {:else}
 	<Follow href={atom}>
 		{#snippet local(close)}

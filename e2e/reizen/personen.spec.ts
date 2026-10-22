@@ -38,7 +38,7 @@ test('a cabinet names its coalition and folds out its seats in the Tweede Kamer'
 	page
 }) => {
 	await page.goto('/kabinetten/rutte_iv');
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('kabinet-Rutte IV');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Kabinet-Rutte IV');
 	await expect(page.getByText('10 januari 2022 tot 2 juli 2024')).toBeVisible();
 	for (const party of ['VVD', 'D66', 'CDA', 'ChristenUnie'])
 		await expect(page.getByRole('link', { name: party, exact: true }).first()).toBeVisible();

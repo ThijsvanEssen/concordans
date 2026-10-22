@@ -28,7 +28,7 @@
 	import { menu } from '$lib/actions/menu';
 	import { topLayer } from '$lib/actions/top-layer';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
-	import type { CiteItem } from '$lib/components/ui/cite-items';
+	import { citedWhat, type CiteItem } from '$lib/components/ui/cite-items';
 	import { kaart } from '$lib/map/map.svelte';
 	import type { MapItem } from '$lib/map/map';
 	import BundleChecklist from '$lib/map/BundleChecklist.svelte';
@@ -109,8 +109,8 @@
 		gone = true;
 		clearTimeout(closing);
 	});
-	async function kopieer(wat: string, sleutel: string) {
-		await copier.copy(wat, sleutel);
+	async function kopieer(tekst: string, sleutel: string, genoemd: string) {
+		await copier.copy(tekst, sleutel, genoemd);
 		if (!gone) closing = setTimeout(() => sluit(), 600);
 	}
 </script>
@@ -131,7 +131,7 @@
 				type="button"
 				class="tekstmenu__item tekstmenu__item--paar"
 				role="menuitem"
-				onclick={() => kopieer(withWords(c), c.kind)}
+				onclick={() => kopieer(withWords(c), c.kind, citedWhat(cite, c, title))}
 				><span class="vorm" class:link={c.kind === 'link'}>{copier.label(c.kind, c.text)}</span
 				><span class="soort">{c.kind}</span></button
 			>
@@ -141,7 +141,8 @@
 		type="button"
 		class="tekstmenu__item"
 		role="menuitem"
-		onclick={() => kopieer(tekst(), 'tekst')}>{copier.label('tekst', 'Kopieer tekst')}</button
+		onclick={() => kopieer(tekst(), 'tekst', `tekst van ${title}`)}
+		>{copier.label('tekst', 'Kopieer tekst')}</button
 	>
 	{#if writing && (fragment?.shade || shading)}
 		<form

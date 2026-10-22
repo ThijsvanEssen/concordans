@@ -43,13 +43,32 @@ test('a kept lid carries the bar in the text', async ({ page }) => {
 	await expect(page.locator('.plaats-bewaard')).toHaveCount(1);
 });
 
-test('Kopieer is heard by a screen reader, without a line drawn', async ({ page, context }) => {
+test('Kopieer says what it copied in the status line, seen and heard', async ({
+	page,
+	context
+}) => {
 	const copied = await catchClipboard(context);
 	await page.goto(ARTICLE);
 	await page.getByRole('button', { name: 'Citeer', exact: true }).click();
 	await page.getByRole('menuitem').first().click();
-	await expect(page.getByRole('status')).toHaveText('Gekopieerd');
+	const status = page.getByRole('status');
+	await expect(status).toHaveText('Gekopieerd: art. 6:162 BW');
+	// Drawn, not only read: a line a reader sees, over no part of the table of contents.
+	await expect(status).toBeVisible();
+	const box = (await status.boundingBox())!;
+	const kolom = await page.locator('.nav-kolom').first().boundingBox();
+	if (kolom) expect(box.x).toBeGreaterThanOrEqual(kolom.x + kolom.width);
 	expect(await copied(page)).toBeTruthy();
+	await expect(status).toHaveText('', { timeout: 4000 });
+});
+
+test('Citeer with the date says the day the page says (T5)', async ({ page }) => {
+	await page.goto(ARTICLE);
+	const dag = await page.getByRole('button', { name: /^Tekst geldend op/ }).textContent();
+	await page.getByRole('button', { name: 'Citeer', exact: true }).click();
+	await expect(page.getByRole('menuitem', { name: /tekst geldend op/ })).toContainText(
+		dag!.replace(/^Tekst geldend op\s*/, '').trim()
+	);
 });
 
 test('Volg a dossier says where it went and marks Gevolgd', async ({ page }) => {
@@ -68,4 +87,23 @@ test('Volg a dossier says where it went and marks Gevolgd', async ({ page }) => 
 			.locator('[aria-label="nieuw"]')
 			.first()
 	).toBeAttached();
+});
+
+test('Volg a dossier then stays one button, Gevolgd, and never flips back', async ({ page }) => {
+	await page.goto('/dossiers/36496');
+	await page.getByRole('button', { name: 'Volg', exact: true }).click();
+	await page.getByRole('menuitem', { name: 'Bewaar bij Gevolgd' }).click();
+	const kop = page.locator('.kop-acties');
+	await expect(kop.getByRole('button', { name: 'Gevolgd', exact: true })).toBeVisible();
+	// Over the next seconds: the one button, never a second one, never Volg again.
+	for (let i = 0; i < 12; i++) {
+		await page.waitForTimeout(150);
+		await expect(kop.getByRole('button', { name: 'Volg', exact: true })).toHaveCount(0);
+		await expect(kop.getByRole('button', { name: 'Gevolgd', exact: true })).toHaveCount(1);
+	}
+	await kop.getByRole('button', { name: 'Gevolgd', exact: true }).click();
+	await expect(page.getByRole('menuitem', { name: 'Open Gevolgd' })).toHaveAttribute(
+		'href',
+		'/onderwerpen'
+	);
 });

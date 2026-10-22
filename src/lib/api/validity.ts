@@ -48,11 +48,13 @@ export function validityOf(answer: unknown): Validity | null | undefined {
 }
 
 /**
- * The day to cite a text as holding on: the day its data stands on (`as_of`); of what has
- * expired the last day it held, the day before `date`; else undefined (today).
+ * The day to cite a text as holding on: of what has expired the last day it held, the day
+ * before `date`; else undefined, and a citation says today (Europe/Amsterdam), the day the
+ * page gives as the peildatum. `as_of` is the day the data stands on, a day behind the
+ * morning: citing that would date the text a day before the page does.
  */
 export function citeDate(v: Validity | null | undefined): Date | undefined {
-	const day = v?.state === 'expired' && v.date ? addDays(v.date, -1) : v?.as_of?.slice(0, 10);
-	// Noon, so the reader's own time zone reads the same day.
-	return day ? new Date(`${day}T12:00:00`) : undefined;
+	const day = v?.state === 'expired' && v.date ? addDays(v.date, -1) : null;
+	// Noon UTC: the same day in Amsterdam and in any time zone near it.
+	return day ? new Date(`${day}T12:00:00Z`) : undefined;
 }

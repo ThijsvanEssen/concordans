@@ -52,7 +52,9 @@
 						role="menuitem"
 						class="tekstmenu__item"
 						onclick={() => {
-							copier.copy(tekst(), 'tekst').catch((e) => report('Kopiëren', e));
+							copier
+								.copy(tekst(), 'tekst', `tekst van ${naam}`)
+								.catch((e) => report('Kopiëren', e));
 							close();
 						}}>{copier.label('tekst', 'Kopieer tekst')}</button
 					>

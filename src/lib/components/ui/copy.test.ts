@@ -17,6 +17,12 @@ describe('createCopier', () => {
 		expect(confirmation.now).toBeNull();
 	});
 
+	it('names what was copied in the status line, when it is given', async () => {
+		const copier = createCopier(async () => {});
+		await copier.copy('Artikel 6:162 BW', 'kort', 'art. 6:162 BW');
+		expect(confirmation.now?.text).toBe('Gekopieerd: art. 6:162 BW');
+	});
+
 	it('says Kopiëren mislukt where the clipboard refuses', async () => {
 		const copier = createCopier(() => Promise.reject(new Error('denied')));
 		expect(await copier.copy('x', 'link')).toBe(false);

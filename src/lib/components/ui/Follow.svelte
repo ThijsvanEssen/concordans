@@ -13,11 +13,14 @@
 	let {
 		href,
 		buttonClass = 'btn',
+		label = 'Volg',
 		local
 	}: {
 		/** The Atom link of the view (`atomHref`). */
 		href: string;
 		buttonClass?: string;
+		/** The button's word: Volg, or Gevolgd where it is followed already. */
+		label?: string;
 		/** The ways to follow in this browser, as menu items; given the function that closes the menu. */
 		local?: Snippet<[() => void]>;
 	} = $props();
@@ -27,7 +30,7 @@
 	const copier = createCopier();
 
 	function copy() {
-		copier.copy(href, 'atom').catch((e) => report('Volgen', e));
+		copier.copy(href, 'atom', 'Atom-link').catch((e) => report('Volgen', e));
 		open = false;
 	}
 </script>
@@ -40,7 +43,7 @@
 			bind:this={button}
 			aria-haspopup="menu"
 			aria-expanded={open}
-			onclick={() => (open = !open)}>{copier.label('atom', 'Volg')}<Caret {open} /></button
+			onclick={() => (open = !open)}>{copier.label('atom', label)}<Caret {open} /></button
 		>
 		{#if open && button}
 			<div
@@ -61,7 +64,7 @@
 		type="button"
 		class={buttonClass}
 		title="Kopieer de Atom-link van deze lijst"
-		onclick={copy}>{copier.label('atom', 'Volg')}</button
+		onclick={copy}>{copier.label('atom', label)}</button
 	>
 {/if}
 

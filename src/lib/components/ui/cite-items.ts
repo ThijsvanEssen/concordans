@@ -18,3 +18,12 @@ export function citeItems(given: Forms | RecordForms | null, link?: string | nul
 	if (link) items.push({ kind: 'link', text: link });
 	return items;
 }
+
+/** What a copied form is called in the status line: the short citation, with the form after it
+ *  where it is another than the short one; a link is the link to it. */
+export function citedWhat(items: CiteItem[], item: CiteItem, name: string): string {
+	const kort = items.find((i) => i.kind === 'kort')?.text ?? name;
+	if (item.kind === 'kort') return kort;
+	if (item.kind === 'link') return `link naar ${kort}`;
+	return `${kort}, ${item.kind}`;
+}

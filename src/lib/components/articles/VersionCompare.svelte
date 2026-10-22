@@ -272,7 +272,8 @@
 	// ── Copying ──────────────────────────────────────────────────────────────────
 
 	const copier = createCopier();
-	const copy = (text: string, what: string) => copier.copy(text, what);
+	const copy = (text: string, what: string) =>
+		copier.copy(text, what, 'citeerwijze met geldigheid');
 
 	const cite = (lid: string | null) =>
 		citation

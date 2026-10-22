@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { votesSentence } from '$lib/components/parliamentary/stemming';
+	import Stembalk from '$lib/components/parliamentary/Stembalk.svelte';
+	import { voteBarOf } from '$lib/components/parliamentary/stembalk';
 	import { capitalize, count } from '$lib/text/words';
 	import { korteDatum } from '$lib/text/datum';
 	// One day of Actueel in the shared timeline, as on the homepage: the day as the heading
@@ -229,9 +231,15 @@
 				>
 			{/if}
 			{#if i.vote}
-				<!-- The outcome is in the label; the tally beside it, or how it was decided. -->
-				{@const how = votesSentence(i.vote.tally) ?? voteHow(i)}
-				{#if how}<span>{how}</span>{/if}
+				<!-- The outcome is in the label; the tally as the bar of every vote (Stembalk), or how
+				     it was decided where the vote has no seats (a hamerstuk). -->
+				{@const bar = voteBarOf(i.vote)}
+				{#if bar}
+					<span class="stem-mini"><Stembalk model={bar} compact /></span>
+				{:else}
+					{@const how = votesSentence(i.vote.tally) ?? voteHow(i)}
+					{#if how}<span>{how}</span>{/if}
+				{/if}
 				{@render partyChoice(i)}
 			{:else if i.commitment}
 				<span
@@ -380,6 +388,10 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
+	}
+	/* A vote's bar on a line of its own, as in the list of stemmingen. */
+	.stem-mini {
+		flex: 1 0 100%;
 	}
 	.meta :global(a) {
 		color: var(--ink-2);

@@ -12,7 +12,7 @@ import { headingCite, type HeadingSource } from './judgment-heading';
 import { kamerstukCitation, kamerstukLabel, kamerstukName, type Paper } from './kamerstuk';
 import { kamerstukNummer, officialNumber } from '$lib/bron/dossier-naam';
 
-type CitationRecord = {
+export type CitationRecord = {
 	/** The name its heading gives it: `Artikel 6:162 BW`, `Wet beveiliging netwerk- en
 	 *  informatiesystemen (Wbni), Stb. 2018, 387`. */
 	heading: string;

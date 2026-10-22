@@ -435,8 +435,8 @@
 		officialUrl ? new URL(officialUrl).hostname.replace(/^www\./, '') : null
 	);
 
-	// An earlier text is cited as geldend on the day it took effect; the text of today on the
-	// day the data stands on (`validity.as_of`), else today.
+	// An earlier text is cited as geldend on the day it took effect; the text of today on today,
+	// as the page says (Europe/Amsterdam), what has expired on its last day.
 	const citeOn = $derived(shown?.from ? new Date(shown.from) : citeDate(validity));
 	const forms = $derived(
 		citation ? citationRecord({ ...citation, kind: 'article', date: citeOn }) : null

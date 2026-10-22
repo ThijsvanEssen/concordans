@@ -107,6 +107,13 @@
 		gap: var(--s-2) var(--s-4);
 		padding: 0 var(--s-4) var(--s-2);
 	}
+	/* Wrapped on a phone, two controls stand over each other: far enough apart that each keeps
+	   its 44 px for a finger (7 px of target beyond each, 14 between). */
+	@media (pointer: coarse), (max-width: 768px) {
+		.regel {
+			row-gap: var(--s-4);
+		}
+	}
 	.jaar-rechter {
 		display: grid;
 		grid-template-columns: auto auto;

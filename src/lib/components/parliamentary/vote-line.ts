@@ -78,9 +78,15 @@ export const hasSides = (d: Decision): boolean =>
 	(d.votes ?? []).length > 0 ||
 	!hasVotes(d.tally);
 
+/** The tone of a decision's outcome: aangenomen ja, verworpen nee, else open. One reading, so
+ *  the motie, the stemming and the list colour an outcome alike (red with its word). */
+export function outcomeTone(d: Decision): VoteLineParts['tone'] {
+	const result = decisionResult(d);
+	return result && result !== 'ingetrokken' ? TONE[result] : 'open';
+}
+
 /** The line of a decision; without an outcome or a kind, the plain word `Stemming`. */
 export function voteLineOf(d: Decision): VoteLineParts {
-	const result = decisionResult(d);
 	const tally = tallyWords(d.tally);
 	const how =
 		tally && d.vote_kind === 'member'
@@ -89,7 +95,7 @@ export function voteLineOf(d: Decision): VoteLineParts {
 	return {
 		word: decisionOutcome(d) ?? 'Stemming',
 		// A vote is aangenomen or verworpen; ingetrokken ends a bill by letter, never a vote.
-		tone: result && result !== 'ingetrokken' ? TONE[result] : 'open',
+		tone: outcomeTone(d),
 		how,
 		date: d.date ?? null,
 		decision: d.key,

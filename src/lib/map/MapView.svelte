@@ -165,7 +165,11 @@
 		role="menuitem"
 		class="tekstmenu__item"
 		onclick={act(close, () =>
-			copier.copy(citaten(b.items, b.volgorde, b.notitie, b.groepNotities), 'citations')
+			copier.copy(
+				citaten(b.items, b.volgorde, b.notitie, b.groepNotities),
+				'citations',
+				`citaten van ${b.naam}`
+			)
 		)}>Kopieer citaten</button
 	>
 	<button
@@ -178,7 +182,8 @@
 					address: (i) => itemAddress(i, page.url.origin),
 					consulted: vandaag()
 				}),
-				'citations'
+				'citations',
+				`citaten van ${b.naam} met link`
 			)
 		)}>Kopieer citaten met link</button
 	>
@@ -230,7 +235,9 @@
 			<TekstLink href={netwerkHref(b.items) ?? undefined}>Netwerk</TekstLink>
 		{/if}
 		{#if m}
-			<TekstLink disabled={!link} onclick={() => copier.copy(link ?? '', 'link')}
+			<TekstLink
+				disabled={!link}
+				onclick={() => copier.copy(link ?? '', 'link', 'link naar de bundel')}
 				>{copier.label('link', 'Kopieer link')}</TekstLink
 			>
 		{:else}

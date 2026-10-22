@@ -1,15 +1,16 @@
 <script lang="ts">
 	// The status line of the ritual (bevestig.svelte.ts), drawn once for the whole site: a live
-	// region that is always there, so a screen reader hears what is put in it. Seen only where
-	// there is a destination to link to; a copy is heard, its button says it.
+	// region that is always there, so a screen reader hears what is put in it, and seen for the
+	// two seconds, whatever it says: Bewaard in, Gekopieerd: art. 6:162 BW. At the foot of the
+	// page, in the middle: the table of contents on the left is never covered.
 	import { confirmation } from '$lib/bevestig/bevestig.svelte';
 
 	const nu = $derived(confirmation.now);
 </script>
 
 <div
-	class:bevestiging={!!nu?.to}
-	class:sr-only={!nu?.to}
+	class:bevestiging={!!nu}
+	class:sr-only={!nu}
 	role="status"
 	aria-live="polite"
 	aria-atomic="true"
@@ -20,10 +21,12 @@
 <style>
 	.bevestiging {
 		position: fixed;
-		left: var(--s-4);
+		inset-inline: var(--s-4);
 		bottom: var(--s-4);
 		z-index: 50;
+		width: fit-content;
 		max-width: calc(100vw - 2 * var(--s-4));
+		margin-inline: auto;
 		padding: var(--s-2) var(--s-3);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { textOf } from '$lib/text/words';
+	import { capitalize, textOf } from '$lib/text/words';
 	import { langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import ReaderHead from './ReaderHead.svelte';
@@ -50,7 +50,7 @@
 	{#snippet head()}
 		<ReaderHead
 			collection="cabinets"
-			title={naam}
+			title={capitalize(naam)}
 			acties={{
 				bewaar: bewaarItem(node.id, { kort: naam, voluit: naam })
 			}}

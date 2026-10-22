@@ -349,7 +349,7 @@
 	const copier = createCopier();
 	function kopieer() {
 		const adres = new URL(deelAdres(eigen), page.url.origin).href;
-		copier.copy(adres, 'deel').catch((e) => report('Kopiëren', e));
+		copier.copy(adres, 'deel', 'link naar Gevolgd').catch((e) => report('Kopiëren', e));
 	}
 </script>
 

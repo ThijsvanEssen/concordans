@@ -4,6 +4,8 @@
 import type { Schema } from '$lib/api/types';
 import type { Validity } from '$lib/api/validity';
 import { enactedLawId, enactedLawStatus } from '$lib/text/enacted-law';
+import { lawName, type InstrumentMeta } from '$lib/api/instrument-cache';
+import { citationRecord, type CitationRecord } from '$lib/text/citation-record';
 
 type Detail = Pick<
 	Schema<'InstrumentDetailDTO'>,
@@ -184,4 +186,29 @@ export function treatyLink(
 				target: { kind: 'bron', key: text.key }
 			}
 		: null;
+}
+
+/**
+ * The citation record of a law as its page has it: its heading, Citeer short and in full. The
+ * head of the law and the name over its table of contents read this one, so they say alike.
+ */
+export function lawCitationRecord(
+	bwbId: string,
+	detail: Partial<
+		Pick<
+			Schema<'InstrumentDetailDTO'>,
+			'title' | 'citation_title' | 'official_title' | 'short_title' | 'abbreviation'
+		>
+	> | null,
+	meta: InstrumentMeta | null | undefined
+): CitationRecord {
+	const name = lawName(meta, detail?.citation_title ?? detail?.title ?? bwbId);
+	return citationRecord({
+		kind: 'law',
+		bwbId,
+		citationTitle: name,
+		abbreviation: detail?.abbreviation ?? meta?.abbreviation,
+		shortTitle: detail?.short_title,
+		fullTitle: lawFullTitle(detail as Detail | null, name)
+	});
 }

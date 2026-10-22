@@ -23,6 +23,9 @@
 				/** Names what a chosen option is in its chip, where its label alone is ambiguous. */
 				chip?: string;
 				options: FacetOption[];
+				/** While the first answer is on its way and there are no options yet: this many
+				 *  lines of room, so nothing under the group moves when the options come. */
+				rijen?: number;
 				/** A long list (the rechtsgebieden) shows this many, the chosen one too, then Alle N. */
 				preview?: number;
 		  }
@@ -173,6 +176,11 @@
 
 			{#if g.kind === 'list'}
 				<ul class="options">
+					{#if pending && g.options.length === 0 && g.rijen}
+						{#each { length: g.rijen } as _, n (n)}
+							<li class="wacht" aria-hidden="true"></li>
+						{/each}
+					{/if}
 					{#each shown(g) as o (o.id)}
 						<li>
 							<FilterOptie
@@ -268,6 +276,19 @@
 		list-style: none;
 		margin: 0;
 		padding: 0;
+	}
+	/* A line of room for an option that is still to come: the height of an option, a faint bar. */
+	.wacht {
+		display: flex;
+		align-items: center;
+		min-height: var(--tik-h);
+	}
+	.wacht::before {
+		content: '';
+		width: 60%;
+		height: var(--s-2);
+		border-radius: var(--r-1);
+		background: var(--rule);
 	}
 	.alle {
 		margin: var(--s-1) 0 0;

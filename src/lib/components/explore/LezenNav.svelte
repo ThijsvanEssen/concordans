@@ -10,7 +10,8 @@
 	import { artikelAnker, layersOf } from '$lib/text/division';
 	import { scrollInReader } from '$lib/bron/landing';
 	import { page } from '$app/state';
-	import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
+	import { getInstrumentDetail, instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
+	import { lawCitationRecord } from './law-head';
 	import { instrumentLawId, lawIdOf, type GraphNode } from '$lib/graph/types';
 	import { bronHref } from '$lib/bron/href';
 	import Caret from '$lib/components/ui/Caret.svelte';
@@ -46,6 +47,24 @@
 		if (!currentBwb) return null;
 		return lawName($instrumentMetaStore.get(currentBwb), currentBwb);
 	});
+
+	// The name over the contents is the heading of the law's own page (the citation record, E6),
+	// never its id: the law is asked (once, as its head asks it) and the column waits without a name.
+	const lawDetail = load(
+		() => currentBwb,
+		(bwb) => (bwb ? getInstrumentDetail(bwb) : Promise.resolve(null)),
+		'Wet, gegevens'
+	);
+	const navTitle = $derived(
+		currentBwb && lawDetail.state.status === 'ready'
+			? lawCitationRecord(
+					currentBwb,
+					lawDetail.state.data,
+					// An act of the EU or a publication is kept under its node key, lower case.
+					$instrumentMetaStore.get(currentBwb) ?? $instrumentMetaStore.get(currentBwb.toLowerCase())
+				).heading
+			: null
+	);
 
 	const groupLabel = (g: Group) => {
 		const label = g.label.trim() || (g.type && g.type !== 'sectie' ? capitalize(g.type) : '');
@@ -267,7 +286,7 @@
 	     above its title. -->
 	<NavKolom
 		label="Overzicht"
-		title={lawTitle}
+		title={navTitle}
 		titleHref={lawHref}
 		onder={onLaw && items.length > 0 ? `${formatCount(items.length)} artikelen` : null}
 		bind:el={navEl}

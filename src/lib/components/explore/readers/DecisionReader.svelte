@@ -17,6 +17,8 @@
 	import CoalitieRegel from '$lib/components/parliamentary/CoalitieRegel.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Stem from '$lib/components/parliamentary/Stem.svelte';
+	import Uitkomst from '$lib/components/parliamentary/Uitkomst.svelte';
+	import { outcomeTone } from '$lib/components/parliamentary/vote-line';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
@@ -143,11 +145,10 @@
 				     second one here. A stemming is cited through what was voted on (KOP_ACTIES). -->
 				{#snippet statusLine()}
 					<p class="woorden">
-						{#if uitkomst}<span
-								class="uitslag"
-								class:uitslag--passed={d.passed === true}
-								class:uitslag--failed={d.passed === false}>{uitkomst}</span
-							>{/if}{#if d.primary_case_kind}{uitkomst ? ', ' : ''}<span class="zaaksoort"
+						{#if uitkomst}<Uitkomst
+								tone={outcomeTone(d)}
+								woord={uitkomst}
+							/>{/if}{#if d.primary_case_kind}{uitkomst ? ', ' : ''}<span class="zaaksoort"
 								>{motionKindLabel(d.motion_kind) ?? d.primary_case_kind}</span
 							>{/if}{#each verder as dossier, i (dossier.number)}{uitkomst ||
 							d.primary_case_kind ||
@@ -292,17 +293,12 @@
 	}
 
 	/* The outcome, the kind of case and the dossier numbers are words, not tags. */
-	.uitslag,
 	.zaaksoort,
 	:global(.dossier-woord) {
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-weight: 600;
 		text-decoration: none;
-	}
-	.uitslag--passed,
-	.uitslag--failed {
-		color: var(--ink-2);
 	}
 	.zaaksoort {
 		color: var(--ink-3);

@@ -7,7 +7,7 @@
 	import { topLayer } from '$lib/actions/top-layer';
 	import Caret from './Caret.svelte';
 	import { createCopier } from './copy.svelte';
-	import type { CiteItem } from './cite-items';
+	import { citedWhat, type CiteItem } from './cite-items';
 
 	let {
 		items,
@@ -33,8 +33,8 @@
 	let button = $state<HTMLElement | null>(null);
 	const copier = createCopier();
 
-	function copy(text: string) {
-		copier.copy(text, 'cite').catch((e) => report('Citeren', e));
+	function copy(item: CiteItem) {
+		copier.copy(item.text, 'cite', citedWhat(items, item, name)).catch((e) => report('Citeren', e));
 		open = false;
 	}
 </script>
@@ -63,7 +63,7 @@
 						type="button"
 						role="menuitem"
 						class="tekstmenu__item tekstmenu__item--paar"
-						onclick={() => copy(item.text)}
+						onclick={() => copy(item)}
 						><span class:pop__link={item.kind === 'link'}>{item.text}</span><span class="pop__k"
 							>{item.kind}</span
 						></button

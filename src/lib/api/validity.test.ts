@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { citeDate, validityOf, type Validity } from './validity';
 import { statusOf } from '$lib/text/validity';
+import { vandaag } from '$lib/text/datum';
 
 const v = (o: Partial<Validity>): Validity => ({
 	state: 'in_force',
@@ -26,9 +27,9 @@ describe('validityOf', () => {
 });
 
 describe('citeDate', () => {
-	it('is the day the data stands on, the last day of what expired, else undefined', () => {
-		const day = (d?: Date) => d && `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-		expect(day(citeDate(v({ as_of: '2026-10-21' })))).toBe('2026-10-21');
+	it('is the last day of what expired, else undefined: a citation says today', () => {
+		const day = (d?: Date) => d && vandaag(d);
+		expect(citeDate(v({ as_of: '2026-10-21' }))).toBeUndefined();
 		expect(day(citeDate(v({ state: 'expired', date: '2020-01-01', as_of: '2026-10-21' })))).toBe(
 			'2019-12-31'
 		);

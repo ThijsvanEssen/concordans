@@ -134,6 +134,18 @@ describe('citing an article of an act of the EU, its text as adopted (A53 #2)', 
 		expect(forms.dated).not.toMatch(/geldend/);
 	});
 
+	it('dates the text on the day the page says, in Amsterdam (T5)', () => {
+		const c = {
+			articleNumber: '162',
+			shortTitle: 'BW',
+			citationTitle: 'Burgerlijk Wetboek Boek 6'
+		};
+		const late = new Date('2026-10-21T22:30:00Z');
+		expect(citeArticle({ ...c, date: late }).dated).toBe(
+			'art. 162 BW (tekst geldend op 22 oktober 2026)'
+		);
+	});
+
 	it('gives no dated form where the day it was adopted is not known', () => {
 		expect(citeArticle({ ...avg, adopted: { on: null } }).dated).toBeNull();
 	});

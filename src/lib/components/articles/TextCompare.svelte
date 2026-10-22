@@ -131,7 +131,10 @@
 					>{showSame ? 'Alleen wijzigingen' : 'Alle leden'}</button
 				>
 			{/if}
-			<button type="button" class="btn is-text" onclick={() => copier.copy(copyText, 'diff')}
+			<button
+				type="button"
+				class="btn is-text"
+				onclick={() => copier.copy(copyText, 'diff', 'vergelijking')}
 				>{copier.label('diff', 'Kopieer')}</button
 			>
 		</span>

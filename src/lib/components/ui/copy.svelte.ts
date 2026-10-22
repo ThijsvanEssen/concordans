@@ -1,6 +1,6 @@
 // Copying to the clipboard, the same everywhere: the button that copied says
 // Gekopieerd, or Kopiëren mislukt where the clipboard refuses, for two seconds, and the
-// ritual's live region says the same to a screen reader (bevestig.svelte.ts).
+// ritual's status line says what was copied, seen and heard (bevestig.svelte.ts).
 
 import { BEVESTIG_MS, announce } from '$lib/bevestig/bevestig.svelte';
 
@@ -14,8 +14,9 @@ export function createCopier(write: Write = clipboard) {
 	let last = $state<{ key: string; ok: boolean } | null>(null);
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	return {
-		/** Copies `text`; `key` names the button, so only that one changes its label. */
-		async copy(text: string, key = '') {
+		/** Copies `text`; `key` names the button, so only that one changes its label, and `wat`
+		 *  names what was copied for the status line (`Gekopieerd: art. 6:162 BW`). */
+		async copy(text: string, key = '', wat?: string) {
 			let ok = true;
 			try {
 				await write(text);
@@ -24,7 +25,7 @@ export function createCopier(write: Write = clipboard) {
 				ok = false;
 			}
 			last = { key, ok };
-			announce(ok ? 'Gekopieerd' : 'Kopiëren mislukt');
+			announce(ok ? (wat ? `Gekopieerd: ${wat}` : 'Gekopieerd') : 'Kopiëren mislukt');
 			clearTimeout(timer);
 			timer = setTimeout(() => (last = null), COPY_MS);
 			return ok;

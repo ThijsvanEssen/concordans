@@ -31,6 +31,14 @@ describe('the bar of a vote', () => {
 		expect(bron('lib/components/open/RijInhoud.svelte')).toMatch(/<VoteLine[\s\S]*<Stembalk/);
 	});
 
+	it('is in Actueel too, and a stemming says its outcome as the motie does (T5 E5)', () => {
+		expect(bron('lib/components/actueel/FeedDay.svelte')).toContain('<Stembalk');
+		const reader = bron('lib/components/explore/readers/DecisionReader.svelte');
+		expect(reader).toContain('<Uitkomst tone={outcomeTone(d)}');
+		expect(reader).not.toMatch(/class="uitslag"/);
+		expect(bron('lib/components/parliamentary/vote-line.ts')).toMatch(/tone: outcomeTone\(d\)/);
+	});
+
 	it('colours voor and tegen with the outcome tokens, and the line at the majority in ink', () => {
 		const t = bron('lib/components/parliamentary/Stembalk.svelte');
 		expect(t).toMatch(/\.part--for\s*\{[^}]*var\(--uitkomst-ja\)/);
