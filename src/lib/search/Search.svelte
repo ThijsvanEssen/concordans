@@ -9,7 +9,7 @@
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import Periode from '$lib/components/ui/Periode.svelte';
-	import { kamerLinks } from './kamer';
+	import { chamberLinks } from './kamer';
 	import { uniqueBy } from '$lib/util/unique';
 	import { goto } from '$app/navigation';
 	import { FAST_MIN_CHARS, SEARCH_KINDS } from './lanes';
@@ -207,7 +207,7 @@
 		{#if search.chamber}
 			<p class="state stil" role="status">
 				{CHAMBER_NAME[search.chamber]}:
-				{#each kamerLinks(search.chamber) as link, i (link.href)}{i > 0 ? ', ' : ''}<a
+				{#each chamberLinks(search.chamber) as link, i (link.href)}{i > 0 ? ', ' : ''}<a
 						href={link.href}>{link.label}</a
 					>{/each}
 			</p>

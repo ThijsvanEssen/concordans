@@ -11,16 +11,16 @@
 	let {
 		hit,
 		q,
-		buren
+		neighbours
 	}: {
 		hit: Schema<'SearchResultItem'>;
 		q: string;
 		/** The hits listed with it, which its context tells it from. */
-		buren: readonly Schema<'SearchResultItem'>[];
+		neighbours: readonly Schema<'SearchResultItem'>[];
 	} = $props();
 
-	const shown = $derived(presentHit(hit, q, buren));
-	const begrip = $derived(conceptOf(hit));
+	const shown = $derived(presentHit(hit, q, neighbours));
+	const concept = $derived(conceptOf(hit));
 </script>
 
 <a class="rij" href={bronHref(hitName(hit), { keepNetwerk: false })}>
@@ -32,7 +32,7 @@
 						>{:else}{part.text}{/if}{/each}</span
 			>
 		{/if}
-		{#if begrip}<span class="begrip">via begrip {begrip}</span>{/if}
+		{#if concept}<span class="begrip">via begrip {concept}</span>{/if}
 	</span>
 	{#if shown.chamber || shown.context || shown.expired}
 		<span class="context"

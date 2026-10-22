@@ -15,7 +15,7 @@ export const RESULT_LIMIT = 50;
 export const OVERVIEW_ROWS = 5;
 
 /** Hits a page shows once one kind is chosen. */
-export const PAGE_ROWS = 20;
+const PAGE_ROWS = 20;
 
 /** Words of a query to try alone where it found nothing: the longer ones, at most three. */
 export function narrowerWords(q: string): string[] {
@@ -24,7 +24,7 @@ export function narrowerWords(q: string): string[] {
 }
 
 /** The court code and the year of a judgment, from its ECLI (`ECLI:NL:HR:2005:AU3313`). */
-export function eclipart(hit: Hit): { court: string; year: string } | null {
+function eclipart(hit: Hit): { court: string; year: string } | null {
 	const m = /^ECLI:[^:]+:([^:]+):(\d{4}):/i.exec(extra(hit, 'ecli'));
 	return m ? { court: m[1].toUpperCase(), year: m[2] } : null;
 }

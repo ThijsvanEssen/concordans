@@ -10,7 +10,7 @@ import { RESULT_LIMIT } from './results';
 type Hit = Schema<'SearchResultItem'>;
 type LaneId = Lane['id'];
 
-export type ResultsLane = {
+type ResultsLane = {
 	status: 'loading' | 'done' | 'failed';
 	hits: Partial<Record<SearchKind, Hit[]>>;
 	/** `any`: no hit held every word. */
@@ -28,7 +28,7 @@ const fresh = (status: ResultsLane['status']): ResultsLane => ({
 	searched: {}
 });
 
-export type ResultsRequest = { q: string; from: string; to: string };
+type ResultsRequest = { q: string; from: string; to: string };
 
 export class SearchResults {
 	lanes = $state(

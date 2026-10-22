@@ -7,18 +7,18 @@
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
+	import ChooseLine from '$lib/components/ui/Bepaalregel.svelte';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
-	import AlleN from '$lib/components/ui/AlleN.svelte';
+	import AllN from '$lib/components/ui/AlleN.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
-	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import TextLink from '$lib/components/ui/TekstLink.svelte';
 	import Verfijnen from '$lib/components/ui/Verfijnen.svelte';
 	import IndexFacets, {
 		selectOptions,
 		activeFilters,
 		type FacetGroup
 	} from '$lib/components/explore/index/IndexFacets.svelte';
-	import RouteKop from '$lib/seo/RouteKop.svelte';
+	import RouteHead from '$lib/seo/RouteKop.svelte';
 	import { SEARCH_KINDS, type SearchKind } from '$lib/search/lanes';
 	import { bySection, groupLabel, sectionOf } from '$lib/search/present';
 	import {
@@ -32,22 +32,32 @@
 		RESULT_LIMIT
 	} from '$lib/search/results';
 	import { SearchResults } from '$lib/search/results.svelte';
-	import ResultaatRij from '$lib/search/ResultaatRij.svelte';
+	import ResultRow from '$lib/search/ResultRow.svelte';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
 	import { formatCount } from '$lib/text/getal';
 	import { uniqueBy } from '$lib/util/unique';
-	import { lijstDoel } from '$lib/stores/sprong';
+	import { lijstDoel as listTarget } from '$lib/stores/sprong';
 
+	// The names of the parameters in the address, which stay Dutch.
+	const P = {
+		q: 'q',
+		from: 'van',
+		to: 'tot',
+		kind: 'soort',
+		court: 'instantie',
+		year: 'jaar',
+		page: 'pagina'
+	} as const;
 	const params = $derived(page.url.searchParams);
-	const q = $derived((params.get('q') ?? '').trim());
-	const from = $derived(params.get('van') ?? '');
-	const to = $derived(params.get('tot') ?? '');
+	const q = $derived((params.get(P.q) ?? '').trim());
+	const from = $derived(params.get(P.from) ?? '');
+	const to = $derived(params.get(P.to) ?? '');
 	const chosen = $derived(
-		SEARCH_KINDS.find((k) => k === params.get('soort')) as SearchKind | undefined
+		SEARCH_KINDS.find((k) => k === params.get(P.kind)) as SearchKind | undefined
 	);
-	const court = $derived(chosen === 'judgments' ? (params.get('instantie') ?? '') : '');
-	const year = $derived(chosen === 'judgments' ? (params.get('jaar') ?? '') : '');
-	const pageNumber = $derived(Number(params.get('pagina')) || 1);
+	const court = $derived(chosen === 'judgments' ? (params.get(P.court) ?? '') : '');
+	const year = $derived(chosen === 'judgments' ? (params.get(P.year) ?? '') : '');
+	const pageNumber = $derived(Number(params.get(P.page)) || 1);
 
 	const results = new SearchResults();
 	$effect(() => {
@@ -58,8 +68,8 @@
 
 	/** A step in the history; typing replaces it. */
 	const patchUrl = (patch: ParamPatch, replace = false) =>
-		navigate(withParams(page.url, patch, { clear: ['pagina'] }), { step: !replace });
-	const hrefWith = (patch: ParamPatch) => withParams(page.url, patch, { clear: ['pagina'] });
+		navigate(withParams(page.url, patch, { clear: [P.page] }), { step: !replace });
+	const hrefWith = (patch: ParamPatch) => withParams(page.url, patch, { clear: [P.page] });
 
 	// What is typed goes into the address when the typing pauses; the field keeps what was typed.
 	let draft = $state<string | null>(null);
@@ -67,7 +77,10 @@
 	function type(v: string) {
 		draft = v;
 		clearTimeout(timer);
-		timer = setTimeout(() => patchUrl({ q: v.trim() || null, soort: null }, true), v ? 300 : 0);
+		timer = setTimeout(
+			() => patchUrl({ [P.q]: v.trim() || null, [P.kind]: null }, true),
+			v ? 300 : 0
+		);
 	}
 	$effect(() => {
 		void q;
@@ -106,7 +119,11 @@
 						on: chosen === g.kind,
 						count: g.hits.length,
 						onClick: () =>
-							patchUrl({ soort: chosen === g.kind ? null : g.kind, instantie: null, jaar: null })
+							patchUrl({
+								[P.kind]: chosen === g.kind ? null : g.kind,
+								[P.court]: null,
+								[P.year]: null
+							})
 					}))
 			}
 		];
@@ -119,7 +136,7 @@
 					value: court,
 					all: 'Alle instanties',
 					options: selectOptions(judgments.courts, court, courtLabel),
-					onChange: (v) => patchUrl({ instantie: v || null })
+					onChange: (v) => patchUrl({ [P.court]: v || null })
 				},
 				{
 					id: 'jaar',
@@ -128,7 +145,7 @@
 					value: year,
 					all: 'Alle jaren',
 					options: selectOptions(judgments.years, year, (y) => y),
-					onChange: (v) => patchUrl({ jaar: v || null })
+					onChange: (v) => patchUrl({ [P.year]: v || null })
 				}
 			);
 		}
@@ -136,7 +153,7 @@
 	});
 	const chips = $derived(activeFilters(groupsOfFacets));
 	const clearFilters = () =>
-		patchUrl({ soort: null, instantie: null, jaar: null, van: null, tot: null });
+		patchUrl({ [P.kind]: null, [P.court]: null, [P.year]: null, [P.from]: null, [P.to]: null });
 
 	let filtersOpen = $state(false);
 	let listEl = $state<HTMLElement | null>(null);
@@ -154,7 +171,7 @@
 	);
 </script>
 
-<RouteKop />
+<RouteHead />
 
 <div class="zoeken blad blad__indeling">
 	<header class="blad__kop">
@@ -164,7 +181,7 @@
 	</header>
 
 	<div class="regel">
-		<Bepaalregel
+		<ChooseLine
 			zoek={{
 				waarde: draft ?? q,
 				placeholder: 'Zoek een wet, uitspraak of dossier',
@@ -174,7 +191,7 @@
 			periode={{
 				van: from,
 				tot: to,
-				onChange: (van, tot) => patchUrl({ van: van || null, tot: tot || null })
+				onChange: (van, tot) => patchUrl({ [P.from]: van || null, [P.to]: tot || null })
 			}}
 		/>
 	</div>
@@ -192,12 +209,12 @@
 				pending={!results.done && all.every((g) => !g.hits.length)}
 			/>
 			{#if chips.length}
-				<p class="wis"><TekstLink onclick={clearFilters}>Wis alle filters</TekstLink></p>
+				<p class="wis"><TextLink onclick={clearFilters}>Wis alle filters</TextLink></p>
 			{/if}
 		</Verfijnen>
 	</aside>
 
-	<div class="lijst" aria-busy={!results.done} use:lijstDoel bind:this={listEl}>
+	<div class="lijst" aria-busy={!results.done} use:listTarget bind:this={listEl}>
 		{#if q.length < 2}
 			<p class="stil">Typ een zoekterm.</p>
 		{/if}
@@ -230,31 +247,31 @@
 						{#if section && (n === 0 || section !== sectionOf(rows[n - 1]))}
 							<div class="sectie">{section}</div>
 						{/if}
-						<ResultaatRij {hit} {q} buren={group.hits} />
+						<ResultRow {hit} {q} neighbours={group.hits} />
 					{/each}
 				</div>
 				{#if paged && paged.pages > 1}
 					<nav class="bladeren" aria-label="Pagina's">
 						{#if paged.page > 1}
-							<TekstLink
+							<TextLink
 								href={withParams(page.url, {
-									pagina: paged.page > 2 ? String(paged.page - 1) : null
-								})}>Vorige</TekstLink
+									[P.page]: paged.page > 2 ? String(paged.page - 1) : null
+								})}>Vorige</TextLink
 							>
 						{/if}
 						<span class="stil">Pagina {paged.page} van {paged.pages}</span>
 						{#if paged.page < paged.pages}
-							<TekstLink href={withParams(page.url, { pagina: String(paged.page + 1) })}
-								>Volgende</TekstLink
+							<TextLink href={withParams(page.url, { [P.page]: String(paged.page + 1) })}
+								>Volgende</TextLink
 							>
 						{/if}
 					</nav>
 				{:else if !chosen && group.hits.length > OVERVIEW_ROWS}
 					<p class="alle">
-						<AlleN
+						<AllN
 							aantal={capped ? null : group.hits.length}
 							noun={groupLabel(group.kind).toLowerCase()}
-							href={hrefWith({ soort: group.kind })}
+							href={hrefWith({ [P.kind]: group.kind })}
 						/>
 					</p>
 				{/if}
@@ -287,11 +304,11 @@
 				<span>Geen resultaten voor "{q}"</span>
 				<span class="verder">
 					{#each narrowerWords(q) as word (word)}
-						<TekstLink href={resultsHref(word, from, to)}>Zoek "{word}"</TekstLink>
+						<TextLink href={resultsHref(word, from, to)}>Zoek "{word}"</TextLink>
 					{/each}
 					{#if from || to}
-						<TekstLink href={withParams(page.url, { van: null, tot: null })}
-							>Zonder periode</TekstLink
+						<TextLink href={withParams(page.url, { [P.from]: null, [P.to]: null })}
+							>Zonder periode</TextLink
 						>
 					{/if}
 				</span>
@@ -299,7 +316,7 @@
 		{:else if filteredAway}
 			<div class="staat stil" role="status">
 				<span>Geen resultaten met deze filters</span>
-				<span class="verder"><TekstLink onclick={clearFilters}>Wis alle filters</TekstLink></span>
+				<span class="verder"><TextLink onclick={clearFilters}>Wis alle filters</TextLink></span>
 			</div>
 		{/if}
 	</div>

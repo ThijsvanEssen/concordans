@@ -21,9 +21,9 @@ describe('the search', () => {
 		).toEqual([]);
 	});
 
-	it('draws the results page with ResultaatRij, one row per hit, never a second kind of row', () => {
+	it('draws the results page with ResultRow, one row per hit, never a second kind of row', () => {
 		const page = BRONNEN.find(({ path }) => path === 'routes/(main)/zoeken/+page.svelte')!;
-		expect(page.text).toContain('<ResultaatRij');
+		expect(page.text).toContain('<ResultRow');
 		expect(page.text).not.toMatch(/role="option"|presentHit/);
 	});
 });

@@ -96,7 +96,7 @@ function resolvedMatch(
  * order of the books between equals (#310), at most ten of `alternatives_total`; the lid
  * applies to each.
  */
-export function keuzesOf(data: Schema<'ResolveResponse'> | null | undefined): {
+export function choicesOf(data: Schema<'ResolveResponse'> | null | undefined): {
 	items: Resolved[];
 	total: number;
 } {

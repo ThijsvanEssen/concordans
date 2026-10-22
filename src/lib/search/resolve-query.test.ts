@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { keuzesOf, lawAbbreviation, lawTitle, resolvedOf } from './resolve-query';
+import { choicesOf, lawAbbreviation, lawTitle, resolvedOf } from './resolve-query';
 
 describe('lawAbbreviation', () => {
 	it('takes one short word with a capital as a possible abbreviation of a law', () => {
@@ -79,7 +79,7 @@ describe('resolvedOf', () => {
 	});
 });
 
-describe('keuzesOf', () => {
+describe('choicesOf', () => {
 	const art = (book: string, key: string) => ({
 		id: `articles/${key}`,
 		key,
@@ -95,10 +95,10 @@ describe('keuzesOf', () => {
 		match: null,
 		alternatives: [art('1', 'bwbr0002656_3'), art('3', 'bwbr0005291_3')],
 		qualifier: 'tweede lid'
-	} as unknown as Parameters<typeof keuzesOf>[0];
+	} as unknown as Parameters<typeof choicesOf>[0];
 
 	it('lists every article a citation can mean, in order, with its lid', () => {
-		expect(keuzesOf(ambiguous)).toEqual({
+		expect(choicesOf(ambiguous)).toEqual({
 			items: [
 				{
 					ref: { collection: 'articles', key: 'bwbr0002656_3' },
@@ -116,11 +116,11 @@ describe('keuzesOf', () => {
 	});
 
 	it('counts the ones left out, and gives nothing beside a match', () => {
-		expect(keuzesOf({ ...ambiguous!, alternatives_total: 14 } as never).total).toBe(14);
-		expect(keuzesOf({ ...ambiguous!, match: art('6', 'bwbr0005289_3') } as never).items).toEqual(
+		expect(choicesOf({ ...ambiguous!, alternatives_total: 14 } as never).total).toBe(14);
+		expect(choicesOf({ ...ambiguous!, match: art('6', 'bwbr0005289_3') } as never).items).toEqual(
 			[]
 		);
-		expect(keuzesOf(null).items).toEqual([]);
+		expect(choicesOf(null).items).toEqual([]);
 	});
 });
 

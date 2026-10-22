@@ -9,7 +9,7 @@ import { search } from '$lib/api/search';
 import type { Schema } from '$lib/api/types';
 import type { BronRef } from '$lib/bron/href';
 import { EarlyEnter } from './enter.svelte';
-import { kamerOf } from './kamer';
+import { chamberOf } from './kamer';
 import {
 	DEBOUNCE_MS,
 	FAST_MIN_CHARS,
@@ -22,7 +22,7 @@ import {
 import { bestHit, bySection, hitName, slots } from './present';
 import { narrowerWords } from './results';
 import {
-	keuzesOf,
+	choicesOf,
 	lawAbbreviation,
 	lawTitle,
 	resolvedOf,
@@ -242,7 +242,7 @@ export class SearchSession {
 
 	/** A citation the API does not know: said where its row was, not dropped without a word. */
 	readonly notFound = $derived(this.unresolved !== '' && this.unresolved === this.q);
-	readonly chamber = $derived(kamerOf(this.q));
+	readonly chamber = $derived(chamberOf(this.q));
 	// A regeling named by its title that the API does not know ("Omgevingswet"): the network
 	// holds a selection of laws, and the hits only mention it.
 	readonly outsideLaw = $derived(
@@ -584,7 +584,7 @@ export class SearchSession {
 	#resolved(term: string, resolved: Schema<'ResolveResponse'> | null | undefined, laws: boolean) {
 		const target = resolvedOf(resolved);
 		this.resolvedWith = { term, target, notation: resolved?.notation ?? null };
-		this.choicesFor = { term, ...keuzesOf(resolved) };
+		this.choicesFor = { term, ...choicesOf(resolved) };
 		this.answered = term;
 		if (!laws || resolved?.notation) return;
 		// The law an abbreviation stands for, first: "AVG" has its law the moment its hits are
