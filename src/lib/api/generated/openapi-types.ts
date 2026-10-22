@@ -113,7 +113,7 @@ export interface paths {
         };
         /**
          * Explanatory documents of an article
-         * @description The documents that explain this article: every EXPLAINS edge that points at the article (`target` `article`) or at one of its versions (`target` `article_version`); an explanation of the law as a whole is no evidence about this article and is not listed. Newest first. An explanation of `scope` `dossier` is written per dossier: the memorandum explains all the changes of the dossier; of `scope` `article` the memorandum names the section about this article in `section_anchor` (the `id` of a section of the document; `GET /api/documents/{key}/passages` gives its text). One document appears once per level. `total` counts all explanations, independent of `limit` and `offset`. Returns an empty list for an unknown article — never a 404.
+         * @description The documents that explain this article: every EXPLAINS edge that points at the article (`target` `article`) or at one of its versions (`target` `article_version`); an explanation of the law as a whole is no evidence about this article and is not listed. Newest first. An explanation of `scope` `dossier` is written per dossier: the memorandum explains all the changes of the dossier; of `scope` `article` the memorandum names the section about this article in `section_anchor` (the `id` of a section of the document; `GET /api/documents/{key}/passages` gives its text). One document appears once per level. `total` counts all explanations, independent of `limit` and `offset`. `sort` `date` (default) is newest first; `importance` puts the explanations that name a section about this article before those written for the dossier, the most confident first (`confidence`), then the newest. Returns an empty list for an unknown article — never a 404.
          */
         get: operations["get_explained_by_api_articles__bwb_id___article_number__explained_by_get"];
         put?: never;
@@ -277,7 +277,7 @@ export interface paths {
         };
         /**
          * EU and international links of an instrument
-         * @description `implements`: EU acts this instrument implements; `implemented_by`: the national publications and regulations that implement this EU act. Both are `IMPLEMENTS` edges between instruments with what they rest on (`bases`): EUR-Lex lists the publication as a national implementing measure, or the considerans says so; not per article. `mentions` and `mentioned_by`: the same for an EU act a regulation names by CELEX number without implementing it (`REFERS_TO`). `international`: treaties (BWB treaties) that articles of this instrument refer to, and ECHR judgments that refer to it or to its articles, each with the evidence of its edge; the graph holds no other links to treaties or to the articles of the ECHR Convention from Dutch text. The instrument is named by BWB id, CELEX number or node key; 404 when unknown. `limit` bounds each list; the `*_total` fields are absolute.
+         * @description `implements`: EU acts this instrument implements; `implemented_by`: the national publications and regulations that implement this EU act. Both are `IMPLEMENTS` edges between instruments with what they rest on (`bases`): EUR-Lex lists the publication as a national implementing measure, or the considerans says so; not per article. `mentions` and `mentioned_by`: the same for an EU act a regulation names by CELEX number without implementing it (`REFERS_TO`). `international`: treaties (BWB treaties) that articles of this instrument refer to, and ECHR judgments that refer to it or to its articles, each with the evidence of its edge; the graph holds no other links to treaties or to the articles of the ECHR Convention from Dutch text. The instrument is named by BWB id, CELEX number or node key; 404 when unknown. `limit` bounds each list; the `*_total` fields are absolute. `sort`: `confidence` (default) puts the most certain link first; `importance` the one whose instrument (treaty, EU act, ECHR judgment) is cited most often (`inbound_citation_count`), then the most certain.
          */
         get: operations["get_instrument_eu_links_api_instruments__identifier__eu_links_get"];
         put?: never;
@@ -337,7 +337,7 @@ export interface paths {
         };
         /**
          * Parliamentary dossiers touching this law
-         * @description Dossiers reached through LEGISLATED_IN from (a) the regulation itself and (b) the amending publications (Stb/Trb) that change, introduce or repeal one of its articles. ``via`` says how the dossier is linked (``instrument`` or ``amending_publication``; in the latter case ``publication`` names the newest publication). ``total`` is the absolute count, independent of ``limit``.
+         * @description Dossiers reached through LEGISLATED_IN from (a) the regulation itself and (b) the amending publications (Stb/Trb) that change, introduce or repeal one of its articles. ``via`` says how the dossier is linked (``instrument`` or ``amending_publication``; in the latter case ``publication`` names the newest publication). ``total`` is the absolute count, independent of ``limit``. ``sort`` ``opened`` (default): newest opened first; ``importance``: the dossiers of the regulation itself first, then those with the most amending publications, then the newest opened.
          */
         get: operations["get_instrument_dossiers_route_api_instruments__bwb_id__dossiers_get"];
         put?: never;
@@ -357,7 +357,7 @@ export interface paths {
         };
         /**
          * Amending publications of a regulation
-         * @description The publications (Staatsblad, Staatscourant, Tractatenblad, ...) that enacted this regulation (ESTABLISHES its articles) or change, introduce or repeal articles of it (AMENDS / INTRODUCES / REPEALS), newest first. Per publication: the edge count per kind, the number of articles affected, the first effective date and the dossiers. ``total`` is the absolute count, independent of ``limit`` and ``offset``. Apart from them, in ``proposals``, the papers of the Tweede Kamer that propose to change it and are pending.
+         * @description The publications (Staatsblad, Staatscourant, Tractatenblad, ...) that enacted this regulation (ESTABLISHES its articles) or change, introduce or repeal articles of it (AMENDS / INTRODUCES / REPEALS), newest first. Per publication: the edge count per kind, the number of articles affected, the first effective date and the dossiers. ``total`` is the absolute count, independent of ``limit`` and ``offset``. Apart from them, in ``proposals``, the papers of the Tweede Kamer that propose to change it and are pending. ``sort`` ``date`` (default) is newest first; ``importance`` puts the publication that affected the most articles first (``articles_affected``), then the newest.
          */
         get: operations["get_instrument_amended_by_route_api_instruments__bwb_id__amended_by_get"];
         put?: never;
@@ -765,7 +765,7 @@ export interface paths {
         };
         /**
          * Committee activities
-         * @description The activities (debates, hearings) a committee leads, newest first, with the dossiers on their agenda. ``total`` is the absolute count.
+         * @description The activities (debates, hearings) a committee leads, newest first, with the dossiers on their agenda. ``sort`` ``importance``: the activities held first, the latest first, then those planned, the soonest first, then those without a date (``date``, the default, is the newest date first, a planned activity before any held). ``total`` is the absolute count.
          */
         get: operations["list_committee_activities_api_committees__slug__activities_get"];
         put?: never;
@@ -867,7 +867,7 @@ export interface paths {
         };
         /**
          * Dossiers a member authored in
-         * @description The dossiers in which this member signed or submitted documents (``AUTHORED``), newest opened first. Each dossier carries the roles the member had there, the functions and capacities they signed in (``kamerlid``, ``bewindspersoon``, ``overig``) and the number of documents. ``total`` is the absolute count.
+         * @description The dossiers in which this member signed or submitted documents (``AUTHORED``), newest opened first. Each dossier carries the roles the member had there, the functions and capacities they signed in (``kamerlid``, ``bewindspersoon``, ``overig``) and the number of documents. ``sort`` ``opened`` (default) is newest opened first; ``importance`` puts the dossier with the most documents signed first. ``total`` is the absolute count.
          */
         get: operations["list_member_dossiers_api_members__key__dossiers_get"];
         put?: never;
@@ -949,7 +949,7 @@ export interface paths {
         };
         /**
          * Dossiers a faction authored in
-         * @description The dossiers in which members of this faction signed or submitted documents while they belonged to it, newest opened first. Same shape as the member variant; ``roles`` and ``document_count`` cover all those members.
+         * @description The dossiers in which members of this faction signed or submitted documents while they belonged to it, newest opened first. Same shape as the member variant, with its ``sort``; ``roles`` and ``document_count`` cover all those members.
          */
         get: operations["list_faction_dossiers_api_factions__key__dossiers_get"];
         put?: never;
@@ -1146,7 +1146,7 @@ export interface paths {
         };
         /**
          * What was made in an activity
-         * @description What is `MADE_IN` the activity: its `documents` (the stenogram and the verslag of a debate, its convocatie), the `motions` submitted in it, the `commitments` made in it and the `decisions` taken in it; and the `cases` on its agenda. Each with its readable address. 404 when unknown.
+         * @description What is `MADE_IN` the activity: its `documents` (the stenogram and the verslag of a debate, its convocatie), the `motions` submitted in it, the `commitments` made in it and the `decisions` taken in it; and the `cases` on its agenda. Each with its readable address. `sort` `number` (default): as the Kamer numbers them; `importance`: the documents newest first, the motions adopted before the others, the commitments still open before the done, the decisions that passed before those that did not, the cases that are no motion before the motions. 404 when unknown.
          */
         get: operations["get_activity_records_route_api_activities__key__records_get"];
         put?: never;
@@ -14076,6 +14076,7 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
+                sort?: "date" | "importance";
             };
             header?: never;
             path: {
@@ -14382,6 +14383,7 @@ export interface operations {
         parameters: {
             query?: {
                 limit?: number;
+                sort?: "confidence" | "importance";
             };
             header?: never;
             path: {
@@ -14496,6 +14498,7 @@ export interface operations {
         parameters: {
             query?: {
                 limit?: number;
+                sort?: "opened" | "importance";
             };
             header?: never;
             path: {
@@ -14530,6 +14533,7 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
+                sort?: "date" | "importance";
             };
             header?: never;
             path: {
@@ -15230,6 +15234,8 @@ export interface operations {
                 limit?: number;
                 /** @description Dossiers to skip. */
                 offset?: number;
+                /** @description `opened` (default): newest opened first; `importance`: the open dossiers first, then those with the most items the committee led, then the newest opened. */
+                sort?: "opened" | "importance";
             };
             header?: never;
             path: {
@@ -15264,6 +15270,7 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
+                sort?: "date" | "importance";
             };
             header?: never;
             path: {
@@ -15453,6 +15460,8 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
+                /** @description `opened` (default): newest opened first; `importance`: the dossier with the most documents signed first, then the newest opened. */
+                sort?: "opened" | "importance";
             };
             header?: never;
             path: {
@@ -15591,6 +15600,8 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
+                /** @description `opened` (default): newest opened first; `importance`: the dossier with the most documents signed first, then the newest opened. */
+                sort?: "opened" | "importance";
             };
             header?: never;
             path: {
@@ -15911,7 +15922,9 @@ export interface operations {
     };
     get_activity_records_route_api_activities__key__records_get: {
         parameters: {
-            query?: never;
+            query?: {
+                sort?: "number" | "importance";
+            };
             header?: never;
             path: {
                 key: string;
