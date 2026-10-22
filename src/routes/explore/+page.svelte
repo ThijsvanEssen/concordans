@@ -1811,7 +1811,9 @@
 	}
 
 	.explore-read--with-nav {
-		grid-template-columns: calc(var(--nav-w, var(--nav-w-auto)) + 5px) minmax(0, 1fr) 5px var(--panel);
+		grid-template-columns: calc(var(--nav-w, var(--nav-w-auto)) + 5px) minmax(0, 1fr) 5px var(
+				--panel
+			);
 	}
 
 	.col {
