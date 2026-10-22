@@ -56,10 +56,10 @@ exports[`Bronnen, list by list > cabinets ? > view 1`] = `
   "regel": "Zoeken Periode AllesMaandKwartaalJaarEigen",
   "richting": "Aflopend; sorteer oplopend",
   "rijen": [
-    "kabinet-Jetten -> /kabinetten/jetten?paneel=netwerk",
-    "kabinet-Schoof -> /kabinetten/schoof?paneel=netwerk",
-    "kabinet-Rutte IV -> /kabinetten/rutte_iv?paneel=netwerk",
-    "kabinet-Rutte III -> /kabinetten/rutte_iii?paneel=netwerk",
+    "kabinet-Jetten -> /kabinetten/jetten",
+    "kabinet-Schoof -> /kabinetten/schoof",
+    "kabinet-Rutte IV -> /kabinetten/rutte_iv",
+    "kabinet-Rutte III -> /kabinetten/rutte_iii",
   ],
   "volgorde": [
     "Aantreden (gekozen)",
@@ -102,8 +102,8 @@ exports[`Bronnen, list by list > cabinets ?coalitie=VVD&van=2010-01-01&q=rutte&s
   "regel": "Zoeken Periode AllesMaandKwartaalJaarEigen van tot",
   "richting": "Oplopend; sorteer aflopend",
   "rijen": [
-    "kabinet-Rutte III -> /kabinetten/rutte_iii?paneel=netwerk",
-    "kabinet-Rutte IV -> /kabinetten/rutte_iv?paneel=netwerk",
+    "kabinet-Rutte III -> /kabinetten/rutte_iii",
+    "kabinet-Rutte IV -> /kabinetten/rutte_iv",
   ],
   "volgorde": [
     "Aantreden",
@@ -158,9 +158,9 @@ exports[`Bronnen, list by list > commitments ? > view 1`] = `
   "regel": "Zoeken Gedaan AllesMaandKwartaalJaarEigen",
   "richting": null,
   "rijen": [
-    "De Kamer ontvangt aan het einde van het eerste kwartaal van 2027 een update over toegankelijk onderwijs voor studenten met een ondersteuningsbehoefte. -> /explore?focus=commitments/0ce0711d_0f70_4a6e_b863_ed7fa0948458&paneel=netwerk",
-    "De Kamer ontvangt over een halfjaar concrete informatie over de manieren om de besteding van de bekostiging transparanter te maken. -> /explore?focus=commitments/1764f942_f9c9_4a23_9da2_038e0abd2cad&paneel=netwerk",
-    "De staatssecretaris informeert in het voorjaar van 2027 de Kamer over de resultaten van de bereikbaarheidsanalyse en de uitkomsten van de gesprekken die gevoerd zijn met de sector en de verschillende regio's. -> /explore?focus=commitments/207e4c20_5f93_4b44_a37d_d4935b077790&paneel=netwerk",
+    "De Kamer ontvangt aan het einde van het eerste kwartaal van 2027 een update over toegankelijk onderwijs voor studenten met een ondersteuningsbehoefte. -> /explore?focus=commitments/0ce0711d_0f70_4a6e_b863_ed7fa0948458",
+    "De Kamer ontvangt over een halfjaar concrete informatie over de manieren om de besteding van de bekostiging transparanter te maken. -> /explore?focus=commitments/1764f942_f9c9_4a23_9da2_038e0abd2cad",
+    "De staatssecretaris informeert in het voorjaar van 2027 de Kamer over de resultaten van de bereikbaarheidsanalyse en de uitkomsten van de gesprekken die gevoerd zijn met de sector en de verschillende regio's. -> /explore?focus=commitments/207e4c20_5f93_4b44_a37d_d4935b077790",
   ],
   "volgorde": [
     "Datum (gekozen)",
@@ -229,9 +229,9 @@ exports[`Bronnen, list by list > commitments ?status=Openstaand&overdue=1&kabine
   "regel": "Zoeken Gedaan AllesMaandKwartaalJaarEigen van tot",
   "richting": null,
   "rijen": [
-    "De Kamer ontvangt aan het einde van het eerste kwartaal van 2027 een update over toegankelijk onderwijs voor studenten met een ondersteuningsbehoefte. -> /explore?focus=commitments/0ce0711d_0f70_4a6e_b863_ed7fa0948458&paneel=netwerk",
-    "De Kamer ontvangt over een halfjaar concrete informatie over de manieren om de besteding van de bekostiging transparanter te maken. -> /explore?focus=commitments/1764f942_f9c9_4a23_9da2_038e0abd2cad&paneel=netwerk",
-    "De staatssecretaris informeert in het voorjaar van 2027 de Kamer over de resultaten van de bereikbaarheidsanalyse en de uitkomsten van de gesprekken die gevoerd zijn met de sector en de verschillende regio's. -> /explore?focus=commitments/207e4c20_5f93_4b44_a37d_d4935b077790&paneel=netwerk",
+    "De Kamer ontvangt aan het einde van het eerste kwartaal van 2027 een update over toegankelijk onderwijs voor studenten met een ondersteuningsbehoefte. -> /explore?focus=commitments/0ce0711d_0f70_4a6e_b863_ed7fa0948458",
+    "De Kamer ontvangt over een halfjaar concrete informatie over de manieren om de besteding van de bekostiging transparanter te maken. -> /explore?focus=commitments/1764f942_f9c9_4a23_9da2_038e0abd2cad",
+    "De staatssecretaris informeert in het voorjaar van 2027 de Kamer over de resultaten van de bereikbaarheidsanalyse en de uitkomsten van de gesprekken die gevoerd zijn met de sector en de verschillende regio's. -> /explore?focus=commitments/207e4c20_5f93_4b44_a37d_d4935b077790",
   ],
   "volgorde": [
     "Datum",
@@ -266,12 +266,12 @@ exports[`Bronnen, list by list > committees ? > view 1`] = `
   "regel": "Zoeken Actief AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
   "richting": "Aflopend; sorteer oplopend",
   "rijen": [
-    "Algemene commissie voor Wonen, Wijken en Integratie -> /commissies/wwi?paneel=netwerk",
-    "Algemene commissie voor Jeugd en Gezin -> /commissies/jg?paneel=netwerk",
-    "Algemene commissie voor Immigratie, Integratie en Asiel -> /commissies/ia?paneel=netwerk",
-    "Algemene commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking -> /commissies/buhaos-2021?paneel=netwerk",
-    "Algemene commissie voor Integratiebeleid -> /commissies/int?paneel=netwerk",
-    "Vaste commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking -> /commissies/buhaos?paneel=netwerk",
+    "Algemene commissie voor Wonen, Wijken en Integratie -> /commissies/wwi",
+    "Algemene commissie voor Jeugd en Gezin -> /commissies/jg",
+    "Algemene commissie voor Immigratie, Integratie en Asiel -> /commissies/ia",
+    "Algemene commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking -> /commissies/buhaos-2021",
+    "Algemene commissie voor Integratiebeleid -> /commissies/int",
+    "Vaste commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking -> /commissies/buhaos",
   ],
   "volgorde": [
     "Actieve dossiers (gekozen)",
@@ -305,12 +305,12 @@ exports[`Bronnen, list by list > committees ?kamer=EK > view 1`] = `
   "regel": "Zoeken Actief AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
   "richting": "Oplopend; sorteer aflopend",
   "rijen": [
-    "Algemene commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking -> /commissies/buhaos-2021?paneel=netwerk",
-    "Vaste commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking -> /commissies/buhaos?paneel=netwerk",
-    "Algemene commissie voor Immigratie, Integratie en Asiel -> /commissies/ia?paneel=netwerk",
-    "Algemene commissie voor Integratiebeleid -> /commissies/int?paneel=netwerk",
-    "Algemene commissie voor Jeugd en Gezin -> /commissies/jg?paneel=netwerk",
-    "Algemene commissie voor Wonen, Wijken en Integratie -> /commissies/wwi?paneel=netwerk",
+    "Algemene commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking -> /commissies/buhaos-2021",
+    "Vaste commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking -> /commissies/buhaos",
+    "Algemene commissie voor Immigratie, Integratie en Asiel -> /commissies/ia",
+    "Algemene commissie voor Integratiebeleid -> /commissies/int",
+    "Algemene commissie voor Jeugd en Gezin -> /commissies/jg",
+    "Algemene commissie voor Wonen, Wijken en Integratie -> /commissies/wwi",
   ],
   "volgorde": [
     "Afkorting (gekozen)",
@@ -345,7 +345,7 @@ exports[`Bronnen, list by list > committees ?only_active=1&q=wonen&sort=name&dir
   "regel": "Zoeken Actief AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
   "richting": "Aflopend; sorteer oplopend",
   "rijen": [
-    "Algemene commissie voor Wonen, Wijken en Integratie -> /commissies/wwi?paneel=netwerk",
+    "Algemene commissie voor Wonen, Wijken en Integratie -> /commissies/wwi",
   ],
   "volgorde": [
     "Actieve dossiers",
@@ -401,9 +401,9 @@ exports[`Bronnen, list by list > decisions ? > view 1`] = `
   "regel": "Zoeken Datum AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
   "richting": "Aflopend; sorteer oplopend",
   "rijen": [
-    "Motie van het lid Van der Plas over bij de begrotingsonderhandelingen inzetten op een zelfstandig en geoormerkt landbouwbeleid -> /stemmingen/decision_00043b49_6b27_4298_956c_06075d02224c?paneel=netwerk",
-    "Motie van de leden Stöteler en Hoogeveen over uitdragen dat Nederland op geen enkel beleidsterrein bereid is tot afschaffing van unanimiteit -> /stemmingen/decision_0d2d1e07_f145_465c_89c9_db2683a5b9d3?paneel=netwerk",
-    "Motie van het lid Klos over zich inzetten voor meer investeringen in wetenschap, innovatie en concurrentievermogen -> /stemmingen/decision_11e1b0c5_e7e5_408b_b513_23a2721d5a6e?paneel=netwerk",
+    "Motie van het lid Van der Plas over bij de begrotingsonderhandelingen inzetten op een zelfstandig en geoormerkt landbouwbeleid -> /stemmingen/decision_00043b49_6b27_4298_956c_06075d02224c",
+    "Motie van de leden Stöteler en Hoogeveen over uitdragen dat Nederland op geen enkel beleidsterrein bereid is tot afschaffing van unanimiteit -> /stemmingen/decision_0d2d1e07_f145_465c_89c9_db2683a5b9d3",
+    "Motie van het lid Klos over zich inzetten voor meer investeringen in wetenschap, innovatie en concurrentievermogen -> /stemmingen/decision_11e1b0c5_e7e5_408b_b513_23a2721d5a6e",
   ],
   "volgorde": [
     "Datum (gekozen)",
@@ -453,9 +453,9 @@ exports[`Bronnen, list by list > decisions ?kamer=EK&sort=subject > view 1`] = `
   "regel": "Zoeken Datum AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
   "richting": "Oplopend; sorteer aflopend",
   "rijen": [
-    "Motie van de leden Stöteler en Hoogeveen over uitdragen dat Nederland op geen enkel beleidsterrein bereid is tot afschaffing van unanimiteit -> /stemmingen/decision_0d2d1e07_f145_465c_89c9_db2683a5b9d3?paneel=netwerk",
-    "Motie van het lid Klos over zich inzetten voor meer investeringen in wetenschap, innovatie en concurrentievermogen -> /stemmingen/decision_11e1b0c5_e7e5_408b_b513_23a2721d5a6e?paneel=netwerk",
-    "Motie van het lid Van der Plas over bij de begrotingsonderhandelingen inzetten op een zelfstandig en geoormerkt landbouwbeleid -> /stemmingen/decision_00043b49_6b27_4298_956c_06075d02224c?paneel=netwerk",
+    "Motie van de leden Stöteler en Hoogeveen over uitdragen dat Nederland op geen enkel beleidsterrein bereid is tot afschaffing van unanimiteit -> /stemmingen/decision_0d2d1e07_f145_465c_89c9_db2683a5b9d3",
+    "Motie van het lid Klos over zich inzetten voor meer investeringen in wetenschap, innovatie en concurrentievermogen -> /stemmingen/decision_11e1b0c5_e7e5_408b_b513_23a2721d5a6e",
+    "Motie van het lid Van der Plas over bij de begrotingsonderhandelingen inzetten op een zelfstandig en geoormerkt landbouwbeleid -> /stemmingen/decision_00043b49_6b27_4298_956c_06075d02224c",
   ],
   "volgorde": [
     "Datum",
@@ -527,9 +527,9 @@ exports[`Bronnen, list by list > decisions ?soort=Motie&passed=false&dossier=366
   "regel": "Zoeken Datum AllesMaandKwartaalJaarEigen van tot Kamer Tweede KamerEerste Kamer",
   "richting": "Aflopend; sorteer oplopend",
   "rijen": [
-    "Motie van het lid Van der Plas over bij de begrotingsonderhandelingen inzetten op een zelfstandig en geoormerkt landbouwbeleid -> /stemmingen/decision_00043b49_6b27_4298_956c_06075d02224c?paneel=netwerk",
-    "Motie van de leden Stöteler en Hoogeveen over uitdragen dat Nederland op geen enkel beleidsterrein bereid is tot afschaffing van unanimiteit -> /stemmingen/decision_0d2d1e07_f145_465c_89c9_db2683a5b9d3?paneel=netwerk",
-    "Motie van het lid Klos over zich inzetten voor meer investeringen in wetenschap, innovatie en concurrentievermogen -> /stemmingen/decision_11e1b0c5_e7e5_408b_b513_23a2721d5a6e?paneel=netwerk",
+    "Motie van het lid Van der Plas over bij de begrotingsonderhandelingen inzetten op een zelfstandig en geoormerkt landbouwbeleid -> /stemmingen/decision_00043b49_6b27_4298_956c_06075d02224c",
+    "Motie van de leden Stöteler en Hoogeveen over uitdragen dat Nederland op geen enkel beleidsterrein bereid is tot afschaffing van unanimiteit -> /stemmingen/decision_0d2d1e07_f145_465c_89c9_db2683a5b9d3",
+    "Motie van het lid Klos over zich inzetten voor meer investeringen in wetenschap, innovatie en concurrentievermogen -> /stemmingen/decision_11e1b0c5_e7e5_408b_b513_23a2721d5a6e",
   ],
   "volgorde": [
     "Datum (gekozen)",
@@ -579,9 +579,9 @@ exports[`Bronnen, list by list > documents ? > view 1`] = `
   "regel": "Zoeken Datum AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
   "richting": null,
   "rijen": [
-    "Uitstel beantwoording vragen van het lid Müller over het bericht "Trump overweegt exportverbod diesel, 'zou heel Europa veel last van hebben" -> /explore?focus=documents/66bfe5c3_09ce_4112_a1ca_3c58f9905c6d&lezen=1&paneel=tekst",
-    "De voorgenomen tracékeuze voor de 380 kV-hoogspanningsverbinding Diemen–Ens ter hoogte van Muiderberg en de Hollandse Brug. -> /explore?focus=documents/00ad4623_3deb_4364_b9d7_2108441f6200&lezen=1&paneel=tekst",
-    "Amendement van het lid Van Brenk over middelen voor een 36-urige werkweek en betere arbeidsvoorwaarden voor het zorgpersoneel in Caribisch Nederland -> /kamerstukken/37020-XVI/20?lezen=1&paneel=tekst",
+    "Uitstel beantwoording vragen van het lid Müller over het bericht "Trump overweegt exportverbod diesel, 'zou heel Europa veel last van hebben" -> /explore?focus=documents/66bfe5c3_09ce_4112_a1ca_3c58f9905c6d",
+    "De voorgenomen tracékeuze voor de 380 kV-hoogspanningsverbinding Diemen–Ens ter hoogte van Muiderberg en de Hollandse Brug. -> /explore?focus=documents/00ad4623_3deb_4364_b9d7_2108441f6200",
+    "Amendement van het lid Van Brenk over middelen voor een 36-urige werkweek en betere arbeidsvoorwaarden voor het zorgpersoneel in Caribisch Nederland -> /kamerstukken/37020-XVI/20",
   ],
   "volgorde": null,
   "zoek": {
@@ -635,9 +635,9 @@ exports[`Bronnen, list by list > documents ?kamer=EK&soort=Motie&q=36600&van=202
   "regel": "Zoeken Datum AllesMaandKwartaalJaarEigen van tot Kamer Tweede KamerEerste Kamer",
   "richting": null,
   "rijen": [
-    "Uitstel beantwoording vragen van het lid Müller over het bericht "Trump overweegt exportverbod diesel, 'zou heel Europa veel last van hebben" -> /explore?focus=documents/66bfe5c3_09ce_4112_a1ca_3c58f9905c6d&lezen=1&paneel=tekst",
-    "De voorgenomen tracékeuze voor de 380 kV-hoogspanningsverbinding Diemen–Ens ter hoogte van Muiderberg en de Hollandse Brug. -> /explore?focus=documents/00ad4623_3deb_4364_b9d7_2108441f6200&lezen=1&paneel=tekst",
-    "Amendement van het lid Van Brenk over middelen voor een 36-urige werkweek en betere arbeidsvoorwaarden voor het zorgpersoneel in Caribisch Nederland -> /kamerstukken/37020-XVI/20?lezen=1&paneel=tekst",
+    "Uitstel beantwoording vragen van het lid Müller over het bericht "Trump overweegt exportverbod diesel, 'zou heel Europa veel last van hebben" -> /explore?focus=documents/66bfe5c3_09ce_4112_a1ca_3c58f9905c6d",
+    "De voorgenomen tracékeuze voor de 380 kV-hoogspanningsverbinding Diemen–Ens ter hoogte van Muiderberg en de Hollandse Brug. -> /explore?focus=documents/00ad4623_3deb_4364_b9d7_2108441f6200",
+    "Amendement van het lid Van Brenk over middelen voor een 36-urige werkweek en betere arbeidsvoorwaarden voor het zorgpersoneel in Caribisch Nederland -> /kamerstukken/37020-XVI/20",
   ],
   "volgorde": null,
   "zoek": {
@@ -706,9 +706,9 @@ exports[`Bronnen, list by list > dossiers ? > view 1`] = `
   "regel": "Zoeken Geopend AllesMaandKwartaalJaarEigen",
   "richting": null,
   "rijen": [
-    "Misbruik en oneigenlijk gebruik op het gebied van belastingen, sociale zekerheid en subsidies -> /dossiers/17050?paneel=netwerk",
-    "Assemblee van de West-Europese Unie -> /dossiers/17257?paneel=netwerk",
-    "Nota over de toestand van ’s Rijks Financiën -> /dossiers/36600?paneel=netwerk",
+    "Misbruik en oneigenlijk gebruik op het gebied van belastingen, sociale zekerheid en subsidies -> /dossiers/17050",
+    "Assemblee van de West-Europese Unie -> /dossiers/17257",
+    "Nota over de toestand van ’s Rijks Financiën -> /dossiers/36600",
   ],
   "volgorde": [
     "Geopend (nieuw → oud) (gekozen)",
@@ -785,9 +785,9 @@ exports[`Bronnen, list by list > dossiers ?q=36600 > view 1`] = `
   "regel": "Zoeken Geopend AllesMaandKwartaalJaarEigen",
   "richting": null,
   "rijen": [
-    "Misbruik en oneigenlijk gebruik op het gebied van belastingen, sociale zekerheid en subsidies -> /dossiers/17050?paneel=netwerk",
-    "Assemblee van de West-Europese Unie -> /dossiers/17257?paneel=netwerk",
-    "Nota over de toestand van ’s Rijks Financiën -> /dossiers/36600?paneel=netwerk",
+    "Misbruik en oneigenlijk gebruik op het gebied van belastingen, sociale zekerheid en subsidies -> /dossiers/17050",
+    "Assemblee van de West-Europese Unie -> /dossiers/17257",
+    "Nota over de toestand van ’s Rijks Financiën -> /dossiers/36600",
   ],
   "volgorde": [
     "Geopend (nieuw → oud) (gekozen)",
@@ -862,9 +862,9 @@ exports[`Bronnen, list by list > dossiers ?stand=all&sort=last_activity > view 1
   "regel": "Zoeken Geopend AllesMaandKwartaalJaarEigen",
   "richting": null,
   "rijen": [
-    "Misbruik en oneigenlijk gebruik op het gebied van belastingen, sociale zekerheid en subsidies -> /dossiers/17050?paneel=netwerk",
-    "Assemblee van de West-Europese Unie -> /dossiers/17257?paneel=netwerk",
-    "Nota over de toestand van ’s Rijks Financiën -> /dossiers/36600?paneel=netwerk",
+    "Misbruik en oneigenlijk gebruik op het gebied van belastingen, sociale zekerheid en subsidies -> /dossiers/17050",
+    "Assemblee van de West-Europese Unie -> /dossiers/17257",
+    "Nota over de toestand van ’s Rijks Financiën -> /dossiers/36600",
   ],
   "volgorde": [
     "Geopend (nieuw → oud)",
@@ -946,9 +946,9 @@ exports[`Bronnen, list by list > dossiers ?stand=closed&uitkomst=aangenomen&phas
   "regel": "Zoeken Geopend AllesMaandKwartaalJaarEigen van tot",
   "richting": null,
   "rijen": [
-    "Misbruik en oneigenlijk gebruik op het gebied van belastingen, sociale zekerheid en subsidies -> /dossiers/17050?paneel=netwerk",
-    "Assemblee van de West-Europese Unie -> /dossiers/17257?paneel=netwerk",
-    "Nota over de toestand van ’s Rijks Financiën -> /dossiers/36600?paneel=netwerk",
+    "Misbruik en oneigenlijk gebruik op het gebied van belastingen, sociale zekerheid en subsidies -> /dossiers/17050",
+    "Assemblee van de West-Europese Unie -> /dossiers/17257",
+    "Nota over de toestand van ’s Rijks Financiën -> /dossiers/36600",
   ],
   "volgorde": [
     "Geopend (nieuw → oud)",
@@ -1031,23 +1031,23 @@ exports[`Bronnen, list by list > factions ?include_inactive=1&q=pvv&sort=abbrevi
   "regel": "Zoeken Actief AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
   "richting": "Aflopend; sorteer oplopend",
   "rijen": [
-    "Volkspartij voor Vrijheid en Democratie -> /fracties/vvd?paneel=netwerk",
-    "Volt -> /fracties/volt?paneel=netwerk",
-    "Socialistische Partij -> /fracties/sp?paneel=netwerk",
-    "Staatkundig Gereformeerde Partij -> /fracties/sgp?paneel=netwerk",
-    "Partij voor de Vrijheid -> /fracties/pvv?paneel=netwerk",
-    "Partij voor de Dieren -> /fracties/pvdd?paneel=netwerk",
-    "Progressief Nederland -> /fracties/pro?paneel=netwerk",
-    "Lid Keijzer -> /fracties/lid_keijzer?paneel=netwerk",
-    "JA21 -> /fracties/ja21?paneel=netwerk",
-    "Groep Markuszower -> /fracties/groep_markuszower?paneel=netwerk",
-    "Forum voor Democratie -> /fracties/fvd?paneel=netwerk",
-    "DENK -> /fracties/denk?paneel=netwerk",
-    "Democraten 66 -> /fracties/d66?paneel=netwerk",
-    "ChristenUnie -> /fracties/christenunie?paneel=netwerk",
-    "Christen-Democratisch Appèl -> /fracties/cda?paneel=netwerk",
-    "BoerBurgerBeweging -> /fracties/bbb?paneel=netwerk",
-    "50PLUS -> /fracties/50plus?paneel=netwerk",
+    "Volkspartij voor Vrijheid en Democratie -> /fracties/vvd",
+    "Volt -> /fracties/volt",
+    "Socialistische Partij -> /fracties/sp",
+    "Staatkundig Gereformeerde Partij -> /fracties/sgp",
+    "Partij voor de Vrijheid -> /fracties/pvv",
+    "Partij voor de Dieren -> /fracties/pvdd",
+    "Progressief Nederland -> /fracties/pro",
+    "Lid Keijzer -> /fracties/lid_keijzer",
+    "JA21 -> /fracties/ja21",
+    "Groep Markuszower -> /fracties/groep_markuszower",
+    "Forum voor Democratie -> /fracties/fvd",
+    "DENK -> /fracties/denk",
+    "Democraten 66 -> /fracties/d66",
+    "ChristenUnie -> /fracties/christenunie",
+    "Christen-Democratisch Appèl -> /fracties/cda",
+    "BoerBurgerBeweging -> /fracties/bbb",
+    "50PLUS -> /fracties/50plus",
   ],
   "volgorde": [
     "Zetels",
@@ -1149,9 +1149,9 @@ exports[`Bronnen, list by list > instruments ? > view 1`] = `
   "regel": "Zoeken In werking getreden AllesMaandKwartaalJaarEigen",
   "richting": null,
   "rijen": [
-    "Aanwijzingsbesluit huurcommissie -> /wetten/BWBR0039968?paneel=netwerk",
-    "Aanwijzingsbesluit Huursubsidiewet -> /wetten/BWBR0010609?paneel=netwerk",
-    "Afkoop eigen risico bij autoverhuur -> /wetten/BWBR0004975?paneel=netwerk",
+    "Aanwijzingsbesluit huurcommissie -> /wetten/BWBR0039968",
+    "Aanwijzingsbesluit Huursubsidiewet -> /wetten/BWBR0010609",
+    "Afkoop eigen risico bij autoverhuur -> /wetten/BWBR0004975",
   ],
   "volgorde": [
     "Citeertitel (gekozen)",
@@ -1229,9 +1229,9 @@ exports[`Bronnen, list by list > instruments ?q=huur&sort=article_count&legal_ar
   "regel": "Zoeken In werking getreden AllesMaandKwartaalJaarEigen",
   "richting": null,
   "rijen": [
-    "Aanwijzingsbesluit huurcommissie -> /wetten/BWBR0039968?paneel=netwerk",
-    "Aanwijzingsbesluit Huursubsidiewet -> /wetten/BWBR0010609?paneel=netwerk",
-    "Afkoop eigen risico bij autoverhuur -> /wetten/BWBR0004975?paneel=netwerk",
+    "Aanwijzingsbesluit huurcommissie -> /wetten/BWBR0039968",
+    "Aanwijzingsbesluit Huursubsidiewet -> /wetten/BWBR0010609",
+    "Afkoop eigen risico bij autoverhuur -> /wetten/BWBR0004975",
   ],
   "volgorde": [
     "Citeertitel",
@@ -1296,9 +1296,9 @@ exports[`Bronnen, list by list > instruments ?soort=verdrag&jurisdiction=eu&leeg
   "regel": "Zoeken In werking getreden AllesMaandKwartaalJaarEigen van tot",
   "richting": null,
   "rijen": [
-    "Aanwijzingsbesluit huurcommissie -> /wetten/BWBR0039968?paneel=netwerk",
-    "Aanwijzingsbesluit Huursubsidiewet -> /wetten/BWBR0010609?paneel=netwerk",
-    "Afkoop eigen risico bij autoverhuur -> /wetten/BWBR0004975?paneel=netwerk",
+    "Aanwijzingsbesluit huurcommissie -> /wetten/BWBR0039968",
+    "Aanwijzingsbesluit Huursubsidiewet -> /wetten/BWBR0010609",
+    "Afkoop eigen risico bij autoverhuur -> /wetten/BWBR0004975",
   ],
   "volgorde": [
     "Citeertitel (gekozen)",
@@ -1368,9 +1368,9 @@ exports[`Bronnen, list by list > judgments ? > view 1`] = `
   "regel": "Zoeken Periode AllesMaandKwartaalJaarEigen",
   "richting": null,
   "rijen": [
-    "ECLI:NL:RVS:2026:6087 -> /uitspraken/ECLI:NL:RVS:2026:6087?paneel=netwerk",
-    "ECLI:NL:RBROT:2026:13915 -> /uitspraken/ECLI:NL:RBROT:2026:13915?paneel=netwerk",
-    "ECLI:NL:RBZWB:2026:9751 -> /uitspraken/ECLI:NL:RBZWB:2026:9751?paneel=netwerk",
+    "ECLI:NL:RVS:2026:6087 -> /uitspraken/ECLI:NL:RVS:2026:6087",
+    "ECLI:NL:RBROT:2026:13915 -> /uitspraken/ECLI:NL:RBROT:2026:13915",
+    "ECLI:NL:RBZWB:2026:9751 -> /uitspraken/ECLI:NL:RBZWB:2026:9751",
   ],
   "volgorde": [
     "Datum (nieuw → oud) (gekozen)",
@@ -1465,9 +1465,9 @@ exports[`Bronnen, list by list > judgments ?q=huur&tier=rechtbank&court_kind=rec
   "regel": "Zoeken Periode AllesMaandKwartaalJaarEigen van tot",
   "richting": null,
   "rijen": [
-    "ECLI:NL:RVS:2026:6087 -> /uitspraken/ECLI:NL:RVS:2026:6087?paneel=netwerk",
-    "ECLI:NL:RBROT:2026:13915 -> /uitspraken/ECLI:NL:RBROT:2026:13915?paneel=netwerk",
-    "ECLI:NL:RBZWB:2026:9751 -> /uitspraken/ECLI:NL:RBZWB:2026:9751?paneel=netwerk",
+    "ECLI:NL:RVS:2026:6087 -> /uitspraken/ECLI:NL:RVS:2026:6087",
+    "ECLI:NL:RBROT:2026:13915 -> /uitspraken/ECLI:NL:RBROT:2026:13915",
+    "ECLI:NL:RBZWB:2026:9751 -> /uitspraken/ECLI:NL:RBZWB:2026:9751",
   ],
   "volgorde": [
     "Datum (nieuw → oud)",
@@ -1545,9 +1545,9 @@ exports[`Bronnen, list by list > judgments ?source=echr&subject=Huurrecht&sort=c
   "regel": "Zoeken Periode AllesMaandKwartaalJaarEigen",
   "richting": null,
   "rijen": [
-    "ECLI:NL:RVS:2026:6087 -> /uitspraken/ECLI:NL:RVS:2026:6087?paneel=netwerk",
-    "ECLI:NL:RBROT:2026:13915 -> /uitspraken/ECLI:NL:RBROT:2026:13915?paneel=netwerk",
-    "ECLI:NL:RBZWB:2026:9751 -> /uitspraken/ECLI:NL:RBZWB:2026:9751?paneel=netwerk",
+    "ECLI:NL:RVS:2026:6087 -> /uitspraken/ECLI:NL:RVS:2026:6087",
+    "ECLI:NL:RBROT:2026:13915 -> /uitspraken/ECLI:NL:RBROT:2026:13915",
+    "ECLI:NL:RBZWB:2026:9751 -> /uitspraken/ECLI:NL:RBZWB:2026:9751",
   ],
   "volgorde": [
     "Datum (nieuw → oud)",
@@ -1606,9 +1606,9 @@ exports[`Bronnen, list by list > members ? > view 1`] = `
   "regel": "Zoeken Actief AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
   "richting": null,
   "rijen": [
-    "Alexander Kops -> /leden/alexander-kops?paneel=netwerk",
-    "Alisha Müller -> /leden/alisha-muller?paneel=netwerk",
-    "André Flach -> /leden/andre-flach?paneel=netwerk",
+    "Alexander Kops -> /leden/alexander-kops",
+    "Alisha Müller -> /leden/alisha-muller",
+    "André Flach -> /leden/andre-flach",
   ],
   "volgorde": [
     "Achternaam (gekozen)",
@@ -1666,9 +1666,9 @@ exports[`Bronnen, list by list > members ?include_inactive=1&fractie=VVD&q=kops&
   "regel": "Zoeken Actief AllesMaandKwartaalJaarEigen Kamer Tweede KamerEerste Kamer",
   "richting": "Oplopend; sorteer aflopend",
   "rijen": [
-    "Alexander Kops -> /leden/alexander-kops?paneel=netwerk",
-    "André Flach -> /leden/andre-flach?paneel=netwerk",
-    "Alisha Müller -> /leden/alisha-muller?paneel=netwerk",
+    "Alexander Kops -> /leden/alexander-kops",
+    "André Flach -> /leden/andre-flach",
+    "Alisha Müller -> /leden/alisha-muller",
   ],
   "volgorde": [
     "Achternaam",
@@ -1725,9 +1725,9 @@ exports[`Bronnen, list by list > members ?kamer=EK&van=2020-01-01 > view 1`] = `
   "regel": "Zoeken Actief AllesMaandKwartaalJaarEigen van tot Kamer Tweede KamerEerste Kamer",
   "richting": null,
   "rijen": [
-    "Alexander Kops -> /leden/alexander-kops?paneel=netwerk",
-    "Alisha Müller -> /leden/alisha-muller?paneel=netwerk",
-    "André Flach -> /leden/andre-flach?paneel=netwerk",
+    "Alexander Kops -> /leden/alexander-kops",
+    "Alisha Müller -> /leden/alisha-muller",
+    "André Flach -> /leden/andre-flach",
   ],
   "volgorde": [
     "Achternaam (gekozen)",

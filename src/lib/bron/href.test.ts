@@ -59,6 +59,10 @@ describe('buildBronHref', () => {
 		expect(buildBronHref(at('/explore'), 'judgments/j')).toBe(
 			'/explore?focus=judgments/j&mode=netwerk'
 		);
+		// A readable address names its bron before the lookup knows its key: it is read.
+		expect(buildBronHref(at('/wetten/BWBR0099999/artikel/1'), 'judgments/j')).toBe(
+			'/explore?focus=judgments/j'
+		);
 	});
 
 	it('reads a bron that is opened from Bladeren', () => {

@@ -17,17 +17,20 @@ export const NETWORK_MODE = 'netwerk';
  * unless the address asks for the canvas (?mode=netwerk). The table of its verbindingen is
  * read so too.
  */
-export function exploreMode(params: URLSearchParams): Mode {
+export function exploreMode(params: URLSearchParams, readable = false): Mode {
 	const mode = params.get('mode');
 	if (mode === 'index') return 'index';
-	if (!params.get('focus')) return 'graph';
+	// A readable address names its bron, also while it is looked up (`readable`).
+	if (!params.get('focus') && !readable) return 'graph';
 	if (params.get('tabel') === '1') return 'read';
 	return mode === NETWORK_MODE || params.get('netwerk') ? 'graph' : 'read';
 }
 
 /** The view an address shows: null off /explore and the readable addresses of bronnen. */
 export const modeOf = (url: URL): Mode | null =>
-	isExplorePath(url.pathname) ? exploreMode(exploreUrl(url).searchParams) : null;
+	isExplorePath(url.pathname)
+		? exploreMode(exploreUrl(url).searchParams, url.pathname !== '/explore')
+		: null;
 
 /** The address opens a bron: its readable address, or /explore with ?focus. */
 export const hasFocus = (url: URL): boolean =>
@@ -112,12 +115,15 @@ export function buildBronHref(
 	const target = focus && parseNodeId(focus);
 	if (!focus || !target) return '/explore';
 	const onExplorePath = !!current && isExplorePath(current.pathname);
+	const readable = !!current && onExplorePath && current.pathname !== '/explore';
 	if (current && onExplorePath) current = exploreUrl(current);
 	const currentMode = onExplorePath && current ? current.searchParams.get('mode') : null;
 	// Bladeren lists bronnen; opening one from there is reading it.
 	const within = keepMode && onExplorePath && currentMode !== 'index';
 	const reading =
-		within && current ? exploreMode(current.searchParams) === 'read' : (mode ?? 'read') === 'read';
+		within && current
+			? exploreMode(current.searchParams, readable) === 'read'
+			: (mode ?? 'read') === 'read';
 
 	const params = new URLSearchParams();
 	params.set('focus', focus);

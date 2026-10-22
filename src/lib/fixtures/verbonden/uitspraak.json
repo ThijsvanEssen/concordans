@@ -100,11 +100,6 @@
 					}
 				]
 			},
-			"cite": {
-				"short": "HR 3 december 2024",
-				"full": "HR 3 december 2024, ECLI:NL:HR:2024:1769"
-			},
-			"title": "HR 3 december 2024, ECLI:NL:HR:2024:1769",
 			"outcome": null,
 			"outcome_text": null,
 			"conclusion_outcome": null,
@@ -124,8 +119,6 @@
 			"series_size": null,
 			"same_as": null,
 			"replaced_by": null,
-			"withdrawn": null,
-			"withdrawn_on": null,
 			"published_on": "2024-12-03",
 			"advocate_general": null,
 			"advocate_general_role": null,
@@ -144,7 +137,6 @@
 					"kind": "subheading",
 					"continues": null,
 					"text": "HOGE RAAD DER NEDERLANDEN\n\nSTRAFKAMER\n\nNummer 22/02386\n\nDatum 3 december 2024\n\nARREST\n\nop het beroep in cassatie tegen een arrest van het gerechtshof Arnhem-Leeuwarden van 24 juni 2022, nummer 21-004903-20, in de strafzaak\n\ntegen\n\n[verdachte] ,\n\ngeboren in [geboorteplaats] op [geboortedatum] 1993,\n\nhierna: de verdachte.",
-					"tables": [],
 					"citations": []
 				},
 				{
@@ -153,7 +145,6 @@
 					"kind": "heading",
 					"continues": null,
 					"text": "Procesverloop in cassatie",
-					"tables": [],
 					"citations": []
 				},
 				{
@@ -162,7 +153,6 @@
 					"kind": "body",
 					"continues": null,
 					"text": "Het beroep is ingesteld door de verdachte. Namens deze hebben R.I. Takens en T.P.A.M. Wouters, beiden advocaat in Amsterdam, bij schriftuur cassatiemiddelen voorgesteld.",
-					"tables": [],
 					"citations": []
 				},
 				{
@@ -171,7 +161,6 @@
 					"kind": "body",
 					"continues": null,
 					"text": "De advocaat-generaal D.J.M.W. Paridaens heeft geconcludeerd tot verwerping van het beroep.",
-					"tables": [],
 					"citations": []
 				}
 			],
@@ -190,14 +179,16 @@
 				}
 			],
 			"path": "/uitspraken/ECLI:NL:HR:2024:1769",
-			"translation_of_id": null,
-			"replaced_by_id": null
+			"cite": {
+				"short": "HR 3 december 2024",
+				"full": "HR 3 december 2024, ECLI:NL:HR:2024:1769"
+			}
 		},
 		"articles": [
 			{
 				"id": "articles/bwbr0001830_81",
 				"key": "bwbr0001830_81",
-				"display_name": "Art. 81 RO",
+				"display_name": "Artikel 81 Wet op de rechterlijke organisatie",
 				"bwb_id": "BWBR0001830",
 				"celex": null,
 				"article_number": "81",
@@ -211,10 +202,9 @@
 					"short_title": "RO",
 					"abbreviation": "RO",
 					"display_name": "Wet op de rechterlijke organisatie",
-					"signed_on": "1827-04-18",
 					"official_url": "https://wetten.overheid.nl/BWBR0001830",
-					"article_count": 176,
-					"inbound_citation_count": 46099,
+					"article_count": 223,
+					"inbound_citation_count": 44767,
 					"judgment_count": null,
 					"outbound_citation_count": null,
 					"path": "/wetten/BWBR0001830"
@@ -224,7 +214,7 @@
 			{
 				"id": "articles/bwbr0001903_27",
 				"key": "bwbr0001903_27",
-				"display_name": "Art. 27 Sv",
+				"display_name": "Artikel 27 Wetboek van Strafvordering",
 				"bwb_id": "BWBR0001903",
 				"celex": null,
 				"article_number": "27",
@@ -238,10 +228,9 @@
 					"short_title": "Sv",
 					"abbreviation": "Sv",
 					"display_name": "Wetboek van Strafvordering",
-					"signed_on": "1921-01-15",
 					"official_url": "https://wetten.overheid.nl/BWBR0001903",
-					"article_count": 1142,
-					"inbound_citation_count": 195688,
+					"article_count": 1260,
+					"inbound_citation_count": 192482,
 					"judgment_count": null,
 					"outbound_citation_count": null,
 					"path": "/wetten/BWBR0001903"
@@ -251,7 +240,7 @@
 			{
 				"id": "articles/bwbr0001903_27c",
 				"key": "bwbr0001903_27c",
-				"display_name": "Art. 27c Sv",
+				"display_name": "Artikel 27c Wetboek van Strafvordering",
 				"bwb_id": "BWBR0001903",
 				"celex": null,
 				"article_number": "27c",
@@ -265,10 +254,9 @@
 					"short_title": "Sv",
 					"abbreviation": "Sv",
 					"display_name": "Wetboek van Strafvordering",
-					"signed_on": "1921-01-15",
 					"official_url": "https://wetten.overheid.nl/BWBR0001903",
-					"article_count": 1142,
-					"inbound_citation_count": 195688,
+					"article_count": 1260,
+					"inbound_citation_count": 192482,
 					"judgment_count": null,
 					"outbound_citation_count": null,
 					"path": "/wetten/BWBR0001903"
@@ -278,7 +266,7 @@
 			{
 				"id": "articles/bwbr0001903_28",
 				"key": "bwbr0001903_28",
-				"display_name": "Art. 28 Sv",
+				"display_name": "Artikel 28 Wetboek van Strafvordering",
 				"bwb_id": "BWBR0001903",
 				"celex": null,
 				"article_number": "28",
@@ -292,10 +280,9 @@
 					"short_title": "Sv",
 					"abbreviation": "Sv",
 					"display_name": "Wetboek van Strafvordering",
-					"signed_on": "1921-01-15",
 					"official_url": "https://wetten.overheid.nl/BWBR0001903",
-					"article_count": 1142,
-					"inbound_citation_count": 195688,
+					"article_count": 1260,
+					"inbound_citation_count": 192482,
 					"judgment_count": null,
 					"outbound_citation_count": null,
 					"path": "/wetten/BWBR0001903"
@@ -325,7 +312,7 @@
 				"article": {
 					"id": "articles/bwbr0001830_81",
 					"key": "bwbr0001830_81",
-					"display_name": "Art. 81 RO",
+					"display_name": "Artikel 81 Wet op de rechterlijke organisatie",
 					"bwb_id": "BWBR0001830",
 					"celex": null,
 					"article_number": "81",
@@ -339,10 +326,9 @@
 						"short_title": "RO",
 						"abbreviation": "RO",
 						"display_name": "Wet op de rechterlijke organisatie",
-						"signed_on": "1827-04-18",
 						"official_url": "https://wetten.overheid.nl/BWBR0001830",
-						"article_count": 176,
-						"inbound_citation_count": 46099,
+						"article_count": 223,
+						"inbound_citation_count": 44767,
 						"judgment_count": null,
 						"outbound_citation_count": null,
 						"path": "/wetten/BWBR0001830"
@@ -376,7 +362,7 @@
 				"article": {
 					"id": "articles/bwbr0001903_27",
 					"key": "bwbr0001903_27",
-					"display_name": "Art. 27 Sv",
+					"display_name": "Artikel 27 Wetboek van Strafvordering",
 					"bwb_id": "BWBR0001903",
 					"celex": null,
 					"article_number": "27",
@@ -390,10 +376,9 @@
 						"short_title": "Sv",
 						"abbreviation": "Sv",
 						"display_name": "Wetboek van Strafvordering",
-						"signed_on": "1921-01-15",
 						"official_url": "https://wetten.overheid.nl/BWBR0001903",
-						"article_count": 1142,
-						"inbound_citation_count": 195688,
+						"article_count": 1260,
+						"inbound_citation_count": 192482,
 						"judgment_count": null,
 						"outbound_citation_count": null,
 						"path": "/wetten/BWBR0001903"
@@ -427,7 +412,7 @@
 				"article": {
 					"id": "articles/bwbr0001903_27c",
 					"key": "bwbr0001903_27c",
-					"display_name": "Art. 27c Sv",
+					"display_name": "Artikel 27c Wetboek van Strafvordering",
 					"bwb_id": "BWBR0001903",
 					"celex": null,
 					"article_number": "27c",
@@ -441,10 +426,9 @@
 						"short_title": "Sv",
 						"abbreviation": "Sv",
 						"display_name": "Wetboek van Strafvordering",
-						"signed_on": "1921-01-15",
 						"official_url": "https://wetten.overheid.nl/BWBR0001903",
-						"article_count": 1142,
-						"inbound_citation_count": 195688,
+						"article_count": 1260,
+						"inbound_citation_count": 192482,
 						"judgment_count": null,
 						"outbound_citation_count": null,
 						"path": "/wetten/BWBR0001903"
@@ -478,7 +462,7 @@
 				"article": {
 					"id": "articles/bwbr0001903_28",
 					"key": "bwbr0001903_28",
-					"display_name": "Art. 28 Sv",
+					"display_name": "Artikel 28 Wetboek van Strafvordering",
 					"bwb_id": "BWBR0001903",
 					"celex": null,
 					"article_number": "28",
@@ -492,10 +476,9 @@
 						"short_title": "Sv",
 						"abbreviation": "Sv",
 						"display_name": "Wetboek van Strafvordering",
-						"signed_on": "1921-01-15",
 						"official_url": "https://wetten.overheid.nl/BWBR0001903",
-						"article_count": 1142,
-						"inbound_citation_count": 195688,
+						"article_count": 1260,
+						"inbound_citation_count": 192482,
 						"judgment_count": null,
 						"outbound_citation_count": null,
 						"path": "/wetten/BWBR0001903"
@@ -507,78 +490,61 @@
 		],
 		"cited_judgments": [
 			{
-				"paragraph_ids": [
-					"rov-2.2.3",
-					"rov-2.3.2"
-				],
-				"paragraph_numbers": [
-					"2.2.3",
-					"2.3.2"
-				],
-				"snippet": "ffende diens betrokkenheid bij een geconstateerd strafbaar feit.”\n\n15. Dit laatste, een geconstateerd strafbaar feit, is bovendien afgezwakt doordat de Hoge Raad inmiddels heeft geoordeeld dat ook het vragen naar betrokkenheid bij een strafbaar feit een verhoorsituatie oplevert (HR 6 november 2018, ECLI:NL:HR:2018:2056, NJB 2018/2111, r.o. 2.3.1)\n\n16. Door verbalisant [verbalisant 1] , een bij de opsporing betrokken politieambtenaar, werd dan ook besloten om een reeds door hem als verdachte aangemerkt persoon kennelijk onverhoeds, namelijk zonder voorafgaande aankondiging of uitnodiging voor verhoor direct op str",
-				"snippet_paragraph_id": "rov-2.2.3",
+				"paragraph_ids": [],
+				"paragraph_numbers": [],
+				"snippet": null,
+				"snippet_paragraph_id": null,
 				"footnote": null,
-				"text": "ECLI:NL:HR:2018:2056",
-				"start": 300,
-				"end": 320,
+				"text": null,
+				"start": null,
+				"end": null,
 				"confidence": 0.95,
-				"mention_count": 2,
-				"cite": {
-					"short": "HR",
-					"full": "HR, ECLI:NL:HR:2018:2056"
-				},
+				"mention_count": 0,
 				"id": "judgments/ecli_nl_hr_2018_2056",
 				"key": "ecli_nl_hr_2018_2056",
 				"display_name": "Hoge Raad 2018-11-06 / 17/00795",
 				"ecli": "ECLI:NL:HR:2018:2056",
-				"path": "/uitspraken/ECLI:NL:HR:2018:2056"
+				"path": "/uitspraken/ECLI:NL:HR:2018:2056",
+				"cite": {
+					"short": "HR 6 november 2018",
+					"full": "HR 6 november 2018, ECLI:NL:HR:2018:2056"
+				}
 			},
 			{
-				"paragraph_ids": [
-					"rov-2.3.3"
-				],
-				"paragraph_numbers": [
-					"2.3.3"
-				],
-				"snippet": "trekkend verweer, in beginsel moet leiden tot uitsluiting van het bewijs van de verklaringen van de verdachte die zijn afgelegd voordat hij een advocaat kon raadplegen, tenzij de verdachte door het achterwege blijven van die mededeling niet in zijn verdediging is geschaad. (Vgl. HR 6 november 2018, ECLI:NL:HR:2018:368.)",
-				"snippet_paragraph_id": "rov-2.3.3",
+				"paragraph_ids": [],
+				"paragraph_numbers": [],
+				"snippet": null,
+				"snippet_paragraph_id": null,
 				"footnote": null,
-				"text": "ECLI:NL:HR:2018:368",
-				"start": 300,
-				"end": 319,
+				"text": null,
+				"start": null,
+				"end": null,
 				"confidence": 0.95,
-				"mention_count": 1,
-				"cite": {
-					"short": "HR",
-					"full": "HR, ECLI:NL:HR:2018:368"
-				},
+				"mention_count": 0,
 				"id": "judgments/ecli_nl_hr_2018_368",
 				"key": "ecli_nl_hr_2018_368",
 				"display_name": "Hoge Raad 2018-03-20 / 16/03113",
 				"ecli": "ECLI:NL:HR:2018:368",
-				"path": "/uitspraken/ECLI:NL:HR:2018:368"
+				"path": "/uitspraken/ECLI:NL:HR:2018:368",
+				"cite": {
+					"short": "HR 20 maart 2018",
+					"full": "HR 20 maart 2018, ECLI:NL:HR:2018:368"
+				}
 			}
 		],
 		"same_as": [],
 		"related_to": [],
 		"conclusions": [
 			{
-				"cite": {
-					"short": "Conclusie A-G Paridaens 1 oktober 2024",
-					"full": "Conclusie A-G Paridaens 1 oktober 2024, ECLI:NL:PHR:2024:994"
-				},
-				"id": "judgments/ecli_nl_phr_2024_994",
 				"ecli": "ECLI:NL:PHR:2024:994",
 				"author": "D.J.M.W. Paridaens",
 				"role": "advocaat-generaal",
 				"date": "2024-10-01",
 				"outcome": null,
-				"outcome_text": null,
-				"path": "/uitspraken/ECLI:NL:PHR:2024:994"
+				"outcome_text": null
 			}
 		],
 		"series": [],
-		"completeness": null,
 		"metadata": {
 			"article_count": 7
 		}
@@ -631,12 +597,11 @@
 					}
 				]
 			},
+			"path": "/uitspraken/ECLI:NL:HR:2024:1769",
 			"cite": {
 				"short": "HR 3 december 2024",
 				"full": "HR 3 december 2024, ECLI:NL:HR:2024:1769"
-			},
-			"title": "HR 3 december 2024, ECLI:NL:HR:2024:1769",
-			"path": "/uitspraken/ECLI:NL:HR:2024:1769"
+			}
 		},
 		"neighbors": {
 			"total": 2,
@@ -670,38 +635,21 @@
 								"names": [],
 								"source": "rechtspraak",
 								"stub": false,
-								"summary": "Recht op rechtsbijstand bij politieverhoor voor niet-aangehouden verdachte. Art. 27c.2, art. 27c.5 en art. 359a Sv. Op grond van art. 27c.2 Sv dient de niet-aangehouden verdachte voorafgaand aan zijn eerste verhoor mededeling te worden gedaan van het, in art. 28.1 Sv gewaarborgde, recht om zich te doen bijstaan door een raadsman. Indien dat voorschrift niet is nageleefd, levert dat in beginsel een…",
-								"tier": "hoge_raad"
+								"summary": "Recht op rechtsbijstand bij politieverhoor voor niet-aangehouden verdachte. Art. 27c.2, art. 27c.5 en art. 359a Sv. Op grond van art. 27c.2 Sv dient de niet-aangehouden verdachte voorafgaand aan zijn eerste verhoor mededeling te worden gedaan van het, in art. 28.1 Sv gewaarborgde, recht om zich te doen bijstaan door een raadsman. Indien dat voorschrift niet is nageleefd, levert dat in beginsel een…"
 							},
-							"cite": {
-								"short": "HR 20 maart 2018",
-								"full": "HR 20 maart 2018, ECLI:NL:HR:2018:368"
-							},
-							"title": "HR 20 maart 2018, ECLI:NL:HR:2018:368",
 							"edge_id": "425c89a3d94dcffb230a5a5f6e6a9e2e90c8aa18",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
 							"confidence": 0.95,
 							"status": "canoniek",
 							"meta": {
-								"cited_ecli": "ECLI:NL:HR:2018:368",
-								"mention_count": 1,
-								"paragraphs": [
-									"2.3.3"
-								],
-								"passages": [
-									{
-										"paragraph_id": "rov-2.3.3",
-										"paragraph_number": "2.3.3",
-										"footnote": null,
-										"snippet": "trekkend verweer, in beginsel moet leiden tot uitsluiting van het bewijs van de verklaringen van de verdachte die zijn afgelegd voordat hij een advocaat kon raadplegen, tenzij de verdachte door het achterwege blijven van die mededeling niet in zijn verdediging is geschaad. (Vgl. HR 6 november 2018, ECLI:NL:HR:2018:368.)",
-										"text": "ECLI:NL:HR:2018:368",
-										"start": 300,
-										"end": 319
-									}
-								]
+								"cited_ecli": "ECLI:NL:HR:2018:368"
 							},
-							"path": "/uitspraken/ECLI:NL:HR:2018:368"
+							"path": "/uitspraken/ECLI:NL:HR:2018:368",
+							"cite": {
+								"short": "HR 20 maart 2018",
+								"full": "HR 20 maart 2018, ECLI:NL:HR:2018:368"
+							}
 						},
 						{
 							"id": "judgments/ecli_nl_hr_2018_2056",
@@ -722,48 +670,21 @@
 								"names": [],
 								"source": "rechtspraak",
 								"stub": false,
-								"summary": "Salduz. Schending consultatierecht, verhoorsituatie. Ontstaat verplichting om verdachte te wijzen op recht op raadpleging advocaat alleen als vaststaat dat strafbaar feit is gepleegd? Art. 359a Sv. (Medeplegen) telen hennep (meermalen gepleegd) in woning medeverdachte en eigen woning, art. 3.B Opiumwet. HR herhaalt relevante overwegingen uit ECLI:NL:HR:2009:BH3079 en ECLI:NL:HR:2015:3608 m.b.t. he…",
-								"tier": "hoge_raad"
+								"summary": "Salduz. Schending consultatierecht, verhoorsituatie. Ontstaat verplichting om verdachte te wijzen op recht op raadpleging advocaat alleen als vaststaat dat strafbaar feit is gepleegd? Art. 359a Sv. (Medeplegen) telen hennep (meermalen gepleegd) in woning medeverdachte en eigen woning, art. 3.B Opiumwet. HR herhaalt relevante overwegingen uit ECLI:NL:HR:2009:BH3079 en ECLI:NL:HR:2015:3608 m.b.t. he…"
 							},
-							"cite": {
-								"short": "HR 6 november 2018",
-								"full": "HR 6 november 2018, ECLI:NL:HR:2018:2056"
-							},
-							"title": "HR 6 november 2018, ECLI:NL:HR:2018:2056",
 							"edge_id": "da975a4834d3639dfbedc59a00f9d652aa979bd3",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
 							"confidence": 0.95,
 							"status": "canoniek",
 							"meta": {
-								"cited_ecli": "ECLI:NL:HR:2018:2056",
-								"mention_count": 2,
-								"paragraphs": [
-									"2.2.3",
-									"2.3.2"
-								],
-								"passages": [
-									{
-										"paragraph_id": "rov-2.2.3",
-										"paragraph_number": "2.2.3",
-										"footnote": null,
-										"snippet": "ffende diens betrokkenheid bij een geconstateerd strafbaar feit.”\n\n15. Dit laatste, een geconstateerd strafbaar feit, is bovendien afgezwakt doordat de Hoge Raad inmiddels heeft geoordeeld dat ook het vragen naar betrokkenheid bij een strafbaar feit een verhoorsituatie oplevert (HR 6 november 2018, ECLI:NL:HR:2018:2056, NJB 2018/2111, r.o. 2.3.1)\n\n16. Door verbalisant [verbalisant 1] , een bij de opsporing betrokken politieambtenaar, werd dan ook besloten om een reeds door hem als verdachte aangemerkt persoon kennelijk onverhoeds, namelijk zonder voorafgaande aankondiging of uitnodiging voor verhoor direct op str",
-										"text": "ECLI:NL:HR:2018:2056",
-										"start": 300,
-										"end": 320
-									},
-									{
-										"paragraph_id": "rov-2.3.2",
-										"paragraph_number": "2.3.2",
-										"footnote": null,
-										"snippet": "is begaan, als de betrokkenheid van een persoon bij dat feit. Daarom kan, ook als (nog) niet vaststaat dat een strafbaar feit plaatsvindt of heeft plaatsgevonden, sprake zijn van een redelijk vermoeden van schuld aan een strafbaar feit en daardoor van een verhoorsituatie. (Vgl. HR 6 november 2018, ECLI:NL:HR:2018:2056.)",
-										"text": "ECLI:NL:HR:2018:2056",
-										"start": 299,
-										"end": 319
-									}
-								]
+								"cited_ecli": "ECLI:NL:HR:2018:2056"
 							},
-							"path": "/uitspraken/ECLI:NL:HR:2018:2056"
+							"path": "/uitspraken/ECLI:NL:HR:2018:2056",
+							"cite": {
+								"short": "HR 6 november 2018",
+								"full": "HR 6 november 2018, ECLI:NL:HR:2018:2056"
+							}
 						}
 					]
 				}
@@ -822,12 +743,11 @@
 					}
 				]
 			},
+			"path": "/uitspraken/ECLI:NL:HR:2024:1769",
 			"cite": {
 				"short": "HR 3 december 2024",
 				"full": "HR 3 december 2024, ECLI:NL:HR:2024:1769"
-			},
-			"title": "HR 3 december 2024, ECLI:NL:HR:2024:1769",
-			"path": "/uitspraken/ECLI:NL:HR:2024:1769"
+			}
 		},
 		"neighbors": {
 			"total": 7,
@@ -847,7 +767,7 @@
 							"key": "bwbr0001830_81",
 							"collection": "articles",
 							"type": "article",
-							"display_name": "Art. 81 RO",
+							"display_name": "Artikel 81 Wet op de rechterlijke organisatie",
 							"labels": [
 								"BWB",
 								"Article"
@@ -857,11 +777,10 @@
 								"bwb_id": "BWBR0001830",
 								"caption": "De Hoge Raad",
 								"display_name": "Artikel 81 Wet op de rechterlijke organisatie",
-								"inbound_citation_count": 33876,
+								"inbound_citation_count": 32967,
 								"instrument_abbreviation": "RO",
 								"instrument_citation_title": "Wet op de rechterlijke organisatie",
 								"label": "Artikel 81",
-								"path": "/Hoofdstuk2/Afdeling5/Artikel81",
 								"position": 141,
 								"repealed": false,
 								"source_publication": "Stb.2012-116",
@@ -870,15 +789,14 @@
 								"valid_from": "2012-07-01",
 								"versie_id": "19301162"
 							},
-							"title": "Art. 81 RO, De Hoge Raad",
 							"edge_id": "67fb10e5cfc243532595117ca4554913a97e6d2f",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
 							"confidence": 0.95,
 							"status": "canoniek",
 							"meta": {
-								"mention_count": 1,
-								"reason": "bwb_article"
+								"reason": "bwb_article",
+								"mention_count": 1
 							},
 							"path": "/wetten/BWBR0001830/artikel/81"
 						},
@@ -887,7 +805,7 @@
 							"key": "bwbr0001903_29",
 							"collection": "articles",
 							"type": "article",
-							"display_name": "Art. 29 Sv",
+							"display_name": "Artikel 29 Wetboek van Strafvordering",
 							"labels": [
 								"BWB",
 								"Article"
@@ -897,11 +815,10 @@
 								"bwb_id": "BWBR0001903",
 								"caption": "De verdachte",
 								"display_name": "Artikel 29 Wetboek van Strafvordering",
-								"inbound_citation_count": 969,
+								"inbound_citation_count": 958,
 								"instrument_abbreviation": "Sv",
 								"instrument_citation_title": "Wetboek van Strafvordering",
 								"label": "Artikel 29",
-								"path": "/BoekEerste/TiteldeelII/Artikel29",
 								"position": 52,
 								"repealed": false,
 								"source_publication": "Stb.2016-476",
@@ -910,15 +827,14 @@
 								"valid_from": "2017-03-01",
 								"versie_id": "23821032"
 							},
-							"title": "Art. 29 Sv, De verdachte",
 							"edge_id": "9bb6987a6943413ed9cd7c99f4673b1bdc0aed74",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
 							"confidence": 0.95,
 							"status": "canoniek",
 							"meta": {
-								"mention_count": 3,
 								"reason": "bwb_article",
+								"mention_count": 3,
 								"paragraphs": [
 									"2.2.3",
 									"2.3.1",
@@ -932,7 +848,7 @@
 							"key": "bwbr0001903_27c",
 							"collection": "articles",
 							"type": "article",
-							"display_name": "Art. 27c Sv",
+							"display_name": "Artikel 27c Wetboek van Strafvordering",
 							"labels": [
 								"BWB",
 								"Article"
@@ -942,11 +858,10 @@
 								"bwb_id": "BWBR0001903",
 								"caption": "De verdachte",
 								"display_name": "Artikel 27c Wetboek van Strafvordering",
-								"inbound_citation_count": 88,
+								"inbound_citation_count": 83,
 								"instrument_abbreviation": "Sv",
 								"instrument_citation_title": "Wetboek van Strafvordering",
 								"label": "Artikel 27c",
-								"path": "/BoekEerste/TiteldeelII/Artikel27c",
 								"position": 40,
 								"repealed": false,
 								"source_publication": "Stb.2016-475",
@@ -955,15 +870,14 @@
 								"valid_from": "2017-03-01",
 								"versie_id": "23816692"
 							},
-							"title": "Art. 27c Sv, De verdachte",
 							"edge_id": "c5b2822131d0f305abd6020ee6715deaeee4447c",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
 							"confidence": 0.95,
 							"status": "canoniek",
 							"meta": {
-								"mention_count": 3,
 								"reason": "bwb_article",
+								"mention_count": 3,
 								"paragraphs": [
 									"2.2.3",
 									"2.3.3"
@@ -976,7 +890,7 @@
 							"key": "bwbr0001903_28",
 							"collection": "articles",
 							"type": "article",
-							"display_name": "Art. 28 Sv",
+							"display_name": "Artikel 28 Wetboek van Strafvordering",
 							"labels": [
 								"BWB",
 								"Article"
@@ -986,11 +900,10 @@
 								"bwb_id": "BWBR0001903",
 								"caption": "De verdachte",
 								"display_name": "Artikel 28 Wetboek van Strafvordering",
-								"inbound_citation_count": 136,
+								"inbound_citation_count": 135,
 								"instrument_abbreviation": "Sv",
 								"instrument_citation_title": "Wetboek van Strafvordering",
 								"label": "Artikel 28",
-								"path": "/BoekEerste/TiteldeelII/Artikel28",
 								"position": 45,
 								"repealed": false,
 								"source_publication": "Stb.2016-476",
@@ -999,15 +912,14 @@
 								"valid_from": "2017-03-01",
 								"versie_id": "23821012"
 							},
-							"title": "Art. 28 Sv, De verdachte",
 							"edge_id": "c8994cd691f8724936a922e10a41d89beb44dff2",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
 							"confidence": 0.95,
 							"status": "canoniek",
 							"meta": {
-								"mention_count": 3,
 								"reason": "bwb_article",
+								"mention_count": 3,
 								"paragraphs": [
 									"2.2.3",
 									"2.3.3"
@@ -1072,12 +984,11 @@
 					}
 				]
 			},
+			"path": "/uitspraken/ECLI:NL:HR:2024:1769",
 			"cite": {
 				"short": "HR 3 december 2024",
 				"full": "HR 3 december 2024, ECLI:NL:HR:2024:1769"
-			},
-			"title": "HR 3 december 2024, ECLI:NL:HR:2024:1769",
-			"path": "/uitspraken/ECLI:NL:HR:2024:1769"
+			}
 		},
 		"neighbors": {
 			"total": 10,
@@ -1113,14 +1024,8 @@
 								"names": [],
 								"source": "rechtspraak",
 								"stub": false,
-								"summary": "Conclusie AG. Verduistering, art. 321 Sr. 1. Middel over uitdrukkelijk onderbouwd standpunt ten aanzien van bewijsvoering. 2. Middel over verwerping art. 359a Sv-verweer m.b.t. verzuim geven van cautie en wijzen op consultatierecht voor (eerste) verhoor. 3. Middel over overschrijding inzendtermijn in cassatie. Conclusie strekt tot verwerping.",
-								"tier": "parket"
+								"summary": "Conclusie AG. Verduistering, art. 321 Sr. 1. Middel over uitdrukkelijk onderbouwd standpunt ten aanzien van bewijsvoering. 2. Middel over verwerping art. 359a Sv-verweer m.b.t. verzuim geven van cautie en wijzen op consultatierecht voor (eerste) verhoor. 3. Middel over overschrijding inzendtermijn in cassatie. Conclusie strekt tot verwerping."
 							},
-							"cite": {
-								"short": "Conclusie A-G Paridaens 1 oktober 2024",
-								"full": "Conclusie A-G Paridaens 1 oktober 2024, ECLI:NL:PHR:2024:994"
-							},
-							"title": "Conclusie A-G Paridaens 1 oktober 2024, ECLI:NL:PHR:2024:994",
 							"edge_id": "397ec653a48291aaf8f342e9f1a3fcf6f8b1dd42",
 							"relation": "ADVISES_ON",
 							"direction": "inbound",
@@ -1129,7 +1034,11 @@
 							"meta": {
 								"basis": "formal_relation"
 							},
-							"path": "/uitspraken/ECLI:NL:PHR:2024:994"
+							"path": "/uitspraken/ECLI:NL:PHR:2024:994",
+							"cite": {
+								"short": "Conclusie A-G Paridaens 1 oktober 2024",
+								"full": "Conclusie A-G Paridaens 1 oktober 2024, ECLI:NL:PHR:2024:994"
+							}
 						}
 					]
 				},
@@ -1148,7 +1057,7 @@
 							"key": "bwbr0001830_81",
 							"collection": "articles",
 							"type": "article",
-							"display_name": "Art. 81 RO",
+							"display_name": "Artikel 81 Wet op de rechterlijke organisatie",
 							"labels": [
 								"BWB",
 								"Article"
@@ -1158,11 +1067,10 @@
 								"bwb_id": "BWBR0001830",
 								"caption": "De Hoge Raad",
 								"display_name": "Artikel 81 Wet op de rechterlijke organisatie",
-								"inbound_citation_count": 33876,
+								"inbound_citation_count": 32967,
 								"instrument_abbreviation": "RO",
 								"instrument_citation_title": "Wet op de rechterlijke organisatie",
 								"label": "Artikel 81",
-								"path": "/Hoofdstuk2/Afdeling5/Artikel81",
 								"position": 141,
 								"repealed": false,
 								"source_publication": "Stb.2012-116",
@@ -1171,15 +1079,14 @@
 								"valid_from": "2012-07-01",
 								"versie_id": "19301162"
 							},
-							"title": "Art. 81 RO, De Hoge Raad",
 							"edge_id": "67fb10e5cfc243532595117ca4554913a97e6d2f",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
 							"confidence": 0.95,
 							"status": "canoniek",
 							"meta": {
-								"mention_count": 1,
-								"reason": "bwb_article"
+								"reason": "bwb_article",
+								"mention_count": 1
 							},
 							"path": "/wetten/BWBR0001830/artikel/81"
 						}
@@ -1214,27 +1121,21 @@
 								"names": [],
 								"source": "rechtspraak",
 								"stub": false,
-								"summary": "Recht op rechtsbijstand bij politieverhoor voor niet-aangehouden verdachte. Art. 27c.2, art. 27c.5 en art. 359a Sv. Op grond van art. 27c.2 Sv dient de niet-aangehouden verdachte voorafgaand aan zijn eerste verhoor mededeling te worden gedaan van het, in art. 28.1 Sv gewaarborgde, recht om zich te doen bijstaan door een raadsman. Indien dat voorschrift niet is nageleefd, levert dat in beginsel een…",
-								"tier": "hoge_raad"
+								"summary": "Recht op rechtsbijstand bij politieverhoor voor niet-aangehouden verdachte. Art. 27c.2, art. 27c.5 en art. 359a Sv. Op grond van art. 27c.2 Sv dient de niet-aangehouden verdachte voorafgaand aan zijn eerste verhoor mededeling te worden gedaan van het, in art. 28.1 Sv gewaarborgde, recht om zich te doen bijstaan door een raadsman. Indien dat voorschrift niet is nageleefd, levert dat in beginsel een…"
 							},
-							"cite": {
-								"short": "HR 20 maart 2018",
-								"full": "HR 20 maart 2018, ECLI:NL:HR:2018:368"
-							},
-							"title": "HR 20 maart 2018, ECLI:NL:HR:2018:368",
 							"edge_id": "425c89a3d94dcffb230a5a5f6e6a9e2e90c8aa18",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
 							"confidence": 0.95,
 							"status": "canoniek",
 							"meta": {
-								"cited_ecli": "ECLI:NL:HR:2018:368",
-								"mention_count": 1,
-								"paragraphs": [
-									"2.3.3"
-								]
+								"cited_ecli": "ECLI:NL:HR:2018:368"
 							},
-							"path": "/uitspraken/ECLI:NL:HR:2018:368"
+							"path": "/uitspraken/ECLI:NL:HR:2018:368",
+							"cite": {
+								"short": "HR 20 maart 2018",
+								"full": "HR 20 maart 2018, ECLI:NL:HR:2018:368"
+							}
 						}
 					]
 				}
@@ -1293,12 +1194,11 @@
 					}
 				]
 			},
+			"path": "/uitspraken/ECLI:NL:HR:2024:1769",
 			"cite": {
 				"short": "HR 3 december 2024",
 				"full": "HR 3 december 2024, ECLI:NL:HR:2024:1769"
-			},
-			"title": "HR 3 december 2024, ECLI:NL:HR:2024:1769",
-			"path": "/uitspraken/ECLI:NL:HR:2024:1769"
+			}
 		},
 		"neighbors": {
 			"total": 10,
@@ -1334,14 +1234,8 @@
 								"names": [],
 								"source": "rechtspraak",
 								"stub": false,
-								"summary": "Conclusie AG. Verduistering, art. 321 Sr. 1. Middel over uitdrukkelijk onderbouwd standpunt ten aanzien van bewijsvoering. 2. Middel over verwerping art. 359a Sv-verweer m.b.t. verzuim geven van cautie en wijzen op consultatierecht voor (eerste) verhoor. 3. Middel over overschrijding inzendtermijn in cassatie. Conclusie strekt tot verwerping.",
-								"tier": "parket"
+								"summary": "Conclusie AG. Verduistering, art. 321 Sr. 1. Middel over uitdrukkelijk onderbouwd standpunt ten aanzien van bewijsvoering. 2. Middel over verwerping art. 359a Sv-verweer m.b.t. verzuim geven van cautie en wijzen op consultatierecht voor (eerste) verhoor. 3. Middel over overschrijding inzendtermijn in cassatie. Conclusie strekt tot verwerping."
 							},
-							"cite": {
-								"short": "Conclusie A-G Paridaens 1 oktober 2024",
-								"full": "Conclusie A-G Paridaens 1 oktober 2024, ECLI:NL:PHR:2024:994"
-							},
-							"title": "Conclusie A-G Paridaens 1 oktober 2024, ECLI:NL:PHR:2024:994",
 							"edge_id": "397ec653a48291aaf8f342e9f1a3fcf6f8b1dd42",
 							"relation": "ADVISES_ON",
 							"direction": "inbound",
@@ -1350,7 +1244,11 @@
 							"meta": {
 								"basis": "formal_relation"
 							},
-							"path": "/uitspraken/ECLI:NL:PHR:2024:994"
+							"path": "/uitspraken/ECLI:NL:PHR:2024:994",
+							"cite": {
+								"short": "Conclusie A-G Paridaens 1 oktober 2024",
+								"full": "Conclusie A-G Paridaens 1 oktober 2024, ECLI:NL:PHR:2024:994"
+							}
 						}
 					]
 				},
@@ -1369,7 +1267,7 @@
 							"key": "bwbr0001830_81",
 							"collection": "articles",
 							"type": "article",
-							"display_name": "Art. 81 RO",
+							"display_name": "Artikel 81 Wet op de rechterlijke organisatie",
 							"labels": [
 								"BWB",
 								"Article"
@@ -1379,11 +1277,10 @@
 								"bwb_id": "BWBR0001830",
 								"caption": "De Hoge Raad",
 								"display_name": "Artikel 81 Wet op de rechterlijke organisatie",
-								"inbound_citation_count": 33876,
+								"inbound_citation_count": 32967,
 								"instrument_abbreviation": "RO",
 								"instrument_citation_title": "Wet op de rechterlijke organisatie",
 								"label": "Artikel 81",
-								"path": "/Hoofdstuk2/Afdeling5/Artikel81",
 								"position": 141,
 								"repealed": false,
 								"source_publication": "Stb.2012-116",
@@ -1392,15 +1289,14 @@
 								"valid_from": "2012-07-01",
 								"versie_id": "19301162"
 							},
-							"title": "Art. 81 RO, De Hoge Raad",
 							"edge_id": "67fb10e5cfc243532595117ca4554913a97e6d2f",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
 							"confidence": 0.95,
 							"status": "canoniek",
 							"meta": {
-								"mention_count": 1,
-								"reason": "bwb_article"
+								"reason": "bwb_article",
+								"mention_count": 1
 							},
 							"path": "/wetten/BWBR0001830/artikel/81"
 						},
@@ -1409,7 +1305,7 @@
 							"key": "bwbr0001903_29",
 							"collection": "articles",
 							"type": "article",
-							"display_name": "Art. 29 Sv",
+							"display_name": "Artikel 29 Wetboek van Strafvordering",
 							"labels": [
 								"BWB",
 								"Article"
@@ -1419,11 +1315,10 @@
 								"bwb_id": "BWBR0001903",
 								"caption": "De verdachte",
 								"display_name": "Artikel 29 Wetboek van Strafvordering",
-								"inbound_citation_count": 969,
+								"inbound_citation_count": 958,
 								"instrument_abbreviation": "Sv",
 								"instrument_citation_title": "Wetboek van Strafvordering",
 								"label": "Artikel 29",
-								"path": "/BoekEerste/TiteldeelII/Artikel29",
 								"position": 52,
 								"repealed": false,
 								"source_publication": "Stb.2016-476",
@@ -1432,15 +1327,14 @@
 								"valid_from": "2017-03-01",
 								"versie_id": "23821032"
 							},
-							"title": "Art. 29 Sv, De verdachte",
 							"edge_id": "9bb6987a6943413ed9cd7c99f4673b1bdc0aed74",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
 							"confidence": 0.95,
 							"status": "canoniek",
 							"meta": {
-								"mention_count": 3,
 								"reason": "bwb_article",
+								"mention_count": 3,
 								"paragraphs": [
 									"2.2.3",
 									"2.3.1",
@@ -1454,7 +1348,7 @@
 							"key": "bwbr0001903_27c",
 							"collection": "articles",
 							"type": "article",
-							"display_name": "Art. 27c Sv",
+							"display_name": "Artikel 27c Wetboek van Strafvordering",
 							"labels": [
 								"BWB",
 								"Article"
@@ -1464,11 +1358,10 @@
 								"bwb_id": "BWBR0001903",
 								"caption": "De verdachte",
 								"display_name": "Artikel 27c Wetboek van Strafvordering",
-								"inbound_citation_count": 88,
+								"inbound_citation_count": 83,
 								"instrument_abbreviation": "Sv",
 								"instrument_citation_title": "Wetboek van Strafvordering",
 								"label": "Artikel 27c",
-								"path": "/BoekEerste/TiteldeelII/Artikel27c",
 								"position": 40,
 								"repealed": false,
 								"source_publication": "Stb.2016-475",
@@ -1477,15 +1370,14 @@
 								"valid_from": "2017-03-01",
 								"versie_id": "23816692"
 							},
-							"title": "Art. 27c Sv, De verdachte",
 							"edge_id": "c5b2822131d0f305abd6020ee6715deaeee4447c",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
 							"confidence": 0.95,
 							"status": "canoniek",
 							"meta": {
-								"mention_count": 3,
 								"reason": "bwb_article",
+								"mention_count": 3,
 								"paragraphs": [
 									"2.2.3",
 									"2.3.3"
@@ -1498,7 +1390,7 @@
 							"key": "bwbr0001903_28",
 							"collection": "articles",
 							"type": "article",
-							"display_name": "Art. 28 Sv",
+							"display_name": "Artikel 28 Wetboek van Strafvordering",
 							"labels": [
 								"BWB",
 								"Article"
@@ -1508,11 +1400,10 @@
 								"bwb_id": "BWBR0001903",
 								"caption": "De verdachte",
 								"display_name": "Artikel 28 Wetboek van Strafvordering",
-								"inbound_citation_count": 136,
+								"inbound_citation_count": 135,
 								"instrument_abbreviation": "Sv",
 								"instrument_citation_title": "Wetboek van Strafvordering",
 								"label": "Artikel 28",
-								"path": "/BoekEerste/TiteldeelII/Artikel28",
 								"position": 45,
 								"repealed": false,
 								"source_publication": "Stb.2016-476",
@@ -1521,15 +1412,14 @@
 								"valid_from": "2017-03-01",
 								"versie_id": "23821012"
 							},
-							"title": "Art. 28 Sv, De verdachte",
 							"edge_id": "c8994cd691f8724936a922e10a41d89beb44dff2",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
 							"confidence": 0.95,
 							"status": "canoniek",
 							"meta": {
-								"mention_count": 3,
 								"reason": "bwb_article",
+								"mention_count": 3,
 								"paragraphs": [
 									"2.2.3",
 									"2.3.3"
@@ -1568,27 +1458,21 @@
 								"names": [],
 								"source": "rechtspraak",
 								"stub": false,
-								"summary": "Recht op rechtsbijstand bij politieverhoor voor niet-aangehouden verdachte. Art. 27c.2, art. 27c.5 en art. 359a Sv. Op grond van art. 27c.2 Sv dient de niet-aangehouden verdachte voorafgaand aan zijn eerste verhoor mededeling te worden gedaan van het, in art. 28.1 Sv gewaarborgde, recht om zich te doen bijstaan door een raadsman. Indien dat voorschrift niet is nageleefd, levert dat in beginsel een…",
-								"tier": "hoge_raad"
+								"summary": "Recht op rechtsbijstand bij politieverhoor voor niet-aangehouden verdachte. Art. 27c.2, art. 27c.5 en art. 359a Sv. Op grond van art. 27c.2 Sv dient de niet-aangehouden verdachte voorafgaand aan zijn eerste verhoor mededeling te worden gedaan van het, in art. 28.1 Sv gewaarborgde, recht om zich te doen bijstaan door een raadsman. Indien dat voorschrift niet is nageleefd, levert dat in beginsel een…"
 							},
-							"cite": {
-								"short": "HR 20 maart 2018",
-								"full": "HR 20 maart 2018, ECLI:NL:HR:2018:368"
-							},
-							"title": "HR 20 maart 2018, ECLI:NL:HR:2018:368",
 							"edge_id": "425c89a3d94dcffb230a5a5f6e6a9e2e90c8aa18",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
 							"confidence": 0.95,
 							"status": "canoniek",
 							"meta": {
-								"cited_ecli": "ECLI:NL:HR:2018:368",
-								"mention_count": 1,
-								"paragraphs": [
-									"2.3.3"
-								]
+								"cited_ecli": "ECLI:NL:HR:2018:368"
 							},
-							"path": "/uitspraken/ECLI:NL:HR:2018:368"
+							"path": "/uitspraken/ECLI:NL:HR:2018:368",
+							"cite": {
+								"short": "HR 20 maart 2018",
+								"full": "HR 20 maart 2018, ECLI:NL:HR:2018:368"
+							}
 						},
 						{
 							"id": "judgments/ecli_nl_hr_2018_2056",
@@ -1609,28 +1493,21 @@
 								"names": [],
 								"source": "rechtspraak",
 								"stub": false,
-								"summary": "Salduz. Schending consultatierecht, verhoorsituatie. Ontstaat verplichting om verdachte te wijzen op recht op raadpleging advocaat alleen als vaststaat dat strafbaar feit is gepleegd? Art. 359a Sv. (Medeplegen) telen hennep (meermalen gepleegd) in woning medeverdachte en eigen woning, art. 3.B Opiumwet. HR herhaalt relevante overwegingen uit ECLI:NL:HR:2009:BH3079 en ECLI:NL:HR:2015:3608 m.b.t. he…",
-								"tier": "hoge_raad"
+								"summary": "Salduz. Schending consultatierecht, verhoorsituatie. Ontstaat verplichting om verdachte te wijzen op recht op raadpleging advocaat alleen als vaststaat dat strafbaar feit is gepleegd? Art. 359a Sv. (Medeplegen) telen hennep (meermalen gepleegd) in woning medeverdachte en eigen woning, art. 3.B Opiumwet. HR herhaalt relevante overwegingen uit ECLI:NL:HR:2009:BH3079 en ECLI:NL:HR:2015:3608 m.b.t. he…"
 							},
-							"cite": {
-								"short": "HR 6 november 2018",
-								"full": "HR 6 november 2018, ECLI:NL:HR:2018:2056"
-							},
-							"title": "HR 6 november 2018, ECLI:NL:HR:2018:2056",
 							"edge_id": "da975a4834d3639dfbedc59a00f9d652aa979bd3",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
 							"confidence": 0.95,
 							"status": "canoniek",
 							"meta": {
-								"cited_ecli": "ECLI:NL:HR:2018:2056",
-								"mention_count": 2,
-								"paragraphs": [
-									"2.2.3",
-									"2.3.2"
-								]
+								"cited_ecli": "ECLI:NL:HR:2018:2056"
 							},
-							"path": "/uitspraken/ECLI:NL:HR:2018:2056"
+							"path": "/uitspraken/ECLI:NL:HR:2018:2056",
+							"cite": {
+								"short": "HR 6 november 2018",
+								"full": "HR 6 november 2018, ECLI:NL:HR:2018:2056"
+							}
 						}
 					]
 				}

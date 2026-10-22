@@ -234,7 +234,7 @@
 	const focus = $derived(params.get('focus') ?? '');
 	// Every bron opens in Tekst, its reader with Verbonden beside it; the canvas is Samenhang
 	// (besluit 32). Netwerk tonen draws the network in Verbonden (?toon=netwerk).
-	const mode = $derived(exploreMode(params));
+	const mode = $derived(exploreMode(params, !!pad));
 	const SHOW = 'toon';
 	const showNetwork = $derived(params.get(SHOW) === 'netwerk');
 	// A toelichting or a citing judgment opened beside the article: the article stays the

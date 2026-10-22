@@ -3648,8 +3648,8 @@ exports[`the rows of Verbonden of the 'artikel' > land on the canvas per group 1
     "lines: documents/7e59f350_a461_4556_8c81_250abfaaafd7 -EXPLAINS-> articles/bwbr0005537_8_72",
   ],
   "judgments (verbonden)": [
-    "nodes: articles/bwbr0005537_8_72, judgments/ecli_nl_cbb_2026_489, judgments/ecli_nl_rbdha_2026_30092, judgments/ecli_nl_rbdha_2026_30152, judgments/ecli_nl_rbdha_2026_30184",
-    "lines: judgments/ecli_nl_cbb_2026_489 -REFERS_TO-> articles/bwbr0005537_8_72; judgments/ecli_nl_rbdha_2026_30092 -REFERS_TO-> articles/bwbr0005537_8_72; judgments/ecli_nl_rbdha_2026_30152 -REFERS_TO-> articles/bwbr0005537_8_72; judgments/ecli_nl_rbdha_2026_30184 -REFERS_TO-> articles/bwbr0005537_8_72",
+    "nodes: articles/bwbr0005537_8_72, judgments/ecli_nl_rvs_2022_3352, judgments/ecli_nl_rvs_2022_3353",
+    "lines: judgments/ecli_nl_rvs_2022_3352 -REFERS_TO-> articles/bwbr0005537_8_72; judgments/ecli_nl_rvs_2022_3353 -REFERS_TO-> articles/bwbr0005537_8_72",
   ],
   "law (kern)": [
     "nodes: articles/bwbr0005537_8_72, instruments/bwbr0005537*",

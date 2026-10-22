@@ -20,7 +20,6 @@
 					}
 				],
 				"kind": "Amendement",
-				"motion_kind": null,
 				"primary_case_kind": "Amendement",
 				"decision_kind": "Stemmen - aangenomen",
 				"passed": true,
@@ -53,8 +52,7 @@
 					"carried": false,
 					"decisive": false
 				},
-				"path": "/stemmingen/decision_01c34d79_d628_4e69_948a_d121b7d0f39b",
-				"kind_group": "amendement"
+				"path": "/stemmingen/decision_01c34d79_d628_4e69_948a_d121b7d0f39b"
 			},
 			{
 				"id": "decisions/decision_58fd750a_3ec7_41de_8473_35006656a75a",
@@ -74,7 +72,6 @@
 					}
 				],
 				"kind": "Amendement",
-				"motion_kind": null,
 				"primary_case_kind": "Amendement",
 				"decision_kind": "Stemmen - verworpen",
 				"passed": false,
@@ -107,8 +104,7 @@
 					"carried": false,
 					"decisive": true
 				},
-				"path": "/stemmingen/decision_58fd750a_3ec7_41de_8473_35006656a75a",
-				"kind_group": "amendement"
+				"path": "/stemmingen/decision_58fd750a_3ec7_41de_8473_35006656a75a"
 			},
 			{
 				"id": "decisions/decision_b610a37d_d799_48ae_b126_d56073ef9991",
@@ -128,7 +124,6 @@
 					}
 				],
 				"kind": "Amendement",
-				"motion_kind": null,
 				"primary_case_kind": "Amendement",
 				"decision_kind": "Stemmen - aangenomen",
 				"passed": true,
@@ -161,8 +156,7 @@
 					"carried": false,
 					"decisive": false
 				},
-				"path": "/stemmingen/decision_b610a37d_d799_48ae_b126_d56073ef9991",
-				"kind_group": "amendement"
+				"path": "/stemmingen/decision_b610a37d_d799_48ae_b126_d56073ef9991"
 			},
 			{
 				"id": "decisions/decision_c94c4b61_f72a_46bc_8cda_266eb0e48052",
@@ -182,7 +176,6 @@
 					}
 				],
 				"kind": "Motie",
-				"motion_kind": null,
 				"primary_case_kind": "Motie",
 				"decision_kind": "Stemmen - aangenomen",
 				"passed": true,
@@ -215,8 +208,7 @@
 					"carried": false,
 					"decisive": false
 				},
-				"path": "/stemmingen/decision_c94c4b61_f72a_46bc_8cda_266eb0e48052",
-				"kind_group": "motie"
+				"path": "/stemmingen/decision_c94c4b61_f72a_46bc_8cda_266eb0e48052"
 			}
 		],
 		"facets": {
@@ -292,8 +284,7 @@
 					"carried": 0,
 					"decisive": 1
 				}
-			],
-			"motion_kind": []
+			]
 		},
 		"partial": false
 	},
@@ -338,7 +329,6 @@
 		"current_phase": "Eindtekst",
 		"closed": true,
 		"outcome": "aangenomen",
-		"withdrawal_letter": null,
 		"tk_decision": {
 			"kind": "Stemmen - aangenomen",
 			"text": "Aangenomen.",
@@ -357,14 +347,6 @@
 		"submitted_on_tk": "2025-06-02",
 		"last_activity": "2026-09-10",
 		"closed_on": "2026-07-10",
-		"completeness": {
-			"outcome": {
-				"state": "done",
-				"as_of": "2026-07-10",
-				"missing": null,
-				"reason": null
-			}
-		},
 		"ministry": "jenv",
 		"initiative": false,
 		"cabinet": "schoof",
@@ -503,20 +485,6 @@
 				}
 			]
 		},
-		"enacted": [
-			{
-				"key": "stb_2026_187",
-				"cite": "Stb. 2026, 187",
-				"published_on": "2026-07-10",
-				"first_effective_date": "2026-08-15",
-				"instrument": {
-					"key": "bwbr0052872",
-					"title": "Cyberbeveiligingswet",
-					"path": "/wetten/BWBR0052872"
-				},
-				"path": "/stb/2026/187"
-			}
-		],
 		"laws_named": [
 			{
 				"name": "Cyberbeveiligingswet",
@@ -677,22 +645,13 @@
 					"current_phase": null,
 					"closed": false,
 					"outcome": null,
-					"withdrawal_letter": null,
 					"tk_decision": null,
 					"ek_outcome": null,
 					"opened_on": "2011-04-29",
 					"opened_on_basis": "first_paper",
 					"submitted_on_tk": null,
-					"last_activity": "2026-10-15",
+					"last_activity": "2026-10-14",
 					"closed_on": null,
-					"completeness": {
-						"outcome": {
-							"state": "not_in_source",
-							"as_of": null,
-							"missing": null,
-							"reason": null
-						}
-					},
 					"ministry": "venj",
 					"initiative": false,
 					"cabinet": "rutte_verhagen",
@@ -739,12 +698,10 @@
 				"decided_on": null,
 				"tally": null,
 				"decision": null,
-				"motion_kind": null,
 				"display_name": "Kamerstuk 36764, nr. 34. Brief regering: Publicatie van het samenwerkingsprotocol inzake toezicht op de Cyberbeveiligingswet (Cbw) en de Wet weerbaarheid…",
 				"replaces": [],
 				"replaced_by": [],
-				"path": "/kamerstukken/36764/34",
-				"kind_group": "brief"
+				"path": "/kamerstukken/36764/34"
 			},
 			{
 				"chamber": "TK",
@@ -774,12 +731,10 @@
 				"decided_on": null,
 				"tally": null,
 				"decision": null,
-				"motion_kind": null,
 				"display_name": "Brief Eerste Kamer: Besluit Eerste Kamer inzake Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de…",
 				"replaces": [],
 				"replaced_by": [],
-				"path": null,
-				"kind_group": "brief"
+				"path": null
 			},
 			{
 				"chamber": "EK",
@@ -802,12 +757,10 @@
 				"decided_on": null,
 				"tally": null,
 				"decision": null,
-				"motion_kind": null,
 				"display_name": "Kamerstuk I 36764, E: Nota naar aanleiding van het tweede verslag",
 				"replaces": [],
 				"replaced_by": [],
-				"path": "/kamerstukken/36764/E",
-				"kind_group": "overig"
+				"path": "/kamerstukken/36764/E"
 			},
 			{
 				"chamber": "EK",
@@ -830,12 +783,10 @@
 				"decided_on": null,
 				"tally": null,
 				"decision": null,
-				"motion_kind": null,
 				"display_name": "Kamerstuk I 36764, D: Tweede verslag",
 				"replaces": [],
 				"replaced_by": [],
-				"path": "/kamerstukken/36764/D",
-				"kind_group": "overig"
+				"path": "/kamerstukken/36764/D"
 			}
 		]
 	},
@@ -996,14 +947,8 @@
 					"text": "Aangenomen.",
 					"date": "2026-04-15"
 				},
-				"official_short": {
-					"title": "Cyberbeveiligingswet",
-					"basis": "citation"
-				},
-				"short_title": "Cyberbeveiligingswet",
-				"short_title_basis": "title"
+				"short_title": "Cyberbeveiligingswet"
 			},
-			"title": "36764 Cyberbeveiligingswet",
 			"path": "/dossiers/36764"
 		},
 		"neighbors": {
@@ -1029,26 +974,24 @@
 								"TK"
 							],
 							"props": {
-								"agenda_title": "Aansluitend: Regeling van werkzaamheden",
-								"committee_id": null,
+								"external_id": "de3463ac-47a2-421c-918e-17e202134e47",
 								"date": "2026-04-15",
-								"display_name": "Aansluitend: Regeling van werkzaamheden (2026-04-15)",
+								"agenda_title": "Aansluitend: Regeling van werkzaamheden",
+								"kind": "Regeling van werkzaamheden",
+								"status": "Uitgevoerd",
+								"committee_id": null,
 								"dossier_numbers": [
 									"36925-(R2219)",
 									"36800-XXII",
 									"36800-A",
 									"36558"
 								],
-								"external_id": "de3463ac-47a2-421c-918e-17e202134e47",
-								"kind": "Regeling van werkzaamheden",
+								"display_name": "Aansluitend: Regeling van werkzaamheden (2026-04-15)",
 								"number": "2026A03119",
-								"precision": "Dag",
 								"replaced_by": [],
-								"status": "Uitgevoerd",
 								"tk_url": "https://www.tweedekamer.nl/debat_en_vergadering/plenaire_vergaderingen/details/activiteit?id=2026A03119",
 								"dossier_short_title": "Rijkswet uitlevering voor Aruba, Curaçao en Sint Maarten"
 							},
-							"title": "Regeling van werkzaamheden van 15 april 2026: Aansluitend: Regeling van werkzaamheden",
 							"edge_id": "09e41bd5fd0675973bf005e1152dab60d00dee6a",
 							"relation": "ABOUT",
 							"direction": "inbound",
@@ -1095,7 +1038,6 @@
 								"post": "minister",
 								"status": "Openstaand"
 							},
-							"title": "Toezegging TZ202604-068: De staatssecretaris Digitale Economie en Soevereiniteit en de minister van JenV zullen in samenwerking voor het eind van het jaar de Kamer informeren over de vragen van het lid Zwinkels inzake gekwalificeerde vertrouwensdiensten en mogelijke alternatieven in gehanteerde werkwijzen hierbij.",
 							"edge_id": "0c02fe6a9a7766e82818d5c15684d4968320b68a",
 							"relation": "ABOUT",
 							"direction": "inbound",
@@ -1157,10 +1099,8 @@
 								},
 								"passed": true,
 								"display_name": "Motie van het lid Van den Berg over geen meervoudige beboeting voor hetzelfde feitencomplex",
-								"short_subject": null,
 								"dossier_short_title": "Cyberbeveiligingswet"
 							},
-							"title": "Stemming over Motie van het lid Van den Berg over geen meervoudige beboeting voor hetzelfde feitencomplex, 31 maart 2026: aangenomen",
 							"edge_id": "00aef566493f540a1ed97763b9c3f1647f0b9918",
 							"relation": "ABOUT",
 							"direction": "inbound",
@@ -1192,7 +1132,6 @@
 								"Publication"
 							],
 							"props": {
-								"amending": false,
 								"article_count": 0,
 								"citation_title": "Stb. 2026, 187",
 								"date_published": "2026-07-10",
@@ -1211,7 +1150,6 @@
 								"source": "bwb",
 								"stub": false
 							},
-							"title": "Stb. 2026, 187: Wet van 8 juli 2026, houdende regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet)",
 							"edge_id": "6dc132427ae4555c09068f634178df82fac9a017",
 							"relation": "LEGISLATED_IN",
 							"direction": "inbound",
@@ -1388,14 +1326,8 @@
 					"text": "Aangenomen.",
 					"date": "2026-04-15"
 				},
-				"official_short": {
-					"title": "Cyberbeveiligingswet",
-					"basis": "citation"
-				},
-				"short_title": "Cyberbeveiligingswet",
-				"short_title_basis": "title"
+				"short_title": "Cyberbeveiligingswet"
 			},
-			"title": "36764 Cyberbeveiligingswet",
 			"path": "/dossiers/36764"
 		},
 		"neighbors": {
@@ -1421,26 +1353,24 @@
 								"TK"
 							],
 							"props": {
-								"agenda_title": "Aansluitend: Regeling van werkzaamheden",
-								"committee_id": null,
+								"external_id": "de3463ac-47a2-421c-918e-17e202134e47",
 								"date": "2026-04-15",
-								"display_name": "Aansluitend: Regeling van werkzaamheden (2026-04-15)",
+								"agenda_title": "Aansluitend: Regeling van werkzaamheden",
+								"kind": "Regeling van werkzaamheden",
+								"status": "Uitgevoerd",
+								"committee_id": null,
 								"dossier_numbers": [
 									"36925-(R2219)",
 									"36800-XXII",
 									"36800-A",
 									"36558"
 								],
-								"external_id": "de3463ac-47a2-421c-918e-17e202134e47",
-								"kind": "Regeling van werkzaamheden",
+								"display_name": "Aansluitend: Regeling van werkzaamheden (2026-04-15)",
 								"number": "2026A03119",
-								"precision": "Dag",
 								"replaced_by": [],
-								"status": "Uitgevoerd",
 								"tk_url": "https://www.tweedekamer.nl/debat_en_vergadering/plenaire_vergaderingen/details/activiteit?id=2026A03119",
 								"dossier_short_title": "Rijkswet uitlevering voor Aruba, Curaçao en Sint Maarten"
 							},
-							"title": "Regeling van werkzaamheden van 15 april 2026: Aansluitend: Regeling van werkzaamheden",
 							"edge_id": "09e41bd5fd0675973bf005e1152dab60d00dee6a",
 							"relation": "ABOUT",
 							"direction": "inbound",
@@ -1459,24 +1389,22 @@
 								"TK"
 							],
 							"props": {
-								"agenda_title": "Wet weerbaarheid kritieke entiteiten (36765)",
-								"committee_id": "14cac666-51cb-4154-80da-9b0e2eeb5014",
+								"external_id": "6b2fc9b6-fdcc-45de-9a11-4b945c94fc01",
 								"date": "2025-09-04",
-								"display_name": "Wet weerbaarheid kritieke entiteiten (36765) (2025-09-04)",
+								"agenda_title": "Wet weerbaarheid kritieke entiteiten (36765)",
+								"kind": "Inbreng verslag (wetsvoorstel)",
+								"status": "Uitgevoerd",
+								"committee_id": "14cac666-51cb-4154-80da-9b0e2eeb5014",
 								"dossier_numbers": [
 									"36764",
 									"36765"
 								],
-								"external_id": "6b2fc9b6-fdcc-45de-9a11-4b945c94fc01",
-								"kind": "Inbreng verslag (wetsvoorstel)",
+								"display_name": "Wet weerbaarheid kritieke entiteiten (36765) (2025-09-04)",
 								"number": "2025A05418",
-								"precision": "Dag",
 								"replaced_by": [],
-								"status": "Uitgevoerd",
 								"tk_url": "https://www.tweedekamer.nl/debat_en_vergadering/commissievergaderingen/details?id=2025A05418",
 								"dossier_short_title": "Cyberbeveiligingswet"
 							},
-							"title": "Inbreng verslag (wetsvoorstel) van 4 september 2025: Wet weerbaarheid kritieke entiteiten (36765)",
 							"edge_id": "0c9be50e0a1356f00b11e8b416af57a1bc3cc370",
 							"relation": "ABOUT",
 							"direction": "inbound",
@@ -1495,26 +1423,24 @@
 								"TK"
 							],
 							"props": {
-								"agenda_title": "Aanvang middagvergadering: Regeling van werkzaamheden",
-								"committee_id": null,
+								"external_id": "79e697e9-eeb6-4d20-a039-f9b8aadb7b70",
 								"date": "2026-01-29",
-								"display_name": "Aanvang middagvergadering: Regeling van werkzaamheden (2026-01-29)",
+								"agenda_title": "Aanvang middagvergadering: Regeling van werkzaamheden",
+								"kind": "Regeling van werkzaamheden",
+								"status": "Uitgevoerd",
+								"committee_id": null,
 								"dossier_numbers": [
 									"36888",
 									"36800-X",
 									"26643",
 									"21501-30"
 								],
-								"external_id": "79e697e9-eeb6-4d20-a039-f9b8aadb7b70",
-								"kind": "Regeling van werkzaamheden",
+								"display_name": "Aanvang middagvergadering: Regeling van werkzaamheden (2026-01-29)",
 								"number": "2026A00713",
-								"precision": "Dag",
 								"replaced_by": [],
-								"status": "Uitgevoerd",
 								"tk_url": "https://www.tweedekamer.nl/debat_en_vergadering/plenaire_vergaderingen/details/activiteit?id=2026A00713",
 								"dossier_short_title": null
 							},
-							"title": "Regeling van werkzaamheden van 29 januari 2026: Aanvang middagvergadering: Regeling van werkzaamheden",
 							"edge_id": "13ac2b98741d9f81c04adddf786a6d6b87a1345b",
 							"relation": "ABOUT",
 							"direction": "inbound",
@@ -1533,26 +1459,24 @@
 								"TK"
 							],
 							"props": {
-								"agenda_title": "Stemmingen",
-								"committee_id": null,
+								"external_id": "f3b8d88e-d71a-4acb-a6e1-c14e8c8d4fcd",
 								"date": "2026-04-07",
-								"display_name": "Stemmingen (2026-04-07)",
+								"agenda_title": "Stemmingen",
+								"kind": "Stemmingen",
+								"status": "Uitgevoerd",
+								"committee_id": null,
 								"dossier_numbers": [
 									"36764",
 									"36663",
 									"23432",
 									"31322"
 								],
-								"external_id": "f3b8d88e-d71a-4acb-a6e1-c14e8c8d4fcd",
-								"kind": "Stemmingen",
+								"display_name": "Stemmingen (2026-04-07)",
 								"number": "2026A02872",
-								"precision": "Dag",
 								"replaced_by": [],
-								"status": "Uitgevoerd",
 								"tk_url": "https://www.tweedekamer.nl/debat_en_vergadering/plenaire_vergaderingen/details/activiteit?id=2026A02872",
 								"dossier_short_title": "Cyberbeveiligingswet"
 							},
-							"title": "Stemmingen van 7 april 2026",
 							"edge_id": "1751af832c4e8f640e35e7ed88286999912669ae",
 							"relation": "ABOUT",
 							"direction": "inbound",
@@ -1599,7 +1523,6 @@
 								"post": "minister",
 								"status": "Openstaand"
 							},
-							"title": "Toezegging TZ202604-068: De staatssecretaris Digitale Economie en Soevereiniteit en de minister van JenV zullen in samenwerking voor het eind van het jaar de Kamer informeren over de vragen van het lid Zwinkels inzake gekwalificeerde vertrouwensdiensten en mogelijke alternatieven in gehanteerde werkwijzen hierbij.",
 							"edge_id": "0c02fe6a9a7766e82818d5c15684d4968320b68a",
 							"relation": "ABOUT",
 							"direction": "inbound",
@@ -1623,9 +1546,6 @@
 								"display_name": "De minister van JenV zegt toe, voor de inwerktreding van de wet, een…",
 								"expected_resolution": "2026-06-24",
 								"external_id": "8d7acc0e-a2a0-47be-b535-104ea97cf7b5",
-								"letter_dossiers": [
-									"36764"
-								],
 								"letter_ids": [
 									"c673b1db-e3d5-4121-8c12-6566a807ced4"
 								],
@@ -1639,15 +1559,12 @@
 								"post": "minister",
 								"status": "Afgedaan"
 							},
-							"title": "Toezegging TZ202604-062: De minister van JenV zegt toe, voor de inwerktreding van de wet, een schriftelijk overzicht met de Kamer te delen over de punten in de Cyberbeveiligingswet die nog nader uitgewerkt dienen te worden, inclusief, waar het kan, een vernoeming van termijnen waarop deze uitgewerkt zullen worden.",
 							"edge_id": "389ab9667bab5bea7f008f19ffc518e2a8971e14",
 							"relation": "ABOUT",
 							"direction": "inbound",
 							"confidence": null,
 							"status": "canoniek",
-							"meta": {
-								"basis": "nakoming"
-							},
+							"meta": {},
 							"path": "/toezeggingen/TZ202604-062"
 						},
 						{
@@ -1676,7 +1593,6 @@
 								"post": "minister",
 								"status": "Openstaand"
 							},
-							"title": "Toezegging TZ202604-067: De minister van JenV zegt toe het door het lid Van den Berg gevraagde tijdspad over de uitwerking van de Cyberbeveiligingswet richting Caribisch Nederland mee te nemen in de eerste evaluatie van de wet en aan de staatssecretaris Koninkrijksrelaties de vraag van het lid El Boujdaini, inzake een algemene routekaart voor het cyberbeschermings- en weerbaarheidsniveau van Caribisch Nederland, door te geleiden.",
 							"edge_id": "89b6d49497e753b38be9033562a6355b4112fe77",
 							"relation": "ABOUT",
 							"direction": "inbound",
@@ -1700,9 +1616,6 @@
 								"display_name": "De minister van JenV zegt toe voor de zomer schriftelijk terug te komen op de…",
 								"expected_resolution": "2026-06-24",
 								"external_id": "f79ef0b3-cd6f-4ea1-8f2d-9d0ccc25fa2f",
-								"letter_dossiers": [
-									"36764"
-								],
 								"letter_ids": [
 									"c673b1db-e3d5-4121-8c12-6566a807ced4"
 								],
@@ -1716,15 +1629,12 @@
 								"post": "minister",
 								"status": "Afgedaan"
 							},
-							"title": "Toezegging TZ202604-065: De minister van JenV zegt toe voor de zomer schriftelijk terug te komen op de door het lid Faber genoemde casus inzake de Wet weerbaarheid kritieke entiteiten en de afhankelijkheid van het toezicht, bijvoorbeeld in het geval van de kerncentrale.",
 							"edge_id": "93af265163f3b83a7fa029fa4be71eccd80e96b9",
 							"relation": "ABOUT",
 							"direction": "inbound",
 							"confidence": null,
 							"status": "canoniek",
-							"meta": {
-								"basis": "nakoming"
-							},
+							"meta": {},
 							"path": "/toezeggingen/TZ202604-065"
 						}
 					]
@@ -1780,10 +1690,8 @@
 								},
 								"passed": true,
 								"display_name": "Motie van het lid Van den Berg over geen meervoudige beboeting voor hetzelfde feitencomplex",
-								"short_subject": null,
 								"dossier_short_title": "Cyberbeveiligingswet"
 							},
-							"title": "Stemming over Motie van het lid Van den Berg over geen meervoudige beboeting voor hetzelfde feitencomplex, 31 maart 2026: aangenomen",
 							"edge_id": "00aef566493f540a1ed97763b9c3f1647f0b9918",
 							"relation": "ABOUT",
 							"direction": "inbound",
@@ -1835,10 +1743,8 @@
 								},
 								"passed": true,
 								"display_name": "Motie van de leden El Boujdaini en Kathmann over een cybersecuritystelsel voor het Caribisch deel van het Koninkrijk dat aansluit bij het niveau in Europees Nederland ",
-								"short_subject": null,
 								"dossier_short_title": "Cyberbeveiligingswet"
 							},
-							"title": "Stemming over Motie van de leden El Boujdaini en Kathmann over een cybersecuritystelsel voor het Caribisch deel van het Koninkrijk dat aansluit bij het niveau in Europees Nederland, 31 maart 2026: aangenomen",
 							"edge_id": "054a4fc04dbc946a6933ffaf333b63ec5698e4b3",
 							"relation": "ABOUT",
 							"direction": "inbound",
@@ -1888,10 +1794,8 @@
 								},
 								"passed": true,
 								"display_name": "Motie van het lid Van den Berg over verplichtingen, bewijslasten, auditlogica en verantwoordingsinformatie onder de Cbw en de Wwke zo veel mogelijk harmoniseren met BIO en ENSIA ",
-								"short_subject": null,
 								"dossier_short_title": "Cyberbeveiligingswet"
 							},
-							"title": "Stemming over Motie van het lid Van den Berg over verplichtingen, bewijslasten, auditlogica en verantwoordingsinformatie onder de Cbw en de Wwke zo veel mogelijk harmoniseren met BIO en ENSIA, 31 maart 2026: aangenomen",
 							"edge_id": "058661b2b0b4dc58c0f13d31983f49f8d3e1435e",
 							"relation": "ABOUT",
 							"direction": "inbound",
@@ -1942,10 +1846,8 @@
 								},
 								"passed": false,
 								"display_name": "Amendement van het lid Kathmann over de interventiebevoegdheid en de inspanningsplicht van de minister",
-								"short_subject": null,
 								"dossier_short_title": "Cyberbeveiligingswet"
 							},
-							"title": "Stemming over Amendement van het lid Kathmann over de interventiebevoegdheid en de inspanningsplicht van de minister, 15 april 2026: verworpen",
 							"edge_id": "06b7e61730b6fa2ab9e253f68252a86df9c2eb3d",
 							"relation": "ABOUT",
 							"direction": "inbound",
@@ -1977,7 +1879,6 @@
 								"Publication"
 							],
 							"props": {
-								"amending": false,
 								"article_count": 0,
 								"citation_title": "Stb. 2026, 187",
 								"date_published": "2026-07-10",
@@ -1996,7 +1897,6 @@
 								"source": "bwb",
 								"stub": false
 							},
-							"title": "Stb. 2026, 187: Wet van 8 juli 2026, houdende regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet)",
 							"edge_id": "6dc132427ae4555c09068f634178df82fac9a017",
 							"relation": "LEGISLATED_IN",
 							"direction": "inbound",
@@ -2021,7 +1921,6 @@
 								"aliases": [
 									"Cbw"
 								],
-								"amending": false,
 								"article_count": 111,
 								"basis": [],
 								"bwb_id": "BWBR0052872",
@@ -2044,7 +1943,7 @@
 								],
 								"enacted_publication": "stb-2026-187",
 								"implements_celex": [],
-								"inbound_citation_count": 330,
+								"inbound_citation_count": 348,
 								"jurisdiction": "nl",
 								"kind": "wet",
 								"legal_areas": [
@@ -2084,7 +1983,6 @@
 								"title": "Cyberbeveiligingswet",
 								"version_date_in_force": "2026-08-15"
 							},
-							"title": "Cyberbeveiligingswet (Cbw)",
 							"edge_id": "88b4f4866b24b908c77c76dbf6ce4ca59c645e47",
 							"relation": "LEGISLATED_IN",
 							"direction": "inbound",
@@ -2118,8 +2016,7 @@
 				"aliases": [
 					"Tw"
 				],
-				"amending": false,
-				"article_count": 338,
+				"article_count": 379,
 				"basis": [],
 				"bwb_id": "BWBR0009950",
 				"celex_refs": [
@@ -2141,7 +2038,7 @@
 				],
 				"enacted_publication": "stb-1998-610",
 				"implements_celex": [],
-				"inbound_citation_count": 4934,
+				"inbound_citation_count": 4220,
 				"jurisdiction": "nl",
 				"kind": "wet",
 				"legal_areas": [
@@ -2170,7 +2067,6 @@
 				"title": "Telecommunicatiewet",
 				"version_date_in_force": "2026-08-15"
 			},
-			"title": "Telecommunicatiewet",
 			"path": "/wetten/BWBR0009950"
 		},
 		"neighbors": {
@@ -2196,8 +2092,7 @@
 				"aliases": [
 					"Tw"
 				],
-				"amending": false,
-				"article_count": 338,
+				"article_count": 379,
 				"basis": [],
 				"bwb_id": "BWBR0009950",
 				"celex_refs": [
@@ -2219,7 +2114,7 @@
 				],
 				"enacted_publication": "stb-1998-610",
 				"implements_celex": [],
-				"inbound_citation_count": 4934,
+				"inbound_citation_count": 4220,
 				"jurisdiction": "nl",
 				"kind": "wet",
 				"legal_areas": [
@@ -2248,7 +2143,6 @@
 				"title": "Telecommunicatiewet",
 				"version_date_in_force": "2026-08-15"
 			},
-			"title": "Telecommunicatiewet",
 			"path": "/wetten/BWBR0009950"
 		},
 		"neighbors": {
@@ -2274,27 +2168,23 @@
 								"EU"
 							],
 							"props": {
-								"amending": false,
 								"article_count": 26,
 								"celex": "32009R1211",
 								"citation_title": "Verordening (EG) nr. 1211/2009",
-								"date_signed": "2009-11-25",
 								"display_name": "Verordening (EG) nr. 1211/2009",
-								"inbound_citation_count": 12,
+								"inbound_citation_count": 9,
 								"jurisdiction": "eu",
 								"kind": null,
 								"lang": "NL",
 								"meta": {
 									"celex": "32009R1211",
-									"lang": "NL",
-									"modified": "2024-01-21T02:28:18.303+01:00"
+									"lang": "NL"
 								},
 								"short_title": null,
 								"source": "eurlex",
 								"stub": false,
 								"title": "Verordening (EG) nr. 1211/2009 van het Europees Parlement en de Raad van 25 november 2009 tot oprichting van het Orgaan van Europese regelgevende instanties voor elektronische communicatie (BEREC) en het Bureau"
 							},
-							"title": "Verordening (EG) nr. 1211/2009",
 							"edge_id": "2ab54011baf0787732cbb8d659129e7b8e5661a8",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
@@ -2315,27 +2205,23 @@
 								"EU"
 							],
 							"props": {
-								"amending": false,
 								"article_count": 0,
 								"celex": "31998L0083",
 								"citation_title": "Richtlijn 98/83/EG",
-								"date_signed": "1998-11-03",
 								"display_name": "Richtlijn 98/83/EG",
-								"inbound_citation_count": 11,
+								"inbound_citation_count": 10,
 								"jurisdiction": "eu",
 								"kind": null,
 								"lang": "NL",
 								"meta": {
 									"celex": "31998L0083",
-									"lang": "NL",
-									"modified": "2023-09-20T11:46:34.841+02:00"
+									"lang": "NL"
 								},
 								"short_title": null,
 								"source": "eurlex",
 								"stub": false,
 								"title": "Richtlijn 98/83/EG van de Raad van 3 november 1998 betreffende de kwaliteit van voor menselijke consumptie bestemd water"
 							},
-							"title": "Richtlijn 98/83/EG",
 							"edge_id": "5e3c50e7c4a012eff609ee2a14b86590b461a39c",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
@@ -2356,27 +2242,23 @@
 								"EU"
 							],
 							"props": {
-								"amending": false,
 								"article_count": 12,
 								"celex": "32015L1535",
 								"citation_title": "Richtlijn (EU) 2015/1535",
-								"date_signed": "2015-09-09",
 								"display_name": "Richtlijn (EU) 2015/1535",
-								"inbound_citation_count": 108,
+								"inbound_citation_count": 98,
 								"jurisdiction": "eu",
 								"kind": null,
 								"lang": "NL",
 								"meta": {
 									"celex": "32015L1535",
-									"lang": "NL",
-									"modified": "2024-12-31T19:22:46.947+01:00"
+									"lang": "NL"
 								},
 								"short_title": null,
 								"source": "eurlex",
 								"stub": false,
 								"title": "Richtlijn (EU) 2015/1535 van het Europees Parlement en de Raad van 9 september 2015 betreffende een informatieprocedure op het gebied van technische voorschriften en regels betreffende de diensten van de informatiemaatschappij (codificatie)"
 							},
-							"title": "Richtlijn (EU) 2015/1535",
 							"edge_id": "70aabc42db6b9bc69fffdc11ae0a358e344cc2bf",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
@@ -2397,11 +2279,9 @@
 								"EU"
 							],
 							"props": {
-								"amending": false,
 								"article_count": 10,
 								"celex": "32008L0063",
 								"citation_title": "Richtlijn 2008/63/EG",
-								"date_signed": "2008-06-20",
 								"display_name": "Richtlijn 2008/63/EG",
 								"inbound_citation_count": 3,
 								"jurisdiction": "eu",
@@ -2409,15 +2289,13 @@
 								"lang": "NL",
 								"meta": {
 									"celex": "32008L0063",
-									"lang": "NL",
-									"modified": "2024-12-31T20:26:29.160+01:00"
+									"lang": "NL"
 								},
 								"short_title": null,
 								"source": "eurlex",
 								"stub": false,
 								"title": "Richtlijn 2008/63/EG van de Commissie van 20 juni 2008 betreffende de mededinging op de markten van telecommunicatie-eindapparatuur"
 							},
-							"title": "Richtlijn 2008/63/EG",
 							"edge_id": "9c9d6e1bb8a50e4db96b69c175e1bb9fe027ea0d",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
@@ -2451,8 +2329,7 @@
 				"aliases": [
 					"Tw"
 				],
-				"amending": false,
-				"article_count": 338,
+				"article_count": 379,
 				"basis": [],
 				"bwb_id": "BWBR0009950",
 				"celex_refs": [
@@ -2474,7 +2351,7 @@
 				],
 				"enacted_publication": "stb-1998-610",
 				"implements_celex": [],
-				"inbound_citation_count": 4934,
+				"inbound_citation_count": 4220,
 				"jurisdiction": "nl",
 				"kind": "wet",
 				"legal_areas": [
@@ -2503,7 +2380,6 @@
 				"title": "Telecommunicatiewet",
 				"version_date_in_force": "2026-08-15"
 			},
-			"title": "Telecommunicatiewet",
 			"path": "/wetten/BWBR0009950"
 		},
 		"neighbors": {
@@ -2529,27 +2405,23 @@
 								"EU"
 							],
 							"props": {
-								"amending": false,
 								"article_count": 46,
 								"celex": "32022L2555",
 								"citation_title": "Richtlijn (EU) 2022/2555",
-								"date_signed": "2022-12-14",
 								"display_name": "Richtlijn (EU) 2022/2555",
-								"inbound_citation_count": 30,
+								"inbound_citation_count": 55,
 								"jurisdiction": "eu",
 								"kind": null,
 								"lang": "NL",
 								"meta": {
 									"celex": "32022L2555",
-									"lang": "NL",
-									"modified": "2024-01-21T01:38:57.400+01:00"
+									"lang": "NL"
 								},
 								"short_title": null,
 								"source": "eurlex",
 								"stub": false,
 								"title": "Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (NIS 2-richtlijn)"
 							},
-							"title": "Richtlijn (EU) 2022/2555",
 							"edge_id": "1fce8c55c02313ac2643eb6c929b8f5ba5382165",
 							"relation": "IMPLEMENTS",
 							"direction": "outbound",
@@ -2584,11 +2456,9 @@
 								"EU"
 							],
 							"props": {
-								"amending": false,
 								"article_count": 35,
 								"celex": "32019L0882",
 								"citation_title": "Richtlijn (EU) 2019/882",
-								"date_signed": "2019-04-17",
 								"display_name": "Richtlijn (EU) 2019/882",
 								"inbound_citation_count": 41,
 								"jurisdiction": "eu",
@@ -2596,15 +2466,13 @@
 								"lang": "NL",
 								"meta": {
 									"celex": "32019L0882",
-									"lang": "NL",
-									"modified": "2024-12-31T19:50:58.963+01:00"
+									"lang": "NL"
 								},
 								"short_title": null,
 								"source": "eurlex",
 								"stub": false,
 								"title": "Richtlijn (EU) 2019/882 van het Europees Parlement en de Raad van 17 april 2019 betreffende de toegankelijkheidsvoorschriften voor producten en diensten"
 							},
-							"title": "Richtlijn (EU) 2019/882",
 							"edge_id": "202c4f47b284e4c92728c19ed28d0c7a7645a5c7",
 							"relation": "IMPLEMENTS",
 							"direction": "outbound",
@@ -2639,27 +2507,23 @@
 								"EU"
 							],
 							"props": {
-								"amending": false,
 								"article_count": 40,
 								"celex": "32023L1791",
 								"citation_title": "Richtlijn (EU) 2023/1791",
-								"date_signed": "2023-09-13",
 								"display_name": "Richtlijn (EU) 2023/1791",
-								"inbound_citation_count": 31,
+								"inbound_citation_count": 19,
 								"jurisdiction": "eu",
 								"kind": null,
 								"lang": "NL",
 								"meta": {
 									"celex": "32023L1791",
-									"lang": "NL",
-									"modified": "2025-07-03T14:16:20.274+02:00"
+									"lang": "NL"
 								},
 								"short_title": null,
 								"source": "eurlex",
 								"stub": false,
 								"title": "Richtlijn (EU) 2023/1791 van het Europees Parlement en de Raad van 13 september 2023 betreffende energie-efficiëntie en tot wijziging van Verordening (EU) 2023/955 (herschikking)"
 							},
-							"title": "Richtlijn (EU) 2023/1791",
 							"edge_id": "335ab7c835ad7bb5ef2e82a4b7cfb8baa7430ad7",
 							"relation": "IMPLEMENTS",
 							"direction": "outbound",
@@ -2694,27 +2558,23 @@
 								"EU"
 							],
 							"props": {
-								"amending": false,
 								"article_count": 7,
 								"celex": "32023L2413",
 								"citation_title": "Richtlijn (EU) 2023/2413",
-								"date_signed": "2023-10-18",
 								"display_name": "Richtlijn (EU) 2023/2413",
-								"inbound_citation_count": 47,
+								"inbound_citation_count": 53,
 								"jurisdiction": "eu",
 								"kind": null,
 								"lang": "NL",
 								"meta": {
 									"celex": "32023L2413",
-									"lang": "NL",
-									"modified": "2026-04-13T15:21:20.398+02:00"
+									"lang": "NL"
 								},
 								"short_title": null,
 								"source": "eurlex",
 								"stub": false,
 								"title": "Richtlijn (EU) 2023/2413 van het Europees Parlement en de Raad van 18 oktober 2023 tot wijziging van Richtlijn (EU) 2018/2001, Verordening (EU) 2018/1999 en Richtlijn 98/70/EG wat de bevordering van energie uit hernieuwbare bronnen betreft, en tot intrekking van Richtlijn (EU) 2015/652 van de Raad"
 							},
-							"title": "Richtlijn (EU) 2023/2413",
 							"edge_id": "3b7bf9bc2201cf66a925d144247da418cda3a415",
 							"relation": "IMPLEMENTS",
 							"direction": "outbound",
@@ -2759,7 +2619,6 @@
 				"BWB"
 			],
 			"props": {
-				"amending": false,
 				"article_count": 26,
 				"basis": [],
 				"bwb_id": "BWBR0041548",
@@ -2782,7 +2641,7 @@
 				],
 				"enacted_publication": "stb-2018-409",
 				"implements_celex": [],
-				"inbound_citation_count": 109,
+				"inbound_citation_count": 94,
 				"jurisdiction": "nl",
 				"kind": "wet",
 				"legal_areas": [
@@ -2811,7 +2670,6 @@
 				"title": "Wet bekostiging financieel toezicht 2019",
 				"version_date_in_force": "2026-08-15"
 			},
-			"title": "Wet bekostiging financieel toezicht 2019",
 			"path": "/wetten/BWBR0041548"
 		},
 		"neighbors": {
@@ -2834,7 +2692,6 @@
 				"BWB"
 			],
 			"props": {
-				"amending": false,
 				"article_count": 26,
 				"basis": [],
 				"bwb_id": "BWBR0041548",
@@ -2857,7 +2714,7 @@
 				],
 				"enacted_publication": "stb-2018-409",
 				"implements_celex": [],
-				"inbound_citation_count": 109,
+				"inbound_citation_count": 94,
 				"jurisdiction": "nl",
 				"kind": "wet",
 				"legal_areas": [
@@ -2886,7 +2743,6 @@
 				"title": "Wet bekostiging financieel toezicht 2019",
 				"version_date_in_force": "2026-08-15"
 			},
-			"title": "Wet bekostiging financieel toezicht 2019",
 			"path": "/wetten/BWBR0041548"
 		},
 		"neighbors": {
@@ -2912,27 +2768,23 @@
 								"EU"
 							],
 							"props": {
-								"amending": false,
 								"article_count": 82,
 								"celex": "32010R1095",
 								"citation_title": "Verordening (EU) nr. 1095/2010",
-								"date_signed": "2010-11-24",
 								"display_name": "Verordening (EU) nr. 1095/2010",
-								"inbound_citation_count": 47,
+								"inbound_citation_count": 46,
 								"jurisdiction": "eu",
 								"kind": null,
 								"lang": "NL",
 								"meta": {
 									"celex": "32010R1095",
-									"lang": "NL",
-									"modified": "2025-07-03T16:38:28.382+02:00"
+									"lang": "NL"
 								},
 								"short_title": null,
 								"source": "eurlex",
 								"stub": false,
 								"title": "Verordening (EU) nr. 1095/2010 van het Europees Parlement en de Raad van 24 november 2010 tot oprichting van een Europese toezichthoudende autoriteit (Europese Autoriteit voor effecten en markten), tot wijziging van Besluit nr. 716/2009/EG en tot intrekking van Besluit 2009/77/EG van de Commissie"
 							},
-							"title": "Verordening (EU) nr. 1095/2010",
 							"edge_id": "1d824219cad25a449c61757828c45dbf3fcf6a68",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
@@ -2953,27 +2805,23 @@
 								"EU"
 							],
 							"props": {
-								"amending": false,
 								"article_count": 23,
 								"celex": "32004L0025",
 								"citation_title": "Richtlijn 2004/25/EG",
-								"date_signed": "2004-04-21",
 								"display_name": "Richtlijn 2004/25/EG",
-								"inbound_citation_count": 56,
+								"inbound_citation_count": 54,
 								"jurisdiction": "eu",
 								"kind": null,
 								"lang": "NL",
 								"meta": {
 									"celex": "32004L0025",
-									"lang": "NL",
-									"modified": "2024-01-20T15:10:15.252+01:00"
+									"lang": "NL"
 								},
 								"short_title": null,
 								"source": "eurlex",
 								"stub": false,
 								"title": "Richtlijn 2004/25/EG van het Europees Parlement en de Raad van 21 april 2004 betreffende het openbaar overnamebod"
 							},
-							"title": "Richtlijn 2004/25/EG",
 							"edge_id": "22a9e1e300f024f9db09984c0b0299556a4867cb",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
@@ -2994,27 +2842,23 @@
 								"EU"
 							],
 							"props": {
-								"amending": false,
 								"article_count": 13,
 								"celex": "32002L0047",
 								"citation_title": "Richtlijn 2002/47/EG",
-								"date_signed": "2002-06-06",
 								"display_name": "Richtlijn 2002/47/EG",
-								"inbound_citation_count": 66,
+								"inbound_citation_count": 56,
 								"jurisdiction": "eu",
 								"kind": null,
 								"lang": "NL",
 								"meta": {
 									"celex": "32002L0047",
-									"lang": "NL",
-									"modified": "2025-07-03T16:09:19.741+02:00"
+									"lang": "NL"
 								},
 								"short_title": null,
 								"source": "eurlex",
 								"stub": false,
 								"title": "Richtlijn 2002/47/EG van het Europees Parlement en de Raad van 6 juni 2002 betreffende financiëlezekerheidsovereenkomsten"
 							},
-							"title": "Richtlijn 2002/47/EG",
 							"edge_id": "32db548a73d88aa48bd154a909a019e47267fb5b",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
@@ -3035,27 +2879,23 @@
 								"EU"
 							],
 							"props": {
-								"amending": false,
 								"article_count": 17,
 								"celex": "32009R0924",
 								"citation_title": "Verordening (EG) nr. 924/2009",
-								"date_signed": "2009-09-16",
 								"display_name": "Verordening (EG) nr. 924/2009",
-								"inbound_citation_count": 17,
+								"inbound_citation_count": 16,
 								"jurisdiction": "eu",
 								"kind": null,
 								"lang": "NL",
 								"meta": {
 									"celex": "32009R0924",
-									"lang": "NL",
-									"modified": "2022-12-13T01:48:17.542+01:00"
+									"lang": "NL"
 								},
 								"short_title": null,
 								"source": "eurlex",
 								"stub": false,
 								"title": "Verordening (EG) nr. 924/2009 van het Europees Parlement en de Raad van 16 september 2009 betreffende grensoverschrijdende betalingen in de Gemeenschap en tot intrekking van Verordening (EG) nr. 2560/2001"
 							},
-							"title": "Verordening (EG) nr. 924/2009",
 							"edge_id": "405ecc9b13f4297e760a6c961b42b984aa56ced7",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
@@ -3086,7 +2926,6 @@
 				"BWB"
 			],
 			"props": {
-				"amending": false,
 				"article_count": 26,
 				"basis": [],
 				"bwb_id": "BWBR0041548",
@@ -3109,7 +2948,7 @@
 				],
 				"enacted_publication": "stb-2018-409",
 				"implements_celex": [],
-				"inbound_citation_count": 109,
+				"inbound_citation_count": 94,
 				"jurisdiction": "nl",
 				"kind": "wet",
 				"legal_areas": [
@@ -3138,7 +2977,6 @@
 				"title": "Wet bekostiging financieel toezicht 2019",
 				"version_date_in_force": "2026-08-15"
 			},
-			"title": "Wet bekostiging financieel toezicht 2019",
 			"path": "/wetten/BWBR0041548"
 		},
 		"neighbors": {
@@ -3164,27 +3002,23 @@
 								"EU"
 							],
 							"props": {
-								"amending": false,
 								"article_count": 46,
 								"celex": "32022L2555",
 								"citation_title": "Richtlijn (EU) 2022/2555",
-								"date_signed": "2022-12-14",
 								"display_name": "Richtlijn (EU) 2022/2555",
-								"inbound_citation_count": 30,
+								"inbound_citation_count": 55,
 								"jurisdiction": "eu",
 								"kind": null,
 								"lang": "NL",
 								"meta": {
 									"celex": "32022L2555",
-									"lang": "NL",
-									"modified": "2024-01-21T01:38:57.400+01:00"
+									"lang": "NL"
 								},
 								"short_title": null,
 								"source": "eurlex",
 								"stub": false,
 								"title": "Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (NIS 2-richtlijn)"
 							},
-							"title": "Richtlijn (EU) 2022/2555",
 							"edge_id": "5510a11195336045dcde48f8fe5adecb245a8f83",
 							"relation": "IMPLEMENTS",
 							"direction": "outbound",
@@ -3233,7 +3067,6 @@
 				"aliases": [
 					"Cbw"
 				],
-				"amending": false,
 				"article_count": 111,
 				"basis": [],
 				"bwb_id": "BWBR0052872",
@@ -3256,7 +3089,7 @@
 				],
 				"enacted_publication": "stb-2026-187",
 				"implements_celex": [],
-				"inbound_citation_count": 330,
+				"inbound_citation_count": 348,
 				"jurisdiction": "nl",
 				"kind": "wet",
 				"legal_areas": [
@@ -3296,7 +3129,6 @@
 				"title": "Cyberbeveiligingswet",
 				"version_date_in_force": "2026-08-15"
 			},
-			"title": "Cyberbeveiligingswet (Cbw)",
 			"path": "/wetten/BWBR0052872"
 		},
 		"neighbors": {
@@ -3323,7 +3155,6 @@
 				"aliases": [
 					"Cbw"
 				],
-				"amending": false,
 				"article_count": 111,
 				"basis": [],
 				"bwb_id": "BWBR0052872",
@@ -3346,7 +3177,7 @@
 				],
 				"enacted_publication": "stb-2026-187",
 				"implements_celex": [],
-				"inbound_citation_count": 330,
+				"inbound_citation_count": 348,
 				"jurisdiction": "nl",
 				"kind": "wet",
 				"legal_areas": [
@@ -3386,7 +3217,6 @@
 				"title": "Cyberbeveiligingswet",
 				"version_date_in_force": "2026-08-15"
 			},
-			"title": "Cyberbeveiligingswet (Cbw)",
 			"path": "/wetten/BWBR0052872"
 		},
 		"neighbors": {
@@ -3412,11 +3242,9 @@
 								"EU"
 							],
 							"props": {
-								"amending": false,
 								"article_count": 38,
 								"celex": "32022R0123",
 								"citation_title": "Verordening (EU) 2022/123",
-								"date_signed": "2022-01-25",
 								"display_name": "Verordening (EU) 2022/123",
 								"inbound_citation_count": 6,
 								"jurisdiction": "eu",
@@ -3424,15 +3252,13 @@
 								"lang": "NL",
 								"meta": {
 									"celex": "32022R0123",
-									"lang": "NL",
-									"modified": "2025-07-03T18:52:08.646+02:00"
+									"lang": "NL"
 								},
 								"short_title": null,
 								"source": "eurlex",
 								"stub": false,
 								"title": "Verordening (EU) 2022/123 van het Europees Parlement en de Raad van 25 januari 2022 betreffende een grotere rol van het Europees Geneesmiddelenbureau inzake crisisparaatheid en -beheersing op het gebied van geneesmiddelen en medische hulpmiddelen"
 							},
-							"title": "Verordening (EU) 2022/123",
 							"edge_id": "009cda00b3dad3e062084e215caf1add094dc3d9",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
@@ -3453,27 +3279,23 @@
 								"EU"
 							],
 							"props": {
-								"amending": false,
 								"article_count": 21,
 								"celex": "32005L0065",
 								"citation_title": "Richtlijn 2005/65/EG",
-								"date_signed": "2005-10-26",
 								"display_name": "Richtlijn 2005/65/EG",
-								"inbound_citation_count": 20,
+								"inbound_citation_count": 15,
 								"jurisdiction": "eu",
 								"kind": null,
 								"lang": "NL",
 								"meta": {
 									"celex": "32005L0065",
-									"lang": "NL",
-									"modified": "2025-04-14T10:46:05.106+02:00"
+									"lang": "NL"
 								},
 								"short_title": null,
 								"source": "eurlex",
 								"stub": false,
 								"title": "Richtlijn 2005/65/EG van het Europees Parlement en de Raad van 26 oktober 2005 betreffende het verhogen van de veiligheid van havens"
 							},
-							"title": "Richtlijn 2005/65/EG",
 							"edge_id": "045be0c4eecbf7973be4d853f72cf07bc43abb7b",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
@@ -3494,27 +3316,23 @@
 								"EU"
 							],
 							"props": {
-								"amending": false,
 								"article_count": 71,
 								"celex": "32019R0943",
 								"citation_title": "Verordening (EU) 2019/943",
-								"date_signed": "2019-06-05",
 								"display_name": "Verordening (EU) 2019/943",
-								"inbound_citation_count": 64,
+								"inbound_citation_count": 61,
 								"jurisdiction": "eu",
 								"kind": null,
 								"lang": "NL",
 								"meta": {
 									"celex": "32019R0943",
-									"lang": "NL",
-									"modified": "2025-07-03T17:41:40.546+02:00"
+									"lang": "NL"
 								},
 								"short_title": null,
 								"source": "eurlex",
 								"stub": false,
 								"title": "Verordening (EU) 2019/943 van het Europees Parlement en de Raad van 5 juni 2019 betreffende de interne markt voor elektriciteit"
 							},
-							"title": "Verordening (EU) 2019/943",
 							"edge_id": "059e29f11cfcb549dc6752ab46b5017d1fd98a26",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
@@ -3535,11 +3353,9 @@
 								"EU"
 							],
 							"props": {
-								"amending": false,
 								"article_count": 12,
 								"celex": "32004R0552",
 								"citation_title": "Verordening (EG) nr. 552/2004",
-								"date_signed": "2004-03-10",
 								"display_name": "Verordening (EG) nr. 552/2004",
 								"inbound_citation_count": 15,
 								"jurisdiction": "eu",
@@ -3547,15 +3363,13 @@
 								"lang": "NL",
 								"meta": {
 									"celex": "32004R0552",
-									"lang": "NL",
-									"modified": "2024-01-21T09:00:19.958+01:00"
+									"lang": "NL"
 								},
 								"short_title": null,
 								"source": "eurlex",
 								"stub": false,
 								"title": "Verordening (EG) nr. 552/2004 van het Europees Parlement en de Raad van 10 maart 2004 betreffende de interoperabiliteit van het Europese netwerk voor luchtverkeersbeveiliging (\"de interoperabiliteitsverordening\") (Voor de EER relevante tekst)"
 							},
-							"title": "Verordening (EG) nr. 552/2004",
 							"edge_id": "07a7cfc5123eff1dfeb23a461bc3bbec15fec2e2",
 							"relation": "REFERS_TO",
 							"direction": "outbound",
@@ -3590,7 +3404,6 @@
 				"aliases": [
 					"Cbw"
 				],
-				"amending": false,
 				"article_count": 111,
 				"basis": [],
 				"bwb_id": "BWBR0052872",
@@ -3613,7 +3426,7 @@
 				],
 				"enacted_publication": "stb-2026-187",
 				"implements_celex": [],
-				"inbound_citation_count": 330,
+				"inbound_citation_count": 348,
 				"jurisdiction": "nl",
 				"kind": "wet",
 				"legal_areas": [
@@ -3653,7 +3466,6 @@
 				"title": "Cyberbeveiligingswet",
 				"version_date_in_force": "2026-08-15"
 			},
-			"title": "Cyberbeveiligingswet (Cbw)",
 			"path": "/wetten/BWBR0052872"
 		},
 		"neighbors": {
@@ -3679,27 +3491,23 @@
 								"EU"
 							],
 							"props": {
-								"amending": false,
 								"article_count": 46,
 								"celex": "32022L2555",
 								"citation_title": "Richtlijn (EU) 2022/2555",
-								"date_signed": "2022-12-14",
 								"display_name": "Richtlijn (EU) 2022/2555",
-								"inbound_citation_count": 30,
+								"inbound_citation_count": 55,
 								"jurisdiction": "eu",
 								"kind": null,
 								"lang": "NL",
 								"meta": {
 									"celex": "32022L2555",
-									"lang": "NL",
-									"modified": "2024-01-21T01:38:57.400+01:00"
+									"lang": "NL"
 								},
 								"short_title": null,
 								"source": "eurlex",
 								"stub": false,
 								"title": "Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (NIS 2-richtlijn)"
 							},
-							"title": "Richtlijn (EU) 2022/2555",
 							"edge_id": "a6e5503b6fb38e86ddc717dd032f4a06c96cd001",
 							"relation": "IMPLEMENTS",
 							"direction": "outbound",
