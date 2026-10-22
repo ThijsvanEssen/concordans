@@ -33,7 +33,7 @@ export function sessionYearOn(date: string | null | undefined): string | null {
 	return `${from}-${from + 1}`;
 }
 
-type Paper = {
+export type Paper = {
 	chamber?: string | null;
 	session_year?: string | null;
 	/** Its date: its vergaderjaar where the API does not name it (`explained-by`). */
@@ -42,17 +42,27 @@ type Paper = {
 	dossier_suffix?: string | null;
 	/** `5` in the Tweede Kamer, a letter (`C`) in the Eerste Kamer. */
 	number?: string | number | null;
+	/** Several papers of one dossier at once, in order: `nrs. 3–5`, in the Eerste Kamer `A, B`. */
+	numbers?: string[] | null;
 };
 
 /** `36945 IV`: the dossier with its suffix, as a citation writes it. */
 const dossierOf = (p: Paper & { dossier_number: string }) =>
 	p.dossier_suffix ? `${p.dossier_number} ${p.dossier_suffix}` : officialNumber(p.dossier_number);
 
+/** `nr. 5`, `nrs. 3–5`; the Eerste Kamer's letters bare: `C`, `A, B`. */
+function numbersOf(p: Paper): string | null {
+	const ns = p.numbers?.length ? p.numbers : p.number == null || p.number === '' ? [] : [p.number];
+	if (!ns.length) return null;
+	if (p.chamber === 'EK') return ns.join(', ');
+	return ns.length === 1 ? `nr. ${ns[0]}` : `nrs. ${ns[0]}–${ns.at(-1)}`;
+}
+
 /** `36791, C` or `36945 IV, nr. 5`: a paper's place in its dossier; null for no Kamerstuk. */
 export function kamerstukLabel(p: Paper): string | null {
-	if (!p.dossier_number || p.number == null || p.number === '') return null;
-	const dossier = dossierOf({ ...p, dossier_number: p.dossier_number });
-	return p.chamber === 'EK' ? `${dossier}, ${p.number}` : `${dossier}, nr. ${p.number}`;
+	const numbers = numbersOf(p);
+	if (!p.dossier_number || !numbers) return null;
+	return `${dossierOf({ ...p, dossier_number: p.dossier_number })}, ${numbers}`;
 }
 
 /**

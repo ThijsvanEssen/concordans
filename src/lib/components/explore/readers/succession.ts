@@ -2,8 +2,8 @@
 // `TRANSPOSED_TO`): the article of the new law that takes its place, or the article of the
 // old law whose place it takes, as the transposition table gives them.
 import type { Schema } from '$lib/api/types';
-import { citeArticle } from '$lib/text/cite';
-import { lawShortName } from '$lib/text/bw';
+import { citationRecord } from '$lib/text/citation-record';
+import { articleRef, lawShortName } from '$lib/text/bw';
 import { enactedLawOfKey } from '$lib/text/enacted-law';
 import { joinAnd, plural, textOf } from '$lib/text/words';
 import type { LidPairing } from '$lib/text/version-diff';
@@ -38,21 +38,23 @@ export function successionName(s: Succession, own: OwnLaw, direction: Direction)
 	const title = law?.citation_title ?? law?.title ?? null;
 	const sameTitle = !!title && !!own.citationTitle && title === own.citationTitle;
 	if (!short && sameTitle) {
-		const { kort } = citeArticle({
+		const cited = citationRecord({
+			kind: 'article',
 			bwbId: a.bwb_id,
 			articleNumber: number,
 			shortTitle: own.shortTitle,
 			citationTitle: title
 		});
-		return `${kort} ${direction === 'new' ? '(nieuw)' : '(oud)'}`;
+		return `${cited.short} ${direction === 'new' ? '(nieuw)' : '(oud)'}`;
 	}
-	if (!title && !short) return a.display_name ?? `art. ${number}`;
-	return citeArticle({
+	if (!title && !short) return a.display_name ?? articleRef(a.bwb_id, number);
+	return citationRecord({
+		kind: 'article',
 		bwbId: a.bwb_id,
 		articleNumber: number,
 		shortTitle: short,
 		citationTitle: title ?? short ?? ''
-	}).kort;
+	}).short;
 }
 
 /**
@@ -71,7 +73,13 @@ export function ownSuccessionName(
 	const title = law?.citation_title ?? law?.title ?? null;
 	if (own.shortTitle || !short || !title || title !== own.citationTitle) return null;
 	// The other is old where the line reads Voorheen: this one is the new.
-	return `art. ${number} ${short} ${direction === 'old' ? '(nieuw)' : '(oud)'}`;
+	const cited = citationRecord({
+		kind: 'article',
+		articleNumber: number,
+		shortTitle: short,
+		citationTitle: title
+	});
+	return `${cited.short} ${direction === 'old' ? '(nieuw)' : '(oud)'}`;
 }
 
 /** The status of the other law where it is not in force: `vastgesteld, nog niet in werking`. */

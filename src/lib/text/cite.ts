@@ -32,7 +32,7 @@ export type Citation = {
 	adopted?: { on: string | null } | null;
 };
 
-type CitationForms = { kort: string; voluit: string; metDatum: string | null };
+type CitationForms = { short: string; full: string; dated: string | null };
 
 /** What an article is cited by, before the place in it: ArticleText's `citation`. */
 export type ArticleCitation = Omit<
@@ -117,7 +117,7 @@ export function citeArticle(c: Citation): CitationForms {
 	const words = (xs: (string | null)[]) => xs.filter(Boolean).join(' ');
 	// A definition without a letter is named by its term, set off by commas: `art. 1,
 	// definitie van 'netwerk- en informatiesysteem', onder a Cbw`.
-	const kort = c.definitie
+	const short = c.definitie
 		? `${[words(head), `definitie van '${c.definitie}'`, words(rest)].filter(Boolean).join(', ')} ${law}`
 		: words([...head, ...rest, law]);
 
@@ -132,16 +132,16 @@ export function citeArticle(c: Citation): CitationForms {
 	// Aanwijzing 3.29: "artikel 5, eerste lid, onderdeel d, van de Wet …"; with the article
 	// alone, "artikel 5 van de Wet …".
 	const of = `van ${lawWithArticle(citationTitle)}`;
-	const voluit = parts.length > 1 ? `${parts.join(', ')}, ${of}` : `${parts[0]} ${of}`;
+	const full = parts.length > 1 ? `${parts.join(', ')}, ${of}` : `${parts[0]} ${of}`;
 
 	// Lower case like the short form: a citation is pasted into a sentence. The text of an act
 	// of the EU is as adopted (the source has no later versions): dated on that day, or not.
 	const dated = c.adopted
 		? c.adopted.on
-			? `${kort} (tekst zoals vastgesteld op ${langeDatum(c.adopted.on)})`
+			? `${short} (tekst zoals vastgesteld op ${langeDatum(c.adopted.on)})`
 			: null
-		: `${kort} (tekst geldend op ${langeDatum(vandaag(c.date ?? new Date()))})`;
-	return { kort, voluit, metDatum: dated };
+		: `${short} (tekst geldend op ${langeDatum(vandaag(c.date ?? new Date()))})`;
+	return { short, full, dated };
 }
 
 type PartPlace = { lid: string | null; onderdelen: string[]; aanhef: boolean };

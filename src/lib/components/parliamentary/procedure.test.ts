@@ -70,7 +70,12 @@ describe('procedure: the Eerste Kamer as eerstekamer.nl shows it', () => {
 		};
 		const g = ekGroup(d)!;
 		expect(g.regels.map((r) => [r.datum, r.zin, r.meta ?? null, r.href ?? null])).toEqual([
-			['2026-09-29', 'Gewijzigd voorstel van wet', 'Kamerstuk I 36799, A', 'https://ek/x.pdf'],
+			[
+				'2026-09-29',
+				'Gewijzigd voorstel van wet',
+				'Kamerstukken I 2026/27, 36799, A',
+				'https://ek/x.pdf'
+			],
 			[
 				null,
 				'Nu: schriftelijke voorbereiding. Volgende stappen: plenaire behandeling en afkondiging.',
@@ -268,8 +273,16 @@ describe('procedure: a paper that is not one of the bill’s', () => {
 			)
 		]);
 		expect(regels.map((r) => [r.label, r.zin, r.meta])).toEqual([
-			[null, 'Voorstel van wet en memorie van toelichting', 'Kamerstuk 36547, nrs. 2–3'],
-			['Brief regering', 'Aanbieding van het onderzoek naar uitbuiting', 'Kamerstuk 36547, nr. 4']
+			[
+				null,
+				'Voorstel van wet en memorie van toelichting',
+				'Kamerstukken II 2023/24, 36547, nrs. 2–3'
+			],
+			[
+				'Brief regering',
+				'Aanbieding van het onderzoek naar uitbuiting',
+				'Kamerstukken II 2023/24, 36547, nr. 4'
+			]
 		]);
 	});
 
@@ -278,7 +291,7 @@ describe('procedure: a paper that is not one of the bill’s', () => {
 		expect([regel.label, regel.zin, regel.meta]).toEqual([
 			null,
 			'Motie',
-			'Kamerstuk 36547, nr. 12'
+			'Kamerstukken II 2023/24, 36547, nr. 12'
 		]);
 	});
 });

@@ -4,7 +4,7 @@
 // fetched. The map proposes the bron's reader; it never makes the item on its own.
 import { articleRef } from '$lib/text/bw';
 import { padHref, parsePad } from '$lib/bron/address';
-import { kamerstukNummer } from '$lib/bron/dossier-naam';
+import { citationRecord } from '$lib/text/citation-record';
 
 const ECLI = /\bECLI:[A-Z]{2}:[A-Z0-9]+:\d{4}:[A-Z0-9.]*[A-Z0-9]/i;
 const BWB = /\bBWBR\d{7}\b/i;
@@ -15,7 +15,7 @@ const KST = /\bkst-(\d+(?:-[a-z]+)?)-(\w+?)(?=\.html|[?#/]|$)/i;
 const PUBLICATION = /\b(stb|stcrt|trb)-(\d{4})-(\d+)\b/i;
 /** The hosts of Concordans. */
 const OWN_HOSTS = /^(?:www\.)?concordans\.nl$|^localhost$|^127\.0\.0\.1$/;
-const SERIES: Record<string, string> = { stb: 'Stb.', stcrt: 'Stcrt.', trb: 'Trb.' };
+const SERIES = new Set(['stb', 'stcrt', 'trb']);
 
 /** How a proposal names a bron by its readable address. */
 function labelOf(path: string): string {
@@ -25,9 +25,18 @@ function labelOf(path: string): string {
 	if (kind === 'wetten' && second === 'artikel')
 		return `${articleRef(first, third)}, ${first.toUpperCase()}`;
 	if (kind === 'wetten' && parts.length === 2) return first.toUpperCase();
-	if (kind === 'kamerstukken') return `${kamerstukNummer(first)}, nr. ${second}`;
-	if (kind in SERIES) return `${SERIES[kind]} ${first}, ${second}`;
-	return path;
+	const cited =
+		kind === 'kamerstukken'
+			? citationRecord({
+					kind: 'kamerstuk',
+					chamber: /^\d/.test(second) ? 'TK' : 'EK',
+					dossier_number: first,
+					number: second
+				})
+			: SERIES.has(kind)
+				? citationRecord({ kind: 'publication', series: kind, year: first, number: second })
+				: null;
+	return cited?.short ?? path;
 }
 
 /**

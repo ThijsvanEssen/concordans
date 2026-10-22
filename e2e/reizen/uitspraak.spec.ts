@@ -44,7 +44,7 @@ test('a cited article opens at the lid the judgment names', async ({ page }) => 
 	await page.goto(URGENDA);
 	await page.getByRole('link', { name: 'art. 6:162 BW', exact: true }).first().click();
 	await expect(page).toHaveURL(/\/wetten\/BWBR0005289\/artikel\/6:162/);
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162 BW');
 });
 
 test('the lines of Behoort bij, unfolded, stand a finger’s target apart', async ({

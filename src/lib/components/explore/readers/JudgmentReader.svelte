@@ -9,7 +9,7 @@
 	import { keyEcli } from '$lib/bron/address';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { citeOverwegingen, zaakNaam } from '$lib/text/judgment-cite';
-	import { headingCite } from '$lib/text/judgment-heading';
+	import { citationRecord } from '$lib/text/citation-record';
 	import { officialPage, sourceCredit } from './judgment-source';
 	import { paragraphCite } from '$lib/text/ecli';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -174,7 +174,7 @@
 		     september 2019), from the judgment's own detail, so they stand with the text. -->
 		{@const conclusies = (data.conclusions ?? []).map((c) => ({
 			ref: c.id,
-			naam: headingCite(c)?.short ?? c.ecli,
+			naam: citationRecord({ ...c, kind: 'judgment' })?.short ?? c.ecli,
 			strekking: strekking(c.outcome)
 		}))}
 		<!-- How it ended, in its own words (API 0.79.55): what a conclusie proposes, what the
@@ -182,7 +182,7 @@
 		{@const eigenStrekking = conclusion ? strekking(j.conclusion_outcome) : null}
 		{@const echr = bevindingen(j.echr_findings)}
 		<!-- As the API cites it: HR 20 december 2019; Conclusie A-G Hartlief 8 mei 2020. -->
-		{@const kop = headingCite(j)}
+		{@const kop = citationRecord({ ...j, kind: 'judgment' })}
 		{@const ro = paragraphNumber(anchor)}
 		{@const naamKort = kop?.short ?? j.display_name ?? 'Uitspraak'}
 		<ReaderHead
@@ -206,7 +206,7 @@
 					{ groep: zaakNaam(naamKort, j.names) }
 				),
 				wat: ro && kop ? `r.o. ${ro}` : '',
-				cite: kop ? citeItems({ kort: kop.short, voluit: kop.full }, view) : [],
+				cite: kop ? citeItems(kop, view) : [],
 				naam: naamKort,
 				bron: deeplink ? { label: sourceName(deeplink) ?? 'Officiële tekst', href: deeplink } : null
 			}}

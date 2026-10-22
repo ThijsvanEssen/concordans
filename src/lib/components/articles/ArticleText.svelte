@@ -24,7 +24,8 @@
 	import { setNoteJump } from '$lib/text/voetnoten.svelte';
 	import type { Schema } from '$lib/api/types';
 	import { markerOf, partsOf, placeOf, walkParts, type ArticlePart } from '$lib/text/article-parts';
-	import { citeArticle, placeCitation, type ArticleCitation } from '$lib/text/cite';
+	import { placeCitation, type ArticleCitation } from '$lib/text/cite';
+	import { citationRecord } from '$lib/text/citation-record';
 	import type { ProposedText } from '$lib/verbonden/proposed-text';
 	import CitedText from './CitedText.svelte';
 	import Aantekening from '$lib/map/Aantekening.svelte';
@@ -532,7 +533,7 @@
 	});
 	/** The place as the menu names it: its short citation, else `Lid 2`. */
 	const placeTitle = (part: ArticlePart | null) =>
-		formsOf(part)?.kort ??
+		formsOf(part)?.short ??
 		(part?.kind === 'lid'
 			? `Lid ${part.number}`
 			: part?.term
@@ -544,7 +545,13 @@
 	/** The citation of a place; null is the article itself. A definition without a letter
 	 *  (a dash item, a definition paragraph) is named by its term, and so is what it holds. */
 	const formsOf = (part: ArticlePart | null) =>
-		citation ? citeArticle({ ...citation, ...placeCitation(part?.id ?? null, allParts) }) : null;
+		citation
+			? citationRecord({
+					...citation,
+					...placeCitation(part?.id ?? null, allParts),
+					kind: 'article'
+				})
+			: null;
 </script>
 
 {#snippet cited(start: number, end: number)}
@@ -765,7 +772,7 @@
 		bewaar && forms
 			? bewaarItem(
 					bewaar.id,
-					{ at: p?.id, kort: forms.kort, voluit: forms.voluit },
+					{ at: p?.id, kort: forms.short, voluit: forms.full },
 					{ groep: bewaar.groep, wet: bewaar.wet, versie: bewaar.versie }
 				)
 			: null}

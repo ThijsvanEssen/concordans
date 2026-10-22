@@ -140,7 +140,7 @@ describe('the name of a Kamerstuk', () => {
 			})
 		).toMatchObject({
 			title: 'Brief van de minister van J&V betreffende het verzoek',
-			context: 'Brief, Kamerstuk I 36547, G'
+			context: 'Brief, Kamerstukken I, 36547, G'
 		});
 		expect(
 			doc({
@@ -151,21 +151,21 @@ describe('the name of a Kamerstuk', () => {
 			})
 		).toMatchObject({
 			title: 'Motie van het lid Krul c.s. over pleegouders',
-			context: 'Motie, Kamerstuk 36547, nr. 38'
+			context: 'Motie, Kamerstukken II, 36547, nr. 38'
 		});
 	});
 
 	it('writes the dossier with its suffix as a citation does (#84)', () => {
 		const motie = { kind: 'Motie', title: 'Motie van het lid X over Y', sequence: 183 };
 		expect(doc({ ...motie, dossier_numbers: ['36600-VIII'] }).context).toBe(
-			'Motie, Kamerstuk 36600 VIII, nr. 183'
+			'Motie, Kamerstukken II, 36600 VIII, nr. 183'
 		);
 		expect(doc({ ...motie, dossier_number: '36600', dossier_suffix: 'VIII' }).context).toBe(
-			'Motie, Kamerstuk 36600 VIII, nr. 183'
+			'Motie, Kamerstukken II, 36600 VIII, nr. 183'
 		);
 		// The Eerste Kamer's letter, also where the data gives it as the sequence.
 		expect(doc({ ...motie, dossier_number: '31936', sequence: 'CG' }).context).toBe(
-			'Motie, Kamerstuk I 31936, CG'
+			'Motie, Kamerstukken I, 31936, CG'
 		);
 	});
 
@@ -178,7 +178,7 @@ describe('the name of a Kamerstuk', () => {
 				number: 'C',
 				chamber: 'EK'
 			}).title
-		).toBe('Blanco verslag, Kamerstuk I 36547, C');
+		).toBe('Blanco verslag, Kamerstukken I, 36547, C');
 	});
 
 	it('names a paper of a bill by its kind and number, not by the title of the bill', () => {
@@ -189,7 +189,7 @@ describe('the name of a Kamerstuk', () => {
 				dossier_number: '36547',
 				sequence: 3
 			}).title
-		).toBe('Memorie van toelichting, Kamerstuk 36547, nr. 3');
+		).toBe('Memorie van toelichting, Kamerstukken II, 36547, nr. 3');
 	});
 
 	it('is never the kind alone where the date is known', () => {
@@ -495,7 +495,9 @@ describe('activityLine', () => {
 			sequence: 12,
 			dossier_short_title: 'Wet betaalbare huur'
 		});
-		expect(brief.context).toBe('Brief regering, Kamerstuk 36496, nr. 12, Wet betaalbare huur');
+		expect(brief.context).toBe(
+			'Brief regering, Kamerstukken II, 36496, nr. 12, Wet betaalbare huur'
+		);
 	});
 });
 

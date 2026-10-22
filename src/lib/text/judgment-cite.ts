@@ -4,7 +4,8 @@
 // is cited after it.
 import { bewaarItem, type MapItem } from '$lib/map/map';
 import { paragraphCite } from './ecli';
-import { headingCite, type HeadingSource } from './judgment-heading';
+import type { HeadingSource } from './judgment-heading';
+import { citationRecord } from './citation-record';
 
 /** What a judgment gives to cite it and its overwegingen. */
 type UitspraakVoorCitaat = HeadingSource & { names?: string[] | null };
@@ -20,7 +21,7 @@ export const zaakNaam = (kort: string, namen: string[] | null | undefined) =>
  * citation.
  */
 export function citeOverwegingen(j: UitspraakVoorCitaat, bronId: string | null) {
-	const kop = headingCite(j);
+	const kop = citationRecord({ ...j, kind: 'judgment' });
 	const ecli = j.ecli;
 	if (!kop || !ecli) return null;
 	const groep = zaakNaam(kop.short, j.names);

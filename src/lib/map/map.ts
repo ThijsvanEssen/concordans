@@ -3,7 +3,8 @@
 // in this browser; a link (share.ts, in the fragment) carries it to someone else, a list of citations to a memo,
 // a CSV to a spreadsheet. It replaces Verbonden's Verzamel.
 import { netwerkParams } from '$lib/selection/netwerk';
-import { dossierLabel, officialNumber } from '$lib/bron/dossier-naam';
+import { dossierLabel } from '$lib/bron/dossier-naam';
+import { citationRecord } from '$lib/text/citation-record';
 import { bronLabel, parseNodeId } from '$lib/vocabulary';
 import { queryHref } from '$lib/util/address';
 import { buildBronHref } from '$lib/bron/href';
@@ -209,11 +210,14 @@ export function bewaarDossier(d: {
 	title?: string | null;
 	short_title?: string | null;
 }): MapItem {
-	const nummer = officialNumber(d.number);
-	const naam = d.short_title ?? d.title;
+	const { short, full } = citationRecord({
+		kind: 'dossier',
+		number: d.number,
+		name: d.short_title ?? d.title
+	});
 	return bewaarItem(
 		`dossiers/${d.number}`,
-		{ kort: `Kamerstukken ${nummer}`, voluit: `Kamerstukken ${nummer}${naam ? ` (${naam})` : ''}` },
+		{ kort: short, voluit: full },
 		{ groep: dossierLabel(d), dossier: d.number }
 	);
 }

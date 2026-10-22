@@ -17,7 +17,8 @@
 	// bottom, folded, every BWB version. `?versies=lid-4` shows one lid through all its
 	// formulations instead.
 	import type { Schema } from '$lib/api/types';
-	import { citeArticle, citePublication, type Citation } from '$lib/text/cite';
+	import type { Citation } from '$lib/text/cite';
+	import { citationRecord } from '$lib/text/citation-record';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
@@ -175,7 +176,8 @@
 		w.until ? `${date(w.from)} tot ${date(w.until)}` : `sinds ${date(w.from)}`;
 
 	const publication = (p: Schema<'PublicationDTO'> | null | undefined) =>
-		citePublication(p?.kind, p?.year, p?.number);
+		citationRecord({ kind: 'publication', series: p?.kind, year: p?.year, number: p?.number })
+			?.short ?? null;
 
 	const signedAndPublished = (p: Schema<'PublicationDTO'> | null | undefined) =>
 		[
@@ -273,7 +275,11 @@
 	const copy = (text: string, what: string) => copier.copy(text, what);
 
 	const cite = (lid: string | null) =>
-		citation ? citeArticle({ ...citation, lid }).kort : lid ? `lid ${lid}` : 'artikel';
+		citation
+			? citationRecord({ ...citation, kind: 'article', lid }).short
+			: lid
+				? `lid ${lid}`
+				: 'artikel';
 
 	const comparisonText = $derived(
 		`${capitalize(cite(null))}, tekst sinds ${date(from.from)} vergeleken met tekst sinds ${date(to.from)}.\n` +

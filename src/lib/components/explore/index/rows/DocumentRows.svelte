@@ -4,7 +4,7 @@
 	import { openHref } from '$lib/bron/href';
 	import { dossierOwnName } from '$lib/bron/dossier-naam';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
-	import { kamerstukLabel } from '$lib/components/parliamentary/kamerstuk';
+	import { citationRecord } from '$lib/text/citation-record';
 	import StukUitslag from '$lib/components/parliamentary/StukUitslag.svelte';
 	import { stukUitslag } from '$lib/components/parliamentary/stuk-uitslag';
 	import Waarde from '$lib/components/ui/Waarde.svelte';
@@ -18,7 +18,10 @@
 <ul class="list">
 	{#each ctx.rows ?? [] as doc (doc.key)}
 		{@const bron = `documents/${doc.key}`}
-		{@const label = kamerstukLabel(doc)}
+		{@const label =
+			doc.number == null || doc.number === ''
+				? null
+				: citationRecord({ ...doc, kind: 'kamerstuk' })?.place}
 		<!-- A Kamerstuk opens in place on its core text (RijInhoud), as in
 		     Actueel, Verbonden and Bundels; the stuk one step further. -->
 		<IndexRow

@@ -195,7 +195,8 @@ export function createGraphContext() {
 				display_name: node.display_name,
 				title: p.title,
 				citation_title: p.citation_title,
-				short_title: p.short_title
+				short_title: p.short_title,
+				abbreviation: p.abbreviation
 			});
 		} else {
 			const { short, full } = containerNames(node, containerKind);
@@ -220,7 +221,11 @@ export function createGraphContext() {
 		const graphNode = nodeToGraphNode(node);
 		const law = graphNode?.drawClass === 'article' ? lawIdOf(p) : null;
 		if (law) {
-			recordInstrument({ bwb_id: law, citation_title: p.instrument_citation_title });
+			recordInstrument({
+				bwb_id: law,
+				citation_title: p.instrument_citation_title,
+				abbreviation: p.instrument_abbreviation
+			});
 			primeInstrumentNames();
 			containers.recordMember('instrument', law, graphNode!.id);
 		}

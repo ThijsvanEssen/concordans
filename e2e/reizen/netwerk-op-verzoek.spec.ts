@@ -10,7 +10,7 @@ const sketch = (page: Page) => page.getByTestId('network-sketch');
 
 test('a bare address opens the bron in Tekst, Verbonden beside or under it', async ({ page }) => {
 	await page.goto(ARTICLE);
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162 BW');
 	await expect(verbonden(page).getByRole('button', { name: 'Netwerk tonen' })).toBeVisible();
 	await expect(page.locator('canvas')).toHaveCount(0);
 	await expect(page).toHaveURL(/\/wetten\/BWBR0005289\/artikel\/6:162$/);

@@ -16,9 +16,9 @@ Wet bestuurlijke lus Awb;Wetten;wijzigt;;;;vastgesteld;hoog;2009-12-24;Stb. 2009
 Kamerstuk 29702;Wetten;wijzigt;;;;vastgesteld;hoog;2009-06-30;Stb. 2009, 264;https://concordans.nl/stb/2009/264
 Kamerstuk 26523;Wetten;wijzigt;;;;vastgesteld;hoog;2002-02-12;Stb. 2002, 53;https://concordans.nl/stb/2002/53
 Amendement van het lid Diederik van Dijk over het afschaffen van rechterlijke dwangsommen in vreemdelingenzaken;Wetsvoorstellen;noemt;;lid 4;;vastgesteld;hoog;2025-06-13;;https://concordans.nl/kamerstukken/36704/19
-Memorie van toelichting, Kamerstuk 32621, nr. 3;Toelichtingen;noemt;;lid 4;;vastgesteld;hoog;2011-02-02;;https://concordans.nl/kamerstukken/32621/3
-Voorstel van wet, Kamerstuk 36105, nr. 2;Wetsvoorstellen;noemt;;lid 3;;vastgesteld;hoog;2022-05-19;;https://concordans.nl/kamerstukken/36105/2
-Nota van wijziging, Kamerstuk 33219, nr. 11;Wetsvoorstellen;noemt;;;;vastgesteld;hoog;2013-03-11;;https://concordans.nl/kamerstukken/33219/11
+Memorie van toelichting, Kamerstukken II 2010/11, 32621, nr. 3;Toelichtingen;noemt;;lid 4;;vastgesteld;hoog;2011-02-02;;https://concordans.nl/kamerstukken/32621/3
+Voorstel van wet, Kamerstukken II 2021/22, 36105, nr. 2;Wetsvoorstellen;noemt;;lid 3;;vastgesteld;hoog;2022-05-19;;https://concordans.nl/kamerstukken/36105/2
+Nota van wijziging, Kamerstukken II 2012/13, 33219, nr. 11;Wetsvoorstellen;noemt;;;;vastgesteld;hoog;2013-03-11;;https://concordans.nl/kamerstukken/33219/11
 Algemene wet bestuursrecht;Wetten;artikel van;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537"
 `;
 
@@ -62,7 +62,7 @@ exports[`Verbonden of a 'artikel' > keeps its groups, rows, kern and export > gr
     "label": "Toelichting",
     "plaats": "verbonden",
     "rows": [
-      "documents/7e59f350_a461_4556_8c81_250abfaaafd7 | Amendement van het lid De Wit over het alleen buiten toepassing verklaren van uniforme openbare voorbereidingsprocedure bij wijzigingen van ondergeschikte aard | nr. 12, § Toelichting | Amendement, Kamerstuk 31352, nr. 12, 12 feb. 2009",
+      "documents/7e59f350_a461_4556_8c81_250abfaaafd7 | Amendement van het lid De Wit over het alleen buiten toepassing verklaren van uniforme openbare voorbereidingsprocedure bij wijzigingen van ondergeschikte aard | nr. 12, § Toelichting | Amendement, Kamerstukken II 2008/09, 31352, nr. 12, 12 feb. 2009",
     ],
     "section": null,
   },
@@ -93,10 +93,10 @@ exports[`Verbonden of a 'artikel' > keeps its groups, rows, kern and export > gr
     "label": "Kamerstukken die dit artikel noemen",
     "plaats": "verbonden",
     "rows": [
-      "documents/75f60705_af3c_4ff3_85b7_821228bcd1dd | Amendement van het lid Diederik van Dijk over het afschaffen van rechterlijke dwangsommen in vreemdelingenzaken | Noemt lid 4 [Staat letterlijk in de tekst] | Amendement, Kamerstuk 36704, nr. 19, Asielnoodmaatregelenwet, 13 jun. 2025",
-      "documents/6c33ccba_751d_4877_9b10_d38154461203 | Memorie van toelichting, Kamerstuk 32621, nr. 3 | Noemt lid 4 [Staat letterlijk in de tekst] | 2 feb. 2011",
-      "documents/0f058717_f090_45a5_8efa_4c8f68783c38 | Voorstel van wet, Kamerstuk 36105, nr. 2 | Noemt lid 3 [Staat letterlijk in de tekst] | 19 mei 2022",
-      "documents/0bd1cf53_8117_4559_b0cd_7ec2f97571f9 | Nota van wijziging, Kamerstuk 33219, nr. 11 | Noemt [Staat letterlijk in de tekst] | 11 mrt. 2013",
+      "documents/75f60705_af3c_4ff3_85b7_821228bcd1dd | Amendement van het lid Diederik van Dijk over het afschaffen van rechterlijke dwangsommen in vreemdelingenzaken | Noemt lid 4 [Staat letterlijk in de tekst] | Amendement, Kamerstukken II 2024/25, 36704, nr. 19, Asielnoodmaatregelenwet, 13 jun. 2025",
+      "documents/6c33ccba_751d_4877_9b10_d38154461203 | Memorie van toelichting, Kamerstukken II 2010/11, 32621, nr. 3 | Noemt lid 4 [Staat letterlijk in de tekst] | 2 feb. 2011",
+      "documents/0f058717_f090_45a5_8efa_4c8f68783c38 | Voorstel van wet, Kamerstukken II 2021/22, 36105, nr. 2 | Noemt lid 3 [Staat letterlijk in de tekst] | 19 mei 2022",
+      "documents/0bd1cf53_8117_4559_b0cd_7ec2f97571f9 | Nota van wijziging, Kamerstukken II 2012/13, 33219, nr. 11 | Noemt [Staat letterlijk in de tekst] | 11 mrt. 2013",
     ],
     "section": null,
   },
@@ -134,8 +134,8 @@ De staatssecretaris Digitale Economie en Soevereiniteit en de minister van…;Do
 De minister van JenV zegt toe, voor de inwerktreding van de wet, een…;Dossiers;over;;;;vastgesteld;hoog;;;https://concordans.nl/toezeggingen/TZ202604-062
 De minister van JenV zegt toe het door het lid Van den Berg gevraagde tijdspad…;Dossiers;over;;;;vastgesteld;hoog;;;https://concordans.nl/toezeggingen/TZ202604-067
 De minister van JenV zegt toe voor de zomer schriftelijk terug te komen op de…;Dossiers;over;;;;vastgesteld;hoog;;;https://concordans.nl/toezeggingen/TZ202604-065
-Nota naar aanleiding van het tweede verslag, Kamerstuk I 36764, E;Dossiers;stuk in;;;;vastgesteld;hoog;2026-06-29;;https://concordans.nl/kamerstukken/36764/E
-Tweede verslag, Kamerstuk I 36764, D;Dossiers;stuk in;;;;vastgesteld;hoog;2026-06-26;;https://concordans.nl/kamerstukken/36764/D"
+Nota naar aanleiding van het tweede verslag, Kamerstukken I 2025/26, 36764, E;Dossiers;stuk in;;;;vastgesteld;hoog;2026-06-29;;https://concordans.nl/kamerstukken/36764/E
+Tweede verslag, Kamerstukken I 2025/26, 36764, D;Dossiers;stuk in;;;;vastgesteld;hoog;2026-06-26;;https://concordans.nl/kamerstukken/36764/D"
 `;
 
 exports[`Verbonden of a 'dossier' > keeps its groups, rows, kern and export > groups 1`] = `
@@ -232,7 +232,7 @@ exports[`Verbonden of a 'dossier' > keeps its groups, rows, kern and export > gr
     "label": "Kamerstukken in de Tweede Kamer",
     "plaats": "verbonden",
     "rows": [
-      "documents/acc2ade6_3130_4fcc_8fd8_285549213431 | Publicatie van het samenwerkingsprotocol inzake toezicht op de Cyberbeveiligingswet (Cbw) en de Wet weerbaarheid kritieke entiteiten (Wwke) in de Staatscourant |  | Brief regering, Kamerstuk 36764, nr. 34, 1 sep. 2026",
+      "documents/acc2ade6_3130_4fcc_8fd8_285549213431 | Publicatie van het samenwerkingsprotocol inzake toezicht op de Cyberbeveiligingswet (Cbw) en de Wet weerbaarheid kritieke entiteiten (Wwke) in de Staatscourant |  | Brief regering, Kamerstukken II 2025/26, 36764, nr. 34, 1 sep. 2026",
       "documents/b529da85_8dc7_436c_abae_d2b317723250 | Besluit Eerste Kamer inzake Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie, tot wijziging van Verordening (EU) nr. 910/2014 en Richtlijn (EU) 2018/1972 en tot intrekking van Richtlijn (EU) 2016/1148 (PbEU 2022, L 333) (Cyberbeveiligingswet) |  | Brief Eerste Kamer, 7 jul. 2026",
     ],
     "section": "Tweede Kamer",
@@ -266,8 +266,8 @@ exports[`Verbonden of a 'dossier' > keeps its groups, rows, kern and export > gr
     "label": "Kamerstukken in de Eerste Kamer",
     "plaats": "verbonden",
     "rows": [
-      "documents/ek_kst_36764_e | Nota naar aanleiding van het tweede verslag, Kamerstuk I 36764, E |  | 29 jun. 2026",
-      "documents/ek_kst_36764_d | Tweede verslag, Kamerstuk I 36764, D |  | 26 jun. 2026",
+      "documents/ek_kst_36764_e | Nota naar aanleiding van het tweede verslag, Kamerstukken I 2025/26, 36764, E |  | 29 jun. 2026",
+      "documents/ek_kst_36764_d | Tweede verslag, Kamerstukken I 2025/26, 36764, D |  | 26 jun. 2026",
     ],
     "section": "Eerste Kamer",
   },

@@ -8,7 +8,7 @@
 	import { getArticleDetail, getArticleHistory, getArticleVersion } from '$lib/api/articles';
 	import type { Schema } from '$lib/api/types';
 	import { articleRef, lawShortName } from '$lib/text/bw';
-	import { citeArticle, citePublication } from '$lib/text/cite';
+	import { citationRecord } from '$lib/text/citation-record';
 	import { langeDatum } from '$lib/text/datum';
 	import { compareTexts, plainDiff, type LidPairing } from '$lib/text/version-diff';
 	import { capitalize } from '$lib/text/words';
@@ -60,12 +60,13 @@
 			if (!listed) throw new Error(`Geen tekst van ${law} ${number}`);
 			const version = await getArticleVersion(law, number, listed.key);
 			const cited = detail
-				? citeArticle({
+				? citationRecord({
+						kind: 'article',
 						bwbId: detail.article.bwb_id,
 						articleNumber: number,
 						shortTitle: lawShortName(detail.article.bwb_id, detail.instrument?.abbreviation),
 						citationTitle: detail.instrument?.citation_title ?? detail.instrument?.title ?? ''
-					}).kort
+					}).short
 				: null;
 			return { version, name: name ?? cited ?? articleRef(law, number) };
 		},
@@ -76,8 +77,12 @@
 	const sinceOf = (v: Listed) =>
 		v.valid_from
 			? `tekst sinds ${langeDatum(v.valid_from)}`
-			: (citePublication(v.amended_by?.kind, v.amended_by?.year, v.amended_by?.number) ??
-				'vastgestelde tekst');
+			: (citationRecord({
+					kind: 'publication',
+					series: v.amended_by?.kind,
+					year: v.amended_by?.year,
+					number: v.amended_by?.number
+				})?.short ?? 'vastgestelde tekst');
 
 	const here = $derived({
 		label: capitalize(

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { bewaarItem } from '$lib/map/map';
+	import { citationRecord } from '$lib/text/citation-record';
 	import { langeDatum, vandaag } from '$lib/text/datum';
 	import { report } from '$lib/api/errors';
 	import { untrack } from 'svelte';
@@ -104,6 +105,18 @@
 	const verlopen = $derived(validity?.state === 'expired');
 	const kindLabel = $derived(lawKind(lawDetail));
 	const fullTitle = $derived(lawFullTitle(lawDetail, lawTitle));
+	// Its heading and its citations: the name it goes by with the abbreviation it is cited by
+	// (`Algemene verordening gegevensbescherming (AVG)`), Citeer short and in full.
+	const record = $derived(
+		citationRecord({
+			kind: 'law',
+			bwbId,
+			citationTitle: lawTitle,
+			abbreviation: lawDetail?.abbreviation ?? $instrumentMetaStore.get(bwbId)?.abbreviation,
+			shortTitle: lawDetail?.short_title,
+			fullTitle
+		})
+	);
 	// A treaty: its record in the Verdragenbank, or from there its text in the BWB.
 	const treaty = $derived(treatyLink(lawDetail, lawDetail?.same_treaty ?? []));
 	// The versions of the law, for the peildatum; the current one dates the text in force
@@ -299,15 +312,15 @@
 	<article class="whole-law" bind:this={lawEl}>
 		<ReaderHead
 			collection="instruments"
-			title={lawTitle}
+			title={record.heading}
 			acties={{
 				bewaar: bewaarItem(
 					`instruments/${lawNodeKey(bwbId)}`,
-					{ kort: lawTitle, voluit: fullTitle ?? lawTitle },
+					{ kort: record.short, voluit: record.full },
 					{ groep: lawTitle, wet: bwbId }
 				),
-				cite: citeItems({ kort: lawTitle, voluit: fullTitle ?? lawTitle }, permalink(page.url, '')),
-				naam: lawTitle,
+				cite: citeItems(record, permalink(page.url, '')),
+				naam: record.short,
 				bron: officialSource
 			}}
 		>

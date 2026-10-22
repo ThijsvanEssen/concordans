@@ -1,15 +1,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import {
-	apiNumber,
-	articleName,
-	articleRef,
-	articleTitle,
-	bookNumber,
-	lawShortName,
-	withBook
-} from './bw';
+import { apiNumber, articleName, articleRef, bookNumber, lawShortName, withBook } from './bw';
 
 describe('BW article numbers', () => {
 	it('gives the number the API gives a BW article, without its book', () => {
@@ -66,31 +58,6 @@ describe('articleRef', () => {
 		);
 		expect(articleRef('BWBR0007846', 'enig-artikel')).toBe('Enig artikel');
 		expect(articleName('BWBR0007846', 'enig-artikel', 'Enig artikel')).toBe('Enig artikel');
-	});
-});
-
-describe('articleTitle', () => {
-	it('names an article by the abbreviation of its law', () => {
-		const evrm = { instrument_abbreviation: 'EVRM', article_number: '8' };
-		expect(articleTitle('Artikel 8 Verdrag tot bescherming van de rechten van de mens', evrm)).toBe(
-			'Artikel 8 EVRM'
-		);
-		expect(
-			articleTitle('Artikel 3:4 Algemene wet bestuursrecht', {
-				instrument_abbreviation: 'Awb',
-				article_number: '3:4'
-			})
-		).toBe('Artikel 3:4 Awb');
-	});
-
-	it('keeps the book of a BW article and the name where there is no abbreviation', () => {
-		expect(
-			articleTitle('Artikel 162 Burgerlijk Wetboek Boek 6', {
-				instrument_abbreviation: 'BW6',
-				article_number: '162'
-			})
-		).toBe('Artikel 6:162 BW');
-		expect(articleTitle('Artikel 1 Wet X', { article_number: '1' })).toBe('Artikel 1 Wet X');
 	});
 });
 

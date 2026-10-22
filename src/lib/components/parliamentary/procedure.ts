@@ -9,7 +9,7 @@ import { noneHeld } from '$lib/text/coverage';
 import type { Schema } from '$lib/api/types';
 import { bronHref } from '$lib/bron/href';
 import { parseNodeId } from '$lib/vocabulary';
-import { kamerstukNummer } from '$lib/bron/dossier-naam';
+import { citationRecord } from '$lib/text/citation-record';
 import { stand } from './stand';
 import { CHAMBER_NAME } from './chamber';
 import { BILL_KINDS, INITIATIVE_BILL, methodPhrase, stepsToCome } from './stages';
@@ -21,7 +21,7 @@ import {
 } from '$lib/components/tijdlijn/tijdlijn';
 import { voteOf, type MetInhoud } from '$lib/components/open/rij-inhoud';
 import { isGeneriek } from '$lib/bron/generiek';
-import { kamerstukName, withoutKamerstuk } from './kamerstuk';
+import { withoutKamerstuk } from '$lib/text/kamerstuk';
 import type { CoalitieBij } from './coalitie';
 
 type Detail = Schema<'DossierDetailResponse'>;
@@ -93,8 +93,6 @@ const NAAM: Record<string, string> = {
 	'Advies Afdeling advisering Raad van State': 'advies'
 };
 const naam = (kind: string) => NAAM[kind] ?? lowerFirst(kind);
-const nrs = (n: string[]) =>
-	n.length === 0 ? '' : n.length === 1 ? `nr. ${n[0]}` : `nrs. ${n[0]}–${n.at(-1)}`;
 
 /** An activity by its agenda title; where that only names the kind, the kind. */
 function activiteitZin(e: Entry, b: Body): string {
@@ -134,11 +132,13 @@ function eigenStuk(e: Entry, groep: 'rvs' | 'tk' | 'ek', dossier: string): Regel
 		zin: eigen ?? (kind || title || 'Stuk'),
 		nummers: nr ? [nr] : null,
 		meta: nr
-			? kamerstukName({
+			? (citationRecord({
+					kind: 'kamerstuk',
 					chamber: groep === 'ek' ? 'EK' : 'TK',
+					date: e.date,
 					dossier_number: dossier,
 					number: nr
-				})
+				})?.short ?? null)
 			: null,
 		href: bronHref(e.node_id, { keepMode: false, mode: 'read' }),
 		ref: e.node_id
@@ -282,7 +282,13 @@ function regelsVan(
 			zin: capitalize(zin),
 			nummers: nummers.length ? nummers : null,
 			meta: nummers.length
-				? `${kamerstukNummer(dossier, groep === 'ek' ? 'EK' : null)}, ${groep === 'ek' ? nummers.join(', ') : nrs(nummers)}`
+				? (citationRecord({
+						kind: 'kamerstuk',
+						chamber: groep === 'ek' ? 'EK' : 'TK',
+						date: day,
+						dossier_number: dossier,
+						numbers: nummers
+					})?.short ?? null)
 				: null,
 			href: bronHref(first.node_id, { keepMode: false, mode: 'read' }),
 			ref: first.node_id
@@ -334,7 +340,13 @@ function ekVoortgang(d: Detail, ek: Regel[]): Regel[] | null {
 				label: null,
 				zin: capitalize(kind),
 				meta: letter
-					? kamerstukName({ chamber: 'EK', dossier_number: d.number, number: letter })
+					? (citationRecord({
+							kind: 'kamerstuk',
+							chamber: 'EK',
+							date: p.date,
+							dossier_number: d.number,
+							number: letter
+						})?.short ?? null)
 					: null,
 				href: p.url ?? null
 			});

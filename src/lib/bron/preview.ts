@@ -13,9 +13,9 @@ import { getNodeGraph } from '$lib/api/nodes';
 import { getArticleDetail } from '$lib/api/articles';
 import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { partsOf, partText } from '$lib/text/article-parts';
-import { articleTitle } from '$lib/text/bw';
 import { courtName } from '$lib/text/court';
-import { headingCite, type Cite } from '$lib/text/judgment-heading';
+import type { Cite } from '$lib/text/judgment-heading';
+import { articleTitle, citationRecord } from '$lib/text/citation-record';
 import { chamberName } from '$lib/components/parliamentary/chamber';
 import { shortDossierTitle } from '$lib/graph/types';
 import { votesSentence } from '$lib/components/parliamentary/stemming';
@@ -115,7 +115,7 @@ const clip = (s: string | null) => s && truncate(s, PREVIEW_CHARS);
  */
 function judgmentHeading(props: Record<string, unknown>, name: string, cite: Cite | null): string {
 	const names = Array.isArray(props.names) ? props.names.filter((n) => typeof n === 'string') : [];
-	const short = headingCite({ cite, props })?.short ?? name;
+	const short = citationRecord({ kind: 'judgment', cite, props })?.short ?? name;
 	const translation = textOf(props.translation_of) ? ', vertaling' : '';
 	return `${names.length ? `${short} (${names.join(', ')})` : short}${translation}`;
 }

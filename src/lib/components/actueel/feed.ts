@@ -2,7 +2,7 @@ import { forAgainst, hasVotes } from '$lib/components/parliamentary/stemming';
 import { BILL_KINDS } from '$lib/components/parliamentary/stages';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
 import { count } from '$lib/text/words';
-import { citePublication } from '$lib/text/cite';
+import { citationRecord } from '$lib/text/citation-record';
 import { DAY_MS, addDays, weekdag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 import { API_BASE_URL } from '$lib/api/base-url';
@@ -329,7 +329,7 @@ export function artikelenGewijzigd(c: FeedItem['commencement']): string | null {
 /** `Stb. 2026, 204`, as a publication is cited; null while the feed lacks a part. */
 export const publicationCite = (
 	p: Pick<NonNullable<FeedItem['publication']>, 'series' | 'year' | 'number'>
-) => citePublication(p.series, p.year, p.number);
+) => citationRecord({ ...p, kind: 'publication' })?.short ?? null;
 
 /** What places a page of the feed, not what it holds. */
 const PAGING = new Set(['limit', 'cursor', 'facets']);

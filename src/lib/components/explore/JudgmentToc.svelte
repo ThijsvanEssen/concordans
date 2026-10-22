@@ -7,7 +7,7 @@
 	// headings — the same nav-column slot LezenNav fills for a wet. Shares the judgment
 	// request in flight with JudgmentReader (`getJudgmentDetail`'s own cache).
 	import { getJudgmentDetail } from '$lib/api/judgments';
-	import { headingCite } from '$lib/text/judgment-heading';
+	import { citationRecord } from '$lib/text/citation-record';
 	import type { GraphNode } from '$lib/graph/types';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';
@@ -46,7 +46,7 @@
 				else if (item.kind === 'rov' && item.id) ro.push({ id: item.id, num: item.num });
 			}
 			return {
-				label: headingCite(j)?.short ?? j.display_name ?? 'Uitspraak',
+				label: citationRecord({ ...j, kind: 'judgment' })?.short ?? j.display_name ?? 'Uitspraak',
 				items,
 				ro,
 				// A conclusion numbers its punten, a judgment its overwegingen (JudgmentReader).

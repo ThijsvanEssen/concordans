@@ -6,7 +6,7 @@ import type { BaseNode, GraphNode } from '$lib/graph/types';
 import { isRauw, menselijkeNaam } from './menselijk';
 import { describeBron, UNNAMED } from './describe';
 import { zonderKopInKapitalen } from './titels.svelte';
-import { kamerstukLabel } from '$lib/components/parliamentary/kamerstuk';
+import { citationRecord } from '$lib/text/citation-record';
 import { isEnactedLawItem } from '$lib/text/enacted-law';
 
 const MAX = 80;
@@ -27,12 +27,16 @@ type TitledNode = Pick<GraphNode, 'collection' | 'label'> & {
 export function documentTitle(node: TitledNode): string | null {
 	if (node.collection !== 'documents') return null;
 	const props = node.raw?.props ?? {};
-	const place = kamerstukLabel({
-		chamber: textOf(props.chamber),
-		dossier_number: textOf(props.dossier_number),
-		dossier_suffix: textOf(props.dossier_suffix),
-		number: textOf(props.sequence != null ? String(props.sequence) : props.number)
-	});
+	const number = textOf(props.sequence != null ? String(props.sequence) : props.number);
+	const place = number
+		? citationRecord({
+				kind: 'kamerstuk',
+				chamber: textOf(props.chamber),
+				dossier_number: textOf(props.dossier_number),
+				dossier_suffix: textOf(props.dossier_suffix),
+				number
+			})?.place
+		: null;
 	if (!place) return null;
 	const name = [textOf(props.kind), textOf(props.title)].filter(Boolean).join(': ');
 	return cut(name ? `${name} (${place})` : place);

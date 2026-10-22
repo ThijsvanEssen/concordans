@@ -9,9 +9,8 @@
 // the netwerk of chosen bronnen (?netwerk, ?uit, ?tussen), ?paneel (a phone's tab, read once)
 // and the position inside the text as the fragment.
 import { keyEcli, padHref, type Pad } from '$lib/bron/address';
-import { stbCitation } from '$lib/text/enacted-law';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
-import { kamerstukName } from '$lib/components/parliamentary/kamerstuk';
+import { citationRecord, enactedLawPlace } from '$lib/text/citation-record';
 import { isIndexCategory, type IndexCategory } from '$lib/components/explore/index/categories';
 import { isContainerKind } from '$lib/graph/container-membership';
 import type { GraphNode, DrawClass } from '$lib/graph/types';
@@ -95,8 +94,6 @@ export function besideJudgment(beside: ReturnType<typeof parseNodeId>): GraphNod
 	};
 }
 
-const SERIES_NAME = { stb: 'Stb.', stcrt: 'Stcrt.', trb: 'Trb.' } as const;
-
 /**
  * What a readable address names, as the page says it when the data lacks it or it failed: a
  * law by its name where the page knows it (`lawNameOf`), not by its BWB id.
@@ -104,23 +101,27 @@ const SERIES_NAME = { stb: 'Stb.', stcrt: 'Stcrt.', trb: 'Trb.' } as const;
 export function nameOfPad(p: Pad, lawNameOf: (bwb: string) => string | null = () => null): string {
 	switch (p.soort) {
 		case 'artikel':
-			return `Artikel ${p.nummer} van ${stbCitation(p.wet) ?? lawNameOf(p.wet) ?? p.wet}`;
+			return `Artikel ${p.nummer} van ${enactedLawPlace(p.wet) ?? lawNameOf(p.wet) ?? p.wet}`;
 		case 'wet':
-			return stbCitation(p.wet) ?? lawNameOf(p.wet) ?? `Wet ${p.wet}`;
+			return enactedLawPlace(p.wet) ?? lawNameOf(p.wet) ?? `Wet ${p.wet}`;
 		case 'kamerstuk':
 			return (
-				kamerstukName({
+				citationRecord({
+					kind: 'kamerstuk',
 					chamber: /^\d/.test(p.nummer) ? 'TK' : 'EK',
 					dossier_number: p.dossier,
 					number: p.nummer
-				}) ?? padHref(p)
+				})?.short ?? padHref(p)
 			);
 		case 'dossier':
 			return kamerstukNummer(p.nummer);
 		case 'uitspraak':
 			return p.ecli;
 		case 'publicatie':
-			return `${SERIES_NAME[p.reeks]} ${p.jaar}, ${p.nummer}`;
+			return (
+				citationRecord({ kind: 'publication', series: p.reeks, year: p.jaar, number: p.nummer })
+					?.short ?? padHref(p)
+			);
 		case 'lid':
 			return `Lid ${p.slug}`;
 		case 'commissie':

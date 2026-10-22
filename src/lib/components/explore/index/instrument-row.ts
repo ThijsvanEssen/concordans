@@ -2,7 +2,8 @@
 // EU, the publication that enacted a law of the Staatsblad, the number of a treaty in the
 // Verdragenbank (API 0.81). A row without any of them stands with its title alone.
 import type { Schema } from '$lib/api/types';
-import { enactedLawId, stbCitation } from '$lib/text/enacted-law';
+import { enactedLawId } from '$lib/text/enacted-law';
+import { enactedLawPlace } from '$lib/text/citation-record';
 
 type Row = Pick<Schema<'InstrumentListItemDTO'>, 'bwb_id' | 'celex' | 'jurisdiction' | 'kind'> &
 	Partial<Pick<Schema<'InstrumentListItemDTO'>, 'official_id' | 'treaty_number'>>;
@@ -11,7 +12,7 @@ type Row = Pick<Schema<'InstrumentListItemDTO'>, 'bwb_id' | 'celex' | 'jurisdict
 export function instrumentKenmerk(w: Row): string {
 	if (w.bwb_id ?? w.celex) return (w.bwb_id ?? w.celex ?? '').toUpperCase();
 	const stb = enactedLawId(w.official_id);
-	if (stb) return stbCitation(stb) ?? stb;
+	if (stb) return enactedLawPlace(stb) ?? stb;
 	if (w.official_id) return w.official_id.toUpperCase();
 	return w.treaty_number ? `Verdragsnr. ${w.treaty_number}` : '';
 }

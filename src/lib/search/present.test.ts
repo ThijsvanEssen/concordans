@@ -155,7 +155,7 @@ describe('presentHit', () => {
 			display_name: TITLE,
 			extra: { kind: 'Amendement', dossier_number: '37022', sequence: '8' }
 		});
-		expect(presentHit(amendement, 'x').title).toBe('Amendement, nr. 8');
+		expect(presentHit(amendement, 'x').title).toBe('Amendement, Kamerstukken II, 37022, nr. 8');
 	});
 
 	it('names a stuk outside a dossier by its own name, with its kind beside it', () => {
@@ -233,7 +233,10 @@ describe('the Kamer of a hit', () => {
 			...stuk('m', 'Motie'),
 			extra: { kind: 'Motie', dossier_number: '32621', sequence: 21, date: '2026-09-07' }
 		};
-		expect(presentHit(motie, '')).toMatchObject({ title: 'Motie, nr. 21', context: '7 sep. 2026' });
+		expect(presentHit(motie, '')).toMatchObject({
+			title: 'Motie, Kamerstukken II 2025/26, 32621, nr. 21',
+			context: '7 sep. 2026'
+		});
 	});
 
 	it('takes the Kamer the API gives over the key', () => {

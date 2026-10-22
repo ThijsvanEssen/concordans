@@ -15,29 +15,31 @@ describe('citeArticle', () => {
 
 	it('cites a lid in the short, the long and the dated form', () => {
 		const forms = citeArticle({ ...base, lid: '2', date: new Date(2026, 8, 22) });
-		expect(forms.kort).toBe('art. 300 lid 2 Sr');
-		expect(forms.voluit).toBe('artikel 300, tweede lid, van het Wetboek van Strafrecht');
-		expect(forms.metDatum).toBe('art. 300 lid 2 Sr (tekst geldend op 22 september 2026)');
+		expect(forms.short).toBe('art. 300 lid 2 Sr');
+		expect(forms.full).toBe('artikel 300, tweede lid, van het Wetboek van Strafrecht');
+		expect(forms.dated).toBe('art. 300 lid 2 Sr (tekst geldend op 22 september 2026)');
 	});
 
 	it('cites an onderdeel inside a lid, and an article without a short title', () => {
-		expect(citeArticle({ ...base, lid: '2', onderdelen: ['a'] }).kort).toBe(
+		expect(citeArticle({ ...base, lid: '2', onderdelen: ['a'] }).short).toBe(
 			'art. 300 lid 2 onder a Sr'
 		);
-		expect(citeArticle({ ...base, lid: '2', onderdelen: ['a'] }).voluit).toBe(
+		expect(citeArticle({ ...base, lid: '2', onderdelen: ['a'] }).full).toBe(
 			'artikel 300, tweede lid, onderdeel a, van het Wetboek van Strafrecht'
 		);
-		expect(citeArticle({ ...base, shortTitle: null }).kort).toBe('art. 300 Wetboek van Strafrecht');
-		expect(citeArticle(base).voluit).toBe('artikel 300 van het Wetboek van Strafrecht');
+		expect(citeArticle({ ...base, shortTitle: null }).short).toBe(
+			'art. 300 Wetboek van Strafrecht'
+		);
+		expect(citeArticle(base).full).toBe('artikel 300 van het Wetboek van Strafrecht');
 	});
 
 	it('cites an onderdeel of an onderdeel, and the aanhef of a lid', () => {
 		const forms = citeArticle({ ...base, articleNumber: '5', lid: '1', onderdelen: ['d', 'i'] });
-		expect(forms.kort).toBe('art. 5 lid 1 onder d sub i Sr');
-		expect(forms.voluit).toBe(
+		expect(forms.short).toBe('art. 5 lid 1 onder d sub i Sr');
+		expect(forms.full).toBe(
 			'artikel 5, eerste lid, onderdeel d, onder i, van het Wetboek van Strafrecht'
 		);
-		expect(citeArticle({ ...base, lid: '3', aanhef: true }).kort).toBe('art. 300 lid 3 aanhef Sr');
+		expect(citeArticle({ ...base, lid: '3', aanhef: true }).short).toBe('art. 300 lid 3 aanhef Sr');
 	});
 
 	it('puts the book of the Burgerlijk Wetboek before the article', () => {
@@ -47,10 +49,10 @@ describe('citeArticle', () => {
 			shortTitle: 'BW',
 			citationTitle: 'Burgerlijk Wetboek Boek 7'
 		};
-		expect(citeArticle({ ...bw7, lid: '3', onderdelen: ['a'] }).kort).toBe(
+		expect(citeArticle({ ...bw7, lid: '3', onderdelen: ['a'] }).short).toBe(
 			'art. 7:3 lid 3 onder a BW'
 		);
-		expect(citeArticle(bw7).voluit).toBe('artikel 7:3 van het Burgerlijk Wetboek');
+		expect(citeArticle(bw7).full).toBe('artikel 7:3 van het Burgerlijk Wetboek');
 		// The API names the book itself `BW6`; the citation names the code.
 		expect(
 			citeArticle({
@@ -58,7 +60,7 @@ describe('citeArticle', () => {
 				articleNumber: '162',
 				shortTitle: 'BW6',
 				citationTitle: 'Burgerlijk Wetboek Boek 6'
-			}).kort
+			}).short
 		).toBe('art. 6:162 BW');
 		const bw7a = {
 			bwbId: 'BWBR0006000',
@@ -66,8 +68,8 @@ describe('citeArticle', () => {
 			shortTitle: 'BW7A',
 			citationTitle: 'Burgerlijk Wetboek Boek 7A'
 		};
-		expect(citeArticle(bw7a).kort).toBe('art. 7A:1576 BW');
-		expect(citeArticle(bw7a).voluit).toBe('artikel 7A:1576 van het Burgerlijk Wetboek');
+		expect(citeArticle(bw7a).short).toBe('art. 7A:1576 BW');
+		expect(citeArticle(bw7a).full).toBe('artikel 7A:1576 van het Burgerlijk Wetboek');
 	});
 
 	it('reads the law of an article from its BWB id', () => {
@@ -75,12 +77,12 @@ describe('citeArticle', () => {
 			{ bwb_id: 'BWBR0006000', article_number: '1576' },
 			{ own: 'Burgerlijk Wetboek Boek 7A' }
 		);
-		expect(citation && citeArticle(citation).kort).toBe('art. 7A:1576 BW');
+		expect(citation && citeArticle(citation).short).toBe('art. 7A:1576 BW');
 	});
 
 	it('keeps a lid it cannot name in words', () => {
 		expect(ordinalWord('2a')).toBeNull();
-		expect(citeArticle({ ...base, lid: '2a' }).voluit).toBe(
+		expect(citeArticle({ ...base, lid: '2a' }).full).toBe(
 			'artikel 300, lid 2a, van het Wetboek van Strafrecht'
 		);
 		expect(partOfAnchor('lid-2-onder-a')).toEqual({ lid: '2', onderdelen: ['a'], aanhef: false });
@@ -110,9 +112,9 @@ describe('citeArticle', () => {
 			citationTitle: 'Grondwet',
 			date: new Date(2026, 8, 24)
 		});
-		expect(forms.kort).toBe('Algemene bepaling Gw');
-		expect(forms.voluit).toBe('Algemene bepaling van de Grondwet');
-		expect(forms.metDatum).toBe('Algemene bepaling Gw (tekst geldend op 24 september 2026)');
+		expect(forms.short).toBe('Algemene bepaling Gw');
+		expect(forms.full).toBe('Algemene bepaling van de Grondwet');
+		expect(forms.dated).toBe('Algemene bepaling Gw (tekst geldend op 24 september 2026)');
 	});
 });
 
@@ -126,14 +128,14 @@ describe('citing an article of an act of the EU, its text as adopted (A53 #2)', 
 
 	it('dates it on the day it was adopted, never as the text in force today', () => {
 		const forms = citeArticle({ ...avg, adopted: { on: '2016-04-27' } });
-		expect(forms.metDatum).toBe(
+		expect(forms.dated).toBe(
 			'art. 6 Verordening (EU) 2016/679 (tekst zoals vastgesteld op 27 april 2016)'
 		);
-		expect(forms.metDatum).not.toMatch(/geldend/);
+		expect(forms.dated).not.toMatch(/geldend/);
 	});
 
 	it('gives no dated form where the day it was adopted is not known', () => {
-		expect(citeArticle({ ...avg, adopted: { on: null } }).metDatum).toBeNull();
+		expect(citeArticle({ ...avg, adopted: { on: null } }).dated).toBeNull();
 	});
 
 	it('carries the act’s day from the reader into every place of the article', () => {
@@ -141,7 +143,7 @@ describe('citing an article of an act of the EU, its text as adopted (A53 #2)', 
 			{ article_number: '6' },
 			{ own: 'Verordening (EU) 2016/679', adopted: { on: '2016-04-27' } }
 		)!;
-		expect(citeArticle({ ...c, lid: '1' }).metDatum).toBe(
+		expect(citeArticle({ ...c, lid: '1' }).dated).toBe(
 			'art. 6 lid 1 Verordening (EU) 2016/679 (tekst zoals vastgesteld op 27 april 2016)'
 		);
 	});
@@ -186,13 +188,13 @@ describe('articleCitation', () => {
 		);
 		expect(c?.heading).toBe('Enig artikel');
 		const forms = citeArticle({ ...c!, date: new Date(2026, 9, 21) });
-		expect(forms.kort).toBe(
+		expect(forms.short).toBe(
 			'Enig artikel Aanpassing bedragen reis- en verblijfkosten leden Eerste Kamer'
 		);
-		expect(forms.voluit).not.toContain('enig-artikel');
+		expect(forms.full).not.toContain('enig-artikel');
 		// Without a label at hand, the name its number spells.
 		expect(
-			citeArticle({ articleNumber: 'enig-artikel', shortTitle: 'X', citationTitle: 'Wet X' }).kort
+			citeArticle({ articleNumber: 'enig-artikel', shortTitle: 'X', citationTitle: 'Wet X' }).short
 		).toBe('Enig artikel X');
 	});
 });
@@ -222,16 +224,16 @@ describe('placeCitation', () => {
 			definitie: 'netwerk- en informatiesysteem'
 		});
 		const forms = cite('onder-_39-onder-a', cbwParts);
-		expect(forms.kort).toBe("art. 1, definitie van 'netwerk- en informatiesysteem', onder a Cbw");
-		expect(forms.voluit).toBe(
+		expect(forms.short).toBe("art. 1, definitie van 'netwerk- en informatiesysteem', onder a Cbw");
+		expect(forms.full).toBe(
 			"artikel 1, definitie van 'netwerk- en informatiesysteem', onderdeel a, van de Cyberbeveiligingswet"
 		);
 	});
 
 	it('cites the definition itself by its term', () => {
 		const forms = cite('onder-_38', cbwParts);
-		expect(forms.kort).toBe("art. 1, definitie van 'NIS2-richtlijn' Cbw");
-		expect(forms.voluit).toBe(
+		expect(forms.short).toBe("art. 1, definitie van 'NIS2-richtlijn' Cbw");
+		expect(forms.full).toBe(
 			"artikel 1, definitie van 'NIS2-richtlijn', van de Cyberbeveiligingswet"
 		);
 	});
@@ -249,13 +251,13 @@ describe('placeCitation', () => {
 			{ id: 'tekst-7', term: null }
 		];
 		const at = (anchor: string) => citeArticle({ ...wft, ...placeCitation(anchor, parts) });
-		expect(at('tekst-6-onder-a').kort).toBe("art. 1:1, definitie van 'adviseren', onder a Wft");
-		expect(at('tekst-6-onder-a').voluit).toBe(
+		expect(at('tekst-6-onder-a').short).toBe("art. 1:1, definitie van 'adviseren', onder a Wft");
+		expect(at('tekst-6-onder-a').full).toBe(
 			"artikel 1:1, definitie van 'adviseren', onderdeel a, van de Wet op het financieel toezicht"
 		);
-		expect(at('tekst-6').kort).toBe("art. 1:1, definitie van 'adviseren' Wft");
+		expect(at('tekst-6').short).toBe("art. 1:1, definitie van 'adviseren' Wft");
 		// A paragraph without a term is the article's.
-		expect(at('tekst-7').kort).toBe('art. 1:1 Wft');
+		expect(at('tekst-7').short).toBe('art. 1:1 Wft');
 	});
 
 	it('puts the definition after the lid', () => {
@@ -265,8 +267,8 @@ describe('placeCitation', () => {
 			{ id: 'lid-2-onder-_1-onder-b', term: null }
 		];
 		const forms = cite('lid-2-onder-_1-onder-b', parts);
-		expect(forms.kort).toBe("art. 1 lid 2, definitie van 'netwerk', onder b Cbw");
-		expect(forms.voluit).toBe(
+		expect(forms.short).toBe("art. 1 lid 2, definitie van 'netwerk', onder b Cbw");
+		expect(forms.full).toBe(
 			"artikel 1, tweede lid, definitie van 'netwerk', onderdeel b, van de Cyberbeveiligingswet"
 		);
 	});
@@ -280,8 +282,8 @@ describe('placeCitation', () => {
 			aanhef: false,
 			definitie: null
 		});
-		expect(cite('onder-_39-onder-a', oud).kort).toBe('art. 1 Cbw');
-		expect(cite('lid-2-onder-a', oud).kort).toBe('art. 1 lid 2 onder a Cbw');
+		expect(cite('onder-_39-onder-a', oud).short).toBe('art. 1 Cbw');
+		expect(cite('lid-2-onder-a', oud).short).toBe('art. 1 lid 2 onder a Cbw');
 		expect(placeCitation(null, cbwParts).definitie).toBeNull();
 	});
 });
@@ -322,13 +324,13 @@ describe('citing a place in an article', () => {
 		expect(parts).toHaveLength(1);
 		expect(placeOf(parts, parts[0])).toBeNull();
 		const forms = cite(bw('2', '1'), parts, parts[0]);
-		expect(forms.kort).toBe('art. 1:2 BW');
-		expect(forms.voluit).toBe('artikel 1:2 van het Burgerlijk Wetboek');
+		expect(forms.short).toBe('art. 1:2 BW');
+		expect(forms.full).toBe('artikel 1:2 van het Burgerlijk Wetboek');
 	});
 
 	it('cites every paragraph of an article without leden as the article', () => {
 		const parts = parseArticleParts('Eerste alinea.\nTweede alinea.');
-		expect(parts.map((p) => cite(bw('9', '1'), parts, p).kort)).toEqual([
+		expect(parts.map((p) => cite(bw('9', '1'), parts, p).short)).toEqual([
 			'art. 1:9 BW',
 			'art. 1:9 BW'
 		]);
@@ -340,8 +342,8 @@ describe('citing a place in an article', () => {
 			{ id: 'lid-2', kind: 'lid', number: '2', start: 168, end: 444 }
 		]);
 		const forms = cite(bw('162', '6'), parts, parts[1]);
-		expect(forms.kort).toBe('art. 6:162 lid 2 BW');
-		expect(forms.voluit).toBe('artikel 6:162, tweede lid, van het Burgerlijk Wetboek');
+		expect(forms.short).toBe('art. 6:162 lid 2 BW');
+		expect(forms.full).toBe('artikel 6:162, tweede lid, van het Burgerlijk Wetboek');
 	});
 
 	it('cites a lid with an aanhef and onderdelen as the lid, its aanhef and each onderdeel', () => {
@@ -362,26 +364,26 @@ describe('citing a place in an article', () => {
 					c,
 					parts,
 					find(parts, (p) => p.id === 'lid-2')
-				).kort
+				).short
 			).toBe('art. 6:96 lid 2 BW');
 			const a = cite(
 				c,
 				parts,
 				find(parts, (p) => p.id === 'lid-2-onder-a')
 			);
-			expect(a.kort).toBe('art. 6:96 lid 2 onder a BW');
-			expect(a.voluit).toBe('artikel 6:96, tweede lid, onderdeel a, van het Burgerlijk Wetboek');
+			expect(a.short).toBe('art. 6:96 lid 2 onder a BW');
+			expect(a.full).toBe('artikel 6:96, tweede lid, onderdeel a, van het Burgerlijk Wetboek');
 		}
 		const aanhef = cite(
 			c,
 			api,
 			find(api, (p) => p.id === 'lid-2-aanhef')
 		);
-		expect(aanhef.kort).toBe('art. 6:96 lid 2 aanhef BW');
-		expect(aanhef.voluit).toBe('artikel 6:96, tweede lid, aanhef, van het Burgerlijk Wetboek');
+		expect(aanhef.short).toBe('art. 6:96 lid 2 aanhef BW');
+		expect(aanhef.full).toBe('artikel 6:96, tweede lid, aanhef, van het Burgerlijk Wetboek');
 		// The closing words of a lid have no anchor of their own: they are the lid's.
 		const slot = find(parsed, (p) => p.id === null);
-		expect(cite(c, parsed, slot).kort).toBe('art. 6:96 lid 2 BW');
+		expect(cite(c, parsed, slot).short).toBe('art. 6:96 lid 2 BW');
 	});
 
 	it('cites an article with an aanhef and onderdelen but no leden', () => {
@@ -389,16 +391,14 @@ describe('citing a place in an article', () => {
 			'Het verzuim treedt zonder ingebrekestelling in:\na. wanneer een termijn verstrijkt;\nb. wanneer de verbintenis voortvloeit uit onrechtmatige daad;\nc. wanneer de schuldeiser moet afleiden dat de schuldenaar zal tekortschieten.';
 		const parts = parseArticleParts(text);
 		const c = bw('83', '6');
-		expect(parts.map((p) => cite(c, parts, p).kort)).toEqual([
+		expect(parts.map((p) => cite(c, parts, p).short)).toEqual([
 			'art. 6:83 aanhef BW',
 			'art. 6:83 onder a BW',
 			'art. 6:83 onder b BW',
 			'art. 6:83 onder c BW'
 		]);
-		expect(cite(c, parts, parts[0]).voluit).toBe(
-			'artikel 6:83, aanhef, van het Burgerlijk Wetboek'
-		);
-		expect(cite(c, parts, parts[2]).voluit).toBe(
+		expect(cite(c, parts, parts[0]).full).toBe('artikel 6:83, aanhef, van het Burgerlijk Wetboek');
+		expect(cite(c, parts, parts[2]).full).toBe(
 			'artikel 6:83, onderdeel b, van het Burgerlijk Wetboek'
 		);
 	});

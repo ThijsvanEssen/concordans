@@ -17,9 +17,12 @@ export type InstrumentMeta = {
 	bwbId: string;
 	/** "Wetboek van Strafrecht" */
 	title: string | null;
-	/** "Sr" */
+	/** "Sr", the abbreviation it is cited by; a book of the BW "Boek 6 BW". */
 	shortTitle: string | null;
 	citationTitle: string | null;
+	/** The abbreviation the API gives (`AVG`, where its short title is "Algemene verordening
+	 *  gegevensbescherming"), kept once known. */
+	abbreviation?: string | null;
 };
 
 /** The id a law is grouped under: its BWB id, or its own key when it has none (EU). */
@@ -52,6 +55,7 @@ export function recordInstrument(input: {
 	display_name?: unknown;
 	citation_title?: unknown;
 	short_title?: unknown;
+	abbreviation?: unknown;
 }): void {
 	const bwbId = instrumentContainerId(input);
 	if (!bwbId) return;
@@ -59,12 +63,19 @@ export function recordInstrument(input: {
 	const existing = cache.get(bwbId);
 	const title = textOf(input.title) ?? textOf(input.display_name) ?? existing?.title ?? null;
 	const citationTitle = textOf(input.citation_title) ?? existing?.citationTitle ?? null;
+	// A law is cited by its abbreviation (`AVG`), its short title only where it has none: an act
+	// of the EU's short title is a name ("Algemene verordening gegevensbescherming").
+	const abbreviation = textOf(input.abbreviation) ?? existing?.abbreviation ?? null;
 
 	const meta: InstrumentMeta = {
 		bwbId,
 		title: title ?? citationTitle,
-		shortTitle: lawShortName(bwbId, textOf(input.short_title) ?? existing?.shortTitle),
-		citationTitle: citationTitle ?? title
+		shortTitle: lawShortName(
+			bwbId,
+			abbreviation ?? textOf(input.short_title) ?? existing?.shortTitle
+		),
+		citationTitle: citationTitle ?? title,
+		abbreviation
 	};
 	// Nothing new is no news: every drawn article records its law, and each change relabels
 	// the whole canvas.
@@ -74,7 +85,10 @@ export function recordInstrument(input: {
 }
 
 const sameMeta = (a: InstrumentMeta, b: InstrumentMeta) =>
-	a.title === b.title && a.shortTitle === b.shortTitle && a.citationTitle === b.citationTitle;
+	a.title === b.title &&
+	a.shortTitle === b.shortTitle &&
+	a.citationTitle === b.citationTitle &&
+	a.abbreviation === b.abbreviation;
 
 /**
  * The names an article's detail carries of its law, under the id the article names it by
@@ -83,7 +97,13 @@ const sameMeta = (a: InstrumentMeta, b: InstrumentMeta) =>
 export function recordArticleLaw(
 	lawId: string,
 	instrument:
-		| { title?: unknown; citation_title?: unknown; short_title?: unknown; display_name?: unknown }
+		| {
+				title?: unknown;
+				citation_title?: unknown;
+				short_title?: unknown;
+				abbreviation?: unknown;
+				display_name?: unknown;
+		  }
 		| null
 		| undefined
 ): void {
@@ -93,7 +113,8 @@ export function recordArticleLaw(
 		title: instrument.title,
 		display_name: instrument.display_name,
 		citation_title: instrument.citation_title,
-		short_title: instrument.short_title
+		short_title: instrument.short_title,
+		abbreviation: instrument.abbreviation
 	});
 }
 

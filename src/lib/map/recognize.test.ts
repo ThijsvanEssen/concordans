@@ -26,12 +26,12 @@ describe('a pasted source Concordans holds', () => {
 		[
 			'https://zoek.officielebekendmakingen.nl/kst-36600-VIII-14.html',
 			'/kamerstukken/36600-VIII/14',
-			'Kamerstuk 36600 VIII, nr. 14'
+			'Kamerstukken II, 36600 VIII, nr. 14'
 		],
 		[
 			'https://zoek.officielebekendmakingen.nl/kst-36799-31',
 			'/kamerstukken/36799/31',
-			'Kamerstuk 36799, nr. 31'
+			'Kamerstukken II, 36799, nr. 31'
 		],
 		['https://zoek.officielebekendmakingen.nl/stb-2026-94.html', '/stb/2026/94', 'Stb. 2026, 94'],
 		[

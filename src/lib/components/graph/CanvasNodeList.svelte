@@ -9,7 +9,7 @@
 	import { bronKind } from '$lib/components/graph/bron-kind';
 	import { moveIndex } from './canvas-keys';
 	import { isEscape } from '$lib/actions/keys';
-	import { articleTitle } from '$lib/text/bw';
+	import { articleTitle } from '$lib/text/citation-record';
 	import { bronNaam, stemmingNaam } from '$lib/bron/naam';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { isClusterId } from '$lib/selection/cluster';

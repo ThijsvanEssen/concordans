@@ -2,10 +2,15 @@
 
 export type CiteItem = { kind: 'kort' | 'voluit' | 'met datum' | 'link'; text: string };
 
-export function citeItems(
-	forms: { kort?: string | null; voluit?: string | null; metDatum?: string | null } | null,
-	link?: string | null
-): CiteItem[] {
+type Forms = { kort?: string | null; voluit?: string | null; metDatum?: string | null };
+/** A bron's citation record (citation-record.ts), or its parts. */
+type RecordForms = { short: string; full: string; dated: string | null };
+
+export function citeItems(given: Forms | RecordForms | null, link?: string | null): CiteItem[] {
+	const forms: Forms | null =
+		given && 'short' in given
+			? { kort: given.short, voluit: given.full, metDatum: given.dated }
+			: given;
 	const items: CiteItem[] = [];
 	if (forms?.kort) items.push({ kind: 'kort', text: forms.kort });
 	if (forms?.voluit) items.push({ kind: 'voluit', text: forms.voluit });

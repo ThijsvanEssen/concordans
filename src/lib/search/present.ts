@@ -10,6 +10,7 @@ import { kindName } from '$lib/components/explore/law-head';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { articleName } from '$lib/text/bw';
+import { citationRecord } from '$lib/text/citation-record';
 import { hasPassed, korteDatum, langeDatum } from '$lib/text/datum';
 import { bronPlural, type Collection } from '$lib/vocabulary';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
@@ -297,8 +298,18 @@ function presentBase(hit: Hit, query: string, neighbours: readonly Hit[]): Prese
 			const sequence = hit.extra?.sequence;
 			const number =
 				typeof sequence === 'string' || typeof sequence === 'number' ? String(sequence) : '';
+			// Its place as a Kamerstuk is cited: `Motie, Kamerstukken II 2025/26, 36764, nr. 31`.
+			const place = number
+				? (citationRecord({
+						kind: 'kamerstuk',
+						chamber: extra(hit, 'chamber'),
+						date: extra(hit, 'date'),
+						dossier_number: extra(hit, 'dossier_number'),
+						number
+					})?.short ?? `nr. ${number}`)
+				: null;
 			return {
-				title: number ? `${kind}, nr. ${number}` : kind,
+				title: place ? `${kind}, ${place}` : kind,
 				context: date,
 				snippet: null,
 				chamber

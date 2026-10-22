@@ -7,7 +7,7 @@
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { langeDatum } from '$lib/text/datum';
 	import { joinParts } from '$lib/text/words';
-	import { kamerstukName } from '$lib/components/parliamentary/kamerstuk';
+	import { citationRecord } from '$lib/text/citation-record';
 	import { bewaarItem } from '$lib/map/map';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import { getDecision, getDecisionDocument, getParliamentSeats } from '$lib/api/records';
@@ -53,11 +53,11 @@
 	);
 	const doc = $derived(tekst.state.status === 'ready' ? tekst.state.data : null);
 
-	/** What was voted on, by its kind and number: `Motie, Kamerstuk 36764, nr. 31`. */
+	/** What was voted on, by its kind and number: `Motie, Kamerstukken II 2025/26, 36764, nr. 31`. */
 	const stukNaam = (p: Schema<'DecisionPaperDTO'>) =>
 		joinParts([
 			p.kind ? shortKind(p.kind) : 'Kamerstuk',
-			kamerstukName({ ...p, chamber: loaded?.chamber })
+			citationRecord({ ...p, kind: 'kamerstuk', chamber: loaded?.chamber })?.short
 		]);
 
 	// What the coalition did (`coalition`). Only in the Tweede Kamer, and only where the API

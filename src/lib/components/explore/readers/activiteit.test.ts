@@ -60,7 +60,7 @@ describe('what was made in an activity', () => {
 			'Moties ingediend in dit debat',
 			'Besluiten'
 		]);
-		expect(groepen[0].regels[0].meta).toBe('Kamerstuk 36764, nr. 32');
+		expect(groepen[0].regels[0].meta).toBe('Kamerstukken II, 36764, nr. 32');
 		expect(groepen[2].regels[0]).toMatchObject({ teken: 'nee', meta: '65–85' });
 		// A motie opens on its dictum from the answer, without its text.
 		expect(inhoud.get('documents/m')).toMatchObject({ als: 'dictum' });
@@ -68,9 +68,16 @@ describe('what was made in an activity', () => {
 	});
 
 	it('cites a paper by its dossier and number', () => {
-		expect(stukNummer({ dossier_number: '36600', dossier_suffix: 'VIII', sequence: 5 })).toBe(
-			'Kamerstuk 36600 VIII, nr. 5'
-		);
-		expect(stukNummer({ dossier_suffix: null, dossier_number: null, sequence: null })).toBeNull();
+		expect(
+			stukNummer({
+				dossier_number: '36600',
+				dossier_suffix: 'VIII',
+				sequence: 5,
+				date: '2025-10-02'
+			})
+		).toBe('Kamerstukken II 2025/26, 36600 VIII, nr. 5');
+		expect(
+			stukNummer({ dossier_suffix: null, dossier_number: null, sequence: null, date: null })
+		).toBeNull();
 	});
 });

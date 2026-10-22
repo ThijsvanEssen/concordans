@@ -1,7 +1,7 @@
 // The parts of the band "Behoort bij": a layer (a bron in a line), a line of the kern, a
 // group below them, and how a neighbour becomes a layer.
 import { textOf } from '$lib/text/words';
-import { headingCite } from '$lib/text/judgment-heading';
+import { citationRecord } from '$lib/text/citation-record';
 import { naamVan } from '$lib/bron/menselijk';
 import type { Neighbor } from '$lib/api/nodes';
 import { refOf, type BronRef } from '$lib/bron/href';
@@ -103,7 +103,7 @@ export function laagVan(n: Neighbor, soort: string): Laag {
 			n.relation === 'APPEAL_OF' && n.direction === 'inbound' ? n.meta?.procedure_type : null
 		);
 		// As the head of its reader cites it; on a phone without the names it is known by.
-		const kort = headingCite({ cite: n.cite, props })?.short;
+		const kort = citationRecord({ kind: 'judgment', cite: n.cite, props })?.short;
 		return { soort, naam: vol, ref, ...(kort ? { kort } : {}), ...(uitkomst ? { uitkomst } : {}) };
 	}
 	return { soort, naam: vol, ref };

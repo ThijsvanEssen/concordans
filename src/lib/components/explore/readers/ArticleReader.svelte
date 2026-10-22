@@ -34,7 +34,8 @@
 	import { page } from '$app/state';
 	import { anchorOfHash, landOn } from '$lib/bron/landing';
 	import { refId } from '$lib/bron/href';
-	import { articleCitation, citeArticle, placeCitation } from '$lib/text/cite';
+	import { articleCitation, placeCitation } from '$lib/text/cite';
+	import { citationRecord } from '$lib/text/citation-record';
 	import { articleName } from '$lib/text/bw';
 	import { placeOf, type Division } from '$lib/text/division';
 	import { lidHistory, unitsOf, wordingsOf } from '$lib/text/version-diff';
@@ -437,7 +438,9 @@
 	// An earlier text is cited as geldend on the day it took effect; the text of today on the
 	// day the data stands on (`validity.as_of`), else today.
 	const citeOn = $derived(shown?.from ? new Date(shown.from) : citeDate(validity));
-	const forms = $derived(citation ? citeArticle({ ...citation, date: citeOn }) : null);
+	const forms = $derived(
+		citation ? citationRecord({ ...citation, kind: 'article', date: citeOn }) : null
+	);
 
 	// Bewaar and Citeer in the head follow the place chosen (#lid-3): that lid, else the whole
 	// article. Both name the same place.
@@ -450,7 +453,9 @@
 		return {
 			plaats,
 			deel,
-			forms: plaats ? citeArticle({ ...citation, ...deel, date: citeOn }) : forms
+			forms: plaats
+				? citationRecord({ ...citation, ...deel, kind: 'article', date: citeOn })
+				: forms
 		};
 	});
 	const keepHere = $derived.by(() => {
@@ -459,7 +464,7 @@
 		return {
 			item: bewaarItem(
 				node.id,
-				{ at: plaats, kort: f.kort, voluit: f.voluit },
+				{ at: plaats, kort: f.short, voluit: f.full },
 				{ groep: citation.citationTitle, wet: bwbId, versie: validFrom }
 			),
 			wat: deel?.lid ? `lid ${deel.lid}` : ''
@@ -627,8 +632,14 @@
 	// The article with its heading where the law gives one: "Artikel 22. Verwerking van
 	// persoonsgegevens".
 	const title = (a: Schema<'ArticleSummaryDTO'>) => {
-		// A BW article with its book (Artikel 6:162); an article without a number by its label.
-		const name = articleName(a.bwb_id, a.article_number, a.label) ?? a.display_name ?? 'Artikel';
+		// As its record names it, with its law's abbreviation (Artikel 6:162 BW); before the law's
+		// names are in, a BW article with its book (Artikel 6:162), one without a number by its
+		// label.
+		const name =
+			forms?.heading ??
+			articleName(a.bwb_id, a.article_number, a.label) ??
+			a.display_name ??
+			'Artikel';
 		return a.heading && a.article_number ? `${name}. ${a.heading}` : name;
 	};
 </script>
@@ -679,7 +690,7 @@
 				bewaar: keepHere?.item ?? null,
 				wat: keepHere?.wat ?? '',
 				cite: hier ? citeItems(hier.forms, readLink) : [],
-				naam: hier?.forms.kort ?? '',
+				naam: hier?.forms.short ?? '',
 				bron: officialUrl && officialName ? { label: officialName, href: officialUrl } : null,
 				tekst: () => a.text ?? ''
 			}}
@@ -891,7 +902,7 @@
 										a.article_number ?? articleNumber,
 										bySource.direction
 									)) ||
-								(forms?.kort ?? title(a)),
+								(forms?.short ?? title(a)),
 							version: (current ?? wordings.at(-1))?.first ?? null,
 							text: a.text,
 							parts: a.parts

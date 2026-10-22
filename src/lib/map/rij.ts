@@ -8,14 +8,13 @@ import { focusOf } from '$lib/bron/href';
 import { voteCitation } from '$lib/bron/naam';
 import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 import { lawIdOf } from '$lib/graph/types';
-import { kamerstukCitation } from '$lib/components/parliamentary/kamerstuk';
+import { citationRecord } from '$lib/text/citation-record';
 
 import { type Row } from '$lib/verbonden/rows';
 import { dossierNumberOf } from '$lib/bron/describe';
 import { FILTER_GROUP_LABEL } from '$lib/verbonden/filter';
 import { dossierLabel } from '$lib/bron/dossier-naam';
 import { zaakNaam } from '$lib/text/judgment-cite';
-import { headingCite } from '$lib/text/judgment-heading';
 import { bewaarItem, type MapItem } from './map';
 
 const propsOf = (r: Row) => (r.props ?? {}) as Record<string, unknown>;
@@ -27,7 +26,8 @@ const dossierOf = (r: Row) =>
 		: null;
 
 /** A judgment row as its reader heads it: `Rb. Den Haag 1 januari 2013`, with its ECLI in full. */
-const judgmentHead = (r: Row) => (r.ref.collection === 'judgments' ? headingCite(r) : null);
+const judgmentHead = (r: Row) =>
+	r.ref.collection === 'judgments' ? citationRecord({ ...r, kind: 'judgment' }) : null;
 
 function groepVanRij(r: Row): string {
 	switch (r.ref.collection) {
@@ -76,15 +76,19 @@ function readerCitation(r: Row): { kort: string; voluit?: string } | null {
 			subject: textOf(p.subject) ?? textOf(p.title) ?? r.title
 		});
 	if (r.ref.collection !== 'documents') return null;
-	const kort = kamerstukCitation({
+	// A paper without a number is cited by its row's title, not by its dossier.
+	const number = p.sequence != null ? String(p.sequence) : textOf(p.number);
+	if (!number) return null;
+	const cited = citationRecord({
+		kind: 'kamerstuk',
 		chamber: textOf(p.chamber),
 		session_year: textOf(p.session_year),
 		date: textOf(p.date) ?? r.date,
 		dossier_number: dossierNumberOf(p),
 		dossier_suffix: textOf(p.dossier_suffix),
-		number: p.sequence != null ? String(p.sequence) : textOf(p.number)
+		number
 	});
-	return kort ? { kort } : null;
+	return cited ? { kort: cited.short } : null;
 }
 
 /**

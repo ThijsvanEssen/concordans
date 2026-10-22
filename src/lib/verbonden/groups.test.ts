@@ -71,7 +71,7 @@ describe('buildGroups', () => {
 			}
 		} as unknown as Neighbor;
 		const row = buildGroups('articles', [verslag]).find((g) => g.id === 'documents')!.rows[0];
-		expect(row.title).toBe('Verslag van een wetgevingsoverleg, Kamerstuk 31058, nr. 11');
+		expect(row.title).toBe('Verslag van een wetgevingsoverleg, Kamerstukken II, 31058, nr. 11');
 	});
 
 	it('puts the votes on a dossier under the Kamer that cast them', () => {
@@ -174,7 +174,7 @@ describe('buildGroups', () => {
 		const row = groups.find((g) => g.id === 'documents')!.rows[0];
 		expect(row.filterGroup).toBe('toelichtingen');
 		expect(row.lid).toBe('2');
-		expect(row.title).toBe('Memorie van toelichting, Kamerstuk 36693, nr. 3');
+		expect(row.title).toBe('Memorie van toelichting, Kamerstukken II, 36693, nr. 3');
 		expect(row.match).toBe('artikel 300, tweede lid, Sr');
 		expect(row.derived).toBe(true);
 		expect(row.proposed).toBeUndefined();

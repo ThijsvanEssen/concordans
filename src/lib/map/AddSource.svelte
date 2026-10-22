@@ -17,7 +17,8 @@
 		type SourceKind
 	} from './map';
 	import { recognize } from './recognize';
-	import { articleCitation, citeArticle } from '$lib/text/cite';
+	import { articleCitation } from '$lib/text/cite';
+	import { citationRecord } from '$lib/text/citation-record';
 	import { BUNDLE_PARAM } from './page';
 	import { ensureInstrumentName, instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 
@@ -70,14 +71,16 @@
 	);
 	const knownLabel = $derived.by(() => {
 		if (!known?.law) return known?.label ?? '';
-		// An article in the reader's own short form (`art. 6:163 BW`, citeArticle), as Bewaar
+		// An article in the reader's own short form (`art. 6:163 BW`, its citation record), as Bewaar
 		// keeps it (UX-toets A21 #5).
 		if (known.article) {
 			const c = articleCitation(
 				{ bwb_id: known.law, article_number: known.article },
 				{ meta: law ?? null }
 			);
-			return c ? citeArticle(c).kort : `${articleRef(known.law, known.article)}, deze wet`;
+			return c
+				? citationRecord({ ...c, kind: 'article' }).short
+				: `${articleRef(known.law, known.article)}, deze wet`;
 		}
 		return lawName(law, null) ?? 'deze wet';
 	});

@@ -6,13 +6,13 @@ import { carriesBillTitle, shortKind } from '$lib/text/document-kind';
 import { textOf } from '$lib/text/words';
 import { isRauw, menselijkeNaam } from '$lib/bron/menselijk';
 import { langeDatum } from '$lib/text/datum';
-import { articleTitle } from '$lib/text/bw';
-import { headingCite, type Cite } from '$lib/text/judgment-heading';
+import type { Cite } from '$lib/text/judgment-heading';
 import { courtName } from '$lib/text/court';
 import { isGeneriek } from '$lib/bron/generiek';
 import { dossierOwnName, dossierUitProps, kamerstukNummer } from '$lib/bron/dossier-naam';
 import { kindName } from '$lib/components/explore/law-head';
-import { withoutKamerstuk, kamerstukName } from '$lib/components/parliamentary/kamerstuk';
+import { withoutKamerstuk } from '$lib/text/kamerstuk';
+import { articleTitle, citationRecord } from '$lib/text/citation-record';
 
 /** What a list says of a bron: its title, the words under it, and what identifies it. */
 type BronDescription = {
@@ -45,7 +45,7 @@ export const dossierNumberOf = (props: Record<string, unknown> | null | undefine
 /**
  * The name and the line under it of a Kamerstuk, by what tells it apart: its own title where
  * that says more than its kind (`Motie van het lid Krul c.s. over …`); else its kind or title
- * with its number (`Verslag, Kamerstuk I 36547, C`); else with its date. Never the kind alone
+ * with its place (`Verslag, Kamerstukken I 2025/26, 36547, C`); else with its date. Never the kind alone
  * where something else is known. The line under it names the kind and the number the title
  * leaves out.
  */
@@ -64,12 +64,15 @@ function documentName(
 	const letter = sequence ? null : (given ?? textOf(props.number));
 	const chamber = props.chamber === 'EK' || letter ? 'EK' : 'TK';
 	const stuk =
-		kamerstukName({
+		citationRecord({
+			kind: 'kamerstuk',
 			chamber,
+			session_year: textOf(props.session_year),
+			date: textOf(props.date),
 			dossier_number: dossier,
 			dossier_suffix: textOf(props.dossier_suffix),
 			number: sequence ?? letter
-		}) ?? (sequence ? `nr. ${sequence}` : letter);
+		})?.short ?? (sequence ? `nr. ${sequence}` : letter);
 	if (!kind && !title) return { title: name, context: null };
 	// The dossier's name on the line under it (API 0.79.30), where the title does not carry
 	// it already: the number in the title is how a Kamerstuk is cited.
@@ -146,7 +149,7 @@ export function describeBron(
 			// "Conclusie P-G Langemeijer en Wissink 13 september 2019".
 			return {
 				title:
-					(headingCite({ cite, props })?.short ??
+					(citationRecord({ kind: 'judgment', cite, props })?.short ??
 						(court ? (join(court, langeDatum(date)) ?? court) : name)) + known,
 				// A judgment known only as cited: its ECLI and court, nothing more. A translation
 				// the Rechtspraak published under its own ECLI says so (in its name, as the source

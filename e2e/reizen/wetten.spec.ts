@@ -70,7 +70,7 @@ test('a law reads whole, with its overview, a date to read it on and what is bas
 
 test('an article: its leden, the law above it and the next article', async ({ page }) => {
 	await page.goto('/wetten/BWBR0005289/artikel/6:162');
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162 BW');
 	await expect(page.getByText('Geldend recht, tekst sinds 1 januari 1992')).toBeVisible();
 	for (const lid of [1, 2, 3])
 		await expect(
@@ -83,7 +83,7 @@ test('an article: its leden, the law above it and the next article', async ({ pa
 	).toHaveAttribute('href', /\/wetten\/BWBR0005289/);
 
 	await page.getByRole('link', { name: 'Volgend artikel →' }).click();
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:163');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:163 BW');
 	await expect(page).toHaveURL(/\/artikel\/6:163/);
 });
 
@@ -128,7 +128,7 @@ test('a law lists its bijlagen after its articles; a bijlage reads its table', a
 }) => {
 	await bijlagenGelezen(page, 'BWBR0052872', ['bwbr0052872_annex_1']);
 	await page.goto('/wetten/BWBR0052872');
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Cyberbeveiligingswet');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Cyberbeveiligingswet (Cbw)');
 	const bijlagen = (await overview(page, touch)).getByRole('list', { name: 'Bijlagen' });
 	await bijlagen.getByRole('link', { name: 'Bijlage 1', exact: true }).click();
 	// A bijlage with a text of its own reads as the law does (besluit 29): still Tekst, the

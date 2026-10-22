@@ -21,7 +21,7 @@ import { laagVan } from '$lib/bron/behoort-layer';
 import { paarZin } from '$lib/verbonden/hoe';
 import { buildNodeLabel } from '$lib/graph/types';
 import { containerNames } from '$lib/graph/store/context';
-import { kamerstukName } from '$lib/components/parliamentary/kamerstuk';
+import { kamerstukName } from '$lib/text/kamerstuk';
 import type { Neighbor } from '$lib/api/nodes';
 
 const ROOT = join(process.cwd(), 'src');

@@ -23,7 +23,7 @@ test('a 500 on the article says so, and Opnieuw loads it once the API answers', 
 
 	await page.unrouteAll({ behavior: 'ignoreErrors' });
 	await alert.getByRole('button', { name: 'Opnieuw' }).click();
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162 BW');
 	await expect(alert).toHaveCount(0);
 });
 
@@ -52,7 +52,7 @@ test('a failing step to the next article keeps this one and its address, and say
 }) => {
 	guard.allow(FAILED);
 	await page.goto(ARTICLE);
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162 BW');
 	await failApi(page, /^\/api\/articles\/BWBR0005289\/163$/, 500);
 	const volgend = page.getByRole('link', { name: 'Volgend artikel →' });
 	await volgend.click();
@@ -61,11 +61,11 @@ test('a failing step to the next article keeps this one and its address, and say
 		.filter({ hasText: 'Artikel 6:163 kon niet worden geladen.' });
 	await expect(alert).toBeVisible();
 	await expect(page).toHaveURL(/6:162/);
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162 BW');
 
 	await page.unrouteAll({ behavior: 'ignoreErrors' });
 	await alert.getByRole('button', { name: 'Opnieuw' }).click();
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:163');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:163 BW');
 	await expect(page).toHaveURL(/6:163/);
 	await expect(alert).toHaveCount(0);
 });
@@ -96,7 +96,7 @@ test('one failing group of Verbonden leaves the others and the text standing', a
 	guard.allow(FAILED);
 	await failApi(page, /^\/api\/articles\/BWBR0005289\/162\/cited-by/, 500);
 	await page.goto(ARTICLE);
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162 BW');
 	const verbonden = page.getByRole('complementary', { name: 'Verbonden' });
 	const alert = verbonden.getByRole('alert').first();
 	await expect(alert).toContainText('De uitspraken konden niet worden geladen.');

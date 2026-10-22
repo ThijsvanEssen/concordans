@@ -8,7 +8,8 @@ import { shortKind } from '$lib/text/document-kind';
 import type { Schema } from '$lib/api/types';
 import type { TijdGroep, TijdRegel } from '$lib/components/tijdlijn/tijdlijn';
 import { voteOf, type Inhoud, type MetInhoud } from '$lib/components/open/rij-inhoud';
-import { kamerstukName, withoutKamerstuk } from '$lib/components/parliamentary/kamerstuk';
+import { withoutKamerstuk } from '$lib/text/kamerstuk';
+import { citationRecord } from '$lib/text/citation-record';
 import { votesShort } from '$lib/components/parliamentary/stemming';
 
 type Records = Schema<'ActivityRecordsResponse'>;
@@ -17,9 +18,10 @@ type Stuk = Schema<'ActivityPaperDTO'>;
 /** What a line opens in place: the item RijInhoud reads, and as what. */
 type RegelInhoud = { item: MetInhoud; als: Inhoud };
 
-/** `Kamerstuk 36764, nr. 32`; null for a paper without a dossier. */
-export const stukNummer = (s: Pick<Stuk, 'dossier_number' | 'dossier_suffix' | 'sequence'>) =>
-	kamerstukName({ ...s, number: s.sequence });
+/** `Kamerstukken II 2025/26, 36764, nr. 32`; null for a paper without a dossier. */
+export const stukNummer = (
+	s: Pick<Stuk, 'dossier_number' | 'dossier_suffix' | 'sequence' | 'date'>
+) => citationRecord({ ...s, kind: 'kamerstuk', number: s.sequence })?.short ?? null;
 
 export function activiteitGroepen(r: Records): {
 	groepen: TijdGroep[];
