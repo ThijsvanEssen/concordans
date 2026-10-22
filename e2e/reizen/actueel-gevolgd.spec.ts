@@ -1,5 +1,6 @@
 // What came in: Actueel per day with its periods and filters, and Gevolgd, the topics a reader
 // follows, with the overview of one.
+import { goToSource } from '../support/navigation';
 import { expect, test } from '../support/test';
 
 test('Actueel: a period and a kind narrow the days', async ({ page, touch }) => {
@@ -46,7 +47,7 @@ test('Actueel: Back finds the earlier days loaded and the place read', async ({ 
 	const y = await page.evaluate(() => scrollY);
 	expect(y).toBeGreaterThan(0);
 
-	await page.getByRole('link', { name: 'Bronnen' }).first().click();
+	await goToSource(page, 'Wetten');
 	await expect(page).not.toHaveURL(/\/actueel/);
 	await page.goBack();
 	await expect(page).toHaveURL(/\/actueel/);

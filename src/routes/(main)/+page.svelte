@@ -22,6 +22,7 @@
 	import { page } from '$app/state';
 	import { afterNavigate } from '$app/navigation';
 	import Entrances from '$lib/components/home/Entrances.svelte';
+	import NetworkEntry from '$lib/components/home/NetworkEntry.svelte';
 	import { START } from '$lib/components/home/start';
 	import { takeServerField } from '$lib/seo/server-text';
 	import { SEARCH_FRAGMENT } from '$lib/seo/moved';
@@ -242,6 +243,7 @@
 				aria-hidden="true"
 			></div>{/if}
 		<Entrances />
+		<NetworkEntry />
 		<section class="actueel" aria-labelledby="actueel-heading">
 			<header>
 				<h2 id="actueel-heading"><a href="/actueel">Actueel</a></h2>

@@ -28,18 +28,20 @@
 		<div class="section" id="onderdelen">
 			<h2 class="section-title">Onderdelen</h2>
 			<p>
-				Zoeken (startpagina, <kbd>{modKey} K</kbd>) gaat naar een bron. Bronnen toont lijsten per
-				soort bron in vier groepen: Recht, Parlementaire behandeling, Parlement en Regering. Actueel
+				Zoeken (startpagina, <kbd>{modKey} K</kbd>) gaat naar een bron. De balk bovenaan toont
+				lijsten per soort bron: Wetten, Uitspraken, Kamerstukken, Parlement en Regering. Actueel
 				toont per dag nieuwe Kamerstukken, stemmingen, toezeggingen, uitspraken en publicaties.
+				Netwerk, naast het zoekveld, toont een bron groot met haar verbindingen. Mijn bevat Bundels
+				en Gevolgd.
 			</p>
 			<p>
-				Een bron opent in Samenhang. Een artikel, wet, uitspraak of Kamerstuk staat daar als tekst
-				op volle breedte (<strong>Tekst</strong>) of naast het netwerk (<strong>Netwerk</strong>).
-				Elke andere bron staat naast het netwerk. Verbonden, rechts, somt de verbindingen van de
-				bron op per groep. Elke rij zegt hoe de bron verbonden is: wat ze aanhaalt of wijzigt, in
-				welk lid of welke overweging, met de passage. Een verbinding op een herkende naam staat
-				schuin. Hover of focus toont waar de verbinding vandaan komt. Een klik op de rij opent de
-				bron in het netwerk. Het netwerk tekent dezelfde verbindingen.
+				Een bron opent als tekst. Een artikel, wet, uitspraak of Kamerstuk staat daar als tekst op
+				volle breedte (<strong>Tekst</strong>) of naast het netwerk (<strong>Netwerk</strong>). Elke
+				andere bron staat naast het netwerk. Verbonden, rechts, somt de verbindingen van de bron op
+				per groep. Elke rij zegt hoe de bron verbonden is: wat ze aanhaalt of wijzigt, in welk lid
+				of welke overweging, met de passage. Een verbinding op een herkende naam staat schuin. Hover
+				of focus toont waar de verbinding vandaan komt. Een klik op de rij opent de bron in het
+				netwerk. Het netwerk tekent dezelfde verbindingen.
 			</p>
 		</div>
 
@@ -182,7 +184,7 @@
 				ertussen, tot vier stappen. <strong>Bronnen ertussen</strong> zet die aan of uit. Een
 				gekozen bron zonder verbinding met de andere staat in het paneel met
 				<em>zonder verbinding</em>.
-				<strong>Wissen</strong> maakt het netwerk leeg; Terug zet het terug. Zonder wissen opent Samenhang
+				<strong>Wissen</strong> maakt het netwerk leeg; Terug zet het terug. Zonder wissen opent Netwerk
 				op het laatste netwerk.
 			</p>
 		</div>
@@ -224,11 +226,10 @@
 		<div class="section">
 			<h2 class="section-title">Regering</h2>
 			<p>
-				Bronnen toont onder Regering de kabinetten, de bewindspersonen en de toezeggingen. Een
-				kabinet heeft een periode, een minister-president en een coalitie. Per ministerie staat op
-				de tijdlijn van het kabinet wie welke post bekleedde. Een opvolger staat op dezelfde regel;
-				een waarnemer staat gestippeld, met ‘waarnemend’. De demissionaire periode is een
-				stippellijn op de tijdas.
+				Regering toont de kabinetten, de bewindspersonen en de toezeggingen. Een kabinet heeft een
+				periode, een minister-president en een coalitie. Per ministerie staat op de tijdlijn van het
+				kabinet wie welke post bekleedde. Een opvolger staat op dezelfde regel; een waarnemer staat
+				gestippeld, met ‘waarnemend’. De demissionaire periode is een stippellijn op de tijdas.
 			</p>
 		</div>
 

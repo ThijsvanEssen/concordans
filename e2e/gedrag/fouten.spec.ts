@@ -3,6 +3,7 @@
 // for the failure itself.
 import { failApi, REQUEST_ID } from '../support/api';
 import { failChunk } from '../support/chunks';
+import { goToMine } from '../support/navigation';
 import { expect, test } from '../support/test';
 
 const ARTICLE = '/wetten/BWBR0005289/artikel/6:162';
@@ -140,15 +141,13 @@ test('a readable address whose lookup fails says which bron, with its kenmerk', 
 test('a page that cannot load without a connection says Geen verbinding', async ({
 	page,
 	context,
-	guard,
-	touch
+	guard
 }) => {
 	guard.allow(/ERR_INTERNET_DISCONNECTED|Failed to fetch|dynamically imported module/);
 	await page.goto('/');
 	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-	if (touch) await page.getByRole('button', { name: 'Menu' }).click();
 	await context.setOffline(true);
-	await page.getByRole('link', { name: 'Bundels', exact: true }).first().click();
+	await goToMine(page, 'Bundels');
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Geen verbinding');
 	await expect(page).toHaveTitle('Geen verbinding, Concordans');
 	await expect(page.getByRole('button', { name: 'Opnieuw laden' })).toBeVisible();

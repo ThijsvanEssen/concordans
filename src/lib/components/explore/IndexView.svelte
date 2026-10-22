@@ -43,7 +43,6 @@
 	import { getCabinets, getMinistries } from '$lib/api/government';
 	import {
 		INDEX_CATEGORIES,
-		INDEX_TABS,
 		categoryLabel,
 		collectionOf,
 		type IndexCategory
@@ -63,8 +62,13 @@
 		type Shared
 	} from './index/lists/list';
 	import { requestFrom } from './index/deep';
+	import { sourceOfList } from '$lib/nav/sources';
 
 	let { category }: { category: IndexCategory } = $props();
+
+	// The lists beside this one under the same source.
+	const source = $derived(sourceOfList(category));
+	const sourceLists = $derived(INDEX_CATEGORIES.filter((c) => source.lists.includes(c.key)));
 
 	// ── URL-driven filter state ─────────────────────────────────────────────
 	const list = $derived(LISTS[category]);
@@ -542,31 +546,27 @@
 <svelte:window onkeydown={handleKey} />
 
 <div class="index-view">
-	<!-- The categories in three groups, each named above its tabs: the law and the
-	     courts, how the Kamer deals with a subject, and who does it. -->
-	<nav class="catbar" data-zijscroll use:sideScroll aria-label="Categorieën" bind:this={catbar}>
-		{#each INDEX_TABS as group, g (g)}
-			<div class="catgroup" role="group" aria-labelledby="catgroup-{g}">
-				<span class="catgroup__label" id="catgroup-{g}">{group.label}</span>
-				<div class="catgroup__tabs">
-					{#each group.categories as cat (cat.key)}
-						<a
-							href={tabHref(cat.key)}
-							class="cat"
-							class:cat--on={cat.key === category}
-							aria-current={cat.key === category ? 'page' : undefined}
-							title={cat.about}
-							data-sveltekit-noscroll
-							data-sveltekit-keepfocus
-						>
-							<KindGlyph collection={collectionOf(cat.key)} size={11} />
-							<span class="cat-name">{cat.label}</span>
-						</a>
-					{/each}
-				</div>
-			</div>
-		{/each}
-	</nav>
+	<!-- The lists of the soort the page stands under (Parlement: Kamerleden, Fracties,
+	     Commissies); the soorten themselves are the top navigation. A soort of one list has
+	     no strip. -->
+	{#if sourceLists.length > 1}
+		<nav class="catbar" data-zijscroll use:sideScroll aria-label={source.label} bind:this={catbar}>
+			{#each sourceLists as cat (cat.key)}
+				<a
+					href={tabHref(cat.key)}
+					class="cat"
+					class:cat--on={cat.key === category}
+					aria-current={cat.key === category ? 'page' : undefined}
+					title={cat.about}
+					data-sveltekit-noscroll
+					data-sveltekit-keepfocus
+				>
+					<KindGlyph collection={collectionOf(cat.key)} size={11} />
+					<span class="cat-name">{cat.label}</span>
+				</a>
+			{/each}
+		</nav>
+	{/if}
 
 	<div class="stage">
 		<div class="stage-scroll" bind:this={scroller}>
@@ -798,34 +798,12 @@
 		display: flex;
 		align-items: stretch;
 		gap: 0;
-		padding: 0 var(--s-5);
+		padding: var(--s-3) var(--s-5) 0;
 		border-bottom: 1px solid var(--rule);
 		background: var(--paper);
 		flex-shrink: 0;
 		overflow-x: auto;
 		scrollbar-width: thin;
-	}
-	/* A group: its name over its tabs, a hairline between groups. */
-	.catgroup {
-		display: flex;
-		flex-direction: column;
-		padding-top: var(--s-3);
-	}
-	.catgroup + .catgroup {
-		margin-left: var(--s-2);
-		padding-left: var(--s-2);
-		box-shadow: inset 1px 0 0 var(--rule);
-	}
-	.catgroup__label {
-		padding: 0 var(--s-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 400;
-		white-space: nowrap;
-		color: var(--ink-3);
-	}
-	.catgroup__tabs {
-		display: flex;
 	}
 	.cat {
 		display: inline-flex;
@@ -854,28 +832,6 @@
 	.cat--on .cat-name {
 		color: var(--ink);
 		font-weight: 600;
-	}
-
-	/* From a tablet up the groups wrap to a second line instead of scrolling: every tab
-	   stays in sight (Regering goes under the rest at 1280 and 1024). Each group has its
-	   hairline at its left; the bar's left inset clips the one that would start a line. */
-	@media (min-width: 769px) {
-		.catbar {
-			flex-wrap: wrap;
-			overflow: visible;
-			mask-image: none;
-			padding-left: calc(var(--s-5) - var(--s-2) - 1px);
-			clip-path: inset(0 0 0 calc(var(--s-5) - var(--s-2)));
-		}
-		.cat {
-			gap: var(--s-1);
-		}
-		.catgroup,
-		.catgroup + .catgroup {
-			margin: 0 var(--s-2) 0 0;
-			padding-left: var(--s-2);
-			box-shadow: inset 1px 0 0 var(--rule);
-		}
 	}
 
 	/* ── Stage container ─────────────────────────────────────────────── */
@@ -1080,13 +1036,10 @@
 	/* Narrow viewports: the columns stack. */
 	@media (max-width: 768px) {
 		.catbar {
-			padding: 0 var(--s-4);
+			padding: var(--s-3) var(--s-4) 0;
 		}
 		.cat {
 			padding: var(--s-2) var(--s-4) var(--s-3);
-		}
-		.catgroup__label {
-			padding: 0 var(--s-4);
 		}
 		/* The filters scroll along on a phone: their bar stays at the top of the list, so a
 		   filter is one tap away wherever one is (Thijs, 9 Oct). Open, they scroll on their own

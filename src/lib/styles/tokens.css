@@ -118,6 +118,8 @@
 	/* The frame: the top bar, a page at most this wide, the text of a text page this wide, the
 	   facet column of a list page. */
 	--topbar-h: 60px;
+	/* The tab bar under a phone's page (TabBalk); 0 where there is none. */
+	--tabbar-h: 0px;
 	--blad-max: 1440px;
 	--blad-tekst: 720px;
 	--facet-w: 240px;
@@ -159,4 +161,11 @@
 	--z-topbar: 20;
 	--z-float: 40;
 	--z-modal: 50;
+}
+
+/* The phone has a tab bar under its page (TabBalk), of the height the pages leave free. */
+@media (max-width: 768px) {
+	:root {
+		--tabbar-h: 64px;
+	}
 }

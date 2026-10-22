@@ -11,9 +11,13 @@ describe('the name and the address of the bundels (decision 19)', () => {
 	});
 
 	it('names the menu item Bundels, without a count', () => {
-		const bar = bron('lib/components/layout/TopBar.svelte');
-		expect(bar.match(/>Bundels(?:<|\{#if)/g)).toHaveLength(2);
-		expect(bar).not.toContain('nav-tel');
+		// One list of Mijn feeds the menu of the bar and the sheet of a phone (lib/nav/mine.ts).
+		expect(bron('lib/nav/mine.ts')).toContain("label: 'Bundels'");
+		for (const pad of ['TopBar', 'MineMenu', 'TabBar']) {
+			const bar = bron(`lib/components/layout/${pad}.svelte`);
+			expect(bar).not.toMatch(/>Bundels</);
+			expect(bar).not.toContain('nav-tel');
+		}
 	});
 
 	it('links to a bundel’s page and the overview through one place ($lib/map/page.ts)', () => {

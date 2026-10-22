@@ -24,7 +24,7 @@
 		code?: string | null;
 		/** What is missing, in a sentence or two; for a 404 a default where none is given. */
 		children?: Snippet;
-		/** The ways on; by default the startpagina and Samenhang. */
+		/** The ways on; by default the startpagina and the network. */
 		actions?: Snippet;
 	} = $props();
 
@@ -56,7 +56,7 @@
 				{@render actions()}
 			{:else}
 				<a href="/" class="btn is-primary">Naar de startpagina</a>
-				<a href="/explore" class="btn">Open Samenhang</a>
+				<a href="/explore" class="btn">Open het netwerk</a>
 			{/if}
 		</div>
 	</div>

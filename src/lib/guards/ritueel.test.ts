@@ -86,7 +86,10 @@ describe('the ritual of Bewaar, Volg and Kopieer', () => {
 		expect(
 			overtreders((t) => /<Bevestiging\s*\/>/.test(t), [plek('routes/+layout.svelte')])
 		).toEqual([]);
-		expect(bron('lib/components/layout/TopBar.svelte')).toMatch(/sign\.has\('bundels'\)/);
-		expect(bron('lib/components/layout/TopBar.svelte')).toMatch(/sign\.has\('gevolgd'\)/);
+		// At Mijn: in the menu of the bar and on the tab of a phone.
+		for (const pad of ['MineMenu', 'TabBar']) {
+			expect(bron(`lib/components/layout/${pad}.svelte`)).toMatch(/sign\.has\('bundels'\)/);
+			expect(bron(`lib/components/layout/${pad}.svelte`)).toMatch(/sign\.has\('gevolgd'\)/);
+		}
 	});
 });

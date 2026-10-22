@@ -22,7 +22,7 @@
 				<span class="shortcut-keys"><kbd>Esc</kbd></span>
 			</div>
 			<div class="shortcut-row">
-				<span class="shortcut-desc">In Samenhang: wissel tussen netwerk en tekst</span>
+				<span class="shortcut-desc">In het netwerk: wissel tussen netwerk en tekst</span>
 				<span class="shortcut-keys"><kbd>L</kbd></span>
 			</div>
 			<div class="shortcut-row">

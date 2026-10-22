@@ -531,6 +531,7 @@
 			margin: 20mm 18mm;
 		}
 		:global(body:has(.bundel) .topbar),
+		:global(body:has(.bundel) .tabbar),
 		:global(body:has(.bundel) .foot),
 		:global(body:has(.bundel) .stub-eyebrow) {
 			display: none;

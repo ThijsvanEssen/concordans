@@ -16,6 +16,7 @@
 	import { getBuckets, type NodeGraph } from '$lib/api/nodes';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronHref } from '$lib/bron/href';
+	import { sourceOfCollection } from '$lib/nav/sources';
 	import { formatCount } from '$lib/text/getal';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { behoort, heeftIets } from './behoort';
@@ -124,6 +125,8 @@
 	// On a phone the band is its first line until it is opened.
 	let uit = $state(false);
 
+	// The band opens with the soort of the top navigation, as a breadcrumb does: Wetten ›.
+	const source = $derived(sourceOfCollection(node.collection));
 	const groepen = $derived(band.onder);
 	// What the phone's first line folds away: the lines after it and the groups; with no line
 	// at all (a kabinet), the groups behind the button alone.
@@ -146,6 +149,11 @@
 {#snippet uitkomst(laag: Laag)}{#if laag.uitkomst}<span class="uitkomst">, {laag.uitkomst}</span
 		>{/if}{/snippet}
 
+{#snippet crumb()}<a class="soort raakvlak" href={source.href}>{source.label}</a><span
+		class="scheiding"
+		aria-hidden="true">›</span
+	>{/snippet}
+
 {#snippet meer()}
 	{#if verborgen > 0}
 		<button
@@ -165,6 +173,7 @@
 			<dl class="regels">
 				{#each regels as r, i (r.id)}
 					<div class="regel">
+						{#if i === 0}{@render crumb()}{/if}
 						<dt class="term">{r.label}</dt>
 						<dd>
 							<ol class="lagen" class:los={r.los} class:gevouwen={gevouwen(r)}>
@@ -208,7 +217,7 @@
 				{/each}
 			</dl>
 		{:else}
-			<div class="regel">{@render meer()}</div>
+			<div class="regel">{@render crumb()}{@render meer()}</div>
 		{/if}
 		{#if groepen.length > 0}
 			<div class="groepen">
@@ -285,6 +294,23 @@
 	.regels > .regel > dd {
 		margin: 0;
 		min-width: 0;
+	}
+	/* The soort first, a link in ink-2 as the layers are, then the ›. */
+	.soort {
+		flex: none;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: var(--underline-offset-tight);
+	}
+	.soort:hover {
+		text-decoration-color: var(--ink);
+	}
+	.scheiding {
+		flex: none;
+		color: var(--ink-3);
 	}
 	.term {
 		padding: 0;

@@ -1,6 +1,7 @@
 // The one ritual of Bewaar, Volg and Kopieer (decision 33): the button changes, a status line
 // says where it went with a link there, the navigation shows a sign until the reader has been
 // there, a kept lid is marked in the text, and a screen reader hears the line (role status).
+import { mineSign } from '../support/navigation';
 import { expect, test } from '../support/test';
 import { ARTICLE, catchClipboard } from '../support/bundels';
 
@@ -17,20 +18,17 @@ test('Bewaar says where it went, marks Bundels until visited, and marks the lid'
 		'/bundels/losse-markeringen'
 	);
 	await expect(page.getByRole('button', { name: 'Bewaard', exact: true })).toBeVisible();
-	// The sign: at Bundels, or on the menu button where the navigation is folded.
-	const folded = (page.viewportSize()?.width ?? 1440) <= 768;
-	const nav = folded ? '.mobile-menu-btn' : 'nav a[href="/bundels"]';
-	await expect(page.locator(`${nav} [aria-label="nieuw"]`)).toHaveCount(1);
+	// The sign: at Mijn, on its button in the bar or on the tab of a phone, and at Bundels in it.
+	await expect(mineSign(page).locator('[aria-label="nieuw"]')).toHaveCount(1);
 	// Gone after two seconds.
 	await expect(status).toHaveText('', { timeout: 4000 });
 
-	if (folded) {
-		await page.getByRole('button', { name: 'Menu' }).click();
-		await expect(page.locator('.mobile-nav a[href="/bundels"] [aria-label="nieuw"]')).toHaveCount(
-			1
-		);
-		await page.locator('.mobile-nav a[href="/bundels"]').click();
-	} else await page.locator('nav a[href="/bundels"]').click();
+	await mineSign(page).click();
+	const bundels = page
+		.getByRole('menuitem', { name: /^Bundels/ })
+		.or(page.getByRole('link', { name: /^Bundels/ }));
+	await expect(bundels.locator('[aria-label="nieuw"]')).toHaveCount(1);
+	await bundels.click();
 	await expect(page).toHaveURL(/\/bundels$/);
 	await expect(page.locator('[aria-label="nieuw"]')).toHaveCount(0);
 });
@@ -81,12 +79,7 @@ test('Volg a dossier says where it went and marks Gevolgd', async ({ page }) => 
 		'href',
 		'/onderwerpen'
 	);
-	await expect(
-		page
-			.locator('nav a[href="/onderwerpen"], .mobile-menu-btn')
-			.locator('[aria-label="nieuw"]')
-			.first()
-	).toBeAttached();
+	await expect(mineSign(page).locator('[aria-label="nieuw"]')).toHaveCount(1);
 });
 
 test('Volg a dossier then stays one button, Gevolgd, and never flips back', async ({ page }) => {

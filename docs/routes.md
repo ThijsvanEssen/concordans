@@ -60,7 +60,13 @@ A bron the API gives no `path` stays under `/explore?focus=`. A lookup that answ
 
 The fragment is a position in the text: `#lid-2-onder-a`, `#aanhef` in an article, `#rov-5.3` in a judgment. `bron/landing.ts` scrolls to it and marks it.
 
-The key `L` switches between Netwerk and Tekst. Bladeren opens from the top nav.
+The key `L` switches between Netwerk and Tekst. Bladeren opens from the top navigation (below).
+
+## Navigation
+
+The top bar names the kinds of source: Wetten, Uitspraken, Kamerstukken, Parlement, Regering and Actueel; at the right the search field, the Netwerk button and the menu Mijn (Bundels, Gevolgd). `src/lib/nav/sources.ts` holds the list: a source is a list of Bladeren (`kind`) or, for Kamerstukken, Parlement and Regering, three; the page of a bron stands under the source of its kind (`sourceOf`), which the bar marks and the first link of the band Behoort bij names (Wetten ›). The lists of one source are the strip above its list in Bladeren; a source of one list has none. `/explore?mode=index` without a `kind` is the overview of all lists.
+
+Netwerk is a tool, not a source (`src/lib/nav/network.ts`): on a bron it opens that bron on the canvas (`mode=netwerk`), elsewhere the canvas without a bron, which begins with choosing one. "Open groot" under the sketch in Verbonden and the block on the start page lead to the same canvas. Below 768 px the bar holds the logo and the Netwerk icon (44 px), and the tab bar (`TabBar`) holds Zoeken, Bladeren, Actueel and Mijn; Bladeren and Mijn open a sheet.
 
 ## Links to a bron
 

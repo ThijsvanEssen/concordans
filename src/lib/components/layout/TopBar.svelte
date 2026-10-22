@@ -1,80 +1,29 @@
 <script lang="ts">
-	import { clickOutside } from '$lib/actions/top-layer';
-	import { BUNDLES_PATH } from '$lib/map/page';
 	import { page } from '$app/stores';
-	import { hasFocus, modeOf } from '$lib/bron/href';
 	import { goto } from '$app/navigation';
 	import { modKey } from '$lib/util/platform';
 	import Wordmark from './Wordmark.svelte';
-	import NewMark from '$lib/components/ui/NewMark.svelte';
+	import MineMenu from './MineMenu.svelte';
+	import NetworkButton from './NetworkButton.svelte';
 	import { sign } from '$lib/bevestig/bevestig.svelte';
+	import { SOURCES, sourceOf } from '$lib/nav/sources';
 
 	let { onSearchOpen }: { onSearchOpen?: () => void } = $props();
 
 	const isHome = $derived($page.url.pathname === '/');
-	// The network, the index and the page of a bron share the route /explore. A bron's page
-	// (Tekst) is one of the bronnen; Samenhang is the canvas, with a bron selected on it or not.
-	const mode = $derived(modeOf($page.url));
-	const isBron = $derived(mode === 'read' && hasFocus($page.url));
-	const isIndex = $derived(mode === 'index' || isBron);
-	const isExplore = $derived(mode !== null && !isIndex);
+	// The source a page stands under: the list of Bladeren or the bron read; the network, the
+	// start page and Mijn stand under none.
+	const source = $derived(sourceOf($page.url));
 	const isActueel = $derived($page.url.pathname.startsWith('/actueel'));
-	const isBundles = $derived($page.url.pathname.startsWith(BUNDLES_PATH));
-	const isOnderwerpen = $derived($page.url.pathname.startsWith('/onderwerpen'));
 
-	// Something kept or followed shows a sign at Bundels or Gevolgd until the reader has been
-	// there (the ritual of Bewaar and Volg, bevestig.svelte.ts).
+	// Something kept or followed shows a sign at Mijn until the reader has been there (the
+	// ritual of Bewaar and Volg, bevestig.svelte.ts).
 	$effect(() => sign.visited($page.url.pathname));
-
-	let mobileMenuOpen = $state(false);
-	let toggleBtnEl: HTMLButtonElement | null = $state(null);
-	let mobileNavEl: HTMLElement | null = $state(null);
-
-	function openMobileMenu() {
-		mobileMenuOpen = true;
-		requestAnimationFrame(() => mobileNavEl?.querySelector<HTMLElement>('a')?.focus());
-	}
-
-	function closeMobileMenu() {
-		mobileMenuOpen = false;
-		toggleBtnEl?.focus();
-	}
-
-	/**
-	 * The focus leaves the sheet (Tab past Bundels, a click outside): it closes and the
-	 * focus goes on where it went, as a menu does (actions/menu.ts). It stood over the page
-	 * while Tab went on behind it (audit 3).
-	 */
-	function focusUitBlad(e: FocusEvent) {
-		const naar = e.relatedTarget as Node | null;
-		// Focus that goes nowhere is a tap, not Tab: on an iPhone a tapped link takes no focus,
-		// and closing here took the sheet away before the tap's click (Thijs, 10 Oct: "op mobiel
-		// werken de menuknoppen niet"). A tap elsewhere closes it by its click (below).
-		if (!naar) return;
-		if (mobileNavEl?.contains(naar) || toggleBtnEl?.contains(naar)) return;
-		// A tapped column takes the focus too, without showing it: closing here let the tap's
-		// click open what lay under it (#98). Tab shows the focus; a tap closes by its click.
-		setTimeout(() => {
-			if (naar instanceof Element && naar.matches(':focus-visible')) mobileMenuOpen = false;
-		});
-	}
-
-	// A click or tap outside the sheet and its button closes it, as a menu does.
-	$effect(() => {
-		if (!mobileMenuOpen) return;
-		return clickOutside(
-			() => [mobileNavEl, toggleBtnEl],
-			() => (mobileMenuOpen = false)
-		);
-	});
 
 	function handleKeydown(e: KeyboardEvent) {
 		if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
 			e.preventDefault();
 			onSearchOpen?.();
-		}
-		if (e.key === 'Escape' && mobileMenuOpen) {
-			closeMobileMenu();
 		}
 		if (e.key === '?' && !e.metaKey && !e.ctrlKey && !e.altKey) {
 			const tag = (document.activeElement as HTMLElement | null)?.tagName;
@@ -98,128 +47,25 @@
 	</a>
 
 	<nav class="topbar-nav" aria-label="Hoofdnavigatie">
-		<a
-			href="/explore"
-			class="nav-link"
-			class:is-active={isExplore}
-			aria-current={isExplore ? 'page' : undefined}>Samenhang</a
-		>
-		<a
-			href="/explore?mode=index"
-			class="nav-link"
-			class:is-active={isIndex}
-			aria-current={isIndex ? 'page' : undefined}>Bronnen</a
-		>
+		{#each SOURCES as s (s.id)}
+			<a
+				href={s.href}
+				class="nav-link"
+				class:is-active={source?.id === s.id}
+				aria-current={source?.id === s.id ? 'page' : undefined}>{s.label}</a
+			>
+		{/each}
 		<a
 			href="/actueel"
 			class="nav-link"
 			class:is-active={isActueel}
 			aria-current={isActueel ? 'page' : undefined}>Actueel</a
 		>
-		<a
-			href="/onderwerpen"
-			class="nav-link"
-			class:is-active={isOnderwerpen}
-			aria-current={isOnderwerpen ? 'page' : undefined}
-			>Gevolgd{#if sign.has('gevolgd')}<NewMark />{/if}</a
-		>
-		<!-- Bundels: a page as the others, without a count (Bewaar says per bron what is kept). -->
-		<a
-			href={BUNDLES_PATH}
-			class="nav-link"
-			class:is-active={isBundles}
-			aria-current={isBundles ? 'page' : undefined}
-			>Bundels{#if sign.has('bundels')}<NewMark />{/if}</a
-		>
 	</nav>
 
-	<button
-		bind:this={toggleBtnEl}
-		class="mobile-menu-btn raakvlak-knop"
-		aria-label="Menu"
-		aria-expanded={mobileMenuOpen}
-		aria-controls="mobile-nav"
-		onclick={() => (mobileMenuOpen ? closeMobileMenu() : openMobileMenu())}
-	>
-		{#if mobileMenuOpen}
-			<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-				<line
-					x1="2"
-					y1="2"
-					x2="12"
-					y2="12"
-					stroke="currentColor"
-					stroke-width="1.5"
-					stroke-linecap="round"
-				/>
-				<line
-					x1="12"
-					y1="2"
-					x2="2"
-					y2="12"
-					stroke="currentColor"
-					stroke-width="1.5"
-					stroke-linecap="round"
-				/>
-			</svg>
-		{:else}
-			<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-				<line
-					x1="2"
-					y1="4"
-					x2="12"
-					y2="4"
-					stroke="currentColor"
-					stroke-width="1.5"
-					stroke-linecap="round"
-				/>
-				<line
-					x1="2"
-					y1="7"
-					x2="12"
-					y2="7"
-					stroke="currentColor"
-					stroke-width="1.5"
-					stroke-linecap="round"
-				/>
-				<line
-					x1="2"
-					y1="10"
-					x2="12"
-					y2="10"
-					stroke="currentColor"
-					stroke-width="1.5"
-					stroke-linecap="round"
-				/>
-			</svg>
-		{/if}
-		{#if !mobileMenuOpen && (sign.has('bundels') || sign.has('gevolgd'))}<NewMark />{/if}
-	</button>
-
-	{#if mobileMenuOpen}
-		<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-		<div
-			id="mobile-nav"
-			bind:this={mobileNavEl}
-			class="mobile-nav"
-			onclick={() => closeMobileMenu()}
-			onfocusout={focusUitBlad}
-		>
-			<a href="/explore" class="mobile-nav-link" class:is-active={isExplore}>Samenhang</a>
-			<a href="/explore?mode=index" class="mobile-nav-link" class:is-active={isIndex}>Bronnen</a>
-			<a href="/actueel" class="mobile-nav-link" class:is-active={isActueel}>Actueel</a>
-			<a href="/onderwerpen" class="mobile-nav-link" class:is-active={isOnderwerpen}
-				>Gevolgd{#if sign.has('gevolgd')}<NewMark />{/if}</a
-			>
-			<a href={BUNDLES_PATH} class="mobile-nav-link" class:is-active={isBundles}
-				>Bundels{#if sign.has('bundels')}<NewMark />{/if}</a
-			>
-		</div>
-	{/if}
-
-	<!-- The start page shows the search field itself. -->
-	{#if !isHome}
-		<div class="topbar-right">
+	<div class="topbar-right">
+		<!-- The start page shows the search field itself. On a phone Zoeken is a tab. -->
+		{#if !isHome}
 			<button
 				class="search-trigger raakvlak-knop"
 				onclick={() => onSearchOpen?.()}
@@ -240,8 +86,10 @@
 				<span class="search-trigger-label">Zoek een wet, uitspraak of dossier</span>
 				<span class="kbd">{modKey}K</span>
 			</button>
-		</div>
-	{/if}
+		{/if}
+		<NetworkButton />
+		<div class="mine-slot"><MineMenu /></div>
+	</div>
 </header>
 
 <style>
@@ -297,6 +145,7 @@
 		min-width: 0;
 		display: flex;
 		align-items: center;
+		gap: var(--s-4);
 	}
 
 	/* The search field: a button that looks like the field it opens. */
@@ -337,81 +186,46 @@
 		white-space: nowrap;
 	}
 
-	.mobile-menu-btn {
-		align-self: center;
-		display: none;
-		background: none;
-		border: 0;
-		cursor: pointer;
-		padding: var(--s-2);
-		color: var(--ink-2);
-		line-height: 1;
-	}
-
-	.mobile-nav {
-		position: fixed;
-		top: var(--topbar-h);
-		left: 0;
-		right: 0;
-		background: var(--paper);
-		border-bottom: 1px solid var(--rule);
-		display: flex;
-		flex-direction: column;
-		z-index: var(--z-topbar);
-		box-shadow: var(--shadow-pop);
-	}
-
-	.mobile-nav-link {
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		color: var(--ink-2);
-		padding: var(--s-4) var(--s-5);
-		border-top: 1px solid var(--rule);
-	}
-
-	.mobile-nav-link:hover,
-	.mobile-nav-link.is-active {
-		color: var(--ink);
-		background: var(--paper-2);
-	}
-
-	/* Four links and the logo take about 500 px: the search field narrows first. */
-	@media (max-width: 900px) {
+	/* Six links, the search field, Netwerk and Mijn: the field narrows first, then folds to its
+	   icon, and the links draw closer. */
+	@media (max-width: 1439px) {
 		.search-trigger {
-			width: 220px;
+			width: 240px;
 		}
-	}
-	/* Then it folds to its icon, and the four links keep their room. */
-	@media (max-width: 780px) {
-		.search-trigger {
-			width: auto;
-		}
-		.search-trigger-label,
 		.kbd {
 			display: none;
 		}
 	}
+	@media (max-width: 1100px) {
+		.topbar {
+			gap: var(--s-5);
+			padding: 0 var(--s-5);
+		}
+		.topbar-nav {
+			gap: var(--s-4);
+		}
+		.topbar-right {
+			gap: var(--s-3);
+		}
+		.search-trigger {
+			width: auto;
+		}
+		.search-trigger-label {
+			display: none;
+		}
+	}
 
-	/* Four links and the search icon need about 600 px: below that, the menu. */
-	@media (max-width: 620px) {
-		/* Without the links there is no baseline to share. */
+	/* A phone: the logo and the Netwerk button; Zoeken, Bladeren, Actueel and Mijn are the tab
+	   bar (TabBalk). */
+	@media (max-width: 768px) {
 		.topbar {
 			align-items: center;
 			gap: var(--s-3);
 			padding: 0 var(--s-4);
 		}
-		.topbar-nav {
-			display: none;
-		}
-		.mobile-menu-btn {
-			display: flex;
-			align-items: center;
-		}
-		.search-trigger {
-			width: auto;
-		}
-		.search-trigger-label,
-		.kbd {
+		.topbar-nav,
+		.search-trigger,
+		.mine-slot {
 			display: none;
 		}
 	}

@@ -2,6 +2,7 @@
 	import { lijstSprong, paneelSprongen } from '$lib/stores/sprong';
 	import type { Snippet } from 'svelte';
 	import TopBar from './TopBar.svelte';
+	import TabBar from './TabBar.svelte';
 	import SearchOverlay from './SearchOverlay.svelte';
 	import { provideSearchOpener } from '$lib/stores/search-trigger';
 
@@ -31,6 +32,7 @@
 	<main id="main-content" tabindex="-1" class="app-shell__content">
 		{@render children?.()}
 	</main>
+	<TabBar onSearchOpen={() => openSearch()} />
 </div>
 
 <SearchOverlay open={searchOpen} query={searchQuery} onClose={() => (searchOpen = false)} />
@@ -68,5 +70,7 @@
 		display: flex;
 		flex-direction: column;
 		width: 100%;
+		/* Under the tab bar of a phone. */
+		padding-bottom: var(--tabbar-h);
 	}
 </style>

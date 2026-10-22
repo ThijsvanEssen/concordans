@@ -22,7 +22,7 @@
 	.bevestiging {
 		position: fixed;
 		inset-inline: var(--s-4);
-		bottom: var(--s-4);
+		bottom: calc(var(--s-4) + var(--tabbar-h));
 		z-index: 50;
 		width: fit-content;
 		max-width: calc(100vw - 2 * var(--s-4));

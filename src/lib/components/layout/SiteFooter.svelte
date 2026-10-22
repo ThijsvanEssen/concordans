@@ -31,7 +31,7 @@
 		<div class="foot-col">
 			<p class="foot-head">Concordans</p>
 			<ul>
-				<li><a href="/explore" class="no-underline">Samenhang</a></li>
+				<li><a href="/explore" class="no-underline">Netwerk</a></li>
 				<li><a href="/docs" class="no-underline">Documentatie</a></li>
 				<li><a href="/docs/methode" class="no-underline">Methode</a></li>
 				<li><a href="/api" class="no-underline">API</a></li>

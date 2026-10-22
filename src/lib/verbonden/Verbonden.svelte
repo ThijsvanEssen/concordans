@@ -528,6 +528,9 @@
 				networkHref={networkHref ?? '/explore'}
 				onGroup={openKind}
 			/>
+			<!-- The bron big, in the network of its own page: what the Netwerk button of the bar
+			     does from here (besluit 36). -->
+			<p class="groot"><TekstLink href={networkHref ?? '/explore'}>Open groot</TekstLink></p>
 		{/if}
 		{#if overview && !verbonden.failed && kinds.length > 0}
 			<KindSummary
@@ -769,6 +772,13 @@
 		gap: 0 var(--s-4);
 		padding: var(--s-1) var(--s-4) var(--s-2);
 		border-bottom: 1px solid var(--rule);
+	}
+	/* Under the sketch, at the right, as Alles in Actueel. */
+	.groot {
+		display: flex;
+		justify-content: flex-end;
+		margin: 0 0 var(--s-3);
+		font-size: var(--t-meta);
 	}
 	/* Netwerk tonen at the right of the heading; the count on the line under it. */
 	.head__netwerk {

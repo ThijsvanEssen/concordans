@@ -1429,7 +1429,7 @@
 			{@render bronPending()}
 		{:else if mode === 'graph'}
 			<!-- The network without a bron: its heading for a screen reader, as the title names it. -->
-			{#if !selectedNode}<h1 class="blad__titel sr-only">Samenhang</h1>{/if}
+			{#if !selectedNode}<h1 class="blad__titel sr-only">Netwerk</h1>{/if}
 			{#if voorbeeldAan}<ExampleLine name={voorbeeld!.naam} />{/if}
 			<div
 				class="explore-graph"
@@ -1683,8 +1683,8 @@
 	.explore-shell {
 		display: flex;
 		flex-direction: column;
-		height: calc(100vh - var(--topbar-h));
-		height: calc(100dvh - var(--topbar-h));
+		height: calc(100vh - var(--topbar-h) - var(--tabbar-h));
+		height: calc(100dvh - var(--topbar-h) - var(--tabbar-h));
 		overflow: hidden;
 	}
 

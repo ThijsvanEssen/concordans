@@ -91,10 +91,14 @@ describe('the touch target', () => {
 		).toEqual([]);
 	});
 
-	it('is 44 px around the bar’s Menu and Zoeken, and a heading’s Citeer in a judgment', () => {
+	it('is 44 px around the bar’s Netwerk and Zoeken, and a heading’s Citeer in a judgment', () => {
 		const bar = read('lib/components/layout/TopBar.svelte');
-		expect(bar).toContain('class="mobile-menu-btn raakvlak-knop"');
 		expect(bar).toContain('class="search-trigger raakvlak-knop"');
+		expect(read('lib/components/layout/NetworkButton.svelte')).toContain(
+			'class="btn netwerk-knop raakvlak-knop"'
+		);
+		// The tab bar of a phone is 64 px high and its items fill it.
+		expect(read('lib/styles/tokens.css')).toMatch(/--tabbar-h: 64px/);
 		expect(read('lib/components/explore/readers/JudgmentReader.svelte')).toContain(
 			'buttonClass="btn is-text reader-heading__link raakvlak-knop"'
 		);
