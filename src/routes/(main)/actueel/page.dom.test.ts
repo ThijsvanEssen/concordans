@@ -109,6 +109,7 @@ describe('Back to Actueel', () => {
 		await settle();
 		expect(again.getByText('d')).toBeTruthy();
 		expect(api.asked('/api/feed').filter(({ query }) => !query?.facets)).toHaveLength(asked);
+	});
 });
 
 describe('the votes of a fractie on Actueel (B5)', () => {
