@@ -5,6 +5,7 @@
 	import { korteDatum } from '$lib/text/datum';
 	import { report } from '$lib/api/errors';
 	import { bewaarItem } from '$lib/map/map';
+	import { atomHref } from '$lib/components/actueel/feed';
 	import { naamVan } from '$lib/bron/menselijk';
 	// De kop van een bewindspersoon. Wie en wat in één
 	// zin; dan drie ingangen met aantallen, zodat duidelijk is waar te beginnen.
@@ -57,7 +58,9 @@
 			voluit: partij
 				? `${m.name ?? naamVan('members', m)} (${partij})`
 				: (m.name ?? naamVan('members', m))
-		})
+		}),
+		// Volg: what the lid signs and promises, as an Atom feed (`/api/feed?member=`).
+		atom: atomHref({ member: m.key })
 	}}
 >
 	{#snippet kindLine()}

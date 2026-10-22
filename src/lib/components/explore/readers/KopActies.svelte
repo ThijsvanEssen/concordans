@@ -10,6 +10,7 @@
 	import type { MapItem } from '$lib/map/map';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import FollowDossier from '$lib/components/parliamentary/FollowDossier.svelte';
+	import Follow from '$lib/components/ui/Follow.svelte';
 	import type { FollowedDossier } from '$lib/onderwerpen/onderwerpen';
 
 	let {
@@ -19,7 +20,8 @@
 		naam = '',
 		bron = null,
 		tekst,
-		follow = null
+		follow = null,
+		atom = null
 	}: {
 		/** What Bewaar keeps; without it no Bewaar. */
 		bewaar?: MapItem | null;
@@ -35,13 +37,15 @@
 		tekst?: () => string;
 		/** What Volg follows under Gevolgd (a dossier); without it no Volg. */
 		follow?: FollowedDossier | null;
+		/** The Atom link Volg copies, where nothing is followed under Gevolgd (a Kamerlid). */
+		atom?: string | null;
 	} = $props();
 
 	const copier = createCopier();
 </script>
 
 <span class="kop-acties">
-	{#if follow}<FollowDossier dossier={follow} />{/if}
+	{#if follow}<FollowDossier dossier={follow} />{:else if atom}<Follow href={atom} />{/if}
 	{#if bewaar}<Bewaar item={bewaar} {wat} />{/if}
 	{#if cite.length > 0}
 		<CiteMenu items={cite} name={naam} align="right" caret>

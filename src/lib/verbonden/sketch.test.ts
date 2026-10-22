@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { WIDTH, LABEL_MAX, SKETCH_LIMIT, sketch, divide, type SketchGroup } from './sketch';
+import { WIDTH, LABEL_MAX, SKETCH_LIMIT, sketch, divide, wrap, type SketchGroup } from './sketch';
 import type { Row } from './rows';
 
-const rij = (
+const row = (
 	collection: 'articles' | 'judgments' | 'documents',
 	key: string,
 	title = key
@@ -22,7 +22,7 @@ const group = (
 	name: id,
 	collection,
 	count,
-	rows: Array.from({ length: Math.min(count, loaded) }, (_, i) => rij(collection, `${id}${i}`))
+	rows: Array.from({ length: Math.min(count, loaded) }, (_, i) => row(collection, `${id}${i}`))
 });
 
 describe('the network on request', () => {
@@ -73,28 +73,60 @@ describe('the network on request', () => {
 		expect(divide([a, b]).singles).toHaveLength(2);
 	});
 
-	it(`keeps names to ${LABEL_MAX} characters, inside the drawing`, () => {
-		const lang = {
+	it(`wraps a name at its words, ${LABEL_MAX} characters a line, inside the drawing, never cut`, () => {
+		const long = 'Art. 2 Mandaatbesluit Raad voor de Kinderbescherming 2022';
+		const named = {
 			...group('a', 1, 'articles'),
-			rows: [rij('articles', 'x', 'Art. 2 Mandaatbesluit Raad voor de Kinderbescherming 2022')]
+			rows: [row('articles', 'x', long)]
 		};
-		const s = sketch([lang, group('u', 500, 'judgments', 25)]);
+		const s = sketch([named, group('u', 500, 'judgments', 25)]);
 		const [l] = s.singles;
-		expect(l.label!.length).toBeLessThanOrEqual(LABEL_MAX);
-		expect(l.label).toMatch(/…$/);
-		const half = (l.label!.length * 6.2) / 2;
+		expect(l.lines!.join(' ')).toBe(long);
+		expect(l.lines!.every((line) => line.length <= LABEL_MAX)).toBe(true);
+		const half = (Math.max(...l.lines!.map((x) => x.length)) * 6.2) / 2;
 		expect(l.lx - half).toBeGreaterThanOrEqual(0);
 		expect(l.lx + half).toBeLessThanOrEqual(WIDTH);
+		expect(wrap('Overige instanties', 14)).toEqual(['Overige', 'instanties']);
 	});
 
-	it('names every bron up to twelve, beyond that the first, the middle and the last', () => {
-		expect(sketch([group('a', 12, 'articles')]).singles.every((l) => l.label)).toBe(true);
-		const veel = sketch([group('a', 13, 'articles'), group('u', 500, 'judgments', 25)]).singles;
-		expect(veel.filter((l) => l.label).map((l) => l.id)).toEqual([
-			'articles/a0',
-			'articles/a6',
-			'articles/a12'
+	it('names a circle in full, inside the drawing', () => {
+		const s = sketch([
+			{ ...group('u', 500, 'judgments', 25), name: 'Stemmingen, Eerste Kamer' },
+			group('a', 13, 'articles')
 		]);
+		for (const c of s.clusters) {
+			expect(c.lines.join(' ')).toBe(c.label);
+			const half = (Math.max(...c.lines.map((x) => x.length)) * 6.2) / 2;
+			expect(c.lx - half).toBeGreaterThanOrEqual(0);
+			expect(c.lx + half).toBeLessThanOrEqual(WIDTH);
+		}
+	});
+
+	it('leaves out a name that would cover another, never two over each other', () => {
+		const s = sketch(
+			[group('a', 30, 'articles'), group('u', 500, 'judgments', 25)],
+			'Art. 6:162 BW'
+		);
+		const named = s.singles.filter((l) => l.lines);
+		expect(named.length).toBeGreaterThan(1);
+		expect(named.length).toBeLessThan(30);
+		const box = (l: (typeof named)[number]) => {
+			const half = (Math.max(...l.lines!.map((x) => x.length)) * 6.2) / 2;
+			return {
+				x0: l.lx - half,
+				x1: l.lx + half,
+				y0: l.ly - 11,
+				y1: l.ly + (l.lines!.length - 1) * 14 + 4
+			};
+		};
+		for (const [i, a] of named.entries())
+			for (const b of named.slice(i + 1)) {
+				const p = box(a);
+				const q = box(b);
+				expect(p.x0 < q.x1 && q.x0 < p.x1 && p.y0 < q.y1 && q.y0 < p.y1, `${a.id} ${b.id}`).toBe(
+					false
+				);
+			}
 	});
 
 	it('stands inside its height', () => {

@@ -22,6 +22,8 @@ export type Acties = {
 	tekst?: () => string;
 	/** What Volg follows under Gevolgd: a dossier. */
 	follow?: FollowedDossier | null;
+	/** The Atom link Volg copies where nothing is kept under Gevolgd (a Kamerlid). */
+	atom?: string | null;
 };
 
 /** Per kind: is it cited (Citeer)? Bewaar is on every reader and needs no entry. */

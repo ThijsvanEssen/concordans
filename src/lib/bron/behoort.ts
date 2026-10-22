@@ -102,26 +102,12 @@ const INHOUD: Partial<Record<Collection, string[]>> = {
 	// A commissie names only its officers and a kabinet counts its bewindspersonen: their
 	// lists stay in Verbonden.
 	factions: ['members'],
-	// A lid's reader lists its commissies; a bewindspersoon's also the dossiers it signed in
-	// (BewindspersoonOverzicht). UX-toets 10 Oct, #16: "Commissies 20" stood twice.
+	// A lid's reader lists its commissies (UX-toets 10 Oct, #16: "Commissies 20" stood twice).
+	// Its dossiers stand in Verbonden as every soort of the main column does (besluit 32, T5).
 	members: ['committees']
 };
-/** Groups the reader lists only where its props say so: a lid with a post in a kabinet. */
-const INHOUD_ALS: Partial<
-	Record<Collection, Record<string, (props: Record<string, unknown>) => boolean>>
-> = {
-	members: {
-		dossiers: (props) =>
-			Array.isArray(props.government_functions) && props.government_functions.length > 0
-	}
-};
-export const isInhoudGroep = (
-	collection: Collection,
-	g: { id: string },
-	props: Record<string, unknown> = {}
-) =>
-	(INHOUD[collection]?.includes(g.id) ?? false) ||
-	(INHOUD_ALS[collection]?.[g.id]?.(props) ?? false);
+export const isInhoudGroep = (collection: Collection, g: { id: string }) =>
+	INHOUD[collection]?.includes(g.id) ?? false;
 
 /** Whether a band has anything to show. */
 export const heeftIets = (b: Behoort) => b.regels.length + b.onder.length > 0;

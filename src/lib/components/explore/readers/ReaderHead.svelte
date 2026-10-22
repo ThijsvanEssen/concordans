@@ -106,6 +106,7 @@
 				bron={acties.bron ?? null}
 				tekst={acties.tekst}
 				follow={acties.follow ?? null}
+				atom={acties.atom ?? null}
 			/>
 		</span>
 	</div>

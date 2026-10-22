@@ -61,11 +61,9 @@ test('a law reads whole, with its overview, a date to read it on and what is bas
 	await expect(page).toHaveURL(/peildatum=2024-01-01/);
 
 	if (touch) return;
-	await expect(
-		page.getByRole('complementary', { name: 'Verbonden' }).getByRole('heading', {
-			name: 'Gebaseerd op deze wet'
-		})
-	).toBeVisible();
+	const verbonden = page.getByRole('complementary', { name: 'Verbonden' });
+	await verbonden.getByRole('button', { name: /^Alle [\d.]+ wetten/ }).click();
+	await expect(verbonden.getByRole('heading', { name: 'Gebaseerd op deze wet' })).toBeVisible();
 });
 
 test('an article: its leden, the law above it and the next article', async ({ page }) => {

@@ -88,6 +88,8 @@ export type VerbondenState = {
 	verwacht?: Record<string, number>;
 	/** What the reader chose for the loaders: kept from bron to bron. */
 	options: LoaderOptions;
+	/** What the API counts per bucket (`relation/collection/direction`): the counts per soort. */
+	buckets?: Map<string, number> | null;
 };
 
 type VerbondenSource = Readable<VerbondenState> & {
@@ -114,7 +116,10 @@ export const LOAD_FAILED = { status: 'error', error: null } as const satisfies L
 export function createVerbondenSource(store: GraphStore): VerbondenSource {
 	let options = DEFAULT_LOADER_OPTIONS;
 	const state = writable<VerbondenState>({ ...EMPTY, options });
-	const put = (st: Omit<VerbondenState, 'options'>) => state.set({ ...st, options });
+	/** What the API counts per bucket of the current bron (`bucketTotals`), as soon as known. */
+	let buckets: Map<string, number> | null = null;
+	const put = (st: Omit<VerbondenState, 'options' | 'buckets'>) =>
+		state.set({ ...st, options, buckets });
 	/** Runs the loader of a group of the current bron again; null before its groups stand. */
 	let rerun: ((id: string) => void) | null = null;
 	let controller: AbortController | null = null;
@@ -178,19 +183,26 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		controller?.abort();
 		current = selection?.id ?? null;
 		if (!selection) {
+			buckets = null;
 			put(EMPTY);
 			return;
 		}
 		const ac = new AbortController();
 		controller = ac;
 		options = startOptions(selection.collection);
+		buckets = null;
 		put({ id: selection.id, groups: [], loading: true, failed: false });
 		const { collection, key } = selection;
 		let perBak: Map<string, Map<string, number>> | null = null;
 		const first = getNodeFirst(collection, key);
 		first
 			.then((first) => {
-				if (ac.signal.aborted || get(state).groups.length > 0) return;
+				if (ac.signal.aborted) return;
+				if (!buckets) {
+					buckets = bucketTotals(first);
+					if (get(state).groups.length > 0) put({ ...get(state) });
+				}
+				if (get(state).groups.length > 0) return;
 				// The groups as they will stand, from the first paint (UX-toets e7a2f95, #1): a
 				// loader's group by the buckets it reads, counted by the light node; a group the
 				// node cannot foretell (its own endpoint: Toelichting, Wijzigingen) and an empty one
@@ -221,7 +233,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 					// What Verbonden leaves to the band and the reader (kern, inhoud) is not in it either.
 					.filter((p) => {
 						const g = groepVan.get(p.id);
-						return !g || (!isKernGroep(collection, g) && !isInhoudGroep(collection, g, eigen));
+						return !g || (!isKernGroep(collection, g) && !isInhoudGroep(collection, g));
 					})
 					.map(({ onvoorspelbaar: _, ...p }) => p);
 				put({
@@ -262,6 +274,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 				perBak ??= lidCountsByCollection(response);
 				const neighbors = neighborsOf(response);
 				const totals = bucketTotals(response);
+				buckets = totals;
 				const props = (response.node.props ?? {}) as Record<string, unknown>;
 				basis = {
 					id: selection.id,

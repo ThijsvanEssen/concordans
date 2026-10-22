@@ -45,10 +45,10 @@ for (const [soort, pad] of SOORTEN) {
 		await verbonden.scrollIntoViewIfNeeded();
 		// The summary: a count, and no group shows more than three rows.
 		await expect(verbonden.locator('.head__count')).toHaveText(/verbinding/);
-		const groepen = verbonden.locator('section.group');
+		const groepen = verbonden.locator('section.kind');
 		expect(await groepen.count()).toBeGreaterThan(0);
 		const rijen = await groepen.evaluateAll((els) =>
-			els.map((el) => el.querySelectorAll('a.row__title').length)
+			els.map((el) => el.querySelectorAll('a.kind__title').length)
 		);
 		expect(Math.max(...rijen)).toBeLessThanOrEqual(3);
 

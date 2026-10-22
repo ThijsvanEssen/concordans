@@ -2,8 +2,8 @@
 // bron in the middle, its verbindingen around it. Up to SKETCH_LIMIT bronnen each stands on
 // its own; beyond that a group stands as one bron with its count, per instantie where the
 // API counts them (a judgment's court), so the drawing stays readable. Pure: the layout in
-// the coordinates of the drawing, which NetwerkSchets renders.
-import { kort } from '$lib/graph/types';
+// the coordinates of the drawing, which NetworkSketch renders. A name is never cut: it
+// wraps over lines, and a name that would cover another, or a circle, is left to its title.
 import { refId, type BronRef } from '$lib/bron/href';
 import { vormVanBron } from '$lib/bron/vormen';
 import type { Collection } from '$lib/vocabulary';
@@ -12,10 +12,12 @@ import type { Row } from './rows';
 
 /** The most bronnen drawn: more and a group becomes one bron with its count (besluit 32). */
 export const SKETCH_LIMIT = 40;
-/** The longest name on the drawing: its citeertitel or abbreviation, else cut with "…". */
+/** The longest line of a name: a longer name wraps at its words. */
 export const LABEL_MAX = 24;
-/** Up to so many bronnen on their own all carry their name; more, the first, middle and last. */
-const ALL_NAMED = 12;
+/** The longest line of a circle's name, under the circle. */
+const CIRCLE_LINE = 14;
+/** The height of a line of a name. */
+export const LINE_H = 14;
 
 export const WIDTH = 360;
 const R_SINGLE = 118;
@@ -26,7 +28,7 @@ const CHAR_WIDTH = 6.2;
 
 export type SketchGroup = {
 	id: string;
-	/** What its circle is called: `Uitspraken`, `Stukken, Eerste Kamer` (at most LABEL_MAX). */
+	/** What its circle is called: `Uitspraken`, `Overige instanties`. */
 	name: string;
 	/** The kind of most of its bronnen, for its colour. */
 	collection: Collection | null;
@@ -42,12 +44,13 @@ type Single = {
 	id: string;
 	ref: BronRef;
 	title: string;
-	label: string | null;
+	/** Its name over lines; null where it would cover another (its title names it). */
+	lines: string[] | null;
 	shape: ReturnType<typeof vormVanBron>;
 	collection: Collection;
 	x: number;
 	y: number;
-	/** Where the middle of its name stands. */
+	/** Where the middle of its name's first line stands. */
 	lx: number;
 	ly: number;
 	/** Half the room to its neighbours: the radius a finger may tap. */
@@ -60,6 +63,9 @@ type Circle = {
 	group: string;
 	count: number;
 	label: string;
+	/** Its name over lines, under the circle; `lx` keeps them inside the drawing. */
+	lines: string[];
+	lx: number;
 	collection: Collection | null;
 	x: number;
 	y: number;
@@ -72,6 +78,8 @@ export type Sketch = {
 	/** The bronnen in the groups together. */
 	inClusters: number;
 	center: { x: number; y: number };
+	/** The name of the bron in the middle, over lines. */
+	centerLines: string[];
 	height: number;
 };
 
@@ -98,12 +106,12 @@ const rad = (deg: number) => (deg * Math.PI) / 180;
 export function divide(
 	groups: readonly SketchGroup[],
 	limit = SKETCH_LIMIT
-): { singles: { row: Row }[]; clusters: Omit<Circle, 'x' | 'y' | 'r'>[] } {
+): { singles: { row: Row }[]; clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx'>[] } {
 	const withCount = groups.filter((g) => g.count > 0);
 	const smallestFirst = [...withCount].sort((a, b) => a.count - b.count);
 	const singles: { row: Row }[] = [];
 	const seen = new Set<string>();
-	const clusters: Omit<Circle, 'x' | 'y' | 'r'>[] = [];
+	const clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx'>[] = [];
 	let room = limit;
 	smallestFirst.forEach((g, i) => {
 		const toGo = smallestFirst.length - 1 - i;
@@ -130,64 +138,112 @@ export function divide(
 	return { singles, clusters };
 }
 
+/** A name over lines of at most `max` characters, broken at its words; a word longer stays whole. */
+export function wrap(name: string, max: number): string[] {
+	const lines: string[] = [];
+	for (const word of name.split(/\s+/).filter(Boolean)) {
+		const last = lines.at(-1);
+		if (last != null && last.length + 1 + word.length <= max)
+			lines[lines.length - 1] = `${last} ${word}`;
+		else lines.push(word);
+	}
+	return lines;
+}
+
+type Box = { x0: number; y0: number; x1: number; y1: number };
+const overlaps = (a: Box, b: Box) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+const widthOf = (lines: string[]) => Math.max(...lines.map((l) => l.length)) * CHAR_WIDTH;
+/** The middle of a name kept inside the drawing. */
+const inside = (x: number, lines: string[]) => {
+	const half = widthOf(lines) / 2;
+	return Math.min(WIDTH - 4 - half, Math.max(4 + half, x));
+};
+/** The box of a name whose first line stands at `y` (its baseline). */
+const boxOf = (x: number, y: number, lines: string[]): Box => {
+	const half = widthOf(lines) / 2;
+	return {
+		x0: x - half - 2,
+		y0: y - 11,
+		x1: x + half + 2,
+		y1: y + (lines.length - 1) * LINE_H + 4
+	};
+};
+
 /** The layout: the single bronnen over the top, the groups under the bron. */
-export function sketch(groups: readonly SketchGroup[], limit = SKETCH_LIMIT): Sketch {
+export function sketch(
+	groups: readonly SketchGroup[],
+	centerName = '',
+	limit = SKETCH_LIMIT
+): Sketch {
 	const { singles: single, clusters: clu } = divide(groups, limit);
 	const cx = WIDTH / 2;
 	const both = single.length > 0 && clu.length > 0;
 	const singleAngles = both ? angles(single.length, -150, -30) : around(single.length);
 	const clusterAngles = both ? angles(clu.length, 20, 160) : around(clu.length);
-	const named = (i: number) =>
-		single.length <= ALL_NAMED ||
-		i === 0 ||
-		i === single.length - 1 ||
-		i === Math.floor((single.length - 1) / 2);
 	const step = single.length > 1 ? (rad(both ? 120 : 360) * R_SINGLE) / single.length : 2 * 22;
+
+	const clusters: Circle[] = clu.map((b, i) => {
+		const a = rad(clusterAngles[i]);
+		const x = cx + R_CLUSTER * Math.cos(a);
+		const lines = wrap(b.label, CIRCLE_LINE);
+		return { ...b, lines, lx: inside(x, lines), x, y: R_CLUSTER * Math.sin(a), r: radius(b.count) };
+	});
+	const centerLines = wrap(centerName, LABEL_MAX);
+	// What a name may not cover: the circles with their names, the bron in the middle with its.
+	const taken: Box[] = [
+		...clusters.flatMap((b) => [
+			{ x0: b.x - b.r, y0: b.y - b.r, x1: b.x + b.r, y1: b.y + b.r },
+			boxOf(b.lx, b.y + b.r + 16, b.lines)
+		]),
+		{ x0: cx - 18, y0: -18, x1: cx + 18, y1: 18 },
+		...(centerName ? [boxOf(cx, 34, centerLines)] : [])
+	];
 
 	const singles: Single[] = single.map(({ row }, i) => {
 		const a = rad(singleAngles[i]);
-		const cos = Math.cos(a);
 		const sin = Math.sin(a);
-		const collection = row.ref.collection;
-		const label = named(i) ? kort(row.title, LABEL_MAX) : null;
-		// Above a node over the bron, under one beside or below it; centred on it, kept inside
-		// the drawing by its estimated width.
-		const x = cx + R_SINGLE * cos;
-		const half = label ? (label.length * CHAR_WIDTH) / 2 : 0;
+		const x = cx + R_SINGLE * Math.cos(a);
+		const y = R_SINGLE * sin;
+		const lines = wrap(row.title, LABEL_MAX);
+		// Above a node over the bron, under one beside or below it.
+		const ly = sin < -0.6 ? y - 12 - (lines.length - 1) * LINE_H : y + 20;
 		return {
 			id: refId(row.ref),
 			ref: row.ref,
 			title: row.title,
-			label,
-			shape: vormVanBron(collection, row.props, row.ref.key),
-			collection,
+			lines,
+			shape: vormVanBron(row.ref.collection, row.props, row.ref.key),
+			collection: row.ref.collection,
 			x,
-			y: R_SINGLE * sin,
-			lx: Math.min(WIDTH - 4 - half, Math.max(4 + half, x)),
-			ly: R_SINGLE * sin + (sin < -0.6 ? -12 : 20),
+			y,
+			lx: inside(x, lines),
+			ly,
 			hit: Math.min(22, step / 2)
 		};
 	});
-	const clusters: Circle[] = clu.map((b, i) => {
-		const a = rad(clusterAngles[i]);
-		return {
-			...b,
-			x: cx + R_CLUSTER * Math.cos(a),
-			y: R_CLUSTER * Math.sin(a),
-			r: radius(b.count)
-		};
-	});
+	for (const l of singles) taken.push({ x0: l.x - 7, y0: l.y - 7, x1: l.x + 7, y1: l.y + 7 });
+	// The names in the order of their place to read: the outer ones first, then from the middle
+	// out; each one only where it covers nothing named before it.
+	const order = singles
+		.map((l, i) => ({ l, i }))
+		.sort((p, q) => rank(p.i, singles.length) - rank(q.i, singles.length));
+	for (const { l } of order) {
+		const box = boxOf(l.lx, l.ly, l.lines!);
+		if (taken.some((t) => overlaps(t, box))) l.lines = null;
+		else taken.push(box);
+	}
 
-	// From the top of the highest name to the foot of the lowest label.
+	// From the top of the highest name to the foot of the lowest.
 	const top = Math.min(
 		-28,
-		...singles.map((l) => l.ly - 14),
+		...singles.filter((l) => l.lines).map((l) => l.ly - 14),
+		...singles.map((l) => l.y - 10),
 		...clusters.map((b) => b.y - b.r - 4)
 	);
 	const foot = Math.max(
-		40,
-		...singles.map((l) => l.ly + 6),
-		...clusters.map((b) => b.y + b.r + 34)
+		34 + centerLines.length * LINE_H,
+		...singles.map((l) => (l.lines ? l.ly + (l.lines.length - 1) * LINE_H + 6 : l.y + 10)),
+		...clusters.map((b) => b.y + b.r + 22 + (b.lines.length - 1) * LINE_H)
 	);
 	const dy = MARGIN - top;
 	for (const l of singles) {
@@ -200,6 +256,13 @@ export function sketch(groups: readonly SketchGroup[], limit = SKETCH_LIMIT): Sk
 		clusters,
 		inClusters: clusters.reduce((sum, b) => sum + b.count, 0),
 		center: { x: cx, y: dy },
+		centerLines,
 		height: Math.ceil(foot + dy + MARGIN)
 	};
+}
+
+/** The first and the last name first, then from the middle outwards. */
+function rank(i: number, n: number): number {
+	if (i === 0 || i === n - 1) return -1;
+	return Math.abs(i - (n - 1) / 2);
 }

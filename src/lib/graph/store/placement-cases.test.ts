@@ -427,7 +427,6 @@ describe.each(BRONNEN)('the rows of Verbonden of the $name', ({ name, collection
 		const st = get(source);
 		source.destroy();
 		const node = RESPONSES[name].node;
-		const props = (node.props ?? {}) as Record<string, unknown>;
 		const out: Record<string, string[]> = {};
 		for (const g of st.groups) {
 			const rows = g.rows.filter((r) => r.relation && r.direction) as CanvasRow[];
@@ -438,7 +437,7 @@ describe.each(BRONNEN)('the rows of Verbonden of the $name', ({ name, collection
 			await settle();
 			const place = isKernGroep(collection, g)
 				? 'kern'
-				: isInhoudGroep(collection, g, props)
+				: isInhoudGroep(collection, g)
 					? 'inhoud'
 					: 'verbonden';
 			out[`${g.id} (${place})`] = describeCanvas(c.ctx).split(' | ');

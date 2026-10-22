@@ -7,6 +7,7 @@
 	import { bewaarItem } from '$lib/map/map';
 	import { fractieNaam, naamVan } from '$lib/bron/menselijk';
 	import ReaderHead from './ReaderHead.svelte';
+	import { atomHref } from '$lib/components/actueel/feed';
 	import { formatCount } from '$lib/text/getal';
 	import { korteDatum, vandaag, yearsOf } from '$lib/text/datum';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
@@ -214,7 +215,9 @@
 						bewaar: bewaarItem(node.id, {
 							kort: titel,
 							voluit: m.party ? `${titel} (${m.party})` : titel
-						})
+						}),
+						// Volg: what the lid signs and promises, as an Atom feed (`/api/feed?member=`).
+						atom: atomHref({ member: m.key })
 					}}
 				>
 					{#snippet kindLine()}

@@ -52,15 +52,20 @@ test('beyond 40 bronnen a group is one circle with its count, and the legend cou
 		await circles.evaluateAll((els) => els.map((el) => el.getAttribute('aria-label') ?? ''))
 	).map((label) => Number(label.split(' ')[0].replaceAll('.', '')));
 	const total = counts.reduce((sum, n) => sum + n, 0);
-	await expect(figure.locator('figcaption')).toHaveText(
-		new RegExp(
-			`^\\s*${singles} afzonderlijk\\s*${groups}\\s*groepen, ${total.toLocaleString('nl-NL').replaceAll('.', '\\.')} in totaal\\s*$`
-		)
+	const nl = (n: number) => n.toLocaleString('nl-NL').replaceAll('.', '\\.');
+	const legend = singles
+		? `${singles} afzonderlijk\\s*${groups}\\s*groepen, ${nl(total)} in totaal`
+		: `${groups}\\s*groepen, ${nl(total)} in totaal`;
+	await expect(figure.locator('figcaption')).toHaveText(new RegExp(`^\\s*${legend}\\s*$`));
+	// What is drawn is what the heading counts: the bronnen on their own and the groups together.
+	await expect(verbonden(page).locator('.head__count')).toHaveText(
+		new RegExp(`^${nl(singles + total)} verbindingen$`)
 	);
-	// No name on the drawing is longer than 24 characters.
-	const names = await figure.locator('text.name').allTextContents();
-	expect(names.filter((n) => n.length > 24)).toEqual([]);
-	// A circle opens its group in Verbonden.
+	// No name is cut: each line of a name at most 24 characters, no "…".
+	const lines = await figure.locator('text.name tspan').allTextContents();
+	expect(lines.filter((n) => n.length > 24 || n.endsWith('…'))).toEqual([]);
+	// A circle opens its soort in Verbonden, with its groups.
 	await figure.getByRole('button', { name: /Kamerstukken$/ }).click();
-	await expect(verbonden(page).locator('[data-group="documents"]')).toBeInViewport();
+	await expect(verbonden(page).locator('[data-group="documents"]')).toBeVisible();
+	await expect(verbonden(page).getByRole('button', { name: 'Alle soorten' })).toBeVisible();
 });

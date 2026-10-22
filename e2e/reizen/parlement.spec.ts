@@ -12,7 +12,11 @@ test('a dossier shows where it stands and opens a stuk of its procedure in place
 	await expect(page.getByRole('region', { name: 'Stand van zaken' })).toContainText(
 		'Aangenomen door de Eerste Kamer'
 	);
-	await page.getByRole('button', { name: 'Procedure' }).click();
+	// The procedure stands open (mockup V1-c).
+	await expect(page.getByRole('button', { name: 'Procedure' })).toHaveAttribute(
+		'aria-expanded',
+		'true'
+	);
 	// One click on the line opens the stuk in place; its source is one step further.
 	await page.getByRole('link', { name: 'Advies en nader rapport', exact: true }).click();
 	await expect(
@@ -239,6 +243,8 @@ test('a dossier marks a toezegging it only had on the agenda of the debate', asy
 		(n) => metBasis(n, (key) => (key === TZ_ROW_NAKOMING ? 'nakoming' : 'agenda')) as Rec
 	);
 	await page.goto('/dossiers/36512');
+	const verbonden = page.getByRole('complementary', { name: 'Verbonden' });
+	await verbonden.getByRole('button', { name: /^Alle \d+ toezeggingen$/ }).click();
 	const groep = page.locator('section[data-group="commitments"]');
 	const rij = (begin: RegExp) =>
 		groep.getByRole('listitem').filter({ has: page.getByRole('link', { name: begin }) });

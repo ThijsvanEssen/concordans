@@ -8,7 +8,7 @@
 	import { formatCount } from '$lib/text/getal';
 	import { plural } from '$lib/text/words';
 	import type { Collection } from '$lib/vocabulary';
-	import { WIDTH, clusterLine, type Sketch } from './sketch';
+	import { LINE_H, WIDTH, clusterLine, type Sketch } from './sketch';
 
 	let {
 		sketch,
@@ -68,7 +68,7 @@
 	<svg
 		viewBox="0 0 {WIDTH} {sketch.height}"
 		role="group"
-		aria-label="Netwerk around {name}: {description}"
+		aria-label="Netwerk rond {name}: {description}"
 	>
 		{#each sketch.singles as l (l.id)}
 			<line x1={m.x} y1={m.y} x2={l.x} y2={l.y} class="line" stroke-width="1.5" />
@@ -90,7 +90,10 @@
 				stroke="var(--ink)"
 				stroke-width="1.5"
 			/>
-			<text x={m.x} y={m.y + 34} text-anchor="middle" class="name name--focus">{name}</text>
+			<text x={m.x} y={m.y + 34} text-anchor="middle" class="name name--focus"
+				>{#each sketch.centerLines as line, i (i)}<tspan x={m.x} dy={i ? LINE_H : 0}>{line}</tspan
+					>{/each}</text
+			>
 		</a>
 
 		{#each sketch.singles as l (l.id)}
@@ -106,8 +109,11 @@
 					stroke-width={v.wijze === 'lijn' ? 2.4 : 0}
 					fill-rule={v.wijze === 'gat' ? 'evenodd' : 'nonzero'}
 				/>
-				{#if l.label}
-					<text x={l.lx} y={l.ly} text-anchor="middle" class="name">{l.label}</text>
+				{#if l.lines}
+					<text x={l.lx} y={l.ly} text-anchor="middle" class="name"
+						>{#each l.lines as line, i (i)}<tspan x={l.lx} dy={i ? LINE_H : 0}>{line}</tspan
+							>{/each}</text
+					>
 				{/if}
 			</a>
 		{/each}
@@ -136,7 +142,10 @@
 					stroke-dasharray={dashed(b.collection) ? '6 4' : undefined}
 				/>
 				<text x={b.x} y={b.y + 4.5} text-anchor="middle" class="count">{formatCount(b.count)}</text>
-				<text x={b.x} y={b.y + b.r + 16} text-anchor="middle" class="name">{b.label}</text>
+				<text x={b.lx} y={b.y + b.r + 16} text-anchor="middle" class="name"
+					>{#each b.lines as line, i (i)}<tspan x={b.lx} dy={i ? LINE_H : 0}>{line}</tspan
+						>{/each}</text
+				>
 			</g>
 		{/each}
 	</svg>

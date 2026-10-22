@@ -216,7 +216,8 @@
 						<RijInhoud item={i.item} als={i.soort} />
 					{/if}
 				{/snippet}
-				<Sectie title="Procedure">
+				<!-- The course of the dossier stands open: the line to read it by (mockup V1-c). -->
+				<Sectie title="Procedure" standaardOpen>
 					<Tijdlijn
 						groepen={p.groepen.map((g) => ({
 							...g,

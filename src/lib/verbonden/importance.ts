@@ -47,7 +47,8 @@ const IMPORTANCE: Partial<Record<Collection, Record<string, Importance>>> = {
 		'documents-tk': 'papers',
 		'documents-ek': 'papers',
 		commitments: 'newest',
-		'decisions-ek': 'newest'
+		'decisions-ek': 'newest',
+		activities: 'newest'
 	},
 	cases: { documents: 'papers', decisions: 'newest' },
 	committees: { members: 'current' },
@@ -56,7 +57,9 @@ const IMPORTANCE: Partial<Record<Collection, Record<string, Importance>>> = {
 	members: {
 		'authored-kamerlid': 'newest',
 		'authored-bewindspersoon': 'newest',
-		'authored-overig': 'newest'
+		'authored-overig': 'newest',
+		votes: 'newest',
+		commitments: 'newest'
 	}
 };
 

@@ -72,8 +72,6 @@ describe.each(BRONNEN)('Verbonden of a $naam', ({ naam, collection, key }) => {
 			api.bewaar();
 			const st = get(source);
 			source.destroy();
-			const node = await getNodeGraph(collection, key, { limit: 1, wait: 'short' });
-			const props = (node.node.props ?? {}) as Record<string, unknown>;
 			const groups = st.groups.map((g) => ({
 				id: g.id,
 				label: g.label,
@@ -81,7 +79,7 @@ describe.each(BRONNEN)('Verbonden of a $naam', ({ naam, collection, key }) => {
 				count: g.failed ? 'mislukt' : countLabel(g),
 				plaats: isKernGroep(collection, g)
 					? 'kern'
-					: isInhoudGroep(collection, g, props)
+					: isInhoudGroep(collection, g)
 						? 'inhoud'
 						: 'verbonden',
 				rows: g.rows.map((r) => rij(r, collection))

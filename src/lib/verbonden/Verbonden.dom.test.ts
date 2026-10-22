@@ -210,4 +210,39 @@ describe('Verbonden', () => {
 		paneel();
 		expect(screen.queryByRole('button', { name: /Netwerk tonen/ })).toBeNull();
 	});
+
+	it('opens in Tekst on the soorten: a heading with its count, three titles with one line, Alle N', async () => {
+		paneel(ROWS, { onShowNetwork: () => {}, showNetwork: false });
+		const koppen = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent?.trim());
+		expect(koppen).toEqual(['Uitspraken1', 'Kamerstukken1']);
+		// The passage and the ECLI wait for the row to open; no order or filter at a glance.
+		expect(screen.queryByText(/ECLI:NL:HR:2019:2006/)).toBeNull();
+		expect(screen.queryByRole('button', { name: 'Filter' })).toBeNull();
+		expect(screen.queryByRole('button', { name: 'Datum' })).toBeNull();
+		await klik(screen.getByRole('link', { name: 'Hoge Raad, 20 december 2019' }));
+		expect(goto).not.toHaveBeenCalled();
+		expect(screen.getByText(/ECLI:NL:HR:2019:2006/)).toBeTruthy();
+	});
+
+	it('opens a soort with its groups, its order and its filter from Alle N, and back', async () => {
+		paneel(
+			{
+				...ROWS,
+				judgments: [
+					uitspraak,
+					{ ...uitspraak, ref: { collection: 'judgments', key: 'x' } },
+					{ ...uitspraak, ref: { collection: 'judgments', key: 'y' } },
+					{ ...uitspraak, ref: { collection: 'judgments', key: 'z' } }
+				]
+			},
+			{ onShowNetwork: () => {}, showNetwork: false }
+		);
+		await fireEvent.click(screen.getByRole('button', { name: 'Alle 4 uitspraken' }));
+		expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent?.trim())).toEqual([
+			'Uitspraken die dit artikel aanhalen'
+		]);
+		expect(screen.getByRole('button', { name: 'Filter' })).toBeTruthy();
+		await fireEvent.click(screen.getByRole('button', { name: 'Alle soorten' }));
+		expect(screen.queryByRole('button', { name: 'Filter' })).toBeNull();
+	});
 });

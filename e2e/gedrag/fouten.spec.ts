@@ -101,9 +101,7 @@ test('one failing group of Verbonden leaves the others and the text standing', a
 	const alert = verbonden.getByRole('alert').first();
 	await expect(alert).toContainText('De uitspraken konden niet worden geladen.');
 	await expect(alert.getByRole('button', { name: 'Opnieuw' })).toBeVisible();
-	await expect(
-		verbonden.getByRole('heading', { name: 'Artikelen die naar dit artikel verwijzen' })
-	).toBeVisible();
+	await expect(verbonden.getByRole('heading', { name: /^Wetten/ })).toBeVisible();
 });
 
 test('a failure is not red at rest', async ({ page, guard }) => {

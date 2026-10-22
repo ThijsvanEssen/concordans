@@ -3,7 +3,7 @@
 	// groups.ts, under the bronfilter. In the network each group can put its bronnen on the
 	// canvas or take them off.
 	import { ecliKey } from '$lib/bron/address';
-	import { capitalize, count, joinAnd, truncate } from '$lib/text/words';
+	import { capitalize, count, joinAnd, plural } from '$lib/text/words';
 	import { meldNetwerk } from '$lib/stores/netwerk-melding';
 	import { report } from '$lib/api/errors';
 	import { rijen } from '$lib/actions/rijen';
@@ -27,6 +27,7 @@
 		FILTER_GROUP_NOUN,
 		withFilterGroup,
 		askedOfApi,
+		filterParams,
 		type VerbondenFilter
 	} from './filter';
 	import { formatCount, isAtLeast } from '$lib/text/getal';
@@ -43,10 +44,11 @@
 	import { groupRequest } from './open-group';
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import NetworkSketch from './NetworkSketch.svelte';
-	import { sketch as drawSketch, LABEL_MAX, type SketchGroup } from './sketch';
+	import KindSummary from './KindSummary.svelte';
+	import { kindsOf, kindsTotal, kindOfGroup, type KindId } from './summary';
+	import { sketch as drawSketch, type SketchGroup } from './sketch';
 	import { citingTiers, type TierCount } from './tiers';
 	import { importanceOf, byImportance } from './importance';
-	import type { Collection } from '$lib/vocabulary';
 	import type { LoaderOptions } from './loaders';
 	import { isInhoudGroep, isKernGroep, lazeKernIds } from '$lib/bron/behoort';
 	import {
@@ -146,6 +148,8 @@
 
 	/** A group opened and in view: from the network, or "Bekijk in Verbonden". */
 	function showGroup(id: string) {
+		const g = groepen.find((x) => x.id === id);
+		if (onShowNetwork && g) detail = kindOfGroup(g) ?? detail;
 		expanded = new Set([...expanded, id]);
 		// A group closed in this browser opens for it.
 		zetOpen(`verbonden:${id}`, true);
@@ -208,13 +212,7 @@
 	const groepen = $derived(
 		verbonden.groups
 			.filter(
-				(g) =>
-					!isKernGroep(selection.collection, g) &&
-					!isInhoudGroep(
-						selection.collection,
-						g,
-						(selection.raw?.props ?? {}) as Record<string, unknown>
-					)
+				(g) => !isKernGroep(selection.collection, g) && !isInhoudGroep(selection.collection, g)
 			)
 			.map((g) => {
 				const own = g.rows.filter(
@@ -232,12 +230,7 @@
 			verbonden.groups.some(
 				(g) =>
 					g.rows.length > 0 &&
-					(isKernGroep(selection.collection, g) ||
-						isInhoudGroep(
-							selection.collection,
-							g,
-							(selection.raw?.props ?? {}) as Record<string, unknown>
-						))
+					(isKernGroep(selection.collection, g) || isInhoudGroep(selection.collection, g))
 			)
 	);
 	// A group whose loader is under way keeps its place with "laden…" (VerbondenState.wachtend).
@@ -281,6 +274,32 @@
 	);
 	const total = $derived(shownLabel(vast ?? verbonden.groups, filter, wachtSet));
 
+	// ── At a glance: per soort its count and the three to read (summary.ts) ──
+	// In Tekst Verbonden opens on the soorten; "Alle N" opens one with its groups, its order and
+	// its filters; a bronfilter in the address (a lid's count, Filter) shows the groups at once.
+	const kinds = $derived(
+		kindsOf(
+			groepen,
+			selection.collection,
+			verbonden.buckets,
+			verbonden.groups.filter(
+				(g) => isKernGroep(selection.collection, g) || isInhoudGroep(selection.collection, g)
+			)
+		)
+	);
+	let detail = $state<KindId | null>(null);
+	$effect(() => {
+		void selection.id;
+		detail = null;
+	});
+	const filtering = $derived(Object.values(filterParams(filter)).some((v) => v !== null));
+	const overview = $derived(!!onShowNetwork && !detail && !filtering);
+	/** A soort opened with its groups, from "Alle N" or a circle of the network. */
+	function openKind(id: string) {
+		detail = id as KindId;
+		afterTick(() => root?.querySelector('.body')?.scrollTo({ top: 0 }));
+	}
+
 	// The judgments that cite an article per instantie, counted by the API over all of them:
 	// the bar of the group and its circles in the network. Asked once the group's total is in.
 	const citingJudgments = $derived(
@@ -288,7 +307,10 @@
 			? groepen.find((g) => g.id === 'judgments' && !g.laden && (g.total ?? 0) > 0)
 			: undefined
 	);
-	const citingTotal = $derived(citingJudgments?.total ?? 0);
+	// Over the soort as its heading counts it: what the three instanties leave is Overige.
+	const citingTotal = $derived(
+		citingJudgments ? (kinds.find((k) => k.id === 'judgments')?.count ?? 0) : 0
+	);
 	let tierCounts = $state<{ id: string; parts: TierCount[] } | null>(null);
 	$effect(() => {
 		const all = citingTotal;
@@ -312,38 +334,23 @@
 	/** The share of the largest part: the bar's parts are as wide as their counts. */
 	const SHADES = [1, 0.7, 0.45, 0.22];
 
-	// The network on request: the groups as the panel shows them, each with its count.
-	const collectionOf = (g: Group): Collection | null => {
-		const fromMatch = g.match?.[0]?.collection;
-		const c =
-			g.rows[0]?.ref.collection ??
-			(Array.isArray(fromMatch) ? fromMatch[0] : fromMatch) ??
-			g.bakken?.[0]?.collection ??
-			null;
-		return (c as Collection | null) ?? null;
-	};
-	const sketchGroups = $derived.by<SketchGroup[]>(() => {
-		if (!showNetwork) return [];
-		const drawn = shown.filter((g) => !g.laden && !(g.failed && g.rows.length === 0));
-		const noun = (g: Group) => capitalize(g.noun ?? g.label);
-		// Two groups of one noun (the stukken of each Kamer) are told apart by their Kamer.
-		const twice = (g: Group) => drawn.filter((x) => noun(x) === noun(g)).length > 1;
-		return drawn.map((g) => ({
-			id: g.id,
-			name: truncate(twice(g) && g.section ? `${noun(g)}, ${g.section}` : noun(g), LABEL_MAX, {
-				atWord: true
-			}),
-			collection: collectionOf(g),
-			count: groupCount(g),
-			rows: g.rows,
-			capped: g.capped,
-			parts: g.id === citingJudgments?.id ? parts : null
-		}));
-	});
-	const sketched = $derived(showNetwork ? drawSketch(sketchGroups) : null);
-	const centerName = $derived(
-		sketched ? truncate(networkName ?? selection.label ?? '', LABEL_MAX, { atWord: true }) : ''
+	// The network on request: the soorten as the summary shows them, each with its count, so
+	// the legend's total and the heading's are one sum.
+	const sketchGroups = $derived<SketchGroup[]>(
+		showNetwork
+			? kinds.map((k) => ({
+					id: k.id,
+					name: k.label,
+					collection: k.collection,
+					count: k.count,
+					rows: k.rows,
+					capped: k.partial,
+					parts: k.id === 'judgments' ? parts : null
+				}))
+			: []
 	);
+	const centerName = $derived(networkName ?? selection.label ?? '');
+	const sketched = $derived(showNetwork ? drawSketch(sketchGroups, centerName) : null);
 
 	function toggle(set: Set<string>, id: string) {
 		const next = new Set(set);
@@ -420,12 +427,12 @@
 		// Before the network has drawn the bron itself there is nothing to draw beside; say so
 		// rather than claim it was drawn.
 		if (!store.showRows(selection.id, rows as CanvasRow[])) {
-			meld(g.id, 'Het netwerk laadt nog; niets drawn.', null);
+			meld(g.id, 'Het netwerk laadt nog; niets getekend.', null);
 			return;
 		}
 		onNaarNetwerk?.();
 		if (nieuw.length)
-			meld(g.id, `${telling(nieuw)} drawn in het netwerk.`, () =>
+			meld(g.id, `${telling(nieuw)} getekend in het netwerk.`, () =>
 				store.hideRows(nieuw.map((r) => refId(r.ref)))
 			);
 		else meld(g.id, `Alle ${telling(rows)} stonden al in het netwerk.`, null);
@@ -481,13 +488,24 @@
 		<!-- A bron without verbindingen has no count: its one line says so below (A53), not a
 		     sentence of explanation (R7, UX-toets 0.79.43). -->
 		{#if !empty && (verbonden.groups.length > 0 || (!verbonden.loading && !verbonden.failed && verbonden.id))}
-			<span class="head__count">{vast ? countLine(vast, filter, wachtSet) : ''}</span>
+			<span class="head__count"
+				>{overview
+					? kinds.length
+						? `${formatCount(kindsTotal(kinds))} ${plural(kindsTotal(kinds), 'verbinding', 'verbindingen')}`
+						: ''
+					: vast
+						? countLine(vast, filter, wachtSet)
+						: ''}</span
+			>
 		{/if}
 	</div>
 	<!-- The choose-line of the panel (docs/bediening.md): how grouped, the filter. No menu of
 	     the bronnen: the groups below are the kinds chosen, and the presets and kinds are in
 	     the filter (Thijs, 11 Oct). -->
-	{#if !empty}<div class="regel">
+	{#if !empty && !overview}<div class="regel">
+			{#if onShowNetwork}
+				<TekstLink onclick={() => (detail = null)}>Alle soorten</TekstLink>
+			{/if}
 			<TekstMenu
 				label="Indeling"
 				waarde={grouping}
@@ -503,10 +521,21 @@
 				sketch={sketched}
 				name={centerName}
 				networkHref={networkHref ?? '/explore'}
-				onGroup={showGroup}
+				onGroup={openKind}
 			/>
 		{/if}
-		{#if verbonden.failed}
+		{#if overview && !verbonden.failed && kinds.length > 0}
+			<KindSummary
+				{kinds}
+				{selection}
+				tiers={parts}
+				onOpen={openKind}
+				{onRetry}
+				{onProposedText}
+				{onAddToNetwerk}
+				{inNetwerk}
+			/>
+		{:else if verbonden.failed}
 			<div class="note">
 				<LoadState state={LOAD_FAILED} what="De verbindingen" plural retry={onRetry} />
 			</div>
@@ -523,7 +552,7 @@
 			<p class="sr-only" role="status">Verbindingen laden</p>
 		{/if}
 
-		{#each shown as g, i (g.id)}
+		{#each overview ? [] : shown.filter((g) => !detail || kindOfGroup(g) === detail) as g, i (g.id)}
 			{@const all = expanded.has(g.id)}
 			{@const bars = years(g)}
 			{@const count = groupCount(g)}
@@ -663,7 +692,7 @@
 			</section>
 		{/each}
 
-		{#if nogOnderweg.length > 0}
+		{#if nogOnderweg.length > 0 && !overview}
 			<p class="note stil group__laden" role="status">
 				{zin(nogOnderweg)} laden…
 			</p>

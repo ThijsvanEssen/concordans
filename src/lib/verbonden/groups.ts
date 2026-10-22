@@ -296,6 +296,12 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 				}
 			]
 		},
+		{
+			id: 'activities',
+			label: 'Activiteiten over dit dossier',
+			noun: 'activiteiten',
+			match: [{ relation: 'ABOUT', direction: 'inbound', collection: 'activities' }]
+		},
 		{ ...EUROPEAN, match: undefined, load: 'dossier-international' }
 	],
 	instruments: [
@@ -768,6 +774,20 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Wetten waaraan dit lid werkte',
 			noun: 'wetten',
 			load: 'member-instruments'
+		},
+		// What the lid voted on and promised, counted as the reader counts them (besluit 32: every
+		// soort of the main column in Verbonden, T5).
+		{
+			id: 'votes',
+			label: 'Besluiten waarover dit lid stemde',
+			noun: 'besluiten',
+			match: [{ relation: 'VOTED', direction: 'outbound', collection: 'decisions' }]
+		},
+		{
+			id: 'commitments',
+			label: 'Toezeggingen van dit lid',
+			noun: 'toezeggingen',
+			match: [{ relation: 'AUTHORED', direction: 'outbound', collection: 'commitments' }]
 		}
 	],
 	factions: [
