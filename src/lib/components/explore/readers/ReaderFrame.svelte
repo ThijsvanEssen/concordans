@@ -16,7 +16,6 @@
 	import { WEERGAVE_KEY, type Weergave } from '../weergave';
 	import SearchInText from '../SearchInText.svelte';
 	import { SearchState } from '../search-state.svelte';
-	import { page } from '$app/state';
 	import { consultedOn } from '$lib/text/datum';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { LoadState as State } from '$lib/util/load.svelte';
