@@ -17,13 +17,13 @@ export function instrumentKenmerk(w: Row): string {
 }
 
 /** The kinds of an act of the EU, by its CELEX letter as the API gives them (API 0.81). */
-const EU_KINDS = new Map([
+const EU_KINDS: readonly (readonly [string, string])[] = [
 	['richtlijn', 'Richtlijn'],
 	['verordening', 'Verordening'],
 	['besluit', 'Besluit'],
 	['kaderbesluit', 'Kaderbesluit']
-]);
+];
 
 /** An act of the EU by its kind (Richtlijn, Verordening); null for another or none. */
 export const euKind = (w: Pick<Row, 'jurisdiction' | 'kind'>): string | null =>
-	w.jurisdiction === 'eu' ? (EU_KINDS.get(w.kind ?? '') ?? null) : null;
+	w.jurisdiction === 'eu' ? (EU_KINDS.find(([kind]) => kind === w.kind)?.[1] ?? null) : null;
