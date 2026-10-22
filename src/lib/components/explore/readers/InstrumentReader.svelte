@@ -37,7 +37,7 @@
 	);
 </script>
 
-<ReaderFrame>
+<ReaderFrame find={!publication}>
 	{#if publication}
 		{@const titel = textOf(p.display_name) ?? node.label}
 		{@const fullTitle = publicationTitle(node.raw?.title, titel)}

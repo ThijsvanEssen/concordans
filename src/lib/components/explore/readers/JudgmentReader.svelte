@@ -131,7 +131,7 @@
 	});
 </script>
 
-<ReaderFrame state={judgment.state} what="Uitspraak" retry={judgment.retry}>
+<ReaderFrame find state={judgment.state} what="Uitspraak" retry={judgment.retry}>
 	{#snippet children(data)}
 		{@const j = data.judgment}
 		{@const paragraphs = j.paragraphs ?? []}

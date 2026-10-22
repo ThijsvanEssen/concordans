@@ -99,6 +99,12 @@
 		background: var(--paper);
 		color: var(--ink);
 	}
+	/* The place the text stands at, in the lists that follow the scroll (DocumentToc, JudgmentToc). */
+	:global(.nav-kolom__rij.is-active) {
+		background: var(--paper);
+		color: var(--ink);
+		box-shadow: inset 2px 0 0 var(--ink);
+	}
 	/* A finger's target in the column and the sheet Inhoud: a row at least 32 px high. */
 	@media (pointer: coarse), (max-width: 768px) {
 		:global(.nav-kolom__rij) {

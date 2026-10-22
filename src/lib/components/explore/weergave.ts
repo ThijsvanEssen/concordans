@@ -9,6 +9,11 @@ export type Weergave = {
 	onKies: (s: ViewSide) => void;
 	/** A bron without a text of its own: the reader already stands beside the network. */
 	tekstMogelijk: boolean;
+	/**
+	 * Opens the contents of the bron over the reader. Given where the contents have no column of
+	 * their own: beside the network, in Netwerk.
+	 */
+	contents?: () => void;
 };
 
 export const WEERGAVE_KEY = Symbol('weergave');

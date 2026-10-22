@@ -243,6 +243,19 @@ a:hover {
 	opacity: 0.7;
 }
 
+/* The hits of Zoek in dit stuk (ZoekInStuk): a neutral wash, the one the reader is at under a line. */
+::highlight(zoek-treffer) {
+	background-color: var(--wassing);
+	color: var(--ink);
+}
+::highlight(zoek-huidig) {
+	background-color: var(--mark-ins);
+	color: var(--ink);
+	text-decoration: underline;
+	text-decoration-color: var(--mark-ins-rule);
+	text-decoration-thickness: 2px;
+}
+
 ::selection {
 	background: var(--wassing);
 	color: var(--ink);

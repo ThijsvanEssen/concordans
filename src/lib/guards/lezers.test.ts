@@ -3,6 +3,36 @@ import { describe, expect, it } from 'vitest';
 import { BRONNEN, bron, overtreders, plek, regels } from '$lib/test/bronnen';
 
 describe('the readers', () => {
+	it('searches a long text in one place, in the frame of every reader of a long text (W14)', () => {
+		// "Zoek in dit stuk" is the frame's (ReaderFrame `find`): a law, an article, a bijlage, a
+		// stuk and a uitspraak ask for it; none draws a search of its own over its text.
+		const lang = ['Article', 'Annex', 'Document', 'Judgment', 'Instrument'];
+		for (const naam of lang)
+			expect(bron(`lib/components/explore/readers/${naam}Reader.svelte`), naam).toMatch(
+				/<ReaderFrame\s+find\b/
+			);
+		expect(
+			overtreders(
+				(t) => /placeholder="Zoek in dit stuk"/.test(t),
+				[plek('lib/components/explore/SearchInText.svelte')]
+			)
+		).toEqual([]);
+	});
+
+	it('picks the peildatum of a law and of its article with one component (W14, X14)', () => {
+		for (const pad of [
+			'lib/components/explore/WholeLawReader.svelte',
+			'lib/components/explore/readers/ArticleReader.svelte'
+		])
+			expect(bron(pad), pad).toMatch(/<WholeLawReaderPeildatum\b/);
+		expect(
+			overtreders(
+				(t) => /Tekst geldend op/.test(t),
+				[plek('lib/components/explore/WholeLawReaderPeildatum.svelte')]
+			)
+		).toEqual([]);
+	});
+
 	it('sets footnotes by one component in every reader (Voetnoten, CitedText `noten`)', () => {
 		// A judgment, a Kamerstuk and an overweging read in place (its card, Gemarkeerd) show
 		// their notes alike: the marker in CitedText (in TextBlocks where a text has tables), the

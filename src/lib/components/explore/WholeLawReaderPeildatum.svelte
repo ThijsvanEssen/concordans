@@ -1,7 +1,7 @@
 <script lang="ts">
 	// The peildatum of the whole-law reader: the versions of the law by year, the text of today
 	// first, as a line of the head.
-	import { langeDatum } from '$lib/text/datum';
+	import { langeDatum, vandaag } from '$lib/text/datum';
 	import { formatCount } from '$lib/text/getal';
 	import type { Schema } from '$lib/api/types';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
@@ -10,13 +10,14 @@
 	let {
 		versions,
 		peildatum,
-		today,
+		today = vandaag(),
 		choose,
 		verlopen = false
 	}: {
 		versions: Schema<'InstrumentVersionDTO'>[];
 		peildatum: string | null;
-		today: string;
+		/** The day the reader is on; the day of the reader's clock when it is not given. */
+		today?: string;
 		/** Opens the text of a day; '' for today's. */
 		choose: (day: string) => void;
 		/** The law has expired: no text holds today, the last one is the newest version. */

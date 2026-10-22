@@ -50,7 +50,7 @@
 			.map((line) => ({ line, heading: line.endsWith(':') }));
 </script>
 
-<ReaderFrame state={annex.state} what="Bijlage" retry={annex.retry}>
+<ReaderFrame find state={annex.state} what="Bijlage" retry={annex.retry}>
 	{#snippet children(detail)}
 		{@const a = detail.annex}
 		{@const entries = a.entries ?? []}

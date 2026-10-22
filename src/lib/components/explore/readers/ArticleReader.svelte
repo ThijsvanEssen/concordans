@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { NOT_IN_DATA, notHeld } from '$lib/text/coverage';
 	import { capitalize, plural } from '$lib/text/words';
-	import { langeDatum } from '$lib/text/datum';
+	import { isDay, langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import {
@@ -38,7 +38,8 @@
 	import { articleName } from '$lib/text/bw';
 	import { placeOf, type Division } from '$lib/text/division';
 	import { lidHistory, unitsOf, wordingsOf } from '$lib/text/version-diff';
-	import { inForceOn } from '../peildatum';
+	import { inForceOn, peildatumVersions } from '../peildatum';
+	import WholeLawReaderPeildatum from '../WholeLawReaderPeildatum.svelte';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { filterParams, type VerbondenFilter } from '$lib/verbonden/filter';
 	import { formatCount } from '$lib/text/getal';
@@ -286,6 +287,23 @@
 			shownIndex = w && w !== current && w !== lapse ? w.index : null;
 		});
 	});
+	// The peildatum as the law has it (WholeLawReaderPeildatum, one component for both pages):
+	// the versions of the law, asked once the article is in; an act of the EU has none.
+	const lawVersions = load(
+		() => (bwbId && article.state.status === 'ready' && !euAct ? bwbId : null),
+		(bwb, signal) => (bwb ? peildatumVersions(bwb, signal) : Promise.resolve([])),
+		'Tekstversies van de wet'
+	);
+	const lawDays = $derived(lawVersions.state.status === 'ready' ? lawVersions.state.data : []);
+	/** A day the reader chose that no tekstversie of this article covers: before it was made. */
+	const peildatumEmpty = $derived(
+		isDay(peildatum) && wordings.length > 0 && !inForceOn(wordings, peildatum, (x) => x)
+	);
+	/** Opens the text of a day; '' for today's (the geldende tekst). */
+	function choosePeildatum(day: string) {
+		if (!day) shownIndex = null;
+		go({ peildatum: day || null, versies: null, vergelijk: null, weergave: null });
+	}
 	// The text of an earlier tekstversie, asked when it is chosen: the history lists none.
 	const shownText = load(
 		() => (shown ? `${bwbId}/${articleNumber}/${shown.first.key}` : null),
@@ -435,7 +453,7 @@
 			forms: plaats ? citeArticle({ ...citation, ...deel, date: citeOn }) : forms
 		};
 	});
-	const bewaarHier = $derived.by(() => {
+	const keepHere = $derived.by(() => {
 		if (!citation || !hier) return null;
 		const { plaats, deel, forms: f } = hier;
 		return {
@@ -645,7 +663,7 @@
 	{/if}
 {/snippet}
 
-<ReaderFrame state={article.state} what="Artikel" retry={article.retry}>
+<ReaderFrame find state={article.state} what="Artikel" retry={article.retry}>
 	{#snippet children({ detail: d })}
 		{@const a = d.article}
 		{@const placeLine = placeOf(place, d.instrument?.display_name ?? law?.citationTitle)}
@@ -658,8 +676,8 @@
 			place={[]}
 			placeTitle={placeLine?.title}
 			acties={{
-				bewaar: bewaarHier?.item ?? null,
-				wat: bewaarHier?.wat ?? '',
+				bewaar: keepHere?.item ?? null,
+				wat: keepHere?.wat ?? '',
 				cite: hier ? citeItems(hier.forms, readLink) : [],
 				naam: hier?.forms.kort ?? '',
 				bron: officialUrl && officialName ? { label: officialName, href: officialUrl } : null,
@@ -793,6 +811,14 @@
 					>
 				{/if}
 			{/snippet}
+			{#if lawDays.length > 0}
+				<WholeLawReaderPeildatum
+					versions={lawDays}
+					peildatum={isDay(peildatum) ? peildatum : null}
+					choose={choosePeildatum}
+					verlopen={expired}
+				/>
+			{/if}
 			<!-- Where the text came from: the wet that made it, its toelichting, the
 				     earlier texts. -->
 			{#if versionDossiers.length > 0}
@@ -903,6 +929,13 @@
 						form="block"
 					/>
 				{/if}
+			{:else if peildatumEmpty && isDay(peildatum)}
+				<p class="note">
+					Van dit artikel is op {langeDatum(peildatum)} geen tekst in de gegevens.
+					<button type="button" class="note__close" onclick={() => choosePeildatum('')}
+						>{expired ? 'Laatste tekst lezen' : 'Geldend recht lezen'}</button
+					>
+				</p>
 			{:else if shown && shownText.state.status !== 'ready'}
 				<LoadState state={shownText.state} what="De tekst" form="block" retry={shownText.retry} />
 			{:else}

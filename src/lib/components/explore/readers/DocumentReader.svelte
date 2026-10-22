@@ -314,7 +314,7 @@
 	});
 </script>
 
-<ReaderFrame state={record.state} what="Document" retry={record.retry}>
+<ReaderFrame find state={record.state} what="Document" retry={record.retry}>
 	{#snippet children(doc)}
 		{@const term = termOfKind(doc.kind)}
 		<!-- Without the group of kinds the source files it under (#58): "Amendement". -->

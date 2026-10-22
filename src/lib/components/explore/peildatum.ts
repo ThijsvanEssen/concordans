@@ -3,6 +3,8 @@
 // place in the law as it was that day.
 import type { Schema } from '$lib/api/types';
 import { isDay } from '$lib/text/datum';
+import { getInstrumentVersions } from '$lib/api/instruments';
+import { uniqueBy } from '$lib/util/unique';
 import type { FootnoteMark } from '$lib/text/voetnoten';
 
 type Version = Pick<Schema<'InstrumentVersionDTO'>, 'valid_from' | 'valid_until' | 'current'>;
@@ -116,3 +118,7 @@ export function atArticles(items: AtItem[], current: Current[]): AtArticle[] {
 		text_preview: i.text_preview ?? null
 	}));
 }
+
+/** The versions of a law for the peildatum, one per day they took effect (the key of one that has no day). */
+export const peildatumVersions = (bwb: string, signal?: AbortSignal) =>
+	getInstrumentVersions(bwb, signal).then((r) => uniqueBy(r.items, (v) => v.valid_from ?? v.key));

@@ -13,6 +13,8 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';
+	import { keepMarkedInView } from './nav-column';
+	import { followSections } from './toc-position.svelte';
 
 	let { selection }: { selection: GraphNode | null } = $props();
 
@@ -35,6 +37,13 @@
 	const loaded = $derived(toc.state.status === 'ready' ? toc.state.data : null);
 	// While the contents load, or after they failed, the column keeps the name of the stuk.
 
+	// The section at the top of the text, marked in the list and kept in view in the column.
+	const position = followSections(() => loaded?.sections.map((s) => s.id) ?? []);
+	let navEl = $state<HTMLElement | null>(null);
+	$effect(() => {
+		if (position.current) keepMarkedInView(navEl);
+	});
+
 	// A link to the passage, so that it can be copied and opened elsewhere; a plain click
 	// scrolls smoothly and puts the passage in the address without a history entry.
 	function jump(e: MouseEvent, id: string) {
@@ -50,6 +59,7 @@
 		label="Inhoud"
 		title={loaded?.title ?? selection?.label ?? null}
 		onder={loaded?.kind ? capitalize(loaded.kind) : null}
+		bind:el={navEl}
 	>
 		<LoadState state={toc.state} what="De inhoudsopgave" retry={toc.retry}>
 			{#snippet children(doc)}
@@ -59,6 +69,8 @@
 							<li>
 								<a
 									class="nav-kolom__rij level-{Math.min(s.level, 3)}"
+									class:is-active={position.current === s.id}
+									aria-current={position.current === s.id ? 'location' : undefined}
 									href="#{s.id}"
 									onclick={(e) => jump(e, s.id)}>{s.heading}</a
 								>

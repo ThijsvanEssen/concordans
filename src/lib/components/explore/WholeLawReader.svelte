@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { bewaarItem } from '$lib/map/map';
 	import { langeDatum, vandaag } from '$lib/text/datum';
-	import { uniqueBy } from '$lib/util/unique';
-	import { getInstrumentVersions } from '$lib/api/instruments';
 	import { report } from '$lib/api/errors';
 	import { untrack } from 'svelte';
 	import { getArticleDetail, getLawBasis } from '$lib/api/articles';
@@ -26,7 +24,7 @@
 	import ReaderHead from './readers/ReaderHead.svelte';
 	import { citeItems } from '$lib/components/ui/cite-items';
 	import { permalink } from '$lib/bron/landing';
-	import { versionOn } from './peildatum';
+	import { peildatumVersions, versionOn } from './peildatum';
 	import { isDay } from '$lib/text/datum';
 	import { nog, verderLabel, type Richting } from './law-paging';
 	import { EMPTY_LIST, createLawList, isDivisionAnchor, type LawList, type Row } from './law-list';
@@ -110,14 +108,7 @@
 	const treaty = $derived(treatyLink(lawDetail, lawDetail?.same_treaty ?? []));
 	// The versions of the law, for the peildatum; the current one dates the text in force
 	// where the law gives no version_date_in_force.
-	const versionList = load(
-		() => bwbId,
-		(bwb, signal) =>
-			getInstrumentVersions(bwb, signal).then((r) =>
-				uniqueBy(r.items, (v) => v.valid_from ?? v.key)
-			),
-		'Tekstversies'
-	);
+	const versionList = load(() => bwbId, peildatumVersions, 'Tekstversies');
 	const versions = $derived(versionList.state.status === 'ready' ? versionList.state.data : []);
 	/** The list of versions has come in: an empty one means the dataset keeps none. */
 	const versionsLoaded = $derived(versionList.state.status === 'ready');

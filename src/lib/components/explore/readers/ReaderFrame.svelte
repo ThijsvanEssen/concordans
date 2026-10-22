@@ -14,6 +14,8 @@
 	import { BEHOORT_KEY } from '$lib/bron/behoort';
 	import WeergaveSchakelaar from '../WeergaveSchakelaar.svelte';
 	import { WEERGAVE_KEY, type Weergave } from '../weergave';
+	import SearchInText from '../SearchInText.svelte';
+	import { SearchState } from '../search-state.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { LoadState as State } from '$lib/util/load.svelte';
 
@@ -22,6 +24,7 @@
 		what = 'De bron',
 		retry,
 		head,
+		find = false,
 		loading,
 		foot,
 		children: body
@@ -32,6 +35,8 @@
 		what?: string;
 		/** Load again after an error: the API may have been out of reach for a moment. */
 		retry?: () => void;
+		/** A long text: "Zoek in dit stuk" stands beside the switch and marks hits in the text. */
+		find?: boolean;
 		/** What stands before the load is in (the head from the light node), in every state. */
 		head?: Snippet;
 		/** In place of the skeleton: the reader's own rows, with their labels, while it loads. */
@@ -48,15 +53,35 @@
 	// for a document opened beside it.
 	const weergave = getContext<(() => Weergave | null) | undefined>(WEERGAVE_KEY);
 	const w = $derived(bron ? (weergave?.() ?? null) : null);
+
+	const search = new SearchState();
 </script>
 
 <div class="reader-frame">
-	<div class="reader-frame__col">
+	<div class="reader-frame__col" bind:this={search.column}>
 		<!-- The band and Netwerk/Tekst on one row, one rule under both over the full width
 		     (Thijs, 10 Oct: the rule stopped short of the toggle). -->
-		{#if w || bron}
+		{#if w || bron || find}
 			<div class="kop-rij">
 				{#if bron}<div class="kop-rij__band"><BehoortBij node={bron()} /></div>{/if}
+				{#if w?.contents || find}
+					<div class="head-actions">
+						{#if w?.contents}
+							<button type="button" class="btn" aria-haspopup="dialog" onclick={w.contents}
+								>Inhoud</button
+							>
+						{/if}
+						{#if find}
+							<button
+								type="button"
+								class="btn"
+								class:is-active={search.open}
+								aria-expanded={search.open}
+								onclick={() => search.toggle()}>Zoek in dit stuk</button
+							>
+						{/if}
+					</div>
+				{/if}
 				{#if w}
 					<div class="weergave">
 						<WeergaveSchakelaar weergave={w} />
@@ -64,6 +89,10 @@
 				{/if}
 			</div>
 		{/if}
+		{#if find && search.open}<SearchInText
+				root={search.column}
+				onClose={() => search.close()}
+			/>{/if}
 		{@render head?.()}
 		{#if state.status === 'loading' && loading}
 			{@render loading()}
@@ -141,6 +170,25 @@
 	.weergave {
 		flex: none;
 		margin-left: auto;
+	}
+	/* The band takes the room; the controls of the long text stand at the right of it. */
+	.head-actions {
+		display: flex;
+		flex: none;
+		gap: var(--s-2);
+	}
+	.head-actions :global(.btn.is-active) {
+		border-color: var(--ink);
+		color: var(--ink);
+	}
+	/* On a phone the controls stand under the band, not squeezed beside it. */
+	@media (max-width: 768px) {
+		.kop-rij {
+			flex-wrap: wrap;
+		}
+		.kop-rij__band {
+			flex-basis: 100%;
+		}
 	}
 	/* On a phone the tabs (Tekst, Netwerk, Verbonden) are the one control. */
 	@media (max-width: 768px) {

@@ -23,7 +23,7 @@ describe('names, not keys', () => {
 				reden: 'the ECLI asked of the API'
 			},
 			{
-				pad: 'lib/components/explore/WholeLawReader.svelte',
+				pad: 'lib/components/explore/peildatum.ts',
 				reden: 'the id of a version, not shown'
 			},
 			{

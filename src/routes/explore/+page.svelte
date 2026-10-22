@@ -1172,7 +1172,12 @@
 			? {
 					stand: readAction === 'read' ? 'netwerk' : 'tekst',
 					onKies: (k) => setReading(k === 'tekst'),
-					tekstMogelijk: true
+					tekstMogelijk: true,
+					// Beside the network the contents have no column: they open over the reader.
+					contents:
+						readAction === 'read' && selectedNode && WITH_CONTENTS.has(selectedNode.collection)
+							? () => (tocOpen = true)
+							: undefined
 				}
 			: mode === 'graph' && selectedNode && !tableMode
 				? { stand: 'netwerk', onKies: () => {}, tekstMogelijk: false }
@@ -1565,6 +1570,9 @@
 					{/if}
 				</div>
 			</div>
+			{#if tocOpen && weergave?.contents}
+				<TocSheet always onClose={() => (tocOpen = false)}>{@render toc()}</TocSheet>
+			{/if}
 		{:else if selectedNode && tableMode}
 			<div class="explore-table">
 				{#if connectionsTable.component}
