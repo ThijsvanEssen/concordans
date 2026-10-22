@@ -29,7 +29,7 @@
 	import { focusFirstNew, rijen } from '$lib/actions/rijen';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
-	import Volg from '$lib/components/ui/Volg.svelte';
+	import Follow from '$lib/components/ui/Follow.svelte';
 	import { atomHref } from '$lib/components/actueel/feed';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
@@ -645,7 +645,7 @@
 							{/if}
 							{#if follow}
 								<!-- The list as a feed: its filters in one Atom link. -->
-								<span class="volg-plek"><Volg href={atomHref(follow)} /></span>
+								<span class="volg-plek"><Follow href={atomHref(follow)} /></span>
 							{/if}
 							{#if sorts.length > 1}
 								<!-- The order of the list: one line under its count (docs/bediening.md). -->

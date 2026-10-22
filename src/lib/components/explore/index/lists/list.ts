@@ -111,7 +111,7 @@ export type List<Row, State extends object, Query> = {
 	/** Whether the rows show, where they can say no more than the Header (default: always). */
 	rowsShown?(p: IndexParams): boolean;
 	/**
-	 * The list as a feed (`/api/feed.atom`): its filters in the feed's words. Null where a filter
+	 * The list as a feed (the Atom feed of the API): its filters in the feed's words. Null where a filter
 	 * is chosen the feed has no word for; there the list offers no Volg.
 	 */
 	follow?(p: IndexParams): Record<string, string | readonly string[] | undefined> | null;

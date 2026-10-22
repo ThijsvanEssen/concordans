@@ -35,7 +35,7 @@
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import Verfijnen from '$lib/components/ui/Verfijnen.svelte';
-	import Volg from '$lib/components/ui/Volg.svelte';
+	import Follow from '$lib/components/ui/Follow.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import {
 		splitsTermen,
@@ -610,7 +610,7 @@
 			<h1 class="blad__titel">Actueel</h1>
 		</div>
 		<div class="blad__acties">
-			<Volg href={atom} buttonClass="btn is-groot" />
+			<Follow href={atom} buttonClass="btn is-groot" />
 			{#if q.length}
 				{#if gevolgd}
 					<a class="btn is-groot" href="/onderwerpen">Gevolgd als onderwerp</a>

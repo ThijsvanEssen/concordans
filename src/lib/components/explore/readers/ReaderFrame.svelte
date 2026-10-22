@@ -17,7 +17,7 @@
 	import SearchInText from '../SearchInText.svelte';
 	import { SearchState } from '../search-state.svelte';
 	import { page } from '$app/state';
-	import { langeDatum, vandaag } from '$lib/text/datum';
+	import { consultedOn } from '$lib/text/datum';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { LoadState as State } from '$lib/util/load.svelte';
 
@@ -47,6 +47,12 @@
 		foot?: Snippet;
 		children?: Snippet<[T]>;
 	} = $props();
+
+	/** Where the text was read and when, for paper (print.css): set in the browser, hidden on screen. */
+	function readAt(node: HTMLElement) {
+		const { origin, pathname, search } = window.location;
+		node.textContent = `${origin}${pathname}${search}, geraadpleegd ${consultedOn()}`;
+	}
 
 	// Where the bron stands, above its text and before it loads (docs/hierarchie.md).
 	const bron = getContext<(() => GraphNode) | undefined>(BEHOORT_KEY);
@@ -105,9 +111,7 @@
 		{/if}
 		{@render foot?.()}
 		<!-- On paper only (lib/styles/print.css): where the text was read and when. -->
-		<p class="papier-bron">
-			{page.url.origin}{page.url.pathname}{page.url.search}, geraadpleegd {langeDatum(vandaag())}
-		</p>
+		<p class="papier-bron" use:readAt></p>
 	</div>
 </div>
 

@@ -119,3 +119,6 @@ export function yearsOf(from: string | null, to: string | null): string {
 	if (a && b) return a === b ? a : `${a}–${b}`;
 	return a ? `${a}–` : b ? `–${b}` : '';
 }
+
+/** Today as a reader dates a consultation: `22 oktober 2026`. */
+export const consultedOn = (now = new Date()): string => langeDatum(vandaag(now));

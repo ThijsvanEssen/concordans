@@ -7,7 +7,7 @@
 	import { getFeed } from '$lib/api/feed';
 	import { report } from '$lib/api/errors';
 	import NewMark from '$lib/components/ui/NewMark.svelte';
-	import Volg from '$lib/components/ui/Volg.svelte';
+	import Follow from '$lib/components/ui/Follow.svelte';
 	import { atomHref } from '$lib/components/actueel/feed';
 	import { vandaag } from '$lib/text/datum';
 	import {
@@ -61,10 +61,10 @@
 				['van', newSince]
 			])}"><NewMark since={newSince} /></a
 		>{/if}
-	<Volg href={atom} />
+	<Follow href={atom} />
 {:else}
-	<Volg href={atom}>
-		{#snippet lokaal(close)}
+	<Follow href={atom}>
+		{#snippet local(close)}
 			<button
 				type="button"
 				role="menuitem"
@@ -76,7 +76,7 @@
 				}}>Bewaar bij Gevolgd</button
 			>
 		{/snippet}
-	</Volg>
+	</Follow>
 {/if}
 
 <style>

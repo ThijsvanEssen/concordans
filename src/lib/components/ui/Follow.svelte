@@ -12,16 +12,14 @@
 
 	let {
 		href,
-		label = 'Volg',
 		buttonClass = 'btn',
-		lokaal
+		local
 	}: {
 		/** The Atom link of the view (`atomHref`). */
 		href: string;
-		label?: string;
 		buttonClass?: string;
 		/** The ways to follow in this browser, as menu items; given the function that closes the menu. */
-		lokaal?: Snippet<[() => void]>;
+		local?: Snippet<[() => void]>;
 	} = $props();
 
 	let open = $state(false);
@@ -34,7 +32,7 @@
 	}
 </script>
 
-{#if lokaal}
+{#if local}
 	<span class="volg" use:menu={{ open, close: () => (open = false) }}>
 		<button
 			type="button"
@@ -42,16 +40,16 @@
 			bind:this={button}
 			aria-haspopup="menu"
 			aria-expanded={open}
-			onclick={() => (open = !open)}>{copier.label('atom', label)}<Caret {open} /></button
+			onclick={() => (open = !open)}>{copier.label('atom', 'Volg')}<Caret {open} /></button
 		>
 		{#if open && button}
 			<div
 				class="tekstmenu__lijst"
 				role="menu"
-				aria-label={label}
+				aria-label="Volg"
 				use:topLayer={{ anchor: button, close: () => (open = false), align: 'right' }}
 			>
-				{@render lokaal(() => (open = false))}
+				{@render local(() => (open = false))}
 				<button type="button" role="menuitem" class="tekstmenu__item" onclick={copy}
 					>Kopieer Atom-link</button
 				>
@@ -63,7 +61,7 @@
 		type="button"
 		class={buttonClass}
 		title="Kopieer de Atom-link van deze lijst"
-		onclick={copy}>{copier.label('atom', label)}</button
+		onclick={copy}>{copier.label('atom', 'Volg')}</button
 	>
 {/if}
 <span class="sr-only" aria-live="polite">{copier.announcement}</span>

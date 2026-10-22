@@ -2,9 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createRawSnippet } from 'svelte';
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { tick } from 'svelte';
-import Volg from './Volg.svelte';
+import Follow from './Follow.svelte';
 
-const href = 'https://concordans.nl/api/feed.atom?dossier=36496';
+const href = 'https://concordans.nl/atom-link';
 const write = vi.fn(() => Promise.resolve());
 
 function clipboard() {
@@ -16,10 +16,10 @@ function clipboard() {
 
 afterEach(() => write.mockClear());
 
-describe('Volg', () => {
+describe('Follow', () => {
 	it('copies the Atom link at once where it has nothing else to offer', async () => {
 		clipboard();
-		render(Volg, { href });
+		render(Follow, { href });
 		await fireEvent.click(screen.getByRole('button', { name: 'Volg' }));
 		await tick();
 		expect(write).toHaveBeenCalledWith(href);
@@ -28,10 +28,10 @@ describe('Volg', () => {
 
 	it('opens a menu with the local way and the Atom link', async () => {
 		clipboard();
-		const lokaal = createRawSnippet(() => ({
+		const local = createRawSnippet(() => ({
 			render: () => '<button role="menuitem">Bewaar bij Gevolgd</button>'
 		}));
-		render(Volg, { href, lokaal });
+		render(Follow, { href, local });
 		await fireEvent.click(screen.getByRole('button', { name: 'Volg' }));
 		expect(screen.getByRole('menuitem', { name: 'Bewaar bij Gevolgd' })).toBeTruthy();
 		await fireEvent.click(screen.getByRole('menuitem', { name: 'Kopieer Atom-link' }));
