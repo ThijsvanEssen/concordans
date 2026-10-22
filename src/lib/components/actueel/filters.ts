@@ -17,9 +17,13 @@ export const COALITION = {
 } as const;
 export type CoalitionWord = keyof typeof COALITION;
 
-/** How a faction voted (API: `vote` with `party`): the site's word is the API's. */
-export const VOTES = { voor: 'Voor', tegen: 'Tegen' } as const;
-export type VoteWord = keyof typeof VOTES;
+/** How a faction voted (API: `vote` with `party`): the site's word is the API's, voor or tegen. */
+export const VOTES = ['voor', 'tegen'] as const;
+
+/** The names of Stemde and its Stem in the address. */
+export const VOTED_PARAM = 'stemde';
+export const VOTE_PARAM = 'stem';
+type VoteWord = (typeof VOTES)[number];
 
 /** A law the feed follows by its BWB id: a law or a regulation (BWBR), or a treaty (BWBV). */
 export const isFeedLaw = (value: string) => /^BWB[RV]\d+$/i.test(value);
@@ -85,15 +89,15 @@ const FILTERS: { [K in keyof ActueelFilters]: Filter<ActueelFilters[K]> } = {
 	dossier: plain(PARAM.dossier, 'dossier'),
 	member: plain(PARAM.member, 'member'),
 	faction: plain(PARAM.party, 'faction'),
-	voted: plain('stemde', 'party'),
+	voted: plain(VOTED_PARAM, 'party'),
 	// How it voted counts only for a faction (the API answers 422 for a vote alone).
 	vote: {
-		param: 'stem',
+		param: VOTE_PARAM,
 		read: (p) => {
-			const v = p.get('stem') ?? '';
-			return Object.hasOwn(VOTES, v) ? (v as VoteWord) : '';
+			const v = p.get(VOTE_PARAM) ?? '';
+			return (VOTES as readonly string[]).includes(v) ? (v as VoteWord) : '';
 		},
-		ask: (v) => (v ? { vote: v === 'voor' ? 'voor' : 'tegen' } : {})
+		ask: (v) => (v ? { vote: v } : {})
 	},
 	coalition: {
 		param: PARAM.coalition,

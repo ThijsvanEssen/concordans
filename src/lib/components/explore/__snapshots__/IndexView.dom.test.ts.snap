@@ -1398,7 +1398,9 @@ exports[`Bronnen, list by list > judgments ?q=huur&tier=rechtbank&court_kind=rec
       "q": "huur",
       "sort": "date_asc",
       "subject_area": "Civiel recht",
-      "tier": "rechtbank",
+      "tier": [
+        "rechtbank",
+      ],
       "to": "2020-12-31",
     },
     {
@@ -1411,7 +1413,9 @@ exports[`Bronnen, list by list > judgments ?q=huur&tier=rechtbank&court_kind=rec
       "q": "huur",
       "sort": "date_asc",
       "subject_area": "Civiel recht",
-      "tier": "rechtbank",
+      "tier": [
+        "rechtbank",
+      ],
       "to": "2020-12-31",
     },
   ],

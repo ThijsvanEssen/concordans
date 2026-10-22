@@ -79,13 +79,14 @@
 	import {
 		COALITION,
 		FEED_FILTER_PARAMS,
+		VOTE_PARAM,
+		VOTED_PARAM,
 		VOTES,
 		feedQuery,
 		readFilters,
 		summaryQuery,
 		type CoalitionWord,
-		type FeedQuery,
-		type VoteWord
+		type FeedQuery
 	} from '$lib/components/actueel/filters';
 	import {
 		CLOSE_VOTE,
@@ -492,7 +493,8 @@
 				options: [...new Set([...Object.keys(factionNames), ...(voted ? [voted] : [])])]
 					.map((key) => ({ value: key, label: factionNames[key] ?? key }))
 					.sort((a, b) => a.label.localeCompare(b.label, 'nl')),
-				onChange: (v) => patchUrl({ stemde: v || null, stem: v ? vote || null : null })
+				onChange: (v) =>
+					patchUrl({ [VOTED_PARAM]: v || null, [VOTE_PARAM]: v ? vote || null : null })
 			},
 			...(voted
 				? [
@@ -502,11 +504,11 @@
 							kind: 'select' as const,
 							value: vote,
 							all: 'Voor en tegen',
-							options: (Object.keys(VOTES) as VoteWord[]).map((k) => ({
+							options: VOTES.map((k) => ({
 								value: k,
 								label: capitalize(k)
 							})),
-							onChange: (v: string) => patchUrl({ stem: v || null })
+							onChange: (v: string) => patchUrl({ [VOTE_PARAM]: v || null })
 						}
 					]
 				: []),

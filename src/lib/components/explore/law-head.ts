@@ -34,11 +34,6 @@ const KIND: Record<string, string> = {
 	verdrag: 'Verdrag',
 	bilateraalverdrag: 'Bilateraal verdrag',
 	multilateraalverdrag: 'Multilateraal verdrag',
-	// An act of the EU, by its CELEX letter (API 0.81).
-	richtlijn: 'Richtlijn',
-	verordening: 'Verordening',
-	besluit: 'Besluit',
-	kaderbesluit: 'Kaderbesluit',
 	// Not a BWB kind: the API's for a publication in the Staatsblad or Staatscourant.
 	publicatie: 'Publicatie'
 };

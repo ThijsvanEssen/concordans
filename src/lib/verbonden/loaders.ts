@@ -43,8 +43,7 @@ import {
 } from '$lib/api/verbonden';
 import { lawArticleList } from '$lib/api/law-articles';
 import { buildGroups, ditVan, EUROPEAN, matches, type Loader, type Match } from './groups';
-import { VERBONDEN_BUCKET } from '$lib/api/records';
-import { filterGroupOf, rechterOfTier, tiersOfRechter, type Rechter } from './filter';
+import { courtOfTier, filterGroupOf, tiersOfCourt, type Court } from './filter';
 import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 import { getJudgmentDetail } from '$lib/api/judgments';
 import { aanhalingIn } from './passage';
@@ -110,9 +109,9 @@ export function implementationLine(
 export type JudgmentOrder = 'date' | 'cited';
 
 /** What the reader chose for a loader: the order of the judgments, and of a law one year (BE-51). */
-export type LoaderOptions = { order: JudgmentOrder; year: number | null; rechter: Rechter | null };
+export type LoaderOptions = { order: JudgmentOrder; year: number | null; court: Court | null };
 
-export const DEFAULT_LOADER_OPTIONS: LoaderOptions = { order: 'date', year: null, rechter: null };
+export const DEFAULT_LOADER_OPTIONS: LoaderOptions = { order: 'date', year: null, court: null };
 
 /**
  * The order a bron's groups start in: the judgments that cite an article the most cited first,
@@ -149,7 +148,7 @@ export type Loaded = {
 	/** The years of all of a group's bronnen, where the API counts them (not only the rows). */
 	years?: { year: number; count: number }[];
 	/** The judgments per rechter, where the API counts them over the whole group. */
-	rechters?: Partial<Record<Rechter, number>>;
+	courts?: Partial<Record<Court, number>>;
 	/** The criteria of the filter the loader asked of the API: its total holds under them. */
 	cutBy?: ('jaar' | 'rechter')[];
 	/** The rest of the rows, asked when the group is opened, the table or an export. */
@@ -624,7 +623,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		const sort = options.order === 'cited' ? ('citation_count' as const) : ('date_desc' as const);
 		// The year and the rechter of the bronfilter are asked of the API: its totals and its
 		// facets then count the whole group, not the page that was loaded.
-		const tier = options.rechter ? tiersOfRechter(options.rechter) : undefined;
+		const tier = options.court ? tiersOfCourt(options.court) : undefined;
 		const query = {
 			limit: CITED_BY_PAGE,
 			sort,
@@ -640,23 +639,13 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		const years = (data.facets?.year ?? []).flatMap((f) =>
 			f.value ? [{ year: Number(f.value), count: f.count }] : []
 		);
-		const rechters: Partial<Record<Rechter, number>> = {};
+		const courts: Partial<Record<Court, number>> = {};
 		for (const f of data.facets?.tier ?? []) {
-			const r = rechterOfTier(f.value);
-			if (r) rechters[r] = (rechters[r] ?? 0) + f.count;
+			const c = courtOfTier(f.value);
+			if (c) courts[c] = (courts[c] ?? 0) + f.count;
 		}
-		// The menu of year and rechter stands where there are judgments to choose among, or
-		// where one is chosen (a small remainder keeps its way back).
-		const choosing =
-			years.reduce((n, y) => n + y.count, 0) > VERBONDEN_BUCKET ||
-			!!options.year ||
-			!!options.rechter;
 		const facets = counted
-			? {
-					years: choosing ? years : undefined,
-					rechters: choosing ? rechters : undefined,
-					cutBy: ['jaar', 'rechter'] as ('jaar' | 'rechter')[]
-				}
+			? { years, courts, cutBy: ['jaar', 'rechter'] as ('jaar' | 'rechter')[] }
 			: {};
 		// The ECHR judgments are no passage (HUDOC names the article, not the place): they
 		// stand in Europees en internationaal, not here (BE-9).

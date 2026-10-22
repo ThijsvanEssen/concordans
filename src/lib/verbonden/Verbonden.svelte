@@ -26,6 +26,7 @@
 		EMPTY_FILTER,
 		FILTER_GROUP_NOUN,
 		withFilterGroup,
+		askedOfApi,
 		type VerbondenFilter
 	} from './filter';
 	import { formatCount, isAtLeast } from '$lib/text/getal';
@@ -158,14 +159,10 @@
 	// the rechter for an article: its judgments of that year and court are loaded, not
 	// filtered out of the first page.
 	$effect(() => {
-		const year =
-			selection.collection === 'instruments' || selection.collection === 'articles'
-				? (filter.jaar ?? null)
-				: null;
-		const rechter = selection.collection === 'articles' ? (filter.rechter ?? null) : null;
+		const asked = askedOfApi(filter, selection.collection);
 		const now = untrack(() => verbonden.options);
-		if (year === now.year && rechter === now.rechter) return;
-		onReloadGroup?.('judgments', { year, rechter });
+		if (asked.year === now.year && asked.court === now.court) return;
+		onReloadGroup?.('judgments', asked);
 	});
 
 	// A new bron starts closed; the same bron with more rows (a group opened) stays as it is.
@@ -438,13 +435,18 @@
 	let openRij = $state<string | null>(null);
 	const wisselRij = (row: Row) => (openRij = openRij === rowKey(row) ? null : rowKey(row));
 
-	// The years of all the group's judgments where the API counts them (a wet, BE-47);
-	// else of the rows loaded, which the sentence then says.
+	// The years of all the group's judgments where the API counts them (a wet, BE-47; an
+	// article, #895), where there are enough to choose among or one is chosen (a small
+	// remainder keeps its way back); else of the rows loaded, which the sentence then says.
 	const years = (g: Group) =>
 		grouping !== 'soort' || g.rows[0]?.filterGroup !== 'uitspraken'
 			? []
 			: g.years?.length
-				? g.years
+				? g.years.reduce((n, y) => n + y.count, 0) > VERBONDEN_BUCKET ||
+					filter.jaar ||
+					filter.rechter
+					? g.years
+					: []
 				: g.rows.length > VERBONDEN_BUCKET
 					? yearHistogram(g.rows)
 					: [];
@@ -619,7 +621,7 @@
 							order={verbonden.options.order}
 							onOrder={(order) => onReloadGroup?.(g.id, { order })}
 							years={bars}
-							rechters={g.rechters}
+							courts={g.courts}
 							{filter}
 							{onFilter}
 						/>

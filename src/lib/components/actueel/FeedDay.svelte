@@ -232,7 +232,7 @@
 				<!-- The outcome is in the label; the tally beside it, or how it was decided. -->
 				{@const how = votesSentence(i.vote.tally) ?? voteHow(i)}
 				{#if how}<span>{how}</span>{/if}
-				{@render stem(i)}
+				{@render partyChoice(i)}
 			{:else if i.commitment}
 				<span
 					>{i.commitment.status ?? ''}{i.commitment.expected_resolution
@@ -248,7 +248,7 @@
 {/snippet}
 
 <!-- How the fractie asked for voted on a vote: "VVD stemde voor". -->
-{#snippet stem(i: FeedItem)}
+{#snippet partyChoice(i: FeedItem)}
 	{#if stemde && i.vote?.party_choice}
 		<span class="meta">{stemde} stemde {i.vote.party_choice.toLowerCase()}</span>
 	{/if}
@@ -320,7 +320,7 @@
 							>{/if}{@render persons(i)}</span
 					>
 				{/if}
-				{@render stem(i)}
+				{@render partyChoice(i)}
 				{#if i.vote?.coalition}
 					<CoalitieRegel coalitie={i.vote.coalition} fracties={i.vote.coalition_factions ?? []} />
 				{/if}

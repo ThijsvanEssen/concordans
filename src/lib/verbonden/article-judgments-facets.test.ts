@@ -28,7 +28,7 @@ const item = (
 
 const run = (options: Partial<LoaderOptions> = {}) =>
 	LOADERS['article-judgments']({
-		node: { id: 'articles/x', key: 'x', props: ARTICLE } as LoaderContext['node'],
+		node: { id: 'articles/x', key: 'x', props: ARTICLE } as unknown as LoaderContext['node'],
 		neighbors: [],
 		totals: new Map(),
 		buren: async () => [],
@@ -69,7 +69,7 @@ describe('the judgments that cite an article, over the whole group', () => {
 			{ year: 2020, count: 800 }
 		]);
 		// The Hoge Raad with the Parket; a tier no rechter names is left out.
-		expect(found.rechters).toEqual({ hr: 750, rechtbank: 300 });
+		expect(found.courts).toEqual({ hr: 750, rechtbank: 300 });
 		expect(found.cutBy).toEqual(['jaar', 'rechter']);
 	});
 
@@ -77,7 +77,7 @@ describe('the judgments that cite an article, over the whole group', () => {
 		const api = fakeApi({
 			[ROUTE]: { total: 1, judgment_total: 1, echr_judgment_total: 0, items: [], facets: FACETS }
 		});
-		await run({ year: 2020, rechter: 'hr' });
+		await run({ year: 2020, court: 'hr' });
 		expect(api.asked(ROUTE)[0].query).toMatchObject({
 			year: '2020',
 			tier: ['hoge_raad', 'parket']
@@ -96,7 +96,7 @@ describe('the judgments that cite an article, over the whole group', () => {
 		const found = await run({ year: 2020 });
 		expect(found.cutBy).toBeUndefined();
 		expect(found.years).toBeUndefined();
-		expect(found.rechters).toBeUndefined();
+		expect(found.courts).toBeUndefined();
 	});
 
 	it('holds the API total under the year and the rechter it asked, not under another filter', () => {

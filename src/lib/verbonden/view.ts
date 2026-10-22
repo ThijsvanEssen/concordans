@@ -317,7 +317,7 @@ export function regroup(groups: Group[], by: Grouping, selection: Collection): G
 }
 
 /** The years a group's chart of judgments shows: the last twelve. */
-export const YEARS_IN_CHART = 12;
+const YEARS_IN_CHART = 12;
 
 /** Judgments per year, the last YEARS_IN_CHART years, for the bar chart of a group. */
 export function yearHistogram(

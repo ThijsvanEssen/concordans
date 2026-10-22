@@ -3,7 +3,6 @@
 // Verdragenbank (API 0.81). A row without any of them stands with its title alone.
 import type { Schema } from '$lib/api/types';
 import { enactedLawId, stbCitation } from '$lib/text/enacted-law';
-import { kindName } from '../law-head';
 
 type Row = Pick<Schema<'InstrumentListItemDTO'>, 'bwb_id' | 'celex' | 'jurisdiction' | 'kind'> &
 	Partial<Pick<Schema<'InstrumentListItemDTO'>, 'official_id' | 'treaty_number'>>;
@@ -17,7 +16,14 @@ export function instrumentKenmerk(w: Row): string {
 	return w.treaty_number ? `Verdragsnr. ${w.treaty_number}` : '';
 }
 
-/** An act of the EU by its kind (Richtlijn, Verordening), else by the jurisdiction's word. */
-export function euKind(w: Pick<Row, 'jurisdiction' | 'kind'>): string | null {
-	return w.jurisdiction === 'eu' ? kindName(w.kind) : null;
-}
+/** The kinds of an act of the EU, by its CELEX letter as the API gives them (API 0.81). */
+const EU_KINDS = new Map([
+	['richtlijn', 'Richtlijn'],
+	['verordening', 'Verordening'],
+	['besluit', 'Besluit'],
+	['kaderbesluit', 'Kaderbesluit']
+]);
+
+/** An act of the EU by its kind (Richtlijn, Verordening); null for another or none. */
+export const euKind = (w: Pick<Row, 'jurisdiction' | 'kind'>): string | null =>
+	w.jurisdiction === 'eu' ? (EU_KINDS.get(w.kind ?? '') ?? null) : null;

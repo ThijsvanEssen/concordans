@@ -97,6 +97,8 @@ export const RECHTERS = [
 ] as const;
 
 export type Rechter = (typeof RECHTERS)[number]['id'];
+/** A rechter as the code names it. */
+export type Court = Rechter;
 
 export type Betrouwbaarheid = 'bron' | 'afgeleid';
 export type Status = 'vastgesteld' | 'voorgesteld';
@@ -294,11 +296,11 @@ const RECHTER_OF_TIER: Record<string, Rechter> = {
 };
 
 /** The tiers of a rechter, as the API takes them (`tier`, repeated): the inverse of RECHTER_OF_TIER. */
-export const tiersOfRechter = (rechter: Rechter): string[] =>
-	Object.entries(RECHTER_OF_TIER).flatMap(([tier, r]) => (r === rechter ? [tier] : []));
+export const tiersOfCourt = (court: Court): string[] =>
+	Object.entries(RECHTER_OF_TIER).flatMap(([tier, r]) => (r === court ? [tier] : []));
 
 /** The rechter of a tier, or null for a tier no filter names (`andere_instantie`). */
-export const rechterOfTier = (tier: string | null | undefined): Rechter | null =>
+export const courtOfTier = (tier: string | null | undefined): Court | null =>
 	tier && Object.hasOwn(RECHTER_OF_TIER, tier) ? RECHTER_OF_TIER[tier] : null;
 
 /** The name of a court of the EU, and its case numbers, as the Rechtspraak gives them. */
@@ -412,3 +414,15 @@ export function hiddenByGroup(
 		.map((group) => ({ group, count: Math.max(totals[group] ?? 0, counted.get(group) ?? 0) }))
 		.filter((h) => h.count > 0);
 }
+
+/**
+ * What the bronfilter asks of the API for a group of judgments, by the bron selected: the year
+ * of a wet's and an article's judgments (BE-51), the rechter of an article's. Null for the rest.
+ */
+export const askedOfApi = (
+	f: VerbondenFilter,
+	collection: string
+): { year: number | null; court: Court | null } => ({
+	year: collection === 'instruments' || collection === 'articles' ? (f.jaar ?? null) : null,
+	court: collection === 'articles' ? (f.rechter ?? null) : null
+});
