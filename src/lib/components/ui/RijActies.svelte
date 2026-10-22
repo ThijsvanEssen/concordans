@@ -150,8 +150,8 @@
 	/* Two places of one size, filled or not: the glyphs of all rows stand in two columns. */
 	.plek {
 		display: inline-grid;
-		width: var(--veld-h-klein);
-		height: var(--veld-h-klein);
+		width: var(--tik-h);
+		height: var(--tik-h);
 	}
 	.rij-knop {
 		display: inline-grid;

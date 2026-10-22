@@ -118,7 +118,6 @@
 		</span>
 		<span class="tools__acts">
 			<Keuze
-				klein
 				label="Weergave"
 				opties={[
 					{ waarde: 'een', label: 'In één tekst' },

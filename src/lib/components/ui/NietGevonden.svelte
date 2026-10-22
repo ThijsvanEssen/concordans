@@ -55,8 +55,8 @@
 			{#if actions}
 				{@render actions()}
 			{:else}
-				<a href="/" class="btn is-groot is-primary">Naar de startpagina</a>
-				<a href="/explore" class="btn is-groot">Open Samenhang</a>
+				<a href="/" class="btn is-primary">Naar de startpagina</a>
+				<a href="/explore" class="btn">Open Samenhang</a>
 			{/if}
 		</div>
 	</div>

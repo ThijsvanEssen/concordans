@@ -77,7 +77,7 @@
 		align-items: center;
 		gap: var(--s-2);
 		width: 100%;
-		min-height: var(--veld-h-klein);
+		min-height: var(--tik-h);
 		padding: 0;
 		border: 0;
 		background: transparent;

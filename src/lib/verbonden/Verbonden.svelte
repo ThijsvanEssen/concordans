@@ -489,13 +489,12 @@
 	     the filter (Thijs, 11 Oct). -->
 	{#if !empty}<div class="regel">
 			<TekstMenu
-				klein
 				label="Indeling"
 				waarde={grouping}
 				opties={GROUPINGS.map((g) => ({ waarde: g.id, label: g.label }))}
 				onSelect={(id) => (grouping = id)}
 			/>
-			<button type="button" class="regel__knop" onclick={onOpenFilter}>Filter</button>
+			<button type="button" class="btn" onclick={onOpenFilter}>Filter</button>
 		</div>{/if}
 
 	<div class="body" use:rijen={'a.row__title'} aria-busy={verbonden.loading}>
@@ -733,31 +732,6 @@
 		gap: 0 var(--s-4);
 		padding: var(--s-1) var(--s-4) var(--s-2);
 		border-bottom: 1px solid var(--rule);
-	}
-	.regel__knop {
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		font-weight: 500;
-		color: var(--ink);
-		cursor: pointer;
-		height: var(--veld-h-klein);
-	}
-	/* A finger's 44 px, as the menu beside it: Filter's place to tap reaches past its word. */
-	@media (pointer: coarse), (max-width: 768px) {
-		.regel__knop {
-			height: var(--veld-h-raak);
-			padding: 0 var(--s-2);
-			margin: 0 calc(-1 * var(--s-2));
-		}
-	}
-	.regel__knop:hover,
-	.regel__knop:focus-visible {
-		color: var(--ink);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
 	}
 	/* Netwerk tonen at the right of the heading; the count on the line under it. */
 	.head__netwerk {

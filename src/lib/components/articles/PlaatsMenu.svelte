@@ -259,7 +259,7 @@
 
 <style>
 	.plaatsmenu {
-		font-size: var(--t-ui-micro);
+		font-size: var(--t-ui);
 	}
 	.kop {
 		margin: 0;

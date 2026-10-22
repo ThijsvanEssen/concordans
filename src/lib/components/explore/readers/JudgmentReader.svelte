@@ -379,7 +379,7 @@
 						<CiteMenu
 							items={citeItems(null, linkTo(view, item.id))}
 							name={item.text}
-							buttonClass="reader-heading__link raakvlak-knop"
+							buttonClass="btn is-text reader-heading__link raakvlak-knop"
 						/>
 					</div>
 				{:else if item.kind === 'rov'}
@@ -654,20 +654,6 @@
 	:global(.reader-heading__link) {
 		flex: none;
 		opacity: 0;
-		padding: 2px var(--s-2);
-		border: 0;
-		background: none;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 400;
-		color: var(--ink-3);
-		cursor: pointer;
-	}
-
-	:global(.reader-heading__link):hover {
-		color: var(--ink);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
 	}
 
 	.reader-heading:hover :global(.reader-heading__link),

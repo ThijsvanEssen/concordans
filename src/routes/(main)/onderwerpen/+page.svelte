@@ -369,9 +369,7 @@
 				{#if alGevolgd}
 					<TekstLink href="/onderwerpen">Gevolgd. Naar de eigen onderwerpen</TekstLink>
 				{:else}
-					<button type="button" class="btn is-groot" onclick={volgGedeeld}
-						>Volg deze onderwerpen</button
-					>
+					<button type="button" class="btn" onclick={volgGedeeld}>Volg deze onderwerpen</button>
 				{/if}
 			</div>
 		{:else if eigen.length}
@@ -460,9 +458,7 @@
 								bind:value={erbij}
 								placeholder="Woord of synoniem"
 							/>
-							<button type="submit" class="btn is-groot" disabled={!normaal(erbij)}
-								>Toevoegen</button
-							>
+							<button type="submit" class="btn" disabled={!normaal(erbij)}>Toevoegen</button>
 						</form>
 					</div>
 				{/if}

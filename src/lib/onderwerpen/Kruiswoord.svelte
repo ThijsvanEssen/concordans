@@ -329,7 +329,7 @@
 		cursor: pointer;
 	}
 	.t.knop {
-		height: var(--veld-h-klein);
+		height: var(--tik-h);
 	}
 	.knop:hover,
 	.knop:focus-visible {

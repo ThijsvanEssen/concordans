@@ -33,8 +33,8 @@
 		flex: none;
 		display: inline-grid;
 		place-items: center;
-		width: var(--veld-h-klein);
-		height: var(--veld-h-klein);
+		width: var(--tik-h);
+		height: var(--tik-h);
 		padding: 0;
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);

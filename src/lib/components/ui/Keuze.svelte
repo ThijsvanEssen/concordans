@@ -11,7 +11,6 @@
 		waarde,
 		onSelect,
 		label,
-		klein = false,
 		vol = false,
 		voor
 	}: {
@@ -20,8 +19,6 @@
 		onSelect: (w: T) => void;
 		/** What is chosen, for a screen reader: `Weergave`, `Kamer`. */
 		label: string;
-		/** In a tight spot (the switch beside the band): a step smaller. */
-		klein?: boolean;
 		/** The full width of its column, every option as wide as the others (a period). */
 		vol?: boolean;
 		/** Something before the label of an option, such as a Picto. */
@@ -29,7 +26,7 @@
 	} = $props();
 </script>
 
-<div class="keuze" class:klein class:vol role="group" aria-label={label}>
+<div class="keuze" class:vol role="group" aria-label={label}>
 	{#each opties as o (o.waarde)}
 		<button
 			type="button"
@@ -44,12 +41,13 @@
 </div>
 
 <style>
-	/* The frame counts in the height: a Keuze stands as high as a field beside it. */
+	/* A segment wears the frame of a Knop (basis.css): the frame counts in the height, so a Keuze
+	   stands as high as a field beside it. */
 	.keuze {
 		box-sizing: border-box;
 		display: inline-flex;
 		height: var(--veld-h);
-		border: 1px solid var(--ink);
+		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
 	}
 	button {
@@ -71,13 +69,6 @@
 	button :global(.picto) {
 		color: currentColor;
 	}
-	.keuze.klein {
-		height: var(--veld-h-klein);
-	}
-	.klein button {
-		padding: 0 var(--s-2);
-		font-size: var(--t-ui-micro);
-	}
 	/* Equal where the words fit, a word that needs more takes it: no empty tail, no word
 	   cut (Kwartaal in a 240px column). */
 	.vol {
@@ -91,7 +82,7 @@
 		padding: 0 var(--s-1);
 	}
 	button + button {
-		border-left: 1px solid var(--ink);
+		border-left: 1px solid var(--rule-strong);
 	}
 	/* The ends follow the frame's corners: no overflow to clip them, so a finger's target
 	   (.raakvlak-knop) reaches out of the frame. */

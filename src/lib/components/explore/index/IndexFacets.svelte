@@ -198,7 +198,6 @@
 				{@const sel = g}
 				<!-- One of many: a text menu (docs/bediening.md), the count beside each option. -->
 				<TekstMenu
-					klein
 					label={sel.label}
 					waarde={sel.value}
 					opties={[

@@ -667,7 +667,6 @@
 								<!-- The order of the list: one line under its count (docs/bediening.md). -->
 								<span class="volgorde">
 									<TekstMenu
-										klein
 										rechts
 										label="Volgorde"
 										waarde={sortDef.id}
@@ -756,12 +755,10 @@
 	<div class="empty">
 		<p class="stil">Geen {noun}{chips.length || q ? ' met deze filters' : ''}.</p>
 		{#if widen}
-			<button type="button" class="btn is-groot" onclick={() => patchUrl(widen.patch)}
-				>{widen.label}</button
-			>
+			<button type="button" class="btn" onclick={() => patchUrl(widen.patch)}>{widen.label}</button>
 		{/if}
 		{#if q}
-			<button type="button" class="btn is-groot" onclick={() => openSearch(q)}
+			<button type="button" class="btn" onclick={() => openSearch(q)}
 				>Zoek "{q}" in alle bronnen</button
 			>
 		{/if}

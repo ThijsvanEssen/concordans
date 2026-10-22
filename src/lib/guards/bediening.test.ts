@@ -1,6 +1,15 @@
 // Controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026).
 import { describe, expect, it } from 'vitest';
-import { bron, isControl, overtreders, plek, regels, type Uitzondering } from '$lib/test/bronnen';
+import {
+	BRONNEN,
+	bron,
+	isControl,
+	overtreders,
+	plek,
+	regels,
+	vondsten,
+	type Uitzondering
+} from '$lib/test/bronnen';
 
 describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () => {
 	it('chooses one of many with TekstMenu, not a native select', () => {
@@ -26,7 +35,7 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 		expect(overtreders(meer)).toEqual([]);
 	});
 
-	it('frames a button only as the Knop (.btn, is-groot) or the IconButton', () => {
+	it('frames a button only as the Knop (.btn) or the IconButton', () => {
 		// A frame in the control's face, or a frame and a pointer, is a button (a field aside);
 		// its one form is in lib/styles/basis.css and IconButton.
 		const knop = (r: { selector: string; body: string }) =>
@@ -84,16 +93,64 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 		expect(bron('lib/components/ui/Verfijnen.svelte')).toMatch(/onclick=\{showList\}/);
 	});
 
-	it('sizes a control at the height of a page or of a panel', () => {
-		// 32 px on a page (--veld-h), 24 px in a panel or a group (--veld-h-klein), 44 px for a
-		// finger on a touch screen (--veld-h-raak).
+	it("sizes a control at one height, or a finger's", () => {
+		// 32 px (--veld-h) for every control, a finger's 44 px on a touch screen (--veld-h-raak),
+		// and --tik-h (24) for a tap target that is no button with words (the next test).
 		const hoog = (body: string) =>
 			[...body.matchAll(/(?<![-\w])height:\s*([^;]+);/g)].some(
-				(m) => !/^(var\(--veld-h(-klein|-raak)?\)|auto|100%)$/.test(m[1].trim())
+				(m) => !/^(var\(--(veld-h|veld-h-raak|tik-h)\)|auto|100%)$/.test(m[1].trim())
 			);
 		expect(
 			overtreders((t) => regels(t).some((r) => isControl(r.selector) && hoog(r.body)))
 		).toEqual([]);
+	});
+
+	it('has three forms of a Knop and no smaller size (besluit 33, A163)', () => {
+		// Filled (.btn.is-primary): the one action of a screen. Framed (.btn): an action or a
+		// menu, and the frame of a segment. Bare (.btn.is-text): a link beside the text. All at
+		// --veld-h with --t-ui; the small size (--veld-h-klein, 24 px, 12 px letters) is gone.
+		const modifiers = BRONNEN.flatMap(({ path, text }) =>
+			[...text.matchAll(/class(?::|=)"?[^"\n]*?\bbtn\b([^"\n]*)"/g)].flatMap((m) =>
+				m[1]
+					.split(/\s+/)
+					.filter((c) => /^is-/.test(c) && !/^is-(primary|text)$/.test(c))
+					.map((c) => ({ pad: path, wat: c }))
+			)
+		);
+		expect(vondsten(modifiers)).toEqual([]);
+		expect(overtreders((t) => /--veld-h-klein|--t-ui-micro|\bis-groot\b/.test(t))).toEqual([]);
+		const tik = BRONNEN.flatMap(({ path, text }) =>
+			regels(text)
+				.filter(
+					(r) =>
+						isControl(r.selector) &&
+						/(?<![-\w])(min-)?(height|width):\s*var\(--tik-h\)/.test(r.body)
+				)
+				.map((r) => ({ pad: path, wat: r.selector }))
+		);
+		// A tap target of 24 px is an icon, a glyph, a cell or a bare text link, never a button
+		// with words in a frame.
+		const tikken: Uitzondering[] = [
+			{ pad: 'lib/components/ui/IconButton.svelte', reden: 'the icon button is a 24 px target' },
+			{ pad: 'lib/styles/basis.css', reden: 'the bare Knop (is-text) is a text link' },
+			{ pad: 'lib/onderwerpen/Kruiswoord.svelte', reden: 'a total is a cell of a table' }
+		];
+		expect(vondsten(tik, tikken)).toEqual([]);
+		// Ink fills the one action (.btn.is-primary in basis.css), not a control of another form.
+		const vlak = BRONNEN.flatMap(({ path, text }) =>
+			regels(text)
+				.filter(
+					(r) =>
+						/background:\s*var\(--ink\)/.test(r.body) &&
+						isControl(r.selector) &&
+						!/^\.btn\.is-primary/.test(r.selector)
+				)
+				.map((r) => ({ pad: path, wat: r.selector }))
+		);
+		const vlakken: Uitzondering[] = [
+			{ pad: 'lib/onderwerpen/Kruiswoord.svelte', reden: 'a chosen total in a table' }
+		];
+		expect(vondsten(vlak, vlakken)).toEqual([]);
 	});
 
 	it('draws a ticked box with Vinkje: no tick glyph, no native checkbox', () => {

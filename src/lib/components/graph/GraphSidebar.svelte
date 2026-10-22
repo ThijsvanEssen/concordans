@@ -193,7 +193,6 @@
 			<div class="block__head">
 				<h3 class="block__title">Bronnen</h3>
 				<TekstMenu
-					klein
 					rechts
 					label="Voorkeuze"
 					tekst="Voorkeuze"
@@ -357,7 +356,6 @@
 				{netwerkActive ? 'Verbonden bronnen' : 'Aantal stappen'}
 			</div>
 			<Keuze
-				klein
 				label={netwerkActive ? 'Verbonden bronnen' : 'Aantal stappen'}
 				waarde={netwerkActive ? null : String(depth)}
 				opties={DEPTHS.map((d) => {
@@ -377,7 +375,6 @@
 			<section class="block">
 				<div class="block__label">Lid</div>
 				<TekstMenu
-					klein
 					label="Lid"
 					waarde={filter.lid ?? ''}
 					opties={[
@@ -394,7 +391,6 @@
 			<div class="block__label">Toon erbij</div>
 			<div class="block">
 				<TekstMenu
-					klein
 					label="Toon erbij"
 					waarde={mutOn ? 'mut' : heatOn ? 'heat' : 'geen'}
 					opties={[
@@ -428,7 +424,6 @@
 				{#if heatOn}
 					<div class="sub">
 						<Keuze
-							klein
 							label="Periode"
 							waarde={overlay.kind === 'heat' ? String(overlay.months) : null}
 							opties={HEAT_PERIODS.map((m) => ({

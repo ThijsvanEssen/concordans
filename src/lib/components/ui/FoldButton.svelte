@@ -59,7 +59,7 @@
 	.fold-knop.quiet {
 		gap: 0;
 		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
+		font-size: var(--t-ui);
 		color: var(--ink-3);
 	}
 	.fold-knop.quiet:hover {

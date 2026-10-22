@@ -141,7 +141,7 @@
 					>Wissen</TekstLink
 				>
 				<!-- One more action, in the one menu of the site (TekstMenu), not a menu of its own. -->
-				<TekstMenu klein rechts label="Meer" tekst="Meer">
+				<TekstMenu rechts label="Meer" tekst="Meer">
 					{#snippet onder(sluit)}
 						<button
 							type="button"

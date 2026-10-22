@@ -881,7 +881,7 @@
 		{#if termen.length}
 			<button
 				type="button"
-				class="btn is-groot"
+				class="btn"
 				title={lijstSoort === 'besluiten' || lijstSoort === 'lokaal'
 					? 'De stemmingen van de lijst als CSV'
 					: 'Alleen stemmingen kunnen als CSV worden gedownload'}

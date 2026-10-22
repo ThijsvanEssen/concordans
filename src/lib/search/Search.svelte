@@ -475,7 +475,7 @@
 
 	.kbd {
 		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
+		font-size: var(--t-ui);
 		font-weight: 500;
 		color: var(--ink-3);
 		border: 1px solid var(--rule);

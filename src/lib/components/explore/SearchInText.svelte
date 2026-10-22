@@ -135,7 +135,7 @@
 		padding: var(--s-2) 0;
 		background: var(--paper);
 		border-bottom: 1px solid var(--rule);
-		font-size: var(--t-ui-micro);
+		font-size: var(--t-ui);
 	}
 	input.search__field {
 		flex: 1;

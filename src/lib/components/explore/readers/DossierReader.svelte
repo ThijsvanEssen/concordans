@@ -272,7 +272,7 @@
 	}
 	.full-title summary {
 		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
+		font-size: var(--t-ui);
 		color: var(--ink-2);
 		cursor: pointer;
 	}

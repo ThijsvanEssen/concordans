@@ -4,13 +4,21 @@ How a control looks and where it stands, on every page and in every panel. The t
 
 ## Five forms
 
-| Form      | For                                                     | Component                                              | Looks                                                                                                         |
-| --------- | ------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| Knop      | doing something: Citeer, Vergelijken, CSV, Deel, Volg   | `.btn` (24), `.btn is-groot` (32), in `basis.css`      | Schibsted, `--t-ui`, 500; `--veld-h` (32) on a page, `--veld-h-klein` (24) in a panel                         |
-| Keuze     | one of 2 to 5 visible options: Periode, Netwerk/Tekst   | `ui/Keuze.svelte`                                      | joined boxes, the chosen one filled in ink                                                                    |
-| Tekstmenu | one of many, or a setting: Alle bronnen, Nieuwste eerst | `ui/TekstMenu.svelte`                                  | the word of its value with a caret, no frame; the chosen option in weight                                     |
-| Vinkje    | switching a thing on or off in a list: facets, columns  | `ui/FilterOptie.svelte` (`inline` beside other things) | the box (`ui/Vinkje.svelte`: 12 px, `--r-1`, a drawn tick), the label, a count at the right; chosen in weight |
-| Tekstlink | going somewhere: Alle 244 uitspraken, Wis alle filters  | `ui/TekstLink.svelte`, `ui/AlleN.svelte`               | the serif in ink, underlined; red only on hover and focus                                                     |
+| Form      | For                                                     | Component                                                 | Looks                                                                                                         |
+| --------- | ------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Knop      | doing something: Citeer, Vergelijken, CSV, Deel, Volg   | `.btn is-primary`, `.btn`, `.btn is-text`, in `basis.css` | Schibsted, `--t-ui`, 500, always `--veld-h` (32); three forms, see below                                      |
+| Keuze     | one of 2 to 5 visible options: Periode, Netwerk/Tekst   | `ui/Keuze.svelte`                                         | joined boxes, the chosen one filled in ink                                                                    |
+| Tekstmenu | one of many, or a setting: Alle bronnen, Nieuwste eerst | `ui/TekstMenu.svelte`                                     | a framed Knop with the word of its value and a caret; the chosen option in weight                             |
+| Vinkje    | switching a thing on or off in a list: facets, columns  | `ui/FilterOptie.svelte` (`inline` beside other things)    | the box (`ui/Vinkje.svelte`: 12 px, `--r-1`, a drawn tick), the label, a count at the right; chosen in weight |
+| Tekstlink | going somewhere: Alle 244 uitspraken, Wis alle filters  | `ui/TekstLink.svelte`, `ui/AlleN.svelte`                  | the serif in ink, underlined; red only on hover and focus                                                     |
+
+The Knop has three forms with a fixed meaning (besluit 33, A163), one height and one letter, and no smaller size:
+
+- **Filled** (`.btn is-primary`, ink): the one action of a screen (Open, Toon, Naar de startpagina); at most one at a time.
+- **Framed** (`.btn`, `--rule-strong`): an action or a menu: Citeer, Vergelijken, Per soort, Filter, Meer. A TekstMenu's button and a Keuze's segments wear the same frame; the chosen segment is `--paper-2` with an ink line under it.
+- **Bare** (`.btn is-text`): a link beside the text, underlined on hover; a caret only if it opens a menu. Its box is a tap target of `--tik-h` (24 px).
+
+A finger's 44 px (`--veld-h-raak`) stays around every one of them on a touch screen. `--tik-h` is a tap target (an icon, a glyph, a cell), never the height of a button with words.
 
 And one icon button, `ui/IconButton.svelte`, 24 px, for +, ×, zoom and ⋯; it names what it does.
 
@@ -33,8 +41,8 @@ A row of a Kamerstuk in Verbonden and in Bladeren opens in place on its core tex
 
 ## Measure, letter, colour, words
 
-- Height: 32 on a page, 24 in a panel or group; one line of controls has one height. On the 4 px grid; `--s-2` between controls, `--s-4` between groups.
-- Letter: a control in Schibsted at `--t-ui` or `--t-ui-micro`, 500. A text link and a facet's label are text, in the serif.
+- Height: 32 for every control, on a page and in a panel; one line of controls has one height. On the 4 px grid; `--s-2` between controls, `--s-4` between groups.
+- Letter: a control in Schibsted at `--t-ui`, 500. A text link and a facet's label are text, in the serif.
 - Colour: ink for everything; chosen is filled (Keuze) or in weight. Red (`--accent`) only on hover and focus, for the outcome "nee" (`--uitkomst-nee`) and for an error. What was red at rest is ink: te laat and voorgesteld in weight, nu, the majority, a chosen or active row, a cited link.
 - Words: a text menu shows its value ("Alle bronnen"), not a label with a colon; a button is a verb or a destination; counts stand in the control ("Alle 244 uitspraken"), not in a sentence; no explanatory sentences between controls.
 
@@ -111,7 +119,7 @@ Every series of dated lines is the one `Tijdlijn` (`src/lib/components/tijdlijn/
 
 ## Rules
 
-`src/lib/guards/bediening.test.ts`: no native `select` outside TekstMenu, no chips outside the panel Netwerk, no "meer" of its own beside AlleN, no control height but `--veld-h` or `--veld-h-klein`, no framed button but `.btn` and IconButton, no menu item but `tekstmenu__item` (a menu of its own adds a class for its layout only), Verfijnen styled once in `basis.css`. `guards/tokens.test.ts` holds the tokens: no hex or `rgb()` in a style outside `tokens.css`, a radius only from `--r-*`, a face only through `--font-serif` or `--font-ui`. A place that keeps an older form is an `Uitzondering` with its reason (`src/lib/test/bronnen.ts`); one that no longer excepts anything fails its guard, so it comes out with the step that made it unneeded.
+`src/lib/guards/bediening.test.ts`: no native `select` outside TekstMenu, no chips outside the panel Netwerk, no "meer" of its own beside AlleN, no control height but `--veld-h`, `--veld-h-raak` (and `--tik-h` for a tap target that is no button with words), no framed button but `.btn` and IconButton, no `.btn` modifier but `is-primary` and `is-text`, no `--veld-h-klein` or `--t-ui-micro`, no ink-filled control but the primary Knop, no menu item but `tekstmenu__item` (a menu of its own adds a class for its layout only), Verfijnen styled once in `basis.css`. `guards/tokens.test.ts` holds the tokens: no hex or `rgb()` in a style outside `tokens.css`, a radius only from `--r-*`, a face only through `--font-serif` or `--font-ui`. A place that keeps an older form is an `Uitzondering` with its reason (`src/lib/test/bronnen.ts`); one that no longer excepts anything fails its guard, so it comes out with the step that made it unneeded.
 
 ## Volg
 

@@ -54,7 +54,7 @@
 	>
 		<section class="facet" aria-labelledby="f-fractie">
 			<h2 class="facet__kop" id="f-fractie">Fractie</h2>
-			<TekstMenu klein label="Fractie" tekst={faction || 'Geen fractie'}>
+			<TekstMenu label="Fractie" tekst={faction || 'Geen fractie'}>
 				{#snippet inhoud(sluit)}
 					<div class="fractie-lijst">
 						<button

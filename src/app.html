@@ -168,7 +168,7 @@
 				--blad-max: 1440px;
 				--blad-tekst: 720px;
 				--veld-h: 32px;
-				--veld-h-klein: 24px;
+				--tik-h: 24px;
 				--r-1: 3px;
 				--r-2: 4px;
 				background: var(--paper);
@@ -303,7 +303,7 @@
 				color: var(--ink-2);
 			}
 			/* The field with its mark (Search); with scripts, over it the room of the scopes
-			   (Keuze, small on a phone) and the gap under them, under it the room of the law
+			   (Keuze) and the gap under them, under it the room of the law
 			   network (.wetsnetwerk-plek), quiet as the app keeps it while it is asked. Without
 			   scripts neither comes, and no room stands empty. */
 			#seo:has(> .entrances) > .search {
@@ -501,11 +501,6 @@
 				}
 				#seo:has(> .entrances) input {
 					font-size: var(--t-body);
-				}
-			}
-			@media (width <= 600px) {
-				.scripts #seo:has(> .entrances) > .search {
-					padding-top: calc(var(--veld-h-klein) + var(--s-3));
 				}
 			}
 		</style>

@@ -101,7 +101,7 @@
 
 {#snippet compare(id: string)}
 	<a
-		class="succession__toggle"
+		class="btn is-text succession__toggle"
 		href={compareHref(id)}
 		data-sveltekit-noscroll
 		aria-expanded={comparing === id}>Vergelijk</a
@@ -146,7 +146,7 @@
 			{#if line.rows.length > 0}
 				<button
 					type="button"
-					class="succession__toggle"
+					class="btn is-text succession__toggle"
 					aria-expanded={open}
 					onclick={() => (unfolded = open ? null : line.direction)}>Leden<Caret {open} /></button
 				>
@@ -200,26 +200,7 @@
 		color: var(--ink-2);
 	}
 	.succession__toggle {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-1);
 		margin-left: var(--s-2);
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		font-weight: 500;
-		color: var(--ink);
-		cursor: pointer;
-	}
-	.succession__toggle[aria-expanded='true'] {
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
-	}
-	.succession__toggle:hover {
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
 	}
 	.succession__source {
 		margin-left: var(--s-2);

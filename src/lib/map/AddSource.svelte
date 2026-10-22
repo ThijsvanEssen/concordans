@@ -126,12 +126,11 @@
 	{#if badUrl}<span class="hint" id="{uid}-hint">Geen webadres</span>{/if}
 	<span class="label" id="{uid}-kind">Soort</span>
 	<span class="keuze" aria-labelledby="{uid}-kind">
-		<TekstMenu klein label="Soort" opties={kinds} waarde={kind} onSelect={(v) => (kind = v)} />
+		<TekstMenu label="Soort" opties={kinds} waarde={kind} onSelect={(v) => (kind = v)} />
 	</span>
 	<span class="label" id="{uid}-group">Groep</span>
 	<span class="keuze" aria-labelledby="{uid}-group">
 		<TekstMenu
-			klein
 			label="Groep"
 			opties={groupOptions}
 			waarde={groupKey}

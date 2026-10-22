@@ -4,21 +4,21 @@ The order in which a page reads, from the page down to a count. This is the typo
 
 All text is in the serif (Newsreader) in three weights, 400, 600 and 800; the sans (Schibsted Grotesk, `--font-ui`) is only for controls: buttons, choice rows, fields, keys, menus and the navigation.
 
-| Rung | What                                      | Face  | Size                                   | Weight | Colour  | Example                                         |
-| ---- | ----------------------------------------- | ----- | -------------------------------------- | ------ | ------- | ----------------------------------------------- |
-| 1    | Page title: the bron a reader shows       | serif | `--t-h1` / `--t-h2`                    | 600    | `ink`   | "Laurens Dassen" (ReaderHead)                   |
-| 2    | Section heading                           | serif | `--t-h3`                               | 800    | `ink`   | "Stemgeschiedenis" (Sectie)                     |
-| 3    | Group in a section                        | serif | `--t-meta` (14px)                      | 600    | `ink`   | "Voor 14", a fractie above its votes            |
-| 4    | Item title: a bron in a list              | serif | `--t-body-2`                           | 400    | `ink`   | the motie voted on                              |
-| 5    | Meta line: date, kind, dossier, outcome   | serif | `--t-micro` (13px)                     | 400    | `ink-3` | "stem van de fractie (Volt), Aangenomen, 6 okt" |
-| 6    | Label and count beside a heading or group | serif | `--t-micro` (13px)                     | 400    | `ink-3` | the 50 beside "Stemgeschiedenis"                |
-| -    | Control: button, choice row, field, menu  | sans  | `--t-ui` (13px), `--t-ui-micro` (12px) | 500    |         | Periode, Citeer, the top navigation             |
+| Rung | What                                      | Face  | Size                | Weight | Colour  | Example                                         |
+| ---- | ----------------------------------------- | ----- | ------------------- | ------ | ------- | ----------------------------------------------- |
+| 1    | Page title: the bron a reader shows       | serif | `--t-h1` / `--t-h2` | 600    | `ink`   | "Laurens Dassen" (ReaderHead)                   |
+| 2    | Section heading                           | serif | `--t-h3`            | 800    | `ink`   | "Stemgeschiedenis" (Sectie)                     |
+| 3    | Group in a section                        | serif | `--t-meta` (14px)   | 600    | `ink`   | "Voor 14", a fractie above its votes            |
+| 4    | Item title: a bron in a list              | serif | `--t-body-2`        | 400    | `ink`   | the motie voted on                              |
+| 5    | Meta line: date, kind, dossier, outcome   | serif | `--t-micro` (13px)  | 400    | `ink-3` | "stem van de fractie (Volt), Aangenomen, 6 okt" |
+| 6    | Label and count beside a heading or group | serif | `--t-micro` (13px)  | 400    | `ink-3` | the 50 beside "Stemgeschiedenis"                |
+| -    | Control: button, choice row, field, menu  | sans  | `--t-ui` (13px)     | 500    |         | Periode, Citeer, the top navigation             |
 
 Rules:
 
 - One rung down is one step in size, face or weight, never only in colour.
 - Inside a meta line, the word that decides (Aangenomen, Verworpen) stands at 600 in `ink-2`; the rest stays `ink-3`.
-- Rungs 3, 5 and 6 are one pixel over the sizes the sans had (14 and 13px): the serif has the smaller x-height. A control keeps the sans' sizes (`--t-ui`, `--t-ui-micro`), so a row of choices still fits a narrow column.
+- Rungs 3, 5 and 6 are one pixel over the sizes the sans had (14 and 13px): the serif has the smaller x-height. A control keeps the sans' size (`--t-ui`), so a row of choices still fits a narrow column.
 - `src/lib/guards/typografie.test.ts` guards it: no `--font-sans`, `--font-ui` only in a rule for a control, and text only at 400, 600 and 800.
 - A stem (Voor, Tegen) and an outcome have a shape as well as a colour: `Stem.svelte` and `Uitkomst.svelte`. Voor and aangenomen a filled box in `--uitkomst-ja`, tegen and verworpen an open box in `--uitkomst-nee`, the rest a dashed box. The word goes with the box where there is room; a row under a group carries the box alone.
 - Tabular figures only in a column of figures, never in a sentence: "6 okt . 2026" is what they do to a date in a line (`guards/typografie.test.ts`).

@@ -86,7 +86,6 @@
 	--t-meta: 14px; /* a group, meta: one pixel over the sans, for the serif's x-height */
 	--t-micro: 13px; /* captions and counts, in --ink-3 */
 	--t-ui: 13px; /* a control's text, in the sans */
-	--t-ui-micro: 12px; /* a small control's text */
 	--t-label: 11px; /* labels over a group: the sans at 500, as written, without spacing */
 	--t-glyph: 10px; /* a mark inside a box: a tick, a caret, a badge */
 	--t-input: 16px; /* text fields: below 16px a phone zooms in on focus */
@@ -127,10 +126,12 @@
 	--row-lead: 140px;
 	/* A lane of a chart over time: a cabinet, a post (KabinettenStrook, CabinetOccupancy). */
 	--lane: var(--s-5);
-	/* The height of a control: a field, a select, a choice of buttons. In a bar, the
-	   smaller one. */
+	/* The height of a control: a button of any of the three forms, a field, a choice of
+	   buttons. One height; there is no smaller button. */
 	--veld-h: 32px;
-	--veld-h-klein: 24px;
+	/* A tap target on a desktop (A147): an icon button, a row's glyph, a text link's box. It
+	   is not a height for a button with words. */
+	--tik-h: 24px;
 	/* A finger's target on a touch screen: a control that has no wider target of its own
 	   (.raakvlak) is this high there. */
 	--veld-h-raak: calc(var(--s-6) + var(--s-3));

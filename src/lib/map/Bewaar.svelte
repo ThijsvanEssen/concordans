@@ -54,7 +54,7 @@
 			? ` ${wat}`
 			: ''}{keeping ? ` in ${keeping.naam}` : ''}</button
 	>
-	<TekstMenu klein rechts label="Bewaar {item.kort} in bundel" tekst="" bind:open>
+	<TekstMenu rechts label="Bewaar {item.kort} in bundel" tekst="" bind:open>
 		{#snippet inhoud(close)}<BundleChecklist {item} {close} />{/snippet}
 	</TekstMenu>
 </span>
@@ -80,21 +80,14 @@
 		display: inline-flex;
 		align-items: stretch;
 	}
-	.splits > .btn {
-		gap: var(--s-2);
-	}
 	.splits:has(:global(.tekstmenu)) > .btn {
 		border-top-right-radius: 0;
 		border-bottom-right-radius: 0;
 	}
 	.splits :global(.tekstmenu__knop) {
-		box-sizing: border-box;
-		height: var(--veld-h-klein);
-		padding: 0 var(--s-1);
-		border: 1px solid var(--rule-strong);
+		padding: 0 var(--s-2);
 		border-left: 0;
 		border-radius: 0 var(--r-1) var(--r-1) 0;
-		color: var(--ink-2);
 	}
 	/* The caret is 44 px wide for a finger, never reaching over Bewaar (UX-toets A21 #3). */
 	@media (pointer: coarse), (max-width: 768px) {
@@ -104,6 +97,5 @@
 	}
 	.splits :global(.tekstmenu__knop:hover) {
 		background: var(--paper-2);
-		color: var(--ink);
 	}
 </style>

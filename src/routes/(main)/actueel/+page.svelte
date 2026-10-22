@@ -646,28 +646,23 @@
 			<h1 class="blad__titel">Actueel</h1>
 		</div>
 		<div class="blad__acties">
-			<Follow href={atom} buttonClass="btn is-groot" />
+			<Follow href={atom} buttonClass="btn" />
 			{#if q.length}
 				{#if gevolgd}
-					<a class="btn is-groot" href="/onderwerpen">Gevolgd als onderwerp</a>
+					<a class="btn" href="/onderwerpen">Gevolgd als onderwerp</a>
 				{:else}
-					<button
-						type="button"
-						class="btn is-groot"
-						title="Volg deze woorden onder Gevolgd"
-						onclick={volgQ}>Volg als onderwerp</button
+					<button type="button" class="btn" title="Volg deze woorden onder Gevolgd" onclick={volgQ}
+						>Volg als onderwerp</button
 					>
 				{/if}
 			{/if}
 			{#if gevolgdeWet}
 				{#if wetGevolgd}
-					<a class="btn is-groot" href="/onderwerpen"
-						>{article ? 'Artikel gevolgd' : 'Wet gevolgd'}</a
-					>
+					<a class="btn" href="/onderwerpen">{article ? 'Artikel gevolgd' : 'Wet gevolgd'}</a>
 				{:else}
 					<button
 						type="button"
-						class="btn is-groot"
+						class="btn"
 						title="Volg {wetNaamKort(gevolgdeWet)} onder Gevolgd"
 						onclick={volgDezeWet}>{article ? 'Volg dit artikel' : 'Volg deze wet'}</button
 					>
@@ -747,7 +742,7 @@
 						{#each korter as k (k.dagen)}
 							<button
 								type="button"
-								class="btn is-groot"
+								class="btn"
 								onclick={() => patchUrl({ van: addDays(today, -k.dagen) })}>{k.label}</button
 							>
 						{/each}

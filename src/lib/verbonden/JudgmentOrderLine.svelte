@@ -41,7 +41,6 @@
 		<!-- Newest first, or the most cited first: the standard judgments on top (UX-15). -->
 		<Keuze
 			label="Volgorde"
-			klein
 			opties={orders.map((o) => ({ waarde: o.value, label: o.label }))}
 			waarde={order}
 			onSelect={(o) => {
@@ -51,7 +50,6 @@
 	{/if}
 	{#if years.length > 0}
 		<TekstMenu
-			klein
 			rechts
 			label="Jaar en rechter"
 			tekst="{filter.jaar ?? 'Alle jaren'}, {rechter?.label.toLowerCase() ?? 'alle rechters'}"

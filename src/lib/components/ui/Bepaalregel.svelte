@@ -55,7 +55,7 @@
 					value={zoek.waarde}
 					oninput={(e) => zoek.onInput(e.currentTarget.value)}
 				/>
-				{#if zoek.knop}<button type="submit" class="btn is-groot" disabled={zoek.knop.disabled}
+				{#if zoek.knop}<button type="submit" class="btn" disabled={zoek.knop.disabled}
 						>{zoek.knop.label}</button
 					>{/if}
 			</form>
@@ -68,7 +68,6 @@
 				from={periode.van}
 				to={periode.tot}
 				label={periode.label ?? 'Periode'}
-				klein={false}
 				onChange={periode.onChange}
 			/>
 		</div>

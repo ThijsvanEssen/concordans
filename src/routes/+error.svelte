@@ -32,10 +32,10 @@
 		code={offline ? null : kenmerk ? `${page.status}, kenmerk ${kenmerk}` : String(page.status)}
 	>
 		{#snippet actions()}
-			<button type="button" class="btn is-groot is-primary" onclick={() => location.reload()}
+			<button type="button" class="btn is-primary" onclick={() => location.reload()}
 				>Opnieuw laden</button
 			>
-			<a href="/" class="btn is-groot">Naar de startpagina</a>
+			<a href="/" class="btn">Naar de startpagina</a>
 		{/snippet}
 	</NietGevonden>
 {/if}

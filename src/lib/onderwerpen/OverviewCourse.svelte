@@ -33,7 +33,6 @@
 			<span class="as">
 				<span class="as__label" aria-hidden="true">Strekking</span>
 				<KeuzeKnoppen
-					klein
 					label="Strekking"
 					opties={[
 						{ waarde: 'alle', label: 'Alle' },

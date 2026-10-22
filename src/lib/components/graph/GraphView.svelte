@@ -1554,7 +1554,7 @@
 	/* On a touch screen and below 768 the buttons stand a finger's 44 px apart: their targets do not meet. */
 	@media (pointer: coarse), (max-width: 768px) {
 		.zoom {
-			gap: calc(var(--s-6) + var(--s-3) - var(--veld-h-klein));
+			gap: calc(var(--s-6) + var(--s-3) - var(--tik-h));
 		}
 	}
 

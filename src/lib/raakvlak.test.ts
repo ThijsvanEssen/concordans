@@ -96,7 +96,7 @@ describe('the touch target', () => {
 		expect(bar).toContain('class="mobile-menu-btn raakvlak-knop"');
 		expect(bar).toContain('class="search-trigger raakvlak-knop"');
 		expect(read('lib/components/explore/readers/JudgmentReader.svelte')).toContain(
-			'buttonClass="reader-heading__link raakvlak-knop"'
+			'buttonClass="btn is-text reader-heading__link raakvlak-knop"'
 		);
 	});
 

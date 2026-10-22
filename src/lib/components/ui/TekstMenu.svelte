@@ -1,7 +1,7 @@
 <script lang="ts" generics="T extends string">
-	// One choice among many, or a setting: the word of its value with a quiet caret, without a
-	// frame (docs/bediening.md, Thijs, 10 Oct: "alle dingen versimpelen is akkoord"). It opens a
-	// list under itself; the chosen option in weight. The one form for every select in
+	// One choice among many, or a setting: a framed Knop (basis.css, besluit 33: a menu is
+	// framed) with the word of its value and a caret. It opens a list under itself; the chosen
+	// option in weight. The one form for every select in
 	// Concordans: Alle bronnen, Per soort, Nieuwste eerst, Alle jaren. A menu that holds more
 	// than a list (two lists side by side) passes its own `inhoud`.
 	import type { Option } from './option';
@@ -18,7 +18,6 @@
 		waarde = null,
 		onSelect,
 		tekst,
-		klein = false,
 		rechts = false,
 		inhoud,
 		onder,
@@ -33,8 +32,6 @@
 		onSelect?: (w: T) => void;
 		/** The words on the button where they are not one option's label (`Alle jaren, alle rechters`). */
 		tekst?: string;
-		/** In a panel or a group: the panel's height (24 px) instead of the page's (32 px). */
-		klein?: boolean;
 		/** The list opens to the left, from the right edge of the button. */
 		rechts?: boolean;
 		/** In place of the options: what the menu holds, with the function that closes it. */
@@ -59,10 +56,10 @@
 	const woorden = $derived(tekst ?? gekozen?.label ?? label);
 </script>
 
-<div class="tekstmenu" class:klein use:menu={{ open, close: sluit }}>
+<div class="tekstmenu" use:menu={{ open, close: sluit }}>
 	<button
 		type="button"
-		class="tekstmenu__knop"
+		class="btn tekstmenu__knop"
 		bind:this={button}
 		aria-haspopup="menu"
 		aria-expanded={open}
@@ -109,36 +106,10 @@
 		position: relative;
 		display: inline-flex;
 	}
+	/* The button is a Knop (basis.css); only the gap to its caret is the menu's own. The
+	   button has the focus back after a choice and stays in ink at rest (Thijs, 10 Oct). */
 	.tekstmenu__knop {
-		display: inline-flex;
-		align-items: center;
 		gap: var(--s-1);
-		height: var(--veld-h);
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		font-weight: 500;
-		color: var(--ink);
-		white-space: nowrap;
-		cursor: pointer;
-	}
-	.klein .tekstmenu__knop {
-		height: var(--veld-h-klein);
-		font-size: var(--t-ui-micro);
-	}
-	/* Red on a hover only: the button has the focus back after a choice, and would stay red
-	   at rest (the Legenda's Bronnen, Thijs, 10 Oct). The focus is underlined in ink. */
-	.tekstmenu__knop:hover {
-		color: var(--ink);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
-	}
-	/* The ink ring of every control (lib/styles/basis.css), with the underline of a hover. */
-	.tekstmenu__knop:focus-visible {
-		text-decoration: underline;
-		text-underline-offset: 3px;
 	}
 	/* Global: the one item of every menu, a step under the rule (`onder`) and the items of a
 	   menu with its own `inhoud` or of a menu of its own (a ⋯, the versions of an article). A
@@ -150,7 +121,7 @@
 		border: 0;
 		background: none;
 		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
+		font-size: var(--t-ui);
 		color: var(--ink);
 		text-align: left;
 		cursor: pointer;

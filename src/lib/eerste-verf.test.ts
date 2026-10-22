@@ -113,19 +113,15 @@ describe('the start page: the server HTML as the first paint', () => {
 	});
 
 	it('keeps the room of what the app adds, with scripts only: the scopes and the law network', () => {
-		// Keuze is small on a phone (width <= 600px in +page.svelte).
-		expect(home).toMatch(
-			/@media \(width <= 600px\) \{\s*\.scopes :global\(\.keuze\) \{\s*height: var\(--veld-h-klein\);/
-		);
+		// Keuze is one height, on a phone too (besluit 33): no smaller step in +page.svelte.
+		expect(home).not.toMatch(/\.scopes :global\(\.keuze\) \{\s*height:/);
 		expect(rule('#seo:has(> .entrances) > .search')).not.toContain('padding-top');
 		// Not js, which goes when the app is 4 s late: the room would close under the reader.
 		expect(read('app.html')).toContain("classList.add('js', 'scripts')");
 		expect(rule('.scripts #seo:has(> .entrances) > .search')).toContain(
 			'padding-top: calc(var(--veld-h) + var(--s-3))'
 		);
-		expect(style).toMatch(
-			/@media \(width <= 600px\) \{\s*\.scripts #seo:has\(> \.entrances\) > \.search \{\s*padding-top: calc\(var\(--veld-h-klein\) \+ var\(--s-3\)\);/
-		);
+		expect(style).not.toMatch(/@media \(width <= 600px\) \{\s*\.scripts #seo/);
 		// The band of the law network while it is asked: the same heights.
 		const plek = [...home.matchAll(/\.wetsnetwerk-plek \{[^}]*?min-height: (\d+px);/g)].map(
 			(m) => m[1]

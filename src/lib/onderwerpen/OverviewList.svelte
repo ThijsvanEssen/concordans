@@ -105,7 +105,7 @@
 		<span class="aantal">{count}</span>
 		<!-- Bewaren and laden behind one quiet word, where the coding is done. -->
 		<span class="lijst__rechts">
-			<TekstMenu klein rechts label="Codering" tekst="Codering">
+			<TekstMenu rechts label="Codering" tekst="Codering">
 				{#snippet inhoud(sluit)}
 					<button
 						type="button"

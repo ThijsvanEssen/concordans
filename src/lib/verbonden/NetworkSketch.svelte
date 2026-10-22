@@ -190,7 +190,7 @@
 	}
 	.name {
 		font-family: var(--font-serif);
-		font-size: var(--t-ui-micro);
+		font-size: var(--t-ui);
 		fill: var(--ink-2);
 		paint-order: stroke;
 		stroke: var(--paper);
@@ -233,7 +233,7 @@
 		gap: 0 var(--s-4);
 		margin: var(--s-2) 0 0;
 		font-family: var(--font-serif);
-		font-size: var(--t-ui-micro);
+		font-size: var(--t-ui);
 		line-height: 20px;
 		color: var(--ink-2);
 	}

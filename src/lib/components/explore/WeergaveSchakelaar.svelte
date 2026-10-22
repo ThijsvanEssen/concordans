@@ -9,7 +9,6 @@
 </script>
 
 <Keuze
-	klein
 	label="Weergave (toets L)"
 	waarde={weergave.stand}
 	onSelect={weergave.onKies}

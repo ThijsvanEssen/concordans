@@ -725,7 +725,7 @@
 					<span class="menu" use:menu={{ open: versionMenu, close: () => (versionMenu = false) }}>
 						<button
 							type="button"
-							class="head__version-knop"
+							class="btn"
 							aria-haspopup="menu"
 							aria-expanded={versionMenu}
 							onclick={() => (versionMenu = !versionMenu)}
@@ -1013,26 +1013,6 @@
 	.head__stand.is-old {
 		color: var(--ink-2);
 	}
-	/* The versions as a text menu: the words, a caret, no frame. */
-	.head__version-knop {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-1);
-		height: var(--veld-h-klein);
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		font-weight: 500;
-		color: var(--ink);
-		cursor: pointer;
-	}
-	.head__version-knop:hover {
-		color: var(--ink);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
-	}
 	.head__compare {
 		text-decoration: none;
 	}
@@ -1217,7 +1197,7 @@
 		.reader-nav-link::after {
 			content: '';
 			position: absolute;
-			inset: min(0px, calc(50% - var(--veld-h-klein) / 2)) 0;
+			inset: min(0px, calc(50% - var(--tik-h) / 2)) 0;
 		}
 	}
 

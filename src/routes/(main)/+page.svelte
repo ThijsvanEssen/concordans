@@ -318,15 +318,9 @@
 	.kort {
 		display: none;
 	}
-	/* On a phone the scopes a step smaller (Keuze klein) and without their marks: five words
-	   fit, as wide as the field under them. In CSS, so the first paint has it (UX-toets). */
+	/* On a phone the scopes without their marks: five words fit, as wide as the field under
+	   them. In CSS, so the first paint has it (UX-toets). */
 	@media (width <= 600px) {
-		.scopes :global(.keuze) {
-			height: var(--veld-h-klein);
-		}
-		.scopes :global(.keuze button) {
-			font-size: var(--t-ui-micro);
-		}
 		.glyphs {
 			display: none;
 		}

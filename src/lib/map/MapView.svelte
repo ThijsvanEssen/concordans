@@ -234,17 +234,11 @@
 				>{copier.label('link', 'Kopieer link')}</TekstLink
 			>
 		{:else}
-			<button type="button" class="btn is-groot" onclick={() => onShared?.('map')}>Bewaar</button>
+			<button type="button" class="btn" onclick={() => onShared?.('map')}>Bewaar</button>
 		{/if}
 		<!-- An empty Losse markeringen has nothing to take along, to empty or to delete. -->
 		{#if b.items.length || !m || !kaart.isDefault(m)}
-			<TekstMenu
-				klein
-				rechts
-				label="Meer bij {b.naam}"
-				tekst="Meer"
-				onClose={() => (choosing = false)}
-			>
+			<TekstMenu rechts label="Meer bij {b.naam}" tekst="Meer" onClose={() => (choosing = false)}>
 				{#snippet inhoud(close)}
 					{#if choosing}
 						{#each kaart.listed as into (into.id)}
@@ -381,7 +375,6 @@
 		{#if m && m.items.length > 1}
 			{@const own = m}
 			<TekstMenu
-				klein
 				label="Volgorde van {own.naam}"
 				opties={[
 					{ waarde: 'groep' as const, label: 'Per wet of dossier' },

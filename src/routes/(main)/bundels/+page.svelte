@@ -143,11 +143,9 @@
 						/>
 					</form>
 				{:else}
-					<button type="button" class="btn is-groot" onclick={() => (naming = true)}
-						>Nieuwe bundel</button
-					>
+					<button type="button" class="btn" onclick={() => (naming = true)}>Nieuwe bundel</button>
 				{/if}
-				<TekstMenu klein rechts label="Meer bij de bundels" tekst="Meer">
+				<TekstMenu rechts label="Meer bij de bundels" tekst="Meer">
 					{#snippet inhoud(close)}
 						<button
 							type="button"

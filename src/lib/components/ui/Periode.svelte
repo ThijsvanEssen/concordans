@@ -13,16 +13,13 @@
 		from: van,
 		to: tot,
 		onChange,
-		label = 'Periode',
-		klein = true
+		label = 'Periode'
 	}: {
 		from: string;
 		to: string;
 		onChange: (van: string, tot: string) => void;
 		/** For the row of choices, where no heading names it. */
 		label?: string;
-		/** 24 px in a panel; false on a page's choose-line, at the height of its field (32). */
-		klein?: boolean;
 	} = $props();
 
 	const uid = $props.id();
@@ -44,8 +41,8 @@
 	}
 </script>
 
-<div class="periode" class:groot={!klein}>
-	<Keuze {klein} vol {label} {opties} waarde={toon} onSelect={kies} />
+<div class="periode">
+	<Keuze vol {label} {opties} waarde={toon} onSelect={kies} />
 	{#if toon === 'eigen'}
 		<div class="range">
 			<label for="{uid}-van">van</label>
@@ -97,14 +94,14 @@
 		box-sizing: border-box;
 		width: 100%;
 		min-width: 0;
-		height: var(--veld-h-klein);
+		height: var(--veld-h);
 		padding: 0 var(--s-1);
 		border: 1px solid var(--rule);
 		border-radius: var(--r-1);
 		background: var(--paper);
 		font: inherit;
 		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
+		font-size: var(--t-ui);
 		color: var(--ink);
 	}
 	/* One colour for the whole field, digits and dashes alike: ink when filled, the quiet
@@ -123,9 +120,6 @@
 	input.leeg::-webkit-datetime-edit-month-field,
 	input.leeg::-webkit-datetime-edit-year-field {
 		color: var(--ink-3);
-	}
-	.groot input {
-		height: var(--veld-h);
 	}
 	input:hover,
 	input:focus-visible {

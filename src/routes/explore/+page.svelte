@@ -1889,8 +1889,8 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		min-width: var(--veld-h-klein);
-		min-height: var(--veld-h-klein);
+		min-width: var(--tik-h);
+		min-height: var(--tik-h);
 		font-family: var(--font-serif);
 		font-size: var(--t-body);
 		line-height: 1;
@@ -2006,7 +2006,7 @@
 	.mobile-tabs .mobile-tab {
 		flex: 1;
 		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
+		font-size: var(--t-ui);
 		color: var(--ink-3);
 		background: none;
 		border: 0;

@@ -59,11 +59,10 @@
 	{/if}
 	<div class="acts">
 		<!-- The text picture only beside In het netwerk: a bron read only there (a kabinet) has none. -->
-		<a class="btn is-groot is-primary" href={lezen}
+		<a class="btn is-primary" href={lezen}
 			>{#if netwerk}<Picto naam="tekst" size={13} />{/if}{lezenLabel}</a
 		>
-		{#if netwerk}<a class="btn is-groot" href={netwerk}
-				><Picto naam="netwerk" size={13} />In het netwerk</a
+		{#if netwerk}<a class="btn" href={netwerk}><Picto naam="netwerk" size={13} />In het netwerk</a
 			>{/if}
 	</div>
 </div>

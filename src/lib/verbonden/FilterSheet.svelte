@@ -293,7 +293,6 @@
 			<div class="block">
 				<div class="block__label">Betrouwbaarheid</div>
 				<Keuze
-					klein
 					vol
 					label="Betrouwbaarheid"
 					opties={[
