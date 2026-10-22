@@ -123,8 +123,8 @@
 	}
 
 	/** "Artikel 3:4 Awb" under the kind Artikel: the kind is not said twice. */
-	const begintMet = (naam: string, soort: string) =>
-		naam.toLowerCase().startsWith(`${soort.toLowerCase()} `);
+	const startsWithKind = (name: string, kind: string) =>
+		name.toLowerCase().startsWith(`${kind.toLowerCase()} `);
 </script>
 
 <svelte:window onpointermove={(e) => (pointerAt = placeOf(e))} />
@@ -224,18 +224,18 @@
 					<KindGlyph collection="articles" />
 					Artikelen met dit nummer
 				</div>
-				{#each search.choices as keuze, i (keuze.ref.key)}
+				{#each search.choices as choice, i (choice.ref.key)}
 					<SearchOption
 						id={rowId(i)}
 						active={search.isActive(i)}
 						citation
 						{compact}
-						href={bronHref(keuze.ref, { at: keuze.at, keepNetwerk: false })}
-						onchoose={() => open(keuze.ref, keuze.at)}
+						href={bronHref(choice.ref, { at: choice.at, keepNetwerk: false })}
+						onchoose={() => open(choice.ref, choice.at)}
 						onpoint={pointAt(i)}
 					>
 						<span class="row-title"
-							>{keuze.label ?? naamVanId(nodeId(keuze.ref.collection, keuze.ref.key))}</span
+							>{choice.label ?? naamVanId(nodeId(choice.ref.collection, choice.ref.key))}</span
 						>
 						{#if search.active === i}<span class="kbd" aria-hidden="true">↵</span>{/if}
 					</SearchOption>
@@ -254,7 +254,7 @@
 					? search.resolvedWith.target?.ref.collection
 					: null) ?? NOTATION_COLLECTION[search.citation.kind]}
 			<!-- The name from the source once the answer has it, not the query as typed. -->
-			{@const naam =
+			{@const name =
 				(search.resolvedWith?.term === search.q ? search.resolvedWith.target?.label : null) ??
 				search.q}
 			<SearchOption
@@ -266,15 +266,15 @@
 				onpoint={pointAt(0)}
 			>
 				<span class="row-kind"
-					><KindGlyph collection={kind} />{#if !begintMet(naam, bronLabel(kind))}
+					><KindGlyph collection={kind} />{#if !startsWithKind(name, bronLabel(kind))}
 						{bronLabel(kind)}{/if}</span
 				>
-				<span class="row-title">{naam}</span>
+				<span class="row-title">{name}</span>
 				<span class="kbd" aria-hidden="true">↵</span>
 			</SearchOption>
 		{:else if search.bare}
 			{@const bare = search.bare}
-			{@const naam = bare.label ?? search.q}
+			{@const name = bare.label ?? search.q}
 			<!-- A link like the hits: its target is known, so a new tab can open it. -->
 			<SearchOption
 				id={rowId(0)}
@@ -288,10 +288,10 @@
 				<span class="row-kind"
 					><KindGlyph
 						collection={bare.ref.collection}
-					/>{#if !begintMet(naam, bronLabel(bare.ref.collection))}
+					/>{#if !startsWithKind(name, bronLabel(bare.ref.collection))}
 						{bronLabel(bare.ref.collection)}{/if}</span
 				>
-				<span class="row-title">{naam}</span>
+				<span class="row-title">{name}</span>
 				<span class="kbd" aria-hidden="true">↵</span>
 			</SearchOption>
 		{/if}
@@ -307,7 +307,7 @@
 		{#each search.shown as group (group.best ? 'beste' : group.kind)}
 			{@const gid = group.best ? 'beste' : group.kind}
 			<!-- The hits a row is told apart from: its whole group, the Beste treffer's too. -->
-			{@const buren = search.groups.find((g) => g.kind === group.kind)?.hits ?? group.hits}
+			{@const neighbours = search.groups.find((g) => g.kind === group.kind)?.hits ?? group.hits}
 			<div class="group" class:group--beste={group.best} role="group" aria-labelledby="{uid}-{gid}">
 				<div class="group-label" id="{uid}-{gid}">
 					<!-- The best hit says what it is, as every group does: "Beste treffer, Dossier". -->
@@ -325,7 +325,7 @@
 				{/if}
 				{#each uniqueBy(group.hits, (x) => x.id) as hit, h (hit.id)}
 					{@const i = search.rowOfHit.get(hit.id) ?? search.offset}
-					{@const shown = presentHit(hit, search.q, buren)}
+					{@const shown = presentHit(hit, search.q, neighbours)}
 					{@const section = sectionOf(hit)}
 					{#if section && (h === 0 || section !== sectionOf(group.hits[h - 1]))}
 						<div class="section" role="presentation">{section}</div>
@@ -372,16 +372,16 @@
 		{#each search.failedLanes as lane (lane.id)}
 			<!-- A lane that failed: its group says so, the other groups stand. A lane under way
 			     holds its place among the groups (slots). -->
-			{@const naam = lane.kinds.map((k) => groupLabel(k)).join(' en ')}
+			{@const name = lane.kinds.map((k) => groupLabel(k)).join(' en ')}
 			<div class="group" role="group" aria-labelledby="{uid}-{lane.id}-stand">
 				<div class="group-label" id="{uid}-{lane.id}-stand">
 					<KindGlyph collection={lane.kinds[0]} />
-					{naam}
+					{name}
 				</div>
 				<div class="state state--group">
 					<LoadState
 						state={{ status: 'error', error: search.lanes[lane.id].error }}
-						what={naam}
+						what={name}
 						plural
 						retry={() => search.retry(lane.id)}
 					/>

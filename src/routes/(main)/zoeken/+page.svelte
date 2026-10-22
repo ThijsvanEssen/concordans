@@ -18,7 +18,7 @@
 		activeFilters,
 		type FacetGroup
 	} from '$lib/components/explore/index/IndexFacets.svelte';
-	import RouteHead from '$lib/seo/RouteKop.svelte';
+	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import { SEARCH_KINDS, type SearchKind } from '$lib/search/lanes';
 	import { bySection, groupLabel, sectionOf } from '$lib/search/present';
 	import {
@@ -171,7 +171,7 @@
 	);
 </script>
 
-<RouteHead />
+<RouteKop />
 
 <div class="zoeken blad blad__indeling">
 	<header class="blad__kop">
