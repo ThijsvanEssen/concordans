@@ -1882,17 +1882,9 @@ exports[`Bronnen, list by list > ministers ?weergave=naast > view 1`] = `
 
 exports[`Bronnen, the address > drops the filters and the open row in a tab, the Kamer kept 1`] = `
 [
-  "/explore?kamer=EK&mode=index&kind=instruments",
-  "/explore?kamer=EK&mode=index&kind=judgments",
   "/explore?kamer=EK&mode=index&kind=dossiers",
   "/explore?kamer=EK&mode=index&kind=decisions",
   "/explore?kamer=EK&mode=index&kind=documents",
-  "/explore?kamer=EK&mode=index&kind=members",
-  "/explore?kamer=EK&mode=index&kind=factions",
-  "/explore?kamer=EK&mode=index&kind=committees",
-  "/explore?kamer=EK&mode=index&kind=cabinets",
-  "/explore?kamer=EK&mode=index&kind=ministers",
-  "/explore?kamer=EK&mode=index&kind=commitments",
 ]
 `;
 

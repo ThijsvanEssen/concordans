@@ -55,6 +55,10 @@ export const strayRed = (page: Page) =>
 export const smallTargets = (page: Page) =>
 	page.evaluate(() => {
 		const H = 22;
+		// The tab bar of a phone covers the foot of the screen: what lies under it is out of reach
+		// until it is scrolled up, as what lies past the screen.
+		const bottom =
+			innerHeight - (document.querySelector<HTMLElement>('.tabbar')?.offsetHeight ?? 0);
 		const controls = document.querySelectorAll<HTMLElement>(
 			'button, [role="button"], [role="tab"], [role="menuitem"], [role="switch"], select, ' +
 				'input:not([type="hidden"]), summary, nav a, a.btn, a[class*="knop"]'
@@ -68,7 +72,7 @@ export const smallTargets = (page: Page) =>
 				r.width === 0 ||
 				r.height === 0 ||
 				r.bottom < 0 ||
-				r.top > innerHeight ||
+				r.top > bottom ||
 				r.right < 0 ||
 				r.left > innerWidth
 			)
@@ -83,7 +87,7 @@ export const smallTargets = (page: Page) =>
 				[cx + H - 1, cy]
 			];
 			const ok = probes.every(([x, y]) => {
-				if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) return true;
+				if (x < 0 || y < 0 || x >= innerWidth || y >= bottom) return true;
 				const hit = document.elementFromPoint(x, y);
 				// Nothing there (past the bottom of the screen): nothing takes the tap.
 				if (!hit) return true;
