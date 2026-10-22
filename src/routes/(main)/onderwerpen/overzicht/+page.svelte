@@ -734,13 +734,13 @@
 	const volgende = $derived.by(() => {
 		if (lokaal && lokaal.length > lokaalGetoond)
 			return {
-				label: `Volgende besluiten, nog ${getal(lokaal.length - lokaalGetoond)}`,
+				label: `Volgende stemmingen, nog ${getal(lokaal.length - lokaalGetoond)}`,
 				loading: false,
 				onclick: () => (lokaalGetoond += STEP)
 			};
 		if (lijstSoort === 'besluiten' && apiLijst.length < (lijstTotaal ?? 0))
 			return {
-				label: `Volgende besluiten, nog ${getal((lijstTotaal ?? 0) - apiLijst.length)}`,
+				label: `Volgende stemmingen, nog ${getal((lijstTotaal ?? 0) - apiLijst.length)}`,
 				loading: lijstLaden,
 				onclick: volgendeBesluiten
 			};
@@ -883,8 +883,8 @@
 				type="button"
 				class="btn is-groot"
 				title={lijstSoort === 'besluiten' || lijstSoort === 'lokaal'
-					? 'De besluiten van de lijst als CSV'
-					: 'Alleen de besluiten gaan als CSV: kies geen getal of een getal van de stemmingen'}
+					? 'De stemmingen van de lijst als CSV'
+					: 'Alleen stemmingen kunnen als CSV worden gedownload'}
 				onclick={exporteer}
 				disabled={(lijstSoort !== 'besluiten' && lijstSoort !== 'lokaal') ||
 					!besluitRijen.length ||

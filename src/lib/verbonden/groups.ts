@@ -865,7 +865,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		},
 		{
 			id: 'commitments',
-			label: 'Toezeggingen gedaan in deze activiteit',
+			label: 'Toezeggingen in deze activiteit',
 			noun: 'toezeggingen',
 			match: [{ relation: 'MADE_IN', direction: 'inbound', collection: 'commitments' }]
 		},

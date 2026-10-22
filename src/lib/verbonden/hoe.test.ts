@@ -74,8 +74,8 @@ describe('hoeVan', () => {
 		);
 		expect([h?.werkwoord, h?.rest, h?.herkomst]).toEqual([
 			'Door de Kamer verbonden',
-			': 2 zaken, brief regering → motie',
-			'Tweede Kamer, zaak gerelateerd aan zaak'
+			': 2 Kamerzaken, brief regering → motie',
+			'Uit de bron, Tweede Kamer'
 		]);
 	});
 
@@ -116,7 +116,7 @@ describe('hoeVan', () => {
 			'Haalt aan',
 			'lid 3, in r.o. 4.3 en 5.1, 2 keer',
 			true,
-			'Herkend in de tekst'
+			'Staat letterlijk in de tekst'
 		]);
 	});
 
@@ -148,7 +148,7 @@ describe('hoeVan', () => {
 		expect([h?.werkwoord, h?.rest, h?.herkomst]).toEqual([
 			'Verwijst naar',
 			'lid 3 als ‘artikel 248 lid 3 van Boek 7’',
-			'Verwijzing in de wettekst, wetten.overheid.nl'
+			'Uit de bron, wetten.overheid.nl'
 		]);
 	});
 
@@ -289,7 +289,7 @@ describe('hoeVan', () => {
 			}),
 			'dossiers'
 		);
-		expect(h?.rest).toBe(': Brief 32761 nr. 12 gaat in op motie 36764 nr. 28; 3 zaken');
+		expect(h?.rest).toBe(': Brief 32761 nr. 12 gaat in op motie 36764 nr. 28; 3 Kamerzaken');
 	});
 
 	it('gives a memorie its section about the article as its line, the opening under it', () => {
@@ -687,9 +687,9 @@ describe('the line of a reference', () => {
 
 describe('kleineLetter', () => {
 	it('lowers a word, never a name', () => {
-		expect(kleineLetter('Herkend in de tekst')).toBe('herkend in de tekst');
-		expect(kleineLetter('Tweede Kamer, zaak gerelateerd aan zaak')).toBe(
-			'Tweede Kamer, zaak gerelateerd aan zaak'
+		expect(kleineLetter('Staat letterlijk in de tekst')).toBe('staat letterlijk in de tekst');
+		expect(kleineLetter('Tweede Kamer, besluit van de Kamer')).toBe(
+			'Tweede Kamer, besluit van de Kamer'
 		);
 		expect(kleineLetter('ECLI genoemd in de tekst')).toBe('ECLI genoemd in de tekst');
 	});

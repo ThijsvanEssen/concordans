@@ -49,7 +49,7 @@
 	};
 	const sourceOfEdge = $derived(
 		v.derived && !v.reason
-			? 'afgeleid door Concordans'
+			? 'Concordans, op naam herkend'
 			: (SOURCE_OF_EDGE[v.from.ref.collection] ?? 'de gegevens van de bron')
 	);
 

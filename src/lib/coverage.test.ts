@@ -60,12 +60,12 @@ describe('the mark of what is missing', () => {
 			'Tekst gewijzigd per 1 juli 2026'
 		);
 		expect(anchorLine({ state: 'lapsed', since: '2026-07-01' })).toBe('Vervallen per 1 juli 2026');
-		expect(anchorLine({ state: 'lost' })).toBe('Fragment niet teruggevonden');
+		expect(anchorLine({ state: 'lost' })).toBe('Passage niet meer in de tekst');
 		// Its words live here alone: no other file writes them.
 		const found = files(ROOT).filter(
 			(path) =>
 				!OWN.has(relative(ROOT, path)) &&
-				/Fragment niet teruggevonden|Tekst gewijzigd per/.test(code(readFileSync(path, 'utf8')))
+				/Passage niet meer in de tekst|Tekst gewijzigd per/.test(code(readFileSync(path, 'utf8')))
 		);
 		expect(found).toEqual([]);
 	});
@@ -89,21 +89,21 @@ describe('the mark of what is missing', () => {
 				},
 				{ noText: true }
 			);
-		expect(without('pending')).toBe('Tekst nog niet opgehaald');
+		expect(without('pending')).toBe('Tekst nog niet beschikbaar');
 		expect(without('pending', '2026-10-20T03:00:00Z')).toBe('Tekst nog niet beschikbaar');
 		expect(without('not_in_source')).toBe('Tekst niet in de gegevens, de bron levert geen tekst');
-		expect(without('none', '2026-10-20T03:00:00Z')).toBe('Tekst niet leesbaar in de bron');
+		expect(without('none', '2026-10-20T03:00:00Z')).toBe('Geen leesbare tekst in de bron');
 		// Why it is pending, where the API says so (from 0.79.68).
 		expect(without('pending', '2026-10-20T03:00:00Z', 'awaiting_normalize')).toBe(
-			'Tekst opgehaald op 20 oktober 2026, wordt nog verwerkt'
+			'Tekst nog niet beschikbaar, ontvangen op 20 oktober 2026'
 		);
 		expect(without('pending', '2026-10-20T03:00:00Z', 'source_pdf_only')).toBe(
 			'Tekst nog niet beschikbaar, de bron heeft alleen de pdf'
 		);
 		// A paper of the Eerste Kamer, a publication: the source has it, the dataset not.
-		expect(without('not_fetched')).toBe('Tekst niet opgenomen, staat bij de bron');
+		expect(without('not_fetched')).toBe('Tekst alleen bij de bron');
 		expect(coverageLine({ text: { state: 'not_fetched' } }, { noText: true })).toBe(
-			'Tekst niet opgenomen, staat bij de bron'
+			'Tekst alleen bij de bron'
 		);
 		// With its text, what of it is not read yet; paragraphs or tables it has none of, nothing.
 		expect(
@@ -112,7 +112,7 @@ describe('the mark of what is missing', () => {
 				paragraphs: { state: 'pending' },
 				tables: { state: 'pending' }
 			})
-		).toBe("Alinea's en tabellen nog niet verwerkt");
+		).toBe("Alinea's en tabellen nog niet beschikbaar");
 		expect(
 			coverageLine({
 				text: { state: 'done' },
@@ -124,10 +124,10 @@ describe('the mark of what is missing', () => {
 
 	it('says how many references of a text are not linked, and nothing where all are', () => {
 		expect(coverageLine({ references: { state: 'partial', missing: 3 } })).toBe(
-			'3 verwijzingen niet gelegd of naar niet geladen tekst'
+			'3 verwijzingen nog niet gekoppeld'
 		);
 		expect(coverageLine({ references: { state: 'partial', missing: 1 } })).toBe(
-			'1 verwijzing niet gelegd of naar niet geladen tekst'
+			'1 verwijzing nog niet gekoppeld'
 		);
 		expect(coverageLine({ references: { state: 'done' } })).toBe(null);
 	});
@@ -135,12 +135,12 @@ describe('the mark of what is missing', () => {
 	it('says of references to a text not loaded yet that they wait for it (target_not_loaded)', () => {
 		expect(
 			coverageLine({ references: { state: 'partial', missing: 4, reason: 'target_not_loaded' } })
-		).toBe('4 verwijzingen naar tekst die nog niet geladen is');
+		).toBe('4 verwijzingen naar tekst die niet in de gegevens staat');
 		expect(
 			coverageLine({ references: { state: 'partial', missing: 1, reason: 'target_not_loaded' } })
-		).toBe('1 verwijzing naar tekst die nog niet geladen is');
+		).toBe('1 verwijzing naar tekst die niet in de gegevens staat');
 		expect(coverageLine({ references: { state: 'partial', reason: 'target_not_loaded' } })).toBe(
-			'Verwijzingen deels naar tekst die nog niet geladen is'
+			'Verwijzingen deels naar tekst die niet in de gegevens staat'
 		);
 	});
 
@@ -149,7 +149,7 @@ describe('the mark of what is missing', () => {
 			'Geen einde vastgelegd, laatste activiteit 5 maart 2019'
 		);
 		expect(coverageLine({ outcome: { state: 'pending', as_of: null } })).toBe(
-			'Uitkomst nog niet verwerkt'
+			'Uitkomst nog niet beschikbaar'
 		);
 		expect(coverageLine({ outcome: { state: 'not_in_source' } })).toBe(null);
 		expect(coverageLine({ outcome: { state: 'done', as_of: '2019-03-05' } })).toBe(null);
@@ -168,18 +168,20 @@ describe('the mark of what is missing', () => {
 
 	it('says what of a law of the Staatsblad is read, and nothing where all is', () => {
 		expect(coverageLine({ references: { state: 'partial', missing: 1234 } })).toBe(
-			'1.234 verwijzingen niet gelegd of naar niet geladen tekst'
+			'1.234 verwijzingen nog niet gekoppeld'
 		);
-		expect(coverageLine({ definitions: { state: 'pending' } })).toBe('Begrippen nog niet verwerkt');
+		expect(coverageLine({ definitions: { state: 'pending' } })).toBe(
+			'Begrippen nog niet beschikbaar'
+		);
 		expect(
 			coverageLine({ references: { state: 'pending' }, definitions: { state: 'pending' } })
-		).toBe('Verwijzingen en begrippen nog niet verwerkt');
+		).toBe('Verwijzingen en begrippen nog niet beschikbaar');
 		expect(
 			coverageLine({
 				references: { state: 'partial', missing: 12 },
 				definitions: { state: 'pending' }
 			})
-		).toBe('12 verwijzingen niet gelegd of naar niet geladen tekst, begrippen nog niet verwerkt');
+		).toBe('12 verwijzingen nog niet gekoppeld, begrippen nog niet beschikbaar');
 		expect(coverageLine({ references: { state: 'done' }, definitions: { state: 'done' } })).toBe(
 			null
 		);
@@ -190,25 +192,27 @@ describe('the mark of what is missing', () => {
 		// Sv 2.8.6 (Stb. 2026, 56): references pending, and one laid to 2.8.16 in its text.
 		const sv = { references: { state: 'pending' }, definitions: { state: 'pending' } } as const;
 		expect(coverageLine(sv, { shown: { references: 1 } })).toBe(
-			'Verwijzingen deels verwerkt, begrippen nog niet verwerkt'
+			'Verwijzingen deels beschikbaar, begrippen nog niet beschikbaar'
 		);
 		expect(coverageLine(sv, { shown: { references: 1, definitions: 2 } })).toBe(
-			'Verwijzingen en begrippen deels verwerkt'
+			'Verwijzingen en begrippen deels beschikbaar'
 		);
 		expect(coverageLine(sv, { shown: { references: 0 } })).toBe(
-			'Verwijzingen en begrippen nog niet verwerkt'
+			'Verwijzingen en begrippen nog niet beschikbaar'
 		);
 	});
 
 	it('says of a source the runs no longer fetch from how far it goes', () => {
 		const at = '2026-10-08T20:53:06Z';
 		expect(coverageLine({ source: { state: 'paused', as_of: at } })).toBe(
-			'Gepauzeerd, bijgewerkt tot 8 oktober 2026'
+			'Wordt niet meer bijgewerkt, stand 8 oktober 2026'
 		);
 		expect(coverageLine({ source: { state: 'unavailable', as_of: at } }, { of: 'HUDOC' })).toBe(
-			'HUDOC onbereikbaar, bijgewerkt tot 8 oktober 2026'
+			'HUDOC onbereikbaar, stand 8 oktober 2026'
 		);
-		expect(coverageLine({ source: { state: 'pending', as_of: null } })).toBe('Nog niet opgehaald');
+		expect(coverageLine({ source: { state: 'pending', as_of: null } })).toBe(
+			'Nog niet beschikbaar'
+		);
 		expect(coverageLine({ source: { state: 'done', as_of: at } }, { of: 'HUDOC' })).toBe(null);
 	});
 

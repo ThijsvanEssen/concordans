@@ -37,9 +37,9 @@
 				op volle breedte (<strong>Tekst</strong>) of naast het netwerk (<strong>Netwerk</strong>).
 				Elke andere bron staat naast het netwerk. Verbonden, rechts, somt de verbindingen van de
 				bron op per groep. Elke rij zegt hoe de bron verbonden is: wat ze aanhaalt of wijzigt, in
-				welk lid of welke overweging, met de passage. Een verbinding die afgeleid is, staat schuin.
-				Hover of focus toont waar de verbinding vandaan komt. Een klik op de rij opent de bron in
-				het netwerk. Het netwerk tekent dezelfde verbindingen.
+				welk lid of welke overweging, met de passage. Een verbinding op een herkende naam staat
+				schuin. Hover of focus toont waar de verbinding vandaan komt. Een klik op de rij opent de
+				bron in het netwerk. Het netwerk tekent dezelfde verbindingen.
 			</p>
 		</div>
 
@@ -68,7 +68,7 @@
 		<div class="section">
 			<h2 class="section-title">Zoeken</h2>
 			<p>
-				Het zoekveld doorzoekt instrumenten, artikelen, uitspraken, dossiers, Kamerstukken,
+				Het zoekveld doorzoekt wetten en regelingen, artikelen, uitspraken, dossiers, Kamerstukken,
 				stemmingen, personen, fracties, commissies, kabinetten en toezeggingen. Een treffer op
 				nummer staat eerst.
 			</p>
@@ -121,7 +121,7 @@
 			</p>
 			<p>
 				De kaart van een verbinding noemt haar betrouwbaarheid (hoog, matig of laag) met de
-				herkomst: gelezen uit de bron, herkend in de tekst of afgeleid. Ook noemt de kaart de
+				herkomst: uit de bron, staat letterlijk in de tekst of naam herkend. Ook noemt de kaart de
 				status. Een verbinding is vastgesteld, of voorgesteld als een wetsvoorstel haar nog maar
 				voorstelt. Wat de woorden betekenen, staat in de <a
 					href="/docs/methode#betrouwbaarheid"
@@ -158,10 +158,11 @@
 			<h2 class="section-title">Netwerk</h2>
 			<p>
 				Een klik op een bron in het netwerk markeert die bron: zij licht op met haar eigen
-				verbindingen, en een kaart ernaast toont Tekst lezen, Omgeving tonen en In netwerk. Een
-				tweede klik, Tekst lezen of Enter opent de lezer. Omgeving tonen tekent het netwerk opnieuw
-				rond die bron, tot de gekozen diepte. Een klik ernaast of Escape heft de markering op.
-				Diepte voegt bronnen rond de gekozen bron toe; die staan vaag getekend.
+				verbindingen, en een kaart ernaast toont Tekst lezen, Toon verbonden bronnen en In netwerk.
+				Een tweede klik, Tekst lezen of Enter opent de lezer. Toon verbonden bronnen tekent het
+				netwerk opnieuw rond die bron, tot het gekozen aantal stappen. Een klik ernaast of Escape
+				heft de markering op. Aantal stappen voegt bronnen rond de gekozen bron toe; die staan vaag
+				getekend.
 			</p>
 			<p>
 				Meer dan veertig bronnen van één soort die alleen aan de gekozen bron hangen, staan als één

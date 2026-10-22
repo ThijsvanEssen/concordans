@@ -177,7 +177,7 @@ describe('ArticleSuccession with an outcome', () => {
 	it('says a gap in the quiet line of what the dataset lacks', () => {
 		const el = line({ outcome: 'gat', parts: [{ from: '', to: 'B6H3', outcome: 'gat' }] });
 		expect(el.querySelector('.dekking')?.textContent).toBe(
-			'Opvolger niet gevonden in de transponeringstabel'
+			'Geen opvolger in de transponeringstabel'
 		);
 		expect(el.textContent).not.toContain('Omgevingswet');
 	});

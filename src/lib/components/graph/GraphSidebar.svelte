@@ -112,7 +112,7 @@
 	const DEPTHS = [1, 2, 3];
 	const grens = $derived(reach?.cap ?? NEIGHBORHOOD_CAP);
 	const CAPPED_REASON = $derived(
-		`Grens van ${grens} bronnen bereikt; een stap verder voegt niets toe.`
+		`Maximaal ${grens} bronnen getoond; een stap verder voegt niets toe.`
 	);
 	const beyondCap = (d: number) => !netwerkActive && !!reach?.capped && d > reach.depth;
 	// What the network shows of the focus's direct neighbours, per kind the API cut off: "32 van
@@ -351,14 +351,14 @@
 			<div
 				class="block__label"
 				title={netwerkActive
-					? 'De buren van de gekozen bron erbij; het netwerk blijft'
+					? 'De verbonden bronnen van de gekozen bron erbij; het netwerk blijft'
 					: `Stappen vanaf de bron, per stap hooguit ${grens} bronnen`}
 			>
-				{netwerkActive ? 'Buren' : 'Diepte'}
+				{netwerkActive ? 'Verbonden bronnen' : 'Aantal stappen'}
 			</div>
 			<Keuze
 				klein
-				label={netwerkActive ? 'Buren' : 'Diepte'}
+				label={netwerkActive ? 'Verbonden bronnen' : 'Aantal stappen'}
 				waarde={netwerkActive ? null : String(depth)}
 				opties={DEPTHS.map((d) => {
 					const reden =
@@ -375,10 +375,10 @@
 
 		{#if lids.length > 0}
 			<section class="block">
-				<div class="block__label">Lid van het artikel</div>
+				<div class="block__label">Lid</div>
 				<TekstMenu
 					klein
-					label="Lid van het artikel"
+					label="Lid"
 					waarde={filter.lid ?? ''}
 					opties={[
 						{ waarde: '', label: 'Alle leden' },
@@ -391,11 +391,11 @@
 		{/if}
 
 		<section class="block">
-			<div class="block__label">Overlay</div>
+			<div class="block__label">Toon erbij</div>
 			<div class="block">
 				<TekstMenu
 					klein
-					label="Overlay"
+					label="Toon erbij"
 					waarde={mutOn ? 'mut' : heatOn ? 'heat' : 'geen'}
 					opties={[
 						{ waarde: 'geen', label: 'Geen' },

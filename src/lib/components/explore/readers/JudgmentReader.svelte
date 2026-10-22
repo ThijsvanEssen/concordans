@@ -300,8 +300,8 @@
 								{#if g.derived}
 									<span
 										class="reader-parties-derived"
-										title="De uitspraak noemt deze rol niet; afgeleid uit rechtsgebied en kop"
-										>afgeleid</span
+										title="De uitspraak noemt deze rol niet; Concordans leidt haar af uit rechtsgebied en kop"
+										>niet in de uitspraak</span
 									>
 								{/if}
 							</th>

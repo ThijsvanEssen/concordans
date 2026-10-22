@@ -38,7 +38,7 @@ const ABOUT: Record<IndexCategory, string> = {
 	dossiers:
 		'Kamerdossiers: wetsvoorstellen, begrotingen, verdragen en andere onderwerpen, met hun stukken, behandeling en uitkomst.',
 	decisions:
-		'Besluiten van de Tweede Kamer en de Eerste Kamer over wetsvoorstellen, moties en amendementen, met de stemmen per fractie of per lid.',
+		'Stemmingen van de Tweede Kamer en de Eerste Kamer over wetsvoorstellen, moties en amendementen, met de stemmen per fractie of per lid.',
 	documents:
 		'Stukken van de Tweede Kamer en de Eerste Kamer: brieven, verslagen, moties, amendementen en wetsvoorstellen, met hun plaats in het dossier.',
 	members: 'Leden van de Tweede Kamer en de Eerste Kamer, met hun fractie en commissies.',

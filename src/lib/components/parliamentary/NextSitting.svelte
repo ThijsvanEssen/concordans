@@ -20,10 +20,12 @@
 {#snippet day(d: SittingDay)}{#if d.href}<a href={d.href}>{d.text}</a>{:else}{d.text}{/if}{/snippet}
 
 {#if line}
+	<!-- One day once: votes on the day of the next sitting name it once, with its weekday. -->
 	<p class="no-sitting">
-		Geen vergaderingen tot {@render day(line.until)}{#if line.votes}; volgende stemmingen {@render day(
+		{#if line.votes?.text.endsWith(line.until.text)}Volgende vergadering en stemmingen: {@render day(
 				line.votes
-			)}{/if}
+			)}{:else}Geen vergaderingen tot {@render day(line.until)}{#if line.votes}; volgende stemmingen
+				{@render day(line.votes)}{/if}{/if}
 	</p>
 {/if}
 

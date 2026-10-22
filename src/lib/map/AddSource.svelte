@@ -143,7 +143,7 @@
 	{/if}
 	<p class="knoppen">
 		<button type="submit" class="btn" disabled={!citation.trim() || badUrl}>Voeg toe</button>
-		<TekstLink onclick={onClose}>Annuleer</TekstLink>
+		<TekstLink onclick={onClose}>Annuleren</TekstLink>
 	</p>
 </form>
 

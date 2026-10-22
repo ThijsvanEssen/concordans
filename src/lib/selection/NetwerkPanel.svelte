@@ -235,8 +235,8 @@
 		{#if omgeving && onOmgeving}
 			<!-- The chosen bron stands in the panel already: its name and the key on hover. -->
 			<p class="omgeving">
-				<TekstLink onclick={onOmgeving} title="Alleen de omgeving van {omgeving} (toets O)"
-					>Alleen de omgeving</TekstLink
+				<TekstLink onclick={onOmgeving} title="Alleen {omgeving} met verbonden bronnen (toets O)"
+					>Alleen verbonden bronnen</TekstLink
 				>
 			</p>
 		{/if}
@@ -252,7 +252,7 @@
 				/>
 			</p>
 			{#if tussen && deels}
-				<p class="deels">Niet alle paden gevonden; de zoektocht duurde te lang.</p>
+				<p class="deels">Niet alle verbindingen gevonden: het zoeken duurde te lang.</p>
 			{/if}
 		{/if}
 	</CanvasKaart>

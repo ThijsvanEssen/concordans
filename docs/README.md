@@ -17,6 +17,7 @@ For users the app has `/docs`, `/docs/methode` and `/docs/sneltoetsen`. The API 
 | [`hierarchie.md`](hierarchie.md)             | Where every bron stands: axes, layers in the source's terms, relations, routes |
 | [`typografie.md`](typografie.md)             | The text hierarchy: page title down to a count, in tokens; how a stem looks    |
 | [`bediening.md`](bediening.md)               | The five forms of a control, the four layers of a page, the rules              |
+| [`woorden.md`](woorden.md)                   | The fixed words of the interface and the words it no longer uses               |
 
 Conventions:
 
@@ -29,9 +30,9 @@ Conventions:
   - A call the API may take long for (search lanes, the feed, a full node, a person's votes) waits as long as the API does (`slowApi`, 30 s), not the 10 s of `api`.
   - A new or changed page is checked for what is on its critical path: which calls the first paint waits for, and whether each must.
 - A click on a bron in the network marks it; it does not open it:
-  - One click (a tap on a phone) lights the bron and its own lines, with its card beside it: Tekst lezen, Omgeving tonen, In netwerk. The network keeps its size.
+  - One click (a tap on a phone) lights the bron and its own lines, with its card beside it: Tekst lezen, Toon verbonden bronnen, In netwerk. The network keeps its size.
   - The reader opens with Tekst lezen, a second click on the bron (a double click too) or Enter.
-  - A click on the empty network or Escape removes the mark. Omgeving tonen shows the bron's own neighbourhood in place of the netwerk.
+  - A click on the empty network or Escape removes the mark. Toon verbonden bronnen shows the bron's own neighbourhood in place of the netwerk.
 - On a phone, whatever puts a bron in the network or opens it there goes to the Netwerk tab: In netwerk, toon in netwerk, Alleen de omgeving (O, or its line in the panel Netwerk), a row of Verbonden, and a link to the network from Bladeren or Actueel (`bronHref(…, { mode: 'graph' })` carries `paneel=netwerk`, read once). What it did stands at the foot of the network, with Ongedaan maken (`meldNetwerk`).
 - A bron's place (what it belongs to, what stands beside it, what falls under it) follows [`hierarchie.md`](hierarchie.md), in the source's terms; the band "Behoort bij" and the groupings of the network read it from there.
 - Every list with dates has the same period filter: `Periode.svelte` in `src/lib/components/ui`, first in every filter pane: Alles, Maand, Kwartaal, Jaar (back from today) or Eigen as one segmented row over the full width of the column (Keuze `vol`), and van and tot as day fields only under Eigen, aligned with the row (one line where both fit, else under each other). The search has the same component. The bounds are days (YYYY-MM-DD) in the URL and to the API. Verbonden and the network have it in the filter sheet. Actueel and Bladeren follow [`bediening.md`](bediening.md); Bladeren takes the `range` group out of its facets into its choose-line. Actueel has the page's field and Periode on one line above the list, the facets with their counts on the left (Kamer, Soort, Fractie, Ministerie, then the rest), a chosen option in bold where it is chosen and no chips; on a phone the facets behind Verfijnen (N); the actions (Atom-feed, Volg als onderwerp) beside the heading. The other filter panes follow the same pattern. A list whose route has no period yet waits for the back end; a list whose dates are its own rows (the kabinetten) filters them itself. Onderwerpen excepted: a signal page with its own window (30 days, or since the visit before); the lists it leads to have the period (the Overzicht, Actueel).

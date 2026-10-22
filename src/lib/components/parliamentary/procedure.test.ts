@@ -73,7 +73,7 @@ describe('procedure: the Eerste Kamer as eerstekamer.nl shows it', () => {
 			['2026-09-29', 'Gewijzigd voorstel van wet', 'Kamerstuk I 36799, A', 'https://ek/x.pdf'],
 			[
 				null,
-				'Nu: schriftelijke voorbereiding. Kan nog volgen: plenaire behandeling en afkondiging.',
+				'Nu: schriftelijke voorbereiding. Volgende stappen: plenaire behandeling en afkondiging.',
 				null,
 				null
 			]
@@ -222,7 +222,7 @@ describe('procedure: the Eerste Kamer as eerstekamer.nl shows it', () => {
 	it('keeps the general line without a page', () => {
 		const g = ekGroup({ ...base, senate: senate([]) })!;
 		expect(g.regels.map((r) => r.zin)).toEqual([
-			'Kan nog volgen: verslag of plenaire behandeling, en stemming.'
+			'Volgende stappen: verslag of plenaire behandeling, en stemming.'
 		]);
 	});
 });
@@ -349,30 +349,30 @@ describe('procedure: what can still follow in the Tweede Kamer', () => {
 	it.each([
 		[
 			null,
-			'Kan nog volgen: verslag, nota naar aanleiding van het verslag, nota van wijziging, plenaire behandeling en stemming.'
+			'Volgende stappen: verslag, nota naar aanleiding van het verslag, nota van wijziging, plenaire behandeling en stemming.'
 		],
 		[
 			'Voorstel van wet',
-			'Kan nog volgen: verslag, nota naar aanleiding van het verslag, nota van wijziging, plenaire behandeling en stemming.'
+			'Volgende stappen: verslag, nota naar aanleiding van het verslag, nota van wijziging, plenaire behandeling en stemming.'
 		],
 		[
 			'Advies Raad van State',
-			'Kan nog volgen: verslag, nota naar aanleiding van het verslag, nota van wijziging, plenaire behandeling en stemming.'
+			'Volgende stappen: verslag, nota naar aanleiding van het verslag, nota van wijziging, plenaire behandeling en stemming.'
 		],
 		[
 			'Verslag',
-			'Kan nog volgen: nota naar aanleiding van het verslag, nota van wijziging, plenaire behandeling en stemming.'
+			'Volgende stappen: nota naar aanleiding van het verslag, nota van wijziging, plenaire behandeling en stemming.'
 		],
 		[
 			'Nota n.a.v. het verslag',
-			'Kan nog volgen: nota van wijziging, plenaire behandeling en stemming.'
+			'Volgende stappen: nota van wijziging, plenaire behandeling en stemming.'
 		],
 		[
 			'Nota van wijziging / Amendement',
-			'Kan nog volgen: nog een nota van wijziging, plenaire behandeling en stemming.'
+			'Volgende stappen: nog een nota van wijziging, plenaire behandeling en stemming.'
 		],
 		// Votes on amendementen or moties, not yet on the bill: its vote can still follow.
-		['Stemmingen', 'Kan nog volgen: stemming.']
+		['Stemmingen', 'Volgende stappen: stemming.']
 	])('after %s', (phase, zin) => {
 		expect(nog(phase)).toBe(zin);
 	});

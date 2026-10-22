@@ -183,7 +183,7 @@
 								class="row__plaats">{hoe.plaats.text}</BronLink
 							>{hoe.rest.slice(
 								i + hoe.plaats.text.length
-							)}{:else}{hoe.rest}{/if}{/if}{#if hoe.afgeleid}, afgeleid{/if}</span
+							)}{:else}{hoe.rest}{/if}{/if}{#if hoe.afgeleid}, naam herkend{/if}</span
 				>
 			{/if}
 			{#if hoe?.citaat}

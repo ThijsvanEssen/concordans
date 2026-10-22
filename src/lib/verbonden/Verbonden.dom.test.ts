@@ -130,7 +130,7 @@ describe('Verbonden', () => {
 		expect(rij.querySelector('.row__citaat')?.textContent).toContain('artikel 6:162 BW');
 		// The comma's space is its margin (.row__sep).
 		const meta = [...rij.querySelectorAll('.row__meta .row__part')].map((p) => p.textContent);
-		expect(meta).toEqual(['ECLI:NL:HR:2019:2006', 'herkend in de tekst']);
+		expect(meta).toEqual(['ECLI:NL:HR:2019:2006', 'staat letterlijk in de tekst']);
 	});
 
 	it('opens a judgment with one click on its row, at the note, the citation marked', async () => {

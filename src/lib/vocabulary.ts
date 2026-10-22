@@ -147,7 +147,7 @@ export const BRON_LABEL: Record<Collection, readonly [singular: string, plural: 
 	annexes: ['Bijlage', 'Bijlagen'],
 	judgments: ['Uitspraak', 'Uitspraken'],
 	dossiers: ['Dossier', 'Dossiers'],
-	cases: ['Zaak', 'Zaken'],
+	cases: ['Kamerzaak', 'Kamerzaken'],
 	documents: ['Stuk', 'Stukken'],
 	activities: ['Activiteit', 'Activiteiten'],
 	decisions: ['Stemming', 'Stemmingen'],

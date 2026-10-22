@@ -36,20 +36,22 @@
 			<h2 class="section-title">Betrouwbaarheid</h2>
 			<p>De kaart van een verbinding noemt haar herkomst:</p>
 			<KeyList>
-				<KeyRow key="gelezen uit de bron"
+				<KeyRow key="uit de bron"
 					>De uitgever legt de verbinding zelf vast, zoals het artikel van een wet of het dossier
 					van een Kamerstuk.</KeyRow
 				>
-				<KeyRow key="herkend in de tekst"
-					>Een verwijzing in de tekst, zoals ‘artikel 6:162 BW’ in een uitspraak. De kaart toont de
-					passage.</KeyRow
+				<KeyRow key="staat letterlijk in de tekst"
+					>Een verwijzing met nummer in de tekst, zoals ‘artikel 6:162 BW’ in een uitspraak. De
+					kaart toont de passage.</KeyRow
 				>
-				<KeyRow key="afgeleid">Uit het dossier of uit de tekst, zonder verwijzing.</KeyRow>
+				<KeyRow key="naam herkend"
+					>Een naam in de tekst of het dossier, zonder verwijzing met nummer.</KeyRow
+				>
 			</KeyList>
 			<p>
 				Daarbij staat hoe zeker de verbinding is: hoog, matig of laag. Wat uit de bron gelezen is,
-				is hoog. Bij een herkenning of afleiding zegt het woord hoe goed het patroon past. Bij laag:
-				lees de passage na.
+				is hoog. Bij een verwijzing in de tekst of een herkende naam zegt het woord hoe goed het
+				patroon past. Bij laag: lees de passage na.
 			</p>
 			<p>
 				De status is vastgesteld of voorgesteld. Een wijziging uit een wetsvoorstel dat nog niet in
@@ -76,7 +78,7 @@
 			<h2 class="section-title">Grenzen</h2>
 			<p>
 				De patronen begrijpen de tekst niet. Een ongebruikelijke formulering wordt gemist of aan de
-				verkeerde bron gelegd.
+				verkeerde bron gekoppeld.
 			</p>
 			<p>
 				Het netwerk bevat een selectie: niet elke regeling uit het Basiswettenbestand, niet alle

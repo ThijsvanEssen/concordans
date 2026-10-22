@@ -536,7 +536,7 @@
 		{#if empty}
 			<p class="note stil">{emptyLine(EMPTY_FILTER)}</p>
 		{:else if !verbonden.loading && !verbonden.failed && alleenKern}
-			<p class="note stil">Geen verbindingen buiten wat boven de tekst staat.</p>
+			<p class="note stil">Geen andere verbindingen.</p>
 		{:else if !verbonden.loading && !verbonden.failed && shown.length === 0 && groepen.length > 0}
 			<p class="note stil">{emptyLine(filter)}</p>
 		{/if}

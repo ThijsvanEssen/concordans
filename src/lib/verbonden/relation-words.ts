@@ -61,9 +61,9 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 		van === 'documents' && naar === 'dossiers'
 			? ['stuk in', 'dossier van', 'stuk in een dossier']
 			: van === 'documents'
-				? ['stuk bij', 'zaak van', 'stuk bij een zaak']
+				? ['stuk bij', 'onderwerp van', 'stuk bij een Kamerzaak']
 				: van === 'cases'
-					? ['zaak in', 'dossier van', 'zaak in een dossier']
+					? ['onderdeel van', 'dossier van', 'onderdeel van een dossier']
 					: van === 'instruments'
 						? ['onderdeel van', 'omvat', 'onderdeel van een verdrag']
 						: van === 'annexes'
@@ -105,7 +105,11 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 				]
 			: ['gebaseerd op', 'gebaseerd op', 'grondslag in de aanhef van een regeling'],
 	IMPLEMENTS: () => ['implementeert', 'implementeert', 'implementatie van EU-recht'],
-	LEGISLATED_IN: () => ['tot stand gekomen in', 'tot stand gekomen in', 'wetsvoorstel van een wet'],
+	LEGISLATED_IN: () => [
+		'tot stand gekomen in',
+		'tot stand gekomen in',
+		'totstandkoming via een wetsvoorstel'
+	],
 	PUBLISHED_IN: () => ['gepubliceerd in', 'gepubliceerd in', 'publicatie in het Tractatenblad'],
 	REFERS_TO: ({ van }) =>
 		van === 'judgments'
@@ -124,7 +128,7 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 		const aard = textOf(meta.procedure_type)?.toLowerCase() ?? 'hoger beroep';
 		return [`${aard} tegen`, `bestreden in ${aard}`, aard];
 	},
-	ADVISES_ON: () => ['conclusie bij', 'uitspraak op', 'conclusie in dezelfde zaak'],
+	ADVISES_ON: () => ['conclusie bij', 'uitspraak na', 'conclusie in dezelfde zaak'],
 	ANSWERS: ({ van, naar }) =>
 		van === 'judgments'
 			? [
@@ -150,13 +154,13 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 					? ['zelfde publicatie als', 'zelfde publicatie als', 'andere uitgave van een publicatie']
 					: van === 'instruments'
 						? ['tekst van', 'tekst in het BWB', 'zelfde verdrag']
-						: ['zelfde bron als', 'zelfde bron als', 'zelfde bron'],
+						: ['ook gepubliceerd als', 'ook gepubliceerd als', 'andere uitgave'],
 	SCOPED_BY: () => ['begrensd door', 'begrenst', 'reikwijdte in een bijlage'],
 	// A toezegging is about the dossier of the letter that fulfils it; one on the agenda of its
 	// debate only was discussed there (`meta.basis` `agenda`, toezegging.ts).
 	ABOUT: ({ van, meta }) =>
 		van === 'decisions'
-			? ['over', 'onderwerp van', 'stemming over een zaak']
+			? ['over', 'onderwerp van', 'onderwerp van een stemming']
 			: van === 'commitments' && onAgendaOnly(meta.basis)
 				? [
 						`${lowerFirst(DISCUSSED_IN_DEBATE)} over`,
@@ -165,26 +169,26 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 					]
 				: van === 'commitments'
 					? ['over', 'onderwerp van', 'toezegging in een dossier']
-					: ['over', 'onderwerp van', 'activiteit over een zaak'],
+					: ['over', 'onderwerp van', 'onderwerp van een debat of vergadering'],
 	LED_BY: () => ['onder leiding van', 'voortouw bij', 'voortouwcommissie'],
 	// A motie is `MADE_IN` the debate it was submitted in (`reason` `ingediend`), a stenogram
 	// the debate it records.
 	MADE_IN: ({ van, meta }) =>
 		van === 'commitments'
-			? ['toegezegd in', 'toegezegd in', 'toezegging in een activiteit']
+			? ['toegezegd in', 'toegezegd in', 'toezegging in een debat']
 			: van === 'decisions'
-				? ['genomen in', 'genomen in', 'stemming in een activiteit']
+				? ['genomen in', 'genomen in', 'stemming in een vergadering']
 				: van === 'documents' && textOf(meta.reason) === 'ingediend'
 					? ['ingediend in', 'ingediend in', 'motie ingediend in een debat']
 					: van === 'documents'
 						? ['verslag van', 'verslag van', 'verslag van een debat']
-						: ['gedaan in', 'gedaan in', 'gedaan in een activiteit'],
+						: ['genoemd in', 'genoemd in', 'vermelding in een debat of vergadering'],
 	MEMBER_OF: () => ['lid van', 'lid', 'lidmaatschap'],
 	SERVED_IN: () => ['bewindspersoon in', 'bewindspersoon', 'ambt in een kabinet'],
 	// The edge runs from the member to the stuk: read from there, a member diende in. One who
 	// signed as minister or for the Kamer, not as Kamerlid, ondertekende.
 	AUTHORED: ({ naar, meta }) => {
-		if (naar === 'commitments') return ['deed', 'gedaan door', 'toezegging'];
+		if (naar === 'commitments') return ['zegde toe', 'toegezegd door', 'toezegging'];
 		const functie = textOf(meta.function);
 		const capacity = textOf(meta.capacity);
 		return capacity && capacity !== 'kamerlid'
@@ -200,7 +204,7 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 		return [
 			keuze === 'voor' || keuze === 'tegen' ? `stemde ${keuze}` : 'stemde over',
 			'gestemd door',
-			'stem'
+			'stemming'
 		];
 	},
 	// A supplementary budget revises its chapter (Dossier → Dossier); an amended motion or
@@ -224,9 +228,11 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 				? [
 						'door de Kamer verbonden met',
 						'door de Kamer verbonden met',
-						van === 'dossiers' ? 'verband tussen zaken in een dossier' : 'verband tussen zaken'
+						van === 'dossiers'
+							? 'door de Kamer verbonden dossiers'
+							: 'door de Kamer verbonden Kamerzaken'
 					]
-				: ['verbonden met', 'verbonden met', 'verband'],
+				: ['hangt samen met', 'hangt samen met', 'samenhang'],
 	SECOND_READING_OF: () => ['tweede lezing van', 'tweede lezing van', 'tweede lezing']
 };
 

@@ -37,7 +37,7 @@
 			><Picto naam="tekst" size={13} />{openLabel}</a
 		>
 		<a href={networkHref} data-sveltekit-noscroll class="btn"
-			><Picto naam="omgeving" size={13} />Alleen de omgeving</a
+			><Picto naam="omgeving" size={13} />Alleen verbonden bronnen</a
 		>
 		{#if row.relation}
 			<TekstLink onclick={() => onVerbinding(row)}>Over deze verbinding</TekstLink>

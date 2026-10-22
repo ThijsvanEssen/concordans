@@ -26,14 +26,15 @@
 {#if motions.length}
 	<ul
 		class="open-motions"
-		aria-label="Moties van afkeuring en wantrouwen, niet in stemming geweest"
+		aria-label="Moties van afkeuring en wantrouwen, nog niet in stemming gebracht"
 	>
 		{#each motions as m (m.key)}
 			{@const dossier = dossierOf(m)}
 			<li>
 				<span class="kind"
-					><OutcomeMark tone="open" title="nog niet in stemming" />{motionKindLabel(m.motion_kind)},
-					nog niet in stemming</span
+					><OutcomeMark tone="open" title="nog niet in stemming gebracht" />{motionKindLabel(
+						m.motion_kind
+					)}, nog niet in stemming gebracht</span
 				>
 				<BronLink ref={{ collection: 'documents', key: m.key }}>{m.title ?? 'Motie'}</BronLink>
 				<span class="meta"

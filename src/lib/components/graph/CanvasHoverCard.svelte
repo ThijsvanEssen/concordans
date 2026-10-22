@@ -193,7 +193,7 @@
 		{/if}
 		{#if onOmgeving && !node.stub}
 			<button type="button" class="btn is-text" onclick={() => onOmgeving(node)}
-				><Picto naam="omgeving" size={13} />Omgeving tonen</button
+				><Picto naam="omgeving" size={13} />Toon verbonden bronnen</button
 			>
 		{/if}
 		{#if onToggleChosen && !node.stub}

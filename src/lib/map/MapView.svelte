@@ -241,7 +241,7 @@
 										type="button"
 										role="menuitem"
 										class="tekstmenu__item"
-										onclick={act(close, () => (asking = 'empty'))}>Leegmaken</button
+										onclick={act(close, () => (asking = 'empty'))}>Wissen</button
 									>
 								{:else}
 									<button
@@ -325,12 +325,12 @@
 	{/if}
 	{#if asking}
 		<p class="vraag">
-			<span>{b.naam} {asking === 'delete' ? 'verwijderen' : 'leegmaken'}?</span>
+			<span>{b.naam} {asking === 'delete' ? 'verwijderen' : 'wissen'}?</span>
 			<button type="button" class="btn" onclick={confirm}
-				>{asking === 'delete' ? 'Verwijder' : 'Leegmaken'}</button
+				>{asking === 'delete' ? 'Verwijderen' : 'Wissen'}</button
 			>
 			<TekstLink onclick={() => (asking = null)}
-				>{asking === 'delete' ? 'Niet verwijderen' : 'Niet leegmaken'}</TekstLink
+				>{asking === 'delete' ? 'Niet verwijderen' : 'Niet wissen'}</TekstLink
 			>
 		</p>
 	{/if}

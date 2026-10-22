@@ -45,10 +45,7 @@
 	<div class="container blad blad--tekst">
 		<nav class="stub-eyebrow" aria-label="Hoort bij"><a href="/over">Over Concordans</a></nav>
 		<header class="blad__kop"><h1 class="blad__titel">Bronnen en hergebruik</h1></header>
-		<p class="stub-lede">
-			Concordans gebruikt alleen officiële bronnen. Deze pagina zegt welke, hoe ver de gegevens gaan
-			en wat er met de teksten en met de verbindingen mag.
-		</p>
+		<p class="stub-lede">Concordans gebruikt alleen officiële bronnen.</p>
 
 		<div class="section" id="herkomst">
 			<h2 class="section-title">Herkomst</h2>
@@ -93,10 +90,7 @@
 					</LoadState>
 					{@const asOf = asOfIn(stats)}
 					{#if asOf.length}
-						<p class="list-note">
-							Stand per bron: de laatste datum in de gegevens, waar de bron die heeft, en de datum
-							van ophalen.
-						</p>
+						<p class="list-note">Stand per bron</p>
 						<KeyList>
 							{#each asOf as a (a.source)}
 								<!-- A source the runs no longer fetch from says so, with the day it reached. -->

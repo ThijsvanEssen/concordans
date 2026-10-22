@@ -72,14 +72,14 @@ export function betrouwbaarheid(
 	const known = reason ? HERKOMST_REDEN[reason] : undefined;
 	const why =
 		reason === 'bwb_article' || reason === 'ecli'
-			? 'de verwijzing is als geheel herkend in de tekst'
+			? 'de verwijzing staat letterlijk in de tekst'
 			: known
 				? kleineLetter(known)
 				: reason
-					? 'herkend in de tekst'
+					? 'staat letterlijk in de tekst'
 					: derived
-						? 'afgeleid uit het dossier of uit de tekst, niet uit een verwijzing'
-						: 'gelezen uit de bron';
+						? 'naam herkend, geen verwijzing met nummer'
+						: 'uit de bron';
 	return { word: confidenceWord(confidence, derived), why };
 }
 

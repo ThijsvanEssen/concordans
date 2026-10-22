@@ -46,12 +46,10 @@ describe('verbindingOfRow', () => {
 		const v = verbindingOfRow(uitspraak, artikel)!;
 		expect(v.reason).toBe('bwb_article');
 		expect(betrouwbaarheid(v.confidence, v.derived, v.reason).why).toBe(
-			'de verwijzing is als geheel herkend in de tekst'
+			'de verwijzing staat letterlijk in de tekst'
 		);
 		// A reference read from the XML of wetten.overheid.nl is no recognition.
-		expect(betrouwbaarheid(1, false, 'bwb_xml_ref').why).toBe(
-			'verwijzing in de wettekst, wetten.overheid.nl'
-		);
+		expect(betrouwbaarheid(1, false, 'bwb_xml_ref').why).toBe('uit de bron, wetten.overheid.nl');
 	});
 
 	it('says the words of the row, the table, the CSV and the legend', () => {

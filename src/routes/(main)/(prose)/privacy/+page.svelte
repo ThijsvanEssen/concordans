@@ -9,9 +9,7 @@
 	<div class="container blad blad--tekst">
 		<nav class="stub-eyebrow" aria-label="Hoort bij"><a href="/over">Over Concordans</a></nav>
 		<header class="blad__kop"><h1 class="blad__titel">Privacyverklaring</h1></header>
-		<p class="stub-lede">
-			Concordans verwerkt zo min mogelijk persoonsgegevens. Deze pagina zegt welke en waarom.
-		</p>
+		<p class="stub-lede">Concordans verwerkt zo min mogelijk persoonsgegevens.</p>
 
 		<div class="section">
 			<h2 class="section-title">Verwerkingsverantwoordelijke</h2>
@@ -39,18 +37,37 @@
 			</p>
 		</div>
 
-		<div class="section">
-			<h2 class="section-title">Opslag in de browser</h2>
+		<div class="section" id="browser">
+			<h2 class="section-title">In de browser</h2>
+			<ul>
+				<li>
+					De breedte van de panelen, het laatst samengestelde netwerk en of de legenda open staat.
+				</li>
+				<li>De gevolgde onderwerpen, met de dag van het vorige bezoek.</li>
+				<li>De bundels, met hun aantekeningen.</li>
+			</ul>
 			<p>
-				Concordans bewaart enkele weergave-instellingen in de opslag van de browser: de breedte van
-				de panelen, het laatst samengestelde netwerk en of de legenda open staat. Ook de gevolgde
-				onderwerpen staan daar, met de dag van het vorige bezoek, en de bundels met hun
-				aantekeningen. Die blijven in de browser en gaan niet naar een server. Concordans vraagt de
-				browser die opslag niet zelf te wissen. Een bundel als bestand of als link maakt u zelf, net
-				als een link naar de gevolgde onderwerpen; zo'n link draagt de bundel of de onderwerpen in
-				het deel na het hekje, dat de browser niet meestuurt. Om nieuwe stukken bij een onderwerp te
-				vinden, gaan de woorden als zoekterm naar de API; voor wat er nieuw is bij een bundel gaan
-				de wetten, dossiers en artikelen erin als vraag naar de API, zonder de aantekeningen.
+				Dit blijft in de browser en gaat niet naar een server. Er is geen back-up van; zie
+				<a href="/voorwaarden#back-ups" class="cite">Geen back-ups</a>.
+			</p>
+		</div>
+
+		<div class="section" id="server">
+			<h2 class="section-title">Naar de server</h2>
+			<ul>
+				<li>De woorden van een gevolgd onderwerp, als zoekterm voor nieuwe stukken.</li>
+				<li>
+					De wetten, dossiers en artikelen van een bundel, om te zien wat er nieuw is; de
+					aantekeningen niet.
+				</li>
+			</ul>
+		</div>
+
+		<div class="section" id="delen">
+			<h2 class="section-title">Delen</h2>
+			<p>
+				Een bundel of de gevolgde onderwerpen gaan mee als bestand of als link. Een link draagt ze
+				in het deel na het hekje, dat de browser niet naar de server stuurt.
 			</p>
 		</div>
 
@@ -59,10 +76,15 @@
 </div>
 
 <style>
-	p {
+	p,
+	li {
 		font-size: var(--t-body);
 		line-height: var(--lh-body);
 		color: var(--ink);
 		margin: 0;
+	}
+	ul {
+		margin: 0 0 var(--s-3);
+		padding-left: var(--s-5);
 	}
 </style>

@@ -107,9 +107,13 @@ test('Actueel: the days without a sitting and the open motions of no confidence 
 	page
 }) => {
 	await page.goto('/actueel');
-	await expect(page.getByText(/^Geen vergaderingen tot 27 oktober 2026/)).toBeVisible();
-	const open = page.getByRole('list', { name: /niet in stemming geweest/ });
-	await expect(open.getByText('Motie van afkeuring, nog niet in stemming').first()).toBeVisible();
+	await expect(
+		page.getByText(/^Volgende vergadering en stemmingen: dinsdag 27 oktober 2026/)
+	).toBeVisible();
+	const open = page.getByRole('list', { name: /nog niet in stemming gebracht/ });
+	await expect(
+		open.getByText('Motie van afkeuring, nog niet in stemming gebracht').first()
+	).toBeVisible();
 	await expect(open.getByRole('link').first()).toHaveAttribute(
 		'href',
 		/\/kamerstukken\/37020-XVI\/60/

@@ -162,7 +162,7 @@
 			<h2 class="sheet__title" id="{uid}-title">Filter</h2>
 			<span class="sheet__count">{formatCount(count)} van {formatCount(total)}</span>
 			<span class="sheet__space"></span>
-			<TekstLink onclick={() => (draft = EMPTY_FILTER)}>Wis alles</TekstLink>
+			<TekstLink onclick={() => (draft = EMPTY_FILTER)}>Wissen</TekstLink>
 			<IconButton label="Sluiten" onclick={onClose}>×</IconButton>
 		</div>
 

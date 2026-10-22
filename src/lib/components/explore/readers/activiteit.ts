@@ -84,7 +84,7 @@ export function activiteitGroepen(r: Records): {
 		},
 		{
 			id: 'toezeggingen',
-			titel: 'Toezeggingen gedaan in dit debat',
+			titel: 'Toezeggingen in dit debat',
 			regels: (r.commitments ?? []).map(
 				(c): TijdRegel => ({
 					id: c.id,

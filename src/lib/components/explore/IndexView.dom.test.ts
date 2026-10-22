@@ -186,7 +186,7 @@ describe('the stand of a source', () => {
 		await open('judgments', 'source=echr');
 		await waitFor(() =>
 			expect(text(document.querySelector('.result-head .dekking'))).toBe(
-				'HUDOC gepauzeerd, bijgewerkt tot 8 oktober 2026'
+				'HUDOC wordt niet meer bijgewerkt, stand 8 oktober 2026'
 			)
 		);
 	});

@@ -347,7 +347,10 @@ function ekVoortgang(d: Detail, ek: Regel[]): Regel[] | null {
 			datum: null,
 			teken: 'verwacht',
 			soort: 'activities',
-			zin: [nu ? `Nu: ${stapNaam(nu)}.` : '', nog.length ? `Kan nog volgen: ${joinAnd(nog)}.` : '']
+			zin: [
+				nu ? `Nu: ${stapNaam(nu)}.` : '',
+				nog.length ? `Volgende stappen: ${joinAnd(nog)}.` : ''
+			]
 				.filter(Boolean)
 				.join(' ')
 		});
@@ -415,7 +418,7 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 			datum: null,
 			teken: 'verwacht',
 			soort: 'activities',
-			zin: `Kan nog volgen: ${joinAnd(stepsToCome(d.current_phase))}.`
+			zin: `Volgende stappen: ${joinAnd(stepsToCome(d.current_phase))}.`
 		});
 	groepen.push({
 		id: 'tk',
@@ -433,7 +436,7 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 			datum: null,
 			teken: 'verwacht',
 			soort: 'activities',
-			zin: 'Kan nog volgen: verslag of plenaire behandeling, en stemming.'
+			zin: 'Volgende stappen: verslag of plenaire behandeling, en stemming.'
 		});
 	if (state[2] === 'open')
 		ek.push({
@@ -441,7 +444,7 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 			datum: null,
 			teken: 'verwacht',
 			soort: 'activities',
-			zin: 'Aan de orde na aanneming door de Tweede Kamer.'
+			zin: 'Volgt na aanneming door de Tweede Kamer.'
 		});
 	if (ek.length) groepen.push({ id: 'ek', titel: CHAMBER_NAME.EK, regels: ek });
 

@@ -39,7 +39,7 @@
 		</div>
 
 		<div class="foot-col">
-			<p class="foot-head">Bronnen</p>
+			<p class="foot-head">Officiële bronnen</p>
 			<ul>
 				<li>
 					<a href="https://wetten.overheid.nl" target="_blank" rel="noopener" class="no-underline"
@@ -77,7 +77,6 @@
 						>eur-lex.europa.eu</a
 					>
 				</li>
-				<li><a href="/bronnen" class="no-underline">Herkomst per bron</a></li>
 			</ul>
 		</div>
 
@@ -88,6 +87,7 @@
 				<li><a href="/bronnen" class="no-underline">Bronnen en hergebruik</a></li>
 				<li><a href="/voorwaarden" class="no-underline">Voorwaarden</a></li>
 				<li><a href="/privacy" class="no-underline">Privacy</a></li>
+				<li><a href="/voorwaarden#fouten" class="no-underline">Fouten melden</a></li>
 			</ul>
 		</div>
 	</div>

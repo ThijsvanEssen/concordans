@@ -25,7 +25,7 @@ import { votesSentence } from '$lib/components/parliamentary/stemming';
 import { onAgendaOnly, DISCUSSED_IN_DEBATE } from '$lib/text/toezegging';
 
 /**
- * A word of the line in the meta letter: `Herkend in de tekst` reads `herkend in de tekst`
+ * A word of the line in the meta letter: `Staat letterlijk in de tekst` reads `staat letterlijk in de tekst`
  * after a comma. A name keeps its capital: the Tweede Kamer, the ECLI.
  */
 export const kleineLetter = (s: string) =>
@@ -39,7 +39,7 @@ export type Hoe = {
 	 * statement rather than a verb carries its own sign: `: 2 zaken`, `, 27 voor en 123 tegen`.
 	 */
 	rest: string | null;
-	/** Derived or below full confidence: the line in italics, with "afgeleid". */
+	/** Derived or below full confidence: the line in italics, with "naam herkend". */
 	afgeleid: boolean;
 	/** The passage of the source with the words that name the selected bron. */
 	citaat: PassageParts | null;
@@ -67,9 +67,9 @@ export const publicatie = (s: string | null) =>
 		.replace(/^(Stb|Stcrt|Trb)\.?\s*(\d{4})-(\d+)$/, '$1. $2, $3') ?? null;
 
 export const HERKOMST_REDEN: Record<string, string> = {
-	bwb_xml_ref: 'Verwijzing in de wettekst, wetten.overheid.nl',
-	bwb_article: 'Herkend in de tekst',
-	ecli: 'ECLI genoemd in de tekst'
+	bwb_xml_ref: 'Uit de bron, wetten.overheid.nl',
+	bwb_article: 'Staat letterlijk in de tekst',
+	ecli: 'ECLI staat letterlijk in de tekst'
 };
 
 /**
@@ -201,16 +201,19 @@ const HOE: Partial<Record<Relation, (c: HoeContext) => Hoe | null | undefined>> 
 		if (paar)
 			return regel(
 				'Door de Kamer verbonden',
-				`: ${paar}${zaken && zaken > 1 ? `; ${zaken} zaken` : ''}`,
-				'Tweede Kamer, zaak gerelateerd aan zaak'
+				`: ${paar}${zaken && zaken > 1 ? `; ${zaken} Kamerzaken` : ''}`,
+				'Uit de bron, Tweede Kamer'
 			);
 		const soorten = Array.isArray(edge.case_kinds)
 			? edge.case_kinds.filter((k): k is string => typeof k === 'string').join('; ')
 			: null;
 		return regel(
 			'Door de Kamer verbonden',
-			erbij(': ', join(zaken ? count(zaken, 'zaak', 'zaken') : null, soorten?.toLowerCase())),
-			'Tweede Kamer, zaak gerelateerd aan zaak'
+			erbij(
+				': ',
+				join(zaken ? count(zaken, 'Kamerzaak', 'Kamerzaken') : null, soorten?.toLowerCase())
+			),
+			'Uit de bron, Tweede Kamer'
 		);
 	},
 	APPEAL_OF: ({ row, edge, inbound, formeel, regel }) => {
@@ -258,7 +261,7 @@ const HOE: Partial<Record<Relation, (c: HoeContext) => Hoe | null | undefined>> 
 	ADVISES_ON: ({ inbound, formeel, regel }) =>
 		inbound
 			? regel('Conclusie bij', 'deze uitspraak', formeel)
-			: regel('Uitspraak op', 'deze conclusie', formeel),
+			: regel('Uitspraak na', 'deze conclusie', formeel),
 	ESTABLISHES: (c) => wijziging(c),
 	AMENDS: (c) => wijziging(c),
 	INTRODUCES: (c) => wijziging(c),
@@ -392,7 +395,7 @@ function verwijzing(c: HoeContext): Hoe {
 		(textOf(edge.cited_ecli)
 			? HERKOMST_REDEN.ecli
 			: row.snippet || row.match
-				? 'Herkend in de tekst'
+				? 'Staat letterlijk in de tekst'
 				: null);
 	// A verb with an object names it before the rest: `Verwijst naar lid 2`, `Verwijst naar dit
 	// artikel als ‘…’`, `Verwijst ernaar als ‘…’`, never `Verwijst naar als`. A participle needs

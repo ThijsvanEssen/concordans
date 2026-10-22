@@ -45,9 +45,9 @@ export const lacks = (what: string) => `${capitalize(what)} ${NOT_IN_DATA}`;
  */
 export type Lack = 'successor';
 
-/** The line of a Lack: `Opvolger niet gevonden in de transponeringstabel`. */
+/** The line of a Lack: `Geen opvolger in de transponeringstabel`. */
 export const LACK: Record<Lack, string> = {
-	successor: 'Opvolger niet gevonden in de transponeringstabel'
+	successor: 'Geen opvolger in de transponeringstabel'
 };
 
 /** A part of which the dataset holds none, in a line: `geen artikelen in de gegevens`. */
@@ -70,10 +70,10 @@ const day = (iso: string | null | undefined) => langeDatum(iso?.slice(0, 10));
 
 /** Of a source: whether the runs still fetch from it. Null while they do. */
 function sourceLine(s: PartState | undefined): string | null {
-	const until = s?.as_of ? `, bijgewerkt tot ${day(s.as_of)}` : '';
-	if (s?.state === 'paused') return `gepauzeerd${until}`;
+	const until = s?.as_of ? `, stand ${day(s.as_of)}` : '';
+	if (s?.state === 'paused') return `wordt niet meer bijgewerkt${until}`;
 	if (s?.state === 'unavailable') return `onbereikbaar${until}`;
-	if (s?.state === 'pending') return 'nog niet opgehaald';
+	if (s?.state === 'pending') return 'nog niet beschikbaar';
 	return null;
 }
 
@@ -86,15 +86,14 @@ function sourceLine(s: PartState | undefined): string | null {
 function textLine(t: PartState | undefined, noText: boolean): string | null {
 	if (t?.state === 'pending' && t.reason === 'awaiting_normalize')
 		return t.as_of
-			? `tekst opgehaald op ${day(t.as_of)}, wordt nog verwerkt`
-			: 'tekst opgehaald, wordt nog verwerkt';
+			? `tekst nog niet beschikbaar, ontvangen op ${day(t.as_of)}`
+			: 'tekst nog niet beschikbaar';
 	if (t?.state === 'pending' && t.reason === 'source_pdf_only')
 		return 'tekst nog niet beschikbaar, de bron heeft alleen de pdf';
-	if (t?.state === 'pending')
-		return t.as_of ? 'tekst nog niet beschikbaar' : 'tekst nog niet opgehaald';
+	if (t?.state === 'pending') return 'tekst nog niet beschikbaar';
 	if (t?.state === 'not_in_source') return `tekst ${NOT_IN_DATA}, de bron levert geen tekst`;
-	if (t?.state === 'not_fetched') return 'tekst niet opgenomen, staat bij de bron';
-	if (t?.state === 'none') return 'tekst niet leesbaar in de bron';
+	if (t?.state === 'not_fetched') return 'tekst alleen bij de bron';
+	if (t?.state === 'none') return 'geen leesbare tekst in de bron';
 	return noText ? `tekst ${NOT_IN_DATA}` : null;
 }
 
@@ -110,14 +109,14 @@ function referencesLine(r: PartState | undefined): string | null {
 		? `${formatCount(n)} ${plural(n, 'verwijzing', 'verwijzingen')}`
 		: 'verwijzingen deels';
 	return r.reason === 'target_not_loaded'
-		? `${what} naar tekst die nog niet geladen is`
-		: `${what} niet gelegd of naar niet geladen tekst`;
+		? `${what} naar tekst die niet in de gegevens staat`
+		: `${what} nog niet gekoppeld`;
 }
 
 /**
  * What a line says: `of` the source a line about a source is of, `noText` a reader without
  * text, `shown` how many of a part the reader shows: a part still pending of which it shows
- * some is read in part (`Verwijzingen deels verwerkt`), not yet at all.
+ * some is read in part (`Verwijzingen deels beschikbaar`), not yet at all.
  */
 type CoverageOptions = { of?: string; noText?: boolean; shown?: Shown };
 
@@ -125,8 +124,8 @@ type CoverageOptions = { of?: string; noText?: boolean; shown?: Shown };
 export type Shown = Partial<Record<Part, number>>;
 
 /**
- * The line, in words: `Tekst nog niet opgehaald`, `Tekst niet opgenomen, staat bij de bron`, `12 verwijzingen niet gelegd of naar
- * niet geladen tekst, begrippen nog niet verwerkt`, `Geen einde vastgelegd, laatste activiteit 3 maart 2019`, `HUDOC gepauzeerd,
+ * The line, in words: `Tekst nog niet beschikbaar`, `Tekst alleen bij de bron`, `12 verwijzingen nog niet gekoppeld,
+ * begrippen nog niet beschikbaar`, `Geen einde vastgelegd, laatste activiteit 3 maart 2019`, `HUDOC wordt niet meer bijgewerkt,
  * …`. Null where nothing is known to lack.
  */
 export function coverageLine(
@@ -156,8 +155,8 @@ export function coverageLine(
 	);
 	const begun = pending.filter((p) => (shown[p] ?? 0) > 0);
 	const notYet = pending.filter((p) => !begun.includes(p));
-	if (begun.length) said.push(`${joinAnd(begun.map((p) => PART[p]))} deels verwerkt`);
-	if (notYet.length) said.push(`${joinAnd(notYet.map((p) => PART[p]))} nog niet verwerkt`);
+	if (begun.length) said.push(`${joinAnd(begun.map((p) => PART[p]))} deels beschikbaar`);
+	if (notYet.length) said.push(`${joinAnd(notYet.map((p) => PART[p]))} nog niet beschikbaar`);
 	// An open bill: the Kamer records no withdrawal, so it is not known to run still.
 	if (outcomeOn) said.push(`geen einde vastgelegd, laatste activiteit ${day(outcomeOn)}`);
 	const source = sourceLine(c.source);
@@ -185,7 +184,7 @@ export type AnchorState =
 
 /**
  * The line of an arcering whose anchor no longer holds (besluit 23): `Nu in lid 3`, `Tekst
- * gewijzigd per 1 juli 2026`, `Vervallen per 1 juli 2026`, `Fragment niet teruggevonden`.
+ * gewijzigd per 1 juli 2026`, `Vervallen per 1 juli 2026`, `Passage niet meer in de tekst`.
  */
 export function anchorLine(a: AnchorState): string {
 	switch (a.state) {
@@ -196,6 +195,6 @@ export function anchorLine(a: AnchorState): string {
 		case 'lapsed':
 			return `Vervallen per ${langeDatum(a.since)}`;
 		case 'lost':
-			return 'Fragment niet teruggevonden';
+			return 'Passage niet meer in de tekst';
 	}
 }

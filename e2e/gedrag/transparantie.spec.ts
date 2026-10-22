@@ -75,10 +75,10 @@ test('a law of the Staatsblad says what of it is not read yet, and so do its art
 	page
 }) => {
 	await page.goto('/wetten/STB-2026-56?lezen=1');
-	await expect(page.getByText('Verwijzingen en begrippen nog niet verwerkt')).toBeVisible();
+	await expect(page.getByText('Verwijzingen en begrippen nog niet beschikbaar')).toBeVisible();
 	await page.goto('/wetten/STB-2026-56/artikel/2.8.6?lezen=1');
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('2.8.6');
-	await expect(page.getByText(/nog niet verwerkt$/)).toBeVisible();
+	await expect(page.getByText(/nog niet beschikbaar$/)).toBeVisible();
 });
 
 /** The stats with the EHRM's source paused on 8 October 2026: the runs no longer fetch it. */
@@ -99,7 +99,7 @@ const echrPaused = (stats: Record<string, unknown>) => {
 test('Bronnen says of a paused source that it is, and the day it reached', async ({ page }) => {
 	await patchApi(page, /^\/api\/stats$/, echrPaused);
 	await page.goto('/bronnen');
-	await expect(page.getByText('Gepauzeerd, bijgewerkt tot 8 oktober 2026')).toBeVisible();
+	await expect(page.getByText('Wordt niet meer bijgewerkt, stand 8 oktober 2026')).toBeVisible();
 	// A source the runs still fetch says how far it goes.
 	await expect(page.getByText(/opgehaald op/).first()).toBeVisible();
 });
@@ -107,7 +107,9 @@ test('Bronnen says of a paused source that it is, and the day it reached', async
 test('the list of the EHRM says its source is paused', async ({ page }) => {
 	await patchApi(page, /^\/api\/stats$/, echrPaused);
 	await page.goto('/explore?mode=index&kind=judgments&source=echr');
-	await expect(page.getByText('HUDOC gepauzeerd, bijgewerkt tot 8 oktober 2026')).toBeVisible();
+	await expect(
+		page.getByText('HUDOC wordt niet meer bijgewerkt, stand 8 oktober 2026')
+	).toBeVisible();
 });
 
 // The parts the API gives from 0.79.68 (#840, #842, #846, #849), patched in until it is live.
@@ -140,17 +142,11 @@ test('an article, a judgment and a Kamerstuk say how many references are not lin
 	await patchApi(page, /^\/api\/judgments\/ECLI(:|%3A)NL(:|%3A)HR(:|%3A)2019(:|%3A)2006$/, partial);
 	await patchApi(page, DOCUMENT, partial);
 	await page.goto('/wetten/BWBR0005289/artikel/6:162?lezen=1');
-	await expect(
-		page.getByText('3 verwijzingen niet gelegd of naar niet geladen tekst')
-	).toBeVisible();
+	await expect(page.getByText('3 verwijzingen nog niet gekoppeld')).toBeVisible();
 	await page.goto('/uitspraken/ECLI:NL:HR:2019:2006?lezen=1');
-	await expect(
-		page.getByText('3 verwijzingen niet gelegd of naar niet geladen tekst')
-	).toBeVisible();
+	await expect(page.getByText('3 verwijzingen nog niet gekoppeld')).toBeVisible();
 	await page.goto('/kamerstukken/32467/14?lezen=1');
-	await expect(
-		page.getByText('3 verwijzingen niet gelegd of naar niet geladen tekst')
-	).toBeVisible();
+	await expect(page.getByText('3 verwijzingen nog niet gekoppeld')).toBeVisible();
 });
 
 test('an article whose missing references point to a text not loaded yet says so', async ({
@@ -161,7 +157,9 @@ test('an article whose missing references point to a text not loaded yet says so
 		completeness: { references: part('partial', null, 2, 'target_not_loaded') }
 	}));
 	await page.goto('/wetten/BWBR0005289/artikel/6:162?lezen=1');
-	await expect(page.getByText('2 verwijzingen naar tekst die nog niet geladen is')).toBeVisible();
+	await expect(
+		page.getByText('2 verwijzingen naar tekst die niet in de gegevens staat')
+	).toBeVisible();
 });
 
 test('a Kamerstuk without its text says why, and points to the original file', async ({ page }) => {
@@ -177,7 +175,7 @@ test('a Kamerstuk fetched and not read yet says when it was fetched', async ({ p
 	await patchApi(page, DOCUMENT, withoutText(fetched));
 	await page.goto('/kamerstukken/32467/14?lezen=1');
 	await expect(
-		page.getByText('Tekst opgehaald op 20 oktober 2026, wordt nog verwerkt', { exact: true })
+		page.getByText('Tekst nog niet beschikbaar, ontvangen op 20 oktober 2026', { exact: true })
 	).toBeVisible();
 });
 
@@ -199,10 +197,8 @@ test('a paper of the Eerste Kamer says its text is at the source, with a link', 
 }) => {
 	await patchApi(page, /^\/api\/documents\/ek_kst_1264285$/, withoutText(part('not_fetched')));
 	await page.goto('/kamerstukken/36600-VIII/AB?lezen=1');
-	const note = page.getByRole('paragraph').filter({ hasText: 'Tekst niet opgenomen' });
-	await expect(note).toHaveText(
-		'Tekst niet opgenomen, staat bij de bron, officielebekendmakingen.nl ↗'
-	);
+	const note = page.getByRole('paragraph').filter({ hasText: 'Tekst alleen bij de bron' });
+	await expect(note).toHaveText('Tekst alleen bij de bron, officielebekendmakingen.nl ↗');
 	await expect(note.getByRole('link')).toHaveAttribute(
 		'href',
 		'https://zoek.officielebekendmakingen.nl/kst-1264285.html'
@@ -215,7 +211,7 @@ test('a publication says its text is at the source, with a link', async ({ page 
 		completeness: { text: part('not_fetched') }
 	}));
 	await page.goto('/stb/2026/94?lezen=1');
-	await expect(page.getByText(/^Tekst niet opgenomen, staat bij de bron, /)).toBeVisible();
+	await expect(page.getByText(/^Tekst alleen bij de bron, /)).toBeVisible();
 	await expect(page.getByRole('link', { name: 'officielebekendmakingen.nl ↗' })).toHaveAttribute(
 		'href',
 		/zoek\.officielebekendmakingen\.nl\/stb-2026-94/

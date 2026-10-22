@@ -313,7 +313,7 @@ describe('an anchor that no longer holds', () => {
 		const { container } = open(kept({ waar: 'lid-2', exact: 'zwaarwegend belang', start: 4 }));
 		const line = container.querySelector(`[${PLACE}="lid-2"] .anchor-line`)!;
 		expect(line.querySelector('q')?.textContent).toBe('zwaarwegend belang');
-		expect(line.textContent).toContain('Fragment niet teruggevonden');
+		expect(line.textContent).toContain('Passage niet meer in de tekst');
 	});
 });
 
