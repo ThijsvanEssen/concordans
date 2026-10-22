@@ -317,7 +317,7 @@ export interface paths {
         };
         /**
          * Every judgment citing this instrument
-         * @description Per judgment: light metadata plus the specific articles it refers to. Meant for the case-law layer of the graph. ``total`` is the absolute count, independent of ``limit``. ``sort``: ``date`` (default), the newest first; ``cited``, the most cited articles of the law first, then the newest. ``facets.year`` counts every citing judgment per year, not the page; ``year`` keeps the judgments of one year (``total`` and the page).
+         * @description Per judgment: light metadata plus the specific articles it refers to. Meant for the case-law layer of the graph. ``total`` is the absolute count, independent of ``limit``. ``sort``: ``date`` (default), the newest first; ``cited``, the most cited articles of the law first; ``citation_count``, the most cited judgment first (a standard judgment); each then the newest. ``year`` and ``tier`` (repeated: any of them) filter ``total`` and the page. ``facets`` counts the judgments, not the page: per ``year`` without the ``year`` filter, per ``tier`` (most first) without the ``tier`` filter, each under the other filter.
          */
         get: operations["get_instrument_judgments_route_api_instruments__bwb_id__judgments_get"];
         put?: never;
@@ -9448,14 +9448,20 @@ export interface components {
         };
         /**
          * InstrumentJudgmentFacets
-         * @description Every judgment that cites this instrument counted, not the page.
+         * @description The judgments that cite this instrument counted, not the page, each facet under the
+         *     other filter.
          */
         InstrumentJudgmentFacets: {
             /**
              * Year
-             * @description Per year of the judgment, the oldest first; `value` null counts those without a date.
+             * @description Per year of the judgment, the oldest first; `value` null counts those without a date. Without the `year` filter.
              */
             year: components["schemas"]["FacetCountDTO"][];
+            /**
+             * Tier
+             * @description Per tier, the most first. Without the `tier` filter.
+             */
+            tier: components["schemas"]["FacetCountDTO"][];
         };
         /**
          * InstrumentJudgmentItem
@@ -9563,11 +9569,11 @@ export interface components {
             year: string | null;
             /**
              * Sort
-             * @description The order of `items`: `date`, the newest first; `cited`, the most cited articles of this law first, then the newest. Ties by id.
+             * @description The order of `items`: `date`, the newest first; `cited`, the most cited articles of this law first; `citation_count`, the most cited judgment first; each then the newest. Ties by id.
              * @default date
              * @enum {string}
              */
-            sort: "date" | "cited";
+            sort: "date" | "cited" | "citation_count";
             facets: components["schemas"]["InstrumentJudgmentFacets"];
             /** Items */
             items: components["schemas"]["InstrumentJudgmentItem"][];
@@ -14452,9 +14458,11 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
-                sort?: "date" | "cited";
+                sort?: "date" | "cited" | "citation_count";
                 /** @description The judgments of this year (of their date) alone; ``facets.year`` still counts every year. */
                 year?: string | null;
+                /** @description The tier: `hoge_raad`, `gerechtshof`, `andere_instantie`, …; repeated, the judgments of any of them; ``facets.tier`` still counts every tier. */
+                tier?: components["schemas"]["Tier"][] | null;
             };
             header?: never;
             path: {
