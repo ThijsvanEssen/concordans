@@ -158,12 +158,20 @@ describe('ArticleReader, whether the article holds (besluit 30)', () => {
 		expect(container.querySelectorAll('.head__stand')).toHaveLength(0);
 	});
 
-	it('dates the citation on the day the data stands on, the last day of what expired', async () => {
-		bw({ ...expired, state: 'in_force', date: null });
-		render(ArticleReader, { node: bwNode });
-		await settle();
-		await fireEvent.click(screen.getByRole('button', { name: /^Citeer/ }));
-		expect(document.body.textContent).toContain('tekst geldend op 21 oktober 2026');
+	it('dates the citation on today in Amsterdam, as the page does, not on the day the data stands on (T5)', async () => {
+		// Half past midnight in the Netherlands on the 22nd: the 21st in UTC, and as_of's day.
+		vi.useFakeTimers({ toFake: ['Date'] });
+		vi.setSystemTime(new Date('2026-10-21T22:30:00Z'));
+		try {
+			bw({ ...expired, state: 'in_force', date: null });
+			render(ArticleReader, { node: bwNode });
+			await settle();
+			await fireEvent.click(screen.getByRole('button', { name: /^Citeer/ }));
+			expect(document.body.textContent).toContain('tekst geldend op 22 oktober 2026');
+			expect(document.body.textContent).not.toContain('tekst geldend op 21 oktober 2026');
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	it('says nog niet in werking with its day', async () => {
