@@ -153,6 +153,8 @@ describe('ArticleReader, the peildatum', () => {
 		open('/wetten/BWBR0001/artikel/1?peildatum=2005-01-01');
 		const { container } = render(ArticleReader, { node });
 		await settle();
-		expect(container.textContent).toContain('Van dit artikel is op 1 januari 2005 geen tekst');
+		expect(container.textContent).toContain(
+			'Tekst van dit artikel op 1 januari 2005 niet in de gegevens'
+		);
 	});
 });

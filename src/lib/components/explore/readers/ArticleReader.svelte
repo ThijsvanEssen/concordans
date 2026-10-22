@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { NOT_IN_DATA, notHeld } from '$lib/text/coverage';
+	import { NOT_IN_DATA, lacks, notHeld } from '$lib/text/coverage';
 	import { capitalize, plural } from '$lib/text/words';
 	import { isDay, langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
@@ -931,7 +931,7 @@
 				{/if}
 			{:else if peildatumEmpty && isDay(peildatum)}
 				<p class="note">
-					Van dit artikel is op {langeDatum(peildatum)} geen tekst in de gegevens.
+					{lacks(`Tekst van dit artikel op ${langeDatum(peildatum)}`)}.
 					<button type="button" class="note__close" onclick={() => choosePeildatum('')}
 						>{expired ? 'Laatste tekst lezen' : 'Geldend recht lezen'}</button
 					>
