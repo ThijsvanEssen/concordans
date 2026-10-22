@@ -63,7 +63,7 @@ const MOTION_KIND: Record<string, string> = {
 };
 
 /** "Motie van wantrouwen" for such a motion, else ''. */
-export const motionName = (hit: Hit): string => MOTION_KIND[extra(hit, 'motion_kind')] ?? '';
+const motionName = (hit: Hit): string => MOTION_KIND[extra(hit, 'motion_kind')] ?? '';
 
 /** What a link to the hit names: its node id, and a dossier's number (`37020-XV`). */
 export const hitName = (hit: Hit): string =>

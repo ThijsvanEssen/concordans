@@ -396,7 +396,11 @@
 				<span class="verder">
 					<TekstLink onclick={() => fieldEl?.select()}>Pas de zoekterm aan</TekstLink>
 					{#each search.narrower as word (word)}
-						<TekstLink onclick={() => (search.query = word)}>Zoek "{word}"</TekstLink>
+						<TekstLink
+							onclick={() => {
+								search.query = word;
+							}}>Zoek "{word}"</TekstLink
+						>
 					{/each}
 					{#if search.from || search.to}
 						<TekstLink
