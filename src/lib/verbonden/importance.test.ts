@@ -45,3 +45,56 @@ describe('the most important rows first', () => {
 		expect(importanceOf('dossiers', 'documents-tk')).toBe('papers');
 	});
 });
+
+describe('the other rules of the order', () => {
+	const member = (key: string, period: Row['period'], edge?: Record<string, unknown>): Row => ({
+		ref: { collection: 'members', key },
+		title: key,
+		context: null,
+		filterGroup: 'leden',
+		period,
+		edge
+	});
+
+	it('puts the leden who sit now first, then the ones who left last', () => {
+		const rows = [
+			member('oud', { from: '1994-01-01', to: '1998-01-01', role: null }),
+			member('nu-laat', { from: '2024-01-01', to: null, role: null }),
+			member('recent', { from: '2010-01-01', to: '2021-01-01', role: null }),
+			member('nu-vroeg', { from: '2002-01-01', to: null, role: null })
+		];
+		expect(byImportance(rows, 'current').map((r) => r.ref.key)).toEqual([
+			'nu-laat',
+			'nu-vroeg',
+			'recent',
+			'oud'
+		]);
+	});
+
+	it('puts the bewindspersonen of a kabinet by their highest post', () => {
+		const post = (p: string) => ({ posts: [{ post: p }] });
+		const rows = [
+			member(
+				'staatssecretaris',
+				{ from: '2022-01-10', to: null, role: null },
+				post('staatssecretaris')
+			),
+			member('minister', { from: '2022-01-10', to: null, role: null }, post('minister')),
+			member('mp', { from: '2022-01-10', to: null, role: null }, post('minister-president')),
+			member('zonder-post', { from: '2022-01-10', to: null, role: null })
+		];
+		expect(byImportance(rows, 'office').map((r) => r.ref.key)).toEqual([
+			'mp',
+			'minister',
+			'staatssecretaris',
+			'zonder-post'
+		]);
+	});
+
+	it('puts a wetsvoorstel before the verslag on a wetsvoorstel (initiatief)', () => {
+		expect(kindRank('Voorstel van wet')).toBeLessThan(
+			kindRank('Verslag (initiatief)wetsvoorstel (nader)')
+		);
+		expect(kindRank('Gewijzigd voorstel van wet')).toBe(kindRank('Voorstel van wet'));
+	});
+});

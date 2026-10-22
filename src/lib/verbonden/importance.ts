@@ -6,7 +6,13 @@
 //   (`inbound_citation_count`), then the newest;
 // - papers: a Kamerstuk by its place in the making of a law (voorstel van wet, memorie van
 //   toelichting, nota van wijziging, nota naar aanleiding van het verslag, verslag,
-//   amendement, motie, brief, the rest), then the newest.
+//   amendement, motie, brief, the rest), then the newest;
+// - current: a seat or a post that is still held first (a commissie's leden), then the one that
+//   ended last;
+// - office: a bewindspersoon of a kabinet by the highest post (minister-president, viceminister-
+//   president, minister, minister zonder portefeuille, staatssecretaris), then the one still
+//   serving;
+// - newest: by the date of the bron.
 //
 // A group the API orders (`orders`, the judgments of an article by `citation_count`), or whose
 // order says something (a course of changes, a vote by its choice), keeps its own.
@@ -14,7 +20,7 @@ import type { Collection } from '$lib/vocabulary';
 import { kindRank } from '$lib/text/document-kind';
 import type { Row } from './rows';
 
-type Importance = 'cited' | 'papers';
+type Importance = 'cited' | 'papers' | 'current' | 'office' | 'newest';
 
 /** The groups ranked here, per kind of bron: group id to the rule. */
 const IMPORTANCE: Partial<Record<Collection, Record<string, Importance>>> = {
@@ -24,7 +30,12 @@ const IMPORTANCE: Partial<Record<Collection, Record<string, Importance>>> = {
 		'refers-to': 'cited',
 		documents: 'papers'
 	},
-	instruments: { 'based-on': 'cited', related: 'cited' },
+	instruments: {
+		'based-on': 'cited',
+		related: 'cited',
+		'implemented-by': 'cited',
+		changes: 'newest'
+	},
 	judgments: { articles: 'cited', judgments: 'cited', 'cited-by': 'cited' },
 	documents: {
 		names: 'papers',
@@ -32,7 +43,21 @@ const IMPORTANCE: Partial<Record<Collection, Record<string, Importance>>> = {
 		explains: 'cited',
 		'refers-to': 'cited'
 	},
-	dossiers: { 'documents-tk': 'papers', 'documents-ek': 'papers' }
+	dossiers: {
+		'documents-tk': 'papers',
+		'documents-ek': 'papers',
+		commitments: 'newest',
+		'decisions-ek': 'newest'
+	},
+	cases: { documents: 'papers', decisions: 'newest' },
+	committees: { members: 'current' },
+	cabinets: { bewindspersonen: 'office' },
+	factions: { authored: 'newest' },
+	members: {
+		'authored-kamerlid': 'newest',
+		'authored-bewindspersoon': 'newest',
+		'authored-overig': 'newest'
+	}
 };
 
 const citations = (r: Row): number => {
@@ -43,9 +68,35 @@ const citations = (r: Row): number => {
 /** Newest first; a row without a date after the dated ones. */
 const newest = (a: Row, b: Row) => (b.date ?? '').localeCompare(a.date ?? '');
 
+/** Held now first (no end), then the end that lies last, then the start that lies last. */
+const current = (a: Row, b: Row) =>
+	Number(!!a.period?.to) - Number(!!b.period?.to) ||
+	(b.period?.to ?? '').localeCompare(a.period?.to ?? '') ||
+	(b.period?.from ?? '').localeCompare(a.period?.from ?? '');
+
+/** The posts of a kabinet from the highest down (`meta.posts[].post` of SERVED_IN). */
+const POSTS = [
+	'minister-president',
+	'viceminister-president',
+	'minister',
+	'minister_zonder_portefeuille',
+	'staatssecretaris'
+];
+const postRank = (r: Row): number => {
+	const posts = r.edge?.posts;
+	const ranks = (Array.isArray(posts) ? posts : []).map((p) =>
+		POSTS.indexOf(String((p as Record<string, unknown> | null)?.post ?? ''))
+	);
+	const found = ranks.filter((i) => i >= 0);
+	return found.length ? Math.min(...found) : POSTS.length;
+};
+
 const COMPARE: Record<Importance, (a: Row, b: Row) => number> = {
 	cited: (a, b) => citations(b) - citations(a) || newest(a, b),
-	papers: (a, b) => kindRank(a.props?.kind) - kindRank(b.props?.kind) || newest(a, b)
+	papers: (a, b) => kindRank(a.props?.kind) - kindRank(b.props?.kind) || newest(a, b),
+	current,
+	office: (a, b) => postRank(a) - postRank(b) || current(a, b),
+	newest
 };
 
 /** The rule of a group of the bron of `collection`, or null where its order stands. */

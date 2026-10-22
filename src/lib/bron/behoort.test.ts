@@ -409,6 +409,7 @@ describe('kern of context', () => {
 			    "dossier",
 			    "committee",
 			  ],
+			  "annexes": [],
 			  "articles": [
 			    "law",
 			  ],

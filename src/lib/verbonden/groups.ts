@@ -931,6 +931,16 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			noun: 'zaken',
 			match: [{ relation: 'RELATED_TO', collection: 'cases' }]
 		}
+	],
+	// The law an annex belongs to is its kern line (behoort-rules); the articles whose scope
+	// the annex gives are its context.
+	annexes: [
+		{
+			id: 'scoped-by',
+			label: 'Artikelen waarvan de reikwijdte in deze bijlage staat',
+			noun: 'artikelen',
+			match: [{ relation: 'SCOPED_BY', direction: 'inbound', collection: 'articles' }]
+		}
 	]
 };
 

@@ -55,7 +55,7 @@ export function ownKind(kind: unknown): string | null {
 
 /** The kinds of Kamerstuk in the order of the making of a law; the rest after them. */
 const KIND_ORDER: readonly RegExp[] = [
-	/voorstel van wet|wetsvoorstel/i,
+	/^((nader )?gewijzigd )?voorstel van wet|^wetsvoorstel/i,
 	/memorie van toelichting/i,
 	/nota van wijziging/i,
 	/nota naar aanleiding van het verslag|memorie van antwoord/i,
