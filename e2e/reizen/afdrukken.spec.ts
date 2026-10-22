@@ -1,15 +1,13 @@
 // On paper a reader is its head, its status line, its text and the address it was read at.
 import { expect, test } from '../support/test';
-import { showText } from '../support/panes';
 
 for (const path of [
 	'/wetten/BWBR0005289/artikel/6:162',
 	'/uitspraken/ECLI:NL:HR:2019:2006',
 	'/kamerstukken/36799/31'
 ]) {
-	test(`${path} prints without bar, network, buttons and panels`, async ({ page, touch }) => {
+	test(`${path} prints without bar, network, buttons and panels`, async ({ page }) => {
 		await page.goto(path);
-		await showText(page, touch);
 		await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 		await page.emulateMedia({ media: 'print' });
 		await expect(page.locator('.topbar')).toBeHidden();
