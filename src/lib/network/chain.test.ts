@@ -59,7 +59,7 @@ const delegated = {
 describe('the keten of a law', () => {
 	it('stands in layers: the law, its articles, the regulations per kind', () => {
 		const k = chain({ id: 'instruments/bwbr0010346', name: 'Arbowet' }, delegated, null);
-		expect(k.layers.map((l) => l.id)).toEqual(['law', 'article', 'amvb', 'ministerial', 'other']);
+		expect(k.layers.map((l) => l.id)).toEqual(['law', 'article', 'amvb', 'kb', 'ministerial']);
 		expect(k.layers[1].nodes.map((a) => a.short)).toEqual([
 			'art. 3',
 			'art. 16',

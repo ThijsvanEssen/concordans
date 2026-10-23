@@ -14,6 +14,7 @@ type Delegated = Schema<'InstrumentDelegatedResponse'>;
 type Basis = Schema<'InstrumentBasisResponse'>;
 type Summary = Schema<'InstrumentSummaryDTO'>;
 type BasisArticle = Schema<'ImplementedBasisArticleDTO'>;
+type Item = Delegated['items'][number];
 
 export type LayerId =
 	| 'eu'
@@ -21,7 +22,9 @@ export type LayerId =
 	| 'law'
 	| 'article'
 	| 'implementation'
+	| 'statute'
 	| 'amvb'
+	| 'kb'
 	| 'ministerial'
 	| 'policy'
 	| 'other';
@@ -31,6 +34,8 @@ const LAYER_LABEL: Record<LayerId, string> = {
 	basis: 'Grondslag',
 	law: 'Wet',
 	implementation: 'Implementatie',
+	statute: 'Wet',
+	kb: 'Koninklijk besluit',
 	article: 'Artikel',
 	amvb: 'AMvB',
 	ministerial: 'Ministeriële regeling',
@@ -39,7 +44,7 @@ const LAYER_LABEL: Record<LayerId, string> = {
 };
 
 /** The order of the layers of regulations under the articles. */
-const REGULATION_LAYERS: LayerId[] = ['amvb', 'ministerial', 'policy', 'other'];
+const REGULATION_LAYERS: LayerId[] = ['statute', 'amvb', 'kb', 'ministerial', 'policy', 'other'];
 
 export type ChainNode = {
 	/** The node id: `instruments/bwbr…`, `articles/bwbr…_16`. */
@@ -64,14 +69,19 @@ export type ChainNode = {
 
 export type ChainLayer = { id: LayerId; label: string; nodes: ChainNode[] };
 
+/** The layer of a regulation by its BWB kind; a wet under a wet (an organieke wet) is a Wet. */
+const LAYER_OF: Record<string, LayerId> = {
+	wet: 'statute',
+	rijkswet: 'statute',
+	amvb: 'amvb',
+	rijksamvb: 'amvb',
+	kb: 'kb',
+	rijkskb: 'kb',
+	'ministeriele-regeling': 'ministerial',
+	beleidsregel: 'policy'
+};
 const layerOf = (kind: string | null | undefined): LayerId =>
-	kind === 'amvb'
-		? 'amvb'
-		: kind === 'ministeriele-regeling'
-			? 'ministerial'
-			: kind === 'beleidsregel'
-				? 'policy'
-				: 'other';
+	LAYER_OF[(kind ?? '').toLowerCase()] ?? 'other';
 
 /** `art. 16` of an article as its law numbers it. */
 const articleShort = (a: BasisArticle) =>
@@ -129,6 +139,8 @@ type ChainOptions = {
 	kind?: string | null;
 	/** An article as the start: only the regulations issued under it (R3-K F5). */
 	article?: string | null;
+	/** The regulations that only name the law, with dashed lines; off, only what rests on it. */
+	mentions?: boolean;
 	/** The EU acts the law implements, above it, and the laws that implement it, below (F1). */
 	eu?: { implements: readonly EuInstrument[]; implementedBy: readonly EuInstrument[] } | null;
 };
@@ -161,7 +173,8 @@ export function chain(
 		keep = null,
 		kind = null,
 		article = null,
-		eu = null
+		eu = null,
+		mentions = true
 	}: ChainOptions = {}
 ): {
 	layers: ChainLayer[];
@@ -267,50 +280,107 @@ export function chain(
 			}
 		]
 	});
+	// Every regulation once, in the layer of its kind: those under an article of the law, and
+	// those under a regulation of it in turn (sub_delegated: the Cyberbeveiligingsregelingen
+	// under the Cyberbeveiligingsbesluit), each tied to what it is issued under.
+	const byId = new Map<string, { node: ChainNode; articles: BasisArticle[] }>();
+	const wayOf = (kind: string | null | undefined): 'delegates' | 'mentioned' =>
+		kind === 'mentioned' ? 'mentioned' : 'delegates';
+	const take = (
+		r: Pick<Item, 'instrument' | 'kind' | 'date_in_force' | 'basis_kind' | 'articles'> & {
+			sub_delegated?: Item['sub_delegated'];
+		},
+		parents: ChainNode['parents'],
+		ownArticles: BasisArticle[]
+	) => {
+		const known = byId.get(r.instrument.id);
+		if (known) {
+			for (const p of parents)
+				if (!known.node.parents.some((q) => q.id === p.id)) known.node.parents.push(p);
+			return;
+		}
+		byId.set(r.instrument.id, {
+			articles: ownArticles,
+			node: {
+				id: r.instrument.id,
+				name: nameOf(r.instrument),
+				short: nameOf(r.instrument),
+				collection: 'instruments',
+				instrument: r.instrument,
+				kind: r.kind ?? null,
+				since: r.date_in_force ?? null,
+				grondslag: ownArticles.length ? basisLine(ownArticles, 'delegates') : null,
+				mentions: ownArticles.length ? basisLine(ownArticles, 'mentioned') : null,
+				parents,
+				further: (r.sub_delegated ?? []).map((sub) => nameOf(sub.instrument))
+			}
+		});
+	};
+	for (const item of own) {
+		const mine = item.articles.filter((a) => !article || a.article_number === article);
+		take(
+			item,
+			mine.map((a) => ({ id: a.id, way: wayOf(a.basis_kind ?? item.basis_kind) })),
+			mine
+		);
+	}
+	for (const item of own)
+		for (const sub of item.sub_delegated ?? [])
+			take(sub, [{ id: item.instrument.id, way: wayOf(sub.basis_kind) }], []);
+	// Without the mentions, a regulation that only names the law is no part of its keten.
+	const nodes = [...byId.values()].filter(
+		({ node }) => mentions || node.parents.some((p) => p.way === 'delegates')
+	);
+	if (!mentions)
+		for (const { node } of nodes) node.parents = node.parents.filter((p) => p.way === 'delegates');
+	// Ordered by what they hang under, so the lines cross as little as they can: an article by
+	// its number, a regulation under a regulation by that one's place.
+	const articleOrder = (id: string) => {
+		const a = own.flatMap((i) => i.articles).find((x) => x.id === id);
+		return a ? articleShort(a) : null;
+	};
+	const placeOf = new Map<string, number>();
+	const keyOf = (n: ChainNode) => {
+		const at = n.parents.map((p) => placeOf.get(p.id)).filter((x): x is number => x !== undefined);
+		return at.length ? Math.min(...at) : Number.POSITIVE_INFINITY;
+	};
+	const articleIds = [
+		...new Set(nodes.flatMap(({ node }) => node.parents.map((p) => p.id)).filter(articleOrder))
+	].sort((x, y) => NL.compare(articleOrder(x)!, articleOrder(y)!));
+	articleIds.forEach((id, i) => placeOf.set(id, i));
 	const perLayer = new Map<LayerId, ChainNode[]>();
 	const articles = new Map<string, ChainNode>();
-	for (const item of own) {
-		const layer = layerOf(item.kind);
-		const list = perLayer.get(layer) ?? [];
-		perLayer.set(layer, list);
-		const node: ChainNode = {
-			id: item.instrument.id,
-			name: nameOf(item.instrument),
-			short: nameOf(item.instrument),
-			collection: 'instruments',
-			instrument: item.instrument,
-			kind: item.kind ?? null,
-			since: item.date_in_force ?? null,
-			grondslag: basisLine(item.articles, 'delegates'),
-			mentions: basisLine(item.articles, 'mentioned'),
-			parents: item.articles
-				.filter((a) => !article || a.article_number === article)
-				.map((a) => ({
-					id: a.id,
-					way: (a.basis_kind ?? item.basis_kind) === 'mentioned' ? 'mentioned' : 'delegates'
-				})),
-			further: (item.sub_delegated ?? []).map((s) => nameOf(s.instrument))
-		};
-		if (list.length >= max && item.instrument.id !== keep) {
-			rest[layer] = (rest[layer] ?? 0) + 1;
-			(more[layer] ??= []).push(node);
-			continue;
+	let place = articleIds.length;
+	for (const id of REGULATION_LAYERS) {
+		const all = nodes
+			.map(({ node }) => node)
+			.filter((n) => layerOf(n.kind) === id)
+			.sort((x, y) => keyOf(x) - keyOf(y) || NL.compare(x.name, y.name));
+		const drawn: ChainNode[] = [];
+		for (const n of all) {
+			if (drawn.length >= max && n.id !== keep) {
+				rest[id] = (rest[id] ?? 0) + 1;
+				(more[id] ??= []).push(n);
+				continue;
+			}
+			drawn.push(n);
+			for (const a of byId.get(n.id)!.articles)
+				if (!articles.has(a.id))
+					articles.set(a.id, {
+						id: a.id,
+						name: a.display_name ?? articleShort(a),
+						short: articleShort(a),
+						collection: 'articles',
+						kind: null,
+						since: null,
+						grondslag: null,
+						mentions: null,
+						parents: [{ id: law.id, way: 'delegates' }],
+						further: []
+					});
 		}
-		for (const a of item.articles)
-			if (!articles.has(a.id) && (!article || a.article_number === article))
-				articles.set(a.id, {
-					id: a.id,
-					name: a.display_name ?? articleShort(a),
-					short: articleShort(a),
-					collection: 'articles',
-					kind: null,
-					since: null,
-					grondslag: null,
-					mentions: null,
-					parents: [{ id: law.id, way: 'delegates' }],
-					further: []
-				});
-		list.push(node);
+		for (const n of all) placeOf.set(n.id, place++);
+		if (drawn.length) perLayer.set(id, drawn);
 	}
 	if (articles.size)
 		layers.push({
@@ -328,8 +398,8 @@ export function chain(
 			)
 		});
 	for (const id of REGULATION_LAYERS) {
-		const nodes = perLayer.get(id);
-		if (nodes?.length) layers.push({ id, label: LAYER_LABEL[id], nodes });
+		const list = perLayer.get(id);
+		if (list?.length) layers.push({ id, label: LAYER_LABEL[id], nodes: list });
 	}
-	return { layers, rest, more, total: own.length, amending, missing };
+	return { layers, rest, more, total: nodes.length, amending, missing };
 }
