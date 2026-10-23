@@ -603,7 +603,7 @@ export interface paths {
         };
         /**
          * Dossier detail
-         * @description One dossier: its title, stage, how many documents, activities, decisions and commitments it holds, and what it links to: the instruments it legislated, amends, introduces or repeals (one item per instrument, relation and status), the committees that lead its activities, the publications its law was enacted in (`enacted`: `Stb. 2024, 193`), its documents per kind, its Eerste Kamer papers, and the dossiers it revises, accompanies or is related to (and those that revise, accompany or relate to it).
+         * @description One dossier: its title, stage, how many documents, activities, decisions and commitments it holds, and what it links to: the instruments it legislated, amends, introduces or repeals (one item per instrument, relation and status), the committees that lead its activities, the publications its law was enacted in (`enacted`: `Stb. 2024, 193`), its documents per kind, its Eerste Kamer papers, and the dossiers it revises, accompanies or is related to (and those that revise, accompany or relate to it). `sort`: `name` (default) lists the instruments by relation, status and name and the committees by name; `importance` puts the instrument cited most (`inbound_citation_count`) first within its relation and status, and the committee that leads most of the dossier's activities first.
          */
         get: operations["get_dossier_api_dossiers__number__get"];
         put?: never;
@@ -787,7 +787,7 @@ export interface paths {
          * Members of parliament
          * @description Members of parliament, optionally filtered by party or name, each with the posts they held in a cabinet (``government_functions``). By default only people who ever held a seat; ``?include_all=true`` includes ministers and other non-members, ``capacity=bewindspersoon`` keeps everyone who held a post in a cabinet and ``cabinet`` those who held one in that cabinet. A record without a name is never listed.
          *
-         *     members, each with its `government_functions` (filter `party` (the current party or any faction of the timeline; with `active=true` the faction they sit for now, so a member who left it for another is not counted), `active`, `q` (a part of the name, in any case and with or without accents: `yesilgoz` finds Yeşilgöz), `slug` (the one member of that slug, whoever they are); `sort` `name` (default) or `family_name`: by surname, then tussenvoegsel, as the Kamer lists its members, those without a surname in the source last; ministers only with `include_all`, `capacity=bewindspersoon` (everyone who held a post in a cabinet) or `cabinet` (a cabinet key: who held a post in it); a record without a name is never listed); a member's votes, a faction vote counted only for the period they belonged to it, each with `vote_source` (`member`: their own, on a roll-call; `faction`: their faction's) and the `faction_key` and `party` of the faction they sat in on its date, also for their own vote (the party they sit for now only for an undated one) and `in_office`, the posts of `government_functions` they held on its date (`function`, `cabinet_key`, `cabinet`; empty when none: a vote as demissionary bewindspersoon and Kamerlid), `coalition` and `coalition_factions` as on the feed (null and `[]` without a coalition vote and in the Eerste Kamer; `limit` (1-200, default 50) and `offset` page them, `in_office=true` keeps the votes cast in office alone before the page is cut, and `next_offset` is the offset of the next page, null after a page that was not full); the dossiers the member authored documents in (`AUTHORED`), each a dossier summary plus `roles` (the source's role names), `functions` and `capacities` (what the member signed as there: `kamerlid`, `bewindspersoon`, `overig`, see data-model (docs/data-model.md#parliament)) and `document_count`, paged with `total`; in `/api/nodes/members/{key}` every `AUTHORED` edge carries `meta.role`, `meta.function` and `meta.capacity` of that signature; laws the member proposed changes to. `?chamber=EK` lists the members of the Eerste Kamer (with `party` their faction's abbreviation, `active` those the last snapshot shows); a member of the Eerste Kamer has `ek`, in the list and the detail
+         *     members, each with its `government_functions` (filter `party` (the current party or any faction of the timeline; with `active=true` the faction they sit for now, so a member who left it for another is not counted), `active`, `q` (a part of the name, in any case and with or without accents: `yesilgoz` finds Yeşilgöz), `slug` (the one member of that slug, whoever they are); `sort` `name` (default) or `family_name`: by surname, then tussenvoegsel, as the Kamer lists its members, those without a surname in the source last; ministers only with `include_all`, `capacity=bewindspersoon` (everyone who held a post in a cabinet) or `cabinet` (a cabinet key: who held a post in it); a record without a name is never listed); a member's votes, a faction vote counted only for the period they belonged to it, each with `vote_source` (`member`: their own, on a roll-call; `faction`: their faction's) and the `faction_key` and `party` of the faction they sat in on its date, also for their own vote (the party they sit for now only for an undated one) and `in_office`, the posts of `government_functions` they held on its date (`function`, `cabinet_key`, `cabinet`; empty when none: a vote as demissionary bewindspersoon and Kamerlid), `coalition` and `coalition_factions` as on the feed (null and `[]` without a coalition vote and in the Eerste Kamer; `limit` (1-200, default 50) and `offset` page them, `in_office=true` keeps the votes cast in office alone and `in_office=false` those cast out of office alone, before the page is cut, and `next_offset` is the offset of the next page, null after a page that was not full); the dossiers the member authored documents in (`AUTHORED`), each a dossier summary plus `roles` (the source's role names), `functions` and `capacities` (what the member signed as there: `kamerlid`, `bewindspersoon`, `overig`, see data-model (docs/data-model.md#parliament)) and `document_count`, paged with `total`; in `/api/nodes/members/{key}` every `AUTHORED` edge carries `meta.role`, `meta.function` and `meta.capacity` of that signature; laws the member proposed changes to. `?chamber=EK` lists the members of the Eerste Kamer (with `party` their faction's abbreviation, `active` those the last snapshot shows); a member of the Eerste Kamer has `ek`, in the list and the detail
          */
         get: operations["list_members_api_members_get"];
         put?: never;
@@ -1335,6 +1335,8 @@ export interface paths {
          *     The stop words of `q` (the Dutch stop words of PostgreSQL's Snowball dictionary: `wat`, `is`, `de`, `van`, `mijn`) are no words of the search, unless they are all of it: `words` are those searched, `left_out` the others (`wat is de opzegtermijn van mijn huurcontract` searches `opzegtermijn huurcontract`). When no hit of any type holds every word of two or more, the full search (not `mode=live`) is asked again for the hits that hold one at least (of a ranked type those with more first; not of a citation, `Kamerstuk 35925 VI nr. 5`) and `matched` is `any`, else `all`. `toezegging` and `toezeggingen` name the type of a commitment and are left out of its search (`toezeggingen pensioenen`); a word of a commitment, a vote or a cabinet also finds the forms of its stem of four characters or more (`pensioenen`: nabestaandenpensioen). A word of the name of a kind of motion (`wantrouwen` of motie van wantrouwen, `afkeuring` of motie van afkeuring; `motion_kind`, `semantic tk-motion-kinds`) also finds the motions of that kind and the votes on them, whose subject does not hold it (`het opzeggen van het vertrouwen`), a motion above those that only hold the word; `motion_kind` keeps the papers and the votes to those motions. An LJN (`LJN AU3313`, `AU3313`: the number of the ECLI of a decision before 2013) is the judgment whose ECLI ends in it, as an ECLI is. A member is named whole by the name without the names or initials before it (`Rutte`: Mark Rutte, 0.75, before the Besluit archief Rutten that holds it). `exact` per hit says whether `q` names it as the one thing it is (its citation, ECLI, LJN, number, the abbreviation or whole title of a law, the name of a judgment, the whole name of a member, faction, committee or cabinet), never by a heading or words; `best` is the id of what a search box opens on Enter: the match of `resolved` of confidence 0.9 or more, else the hit of a concept, else the one `exact` hit, else null (`huurverhoging`: no hit it names, however its words match).
          *
          *     A query that is a term of the curated list of concepts (`wanprestatie`, `ontslag op staande voet`, `GDPR`, `minimum wage`; the whole query or its words without its stop words, any case, without accents and punctuation; docs/api.md "Concepts") has the article or law the term is about first among the hits of its type, score 1, `exact`, with `concept` the term (not with a period, nor when its type is not in `types`); it is `best` unless `resolved` names something with confidence 0.9 or more.
+         *
+         *     Pages and facets (`mode=full`): `offset` skips that many hits of each type (a page of `limit`, `offset` at most 500). `facets=true` adds `counts`, per type how many hits it has (`total`; `capped`: at least that many, the count stops after 5,000 rows), and `facets`, the hits divided by instance (`tier`) and decision year (`year`) for `judgments`, by `kind` for `documents`, by `validity` (in force, expired, not in force yet) for `instruments`; the rows that hold the words, unranked, so a count may be more than the hits a citation or a name puts first. A type without a count of its own (`members`, ...) has the hits it found, `capped` when it found as many as asked for. A count that takes over a second is null. `mode=live` has neither.
          */
         get: operations["search_api_search_get"];
         put?: never;
@@ -12513,6 +12515,22 @@ export interface components {
             explanation: string | null;
         };
         /**
+         * SearchCountDTO
+         * @description How many hits a type has.
+         */
+        SearchCountDTO: {
+            /**
+             * Total
+             * @description The hits of the type that hold the words, before `offset` and `limit`: the rows that hold every word of `q` (not fewer than the hits listed). At least this many when `capped`.
+             */
+            total: number;
+            /**
+             * Capped
+             * @description Counting stopped at the cap (5,000 rows): `total` is a lower bound and the facets are those of the rows found first, not of all.
+             */
+            capped: boolean;
+        };
+        /**
          * SearchResponse
          * @description Full-text search response, grouped by type.
          */
@@ -12565,6 +12583,28 @@ export interface components {
              * @description The id of what `q` names exactly, for a search box to open on Enter: the match of `resolved` when its confidence is 0.9 or more (a citation, an identifier, a law, faction or member by its whole name or abbreviation), else the hit of the concept `q` is the term of (`concept`), else the one hit of `results` that is `exact`. Null when none is, or more than one (`BW`: each book), however well words match (`huurverhoging`).
              */
             best: string | null;
+            /**
+             * Offset
+             * @description The hits of each type skipped (`offset` of the request): `results` holds the hits from the offset-th on.
+             * @default 0
+             */
+            offset: number;
+            /**
+             * Counts
+             * @description With `facets=true`: per type of `types` that is counted (`articles`, `dossiers`, `documents`, `instruments`, `judgments`) how many hits it has; null for a type whose count took longer than a second. Null without `facets=true`.
+             */
+            counts: {
+                [key: string]: components["schemas"]["SearchCountDTO"] | null;
+            } | null;
+            /**
+             * Facets
+             * @description With `facets=true`: per type the hits divided by a property, each value with its count, the largest first (`year` the newest first; a null value counts the hits without one), over the hits counted (`counts`, `capped`): `judgments.tier` (the instance: `hoge_raad`, `gerechtshof`, ...) and `judgments.year` (of the decision), `documents.kind`, `instruments.validity` (`in_force`, `expired`, `not_in_force_yet`, as `/api/instruments` says it; null when its source says none). Null without `facets=true`.
+             */
+            facets: {
+                [key: string]: {
+                    [key: string]: components["schemas"]["FacetCountDTO"][];
+                };
+            } | null;
         };
         /**
          * SearchResultItem
@@ -14833,6 +14873,8 @@ export interface operations {
                 limit?: number;
                 /** @description Neighbors to skip in every bucket. */
                 offset?: number;
+                /** @description `key` (default): the neighbours of a bucket in key order; `importance`: in a bucket of at most 200 edges, the most important first: judgments, articles and instruments the most cited (`inbound_citation_count`), members and factions the first signatory first, cases the one with most papers; then by key. A larger bucket and the other collections stay in key order. */
+                sort?: "key" | "importance";
                 /** @description `canvas`: of a neighbour only the props the canvas of the explorer draws, per collection, and of its edge only the `meta` it reads (null when none); `full` (the default) every prop but the text */
                 props?: "full" | "canvas";
                 /** @description `passages`: an edge that keeps where a judgment cites (its `meta.mentions`) has its passages (`paragraph_id`, `paragraph_number`, `footnote`, `snippet`, `text`, `start`, `end`: `snippet[start:end]` is `text`), the first place in each of its first three paragraphs; `light` (the default) none. */
@@ -14986,7 +15028,9 @@ export interface operations {
     };
     get_dossier_api_dossiers__number__get: {
         parameters: {
-            query?: never;
+            query?: {
+                sort?: "name" | "importance";
+            };
             header?: never;
             path: {
                 /** @description Dossier number, e.g. 29684, 29684-I, 21501-31 or 36956-(R2220). */
@@ -15390,8 +15434,8 @@ export interface operations {
                 limit?: number;
                 /** @description Skip the newest that many votes. */
                 offset?: number;
-                /** @description Only the votes cast while the member held a post of the government (``in_office`` not empty), before the page is cut. */
-                in_office?: boolean;
+                /** @description ``true``: only the votes cast while the member held a post of the government (``in_office`` not empty); ``false``: only those cast while they held none (as Kamerlid alone); left out: all. Applied before the page is cut. */
+                in_office?: boolean | null;
             };
             header?: never;
             path: {
@@ -16229,6 +16273,10 @@ export interface operations {
                 to?: string | null;
                 /** @description Comma-separated kinds of motion: `censure` (motie van afkeuring), `no_confidence` (motie van wantrouwen). Of the papers and the votes only those motions and the votes on them. */
                 motion_kind?: string | null;
+                /** @description Hits of each type to skip (a page of `limit`); only with `mode=full`. At most 500: a type ranks no more. */
+                offset?: number;
+                /** @description Also count the hits per type (`counts`) and divide them by property (`facets`); only with `mode=full`. */
+                facets?: boolean;
             };
             header?: never;
             path?: never;
