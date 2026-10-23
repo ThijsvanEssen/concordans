@@ -3,6 +3,7 @@
 // line. The groups of the panel (groups.ts) are its parts: "Alle N" opens the soort with
 // them, its order and its filters. Pure: the panel and the network draw from it alike, so
 // the heading's count and the legend's total are one sum.
+import { DISCUSSED_IN_DEBATE, onAgendaOnly } from '$lib/text/toezegging';
 import { KERN } from '$lib/bron/behoort';
 import { refId } from '$lib/bron/href';
 import { korteDatum } from '$lib/text/datum';
@@ -292,7 +293,12 @@ export function shortLine(row: Row): string {
 					: row.relation === 'BASED_ON' && row.direction === 'inbound'
 						? [kindName(typeof props.kind === 'string' ? props.kind : null), day]
 						: [row.context, day];
-	return parts.filter((p): p is string => !!p).join(', ');
+	// A toezegging only on the agenda of the dossier's debate says so, as its row does (hoe.ts).
+	const agenda =
+		row.ref.collection === 'commitments' && onAgendaOnly((row.edge ?? {}).basis)
+			? DISCUSSED_IN_DEBATE
+			: null;
+	return [agenda, ...parts].filter((p): p is string => !!p).join(', ');
 }
 
 /** Whether a title names the kind already ("Memorie van toelichting, Kamerstukken II …"). */

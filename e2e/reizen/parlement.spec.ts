@@ -250,7 +250,8 @@ test('a dossier marks a toezegging it only had on the agenda of the debate', asy
 	await naarVerbonden(page);
 	await page.locator('.col--panel').scrollIntoViewIfNeeded();
 	await verbonden.getByRole('button', { name: /^Alle \d+ toezeggingen$/ }).click();
-	const groep = page.locator('section[data-group="commitments"]');
+	// The soort opened in place in the one view of Verbonden (A208e).
+	const groep = page.locator('section[data-kind="commitments"]');
 	const rij = (begin: RegExp) =>
 		groep.getByRole('listitem').filter({ has: page.getByRole('link', { name: begin }) });
 	await expect(rij(/^Voor de zomer ontvangt de Kamer een brief van de minister/)).toContainText(

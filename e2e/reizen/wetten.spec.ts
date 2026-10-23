@@ -70,7 +70,8 @@ test('a law reads whole, with its overview, a date to read it on and what is bas
 	await expect(verbonden.getByRole('heading', { name: 'Uitvoeringsregelingen' })).toBeVisible();
 	await expect(verbonden.getByRole('heading', { name: /^Wetten/ })).toBeVisible();
 	await verbonden.getByRole('button', { name: /^Alle [\d.]+ uitvoeringsregelingen/ }).click();
-	await expect(verbonden.getByRole('heading', { name: 'Gebaseerd op deze wet' })).toBeVisible();
+	// Opened in place in the one view (A208e): Minder folds it again.
+	await expect(verbonden.getByRole('button', { name: 'Minder' })).toBeVisible();
 });
 
 test('an article: its leden, the law above it and the next article', async ({ page }) => {
