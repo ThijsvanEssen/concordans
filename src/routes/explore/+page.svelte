@@ -37,7 +37,7 @@
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { LoadFailure } from '$lib/util/load.svelte';
 	import { Lazy } from '$lib/util/lazy.svelte';
-	import { getNodeCanvas, getNodeHull } from '$lib/api/records';
+	import { getNodeCanvas, getNodeHull, once } from '$lib/api/records';
 	import { kopNode } from '$lib/bron/first-node';
 	import {
 		bronHref,
@@ -623,16 +623,9 @@
 	});
 	const sharedKey = $derived(sharedEnds.map((e) => e.id).join(','));
 	/** What each pair of bronnen shares, asked once a pair (/api/nodes/shared, API 0.80.8). */
-	const pairAnswers = new Map<string, Promise<Awaited<ReturnType<typeof getShared>>>>();
 	const askPair = (a: string, b: string) => {
-		const key = [a, b].sort().join(',');
-		let asked = pairAnswers.get(key);
-		if (!asked) {
-			asked = getShared({ ids: key, limit: 8 });
-			asked.catch(() => pairAnswers.delete(key));
-			pairAnswers.set(key, asked);
-		}
-		return asked;
+		const ids = [a, b].sort().join(',');
+		return once(`nodes/shared/${ids}`, () => getShared({ ids, limit: 8 }));
 	};
 	let sharedData = $state.raw<{
 		key: string;
