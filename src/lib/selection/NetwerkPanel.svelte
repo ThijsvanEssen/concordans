@@ -125,8 +125,14 @@
 	     één regel voor wat ertussen ligt. Wissen is één klik, en Terug zet het terug. -->
 	<CanvasKaart title="Netwerk" class="netwerk" {open} onToggle={() => kiesOpen(!open)}>
 		{#snippet samenvatting()}
-			{#if loading}<span class="laden">laden</span>{:else if !open && entries.length > 0}<span
-					class="aantal">{count(entries.length, 'bron', 'bronnen')}</span
+			{#if loading}<span
+					class="laden"
+					class:punt={open}
+					role="status"
+					aria-label="Laden"
+					title="Laden">{open ? '' : 'laden'}</span
+				>{:else if !open && entries.length > 0}<span class="aantal"
+					>{count(entries.length, 'bron', 'bronnen')}</span
 				>{/if}
 		{/snippet}
 		{#snippet actie()}
@@ -313,8 +319,31 @@
 		color: var(--ink-2);
 	}
 	.laden {
+		flex: none;
+		white-space: nowrap;
 		font-size: var(--t-micro);
 		color: var(--ink-3);
+	}
+	/* Open, the head has no room for a word beside the actions: a dot of its own, no shift. */
+	.laden.punt {
+		width: var(--s-2);
+		height: var(--s-2);
+		border-radius: var(--r-rond);
+		background: var(--ink-3);
+		animation: laden-puls 1s ease-in-out infinite alternate;
+	}
+	@keyframes laden-puls {
+		from {
+			opacity: 0.25;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.laden.punt {
+			animation: none;
+		}
 	}
 	.chips {
 		list-style: none;

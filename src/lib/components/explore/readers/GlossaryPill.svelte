@@ -2,6 +2,7 @@
 	// Inline term that shows a popover with the full name and a plain explanation on
 	// hover or focus: the kind of a kamerstuk in the document reader (MvT, Motie). A dotted
 	// underline marks the term.
+	import { placement, topOf } from '$lib/actions/top-layer';
 	import { GLOSSARY, type GlossaryTerm } from '$lib/glossary';
 
 	let { term, label }: { term: GlossaryTerm; label?: string } = $props();
@@ -13,19 +14,15 @@
 	let popEl: HTMLSpanElement | null = $state(null);
 
 	// The readers scroll inside containers that clip their overflow, so the popover is
-	// placed against the viewport: above the term, or below it when there is no room.
-	const GAP = 4;
-	const MARGIN = 8;
+	// placed against the viewport as every card is (placement): below the term, above it only
+	// where there is no room below, so it never covers the title above its own row.
 	let pos = $state({ top: 0, left: 0 });
 	function place() {
 		if (!pillEl || !popEl) return;
 		const r = pillEl.getBoundingClientRect();
-		const h = popEl.offsetHeight;
-		const w = popEl.offsetWidth;
-		const above = r.top - GAP - h;
-		const top = above >= MARGIN ? above : r.bottom + GAP;
-		const left = Math.max(MARGIN, Math.min(r.left, window.innerWidth - w - MARGIN));
-		pos = { top, left };
+		const box = { width: popEl.offsetWidth, height: popEl.offsetHeight };
+		const { up, left } = placement(r, box, { width: innerWidth, height: innerHeight });
+		pos = { top: topOf(r, up, box.height), left };
 	}
 	$effect(() => {
 		if (!open) return;

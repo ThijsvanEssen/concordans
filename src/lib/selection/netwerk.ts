@@ -92,6 +92,13 @@ export function onlyAround(n: Netwerk, id: string): Netwerk {
 	return { ...n, ids, uit: new Set(ids.filter((x) => x !== id)) };
 }
 
+/** The entries as `n` shows them: their on/off follows the address at once, before a redraw. */
+export function followNetwerk(entries: NetwerkEntry[], n: Netwerk): NetwerkEntry[] {
+	return entries.map((e) =>
+		n.ids.includes(e.id) && e.on !== isOn(n, e.id) ? { ...e, on: !e.on } : e
+	);
+}
+
 export function withToggled(n: Netwerk, id: string): Netwerk {
 	if (!n.ids.includes(id)) return n;
 	const uit = new Set(n.uit);
