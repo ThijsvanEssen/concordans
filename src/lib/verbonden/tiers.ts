@@ -2,6 +2,7 @@
 // (`judgment_total` of `/cited-by` with `tier`): the bar of the group Uitspraken and its
 // groups in the network (besluit 32). Three requests of one row each, asked once the group
 // stands; the rest of the total is Overige instanties.
+import { LAW_JUDGMENTS } from '$lib/api/first-pages';
 import { abortable } from '$lib/api/records';
 import { getCitingJudgmentsOfTier, getInstrumentJudgments } from '$lib/api/verbonden';
 import { TIER_LABEL, type Tier } from '$lib/vocabulary';
@@ -51,8 +52,8 @@ export async function citingTiers(
 }
 
 /**
- * The judgments that cite a law per instantie: one request, the tier facet of the law's
- * judgments, which counts judgments as `total` does. The Parket stands with the Hoge Raad;
+ * The judgments that cite a law per instantie: the tier facet of the first page of the law's
+ * judgments (the request its group makes, so none more), which counts judgments as `total` does. The Parket stands with the Hoge Raad;
  * the rest of `total` is Overige instanties.
  */
 export async function lawTiers(
@@ -60,7 +61,10 @@ export async function lawTiers(
 	total: number,
 	signal?: AbortSignal
 ): Promise<TierCount[]> {
-	const page = await abortable(getInstrumentJudgments(bwb, { limit: 1 }), signal);
+	const page = await abortable(
+		getInstrumentJudgments(bwb, { limit: LAW_JUDGMENTS, sort: 'date' }),
+		signal
+	);
 	const facet = page.facets?.tier ?? [];
 	const of = (tiers: readonly Tier[]) =>
 		facet.reduce((n, f) => n + (f.value && tiers.includes(f.value as Tier) ? f.count : 0), 0);
