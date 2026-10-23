@@ -21,8 +21,10 @@
 	const rows = $derived(rowsOf(text, table));
 
 	/** A cell of at most this many characters is a label (a sector, a rate): it keeps its
-	 *  words whole, so its column is as wide as its longest word. */
+	 *  words whole, so its column is as wide as its longest word; unless a word is longer
+	 *  than WORD (the name of a substance), which breaks at its syllables before the table pans. */
 	const SHORT = 32;
+	const WORD = 16;
 	/** A cell is a list when it starts with a dash; the API keeps the paragraphs of a cell in
 	 *  one line, a line separator (U+2028) between them, or, as long as it does not, only a
 	 *  space before the dash of the next item. */
@@ -42,7 +44,12 @@
 		parts.push([start + from, end]);
 		return parts;
 	}
-	const short = (start: number, end: number) => end - start <= SHORT;
+	const short = (start: number, end: number) =>
+		end - start <= SHORT &&
+		text
+			.slice(start, end)
+			.split(/\s+/)
+			.every((w) => w.length <= WORD);
 	const head = $derived(rows.filter((r) => r.head));
 	const body = $derived(rows.filter((r) => !r.head));
 </script>
