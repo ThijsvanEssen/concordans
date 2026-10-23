@@ -43,4 +43,12 @@ describe('Rechtsgebied of the judgments', () => {
 		mount({ areas: undefined, years: [{ year: 2020, count: 3 }] });
 		expect(screen.queryByRole('button', { name: /rechtsgebied/ })).toBeNull();
 	});
+
+	it('says nothing of areas while the facet is empty', async () => {
+		mount({ areas: [], years: [{ year: 2020, count: 3 }] });
+		const knop = screen.getByRole('button', { name: /Jaar en rechter/ });
+		expect(knop.textContent).not.toMatch(/rechtsgebied/);
+		await fireEvent.click(knop);
+		expect(screen.queryByRole('group', { name: 'Rechtsgebied' })).toBeNull();
+	});
 });
