@@ -1,191 +1,70 @@
 import Graph from 'graphology';
 import { describe, expect, it } from 'vitest';
-import type { ContainerGroup } from './container-membership';
 import { readFileSync } from 'node:fs';
-import {
-	forEachRealNeighbor,
-	packGroups,
-	placeClusters,
-	realDegree,
-	ringAround,
-	syncGroupLinks
-} from './layout';
+import { forEachRealNeighbor, radialLayout, realDegree } from './layout';
 
-const group = (id: string, members: string[]): ContainerGroup => ({
-	kind: 'dossier',
-	id,
-	label: id,
-	fullLabel: id,
-	members: new Set(members),
-	parts: new Set(members),
-	periods: new Map()
+const at = (g: Graph, id: string) => ({
+	x: g.getNodeAttribute(id, 'x') as number,
+	y: g.getNodeAttribute(id, 'y') as number
 });
+/** The angle clockwise from the top, where the first sector begins. */
+const angle = (g: Graph, id: string) =>
+	(Math.atan2(at(g, id).y, at(g, id).x) + Math.PI / 2 + 2 * Math.PI) % (2 * Math.PI);
 
-/** A small fixed canvas: two dossiers of three stukken on top of each other, a judgment in
- *  them, a focus with three neighbours. */
-function small(): Graph {
-	const g = new Graph();
-	const at: Record<string, [number, number]> = {
-		a1: [0, 0],
-		a2: [10, 0],
-		a3: [0, 10],
-		b1: [5, 5],
-		b2: [15, 5],
-		b3: [5, 15],
-		j: [6, 6],
-		f: [100, 100],
-		c: [100, 110]
-	};
-	for (const [id, [x, y]] of Object.entries(at)) g.addNode(id, { x, y });
-	g.addDirectedEdge('f', 'a1');
-	g.addDirectedEdge('f', 'j');
-	g.addDirectedEdge('c', 'f');
-	return g;
-}
+describe('radialLayout', () => {
+	function canvas(ids: string[]): Graph {
+		const g = new Graph();
+		for (const id of ids) g.addNode(id, { x: Math.random(), y: Math.random() });
+		return g;
+	}
+	const kind = (id: string) => id.split('/')[0];
 
-const rounded = (g: Graph) =>
-	Object.fromEntries(
-		g.mapNodes((id, a) => [id, [Math.round(a.x as number), Math.round(a.y as number)]])
-	);
-
-const dist = (g: Graph, a: string, b: string) =>
-	Math.hypot(
-		(g.getNodeAttribute(a, 'x') as number) - (g.getNodeAttribute(b, 'x') as number),
-		(g.getNodeAttribute(a, 'y') as number) - (g.getNodeAttribute(b, 'y') as number)
-	);
-
-describe('packGroups', () => {
-	it('packs each group into its own disk, apart from the other', () => {
-		const g = small();
-		expect(packGroups(g, [group('A', ['a1', 'a2', 'a3']), group('B', ['b1', 'b2', 'b3'])])).toBe(
-			true
-		);
-		expect(rounded(g)).toMatchInlineSnapshot(`
-			{
-			  "a1": [
-			    -16,
-			    -29,
-			  ],
-			  "a2": [
-			    -45,
-			    -14,
-			  ],
-			  "a3": [
-			    -27,
-			    -58,
-			  ],
-			  "b1": [
-			    53,
-			    41,
-			  ],
-			  "b2": [
-			    24,
-			    56,
-			  ],
-			  "b3": [
-			    43,
-			    12,
-			  ],
-			  "c": [
-			    100,
-			    110,
-			  ],
-			  "f": [
-			    100,
-			    100,
-			  ],
-			  "j": [
-			    -7,
-			    -7,
-			  ],
-			}
-		`);
-		// Members of one group stand closer to each other than to the other group.
-		expect(dist(g, 'a1', 'a2')).toBeLessThan(dist(g, 'a1', 'b1'));
+	it('puts one chosen bron at the centre, the rest in a sector per kind, in order', () => {
+		const g = canvas(['a/focus', 'u/1', 'u/2', 'u/3', 's/1', 's/2']);
+		radialLayout(g, ['a/focus'], kind, ['u', 's'], (a, b) => a.localeCompare(b));
+		expect(at(g, 'a/focus')).toEqual({ x: 0, y: 0 });
+		const r = (id: string) => Math.hypot(at(g, id).x, at(g, id).y);
+		expect(r('u/1')).toBeCloseTo(r('s/2'));
+		// The judgments' sector first, clockwise from the top; the stukken after it.
+		const u = ['u/1', 'u/2', 'u/3'].map((id) => angle(g, id));
+		expect(u).toEqual([...u].sort((a, b) => a - b));
+		expect(Math.min(...['s/1', 's/2'].map((id) => angle(g, id)))).toBeGreaterThan(Math.max(...u));
 	});
 
-	it('packs nothing for groups of one', () => {
-		const g = small();
-		expect(packGroups(g, [group('A', ['a1']), group('B', ['gone', 'b1'])])).toBe(false);
-		expect(rounded(g)).toEqual(rounded(small()));
+	it('sets more chosen bronnen side by side in the middle', () => {
+		const g = canvas(['a/1', 'a/2', 'u/1']);
+		radialLayout(g, ['a/1', 'a/2'], kind, ['u'], () => 0);
+		expect(at(g, 'a/1').y).toBe(0);
+		expect(at(g, 'a/2').y).toBe(0);
+		expect(at(g, 'a/1').x).toBeLessThan(at(g, 'a/2').x);
 	});
 
-	it('packs a bron in two groups by the larger one', () => {
-		const g = small();
-		packGroups(g, [group('A', ['a1', 'a2']), group('B', ['a1', 'b1', 'b2'])]);
-		expect(dist(g, 'a1', 'b1')).toBeLessThan(dist(g, 'a1', 'a2'));
+	it('sends a full ring on to the next one out', () => {
+		const ids = Array.from({ length: 80 }, (_, i) => `u/${String(i).padStart(2, '0')}`);
+		const g = canvas(['a/f', ...ids]);
+		radialLayout(g, ['a/f'], kind, ['u'], (a, b) => a.localeCompare(b));
+		const radii = new Set(ids.map((id) => Math.round(Math.hypot(at(g, id).x, at(g, id).y))));
+		expect(radii.size).toBeGreaterThan(1);
 	});
 });
 
 describe('forEachRealNeighbor and realDegree', () => {
-	it('pass over the links of a hull: a group of four without lines has no neighbours', () => {
-		const g = small();
-		syncGroupLinks(g, [group('A', ['a1', 'a2', 'a3', 'b1'])], new Set());
+	it('pass over a link that is no line', () => {
+		const g = new Graph();
+		for (const id of ['a', 'b', 'f']) g.addNode(id);
+		g.addDirectedEdge('f', 'a');
+		g.addUndirectedEdge('a', 'b', { layoutOnly: true });
 		const of = (id: string) => {
 			const found: string[] = [];
 			forEachRealNeighbor(g, id, (n) => found.push(n));
 			return found;
 		};
-		expect(of('a2')).toEqual([]);
-		expect(realDegree(g, 'a2')).toBe(0);
-		expect(of('a1')).toEqual(['f']);
-		expect(realDegree(g, 'f')).toBe(3);
+		expect(of('a')).toEqual(['f']);
+		expect(realDegree(g, 'b')).toBe(0);
 	});
 
 	it('are what the canvas reads: no bare neighbours or degree in GraphCanvas', () => {
 		const src = readFileSync('src/lib/components/graph/GraphCanvas.svelte', 'utf8');
 		expect(src).not.toMatch(/graph\.(forEachNeighbor|degree)\(/);
-	});
-});
-
-describe('syncGroupLinks', () => {
-	it('ties a group in a ring with chords past three, and takes out what no group needs', () => {
-		const g = small();
-		const four = syncGroupLinks(g, [group('A', ['a1', 'a2', 'a3', 'j'])], new Set());
-		expect([...four].sort()).toEqual([
-			'anchor:A:a1~a2',
-			'anchor:A:a1~a3',
-			'anchor:A:a1~j',
-			'anchor:A:a2~a3',
-			'anchor:A:a2~j',
-			'anchor:A:a3~j'
-		]);
-		expect(g.getEdgeAttribute('anchor:A:a1~a2', 'layoutOnly')).toBe(true);
-		const two = syncGroupLinks(g, [group('A', ['a1', 'a2'])], four);
-		expect([...two]).toEqual(['anchor:A:a1~a2']);
-		expect(g.edges().filter((e) => e.startsWith('anchor:'))).toEqual(['anchor:A:a1~a2']);
-	});
-
-	it('adds one link where two groups tie the same two bronnen', () => {
-		const g = small();
-		syncGroupLinks(g, [group('A', ['a1', 'a2']), group('B', ['a1', 'a2'])], new Set());
-		expect(g.edges().filter((e) => e.startsWith('anchor:'))).toEqual(['anchor:A:a1~a2']);
-	});
-});
-
-describe('placeClusters', () => {
-	it('puts a cluster just outside the ring of the focus, where it has most room', () => {
-		const g = small();
-		g.addNode('cluster:judgments', { x: 0, y: 0 });
-		g.addDirectedEdge('cluster:judgments', 'f');
-		placeClusters(g, 'f', ['cluster:judgments'], (id) => id.startsWith('cluster:'));
-		expect(rounded(g)['cluster:judgments']).toMatchInlineSnapshot(`
-			[
-			  222,
-			  -22,
-			]
-		`);
-	});
-});
-
-describe('ringAround', () => {
-	it('puts the focus at the centre, its neighbours on a ring, the rest outside, the chosen where they are', () => {
-		const g = small();
-		const moved = ringAround(g, 'f', new Set(['b3']));
-		expect([...moved].sort()).toEqual(['a1', 'a2', 'a3', 'b1', 'b2', 'c', 'j']);
-		expect(rounded(g).f).toEqual([0, 0]);
-		expect(dist(g, 'f', 'a1')).toBeCloseTo(120);
-		expect(dist(g, 'f', 'a2')).toBeCloseTo(260);
-		expect(rounded(g).b3).toEqual([5, 15]);
 	});
 });

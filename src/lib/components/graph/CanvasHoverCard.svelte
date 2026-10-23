@@ -95,6 +95,9 @@
 				return textOf(nodeProps?.['party']);
 			case 'dossier':
 				return textOf(nodeProps?.['number']) ?? textOf(nodeProps?.['label']) ?? naamVanId(node.id);
+			// A Kamerstuk by the dossier it is part of (mockup A197-b: Datum, Dossier).
+			case 'document':
+				return textOf(nodeProps?.['dossier_number']);
 			case 'committee':
 			case 'faction':
 				return textOf(nodeProps?.['abbreviation']);
@@ -146,6 +149,7 @@
 		article: 'Wet',
 		member: 'Fractie',
 		dossier: 'Dossier',
+		document: 'Dossier',
 		committee: 'Afkorting',
 		faction: 'Afkorting'
 	};

@@ -237,6 +237,10 @@
 	.failure {
 		margin: var(--s-5);
 	}
+	/* A click marks the bron with its frame (.sel); the keyboard keeps its ring. */
+	.node:focus:not(:focus-visible) {
+		outline: none;
+	}
 	.drawing {
 		display: block;
 		width: 100%;

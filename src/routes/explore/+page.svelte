@@ -6,7 +6,7 @@
 	//
 	// A click on the canvas marks a bron (?marked) and opens its card; Lees on it reads the bron,
 	// a step of its own: Back brings the werkplek back from its address.
-	import { notHeld } from '$lib/text/coverage';
+	import { noneHeld, notHeld } from '$lib/text/coverage';
 	import { categoryLabel } from '$lib/components/explore/index/categories';
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import { get } from 'svelte/store';
@@ -17,7 +17,7 @@
 	import { inView } from '$lib/actions/in-view';
 	import { PHONE, READ_BESIDE } from '$lib/util/breakpoints';
 	import { laadWetsnetwerk } from '$lib/components/actueel/wetsnetwerk';
-	import { vandaag } from '$lib/text/datum';
+	import { vandaag, yearFraction } from '$lib/text/datum';
 	import { meldNetwerk, showNetworkFailure } from '$lib/stores/netwerk-melding';
 	import {
 		DEFAULT_FILTERS,
@@ -108,6 +108,7 @@
 	} from '$lib/bron/address';
 	import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 	import NetwerkPanel from '$lib/selection/NetwerkPanel.svelte';
+	import NetworkOptions from '$lib/selection/NetworkOptions.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import ChainView from '$lib/network/ChainView.svelte';
 	import SharedView from '$lib/network/SharedView.svelte';
@@ -116,7 +117,7 @@
 	import { getLawBasis, getLawDelegated } from '$lib/api/articles';
 	import { getShared } from '$lib/api/nodes';
 	import { formatCount } from '$lib/text/getal';
-	import { textOf } from '$lib/text/words';
+	import { capitalize, textOf } from '$lib/text/words';
 	import { focusStap } from '$lib/graph/focus-stap';
 	import {
 		onlyAround,
@@ -435,7 +436,7 @@
 			: !chainLaw
 				? 'Keten: alleen bij een wet of een artikel'
 				: chainModel && chainModel.total === 0
-					? 'Geen uitvoeringsregelingen in de gegevens'
+					? capitalize(noneHeld('uitvoeringsregelingen'))
 					: null
 	);
 	/** A node of the keten as the card reads a bron. */
@@ -481,7 +482,7 @@
 			ties: (k.further.length
 				? k.further
 				: k.collection === 'instruments' && k.id !== `instruments/${chainLaw?.toLowerCase()}`
-					? ['Geen uitvoeringsregelingen in de gegevens']
+					? [capitalize(noneHeld('uitvoeringsregelingen'))]
 					: []
 			).map((text) => ({ text, collection: 'instruments' as const }))
 		};
@@ -490,10 +491,7 @@
 		(chainModel?.layers ?? [])
 			.flatMap((l) => l.nodes)
 			.filter((k) => k.since)
-			.map((k) => {
-				const [j, m = 1, d = 1] = k.since!.split('-').map(Number);
-				return { jaar: j + ((m - 1) * 31 + d - 1) / 372, collection: 'instruments' as const };
-			})
+			.map((k) => ({ jaar: yearFraction(k.since!), collection: 'instruments' as const }))
 	);
 
 	/** The chosen bronnen of the netwerk that are on, as the API names them: Verband's ends. */
@@ -505,7 +503,8 @@
 					.map((e) => ({
 						id: e.node!.id,
 						name: bronNaam(e.node!, $instrumentMetaStore),
-						collection: e.collection
+						collection: e.collection,
+						connections: e.connections ?? null
 					}))
 			: []
 	);
@@ -564,15 +563,24 @@
 				: null);
 		if (!d) return null;
 		const byId = new Map(sharedEnds.map((e) => [e.id, e]));
-		return sharedModel(d, (id) => ({
+		const model = sharedModel(d, (id) => ({
 			name: byId.get(id)?.name ?? id,
 			collection: byId.get(id)?.collection ?? null
 		}));
+		// From the netwerk itself, the judgments both cite are not known: "?", as the gap says.
+		return here?.data ? model : { ...model, judgments: null };
 	});
 	const sharedGap = $derived(
 		sharedData?.key === sharedKey && sharedData.failure === 'niet'
-			? 'onvolledig: alleen de bronnen ertussen in het netwerk'
+			? 'onvolledig: alleen de bronnen ertussen'
 			: null
+	);
+	/** The tijdstrook of Verband: the shared bronnen with a date. */
+	const sharedDots = $derived(
+		(sharedState?.rows ?? []).flatMap((r) => {
+			const datum = textOf(r.node.props?.date);
+			return datum ? [{ jaar: yearFraction(datum), collection: r.collection }] : [];
+		})
 	);
 	const sharedCard = $derived.by(() => {
 		const r = sharedState?.rows.find((x) => x.id === marked);
@@ -1755,7 +1763,11 @@
 								onToggleMutatie={toggleMutatie}
 								midden={view === 'omgeving' ? undefined : viewMiddle}
 								extern={view === 'keten' ? chainCard : view === 'verband' ? sharedCard : null}
-								externStippen={view === 'keten' ? chainDots : view === 'verband' ? [] : null}
+								externStippen={view === 'keten'
+									? chainDots
+									: view === 'verband'
+										? sharedDots
+										: null}
 							>
 								{#snippet viewChoice()}
 									<div class="view-choice">
@@ -1785,6 +1797,20 @@
 										>{shareCopier.label('share', 'Deel')}</button
 									>
 								{/snippet}
+								{#snippet meer()}
+									<NetworkOptions
+										around={selectedNode && !selectedNode.stub
+											? bronNaam(selectedNode, $instrumentMetaStore)
+											: null}
+										aroundOn={!!aroundId}
+										onAround={toggleAround}
+										chosen={netwerk.ids.length}
+										between={netwerk.tussen}
+										betweenCount={composer.joiningCount}
+										partial={composer.partial}
+										onBetween={() => setNetwerk({ ...netwerk, tussen: !netwerk.tussen })}
+									/>
+								{/snippet}
 								{#snippet canvasOverlay()}
 									<NetwerkPanel
 										entries={netwerkActive
@@ -1798,25 +1824,17 @@
 										start={!focus && !netwerkActive}
 										{telefoon}
 										onSelect={addIdToNetwerk}
-										omgeving={selectedNode && !selectedNode.stub
-											? bronNaam(selectedNode, $instrumentMetaStore)
-											: null}
-										aroundOn={!!aroundId}
-										onOmgeving={toggleAround}
 										onVoorbeeld={showExample}
 										selection={selectedNode &&
 										selectedLinkId &&
 										!netwerk.ids.includes(selectedLinkId)
 											? { label: bronNaam(selectedNode, $instrumentMetaStore) }
 											: null}
-										tussen={netwerk.tussen}
 										onGroepAan={(kind) => {
 											const uit = new Set(get(store.filters).hiddenGroups);
 											uit.delete(kind);
 											store.setFilters({ hiddenGroups: uit });
 										}}
-										joiningCount={composer.joiningCount}
-										deels={composer.partial}
 										onToggle={(id) => {
 											if (aroundId) setUrl({ [AROUND]: null });
 											setNetwerk(withToggled(netwerk, id));
@@ -1826,7 +1844,6 @@
 											setNetwerk(withRemoved(netwerk, id));
 										}}
 										onAdd={() => selectedNode && addToNetwerk(selectedNode)}
-										onTussen={() => setNetwerk({ ...netwerk, tussen: !netwerk.tussen })}
 										onClearContext={() => store.clearContext()}
 										onClear={wisAlles}
 									/>
@@ -2011,6 +2028,11 @@
 		.view-choice :global(.keuze > *) {
 			flex: 1;
 			justify-content: center;
+		}
+	}
+	@media (pointer: coarse), (max-width: 768px) {
+		.view-choice :global(.keuze > *) {
+			min-height: var(--veld-h-raak);
 		}
 	}
 	@media (max-width: 1100px) {

@@ -245,8 +245,25 @@ const VORM_SCALE = 1.5;
 // Een sprite per vorm (vormen.ts), in inkt. Een bron buiten de gegevens is de
 // omtrek van zijn vorm; de gekozen bron krijgt een rand in inkt en een papieren halo.
 const vormCache: Map<string, string> = new Map();
-export function spriteForVorm(vorm: Vorm, stub: boolean, focused: boolean): string {
-	const k = `${vorm}:${stub}:${focused}`;
+/** A colour token (`var(--groep-wet)`) as the canvas paints it. */
+function kleurUit(waarde: string | undefined, fallback: string): string {
+	const naam = waarde?.match(/^var\((--[\w-]+)\)$/)?.[1];
+	if (!naam) return waarde || fallback;
+	if (typeof document === 'undefined') return fallback;
+	return getComputedStyle(document.documentElement).getPropertyValue(naam).trim() || fallback;
+}
+
+/**
+ * The sprite of a vorm in ink, or in the colour of its kind (`colour`, kindColour): the werkplek
+ * draws the kinds as the mockups do (A197).
+ */
+export function spriteForVorm(
+	vorm: Vorm,
+	stub: boolean,
+	focused: boolean,
+	colour?: string
+): string {
+	const k = `${vorm}:${stub}:${focused}:${colour ?? ''}`;
 	let url = vormCache.get(k);
 	if (url) return url;
 	const t = tokens();
@@ -259,6 +276,7 @@ export function spriteForVorm(vorm: Vorm, stub: boolean, focused: boolean): stri
 	ctx.scale(VORM_SCALE, VORM_SCALE);
 	const v = VORMEN[vorm];
 	const path = new Path2D(v.d);
+	const inkt = kleurUit(colour, t.ink);
 	if (focused) {
 		ctx.lineJoin = 'round';
 		ctx.strokeStyle = t.paper;
@@ -271,11 +289,11 @@ export function spriteForVorm(vorm: Vorm, stub: boolean, focused: boolean): stri
 	if (stub || v.wijze === 'lijn') {
 		ctx.fillStyle = t.paper;
 		ctx.fill(path, v.wijze === 'gat' ? 'evenodd' : 'nonzero');
-		ctx.strokeStyle = stub ? t.ink3 : t.ink;
+		ctx.strokeStyle = stub ? t.ink3 : inkt;
 		ctx.lineWidth = v.wijze === 'lijn' ? 2 : 1.3;
 		ctx.stroke(path);
 	} else {
-		ctx.fillStyle = t.ink;
+		ctx.fillStyle = inkt;
 		ctx.fill(path, v.wijze === 'gat' ? 'evenodd' : 'nonzero');
 	}
 	url = canvas.toDataURL('image/png');

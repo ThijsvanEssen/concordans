@@ -181,3 +181,9 @@ export function yearsOf(from: string | null, to: string | null): string {
 
 /** Today as a reader dates a consultation: `22 oktober 2026`. */
 export const consultedOn = (now = new Date()): string => langeDatum(vandaag(now));
+
+/** A day as a year and its fraction, `2006-03-01` as 2006.16: where it stands on a time line. */
+export const yearFraction = (iso: string): number => {
+	const [j, m = 1, d = 1] = iso.split('-').map(Number);
+	return j + ((m - 1) * 31 + d - 1) / 372;
+};

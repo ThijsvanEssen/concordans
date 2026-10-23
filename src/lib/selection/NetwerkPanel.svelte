@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { count } from '$lib/text/words';
-	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import CanvasKaart from '$lib/components/graph/CanvasKaart.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
@@ -19,22 +17,15 @@
 		loading = false,
 		selection = null,
 		start = false,
-		tussen,
-		joiningCount,
-		deels = false,
 		onSelect,
 		onToggle,
 		onRemove,
 		onGroepAan,
 		onAdd,
-		onTussen,
 		onClearContext,
 		onClear,
 		onVoorbeeld,
-		telefoon = false,
-		omgeving = null,
-		aroundOn = false,
-		onOmgeving
+		telefoon = false
 	}: {
 		entries: NetwerkEntry[];
 		loading?: boolean;
@@ -42,15 +33,6 @@
 		selection?: { label: string } | null;
 		/** The canvas is empty: the panel is the start of the page. */
 		start?: boolean;
-		tussen: boolean;
-		joiningCount: number;
-		/** The selected bron whose surroundings alone the line below shows (O; Thijs, 10 Oct). */
-		omgeving?: string | null;
-		/** The filter Alleen verbonden bronnen is on. */
-		aroundOn?: boolean;
-		onOmgeving?: () => void;
-		/** The API ran out of time looking for paths: these are the ones it found (`partial`). */
-		deels?: boolean;
 		/** Adds a bron found by the search, by the name a link uses. */
 		onSelect: (id: string) => void;
 		onToggle: (id: string) => void;
@@ -58,7 +40,6 @@
 		/** A chip greyed with its grouping: switch that grouping on again. */
 		onGroepAan?: (kind: NonNullable<NetwerkEntry['verborgenMet']>) => void;
 		onAdd: () => void;
-		onTussen: () => void;
 		onClearContext: () => void;
 		onClear: () => void;
 		/** Een voorbeeldnetwerk met één klik. */
@@ -210,35 +191,6 @@
 				/>
 			</div>
 		{/if}
-		{#if (omgeving || aroundOn) && onOmgeving}
-			<!-- A filter, on and off; the chosen bronnen stay. The bron's name and the key on hover. -->
-			<p class="omgeving">
-				<FilterOptie
-					inline
-					on={aroundOn}
-					onToggle={onOmgeving}
-					label="Alleen verbonden bronnen"
-					title={omgeving
-						? `Alleen ${omgeving} met verbonden bronnen (toets O)`
-						: 'Alleen verbonden bronnen (toets O)'}
-				/>
-			</p>
-		{/if}
-		{#if entries.length > 1}
-			<p class="tussen">
-				<FilterOptie
-					inline
-					on={tussen}
-					onToggle={onTussen}
-					label={tussen
-						? `${count(joiningCount, 'bron', 'bronnen')} ertussen`
-						: 'Toon de bronnen ertussen'}
-				/>
-			</p>
-			{#if tussen && deels}
-				<p class="deels">Niet alle verbindingen gevonden: het zoeken duurde te lang.</p>
-			{/if}
-		{/if}
 		{#if telefoon && entries.length > 0}
 			<!-- On a phone under Filter, with the netwerk's own filters (GraphView). -->
 			<p class="netwerk-acties">
@@ -271,22 +223,11 @@
 		font-size: var(--t-meta);
 		color: var(--ink);
 	}
-	/* One quiet line under the chips, in the text's letter. */
-	.omgeving {
-		margin: var(--s-2) 0 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-	}
 	.netwerk-acties {
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--s-2) var(--s-4);
 		margin: var(--s-3) 0 0;
-	}
-	.deels {
-		margin: var(--s-1) 0 0;
-		font-size: var(--t-micro);
-		color: var(--ink-3);
 	}
 	.laden {
 		flex: none;
@@ -410,9 +351,6 @@
 	}
 	.zoek {
 		width: 100%;
-	}
-	.tussen {
-		margin: var(--s-2) 0 0;
 	}
 	.zoek--start {
 		margin-top: var(--s-3);

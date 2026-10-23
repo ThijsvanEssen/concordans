@@ -20,7 +20,7 @@
 		onChoose
 	}: {
 		/** The chosen bronnen, in the order of the netwerk: their id and name. */
-		ends: readonly { id: string; name: string }[];
+		ends: readonly { id: string; name: string; connections?: number | null }[];
 		model: SharedModel | null;
 		chosen?: string | null;
 		/** What the data lacks, as one label. */
@@ -36,7 +36,9 @@
 	const TOP = 70;
 	const rows = $derived(model?.rows ?? []);
 	const bottom = $derived(TOP + rows.length * ROW);
-	const height = $derived(Math.max(420, bottom + (model?.judgments ? 140 : 40)));
+	/** The shared judgments drawn as one circle: their count, or "?" where it is not known. */
+	const withJudgments = $derived(!!model && model.judgments !== 0);
+	const height = $derived(Math.max(420, bottom + (withJudgments ? 160 : 40)));
 	const middle = $derived(width / 2);
 	/** The chosen bronnen: the first left, the second right, more under them by turns. */
 	const place = $derived(
@@ -69,7 +71,7 @@
 				form="block"
 			/>
 		</div>
-	{:else if gap}<p class="gap">{gap}</p>{/if}
+	{:else if gap && model?.judgments !== null}<p class="gap">{gap}</p>{/if}
 	{#if ends.length < 2}
 		<p class="empty stil">Voeg een tweede bron toe</p>
 	{:else}
@@ -87,7 +89,7 @@
 						/>{/if}
 				{/each}
 			{/each}
-			{#if model?.judgments}
+			{#if model && withJudgments}
 				{#each ends as e (e.id)}
 					{@const p = place.get(e.id)!}
 					<line
@@ -101,11 +103,16 @@
 				{/each}
 				<circle class="group" cx={middle} cy={bottom + 50} r="26" />
 				<text class="count" x={middle} y={bottom + 55} text-anchor="middle"
-					>{formatCount(model.judgments)}</text
+					>{model.judgments === null ? '?' : formatCount(model.judgments)}</text
 				>
 				<text class="name" x={middle} y={bottom + 96} text-anchor="middle"
-					>{plural(model.judgments, 'Uitspraak', 'Uitspraken')} die beide aanhalen</text
+					>{plural(model.judgments ?? 2, 'Uitspraak', 'Uitspraken')} die beide aanhalen</text
 				>
+				{#if gap && model.judgments === null}
+					<foreignObject x={middle - 160} y={bottom + 108} width="320" height="28"
+						><p class="gap gap--onder">{gap}</p></foreignObject
+					>
+				{/if}
 			{/if}
 			{#each rows as r, i (r.id)}
 				<g
@@ -152,6 +159,10 @@
 						stroke-width="1.5"
 					/>
 					<text class="name name--end" x={p.x} y={p.y + 34} text-anchor="middle">{e.name}</text>
+					{#if e.connections}<text class="name" x={p.x} y={p.y + 56} text-anchor="middle"
+							>{formatCount(e.connections)}
+							{plural(e.connections, 'verbinding', 'verbindingen')}</text
+						>{/if}
 				</g>
 			{/each}
 		</svg>
@@ -176,12 +187,15 @@
 						</button>
 					</li>
 				{/each}
-				{#if model?.judgments}
+				{#if model && withJudgments}
 					<li class="ladder__group">
 						<span class="ladder__name"
-							><i class="mark mark--round"></i>{formatCount(model.judgments)}
-							{plural(model.judgments, 'uitspraak', 'uitspraken')} die beide aanhalen</span
+							><i class="mark mark--round"></i>{model.judgments === null
+								? 'Uitspraken'
+								: `${formatCount(model.judgments)} ${plural(model.judgments, 'uitspraak', 'uitspraken')}`}
+							die beide aanhalen</span
 						>
+						{#if gap}<span class="gap gap--ladder">{gap}</span>{/if}
 					</li>
 				{/if}
 			</ul>
@@ -217,6 +231,21 @@
 	}
 	.failure {
 		margin: var(--s-5);
+	}
+	.gap--onder {
+		position: static;
+		display: table;
+		margin: 0 auto;
+		white-space: nowrap;
+	}
+	.gap--ladder {
+		position: static;
+		display: inline-block;
+		margin: 0 var(--s-3) var(--s-2);
+	}
+	/* A click marks the bron with its frame (.sel); the keyboard keeps its ring. */
+	.node:focus:not(:focus-visible) {
+		outline: none;
 	}
 	.drawing {
 		display: block;

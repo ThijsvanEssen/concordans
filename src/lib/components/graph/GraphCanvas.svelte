@@ -218,7 +218,6 @@
 	let latestHeatPeriodMonths = 12;
 	let latestMutatieActive = false;
 	let latestContainerGroups: Map<string, ContainerGroup> = new Map();
-	let latestFocusMembers: ReadonlySet<string> = new Set();
 	/**
 	 * Members of the focused hull whose seat in it has ended, with its last day: drawn in the
 	 * hull but quiet, "tot <datum>" on a hover, never as a line out of it (Orchestrator, 10 Oct).
@@ -329,7 +328,6 @@
 
 	$effect(() => {
 		const focusGroup = focusContainerId ? containerGroups.get(focusContainerId) : undefined;
-		latestFocusMembers = focusGroup?.members ?? new Set();
 		// Ended before the hull's own last day: a cabinet that has ended does not make all its
 		// bewindspersonen former ones, only those who left before it did.
 		const zetels = [...(focusGroup?.periods ?? [])];
@@ -913,14 +911,9 @@
 				// No single node to focus around when the selection is a container (a wet,
 				// fractie, commissie or dossier draws no node of its own): its own children
 				// count as in focus instead, so the rest of a busy view still dims.
-				const dimStale =
-					isContext(id) ||
-					isTussen(id) ||
-					(f0?.dimStaleContext !== false &&
-						!latestPinnedIds.has(id) &&
-						(focusedId !== null
-							? id !== focusedId && !focusLevel1.has(id)
-							: latestFocusMembers.size > 0 && !latestFocusMembers.has(id)));
+				// The werkplek draws every bron of its order in full (mockup A197); only the context
+				// added around the chosen bronnen steps back.
+				const dimStale = isContext(id) && f0?.dimStaleContext !== false;
 
 				const inHover = hoveredId !== null;
 				const inFocusGroup = !inHover || id === hoveredId || hoveredNeighbours.has(id);
@@ -956,15 +949,13 @@
 					};
 				}
 
-				// Labels only on hover, on the focus, on the chosen bronnen of a netwerk and on a
-				// cluster bron, whose name ("250 uitspraken") is what it says.
-				let label = '';
-				let forceLabel = false;
+				// Every bron its short name, as the mockup draws them (A197); where names would cover
+				// each other sigma leaves some out, never those of the hover, the focus, the chosen
+				// bronnen and a cluster bron, whose name ("250 uitspraken") is what it says.
+				const label = data.label as string;
 				const chosen = latestPinnedIds.has(id);
-				if ((inHover && inFocusGroup) || id === focusedId || chosen || data.cluster) {
-					label = data.label as string;
-					forceLabel = true;
-				}
+				const forceLabel =
+					(inHover && inFocusGroup) || id === focusedId || chosen || !!data.cluster;
 
 				if (id !== focusedId && chosen)
 					return {
@@ -981,7 +972,12 @@
 					hidden: false,
 					label,
 					forceLabel,
-					image: spriteForVorm(data.vorm as Vorm, !!data.stub, true),
+					image: spriteForVorm(
+						data.vorm as Vorm,
+						!!data.stub,
+						true,
+						data.kleur as string | undefined
+					),
 					size: ((data.size as number) ?? 4) * 1.6,
 					zIndex: 2
 				};

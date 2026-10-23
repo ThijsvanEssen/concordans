@@ -24,7 +24,10 @@
 		type VerbondenFilter
 	} from '$lib/verbonden/filter';
 	import type { VerbondenState } from '$lib/verbonden/data-source';
-	import { allRows, lidCounts, relationCounts } from '$lib/verbonden/view';
+	import { allRows, lidCounts } from '$lib/verbonden/view';
+	import { relationLabel } from '$lib/verbonden/relation-words';
+	import { capitalize } from '$lib/text/words';
+	import { kindColour } from '$lib/bron/kleur';
 	import {
 		edgeColorFor,
 		edgeStyleFor,
@@ -69,7 +72,8 @@
 		netwerkActive = false,
 		hasNodes = false,
 		reach = null,
-		periode
+		periode,
+		meer
 	}: {
 		verbonden: VerbondenState;
 		filter: VerbondenFilter;
@@ -92,6 +96,7 @@
 		onToggleGroup?: (kind: ContainerKind) => void;
 		canvasCounts: {
 			kinds?: Partial<Record<FilterGroup, number>>;
+			relations?: Partial<Record<Relation, number>>;
 			metGroep?: Partial<
 				Record<FilterGroup, { count: number; van: number; groepen: ContainerKind[] }>
 			>;
@@ -108,6 +113,8 @@
 		reach?: NeighborhoodReach | null;
 		/** The block Periode, after Relatie. */
 		periode?: Snippet;
+		/** First under Meer: the netwerk's own filters (NetworkOptions). */
+		meer?: Snippet;
 	} = $props();
 
 	const MEER = 'netwerk:meer';
@@ -133,12 +140,33 @@
 	);
 	const uitsnedeTotaal = $derived(uitsnede.reduce((n, b) => n + b.total, 0));
 	const NO_SELECTION_REASON = 'Kies eerst een bron in het netwerk.';
+	// Relatie: the lines drawn, one row per relation, in the words of the mockup (A197-b) where
+	// one relation is read two ways (a judgment haalt aan, a Kamerstuk noemt).
+	/** The kind of bron a filter group draws, for its colour (kleur.ts). */
+	const GROUP_COLLECTION: Record<FilterGroup, Collection> = {
+		artikelen: 'articles',
+		wetten: 'instruments',
+		uitspraken: 'judgments',
+		toelichtingen: 'documents',
+		wetsvoorstellen: 'documents',
+		dossiers: 'dossiers',
+		stemmingen: 'decisions',
+		leden: 'members',
+		internationaal: 'instruments'
+	};
+	const OWN_WORDS: Partial<Record<Relation, string>> = {
+		REFERS_TO: 'Haalt aan, noemt',
+		BASED_ON: 'Grondslag, uitvoeringsregeling'
+	};
 	const relations = $derived(
-		selectionCollection
-			? relationCounts(verbonden.groups, selectionCollection).filter((r) =>
-					inLegend(r.relation as Relation)
-				)
-			: []
+		(Object.entries(canvasCounts.relations ?? {}) as [Relation, number][])
+			.filter(([r]) => inLegend(r))
+			.sort((a, b) => b[1] - a[1])
+			.map(([relation, count]) => ({
+				relation,
+				count,
+				label: OWN_WORDS[relation] ?? capitalize(relationLabel(relation))
+			}))
 	);
 	const CONTAINER_KIND_HINT: Record<ContainerKind, string> = {
 		instrument: 'een omtrek om de artikelen van een wet of regeling',
@@ -201,7 +229,8 @@
 		<section class="block">
 			<h3 class="block__title">Soort</h3>
 			<!-- Articles are switched with their wet, under Groepering (Thijs, 9 Oct). -->
-			{#each FILTER_GROUPS.filter((b) => b !== 'artikelen') as k (k)}
+			<!-- The kinds on the canvas, and one switched off: no rows of nothing (mockup A197-b). -->
+			{#each FILTER_GROUPS.filter((b) => b !== 'artikelen' && ((totals[b] ?? 0) > 0 || !isOn(b))) as k (k)}
 				{@const n = totals[k] ?? 0}
 				{@const groepen = metGroepUit(k)}
 				<FilterOptie
@@ -219,7 +248,11 @@
 					empty={n === 0}
 					gedimd={!!groepen}
 				>
-					{#snippet voor()}<KindGlyph vorm={FILTER_GROUP_VORM[k]} size={11} />{/snippet}
+					{#snippet voor()}<KindGlyph
+							vorm={FILTER_GROUP_VORM[k]}
+							size={11}
+							colour={kindColour(GROUP_COLLECTION[k])}
+						/>{/snippet}
 				</FilterOptie>
 			{/each}
 		</section>
@@ -266,6 +299,7 @@
 		</div>
 		{#if meerOpen}
 			<div class="verder__inhoud" id="netwerk-meer">
+				{#if meer}<section class="block">{@render meer()}</section>{/if}
 				<section class="block">
 					<div class="block__label">Voorkeuze</div>
 					<TekstMenu

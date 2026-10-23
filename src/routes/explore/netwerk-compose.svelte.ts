@@ -197,7 +197,8 @@ export class NetwerkComposer {
 					collection: response.node.collection as NetwerkEntry['collection'],
 					on: isOn(n, id),
 					alone: participants.length > 1 && alone.has(canvasId),
-					via: deelVan(widened.get(canvasId))
+					via: deelVan(widened.get(canvasId)),
+					connections: response.neighbors?.total
 				};
 			}),
 			// A chosen bron the API does not know (an old link, a removed record) stays listed,

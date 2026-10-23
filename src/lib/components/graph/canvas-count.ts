@@ -15,6 +15,8 @@ export type CanvasCounts = {
 	vormen: Partial<Record<Vorm, number>>;
 	/** Per kind, the bronnen hidden with a grouping switched off, and which groupings. */
 	metGroep: Partial<Record<FilterGroup, { count: number; van: number; groepen: ContainerKind[] }>>;
+	/** The lines between two bronnen drawn, per relation, shown or switched off: the Relatie. */
+	relations: Partial<Record<Relation, number>>;
 };
 
 /** Whether two lists of drawn bronnen hold the same ones: the list is not handed on unchanged. */
@@ -24,7 +26,14 @@ export const sameIds = (a: readonly string[], b: readonly string[]) => {
 	return b.every((id) => kept.has(id));
 };
 
-export const NO_COUNTS: CanvasCounts = { nodes: 0, edges: 0, kinds: {}, vormen: {}, metGroep: {} };
+export const NO_COUNTS: CanvasCounts = {
+	nodes: 0,
+	edges: 0,
+	kinds: {},
+	vormen: {},
+	metGroep: {},
+	relations: {}
+};
 
 export function countCanvas(o: {
 	graph: Graph;
@@ -64,11 +73,14 @@ export function countCanvas(o: {
 		m.count++;
 		if (!m.groepen.includes(groep)) m.groepen.push(groep);
 	});
+	const relations: CanvasCounts['relations'] = {};
 	graph.forEachEdge((_id, attrs, src, tgt) => {
 		if (attrs.layoutOnly || !drawn.has(src) || !drawn.has(tgt)) return;
-		if (o.hiddenRelations.has(attrs.relation as Relation)) return;
+		const relation = attrs.relation as Relation;
+		relations[relation] = (relations[relation] ?? 0) + 1;
+		if (o.hiddenRelations.has(relation)) return;
 		edges++;
 	});
 	for (const [k, m] of Object.entries(metGroep)) m.van = bronnen[k as FilterGroup] ?? 0;
-	return { counts: { nodes, edges, kinds, vormen, metGroep }, drawnIds };
+	return { counts: { nodes, edges, kinds, vormen, metGroep, relations }, drawnIds };
 }

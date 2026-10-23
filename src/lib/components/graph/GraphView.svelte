@@ -1,16 +1,14 @@
 <script lang="ts">
 	import { clickOutside } from '$lib/actions/top-layer';
-	import { report } from '$lib/api/errors';
 	import { naFilter, zichtSleutel } from '$lib/graph/zicht';
-	import { vandaag } from '$lib/text/datum';
+	import { vandaag, yearFraction } from '$lib/text/datum';
 	import { formatCount } from '$lib/text/getal';
 	import type { NeighborhoodReach } from '$lib/graph/store/types';
-	import { onDestroy, onMount, untrack } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';
 	import { hasModifier, isEscape, isTyping } from '$lib/actions/keys';
 	import { get } from 'svelte/store';
 	import Graph from 'graphology';
-	import type FA2LayoutType from 'graphology-layout-forceatlas2/worker';
 	import GraphCanvas from './GraphCanvas.svelte';
 	import type { GraphCanvasApi } from './GraphCanvas.svelte';
 	import CanvasHoverCard from './CanvasHoverCard.svelte';
@@ -41,9 +39,9 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import { vormVanBron } from '$lib/bron/vormen';
+	import { kindColour } from '$lib/bron/kleur';
 	import {
 		containerIdFor,
-		isDrawnGroup,
 		momentOf,
 		type Period,
 		isContainerKind,
@@ -52,7 +50,7 @@
 	} from '$lib/graph/container-membership';
 	import { metGroepVerborgen } from '$lib/graph/met-groep';
 	import { kolomPlekken } from '$lib/selection/kolommen';
-	import { packGroups, placeClusters, ringAround, syncGroupLinks } from '$lib/graph/layout';
+	import { radialLayout } from '$lib/graph/layout';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import type { Overlay } from '$lib/selection/overlay';
 	import { DEFAULT_HEAT_MONTHS } from '$lib/selection/overlay';
@@ -122,6 +120,7 @@
 		links,
 		balk,
 		viewChoice,
+		meer,
 		midden,
 		extern = null,
 		externStippen = null,
@@ -162,6 +161,8 @@
 		balk?: Snippet;
 		/** After the chosen bronnen: the Weergave (Omgeving, Verband, Keten). */
 		viewChoice?: Snippet;
+		/** First under Meer of the legend: the netwerk's own filters. */
+		meer?: Snippet;
 		/**
 		 * A weergave of its own in the canvas's place (Keten, Verband): the card at the right is
 		 * then `extern`'s, the tijdstrook `externStippen`.
@@ -296,11 +297,9 @@
 		fitSuppressed = true;
 	}
 
-	/** Re-centre the layout on `focalId` after an update that kept old positions. */
+	/** Order the canvas again around `focalId`, the bron it is drawn around now. */
 	export function reseatAround(focalId: string) {
-		if (!g.hasNode(focalId)) return;
-		const movable = ringAround(g, focalId, get(store.pinned));
-		runLayout(movable).catch((e) => report('Netwerk opmaak', e));
+		if (g.hasNode(focalId)) runLayout();
 	}
 
 	// A new focus from outside the canvas (a link in a reader, Back) frames the network as
@@ -311,27 +310,13 @@
 		if (!handOpCanvas) fitWhenSettled();
 	}
 
-	/** Lift the suppression and fit once the layout has stopped. */
+	/** Lift the suppression and fit, once the order of this change stands. */
 	export function fitWhenSettled() {
 		// An explicit request: it overrides the viewport an additive sync kept.
 		fitSuppressed = false;
 		skipNextFit = false;
 		fitFollows = true;
-		const FIT_MAX_WAIT_MS = 6000;
-		const POLL_MS = 100;
-		setTimeout(() => {
-			const start = Date.now();
-			const tick = () => {
-				const running = !!layout && layout.isRunning();
-				const elapsed = Date.now() - start;
-				if (!running || elapsed >= FIT_MAX_WAIT_MS) {
-					scheduleFit();
-					return;
-				}
-				setTimeout(tick, POLL_MS);
-			};
-			tick();
-		}, 50);
+		setTimeout(scheduleFit, 50);
 	}
 
 	// The reader's notes in every bundel, per bron: in its card, and a mark on
@@ -509,61 +494,34 @@
 		canvas?.refresh();
 	});
 
-	let layout: FA2LayoutType | null = null;
-	let layoutStopTimer: ReturnType<typeof setTimeout> | null = null;
-	let layoutPromise: Promise<void> | null = null;
+	/** Within a sector: by date, the oldest first, then by name. */
+	const inOrder = (a: string, b: string) => {
+		const da = String(g.getNodeAttribute(a, 'date') ?? '');
+		const db = String(g.getNodeAttribute(b, 'date') ?? '');
+		return da && db && da !== db
+			? da.localeCompare(db)
+			: String(g.getNodeAttribute(a, 'label') ?? '').localeCompare(
+					String(g.getNodeAttribute(b, 'label') ?? '')
+				);
+	};
 
-	async function ensureLayout() {
-		if (layout) return;
-		if (!layoutPromise) {
-			layoutPromise = (async () => {
-				const { default: FA2Layout } = await import('graphology-layout-forceatlas2/worker');
-				layout = new FA2Layout(g, {
-					settings: {
-						gravity: 0.25,
-						scalingRatio: 30,
-						strongGravityMode: false,
-						slowDown: 8,
-						adjustSizes: true,
-						barnesHutOptimize: false,
-						barnesHutTheta: 0.5
-					}
-				});
-			})();
-		}
-		await layoutPromise;
-	}
-
-	async function runLayout(addedThisSync?: Set<string>) {
-		if (g.order < 2) return;
-		const pinExisting = !!addedThisSync && addedThisSync.size > 0;
-		const pinnedDuringBurst: string[] = [];
-		if (pinExisting) {
-			g.forEachNode((id) => {
-				if (addedThisSync!.has(id)) return;
-				if (!g.getNodeAttribute(id, 'fixed')) {
-					g.setNodeAttribute(id, 'fixed', true);
-					pinnedDuringBurst.push(id);
-				}
-			});
-		}
-		await ensureLayout();
-		const unpin = () => {
-			for (const id of pinnedDuringBurst) if (g.hasNode(id)) g.removeNodeAttribute(id, 'fixed');
-		};
-		if (!layout) return unpin();
-		if (!layout.isRunning()) layout.start();
-		if (layoutStopTimer) clearTimeout(layoutStopTimer);
-		const burst = pinExisting
-			? Math.min(800, 350 + (addedThisSync?.size ?? 0) * 18)
-			: Math.min(2500, 600 + g.order * 6);
-		layoutStopTimer = setTimeout(() => {
-			layout?.stop();
-			unpin();
-			separateContainerGroups();
-			placeClusterNodes();
-			scheduleFit();
-		}, burst);
+	/**
+	 * The order of the canvas (layout.ts, mockup A197): the chosen bronnen, or the bron it is
+	 * drawn around, in the middle; every other bron in the sector of its kind. No force layout:
+	 * one netwerk is drawn the same way each time.
+	 */
+	function runLayout() {
+		if (g.order === 0) return;
+		const centre = pinnedIds.size > 0 ? [...pinnedIds] : selection ? [selection.id] : [];
+		radialLayout(
+			g,
+			centre,
+			(id) => String(g.getNodeAttribute(id, 'filterGroup') ?? 'overig'),
+			FILTER_GROUPS,
+			inOrder
+		);
+		canvas?.refresh();
+		scheduleFit();
 	}
 
 	// Node label: the name of the bron (bron/naam.ts), short enough for the canvas; a
@@ -777,10 +735,6 @@
 		const wholesaleReplace =
 			toDrop.length > 0 && toDrop.length === g.order && [...keep].every((id) => !g.hasNode(id));
 		if (wholesaleReplace && toDrop.length > 50) {
-			layout?.stop();
-			layout?.kill();
-			layout = null;
-			layoutPromise = null;
 			toDrop.forEach((id) => lookup.delete(id));
 			g.clear();
 			changed = true;
@@ -825,7 +779,6 @@
 			const attrs: Record<string, unknown> = {
 				label: nodeLabel(n),
 				cluster: isClusterId(n.id),
-				forceLabel: isClusterId(n.id),
 				color: TRANSPARENT,
 				drawClass: n.drawClass,
 				vorm,
@@ -843,7 +796,15 @@
 				stub: !!n.stub,
 				date: typeof n.raw?.props?.date === 'string' ? n.raw.props.date.slice(0, 10) : null,
 				size: nodeSize(n.id) * IMAGE_SIZE_BUMP,
-				image: spriteForVorm(vorm, !!n.stub, false)
+				// The kinds in their colour, the chosen bronnen in ink (mockup A197-b).
+				kleur: pinnedIds.has(n.id) ? undefined : kindColour(n.collection),
+				image: spriteForVorm(
+					vorm,
+					!!n.stub,
+					false,
+					pinnedIds.has(n.id) ? undefined : kindColour(n.collection)
+				),
+				forceLabel: true
 			};
 			// A wet's anchor is a point its hull and the lines of a change end at: no sprite.
 			if (n.anchor)
@@ -884,34 +845,12 @@
 		}
 		hasNodes = g.order > 0;
 		if (changed) scheduleFit();
-		runLayout(addedThisSync).catch((e) => report('Netwerk opmaak', e));
-		syncContainerAnchors();
+		// A change of what stands in the middle orders the canvas again too.
+		const centre = pinnedIds.size > 0 ? [...pinnedIds].join() : (selection?.id ?? '');
+		if (changed || centre !== centreBefore) runLayout();
+		centreBefore = centre;
 	}
-
-	/** The layout-only links that pull each hull's members together (layout.ts). */
-	let anchorEdgeIds: ReadonlySet<string> = new Set();
-	function syncContainerAnchors() {
-		anchorEdgeIds = syncGroupLinks(g, containerGroups.values(), anchorEdgeIds);
-	}
-
-	function placeClusterNodes() {
-		// A fractie, commissie or dossier as focus: round its anchor, outside its hull.
-		const focus = focusNodeId ?? selection?.id ?? null;
-		if (!focus || !g.hasNode(focus) || clusters.length === 0) return;
-		placeClusters(
-			g,
-			focus,
-			clusters.map((c) => c.id),
-			isClusterId
-		);
-	}
-
-	function separateContainerGroups() {
-		const drawn = [...containerGroups.values()].filter((group) =>
-			isDrawnGroup(group, focusContainerId, focusNodeId, groupPeriod)
-		);
-		if (packGroups(g, drawn)) canvas?.refresh();
-	}
+	let centreBefore = '';
 
 	function drawEdges(allEdges: GraphEdge[]) {
 		const es = allEdges.filter((e) => isDrawn(e.relation));
@@ -976,16 +915,9 @@
 			store.containers.subscribe((groups) => {
 				containerGroups = groups;
 				queueRedraw();
-				syncContainerAnchors();
 			})
 		];
 		return () => unsub.forEach((u) => u());
-	});
-
-	onDestroy(() => {
-		if (layoutStopTimer) clearTimeout(layoutStopTimer);
-		layout?.kill();
-		layout = null;
 	});
 
 	// The canvas as a focusable region: ← and → step through the bronnen shown only
@@ -1050,12 +982,8 @@
 		const nieuw: { jaar: number; collection: Collection }[] = [];
 		g.forEachNode((id, a) => {
 			if (isClusterId(id) || typeof a.date !== 'string') return;
-			const [j, m = 1, d = 1] = a.date.split('-').map(Number);
-			if (j > 1000)
-				nieuw.push({
-					jaar: j + ((m - 1) * 31 + d - 1) / 372,
-					collection: a.collection as Collection
-				});
+			const jaar = yearFraction(a.date);
+			if (jaar > 1000) nieuw.push({ jaar, collection: a.collection as Collection });
 		});
 		const sleutel = nieuw.map((s) => `${s.jaar}${s.collection}`).join();
 		if (sleutel !== stippenSleutel) {
@@ -1149,6 +1077,7 @@
 {#snippet sidebar()}
 	<GraphSidebar
 		{periode}
+		{meer}
 		{...legend}
 		{verbonden}
 		{filter}
@@ -1541,7 +1470,7 @@
 			margin: 0 0 var(--s-2) var(--s-2);
 		}
 		/* The Weergave and Filter on one row, as the mockup's 390. */
-		.strook--links > :global(.weergave) {
+		.strook--links > :global(.view-choice) {
 			flex: 1 1 0;
 			min-width: 0;
 		}
@@ -1577,8 +1506,7 @@
 			display: none;
 		}
 		/* The filters of the netwerk itself come with Filter, as the legend does. */
-		.strook--links:not(:has(.strook__filters.is-open))
-			:global(:is(.omgeving, .tussen, .deels, .netwerk-acties)) {
+		.strook--links:not(:has(.strook__filters.is-open)) :global(.netwerk-acties) {
 			display: none;
 		}
 		.strook--kaart {

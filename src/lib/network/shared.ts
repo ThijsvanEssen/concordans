@@ -28,8 +28,8 @@ export type SharedRow = {
 
 export type SharedModel = {
 	rows: SharedRow[];
-	/** The shared judgments, counted: drawn as one group. */
-	judgments: number;
+	/** The shared judgments, counted: drawn as one group; null where the count is not known. */
+	judgments: number | null;
 	/** The shared bronnen of every other kind beyond the rows drawn. */
 	rest: number;
 	total: number;
@@ -76,8 +76,8 @@ function joinLines(
 	].join(', ');
 }
 
-/** The name of a shared bron as the API gives it: a judgment as a lawyer cites it. */
-const nameOf = (n: Neighbor) => naamVanId(n.id, n.cite?.short ?? n.display_name);
+/** The name of a shared bron as the API gives it. */
+const nameOf = (n: Neighbor) => naamVanId(n.id, n.display_name);
 
 /**
  * The model of what `ids` share, at most `max` rows of bronnen other than judgments, in the

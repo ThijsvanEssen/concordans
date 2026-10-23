@@ -34,6 +34,8 @@ export type NetwerkEntry = {
 	node?: GraphNode;
 	/** On, but hidden with a grouping switched off (a stuk of a dossier with Dossier off). */
 	verborgenMet?: ContainerKind;
+	/** All its verbindingen, as its node counts them: under it in the weergave Verband. */
+	connections?: number;
 	/** A group the paths ran through some of its members of: how many of how many. */
 	via?: { used: number; total: number };
 };

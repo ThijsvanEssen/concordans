@@ -57,3 +57,19 @@ test('lezer, netwerk, Lees and Back: the same chips and the same bron marked', a
 	await expect(page.getByRole('link', { name: 'Lees', exact: true })).toBeVisible();
 	await expect(await chips(page)).toHaveText(gekozen);
 });
+
+test('the keten of a law: its regulations in layers, a click opens the card with Lees', async ({
+	page,
+	touch
+}) => {
+	await page.goto('/wetten/BWBR0010346?mode=netwerk&weergave=keten');
+	await expect(page.getByRole('button', { name: 'Keten', pressed: true })).toBeVisible();
+	// On a wide screen a drawing in layers, on a phone a list per layer.
+	const regeling = touch
+		? page.getByRole('region', { name: 'AMvB' }).getByRole('button').first()
+		: page.getByRole('group', { name: 'Keten' }).getByRole('button').nth(1);
+	await expect(regeling).toBeVisible();
+	await regeling.click();
+	await expect(page).toHaveURL(/kies=/);
+	await expect(page.getByRole('link', { name: 'Lees', exact: true })).toBeVisible();
+});
