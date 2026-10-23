@@ -24,8 +24,9 @@ for (const [soort, pad] of SOORTEN) {
 		await verbonden.scrollIntoViewIfNeeded();
 		// The summary: a count, and no group shows more than three rows.
 		await expect(verbonden.locator('.head__count')).toHaveText(/verbinding/);
+		// The soorten come once their set is in (UX-toets T9b): wait for them.
 		const groepen = verbonden.locator('section.kind');
-		expect(await groepen.count()).toBeGreaterThan(0);
+		await expect(groepen.first()).toBeVisible();
 		const rijen = await groepen.evaluateAll((els) =>
 			els.map((el) => el.querySelectorAll('a.kind__title').length)
 		);
