@@ -84,9 +84,12 @@
 		}, 1000);
 		return () => clearTimeout(t);
 	});
+	// An article stands from its first paint; a dossier holds the room of its band instead, one
+	// line wide and two on a phone (its procesgang wraps there), so its title stands at once.
+	const NO_BAND_WAIT = new Set(['articles', 'dossiers']);
 	const bandWait = $derived(
 		!!bron &&
-			bron().collection !== 'articles' &&
+			!NO_BAND_WAIT.has(bron().collection) &&
 			bandAlways(bron().collection) &&
 			band.has === null &&
 			band.waited !== bron().id
@@ -130,6 +133,7 @@
 				{#if bron}<div
 						class="kop-rij__band"
 						class:kop-rij__band--held={bandHeld}
+						class:kop-rij__band--twee={bandHeld && bron().collection === 'dossiers'}
 						hidden={band.has === false}
 					>
 						<BehoortBij
@@ -218,6 +222,12 @@
 	}
 	.kop-rij__band--held {
 		min-height: calc(var(--t-meta) * var(--lh-snug));
+	}
+	@media (max-width: 768px) {
+		.kop-rij__band--twee {
+			/* Two lines of the band (20 px each, measured at 390). */
+			min-height: calc(var(--s-6) + var(--s-2));
+		}
 	}
 	.kop-rij[hidden],
 	.kop-rij__band[hidden] {
