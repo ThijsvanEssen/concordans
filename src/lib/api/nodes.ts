@@ -1,6 +1,7 @@
 import type { QueryOf, Schema } from '$lib/api/types';
 import { NODE_TYPES, type Collection, type Relation } from '$lib/vocabulary';
 import { api, clientFor, unwrap } from './client';
+import { isNotFound } from './errors';
 
 // Keys are lower case in the API and the routes are case-sensitive.
 const path = (collection: Collection, key: string) => ({ collection, key: key.toLowerCase() });
@@ -194,5 +195,12 @@ export const getPaths = (query: QueryOf<'/api/paths'>) =>
  * each, with the edges by which every one hangs at each bron asked (`links`). The weergave
  * Verband of the werkplek (besluit 39).
  */
-export const getShared = (query: QueryOf<'/api/nodes/shared'>, signal?: AbortSignal) =>
-	unwrap(api.GET('/api/nodes/shared', { params: { query }, signal }));
+export function getShared(query: QueryOf<'/api/nodes/shared'>, signal?: AbortSignal) {
+	// A route the API does not have yet (A200) is asked once a visit: its 404 stands.
+	if (sharedMissing) return Promise.reject(sharedMissing);
+	return unwrap(api.GET('/api/nodes/shared', { params: { query }, signal })).catch((e) => {
+		if (isNotFound(e)) sharedMissing = e;
+		throw e;
+	});
+}
+let sharedMissing: unknown = null;

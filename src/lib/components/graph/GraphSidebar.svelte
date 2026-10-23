@@ -154,6 +154,7 @@
 		leden: 'members',
 		internationaal: 'instruments'
 	};
+	const kinds = $derived(FILTER_GROUPS.filter((k) => (totals[k] ?? 0) > 0 || !isOn(k)));
 	const OWN_WORDS: Partial<Record<Relation, string>> = {
 		REFERS_TO: 'Haalt aan, noemt',
 		BASED_ON: 'Grondslag, uitvoeringsregeling'
@@ -179,7 +180,7 @@
 	// are named by what does stand there (Thijs). Verbonden lists the wetten, dossiers and
 	// fracties themselves, and keeps their names; the switch is the same.
 	const OP_HET_NETWERK: Partial<Record<FilterGroup, { label: string; elders: string }>> = {
-		wetten: { label: 'Publicaties', elders: 'Wetten' },
+		wetten: { label: 'Wetten en regelingen', elders: 'Wetten' },
 		dossiers: { label: 'Overige stukken', elders: 'Dossiers' },
 		leden: { label: 'Leden', elders: 'Leden en fracties' }
 	};
@@ -226,36 +227,37 @@
 	{#if !hasNodes}
 		<p class="empty stil">Nog geen bronnen in het netwerk.</p>
 	{:else}
-		<section class="block">
-			<h3 class="block__title">Soort</h3>
-			<!-- Articles are switched with their wet, under Groepering (Thijs, 9 Oct). -->
-			<!-- The kinds on the canvas, and one switched off: no rows of nothing (mockup A197-b). -->
-			{#each FILTER_GROUPS.filter((b) => b !== 'artikelen' && ((totals[b] ?? 0) > 0 || !isOn(b))) as k (k)}
-				{@const n = totals[k] ?? 0}
-				{@const groepen = metGroepUit(k)}
-				<FilterOptie
-					label={kindLabel(k)}
-					title={groepen
-						? `Aan met ${groepen.map((g) => GROUP_LABEL[g]).join(' en ')}`
-						: kindTitle(k)}
-					wrap
-					on={isOn(k)}
-					onToggle={() =>
-						groepen
-							? groepen.forEach((g) => onToggleGroup?.(g))
-							: onFilter(toggleFilterGroup(filter, k))}
-					count={n}
-					empty={n === 0}
-					gedimd={!!groepen}
-				>
-					{#snippet voor()}<KindGlyph
-							vorm={FILTER_GROUP_VORM[k]}
-							size={11}
-							colour={kindColour(GROUP_COLLECTION[k])}
-						/>{/snippet}
-				</FilterOptie>
-			{/each}
-		</section>
+		<!-- The kinds drawn, and one switched off: no rows of nothing, no heading without rows. -->
+		{#if kinds.length > 0}
+			<section class="block">
+				<h3 class="block__title">Soort</h3>
+				{#each kinds as k (k)}
+					{@const n = totals[k] ?? 0}
+					{@const groepen = metGroepUit(k)}
+					<FilterOptie
+						label={kindLabel(k)}
+						title={groepen
+							? `Aan met ${groepen.map((g) => GROUP_LABEL[g]).join(' en ')}`
+							: kindTitle(k)}
+						wrap
+						on={isOn(k)}
+						onToggle={() =>
+							groepen
+								? groepen.forEach((g) => onToggleGroup?.(g))
+								: onFilter(toggleFilterGroup(filter, k))}
+						count={n}
+						empty={n === 0}
+						gedimd={!!groepen}
+					>
+						{#snippet voor()}<KindGlyph
+								vorm={FILTER_GROUP_VORM[k]}
+								size={11}
+								colour={kindColour(GROUP_COLLECTION[k])}
+							/>{/snippet}
+					</FilterOptie>
+				{/each}
+			</section>
+		{/if}
 
 		{#if relations.length > 0}
 			<section class="block">

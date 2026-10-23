@@ -11,7 +11,7 @@ import { edgesByNode, mostCommonRelation, pushTo } from '$lib/graph/adjacency';
 export const CLUSTER_MAX_LOOSE = 40;
 
 const CLUSTER_PREFIX = 'cluster:';
-const clusterId = (collection: Collection) => `${CLUSTER_PREFIX}${collection}`;
+const clusterId = (collection: Collection, of = '') => `${CLUSTER_PREFIX}${collection}${of}`;
 export const isClusterId = (id: string) => id.startsWith(CLUSTER_PREFIX);
 
 export type Cluster = {
@@ -48,7 +48,9 @@ export function clustersOf(
 	edges: readonly Edge[],
 	focus: string | null,
 	keep: ReadonlySet<string>,
-	expanded: ReadonlySet<string>
+	expanded: ReadonlySet<string>,
+	/** Around another chosen bron than the focus: its id, so its clusters are its own. */
+	of = ''
 ): Cluster[] {
 	if (!focus) return [];
 	const collectionOf = new Map(nodes.map((n) => [n.id, n.collection]));
@@ -60,7 +62,7 @@ export function clustersOf(
 	const byKind = new Map<Collection, string[]>();
 	for (const id of level1) {
 		const collection = collectionOf.get(id);
-		if (!collection || keep.has(id) || expanded.has(clusterId(collection))) continue;
+		if (!collection || keep.has(id) || expanded.has(clusterId(collection, of))) continue;
 		// Loose: every verbinding goes to the focus or to a neighbour of the same kind.
 		const loose = (ties.get(id) ?? []).every((e) => {
 			const other = e.source === id ? e.target : e.source;
@@ -74,7 +76,7 @@ export function clustersOf(
 		if (members.length <= CLUSTER_MAX_LOOSE) continue;
 		const { relation, toEnd } = mostCommonRelation(new Set(members), ties, focus);
 		clusters.push({
-			id: clusterId(collection),
+			id: clusterId(collection, of),
 			collection,
 			members,
 			relation,

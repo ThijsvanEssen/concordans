@@ -24,6 +24,7 @@
 	import { isVersionCollection, drawClassOf, kort } from '$lib/graph/types';
 	import { isDrawn } from '$lib/graph/collection-role';
 	import {
+		CLUSTER_MAX_LOOSE,
 		clusterLabel,
 		clustersOf,
 		tussenClustersOf,
@@ -122,6 +123,8 @@
 		viewChoice,
 		meer,
 		midden,
+		surroundings = false,
+		externCounts = null,
 		extern = null,
 		externStippen = null,
 		...legend
@@ -163,11 +166,15 @@
 		viewChoice?: Snippet;
 		/** First under Meer of the legend: the netwerk's own filters. */
 		meer?: Snippet;
+		/** The weergave Omgeving: each chosen bron with its own neighbours, clustered per kind. */
+		surroundings?: boolean;
+		/** Soort and Relatie of a weergave of its own: what it draws, not the canvas. */
+		externCounts?: Pick<CanvasCounts, 'kinds' | 'relations'> | null;
 		/**
 		 * A weergave of its own in the canvas's place (Keten, Verband): the card at the right is
 		 * then `extern`'s, the tijdstrook `externStippen`.
 		 */
-		midden?: Snippet;
+		midden?: Snippet<[number]>;
 		extern?: ExternalCard | null;
 		externStippen?: readonly { jaar: number; collection: Collection }[] | null;
 	} & LegendProps = $props();
@@ -589,7 +596,9 @@
 			expanded = new Set();
 			clusterCard = null;
 		}
-		const keep = new Set<string>([...pinnedIds, ...(coreIds ?? [])]);
+		// In the weergave Omgeving every chosen bron folds its own loose neighbours past forty a
+		// kind, as the sketch does; else what ties the chosen bronnen stays drawn bron by bron.
+		const keep = new Set<string>([...pinnedIds, ...(surroundings ? [] : (coreIds ?? []))]);
 		for (const group of containerGroups.values()) for (const id of group.members) keep.add(id);
 		const canvasNodes = rawNodes.filter(isCanvasNode);
 		const edges = rawEdges.filter((e) => isDrawn(e.relation));
@@ -598,8 +607,36 @@
 		if (focus) chosen.add(focus);
 		const inHull = new Set<string>();
 		for (const group of containerGroups.values()) for (const id of group.members) inHull.add(id);
+		const centres = surroundings && pinnedIds.size > 0 ? [...pinnedIds] : focus ? [focus] : [];
+		// A chosen law in Omgeving: its own articles past forty as one cluster, "203 artikelen",
+		// so its neighbours around it stay readable (UX-toets T10).
+		const ownArticles = (open: ReadonlySet<string>): Cluster[] =>
+			!surroundings
+				? []
+				: [...pinnedIds].flatMap((id) => {
+						const n = lookup.get(id) ?? rawNodes.find((r) => r.id === id);
+						if (!n || n.collection !== 'instruments') return [];
+						const cid = containerIdFor(n.raw ?? { collection: n.collection, key: n.key });
+						const group = cid ? containerGroups.get(cid) : undefined;
+						const members = [...(group?.members ?? [])].filter((m) => !pinnedIds.has(m));
+						const cl: Cluster = {
+							id: `cluster:articles@${id}`,
+							collection: 'articles',
+							members,
+							relation: 'PART_OF',
+							toFocus: true,
+							neighbours: members.length,
+							ends: [{ id, relation: 'PART_OF', toEnd: true }]
+						};
+						return members.length > CLUSTER_MAX_LOOSE && !open.has(cl.id) ? [cl] : [];
+					});
 		const alle = (open: ReadonlySet<string>) => [
-			...clustersOf(canvasNodes, edges, focus, keep, open),
+			...ownArticles(open),
+			...centres.flatMap((c) =>
+				clustersOf(canvasNodes, edges, c, keep, open, c === focus ? '' : `@${c}`).map((cl) =>
+					c === focus ? cl : { ...cl, ends: [{ id: c, relation: cl.relation, toEnd: cl.toFocus }] }
+				)
+			),
 			...(pinnedIds.size > 0 ? tussenClustersOf(canvasNodes, edges, chosen, inHull, open) : [])
 		];
 		clusters = alle(expanded);
@@ -637,6 +674,15 @@
 		applyFilters();
 	}
 
+	// Another weergave folds otherwise: drawn again.
+	$effect(() => {
+		void surroundings;
+		untrack(() => {
+			rawChanged = true;
+			queueRedraw();
+		});
+	});
+
 	const clusterNode = (c: Cluster): GraphNode =>
 		({
 			id: c.id,
@@ -644,7 +690,8 @@
 			key: c.id,
 			drawClass: drawClassOf(c.collection),
 			label: clusterLabel(c),
-			size: CLUSTER_SIZE
+			size: CLUSTER_SIZE,
+			members: c.members.length
 		}) as GraphNode;
 
 	const clusterEdge = (c: Cluster, focus: string): GraphEdge => ({
@@ -779,6 +826,8 @@
 			const attrs: Record<string, unknown> = {
 				label: nodeLabel(n),
 				cluster: isClusterId(n.id),
+				// A cluster counts its members in Soort: "Uitspraken 200", not 1.
+				members: (n as GraphNode & { members?: number }).members ?? 1,
 				color: TRANSPARENT,
 				drawClass: n.drawClass,
 				vorm,
@@ -967,6 +1016,8 @@
 		store.setFilters({ hiddenRelations: next });
 	}
 
+	/** The scale of a weergave of its own, by its zoom. */
+	let middleScale = $state(1);
 	/** The canvas and the cards over it (see the markup). */
 	let buhne = $state<HTMLDivElement | null>(null);
 
@@ -1049,6 +1100,16 @@
 
 <svelte:window onkeydown={handleKeydown} onpointerdown={closeClusterCard} />
 
+<!-- Deel and the zoom, the same over the canvas and over a weergave of its own. -->
+{#snippet controls(zoomIn: () => void, zoomOut: () => void, all: () => void)}
+	{#if balk}<div class="doek-balk">{@render balk()}</div>{/if}
+	<div class="zoom" role="group" aria-label="Zoomen">
+		<IconButton label="Inzoomen" onclick={zoomIn}>+</IconButton>
+		<IconButton label="Uitzoomen" onclick={zoomOut}>−</IconButton>
+		<IconButton label="Alles in beeld" onclick={all}>⤢</IconButton>
+	</div>
+{/snippet}
+
 {#snippet periode()}
 	<section class="block" aria-labelledby="werkplek-periode">
 		<h3 class="strook__kop" id="werkplek-periode">Periode</h3>
@@ -1087,7 +1148,7 @@
 		onToggleRelation={toggleRelation}
 		hiddenGroups={filters.hiddenGroups}
 		onToggleGroup={toggleGroup}
-		{canvasCounts}
+		canvasCounts={externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts}
 		{overlay}
 		inFluxCount={inFluxMap.size}
 		{netwerkActive}
@@ -1119,7 +1180,16 @@
 		{/if}
 	</aside>
 	<div class="graph-main">
-		{#if midden}{@render midden()}{/if}
+		{#if midden}
+			<div class="middle-stage">
+				{@render midden(middleScale)}
+				{@render controls(
+					() => (middleScale = Math.min(3, middleScale * 1.25)),
+					() => (middleScale = Math.max(0.5, middleScale / 1.25)),
+					() => (middleScale = 1)
+				)}
+			</div>
+		{/if}
 		<div class="buhne" bind:this={buhne} hidden={!!midden}>
 			<!-- The bronnen on the canvas, for the keyboard: outside the canvas, so ← and →
 		     keep stepping through the history there. -->
@@ -1154,12 +1224,11 @@
 				}}
 				onwheel={() => (fitFollows = false)}
 			>
-				{#if balk}<div class="doek-balk">{@render balk()}</div>{/if}
-				<div class="zoom" role="group" aria-label="Zoomen">
-					<IconButton label="Inzoomen" onclick={() => canvas?.zoom(1.5)}>+</IconButton>
-					<IconButton label="Uitzoomen" onclick={() => canvas?.zoom(1 / 1.5)}>−</IconButton>
-					<IconButton label="Alles in beeld" onclick={() => canvas?.fit()}>⤢</IconButton>
-				</div>
+				{@render controls(
+					() => canvas?.zoom(1.5),
+					() => canvas?.zoom(1 / 1.5),
+					() => canvas?.fit()
+				)}
 				<GraphCanvas
 					graph={g}
 					focusedId={selection && !isContainerKind(selection.drawClass) ? selection.id : null}
@@ -1335,8 +1404,6 @@
 				onVerder={keyNode ? () => kaartUit('canvas') : undefined}
 				onBack={keyNode ? () => kaartUit('lijst') : undefined}
 			/>
-		{:else}
-			<p class="strook__leeg">Kies een bron in het netwerk</p>
 		{/if}
 	</aside>
 </div>
@@ -1369,13 +1436,6 @@
 	.strook--kaart {
 		padding: var(--s-5);
 		border-left: 1px solid var(--rule);
-	}
-	.strook__leeg {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		font-style: italic;
-		color: var(--ink-3);
 	}
 	.strook__kop {
 		margin: 0 0 var(--s-3);
@@ -1442,7 +1502,28 @@
 	}
 	/* Narrower than three strips: the canvas takes the width; the strip at the left heads it,
 	   its filters under the button Filter, and the card is a sheet at the foot of the canvas. */
-	@media (max-width: 1100px) {
+	/* Between a phone and three strips (1024): the strip at the left narrower, the canvas and its
+	   tijdstrook, the card a panel at the right over the canvas, as the mockup at 1180. */
+	@media (min-width: 769px) and (max-width: 1100px) {
+		.graph-view {
+			grid-template-columns: 260px minmax(0, 1fr);
+		}
+		.strook--kaart {
+			position: absolute;
+			top: var(--s-3);
+			right: var(--s-3);
+			z-index: var(--z-float);
+			width: 340px;
+			max-height: 70%;
+			border: 1px solid var(--rule-strong);
+			border-radius: var(--r-2);
+			box-shadow: var(--shadow-pop);
+		}
+		.strook--kaart:not(.is-open) {
+			display: none;
+		}
+	}
+	@media (max-width: 768px) {
 		.graph-view {
 			display: flex;
 			flex-direction: column;
@@ -1502,6 +1583,16 @@
 	}
 	/* A phone, as the mockup's 390: no headings over the chosen bronnen, the card a sheet. */
 	@media (max-width: 768px) {
+		/* A finger's 44 px: the rows of the filters, Meer, Deel and the zoom. */
+		.strook--links :global(.optie),
+		.strook--links :global(.fold-knop) {
+			min-height: var(--veld-h-raak);
+		}
+		.doek-balk :global(.btn),
+		.zoom :global(button) {
+			min-width: var(--veld-h-raak);
+			height: var(--veld-h-raak);
+		}
 		.strook--links :global(.canvas-kaart__kop) {
 			display: none;
 		}
@@ -1540,6 +1631,13 @@
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
+	}
+	.middle-stage {
+		position: relative;
+		flex: 1;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
 	}
 
 	.buhne {

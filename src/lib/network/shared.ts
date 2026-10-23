@@ -22,6 +22,8 @@ export type SharedRow = {
 	line: string;
 	/** Per chosen bron, how the shared one hangs at it: `Haalt Art. 6:162 BW aan`. */
 	how: { bron: string; text: string; collection: Collection | null }[];
+	/** The relations of its lines, for the filter Relatie. */
+	relations: Relation[];
 	/** The chosen bronnen it hangs at (their ids). */
 	at: string[];
 };
@@ -122,7 +124,8 @@ export function sharedModel(
 				collection: n.collection as Collection,
 				node: n,
 				how,
-				at: [...new Set(n.links.map((l) => l.source))]
+				at: [...new Set(n.links.map((l) => l.source))],
+				relations: [...new Set(n.links.map((l) => (l.relation ?? 'RELATED_TO') as Relation))]
 			});
 		}
 	}

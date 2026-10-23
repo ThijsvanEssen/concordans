@@ -700,6 +700,13 @@
 		border-bottom: 1px solid var(--rule);
 	}
 	/* Under the sketch, at the right, as Alles in Actueel. */
+	@media (max-width: 768px) {
+		.groot :global(.tekstlink) {
+			display: inline-flex;
+			align-items: center;
+			min-height: var(--veld-h-raak);
+		}
+	}
 	.groot {
 		display: flex;
 		justify-content: flex-end;

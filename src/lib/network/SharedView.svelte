@@ -1,5 +1,7 @@
 <script lang="ts">
 	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { filterGroupOf, type FilterGroup } from '$lib/verbonden/filter';
+	import type { Relation } from '$lib/vocabulary';
 	// The weergave Verband (besluit 39, mockup A197-b): the chosen bronnen at the sides, what
 	// they share in a column between them, a line from each shared bron to each chosen one it
 	// hangs at; the judgments they share as one circle with their count. On a phone a ladder:
@@ -15,6 +17,9 @@
 		model,
 		chosen = null,
 		gap = null,
+		scale = 1,
+		hiddenKinds = new Set(),
+		hiddenRelations = new Set(),
 		failure = null,
 		loading = false,
 		onChoose
@@ -25,6 +30,11 @@
 		chosen?: string | null;
 		/** What the data lacks, as one label. */
 		gap?: string | null;
+		/** The zoom of the werkplek: the drawing larger or smaller, scrolled within. */
+		scale?: number;
+		/** The kinds and relations the filter of the strip switched off. */
+		hiddenKinds?: ReadonlySet<FilterGroup>;
+		hiddenRelations?: ReadonlySet<Relation>;
 		/** What could not be loaded, said with Opnieuw (LoadState). */
 		failure?: { what: string; error: unknown; retry: () => void; plural?: boolean } | null;
 		loading?: boolean;
@@ -34,10 +44,18 @@
 	let width = $state(760);
 	const ROW = 62;
 	const TOP = 70;
-	const rows = $derived(model?.rows ?? []);
+	// The rows the filter of the strip leaves: their kind on, one of their relations on.
+	const rows = $derived(
+		(model?.rows ?? []).filter((r) => {
+			const k = filterGroupOf(r.collection, r.node.key, r.node.props);
+			return (!k || !hiddenKinds.has(k)) && r.relations.some((rel) => !hiddenRelations.has(rel));
+		})
+	);
 	const bottom = $derived(TOP + rows.length * ROW);
 	/** The shared judgments drawn as one circle: their count, or "?" where it is not known. */
-	const withJudgments = $derived(!!model && model.judgments !== 0);
+	const withJudgments = $derived(
+		!!model && model.judgments !== 0 && !hiddenKinds.has('uitspraken')
+	);
 	const height = $derived(Math.max(420, bottom + (withJudgments ? 160 : 40)));
 	const middle = $derived(width / 2);
 	/** The chosen bronnen: the first left, the second right, more under them by turns. */
@@ -53,6 +71,17 @@
 		)
 	);
 	const rowY = (i: number) => TOP + i * ROW;
+	/** A name over at most two lines as wide as the column between the bronnen allows. */
+	const linesOf = (name: string) => {
+		const max = Math.max(24, Math.floor((width - 320) / 7));
+		const out: string[] = [];
+		for (const w of name.split(/\s+/)) {
+			const last = out[out.length - 1];
+			if (last && (last + ' ' + w).length <= max) out[out.length - 1] = `${last} ${w}`;
+			else out.push(w);
+		}
+		return out.length > 2 ? [out[0], `${out[1]}…`] : out;
+	};
 	const press = (e: KeyboardEvent, r: SharedRow) => {
 		if (e.key !== 'Enter' && e.key !== ' ') return;
 		e.preventDefault();
@@ -75,7 +104,13 @@
 	{#if ends.length < 2}
 		<p class="empty stil">Voeg een tweede bron toe</p>
 	{:else}
-		<svg class="drawing" viewBox="0 0 {width} {height}" role="group" aria-label="Verband">
+		<svg
+			class="drawing"
+			style:width="{scale * 100}%"
+			viewBox="0 0 {width} {height}"
+			role="group"
+			aria-label="Verband"
+		>
 			{#each rows as r, i (r.id)}
 				{#each r.at as a (a)}
 					{@const p = place.get(a)}
@@ -142,7 +177,14 @@
 						height="14"
 						fill={kindColour(r.collection)}
 					/>
-					<text class="name" x={middle} y={rowY(i) - 14} text-anchor="middle">{r.name}</text>
+					<text
+						class="name"
+						x={middle}
+						y={rowY(i) - 14 - (linesOf(r.name).length - 1) * 13}
+						text-anchor="middle"
+						>{#each linesOf(r.name) as l, j (j)}<tspan x={middle} dy={j ? 13 : 0}>{l}</tspan
+							>{/each}</text
+					>
 				</g>
 			{/each}
 			{#each ends as e (e.id)}
@@ -209,7 +251,7 @@
 		position: relative;
 		flex: 1;
 		min-height: 0;
-		overflow-y: auto;
+		overflow: auto;
 		background: var(--paper);
 	}
 	/* The gap marker (besluit 23): one label, never a paragraph. */

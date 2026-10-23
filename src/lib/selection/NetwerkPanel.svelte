@@ -74,7 +74,7 @@
 		<!-- The field itself, not steps that explain it (Thijs, 9 Oct: "de UI moet zichzelf
 		     wijzen"). -->
 		<div class="zoek zoek--start">
-			<Search compact placeholder="Bron toevoegen" {onSelect} />
+			<Search compact picker placeholder="Bron toevoegen" {onSelect} />
 		</div>
 		{#if onVoorbeeld}
 			<button type="button" class="voorbeeld" onclick={onVoorbeeld}>
@@ -113,7 +113,7 @@
 				</TekstMenu>
 			{/if}
 		{/snippet}
-		<ul class="chips" data-zijscroll>
+		<ul class="chips">
 			{#each getoond as e (e.id)}
 				<li class="chip" class:uit={!e.on} class:mist={e.missing} class:is-dim={!!e.verborgenMet}>
 					<button
@@ -183,6 +183,7 @@
 			<div class="zoek">
 				<Search
 					compact
+					picker
 					placeholder="Bron toevoegen"
 					onSelect={(id) => {
 						onSelect(id);
@@ -388,15 +389,16 @@
 		font-size: var(--t-h3);
 		font-weight: 600;
 	}
-	/* A phone: the chosen bronnen on one line that scrolls, as the mockup's 390. */
+	/* A phone: the chosen bronnen side by side, on as many lines as they need. */
 	@media (max-width: 768px) {
 		.chips {
 			flex-direction: row;
-			flex-wrap: nowrap;
-			overflow-x: auto;
+			flex-wrap: wrap;
 		}
-		.chips > li {
-			flex: none;
+		.netwerk-acties :global(.tekstlink) {
+			display: inline-flex;
+			align-items: center;
+			min-height: var(--veld-h-raak);
 		}
 	}
 	@media (pointer: coarse), (max-width: 768px) {

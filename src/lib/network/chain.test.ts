@@ -108,4 +108,27 @@ describe('the keten of a law', () => {
 		]);
 		expect(k.total).toBe(0);
 	});
+
+	it('leaves decrees that only change out of the layers, and names a regulation they change that the data lacks', () => {
+		const metWijziging = {
+			bwb_id: 'BWBR0010346',
+			total: 3,
+			items: [
+				item('instruments/a', 'Asbestverwijderingsbesluit 2005', 'amvb', [article('16')]),
+				item(
+					'instruments/w',
+					'Wijzigingsbesluit Arbeidsomstandighedenbesluit (nieuwe opzet)',
+					'amvb',
+					[article('16')]
+				),
+				item('instruments/x', 'Aanpassingsbesluit vierde tranche Awb', 'amvb', [article('3')])
+			]
+		} as never;
+		const k = chain({ id: 'w', name: 'Arbeidsomstandighedenwet' }, metWijziging, null);
+		expect(k.layers.find((l) => l.id === 'amvb')!.nodes.map((n) => n.id)).toEqual([
+			'instruments/a'
+		]);
+		expect(k.amending).toHaveLength(2);
+		expect(k.missing).toEqual(['Arbeidsomstandighedenbesluit']);
+	});
 });

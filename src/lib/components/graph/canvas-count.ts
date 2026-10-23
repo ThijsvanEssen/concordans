@@ -56,7 +56,7 @@ export function countCanvas(o: {
 	const drawnIds: string[] = [];
 	graph.forEachNode((id, attrs) => {
 		const kind = attrs.filterGroup as FilterGroup | undefined;
-		if (kind) kinds[kind] = (kinds[kind] ?? 0) + 1;
+		if (kind) kinds[kind] = (kinds[kind] ?? 0) + ((attrs.members as number | undefined) ?? 1);
 		if (drawn.has(id)) {
 			drawnIds.push(id);
 			nodes++;

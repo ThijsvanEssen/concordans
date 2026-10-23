@@ -143,6 +143,11 @@
 
 	const snippet = $derived(articleText ?? preview(nodeText));
 	const datum = $derived(textOf(nodeProps?.['date']));
+	/** What it is: a Kamerstuk by its own kind (Memorie van toelichting), the rest by bronKind. */
+	const kindName = $derived(
+		(node.collection === 'documents' ? textOf(nodeProps?.['kind']) : null) ??
+			bronKind(node.collection, nodeProps)
+	);
 	/** What the line under Datum names, per kind: the law of an article, a judgment's ECLI. */
 	const CITE_LABEL: Partial<Record<GraphNode['drawClass'], string>> = {
 		judgment: 'ECLI',
@@ -165,7 +170,7 @@
 <div class="citepanel" {onkeydown} bind:this={el}>
 	<div class="head">
 		<KindGlyph collection={node.collection} />
-		<span class="kind">{bronKind(node.collection, nodeProps)}</span>
+		<span class="kind">{kindName}</span>
 	</div>
 
 	<h2 class="title {node.stub ? 'title--stub' : ''}">{naam}</h2>
@@ -334,6 +339,9 @@
 	}
 	/* A phone: the sheet holds what one decides by, as the mockup's 390. */
 	@media (max-width: 768px) {
+		.foot :global(.btn) {
+			height: var(--veld-h-raak);
+		}
 		.title {
 			font-size: var(--t-body-2);
 			line-height: 24px;

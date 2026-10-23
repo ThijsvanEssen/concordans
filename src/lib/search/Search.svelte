@@ -28,6 +28,7 @@
 	let {
 		overlay = false,
 		compact = false,
+		picker = false,
 		placeholder = 'Zoek een wet, uitspraak of dossier',
 		initial = '',
 		onOpen,
@@ -43,6 +44,8 @@
 		overlay?: boolean;
 		/** A narrow field and list, for a panel. */
 		compact?: boolean;
+		/** A field that picks one bron (Bron toevoegen): no period and no line of what is searched. */
+		picker?: boolean;
 		placeholder?: string;
 		/** Called when a bron is opened; the overlay closes on it. */
 		onOpen?: () => void;
@@ -171,7 +174,7 @@
 		{#if overlay}<span class="kbd" aria-hidden="true">esc</span>{/if}
 	</div>
 
-	{#if search.q.length >= FAST_MIN_CHARS}
+	{#if search.q.length >= FAST_MIN_CHARS && !picker}
 		<!-- The same period as every list with dates (Periode). -->
 		<div class="periode">
 			<Periode
@@ -319,7 +322,7 @@
 						<span class="deel">treffers met een deel van de woorden</span>
 					{/if}
 				</div>
-				{#if !group.best && searchedLine(search.searched[group.kind])}
+				{#if !picker && !group.best && searchedLine(search.searched[group.kind])}
 					<!-- What its search reads, so a hit not found is not taken for one not there. -->
 					<p class="gezocht"><Coverage searched={search.searched[group.kind]} /></p>
 				{/if}

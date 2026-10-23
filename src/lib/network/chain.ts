@@ -73,6 +73,12 @@ const basisLine = (articles: readonly BasisArticle[], way: 'delegates' | 'mentio
 			.sort((a, b) => NL.compare(a.article_number ?? '', b.article_number ?? ''))
 	);
 
+/** A decree that changes other regulations, by its title: `Wijzigingsbesluit …`, `Aanpassingsbesluit …`. */
+const AMENDING =
+	/^(?:aanpassingsbesluit|wijzigingsbesluit|reparatiebesluit|verzamelbesluit|besluit (?:tot|houdende) wijziging|wijziging |regeling intrekking)/i;
+/** The regulation a `Wijzigingsbesluit` changes: its name up to a comma or a bracket. */
+const CHANGES = /^wijzigingsbesluit\s+([^,(]+?)(?:\s+enz\.?)?(?:[,(]|$)/i;
+
 const nameOf = (i: Summary): string =>
 	i.citation_title ?? naamVanId(i.id, i.display_name ?? i.title);
 
@@ -88,8 +94,40 @@ export function chain(
 	max = Number.POSITIVE_INFINITY,
 	/** A regulation drawn whatever `max`: the one marked. */
 	keep: string | null = null
-): { layers: ChainLayer[]; rest: Partial<Record<LayerId, number>>; total: number } {
+): {
+	layers: ChainLayer[];
+	rest: Partial<Record<LayerId, number>>;
+	total: number;
+	amending: string[];
+	missing: string[];
+} {
 	const layers: ChainLayer[] = [];
+	// A decree that only changes other regulations is no uitvoeringsregeling of the law: out of
+	// the layers, counted apart. The regulation it changes, where the data has no grondslag for
+	// it, is a gap said by name (mockup A197-c: "grondslag niet in de gegevens").
+	const amending: string[] = [];
+	const own = (delegated?.items ?? []).filter((item) => {
+		if (!AMENDING.test(nameOf(item.instrument))) return true;
+		amending.push(nameOf(item.instrument));
+		return false;
+	});
+	const named = new Set(own.map((item) => nameOf(item.instrument).toLowerCase()));
+	const missing = [
+		...new Set(
+			amending.flatMap((title) => {
+				const changed = CHANGES.exec(title)?.[1]?.trim();
+				// Only a regulation of this law by its name (Arbeidsomstandighedenwet: the
+				// Arbeidsomstandighedenbesluit), not one of another law the decree changes too.
+				const stem = law.name.replace(/wet$/i, '').toLowerCase();
+				return changed &&
+					stem.length > 3 &&
+					changed.toLowerCase().startsWith(stem) &&
+					!named.has(changed.toLowerCase())
+					? [changed]
+					: [];
+			})
+		)
+	];
 	const rest: Partial<Record<LayerId, number>> = {};
 	if (basis?.items.length)
 		layers.push({
@@ -133,7 +171,7 @@ export function chain(
 	});
 	const perLayer = new Map<LayerId, ChainNode[]>();
 	const articles = new Map<string, ChainNode>();
-	for (const item of delegated?.items ?? []) {
+	for (const item of own) {
 		const layer = layerOf(item.kind);
 		const list = perLayer.get(layer) ?? [];
 		perLayer.set(layer, list);
@@ -182,5 +220,5 @@ export function chain(
 		const nodes = perLayer.get(id);
 		if (nodes?.length) layers.push({ id, label: LAYER_LABEL[id], nodes });
 	}
-	return { layers, rest, total: delegated?.total ?? 0 };
+	return { layers, rest, total: own.length, amending, missing };
 }

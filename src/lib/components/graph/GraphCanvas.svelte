@@ -846,7 +846,12 @@
 				// focus always ($lib label-place). A name with no free place waits for a hover.
 				const room = context.canvas.width / (window.devicePixelRatio || 1);
 				const focus = ((data as { zIndex?: number }).zIndex ?? 0) >= 2;
-				const eigen = (data as { key?: string }).key === focusedId ? focusPlek : null;
+				// The focus's name beside it where it stands in this frame: the place reserved before the
+				// frame can be the one before the order moved it (a name alone in a corner, T10).
+				const eigen =
+					(data as { key?: string }).key === focusedId && focusPlek
+						? { x: labelX(data.x, data.size, w + 4, room), y: data.y - (size + 4) / 2 }
+						: null;
 				const at =
 					eigen ??
 					plaatsLabel(data.x, data.y, data.size, w + 4, size + 4, room, labelsTaken, focus);

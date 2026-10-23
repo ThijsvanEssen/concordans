@@ -139,6 +139,8 @@ export type GraphStore = {
 		onPaths?: string[];
 		/** Chosen bronnen a drawn path reaches: tied, not alone. */
 		tiedByPaths?: string[];
+		/** The weergave Omgeving: every neighbour of each chosen bron, not only what they share. */
+		surroundings?: boolean;
 	}) => { alone: ReadonlySet<string>; joining: string[] };
 	/** Draws the paths between chosen bronnen (`/api/paths`, API 0.73); returns what it drew. */
 	mergePaths: (response: Schema<'PathsResponse'>) => Promise<{ onPath: string[]; tied: string[] }>;

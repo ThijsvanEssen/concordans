@@ -55,7 +55,8 @@ export function createCompose(
 		withJoining,
 		fresh,
 		onPaths = [],
-		tiedByPaths = []
+		tiedByPaths = [],
+		surroundings = false
 	}) => {
 		const selectedId = get(selectionStore)?.id ?? null;
 		const on: string[] = participants.map((p) => nodeIdOf(p.response));
@@ -69,7 +70,8 @@ export function createCompose(
 				neighbors: neighborsOf(p.response)
 			})),
 			(n) => (n.collection === 'articles' ? lawIdOf(n.props) : null),
-			withJoining
+			withJoining,
+			surroundings
 		);
 
 		const wanted = new Set<string>(on);

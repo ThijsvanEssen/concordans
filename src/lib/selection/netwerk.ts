@@ -137,7 +137,9 @@ const idOf = (n: Pick<Neighbor, 'collection' | 'key'>) => nodeId(n.collection, n
 export function between(
 	participants: Participant[],
 	lawOf: (n: Neighbor) => string | null,
-	withJoining: boolean
+	withJoining: boolean,
+	/** Keep every neighbour of each participant (the weergave Omgeving), shared or not. */
+	surroundings = false
 ): Between {
 	const ids = new Set(participants.map((p) => p.id));
 	const laws = new Map<string, string>();
@@ -181,7 +183,10 @@ export function between(
 				continue;
 			}
 			const by = reachedBy.get(id)!;
-			if (by.size < 2) continue;
+			if (by.size < 2) {
+				if (surroundings) kept.add(id);
+				continue;
+			}
 			for (const other of by) tie(p.id, other);
 			if (!withJoining) continue;
 			kept.add(id);

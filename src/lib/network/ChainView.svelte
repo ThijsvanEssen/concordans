@@ -1,11 +1,14 @@
 <script lang="ts">
 	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import type { FilterGroup } from '$lib/verbonden/filter';
+	import type { Relation } from '$lib/vocabulary';
 	// The weergave Keten (besluit 39, mockup A197-c): the law at the top, the articles it gives
 	// powers in, the regulations under them per layer; a line from each to what it hangs under,
 	// dashed where it only names it. On a wide screen a drawing in layers, on a phone a list per
 	// layer (AMvB, Ministeriële regeling, Beleidsregel as headings). One click marks a bron: its
 	// card stands in the strip at the right.
 	import { formatCount } from '$lib/text/getal';
+	import { plural } from '$lib/text/words';
 	import { kindColour } from '$lib/bron/kleur';
 	import type { ChainNode, ChainLayer, LayerId } from '$lib/network/chain';
 
@@ -14,6 +17,10 @@
 		rest = {},
 		chosen = null,
 		gap = null,
+		scale = 1,
+		hiddenKinds = new Set(),
+		hiddenRelations = new Set(),
+		amending = 0,
 		failure = null,
 		onChoose
 	}: {
@@ -24,16 +31,37 @@
 		chosen?: string | null;
 		/** What the data lacks, as one label over the drawing. */
 		gap?: string | null;
+		/** The zoom of the werkplek: the drawing larger or smaller, scrolled within. */
+		scale?: number;
+		/** The kinds and relations the filter of the strip switched off. */
+		hiddenKinds?: ReadonlySet<FilterGroup>;
+		hiddenRelations?: ReadonlySet<Relation>;
+		/** The decrees that only change other regulations: left out of the layers, counted. */
+		amending?: number;
 		/** What could not be loaded, said with Opnieuw (LoadState). */
 		failure?: { what: string; error: unknown; retry: () => void; plural?: boolean } | null;
 		onChoose: (k: ChainNode) => void;
 	} = $props();
 
+	/** The layers the filter leaves: the articles with Artikelen, the regulations with Wetten. */
+	const shown = $derived(
+		layers.filter((l) =>
+			l.id === 'article'
+				? !hiddenKinds.has('artikelen')
+				: l.id === 'law'
+					? true
+					: !hiddenKinds.has('wetten')
+		)
+	);
+	/** A line given (delegates) is a grondslag, one named a mention: the filter Relatie. */
+	const lineShown = (way: 'delegates' | 'mentioned') =>
+		!hiddenRelations.has(way === 'delegates' ? 'BASED_ON' : 'REFERS_TO');
+
 	let width = $state(760);
 	const ROW = 120;
 	const TOP = 48;
 	const LEFT = 120;
-	const height = $derived(TOP + layers.length * ROW);
+	const height = $derived(TOP + shown.length * ROW);
 	/** The room of a node in its layer, for the length of its name's lines. */
 	const charsFor = (n: number) =>
 		Math.max(12, Math.floor(Math.max(200, width - LEFT - 24) / Math.max(1, n) / 7));
@@ -41,7 +69,7 @@
 	const place = $derived.by(() => {
 		const m = new Map<string, { x: number; y: number }>();
 		const room = Math.max(200, width - LEFT - 24);
-		layers.forEach((layer, i) => {
+		shown.forEach((layer, i) => {
 			const n = layer.nodes.length;
 			layer.nodes.forEach((k, j) =>
 				m.set(k.id, { x: LEFT + ((j + 0.5) / n) * room, y: TOP + i * ROW + 30 })
@@ -50,9 +78,10 @@
 		return m;
 	});
 	const lines = $derived(
-		layers.flatMap((l) =>
+		shown.flatMap((l) =>
 			l.nodes.flatMap((k) =>
 				k.parents.flatMap((o) => {
+					if (!lineShown(o.way)) return [];
 					const a = place.get(o.id);
 					const b = place.get(k.id);
 					return a && b
@@ -102,8 +131,14 @@
 			/>
 		</div>
 	{:else if gap}<p class="gap">{gap}</p>{/if}
-	<svg class="drawing" viewBox="0 0 {width} {height}" role="group" aria-label="Keten">
-		{#each layers as layer, i (layer.id)}
+	<svg
+		class="drawing"
+		style:width="{scale * 100}%"
+		viewBox="0 0 {width} {height}"
+		role="group"
+		aria-label="Keten"
+	>
+		{#each shown as layer, i (layer.id)}
 			<text class="layer-label" x="24" y={TOP + i * ROW + 4}>{layer.label.toUpperCase()}</text>
 			<line class="rail" x1="20" x2={width - 20} y1={TOP + i * ROW + 70} y2={TOP + i * ROW + 70} />
 			{#if rest[layer.id]}
@@ -123,7 +158,7 @@
 				stroke-dasharray={l.dashed ? '5 4' : undefined}
 			/>
 		{/each}
-		{#each layers as layer (layer.id)}
+		{#each shown as layer (layer.id)}
 			{#each layer.nodes as k (k.id)}
 				{@const p = place.get(k.id)!}
 				{@const isArticle = k.collection === 'articles'}
@@ -173,10 +208,14 @@
 			{/each}
 		{/each}
 	</svg>
+	{#if amending}<p class="amending">
+			{formatCount(amending)}
+			{plural(amending, 'wijzigingsbesluit', 'wijzigingsbesluiten')} buiten de keten
+		</p>{/if}
 
-	<!-- On a phone: the layers as a list, the regulations under their heading. -->
+	<!-- On a phone: the shown as a list, the regulations under their heading. -->
 	<div class="list">
-		{#each layers.filter((l) => l.id !== 'law' && l.id !== 'article') as layer (layer.id)}
+		{#each shown.filter((l) => l.id !== 'law' && l.id !== 'article') as layer (layer.id)}
 			<section class="list__layer" aria-label={layer.label}>
 				<h3 class="list__head">{layer.label}</h3>
 				<ul>
@@ -217,7 +256,7 @@
 		position: relative;
 		flex: 1;
 		min-height: 0;
-		overflow-y: auto;
+		overflow: auto;
 		background: var(--paper);
 	}
 	/* The gap marker (besluit 23): one label, never a paragraph. */
@@ -232,6 +271,11 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		line-height: 20px;
+		color: var(--ink-3);
+	}
+	.amending {
+		margin: 0 var(--s-5) var(--s-4);
+		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.failure {

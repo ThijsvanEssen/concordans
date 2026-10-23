@@ -62,6 +62,8 @@ export class NetwerkComposer {
 	joiningCount = $state(0);
 	/** The paths of the last composition are not all there (`partial`, API 0.79.23). */
 	partial = $state(false);
+	/** The weergave Omgeving: each chosen bron with all its neighbours, not only what they share. */
+	surroundings = false;
 	/** Whether the canvas is a composed netwerk now. */
 	composed = false;
 
@@ -180,6 +182,7 @@ export class NetwerkComposer {
 		const { alone, joining } = this.#store.compose({
 			participants,
 			withJoining: n.tussen,
+			surroundings: this.surroundings,
 			fresh,
 			onPaths: paths?.onPath ?? [],
 			tiedByPaths: paths?.tied ?? []

@@ -6,13 +6,13 @@
 	//
 	// A click on the canvas marks a bron (?marked) and opens its card; Lees on it reads the bron,
 	// a step of its own: Back brings the werkplek back from its address.
-	import { noneHeld, notHeld } from '$lib/text/coverage';
+	import { NOT_IN_DATA, noneHeld, notHeld } from '$lib/text/coverage';
 	import { categoryLabel } from '$lib/components/explore/index/categories';
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import { get } from 'svelte/store';
 	import { page } from '$app/state';
 	import { afterNavigate, goto } from '$app/navigation';
-	import type { Collection } from '$lib/vocabulary';
+	import type { Collection, Relation } from '$lib/vocabulary';
 	import { sprongDoel } from '$lib/stores/sprong';
 	import { inView } from '$lib/actions/in-view';
 	import { PHONE, READ_BESIDE } from '$lib/util/breakpoints';
@@ -71,7 +71,15 @@
 	import IndexOverzicht from '$lib/components/explore/index/IndexOverzicht.svelte';
 	import Verbonden from '$lib/verbonden/Verbonden.svelte';
 	import VerbindingCard from '$lib/verbonden/VerbindingCard.svelte';
-	import { filterParams, parseFilter, type VerbondenFilter } from '$lib/verbonden/filter';
+	import {
+		FILTER_GROUPS,
+		filterGroupOf,
+		filterParams,
+		parseFilter,
+		type FilterGroup,
+		type VerbondenFilter
+	} from '$lib/verbonden/filter';
+	import type { CanvasCounts } from '$lib/components/graph/canvas-count';
 	import type { Row } from '$lib/verbonden/rows';
 	import { createVerbondenSource, type VerbondenState } from '$lib/verbonden/data-source';
 	import { edgeKey } from '$lib/verbonden/edge-meta';
@@ -117,7 +125,7 @@
 	import { getLawBasis, getLawDelegated } from '$lib/api/articles';
 	import { getShared } from '$lib/api/nodes';
 	import { formatCount } from '$lib/text/getal';
-	import { capitalize, textOf } from '$lib/text/words';
+	import { capitalize, joinAnd, textOf } from '$lib/text/words';
 	import { focusStap } from '$lib/graph/focus-stap';
 	import {
 		onlyAround,
@@ -435,9 +443,11 @@
 			? null
 			: !chainLaw
 				? 'Keten: alleen bij een wet of een artikel'
-				: chainModel && chainModel.total === 0
-					? capitalize(noneHeld('uitvoeringsregelingen'))
-					: null
+				: chainModel?.missing.length
+					? `${joinAnd(chainModel.missing.slice(0, 2), { n: chainModel.missing.length - 2, one: 'andere', many: 'andere' })}: grondslag ${NOT_IN_DATA}`
+					: chainModel && chainModel.total === 0
+						? capitalize(noneHeld('uitvoeringsregelingen'))
+						: null
 	);
 	/** A node of the keten as the card reads a bron. */
 	function chainNodeOf(k: ChainNode): GraphNode {
@@ -529,7 +539,7 @@
 	$effect(() => {
 		const key = sharedKey;
 		void sharedTries;
-		if (sharedEnds.length < 2) return;
+		if (key.split(',').length < 2) return;
 		const ac = new AbortController();
 		getShared({ ids: key, limit: 8 }, ac.signal)
 			.then((data) => (sharedData = { key, data, failure: null }))
@@ -556,7 +566,7 @@
 						coreIds,
 						(id) => {
 							const n = store.getNodeById(id);
-							return n && { ...n, label: kort(bronNaam(n, $instrumentMetaStore)) };
+							return n && { ...n, label: bronNaam(n, $instrumentMetaStore) };
 						},
 						canvasEdges
 					)
@@ -575,6 +585,38 @@
 			? 'onvolledig: alleen de bronnen ertussen'
 			: null
 	);
+	// Soort and Relatie of a weergave of its own count what it draws, and its filter hides it.
+	let hiddenRelations = $state.raw<ReadonlySet<Relation>>(new Set());
+	store.filters.subscribe((f) => (hiddenRelations = f.hiddenRelations));
+	const hiddenKinds = $derived<ReadonlySet<FilterGroup>>(
+		new Set(FILTER_GROUPS.filter((k) => filter.bronnen && !filter.bronnen.has(k)))
+	);
+	const chainCounts = $derived.by(() => {
+		if (!chainModel) return null;
+		const nodes = chainModel.layers.flatMap((l) => l.nodes);
+		const lines = nodes.flatMap((n) => n.parents);
+		const articles = nodes.filter((n) => n.collection === 'articles').length;
+		return {
+			kinds: { wetten: nodes.length - articles, artikelen: articles },
+			relations: {
+				BASED_ON: lines.filter((l) => l.way === 'delegates').length,
+				REFERS_TO: lines.filter((l) => l.way === 'mentioned').length
+			}
+		} satisfies Pick<CanvasCounts, 'kinds' | 'relations'>;
+	});
+	const sharedCounts = $derived.by(() => {
+		if (!sharedState) return null;
+		const kinds: Partial<Record<FilterGroup, number>> = {};
+		for (const r of sharedState.rows) {
+			const k = filterGroupOf(r.collection, r.node.key, r.node.props);
+			if (k) kinds[k] = (kinds[k] ?? 0) + 1;
+		}
+		if (sharedState.judgments) kinds.uitspraken = (kinds.uitspraken ?? 0) + sharedState.judgments;
+		const relations: Partial<Record<Relation, number>> = {};
+		for (const r of sharedState.rows)
+			for (const rel of r.relations) relations[rel] = (relations[rel] ?? 0) + 1;
+		return { kinds, relations } satisfies Pick<CanvasCounts, 'kinds' | 'relations'>;
+	});
 	/** The tijdstrook of Verband: the shared bronnen with a date. */
 	const sharedDots = $derived(
 		(sharedState?.rows ?? []).flatMap((r) => {
@@ -1076,8 +1118,10 @@
 
 	$effect(() => {
 		const n = shownNetwork;
+		const omgeving = view === 'omgeving';
 		if (mode !== 'graph') return;
 		untrack(() => {
+			composer.surroundings = omgeving;
 			if (n.ids.length > 0) composer.compose(n);
 			else if (composer.composed) composer.release();
 		});
@@ -1671,22 +1715,29 @@
 	></div>
 {/snippet}
 
-{#snippet viewMiddle()}
+{#snippet viewMiddle(scale: number)}
 	{#if view === 'keten'}
 		<ChainView
+			{scale}
 			layers={chainModel?.layers ?? []}
 			rest={chainModel?.rest}
 			chosen={marked}
 			gap={chainGap}
+			{hiddenKinds}
+			{hiddenRelations}
+			amending={chainModel?.amending.length ?? 0}
 			failure={chainFailure}
 			onChoose={(k) => setUrl({ [MARK_PARAM]: k.id })}
 		/>
 	{:else if view === 'verband'}
 		<SharedView
+			{scale}
 			ends={sharedEnds}
 			model={sharedState}
 			chosen={marked}
 			gap={sharedGap}
+			{hiddenKinds}
+			{hiddenRelations}
 			failure={sharedFailure}
 			loading={sharedEnds.length > 1 && sharedData?.key !== sharedKey}
 			onChoose={(r) => setUrl({ [MARK_PARAM]: r.id })}
@@ -1762,6 +1813,12 @@
 								onHeatPeriodChange={setHeatPeriod}
 								onToggleMutatie={toggleMutatie}
 								midden={view === 'omgeving' ? undefined : viewMiddle}
+								surroundings={view === 'omgeving'}
+								externCounts={view === 'keten'
+									? chainCounts
+									: view === 'verband'
+										? sharedCounts
+										: null}
 								extern={view === 'keten' ? chainCard : view === 'verband' ? sharedCard : null}
 								externStippen={view === 'keten'
 									? chainDots
@@ -2013,7 +2070,7 @@
 		font-weight: 600;
 		color: var(--ink-3);
 	}
-	@media (max-width: 1100px) {
+	@media (max-width: 768px) {
 		.view-choice {
 			padding: 0;
 			border-top: 0;
@@ -2035,9 +2092,14 @@
 			min-height: var(--veld-h-raak);
 		}
 	}
-	@media (max-width: 1100px) {
+	@media (max-width: 768px) {
 		.terug {
 			margin: var(--s-1) 0;
+		}
+		.terug a {
+			display: inline-flex;
+			align-items: center;
+			min-height: var(--veld-h-raak);
 		}
 	}
 	.terug {
