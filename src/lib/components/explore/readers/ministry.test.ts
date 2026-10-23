@@ -21,7 +21,7 @@ describe('the words of a ministry', () => {
 				{ from: '2017-10-26', to: null }
 			])
 		).toBe(
-			`22${nbsp}juli${nbsp}2002 tot 14${nbsp}oktober${nbsp}2010; sinds 26${nbsp}oktober${nbsp}2017`
+			`vanaf 22${nbsp}juli${nbsp}2002 tot 14${nbsp}oktober${nbsp}2010; sinds 26${nbsp}oktober${nbsp}2017`
 		);
 		expect(periodWords([{ from: null, to: null }])).toBeNull();
 	});

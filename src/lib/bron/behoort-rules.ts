@@ -13,7 +13,7 @@ import { getDossier } from '$lib/api/dossiers';
 import { CHAMBER_NAME, chamberFromParam } from '$lib/components/parliamentary/chamber';
 import { refOf } from '$lib/bron/ref';
 import { dossierLabel } from './dossier-naam';
-import { artikelAnker } from '$lib/text/division';
+import { articleAnchor } from '$lib/text/division';
 import { langeDatum } from '$lib/text/datum';
 import { lawLineWords, type LawLayer } from './law-line';
 import { fractiePeriodes } from './fractie-periode';
@@ -86,7 +86,7 @@ function lawLine(c: Context, withPlace: boolean): Regel[] {
 		...(at ? { at } : {})
 	});
 	const number = withPlace ? textOf(c.props.article_number) : null;
-	const wet = law ? [layer(law, number ? artikelAnker(number) : undefined)] : [];
+	const wet = law ? [layer(law, number ? articleAnchor(number) : undefined)] : [];
 	if (!withPlace) return regel('wet', term, wet);
 	const deel = divisions.map((d) => layer(d, ref ? d.anchor : undefined));
 	return regel('wet', term, [...wet, ...deel]);

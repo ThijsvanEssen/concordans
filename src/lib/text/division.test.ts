@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { artikelAnker, layersOf, placeOf, plekVan } from './division';
+import { articleAnchor, layersOf, placeOf, plekVan } from './division';
 
 const awb34 = [
 	{ type: 'hoofdstuk', label: 'Hoofdstuk 3', title: 'Algemene bepalingen over besluiten' },
@@ -69,8 +69,8 @@ describe('plekVan', () => {
 		{ article_number: null, address: 'stam_7', breadcrumb: [] }
 	];
 	it('finds the article an anchor names', () => {
-		expect(plekVan(lijst, artikelAnker('2'))).toBe(1);
-		expect(plekVan(lijst, artikelAnker('stam_7'))).toBe(3);
+		expect(plekVan(lijst, articleAnchor('2'))).toBe(1);
+		expect(plekVan(lijst, articleAnchor('stam_7'))).toBe(3);
 	});
 	it('finds the first article of a division by the anchor the API gives, at any depth', () => {
 		expect(plekVan(lijst, 'deel-hoofdstuk-2')).toBe(2);
@@ -78,7 +78,7 @@ describe('plekVan', () => {
 	});
 	it('is -1 for an anchor the law does not have', () => {
 		expect(plekVan(lijst, 'deel-hoofdstuk-9')).toBe(-1);
-		expect(plekVan(lijst, artikelAnker('99'))).toBe(-1);
+		expect(plekVan(lijst, articleAnchor('99'))).toBe(-1);
 		expect(plekVan(lijst, 'lid-2')).toBe(-1);
 	});
 });

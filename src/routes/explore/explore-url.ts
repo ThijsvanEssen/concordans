@@ -141,7 +141,7 @@ export function nameOfPad(p: Pad, lawNameOf: (bwb: string) => string | null = ()
 			return `Activiteit ${p.nummer}`;
 		case 'kabinet':
 			return `Kabinet ${p.key}`;
-		case 'ministerie':
+		case 'ministry':
 			return `Ministerie ${p.key}`;
 		case 'fractie':
 			return `Fractie ${p.key}`;

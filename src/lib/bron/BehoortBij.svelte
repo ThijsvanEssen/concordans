@@ -4,7 +4,7 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import BelongsTo from './BelongsTo.svelte';
 
-	let { node, onHas }: { node: GraphNode; onHas?: (heeft: boolean) => void } = $props();
+	let { node, onHas }: { node: GraphNode; onHas?: (has: boolean) => void } = $props();
 </script>
 
 {#key node.id}<BelongsTo {node} {onHas} />{/key}

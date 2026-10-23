@@ -323,7 +323,7 @@ export const EDGE_AT_45: Record<Vorm, number> = {
 	orgaan: 4.4,
 	'orgaan-o': 4.3,
 	kabinet: 4.4,
-	ministerie: 4.4,
+	ministry: 4.4,
 	overig: 3.5
 };
 

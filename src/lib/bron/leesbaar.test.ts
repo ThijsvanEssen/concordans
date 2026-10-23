@@ -48,8 +48,8 @@ describe('a readable address', () => {
 
 	it('reads a cabinet, a fractie, a commissie and a toezegging, and gives them back', () => {
 		expect(parsePad('/kabinetten/rutte_iv')).toEqual({ soort: 'kabinet', key: 'rutte_iv' });
-		expect(parsePad('/ministeries/jenv')).toEqual({ soort: 'ministerie', key: 'jenv' });
-		expect(focusOfPad({ soort: 'ministerie', key: 'jenv' })).toBe('ministries/jenv');
+		expect(parsePad('/ministeries/jenv')).toEqual({ soort: 'ministry', key: 'jenv' });
+		expect(focusOfPad({ soort: 'ministry', key: 'jenv' })).toBe('ministries/jenv');
 		expect(padOfFocus('ministries/jenv')).toBe('/ministeries/jenv');
 		expect(parsePad('/fracties/ek_democraten_1966')).toEqual({
 			soort: 'fractie',
@@ -403,7 +403,7 @@ describe('every kind of address', () => {
 		publicatie: { soort: 'publicatie', reeks: 'stcrt', jaar: '2026', nummer: '17140' },
 		lid: { soort: 'lid', slug: 'rob-jetten' },
 		kabinet: { soort: 'kabinet', key: 'rutte_iv' },
-		ministerie: { soort: 'ministerie', key: 'jenv' },
+		ministry: { soort: 'ministry', key: 'jenv' },
 		fractie: { soort: 'fractie', key: 'ek_democraten_1966' },
 		commissie: { soort: 'commissie', slug: 'buhaos-2021' },
 		toezegging: { soort: 'toezegging', nummer: 'TZ202609-124' },

@@ -45,7 +45,7 @@ export type Pad =
 	| { soort: 'publicatie'; reeks: Reeks; jaar: string; nummer: string }
 	| { soort: 'lid'; slug: string }
 	| { soort: 'kabinet'; key: string }
-	| { soort: 'ministerie'; key: string }
+	| { soort: 'ministry'; key: string }
 	| { soort: 'fractie'; key: string }
 	| { soort: 'commissie'; slug: string }
 	| { soort: 'toezegging'; nummer: string }
@@ -216,16 +216,16 @@ const ADDRESS_RULES: { [S in AddressKind]: AddressRule<S> } = {
 		fromKey: ({ collection, key }) =>
 			collection === 'cabinets' && KEY.test(key) ? { soort: 'kabinet', key } : null
 	},
-	ministerie: {
+	ministry: {
 		read: (p) => {
 			const key = single(p, 'ministeries', KEY);
-			return key ? { soort: 'ministerie', key } : null;
+			return key ? { soort: 'ministry', key } : null;
 		},
 		write: (pad) => `/ministeries/${pad.key}`,
 		lookup: (pad) => ({ kind: 'ministry', id: pad.key }),
 		focus: (pad) => `ministries/${pad.key}`,
 		fromKey: ({ collection, key }) =>
-			collection === 'ministries' && KEY.test(key) ? { soort: 'ministerie', key } : null
+			collection === 'ministries' && KEY.test(key) ? { soort: 'ministry', key } : null
 	},
 	fractie: {
 		read: (p) => {

@@ -59,7 +59,7 @@ const COLLECTION_OF_PAD: Partial<Record<Pad['soort'], Collection>> = {
 	kamerstuk: 'documents',
 	lid: 'members',
 	kabinet: 'cabinets',
-	ministerie: 'ministries',
+	ministry: 'ministries',
 	fractie: 'factions',
 	commissie: 'committees',
 	toezegging: 'commitments',

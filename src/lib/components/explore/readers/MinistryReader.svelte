@@ -10,7 +10,7 @@
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
-	import { langeDatum } from '$lib/text/datum';
+	import { sinceDate } from '$lib/text/datum';
 	import { load } from '$lib/util/load.svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import { POST_LABEL } from '../index/government';
@@ -32,10 +32,10 @@
 
 	// The head from the light node at once, then from the record.
 	const p = $derived(node.raw?.props ?? {});
-	const naam = $derived(record?.name ?? textOf(p.name) ?? node.label);
-	const tot = $derived(record ? record.until : textOf(p.to_date));
-	const afkorting = $derived(record?.abbreviation ?? textOf(p.abbreviation));
-	const titel = $derived(ministryTitle(naam, tot));
+	const name = $derived(record?.name ?? textOf(p.name) ?? node.label);
+	const until = $derived(record ? record.until : textOf(p.to_date));
+	const abbreviation = $derived(record?.abbreviation ?? textOf(p.abbreviation));
+	const title = $derived(ministryTitle(name, until));
 	const stretches = $derived(
 		record
 			? record.periods.map((s) => ({ from: s.from_date, to: s.until }))
@@ -46,20 +46,20 @@
 	);
 
 	/** The day a post began, where it is not the cabinet's own. */
-	const sinds = (from: string | null | undefined, kabinet: string | null | undefined) =>
-		from && from !== kabinet ? langeDatum(from) : null;
+	const since = (from: string | null | undefined, cabinet: string | null | undefined) =>
+		from && from !== cabinet ? sinceDate(from) : null;
 </script>
 
 <ReaderFrame state={ministry.state} what="Ministerie" retry={ministry.retry}>
 	{#snippet head()}
 		<ReaderHead
 			collection="ministries"
-			title={titel}
-			acties={{ bewaar: bewaarItem(node.id, { kort: naam, voluit: titel }) }}
+			{title}
+			acties={{ bewaar: bewaarItem(node.id, { kort: name, voluit: title }) }}
 		>
 			{#snippet statusLine()}
 				{#if periodWords(stretches)}<span>{periodWords(stretches)}</span>{/if}
-				{#if afkorting}<span class="afk">{afkorting}</span>{/if}
+				{#if abbreviation}<span class="abbr">{abbreviation}</span>{/if}
 			{/snippet}
 		</ReaderHead>
 	{/snippet}
@@ -80,20 +80,20 @@
 			{#if m.cabinets.length > 0}
 				<Sectie title="Bewindspersonen" inklapbaar={false}>
 					{#each m.cabinets as c (c.key)}
-						<div class="kabinet">
-							<h4 class="kabinet__naam">
-								<BronLink ref={`cabinets/${c.key}`}>{c.name ?? c.key}</BronLink>
+						<div class="cabinet">
+							<h4 class="cabinet__name">
+								<BronLink ref={`cabinets/${c.key}`}>{c.name}</BronLink>
 							</h4>
 							<Feiten klein>
 								{#each c.posts as post, i (i)}
-									{@const sindsDag = sinds(post.from_date, c.from_date)}
+									{@const sinceDay = since(post.from_date, c.from_date)}
 									<Veld
 										label={post.function ?? (post.post ? POST_LABEL[post.post] : '')}
 										value={post.member}
 									>
 										<BronLink ref={`members/${post.member.key}`}>{post.member.name}</BronLink
-										>{#if post.acting}, ad interim{/if}{#if sindsDag}<span class="sinds">
-												, sinds {sindsDag}</span
+										>{#if post.acting}, ad interim{/if}{#if sinceDay}<span class="since">
+												, {sinceDay}</span
 											>{/if}
 									</Veld>
 								{/each}
@@ -114,21 +114,21 @@
 		gap: var(--lezer-stap);
 		color: var(--ink-2);
 	}
-	.kabinet + .kabinet {
+	.cabinet + .cabinet {
 		margin-top: var(--s-4);
 	}
-	.kabinet__naam {
+	.cabinet__name {
 		margin: 0 0 var(--s-2);
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		font-weight: 600;
 		color: var(--ink);
 	}
-	.sinds {
+	.since {
 		color: var(--ink-3);
 	}
 	/* The abbreviation: a word, not a tag. */
-	.afk {
+	.abbr {
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);

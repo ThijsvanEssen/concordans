@@ -34,11 +34,11 @@
 		if (!open) return;
 		previousFocus = document.activeElement as HTMLElement | null;
 		return () => {
-			const terug = previousFocus;
+			const back = previousFocus;
 			previousFocus = null;
 			// After the dialog has gone; a place that went with it leaves the focus on the page.
 			queueMicrotask(() => {
-				if (terug?.isConnected) terug.focus();
+				if (back?.isConnected) back.focus();
 				else document.getElementById('main-content')?.focus();
 			});
 		};

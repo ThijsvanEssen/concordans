@@ -6,7 +6,7 @@
 	// bijlagen with a text of their own; on a bijlage the same, the bijlage marked.
 	import { lawAnnexes, lawArticles, type LawAnnex, type LawArticle } from '$lib/bron/law-articles';
 	import { parseAnchor } from '$lib/text/anchor';
-	import { artikelAnker, layersOf } from '$lib/text/division';
+	import { articleAnchor, layersOf } from '$lib/text/division';
 	import { scrollInReader } from '$lib/bron/landing';
 	import { page } from '$app/state';
 	import { getInstrumentDetail, instrumentMetaStore } from '$lib/api/instrument-cache';
@@ -187,7 +187,7 @@
 	// From a bijlage it opens the whole law.
 	const lawHref = $derived(
 		lawRef && selectedNumber
-			? bronHref(lawRef, { at: artikelAnker(selectedNumber) })
+			? bronHref(lawRef, { at: articleAnchor(selectedNumber) })
 			: lawRef && selection?.collection === 'annexes'
 				? bronHref(lawRef)
 				: null
@@ -219,11 +219,11 @@
 	// On the law an article opens in place, in the whole law (K3); from an article, its own.
 	const articleHref = (it: LawArticle) =>
 		onLaw
-			? `${page.url.pathname}${page.url.search}#${encodeURIComponent(artikelAnker(it.articleNumber))}`
+			? `${page.url.pathname}${page.url.search}#${encodeURIComponent(articleAnchor(it.articleNumber))}`
 			: bronHref({ collection: 'articles', key: it.key });
 	/** The anchor already in the URL: the article is scrolled to again. */
 	function openArticle(e: MouseEvent, it: LawArticle) {
-		const id = artikelAnker(it.articleNumber);
+		const id = articleAnchor(it.articleNumber);
 		if (!onLaw || decodeURIComponent(page.url.hash.slice(1)) !== id) return;
 		e.preventDefault();
 		const el = document.querySelector<HTMLElement>(

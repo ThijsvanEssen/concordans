@@ -6,11 +6,11 @@
 
 	/** The kind of a waiting row of a group (`noun`): what a row of it holds beside this bron. */
 	export function pendingKind(noun: string | undefined, collection: Collection): PendingKind {
-		const wet = collection === 'articles' || collection === 'instruments';
-		if (noun === 'uitspraken') return wet ? 'passage' : 'uitspraak';
+		const law = collection === 'articles' || collection === 'instruments';
+		if (noun === 'uitspraken') return law ? 'passage' : 'uitspraak';
 		if (noun === 'artikelen')
-			return collection === 'judgments' ? 'artikel' : wet ? 'verwijzing' : 'stuk';
-		if (wet && (noun === 'stukken' || noun === 'Kamerstukken')) return 'kamerstuk';
+			return collection === 'judgments' ? 'artikel' : law ? 'verwijzing' : 'stuk';
+		if (law && (noun === 'stukken' || noun === 'Kamerstukken')) return 'kamerstuk';
 		return 'stuk';
 	}
 </script>

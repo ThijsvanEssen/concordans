@@ -77,7 +77,7 @@ export function deelIds(crumbs: Division[]): string[] {
 }
 
 /** The anchor of an article in the whole law, by its number as the BWB has it: `artikel-658`. */
-export const artikelAnker = (number: string) => formatAnchor({ kind: 'article', number });
+export const articleAnchor = (number: string) => formatAnchor({ kind: 'article', number });
 
 /** An article of the list of a law, as far as an anchor in the whole law names it. */
 type Plek = {
