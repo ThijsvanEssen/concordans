@@ -258,7 +258,7 @@
 											class:vote-outcome--passed={v.passed}
 											class:vote-outcome--failed={!v.passed}
 										>
-											{v.passed ? 'Aangenomen' : 'Verworpen'}
+											{outcomeWord(!!v.passed)}
 										</span>
 									{/if}
 									{#if v.date}<span class="vote-date">{korteDatum(v.date)}</span>{/if}
