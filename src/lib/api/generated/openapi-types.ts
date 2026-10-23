@@ -33,7 +33,7 @@ export interface paths {
         };
         /**
          * Passages of judgments that cite an article
-         * @description One row per passage: a judgment and the paragraph in it that cites the article, with the lid, onderdeel or aanhef it names, a snippet and the confidence of the detection. Newest judgment first. `court` (ECLI court code), `tier` (repeated: any of them), `year` (of the judgment's date) and `lid` (a lid number the passage names) filter; `total` counts all passages that match, `judgment_total` the judgments they are in, `echr_judgment_total` the ECHR judgments that cite the article (no passage: HUDOC names the article). `facets` counts the judgments, whatever the page: per `year` (oldest first, null for none first) without the `year` filter, per `tier` (most first) without the `tier` filter, each under the other filters. 404 when the article is unknown.
+         * @description One row per passage: a judgment and the paragraph in it that cites the article, with the lid, onderdeel or aanhef it names, a snippet and the confidence of the detection. Newest judgment first. `court` (ECLI court code), `tier` (repeated: any of them), `year` (of the judgment's date), `subject_area` (a main area of law of the judgment's source, the part of a subject before its first `;`: `Strafrecht`) and `lid` (a lid number the passage names) filter; `total` counts all passages that match, `judgment_total` the judgments they are in, `echr_judgment_total` the ECHR judgments that cite the article (no passage: HUDOC names the article). `facets` counts the judgments, whatever the page: per `year` (oldest first, null for none first) without the `year` filter, per `tier` (most first) without the `tier` filter, per `subject_area` (most first) without the `subject_area` filter, each under the other filters. 404 when the article is unknown.
          */
         get: operations["get_article_cited_by_passages_api_articles__bwb_id___article_number__cited_by_get"];
         put?: never;
@@ -217,7 +217,7 @@ export interface paths {
         };
         /**
          * Paginated list of instruments
-         * @description A paginated list of statutes, regulations and EU instruments. Supports free-text search (`q`), a jurisdiction filter (`nl`/`eu`), a kind filter, a minimum article count, and the registers of the BWB: a legal area (`legal_area`, a main area includes its specific areas) and a government theme (`policy_domain`), each by TOOI id or slug; an unknown value finds nothing. `facets` counts the instruments under the filters per legal area (a tree) and per theme, each without its own filter. The regulations that change other regulations (`amending` on an item) are hidden from the list without a search and shown with one; `amending` says otherwise (`hide`, `show`, `only`), and the facet `amending` counts both. The same holds for the instruments no longer in force (`validity`: `in_force`, `expired` or `all`; left out, `in_force` without `q` and `all` with it; `expired_on` on an item, as the BWB gives it, read on the Dutch day). `facets=false` leaves them out (null): the pages after the first need none.
+         * @description A paginated list of statutes, regulations and EU instruments. Supports free-text search (`q`), a jurisdiction filter (`nl`/`eu`), a kind filter, a minimum article count, and the registers of the BWB: a legal area (`legal_area`, a main area includes its specific areas) and a government theme (`policy_domain`), each by TOOI id or slug; an unknown value finds nothing; and the ministry first responsible for a BWB regulation (`ministry`, its WTI). `facets` counts the instruments under the filters per legal area (a tree) and per theme, each without its own filter. The regulations that change other regulations (`amending` on an item) are hidden from the list without a search and shown with one; `amending` says otherwise (`hide`, `show`, `only`), and the facet `amending` counts both. The same holds for the instruments no longer in force (`validity`: `in_force`, `expired` or `all`; left out, `in_force` without `q` and `all` with it; `expired_on` on an item, as the BWB gives it, read on the Dutch day). `facets=false` leaves them out (null): the pages after the first need none.
          */
         get: operations["list_instruments_api_instruments_get"];
         put?: never;
@@ -317,7 +317,7 @@ export interface paths {
         };
         /**
          * Every judgment citing this instrument
-         * @description Per judgment: light metadata plus the specific articles it refers to. Meant for the case-law layer of the graph. ``total`` is the absolute count, independent of ``limit``. ``sort``: ``date`` (default), the newest first; ``cited``, the most cited articles of the law first; ``citation_count``, the most cited judgment first (a standard judgment); each then the newest. ``year`` and ``tier`` (repeated: any of them) filter ``total`` and the page. ``facets`` counts the judgments, not the page: per ``year`` without the ``year`` filter, per ``tier`` (most first) without the ``tier`` filter, each under the other filter.
+         * @description Per judgment: light metadata plus the specific articles it refers to. Meant for the case-law layer of the graph. ``total`` is the absolute count, independent of ``limit``. ``sort``: ``date`` (default), the newest first; ``cited``, the most cited articles of the law first; ``citation_count``, the most cited judgment first (a standard judgment); each then the newest. ``year``, ``tier`` (repeated: any of them) and ``subject_area`` (a main area of law of the judgment's source: ``Strafrecht``) filter ``total`` and the page. ``facets`` counts the judgments, not the page: per ``year`` without the ``year`` filter, per ``tier`` (most first) without the ``tier`` filter, per ``subject_area`` (most first) without the ``subject_area`` filter, each under the other filters.
          */
         get: operations["get_instrument_judgments_route_api_instruments__bwb_id__judgments_get"];
         put?: never;
@@ -417,7 +417,7 @@ export interface paths {
         };
         /**
          * Regulations issued under a law
-         * @description The regulations in force whose preamble ("Gelet op") names an article in force of this law as their legal basis (`BASED_ON`), one per regulation with the articles it names, whether those give the power it is made under (`basis_kind`), its articles that work each out (`referring`), the other laws it names (`also_based_on`) and the regulations issued under it in turn (`sub_delegated`): AMvBs first, then ministerial regulations, then the others; by title. A repealed regulation (as on the list: `expired_on` today or before) or article is left out. Empty for an unknown instrument.
+         * @description The regulations whose preamble ("Gelet op") names an article in force of this law as their legal basis (`BASED_ON`), one per regulation with the articles it names, whether those give the power it is made under (`basis_kind`), its articles that work each out (`referring`), the other laws it names (`also_based_on`) and the regulations issued under it in turn (`sub_delegated`): AMvBs first, then ministerial regulations, then the others; by title. By `validity` those in force (the default), those no longer in force (`expired_on` today or before) or all, each with its `expired_on`; `expired_total` counts the ones no longer in force whatever was asked for and `by_kind` the items per kind. A repealed article is left out. `detail=summary`: the light form, per regulation only the articles of the law it names, without `referring` and `also_based_on`, with `sub_delegated` (its articles without `referring`). Empty for an unknown instrument.
          */
         get: operations["get_instrument_delegated_route_api_instruments__bwb_id__delegated_get"];
         put?: never;
@@ -437,7 +437,7 @@ export interface paths {
         };
         /**
          * The laws a regulation is issued under
-         * @description The legal basis of a regulation: per law its preamble ("Gelet op") names an article in force of (`BASED_ON`), by title, the articles it names with the leden and onderdelen, whether they give the power it is made under (`basis_kind`) and the articles of the regulation that refer to each (`referring`). Empty for a law without a preamble basis and for an unknown instrument. The other way: `.../delegated`.
+         * @description The legal basis of a regulation: per law its preamble ("Gelet op") names an article in force of (`BASED_ON`), by title, the articles it names with the leden and onderdelen, whether they give the power it is made under (`basis_kind`) and the articles of the regulation that refer to each (`referring`). By `validity` the laws in force (the default), those no longer in force or all, each with its `expired_on`; `expired_total` counts the ones no longer in force whatever was asked for. Empty for a law without a preamble basis and for an unknown instrument. The other way: `.../delegated`.
          */
         get: operations["get_instrument_basis_route_api_instruments__bwb_id__basis_get"];
         put?: never;
@@ -530,6 +530,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/nodes/shared": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The neighbours that several nodes share
+         * @description The nodes at the other end of an edge of every node of `ids` (2 to 5 node ids, `collection/key`, comma-separated; an edge counts in either direction, and a node asked for is not its own neighbour), in buckets of one collection: what two sources have in common, the articles, the judgments that cite both, the law they are in. A bucket holds one page (`limit` from `offset`, as `/api/nodes/{collection}/{key}`), its `total` and the `next_offset`. `sort=importance` (default): the most cited first (`inbound_citation_count` of a judgment, an article or an instrument), then by key; `key`: by key. Each neighbour has `links`: every edge between it and each node asked for (`source`, `edge_id`, `relation`, `direction`, `status`, `confidence`). `relations`, `node_types`, `direction` and `status` narrow the edges, as on the node route; `tier` (repeated) and `subject_area` (a main area of law, `Strafrecht`) narrow the judgments alone, the other buckets stay whole. `facets` count the neighbours before the page: per collection, and of the judgments per tier (under `subject_area`) and per main area of law (under `tier`). Reads the edges of each node once, through their indexes: the cost grows with the edges of the nodes asked for (6:162 BW has 10,500), not with the graph. 404 when a node is not there.
+         */
+        get: operations["get_shared_neighbors_route_api_nodes_shared_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/nodes/{collection}/{key}": {
         parameters: {
             query?: never;
@@ -564,6 +584,26 @@ export interface paths {
          * @description Returns every node and edge within `depth` hops of the focal node in a single traversal query. `relations` and `status` restrict the edges the traversal follows, `direction` restricts it to edges leaving (`outbound`) or reaching (`inbound`) each node on the way, and `node_types` to paths through nodes of those types (the focal node is always included). `stop_at` names collections the walk reaches but does not go through (but from the focal node, and from a member to the faction and the cabinet it sits in, `MEMBER_OF` and `SERVED_IN`), so the cap goes to what the node itself touches: `stop_at=members,factions,committees,cabinets` keeps the papers of a paper's dossier, not those its signers signed elsewhere. A law is not walked back to the old articles whose outcome in a recodification it holds (`TRANSPOSED_TO` the law, `meta.outcome`), nor are they counted in its `buckets`.
          */
         get: operations["get_node_neighborhood_route_api_nodes__collection___key__neighborhood_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/nodes/{collection}/{key}/surroundings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What stands around a paper, case, vote, commitment or activity
+         * @description The surroundings of a paper (`documents`), case (`cases`), decision (`decisions`), commitment (`commitments`) or activity (`activities`) in one compact answer, from the edges of the node and of its paper and case alone: `submitters` (who signed or made it, the first signatory first, with the faction they sat in on its day), `dossiers` (each as one node with what it holds counted in `held`, never its members), `laws` (the laws and articles it amends, introduces or repeals, then the law made from its dossier, then those it names; each with its relation and status), `votes` (the decisions on it, newest first, with the vote of each faction), `follows` (the commitments a letter fulfils, the letters that answer it, the paper that replaces it; of an activity what was made in it), `context` (the debate it was made in, the committee that leads it). Every section has its total (`*_total`, `total`, `kinds`) beside the `cap` items it shows, and `gaps` says what the data does not hold. 422 for another collection, 404 when the node is not there.
+         */
+        get: operations["get_surroundings_route_api_nodes__collection___key__surroundings_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1020,6 +1060,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ministries/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ministry detail
+         * @description One ministry: its names (``periods``, ``predecessors``), its bewindspersonen per cabinet, newest first (``cabinets``), and the counts of what is its own, each the ``total`` of a list filtered on ``ministry``: ``laws`` (the BWB regulations in force it is first responsible for, ``/api/instruments``), ``open_dossiers`` (``/api/dossiers?status=open``) and ``open_commitments`` (``/api/commitments?status=Openstaand``).
+         */
+        get: operations["get_ministry_api_ministries__key__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/cabinets": {
         parameters: {
             query?: never;
@@ -1246,7 +1306,7 @@ export interface paths {
         };
         /**
          * The papers of the chambers
-         * @description The papers of the Tweede Kamer and the Eerste Kamer, newest first, with their metadata (no text): ``chamber``, ``kind``, ``dossier_number`` (the dossier it is numbered in), ``number`` (the nr., or the letter of the Eerste Kamer), ``date``, ``title`` and ``session_year``; of a motion or an amendment how it ended (``outcome``) and of a motion of censure or of no confidence ``motion_kind``. ``motion_kind=censure,no_confidence`` keeps those motions: one open while its ``outcome`` is null. ``facets`` counts per ``kind`` and ``chamber``, each without its own filter; ``facets=false`` reads one page only.
+         * @description The papers of the Tweede Kamer and the Eerste Kamer, newest first, with their metadata (no text): ``chamber``, ``kind``, ``dossier_number`` (the dossier it is numbered in), ``number`` (the nr., or the letter of the Eerste Kamer), ``date``, ``title`` and ``session_year``; of a motion or an amendment how it ended (``outcome``) and of a motion of censure or of no confidence ``motion_kind``. ``motion_kind=censure,no_confidence`` keeps those motions: one open while its ``outcome`` is null. ``letter_kind=article_100`` keeps the artikel 100-brieven of the government, as their subject names them. ``facets`` counts per ``kind`` and ``chamber``, each without its own filter; ``facets=false`` reads one page only.
          */
         get: operations["list_chamber_documents_api_documents_get"];
         put?: never;
@@ -1330,7 +1390,7 @@ export interface paths {
          * Search across several entity types
          * @description Searches articles, judgments, dossiers and documents. Use `types` to restrict the search to specific collections and `kind` to facet on document or dossier kinds. Every hit has a `score` between 0 and 1, its rank tier for the query: the query is an identifier of the hit (1), its whole name (0.75), the start of its name (0.5), part of its name (0.25) or the hit matched on words only (0.1). Hits of a type come best score first. With `resolve=true` the answer also holds `resolved`, what `/api/resolve` answers for `q`: one request for a search box that goes to the node a citation names and lists the hits otherwise.
          *
-         *     text search over `types` (`articles`, `cabinets`, `commitments`, `committees`, `decisions`, `documents`, `dossiers`, `factions`, `instruments`, `judgments`, `members`; all by default), `kind`, `limit`, and a period `from`, `to` (YYYY-MM-DD, both days in it, either open; 422 for `from` after `to`): each hit by a date of its own, in full and live search alike: a judgment the day of its decision (`date_eff`), a paper its date, a dossier the day it was opened, a vote its date, a commitment the day it was made, a law the day it came into force (`date_in_force`), an article the day its law came into force; a type without a date of its own (a member, a faction, a committee, a cabinet) finds nothing within a period. A citation in `q` (`art. 6:162 BW`, `artikel 287 Sr`, `Sr 287`, a full ECLI) puts its article or judgment first, and so does the whole name of a judgment (`Urgenda`, `Lindenbaum/Cohen`: one of its `names`, any case). Every hit has a `score`, its rank tier for `q`: an identifier of the hit (1), its whole name (0.75), the start of its name (0.5), every word of `q` in its name (0.25), a match on words only (0.1), compared in lower case and without accents (`yesilgoz` is part of `Yeşilgöz-Zegerius`); a type lists its hits best first, ties in database order. The names of a hit are its `display_name`, citation title, the `heading` of an article and the `aliases` of an instrument (`BW`, `Boek 6 BW`, `6 BW`: 0.75, before the words); `q` inside the title of a division an article stands in counts as part of its name (0.25). Scores compare across types: a heading or alias that is `q` (0.75) outranks a judgment that only holds its words (0.1). A word of `q` also finds its plural or singular where the last consonant changes between them, which stem apart (`huurprijs` and `huurprijzen`, `brief` and `brieven`). Within a type the database orders by BM25 before the `limit` (on a large table its statistics, the number of rows and the mean length of a field, are an estimate from a fixed sample, at most 6 hours old; the number of rows that hold a common word is the planner's estimate from its statistics, a rare word is counted, and a count that takes over 5 s weighs its terms as held by every row; a word matches the start of a value or a part of it from three characters, the start in any case and, in a name or title, without accents), with a word in a heading (x4), a division title (x1.5), a display name (x2), an alias or short title (x3) weighing more than one in a text; an instrument whose alias or short title is the whole of `q` is always fetched. Of the articles the database orders by their tier before BM25, as far as the article says it (named by its terms, a heading or display name that starts with `q`, every word of `q` in its heading or the title of a division it stands in), so that the best tiers are among the hits however few are asked, while typing too (`onrechtmatige daad`: art. 6:162 BW, in the title Onrechtmatige daad, before the articles of the Wet conflictenrecht onrechtmatige daad). An article is also found by its terms, what the judgments that cite it call it (`noodweer`: art. 41 Sr, whose words do not hold it; `lg_article_terms`), as a match on words (0.1), ranked above those that only hold the word; such a hit has `extra.terms`, the words of `q` it was found by, which come from the case law, not from the law. An article of which every word of `q` is a strong term (a good share of the judgments that use the word cite it, and few judgments cite it at all: `verjaring`, art. 3:310 BW) scores as a whole name (0.75), the best by its words first; a word in more than one in 50 summaries names no article and is left out of that (`ontslag op staande voet`: art. 7:677 BW, named by its other words). A word of `q` that is the short title or an alias of a law (as the instrument has it, whole, any case and without accents: `Cbw`, `Sr`, `BW` of every book) also matches each of its articles, as the name of the law in its `display_name` does (`zorgplicht cbw`: art. 21 of the Cyberbeveiligingswet), and each dossier the law is `LEGISLATED_IN` (`cbw`: dossier 36764, the bill that became it; ranked above a dossier that only holds the word), in full and live search alike. `dossier` and `dossiers` name the type and are left out of a search of dossiers unless they are all of `q` (`cbw dossier` asks for the dossier of the Cbw). `extra` of an article carries `instrument_title` (its law), `instrument_abbreviation`, `heading` and `division_titles` (its `display_name` the article as it is cited: `Art. 6:162 BW`), of an instrument `short_title`, `aliases`, `kind` and the dates `date_published`, `date_in_force` and `version_date_in_force` (as `/api/instruments/{identifier}` gives them; regulations of one title told apart by them); an article and an instrument `expired_on`, the first day it no longer holds (of an article the earlier of its law's and its own end, docs/api.md "Validity"): one expired by today comes after every hit of its score that holds, not left out; of a judgment `ecli`, `appno`, `names` and `cite` (as `/api/judgments` gives it; and `person` when it was found by one), of a document `dossier_number`, of a dossier `number`, `kind`, `current_phase`, `closed`, `outcome` and `short_title` (the name it goes by, as `/api/dossiers` gives it: `Wet betaalbare huur`; null without one). A judgment is also found by a person it names (`lg_judgment_persons`: a party not anonymised, whoever acts for a party) when every word of `q` is a word of that one name, whole (while typing, `mode=live`, the last word by its start): `R. van Gelder`, `Van Gelder` and `mr. drs. R. van Gelder` find `mr. drs. R. van Gelder`, `Vermeulen` finds `mr. I.T.F. Vermeulen`, `college van gedeputeerde staten van Zuid-Holland` finds that party; at least one word of three characters or more that is no title, article or particle (`van`, `mr`); the newest first of the first 2,000 names found. Such a hit has `extra.person` (`name` as written, `role`: the party's role, or `advocaat`, `gemachtigde`, `raadsman` of who acts for one, and `party`: the alias or name of the party they act for, null for a party) and scores 0.25 when `q` is all of the name but its titles, initials, articles and particles, else 0.1 after the judgments found by their words. A member is found by every word of its names (its name, party and the factions of its timeline), a faction by its name, abbreviation and aliases; a word without accents or in capitals finds a name with them (`yesilgoz`: Yeşilgöz; of a member in its own name only; a member without a role, `extra.has_role` false, after every member with one, whatever its score). A cabinet is found by every word of its name (`Rutte`, `kabinet Schoof`), newest first, with `from_date` and `to_date` in `extra`; a commitment by every word of its text or its number (`TZ202609-011`), newest first, with `number`, `made_on`, `status`, `minister_name`, `cabinet` and `ministry` in `extra`. A vote (`decisions`) by every word of what was voted on (`subject`) or its `kind` (`Motie`, `Wetgeving`), newest first, with `date`, `kind`, `passed`, `chamber` and `dossier_numbers` in `extra`; `stemming`, `stemmingen`, `besluit` and `besluiten` name the type and are left out (`stemming abortus` asks for the votes on abortion). Words of `q` that are the abbreviation, name or alias of a faction (of either chamber, past ones too; not when they are part of the name of a member, nor all of `q`) are no words of the search of the papers and the votes: their hits are signed for it (a paper by one of its Kamerleden for it, a vote on such a paper), and `searched.<type>.signed_for` names it (`motie stikstof VVD`). A document hit has in `extra` its `kind`, `external_id`, `dossier_number`, `sequence` (its number in the dossier: nr. 12), `number` (as above: `12`, the letter `A` of an Eerste Kamer paper), `date` (as the source gives it; null when it has none), `chamber` (`TK`, `EK`, null for Staatsblad and Staatscourant, as in `/api/documents`) and `dossier_short_title` (the name its dossier goes by, as `/api/dossiers` gives it; null without one); with `resolve=true` also `resolved`, what `/api/resolve` answers for `q` (kind `none` for a query over 200 characters), null without it: a search box resolves and searches in one request. `mode=live` (while typing; `full` is the default) answers all types within 250 ms together (a type that waited for a thread has what is left): a type not done by then is empty and named in `partial` (`{"judgments": true}`; a type not cut off is not in it); nothing is ranked by its words (no BM25): each word of `q` is a word of a field (every word it holds: `20/325` both 20 and 325), a whole value (a number, an identifier) or, from three characters, the start of a word of a name or title (`stik`: Stikstofwet; not `tikst`, which the full search finds), and of the first 2,000 rows found those whose name or title starts with `q` come first, then the most cited articles, the laws with the most articles, the dossiers with the latest activity and the newest papers; the judgments are found without ranking their summaries: by ECLI, by a part of a name (`Urgenda`), or by every word of three characters or more in the display name (court, date, case number), the most cited first, and when none does (a subject, `onrechtmatige daad`) the newest that hold the words (summary, name, display name; of the first 2,000 found, without a rank); a query of fewer than three characters finds no judgment. The full search ranks each type within 3 s: a type that takes longer answers what its live search finds (within 1 s more; for judgments that no name or display name holds: the newest that hold the words, of the first 2,000 found, without a rank) and is named in `partial` too, instead of the request answering 503 at its deadline; the next search of the same terms finds what it counted meanwhile. `searched` says per type of `types` what its search reads: `fields` (`title`, `name`, `number`, `summary`, `text`, `kind`) and `completeness.text`, `none` for a type whose text it does not read (judgments, documents).
+         *     text search over `types` (`articles`, `cabinets`, `commitments`, `committees`, `decisions`, `documents`, `dossiers`, `factions`, `instruments`, `judgments`, `members`; all by default), `kind`, `limit`, and a period `from`, `to` (YYYY-MM-DD, both days in it, either open; 422 for `from` after `to`): each hit by a date of its own, in full and live search alike: a judgment the day of its decision (`date_eff`), a paper its date, a dossier the day it was opened, a vote its date, a commitment the day it was made, a law the day it came into force (`date_in_force`), an article the day its law came into force; a type without a date of its own (a member, a faction, a committee, a cabinet) finds nothing within a period. An article only a citation names, with no text of its own, is no hit. A citation in `q` (`art. 6:162 BW`, `artikel 287 Sr`, `Sr 287`, a full ECLI) puts its article or judgment first, and so does the whole name of a judgment (`Urgenda`, `Lindenbaum/Cohen`: one of its `names`, any case). Every hit has a `score`, its rank tier for `q`: an identifier of the hit (1), its whole name (0.75), the start of its name (0.5), every word of `q` in its name (0.25), a match on words only (0.1), compared in lower case and without accents (`yesilgoz` is part of `Yeşilgöz-Zegerius`); a type lists its hits best first, ties in database order. The names of a hit are its `display_name`, citation title, the `heading` of an article and the `aliases` of an instrument (`BW`, `Boek 6 BW`, `6 BW`: 0.75, before the words); `q` inside the title of a division an article stands in counts as part of its name (0.25). Scores compare across types: a heading or alias that is `q` (0.75) outranks a judgment that only holds its words (0.1). A word of `q` also finds its plural or singular where the last consonant changes between them, which stem apart (`huurprijs` and `huurprijzen`, `brief` and `brieven`). Within a type the database orders by BM25 before the `limit` (on a large table its statistics, the number of rows and the mean length of a field, are an estimate from a fixed sample, at most 6 hours old; the number of rows that hold a common word is the planner's estimate from its statistics, a rare word is counted, and a count that takes over 5 s weighs its terms as held by every row; a word matches the start of a value or a part of it from three characters, the start in any case and, in a name or title, without accents), with a word in a heading (x4), a division title (x1.5), a display name (x2), an alias or short title (x3) weighing more than one in a text; an instrument whose alias or short title is the whole of `q` is always fetched. Of the articles the database orders by their tier before BM25, as far as the article says it (named by its terms, a heading or display name that starts with `q`, every word of `q` in its heading or the title of a division it stands in), so that the best tiers are among the hits however few are asked, while typing too (`onrechtmatige daad`: art. 6:162 BW, in the title Onrechtmatige daad, before the articles of the Wet conflictenrecht onrechtmatige daad). An article is also found by its terms, what the judgments that cite it call it (`noodweer`: art. 41 Sr, whose words do not hold it; `lg_article_terms`), as a match on words (0.1), ranked above those that only hold the word; such a hit has `extra.terms`, the words of `q` it was found by, which come from the case law, not from the law. An article of which every word of `q` is a strong term (a good share of the judgments that use the word cite it, and few judgments cite it at all: `verjaring`, art. 3:310 BW) scores as a whole name (0.75), the best by its words first; a word in more than one in 50 summaries names no article and is left out of that (`ontslag op staande voet`: art. 7:677 BW, named by its other words). A word of `q` that is the short title or an alias of a law (as the instrument has it, whole, any case and without accents: `Cbw`, `Sr`, `BW` of every book) also matches each of its articles, as the name of the law in its `display_name` does (`zorgplicht cbw`: art. 21 of the Cyberbeveiligingswet), and each dossier the law is `LEGISLATED_IN` (`cbw`: dossier 36764, the bill that became it; ranked above a dossier that only holds the word), in full and live search alike. `dossier` and `dossiers` name the type and are left out of a search of dossiers unless they are all of `q` (`cbw dossier` asks for the dossier of the Cbw). `extra` of an article carries `instrument_title` (its law), `instrument_abbreviation`, `heading` and `division_titles` (its `display_name` the article as it is cited: `Art. 6:162 BW`), of an instrument `short_title`, `aliases`, `kind` and the dates `date_published`, `date_in_force` and `version_date_in_force` (as `/api/instruments/{identifier}` gives them; regulations of one title told apart by them); an article and an instrument `expired_on`, the first day it no longer holds (of an article the earlier of its law's and its own end, docs/api.md "Validity"): one expired by today comes after every hit of its score that holds, not left out; of a judgment `ecli`, `appno`, `names` and `cite` (as `/api/judgments` gives it; and `person` when it was found by one), of a document `dossier_number`, of a dossier `number`, `kind`, `current_phase`, `closed`, `outcome` and `short_title` (the name it goes by, as `/api/dossiers` gives it: `Wet betaalbare huur`; null without one). A judgment is also found by a person it names (`lg_judgment_persons`: a party not anonymised, whoever acts for a party) when every word of `q` is a word of that one name, whole (while typing, `mode=live`, the last word by its start): `R. van Gelder`, `Van Gelder` and `mr. drs. R. van Gelder` find `mr. drs. R. van Gelder`, `Vermeulen` finds `mr. I.T.F. Vermeulen`, `college van gedeputeerde staten van Zuid-Holland` finds that party; at least one word of three characters or more that is no title, article or particle (`van`, `mr`); the newest first of the first 2,000 names found. Such a hit has `extra.person` (`name` as written, `role`: the party's role, or `advocaat`, `gemachtigde`, `raadsman` of who acts for one, and `party`: the alias or name of the party they act for, null for a party) and scores 0.25 when `q` is all of the name but its titles, initials, articles and particles, else 0.1 after the judgments found by their words. A member is found by every word of its names (its name, party and the factions of its timeline), a faction by its name, abbreviation and aliases; a word without accents or in capitals finds a name with them (`yesilgoz`: Yeşilgöz; of a member in its own name only; a member without a role, `extra.has_role` false, after every member with one, whatever its score). A cabinet is found by every word of its name (`Rutte`, `kabinet Schoof`), newest first, with `from_date` and `to_date` in `extra`; a commitment by every word of its text or its number (`TZ202609-011`), newest first, with `number`, `made_on`, `status`, `minister_name`, `cabinet` and `ministry` in `extra`. A vote (`decisions`) by every word of what was voted on (`subject`) or its `kind` (`Motie`, `Wetgeving`), newest first, with `date`, `kind`, `passed`, `chamber` and `dossier_numbers` in `extra`; `stemming`, `stemmingen`, `besluit` and `besluiten` name the type and are left out (`stemming abortus` asks for the votes on abortion). Words of `q` that are the abbreviation, name or alias of a faction (of either chamber, past ones too; not when they are part of the name of a member, nor all of `q`) are no words of the search of the papers and the votes: their hits are signed for it (a paper by one of its Kamerleden for it, a vote on such a paper), and `searched.<type>.signed_for` names it (`motie stikstof VVD`). A document hit has in `extra` its `kind`, `external_id`, `dossier_number`, `sequence` (its number in the dossier: nr. 12), `number` (as above: `12`, the letter `A` of an Eerste Kamer paper), `date` (as the source gives it; null when it has none), `chamber` (`TK`, `EK`, null for Staatsblad and Staatscourant, as in `/api/documents`) and `dossier_short_title` (the name its dossier goes by, as `/api/dossiers` gives it; null without one); with `resolve=true` also `resolved`, what `/api/resolve` answers for `q` (kind `none` for a query over 200 characters), null without it: a search box resolves and searches in one request. `mode=live` (while typing; `full` is the default) answers all types within 250 ms together (a type that waited for a thread has what is left): a type not done by then is empty and named in `partial` (`{"judgments": true}`; a type not cut off is not in it); nothing is ranked by its words (no BM25): each word of `q` is a word of a field (every word it holds: `20/325` both 20 and 325), a whole value (a number, an identifier) or, from three characters, the start of a word of a name or title (`stik`: Stikstofwet; not `tikst`, which the full search finds), and of the first 2,000 rows found those whose name or title starts with `q` come first, then the most cited articles, the laws with the most articles, the dossiers with the latest activity and the newest papers; the judgments are found without ranking their summaries: by ECLI, by a part of a name (`Urgenda`), or by every word of three characters or more in the display name (court, date, case number), the most cited first, and when none does (a subject, `onrechtmatige daad`) the newest that hold the words (summary, name, display name; of the first 2,000 found, without a rank); a query of fewer than three characters finds no judgment. The full search ranks each type within 3 s: a type that takes longer answers what its live search finds (within 1 s more; for judgments that no name or display name holds: the newest that hold the words, of the first 2,000 found, without a rank) and is named in `partial` too, instead of the request answering 503 at its deadline; the next search of the same terms finds what it counted meanwhile. `searched` says per type of `types` what its search reads: `fields` (`title`, `name`, `number`, `summary`, `text`, `kind`) and `completeness.text`, `none` for a type whose text it does not read (judgments, documents).
          *
          *     The stop words of `q` (the Dutch stop words of PostgreSQL's Snowball dictionary: `wat`, `is`, `de`, `van`, `mijn`) are no words of the search, unless they are all of it: `words` are those searched, `left_out` the others (`wat is de opzegtermijn van mijn huurcontract` searches `opzegtermijn huurcontract`). When no hit of any type holds every word of two or more, the full search (not `mode=live`) is asked again for the hits that hold one at least (of a ranked type those with more first; not of a citation, `Kamerstuk 35925 VI nr. 5`) and `matched` is `any`, else `all`. `toezegging` and `toezeggingen` name the type of a commitment and are left out of its search (`toezeggingen pensioenen`); a word of a commitment, a vote or a cabinet also finds the forms of its stem of four characters or more (`pensioenen`: nabestaandenpensioen). A word of the name of a kind of motion (`wantrouwen` of motie van wantrouwen, `afkeuring` of motie van afkeuring; `motion_kind`, `semantic tk-motion-kinds`) also finds the motions of that kind and the votes on them, whose subject does not hold it (`het opzeggen van het vertrouwen`), a motion above those that only hold the word; `motion_kind` keeps the papers and the votes to those motions. An LJN (`LJN AU3313`, `AU3313`: the number of the ECLI of a decision before 2013) is the judgment whose ECLI ends in it, as an ECLI is. A member is named whole by the name without the names or initials before it (`Rutte`: Mark Rutte, 0.75, before the Besluit archief Rutten that holds it). `exact` per hit says whether `q` names it as the one thing it is (its citation, ECLI, LJN, number, the abbreviation or whole title of a law, the name of a judgment, the whole name of a member, faction, committee or cabinet), never by a heading or words; `best` is the id of what a search box opens on Enter: the match of `resolved` of confidence 0.9 or more, else the hit of a concept, else the one `exact` hit, else null (`huurverhoging`: no hit it names, however its words match).
          *
@@ -1566,7 +1626,7 @@ export interface paths {
         };
         /**
          * The node a readable URL names, exactly
-         * @description No guess and no fallback (that is `/api/resolve`): the node, or 404 (`<Kind> '<its parameters>' not found.`). 422 for a parameter that is missing or malformed. `kind` and its parameters: `document` (`dossier` as in the URL, `36600-VIII`, and `number`, a number of the Tweede Kamer or a letter of the Eerste Kamer; a paper that is not there is 404, not its dossier), `dossier` (`number`, `36455-(R2188)`), `article` (`law` BWB id or CELEX, or the abbreviation a law is cited by in any case: `wft`, `Sr`, `AVG`, and `bw` with the book in the number; `number`: `6:162` and `162` under BW Boek 6 alike), `annex` (`law` BWB id and `label`, `II`), `case` (a zaak of the Tweede Kamer: its `number`, `2025Z15468`), `activity` (one of the Tweede Kamer, a debate: its `number`, `2026A01323`), `law` (`id`, as `law` of an article), `judgment` (`ecli`; a judgment only cited is answered, with `stub`), `publication` (`series` stb, stcrt or trb, `year`, `number`), `official` (`id` of officielebekendmakingen.nl: `stb-2026-94`, `kst-36799-31`), `commitment` (`number`), `faction`, `committee` (slug), `cabinet` and `member` (its `slug`, `rob-jetten`) (`id`).
+         * @description No guess and no fallback (that is `/api/resolve`): the node, or 404 (`<Kind> '<its parameters>' not found.`). 422 for a parameter that is missing or malformed. `kind` and its parameters: `document` (`dossier` as in the URL, `36600-VIII`, and `number`, a number of the Tweede Kamer or a letter of the Eerste Kamer; a paper that is not there is 404, not its dossier), `dossier` (`number`, `36455-(R2188)`), `article` (`law` BWB id or CELEX, or the abbreviation a law is cited by in any case: `wft`, `Sr`, `AVG`, and `bw` with the book in the number; `number`: `6:162` and `162` under BW Boek 6 alike), `annex` (`law` BWB id and `label`, `II`), `case` (a zaak of the Tweede Kamer: its `number`, `2025Z15468`), `activity` (one of the Tweede Kamer, a debate: its `number`, `2026A01323`), `law` (`id`, as `law` of an article), `judgment` (`ecli`; a judgment only cited is answered, with `stub`), `publication` (`series` stb, stcrt or trb, `year`, `number`), `official` (`id` of officielebekendmakingen.nl: `stb-2026-94`, `kst-36799-31`), `commitment` (`number`), `faction`, `committee` (slug), `cabinet`, `ministry` (its key, `fin`) and `member` (its `slug`, `rob-jetten`) (`id`).
          */
         get: operations["get_lookup_api_lookup_get"];
         put?: never;
@@ -1649,26 +1709,6 @@ export interface paths {
          *     from memory.
          */
         get: operations["health_api_health_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/nodes/shared": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * The neighbours that several nodes share
-         * @description The nodes at the other end of an edge of every node of `ids` (2 to 5 node ids, `collection/key`, comma-separated; an edge counts in either direction, and a node asked for is not its own neighbour), in buckets of one collection: what two sources have in common, the articles, the judgments that cite both, the law they are in. A bucket holds one page (`limit` from `offset`, as `/api/nodes/{collection}/{key}`), its `total` and the `next_offset`. `sort=importance` (default): the most cited first (`inbound_citation_count` of a judgment, an article or an instrument), then by key; `key`: by key. Each neighbour has `links`: every edge between it and each node asked for (`source`, `edge_id`, `relation`, `direction`, `status`, `confidence`). `relations`, `node_types`, `direction` and `status` narrow the edges, as on the node route; `tier` (repeated) and `subject_area` (a main area of law, `Strafrecht`) narrow the judgments alone, the other buckets stay whole. `facets` count the neighbours before the page: per collection, and of the judgments per tier (under `subject_area`) and per main area of law (under `tier`). Reads the edges of each node once, through their indexes: the cost grows with the edges of the nodes asked for (6:162 BW has 10,500), not with the graph. 404 when a node is not there.
-         */
-        get: operations["get_shared_neighbors_route_api_nodes_shared_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1801,6 +1841,11 @@ export interface components {
              * @description ``Activiteit.Status`` as the source writes it: ``Gepland`` (still to come, also when its date has passed), ``Uitgevoerd``, ``Geannuleerd``, ``Verplaatst``, ``Vervallen``; null when the source gives none (the Eerste Kamer gives none).
              */
             status: string | null;
+            /**
+             * Effective Date
+             * @description The day it was held, or is to be: ``date``, but for a ``Verplaatst`` activity the day of the one that took its place (``moved_to``; the latest when there are several), since ``date`` is the day it was first set for and did not go ahead. Null without a date.
+             */
+            effective_date: string | null;
             /**
              * Agenda Title
              * @description Its subject (``Activiteit.Onderwerp``).
@@ -2132,6 +2177,11 @@ export interface components {
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */
             readonly path: string | null;
+            /**
+             * Ministry Name
+             * @description The name of ``ministry`` (``GET /api/ministries/{key}``): ``Financiën``; null without one.
+             */
+            readonly ministry_name: string | null;
         };
         /**
          * ActorDossiersResponse
@@ -2708,7 +2758,7 @@ export interface components {
              * Collection
              * @enum {string}
              */
-            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "annexes";
+            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "ministries" | "annexes";
             /** Bwb Id */
             bwb_id: string | null;
             /**
@@ -3251,7 +3301,7 @@ export interface components {
              * Relation
              * @enum {string}
              */
-            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
+            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "COMMENCES" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
             target_article: components["schemas"]["ArticleRelationDTO"];
             /** Semantic Type */
             semantic_type: string | null;
@@ -3596,7 +3646,7 @@ export interface components {
              * Collection
              * @enum {string}
              */
-            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "annexes";
+            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "ministries" | "annexes";
             /** Type */
             type: string;
             /** Display Name */
@@ -3677,6 +3727,11 @@ export interface components {
              * @description Its BWB type, lower case.
              */
             kind: string | null;
+            /**
+             * Expired On
+             * @description The first day it was no longer in force (repealed or lapsed), as the BWB gives it; null while in force.
+             */
+            expired_on: string | null;
             /** Articles */
             articles: components["schemas"]["BasisArticleDTO"][];
         };
@@ -4194,6 +4249,11 @@ export interface components {
              * @description Per tier, most first; without the `tier` filter.
              */
             tier: components["schemas"]["FacetCountDTO"][];
+            /**
+             * Subject Area
+             * @description Per main area of law of the source (`Strafrecht`, `Civiel recht`, `Bestuursrecht`), most first; a judgment counts for each of its areas; without the `subject_area` filter.
+             */
+            subject_area: components["schemas"]["FacetCountDTO"][];
         };
         /**
          * CitedByJudgment
@@ -4370,6 +4430,29 @@ export interface components {
             read_on: string;
         };
         /**
+         * CommencementPublicationDTO
+         * @description The publication that put a law into force.
+         */
+        CommencementPublicationDTO: {
+            /** Key */
+            key: string;
+            /**
+             * Cite
+             * @description As it is cited: `Stb. 2024, 197`.
+             */
+            cite: string | null;
+            /**
+             * Published On
+             * @description The day it was published.
+             */
+            published_on: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
          * CommitmentActivityDTO
          * @description The activity a commitment was made in: a debate, as the Kamer names it.
          */
@@ -4461,6 +4544,11 @@ export interface components {
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */
             readonly path: string | null;
+            /**
+             * Ministry Name
+             * @description The name of ``ministry`` (``GET /api/ministries/{key}``): ``Financiën``; null without one.
+             */
+            readonly ministry_name: string | null;
         };
         /** CommitmentDossierDTO */
         CommitmentDossierDTO: {
@@ -5168,7 +5256,7 @@ export interface components {
              * Collection
              * @enum {string}
              */
-            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "annexes";
+            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "ministries" | "annexes";
             /** Key */
             key: string;
             /** Path */
@@ -6184,6 +6272,13 @@ export interface components {
              * @description The publications its law was enacted in (`Stb. 2024, 193`), the earliest published first: the same `legislated_in` edges as `instruments`.
              */
             enacted: components["schemas"]["EnactedPublicationDTO"][];
+            /** @description Who brought the bill in, from the signature `ministry`, `initiative` and `cabinet` are read from (`semantic tk-government`); null where nobody in government or parliament signed. */
+            proposed_by: components["schemas"]["DossierProposerDTO"] | null;
+            /**
+             * In Force Since
+             * @description The day the law of the dossier came into force: the earliest `first_effective_date` of `enacted` that is today or past; null for a dossier whose law is not in force (yet).
+             */
+            in_force_since: string | null;
             /**
              * Laws Named
              * @description The laws the title names (`Wetboek van Strafrecht`, `Vreemdelingenwet 2000`), each with whether the graph holds it: a law the dossier changes that is not loaded has no instrument above.
@@ -6214,6 +6309,11 @@ export interface components {
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */
             readonly path: string | null;
+            /**
+             * Ministry Name
+             * @description The name of ``ministry`` (``GET /api/ministries/{key}``): ``Financiën``; null without one.
+             */
+            readonly ministry_name: string | null;
         };
         /**
          * DossierDocumentDTO
@@ -6469,7 +6569,7 @@ export interface components {
             /** To Id */
             to_id: string | null;
             /** Relation */
-            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
+            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "COMMENCES" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
             /** Status */
             status: string | null;
             /** Meta */
@@ -6495,7 +6595,7 @@ export interface components {
              * Collection
              * @enum {string}
              */
-            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "annexes";
+            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "ministries" | "annexes";
             /** Type */
             type: string;
             /** Display Name */
@@ -6568,6 +6668,39 @@ export interface components {
              * @description The first date of those; null for none.
              */
             date: string | null;
+        };
+        /**
+         * DossierProposerDTO
+         * @description Who brought the bill in: the person who signed its earliest signed document first
+         *     (the cabinet of that day is ``cabinet`` of the dossier).
+         */
+        DossierProposerDTO: {
+            /** Member Key */
+            member_key: string | null;
+            /** Name */
+            name: string | null;
+            /**
+             * Function
+             * @description As the source writes it: `minister van Binnenlandse Zaken`.
+             */
+            function: string | null;
+            /**
+             * Capacity
+             * @description `bewindspersoon` (the government brought it in) or `kamerlid` (an initiative bill).
+             */
+            capacity: ("kamerlid" | "bewindspersoon" | "overig") | null;
+            /**
+             * Date
+             * @description The day they signed.
+             */
+            date: string | null;
+            /** @description Their ministry, as `ministry` of the dossier. */
+            ministry: components["schemas"]["MinistryKey"] | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * DossierRefDTO
@@ -6806,6 +6939,11 @@ export interface components {
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */
             readonly path: string | null;
+            /**
+             * Ministry Name
+             * @description The name of ``ministry`` (``GET /api/ministries/{key}``): ``Financiën``; null without one.
+             */
+            readonly ministry_name: string | null;
         };
         /**
          * DossierTimelineResponse
@@ -7111,6 +7249,11 @@ export interface components {
             number: string | null;
             /** Url */
             url: string;
+            /**
+             * Path
+             * @description Its readable address where the graph holds the paper itself: `publicatie wet` and `publicatie inwerkingtreding` are the Staatsblad pages (`/stb/2024/193`) of `enacted`; null for any other paper.
+             */
+            path: string | null;
         };
         /**
          * EkSourceDTO
@@ -7197,10 +7340,17 @@ export interface components {
              */
             cite: string | null;
             /**
+             * Signed On
+             * @description The day the Koning and the minister signed it.
+             */
+            signed_on: string | null;
+            /**
              * Published On
              * @description The day it was published.
              */
             published_on: string | null;
+            /** @description The publication that put what it enacted into force (the inwerkingtredingsbesluit, `Stb. 2024, 197`), as the BWB names it for the earliest of what it enacted; null when the publication itself puts it into force or the BWB names none. */
+            commencement: components["schemas"]["CommencementPublicationDTO"] | null;
             /**
              * First Effective Date
              * @description The earliest effective date of what it enacted (the `effective_date` of its `establishes`, `amends`, `introduces` and `repeals` edges, as the BWB gives it); null where its source gives none, as for a law of the Staatsblad the BWB does not hold.
@@ -7233,7 +7383,7 @@ export interface components {
              * @default IMPLEMENTS
              * @enum {string}
              */
-            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
+            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "COMMENCES" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
             /** Confidence */
             confidence: number | null;
             /**
@@ -8087,7 +8237,7 @@ export interface components {
              * Collection
              * @enum {string}
              */
-            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "annexes";
+            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "ministries" | "annexes";
             /** Key */
             key: string;
             /**
@@ -9016,6 +9166,11 @@ export interface components {
              */
             kind: string | null;
             /**
+             * Expired On
+             * @description The first day it was no longer in force (repealed or lapsed), as the BWB gives it; null while in force.
+             */
+            expired_on: string | null;
+            /**
              * Basis Kind
              * @description `delegates` when one of `articles` does; `delegates`: the leden named (none: the whole article) give the power the regulation is made under (a delegation formula, "bij besluit van", "kan regels stellen"); `mentioned`: the article is only named in the preamble (Awb 3:4 by a policy rule); null: not known (an article without text).
              */
@@ -9039,8 +9194,14 @@ export interface components {
             /** Total */
             total: number;
             /**
+             * Expired Total
+             * @description How many of the laws its preamble names are no longer in force, whatever `validity` asked for.
+             * @default 0
+             */
+            expired_total: number;
+            /**
              * Items
-             * @description Every law its preamble names an article in force of, by title.
+             * @description Every law of the `validity` asked for its preamble names an article in force of, by title.
              */
             items: components["schemas"]["InstrumentBasisItem"][];
         };
@@ -9070,6 +9231,11 @@ export interface components {
              * @description When the regulation itself entered into force.
              */
             date_in_force: string | null;
+            /**
+             * Expired On
+             * @description The first day it was no longer in force (repealed or lapsed), as the BWB gives it; null while in force.
+             */
+            expired_on: string | null;
             /**
              * Basis Kind
              * @description `delegates` when one of `articles` does: the law gives the power it is made under; `mentioned` when it only names them ("Genoemd in de aanhef van"); null when not known.
@@ -9104,10 +9270,61 @@ export interface components {
             /** Total */
             total: number;
             /**
-             * Items
-             * @description Every regulation in force issued under an article of the law: AMvBs first, then ministerial regulations, then the others; by title.
+             * Expired Total
+             * @description How many regulations issued under an article in force of the law are no longer in force, whatever `validity` asked for.
+             * @default 0
              */
-            items: components["schemas"]["InstrumentDelegatedItem"][];
+            expired_total: number;
+            /**
+             * By Kind
+             * @description `total` per `kind` (`unknown` without one).
+             */
+            by_kind: {
+                [key: string]: number;
+            };
+            /**
+             * Items
+             * @description Every regulation of the `validity` asked for issued under an article of the law: AMvBs first, then ministerial regulations, then the others; by title. With `detail=summary` the light form.
+             */
+            items: components["schemas"]["InstrumentDelegatedItem"][] | components["schemas"]["InstrumentDelegatedSummaryItem"][];
+        };
+        /**
+         * InstrumentDelegatedSummaryItem
+         * @description A regulation whose preamble names an article of the law, in the light form
+         *     (`detail=summary`): without what it takes reading its own articles for.
+         */
+        InstrumentDelegatedSummaryItem: {
+            instrument: components["schemas"]["InstrumentSummaryDTO"];
+            /**
+             * Kind
+             * @description Its BWB type, lower case: `amvb`, `ministeriele-regeling`, `kb`, …
+             */
+            kind: string | null;
+            /**
+             * Date In Force
+             * @description When the regulation itself entered into force.
+             */
+            date_in_force: string | null;
+            /**
+             * Expired On
+             * @description The first day it was no longer in force (repealed or lapsed), as the BWB gives it; null while in force.
+             */
+            expired_on: string | null;
+            /**
+             * Basis Kind
+             * @description `delegates` when one of `articles` does: the law gives the power it is made under; `mentioned` when it only names them ("Genoemd in de aanhef van"); null when not known.
+             */
+            basis_kind: ("delegates" | "mentioned") | null;
+            /**
+             * Articles
+             * @description The articles of the law it is issued under, in the order of the law.
+             */
+            articles: components["schemas"]["BasisArticleDTO"][];
+            /**
+             * Sub Delegated
+             * @description The regulations in force issued under its articles in turn, as on the full form.
+             */
+            sub_delegated: components["schemas"]["SubDelegatedDTO"][];
         };
         /**
          * InstrumentDetailDTO
@@ -9123,7 +9340,7 @@ export interface components {
              * @default instruments
              * @enum {string}
              */
-            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "annexes";
+            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "ministries" | "annexes";
             /**
              * Bwb Id
              * @description BWB id of a Dutch regulation or treaty; `BWBV0001000` for the Convention of the ECHR.
@@ -9209,6 +9426,8 @@ export interface components {
              * @description The first day it was no longer in force (repealed or lapsed), as the BWB gives it; null while in force.
              */
             expired_on: string | null;
+            /** @description The ministry first responsible for a BWB regulation (``GET /api/ministries``): the one its WTI names (``eerstverantwoordelijke``), under its name of today; null for one the WTI gives none or no ministry (a ZBO), and for any other instrument. */
+            ministry: components["schemas"]["MinistryKey"] | null;
             /** @description Whether it holds today, from the dates its source gives (docs/api.md "Validity"); null where the source says nothing of it (an EU act, a treaty the Verdragenbank does not say is in force). */
             validity: components["schemas"]["ValidityDTO"] | null;
             /**
@@ -9274,6 +9493,11 @@ export interface components {
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */
             readonly path: string | null;
+            /**
+             * Ministry Name
+             * @description The name of ``ministry`` (``GET /api/ministries/{key}``): ``Financiën``; null without one.
+             */
+            readonly ministry_name: string | null;
         };
         /**
          * InstrumentDivisionDTO
@@ -9484,6 +9708,11 @@ export interface components {
              * @description Per tier, the most first. Without the `tier` filter.
              */
             tier: components["schemas"]["FacetCountDTO"][];
+            /**
+             * Subject Area
+             * @description Per main area of law of the source (`Strafrecht`, `Civiel recht`, `Bestuursrecht`), the most first; a judgment counts for each of its areas. Without the `subject_area` filter.
+             */
+            subject_area: components["schemas"]["FacetCountDTO"][];
         };
         /**
          * InstrumentJudgmentItem
@@ -9614,7 +9843,7 @@ export interface components {
              * @default instruments
              * @enum {string}
              */
-            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "annexes";
+            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "ministries" | "annexes";
             /** Bwb Id */
             bwb_id: string | null;
             /** Celex */
@@ -9673,11 +9902,18 @@ export interface components {
              * @description The first day it was no longer in force (repealed or lapsed), as the BWB gives it; null while in force.
              */
             expired_on: string | null;
+            /** @description The ministry first responsible for a BWB regulation (``GET /api/ministries``): the one its WTI names (``eerstverantwoordelijke``), under its name of today; null for one the WTI gives none or no ministry (a ZBO), and for any other instrument. */
+            ministry: components["schemas"]["MinistryKey"] | null;
             /**
              * Path
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */
             readonly path: string | null;
+            /**
+             * Ministry Name
+             * @description The name of ``ministry`` (``GET /api/ministries/{key}``): ``Financiën``; null without one.
+             */
+            readonly ministry_name: string | null;
         };
         /**
          * InstrumentListResponse
@@ -10025,7 +10261,7 @@ export interface components {
              * @default REFERS_TO
              * @enum {string}
              */
-            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
+            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "COMMENCES" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
             /** Confidence */
             confidence: number | null;
             /**
@@ -10294,7 +10530,7 @@ export interface components {
              * Collection
              * @enum {string}
              */
-            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "annexes";
+            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "ministries" | "annexes";
             /** Type */
             type: string;
             /** Display Name */
@@ -10386,6 +10622,26 @@ export interface components {
              * @description What the decision is: `arrest`, `vonnis`, `beschikking`, `uitspraak`, `beslissing` (the kantonrechter on an appeal against a traffic fine), `conclusie` or `prejudiciële beslissing`. From the metadata and the kop where they tell, else from the court and the area of law; null when nothing does.
              */
             decision_kind: ("arrest" | "vonnis" | "beschikking" | "uitspraak" | "beslissing" | "conclusie" | "prejudiciële beslissing") | null;
+            /**
+             * Subjects
+             * @description The areas of law of the source as it writes them (`Strafrecht`, `Bestuursrecht; Belastingrecht`); empty when it gives none.
+             */
+            subjects: string[];
+            /**
+             * Subject Areas
+             * @description The main areas of law: each of `subjects` up to its first `;`, each once (`Strafrecht`, `Civiel recht`, `Bestuursrecht`). What the `subject_area` filters of the lists take.
+             */
+            subject_areas: string[];
+            /**
+             * Procedure
+             * @description The procedure as the Rechtspraak gives it (`psi:procedure`): `Hoger beroep`, `Cassatie`, `Eerste aanleg - meervoudig`; null when it gives none.
+             */
+            procedure: string | null;
+            /**
+             * Chamber
+             * @description The chamber or division of the court that the kop names (`Strafkamer`, `Civiele kamer`, `Afdeling civiel recht`, `Team Handel`), as written; null when the kop names none (the metadata of the source does not).
+             */
+            chamber: string | null;
             /**
              * Series Id
              * @description The series of parallel cases the judgment is one of (the same court, day and, nearly, text): the lowest ECLI in it. Null outside a series.
@@ -10604,7 +10860,7 @@ export interface components {
              * @default judgments
              * @enum {string}
              */
-            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "annexes";
+            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "ministries" | "annexes";
             /** Ecli */
             ecli: string | null;
             /** Display Name */
@@ -10990,7 +11246,7 @@ export interface components {
              * Collection
              * @enum {string}
              */
-            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "annexes";
+            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "ministries" | "annexes";
             /**
              * Kind
              * @description What the node is: `document`, `dossier`, `article`, `annex`, `instrument`, `judgment`, `commitment`, `case`, `activity`, `faction`, `committee`, `cabinet`.
@@ -11393,10 +11649,30 @@ export interface components {
             next_offset: number | null;
         };
         /**
+         * MinistryCabinetDTO
+         * @description A cabinet with the posts held under the ministry in it, in order of start.
+         */
+        MinistryCabinetDTO: {
+            /** Key */
+            key: string;
+            /** Name */
+            name: string | null;
+            /** From Date */
+            from_date: string | null;
+            /**
+             * To Date
+             * @description The day it ended, as Rijksoverheid gives it: the day of the change, on which the next cabinet (holder, phase) takes office; so the period runs from ``from_date`` up to, not including, ``to_date``, and ``to_date`` is the ``from_date`` of what follows. Null while it lasts.
+             */
+            to_date: string | null;
+            /** Posts */
+            posts: components["schemas"]["MinistryPostDTO"][];
+        };
+        /**
          * MinistryDTO
          * @description A ministry name of ``data/ministries.json``: a name that came back (Economische
          *     Zaken) has a period for each time; a former one names its successor and the last day
-         *     it had its name (``successor`` and ``until`` of its last period).
+         *     it had its name (``successor`` and ``until`` of its last period). A node of the graph
+         *     too (``/api/nodes/ministries/{key}``), at ``/ministeries/{key}``.
          */
         MinistryDTO: {
             key: components["schemas"]["MinistryKey"];
@@ -11414,6 +11690,66 @@ export interface components {
             until: string | null;
             /** Periods */
             periods: components["schemas"]["MinistryPeriodDTO"][];
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
+         * MinistryDetailDTO
+         * @description A ministry with its bewindspersonen per cabinet, and how many laws, open dossiers
+         *     and open commitments are its own: each the ``total`` of a list with ``ministry``.
+         */
+        MinistryDetailDTO: {
+            key: components["schemas"]["MinistryKey"];
+            /** Name */
+            name: string;
+            /** Abbreviation */
+            abbreviation: string | null;
+            /**
+             * Tooi
+             * @description The TOOI code: ``mnre1045``.
+             */
+            tooi: string | null;
+            successor: components["schemas"]["MinistryKey"] | null;
+            /** Until */
+            until: string | null;
+            /** Periods */
+            periods: components["schemas"]["MinistryPeriodDTO"][];
+            /**
+             * Predecessors
+             * @description The names it followed (``Veiligheid en Justitie`` for ``Justitie en Veiligheid``), each a ministry of its own.
+             */
+            predecessors: components["schemas"]["MinistryKey"][];
+            /**
+             * Cabinets
+             * @description The cabinets with a post under it, newest first: a post is under the ministry it had on its day (``government_functions[].ministry``).
+             */
+            cabinets: components["schemas"]["MinistryCabinetDTO"][];
+            /**
+             * Laws
+             * @description The BWB regulations it is first responsible for (the WTI's ``eerstverantwoordelijke``), as ``GET /api/instruments?ministry=`` lists them: those in force, without the ones that change others.
+             * @default 0
+             */
+            laws: number;
+            /**
+             * Open Dossiers
+             * @description Its open dossiers: ``GET /api/dossiers?status=open&ministry=`` (a dossier's ministry is that of the bewindspersoon who signed it first).
+             * @default 0
+             */
+            open_dossiers: number;
+            /**
+             * Open Commitments
+             * @description Its open commitments: ``GET /api/commitments?status=Openstaand&ministry=``.
+             * @default 0
+             */
+            open_commitments: number;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * MinistryKey
@@ -11454,12 +11790,43 @@ export interface components {
             successor_source: ("tooi" | "rijksoverheid" | "curated") | null;
         };
         /**
+         * MinistryPostDTO
+         * @description A post under the ministry, as the cabinet lists it (``GET /api/cabinets/{key}``).
+         */
+        MinistryPostDTO: {
+            member: components["schemas"]["PersonRefDTO"];
+            post: components["schemas"]["Post"] | null;
+            /**
+             * Function
+             * @description As Rijksoverheid names the post.
+             */
+            function: string | null;
+            /** Portfolio */
+            portfolio: string | null;
+            /**
+             * From Date
+             * @description The day it began.
+             */
+            from_date: string | null;
+            /**
+             * To Date
+             * @description The day it ended, as Rijksoverheid gives it: the day of the change, on which the next cabinet (holder, phase) takes office; so the period runs from ``from_date`` up to, not including, ``to_date``, and ``to_date`` is the ``from_date`` of what follows. Null while it lasts.
+             */
+            to_date: string | null;
+            /**
+             * Acting
+             * @description A stand-in (ad interim).
+             * @default false
+             */
+            acting: boolean;
+        };
+        /**
          * NeighborBucketDTO
          * @description The neighbours that share a relation, a direction and a collection: one page of them.
          */
         NeighborBucketDTO: {
             /** Relation */
-            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
+            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "COMMENCES" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
             /**
              * Direction
              * @enum {string}
@@ -11469,7 +11836,7 @@ export interface components {
              * Collection
              * @enum {string}
              */
-            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "annexes";
+            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "ministries" | "annexes";
             /** Type */
             type: string;
             /** Total */
@@ -11506,7 +11873,7 @@ export interface components {
              * Collection
              * @enum {string}
              */
-            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "annexes";
+            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "ministries" | "annexes";
             /** Type */
             type: string;
             /** Display Name */
@@ -11532,7 +11899,7 @@ export interface components {
             /** Edge Id */
             edge_id: string;
             /** Relation */
-            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
+            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "COMMENCES" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
             /**
              * Direction
              * @enum {string}
@@ -11562,7 +11929,7 @@ export interface components {
              * Collection
              * @enum {string}
              */
-            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "annexes";
+            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "ministries" | "annexes";
             /**
              * Total
              * @description Its neighbours there along the edges walked, of the types asked (from the edges: one that is gone counts too).
@@ -11636,7 +12003,7 @@ export interface components {
             /** Target */
             target: string;
             /** Relation */
-            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
+            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "COMMENCES" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
             /** Confidence */
             confidence: number | null;
             /** Status */
@@ -12096,7 +12463,7 @@ export interface components {
              * Relations
              * @description The relations the paths keep to, as asked; null for all.
              */
-            relations: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED")[] | null;
+            relations: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "COMMENCES" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED")[] | null;
             /**
              * Through Laws
              * @description Whether a path may pass through a law by its articles (`PART_OF`).
@@ -12357,7 +12724,7 @@ export interface components {
              * Relation
              * @enum {string}
              */
-            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
+            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "COMMENCES" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
             /** Semantic Type */
             semantic_type: string | null;
             /**
@@ -12413,7 +12780,7 @@ export interface components {
              * Collection
              * @enum {string}
              */
-            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "annexes";
+            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "ministries" | "annexes";
             /**
              * Kind
              * @enum {string}
@@ -12639,7 +13006,7 @@ export interface components {
              * Collection
              * @enum {string}
              */
-            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "annexes";
+            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "ministries" | "annexes";
             /** Type */
             type: string;
             /** Display Name */
@@ -12892,6 +13259,140 @@ export interface components {
             ministry: components["schemas"]["MinistryKey"] | null;
         };
         /**
+         * SharedBucketDTO
+         * @description The shared neighbours of one collection: one page of them.
+         */
+        SharedBucketDTO: {
+            /**
+             * Collection
+             * @enum {string}
+             */
+            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "ministries" | "annexes";
+            /** Type */
+            type: string;
+            /**
+             * Total
+             * @description Under the filters, whatever the page.
+             */
+            total: number;
+            /**
+             * Next Offset
+             * @description Null on the last page.
+             */
+            next_offset: number | null;
+            /** Items */
+            items: components["schemas"]["SharedNeighborDTO"][];
+        };
+        /**
+         * SharedFacetsDTO
+         * @description Counts of the shared neighbours, each facet under the filters but its own.
+         */
+        SharedFacetsDTO: {
+            /**
+             * Collection
+             * @description Per collection (`value`), most first.
+             */
+            collection: components["schemas"]["FacetCountDTO"][];
+            /**
+             * Tier
+             * @description Of the judgments, per tier, most first, under `subject_area`.
+             */
+            tier: components["schemas"]["FacetCountDTO"][];
+            /**
+             * Subject Area
+             * @description Of the judgments, per main area of law (a judgment counts for each of its areas), most first, under `tier`.
+             */
+            subject_area: components["schemas"]["FacetCountDTO"][];
+        };
+        /**
+         * SharedLinkDTO
+         * @description The edge by which a shared neighbour hangs at one of the nodes asked for.
+         */
+        SharedLinkDTO: {
+            /**
+             * Source
+             * @description The node asked for (`collection/key`) it hangs at.
+             */
+            source: string;
+            /** Edge Id */
+            edge_id: string;
+            /** Relation */
+            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "COMMENCES" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
+            /**
+             * Direction
+             * @description `outbound`: the edge leaves the source for the neighbour.
+             * @enum {string}
+             */
+            direction: "outbound" | "inbound";
+            /** Status */
+            status: string | null;
+            /** Confidence */
+            confidence: number | null;
+        };
+        /**
+         * SharedNeighborDTO
+         * @description A neighbour of every node asked for, with the edges that tie it to each.
+         */
+        SharedNeighborDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /**
+             * Collection
+             * @enum {string}
+             */
+            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "ministries" | "annexes";
+            /** Type */
+            type: string;
+            /** Display Name */
+            display_name: string | null;
+            /** Labels */
+            labels: string[];
+            /** Props */
+            props: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Kind Group
+             * @description Of a paper or a case: What the paper or case is, by its Soort (`kind`): `motie` or `amendement` (also a changed one), `wetsvoorstel`, `brief` (a Soort beginning with Brief), `overig`; null without a Soort. Absent for any other node.
+             */
+            kind_group?: ("motie" | "amendement" | "wetsvoorstel" | "brief" | "overig") | null;
+            /** @description Of a judgment: The judgment as a lawyer cites it: `short` `HR 20 december 2019`, `Rb. Den Haag 6 december 2019`, `Conclusie A-G Hartlief 20 december 2019` (`P-G` where a procureur-generaal signed it), `HvJ EU 22 juni 2023, C-160/20` (a court of the Union with its case number); `full` with its ECLI. Null without an ECLI. Absent for a node of another collection. */
+            cite?: components["schemas"]["JudgmentCiteDTO"] | null;
+            /**
+             * Title
+             * @description Its title, as the `<title>` of its page has it and `title` of `/api/nodes/{collection}/{key}` (`Art. 6:162 BW, Onrechtmatige daad`, `HR 20 december 2019 (Urgenda), ECLI:NL:HR:2019:2006`, `36496 Wet AI-toezicht`), from the props it carries (with `props=canvas` too, which keeps what it reads).
+             */
+            title?: string | null;
+            /**
+             * Links
+             * @description Every edge between the neighbour and a node asked for, the nodes in the order of `ids`, each node with at least one.
+             */
+            links: components["schemas"]["SharedLinkDTO"][];
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
+         * SharedNeighborsResponse
+         * @description Response for GET /api/nodes/shared.
+         */
+        SharedNeighborsResponse: {
+            /** Ids */
+            ids: string[];
+            /**
+             * Total
+             * @description The shared neighbours of every collection.
+             */
+            total: number;
+            /** Buckets */
+            buckets: components["schemas"]["SharedBucketDTO"][];
+            facets: components["schemas"]["SharedFacetsDTO"];
+        };
+        /**
          * SignedForDTO
          * @description A faction the query names, which the hits of a type are signed for.
          */
@@ -12998,6 +13499,11 @@ export interface components {
              * @description When the regulation itself entered into force.
              */
             date_in_force: string | null;
+            /**
+             * Expired On
+             * @description The first day it was no longer in force (repealed or lapsed), as the BWB gives it; null while in force.
+             */
+            expired_on: string | null;
             /**
              * Basis Kind
              * @description `delegates` when one of `articles` does; `delegates`: the leden named (none: the whole article) give the power the regulation is made under (a delegation formula, "bij besluit van", "kan regels stellen"); `mentioned`: the article is only named in the preamble (Awb 3:4 by a policy rule); null: not known (an article without text).
@@ -13133,6 +13639,207 @@ export interface components {
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */
             readonly path: string | null;
+        };
+        /**
+         * SurroundingDossierDTO
+         * @description A dossier as one node, with what it holds counted (never its members).
+         */
+        SurroundingDossierDTO: {
+            node: components["schemas"]["BaseNodeDTO"];
+            /** Via */
+            via: string;
+            held: components["schemas"]["SurroundingHeldDTO"];
+        };
+        /**
+         * SurroundingFactionVoteDTO
+         * @description How one faction voted on a decision.
+         */
+        SurroundingFactionVoteDTO: {
+            faction: components["schemas"]["BaseNodeDTO"];
+            /**
+             * Choice
+             * @description `Voor`, `Tegen`, ...; of a roll call `Verdeeld` when the members of the faction did not all vote alike.
+             */
+            choice: string | null;
+            /**
+             * Seats
+             * @description The seats of the faction's vote; of a roll call the members who voted.
+             */
+            seats: number | null;
+            /**
+             * Members
+             * @description Of a roll call: how many members of the faction cast each choice, by the faction they sat in on the day; null for a vote by faction.
+             */
+            members: {
+                [key: string]: number;
+            } | null;
+        };
+        /**
+         * SurroundingGapDTO
+         * @description Something the data does not hold, said as it is.
+         */
+        SurroundingGapDTO: {
+            /**
+             * Section
+             * @enum {string}
+             */
+            section: "submitters" | "dossiers" | "laws" | "votes" | "follows" | "context";
+            /** Reason */
+            reason: string;
+        };
+        /**
+         * SurroundingHeldDTO
+         * @description What a dossier holds, counted.
+         */
+        SurroundingHeldDTO: {
+            /** Documents */
+            documents: number;
+            /** Cases */
+            cases: number;
+            /** Decisions */
+            decisions: number;
+            /** Commitments */
+            commitments: number;
+            /** Activities */
+            activities: number;
+            /**
+             * Laws
+             * @description The publications that legislated in it.
+             */
+            laws: number;
+        };
+        /**
+         * SurroundingItemDTO
+         * @description A node of a section and the edge that ties it to the node asked for.
+         */
+        SurroundingItemDTO: {
+            node: components["schemas"]["BaseNodeDTO"];
+            /**
+             * Relation
+             * @enum {string}
+             */
+            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "COMMENCES" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
+            /**
+             * Direction
+             * @description `outbound`: the edge leaves `via` for the node.
+             * @enum {string}
+             */
+            direction: "outbound" | "inbound";
+            /** Edge Id */
+            edge_id: string;
+            /** Status */
+            status: string | null;
+            /**
+             * Via
+             * @description The node the edge hangs at: the node asked for, or its paper, case or dossier (`collection/key`).
+             */
+            via: string;
+        };
+        /**
+         * SurroundingKindDTO
+         * @description How many edges of a relation reach nodes of a collection.
+         */
+        SurroundingKindDTO: {
+            /**
+             * Relation
+             * @enum {string}
+             */
+            relation: "PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "COMMENCES" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED";
+            /**
+             * Collection
+             * @enum {string}
+             */
+            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "ministries" | "annexes";
+            /** Count */
+            count: number;
+        };
+        /**
+         * SurroundingSectionDTO
+         * @description Some nodes of one kind of surrounding, and how many there are.
+         */
+        SurroundingSectionDTO: {
+            /**
+             * Total
+             * @description The distinct nodes of the section's kinds at the node and its document, case and dossier, per relation, whatever `items` holds.
+             */
+            total: number;
+            /**
+             * Kinds
+             * @description `total` per relation and collection.
+             */
+            kinds: components["schemas"]["SurroundingKindDTO"][];
+            /** Items */
+            items: components["schemas"]["SurroundingItemDTO"][];
+        };
+        /**
+         * SurroundingSubmitterDTO
+         * @description Who signed a paper or case, or made a commitment.
+         */
+        SurroundingSubmitterDTO: {
+            node: components["schemas"]["BaseNodeDTO"];
+            /** Edge Id */
+            edge_id: string;
+            /**
+             * Role
+             * @description `Eerste ondertekenaar`, `Mede ondertekenaar`, `toezegger`, as the source writes it.
+             */
+            role: string | null;
+            /** Function */
+            function: string | null;
+            /**
+             * Capacity
+             * @description `kamerlid`, `bewindspersoon` or `overig`.
+             */
+            capacity: string | null;
+            /** @description The faction they sat in on the day of the node; null for a bewindspersoon and where no membership covers that day. */
+            faction: components["schemas"]["BaseNodeDTO"] | null;
+        };
+        /**
+         * SurroundingVoteDTO
+         * @description A decision on the node or its paper or case, with the vote of each faction.
+         */
+        SurroundingVoteDTO: {
+            /** @description The decision; `props.tally`, `passed` and `vote_kind` say how it ended. */
+            node: components["schemas"]["BaseNodeDTO"];
+            /**
+             * About
+             * @description The paper or case the decision is on (`collection/key`); null for the decision asked for.
+             */
+            about: string | null;
+            /**
+             * Factions
+             * @description Of a vote by faction its `VOTED` edges; of a roll call (`props.vote_kind` `member`) derived from the votes of its members; empty for a hamerstuk and a roll call whose member votes or memberships are not read.
+             */
+            factions: components["schemas"]["SurroundingFactionVoteDTO"][];
+        };
+        /**
+         * SurroundingsResponse
+         * @description What stands around a paper, case, decision, commitment or activity: who put it
+         *     forward, the dossier as one node, the laws it touches, the votes on it per faction,
+         *     what follows from it, and where it was made.
+         */
+        SurroundingsResponse: {
+            focal: components["schemas"]["BaseNodeDTO"];
+            /** Submitters */
+            submitters: components["schemas"]["SurroundingSubmitterDTO"][];
+            /** Submitters Total */
+            submitters_total: number;
+            /** Dossiers */
+            dossiers: components["schemas"]["SurroundingDossierDTO"][];
+            /** Dossiers Total */
+            dossiers_total: number;
+            laws: components["schemas"]["SurroundingSectionDTO"];
+            /** Votes */
+            votes: components["schemas"]["SurroundingVoteDTO"][];
+            /** Votes Total */
+            votes_total: number;
+            follows: components["schemas"]["SurroundingSectionDTO"];
+            context: components["schemas"]["SurroundingSectionDTO"];
+            /**
+             * Gaps
+             * @description Per section that is empty or incomplete, why: the source lacks it.
+             */
+            gaps: components["schemas"]["SurroundingGapDTO"][];
         };
         /**
          * TermSpanDTO
@@ -13948,140 +14655,6 @@ export interface components {
              */
             cabinet: string | null;
         };
-        /**
-         * SharedFacetsDTO
-         * @description Counts of the shared neighbours, each facet under the filters but its own.
-         */
-        SharedFacetsDTO: {
-            /**
-             * Collection
-             * @description Per collection (`value`), most first.
-             */
-            collection: components["schemas"]["FacetCountDTO"][];
-            /**
-             * Tier
-             * @description Of the judgments, per tier, most first, under `subject_area`.
-             */
-            tier: components["schemas"]["FacetCountDTO"][];
-            /**
-             * Subject Area
-             * @description Of the judgments, per main area of law (a judgment counts for each of its areas), most first, under `tier`.
-             */
-            subject_area: components["schemas"]["FacetCountDTO"][];
-        };
-        /**
-         * SharedLinkDTO
-         * @description The edge by which a shared neighbour hangs at one of the nodes asked for.
-         */
-        SharedLinkDTO: {
-            /**
-             * Source
-             * @description The node asked for (`collection/key`) it hangs at.
-             */
-            source: string;
-            /** Edge Id */
-            edge_id: string;
-            /** Relation */
-            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "COMMENCES" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
-            /**
-             * Direction
-             * @description `outbound`: the edge leaves the source for the neighbour.
-             * @enum {string}
-             */
-            direction: "outbound" | "inbound";
-            /** Status */
-            status: string | null;
-            /** Confidence */
-            confidence: number | null;
-        };
-        /**
-         * SharedNeighborDTO
-         * @description A neighbour of every node asked for, with the edges that tie it to each.
-         */
-        SharedNeighborDTO: {
-            /** Id */
-            id: string;
-            /** Key */
-            key: string;
-            /**
-             * Collection
-             * @enum {string}
-             */
-            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "annexes";
-            /** Type */
-            type: string;
-            /** Display Name */
-            display_name: string | null;
-            /** Labels */
-            labels: string[];
-            /** Props */
-            props: {
-                [key: string]: unknown;
-            } | null;
-            /**
-             * Kind Group
-             * @description Of a paper or a case: What the paper or case is, by its Soort (`kind`): `motie` or `amendement` (also a changed one), `wetsvoorstel`, `brief` (a Soort beginning with Brief), `overig`; null without a Soort. Absent for any other node.
-             */
-            kind_group?: ("motie" | "amendement" | "wetsvoorstel" | "brief" | "overig") | null;
-            /** @description Of a judgment: The judgment as a lawyer cites it: `short` `HR 20 december 2019`, `Rb. Den Haag 6 december 2019`, `Conclusie A-G Hartlief 20 december 2019` (`P-G` where a procureur-generaal signed it), `HvJ EU 22 juni 2023, C-160/20` (a court of the Union with its case number); `full` with its ECLI. Null without an ECLI. Absent for a node of another collection. */
-            cite?: components["schemas"]["JudgmentCiteDTO"] | null;
-            /**
-             * Title
-             * @description Its title, as the `<title>` of its page has it and `title` of `/api/nodes/{collection}/{key}` (`Art. 6:162 BW, Onrechtmatige daad`, `HR 20 december 2019 (Urgenda), ECLI:NL:HR:2019:2006`, `36496 Wet AI-toezicht`), from the props it carries (with `props=canvas` too, which keeps what it reads).
-             */
-            title?: string | null;
-            /**
-             * Links
-             * @description Every edge between the neighbour and a node asked for, the nodes in the order of `ids`, each node with at least one.
-             */
-            links: components["schemas"]["SharedLinkDTO"][];
-            /**
-             * Path
-             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
-             */
-            readonly path: string | null;
-        };
-        /**
-         * SharedBucketDTO
-         * @description The shared neighbours of one collection: one page of them.
-         */
-        SharedBucketDTO: {
-            /**
-             * Collection
-             * @enum {string}
-             */
-            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "annexes";
-            /** Type */
-            type: string;
-            /**
-             * Total
-             * @description Under the filters, whatever the page.
-             */
-            total: number;
-            /**
-             * Next Offset
-             * @description Null on the last page.
-             */
-            next_offset: number | null;
-            /** Items */
-            items: components["schemas"]["SharedNeighborDTO"][];
-        };
-        /**
-         * SharedNeighborsResponse
-         * @description Response for GET /api/nodes/shared.
-         */
-        SharedNeighborsResponse: {
-            /** Ids */
-            ids: string[];
-            /**
-             * Total
-             * @description The shared neighbours of every collection.
-             */
-            total: number;
-            /** Buckets */
-            buckets: components["schemas"]["SharedBucketDTO"][];
-            facets: components["schemas"]["SharedFacetsDTO"];
-        };
     };
     responses: never;
     parameters: never;
@@ -14138,6 +14711,8 @@ export interface operations {
                 lid?: string | null;
                 /** @description `date_desc`: the newest judgment first; `citation_count`: the most cited judgment first (a standard judgment), then the newest. */
                 sort?: "date_desc" | "citation_count";
+                /** @description A main area of law of the judgment's source, as `facets.subject_area` writes it: `Strafrecht`, `Civiel recht`, `Bestuursrecht`; `facets.subject_area` still counts every area. */
+                subject_area?: string | null;
             };
             header?: never;
             path: {
@@ -14484,6 +15059,8 @@ export interface operations {
                 amending?: ("hide" | "show" | "only") | null;
                 /** @description The instruments in force today (`in_force`), those no longer in force (`expired`), or `all`. Left out: `in_force` without `q`, `all` with it. */
                 validity?: ("in_force" | "expired" | "all") | null;
+                /** @description The ministry first responsible (``GET /api/ministries``). */
+                ministry?: components["schemas"]["MinistryKey"] | null;
             };
             header?: never;
             path?: never;
@@ -14659,6 +15236,8 @@ export interface operations {
                 year?: string | null;
                 /** @description The tier: `hoge_raad`, `gerechtshof`, `andere_instantie`, …; repeated, the judgments of any of them; ``facets.tier`` still counts every tier. */
                 tier?: components["schemas"]["Tier"][] | null;
+                /** @description A main area of law of the judgment's source, as ``facets.subject_area`` writes it: `Strafrecht`, `Civiel recht`, `Bestuursrecht`; ``facets.subject_area`` still counts every area. */
+                subject_area?: string | null;
             };
             header?: never;
             path: {
@@ -14824,7 +15403,12 @@ export interface operations {
     };
     get_instrument_delegated_route_api_instruments__bwb_id__delegated_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Those in force today (`in_force`), those no longer in force (`expired`) or `all`, as on the list of instruments. */
+                validity?: "in_force" | "expired" | "all";
+                /** @description `summary`: the light form, see the description. */
+                detail?: "full" | "summary";
+            };
             header?: never;
             path: {
                 bwb_id: string;
@@ -14855,7 +15439,10 @@ export interface operations {
     };
     get_instrument_basis_route_api_instruments__bwb_id__basis_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Those in force today (`in_force`), those no longer in force (`expired`) or `all`, as on the list of instruments. */
+                validity?: "in_force" | "expired" | "all";
+            };
             header?: never;
             path: {
                 bwb_id: string;
@@ -15020,6 +15607,56 @@ export interface operations {
             };
         };
     };
+    get_shared_neighbors_route_api_nodes_shared_get: {
+        parameters: {
+            query: {
+                /** @description Node ids, comma-separated: `articles/x,articles/y`. */
+                ids: string;
+                /** @description Neighbours per bucket, not per response. */
+                limit?: number;
+                /** @description Neighbours to skip in every bucket. */
+                offset?: number;
+                /** @description `importance` (default): the most cited first; `key`: in key order. */
+                sort?: "key" | "importance";
+                /** @description Of the judgments the tier (repeated: any of them). */
+                tier?: components["schemas"]["Tier"][] | null;
+                /** @description Of the judgments a main area of law of their source: `Strafrecht`, `Civiel recht`, `Bestuursrecht`. */
+                subject_area?: string | null;
+                /** @description Comma-separated relations to keep (`REFERS_TO,PART_OF`). */
+                relations?: string | null;
+                /** @description Comma-separated node types to keep (`article,judgment`). */
+                node_types?: string | null;
+                /** @description Keep the edges that leave (`outbound`) or reach the node. */
+                direction?: ("outbound" | "inbound") | null;
+                /** @description Keep the edges of this status (`canoniek`, `voorgesteld`). */
+                status?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SharedNeighborsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_node_graph_api_nodes__collection___key__get: {
         parameters: {
             query?: {
@@ -15108,6 +15745,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NodeNeighborhoodResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_surroundings_route_api_nodes__collection___key__surroundings_get: {
+        parameters: {
+            query?: {
+                /** @description The items each section shows, at most. */
+                cap?: number;
+            };
+            header?: never;
+            path: {
+                collection: string;
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurroundingsResponse"];
                 };
             };
             /** @description Validation Error */
@@ -15920,6 +16592,37 @@ export interface operations {
             };
         };
     };
+    get_ministry_api_ministries__key__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MinistryDetailDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_cabinets_api_cabinets_get: {
         parameters: {
             query?: never;
@@ -16276,6 +16979,8 @@ export interface operations {
                 to?: string | null;
                 /** @description Comma-separated kinds of motion: ``censure`` (motie van afkeuring), ``no_confidence`` (motie van wantrouwen). Only those motions. */
                 motion_kind?: string | null;
+                /** @description A kind of letter of the government that its subject names: ``article_100`` the artikel 100-brieven (a deployment of the armed forces, artikel 100 Grondwet). Only those letters. */
+                letter_kind?: "article_100" | null;
                 /** @description Count per kind and chamber. */
                 facets?: boolean;
                 limit?: number;
@@ -16895,7 +17600,7 @@ export interface operations {
     get_lookup_api_lookup_get: {
         parameters: {
             query: {
-                kind: "document" | "dossier" | "article" | "annex" | "law" | "judgment" | "publication" | "official" | "commitment" | "case" | "activity" | "faction" | "committee" | "cabinet" | "member";
+                kind: "document" | "dossier" | "article" | "annex" | "law" | "judgment" | "publication" | "official" | "commitment" | "case" | "activity" | "faction" | "committee" | "cabinet" | "ministry" | "member";
                 dossier?: string | null;
                 number?: string | null;
                 law?: string | null;
@@ -17033,56 +17738,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthDTO"];
-                };
-            };
-        };
-    };
-    get_shared_neighbors_route_api_nodes_shared_get: {
-        parameters: {
-            query: {
-                /** @description Node ids, comma-separated: `articles/x,articles/y`. */
-                ids: string;
-                /** @description Neighbours per bucket, not per response. */
-                limit?: number;
-                /** @description Neighbours to skip in every bucket. */
-                offset?: number;
-                /** @description `importance` (default): the most cited first; `key`: in key order. */
-                sort?: "key" | "importance";
-                /** @description Of the judgments the tier (repeated: any of them). */
-                tier?: components["schemas"]["Tier"][] | null;
-                /** @description Of the judgments a main area of law of their source: `Strafrecht`, `Civiel recht`, `Bestuursrecht`. */
-                subject_area?: string | null;
-                /** @description Comma-separated relations to keep (`REFERS_TO,PART_OF`). */
-                relations?: string | null;
-                /** @description Comma-separated node types to keep (`article,judgment`). */
-                node_types?: string | null;
-                /** @description Keep the edges that leave (`outbound`) or reach the node. */
-                direction?: ("outbound" | "inbound") | null;
-                /** @description Keep the edges of this status (`canoniek`, `voorgesteld`). */
-                status?: string | null;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SharedNeighborsResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -38,6 +38,9 @@ const judgment = (over: Partial<Judgment> = {}): Judgment => ({
 	summary_en: null,
 	translation_of: null,
 	names: [],
+	subject_areas: [],
+	procedure: null,
+	subjects: [],
 	decision_kind: null,
 	series_id: null,
 	series_size: null,
@@ -58,6 +61,7 @@ const judgment = (over: Partial<Judgment> = {}): Judgment => ({
 	ecli: 'ECLI:NL:XX:2026:1',
 	summary: null,
 	path: null,
+	chamber: null,
 	...over
 });
 

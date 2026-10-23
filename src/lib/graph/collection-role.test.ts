@@ -24,7 +24,8 @@ const ROLES: Record<Collection, [string, string | null, boolean, 0 | 1 | 2]> = {
 	members: ['member', null, true, 0],
 	factions: ['faction', 'faction', true, 0],
 	committees: ['committee', 'committee', true, 0],
-	cabinets: ['committee', 'committee', true, 0]
+	cabinets: ['committee', 'committee', true, 0],
+	ministries: ['committee', null, true, 0]
 };
 
 describe('the role of a collection', () => {

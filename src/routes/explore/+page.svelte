@@ -122,7 +122,7 @@
 	import SharedView from '$lib/network/SharedView.svelte';
 	import { chain, isRegulation, type ChainNode } from '$lib/network/chain';
 	import { sharedFromNetwork, sharedModel } from '$lib/network/shared';
-	import { getLawBasis, getLawDelegated } from '$lib/api/articles';
+	import { getLawBasis, getLawDelegatedSummary } from '$lib/api/articles';
 	import { getShared } from '$lib/api/nodes';
 	import { getEuLinks } from '$lib/api/verbonden';
 	import { formatCount } from '$lib/text/getal';
@@ -411,9 +411,29 @@
 	const chainKind = $derived(
 		chainStart?.collection === 'instruments' ? textOf(chainStart.raw?.props?.kind) : null
 	);
+	/**
+	 * The keten with the regulations no longer in force (drawn faint), or without; and with the
+	 * regulations that only name the law, or only those issued under it (the default: a
+	 * Grondwet's 171 crossed each other, Thijs 23 Oct). Relatie's Noemt is that switch.
+	 */
+	let chainExpired = $state(false);
+	/** The lines of the keten in the strip's Relatie, by their legal name. */
+	const CHAIN_RELATION_WORDS: Partial<Record<Relation, string>> = {
+		BASED_ON: 'Gebaseerd op',
+		REFERS_TO: 'Noemt'
+	};
+	let chainMentions = $state(false);
+	let chainBasedOff = $state(false);
+	const chainHidden = $derived(
+		new Set<Relation>([
+			...(chainMentions ? [] : (['REFERS_TO'] as const)),
+			...(chainBasedOff ? (['BASED_ON'] as const) : [])
+		])
+	);
 	let chainData = $state.raw<{
 		bwb: string;
-		delegated: Awaited<ReturnType<typeof getLawDelegated>>;
+		validity: 'in_force' | 'all';
+		delegated: Awaited<ReturnType<typeof getLawDelegatedSummary>>;
 		basis: Awaited<ReturnType<typeof getLawBasis>> | null;
 		eu: Awaited<ReturnType<typeof getEuLinks>> | null;
 	} | null>(null);
@@ -426,6 +446,7 @@
 	);
 	$effect(() => {
 		const bwb = chainLaw;
+		const validity = chainExpired ? 'all' : 'in_force';
 		void chainTries;
 		if (!bwb) return;
 		let current = true;
@@ -440,9 +461,9 @@
 			if (!isNotFound(e)) report('Keten EU', e);
 			return null;
 		});
-		Promise.all([getLawDelegated(bwb), basis, eu])
+		Promise.all([getLawDelegatedSummary(bwb, validity), basis, eu])
 			.then(([delegated, basis, eu]) => {
-				if (current) chainData = { bwb, delegated, basis, eu };
+				if (current) chainData = { bwb, validity, delegated, basis, eu };
 			})
 			.catch((e) => {
 				report('Keten', e);
@@ -453,12 +474,17 @@
 		};
 	});
 	/** The keten is on its way: the drawing says so, and Soort counts nothing yet (R3-K F6). */
-	const chainLoading = $derived(!!chainLaw && chainData?.bwb !== chainLaw && !chainFailure);
+	const chainLoading = $derived(
+		!!chainLaw &&
+			(chainData?.bwb !== chainLaw || chainData.validity !== (chainExpired ? 'all' : 'in_force')) &&
+			!chainFailure
+	);
 	// An article's law by its name, not its id, on the keten's head.
 	$effect(() => {
 		if (chainArticle) ensureInstrumentName(chainLaw);
 	});
-	const chainModel = $derived.by(() => {
+	/** The keten with or without its mentions: drawn, and counted for Relatie. */
+	const chainOf = (mentions: boolean) => {
 		const bwb = chainLaw;
 		if (!bwb || chainData?.bwb !== bwb) return null;
 		const id = `instruments/${bwb.toLowerCase()}`;
@@ -474,6 +500,7 @@
 			keep: marked,
 			kind: chainKind,
 			article: chainArticle,
+			mentions,
 			eu: eu
 				? {
 						implements: eu.implements.map((l) => l.instrument),
@@ -481,7 +508,9 @@
 					}
 				: null
 		});
-	});
+	};
+	const chainModel = $derived(chainOf(chainMentions));
+	const chainAll = $derived(chainMentions ? chainModel : chainOf(true));
 	/** The article the keten starts from, as the drawing names it: marked until another is. */
 	const chainArticleId = $derived(
 		chainArticle ? (chainModel?.layers.find((l) => l.id === 'article')?.nodes[0]?.id ?? null) : null
@@ -671,12 +700,18 @@
 	);
 	const chainCounts = $derived.by(() => {
 		// On its way, Soort counts nothing: not the canvas's numbers that the keten's replace (F6).
-		if (!chainModel) return { kinds: {}, relations: {} };
+		if (!chainModel || !chainAll) return { kinds: {}, relations: {} };
 		const nodes = chainModel.layers.flatMap((l) => l.nodes);
-		const lines = nodes.flatMap((n) => n.parents);
-		const articles = nodes.filter((n) => n.collection === 'articles').length;
+		const lines = chainAll.layers.flatMap((l) => l.nodes).flatMap((n) => n.parents);
+		const kinds: Partial<Record<FilterGroup, number>> = {};
+		for (const n of nodes) {
+			const k = filterGroupOf(n.collection, n.id.split('/')[1], {
+				celex: n.instrument?.celex ?? null
+			});
+			if (k) kinds[k] = (kinds[k] ?? 0) + 1;
+		}
 		return {
-			kinds: { wetten: nodes.length - articles, artikelen: articles },
+			kinds,
 			relations: {
 				BASED_ON: lines.filter((l) => l.way === 'delegates').length,
 				REFERS_TO: lines.filter((l) => l.way === 'mentioned').length
@@ -1837,8 +1872,15 @@
 			chosen={marked ?? chainArticleId}
 			gap={chainGap}
 			{hiddenKinds}
-			{hiddenRelations}
+			hiddenRelations={chainHidden}
 			amending={chainModel?.amending.length ?? 0}
+			expired={chainData?.delegated?.expired_total
+				? {
+						total: chainData.delegated.expired_total,
+						shown: chainExpired,
+						onToggle: () => (chainExpired = !chainExpired)
+					}
+				: null}
 			failure={chainFailure}
 			onChoose={(k) => setUrl({ [MARK_PARAM]: k.id })}
 		/>
@@ -1944,6 +1986,16 @@
 										? sharedCounts
 										: null}
 								extern={view === 'keten' ? chainCard : view === 'verband' ? sharedCard : null}
+								externRelations={view === 'keten'
+									? {
+											hidden: chainHidden,
+											toggle: (r) => {
+												if (r === 'REFERS_TO') chainMentions = !chainMentions;
+												if (r === 'BASED_ON') chainBasedOff = !chainBasedOff;
+											},
+											labels: CHAIN_RELATION_WORDS
+										}
+									: null}
 								externStippen={view === 'keten'
 									? chainDots
 									: view === 'verband'

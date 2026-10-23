@@ -67,7 +67,8 @@ const SOURCE_OF_COLLECTION: Record<Collection, SourceId> = {
 	factions: 'parlement',
 	committees: 'parlement',
 	cabinets: 'regering',
-	commitments: 'regering'
+	commitments: 'regering',
+	ministries: 'regering'
 };
 
 /** The source a kind of bron belongs to. */

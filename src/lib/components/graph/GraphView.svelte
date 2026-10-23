@@ -126,6 +126,7 @@
 		extern = null,
 		externStippen = null,
 		middenZoom = true,
+		externRelations = null,
 		...legend
 	}: {
 		store: GraphStore;
@@ -176,6 +177,12 @@
 		externStippen?: readonly { jaar: number; collection: Collection }[] | null;
 		/** Zoom over a weergave of its own; Keten fits its width and scrolls instead. */
 		middenZoom?: boolean;
+		/** Relatie of a weergave of its own: what it hides, its switch and the names of its lines. */
+		externRelations?: {
+			hidden: ReadonlySet<Relation>;
+			toggle: (r: Relation) => void;
+			labels: Partial<Record<Relation, string>>;
+		} | null;
 	} & LegendProps = $props();
 
 	// ── graphology (data + layout, no sigma) ─────────────────────────────────
@@ -1149,9 +1156,10 @@
 		{verbonden}
 		{filter}
 		selectionCollection={selection?.collection ?? null}
-		{reach}
-		hiddenRelations={filters.hiddenRelations}
-		onToggleRelation={toggleRelation}
+		reach={externCounts ? null : reach}
+		hiddenRelations={externRelations?.hidden ?? filters.hiddenRelations}
+		onToggleRelation={externRelations?.toggle ?? toggleRelation}
+		relationLabels={externRelations?.labels}
 		hiddenGroups={filters.hiddenGroups}
 		onToggleGroup={toggleGroup}
 		canvasCounts={externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts}

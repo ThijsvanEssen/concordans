@@ -47,14 +47,19 @@ const artikel = (n: string, leden: string[] = []): Schema<'ImplementedBasisArtic
 });
 
 // The Cyberbeveiligingswet: its AMvB on five articles, a ministerial regulation on one.
-const cbw: Schema<'InstrumentDelegatedResponse'> = {
+const cbw: Omit<Schema<'InstrumentDelegatedResponse'>, 'items'> & {
+	items: Schema<'InstrumentDelegatedItem'>[];
+} = {
 	bwb_id: 'BWBR0052872',
 	total: 2,
+	expired_total: 0,
+	by_kind: {},
 	items: [
 		{
 			instrument: instrument('bwbr0052875', 'Cyberbeveiligingsbesluit'),
 			kind: 'amvb',
 			date_in_force: '2026-08-15',
+			expired_on: null,
 			basis_kind: null,
 			also_based_on: [],
 			sub_delegated: [],
@@ -69,6 +74,7 @@ const cbw: Schema<'InstrumentDelegatedResponse'> = {
 			instrument: instrument('bwbr0052900', 'Cyberbeveiligingsregeling voor de zorg'),
 			kind: 'ministeriele-regeling',
 			date_in_force: '2026-08-15',
+			expired_on: null,
 			basis_kind: null,
 			also_based_on: [],
 			sub_delegated: [],
@@ -155,7 +161,13 @@ describe('the list "Uitvoeringsregelingen"', () => {
 	});
 
 	it('lists the connected laws in a map where nothing is issued under the law', async () => {
-		answer.current = { bwb_id: 'BWBR0001854', total: 0, items: [] };
+		answer.current = {
+			bwb_id: 'BWBR0001854',
+			total: 0,
+			expired_total: 0,
+			by_kind: {},
+			items: []
+		};
 		const kaart = await onderWet('BWBR0001854');
 		expect(kaart.titel).toBe('Wetten die met deze wet verbonden zijn');
 		expect(paths()).toContain('/api/instruments/{bwb_id}/related-instruments');
@@ -184,12 +196,14 @@ describe('the list "Uitvoeringsregelingen", under the AMvB and beside it', () =>
 			{
 				instrument: instrument('bwbr0026338', 'Drinkwaterwet'),
 				kind: 'wet',
+				expired_on: null,
 				basis_kind: null,
 				articles: [artikel('54a')]
 			},
 			{
 				instrument: instrument('bwbr0009950', 'Telecommunicatiewet'),
 				kind: 'wet',
+				expired_on: null,
 				basis_kind: null,
 				articles: [artikel('11a.1')]
 			}
@@ -199,6 +213,7 @@ describe('the list "Uitvoeringsregelingen", under the AMvB and beside it', () =>
 				instrument: instrument('bwbr0052878', 'Cyberbeveiligingsregeling IenW'),
 				kind: 'ministeriele-regeling',
 				date_in_force: '2026-08-15',
+				expired_on: null,
 				basis_kind: null,
 				articles: [artikel('19'), artikel('23'), artikel('28')]
 			}
@@ -238,6 +253,7 @@ describe('the list "Uitvoeringsregelingen", under the AMvB and beside it', () =>
 		const row = basisRow({
 			instrument: instrument('bwbr0052872', 'Cyberbeveiligingswet'),
 			kind: 'wet',
+			expired_on: null,
 			basis_kind: 'delegates',
 			articles: [{ ...artikel('16', ['1', '7']), referring: [verwijzend('2')] }]
 		});

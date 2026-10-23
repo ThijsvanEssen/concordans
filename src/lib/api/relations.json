@@ -16,163 +16,293 @@
 		"members",
 		"factions",
 		"cabinets",
+		"ministries",
 		"annexes"
 	],
 	"relations": [
 		{
 			"name": "PART_OF",
 			"sources": ["articles", "annexes", "documents", "cases", "instruments"],
-			"targets": ["instruments", "cases", "dossiers"]
+			"targets": ["instruments", "cases", "dossiers"],
+			"ends": [
+				["articles", "instruments"],
+				["annexes", "instruments"],
+				["documents", "cases"],
+				["documents", "dossiers"],
+				["cases", "dossiers"],
+				["instruments", "instruments"]
+			]
 		},
 		{
 			"name": "VERSION_OF",
 			"sources": ["instrument_versions", "article_versions"],
-			"targets": ["instruments", "articles"]
+			"targets": ["instruments", "articles"],
+			"ends": [
+				["instrument_versions", "instruments"],
+				["article_versions", "articles"]
+			]
 		},
 		{
 			"name": "ESTABLISHES",
 			"sources": ["instruments"],
-			"targets": ["articles"]
+			"targets": ["articles"],
+			"ends": [["instruments", "articles"]]
 		},
 		{
 			"name": "AMENDS",
 			"sources": ["instruments", "documents"],
-			"targets": ["instruments", "articles"]
+			"targets": ["articles", "instruments"],
+			"ends": [
+				["instruments", "articles"],
+				["documents", "instruments"],
+				["documents", "articles"]
+			]
 		},
 		{
 			"name": "INTRODUCES",
 			"sources": ["instruments", "documents"],
-			"targets": ["instruments", "articles"]
+			"targets": ["articles"],
+			"ends": [
+				["instruments", "articles"],
+				["documents", "articles"]
+			]
 		},
 		{
 			"name": "REPEALS",
 			"sources": ["instruments", "documents"],
-			"targets": ["instruments", "articles"]
+			"targets": ["articles"],
+			"ends": [
+				["instruments", "articles"],
+				["documents", "articles"]
+			]
+		},
+		{
+			"name": "COMMENCES",
+			"sources": ["instruments"],
+			"targets": ["instruments"],
+			"ends": [["instruments", "instruments"]]
 		},
 		{
 			"name": "TRANSPOSED_TO",
 			"sources": ["articles"],
-			"targets": ["articles", "instruments"]
+			"targets": ["articles", "instruments"],
+			"ends": [
+				["articles", "articles"],
+				["articles", "instruments"]
+			]
 		},
 		{
 			"name": "BASED_ON",
 			"sources": ["instruments"],
-			"targets": ["articles"]
+			"targets": ["articles"],
+			"ends": [["instruments", "articles"]]
 		},
 		{
 			"name": "IMPLEMENTS",
 			"sources": ["instruments"],
-			"targets": ["instruments"]
+			"targets": ["instruments"],
+			"ends": [["instruments", "instruments"]]
 		},
 		{
 			"name": "LEGISLATED_IN",
 			"sources": ["instruments"],
-			"targets": ["dossiers"]
+			"targets": ["dossiers"],
+			"ends": [["instruments", "dossiers"]]
 		},
 		{
 			"name": "PUBLISHED_IN",
 			"sources": ["instruments"],
-			"targets": ["instruments"]
+			"targets": ["instruments"],
+			"ends": [["instruments", "instruments"]]
 		},
 		{
 			"name": "REFERS_TO",
 			"sources": ["articles", "documents", "judgments", "instruments"],
-			"targets": ["articles", "instruments", "judgments", "documents"]
+			"targets": ["articles", "instruments", "documents", "judgments"],
+			"ends": [
+				["articles", "articles"],
+				["articles", "instruments"],
+				["documents", "articles"],
+				["documents", "instruments"],
+				["documents", "documents"],
+				["judgments", "articles"],
+				["judgments", "instruments"],
+				["judgments", "judgments"],
+				["instruments", "articles"],
+				["instruments", "instruments"]
+			]
 		},
 		{
 			"name": "EXPLAINS",
 			"sources": ["documents"],
-			"targets": ["article_versions", "articles", "instruments"]
+			"targets": ["article_versions", "articles", "instruments"],
+			"ends": [
+				["documents", "article_versions"],
+				["documents", "articles"],
+				["documents", "instruments"]
+			]
 		},
 		{
 			"name": "APPEAL_OF",
 			"sources": ["judgments"],
-			"targets": ["judgments"]
+			"targets": ["judgments"],
+			"ends": [["judgments", "judgments"]]
 		},
 		{
 			"name": "CONTINUES",
-			"sources": ["judgments", "activities"],
-			"targets": ["judgments", "activities"]
+			"sources": ["judgments", "activities", "factions", "ministries"],
+			"targets": ["judgments", "activities", "factions", "ministries"],
+			"ends": [
+				["judgments", "judgments"],
+				["activities", "activities"],
+				["factions", "factions"],
+				["ministries", "ministries"]
+			]
 		},
 		{
 			"name": "REFERRED_BY",
 			"sources": ["judgments"],
-			"targets": ["judgments"]
+			"targets": ["judgments"],
+			"ends": [["judgments", "judgments"]]
 		},
 		{
 			"name": "ADVISES_ON",
 			"sources": ["judgments"],
-			"targets": ["judgments"]
+			"targets": ["judgments"],
+			"ends": [["judgments", "judgments"]]
 		},
 		{
 			"name": "ANSWERS",
 			"sources": ["judgments", "documents"],
-			"targets": ["judgments", "commitments", "documents"]
+			"targets": ["judgments", "commitments", "documents"],
+			"ends": [
+				["judgments", "judgments"],
+				["documents", "commitments"],
+				["documents", "documents"]
+			]
 		},
 		{
 			"name": "SAME_AS",
 			"sources": ["judgments", "instruments", "documents", "members"],
-			"targets": ["judgments", "instruments", "members"]
+			"targets": ["judgments", "instruments", "members"],
+			"ends": [
+				["judgments", "judgments"],
+				["instruments", "instruments"],
+				["documents", "instruments"],
+				["members", "members"]
+			]
 		},
 		{
 			"name": "SCOPED_BY",
 			"sources": ["articles"],
-			"targets": ["annexes"]
+			"targets": ["annexes"],
+			"ends": [["articles", "annexes"]]
 		},
 		{
 			"name": "ABOUT",
 			"sources": ["activities", "decisions", "commitments"],
-			"targets": ["cases", "dossiers"]
+			"targets": ["cases", "dossiers", "documents"],
+			"ends": [
+				["activities", "cases"],
+				["activities", "dossiers"],
+				["decisions", "cases"],
+				["decisions", "dossiers"],
+				["decisions", "documents"],
+				["commitments", "dossiers"]
+			]
 		},
 		{
 			"name": "LED_BY",
-			"sources": ["activities", "cases"],
-			"targets": ["committees"]
+			"sources": ["activities", "cases", "instruments", "dossiers", "commitments"],
+			"targets": ["committees", "ministries"],
+			"ends": [
+				["activities", "committees"],
+				["cases", "committees"],
+				["instruments", "ministries"],
+				["dossiers", "ministries"],
+				["commitments", "ministries"]
+			]
 		},
 		{
 			"name": "MADE_IN",
 			"sources": ["commitments", "documents", "decisions"],
-			"targets": ["activities"]
+			"targets": ["activities"],
+			"ends": [
+				["commitments", "activities"],
+				["documents", "activities"],
+				["decisions", "activities"]
+			]
 		},
 		{
 			"name": "MEMBER_OF",
 			"sources": ["members"],
-			"targets": ["committees", "factions"]
+			"targets": ["committees", "factions"],
+			"ends": [
+				["members", "committees"],
+				["members", "factions"]
+			]
 		},
 		{
 			"name": "SERVED_IN",
 			"sources": ["members"],
-			"targets": ["cabinets"]
+			"targets": ["cabinets", "ministries"],
+			"ends": [
+				["members", "cabinets"],
+				["members", "ministries"]
+			]
 		},
 		{
 			"name": "AUTHORED",
 			"sources": ["members"],
-			"targets": ["documents", "cases", "commitments"]
+			"targets": ["documents", "cases", "commitments"],
+			"ends": [
+				["members", "documents"],
+				["members", "cases"],
+				["members", "commitments"]
+			]
 		},
 		{
 			"name": "RELATED_TO",
-			"sources": ["dossiers", "judgments", "cases"],
-			"targets": ["dossiers", "judgments", "cases"]
+			"sources": ["cases", "dossiers", "judgments"],
+			"targets": ["cases", "dossiers", "judgments"],
+			"ends": [
+				["cases", "cases"],
+				["dossiers", "dossiers"],
+				["judgments", "judgments"]
+			]
 		},
 		{
 			"name": "REVISES",
 			"sources": ["dossiers", "documents"],
-			"targets": ["dossiers", "documents"]
+			"targets": ["dossiers", "documents"],
+			"ends": [
+				["dossiers", "dossiers"],
+				["documents", "documents"]
+			]
 		},
 		{
 			"name": "ACCOMPANIES",
 			"sources": ["dossiers", "documents"],
-			"targets": ["dossiers", "documents"]
+			"targets": ["dossiers", "documents"],
+			"ends": [
+				["dossiers", "dossiers"],
+				["documents", "documents"]
+			]
 		},
 		{
 			"name": "SECOND_READING_OF",
 			"sources": ["dossiers"],
-			"targets": ["dossiers"]
+			"targets": ["dossiers"],
+			"ends": [["dossiers", "dossiers"]]
 		},
 		{
 			"name": "VOTED",
 			"sources": ["members", "factions"],
-			"targets": ["decisions"]
+			"targets": ["decisions"],
+			"ends": [
+				["members", "decisions"],
+				["factions", "decisions"]
+			]
 		}
 	]
 }

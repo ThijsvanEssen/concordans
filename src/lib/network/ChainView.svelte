@@ -10,6 +10,10 @@
 	import { formatCount } from '$lib/text/getal';
 	import { plural } from '$lib/text/words';
 	import { kindColour } from '$lib/bron/kleur';
+	import { VORMEN, vormVanBron } from '$lib/bron/vormen';
+	import { edgeColorFor, lijnDikte } from '$lib/components/graph/nodeSprites';
+	import { EDGE_WEIGHT } from '$lib/graph/types';
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import type { ChainNode, ChainLayer, LayerId } from '$lib/network/chain';
 
 	let {
@@ -24,8 +28,11 @@
 		amending = 0,
 		failure = null,
 		loading = false,
+		expired = null,
 		onChoose
 	}: {
+		/** The regulations no longer in force: how many, whether they are drawn, and the switch. */
+		expired?: { total: number; shown: boolean; onToggle: () => void } | null;
 		layers: readonly ChainLayer[];
 		/** Per layer, the regulations not drawn. */
 		rest?: Partial<Record<LayerId, number>>;
@@ -71,15 +78,33 @@
 	/** The room of a node in its layer, for the length of its name's lines. */
 	const charsFor = (n: number) =>
 		Math.max(12, Math.floor(Math.max(200, width - LEFT - 24) / Math.max(1, n) / 7));
-	/** Where each node stands: its layer's row, spread over the width. */
+	/**
+	 * Where each node stands: its layer's row; across, under what it hangs from (the mean of its
+	 * parents' places), kept apart by a node's room and within the width, so the lines run down
+	 * rather than across each other (Thijs, Grondwet, 23 Oct). A layer without placed parents
+	 * spreads evenly.
+	 */
 	const place = $derived.by(() => {
 		const m = new Map<string, { x: number; y: number }>();
-		const room = Math.max(200, width - LEFT - 24);
+		const left = LEFT;
+		const right = Math.max(LEFT + 200, width - 24);
 		shown.forEach((layer, i) => {
 			const n = layer.nodes.length;
-			layer.nodes.forEach((k, j) =>
-				m.set(k.id, { x: LEFT + ((j + 0.5) / n) * room, y: TOP + i * ROW + 30 })
-			);
+			const gap = (right - left) / n;
+			const wish = layer.nodes.map((k, j) => {
+				const at = k.parents.map((p) => m.get(p.id)?.x).filter((x): x is number => x !== undefined);
+				return {
+					k,
+					x: at.length ? at.reduce((a, b) => a + b, 0) / at.length : left + (j + 0.5) * gap
+				};
+			});
+			wish.sort((a, b) => a.x - b.x);
+			// Apart by a gap from the left, then back within the right edge.
+			const xs: number[] = [];
+			wish.forEach((w, j) => xs.push(Math.max(w.x, j ? xs[j - 1] + gap : left + gap / 2)));
+			for (let j = xs.length - 1; j >= 0; j--)
+				xs[j] = Math.min(xs[j], j === xs.length - 1 ? right - gap / 2 : xs[j + 1] - gap);
+			wish.forEach((w, j) => m.set(w.k.id, { x: xs[j], y: TOP + i * ROW + 30 }));
 		});
 		return m;
 	});
@@ -96,7 +121,7 @@
 									id: `${o.id}~${k.id}`,
 									a,
 									b,
-									dashed: o.way === 'mentioned',
+									relation: relationOf(o.way),
 									lit: chosen === k.id || chosen === o.id
 								}
 							]
@@ -105,8 +130,15 @@
 			)
 		)
 	);
-	const colour = (k: ChainNode) =>
-		k.collection === 'articles' ? 'var(--ink)' : kindColour('instruments');
+	// Each bron drawn as the canvas and the legend draw its kind: one shape and one colour per
+	// kind (vormen.ts, kleur.ts), so Soort is the key to this drawing too.
+	const colour = (k: ChainNode) => kindColour(k.collection);
+	const vormOf = (k: ChainNode) =>
+		VORMEN[vormVanBron(k.collection, { celex: k.instrument?.celex ?? null }, k.id.split('/')[1])];
+	/** A line as the canvas draws its relation: a grondslag (BASED_ON), a mention (REFERS_TO). */
+	function relationOf(way: 'delegates' | 'mentioned') {
+		return way === 'delegates' ? ('BASED_ON' as const) : ('REFERS_TO' as const);
+	}
 	/** A name over at most two lines of `max` characters; a longer one ends in "…", its title
 	 *  and the card name it whole. */
 	const linesOf = (s: string, max = 24) => {
@@ -185,7 +217,16 @@
 		</div>
 	{:else if loading}
 		<p class="laden" role="status">Keten laden…</p>
-	{:else if gap}<p class="gap">{gap}</p>{/if}
+	{:else if gap || expired?.total}
+		<div class="kop">
+			{#if gap}<p class="gap">{gap}</p>{/if}
+			{#if expired?.total}<TekstLink onclick={expired.onToggle} aria-pressed={expired.shown}
+					>{expired.shown
+						? 'Zonder vervallen regelingen'
+						: `Ook ${formatCount(expired.total)} vervallen ${plural(expired.total, 'regeling', 'regelingen')}`}</TekstLink
+				>{/if}
+		</div>
+	{/if}
 	<svg
 		class="drawing"
 		style:width="{scale * 100}%"
@@ -226,13 +267,15 @@
 				y1={l.a.y + 8}
 				x2={l.b.x}
 				y2={l.b.y - 8}
-				stroke-dasharray={l.dashed ? '5 4' : undefined}
+				stroke={edgeColorFor(l.relation, 'article')}
+				stroke-width={lijnDikte(EDGE_WEIGHT[l.relation]) * (l.lit ? 1.6 : 1)}
 			/>
 		{/each}
 		{#each shown as layer (layer.id)}
 			{#each layer.nodes as k (k.id)}
 				{@const p = place.get(k.id)!}
 				{@const isArticle = k.collection === 'articles'}
+				{@const v = vormOf(k)}
 				<g
 					class="node"
 					class:is-active={chosen === k.id}
@@ -243,7 +286,7 @@
 					onclick={() => onChoose(k)}
 					onkeydown={(e) => press(e, () => onChoose(k))}
 				>
-					<title>{k.name}</title>
+					<title>{k.expired ? `${k.name}, vervallen sinds ${k.expired}` : k.name}</title>
 					<circle cx={p.x} cy={p.y} r="22" class="hit" />
 					{#if chosen === k.id}<rect
 							class="sel"
@@ -253,16 +296,14 @@
 							height="24"
 							rx="2"
 						/>{/if}
-					<rect
-						x={p.x - 7}
-						y={p.y - 7}
-						width="14"
-						height="14"
-						fill={isArticle || (layer.id !== 'law' && layer.id !== 'basis' && layer.id !== 'amvb')
-							? 'var(--paper)'
-							: colour(k)}
-						stroke={colour(k)}
-						stroke-width={isArticle ? 1.5 : 2}
+					<path
+						class:vervallen={!!k.expired}
+						d={v.d}
+						transform="translate({p.x - 8} {p.y - 8})"
+						fill={v.wijze === 'lijn' ? 'var(--paper)' : colour(k)}
+						fill-rule="evenodd"
+						stroke={v.wijze === 'lijn' ? colour(k) : 'none'}
+						stroke-width="1.5"
 					/>
 					<text
 						class="name"
@@ -330,9 +371,6 @@
 	}
 	/* The gap marker (besluit 23): one label, never a paragraph. */
 	.gap {
-		position: absolute;
-		top: var(--s-3);
-		left: var(--s-5);
 		margin: 0;
 		padding: 0 var(--s-2);
 		border: 1px dashed var(--rule-strong);
@@ -399,14 +437,24 @@
 		stroke: var(--rule);
 	}
 	.line {
-		stroke: var(--rule-strong);
-		stroke-width: 1.2;
-		opacity: 0.7;
+		opacity: 0.55;
 	}
 	.line.is-active {
-		stroke: var(--ink);
-		stroke-width: 2;
 		opacity: 1;
+	}
+	/* No longer in force: drawn faint, its title says since when. */
+	.vervallen {
+		opacity: 0.4;
+	}
+	.kop {
+		position: absolute;
+		top: var(--s-3);
+		left: var(--s-5);
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--s-2) var(--s-4);
+		font-size: var(--t-micro);
 	}
 	.hit {
 		fill: transparent;
@@ -438,7 +486,7 @@
 		text-decoration: underline;
 	}
 	.node:focus-visible .sel,
-	.node:focus-visible rect {
+	.node:focus-visible path {
 		outline: 2px solid var(--focus);
 	}
 	.list {
@@ -448,9 +496,8 @@
 		.drawing {
 			display: none;
 		}
-		.gap {
+		.kop {
 			position: static;
-			display: inline-block;
 			margin: var(--s-3) var(--s-4) 0;
 		}
 		.rest {

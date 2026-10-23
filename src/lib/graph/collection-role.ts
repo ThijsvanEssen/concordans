@@ -35,7 +35,8 @@ export const COLLECTION_ROLE: Record<Collection, Role> = {
 	members: { drawClass: 'member', hull: null, neighbour: true, column: 0 },
 	factions: { drawClass: 'faction', hull: 'faction', neighbour: true, column: 0 },
 	committees: { drawClass: 'committee', hull: 'committee', neighbour: true, column: 0 },
-	cabinets: { drawClass: 'committee', hull: 'committee', neighbour: true, column: 0 }
+	cabinets: { drawClass: 'committee', hull: 'committee', neighbour: true, column: 0 },
+	ministries: { drawClass: 'committee', hull: null, neighbour: true, column: 0 }
 };
 
 /**

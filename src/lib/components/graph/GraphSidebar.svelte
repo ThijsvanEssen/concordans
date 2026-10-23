@@ -60,6 +60,7 @@
 		laadtSoort = new Set<string>(),
 		hiddenRelations,
 		onToggleRelation,
+		relationLabels = {},
 		hiddenGroups = new Set(),
 		onToggleGroup,
 		canvasCounts,
@@ -86,7 +87,9 @@
 		onLaadSoort?: (collection: Collection) => void;
 		/** The kinds being loaded so. */
 		laadtSoort?: ReadonlySet<string>;
-		hiddenRelations: Set<Relation>;
+		hiddenRelations: ReadonlySet<Relation>;
+		/** The name of a line where a weergave gives its own (Keten: Gebaseerd op, Noemt). */
+		relationLabels?: Partial<Record<Relation, string>>;
 		onToggleRelation: (r: Relation) => void;
 		/** Groupings switched off: no hull around their bronnen. */
 		hiddenGroups?: ReadonlySet<ContainerKind>;
@@ -159,7 +162,8 @@
 			.sort((a, b) => b[1] - a[1])
 			.map(([relation]) => ({
 				relation,
-				label: OWN_WORDS[relation] ?? capitalize(relationLabel(relation))
+				label:
+					relationLabels[relation] ?? OWN_WORDS[relation] ?? capitalize(relationLabel(relation))
 			}))
 	);
 	const CONTAINER_KIND_HINT: Record<ContainerKind, string> = {

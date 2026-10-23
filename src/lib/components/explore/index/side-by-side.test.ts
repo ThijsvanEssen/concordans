@@ -12,6 +12,7 @@ const MINISTRIES: Ministry[] = [
 		successor: null,
 		until: null,
 		periods: [],
+		path: null,
 		key: 'az',
 		name: 'Algemene Zaken'
 	},
@@ -21,6 +22,7 @@ const MINISTRIES: Ministry[] = [
 		successor: null,
 		until: null,
 		periods: [],
+		path: null,
 		key: 'bz',
 		name: 'Buitenlandse Zaken'
 	},
@@ -30,6 +32,7 @@ const MINISTRIES: Ministry[] = [
 		successor: null,
 		until: null,
 		periods: [],
+		path: null,
 		key: 'jenv',
 		name: 'Justitie en Veiligheid'
 	},
@@ -38,6 +41,7 @@ const MINISTRIES: Ministry[] = [
 		tooi: null,
 		until: null,
 		periods: [],
+		path: null,
 		key: 'venj',
 		name: 'Veiligheid en Justitie',
 		successor: 'jenv'
@@ -47,6 +51,7 @@ const MINISTRIES: Ministry[] = [
 		tooi: null,
 		until: null,
 		periods: [],
+		path: null,
 		key: 'justitie',
 		name: 'Justitie',
 		successor: 'venj'
@@ -57,6 +62,7 @@ const MINISTRIES: Ministry[] = [
 		successor: null,
 		until: null,
 		periods: [],
+		path: null,
 		key: 'ezk',
 		name: 'Economische Zaken en Klimaat'
 	},
@@ -65,6 +71,7 @@ const MINISTRIES: Ministry[] = [
 		tooi: null,
 		until: null,
 		periods: [],
+		path: null,
 		key: 'ez',
 		name: 'Economische Zaken',
 		successor: 'ezk'
@@ -74,6 +81,7 @@ const MINISTRIES: Ministry[] = [
 		tooi: null,
 		until: null,
 		periods: [],
+		path: null,
 		key: 'eli',
 		name: 'Economische Zaken, Landbouw en Innovatie',
 		successor: 'ez'
@@ -84,6 +92,7 @@ const MINISTRIES: Ministry[] = [
 		successor: null,
 		until: null,
 		periods: [],
+		path: null,
 		key: 'lvvn',
 		name: 'Landbouw, Visserij, Voedselzekerheid en Natuur'
 	},
@@ -92,6 +101,7 @@ const MINISTRIES: Ministry[] = [
 		tooi: null,
 		until: null,
 		periods: [],
+		path: null,
 		key: 'lnv',
 		name: 'Landbouw, Natuur en Voedselkwaliteit',
 		successor: 'lvvn'

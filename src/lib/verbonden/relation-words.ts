@@ -75,6 +75,8 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 	// The publication that enacted a new regulation set its articles (BWB `nieuwe-regeling`).
 	ESTABLISHES: ({ naar }) => ['stelt vast', 'vastgesteld bij', `vaststelling ${ofA(naar)}`],
 	AMENDS: ({ naar }) => ['wijzigt', 'wijzigt', `wijziging ${ofA(naar)}`],
+	// A publication in the Staatsblad by which a law or its articles come into force.
+	COMMENCES: () => ['doet in werking treden', 'in werking getreden bij', 'inwerkingtreding'],
 	INTRODUCES: ({ naar }) => ['voegt in', 'voegt in', `invoeging ${ofA(naar)}`],
 	// An article vervalt; a law is ingetrokken (Aanwijzingen voor de regelgeving).
 	REPEALS: ({ naar }) =>

@@ -10,10 +10,12 @@ import { NL } from '$lib/text/collator';
 import { grondslagArtikelen } from '$lib/text/delegaties';
 import { kindName } from '$lib/text/law-kind';
 
-type Delegated = Schema<'InstrumentDelegatedResponse'>;
+type Delegated = Omit<Schema<'InstrumentDelegatedResponse'>, 'items'> & {
+	items: Schema<'InstrumentDelegatedSummaryItem'>[];
+};
 type Basis = Schema<'InstrumentBasisResponse'>;
 type Summary = Schema<'InstrumentSummaryDTO'>;
-type BasisArticle = Schema<'ImplementedBasisArticleDTO'>;
+type BasisArticle = Schema<'BasisArticleDTO'>;
 type Item = Delegated['items'][number];
 
 export type LayerId =
@@ -58,6 +60,8 @@ export type ChainNode = {
 	kind: string | null;
 	/** In force since, for a regulation; the tijdstrook places it there. */
 	since: string | null;
+	/** No longer in force since, where it is not (`validity=all`): drawn faint, said so. */
+	expired?: string | null;
 	/** `grondslag art. 16, 20 en 33`, `noemt art. 22`: how it hangs under the law. */
 	grondslag: string | null;
 	mentions: string | null;
@@ -287,7 +291,10 @@ export function chain(
 	const wayOf = (kind: string | null | undefined): 'delegates' | 'mentioned' =>
 		kind === 'mentioned' ? 'mentioned' : 'delegates';
 	const take = (
-		r: Pick<Item, 'instrument' | 'kind' | 'date_in_force' | 'basis_kind' | 'articles'> & {
+		r: Pick<
+			Item,
+			'instrument' | 'kind' | 'date_in_force' | 'expired_on' | 'basis_kind' | 'articles'
+		> & {
 			sub_delegated?: Item['sub_delegated'];
 		},
 		parents: ChainNode['parents'],
@@ -309,6 +316,7 @@ export function chain(
 				instrument: r.instrument,
 				kind: r.kind ?? null,
 				since: r.date_in_force ?? null,
+				expired: r.expired_on ?? null,
 				grondslag: ownArticles.length ? basisLine(ownArticles, 'delegates') : null,
 				mentions: ownArticles.length ? basisLine(ownArticles, 'mentioned') : null,
 				parents,

@@ -72,7 +72,8 @@ export const VORM_VAN: Record<Collection, Vorm> = {
 	members: 'persoon',
 	factions: 'orgaan',
 	committees: 'orgaan-o',
-	cabinets: 'kabinet'
+	cabinets: 'kabinet',
+	ministries: 'orgaan-o'
 };
 
 const vormOf = (collection: string): Vorm =>

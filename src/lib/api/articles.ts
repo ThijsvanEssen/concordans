@@ -1,6 +1,7 @@
 import { api, unwrap, slowApi } from './client';
 import { ifExists } from './errors';
 import { abortable, once } from './records';
+import type { Schema } from './types';
 import { CITED_BY_TOP } from './first-pages';
 import { onForget } from '$lib/util/forget';
 
@@ -89,7 +90,23 @@ export const getLawDelegated = (bwbId: string) =>
 			unwrap(
 				slowApi.GET('/api/instruments/{bwb_id}/delegated', { params: { path: { bwb_id: bwbId } } })
 			)
-		)
+		).then((r) => r && { ...r, items: r.items as Schema<'InstrumentDelegatedItem'>[] })
+	);
+
+/**
+ * The light form of the regulations issued under a law, for the keten: per regulation its
+ * kind, date, articles and the regulations under it in turn, without what a row of Verbonden
+ * reads (`detail=summary`, API 0.80.8); `all` with those no longer in force, `in_force` without.
+ */
+export const getLawDelegatedSummary = (bwbId: string, validity: 'in_force' | 'all' = 'in_force') =>
+	once(`instruments/${bwbId}/delegated/summary/${validity}`, () =>
+		ifExists(
+			unwrap(
+				slowApi.GET('/api/instruments/{bwb_id}/delegated', {
+					params: { path: { bwb_id: bwbId }, query: { detail: 'summary', validity } }
+				})
+			)
+		).then((r) => r && { ...r, items: r.items as Schema<'InstrumentDelegatedSummaryItem'>[] })
 	);
 
 /**

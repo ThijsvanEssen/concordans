@@ -25,7 +25,8 @@ export const NODE_TYPES = {
 	members: 'member',
 	factions: 'faction',
 	committees: 'committee',
-	cabinets: 'cabinet'
+	cabinets: 'cabinet',
+	ministries: 'ministry'
 } as const satisfies Record<Collection, string>;
 
 /** Every relation once, in the order of the API's catalogue; the record makes the type complete. */
@@ -36,6 +37,7 @@ const RELATION_SET: Record<Relation, true> = {
 	AMENDS: true,
 	INTRODUCES: true,
 	REPEALS: true,
+	COMMENCES: true,
 	TRANSPOSED_TO: true,
 	BASED_ON: true,
 	IMPLEMENTS: true,
@@ -155,7 +157,8 @@ export const BRON_LABEL: Record<Collection, readonly [singular: string, plural: 
 	members: ['Persoon', 'Personen'],
 	factions: ['Fractie', 'Fracties'],
 	committees: ['Commissie', 'Commissies'],
-	cabinets: ['Kabinet', 'Kabinetten']
+	cabinets: ['Kabinet', 'Kabinetten'],
+	ministries: ['Ministerie', 'Ministeries']
 };
 
 export const bronLabel = (collection: Collection) => BRON_LABEL[collection][0];

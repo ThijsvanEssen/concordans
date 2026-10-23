@@ -10,8 +10,9 @@ import { importanceOf } from '$lib/verbonden/importance';
 import { NODE_TYPES, type Collection } from '$lib/vocabulary';
 
 /** The kinds of bron that have a page of their own; a version is read through its article or law. */
+// A ministry is a node since API 0.80.8, with no page of its own on the site yet.
 const WITH_PAGE = (Object.keys(NODE_TYPES) as Collection[]).filter(
-	(c) => c !== 'instrument_versions' && c !== 'article_versions'
+	(c) => c !== 'instrument_versions' && c !== 'article_versions' && c !== 'ministries'
 );
 
 /**
