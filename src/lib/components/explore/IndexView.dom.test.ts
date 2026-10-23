@@ -247,6 +247,12 @@ describe('Bronnen, an empty list', () => {
 	});
 });
 
+/** The folded groups of the filter column, opened as a reader does (A192). */
+const openGroups = async () => {
+	for (const b of document.querySelectorAll('.facets button[aria-expanded="false"]'))
+		await fireEvent.click(b);
+};
+
 describe('Bronnen, the address', () => {
 	it('drops the filters and the open row in a tab, the Kamer kept', async () => {
 		await open('dossiers', 'kamer=EK&phase=Eerste+Kamer&q=x&sort=title&open=dossiers/1&leeg=1');
@@ -256,6 +262,7 @@ describe('Bronnen, the address', () => {
 
 	it('takes a filter on and off in one step, the open row and the sort kept', async () => {
 		const api = await open('dossiers', 'sort=title&open=dossiers/1');
+		await openGroups();
 		await fireEvent.click(screen.getByRole('button', { name: /^Begroting/ }));
 		await settled();
 		expect(page.url.search).toMatchSnapshot();
@@ -279,6 +286,7 @@ describe('Bronnen, the address', () => {
 		const count = () => document.querySelector('.result-count')?.textContent?.trim();
 		const before = count();
 		expect(before).toMatch(/\d/);
+		await openGroups();
 		await fireEvent.click(screen.getByRole('button', { name: /^Begroting/ }));
 		await waitFor(() => expect(count()).toBe('tellen…'));
 		failing = true;

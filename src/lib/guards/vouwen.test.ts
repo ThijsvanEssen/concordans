@@ -16,4 +16,21 @@ describe('one fold (code-eenvoud F64)', () => {
 		// The cards over the canvas are kept as every heading is, in dicht.svelte.ts.
 		expect(overtreders((t) => /'concordans:(?:legenda|netwerkpaneel)'/.test(t))).toEqual([]);
 	});
+
+	it('folds the option groups of every filter column in IndexFacets alone (A192)', () => {
+		// Uitspraken, Actueel and Zoeken all draw their filters with IndexFacets; none folds
+		// groups of its own under a key `facet:`.
+		expect(
+			overtreders(
+				(t) => /['"`]facet:/.test(t),
+				[plek('lib/components/explore/index/IndexFacets.svelte')]
+			)
+		).toEqual([]);
+		for (const page of [
+			'routes/(main)/zoeken/+page.svelte',
+			'routes/(main)/actueel/+page.svelte',
+			'lib/components/explore/IndexView.svelte'
+		])
+			expect(bron(page)).toContain('<IndexFacets');
+	});
 });
