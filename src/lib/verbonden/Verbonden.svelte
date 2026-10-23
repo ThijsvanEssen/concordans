@@ -39,6 +39,7 @@
 	import { groupRequest } from './open-group';
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import NetworkSketch from './NetworkSketch.svelte';
+	import SchetsKaart from './SchetsKaart.svelte';
 	import KindSummary from './KindSummary.svelte';
 	import { kindsOf, kindsTotal, kindOfGroup, type KindId } from './summary';
 	import { sketch as drawSketch, type SketchGroup } from './sketch';
@@ -470,22 +471,12 @@
 				onSingle={(id) => (schetsId = schetsId === id ? null : id)}
 				onGroup={openKind}
 			/>
-			<!-- A bron on its own clicked in the drawing: its row, opened in place (besluit 39). -->
+			<!-- A bron on its own clicked in the drawing: its card, in place (besluit 39). -->
 			{#if schetsOpen}
-				<ul class="rows schets-rij">
-					<VerbondenRow
-						row={schetsOpen.row}
-						{selection}
-						open={openRij === rowKey(schetsOpen.row)}
-						onToggle={() => wisselRij(schetsOpen!.row)}
-						{onProposedText}
-						{onAddToNetwerk}
-						{inNetwerk}
-					/>
-				</ul>
+				<SchetsKaart row={schetsOpen.row} {selection} {onAddToNetwerk} {inNetwerk} />
 			{/if}
 			<!-- The werkplek with this bron: what the Netwerk button of the bar does from here. -->
-			<p class="groot"><TekstLink href={networkHref ?? '/explore'}>In het netwerk</TekstLink></p>
+			<p class="groot"><TekstLink href={networkHref ?? '/explore'}>Open in netwerk</TekstLink></p>
 		{/if}
 		<!-- The soorten once their set is in, each in its place in their order: before, the heads
 		     to come as blank rows, so no soort comes in above another and pushes it (UX-toets
@@ -709,14 +700,6 @@
 		border-bottom: 1px solid var(--rule);
 	}
 	/* Under the sketch, at the right, as Alles in Actueel. */
-	/* The row of a bron opened from the drawing: framed, as a card under it. */
-	.schets-rij {
-		margin: 0 0 var(--s-2);
-		padding: 0;
-		list-style: none;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-	}
 	.groot {
 		display: flex;
 		justify-content: flex-end;

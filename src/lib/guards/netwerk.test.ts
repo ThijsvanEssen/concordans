@@ -1,10 +1,11 @@
-// The cards over the network stand at one width on one right edge (Thijs, 10 Oct), in the
+// The werkplek in three strips (besluit 39): the panel Netwerk and the legend at the left, the
+// card of a bron at the right; over the canvas only the zoom and a cluster's card, in the
 // controls and the colours of the rest of the site.
 import { describe, expect, it } from 'vitest';
 import { BRONNEN, bron, overtreders, regels } from '$lib/test/bronnen';
 
 describe('the network and its cards', () => {
-	it('draws every card over the network with CanvasKaart: one frame, one width', () => {
+	it('draws the panel Netwerk and a cluster with CanvasKaart: one frame, one width', () => {
 		// Thijs, 10 Oct: "Deze mogen even breed zijn en hetzelfde soort component zijn". The
 		// folded Netwerk took its content's width (`width: auto`). Width and right edge are
 		// --paneel-breed and --paneel-rand, CanvasKaart's.
@@ -20,7 +21,6 @@ describe('the network and its cards', () => {
 		).toEqual([]);
 		const graph = bron('lib/components/graph/GraphView.svelte');
 		const netwerk = bron('lib/selection/NetwerkPanel.svelte');
-		expect(graph).toMatch(/<CanvasKaart[^>]*class="legenda"/);
 		expect(graph).toMatch(/<CanvasKaart[^>]*class="cluster-kaart"/);
 		expect(netwerk).toMatch(/<CanvasKaart[^>]*class="netwerk"/);
 		const eigenKader = (t: string) =>
@@ -52,25 +52,33 @@ describe('the network and its cards', () => {
 		).toEqual([]);
 	});
 
-	it('gives the cards over the network the controls of the rest of the site', () => {
-		// A menu is TekstMenu, an action in a card is text (btn is-text, TekstLink), a filter a
-		// FilterOptie or a Keuze: no menu of their own (<details>), no filled button.
+	it('gives the cards the controls of the rest of the site, one filled button: Lees', () => {
+		// A menu is TekstMenu, a filter a FilterOptie or a Keuze: no menu of their own
+		// (<details>). The one filled button of the werkplek is Lees on the card of a bron.
 		expect(
 			BRONNEN.filter(
 				(s) =>
 					/^lib\/(components\/graph|netwerk)\//.test(s.path) &&
-					/<details\b|class="btn is-primary"/.test(s.text)
+					(/<details\b/.test(s.text) ||
+						(/class="btn is-primary"/.test(s.text) &&
+							s.path !== 'lib/components/graph/CanvasHoverCard.svelte'))
 			).map((s) => s.path)
 		).toEqual([]);
+		expect(bron('lib/components/graph/CanvasHoverCard.svelte')).toMatch(
+			/class="btn is-primary"[\s\S]*?>Lees</
+		);
 	});
 
-	it('lets a Tab reach the cards over the network before the canvas (keyboard audit)', () => {
+	it('lets a Tab reach the strip at the left before the canvas, the card after it', () => {
 		const t = bron('lib/components/graph/GraphView.svelte');
 		const opmaak = t.slice(t.indexOf('<div class="graph-view">'));
 		const plaats = (c: string) => opmaak.indexOf(c);
-		expect(plaats('class="canvas-overlay"')).toBeGreaterThan(-1);
-		expect(plaats('class="canvas-overlay"')).toBeLessThan(plaats('class="graph-canvas-wrap"'));
-		expect(plaats('class="legenda"')).toBeLessThan(plaats('<CanvasNodeList'));
+		expect(plaats('{@render canvasOverlay?.()}')).toBeGreaterThan(-1);
+		expect(plaats('{@render canvasOverlay?.()}')).toBeLessThan(plaats('legenda-inhoud"'));
+		expect(plaats('legenda-inhoud"')).toBeLessThan(plaats('<CanvasNodeList'));
+		expect(plaats('class="graph-canvas-wrap"')).toBeLessThan(plaats('<CanvasHoverCard'));
+		// Nothing floats over the canvas but the zoom and a cluster's card: no Legenda card.
+		expect(t).not.toMatch(/class="canvas-overlay"|class="legenda"/);
 		expect(plaats('<CanvasNodeList')).toBeLessThan(plaats('class="graph-canvas-wrap"'));
 		// The list of bronnen is visible where it has the focus: the canvas takes its outline.
 		expect(t).toMatch(/\.buhne:has\(\.canvas-node-list :focus-visible\) \.graph-canvas-wrap/);

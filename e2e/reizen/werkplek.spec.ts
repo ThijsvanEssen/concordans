@@ -29,9 +29,9 @@ test('lezer, netwerk, Lees and Back: the same chips and the same bron marked', a
 	// One click opens the bron in place, under the drawing: no step.
 	await single.click();
 	await expect(page).toHaveURL(/6:163\?toon=netwerk$/);
-	const rij = page.locator('.schets-rij');
+	const rij = page.getByRole('region', { name });
 	await expect(rij).toContainText(name.split(',')[0]);
-	await rij.getByRole('button', { name: /netwerk/i }).click();
+	await rij.getByRole('button', { name: 'Zet in het netwerk' }).click();
 	await expect(netwerkKnop(page)).toHaveAccessibleName('Netwerk, 1 bron');
 
 	await netwerkKnop(page).click();
@@ -41,10 +41,11 @@ test('lezer, netwerk, Lees and Back: the same chips and the same bron marked', a
 	await expect(page.locator('.mobile-tab')).toHaveCount(0);
 	const id = new URL(page.url()).searchParams.get('netwerk')!;
 
-	// The bron marked, as a click on the canvas marks it: its card with Lees.
+	// The bron marked, as a click on the canvas marks it: its card with Lees, in the strip at
+	// the right (a sheet under the canvas on a phone), covering no bron.
 	await page.goto(`${page.url()}&kies=${encodeURIComponent(id)}`);
 	const gekozen = await (await chips(page)).allInnerTexts();
-	const lees = page.getByRole('link', { name: 'Tekst lezen' });
+	const lees = page.getByRole('link', { name: 'Lees', exact: true });
 	await expect(lees).toBeVisible();
 	await lees.click();
 	await expect(page).not.toHaveURL(/mode=netwerk/);
@@ -53,6 +54,6 @@ test('lezer, netwerk, Lees and Back: the same chips and the same bron marked', a
 
 	await page.goBack();
 	await expect.poll(() => new URL(page.url()).searchParams.get('kies')).toBe(id);
-	await expect(page.getByRole('link', { name: 'Tekst lezen' })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Lees', exact: true })).toBeVisible();
 	await expect(await chips(page)).toHaveText(gekozen);
 });

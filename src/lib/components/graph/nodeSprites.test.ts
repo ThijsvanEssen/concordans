@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { VORM_VOLGORDE } from '$lib/bron/vormen';
+import { VORMEN, type Vorm } from '$lib/bron/vormen';
 import { EDGE_AT_45, badgeAxisOffset } from './nodeSprites';
 
 describe('the badge on the edge of a vorm', () => {
 	it('knows the edge of every vorm, inside its 16-box', () => {
-		for (const vorm of VORM_VOLGORDE) {
+		for (const vorm of Object.keys(VORMEN) as Vorm[]) {
 			expect(EDGE_AT_45[vorm], vorm).toBeGreaterThan(0);
 			expect(EDGE_AT_45[vorm], vorm).toBeLessThanOrEqual(8);
 		}

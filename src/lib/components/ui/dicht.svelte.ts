@@ -3,8 +3,8 @@
 // standaard van kopjes dicht in de reader en sub kopjes ook collapsable"). A section of a
 // reader starts closed, a heading inside it starts open; what the reader opens or closes is
 // kept for every bron of its kind, in this browser. One key per kind: `Procedure`,
-// `Zetels in de Eerste Kamer`, `verbonden:judgments`, `sub:Tweede Kamer`. The cards over the
-// canvas (the legend, the panel Netwerk) are kept here too.
+// `Zetels in de Eerste Kamer`, `verbonden:judgments`, `sub:Tweede Kamer`. The panel Netwerk
+// folded on a phone is kept here too.
 import { onForget } from '$lib/util/forget';
 
 const SLEUTEL = 'concordans:kopjes';
@@ -12,11 +12,10 @@ const SLEUTEL = 'concordans:kopjes';
 /**
  * The keys of what something else opens or reads by name: a section opened from elsewhere
  * (the day of votes in a procedure opens Amendementen, and scrolls to it by the same word as
- * its anchor), and the cards over the canvas.
+ * its anchor), and the panel Netwerk.
  */
 export const FOLD = {
 	amendments: 'amendementen',
-	legend: 'legenda',
 	networkPanel: 'netwerkpaneel'
 } as const;
 

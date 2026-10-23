@@ -2,23 +2,26 @@
 	import { NOT_IN_DATA } from '$lib/text/coverage';
 	import { capitalize, textOf, truncate } from '$lib/text/words';
 	import { naamVanId } from '$lib/bron/menselijk';
-	// The hover panel of the canvas: what the bron is, a preview, and two actions: open
-	// it, and add it to the netwerk or take it out.
+	// The card of the bron marked in the werkplek, in the strip at its right (besluit 39; on a
+	// phone a sheet under the canvas): what the bron is, a preview, how it is tied to the chosen
+	// bronnen, and its actions: Lees (the one filled), Toevoegen, Bewaar. It covers no bron.
 	import type { GraphNode } from '$lib/graph/types';
 	import { articleOf, lawIdOf } from '$lib/graph/types';
 	import { getArticleDetail } from '$lib/api/articles';
 	import { abortable } from '$lib/api/records';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';
+	import { langeDatum } from '$lib/text/datum';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { bronHref, refOf } from '$lib/bron/href';
+	import { focusOf, openHref, refOf } from '$lib/bron/href';
 	import { bronKind } from '$lib/components/graph/bron-kind';
-	import Picto from '$lib/components/ui/Picto.svelte';
 	import { bronNaam } from '$lib/bron/naam';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { isEscape } from '$lib/actions/keys';
 	import type { NodeNotitie } from '$lib/map/notities';
 	import Aantekening from '$lib/map/Aantekening.svelte';
+	import Bewaar from '$lib/map/Bewaar.svelte';
+	import { bewaarItem } from '$lib/map/map';
 
 	let {
 		node,
@@ -26,10 +29,7 @@
 		onOpen,
 		onLezen,
 		onToggleChosen,
-		onOmgeving,
-		at = null,
-		onMouseEnter,
-		onMouseLeave,
+		verbanden = [],
 		onClose,
 		onVerder,
 		onBack,
@@ -43,12 +43,8 @@
 		/** A plain click on "Tekst lezen" opens the bron here; a new tab keeps the link. */
 		onLezen?: (node: GraphNode) => void;
 		onToggleChosen?: (node: GraphNode) => void;
-		/** Alleen de omgeving van deze bron, in plaats van het netwerk (vroeger een dubbelklik). */
-		onOmgeving?: (node: GraphNode) => void;
-		/** Waar de kaart staat, naast de bron onder de muis; zonder: rechtsonder. */
-		at?: { x: number; y: number } | null;
-		onMouseEnter?: () => void;
-		onMouseLeave?: () => void;
+		/** How it is tied to the chosen bronnen, a line each: `Haalt Art. 6:162 BW aan`. */
+		verbanden?: readonly { tekst: string; collection: GraphNode['collection'] | null }[];
 		/** Escape in the card (reached from the keyboard's list of bronnen). */
 		onClose?: () => void;
 		/** Tab past its last action, and Shift+Tab before its first. */
@@ -78,8 +74,6 @@
 			onBack();
 		}
 	}
-
-	const W = 360;
 
 	const nodeProps = $derived(node.raw?.props ?? undefined);
 
@@ -139,27 +133,32 @@
 	);
 
 	const snippet = $derived(articleText ?? preview(nodeText));
+	const datum = $derived(textOf(nodeProps?.['date']));
+	/** What the line under Datum names, per kind: the law of an article, a judgment's ECLI. */
+	const CITE_LABEL: Partial<Record<GraphNode['drawClass'], string>> = {
+		judgment: 'ECLI',
+		article: 'Wet',
+		member: 'Fractie',
+		dossier: 'Dossier',
+		committee: 'Afkorting',
+		faction: 'Afkorting'
+	};
+	const naam = $derived(bronNaam(node, $instrumentMetaStore));
+	const ref = $derived(refOf(node.collection, node.key, node.raw?.props));
+	const bewaar = $derived.by(() => {
+		const id = node.stub ? null : focusOf(ref);
+		return id ? bewaarItem(id, { kort: naam }, { wet: lawIdOf(nodeProps) }) : null;
+	});
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div
-	class="citepanel"
-	class:bij-bron={!!at}
-	style="width:min({W}px, calc(100% - var(--s-4)));{at ? `left:${at.x}px;top:${at.y}px;` : ''}"
-	onmouseenter={onMouseEnter}
-	onmouseleave={onMouseLeave}
-	{onkeydown}
-	bind:this={el}
->
+<div class="citepanel" {onkeydown} bind:this={el}>
 	<div class="head">
 		<KindGlyph collection={node.collection} />
-		<span class="kind caps">{bronKind(node.collection, nodeProps)}</span>
-		{#if cite}<span class="cite">{cite}</span>{/if}
+		<span class="kind">{bronKind(node.collection, nodeProps)}</span>
 	</div>
 
-	<h4 class="title {node.stub ? 'title--stub' : ''}">
-		{bronNaam(node, $instrumentMetaStore)}
-	</h4>
+	<h2 class="title {node.stub ? 'title--stub' : ''}">{naam}</h2>
 
 	{#if node.stub}
 		<p class="snippet stub-note">{capitalize(NOT_IN_DATA)}.</p>
@@ -171,6 +170,15 @@
 		<p class="snippet">{snippet}</p>
 	{/if}
 
+	{#if datum || cite}
+		<dl class="kenmerken">
+			{#if datum}<dt>Datum</dt>
+				<dd>{langeDatum(datum)}</dd>{/if}
+			{#if cite}<dt>{CITE_LABEL[node.drawClass] ?? 'Bron'}</dt>
+				<dd>{cite}</dd>{/if}
+		</dl>
+	{/if}
+
 	<!-- The reader's notes, as on Bundels (Aantekening), read only: changed there. -->
 	{#each notities as n, i (i)}
 		<Aantekening tekst={n.tekst} bij={n.waar ?? 'deze bron'} waar={n.waar} compact />
@@ -180,55 +188,43 @@
 		{#if !node.stub}
 			<!-- A link, so a middle click or cmd-click opens the bron in a new tab. -->
 			<a
-				class="btn is-text lezen"
-				href={bronHref(refOf(node.collection, node.key, node.raw?.props))}
+				class="btn is-primary"
+				href={openHref(ref)}
 				data-sveltekit-noscroll
 				onclick={(e) => {
 					if (onLezen && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
 						e.preventDefault();
 						onLezen(node);
 					} else onOpen(node);
-				}}><Picto naam="tekst" size={13} />Tekst lezen</a
-			>
-		{/if}
-		{#if onOmgeving && !node.stub}
-			<button type="button" class="btn is-text" onclick={() => onOmgeving(node)}
-				><Picto naam="omgeving" size={13} />Toon verbonden bronnen</button
+				}}>Lees</a
 			>
 		{/if}
 		{#if onToggleChosen && !node.stub}
-			<button
-				type="button"
-				class="btn is-text netwerk"
-				class:is-active={isChosen}
-				aria-pressed={isChosen}
-				onclick={() => onToggleChosen(node)}
-				><Picto naam="plus" size={13} />{isChosen ? 'Uit het netwerk' : 'In het netwerk'}</button
+			<button type="button" class="btn" aria-pressed={isChosen} onclick={() => onToggleChosen(node)}
+				>{isChosen ? 'Uit het netwerk' : 'Toevoegen'}</button
 			>
 		{/if}
+		{#if bewaar}<Bewaar item={bewaar} />{/if}
 	</div>
+
+	{#if verbanden.length > 0}
+		<section class="verbanden" aria-label="Verbonden met de gekozen bronnen">
+			<h3 class="verbanden__kop">Verbonden met de gekozen bronnen</h3>
+			<ul>
+				{#each verbanden as v (v.tekst)}<li>
+						{#if v.collection}<KindGlyph collection={v.collection} size={11} />{/if}{v.tekst}
+					</li>{/each}
+			</ul>
+		</section>
+	{/if}
 </div>
 
 <style>
-	/* Rechtsonder naast de zoom; rechtsboven staat het netwerkpaneel. */
+	/* In the strip at the right of the werkplek, on its paper: no frame of its own. */
 	.citepanel {
-		position: absolute;
-		bottom: var(--s-3);
-		/* Beside the zoom; in a narrow network (beside the reader) never past its left edge. */
-		right: min(
-			calc(var(--s-3) + 32px + var(--s-3)),
-			calc(100% - min(360px, 100% - var(--s-4)) - var(--s-2))
-		);
-		z-index: calc(var(--z-float) + 1);
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		box-shadow: var(--shadow-pop);
-		padding: var(--s-4) var(--s-4) var(--s-3);
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-2);
-		pointer-events: all;
 	}
 
 	.head {
@@ -248,23 +244,34 @@
 	.kind {
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 600;
+		font-style: italic;
 		color: var(--ink-3);
 	}
 
-	.cite {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: var(--t-meta);
+	/* Datum and its kind's line, as the mockup's: a column of terms, 96 px. */
+	.kenmerken {
+		display: grid;
+		grid-template-columns: 96px minmax(0, 1fr);
+		gap: var(--s-2) var(--s-3);
+		margin: var(--s-2) 0 0;
+	}
+	.kenmerken dt {
+		font-size: var(--t-micro);
+		line-height: 20px;
 		color: var(--ink-3);
-		margin-left: auto;
+	}
+	.kenmerken dd {
+		margin: 0;
+		font-size: var(--t-meta);
+		line-height: 20px;
+		overflow-wrap: anywhere;
 	}
 
 	.title {
 		font-family: var(--font-serif);
-		font-size: var(--t-body);
+		font-size: var(--t-h3);
 		font-weight: 600;
-		line-height: var(--lh-snug);
+		line-height: 28px;
 		color: var(--ink);
 		margin: 0;
 	}
@@ -272,39 +279,65 @@
 	.snippet {
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
-		line-height: var(--lh-body);
+		line-height: 24px;
 		color: var(--ink-2);
 		margin: 0;
 	}
 
 	.cite-loading {
-		padding: var(--s-2) var(--s-3);
+		padding: var(--s-2) 0;
 	}
 
-	/* In a narrow network the actions take a second line rather than leave the card. */
+	/* Lees filled, the others framed (E2), on one line or wrapped. */
 	.foot {
 		display: flex;
 		flex-wrap: wrap;
+		align-items: center;
 		gap: var(--s-2);
-		padding-top: var(--s-1);
-		border-top: 1px solid var(--rule);
-		margin-top: var(--s-1);
+		margin-top: var(--s-2);
 	}
 
-	/* The way to the text in ink, the others a step quieter (Knop, is-text). */
-	.lezen {
-		color: var(--ink);
+	.verbanden {
+		margin-top: var(--s-4);
 	}
-
-	.citepanel.bij-bron {
-		right: auto;
-		bottom: auto;
-	}
-	.netwerk {
+	.verbanden__kop {
+		margin: 0 0 var(--s-2);
+		font-size: var(--t-micro);
+		font-weight: 400;
 		color: var(--ink-3);
-		margin-left: auto;
 	}
-	.netwerk.is-active {
+	.verbanden ul {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	.verbanden li {
+		display: flex;
+		align-items: baseline;
+		gap: var(--s-2);
+		padding: var(--s-2) 0;
+		border-top: 1px solid var(--rule);
+		font-size: var(--t-meta);
 		color: var(--ink);
+	}
+	/* A phone: the sheet holds what one decides by, as the mockup's 390. */
+	@media (max-width: 768px) {
+		.title {
+			font-size: var(--t-body-2);
+			line-height: 24px;
+		}
+		.snippet {
+			font-size: var(--t-meta);
+			line-height: 20px;
+			display: -webkit-box;
+			-webkit-line-clamp: 2;
+			line-clamp: 2;
+			-webkit-box-orient: vertical;
+			overflow: hidden;
+		}
+		.kenmerken,
+		.verbanden {
+			display: none;
+		}
 	}
 </style>

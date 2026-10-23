@@ -24,7 +24,7 @@
 	} from './hulls';
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import type { Vorm } from '$lib/bron/vormen';
-	import { onDestroy, onMount, untrack } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import type SigmaType from 'sigma';
 	import type Graph from 'graphology';
 	import { edgeKey, readEdge } from '$lib/verbonden/edge-meta';
@@ -92,15 +92,13 @@
 		onNodeClick,
 		onNodeDoubleClick,
 		onNodeHover,
-		onNodeLeave,
 		onEdgeClick,
 		onStageClick,
 		onReady,
 		onCameraChange,
 		onDrawn,
 		externalHoveredId = null as string | null,
-		notitieIds = new Set() as ReadonlySet<string>,
-		avoid = null as Rect | null
+		notitieIds = new Set() as ReadonlySet<string>
 	}: {
 		graph: Graph;
 		focusedId?: string | null;
@@ -140,7 +138,6 @@
 		onNodeClick?: (id: string) => void;
 		onNodeDoubleClick?: (id: string) => void;
 		onNodeHover?: (id: string, vx: number, vy: number) => void;
-		onNodeLeave?: () => void;
 		onEdgeClick?: (id: string) => void;
 		onStageClick?: () => void;
 		onReady?: (api: GraphCanvasApi) => void;
@@ -149,16 +146,7 @@
 		externalHoveredId?: string | null;
 		/** The bronnen with a note of the reader's (Bundels): a quiet mark beside each. */
 		notitieIds?: ReadonlySet<string>;
-		/** A panel floating over the canvas, in canvas pixels: hull labels keep clear of it. */
-		avoid?: Rect | null;
 	} = $props();
-
-	type Rect = { x: number; y: number; width: number; height: number };
-
-	$effect(() => {
-		void avoid;
-		untrack(() => computeHulls());
-	});
 
 	let wrap: HTMLDivElement;
 	let destroyed = false;
@@ -469,7 +457,8 @@
 			labelWidth,
 			width: view.getDimensions().width,
 			zoomedOut: view.getCamera().ratio > HULL_LABEL_ZOOM,
-			avoid,
+			// Nothing floats over the canvas of the werkplek (besluit 39).
+			avoid: null,
 			hoveredHullId,
 			hoveredId,
 			hoveredNeighbours,
@@ -691,26 +680,9 @@
 			const height = maxY - minY || 1;
 			const dims = renderer.getDimensions();
 			const usable = dims.height - 2 * STAGE_PADDING;
-			let top = usable > LABEL_ROOM * 2 ? (height * LABEL_ROOM) / (usable - LABEL_ROOM) : 0;
-			// A panel floating in a corner of the canvas takes room the nodes must leave:
-			// the box grows right or up, whichever costs the drawing less of its size.
-			const span = maxX - minX || 1;
-			let right = 0;
-			const panel = avoid;
-			if (panel && panel.width > 0 && panel.height > 0) {
-				const usableW = dims.width - 2 * STAGE_PADDING;
-				const fromRight = dims.width - panel.x + EDGE_GAP;
-				const fromTop = panel.y + panel.height + EDGE_GAP;
-				const shareW = fromRight / usableW;
-				const shareH = fromTop / usable;
-				// A share at or below zero is a panel not over this canvas (measured before
-				// the canvas had its width): it takes no room, and would shrink the box.
-				if (shareW > 0 && shareW < shareH && shareW < 0.6) right = (span * shareW) / (1 - shareW);
-				else if (shareH > 0 && shareH < 0.6)
-					top = Math.max(top, ((height + top) * shareH) / (1 - shareH));
-			}
+			const top = usable > LABEL_ROOM * 2 ? (height * LABEL_ROOM) / (usable - LABEL_ROOM) : 0;
 			renderer.setCustomBBox({
-				x: [minX, (maxX > minX ? maxX : minX + 1) + right],
+				x: [minX, maxX > minX ? maxX : minX + 1],
 				y: [minY, minY + height + top]
 			});
 		} else {
@@ -912,9 +884,8 @@
 				const w = context.measureText(data.label).width + 4;
 				const h = size + 4;
 				const room = context.canvas.width / (window.devicePixelRatio || 1);
-				const kaart = avoid ? { x: avoid.x, y: avoid.y, w: avoid.width, h: avoid.height } : null;
 				const plek = labelsAt.get((data as { key?: string }).key ?? '') ?? {
-					...hoverPlaats(data.x, data.y, data.size, w, h, room, kaart),
+					...hoverPlaats(data.x, data.y, data.size, w, h, room),
 					w,
 					h
 				};
@@ -1209,7 +1180,6 @@
 		renderer.on('leaveNode', () => {
 			sigmaHoveredId = null;
 			setHoveredId(externalHoveredId ?? null);
-			onNodeLeave?.();
 		});
 		renderer.on('enterEdge', ({ edge }) => {
 			hoveredEdgeId = edge;

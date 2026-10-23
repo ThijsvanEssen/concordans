@@ -5,6 +5,7 @@
 	// opens its group in the panel below. The legend is one line that counts what is drawn
 	// (besluit 29.3). The way to the werkplek is the link Open in netwerk under it.
 	import { VORMEN } from '$lib/bron/vormen';
+	import { kleurVanSoort } from '$lib/bron/kleur';
 	import { formatCount } from '$lib/text/getal';
 	import { plural } from '$lib/text/words';
 	import type { Collection } from '$lib/vocabulary';
@@ -34,29 +35,7 @@
 		act();
 	};
 
-	/** The colour of a kind, as the canvas draws its groups. */
-	const colour = (c: Collection | null, hue: string | null = null): string => {
-		if (hue === 'regelingen') return 'var(--groep-regeling)';
-		switch (c) {
-			case 'instruments':
-			case 'articles':
-			case 'annexes':
-				return 'var(--groep-wet)';
-			case 'documents':
-			case 'dossiers':
-			case 'activities':
-				return 'var(--groep-dossier)';
-			case 'judgments':
-				return 'var(--indigo)';
-			case 'members':
-			case 'factions':
-				return 'var(--groep-fractie)';
-			case 'committees':
-				return 'var(--groep-commissie)';
-			default:
-				return 'var(--ink-2)';
-		}
-	};
+	const colour = kleurVanSoort;
 	/** A group of Kamerstukken is dashed, as a dossier on the canvas. */
 	const dashed = (c: Collection | null) => c === 'documents' || c === 'dossiers';
 
@@ -81,7 +60,15 @@
 		aria-label="Netwerk rond {name}: {description}"
 	>
 		{#each sketch.singles as l (l.id)}
-			<line x1={m.x} y1={m.y} x2={l.x} y2={l.y} class="line" stroke-width="1.5" />
+			<line
+				x1={m.x}
+				y1={m.y}
+				x2={l.x}
+				y2={l.y}
+				class="line"
+				class:is-open={open === l.id}
+				stroke-width={open === l.id ? 2 : 1.5}
+			/>
 		{/each}
 		{#each sketch.clusters as b (b.id)}
 			<line x1={m.x} y1={m.y} x2={b.x} y2={b.y} class="line" stroke-width={clusterLine(b.count)} />
@@ -119,6 +106,14 @@
 			>
 				<title>{l.title}</title>
 				<circle cx={l.x} cy={l.y} r={l.hit} class="hit" />
+				{#if open === l.id}<rect
+						class="sel"
+						x={l.x - 12}
+						y={l.y - 12}
+						width="24"
+						height="24"
+						rx="2"
+					/>{/if}
 				<path
 					d={v.d}
 					transform="translate({l.x - 7} {l.y - 7}) scale(0.875)"
@@ -207,6 +202,16 @@
 		stroke: var(--rule-strong);
 		opacity: 0.55;
 	}
+	/* The bron opened under the drawing: its line in ink, a frame around it. */
+	.line.is-open {
+		stroke: var(--ink);
+		opacity: 1;
+	}
+	.sel {
+		fill: none;
+		stroke: var(--ink);
+		stroke-width: 2;
+	}
 	/* The room a finger may tap: unseen, at least 44 px where the neighbours leave it. */
 	.hit {
 		fill: transparent;
@@ -240,6 +245,11 @@
 	.cluster:hover .name {
 		fill: var(--ink);
 		text-decoration: underline;
+	}
+	/* A click marks the bron with its frame (.sel); the keyboard keeps its ring below. */
+	.single:focus:not(:focus-visible),
+	.cluster:focus:not(:focus-visible) {
+		outline: none;
 	}
 	.single:focus-visible path,
 	.cluster:focus-visible circle:not(.hit) {

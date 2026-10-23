@@ -205,7 +205,7 @@ describe('Verbonden', () => {
 		expect(figuur.querySelectorAll('a')).toHaveLength(0);
 	});
 
-	it('opens a bron of the drawing in place under it, its row; the werkplek is a link below', async () => {
+	it('opens a bron of the drawing in place under it, its card; the werkplek is a link below', async () => {
 		paneel(ROWS, { onShowNetwork: () => {}, showNetwork: true, networkHref: '/x?mode=netwerk' });
 		const figuur = screen.getByTestId('network-sketch');
 		const hr = figuur.querySelector<SVGElement>(
@@ -214,13 +214,13 @@ describe('Verbonden', () => {
 		await klik(hr);
 		expect(goto).not.toHaveBeenCalled();
 		expect(hr.getAttribute('aria-expanded')).toBe('true');
-		const rij = document.querySelector('.schets-rij')!;
-		expect(rij.textContent).toContain('Hoge Raad, 20 december 2019');
-		expect(screen.getByRole('link', { name: 'In het netwerk' }).getAttribute('href')).toBe(
+		const kaart = screen.getByRole('region', { name: 'Hoge Raad, 20 december 2019' });
+		expect(kaart.querySelector('a.btn')?.textContent).toBe('Lees');
+		expect(screen.getByRole('link', { name: 'Open in netwerk' }).getAttribute('href')).toBe(
 			'/x?mode=netwerk'
 		);
 		await klik(hr);
-		expect(document.querySelector('.schets-rij')).toBeNull();
+		expect(screen.queryByRole('region', { name: 'Hoge Raad, 20 december 2019' })).toBeNull();
 	});
 
 	it('has no Netwerk tonen beside the canvas', () => {

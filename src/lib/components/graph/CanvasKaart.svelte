@@ -64,6 +64,7 @@
 			</button>
 		{:else}
 			<span class="canvas-kaart__titel">{title}</span>
+			{#if samenvatting}{@render samenvatting()}{/if}
 		{/if}
 		{#if actie}<span class="canvas-kaart__actie">{@render actie()}</span>{/if}
 	</div>

@@ -58,6 +58,11 @@ describe('the keyboard', () => {
 				'a total of the grid: an inset line in ink, as a cell'
 			),
 			selector(
+				'lib/verbonden/NetworkSketch.svelte',
+				'.single:focus:not(:focus-visible), .cluster:focus:not(:focus-visible)',
+				'a bron of the drawing clicked: its frame marks it; :focus-visible keeps the ring'
+			),
+			selector(
 				'lib/styles/basis.css',
 				"[tabindex='-1']:focus:not(:focus-visible)",
 				'a list reached by its skip link (focus by a click or a script): :focus-visible keeps the ring'

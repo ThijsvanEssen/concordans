@@ -1,13 +1,7 @@
 // De tekens van Concordans. De vorm zegt wat een bron
 // is; alle tekens staan in inkt, er is geen kleur te onthouden. Eén tabel voor de tekens
 // in de tekst (KindGlyph) en op het canvas (nodeSprites), getekend in een vak van 16.
-import {
-	BILL_KIND,
-	isCollection,
-	isInternational,
-	REGULATION_LABEL,
-	type Collection
-} from '$lib/vocabulary';
+import { BILL_KIND, isCollection, isInternational, type Collection } from '$lib/vocabulary';
 import type { FilterGroup } from '$lib/verbonden/filter';
 
 export type Vorm =
@@ -115,42 +109,3 @@ export function vormVanBron(
 		return 'voorstel';
 	return vorm;
 }
-
-/** The order of the shapes in a legend: law, the parliament, people and bodies, the rest. */
-export const VORM_VOLGORDE: Vorm[] = [
-	'regel',
-	'regel-int',
-	'regel-o',
-	'uitspraak',
-	'dossier',
-	'stuk',
-	'voorstel',
-	'besluit',
-	'activiteit',
-	'toezegging',
-	'persoon',
-	'orgaan',
-	'orgaan-o',
-	'kabinet',
-	'overig'
-];
-
-/** What a shape stands for, as a legend names it. */
-export const VORM_LABEL: Record<Vorm, string> = {
-	// Every Dutch regeling, not only a wet: a beleidsregel or an AMvB has the same square.
-	regel: REGULATION_LABEL,
-	'regel-int': 'Europese of internationale regeling',
-	'regel-o': 'Artikel',
-	uitspraak: 'Uitspraak',
-	dossier: 'Dossier',
-	stuk: 'Stuk',
-	voorstel: 'Wetsvoorstel',
-	besluit: 'Stemming',
-	activiteit: 'Activiteit',
-	toezegging: 'Toezegging',
-	persoon: 'Persoon',
-	orgaan: 'Fractie',
-	'orgaan-o': 'Commissie',
-	kabinet: 'Kabinet',
-	overig: 'Overig'
-};

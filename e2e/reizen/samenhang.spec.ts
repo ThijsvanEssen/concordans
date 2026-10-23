@@ -4,6 +4,16 @@ import { expect, test } from '../support/test';
 
 const ARTICLE = '/wetten/BWBR0005289/artikel/6:162';
 
+/** The legend stands in the strip at the left; narrower, under the button Filter. */
+async function openFilters(page: import('@playwright/test').Page) {
+	const filter = page.getByRole('button', { name: 'Filter', exact: true });
+	await filter
+		.or(page.getByRole('region', { name: 'Legenda' }))
+		.first()
+		.waitFor();
+	if (await filter.isVisible()) await filter.click();
+}
+
 /** The bronnen drawn, as the list beside the canvas counts them. */
 const drawn = (page: import('@playwright/test').Page) =>
 	page.getByRole('list', { name: /^Bronnen in het netwerk, \d+/ });
@@ -20,7 +30,7 @@ test('the legend switches a kind of bron off and on', async ({ page }) => {
 	await page.goto(`${ARTICLE}?mode=netwerk`);
 	// The network fills in steps; the count is read once it has.
 	await page.waitForLoadState('networkidle');
-	await page.getByRole('button', { name: /^Legenda/ }).click();
+	await openFilters(page);
 	const legend = page.getByRole('region', { name: 'Legenda' });
 	const judgments = legend.getByRole('button', { name: /^Uitspraken [\d.]+$/ });
 	await expect(judgments).toHaveAttribute('aria-pressed', 'true');
@@ -62,7 +72,7 @@ test('the open legend counts the stemmingen drawn, the focus selected', async ({
 	const items = await drawn(page).getByRole('listitem').allInnerTexts();
 	const stemmingen = items.filter((t) => t.endsWith(', Stemming')).length;
 	expect(stemmingen).toBeGreaterThan(0);
-	await page.getByRole('button', { name: /^Legenda/ }).click();
+	await openFilters(page);
 	const legend = page.getByRole('region', { name: 'Legenda' });
 	await expect(legend.getByRole('button', { name: /^Stemmingen [\d.]+$/ })).toHaveAccessibleName(
 		`Stemmingen ${stemmingen}`
@@ -84,13 +94,13 @@ test('Verbonden as a table, exported as CSV', async ({ page }) => {
 	expect((await download).suggestedFilename()).toMatch(/\.csv$/);
 });
 
-test('Samenhang opens with an example network that can be cleared', async ({ page, touch }) => {
+test('Samenhang opens with an example network that can be cleared', async ({ page }) => {
 	await page.goto('/explore');
 	await page.waitForLoadState('networkidle');
 	const network = page.getByRole('region', { name: 'Netwerk' });
-	// At 375 the chosen bronnen fold under the bar of the network.
-	if (touch) await network.getByRole('button', { name: /^Netwerk \d+ bronnen$/ }).click();
 	await expect(network.getByRole('button', { pressed: true }).first()).toBeVisible();
+	// On a phone Wissen stands under Filter, with the netwerk's own filters.
+	await openFilters(page);
 	await network.getByRole('button', { name: 'Wissen' }).click();
 	await expect(network.getByRole('button', { name: 'Wissen' })).toHaveCount(0);
 });

@@ -1499,6 +1499,23 @@
 								onHeatPeriodChange={setHeatPeriod}
 								onToggleMutatie={toggleMutatie}
 							>
+								{#snippet links()}
+									<!-- The way back to the bron the werkplek began with: read, a step of its own. -->
+									{#if selectedNode && !selectedNode.id.startsWith('synth:')}
+										<p class="terug">
+											<a
+												href={openHref(
+													refOf(selectedNode.collection, selectedNode.key, selectedNode.raw?.props)
+												)}>← {bronNaam(selectedNode, $instrumentMetaStore)}</a
+											>
+										</p>
+									{/if}
+								{/snippet}
+								{#snippet balk()}
+									<button type="button" class="btn" onclick={handleShareView}
+										>{shareCopier.label('share', 'Deel')}</button
+									>
+								{/snippet}
 								{#snippet canvasOverlay()}
 									<NetwerkPanel
 										entries={netwerkActive
@@ -1543,8 +1560,6 @@
 										onTussen={() => setNetwerk({ ...netwerk, tussen: !netwerk.tussen })}
 										onClearContext={() => store.clearContext()}
 										onClear={wisAlles}
-										deelLabel={shareCopier.label('share', 'Deel')}
-										onDeel={handleShareView}
 									/>
 								{/snippet}
 							</GraphViewC>
@@ -1697,6 +1712,25 @@
 	}
 	.werkplek .col--graph {
 		flex: 1;
+	}
+	.terug {
+		margin: 0 0 var(--s-4);
+	}
+	@media (max-width: 1100px) {
+		.terug {
+			margin: var(--s-1) 0;
+		}
+	}
+	.terug {
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		line-height: 20px;
+	}
+	.terug a {
+		color: var(--ink-2);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: var(--underline-offset-tight);
 	}
 
 	.explore-read {

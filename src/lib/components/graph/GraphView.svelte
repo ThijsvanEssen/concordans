@@ -19,6 +19,7 @@
 	import { readingOrder } from './canvas-keys';
 	import { countCanvas, NO_COUNTS, sameIds, type CanvasCounts } from './canvas-count';
 	import GraphSidebar from './GraphSidebar.svelte';
+	import Tijdstrook from './Tijdstrook.svelte';
 	import type { ComponentProps, Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/store/types';
 	import type { GraphEdge, GraphNode, DrawClass } from '$lib/graph/types';
@@ -39,7 +40,7 @@
 	import { bronNaam } from '$lib/bron/naam';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
-	import { VORM_LABEL, VORM_VOLGORDE, vormVanBron } from '$lib/bron/vormen';
+	import { vormVanBron } from '$lib/bron/vormen';
 	import {
 		containerIdFor,
 		isDrawnGroup,
@@ -55,7 +56,7 @@
 	import type { NodeCounts } from '$lib/api/overlays';
 	import type { Overlay } from '$lib/selection/overlay';
 	import { DEFAULT_HEAT_MONTHS } from '$lib/selection/overlay';
-	import type { Relation } from '$lib/vocabulary';
+	import type { Collection, Relation } from '$lib/vocabulary';
 	import {
 		FILTER_GROUPS,
 		filterGroupOf,
@@ -64,16 +65,9 @@
 		type VerbondenFilter
 	} from '$lib/verbonden/filter';
 	import type { VerbondenState } from '$lib/verbonden/data-source';
-	import { laatstOpen, opzij, type Zwevend } from '$lib/stores/zwevend';
-	import {
-		cardBeside,
-		CLUSTER_CARD,
-		clusterCardAt,
-		foldStep,
-		legendPlace,
-		placeCard
-	} from '$lib/selection/card-place';
-	import { FOLD, isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
+	import { CLUSTER_CARD, clusterCardAt, placeCard } from '$lib/selection/card-place';
+	import { relationWords } from '$lib/verbonden/relation-words';
+	import { capitalize } from '$lib/text/words';
 	import { netwerkMelding } from '$lib/stores/netwerk-melding';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { kaart } from '$lib/map/map.svelte';
@@ -98,7 +92,6 @@
 
 	let {
 		store,
-		compact = false,
 		filter,
 		verbonden,
 		reach = null,
@@ -110,7 +103,6 @@
 		kies = null,
 		onKies,
 		onNodeClick,
-		onNodeDoubleClick,
 		onMetGroep,
 		onToggleChosen,
 		netwerkActive = false,
@@ -119,10 +111,11 @@
 		onBack,
 		onGoForward,
 		canvasOverlay,
+		links,
+		balk,
 		...legend
 	}: {
 		store: GraphStore;
-		compact?: boolean;
 		filter: VerbondenFilter;
 		verbonden: VerbondenState;
 		/** How far the last neighbourhood reached, and whether the API cut it off. */
@@ -139,8 +132,6 @@
 		onKies?: (id: string | null) => void;
 		/** Lees: the marked bron is read, or (beside a reader) selected. */
 		onNodeClick?: (node: GraphNode) => void;
-		/** Replaces the canvas with the bron's own neighbourhood; a click only selects. */
-		onNodeDoubleClick?: (node: GraphNode) => void;
 		/** The bronnen hidden with a grouping that is off, by canvas id: their chips grey. */
 		onMetGroep?: (verborgen: ReadonlyMap<string, ContainerKind>) => void;
 		/** Adds a bron to the netwerk, or takes it out. */
@@ -151,7 +142,12 @@
 		onClear?: () => void;
 		onBack?: () => void;
 		onGoForward?: () => void;
+		/** The panel Netwerk, in the strip at the left. */
 		canvasOverlay?: Snippet;
+		/** What heads the strip at the left: the way back to the bron, the Weergave. */
+		links?: Snippet;
+		/** At the top right of the canvas: Deel. */
+		balk?: Snippet;
 	} & LegendProps = $props();
 
 	// ── graphology (data + layout, no sigma) ─────────────────────────────────
@@ -195,15 +191,6 @@
 		filter.bronnen ? new Set(FILTER_GROUPS.filter((k) => !filter.bronnen!.has(k))) : new Set()
 	);
 
-	// The floating legend: closed until opened, kept per browser (FOLD.legend), and folded
-	// while the canvas has no room for it beside the panel Netwerk (opzij, zwevend.ts).
-	const legendaOpen = $derived(isOpen(FOLD.legend, false) && $opzij !== 'legenda');
-	const zetLegenda = (v: boolean) => {
-		if (v && get(opzij) === 'legenda') opzij.set(null);
-		if (v) laatstOpen.set('legenda');
-		zetOpen(FOLD.legend, v);
-	};
-
 	// What the canvas draws, as it says it (GraphCanvas `onDrawn`), counted for the Legenda,
 	// the sidebar and the keyboard's list.
 	let drawn: ReadonlySet<string> = new Set();
@@ -224,6 +211,7 @@
 			hiddenRelations: filters.hiddenRelations
 		});
 		canvasCounts = geteld.counts;
+		telJaren();
 		// The keyboard's list sorts what is drawn: only a change sorts it again.
 		if (
 			!sameIds(
@@ -330,9 +318,8 @@
 	const notities = $derived(notesOfBundels(kaart.mappen));
 	const notitieIds = $derived(gemerkt(notities));
 
-	// Hover panel state (only in the full canvas)
+	// The bron whose card stands in the strip at the right: the one marked, or the keyboard's.
 	let hoverNode = $state<GraphNode | null>(null);
-	let hoverAt = $state<{ x: number; y: number } | null>(null);
 	// The bronnen drawn on the canvas, for the keyboard's list of them, and the one in its focus.
 	let drawnIds = $state<string[]>([]);
 	let keyNode = $state<GraphNode | null>(null);
@@ -351,7 +338,6 @@
 		}
 		stilNa = null;
 		keyNode = n;
-		hoverAt = null;
 		hoverNode = n;
 	}
 	// The card of the bron in the keyboard's list: Tab goes into it, Escape and Shift+Tab back
@@ -412,19 +398,13 @@
 		}
 	}
 
-	// One click marks a bron: it lights up with its own lines, its card beside it. The reader
-	// opens with "Tekst lezen", a second click on it or Enter; the network keeps its size
-	// (Thijs, 9 Oct; before, one click opened the reader).
+	// One click marks a bron: it lights up with its own lines, its card in the strip at the
+	// right. Lees on the card, a second click on it or Enter reads it (Thijs, 9 Oct).
 	let gemarkeerd = $state<GraphNode | null>(null);
 	function markeer(n: GraphNode) {
 		if (gemarkeerd?.id === n.id) return open(n);
-		if (showTimer) clearTimeout(showTimer);
-		if (hideTimer) clearTimeout(hideTimer);
-		showTimer = hideTimer = null;
 		gemarkeerd = n;
 		keyNode = null;
-		// Beside the bron; in a narrow network (beside the reader) or after a tap, at its foot.
-		hoverAt = compact ? null : kaartPlek(lastPointer);
 		hoverNode = n;
 		onKies?.(n.id);
 	}
@@ -462,12 +442,9 @@
 			if (!n) return;
 			gemarkeerd = n;
 			keyNode = null;
-			hoverAt = null;
 			hoverNode = n;
 		});
 	});
-	let hideTimer: ReturnType<typeof setTimeout> | null = null;
-	let showTimer: ReturnType<typeof setTimeout> | null = null;
 
 	/** Every node is drawn by sigma's image program: its sprite on a background of this. */
 	const TRANSPARENT = 'rgba(0,0,0,0)';
@@ -769,7 +746,7 @@
 
 	function drawNodes(nodes: GraphNode[]) {
 		const newIds = new Set(nodes.map((n) => n.id));
-		skipNextFit = keepsCamera(compact ? 'compact' : 'full', newIds);
+		skipNextFit = keepsCamera('full', newIds);
 
 		let changed = false;
 		const addedThisSync = new Set<string>();
@@ -948,70 +925,10 @@
 		if (changed) scheduleFit();
 	}
 
-	// The hover panel opens only after the pointer rests on a node for 400 ms.
-	function handleNodeHover(nodeId: string, vx?: number, vy?: number) {
+	// A bron under the pointer lights up with its lines (GraphCanvas); its card waits for a
+	// click: no card covers the canvas (besluit 39).
+	function handleNodeHover(_nodeId: string, vx?: number, vy?: number) {
 		if (vx !== undefined && vy !== undefined) lastPointer = { x: vx, y: vy };
-		if (compact || isClusterId(nodeId)) return;
-		// A marked bron keeps its card; hovering another only lights it.
-		if (gemarkeerd) return;
-		// De kaart staat naast de bron, niet los in een hoek.
-		if (vx !== undefined && vy !== undefined) hoverAt = kaartPlek({ x: vx, y: vy });
-		if (hideTimer) {
-			clearTimeout(hideTimer);
-			hideTimer = null;
-		}
-		if (showTimer) {
-			clearTimeout(showTimer);
-			showTimer = null;
-		}
-		const n = lookup.get(nodeId);
-		if (!n) return;
-		showTimer = setTimeout(() => {
-			hoverNode = n;
-			showTimer = null;
-		}, 400);
-	}
-
-	/** Where the card of a bron stands: beside the bron at `at` (card-place.ts). */
-	const kaartPlek = (at: { x: number; y: number } | null) =>
-		at && canvasWrap
-			? cardBeside(at, { width: canvasWrap.clientWidth, height: canvasWrap.clientHeight })
-			: null;
-
-	// A card taller than its place (an article's text, the reader's notes) moves up until its
-	// foot is inside the network, as its text loads too.
-	$effect(() => {
-		const el = citeEl;
-		const wrap = canvasWrap;
-		if (!el || !wrap || !hoverAt) return;
-		const past = () => {
-			const at = untrack(() => hoverAt);
-			if (!at) return;
-			const y = Math.max(8, Math.min(at.y, wrap.clientHeight - el.offsetHeight - 8));
-			if (y !== at.y) hoverAt = { x: at.x, y };
-		};
-		const ro = new ResizeObserver(past);
-		ro.observe(el);
-		return () => ro.disconnect();
-	});
-
-	function handleNodeLeave() {
-		if (compact || gemarkeerd) return;
-		if (showTimer) {
-			clearTimeout(showTimer);
-			showTimer = null;
-		}
-		hideTimer = setTimeout(() => {
-			hoverNode = null;
-			hideTimer = null;
-		}, 600);
-	}
-
-	function cancelHide() {
-		if (hideTimer) {
-			clearTimeout(hideTimer);
-			hideTimer = null;
-		}
 	}
 
 	onMount(() => {
@@ -1097,168 +1014,124 @@
 		store.setFilters({ hiddenRelations: next });
 	}
 
-	// The panel floating over the canvas, measured so that hull labels keep clear of it.
-	let overlayHost = $state<HTMLDivElement | null>(null);
 	/** The canvas and the cards over it (see the markup). */
 	let buhne = $state<HTMLDivElement | null>(null);
-	// The legend under the panel Netwerk, as wide as it (Thijs, 10 Oct: "legenda en netwerk
-	// onder elkaar"): placed from the panel's measured box, and the two weighed against the
-	// height of the canvas. Both open while they fit; the one opened last stays, the other
-	// folds (zwevend.ts) and comes back once there is room.
-	let legendaEl = $state<HTMLElement | null>(null);
-	/** The API cut the focus's direct neighbours off (reach.buckets, #528). */
-	const deels = $derived(!netwerkActive && !!reach?.buckets?.some((b) => b.kept < b.total));
-	let legendaPlek = $state<{ top: number; right: number; width: number; max: number }>({
-		top: 12,
-		right: 12,
-		width: 280,
-		max: 0
-	});
-	/** The height of each card when it last stood open, to know whether it fits again. */
-	const hoogteOpen: Partial<Record<Zwevend, number>> = {};
-	// A last guard: no more than a few folds a second, whatever the measures say.
-	let wissels: number[] = [];
-	function wissel(wie: Zwevend | null) {
-		if (get(opzij) === wie) return;
-		const nu = performance.now();
-		wissels = wissels.filter((t) => nu - t < 1000);
-		if (wissels.length >= 4) return;
-		wissels.push(nu);
-		opzij.set(wie);
+
+	// Below 1101 px the filters of the strip open under a button Filter, over the canvas.
+	let filtersOpen = $state(false);
+
+	// ── The tijdstrook ──────────────────────────────────────────────────────────
+	// Every bron on the canvas with a date, whatever the period: the strip shows what lies
+	// outside it too, so the period can widen again.
+	let stippen = $state<{ jaar: number; collection: Collection }[]>([]);
+	let stippenSleutel = '';
+	function telJaren() {
+		const nieuw: { jaar: number; collection: Collection }[] = [];
+		g.forEachNode((id, a) => {
+			if (isClusterId(id) || typeof a.date !== 'string') return;
+			const [j, m = 1, d = 1] = a.date.split('-').map(Number);
+			if (j > 1000)
+				nieuw.push({
+					jaar: j + ((m - 1) * 31 + d - 1) / 372,
+					collection: a.collection as Collection
+				});
+		});
+		const sleutel = nieuw.map((s) => `${s.jaar}${s.collection}`).join();
+		if (sleutel !== stippenSleutel) {
+			stippenSleutel = sleutel;
+			stippen = nieuw;
+		}
 	}
-	function schik() {
-		const host = overlayHost;
-		if (!host) return;
-		// The cards' width and edge from the tokens (--paneel-breed, --paneel-rand).
-		const stijl = getComputedStyle(host);
-		const card = {
-			width: parseFloat(stijl.getPropertyValue('--paneel-breed')) || 280,
-			edge: parseFloat(stijl.getPropertyValue('--paneel-rand')) || 12
-		};
-		const nw = host.querySelector<HTMLElement>('.netwerk:not(.netwerk--start)');
-		legendaPlek = legendPlace(
-			{ width: host.clientWidth, height: host.clientHeight },
-			nw
-				? { top: nw.offsetTop, left: nw.offsetLeft, width: nw.offsetWidth, height: nw.offsetHeight }
-				: null,
-			card
-		);
-		const nwOpen = !!nw && !nw.classList.contains('netwerk--dicht');
-		const nwH = nw ? nw.scrollHeight : 0;
-		// The legend scrolls inside its content: its whole height is its head and that content.
-		const kop = legendaEl?.querySelector<HTMLElement>('.canvas-kaart__kop');
-		const inhoud = legendaEl?.querySelector<HTMLElement>('.canvas-kaart__inhoud');
-		const lgH = legendaEl ? (kop?.offsetHeight ?? 0) + (inhoud?.scrollHeight ?? 0) + 2 : 0;
-		if (nwOpen) hoogteOpen.netwerk = nwH;
-		if (legendaOpen) hoogteOpen.legenda = lgH;
-		const step = foldStep({
-			height: host.clientHeight,
-			panel: nw ? { open: nwOpen, height: nwH } : null,
-			legend: { open: legendaOpen, height: lgH },
-			folded: get(opzij),
-			lastOpened: get(laatstOpen),
-			openHeights: hoogteOpen
+	const eersteJaar = $derived(
+		stippen.length ? String(Math.floor(Math.min(...stippen.map((s) => s.jaar)))) : ''
+	);
+	const laatsteJaar = $derived(
+		stippen.length ? String(Math.floor(Math.max(...stippen.map((s) => s.jaar)))) : ''
+	);
+	const jaarVan = (dag: string | null) => (dag ? Number(dag.slice(0, 4)) : null);
+	/** A period chosen by its years: the bronfilter holds it as days (?van, ?tot). */
+	function kiesPeriode(van: number | null, tot: number | null) {
+		legend.onFilter({
+			...filter,
+			van: van === null ? null : `${van}-01-01`,
+			tot: tot === null ? null : `${tot}-12-31`
 		});
-		if (step === 'unfold') opzij.set(null);
-		else if (step) wissel(step.fold);
 	}
-	$effect(() => {
-		const host = overlayHost;
-		const lg = legendaEl;
-		if (!host) return;
-		const kijk = new ResizeObserver(() => schik());
-		kijk.observe(host);
-		if (lg) kijk.observe(lg);
-		// The panel Netwerk is watched as it is now: after a step to another bron it can be a
-		// new element, whose chips wrap later (Legenda over Netwerk, UX test 10 Oct, #10).
-		const volg = () => {
-			const nw = host.querySelector<HTMLElement>('.netwerk');
-			if (nw) kijk.observe(nw);
-		};
-		volg();
-		// The panel's content changes without a change of its own box (a chip added).
-		const verandert = new MutationObserver(() => {
-			volg();
-			schik();
-		});
-		// A chip's new name is a change of its text alone (kabinet → uitspraak: the chips took a
-		// second line and the Legenda stayed 19 px over the panel, UX test 10 Oct, #10).
-		verandert.observe(host, {
-			childList: true,
-			subtree: true,
-			characterData: true,
-			attributes: true,
-			attributeFilter: ['class']
-		});
-		// The window too: a canvas that grows with it is measured again.
-		window.addEventListener('resize', schik);
-		// Untracked: schik reads legendaOpen and may fold a card, which changes it; this effect
-		// is for the elements, not for what they show (an effect loop once the Legenda grew).
-		untrack(schik);
-		return () => {
-			kijk.disconnect();
-			verandert.disconnect();
-			window.removeEventListener('resize', schik);
-		};
-	});
-	$effect(() => {
-		void legendaOpen;
-		queueMicrotask(schik);
-	});
-	let overlayRect = $state<{ x: number; y: number; width: number; height: number } | null>(null);
-	$effect(() => {
-		const host = overlayHost;
-		if (!host) return;
-		let last: typeof overlayRect = null;
-		const measure = () => {
-			const box = host.getBoundingClientRect();
-			const panels = [...host.children].map((c) => c.getBoundingClientRect());
-			const shown = panels.filter((r) => r.width > 0 && r.height > 0);
-			if (shown.length === 0) {
-				overlayRect = last = null;
-				return;
+	function veldJaar(e: Event): number | null {
+		const v = (e.currentTarget as HTMLInputElement).value.trim();
+		const n = Number(v);
+		return v && Number.isInteger(n) && n > 1000 && n < 3000 ? n : null;
+	}
+
+	// ── How the bron of the card is tied to the chosen bronnen ─────────────────
+	// Read from the lines on the canvas: "Haalt Art. 6:162 BW aan", "Art. 6:162 BW noemt deze
+	// bron", in the words of every verbinding (relation-words.ts).
+	const verbanden = $derived.by(() => {
+		const n = hoverNode;
+		void drawnIds;
+		if (!n || !g.hasNode(n.id)) return [];
+		const lines: { tekst: string; collection: Collection | null }[] = [];
+		for (const other of pinnedIds) {
+			if (other === n.id || !g.hasNode(other)) continue;
+			const ander = lookup.get(other);
+			const naam = ander ? kort(bronNaam(ander, $instrumentMetaStore)) : other;
+			for (const [van, naar] of [
+				[n.id, other],
+				[other, n.id]
+			]) {
+				const edge = g.edge(van, naar);
+				if (!edge) continue;
+				const relation = g.getEdgeAttribute(edge, 'relation') as Relation;
+				const w = relationWords(
+					relation,
+					lookup.get(van)?.collection ?? null,
+					lookup.get(naar)?.collection ?? null,
+					g.getEdgeAttribute(edge, 'meta') as Record<string, unknown> | null
+				);
+				const [verb, ...deeltje] = w.actief.split(' ');
+				lines.push({
+					tekst:
+						van === n.id
+							? capitalize([verb, naam, ...deeltje].join(' '))
+							: [naam, verb, 'deze bron', ...deeltje].join(' '),
+					collection: ander?.collection ?? null
+				});
 			}
-			const left = Math.min(...shown.map((r) => r.left));
-			const top = Math.min(...shown.map((r) => r.top));
-			const right = Math.max(...shown.map((r) => r.right));
-			const bottom = Math.max(...shown.map((r) => r.bottom));
-			const next = {
-				x: left - box.left,
-				y: top - box.top,
-				width: right - left,
-				height: bottom - top
-			};
-			// Compared with the last measure, not the state: reading the state here would
-			// make this effect depend on what it writes.
-			const same =
-				last &&
-				Math.abs(last.x - next.x) < 1 &&
-				Math.abs(last.y - next.y) < 1 &&
-				Math.abs(last.width - next.width) < 1 &&
-				Math.abs(last.height - next.height) < 1;
-			if (!same) overlayRect = last = next;
-		};
-		const resize = new ResizeObserver(measure);
-		const watch = () => {
-			resize.disconnect();
-			resize.observe(host);
-			for (const child of host.children) resize.observe(child);
-			measure();
-		};
-		const children = new MutationObserver(watch);
-		children.observe(host, { childList: true });
-		watch();
-		return () => {
-			resize.disconnect();
-			children.disconnect();
-		};
+		}
+		return lines;
 	});
 </script>
 
 <svelte:window onkeydown={handleKeydown} onpointerdown={closeClusterCard} />
 
+{#snippet periode()}
+	<section class="block" aria-labelledby="werkplek-periode">
+		<h3 class="strook__kop" id="werkplek-periode">Periode</h3>
+		<p class="periode">
+			<input
+				class="veld"
+				inputmode="numeric"
+				aria-label="Van het jaar"
+				placeholder={eersteJaar}
+				value={jaarVan(filter.van) ?? ''}
+				onchange={(e) => kiesPeriode(veldJaar(e), jaarVan(filter.tot))}
+			/>
+			<span>tot</span>
+			<input
+				class="veld"
+				inputmode="numeric"
+				aria-label="Tot en met het jaar"
+				placeholder={laatsteJaar}
+				value={jaarVan(filter.tot) ?? ''}
+				onchange={(e) => kiesPeriode(jaarVan(filter.van), veldJaar(e))}
+			/>
+		</p>
+	</section>
+{/snippet}
+
 {#snippet sidebar()}
 	<GraphSidebar
+		{periode}
 		{...legend}
 		{verbonden}
 		{filter}
@@ -1277,42 +1150,29 @@
 {/snippet}
 
 <div class="graph-view">
+	<!-- The strip at the left (besluit 39): the way back and the Weergave, the chosen bronnen,
+	     then the legend that is the filter and the period. First in the page, so a Tab reaches
+	     them before the canvas and its zoom (keyboard audit, 10 Oct). -->
+	<aside class="strook strook--links" aria-label="Bronnen en filters">
+		{@render links?.()}
+		{@render canvasOverlay?.()}
+		{#if canvasCounts.nodes > 0}
+			<button
+				type="button"
+				class="btn filterknop"
+				aria-expanded={filtersOpen}
+				aria-controls="werkplek-filters"
+				onclick={() => (filtersOpen = !filtersOpen)}>Filter</button
+			>
+			<div class="strook__filters" class:is-open={filtersOpen} id="werkplek-filters">
+				<section class="legenda-inhoud" aria-label="Legenda">
+					{@render sidebar()}
+				</section>
+			</div>
+		{/if}
+	</aside>
 	<div class="graph-main">
-		<!-- The stage: the cards over the network first, so a Tab reaches Netwerk, Deel and
-		     the Legenda before the canvas and its zoom (keyboard audit, 10 Oct); they float
-		     over the canvas where they stood, outside it, so ← and → typed in them stay theirs. -->
 		<div class="buhne" bind:this={buhne}>
-			{#if canvasOverlay}
-				<div class="canvas-overlay" bind:this={overlayHost}>
-					{@render canvasOverlay()}
-				</div>
-			{/if}
-			<!-- De legenda zweeft boven het canvas, zoals het netwerkpaneel en de gids.
-		     Dicht: de tekens van wat er staat. Open: filter, groepering en verbindingen. -->
-			{#if canvasCounts.nodes > 0}
-				<CanvasKaart
-					class="legenda"
-					title="Legenda"
-					open={legendaOpen}
-					onToggle={() => zetLegenda(!legendaOpen)}
-					bind:el={legendaEl}
-					style="top:{legendaPlek.top}px; right:{legendaPlek.right}px; max-height:{legendaPlek.max}px"
-				>
-					{#snippet samenvatting()}
-						{#if !legendaOpen}
-							{#each VORM_VOLGORDE.filter((v) => (canvasCounts.vormen[v] ?? 0) > 0) as v (v)}
-								<span class="teken" title="{VORM_LABEL[v]}: {canvasCounts.vormen[v]}"
-									><KindGlyph vorm={v} size={11} /></span
-								>
-							{/each}
-							<!-- Not all of the focus's direct neighbours are on the canvas: the Legenda,
-							     open, says per kind how many (Getoond). -->
-							{#if deels}<span class="deels">deels</span>{/if}
-						{/if}
-					{/snippet}
-					<div class="legenda-inhoud">{@render sidebar()}</div>
-				</CanvasKaart>
-			{/if}
 			<!-- The bronnen on the canvas, for the keyboard: outside the canvas, so ← and →
 		     keep stepping through the history there. -->
 			<CanvasNodeList
@@ -1346,13 +1206,13 @@
 				}}
 				onwheel={() => (fitFollows = false)}
 			>
+				{#if balk}<div class="doek-balk">{@render balk()}</div>{/if}
 				<div class="zoom" role="group" aria-label="Zoomen">
 					<IconButton label="Inzoomen" onclick={() => canvas?.zoom(1.5)}>+</IconButton>
 					<IconButton label="Uitzoomen" onclick={() => canvas?.zoom(1 / 1.5)}>−</IconButton>
 					<IconButton label="Alles in beeld" onclick={() => canvas?.fit()}>⤢</IconButton>
 				</div>
 				<GraphCanvas
-					avoid={overlayRect}
 					graph={g}
 					focusedId={selection && !isContainerKind(selection.drawClass) ? selection.id : null}
 					{filters}
@@ -1390,7 +1250,6 @@
 						if (e) onEdgeClick?.(e);
 					}}
 					onNodeHover={handleNodeHover}
-					onNodeLeave={handleNodeLeave}
 					onStageClick={() => {
 						ontmarkeer();
 						onClear?.();
@@ -1402,7 +1261,7 @@
 					onReady={(api) => {
 						canvas = api;
 						canvas.refresh();
-						const camera = skipNextFit && savedCamera(compact ? 'compact' : 'full');
+						const camera = skipNextFit && savedCamera('full');
 						if (camera) {
 							canvas.restoreCamera(camera);
 							skipNextFit = false;
@@ -1411,7 +1270,7 @@
 						}
 					}}
 					onCameraChange={(state) => {
-						saveCamera(compact ? 'compact' : 'full', state);
+						saveCamera('full', state);
 					}}
 				/>
 
@@ -1496,48 +1355,220 @@
 						{/if}
 					</p>
 				{/if}
-
-				{#if hoverNode && (!compact || keyNode || gemarkeerd)}
-					<CanvasHoverCard
-						node={hoverNode}
-						isChosen={pinnedIds.has(hoverNode.id)}
-						notities={notities.get(hoverNode.id) ?? []}
-						at={keyNode ? null : hoverAt}
-						onOpen={() => {
-							ontmarkeer(false);
-						}}
-						onLezen={open}
-						{onToggleChosen}
-						onOmgeving={onNodeDoubleClick
-							? (n) => {
-									ontmarkeer();
-									onNodeDoubleClick?.(n);
-								}
-							: undefined}
-						onMouseEnter={cancelHide}
-						onMouseLeave={() => {
-							if (!gemarkeerd) hoverNode = null;
-						}}
-						bind:el={citeEl}
-						onClose={keyNode ? () => kaartUit('lijst', true) : undefined}
-						onVerder={keyNode ? () => kaartUit('canvas') : undefined}
-						onBack={keyNode ? () => kaartUit('lijst') : undefined}
-					/>
-				{/if}
 			</div>
 		</div>
+		<Tijdstrook
+			{stippen}
+			van={jaarVan(filter.van)}
+			tot={jaarVan(filter.tot)}
+			onPeriode={kiesPeriode}
+		/>
 	</div>
+	<!-- The strip at the right: the card of the bron marked; on a phone a sheet under the canvas. -->
+	<aside class="strook strook--kaart" class:is-open={!!hoverNode} aria-label="Kaart">
+		{#if hoverNode}
+			<CanvasHoverCard
+				node={hoverNode}
+				isChosen={pinnedIds.has(hoverNode.id)}
+				notities={notities.get(hoverNode.id) ?? []}
+				{verbanden}
+				onOpen={() => ontmarkeer(false)}
+				onLezen={open}
+				{onToggleChosen}
+				bind:el={citeEl}
+				onClose={keyNode ? () => kaartUit('lijst', true) : undefined}
+				onVerder={keyNode ? () => kaartUit('canvas') : undefined}
+				onBack={keyNode ? () => kaartUit('lijst') : undefined}
+			/>
+		{:else}
+			<p class="strook__leeg">Kies een bron in het netwerk</p>
+		{/if}
+	</aside>
 </div>
 
 <style>
 	/* Het canvas is een eigen stapellaag. Legenda, netwerkpaneel en kaart zweven
 	   binnen het canvas en komen nooit boven menu's, statusbalk of kaarten van buiten. */
+	/* The werkplek in three strips (besluit 39): the bronnen and filters at the left (300),
+	   the canvas with its tijdstrook, the card at the right (360). Nothing floats over the
+	   canvas but its zoom. Its own stacking layer: never over menus or the bar. */
 	.graph-view {
-		display: flex;
+		position: relative;
+		display: grid;
+		grid-template-columns: 300px minmax(0, 1fr) 360px;
 		width: 100%;
 		height: 100%;
 		overflow: hidden;
 		isolation: isolate;
+	}
+	.strook {
+		min-height: 0;
+		overflow-y: auto;
+		box-sizing: border-box;
+		background: var(--paper);
+	}
+	.strook--links {
+		padding: var(--s-4) var(--s-5);
+		border-right: 1px solid var(--rule);
+	}
+	.strook--kaart {
+		padding: var(--s-5);
+		border-left: 1px solid var(--rule);
+	}
+	.strook__leeg {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		font-style: italic;
+		color: var(--ink-3);
+	}
+	.strook__kop {
+		margin: 0 0 var(--s-3);
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		font-weight: 600;
+		color: var(--ink-3);
+	}
+	/* Deel at the top right of the canvas, as the mockup's Deel and Exporteer. */
+	.doek-balk {
+		position: absolute;
+		top: var(--s-3);
+		right: var(--s-3);
+		z-index: var(--z-float);
+		display: flex;
+		gap: var(--s-2);
+	}
+	/* The panel Netwerk and its start stand in the strip, on its paper: no card of their own. */
+	.strook--links :global(.canvas-kaart),
+	.strook--links :global(.netwerk--start) {
+		position: static;
+		transform: none;
+		width: auto;
+		max-width: none;
+		max-height: none;
+		margin: 0 0 var(--s-4);
+		padding: 0;
+		border: 0;
+		box-shadow: none;
+		background: none;
+	}
+	/* Bronnen titled as the blocks under it: Soort, Relatie, Periode. */
+	.strook--links :global(.canvas-kaart__titel) {
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	.strook--links :global(.canvas-kaart__kop),
+	.strook--links :global(.canvas-kaart__inhoud) {
+		padding-left: 0;
+		padding-right: 0;
+	}
+	.filterknop {
+		display: none;
+	}
+	.periode {
+		display: flex;
+		align-items: center;
+		gap: var(--s-2);
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+	}
+	.veld {
+		box-sizing: border-box;
+		width: 84px;
+		height: var(--veld-h);
+		padding: 0 var(--s-3);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: var(--paper);
+		font-family: var(--font-serif);
+		font-size: var(--t-input);
+		color: var(--ink);
+	}
+	/* Narrower than three strips: the canvas takes the width; the strip at the left heads it,
+	   its filters under the button Filter, and the card is a sheet at the foot of the canvas. */
+	@media (max-width: 1100px) {
+		.graph-view {
+			display: flex;
+			flex-direction: column;
+		}
+		.strook--links {
+			flex: none;
+			display: flex;
+			flex-wrap: wrap;
+			align-items: flex-start;
+			gap: 0 var(--s-3);
+			max-height: 60%;
+			padding: var(--s-2) var(--s-4);
+			border-right: 0;
+			border-bottom: 1px solid var(--rule);
+		}
+		.strook--links > :global(*) {
+			flex-basis: 100%;
+		}
+		.strook--links > :global(.canvas-kaart) {
+			min-width: 0;
+			margin: 0;
+		}
+		.strook--links > .filterknop {
+			flex: none;
+			margin: var(--s-1) 0 var(--s-2) auto;
+		}
+		.filterknop {
+			display: inline-flex;
+		}
+		.strook__filters:not(.is-open) {
+			display: none;
+		}
+		.graph-main {
+			flex: 1;
+		}
+		.strook--kaart {
+			position: absolute;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			z-index: var(--z-float);
+			max-height: 55%;
+			padding: var(--s-4);
+			border-left: 0;
+			border-top: 1px solid var(--rule-strong);
+			box-shadow: var(--shadow-pop);
+		}
+		.strook--kaart:not(.is-open) {
+			display: none;
+		}
+	}
+	/* A phone, as the mockup's 390: no headings over the chosen bronnen, the card a sheet. */
+	@media (max-width: 768px) {
+		.strook--links :global(.canvas-kaart__kop) {
+			display: none;
+		}
+		/* The filters of the netwerk itself come with Filter, as the legend does. */
+		.strook--links:not(:has(.strook__filters.is-open))
+			:global(:is(.omgeving, .tussen, .deels, .netwerk-acties)) {
+			display: none;
+		}
+		.strook--kaart {
+			max-height: 45%;
+			padding-top: var(--s-2);
+			border-radius: var(--r-2) var(--r-2) 0 0;
+			box-shadow: var(--shadow-modal);
+		}
+		.strook--kaart::before {
+			content: '';
+			display: block;
+			width: 40px;
+			height: 4px;
+			margin: 0 auto var(--s-3);
+			border-radius: var(--r-rond);
+			background: var(--rule);
+		}
+	}
+	@media (pointer: coarse), (max-width: 768px) {
+		.veld {
+			height: var(--veld-h-raak);
+		}
 	}
 
 	.graph-main {
@@ -1592,16 +1623,6 @@
 		}
 	}
 
-	/* Takes the canvas's place for the panel it holds; only the panel takes the pointer. */
-	.canvas-overlay {
-		position: absolute;
-		inset: 0;
-		pointer-events: none;
-	}
-	.canvas-overlay > :global(*) {
-		pointer-events: auto;
-	}
-
 	.cluster-naam {
 		display: flex;
 		align-items: center;
@@ -1637,13 +1658,8 @@
 		white-space: nowrap;
 	}
 
-	.teken {
-		display: inline-flex;
-		color: var(--ink);
-	}
 	.legenda-inhoud {
-		overflow-y: auto;
-		border-bottom: 1px solid var(--rule);
+		padding-top: 0;
 	}
 	/* Een menu in de legenda opent binnen de kaart, onder zijn knop, en schuift mee;
 	   zo valt het nooit onder of buiten de kaart. */
@@ -1659,24 +1675,10 @@
 	.legenda-inhoud :global(.menu:has(.menu__list)) {
 		flex-basis: 100%;
 	}
-	.deels {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
 	.legenda-inhoud :global(.legend) {
 		height: auto;
 		border-right: 0;
-		padding-top: var(--s-3);
-	}
-
-	/* On a phone the full width, as the Netwerk card above it: one width, one right edge. */
-	@media (max-width: 768px) {
-		:global(.canvas-kaart.legenda) {
-			left: var(--paneel-rand);
-			width: auto;
-			max-width: none;
-		}
+		padding: 0;
 	}
 	.netwerk-melding {
 		position: absolute;
@@ -1707,14 +1709,6 @@
 	@media (max-width: 768px) {
 		.netwerk-melding {
 			display: flex;
-		}
-		/* Narrow: the Netwerk panel takes the top; the legend stays at the bottom left and
-		   leaves room for it. */
-		:global(.canvas-kaart.legenda) {
-			max-height: calc(100% - 12rem);
-		}
-		.legenda-inhoud :global(.legend) {
-			width: min(250px, calc(100vw - 48px));
 		}
 	}
 </style>

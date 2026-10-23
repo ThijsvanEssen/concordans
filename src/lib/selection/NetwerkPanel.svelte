@@ -4,16 +4,13 @@
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import CanvasKaart from '$lib/components/graph/CanvasKaart.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	// The netwerk of chosen bronnen, over the canvas: a search that adds a bron, the
+	// The netwerk of chosen bronnen, in the strip at the left of the werkplek: a search that adds a bron, the
 	// selected bron added, each chosen one on or off, taken out, or opened, the bronnen
 	// that join them shown or not, and the context around them cleared. On an empty
 	// Verkenner it is the start of the page, in the middle of the canvas.
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Search from '$lib/search/Search.svelte';
-	import { laatstOpen, opzij } from '$lib/stores/zwevend';
-	import { FOLD, isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { GROUP_LABEL } from '$lib/graph/collection-role';
-	import { get } from 'svelte/store';
 	import type { NetwerkEntry } from './netwerk';
 	import { formatCount } from '$lib/text/getal';
 
@@ -35,8 +32,6 @@
 		onClear,
 		onVoorbeeld,
 		telefoon = false,
-		deelLabel = 'Deel',
-		onDeel,
 		omgeving = null,
 		aroundOn = false,
 		onOmgeving
@@ -49,9 +44,6 @@
 		start?: boolean;
 		tussen: boolean;
 		joiningCount: number;
-		/** Deel: the address of this view, the netwerk and its filters in it ("Gekopieerd" once copied). */
-		deelLabel?: string;
-		onDeel?: () => void;
 		/** The selected bron whose surroundings alone the line below shows (O; Thijs, 10 Oct). */
 		omgeving?: string | null;
 		/** The filter Alleen verbonden bronnen is on. */
@@ -71,19 +63,9 @@
 		onClear: () => void;
 		/** Een voorbeeldnetwerk met één klik. */
 		onVoorbeeld?: () => void;
-		/** A phone: the panel starts folded, as it covers the canvas there. */
+		/** A phone: the chosen bronnen on one line that scrolls, the field behind Bron toevoegen. */
 		telefoon?: boolean;
 	} = $props();
-
-	// Folded to its head, like the legend; kept per browser (FOLD.networkPanel). Without a
-	// choice it is open, on a phone folded. Where the legend opened under it does not fit, this
-	// panel gives way, and comes back once there is room (GraphView measures, zwevend.ts).
-	const open = $derived(isOpen(FOLD.networkPanel, !telefoon) && $opzij !== 'netwerk');
-	const kiesOpen = (v: boolean) => {
-		if (v && get(opzij) === 'netwerk') opzij.set(null);
-		if (v) laatstOpen.set('netwerk');
-		zetOpen(FOLD.networkPanel, v);
-	};
 
 	let zoeken = $state(false);
 
@@ -123,25 +105,14 @@
 {:else}
 	<!-- De gekozen bronnen als labels op één regel; zoeken pas na "Bron toevoegen";
 	     één regel voor wat ertussen ligt. Wissen is één klik, en Terug zet het terug. -->
-	<CanvasKaart title="Netwerk" class="netwerk" {open} onToggle={() => kiesOpen(!open)}>
+	<!-- Bronnen, the first block of the strip at the left (mockup A197-b). -->
+	<CanvasKaart title="Bronnen" label="Netwerk" class="netwerk">
 		{#snippet samenvatting()}
-			{#if loading}<span
-					class="laden"
-					class:punt={open}
-					role="status"
-					aria-label="Laden"
-					title="Laden">{open ? '' : 'laden'}</span
-				>{:else if !open && entries.length > 0}<span class="aantal"
-					>{count(entries.length, 'bron', 'bronnen')}</span
-				>{/if}
+			{#if loading}<span class="laden punt" role="status" aria-label="Laden" title="Laden"
+				></span>{/if}
 		{/snippet}
 		{#snippet actie()}
-			<!-- Deel moved here from the status bar (Thijs, 10 Oct): what it gives beyond the
-			     bron's own address is this netwerk. -->
-			{#if onDeel}
-				<TekstLink onclick={onDeel}>{deelLabel}</TekstLink>
-			{/if}
-			{#if open && entries.length > 0}
+			{#if entries.length > 0 && !telefoon}
 				<TekstLink onclick={onClear} title="Leeg het netwerk en het canvas; Terug zet het terug"
 					>Wissen</TekstLink
 				>
@@ -161,7 +132,7 @@
 				</TekstMenu>
 			{/if}
 		{/snippet}
-		<ul class="chips">
+		<ul class="chips" data-zijscroll>
 			{#each getoond as e (e.id)}
 				<li class="chip" class:uit={!e.on} class:mist={e.missing} class:is-dim={!!e.verborgenMet}>
 					<button
@@ -218,25 +189,27 @@
 					>
 				</li>
 			{/if}
-			<li>
-				{#if zoeken}
-					<div class="zoek">
-						<Search
-							compact
-							placeholder="Bron toevoegen"
-							onSelect={(id) => {
-								onSelect(id);
-								zoeken = false;
-							}}
-						/>
-					</div>
-				{:else}
+			{#if telefoon && !zoeken}
+				<li>
 					<button type="button" class="chip chip--plus" onclick={() => (zoeken = true)}
 						>Bron toevoegen</button
 					>
-				{/if}
-			</li>
+				</li>
+			{/if}
 		</ul>
+		{#if !telefoon || zoeken}
+			<!-- The field itself (mockup A197-b); on a phone behind Bron toevoegen. -->
+			<div class="zoek">
+				<Search
+					compact
+					placeholder="Bron toevoegen"
+					onSelect={(id) => {
+						onSelect(id);
+						zoeken = false;
+					}}
+				/>
+			</div>
+		{/if}
 		{#if (omgeving || aroundOn) && onOmgeving}
 			<!-- A filter, on and off; the chosen bronnen stay. The bron's name and the key on hover. -->
 			<p class="omgeving">
@@ -266,25 +239,19 @@
 				<p class="deels">Niet alle verbindingen gevonden: het zoeken duurde te lang.</p>
 			{/if}
 		{/if}
+		{#if telefoon && entries.length > 0}
+			<!-- On a phone under Filter, with the netwerk's own filters (GraphView). -->
+			<p class="netwerk-acties">
+				<TekstLink onclick={onClear} title="Leeg het netwerk en het canvas; Terug zet het terug"
+					>Wissen</TekstLink
+				>
+				<TekstLink onclick={onClearContext}>Alleen de gekozen bronnen tonen</TekstLink>
+			</p>
+		{/if}
 	</CanvasKaart>
 {/if}
 
 <style>
-	/* Its place over the canvas, top right; its frame and width are CanvasKaart's. */
-	:global(.canvas-kaart.netwerk) {
-		top: var(--paneel-rand);
-		right: var(--paneel-rand);
-		max-height: calc(100% - 2 * var(--paneel-rand));
-	}
-	/* On a phone the full width at the top of the canvas, open or folded: no empty strip
-	   beside it (sweep at 375, 10 Oct). */
-	@media (max-width: 768px) {
-		:global(.canvas-kaart.netwerk) {
-			left: var(--paneel-rand);
-			width: auto;
-			max-width: none;
-		}
-	}
 	/* An empty network: the field in the middle of the canvas, a card of its own. */
 	.netwerk--start {
 		position: absolute;
@@ -310,13 +277,16 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 	}
+	.netwerk-acties {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--s-2) var(--s-4);
+		margin: var(--s-3) 0 0;
+	}
 	.deels {
 		margin: var(--s-1) 0 0;
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-	.aantal {
-		color: var(--ink-2);
 	}
 	.laden {
 		flex: none;
@@ -347,20 +317,23 @@
 	}
 	.chips {
 		list-style: none;
-		margin: var(--s-2) 0 0;
+		margin: 0 0 var(--s-2);
 		padding: 0;
 		display: flex;
-		flex-wrap: wrap;
-		gap: var(--s-1);
+		flex-direction: column;
+		align-items: flex-start;
+		gap: var(--s-2);
 	}
 	.chip {
 		display: inline-flex;
 		align-items: center;
-		border: 1px solid var(--ink);
+		min-height: var(--veld-h);
+		box-sizing: border-box;
+		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-rond);
 		background: var(--paper);
 		font-family: var(--font-serif);
-		font-size: var(--t-micro);
+		font-size: var(--t-meta);
 		color: var(--ink);
 	}
 	.chips > li {
@@ -377,12 +350,12 @@
 	.chip-naam {
 		display: inline-flex;
 		align-items: center;
-		gap: var(--s-1);
+		gap: var(--s-2);
 		max-width: 100%;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		padding: var(--s-1) var(--s-1) var(--s-1) var(--s-2);
+		padding: 0 var(--s-1) 0 var(--s-3);
 		border: 0;
 		background: none;
 		font: inherit;
@@ -436,7 +409,7 @@
 		font-size: var(--t-micro);
 	}
 	.zoek {
-		min-width: 14rem;
+		width: 100%;
 	}
 	.tussen {
 		margin: var(--s-2) 0 0;
@@ -476,5 +449,21 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
 		font-weight: 600;
+	}
+	/* A phone: the chosen bronnen on one line that scrolls, as the mockup's 390. */
+	@media (max-width: 768px) {
+		.chips {
+			flex-direction: row;
+			flex-wrap: nowrap;
+			overflow-x: auto;
+		}
+		.chips > li {
+			flex: none;
+		}
+	}
+	@media (pointer: coarse), (max-width: 768px) {
+		.chip {
+			min-height: var(--veld-h-raak);
+		}
 	}
 </style>
