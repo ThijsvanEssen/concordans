@@ -49,7 +49,10 @@ describe('what is new in a bundel', () => {
 				return {
 					items: [
 						{
-							judgment: { date: '2026-10-07', cite: { full: 'Rb. Den Haag 7 oktober 2026' } },
+							judgment: {
+								date: '2026-10-07',
+								cite: { full: 'Rb. Den Haag 7\u00a0oktober\u00a02026' }
+							},
 							paragraph_id: 'rov-3.1',
 							paragraph_number: '3.1'
 						}

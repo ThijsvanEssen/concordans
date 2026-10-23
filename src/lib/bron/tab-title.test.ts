@@ -61,7 +61,7 @@ describe('pageName', () => {
 			pageName(node('instruments', 'x', null, {}, 'Stb. 2026, 187: BEGRIPSBEPALING'), null)
 		).toBe('Stb. 2026, 187');
 		const long =
-			'Stemming over Gewijzigde motie van het lid Grinwis over optionele varianten van steward ownership en werknemerseigendom, 29 september 2026: aangenomen';
+			'Stemming over Gewijzigde motie van het lid Grinwis over optionele varianten van steward ownership en werknemerseigendom, 29\u00a0september\u00a02026: aangenomen';
 		const title = pageName(node('decisions', 'x', null), long);
 		expect(title.length).toBeLessThanOrEqual(81);
 		expect(title.endsWith('…')).toBe(true);
@@ -93,8 +93,8 @@ describe('the card of a judgment and a stemming', () => {
 			names: ['Urgenda'],
 			translation_of: 'ECLI:NL:HR:2019:2006'
 		};
-		expect(title('judgments', props, 'HR 20 december 2019')).toBe(
-			'HR 20 december 2019 (Urgenda), vertaling'
+		expect(title('judgments', props, 'HR 20\u00a0december\u00a02019')).toBe(
+			'HR 20\u00a0december\u00a02019 (Urgenda), vertaling'
 		);
 	});
 
@@ -106,7 +106,7 @@ describe('the card of a judgment and a stemming', () => {
 			advocate_general: 'F.F. Langemeijer en M.H. Wissink',
 			advocate_general_role: 'procureur-generaal'
 		};
-		const short = 'Conclusie P-G Langemeijer en Wissink 13 september 2019';
+		const short = 'Conclusie P-G Langemeijer en Wissink 13\u00a0september\u00a02019';
 		expect(title('judgments', props, short)).toBe(short);
 	});
 
@@ -114,10 +114,10 @@ describe('the card of a judgment and a stemming', () => {
 		const subject =
 			'Wijziging van de Wet structuur uitvoeringsorganisatie werk en inkomen (Wet proactieve dienstverlening SZW) ';
 		expect(title('decisions', { subject, date: '2026-09-29' })).toBe(
-			'Tweede Kamer, 29 september 2026: Wet proactieve dienstverlening SZW'
+			'Tweede Kamer, 29\u00a0september\u00a02026: Wet proactieve dienstverlening SZW'
 		);
 		expect(
 			title('decisions', { subject: 'Goedkeuring Verdrag', chamber: 'EK', date: '2026-09-29' })
-		).toBe('Eerste Kamer, 29 september 2026: Goedkeuring Verdrag');
+		).toBe('Eerste Kamer, 29\u00a0september\u00a02026: Goedkeuring Verdrag');
 	});
 });

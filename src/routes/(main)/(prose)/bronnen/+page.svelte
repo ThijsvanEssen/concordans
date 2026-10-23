@@ -3,7 +3,7 @@
 	import KeyRow from '$lib/components/ui/KeyRow.svelte';
 	import CoverageLine from '$lib/components/ui/Coverage.svelte';
 	import { coverageLine } from '$lib/text/coverage';
-	import { langeDatum } from '$lib/text/datum';
+	import { onDate, untilDate, throughDate } from '$lib/text/datum';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	// Bronnen en hergebruik: the one place for where the data comes from, how far it goes, and
 	// what may be done with it. Elsewhere one sentence links here.
@@ -82,7 +82,8 @@
 										>{formatCount(t.count)}{#if t.first_date && t.last_date}, {t.first_date.slice(
 												0,
 												4
-											)} tot {langeDatum(t.last_date)}{/if}</KeyRow
+											)}
+											{untilDate(t.last_date)}{/if}</KeyRow
 									>
 								{/each}
 							</KeyList>
@@ -97,7 +98,7 @@
 								<KeyRow key={a.source}
 									>{#if coverageLine(a.completeness)}<CoverageLine
 											coverage={a.completeness}
-										/>{:else}{a.newest ? `tot en met ${langeDatum(a.newest)}, ` : ''}opgehaald op {langeDatum(
+										/>{:else}{a.newest ? `${throughDate(a.newest)}, ` : ''}opgehaald {onDate(
 											a.fetched
 										)}{/if}</KeyRow
 								>

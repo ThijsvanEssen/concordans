@@ -1,3 +1,4 @@
+import { outcomeWord } from '$lib/text/outcome';
 import { capitalize } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import { OUTCOME_LABEL, type Outcome } from '$lib/components/parliamentary/stages';
@@ -34,12 +35,12 @@ export function decisionResult(d: Partial<Decision>): Outcome | null {
 }
 
 /**
- * The outcome in a word: `Aangenomen`, `Verworpen`, `Zonder stemming aangenomen`, or for a
+ * The outcome in a word: `Aangenomen`, `Verworpen`, `Aangenomen zonder stemming`, or for a
  * decision that is no vote the Kamer's own word after the dash (`Stemmen - uitstellen`
  * gives `Uitstellen`).
  */
 export function decisionOutcome(d: Decision): string | null {
-	if (isHammer(d)) return 'Zonder stemming aangenomen';
+	if (isHammer(d)) return outcomeWord(true, 'zonder stemming');
 	const result = decisionResult(d);
 	if (result) return OUTCOME_LABEL[result];
 	const rest = d.decision_kind?.replace(/^Stemmen\s*-\s*/i, '').trim();

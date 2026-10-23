@@ -155,7 +155,7 @@ describe('a citation in a note, on a row', () => {
 	});
 
 	it('reads the passage an edge keeps, with its note (edge_meta=passages)', () => {
-		const snippet = 'Zie HR 23 september 1988, ECLI:NL:HR:1988:AD5713 (Kalimijnen).';
+		const snippet = 'Zie HR 23\u00a0september\u00a01988, ECLI:NL:HR:1988:AD5713 (Kalimijnen).';
 		const words = 'ECLI:NL:HR:1988:AD5713';
 		const p = plaatsVanEdge(
 			{
@@ -197,13 +197,13 @@ describe('a citation in a note, on a row', () => {
 	it('links r.o. and note in the line: Haalt aan in r.o. 5.7.6 (voetnoot 35)', () => {
 		const row: Row = {
 			ref: { collection: 'judgments', key: 'ecli_nl_hr_2019_2006' },
-			title: 'HR 20 december 2019',
+			title: 'HR 20\u00a0december\u00a02019',
 			context: null,
 			filterGroup: 'uitspraken',
 			relation: 'REFERS_TO',
 			direction: 'inbound',
 			position: 'r.o. 5.7.6 (voetnoot 35)',
-			snippet: 'Zie voor Nederland: HR 23 september 1988, ECLI:NL:HR:1988:AD5713.',
+			snippet: 'Zie voor Nederland: HR 23\u00a0september\u00a01988, ECLI:NL:HR:1988:AD5713.',
 			match: 'ECLI:NL:HR:1988:AD5713',
 			passageAt: 'rov-5.7.6',
 			noot: { id: 'fn-35', label: '35' },

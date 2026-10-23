@@ -48,10 +48,12 @@ describe('presentHit', () => {
 			});
 			expect(presentHit(a, 'belasting', [a, b])).toEqual({
 				title: 'Belastingen op milieugrondslag',
-				context: 'Beleidsregel, 27 apr. 2007',
+				context: 'Beleidsregel, 27\u00a0apr.\u00a02007',
 				snippet: null
 			});
-			expect(presentHit(b, 'belasting', [a, b]).context).toBe('Beleidsregel, 12 jun. 2008');
+			expect(presentHit(b, 'belasting', [a, b]).context).toBe(
+				'Beleidsregel, 12\u00a0jun.\u00a02008'
+			);
 		});
 		it('takes the day it was published first, then the day it came into force', () => {
 			const both = {
@@ -59,19 +61,21 @@ describe('presentHit', () => {
 				date_in_force: '1994-01-01',
 				version_date_in_force: '2026-01-01'
 			};
-			expect(presentHit(regeling('bwbr0005537', both), 'x').context).toBe('Wet, 1 jan. 1994');
+			expect(presentHit(regeling('bwbr0005537', both), 'x').context).toBe(
+				'Wet, 1\u00a0jan.\u00a01994'
+			);
 			expect(
 				presentHit(regeling('bwbr0005537', { ...both, date_published: '1992-06-04' }), 'x').context
-			).toBe('Wet, 4 jun. 1992');
+			).toBe('Wet, 4\u00a0jun.\u00a01992');
 		});
 		it('keeps its BWB id where kind and day say no more than its neighbour', () => {
 			const same = { kind: 'beleidsregel', version_date_in_force: '2007-04-27' };
 			const a = regeling('bwbr0021767', same);
 			const b = regeling('bwbr0022916', same);
 			expect(presentHit(a, 'belasting', [a, b]).context).toBe(
-				'Beleidsregel, 27 apr. 2007, BWBR0021767'
+				'Beleidsregel, 27\u00a0apr.\u00a02007, BWBR0021767'
 			);
-			expect(presentHit(a, 'belasting', [a]).context).toBe('Beleidsregel, 27 apr. 2007');
+			expect(presentHit(a, 'belasting', [a]).context).toBe('Beleidsregel, 27\u00a0apr.\u00a02007');
 		});
 		it('names the BWB id where the API gives neither kind nor day', () => {
 			const a = regeling('bwbr0021767');
@@ -102,7 +106,7 @@ describe('presentHit', () => {
 		]);
 	});
 
-	it('cites a judgment as lawyers do (HR 19 februari 1993), with the ECLI beside it', () => {
+	it('cites a judgment as lawyers do (HR 19\u00a0februari\u00a01993), with the ECLI beside it', () => {
 		const shown = presentHit(
 			hit({
 				collection: 'judgments',
@@ -113,7 +117,7 @@ describe('presentHit', () => {
 			}),
 			'daad'
 		);
-		expect(shown.title).toBe('HR 19 februari 1993');
+		expect(shown.title).toBe('HR 19\u00a0februari\u00a01993');
 		expect(shown.context).toBe('ECLI:NL:HR:1993:ZC0870');
 		expect(shown.snippet).not.toBeNull();
 	});
@@ -125,19 +129,19 @@ describe('presentHit', () => {
 				''
 			).title;
 		expect(titel('ECLI:NL:RVS:2026:5670', 'Raad van State 2026-09-03 / 202401234/1/R2')).toBe(
-			'ABRvS 3 september 2026'
+			'ABRvS 3\u00a0september\u00a02026'
 		);
 		expect(titel('ECLI:NL:RBDHA:2026:1', 'Rechtbank Den Haag 2026-07-06 / C/09/1')).toBe(
-			'Rb. Den Haag 6 juli 2026'
+			'Rb. Den Haag 6\u00a0juli\u00a02026'
 		);
 		expect(titel('ECLI:NL:GHSGR:2010:BN1234', "Gerechtshof 's-Gravenhage 2010-08-24 / 1")).toBe(
-			"Hof 's-Gravenhage 24 augustus 2010"
+			"Hof 's-Gravenhage 24\u00a0augustus\u00a02010"
 		);
 		expect(titel('ECLI:NL:CRVB:2026:404', 'Centrale Raad van Beroep 2026-02-11 / 24/1')).toBe(
-			'CRvB 11 februari 2026'
+			'CRvB 11\u00a0februari\u00a02026'
 		);
 		expect(titel('ECLI:CE:ECHR:2026:0908JUD000748123', 'EHRM 2026-09-08 / 7481/23')).toBe(
-			'EHRM 8 september 2026'
+			'EHRM 8\u00a0september\u00a02026'
 		);
 	});
 
@@ -184,13 +188,13 @@ describe('two judgments of one name', () => {
 	it('tells the translation from the original by the name the court gives it', () => {
 		expect(
 			presentHit(urgenda('a', 'ECLI:NL:HR:2019:2006', 'Hoge Raad 2019-12-20 / 19/00135'), '').title
-		).toBe('HR 20 december 2019 (Urgenda)');
+		).toBe('HR 20\u00a0december\u00a02019 (Urgenda)');
 		expect(
 			presentHit(
 				urgenda('b', 'ECLI:NL:HR:2019:2007', 'Hoge Raad 2019-12-20 / 19/00135 (Engels)'),
 				''
 			).title
-		).toBe('HR 20 december 2019 (Urgenda), Engelse vertaling');
+		).toBe('HR 20\u00a0december\u00a02019 (Urgenda), Engelse vertaling');
 		expect(
 			presentHit(
 				urgenda(
@@ -200,7 +204,7 @@ describe('two judgments of one name', () => {
 				),
 				''
 			).title
-		).toBe('Rb. Den Haag 24 juni 2015 (Urgenda), Engelse vertaling');
+		).toBe('Rb. Den Haag 24\u00a0juni\u00a02015 (Urgenda), Engelse vertaling');
 	});
 
 	it('gives a judgment that is only cited the year of its ECLI', () => {
@@ -228,14 +232,14 @@ describe('the Kamer of a hit', () => {
 			display_name: 'Stikstof en natuur',
 			extra: { kind: 'Stenogram', date: '2025-05-22', chamber: 'TK' }
 		});
-		expect(presentHit(stenogram, '').context).toBe('Stenogram, 22 mei 2025');
+		expect(presentHit(stenogram, '').context).toBe('Stenogram, 22\u00a0mei\u00a02025');
 		const motie = {
 			...stuk('m', 'Motie'),
 			extra: { kind: 'Motie', dossier_number: '32621', sequence: 21, date: '2026-09-07' }
 		};
 		expect(presentHit(motie, '')).toMatchObject({
 			title: 'Motie, Kamerstukken II 2025/26, 32621, nr. 21',
-			context: '7 sep. 2026'
+			context: '7\u00a0sep.\u00a02026'
 		});
 	});
 
@@ -314,7 +318,7 @@ describe('a cabinet', () => {
 		});
 		expect(presentHit(schoof, 'schoof')).toMatchObject({
 			title: 'kabinet-Schoof',
-			context: '2 jul. 2024 tot 23 feb. 2026'
+			context: '2\u00a0jul.\u00a02024 tot 23\u00a0feb.\u00a02026'
 		});
 	});
 });
@@ -329,7 +333,7 @@ describe('a toezegging', () => {
 		});
 		expect(presentHit(tz, 'mensenhandel')).toMatchObject({
 			title: 'De Kamer ontvangt de rapportage mensenhandel',
-			context: 'TZ202609-117, 29 sep. 2026'
+			context: 'TZ202609-117, 29\u00a0sep.\u00a02026'
 		});
 	});
 });
@@ -345,7 +349,7 @@ describe('a vote as a hit', () => {
 		} as unknown as Hit;
 		expect(presentHit(hit, 'huurcommissie')).toEqual({
 			title: 'Wet toekomstbestendige huurcommissie (36.791)',
-			context: 'aangenomen, 29 sep. 2026',
+			context: 'aangenomen, 29\u00a0sep.\u00a02026',
 			snippet: null,
 			chamber: 'EK'
 		});
@@ -506,7 +510,7 @@ describe('a hit that has expired (besluit 30)', () => {
 
 	it('says vervallen once its day has passed', () => {
 		const shown = presentHit(law({ expired_on: '2020-01-01' }), 'wet', [], new Date(2026, 9, 22));
-		expect(shown.expired).toBe('Vervallen per 1 januari 2020');
+		expect(shown.expired).toBe('Vervallen per 1\u00a0januari\u00a02020');
 	});
 	it('says nothing of a law that holds, or lapses later', () => {
 		expect(presentHit(law({}), 'wet', [], new Date(2026, 9, 22)).expired).toBeUndefined();

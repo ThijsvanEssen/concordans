@@ -2,6 +2,7 @@
 // groepen (Raad van State, Tweede Kamer, Eerste Kamer). Alleen wat gebeurd is; wat nog kan
 // volgen staat als één gestippelde regel die zegt dat het kan volgen. Moties, amendementen,
 // brieven en procedurevergaderingen worden geteld en staan achter één knop.
+import { outcomeWord } from '$lib/text/outcome';
 import { carriesBillTitle, motionOrAmendment, shortKind } from '$lib/text/document-kind';
 import { forAgainst } from './stemming';
 import { capitalize, count, joinAnd, lowerFirst } from '$lib/text/words';
@@ -210,10 +211,7 @@ function regelsVan(
 				teken: uitslag === null ? 'open' : uitslag ? 'ja' : 'nee',
 				soort: 'decisions',
 				label: groep === 'ek' ? 'Stemming Eerste Kamer' : 'Stemming Tweede Kamer',
-				zin:
-					uitslag === null
-						? capitalize(noneHeld('uitslag'))
-						: [uitslag ? 'Aangenomen' : 'Verworpen', how].filter(Boolean).join(' '),
+				zin: uitslag === null ? capitalize(noneHeld('uitslag')) : (outcomeWord(uitslag, how) ?? ''),
 				href: bronHref(e.node_id, { keepMode: false, mode: 'read' }),
 				ref: e.node_id,
 				groot: true,

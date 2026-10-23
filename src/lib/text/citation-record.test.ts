@@ -129,8 +129,8 @@ describe('citationRecord', () => {
 			'Kamerstukken 36600 VIII (Begroting OCW)'
 		]);
 		const cite = {
-			short: 'HR 20 december 2019',
-			full: 'HR 20 december 2019, ECLI:NL:HR:2019:2006'
+			short: 'HR 20\u00a0december\u00a02019',
+			full: 'HR 20\u00a0december\u00a02019, ECLI:NL:HR:2019:2006'
 		};
 		expect(citationRecord({ kind: 'judgment', cite })).toMatchObject({
 			heading: cite.short,

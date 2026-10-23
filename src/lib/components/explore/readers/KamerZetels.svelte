@@ -11,7 +11,7 @@
 	import { indelingMarkering } from '../zaaltegenover';
 	import ZaalPlaatsen from '../ZaalPlaatsen.svelte';
 	import { achtergrondVan, kleurVan } from '../partijkleuren.svelte';
-	import { DAY_MS, korteDatum, langeDatum, vandaag } from '$lib/text/datum';
+	import { DAY_MS, korteDatum, langeDatum, onDate, fromDate, vandaag } from '$lib/text/datum';
 	import { noneHeld } from '$lib/text/coverage';
 	import { capitalize } from '$lib/text/words';
 	import { hallOfDay, vacantZonderFractie, wijzigingenVan, zetelHoogte } from './zetels';
@@ -283,10 +283,7 @@
 								aria-label="{k.s.coalition} zetels, {langeDatum(k.s.from_date)}{onzekerWoord(k.s)}"
 								onclick={() => onSelect(k.s)}
 								onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelect(k.s)}
-								><title
-									>{k.s.coalition} zetels vanaf {langeDatum(k.s.from_date)}{onzekerWoord(
-										k.s
-									)}</title
+								><title>{k.s.coalition} zetels {fromDate(k.s.from_date)}{onzekerWoord(k.s)}</title
 								></rect
 							>
 						{/each}
@@ -316,7 +313,7 @@
 		{:else if !zaal}
 			<p class="onderschrift">
 				{stretches.length
-					? `${capitalize(noneHeld('samenstelling'))} op ${langeDatum(dag)}.`
+					? `${capitalize(noneHeld('samenstelling'))} ${onDate(dag)}.`
 					: `Geen samenstelling van de ${kamer === 'TK' ? 'Tweede' : 'Eerste'} Kamer voor dit kabinet in de gegevens.`}
 			</p>
 		{:else}
@@ -325,7 +322,7 @@
 			{@const markering = indelingMarkering(zaal)}
 			<figure class="kamer">
 				<p class="onderschrift">
-					Samenstelling op {langeDatum(zaal.as_of ?? dag)}.{markering ? ` ${markering}.` : ''}
+					Samenstelling {onDate(zaal.as_of ?? dag)}.{markering ? ` ${markering}.` : ''}
 				</p>
 				<div class="zaal">
 					{#if kamer === 'TK'}

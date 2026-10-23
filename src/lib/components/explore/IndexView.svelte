@@ -645,7 +645,7 @@
 							{:else if list.Rows && resultTotal !== null && !error}
 								<p class="result-count">
 									{formatCount(resultTotal)}<span class="result-noun"
-										>{resultTotal === 1 ? noun1(category) : labelOf(category)}{#if summary},
+										>&nbsp;{resultTotal === 1 ? noun1(category) : labelOf(category)}{#if summary},
 											{summary}{/if}</span
 									>
 								</p>
@@ -879,7 +879,7 @@
 		color: var(--ink);
 	}
 	.result-noun {
-		margin-left: var(--s-2);
+		margin-left: var(--s-1);
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);

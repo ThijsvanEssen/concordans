@@ -6,7 +6,7 @@
 	// from passed-law.ts.
 	import type { Schema } from '$lib/api/types';
 	import BronLink from '$lib/bron/BronLink.svelte';
-	import { langeDatum } from '$lib/text/datum';
+	import { langeDatum, onDate } from '$lib/text/datum';
 	import { separatorBefore } from '$lib/text/words';
 	import { inForceWords, lawsMade, enactments } from './passed-law';
 
@@ -32,8 +32,7 @@
 			>{v.cite ? ', ' : ''}{:else if v.cite}{LEAD.cite}{/if}{#if v.cite}<BronLink
 				ref={{ collection: 'instruments', key: v.cite.key }}
 				href={v.cite.href}
-				title={v.issued ? `Uitgegeven op ${langeDatum(v.issued)}` : undefined}
-				>{v.cite.text}</BronLink
+				title={v.issued ? `Uitgegeven ${onDate(v.issued)}` : undefined}>{v.cite.text}</BronLink
 			>{/if}{#if v.inForce}{`; ${inForceWords(v.inForce)} ${langeDatum(v.inForce)}`}{/if}.
 	</p>
 {/each}

@@ -1,4 +1,5 @@
 // Stemmingen of a Kamer by sitting day, newest first; their total and facets counted apart.
+import { OUTCOME_LABELS } from '$lib/text/outcome';
 import type { Schema } from '$lib/api/types';
 import { decisionsPage, geteld, nogTeTellen } from '$lib/api/decisions';
 import { EK_SOURCE } from '$lib/components/parliamentary/chamber';
@@ -134,14 +135,14 @@ export const decisions = defineList<Row, DecisionsState, ReturnType<typeof query
 				options: [
 					{
 						id: 'true',
-						label: 'Aangenomen',
+						label: OUTCOME_LABELS.aangenomen,
 						count: outcomes.get('true') ?? 0,
 						on: p.passed === 'true',
 						onClick: toggle(patch, 'passed', p.passed, 'true')
 					},
 					{
 						id: 'false',
-						label: 'Verworpen',
+						label: OUTCOME_LABELS.verworpen,
 						count: outcomes.get('false') ?? 0,
 						on: p.passed === 'false',
 						onClick: toggle(patch, 'passed', p.passed, 'false')

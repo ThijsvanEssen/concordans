@@ -39,7 +39,7 @@ describe('discussedIn', () => {
 		expect(discussedIn({ agenda_title: ' ', date: '2026-03-11' })).toEqual({
 			label: 'Besproken',
 			before: 'in het debat van',
-			link: '11 maart 2026'
+			link: '11\u00a0maart\u00a02026'
 		});
 		expect(discussedIn(null)).toEqual({ label: 'Besproken', before: 'in het debat', link: null });
 	});

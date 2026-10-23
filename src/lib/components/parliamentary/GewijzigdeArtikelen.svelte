@@ -7,7 +7,7 @@
 	// publication in the Staatsblad, or proposed in a paper of the dossier. An article, a law,
 	// a publication and a paper are BronLinks: one click opens them in place.
 	import Sectie from '$lib/components/ui/Sectie.svelte';
-	import { langeDatum } from '$lib/text/datum';
+	import { sinceDate } from '$lib/text/datum';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import FoldButton from '$lib/components/ui/FoldButton.svelte';
@@ -67,9 +67,7 @@
 					<p class="samen">
 						<BronLink ref={gedeeld.source.id}
 							>{naamVanId(gedeeld.source.id, gedeeld.source.display_name)}</BronLink
-						>{gedeeld.effective_date
-							? `, in werking sinds ${langeDatum(gedeeld.effective_date)}.`
-							: '.'}
+						>{gedeeld.effective_date ? `, in werking ${sinceDate(gedeeld.effective_date)}.` : '.'}
 					</p>
 				{/if}
 				<ul class="artikelen">

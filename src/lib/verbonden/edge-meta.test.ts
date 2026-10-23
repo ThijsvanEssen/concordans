@@ -28,11 +28,11 @@ const uitspraak: GraphNode = {
 	collection: 'judgments',
 	key: 'ecli_nl_hr_2019_2006',
 	drawClass: 'judgment',
-	label: 'HR 20 december 2019',
+	label: 'HR 20\u00a0december\u00a02019',
 	raw: { props: { ecli: 'ECLI:NL:HR:2019:2006' } } as unknown as GraphNode['raw']
 };
 
-const snippet = 'Zie HR 23 september 1988, ECLI:NL:HR:1988:AD5713 (Kalimijnen).';
+const snippet = 'Zie HR 23\u00a0september\u00a01988, ECLI:NL:HR:1988:AD5713 (Kalimijnen).';
 const words = 'ECLI:NL:HR:1988:AD5713';
 
 const cases: { name: string; from: GraphNode; meta: Record<string, unknown> }[] = [

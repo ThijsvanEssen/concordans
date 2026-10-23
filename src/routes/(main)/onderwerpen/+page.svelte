@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { capitalize } from '$lib/text/words';
+	import { atLeast } from '$lib/text/getal';
 	import { twoAtATime } from '$lib/util/two-at-a-time';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
@@ -56,7 +58,7 @@
 	import { getInstrumentDetail } from '$lib/api/instrument-cache';
 	import { getDossier } from '$lib/api/dossiers';
 	import { dossierName } from '$lib/bron/dossier-naam';
-	import { addDays, korteDatum, vandaag } from '$lib/text/datum';
+	import { addDays, korteDatum, sinceDate, vandaag } from '$lib/text/datum';
 
 	/** Lines per topic, as the feed gives at most in one page. */
 	const PER_ONDERWERP = 100;
@@ -265,11 +267,11 @@
 	}
 
 	const periodeVan = (o: Onderwerp) =>
-		vanaf(o) === recent ? `Afgelopen ${RECENT_DAGEN} dagen` : `Sinds ${korteDatum(vanaf(o))}`;
-	/** The count beside the topic's heading: `25`, or `25+` where the search stopped short. */
+		vanaf(o) === recent ? `Afgelopen ${RECENT_DAGEN} dagen` : capitalize(sinceDate(vanaf(o)));
+	/** The count beside the topic's heading: `25`, or `meer dan 25` where the search stopped short. */
 	function telling(s: Stand | undefined): string | null {
 		if (s?.status !== 'klaar' || s.eerder) return null;
-		return `${s.items.length}${s.meer || s.doorzocht ? '+' : ''}`;
+		return atLeast(s.items.length, !!(s.meer || s.doorzocht));
 	}
 	/**
 	 * What the count is of, as a label (UX-toets 10 Oct, #17: no sentence):
@@ -281,13 +283,13 @@
 			return vanaf(o) === recent
 				? `Eerder dan de afgelopen ${RECENT_DAGEN} dagen`
 				: `Vóór ${korteDatum(vanaf(o))}`;
-		if (o.vorige && vanaf(o) === o.vorige) return `Nieuw sinds ${korteDatum(o.vorige)}`;
+		if (o.vorige && vanaf(o) === o.vorige) return `Nieuw ${sinceDate(o.vorige)}`;
 		const periode = periodeVan(o);
 		if (s?.status !== 'klaar' || !o.vorige) return periode;
 		const nieuw = s.items.filter((i) => isNieuw(i.date, o.vorige)).length;
 		// Searched only from after the visit before: what is new may be more too.
-		const minNieuw = s.doorzocht && s.doorzocht > o.vorige ? '+' : '';
-		return `${periode}; ${nieuw}${minNieuw} nieuw sinds ${korteDatum(o.vorige)}`;
+		const minNieuw = !!(s.doorzocht && s.doorzocht > o.vorige);
+		return `${periode}; ${atLeast(nieuw, minNieuw)} nieuw ${sinceDate(o.vorige)}`;
 	}
 
 	/** The law (and article) in Actueel. */

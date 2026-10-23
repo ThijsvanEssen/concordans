@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { OUTCOME_LABELS } from '$lib/text/outcome';
 	// Overview of a topic: its events in the Kruiswoord (concept ux-voorstel/1f, ronde 6), the
 	// months as rows and the columns under Stukken, Stemmingen and a chosen fractie, and under it
 	// the list of a chosen number. The stemmingen are counted by /api/decisions per day
@@ -26,7 +27,7 @@
 	import OverviewFacets from '$lib/onderwerpen/OverviewFacets.svelte';
 	import OverviewCourse from '$lib/onderwerpen/OverviewCourse.svelte';
 	import OverviewList from '$lib/onderwerpen/OverviewList.svelte';
-	import { isDay, langeDatum, maandNaam, vandaag } from '$lib/text/datum';
+	import { isDay, maandNaam, fromDate, vandaag } from '$lib/text/datum';
 	import { download, safeFileName } from '$lib/verbonden/export';
 	import { lees, topicKey, topicsOf, vindIndex } from '$lib/onderwerpen/onderwerpen';
 	import { dossierOwnName } from '$lib/bron/dossier-naam';
@@ -418,10 +419,10 @@
 		new Set(laag ? (['amendementen', 'brieven', 'toezeggingen'] as Kolom[]) : [])
 	);
 	const kolommen = $derived.by<KolomKop[]>(() => {
-		const metWoord = 'met een woord van het onderwerp in de titel';
+		const withWord = 'met een woord van het onderwerp in de titel';
 		const stemmingen = laag
 			? `Stemmingen over moties met de strekking ${LAAG_LABEL[laag].toLowerCase()}`
-			: `Stemmingen over moties, amendementen en wetsvoorstellen ${metWoord}`;
+			: `Stemmingen over moties, amendementen en wetsvoorstellen ${withWord}`;
 		const k: KolomKop[] = [
 			{
 				k: 'moties',
@@ -429,7 +430,7 @@
 				groep: 'Stukken',
 				titel: laag
 					? `Moties met de strekking ${LAAG_LABEL[laag].toLowerCase()}, op de dag van de stemming.`
-					: `Ingediende moties ${metWoord} of de titel van het dossier.`
+					: `Ingediende moties ${withWord} of de titel van het dossier.`
 			},
 			{
 				k: 'amendementen',
@@ -442,7 +443,7 @@
 				k: 'brieven',
 				label: 'Brieven',
 				groep: 'Stukken',
-				titel: `Brieven van de regering ${metWoord} of de titel van het dossier.`
+				titel: `Brieven van de regering ${withWord} of de titel van het dossier.`
 			},
 			{
 				k: 'toezeggingen',
@@ -453,14 +454,14 @@
 			},
 			{
 				k: 'aangenomen',
-				label: 'Aangenomen',
+				label: OUTCOME_LABELS.aangenomen,
 				groep: 'Stemmingen',
 				vorm: 'ja',
 				titel: `${stemmingen}: aangenomen.`
 			},
 			{
 				k: 'verworpen',
-				label: 'Verworpen',
+				label: OUTCOME_LABELS.verworpen,
 				groep: 'Stemmingen',
 				vorm: 'nee',
 				titel: `${stemmingen}: verworpen.`
@@ -494,13 +495,13 @@
 		return [
 			...(grens && !laag
 				? [
-						`${perioden ? 'Amendementen' : 'Moties, amendementen, brieven en toezeggingen'} doorzocht vanaf ${langeDatum(grens)}.`
+						`${perioden ? 'Amendementen' : 'Moties, amendementen, brieven en toezeggingen'} doorzocht ${fromDate(grens)}.`
 					]
 				: []),
 			...(ketenDossiers > DOSSIERS_MAX && !laag
 				? [`Amendementen in ${DOSSIERS_MAX} van ${getal(ketenDossiers)} dossiers nagelopen.`]
 				: []),
-			...(laag && motiesGrens ? [`Moties doorzocht vanaf ${langeDatum(motiesGrens)}.`] : []),
+			...(laag && motiesGrens ? [`Moties doorzocht ${fromDate(motiesGrens)}.`] : []),
 			...(importFout ? ['Geen codering in dit bestand.'] : [])
 		];
 	});

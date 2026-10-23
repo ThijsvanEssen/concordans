@@ -37,7 +37,10 @@ const neighbor = (n: BaseNode): Schema<'NeighborDTO'> => ({
 const abrvs = node(
 	'ecli_nl_rvs_2026_5670',
 	{ ecli: 'ECLI:NL:RVS:2026:5670', date: '2026-09-03', court: 'Raad van State' },
-	{ short: 'ABRvS 3 september 2026', full: 'ABRvS 3 september 2026, ECLI:NL:RVS:2026:5670' }
+	{
+		short: 'ABRvS 3\u00a0september\u00a02026',
+		full: 'ABRvS 3\u00a0september\u00a02026, ECLI:NL:RVS:2026:5670'
+	}
 );
 const pg = node(
 	'ecli_nl_phr_2019_887',
@@ -49,8 +52,8 @@ const pg = node(
 		advocate_general_role: 'procureur-generaal'
 	},
 	{
-		short: 'Conclusie P-G Langemeijer en Wissink 13 september 2019',
-		full: 'Conclusie P-G Langemeijer en Wissink 13 september 2019, ECLI:NL:PHR:2019:887'
+		short: 'Conclusie P-G Langemeijer en Wissink 13\u00a0september\u00a02019',
+		full: 'Conclusie P-G Langemeijer en Wissink 13\u00a0september\u00a02019, ECLI:NL:PHR:2019:887'
 	}
 );
 
@@ -70,13 +73,16 @@ describe('a judgment cited one way', () => {
 		const urgenda = node(
 			'ecli_nl_hr_2019_2006',
 			{ ecli: 'ECLI:NL:HR:2019:2006', date: '2019-12-20', court: 'Hoge Raad', names: ['Urgenda'] },
-			{ short: 'HR 20 december 2019', full: 'HR 20 december 2019, ECLI:NL:HR:2019:2006' }
+			{
+				short: 'HR 20\u00a0december\u00a02019',
+				full: 'HR 20\u00a0december\u00a02019, ECLI:NL:HR:2019:2006'
+			}
 		);
 		expect(previewFromNode('judgments', null, urgenda.props!, urgenda.cite).title).toBe(
-			'HR 20 december 2019 (Urgenda)'
+			'HR 20\u00a0december\u00a02019 (Urgenda)'
 		);
 		expect(laagVan(neighbor(urgenda), 'Hoger beroep of cassatie').naam).toBe(
-			'HR 20 december 2019 (Urgenda)'
+			'HR 20\u00a0december\u00a02019 (Urgenda)'
 		);
 	});
 });

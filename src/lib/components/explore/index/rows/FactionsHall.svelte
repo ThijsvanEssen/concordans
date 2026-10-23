@@ -5,7 +5,7 @@
 	import { fractieNaam, naamVan } from '$lib/bron/menselijk';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { ekListSource } from '$lib/components/parliamentary/chamber';
-	import { langeDatum } from '$lib/text/datum';
+	import { onDate } from '$lib/text/datum';
 	import { load } from '$lib/util/load.svelte';
 	import Hemicycle from '../../Hemicycle.svelte';
 	import ZaalTegenover from '../../ZaalTegenover.svelte';
@@ -93,7 +93,7 @@
 				coalitie={coalitionLine}
 				{members}
 				peil={[
-					`Samenstelling op ${langeDatum(
+					`Samenstelling ${onDate(
 						(seats.chamber === 'EK' ? composition?.composition_date : null) ?? seats.as_of ?? null
 					)}`,
 					indelingMarkering(seats)

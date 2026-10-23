@@ -25,8 +25,8 @@
 		label: string;
 		on: boolean;
 		onToggle: () => void;
-		/** Left out while counts are loading, rather than a column of zeros. */
-		count?: number | null;
+		/** Left out while counts are loading, rather than a column of zeros; text (`meer dan 50`) as given. */
+		count?: number | string | null;
 		/** A colour in place of the box: a fractie. */
 		swatch?: string | null;
 		/** Before the label, after the box: the glyph of a kind, the line of a verbinding. */
@@ -67,7 +67,7 @@
 	{#if voor}<span class="voor">{@render voor()}</span>{/if}
 	<span class="label" class:wrap>{label}</span>
 	{#if loading}<span class="aantal" aria-label="wordt geteld"></span>{:else if count != null}<span
-			class="aantal">{formatCount(count)}</span
+			class="aantal">{typeof count === 'string' ? count : formatCount(count)}</span
 		>{/if}
 </button>
 

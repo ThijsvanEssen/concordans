@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { outcomeWord } from '$lib/text/outcome';
 	import { votesSentence } from '$lib/components/parliamentary/stemming';
 	import Stembalk from '$lib/components/parliamentary/Stembalk.svelte';
 	import { voteBarOf } from '$lib/components/parliamentary/stembalk';
@@ -324,7 +325,7 @@
 				{#if i.persons.length || i.vote}
 					<span class="meta"
 						>{#if i.vote}<span class="outcome" class:outcome--failed={!i.vote.passed}
-								>{i.vote.passed ? 'Aangenomen' : 'Verworpen'}</span
+								>{outcomeWord(!!i.vote.passed)}</span
 							>{/if}{@render persons(i)}</span
 					>
 				{/if}

@@ -23,7 +23,7 @@ const licht = {
 					{
 						key: HOF,
 						collection: 'judgments',
-						display_name: 'Gerechtshof Den Haag, 9 oktober 2018',
+						display_name: 'Gerechtshof Den Haag, 9\u00a0oktober\u00a02018',
 						relation: 'APPEAL_OF',
 						direction: 'outbound'
 					}

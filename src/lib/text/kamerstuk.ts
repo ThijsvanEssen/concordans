@@ -1,7 +1,7 @@
 // The Kamerstuk a paper is: its own dossier and its number there (API 0.63). A dossier's
 // timeline also holds papers of another dossier (in 31746 stands 31058, nr. 11), so the
 // number alone would name the wrong Kamerstuk.
-import { kamerstukNummer, officialNumber } from '$lib/bron/dossier-naam';
+import { dossierNumberText, kamerstukNummer } from '$lib/bron/dossier-naam';
 
 export type Kamerstuk = {
 	dossier: string;
@@ -48,7 +48,7 @@ export type Paper = {
 
 /** `36945 IV`: the dossier with its suffix, as a citation writes it. */
 const dossierOf = (p: Paper & { dossier_number: string }) =>
-	p.dossier_suffix ? `${p.dossier_number} ${p.dossier_suffix}` : officialNumber(p.dossier_number);
+	dossierNumberText(p.dossier_number, p.dossier_suffix);
 
 /** `nr. 5`, `nrs. 3–5`; the Eerste Kamer's letters bare: `C`, `A, B`. */
 function numbersOf(p: Paper): string | null {

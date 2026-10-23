@@ -116,8 +116,8 @@ describe('tussenClustersOf', () => {
 
 	it('names the chosen bronnen on its card', () => {
 		const [c] = tussenClustersOf(nodes, edges, chosen, new Set(), new Set());
-		expect(clusterZinnen(c, null, ['Art. 273f Sr', 'HR 24 november 2015'])).toEqual([
-			'Elk alleen verbonden met Art. 273f Sr en HR 24 november 2015.'
+		expect(clusterZinnen(c, null, ['Art. 273f Sr', 'HR 24\u00a0november\u00a02015'])).toEqual([
+			'Elk alleen verbonden met Art. 273f Sr en HR 24\u00a0november\u00a02015.'
 		]);
 	});
 });

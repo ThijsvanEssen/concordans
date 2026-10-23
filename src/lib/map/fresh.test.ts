@@ -89,8 +89,8 @@ describe('the newest judgment citing an article', () => {
 				judgment: {
 					date: '2026-10-07',
 					cite: {
-						short: 'Rb. Den Haag 7 oktober 2026',
-						full: 'Rb. Den Haag 7 oktober 2026, ECLI:X'
+						short: 'Rb. Den Haag 7\u00a0oktober\u00a02026',
+						full: 'Rb. Den Haag 7\u00a0oktober\u00a02026, ECLI:X'
 					},
 					path: '/uitspraken/ECLI:X'
 				},
@@ -103,7 +103,7 @@ describe('the newest judgment citing an article', () => {
 	it('is new where it was decided after the visit before, cited at its place', () => {
 		expect(newestCiting(page, '2026-10-01')).toEqual({
 			date: '2026-10-07',
-			cite: 'Rb. Den Haag 7 oktober 2026, ECLI:X',
+			cite: 'Rb. Den Haag 7\u00a0oktober\u00a02026, ECLI:X',
 			place: '3.1',
 			href: '/uitspraken/ECLI:X#rov-3.1'
 		});

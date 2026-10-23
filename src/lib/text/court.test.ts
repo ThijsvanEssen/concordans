@@ -19,6 +19,6 @@ describe('courtName (#62)', () => {
 			court: 'RBUTR',
 			date: '2008-09-24'
 		});
-		expect(row.title).toBe('Rechtbank Utrecht, 24 september 2008');
+		expect(row.title).toBe('Rechtbank Utrecht, 24\u00a0september\u00a02008');
 	});
 });

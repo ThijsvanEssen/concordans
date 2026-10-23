@@ -75,7 +75,7 @@
 		loading: boolean;
 	} = $props();
 
-	const UITKOMST_LABEL: Record<Uitkomst, string> = {
+	const OUTCOME_LABELS: Record<Uitkomst, string> = {
 		aangenomen: 'aangenomen',
 		verworpen: 'verworpen',
 		overig: 'zonder uitkomst'
@@ -163,7 +163,7 @@
 						>
 						<div class="rij__regel">
 							<span class="rij__uitkomst"
-								><UitkomstTeken tone={outcomeShape(u)} woord={UITKOMST_LABEL[u]} />{tally
+								><UitkomstTeken tone={outcomeShape(u)} woord={OUTCOME_LABELS[u]} />{tally
 									? `, ${tally}`
 									: ''}{#if s}<span class="rij__stem">{faction} <StemTeken keuze={s} /></span
 									>{/if}</span

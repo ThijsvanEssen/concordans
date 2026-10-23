@@ -68,7 +68,7 @@ for (const { stuk, own } of [
 		const stemmingen = items.filter((t) => t.endsWith(', Stemming'));
 		expect(stemmingen.length).toBeGreaterThan(0);
 		// Each stemming in the network is of the stuk's own dossier, all of the autumn of 2026.
-		expect(stemmingen.filter((t) => !/ (september|oktober) 2026: /.test(t))).toEqual([]);
+		expect(stemmingen.filter((t) => !/\s(september|oktober)\s2026: /.test(t))).toEqual([]);
 	});
 }
 

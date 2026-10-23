@@ -65,8 +65,8 @@ const lid: MapItem = { ...artikel, at: 'lid-2', kort: 'art. 6:162 lid 2 BW' };
 const uitspraak: MapItem = {
 	id: 'judgments/ecli_nl_hr_2019_2006',
 	at: '',
-	kort: 'HR 20 december 2019, ECLI:NL:HR:2019:2006',
-	groep: 'HR 20 december 2019',
+	kort: 'HR 20\u00a0december\u00a02019, ECLI:NL:HR:2019:2006',
+	groep: 'HR 20\u00a0december\u00a02019',
 	groupKey: 'judgments/ecli_nl_hr_2019_2006'
 };
 const ro: MapItem = { ...uitspraak, at: 'rov-5.7.1', kort: `${uitspraak.kort}, r.o. 5.7.1` };

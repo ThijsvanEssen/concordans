@@ -65,7 +65,7 @@ describe('a conclusion', () => {
 			advocate_general: 'mr. R.E.C.M. Niessen',
 			advocate_general_role: 'advocaat-generaal'
 		};
-		const short = 'Conclusie A-G Niessen 2 augustus 2018';
+		const short = 'Conclusie A-G Niessen 2\u00a0augustus\u00a02018';
 		expect(
 			describeBron('judgments', 'ecli_nl_phr_2018_1', 'x', props, { short, full: '' }).title
 		).toBe(short);
@@ -194,7 +194,7 @@ describe('the name of a Kamerstuk', () => {
 
 	it('is never the kind alone where the date is known', () => {
 		expect(doc({ kind: 'Brief', title: 'Brief', date: '2026-09-10' }).title).toBe(
-			'Brief, 10 september 2026'
+			'Brief, 10\u00a0september\u00a02026'
 		);
 	});
 });
@@ -221,10 +221,10 @@ describe('the name of an activity', () => {
 				{ kind: 'plenaire vergadering', agenda_title: 'Stemmingen', date: '2026-09-29' },
 				'Stemmingen (2026-09-29)'
 			).title
-		).toBe('Stemmingen, 29 september 2026');
+		).toBe('Stemmingen, 29\u00a0september\u00a02026');
 		expect(
 			act({ kind: 'Plenair debat', date: '2026-09-22' }, 'Plenair debat (2026-09-22)').title
-		).toBe('Plenair debat, 22 september 2026');
+		).toBe('Plenair debat, 22\u00a0september\u00a02026');
 	});
 });
 
@@ -269,7 +269,7 @@ describe('periodLabel', () => {
 describe('bundleMentions', () => {
 	const mention = (position: string, confidence: number, lid: string | null = null): Row => ({
 		ref: { collection: 'judgments', key: 'ecli_nl_hr_2019_1278' },
-		title: 'Hoge Raad, 19 juli 2019',
+		title: 'Hoge Raad, 19\u00a0juli\u00a02019',
 		context: null,
 		filterGroup: 'uitspraken',
 		position,
@@ -343,7 +343,7 @@ describe('sister cases', () => {
 	it('finds the titles rows share, and the case number that tells them apart', () => {
 		const row = (ecli: string, display_name: string) =>
 			({
-				title: 'Gerechtshof Amsterdam, 22 september 2026',
+				title: 'Gerechtshof Amsterdam, 22\u00a0september\u00a02026',
 				identifier: ecli,
 				props: { display_name }
 			}) as unknown as Row;
@@ -351,7 +351,9 @@ describe('sister cases', () => {
 			row('ECLI:NL:GHAMS:2026:2678', 'Gerechtshof Amsterdam 2026-09-22 / 200.343.062/01'),
 			row('ECLI:NL:GHAMS:2026:2679', 'Gerechtshof Amsterdam 2026-09-22 / 200.343.064/01')
 		];
-		expect([...repeatedTitles(rows)]).toEqual(['Gerechtshof Amsterdam, 22 september 2026']);
+		expect([...repeatedTitles(rows)]).toEqual([
+			'Gerechtshof Amsterdam, 22\u00a0september\u00a02026'
+		]);
 		expect(rows.map(caseNumberOf)).toEqual(['200.343.062/01', '200.343.064/01']);
 		expect(caseNumberOf({ ...rows[0], props: {} } as Row)).toBe('2678');
 	});

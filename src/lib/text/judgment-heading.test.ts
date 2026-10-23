@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 // Guard (gelijke pagina's): every place that cites a judgment by its heading reads it through
 // headingCite, so a judgment of the courts of the EU has its case number on the reader, the
-// canvas, the card and Behoort bij alike (`HvJ EU 22 juni 2023, C-160/20`).
+// canvas, the card and Behoort bij alike (`HvJ EU 22\u00a0juni\u00a02023, C-160/20`).
 const READS_CITE = /\bcite\??\.(?:short|full)\b/;
 
 /** The one place that reads the API's cite: a citing judgment with a cite of loose fields. */

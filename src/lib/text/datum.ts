@@ -7,6 +7,13 @@
 //   maandJaar    sep. 2026           in an axis or a period
 //   langeDatum   28 september 2026   in a sentence or a citation
 //   weekdag      Dinsdag 28 september 2026, as a heading over a day
+//   the choice: langeDatum in a sentence or a heading, korteDatum in a list, a row, a column
+//   or a bar; never both in one block (E9 A)
+//   sinceDate   sinds 28 september 2026; so asOfDate, onDate, fromDate, untilDate and
+//                throughDate: a word before a date in a sentence is written here only,
+//                and always with the long date (guards/datum.test.ts)
+//
+// The parts of a date are joined by a no-break space, so a line never breaks inside it.
 
 import { capitalize } from './words';
 
@@ -40,6 +47,7 @@ const MAAND_KORT = [
 	'nov.',
 	'dec.'
 ];
+const NBSP = '\u00a0';
 const WEEKDAG = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];
 
 type Dag = { j: number; m: number; d: number };
@@ -55,13 +63,13 @@ export function dagVan(iso: string | null | undefined): Dag | null {
 /** `28 sep. 2026`; empty without a date. */
 export const korteDatum = (iso: string | null | undefined): string => {
 	const t = dagVan(iso);
-	return t ? `${t.d} ${MAAND_KORT[t.m - 1]} ${t.j}` : '';
+	return t ? `${t.d}${NBSP}${MAAND_KORT[t.m - 1]}${NBSP}${t.j}` : '';
 };
 
 /** `28 sep.`; empty without a date. */
 export const dagMaand = (iso: string | null | undefined): string => {
 	const t = dagVan(iso);
-	return t ? `${t.d} ${MAAND_KORT[t.m - 1]}` : '';
+	return t ? `${t.d}${NBSP}${MAAND_KORT[t.m - 1]}` : '';
 };
 
 /** The month alone, `september` or, `kort`, `sep.`: over the days of a timetable. */
@@ -73,13 +81,13 @@ export const maandNaam = (iso: string | null | undefined, kort = false): string 
 /** `sep. 2026`; empty without a date. */
 export const maandJaar = (iso: string | null | undefined): string => {
 	const t = dagVan(iso);
-	return t ? `${MAAND_KORT[t.m - 1]} ${t.j}` : '';
+	return t ? `${MAAND_KORT[t.m - 1]}${NBSP}${t.j}` : '';
 };
 
 /** `28 september 2026`; empty without a date. */
 export const langeDatum = (iso: string | null | undefined): string => {
 	const t = dagVan(iso);
-	return t ? `${t.d} ${MONTHS[t.m - 1]} ${t.j}` : '';
+	return t ? `${t.d}${NBSP}${MONTHS[t.m - 1]}${NBSP}${t.j}` : '';
 };
 
 /** `Dinsdag 28 september 2026`; empty without a date. */
@@ -89,6 +97,26 @@ export const weekdag = (iso: string | null | undefined): string => {
 	const w = WEEKDAG[new Date(Date.UTC(t.j, t.m - 1, t.d)).getUTCDay()];
 	return `${capitalize(w)} ${langeDatum(iso)}`;
 };
+
+const withWord =
+	(woord: string) =>
+	(iso: string | null | undefined): string => {
+		const d = langeDatum(iso);
+		return d ? `${woord} ${d}` : '';
+	};
+
+/** `sinds 28 september 2026`; empty without a date. */
+export const sinceDate = withWord('sinds');
+/** `per 28 september 2026`; empty without a date. */
+export const asOfDate = withWord('per');
+/** `op 28 september 2026`; empty without a date. */
+export const onDate = withWord('op');
+/** `vanaf 28 september 2026`; empty without a date. */
+export const fromDate = withWord('vanaf');
+/** `tot 28 september 2026`; empty without a date. */
+export const untilDate = withWord('tot');
+/** `tot en met 28 september 2026`; empty without a date. */
+export const throughDate = withWord('tot en met');
 
 /** A day as the URL and the API write it, `2015-01-01`, and one the calendar has. */
 export const isDay = (s: string | null | undefined): s is string =>

@@ -34,7 +34,7 @@
 	import { SearchResults } from '$lib/search/results.svelte';
 	import ResultRow from '$lib/search/ResultRow.svelte';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
-	import { formatCount } from '$lib/text/getal';
+	import { atLeast, formatCount } from '$lib/text/getal';
 	import { uniqueBy } from '$lib/util/unique';
 	import { lijstDoel as listTarget } from '$lib/stores/sprong';
 
@@ -117,7 +117,7 @@
 						id: g.kind,
 						label: groupLabel(g.kind),
 						on: chosen === g.kind,
-						count: g.hits.length,
+						count: atLeast(g.hits.length, g.hits.length >= RESULT_LIMIT),
 						onClick: () =>
 							patchUrl({
 								[P.kind]: chosen === g.kind ? null : g.kind,
@@ -233,7 +233,7 @@
 				<h2 class="groep__kop" id="groep-{group.kind}">
 					<KindGlyph collection={group.kind} />
 					{groupLabel(group.kind)}
-					<span class="aantal">{formatCount(group.hits.length)}{capped ? '+' : ''}</span>
+					<span class="aantal">{atLeast(group.hits.length, capped)}</span>
 					{#if lane.matched === 'any'}
 						<span class="deel">treffers met een deel van de woorden</span>
 					{/if}

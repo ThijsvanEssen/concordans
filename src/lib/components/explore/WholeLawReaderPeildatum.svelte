@@ -1,7 +1,7 @@
 <script lang="ts">
 	// The peildatum of the whole-law reader: the versions of the law by year, the text of today
 	// first, as a line of the head.
-	import { langeDatum, vandaag } from '$lib/text/datum';
+	import { langeDatum, sinceDate, vandaag } from '$lib/text/datum';
 	import { formatCount } from '$lib/text/getal';
 	import type { Schema } from '$lib/api/types';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
@@ -49,7 +49,7 @@
 		{#snippet inhoud(close)}
 			<div class="peil-lijst">
 				<span class="peil-noot"
-					>{formatCount(versions.length)} versies sinds {langeDatum(oldest ?? null)}</span
+					>{formatCount(versions.length)} versies {sinceDate(oldest ?? null)}</span
 				>
 				{#if !verlopen}
 					<button

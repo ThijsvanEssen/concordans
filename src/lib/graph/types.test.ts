@@ -72,13 +72,16 @@ describe('node labels', () => {
 		expect(buildNodeLabel(node('articles', 'a', { article_number: '287' }), 'article')).toBe(
 			'Art. 287'
 		);
-		const cite = { short: 'HR 3 maart 2023', full: 'HR 3 maart 2023, ECLI:NL:HR:2023:456' };
+		const cite = {
+			short: 'HR 3\u00a0maart\u00a02023',
+			full: 'HR 3\u00a0maart\u00a02023, ECLI:NL:HR:2023:456'
+		};
 		expect(
 			buildNodeLabel(
 				{ ...node('judgments', 'j', { ecli: 'ECLI:NL:HR:2023:456' }), cite },
 				'judgment'
 			)
-		).toBe('HR 3 maart 2023');
+		).toBe('HR 3\u00a0maart\u00a02023');
 	});
 
 	it('names a motion after its lead signatory', () => {
@@ -93,7 +96,7 @@ describe('node labels', () => {
 			}),
 			'document'
 		);
-		expect(label).toBe('Motie de Vries (D66), jan. 2026');
+		expect(label).toBe('Motie de Vries (D66), jan.\u00a02026');
 	});
 
 	it('takes the eerste ondertekenaar of a motie, wherever the source lists it', () => {

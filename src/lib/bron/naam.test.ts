@@ -97,7 +97,7 @@ describe('bronNaam', () => {
 				props: { court: 'Raad van State', date: '2023-01-11', ecli: 'ECLI:NL:RVS:2023:93' }
 			} as unknown as GraphNode['raw']
 		});
-		expect(bronNaam(j, meta)).toBe('Raad van State, 11 januari 2023');
+		expect(bronNaam(j, meta)).toBe('Raad van State, 11\u00a0januari\u00a02023');
 	});
 });
 
@@ -120,7 +120,9 @@ describe('stemmingNaam', () => {
 					passed: true
 				})
 			)
-		).toBe('Stemming Tweede Kamer, aangenomen, 29 september 2026: Wijziging van de Wet SUWI');
+		).toBe(
+			'Stemming Tweede Kamer, aangenomen, 29\u00a0september\u00a02026: Wijziging van de Wet SUWI'
+		);
 	});
 
 	it('says a postponed vote and a vote of the Eerste Kamer in their own words', () => {

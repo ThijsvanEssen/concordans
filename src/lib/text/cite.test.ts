@@ -17,7 +17,7 @@ describe('citeArticle', () => {
 		const forms = citeArticle({ ...base, lid: '2', date: new Date(2026, 8, 22) });
 		expect(forms.short).toBe('art. 300 lid 2 Sr');
 		expect(forms.full).toBe('artikel 300, tweede lid, van het Wetboek van Strafrecht');
-		expect(forms.dated).toBe('art. 300 lid 2 Sr (tekst geldend op 22 september 2026)');
+		expect(forms.dated).toBe('art. 300 lid 2 Sr (tekst geldend op 22\u00a0september\u00a02026)');
 	});
 
 	it('cites an onderdeel inside a lid, and an article without a short title', () => {
@@ -114,7 +114,7 @@ describe('citeArticle', () => {
 		});
 		expect(forms.short).toBe('Algemene bepaling Gw');
 		expect(forms.full).toBe('Algemene bepaling van de Grondwet');
-		expect(forms.dated).toBe('Algemene bepaling Gw (tekst geldend op 24 september 2026)');
+		expect(forms.dated).toBe('Algemene bepaling Gw (tekst geldend op 24\u00a0september\u00a02026)');
 	});
 });
 
@@ -129,7 +129,7 @@ describe('citing an article of an act of the EU, its text as adopted (A53 #2)', 
 	it('dates it on the day it was adopted, never as the text in force today', () => {
 		const forms = citeArticle({ ...avg, adopted: { on: '2016-04-27' } });
 		expect(forms.dated).toBe(
-			'art. 6 Verordening (EU) 2016/679 (tekst zoals vastgesteld op 27 april 2016)'
+			'art. 6 Verordening (EU) 2016/679 (tekst zoals vastgesteld op 27\u00a0april\u00a02016)'
 		);
 		expect(forms.dated).not.toMatch(/geldend/);
 	});
@@ -142,7 +142,7 @@ describe('citing an article of an act of the EU, its text as adopted (A53 #2)', 
 		};
 		const late = new Date('2026-10-21T22:30:00Z');
 		expect(citeArticle({ ...c, date: late }).dated).toBe(
-			'art. 162 BW (tekst geldend op 22 oktober 2026)'
+			'art. 162 BW (tekst geldend op 22\u00a0oktober\u00a02026)'
 		);
 	});
 
@@ -156,7 +156,7 @@ describe('citing an article of an act of the EU, its text as adopted (A53 #2)', 
 			{ own: 'Verordening (EU) 2016/679', adopted: { on: '2016-04-27' } }
 		)!;
 		expect(citeArticle({ ...c, lid: '1' }).dated).toBe(
-			'art. 6 lid 1 Verordening (EU) 2016/679 (tekst zoals vastgesteld op 27 april 2016)'
+			'art. 6 lid 1 Verordening (EU) 2016/679 (tekst zoals vastgesteld op 27\u00a0april\u00a02016)'
 		);
 	});
 });

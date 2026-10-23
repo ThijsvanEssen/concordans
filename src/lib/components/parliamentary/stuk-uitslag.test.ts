@@ -15,10 +15,10 @@ describe('the outcome of a motie or amendement', () => {
 		expect(u).toMatchObject({
 			uitkomst: 'aangenomen',
 			telling: '150–0',
-			datum: '31 mrt. 2026',
+			datum: '31\u00a0mrt.\u00a02026',
 			besluit: 'decision_1'
 		});
-		expect(uitslagTekst(u!)).toBe('aangenomen 150–0 op 31 mrt. 2026');
+		expect(uitslagTekst(u!)).toBe('aangenomen 150–0 op 31\u00a0mrt.\u00a02026');
 		expect(
 			uitslagTekst(stukUitslag({ outcome: 'verworpen', tally: { Voor: 65, Tegen: 85 } })!)
 		).toBe('verworpen 65–85');
@@ -75,10 +75,10 @@ describe('where a toezegging was made and kept', () => {
 	it('names the activity by its kind and day, never by its number', () => {
 		expect(toegezegdIn({ kind: 'Wetgevingsoverleg', date: '2026-03-23' })).toEqual({
 			voor: 'Toegezegd in het',
-			link: 'wetgevingsoverleg van 23 maart 2026'
+			link: 'wetgevingsoverleg van 23\u00a0maart\u00a02026'
 		});
 		expect(toegezegdIn({ kind: 'Plenair debat (wetgeving)', date: '2026-03-23' })?.link).toBe(
-			'plenair debat van 23 maart 2026'
+			'plenair debat van 23\u00a0maart\u00a02026'
 		);
 		expect(toegezegdIn({ kind: 'Procedurevergadering', date: null })?.voor).toBe('Toegezegd in de');
 		expect(toegezegdIn(null)).toBeNull();

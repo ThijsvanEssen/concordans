@@ -12,7 +12,7 @@ describe('uitslagVan', () => {
 		expect(uitslagVan({ passed: null, result: 'Verworpen' })).toBe(false);
 	});
 
-	it('gives no outcome for a postponed vote (36799, 22 september 2026)', () => {
+	it('gives no outcome for a postponed vote (36799, 22\u00a0september\u00a02026)', () => {
 		expect(uitslagVan({ passed: null, result: null })).toBeNull();
 		expect(uitslagVan({})).toBeNull();
 	});

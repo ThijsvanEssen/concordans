@@ -41,12 +41,12 @@ describe('citeDate', () => {
 describe('statusOf', () => {
 	it('says vervallen as a no, nog niet in werking not, and nothing for what holds', () => {
 		expect(statusOf(v({ state: 'expired', date: '2020-01-01' }))).toEqual({
-			text: 'Vervallen per 1 januari 2020',
+			text: 'Vervallen per 1\u00a0januari\u00a02020',
 			negative: true
 		});
 		expect(statusOf(v({ state: 'expired' }))?.text).toBe('Vervallen');
 		expect(statusOf(v({ state: 'not_in_force_yet', date: '2027-01-01' }))).toEqual({
-			text: 'Nog niet in werking (per 1 januari 2027)',
+			text: 'Nog niet in werking (per 1\u00a0januari\u00a02027)',
 			negative: false
 		});
 		expect(statusOf(v({}))).toBeNull();

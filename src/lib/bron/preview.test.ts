@@ -17,7 +17,7 @@ describe('previewFromNode', () => {
 			summary: 'Prejudiciële vraag (art. 392 Rv). Aardbevingsschade.'
 		});
 		expect(p.kicker).toBe('Uitspraak, Hoge Raad');
-		expect(p.date).toBe('19 juli 2019');
+		expect(p.date).toBe('19\u00a0juli\u00a02019');
 		expect(p.lines).toBe('Prejudiciële vraag (art. 392 Rv).');
 	});
 
@@ -26,9 +26,12 @@ describe('previewFromNode', () => {
 			'judgments',
 			'Hoge Raad 2026-08-25 / 24/01299',
 			{ ecli: 'ECLI:NL:HR:2026:1357', court: 'Hoge Raad', date: '2026-08-25' },
-			{ short: 'HR 25 augustus 2026', full: 'HR 25 augustus 2026, ECLI:NL:HR:2026:1357' }
+			{
+				short: 'HR 25\u00a0augustus\u00a02026',
+				full: 'HR 25\u00a0augustus\u00a02026, ECLI:NL:HR:2026:1357'
+			}
 		);
-		expect(p.title).toBe('HR 25 augustus 2026');
+		expect(p.title).toBe('HR 25\u00a0augustus\u00a02026');
 		expect(p.date).toBeNull();
 		const named = previewFromNode(
 			'judgments',
@@ -39,9 +42,12 @@ describe('previewFromNode', () => {
 				date: '2019-12-20',
 				names: ['Urgenda']
 			},
-			{ short: 'HR 20 december 2019', full: 'HR 20 december 2019, ECLI:NL:HR:2019:2006' }
+			{
+				short: 'HR 20\u00a0december\u00a02019',
+				full: 'HR 20\u00a0december\u00a02019, ECLI:NL:HR:2019:2006'
+			}
 		);
-		expect(named.title).toBe('HR 20 december 2019 (Urgenda)');
+		expect(named.title).toBe('HR 20\u00a0december\u00a02019 (Urgenda)');
 	});
 
 	it('names a stemming and an activity without an ISO date', () => {
@@ -51,13 +57,13 @@ describe('previewFromNode', () => {
 			{ subject: 'Wet toekomstbestendige huurcommissie', chamber: 'EK', date: '2026-09-29' }
 		);
 		expect(vote.title).toBe(
-			'Eerste Kamer, 29 september 2026: Wet toekomstbestendige huurcommissie'
+			'Eerste Kamer, 29\u00a0september\u00a02026: Wet toekomstbestendige huurcommissie'
 		);
 		const activity = previewFromNode('activities', 'Stemmingen (2026-09-29)', {
 			kind: 'Stemmingen',
 			date: '2026-09-29'
 		});
-		expect([activity.title, activity.date]).toEqual(['Stemmingen', '29 september 2026']);
+		expect([activity.title, activity.date]).toEqual(['Stemmingen', '29\u00a0september\u00a02026']);
 		for (const t of [vote.title, activity.title]) expect(t).not.toMatch(/\d{4}-\d{2}-\d{2}|\u00b7/);
 	});
 
@@ -97,7 +103,7 @@ describe('previewFromNode', () => {
 			]
 		});
 		expect(p.kicker).toBe('Amendement, nr. 66');
-		expect(p.date).toBe('24 april 2024');
+		expect(p.date).toBe('24\u00a0april\u00a02024');
 		expect(p.dossier).toBe(
 			'Dossier 36496 Wijziging van de Wet goed verhuurderschap (Wet betaalbare huur)'
 		);

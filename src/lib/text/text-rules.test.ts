@@ -19,7 +19,8 @@ describe('text-rules.json', () => {
 	});
 
 	it.each(rules.long_dates)('writes $iso as "$text"', ({ iso, text }) => {
-		expect(langeDatum(iso)).toBe(text);
+		// The API writes the plain spaces; the page keeps a date on one line with no-break ones.
+		expect(langeDatum(iso).replaceAll('\u00a0', ' ')).toBe(text);
 	});
 
 	it.each(rules.division_anchors)('anchors $anchors', ({ breadcrumb, anchors }) => {

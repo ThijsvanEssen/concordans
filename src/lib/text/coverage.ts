@@ -3,7 +3,7 @@
 // live here and only here; the shape is the API's `completeness` (docs/api.md "Completeness"):
 // per part a state, a date and how many are missing.
 import type { Schema } from '$lib/api/types';
-import { langeDatum } from '$lib/text/datum';
+import { langeDatum, asOfDate } from '$lib/text/datum';
 import { formatCount } from '$lib/text/getal';
 import { capitalize, joinAnd, plural } from '$lib/text/words';
 
@@ -191,9 +191,9 @@ export function anchorLine(a: AnchorState): string {
 		case 'moved':
 			return `Nu in ${a.place}`;
 		case 'changed':
-			return `Tekst gewijzigd per ${langeDatum(a.since)}`;
+			return `Tekst gewijzigd ${asOfDate(a.since)}`;
 		case 'lapsed':
-			return `Vervallen per ${langeDatum(a.since)}`;
+			return `Vervallen ${asOfDate(a.since)}`;
 		case 'lost':
 			return 'Passage niet meer in de tekst';
 	}

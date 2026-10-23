@@ -2,7 +2,7 @@
 	import { formatCount } from '$lib/text/getal';
 	import { OPEN_STATUS } from '$lib/components/explore/index/government';
 	import { lowerFirst, plural } from '$lib/text/words';
-	import { korteDatum } from '$lib/text/datum';
+	import { sinceDate, untilDate } from '$lib/text/datum';
 	import { report } from '$lib/api/errors';
 	import { bewaarItem } from '$lib/map/map';
 	import { atomHref } from '$lib/components/actueel/feed';
@@ -70,10 +70,9 @@
 		{#if laatst}
 			<p class="zin">
 				{#if nu.length}
-					{nu.map((f) => f.function).join(' en ')} sinds {korteDatum(nu[0].from_date)}, {nu[0]
-						.cabinet}.
+					{nu.map((f) => f.function).join(' en ')} {sinceDate(nu[0].from_date)}, {nu[0].cabinet}.
 				{:else}
-					Laatst {lowerFirst(laatst.function ?? '')}, tot {korteDatum(laatst.to_date)} ({laatst.cabinet}).
+					Laatst {lowerFirst(laatst.function ?? '')}, {untilDate(laatst.to_date)} ({laatst.cabinet}).
 				{/if}
 			</p>
 		{/if}

@@ -23,7 +23,7 @@ const ro: MapItem = {
 	id: 'judgments/ecli_nl_hr_2019_2006',
 	at: 'rov-5.7.1',
 	kort: 'HR 2019:2006, r.o. 5.7.1',
-	groep: 'HR 20 december 2019 (Urgenda)',
+	groep: 'HR 20\u00a0december\u00a02019 (Urgenda)',
 	groupKey: 'judgments/ecli_nl_hr_2019_2006',
 	notitie: 'Zorgplicht.'
 };

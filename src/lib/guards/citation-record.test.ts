@@ -1,5 +1,5 @@
 // One citation record per bron (besluit 33, E6): every place that names a bron by its place
-// (art. 6:162 BW, Kamerstukken II 2023/24, 36306, nr. 11, Stb. 2018, 387, HR 20 december 2019,
+// (art. 6:162 BW, Kamerstukken II 2023/24, 36306, nr. 11, Stb. 2018, 387, HR 20\u00a0december\u00a02019,
 // ECLI:…) reads it from citationRecord, never from the forms of one kind, never built by hand.
 import { describe, expect, it } from 'vitest';
 import { bron, overtreders, plek } from '$lib/test/bronnen';

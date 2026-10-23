@@ -81,7 +81,7 @@ describe('WholeLawReader, what the dataset lacks', () => {
 		const text = container.textContent ?? '';
 		expect(text).not.toContain('geldende tekst in de gegevens');
 		expect([...container.querySelectorAll('.dekking')].map((d) => d.textContent)).toEqual([
-			'Tekst zoals vastgesteld op 27 april 2016, latere wijzigingen niet verwerkt, EUR-Lex ↗'
+			'Tekst zoals vastgesteld op 27\u00a0april\u00a02016, latere wijzigingen niet verwerkt, EUR-Lex ↗'
 		]);
 	});
 

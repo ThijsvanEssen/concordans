@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { count, plural } from '$lib/text/words';
-	import { langeDatum } from '$lib/text/datum';
+	import { onDate } from '$lib/text/datum';
 	import { RIJEN_150, RIJEN_75, deelStoelen, stemVanStoel } from './stoel';
 	import { fractieNaam } from '$lib/bron/menselijk';
 	import type { Schema } from '$lib/api/types';
@@ -269,9 +269,8 @@
 	{#if !meubels}
 		<figcaption class="hemicycle-caption">
 			<!-- The count stands in the middle; only seats not yet assigned are worth a word. -->
-			{kamer}, {data.chamber === 'EK' ? 'samenstelling' : 'stand'} op {langeDatum(
-				data.as_of ?? null
-			)}{data.assigned_seats < data.total_seats
+			{kamer}, {data.chamber === 'EK' ? 'samenstelling' : 'stand'}
+			{onDate(data.as_of ?? null)}{data.assigned_seats < data.total_seats
 				? `, ${data.assigned_seats} van ${data.total_seats} zetels toegewezen`
 				: ''}
 			{#if data.seating_plan}

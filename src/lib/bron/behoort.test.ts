@@ -137,8 +137,8 @@ describe('behoort', () => {
 						{
 							key: 'ecli_nl_ghdha_2018_2591',
 							collection: 'judgments',
-							display_name: 'Gerechtshof Den Haag, 9 oktober 2018 (Urgenda)',
-							cite: { short: 'Hof Den Haag 9 oktober 2018', full: '' }
+							display_name: 'Gerechtshof Den Haag, 9\u00a0oktober\u00a02018 (Urgenda)',
+							cite: { short: 'Hof Den Haag 9\u00a0oktober\u00a02018', full: '' }
 						}
 					]
 				},
@@ -151,8 +151,8 @@ describe('behoort', () => {
 						{
 							key: 'ecli_nl_hr_2020_1',
 							collection: 'judgments',
-							display_name: 'Hoge Raad, 3 maart 2020',
-							cite: { short: 'HR 3 maart 2020', full: '' }
+							display_name: 'Hoge Raad, 3\u00a0maart\u00a02020',
+							cite: { short: 'HR 3\u00a0maart\u00a02020', full: '' }
 						}
 					]
 				},
@@ -174,9 +174,9 @@ describe('behoort', () => {
 		expect(b.regels[0].laad).toBeTypeOf('function');
 		// On a phone as the API cites them (F107).
 		expect(b.regels[0].lagen.map((l) => l.kort)).toEqual([
-			'Hof Den Haag 9 oktober 2018',
+			'Hof Den Haag 9\u00a0oktober\u00a02018',
 			undefined,
-			'HR 3 maart 2020'
+			'HR 3\u00a0maart\u00a02020'
 		]);
 		expect(b.onder.map((g) => [g.label, g.aantal])).toEqual([['Hoger beroep of cassatie', 2]]);
 		const conclusie = behoort(
@@ -462,7 +462,7 @@ describe('kern of context', () => {
 		expect(b.regels[0].label).toBe('Procesgang');
 		// No citation of the API: the same words on a phone.
 		expect(b.regels[0].lagen[0]).toMatchObject({
-			naam: 'Rechtbank Gelderland, 9 juli 2025, 24/6811'
+			naam: 'Rechtbank Gelderland, 9\u00a0juli\u00a02025, 24/6811'
 		});
 		expect(b.regels[0].lagen[0].kort).toBeUndefined();
 		expect(b.regels[0].lagen[0].ref).toBeUndefined();

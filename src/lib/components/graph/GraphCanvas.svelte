@@ -45,7 +45,7 @@
 	import type { FilterGroup, Rechter } from '$lib/verbonden/filter';
 	import { getInstrumentMeta, lawName } from '$lib/api/instrument-cache';
 	import { isDrawnGroup, type ContainerGroup, type Period } from '$lib/graph/container-membership';
-	import { korteDatum, vandaag } from '$lib/text/datum';
+	import { untilDate, vandaag } from '$lib/text/datum';
 	import { metGroepVerborgen } from '$lib/graph/met-groep';
 	import { pointInPolygon } from '$lib/graph/hull';
 	import {
@@ -959,7 +959,7 @@
 					return {
 						...data,
 						hidden: false,
-						label: zelf ? `${data.label as string}, tot ${korteDatum(gewezen)}` : '',
+						label: zelf ? `${data.label as string}, ${untilDate(gewezen)}` : '',
 						forceLabel: zelf,
 						color: t.paper2,
 						image: spriteForVorm(data.vorm as Vorm, true, false)

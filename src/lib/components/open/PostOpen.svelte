@@ -5,7 +5,7 @@
 	// hun stand), de laatste stukken die hij of zij ondertekende, en de dossiers.
 	import { OPEN_STATUS, commitmentTeken } from '$lib/components/explore/index/government';
 	import { lowerFirst } from '$lib/text/words';
-	import { korteDatum } from '$lib/text/datum';
+	import { korteDatum, sinceDate, untilDate } from '$lib/text/datum';
 	import { menselijkeNaam } from '$lib/bron/menselijk';
 	import { parseNodeId } from '$lib/vocabulary';
 	import { bronHref, indexHref } from '$lib/bron/href';
@@ -90,7 +90,7 @@
 
 	const bron = $derived(`members/${memberKey}`);
 	const zin = $derived(
-		`${naam}${partij ? ` (${partij})` : ''}: ${lowerFirst(functie)}, ${tot ? `van ${korteDatum(van)} tot ${korteDatum(tot)}` : `sinds ${korteDatum(van)}`}.`
+		`${naam}${partij ? ` (${partij})` : ''}: ${lowerFirst(functie)}, ${tot ? `van ${korteDatum(van)} ${untilDate(tot)}` : `${sinceDate(van)}`}.`
 	);
 </script>
 

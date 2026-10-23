@@ -22,6 +22,8 @@
 		onclick?: (e: MouseEvent) => void;
 	} = $props();
 
+	// One item is already on show: "Alle 1 besluit" says nothing and is no way on (E9 D).
+	const toon = $derived(open || aantal == null || aantal > 1);
 	const woorden = $derived(
 		open
 			? 'Minder'
@@ -33,4 +35,4 @@
 	);
 </script>
 
-<TekstLink class="alle-n" {href} {onclick}>{woorden}</TekstLink>
+{#if toon}<TekstLink class="alle-n" {href} {onclick}>{woorden}</TekstLink>{/if}

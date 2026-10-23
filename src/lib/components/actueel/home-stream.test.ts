@@ -477,12 +477,12 @@ describe('a judgment in the feed', () => {
 					court: 'RVS',
 					tier: 'raad_van_state',
 					decided_on: '2026-09-15',
-					cite: { short: 'ABRvS 15 september 2026', full: '' }
+					cite: { short: 'ABRvS 15\u00a0september\u00a02026', full: '' }
 				})
 			)
 		).toEqual({
 			label: 'Uitspraak',
-			title: 'ABRvS 15 september 2026',
+			title: 'ABRvS 15\u00a0september\u00a02026',
 			major: false,
 			teken: 'stuk',
 			vorm: 'uitspraak'
@@ -494,13 +494,13 @@ describe('a judgment in the feed', () => {
 				decided_on: '2018-08-02',
 				advocate_general: 'mr. R.E.C.M. Niessen',
 				advocate_general_role: 'advocaat-generaal',
-				cite: { short: 'Conclusie A-G Niessen 2 augustus 2018', full: '' }
+				cite: { short: 'Conclusie A-G Niessen 2\u00a0augustus\u00a02018', full: '' }
 			})
 		);
 		expect(conclusie).toEqual({
 			label: 'Conclusie',
 			vorm: 'uitspraak',
-			title: 'Conclusie A-G Niessen 2 augustus 2018',
+			title: 'Conclusie A-G Niessen 2\u00a0augustus\u00a02018',
 			major: true,
 			teken: 'stuk'
 		});

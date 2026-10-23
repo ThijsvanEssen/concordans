@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { NOT_IN_DATA, lacks, notHeld } from '$lib/text/coverage';
 	import { capitalize, plural } from '$lib/text/words';
-	import { isDay, langeDatum } from '$lib/text/datum';
+	import { isDay, langeDatum, onDate, asOfDate, sinceDate, untilDate } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import {
@@ -754,8 +754,8 @@
 													go({ versies: null, vergelijk: null, weergave: null, peildatum: null });
 											}}
 											>{w.lapsed
-												? `Vervallen per ${langeDatum(w.from)}`
-												: `${w === current ? 'Geldend, sinds ' : ''}${langeDatum(w.from)}${w.until ? ` tot ${langeDatum(w.until)}` : ''}`}</button
+												? `Vervallen ${asOfDate(w.from)}`
+												: `${w === current ? `Geldend, ${sinceDate(w.from)}` : langeDatum(w.from)}${w.until ? ` ${untilDate(w.until)}` : ''}`}</button
 										>
 										{#if w.index > 0}
 											<a
@@ -864,8 +864,8 @@
 		{#if shown && !comparing}
 			<p class="note note--old">
 				Niet de geldende tekst. Deze tekst gold {shown.until
-					? `van ${langeDatum(shown.from)} tot ${langeDatum(shown.until)}`
-					: `sinds ${langeDatum(shown.from)}`}.
+					? `van ${langeDatum(shown.from)} ${untilDate(shown.until)}`
+					: `${sinceDate(shown.from)}`}.
 				{#if current}
 					<a class="link" href={compareHref(shown.index, current.index)} data-sveltekit-noscroll
 						>Vergelijk met de geldende tekst</a
@@ -942,7 +942,7 @@
 				{/if}
 			{:else if peildatumEmpty && isDay(peildatum)}
 				<p class="note">
-					{lacks(`Tekst van dit artikel op ${langeDatum(peildatum)}`)}.
+					{lacks(`Tekst van dit artikel ${onDate(peildatum)}`)}.
 					<button type="button" class="note__close" onclick={() => choosePeildatum('')}
 						>{expired ? 'Laatste tekst lezen' : 'Geldend recht lezen'}</button
 					>

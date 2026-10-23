@@ -3,7 +3,7 @@
 import { naamVanId } from '$lib/bron/menselijk';
 import type { Schema } from '$lib/api/types';
 import { articleName } from '$lib/text/bw';
-import { langeDatum } from '$lib/text/datum';
+import { sinceDate } from '$lib/text/datum';
 import { CHANGE_HEAD } from '$lib/verbonden/relation-words';
 import { changeRelation } from '$lib/vocabulary';
 
@@ -59,7 +59,7 @@ export function articleLabel(law: ChangedLaw['law'], a: ChangedArticle): string 
 /** What stands before the publication or paper on a change's line, its own spaces included. */
 export function stageLead(c: DossierChange): string {
 	if (c.stage === 'proposed') return 'voorgesteld in ';
-	return c.effective_date ? `in werking sinds ${langeDatum(c.effective_date)}, ` : '';
+	return c.effective_date ? `in werking ${sinceDate(c.effective_date)}, ` : '';
 }
 
 /**

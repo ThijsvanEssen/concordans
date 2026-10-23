@@ -40,7 +40,7 @@ describe('the words a reader follows, found by the API’s rule', () => {
 
 	it('cuts a long text around the first word found, at a word, with an ellipsis', () => {
 		const titel =
-			'Uitvoering van Verordening (EU) 2024/2847 van het Europees Parlement en de Raad van 23 oktober 2024 inzake horizontale cyberbeveiligingsvereisten voor producten met digitale elementen en tot wijziging van de Verordeningen (EU) nr. 168/2013 en (EU) 2019/1020 en Richtlijn (EU) 2020/1828 (cyberweerbaarheidsverordening)';
+			'Uitvoering van Verordening (EU) 2024/2847 van het Europees Parlement en de Raad van 23\u00a0oktober\u00a02024 inzake horizontale cyberbeveiligingsvereisten voor producten met digitale elementen en tot wijziging van de Verordeningen (EU) nr. 168/2013 en (EU) 2019/1020 en Richtlijn (EU) 2020/1828 (cyberweerbaarheidsverordening)';
 		const d = rondTreffer(['cyberbeveiliging'], titel)!;
 		expect(gemarkeerd(d)).toEqual(['cyberbeveiliging']);
 		const t = geheel(d)!;

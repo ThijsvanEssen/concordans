@@ -9,7 +9,7 @@
 	import type { Schema } from '$lib/api/types';
 	import { articleRef, lawShortName } from '$lib/text/bw';
 	import { citationRecord } from '$lib/text/citation-record';
-	import { langeDatum } from '$lib/text/datum';
+	import { sinceDate } from '$lib/text/datum';
 	import { compareTexts, plainDiff, type LidPairing } from '$lib/text/version-diff';
 	import { capitalize } from '$lib/text/words';
 	import { load } from '$lib/util/load.svelte';
@@ -76,7 +76,7 @@
 	/** When a text is from: geldend since a day, or enacted in a publication not yet in force. */
 	const sinceOf = (v: Listed) =>
 		v.valid_from
-			? `tekst sinds ${langeDatum(v.valid_from)}`
+			? `tekst ${sinceDate(v.valid_from)}`
 			: (citationRecord({
 					kind: 'publication',
 					series: v.amended_by?.kind,

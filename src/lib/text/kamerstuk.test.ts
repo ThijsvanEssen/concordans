@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { dossierNumberText } from '$lib/bron/dossier-naam';
 import {
 	kamerstukCitation,
 	kamerstukLabel,
@@ -85,6 +86,18 @@ describe('kamerstukName', () => {
 		);
 		// A dossier numbered with a digit after its hyphen is cited so.
 		expect(kamerstukLabel({ dossier_number: '21501-20', number: 2120 })).toBe('21501-20, nr. 2120');
+		// The same dossier from its number and suffix apart: a numeric suffix with a hyphen, a roman one with a space.
+		expect(
+			kamerstukCitation({
+				chamber: 'TK',
+				session_year: '2026-2027',
+				dossier_number: '21501',
+				dossier_suffix: '20',
+				number: 2461
+			})
+		).toBe('Kamerstukken II 2026/27, 21501-20, nr. 2461');
+		expect(dossierNumberText('36600', 'VIII')).toBe('36600 VIII');
+		expect(dossierNumberText('36600', null)).toBe('36600');
 	});
 
 	it('names the dossier alone without a number, and nothing without a dossier', () => {

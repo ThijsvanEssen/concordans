@@ -30,7 +30,7 @@ const artikel: GraphNode = {
 
 const uitspraak: Row = {
 	ref: { collection: 'judgments', key: 'ecli_nl_rvs_2015_41' },
-	title: 'Raad van State, 21 januari 2015',
+	title: 'Raad van State, 21\u00a0januari\u00a02015',
 	context: null,
 	filterGroup: 'uitspraken',
 	relation: 'REFERS_TO',
@@ -183,7 +183,9 @@ describe('the card and line of a judgment that cites an article (#49)', () => {
 	};
 
 	it('names the judgment as its row does, never by its raw name', () => {
-		expect(verbindingOfEdge(edge, rb, art).from.title).toBe('Rechtbank Den Haag, 1 januari 2013');
+		expect(verbindingOfEdge(edge, rb, art).from.title).toBe(
+			'Rechtbank Den Haag, 1\u00a0januari\u00a02013'
+		);
 	});
 
 	it('gives the card the lid of the row: the same summary of every place', async () => {

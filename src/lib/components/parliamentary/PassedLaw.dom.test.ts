@@ -27,7 +27,9 @@ describe('PassedLaw', () => {
 		);
 		const links = [...p.querySelectorAll('a')].map((a) => a.getAttribute('href'));
 		expect(links).toEqual(['/wetten/BWBR0049889', '/stb/2024/193']);
-		expect(p.querySelectorAll('a')[1].getAttribute('title')).toBe('Uitgegeven op 26 juni 2024');
+		expect(p.querySelectorAll('a')[1].getAttribute('title')).toBe(
+			'Uitgegeven op 26\u00a0juni\u00a02024'
+		);
 	});
 
 	it('leaves out the day the source does not give, and names a publication without a law of its own', () => {

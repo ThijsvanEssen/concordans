@@ -1,3 +1,4 @@
+import { outcomeWord } from '$lib/text/outcome';
 import { OPEN_STATUS } from '$lib/components/explore/index/government';
 import { escapeRegExp } from '$lib/text/words';
 import { courtName } from '$lib/text/court';
@@ -11,7 +12,7 @@ import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { articleName } from '$lib/text/bw';
 import { citationRecord } from '$lib/text/citation-record';
-import { hasPassed, korteDatum, langeDatum } from '$lib/text/datum';
+import { hasPassed, korteDatum, langeDatum, asOfDate } from '$lib/text/datum';
 import { bronPlural, type Collection } from '$lib/vocabulary';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
 
@@ -219,7 +220,7 @@ export function presentHit(
 	return day &&
 		hasPassed(day, now) &&
 		(hit.collection === 'instruments' || hit.collection === 'articles')
-		? { ...shown, expired: `Vervallen per ${langeDatum(day)}` }
+		? { ...shown, expired: `Vervallen ${asOfDate(day)}` }
 		: shown;
 }
 
@@ -364,7 +365,7 @@ function presentBase(hit: Hit, query: string, neighbours: readonly Hit[]): Prese
 				title: subject || name,
 				context: [
 					motionName(hit).toLowerCase(),
-					passed === true ? 'aangenomen' : passed === false ? 'verworpen' : '',
+					outcomeWord(typeof passed === 'boolean' ? passed : null, null, true) ?? '',
 					korteDatum(extra(hit, 'date'))
 				]
 					.filter(Boolean)

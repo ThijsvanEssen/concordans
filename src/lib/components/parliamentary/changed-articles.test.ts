@@ -75,7 +75,7 @@ describe('changed articles', () => {
 
 	it('says the way of a change, with its own spaces', () => {
 		expect(stageLead({ ...change('1', 'enacted', 's'), effective_date: '2026-09-01' })).toBe(
-			'in werking sinds 1 september 2026, '
+			'in werking sinds 1\u00a0september\u00a02026, '
 		);
 		expect(stageLead(change('1', 'proposed', 'd'))).toBe('voorgesteld in ');
 	});

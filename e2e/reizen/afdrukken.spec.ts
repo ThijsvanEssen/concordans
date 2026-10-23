@@ -20,7 +20,7 @@ for (const path of [
 		const source = page.locator('.papier-bron');
 		await expect(source).toBeVisible();
 		await expect(source).toContainText(path.replace(/^\//, ''));
-		await expect(source).toContainText(/geraadpleegd \d{1,2} \w+ \d{4}/);
+		await expect(source).toContainText(/geraadpleegd \d{1,2}\s\w+\s\d{4}/);
 		// The text runs on past the screen: nothing scrolls on its own.
 		const overflow = await page
 			.locator('.reader-frame')

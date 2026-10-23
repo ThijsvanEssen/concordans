@@ -5,6 +5,7 @@
 // passage that carries the verbinding, and where the verbinding comes from (shown on hover or
 // focus). "Deze" and "dit" are the selected bron, as in the group labels.
 // The words of a verbinding themselves are in ./woorden.
+import { outcomeWord } from '$lib/text/outcome';
 import { capitalize, count, escapeRegExp, lowerFirst, plural, textOf } from '$lib/text/words';
 import { atPlace, paragraphNumber } from '$lib/text/anchor';
 import type { Collection, Relation } from '$lib/vocabulary';
@@ -319,7 +320,7 @@ const HOE: Partial<Record<Relation, (c: HoeContext) => Hoe | null | undefined>> 
 		if (other !== 'decisions') return undefined;
 		const besluit =
 			textOf(props.decision_text)?.replace(/\.$/, '') ??
-			(props.passed === true ? 'Aangenomen' : props.passed === false ? 'Verworpen' : null);
+			outcomeWord(typeof props.passed === 'boolean' ? props.passed : null);
 		if (!besluit) return undefined;
 		const stemmen = votesSentence(props.tally, ' en ');
 		return regel(besluit, stemmen && `, ${stemmen}`, 'Besluit van de Kamer');

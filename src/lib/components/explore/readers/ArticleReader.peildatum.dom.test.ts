@@ -154,7 +154,7 @@ describe('ArticleReader, the peildatum', () => {
 		const { container } = render(ArticleReader, { node });
 		await settle();
 		expect(container.textContent).toContain(
-			'Tekst van dit artikel op 1 januari 2005 niet in de gegevens'
+			'Tekst van dit artikel op 1\u00a0januari\u00a02005 niet in de gegevens'
 		);
 	});
 });

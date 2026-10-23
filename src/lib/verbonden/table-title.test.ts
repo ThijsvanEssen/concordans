@@ -17,9 +17,9 @@ describe('tableTitle', () => {
 				date: '2019-12-20',
 				names: ['Urgenda']
 			},
-			cite: { short: 'HR 20 december 2019' } as BaseNode['cite']
+			cite: { short: 'HR 20\u00a0december\u00a02019' } as BaseNode['cite']
 		});
-		expect(tableTitle(urgenda)).toBe('Verbindingen van HR 20 december 2019 (Urgenda)');
+		expect(tableTitle(urgenda)).toBe('Verbindingen van HR 20\u00a0december\u00a02019 (Urgenda)');
 	});
 
 	it('keeps an article by its display name, lower case', () => {

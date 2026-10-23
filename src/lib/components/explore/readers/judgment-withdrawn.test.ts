@@ -9,7 +9,7 @@ const published = { withdrawn: null, withdrawn_on: null, replaced_by: null, repl
 describe('a withdrawn judgment', () => {
 	it('says the source withdrew it, and when', () => {
 		expect(withdrawal({ ...published, withdrawn: 'doc', withdrawn_on: '2026-10-03' })).toEqual({
-			text: 'Ingetrokken door de bron op 3 oktober 2026',
+			text: 'Ingetrokken door de bron op 3\u00a0oktober\u00a02026',
 			replacement: null
 		});
 		expect(withdrawal({ ...published, withdrawn: 'doc' })?.text).toBe('Ingetrokken door de bron');

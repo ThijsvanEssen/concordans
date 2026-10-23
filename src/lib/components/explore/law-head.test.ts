@@ -13,7 +13,7 @@ import {
 const eu = {
 	kind: null,
 	title:
-		'Verordening (EU) 2022/868 van het Europees Parlement en de Raad van 30 mei 2022 (Datagovernanceverordening)',
+		'Verordening (EU) 2022/868 van het Europees Parlement en de Raad van 30\u00a0mei\u00a02022 (Datagovernanceverordening)',
 	citation_title: 'Verordening (EU) 2022/868',
 	official_title: null,
 	official_url: 'https://eur-lex.europa.eu/legal-content/NL/TXT/?uri=CELEX:32022R0868',
@@ -176,8 +176,11 @@ describe('publicationTitle (B36)', () => {
 	it('gives the title a publication has beyond its name', async () => {
 		const { publicationTitle } = await import('./law-head');
 		expect(
-			publicationTitle('Stb. 2018, 100: Besluit van 23 maart 2018, houdende X', 'Stb. 2018, 100')
-		).toBe('Besluit van 23 maart 2018, houdende X');
+			publicationTitle(
+				'Stb. 2018, 100: Besluit van 23\u00a0maart\u00a02018, houdende X',
+				'Stb. 2018, 100'
+			)
+		).toBe('Besluit van 23\u00a0maart\u00a02018, houdende X');
 		expect(publicationTitle('Stb. 2018, 100', 'Stb. 2018, 100')).toBeNull();
 		expect(publicationTitle(null, 'Stb. 2018, 100')).toBeNull();
 	});

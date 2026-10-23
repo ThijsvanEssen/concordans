@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { bewaarItem } from '$lib/map/map';
-	import { langeDatum, vandaag } from '$lib/text/datum';
+	import { langeDatum, onDate, untilDate, vandaag } from '$lib/text/datum';
 	import { report } from '$lib/api/errors';
 	import { untrack } from 'svelte';
 	import { getArticleDetail, getLawBasis } from '$lib/api/articles';
@@ -133,9 +133,9 @@
 		const of = v?.current
 			? `, de ${verlopen ? 'laatste' : 'geldende'} tekst`
 			: v?.valid_from
-				? `, versie van ${langeDatum(v.valid_from)}${v.valid_until ? ` tot ${langeDatum(v.valid_until)}` : ''}`
+				? `, versie van ${langeDatum(v.valid_from)}${v.valid_until ? ` ${untilDate(v.valid_until)}` : ''}`
 				: '';
-		return `Tekst zoals geldend op ${langeDatum(peildatum)}${of}.`;
+		return `Tekst zoals geldend ${onDate(peildatum)}${of}.`;
 	});
 
 	// A regulation's grondslag, under its head: the laws its Gelet op names (`/basis`), asked
@@ -422,7 +422,7 @@
 				</p>
 			{:else}
 				<p class="whole-empty-text stil">
-					Geen tekst van deze regeling op {langeDatum(peildatum)}.
+					Geen tekst van deze regeling {onDate(peildatum)}.
 				</p>
 			{/if}
 		{/if}

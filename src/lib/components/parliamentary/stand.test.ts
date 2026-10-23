@@ -35,7 +35,7 @@ describe('stand: the phase and the day as data', () => {
 			current_phase: 'Nota n.a.v. het verslag'
 		});
 		expect(stand(d)).toMatchObject({
-			zin: 'Bij de Tweede Kamer: nota naar aanleiding van het verslag, 12 mrt. 2026.',
+			zin: 'Bij de Tweede Kamer: nota naar aanleiding van het verslag, 12\u00a0maart\u00a02026.',
 			group: 'tk',
 			phase: 'nota naar aanleiding van het verslag',
 			date: '2026-03-12'
@@ -51,7 +51,7 @@ describe('stand: the phase and the day as data', () => {
 			{ current_phase: 'Advies Raad van State' }
 		);
 		expect(stand(d)).toMatchObject({
-			zin: 'Ingediend bij de Tweede Kamer op 10 jan. 2025, met advies van de Raad van State.',
+			zin: 'Ingediend bij de Tweede Kamer op 10\u00a0januari\u00a02025, met advies van de Raad van State.',
 			group: 'ingediend',
 			phase: null,
 			date: '2025-01-10'
@@ -66,12 +66,14 @@ describe('stand: the phase and the day as data', () => {
 					ek_outcome: { outcome: 'Aangenomen', date: '2024-06-25', method }
 				})
 			)?.zin;
-		expect(ek('Hamerstuk')).toBe('Aangenomen door de Eerste Kamer als hamerstuk, 25 jun. 2024.');
+		expect(ek('Hamerstuk')).toBe(
+			'Aangenomen door de Eerste Kamer als hamerstuk, 25\u00a0juni\u00a02024.'
+		);
 		expect(ek('Stemming bij zitten en opstaan, aangenomen')).toBe(
-			'Aangenomen door de Eerste Kamer bij zitten en opstaan, 25 jun. 2024.'
+			'Aangenomen door de Eerste Kamer bij zitten en opstaan, 25\u00a0juni\u00a02024.'
 		);
 		expect(ek('Hoofdelijke stemming, aangenomen')).toBe(
-			'Aangenomen door de Eerste Kamer, 25 jun. 2024.'
+			'Aangenomen door de Eerste Kamer, 25\u00a0juni\u00a02024.'
 		);
 	});
 });
@@ -86,7 +88,7 @@ describe('boxesOf: the three boxes of the bar', () => {
 			}),
 			[
 				['open', 'Advies', 'Niet in de gegevens'],
-				['nu', 'In behandeling', 'Verslag, 12 mrt. 2026'],
+				['nu', 'In behandeling', 'Verslag, 12\u00a0mrt.\u00a02026'],
 				['open', 'Nog niet', 'Na de Tweede Kamer']
 			]
 		],
@@ -100,8 +102,8 @@ describe('boxesOf: the three boxes of the bar', () => {
 				{ current_phase: 'Advies Raad van State' }
 			),
 			[
-				['klaar', 'Advies', 'Uitgebracht, 2 nov. 2024'],
-				['nu', 'Ingediend', '10 jan. 2025'],
+				['klaar', 'Advies', 'Uitgebracht, 2\u00a0nov.\u00a02024'],
+				['nu', 'Ingediend', '10\u00a0jan.\u00a02025'],
 				['open', 'Nog niet', 'Na de Tweede Kamer']
 			]
 		],
@@ -113,7 +115,7 @@ describe('boxesOf: the three boxes of the bar', () => {
 			}),
 			[
 				['klaar', 'Advies', 'Uitgebracht'],
-				['ja', 'Aangenomen', '29 sep. 2026, zonder stemming'],
+				['ja', 'Aangenomen', '29\u00a0sep.\u00a02026, zonder stemming'],
 				['nu', 'In behandeling', 'Plenaire behandeling']
 			]
 		],
@@ -124,7 +126,7 @@ describe('boxesOf: the three boxes of the bar', () => {
 			}),
 			[
 				['open', 'Advies', 'Niet in de gegevens'],
-				['ja', 'Aangenomen', '4 mei 2026'],
+				['ja', 'Aangenomen', '4\u00a0mei\u00a02026'],
 				['nu', 'In behandeling', 'Sinds aanneming door de Tweede Kamer']
 			]
 		],
@@ -133,7 +135,7 @@ describe('boxesOf: the three boxes of the bar', () => {
 			dossier([], { outcome: 'verworpen', closed: true, closed_on: '2024-02-01' }),
 			[
 				['open', 'Advies', 'Niet in de gegevens'],
-				['nee', 'Verworpen', '1 feb. 2024'],
+				['nee', 'Verworpen', '1\u00a0feb.\u00a02024'],
 				['open', 'Niet aan de orde', 'Verworpen door de Tweede Kamer']
 			]
 		],
@@ -145,8 +147,8 @@ describe('boxesOf: the three boxes of the bar', () => {
 			}),
 			[
 				['open', 'Advies', 'Niet in de gegevens'],
-				['ja', 'Aangenomen', '5 mrt. 2024'],
-				['ja', 'Aangenomen', '25 jun. 2024, hamerstuk']
+				['ja', 'Aangenomen', '5\u00a0mrt.\u00a02024'],
+				['ja', 'Aangenomen', '25\u00a0jun.\u00a02024, hamerstuk']
 			]
 		],
 		[
@@ -161,8 +163,8 @@ describe('boxesOf: the three boxes of the bar', () => {
 			}),
 			[
 				['open', 'Advies', 'Niet in de gegevens'],
-				['ja', 'Aangenomen', '5 mrt. 2024'],
-				['nee', 'Verworpen', '25 jun. 2024, zitten en opstaan']
+				['ja', 'Aangenomen', '5\u00a0mrt.\u00a02024'],
+				['nee', 'Verworpen', '25\u00a0jun.\u00a02024, zitten en opstaan']
 			]
 		],
 		[
@@ -170,7 +172,7 @@ describe('boxesOf: the three boxes of the bar', () => {
 			dossier([], { closed: true, closed_on: '2023-10-03', current_phase: 'Verslag' }),
 			[
 				['open', 'Advies', 'Niet in de gegevens'],
-				['nu', 'In behandeling', '3 okt. 2023'],
+				['nu', 'In behandeling', '3\u00a0okt.\u00a02023'],
 				['open', 'Nog niet', 'Na de Tweede Kamer']
 			]
 		]
@@ -197,7 +199,7 @@ describe('stand: a bill withdrawn (API 0.80.1, #857)', () => {
 
 	it('says it was withdrawn, on the day of the letter, and closes the Eerste Kamer', () => {
 		expect(stand(d)).toMatchObject({
-			zin: 'Ingetrokken op 2 jun. 2025.',
+			zin: 'Ingetrokken op 2\u00a0juni\u00a02025.',
 			group: 'afgehandeld',
 			date: '2025-06-02'
 		});
@@ -206,7 +208,7 @@ describe('stand: a bill withdrawn (API 0.80.1, #857)', () => {
 
 	it('marks the Tweede Kamer box withdrawn, never as a no', () => {
 		const [, tk, ek] = boxesOf(d);
-		expect(tk).toMatchObject({ mark: 'klaar', word: 'Ingetrokken', line: '2 jun. 2025' });
+		expect(tk).toMatchObject({ mark: 'klaar', word: 'Ingetrokken', line: '2\u00a0jun.\u00a02025' });
 		expect(ek).toMatchObject({ mark: 'open', word: 'Niet aan de orde', line: 'Ingetrokken' });
 	});
 });

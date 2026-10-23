@@ -92,7 +92,7 @@ describe('ArticleCompare', () => {
 		expect(asked(VERSION)[0].path?.version_key).toBe('stb_2026_56_2_8_6');
 
 		const heads = [...container.querySelectorAll('.side-head')].map((h) => h.textContent?.trim());
-		expect(heads[0]).toMatch(/^Art\. 126ffa Sv, tekst sinds 1 januari 2024/);
+		expect(heads[0]).toMatch(/^Art\. 126ffa Sv, tekst sinds 1\u00a0januari\u00a02024/);
 		expect(heads[1]).toBe('Art. 2.8.6 Sv (nieuw), Stb. 2026, 56');
 
 		const row = container.querySelector('.row')!.nextElementSibling!;

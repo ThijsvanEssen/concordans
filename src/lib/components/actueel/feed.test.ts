@@ -111,7 +111,7 @@ describe('labels', () => {
 	it('names the day and cites a publication', () => {
 		expect(dayLabel('2026-09-29', '2026-09-29')).toBe('Vandaag');
 		expect(dayLabel('2026-09-28', '2026-09-29')).toBe('Gisteren');
-		expect(dayLabel('2026-09-22', '2026-09-29')).toBe('Dinsdag 22 september 2026');
+		expect(dayLabel('2026-09-22', '2026-09-29')).toBe('Dinsdag 22\u00a0september\u00a02026');
 		expect(publicationCite({ series: 'stb', year: 2026, number: '204' })).toBe('Stb. 2026, 204');
 	});
 });

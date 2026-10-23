@@ -7,11 +7,11 @@ const schoof = { van: ms('2024-07-02'), tot: ms('2026-02-23'), lopend: false };
 describe('streepjes', () => {
 	it('marks the quarters where the width allows, clear of the edges', () => {
 		expect(streepjes(schoof, 800).map((t) => t.label)).toEqual([
-			'okt. 2024',
+			'okt.\u00a02024',
 			'2025',
-			'apr. 2025',
-			'jul. 2025',
-			'okt. 2025',
+			'apr.\u00a02025',
+			'jul.\u00a02025',
+			'okt.\u00a02025',
 			'2026'
 		]);
 	});
@@ -29,8 +29,11 @@ describe('streepjes', () => {
 
 describe('randen and periodeZin', () => {
 	it('ends a running period on "nu"', () => {
-		expect(randen('2026-02-23', null, true)).toEqual({ begin: '23 feb. 2026', eind: 'nu' });
-		expect(randen('2024-07-02', '2026-02-23', false).eind).toBe('23 feb. 2026');
+		expect(randen('2026-02-23', null, true)).toEqual({
+			begin: '23\u00a0feb.\u00a02026',
+			eind: 'nu'
+		});
+		expect(randen('2024-07-02', '2026-02-23', false).eind).toBe('23\u00a0feb.\u00a02026');
 	});
 
 	it('says "sinds" for what still runs and names no period without a start', () => {

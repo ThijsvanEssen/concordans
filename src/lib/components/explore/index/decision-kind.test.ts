@@ -15,7 +15,7 @@ describe('decisionOutcome', () => {
 			decision_kind: 'Stemmen - zonder stemming aannemen'
 		};
 		expect(isHammer(hammer)).toBe(true);
-		expect(decisionOutcome(hammer)).toBe('Zonder stemming aangenomen');
+		expect(decisionOutcome(hammer)).toBe('Aangenomen zonder stemming');
 		expect(
 			decisionOutcome({ kind: null, passed: null, decision_kind: 'Stemmen - uitstellen' })
 		).toBe('Uitstellen');

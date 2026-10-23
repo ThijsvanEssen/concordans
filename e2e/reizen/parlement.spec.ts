@@ -122,7 +122,7 @@ test('the Stemmingen narrow to the motions of no confidence and say when the Kam
 }) => {
 	await page.goto('/explore?mode=index&kind=decisions&motie=wantrouwen');
 	await expect(
-		page.getByText(/^Volgende vergadering en stemmingen: dinsdag 27 oktober 2026$/)
+		page.getByText(/^Volgende vergadering en stemmingen: dinsdag 27\soktober\s2026$/)
 	).toBeVisible();
 	await expect(
 		page.getByText('Motie van wantrouwen', { exact: true }).filter({ visible: true }).first()

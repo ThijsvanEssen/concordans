@@ -153,7 +153,9 @@ describe('ArticleReader, whether the article holds (besluit 30)', () => {
 		expect(stand.textContent?.replace(/\s+/g, ' ').trim()).toBe(
 			'Vervallen per 1 januari 2020, opvolger: Nieuwe wet'
 		);
-		expect(stand.querySelector('.validity__no')?.textContent).toBe('Vervallen per 1 januari 2020');
+		expect(stand.querySelector('.validity__no')?.textContent).toBe(
+			'Vervallen per 1\u00a0januari\u00a02020'
+		);
 		expect(container.textContent).not.toContain('Geldend recht');
 		expect(container.querySelectorAll('.head__stand')).toHaveLength(0);
 	});
@@ -167,8 +169,8 @@ describe('ArticleReader, whether the article holds (besluit 30)', () => {
 			render(ArticleReader, { node: bwNode });
 			await settle();
 			await fireEvent.click(screen.getByRole('button', { name: /^Citeer/ }));
-			expect(document.body.textContent).toContain('tekst geldend op 22 oktober 2026');
-			expect(document.body.textContent).not.toContain('tekst geldend op 21 oktober 2026');
+			expect(document.body.textContent).toContain('tekst geldend op 22\u00a0oktober\u00a02026');
+			expect(document.body.textContent).not.toContain('tekst geldend op 21\u00a0oktober\u00a02026');
 		} finally {
 			vi.useRealTimers();
 		}
@@ -179,7 +181,7 @@ describe('ArticleReader, whether the article holds (besluit 30)', () => {
 		const { container } = render(ArticleReader, { node: bwNode });
 		await settle();
 		expect(container.querySelector('.validity')?.textContent).toBe(
-			'Nog niet in werking (per 1 januari 2027)'
+			'Nog niet in werking (per 1\u00a0januari\u00a02027)'
 		);
 		expect(container.querySelector('.validity__no')).toBeNull();
 	});

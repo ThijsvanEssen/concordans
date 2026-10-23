@@ -54,7 +54,7 @@ test('Bronnen en hergebruik gives the coverage and the date of each source', asy
 	await expect(page.getByRole('heading', { level: 2, name: 'Dekking en stand' })).toBeVisible();
 	const main = page.getByRole('main');
 	await expect(main).toContainText(/Uitspraken\s*[\d.]+/);
-	await expect(main).toContainText(/wetten\.overheid\.nl\s*tot en met \d+ \S+ \d{4}/);
+	await expect(main).toContainText(/wetten\.overheid\.nl\s*tot en met \d+\s\S+\s\d{4}/);
 });
 
 test('the API reference lists the routes per kind', async ({ page }) => {

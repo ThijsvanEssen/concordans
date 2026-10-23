@@ -140,7 +140,7 @@ describe('the list "Gebaseerd op deze wet"', () => {
 			'AMvB op grond van',
 			'art. 16 lid 1 en 7, 21 lid 5, 24'
 		]);
-		expect(metaParts(row, true).map((p) => p.text)).toEqual(['in werking 15 aug. 2026']);
+		expect(metaParts(row, true).map((p) => p.text)).toEqual(['in werking 15\u00a0aug.\u00a02026']);
 		// On the article: the same verb, its leden.
 		const opArtikel = hoeVan(
 			regelingRow({ ...cbw.items![0], leden: ['1', '7'], articles: [] }),
@@ -230,7 +230,7 @@ describe('the list "Gebaseerd op deze wet", under the AMvB and beside it', () =>
 		]);
 		expect(metaParts(row, true).map((p) => p.text)).toEqual([
 			'mede op grond van Drinkwaterwet en Telecommunicatiewet',
-			'in werking 15 aug. 2026'
+			'in werking 15\u00a0aug.\u00a02026'
 		]);
 	});
 

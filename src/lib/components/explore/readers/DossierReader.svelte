@@ -2,7 +2,7 @@
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { textOf } from '$lib/text/words';
 	import { changeVerb } from '$lib/verbonden/relation-words';
-	import { langeDatum } from '$lib/text/datum';
+	import { onDate } from '$lib/text/datum';
 	import { bewaarDossier } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
@@ -166,7 +166,7 @@
 					{#if d.submitted_on_tk}
 						<!-- The day the bill reached the Kamer (API 0.75), before any stage below it. -->
 						<p class="reading">
-							Ingediend bij de Tweede Kamer op {langeDatum(d.submitted_on_tk)}.
+							Ingediend bij de Tweede Kamer {onDate(d.submitted_on_tk)}.
 						</p>
 					{/if}
 				{/snippet}

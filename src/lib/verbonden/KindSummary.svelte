@@ -121,9 +121,11 @@
 				{/each}
 			{/each}
 		</ul>
-		<p class="kind__all">
-			<AlleN aantal={k.count} noun={k.noun} onclick={() => onOpen(k.id)} />
-		</p>
+		{#if k.count > 1}
+			<p class="kind__all">
+				<AlleN aantal={k.count} noun={k.noun} onclick={() => onOpen(k.id)} />
+			</p>
+		{/if}
 	</section>
 {/each}
 

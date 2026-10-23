@@ -21,7 +21,7 @@ type VoteSide = {
 };
 
 type VoteLineParts = {
-	/** `Aangenomen`, `Verworpen`, `Zonder stemming aangenomen`, `Uitstellen`. */
+	/** `Aangenomen`, `Verworpen`, `Aangenomen zonder stemming`, `Uitstellen`. */
 	word: string;
 	/** The mark of the word: aangenomen filled, verworpen open, anything else dashed. */
 	tone: 'ja' | 'nee' | 'open';

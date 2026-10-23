@@ -184,7 +184,9 @@ describe('a withdrawn judgment', () => {
 		});
 		const { container } = render(JudgmentReader, { node });
 		await settle();
-		expect(container.textContent).toContain('Ingetrokken door de bron op 3 oktober 2026.');
+		expect(container.textContent).toContain(
+			'Ingetrokken door de bron op 3\u00a0oktober\u00a02026.'
+		);
 		expect(container.textContent).not.toContain('Tekst niet in de gegevens');
 		expect(container.querySelector('#parties')).toBeNull();
 	});

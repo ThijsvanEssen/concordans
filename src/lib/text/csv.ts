@@ -15,7 +15,8 @@ const LINE_END = '\r\n';
 
 /** A cell; quoted, its quotes doubled, where it holds a quote, the separator or a line end. */
 export function csvCell(value: CsvCell, separator = EXCEL_FORMAT.separator): string {
-	const text = value == null ? '' : String(value);
+	// A date keeps its parts on one line with no-break spaces on the page; a file has plain ones.
+	const text = value == null ? '' : String(value).replaceAll('\u00a0', ' ');
 	const quote = /["\r\n]/.test(text) || text.includes(separator);
 	return quote ? `"${text.replaceAll('"', '""')}"` : text;
 }

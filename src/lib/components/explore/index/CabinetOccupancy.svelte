@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { lacks, NOT_IN_DATA, notHeld } from '$lib/text/coverage';
 	import { naamVan } from '$lib/bron/menselijk';
-	import { korteDatum, maandJaar } from '$lib/text/datum';
+	import { korteDatum, maandJaar, fromDate } from '$lib/text/datum';
 	import CabinetPostOpen from './CabinetPostOpen.svelte';
 	// Who held which post in a cabinet, on the cabinet's term. Per ministry a line per seat;
 	// a successor is the next block on the line, a stand-in has a dotted frame (not italic).
@@ -144,7 +144,7 @@
 			<p class="occ-phases">
 				{#each phases as b, i (i)}{i ? ', ' : ''}{phaseLabel(b.phase).toLowerCase()}{b.phase
 						.from_date
-						? ` vanaf ${korteDatum(b.phase.from_date)}`
+						? ` ${fromDate(b.phase.from_date)}`
 						: ''}{/each}
 			</p>
 		{/if}

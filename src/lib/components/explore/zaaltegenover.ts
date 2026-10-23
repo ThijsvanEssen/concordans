@@ -4,7 +4,7 @@
 // by fractie, the largest first, so the Kamer still stands as it is drawn (Thijs, 12 Oct: "de
 // EK met zetels zoals we die kennen"), and the caption marks it (Thijs, 12 Oct: option a).
 
-import { langeDatum } from '$lib/text/datum';
+import { fromDate } from '$lib/text/datum';
 
 export type Plaats = { block: 'left' | 'right'; row: number; column: number; name: string };
 
@@ -42,6 +42,6 @@ export function indelingMarkering(z: {
 }): string | null {
 	if (z.chamber !== 'EK' || z.hall?.seats?.length) return null;
 	return z.hall_read_on
-		? `Indeling per fractie; zaal bekend vanaf ${langeDatum(z.hall_read_on)}`
+		? `Indeling per fractie; zaal bekend ${fromDate(z.hall_read_on)}`
 		: 'Indeling per fractie';
 }

@@ -1,7 +1,7 @@
 // How current the data of the Kamers is: one line on every page (the footer) and above
 // Actueel, from `data_as_of` of a feed or stats response.
 import type { Schema } from '$lib/api/types';
-import { korteDatum } from './datum';
+import { onDate, throughDate } from './datum';
 
 /** The sources Actueel's events come from, as `data_as_of` names them. */
 const FEED_SOURCES = ['tk', 'eerstekamer'];
@@ -22,8 +22,6 @@ export function feedStand(
 
 /** `Stukken van de Kamers tot en met 24 sep. 2026, opgehaald op 24 sep. 2026` */
 export function standLine(stand: NonNullable<ReturnType<typeof feedStand>>): string {
-	const fetched = stand.retrievedAt
-		? `, opgehaald op ${korteDatum(stand.retrievedAt.slice(0, 10))}`
-		: '';
-	return `Stukken van de Kamers tot en met ${korteDatum(stand.newest)}${fetched}`;
+	const fetched = stand.retrievedAt ? `, opgehaald ${onDate(stand.retrievedAt.slice(0, 10))}` : '';
+	return `Stukken van de Kamers ${throughDate(stand.newest)}${fetched}`;
 }

@@ -1,3 +1,4 @@
+import { OUTCOME_LABELS } from '$lib/text/outcome';
 import type { Schema } from '$lib/api/types';
 
 // A dossier's kind, phases and outcome as the Tweede Kamer gives them (API 0.52): the kind
@@ -142,12 +143,7 @@ export function methodPhrase(method: string | null | undefined, kind?: string | 
 	return how ? VOTE_METHOD_PHRASE[how] : null;
 }
 
-export const OUTCOME_LABEL: Record<Outcome, string> = {
-	aangenomen: 'Aangenomen',
-	verworpen: 'Verworpen',
-	// Withdrawn by letter (API 0.80.1, #857): `withdrawal_letter`, its day `closed_on`.
-	ingetrokken: 'Ingetrokken'
-};
+export const OUTCOME_LABEL: Record<Outcome, string> = OUTCOME_LABELS;
 
 export const isOutcome = (value: unknown): value is Outcome =>
 	typeof value === 'string' && Object.hasOwn(OUTCOME_LABEL, value);

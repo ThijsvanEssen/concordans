@@ -3,7 +3,7 @@
 	// read and since when the data run, then the source as a link, and when it was consulted.
 	// `Samenstelling op 1 oktober 2026, gegevens sinds 1 januari 2003. Bron: Eerste Kamer.`
 	// `Bron: Eerste Kamer der Staten-Generaal, www.eerstekamer.nl, geraadpleegd op 2 oktober 2026.`
-	import { langeDatum } from '$lib/text/datum';
+	import { onDate, sinceDate } from '$lib/text/datum';
 
 	let {
 		composedOn = null,
@@ -27,10 +27,10 @@
 
 	const composed = $derived(
 		composedOn
-			? `Samenstelling op ${langeDatum(composedOn)}${dataSince ? `, gegevens sinds ${langeDatum(dataSince)}` : ''}. `
+			? `Samenstelling ${onDate(composedOn)}${dataSince ? `, gegevens ${sinceDate(dataSince)}` : ''}. `
 			: ''
 	);
-	const read = $derived(readOn ? `, geraadpleegd op ${langeDatum(readOn)}` : '');
+	const read = $derived(readOn ? `, geraadpleegd ${onDate(readOn)}` : '');
 </script>
 
 <p class="source-line" class:source-line--after-list={afterList}>

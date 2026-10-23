@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
 	addDays,
+	onDate,
+	asOfDate,
+	sinceDate,
+	untilDate,
+	throughDate,
+	fromDate,
 	yearsOf,
 	dagMaand,
 	dagVan,
@@ -14,16 +20,38 @@ import {
 	weekdag
 } from './datum';
 
+const NB = '\u00a0';
+
 describe('datum', () => {
+	it('keeps a date on one line: a no-break space between its parts', () => {
+		expect(korteDatum('2026-09-28')).toBe(`28${NB}sep.${NB}2026`);
+		expect(langeDatum('2026-09-28')).toBe(`28${NB}september${NB}2026`);
+		expect(dagMaand('2026-09-28')).toBe(`28${NB}sep.`);
+		expect(maandJaar('2026-09-28')).toBe(`sep.${NB}2026`);
+		for (const f of [korteDatum, langeDatum, dagMaand, maandJaar, weekdag]) {
+			expect(f('2026-09-28')).not.toMatch(/(?<=\d) (?=[a-z])|(?<=[a-z.]) (?=\d{4})/i);
+		}
+	});
+
+	it('puts a word before a date in one place, always with the long date', () => {
+		expect(sinceDate('2026-09-28')).toBe(`sinds 28${NB}september${NB}2026`);
+		expect(asOfDate('2026-09-28')).toBe(`per 28${NB}september${NB}2026`);
+		expect(onDate('2026-09-28')).toBe(`op 28${NB}september${NB}2026`);
+		expect(fromDate('2026-09-28')).toBe(`vanaf 28${NB}september${NB}2026`);
+		expect(untilDate('2026-09-28')).toBe(`tot 28${NB}september${NB}2026`);
+		expect(throughDate('2026-09-28')).toBe(`tot en met 28${NB}september${NB}2026`);
+		expect(sinceDate(null)).toBe('');
+	});
+
 	it('abbreviates as the Taalunie does', () => {
-		expect(korteDatum('2026-09-28')).toBe('28 sep. 2026');
-		expect(korteDatum('2026-03-04')).toBe('4 mrt. 2026');
-		expect(korteDatum('2026-05-01')).toBe('1 mei 2026');
+		expect(korteDatum('2026-09-28')).toBe('28\u00a0sep.\u00a02026');
+		expect(korteDatum('2026-03-04')).toBe('4\u00a0mrt.\u00a02026');
+		expect(korteDatum('2026-05-01')).toBe('1\u00a0mei\u00a02026');
 	});
 
 	it('reads the day of a moment as written, whatever the time zone', () => {
-		expect(korteDatum('2026-09-28T23:30:00Z')).toBe('28 sep. 2026');
-		expect(langeDatum('2026-01-01T00:00:00+02:00')).toBe('1 januari 2026');
+		expect(korteDatum('2026-09-28T23:30:00Z')).toBe('28\u00a0sep.\u00a02026');
+		expect(langeDatum('2026-01-01T00:00:00+02:00')).toBe('1\u00a0januari\u00a02026');
 	});
 
 	it('says today in Europe/Amsterdam, whatever the time zone of the reader (T5)', () => {
@@ -35,16 +63,16 @@ describe('datum', () => {
 	});
 
 	it('has a short form without the year, and one with month and year', () => {
-		expect(dagMaand('2026-09-28')).toBe('28 sep.');
-		expect(maandJaar('2026-09-28')).toBe('sep. 2026');
+		expect(dagMaand('2026-09-28')).toBe('28\u00a0sep.');
+		expect(maandJaar('2026-09-28')).toBe('sep.\u00a02026');
 	});
 
 	it('writes the month in full in a sentence', () => {
-		expect(langeDatum('2019-12-20')).toBe('20 december 2019');
+		expect(langeDatum('2019-12-20')).toBe('20\u00a0december\u00a02019');
 	});
 
 	it('heads a day with its weekday', () => {
-		expect(weekdag('2026-09-29')).toBe('Dinsdag 29 september 2026');
+		expect(weekdag('2026-09-29')).toBe('Dinsdag 29\u00a0september\u00a02026');
 	});
 
 	it('says nothing for a missing or broken date', () => {

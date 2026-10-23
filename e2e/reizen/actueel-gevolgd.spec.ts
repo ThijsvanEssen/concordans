@@ -124,7 +124,7 @@ test('Actueel: the days without a sitting and the open motions of no confidence 
 }) => {
 	await page.goto('/actueel');
 	await expect(
-		page.getByText(/^Volgende vergadering en stemmingen: dinsdag 27 oktober 2026/)
+		page.getByText(/^Volgende vergadering en stemmingen: dinsdag 27\soktober\s2026/)
 	).toBeVisible();
 	const open = page.getByRole('list', { name: /nog niet in stemming gebracht/ });
 	await expect(

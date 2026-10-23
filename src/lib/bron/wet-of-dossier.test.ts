@@ -33,7 +33,7 @@ const files = (dir: string): string[] =>
 	});
 
 const LONG =
-	'Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14 december 2022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie (PbEU 2022, L 333) (Cyberbeveiligingswet)';
+	'Regels ter implementatie van Richtlijn (EU) 2022/2555 van het Europees Parlement en de Raad van 14\u00a0december\u00a02022 betreffende maatregelen voor een hoog gezamenlijk niveau van cyberbeveiliging in de Unie (PbEU 2022, L 333) (Cyberbeveiligingswet)';
 
 describe('wet and dossier of the same name', () => {
 	it('words a dossier number in one place only', () => {
@@ -106,7 +106,7 @@ describe('wet and dossier of the same name', () => {
 		]);
 		const wet = previewFromNode('instruments', 'Cyberbeveiligingswet', {
 			citation_title: 'Cyberbeveiligingswet',
-			official_title: `Wet van 8 juli 2026, houdende ${LONG}`,
+			official_title: `Wet van 8\u00a0juli\u00a02026, houdende ${LONG}`,
 			kind: 'wet'
 		});
 		expect([wet.kicker, wet.title]).toEqual(['Wet', 'Cyberbeveiligingswet']);

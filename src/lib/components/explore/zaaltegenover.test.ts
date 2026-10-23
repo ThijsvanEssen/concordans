@@ -55,7 +55,7 @@ describe('indelingMarkering: the caption of a hall drawn by fractie', () => {
 
 	it('names the day the plan is known from where the API gives it', () => {
 		expect(indelingMarkering({ chamber: 'EK', hall: null, hall_read_on: '2026-10-09' })).toBe(
-			'Indeling per fractie; zaal bekend vanaf 9 oktober 2026'
+			'Indeling per fractie; zaal bekend vanaf 9\u00a0oktober\u00a02026'
 		);
 	});
 });

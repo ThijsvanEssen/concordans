@@ -1,6 +1,6 @@
 import { parentAnchor, parseAnchor, printedOnderdeel } from './anchor';
 import { articleRef, bookNumber, bwCode, isNamedNumber } from './bw';
-import { langeDatum, vandaag } from './datum';
+import { onDate, vandaag } from './datum';
 import { ordinalWord } from './getal';
 // The three forms in which an article, a lid or an onderdeel is cited.
 // TODO(backend): the API gives no citation formats per article; the short and long
@@ -138,9 +138,9 @@ export function citeArticle(c: Citation): CitationForms {
 	// of the EU is as adopted (the source has no later versions): dated on that day, or not.
 	const dated = c.adopted
 		? c.adopted.on
-			? `${short} (tekst zoals vastgesteld op ${langeDatum(c.adopted.on)})`
+			? `${short} (tekst zoals vastgesteld ${onDate(c.adopted.on)})`
 			: null
-		: `${short} (tekst geldend op ${langeDatum(vandaag(c.date ?? new Date()))})`;
+		: `${short} (tekst geldend ${onDate(vandaag(c.date ?? new Date()))})`;
 	return { short, full, dated };
 }
 

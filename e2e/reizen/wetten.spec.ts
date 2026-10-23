@@ -92,7 +92,7 @@ test('an earlier text of an article says so, and leads back to the law in force'
 	await page.getByRole('button', { name: '3 tekstversies' }).click();
 	const versions = page.getByRole('menu', { name: 'Tekstversies' });
 	await expect(versions.getByRole('menuitemradio', { checked: true })).toHaveText(
-		/Geldend, sinds 17 november 2017/
+		/Geldend, sinds 17\snovember\s2017/
 	);
 	await versions.getByRole('menuitemradio', { name: '6 april 2006 tot 17 november 2017' }).click();
 	await expect(page.getByText('Eerdere tekst, 6 april 2006 tot 17 november 2017')).toBeVisible();

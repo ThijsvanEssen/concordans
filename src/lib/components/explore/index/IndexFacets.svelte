@@ -9,7 +9,7 @@
 		label: string;
 		on: boolean;
 		onClick: () => void;
-		count?: number;
+		count?: number | string;
 		swatch?: string;
 		/** Under an option of the same group: a specific area under its rechtsgebied. */
 		indent?: boolean;

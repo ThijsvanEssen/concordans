@@ -14,8 +14,8 @@ const lid: MapItem = {
 const ro: MapItem = {
 	id: 'judgments/ecli_nl_hr_2005_au3313',
 	at: 'rov-3.4',
-	kort: 'HR 11 november 2005, ECLI:NL:HR:2005:AU3313, r.o. 3.4',
-	groep: 'HR 11 november 2005',
+	kort: 'HR 11\u00a0november\u00a02005, ECLI:NL:HR:2005:AU3313, r.o. 3.4',
+	groep: 'HR 11\u00a0november\u00a02005',
 	groupKey: 'judgments/ecli_nl_hr_2005_au3313'
 };
 const fromFile: SharedMap = {

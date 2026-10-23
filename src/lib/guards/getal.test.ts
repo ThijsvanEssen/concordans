@@ -16,3 +16,23 @@ describe('a count in words', () => {
 		expect(raw).toEqual([]);
 	});
 });
+
+describe('a count that stopped short', () => {
+	it('is "meer dan N", never "N+" and never the page limit as a number (E9 P, S)', () => {
+		// `${n}${more ? '+' : ''}` wrote "50+" beside "Wetten 50", the limit of a page twice as a
+		// count; atLeast says `meer dan 50` once.
+		const plus = /\?\s*'\+'\s*:\s*''/;
+		const rauw = /aantal=\{[\w.]*\.count\}/;
+		const vinden = BRONNEN.filter(
+			({ text }) => plus.test(text) || (text.includes('next_offset') && rauw.test(text))
+		).map((s) => s.path);
+		expect(vinden).toEqual([]);
+	});
+});
+
+describe('a count and its word', () => {
+	it('stand apart: a space between the number and the noun, not "66.190stemmingen" (E9 R)', () => {
+		const aaneen = /\{formatCount\([^)]*\)\}<span[^>]*>\s*(?!&nbsp;)/;
+		expect(BRONNEN.filter(({ text }) => aaneen.test(text)).map((s) => s.path)).toEqual([]);
+	});
+});

@@ -57,9 +57,11 @@ describe('the mark of what is missing', () => {
 	it('says where an arcering is now, in one line, never silently', () => {
 		expect(anchorLine({ state: 'moved', place: 'lid 3' })).toBe('Nu in lid 3');
 		expect(anchorLine({ state: 'changed', since: '2026-07-01' })).toBe(
-			'Tekst gewijzigd per 1 juli 2026'
+			'Tekst gewijzigd per 1\u00a0juli\u00a02026'
 		);
-		expect(anchorLine({ state: 'lapsed', since: '2026-07-01' })).toBe('Vervallen per 1 juli 2026');
+		expect(anchorLine({ state: 'lapsed', since: '2026-07-01' })).toBe(
+			'Vervallen per 1\u00a0juli\u00a02026'
+		);
 		expect(anchorLine({ state: 'lost' })).toBe('Passage niet meer in de tekst');
 		// Its words live here alone: no other file writes them.
 		const found = files(ROOT).filter(
@@ -95,7 +97,7 @@ describe('the mark of what is missing', () => {
 		expect(without('none', '2026-10-20T03:00:00Z')).toBe('Geen leesbare tekst in de bron');
 		// Why it is pending, where the API says so (from 0.79.68).
 		expect(without('pending', '2026-10-20T03:00:00Z', 'awaiting_normalize')).toBe(
-			'Tekst nog niet beschikbaar, ontvangen op 20 oktober 2026'
+			'Tekst nog niet beschikbaar, ontvangen op 20\u00a0oktober\u00a02026'
 		);
 		expect(without('pending', '2026-10-20T03:00:00Z', 'source_pdf_only')).toBe(
 			'Tekst nog niet beschikbaar, de bron heeft alleen de pdf'
@@ -146,7 +148,7 @@ describe('the mark of what is missing', () => {
 
 	it('says of an open bill that no end is recorded, not that it runs', () => {
 		expect(coverageLine({ outcome: { state: 'pending', as_of: '2019-03-05' } })).toBe(
-			'Geen einde vastgelegd, laatste activiteit 5 maart 2019'
+			'Geen einde vastgelegd, laatste activiteit 5\u00a0maart\u00a02019'
 		);
 		expect(coverageLine({ outcome: { state: 'pending', as_of: null } })).toBe(
 			'Uitkomst nog niet beschikbaar'
@@ -159,7 +161,7 @@ describe('the mark of what is missing', () => {
 
 	it('says what is missing in one line, with a date where the API gives one', () => {
 		expect(coverageLine({ versions: { state: 'not_in_source', as_of: '2016-04-27' } })).toBe(
-			'Tekst zoals vastgesteld op 27 april 2016, latere wijzigingen niet verwerkt'
+			'Tekst zoals vastgesteld op 27\u00a0april\u00a02016, latere wijzigingen niet verwerkt'
 		);
 		expect(coverageLine({ versions: { state: 'not_in_source', as_of: null } })).toBe(
 			'Tekst zoals vastgesteld, latere wijzigingen niet verwerkt'
@@ -205,10 +207,10 @@ describe('the mark of what is missing', () => {
 	it('says of a source the runs no longer fetch from how far it goes', () => {
 		const at = '2026-10-08T20:53:06Z';
 		expect(coverageLine({ source: { state: 'paused', as_of: at } })).toBe(
-			'Wordt niet meer bijgewerkt, stand 8 oktober 2026'
+			'Wordt niet meer bijgewerkt, stand 8\u00a0oktober\u00a02026'
 		);
 		expect(coverageLine({ source: { state: 'unavailable', as_of: at } }, { of: 'HUDOC' })).toBe(
-			'HUDOC onbereikbaar, stand 8 oktober 2026'
+			'HUDOC onbereikbaar, stand 8\u00a0oktober\u00a02026'
 		);
 		expect(coverageLine({ source: { state: 'pending', as_of: null } })).toBe(
 			'Nog niet beschikbaar'

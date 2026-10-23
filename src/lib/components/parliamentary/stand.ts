@@ -1,6 +1,7 @@
+import { OUTCOME_LABELS } from '$lib/text/outcome';
 import { NOT_IN_DATA } from '$lib/text/coverage';
 import { capitalize } from '$lib/text/words';
-import { korteDatum } from '$lib/text/datum';
+import { korteDatum, langeDatum, onDate } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 import { CHAMBER_NAME } from './chamber';
 import { methodPhrase, phasePlace, voteMethod, type PhaseName } from './stages';
@@ -61,18 +62,20 @@ export function stand(d: Dossier): Stand | null {
 		{ name: CHAMBER_NAME.TK, short: 'TK', state: tk },
 		{ name: CHAMBER_NAME.EK, short: 'EK', state: ek }
 	];
-	const on = (date: string | null, before: string) => (date ? `${before}${korteDatum(date)}` : '');
+	// A sentence has the long date (the short one is for the boxes of the bar and for lists).
+	const on = (date: string | null, before: string) =>
+		date ? (before === ' op ' ? ` ${onDate(date)}` : `${before}${langeDatum(date)}`) : '';
 	const place = phasePlace(d.current_phase);
 
 	if (d.ek_outcome) {
 		const { outcome, date, method } = d.ek_outcome;
-		const zin = `${outcome} door de Eerste Kamer${spaced(methodPhrase(method))}, ${korteDatum(date)}.`;
+		const zin = `${outcome} door de Eerste Kamer${spaced(methodPhrase(method))}, ${langeDatum(date)}.`;
 		return { bodies, zin, group: 'afgehandeld', phase: null, date: date ?? null };
 	}
 	if (rejected || withdrawn || d.closed) {
 		const date = d.closed_on ?? null;
 		const zin = rejected
-			? `Verworpen door de Tweede Kamer${on(date, ', ')}.`
+			? `${OUTCOME_LABELS.verworpen} door de Tweede Kamer${on(date, ', ')}.`
 			: withdrawn
 				? `Ingetrokken${on(date, ' op ')}.`
 				: `Afgehandeld${on(date, ' ')}.`;
@@ -135,17 +138,17 @@ export function boxesOf(d: Dossier | Detail): Box[] {
 		? box(
 				tk.name,
 				'ja',
-				'Aangenomen',
+				OUTCOME_LABELS.aangenomen,
 				korteDatum(d.tk_decision.date),
 				voteMethod(null, d.tk_decision.kind)
 			)
 		: d.outcome === 'verworpen'
-			? box(tk.name, 'nee', 'Verworpen', korteDatum(d.closed_on))
+			? box(tk.name, 'nee', OUTCOME_LABELS.verworpen, korteDatum(d.closed_on))
 			: d.outcome === 'ingetrokken'
 				? // Withdrawn, not voted down: no "nee" (red only for no and errors).
 					box(tk.name, 'klaar', 'Ingetrokken', korteDatum(d.closed_on))
 				: tk.state === 'done'
-					? box(tk.name, 'ja', 'Aangenomen', korteDatum(dateOf(d, 'Eindtekst')))
+					? box(tk.name, 'ja', OUTCOME_LABELS.aangenomen, korteDatum(dateOf(d, 'Eindtekst')))
 					: st.group === 'ingediend'
 						? box(tk.name, 'nu', 'Ingediend', korteDatum(st.date))
 						: box(tk.name, 'nu', 'In behandeling', capitalize(st.phase ?? ''), korteDatum(st.date));
@@ -153,7 +156,7 @@ export function boxesOf(d: Dossier | Detail): Box[] {
 	let ekBox: Box;
 	if (d.ek_outcome) {
 		const { outcome, date, method } = d.ek_outcome;
-		const mark = outcome === 'Verworpen' ? 'nee' : 'ja';
+		const mark = outcome === OUTCOME_LABELS.verworpen ? 'nee' : 'ja';
 		ekBox = box(ek.name, mark, outcome, korteDatum(date), voteMethod(method));
 	} else if (ek.state === 'now') {
 		// Where the bill is, as eerstekamer.nl heads its list (API 0.76); else its step.
@@ -162,7 +165,10 @@ export function boxesOf(d: Dossier | Detail): Box[] {
 		const where = senate?.status ?? step ?? 'Sinds aanneming door de Tweede Kamer';
 		ekBox = box(ek.name, 'nu', 'In behandeling', where);
 	} else if (ek.state === 'none') {
-		const why = d.outcome === 'ingetrokken' ? 'Ingetrokken' : 'Verworpen door de Tweede Kamer';
+		const why =
+			d.outcome === 'ingetrokken'
+				? OUTCOME_LABELS.ingetrokken
+				: `${OUTCOME_LABELS.verworpen} door de Tweede Kamer`;
 		ekBox = box(ek.name, 'open', 'Niet aan de orde', why);
 	} else {
 		ekBox = box(ek.name, 'open', 'Nog niet', 'Na de Tweede Kamer');

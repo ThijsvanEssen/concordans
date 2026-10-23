@@ -17,7 +17,9 @@ test('Dutch law says it is the law in force, since when', async ({ page }) => {
 test('an EU article is the text as adopted, dated so, and sourced to EUR-Lex', async ({ page }) => {
 	await page.goto('/wetten/32016R0679/artikel/6');
 	await expect(
-		page.getByText(/^Tekst zoals vastgesteld op 27 april 2016, latere wijzigingen niet verwerkt/)
+		page.getByText(
+			/^Tekst zoals vastgesteld op 27\s+april\s+2016, latere wijzigingen niet verwerkt/
+		)
 	).toBeVisible();
 	await expect(page.getByRole('link', { name: 'EUR-Lex ↗' })).toHaveAttribute(
 		'href',

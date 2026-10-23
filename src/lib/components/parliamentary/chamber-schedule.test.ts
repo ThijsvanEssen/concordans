@@ -34,17 +34,17 @@ describe('noSitting', () => {
 	it('names the day of the next sitting and of the next votes, each with its page', () => {
 		const r = noSitting(schedule(act('2026-10-27'), act('2026-10-27')), today);
 		expect(r).toEqual({
-			until: { text: '27 oktober 2026', href: '/activiteiten/2026A05413' },
-			votes: { text: 'dinsdag 27 oktober 2026', href: '/activiteiten/2026A05413' }
+			until: { text: '27\u00a0oktober\u00a02026', href: '/activiteiten/2026A05413' },
+			votes: { text: 'dinsdag 27\u00a0oktober\u00a02026', href: '/activiteiten/2026A05413' }
 		});
 	});
 
 	it('says the week of an activity planned for a week, not yet for a day', () => {
 		const week = act('2026-11-02', { precision: 'Weeknummer', path: null });
 		const r = noSitting(schedule(week, week), today);
-		expect(r?.until.text).toBe('de week van 2 november 2026');
+		expect(r?.until.text).toBe('de week van 2\u00a0november\u00a02026');
 		expect(r?.votes).toEqual({
-			text: 'in de week van 2 november 2026',
+			text: 'in de week van 2\u00a0november\u00a02026',
 			href: 'https://www.tweedekamer.nl/x'
 		});
 	});

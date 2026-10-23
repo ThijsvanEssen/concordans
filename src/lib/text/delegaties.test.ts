@@ -104,7 +104,7 @@ describe('delegation formulas', () => {
 
 	it('names a regulation by its title, kind and day, and its articles short', () => {
 		expect(regelingNaam(besluit)).toBe('Cyberbeveiligingsbesluit');
-		expect(regelingRegel(besluit)).toBe('AMvB, 15 augustus 2026');
+		expect(regelingRegel(besluit)).toBe('AMvB, 15\u00a0augustus\u00a02026');
 		expect(regelingRegel({ ...besluit, kind: 'ministeriele-regeling', date_in_force: null })).toBe(
 			'Ministeriële regeling'
 		);
@@ -118,7 +118,7 @@ describe('delegation formulas', () => {
 			title: 'Cyberbeveiligingsbesluit',
 			// The kind stands in the line, `AMvB op grond van lid 1` (hoe.ts).
 			context: null,
-			identifier: 'in werking 15 aug. 2026',
+			identifier: 'in werking 15\u00a0aug.\u00a02026',
 			date: '2026-08-15',
 			lid: '1',
 			relation: 'BASED_ON',

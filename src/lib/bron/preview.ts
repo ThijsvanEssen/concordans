@@ -3,6 +3,7 @@
 // the API gives: a stuk its dossier, its indieners with their fractie and, for a motie or
 // amendement, the vote on its zaak; a judgment the first sentence of its summary, or at an
 // r.o. that overweging; an article its first lid, or the part the reference names.
+import { outcomeWord } from '$lib/text/outcome';
 import { motionOrAmendment, shortKind } from '$lib/text/document-kind';
 import { langeDatum } from '$lib/text/datum';
 import { separatorBefore, textOf, truncate } from '$lib/text/words';
@@ -100,7 +101,7 @@ export function indieners(actors: unknown): string | null {
 export function uitslagVan(props: Record<string, unknown>): string | null {
 	const besluit =
 		textOf(props.decision_text)?.replace(/\.$/, '') ??
-		(props.passed === true ? 'Aangenomen' : props.passed === false ? 'Verworpen' : null);
+		outcomeWord(typeof props.passed === 'boolean' ? props.passed : null);
 	if (!besluit) return null;
 	const stemmen = votesSentence(props.tally, ' en ');
 	return stemmen ? `${besluit}, ${stemmen}` : besluit;

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { outcomeWord } from '$lib/text/outcome';
 	import { atLeast } from '$lib/text/getal';
 	import { choiceRank } from '$lib/components/parliamentary/stemming';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
@@ -372,7 +373,9 @@
 				<Sectie
 					title={(m.government_functions ?? []).length > 0 ? 'Als Kamerlid' : 'Stemgeschiedenis'}
 					collection="decisions"
-					aantal={apart ? atLeast(alle.length, inOffice!.next != null) : stemmen.count}
+					aantal={apart
+						? atLeast(alle.length, inOffice!.next != null)
+						: atLeast(stemmen.count, stemmen.next_offset != null)}
 				>
 					{#each groups as group (`${group.party}|${group.ambt}`)}
 						{#if groups.length > 1 || group.ambt}
@@ -437,7 +440,7 @@
 															class:vote-outcome--passed={v.passed}
 															class:vote-outcome--failed={!v.passed}
 														>
-															{v.passed ? 'Aangenomen' : 'Verworpen'}
+															{outcomeWord(!!v.passed)}
 														</span>
 													{/if}
 													{#if v.date}<span class="vote-date">{korteDatum(v.date)}</span>{/if}

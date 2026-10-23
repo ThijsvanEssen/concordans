@@ -182,7 +182,7 @@ describe('the papers and articles a row is tied to', () => {
 				path: null,
 				kind_group: 'brief'
 			})
-		).toBe('brief van 7 okt. 2026');
+		).toBe('brief van 7\u00a0okt.\u00a02026');
 		expect(
 			stukNaam({
 				title: null,

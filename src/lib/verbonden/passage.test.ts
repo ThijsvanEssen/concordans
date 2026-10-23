@@ -70,7 +70,7 @@ describe('aanhalingIn', () => {
 	});
 
 	it('finds a BW article the API numbers without its book (`305a` for 3:305a)', () => {
-		// Urgenda, HR 20 december 2019: `article_number: "305a"`, the span says `art. 3:305a BW`.
+		// Urgenda, HR 20\u00a0december\u00a02019: `article_number: "305a"`, the span says `art. 3:305a BW`.
 		const t = 'Urgenda vordert op grond van art. 3:305a BW een bevel aan de Staat.';
 		const bw = {
 			article: {

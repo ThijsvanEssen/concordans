@@ -11,7 +11,7 @@ import Verbonden from './Verbonden.svelte';
 vi.mock('$app/state', () => ({ page: { url: new URL('http://x/explore') } }));
 
 const judgment: Row = {
-	title: 'HR 1 januari 2020',
+	title: 'HR 1\u00a0januari\u00a02020',
 	ref: { collection: 'judgments', key: 'ecli_nl_hr_2020_1' },
 	relation: 'REFERS_TO',
 	direction: 'inbound',

@@ -127,7 +127,7 @@ describe('the place of a verbinding in its source', () => {
 			collection: 'judgments',
 			key: 'ecli_nl_rvs_2015_41',
 			drawClass: 'judgment',
-			label: 'ABRvS 14 januari 2015'
+			label: 'ABRvS 14\u00a0januari\u00a02015'
 		} as GraphNode;
 		const v = verbindingOfRow(
 			{

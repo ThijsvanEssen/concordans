@@ -70,7 +70,7 @@ describe('Verbonden at a glance', () => {
 					props: { kind: 'Memorie van toelichting' }
 				})
 			)
-		).toBe('Memorie van toelichting, 22 jun. 2010');
+		).toBe('Memorie van toelichting, 22\u00a0jun.\u00a02010');
 		expect(
 			shortLine(
 				row('documents', 'k', {

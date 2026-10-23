@@ -87,7 +87,9 @@ describe('VersionCompare: where a wording came from', () => {
 
 	it('names the day it was laid down and published in the title of the publication', () => {
 		const body = html('');
-		expect(body).toContain('title="vastgesteld 1 juni 2017, uitgegeven 20 juni 2017"');
-		expect(body).toContain('title="uitgegeven 1 juli 2017"');
+		expect(body).toContain(
+			'title="vastgesteld 1\u00a0juni\u00a02017, uitgegeven 20\u00a0juni\u00a02017"'
+		);
+		expect(body).toContain('title="uitgegeven 1\u00a0juli\u00a02017"');
 	});
 });

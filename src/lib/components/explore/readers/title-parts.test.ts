@@ -3,10 +3,9 @@ import { titleParts } from './title-parts';
 
 describe('titleParts', () => {
 	it('breaks an ECLI between its court and its year alone', () => {
-		expect(titleParts("Hof 's-Hertogenbosch 20 oktober 2026, ECLI:NL:GHSHE:2026:2880")).toEqual([
-			"Hof 's-Hertogenbosch 20 oktober 2026, ECLI:NL:GHSHE:",
-			'2026:2880'
-		]);
+		expect(
+			titleParts("Hof 's-Hertogenbosch 20\u00a0oktober\u00a02026, ECLI:NL:GHSHE:2026:2880")
+		).toEqual(["Hof 's-Hertogenbosch 20\u00a0oktober\u00a02026, ECLI:NL:GHSHE:", '2026:2880']);
 	});
 
 	it('breaks after any other colon', () => {

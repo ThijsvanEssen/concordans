@@ -7,7 +7,7 @@ const DOSSIER_36875 = {
 	key: '36875',
 	number: '36875',
 	title:
-		'Uitvoering van Verordening (EU) 2024/2847 van het Europees Parlement en de Raad van 23 oktober 2024 inzake horizontale cyberbeveiligingsvereisten voor producten met digitale elementen (cyberweerbaarheidsverordening)',
+		'Uitvoering van Verordening (EU) 2024/2847 van het Europees Parlement en de Raad van 23\u00a0oktober\u00a02024 inzake horizontale cyberbeveiligingsvereisten voor producten met digitale elementen (cyberweerbaarheidsverordening)',
 	short_title: 'Uitvoeringswet verordening cyberweerbaarheid'
 };
 

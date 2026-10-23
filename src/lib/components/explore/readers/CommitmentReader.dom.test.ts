@@ -66,7 +66,7 @@ describe('the days of a toezegging (B34)', () => {
 
 	it('reads Geregistreerd from registered_on, `date` being the day of the debate', async () => {
 		const v = await read({ ...NAKOMING, date: '2026-10-14', registered_on: '2026-10-21' });
-		expect(registered(v)).toBe('21 oktober 2026');
+		expect(registered(v)).toBe('21\u00a0oktober\u00a02026');
 	});
 
 	it('has no Geregistreerd where the Kamer named no day', async () => {
@@ -81,7 +81,7 @@ describe('the days of a toezegging (B34)', () => {
 			date: '2026-10-21'
 		};
 		const v = await read(legacy);
-		expect(registered(v)).toBe('21 oktober 2026');
+		expect(registered(v)).toBe('21\u00a0oktober\u00a02026');
 	});
 });
 

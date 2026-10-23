@@ -95,7 +95,7 @@ describe('hoeVan', () => {
 		);
 		expect([h?.werkwoord, h?.rest, h?.herkomst]).toEqual([
 			'Wijzigt',
-			'dit artikel, in werking 1 juli 2024',
+			'dit artikel, in werking 1\u00a0juli\u00a02024',
 			'Wetten.overheid.nl, Stb. 2024, 193'
 		]);
 	});
@@ -647,7 +647,7 @@ describe('the line of a reference', () => {
 		);
 		expect([artikel?.werkwoord, artikel?.rest]).toEqual([
 			'Stelt vast',
-			', in werking 15 augustus 2026'
+			', in werking 15\u00a0augustus\u00a02026'
 		]);
 	});
 
@@ -681,7 +681,7 @@ describe('the line of a reference', () => {
 			}),
 			'instruments'
 		);
-		expect([h?.werkwoord, h?.rest]).toEqual(['Wijzigt', ', in werking 15 augustus 2026']);
+		expect([h?.werkwoord, h?.rest]).toEqual(['Wijzigt', ', in werking 15\u00a0augustus\u00a02026']);
 	});
 });
 

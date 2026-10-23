@@ -93,7 +93,7 @@ describe('voteLineOf', () => {
 
 	it("says a hamerstuk once, and a postponement in the Kamer's own word", () => {
 		const hammer = voteLineOf(decision({ decision_kind: 'Stemmen - zonder stemming aannemen' }));
-		expect([hammer.word, hammer.how]).toEqual(['Zonder stemming aangenomen', null]);
+		expect([hammer.word, hammer.how]).toEqual(['Aangenomen zonder stemming', null]);
 		const postponed = voteLineOf(decision({ decision_kind: 'Stemmen - uitstellen' }));
 		expect([postponed.word, postponed.tone]).toEqual(['Uitstellen', 'open']);
 	});

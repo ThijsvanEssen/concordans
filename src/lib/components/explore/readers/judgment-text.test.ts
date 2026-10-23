@@ -191,7 +191,7 @@ STRAFKAMER
 
 ARREST
 
-op het beroep in cassatie tegen een arrest van het gerechtshof Den Haag van 8 november 2024, nummer 22-002967-23, in de strafzaak
+op het beroep in cassatie tegen een arrest van het gerechtshof Den Haag van 8\u00a0november\u00a02024, nummer 22-002967-23, in de strafzaak
 
 tegen
 
@@ -352,7 +352,7 @@ geïntimeerde,`;
 	});
 
 	it('"tussen … en" with the role after each name (ECLI:NL:RBAMS:2025:3600)', () => {
-		const heading = `uitspraak van de meervoudige kamer van 3 juni 2025 in de zaak tussen
+		const heading = `uitspraak van de meervoudige kamer van 3\u00a0juni\u00a02025 in de zaak tussen
 Moonflower B.V., uit Nunspeet, eiseres
 (gemachtigde: mr. P.J. de Booij),
 en
@@ -369,7 +369,7 @@ de minister van Infrastructuur en Waterstaat, verweerder
 1. de minister van Sociale Zaken en Werkgelegenheid
 2. [appellant], gevestigd in [woonplaats]
 appellanten,
-tegen de uitspraak van de rechtbank Gelderland van 9 juli 2025 in zaak nr. 24/6811 in het geding tussen:
+tegen de uitspraak van de rechtbank Gelderland van 9\u00a0juli\u00a02025 in zaak nr. 24/6811 in het geding tussen:
 [appellant]
 en
 de minister.`;
@@ -421,7 +421,7 @@ geboren op [geboortedag] 1990,`;
 1 C MANAGEMENT B.V.,
 2. C TELEPORT B.V. ,
 beide gevestigd te Rotterdam,
-eisende partijen bij dagvaarding van 20 oktober 2025,
+eisende partijen bij dagvaarding van 20\u00a0oktober\u00a02025,
 advocaten: mr. M.A. Wielinga Carvajal en mr. G.A. Smit,
 t e g e n
 de rechtspersoon naar buitenlands recht
@@ -973,10 +973,10 @@ describe('the body as the reader lays it out', () => {
 			para('body', 'Overgangsrecht inwerkingtreding Omgevingswet'),
 			para(
 				'body',
-				'Op 1 januari 2024 zijn de Omgevingswet en de Invoeringswet in werking getreden.',
+				'Op 1\u00a0januari\u00a02024 zijn de Omgevingswet en de Invoeringswet in werking getreden.',
 				{ number: '1', paragraph_id: 'rov-1' }
 			),
-			para('body', 'De aanvraag om een omgevingsvergunning is ingediend op 22 mei 2022.'),
+			para('body', 'De aanvraag om een omgevingsvergunning is ingediend op 22\u00a0mei\u00a02022.'),
 			para('body', 'Inleiding'),
 			para('body', 'Tot slot stelt appellant dat de vergunning leidt tot rechtsongelijkheid.')
 		]);
@@ -992,12 +992,12 @@ describe('the body as the reader lays it out', () => {
 			'CONCLUSIE',
 			'[verdachte] ,',
 			'hierna: de verdachte',
-			'De verdachte is bij arrest van 7 oktober 2014 door het gerechtshof niet-ontvankelijk verklaard in het hoger beroep, ingesteld tegen het vonnis van de politierechter.',
+			'De verdachte is bij arrest van 7\u00a0oktober\u00a02014 door het gerechtshof niet-ontvankelijk verklaard in het hoger beroep, ingesteld tegen het vonnis van de politierechter.',
 			'Derhalve is het cassatieberoep ontvankelijk.'
 		].join('\n\n');
 		const items = bodyItems([para('subheading', kop)]);
 		expect(items.map((i) => (i.kind === 'prose' ? i.body : i.kind))).toEqual([
-			'De verdachte is bij arrest van 7 oktober 2014 door het gerechtshof niet-ontvankelijk verklaard in het hoger beroep, ingesteld tegen het vonnis van de politierechter.',
+			'De verdachte is bij arrest van 7\u00a0oktober\u00a02014 door het gerechtshof niet-ontvankelijk verklaard in het hoger beroep, ingesteld tegen het vonnis van de politierechter.',
 			'Derhalve is het cassatieberoep ontvankelijk.'
 		]);
 	});
@@ -1007,7 +1007,7 @@ describe('the body as the reader lays it out', () => {
 			para('toc', '1 Procesverloop'),
 			para(
 				'body',
-				'Op 1 januari 2024 zijn de Omgevingswet en de Invoeringswet in werking getreden.',
+				'Op 1\u00a0januari\u00a02024 zijn de Omgevingswet en de Invoeringswet in werking getreden.',
 				{ number: '1', paragraph_id: 'rov-1' }
 			),
 			para('body', 'Tussenkop'),

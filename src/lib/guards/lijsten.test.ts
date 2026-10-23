@@ -82,7 +82,7 @@ describe('list pages and the feed', () => {
 		).toEqual([]);
 		expect(
 			overtreders(
-				(t) => /Doorzocht vanaf \{/.test(t),
+				(t) => /Doorzocht (?:vanaf )?\{/.test(t),
 				[plek('lib/components/actueel/Doorzocht.svelte')]
 			)
 		).toEqual([]);

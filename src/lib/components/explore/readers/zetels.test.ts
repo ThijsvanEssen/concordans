@@ -46,13 +46,14 @@ describe('wijzigingenVan', () => {
 				e(
 					'hernoeming',
 					['vvd'],
-					'Van 13 juni 2023 tot 9 september 2026 was de naam van de fractie GroenLinks-PvdA .'
+					'Van 13\u00a0juni\u00a02023 tot 9\u00a0september\u00a02026 was de naam van de fractie GroenLinks-PvdA .'
 				)
 			]
 		} as never;
 		expect(wijzigingenVan(stuk)).toEqual([
 			{
-				woorden: 'Van 13 juni 2023 tot 9 september 2026 was de naam van de fractie GroenLinks-PvdA'
+				woorden:
+					'Van 13\u00a0juni\u00a02023 tot 9\u00a0september\u00a02026 was de naam van de fractie GroenLinks-PvdA'
 			}
 		]);
 	});

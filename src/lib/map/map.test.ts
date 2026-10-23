@@ -103,11 +103,11 @@ describe('the map', () => {
 		};
 		expect(citaten([ro], 'groep', null, null, attribution)).toBe(
 			'Rechtspraak\n1. HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1 (https://concordans.nl/' +
-				`${ro.id}, geraadpleegd 22 oktober 2026)`
+				`${ro.id}, geraadpleegd 22\u00a0oktober\u00a02026)`
 		);
 		// A source without an address keeps the day.
 		expect(citaten([ro], 'eigen', null, null, { address: () => '', consulted: '2026-10-22' })).toBe(
-			'1. HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1 (geraadpleegd 22 oktober 2026)'
+			'1. HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1 (geraadpleegd 22\u00a0oktober\u00a02026)'
 		);
 	});
 

@@ -2,7 +2,7 @@
 	// The API searched words or a fractie for a while and answered with what it found, from the
 	// day it reached (0.79.28): that day, and further back as the same question up to the day
 	// before. One line on Actueel and on Gevolgd alike.
-	import { korteDatum } from '$lib/text/datum';
+	import { fromDate } from '$lib/text/datum';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 
 	let {
@@ -18,7 +18,7 @@
 </script>
 
 <p class="doorzocht">
-	Doorzocht vanaf {korteDatum(vanaf)}.
+	Doorzocht {fromDate(vanaf)}.
 	<TekstLink disabled={loading} onclick={onVerder}
 		>{loading ? 'Laden…' : 'Zoek verder terug'}</TekstLink
 	>

@@ -25,6 +25,18 @@ const JOINED_SUFFIX = /^(\d+)-([A-Z]+|\([A-Z0-9]+\))$/i;
 export const officialNumber = (number: string) => number.replace(JOINED_SUFFIX, '$1 $2');
 
 /**
+ * A dossier number with its suffix as a citation writes it (Handleiding Kamerstukken): a
+ * numeric suffix, a subdossier, after a hyphen (`21501-20`), a roman one or a letter after a
+ * space (`36600 VIII`). The one place that joins them (E9 K).
+ */
+export const dossierNumberText = (number: string, suffix?: string | null) =>
+	suffix
+		? /^\d+$/.test(suffix)
+			? `${number}-${suffix}`
+			: `${number} ${suffix}`
+		: officialNumber(number);
+
+/**
  * The kind of a dossier with its number, the one wording for it everywhere: `Dossier 36764`,
  * `Dossier I 36764` for the Eerste Kamer. A stuk in it follows after a comma.
  */

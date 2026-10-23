@@ -49,7 +49,7 @@ describe('the name of a bron for a reader', () => {
 				},
 				() => 'Algemene wet bestuursrecht'
 			)
-		).toBe('Algemene wet bestuursrecht, versie van 1 mei 2022');
+		).toBe('Algemene wet bestuursrecht, versie van 1\u00a0mei\u00a02022');
 		expect(
 			menselijkeNaam({
 				collection: 'commitments',
@@ -67,7 +67,7 @@ describe('the name of a bron for a reader', () => {
 					agenda_title: 'Commissie voor Binnenlandse Zaken (BIZA)'
 				}
 			})
-		).toBe('Commissie voor Binnenlandse Zaken (BIZA), 2 april 2024');
+		).toBe('Commissie voor Binnenlandse Zaken (BIZA), 2\u00a0april\u00a02024');
 		expect(
 			menselijkeNaam({
 				collection: 'instruments',
@@ -92,11 +92,11 @@ describe('the name of a bron for a reader', () => {
 			menselijkeNaam({ collection: 'instrument_versions', key: 'bwbr0005537_2022_05_01', props });
 		const awb = { bwb_id: 'BWBR0005537', instrument_citation_title: 'Awb' };
 		expect(versie({ ...awb, valid_from: '2022-05-01', current: true })).toBe(
-			'Awb, geldende versie sinds 1 mei 2022'
+			'Awb, geldende versie sinds 1\u00a0mei\u00a02022'
 		);
 		expect(
 			versie({ ...awb, valid_from: '2021-01-01', valid_until: '2022-04-30', current: false })
-		).toBe('Awb, versie van 1 januari 2021 tot 30 april 2022');
+		).toBe('Awb, versie van 1\u00a0januari\u00a02021 tot 30\u00a0april\u00a02022');
 		expect(
 			menselijkeNaam({ collection: 'cases', key: '81311fd5_88d6', props: { number: '2025Z15468' } })
 		).toBe('Zaak 2025Z15468');

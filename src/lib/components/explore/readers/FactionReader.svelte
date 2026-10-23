@@ -2,7 +2,7 @@
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { capitalize, plural, textOf } from '$lib/text/words';
 	import { noneHeld } from '$lib/text/coverage';
-	import { korteDatum, langeDatum } from '$lib/text/datum';
+	import { korteDatum, onDate, sinceDate } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
 	import ReaderHead from './ReaderHead.svelte';
@@ -101,10 +101,8 @@
 						<p class="woorden">
 							<span class="zetels"
 								>{seats}
-								{plural(seats, 'zetel', 'zetels')}{ek && read
-									? ` op ${langeDatum(read)}`
-									: ''}</span
-							>{#if sinds && !ek}, <span class="sinds">fractie sinds {langeDatum(sinds)}</span>{/if}
+								{plural(seats, 'zetel', 'zetels')}{ek && read ? ` ${onDate(read)}` : ''}</span
+							>{#if sinds && !ek}, <span class="sinds">fractie {sinceDate(sinds)}</span>{/if}
 						</p>
 					{/if}
 				{/snippet}
@@ -118,7 +116,7 @@
 							<dd>
 								{#if seat.member}<BronLink ref={`members/${seat.member}`}>{seat.name}</BronLink
 									>{:else}{seat.name}{/if}{#if seat.since}<span class="since"
-										>, sinds {langeDatum(seat.since)}</span
+										>, {sinceDate(seat.since)}</span
 									>{/if}
 							</dd>
 						{/each}

@@ -9,7 +9,7 @@ describe('a pasted source Concordans holds', () => {
 			'ECLI:NL:HR:2005:AU3313'
 		],
 		[
-			'HR 11 november 2005, ECLI:NL:HR:2005:AU3313 (Kooiker).',
+			'HR 11\u00a0november\u00a02005, ECLI:NL:HR:2005:AU3313 (Kooiker).',
 			'/uitspraken/ECLI:NL:HR:2005:AU3313',
 			'ECLI:NL:HR:2005:AU3313'
 		],

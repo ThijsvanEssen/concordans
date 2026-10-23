@@ -334,7 +334,7 @@ describe('an appealed decision the dataset lacks', () => {
 		});
 		const rows = groups.find((g) => g.id === 'earlier-instance')?.rows ?? [];
 		expect(rows.map((r) => [r.title, r.missing])).toEqual([
-			['Rechtbank Gelderland, 9 juli 2025, 24/6811', true]
+			['Rechtbank Gelderland, 9\u00a0juli\u00a02025, 24/6811', true]
 		]);
 	});
 	it('leaves the groups as they are without one', () => {
@@ -374,7 +374,7 @@ describe('a judgment of the EHRM', () => {
 			date: '2024-12-10',
 			ecli: 'ECLI:CE:ECHR:2024:1210JUD000447021'
 		});
-		expect(bron.title).toBe('Europees Hof voor de Rechten van de Mens, 10 december 2024');
+		expect(bron.title).toBe('Europees Hof voor de Rechten van de Mens, 10\u00a0december\u00a02024');
 	});
 });
 

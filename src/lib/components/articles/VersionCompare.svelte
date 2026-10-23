@@ -3,7 +3,7 @@
 	import { capitalize } from '$lib/text/words';
 	import { hasModifier, isTyping } from '$lib/actions/keys';
 	import { lidAnchor, lidNumber } from '$lib/text/anchor';
-	import { DAY_MS, korteDatum, langeDatum } from '$lib/text/datum';
+	import { DAY_MS, korteDatum, langeDatum, untilDate } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
@@ -319,9 +319,7 @@
 	     versions under it per year; the one the other side shows cannot be chosen. -->
 	<TekstMenu label="Tekstversie {which}" tekst="Tekst sinds {date(w.from)}">
 		{#snippet knop()}<Badge {which} /><span class="ab__text"
-				>Tekst sinds {optionLabel(w)}, {w.until
-					? `tot ${korteDatum(w.until)}`
-					: 'geldend recht'}</span
+				>Tekst sinds {optionLabel(w)}, {w.until ? `${untilDate(w.until)}` : 'geldend recht'}</span
 			>{/snippet}
 		{#snippet inhoud(sluit)}
 			<div class="ab__lijst">
