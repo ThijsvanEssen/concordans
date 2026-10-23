@@ -72,10 +72,16 @@
 </button>
 
 <style>
+	/* One grid for every option: box, mark, label and count each in a column of their own, every
+	   small part centred on the label's first line, so a label of two lines moves nothing beside
+	   it (Thijs, 23 Oct: "checkboxes die niet zo goed uitlijnen"). */
 	.optie {
-		display: flex;
-		align-items: center;
-		gap: var(--s-2);
+		--regel: calc(var(--lh-snug) * 1em);
+		display: grid;
+		grid-template-columns: auto auto minmax(0, 1fr) auto;
+		align-items: start;
+		align-content: center;
+		gap: 0 var(--s-2);
 		width: 100%;
 		min-height: var(--tik-h);
 		padding: 0;
@@ -96,6 +102,7 @@
 		outline-offset: 1px;
 	}
 	.optie.inline {
+		display: inline-grid;
 		width: auto;
 		min-height: 0;
 		font-size: var(--t-micro);
@@ -121,41 +128,46 @@
 	.kleur {
 		width: var(--s-3);
 		height: var(--s-3);
-		flex: none;
+		margin-top: calc((var(--regel) - var(--s-3)) / 2);
 		border-radius: 50%;
+	}
+	.optie > :global(.vinkje) {
+		margin-top: calc((var(--regel) - var(--s-3)) / 2);
 	}
 	.is-active .kleur {
 		box-shadow:
 			0 0 0 2px var(--paper),
 			0 0 0 3px var(--ink);
 	}
+	/* As wide as its block asks (--optie-voor: the legend's line samples), so the names of every
+	   block start in one column. */
 	.voor {
 		display: inline-flex;
 		align-items: center;
-		flex: none;
+		justify-content: center;
+		min-width: var(--optie-voor, 0);
+		height: var(--regel);
 		color: var(--ink);
+	}
+	/* Without a mark, the label takes its column: no empty track. */
+	.optie:not(:has(.voor)) .label {
+		grid-column: 2 / 4;
 	}
 	.label {
 		min-width: 0;
+		line-height: var(--lh-snug);
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 	.label.wrap {
 		white-space: normal;
-		line-height: var(--lh-snug);
-	}
-	/* A label of more lines: the box and the swatch on its first line, not in its middle. */
-	.optie:has(.label.wrap) {
-		align-items: flex-start;
-	}
-	.optie:has(.label.wrap) > :global(.vinkje),
-	.optie:has(.label.wrap) > .kleur {
-		margin-top: calc((var(--lh-snug) * 1em - var(--s-3)) / 2);
 	}
 	.aantal {
-		margin-left: auto;
-		padding-left: var(--s-2);
+		display: inline-flex;
+		align-items: center;
+		justify-content: flex-end;
+		height: var(--regel);
 		font-size: var(--t-micro);
 		font-weight: 400;
 		font-variant-numeric: tabular-nums;

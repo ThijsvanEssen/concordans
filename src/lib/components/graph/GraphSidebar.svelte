@@ -467,6 +467,8 @@
 <style>
 	/* In the strip at the left of the werkplek: blocks under a rule, as the mockup A197-b. */
 	.legend {
+		/* The marks of Soort and Relatie in one column, as wide as a line sample. */
+		--optie-voor: 28px;
 		display: flex;
 		flex-direction: column;
 		background: var(--paper);

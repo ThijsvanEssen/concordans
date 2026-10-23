@@ -114,3 +114,10 @@ test('Alle N lists the regulations a layer does not draw (R3-K F4)', async ({ pa
 	await alle.click();
 	await expect(page.getByRole('button', { name: 'Minder' }).first()).toBeVisible();
 });
+
+test('Keten fits its width: no zoom, Deel stays', async ({ page }) => {
+	await page.goto('/wetten/BWBR0010346?mode=netwerk&weergave=keten');
+	await expect(page.getByRole('button', { name: 'Keten', pressed: true })).toBeVisible();
+	await expect(page.getByRole('button', { name: /^Deel/ }).first()).toBeAttached();
+	await expect(page.getByRole('button', { name: 'Inzoomen' })).toHaveCount(0);
+});

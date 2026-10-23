@@ -126,6 +126,7 @@
 		externCounts = null,
 		extern = null,
 		externStippen = null,
+		middenZoom = true,
 		...legend
 	}: {
 		store: GraphStore;
@@ -176,6 +177,8 @@
 		midden?: Snippet<[number]>;
 		extern?: ExternalCard | null;
 		externStippen?: readonly { jaar: number; collection: Collection }[] | null;
+		/** Zoom over a weergave of its own; Keten fits its width and scrolls instead. */
+		middenZoom?: boolean;
 	} & LegendProps = $props();
 
 	// ── graphology (data + layout, no sigma) ─────────────────────────────────
@@ -1107,13 +1110,13 @@
 <svelte:window onkeydown={handleKeydown} onpointerdown={closeClusterCard} />
 
 <!-- Deel and the zoom, the same over the canvas and over a weergave of its own. -->
-{#snippet controls(zoomIn: () => void, zoomOut: () => void, all: () => void)}
+{#snippet controls(zoomIn: () => void, zoomOut: () => void, all: () => void, zoomen = true)}
 	{#if balk}<div class="doek-balk">{@render balk()}</div>{/if}
-	<div class="zoom" role="group" aria-label="Zoomen">
-		<IconButton label="Inzoomen" onclick={zoomIn}>+</IconButton>
-		<IconButton label="Uitzoomen" onclick={zoomOut}>−</IconButton>
-		<IconButton label="Alles in beeld" onclick={all}>⤢</IconButton>
-	</div>
+	{#if zoomen}<div class="zoom" role="group" aria-label="Zoomen">
+			<IconButton label="Inzoomen" onclick={zoomIn}>+</IconButton>
+			<IconButton label="Uitzoomen" onclick={zoomOut}>−</IconButton>
+			<IconButton label="Alles in beeld" onclick={all}>⤢</IconButton>
+		</div>{/if}
 {/snippet}
 
 {#snippet periode()}
@@ -1194,7 +1197,8 @@
 				{@render controls(
 					() => (middleScale = Math.min(3, middleScale * 1.25)),
 					() => (middleScale = Math.max(0.5, middleScale / 1.25)),
-					() => (middleScale = 1)
+					() => (middleScale = 1),
+					middenZoom
 				)}
 			{:else}
 				{@render controls(
@@ -1210,7 +1214,8 @@
 				{@render controls(
 					() => (middleScale = Math.min(3, middleScale * 1.25)),
 					() => (middleScale = Math.max(0.5, middleScale / 1.25)),
-					() => (middleScale = 1)
+					() => (middleScale = 1),
+					middenZoom
 				)}
 			</div>
 		{/if}

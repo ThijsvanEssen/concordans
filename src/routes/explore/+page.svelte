@@ -1968,6 +1968,7 @@
 								onHeatPeriodChange={setHeatPeriod}
 								onToggleMutatie={toggleMutatie}
 								midden={view === 'omgeving' ? undefined : viewMiddle}
+								middenZoom={view !== 'keten'}
 								surroundings={view === 'omgeving'}
 								externCounts={view === 'keten'
 									? chainCounts
