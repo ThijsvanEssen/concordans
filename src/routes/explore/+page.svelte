@@ -385,8 +385,18 @@
 	const withChain = (n: GraphNode | null | undefined) =>
 		!!n &&
 		(n.collection === 'instruments' || n.collection === 'articles' || !!LINEAGE[n.collection]);
+	/** Another chosen bron the keten was opened from ("Ook gekozen"), by its canvas id. */
+	let chainFrom = $state<string | null>(null);
+	/** The bronnen chosen besides the page's: in the keten marked, else named beside it. */
+	const chainChosen = $derived(
+		[selectedNode, ...composer.entries.filter((e) => e.on).map((e) => e.node)].filter(
+			(n): n is GraphNode => !!n && !n.id.startsWith('synth:')
+		)
+	);
 	const chainStart = $derived.by(() => {
 		if (mode !== 'graph' || view !== 'keten') return null;
+		const from = chainChosen.find((n) => n.id === chainFrom && withChain(n));
+		if (from) return from;
 		if (withChain(selectedNode)) return selectedNode;
 		return composer.entries.find((e) => e.on && withChain(e.node))?.node ?? null;
 	});
@@ -1983,6 +1993,16 @@
 					}
 				: null}
 			failure={chainFailure}
+			start={chainStart?.id ?? null}
+			period={{ van: filter.van, tot: filter.tot }}
+			others={chainChosen
+				.filter((n) => n.id !== chainStart?.id)
+				.map((n) => ({
+					id: n.id,
+					name: bronNaam(n, $instrumentMetaStore),
+					collection: n.collection,
+					onOpen: withChain(n) ? () => (chainFrom = n.id) : null
+				}))}
 			onChoose={(k) => setUrl({ [MARK_PARAM]: k.id })}
 		/>
 	{:else if view === 'verband'}

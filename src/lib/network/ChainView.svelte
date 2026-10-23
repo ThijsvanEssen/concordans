@@ -31,10 +31,24 @@
 		loading = false,
 		expired = null,
 		start = null,
+		period = null,
+		others = [],
 		onChoose
 	}: {
 		/** The bron the keten starts from, which no filter hides. */
 		start?: string | null;
+		/** The period of the strip: a bron dated outside it is drawn faint, and counted. */
+		period?: { van: string | null; tot: string | null } | null;
+		/**
+		 * The other chosen bronnen: marked where they stand in the keten, else named in a line
+		 * of their own; one with a keten of its own opens it in one click.
+		 */
+		others?: readonly {
+			id: string;
+			name: string;
+			collection: string;
+			onOpen: (() => void) | null;
+		}[];
 		/** The regulations no longer in force: how many, whether they are drawn, and the switch. */
 		expired?: { total: number; shown: boolean; onToggle: () => void } | null;
 		layers: readonly ChainLayer[];
@@ -176,6 +190,16 @@
 	};
 	/** How many a layer holds, drawn and listed: the number of its "Alle". */
 	const allOf = (l: ChainLayer) => l.nodes.length + (rest[l.id] ?? 0);
+	/** Dated outside the period of the strip: faint, not gone (Thijs, 23 Oct). */
+	const outside = (k: ChainNode) =>
+		!!period &&
+		!!k.since &&
+		((!!period.van && k.since < period.van) || (!!period.tot && k.since > period.tot));
+	const outsideCount = $derived(shown.flatMap((l) => l.nodes).filter(outside).length);
+	const otherIds = $derived(new Set(others.map((o) => o.id)));
+	const notHere = $derived(
+		others.filter((o) => !shown.some((l) => l.nodes.some((n) => n.id === o.id)))
+	);
 	/** The layers of the list (a phone): the start and what stands above it as the list's head (F12). */
 	const head = $derived(shown.filter((l) => l.id === 'law' || l.id === 'basis' || l.id === 'eu'));
 	const listed = $derived(
@@ -228,8 +252,15 @@
 		</div>
 	{:else if loading}
 		<p class="laden" role="status">Keten laden…</p>
-	{:else if gap || expired?.total}
+	{:else if gap || expired?.total || outsideCount || notHere.length}
 		<div class="kop">
+			{#if outsideCount}<span class="stil">{formatCount(outsideCount)} buiten de periode</span>{/if}
+			{#if notHere.length}<span class="ook"
+					>Ook gekozen, niet in deze keten: {#each notHere as o, i (o.id)}{#if i},
+						{/if}{#if o.onOpen}<TekstLink onclick={o.onOpen} title="De keten van {o.name}"
+								>{o.name}</TekstLink
+							>{:else}{o.name}{/if}{/each}</span
+				>{/if}
 			{#if gap}<p class="gap">{gap}</p>{/if}
 			{#if expired?.total}<TekstLink onclick={expired.onToggle} aria-pressed={expired.shown}
 					>{expired.shown
@@ -290,6 +321,8 @@
 				<g
 					class="node"
 					class:is-active={chosen === k.id}
+					class:is-outside={outside(k)}
+					class:is-other={otherIds.has(k.id)}
 					role="button"
 					tabindex="0"
 					aria-label={k.name}
@@ -299,6 +332,14 @@
 				>
 					<title>{k.expired ? `${k.name}, vervallen sinds ${k.expired}` : k.name}</title>
 					<circle cx={p.x} cy={p.y} r="22" class="hit" />
+					{#if otherIds.has(k.id) && chosen !== k.id}<rect
+							class="sel sel--ander"
+							x={p.x - 12}
+							y={p.y - 12}
+							width="24"
+							height="24"
+							rx="2"
+						/>{/if}
 					{#if chosen === k.id}<rect
 							class="sel"
 							x={p.x - 12}
@@ -452,6 +493,18 @@
 	}
 	.line.is-active {
 		opacity: 1;
+	}
+	/* Outside the period of the strip: faint, not gone. */
+	.node.is-outside {
+		opacity: 0.35;
+	}
+	/* Another chosen bron in this keten: its frame, dashed (the marked one's is whole). */
+	.sel--ander {
+		stroke-dasharray: 3 2;
+	}
+	.is-other .name {
+		font-weight: 600;
+		fill: var(--ink);
 	}
 	/* No longer in force: drawn faint, its title says since when. */
 	.vervallen {

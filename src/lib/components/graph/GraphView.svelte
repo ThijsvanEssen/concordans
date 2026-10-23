@@ -1055,11 +1055,13 @@
 			stippen = nieuw;
 		}
 	}
+	/** The dots of the strip: the canvas's, or those of a weergave of its own (Keten, Verband). */
+	const strookStippen = $derived(externStippen ?? stippen);
 	const eersteJaar = $derived(
-		stippen.length ? String(Math.floor(Math.min(...stippen.map((s) => s.jaar)))) : ''
+		strookStippen.length ? String(Math.floor(Math.min(...strookStippen.map((s) => s.jaar)))) : ''
 	);
 	const laatsteJaar = $derived(
-		stippen.length ? String(Math.floor(Math.max(...stippen.map((s) => s.jaar)))) : ''
+		strookStippen.length ? String(Math.floor(Math.max(...strookStippen.map((s) => s.jaar)))) : ''
 	);
 	const jaarVan = (dag: string | null) => (dag ? Number(dag.slice(0, 4)) : null);
 	/** A period chosen by its years: the bronfilter holds it as days (?van, ?tot). */
@@ -1408,7 +1410,7 @@
 			</div>
 		</div>
 		<Tijdstrook
-			stippen={externStippen ?? stippen}
+			stippen={strookStippen}
 			van={jaarVan(filter.van)}
 			tot={jaarVan(filter.tot)}
 			onPeriode={kiesPeriode}
