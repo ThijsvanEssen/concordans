@@ -40,9 +40,6 @@ export const AMENDING_BILL_KINDS: ReadonlySet<string> = new Set<DossierKind>([
 	INITIATIVE_BILL
 ]);
 
-/** A dossier of letters and motions has no kind: it is listed as one of the others. */
-export const NO_KIND_LABEL = 'Overige dossiers';
-
 /** The phases of a bill, in the order of the curated list. */
 export const PHASES = [
 	'Voorstel van wet',

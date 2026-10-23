@@ -85,7 +85,7 @@
 		<ReaderHead
 			collection="instruments"
 			title={titel}
-			place={[publicationName(publication)]}
+			kindLabel={publicationName(publication)}
 			acties={{
 				bewaar: bewaarItem(node.id, { kort: forms.short, voluit: forms.full }, { groep: plek }),
 				cite: citeItems(forms, permalink(page.url, '')),

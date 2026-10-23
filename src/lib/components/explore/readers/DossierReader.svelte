@@ -6,7 +6,6 @@
 	import { bewaarDossier } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import { dossierName, kamerstukNummer, officialNumber } from '$lib/bron/dossier-naam';
 	import { atomHref } from '$lib/components/actueel/feed';
@@ -22,7 +21,6 @@
 	import { report } from '$lib/api/errors';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { GraphNode } from '$lib/graph/types';
-	import { bronLabel } from '$lib/vocabulary';
 	import { getDossier } from '$lib/api/dossiers';
 
 	import StandBalk from '$lib/components/parliamentary/StandBalk.svelte';
@@ -116,6 +114,7 @@
 		<div class="r-dossier">
 			<ReaderHead
 				collection="dossiers"
+				kindParts={[kamerstukNummer(d.number)]}
 				title={d.short_title ?? d.title ?? officialNumber(d.number)}
 				acties={{
 					// One group per dossier in a map, as a Kamerstuk of it is grouped (map.ts).
@@ -124,11 +123,6 @@
 					follow: { number: d.number, title: dossierName(d) }
 				}}
 			>
-				{#snippet kindLine()}
-					<SoortLink collection="dossiers">{bronLabel('dossiers')}</SoortLink><span
-						>, {kamerstukNummer(d.number)}</span
-					>
-				{/snippet}
 				{#snippet onderTitel()}
 					{#if d.short_title && d.title && d.title.trim() !== d.short_title}
 						<details class="full-title">

@@ -128,6 +128,8 @@
 	import { NetwerkComposer } from './netwerk-compose.svelte';
 	import { OverlayCounts } from './overlay-counts.svelte';
 	import TocSheet from './TocSheet.svelte';
+	import BronFailure from '$lib/components/explore/BronFailure.svelte';
+	import { contentsEmpty } from '$lib/components/explore/contents-state.svelte';
 	import ExampleLine from './ExampleLine.svelte';
 
 	// One store for the lifetime of this page, so it survives mode switches.
@@ -1091,6 +1093,14 @@
 		'judgments'
 	]);
 
+	/** Whether the bron on screen has contents to go by: a text with one entry or none has no
+	 *  column, no tab Inhoud and no button (the tables of contents tell, contents-state). */
+	const hasContents = $derived(
+		!!selectedNode &&
+			WITH_CONTENTS.has(selectedNode.collection) &&
+			contentsEmpty.id !== selectedNode.id
+	);
+
 	// ── Resizable columns ────────────────────────────────────────────────────
 	const widths = new ColumnWidths();
 	onMount(() => widths.load());
@@ -1169,10 +1179,7 @@
 					onKies: (k) => setReading(k === 'tekst'),
 					tekstMogelijk: true,
 					// Beside the network the contents have no column: they open over the reader.
-					contents:
-						selectedNode && WITH_CONTENTS.has(selectedNode.collection)
-							? () => (tocOpen = true)
-							: undefined
+					contents: hasContents ? () => (tocOpen = true) : undefined
 				}
 			: null
 	);
@@ -1265,9 +1272,19 @@
 <!-- A bron on its way: the frame of its text, a skeleton where the head and the text will
      stand, so the page does not jump from empty to full (E3 T1). -->
 {#snippet bronPending()}
-	<div class="explore-laden">
-		<p class="sr-only" role="status">Laden…</p>
-		<LoadState state={{ status: 'loading' }} what="De bron" form="block" />
+	<div class="explore-read explore-laden">
+		<div class="col col--reader col--measure">
+			<p class="sr-only" role="status">Laden…</p>
+			<ReaderFrame state={{ status: 'loading' }} />
+		</div>
+	</div>
+{/snippet}
+
+<!-- A bron that did not come: in the column of its text, under a heading as a bron has, not
+     loose in a corner of the page (E8). -->
+{#snippet bronFout(f: LoadFailure)}
+	<div class="explore-read">
+		<div class="col col--reader col--measure"><BronFailure failure={f} /></div>
 	</div>
 {/snippet}
 
@@ -1414,13 +1431,7 @@
 				<p><a href="/bronnen#dekking">Bronnen en dekking</a></p>
 			</NietGevonden>
 		{:else if loadFailure && !selectedNode && !netwerkActive}
-			<div class="explore-empty">
-				<LoadState
-					state={{ status: 'error', error: loadFailure.error }}
-					what={loadFailure.what}
-					retry={loadFailure.retry}
-				/>
-			</div>
+			{@render bronFout(loadFailure)}
 		{:else if padNotHeld && !selectedNode && !netwerkActive}
 			<p class="explore-empty stil">{padNotHeld}</p>
 		{:else if mode === 'graph' && (focus || pad) && !selectedNode && !netwerkActive && !focusNotHeld && !loadFailure}
@@ -1602,7 +1613,7 @@
 				{/if}
 			</div>
 		{:else if selectedNode}
-			{@const withContents = WITH_CONTENTS.has(selectedNode.collection)}
+			{@const withContents = hasContents}
 			<div
 				class="explore-read"
 				class:explore-read--with-nav={withContents}
@@ -1647,13 +1658,7 @@
 				<TocSheet onClose={() => (tocOpen = false)}>{@render toc()}</TocSheet>
 			{/if}
 		{:else if loadFailure}
-			<div class="explore-empty">
-				<LoadState
-					state={{ status: 'error', error: loadFailure.error }}
-					what={loadFailure.what}
-					retry={loadFailure.retry}
-				/>
-			</div>
+			{@render bronFout(loadFailure)}
 		{:else if focusNotHeld}
 			<p class="explore-empty stil">{focusNotHeld}</p>
 		{:else if focus || pad}
@@ -1944,19 +1949,10 @@
 	.explore-empty {
 		margin: var(--s-6);
 	}
-	.explore-laden {
-		width: 100%;
-		max-width: var(--blad-tekst);
-		margin: 0 auto;
-		padding: var(--s-7) var(--s-6);
-	}
 	/* On a phone the page's own margin, as the reader's and the logo's (A53 #7). */
 	@media (max-width: 768px) {
 		.explore-empty {
 			margin: var(--s-5) var(--s-4);
-		}
-		.explore-laden {
-			padding: var(--s-5) var(--s-4);
 		}
 	}
 

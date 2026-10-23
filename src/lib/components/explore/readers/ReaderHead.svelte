@@ -8,6 +8,8 @@
 	// KopActies through `acties`, Bewaar always, Citeer where the kind is cited (KOP_ACTIES);
 	// what only one kind has (Vergelijken, the peildatum) comes in `extra`, before them.
 	import SoortLink from '$lib/bron/SoortLink.svelte';
+	import GlossaryPill from './GlossaryPill.svelte';
+	import type { GlossaryTerm } from '$lib/glossary';
 	import { bronLabel, type Collection } from '$lib/vocabulary';
 	import type { Snippet } from 'svelte';
 	import KopActies from './KopActies.svelte';
@@ -17,15 +19,18 @@
 		collection,
 		juris,
 		kindLabel = null,
+		kindTerm = null,
+		kindParts = [],
+		lijst,
 		title,
 		place = [],
 		placeTitle = null,
 		nav,
-		kindLine,
 		onderTitel,
 		statusLine,
 		later,
 		laterPlek = false,
+		statusHeld = false,
 		acties,
 		extra,
 		children
@@ -34,6 +39,12 @@
 		juris?: string | null;
 		/** The kind of the bron where it is more precise than its collection: `Conclusie`. */
 		kindLabel?: string | null;
+		/** A kind with a plain explanation (Motie, MvT): the word becomes a term beside the glyph. */
+		kindTerm?: GlossaryTerm | null;
+		/** What follows the kind after a comma: a date, a court, a chamber. Data, never a line. */
+		kindParts?: readonly (string | number | null | undefined | false)[];
+		/** The list the kind leads to where that is not its collection: `ministers`. */
+		lijst?: 'ministers' | Collection;
 		title: string;
 		/** The place of the bron, printed above the title: `Wetboek van Strafrecht, Tweede Boek, Titel XX`. */
 		place?: string[];
@@ -41,8 +52,6 @@
 		placeTitle?: string | null;
 		/** Links to the previous and next bron, at the end of the first line. */
 		nav?: Snippet;
-		/** The line above the title in a reader's own words (a mark, a date): else its kind. */
-		kindLine?: Snippet;
 		/** What stands under the title: the official title, the indieners, what a bill amends. */
 		onderTitel?: Snippet;
 		/** The words of the status line: `Geldend recht, tekst sinds 1 maart 2019`. */
@@ -53,6 +62,8 @@
 		/** That line kept from the start, empty or not, so its phrase moves nothing when it
 		 * comes (Sv 147: 22 px, 10 Oct). */
 		laterPlek?: boolean;
+		/** The status line kept from the start, empty or not, for words that come with a later answer. */
+		statusHeld?: boolean;
 		/** The actions of the head: Bewaar always, Citeer where the kind is cited. */
 		acties: Acties;
 		/** A control only this kind has, before the actions: Vergelijken. */
@@ -61,14 +72,13 @@
 		children?: Snippet;
 	} = $props();
 
+	const delen = $derived(joinParts([juris, ...kindParts]));
 	const citeer = $derived(KOP_ACTIES[collection]?.citeer ?? false);
 </script>
 
 <div class="reader-head">
 	<div class="reader-line" class:reader-line--plaats={collection === 'articles'}>
-		{#if kindLine}
-			<div class="reader-kind">{@render kindLine()}</div>
-		{:else if place.length > 0 || placeTitle}
+		{#if place.length > 0 || placeTitle}
 			<!-- One line on a wide screen, the whole of it on hover; wrapped on a phone. A place
 			     the band Behoort bij names already gives only its heading. -->
 			<div class="reader-place" title={[place.join(', '), placeTitle].filter(Boolean).join('. ')}>
@@ -77,9 +87,14 @@
 			</div>
 		{:else}
 			<div class="reader-kind">
-				<!-- One run of words: the kind as a link, the jurisdiction after its comma. -->
-				<SoortLink {collection}><span>{kindLabel ?? bronLabel(collection)}</span></SoortLink
-				>{#if joinParts([juris])}<span class="reader-juris">, {joinParts([juris])}</span>{/if}
+				<!-- One run of words, one form on every kind: glyph and kind as a link to its list,
+				     the rest after its commas. A kind with a term keeps the link on the glyph. -->
+				{#if kindTerm}<SoortLink {collection} {lijst} glyphOnly /><GlossaryPill
+						term={kindTerm}
+						label={kindLabel ?? kindTerm}
+					/>{:else}<SoortLink {collection} {lijst}
+						><span>{kindLabel ?? bronLabel(collection)}</span></SoortLink
+					>{/if}{#if delen}<span class="reader-juris">, {delen}</span>{/if}
 			</div>
 		{/if}
 		{@render nav?.()}
@@ -94,7 +109,7 @@
 	     so a phrase that comes late (the memorie, the bill) does not push the actions or wrap
 	     beside them (Thijs, 10 Oct, approved suggestion 5). On every reader in this place. -->
 	<div class="reader-status">
-		<div class="reader-status__woorden">{@render statusLine?.()}</div>
+		<div class="reader-status__woorden" class:plek={statusHeld}>{@render statusLine?.()}</div>
 		{#if later || laterPlek}<div class="reader-status__later">{@render later?.()}</div>{/if}
 		<span class="reader-status__acties">
 			{@render extra?.()}
@@ -236,6 +251,9 @@
 		font-size: var(--t-meta);
 		line-height: var(--lh-snug);
 		color: var(--ink);
+	}
+	.reader-status__woorden.plek {
+		min-height: calc(var(--t-meta) * var(--lh-snug));
 	}
 	.reader-status__woorden :global(p) {
 		margin: 0;

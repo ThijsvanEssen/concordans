@@ -99,6 +99,31 @@
 		color: var(--ink);
 		box-shadow: inset 2px 0 0 var(--ink);
 	}
+	/* The one type of a division in the contents, by its depth: a boek or kop reads as a
+	   heading, a paragraaf as a quiet label. The tables of contents give only the level. */
+	:global(.nav-kolom__n1) {
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		font-weight: 600;
+		color: var(--ink);
+	}
+	:global(.nav-kolom__n2) {
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		font-weight: 600;
+		color: var(--ink-2);
+	}
+	:global(.nav-kolom__n3) {
+		font-size: var(--t-micro);
+		font-weight: 600;
+		color: var(--ink-3);
+	}
+	:global(.nav-kolom__n4) {
+		font-size: var(--t-micro);
+		font-weight: 400;
+		font-style: italic;
+		color: var(--ink-3);
+	}
 	/* A finger's target in the column and the sheet Inhoud: a row 44 px high. */
 	@media (pointer: coarse), (max-width: 768px) {
 		:global(.nav-kolom__rij) {

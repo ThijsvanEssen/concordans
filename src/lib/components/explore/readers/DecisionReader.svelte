@@ -11,7 +11,6 @@
 	import { joinParts } from '$lib/text/words';
 	import { citationRecord } from '$lib/text/citation-record';
 	import { bewaarItem } from '$lib/map/map';
-	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import { getDecision, getDecisionDocument, getParliamentSeats } from '$lib/api/records';
 	import { coalitionFactionsOf } from '$lib/components/parliamentary/coalitie';
 	import CoalitieRegel from '$lib/components/parliamentary/CoalitieRegel.svelte';
@@ -30,7 +29,6 @@
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronHref } from '$lib/bron/href';
-	import { bronLabel } from '$lib/vocabulary';
 	import { ekFactionGroups, votersOf } from './voters';
 	import { decisionMethod, decisionOutcome } from '$lib/components/explore/index/decision-kind';
 	import { EK_SOURCE, chamberName } from '$lib/components/parliamentary/chamber';
@@ -129,6 +127,7 @@
 		<div class="r-decision">
 			<ReaderHead
 				collection="decisions"
+				kindParts={[chamberName(chamber), d.date ? langeDatum(d.date) : null]}
 				title={d.subject ?? doc?.title ?? lacks('onderwerp')}
 				acties={{
 					bewaar: bewaarItem(node.id, voteCitation({ date: d.date, chamber, subject: onderwerp }), {
@@ -136,11 +135,6 @@
 					})
 				}}
 			>
-				{#snippet kindLine()}
-					<SoortLink collection="decisions">{bronLabel('decisions')}</SoortLink><span
-						>, {chamberName(chamber)}{d.date ? `, ${langeDatum(d.date)}` : ''}</span
-					>
-				{/snippet}
 				<!-- The outcome and what was voted on; the dossier is in the band ("Over 34372 …"), a
 				     second one here. A stemming is cited through what was voted on (KOP_ACTIES). -->
 				{#snippet statusLine()}

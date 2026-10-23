@@ -31,7 +31,6 @@
 	import { ifExists, report } from '$lib/api/errors';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
-	import GlossaryPill from './GlossaryPill.svelte';
 	import { termOfKind } from '$lib/glossary';
 	import { page } from '$app/state';
 	import { anchorOfHash, landOn, permalink } from '$lib/bron/landing';
@@ -333,6 +332,9 @@
 		<div class="r-document">
 			<ReaderHead
 				collection="documents"
+				kindLabel={kind ?? 'Document'}
+				kindTerm={term}
+				kindParts={[doc.date ? korteDatum(doc.date) : null, ...caseKinds]}
 				title={doc.title ?? naamVan('documents', doc)}
 				acties={{
 					bewaar: paper.item,
@@ -347,14 +349,6 @@
 					tekst: doc.text ? () => doc.text ?? '' : undefined
 				}}
 			>
-				{#snippet kindLine()}
-					<!-- Running text, the comma against the word before it. -->
-					<span
-						>{#if term}<GlossaryPill {term} label={kind ?? term} />{:else}{kind ??
-								'Document'}{/if}{#if doc.date}, {korteDatum(doc.date)}{/if}{#if caseKinds.length},
-							{caseKinds.join(', ')}{/if}</span
-					>
-				{/snippet}
 				{#snippet onderTitel()}
 					{#if doc.submitters?.length}
 						<p class="submitted"><SubmitterLine submitters={fromDocument(doc.submitters)} /></p>
@@ -645,6 +639,18 @@
 		color: inherit;
 		text-align: inherit;
 		cursor: pointer;
+	}
+	/* A finger's 44 px around the heading, before it (its ▾ comes after it, on ::after). */
+	@media (pointer: coarse), (max-width: 768px) {
+		.heading__knop {
+			position: relative;
+		}
+		.heading__knop::before {
+			content: '';
+			position: absolute;
+			inset: min(calc(-1 * var(--s-2)), calc(50% - (var(--s-6) + var(--s-3)) / 2))
+				calc(-1 * var(--s-1));
+		}
 	}
 	.heading:hover .heading__knop,
 	.heading.is-open .heading__knop,

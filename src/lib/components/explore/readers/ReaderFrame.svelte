@@ -11,11 +11,12 @@
 	import { getContext, type Snippet } from 'svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import BehoortBij from '$lib/bron/BehoortBij.svelte';
-	import { BEHOORT_KEY } from '$lib/bron/behoort';
+	import { BEHOORT_KEY, bandAlways } from '$lib/bron/behoort';
 	import WeergaveSchakelaar from '../WeergaveSchakelaar.svelte';
 	import { WEERGAVE_KEY, type Weergave } from '../weergave';
 	import SearchInText from '../SearchInText.svelte';
 	import { SearchState } from '../search-state.svelte';
+	import { BandState } from './band-state.svelte';
 	import { consultedOn } from '$lib/text/datum';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { LoadState as State } from '$lib/util/load.svelte';
@@ -61,6 +62,13 @@
 	const weergave = getContext<(() => Weergave | null) | undefined>(WEERGAVE_KEY);
 	const w = $derived(bron ? (weergave?.() ?? null) : null);
 
+	// Whether the band has lines, told once its light node is in: until then a kind that always
+	// has a band holds its place; a row with nothing in it (no band, no controls) is not drawn
+	// at all, no bare rule over the title.
+	const band = new BandState();
+	const bandHeld = $derived(bron ? bandAlways(bron().collection) && band.has !== false : false);
+	const rowShown = $derived(band.has === true || bandHeld || !!w || find);
+
 	const search = new SearchState();
 </script>
 
@@ -69,8 +77,19 @@
 		<!-- The band and Netwerk/Tekst on one row, one rule under both over the full width
 		     (Thijs, 10 Oct: the rule stopped short of the toggle). -->
 		{#if w || bron || find}
-			<div class="kop-rij">
-				{#if bron}<div class="kop-rij__band"><BehoortBij node={bron()} /></div>{/if}
+			<div class="kop-rij" hidden={!rowShown}>
+				{#if bron}<div
+						class="kop-rij__band"
+						class:kop-rij__band--held={bandHeld}
+						hidden={band.has === false}
+					>
+						<BehoortBij
+							node={bron()}
+							onHas={(h) => {
+								band.has = h;
+							}}
+						/>
+					</div>{/if}
 				{#if w?.contents || find}
 					<div class="head-actions">
 						{#if w?.contents}
@@ -171,7 +190,13 @@
 	.kop-rij__band {
 		flex: 1;
 		min-width: 0;
+	}
+	.kop-rij__band--held {
 		min-height: calc(var(--t-meta) * var(--lh-snug));
+	}
+	.kop-rij[hidden],
+	.kop-rij__band[hidden] {
+		display: none;
 	}
 	/* The rule is the row's; the band keeps none of its own. */
 	.kop-rij__band :global(.behoort) {

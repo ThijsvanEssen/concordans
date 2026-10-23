@@ -13,6 +13,7 @@
 	import { bodyItems, judgmentParticipants, signatureStart } from './readers/judgment-text';
 	import { keepMarkedInView } from './nav-column';
 	import { followSections } from './toc-position.svelte';
+	import { reportContents } from './contents-state.svelte';
 
 	let { selection }: { selection: GraphNode | null } = $props();
 
@@ -54,6 +55,9 @@
 		'Inhoudsopgave'
 	);
 	const loaded = $derived(toc.state.status === 'ready' ? toc.state.data : null);
+	$effect(() => {
+		if (selection && loaded) reportContents(selection.id, loaded.items.length + loaded.ro.length);
+	});
 	// The heading and the overweging at the top of the text, marked in the lists and kept in
 	// view in the column.
 	const headingAt = followSections(() => loaded?.items.map((i) => i.id) ?? []);
@@ -112,8 +116,6 @@
 							</ol>
 						</div>
 					{/if}
-				{:else}
-					<p class="nav-kolom__note">Geen indeling.</p>
 				{/if}
 			{/snippet}
 		</LoadState>

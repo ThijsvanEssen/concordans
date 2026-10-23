@@ -12,13 +12,16 @@
 	let {
 		collection,
 		lijst = collection,
+		glyphOnly = false,
 		children
 	}: {
 		collection: Collection;
 		/** The list it leads to where that is not its collection: `ministers` for a bewindspersoon. */
 		lijst?: Collection | 'ministers';
+		/** The link on the glyph alone, the words beside it (a term with its own hover). */
+		glyphOnly?: boolean;
 		/** The kind in words; the glyph comes before it. */
-		children: Snippet;
+		children?: Snippet;
 	} = $props();
 </script>
 
@@ -26,8 +29,9 @@
 		class="soort"
 		href={indexHref(lijst)}
 		title="Alle {categoryLabel(lijst).toLowerCase()} onder Bronnen"
-		><KindGlyph {collection} />{@render children()}</a
-	>{:else}<KindGlyph {collection} />{@render children()}{/if}
+		aria-label={glyphOnly ? `Alle ${categoryLabel(lijst).toLowerCase()} onder Bronnen` : undefined}
+		><KindGlyph {collection} />{#if !glyphOnly}{@render children?.()}{/if}</a
+	>{:else}<KindGlyph {collection} />{#if !glyphOnly}{@render children?.()}{/if}{/if}
 
 <style>
 	.soort {

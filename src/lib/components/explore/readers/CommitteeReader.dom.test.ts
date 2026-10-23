@@ -42,7 +42,7 @@ const read = async (detail: Record<string, unknown>) => {
 describe('the tiles of a commissie', () => {
 	it('says a commissie without a seat in the data is not known, not "0 Leden"', async () => {
 		const tiles = await read({ members: null, dossiers: [], dossier_total: 0 });
-		expect(tiles.Leden).toBe('niet in de gegevens');
+		expect(tiles['Huidige leden']).toBe('niet in de gegevens');
 	});
 
 	it('counts the leden it has, and none when no seat is current', async () => {
@@ -51,11 +51,13 @@ describe('the tiles of a commissie', () => {
 			dossiers: [],
 			dossier_total: 0
 		});
-		expect(tiles.Leden).toBe('1');
+		expect(tiles['Huidige leden']).toBe('1');
 	});
 
 	it('counts none when no seat is current', async () => {
-		expect((await read({ members: [], dossiers: [], dossier_total: 0 })).Leden).toBe('0');
+		expect((await read({ members: [], dossiers: [], dossier_total: 0 }))['Huidige leden']).toBe(
+			'0'
+		);
 	});
 
 	it('takes the open dossiers from the API, not from the page of dossiers loaded', async () => {

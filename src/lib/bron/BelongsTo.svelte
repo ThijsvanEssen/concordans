@@ -11,6 +11,7 @@
 	// per bron (BehoortBij keys it), so all it holds starts closed and empty with the next one.
 	import { count } from '$lib/text/words';
 	import { untrack } from 'svelte';
+	import { MediaQuery } from 'svelte/reactivity';
 	import { getNodeFirst } from '$lib/api/records';
 	import { report } from '$lib/api/errors';
 	import { getBuckets, type NodeGraph } from '$lib/api/nodes';
@@ -24,7 +25,14 @@
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { createLoader, type LoadState as State } from '$lib/util/load.svelte';
 
-	let { node }: { node: GraphNode } = $props();
+	let {
+		node,
+		onHas
+	}: {
+		node: GraphNode;
+		/** Told once the band has its lines in: whether there is anything to show. */
+		onHas?: (heeft: boolean) => void;
+	} = $props();
 
 	// The light node of this bron, kept while the reader's node is replaced under the same id
 	// (its head, its light node, the canvas's): the band stands once, in its final form, not
@@ -84,6 +92,10 @@
 		band.regels.map((r) => ({ ...r, lagen: vol[r.id] ?? r.lagen })).filter((r) => r.lagen.length)
 	);
 
+	$effect(() => {
+		if (lichtHier && !wacht) onHas?.(heeftIets(band));
+	});
+
 	// A group's rows, asked when it is opened; one list open at a time.
 	let open = $state<string | null>(null);
 	let rijen = $state<Record<string, State<Laag[]>>>({});
@@ -119,8 +131,11 @@
 	// is opened (Thijs, 10 Oct: the band "te groot", over three lines); three stand whole, as
 	// the kruimelpad of the mockups V1 (Thijs, 22 Oct).
 	let ontvouwd = $state<Record<string, boolean>>({});
+	// Side by side (the fracties of a lid) it folds on a phone from three on: its lines stand a
+	// finger's 44 px apart there, and the name must come first (E8, N9).
+	const phone = new MediaQuery('max-width: 768px');
 	const gevouwen = (r: { id: string; los?: boolean; lagen: Laag[] }) =>
-		!r.los && r.lagen.length > 3 && !ontvouwd[r.id];
+		!ontvouwd[r.id] && (r.los ? phone.current && r.lagen.length > 2 : r.lagen.length > 3);
 
 	// On a phone the band is its first line until it is opened.
 	let uit = $state(false);

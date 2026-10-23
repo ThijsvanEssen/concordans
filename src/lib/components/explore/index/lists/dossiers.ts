@@ -2,12 +2,7 @@
 import type { Schema } from '$lib/api/types';
 import { formatCount } from '$lib/text/getal';
 import { choiceOf, facetOptions } from '$lib/util/choice';
-import {
-	NO_KIND_LABEL,
-	OUTCOME_LABEL,
-	PHASES,
-	type Outcome
-} from '$lib/components/parliamentary/stages';
+import { OUTCOME_LABEL, PHASES, type Outcome } from '$lib/components/parliamentary/stages';
 import { faceted } from '../faceted';
 import { OPEN_STATUS } from '../government';
 import type { FacetsOf } from '$lib/api/lists';
@@ -121,9 +116,7 @@ export const dossiers = defineList<Row, State, ReturnType<typeof query>>({
 			{
 				id: 'track',
 				label: 'Dossiersoort',
-				note: withoutKind
-					? `${formatCount(withoutKind)} ${NO_KIND_LABEL.toLowerCase()}, zonder soort`
-					: undefined,
+				note: withoutKind ? `${formatCount(withoutKind)} zonder soort` : undefined,
 				kind: 'list',
 				options: kinds.map((k) => ({
 					id: k,

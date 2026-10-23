@@ -171,7 +171,7 @@
 		<section class="group" aria-labelledby="facet-{g.id}">
 			<h2 class="group-head" id="facet-{g.id}">
 				<span>{g.label}</span>
-				{#if g.note && !hidden}<span class="group-note">{g.note}</span>{/if}
+				{#if g.note && !hidden}<span class="group-note" title={g.note}>{g.note}</span>{/if}
 			</h2>
 
 			{#if g.kind === 'list'}
@@ -258,13 +258,19 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: baseline;
+		gap: var(--s-3);
 		margin: 0 0 var(--s-2);
 		/* A group in a section, rung 3 of docs/typografie.md; its note rung 6. */
 		font-size: var(--t-meta);
 		font-weight: 600;
 		color: var(--ink);
 	}
+	/* One line at the right, cut off where it is long: the whole of it in the title. */
 	.group-note {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 		font-weight: 400;
 		letter-spacing: 0;
 		text-transform: none;

@@ -310,6 +310,7 @@
 	<article class="whole-law" bind:this={lawEl}>
 		<ReaderHead
 			collection="instruments"
+			{kindLabel}
 			title={record.heading}
 			acties={{
 				bewaar: bewaarItem(
@@ -322,7 +323,6 @@
 				bron: officialSource
 			}}
 		>
-			{#snippet kindLine()}<span>{kindLabel}</span>{/snippet}
 			{#snippet onderTitel()}
 				{#if fullTitle}<p class="whole-official">{fullTitle}</p>{/if}
 			{/snippet}

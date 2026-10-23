@@ -3,10 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { bron } from '$lib/test/bronnen';
 
 describe('the stand of a law and of an article', () => {
-	it('is drawn by Validity in the reader of a law and in that of an article', () => {
+	it('is drawn by Validity in the reader of a law, of an article and of a bijlage', () => {
 		for (const pad of [
 			'lib/components/explore/WholeLawReader.svelte',
-			'lib/components/explore/readers/ArticleReader.svelte'
+			'lib/components/explore/readers/ArticleReader.svelte',
+			'lib/components/explore/readers/AnnexReader.svelte'
 		]) {
 			expect(bron(pad), pad).toMatch(/<Validity\b/);
 		}

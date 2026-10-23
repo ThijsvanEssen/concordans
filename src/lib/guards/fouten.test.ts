@@ -54,6 +54,10 @@ describe('errors that are not swallowed', () => {
 						'routes/(main)/onderwerpen/overzicht/+page.svelte',
 						'a CSV made here, not loaded; its button asks again'
 					),
+					plek(
+						'lib/components/explore/BronFailure.svelte',
+						'the heading of the page of a bron that could not be loaded'
+					),
 					plek('routes/+error.svelte', 'the title of the page that failed, with Opnieuw laden'),
 					{
 						pad: 'routes/explore/+page.svelte',

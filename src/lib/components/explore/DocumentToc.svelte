@@ -13,6 +13,7 @@
 	import { load } from '$lib/util/load.svelte';
 	import { keepMarkedInView } from './nav-column';
 	import { followSections } from './toc-position.svelte';
+	import { reportContents } from './contents-state.svelte';
 
 	let { selection }: { selection: GraphNode | null } = $props();
 
@@ -31,6 +32,10 @@
 		'Inhoudsopgave'
 	);
 	const loaded = $derived(toc.state.status === 'ready' ? toc.state.data : null);
+
+	$effect(() => {
+		if (selection && loaded) reportContents(selection.id, loaded.sections.length);
+	});
 
 	// The section at the top of the text, marked in the list and kept in view in the column.
 	const position = followSections(() => loaded?.sections.map((s) => s.id) ?? []);
@@ -58,7 +63,9 @@
 						{#each doc.sections as s (s.id)}
 							<li>
 								<a
-									class="nav-kolom__rij level-{Math.min(s.level, 3)}"
+									class="nav-kolom__rij nav-kolom__n{Math.min(s.level, 3) === 3
+										? 4
+										: Math.min(s.level, 3)} level-{Math.min(s.level, 3)}"
 									class:is-active={position.current === s.id}
 									aria-current={position.current === s.id ? 'location' : undefined}
 									href="#{s.id}"
@@ -67,8 +74,6 @@
 							</li>
 						{/each}
 					</ol>
-				{:else}
-					<p class="nav-kolom__note">Geen indeling.</p>
 				{/if}
 			{/snippet}
 		</LoadState>
@@ -76,24 +81,11 @@
 {/if}
 
 <style>
-	/* Heads a group of the contents: rung 3 of docs/typografie.md. */
+	/* Spacing only: the type of a level is NavKolom's. */
 	.level-1 {
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		font-weight: 600;
-		color: var(--ink);
 		margin-top: var(--s-3);
 	}
-
-	.level-2 {
-		font-family: var(--font-serif);
-		font-weight: 600;
-		color: var(--ink);
-	}
-
 	.level-3 {
 		padding-left: calc(var(--s-4) + var(--s-3));
-		color: var(--ink-3);
-		font-style: italic;
 	}
 </style>

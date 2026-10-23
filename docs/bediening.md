@@ -128,7 +128,7 @@ Every series of dated lines is the one `Tijdlijn` (`src/lib/components/tijdlijn/
 
 ## Volg
 
-`Volg` (`ui/Volg.svelte`) is the same on Actueel, a dossier and the lists with a feed (the stemmingen, the toezeggingen): the Atom link of exactly this view, copied (`Gekopieerd`); nothing is kept by Concordans. A list offers it only where every filter chosen has a word in the feed (`follow` of the list; a chosen uitslag or soort of vote has none). Where the view can also be kept in this browser (a dossier), Volg opens a menu with Bewaar bij Gevolgd and Kopieer Atom-link; once kept, a link Gevolgd stands beside Volg.
+`Volg` (`ui/Volg.svelte`) is the same on Actueel, a dossier and the lists with a feed (the stemmingen, the toezeggingen): the Atom link of exactly this view, copied (`Gekopieerd`); nothing is kept by Concordans. A list offers it only where every filter chosen has a word in the feed (`follow` of the list; a chosen uitslag or soort of vote has none). Where the view can also be kept in this browser (a dossier), Volg opens a menu with Bewaar bij Gevolgd and Kopieer Atom-link; once kept, a link Gevolgd stands beside Volg. In the head of a reader Bewaar is always the first action, Volg or Citeer after it.
 
 ## Print
 

@@ -45,8 +45,8 @@
 </script>
 
 <span class="kop-acties">
-	{#if follow}<FollowDossier dossier={follow} />{:else if atom}<Follow href={atom} />{/if}
 	{#if bewaar}<Bewaar item={bewaar} {wat} />{/if}
+	{#if follow}<FollowDossier dossier={follow} />{:else if atom}<Follow href={atom} />{/if}
 	{#if cite.length > 0}
 		<CiteMenu items={cite} name={naam} align="right" caret>
 			{#snippet onder(close)}

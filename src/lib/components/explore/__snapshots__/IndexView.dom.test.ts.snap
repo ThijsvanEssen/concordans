@@ -677,7 +677,7 @@ exports[`Bronnen, list by list > dossiers ? > requests 1`] = `
 
 exports[`Bronnen, list by list > dossiers ? > view 1`] = `
 {
-  "facetten": "Stand Openstaand 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Dossiersoort 1.997 overige dossiers, zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Toon 3.728 dossiers",
+  "facetten": "Stand Openstaand 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Dossiersoort 1.997 zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Toon 3.728 dossiers",
   "filters": [
     "Openstaand 3.728 (aan)",
     "Afgehandeld 4.077",
@@ -756,7 +756,7 @@ exports[`Bronnen, list by list > dossiers ?q=36600 > requests 1`] = `
 
 exports[`Bronnen, list by list > dossiers ?q=36600 > view 1`] = `
 {
-  "facetten": "Stand Openstaand 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Dossiersoort 1.997 overige dossiers, zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Toon 3.728 dossiers",
+  "facetten": "Stand Openstaand 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Dossiersoort 1.997 zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Toon 3.728 dossiers",
   "filters": [
     "Openstaand 3.728",
     "Afgehandeld 4.077",
@@ -833,7 +833,7 @@ exports[`Bronnen, list by list > dossiers ?stand=all&sort=last_activity > reques
 
 exports[`Bronnen, list by list > dossiers ?stand=all&sort=last_activity > view 1`] = `
 {
-  "facetten": "Stand Openstaand 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Dossiersoort 1.997 overige dossiers, zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Wissen Toon 3.728 dossiers",
+  "facetten": "Stand Openstaand 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Dossiersoort 1.997 zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Wissen Toon 3.728 dossiers",
   "filters": [
     "Openstaand 3.728",
     "Afgehandeld 4.077",
@@ -916,7 +916,7 @@ exports[`Bronnen, list by list > dossiers ?stand=closed&uitkomst=aangenomen&phas
 
 exports[`Bronnen, list by list > dossiers ?stand=closed&uitkomst=aangenomen&phase=Eerste+Kamer,Tweede+Kamer&has_phase=Raad+van+State&track=Wetsvoorstel&ministerie=bzk&van=2020-01-01&sort=number > view 1`] = `
 {
-  "facetten": "Stand Openstaand 3.728 Afgehandeld 4.077 Aangenomen 0 Alle dossiers 7.805 Dossiersoort 1.997 overige dossiers, zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Wissen Toon 3.728 dossiers",
+  "facetten": "Stand Openstaand 3.728 Afgehandeld 4.077 Aangenomen 0 Alle dossiers 7.805 Dossiersoort 1.997 zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Wissen Toon 3.728 dossiers",
   "filters": [
     "Openstaand 3.728",
     "Afgehandeld 4.077",

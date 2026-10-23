@@ -109,6 +109,13 @@ const INHOUD: Partial<Record<Collection, string[]>> = {
 export const isInhoudGroep = (collection: Collection, g: { id: string }) =>
 	INHOUD[collection]?.includes(g.id) ?? false;
 
+/** Kinds whose band depends on the data: one without it has no band to hold a place for. */
+const BAND_PER_CASE = new Set<Collection>(['instruments', 'commitments']);
+
+/** Whether a kind of bron always has a band, so its reader holds the place from the start. */
+export const bandAlways = (collection: Collection) =>
+	(BANDS[collection]?.lines.length ?? 0) > 0 && !BAND_PER_CASE.has(collection);
+
 /** Whether a band has anything to show. */
 export const heeftIets = (b: Behoort) => b.regels.length + b.onder.length > 0;
 

@@ -54,31 +54,26 @@
 			acties={{
 				bewaar: bewaarItem(node.id, { kort: naam, voluit: naam })
 			}}
-		/>
+		>
+			<!-- The period is the one fact of the status line, from the light node at once. -->
+			{#snippet statusLine()}
+				{#if van}<span class="nums"
+						>{tot ? `${when(van)} tot ${when(tot)}` : `sinds ${when(van)}`}</span
+					>{/if}
+			{/snippet}
+		</ReaderHead>
 	{/snippet}
 	{#snippet loading()}
-		<!-- The period from the light node; the other rows wait for the record, each with
-			     its label in place so nothing under them moves when they come. -->
+		<!-- The rows wait for the record, each with its label in place so nothing under them
+			     moves when they come. -->
 		<Feiten>
-			<Veld label="Periode" value={when(van)} nodig>
-				<span class="nums"
-					>{#if tot}{when(van)} tot {when(tot)}{:else}sinds {when(van)}{/if}</span
-				>
-			</Veld>
 			{#each ['Minister-president', 'Coalitie', 'Bewindspersonen', 'Wetsvoorstellen', 'Toezeggingen'] as label (label)}
 				<Veld {label} value="…"><span class="stil">…</span></Veld>
 			{/each}
 		</Feiten>
 	{/snippet}
 	{#snippet children(c)}
-		{@const from = when(c.from_date)}
-		{@const to = when(c.to_date)}
 		<Feiten>
-			<Veld label="Periode" value={from} nodig>
-				<span class="nums"
-					>{#if to}{from} tot {to}{:else}sinds {from}{/if}</span
-				>
-			</Veld>
 			<!-- The link takes the person's address from the answer (keepPaths):
 				     `prime_minister.path`. -->
 			<Veld label="Minister-president" value={c.prime_minister}>

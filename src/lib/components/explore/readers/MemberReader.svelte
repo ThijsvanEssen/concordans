@@ -13,7 +13,6 @@
 	import { korteDatum, vandaag, yearsOf } from '$lib/text/datum';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import { getMember, getMemberAuthored } from '$lib/api/records';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
@@ -211,6 +210,10 @@
 				{@const titel = m.name ?? naamVan('members', m)}
 				<ReaderHead
 					collection="members"
+					lijst={(m.government_functions ?? []).length > 0 ? 'ministers' : 'members'}
+					kindLabel={ekSitting && !sitting
+						? 'Lid van de Eerste Kamer'
+						: currentTitle(career, sitting)}
 					title={titel}
 					acties={{
 						bewaar: bewaarItem(node.id, {
@@ -221,15 +224,6 @@
 						atom: atomHref({ member: m.key })
 					}}
 				>
-					{#snippet kindLine()}
-						<SoortLink
-							collection="members"
-							lijst={(m.government_functions ?? []).length > 0 ? 'ministers' : 'members'}
-							>{ekSitting && !sitting
-								? 'Lid van de Eerste Kamer'
-								: currentTitle(career, sitting)}</SoortLink
-						>
-					{/snippet}
 					{#snippet statusLine()}
 						{#if m.party}
 							<NameLink collection="factions" name={m.party} class="fractie-woord" />

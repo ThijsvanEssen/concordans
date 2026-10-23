@@ -1,14 +1,12 @@
 <script lang="ts">
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
-	import { capitalize, joinParts, textOf } from '$lib/text/words';
+	import { capitalize, textOf } from '$lib/text/words';
 	import { NOT_IN_DATA } from '$lib/text/coverage';
 	import { bewaarItem } from '$lib/map/map';
 	import ReaderHead from './ReaderHead.svelte';
-	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import type { GraphNode } from '$lib/graph/types';
-	import { bronLabel } from '$lib/vocabulary';
 	import { getCommittee } from '$lib/api/committees';
 	import { OUTCOME_LABEL, type Outcome } from '$lib/components/parliamentary/stages';
 	import { chamberName } from '$lib/components/parliamentary/chamber';
@@ -49,6 +47,7 @@
 		<!-- The header comes from the node, so a failed detail request costs the counts only. -->
 		<ReaderHead
 			collection="committees"
+			kindParts={[chamberName(chamber), kind]}
 			title={name}
 			acties={{
 				bewaar: bewaarItem(node.id, {
@@ -57,13 +56,6 @@
 				})
 			}}
 		>
-			{#snippet kindLine()}
-				<SoortLink collection="committees">{bronLabel('committees')}</SoortLink>{joinParts([
-					'',
-					chamberName(chamber),
-					kind
-				]) && `, ${joinParts([chamberName(chamber), kind])}`}
-			{/snippet}
 			{#snippet statusLine()}
 				{#if abbreviation && abbreviation !== name}<span class="afk">{abbreviation}</span>{/if}
 			{/snippet}
@@ -90,7 +82,7 @@
 						<span class="stat-num stat-num--gat">{NOT_IN_DATA}</span>
 					{:else}
 						<span class="stat-num">{c.members.length}</span>
-					{/if}<span class="stat-label">Leden</span>
+					{/if}<span class="stat-label">Huidige leden</span>
 				</li>
 				{#if !ek}
 					<!-- The Eerste Kamer's committees are not yet linked to dossiers. The count is

@@ -12,7 +12,6 @@
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { getAnnex } from '$lib/api/documents';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronLabel } from '$lib/vocabulary';
@@ -20,6 +19,11 @@
 	import { formatCount } from '$lib/text/getal';
 	import { annexGroups, type AnnexItem } from './annex';
 	import { load } from '$lib/util/load.svelte';
+	import { report } from '$lib/api/errors';
+	import Validity from '$lib/components/ui/Validity.svelte';
+	import { validityOf } from '$lib/api/validity';
+	import { getInstrumentDetail } from '$lib/api/instrument-cache';
+	import type { Schema } from '$lib/api/types';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -34,6 +38,23 @@
 		},
 		'Bijlage'
 	);
+
+	// Whether it holds is whether its law does: asked once per law (the cache has it already
+	// for the name), so the status line fills in after the text, in a place held for it.
+	let wet = $state<Schema<'InstrumentDetailDTO'> | null>(null);
+	$effect(() => {
+		const id = annex.state.status === 'ready' ? annex.state.data.annex.bwb_id : null;
+		wet = null;
+		if (!id) return;
+		let stale = false;
+		getInstrumentDetail(id)
+			.then((d) => {
+				if (!stale) wet = d;
+			})
+			.catch((e) => report('De wet van de bijlage', e));
+		return () => (stale = true);
+	});
+	const validity = $derived(validityOf(wet));
 
 	/** Its heading as printed, without its title: `Bijlage 1`, `Lijst I`. */
 	const headingOf = (a: { key: string; display_name: string | null; label: string | null }) =>
@@ -62,6 +83,8 @@
 		<div class="r-annex">
 			<ReaderHead
 				collection="annexes"
+				kindLabel={a.title ? heading : bronLabel('annexes')}
+				statusHeld
 				title={titel}
 				acties={{
 					bewaar: bewaarItem(
@@ -76,11 +99,9 @@
 					naam: kort
 				}}
 			>
-				<!-- The bijlage names itself once (UX-toets 0.79.43, #30): its heading (Bijlage 1,
-				     Lijst I) in the kind line only where the title is one of its own; its law stands
-				     in the band. -->
-				{#snippet kindLine()}
-					<KindGlyph collection="annexes" />{a.title ? heading : bronLabel('annexes')}
+				{#snippet statusLine()}
+					{#if validity?.state === 'in_force'}<span>Geldend recht</span>{/if}
+					<Validity {validity} />
 				{/snippet}
 			</ReaderHead>
 

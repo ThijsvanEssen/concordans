@@ -58,9 +58,7 @@
 {#each kinds as k (k.id)}
 	<section class="kind" data-kind={k.id}>
 		<h3 class="kind__head">
-			<span>{k.label}</span><span class="kind__count"
-				>{formatCount(k.count)}{k.id === 'laws' ? ` ${k.noun}` : ''}</span
-			>
+			<span>{k.label}</span><span class="kind__count">{formatCount(k.count)}</span>
 		</h3>
 		{#if k.id === 'judgments' && tiers?.length}
 			<div class="bar" aria-hidden="true">
@@ -121,7 +119,8 @@
 				{/each}
 			{/each}
 		</ul>
-		{#if k.count > 1}
+		<!-- Alle N is the way to the rest: with nothing more than the rows above it opens nothing. -->
+		{#if k.count > PREVIEW_ROWS}
 			<p class="kind__all">
 				<AlleN aantal={k.count} noun={k.noun} onclick={() => onOpen(k.id)} />
 			</p>

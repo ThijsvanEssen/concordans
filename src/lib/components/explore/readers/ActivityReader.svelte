@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { joinParts } from '$lib/text/words';
 	import { langeDatum } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import ReaderHead from './ReaderHead.svelte';
@@ -11,7 +10,6 @@
 	import ReaderFrame from './ReaderFrame.svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import type { Schema } from '$lib/api/types';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronLabel } from '$lib/vocabulary';
 	import { activityLine } from '$lib/verbonden/lines';
 	import { getActivity, getActivityRecords } from '$lib/api/records';
@@ -78,6 +76,7 @@
 	<div class="r-activity">
 		<ReaderHead
 			collection="activities"
+			kindLabel={activityLine({ kind: kind ?? bronLabel('activities'), status, date })}
 			title={titel}
 			acties={{
 				bewaar: bewaarItem(
@@ -90,17 +89,8 @@
 				)
 			}}
 		>
-			{#snippet kindLine()}
-				<KindGlyph collection="activities" />
-				<!-- One still to come says so, as its row in Verbonden does (#59). -->
-				{joinParts([
-					activityLine({
-						kind: kind ?? bronLabel('activities'),
-						status,
-						date
-					}),
-					date ? langeDatum(date) : null
-				])}
+			{#snippet statusLine()}
+				{#if date}<span>{langeDatum(date)}.</span>{/if}
 			{/snippet}
 		</ReaderHead>
 

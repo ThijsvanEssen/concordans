@@ -18,6 +18,7 @@
 	import { lawNodeKey } from '$lib/text/enacted-law';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';
+	import { reportContents } from './contents-state.svelte';
 
 	let { selection }: { selection: GraphNode | null } = $props();
 
@@ -88,6 +89,9 @@
 	const ready = $derived(articleList.state.status === 'ready' ? articleList.state.data : null);
 	const items = $derived(ready?.articles ?? []);
 	const annexes = $derived(ready?.annexes ?? []);
+	$effect(() => {
+		if (selection && ready) reportContents(selection.id, items.length + annexes.length);
+	});
 
 	// A tree of groups from each article's breadcrumb; articles without one go into "Overig".
 	function buildGroups(flat: Item[]): Group[] | null {
@@ -254,7 +258,7 @@
 	{@const href = g.id ? deelHref(g.id) : null}
 	<details class="group depth-{level}" open={shouldOpen}>
 		<!-- The division's link is the one tab stop; the summary only answers a click on the caret. -->
-		<summary class="group__head" tabindex={href ? -1 : undefined}>
+		<summary class="group__head nav-kolom__n{level + 1}" tabindex={href ? -1 : undefined}>
 			<Caret side />
 			{#if href}
 				<a
@@ -356,7 +360,6 @@
 		align-items: flex-start;
 		gap: var(--s-2);
 		padding: var(--s-1) var(--s-4);
-		color: var(--ink-3);
 	}
 	.group__head:hover {
 		background: var(--paper-2);
@@ -375,37 +378,12 @@
 		}
 	}
 
-	/* Depth carries the hierarchy: a boek reads as a heading, a paragraaf as a
-	   quiet sub-label — indentation alone (10px/level) is too faint a signal
-	   in a column this narrow. */
+	/* Depth carries the hierarchy in the type of each level (NavKolom: nav-kolom__n1 to 4). */
 	.group.depth-0 + .group.depth-0 {
 		margin-top: var(--s-3);
 		border-top: 1px solid var(--rule);
 		padding-top: var(--s-2);
 	}
-	.group.depth-0 > .group__head {
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		font-weight: 600;
-		color: var(--ink);
-	}
-	.group.depth-1 > .group__head {
-		font-size: var(--t-meta);
-		font-weight: 600;
-		color: var(--ink-2);
-	}
-	.group.depth-2 > .group__head {
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-	}
-	.group.depth-3 > .group__head {
-		font-size: var(--t-micro);
-		font-weight: 400;
-		color: var(--ink-3);
-		font-style: italic;
-	}
-
 	/* The first line of the label is 1.3 high; the caret sits on its middle. */
 	.group__head :global(.caret) {
 		margin: calc((1.3em - 10px) / 2) 0 0;

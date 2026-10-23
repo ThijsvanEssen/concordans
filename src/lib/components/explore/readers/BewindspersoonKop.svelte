@@ -11,7 +11,6 @@
 	// zin; dan drie ingangen met aantallen, zodat duidelijk is waar te beginnen.
 	import type { Schema } from '$lib/api/types';
 	import { getMemberCommitments, getMemberDossiers } from '$lib/api/records';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 
 	let { m, id }: { m: Schema<'MemberDetailDTO'>; id: string } = $props();
@@ -51,6 +50,9 @@
      since when in the status line, the ways into the overview under it. -->
 <ReaderHead
 	collection="members"
+	lijst="ministers"
+	kindLabel="Bewindspersoon"
+	kindParts={[partij]}
 	title={m.name ?? naamVan('members', m)}
 	acties={{
 		bewaar: bewaarItem(id, {
@@ -63,9 +65,6 @@
 		atom: atomHref({ member: m.key })
 	}}
 >
-	{#snippet kindLine()}
-		<KindGlyph collection="members" />Bewindspersoon{partij ? `, ${partij}` : ''}
-	{/snippet}
 	{#snippet statusLine()}
 		{#if laatst}
 			<p class="zin">
