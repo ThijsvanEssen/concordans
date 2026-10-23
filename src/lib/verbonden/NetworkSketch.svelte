@@ -241,11 +241,6 @@
 		fill: var(--ink);
 		text-decoration: underline;
 	}
-	/* The ring is the bron's own (below), not the box of the whole group. */
-	.single:focus,
-	.cluster:focus {
-		outline: none;
-	}
 	.single:focus-visible path,
 	.cluster:focus-visible circle:not(.hit) {
 		outline: 2px solid var(--focus);
