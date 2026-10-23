@@ -38,6 +38,7 @@
 		deelLabel = 'Deel',
 		onDeel,
 		omgeving = null,
+		aroundOn = false,
 		onOmgeving
 	}: {
 		entries: NetwerkEntry[];
@@ -53,6 +54,8 @@
 		onDeel?: () => void;
 		/** The selected bron whose surroundings alone the line below shows (O; Thijs, 10 Oct). */
 		omgeving?: string | null;
+		/** The filter Alleen verbonden bronnen is on. */
+		aroundOn?: boolean;
 		onOmgeving?: () => void;
 		/** The API ran out of time looking for paths: these are the ones it found (`partial`). */
 		deels?: boolean;
@@ -228,12 +231,18 @@
 				{/if}
 			</li>
 		</ul>
-		{#if omgeving && onOmgeving}
-			<!-- The chosen bron stands in the panel already: its name and the key on hover. -->
+		{#if (omgeving || aroundOn) && onOmgeving}
+			<!-- A filter, on and off; the chosen bronnen stay. The bron's name and the key on hover. -->
 			<p class="omgeving">
-				<TekstLink onclick={onOmgeving} title="Alleen {omgeving} met verbonden bronnen (toets O)"
-					>Alleen verbonden bronnen</TekstLink
-				>
+				<FilterOptie
+					inline
+					on={aroundOn}
+					onToggle={onOmgeving}
+					label="Alleen verbonden bronnen"
+					title={omgeving
+						? `Alleen ${omgeving} met verbonden bronnen (toets O)`
+						: 'Alleen verbonden bronnen (toets O)'}
+				/>
 			</p>
 		{/if}
 		{#if entries.length > 1}
@@ -289,7 +298,6 @@
 		font-size: var(--t-meta);
 		color: var(--ink);
 	}
-	/* Only the surroundings of the selected bron: a line, as Toon de bronnen ertussen. */
 	/* One quiet line under the chips, in the text's letter. */
 	.omgeving {
 		margin: var(--s-2) 0 0;

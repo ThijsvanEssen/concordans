@@ -1,4 +1,5 @@
 <script lang="ts">
+	import TermText from '../../readers/TermText.svelte';
 	import { NOT_IN_DATA } from '$lib/text/coverage';
 	import type { Schema } from '$lib/api/types';
 	import { openHref } from '$lib/bron/href';
@@ -95,7 +96,7 @@
 		{/snippet}
 		{#snippet body()}
 			{#if st?.zin}
-				<span class="row-zin">{st.zin}</span>
+				<span class="row-zin"><TermText text={st.zin} /></span>
 			{/if}
 			<!-- Sorted by its last activity, that day; else the day it was opened. -->
 			{@const laatst = ctx.sort.id === 'last_activity' ? d.last_activity : null}

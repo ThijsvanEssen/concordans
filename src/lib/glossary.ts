@@ -7,6 +7,8 @@ interface GlossaryEntry {
 	full: string;
 	/** One-line plain-Dutch explanation. */
 	plain: string;
+	/** The official page the explanation rests on, where it is worded after one. */
+	bron?: string;
 }
 
 export const GLOSSARY = {
@@ -33,6 +35,14 @@ export const GLOSSARY = {
 		plain:
 			'Voorstel van een lid van de Tweede Kamer om de tekst van een wetsvoorstel te wijzigen voordat erover gestemd wordt.'
 	},
+	Hamerstuk: {
+		full: 'Hamerstuk',
+		plain:
+			'Wetsvoorstel of brief waarover niemand in de vergadering het woord wil voeren; het wordt zonder stemming aanvaard.',
+		// Eerste Kamer: "Een hamerstuk is een wetsvoorstel of een brief waarover niemand tijdens
+		// een plenaire vergadering het woord wenst te voeren en dat zonder stemming wordt aanvaard."
+		bron: 'https://www.eerstekamer.nl/begrip/hamerstuk'
+	},
 	Motie: {
 		full: 'Motie',
 		plain: 'Verzoek van een Kamer aan de regering; geen wet.'
@@ -45,6 +55,25 @@ export const GLOSSARY = {
 } satisfies Record<string, GlossaryEntry>;
 
 export type GlossaryTerm = keyof typeof GLOSSARY;
+
+/** The words of running text that are a glossary term, as the procedure writes them. */
+export const TERM_IN_TEXT: [RegExp, GlossaryTerm][] = [
+	[/nota naar aanleiding van het (?:nader |tweede nader )?verslag/i, 'Nota'],
+	[/nota van wijziging/i, 'Nota van wijziging'],
+	[/hamerstuk/i, 'Hamerstuk']
+];
+
+/** Running text cut into plain pieces and the glossary terms in it. */
+export function splitTerms(text: string): { text: string; term?: GlossaryTerm }[] {
+	const all = new RegExp(`(${TERM_IN_TEXT.map(([r]) => r.source).join('|')})`, 'gi');
+	return text
+		.split(all)
+		.filter((t) => t !== '')
+		.map((t) => ({
+			text: t,
+			term: TERM_IN_TEXT.find(([r]) => new RegExp(`^${r.source}$`, 'i').test(t))?.[1]
+		}));
+}
 
 /**
  * The glossary term for the kind of a kamerstuk, as the source words it: `Nota van wijziging

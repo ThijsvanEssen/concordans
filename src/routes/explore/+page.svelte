@@ -103,6 +103,7 @@
 	import NetwerkPanel from '$lib/selection/NetwerkPanel.svelte';
 	import { focusStap } from '$lib/graph/focus-stap';
 	import {
+		onlyAround,
 		EXAMPLE_NETWERK,
 		netwerkParams,
 		parseNetwerk,
@@ -305,7 +306,14 @@
 	const netwerk = $derived<Netwerk>(
 		parseNetwerk(new URLSearchParams(netwerkQuery || (voorbeeldAan ? voorbeeld!.query : '')))
 	);
-	const netwerkActive = $derived(netwerk.ids.length > 0);
+	// "Alleen verbonden bronnen" is a filter on the netwerk, not a replacement: ?omgeving names
+	// the bron whose surroundings alone are drawn; the chosen bronnen stay in the address, greyed,
+	// and come back when the filter goes off.
+	const aroundId = $derived(
+		parseNodeId(params.get('omgeving') ?? '') ? params.get('omgeving') : null
+	);
+	const shownNetwerk = $derived(aroundId ? onlyAround(netwerk, aroundId) : netwerk);
+	const netwerkActive = $derived(shownNetwerk.ids.length > 0);
 
 	// ── The bronfilter ───────────────────────────────────────────────────────
 	// One filter object, parsed from the URL, for the panel, the margin of the reader,
@@ -823,7 +831,7 @@
 	let metGroep = $state<ReadonlyMap<string, ContainerKind>>(new Map());
 
 	$effect(() => {
-		const n = netwerk;
+		const n = shownNetwerk;
 		if (mode !== 'graph') return;
 		untrack(() => {
 			if (n.ids.length > 0) composer.compose(n);
@@ -877,6 +885,15 @@
 			wachtOp = null;
 	});
 
+	function toggleAround() {
+		if (aroundId) return setUrl({ omgeving: null });
+		const id = selectedLinkId;
+		if (!id) return;
+		// The first bron of an empty canvas grows out of it, as a bron added does.
+		if (!netwerkActive) composer.keepCanvas();
+		setUrl({ omgeving: id });
+	}
+
 	function addToNetwerk(node: GraphNode) {
 		const id = linkIdOf(node);
 		if (id) addIdToNetwerk(id, kort(bronNaam(node, $instrumentMetaStore)));
@@ -914,7 +931,16 @@
 		deepenedId = '';
 		writeStored(NETWERK_KEY, null);
 		setUrl(
-			{ netwerk: null, uit: null, tussen: null, focus: null, [SHOW]: null, open: null, mode: null },
+			{
+				netwerk: null,
+				uit: null,
+				tussen: null,
+				omgeving: null,
+				focus: null,
+				[SHOW]: null,
+				open: null,
+				mode: null
+			},
 			{ push: true }
 		);
 	}
@@ -1152,12 +1178,11 @@
 				);
 			return;
 		}
-		// O: only the surroundings of the selected bron, in place of the network, as a double
-		// click on it does (Thijs, 10 Oct: the row's Alleen de omgeving moved here).
-		if (e.key.toLowerCase() === 'o' && selectedNode && mode !== 'index') {
+		// O: the filter Alleen verbonden bronnen on or off for the selected bron.
+		if (e.key.toLowerCase() === 'o' && mode !== 'index' && (aroundId || selectedNode)) {
 			e.preventDefault();
 			kiesPaneel('graph');
-			handleNodeReplace(selectedNode);
+			toggleAround();
 			return;
 		}
 		if (e.key.toLowerCase() !== 'l' || !readAction) return;
@@ -1557,7 +1582,8 @@
 										omgeving={selectedNode && !selectedNode.stub
 											? bronNaam(selectedNode, $instrumentMetaStore)
 											: null}
-										onOmgeving={() => selectedNode && handleNodeReplace(selectedNode)}
+										aroundOn={!!aroundId}
+										onOmgeving={toggleAround}
 										onVoorbeeld={showExample}
 										selection={selectedNode &&
 										selectedLinkId &&
@@ -1572,8 +1598,14 @@
 										}}
 										joiningCount={composer.joiningCount}
 										deels={composer.partial}
-										onToggle={(id) => setNetwerk(withToggled(netwerk, id))}
-										onRemove={(id) => setNetwerk(withRemoved(netwerk, id))}
+										onToggle={(id) => {
+											if (aroundId) setUrl({ omgeving: null });
+											setNetwerk(withToggled(netwerk, id));
+										}}
+										onRemove={(id) => {
+											if (id === aroundId) setUrl({ omgeving: null });
+											setNetwerk(withRemoved(netwerk, id));
+										}}
 										onAdd={() => selectedNode && addToNetwerk(selectedNode)}
 										onTussen={() => setNetwerk({ ...netwerk, tussen: !netwerk.tussen })}
 										onClearContext={() => store.clearContext()}

@@ -40,10 +40,10 @@ export function depthFor(
 	return explicit ?? (isContainerKind(drawClass) ? 1 : DEPTH.fallback);
 }
 
-/** The netwerk's own three params, so that selecting a bron does not compose it again. */
+/** The netwerk's own params, so that selecting a bron does not compose it again. */
 export function netwerkQuery(params: URLSearchParams): string {
 	const own = new URLSearchParams();
-	for (const name of ['netwerk', 'uit', 'tussen']) {
+	for (const name of ['netwerk', 'uit', 'tussen', 'omgeving']) {
 		const value = params.get(name);
 		if (value !== null) own.set(name, value);
 	}

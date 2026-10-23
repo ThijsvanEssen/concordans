@@ -83,6 +83,15 @@ export function withRemoved(n: Netwerk, id: string): Netwerk {
 	return { ...n, ids: n.ids.filter((x) => x !== id), uit };
 }
 
+/**
+ * The netwerk as the filter Alleen verbonden bronnen shows it: only `id` (added when it is
+ * not chosen yet) is on, the others stay listed, switched off. The address keeps the full netwerk.
+ */
+export function onlyAround(n: Netwerk, id: string): Netwerk {
+	const ids = n.ids.includes(id) ? n.ids : [...n.ids, id];
+	return { ...n, ids, uit: new Set(ids.filter((x) => x !== id)) };
+}
+
 export function withToggled(n: Netwerk, id: string): Netwerk {
 	if (!n.ids.includes(id)) return n;
 	const uit = new Set(n.uit);

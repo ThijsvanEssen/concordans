@@ -86,10 +86,11 @@ const KEPT_PARAMS = [
 	'diepte',
 	'netwerk',
 	'uit',
-	'tussen'
+	'tussen',
+	'omgeving'
 ];
 
-const NETWERK_PARAMS = new Set(['netwerk', 'uit', 'tussen']);
+const NETWERK_PARAMS = new Set(['netwerk', 'uit', 'tussen', 'omgeving']);
 
 /** The kept params that Bronnen names a filter of its own by (its period): left there. */
 const BRONNEN_PARAMS = new Set(['van', 'tot', 'status']);

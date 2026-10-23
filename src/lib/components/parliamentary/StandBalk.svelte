@@ -5,6 +5,7 @@
 	// gestippeld. Onder elk vak één zin met de datum. Werkt op een lijstitem en op het detail.
 	import type { Schema } from '$lib/api/types';
 	import { boxesOf, stand } from './stand';
+	import TermText from '../explore/readers/TermText.svelte';
 	import OutcomeMark from './Uitkomst.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import { langeDatum } from '$lib/text/datum';
@@ -34,7 +35,7 @@
 				>.
 			</p>
 		{:else}
-			<p class="zin">{st.zin}</p>
+			<p class="zin"><TermText text={st.zin} /></p>
 		{/if}
 		<ol class="balk">
 			{#each boxes as box (box.body)}

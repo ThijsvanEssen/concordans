@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { onlyAround, describe, expect, it } from 'vitest';
 import type { Neighbor } from '$lib/api/nodes';
 import {
+	onlyAround,
 	deelVan,
 	between,
 	isOn,
@@ -120,5 +121,16 @@ describe('deelVan', () => {
 		expect(deelVan({ used: 200, total: 846 })).toEqual({ used: 200, total: 846 });
 		expect(deelVan({ used: 12, total: 12 })).toBeUndefined();
 		expect(deelVan(undefined)).toBeUndefined();
+	});
+});
+
+describe('onlyAround', () => {
+	it('switches the others off and keeps them listed; adds the bron when it is not chosen', () => {
+		const n = parseNetwerk(new URLSearchParams(`netwerk=${JETTEN},${BUMA}`));
+		const f = onlyAround(n, BUMA);
+		expect(f.ids).toEqual([JETTEN, BUMA]);
+		expect([...f.uit]).toEqual([JETTEN]);
+		expect(n.uit.size).toBe(0);
+		expect(onlyAround(n, SR).ids).toEqual([JETTEN, BUMA, SR]);
 	});
 });
