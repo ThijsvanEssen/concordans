@@ -465,5 +465,9 @@
 		.chip {
 			min-height: var(--veld-h-raak);
 		}
+		.chip-weg {
+			align-self: stretch;
+			min-width: var(--veld-h-raak);
+		}
 	}
 </style>

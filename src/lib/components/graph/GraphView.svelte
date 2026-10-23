@@ -1159,7 +1159,7 @@
 		{#if canvasCounts.nodes > 0}
 			<button
 				type="button"
-				class="btn filterknop"
+				class="btn filterknop raakvlak-knop"
 				aria-expanded={filtersOpen}
 				aria-controls="werkplek-filters"
 				onclick={() => (filtersOpen = !filtersOpen)}>Filter</button
@@ -1566,6 +1566,9 @@
 		}
 	}
 	@media (pointer: coarse), (max-width: 768px) {
+		.filterknop {
+			height: var(--veld-h-raak);
+		}
 		.veld {
 			height: var(--veld-h-raak);
 		}

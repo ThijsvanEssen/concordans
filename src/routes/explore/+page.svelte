@@ -1512,7 +1512,7 @@
 									{/if}
 								{/snippet}
 								{#snippet balk()}
-									<button type="button" class="btn" onclick={handleShareView}
+									<button type="button" class="btn raakvlak-knop" onclick={handleShareView}
 										>{shareCopier.label('share', 'Deel')}</button
 									>
 								{/snippet}
