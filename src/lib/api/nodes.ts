@@ -1,7 +1,8 @@
 import type { QueryOf, Schema } from '$lib/api/types';
 import { NODE_TYPES, type Collection, type Relation } from '$lib/vocabulary';
 import { api, clientFor, unwrap } from './client';
-import { isNotFound } from './errors';
+import { isNotFound, report } from './errors';
+import { onForget } from '$lib/util/forget';
 
 // Keys are lower case in the API and the routes are case-sensitive.
 const path = (collection: Collection, key: string) => ({ collection, key: key.toLowerCase() });
@@ -214,7 +215,13 @@ let shared: Promise<boolean> | null = null;
 const apiHasShared = () =>
 	(shared ??= unwrap(api.GET('/api/health'))
 		.then((h) => atLeast(String(h.version ?? ''), SHARED_SINCE))
-		.catch(() => false));
+		.catch((e) => {
+			report('API versie', e);
+			return false;
+		}));
+onForget(() => {
+	shared = null;
+});
 /** Whether `version` (`0.80.7`) is `min` or later. */
 function atLeast(version: string, min: readonly number[]): boolean {
 	const v = version.split('.').map((n) => Number.parseInt(n, 10) || 0);
