@@ -412,7 +412,7 @@ describe('the werkplek (besluit 39)', () => {
 	it('marks a bron in place (?kies), and Lees reads it as a step Back undoes', async () => {
 		localStorage.setItem('concordans:netwerk', `netwerk=${MEMBER}`);
 		const { container } = await openAt(`/explore?focus=${ARTICLE}&mode=netwerk&netwerk=${MEMBER}`);
-		(seen.GraphView.onKies as (id: string | null) => void)(MEMBER);
+		(seen.GraphView.onMark as (id: string | null) => void)(MEMBER);
 		await settle();
 		expect(param('kies')).toBe(MEMBER);
 		expect(history().entries).toHaveLength(1);
@@ -426,7 +426,7 @@ describe('the werkplek (besluit 39)', () => {
 		await settle();
 		expect(view(container)).toBe('graph');
 		expect(param('netwerk')).toBe(MEMBER);
-		expect(seen.GraphView.kies).toBe(MEMBER);
+		expect(seen.GraphView.marked).toBe(MEMBER);
 	});
 
 	it('opens the kept netwerk with the bron beside it, never in its place', async () => {

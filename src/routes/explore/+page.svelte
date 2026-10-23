@@ -4,7 +4,7 @@
 	// (besluit 39); Bladeren lists bronnen. The URL holds the state (./explore-url.ts names
 	// every param).
 	//
-	// A click on the canvas marks a bron (?kies) and opens its card; Lees on it reads the bron,
+	// A click on the canvas marks a bron (?marked) and opens its card; Lees on it reads the bron,
 	// a step of its own: Back brings the werkplek back from its address.
 	import { notHeld } from '$lib/text/coverage';
 	import { categoryLabel } from '$lib/components/explore/index/categories';
@@ -95,7 +95,7 @@
 		type Overlay
 	} from '$lib/selection/overlay';
 	import { AMENDING_RELATIONS, parseNodeId } from '$lib/vocabulary';
-	import { articleOf, kort, lawIdOf, syntheticNode } from '$lib/graph/types';
+	import { articleOf, kort, lawIdOf, nodeToGraphNode, syntheticNode } from '$lib/graph/types';
 	import { bronNaam } from '$lib/bron/naam';
 	import { lookUp } from '$lib/bron/leesbaar';
 	import {
@@ -108,6 +108,15 @@
 	} from '$lib/bron/address';
 	import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 	import NetwerkPanel from '$lib/selection/NetwerkPanel.svelte';
+	import Keuze from '$lib/components/ui/Keuze.svelte';
+	import ChainView from '$lib/network/ChainView.svelte';
+	import SharedView from '$lib/network/SharedView.svelte';
+	import { chain, type ChainNode } from '$lib/network/chain';
+	import { sharedFromNetwork, sharedModel } from '$lib/network/shared';
+	import { getLawBasis, getLawDelegated } from '$lib/api/articles';
+	import { getShared } from '$lib/api/nodes';
+	import { formatCount } from '$lib/text/getal';
+	import { textOf } from '$lib/text/words';
 	import { focusStap } from '$lib/graph/focus-stap';
 	import {
 		onlyAround,
@@ -143,6 +152,8 @@
 
 	// One store for the lifetime of this page, so it survives mode switches.
 	const store = createGraphStore();
+	// The netwerk of chosen bronnen, put on the canvas (netwerk-compose.svelte.ts).
+	const composer = new NetwerkComposer(store, () => graphView);
 
 	let selectedNode = $state<GraphNode | null>(null);
 	/**
@@ -311,7 +322,7 @@
 	// clusters, the faint bronnen between and the cap of 100 keep it light there.
 	// ── The example, where nothing is chosen ─────────────────────────────────
 	// The Verkenner without a focus, a netwerk or one remembered opens on the home page's
-	// own example (Thijs, 10 Oct: "kies dan het voorbeeld dat van de homepage komt"): the
+	// own example (Thijs, 10 Oct: "marked dan het voorbeeld dat van de homepage komt"): the
 	// network of the newest passed bill, as laadWetsnetwerk gives it there. Shown, not
 	// written: the address stays /explore. A line above says it is an example.
 	let voorbeeld = $state<{ query: string; naam: string } | null>(null);
@@ -343,9 +354,231 @@
 	const bewaard = $derived(parseNetwerk(new URLSearchParams(bewaardNetwerk() ?? '')));
 	/** The netwerk a bron is added to: the werkplek's, or the kept one while reading. */
 	const kiesNetwerk = $derived(mode === 'graph' ? netwerk : bewaard);
-	/** The bron marked in the werkplek, its card open (?kies): Back after Lees finds it again. */
-	const KIES = 'kies';
-	const kies = $derived(params.get(KIES));
+	/** The bron marked in the werkplek, its card open (?marked): Back after Lees finds it again. */
+	const MARK_PARAM = 'kies';
+	const marked = $derived(params.get(MARK_PARAM));
+
+	// ── The weergaven of the werkplek (besluit 39) ───────────────────────────
+	// Omgeving is the canvas; Verband what the chosen bronnen share (/api/nodes/shared); Keten
+	// a law, its articles and the regulations under them (/delegated, /basis). ?weergave.
+	const VIEW_PARAM = 'weergave';
+	const VIEWS = [
+		{ waarde: 'omgeving', label: 'Omgeving' },
+		{ waarde: 'verband', label: 'Verband' },
+		{ waarde: 'keten', label: 'Keten' }
+	] as const;
+	type ViewId = (typeof VIEWS)[number]['waarde'];
+	const view = $derived<ViewId>(
+		VIEWS.find((w) => w.waarde === params.get(VIEW_PARAM))?.waarde ?? 'omgeving'
+	);
+	const chooseView = (w: ViewId) =>
+		setUrl({ [VIEW_PARAM]: w === 'omgeving' ? null : w, [MARK_PARAM]: null });
+
+	/** The law of the keten: the bron itself, or an article's law. */
+	const chainLaw = $derived.by(() => {
+		const n = mode === 'graph' && view === 'keten' ? selectedNode : null;
+		if (!n) return null;
+		if (n.collection === 'articles') return lawIdOf(n.raw?.props) ?? null;
+		if (n.collection !== 'instruments') return null;
+		return textOf(n.raw?.props?.bwb_id) ?? n.key.toUpperCase();
+	});
+	let chainData = $state.raw<{
+		bwb: string;
+		delegated: Awaited<ReturnType<typeof getLawDelegated>>;
+		basis: Awaited<ReturnType<typeof getLawBasis>> | null;
+	} | null>(null);
+	let chainError = $state.raw<{ bwb: string; error: unknown } | null>(null);
+	let chainTries = $state(0);
+	const chainFailure = $derived(
+		chainError && chainError.bwb === chainLaw
+			? { what: 'De keten', error: chainError.error, retry: () => chainTries++ }
+			: null
+	);
+	$effect(() => {
+		const bwb = chainLaw;
+		void chainTries;
+		if (!bwb) return;
+		let current = true;
+		chainError = null;
+		const basis = getLawBasis(bwb).catch((e) => {
+			// The keten stands without the laws above it: its own regulations are what it shows.
+			report('Keten grondslag', e);
+			return null;
+		});
+		Promise.all([getLawDelegated(bwb), basis])
+			.then(([delegated, basis]) => {
+				if (current) chainData = { bwb, delegated, basis };
+			})
+			.catch((e) => {
+				report('Keten', e);
+				if (current) chainError = { bwb, error: e };
+			});
+		return () => {
+			current = false;
+		};
+	});
+	const chainModel = $derived.by(() => {
+		const bwb = chainLaw;
+		if (!bwb || chainData?.bwb !== bwb) return null;
+		const id = `instruments/${bwb.toLowerCase()}`;
+		return chain(
+			{ id, name: lawName($instrumentMetaStore.get(bwb), bwb) },
+			chainData.delegated,
+			chainData.basis,
+			4,
+			marked
+		);
+	});
+	const chainGap = $derived(
+		view !== 'keten'
+			? null
+			: !chainLaw
+				? 'Keten: alleen bij een wet of een artikel'
+				: chainModel && chainModel.total === 0
+					? 'Geen uitvoeringsregelingen in de gegevens'
+					: null
+	);
+	/** A node of the keten as the card reads a bron. */
+	function chainNodeOf(k: ChainNode): GraphNode {
+		const [collection, key] = k.id.split('/') as ['instruments' | 'articles', string];
+		const i = k.instrument;
+		return {
+			id: k.id,
+			collection,
+			key,
+			drawClass: collection === 'articles' ? 'article' : 'instrument',
+			label: k.name,
+			raw: {
+				id: k.id,
+				key,
+				collection,
+				type: collection === 'articles' ? 'article' : 'instrument',
+				display_name: k.name,
+				labels: [],
+				path: i?.path ?? null,
+				props: {
+					bwb_id: i?.bwb_id ?? null,
+					title: i?.title ?? null,
+					citation_title: i?.citation_title ?? null,
+					kind: k.kind,
+					date: k.since
+				}
+			}
+		} as GraphNode;
+	}
+	const chainCard = $derived.by(() => {
+		const k = chainModel?.layers.flatMap((l) => l.nodes).find((x) => x.id === marked);
+		if (!k) return null;
+		const aangehaald = k.instrument?.inbound_citation_count;
+		return {
+			node: chainNodeOf(k),
+			facts: [
+				...(k.grondslag ? [{ term: 'Grondslag', value: k.grondslag }] : []),
+				...(k.mentions ? [{ term: 'Noemt', value: k.mentions }] : []),
+				...(aangehaald ? [{ term: 'Aangehaald', value: `${formatCount(aangehaald)} keer` }] : [])
+			],
+			tiesHeading: 'Verder in de keten',
+			ties: (k.further.length
+				? k.further
+				: k.collection === 'instruments' && k.id !== `instruments/${chainLaw?.toLowerCase()}`
+					? ['Geen uitvoeringsregelingen in de gegevens']
+					: []
+			).map((text) => ({ text, collection: 'instruments' as const }))
+		};
+	});
+	const chainDots = $derived(
+		(chainModel?.layers ?? [])
+			.flatMap((l) => l.nodes)
+			.filter((k) => k.since)
+			.map((k) => {
+				const [j, m = 1, d = 1] = k.since!.split('-').map(Number);
+				return { jaar: j + ((m - 1) * 31 + d - 1) / 372, collection: 'instruments' as const };
+			})
+	);
+
+	/** The chosen bronnen of the netwerk that are on, as the API names them: Verband's ends. */
+	const sharedEnds = $derived(
+		mode === 'graph' && view === 'verband'
+			? composer.entries
+					.filter((e) => e.on && e.node)
+					.slice(0, 5)
+					.map((e) => ({
+						id: e.node!.id,
+						name: bronNaam(e.node!, $instrumentMetaStore),
+						collection: e.collection
+					}))
+			: []
+	);
+	const sharedKey = $derived(sharedEnds.map((e) => e.id).join(','));
+	let sharedData = $state.raw<{
+		key: string;
+		data: Awaited<ReturnType<typeof getShared>> | null;
+		failure: 'niet' | 'mis' | null;
+		error?: unknown;
+	} | null>(null);
+	let sharedTries = $state(0);
+	const sharedFailure = $derived(
+		sharedData?.key === sharedKey && sharedData.failure === 'mis'
+			? {
+					what: 'De gedeelde bronnen',
+					error: sharedData.error,
+					retry: () => sharedTries++,
+					plural: true
+				}
+			: null
+	);
+	$effect(() => {
+		const key = sharedKey;
+		void sharedTries;
+		if (sharedEnds.length < 2) return;
+		const ac = new AbortController();
+		getShared({ ids: key, limit: 8 }, ac.signal)
+			.then((data) => (sharedData = { key, data, failure: null }))
+			.catch((e) => {
+				if (ac.signal.aborted || isAborted(e)) return;
+				if (!isNotFound(e)) report('Verband', e);
+				sharedData = { key, data: null, failure: isNotFound(e) ? 'niet' : 'mis', error: e };
+			});
+		return () => ac.abort();
+	});
+	// Where the API has no shared bronnen yet (A200 not live), the canvas's own: the bronnen
+	// between the chosen ones, marked as such.
+	let coreIds = $state.raw<ReadonlySet<string> | null>(null);
+	store.core.subscribe((c) => (coreIds = c));
+	let canvasEdges = $state.raw<GraphEdge[]>([]);
+	store.edges.subscribe((e) => (canvasEdges = e));
+	const sharedState = $derived.by(() => {
+		const here = sharedData?.key === sharedKey ? sharedData : null;
+		const d =
+			here?.data ??
+			(here?.failure === 'niet' && coreIds
+				? sharedFromNetwork(
+						sharedEnds.map((e) => e.id),
+						coreIds,
+						(id) => {
+							const n = store.getNodeById(id);
+							return n && { ...n, label: kort(bronNaam(n, $instrumentMetaStore)) };
+						},
+						canvasEdges
+					)
+				: null);
+		if (!d) return null;
+		const byId = new Map(sharedEnds.map((e) => [e.id, e]));
+		return sharedModel(d, (id) => ({
+			name: byId.get(id)?.name ?? id,
+			collection: byId.get(id)?.collection ?? null
+		}));
+	});
+	const sharedGap = $derived(
+		sharedData?.key === sharedKey && sharedData.failure === 'niet'
+			? 'onvolledig: alleen de bronnen ertussen in het netwerk'
+			: null
+	);
+	const sharedCard = $derived.by(() => {
+		const r = sharedState?.rows.find((x) => x.id === marked);
+		const node = r ? (store.getNodeById(r.id) ?? nodeToGraphNode(r.node)) : null;
+		return r && node ? { node, ties: r.how } : null;
+	});
 
 	// ── The bronfilter ───────────────────────────────────────────────────────
 	// One filter object, parsed from the URL, for the panel, the margin of the reader,
@@ -830,7 +1063,6 @@
 	}
 
 	// ── Composing the netwerk ─────────────────────────────────────────────────
-	const composer = new NetwerkComposer(store, () => graphView);
 	/** The bronnen a grouping switched off hides, by canvas id: their chips grey. */
 	let metGroep = $state<ReadonlyMap<string, ContainerKind>>(new Map());
 
@@ -949,7 +1181,7 @@
 				[AROUND]: null,
 				focus: null,
 				[SHOW]: null,
-				[KIES]: null,
+				[MARK_PARAM]: null,
 				open: null,
 				mode: null
 			},
@@ -1431,6 +1663,29 @@
 	></div>
 {/snippet}
 
+{#snippet viewMiddle()}
+	{#if view === 'keten'}
+		<ChainView
+			layers={chainModel?.layers ?? []}
+			rest={chainModel?.rest}
+			chosen={marked}
+			gap={chainGap}
+			failure={chainFailure}
+			onChoose={(k) => setUrl({ [MARK_PARAM]: k.id })}
+		/>
+	{:else if view === 'verband'}
+		<SharedView
+			ends={sharedEnds}
+			model={sharedState}
+			chosen={marked}
+			gap={sharedGap}
+			failure={sharedFailure}
+			loading={sharedEnds.length > 1 && sharedData?.key !== sharedKey}
+			onChoose={(r) => setUrl({ [MARK_PARAM]: r.id })}
+		/>
+	{/if}
+{/snippet}
+
 <div class="explore-shell">
 	<div class="explore-content">
 		{#if mode === 'index'}
@@ -1476,8 +1731,8 @@
 								inFluxMap={overlayCounts.inFlux}
 								heatMap={overlayCounts.heat}
 								{overlay}
-								{kies}
-								onKies={(id) => setUrl({ [KIES]: id })}
+								{marked}
+								onMark={(id) => setUrl({ [MARK_PARAM]: id })}
 								onNodeClick={lees}
 								onMetGroep={(m) => (metGroep = m)}
 								onToggleChosen={toggleChosen}
@@ -1498,7 +1753,21 @@
 								onToggleHeat={toggleHeat}
 								onHeatPeriodChange={setHeatPeriod}
 								onToggleMutatie={toggleMutatie}
+								midden={view === 'omgeving' ? undefined : viewMiddle}
+								extern={view === 'keten' ? chainCard : view === 'verband' ? sharedCard : null}
+								externStippen={view === 'keten' ? chainDots : view === 'verband' ? [] : null}
 							>
+								{#snippet viewChoice()}
+									<div class="view-choice">
+										<h3 class="weergave__kop">Weergave</h3>
+										<Keuze
+											label="Weergave"
+											waarde={view}
+											opties={VIEWS.map((w) => ({ waarde: w.waarde, label: w.label }))}
+											onSelect={chooseView}
+										/>
+									</div>
+								{/snippet}
 								{#snippet links()}
 									<!-- The way back to the bron the werkplek began with: read, a step of its own. -->
 									{#if selectedNode && !selectedNode.id.startsWith('synth:')}
@@ -1715,6 +1984,34 @@
 	}
 	.terug {
 		margin: 0 0 var(--s-4);
+	}
+	/* Weergave, a block of the strip at the left (mockup A197-b). */
+	.view-choice {
+		padding: var(--s-4) 0;
+		border-top: 1px solid var(--rule);
+	}
+	.weergave__kop {
+		margin: 0 0 var(--s-3);
+		font-size: var(--t-micro);
+		font-weight: 600;
+		color: var(--ink-3);
+	}
+	@media (max-width: 1100px) {
+		.view-choice {
+			padding: 0;
+			border-top: 0;
+		}
+		.weergave__kop {
+			display: none;
+		}
+		/* The three over the row's width, as the mockup's 390. */
+		.view-choice :global(.keuze) {
+			display: flex;
+		}
+		.view-choice :global(.keuze > *) {
+			flex: 1;
+			justify-content: center;
+		}
 	}
 	@media (max-width: 1100px) {
 		.terug {

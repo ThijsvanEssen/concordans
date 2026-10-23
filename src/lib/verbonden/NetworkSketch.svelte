@@ -5,7 +5,7 @@
 	// opens its group in the panel below. The legend is one line that counts what is drawn
 	// (besluit 29.3). The way to the werkplek is the link Open in netwerk under it.
 	import { VORMEN } from '$lib/bron/vormen';
-	import { kleurVanSoort } from '$lib/bron/kleur';
+	import { kindColour } from '$lib/bron/kleur';
 	import { formatCount } from '$lib/text/getal';
 	import { plural } from '$lib/text/words';
 	import type { Collection } from '$lib/vocabulary';
@@ -35,7 +35,7 @@
 		act();
 	};
 
-	const colour = kleurVanSoort;
+	const colour = kindColour;
 	/** A group of Kamerstukken is dashed, as a dossier on the canvas. */
 	const dashed = (c: Collection | null) => c === 'documents' || c === 'dossiers';
 

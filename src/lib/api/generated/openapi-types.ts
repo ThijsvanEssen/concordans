@@ -1657,6 +1657,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/nodes/shared": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The neighbours that several nodes share
+         * @description The nodes at the other end of an edge of every node of `ids` (2 to 5 node ids, `collection/key`, comma-separated; an edge counts in either direction, and a node asked for is not its own neighbour), in buckets of one collection: what two sources have in common, the articles, the judgments that cite both, the law they are in. A bucket holds one page (`limit` from `offset`, as `/api/nodes/{collection}/{key}`), its `total` and the `next_offset`. `sort=importance` (default): the most cited first (`inbound_citation_count` of a judgment, an article or an instrument), then by key; `key`: by key. Each neighbour has `links`: every edge between it and each node asked for (`source`, `edge_id`, `relation`, `direction`, `status`, `confidence`). `relations`, `node_types`, `direction` and `status` narrow the edges, as on the node route; `tier` (repeated) and `subject_area` (a main area of law, `Strafrecht`) narrow the judgments alone, the other buckets stay whole. `facets` count the neighbours before the page: per collection, and of the judgments per tier (under `subject_area`) and per main area of law (under `tier`). Reads the edges of each node once, through their indexes: the cost grows with the edges of the nodes asked for (6:162 BW has 10,500), not with the graph. 404 when a node is not there.
+         */
+        get: operations["get_shared_neighbors_route_api_nodes_shared_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -13928,6 +13948,140 @@ export interface components {
              */
             cabinet: string | null;
         };
+        /**
+         * SharedFacetsDTO
+         * @description Counts of the shared neighbours, each facet under the filters but its own.
+         */
+        SharedFacetsDTO: {
+            /**
+             * Collection
+             * @description Per collection (`value`), most first.
+             */
+            collection: components["schemas"]["FacetCountDTO"][];
+            /**
+             * Tier
+             * @description Of the judgments, per tier, most first, under `subject_area`.
+             */
+            tier: components["schemas"]["FacetCountDTO"][];
+            /**
+             * Subject Area
+             * @description Of the judgments, per main area of law (a judgment counts for each of its areas), most first, under `tier`.
+             */
+            subject_area: components["schemas"]["FacetCountDTO"][];
+        };
+        /**
+         * SharedLinkDTO
+         * @description The edge by which a shared neighbour hangs at one of the nodes asked for.
+         */
+        SharedLinkDTO: {
+            /**
+             * Source
+             * @description The node asked for (`collection/key`) it hangs at.
+             */
+            source: string;
+            /** Edge Id */
+            edge_id: string;
+            /** Relation */
+            relation: ("PART_OF" | "VERSION_OF" | "ESTABLISHES" | "AMENDS" | "INTRODUCES" | "REPEALS" | "COMMENCES" | "TRANSPOSED_TO" | "BASED_ON" | "IMPLEMENTS" | "LEGISLATED_IN" | "PUBLISHED_IN" | "REFERS_TO" | "EXPLAINS" | "APPEAL_OF" | "CONTINUES" | "REFERRED_BY" | "ADVISES_ON" | "ANSWERS" | "SAME_AS" | "SCOPED_BY" | "ABOUT" | "LED_BY" | "MADE_IN" | "MEMBER_OF" | "SERVED_IN" | "AUTHORED" | "RELATED_TO" | "REVISES" | "ACCOMPANIES" | "SECOND_READING_OF" | "VOTED") | null;
+            /**
+             * Direction
+             * @description `outbound`: the edge leaves the source for the neighbour.
+             * @enum {string}
+             */
+            direction: "outbound" | "inbound";
+            /** Status */
+            status: string | null;
+            /** Confidence */
+            confidence: number | null;
+        };
+        /**
+         * SharedNeighborDTO
+         * @description A neighbour of every node asked for, with the edges that tie it to each.
+         */
+        SharedNeighborDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /**
+             * Collection
+             * @enum {string}
+             */
+            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "annexes";
+            /** Type */
+            type: string;
+            /** Display Name */
+            display_name: string | null;
+            /** Labels */
+            labels: string[];
+            /** Props */
+            props: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Kind Group
+             * @description Of a paper or a case: What the paper or case is, by its Soort (`kind`): `motie` or `amendement` (also a changed one), `wetsvoorstel`, `brief` (a Soort beginning with Brief), `overig`; null without a Soort. Absent for any other node.
+             */
+            kind_group?: ("motie" | "amendement" | "wetsvoorstel" | "brief" | "overig") | null;
+            /** @description Of a judgment: The judgment as a lawyer cites it: `short` `HR 20 december 2019`, `Rb. Den Haag 6 december 2019`, `Conclusie A-G Hartlief 20 december 2019` (`P-G` where a procureur-generaal signed it), `HvJ EU 22 juni 2023, C-160/20` (a court of the Union with its case number); `full` with its ECLI. Null without an ECLI. Absent for a node of another collection. */
+            cite?: components["schemas"]["JudgmentCiteDTO"] | null;
+            /**
+             * Title
+             * @description Its title, as the `<title>` of its page has it and `title` of `/api/nodes/{collection}/{key}` (`Art. 6:162 BW, Onrechtmatige daad`, `HR 20 december 2019 (Urgenda), ECLI:NL:HR:2019:2006`, `36496 Wet AI-toezicht`), from the props it carries (with `props=canvas` too, which keeps what it reads).
+             */
+            title?: string | null;
+            /**
+             * Links
+             * @description Every edge between the neighbour and a node asked for, the nodes in the order of `ids`, each node with at least one.
+             */
+            links: components["schemas"]["SharedLinkDTO"][];
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
+         * SharedBucketDTO
+         * @description The shared neighbours of one collection: one page of them.
+         */
+        SharedBucketDTO: {
+            /**
+             * Collection
+             * @enum {string}
+             */
+            collection: "instruments" | "articles" | "instrument_versions" | "article_versions" | "cases" | "documents" | "judgments" | "dossiers" | "activities" | "decisions" | "commitments" | "committees" | "members" | "factions" | "cabinets" | "annexes";
+            /** Type */
+            type: string;
+            /**
+             * Total
+             * @description Under the filters, whatever the page.
+             */
+            total: number;
+            /**
+             * Next Offset
+             * @description Null on the last page.
+             */
+            next_offset: number | null;
+            /** Items */
+            items: components["schemas"]["SharedNeighborDTO"][];
+        };
+        /**
+         * SharedNeighborsResponse
+         * @description Response for GET /api/nodes/shared.
+         */
+        SharedNeighborsResponse: {
+            /** Ids */
+            ids: string[];
+            /**
+             * Total
+             * @description The shared neighbours of every collection.
+             */
+            total: number;
+            /** Buckets */
+            buckets: components["schemas"]["SharedBucketDTO"][];
+            facets: components["schemas"]["SharedFacetsDTO"];
+        };
     };
     responses: never;
     parameters: never;
@@ -16879,6 +17033,56 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthDTO"];
+                };
+            };
+        };
+    };
+    get_shared_neighbors_route_api_nodes_shared_get: {
+        parameters: {
+            query: {
+                /** @description Node ids, comma-separated: `articles/x,articles/y`. */
+                ids: string;
+                /** @description Neighbours per bucket, not per response. */
+                limit?: number;
+                /** @description Neighbours to skip in every bucket. */
+                offset?: number;
+                /** @description `importance` (default): the most cited first; `key`: in key order. */
+                sort?: "key" | "importance";
+                /** @description Of the judgments the tier (repeated: any of them). */
+                tier?: components["schemas"]["Tier"][] | null;
+                /** @description Of the judgments a main area of law of their source: `Strafrecht`, `Civiel recht`, `Bestuursrecht`. */
+                subject_area?: string | null;
+                /** @description Comma-separated relations to keep (`REFERS_TO,PART_OF`). */
+                relations?: string | null;
+                /** @description Comma-separated node types to keep (`article,judgment`). */
+                node_types?: string | null;
+                /** @description Keep the edges that leave (`outbound`) or reach the node. */
+                direction?: ("outbound" | "inbound") | null;
+                /** @description Keep the edges of this status (`canoniek`, `voorgesteld`). */
+                status?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SharedNeighborsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -188,3 +188,11 @@ export const getNodeNeighborhood = (
 /** The paths between bronnen (`/api/paths`). */
 export const getPaths = (query: QueryOf<'/api/paths'>) =>
 	unwrap(api.GET('/api/paths', { params: { query } }));
+
+/**
+ * What two to five bronnen share: the neighbours of each of them, per collection, a page of
+ * each, with the edges by which every one hangs at each bron asked (`links`). The weergave
+ * Verband of the werkplek (besluit 39).
+ */
+export const getShared = (query: QueryOf<'/api/nodes/shared'>, signal?: AbortSignal) =>
+	unwrap(api.GET('/api/nodes/shared', { params: { query }, signal }));

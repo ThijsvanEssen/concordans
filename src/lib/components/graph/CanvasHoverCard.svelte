@@ -29,7 +29,9 @@
 		onOpen,
 		onLezen,
 		onToggleChosen,
-		verbanden = [],
+		ties = [],
+		tiesHeading = 'Verbonden met de gekozen bronnen',
+		facts = [],
 		onClose,
 		onVerder,
 		onBack,
@@ -44,7 +46,11 @@
 		onLezen?: (node: GraphNode) => void;
 		onToggleChosen?: (node: GraphNode) => void;
 		/** How it is tied to the chosen bronnen, a line each: `Haalt Art. 6:162 BW aan`. */
-		verbanden?: readonly { tekst: string; collection: GraphNode['collection'] | null }[];
+		ties?: readonly { text: string; collection: GraphNode['collection'] | null }[];
+		/** The heading over them: `Verder in de keten` in the weergave Keten. */
+		tiesHeading?: string;
+		/** Lines of its own under Datum: `Grondslag`, `Aangehaald`. */
+		facts?: readonly { term: string; value: string }[];
 		/** Escape in the card (reached from the keyboard's list of bronnen). */
 		onClose?: () => void;
 		/** Tab past its last action, and Shift+Tab before its first. */
@@ -170,12 +176,14 @@
 		<p class="snippet">{snippet}</p>
 	{/if}
 
-	{#if datum || cite}
-		<dl class="kenmerken">
+	{#if datum || cite || facts.length}
+		<dl class="facts">
 			{#if datum}<dt>Datum</dt>
 				<dd>{langeDatum(datum)}</dd>{/if}
 			{#if cite}<dt>{CITE_LABEL[node.drawClass] ?? 'Bron'}</dt>
 				<dd>{cite}</dd>{/if}
+			{#each facts as k (k.term)}<dt>{k.term}</dt>
+				<dd>{k.value}</dd>{/each}
 		</dl>
 	{/if}
 
@@ -207,12 +215,12 @@
 		{#if bewaar}<Bewaar item={bewaar} />{/if}
 	</div>
 
-	{#if verbanden.length > 0}
-		<section class="verbanden" aria-label="Verbonden met de gekozen bronnen">
-			<h3 class="verbanden__kop">Verbonden met de gekozen bronnen</h3>
+	{#if ties.length > 0}
+		<section class="ties" aria-label={tiesHeading}>
+			<h3 class="verbanden__kop">{tiesHeading}</h3>
 			<ul>
-				{#each verbanden as v (v.tekst)}<li>
-						{#if v.collection}<KindGlyph collection={v.collection} size={11} />{/if}{v.tekst}
+				{#each ties as v (v.text)}<li>
+						{#if v.collection}<KindGlyph collection={v.collection} size={11} />{/if}{v.text}
 					</li>{/each}
 			</ul>
 		</section>
@@ -249,18 +257,18 @@
 	}
 
 	/* Datum and its kind's line, as the mockup's: a column of terms, 96 px. */
-	.kenmerken {
+	.facts {
 		display: grid;
 		grid-template-columns: 96px minmax(0, 1fr);
 		gap: var(--s-2) var(--s-3);
 		margin: var(--s-2) 0 0;
 	}
-	.kenmerken dt {
+	.facts dt {
 		font-size: var(--t-micro);
 		line-height: 20px;
 		color: var(--ink-3);
 	}
-	.kenmerken dd {
+	.facts dd {
 		margin: 0;
 		font-size: var(--t-meta);
 		line-height: 20px;
@@ -297,7 +305,7 @@
 		margin-top: var(--s-2);
 	}
 
-	.verbanden {
+	.ties {
 		margin-top: var(--s-4);
 	}
 	.verbanden__kop {
@@ -306,12 +314,12 @@
 		font-weight: 400;
 		color: var(--ink-3);
 	}
-	.verbanden ul {
+	.ties ul {
 		margin: 0;
 		padding: 0;
 		list-style: none;
 	}
-	.verbanden li {
+	.ties li {
 		display: flex;
 		align-items: baseline;
 		gap: var(--s-2);
@@ -335,8 +343,8 @@
 			-webkit-box-orient: vertical;
 			overflow: hidden;
 		}
-		.kenmerken,
-		.verbanden {
+		.facts,
+		.ties {
 			display: none;
 		}
 	}

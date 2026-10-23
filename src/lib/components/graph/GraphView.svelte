@@ -67,12 +67,20 @@
 	import type { VerbondenState } from '$lib/verbonden/data-source';
 	import { CLUSTER_CARD, clusterCardAt, placeCard } from '$lib/selection/card-place';
 	import { relationWords } from '$lib/verbonden/relation-words';
-	import { capitalize } from '$lib/text/words';
+	import { sentence } from '$lib/network/shared';
 	import { netwerkMelding } from '$lib/stores/netwerk-melding';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { kaart } from '$lib/map/map.svelte';
 	import { gemerkt, notesOfBundels } from '$lib/map/notities';
 	import { keepsCamera, saveCamera, savedCamera } from './camera';
+
+	/** The card of a bron marked in a weergave of its own: its node and what it says of it. */
+	type ExternalCard = {
+		node: GraphNode;
+		ties: { text: string; collection: GraphNode['collection'] | null }[];
+		tiesHeading?: string;
+		facts?: { term: string; value: string }[];
+	};
 
 	/** What the legend (GraphSidebar) asks of the page, handed through as one. */
 	type LegendProps = Pick<
@@ -100,8 +108,8 @@
 		inFluxMap = new Map() as NodeCounts,
 		heatMap = new Map() as NodeCounts,
 		overlay = { kind: 'none' } as Overlay,
-		kies = null,
-		onKies,
+		marked = null,
+		onMark,
 		onNodeClick,
 		onMetGroep,
 		onToggleChosen,
@@ -113,6 +121,10 @@
 		canvasOverlay,
 		links,
 		balk,
+		viewChoice,
+		midden,
+		extern = null,
+		externStippen = null,
 		...legend
 	}: {
 		store: GraphStore;
@@ -126,10 +138,10 @@
 		inFluxMap?: NodeCounts;
 		heatMap?: NodeCounts;
 		overlay?: Overlay;
-		/** The bron marked, as the address holds it (?kies): its card open. */
-		kies?: string | null;
+		/** The bron marked, as the address holds it (?marked): its card open. */
+		marked?: string | null;
 		/** A bron was marked, or none is any more: the page writes it in the address. */
-		onKies?: (id: string | null) => void;
+		onMark?: (id: string | null) => void;
 		/** Lees: the marked bron is read, or (beside a reader) selected. */
 		onNodeClick?: (node: GraphNode) => void;
 		/** The bronnen hidden with a grouping that is off, by canvas id: their chips grey. */
@@ -148,6 +160,15 @@
 		links?: Snippet;
 		/** At the top right of the canvas: Deel. */
 		balk?: Snippet;
+		/** After the chosen bronnen: the Weergave (Omgeving, Verband, Keten). */
+		viewChoice?: Snippet;
+		/**
+		 * A weergave of its own in the canvas's place (Keten, Verband): the card at the right is
+		 * then `extern`'s, the tijdstrook `externStippen`.
+		 */
+		midden?: Snippet;
+		extern?: ExternalCard | null;
+		externStippen?: readonly { jaar: number; collection: Collection }[] | null;
 	} & LegendProps = $props();
 
 	// ── graphology (data + layout, no sigma) ─────────────────────────────────
@@ -406,14 +427,14 @@
 		gemarkeerd = n;
 		keyNode = null;
 		hoverNode = n;
-		onKies?.(n.id);
+		onMark?.(n.id);
 	}
 	/** No bron marked any more; `tell` the page, so that the address forgets it too. */
 	function ontmarkeer(tell = true) {
 		const was = gemarkeerd;
 		gemarkeerd = null;
 		hoverNode = null;
-		if (tell && was) onKies?.(null);
+		if (tell && was) onMark?.(null);
 	}
 	// Lees keeps the bron marked in the address: Back after reading finds it again.
 	function open(n: GraphNode) {
@@ -424,14 +445,14 @@
 	$effect(() => {
 		if (gemarkeerd && !drawnIds.includes(gemarkeerd.id)) ontmarkeer(false);
 	});
-	// The bron the address marks (?kies, after Back), once it is drawn: its card opens again.
+	// The bron the address marks (?marked, after Back), once it is drawn: its card opens again.
 	// A mark the address lost (Back past it) closes.
-	let kiesVoor: string | null = null;
+	let markedBefore: string | null = null;
 	$effect(() => {
-		const id = kies;
+		const id = marked;
 		const drawnNow = drawnIds;
-		const had = kiesVoor;
-		kiesVoor = id;
+		const had = markedBefore;
+		markedBefore = id;
 		untrack(() => {
 			if (!id) {
 				if (had && gemarkeerd?.id === had) ontmarkeer(false);
@@ -1066,11 +1087,11 @@
 	// ── How the bron of the card is tied to the chosen bronnen ─────────────────
 	// Read from the lines on the canvas: "Haalt Art. 6:162 BW aan", "Art. 6:162 BW noemt deze
 	// bron", in the words of every verbinding (relation-words.ts).
-	const verbanden = $derived.by(() => {
+	const ties = $derived.by(() => {
 		const n = hoverNode;
 		void drawnIds;
 		if (!n || !g.hasNode(n.id)) return [];
-		const lines: { tekst: string; collection: Collection | null }[] = [];
+		const lines: { text: string; collection: Collection | null }[] = [];
 		for (const other of pinnedIds) {
 			if (other === n.id || !g.hasNode(other)) continue;
 			const ander = lookup.get(other);
@@ -1088,12 +1109,8 @@
 					lookup.get(naar)?.collection ?? null,
 					g.getEdgeAttribute(edge, 'meta') as Record<string, unknown> | null
 				);
-				const [verb, ...deeltje] = w.actief.split(' ');
 				lines.push({
-					tekst:
-						van === n.id
-							? capitalize([verb, naam, ...deeltje].join(' '))
-							: [naam, verb, 'deze bron', ...deeltje].join(' '),
+					text: sentence(w.actief, naam, van === n.id ? 'naar' : 'van'),
 					collection: ander?.collection ?? null
 				});
 			}
@@ -1156,7 +1173,8 @@
 	<aside class="strook strook--links" aria-label="Bronnen en filters">
 		{@render links?.()}
 		{@render canvasOverlay?.()}
-		{#if canvasCounts.nodes > 0}
+		{@render viewChoice?.()}
+		{#if canvasCounts.nodes > 0 || midden}
 			<button
 				type="button"
 				class="btn filterknop raakvlak-knop"
@@ -1172,7 +1190,8 @@
 		{/if}
 	</aside>
 	<div class="graph-main">
-		<div class="buhne" bind:this={buhne}>
+		{#if midden}{@render midden()}{/if}
+		<div class="buhne" bind:this={buhne} hidden={!!midden}>
 			<!-- The bronnen on the canvas, for the keyboard: outside the canvas, so ← and →
 		     keep stepping through the history there. -->
 			<CanvasNodeList
@@ -1358,20 +1377,27 @@
 			</div>
 		</div>
 		<Tijdstrook
-			{stippen}
+			stippen={externStippen ?? stippen}
 			van={jaarVan(filter.van)}
 			tot={jaarVan(filter.tot)}
 			onPeriode={kiesPeriode}
 		/>
 	</div>
 	<!-- The strip at the right: the card of the bron marked; on a phone a sheet under the canvas. -->
-	<aside class="strook strook--kaart" class:is-open={!!hoverNode} aria-label="Kaart">
-		{#if hoverNode}
+	<aside
+		class="strook strook--kaart"
+		class:is-open={!!(midden ? extern : hoverNode)}
+		aria-label="Kaart"
+	>
+		{#if midden ? extern : hoverNode}
+			{@const kaartNode = midden ? extern!.node : hoverNode!}
 			<CanvasHoverCard
-				node={hoverNode}
-				isChosen={pinnedIds.has(hoverNode.id)}
-				notities={notities.get(hoverNode.id) ?? []}
-				{verbanden}
+				node={kaartNode}
+				isChosen={pinnedIds.has(kaartNode.id)}
+				notities={notities.get(kaartNode.id) ?? []}
+				ties={midden ? extern!.ties : ties}
+				tiesHeading={midden ? extern!.tiesHeading : undefined}
+				facts={midden ? extern!.facts : undefined}
 				onOpen={() => ontmarkeer(false)}
 				onLezen={open}
 				{onToggleChosen}
@@ -1512,8 +1538,14 @@
 		}
 		.strook--links > .filterknop {
 			flex: none;
-			margin: var(--s-1) 0 var(--s-2) auto;
+			margin: 0 0 var(--s-2) var(--s-2);
 		}
+		/* The Weergave and Filter on one row, as the mockup's 390. */
+		.strook--links > :global(.weergave) {
+			flex: 1 1 0;
+			min-width: 0;
+		}
+
 		.filterknop {
 			display: inline-flex;
 		}
@@ -1589,6 +1621,13 @@
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
+	}
+	/* Under a weergave of its own the canvas keeps its size, unseen: sigma needs one. */
+	.buhne[hidden] {
+		position: absolute;
+		inset: 0;
+		visibility: hidden;
+		pointer-events: none;
 	}
 	.graph-canvas-wrap {
 		flex: 1;

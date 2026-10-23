@@ -4,7 +4,7 @@
 import type { Collection } from '$lib/vocabulary';
 
 /** The colour of a kind, as the canvas draws its groups; the regulations a hue of their own. */
-export function kleurVanSoort(c: Collection | null, hue: string | null = null): string {
+export function kindColour(c: Collection | null, hue: string | null = null): string {
 	if (hue === 'regelingen') return 'var(--groep-regeling)';
 	switch (c) {
 		case 'instruments':

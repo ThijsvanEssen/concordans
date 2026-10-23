@@ -4,7 +4,7 @@
 	// its kind at its date. A drag over the band, or a tap on a year, chooses the period, which
 	// the bronfilter holds (?van, ?tot); a tap on the one year chosen gives every year back.
 	// The keyboard's way is Periode in the strip at the left.
-	import { kleurVanSoort } from '$lib/bron/kleur';
+	import { kindColour } from '$lib/bron/kleur';
 	import type { Collection } from '$lib/vocabulary';
 
 	type Stip = { jaar: number; collection: Collection };
@@ -91,7 +91,7 @@
 					class="stip"
 					class:is-dim={!!keuze && (s.jaar < keuze.van || s.jaar >= keuze.tot + 1)}
 					style:left="{plek(s.jaar)}%"
-					style:background={kleurVanSoort(s.collection)}
+					style:background={kindColour(s.collection)}
 				></i>
 			{/each}
 		</div>
@@ -131,7 +131,7 @@
 		bottom: var(--s-1);
 		width: 10px;
 		height: 10px;
-		margin-left: -5px;
+		transform: translateX(-50%);
 		border-radius: var(--r-rond);
 	}
 	.stip.is-dim {
@@ -143,7 +143,7 @@
 	}
 	.as span {
 		position: absolute;
-		top: 2px;
+		top: 0;
 		transform: translateX(-50%);
 		white-space: nowrap;
 		font-family: var(--font-serif);
