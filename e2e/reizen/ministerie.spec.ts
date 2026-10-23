@@ -10,14 +10,14 @@ test('a ministry names its period, its predecessor and its bewindspersonen per c
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText(
 		'Ministerie van Justitie en Veiligheid'
 	);
-	await expect(page.getByText('sinds 26 oktober 2017')).toBeVisible();
+	await expect(page.getByText('sinds 1 januari 2018')).toBeVisible();
 	await expect(page.getByRole('link', { name: 'Veiligheid en Justitie' })).toHaveAttribute(
 		'href',
 		/\/ministeries\/venj/
 	);
 	const kabinetten = page.getByRole('heading', { level: 4 });
-	await expect(kabinetten).toHaveText(['kabinet-Schoof', 'kabinet-Rutte IV']);
-	await expect(page.getByRole('link', { name: 'F.M. Weerwind' })).toBeVisible();
+	await expect(kabinetten).toHaveText(['kabinet-Jetten', 'kabinet-Schoof', 'kabinet-Rutte IV', 'kabinet-Rutte III']);
+	await expect(page.getByRole('link', { name: 'Eric van der Burg' })).toBeVisible();
 });
 
 test('what is its own stands in Verbonden: laws, open dossiers and open toezeggingen', async ({
@@ -33,9 +33,10 @@ test('what is its own stands in Verbonden: laws, open dossiers and open toezeggi
 		await expect(verbonden.getByRole('heading', { name: soort })).toBeVisible();
 });
 
-test('a dossier and a toezegging name their ministry as a link to its page', async ({ page }) => {
-	// A wet joins them once the BWB's ministries are in the data (`normalize bwb`, 0.80.8).
-	for (const pad of ['/dossiers/36496', '/toezeggingen/TZ202603-117']) {
+test('a wet, a dossier and a toezegging name their ministry as a link to its page', async ({
+	page
+}) => {
+	for (const pad of ['/wetten/BWBR0044977', '/dossiers/36496', '/toezeggingen/TZ202603-117']) {
 		await page.goto(pad);
 		await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
 		await expect(page.locator('a[href^="/ministeries/"]').first(), pad).toBeVisible();

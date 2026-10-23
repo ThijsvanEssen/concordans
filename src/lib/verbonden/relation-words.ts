@@ -247,13 +247,7 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 							: 'door de Kamer verbonden Kamerzaken'
 					]
 				: ['hangt samen met', 'hangt samen met', 'samenhang'],
-	SECOND_READING_OF: () => ['tweede lezing van', 'tweede lezing van', 'tweede lezing'],
-	// A publication that sets the day a law takes effect, to the publication that enacted it.
-	COMMENCES: () => [
-		'bepaalt inwerkingtreding van',
-		'inwerkingtreding bepaald bij',
-		'inwerkingtredingsbesluit'
-	]
+	SECOND_READING_OF: () => ['tweede lezing van', 'tweede lezing van', 'tweede lezing']
 };
 
 /**
