@@ -309,11 +309,10 @@
 	// "Alleen verbonden bronnen" is a filter on the netwerk, not a replacement: ?omgeving names
 	// the bron whose surroundings alone are drawn; the chosen bronnen stay in the address, greyed,
 	// and come back when the filter goes off.
-	const aroundId = $derived(
-		parseNodeId(params.get('omgeving') ?? '') ? params.get('omgeving') : null
-	);
-	const shownNetwerk = $derived(aroundId ? onlyAround(netwerk, aroundId) : netwerk);
-	const netwerkActive = $derived(shownNetwerk.ids.length > 0);
+	const AROUND = 'omgeving';
+	const aroundId = $derived(parseNodeId(params.get(AROUND) ?? '') ? params.get(AROUND) : null);
+	const shownNetwork = $derived(aroundId ? onlyAround(netwerk, aroundId) : netwerk);
+	const netwerkActive = $derived(shownNetwork.ids.length > 0);
 
 	// ── The bronfilter ───────────────────────────────────────────────────────
 	// One filter object, parsed from the URL, for the panel, the margin of the reader,
@@ -831,7 +830,7 @@
 	let metGroep = $state<ReadonlyMap<string, ContainerKind>>(new Map());
 
 	$effect(() => {
-		const n = shownNetwerk;
+		const n = shownNetwork;
 		if (mode !== 'graph') return;
 		untrack(() => {
 			if (n.ids.length > 0) composer.compose(n);
@@ -886,12 +885,12 @@
 	});
 
 	function toggleAround() {
-		if (aroundId) return setUrl({ omgeving: null });
+		if (aroundId) return setUrl({ [AROUND]: null });
 		const id = selectedLinkId;
 		if (!id) return;
 		// The first bron of an empty canvas grows out of it, as a bron added does.
 		if (!netwerkActive) composer.keepCanvas();
-		setUrl({ omgeving: id });
+		setUrl({ [AROUND]: id });
 	}
 
 	function addToNetwerk(node: GraphNode) {
@@ -935,7 +934,7 @@
 				netwerk: null,
 				uit: null,
 				tussen: null,
-				omgeving: null,
+				[AROUND]: null,
 				focus: null,
 				[SHOW]: null,
 				open: null,
@@ -1599,11 +1598,11 @@
 										joiningCount={composer.joiningCount}
 										deels={composer.partial}
 										onToggle={(id) => {
-											if (aroundId) setUrl({ omgeving: null });
+											if (aroundId) setUrl({ [AROUND]: null });
 											setNetwerk(withToggled(netwerk, id));
 										}}
 										onRemove={(id) => {
-											if (id === aroundId) setUrl({ omgeving: null });
+											if (id === aroundId) setUrl({ [AROUND]: null });
 											setNetwerk(withRemoved(netwerk, id));
 										}}
 										onAdd={() => selectedNode && addToNetwerk(selectedNode)}
