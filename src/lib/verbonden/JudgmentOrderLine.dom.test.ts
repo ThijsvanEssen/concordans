@@ -29,14 +29,14 @@ describe('Rechtsgebied of the judgments', () => {
 		const onFilter = mount();
 		await fireEvent.click(screen.getByRole('button', { name: /rechtsgebied/ }));
 		await fireEvent.click(screen.getByRole('menuitemradio', { name: /Strafrecht/ }));
-		expect(onFilter).toHaveBeenCalledWith({ ...EMPTY_FILTER, rechtsgebied: 'Strafrecht' });
+		expect(onFilter).toHaveBeenCalledWith({ ...EMPTY_FILTER, area: 'Strafrecht' });
 	});
 
 	it('names the area chosen on the control and offers all areas again', async () => {
-		const onFilter = mount({ filter: { ...EMPTY_FILTER, rechtsgebied: 'Strafrecht' } });
+		const onFilter = mount({ filter: { ...EMPTY_FILTER, area: 'Strafrecht' } });
 		await fireEvent.click(screen.getByRole('button', { name: /rechtsgebied/ }));
 		await fireEvent.click(screen.getByRole('menuitemradio', { name: /Alle rechtsgebieden/ }));
-		expect(onFilter).toHaveBeenCalledWith({ ...EMPTY_FILTER, rechtsgebied: null });
+		expect(onFilter).toHaveBeenCalledWith({ ...EMPTY_FILTER, area: null });
 	});
 
 	it('shows no control where the API counts no areas', () => {

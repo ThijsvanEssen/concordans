@@ -33,12 +33,12 @@
 
 	const rechter = $derived(RECHTERS.find((r) => r.id === filter.rechter));
 	// Where the API counts the courts, only those that have judgments (and the one chosen).
-	const hasAreas = $derived(!!areas?.length || !!filter.rechtsgebied);
-	const tekst = $derived(
+	const hasAreas = $derived(!!areas?.length || !!filter.area);
+	const summary = $derived(
 		[
 			filter.jaar ?? 'Alle jaren',
 			rechter?.label.toLowerCase() ?? 'alle rechters',
-			...(hasAreas ? [filter.rechtsgebied?.toLowerCase() ?? 'alle rechtsgebieden'] : [])
+			...(hasAreas ? [filter.area?.toLowerCase() ?? 'alle rechtsgebieden'] : [])
 		].join(', ')
 	);
 	const choices = $derived(
@@ -63,7 +63,7 @@
 		<TekstMenu
 			rechts
 			label={hasAreas ? 'Jaar, rechter en rechtsgebied' : 'Jaar en rechter'}
-			{tekst}
+			tekst={summary}
 		>
 			{#snippet inhoud(sluit)}
 				<div class="jaar-rechter">
@@ -110,10 +110,10 @@
 									type="button"
 									role="menuitemradio"
 									class="tekstmenu__item jaar-rechter__item"
-									aria-checked={(filter.rechtsgebied ?? null) === a.area}
+									aria-checked={(filter.area ?? null) === a.area}
 									onclick={() => {
 										sluit();
-										onFilter({ ...filter, rechtsgebied: a.area });
+										onFilter({ ...filter, area: a.area });
 									}}
 									>{a.area ?? 'Alle rechtsgebieden'}{#if a.count}<span class="jaar-rechter__tel"
 											>{formatCount(a.count)}</span

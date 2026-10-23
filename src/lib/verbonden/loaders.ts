@@ -676,7 +676,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					years,
 					courts,
 					areas: areasOf(data.facets?.subject_area),
-					cutBy: ['jaar', 'rechter', 'rechtsgebied'] as CutBy[]
+					cutBy: ['jaar', 'rechter', 'area'] as CutBy[]
 				}
 			: {};
 		// The ECHR judgments are no passage (HUDOC names the article, not the place): they
@@ -1256,7 +1256,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				.filter((f) => f.value)
 				.map((f) => ({ year: Number(f.value), count: f.count })),
 			areas: areasOf(found.facets?.subject_area),
-			cutBy: found.facets?.year?.length ? ['jaar', 'rechtsgebied'] : undefined,
+			cutBy: found.facets?.year?.length ? ['jaar', 'area'] : undefined,
 			rows: found.items
 				.filter((j) => !isInternational({ key: j.key, props: {} }))
 				.map((j) => ({

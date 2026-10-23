@@ -59,7 +59,7 @@ describe('parseFilter', () => {
 describe('presets', () => {
 	it('keeps a main area of law in the address', () => {
 		const f = parseFilter(new URLSearchParams('rechtsgebied=Strafrecht'));
-		expect(f.rechtsgebied).toBe('Strafrecht');
+		expect(f.area).toBe('Strafrecht');
 		expect(filterParams(f).rechtsgebied).toBe('Strafrecht');
 		expect(filterParams(EMPTY_FILTER).rechtsgebied).toBeNull();
 	});

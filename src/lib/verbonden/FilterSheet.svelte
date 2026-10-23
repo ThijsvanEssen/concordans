@@ -109,7 +109,7 @@
 	// the one chosen stays to be undone.
 	const gebieden = $derived.by(() => {
 		const counted = groups.flatMap((g) => g.areas ?? []);
-		const chosen = draft.rechtsgebied;
+		const chosen = draft.area;
 		return chosen && !counted.some((a) => a.area === chosen)
 			? [...counted, { area: chosen, count: 0 }]
 			: counted;
@@ -307,9 +307,8 @@
 						<FilterOptie
 							label={a.area}
 							count={a.count}
-							on={draft.rechtsgebied === a.area}
-							onToggle={() =>
-								(draft = { ...draft, rechtsgebied: draft.rechtsgebied === a.area ? null : a.area })}
+							on={draft.area === a.area}
+							onToggle={() => (draft = { ...draft, area: draft.area === a.area ? null : a.area })}
 						/>
 					{/each}
 				</div>
