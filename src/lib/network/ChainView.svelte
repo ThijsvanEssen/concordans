@@ -321,8 +321,7 @@
 				<g
 					class="node"
 					class:is-active={chosen === k.id}
-					class:is-outside={outside(k)}
-					class:is-other={otherIds.has(k.id)}
+					class:is-dim={outside(k)}
 					role="button"
 					tabindex="0"
 					aria-label={k.name}
@@ -358,7 +357,7 @@
 						stroke-width="1.5"
 					/>
 					<text
-						class="name"
+						class="name {otherIds.has(k.id) ? 'name--ander' : ''}"
 						class:name--law={layer.id === 'law'}
 						x={isArticle ? p.x - 6 : p.x}
 						y={p.y + 24}
@@ -495,14 +494,14 @@
 		opacity: 1;
 	}
 	/* Outside the period of the strip: faint, not gone. */
-	.node.is-outside {
+	.node.is-dim {
 		opacity: 0.35;
 	}
 	/* Another chosen bron in this keten: its frame, dashed (the marked one's is whole). */
 	.sel--ander {
 		stroke-dasharray: 3 2;
 	}
-	.is-other .name {
+	.name--ander {
 		font-weight: 600;
 		fill: var(--ink);
 	}

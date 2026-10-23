@@ -3,6 +3,7 @@
 // indieners, the dossier as one bron, the laws it changes or names, its vote, what it answers
 // and where it was made (R3-N B13). As rows the canvas draws beside the focus (showRows).
 import type { Schema } from '$lib/api/types';
+import { naamVanId } from '$lib/bron/menselijk';
 import { isCollection, type Collection, type Relation } from '$lib/vocabulary';
 import type { CanvasRow } from './store/types';
 
@@ -23,7 +24,7 @@ const rowOf = (node: Node, relation: string, direction: string, proposed = false
 		? [
 				{
 					ref: { collection: node.collection, key: node.key },
-					title: node.display_name ?? node.key,
+					title: naamVanId(node.id, node.display_name),
 					relation: relation as Relation,
 					direction: direction === 'outbound' ? 'outbound' : 'inbound',
 					proposed,

@@ -521,7 +521,7 @@
 			const t = parseNodeId(id);
 			return t
 				? getNodeGraph(t.collection, t.key, { limit: 20, relations: relations.join(',') }).catch(
-						() => null
+						(e) => (report('Keten', e), null)
 					)
 				: Promise.resolve(null);
 		};
