@@ -17,7 +17,7 @@
 	import { sprongDoel } from '$lib/stores/sprong';
 	import { inView } from '$lib/actions/in-view';
 	import { PHONE, READ_BESIDE } from '$lib/util/breakpoints';
-	import { vandaag, yearFraction } from '$lib/text/datum';
+	import { yearFraction } from '$lib/text/datum';
 	import { meldNetwerk, showNetworkFailure } from '$lib/stores/netwerk-melding';
 	import {
 		DEFAULT_FILTERS,
