@@ -63,7 +63,17 @@ export async function selectWords(page: Page, place: string, words: string, touc
 					getSelection()!.removeAllRanges();
 					getSelection()!.addRange(range);
 				}
-				return { x: r.x, y: r.y + r.height / 2, w: r.width };
+				// The words may wrap over two lines (a narrower column): from the start of the
+				// first line's part to the end of the last's.
+				const rects = [...range.getClientRects()];
+				const first = rects[0] ?? r;
+				const last = rects.at(-1) ?? r;
+				return {
+					x: first.x,
+					y: first.y + first.height / 2,
+					x2: last.right,
+					y2: last.y + last.height / 2
+				};
 			}
 			throw new Error(`${words} not in ${place}`);
 		},
@@ -72,7 +82,7 @@ export async function selectWords(page: Page, place: string, words: string, touc
 	if (touch) return;
 	await page.mouse.move(box.x + 1, box.y);
 	await page.mouse.down();
-	await page.mouse.move(box.x + box.w - 1, box.y, { steps: 6 });
+	await page.mouse.move(box.x2 - 1, box.y2, { steps: 6 });
 	await page.mouse.up();
 }
 

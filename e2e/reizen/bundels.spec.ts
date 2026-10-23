@@ -202,10 +202,9 @@ test('arceer words of a lid and see them again in the bundel', async ({ page, to
 	await expect.poll(drawn).toEqual(['ongeschreven recht']);
 
 	// A click (a tap) on the arcering opens its own menu.
+	// On the first line the words stand on: they may wrap in a narrower column.
 	const at = await page.evaluate(() => {
-		const r = [
-			...(CSS.highlights.get('arcering') as unknown as Set<Range>)
-		][0].getBoundingClientRect();
+		const r = [...(CSS.highlights.get('arcering') as unknown as Set<Range>)][0].getClientRects()[0];
 		return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
 	});
 	if (touch) await page.touchscreen.tap(at.x, at.y);
