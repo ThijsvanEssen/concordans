@@ -77,3 +77,20 @@ describe('a table in a Kamerstuk', () => {
 		expect(rows[0].querySelector('td')!.getAttribute('rowspan')).toBe('2');
 	});
 });
+
+describe('a table whose cell lists items', () => {
+	const text =
+		'Sector\tSoort\nEnergie\t– Eerste soort als bedoeld in artikel 2 – Tweede soort – Derde soort';
+	const tables = [{ start: 0, end: text.length, head_rows: 1, columns: 2, spans: [] }];
+
+	it('sets each item in a paragraph of its own, and keeps a heading and a label whole', () => {
+		const { container } = render(TextBlocks, { text, tables });
+		const items = [...container.querySelectorAll('td p')].map((p) => p.textContent?.trim());
+		expect(items).toEqual([
+			'– Eerste soort als bedoeld in artikel 2',
+			'– Tweede soort',
+			'– Derde soort'
+		]);
+		expect(container.querySelector('td.kort')?.textContent).toBe('Energie');
+	});
+});
