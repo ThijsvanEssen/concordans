@@ -2,7 +2,7 @@ import type { Validity } from '$lib/api/validity';
 import { describe, expect, it } from 'vitest';
 import {
 	lawFullTitle,
-	lawHeadLine,
+	lawHeadFacts,
 	lawKind,
 	publicationName,
 	sourceName,
@@ -57,7 +57,13 @@ describe('the head of a law', () => {
 	});
 });
 
-describe('the head line', () => {
+/** The facts of the head in one line, label and value, for a test to read. */
+const lawHeadLine = (...args: Parameters<typeof lawHeadFacts>) => {
+	const { dates, counts } = lawHeadFacts(...args);
+	return [...dates, ...counts].map((f) => `${f.label}: ${f.value}`).join('; ');
+};
+
+describe('the facts of the head', () => {
 	const opts = {
 		count: 587,
 		peildatum: null,
@@ -72,30 +78,30 @@ describe('the head line', () => {
 	};
 	it('says when the law came into force and which version is the text in force', () => {
 		expect(lawHeadLine(awb, opts)).toBe(
-			'584 artikelen. In werking sinds 1994-01-01. Geldende tekst: versie van 2026-08-15. 15108 keer aangehaald.'
+			'In werking sinds: 1994-01-01; Tekst sinds: 2026-08-15; Artikelen: 584; Aangehaald: 15108 keer'
 		);
 	});
 	it('takes the current version from the list where the law gives none', () => {
 		expect(
 			lawHeadLine({ ...awb, version_date_in_force: null }, { ...opts, currentFrom: '2026-08-15' })
-		).toContain('versie van 2026-08-15');
+		).toContain('Tekst sinds: 2026-08-15');
 	});
 	it('says the date once where the version is the law as it came into force', () => {
 		expect(lawHeadLine({ ...awb, version_date_in_force: '1994-01-01' }, opts)).not.toContain(
-			'Geldende tekst'
+			'Tekst sinds'
 		);
 	});
-	it('leaves the stand to the line Validity once the API says it: no Geldende tekst of a law that expired', () => {
+	it('leaves the stand to the line Validity once the API says it: no Tekst sinds of a law that expired', () => {
 		const expired: Validity = { state: 'expired', date: '2020-01-01', as_of: null, successors: [] };
-		expect(lawHeadLine(awb, { ...opts, validity: expired })).not.toContain('Geldende tekst');
-		expect(lawHeadLine(awb, { ...opts, validity: null })).not.toContain('Geldende tekst');
+		expect(lawHeadLine(awb, { ...opts, validity: expired })).not.toContain('Tekst sinds');
+		expect(lawHeadLine(awb, { ...opts, validity: null })).not.toContain('Tekst sinds');
 		const holds: Validity = { ...expired, state: 'in_force' };
-		expect(lawHeadLine(awb, { ...opts, validity: holds })).toContain('Geldende tekst');
+		expect(lawHeadLine(awb, { ...opts, validity: holds })).toContain('Tekst sinds');
 	});
 	it('gives on a peildatum the count of that day, without the text in force', () => {
 		const line = lawHeadLine(awb, { ...opts, count: 530, peildatum: '2015-01-01' });
-		expect(line).toContain('530 artikelen.');
-		expect(line).not.toContain('Geldende tekst');
+		expect(line).toContain('Artikelen: 530');
+		expect(line).not.toContain('Tekst sinds');
 	});
 	it('leaves out a date the act of the EU has not', () => {
 		expect(
@@ -108,7 +114,7 @@ describe('the head line', () => {
 				},
 				opts
 			)
-		).toBe('99 artikelen.');
+		).toBe('Artikelen: 99');
 	});
 	it('says of a law of the Staatsblad that it is enacted, not in force, and where it was published', () => {
 		const sv = {
@@ -121,9 +127,9 @@ describe('the head line', () => {
 			official_id: 'stb-2026-56'
 		};
 		expect(lawHeadLine(sv, opts)).toBe(
-			'120 artikelen. Vastgesteld, nog niet in werking (Stb. 2026, 56).'
+			'Status: Vastgesteld, nog niet in werking (Stb. 2026, 56); Artikelen: 120'
 		);
-		expect(lawHeadLine({ ...sv, in_force: true }, opts)).toBe('120 artikelen.');
+		expect(lawHeadLine({ ...sv, in_force: true }, opts)).toBe('Artikelen: 120');
 	});
 });
 
@@ -167,7 +173,7 @@ describe('the count in the head', () => {
 			article_count: 0,
 			inbound_citation_count: 0
 		};
-		expect(lawHeadLine(d, { ...opts, count: 66 })).toBe('66 artikelen.');
+		expect(lawHeadLine(d, { ...opts, count: 66 })).toBe('Artikelen: 66');
 		expect(lawHeadLine(d, { ...opts, count: 0 })).toBe('');
 	});
 });

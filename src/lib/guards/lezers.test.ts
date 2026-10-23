@@ -19,6 +19,17 @@ describe('the readers', () => {
 		).toEqual([]);
 	});
 
+	it('folds the full title of a law and of a dossier with one component (A190)', () => {
+		for (const pad of [
+			'lib/components/explore/WholeLawReader.svelte',
+			'lib/components/explore/readers/DossierReader.svelte'
+		])
+			expect(bron(pad), pad).toMatch(/<FullTitle\b/);
+		expect(
+			overtreders((t) => />Volledige titel</.test(t), [plek('lib/components/ui/FullTitle.svelte')])
+		).toEqual([]);
+	});
+
 	it('picks the peildatum of a law and of its article with one component (W14, X14)', () => {
 		for (const pad of [
 			'lib/components/explore/WholeLawReader.svelte',
@@ -187,11 +198,11 @@ describe('the readers', () => {
 		).toEqual([]);
 	});
 
-	it('starts every reader at one title column where no network stands beside it', () => {
-		const regel = /\.explore-read:not\(\.explore-read--with-nav\) \.col--measure \{([^}]*)\}/.exec(
-			bron('routes/explore/+page.svelte')
-		)?.[1];
-		expect(regel).toMatch(/--reader-col-left:\s*calc\([^;]*--nav-w\b/);
+	it('keeps no empty room for contents beside a reader that has none (A190)', () => {
+		// Thijs, 23 Oct: a kabinet stood beside a wide empty column kept for a law's contents.
+		expect(bron('routes/explore/+page.svelte')).not.toMatch(
+			/\.explore-read:not\(\.explore-read--with-nav\)[^{]*\{[^}]*--reader-col-left/
+		);
 	});
 
 	it('centres every reader between the side columns on a wide screen, through ReaderFrame', () => {

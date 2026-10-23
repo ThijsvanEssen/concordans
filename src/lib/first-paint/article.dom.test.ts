@@ -90,10 +90,9 @@ describe('the first paint of an article', () => {
 		const col = html();
 		for (const selector of [
 			'.kop-rij__band',
-			'.head-actions',
 			'.reader-place',
 			'.reader-nav',
-			'.reader-status__woorden',
+			'.reader-facts',
 			'.reader-status__acties',
 			'.reader-rijen'
 		])
@@ -104,8 +103,10 @@ describe('the first paint of an article', () => {
 
 	it('says in that room what the reader says: its status, its place, its band, its origin', () => {
 		const col = html();
-		expect(col.querySelector('.head__stand')!.textContent).toBe(
-			`Geldend recht, tekst sinds ${langeDatum('1992-01-01')}`
+		// The stand of a holding article is the strip of its facts, as the law's (A190).
+		expect(col.querySelector('.head__stand')).toBeNull();
+		expect(col.querySelector('.reader-facts')!.textContent).toContain(
+			`Tekst sinds${langeDatum('1992-01-01')}`
 		);
 		expect(col.querySelector('.reader-place')!.textContent).toBe('Algemene bepalingen');
 		expect(col.querySelector('.behoort .term')!.textContent).toBe('Wet');

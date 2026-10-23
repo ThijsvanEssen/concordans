@@ -1,4 +1,5 @@
 <script lang="ts">
+	import FullTitle from '$lib/components/ui/FullTitle.svelte';
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { textOf } from '$lib/text/words';
 	import { changeVerb } from '$lib/verbonden/relation-words';
@@ -109,7 +110,13 @@
 		/>{/if}
 </svelte:head>
 
-<ReaderFrame state={dossier.state} what="Dossier" retry={dossier.retry}>
+<!-- Verbonden under the text waits for the procedure (ReaderFrame `pending`, T9). -->
+<ReaderFrame
+	state={dossier.state}
+	what="Dossier"
+	retry={dossier.retry}
+	pending={timeline.state.status === 'loading'}
+>
 	{#snippet children(d)}
 		<div class="r-dossier">
 			<ReaderHead
@@ -125,10 +132,7 @@
 			>
 				{#snippet onderTitel()}
 					{#if d.short_title && d.title && d.title.trim() !== d.short_title}
-						<details class="full-title">
-							<summary class="raakvlak">Volledige titel</summary>
-							<p>{d.title}</p>
-						</details>
+						<FullTitle title={d.title} />
 					{/if}
 					<!-- What the bill does to the law, under its title (concept 21, Thijs 10 Oct): the laws
 				     it amends and the EU acts it implements (`legal_effect`), as links. -->
@@ -236,7 +240,9 @@
 			{/if}
 
 			<!-- The amendments as a timetable, asked once in view; only where the dossier counts any. -->
-			{#if aantalAmendementen(d.documents_by_kind) > 0}
+			<!-- Under the procedure once it is in: it does not stand where the procedure comes and get
+			     pushed down by it (UX-toets T9b). -->
+			{#if aantalAmendementen(d.documents_by_kind) > 0 && timeline.state.status !== 'loading'}
 				<AmendementenDienstregeling dossierNumber={d.number} />
 			{/if}
 
@@ -264,17 +270,6 @@
 		text-decoration: underline;
 		text-decoration-color: var(--rule-strong);
 		text-underline-offset: 3px;
-	}
-	.full-title summary {
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		color: var(--ink-2);
-		cursor: pointer;
-	}
-	.full-title p {
-		margin: var(--s-1) 0 0;
-		font-size: var(--t-meta);
-		color: var(--ink-2);
 	}
 	.r-dossier {
 		display: flex;

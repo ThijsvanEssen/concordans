@@ -13,7 +13,8 @@
 		peildatum,
 		today = vandaag(),
 		choose,
-		verlopen = false
+		verlopen = false,
+		asFact = false
 	}: {
 		versions: Schema<'InstrumentVersionDTO'>[];
 		peildatum: string | null;
@@ -23,6 +24,8 @@
 		choose: (day: string) => void;
 		/** The law has expired: no text holds today, the last one is the newest version. */
 		verlopen?: boolean;
+		/** A cell of the head's facts (Feiten `strip`): its label over the menu. */
+		asFact?: boolean;
 	} = $props();
 
 	const oldest = $derived(
@@ -44,8 +47,7 @@
 	const shown = $derived(langeDatum(peildatum ?? (lastText ? newest : today)));
 </script>
 
-<div class="whole-peil">
-	<span>{label}</span>
+{#snippet picker()}
 	<TekstMenu {label} tekst={shown}>
 		{#snippet inhoud(close)}
 			<div class="peil-lijst">
@@ -87,7 +89,19 @@
 			</div>
 		{/snippet}
 	</TekstMenu>
-</div>
+{/snippet}
+
+{#if asFact}
+	<div class="field">
+		<dt>{label}</dt>
+		<dd class="as-fact">{@render picker()}</dd>
+	</div>
+{:else}
+	<div class="whole-peil as-fact">
+		<span>{label}</span>
+		{@render picker()}
+	</div>
+{/if}
 
 <style>
 	/* A list that reads as a line of the head. */
@@ -100,6 +114,41 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		color: var(--ink-2);
+	}
+	/* In the strip of facts and on the article's line the day is a value in the text's type, underlined in dots, with
+	   its caret: no box among the other values (Thijs, 23 Oct). */
+	.as-fact :global(.tekstmenu__knop) {
+		height: auto;
+		min-height: 0;
+		padding: 0;
+		gap: var(--s-1);
+		border: 0;
+		background: none;
+		font-family: var(--font-serif);
+		font-size: var(--t-body-2);
+		font-weight: 400;
+		color: var(--ink);
+		text-decoration: underline dotted var(--rule-strong);
+		text-underline-offset: 4px;
+	}
+	/* The line keeps the height of a control, as its room is kept while the versions come
+	   (ArticleReader .peil-plek). */
+	.whole-peil.as-fact {
+		align-items: center;
+	}
+	.whole-peil.as-fact :global(.tekstmenu__knop) {
+		min-height: var(--veld-h);
+	}
+	/* A finger's target on a touch screen, unframed. */
+	@media (pointer: coarse), (max-width: 768px) {
+		.as-fact :global(.tekstmenu__knop),
+		.whole-peil.as-fact :global(.tekstmenu__knop) {
+			min-height: var(--veld-h-raak);
+		}
+	}
+	.as-fact :global(.tekstmenu__knop:hover),
+	.as-fact :global(.tekstmenu__knop[aria-expanded='true']) {
+		text-decoration-color: var(--ink);
 	}
 	.peil-lijst {
 		display: flex;

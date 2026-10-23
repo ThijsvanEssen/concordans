@@ -336,12 +336,23 @@
 				if (!ac.signal.aborted) tierCounts = { id, parts };
 			},
 			(e) => {
-				if (!ac.signal.aborted) report('Verbonden tierCounts', e);
+				if (ac.signal.aborted) return;
+				report('Verbonden tierCounts', e);
+				// No bar: its held room goes (KindSummary tiersPending).
+				tierCounts = { id, parts: [] };
 			}
 		);
 		return () => ac.abort();
 	});
 	const parts = $derived(tierCounts?.id === selection.id ? tierCounts.parts : null);
+	/** The bar per instantie is asked and not in: its room is held (UX-toets T9b, A202). */
+	const tiersPending = $derived.by(() => {
+		const props = selection.raw?.props ?? {};
+		const bwb = typeof props.bwb_id === 'string';
+		const number = typeof props.article_number === 'string';
+		const isLaw = selection.collection === 'instruments';
+		return !!citingTotal && (isLaw ? bwb : bwb && number) && !parts;
+	});
 	/** The share of the largest part: the bar's parts are as wide as their counts. */
 	const SHADES = [1, 0.7, 0.45, 0.22];
 
@@ -504,15 +515,22 @@
 		{/if}
 		<!-- A bron without verbindingen has no count: its one line says so below (A53), not a
 		     sentence of explanation (R7, UX-toets 0.79.43). -->
-		{#if !empty && (verbonden.groups.length > 0 || (!verbonden.loading && !verbonden.failed && verbonden.id))}
+		<!-- Its line stands from the start, empty until the count is in: the groups under it do
+		     not move when it comes (UX-toets T9, A190). -->
+		{#if !empty}
 			<span class="head__count"
-				>{alleVerbindingen != null
-					? `${formatCount(alleVerbindingen)} ${plural(alleVerbindingen, 'verbinding', 'verbindingen')}`
-					: vast && (!overview || kinds.length)
-						? countLine(vast, filter, wachtSet)
-						: overview && kinds.length
-							? `${formatCount(kindsTotal(kinds))} ${plural(kindsTotal(kinds), 'verbinding', 'verbindingen')}`
-							: ''}</span
+				>{!(
+					verbonden.groups.length > 0 ||
+					(!verbonden.loading && !verbonden.failed && verbonden.id)
+				)
+					? ''
+					: alleVerbindingen != null
+						? `${formatCount(alleVerbindingen)} ${plural(alleVerbindingen, 'verbinding', 'verbindingen')}`
+						: vast && (!overview || kinds.length)
+							? countLine(vast, filter, wachtSet)
+							: overview && kinds.length
+								? `${formatCount(kindsTotal(kinds))} ${plural(kindsTotal(kinds), 'verbinding', 'verbindingen')}`
+								: ''}</span
 			>
 		{/if}
 	</div>
@@ -544,11 +562,15 @@
 			     does from here (besluit 36). -->
 			<p class="groot"><TekstLink href={networkHref ?? '/explore'}>In het netwerk</TekstLink></p>
 		{/if}
-		{#if overview && !verbonden.failed && kinds.length > 0}
+		<!-- The soorten once their set is in, each in its place in their order: before, the heads
+		     to come as blank rows, so no soort comes in above another and pushes it (UX-toets
+		     T9b). -->
+		{#if overview && !verbonden.failed && kinds.length > 0 && !verbonden.loading}
 			<KindSummary
 				{kinds}
 				{selection}
 				tiers={parts}
+				{tiersPending}
 				onOpen={openKind}
 				{onRetry}
 				{onProposedText}
@@ -559,7 +581,7 @@
 			<div class="note">
 				<LoadState state={LOAD_FAILED} what="De verbindingen" plural retry={onRetry} />
 			</div>
-		{:else if verbonden.loading && verbonden.groups.length === 0}
+		{:else if verbonden.loading && (overview || verbonden.groups.length === 0)}
 			<!-- The heads of the groups to come, with their counts, and rows still being read. -->
 			<!-- Each group in its place, with blank rows as many as it will show (#1): what
 			     comes fills them in, and nothing below moves. -->
@@ -889,6 +911,7 @@
 	}
 	.head__count {
 		flex-basis: 100%;
+		min-height: calc(var(--t-micro) * var(--lh-snug));
 		color: var(--ink-3);
 	}
 	.body {

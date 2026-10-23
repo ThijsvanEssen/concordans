@@ -167,6 +167,15 @@
 
 	// The step line: the coalition's seats over the period, the majority as a line.
 	const W = 600;
+	// On a touch screen a step is often narrower than a finger: there the strip is the one
+	// target and a tap takes the step under it; with a mouse and the keys each step is a button.
+	const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+	function pickAt(e: MouseEvent) {
+		const box = (e.currentTarget as SVGSVGElement).getBoundingClientRect();
+		const x = ((e.clientX - box.left) / box.width) * W;
+		const k = stappen.find((t) => x >= t.x0 && x < t.x1) ?? stappen.at(-1);
+		if (k) onSelect(k.s);
+	}
 	const H = 72;
 	const PAD = 0;
 	const dagNr = (d: string) => Date.parse(`${d}T00:00:00Z`) / DAY_MS;
@@ -221,7 +230,8 @@
 		? 'meerderheid'
 		: 'geen meerderheid'}{/snippet}
 
-<Sectie title={titel}>
+<!-- Open, not folded: the two Kamers stand side by side, seen at a glance (Thijs, 23 Oct, A190). -->
+<Sectie title={titel} inklapbaar={false}>
 	<div class="zetels">
 		{#if kop}
 			<!-- The head figure (concept 16, B): the coalition's seats on the day shown. -->
@@ -247,9 +257,11 @@
 							style:left="{f.at * 100}%"
 							aria-hidden="true"
 						></span>{/each}
+					<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
 					<svg
 						viewBox="0 0 {W} {H}"
 						preserveAspectRatio="none"
+						onclick={coarse ? pickAt : undefined}
 						role="group"
 						aria-label="Zetels van de coalitie in de {kamer === 'TK'
 							? 'Tweede'
@@ -270,23 +282,27 @@
 						{/each}
 						<!-- The majority over the steps, so a coalition above it does not hide it. -->
 						<line x1="0" x2={W} y1={yMeerderheid} y2={yMeerderheid} class="lijn" />
-						{#each stappen as k (k.s.from_date)}
-							<!-- A step is the day of the hall below: the whole height is the target. -->
-							<rect
-								x={k.x0}
-								y="0"
-								width={k.x1 - k.x0}
-								height={H}
-								class="doel"
-								role="button"
-								tabindex="0"
-								aria-label="{k.s.coalition} zetels, {langeDatum(k.s.from_date)}{onzekerWoord(k.s)}"
-								onclick={() => onSelect(k.s)}
-								onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelect(k.s)}
-								><title>{k.s.coalition} zetels {fromDate(k.s.from_date)}{onzekerWoord(k.s)}</title
-								></rect
-							>
-						{/each}
+						{#if !coarse}
+							{#each stappen as k (k.s.from_date)}
+								<!-- A step is the day of the hall below: the whole height is the target. -->
+								<rect
+									x={k.x0}
+									y="0"
+									width={k.x1 - k.x0}
+									height={H}
+									class="doel"
+									role="button"
+									tabindex="0"
+									aria-label="{k.s.coalition} zetels, {langeDatum(k.s.from_date)}{onzekerWoord(
+										k.s
+									)}"
+									onclick={() => onSelect(k.s)}
+									onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelect(k.s)}
+									><title>{k.s.coalition} zetels {fromDate(k.s.from_date)}{onzekerWoord(k.s)}</title
+									></rect
+								>
+							{/each}
+						{/if}
 					</svg>
 					<!-- The majority named at its line, not in a sentence under it (UX-toets 10 Oct, #17). -->
 					<span class="lijn-naam" style:top="{(yMeerderheid / H) * 100}%" aria-hidden="true"

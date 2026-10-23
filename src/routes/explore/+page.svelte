@@ -1342,7 +1342,7 @@
 						next={articleIndex >= 0 ? articleStep(articleIndex + 1) : undefined}
 						{place}
 						lidCounts={lidCountsOfArticle}
-						lidTellend={!geteld && !apiTellingen}
+						lidCounting={!geteld && !apiTellingen}
 						{billCount}
 						{billMore}
 						{filter}
@@ -1805,13 +1805,13 @@
 	   At 1920: network 606, reader 840, Verbonden 464; at 2560: 1220, 850, 480. */
 	.explore-graph,
 	.explore-read {
-		--nav-w-auto: 220px;
+		--nav-w-auto: 200px;
 		--graph-w-auto: 360px;
 		--panel-w-auto: clamp(340px, calc(100vw - 872px), 408px);
 		--panel: var(--panel-w, var(--panel-w-auto));
 	}
-	/* Beside the reader's contents (220) Verbonden leaves the reader 670 at 1280. */
-	@media (max-width: 1439px) {
+	/* Beside the reader's contents (200) Verbonden leaves the reader its room below 1280. */
+	@media (max-width: 1279px) {
 		.explore-read--with-nav {
 			--panel-w-auto: clamp(340px, calc(100vw - 900px), 408px);
 		}
@@ -1822,19 +1822,19 @@
 			--graph-w-auto: 328px;
 			--panel-w-auto: 432px;
 		}
-		/* One title column for every reader (Thijs, 10 Oct, "Voor Thijs" 4): the contents
-		   take the network's width less the difference in the reader's left margin (64 for
-		   the hanging numbers of the leden, 32 beside the network), so a title starts where
-		   it does beside the network (365 at 1440) and the article keeps 590 px. */
-		.explore-read {
-			--nav-w-auto: calc(var(--graph-w-auto) + var(--s-6) - 64px);
-		}
 	}
 	@media (min-width: 1600px) {
 		.explore-graph,
 		.explore-read {
 			--panel-w-auto: clamp(432px, calc(432px + (100vw - 1600px) / 10), 480px);
 			--graph-w-auto: max(328px, calc(100vw - var(--panel) - 850px));
+		}
+	}
+	/* Reading, Verbonden is 400 from 1280, as mockup V1: room for the text and its contents
+	   beside it (A190, Thijs 23 Oct); below, the width above. */
+	@media (min-width: 1280px) {
+		.explore-read {
+			--panel-w-auto: 400px;
 		}
 	}
 
@@ -1863,6 +1863,22 @@
 
 	.explore-read {
 		grid-template-columns: minmax(0, 1fr) 5px var(--panel);
+	}
+	/* A reader without contents (a kabinet, a lid, a fractie) and Verbonden stand together in
+	   the middle of the screen: the room is the same at both outer edges, none kept for
+	   contents (A190, UX-toets T9: 123 at the left, 32 at the right). The text column is the
+	   measure with its margins. */
+	@media (min-width: 1101px) {
+		.explore-read:not(.explore-read--with-nav) {
+			grid-template-columns:
+				minmax(0, calc(790px + var(--s-6) + var(--s-8)))
+				5px var(--panel);
+			justify-content: center;
+		}
+		/* No numbers hang at its left: the step to the edge is Verbonden's at the right. */
+		.explore-read:not(.explore-read--with-nav) .col--measure {
+			--reader-pad-left: var(--s-6);
+		}
 	}
 
 	.explore-read--with-nav {
@@ -1988,14 +2004,16 @@
 		--reader-pad-right: var(--s-8);
 		--reader-max: 790px;
 	}
-	/* One title column for every reader (round 2 of the consistency pass, 10 Oct): a reader
-	   without contents (a dossier, a lid, a stemming) starts where one with contents does,
-	   past the width the contents would take, not in the middle of its wider column. */
-	@media (min-width: 769px) {
-		.explore-read:not(.explore-read--with-nav) .col--measure {
-			--reader-col-left: calc(var(--nav-w, var(--nav-w-auto)) + 5px);
+	/* Below 1440, 32 px to the rule of Verbonden: the text keeps some 575 px at 1280 beside the
+	   contents (200) and Verbonden (400); from 1440 some 700 (A190, V1: 720). */
+	@media (max-width: 1439px) {
+		.col--measure {
+			--reader-pad-right: var(--s-6);
 		}
 	}
+	/* A reader without contents (a kabinet, a lid, a stemming) stands in the middle of its
+	   column, as one with contents does between them and Verbonden: no room is kept empty at
+	   its left for contents it has not (Thijs, 23 Oct, A190). */
 
 	.explore-empty {
 		margin: var(--s-6);

@@ -11,8 +11,10 @@
 	import GlossaryPill from './GlossaryPill.svelte';
 	import type { GlossaryTerm } from '$lib/glossary';
 	import { bronLabel, type Collection } from '$lib/vocabulary';
-	import type { Snippet } from 'svelte';
+	import { getContext, type Snippet } from 'svelte';
 	import KopActies from './KopActies.svelte';
+	import SearchInText from '../SearchInText.svelte';
+	import { FIND_KEY, type FindInText } from '../search-state.svelte';
 	import { KOP_ACTIES, type Acties } from './kop-acties';
 
 	let {
@@ -31,6 +33,8 @@
 		later,
 		laterPlek = false,
 		statusHeld = false,
+		facts,
+		tools,
 		acties,
 		extra,
 		children
@@ -64,6 +68,12 @@
 		laterPlek?: boolean;
 		/** The status line kept from the start, empty or not, for words that come with a later answer. */
 		statusHeld?: boolean;
+		/** The facts of the bron as a strip of label and value (Feiten `strip`): in force since,
+		 * the text of which day, its articles, how often it is cited. */
+		facts?: Snippet;
+		/** A quiet tool of the text after Zoek in dit stuk: an article's toelichting, which opens
+		 * under it. */
+		tools?: Snippet;
 		/** The actions of the head: Bewaar always, Citeer where the kind is cited. */
 		acties: Acties;
 		/** A control only this kind has, before the actions: Vergelijken. */
@@ -72,8 +82,10 @@
 		children?: Snippet;
 	} = $props();
 
-	const delen = $derived(joinParts([juris, ...kindParts]));
-	const citeer = $derived(KOP_ACTIES[collection]?.citeer ?? false);
+	const kindRest = $derived(joinParts([juris, ...kindParts]));
+	const cited = $derived(KOP_ACTIES[collection]?.citeer ?? false);
+	// "Zoek in dit stuk" of the frame (ReaderFrame `find`), in the one row of the actions.
+	const finder = getContext<FindInText | undefined>(FIND_KEY);
 </script>
 
 <div class="reader-head">
@@ -96,7 +108,7 @@
 						label={kindLabel ?? kindTerm}
 					/>{:else}<SoortLink {collection} {lijst}
 						><span>{kindLabel ?? bronLabel(collection)}</span></SoortLink
-					>{/if}{#if delen}<span class="reader-juris">, {delen}</span>{/if}
+					>{/if}{#if kindRest}<span class="reader-juris">, {kindRest}</span>{/if}
 			</div>
 		{/if}
 		{@render nav?.()}
@@ -110,25 +122,61 @@
 	<!-- The status, then the actions on a row of their own: the words have the column's width,
 	     so a phrase that comes late (the memorie, the bill) does not push the actions or wrap
 	     beside them (Thijs, 10 Oct, approved suggestion 5). On every reader in this place. -->
+	<!-- The actions of the stuk in one row, right under its title and before its status and
+	     facts, on every reader alike (A190, Thijs 23 Oct; E2: a frame for an action or a menu):
+	     what only this kind has, Bewaar and Citeer, then Zoek in dit stuk. -->
+	<span class="reader-status__acties">
+		{@render extra?.()}
+		<KopActies
+			bewaar={acties.bewaar}
+			wat={acties.wat ?? ''}
+			cite={cited ? (acties.cite ?? []) : []}
+			naam={acties.naam ?? ''}
+			bron={acties.bron ?? null}
+			tekst={acties.tekst}
+			follow={acties.follow ?? null}
+			atom={acties.atom ?? null}
+		/>
+		{#if finder?.find}
+			<!-- A tool of the text, not an action on the bron: bare, with its glass, at the row's
+			     right edge (E2: a frame for an action or a menu; Thijs chose variant x, 23 Oct). -->
+			<button
+				type="button"
+				class="find-btn raakvlak"
+				class:is-active={finder.search.open}
+				aria-expanded={finder.search.open}
+				onclick={() => finder.search.toggle()}
+				><svg
+					width="14"
+					height="14"
+					viewBox="0 0 16 16"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.6"
+					aria-hidden="true"><circle cx="7" cy="7" r="4.8" /><path d="M10.6 10.6 14 14" /></svg
+				><span>Zoek<span class="find-rest"> in dit stuk</span></span></button
+			>
+		{/if}
+		{@render tools?.()}
+	</span>
 	<div class="reader-status">
-		<div class="reader-status__woorden" class:plek={statusHeld}>{@render statusLine?.()}</div>
+		<!-- The words of the status where there are any or their room is kept: no empty line. -->
+		{#if statusLine || statusHeld}<div class="reader-status__woorden" class:plek={statusHeld}>
+				{@render statusLine?.()}
+			</div>{/if}
+		{#if facts}<div class="reader-facts">{@render facts()}</div>{/if}
+		<!-- What comes after the text (an article's bills) under the facts: its room is held at
+		     the foot of the head, before the text, not between the actions and the facts. -->
 		{#if later || laterPlek}<div class="reader-status__later">{@render later?.()}</div>{/if}
-		<span class="reader-status__acties">
-			{@render extra?.()}
-			<KopActies
-				bewaar={acties.bewaar}
-				wat={acties.wat ?? ''}
-				cite={citeer ? (acties.cite ?? []) : []}
-				naam={acties.naam ?? ''}
-				bron={acties.bron ?? null}
-				tekst={acties.tekst}
-				follow={acties.follow ?? null}
-				atom={acties.atom ?? null}
-			/>
-		</span>
 	</div>
 	{#if children}<div class="reader-rijen">{@render children()}</div>{/if}
 </div>
+<!-- The field under the head, beside it and not in it: it stays at the top of the text while
+     the text scrolls (sticky in the reader's own block, which holds the text). -->
+{#if finder?.find && finder.search.open}<SearchInText
+		root={finder.search.column}
+		onClose={() => finder.search.close()}
+	/>{/if}
 
 <style>
 	/* One step from the head to what follows, on every reader: a reader that spaces its blocks
@@ -192,9 +240,7 @@
 		}
 		/* On a phone the place and Vorig, Volgend stand on two rows. */
 		.reader-line--plaats {
-			min-height: calc(
-				var(--t-body-2) * var(--lh-snug) + var(--s-2) + var(--t-micro) * var(--lh-snug)
-			);
+			min-height: calc(var(--t-body-2) * var(--lh-snug) + var(--s-2) + var(--veld-h-raak));
 		}
 		.reader-place {
 			flex-basis: 100%;
@@ -263,11 +309,13 @@
 	.reader-status__woorden :global(p) {
 		margin: 0;
 	}
+	/* The row of actions between the title and the status, a step from each. */
 	.reader-status__acties {
-		display: inline-flex;
+		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--s-2);
+		margin: var(--s-3) 0;
 	}
 	/* On a touch screen and below 768 the lines of the status and of the actions stand apart enough that
 	   the 44 px of their controls (.btn, .tekstmenu__knop) do not meet. */
@@ -277,7 +325,59 @@
 		}
 		.reader-status__acties {
 			row-gap: var(--s-5);
+			margin-bottom: var(--s-4);
 		}
+		/* The actions of the head are a finger's 44 px themselves, not only their target
+		   (UX-toets T9). */
+		.reader-status__acties :global(.btn),
+		.find-btn {
+			min-height: var(--veld-h-raak);
+		}
+	}
+	/* Zoek in dit stuk: the quiet tool at the right of Bewaar and Citeer, in the letter of the
+	   controls, underlined under the pointer and while the field is open. */
+	.find-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-2);
+		height: var(--veld-h);
+		margin-left: auto;
+		padding: 0 var(--s-2);
+		border: 0;
+		background: none;
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
+		color: var(--ink-2);
+		cursor: pointer;
+	}
+	/* On a phone one word on the row of Bewaar and Citeer, not a line of its own (UX-toets
+	   T9); its whole name stays for a screen reader. */
+	@media (max-width: 640px) {
+		.find-btn {
+			padding: 0 var(--s-1);
+		}
+		.find-rest {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+			white-space: nowrap;
+		}
+	}
+	.find-btn:hover,
+	.find-btn.is-active {
+		color: var(--ink);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+	/* The facts a block of their own between the words of the status and the actions, a
+	   hairline over them; no rule under the actions, the text's own first rule follows. */
+	.reader-facts {
+		align-self: stretch;
+		margin: var(--s-2) 0 var(--s-1);
+		padding-top: var(--s-3);
+		border-top: 1px solid var(--rule);
 	}
 	.reader-rijen {
 		display: grid;

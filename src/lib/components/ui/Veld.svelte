@@ -19,12 +19,18 @@
 	} = $props();
 </script>
 
+<!-- A label and its value in one group (a dl may hold them in a div): in the list of Feiten the
+     group draws no box of its own, in its strip it is a cell. -->
 {#if !ontbreekt(value)}
-	<dt>{label}</dt>
-	<dd>
-		{#if children}{@render children()}{:else}{value}{/if}
-	</dd>
+	<div class="field">
+		<dt>{label}</dt>
+		<dd>
+			{#if children}{@render children()}{:else}{value}{/if}
+		</dd>
+	</div>
 {:else if nodig}
-	<dt>{label}</dt>
-	<dd><Waarde value={null} nodig /></dd>
+	<div class="field">
+		<dt>{label}</dt>
+		<dd><Waarde value={null} nodig /></dd>
+	</div>
 {/if}

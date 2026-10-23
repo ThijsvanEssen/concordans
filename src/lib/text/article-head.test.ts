@@ -7,6 +7,7 @@ import {
 	explanatoryLabel,
 	originVerbOf,
 	ownExplanation,
+	plainSince,
 	versionLabelOf
 } from './article-head';
 
@@ -23,6 +24,31 @@ const label = (o: Partial<Parameters<typeof versionLabelOf>[0]>) =>
 		validFrom: '1992-01-01',
 		...o
 	});
+
+describe('the day of the text in the strip of an article (A190)', () => {
+	const base = {
+		stubLabel: null,
+		shown: null,
+		showStatus: false,
+		officialId: null,
+		validity: { state: 'in_force' as const, date: null, as_of: null, successors: [] },
+		repealed: false,
+		lapseFrom: null,
+		euAct: false,
+		validFrom: '1992-01-01'
+	};
+	it('is the day of the text where it holds or is not known not to', () => {
+		expect(plainSince(base)).toBe(langeDatum('1992-01-01'));
+		expect(plainSince({ ...base, validity: null })).toBe(langeDatum('1992-01-01'));
+		expect(plainSince({ ...base, validFrom: null })).toBe('');
+	});
+	it('is none where the stand is a sentence', () => {
+		expect(plainSince({ ...base, showStatus: true })).toBeNull();
+		expect(plainSince({ ...base, euAct: true })).toBeNull();
+		expect(plainSince({ ...base, shown: { from: '2001-01-01', until: null } })).toBeNull();
+		expect(plainSince({ ...base, stubLabel: 'Niet in de gegevens.' })).toBeNull();
+	});
+});
 
 describe('the head of an article', () => {
 	it('titles it by its number, a BW article by its book, with its heading', () => {

@@ -20,6 +20,7 @@
 		kinds,
 		selection,
 		tiers = null,
+		tiersPending = false,
 		onOpen,
 		onRetry,
 		onProposedText,
@@ -30,6 +31,8 @@
 		selection: GraphNode;
 		/** The judgments that cite the article per instantie, over the soort's count. */
 		tiers?: TierCount[] | null;
+		/** The bar is asked and not in: its room stands, so the soorten under it do not move. */
+		tiersPending?: boolean;
 		/** "Alle N": the soort with its groups. */
 		onOpen: (id: string) => void;
 		/** Ask a group whose rows did not come again. */
@@ -75,6 +78,12 @@
 						><span class="parts__count">{formatCount(t.count)}</span>
 					</li>
 				{/each}
+			</ul>
+		{:else if k.id === 'judgments' && tiersPending}
+			<!-- The room of the bar and its two rows of parts while they come (UX-toets T9b). -->
+			<div class="bar bar--wacht" aria-hidden="true"></div>
+			<ul class="parts parts--wacht" aria-hidden="true">
+				{#each { length: 4 } as _, i (i)}<li><span>…</span><span>…</span></li>{/each}
 			</ul>
 		{/if}
 		{#if k.failed && k.rows.length === 0}
@@ -161,6 +170,12 @@
 		gap: 2px;
 		height: var(--s-2);
 		margin: 0 0 var(--s-2);
+	}
+	.bar--wacht {
+		background: var(--paper-2);
+	}
+	.parts--wacht {
+		visibility: hidden;
 	}
 	.bar i {
 		display: block;

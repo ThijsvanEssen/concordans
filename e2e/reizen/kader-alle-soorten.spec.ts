@@ -81,9 +81,17 @@ for (const [soort, pad] of SOORTEN) {
 			'a band without lines'
 		).toBe(true);
 
-		// 3. The status line says something where the kind has one to say.
+		// 3. The status line says something where the kind has one to say; a law and an article
+		// say it in the strip of their facts (A190).
 		if (STATUS.has(soort))
-			await expect(page.locator('.reader-status__woorden').first(), 'status line').not.toBeEmpty();
+			await expect(
+				page
+					.locator(
+						soort === 'wet' || soort === 'artikel' ? '.reader-facts' : '.reader-status__woorden'
+					)
+					.first(),
+				'status line'
+			).not.toBeEmpty();
 
 		// 4. Inhoud has two entries at least, or there is none: no column, no tab, no button.
 		const leeg = (await page.locator('.toc-column[hidden]').count()) > 0;

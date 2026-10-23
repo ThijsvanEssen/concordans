@@ -76,7 +76,8 @@ test('a law reads whole, with its overview, a date to read it on and what is bas
 test('an article: its leden, the law above it and the next article', async ({ page }) => {
 	await page.goto('/wetten/BWBR0005289/artikel/6:162');
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162 BW');
-	await expect(page.getByText('Geldend recht, tekst sinds 1 januari 1992')).toBeVisible();
+	await expect(page.locator('.reader-facts')).toContainText('Geldend recht');
+	await expect(page.locator('.reader-facts')).toContainText('1 januari 1992');
 	for (const lid of [1, 2, 3])
 		await expect(
 			page.getByRole('button', { name: `art. 6:162 lid ${lid} BW: citeren, bewaren` })
@@ -106,7 +107,8 @@ test('an earlier text of an article says so, and leads back to the law in force'
 	await expect(page.getByText(/Niet de geldende tekst/)).toBeVisible();
 
 	await page.getByRole('button', { name: 'Geldend recht lezen' }).click();
-	await expect(page.getByText('Geldend recht, tekst sinds 17 november 2017')).toBeVisible();
+	await expect(page.locator('.reader-facts')).toContainText('Geldend recht');
+	await expect(page.locator('.reader-facts')).toContainText('17 november 2017');
 	await expect(page.getByText(/Niet de geldende tekst/)).toHaveCount(0);
 });
 

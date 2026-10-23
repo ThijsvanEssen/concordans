@@ -18,7 +18,7 @@
 		next,
 		place = [],
 		lidCounts = new Map(),
-		lidTellend = false,
+		lidCounting = false,
 		billCount = 0,
 		billMore = false,
 		filter,
@@ -33,7 +33,7 @@
 		place?: Division[];
 		/** Verbindingen per lid of the article, under the bronfilter. */
 		lidCounts?: Map<string, number>;
-		lidTellend?: boolean;
+		lidCounting?: boolean;
 		billCount?: number;
 		/** The count is a sample: the first lading of a much changed article. */
 		billMore?: boolean;
@@ -62,7 +62,7 @@
 		{next}
 		{place}
 		{lidCounts}
-		{lidTellend}
+		{lidCounting}
 		{billCount}
 		{billMore}
 		{filter}

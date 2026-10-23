@@ -152,6 +152,19 @@ export function versionLabelOf(o: {
 	return from ? `Geldend recht, tekst sinds ${from}` : 'Geldend recht';
 }
 
+/**
+ * The day of the text where the stand of an article is a fact of its strip, as a law's is
+ * (A190, UX-toets T9): it holds, or is not known not to, and the text on screen is its own.
+ * '' where that day is not known; null where the stand is a sentence (versionLabelOf): a stub,
+ * an earlier text, a status, an enacted law not in force, a repealed article, an act of the EU.
+ */
+export function plainSince(o: Parameters<typeof versionLabelOf>[0]): string | null {
+	if (o.stubLabel || o.shown || o.showStatus || o.euAct) return null;
+	if (enactedLawId(o.officialId) && o.validity === undefined) return null;
+	if (o.repealed && o.validity === undefined) return null;
+	return langeDatum(o.validFrom) || '';
+}
+
 /** How the wet named under the text relates to it. */
 export function originVerbOf(
 	onScreen: { index: number; first: { change?: string | null } } | null
