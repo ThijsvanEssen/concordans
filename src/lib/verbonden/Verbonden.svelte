@@ -329,12 +329,9 @@
 		const bwb = typeof props.bwb_id === 'string' ? props.bwb_id : null;
 		const number = typeof props.article_number === 'string' ? props.article_number : null;
 		const isLaw = selection.collection === 'instruments';
-		if (!all || (isLaw ? !selection.key : !bwb || !number)) return;
+		if (!all || (isLaw ? !bwb : !bwb || !number)) return;
 		const ac = new AbortController();
-		(isLaw
-			? lawTiers(selection.key, all, ac.signal)
-			: citingTiers(bwb!, number!, all, ac.signal)
-		).then(
+		(isLaw ? lawTiers(bwb!, all, ac.signal) : citingTiers(bwb!, number!, all, ac.signal)).then(
 			(parts) => {
 				if (!ac.signal.aborted) tierCounts = { id, parts };
 			},
