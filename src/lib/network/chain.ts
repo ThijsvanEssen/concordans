@@ -8,17 +8,29 @@ import { naamVanId } from '$lib/bron/menselijk';
 import { articleRef } from '$lib/text/bw';
 import { NL } from '$lib/text/collator';
 import { grondslagArtikelen } from '$lib/text/delegaties';
+import { kindName } from '$lib/text/law-kind';
 
 type Delegated = Schema<'InstrumentDelegatedResponse'>;
 type Basis = Schema<'InstrumentBasisResponse'>;
 type Summary = Schema<'InstrumentSummaryDTO'>;
 type BasisArticle = Schema<'ImplementedBasisArticleDTO'>;
 
-export type LayerId = 'basis' | 'law' | 'article' | 'amvb' | 'ministerial' | 'policy' | 'other';
+export type LayerId =
+	| 'eu'
+	| 'basis'
+	| 'law'
+	| 'article'
+	| 'implementation'
+	| 'amvb'
+	| 'ministerial'
+	| 'policy'
+	| 'other';
 
 const LAYER_LABEL: Record<LayerId, string> = {
+	eu: 'EU-recht',
 	basis: 'Grondslag',
 	law: 'Wet',
+	implementation: 'Implementatie',
 	article: 'Artikel',
 	amvb: 'AMvB',
 	ministerial: 'Ministeriële regeling',
@@ -82,21 +94,80 @@ const CHANGES = /^wijzigingsbesluit\s+([^,(]+?)(?:\s+enz\.?)?(?:[,(]|$)/i;
 const nameOf = (i: Summary): string =>
 	i.citation_title ?? naamVanId(i.id, i.display_name ?? i.title);
 
+/** An instrument of /eu-links: its summary as the keten reads one. */
+type EuInstrument = Pick<
+	Summary,
+	'id' | 'key' | 'bwb_id' | 'celex' | 'title' | 'citation_title'
+> & {
+	kind?: string | null;
+	path?: string | null;
+};
+
+/** The kinds of a regulation, which rests on a law: one without a grondslag in the data says so. */
+const REGULATION_KINDS = new Set([
+	'amvb',
+	'rijksamvb',
+	'kb',
+	'ministeriele-regeling',
+	'beleidsregel',
+	'circulaire',
+	'zbo',
+	'pbo',
+	'reglement'
+]);
+/** A regulation, by the kind the BWB gives it (`AMvB`, `beleidsregel`): it rests on a law. */
+export const isRegulation = (kind: string | null | undefined) =>
+	REGULATION_KINDS.has((kind ?? '').toLowerCase());
+
+/** What the keten is drawn around, beside the law's own lists. */
+export type ChainOptions = {
+	/** Up to this many regulations a layer are drawn (the API sorts them by title). */
+	max?: number;
+	/** A regulation drawn whatever `max`: the one marked. */
+	keep?: string | null;
+	/** The kind of the start (`AMvB`, `beleidsregel`, `publicatie`): its layer's heading. */
+	kind?: string | null;
+	/** An article as the start: only the regulations issued under it (R3-K F5). */
+	article?: string | null;
+	/** The EU acts the law implements, above it, and the laws that implement it, below (F1). */
+	eu?: { implements: readonly EuInstrument[]; implementedBy: readonly EuInstrument[] } | null;
+};
+
+const euNode = (i: EuInstrument, parents: ChainNode['parents']): ChainNode => ({
+	id: i.id,
+	name: i.citation_title ?? naamVanId(i.id, i.title),
+	short: i.citation_title ?? naamVanId(i.id, i.title),
+	collection: 'instruments',
+	instrument: { ...i, short_title: null, abbreviation: null, display_name: null } as Summary,
+	kind: i.kind?.toLowerCase() ?? null,
+	since: null,
+	grondslag: null,
+	mentions: null,
+	parents,
+	further: []
+});
+
 /**
- * The layers of the keten of `wet` (its summary), from what /delegated and /basis give. Up to
- * `max` regulations a layer (the API sorts them by title), and `houd`; the rest are counted,
- * not drawn.
+ * The layers of the keten of `wet` (its summary), from what /delegated, /basis and /eu-links
+ * give. Up to `max` regulations a layer, and `keep`; the rest are listed apart (`more`), not
+ * drawn.
  */
 export function chain(
 	law: { id: string; name: string; instrument?: Summary },
 	delegated: Delegated | null,
 	basis: Basis | null,
-	max = Number.POSITIVE_INFINITY,
-	/** A regulation drawn whatever `max`: the one marked. */
-	keep: string | null = null
+	{
+		max = Number.POSITIVE_INFINITY,
+		keep = null,
+		kind = null,
+		article = null,
+		eu = null
+	}: ChainOptions = {}
 ): {
 	layers: ChainLayer[];
 	rest: Partial<Record<LayerId, number>>;
+	/** Per layer, the regulations not drawn: "Alle 403" lists them. */
+	more: Partial<Record<LayerId, ChainNode[]>>;
 	total: number;
 	amending: string[];
 	missing: string[];
@@ -107,6 +178,7 @@ export function chain(
 	// it, is a gap said by name (mockup A197-c: "grondslag niet in de gegevens").
 	const amending: string[] = [];
 	const own = (delegated?.items ?? []).filter((item) => {
+		if (article && !item.articles.some((a) => a.article_number === article)) return false;
 		if (!AMENDING.test(nameOf(item.instrument))) return true;
 		amending.push(nameOf(item.instrument));
 		return false;
@@ -129,6 +201,29 @@ export function chain(
 		)
 	];
 	const rest: Partial<Record<LayerId, number>> = {};
+	const more: Partial<Record<LayerId, ChainNode[]>> = {};
+	/** A layer of EU acts or implementing laws: up to `max` drawn, the rest listed. */
+	const capped = (id: LayerId, list: ChainNode[]) => {
+		const drawn = list.filter((n, i) => i < max || n.id === keep);
+		const over = list.filter((n) => !drawn.includes(n));
+		if (over.length) {
+			rest[id] = over.length;
+			more[id] = over;
+		}
+		return drawn;
+	};
+	if (eu?.implements.length) {
+		// One kind names the layer (Richtlijn); several, EU-recht.
+		const kinds = new Set(eu.implements.map((i) => kindName(i.kind)));
+		layers.push({
+			id: 'eu',
+			label: (kinds.size === 1 && [...kinds][0]) || LAYER_LABEL.eu,
+			nodes: capped(
+				'eu',
+				eu.implements.map((i) => euNode(i, []))
+			)
+		});
+	}
 	if (basis?.items.length)
 		layers.push({
 			id: 'basis',
@@ -149,7 +244,7 @@ export function chain(
 		});
 	layers.push({
 		id: 'law',
-		label: LAYER_LABEL.law,
+		label: kindName(kind) ?? LAYER_LABEL.law,
 		nodes: [
 			{
 				id: law.id,
@@ -161,10 +256,13 @@ export function chain(
 				since: null,
 				grondslag: null,
 				mentions: null,
-				parents: (basis?.items ?? []).map((b) => ({
-					id: b.instrument.id,
-					way: b.basis_kind === 'mentioned' ? 'mentioned' : 'delegates'
-				})),
+				parents: [
+					...(basis?.items ?? []).map((b) => ({
+						id: b.instrument.id,
+						way: b.basis_kind === 'mentioned' ? ('mentioned' as const) : ('delegates' as const)
+					})),
+					...(eu?.implements ?? []).map((i) => ({ id: i.id, way: 'delegates' as const }))
+				],
 				further: []
 			}
 		]
@@ -175,12 +273,31 @@ export function chain(
 		const layer = layerOf(item.kind);
 		const list = perLayer.get(layer) ?? [];
 		perLayer.set(layer, list);
+		const node: ChainNode = {
+			id: item.instrument.id,
+			name: nameOf(item.instrument),
+			short: nameOf(item.instrument),
+			collection: 'instruments',
+			instrument: item.instrument,
+			kind: item.kind ?? null,
+			since: item.date_in_force ?? null,
+			grondslag: basisLine(item.articles, 'delegates'),
+			mentions: basisLine(item.articles, 'mentioned'),
+			parents: item.articles
+				.filter((a) => !article || a.article_number === article)
+				.map((a) => ({
+					id: a.id,
+					way: (a.basis_kind ?? item.basis_kind) === 'mentioned' ? 'mentioned' : 'delegates'
+				})),
+			further: (item.sub_delegated ?? []).map((s) => nameOf(s.instrument))
+		};
 		if (list.length >= max && item.instrument.id !== keep) {
 			rest[layer] = (rest[layer] ?? 0) + 1;
+			(more[layer] ??= []).push(node);
 			continue;
 		}
 		for (const a of item.articles)
-			if (!articles.has(a.id))
+			if (!articles.has(a.id) && (!article || a.article_number === article))
 				articles.set(a.id, {
 					id: a.id,
 					name: a.display_name ?? articleShort(a),
@@ -193,22 +310,7 @@ export function chain(
 					parents: [{ id: law.id, way: 'delegates' }],
 					further: []
 				});
-		list.push({
-			id: item.instrument.id,
-			name: nameOf(item.instrument),
-			short: nameOf(item.instrument),
-			collection: 'instruments',
-			instrument: item.instrument,
-			kind: item.kind ?? null,
-			since: item.date_in_force ?? null,
-			grondslag: basisLine(item.articles, 'delegates'),
-			mentions: basisLine(item.articles, 'mentioned'),
-			parents: item.articles.map((a) => ({
-				id: a.id,
-				way: (a.basis_kind ?? item.basis_kind) === 'mentioned' ? 'mentioned' : 'delegates'
-			})),
-			further: (item.sub_delegated ?? []).map((s) => nameOf(s.instrument))
-		});
+		list.push(node);
 	}
 	if (articles.size)
 		layers.push({
@@ -216,9 +318,18 @@ export function chain(
 			label: LAYER_LABEL.article,
 			nodes: [...articles.values()].sort((a, b) => NL.compare(a.short, b.short))
 		});
+	if (eu?.implementedBy.length)
+		layers.push({
+			id: 'implementation',
+			label: LAYER_LABEL.implementation,
+			nodes: capped(
+				'implementation',
+				eu.implementedBy.map((i) => euNode(i, [{ id: law.id, way: 'delegates' }]))
+			)
+		});
 	for (const id of REGULATION_LAYERS) {
 		const nodes = perLayer.get(id);
 		if (nodes?.length) layers.push({ id, label: LAYER_LABEL[id], nodes });
 	}
-	return { layers, rest, total: own.length, amending, missing };
+	return { layers, rest, more, total: own.length, amending, missing };
 }

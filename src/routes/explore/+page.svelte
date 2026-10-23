@@ -7,6 +7,7 @@
 	// A click on the canvas marks a bron (?marked) and opens its card; Lees on it reads the bron,
 	// a step of its own: Back brings the werkplek back from its address.
 	import { NOT_IN_DATA, noneHeld, notHeld } from '$lib/text/coverage';
+	import { articleRef } from '$lib/text/bw';
 	import { categoryLabel } from '$lib/components/explore/index/categories';
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import { get } from 'svelte/store';
@@ -114,16 +115,17 @@
 		exploreHref,
 		exploreUrl
 	} from '$lib/bron/address';
-	import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
+	import { ensureInstrumentName, instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 	import NetwerkPanel from '$lib/selection/NetwerkPanel.svelte';
 	import NetworkOptions from '$lib/selection/NetworkOptions.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import ChainView from '$lib/network/ChainView.svelte';
 	import SharedView from '$lib/network/SharedView.svelte';
-	import { chain, type ChainNode } from '$lib/network/chain';
+	import { chain, isRegulation, type ChainNode } from '$lib/network/chain';
 	import { sharedFromNetwork, sharedModel } from '$lib/network/shared';
 	import { getLawBasis, getLawDelegated } from '$lib/api/articles';
 	import { getShared } from '$lib/api/nodes';
+	import { getEuLinks } from '$lib/api/verbonden';
 	import { formatCount } from '$lib/text/getal';
 	import { capitalize, joinAnd, textOf } from '$lib/text/words';
 	import { focusStap } from '$lib/graph/focus-stap';
@@ -383,18 +385,55 @@
 	const chooseView = (w: ViewId) =>
 		setUrl({ [VIEW_PARAM]: w === 'omgeving' ? null : w, [MARK_PARAM]: null });
 
+	/**
+	 * Where the keten starts: the bron of the page, else the first chosen bron of the netwerk
+	 * that is a law or an article (R3-N B3: /explore?netwerk=instruments/… said "alleen bij een
+	 * wet" for a law).
+	 */
+	const chainStart = $derived.by(() => {
+		if (mode !== 'graph' || view !== 'keten') return null;
+		const wetgeving = (n: GraphNode | null | undefined) =>
+			n?.collection === 'instruments' || n?.collection === 'articles';
+		if (wetgeving(selectedNode)) return selectedNode;
+		return (
+			composer.entries.find(
+				(e) => e.on && e.node && (e.collection === 'instruments' || e.collection === 'articles')
+			)?.node ?? null
+		);
+	});
+	/**
+	 * Whether Keten means something here: a law, a regulation or an article as the bron or among
+	 * the chosen ones; elsewhere it is offered greyed (R3-K F9, R3-I F1).
+	 */
+	const ketenKan = $derived(
+		mode === 'graph' &&
+			[selectedNode, ...composer.entries.filter((e) => e.on).map((e) => e.node)].some(
+				(n) => n?.collection === 'instruments' || n?.collection === 'articles'
+			)
+	);
 	/** The law of the keten: the bron itself, or an article's law. */
 	const chainLaw = $derived.by(() => {
-		const n = mode === 'graph' && view === 'keten' ? selectedNode : null;
+		const n = chainStart;
 		if (!n) return null;
 		if (n.collection === 'articles') return lawIdOf(n.raw?.props) ?? null;
 		if (n.collection !== 'instruments') return null;
-		return textOf(n.raw?.props?.bwb_id) ?? n.key.toUpperCase();
+		return lawIdOf(n.raw?.props) ?? n.key.toUpperCase();
 	});
+	/** An article as the start: the keten of the regulations issued under it (R3-K F5). */
+	const chainArticle = $derived(
+		chainStart?.collection === 'articles'
+			? (articleOf(chainStart.raw?.props)?.articleNumber ?? null)
+			: null
+	);
+	/** The start's kind (`AMvB`, `beleidsregel`, `publicatie`, `richtlijn`): its layer's heading. */
+	const chainKind = $derived(
+		chainStart?.collection === 'instruments' ? textOf(chainStart.raw?.props?.kind) : null
+	);
 	let chainData = $state.raw<{
 		bwb: string;
 		delegated: Awaited<ReturnType<typeof getLawDelegated>>;
 		basis: Awaited<ReturnType<typeof getLawBasis>> | null;
+		eu: Awaited<ReturnType<typeof getEuLinks>> | null;
 	} | null>(null);
 	let chainError = $state.raw<{ bwb: string; error: unknown } | null>(null);
 	let chainTries = $state(0);
@@ -409,14 +448,19 @@
 		if (!bwb) return;
 		let current = true;
 		chainError = null;
+		// The keten stands without the laws above it and without its EU acts: its own
+		// regulations are what it shows.
 		const basis = getLawBasis(bwb).catch((e) => {
-			// The keten stands without the laws above it: its own regulations are what it shows.
 			report('Keten grondslag', e);
 			return null;
 		});
-		Promise.all([getLawDelegated(bwb), basis])
-			.then(([delegated, basis]) => {
-				if (current) chainData = { bwb, delegated, basis };
+		const eu = getEuLinks(bwb).catch((e) => {
+			if (!isNotFound(e)) report('Keten EU', e);
+			return null;
+		});
+		Promise.all([getLawDelegated(bwb), basis, eu])
+			.then(([delegated, basis, eu]) => {
+				if (current) chainData = { bwb, delegated, basis, eu };
 			})
 			.catch((e) => {
 				report('Keten', e);
@@ -426,29 +470,60 @@
 			current = false;
 		};
 	});
+	/** The keten is on its way: the drawing says so, and Soort counts nothing yet (R3-K F6). */
+	const chainLoading = $derived(!!chainLaw && chainData?.bwb !== chainLaw && !chainFailure);
+	// An article's law by its name, not its id, on the keten's head.
+	$effect(() => {
+		if (chainArticle) ensureInstrumentName(chainLaw);
+	});
 	const chainModel = $derived.by(() => {
 		const bwb = chainLaw;
 		if (!bwb || chainData?.bwb !== bwb) return null;
 		const id = `instruments/${bwb.toLowerCase()}`;
-		return chain(
-			{ id, name: lawName($instrumentMetaStore.get(bwb), bwb) },
-			chainData.delegated,
-			chainData.basis,
-			4,
-			marked
-		);
+		const start = chainStart;
+		// A publication by its name (Stb. 2018, 101), never its key (R3-K F11).
+		const name =
+			start?.collection === 'instruments'
+				? bronNaam(start, $instrumentMetaStore)
+				: lawName($instrumentMetaStore.get(bwb), bwb);
+		const eu = chainData.eu;
+		return chain({ id, name }, chainData.delegated, chainData.basis, {
+			max: 4,
+			keep: marked,
+			kind: chainKind,
+			article: chainArticle,
+			eu: eu
+				? {
+						implements: eu.implements.map((l) => l.instrument),
+						implementedBy: eu.implemented_by.map((l) => l.instrument)
+					}
+				: null
+		});
 	});
-	const chainGap = $derived(
-		view !== 'keten'
-			? null
-			: !chainLaw
-				? 'Keten: alleen bij een wet of een artikel'
-				: chainModel?.missing.length
-					? `${joinAnd(chainModel.missing.slice(0, 2), { n: chainModel.missing.length - 2, one: 'andere', many: 'andere' })}: grondslag ${NOT_IN_DATA}`
-					: chainModel && chainModel.total === 0
-						? capitalize(noneHeld('uitvoeringsregelingen'))
-						: null
+	/** The article the keten starts from, as the drawing names it: marked until another is. */
+	const chainArticleId = $derived(
+		chainArticle ? (chainModel?.layers.find((l) => l.id === 'article')?.nodes[0]?.id ?? null) : null
 	);
+	const chainGap = $derived.by(() => {
+		if (view !== 'keten' || chainLoading) return null;
+		if (!chainLaw) return 'Keten: alleen bij een wet, een regeling of een artikel';
+		const m = chainModel;
+		if (!m) return null;
+		if (m.missing.length)
+			return `${joinAnd(m.missing.slice(0, 2), { n: m.missing.length - 2, one: 'andere', many: 'andere' })}: grondslag ${NOT_IN_DATA}`;
+		// A regulation whose grondslag the data lacks says so, as the law above it does (F3).
+		const zonderGrondslag = isRegulation(chainKind) && !m.layers.some((l) => l.id === 'basis');
+		const geen =
+			m.total === 0 && !m.layers.some((l) => l.id === 'implementation')
+				? noneHeld(
+						chainArticle
+							? `uitvoeringsregelingen op grond van ${articleRef(null, chainArticle)}`
+							: 'uitvoeringsregelingen'
+					)
+				: null;
+		const gaten = [zonderGrondslag ? `grondslag ${NOT_IN_DATA}` : null, geen].filter(Boolean);
+		return gaten.length ? capitalize(gaten.join(', ')) : null;
+	});
 	/** A node of the keten as the card reads a bron. */
 	function chainNodeOf(k: ChainNode): GraphNode {
 		const [collection, key] = k.id.split('/') as ['instruments' | 'articles', string];
@@ -478,7 +553,10 @@
 		} as GraphNode;
 	}
 	const chainCard = $derived.by(() => {
-		const k = chainModel?.layers.flatMap((l) => l.nodes).find((x) => x.id === marked);
+		const k = [
+			...(chainModel?.layers.flatMap((l) => l.nodes) ?? []),
+			...Object.values(chainModel?.more ?? {}).flat()
+		].find((x) => x.id === marked);
 		if (!k) return null;
 		const aangehaald = k.instrument?.inbound_citation_count;
 		return {
@@ -592,7 +670,8 @@
 		new Set(FILTER_GROUPS.filter((k) => filter.bronnen && !filter.bronnen.has(k)))
 	);
 	const chainCounts = $derived.by(() => {
-		if (!chainModel) return null;
+		// On its way, Soort counts nothing: not the canvas's numbers that the keten's replace (F6).
+		if (!chainModel) return { kinds: {}, relations: {} };
 		const nodes = chainModel.layers.flatMap((l) => l.nodes);
 		const lines = nodes.flatMap((n) => n.parents);
 		const articles = nodes.filter((n) => n.collection === 'articles').length;
@@ -1721,7 +1800,9 @@
 			{scale}
 			layers={chainModel?.layers ?? []}
 			rest={chainModel?.rest}
-			chosen={marked}
+			more={chainModel?.more}
+			loading={chainLoading}
+			chosen={marked ?? chainArticleId}
 			gap={chainGap}
 			{hiddenKinds}
 			{hiddenRelations}
@@ -1832,7 +1913,13 @@
 										<Keuze
 											label="Weergave"
 											waarde={view}
-											opties={VIEWS.map((w) => ({ waarde: w.waarde, label: w.label }))}
+											opties={VIEWS.map((w) => ({
+												waarde: w.waarde,
+												label: w.label,
+												...(w.waarde === 'keten' && !ketenKan && view !== 'keten'
+													? { uit: true, titel: 'Alleen bij een wet, een regeling of een artikel' }
+													: {})
+											}))}
 											onSelect={chooseView}
 										/>
 									</div>

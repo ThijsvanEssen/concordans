@@ -20,13 +20,19 @@
 		scale = 1,
 		hiddenKinds = new Set(),
 		hiddenRelations = new Set(),
+		more = {},
 		amending = 0,
 		failure = null,
+		loading = false,
 		onChoose
 	}: {
 		layers: readonly ChainLayer[];
 		/** Per layer, the regulations not drawn. */
 		rest?: Partial<Record<LayerId, number>>;
+		/** Per layer, those regulations themselves: "Alle 403" lists them (R3-K F4). */
+		more?: Partial<Record<LayerId, readonly ChainNode[]>>;
+		/** The keten is on its way: the drawing's place says so, nothing springs in (R3-K F6). */
+		loading?: boolean;
 		/** The node marked. */
 		chosen?: string | null;
 		/** What the data lacks, as one label over the drawing. */
@@ -112,12 +118,59 @@
 		}
 		return out.length > 2 ? [out[0], `${out[1]}…`] : out;
 	};
-	const press = (e: KeyboardEvent, k: ChainNode) => {
+	const press = (e: KeyboardEvent, act: () => void) => {
 		if (e.key !== 'Enter' && e.key !== ' ') return;
 		e.preventDefault();
-		onChoose(k);
+		act();
 	};
+
+	/** The layers whose regulations not drawn are listed: "Alle 403" opens them, once more closes. */
+	let open = $state<ReadonlySet<LayerId>>(new Set());
+	const toggle = (id: LayerId) => {
+		const next = new Set(open);
+		if (!next.delete(id)) next.add(id);
+		open = next;
+	};
+	/** How many a layer holds, drawn and listed: the number of its "Alle". */
+	const allOf = (l: ChainLayer) => l.nodes.length + (rest[l.id] ?? 0);
+	/** The layers of the list (a phone): the start and what stands above it as the list's head (F12). */
+	const head = $derived(shown.filter((l) => l.id === 'law' || l.id === 'basis' || l.id === 'eu'));
+	const listed = $derived(
+		shown.filter((l) => l.id !== 'law' && l.id !== 'basis' && l.id !== 'eu' && l.id !== 'article')
+	);
 </script>
+
+{#snippet row(k: ChainNode)}
+	<li>
+		<button
+			type="button"
+			class="list__row"
+			class:is-active={chosen === k.id}
+			aria-pressed={chosen === k.id}
+			onclick={() => onChoose(k)}
+		>
+			<span class="list__name"><i class="mark" style:background={colour(k)}></i>{k.name}</span>
+			{#if k.grondslag || k.mentions}<span class="list__how"
+					>{[
+						k.grondslag ? `grondslag ${k.grondslag}` : null,
+						k.mentions ? `noemt ${k.mentions}` : null
+					]
+						.filter(Boolean)
+						.join(', ')}</span
+				>{/if}
+		</button>
+	</li>
+{/snippet}
+
+{#snippet alle(layer: ChainLayer)}
+	<button
+		type="button"
+		class="btn is-text alle raakvlak-knop"
+		aria-expanded={open.has(layer.id)}
+		onclick={() => toggle(layer.id)}
+		>{open.has(layer.id) ? 'Minder' : `Alle ${formatCount(allOf(layer))}`}</button
+	>
+{/snippet}
 
 <div class="chain" bind:clientWidth={width}>
 	{#if failure}
@@ -130,6 +183,8 @@
 				form="block"
 			/>
 		</div>
+	{:else if loading}
+		<p class="laden" role="status">Keten laden…</p>
 	{:else if gap}<p class="gap">{gap}</p>{/if}
 	<svg
 		class="drawing"
@@ -148,9 +203,19 @@
 				y2={TOP + (i + 1) * ROW - 8}
 			/>
 			{#if rest[layer.id]}
-				<text class="others" x={width - 24} y={TOP + i * ROW + 4} text-anchor="end"
-					>en {formatCount(rest[layer.id]!)} andere</text
+				<g
+					class="others"
+					role="button"
+					tabindex="0"
+					aria-expanded={open.has(layer.id)}
+					onclick={() => toggle(layer.id)}
+					onkeydown={(e) => press(e, () => toggle(layer.id))}
 				>
+					<rect class="hit" x={width - 124} y={TOP + i * ROW - 18} width="104" height="32" />
+					<text x={width - 24} y={TOP + i * ROW + 4} text-anchor="end"
+						>{open.has(layer.id) ? 'Minder' : `Alle ${formatCount(allOf(layer))}`}</text
+					>
+				</g>
 			{/if}
 		{/each}
 		{#each lines as l (l.id)}
@@ -176,7 +241,7 @@
 					aria-label={k.name}
 					aria-pressed={chosen === k.id}
 					onclick={() => onChoose(k)}
-					onkeydown={(e) => press(e, k)}
+					onkeydown={(e) => press(e, () => onChoose(k))}
 				>
 					<title>{k.name}</title>
 					<circle cx={p.x} cy={p.y} r="22" class="hit" />
@@ -214,44 +279,42 @@
 			{/each}
 		{/each}
 	</svg>
+	<!-- On a wide screen the regulations a layer does not draw, listed under the drawing once
+	     its Alle is pressed. -->
+	{#each shown.filter((l) => open.has(l.id) && more[l.id]?.length) as layer (layer.id)}
+		<section class="rest" aria-label="{layer.label}, alle">
+			<h3 class="list__head">{layer.label}</h3>
+			<ul>
+				{#each more[layer.id] ?? [] as k (k.id)}{@render row(k)}{/each}
+			</ul>
+		</section>
+	{/each}
 	{#if amending}<p class="amending">
 			{formatCount(amending)}
 			{plural(amending, 'wijzigingsbesluit', 'wijzigingsbesluiten')} buiten de keten
 		</p>{/if}
 
-	<!-- On a phone: the shown as a list, the regulations under their heading. -->
+	<!-- On a phone: a list, the law (and what it rests on) at its head, the regulations under
+	     their heading (R3-K F12). -->
 	<div class="list">
-		{#each shown.filter((l) => l.id !== 'law' && l.id !== 'article') as layer (layer.id)}
+		{#each head as layer (layer.id)}
 			<section class="list__layer" aria-label={layer.label}>
 				<h3 class="list__head">{layer.label}</h3>
 				<ul>
-					{#each layer.nodes as k (k.id)}
-						<li>
-							<button
-								type="button"
-								class="list__row"
-								class:is-active={chosen === k.id}
-								aria-pressed={chosen === k.id}
-								onclick={() => onChoose(k)}
-							>
-								<span class="list__name"
-									><i class="mark" style:background={colour(k)}></i>{k.name}</span
-								>
-								{#if k.grondslag || k.mentions}<span class="list__how"
-										>{[
-											k.grondslag ? `grondslag ${k.grondslag}` : null,
-											k.mentions ? `noemt ${k.mentions}` : null
-										]
-											.filter(Boolean)
-											.join(', ')}</span
-									>{/if}
-							</button>
-						</li>
-					{/each}
+					{#each layer.nodes as k (k.id)}{@render row(k)}{/each}
 				</ul>
-				{#if rest[layer.id]}<p class="list__others">
-						en {formatCount(rest[layer.id]!)} andere
-					</p>{/if}
+			</section>
+		{/each}
+		{#each listed as layer (layer.id)}
+			<section class="list__layer" aria-label={layer.label}>
+				<h3 class="list__head">{layer.label}</h3>
+				<ul>
+					{#each layer.nodes as k (k.id)}{@render row(k)}{/each}
+					{#if open.has(layer.id)}{#each more[layer.id] ?? [] as k (k.id)}{@render row(
+								k
+							)}{/each}{/if}
+				</ul>
+				{#if rest[layer.id]}{@render alle(layer)}{/if}
 			</section>
 		{/each}
 	</div>
@@ -303,9 +366,34 @@
 		fill: var(--ink-3);
 	}
 	.others {
+		cursor: pointer;
+	}
+	.others text {
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		fill: var(--ink-3);
+		fill: var(--ink-2);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+	}
+	.others:hover text {
+		fill: var(--ink);
+	}
+	.laden {
+		margin: var(--s-5);
+		font-size: var(--t-meta);
+		color: var(--ink-3);
+	}
+	.rest {
+		margin: 0 var(--s-5) var(--s-4);
+	}
+	.rest ul {
+		margin: 0;
+		padding: 0 0 0 var(--s-3);
+		list-style: none;
+		border-left: 2px solid var(--rule);
+	}
+	.alle {
+		margin-top: var(--s-1);
 	}
 	.rail {
 		stroke: var(--rule);
@@ -365,6 +453,9 @@
 			display: inline-block;
 			margin: var(--s-3) var(--s-4) 0;
 		}
+		.rest {
+			display: none;
+		}
 		.list {
 			display: block;
 			padding: var(--s-2) var(--s-4) var(--s-8);
@@ -423,11 +514,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		line-height: 20px;
-		color: var(--ink-3);
-	}
-	.list__others {
-		margin: var(--s-2) 0 0;
-		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 </style>

@@ -79,13 +79,21 @@ describe('the keten of a law', () => {
 	});
 
 	it('draws up to a number a layer and counts the rest, the one marked always', () => {
-		const k = chain({ id: 'w', name: 'Arbowet' }, delegated, null, 1, 'instruments/b');
+		const k = chain({ id: 'w', name: 'Arbowet' }, delegated, null, {
+			max: 1,
+			keep: 'instruments/b'
+		});
 		expect(k.layers.find((l) => l.id === 'amvb')!.nodes.map((n) => n.id)).toEqual([
 			'instruments/a',
 			'instruments/b'
 		]);
-		const zonder = chain({ id: 'w', name: 'Arbowet' }, delegated, null, 1);
+		const zonder = chain({ id: 'w', name: 'Arbowet' }, delegated, null, { max: 1 });
 		expect(zonder.rest.amvb).toBe(1);
+		// The rest listed, for "Alle 2", not drawn and adding no article (R3-K F4).
+		expect(zonder.more.amvb?.map((n) => n.id)).toEqual(['instruments/b']);
+		expect(zonder.layers.find((l) => l.id === 'article')!.nodes.map((a) => a.short)).not.toContain(
+			'art. 33'
+		);
 	});
 
 	it('puts the laws a regulation is issued under above it', () => {
@@ -130,5 +138,59 @@ describe('the keten of a law', () => {
 		]);
 		expect(k.amending).toHaveLength(2);
 		expect(k.missing).toEqual(['Arbeidsomstandighedenbesluit']);
+	});
+
+	it('heads the start by its kind: an AMvB is no Wet (R3-K F2)', () => {
+		const k = chain({ id: 'instruments/bwbr0022762', name: 'Activiteitenbesluit' }, null, null, {
+			kind: 'AMvB'
+		});
+		expect(k.layers[0].label).toBe('AMvB');
+		const stb = chain({ id: 'instruments/stb_2018_101', name: 'Stb. 2018, 101' }, null, null, {
+			kind: 'publicatie'
+		});
+		expect(stb.layers[0].label).toBe('Publicatie');
+	});
+
+	it('draws from an article only the regulations issued under it (R3-K F5)', () => {
+		const k = chain({ id: 'instruments/bwbr0010346', name: 'Arbowet' }, delegated, null, {
+			article: '16'
+		});
+		expect(k.layers.find((l) => l.id === 'amvb')!.nodes.map((n) => n.id)).toEqual([
+			'instruments/a',
+			'instruments/b'
+		]);
+		expect(k.layers.find((l) => l.id === 'article')!.nodes.map((a) => a.short)).toEqual([
+			'art. 16'
+		]);
+		expect(k.total).toBe(2);
+	});
+
+	it('puts the EU act above the law that implements it, and its implementing laws below (R3-K F1)', () => {
+		const richtlijn = {
+			id: 'instruments/32015l2302',
+			key: '32015l2302',
+			bwb_id: null,
+			celex: '32015L2302',
+			title: 'Richtlijn',
+			citation_title: 'Richtlijn (EU) 2015/2302',
+			kind: 'richtlijn'
+		};
+		const wet = { ...richtlijn, id: 'instruments/bwbr0040511', celex: null, kind: 'wet' };
+		const boven = chain({ id: 'instruments/bwbr0040511', name: 'Implementatiewet' }, null, null, {
+			eu: { implements: [richtlijn], implementedBy: [] }
+		});
+		expect(boven.layers.map((l) => [l.id, l.label])).toEqual([
+			['eu', 'Richtlijn'],
+			['law', 'Wet']
+		]);
+		expect(boven.layers[1].nodes[0].parents).toEqual([{ id: richtlijn.id, way: 'delegates' }]);
+		const onder = chain({ id: richtlijn.id, name: 'Richtlijn (EU) 2015/2302' }, null, null, {
+			kind: 'richtlijn',
+			eu: { implements: [], implementedBy: [wet] }
+		});
+		expect(onder.layers.map((l) => [l.id, l.label])).toEqual([
+			['law', 'Richtlijn'],
+			['implementation', 'Implementatie']
+		]);
 	});
 });

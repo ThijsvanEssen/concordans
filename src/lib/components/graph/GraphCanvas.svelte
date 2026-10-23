@@ -564,7 +564,9 @@
 		});
 		for (const id of metGroep.keys()) if (graph.hasNode(id)) next.add(id);
 		const hiddenEnd = (id: string) =>
-			id !== focusedId && (metGroep.has(id) || hiddenByFilter(graph.getNodeAttributes(id)));
+			id !== focusedId &&
+			!latestPinnedIds.has(id) &&
+			(metGroep.has(id) || hiddenByFilter(graph.getNodeAttributes(id)));
 		graph.forEachNode((id, attrs) => {
 			// A chosen bron of a netwerk is drawn whether or not anything ties it.
 			if (id === focusedId || latestPinnedIds.has(id) || next.has(id) || hiddenByFilter(attrs))
@@ -624,8 +626,10 @@
 		outsideYears(attrs.date) ||
 		otherCourt(attrs);
 
+	// The focus and the chosen bronnen stay drawn under every filter: Soort off for their own
+	// kind leaves them standing, so the choice can be undone (R3-N B1).
 	const isHiddenNode = (id: string, attrs: Record<string, unknown>) =>
-		id !== focusedId && (hiddenByFilter(attrs) || strays.has(id));
+		id !== focusedId && !latestPinnedIds.has(id) && (hiddenByFilter(attrs) || strays.has(id));
 
 	/**
 	 * What this component's $effects change is drawn in the next frame, once for all of them:

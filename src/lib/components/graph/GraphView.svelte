@@ -1164,7 +1164,8 @@
 		{@render links?.()}
 		{@render canvasOverlay?.()}
 		{@render viewChoice?.()}
-		{#if canvasCounts.nodes > 0 || midden}
+		<!-- Whatever the filter leaves drawn: the filters stay, so a kind switched off comes back. -->
+		{#if hasNodes || midden}
 			<button
 				type="button"
 				class="btn filterknop raakvlak-knop"

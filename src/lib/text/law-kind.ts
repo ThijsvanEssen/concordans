@@ -18,7 +18,10 @@ const KIND: Record<string, string> = {
 	verdrag: 'Verdrag',
 	bilateraalverdrag: 'Bilateraal verdrag',
 	multilateraalverdrag: 'Multilateraal verdrag',
-	// Not a BWB kind: the API's for a publication in the Staatsblad or Staatscourant.
+	// Not BWB kinds: the API's for an act of the EU, and for a publication in the Staatsblad or
+	// Staatscourant.
+	richtlijn: 'Richtlijn',
+	verordening: 'Verordening',
 	publicatie: 'Publicatie'
 };
 
