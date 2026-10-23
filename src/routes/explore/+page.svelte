@@ -88,10 +88,11 @@
 		type Overlay
 	} from '$lib/selection/overlay';
 	import { AMENDING_RELATIONS, parseNodeId } from '$lib/vocabulary';
-	import { articleOf, kort, lawIdOf } from '$lib/graph/types';
+	import { articleOf, kort, lawIdOf, syntheticNode } from '$lib/graph/types';
 	import { bronNaam } from '$lib/bron/naam';
 	import { lookUp } from '$lib/bron/leesbaar';
 	import {
+		keyEcli,
 		padOfFocus,
 		parsePad,
 		remember as rememberPad,
@@ -740,6 +741,14 @@
 		const name = nameOfAddress(asked);
 		if (huidig && (huidig.id === asked || linkIdOf(huidig) === asked || huidig.key === key)) {
 			showNetworkFailure({ what: 'Het netwerk', error: err, retry: () => retryFocus(asked) });
+			return;
+		}
+		// A judgment is named by its ECLI: its reader stands on that and says in its own column
+		// what failed, with Verbonden beside it, as every other kind does.
+		const target = parseNodeId(asked);
+		const ecli = target?.collection === 'judgments' ? keyEcli(target.key) : null;
+		if (ecli && !huidig) {
+			selectedNode = syntheticNode('judgments', target!.key, ecli, { ecli });
 			return;
 		}
 		if (huidig) {

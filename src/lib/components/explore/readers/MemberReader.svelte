@@ -112,19 +112,23 @@
 		if (!bewindspersoon) return;
 		const key = bronKey;
 		let weg = false;
-		inOffice = { votes: [], next: 0, laden: true };
+		// The split stands only when the API knows `in_office=false` (#921): an API that does
+		// not answers with all the votes, some with a post. Then it is not drawn and the one
+		// list stands, until the API does; no version to read, the answer says it.
 		getMemberVotesOutOfOffice(key)
 			.then((v) => {
-				if (!weg) outOfOffice = v.votes.filter((x) => !x.in_office?.length);
+				if (weg || !v.votes.every((x) => !x.in_office?.length)) return;
+				outOfOffice = v.votes;
+				inOffice = { votes: [], next: 0, laden: true };
+				getMemberVotesInOffice(key)
+					.then((w) => {
+						if (!weg) inOffice = { votes: w.votes, next: w.next_offset ?? null, laden: false };
+					})
+					.catch(() => {
+						if (!weg) inOffice = null;
+					});
 			})
 			.catch((e) => report('Stemmen als Kamerlid', e));
-		getMemberVotesInOffice(key)
-			.then((v) => {
-				if (!weg) inOffice = { votes: v.votes, next: v.next_offset ?? null, laden: false };
-			})
-			.catch(() => {
-				if (!weg) inOffice = null;
-			});
 		return () => {
 			weg = true;
 		};
@@ -444,11 +448,10 @@
 				{@const stemmen = votes.state.data}
 				<!-- A bewindspersoon's votes in a post come on their own, all of them (#534); the
 				     newest 50 give the rest. Until the first page is in, the 50 give both. -->
-				{@const apart = !!inOffice && !(inOffice.laden && inOffice.votes.length === 0)}
+				{@const apart =
+					!!outOfOffice && !!inOffice && !(inOffice.laden && inOffice.votes.length === 0)}
 				{@const ambt = apart ? inOffice!.votes : []}
-				{@const eigen = apart
-					? (outOfOffice ?? stemmen.votes.filter((v) => !v.in_office?.length))
-					: stemmen.votes}
+				{@const eigen = apart ? outOfOffice! : stemmen.votes}
 				{@const meer = apart && inOffice!.next != null}
 				{@const shown = (rows: Vote[]) => (showAllVotes ? rows : rows.slice(0, VOTES_PREVIEW))}
 				<!-- The votes of a bewindspersoon stand apart as such, under "Als bewindspersoon"
@@ -483,7 +486,7 @@
 				     0.75, BE-43). -->
 				{#if eigen.length > 0 || ambt.length === 0}
 					<Sectie
-						title={(m.government_functions ?? []).length > 0 ? 'Als Kamerlid' : 'Stemgeschiedenis'}
+						title={apart ? 'Als Kamerlid' : 'Stemgeschiedenis'}
 						collection="decisions"
 						aantal={apart ? eigen.length : atLeast(stemmen.count, stemmen.next_offset != null)}
 					>

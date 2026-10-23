@@ -263,3 +263,19 @@ test('a list of Bronnen whose chunk did not come says so, and Opnieuw shows it',
 	await expect(alert).toHaveCount(0);
 	await expect(page.getByRole('link', { name: /ECLI:NL:/ }).first()).toBeVisible();
 });
+
+test('a judgment that does not load fails in its column, with its heading line and Verbonden', async ({
+	page,
+	guard,
+	touch
+}) => {
+	test.skip(touch, 'Verbonden stands beside the text from 1440');
+	guard.allow(FAILED);
+	await failApi(page, /^\/api\/(judgments|nodes)\//, 500);
+	await page.goto('/uitspraken/ECLI:NL:HR:2019:2006');
+	await expect(
+		page.getByRole('alert').filter({ hasText: 'Uitspraak kon niet worden geladen.' })
+	).toBeVisible();
+	await expect(page.getByRole('complementary', { name: 'Verbonden' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Er ging iets mis' })).toHaveCount(0);
+});

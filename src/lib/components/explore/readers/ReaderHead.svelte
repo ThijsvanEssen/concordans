@@ -82,7 +82,9 @@
 			<!-- One line on a wide screen, the whole of it on hover; wrapped on a phone. A place
 			     the band Behoort bij names already gives only its heading. -->
 			<div class="reader-place" title={[place.join(', '), placeTitle].filter(Boolean).join('. ')}>
-				{place.join(', ')}{#if place.length > 0 && placeTitle}.
+				<SoortLink {collection} {lijst} glyphOnly />{place.join(
+					', '
+				)}{#if place.length > 0 && placeTitle}.
 				{/if}{#if placeTitle}<i>{placeTitle}</i>{/if}
 			</div>
 		{:else}
@@ -176,6 +178,9 @@
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+	}
+	.reader-place :global(.kind-glyph) {
+		margin-right: var(--s-1);
 	}
 	.reader-place i {
 		color: var(--ink-2);

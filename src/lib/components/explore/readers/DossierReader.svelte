@@ -114,7 +114,7 @@
 		<div class="r-dossier">
 			<ReaderHead
 				collection="dossiers"
-				kindParts={[kamerstukNummer(d.number)]}
+				kindLabel={kamerstukNummer(d.number)}
 				title={d.short_title ?? d.title ?? officialNumber(d.number)}
 				acties={{
 					// One group per dossier in a map, as a Kamerstuk of it is grouped (map.ts).

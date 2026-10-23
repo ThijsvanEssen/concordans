@@ -48,6 +48,21 @@ for (const [soort, pad] of SOORTEN) {
 				).toBeAttached();
 		}
 
+		// The glyph stands in the head line of every kind, an article's with its place too, and
+		// the kind is said once: no word twice in a row ("Dossier, Dossier 36496").
+		await expect(
+			page.locator('.reader-line .kind-glyph').first(),
+			'glyph in the head line'
+		).toBeAttached();
+		const regel = await page
+			.locator('.reader-kind')
+			.evaluateAll((els) => els[0]?.textContent ?? '');
+		const woorden: string[] = regel.toLowerCase().match(/[a-zà-ÿ]+/g) ?? [];
+		expect(
+			woorden.filter((w, i) => w.length > 3 && woorden.indexOf(w) !== i),
+			`a word twice in the head line "${regel.trim()}"`
+		).toEqual([]);
+
 		// 2. No bare rule: the row of the band has something in it, or it is not drawn.
 		const rij = await page
 			.locator('.kop-rij:not([hidden])')

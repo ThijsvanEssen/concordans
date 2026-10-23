@@ -65,3 +65,24 @@ test('Bronnen › Fracties: the seats of each Kamer add up to the whole Kamer', 
 	await expect(ek).toBeVisible();
 	expect(await seatsIn(ek)).toBe(75);
 });
+
+// The split into "Als bewindspersoon" and "Als Kamerlid" stands only where the API knows
+// `in_office=false` (#921): an API that does not answers with all the votes, and the one list
+// stays.
+test('the votes of a bewindspersoon stay one list while the API ignores in_office=false', async ({
+	page
+}) => {
+	await page.goto('/leden/marielle-paul');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Mariëlle Paul/);
+	await expect(page.getByRole('heading', { name: /^Stemgeschiedenis/ })).toBeVisible();
+	await expect(page.getByRole('heading', { name: /^Als bewindspersoon/ })).toHaveCount(0);
+	await expect(page.getByRole('heading', { name: /^Als Kamerlid/ })).toHaveCount(0);
+});
+
+test('the votes of a bewindspersoon split where the API filters in_office=false', async ({
+	page
+}) => {
+	await page.goto('/leden/rob-jetten');
+	await expect(page.getByRole('heading', { name: /^Als bewindspersoon/ })).toBeVisible();
+	await expect(page.getByRole('heading', { name: /^Als Kamerlid/ })).toBeVisible();
+});
