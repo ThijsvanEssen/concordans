@@ -102,8 +102,15 @@
 		DEFAULT_HEAT_MONTHS,
 		type Overlay
 	} from '$lib/selection/overlay';
-	import { AMENDING_RELATIONS, parseNodeId } from '$lib/vocabulary';
-	import { articleOf, kort, lawIdOf, nodeToGraphNode, syntheticNode } from '$lib/graph/types';
+	import { AMENDING_RELATIONS, NODE_TYPES, parseNodeId } from '$lib/vocabulary';
+	import {
+		articleOf,
+		drawClassOf,
+		kort,
+		lawIdOf,
+		nodeToGraphNode,
+		syntheticNode
+	} from '$lib/graph/types';
 	import { bronNaam } from '$lib/bron/naam';
 	import { lookUp } from '$lib/bron/leesbaar';
 	import {
@@ -120,10 +127,11 @@
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import ChainView from '$lib/network/ChainView.svelte';
 	import SharedView from '$lib/network/SharedView.svelte';
-	import { chain, isRegulation, type ChainNode } from '$lib/network/chain';
+	import { chain, isRegulation, type ChainLayer, type ChainNode } from '$lib/network/chain';
+	import { LINEAGE, lineage } from '$lib/network/lineage';
 	import { verbandModel, type DirectLink } from '$lib/network/shared';
 	import { getLawBasis, getLawDelegatedSummary } from '$lib/api/articles';
-	import { getShared, getSurroundings } from '$lib/api/nodes';
+	import { getNodeGraph, getShared, getSurroundings } from '$lib/api/nodes';
 	import { SURROUNDED, surroundingRows } from '$lib/graph/surroundings';
 	import { getEuLinks } from '$lib/api/verbonden';
 	import { formatCount } from '$lib/text/getal';
@@ -373,26 +381,29 @@
 	 * that is a law or an article (R3-N B3: /explore?netwerk=instruments/… said "alleen bij een
 	 * wet" for a law).
 	 */
+	/** A bron with a keten: a law or an article, or one of the kinds of lineage.ts. */
+	const withChain = (n: GraphNode | null | undefined) =>
+		!!n &&
+		(n.collection === 'instruments' || n.collection === 'articles' || !!LINEAGE[n.collection]);
 	const chainStart = $derived.by(() => {
 		if (mode !== 'graph' || view !== 'keten') return null;
-		const isLegislation = (n: GraphNode | null | undefined) =>
-			n?.collection === 'instruments' || n?.collection === 'articles';
-		if (isLegislation(selectedNode)) return selectedNode;
-		return (
-			composer.entries.find(
-				(e) => e.on && e.node && (e.collection === 'instruments' || e.collection === 'articles')
-			)?.node ?? null
-		);
+		if (withChain(selectedNode)) return selectedNode;
+		return composer.entries.find((e) => e.on && withChain(e.node))?.node ?? null;
 	});
 	/**
-	 * Whether Keten means something here: a law, a regulation or an article as the bron or among
-	 * the chosen ones; elsewhere it is offered greyed (R3-K F9, R3-I F1).
+	 * Whether Keten means something here: a law, a regulation or an article, a judgment, a
+	 * fractie or a Kamerlid as the bron or among the chosen ones; elsewhere it is not offered
+	 * (R3-K F9, R3-I F1, besluit 41).
 	 */
 	const chainPossible = $derived(
 		mode === 'graph' &&
-			[selectedNode, ...composer.entries.filter((e) => e.on).map((e) => e.node)].some(
-				(n) => n?.collection === 'instruments' || n?.collection === 'articles'
-			)
+			[selectedNode, ...composer.entries.filter((e) => e.on).map((e) => e.node)].some(withChain)
+	);
+	/** A judgment, a fractie or a Kamerlid: its keten is its lineage (lineage.ts). */
+	const lineageStart = $derived(
+		chainStart && LINEAGE[chainStart.collection] && !chainStart.id.startsWith('synth:')
+			? chainStart
+			: null
 	);
 	/** The law of the keten: the bron itself, or an article's law. */
 	const chainLaw = $derived.by(() => {
@@ -441,7 +452,7 @@
 	let chainError = $state.raw<{ bwb: string; error: unknown } | null>(null);
 	let chainTries = $state(0);
 	const chainFailure = $derived(
-		chainError && chainError.bwb === chainLaw
+		chainError && (chainError.bwb === chainLaw || chainError.bwb === lineageStart?.id)
 			? { what: 'De keten', error: chainError.error, retry: () => chainTries++ }
 			: null
 	);
@@ -474,11 +485,58 @@
 			current = false;
 		};
 	});
+	/** Up to `max` bronnen a layer drawn, and `keep`; the rest listed under Alle N. */
+	function capLayers(layers: ChainLayer[], max: number, keep: string | null) {
+		const rest: Record<string, number> = {};
+		const more: Record<string, ChainNode[]> = {};
+		const drawn = layers.map((l) => {
+			const kept = l.nodes.filter((n, i) => i < max || n.id === keep);
+			const over = l.nodes.filter((n) => !kept.includes(n));
+			if (over.length) {
+				rest[l.id] = over.length;
+				more[l.id] = over;
+			}
+			return { ...l, nodes: kept };
+		});
+		return { layers: drawn, rest, more };
+	}
+	/** The keten of a judgment, a fractie or a Kamerlid (lineage.ts), by the start's id. */
+	let lineageData = $state.raw<{ id: string; layers: ChainLayer[] } | null>(null);
+	$effect(() => {
+		const n = lineageStart;
+		void chainTries;
+		if (!n) return;
+		const relations = LINEAGE[n.collection]!;
+		const ask = (id: string) => {
+			const t = parseNodeId(id);
+			return t
+				? getNodeGraph(t.collection, t.key, { limit: 20, relations: relations.join(',') }).catch(
+						() => null
+					)
+				: Promise.resolve(null);
+		};
+		let current = true;
+		chainError = null;
+		ask(n.id)
+			.then((start) => (start ? lineage(start, relations, ask) : []))
+			.then((layers) => {
+				if (current) lineageData = { id: n.id, layers };
+			})
+			.catch((e) => {
+				report('Keten', e);
+				if (current) chainError = { bwb: n.id, error: e };
+			});
+		return () => {
+			current = false;
+		};
+	});
 	/** The keten is on its way: the drawing says so, and Soort counts nothing yet (R3-K F6). */
 	const chainLoading = $derived(
-		!!chainLaw &&
-			(chainData?.bwb !== chainLaw || chainData.validity !== (chainExpired ? 'all' : 'in_force')) &&
-			!chainFailure
+		(!!lineageStart && lineageData?.id !== lineageStart.id && !chainError) ||
+			(!!chainLaw &&
+				(chainData?.bwb !== chainLaw ||
+					chainData.validity !== (chainExpired ? 'all' : 'in_force')) &&
+				!chainFailure)
 	);
 	// An article's law by its name, not its id, on the keten's head.
 	$effect(() => {
@@ -510,7 +568,18 @@
 				: null
 		});
 	};
-	const chainModel = $derived(chainOf(chainMentions));
+	const chainModel = $derived(
+		lineageStart
+			? lineageData?.id === lineageStart.id
+				? {
+						...capLayers(lineageData.layers, 6, marked),
+						total: lineageData.layers.reduce((n, l) => n + l.nodes.length, 0) - 1,
+						amending: [],
+						missing: []
+					}
+				: null
+			: chainOf(chainMentions)
+	);
 	const chainAll = $derived(chainMentions ? chainModel : chainOf(true));
 	/** The article the keten starts from, as the drawing names it: marked until another is. */
 	const chainArticleId = $derived(
@@ -518,7 +587,19 @@
 	);
 	const chainGap = $derived.by(() => {
 		if (view !== 'keten' || chainLoading) return null;
-		if (!chainLaw) return 'Keten: alleen bij een wet, een regeling of een artikel';
+		if (lineageStart) {
+			if (!chainModel || chainModel.total > 0) return null;
+			return capitalize(
+				noneHeld(
+					lineageStart.collection === 'judgments'
+						? 'andere aanleg'
+						: lineageStart.collection === 'factions'
+							? 'voorganger of opvolger'
+							: 'fractie, kabinet of commissie'
+				)
+			);
+		}
+		if (!chainLaw) return null;
 		const m = chainModel;
 		if (!m) return null;
 		if (m.missing.length) return `${joinAnd(m.missing)}: grondslag ${NOT_IN_DATA}`;
@@ -537,19 +618,20 @@
 	});
 	/** A node of the keten as the card reads a bron. */
 	function chainNodeOf(k: ChainNode): GraphNode {
-		const [collection, key] = k.id.split('/') as ['instruments' | 'articles', string];
+		const collection = k.collection;
+		const key = k.id.slice(k.id.indexOf('/') + 1);
 		const i = k.instrument;
 		return {
 			id: k.id,
 			collection,
 			key,
-			drawClass: collection === 'articles' ? 'article' : 'instrument',
+			drawClass: drawClassOf(collection),
 			label: k.name,
 			raw: {
 				id: k.id,
 				key,
 				collection,
-				type: collection === 'articles' ? 'article' : 'instrument',
+				type: NODE_TYPES[collection],
 				display_name: k.name,
 				labels: [],
 				path: i?.path ?? null,
@@ -1558,7 +1640,9 @@
 		untrack(() => setUrl({ paneel: null }));
 	});
 	/** The canvas is on the screen: the werkplek. */
-	const canvasZichtbaar = $derived(mode === 'graph');
+	// Keten and Verband draw what they ask themselves: the neighbourhood of Omgeving waits until
+	// Omgeving is shown (laad lui).
+	const canvasZichtbaar = $derived(mode === 'graph' && view === 'omgeving');
 	// Below --nav-w's own breakpoint, Lezen's table of contents opens as a sheet
 	// instead of taking a permanent column.
 	let tocOpen = $state(false);
@@ -2026,16 +2110,9 @@
 											<Keuze
 												label="Weergave"
 												waarde={view}
-												opties={VIEWS.map((w) => ({
-													waarde: w.waarde,
-													label: w.label,
-													...(w.waarde === 'keten' && !chainPossible && view !== 'keten'
-														? {
-																uit: true,
-																titel: 'Alleen bij een wet, een regeling of een artikel'
-															}
-														: {})
-												}))}
+												opties={VIEWS.filter(
+													(w) => w.waarde !== 'keten' || chainPossible || view === 'keten'
+												).map((w) => ({ waarde: w.waarde, label: w.label }))}
 												onSelect={chooseView}
 											/>
 										</div>{/if}

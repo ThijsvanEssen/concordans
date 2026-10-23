@@ -9,6 +9,7 @@ import { articleRef } from '$lib/text/bw';
 import { NL } from '$lib/text/collator';
 import { grondslagArtikelen } from '$lib/text/delegaties';
 import { kindName } from '$lib/text/law-kind';
+import type { Relation } from '$lib/vocabulary';
 
 type Delegated = Omit<Schema<'InstrumentDelegatedResponse'>, 'items'> & {
 	items: Schema<'InstrumentDelegatedSummaryItem'>[];
@@ -54,7 +55,14 @@ export type ChainNode = {
 	name: string;
 	/** Short, on the drawing: `art. 16`. */
 	short: string;
-	collection: 'instruments' | 'articles';
+	collection:
+		| 'instruments'
+		| 'articles'
+		| 'judgments'
+		| 'factions'
+		| 'members'
+		| 'cabinets'
+		| 'committees';
 	instrument?: Summary;
 	/** Its BWB type, lower case (`amvb`), as the card names its kind. */
 	kind: string | null;
@@ -66,12 +74,13 @@ export type ChainNode = {
 	grondslag: string | null;
 	mentions: string | null;
 	/** The nodes of the layer above it, and how: a power given, or only named. */
-	parents: { id: string; way: 'delegates' | 'mentioned' }[];
+	parents: { id: string; way: 'delegates' | 'mentioned'; relation?: Relation }[];
 	/** The regulations issued under it in turn, one level down. */
 	further: string[];
 };
 
-export type ChainLayer = { id: LayerId; label: string; nodes: ChainNode[] };
+/** A layer of a law's keten (LayerId), or of a lineage (`0|Rechtbank`, lineage.ts). */
+export type ChainLayer = { id: LayerId | `${number}|${string}`; label: string; nodes: ChainNode[] };
 
 /** The layer of a regulation by its BWB kind; a wet under a wet (an organieke wet) is a Wet. */
 const LAYER_OF: Record<string, LayerId> = {

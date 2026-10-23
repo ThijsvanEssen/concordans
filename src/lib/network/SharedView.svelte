@@ -149,7 +149,13 @@
 						onkeydown={(e) => press(e, it.row)}
 					>
 						<title>{it.row.name}: {it.row.line}</title>
-						<rect class="hit" x={rowX - 16} y={rowY(i) - 20} width={Math.max(0, width - rowX)} height="40" />
+						<rect
+							class="hit"
+							x={rowX - 16}
+							y={rowY(i) - 20}
+							width={Math.max(0, width - rowX)}
+							height="40"
+						/>
 						{#if chosen === it.id}<rect
 								class="sel"
 								x={rowX - 12}

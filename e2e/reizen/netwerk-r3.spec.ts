@@ -52,10 +52,23 @@ test('Keten on /explore with a law draws its keten (R3-N B3)', async ({ page, to
 	await expect(regulation).toBeVisible();
 });
 
-test('Keten is not offered where it means nothing (R3-K F9)', async ({ page }) => {
-	await page.goto('/fracties/vvd?mode=netwerk');
+test('Keten is not offered where there is none (R3-K F9, besluit 41)', async ({ page }) => {
+	await page.goto('/dossiers/36496?mode=netwerk');
 	await expect(page.getByRole('button', { name: 'Omgeving', pressed: true })).toBeVisible();
-	await expect(page.getByRole('button', { name: 'Keten' })).toBeDisabled();
+	await expect(page.getByRole('button', { name: 'Keten' })).toHaveCount(0);
+});
+
+// A keten per kind, with layers of its own (besluit 41): a judgment through its instances.
+test('the keten of a judgment stands in its instances', async ({ page, touch }) => {
+	await page.goto('/uitspraken/ECLI:NL:HR:2019:2006?mode=netwerk&weergave=keten');
+	await expect(page.getByRole('button', { name: 'Keten', pressed: true })).toBeVisible();
+	if (touch) {
+		for (const laag of ['Rechtbank', 'Gerechtshof', 'Hoge Raad'])
+			await expect(page.getByRole('region', { name: laag })).toBeVisible();
+	} else
+		await expect(page.getByRole('group', { name: 'Keten' })).toContainText(
+			/RECHTBANK.*GERECHTSHOF.*HOGE RAAD/
+		);
 });
 
 test('Verband counts the bron of the page as the first end (R3-I F2)', async ({ page }) => {

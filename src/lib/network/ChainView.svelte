@@ -14,7 +14,8 @@
 	import { edgeColorFor, lijnDikte } from '$lib/components/graph/nodeSprites';
 	import { EDGE_WEIGHT } from '$lib/graph/types';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import type { ChainNode, ChainLayer, LayerId } from '$lib/network/chain';
+	import type { ChainNode, ChainLayer } from '$lib/network/chain';
+	type LayerId = ChainLayer['id'];
 
 	let {
 		layers,
@@ -29,8 +30,11 @@
 		failure = null,
 		loading = false,
 		expired = null,
+		start = null,
 		onChoose
 	}: {
+		/** The bron the keten starts from, which no filter hides. */
+		start?: string | null;
 		/** The regulations no longer in force: how many, whether they are drawn, and the switch. */
 		expired?: { total: number; shown: boolean; onToggle: () => void } | null;
 		layers: readonly ChainLayer[];
@@ -58,13 +62,20 @@
 
 	/** The layers the filter leaves: the articles with Artikelen, the regulations with Wetten. */
 	const shown = $derived(
-		layers.filter((l) =>
-			l.id === 'article'
-				? !hiddenKinds.has('artikelen')
-				: l.id === 'law'
-					? true
-					: !hiddenKinds.has('wetten')
-		)
+		layers.filter((l) => {
+			// The start's own layer stays; another goes with the kind of what it holds.
+			if (l.id === 'law' || l.nodes.some((n) => n.id === start)) return true;
+			const c = l.nodes[0]?.collection;
+			const kind =
+				l.id === 'article'
+					? 'artikelen'
+					: c === 'judgments'
+						? 'uitspraken'
+						: c === 'members' || c === 'factions' || c === 'committees' || c === 'cabinets'
+							? 'leden'
+							: 'wetten';
+			return !hiddenKinds.has(kind);
+		})
 	);
 	/** A line given (delegates) is a grondslag, one named a mention: the filter Relatie. */
 	const lineShown = (way: 'delegates' | 'mentioned') =>
@@ -121,7 +132,7 @@
 									id: `${o.id}~${k.id}`,
 									a,
 									b,
-									relation: relationOf(o.way),
+									relation: o.relation ?? relationOf(o.way),
 									lit: chosen === k.id || chosen === o.id
 								}
 							]
