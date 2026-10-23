@@ -131,9 +131,18 @@
 		text-decoration: underline dotted var(--rule-strong);
 		text-underline-offset: 4px;
 	}
+	/* The line keeps the height of a control, as its room is kept while the versions come
+	   (ArticleReader .peil-plek). */
+	.whole-peil.as-fact {
+		align-items: center;
+	}
+	.whole-peil.as-fact :global(.tekstmenu__knop) {
+		min-height: var(--veld-h);
+	}
 	/* A finger's target on a touch screen, unframed. */
 	@media (pointer: coarse), (max-width: 768px) {
-		.as-fact :global(.tekstmenu__knop) {
+		.as-fact :global(.tekstmenu__knop),
+		.whole-peil.as-fact :global(.tekstmenu__knop) {
 			min-height: var(--veld-h-raak);
 		}
 	}

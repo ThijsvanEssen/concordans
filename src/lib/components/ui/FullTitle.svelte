@@ -17,6 +17,12 @@
 		color: var(--ink-2);
 		cursor: pointer;
 	}
+	/* A finger's target on a touch screen. */
+	@media (pointer: coarse), (max-width: 768px) {
+		.full-title summary {
+			line-height: var(--veld-h-raak);
+		}
+	}
 	.full-title p {
 		margin: var(--s-1) 0 0;
 		font-size: var(--t-meta);

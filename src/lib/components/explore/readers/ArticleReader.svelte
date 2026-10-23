@@ -935,6 +935,12 @@
 		margin-top: var(--s-3);
 		min-height: var(--veld-h);
 	}
+	/* A finger's target there (WholeLawReaderPeildatum). */
+	@media (pointer: coarse), (max-width: 768px) {
+		.peil-plek {
+			min-height: var(--veld-h-raak);
+		}
+	}
 	.head__origin {
 		position: relative;
 		display: flex;
