@@ -1964,10 +1964,6 @@
 								onDepth={setDepth}
 								onLaadSoort={netwerkActive ? undefined : laadSoort}
 								{laadtSoort}
-								allesGrens={{ grens: ALLES_GRENS, geladen: alles }}
-								onAllesLaden={alles || netwerkActive
-									? undefined
-									: () => setUrl({ alles: '1', diepte: null }, { push: true })}
 								onToggleHeat={toggleHeat}
 								onHeatPeriodChange={setHeatPeriod}
 								onToggleMutatie={toggleMutatie}

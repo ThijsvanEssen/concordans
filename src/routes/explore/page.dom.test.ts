@@ -304,16 +304,6 @@ describe('the Verkenner writes its state to the address', () => {
 		expect(steps.every((s) => !s.step)).toBe(true);
 	});
 
-	it('loads every neighbour as a step, without a depth', async () => {
-		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk&diepte=3`);
-		(seen.GraphView.onAllesLaden as () => void)();
-		await settle();
-		expect(param('alles')).toBe('1');
-		expect(param('diepte')).toBeNull();
-		expect(seen.GraphView.depth).toBe(1);
-		expect(history().entries).toHaveLength(2);
-	});
-
 	it('drops the hint ?paneel once read, in place', async () => {
 		phone.matches = true;
 		await openAt(`/explore?focus=${ARTICLE}&paneel=netwerk`);

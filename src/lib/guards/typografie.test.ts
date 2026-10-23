@@ -119,7 +119,6 @@ describe('typography', () => {
 			'lib/components/explore/readers/DecisionReader.svelte',
 			'lib/components/ui/FilterOptie.svelte',
 			'lib/components/tijdlijn/Tijdlijn.svelte',
-			'lib/components/graph/GraphSidebar.svelte',
 			'lib/onderwerpen/Kruiswoord.svelte',
 			'routes/(main)/api/+page.svelte',
 			'lib/components/explore/index/IndexOverzicht.svelte'

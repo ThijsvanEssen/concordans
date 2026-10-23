@@ -88,10 +88,8 @@
 		| 'onOpenFilter'
 		| 'depth'
 		| 'onDepth'
-		| 'onAllesLaden'
 		| 'onLaadSoort'
 		| 'laadtSoort'
-		| 'allesGrens'
 		| 'onToggleHeat'
 		| 'onHeatPeriodChange'
 		| 'onToggleMutatie'
@@ -1145,7 +1143,7 @@
 
 {#snippet sidebar()}
 	<GraphSidebar
-		{periode}
+		periode={filter.van || filter.tot || eersteJaar !== laatsteJaar ? periode : undefined}
 		{meer}
 		{...legend}
 		{verbonden}

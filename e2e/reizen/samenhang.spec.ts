@@ -33,7 +33,7 @@ test('the legend switches a kind of bron off and on', async ({ page }) => {
 	await page.waitForLoadState('networkidle');
 	await openFilters(page);
 	const legend = page.getByRole('region', { name: 'Legenda' });
-	const judgments = legend.getByRole('button', { name: /^Uitspraken [\d.]+$/ });
+	const judgments = legend.getByRole('button', { name: /^Uitspraken [\d.]+( van [\d.]+)?$/ });
 	await expect(judgments).toHaveAttribute('aria-pressed', 'true');
 	const before = await drawn(page).getAttribute('aria-label');
 	await judgments.click();

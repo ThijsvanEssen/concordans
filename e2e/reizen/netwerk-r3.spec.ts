@@ -78,8 +78,9 @@ test('no "?" for judgments both cite where one end cites none (R3-N B7)', async 
 test('a cut neighbourhood says how much of it is shown (R3-N B6)', async ({ page }) => {
 	await page.goto('/explore?netwerk=instruments/bwbr0005537');
 	const legend = await filters(page);
-	await expect(legend.getByRole('heading', { name: 'Getoond' })).toBeVisible();
-	await expect(legend.getByText(/van [\d.]+/).first()).toBeVisible();
+	// In Soort's own column of counts, no block of its own.
+	await expect(legend.getByRole('button', { name: /^Artikelen [\d.]+ van [\d.]+$/ })).toBeVisible();
+	await expect(legend.getByRole('heading', { name: 'Getoond' })).toHaveCount(0);
 });
 
 test('an article the data lacks leads to its law, by name (R3-I F19)', async ({ page, guard }) => {

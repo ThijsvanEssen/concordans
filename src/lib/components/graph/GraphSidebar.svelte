@@ -1,10 +1,10 @@
 <script lang="ts">
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
 	import { NL } from '$lib/text/collator';
-	// The legend of the werkplek, which is also its filter (besluit 39): Soort (the kinds with
-	// their counts), Relatie (the verbindingen per relation with a line sample), the Periode the
-	// page gives; under Meer the preset, what is shown of the focus's neighbours, the grouping,
-	// the depth, the lid and the overlays.
+	// The legend of the werkplek, which is also its filter (besluit 39): Soort (the kinds drawn,
+	// of how many where the API cut them off, and the step that loads them all), Relatie (the
+	// verbindingen drawn, a line sample each), the Periode the page gives; under Meer the preset,
+	// the grouping, the depth, the lid and the overlays.
 	import FoldButton from '$lib/components/ui/FoldButton.svelte';
 	import { isOpen } from '$lib/components/ui/dicht.svelte';
 	import type { Snippet } from 'svelte';
@@ -41,7 +41,8 @@
 	import { drawClassOf } from '$lib/graph/types';
 	import { GROUP_LABEL, inLegend } from '$lib/graph/collection-role';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { BRON_LABEL, isCollection } from '$lib/vocabulary';
+	import { BRON_LABEL } from '$lib/vocabulary';
+	import { kindCuts } from './kind-cut';
 	import { formatCount } from '$lib/text/getal';
 	import { FILTER_GROUP_VORM } from '$lib/bron/vormen';
 	import type { ContainerKind } from '$lib/graph/container-membership';
@@ -55,10 +56,8 @@
 		onOpenFilter,
 		depth,
 		onDepth,
-		onAllesLaden,
 		onLaadSoort,
 		laadtSoort = new Set<string>(),
-		allesGrens = null,
 		hiddenRelations,
 		onToggleRelation,
 		hiddenGroups = new Set(),
@@ -83,13 +82,10 @@
 		onOpenFilter: () => void;
 		depth: number;
 		onDepth: (d: number) => void;
-		onAllesLaden?: () => void;
 		/** All the focus's direct neighbours of one kind (the per-kind step). */
 		onLaadSoort?: (collection: Collection) => void;
 		/** The kinds being loaded so. */
 		laadtSoort?: ReadonlySet<string>;
-		/** The most "Alles laden" asks at once; set once it has (the cap then stands as a label). */
-		allesGrens?: { grens: number; geladen: boolean } | null;
 		hiddenRelations: Set<Relation>;
 		onToggleRelation: (r: Relation) => void;
 		/** Groupings switched off: no hull around their bronnen. */
@@ -134,12 +130,9 @@
 		`Maximaal ${grens} bronnen getoond; een stap verder voegt niets toe.`
 	);
 	const beyondCap = (d: number) => !netwerkActive && !!reach?.capped && d > reach.depth;
-	// What the network shows of the focus's direct neighbours, per kind the API cut off: "32 van
-	// 1.483" as a label, not a sentence (Thijs, 10 Oct: "maak duidelijk dat we niet alles zien").
-	const uitsnede = $derived(
-		(reach?.buckets ?? []).filter((b) => b.kept < b.total && isCollection(b.collection))
-	);
-	const uitsnedeTotaal = $derived(uitsnede.reduce((n, b) => n + b.total, 0));
+	// Per kind drawn, the whole where the API cut it off: "63 van 10.395" in the count's column
+	// (Thijs, 10 Oct: "maak duidelijk dat we niet alles zien"; 23 Oct: one list, one grid).
+	const cuts = $derived(kindCuts(reach?.buckets ?? [], totals));
 	const NO_SELECTION_REASON = 'Kies eerst een bron in het netwerk.';
 	// Relatie: the lines drawn, one row per relation, in the words of the mockup (A197-b) where
 	// one relation is read two ways (a judgment haalt aan, a Kamerstuk noemt).
@@ -164,9 +157,8 @@
 		(Object.entries(canvasCounts.relations ?? {}) as [Relation, number][])
 			.filter(([r]) => inLegend(r))
 			.sort((a, b) => b[1] - a[1])
-			.map(([relation, count]) => ({
+			.map(([relation]) => ({
 				relation,
-				count,
 				label: OWN_WORDS[relation] ?? capitalize(relationLabel(relation))
 			}))
 	);
@@ -235,6 +227,7 @@
 				{#each kinds as k (k)}
 					{@const n = totals[k] ?? 0}
 					{@const groepen = metGroepUit(k)}
+					{@const cut = cuts[k]}
 					<FilterOptie
 						label={kindLabel(k)}
 						title={groepen
@@ -246,7 +239,7 @@
 							groepen
 								? groepen.forEach((g) => onToggleGroup?.(g))
 								: onFilter(toggleFilterGroup(filter, k))}
-						count={n}
+						count={cut ? `${formatCount(n)} van ${formatCount(cut.total)}` : n}
 						loading={counting}
 						empty={n === 0}
 						gedimd={!!groepen}
@@ -257,49 +250,18 @@
 								colour={kindColour(GROUP_COLLECTION[k])}
 							/>{/snippet}
 					</FilterOptie>
-				{/each}
-			</section>
-		{/if}
-
-		<!-- What came of the neighbours there are, per kind the API cut off: beside Soort, not under
-		     Meer (R3-N B6, besluit 23). -->
-		{#if uitsnede.length}
-			<!-- The focus's direct neighbours the network shows, of those there are. -->
-			<section class="block">
-				<h3 class="block__title">Getoond</h3>
-				<ul class="uitsnede">
-					{#each uitsnede as b (b.collection)}
-						<li>
-							<KindGlyph collection={b.collection as Collection} size={11} /><span
-								class="uitsnede__soort">{BRON_LABEL[b.collection as Collection][1]}</span
-							><span class="uitsnede__aantal"
-								>{formatCount(b.kept)}
-								<span class="uitsnede__van">van {formatCount(b.total)}</span></span
-							>{#if onLaadSoort}<span class="uitsnede__laad"
-									>{#if laadtSoort.has(b.collection)}<span class="stil">Laden…</span
-										>{:else}<TekstLink
-											onclick={() => onLaadSoort(b.collection as Collection)}
-											aria-label="Alle {formatCount(b.total)} {BRON_LABEL[
-												b.collection as Collection
-											][1].toLowerCase()} laden">Alle laden</TekstLink
-										>{/if}</span
+					<!-- The one step where the kind is cut off: all of it, under its count. -->
+					{#if cut && onLaadSoort}
+						{@const c = cut.collection as Collection}
+						<p class="laad">
+							{#if laadtSoort.has(c)}<span class="stil">Laden…</span>{:else}<TekstLink
+									onclick={() => onLaadSoort(c)}
+									aria-label="Alle {formatCount(cut.total)} {BRON_LABEL[c][1].toLowerCase()} laden"
+									>Alle laden</TekstLink
 								>{/if}
-						</li>
-					{/each}
-				</ul>
-				<!-- What the link loads, the API's cap in its words where the whole is more; once
-		     loaded and still cut, the cap as a label (UX-toets 0.79.44, #43). -->
-				{#if onAllesLaden}
-					<p class="uitsnede__actie">
-						<TekstLink onclick={onAllesLaden}
-							>{allesGrens && uitsnedeTotaal > allesGrens.grens
-								? `${formatCount(allesGrens.grens)} van ${formatCount(uitsnedeTotaal)} laden`
-								: `Alle ${formatCount(uitsnedeTotaal)} laden`}</TekstLink
-						>
-					</p>
-				{:else if allesGrens?.geladen}
-					<p class="uitsnede__actie stil">Grens bereikt: {formatCount(allesGrens.grens)}</p>
-				{/if}
+						</p>
+					{/if}
+				{/each}
 			</section>
 		{/if}
 
@@ -309,13 +271,7 @@
 				{#each relations as r (r.relation)}
 					{@const rel = r.relation as Relation}
 					{@const on = !hiddenRelations.has(rel)}
-					<FilterOptie
-						label={r.label}
-						wrap
-						{on}
-						onToggle={() => onToggleRelation(rel)}
-						count={r.count}
-					>
+					<FilterOptie label={r.label} wrap {on} onToggle={() => onToggleRelation(rel)}>
 						{#snippet voor()}
 							<!-- As thick as on the canvas at the default zoom, with its arrowhead. -->
 							{@const dik = Math.max(lijnDikte(EDGE_WEIGHT[rel]), 1.4)}
@@ -542,38 +498,12 @@
 		flex-direction: column;
 		gap: var(--s-4);
 	}
-	.uitsnede {
-		list-style: none;
+	/* Under the count, in its column: the one step of a kind cut off. */
+	.laad {
+		display: flex;
+		justify-content: flex-end;
 		margin: 0;
-		padding: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-	}
-	.uitsnede li {
-		display: grid;
-		grid-template-columns: auto minmax(0, 1fr) auto;
-		align-items: center;
-		gap: 0 var(--s-2);
-		padding: 2px 0;
-	}
-	.uitsnede__aantal {
-		font-variant-numeric: tabular-nums;
-		color: var(--ink);
-	}
-	/* "Alle laden" on its own line under the count, at every width: beside it, it squeezed
-	   the kind's name into the count (Thijs, 11 Oct, variant A). */
-	.uitsnede__laad {
-		grid-column: 3;
-		justify-self: end;
 		font-size: var(--t-micro);
-	}
-	.uitsnede__actie {
-		margin: var(--s-1) 0 0;
-		font-size: var(--t-meta);
-	}
-	.uitsnede__van {
-		color: var(--ink-3);
 	}
 	.block__label {
 		display: flex;
