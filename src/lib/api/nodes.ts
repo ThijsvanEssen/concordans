@@ -200,7 +200,7 @@ export async function getShared(
 	query: QueryOf<'/api/nodes/shared'>,
 	signal?: AbortSignal
 ): Promise<Schema<'SharedNeighborsResponse'> | null> {
-	// The route came with API 0.80.7 (A200): an older API is not asked (a 404 is a console error
+	// The route came with API 0.80.8 (A200, #937): an older API is not asked (a 404 is a console error
 	// in every browser), and a 404 all the same stands for the visit. Null: not there.
 	if (!(await apiHasShared())) return null;
 	return unwrap(api.GET('/api/nodes/shared', { params: { query }, signal })).catch((e) => {
@@ -210,7 +210,7 @@ export async function getShared(
 	});
 }
 /** The first version of the API with /api/nodes/shared. */
-const SHARED_SINCE = [0, 80, 7];
+const SHARED_SINCE = [0, 80, 8];
 let shared: Promise<boolean> | null = null;
 const apiHasShared = () =>
 	(shared ??= unwrap(api.GET('/api/health'))
