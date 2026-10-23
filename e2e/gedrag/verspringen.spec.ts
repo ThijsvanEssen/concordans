@@ -27,3 +27,39 @@ test('Actueel: the filters keep their place while the counts come in', async ({ 
 	// Coalitie came in beside its room, so what is under it moves by nothing either.
 	expect(Math.abs((await at('Ministerie')) - before.Ministerie)).toBeLessThan(8);
 });
+
+// On a phone Verbonden stands under the text: nothing shifts while an article or a judgment comes
+// in (besluit 31), the layout shift of the whole load at most 0.05.
+const READERS = [
+	{ what: 'an article', path: '/wetten/BWBR0005289/artikel/6:162' },
+	{ what: 'a judgment', path: '/uitspraken/ECLI:NL:HR:2019:2006' }
+];
+
+for (const r of READERS) {
+	test(`${r.what} comes in on a phone without a shift`, async ({ page, touch }) => {
+		test.skip(!touch, 'Verbonden stands under the text on a phone');
+		// The text comes a moment after the rest, as on a slow line: Verbonden must not stand
+		// where it comes.
+		await page.route(/\/api\/(articles|judgments)\//, async (route) => {
+			await new Promise((done) => setTimeout(done, 1200));
+			await route.fallback();
+		});
+		await page.addInitScript(() => {
+			const w = window as unknown as { __cls: number };
+			w.__cls = 0;
+			new PerformanceObserver((list) => {
+				for (const e of list.getEntries() as (PerformanceEntry & {
+					value: number;
+					hadRecentInput: boolean;
+				})[])
+					if (!e.hadRecentInput) w.__cls += e.value;
+			}).observe({ type: 'layout-shift', buffered: true });
+		});
+		await page.goto(r.path);
+		await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+		await expect(page.getByRole('heading', { level: 2, name: 'Verbonden' })).toBeAttached();
+		await page.waitForTimeout(1500);
+		const cls = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
+		expect(cls).toBeLessThanOrEqual(0.05);
+	});
+}

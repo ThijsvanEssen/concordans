@@ -80,7 +80,8 @@
 	});
 </script>
 
-<div class="reader-frame">
+<!-- data-klaar: the text is here; under it on a narrow screen Verbonden may come (explore). -->
+<div class="reader-frame" data-klaar={state.status === 'ready' || undefined}>
 	<div class="reader-frame__col" bind:this={search.column}>
 		<!-- The band and Netwerk/Tekst on one row, one rule under both over the full width
 		     (Thijs, 10 Oct: the rule stopped short of the toggle). -->

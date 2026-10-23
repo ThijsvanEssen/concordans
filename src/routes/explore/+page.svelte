@@ -2083,6 +2083,11 @@
 			border-top: 1px solid var(--rule);
 			padding: var(--s-5) var(--s-4) var(--s-7);
 		}
+		/* Under the text, Verbonden comes once the text is there (ReaderFrame data-klaar): before
+		   it, it stood where the text comes and was pushed down by it (CLS 0.81 at 375). */
+		.explore-read:not(:has(.col--reader :global(.reader-frame[data-klaar]))) .col--panel {
+			display: none;
+		}
 		.explore-read .toc-column,
 		.explore-read .resize-handle {
 			display: none;
