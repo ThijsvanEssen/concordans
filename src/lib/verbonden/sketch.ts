@@ -32,6 +32,8 @@ export type SketchGroup = {
 	name: string;
 	/** The kind of most of its bronnen, for its colour. */
 	collection: Collection | null;
+	/** The soort that has a colour of its own besides its collection's (the regulations). */
+	hue?: string | null;
 	count: number;
 	rows: Row[];
 	/** The API cut the group off: its rows are not all there is, so it stands as one. */
@@ -48,6 +50,7 @@ type Single = {
 	lines: string[] | null;
 	shape: ReturnType<typeof vormVanBron>;
 	collection: Collection;
+	hue: string | null;
 	x: number;
 	y: number;
 	/** Where the middle of its name's first line stands. */
@@ -67,6 +70,7 @@ type Circle = {
 	lines: string[];
 	lx: number;
 	collection: Collection | null;
+	hue: string | null;
 	x: number;
 	y: number;
 	r: number;
@@ -106,10 +110,13 @@ const rad = (deg: number) => (deg * Math.PI) / 180;
 export function divide(
 	groups: readonly SketchGroup[],
 	limit = SKETCH_LIMIT
-): { singles: { row: Row }[]; clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx'>[] } {
+): {
+	singles: { row: Row; hue: string | null }[];
+	clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx'>[];
+} {
 	const withCount = groups.filter((g) => g.count > 0);
 	const smallestFirst = [...withCount].sort((a, b) => a.count - b.count);
-	const singles: { row: Row }[] = [];
+	const singles: { row: Row; hue: string | null }[] = [];
 	const seen = new Set<string>();
 	const clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx'>[] = [];
 	let room = limit;
@@ -121,7 +128,7 @@ export function divide(
 				const id = refId(row.ref);
 				if (seen.has(id)) continue;
 				seen.add(id);
-				singles.push({ row });
+				singles.push({ row, hue: g.hue ?? null });
 			}
 			room -= g.count;
 			return;
@@ -129,7 +136,8 @@ export function divide(
 		const own = g.parts?.length
 			? g.parts.map((d) => ({ id: `${g.id}:${d.tier ?? 'other'}`, label: d.label, count: d.count }))
 			: [{ id: g.id, label: g.name, count: g.count }];
-		for (const p of own) clusters.push({ ...p, group: g.id, collection: g.collection });
+		for (const p of own)
+			clusters.push({ ...p, group: g.id, collection: g.collection, hue: g.hue ?? null });
 		room -= own.length;
 	});
 	// In the order of the panel, not by size.
@@ -199,7 +207,7 @@ export function sketch(
 		...(centerName ? [boxOf(cx, 34, centerLines)] : [])
 	];
 
-	const singles: Single[] = single.map(({ row }, i) => {
+	const singles: Single[] = single.map(({ row, hue }, i) => {
 		const a = rad(singleAngles[i]);
 		const sin = Math.sin(a);
 		const x = cx + R_SINGLE * Math.cos(a);
@@ -214,6 +222,7 @@ export function sketch(
 			lines,
 			shape: vormVanBron(row.ref.collection, row.props, row.ref.key),
 			collection: row.ref.collection,
+			hue,
 			x,
 			y,
 			lx: inside(x, lines),

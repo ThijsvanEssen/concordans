@@ -47,6 +47,8 @@
 	--groep-fractie: #944078; /* dotted */
 	--groep-commissie: #438365; /* dash and dot */
 	--groep-dossier: #d3762d; /* dashed */
+	/* The regulations issued under a wet in Verbonden's sketch: a hue of their own, L* 45. */
+	--groep-regeling: #8a6208;
 
 	/* The network's own colours. No red: in the network red only says no, and nothing
 	   there says no yet (Thijs, 10 Oct: "de kleur mag alleen blijven zolang het een doel

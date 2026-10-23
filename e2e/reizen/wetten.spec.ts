@@ -62,7 +62,10 @@ test('a law reads whole, with its overview, a date to read it on and what is bas
 
 	if (touch) return;
 	const verbonden = page.getByRole('complementary', { name: 'Verbonden' });
-	await verbonden.getByRole('button', { name: /^Alle [\d.]+ wetten/ }).click();
+	// The regulations issued under the law are a soort of their own, before the laws it cites.
+	await expect(verbonden.getByRole('heading', { name: 'Uitvoeringsregelingen' })).toBeVisible();
+	await expect(verbonden.getByRole('heading', { name: /^Wetten/ })).toBeVisible();
+	await verbonden.getByRole('button', { name: /^Alle [\d.]+ uitvoeringsregelingen/ }).click();
 	await expect(verbonden.getByRole('heading', { name: 'Gebaseerd op deze wet' })).toBeVisible();
 });
 

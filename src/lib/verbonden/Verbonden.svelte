@@ -352,6 +352,7 @@
 					id: k.id,
 					name: k.label,
 					collection: k.collection,
+					hue: k.id === 'regelingen' ? k.id : null,
 					count: k.count,
 					rows: k.rows,
 					capped: k.partial,
