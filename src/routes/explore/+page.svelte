@@ -1633,8 +1633,10 @@
 						>
 					</nav>
 				{/if}
-				{#if withContents}
-					<div class="col col--nav toc-column">
+				<!-- Kept in the page while it holds nothing, hidden: the table of contents tells again
+				     when its rows come (contents-state). -->
+				{#if WITH_CONTENTS.has(selectedNode.collection)}
+					<div class="col col--nav toc-column" hidden={!withContents}>
 						{@render toc()}
 					</div>
 				{/if}

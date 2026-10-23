@@ -90,7 +90,8 @@
 	const items = $derived(ready?.articles ?? []);
 	const annexes = $derived(ready?.annexes ?? []);
 	$effect(() => {
-		if (selection && ready) reportContents(selection.id, items.length + annexes.length);
+		if (selection && currentBwb && ready)
+			reportContents(selection.id, items.length + annexes.length);
 	});
 
 	// A tree of groups from each article's breadcrumb; articles without one go into "Overig".

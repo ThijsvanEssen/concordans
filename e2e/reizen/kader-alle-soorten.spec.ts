@@ -70,14 +70,20 @@ for (const [soort, pad] of SOORTEN) {
 		if (STATUS.has(soort))
 			await expect(page.locator('.reader-status__woorden').first(), 'status line').not.toBeEmpty();
 
-		// 4. Inhoud has two entries at least, or there is none.
-		const inhoud = await page
-			.locator('nav[aria-label="Inhoud"]')
-			.evaluateAll((els) => els.map((el) => el.querySelectorAll('a').length));
-		expect(
-			inhoud.every((n) => n >= 2),
-			'Inhoud with fewer than two entries'
-		).toBe(true);
+		// 4. Inhoud has two entries at least, or there is none: no column, no tab, no button.
+		const leeg = (await page.locator('.toc-column[hidden]').count()) > 0;
+		if (leeg) {
+			await expect(page.locator('.mobile-tab--toc'), 'a tab Inhoud without entries').toHaveCount(0);
+			await expect(page.getByRole('button', { name: 'Inhoud', exact: true })).toHaveCount(0);
+		} else {
+			const inhoud = await page
+				.locator('nav[aria-label="Inhoud"]')
+				.evaluateAll((els) => els.map((el) => el.querySelectorAll('a').length));
+			expect(
+				inhoud.every((n) => n >= 2),
+				'Inhoud with fewer than two entries'
+			).toBe(true);
+		}
 		await expect(page.getByText('Geen indeling.')).toHaveCount(0);
 
 		// 5. The count of a soort is a number, no unit.
