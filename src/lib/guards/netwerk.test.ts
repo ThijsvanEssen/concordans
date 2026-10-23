@@ -27,7 +27,6 @@ describe('the network and its cards', () => {
 			regels(t).some(
 				(r) =>
 					/\.(netwerk|legenda|cluster-kaart)(?![-\w])/.test(r.selector) &&
-					!/netwerk--start/.test(r.selector) &&
 					/(?<![-\w])(border|background|box-shadow):|(?<![-\w])width:\s*(?!\s|auto)/.test(r.body)
 			);
 		expect(
@@ -99,5 +98,20 @@ describe('the network and its cards', () => {
 			/c !== 'cases'|collection === 'cases'\) return null/
 		];
 		expect(overtreders((t) => own.some((r) => r.test(t)))).toEqual([]);
+	});
+});
+
+describe('/explore and the werkplek of a bron', () => {
+	// Thijs, 23 Oct: "nieuwe functies zijn leidend", "Reuse componenten!": /explore is the same
+	// werkplek, with the same components, the same panel and no branch of its own.
+	const page = bron('routes/explore/+page.svelte');
+	const markup = page.slice(page.indexOf('</script>'));
+	it('render one werkplek: one canvas, one panel Netwerk, one Keten, one Verband', () => {
+		for (const tag of ['<GraphViewC', '<NetwerkPanel', '<ChainView', '<SharedView'])
+			expect(markup.split(tag).length - 1, tag).toBe(1);
+	});
+	it('have no variant of a werkplek component for an empty canvas or for /explore', () => {
+		expect(bron('lib/selection/NetwerkPanel.svelte')).not.toMatch(/\bstart\b\s*[=?:]/);
+		expect(markup).not.toMatch(/pathname\s*[!=]==?\s*'\/explore'/);
 	});
 });

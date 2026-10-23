@@ -99,7 +99,12 @@ test('Verbonden as a table, exported as CSV', async ({ page }) => {
 test('an empty werkplek is empty: the field Bron toevoegen, no example', async ({ page }) => {
 	await page.goto('/explore');
 	const network = page.getByRole('region', { name: 'Netwerk' });
-	await expect(network.getByPlaceholder('Bron toevoegen')).toBeVisible();
+	// The field, or on a phone the button that opens it.
+	await expect(
+		network
+			.getByPlaceholder('Bron toevoegen')
+			.or(network.getByRole('button', { name: 'Bron toevoegen' }))
+	).toBeVisible();
 	await expect(network.getByRole('button', { pressed: true })).toHaveCount(0);
 	await page.waitForTimeout(500);
 	await expect(page).toHaveURL(/\/explore$/);
@@ -120,5 +125,5 @@ test('a bron in the network becomes the focus, and Samenhang follows it', async 
 	await page.keyboard.press('Enter');
 	await expect(page).toHaveURL(/\/kamerstukken\//);
 	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-	expect(name).toContain('Kamerstuk');
+	expect(name).toMatch(/, Stuk$/);
 });

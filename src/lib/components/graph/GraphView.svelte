@@ -1487,8 +1487,7 @@
 		gap: var(--s-2);
 	}
 	/* The panel Netwerk and its start stand in the strip, on its paper: no card of their own. */
-	.strook--links :global(.canvas-kaart),
-	.strook--links :global(.netwerk--start) {
+	.strook--links :global(.canvas-kaart) {
 		position: static;
 		transform: none;
 		width: auto;

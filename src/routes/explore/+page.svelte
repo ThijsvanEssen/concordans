@@ -520,8 +520,7 @@
 		if (!chainLaw) return 'Keten: alleen bij een wet, een regeling of een artikel';
 		const m = chainModel;
 		if (!m) return null;
-		if (m.missing.length)
-			return `${joinAnd(m.missing)}: grondslag ${NOT_IN_DATA}`;
+		if (m.missing.length) return `${joinAnd(m.missing)}: grondslag ${NOT_IN_DATA}`;
 		// A regulation whose grondslag the data lacks says so, as the law above it does (F3).
 		const withoutBasis = isRegulation(chainKind) && !m.layers.some((l) => l.id === 'basis');
 		const none =
@@ -2056,7 +2055,6 @@
 												)
 											: []}
 										loading={composer.loading}
-										start={!focus && !netwerkActive}
 										{telefoon}
 										onSelect={addIdToNetwerk}
 										selection={selectedNode &&

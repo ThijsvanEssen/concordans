@@ -153,3 +153,18 @@ test('Verband draws every chosen bron, the same in any order, and keeps its verb
 	expect(vijf).toContain(evaluatie);
 	expect(vijf.some((t) => t.startsWith('Mark Rutte'))).toBe(true);
 });
+
+test('the same keten on /explore and on the page of the law (besluit 41)', async ({
+	page,
+	touch
+}) => {
+	const keten = async (url: string) => {
+		await page.goto(url);
+		const view = touch ? page.locator('.chain .list') : page.getByRole('group', { name: 'Keten' });
+		await expect(view.getByRole('button').first()).toBeVisible();
+		return view.evaluate((el) => el.textContent?.replace(/\s+/g, ' ').trim());
+	};
+	const hier = await keten('/explore?netwerk=instruments/bwbr0010346&weergave=keten');
+	const daar = await keten('/wetten/BWBR0010346?mode=netwerk&weergave=keten');
+	expect(hier).toBe(daar);
+});

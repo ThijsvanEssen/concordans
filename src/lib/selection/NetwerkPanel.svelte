@@ -5,7 +5,7 @@
 	// The netwerk of chosen bronnen, in the strip at the left of the werkplek: a search that adds a bron, the
 	// selected bron added, each chosen one on or off, taken out, or opened, the bronnen
 	// that join them shown or not, and the context around them cleared. On an empty
-	// Verkenner it is the start of the page, in the middle of the canvas.
+	// Verkenner it is the same panel, empty: the field Bron toevoegen (one werkplek, one panel).
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Search from '$lib/search/Search.svelte';
 	import { GROUP_LABEL } from '$lib/graph/collection-role';
@@ -16,7 +16,6 @@
 		entries,
 		loading = false,
 		selection = null,
-		start = false,
 		onSelect,
 		onToggle,
 		onRemove,
@@ -30,8 +29,6 @@
 		loading?: boolean;
 		/** The selected bron when it is not chosen yet. */
 		selection?: { label: string } | null;
-		/** The canvas is empty: the panel is the start of the page. */
-		start?: boolean;
 		/** Adds a bron found by the search, by the name a link uses. */
 		onSelect: (id: string) => void;
 		onToggle: (id: string) => void;
@@ -66,156 +63,126 @@
 					: 'leden';
 </script>
 
-{#if start}
-	<section class="netwerk netwerk--start" aria-label="Netwerk">
-		<h2 class="start__title">Netwerk</h2>
-		<!-- The field itself, not steps that explain it (Thijs, 9 Oct: "de UI moet zichzelf
-		     wijzen"). -->
-		<div class="zoek zoek--start">
-			<Search compact picker placeholder="Bron toevoegen" {onSelect} />
-		</div>
-	</section>
-{:else}
-	<!-- De gekozen bronnen als labels op één regel; zoeken pas na "Bron toevoegen";
+<!-- De gekozen bronnen als labels op één regel; zoeken pas na "Bron toevoegen";
 	     één regel voor wat ertussen ligt. Wissen is één klik, en Terug zet het terug. -->
-	<!-- Bronnen, the first block of the strip at the left (mockup A197-b). -->
-	<CanvasKaart title="Bronnen" label="Netwerk" class="netwerk">
-		{#snippet samenvatting()}
-			{#if loading}<span class="laden punt" role="status" aria-label="Laden" title="Laden"
-				></span>{/if}
-		{/snippet}
-		{#snippet actie()}
-			{#if entries.length > 0 && !telefoon}
-				<TekstLink onclick={onClear} title="Leeg het netwerk en het canvas; Terug zet het terug"
-					>Wissen</TekstLink
-				>
-				<!-- One more action, in the one menu of the site (TekstMenu), not a menu of its own. -->
-				<TekstMenu rechts label="Meer" tekst="Meer">
-					{#snippet onder(sluit)}
-						<button
-							type="button"
-							role="menuitem"
-							class="tekstmenu__item"
-							onclick={() => {
-								sluit();
-								onClearContext();
-							}}>Alleen de gekozen bronnen tonen</button
-						>
-					{/snippet}
-				</TekstMenu>
-			{/if}
-		{/snippet}
-		<ul class="chips">
-			{#each getoond as e (e.id)}
-				<li class="chip" class:uit={!e.on} class:mist={e.missing} class:is-dim={!!e.verborgenMet}>
+<!-- Bronnen, the first block of the strip at the left (mockup A197-b). -->
+<CanvasKaart title="Bronnen" label="Netwerk" class="netwerk">
+	{#snippet samenvatting()}
+		{#if loading}<span class="laden punt" role="status" aria-label="Laden" title="Laden"
+			></span>{/if}
+	{/snippet}
+	{#snippet actie()}
+		{#if entries.length > 0 && !telefoon}
+			<TekstLink onclick={onClear} title="Leeg het netwerk en het canvas; Terug zet het terug"
+				>Wissen</TekstLink
+			>
+			<!-- One more action, in the one menu of the site (TekstMenu), not a menu of its own. -->
+			<TekstMenu rechts label="Meer" tekst="Meer">
+				{#snippet onder(sluit)}
 					<button
 						type="button"
-						class="chip-naam"
-						aria-pressed={e.on}
-						disabled={e.missing}
-						title={e.missing
-							? 'Niet gevonden'
-							: e.verborgenMet
-								? `Aan met ${GROUP_LABEL[e.verborgenMet]}`
-								: e.on
-									? `${e.titel ?? e.label}: verbergen`
-									: `${e.titel ?? e.label}: tonen`}
-						onclick={() => (e.verborgenMet ? onGroepAan?.(e.verborgenMet) : onToggle(e.id))}
-						><KindGlyph collection={e.collection} size={11} /><span
-							>{e.label}{#if e.alone}<span
-									class="los"
-									title="Geen verbinding met de andere gekozen bronnen">, zonder verbinding</span
-								>{:else if e.via}<span
-									class="los"
-									title="De verbindingen lopen via de eerste {formatCount(e.via.used)} {ledenVan(
-										e.collection
-									)}"
-									>, via {formatCount(e.via.used)} van {formatCount(e.via.total)}
-									{ledenVan(e.collection)}</span
-								>{/if}</span
-						></button
+						role="menuitem"
+						class="tekstmenu__item"
+						onclick={() => {
+							sluit();
+							onClearContext();
+						}}>Alleen de gekozen bronnen tonen</button
 					>
-					<button
-						type="button"
-						class="chip-weg"
-						onclick={() => onRemove(e.id)}
-						aria-label="Haal {e.label} uit netwerk">×</button
-					>
-				</li>
-			{/each}
-			{#if gevouwen}
-				<li class="verder">
-					<TekstLink onclick={() => (alles = true)}>en {entries.length - KORT} andere</TekstLink>
-				</li>
-			{:else if entries.length > KORT + 1}
-				<li class="verder">
-					<TekstLink onclick={() => (alles = false)}>minder</TekstLink>
-				</li>
-			{/if}
-			{#if selection}
-				<li>
-					<button
-						type="button"
-						class="chip chip--voorstel"
-						onclick={onAdd}
-						aria-label="Voeg {selection.label} toe aan netwerk">+ {selection.label}</button
-					>
-				</li>
-			{/if}
-			{#if telefoon && !zoeken}
-				<li>
-					<button type="button" class="chip chip--plus" onclick={() => (zoeken = true)}
-						>Bron toevoegen</button
-					>
-				</li>
-			{/if}
-		</ul>
-		{#if !telefoon || zoeken}
-			<!-- The field itself (mockup A197-b); on a phone behind Bron toevoegen. -->
-			<div class="zoek">
-				<Search
-					compact
-					picker
-					placeholder="Bron toevoegen"
-					onSelect={(id) => {
-						onSelect(id);
-						zoeken = false;
-					}}
-				/>
-			</div>
+				{/snippet}
+			</TekstMenu>
 		{/if}
-		{#if telefoon && entries.length > 0}
-			<!-- On a phone under Filter, with the netwerk's own filters (GraphView). -->
-			<p class="netwerk-acties">
-				<TekstLink onclick={onClear} title="Leeg het netwerk en het canvas; Terug zet het terug"
-					>Wissen</TekstLink
+	{/snippet}
+	<ul class="chips">
+		{#each getoond as e (e.id)}
+			<li class="chip" class:uit={!e.on} class:mist={e.missing} class:is-dim={!!e.verborgenMet}>
+				<button
+					type="button"
+					class="chip-naam"
+					aria-pressed={e.on}
+					disabled={e.missing}
+					title={e.missing
+						? 'Niet gevonden'
+						: e.verborgenMet
+							? `Aan met ${GROUP_LABEL[e.verborgenMet]}`
+							: e.on
+								? `${e.titel ?? e.label}: verbergen`
+								: `${e.titel ?? e.label}: tonen`}
+					onclick={() => (e.verborgenMet ? onGroepAan?.(e.verborgenMet) : onToggle(e.id))}
+					><KindGlyph collection={e.collection} size={11} /><span
+						>{e.label}{#if e.alone}<span
+								class="los"
+								title="Geen verbinding met de andere gekozen bronnen">, zonder verbinding</span
+							>{:else if e.via}<span
+								class="los"
+								title="De verbindingen lopen via de eerste {formatCount(e.via.used)} {ledenVan(
+									e.collection
+								)}"
+								>, via {formatCount(e.via.used)} van {formatCount(e.via.total)}
+								{ledenVan(e.collection)}</span
+							>{/if}</span
+					></button
 				>
-				<TekstLink onclick={onClearContext}>Alleen de gekozen bronnen tonen</TekstLink>
-			</p>
+				<button
+					type="button"
+					class="chip-weg"
+					onclick={() => onRemove(e.id)}
+					aria-label="Haal {e.label} uit netwerk">×</button
+				>
+			</li>
+		{/each}
+		{#if gevouwen}
+			<li class="verder">
+				<TekstLink onclick={() => (alles = true)}>en {entries.length - KORT} andere</TekstLink>
+			</li>
+		{:else if entries.length > KORT + 1}
+			<li class="verder">
+				<TekstLink onclick={() => (alles = false)}>minder</TekstLink>
+			</li>
 		{/if}
-	</CanvasKaart>
-{/if}
+		{#if selection}
+			<li>
+				<button
+					type="button"
+					class="chip chip--voorstel"
+					onclick={onAdd}
+					aria-label="Voeg {selection.label} toe aan netwerk">+ {selection.label}</button
+				>
+			</li>
+		{/if}
+		{#if telefoon && !zoeken}
+			<li>
+				<button type="button" class="chip chip--plus" onclick={() => (zoeken = true)}
+					>Bron toevoegen</button
+				>
+			</li>
+		{/if}
+	</ul>
+	{#if !telefoon || zoeken}
+		<!-- The field itself (mockup A197-b); on a phone behind Bron toevoegen. -->
+		<div class="zoek">
+			<Search
+				compact
+				picker
+				placeholder="Bron toevoegen"
+				onSelect={(id) => {
+					onSelect(id);
+					zoeken = false;
+				}}
+			/>
+		</div>
+	{/if}
+	{#if telefoon && entries.length > 0}
+		<!-- On a phone under Filter, with the netwerk's own filters (GraphView). -->
+		<p class="netwerk-acties">
+			<TekstLink onclick={onClear} title="Leeg het netwerk en het canvas; Terug zet het terug"
+				>Wissen</TekstLink
+			>
+			<TekstLink onclick={onClearContext}>Alleen de gekozen bronnen tonen</TekstLink>
+		</p>
+	{/if}
+</CanvasKaart>
 
 <style>
-	/* An empty network: the field in the middle of the canvas, a card of its own. */
-	.netwerk--start {
-		position: absolute;
-		top: 18%;
-		left: 50%;
-		z-index: var(--z-float);
-		transform: translateX(-50%);
-		box-sizing: border-box;
-		width: min(440px, calc(100% - 2 * var(--s-3)));
-		display: grid;
-		gap: var(--s-3);
-		padding: var(--s-5);
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink);
-	}
 	.netwerk-acties {
 		display: flex;
 		flex-wrap: wrap;
@@ -345,16 +312,7 @@
 	.zoek {
 		width: 100%;
 	}
-	.zoek--start {
-		margin-top: var(--s-3);
-	}
 
-	.start__title {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-h3);
-		font-weight: 600;
-	}
 	/* A phone: the chosen bronnen side by side, on as many lines as they need. */
 	@media (max-width: 768px) {
 		.chips {
