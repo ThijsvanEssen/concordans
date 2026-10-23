@@ -5,7 +5,7 @@ import type Graph from 'graphology';
 import type { ContainerKind } from '$lib/graph/container-membership';
 import type { Vorm } from '$lib/bron/vormen';
 import type { FilterGroup, Rechter } from '$lib/verbonden/filter';
-import type { Relation } from '$lib/vocabulary';
+import type { Collection, Relation } from '$lib/vocabulary';
 
 export type CanvasCounts = {
 	nodes: number;
@@ -17,6 +17,8 @@ export type CanvasCounts = {
 	metGroep: Partial<Record<FilterGroup, { count: number; van: number; groepen: ContainerKind[] }>>;
 	/** The lines between two bronnen drawn, per relation, shown or switched off: the Relatie. */
 	relations: Partial<Record<Relation, number>>;
+	/** The kinds the drawn references (REFERS_TO) start at: Relatie names them by it. */
+	refersFrom?: Collection[];
 };
 
 /** Whether two lists of drawn bronnen hold the same ones: the list is not handed on unchanged. */
@@ -74,13 +76,19 @@ export function countCanvas(o: {
 		if (!m.groepen.includes(groep)) m.groepen.push(groep);
 	});
 	const relations: CanvasCounts['relations'] = {};
+	const refersFrom = new Set<Collection>();
 	graph.forEachEdge((_id, attrs, src, tgt) => {
 		if (attrs.layoutOnly || !drawn.has(src) || !drawn.has(tgt)) return;
 		const relation = attrs.relation as Relation;
 		relations[relation] = (relations[relation] ?? 0) + 1;
+		if (relation === 'REFERS_TO')
+			refersFrom.add(graph.getNodeAttribute(src, 'collection') as Collection);
 		if (o.hiddenRelations.has(relation)) return;
 		edges++;
 	});
 	for (const [k, m] of Object.entries(metGroep)) m.van = bronnen[k as FilterGroup] ?? 0;
-	return { counts: { nodes, edges, kinds, vormen, metGroep, relations }, drawnIds };
+	return {
+		counts: { nodes, edges, kinds, vormen, metGroep, relations, refersFrom: [...refersFrom] },
+		drawnIds
+	};
 }

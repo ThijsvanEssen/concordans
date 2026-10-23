@@ -69,7 +69,7 @@ describe('presets', () => {
 	it('toggles one kind and returns to all when every kind is on', () => {
 		const one = toggleFilterGroup(EMPTY_FILTER, 'uitspraken');
 		expect(one.bronnen!.has('uitspraken')).toBe(false);
-		expect(one.bronnen!.size).toBe(8);
+		expect(one.bronnen!.size).toBe(9);
 		expect(toggleFilterGroup(one, 'uitspraken').bronnen).toBeNull();
 	});
 });
@@ -103,10 +103,12 @@ describe('filterGroupOf', () => {
 		expect(filterGroupOf('documents', 'd', { kind: 'Brief regering' }, relation)).toBe(kind);
 	});
 
-	it('groups kamerleden, fracties and commissies as leden, not dossiers', () => {
+	it('groups kamerleden and fracties as leden, commissies and kabinetten apart, not dossiers', () => {
 		expect(filterGroupOf('members', 'm1', {})).toBe('leden');
 		expect(filterGroupOf('factions', 'f1', {})).toBe('leden');
-		expect(filterGroupOf('committees', 'c1', {})).toBe('leden');
+		// Drawn as a body of their own, a kind of their own (Thijs, 23 Oct).
+		expect(filterGroupOf('committees', 'c1', {})).toBe('organen');
+		expect(filterGroupOf('cabinets', 'k1', {})).toBe('organen');
 		expect(filterGroupOf('activities', 'a1', {})).toBe('dossiers');
 		expect(filterGroupOf('decisions', 'b1', {})).toBe('stemmingen');
 	});

@@ -167,7 +167,7 @@
 		/** The weergave Omgeving: each chosen bron with its own neighbours, clustered per kind. */
 		surroundings?: boolean;
 		/** Soort and Relatie of a weergave of its own: what it draws, not the canvas. */
-		externCounts?: Pick<CanvasCounts, 'kinds' | 'relations'> | null;
+		externCounts?: Pick<CanvasCounts, 'kinds' | 'relations' | 'refersFrom'> | null;
 		/**
 		 * A weergave of its own in the canvas's place (Keten, Verband): the card at the right is
 		 * then `extern`'s, the tijdstrook `externStippen`.
@@ -177,11 +177,10 @@
 		externStippen?: readonly { jaar: number; collection: Collection }[] | null;
 		/** Zoom over a weergave of its own; Keten fits its width and scrolls instead. */
 		middenZoom?: boolean;
-		/** Relatie of a weergave of its own: what it hides, its switch and the names of its lines. */
+		/** Relatie of a weergave of its own: what it hides, and its switch. */
 		externRelations?: {
 			hidden: ReadonlySet<Relation>;
 			toggle: (r: Relation) => void;
-			labels: Partial<Record<Relation, string>>;
 		} | null;
 	} & LegendProps = $props();
 
@@ -1161,7 +1160,6 @@
 		reach={externCounts ? null : reach}
 		hiddenRelations={externRelations?.hidden ?? filters.hiddenRelations}
 		onToggleRelation={externRelations?.toggle ?? toggleRelation}
-		relationLabels={externRelations?.labels}
 		hiddenGroups={filters.hiddenGroups}
 		onToggleGroup={toggleGroup}
 		canvasCounts={externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts}

@@ -439,11 +439,6 @@
 	 * Grondwet's 171 crossed each other, Thijs 23 Oct). Relatie's Noemt is that switch.
 	 */
 	let chainExpired = $state(false);
-	/** The lines of the keten in the strip's Relatie, by their legal name. */
-	const CHAIN_RELATION_WORDS: Partial<Record<Relation, string>> = {
-		BASED_ON: 'Gebaseerd op',
-		REFERS_TO: 'Noemt'
-	};
 	let chainMentions = $state(false);
 	let chainBasedOff = $state(false);
 	const chainHidden = $derived(
@@ -808,8 +803,10 @@
 			relations: {
 				BASED_ON: lines.filter((l) => l.way === 'delegates').length,
 				REFERS_TO: lines.filter((l) => l.way === 'mentioned').length
-			}
-		} satisfies Pick<CanvasCounts, 'kinds' | 'relations'>;
+			},
+			// A regulation names the law: Noemt.
+			refersFrom: ['instruments' as const]
+		} satisfies Pick<CanvasCounts, 'kinds' | 'relations' | 'refersFrom'>;
 	});
 	const sharedCounts = $derived.by(() => {
 		if (!sharedState) return null;
@@ -2113,8 +2110,7 @@
 											toggle: (r) => {
 												if (r === 'REFERS_TO') chainMentions = !chainMentions;
 												if (r === 'BASED_ON') chainBasedOff = !chainBasedOff;
-											},
-											labels: CHAIN_RELATION_WORDS
+											}
 										}
 									: null}
 								externStippen={view === 'keten'

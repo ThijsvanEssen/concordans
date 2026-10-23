@@ -25,8 +25,7 @@
 	} from '$lib/verbonden/filter';
 	import type { VerbondenState } from '$lib/verbonden/data-source';
 	import { allRows, lidCounts } from '$lib/verbonden/view';
-	import { relationLabel } from '$lib/verbonden/relation-words';
-	import { capitalize } from '$lib/text/words';
+	import { lineName } from '$lib/verbonden/relation-words';
 	import { kindColour } from '$lib/bron/kleur';
 	import {
 		edgeColorFor,
@@ -60,7 +59,6 @@
 		laadtSoort = new Set<string>(),
 		hiddenRelations,
 		onToggleRelation,
-		relationLabels = {},
 		hiddenGroups = new Set(),
 		onToggleGroup,
 		canvasCounts,
@@ -88,8 +86,6 @@
 		/** The kinds being loaded so. */
 		laadtSoort?: ReadonlySet<string>;
 		hiddenRelations: ReadonlySet<Relation>;
-		/** The name of a line where a weergave gives its own (Keten: Gebaseerd op, Noemt). */
-		relationLabels?: Partial<Record<Relation, string>>;
 		onToggleRelation: (r: Relation) => void;
 		/** Groupings switched off: no hull around their bronnen. */
 		hiddenGroups?: ReadonlySet<ContainerKind>;
@@ -97,6 +93,7 @@
 		canvasCounts: {
 			kinds?: Partial<Record<FilterGroup, number>>;
 			relations?: Partial<Record<Relation, number>>;
+			refersFrom?: Collection[];
 			metGroep?: Partial<
 				Record<FilterGroup, { count: number; van: number; groepen: ContainerKind[] }>
 			>;
@@ -149,21 +146,17 @@
 		dossiers: 'dossiers',
 		stemmingen: 'decisions',
 		leden: 'members',
+		organen: 'committees',
 		internationaal: 'instruments'
 	};
 	const kinds = $derived(FILTER_GROUPS.filter((k) => (totals[k] ?? 0) > 0 || !isOn(k)));
-	const OWN_WORDS: Partial<Record<Relation, string>> = {
-		REFERS_TO: 'Haalt aan, noemt',
-		BASED_ON: 'Grondslag, uitvoeringsregeling'
-	};
 	const relations = $derived(
 		(Object.entries(canvasCounts.relations ?? {}) as [Relation, number][])
 			.filter(([r]) => inLegend(r))
 			.sort((a, b) => b[1] - a[1])
 			.map(([relation]) => ({
 				relation,
-				label:
-					relationLabels[relation] ?? OWN_WORDS[relation] ?? capitalize(relationLabel(relation))
+				label: lineName(relation, canvasCounts.refersFrom)
 			}))
 	);
 	const CONTAINER_KIND_HINT: Record<ContainerKind, string> = {

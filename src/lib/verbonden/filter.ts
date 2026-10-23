@@ -40,6 +40,7 @@ export const FILTER_GROUPS = [
 	'dossiers',
 	'stemmingen',
 	'leden',
+	'organen',
 	'internationaal'
 ] as const;
 
@@ -54,6 +55,7 @@ export const FILTER_GROUP_LABEL: Record<FilterGroup, string> = {
 	dossiers: 'Dossiers',
 	stemmingen: 'Stemmingen',
 	leden: 'Leden en fracties',
+	organen: 'Commissies en kabinetten',
 	internationaal: 'Europees en internationaal'
 };
 
@@ -67,6 +69,7 @@ export const FILTER_GROUP_NOUN: Record<FilterGroup, string> = {
 	dossiers: 'dossiers',
 	stemmingen: 'stemmingen',
 	leden: 'leden en fracties',
+	organen: 'commissies en kabinetten',
 	internationaal: 'Europese en internationale bronnen'
 };
 
@@ -80,6 +83,7 @@ const FILTER_GROUP_ONE: Record<FilterGroup, string> = {
 	dossiers: 'dossier',
 	stemmingen: 'stemming',
 	leden: 'lid of fractie',
+	organen: 'commissie of kabinet',
 	internationaal: 'Europese of internationale bron'
 };
 
@@ -275,8 +279,12 @@ export function filterGroupOf(
 			return 'stemmingen';
 		case 'members':
 		case 'factions':
-		case 'committees':
 			return 'leden';
+		// A commissie, a kabinet, a ministerie: drawn as a body of its own, a kind of its own.
+		case 'committees':
+		case 'cabinets':
+		case 'ministries':
+			return 'organen';
 		default:
 			return 'dossiers';
 	}

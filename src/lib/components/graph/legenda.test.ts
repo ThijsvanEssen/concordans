@@ -45,3 +45,12 @@ describe('an option of a filter', () => {
 		);
 	});
 });
+
+describe('Relatie', () => {
+	it('names a line from one definition in every weergave (lineName), no map of its own', () => {
+		const page = readFileSync(join(process.cwd(), 'src/routes/explore/+page.svelte'), 'utf8');
+		expect(source).toMatch(/lineName\(relation, canvasCounts\.refersFrom\)/);
+		expect(source).not.toMatch(/OWN_WORDS|relationLabels/);
+		expect(page).not.toMatch(/RELATION_WORDS/);
+	});
+});

@@ -92,6 +92,7 @@ export const FILTER_GROUP_VORM: Record<FilterGroup, Vorm> = {
 	dossiers: 'dossier',
 	stemmingen: 'besluit',
 	leden: 'persoon',
+	organen: 'orgaan-o',
 	internationaal: 'regel-int'
 };
 
