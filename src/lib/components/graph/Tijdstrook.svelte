@@ -151,4 +151,10 @@
 		line-height: 1;
 		color: var(--ink-3);
 	}
+	/* A phone keeps its room for the drawing, as the mockup's 390; Periode is under Filter. */
+	@media (max-width: 768px) {
+		.tijdstrook {
+			display: none;
+		}
+	}
 </style>

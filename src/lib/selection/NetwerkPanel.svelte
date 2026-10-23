@@ -52,7 +52,8 @@
 
 	// A long netwerk (the start page's band opens with fifteen) folds after a few, so it
 	// does not cover the canvas.
-	const KORT = 5;
+	// On a phone two, so the werkplek keeps its room for the drawing.
+	const KORT = $derived(telefoon ? 2 : 5);
 	let alles = $state(false);
 	const gevouwen = $derived(!alles && entries.length > KORT + 1);
 	const getoond = $derived(gevouwen ? entries.slice(0, KORT) : entries);
