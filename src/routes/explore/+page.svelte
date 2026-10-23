@@ -2326,6 +2326,24 @@
 				--panel
 			);
 	}
+	/* The reading view with its contents keeps margins at both sides from 1280 (A208d, Thijs
+	   23 Oct: "meer ruimte aan de zijkanten"): 24, 32 from 1440, and on a wide screen the whole
+	   at most 1680 wide in the middle, so the contents, the text and Verbonden keep their
+	   distances and the room beyond goes to both edges alike. The contents' rows and
+	   Verbonden's last column step in by one step (12), so both edges read the same. */
+	@media (min-width: 1280px) {
+		.explore-read--with-nav {
+			padding-inline: max(var(--s-5), calc((100vw - 1680px) / 2));
+		}
+		.explore-read.explore-read--with-nav .col--panel {
+			padding-right: var(--s-3);
+		}
+	}
+	@media (min-width: 1440px) {
+		.explore-read--with-nav {
+			padding-inline: max(var(--s-6), calc((100vw - 1680px) / 2));
+		}
+	}
 
 	.col {
 		height: 100%;
