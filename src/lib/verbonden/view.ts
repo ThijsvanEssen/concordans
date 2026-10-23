@@ -1,7 +1,6 @@
 // What the panel, the table and the legend derive from the groups and the filter:
 // the rows that pass, the counts, the groupings and the years of the judgments.
 import { capitalize, plural } from '$lib/text/words';
-import { NL } from '$lib/text/collator';
 import type { Collection } from '$lib/vocabulary';
 import { relationLabel } from './relation-words';
 import { sumLidCounts } from '$lib/api/nodes';
@@ -250,70 +249,6 @@ export function lidCounts(rows: Row[]): Map<string, number> {
 		counts.set(k, (counts.get(k) ?? 0) + 1);
 	}
 	return counts;
-}
-
-export type Grouping = 'soort' | 'lid' | 'verbinding' | 'aard' | 'datum';
-
-export const GROUPINGS: { id: Grouping; label: string }[] = [
-	{ id: 'soort', label: 'Per soort' },
-	{ id: 'lid', label: 'Per lid' },
-	{ id: 'verbinding', label: 'Per verbinding' },
-	{ id: 'aard', label: 'Per aard' },
-	{ id: 'datum', label: 'Op datum' }
-];
-
-const lidOrder = (a: string, b: string) => (a === '' ? 1 : b === '' ? -1 : NL.compare(a, b));
-
-/**
- * The groups regrouped: per lid (`Lid 2`, the rest under `Hele artikel`), per soort
- * verbinding, or per year, newest first. `soort` returns the groups as they are.
- */
-export function regroup(groups: Group[], by: Grouping, selection: Collection): Group[] {
-	if (by === 'soort') return groups;
-	const rows = allRows(groups);
-	const buckets = new Map<string, Row[]>();
-	const keyOf = (r: Row): string => {
-		if (by === 'lid') return r.lid ?? '';
-		if (by === 'aard') return r.aard ?? '';
-		if (by === 'verbinding') return rowLabel(r, selection);
-		return r.date ? r.date.slice(0, 4) : '';
-	};
-	for (const r of rows) {
-		const k = keyOf(r);
-		if (!buckets.has(k)) buckets.set(k, []);
-		buckets.get(k)!.push(r);
-	}
-	const keys = [...buckets.keys()].sort((a, b) =>
-		by === 'lid'
-			? lidOrder(a, b)
-			: by === 'datum'
-				? a === ''
-					? 1
-					: b === ''
-						? -1
-						: b.localeCompare(a)
-				: a.localeCompare(b, 'nl')
-	);
-	return keys.map((k) => ({
-		id: `${by}:${k || 'geen'}`,
-		label:
-			by === 'lid'
-				? k
-					? `Lid ${k}`
-					: 'Hele artikel'
-				: by === 'datum'
-					? k || 'Zonder datum'
-					: by === 'aard'
-						? k
-							? capitalize(k)
-							: 'Zonder aard'
-						: k || 'Overige verbindingen',
-		rows: buckets
-			.get(k)!
-			.slice()
-			.sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '')),
-		capped: false
-	}));
 }
 
 /** The years a group's chart of judgments shows: the last twelve. */

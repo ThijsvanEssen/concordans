@@ -16,7 +16,7 @@ import { bucketsRead, groupCount, type Group } from './groups';
 import { byImportance } from './importance';
 import { isNested, type Row } from './rows';
 
-export type KindId =
+type KindId =
 	| 'judgments'
 	| 'documents'
 	| 'regelingen'

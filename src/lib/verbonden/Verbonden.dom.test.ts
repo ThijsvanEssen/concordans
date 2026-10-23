@@ -232,16 +232,16 @@ describe('Verbonden', () => {
 		paneel(ROWS, { onShowNetwork: () => {}, showNetwork: false });
 		const koppen = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent?.trim());
 		expect(koppen).toEqual(['Uitspraken1', 'Stukken1']);
-		// The passage and the ECLI wait for the row to open; no order or filter at a glance.
+		// The passage and the ECLI wait for the row to open; no order at a glance, one Filter.
 		expect(screen.queryByText(/ECLI:NL:HR:2019:2006/)).toBeNull();
-		expect(screen.queryByRole('button', { name: 'Filter' })).toBeNull();
+		expect(screen.getByRole('button', { name: 'Filter' })).toBeTruthy();
 		expect(screen.queryByRole('button', { name: 'Datum' })).toBeNull();
 		await klik(screen.getByRole('link', { name: 'Hoge Raad, 20 december 2019' }));
 		expect(goto).not.toHaveBeenCalled();
 		expect(screen.getByText(/ECLI:NL:HR:2019:2006/)).toBeTruthy();
 	});
 
-	it('opens a soort with its groups, its order and its filter from Alle N, and back', async () => {
+	it('opens a soort in place from Alle N, in the one view, and folds it with Minder (A208e)', async () => {
 		paneel(
 			{
 				...ROWS,
@@ -254,12 +254,15 @@ describe('Verbonden', () => {
 			},
 			{ onShowNetwork: () => {}, showNetwork: false }
 		);
+		const kop = () =>
+			screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent?.trim());
+		expect(kop()).toEqual(['Uitspraken4', 'Stukken1']);
 		await fireEvent.click(screen.getByRole('button', { name: 'Alle 4 uitspraken' }));
-		expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent?.trim())).toEqual([
-			'Uitspraken die dit artikel aanhalen'
-		]);
-		expect(screen.getByRole('button', { name: 'Filter' })).toBeTruthy();
-		await fireEvent.click(screen.getByRole('button', { name: 'Alle soorten' }));
-		expect(screen.queryByRole('button', { name: 'Filter' })).toBeNull();
+		// The same soorten stand: no second view, no Alle soorten or Indeling.
+		expect(kop()).toEqual(['Uitspraken4', 'Stukken1']);
+		expect(screen.queryByRole('button', { name: /Alle soorten|Indeling/ })).toBeNull();
+		expect(document.querySelectorAll('[data-kind="judgments"] .kind__rows > li')).toHaveLength(4);
+		await fireEvent.click(screen.getByRole('button', { name: 'Minder' }));
+		expect(document.querySelectorAll('[data-kind="judgments"] .kind__rows > li')).toHaveLength(3);
 	});
 });

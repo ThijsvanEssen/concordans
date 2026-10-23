@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	// Verbonden at a glance (mockups V1): per soort a heading with its count over the whole, the
 	// three to read as a title and one line, and "Alle N" that opens the soort with its groups,
 	// its order and its filters. A click on a title opens the row in place, with its passage,
@@ -21,6 +22,8 @@
 		selection,
 		tiers = null,
 		tiersPending = false,
+		open = new Set<string>(),
+		kindTools,
 		onOpen,
 		onRetry,
 		onProposedText,
@@ -34,6 +37,10 @@
 		/** The bar is asked and not in: its room stands, so the soorten under it do not move. */
 		tiersPending?: boolean;
 		/** "Alle N": the soort with its groups. */
+		/** The soorten opened in place with all their rows. */
+		open?: Set<string>;
+		/** What a soort opened in place shows over its rows: the order of the judgments. */
+		kindTools?: Snippet<[string]>;
 		onOpen: (id: string) => void;
 		/** Ask a group whose rows did not come again. */
 		onRetry?: () => void;
@@ -94,8 +101,9 @@
 				retry={onRetry}
 			/>
 		{/if}
+		{#if open.has(k.id)}{@render kindTools?.(k.id)}{/if}
 		<ul class="kind__rows">
-			{#each k.rows.slice(0, PREVIEW_ROWS) as row (rowKey(row))}
+			{#each open.has(k.id) ? k.rows : k.rows.slice(0, PREVIEW_ROWS) as row (rowKey(row))}
 				{#if opened === rowKey(row)}
 					<li class="kind__open">
 						<ul class="rows">
@@ -137,7 +145,7 @@
 		<!-- Alle N is the way to the rest: with nothing more than the rows above it opens nothing. -->
 		{#if k.count > PREVIEW_ROWS}
 			<p class="kind__all">
-				<AlleN aantal={k.count} noun={k.noun} onclick={() => onOpen(k.id)} />
+				<AlleN aantal={k.count} noun={k.noun} open={open.has(k.id)} onclick={() => onOpen(k.id)} />
 			</p>
 		{/if}
 	</section>

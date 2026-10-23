@@ -7,7 +7,6 @@
 	import { rijen } from '$lib/actions/rijen';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { page } from '$app/state';
@@ -41,24 +40,21 @@
 	import NetworkSketch from './NetworkSketch.svelte';
 	import SchetsKaart from './SchetsKaart.svelte';
 	import KindSummary from './KindSummary.svelte';
-	import { kindsOf, kindsTotal, kindOfGroup, type KindId } from './summary';
-	import { sketch as drawSketch, type SketchGroup } from './sketch';
+	import { kindsOf, kindsTotal, kindOfGroup } from './summary';
+	import { PHONE_SKETCH_LIMIT, sketch as drawSketch, type SketchGroup } from './sketch';
 	import { citingTiers, lawTiers, type TierCount } from './tiers';
 	import { importanceOf, byImportance } from './importance';
 	import type { LoaderOptions } from './loaders';
 	import { isInhoudGroep, isKernGroep, lazeKernIds } from '$lib/bron/behoort';
 	import {
-		GROUPINGS,
 		PREVIEW_ROWS,
 		countLine,
 		filterGroups,
 		hiddenLine,
-		regroup,
 		shownLabel,
 		totalCount,
 		vasteGroepen,
-		yearHistogram,
-		type Grouping
+		yearHistogram
 	} from './view';
 
 	let {
@@ -113,7 +109,6 @@
 	/** "Toelichtingen en wijzigingen", the first word with a capital. */
 	const zin = (woorden: string[]) => capitalize(joinAnd(woorden));
 
-	let grouping = $state<Grouping>('soort');
 	let expanded = $state(new Set<string>());
 
 	// "Bekijk in Verbonden" on a cluster bron: the group with most bronnen of its kind,
@@ -156,7 +151,8 @@
 	/** A group opened and in view: from the network, or "Bekijk in Verbonden". */
 	function showGroup(id: string) {
 		const g = groepen.find((x) => x.id === id);
-		if (onShowNetwork && g) detail = kindOfGroup(g) ?? detail;
+		const kind = g ? kindOfGroup(g) : null;
+		if (onShowNetwork && kind) openKind(kind);
 		expanded = new Set([...expanded, id]);
 		// A group closed in this browser opens for it.
 		zetOpen(`verbonden:${id}`, true);
@@ -248,7 +244,7 @@
 	const onvoorspelbaar = (g: Group) => !!g.load && !g.bakken && !g.section;
 	const voorzien = (g: Group) => !g.laden || verbonden.verwacht?.[g.id] != null;
 	const shown = $derived.by(() => {
-		const r = regroup(filtered, grouping, selection.collection).filter(voorzien);
+		const r = filtered.filter(voorzien);
 		return [...r.filter((g) => !onvoorspelbaar(g)), ...r.filter(onvoorspelbaar)];
 	});
 	// A group still loading whose rows the node cannot foretell takes no place: it may come
@@ -256,9 +252,7 @@
 	// skeleton of Wijzigingen 92 px up when Toelichting came empty). One line under the
 	// groups says what is still coming; a group that comes with rows takes its place above it.
 	const nogOnderweg = $derived(
-		regroup(filtered, grouping, selection.collection)
-			.filter((g) => !voorzien(g))
-			.map((g) => g.noun ?? g.label.toLowerCase())
+		filtered.filter((g) => !voorzien(g)).map((g) => g.noun ?? g.label.toLowerCase())
 	);
 	const hidden = $derived(hiddenLine(groepen, filter));
 	// What the table lists: the bronfilter applied, as its own count line does.
@@ -304,23 +298,32 @@
 			)
 		)
 	);
-	let detail = $state<KindId | null>(null);
+	/** The soorten opened in place with all their rows, from "Alle N" or a circle of the
+	 *  network: one view of Verbonden, no second one per soort (A208e). */
+	let openKinds = $state(new Set<string>());
 	$effect(() => {
 		void selection.id;
-		detail = null;
+		openKinds = new Set();
 	});
 	const filtering = $derived(Object.values(filterParams(filter)).some((v) => v !== null));
-	const overview = $derived(!!onShowNetwork && !detail && !filtering);
-	/** A soort opened with its groups, from "Alle N" or a circle of the network. */
-	function openKind(id: string) {
-		detail = id as KindId;
+	const overview = $derived(!!onShowNetwork && !filtering);
+	/** A soort opened in place with its rows, from "Alle N" or a circle of the network; again
+	 *  "Alle N" (Minder) closes it. */
+	function openKind(id: string, toggle = false) {
+		if (toggle && openKinds.has(id)) {
+			openKinds = new Set([...openKinds].filter((k) => k !== id));
+			return;
+		}
+		openKinds = new Set([...openKinds, id]);
 		// "Alle N" opens the soort with its rows at once, not its first rows and a second "Alle N"
 		// (R3-L F5): its groups open, the rest of their rows asked.
 		const groups = groepen.filter((g) => kindOfGroup(g) === id);
 		expanded = new Set([...expanded, ...groups.map((g) => g.id)]);
 		for (const g of groups)
 			if ((g.total ?? 0) > g.rows.length) onMeer?.(g.id)?.catch((e) => report('Verbonden meer', e));
-		afterTick(() => root?.querySelector('.body')?.scrollTo({ top: 0 }));
+		afterTick(() =>
+			root?.querySelector(`[data-kind="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'start' })
+		);
 	}
 
 	// The judgments that cite an article per instantie, counted by the API over all of them:
@@ -386,7 +389,14 @@
 			: []
 	);
 	const centerName = $derived(networkName ?? selection.label ?? '');
-	const sketched = $derived(showNetwork ? drawSketch(sketchGroups, centerName) : null);
+	// On a phone fewer bronnen stand on their own: past a dozen a soort is one circle with its
+	// count, so no names lie over each other in the narrow drawing (A208e).
+	const phone = typeof matchMedia === 'function' && matchMedia('(max-width: 768px)').matches;
+	const sketched = $derived(
+		showNetwork
+			? drawSketch(sketchGroups, centerName, phone ? PHONE_SKETCH_LIMIT : undefined)
+			: null
+	);
 	/** The bron on its own opened under the drawing. */
 	let schetsId = $state<string | null>(null);
 	$effect(() => {
@@ -409,7 +419,7 @@
 	// article, #895), where there are enough to choose among or one is chosen (a small
 	// remainder keeps its way back); else of the rows loaded, which the sentence then says.
 	const years = (g: Group) =>
-		grouping !== 'soort' || g.rows[0]?.filterGroup !== 'uitspraken'
+		g.rows[0]?.filterGroup !== 'uitspraken'
 			? []
 			: g.years?.length
 				? g.years.reduce((n, y) => n + y.count, 0) > VERBONDEN_BUCKET ||
@@ -433,6 +443,22 @@
 		);
 	}
 </script>
+
+<!-- A soort of judgments opened in place keeps its order and its year and court (A208e). -->
+{#snippet kindTools(kind: string)}
+	{@const g = kind === 'judgments' ? groepen.find((x) => kindOfGroup(x) === 'judgments') : null}
+	{#if g && (g.orders || years(g).length > 0)}
+		<JudgmentOrderLine
+			orders={g.orders}
+			order={verbonden.options.order}
+			onOrder={(order) => onReloadGroup?.(g.id, { order })}
+			years={years(g)}
+			courts={g.courts}
+			{filter}
+			{onFilter}
+		/>
+	{/if}
+{/snippet}
 
 <aside
 	class="verbonden"
@@ -481,16 +507,7 @@
 	<!-- The choose-line of the panel (docs/bediening.md): how grouped, the filter. No menu of
 	     the bronnen: the groups below are the kinds chosen, and the presets and kinds are in
 	     the filter (Thijs, 11 Oct). -->
-	{#if !empty && !overview}<div class="regel">
-			{#if onShowNetwork}
-				<TekstLink onclick={() => (detail = null)}>Alle soorten</TekstLink>
-			{/if}
-			<TekstMenu
-				label="Indeling"
-				waarde={grouping}
-				opties={GROUPINGS.map((g) => ({ waarde: g.id, label: g.label }))}
-				onSelect={(id) => (grouping = id)}
-			/>
+	{#if !empty}<div class="regel">
 			<button type="button" class="btn" onclick={onOpenFilter}>Filter</button>
 		</div>{/if}
 
@@ -519,7 +536,9 @@
 				{selection}
 				tiers={parts}
 				{tiersPending}
-				onOpen={openKind}
+				open={openKinds}
+				onOpen={(id) => openKind(id, true)}
+				{kindTools}
 				{onRetry}
 				{onProposedText}
 				{onAddToNetwerk}
@@ -542,7 +561,7 @@
 			<p class="sr-only" role="status">Verbindingen laden</p>
 		{/if}
 
-		{#each overview ? [] : shown.filter((g) => !detail || kindOfGroup(g) === detail) as g, i (g.id)}
+		{#each overview ? [] : shown as g, i (g.id)}
 			{@const all = expanded.has(g.id)}
 			{@const bars = years(g)}
 			{@const count = groupCount(g)}
@@ -588,7 +607,7 @@
 							/>
 						</div>
 					{/if}
-					{#if g.id === citingJudgments?.id && grouping === 'soort'}
+					{#if g.id === citingJudgments?.id}
 						<!-- Per instantie, over all of them; its place kept while the counts come. -->
 						<div class="tiers" aria-hidden={!parts}>
 							{#if parts}

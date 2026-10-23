@@ -12,6 +12,8 @@ import type { Row } from './rows';
 
 /** The most bronnen drawn: more and a group becomes one bron with its count (besluit 32). */
 export const SKETCH_LIMIT = 40;
+/** On a phone, a dozen: the drawing is narrow. */
+export const PHONE_SKETCH_LIMIT = 12;
 /** The longest line of a name: a longer name wraps at its words. */
 export const LABEL_MAX = 24;
 /** The longest line of a circle's name, under the circle. */
@@ -24,7 +26,7 @@ const R_SINGLE = 118;
 const R_CLUSTER = 128;
 const MARGIN = 16;
 /** The width of a character of a name at 12 px, to keep a name inside the drawing. */
-const CHAR_WIDTH = 6.2;
+const CHAR_WIDTH = 7;
 
 export type SketchGroup = {
 	id: string;
@@ -71,6 +73,9 @@ type Circle = {
 	/** Its name over lines, under the circle; `lx` keeps them inside the drawing. */
 	lines: string[];
 	lx: number;
+	/** The baseline of its name's first line: under the circle, above it where under it
+	 *  would cover a name before it. */
+	ly: number;
 	collection: Collection | null;
 	hue: string | null;
 	x: number;
@@ -114,13 +119,13 @@ export function divide(
 	limit = SKETCH_LIMIT
 ): {
 	singles: { row: Row; hue: string | null }[];
-	clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx'>[];
+	clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx' | 'ly'>[];
 } {
 	const withCount = groups.filter((g) => g.count > 0);
 	const smallestFirst = [...withCount].sort((a, b) => a.count - b.count);
 	const singles: { row: Row; hue: string | null }[] = [];
 	const seen = new Set<string>();
-	const clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx'>[] = [];
+	const clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx' | 'ly'>[] = [];
 	let room = limit;
 	smallestFirst.forEach((g, i) => {
 		const toGo = smallestFirst.length - 1 - i;
@@ -196,14 +201,34 @@ export function sketch(
 		const a = rad(clusterAngles[i]);
 		const x = cx + R_CLUSTER * Math.cos(a);
 		const lines = wrap(b.label, CIRCLE_LINE);
-		return { ...b, lines, lx: inside(x, lines), x, y: R_CLUSTER * Math.sin(a), r: radius(b.count) };
+		const y = R_CLUSTER * Math.sin(a);
+		const r = radius(b.count);
+		return { ...b, lines, lx: inside(x, lines), ly: y + r + 16, x, y, r };
 	});
+	// A circle's name never lies over another's: under its circle where that is free, else
+	// above it, else none (its title and the list name it).
+	const names: Box[] = clusters.map((b) => ({
+		x0: b.x - b.r,
+		y0: b.y - b.r,
+		x1: b.x + b.r,
+		y1: b.y + b.r
+	}));
+	for (const b of clusters) {
+		const under = boxOf(b.lx, b.ly, b.lines);
+		const above = boxOf(b.lx, b.y - b.r - 8 - (b.lines.length - 1) * LINE_H, b.lines);
+		const free = (box: Box) => !names.some((t) => overlaps(t, box));
+		if (free(under)) names.push(under);
+		else if (free(above)) {
+			b.ly = above.y0 + 11;
+			names.push(above);
+		} else b.lines = [];
+	}
 	const centerLines = wrap(centerName, LABEL_MAX);
 	// What a name may not cover: the circles with their names, the bron in the middle with its.
 	const taken: Box[] = [
 		...clusters.flatMap((b) => [
 			{ x0: b.x - b.r, y0: b.y - b.r, x1: b.x + b.r, y1: b.y + b.r },
-			boxOf(b.lx, b.y + b.r + 16, b.lines)
+			boxOf(b.lx, b.ly, b.lines)
 		]),
 		{ x0: cx - 18, y0: -18, x1: cx + 18, y1: 18 },
 		...(centerName ? [boxOf(cx, 34, centerLines)] : [])
@@ -250,7 +275,8 @@ export function sketch(
 		-28,
 		...singles.filter((l) => l.lines).map((l) => l.ly - 14),
 		...singles.map((l) => l.y - 10),
-		...clusters.map((b) => b.y - b.r - 4)
+		...clusters.map((b) => b.y - b.r - 4),
+		...clusters.filter((b) => b.ly < b.y).map((b) => b.ly - 14)
 	);
 	const foot = Math.max(
 		34 + centerLines.length * LINE_H,
@@ -262,7 +288,10 @@ export function sketch(
 		l.y += dy;
 		l.ly += dy;
 	}
-	for (const b of clusters) b.y += dy;
+	for (const b of clusters) {
+		b.y += dy;
+		b.ly += dy;
+	}
 	return {
 		singles,
 		clusters,

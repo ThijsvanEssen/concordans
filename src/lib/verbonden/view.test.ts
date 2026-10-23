@@ -2,14 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { EMPTY_FILTER, hiddenByGroup } from './filter';
 import type { Group } from './groups';
 import type { Row } from './rows';
-import {
-	countLine,
-	filterGroups,
-	lidTellingenOnder,
-	regroup,
-	vasteGroepen,
-	yearHistogram
-} from './view';
+import { countLine, filterGroups, lidTellingenOnder, vasteGroepen, yearHistogram } from './view';
 
 const row = (over: Partial<Row>): Row => ({
 	ref: { collection: 'judgments', key: 'j' },
@@ -144,24 +137,6 @@ describe('the panel under the filter', () => {
 		expect(filterGroups(wachtend, f, new Set(['judgments'])).map((g) => g.id)).toEqual([
 			'cited-by'
 		]);
-	});
-
-	it('regroups per lid, the rest under Hele artikel', () => {
-		const perLid = regroup(
-			[
-				...groups,
-				{
-					id: 'law',
-					label: 'Wet',
-					rows: [row({ ref: { collection: 'instruments', key: 'w' }, filterGroup: 'wetten' })],
-					capped: false
-				}
-			],
-			'lid',
-			'articles'
-		);
-		expect(perLid.map((g) => g.label)).toEqual(['Lid 1', 'Lid 2', 'Hele artikel']);
-		expect(perLid[1].rows).toHaveLength(2);
 	});
 
 	it('counts judgments per year for the bar chart', () => {

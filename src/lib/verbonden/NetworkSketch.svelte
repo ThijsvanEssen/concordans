@@ -151,7 +151,7 @@
 					stroke-dasharray={dashed(b.collection) ? '6 4' : undefined}
 				/>
 				<text x={b.x} y={b.y + 4.5} text-anchor="middle" class="count">{formatCount(b.count)}</text>
-				<text x={b.lx} y={b.y + b.r + 16} text-anchor="middle" class="name"
+				<text x={b.lx} y={b.ly} text-anchor="middle" class="name"
 					>{#each b.lines as line, i (i)}<tspan x={b.lx} dy={i ? LINE_H : 0}>{line}</tspan
 						>{/each}</text
 				>
