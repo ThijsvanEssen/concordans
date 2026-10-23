@@ -152,9 +152,11 @@ describe('the first paint of an article', () => {
 			'col col--panel'
 		]);
 		expect(read.querySelector('.col--reader .reader-frame.K-frame p')!.textContent).toBe('tekst');
-		// Without contents (a law of one article): no tab, the column kept hidden.
+		// Without contents (a law of one article): no Inhoud, the column kept hidden; the phone's
+		// tabs Tekst and Verbonden stand (A197-a).
 		const bare = new DOMParser().parseFromString(frame('', K, false), 'text/html');
-		expect(bare.querySelector('.explore-read--with-nav, .mobile-tabs')).toBeNull();
+		expect(bare.querySelector('.explore-read--with-nav, .mobile-tab--toc')).toBeNull();
+		expect(bare.querySelectorAll('.lees-tabs [role="tab"]')).toHaveLength(2);
 		expect(bare.querySelector<HTMLElement>('.col--nav')!.hidden).toBe(true);
 	});
 

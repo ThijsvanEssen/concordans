@@ -3,4 +3,6 @@
 export class BandState {
 	/** Null until the band has told. */
 	has = $state<boolean | null>(null);
+	/** The bron whose band the column no longer waits for: a second has passed. */
+	waited = $state<string | null>(null);
 }

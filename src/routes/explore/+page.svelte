@@ -159,7 +159,7 @@
 	import { OverlayCounts } from './overlay-counts.svelte';
 	import TocSheet from './TocSheet.svelte';
 	import BronFailure from '$lib/components/explore/BronFailure.svelte';
-	import { contentsEmpty } from '$lib/components/explore/contents-state.svelte';
+	import { contentsTold, contentsEmpty } from '$lib/components/explore/contents-state.svelte';
 	import ExampleLine from './ExampleLine.svelte';
 
 	// One store for the lifetime of this page, so it survives mode switches.
@@ -1518,6 +1518,12 @@
 
 	// On a phone Verbonden stands under the text; the key 3 brings it forward.
 	let mobilePanel = $state<Panel>('reader');
+	/** On a phone the tab of the read view: the text or Verbonden (A197-a, R3-L F4). */
+	let readTab = $state<'tekst' | 'verbonden'>('tekst');
+	$effect(() => {
+		void selectedNode?.id;
+		readTab = 'tekst';
+	});
 	// The hint of a phone's tab of before (?paneel) is dropped from the address: the werkplek
 	// has no tabs, the text and Verbonden stand under each other.
 	$effect(() => {
@@ -1542,12 +1548,37 @@
 		'judgments'
 	]);
 
+	/** What the light node says of the contents before a table of contents has told (R3-L F1):
+	 *  a publication has none, a law of one article none. Null: the node does not say. */
+	const contentsFromNode = $derived.by(() => {
+		if (selectedNode?.collection !== 'instruments') return null;
+		const p = selectedNode.raw?.props ?? {};
+		if (p.publication_kind) return false;
+		return p.article_count === 1 ? false : null;
+	});
 	/** Whether the bron on screen has contents to go by: a text with one entry or none has no
 	 *  column, no tab Inhoud and no button (the tables of contents tell, contents-state). */
 	const hasContents = $derived(
 		!!selectedNode &&
 			WITH_CONTENTS.has(selectedNode.collection) &&
-			contentsEmpty.id !== selectedNode.id
+			contentsEmpty.id !== selectedNode.id &&
+			contentsFromNode !== false
+	);
+	// A stuk's contents come with its text, its head a moment before: the column of the text
+	// is not shown until they have told, so it does not jump to the left when there are none
+	// (R3-L F1). At most two seconds.
+	let contentsWaited = $state<string | null>(null);
+	$effect(() => {
+		const id = selectedNode?.id ?? null;
+		const t = setTimeout(() => {
+			contentsWaited = id;
+		}, 2000);
+		return () => clearTimeout(t);
+	});
+	const contentsPending = $derived(
+		selectedNode?.collection === 'documents' &&
+			contentsTold.id !== selectedNode.id &&
+			contentsWaited !== selectedNode.id
 	);
 
 	// ── Resizable columns ────────────────────────────────────────────────────
@@ -2087,10 +2118,28 @@
 				class:is-resizing={!!widths.drag}
 				style:--panel-w={widths.css('panel')}
 			>
-				<!-- Narrow, the text and Verbonden stand under each other in one scroll (V1-a-375);
-				     only the contents open as a sheet. -->
-				{#if withContents}
-					<nav class="mobile-tabs" aria-label="Panelen">
+				<!-- On a phone the text and Verbonden are two tabs, Verbonden one tap away (A197-a, UX
+				     R3-L F4); on a tablet they stand beside each other. The contents open as a sheet. -->
+				<nav class="mobile-tabs" class:mobile-tabs--tabs={!withContents} aria-label="Panelen">
+					<div class="lees-tabs" role="tablist" aria-label="Tekst of Verbonden">
+						<button
+							type="button"
+							role="tab"
+							class="mobile-tab"
+							class:is-active={readTab === 'tekst'}
+							aria-selected={readTab === 'tekst'}
+							onclick={() => (readTab = 'tekst')}>Tekst</button
+						>
+						<button
+							type="button"
+							role="tab"
+							class="mobile-tab"
+							class:is-active={readTab === 'verbonden'}
+							aria-selected={readTab === 'verbonden'}
+							onclick={() => (readTab = 'verbonden')}>Verbonden</button
+						>
+					</div>
+					{#if withContents}
 						<button
 							type="button"
 							class="mobile-tab mobile-tab--toc"
@@ -2098,8 +2147,8 @@
 							aria-expanded={tocOpen}
 							onclick={() => (tocOpen = true)}>Inhoud</button
 						>
-					</nav>
-				{/if}
+					{/if}
+				</nav>
 				<!-- Kept in the page while it holds nothing, hidden: the table of contents tells again
 				     when its rows come (contents-state). -->
 				{#if WITH_CONTENTS.has(selectedNode.collection)}
@@ -2107,12 +2156,17 @@
 						{@render toc()}
 					</div>
 				{/if}
-				<div class="col col--reader col--measure">
+				<div
+					class="col col--reader col--measure"
+					class:mobile-hidden={readTab === 'verbonden'}
+					data-wacht={contentsPending || undefined}
+				>
 					{@render reader()}
 				</div>
 				{@render handle('panel')}
 				<div
 					class="col col--panel"
+					class:mobile-hidden={readTab === 'tekst'}
 					use:inView={() => (panelSeen = true)}
 					use:sprongDoel={{
 						id: 'verbonden',
@@ -2536,52 +2590,46 @@
 	.mobile-tab--toc {
 		flex: none;
 		margin-left: auto;
+		padding-inline: var(--s-4);
 		color: var(--ink-2);
 	}
 
 	/* The nav column (LezenNav/DocumentToc/JudgmentToc) is a permanent column above
 	   1100px; below it, Inhoud opens the same content as a sheet (TocSheet). The text and
 	   Verbonden stand under each other in one scroll, Verbonden after the text (V1-a-375). */
+	/* Below 1101 no column of contents: Inhoud opens as a sheet (TocSheet). On a tablet the text
+	   and Verbonden stand beside each other, each in its own scroll (A197-a); on a phone they
+	   are two tabs (below). */
 	@media (max-width: 1100px) {
 		.explore-read,
 		.explore-read--with-nav {
-			display: block;
-			overflow-y: auto;
-			-webkit-overflow-scrolling: touch;
+			grid-template-columns: minmax(0, 1fr) 5px var(--panel);
+			grid-template-rows: auto minmax(0, 1fr);
 		}
 		.explore-read .mobile-tabs {
 			display: flex;
+			grid-column: 1 / -1;
+			grid-row: 1;
 		}
-		.explore-read .col {
-			height: auto;
-			overflow: visible;
-		}
-		.explore-read .col--panel {
-			background: none;
-			box-shadow: none;
-		}
-		.explore-read :global(.reader),
-		.explore-read :global(.reader__main),
-		.explore-read :global(.reader-frame),
-		.explore-read .panel,
-		.explore-read :global(.verbonden),
-		.explore-read :global(.verbonden .body) {
-			height: auto;
-			overflow: visible;
-		}
-		.explore-read .col--panel {
-			border-top: 1px solid var(--rule);
-			padding: var(--s-5) var(--s-4) var(--s-7);
-		}
-		/* Under the text, Verbonden comes once the text is there (ReaderFrame data-klaar): before
-		   it, it stood where the text comes and was pushed down by it (CLS 0.81 at 375). */
-		.explore-read:not(:has(.col--reader :global(.reader-frame[data-klaar]))) .col--panel {
-			display: none;
-		}
-		.explore-read .toc-column,
+		.explore-read .col,
 		.explore-read .resize-handle {
+			grid-row: 2;
+		}
+		.explore-read .toc-column {
 			display: none;
 		}
+	}
+	/* The tabs Tekst and Verbonden are the phone's; a tablet has both beside each other, and a
+	   bar only for Inhoud. */
+	@media (min-width: 769px) {
+		.lees-tabs,
+		.explore-read .mobile-tabs--tabs {
+			display: none;
+		}
+	}
+	/* The text waits, unseen, until its contents have told (contentsPending, R3-L F1). */
+	.col--reader[data-wacht] {
+		visibility: hidden;
 	}
 
 	@media (max-width: 768px) {
@@ -2595,9 +2643,22 @@
 			grid-column: 1;
 			grid-row: 1;
 		}
-		.col {
+		.col,
+		.explore-read .col {
 			grid-row: 2;
 			grid-column: 1;
+		}
+		.lees-tabs {
+			display: flex;
+			flex: 1;
+		}
+		/* The tab not chosen. */
+		.explore-read .mobile-hidden {
+			display: none;
+		}
+		/* Verbonden as a tab of its own: the page's margins, its own scroll. */
+		.explore-read .col--panel {
+			padding: var(--s-5) var(--s-4) var(--s-7);
 		}
 		.resize-handle {
 			display: none;

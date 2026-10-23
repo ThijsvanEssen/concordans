@@ -1,6 +1,7 @@
 <script lang="ts">
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { capitalize, textOf } from '$lib/text/words';
+	import { asOfDate } from '$lib/text/datum';
 	import { NOT_IN_DATA } from '$lib/text/coverage';
 	import { bewaarItem } from '$lib/map/map';
 	import ReaderHead from './ReaderHead.svelte';
@@ -19,6 +20,8 @@
 	const committeeSlug = (n: GraphNode): string | null => textOf(n.raw?.props?.slug);
 
 	const p = $derived(node.raw?.props ?? {});
+	/** The day a commissie that is no more ended, from its light node (R3-L F6). */
+	const endedOn = $derived(textOf(p.ended_on));
 	const name = $derived(textOf(p.name) ?? node.raw?.display_name ?? node.label);
 	const abbreviation = $derived(textOf(p.abbreviation));
 	const kind = $derived(textOf(p.kind));
@@ -58,6 +61,7 @@
 		>
 			{#snippet statusLine()}
 				{#if abbreviation && abbreviation !== name}<span class="afk">{abbreviation}</span>{/if}
+				{#if endedOn}<span>Opgeheven {asOfDate(endedOn)}</span>{/if}
 			{/snippet}
 		</ReaderHead>
 	{/snippet}
@@ -75,16 +79,19 @@
 			.sort((a, b) => rang(a.zetel) - rang(b.zetel))}
 		{@const source = c.source}
 		<div class="r-committee">
+			<!-- A commissie that is no more has no current leden or open dossiers to count. -->
 			<ul class="stats">
-				<li>
-					<!-- No seat in the data at all is not "0 Leden": it is not known. -->
-					{#if c.members == null}
-						<span class="stat-num stat-num--gat">{NOT_IN_DATA}</span>
-					{:else}
-						<span class="stat-num">{c.members.length}</span>
-					{/if}<span class="stat-label">Huidige leden</span>
-				</li>
-				{#if !ek}
+				{#if !endedOn}
+					<li>
+						<!-- No seat in the data at all is not "0 Leden": it is not known. -->
+						{#if c.members == null}
+							<span class="stat-num stat-num--gat">{NOT_IN_DATA}</span>
+						{:else}
+							<span class="stat-num">{c.members.length}</span>
+						{/if}<span class="stat-label">Huidige leden</span>
+					</li>
+				{/if}
+				{#if !ek && !endedOn}
 					<!-- The Eerste Kamer's committees are not yet linked to dossiers. The count is
 					     the API's, the one of the list, not what the page of dossiers holds. -->
 					<li>

@@ -73,6 +73,24 @@
 	const band = new BandState();
 	const bandHeld = $derived(bron ? bandAlways(bron().collection) && band.has !== false : false);
 	const rowShown = $derived(band.has === true || bandHeld);
+	// The band comes with the light node, the cheapest call, and may take two lines (an
+	// activiteit: its commissie and its dossiers): the column waits for it, unseen, so the title
+	// under it does not move down (R3-L F2). An article stands from its first paint, which has
+	// its band; the wait is a second at most.
+	$effect(() => {
+		const id = bron?.().id ?? null;
+		const t = setTimeout(() => {
+			band.waited = id;
+		}, 1000);
+		return () => clearTimeout(t);
+	});
+	const bandWait = $derived(
+		!!bron &&
+			bron().collection !== 'articles' &&
+			bandAlways(bron().collection) &&
+			band.has === null &&
+			band.waited !== bron().id
+	);
 
 	// The head of the reader draws the button and the field (ReaderHead): the actions of the
 	// stuk stand together, not one above the band and the others under the title (A190).
@@ -104,7 +122,7 @@
 
 <!-- data-klaar: the text is here; under it on a narrow screen Verbonden may come (explore). -->
 <div class="reader-frame" data-klaar={done || undefined}>
-	<div class="reader-frame__col" bind:this={search.column}>
+	<div class="reader-frame__col" data-wacht={bandWait || undefined} bind:this={search.column}>
 		<!-- The band on a row of its own, its rule over the full width. The network is a werkplek
 		     of its own, never beside the text (besluit 39). -->
 		{#if bron}
@@ -170,6 +188,9 @@
 	   (`.hangt`, desktop only); a term and what it names (Behoort bij, partijen, Voor and
 	   Tegen, a career) share one term column (`--reader-term`), wide enough for the longest
 	   term at rung 6 ("Bij wetsvoorstel"). One right edge: the column's. */
+	.reader-frame__col[data-wacht] {
+		visibility: hidden;
+	}
 	.reader-frame__col {
 		--reader-term: calc(var(--s-8) + var(--s-6));
 		max-width: var(--reader-max, 760px);

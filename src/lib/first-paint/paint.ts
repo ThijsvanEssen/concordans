@@ -28,15 +28,19 @@ export function frame(col: string, k: Classes, contents: boolean, style = ''): s
 	return (
 		`<div class="explore-shell ${p}"><div class="explore-content ${p}">` +
 		`<div class="explore-read${contents ? ' explore-read--with-nav' : ''} ${p}"${style ? ` style="${style}"` : ''}>` +
+		// The bar of a narrow screen: on a phone the tabs Tekst and Verbonden, Inhoud where the
+		// bron has contents (A197-a).
+		`<nav class="mobile-tabs${contents ? '' : ' mobile-tabs--tabs'} ${p}"><div class="lees-tabs ${p}" role="tablist"><button type="button" role="tab" class="mobile-tab is-active ${p}" tabindex="-1">Tekst</button><button type="button" role="tab" class="mobile-tab ${p}" tabindex="-1">Verbonden</button></div>` +
 		(contents
-			? `<nav class="mobile-tabs ${p}"><button type="button" class="mobile-tab mobile-tab--toc ${p}" tabindex="-1" data-later>Inhoud</button></nav>`
+			? `<button type="button" class="mobile-tab mobile-tab--toc ${p}" tabindex="-1" data-later>Inhoud</button>`
 			: '') +
+		'</nav>' +
 		`<div class="col col--nav toc-column ${p}"${contents ? '' : ' hidden'}></div>` +
 		`<div class="col col--reader col--measure ${p}"><div class="reader ${p}"><div class="reader__main ${p}">` +
 		`<div class="reader-frame ${k.frame}"><div class="reader-frame__col ${k.frame}">${col}</div></div>` +
 		'</div></div></div>' +
 		`<div class="resize-handle resize-handle--panel ${p}"></div>` +
-		`<div class="col col--panel ${p}"></div>` +
+		`<div class="col col--panel mobile-hidden ${p}"></div>` +
 		'</div></div></div>'
 	);
 }

@@ -147,6 +147,9 @@
 	// once its detail says it is no wet (a wet has no Gelet op); the articles stand in its
 	// group Grondslag in Verbonden, from the same answer.
 	let grondslag = $state<KopDeel[]>([]);
+	/** The laws of a Gelet op named first; the rest opens in place. */
+	const GROUNDS_SHOWN = 3;
+	let allGrounds = $state(new Set<string>());
 	$effect(() => {
 		grondslag = [];
 		const bwb = bwbId;
@@ -349,15 +352,23 @@
 	{#if versionList.state.status === 'error'}
 		<LoadState state={versionList.state} what="De tekstversies" plural retry={versionList.retry} />
 	{/if}
+	<!-- A regulation on many laws names the first three, the rest one click away in place (R3-L
+	     F8): its head is no wall of links above its facts. -->
 	{#each grondslag as deel (deel.werkwoord)}
+		{@const all = allGrounds.has(deel.werkwoord)}
+		{@const shown = all ? deel.wetten : deel.wetten.slice(0, GROUNDS_SHOWN)}
+		{@const rest = deel.wetten.length - shown.length}
 		<p class="whole-count">
 			{deel.werkwoord}
-			{#each deel.wetten as w, i (w.key)}{#if i > 0}{i === deel.wetten.length - 1
+			{#each shown as w, i (w.key)}{#if i > 0}{i === shown.length - 1 && !rest
 						? ' en '
 						: ', '}{/if}<a
 					href={bronHref({ collection: 'instruments', key: w.key })}
 					data-sveltekit-noscroll>{w.naam}</a
-				>{/each}.
+				>{/each}{#if rest > 0}
+				en <TekstLink onclick={() => (allGrounds = new Set([...allGrounds, deel.werkwoord]))}
+					>{rest} andere</TekstLink
+				>{/if}.
 		</p>
 	{/each}
 	{#if treaty}

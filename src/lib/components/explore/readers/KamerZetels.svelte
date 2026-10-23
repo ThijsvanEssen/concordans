@@ -35,7 +35,8 @@
 		dag,
 		kabinet,
 		onSelect,
-		fasen = []
+		fasen = [],
+		ready = $bindable(false)
 	}: {
 		kamer: Chamber;
 		/** The cabinet's stretches in this Kamer; empty where the API has none. */
@@ -52,6 +53,8 @@
 		onSelect: (s: Stretch) => void;
 		/** The cabinet's phases (demissionair and after), as on its posts. */
 		fasen?: { van: string; label: string }[];
+		/** Its hall has answered (or failed): the Kamers stand together once both have. */
+		ready?: boolean;
 	} = $props();
 
 	const titel = $derived(
@@ -89,6 +92,9 @@
 	);
 	/** The hall of the day, once it is in; null where the data has none for it. */
 	const zaal = $derived(hall.state.status === 'ready' ? hall.state.data : null);
+	$effect(() => {
+		ready = hall.state.status !== 'loading';
+	});
 
 	const gekozen = $derived(
 		stretches.find((s) => dag >= s.from_date && dag <= (s.to_date ?? eind)) ??

@@ -314,6 +314,12 @@
 	/** A soort opened with its groups, from "Alle N" or a circle of the network. */
 	function openKind(id: string) {
 		detail = id as KindId;
+		// "Alle N" opens the soort with its rows at once, not its first rows and a second "Alle N"
+		// (R3-L F5): its groups open, the rest of their rows asked.
+		const groups = groepen.filter((g) => kindOfGroup(g) === id);
+		expanded = new Set([...expanded, ...groups.map((g) => g.id)]);
+		for (const g of groups)
+			if ((g.total ?? 0) > g.rows.length) onMeer?.(g.id)?.catch((e) => report('Verbonden meer', e));
 		afterTick(() => root?.querySelector('.body')?.scrollTo({ top: 0 }));
 	}
 
@@ -458,13 +464,17 @@
 					(!verbonden.loading && !verbonden.failed && verbonden.id)
 				)
 					? ''
-					: alleVerbindingen != null
-						? `${formatCount(alleVerbindingen)} ${plural(alleVerbindingen, 'verbinding', 'verbindingen')}`
-						: vast && (!overview || kinds.length)
-							? countLine(vast, filter, wachtSet)
-							: overview && kinds.length
-								? `${formatCount(kindsTotal(kinds))} ${plural(kindsTotal(kinds), 'verbinding', 'verbindingen')}`
-								: ''}</span
+					: overview && kinds.length && !verbonden.loading
+						? // The sum of the soorten shown under it, so the head and the soorten agree (R3-L
+							// F7); a group that waits on its rows says its own count.
+							`${formatCount(kindsTotal(kinds))} ${plural(kindsTotal(kinds), 'verbinding', 'verbindingen')}`
+						: alleVerbindingen != null
+							? `${formatCount(alleVerbindingen)} ${plural(alleVerbindingen, 'verbinding', 'verbindingen')}`
+							: vast && (!overview || kinds.length)
+								? countLine(vast, filter, wachtSet)
+								: overview && kinds.length
+									? `${formatCount(kindsTotal(kinds))} ${plural(kindsTotal(kinds), 'verbinding', 'verbindingen')}`
+									: ''}</span
 			>
 		{/if}
 	</div>
@@ -873,6 +883,14 @@
 		gap: var(--s-4);
 		padding: var(--s-4);
 		font-size: var(--t-micro);
+	}
+	/* On a phone each a finger's 44 px of its own (R3-L F11). */
+	@media (pointer: coarse), (max-width: 768px) {
+		.foot :global(.tekstlink) {
+			display: inline-flex;
+			align-items: center;
+			min-height: var(--veld-h-raak);
+		}
 	}
 
 	.group__alle {

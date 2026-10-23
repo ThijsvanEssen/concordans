@@ -42,6 +42,19 @@
 		return zetels?.from_date && d && d >= zetels.from_date && d <= eind ? d : eind;
 	});
 
+	// The two Kamers stand once both halls have answered, unseen before: the hall of one that
+	// comes later does not push the other down (R3-L F3). Three seconds at most.
+	let tkReady = $state(false);
+	let ekReady = $state(false);
+	let waited = $state(false);
+	$effect(() => {
+		const t = setTimeout(() => {
+			waited = true;
+		}, 3000);
+		return () => clearTimeout(t);
+	});
+	const shown = $derived(waited || (tkReady && ekReady));
+
 	/** The halls on the first day of a stretch; the last stretch is the halls without ?zetels. */
 	const kies = (s: Stuk) =>
 		navigate(
@@ -54,9 +67,10 @@
 {:else if zetels?.tk?.length}
 	<!-- One section per Kamer, open and side by side where the column has room for both; on a
 	     phone under each other (Thijs, 23 Oct, A190). -->
-	<div class="chambers">
+	<div class="chambers" data-wacht={!shown || undefined}>
 		<KamerZetels
 			kamer="TK"
+			bind:ready={tkReady}
 			stretches={zetels.tk}
 			meerderheid={zetels.majority.TK ?? 76}
 			from={zetels.from_date ?? null}
@@ -68,6 +82,7 @@
 		/>
 		<KamerZetels
 			kamer="EK"
+			bind:ready={ekReady}
 			stretches={zetels.ek ?? []}
 			meerderheid={zetels.majority.EK ?? 38}
 			from={zetels.from_date ?? null}
@@ -82,6 +97,9 @@
 
 <style>
 	/* Two columns where each has the room of a hall and its two sides, else one. */
+	.chambers[data-wacht] {
+		visibility: hidden;
+	}
 	.chambers {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(min(100%, 336px), 1fr));

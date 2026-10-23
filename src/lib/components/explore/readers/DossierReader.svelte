@@ -14,6 +14,7 @@
 	import { uniqueBy } from '$lib/util/unique';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
+	import { stand } from '$lib/components/parliamentary/stand';
 	import ReaderHead from './ReaderHead.svelte';
 	import { bronHref } from '$lib/bron/href';
 	import { getDossierTimeline } from '$lib/api/records';
@@ -161,8 +162,9 @@
 					{/if}
 				{/snippet}
 				{#snippet statusLine()}
-					{#if d.submitted_on_tk}
-						<!-- The day the bill reached the Kamer (API 0.75), before any stage below it. -->
+					{#if d.submitted_on_tk && stand(d)?.group !== 'ingediend'}
+						<!-- The day the bill reached the Kamer (API 0.75), before any stage below it; where
+						     the stand says it already ("Ingediend bij de Tweede Kamer op …"), once (R3-L F9). -->
 						<p class="reading">
 							Ingediend bij de Tweede Kamer {onDate(d.submitted_on_tk)}.
 						</p>

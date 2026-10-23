@@ -2,7 +2,7 @@
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { capitalize, plural, textOf } from '$lib/text/words';
 	import { noneHeld } from '$lib/text/coverage';
-	import { korteDatum, onDate, sinceDate } from '$lib/text/datum';
+	import { asOfDate, fromDate, korteDatum, onDate, sinceDate } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
 	import { naamVan } from '$lib/bron/menselijk';
 	import ReaderHead from './ReaderHead.svelte';
@@ -83,6 +83,7 @@
 		{@const since = textOf(f.props?.data_since)}
 		{@const board = boardOf(f.props)}
 		{@const sinds = textOf(f.props?.active_from)}
+		{@const endedOn = textOf(f.props?.active_until)}
 		{@const titel = abbreviation ?? name ?? naamVan('factions', f)}
 		<div class="r-faction">
 			<!-- The Kamer stands in the band (Kamer: Tweede Kamer), not again here (Thijs, 10 Oct). -->
@@ -97,7 +98,15 @@
 					{#if name && abbreviation && name !== abbreviation}<p class="sub">{name}</p>{/if}
 				{/snippet}
 				{#snippet statusLine()}
-					{#if typeof seats === 'number'}
+					{#if endedOn}
+						<!-- A fractie that is no more says so, as a law that expired (R3-L F6): no "0
+						     zetels, fractie sinds" as if it sat. -->
+						<p class="woorden">
+							<span>Opgeheven {asOfDate(endedOn)}</span>{#if sinds}, <span class="sinds"
+									>fractie {fromDate(sinds)}</span
+								>{/if}
+						</p>
+					{:else if typeof seats === 'number'}
 						<p class="woorden">
 							<span class="zetels"
 								>{seats}
@@ -136,7 +145,7 @@
 					</dl>
 				{/if}
 				<Sectie
-					title="Leden"
+					title={endedOn ? 'Laatste leden' : 'Leden'}
 					collection="members"
 					aantal={leden.state.status === 'ready' ? lijst.length : null}
 				>
