@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Neighbor } from '$lib/api/nodes';
 import {
-	followNetwerk,
+	syncOn,
 	onlyAround,
 	deelVan,
 	between,
@@ -136,15 +136,16 @@ describe('onlyAround', () => {
 	});
 });
 
-describe('followNetwerk', () => {
+describe('syncOn', () => {
 	it('turns the entries on again when the address no longer switches them off', () => {
 		const around = onlyAround(parseNetwerk(new URLSearchParams(`netwerk=${JETTEN},${BUMA}`)), BUMA);
 		const entry = (id: string, on: boolean) => ({ id, on }) as never;
 		const drawn = [entry(JETTEN, false), entry(BUMA, true)];
 		const plain = parseNetwerk(new URLSearchParams(`netwerk=${JETTEN},${BUMA}`));
-		expect(followNetwerk(drawn, plain).map((e) => e.on)).toEqual([true, true]);
-		expect(
-			followNetwerk([entry(JETTEN, true), entry(BUMA, true)], around).map((e) => e.on)
-		).toEqual([false, true]);
+		expect(syncOn(drawn, plain).map((e) => e.on)).toEqual([true, true]);
+		expect(syncOn([entry(JETTEN, true), entry(BUMA, true)], around).map((e) => e.on)).toEqual([
+			false,
+			true
+		]);
 	});
 });

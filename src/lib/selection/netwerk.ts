@@ -93,7 +93,7 @@ export function onlyAround(n: Netwerk, id: string): Netwerk {
 }
 
 /** The entries as `n` shows them: their on/off follows the address at once, before a redraw. */
-export function followNetwerk(entries: NetwerkEntry[], n: Netwerk): NetwerkEntry[] {
+export function syncOn(entries: NetwerkEntry[], n: Netwerk): NetwerkEntry[] {
 	return entries.map((e) =>
 		n.ids.includes(e.id) && e.on !== isOn(n, e.id) ? { ...e, on: !e.on } : e
 	);

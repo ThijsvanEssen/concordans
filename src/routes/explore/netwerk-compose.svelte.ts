@@ -10,13 +10,7 @@ import { naamVanId } from '$lib/bron/menselijk';
 import { getDossierKey } from '$lib/api/dossiers';
 import type { GraphStore } from '$lib/graph/store/types';
 import { nodeToGraphNode } from '$lib/graph/types';
-import {
-	deelVan,
-	followNetwerk,
-	isOn,
-	type Netwerk,
-	type NetwerkEntry
-} from '$lib/selection/netwerk';
+import { deelVan, syncOn, isOn, type Netwerk, type NetwerkEntry } from '$lib/selection/netwerk';
 import { showNetworkFailure } from '$lib/stores/netwerk-melding';
 import { parseNodeId } from '$lib/vocabulary';
 
@@ -138,7 +132,7 @@ export class NetwerkComposer {
 	async #compose(n: Netwerk) {
 		const epoch = ++this.#epoch;
 		this.loading = true;
-		this.entries = followNetwerk(this.entries, n);
+		this.entries = syncOn(this.entries, n);
 		const fullRequests = Promise.allSettled(n.ids.map((id) => this.#fullOf(id)));
 		const pending = n.ids.some((id) => !this.#fullIn.has(id));
 		const lights = await Promise.allSettled(n.ids.map((id) => this.#lightOf(id)));
