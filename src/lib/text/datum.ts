@@ -50,12 +50,12 @@ const MAAND_KORT = [
 const NBSP = '\u00a0';
 const WEEKDAG = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];
 
-const DATUM_IN_TEKST = new RegExp(`\\b(\\d{1,2}) (${MONTHS.join('|')})(?: (\\d{4}))?\\b`, 'gi');
+const DATE_IN_TEXT = new RegExp(`\\b(\\d{1,2}) (${MONTHS.join('|')})(?: (\\d{4}))?\\b`, 'gi');
 
 /** A text with the dates in its words held together: `12 maart 2020` never breaks over two lines.
  *  A space for a no-break space, so every offset in the text stays. */
-export const vasteDatums = (tekst: string): string =>
-	tekst.replace(DATUM_IN_TEKST, (d) => d.replaceAll(' ', NBSP));
+export const holdDatesTogether = (text: string): string =>
+	text.replace(DATE_IN_TEXT, (d) => d.replaceAll(' ', NBSP));
 
 type Dag = { j: number; m: number; d: number };
 

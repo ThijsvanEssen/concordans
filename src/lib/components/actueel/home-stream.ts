@@ -1,7 +1,7 @@
 import { votesSentence } from '$lib/components/parliamentary/stemming';
 import { motionKindLabel } from '$lib/components/parliamentary/motion-kind';
 import { capitalize, joinAnd, truncate } from '$lib/text/words';
-import { vasteDatums } from '$lib/text/datum';
+import { holdDatesTogether } from '$lib/text/datum';
 import { bewindspersoonVan, eersteIndiener } from '$lib/bron/submitters';
 import type { BronRef } from '$lib/bron/href';
 import type { Vorm } from '$lib/bron/vormen';
@@ -550,7 +550,7 @@ export function vormVanFeed(i: Pick<FeedItem, 'kind'>): Vorm {
  */
 export function headlineOf(i: FeedItem): Headline {
 	const { label, title, major, teken } = kopVan(i);
-	return { label, title: vasteDatums(title), major, teken, vorm: vormVanFeed(i) };
+	return { label, title: holdDatesTogether(title), major, teken, vorm: vormVanFeed(i) };
 }
 
 /** The line of one event alone, as a day of Actueel and the homepage write it. */

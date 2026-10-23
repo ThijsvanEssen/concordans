@@ -8,7 +8,7 @@ import {
 	throughDate,
 	fromDate,
 	yearsOf,
-	vasteDatums,
+	holdDatesTogether,
 	dagMaand,
 	dagVan,
 	DAY_MS,
@@ -115,10 +115,10 @@ describe('yearsOf', () => {
 	});
 });
 
-describe('vasteDatums', () => {
+describe('holdDatesTogether', () => {
 	it('holds a date in running text together and keeps every offset', () => {
 		const tekst = 'Besluit van 12 maart 2020 en 3 mei, niet 5 keer';
-		const vast = vasteDatums(tekst);
+		const vast = holdDatesTogether(tekst);
 		expect(vast).toBe('Besluit van 12 maart 2020 en 3 mei, niet 5 keer');
 		expect(vast.length).toBe(tekst.length);
 	});
