@@ -1,7 +1,8 @@
 import type { QueryOf, Schema } from '$lib/api/types';
 import { NODE_TYPES, type Collection, type Relation } from '$lib/vocabulary';
-import { api, clientFor, unwrap } from './client';
+import { ApiError, api, clientFor, unwrap } from './client';
 import { isNotFound } from './errors';
+import { once } from './records';
 
 // Keys are lower case in the API and the routes are case-sensitive.
 const path = (collection: Collection, key: string) => ({ collection, key: key.toLowerCase() });
@@ -205,3 +206,20 @@ export async function getShared(
 		return null;
 	});
 }
+
+/**
+ * The surroundings of a stuk, zaak, stemming, toezegging or activiteit in one answer (API
+ * 0.80.8, #948): its indieners, its dossier as one node, the laws it changes or names, the
+ * votes on it, what it answers and where it was made. Null for another kind or a bron not there.
+ */
+export const getSurroundings = (collection: Collection, key: string) =>
+	once(`nodes/${collection}/${key}/surroundings`, () =>
+		unwrap(
+			api.GET('/api/nodes/{collection}/{key}/surroundings', {
+				params: { path: { collection, key } }
+			})
+		).catch((e) => {
+			if (isNotFound(e) || (e instanceof ApiError && e.status === 422)) return null;
+			throw e;
+		})
+	);

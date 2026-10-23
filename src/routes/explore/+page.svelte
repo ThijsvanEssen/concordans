@@ -123,7 +123,8 @@
 	import { chain, isRegulation, type ChainNode } from '$lib/network/chain';
 	import { verbandModel, type DirectLink } from '$lib/network/shared';
 	import { getLawBasis, getLawDelegatedSummary } from '$lib/api/articles';
-	import { getShared } from '$lib/api/nodes';
+	import { getShared, getSurroundings } from '$lib/api/nodes';
+	import { SURROUNDED, surroundingRows } from '$lib/graph/surroundings';
 	import { getEuLinks } from '$lib/api/verbonden';
 	import { formatCount } from '$lib/text/getal';
 	import { capitalize, joinAnd, textOf } from '$lib/text/words';
@@ -970,6 +971,20 @@
 
 	async function expandAround(node: GraphNode, epoch: number) {
 		if (node.id.startsWith('synth:')) return;
+		// A stuk, a zaak, a stemming, a toezegging, an activiteit: its own neighbours, the dossier
+		// one bron, not the dossier's members around it (R3-N B13, API 0.80.8 surroundings). An
+		// explicit depth, or Alle laden, still draws the neighbourhood.
+		if (SURROUNDED.has(node.collection) && explicitDepth === null && !alles) {
+			const around = await getSurroundings(node.collection, node.key).catch((e) => {
+				report('Verkenner omgeving', e);
+				return null;
+			});
+			if (epoch !== focusEpoch) return;
+			if (around && store.showRows(node.id, surroundingRows(around))) {
+				store.sweepOrphans();
+				return;
+			}
+		}
 		await store.expandNeighborhood(node.collection, node.key, {
 			depth: depthFor(node.drawClass),
 			cap: alles ? ALLES_GRENS : omgevingGrens

@@ -43,15 +43,17 @@ test('the legend switches a kind of bron off and on', async ({ page }) => {
 	await expect(drawn(page)).toHaveAttribute('aria-label', before!);
 });
 
-// The network of a stuk holds what its own verbindingen reach: its dossier with the dossier's
-// stukken and stemmingen, its indiener, never what the indiener voted on or signed elsewhere
-// (productcheck 0.80, punt 3: votes of July 2025 on another matter around a motie of 2026).
-for (const { stuk, own } of [
+// The network of a stuk holds what its own verbindingen reach (API surroundings, R3-N B13): its
+// dossier as one bron, its indiener, its own vote, never what the indiener voted on or signed
+// elsewhere (productcheck 0.80, punt 3: votes of July 2025 on another matter around a motie of
+// 2026), nor the votes of the rest of its dossier.
+for (const { stuk, own, votes } of [
 	{
 		stuk: '/kamerstukken/36799/31',
-		own: /29 september 2026: Motie van het lid De Beer over bij proactieve dienstverlening/
+		own: /29 september 2026: Motie van het lid De Beer over bij proactieve dienstverlening/,
+		votes: 1
 	},
-	{ stuk: '/kamerstukken/37020-X/53', own: /Beslisnota bij Kamerbrief over incident/ }
+	{ stuk: '/kamerstukken/37020-X/53', own: /Beslisnota bij Kamerbrief over incident/, votes: 0 }
 ]) {
 	test(`the network of ${stuk} draws no stemming of its indiener elsewhere`, async ({ page }) => {
 		await page.goto(`${stuk}?mode=netwerk`);
@@ -59,8 +61,8 @@ for (const { stuk, own } of [
 		await page.waitForLoadState('networkidle');
 		const items = await drawn(page).getByRole('listitem').allInnerTexts();
 		const stemmingen = items.filter((t) => t.endsWith(', Stemming'));
-		expect(stemmingen.length).toBeGreaterThan(0);
-		// Each stemming in the network is of the stuk's own dossier, all of the autumn of 2026.
+		expect(stemmingen.length).toBe(votes);
+		// A stemming in the network is the stuk's own, of the autumn of 2026.
 		expect(stemmingen.filter((t) => !/\s(september|oktober)\s2026: /.test(t))).toEqual([]);
 	});
 }
