@@ -19,7 +19,7 @@
 <footer class="foot">
 	<div class="container foot-grid">
 		<div class="foot-blurb">
-			<a href="/" class="foot-logo no-underline" aria-label="Concordans home">
+			<a href="/" class="foot-logo no-underline raak-rij" aria-label="Concordans home">
 				<Wordmark size={17} />
 			</a>
 			<p>
@@ -31,10 +31,10 @@
 		<div class="foot-col">
 			<p class="foot-head">Concordans</p>
 			<ul>
-				<li><a href="/explore" class="no-underline">Netwerk</a></li>
-				<li><a href="/docs" class="no-underline">Documentatie</a></li>
-				<li><a href="/docs/methode" class="no-underline">Methode</a></li>
-				<li><a href="/api" class="no-underline">API</a></li>
+				<li><a href="/explore" class="no-underline raak-rij">Netwerk</a></li>
+				<li><a href="/docs" class="no-underline raak-rij">Documentatie</a></li>
+				<li><a href="/docs/methode" class="no-underline raak-rij">Methode</a></li>
+				<li><a href="/api" class="no-underline raak-rij">API</a></li>
 			</ul>
 		</div>
 
@@ -42,8 +42,11 @@
 			<p class="foot-head">Officiële bronnen</p>
 			<ul>
 				<li>
-					<a href="https://wetten.overheid.nl" target="_blank" rel="noopener" class="no-underline"
-						>wetten.overheid.nl</a
+					<a
+						href="https://wetten.overheid.nl"
+						target="_blank"
+						rel="noopener"
+						class="no-underline raak-rij">wetten.overheid.nl</a
 					>
 				</li>
 				<li>
@@ -51,17 +54,23 @@
 						href="https://www.rechtspraak.nl/uitspraken"
 						target="_blank"
 						rel="noopener"
-						class="no-underline">rechtspraak.nl</a
+						class="no-underline raak-rij">rechtspraak.nl</a
 					>
 				</li>
 				<li>
-					<a href="https://www.tweedekamer.nl" target="_blank" rel="noopener" class="no-underline"
-						>tweedekamer.nl</a
+					<a
+						href="https://www.tweedekamer.nl"
+						target="_blank"
+						rel="noopener"
+						class="no-underline raak-rij">tweedekamer.nl</a
 					>
 				</li>
 				<li>
-					<a href="https://www.eerstekamer.nl" target="_blank" rel="noopener" class="no-underline"
-						>eerstekamer.nl</a
+					<a
+						href="https://www.eerstekamer.nl"
+						target="_blank"
+						rel="noopener"
+						class="no-underline raak-rij">eerstekamer.nl</a
 					>
 				</li>
 				<li>
@@ -69,12 +78,15 @@
 						href="https://www.officielebekendmakingen.nl"
 						target="_blank"
 						rel="noopener"
-						class="no-underline">officielebekendmakingen.nl</a
+						class="no-underline raak-rij">officielebekendmakingen.nl</a
 					>
 				</li>
 				<li>
-					<a href="https://eur-lex.europa.eu" target="_blank" rel="noopener" class="no-underline"
-						>eur-lex.europa.eu</a
+					<a
+						href="https://eur-lex.europa.eu"
+						target="_blank"
+						rel="noopener"
+						class="no-underline raak-rij">eur-lex.europa.eu</a
 					>
 				</li>
 			</ul>
@@ -83,17 +95,20 @@
 		<div class="foot-col">
 			<p class="foot-head">Over</p>
 			<ul>
-				<li><a href="/over" class="no-underline">Over Concordans</a></li>
-				<li><a href="/bronnen" class="no-underline">Bronnen en hergebruik</a></li>
-				<li><a href="/voorwaarden" class="no-underline">Voorwaarden</a></li>
-				<li><a href="/privacy" class="no-underline">Privacy</a></li>
-				<li><a href="/voorwaarden#fouten" class="no-underline">Fouten melden</a></li>
+				<li><a href="/over" class="no-underline raak-rij">Over Concordans</a></li>
+				<li><a href="/bronnen" class="no-underline raak-rij">Bronnen en hergebruik</a></li>
+				<li><a href="/voorwaarden" class="no-underline raak-rij">Voorwaarden</a></li>
+				<li><a href="/privacy" class="no-underline raak-rij">Privacy</a></li>
+				<li><a href="/voorwaarden#fouten" class="no-underline raak-rij">Fouten melden</a></li>
 			</ul>
 		</div>
 	</div>
 
 	<div class="container foot-bottom" use:inView={askStand}>
-		<span>© 2026 Concordans, <a href="mailto:{CONTACT_EMAIL}">{CONTACT_EMAIL}</a></span>
+		<span
+			>© 2026 Concordans, <a href="mailto:{CONTACT_EMAIL}" class="raak-rij">{CONTACT_EMAIL}</a
+			></span
+		>
 		{#if stand}<span class="stand">{standLine(stand)}</span>{/if}
 	</div>
 </footer>

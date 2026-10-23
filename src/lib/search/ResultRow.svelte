@@ -93,11 +93,12 @@
 		font-style: italic;
 	}
 	.context {
-		flex: 0 1 auto;
+		/* As wide as its words, up to 40%: `anywhere` let the title squeeze it to a letter. */
+		flex: none;
 		max-width: 40%;
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-		overflow-wrap: anywhere;
+		overflow-wrap: break-word;
 		text-align: right;
 	}
 	.context abbr {

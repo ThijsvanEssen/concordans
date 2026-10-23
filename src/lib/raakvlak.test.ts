@@ -48,15 +48,15 @@ describe('the touch target', () => {
 		expect(read('lib/map/MapGroups.svelte')).not.toMatch(/class="notitie-knop/);
 	});
 
-	it('is at least 32 px high on every row and heading of a table of contents, on a touch screen', () => {
+	it('is 44 px high on every row and heading of a table of contents, on a touch screen', () => {
 		const kolom = read('lib/components/explore/NavKolom.svelte');
 		const coarse = kolom.slice(kolom.indexOf('@media (pointer: coarse)'));
 		expect(kolom).toContain('@media (pointer: coarse)');
-		expect(coarse).toMatch(/\.nav-kolom__rij\)[^{]*\{[^}]*min-height: var\(--s-6\)/);
+		expect(coarse).toMatch(/\.nav-kolom__rij\)[^{]*\{[^}]*min-height: var\(--veld-h-raak\)/);
 		const nav = read('lib/components/explore/LezenNav.svelte');
 		const navCoarse = nav.slice(nav.indexOf('@media (pointer: coarse)'));
 		expect(nav).toContain('@media (pointer: coarse)');
-		expect(navCoarse).toMatch(/\.group__head[^{]*\{[^}]*min-height: var\(--s-6\)/);
+		expect(navCoarse).toMatch(/\.group__head[^{]*\{[^}]*min-height: var\(--veld-h-raak\)/);
 	});
 
 	it("fills a heading's row with its link, and gives the sheet's close button 32 px (F5)", () => {

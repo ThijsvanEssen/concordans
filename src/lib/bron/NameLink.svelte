@@ -28,5 +28,6 @@
 	);
 </script>
 
-{#if resolved}<BronLink ref={`${collection}/${resolved}`} class={className}>{name}</BronLink
+{#if resolved}<BronLink ref={`${collection}/${resolved}`} class="raak-rij {className}"
+		>{name}</BronLink
 	>{:else}<span class={className}>{name}</span>{/if}

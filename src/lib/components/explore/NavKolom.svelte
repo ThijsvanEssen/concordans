@@ -99,12 +99,12 @@
 		color: var(--ink);
 		box-shadow: inset 2px 0 0 var(--ink);
 	}
-	/* A finger's target in the column and the sheet Inhoud: a row at least 32 px high. */
+	/* A finger's target in the column and the sheet Inhoud: a row 44 px high. */
 	@media (pointer: coarse), (max-width: 768px) {
 		:global(.nav-kolom__rij) {
 			display: flex;
 			align-items: center;
-			min-height: var(--s-6);
+			min-height: var(--veld-h-raak);
 		}
 	}
 </style>

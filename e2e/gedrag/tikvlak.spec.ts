@@ -45,6 +45,18 @@ async function knoppen(page: Page): Promise<Record<string, number>> {
 	return gemeten;
 }
 
+/** The links `welke` selects, each by its text, with the height a finger finds on it. */
+async function links(page: Page, welke: string): Promise<Record<string, number>> {
+	const gemeten: Record<string, number> = {};
+	for (const link of await page.locator(`${welke}:visible`).all()) {
+		await link.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+		if (!(await link.boundingBox())) continue;
+		const naam = ((await link.textContent()) ?? '').trim().slice(0, 40);
+		gemeten[naam || (await link.getAttribute('href')) || '?'] = await raakhoogte(link);
+	}
+	return gemeten;
+}
+
 const klein = (gemeten: Record<string, number>) =>
 	Object.entries(gemeten).filter(([, h]) => h < 43.5);
 
@@ -75,6 +87,40 @@ test.describe('on a phone', () => {
 			expect(klein(g)).toEqual([]);
 		});
 	}
+
+	test('the links of the footer are 44 px to a finger', async ({ page }) => {
+		await page.goto('/over');
+		await expect(page.locator('footer.foot')).toBeAttached();
+		const g = await links(page, 'footer.foot a');
+		expect(Object.keys(g).length).toBeGreaterThan(10);
+		expect(klein(g)).toEqual([]);
+	});
+
+	test('the ways in on the start page are 44 px to a finger', async ({ page }) => {
+		await page.goto('/');
+		await expect(page.locator('.entrances a').first()).toBeVisible();
+		const g = await links(page, '.entrances a');
+		expect(Object.keys(g).length).toBeGreaterThan(4);
+		expect(klein(g)).toEqual([]);
+	});
+
+	test('the rows of Inhoud are 44 px to a finger', async ({ page }) => {
+		await page.goto('/wetten/32016R0679');
+		await page.getByRole('button', { name: 'Inhoud', exact: true }).first().click();
+		await expect(page.locator('.nav-kolom a:visible').first()).toBeVisible();
+		const g = await links(page, '.nav-kolom a');
+		expect(Object.keys(g).length).toBeGreaterThan(3);
+		expect(klein(g)).toEqual([]);
+	});
+
+	test('the people in Actueel are 44 px to a finger', async ({ page }) => {
+		await page.goto('/actueel');
+		const persoon = page.locator('main a[href^="/leden/"]');
+		await expect(persoon.first()).toBeVisible();
+		const g = await links(page, 'main a[href^="/leden/"]');
+		expect(Object.keys(g).length).toBeGreaterThan(0);
+		expect(klein(g)).toEqual([]);
+	});
 
 	test('the items of a menu are 44 px high', async ({ page }) => {
 		await page.goto(ARTICLE);

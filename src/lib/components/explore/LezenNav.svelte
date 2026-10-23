@@ -365,7 +365,7 @@
 	@media (pointer: coarse), (max-width: 768px) {
 		.group__head {
 			align-items: center;
-			min-height: var(--s-6);
+			min-height: var(--veld-h-raak);
 			padding-block: 0;
 		}
 		.group__head > a.group__label {

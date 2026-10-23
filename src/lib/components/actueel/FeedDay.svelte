@@ -367,7 +367,8 @@
 		.filter((p) => p.role !== 'medeindiener')
 		.slice(0, 2) as p, n (`${p.key ?? p.name}/${n}`)}
 		<span class="person" style:--party={colorOf(p.faction?.short)}
-			>{#if p.key}<BronLink ref={`members/${p.key}`} preview={false}>{p.name}</BronLink
+			>{#if p.key}<BronLink ref={`members/${p.key}`} preview={false} class="raak-rij"
+					>{p.name}</BronLink
 				>{:else}{p.name}{/if}{#if p.faction?.short}<span class="faction"
 					>{` ${p.faction.short}`}</span
 				>{/if}</span

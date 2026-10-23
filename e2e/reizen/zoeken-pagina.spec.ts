@@ -115,3 +115,32 @@ test('nothing found has a page that offers a way on', async ({ page }) => {
 	await expect(page).toHaveURL(/q=qwertzpl/);
 	await expect(page.getByText('Geen resultaten voor "qwertzpl"')).toBeVisible();
 });
+
+test('the source of a hit is a word wide, not squeezed to a letter by a long text', async ({
+	page,
+	touch
+}) => {
+	test.skip(touch, 'on a phone the source stands under the text');
+	const lang =
+		'Iedere tekortkoming in de nakoming van een verbintenis verplicht de schuldenaar '.repeat(4);
+	await answerSearch(page, {
+		articles: [
+			article(74, {
+				snippet: lang,
+				extra: {
+					bwb_id: 'BWBR0005289',
+					article_number: '74',
+					citation_title: 'Uitvoeringsregeling Ikoa'
+				}
+			})
+		]
+	});
+	await page.goto('/zoeken?q=wanprestatie');
+	const bron = page.locator('.rij .context').first();
+	await expect(bron).toBeVisible();
+	const tekst = ((await bron.textContent()) ?? '').trim();
+	const doos = (await bron.boundingBox())!;
+	// One line, as wide as its text: not a column of single letters.
+	expect(doos.width).toBeGreaterThan(tekst.length * 4);
+	expect(doos.height).toBeLessThan(30);
+});

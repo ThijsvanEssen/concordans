@@ -45,7 +45,7 @@
 	{
 		"path": "/docs",
 		"title": "Documentatie, Concordans",
-		"description": "Werking van Concordans: bronnen, verbindingen, Samenhang en de lezers."
+		"description": "Werking van Concordans: bronnen, verbindingen, netwerk en de lezers."
 	},
 	{
 		"path": "/docs/methode",
@@ -55,7 +55,7 @@
 	{
 		"path": "/docs/sneltoetsen",
 		"title": "Sneltoetsen, Concordans",
-		"description": "De sneltoetsen van Samenhang en de lezers."
+		"description": "De sneltoetsen van het netwerk en de lezers."
 	},
 	{
 		"path": "/api",

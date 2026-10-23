@@ -172,6 +172,13 @@ a:hover {
 	:where(.btn, .tekstmenu__knop, .raakvlak-knop) {
 		position: relative;
 	}
+	/* A link that stands in a list (a footer's, a start page's entrance, a name in a row):
+	   a line of its own 44 px high, where a finger would otherwise meet its neighbours. */
+	.raak-rij {
+		display: inline-flex;
+		align-items: center;
+		min-height: var(--veld-h-raak);
+	}
 	.btn::after,
 	.tekstmenu__knop::after,
 	.raakvlak-knop::after {

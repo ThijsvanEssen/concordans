@@ -17,12 +17,12 @@
 <div class="entrances">
 	<section class="entrance" aria-labelledby="entrance-article">
 		<h2 id="entrance-article">{article.heading}</h2>
-		<a class="title" href={article.href}>{article.title}</a>
+		<a class="title raak-rij" href={article.href}>{article.title}</a>
 		<ul class="rows">
 			{#each article.parts as part (part.bronnen)}
 				<li>
 					<KindGlyph collection={part.collection} />
-					<a href="{article.href}?bronnen={part.bronnen}">{part.label}</a>
+					<a class="raak-rij" href="{article.href}?bronnen={part.bronnen}">{part.label}</a>
 				</li>
 			{/each}
 		</ul>
@@ -30,7 +30,7 @@
 
 	<section class="entrance" aria-labelledby="entrance-vote">
 		<h2 id="entrance-vote">{vote.heading}</h2>
-		<a class="title" href={vote.href}>{vote.title}</a>
+		<a class="title raak-rij" href={vote.href}>{vote.title}</a>
 		<p class="meta">{vote.date}</p>
 		<p class="outcome"><OutcomeMark tone="nee" woord={vote.outcome} /> <span>{vote.tally}</span></p>
 		<dl class="sides">
@@ -43,12 +43,12 @@
 
 	<section class="entrance" aria-labelledby="entrance-bundle">
 		<h2 id="entrance-bundle">{bundle.heading}</h2>
-		<a class="title" href={bundle.href}>{bundle.title}</a>
+		<a class="title raak-rij" href={bundle.href}>{bundle.title}</a>
 		<ul class="rows">
 			{#each bundle.lines as line (line.href)}
 				<li>
 					<KindGlyph collection={line.collection} />
-					<a href={line.href}>{line.label}</a>
+					<a class="raak-rij" href={line.href}>{line.label}</a>
 				</li>
 			{/each}
 			<li class="note">
