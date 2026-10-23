@@ -94,15 +94,17 @@ test('Verbonden as a table, exported as CSV', async ({ page }) => {
 	expect((await download).suggestedFilename()).toMatch(/\.csv$/);
 });
 
-test('Samenhang opens with an example network that can be cleared', async ({ page }) => {
+test('Samenhang opens with an example as a proposal; the first bron chosen takes its place (R3-N B4)', async ({
+	page
+}) => {
 	await page.goto('/explore');
 	await page.waitForLoadState('networkidle');
 	const network = page.getByRole('region', { name: 'Netwerk' });
-	await expect(network.getByRole('button', { pressed: true }).first()).toBeVisible();
-	// On a phone Wissen stands under Filter, with the netwerk's own filters.
-	await openFilters(page);
-	await network.getByRole('button', { name: 'Wissen' }).click();
-	await expect(network.getByRole('button', { name: 'Wissen' })).toHaveCount(0);
+	// The example's bronnen are no chips of the reader's: nothing to switch, take out or clear.
+	await expect(network.locator('.chip--voorbeeld').first()).toBeVisible();
+	await expect(network.getByRole('button', { pressed: true })).toHaveCount(0);
+	await expect(network.getByRole('button', { name: /^Haal .* uit netwerk$/ })).toHaveCount(0);
+	await expect(page).not.toHaveURL(/netwerk=/);
 });
 
 test('a bron in the network becomes the focus, and Samenhang follows it', async ({
