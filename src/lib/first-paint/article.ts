@@ -206,10 +206,13 @@ export function articleColumn(v: ArticlePaint, k: Classes): string {
 		: '';
 	// The strip of its facts (Feiten strip): the day of its text, the peildatum, its versions.
 	const cells =
+		(textSince !== null && validity !== null
+			? `<div class="field"><dt>Stand</dt><dd>Geldend recht</dd></div>`
+			: '') +
 		(textSince ? `<div class="field"><dt>Tekst sinds</dt><dd>${esc(textSince)}</dd></div>` : '') +
 		(euAct ? '' : peildatum(validity, onScreen?.from ?? null, k, caret)) +
 		(wordings.length > 1
-			? `<div class="field"><dt>Tekstversies</dt><dd class="versies ${k.reader}"><span class="menu ${k.reader}"><button type="button" class="btn ${k.reader}" tabindex="-1">${formatCount(wordings.length)}${caret}</button></span></dd></div>`
+			? `<div class="field"><dt>Tekstversies</dt><dd class="versies ${k.reader}"><span class="menu ${k.reader}"><button type="button" class="btn ${k.reader}" tabindex="-1" aria-label="${formatCount(wordings.length)} tekstversies">${formatCount(wordings.length)}${caret}</button></span></dd></div>`
 			: '');
 	const facts = cells
 		? `<div class="reader-facts ${k.head}" data-later><div class="strip-edge ${k.facts}"><dl class="feiten strip ${k.facts}" aria-label="Kenmerken">${cells}</dl></div></div>`

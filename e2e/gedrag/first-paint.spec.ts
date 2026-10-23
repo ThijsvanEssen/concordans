@@ -38,7 +38,7 @@ for (const a of ARTICLES) {
 			await expect(paint.getByRole('heading', { level: 1 })).toHaveText(a.title);
 			await expect(paint.getByText(a.words)).toBeVisible();
 			// What the app adds when it has come takes its room, unseen.
-			await expect(paint.getByText('Geldend recht, tekst sinds')).toBeHidden();
+			await expect(paint.getByText('Geldend recht')).toBeHidden();
 		});
 
 		test('the app takes the article over where it stands', async ({ page }) => {

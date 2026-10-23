@@ -339,7 +339,9 @@
 	);
 	/** The cell of the peildatum keeps its room while the law's versions come (T9). */
 	const peildatumKept = $derived(!euAct && lawVersions.state.status === 'loading');
-	const withFacts = $derived(!!since || lawDays.length > 0 || peildatumKept || wordings.length > 1);
+	const withFacts = $derived(
+		since !== null || lawDays.length > 0 || peildatumKept || wordings.length > 1
+	);
 	/** Whether the status says anything besides the strip: no empty line (A190). */
 	const hasStatus = (d: NonNullable<typeof loaded>) =>
 		showStatus ||
@@ -673,6 +675,9 @@
 		     place while the law's versions come (T9). -->
 		{#snippet articleFacts()}
 			<Feiten strip label="Kenmerken">
+				<!-- Where it holds, so it says (transparency, besluit 23); where the API does not know,
+				     only the day of its text. -->
+				{#if since !== null && validity !== null}<Veld label="Stand" value="Geldend recht" />{/if}
 				{#if since}<Veld label="Tekst sinds" value={since} />{/if}
 				{#if lawDays.length > 0 || peildatumKept}
 					<WholeLawReaderPeildatum
@@ -697,6 +702,7 @@
 									aria-haspopup="menu"
 									aria-expanded={versionMenu}
 									onclick={() => (versionMenu = !versionMenu)}
+									aria-label="{formatCount(wordings.length)} tekstversies"
 									>{formatCount(wordings.length)}<Caret open={versionMenu} /></button
 								>
 								{#if versionMenu}

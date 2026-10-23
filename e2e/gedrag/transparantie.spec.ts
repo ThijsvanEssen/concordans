@@ -11,7 +11,10 @@ import { patchApi } from '../support/api';
 
 test('Dutch law says it is the law in force, since when', async ({ page }) => {
 	await page.goto('/wetten/BWBR0005289/artikel/6:162');
-	await expect(page.getByText('Geldend recht, tekst sinds 1 januari 1992')).toBeVisible();
+	// In the strip of its facts, as the law's (A190).
+	const facts = page.getByRole('definition').filter({ hasText: 'Geldend recht' });
+	await expect(facts).toBeVisible();
+	await expect(page.locator('.reader-facts')).toContainText('1 januari 1992');
 });
 
 test('an EU article is the text as adopted, dated so, and sourced to EUR-Lex', async ({ page }) => {
