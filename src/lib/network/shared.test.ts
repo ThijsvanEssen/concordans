@@ -1,18 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { sharedFromNetwork, sharedModel, sentence } from './shared';
-import type { GraphEdge, GraphNode } from '$lib/graph/types';
+import { verbandModel, sentence } from './shared';
 
-const names = (id: string) =>
-	({
-		'articles/a': { name: 'Art. 6:162 BW', collection: 'articles' as const },
-		'articles/b': { name: 'Art. 7:658 BW', collection: 'articles' as const }
-	})[id] ?? { name: id, collection: null };
+const NAMES: Record<string, { name: string; collection: 'articles' | 'members' | 'factions' }> = {
+	'articles/a': { name: 'Art. 126ffa Sv', collection: 'articles' },
+	'members/d': { name: 'Dilan Yeşilgöz', collection: 'members' },
+	'factions/v': { name: 'VVD', collection: 'factions' },
+	'members/r': { name: 'Mark Rutte', collection: 'members' }
+};
+const names = (id: string) => NAMES[id] ?? { name: id, collection: null };
 
-const neighbour = (
-	id: string,
-	collection: string,
-	links: { source: string; direction: string; relation: string }[]
-) => ({
+const neighbour = (id: string, collection: string, sources: string[]) => ({
 	id,
 	key: id.split('/')[1],
 	collection,
@@ -20,8 +17,32 @@ const neighbour = (
 	display_name: id,
 	labels: [],
 	props: {},
-	links: links.map((l) => ({ ...l, edge_id: `${l.source}-${id}`, status: null, confidence: null }))
+	links: sources.map((source) => ({
+		source,
+		edge_id: `${source}-${id}`,
+		relation: 'AUTHORED',
+		direction: 'outbound',
+		status: null,
+		confidence: null
+	}))
 });
+/** /api/nodes/shared of one pair: its shared bronnen of one kind, and its judgments counted. */
+const pair = (ids: string[], shared: string[], judgments = 0) =>
+	({
+		ids,
+		total: shared.length + judgments,
+		buckets: [
+			{
+				collection: 'documents',
+				type: 'document',
+				total: shared.length,
+				next_offset: null,
+				items: shared.map((d) => neighbour(d, 'documents', ids))
+			},
+			{ collection: 'judgments', type: 'judgment', total: judgments, next_offset: null, items: [] }
+		],
+		facets: { collection: [], tier: [], subject_area: [] }
+	}) as never;
 
 describe('the weergave Verband', () => {
 	it('says a verbinding of its object, a preposition kept with its verb', () => {
@@ -30,63 +51,54 @@ describe('the weergave Verband', () => {
 		expect(sentence('noemt', 'Art. 6:162 BW', 'van')).toBe('Art. 6:162 BW noemt deze bron');
 	});
 
-	it('draws the shared bronnen as rows, counts the judgments, joins the lines of one verb', () => {
-		const shared = {
-			ids: ['articles/a', 'articles/b'],
-			total: 120,
-			buckets: [
-				{
-					collection: 'documents',
-					type: 'document',
-					total: 2,
-					next_offset: null,
-					items: [
-						neighbour('documents/k', 'documents', [
-							{ source: 'articles/a', direction: 'inbound', relation: 'REFERS_TO' },
-							{ source: 'articles/b', direction: 'inbound', relation: 'REFERS_TO' }
-						])
-					]
-				},
-				{ collection: 'judgments', type: 'judgment', total: 118, next_offset: 30, items: [] }
-			],
-			facets: { collection: [], tier: [], subject_area: [] }
-		} as never;
-		const m = sharedModel(shared, names);
-		expect(m.judgments).toBe(118);
-		expect(m.rows.map((r) => r.id)).toEqual(['documents/k']);
-		expect(m.rows[0].at).toEqual(['articles/a', 'articles/b']);
-		expect(m.rows[0].line).toMatch(/Art\. 6:162 BW en Art\. 7:658 BW/);
-		expect(m.rest).toBe(1);
+	const evaluatie = pair(['articles/a', 'members/d'], ['documents/evaluatie'], 3);
+	const motie = pair(['members/d', 'members/r'], ['documents/motie']);
+	const direct = [{ from: 'members/d', to: 'factions/v', relation: 'MEMBER_OF' as const }];
+
+	it('keeps what a pair shares when a bron is added (Thijs, 23 Oct)', () => {
+		const vier = verbandModel(
+			['articles/a', 'members/d', 'factions/v'],
+			[evaluatie],
+			direct,
+			names
+		);
+		const vijf = verbandModel(
+			['articles/a', 'members/d', 'factions/v', 'members/r'],
+			[evaluatie, motie],
+			direct,
+			names
+		);
+		expect(vier.rows.map((r) => r.id)).toEqual(['documents/evaluatie']);
+		expect(vijf.rows.map((r) => r.id)).toEqual(['documents/evaluatie', 'documents/motie']);
+		expect(vijf.judgments).toEqual([{ at: ['articles/a', 'members/d'], total: 3 }]);
 	});
 
-	it('reads the bronnen between from the netwerk where the API has none, those tied to both first', () => {
-		const node = (id: string) =>
-			({
-				id,
-				key: id.split('/')[1],
-				collection: id.split('/')[0],
-				label: id,
-				drawClass: 'document'
-			}) as GraphNode;
-		const edge = (source: string, target: string): GraphEdge => ({
-			id: `${source}>${target}`,
-			source,
-			target,
-			relation: 'REFERS_TO',
-			label: '',
-			directed: true
-		});
-		const shared = sharedFromNetwork(
-			['articles/a', 'articles/b'],
-			['articles/a', 'articles/b', 'documents/x', 'documents/y', 'documents/z'],
-			node,
-			[
-				edge('documents/x', 'articles/a'),
-				edge('documents/y', 'articles/a'),
-				edge('documents/y', 'articles/b')
-			]
+	it('gives the same Verband for the same bronnen in another order', () => {
+		const een = verbandModel(
+			['members/r', 'members/d', 'articles/a'],
+			[motie, evaluatie],
+			[],
+			names
 		);
-		const m = sharedModel(shared, names);
-		expect(m.rows.map((r) => r.id)).toEqual(['documents/y', 'documents/x']);
+		const twee = verbandModel(
+			['articles/a', 'members/d', 'members/r'],
+			[evaluatie, motie],
+			[],
+			names
+		);
+		expect(een.rows.map((r) => [r.id, r.at])).toEqual(twee.rows.map((r) => [r.id, r.at]));
+		expect(een.judgments).toEqual(twee.judgments);
+	});
+
+	it('says the verbindingen between the chosen bronnen themselves, and names one without any', () => {
+		const m = verbandModel(
+			['articles/a', 'members/d', 'factions/v', 'members/r'],
+			[evaluatie],
+			direct,
+			names
+		);
+		expect(m.direct.map((d) => d.at)).toEqual([['factions/v', 'members/d']]);
+		expect(m.direct[0].text).toMatch(/^Dilan Yeşilgöz .+ VVD$/);
+		expect(m.alone).toEqual(['members/r']);
 	});
 });

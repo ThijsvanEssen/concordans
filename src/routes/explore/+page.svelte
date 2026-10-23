@@ -121,7 +121,7 @@
 	import ChainView from '$lib/network/ChainView.svelte';
 	import SharedView from '$lib/network/SharedView.svelte';
 	import { chain, isRegulation, type ChainNode } from '$lib/network/chain';
-	import { sharedFromNetwork, sharedModel } from '$lib/network/shared';
+	import { verbandModel, type DirectLink } from '$lib/network/shared';
 	import { getLawBasis, getLawDelegatedSummary } from '$lib/api/articles';
 	import { getShared } from '$lib/api/nodes';
 	import { getEuLinks } from '$lib/api/verbonden';
@@ -593,11 +593,14 @@
 			.map((k) => ({ jaar: yearFraction(k.since!), collection: 'instruments' as const }))
 	);
 
-	/** The chosen bronnen of the netwerk that are on, as the API names them: Verband's ends. */
-	// The bron of the page counts as the first, chosen or not: one bron added makes two (R3-I F2).
+	/**
+	 * Verband's ends: the bron of the page (one bron added makes two, R3-I F2) and every chosen
+	 * bron that is on, each drawn whatever it shares; by name, so the order of the chips does not
+	 * change the drawing (Thijs, 23 Oct).
+	 */
 	const sharedEnds = $derived.by(() => {
 		if (mode !== 'graph' || view !== 'verband') return [];
-		const chosen = composer.entries
+		const ends = composer.entries
 			.filter((e) => e.on && e.node)
 			.map((e) => ({
 				id: e.node!.id,
@@ -605,25 +608,36 @@
 				collection: e.collection,
 				connections: e.connections ?? null
 			}));
-		const page =
+		if (
 			selectedNode &&
 			!selectedNode.id.startsWith('synth:') &&
-			!chosen.some((e) => e.id === selectedNode!.id)
-				? [
-						{
-							id: selectedNode.id,
-							name: bronNaam(selectedNode, $instrumentMetaStore),
-							collection: selectedNode.collection,
-							connections: null
-						}
-					]
-				: [];
-		return [...page, ...chosen].slice(0, 5);
+			!ends.some((e) => e.id === selectedNode!.id)
+		)
+			ends.push({
+				id: selectedNode.id,
+				name: bronNaam(selectedNode, $instrumentMetaStore),
+				collection: selectedNode.collection,
+				connections: null
+			});
+		return ends.sort((x, y) => x.name.localeCompare(y.name, 'nl') || x.id.localeCompare(y.id));
 	});
 	const sharedKey = $derived(sharedEnds.map((e) => e.id).join(','));
+	/** What each pair of bronnen shares, asked once a pair (/api/nodes/shared, API 0.80.8). */
+	const pairAnswers = new Map<string, Promise<Awaited<ReturnType<typeof getShared>>>>();
+	const askPair = (a: string, b: string) => {
+		const key = [a, b].sort().join(',');
+		let asked = pairAnswers.get(key);
+		if (!asked) {
+			asked = getShared({ ids: key, limit: 8 });
+			asked.catch(() => pairAnswers.delete(key));
+			pairAnswers.set(key, asked);
+		}
+		return asked;
+	};
 	let sharedData = $state.raw<{
 		key: string;
-		data: Awaited<ReturnType<typeof getShared>> | null;
+		answers: NonNullable<Awaited<ReturnType<typeof getShared>>>[];
+		direct: DirectLink[];
 		failure: 'niet' | 'mis' | null;
 		error?: unknown;
 	} | null>(null);
@@ -641,55 +655,49 @@
 	$effect(() => {
 		const key = sharedKey;
 		void sharedTries;
-		if (key.split(',').length < 2) return;
-		const ac = new AbortController();
-		getShared({ ids: key, limit: 8 }, ac.signal)
-			.then((data) => (sharedData = { key, data, failure: data ? null : 'niet' }))
+		const ids = key ? key.split(',') : [];
+		if (ids.length < 2) return;
+		let current = true;
+		const pairs = ids.flatMap((a, i) => ids.slice(i + 1).map((b) => askPair(a, b)));
+		const netwerkIds = composer.entries.filter((e) => e.on && e.node).map((e) => e.id);
+		const page = untrack(() => selectedLinkId);
+		if (page && !netwerkIds.includes(page)) netwerkIds.push(page);
+		Promise.all([Promise.all(pairs), composer.directLinks(netwerkIds)])
+			.then(([answers, direct]) => {
+				if (!current) return;
+				const got = answers.filter((x): x is NonNullable<typeof x> => !!x);
+				sharedData = { key, answers: got, direct, failure: got.length ? null : 'niet' };
+			})
 			.catch((e) => {
-				if (ac.signal.aborted || isAborted(e)) return;
+				if (!current || isAborted(e)) return;
 				if (!isNotFound(e)) report('Verband', e);
-				sharedData = { key, data: null, failure: isNotFound(e) ? 'niet' : 'mis', error: e };
+				sharedData = {
+					key,
+					answers: [],
+					direct: [],
+					failure: isNotFound(e) ? 'niet' : 'mis',
+					error: e
+				};
 			});
-		return () => ac.abort();
+		return () => {
+			current = false;
+		};
 	});
-	// Where the API has no shared bronnen yet (A200 not live), the canvas's own: the bronnen
-	// between the chosen ones, marked as such.
-	let coreIds = $state.raw<ReadonlySet<string> | null>(null);
-	store.core.subscribe((c) => (coreIds = c));
-	let canvasEdges = $state.raw<GraphEdge[]>([]);
-	store.edges.subscribe((e) => (canvasEdges = e));
 	const sharedState = $derived.by(() => {
 		const here = sharedData?.key === sharedKey ? sharedData : null;
-		const d =
-			here?.data ??
-			(here?.failure === 'niet' && coreIds
-				? sharedFromNetwork(
-						sharedEnds.map((e) => e.id),
-						coreIds,
-						(id) => {
-							const n = store.getNodeById(id);
-							return n && { ...n, label: bronNaam(n, $instrumentMetaStore) };
-						},
-						canvasEdges
-					)
-				: null);
-		if (!d) return null;
+		if (!here || here.failure) return null;
 		const byId = new Map(sharedEnds.map((e) => [e.id, e]));
-		const model = sharedModel(d, (id) => ({
-			name: byId.get(id)?.name ?? id,
-			collection: byId.get(id)?.collection ?? null
-		}));
-		// From the netwerk itself, the judgments both cite are not known: "?", as the gap says;
-		// only where each end can be cited by a judgment at all (R3-N B7: no "?" for a Kamerlid).
-		if (here?.data) return model;
-		const citable = sharedEnds.every((e) => CITED_BY_JUDGMENTS.has(e.collection));
-		return { ...model, judgments: citable ? null : 0 };
+		return verbandModel(
+			sharedEnds.map((e) => e.id),
+			here.answers,
+			here.direct,
+			(id) => ({ name: byId.get(id)?.name ?? id, collection: byId.get(id)?.collection ?? null })
+		);
 	});
-	/** What a judgment cites, or is cited by: the ends whose shared judgments the "?" stands for. */
-	const CITED_BY_JUDGMENTS: ReadonlySet<string> = new Set(['articles', 'instruments', 'judgments']);
+	/** An API without /api/nodes/shared: Verband says so, it does not guess from the canvas. */
 	const sharedGap = $derived(
 		sharedData?.key === sharedKey && sharedData.failure === 'niet'
-			? 'onvolledig: alleen de bronnen ertussen'
+			? 'gedeelde bronnen niet beschikbaar'
 			: null
 	);
 	// Soort and Relatie of a weergave of its own count what it draws, and its filter hides it.
@@ -725,7 +733,8 @@
 			const k = filterGroupOf(r.collection, r.node.key, r.node.props);
 			if (k) kinds[k] = (kinds[k] ?? 0) + 1;
 		}
-		if (sharedState.judgments) kinds.uitspraken = (kinds.uitspraken ?? 0) + sharedState.judgments;
+		const judgments = sharedState.judgments.reduce((n, j) => n + j.total, 0);
+		if (judgments) kinds.uitspraken = (kinds.uitspraken ?? 0) + judgments;
 		const relations: Partial<Record<Relation, number>> = {};
 		for (const r of sharedState.rows)
 			for (const rel of r.relations) relations[rel] = (relations[rel] ?? 0) + 1;

@@ -12,7 +12,8 @@ import type { GraphStore } from '$lib/graph/store/types';
 import { nodeToGraphNode } from '$lib/graph/types';
 import { deelVan, syncOn, isOn, type Netwerk, type NetwerkEntry } from '$lib/selection/netwerk';
 import { showNetworkFailure } from '$lib/stores/netwerk-melding';
-import { parseNodeId } from '$lib/vocabulary';
+import { parseNodeId, type Relation } from '$lib/vocabulary';
+import type { DirectLink } from '$lib/network/shared';
 
 /** The most bronnen `/api/paths` takes in one request. */
 export const PATHS_MAX = 5;
@@ -142,6 +143,32 @@ export class NetwerkComposer {
 			this.#full.set(id, request);
 		}
 		return request;
+	}
+
+	/**
+	 * The verbindingen between the chosen bronnen themselves (`ids`, as the netwerk names them),
+	 * read from their full nodes, by canvas id: `members/d MEMBER_OF factions/v`. For Verband.
+	 */
+	async directLinks(ids: readonly string[]): Promise<DirectLink[]> {
+		const responses = (await Promise.allSettled(ids.map((id) => this.#fullOf(id))))
+			.filter((r): r is PromiseFulfilledResult<NodeResponse> => r.status === 'fulfilled')
+			.map((r) => r.value);
+		const chosen = new Set(responses.map(canvasIdOf));
+		const seen = new Set<string>();
+		const links: DirectLink[] = [];
+		for (const r of responses) {
+			const self = canvasIdOf(r);
+			for (const b of r.neighbors?.buckets ?? [])
+				for (const item of b.items) {
+					if (item.id === self || !chosen.has(item.id)) continue;
+					const [from, to] = b.direction === 'inbound' ? [item.id, self] : [self, item.id];
+					const key = `${from}|${to}|${b.relation}`;
+					if (seen.has(key)) continue;
+					seen.add(key);
+					links.push({ from, to, relation: b.relation as Relation });
+				}
+		}
+		return links;
 	}
 
 	/** A chosen bron's light node (one neighbour per bucket), or its full one where that is in. */
