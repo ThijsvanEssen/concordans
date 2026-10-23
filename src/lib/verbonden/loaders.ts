@@ -1031,7 +1031,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 
 	// The laws whose articles refer to this law's articles, or the other way round, which way
 	// counted on the row (`17 artikelen verwijzen naar deze wet`, hoe.ts). One issued under the
-	// other (`basis`) stands under Gebaseerd op deze wet or Grondslag, and not here again.
+	// other (`basis`) stands under Uitvoeringsregelingen or Grondslag, and not here again.
 	'instrument-related': async ({ node, signal }) => {
 		const bwb = bwbOf(node);
 		if (!bwb) return { rows: [] };

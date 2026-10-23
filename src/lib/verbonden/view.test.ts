@@ -86,7 +86,7 @@ describe('the panel under the filter', () => {
 	it('counts what is shown and what is hidden, and never leaves an empty panel silent', () => {
 		expect(countLine(groups, EMPTY_FILTER)).toBe('1.098 verbindingen');
 		const f = { ...EMPTY_FILTER, bronnen: new Set(['artikelen'] as const) };
-		expect(countLine(groups, f)).toBe('34 van 1.098 verbindingen');
+		expect(countLine(groups, f)).toBe('34 van de 1.098 verbindingen');
 		// A group the API cut off without a total: the sum is at least.
 		const afgekapt = [
 			...groups,

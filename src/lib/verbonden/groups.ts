@@ -369,7 +369,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		{
 			// The AMvB's and regelingen whose Gelet op names an article of the law (Thijs, 13 Oct).
 			id: 'based-on',
-			label: 'Gebaseerd op deze wet',
+			label: 'Uitvoeringsregelingen',
 			noun: 'regelingen',
 			load: 'instrument-delegated'
 		},

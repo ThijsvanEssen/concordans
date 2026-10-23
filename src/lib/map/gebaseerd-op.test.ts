@@ -1,5 +1,5 @@
 // Guard: a law's regulations read alike under a kept law in a map (MapRegelingen) and in its
-// group Gebaseerd op deze wet in Verbonden: one request, one row per regulation, the same
+// group Uitvoeringsregelingen in Verbonden: one request, one row per regulation, the same
 // name, kind, day and articles (equal pages, equal experience).
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Schema } from '$lib/api/types';
@@ -96,7 +96,7 @@ beforeEach(() => {
 	});
 });
 
-describe('the list "Gebaseerd op deze wet"', () => {
+describe('the list "Uitvoeringsregelingen"', () => {
 	it('names the articles a regulation rests on once each, with their leden', () => {
 		expect(grondslagArtikelen(cbw.items![0].articles)).toBe('art. 16 lid 1 en 7, 21 lid 5, 24');
 		// A BW article with its book.
@@ -113,7 +113,7 @@ describe('the list "Gebaseerd op deze wet"', () => {
 		expect(fake.asked('/api/instruments/{bwb_id}/delegated')).toContainEqual({
 			path: { bwb_id: 'BWBR0052872' }
 		});
-		expect(kaart.titel).toBe('Gebaseerd op deze wet');
+		expect(kaart.titel).toBe('Uitvoeringsregelingen');
 		expect(groep.total).toBe(2);
 		expect(kaart.regelingen.map((r) => [r.id, r.naam, r.soort, r.datum, r.artikelen])).toEqual(
 			groep.rows.map((r) => [
@@ -163,7 +163,7 @@ describe('the list "Gebaseerd op deze wet"', () => {
 	});
 });
 
-describe('the list "Gebaseerd op deze wet", under the AMvB and beside it', () => {
+describe('the list "Uitvoeringsregelingen", under the AMvB and beside it', () => {
 	const besluit = cbw.items![0];
 	const verwijzend = (n: string) => ({
 		id: `articles/bwbr0052875_${n}`,

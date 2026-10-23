@@ -132,7 +132,7 @@ export function countLine(
 	const heel = atLeast(total, minstens(groups));
 	return shown === total
 		? `${heel} ${noun}`
-		: `${shownLabel(groups, f, wachtend)} van ${heel} ${noun}`;
+		: `${shownLabel(groups, f, wachtend)} van de ${heel} ${noun}`;
 }
 
 // A group the API cut off counts what it holds: the sum is more, as its own `meer dan 30`.
