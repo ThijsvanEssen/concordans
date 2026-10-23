@@ -118,45 +118,46 @@
 	<!-- The status, then the actions on a row of their own: the words have the column's width,
 	     so a phrase that comes late (the memorie, the bill) does not push the actions or wrap
 	     beside them (Thijs, 10 Oct, approved suggestion 5). On every reader in this place. -->
+	<!-- The actions of the stuk in one row, right under its title and before its status and
+	     facts, on every reader alike (A190, Thijs 23 Oct; E2: a frame for an action or a menu):
+	     what only this kind has, Bewaar and Citeer, then Zoek in dit stuk. -->
+	<span class="reader-status__acties">
+		{@render extra?.()}
+		<KopActies
+			bewaar={acties.bewaar}
+			wat={acties.wat ?? ''}
+			cite={cited ? (acties.cite ?? []) : []}
+			naam={acties.naam ?? ''}
+			bron={acties.bron ?? null}
+			tekst={acties.tekst}
+			follow={acties.follow ?? null}
+			atom={acties.atom ?? null}
+		/>
+		{#if finder?.find}
+			<!-- A tool of the text, not an action on the bron: bare, with its glass, at the row's
+			     right edge (E2: a frame for an action or a menu; Thijs chose variant x, 23 Oct). -->
+			<button
+				type="button"
+				class="find-btn raakvlak"
+				class:is-active={finder.search.open}
+				aria-expanded={finder.search.open}
+				onclick={() => finder.search.toggle()}
+				><svg
+					width="14"
+					height="14"
+					viewBox="0 0 16 16"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.6"
+					aria-hidden="true"><circle cx="7" cy="7" r="4.8" /><path d="M10.6 10.6 14 14" /></svg
+				>Zoek in dit stuk</button
+			>
+		{/if}
+	</span>
 	<div class="reader-status">
 		<div class="reader-status__woorden" class:plek={statusHeld}>{@render statusLine?.()}</div>
 		{#if later || laterPlek}<div class="reader-status__later">{@render later?.()}</div>{/if}
 		{#if facts}<div class="reader-facts">{@render facts()}</div>{/if}
-		<!-- The actions of the stuk in one row (A190, E2: a frame for an action or a menu): what
-		     only this kind has, Bewaar and Citeer, then Zoek in dit stuk. -->
-		<span class="reader-status__acties">
-			{@render extra?.()}
-			<KopActies
-				bewaar={acties.bewaar}
-				wat={acties.wat ?? ''}
-				cite={cited ? (acties.cite ?? []) : []}
-				naam={acties.naam ?? ''}
-				bron={acties.bron ?? null}
-				tekst={acties.tekst}
-				follow={acties.follow ?? null}
-				atom={acties.atom ?? null}
-			/>
-			{#if finder?.find}
-				<!-- A tool of the text, not an action on the bron: bare, with its glass, at the row's
-				     right edge (E2: a frame for an action or a menu; Thijs chose variant x, 23 Oct). -->
-				<button
-					type="button"
-					class="find-btn raakvlak"
-					class:is-active={finder.search.open}
-					aria-expanded={finder.search.open}
-					onclick={() => finder.search.toggle()}
-					><svg
-						width="14"
-						height="14"
-						viewBox="0 0 16 16"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.6"
-						aria-hidden="true"><circle cx="7" cy="7" r="4.8" /><path d="M10.6 10.6 14 14" /></svg
-					>Zoek in dit stuk</button
-				>
-			{/if}
-		</span>
 	</div>
 	{#if children}<div class="reader-rijen">{@render children()}</div>{/if}
 </div>
@@ -300,12 +301,13 @@
 	.reader-status__woorden :global(p) {
 		margin: 0;
 	}
+	/* The row of actions between the title and the status, a step from each. */
 	.reader-status__acties {
-		align-self: stretch;
-		display: inline-flex;
+		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--s-2);
+		margin: var(--s-3) 0;
 	}
 	/* On a touch screen and below 768 the lines of the status and of the actions stand apart enough that
 	   the 44 px of their controls (.btn, .tekstmenu__knop) do not meet. */
@@ -315,6 +317,7 @@
 		}
 		.reader-status__acties {
 			row-gap: var(--s-5);
+			margin-bottom: var(--s-4);
 		}
 	}
 	/* Zoek in dit stuk: the quiet tool at the right of Bewaar and Citeer, in the letter of the
