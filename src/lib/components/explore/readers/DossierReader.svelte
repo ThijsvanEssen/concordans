@@ -110,7 +110,13 @@
 		/>{/if}
 </svelte:head>
 
-<ReaderFrame state={dossier.state} what="Dossier" retry={dossier.retry}>
+<!-- Verbonden under the text waits for the procedure (ReaderFrame `pending`, T9). -->
+<ReaderFrame
+	state={dossier.state}
+	what="Dossier"
+	retry={dossier.retry}
+	pending={timeline.state.status === 'loading'}
+>
 	{#snippet children(d)}
 		<div class="r-dossier">
 			<ReaderHead

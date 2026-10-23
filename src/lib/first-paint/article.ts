@@ -17,6 +17,7 @@ import {
 	originVerbOf,
 	ownExplanation,
 	versionLabelOf,
+	plainSince,
 	type Explanatory
 } from '$lib/text/article-head';
 import { articleCitation } from '$lib/text/cite';
@@ -139,6 +140,17 @@ export function articleColumn(v: ArticlePaint, k: Classes): string {
 		euAct: !!euAct,
 		validFrom: current?.from ?? textOf(node.valid_from)
 	});
+	const textSince = plainSince({
+		stubLabel: null,
+		shown: null,
+		showStatus,
+		officialId: a.official_id,
+		validity,
+		repealed: !!a.repealed,
+		lapseFrom: lapse?.from,
+		euAct: !!euAct,
+		validFrom: current?.from ?? textOf(node.valid_from)
+	});
 	const wordingDossier = onScreen?.first.amended_by?.dossiers?.[0] ?? null;
 	const since = onScreen?.from ?? null;
 	const versionKeys = onScreen?.versions.map((x) => x.key) ?? [];
@@ -184,14 +196,24 @@ export function articleColumn(v: ArticlePaint, k: Classes): string {
 			{ versions: { state: 'not_in_source', as_of: euAct?.signed_on ?? null } },
 			euAct?.official_url ? 'EUR-Lex' : undefined
 		);
-	} else if (label) {
+	} else if (textSince === null && label) {
 		status += `<span class="head__stand ${k.reader}">${esc(label)}</span>`;
 	}
 	status += coverage(v.completeness);
-	if (wordings.length > 1)
-		status += `<span class="menu ${k.reader}"><button type="button" class="btn ${k.reader}" tabindex="-1">${formatCount(wordings.length)} tekstversies${caret}</button></span>`;
-	if (explanatory)
-		status += `<a class="head__mvt ${k.reader}">${esc(explanatoryLabel(explanatory))}<span class="head__mvt-mark ${k.reader}" aria-hidden="true">↓</span></a>`;
+	// The toelichting a quiet tool after Zoek in dit stuk, as the reader has it (A190).
+	const tools = explanatory
+		? `<a class="head__mvt ${k.reader}">${esc(explanatoryLabel(explanatory))}<span class="head__mvt-mark ${k.reader}" aria-hidden="true">↓</span></a>`
+		: '';
+	// The strip of its facts (Feiten strip): the day of its text, the peildatum, its versions.
+	const cells =
+		(textSince ? `<div class="field"><dt>Tekst sinds</dt><dd>${esc(textSince)}</dd></div>` : '') +
+		(euAct ? '' : peildatum(validity, onScreen?.from ?? null, k, caret)) +
+		(wordings.length > 1
+			? `<div class="field"><dt>Tekstversies</dt><dd class="versies ${k.reader}"><span class="menu ${k.reader}"><button type="button" class="btn ${k.reader}" tabindex="-1">${formatCount(wordings.length)}${caret}</button></span></dd></div>`
+			: '');
+	const facts = cells
+		? `<div class="reader-facts ${k.head}" data-later><div class="strip-edge ${k.facts}"><dl class="feiten strip ${k.facts}" aria-label="Kenmerken">${cells}</dl></div></div>`
+		: '';
 
 	const dossiers = uniqueBy(onScreen?.first.amended_by?.dossiers ?? [], (d) => d.key);
 	const origin = dossiers.length
@@ -220,12 +242,13 @@ export function articleColumn(v: ArticlePaint, k: Classes): string {
 		`<div class="reader-head ${k.head}">` +
 		`<div class="reader-line reader-line--plaats ${k.head}">${placeLine}${nav}</div>` +
 		`<h1 class="reader-title ${k.head}">${titleParts(headTitle(a, recorded)).map(esc).join('<wbr>')}</h1>` +
-		`<span class="reader-status__acties ${k.head}" data-later>${compare}<span class="kop-acties ${k.actions}"><span class="ev-actions"></span></span><button type="button" class="find-btn raakvlak ${k.head}" tabindex="-1"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.8"/><path d="M10.6 10.6 14 14"/></svg>Zoek in dit stuk</button></span>` +
+		`<span class="reader-status__acties ${k.head}" data-later>${compare}<span class="kop-acties ${k.actions}"><span class="ev-actions"></span></span><button type="button" class="find-btn raakvlak ${k.head}" tabindex="-1"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.8"/><path d="M10.6 10.6 14 14"/></svg>Zoek<span class="find-btn__rest ${k.head}"> in dit stuk</span></button>${tools}</span>` +
 		`<div class="reader-status ${k.head}">` +
-		`<div class="reader-status__woorden ${k.head}" data-later>${status}</div>` +
+		(status ? `<div class="reader-status__woorden ${k.head}" data-later>${status}</div>` : '') +
+		facts +
 		`<div class="reader-status__later ${k.head}"></div>` +
 		'</div>' +
-		`<div class="reader-rijen ${k.head}" data-later>${euAct ? '' : peildatum(validity, onScreen?.from ?? null, k, caret)}${origin}</div>` +
+		`<div class="reader-rijen ${k.head}" data-later>${origin}</div>` +
 		'</div>';
 
 	return (
@@ -262,8 +285,8 @@ function belongsTo(law: LawSource | undefined, props: Record<string, unknown>, k
 	return `<nav class="behoort ${k.belongsTo}"><dl class="regels ${k.belongsTo}"><div class="regel ${k.belongsTo}"><a class="soort raakvlak ${k.belongsTo}">${ARTICLES_SOURCE}</a><span class="scheiding ${k.belongsTo}" aria-hidden="true">›</span><dt class="term ${k.belongsTo}">${esc(term)}</dt><dd class="${k.belongsTo}"><ol class="lagen${folded ? ' gevouwen' : ''} ${k.belongsTo}">${items}</ol></dd></div></dl></nav>`;
 }
 
-/** The peildatum of the law (WholeLawReaderPeildatum): the text of today, or of an expired
- *  law its last one. */
+/** The peildatum of the law as a cell of the strip (WholeLawReaderPeildatum `asFact`): the
+ *  text of today, or of an expired law its last one. */
 function peildatum(
 	validity: Validity | null | undefined,
 	last: string | null,
@@ -273,7 +296,7 @@ function peildatum(
 	const expired = validity?.state === 'expired';
 	const label = peildatumLabel(expired);
 	const day = langeDatum(expired ? last : vandaag());
-	return `<div class="whole-peil as-fact ${k.peil}"><span class="${k.peil}">${label}</span><div class="tekstmenu ${k.textMenu}"><button type="button" class="btn tekstmenu__knop ${k.textMenu}" tabindex="-1">${esc(day)}${caret}</button></div></div>`;
+	return `<div class="field ${k.peil}"><dt class="${k.peil}">${label}</dt><dd class="as-fact ${k.peil}"><div class="tekstmenu ${k.textMenu}"><button type="button" class="btn tekstmenu__knop ${k.textMenu}" tabindex="-1">${esc(day)}${caret}</button></div></dd></div>`;
 }
 
 type Formulas = { start: number; end: number }[];

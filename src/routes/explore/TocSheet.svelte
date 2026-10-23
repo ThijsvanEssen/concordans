@@ -75,11 +75,11 @@
 	.close:hover {
 		color: var(--ink);
 	}
-	/* A finger's target: 32 px at least. */
+	/* A finger's target: 44 px (UX-toets T9). */
 	@media (pointer: coarse), (max-width: 768px) {
 		.close {
-			min-height: var(--s-6);
-			min-width: var(--s-6);
+			min-height: var(--veld-h-raak);
+			min-width: var(--veld-h-raak);
 		}
 	}
 	/* The sheet is called Inhoud already: the column's own caption would say it twice. */

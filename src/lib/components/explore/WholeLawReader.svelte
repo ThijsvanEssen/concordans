@@ -2,7 +2,8 @@
 	import { bewaarItem } from '$lib/map/map';
 	import { langeDatum, onDate, untilDate, vandaag } from '$lib/text/datum';
 	import { report } from '$lib/api/errors';
-	import { untrack } from 'svelte';
+	import { getContext, untrack } from 'svelte';
+	import { WAIT_KEY, type FrameWait } from './search-state.svelte';
 	import { getArticleDetail, getLawBasis } from '$lib/api/articles';
 	import { grondslagKopregel, type KopDeel } from '$lib/text/delegaties';
 	import {
@@ -159,6 +160,10 @@
 			(e) => report('Grondslag', e)
 		);
 	});
+
+	// Verbonden under the text waits for the first page of articles (ReaderFrame, T9).
+	const wait = getContext<FrameWait | undefined>(WAIT_KEY);
+	$effect(() => wait?.(() => status === 'loading'));
 
 	const headFacts = $derived(
 		lawHeadFacts(lawDetail, {

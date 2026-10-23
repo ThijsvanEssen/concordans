@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { NOT_IN_DATA, lacks, notHeld } from '$lib/text/coverage';
+	import { NOT_IN_DATA, coverageLine, lacks, notHeld } from '$lib/text/coverage';
+	import Feiten from '$lib/components/ui/Feiten.svelte';
+	import Veld from '$lib/components/ui/Veld.svelte';
 	import { capitalize, plural } from '$lib/text/words';
 	import { isDay, langeDatum, onDate, asOfDate, sinceDate, untilDate } from '$lib/text/datum';
 	import { bewaarItem } from '$lib/map/map';
@@ -56,6 +58,7 @@
 		originVerbOf,
 		ownExplanation,
 		versionLabelOf,
+		plainSince,
 		type Explanatory
 	} from '$lib/text/article-head';
 	import Validity from '$lib/components/ui/Validity.svelte';
@@ -77,7 +80,7 @@
 		next,
 		place = [],
 		lidCounts = new Map(),
-		lidTellend = false,
+		lidCounting = false,
 		billCount = 0,
 		billMore = false,
 		filter,
@@ -91,7 +94,7 @@
 		place?: Division[];
 		lidCounts?: Map<string, number>;
 		/** The counts per lid are still on their way. */
-		lidTellend?: boolean;
+		lidCounting?: boolean;
 		billCount?: number;
 		billMore?: boolean;
 		filter?: VerbondenFilter;
@@ -319,6 +322,35 @@
 	const validity = $derived(validityOf(loaded?.article));
 	const showStatus = $derived(!shown && !stubLabel && statusOf(validity) !== null);
 	const expired = $derived(validity?.state === 'expired');
+
+	// The day of its text as a fact of the strip, where the stand is no sentence (A190).
+	const since = $derived(
+		plainSince({
+			stubLabel,
+			shown,
+			showStatus,
+			officialId: loaded?.article.official_id,
+			validity,
+			repealed: !!loaded?.article.repealed,
+			lapseFrom: lapse?.from,
+			euAct: !!euAct,
+			validFrom
+		})
+	);
+	/** The cell of the peildatum keeps its room while the law's versions come (T9). */
+	const peildatumKept = $derived(!euAct && lawVersions.state.status === 'loading');
+	const withFacts = $derived(!!since || lawDays.length > 0 || peildatumKept || wordings.length > 1);
+	/** Whether the status says anything besides the strip: no empty line (A190). */
+	const hasStatus = (d: NonNullable<typeof loaded>) =>
+		showStatus ||
+		(since === null && (versionLabel === null || !!versionLabel)) ||
+		!!coverageLine(d.completeness, {
+			shown: {
+				references: d.citations.filter((c) => c.target).length + (d.references?.length ?? 0),
+				definitions: d.definitions?.length ?? 0
+			}
+		}) ||
+		versionState?.status === 'error';
 
 	const versionLabel = $derived(
 		versionLabelOf({
@@ -612,6 +644,133 @@
 	{#snippet children({ detail: d })}
 		{@const a = d.article}
 		{@const placeLine = placeOf(place, d.instrument?.display_name ?? law?.citationTitle)}
+		{#snippet articleStatus()}
+			{#if showStatus}
+				<Validity {validity} opvolger={!d.successors?.length} />
+			{:else if versionLabel === null}
+				<Coverage
+					coverage={{ versions: { state: 'not_in_source', as_of: euAdopted } }}
+					bron={euSource}
+				/>
+			{:else if since === null && versionLabel}
+				<span class="head__stand" class:is-old={!!shown}>{versionLabel}</span>
+			{/if}
+			<!-- What of its references is linked; of a law of the Staatsblad also what of its
+			     law's definitions is read. -->
+			<Coverage
+				coverage={d.completeness}
+				shown={{
+					references: d.citations.filter((c) => c.target).length + (d.references?.length ?? 0),
+					definitions: d.definitions?.length ?? 0
+				}}
+			/>
+			{#if versionState?.status === 'error'}
+				<LoadState state={versionState} what="De tekstversies" plural retry={article.retry} />
+			{/if}
+		{/snippet}
+		<!-- The stand of the article as the law's, a strip of facts (A190, UX-toets T9): the day
+		     of its text, the text of which day, its versions. The cell of the peildatum keeps its
+		     place while the law's versions come (T9). -->
+		{#snippet articleFacts()}
+			<Feiten strip label="Kenmerken">
+				{#if since}<Veld label="Tekst sinds" value={since} />{/if}
+				{#if lawDays.length > 0 || peildatumKept}
+					<WholeLawReaderPeildatum
+						asFact
+						versions={lawDays}
+						peildatum={isDay(peildatum) ? peildatum : null}
+						choose={choosePeildatum}
+						verlopen={expired}
+					/>
+				{/if}
+				{#if wordings.length > 1}
+					<div class="field">
+						<dt>Tekstversies</dt>
+						<dd class="versies">
+							<span
+								class="menu"
+								use:menu={{ open: versionMenu, close: () => (versionMenu = false) }}
+							>
+								<button
+									type="button"
+									class="btn"
+									aria-haspopup="menu"
+									aria-expanded={versionMenu}
+									onclick={() => (versionMenu = !versionMenu)}
+									>{formatCount(wordings.length)}<Caret open={versionMenu} /></button
+								>
+								{#if versionMenu}
+									<!-- One place for the versions: a row reads that text, its change
+				     opens the comparison with the text before it. -->
+									<div class="pop pop--versions" role="menu" aria-label="Tekstversies">
+										<div class="pop__cols" aria-hidden="true">
+											<span>Lezen</span><span>Wat veranderde</span>
+										</div>
+										{#each [...wordings].reverse() as w (w.index)}
+											<div class="pop__row">
+												<button
+													type="button"
+													role="menuitemradio"
+													aria-checked={(shownIndex ?? (current ?? lapse)?.index) === w.index}
+													class="tekstmenu__item"
+													onclick={() => {
+														shownIndex = w === current || w === lapse ? null : w.index;
+														versionMenu = false;
+														// Reading one text folds the comparison away; a text chosen here
+														// is no longer that of the peildatum.
+														if (comparing || crossComparing || peildatum)
+															go({
+																versies: null,
+																vergelijk: null,
+																weergave: null,
+																peildatum: null
+															});
+													}}
+													>{w.lapsed
+														? `Vervallen ${asOfDate(w.from)}`
+														: `${w === current ? `Geldend, ${sinceDate(w.from)}` : langeDatum(w.from)}${w.until ? ` ${untilDate(w.until)}` : ''}`}</button
+												>
+												{#if w.index > 0}
+													<a
+														class="pop__change"
+														role="menuitem"
+														href={compareHref(w.index - 1, w.index)}
+														data-sveltekit-noscroll
+														title="Vergelijk met de tekst ervoor"
+														onclick={() => (versionMenu = false)}>{w.summary} →</a
+													>
+												{:else}
+													<span class="pop__change pop__change--none">oudste tekst</span>
+												{/if}
+											</div>
+										{/each}
+									</div>
+								{/if}
+							</span>
+						</dd>
+					</div>
+				{/if}
+			</Feiten>
+		{/snippet}
+		{#snippet articleTools()}
+			<!-- Its toelichting, as the last phrase of the status: it comes
+		     after the text and fill in without moving it (Orchestrator, 10 Oct). -->
+			{#if explanatory && explanatoryHref}
+				<a
+					class="head__mvt"
+					class:is-open={explanatoryOpen}
+					href={explanatoryHref}
+					data-sveltekit-noscroll
+					aria-expanded={explanatoryOpen}
+					title={explanatoryOpen
+						? 'Sluiten'
+						: `${explanatory.title ?? explanatory.kind ?? 'Toelichting'}: onder het artikel lezen`}
+					>{explanatoryLabel(explanatory)}<span class="head__mvt-mark" aria-hidden="true"
+						>{explanatoryOpen ? '×' : '↓'}</span
+					></a
+				>
+			{/if}
+		{/snippet}
 		<!-- Wet › hoofdstuk › afdeling stands in the band Behoort bij; the head keeps the heading
 		     of the innermost layer only, which the band does not say. -->
 		<ReaderHead
@@ -629,104 +788,13 @@
 				tekst: () => a.text ?? ''
 			}}
 			laterPlek
+			statusLine={hasStatus(d) ? articleStatus : undefined}
+			facts={withFacts ? articleFacts : undefined}
+			tools={articleTools}
 		>
 			{#snippet nav()}
 				{#if prev || next}
 					<nav class="reader-nav" aria-label="Artikelen">{@render steps('', 'kop')}</nav>
-				{/if}
-			{/snippet}
-			{#snippet statusLine()}
-				{#if showStatus}
-					<Validity {validity} opvolger={!d.successors?.length} />
-				{:else if versionLabel === null}
-					<Coverage
-						coverage={{ versions: { state: 'not_in_source', as_of: euAdopted } }}
-						bron={euSource}
-					/>
-				{:else if versionLabel}
-					<span class="head__stand" class:is-old={!!shown}>{versionLabel}</span>
-				{/if}
-				<!-- What of its references is linked; of a law of the Staatsblad also what of its
-				     law's definitions is read. -->
-				<Coverage
-					coverage={d.completeness}
-					shown={{
-						references: d.citations.filter((c) => c.target).length + (d.references?.length ?? 0),
-						definitions: d.definitions?.length ?? 0
-					}}
-				/>
-				{#if wordings.length > 1}
-					<span class="menu" use:menu={{ open: versionMenu, close: () => (versionMenu = false) }}>
-						<button
-							type="button"
-							class="btn"
-							aria-haspopup="menu"
-							aria-expanded={versionMenu}
-							onclick={() => (versionMenu = !versionMenu)}
-							>{wordings.length} tekstversies<Caret open={versionMenu} /></button
-						>
-						{#if versionMenu}
-							<!-- One place for the versions: a row reads that text, its change
-						     opens the comparison with the text before it. -->
-							<div class="pop pop--versions" role="menu" aria-label="Tekstversies">
-								<div class="pop__cols" aria-hidden="true">
-									<span>Lezen</span><span>Wat veranderde</span>
-								</div>
-								{#each [...wordings].reverse() as w (w.index)}
-									<div class="pop__row">
-										<button
-											type="button"
-											role="menuitemradio"
-											aria-checked={(shownIndex ?? (current ?? lapse)?.index) === w.index}
-											class="tekstmenu__item"
-											onclick={() => {
-												shownIndex = w === current || w === lapse ? null : w.index;
-												versionMenu = false;
-												// Reading one text folds the comparison away; a text chosen here
-												// is no longer that of the peildatum.
-												if (comparing || crossComparing || peildatum)
-													go({ versies: null, vergelijk: null, weergave: null, peildatum: null });
-											}}
-											>{w.lapsed
-												? `Vervallen ${asOfDate(w.from)}`
-												: `${w === current ? `Geldend, ${sinceDate(w.from)}` : langeDatum(w.from)}${w.until ? ` ${untilDate(w.until)}` : ''}`}</button
-										>
-										{#if w.index > 0}
-											<a
-												class="pop__change"
-												role="menuitem"
-												href={compareHref(w.index - 1, w.index)}
-												data-sveltekit-noscroll
-												title="Vergelijk met de tekst ervoor"
-												onclick={() => (versionMenu = false)}>{w.summary} →</a
-											>
-										{:else}
-											<span class="pop__change pop__change--none">oudste tekst</span>
-										{/if}
-									</div>
-								{/each}
-							</div>
-						{/if}
-					</span>
-				{:else if versionState?.status === 'error'}
-					<LoadState state={versionState} what="De tekstversies" plural retry={article.retry} />
-				{/if}
-				<!-- Its toelichting, as the last phrase of the status: it comes
-				     after the text and fill in without moving it (Orchestrator, 10 Oct). -->
-				{#if explanatory && explanatoryHref}
-					<a
-						class="head__mvt"
-						class:is-open={explanatoryOpen}
-						href={explanatoryHref}
-						data-sveltekit-noscroll
-						aria-expanded={explanatoryOpen}
-						title={explanatoryOpen
-							? 'Sluiten'
-							: `${explanatory.title ?? explanatory.kind ?? 'Toelichting'}: onder het artikel lezen`}
-						>{explanatoryLabel(explanatory)}<span class="head__mvt-mark" aria-hidden="true"
-							>{explanatoryOpen ? '×' : '↓'}</span
-						></a
-					>
 				{/if}
 			{/snippet}
 			<!-- What is coming comes with Verbonden, after the text: on its own line, kept from
@@ -754,18 +822,6 @@
 					>
 				{/if}
 			{/snippet}
-			{#if lawDays.length > 0}
-				<WholeLawReaderPeildatum
-					versions={lawDays}
-					peildatum={isDay(peildatum) ? peildatum : null}
-					choose={choosePeildatum}
-					verlopen={expired}
-				/>
-			{:else if !euAct && lawVersions.state.status === 'loading'}
-				<!-- The line of the peildatum keeps its room while the law's versions are asked
-				     (/versions is slow): the text under it does not move when it comes (T9). -->
-				<div class="peil-plek" aria-hidden="true"></div>
-			{/if}
 			<!-- Where the text came from: the wet that made it, its toelichting, the
 				     earlier texts. -->
 			{#if versionDossiers.length > 0}
@@ -902,7 +958,7 @@
 					delegaties={shownVersion ? [] : (d.delegations ?? [])}
 					grondslag={() => getDelegated(bwbId, articleNumber)}
 					counts={shown ? new Map() : lidCounts}
-					tellend={!shown && lidTellend}
+					tellend={!shown && lidCounting}
 					{lidHref}
 					{citation}
 					bewaar={citation
@@ -930,14 +986,27 @@
 <style>
 	/* Under the status (ReaderHead): where the text came from, what is coming, each quieter
 	   than the one before. */
-	/* The room of the line of the peildatum (WholeLawReaderPeildatum: its margin, a control). */
-	.peil-plek {
-		margin-top: var(--s-3);
-		min-height: var(--veld-h);
+	/* The versions in the strip: their count a value, as the peildatum's day (A190). */
+	.versies :global(.btn) {
+		height: auto;
+		min-height: 0;
+		padding: 0;
+		gap: var(--s-1);
+		border: 0;
+		background: none;
+		font-family: var(--font-serif);
+		font-size: var(--t-body-2);
+		font-weight: 400;
+		color: var(--ink);
+		text-decoration: underline dotted var(--rule-strong);
+		text-underline-offset: 4px;
 	}
-	/* A finger's target there (WholeLawReaderPeildatum). */
+	.versies :global(.btn:hover),
+	.versies :global(.btn[aria-expanded='true']) {
+		text-decoration-color: var(--ink);
+	}
 	@media (pointer: coarse), (max-width: 768px) {
-		.peil-plek {
+		.versies :global(.btn) {
 			min-height: var(--veld-h-raak);
 		}
 	}
@@ -1127,6 +1196,14 @@
 
 	.reader-nav-link {
 		color: var(--ink-3);
+	}
+	/* Below 768 a line of 44 px, the target the size of what it looks like (UX-toets T9). */
+	@media (pointer: coarse), (max-width: 768px) {
+		.reader-nav-link {
+			display: inline-flex;
+			align-items: center;
+			min-height: var(--veld-h-raak);
+		}
 	}
 	.reader-nav-link:hover {
 		color: var(--ink);

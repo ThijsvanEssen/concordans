@@ -34,6 +34,7 @@
 		laterPlek = false,
 		statusHeld = false,
 		facts,
+		tools,
 		acties,
 		extra,
 		children
@@ -70,6 +71,9 @@
 		/** The facts of the bron as a strip of label and value (Feiten `strip`): in force since,
 		 * the text of which day, its articles, how often it is cited. */
 		facts?: Snippet;
+		/** A quiet tool of the text after Zoek in dit stuk: an article's toelichting, which opens
+		 * under it. */
+		tools?: Snippet;
 		/** The actions of the head: Bewaar always, Citeer where the kind is cited. */
 		acties: Acties;
 		/** A control only this kind has, before the actions: Vergelijken. */
@@ -150,17 +154,20 @@
 					stroke="currentColor"
 					stroke-width="1.6"
 					aria-hidden="true"><circle cx="7" cy="7" r="4.8" /><path d="M10.6 10.6 14 14" /></svg
-				>Zoek in dit stuk</button
+				>Zoek<span class="find-btn__rest"> in dit stuk</span></button
 			>
 		{/if}
+		{@render tools?.()}
 	</span>
 	<div class="reader-status">
 		<!-- The words of the status where there are any or their room is kept: no empty line. -->
 		{#if statusLine || statusHeld}<div class="reader-status__woorden" class:plek={statusHeld}>
 				{@render statusLine?.()}
 			</div>{/if}
-		{#if later || laterPlek}<div class="reader-status__later">{@render later?.()}</div>{/if}
 		{#if facts}<div class="reader-facts">{@render facts()}</div>{/if}
+		<!-- What comes after the text (an article's bills) under the facts: its room is held at
+		     the foot of the head, before the text, not between the actions and the facts. -->
+		{#if later || laterPlek}<div class="reader-status__later">{@render later?.()}</div>{/if}
 	</div>
 	{#if children}<div class="reader-rijen">{@render children()}</div>{/if}
 </div>
@@ -233,9 +240,7 @@
 		}
 		/* On a phone the place and Vorig, Volgend stand on two rows. */
 		.reader-line--plaats {
-			min-height: calc(
-				var(--t-body-2) * var(--lh-snug) + var(--s-2) + var(--t-micro) * var(--lh-snug)
-			);
+			min-height: calc(var(--t-body-2) * var(--lh-snug) + var(--s-2) + var(--veld-h-raak));
 		}
 		.reader-place {
 			flex-basis: 100%;
@@ -322,6 +327,12 @@
 			row-gap: var(--s-5);
 			margin-bottom: var(--s-4);
 		}
+		/* The actions of the head are a finger's 44 px themselves, not only their target
+		   (UX-toets T9). */
+		.reader-status__acties :global(.btn),
+		.find-btn {
+			min-height: var(--veld-h-raak);
+		}
 	}
 	/* Zoek in dit stuk: the quiet tool at the right of Bewaar and Citeer, in the letter of the
 	   controls, underlined under the pointer and while the field is open. */
@@ -339,10 +350,19 @@
 		color: var(--ink-2);
 		cursor: pointer;
 	}
-	/* On a phone, where it wraps under Bewaar and Citeer, at the text's edge as they are. */
+	/* On a phone one word on the row of Bewaar and Citeer, not a line of its own (UX-toets
+	   T9); its whole name stays for a screen reader. */
 	@media (max-width: 640px) {
 		.find-btn {
-			margin-left: calc(-1 * var(--s-2));
+			padding: 0 var(--s-1);
+		}
+		.find-btn__rest {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+			white-space: nowrap;
 		}
 	}
 	.find-btn:hover,

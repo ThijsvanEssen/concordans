@@ -19,3 +19,19 @@ export const FIND_KEY = Symbol('find-in-text');
 
 /** What the frame gives its head: whether its text is long, and the state of the search. */
 export type FindInText = { readonly find: boolean; search: SearchState };
+
+/** The parts of a reader's text that are still on their way (the articles of a law, the
+ *  procedure of a dossier): until none is, the frame is not done and Verbonden, which stands
+ *  under the text on a narrow screen, waits (UX-toets T9: it stood there and was pushed). */
+export const WAIT_KEY = Symbol('frame-wait');
+
+/** What the frame gives a reader to say that a part of its text is still coming. */
+export type FrameWait = (pending: () => boolean) => () => void;
+
+/** The parts that are still coming, counted by the frame. */
+export class FramePending {
+	parts = $state<(() => boolean)[]>([]);
+	get any() {
+		return this.parts.some((p) => p());
+	}
+}

@@ -1342,7 +1342,7 @@
 						next={articleIndex >= 0 ? articleStep(articleIndex + 1) : undefined}
 						{place}
 						lidCounts={lidCountsOfArticle}
-						lidTellend={!geteld && !apiTellingen}
+						lidCounting={!geteld && !apiTellingen}
 						{billCount}
 						{billMore}
 						{filter}
@@ -1863,6 +1863,22 @@
 
 	.explore-read {
 		grid-template-columns: minmax(0, 1fr) 5px var(--panel);
+	}
+	/* A reader without contents (a kabinet, a lid, a fractie) and Verbonden stand together in
+	   the middle of the screen: the room is the same at both outer edges, none kept for
+	   contents (A190, UX-toets T9: 123 at the left, 32 at the right). The text column is the
+	   measure with its margins. */
+	@media (min-width: 1101px) {
+		.explore-read:not(.explore-read--with-nav) {
+			grid-template-columns:
+				minmax(0, calc(790px + var(--s-6) + var(--s-8)))
+				5px var(--panel);
+			justify-content: center;
+		}
+		/* No numbers hang at its left: the step to the edge is Verbonden's at the right. */
+		.explore-read:not(.explore-read--with-nav) .col--measure {
+			--reader-pad-left: var(--s-6);
+		}
 	}
 
 	.explore-read--with-nav {

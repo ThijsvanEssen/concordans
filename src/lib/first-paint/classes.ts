@@ -16,7 +16,8 @@ export const COMPONENTS: Record<Component, string> = {
 	actions: 'src/lib/components/explore/readers/KopActies.svelte',
 	dossierName: 'src/lib/bron/DossierNaam.svelte',
 	caret: 'src/lib/components/ui/Caret.svelte',
-	text: 'src/lib/components/articles/ArticleText.svelte'
+	text: 'src/lib/components/articles/ArticleText.svelte',
+	facts: 'src/lib/components/ui/Feiten.svelte'
 };
 
 /** A component the paint sets elements of. */
@@ -34,7 +35,8 @@ type Component =
 	| 'actions'
 	| 'dossierName'
 	| 'caret'
-	| 'text';
+	| 'text'
+	| 'facts';
 
 /** The scoping class of each component. */
 export type Classes = Record<Component, string>;

@@ -198,6 +198,7 @@ describe('ArticleReader, whether the article holds (besluit 30)', () => {
 		const { container } = render(ArticleReader, { node: bwNode });
 		await settle();
 		expect(container.querySelector('.validity')).toBeNull();
-		expect(container.querySelector('.head__stand')?.textContent).toMatch(/^Geldend recht/);
+		// The stand no sentence: the day of its text is a fact of the strip, as a law's (A190).
+		expect(container.querySelector('.head__stand')).toBeNull();
 	});
 });

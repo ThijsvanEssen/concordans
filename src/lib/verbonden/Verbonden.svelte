@@ -504,15 +504,22 @@
 		{/if}
 		<!-- A bron without verbindingen has no count: its one line says so below (A53), not a
 		     sentence of explanation (R7, UX-toets 0.79.43). -->
-		{#if !empty && (verbonden.groups.length > 0 || (!verbonden.loading && !verbonden.failed && verbonden.id))}
+		<!-- Its line stands from the start, empty until the count is in: the groups under it do
+		     not move when it comes (UX-toets T9, A190). -->
+		{#if !empty}
 			<span class="head__count"
-				>{alleVerbindingen != null
-					? `${formatCount(alleVerbindingen)} ${plural(alleVerbindingen, 'verbinding', 'verbindingen')}`
-					: vast && (!overview || kinds.length)
-						? countLine(vast, filter, wachtSet)
-						: overview && kinds.length
-							? `${formatCount(kindsTotal(kinds))} ${plural(kindsTotal(kinds), 'verbinding', 'verbindingen')}`
-							: ''}</span
+				>{!(
+					verbonden.groups.length > 0 ||
+					(!verbonden.loading && !verbonden.failed && verbonden.id)
+				)
+					? ''
+					: alleVerbindingen != null
+						? `${formatCount(alleVerbindingen)} ${plural(alleVerbindingen, 'verbinding', 'verbindingen')}`
+						: vast && (!overview || kinds.length)
+							? countLine(vast, filter, wachtSet)
+							: overview && kinds.length
+								? `${formatCount(kindsTotal(kinds))} ${plural(kindsTotal(kinds), 'verbinding', 'verbindingen')}`
+								: ''}</span
 			>
 		{/if}
 	</div>
@@ -889,6 +896,7 @@
 	}
 	.head__count {
 		flex-basis: 100%;
+		min-height: calc(var(--t-micro) * var(--lh-snug));
 		color: var(--ink-3);
 	}
 	.body {

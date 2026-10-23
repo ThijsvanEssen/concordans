@@ -8,13 +8,20 @@
 	// --reader-pad-top, --reader-pad-left, --reader-pad-right and --reader-max
 	// (explore/+page.svelte). So the text keeps its place and width whatever opens
 	// beside it, and the scrollbar keeps its gutter whether or not the text scrolls.
-	import { getContext, setContext, type Snippet } from 'svelte';
+	import { getContext, setContext, untrack, type Snippet } from 'svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import BehoortBij from '$lib/bron/BehoortBij.svelte';
 	import { BEHOORT_KEY, bandAlways } from '$lib/bron/behoort';
 	import WeergaveSchakelaar from '../WeergaveSchakelaar.svelte';
 	import { WEERGAVE_KEY, type Weergave } from '../weergave';
-	import { SearchState, FIND_KEY, type FindInText } from '../search-state.svelte';
+	import {
+		FramePending,
+		SearchState,
+		FIND_KEY,
+		WAIT_KEY,
+		type FindInText,
+		type FrameWait
+	} from '../search-state.svelte';
 	import { BandState } from './band-state.svelte';
 	import { consultedOn } from '$lib/text/datum';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -30,6 +37,7 @@
 		find = false,
 		loading,
 		foot,
+		pending: ownPending = false,
 		children: body
 	}: {
 		/** What the reader loads; without it the body stands at once. */
@@ -45,6 +53,8 @@
 		head?: Snippet;
 		/** In place of the skeleton: the reader's own rows, with their labels, while it loads. */
 		loading?: Snippet;
+		/** A part of the text still coming after the frame's own load (a dossier's procedure). */
+		pending?: boolean;
 		/** What stands after the body in every state (a part with a load of its own). */
 		foot?: Snippet;
 		children?: Snippet<[T]>;
@@ -74,6 +84,17 @@
 	// The head of the reader draws the button and the field (ReaderHead): the actions of the
 	// stuk stand together, not one above the band and the others under the title (A190).
 	const search = new SearchState();
+	// A part of the text that comes after the frame's own load holds data-klaar back.
+	const pending = new FramePending();
+	// Untracked: a reader registers in an effect, which must not depend on the list it changes.
+	setContext<FrameWait>(WAIT_KEY, (part) => {
+		untrack(() => pending.parts.push(part));
+		return () =>
+			untrack(() => {
+				pending.parts = pending.parts.filter((p) => p !== part);
+			});
+	});
+	const done = $derived(state.status === 'ready' && !ownPending && !pending.any);
 	setContext<FindInText>(FIND_KEY, {
 		get find() {
 			return find;
@@ -89,7 +110,7 @@
 </script>
 
 <!-- data-klaar: the text is here; under it on a narrow screen Verbonden may come (explore). -->
-<div class="reader-frame" data-klaar={state.status === 'ready' || undefined}>
+<div class="reader-frame" data-klaar={done || undefined}>
 	<div class="reader-frame__col" bind:this={search.column}>
 		<!-- The band and Netwerk/Tekst on one row, one rule under both over the full width
 		     (Thijs, 10 Oct: the rule stopped short of the toggle). -->
