@@ -50,12 +50,29 @@ const MAAND_KORT = [
 const NBSP = '\u00a0';
 const WEEKDAG = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];
 
-const DATE_IN_TEXT = new RegExp(`\\b(\\d{1,2}) (${MONTHS.join('|')})(?: (\\d{4}))?\\b`, 'gi');
+const DATE_IN_TEXT = new RegExp(
+	`\\b(\\d{1,2})[ \\u00a0](${MONTHS.join('|')})(?:[ \\u00a0](\\d{4}))?\\b`,
+	'gi'
+);
 
 /** A text with the dates in its words held together: `12 maart 2020` never breaks over two lines.
  *  A space for a no-break space, so every offset in the text stays. */
 export const holdDatesTogether = (text: string): string =>
 	text.replace(DATE_IN_TEXT, (d) => d.replaceAll(' ', NBSP));
+
+/** A text cut at its dates: `12 maart 2020` a part of its own, for a nowrap span. The parts
+ *  joined are the text, so no offset moves and nothing in the text changes. */
+export const splitDates = (text: string): { text: string; date: boolean }[] => {
+	const parts: { text: string; date: boolean }[] = [];
+	let start = 0;
+	for (const m of text.matchAll(DATE_IN_TEXT)) {
+		if (m.index > start) parts.push({ text: text.slice(start, m.index), date: false });
+		parts.push({ text: m[0], date: true });
+		start = m.index + m[0].length;
+	}
+	if (start < text.length) parts.push({ text: text.slice(start), date: false });
+	return parts;
+};
 
 type Dag = { j: number; m: number; d: number };
 

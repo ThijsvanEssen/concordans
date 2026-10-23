@@ -13,6 +13,7 @@
 	import { nootStand } from '$lib/text/voetnoten.svelte';
 	import { ownLawOf, ownArticleAnchor } from '$lib/text/own-article.svelte';
 	import { page } from '$app/state';
+	import { splitDates } from '$lib/text/datum';
 	import { segmentsOf, withMarkers, type Segment, type Span } from '$lib/text/segments';
 
 	let {
@@ -75,16 +76,21 @@
 	};
 </script>
 
+{#snippet plain(content: string)}{#each splitDates(content) as d, k (k)}{#if d.date}<span
+				class="date">{d.text}</span
+			>{:else}{d.text}{/if}{/each}{/snippet}
 {#snippet stuk(seg: Segment)}{#if seg.formule && grondslag}<GrondslagFormule
 			formule={seg.formule}
-			laad={grondslag}>{seg.content}</GrondslagFormule
+			laad={grondslag}>{@render plain(seg.content)}</GrondslagFormule
 		>{:else if seg.begrip}<BronLink
 			ref={`articles/${seg.begrip.article_key}`}
 			voorbeeld={definitieKaart(seg.begrip)}
-			class="begrip">{seg.content}</BronLink
+			class="begrip">{@render plain(seg.content)}</BronLink
 		>{:else if seg.span && refOfSpan(seg)}{#if doel && seg.span.target.key === doel}<mark
 				class="doel"
-				><BronLink ref={refOfSpan(seg)!} at={seg.at} class="cited">{seg.content}</BronLink></mark
+				><BronLink ref={refOfSpan(seg)!} at={seg.at} class="cited"
+					>{@render plain(seg.content)}</BronLink
+				></mark
 			>{:else}<BronLink
 				ref={refOfSpan(seg)!}
 				at={seg.at}
@@ -92,8 +98,8 @@
 				extra={seg.span.definition_ref && definities.get(seg.span.definition_ref)
 					? definitieRegel(definities.get(seg.span.definition_ref)!)
 					: null}
-				class="cited">{seg.content}</BronLink
-			>{/if}{:else}{seg.content}{/if}{/snippet}
+				class="cited">{@render plain(seg.content)}</BronLink
+			>{/if}{:else}{@render plain(seg.content)}{/if}{/snippet}
 {#each shownSegments as seg, i (i)}{#if seg.noot}<sup
 			class="noot-ref"
 			id={seg.noot.anchor ?? undefined}
@@ -112,6 +118,12 @@
 		)}{/if}{/each}
 
 <style>
+	/* A date stays on one line, and its month is not hyphenated (hyphens: auto breaks past a
+	   no-break space). */
+	.date {
+		white-space: nowrap;
+		hyphens: manual;
+	}
 	/* The citation of the bron the text is read for, as a passage marks it. */
 	.doel {
 		background: var(--wassing);

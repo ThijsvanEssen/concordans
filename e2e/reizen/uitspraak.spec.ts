@@ -84,3 +84,27 @@ test('the items of a menu are a finger’s 44 px high', async ({ page, touch }) 
 		await expect(items).toHaveCount(0);
 	}
 });
+
+test('a date in running text and in a footnote never breaks over two lines', async ({ page }) => {
+	await page.goto('/uitspraken/ECLI:NL:HR:2019:793');
+	await expect(page.locator('.reader-para').first()).toBeVisible();
+	const broken = await page.evaluate(() => {
+		const months =
+			'januari|februari|maart|april|mei|juni|juli|augustus|september|oktober|november|december';
+		const date = new RegExp(`\\b\\d{1,2}[ \\u00a0](?:${months})(?:[ \\u00a0]\\d{4})?\\b`, 'gi');
+		let seen = 0;
+		const bad: string[] = [];
+		for (const el of document.querySelectorAll(
+			'.voetnoot__tekst, .reader-para:not(:has(.reader-para))'
+		)) {
+			const spans = el.querySelectorAll('.date');
+			const inText = (el.textContent ?? '').match(date)?.length ?? 0;
+			seen += inText;
+			if (spans.length !== inText) bad.push(`not held: ${el.textContent?.slice(0, 40)}`);
+			for (const d of spans) if (d.getClientRects().length > 1) bad.push(d.textContent ?? '');
+		}
+		return { seen, bad };
+	});
+	expect(broken.seen, 'dates in the text').toBeGreaterThan(0);
+	expect(broken.bad).toEqual([]);
+});

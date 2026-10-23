@@ -9,6 +9,7 @@ import {
 	fromDate,
 	yearsOf,
 	holdDatesTogether,
+	splitDates,
 	dagMaand,
 	dagVan,
 	DAY_MS,
@@ -121,5 +122,14 @@ describe('holdDatesTogether', () => {
 		const vast = holdDatesTogether(tekst);
 		expect(vast).toBe('Besluit van 12 maart 2020 en 3 mei, niet 5 keer');
 		expect(vast.length).toBe(tekst.length);
+	});
+});
+
+describe('splitDates', () => {
+	it('cuts a text at its dates and loses nothing', () => {
+		const text = 'Op 22 april 1998 en 3 mei, niet 5 keer';
+		const parts = splitDates(text);
+		expect(parts.map((d) => d.text).join('')).toBe(text);
+		expect(parts.filter((d) => d.date).map((d) => d.text)).toEqual(['22 april 1998', '3 mei']);
 	});
 });
