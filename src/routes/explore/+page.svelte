@@ -542,7 +542,7 @@
 		if (key.split(',').length < 2) return;
 		const ac = new AbortController();
 		getShared({ ids: key, limit: 8 }, ac.signal)
-			.then((data) => (sharedData = { key, data, failure: null }))
+			.then((data) => (sharedData = { key, data, failure: data ? null : 'niet' }))
 			.catch((e) => {
 				if (ac.signal.aborted || isAborted(e)) return;
 				if (!isNotFound(e)) report('Verband', e);

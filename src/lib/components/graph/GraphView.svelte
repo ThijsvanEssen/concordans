@@ -1180,6 +1180,23 @@
 		{/if}
 	</aside>
 	<div class="graph-main">
+		<!-- On a phone Deel and the zoom in a bar of their own above the drawing: over it they
+		     covered its bronnen (UX-toets T10b). -->
+		<div class="control-bar">
+			{#if midden}
+				{@render controls(
+					() => (middleScale = Math.min(3, middleScale * 1.25)),
+					() => (middleScale = Math.max(0.5, middleScale / 1.25)),
+					() => (middleScale = 1)
+				)}
+			{:else}
+				{@render controls(
+					() => canvas?.zoom(1.5),
+					() => canvas?.zoom(1 / 1.5),
+					() => canvas?.fit()
+				)}
+			{/if}
+		</div>
 		{#if midden}
 			<div class="middle-stage">
 				{@render midden(middleScale)}
@@ -1500,29 +1517,28 @@
 		font-size: var(--t-input);
 		color: var(--ink);
 	}
-	/* Narrower than three strips: the canvas takes the width; the strip at the left heads it,
-	   its filters under the button Filter, and the card is a sheet at the foot of the canvas. */
-	/* Between a phone and three strips (1024): the strip at the left narrower, the canvas and its
-	   tijdstrook, the card a panel at the right over the canvas, as the mockup at 1180. */
+	/* Between a phone and three strips (1024): the strips narrower, the canvas and its tijdstrook
+	   between them; the card's strip only while a bron is marked. */
 	@media (min-width: 769px) and (max-width: 1100px) {
 		.graph-view {
-			grid-template-columns: 260px minmax(0, 1fr);
+			grid-template-columns: 240px minmax(0, 1fr);
+		}
+		/* A card marked: a strip of its own, the canvas narrower, nothing covered (T10b). */
+		.graph-view:has(.strook--kaart.is-open) {
+			grid-template-columns: 240px minmax(0, 1fr) 300px;
+		}
+		.strook--links {
+			padding: var(--s-4);
 		}
 		.strook--kaart {
-			position: absolute;
-			top: var(--s-3);
-			right: var(--s-3);
-			z-index: var(--z-float);
-			width: 340px;
-			max-height: 70%;
-			border: 1px solid var(--rule-strong);
-			border-radius: var(--r-2);
-			box-shadow: var(--shadow-pop);
+			padding: var(--s-4);
 		}
 		.strook--kaart:not(.is-open) {
 			display: none;
 		}
 	}
+	/* A phone: the canvas takes the width; the strip at the left heads it, its filters under the
+	   button Filter, and the card is a sheet at the foot of the canvas. */
 	@media (max-width: 768px) {
 		.graph-view {
 			display: flex;
@@ -1583,6 +1599,25 @@
 	}
 	/* A phone, as the mockup's 390: no headings over the chosen bronnen, the card a sheet. */
 	@media (max-width: 768px) {
+		.graph-main > .control-bar {
+			display: flex;
+			justify-content: flex-end;
+			gap: var(--s-2);
+			padding: var(--s-1) var(--s-3);
+			border-bottom: 1px solid var(--rule);
+		}
+		.control-bar > .doek-balk,
+		.control-bar > .zoom {
+			position: static;
+			flex-direction: row;
+			gap: var(--s-2);
+		}
+		.graph-canvas-wrap > .doek-balk,
+		.graph-canvas-wrap > .zoom,
+		.middle-stage > .doek-balk,
+		.middle-stage > .zoom {
+			display: none;
+		}
 		/* A finger's 44 px: the rows of the filters, Meer, Deel and the zoom. */
 		.strook--links :global(.optie),
 		.strook--links :global(.fold-knop) {
@@ -1631,6 +1666,9 @@
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
+	}
+	.control-bar {
+		display: none;
 	}
 	.middle-stage {
 		position: relative;

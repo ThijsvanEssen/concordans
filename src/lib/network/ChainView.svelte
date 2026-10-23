@@ -101,8 +101,8 @@
 	);
 	const colour = (k: ChainNode) =>
 		k.collection === 'articles' ? 'var(--ink)' : kindColour('instruments');
-	/** A name over at most three lines of `max` characters; a longer one ends in "…", its
-	 *  title and the card name it whole. */
+	/** A name over at most two lines of `max` characters; a longer one ends in "…", its title
+	 *  and the card name it whole. */
 	const linesOf = (s: string, max = 24) => {
 		const out: string[] = [];
 		for (const w of s.split(/\s+/)) {
@@ -110,7 +110,7 @@
 			if (last && (last + ' ' + w).length <= max) out[out.length - 1] = `${last} ${w}`;
 			else out.push(w);
 		}
-		return out.length > 3 ? [...out.slice(0, 2), `${out[2]}…`] : out;
+		return out.length > 2 ? [out[0], `${out[1]}…`] : out;
 	};
 	const press = (e: KeyboardEvent, k: ChainNode) => {
 		if (e.key !== 'Enter' && e.key !== ' ') return;
@@ -140,7 +140,13 @@
 	>
 		{#each shown as layer, i (layer.id)}
 			<text class="layer-label" x="24" y={TOP + i * ROW + 4}>{layer.label.toUpperCase()}</text>
-			<line class="rail" x1="20" x2={width - 20} y1={TOP + i * ROW + 70} y2={TOP + i * ROW + 70} />
+			<line
+				class="rail"
+				x1="20"
+				x2={width - 20}
+				y1={TOP + (i + 1) * ROW - 8}
+				y2={TOP + (i + 1) * ROW - 8}
+			/>
 			{#if rest[layer.id]}
 				<text class="others" x={width - 24} y={TOP + i * ROW + 4} text-anchor="end"
 					>en {formatCount(rest[layer.id]!)} andere</text
@@ -331,7 +337,7 @@
 		fill: var(--ink-2);
 		paint-order: stroke;
 		stroke: var(--paper);
-		stroke-width: 4px;
+		stroke-width: 6px;
 		stroke-linejoin: round;
 	}
 	.name--law,

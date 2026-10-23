@@ -155,6 +155,8 @@
 	/** Where each name stands in this frame: its hover stands there too, not beside it. */
 	let labelsAt = new Map<string, LabelRect>();
 	/** Where the focus's name stands this frame, reserved before the others (voorbehouden). */
+	/** A phone's width, where the canvas names only the bronnen that matter most. */
+	const narrow = typeof window === 'undefined' ? null : window.matchMedia('(max-width: 768px)');
 	let focusPlek: { x: number; y: number } | null = null;
 	/**
 	 * The places taken before the names are drawn (UX test 10 Oct, #25: names over one another):
@@ -957,10 +959,11 @@
 				// Every bron its short name, as the mockup draws them (A197); where names would cover
 				// each other sigma leaves some out, never those of the hover, the focus, the chosen
 				// bronnen and a cluster bron, whose name ("250 uitspraken") is what it says.
-				const label = data.label as string;
 				const chosen = latestPinnedIds.has(id);
 				const forceLabel =
 					(inHover && inFocusGroup) || id === focusedId || chosen || !!data.cluster;
+				// On a phone only those names: the others would cover each other (UX-toets T10b).
+				const label = forceLabel || !narrow?.matches ? (data.label as string) : '';
 
 				if (id !== focusedId && chosen)
 					return {

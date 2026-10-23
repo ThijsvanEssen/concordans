@@ -195,12 +195,29 @@ export const getPaths = (query: QueryOf<'/api/paths'>) =>
  * each, with the edges by which every one hangs at each bron asked (`links`). The weergave
  * Verband of the werkplek (besluit 39).
  */
-export function getShared(query: QueryOf<'/api/nodes/shared'>, signal?: AbortSignal) {
-	// A route the API does not have yet (A200) is asked once a visit: its 404 stands.
-	if (sharedMissing) return Promise.reject(sharedMissing);
+export async function getShared(
+	query: QueryOf<'/api/nodes/shared'>,
+	signal?: AbortSignal
+): Promise<Schema<'SharedNeighborsResponse'> | null> {
+	// The route came with API 0.80.7 (A200): an older API is not asked (a 404 is a console error
+	// in every browser), and a 404 all the same stands for the visit. Null: not there.
+	if (!(await apiHasShared())) return null;
 	return unwrap(api.GET('/api/nodes/shared', { params: { query }, signal })).catch((e) => {
-		if (isNotFound(e)) sharedMissing = e;
-		throw e;
+		if (!isNotFound(e)) throw e;
+		shared = Promise.resolve(false);
+		return null;
 	});
 }
-let sharedMissing: unknown = null;
+/** The first version of the API with /api/nodes/shared. */
+const SHARED_SINCE = [0, 80, 7];
+let shared: Promise<boolean> | null = null;
+const apiHasShared = () =>
+	(shared ??= unwrap(api.GET('/api/health'))
+		.then((h) => atLeast(String(h.version ?? ''), SHARED_SINCE))
+		.catch(() => false));
+/** Whether `version` (`0.80.7`) is `min` or later. */
+function atLeast(version: string, min: readonly number[]): boolean {
+	const v = version.split('.').map((n) => Number.parseInt(n, 10) || 0);
+	for (let i = 0; i < min.length; i++) if ((v[i] ?? 0) !== min[i]) return (v[i] ?? 0) > min[i];
+	return true;
+}

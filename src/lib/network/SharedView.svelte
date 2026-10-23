@@ -80,7 +80,7 @@
 			if (last && (last + ' ' + w).length <= max) out[out.length - 1] = `${last} ${w}`;
 			else out.push(w);
 		}
-		return out.length > 2 ? [out[0], `${out[1]}…`] : out;
+		return out.length > 1 ? [`${out[0]}…`] : out;
 	};
 	const press = (e: KeyboardEvent, r: SharedRow) => {
 		if (e.key !== 'Enter' && e.key !== ' ') return;
@@ -333,7 +333,7 @@
 		fill: var(--ink-2);
 		paint-order: stroke;
 		stroke: var(--paper);
-		stroke-width: 4px;
+		stroke-width: 6px;
 		stroke-linejoin: round;
 	}
 	.name--end,
