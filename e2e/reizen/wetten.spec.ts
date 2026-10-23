@@ -22,8 +22,9 @@ test('Bronnen › Wetten: a filter narrows the list, a search finds a law that o
 	if (touch) await page.getByRole('button', { name: 'Verfijnen' }).click();
 	const filter = page
 		.getByRole('region', { name: 'Rechtsgebied' })
-		.getByRole('button', { pressed: false })
-		.first();
+		.getByRole('button')
+		// The first button is the head of the group, the second its first option.
+		.nth(1);
 	await filter.click();
 	await expect(filter).toHaveAttribute('aria-pressed', 'true');
 	await expect(page).toHaveURL(/kind=instruments.*&/);
