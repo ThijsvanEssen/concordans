@@ -1,4 +1,4 @@
-import { onlyAround, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { Neighbor } from '$lib/api/nodes';
 import {
 	onlyAround,
