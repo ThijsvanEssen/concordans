@@ -16,7 +16,12 @@ test('a ministry names its period, its predecessor and its bewindspersonen per c
 		/\/ministeries\/venj/
 	);
 	const kabinetten = page.getByRole('heading', { level: 4 });
-	await expect(kabinetten).toHaveText(['kabinet-Jetten', 'kabinet-Schoof', 'kabinet-Rutte IV', 'kabinet-Rutte III']);
+	await expect(kabinetten).toHaveText([
+		'kabinet-Jetten',
+		'kabinet-Schoof',
+		'kabinet-Rutte IV',
+		'kabinet-Rutte III'
+	]);
 	await expect(page.getByRole('link', { name: 'Eric van der Burg' })).toBeVisible();
 });
 
