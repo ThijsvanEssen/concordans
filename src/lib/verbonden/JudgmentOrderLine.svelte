@@ -169,6 +169,12 @@
 		max-height: 60vh;
 		overflow-y: auto;
 	}
+	/* On a phone the three lists stand under each other: three columns do not fit the screen. */
+	@media (max-width: 768px) {
+		.jaar-rechter {
+			grid-auto-flow: row;
+		}
+	}
 	.jaar-rechter__lijst {
 		display: flex;
 		flex-direction: column;
