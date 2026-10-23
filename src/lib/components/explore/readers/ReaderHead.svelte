@@ -154,7 +154,7 @@
 					stroke="currentColor"
 					stroke-width="1.6"
 					aria-hidden="true"><circle cx="7" cy="7" r="4.8" /><path d="M10.6 10.6 14 14" /></svg
-				>Zoek<span class="find-btn__rest"> in dit stuk</span></button
+				>Zoek<span class="find-rest"> in dit stuk</span></button
 			>
 		{/if}
 		{@render tools?.()}
@@ -356,7 +356,7 @@
 		.find-btn {
 			padding: 0 var(--s-1);
 		}
-		.find-btn__rest {
+		.find-rest {
 			position: absolute;
 			width: 1px;
 			height: 1px;

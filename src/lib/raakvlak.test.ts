@@ -59,7 +59,7 @@ describe('the touch target', () => {
 		expect(navCoarse).toMatch(/\.group__head[^{]*\{[^}]*min-height: var\(--veld-h-raak\)/);
 	});
 
-	it("fills a heading's row with its link, and gives the sheet's close button 32 px (F5)", () => {
+	it("fills a heading's row with its link, and gives the sheet's close button 44 px (F5, UX-toets T9)", () => {
 		const nav = read('lib/components/explore/LezenNav.svelte');
 		const navCoarse = nav.slice(nav.indexOf('@media (pointer: coarse)'));
 		expect(navCoarse).toMatch(/\.group__head \{[^}]*padding-block: 0/);
@@ -67,7 +67,7 @@ describe('the touch target', () => {
 		const sheetCoarse = sheet.slice(sheet.indexOf('@media (pointer: coarse)'));
 		expect(sheet).toContain('@media (pointer: coarse)');
 		expect(sheetCoarse).toMatch(
-			/\.close \{[^}]*min-height: var\(--s-6\)[^}]*min-width: var\(--s-6\)/
+			/\.close \{[^}]*min-height: var\(--veld-h-raak\)[^}]*min-width: var\(--veld-h-raak\)/
 		);
 	});
 

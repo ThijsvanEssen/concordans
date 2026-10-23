@@ -242,7 +242,7 @@ export function articleColumn(v: ArticlePaint, k: Classes): string {
 		`<div class="reader-head ${k.head}">` +
 		`<div class="reader-line reader-line--plaats ${k.head}">${placeLine}${nav}</div>` +
 		`<h1 class="reader-title ${k.head}">${titleParts(headTitle(a, recorded)).map(esc).join('<wbr>')}</h1>` +
-		`<span class="reader-status__acties ${k.head}" data-later>${compare}<span class="kop-acties ${k.actions}"><span class="ev-actions"></span></span><button type="button" class="find-btn raakvlak ${k.head}" tabindex="-1"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.8"/><path d="M10.6 10.6 14 14"/></svg>Zoek<span class="find-btn__rest ${k.head}"> in dit stuk</span></button>${tools}</span>` +
+		`<span class="reader-status__acties ${k.head}" data-later>${compare}<span class="kop-acties ${k.actions}"><span class="ev-actions"></span></span><button type="button" class="find-btn raakvlak ${k.head}" tabindex="-1"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.8"/><path d="M10.6 10.6 14 14"/></svg>Zoek<span class="find-rest ${k.head}"> in dit stuk</span></button>${tools}</span>` +
 		`<div class="reader-status ${k.head}">` +
 		(status ? `<div class="reader-status__woorden ${k.head}" data-later>${status}</div>` : '') +
 		facts +
