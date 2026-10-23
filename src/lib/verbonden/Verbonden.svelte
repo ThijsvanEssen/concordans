@@ -443,13 +443,14 @@
 <!-- A soort of judgments opened in place keeps its order and its year and court (A208e). -->
 {#snippet kindTools(kind: string)}
 	{@const g = kind === 'judgments' ? groepen.find((x) => kindOfGroup(x) === 'judgments') : null}
-	{#if g && (g.orders || years(g).length > 0)}
+	{#if g && (g.orders || years(g).length > 0 || g.areas?.length)}
 		<JudgmentOrderLine
 			orders={g.orders}
 			order={verbonden.options.order}
 			onOrder={(order) => onReloadGroup?.(g.id, { order })}
 			years={years(g)}
 			courts={g.courts}
+			areas={g.areas}
 			{filter}
 			{onFilter}
 		/>

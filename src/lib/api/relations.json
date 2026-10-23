@@ -83,11 +83,6 @@
 			"ends": [["instruments", "instruments"]]
 		},
 		{
-			"name": "COMMENCES",
-			"sources": ["instruments"],
-			"targets": ["instruments"]
-		},
-		{
 			"name": "TRANSPOSED_TO",
 			"sources": ["articles"],
 			"targets": ["articles", "instruments"],

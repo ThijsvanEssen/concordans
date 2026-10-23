@@ -83,12 +83,6 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 		naar === 'instruments'
 			? ['trekt in', 'trekt in', 'intrekking van een wet']
 			: ['doet vervallen', 'doet vervallen', 'vervallen van een artikel'],
-	// The publication that sets the day a law takes effect (an inwerkingtredingsbesluit).
-	COMMENCES: () => [
-		'bepaalt de inwerkingtreding van',
-		'in werking gesteld bij',
-		'inwerkingtreding'
-	],
 	// A recodification: the transposition table places the old article in the new law; to the
 	// new law itself, what it says of an old article it places in no article (its outcome).
 	TRANSPOSED_TO: ({ naar, meta }) => {
