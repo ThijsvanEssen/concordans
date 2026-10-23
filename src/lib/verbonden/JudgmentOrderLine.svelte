@@ -1,6 +1,6 @@
 <script lang="ts">
 	// One line of controls under the heading of a group of judgments (docs/bediening.md): their
-	// order, and the year and the court behind one text menu.
+	// order, and the year, the court and the area of law behind one text menu.
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import { formatCount } from '$lib/text/getal';
 	import { RECHTERS, type Court, type Rechter, type VerbondenFilter } from './filter';
@@ -33,6 +33,14 @@
 
 	const rechter = $derived(RECHTERS.find((r) => r.id === filter.rechter));
 	// Where the API counts the courts, only those that have judgments (and the one chosen).
+	const hasAreas = $derived(!!areas?.length || !!filter.rechtsgebied);
+	const tekst = $derived(
+		[
+			filter.jaar ?? 'Alle jaren',
+			rechter?.label.toLowerCase() ?? 'alle rechters',
+			...(hasAreas ? [filter.rechtsgebied?.toLowerCase() ?? 'alle rechtsgebieden'] : [])
+		].join(', ')
+	);
 	const choices = $derived(
 		RECHTERS.filter((r) => !courts || courts[r.id] || filter.rechter === r.id)
 	);
@@ -51,11 +59,11 @@
 			}}
 		/>
 	{/if}
-	{#if years.length > 0}
+	{#if years.length > 0 || hasAreas}
 		<TekstMenu
 			rechts
-			label="Jaar en rechter"
-			tekst="{filter.jaar ?? 'Alle jaren'}, {rechter?.label.toLowerCase() ?? 'alle rechters'}"
+			label={hasAreas ? 'Jaar, rechter en rechtsgebied' : 'Jaar en rechter'}
+			{tekst}
 		>
 			{#snippet inhoud(sluit)}
 				<div class="jaar-rechter">
@@ -95,29 +103,25 @@
 							>
 						{/each}
 					</div>
-				</div>
-			{/snippet}
-		</TekstMenu>
-	{/if}
-	{#if areas?.length || filter.rechtsgebied}
-		<TekstMenu rechts label="Rechtsgebied" tekst={filter.rechtsgebied ?? 'Alle rechtsgebieden'}>
-			{#snippet inhoud(sluit)}
-				<div class="jaar-rechter__lijst" role="group" aria-label="Rechtsgebied">
-					{#each [{ area: null, count: null }, ...(areas ?? [])] as a (a.area ?? 'alle')}
-						<button
-							type="button"
-							role="menuitemradio"
-							class="tekstmenu__item jaar-rechter__item"
-							aria-checked={(filter.rechtsgebied ?? null) === a.area}
-							onclick={() => {
-								sluit();
-								onFilter({ ...filter, rechtsgebied: a.area });
-							}}
-							>{a.area ?? 'Alle rechtsgebieden'}{#if a.count}<span class="jaar-rechter__tel"
-									>{formatCount(a.count)}</span
-								>{/if}</button
-						>
-					{/each}
+					{#if hasAreas}
+						<div class="jaar-rechter__lijst" role="group" aria-label="Rechtsgebied">
+							{#each [{ area: null, count: null }, ...(areas ?? [])] as a (a.area ?? 'alle')}
+								<button
+									type="button"
+									role="menuitemradio"
+									class="tekstmenu__item jaar-rechter__item"
+									aria-checked={(filter.rechtsgebied ?? null) === a.area}
+									onclick={() => {
+										sluit();
+										onFilter({ ...filter, rechtsgebied: a.area });
+									}}
+									>{a.area ?? 'Alle rechtsgebieden'}{#if a.count}<span class="jaar-rechter__tel"
+											>{formatCount(a.count)}</span
+										>{/if}</button
+								>
+							{/each}
+						</div>
+					{/if}
 				</div>
 			{/snippet}
 		</TekstMenu>
@@ -160,7 +164,7 @@
 	}
 	.jaar-rechter {
 		display: grid;
-		grid-template-columns: auto auto;
+		grid-auto-flow: column;
 		gap: 0 var(--s-2);
 		max-height: 60vh;
 		overflow-y: auto;

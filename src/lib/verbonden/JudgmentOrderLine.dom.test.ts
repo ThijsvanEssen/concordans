@@ -27,20 +27,20 @@ const mount = (over: Record<string, unknown> = {}) => {
 describe('Rechtsgebied of the judgments', () => {
 	it('chooses an area from the counts the API gives', async () => {
 		const onFilter = mount();
-		await fireEvent.click(screen.getByRole('button', { name: /Rechtsgebied/ }));
+		await fireEvent.click(screen.getByRole('button', { name: /rechtsgebied/ }));
 		await fireEvent.click(screen.getByRole('menuitemradio', { name: /Strafrecht/ }));
 		expect(onFilter).toHaveBeenCalledWith({ ...EMPTY_FILTER, rechtsgebied: 'Strafrecht' });
 	});
 
 	it('names the area chosen on the control and offers all areas again', async () => {
 		const onFilter = mount({ filter: { ...EMPTY_FILTER, rechtsgebied: 'Strafrecht' } });
-		await fireEvent.click(screen.getByRole('button', { name: /Rechtsgebied/ }));
+		await fireEvent.click(screen.getByRole('button', { name: /rechtsgebied/ }));
 		await fireEvent.click(screen.getByRole('menuitemradio', { name: /Alle rechtsgebieden/ }));
 		expect(onFilter).toHaveBeenCalledWith({ ...EMPTY_FILTER, rechtsgebied: null });
 	});
 
 	it('shows no control where the API counts no areas', () => {
-		mount({ areas: undefined });
-		expect(screen.queryByRole('button', { name: /Rechtsgebied/ })).toBeNull();
+		mount({ areas: undefined, years: [{ year: 2020, count: 3 }] });
+		expect(screen.queryByRole('button', { name: /rechtsgebied/ })).toBeNull();
 	});
 });
