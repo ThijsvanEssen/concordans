@@ -67,7 +67,7 @@ test('the keten of a law: its regulations in layers, a click opens the card with
 	// On a wide screen a drawing in layers, on a phone a list per layer.
 	const regeling = touch
 		? page.getByRole('region', { name: 'AMvB' }).getByRole('button').first()
-		: page.getByRole('group', { name: 'Keten' }).getByRole('button').nth(1);
+		: page.getByRole('group', { name: 'Keten' }).getByRole('button', { pressed: false }).last();
 	await expect(regeling).toBeVisible();
 	await regeling.click();
 	await expect(page).toHaveURL(/kies=/);
