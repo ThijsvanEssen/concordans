@@ -47,7 +47,7 @@
 	import KindSummary from './KindSummary.svelte';
 	import { kindsOf, kindsTotal, kindOfGroup, type KindId } from './summary';
 	import { sketch as drawSketch, type SketchGroup } from './sketch';
-	import { citingTiers, type TierCount } from './tiers';
+	import { citingTiers, lawTiers, type TierCount } from './tiers';
 	import { importanceOf, byImportance } from './importance';
 	import type { LoaderOptions } from './loaders';
 	import { isInhoudGroep, isKernGroep, lazeKernIds } from '$lib/bron/behoort';
@@ -313,7 +313,7 @@
 	// The judgments that cite an article per instantie, counted by the API over all of them:
 	// the bar of the group and its circles in the network. Asked once the group's total is in.
 	const citingJudgments = $derived(
-		selection.collection === 'articles'
+		selection.collection === 'articles' || selection.collection === 'instruments'
 			? groepen.find((g) => g.id === 'judgments' && !g.laden && (g.total ?? 0) > 0)
 			: undefined
 	);
@@ -328,9 +328,13 @@
 		const props = selection.raw?.props ?? {};
 		const bwb = typeof props.bwb_id === 'string' ? props.bwb_id : null;
 		const number = typeof props.article_number === 'string' ? props.article_number : null;
-		if (!all || !bwb || !number) return;
+		const isLaw = selection.collection === 'instruments';
+		if (!all || (isLaw ? !selection.key : !bwb || !number)) return;
 		const ac = new AbortController();
-		citingTiers(bwb, number, all, ac.signal).then(
+		(isLaw
+			? lawTiers(selection.key, all, ac.signal)
+			: citingTiers(bwb!, number!, all, ac.signal)
+		).then(
 			(parts) => {
 				if (!ac.signal.aborted) tierCounts = { id, parts };
 			},

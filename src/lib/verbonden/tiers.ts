@@ -3,7 +3,7 @@
 // groups in the network (besluit 32). Three requests of one row each, asked once the group
 // stands; the rest of the total is Overige instanties.
 import { abortable } from '$lib/api/records';
-import { getCitingJudgmentsOfTier } from '$lib/api/verbonden';
+import { getCitingJudgmentsOfTier, getInstrumentJudgments } from '$lib/api/verbonden';
 import { TIER_LABEL, type Tier } from '$lib/vocabulary';
 
 /** The instanties counted on their own, highest first. */
@@ -48,4 +48,24 @@ export async function citingTiers(
 		)
 	);
 	return tierParts(counts, total);
+}
+
+/**
+ * The judgments that cite a law per instantie: one request, the tier facet of the law's
+ * judgments, which counts judgments as `total` does. The Parket stands with the Hoge Raad;
+ * the rest of `total` is Overige instanties.
+ */
+export async function lawTiers(
+	bwb: string,
+	total: number,
+	signal?: AbortSignal
+): Promise<TierCount[]> {
+	const page = await abortable(getInstrumentJudgments(bwb, { limit: 1 }), signal);
+	const facet = page.facets?.tier ?? [];
+	const of = (tiers: readonly Tier[]) =>
+		facet.reduce((n, f) => n + (f.value && tiers.includes(f.value as Tier) ? f.count : 0), 0);
+	return tierParts(
+		COUNTED_TIERS.map((tier) => of(TIERS_OF[tier] ?? [tier])),
+		total
+	);
 }
