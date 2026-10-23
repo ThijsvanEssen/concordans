@@ -12,6 +12,7 @@
 		paperSectionCite
 	} from '$lib/components/parliamentary/paper-cite';
 	import {
+		numeralOf,
 		paperBlocks,
 		paperParagraphs,
 		parseAnchor,
@@ -20,6 +21,7 @@
 	} from '$lib/text/anchor';
 	import PlaatsMenu, { placeMarker } from '$lib/components/articles/PlaatsMenu.svelte';
 	import PlaceNumber, { placeColumn } from '$lib/bron/PlaceNumber.svelte';
+	import ParagraphWords from '$lib/bron/ParagraphWords.svelte';
 	import { blockClick } from '$lib/actions/klik';
 	import { kaart } from '$lib/map/map.svelte';
 	import { getDocument } from '$lib/api/records';
@@ -38,7 +40,7 @@
 	import TextBlocks from '$lib/components/articles/TextBlocks.svelte';
 	import Voetnoten from '$lib/components/articles/Voetnoten.svelte';
 	import { kantlijn } from '$lib/actions/kantlijn';
-	import { isNootAnker, regelVan, stukNoten, type Bereik } from '$lib/text/voetnoten';
+	import { isNootAnker, onWordEdges, regelVan, stukNoten, type Bereik } from '$lib/text/voetnoten';
 	import { zetNootStand } from '$lib/text/voetnoten.svelte';
 	import { markeringVoor } from '$lib/bron/markering.svelte';
 	import { findPassage } from '$lib/text/find-passage';
@@ -173,7 +175,10 @@
 		const i = regelVan(paragraphs, b.start);
 		if (i < 0) return null;
 		const p = paragraphs[i];
-		return { i, bereik: { start: b.start - p.start, end: b.end - p.start } };
+		return {
+			i,
+			bereik: onWordEdges(p.text, { start: b.start - p.start, end: b.end - p.start })
+		};
 	});
 	/** The note markers of a block's lines, `at` in its text. */
 	const blockMarkers = (b: PaperBlock) => {
@@ -471,12 +476,15 @@
 										: (p.id ?? undefined)}
 								title={i === passageEntryIndex ? (passage?.why ?? undefined) : undefined}
 							>
+								<!-- The number of a question, as the source prints it on a line before it (16.),
+								     hangs in the margin as a lid's does; its old anchor stays where it was. -->
+								{#if b.numeral}<span id={b.numeral.id ?? undefined}></span>{/if}
 								{#if forms && at && p.first}
 									<PlaceNumber
-										number={n ?? ''}
-										label="Alinea {n}"
+										number={b.numeral ? (numeralOf(b.numeral.text) ?? '') : (n ?? '')}
+										label={b.numeral ? `Vraag ${numeralOf(b.numeral.text)}` : `Alinea ${n}`}
 										open={menu?.at === at}
-										quiet
+										quiet={!b.numeral}
 										onopen={(marker) => openMenu(at, marker)}
 									/>
 								{/if}
@@ -501,7 +509,9 @@
 												{@render possibleLink()}
 											</p>{/if}
 									{:else}
-										<p>{@render woorden()}{@render possibleLink()}</p>
+										<ParagraphWords answerLabel={b.answerLabel?.text ?? null} question={b.question}
+											>{@render woorden()}{@render possibleLink()}</ParagraphWords
+										>
 									{/if}
 									<Voetnoten noten={nootLijst(markers?.map((m) => m.id))} />
 									<Voetnoten noten={nootLijst(sluit)} marge={false} />

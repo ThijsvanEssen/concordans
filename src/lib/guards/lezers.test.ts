@@ -19,6 +19,16 @@ describe('the readers', () => {
 		).toEqual([]);
 	});
 
+	it('sets the words of an alinea of a Kamerstuk by one component, in its reader and in a bundel (A213)', () => {
+		// A question hangs its number in the margin and stands in italics, its answer under it
+		// with the label of the source: ParagraphWords, from the blocks of paperBlocks.
+		for (const pad of [
+			'lib/components/explore/readers/DocumentReader.svelte',
+			'lib/bron/PaperParagraph.svelte'
+		])
+			expect(bron(pad), pad).toMatch(/<ParagraphWords\b/);
+	});
+
 	it('folds the full title of a law and of a dossier with one component (A190)', () => {
 		for (const pad of [
 			'lib/components/explore/WholeLawReader.svelte',

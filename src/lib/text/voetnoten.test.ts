@@ -5,6 +5,7 @@ import {
 	articleNotes,
 	listedNotes,
 	metVoetnoot,
+	onWordEdges,
 	regelVan,
 	stukNoten,
 	stukPlaats,
@@ -362,5 +363,17 @@ describe('the footnotes of their own of an article and a bijlage (#881)', () => 
 		// Without anchors (a map) the marker is text; a note that is not there leaves it so too.
 		expect(articleMarkers(marks, new Map(), 0, 7, false, listed)[0].href).toBeNull();
 		expect(articleMarkers(marks, new Map(), 0, 7, true)[0].href).toBeNull();
+	});
+});
+
+describe('a mark on whole words (A213)', () => {
+	const words = 'en de Cyberbeveiligingswet. Deze wet';
+	it('widens a range that stops inside a word to the word', () => {
+		expect(onWordEdges(words, { start: 6, end: 13 })).toEqual({ start: 6, end: 26 });
+		expect(onWordEdges(words, { start: 10, end: 16 })).toEqual({ start: 6, end: 26 });
+	});
+	it('leaves a range on word edges, and keeps it inside the text', () => {
+		expect(onWordEdges(words, { start: 6, end: 26 })).toEqual({ start: 6, end: 26 });
+		expect(onWordEdges(words, { start: 30, end: 99 })).toEqual({ start: 28, end: 36 });
 	});
 });

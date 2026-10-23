@@ -226,11 +226,64 @@ export type PaperBlock = {
 	start: number;
 	text: string;
 	tables: Table[];
+	/** The number the source prints on a line of its own before it (`16.`, `Vraag 4`): it hangs
+	 *  in the margin of this block. */
+	numeral: PaperParagraph | null;
+	/** The label of an answer the source prints on a line of its own before it (`Antwoord`). */
+	answerLabel: PaperParagraph | null;
+	/** Whether it is a question: numbered, and the answer's label follows or it ends in `?`. */
+	question: boolean;
 };
+
+/** A line that is only a number: `16.`, `4a.`, `Vraag 4`. The digits are captured. */
+const NUMERAL_LINE = /^(?:Vraag\s+)?(\d+[a-z]?\.?)$/;
+/** A line that is only the label of an answer: `Antwoord`, `Antwoord op vraag 4`. */
+const ANSWER_LABEL = /^Antwoord(?:\s+op\s+vraag\s+\d+[a-z]?)?[.:]?$/i;
+
+/** The number a line is, when it is nothing else; `Vraag 4` hangs as `4`. */
+export const numeralOf = (line: string): string | null => NUMERAL_LINE.exec(line)?.[1] ?? null;
+
+/**
+ * The number or the label of an answer on a line of its own joins the block after it (a number
+ * hangs in the margin of its question, the label heads its answer), so that a question and its
+ * answer read as a pair; offsets, lines and anchors stay as the API has them. A line before a
+ * heading or a table, or at the end, stays as it is.
+ */
+function withLabels(blocks: PaperBlock[], headings: ReadonlySet<string>): PaperBlock[] {
+	const out: PaperBlock[] = [];
+	let numeral: PaperParagraph | null = null;
+	let answerLabel: PaperParagraph | null = null;
+	blocks.forEach((b, k) => {
+		const next = blocks[k + 1];
+		const bare = b.lines.length === 1 && !b.tables.length ? b.line.text : null;
+		const joinable =
+			!!next &&
+			!next.tables.length &&
+			!(next.lines.length === 1 && headings.has(next.line.text.toLowerCase()));
+		if (bare !== null && joinable && !numeral && !answerLabel && numeralOf(bare)) {
+			numeral = b.line;
+			return;
+		}
+		if (bare !== null && joinable && !answerLabel && ANSWER_LABEL.test(bare)) {
+			answerLabel = b.line;
+			return;
+		}
+		const answerNext = !!next && next.lines.length === 1 && ANSWER_LABEL.test(next.line.text);
+		out.push({
+			...b,
+			numeral,
+			answerLabel,
+			question: !!numeral && (answerNext || b.text.endsWith('?'))
+		});
+		numeral = null;
+		answerLabel = null;
+	});
+	return out;
+}
 
 export function paperBlocks(
 	lines: readonly PaperParagraph[],
-	doc: Pick<PaperSource, 'text' | 'tables'>
+	doc: Pick<PaperSource, 'text' | 'tables' | 'sections'>
 ): PaperBlock[] {
 	const text = doc.text ?? '';
 	const tables = doc.tables ?? [];
@@ -264,11 +317,17 @@ export function paperBlocks(
 			lines: own,
 			start,
 			text: text.slice(start, end),
-			tables: table ? tablesWithin([table], start, end - start) : []
+			tables: table ? tablesWithin([table], start, end - start) : [],
+			numeral: null,
+			answerLabel: null,
+			question: false
 		});
 		k = last + 1;
 	}
-	return blocks;
+	return withLabels(
+		blocks,
+		new Set((doc.sections ?? []).map((s) => s.heading.trim().toLowerCase()))
+	);
 }
 
 /** The anchor of a lid by its number: `lid-2`. */

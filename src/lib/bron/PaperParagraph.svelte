@@ -6,10 +6,11 @@
 	// alinea is shown without its stuk: an opened item of a bundel (MapInhoud).
 	import PlaatsMenu, { placeMarker } from '$lib/components/articles/PlaatsMenu.svelte';
 	import PlaceNumber, { placeColumn } from './PlaceNumber.svelte';
+	import ParagraphWords from './ParagraphWords.svelte';
 	import { blockClick } from '$lib/actions/klik';
 	import { citeItems } from '$lib/components/ui/cite-items';
 	import { paperParagraphOf } from '$lib/map/inhoud';
-	import { paperBlocks, type PaperSource } from '$lib/text/anchor';
+	import { numeralOf, paperBlocks, type PaperSource } from '$lib/text/anchor';
 	import TextBlocks from '$lib/components/articles/TextBlocks.svelte';
 	import { paperParagraphCite, type PaperCitation } from '$lib/components/parliamentary/paper-cite';
 
@@ -64,15 +65,16 @@
 			{@const forms = at ? (cite?.(n, at, link(at)) ?? null) : null}
 			<div
 				class="alinea plaats-blok"
-				class:eigen={around && shown.eigen.has(a.i)}
+				class:eigen={around &&
+					(shown.eigen.has(a.i) || (!!b.numeral && shown.eigen.has(b.numeral.i)))}
 				class:is-open={menu?.at === at}
 			>
 				{#if forms && a.first}
 					<PlaceNumber
-						number={n}
-						label="Alinea {n}"
+						number={b.numeral ? (numeralOf(b.numeral.text) ?? n) : n}
+						label={b.numeral ? `Vraag ${numeralOf(b.numeral.text)}` : `Alinea ${n}`}
 						open={menu?.at === at}
-						quiet
+						quiet={!b.numeral}
 						onopen={(marker) => openMenu(at, marker)}
 					/>
 				{/if}
@@ -81,7 +83,11 @@
 						<TextBlocks text={b.text} tables={b.tables} />
 					</div>
 				{:else}
-					<p class:is-klikbaar={!!forms} use:blockClick={forms ? onText(at) : null}>{a.text}</p>
+					<div class:is-klikbaar={!!forms} use:blockClick={forms ? onText(at) : null}>
+						<ParagraphWords answerLabel={b.answerLabel?.text ?? null} question={b.question}
+							>{a.text}</ParagraphWords
+						>
+					</div>
 				{/if}
 				{#if menu && menu.at === at && forms && a.first}
 					<PlaatsMenu
@@ -115,9 +121,6 @@
 		position: relative;
 		padding: 0 var(--s-2) 0 var(--alinea-num);
 		border-radius: var(--r-1);
-	}
-	.alinea p {
-		margin: 0;
 	}
 	.alinea:has(:global(.plaats-marker)):hover,
 	.alinea.is-open {

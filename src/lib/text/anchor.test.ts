@@ -11,6 +11,7 @@ import {
 	formatAnchor,
 	lidAnchor,
 	lidNumber,
+	numeralOf,
 	onderdeelAnchor,
 	paragraphAnchor,
 	paragraphNumber,
@@ -240,5 +241,69 @@ describe('the blocks of a Kamerstuk: an alinea with a table one block (A55, API 
 			['', 'A', 'B'],
 			['x', '1', '']
 		]);
+	});
+});
+
+describe('a question and its answer: the number and the label on a line of their own (A213)', () => {
+	// kst-29893-283 and kst-36942-6 as the API gives them: `16.` a paragraph of its own, the
+	// question after it, then the answer, with `Antwoord` a line of its own in a nota.
+	const lines = [
+		'Inleiding.',
+		'16.',
+		'Hoe borgt u dit?',
+		'Het wordt geborgd.',
+		'17.',
+		'Hoe dan?',
+		'Antwoord',
+		'Zo.'
+	];
+	const paperOf = (rows: string[], sections: { heading: string; char_start: number }[] = []) => {
+		const text = rows.join('\n');
+		let at = 0;
+		const paragraphs = rows.map((r, i) => {
+			const p = { id: `p-0000000${i}`, number: i + 1, char_start: at, char_end: at + r.length };
+			at += r.length + 1;
+			return p;
+		});
+		return { text, paragraphs, sections };
+	};
+
+	it('hangs the number on its question, which the label of the source after it marks as one', () => {
+		const doc = paperOf(lines);
+		const blocks = paperBlocks(paperParagraphs(doc), doc);
+		expect(blocks.map((b) => b.line.text)).toEqual([
+			'Inleiding.',
+			'Hoe borgt u dit?',
+			'Het wordt geborgd.',
+			'Hoe dan?',
+			'Zo.'
+		]);
+		expect(blocks[1]).toMatchObject({ numeral: { text: '16.', id: 'p-00000001' }, question: true });
+		expect(blocks[2]).toMatchObject({ numeral: null, answerLabel: null, question: false });
+		expect(blocks[3]).toMatchObject({ numeral: { text: '17.' }, question: true });
+		expect(blocks[4]).toMatchObject({ answerLabel: { text: 'Antwoord' }, question: false });
+		// Offsets and lines are the API's: the question is still found where it stands.
+		expect(blocks[1].start).toBe(doc.text.indexOf('Hoe borgt'));
+	});
+
+	it('takes "Vraag 4" as the number 4 and "Antwoord op vraag 4" as the label of its answer', () => {
+		expect(numeralOf('Vraag 4')).toBe('4');
+		expect(numeralOf('16.')).toBe('16.');
+		expect(numeralOf('Vraag 4 en 5')).toBeNull();
+		const doc = paperOf(['Vraag 4', 'Wat?', 'Antwoord op vraag 4', 'Dat.']);
+		const [first, second] = paperBlocks(paperParagraphs(doc), doc);
+		expect(first).toMatchObject({ question: true });
+		expect(second.answerLabel?.text).toBe('Antwoord op vraag 4');
+	});
+
+	it('leaves a number before a heading, a table or the end where it is', () => {
+		const doc = paperOf(['Tekst.', '5.', '6. Kop'], [{ heading: '6. Kop', char_start: 10 }]);
+		expect(paperBlocks(paperParagraphs(doc), doc).map((b) => b.line.text)).toEqual([
+			'Tekst.',
+			'5.',
+			'6. Kop'
+		]);
+		const ending = paperOf(['Tekst.', '5.']);
+		expect(paperBlocks(paperParagraphs(ending), ending)).toHaveLength(2);
 	});
 });

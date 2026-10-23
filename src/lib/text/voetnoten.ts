@@ -41,6 +41,19 @@ export type NoteMarker = NootMarker;
 /** A range to mark in a text: the words a verbinding names. */
 export type Bereik = { start: number; end: number };
 
+const WORD_CHAR = /[\p{L}\p{N}]/u;
+
+/** `bereik` in `text` widened to whole words: a range that starts or ends inside a word marks
+ *  the word, never a part of it ("Cyberbe" of "Cyberbeveiligingswet"). */
+export function onWordEdges(text: string, bereik: Bereik): Bereik {
+	let { start, end } = bereik;
+	start = Math.max(0, Math.min(start, text.length));
+	end = Math.max(start, Math.min(end, text.length));
+	while (start > 0 && WORD_CHAR.test(text[start - 1]) && WORD_CHAR.test(text[start])) start--;
+	while (end < text.length && WORD_CHAR.test(text[end - 1]) && WORD_CHAR.test(text[end])) end++;
+	return { start, end };
+}
+
 /** The anchor of a judgment's note by its label: `fn-35`; a second note with a label `fn-35-2`. */
 export const nootAnker = (label: string) => formatAnchor({ kind: 'note', label });
 
