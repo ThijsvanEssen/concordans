@@ -34,15 +34,14 @@ test('a fractie gives its seats, its chair and its leden', async ({ page }) => {
 	await expect(leden).toHaveAttribute('aria-expanded', 'true');
 });
 
-test('a cabinet names its coalition and folds out its seats in the Tweede Kamer', async ({
-	page
-}) => {
+test('a cabinet names its coalition and shows its seats in both Kamers', async ({ page }) => {
 	await page.goto('/kabinetten/rutte_iv');
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Kabinet-Rutte IV');
 	await expect(page.getByText('10 januari 2022 tot 2 juli 2024')).toBeVisible();
 	for (const party of ['VVD', 'D66', 'CDA', 'ChristenUnie'])
 		await expect(page.getByRole('link', { name: party, exact: true }).first()).toBeVisible();
-	await page.getByRole('button', { name: 'Zetels in de Tweede Kamer' }).click();
+	// Both Kamers open, side by side (A190): no heading to unfold.
+	await expect(page.getByRole('heading', { name: 'Zetels in de Eerste Kamer' })).toBeVisible();
 	await expect(
 		page.getByRole('group', { name: /^Zetels van de coalitie in de Tweede Kamer/ })
 	).toBeVisible();

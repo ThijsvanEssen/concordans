@@ -76,10 +76,11 @@ describe('the network and its cards', () => {
 		expect(t).toMatch(/\.buhne:has\(\.canvas-node-list :focus-visible\) \.graph-canvas-wrap/);
 	});
 
-	it('gives the contents the network’s width from 1440, so every reader title starts in one column', () => {
-		expect(bron('routes/explore/+page.svelte')).toMatch(
-			/--nav-w-auto:\s*calc\([^;]*var\(--graph-w-auto\)/
-		);
+	it('keeps the contents narrow beside the text, never the network’s width (A190)', () => {
+		const t = bron('routes/explore/+page.svelte');
+		expect(t).not.toMatch(/--nav-w-auto:\s*calc\([^;]*var\(--graph-w-auto\)/);
+		for (const [, w] of t.matchAll(/--nav-w-auto:\s*(\d+)px/g))
+			expect(Number(w)).toBeLessThanOrEqual(240);
 	});
 
 	it('reads the role of a collection on the canvas from COLLECTION_ROLE (F65)', () => {

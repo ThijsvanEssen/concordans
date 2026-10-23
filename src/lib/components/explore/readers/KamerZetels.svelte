@@ -221,7 +221,8 @@
 		? 'meerderheid'
 		: 'geen meerderheid'}{/snippet}
 
-<Sectie title={titel}>
+<!-- Open, not folded: the two Kamers stand side by side, seen at a glance (Thijs, 23 Oct, A190). -->
+<Sectie title={titel} inklapbaar={false}>
 	<div class="zetels">
 		{#if kop}
 			<!-- The head figure (concept 16, B): the coalition's seats on the day shown. -->

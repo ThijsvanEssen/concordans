@@ -90,7 +90,6 @@ describe('the first paint of an article', () => {
 		const col = html();
 		for (const selector of [
 			'.kop-rij__band',
-			'.head-actions',
 			'.reader-place',
 			'.reader-nav',
 			'.reader-status__woorden',

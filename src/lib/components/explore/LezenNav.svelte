@@ -363,8 +363,6 @@
 	/* The bijlagen after the articles, set off as one part is from the next. */
 	.annexes {
 		margin-top: var(--s-3);
-		border-top: 1px solid var(--rule);
-		padding-top: var(--s-2);
 	}
 
 	.group {
@@ -381,11 +379,11 @@
 	.group__head {
 		display: flex;
 		align-items: flex-start;
-		gap: var(--s-2);
-		padding: var(--s-1) var(--s-4);
+		gap: var(--s-1);
+		padding: var(--s-1) var(--s-3);
 	}
 	.group__head:hover {
-		background: var(--paper-2);
+		color: var(--ink);
 	}
 	/* A finger's target: a heading at least 32 px high, as the rows are (NavKolom). */
 	@media (pointer: coarse), (max-width: 768px) {
@@ -401,15 +399,16 @@
 		}
 	}
 
-	/* Depth carries the hierarchy in the type of each level (NavKolom: nav-kolom__n1 to 4). */
+	/* Depth carries the hierarchy in the type of each level (NavKolom: nav-kolom__n1 to 4);
+	   a step of white between the parts of the first level, no rule. */
 	.group.depth-0 + .group.depth-0 {
-		margin-top: var(--s-3);
-		border-top: 1px solid var(--rule);
-		padding-top: var(--s-2);
+		margin-top: var(--s-1);
 	}
-	/* The first line of the label is 1.3 high; the caret sits on its middle. */
+	/* The caret sits on the middle of the label's first line, quieter than the words. */
 	.group__head :global(.caret) {
-		margin: calc((1.3em - 10px) / 2) 0 0;
+		margin: calc((var(--lh-snug) * 1em - 10px) / 2) 0 0;
+		color: var(--ink-3);
+		opacity: 0.7;
 	}
 	/* A <details> keeps its own open state; the caret follows it. */
 	details[open] > summary :global(.caret) {
@@ -417,29 +416,26 @@
 	}
 
 	.group__label {
-		line-height: 1.3;
+		line-height: var(--lh-snug);
 		color: inherit;
 		text-decoration: none;
 	}
 	/* The division the law is opened at (#deel-…), marked as the article chosen is. */
 	.group__head:has(.is-hier) {
-		background: var(--paper-2);
 		color: var(--ink);
+		box-shadow: inset 2px 0 0 var(--ink);
 	}
 	a.group__label:hover {
 		text-decoration-line: underline;
 		text-underline-offset: 3px;
 	}
 
+	/* A level under its division, set in by the width of the caret. */
 	.children {
 		padding-left: var(--s-3);
 	}
-
-	.is-active {
-		background: var(--paper-2);
-		color: var(--ink);
-		font-weight: 600;
-		border-left-color: var(--ink);
-		padding-left: var(--s-4);
+	/* The articles of a division under the words of its heading, past its caret. */
+	.group > .list {
+		padding-left: var(--s-3);
 	}
 </style>

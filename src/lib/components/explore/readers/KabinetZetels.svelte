@@ -52,27 +52,42 @@
 {#if seats.state.status === 'error'}
 	<LoadState state={seats.state} what="De zetelverdeling" retry={seats.retry} />
 {:else if zetels?.tk?.length}
-	<!-- One section per Kamer, so either closes on its own (Thijs, 10 Oct). -->
-	<KamerZetels
-		kamer="TK"
-		stretches={zetels.tk}
-		meerderheid={zetels.majority.TK ?? 76}
-		from={zetels.from_date ?? null}
-		to={eind}
-		dag={opDag}
-		kabinet={zetels.key}
-		onSelect={kies}
-		{fasen}
-	/>
-	<KamerZetels
-		kamer="EK"
-		stretches={zetels.ek ?? []}
-		meerderheid={zetels.majority.EK ?? 38}
-		from={zetels.from_date ?? null}
-		to={eind}
-		dag={opDag}
-		kabinet={zetels.key}
-		onSelect={kies}
-		{fasen}
-	/>
+	<!-- One section per Kamer, open and side by side where the column has room for both; on a
+	     phone under each other (Thijs, 23 Oct, A190). -->
+	<div class="chambers">
+		<KamerZetels
+			kamer="TK"
+			stretches={zetels.tk}
+			meerderheid={zetels.majority.TK ?? 76}
+			from={zetels.from_date ?? null}
+			to={eind}
+			dag={opDag}
+			kabinet={zetels.key}
+			onSelect={kies}
+			{fasen}
+		/>
+		<KamerZetels
+			kamer="EK"
+			stretches={zetels.ek ?? []}
+			meerderheid={zetels.majority.EK ?? 38}
+			from={zetels.from_date ?? null}
+			to={eind}
+			dag={opDag}
+			kabinet={zetels.key}
+			onSelect={kies}
+			{fasen}
+		/>
+	</div>
 {/if}
+
+<style>
+	/* Two columns where each has the room of a hall and its two sides, else one. */
+	.chambers {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 336px), 1fr));
+		gap: var(--s-5) var(--s-6);
+		align-items: start;
+		/* The grid spaces the sections; a section's own step before it falls away (Sectie). */
+		--lezer-stap: var(--s-5);
+	}
+</style>

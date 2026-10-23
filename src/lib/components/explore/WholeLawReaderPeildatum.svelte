@@ -13,7 +13,8 @@
 		peildatum,
 		today = vandaag(),
 		choose,
-		verlopen = false
+		verlopen = false,
+		asFact = false
 	}: {
 		versions: Schema<'InstrumentVersionDTO'>[];
 		peildatum: string | null;
@@ -23,6 +24,8 @@
 		choose: (day: string) => void;
 		/** The law has expired: no text holds today, the last one is the newest version. */
 		verlopen?: boolean;
+		/** A cell of the head's facts (Feiten `strip`): its label over the menu. */
+		asFact?: boolean;
 	} = $props();
 
 	const oldest = $derived(
@@ -44,8 +47,7 @@
 	const shown = $derived(langeDatum(peildatum ?? (lastText ? newest : today)));
 </script>
 
-<div class="whole-peil">
-	<span>{label}</span>
+{#snippet picker()}
 	<TekstMenu {label} tekst={shown}>
 		{#snippet inhoud(close)}
 			<div class="peil-lijst">
@@ -87,7 +89,19 @@
 			</div>
 		{/snippet}
 	</TekstMenu>
-</div>
+{/snippet}
+
+{#if asFact}
+	<div class="field">
+		<dt>{label}</dt>
+		<dd>{@render picker()}</dd>
+	</div>
+{:else}
+	<div class="whole-peil">
+		<span>{label}</span>
+		{@render picker()}
+	</div>
+{/if}
 
 <style>
 	/* A list that reads as a line of the head. */

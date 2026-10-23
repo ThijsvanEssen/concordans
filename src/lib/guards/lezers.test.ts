@@ -187,11 +187,11 @@ describe('the readers', () => {
 		).toEqual([]);
 	});
 
-	it('starts every reader at one title column where no network stands beside it', () => {
-		const regel = /\.explore-read:not\(\.explore-read--with-nav\) \.col--measure \{([^}]*)\}/.exec(
-			bron('routes/explore/+page.svelte')
-		)?.[1];
-		expect(regel).toMatch(/--reader-col-left:\s*calc\([^;]*--nav-w\b/);
+	it('keeps no empty room for contents beside a reader that has none (A190)', () => {
+		// Thijs, 23 Oct: a kabinet stood beside a wide empty column kept for a law's contents.
+		expect(bron('routes/explore/+page.svelte')).not.toMatch(
+			/\.explore-read:not\(\.explore-read--with-nav\)[^{]*\{[^}]*--reader-col-left/
+		);
 	});
 
 	it('centres every reader between the side columns on a wide screen, through ReaderFrame', () => {

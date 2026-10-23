@@ -223,7 +223,7 @@ export function articleColumn(v: ArticlePaint, k: Classes): string {
 		`<div class="reader-status ${k.head}">` +
 		`<div class="reader-status__woorden ${k.head}" data-later>${status}</div>` +
 		`<div class="reader-status__later ${k.head}"></div>` +
-		`<span class="reader-status__acties ${k.head}" data-later>${compare}<span class="kop-acties ${k.actions}"><span class="ev-actions"></span></span></span>` +
+		`<span class="reader-status__acties ${k.head}" data-later>${compare}<span class="kop-acties ${k.actions}"><span class="ev-actions"></span></span><button type="button" class="btn ${k.head}" tabindex="-1">Zoek in dit stuk</button></span>` +
 		'</div>' +
 		`<div class="reader-rijen ${k.head}" data-later>${euAct ? '' : peildatum(validity, onScreen?.from ?? null, k, caret)}${origin}</div>` +
 		'</div>';
@@ -231,7 +231,6 @@ export function articleColumn(v: ArticlePaint, k: Classes): string {
 	return (
 		`<div class="kop-rij ${k.frame}">` +
 		`<div class="kop-rij__band kop-rij__band--held ${k.frame}" data-later>${belongsTo(v.law ?? undefined, node, k)}</div>` +
-		`<div class="head-actions ${k.frame}" data-later><button type="button" class="btn ${k.frame}" tabindex="-1">Zoek in dit stuk</button></div>` +
 		'</div>' +
 		head +
 		`<div class="reader-body ${k.reader}">${text(a, v.delegations ?? [], k)}</div>`

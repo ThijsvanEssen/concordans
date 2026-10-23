@@ -42,7 +42,7 @@
 		font-size: var(--t-micro);
 	}
 	.kop {
-		padding: 0 var(--s-4) var(--s-3);
+		padding: 0 var(--s-3) var(--s-2);
 	}
 	.titel {
 		margin: var(--s-1) 0 0;
@@ -68,7 +68,7 @@
 	.nav-kolom > :global(.stil),
 	:global(.nav-kolom__note) {
 		margin: 0;
-		padding: var(--s-4);
+		padding: var(--s-3);
 		font-size: inherit;
 		color: var(--ink-3);
 	}
@@ -77,45 +77,47 @@
 		margin: 0;
 		padding: 0 0 var(--s-5);
 	}
+	/* A row: small, light, no ground and no rule (A190, besluit 36: the standard principles of
+	   a digital table of contents). The place the text stands at is marked by a thin line in
+	   ink at its left and the ink of its words, nothing heavier. */
 	:global(.nav-kolom__rij) {
 		display: block;
 		width: 100%;
-		padding: var(--s-1) var(--s-4);
+		padding: var(--s-1) var(--s-3);
 		border: 0;
 		background: none;
 		text-align: left;
 		color: var(--ink-3);
-		line-height: 1.3;
+		line-height: var(--lh-snug);
 		cursor: pointer;
 		text-decoration: none;
 	}
 	:global(.nav-kolom__rij:hover) {
-		background: var(--paper-2);
 		color: var(--ink);
 	}
 	/* The place the text stands at, in the lists that follow the scroll (DocumentToc, JudgmentToc). */
 	:global(.nav-kolom__rij.is-active) {
-		background: var(--paper-2);
 		color: var(--ink);
 		box-shadow: inset 2px 0 0 var(--ink);
 	}
-	/* The one type of a division in the contents, by its depth: a boek or kop reads as a
-	   heading, a paragraaf as a quiet label. The tables of contents give only the level. */
+	/* The one type of a division in the contents, by its depth, in one weight: a boek or kop in
+	   ink-2 at meta size, deeper levels smaller and quieter. The tables of contents give only
+	   the level. */
 	:global(.nav-kolom__n1) {
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-		font-weight: 600;
-		color: var(--ink);
+		font-weight: 400;
+		color: var(--ink-2);
 	}
 	:global(.nav-kolom__n2) {
 		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		font-weight: 600;
+		font-size: var(--t-micro);
+		font-weight: 400;
 		color: var(--ink-2);
 	}
 	:global(.nav-kolom__n3) {
 		font-size: var(--t-micro);
-		font-weight: 600;
+		font-weight: 400;
 		color: var(--ink-3);
 	}
 	:global(.nav-kolom__n4) {

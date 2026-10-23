@@ -8,14 +8,13 @@
 	// --reader-pad-top, --reader-pad-left, --reader-pad-right and --reader-max
 	// (explore/+page.svelte). So the text keeps its place and width whatever opens
 	// beside it, and the scrollbar keeps its gutter whether or not the text scrolls.
-	import { getContext, type Snippet } from 'svelte';
+	import { getContext, setContext, type Snippet } from 'svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import BehoortBij from '$lib/bron/BehoortBij.svelte';
 	import { BEHOORT_KEY, bandAlways } from '$lib/bron/behoort';
 	import WeergaveSchakelaar from '../WeergaveSchakelaar.svelte';
 	import { WEERGAVE_KEY, type Weergave } from '../weergave';
-	import SearchInText from '../SearchInText.svelte';
-	import { SearchState } from '../search-state.svelte';
+	import { SearchState, FIND_KEY, type FindInText } from '../search-state.svelte';
 	import { BandState } from './band-state.svelte';
 	import { consultedOn } from '$lib/text/datum';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -39,7 +38,8 @@
 		what?: string;
 		/** Load again after an error: the API may have been out of reach for a moment. */
 		retry?: () => void;
-		/** A long text: "Zoek in dit stuk" stands beside the switch and marks hits in the text. */
+		/** A long text: "Zoek in dit stuk" stands in the head's row of actions (ReaderHead) and
+		 * marks hits in the text. */
 		find?: boolean;
 		/** What stands before the load is in (the head from the light node), in every state. */
 		head?: Snippet;
@@ -61,17 +61,25 @@
 
 	// Netwerk / Tekst, top right beside the band: only for the bron the band is for, not
 	// for a document opened beside it.
-	const weergave = getContext<(() => Weergave | null) | undefined>(WEERGAVE_KEY);
-	const w = $derived(bron ? (weergave?.() ?? null) : null);
+	const viewOf = getContext<(() => Weergave | null) | undefined>(WEERGAVE_KEY);
+	const w = $derived(bron ? (viewOf?.() ?? null) : null);
 
 	// Whether the band has lines, told once its light node is in: until then a kind that always
 	// has a band holds its place; a row with nothing in it (no band, no controls) is not drawn
 	// at all, no bare rule over the title.
 	const band = new BandState();
 	const bandHeld = $derived(bron ? bandAlways(bron().collection) && band.has !== false : false);
-	const rowShown = $derived(band.has === true || bandHeld || !!w || find);
+	const rowShown = $derived(band.has === true || bandHeld || !!w);
 
+	// The head of the reader draws the button and the field (ReaderHead): the actions of the
+	// stuk stand together, not one above the band and the others under the title (A190).
 	const search = new SearchState();
+	setContext<FindInText>(FIND_KEY, {
+		get find() {
+			return find;
+		},
+		search
+	});
 
 	// The text is here: the first paint of the address gives the column to the reader once
 	// it stands in its place (lib/first-paint/takeover.ts).
@@ -85,7 +93,7 @@
 	<div class="reader-frame__col" bind:this={search.column}>
 		<!-- The band and Netwerk/Tekst on one row, one rule under both over the full width
 		     (Thijs, 10 Oct: the rule stopped short of the toggle). -->
-		{#if w || bron || find}
+		{#if w || bron}
 			<div class="kop-rij" hidden={!rowShown}>
 				{#if bron}<div
 						class="kop-rij__band"
@@ -99,22 +107,11 @@
 							}}
 						/>
 					</div>{/if}
-				{#if w?.contents || find}
+				{#if w?.contents}
 					<div class="head-actions">
-						{#if w?.contents}
-							<button type="button" class="btn" aria-haspopup="dialog" onclick={w.contents}
-								>Inhoud</button
-							>
-						{/if}
-						{#if find}
-							<button
-								type="button"
-								class="btn"
-								class:is-active={search.open}
-								aria-expanded={search.open}
-								onclick={() => search.toggle()}>Zoek in dit stuk</button
-							>
-						{/if}
+						<button type="button" class="btn" aria-haspopup="dialog" onclick={w.contents}
+							>Inhoud</button
+						>
 					</div>
 				{/if}
 				{#if w}
@@ -124,10 +121,6 @@
 				{/if}
 			</div>
 		{/if}
-		{#if find && search.open}<SearchInText
-				root={search.column}
-				onClose={() => search.close()}
-			/>{/if}
 		{@render head?.()}
 		{#if state.status === 'loading' && loading}
 			{@render loading()}
@@ -217,15 +210,11 @@
 		flex: none;
 		margin-left: auto;
 	}
-	/* The band takes the room; the controls of the long text stand at the right of it. */
+	/* The band takes the room; Inhoud stands at the right of it. */
 	.head-actions {
 		display: flex;
 		flex: none;
 		gap: var(--s-2);
-	}
-	.head-actions :global(.btn.is-active) {
-		border-color: var(--ink);
-		color: var(--ink);
 	}
 	/* On a phone the controls stand under the band, not squeezed beside it. */
 	@media (max-width: 768px) {

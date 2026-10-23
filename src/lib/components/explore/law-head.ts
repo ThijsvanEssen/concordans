@@ -70,14 +70,18 @@ export function sourceName(url: string | null | undefined): string | null {
 	}
 }
 
+/** A fact of the head: its label and its value, a cell of the strip (Feiten `strip`). */
+type LawFact = { label: string; value: string };
+
 /**
- * The head in sentences: 587 artikelen. In werking sinds 1 januari 1994. Geldende tekst:
- * versie van 15 augustus 2026. 15.108 keer aangehaald. The law came into force once; its
+ * The facts of the head, each once (E9): In werking sinds 1 januari 1994, Tekst sinds 15
+ * augustus 2026, Artikelen 587, Aangehaald 15.108 keer. The law came into force once; its
  * text in force is that of its latest version. On a peildatum only the count of that day. A
- * law of the Staatsblad the BWB does not hold yet: Vastgesteld, nog niet in werking (Stb.
- * 2026, 56).
+ * law of the Staatsblad the BWB does not hold yet: Status Vastgesteld, nog niet in werking
+ * (Stb. 2026, 56). The peildatum is a cell of its own (WholeLawReaderPeildatum), after the
+ * dates.
  */
-export function lawHeadLine(
+export function lawHeadFacts(
 	d: Dates | null,
 	opts: {
 		count: number;
@@ -89,27 +93,36 @@ export function lawHeadLine(
 		/**
 		 * What the API says of whether the law holds (undefined: an API without it). The line
 		 * Validity says it then, once: no Vastgesteld, nog niet in werking beside it, and no
-		 * Geldende tekst where the law does not hold or is not known to.
+		 * Tekst sinds where the law does not hold or is not known to.
 		 */
 		validity?: Validity | null;
 	}
-): string {
+): { dates: LawFact[]; counts: LawFact[] } {
 	const { count, peildatum, currentFrom, longDate, formatCount, validity } = opts;
 	const saysHolds = validity === undefined || validity?.state === 'in_force';
 	const version = d?.version_date_in_force ?? currentFrom ?? null;
 	// The list is the count where the law says 0 (a BWB treaty); a record without text none.
 	const n = peildatum ? count : d?.article_count || count;
-	return [
-		n > 0 ? `${formatCount(n)} artikelen.` : null,
-		validity === undefined ? enactedStatus(d) : null,
-		d?.date_in_force ? `In werking sinds ${longDate(d.date_in_force)}.` : null,
-		saysHolds && !peildatum && version && version !== d?.date_in_force
-			? `Geldende tekst: versie van ${longDate(version)}.`
-			: null,
-		d?.inbound_citation_count ? `${formatCount(d.inbound_citation_count)} keer aangehaald.` : null
-	]
-		.filter(Boolean)
-		.join(' ');
+	const status = validity === undefined ? enactedStatus(d) : null;
+	const fact = (label: string, value: string | null | false | undefined) =>
+		value ? [{ label, value }] : [];
+	return {
+		dates: [
+			...fact('Status', status),
+			...fact('In werking sinds', d?.date_in_force && longDate(d.date_in_force)),
+			...fact(
+				'Tekst sinds',
+				saysHolds && !peildatum && version && version !== d?.date_in_force && longDate(version)
+			)
+		],
+		counts: [
+			...fact('Artikelen', n > 0 && formatCount(n)),
+			...fact(
+				'Aangehaald',
+				!!d?.inbound_citation_count && `${formatCount(d.inbound_citation_count)} keer`
+			)
+		]
+	};
 }
 
 /** Of a law of the Staatsblad not in force yet (`status` vastgesteld), its status as a sentence. */
@@ -117,7 +130,7 @@ function enactedStatus(d: Dates | null): string | null {
 	const law =
 		d?.status === 'vastgesteld' && d.in_force !== true ? enactedLawId(d.official_id) : null;
 	const status = law ? enactedLawStatus(law) : null;
-	return status ? `${status}.` : null;
+	return status ?? null;
 }
 
 /** The same treaty elsewhere (`same_treaty`): the BWB text of a Verdragenbank record, or the other way. */

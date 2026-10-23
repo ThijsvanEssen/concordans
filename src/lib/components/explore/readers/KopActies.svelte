@@ -87,11 +87,10 @@
 			row-gap: var(--s-5);
 		}
 	}
-	/* On a phone the pair starts at the text's edge, on a line of its own. */
+	/* On a phone the pair starts at the text's edge; Zoek in dit stuk follows where it fits. */
 	@media (max-width: 768px) {
 		.kop-acties {
 			margin-left: 0;
-			flex-basis: 100%;
 		}
 	}
 </style>

@@ -33,7 +33,7 @@
 	import {
 		lawCitationRecord,
 		lawFullTitle,
-		lawHeadLine,
+		lawHeadFacts,
 		lawKind,
 		sourceName,
 		treatyLink
@@ -46,6 +46,8 @@
 	import WholeLawReaderPeildatum from './WholeLawReaderPeildatum.svelte';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import Validity from '$lib/components/ui/Validity.svelte';
+	import Feiten from '$lib/components/ui/Feiten.svelte';
+	import Veld from '$lib/components/ui/Veld.svelte';
 	import { validityOf } from '$lib/api/validity';
 	import { coverageLine } from '$lib/text/coverage';
 	import { followPosition } from './law-position.svelte';
@@ -156,8 +158,8 @@
 		);
 	});
 
-	const headLine = $derived(
-		lawHeadLine(lawDetail, {
+	const headFacts = $derived(
+		lawHeadFacts(lawDetail, {
 			count: total,
 			peildatum,
 			currentFrom: currentVersion?.valid_from,
@@ -183,6 +185,16 @@
 		lawDetail?.article_count === 0 && (status !== 'ready' || total === 0)
 	);
 	const isEu = $derived(lawDetail?.jurisdiction === 'eu');
+	// The cell of the peildatum keeps its place while the versions come, so the cells after it
+	// do not move (V4); an act of the EU has its text as adopted only, and no versions.
+	const peildatumShown = $derived(
+		!lacksArticles &&
+			!isEu &&
+			(versions.length > 0 || (versionList.state.status === 'loading' && !!lawDetail))
+	);
+	const withFacts = $derived(
+		headFacts.dates.length > 0 || headFacts.counts.length > 0 || peildatumShown
+	);
 
 	$effect(() => {
 		detailByNumber.clear();
@@ -295,6 +307,18 @@
 	</div>
 {/snippet}
 
+<!-- The facts of the law, each once (E9), a strip of their own under its title (A190): its
+     dates, the text of which day (the peildatum), its articles, how often it is cited. -->
+{#snippet factStrip()}
+	<Feiten strip label="Kenmerken">
+		{#each headFacts.dates as f (f.label)}<Veld label={f.label} value={f.value} />{/each}
+		{#if peildatumShown}
+			<WholeLawReaderPeildatum asFact {versions} {peildatum} {today} {choose} {verlopen} />
+		{/if}
+		{#each headFacts.counts as f (f.label)}<Veld label={f.label} value={f.value} />{/each}
+	</Feiten>
+{/snippet}
+
 <!-- The head stands on the law's own detail, the cheapest call; the list of its articles
      follows under it (lazy: the text of the head first, Orchestrator 10 Oct). -->
 {#if status === 'loading' && !lawDetail}
@@ -312,6 +336,7 @@
 			collection="instruments"
 			{kindLabel}
 			title={record.heading}
+			facts={withFacts ? factStrip : undefined}
 			acties={{
 				bewaar: bewaarItem(
 					`instruments/${lawNodeKey(bwbId)}`,
@@ -329,7 +354,6 @@
 			<!-- What is on screen and which text: the count, a treaty, the peildatum. -->
 			{#snippet statusLine()}
 				<Validity {validity} />
-				<span>{headLine}</span>
 				{#if textNotRead}
 					<p class="whole-count">
 						<Coverage noText coverage={lawDetail?.completeness} bron={officialSource} />
@@ -378,9 +402,6 @@
 							<a href={treaty.target.url} rel="external">{treaty.label}</a>
 						{/if}
 					</p>
-				{/if}
-				{#if versions.length > 0 && !lacksArticles}
-					<WholeLawReaderPeildatum {versions} {peildatum} {today} {choose} {verlopen} />
 				{/if}
 			{/snippet}
 			{#if peildatum && !(versionsLoaded && versions.length === 0)}

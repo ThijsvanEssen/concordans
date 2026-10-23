@@ -1822,12 +1822,10 @@
 			--graph-w-auto: 328px;
 			--panel-w-auto: 432px;
 		}
-		/* One title column for every reader (Thijs, 10 Oct, "Voor Thijs" 4): the contents
-		   take the network's width less the difference in the reader's left margin (64 for
-		   the hanging numbers of the leden, 32 beside the network), so a title starts where
-		   it does beside the network (365 at 1440) and the article keeps 590 px. */
+		/* The contents float narrow beside the text, a list and no column of its own (A190,
+		   besluit 36): 240 at 1440, so the reader keeps its measure between them and Verbonden. */
 		.explore-read {
-			--nav-w-auto: calc(var(--graph-w-auto) + var(--s-6) - 64px);
+			--nav-w-auto: 240px;
 		}
 	}
 	@media (min-width: 1600px) {
@@ -1988,14 +1986,9 @@
 		--reader-pad-right: var(--s-8);
 		--reader-max: 790px;
 	}
-	/* One title column for every reader (round 2 of the consistency pass, 10 Oct): a reader
-	   without contents (a dossier, a lid, a stemming) starts where one with contents does,
-	   past the width the contents would take, not in the middle of its wider column. */
-	@media (min-width: 769px) {
-		.explore-read:not(.explore-read--with-nav) .col--measure {
-			--reader-col-left: calc(var(--nav-w, var(--nav-w-auto)) + 5px);
-		}
-	}
+	/* A reader without contents (a kabinet, a lid, a stemming) stands in the middle of its
+	   column, as one with contents does between them and Verbonden: no room is kept empty at
+	   its left for contents it has not (Thijs, 23 Oct, A190). */
 
 	.explore-empty {
 		margin: var(--s-6);

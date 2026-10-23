@@ -11,8 +11,10 @@
 	import GlossaryPill from './GlossaryPill.svelte';
 	import type { GlossaryTerm } from '$lib/glossary';
 	import { bronLabel, type Collection } from '$lib/vocabulary';
-	import type { Snippet } from 'svelte';
+	import { getContext, type Snippet } from 'svelte';
 	import KopActies from './KopActies.svelte';
+	import SearchInText from '../SearchInText.svelte';
+	import { FIND_KEY, type FindInText } from '../search-state.svelte';
 	import { KOP_ACTIES, type Acties } from './kop-acties';
 
 	let {
@@ -31,6 +33,7 @@
 		later,
 		laterPlek = false,
 		statusHeld = false,
+		facts,
 		acties,
 		extra,
 		children
@@ -64,6 +67,9 @@
 		laterPlek?: boolean;
 		/** The status line kept from the start, empty or not, for words that come with a later answer. */
 		statusHeld?: boolean;
+		/** The facts of the bron as a strip of label and value (Feiten `strip`): in force since,
+		 * the text of which day, its articles, how often it is cited. */
+		facts?: Snippet;
 		/** The actions of the head: Bewaar always, Citeer where the kind is cited. */
 		acties: Acties;
 		/** A control only this kind has, before the actions: Vergelijken. */
@@ -72,8 +78,10 @@
 		children?: Snippet;
 	} = $props();
 
-	const delen = $derived(joinParts([juris, ...kindParts]));
-	const citeer = $derived(KOP_ACTIES[collection]?.citeer ?? false);
+	const kindRest = $derived(joinParts([juris, ...kindParts]));
+	const cited = $derived(KOP_ACTIES[collection]?.citeer ?? false);
+	// "Zoek in dit stuk" of the frame (ReaderFrame `find`), in the one row of the actions.
+	const finder = getContext<FindInText | undefined>(FIND_KEY);
 </script>
 
 <div class="reader-head">
@@ -96,7 +104,7 @@
 						label={kindLabel ?? kindTerm}
 					/>{:else}<SoortLink {collection} {lijst}
 						><span>{kindLabel ?? bronLabel(collection)}</span></SoortLink
-					>{/if}{#if delen}<span class="reader-juris">, {delen}</span>{/if}
+					>{/if}{#if kindRest}<span class="reader-juris">, {kindRest}</span>{/if}
 			</div>
 		{/if}
 		{@render nav?.()}
@@ -113,22 +121,40 @@
 	<div class="reader-status">
 		<div class="reader-status__woorden" class:plek={statusHeld}>{@render statusLine?.()}</div>
 		{#if later || laterPlek}<div class="reader-status__later">{@render later?.()}</div>{/if}
+		{#if facts}<div class="reader-facts">{@render facts()}</div>{/if}
+		<!-- The actions of the stuk in one row (A190, E2: a frame for an action or a menu): what
+		     only this kind has, Bewaar and Citeer, then Zoek in dit stuk. -->
 		<span class="reader-status__acties">
 			{@render extra?.()}
 			<KopActies
 				bewaar={acties.bewaar}
 				wat={acties.wat ?? ''}
-				cite={citeer ? (acties.cite ?? []) : []}
+				cite={cited ? (acties.cite ?? []) : []}
 				naam={acties.naam ?? ''}
 				bron={acties.bron ?? null}
 				tekst={acties.tekst}
 				follow={acties.follow ?? null}
 				atom={acties.atom ?? null}
 			/>
+			{#if finder?.find}
+				<button
+					type="button"
+					class="btn"
+					class:is-active={finder.search.open}
+					aria-expanded={finder.search.open}
+					onclick={() => finder.search.toggle()}>Zoek in dit stuk</button
+				>
+			{/if}
 		</span>
 	</div>
 	{#if children}<div class="reader-rijen">{@render children()}</div>{/if}
 </div>
+<!-- The field under the head, beside it and not in it: it stays at the top of the text while
+     the text scrolls (sticky in the reader's own block, which holds the text). -->
+{#if finder?.find && finder.search.open}<SearchInText
+		root={finder.search.column}
+		onClose={() => finder.search.close()}
+	/>{/if}
 
 <style>
 	/* One step from the head to what follows, on every reader: a reader that spaces its blocks
@@ -278,6 +304,15 @@
 		.reader-status__acties {
 			row-gap: var(--s-5);
 		}
+	}
+	.reader-status__acties :global(.btn.is-active) {
+		border-color: var(--ink);
+		color: var(--ink);
+	}
+	/* The facts stand between the words of the status and the actions, a block of their own. */
+	.reader-facts {
+		align-self: stretch;
+		margin: var(--s-2) 0;
 	}
 	.reader-rijen {
 		display: grid;
