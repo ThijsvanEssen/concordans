@@ -47,6 +47,7 @@
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import Validity from '$lib/components/ui/Validity.svelte';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
+	import FullTitle from '$lib/components/ui/FullTitle.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
 	import { validityOf } from '$lib/api/validity';
 	import { coverageLine } from '$lib/text/coverage';
@@ -349,7 +350,7 @@
 			}}
 		>
 			{#snippet onderTitel()}
-				{#if fullTitle}<p class="whole-official">{fullTitle}</p>{/if}
+				{#if fullTitle}<FullTitle title={fullTitle} />{/if}
 			{/snippet}
 			<!-- What is on screen and which text: the count, a treaty, the peildatum. -->
 			{#snippet statusLine()}
@@ -495,14 +496,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-	.whole-official {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		font-style: italic;
-		color: var(--ink-2);
-		max-width: 68ch;
 	}
 	.whole-count a {
 		color: inherit;

@@ -35,6 +35,8 @@
 
 <style>
 	.nav-kolom {
+		/* The muted ink of the rows: ink-3 towards the paper. */
+		--nav-stil: color-mix(in srgb, var(--ink-3) 75%, var(--paper));
 		height: 100%;
 		overflow-y: auto;
 		padding-top: var(--s-5);
@@ -77,9 +79,9 @@
 		margin: 0;
 		padding: 0 0 var(--s-5);
 	}
-	/* A row: small, light, no ground and no rule (A190, besluit 36: the standard principles of
-	   a digital table of contents). The place the text stands at is marked by a thin line in
-	   ink at its left and the ink of its words, nothing heavier. */
+	/* A row: small, muted, one line, no ground and no rule (A190, variant a, Thijs 23 Oct): the
+	   contents stand back from the text; the place the text stands at is in ink, with a thin
+	   line in ink at its left. A heading cut off keeps its whole as its title. */
 	:global(.nav-kolom__rij) {
 		display: block;
 		width: 100%;
@@ -87,8 +89,12 @@
 		border: 0;
 		background: none;
 		text-align: left;
-		color: var(--ink-3);
+		color: var(--nav-stil);
+		font-size: var(--t-micro);
 		line-height: var(--lh-snug);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 		cursor: pointer;
 		text-decoration: none;
 	}
@@ -100,37 +106,29 @@
 		color: var(--ink);
 		box-shadow: inset 2px 0 0 var(--ink);
 	}
-	/* The one type of a division in the contents, by its depth, in one weight: a boek or kop in
-	   ink-2 at meta size, deeper levels smaller and quieter. The tables of contents give only
-	   the level. */
-	:global(.nav-kolom__n1) {
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		font-weight: 400;
-		color: var(--ink-2);
-	}
-	:global(.nav-kolom__n2) {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 400;
-		color: var(--ink-2);
-	}
+	/* Every level in one size and one weight, muted; the depth is the indent, the first level
+	   a step of white before it. The tables of contents give only the level. */
+	:global(.nav-kolom__n1),
+	:global(.nav-kolom__n2),
 	:global(.nav-kolom__n3) {
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-weight: 400;
-		color: var(--ink-3);
+		color: var(--nav-stil);
 	}
 	:global(.nav-kolom__n4) {
 		font-size: var(--t-micro);
 		font-weight: 400;
 		font-style: italic;
-		color: var(--ink-3);
+		color: var(--nav-stil);
 	}
 	/* A finger's target in the column and the sheet Inhoud: a row 44 px high. */
 	@media (pointer: coarse), (max-width: 768px) {
 		:global(.nav-kolom__rij) {
 			display: flex;
 			align-items: center;
+			/* In the sheet Inhoud the whole heading, over its lines: no hover gives its title. */
+			white-space: normal;
 			min-height: var(--veld-h-raak);
 			/* The 44 px is the row: a long heading adds its lines, no padding besides. */
 			padding-block: 0;

@@ -92,6 +92,7 @@
 									class:is-active={headingAt.current === it.id}
 									aria-current={headingAt.current === it.id ? 'location' : undefined}
 									href="#{it.id}"
+									title={it.label}
 									onclick={(e) => jump(e, it.id)}>{it.label}</a
 								>
 							</li>

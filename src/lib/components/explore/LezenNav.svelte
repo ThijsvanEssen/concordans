@@ -258,6 +258,7 @@
 			aria-current={item.key === selectedKey ? 'page' : isHier(item) ? 'location' : undefined}
 			href={articleHref(item)}
 			data-sveltekit-noscroll
+			title={item.label}
 			onclick={(e) => openArticle(e, item)}>{item.label}</a
 		>
 	</li>
@@ -290,10 +291,11 @@
 					{href}
 					data-sveltekit-noscroll
 					onkeydown={groupKey}
+					title={groupLabel(g)}
 					onclick={(e) => openDeel(e, g.id)}>{groupLabel(g)}</a
 				>
 			{:else}
-				<span class="group__label">{groupLabel(g)}</span>
+				<span class="group__label" title={groupLabel(g)}>{groupLabel(g)}</span>
 			{/if}
 		</summary>
 		{#if g.items.length > 0}
@@ -341,6 +343,7 @@
 							class:is-active={annex.key === selectedKey}
 							aria-current={annex.key === selectedKey ? 'page' : undefined}
 							href={bronHref({ collection: 'annexes', key: annex.key })}
+							title={annex.title ? `${annex.name} ${annex.title}` : annex.name}
 							>{annex.title ? `${annex.name} ${annex.title}` : annex.name}</a
 						>
 					</li>
@@ -396,6 +399,7 @@
 			align-self: stretch;
 			display: flex;
 			align-items: center;
+			white-space: normal;
 		}
 	}
 
@@ -415,7 +419,12 @@
 		transform: rotate(0deg);
 	}
 
+	/* One line a division, cut off; its whole heading as its title (A190, variant a). */
 	.group__label {
+		min-width: 0;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
 		line-height: var(--lh-snug);
 		color: inherit;
 		text-decoration: none;

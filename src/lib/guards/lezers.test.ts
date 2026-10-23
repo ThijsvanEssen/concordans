@@ -19,6 +19,17 @@ describe('the readers', () => {
 		).toEqual([]);
 	});
 
+	it('folds the full title of a law and of a dossier with one component (A190)', () => {
+		for (const pad of [
+			'lib/components/explore/WholeLawReader.svelte',
+			'lib/components/explore/readers/DossierReader.svelte'
+		])
+			expect(bron(pad), pad).toMatch(/<FullTitle\b/);
+		expect(
+			overtreders((t) => />Volledige titel</.test(t), [plek('lib/components/ui/FullTitle.svelte')])
+		).toEqual([]);
+	});
+
 	it('picks the peildatum of a law and of its article with one component (W14, X14)', () => {
 		for (const pad of [
 			'lib/components/explore/WholeLawReader.svelte',

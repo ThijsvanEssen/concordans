@@ -223,7 +223,7 @@ export function articleColumn(v: ArticlePaint, k: Classes): string {
 		`<div class="reader-status ${k.head}">` +
 		`<div class="reader-status__woorden ${k.head}" data-later>${status}</div>` +
 		`<div class="reader-status__later ${k.head}"></div>` +
-		`<span class="reader-status__acties ${k.head}" data-later>${compare}<span class="kop-acties ${k.actions}"><span class="ev-actions"></span></span><button type="button" class="btn ${k.head}" tabindex="-1">Zoek in dit stuk</button></span>` +
+		`<span class="reader-status__acties ${k.head}" data-later>${compare}<span class="kop-acties ${k.actions}"><span class="ev-actions"></span></span><button type="button" class="find-btn raakvlak ${k.head}" tabindex="-1"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.8"/><path d="M10.6 10.6 14 14"/></svg>Zoek in dit stuk</button></span>` +
 		'</div>' +
 		`<div class="reader-rijen ${k.head}" data-later>${euAct ? '' : peildatum(validity, onScreen?.from ?? null, k, caret)}${origin}</div>` +
 		'</div>';
@@ -273,7 +273,7 @@ function peildatum(
 	const expired = validity?.state === 'expired';
 	const label = peildatumLabel(expired);
 	const day = langeDatum(expired ? last : vandaag());
-	return `<div class="whole-peil ${k.peil}"><span class="${k.peil}">${label}</span><div class="tekstmenu ${k.textMenu}"><button type="button" class="btn tekstmenu__knop ${k.textMenu}" tabindex="-1">${esc(day)}${caret}</button></div></div>`;
+	return `<div class="whole-peil as-fact ${k.peil}"><span class="${k.peil}">${label}</span><div class="tekstmenu ${k.textMenu}"><button type="button" class="btn tekstmenu__knop ${k.textMenu}" tabindex="-1">${esc(day)}${caret}</button></div></div>`;
 }
 
 type Formulas = { start: number; end: number }[];

@@ -94,10 +94,10 @@
 {#if asFact}
 	<div class="field">
 		<dt>{label}</dt>
-		<dd>{@render picker()}</dd>
+		<dd class="as-fact">{@render picker()}</dd>
 	</div>
 {:else}
-	<div class="whole-peil">
+	<div class="whole-peil as-fact">
 		<span>{label}</span>
 		{@render picker()}
 	</div>
@@ -114,6 +114,32 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		color: var(--ink-2);
+	}
+	/* In the strip of facts and on the article's line the day is a value in the text's type, underlined in dots, with
+	   its caret: no box among the other values (Thijs, 23 Oct). */
+	.as-fact :global(.tekstmenu__knop) {
+		height: auto;
+		min-height: 0;
+		padding: 0;
+		gap: var(--s-1);
+		border: 0;
+		background: none;
+		font-family: var(--font-serif);
+		font-size: var(--t-body-2);
+		font-weight: 400;
+		color: var(--ink);
+		text-decoration: underline dotted var(--rule-strong);
+		text-underline-offset: 4px;
+	}
+	/* A finger's target on a touch screen, unframed. */
+	@media (pointer: coarse), (max-width: 768px) {
+		.as-fact :global(.tekstmenu__knop) {
+			min-height: var(--veld-h-raak);
+		}
+	}
+	.as-fact :global(.tekstmenu__knop:hover),
+	.as-fact :global(.tekstmenu__knop[aria-expanded='true']) {
+		text-decoration-color: var(--ink);
 	}
 	.peil-lijst {
 		display: flex;

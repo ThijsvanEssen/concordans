@@ -1,4 +1,5 @@
 <script lang="ts">
+	import FullTitle from '$lib/components/ui/FullTitle.svelte';
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { textOf } from '$lib/text/words';
 	import { changeVerb } from '$lib/verbonden/relation-words';
@@ -125,10 +126,7 @@
 			>
 				{#snippet onderTitel()}
 					{#if d.short_title && d.title && d.title.trim() !== d.short_title}
-						<details class="full-title">
-							<summary class="raakvlak">Volledige titel</summary>
-							<p>{d.title}</p>
-						</details>
+						<FullTitle title={d.title} />
 					{/if}
 					<!-- What the bill does to the law, under its title (concept 21, Thijs 10 Oct): the laws
 				     it amends and the EU acts it implements (`legal_effect`), as links. -->
@@ -264,17 +262,6 @@
 		text-decoration: underline;
 		text-decoration-color: var(--rule-strong);
 		text-underline-offset: 3px;
-	}
-	.full-title summary {
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		color: var(--ink-2);
-		cursor: pointer;
-	}
-	.full-title p {
-		margin: var(--s-1) 0 0;
-		font-size: var(--t-meta);
-		color: var(--ink-2);
 	}
 	.r-dossier {
 		display: flex;

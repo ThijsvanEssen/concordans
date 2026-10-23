@@ -1805,13 +1805,13 @@
 	   At 1920: network 606, reader 840, Verbonden 464; at 2560: 1220, 850, 480. */
 	.explore-graph,
 	.explore-read {
-		--nav-w-auto: 220px;
+		--nav-w-auto: 200px;
 		--graph-w-auto: 360px;
 		--panel-w-auto: clamp(340px, calc(100vw - 872px), 408px);
 		--panel: var(--panel-w, var(--panel-w-auto));
 	}
-	/* Beside the reader's contents (220) Verbonden leaves the reader 670 at 1280. */
-	@media (max-width: 1439px) {
+	/* Beside the reader's contents (200) Verbonden leaves the reader its room below 1280. */
+	@media (max-width: 1279px) {
 		.explore-read--with-nav {
 			--panel-w-auto: clamp(340px, calc(100vw - 900px), 408px);
 		}
@@ -1822,17 +1822,19 @@
 			--graph-w-auto: 328px;
 			--panel-w-auto: 432px;
 		}
-		/* The contents float narrow beside the text, a list and no column of its own (A190,
-		   besluit 36): 240 at 1440, so the reader keeps its measure between them and Verbonden. */
-		.explore-read {
-			--nav-w-auto: 240px;
-		}
 	}
 	@media (min-width: 1600px) {
 		.explore-graph,
 		.explore-read {
 			--panel-w-auto: clamp(432px, calc(432px + (100vw - 1600px) / 10), 480px);
 			--graph-w-auto: max(328px, calc(100vw - var(--panel) - 850px));
+		}
+	}
+	/* Reading, Verbonden is 400 from 1280, as mockup V1: room for the text and its contents
+	   beside it (A190, Thijs 23 Oct); below, the width above. */
+	@media (min-width: 1280px) {
+		.explore-read {
+			--panel-w-auto: 400px;
 		}
 	}
 
@@ -1985,6 +1987,13 @@
 		--reader-pad-left: 64px;
 		--reader-pad-right: var(--s-8);
 		--reader-max: 790px;
+	}
+	/* Below 1440, 32 px to the rule of Verbonden: the text keeps some 575 px at 1280 beside the
+	   contents (200) and Verbonden (400); from 1440 some 700 (A190, V1: 720). */
+	@media (max-width: 1439px) {
+		.col--measure {
+			--reader-pad-right: var(--s-6);
+		}
 	}
 	/* A reader without contents (a kabinet, a lid, a stemming) stands in the middle of its
 	   column, as one with contents does between them and Verbonden: no room is kept empty at

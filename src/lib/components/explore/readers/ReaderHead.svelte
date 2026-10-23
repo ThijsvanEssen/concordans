@@ -137,12 +137,23 @@
 				atom={acties.atom ?? null}
 			/>
 			{#if finder?.find}
+				<!-- A tool of the text, not an action on the bron: bare, with its glass, at the row's
+				     right edge (E2: a frame for an action or a menu; Thijs chose variant x, 23 Oct). -->
 				<button
 					type="button"
-					class="btn"
+					class="find-btn raakvlak"
 					class:is-active={finder.search.open}
 					aria-expanded={finder.search.open}
-					onclick={() => finder.search.toggle()}>Zoek in dit stuk</button
+					onclick={() => finder.search.toggle()}
+					><svg
+						width="14"
+						height="14"
+						viewBox="0 0 16 16"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.6"
+						aria-hidden="true"><circle cx="7" cy="7" r="4.8" /><path d="M10.6 10.6 14 14" /></svg
+					>Zoek in dit stuk</button
 				>
 			{/if}
 		</span>
@@ -290,6 +301,7 @@
 		margin: 0;
 	}
 	.reader-status__acties {
+		align-self: stretch;
 		display: inline-flex;
 		flex-wrap: wrap;
 		align-items: center;
@@ -305,14 +317,41 @@
 			row-gap: var(--s-5);
 		}
 	}
-	.reader-status__acties :global(.btn.is-active) {
-		border-color: var(--ink);
-		color: var(--ink);
+	/* Zoek in dit stuk: the quiet tool at the right of Bewaar and Citeer, in the letter of the
+	   controls, underlined under the pointer and while the field is open. */
+	.find-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-2);
+		height: var(--veld-h);
+		margin-left: auto;
+		padding: 0 var(--s-2);
+		border: 0;
+		background: none;
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
+		color: var(--ink-2);
+		cursor: pointer;
 	}
-	/* The facts stand between the words of the status and the actions, a block of their own. */
+	/* On a phone, where it wraps under Bewaar and Citeer, at the text's edge as they are. */
+	@media (max-width: 640px) {
+		.find-btn {
+			margin-left: calc(-1 * var(--s-2));
+		}
+	}
+	.find-btn:hover,
+	.find-btn.is-active {
+		color: var(--ink);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+	/* The facts a block of their own between the words of the status and the actions, a
+	   hairline over them; no rule under the actions, the text's own first rule follows. */
 	.reader-facts {
 		align-self: stretch;
-		margin: var(--s-2) 0;
+		margin: var(--s-2) 0 var(--s-1);
+		padding-top: var(--s-3);
+		border-top: 1px solid var(--rule);
 	}
 	.reader-rijen {
 		display: grid;
