@@ -66,7 +66,12 @@ export function uitspraakNoten(
 		if (!f.text?.trim()) continue;
 		let id = nootAnker(f.label);
 		for (let n = 2; noten.has(id); n++) id = `${nootAnker(f.label)}-${n}`;
-		noten.set(id, { id, label: f.label, text: holdDatesTogether(f.text), citations: f.citations ?? [] });
+		noten.set(id, {
+			id,
+			label: f.label,
+			text: holdDatesTogether(f.text),
+			citations: f.citations ?? []
+		});
 		if (!f.paragraph_id) {
 			los.push(id);
 			continue;
