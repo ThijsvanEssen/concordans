@@ -28,6 +28,7 @@
 		at = null,
 		preview = true,
 		voorbeeld = null,
+		readLabel = null,
 		extra = null,
 		doel = null,
 		noot = null,
@@ -44,6 +45,8 @@
 		preview?: boolean;
 		/** The card itself, where the reference is not a bron's own (a defined term). */
 		voorbeeld?: Preview | null;
+		/** Its link to the bron, in a defined term's card: on touch the first tap shows the card. */
+		readLabel?: string | null;
 		/** One line more on the card: the definition a citation's words name. */
 		extra?: string | null;
 		/** The bron an r.o.'s card is read for: its citations in the overweging marked. */
@@ -70,7 +73,9 @@
 
 	// The card of an r.o.: the overweging, a card to read rather than a glance.
 	const ro = $derived(preview && !voorbeeld && isOverwegingRef(id, at));
-	const hover = new HoverCard(() => ro);
+	// A defined term's card is read too: a finger sees the definition first, then goes.
+	const readCard = $derived(!!voorbeeld && !!readLabel);
+	const hover = new HoverCard(() => ro || readCard);
 	const binnen = (t: EventTarget | null) =>
 		t instanceof Node && (!!anker?.contains(t) || !!kaart?.contains(t));
 
@@ -81,7 +86,7 @@
 			anchor: () => anker,
 			card: () => kaart,
 			close: () => hover.close(),
-			readable: ro
+			readable: ro || readCard
 		});
 	});
 
@@ -107,7 +112,7 @@
 </script>
 
 <a
-	class={className}
+	class="{className} raakvlak"
 	{href}
 	{title}
 	data-sveltekit-noscroll
@@ -148,6 +153,10 @@
 			{extra}
 			anchor={anker}
 			bind:element={kaart}
+			{href}
+			readLabel={readCard ? readLabel : null}
+			onpointerenter={() => hover.enter()}
+			onpointerleave={() => hover.leave()}
 			id="{uid}-card"
 			onclose={() => hover.close()}
 		/>{/if}{/if}

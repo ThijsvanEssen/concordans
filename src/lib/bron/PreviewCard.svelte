@@ -15,6 +15,10 @@
 		extra,
 		anchor,
 		id,
+		href = null,
+		readLabel = null,
+		onpointerenter,
+		onpointerleave,
 		onclose,
 		element = $bindable(null)
 	}: {
@@ -26,6 +30,11 @@
 		extra: string | null;
 		anchor: HTMLElement;
 		id: string;
+		/** With `readLabel`: where the card's link goes (a defined term: its article). */
+		href?: string | null;
+		readLabel?: string | null;
+		onpointerenter?: () => void;
+		onpointerleave?: () => void;
 		onclose: () => void;
 		/** The card while it shows. */
 		element?: HTMLElement | null;
@@ -44,17 +53,43 @@
 	});
 </script>
 
-{#if card}<FloatingCard kind="glance" tag="span" bind:element {anchor} {onclose} {id} role="tooltip"
+{#if card}<FloatingCard
+		kind="glance"
+		tag="span"
+		class={readLabel ? 'clickable' : ''}
+		bind:element
+		{anchor}
+		{onclose}
+		{id}
+		{onpointerenter}
+		{onpointerleave}
+		role="tooltip"
 		><span class="kicker">{card.kicker}{card.date ? `, ${card.date}` : ''}</span><span class="title"
 			>{card.title}</span
 		>{#if card.dossier}<span class="line">{card.dossier}</span>{/if}{#if card.wie}<span class="line"
 				>{card.wie}</span
 			>{/if}{#if card.uitslag}<span class="outcome">{card.uitslag}</span>{/if}{#if card.extra}<span
 				class="line">{card.extra}</span
-			>{/if}{#if card.lines}<span class="lines">{card.lines}</span>{/if}</FloatingCard
+			>{/if}{#if card.lines}<span class="lines">{card.lines}</span>{/if}{#if readLabel && href}<a
+				class="verder"
+				{href}
+				data-sveltekit-noscroll>{readLabel}</a
+			>{/if}</FloatingCard
 	>{/if}
 
 <style>
+	/* The card of a defined term has a link: it takes the pointer (a glance does not). */
+	:global(.floating-card.clickable) {
+		pointer-events: auto;
+	}
+	.verder {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+		font-size: var(--t-meta);
+		color: var(--ink);
+		text-decoration: underline;
+	}
 	.kicker {
 		font-size: var(--t-label);
 		color: var(--ink-3);

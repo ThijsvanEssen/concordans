@@ -5,7 +5,13 @@
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import { refOf } from '$lib/bron/href';
 	import { isCollection } from '$lib/vocabulary';
-	import { definitieKaart, definitieRegel, type Begrip, type Definitie } from '$lib/text/begrippen';
+	import {
+		definitieKaart,
+		definitieRegel,
+		readLabel,
+		type Begrip,
+		type Definitie
+	} from '$lib/text/begrippen';
 	import type { DelegatieSpan, Gedelegeerd } from '$lib/text/delegaties';
 	import GrondslagFormule from './GrondslagFormule.svelte';
 	import FootnoteLink from './FootnoteLink.svelte';
@@ -85,7 +91,8 @@
 		>{:else if seg.begrip}<BronLink
 			ref={`articles/${seg.begrip.article_key}`}
 			voorbeeld={definitieKaart(seg.begrip)}
-			class="begrip">{@render plain(seg.content)}</BronLink
+			readLabel={readLabel(seg.begrip)}
+			class="begrip raakvlak">{@render plain(seg.content)}</BronLink
 		>{:else if seg.span && refOfSpan(seg)}{#if doel && seg.span.target.key === doel}<mark
 				class="doel"
 				><BronLink ref={refOfSpan(seg)!} at={seg.at} class="cited"

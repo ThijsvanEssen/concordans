@@ -42,7 +42,7 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <header class="topbar">
-	<a href="/" class="logo" aria-label="Concordans">
+	<a href="/" class="logo raakvlak" aria-label="Concordans">
 		<Wordmark />
 	</a>
 

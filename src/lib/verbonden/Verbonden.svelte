@@ -131,6 +131,28 @@
 		})
 	);
 
+	// A link that names the bronnen (?bronnen=, the start page's) comes for Verbonden: where the
+	// text and Verbonden stand under each other, once its groups are in, it is in view (R3-I F5).
+	// The text above it arrives after the groups and moves it; it is brought back until the
+	// reader scrolls for themselves.
+	let announced = false;
+	$effect(() => {
+		if (announced || !onShowNetwork || !root || groepen.length === 0) return;
+		announced = true;
+		if (!page.url.searchParams.get('bronnen') || !matchMedia('(max-width: 768px)').matches) return;
+		const toVerbonden = () => root?.scrollIntoView({ block: 'start' });
+		let ownScroll = false;
+		const ownScrolled = () => (ownScroll = true);
+		for (const e of ['touchstart', 'wheel', 'keydown'] as const)
+			addEventListener(e, ownScrolled, { once: true, passive: true });
+		const until = Date.now() + 3000;
+		const ticker = setInterval(() => {
+			if (ownScroll || Date.now() > until) return clearInterval(ticker);
+			toVerbonden();
+		}, 250);
+		afterTick(toVerbonden);
+	});
+
 	/** A group opened and in view: from the network, or "Bekijk in Verbonden". */
 	function showGroup(id: string) {
 		const g = groepen.find((x) => x.id === id);
@@ -677,6 +699,7 @@
 
 <style>
 	.verbonden {
+		scroll-margin-top: var(--topbar-h);
 		display: flex;
 		flex-direction: column;
 		height: 100%;

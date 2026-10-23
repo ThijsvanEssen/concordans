@@ -20,7 +20,9 @@
 	<h2 id="ingang-netwerk">Zie hoe het samenhangt</h2>
 	<ul>
 		{#each entries as entry (entry.href)}
-			<li><Picto naam="netwerk-o" size={14} /><a href={entry.href}>{entry.label}</a></li>
+			<li>
+				<Picto naam="netwerk-o" size={14} /><a class="raakvlak" href={entry.href}>{entry.label}</a>
+			</li>
 		{/each}
 	</ul>
 </section>

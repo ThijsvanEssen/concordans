@@ -45,6 +45,11 @@ export function definitieRegel(d: Definitie): string {
 	return `${d.term}: ${d.text}${plaats ? ` (${plaats})` : ''}`;
 }
 
+/** The link in the card of a defined term, for a finger that cannot follow it by a tap. */
+export function readLabel(d: Pick<Definitie, 'article_number'>): string {
+	return d.article_number ? `Lees ${articleRef(null, d.article_number)}` : 'Lees het artikel';
+}
+
 /** The card of a defined term, for the hover card every reference has (BronLink). */
 export function definitieKaart(d: Definitie): Preview {
 	const plaats = plaatsVan(d);

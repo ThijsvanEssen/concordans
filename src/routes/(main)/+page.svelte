@@ -245,7 +245,7 @@
 		<NetworkEntry />
 		<section class="actueel" aria-labelledby="actueel-heading">
 			<header>
-				<h2 id="actueel-heading"><a href="/actueel">Actueel</a></h2>
+				<h2 id="actueel-heading"><a class="raakvlak" href="/actueel">Actueel</a></h2>
 				<p class="volger">Wat de Kamer en de rechter met de wet doen</p>
 			</header>
 			{#if feedState === 'laden'}
@@ -269,7 +269,7 @@
 				/>
 			{/if}
 			<Tijdlijn groepen={groups} datums={false} />
-			<p class="all"><a href="/actueel">Alles in Actueel →</a></p>
+			<p class="all"><a class="raakvlak" href="/actueel">Alles in Actueel →</a></p>
 		</section>
 	</div>
 </div>
