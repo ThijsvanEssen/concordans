@@ -470,7 +470,7 @@ describe('citedLine', () => {
 				{ article_number: '5:49' },
 				{ article_number: '5:50' }
 			])
-		).toBe('art. 4:12, 5:49 en 1 ander');
+		).toBe('art. 4:12, 5:49 en 5:50');
 		expect(
 			citedLine([
 				{ article_number: '1' },
@@ -479,7 +479,7 @@ describe('citedLine', () => {
 				{ article_number: null },
 				{ article_number: '4' }
 			])
-		).toBe('art. 1, 2 en 2 andere');
+		).toBe('art. 1, 2, 3 en 4');
 	});
 });
 

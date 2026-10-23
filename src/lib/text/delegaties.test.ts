@@ -175,7 +175,7 @@ describe('the grondslag of a regulation', () => {
 		const a = (n: string) => ({ article_number: n });
 		expect(uitgewerktIn([a('2'), a('3')])).toBe('uitgewerkt in art. 2 en 3');
 		expect(uitgewerktIn(['1', '2', '3', '4', '5', '6', '7', '8'].map(a))).toBe(
-			'uitgewerkt in art. 1, 2, 3, 4, 5, 6 en 2 andere'
+			'uitgewerkt in art. 1, 2, 3, 4, 5, 6, 7 en 8'
 		);
 		expect(uitgewerktIn([])).toBeNull();
 	});

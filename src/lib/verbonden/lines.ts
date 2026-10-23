@@ -26,7 +26,7 @@ export function periodLabel(period: NonNullable<Row['period']>): string {
 }
 
 /**
- * `art. 4:12, 5:49 en 3 andere`: the articles of the law a judgment cites; a BW article with
+ * `art. 4:12, 5:49 en 6:162`: the articles of the law a judgment cites; a BW article with
  * its book, `art. 7:225` (`bwb` the law's id).
  */
 export function citedLine(
@@ -39,9 +39,8 @@ export function citedLine(
 	if (!numbers.length) return null;
 	// The sole article of a law (`enig-artikel`) is cited alone, by its name.
 	if (numbers.length === 1) return articleRef(bwb, numbers[0]);
-	const shown = numbers.slice(0, 2).join(', ');
-	const rest = numbers.length - 2;
-	return `art. ${shown}${rest > 0 ? ` en ${count(rest, 'ander', 'andere')}` : ''}`;
+	// Every one: a list cut short said "en 3 andere" without a way to them (Thijs, 23 Oct).
+	return `art. ${joinAnd(numbers)}`;
 }
 
 /**

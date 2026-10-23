@@ -163,8 +163,6 @@ export function grondslagRegel(g: Grondslag): { werkwoord: string; rest: string 
 	return { werkwoord, rest };
 }
 
-/** How many articles that work a grondslag out a line names; the rest counted. */
-const UITGEWERKT_GENOEMD = 6;
 
 /**
  * The articles of a regulation that work its grondslag out (`referring`): `uitgewerkt in
@@ -180,9 +178,7 @@ export function uitgewerktIn(referring: unknown, bwb?: string | null): string | 
 			)
 		: [];
 	if (!xs.length) return null;
-	const genoemd = xs.slice(0, UITGEWERKT_GENOEMD);
-	const meer = xs.length - genoemd.length;
-	return `uitgewerkt in art. ${joinAnd(genoemd, { n: meer, one: 'andere', many: 'andere' })}`;
+	return `uitgewerkt in art. ${joinAnd(xs)}`;
 }
 
 /** One sentence of the head of a regulation: `Op grond van` and the laws. */
