@@ -85,6 +85,8 @@ export class NetwerkComposer {
 	cut = $state.raw<{ collection: string; total: number; kept: number }[]>([]);
 	/** The weergave Omgeving: each chosen bron with all its neighbours, not only what they share. */
 	surroundings = false;
+	/** The canvas is shown (Omgeving): the paths between the chosen bronnen are asked for it. */
+	drawsPaths = true;
 	/** Whether the canvas is a composed netwerk now. */
 	composed = false;
 
@@ -188,10 +190,12 @@ export class NetwerkComposer {
 		if (epoch !== this.#epoch) return;
 		const onIds = lights
 			.map((r, i) => (r.status === 'fulfilled' && isOn(n, n.ids[i]) ? canvasIdOf(r.value) : null))
-			.filter((id): id is string => id !== null);
+			.filter((id): id is string => id !== null)
+			// In one order whatever the chips' order: the same netwerk asks the same paths.
+			.sort();
 		// The route takes 2 to 5 bronnen; a larger netwerk keeps the shared neighbours.
 		const paths =
-			n.tussen && onIds.length > 1 && onIds.length <= PATHS_MAX
+			this.drawsPaths && n.tussen && onIds.length > 1 && onIds.length <= PATHS_MAX
 				? pathsBetween(onIds)
 				: Promise.resolve(null);
 		if (pending) this.#draw(n, lights, null);

@@ -1,8 +1,7 @@
 import type { QueryOf, Schema } from '$lib/api/types';
 import { NODE_TYPES, type Collection, type Relation } from '$lib/vocabulary';
 import { api, clientFor, unwrap } from './client';
-import { isNotFound, report } from './errors';
-import { onForget } from '$lib/util/forget';
+import { isNotFound } from './errors';
 
 // Keys are lower case in the API and the routes are case-sensitive.
 const path = (collection: Collection, key: string) => ({ collection, key: key.toLowerCase() });
@@ -200,31 +199,9 @@ export async function getShared(
 	query: QueryOf<'/api/nodes/shared'>,
 	signal?: AbortSignal
 ): Promise<Schema<'SharedNeighborsResponse'> | null> {
-	// The route came with API 0.80.8 (A200, #937): an older API is not asked (a 404 is a console error
-	// in every browser), and a 404 all the same stands for the visit. Null: not there.
-	if (!(await apiHasShared())) return null;
+	// From API 0.80.8 (A200, #937); a 404 all the same says: not there.
 	return unwrap(api.GET('/api/nodes/shared', { params: { query }, signal })).catch((e) => {
 		if (!isNotFound(e)) throw e;
-		shared = Promise.resolve(false);
 		return null;
 	});
-}
-/** The first version of the API with /api/nodes/shared. */
-const SHARED_SINCE = [0, 80, 8];
-let shared: Promise<boolean> | null = null;
-const apiHasShared = () =>
-	(shared ??= unwrap(api.GET('/api/health'))
-		.then((h) => atLeast(String(h.version ?? ''), SHARED_SINCE))
-		.catch((e) => {
-			report('API versie', e);
-			return false;
-		}));
-onForget(() => {
-	shared = null;
-});
-/** Whether `version` (`0.80.7`) is `min` or later. */
-function atLeast(version: string, min: readonly number[]): boolean {
-	const v = version.split('.').map((n) => Number.parseInt(n, 10) || 0);
-	for (let i = 0; i < min.length; i++) if ((v[i] ?? 0) !== min[i]) return (v[i] ?? 0) > min[i];
-	return true;
 }

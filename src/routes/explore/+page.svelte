@@ -1245,6 +1245,7 @@
 		if (mode !== 'graph') return;
 		untrack(() => {
 			composer.surroundings = omgeving;
+			composer.drawsPaths = omgeving;
 			if (n.ids.length > 0) composer.compose(n);
 			else if (composer.composed) composer.release();
 		});

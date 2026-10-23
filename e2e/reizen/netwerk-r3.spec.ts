@@ -121,3 +121,35 @@ test('Keten fits its width: no zoom, Deel stays', async ({ page }) => {
 	await expect(page.getByRole('button', { name: /^Deel/ }).first()).toBeAttached();
 	await expect(page.getByRole('button', { name: 'Inzoomen' })).toHaveCount(0);
 });
+
+// Verband per pair (Thijs, 23 Oct): every chosen bron drawn, the same bronnen in another order
+// give the same Verband, and a bron added takes no verband away.
+const D = 'members/9ab41898_332f_4c08_a834_d58b4669c990';
+const R = 'members/8b3664bd_77e4_468b_af96_f3f4ec27fcce';
+const VIER = ['instruments/bwbr0010346', D, 'articles/bwbr0001903_126ffa', 'factions/vvd'];
+/** What Verband draws and says, in order: the drawing on a wide screen, the list on a phone. */
+async function verband(page: Page, ids: string[], touch: boolean) {
+	await page.goto(`/explore?netwerk=${ids.join(',')}&weergave=verband`);
+	const shared = page.locator('.shared');
+	const lines = touch ? shared.locator('.ladder__name') : shared.locator('svg text');
+	await expect(lines.filter({ hasText: /lid van/ }).first()).toBeVisible({ timeout: 20_000 });
+	return (await lines.evaluateAll((els) => els.map((e) => e.textContent ?? ''))).map((t) =>
+		t.trim()
+	);
+}
+
+test('Verband draws every chosen bron, the same in any order, and keeps its verbanden', async ({
+	page,
+	touch
+}) => {
+	const vier = await verband(page, VIER, touch);
+	for (const naam of ['Arbowet', 'Art. 126ffa Sv', 'Dilan Yeşilgöz-Zegerius'])
+		expect(vier.some((t) => t.startsWith(naam))).toBe(true);
+	const evaluatie = vier.find((t) => /Evaluat/.test(t))!;
+	expect(evaluatie).toBeTruthy();
+	const omgekeerd = await verband(page, [...VIER].reverse(), touch);
+	expect(omgekeerd).toEqual(vier);
+	const vijf = await verband(page, [...VIER, R], touch);
+	expect(vijf).toContain(evaluatie);
+	expect(vijf.some((t) => t.startsWith('Mark Rutte'))).toBe(true);
+});
