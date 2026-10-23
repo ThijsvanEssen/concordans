@@ -121,7 +121,9 @@ describe('typography', () => {
 			'lib/components/tijdlijn/Tijdlijn.svelte',
 			'lib/onderwerpen/Kruiswoord.svelte',
 			'routes/(main)/api/+page.svelte',
-			'lib/components/explore/index/IndexOverzicht.svelte'
+			'lib/components/explore/index/IndexOverzicht.svelte',
+			'lib/verbonden/TierBar.svelte',
+			'lib/verbonden/GroupHead.svelte'
 		].map((pad) => plek(pad, 'a column of figures'));
 		expect(overtreders((t) => /tabular-nums/.test(t), columns)).toEqual([]);
 	});

@@ -128,7 +128,8 @@ describe('Verbonden', () => {
 		expect(rij.querySelector('.row__citaat')?.textContent).toContain('artikel 6:162 BW');
 		// The comma's space is its margin (.row__sep).
 		const meta = [...rij.querySelectorAll('.row__meta .row__part')].map((p) => p.textContent);
-		expect(meta).toEqual(['ECLI:NL:HR:2019:2006', 'staat letterlijk in de tekst']);
+		// The ECLI short; the passage shows the verbinding is in the text, the words not again (A208c).
+		expect(meta).toEqual(['HR:2019:2006']);
 	});
 
 	it('opens a judgment with one click on its row, at the note, the citation marked', async () => {
@@ -233,12 +234,12 @@ describe('Verbonden', () => {
 		const koppen = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent?.trim());
 		expect(koppen).toEqual(['Uitspraken1', 'Stukken1']);
 		// The passage and the ECLI wait for the row to open; no order at a glance, one Filter.
-		expect(screen.queryByText(/ECLI:NL:HR:2019:2006/)).toBeNull();
+		expect(screen.queryByText(/HR:2019:2006/)).toBeNull();
 		expect(screen.getByRole('button', { name: 'Filter' })).toBeTruthy();
 		expect(screen.queryByRole('button', { name: 'Datum' })).toBeNull();
 		await klik(screen.getByRole('link', { name: 'Hoge Raad, 20 december 2019' }));
 		expect(goto).not.toHaveBeenCalled();
-		expect(screen.getByText(/ECLI:NL:HR:2019:2006/)).toBeTruthy();
+		expect(screen.getByText(/HR:2019:2006/)).toBeTruthy();
 	});
 
 	it('opens a soort in place from Alle N, in the one view, and folds it with Minder (A208e)', async () => {

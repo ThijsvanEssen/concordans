@@ -1,7 +1,6 @@
 <script lang="ts">
 	// One line of controls under the heading of a group of judgments (docs/bediening.md): their
 	// order, and the year and the court behind one text menu.
-	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import { formatCount } from '$lib/text/getal';
 	import { RECHTERS, type Court, type Rechter, type VerbondenFilter } from './filter';
@@ -38,8 +37,9 @@
 
 <div class="regel">
 	{#if orders}
-		<!-- Newest first, or the most cited first: the standard judgments on top (UX-15). -->
-		<Keuze
+		<!-- Newest first, or the most cited first: the standard judgments on top (UX-15). A text
+		     menu as the year and the court are: one quiet line of two choices (A208c). -->
+		<TekstMenu
 			label="Volgorde"
 			opties={orders.map((o) => ({ waarde: o.value, label: o.label }))}
 			waarde={order}
@@ -99,6 +99,8 @@
 </div>
 
 <style>
+	/* One line: the order at the left, the year and the court at the right, as words in the
+	   text's letter with a quiet line under them, not two boxes over each other (A208c). */
 	.regel {
 		display: flex;
 		flex-wrap: wrap;
@@ -107,11 +109,27 @@
 		gap: var(--s-2) var(--s-4);
 		padding: 0 var(--s-4) var(--s-2);
 	}
-	/* Wrapped on a phone, two controls stand over each other: far enough apart that each keeps
-	   its 44 px for a finger (7 px of target beyond each, 14 between). */
+	.regel :global(.tekstmenu__knop) {
+		height: auto;
+		padding: 0;
+		gap: var(--s-1);
+		border: 0;
+		background: none;
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		color: var(--ink-2);
+		text-decoration: underline dotted var(--rule-strong);
+		text-underline-offset: 4px;
+	}
+	.regel :global(.tekstmenu__knop:hover),
+	.regel :global(.tekstmenu__knop[aria-expanded='true']) {
+		color: var(--ink);
+		text-decoration-color: var(--ink);
+	}
+	/* A finger's 44 px each on a touch screen, unframed. */
 	@media (pointer: coarse), (max-width: 768px) {
-		.regel {
-			row-gap: var(--s-4);
+		.regel :global(.tekstmenu__knop) {
+			min-height: var(--veld-h-raak);
 		}
 	}
 	.jaar-rechter {

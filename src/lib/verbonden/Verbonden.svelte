@@ -32,6 +32,7 @@
 	import PendingRows, { pendingKind } from './PendingRows.svelte';
 	import PendingGroup from './PendingGroup.svelte';
 	import GroupHead from './GroupHead.svelte';
+	import TierBar from './TierBar.svelte';
 	import JudgmentOrderLine from './JudgmentOrderLine.svelte';
 	import VerbondenRow from './VerbondenRow.svelte';
 	import { VERBONDEN_BUCKET } from '$lib/api/records';
@@ -369,8 +370,6 @@
 		const isLaw = selection.collection === 'instruments';
 		return !!citingTotal && (isLaw ? bwb : bwb && number) && !parts;
 	});
-	/** The share of the largest part: the bar's parts are as wide as their counts. */
-	const SHADES = [1, 0.7, 0.45, 0.22];
 
 	// The network on request: the soorten as the summary shows them, each with its count, so
 	// the legend's total and the heading's are one sum.
@@ -565,7 +564,8 @@
 			{@const all = expanded.has(g.id)}
 			{@const bars = years(g)}
 			{@const count = groupCount(g)}
-			{@const toe = !isOpen(`verbonden:${g.id}`, true)}
+			<!-- A group is no folding section (besluit 38, K1): always open. -->
+			{@const toe = false}
 			{@const zussen = repeatedTitles(g.rows)}
 			{#if g.section && g.section !== shown[i - 1]?.section}
 				<h3 class="section">{g.section}</h3>
@@ -581,8 +581,6 @@
 						: g.failed && g.rows.length === 0
 							? ''
 							: countLabel(g)}
-					open={!toe}
-					onToggle={() => zetOpen(`verbonden:${g.id}`, toe)}
 				/>
 				{#if !toe}
 					{#if g.laden && verbonden.verwacht?.[g.id]}
@@ -607,26 +605,10 @@
 							/>
 						</div>
 					{/if}
-					{#if g.id === citingJudgments?.id}
-						<!-- Per instantie, over all of them; its place kept while the counts come. -->
-						<div class="tiers" aria-hidden={!parts}>
-							{#if parts}
-								<div class="balk">
-									{#each parts as d, j (d.label)}
-										<i style:flex="{d.count} 1 0" style:opacity={SHADES[j] ?? 0.22}></i>
-									{/each}
-								</div>
-								<ul class="verdeling">
-									{#each parts as d, j (d.label)}
-										<li>
-											<span
-												><span class="sw" style:opacity={SHADES[j] ?? 0.22}></span>{d.label}</span
-											><span class="c">{formatCount(d.count)}</span>
-										</li>
-									{/each}
-								</ul>
-							{/if}
-						</div>
+					{#if g.id === citingJudgments?.id && !filter.jaar && !filter.rechter}
+						<!-- Per instantie, over all of them, the same unit as the heading: the judgments
+						     (A208c); under a year or a court the heading counts those, the bar would not. -->
+						<div class="tiers-plek"><TierBar {parts} pending={tiersPending} /></div>
 					{/if}
 					{#if g.orders || bars.length > 0}
 						<JudgmentOrderLine
@@ -775,47 +757,6 @@
 			min-height: var(--veld-h-raak);
 		}
 	}
-	.tiers {
-		min-height: calc(var(--s-2) + var(--s-2) + 40px);
-		padding: var(--s-1) var(--s-4) var(--s-2);
-	}
-	.balk {
-		display: flex;
-		gap: 2px;
-		height: var(--s-2);
-		margin: 0 0 var(--s-2);
-	}
-	.balk i {
-		display: block;
-		height: 100%;
-		background: var(--indigo);
-	}
-	.verdeling {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 0 var(--s-4);
-		margin: 0;
-		padding: 0;
-		list-style: none;
-		font-size: var(--t-micro);
-		line-height: 20px;
-		color: var(--ink-3);
-	}
-	.verdeling li {
-		display: flex;
-		justify-content: space-between;
-		gap: var(--s-2);
-	}
-	.sw {
-		display: inline-block;
-		width: var(--s-2);
-		height: var(--s-2);
-		margin-right: var(--s-2);
-		background: var(--indigo);
-	}
-	.c {
-		color: var(--ink);
-	}
 	/* In Tekst Verbonden is a column of the page, as the mockups V1 lay it out: a rule at its left
 	   as long as what it holds, 32 px to its words, its heading at the size of a section, and
 	   its soorten on their own edges. Beside the canvas it stays a panel with its own scroll. */
@@ -912,6 +853,9 @@
 		}
 	}
 
+	.tiers-plek {
+		padding: var(--s-1) var(--s-4) var(--s-2);
+	}
 	.group__alle {
 		margin: 0;
 		padding: var(--s-1) var(--s-4) var(--s-3);

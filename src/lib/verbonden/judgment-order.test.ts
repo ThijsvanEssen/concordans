@@ -39,7 +39,8 @@ const html = (collection: 'articles' | 'instruments') => {
 
 describe('the order of the judgments in Verbonden', () => {
 	it('can be chosen on an article and on a law, without a way to load again', () => {
-		expect(html('articles')).toContain('Meest aangehaald');
-		expect(html('instruments')).toContain('Meeste artikelen');
+		// One text menu of the order (A208c): its options open from it.
+		expect(html('articles')).toContain('aria-label="Volgorde: ');
+		expect(html('instruments')).toContain('aria-label="Volgorde: ');
 	});
 });

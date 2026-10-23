@@ -298,7 +298,7 @@ function metaPartsVan(
 		if (row.period) parts.push({ text: periodLabel(row.period), kind: 'plain' });
 		if (row.function && row.function !== 'Tweede Kamerlid')
 			parts.push({ text: `als ${row.function}`, kind: 'plain' });
-		const when = row.identifier ?? korteDatum(row.date);
+		const when = shortId(row) ?? korteDatum(row.date);
 		if (when) parts.push({ text: when, kind: 'plain' });
 		return parts;
 	}
@@ -314,11 +314,18 @@ function metaPartsVan(
 	// Who signed, as what: the function unless it is the plain seat.
 	if (row.function && row.function !== 'Tweede Kamerlid')
 		parts.push({ text: `als ${row.function}`, kind: 'plain' });
-	const when = row.identifier ?? (row.filterGroup === 'uitspraken' ? null : korteDatum(row.date));
+	const when = shortId(row) ?? (row.filterGroup === 'uitspraken' ? null : korteDatum(row.date));
 	if (when) parts.push({ text: when, kind: 'plain' });
 	const word = confidenceWord(row.confidence, !!row.derived);
 	if (word !== 'hoog') parts.push({ text: `betrouwbaarheid ${word}`, kind: 'derived' });
 	return parts;
+}
+
+/** A row's identifier as the meta line says it: a judgment's ECLI short, without the ECLI:NL:
+ *  every Dutch one has (A208c): HR:2009:BH2815. */
+function shortId(row: Row): string | null {
+	const id = row.identifier ?? null;
+	return id && row.ref.collection === 'judgments' ? id.replace(/^ECLI:NL:/, '') : id;
 }
 
 /** The titles that more than one row of `rows` has: sister cases, heard on one day. */

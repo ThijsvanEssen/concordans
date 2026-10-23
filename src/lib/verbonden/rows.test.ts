@@ -370,10 +370,7 @@ describe('sister cases', () => {
 			props
 		};
 		expect(caseNumberOf(row)).toBeNull();
-		expect(metaParts(row).map((p) => p.text)).toEqual([
-			'niet in de gegevens',
-			'ECLI:NL:HR:2017:305'
-		]);
+		expect(metaParts(row).map((p) => p.text)).toEqual(['niet in de gegevens', 'HR:2017:305']);
 	});
 });
 

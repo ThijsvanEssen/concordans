@@ -1,38 +1,18 @@
 <script lang="ts">
-	// The head of a group of Verbonden: its heading opens and closes it (remembered per group,
-	// Sectie's rule), its count follows. Without `onToggle` it is the head of a group still to come, as it will stand.
-	import Caret from '$lib/components/ui/Caret.svelte';
-
+	// The head of a group of Verbonden: its heading and its count. A group is no folding section
+	// (besluit 38, K1): the heading opens nothing, it names the group.
 	let {
 		label,
-		count,
-		open,
-		onToggle
+		count
 	}: {
 		label: string;
 		count: string;
-		open: boolean;
-		onToggle?: () => void;
 	} = $props();
-
-	// The last word keeps the caret with it: an SVG after text wraps alone (Thijs, 10 Oct: "de
-	// nieuwe regel hier is niet mooi").
-	const begin = $derived(label.replace(/\S+$/, ''));
-	const slot = $derived(label.match(/\S+$/)?.[0] ?? '');
 </script>
 
-<!-- The count follows the heading; when the heading wraps, it stands on the first line's right,
-     by the box. -->
-<div class="group__head" data-rij={onToggle ? '' : undefined}>
-	<h3 class="group__label">
-		<button
-			type="button"
-			class="group__knop"
-			tabindex={onToggle ? undefined : -1}
-			aria-expanded={onToggle ? open : undefined}
-			onclick={onToggle}>{begin}<span class="group__slot">{slot}<Caret {open} side /></span></button
-		>
-	</h3>
+<!-- The count follows the heading; when the heading wraps, it stands on the first line's right. -->
+<div class="group__head">
+	<h3 class="group__label">{label}</h3>
 	<span class="group__count">{count}</span>
 </div>
 
@@ -40,8 +20,9 @@
 	.group__head {
 		display: flex;
 		align-items: baseline;
+		justify-content: space-between;
 		gap: var(--s-2);
-		padding: var(--s-4) var(--s-4) var(--s-1);
+		padding: var(--s-4) var(--s-4) var(--s-2);
 	}
 	.group__label {
 		flex: 0 1 auto;
@@ -52,39 +33,9 @@
 		font-weight: 600;
 		color: var(--ink);
 	}
-	/* A block, not inline: a button inline is an inline-block, whose baseline is its last
-	   line, and the count and the box would follow a wrapped heading down to it. The caret
-	   follows the last word in the slot. */
-	.group__knop {
-		display: block;
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		color: inherit;
-		cursor: pointer;
-		text-align: left;
-	}
-	/* A finger's 44 px on a touch screen and below 768: the heading's place to tap takes the
-	   room above it. */
-	@media (pointer: coarse), (max-width: 768px) {
-		.group__head {
-			padding-top: var(--s-1);
-		}
-		.group__knop {
-			padding: var(--s-3) 0;
-		}
-	}
-	.group__knop:hover {
-		color: var(--ink);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
-	}
-	.group__slot {
-		white-space: nowrap;
-	}
 	.group__count {
 		flex: none;
 		color: var(--ink-3);
+		font-variant-numeric: tabular-nums;
 	}
 </style>

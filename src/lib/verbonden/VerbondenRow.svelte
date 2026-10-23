@@ -117,6 +117,13 @@
 	);
 
 	const hoe = $derived(hoeVan(row, selection.collection));
+	// Where the passage stands under the line, it shows the verbinding is in the text: the
+	// words "staat letterlijk in de tekst" say it twice (A208c).
+	const herkomst = $derived(
+		hoe?.herkomst && !(hoe.citaat && hoe.herkomst === 'Staat letterlijk in de tekst')
+			? hoe.herkomst
+			: null
+	);
 	const dossier = $derived(dossierVanRij(row));
 	// A motie or amendement says how the Kamer decided, on every list (StukUitslag); the day of
 	// the vote then stands for the stuk's own.
@@ -200,9 +207,9 @@
 					>
 				{/each}{#if uitslag}{#if delen.length}<span class="row__sep">,</span>{/if}<span
 						class="row__part"><StukUitslag {uitslag} /></span
-					>{/if}{#if hoe?.herkomst}{#if delen.length || uitslag}<span class="row__sep">,</span
-						>{/if}<span class="row__part row__part--herkomst"
-						>{delen.length || uitslag ? kleineLetter(hoe.herkomst) : hoe.herkomst}</span
+					>{/if}{#if herkomst}{#if delen.length || uitslag}<span class="row__sep">,</span>{/if}<span
+						class="row__part row__part--herkomst"
+						>{delen.length || uitslag ? kleineLetter(herkomst) : herkomst}</span
 					>{/if}
 				{#if row.proposed && onProposedText}
 					<span class="row__sep">,</span>

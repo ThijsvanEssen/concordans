@@ -3,7 +3,6 @@
 	// gives, and blank rows as many as it will show (#1), so what comes fills them in and
 	// nothing below moves. Without a group to foretell, quiet bars where groups will be.
 	import { formatCount } from '$lib/text/getal';
-	import { isOpen } from '$lib/components/ui/dicht.svelte';
 	import { VERBONDEN_BUCKET } from '$lib/api/records';
 	import type { Collection } from '$lib/vocabulary';
 	import GroupHead from './GroupHead.svelte';
@@ -22,12 +21,8 @@
 
 {#if group}
 	<section class="group" aria-hidden="true">
-		<GroupHead
-			label={group.label}
-			count={group.count != null ? formatCount(group.count) : '…'}
-			open
-		/>
-		{#if group.count && isOpen(`verbonden:${group.id}`, true)}
+		<GroupHead label={group.label} count={group.count != null ? formatCount(group.count) : '…'} />
+		{#if group.count}
 			{#if group.noun === 'uitspraken' && (group.count > VERBONDEN_BUCKET || group.ordered)}
 				<!-- The line of the judgments' order and years, as it will stand. -->
 				<div class="regel-wacht"></div>

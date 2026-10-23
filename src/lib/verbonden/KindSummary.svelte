@@ -16,6 +16,7 @@
 	import { shortLine, type Kind } from './summary';
 	import type { TierCount } from './tiers';
 	import VerbondenRow from './VerbondenRow.svelte';
+	import TierBar from './TierBar.svelte';
 
 	let {
 		kinds,
@@ -49,9 +50,6 @@
 		inNetwerk?: (row: Row) => boolean;
 	} = $props();
 
-	/** The share of each part of the bar, the largest darkest. */
-	const SHADES = [1, 0.7, 0.45, 0.22];
-
 	/** The row opened in place: one at a time. */
 	let opened = $state<string | null>(null);
 	$effect(() => {
@@ -72,26 +70,8 @@
 		<h3 class="kind__head">
 			<span>{k.label}</span><span class="kind__count">{formatCount(k.count)}</span>
 		</h3>
-		{#if k.id === 'judgments' && tiers?.length}
-			<div class="bar" aria-hidden="true">
-				{#each tiers as t, j (t.label)}
-					<i style:flex="{t.count} 1 0" style:opacity={SHADES[j] ?? 0.22}></i>
-				{/each}
-			</div>
-			<ul class="parts" aria-label="Per instantie">
-				{#each tiers as t, j (t.label)}
-					<li>
-						<span><span class="swatch" style:opacity={SHADES[j] ?? 0.22}></span>{t.label}</span
-						><span class="parts__count">{formatCount(t.count)}</span>
-					</li>
-				{/each}
-			</ul>
-		{:else if k.id === 'judgments' && tiersPending}
-			<!-- The room of the bar and its two rows of parts while they come (UX-toets T9b). -->
-			<div class="bar bar--wacht" aria-hidden="true"></div>
-			<ul class="parts parts--wacht" aria-hidden="true">
-				{#each { length: 4 } as _, i (i)}<li><span>…</span><span>…</span></li>{/each}
-			</ul>
+		{#if k.id === 'judgments' && (tiers?.length || tiersPending)}
+			<TierBar parts={tiers} pending={tiersPending} />
 		{/if}
 		{#if k.failed && k.rows.length === 0}
 			<LoadState
@@ -172,49 +152,6 @@
 	.kind__count {
 		font-weight: 400;
 		color: var(--ink-3);
-	}
-	.bar {
-		display: flex;
-		gap: 2px;
-		height: var(--s-2);
-		margin: 0 0 var(--s-2);
-	}
-	.bar--wacht {
-		background: var(--paper-2);
-	}
-	.parts--wacht {
-		visibility: hidden;
-	}
-	.bar i {
-		display: block;
-		height: 100%;
-		background: var(--indigo);
-	}
-	.parts {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 0 var(--s-4);
-		margin: 0 0 var(--s-3);
-		padding: 0;
-		list-style: none;
-		font-size: var(--t-micro);
-		line-height: 20px;
-		color: var(--ink-3);
-	}
-	.parts li {
-		display: flex;
-		justify-content: space-between;
-		gap: var(--s-2);
-	}
-	.swatch {
-		display: inline-block;
-		width: var(--s-2);
-		height: var(--s-2);
-		margin-right: var(--s-2);
-		background: var(--indigo);
-	}
-	.parts__count {
-		color: var(--ink);
 	}
 	.kind__rows,
 	.rows {
