@@ -85,6 +85,8 @@
 	const kindRest = $derived(joinParts([juris, ...kindParts]));
 	const cited = $derived(KOP_ACTIES[collection]?.citeer ?? false);
 	// "Zoek in dit stuk" of the frame (ReaderFrame `find`), in the one row of the actions.
+	/** The words after Zoek, which a phone leaves to a screen reader; with their space. */
+	const FIND_REST = ' in dit stuk';
 	const finder = getContext<FindInText | undefined>(FIND_KEY);
 </script>
 
@@ -154,7 +156,7 @@
 					stroke="currentColor"
 					stroke-width="1.6"
 					aria-hidden="true"><circle cx="7" cy="7" r="4.8" /><path d="M10.6 10.6 14 14" /></svg
-				><span>Zoek<span class="find-rest">{' '}in dit stuk</span></span></button
+				><span>Zoek<span class="find-rest">{FIND_REST}</span></span></button
 			>
 		{/if}
 		{@render tools?.()}
