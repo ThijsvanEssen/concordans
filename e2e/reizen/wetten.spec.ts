@@ -20,7 +20,10 @@ test('Bronnen › Wetten: a filter narrows the list, a search finds a law that o
 
 	// On a phone the filters fold under Verfijnen.
 	if (touch) await page.getByRole('button', { name: 'Verfijnen' }).click();
-	const filter = page.getByRole('region', { name: 'Rechtsgebied' }).getByRole('button', { pressed: false }).first();
+	const filter = page
+		.getByRole('region', { name: 'Rechtsgebied' })
+		.getByRole('button', { pressed: false })
+		.first();
 	await filter.click();
 	await expect(filter).toHaveAttribute('aria-pressed', 'true');
 	await expect(page).toHaveURL(/kind=instruments.*&/);
