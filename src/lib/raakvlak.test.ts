@@ -98,7 +98,9 @@ describe('the touch target', () => {
 			'class="btn netwerk-knop raakvlak-knop"'
 		);
 		// The tab bar of a phone is 64 px high and its items fill it.
-		expect(read('lib/styles/tokens.css')).toMatch(/--tabbar-h: calc\(64px \+ var\(--safe-bottom\)\)/);
+		expect(read('lib/styles/tokens.css')).toMatch(
+			/--tabbar-h: calc\(64px \+ var\(--safe-bottom\)\)/
+		);
 		// ... above the home bar of an installed app, with the viewport covering the screen.
 		expect(read('lib/components/layout/TabBar.svelte')).toContain('var(--safe-bottom)');
 		expect(read('lib/styles/tokens.css')).toContain('env(safe-area-inset-bottom');
