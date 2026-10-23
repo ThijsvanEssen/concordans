@@ -65,7 +65,7 @@ test('beyond 40 bronnen a group is one circle with its count, and the legend cou
 	const lines = await figure.locator('text.name tspan').allTextContents();
 	expect(lines.filter((n) => n.length > 24 || n.endsWith('…'))).toEqual([]);
 	// A circle opens its soort in Verbonden, with its groups.
-	await figure.getByRole('button', { name: /Kamerstukken$/ }).click();
+	await figure.getByRole('button', { name: /Stukken$/ }).click();
 	await expect(verbonden(page).locator('[data-group="documents"]')).toBeVisible();
 	await expect(verbonden(page).getByRole('button', { name: 'Alle soorten' })).toBeVisible();
 });
