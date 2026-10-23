@@ -100,12 +100,19 @@ describe('buildBronHref', () => {
 		).toBe('/explore?focus=articles/b&mode=netwerk&paneel=netwerk');
 	});
 
-	it('leaves the netwerk behind when asked', () => {
-		expect(
-			buildBronHref(at('/explore?focus=articles/a&netwerk=members/x'), 'articles/b', {
-				keepNetwerk: false
-			})
-		).toBe('/explore?focus=articles/b&mode=netwerk');
+	it('leaves the netwerk behind when asked, and in the werkplek keeps it', () => {
+		const werkplek = at('/explore?focus=articles/a&mode=netwerk&netwerk=members/x');
+		expect(buildBronHref(werkplek, 'articles/b', { keepNetwerk: false })).toBe(
+			'/explore?focus=articles/b&mode=netwerk'
+		);
+		expect(buildBronHref(werkplek, 'articles/b')).toBe(
+			'/explore?focus=articles/b&mode=netwerk&netwerk=members/x'
+		);
+	});
+
+	it('reads a bron without the netwerk: Back brings the werkplek back (besluit 39)', () => {
+		const werkplek = at('/explore?focus=articles/a&mode=netwerk&netwerk=members/x&uit=members/x');
+		expect(buildOpenHref(werkplek, 'articles/b')).toBe('/explore?focus=articles/b');
 	});
 
 	it('carries extra params, such as the peildatum of the law it was opened from', () => {
@@ -144,13 +151,13 @@ describe('exploreMode', () => {
 		['', 'graph'],
 		['mode=index', 'index'],
 		['mode=index&focus=articles/a_1', 'index'],
-		// Every bron opens in Tekst (besluit 32); the canvas is ?mode=netwerk or a netwerk.
+		// Every bron opens in Tekst (besluit 32); the werkplek is ?mode=netwerk (besluit 39).
 		['focus=articles/a_1', 'read'],
 		['focus=judgments/ecli_nl_hr_2019_1', 'read'],
 		['focus=annexes/bwbr0052872_annex_1', 'read'],
 		['focus=members/m1', 'read'],
 		['focus=members/m1&mode=netwerk', 'graph'],
-		['focus=members/m1&netwerk=articles/a_1', 'graph'],
+		['focus=members/m1&netwerk=articles/a_1', 'read'],
 		['focus=members/m1&mode=netwerk&tabel=1', 'read'],
 		['tabel=1', 'graph'],
 		['mode=netwerk', 'graph']

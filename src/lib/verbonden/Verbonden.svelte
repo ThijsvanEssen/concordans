@@ -1,24 +1,19 @@
 <script lang="ts">
 	// The panel Verbonden: the verbindingen of the selected bron, in the groups of the table in
-	// groups.ts, under the bronfilter. In the network each group can put its bronnen on the
-	// canvas or take them off.
+	// groups.ts, under the bronfilter.
 	import { ecliKey } from '$lib/bron/address';
-	import { capitalize, count, joinAnd, plural } from '$lib/text/words';
-	import { meldNetwerk } from '$lib/stores/netwerk-melding';
+	import { capitalize, joinAnd, plural } from '$lib/text/words';
 	import { report } from '$lib/api/errors';
 	import { rijen } from '$lib/actions/rijen';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
-	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { page } from '$app/state';
 	import { tick, untrack } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';
 	import { refId } from '$lib/bron/href';
-	import type { GraphStore } from '$lib/graph/store/types';
-	import type { CanvasRow } from '$lib/graph/store/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import {
 		filterGroupCount,
@@ -69,11 +64,8 @@
 		verbonden,
 		selection,
 		filter,
-		store,
-		network = false,
 		onFilter,
 		onOpenFilter,
-		onNaarNetwerk,
 		onAddToNetwerk,
 		inNetwerk,
 		onProposedText,
@@ -90,13 +82,8 @@
 		verbonden: VerbondenState;
 		selection: GraphNode;
 		filter: VerbondenFilter;
-		store: GraphStore;
-		/** The canvas is on screen: groups carry their layer control. */
-		network?: boolean;
 		onFilter: (f: VerbondenFilter) => void;
 		onOpenFilter: () => void;
-		/** A group was drawn in the network (on a phone: to the Netwerk tab). */
-		onNaarNetwerk?: () => void;
 		/** Één bron uit de rij in het netwerk zetten. */
 		onAddToNetwerk?: (row: Row) => void;
 		/** Of de bron van een rij al in het netwerk staat. */
@@ -116,7 +103,7 @@
 		showNetwork?: boolean;
 		/** Netwerk tonen or verbergen; without it the panel has no such button (on the canvas). */
 		onShowNetwork?: (on: boolean) => void;
-		/** The bron on the canvas of Samenhang, from the middle of the network. */
+		/** The werkplek with this bron: Open in netwerk, under the drawing. */
 		networkHref?: string;
 		/** The name of the bron in the middle of the network, its citeertitel. */
 		networkName?: string;
@@ -127,9 +114,6 @@
 
 	let grouping = $state<Grouping>('soort');
 	let expanded = $state(new Set<string>());
-
-	let onCanvas = $state(new Set<string>());
-	$effect(() => store.nodes.subscribe((ns) => (onCanvas = new Set(ns.map((n) => n.id)))));
 
 	// "Bekijk in Verbonden" on a cluster bron: the group with most bronnen of its kind,
 	// opened and in view.
@@ -374,91 +358,18 @@
 	);
 	const centerName = $derived(networkName ?? selection.label ?? '');
 	const sketched = $derived(showNetwork ? drawSketch(sketchGroups, centerName) : null);
+	/** The bron on its own opened under the drawing. */
+	let schetsId = $state<string | null>(null);
+	$effect(() => {
+		void selection.id;
+		schetsId = null;
+	});
+	const schetsOpen = $derived(sketched?.singles.find((l) => l.id === schetsId) ?? null);
 
 	function toggle(set: Set<string>, id: string) {
 		const next = new Set(set);
 		if (!next.delete(id)) next.add(id);
 		return next;
-	}
-
-	const drawable = (rows: Row[]) => rows.filter((r) => r.relation && r.direction);
-	/** Whether a group holds all its rows, not the first five of Verbonden's first request. */
-	const heel = (g: Group) => g.rows.length >= (g.total ?? 0) || opgehaald.has(g.id);
-	/** The groups whose own buckets were asked for a drawing: as whole as the API gives. */
-	let opgehaald = $state(new Set<string>());
-	$effect(() => {
-		void selection.id;
-		opgehaald = new Set();
-	});
-	// On, off and undo act on the whole group, not on the rows loaded (kabinet-Jetten, 10 Oct:
-	// 5 of 28 bewindspersonen).
-	const isLayerOn = (g: Group) => {
-		const rows = drawable(g.rows);
-		return heel(g) && rows.length > 0 && rows.every((r) => onCanvas.has(refId(r.ref)));
-	};
-	/** The group with all its rows, asked first where it holds only the first few. */
-	async function heleGroep(g: Group): Promise<Group> {
-		if (heel(g) || !onMeer) return g;
-		const voor = selection.id;
-		await onMeer(g.id);
-		await tick();
-		if (voor !== selection.id) return g;
-		opgehaald = new Set(opgehaald).add(g.id);
-		return groepen.find((x) => x.id === g.id) ?? g;
-	}
-
-	/**
-	 * What the last "toon in netwerk" did, under its group: how many were drawn or taken off,
-	 * with a way back (UX 8 Oct: the box changed nothing one could see). Gone after a while.
-	 */
-	let melding = $state<{ groep: string; tekst: string; terug: (() => void) | null } | null>(null);
-	let meldingTimer: ReturnType<typeof setTimeout> | undefined;
-	const MELDING_MS = 8000;
-
-	/** `31 bronnen`, `1 bron`: the kind of a row is not always the noun of its group. */
-	const telling = (rows: Row[]) => count(rows.length, 'bron', 'bronnen');
-
-	// Another bron: its groups have their own notes, none yet.
-	$effect(() => {
-		void selection.id;
-		melding = null;
-	});
-
-	function meld(groep: string, tekst: string, terug: (() => void) | null) {
-		clearTimeout(meldingTimer);
-		melding = { groep, tekst, terug };
-		meldingTimer = setTimeout(() => (melding = null), MELDING_MS);
-		// On a phone the network says it too: the Netwerk tab is where the reader goes.
-		meldNetwerk(tekst, terug, MELDING_MS);
-	}
-
-	async function toggleLayer(eerst: Group) {
-		const aan = isLayerOn(eerst);
-		const voor = selection.id;
-		const g = aan ? eerst : await heleGroep(eerst);
-		if (voor !== selection.id) return;
-		const rows = drawable(g.rows);
-		if (aan) {
-			const ids = rows.map((r) => refId(r.ref));
-			store.hideRows(ids);
-			meld(g.id, `${telling(rows)} uit het netwerk gehaald.`, () =>
-				store.showRows(selection.id, rows as CanvasRow[])
-			);
-			return;
-		}
-		const nieuw = rows.filter((r) => !onCanvas.has(refId(r.ref)));
-		// Before the network has drawn the bron itself there is nothing to draw beside; say so
-		// rather than claim it was drawn.
-		if (!store.showRows(selection.id, rows as CanvasRow[])) {
-			meld(g.id, 'Het netwerk laadt nog; niets getekend.', null);
-			return;
-		}
-		onNaarNetwerk?.();
-		if (nieuw.length)
-			meld(g.id, `${telling(nieuw)} getekend in het netwerk.`, () =>
-				store.hideRows(nieuw.map((r) => refId(r.ref)))
-			);
-		else meld(g.id, `Alle ${telling(rows)} stonden al in het netwerk.`, null);
 	}
 
 	/** The row opened in place: one at a time. */
@@ -555,11 +466,25 @@
 			<NetworkSketch
 				sketch={sketched}
 				name={centerName}
-				networkHref={networkHref ?? '/explore'}
+				open={schetsOpen?.id ?? null}
+				onSingle={(id) => (schetsId = schetsId === id ? null : id)}
 				onGroup={openKind}
 			/>
-			<!-- The bron big, in the network of its own page: what the Netwerk button of the bar
-			     does from here (besluit 36). -->
+			<!-- A bron on its own clicked in the drawing: its row, opened in place (besluit 39). -->
+			{#if schetsOpen}
+				<ul class="rows schets-rij">
+					<VerbondenRow
+						row={schetsOpen.row}
+						{selection}
+						open={openRij === rowKey(schetsOpen.row)}
+						onToggle={() => wisselRij(schetsOpen!.row)}
+						{onProposedText}
+						{onAddToNetwerk}
+						{inNetwerk}
+					/>
+				</ul>
+			{/if}
+			<!-- The werkplek with this bron: what the Netwerk button of the bar does from here. -->
 			<p class="groot"><TekstLink href={networkHref ?? '/explore'}>In het netwerk</TekstLink></p>
 		{/if}
 		<!-- The soorten once their set is in, each in its place in their order: before, the heads
@@ -604,16 +529,6 @@
 				<h3 class="section">{g.section}</h3>
 			{/if}
 			<section class="group" data-group={g.id}>
-				{#snippet laag()}
-					<RijActies
-						naam={g.label}
-						netwerk={{
-							aan: isLayerOn(g),
-							voegToe: () => toggleLayer(g),
-							haalWeg: () => toggleLayer(g)
-						}}
-					/>
-				{/snippet}
 				<!-- While its rows come, the count the node foretells, as the skeleton showed it (#1). -->
 				<GroupHead
 					label={g.label}
@@ -626,7 +541,6 @@
 							: countLabel(g)}
 					open={!toe}
 					onToggle={() => zetOpen(`verbonden:${g.id}`, toe)}
-					actions={network && drawable(g.rows).length > 0 ? laag : undefined}
 				/>
 				{#if !toe}
 					{#if g.laden && verbonden.verwacht?.[g.id]}
@@ -650,19 +564,6 @@
 								retry={onRetry}
 							/>
 						</div>
-					{/if}
-					{#if melding?.groep === g.id}
-						<p class="group__melding" role="status">
-							{melding.tekst}
-							{#if melding.terug}
-								<TekstLink
-									onclick={() => {
-										melding?.terug?.();
-										melding = null;
-									}}>Ongedaan maken</TekstLink
-								>
-							{/if}
-						</p>
 					{/if}
 					{#if g.id === citingJudgments?.id && grouping === 'soort'}
 						<!-- Per instantie, over all of them; its place kept while the counts come. -->
@@ -808,6 +709,14 @@
 		border-bottom: 1px solid var(--rule);
 	}
 	/* Under the sketch, at the right, as Alles in Actueel. */
+	/* The row of a bron opened from the drawing: framed, as a card under it. */
+	.schets-rij {
+		margin: 0 0 var(--s-2);
+		padding: 0;
+		list-style: none;
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-2);
+	}
 	.groot {
 		display: flex;
 		justify-content: flex-end;
@@ -936,13 +845,6 @@
 		font-weight: 400;
 		font-style: italic;
 		color: var(--ink-3);
-	}
-	/* What the last drawing of the group in the network did, under its head. */
-	.group__melding {
-		margin: 0;
-		padding: 0 var(--s-4) var(--s-1);
-		font-size: var(--t-micro);
-		color: var(--ink-2);
 	}
 	.rows {
 		list-style: none;

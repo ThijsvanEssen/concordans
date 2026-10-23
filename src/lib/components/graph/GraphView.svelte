@@ -107,6 +107,8 @@
 		inFluxMap = new Map() as NodeCounts,
 		heatMap = new Map() as NodeCounts,
 		overlay = { kind: 'none' } as Overlay,
+		kies = null,
+		onKies,
 		onNodeClick,
 		onNodeDoubleClick,
 		onMetGroep,
@@ -131,6 +133,11 @@
 		inFluxMap?: NodeCounts;
 		heatMap?: NodeCounts;
 		overlay?: Overlay;
+		/** The bron marked, as the address holds it (?kies): its card open. */
+		kies?: string | null;
+		/** A bron was marked, or none is any more: the page writes it in the address. */
+		onKies?: (id: string | null) => void;
+		/** Lees: the marked bron is read, or (beside a reader) selected. */
 		onNodeClick?: (node: GraphNode) => void;
 		/** Replaces the canvas with the bron's own neighbourhood; a click only selects. */
 		onNodeDoubleClick?: (node: GraphNode) => void;
@@ -419,18 +426,45 @@
 		// Beside the bron; in a narrow network (beside the reader) or after a tap, at its foot.
 		hoverAt = compact ? null : kaartPlek(lastPointer);
 		hoverNode = n;
+		onKies?.(n.id);
 	}
-	function ontmarkeer() {
+	/** No bron marked any more; `tell` the page, so that the address forgets it too. */
+	function ontmarkeer(tell = true) {
+		const was = gemarkeerd;
 		gemarkeerd = null;
 		hoverNode = null;
+		if (tell && was) onKies?.(null);
 	}
+	// Lees keeps the bron marked in the address: Back after reading finds it again.
 	function open(n: GraphNode) {
-		ontmarkeer();
+		ontmarkeer(false);
 		onNodeClick?.(n);
 	}
-	// A bron that left the canvas is no longer marked.
+	// A bron that left the canvas is no longer marked here; the address keeps it.
 	$effect(() => {
-		if (gemarkeerd && !drawnIds.includes(gemarkeerd.id)) ontmarkeer();
+		if (gemarkeerd && !drawnIds.includes(gemarkeerd.id)) ontmarkeer(false);
+	});
+	// The bron the address marks (?kies, after Back), once it is drawn: its card opens again.
+	// A mark the address lost (Back past it) closes.
+	let kiesVoor: string | null = null;
+	$effect(() => {
+		const id = kies;
+		const drawnNow = drawnIds;
+		const had = kiesVoor;
+		kiesVoor = id;
+		untrack(() => {
+			if (!id) {
+				if (had && gemarkeerd?.id === had) ontmarkeer(false);
+				return;
+			}
+			if (gemarkeerd?.id === id || !drawnNow.includes(id)) return;
+			const n = lookup.get(id);
+			if (!n) return;
+			gemarkeerd = n;
+			keyNode = null;
+			hoverAt = null;
+			hoverNode = n;
+		});
 	});
 	let hideTimer: ReturnType<typeof setTimeout> | null = null;
 	let showTimer: ReturnType<typeof setTimeout> | null = null;
@@ -1470,7 +1504,7 @@
 						notities={notities.get(hoverNode.id) ?? []}
 						at={keyNode ? null : hoverAt}
 						onOpen={() => {
-							ontmarkeer();
+							ontmarkeer(false);
 						}}
 						onLezen={open}
 						{onToggleChosen}

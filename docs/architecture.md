@@ -41,11 +41,11 @@ The API's names are the code's names: collections, relations, fields. Dutch appe
 
 ## Views of the Verkenner
 
-| View     | URL                  | Shows                                                                                                                   |
-| -------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Tekst    | a bron's address     | The reader of any bron, Verbonden beside it; Netwerk tonen draws its network in Verbonden (`?toon=netwerk`)             |
-| Netwerk  | `?mode=netwerk`      | The canvas (button Netwerk); without a bron or with chosen bronnen always; with a bron, its reader and Verbonden beside |
-| Bladeren | `?mode=index&kind=…` | `IndexView`: one category with filters, defined in `index/lists`; without `kind`, `IndexOverzicht` lists them all       |
+| View     | URL                  | Shows                                                                                                                     |
+| -------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Tekst    | a bron's address     | The reader of any bron, Verbonden beside it; Netwerk tonen draws its network in Verbonden (`?toon=netwerk`)               |
+| Netwerk  | `?mode=netwerk`      | The werkplek (button Netwerk): the canvas without a reader; without a bron always; `?kies` the bron marked, its card open |
+| Bladeren | `?mode=index&kind=…` | `IndexView`: one category with filters, defined in `index/lists`; without `kind`, `IndexOverzicht` lists them all         |
 
 Every bron opens in Tekst, also at its bare address (besluit 32). The groups of Verbonden are the layers of the canvas. Column widths are kept in `localStorage`; a narrow screen shows one column at a time.
 

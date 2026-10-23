@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { sourceOf, sourceOfCollection, SOURCES } from './sources';
-import { networkHref, onNetwork } from './network';
+import { networkCount, networkHref, onNetwork } from './network';
 import { mineAt } from './mine';
 
 const at = (path: string) => new URL(path, 'https://concordans.nl');
@@ -46,9 +46,11 @@ describe('the source a page stands under', () => {
 describe('the Netwerk button', () => {
 	it('opens the bron of the page big, and elsewhere begins with choosing', () => {
 		const article = '/wetten/BWBR0005289/artikel/6:162';
-		expect(networkHref(at(article))).toBe(`${article}?mode=netwerk&paneel=netwerk`);
-		expect(networkHref(at(`${article}?toon=netwerk&lid=2`))).toBe(
-			`${article}?lid=2&mode=netwerk&paneel=netwerk`
+		expect(networkHref(at(article))).toBe(`${article}?mode=netwerk`);
+		expect(networkHref(at(`${article}?toon=netwerk&lid=2`))).toBe(`${article}?lid=2&mode=netwerk`);
+		// On the werkplek it stays where it is.
+		expect(networkHref(at(`${article}?mode=netwerk&netwerk=articles/a`))).toBe(
+			`${article}?mode=netwerk&netwerk=articles/a`
 		);
 		expect(networkHref(at('/'))).toBe('/explore');
 		expect(networkHref(at('/explore?mode=index&kind=instruments'))).toBe('/explore');
@@ -60,6 +62,12 @@ describe('the Netwerk button', () => {
 		expect(onNetwork(at('/wetten/BWBR0005289/artikel/6:162?mode=netwerk'))).toBe(true);
 		expect(onNetwork(at('/wetten/BWBR0005289/artikel/6:162'))).toBe(false);
 		expect(onNetwork(at('/explore?mode=index'))).toBe(false);
+	});
+
+	it("counts the werkplek's own netwerk there, the kept one elsewhere", () => {
+		expect(networkCount(at('/explore?netwerk=articles/a,articles/b'), 5)).toBe(2);
+		expect(networkCount(at('/wetten/BWBR0005289/artikel/6:162'), 3)).toBe(3);
+		expect(networkCount(at('/actueel'), 0)).toBe(0);
 	});
 });
 

@@ -46,6 +46,8 @@ type Single = {
 	id: string;
 	ref: BronRef;
 	title: string;
+	/** Its row of Verbonden: a click opens it in place under the drawing. */
+	row: Row;
 	/** Its name over lines; null where it would cover another (its title names it). */
 	lines: string[] | null;
 	shape: ReturnType<typeof vormVanBron>;
@@ -219,6 +221,7 @@ export function sketch(
 			id: refId(row.ref),
 			ref: row.ref,
 			title: row.title,
+			row,
 			lines,
 			shape: vormVanBron(row.ref.collection, row.props, row.ref.key),
 			collection: row.ref.collection,

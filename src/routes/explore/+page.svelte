@@ -1,21 +1,21 @@
 <script lang="ts">
 	// The explorer: one bron at a time, in one of three modes. Lezen shows the bron with
-	// its verbindingen alongside; Netwerk shows the canvas and, once a bron is selected,
-	// the same reader beside it; Bladeren lists bronnen. The URL holds the state
-	// (./explore-url.ts names every param).
+	// its verbindingen alongside; Netwerk is a werkplek of its own, the canvas without a reader
+	// (besluit 39); Bladeren lists bronnen. The URL holds the state (./explore-url.ts names
+	// every param).
 	//
-	// A click on the canvas selects a bron: the reader follows, the canvas stays. A double
-	// click replaces the canvas with the bron's own neighbourhood.
+	// A click on the canvas marks a bron (?kies) and opens its card; Lees on it reads the bron,
+	// a step of its own: Back brings the werkplek back from its address.
 	import { notHeld } from '$lib/text/coverage';
 	import { categoryLabel } from '$lib/components/explore/index/categories';
-	import { onDestroy, onMount, setContext, untrack } from 'svelte';
+	import { onDestroy, onMount, untrack } from 'svelte';
 	import { get } from 'svelte/store';
 	import { page } from '$app/state';
 	import { afterNavigate, goto } from '$app/navigation';
 	import type { Collection } from '$lib/vocabulary';
 	import { sprongDoel } from '$lib/stores/sprong';
 	import { inView } from '$lib/actions/in-view';
-	import { BESIDE, PHONE, READ_BESIDE } from '$lib/util/breakpoints';
+	import { PHONE, READ_BESIDE } from '$lib/util/breakpoints';
 	import { laadWetsnetwerk } from '$lib/components/actueel/wetsnetwerk';
 	import { vandaag } from '$lib/text/datum';
 	import { meldNetwerk, showNetworkFailure } from '$lib/stores/netwerk-melding';
@@ -32,18 +32,26 @@
 	import { pageName } from '$lib/bron/tab-title';
 	import { titelVan } from '$lib/bron/titels.svelte';
 	import { ignore, isAborted, isNotFound, report } from '$lib/api/errors';
-	import { readStored, writeStored } from '$lib/util/storage';
+	import { bewaardNetwerk, bewaarNetwerk, leesBewaard } from '$lib/selection/bewaard.svelte';
 	import PanelBoundary from '$lib/components/ui/PanelBoundary.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { LoadFailure } from '$lib/util/load.svelte';
 	import { Lazy } from '$lib/util/lazy.svelte';
 	import { getNodeCanvas, getNodeHull } from '$lib/api/records';
 	import { kopNode } from '$lib/bron/first-node';
-	import { bronHref, exploreMode, focusOf, NETWORK_MODE, refId, refOf } from '$lib/bron/href';
+	import {
+		bronHref,
+		exploreMode,
+		focusOf,
+		modeOf,
+		openHref,
+		refId,
+		refOf,
+		type BronRef
+	} from '$lib/bron/href';
 	import { getDossierKey } from '$lib/api/dossiers';
 	import { getMemberVotes } from '$lib/api/members';
 	import { createGraphStore } from '$lib/graph/graph-store';
-	import type { CanvasRow } from '$lib/graph/store/types';
 	import type GraphView from '$lib/components/graph/GraphView.svelte';
 	import KindReader from '$lib/components/explore/KindReader.svelte';
 	import {
@@ -56,7 +64,6 @@
 	import NietGevonden from '$lib/components/ui/NietGevonden.svelte';
 	import { LADEN_TITEL, serverKop, siteTitle } from '$lib/seo/server-head.svelte';
 	import { routeKop } from '$lib/seo/routes';
-	import { WEERGAVE_KEY, type Weergave } from '$lib/components/explore/weergave';
 	import LezenNav from '$lib/components/explore/LezenNav.svelte';
 	import DocumentToc from '$lib/components/explore/DocumentToc.svelte';
 	import JudgmentToc from '$lib/components/explore/JudgmentToc.svelte';
@@ -123,7 +130,7 @@
 		nameOfPad,
 		netwerkQuery as netwerkQueryOf
 	} from './explore-url';
-	import { PANELS, panelOfKey, verbondenInView, type Panel } from './panels';
+	import { panelOfKey, verbondenInView, type Panel } from './panels';
 	import { citedByName, pathByName } from '$lib/bron/law-name';
 	import { followServerMove } from '$lib/bron/moved-law';
 	import { ColumnWidths, type Column } from './column-widths.svelte';
@@ -279,7 +286,26 @@
 
 	// ── The netwerk of chosen bronnen ─────────────────────────────────────────
 	// Parsed from its own three params only, so selecting a bron does not compose again.
-	const netwerkQuery = $derived(netwerkQueryOf(params));
+	//
+	// Arriving in the werkplek from a bron (the button Netwerk, In het netwerk, a link with
+	// ?mode=netwerk), the netwerk kept in this browser opens with the bron as a proposal beside
+	// it (+ bron in the panel Netwerk), never replaced without a word; without one the bron is
+	// the beginning, its surroundings drawn around it (besluit 39). Only on arrival, never on
+	// Back: a netwerk emptied in the werkplek stays empty, an address comes back as it was.
+	leesBewaard();
+	let beginNodig = $state(false);
+	const beginQuery = $derived(
+		beginNodig && focus && mode === 'graph' && !netwerkQueryOf(params) ? bewaardNetwerk() : null
+	);
+	const netwerkQuery = $derived(beginQuery ?? netwerkQueryOf(params));
+	$effect(() => {
+		const q = beginQuery;
+		if (q) untrack(() => setUrl(Object.fromEntries(new URLSearchParams(q))));
+	});
+	$effect(() => {
+		if (beginNodig && (mode !== 'graph' || netwerkQueryOf(params) || (focus && !bewaardNetwerk())))
+			beginNodig = false;
+	});
 	const telefoon = typeof window !== 'undefined' && window.matchMedia(PHONE).matches;
 	// "Bronnen ertussen" is on by default, on a phone too (Thijs, 9 Oct, from an iPhone): the
 	// clusters, the faint bronnen between and the cap of 100 keep it light there.
@@ -291,7 +317,7 @@
 	let voorbeeld = $state<{ query: string; naam: string } | null>(null);
 	const zonderKeuze = $derived(!focus && !pad && !netwerkQuery && mode !== 'index');
 	$effect(() => {
-		if (!zonderKeuze || voorbeeld || readStored(NETWERK_KEY)) return;
+		if (!zonderKeuze || voorbeeld || bewaardNetwerk()) return;
 		const ac = new AbortController();
 		laadWetsnetwerk([], vandaag(), ac.signal)
 			.then((schets) => {
@@ -313,6 +339,13 @@
 	const aroundId = $derived(parseNodeId(params.get(AROUND) ?? '') ? params.get(AROUND) : null);
 	const shownNetwork = $derived(aroundId ? onlyAround(netwerk, aroundId) : netwerk);
 	const netwerkActive = $derived(shownNetwork.ids.length > 0);
+	/** Outside the werkplek, the netwerk kept in this browser: a bron read is added to it. */
+	const bewaard = $derived(parseNetwerk(new URLSearchParams(bewaardNetwerk() ?? '')));
+	/** The netwerk a bron is added to: the werkplek's, or the kept one while reading. */
+	const kiesNetwerk = $derived(mode === 'graph' ? netwerk : bewaard);
+	/** The bron marked in the werkplek, its card open (?kies): Back after Lees finds it again. */
+	const KIES = 'kies';
+	const kies = $derived(params.get(KIES));
 
 	// ── The bronfilter ───────────────────────────────────────────────────────
 	// One filter object, parsed from the URL, for the panel, the margin of the reader,
@@ -462,17 +495,10 @@
 			lids.set(edgeKey(edge.source, edge.target, edge.relation), card.verbinding.lid);
 		return lids;
 	});
+	/** Zet in het netwerk from the card Verbinding: the row's bron joins the netwerk. */
 	function showInNetwork(row: Row) {
-		if (selectedNode && row.relation && row.direction) {
-			if (!store.showRows(selectedNode.id, [row as CanvasRow])) {
-				meldNetwerk('Het netwerk laadt nog; niets getekend.', null);
-				return;
-			}
-			const id = refId(row.ref);
-			meldNetwerk(`${row.title} getekend in het netwerk.`, () => store.hideRows([id]));
-		}
-		if (mode !== 'graph') setReading(false);
-		mobilePanel = 'graph';
+		const id = focusOf(row.ref);
+		if (id) addIdToNetwerk(id, row.title);
 	}
 	const besideHrefOf = (row: Row | null) =>
 		row && withParams(page.url, { naast: refId(row.ref) }, { hash: row.at ?? '' });
@@ -792,36 +818,15 @@
 		graphView?.fitWhenSettled();
 	}
 
-	function handleNodeClick(node: GraphNode) {
-		const end = perfStart(`click ${node.id}`);
-		if (!node.id.startsWith('synth:')) {
-			// A bron chosen in the example: the example's network comes along into the address,
-			// the canvas stays as it is.
-			const exampleParams = voorbeeldAan
-				? Object.fromEntries(new URLSearchParams(voorbeeld!.query))
-				: undefined;
-			const href = bronHref(refOf(node.collection, node.key, node.raw?.props), {
-				params: exampleParams
-			});
-			navigate(href, { step: true });
-		}
-		end();
-	}
-
-	// A double click leaves the netwerk and draws the bron's own neighbourhood.
-	function handleNodeReplace(node: GraphNode) {
+	/**
+	 * Lees on the card of a marked bron: the bron in Tekst, a step of its own. The werkplek's
+	 * address (its netwerk, its filters, the bron marked) stays in the history: Back brings it.
+	 */
+	function lees(node: GraphNode) {
 		if (node.id.startsWith('synth:')) return;
-		const ref = refOf(node.collection, node.key, node.raw?.props);
-		const id = focusOf(ref);
-		if (!id) return;
-		if (netwerkActive) composer.release();
-		replaceNext = id;
-		if (id === focus && !netwerkActive) {
-			replaceNext = null;
-			deepen(node, true).catch((e) => showFocusError(e, node.key));
-			return;
-		}
-		navigate(bronHref(ref, { keepNetwerk: false }), { step: true });
+		const end = perfStart(`lees ${node.id}`);
+		navigate(openHref(refOf(node.collection, node.key, node.raw?.props)), { step: true });
+		end();
 	}
 
 	// ── Composing the netwerk ─────────────────────────────────────────────────
@@ -851,23 +856,21 @@
 	}
 
 	function setNetwerk(n: Netwerk) {
-		if (n.ids.length === 0) writeStored(NETWERK_KEY, null);
+		if (n.ids.length === 0) bewaarNetwerk(null);
 		// Clearing the netwerk or removing a bron is undone with Back.
 		const shrinks = n.ids.length < netwerk.ids.length;
 		setUrl(netwerkParams(n), { push: shrinks });
 	}
 
-	// The Verkenner opens on the last netwerk until it is cleared: a double click that
-	// leaves it, or a bron opened elsewhere, does not forget it.
-	const NETWERK_KEY = 'concordans:netwerk';
+	// The werkplek opens on the last netwerk until it is cleared: a bron read does not forget it.
 	$effect(() => {
-		if (netwerkQuery && netwerk.ids.length > 0) writeStored(NETWERK_KEY, netwerkQuery);
+		if (mode === 'graph' && netwerkQuery && netwerk.ids.length > 0) bewaarNetwerk(netwerkQuery);
 	});
 	$effect(() => {
 		// A readable address names its bron, also while it is looked up (a Kamerstuk, an
 		// article): the remembered netwerk does not take its place.
 		if (focus || pad || netwerkQuery || mode === 'index') return;
-		const saved = readStored(NETWERK_KEY);
+		const saved = bewaardNetwerk();
 		if (!saved) return;
 		// The bronnen between start shown, whatever the last netwerk had (Thijs, 9 Oct:
 		// "standaard aan"); only a link that says ?tussen=0 keeps them off.
@@ -899,15 +902,24 @@
 	}
 
 	function addIdToNetwerk(id: string, naam?: string) {
+		// While reading, the bron joins the netwerk kept for the werkplek; the button Netwerk of
+		// the top bar counts it.
+		if (mode !== 'graph') {
+			bewaarNetwerk(
+				new URLSearchParams(netwerkClean(netwerkParams(withAdded(bewaard, id)))).toString()
+			);
+			return;
+		}
 		// The first bron chosen grows out of the canvas as it is: what is there stays, as context.
 		if (!netwerkActive) composer.keepCanvas();
 		setNetwerk(withAdded(netwerk, id));
-		// On a phone the Netwerk tab shows it was added, with the way back (Thijs, 9 Oct).
-		mobilePanel = 'graph';
 		meldNetwerk(`${naam ?? 'De bron'} toegevoegd aan het netwerk.`, () =>
 			setNetwerk(withRemoved(netwerk, id))
 		);
 	}
+	/** The params of a netwerk that hold a value. */
+	const netwerkClean = (p: Record<string, string | null>) =>
+		Object.fromEntries(Object.entries(p).filter((e): e is [string, string] => e[1] !== null));
 
 	function toggleChosen(node: GraphNode) {
 		const id = linkIdOf(node);
@@ -928,7 +940,7 @@
 		composer.forget();
 		loadedFocus = '';
 		deepenedId = '';
-		writeStored(NETWERK_KEY, null);
+		bewaarNetwerk(null);
 		setUrl(
 			{
 				netwerk: null,
@@ -937,6 +949,7 @@
 				[AROUND]: null,
 				focus: null,
 				[SHOW]: null,
+				[KIES]: null,
 				open: null,
 				mode: null
 			},
@@ -980,6 +993,17 @@
 		const changed = (name: string) => (from?.get(name) ?? null) !== (to?.get(name) ?? null);
 		if (nav.type === 'link' || nav.type === 'popstate' || changed('focus') || changed('mode'))
 			steppedIn = true;
+		// Into the werkplek with a bron and no netwerk in the address: it begins (beginQuery).
+		if (
+			nav.type !== 'popstate' &&
+			naar &&
+			to &&
+			modeOf(naar) === 'graph' &&
+			(!van || modeOf(van) !== 'graph') &&
+			!netwerkQueryOf(to) &&
+			(to.get('focus') || naar.pathname !== '/explore')
+		)
+			beginNodig = true;
 	});
 	const goBack = () => (steppedIn ? history.back() : goto('/'));
 
@@ -1001,12 +1025,18 @@
 		navigate(href, { step: push });
 	}
 
-	// Tekst, or the bron on the canvas of Samenhang with its text beside it.
-	const setReading = (on: boolean) =>
-		setUrl(
-			{ mode: on ? null : NETWORK_MODE, [SHOW]: null, naast: null, tabel: null },
-			{ push: true }
-		);
+	// Tekst, or the werkplek with the bron: each a step of its own, the netwerk staying in the
+	// werkplek's address.
+	function setReading(on: boolean) {
+		const node = selectedNode;
+		if (!node || node.id.startsWith('synth:')) return;
+		const ref = refOf(node.collection, node.key, node.raw?.props);
+		const at = decodeURIComponent(page.url.hash.slice(1)) || null;
+		navigate(on ? openHref(ref, { at }) : werkplekHref(ref, at), { step: true });
+	}
+	/** The werkplek with the bron: as the button Netwerk of the top bar opens it. */
+	const werkplekHref = (ref: BronRef, at: string | null = null) =>
+		bronHref(ref, { keepMode: false, mode: 'graph', at });
 	// Netwerk tonen and Netwerk verbergen in Verbonden: one step each, so Back undoes it.
 	const setShowNetwork = (on: boolean) => setUrl({ [SHOW]: on ? 'netwerk' : null }, { push: true });
 	// Always explicit: an unset diepte means 1 for a container and 2 for every other bron,
@@ -1097,28 +1127,16 @@
 	const shareCopier = createCopier();
 	const handleShareView = () => shareCopier.copy(page.url.toString(), 'share');
 
-	// Narrow viewports show one column at a time.
-	// Arriving with a netwerk (a link from the start page), the network is what was asked for.
-	let mobilePanel = $state<Panel>(untrack(() => netwerkActive) ? 'graph' : 'reader');
-	// A link to the network (In het netwerk from Actueel, a network link in Bladeren) opens
-	// the Netwerk tab on a phone, a link that opens a text (a Kamerstuk, openHref) the Tekst
-	// tab, also from Verbonden; the hint is read once and dropped from the address.
+	// On a phone Verbonden stands under the text; the key 3 brings it forward.
+	let mobilePanel = $state<Panel>('reader');
+	// The hint of a phone's tab of before (?paneel) is dropped from the address: the werkplek
+	// has no tabs, the text and Verbonden stand under each other.
 	$effect(() => {
-		const paneel = page.url.searchParams.get('paneel');
-		if (paneel !== 'netwerk' && paneel !== 'tekst') return;
-		untrack(() => {
-			mobilePanel = paneel === 'netwerk' ? 'graph' : 'reader';
-			setUrl({ paneel: null });
-		});
+		if (page.url.searchParams.get('paneel') === null) return;
+		untrack(() => setUrl({ paneel: null }));
 	});
-	// What opens beside the article (a toelichting, a citing judgment) is read in the Tekst
-	// tab on a phone: a row of Verbonden that opens it brings that tab forward.
-	$effect(() => {
-		if (!besideId) return;
-		untrack(() => (mobilePanel = 'reader'));
-	});
-	/** The canvas is on the screen: the network, and on a phone its tab. */
-	const canvasZichtbaar = $derived(mode === 'graph' && !(telefoon && mobilePanel !== 'graph'));
+	/** The canvas is on the screen: the werkplek. */
+	const canvasZichtbaar = $derived(mode === 'graph');
 	// Below --nav-w's own breakpoint, Lezen's table of contents opens as a sheet
 	// instead of taking a permanent column.
 	let tocOpen = $state(false);
@@ -1165,10 +1183,10 @@
 			);
 			return;
 		}
-		// 1, 2 and 3: the layers of a bron, Tekst, Netwerk and Verbonden (Thijs, 10 Oct), as the
-		// tabs on a phone; 3 puts the focus on Verbonden's first row, for J and K.
+		// 1 and 3: the layers of a bron, Tekst and Verbonden (Thijs, 10 Oct); 3 puts the focus on
+		// Verbonden's first row, for J and K.
 		const panel = panelOfKey(e.key);
-		if (panel && selectedNode && mode !== 'index') {
+		if (panel && selectedNode && mode === 'read') {
 			e.preventDefault();
 			kiesPaneel(panel);
 			if (panel === 'verbonden')
@@ -1178,9 +1196,8 @@
 			return;
 		}
 		// O: the filter Alleen verbonden bronnen on or off for the selected bron.
-		if (e.key.toLowerCase() === 'o' && mode !== 'index' && (aroundId || selectedNode)) {
+		if (e.key.toLowerCase() === 'o' && mode === 'graph' && (aroundId || selectedNode)) {
 			e.preventDefault();
-			kiesPaneel('graph');
 			toggleAround();
 			return;
 		}
@@ -1189,17 +1206,9 @@
 		setReading(readAction === 'read');
 	}
 
-	/**
-	 * A tab on a phone, where the tabs are the one control: Tekst reads the bron, as the
-	 * switch Netwerk / Tekst does on a wide screen, and Netwerk goes back to the network.
-	 */
-	function kiesPaneel(id: Panel) {
-		if (id === 'reader' && readAction === 'read') setReading(true);
-		else if (id === 'graph' && readAction === 'network') setReading(false);
-		mobilePanel = id;
-	}
+	const kiesPaneel = (id: Panel) => (mobilePanel = id);
 
-	/** What the key L does: read the bron, or show it on the canvas of Samenhang. */
+	/** What the key L does: read the bron, or open the werkplek with it. */
 	const readAction = $derived<'read' | 'network' | null>(
 		// The table has its own way back to the text.
 		tableMode
@@ -1210,21 +1219,6 @@
 					? 'read'
 					: null
 	);
-
-	// On the canvas the switch Netwerk / Tekst stands in the reader's frame, beside the band
-	// (ReaderFrame), the way back to Tekst. In Tekst the network is Netwerk tonen in Verbonden.
-	const weergave = $derived<Weergave | null>(
-		readAction === 'read'
-			? {
-					stand: 'netwerk',
-					onKies: (k) => setReading(k === 'tekst'),
-					tekstMogelijk: true,
-					// Beside the network the contents have no column: they open over the reader.
-					contents: hasContents ? () => (tocOpen = true) : undefined
-				}
-			: null
-	);
-	setContext(WEERGAVE_KEY, () => weergave);
 
 	// ── Bladeren ─────────────────────────────────────────────────────────────
 	const indexKind = $derived(indexCategory(params));
@@ -1384,7 +1378,7 @@
 	{/if}
 {/snippet}
 
-{#snippet panel(network: boolean)}
+{#snippet panel()}
 	{#if selectedNode}
 		<div class="panel">
 			<PanelBoundary what="Verbonden" resetOn={selectedNode.id}>
@@ -1396,28 +1390,24 @@
 					{verbonden}
 					selection={selectedNode}
 					{filter}
-					{store}
-					{network}
 					onFilter={applyFilter}
 					onOpenFilter={() => (filterOpen = true)}
-					onNaarNetwerk={() => (mobilePanel = 'graph')}
 					onAddToNetwerk={(row) => {
 						const id = focusOf(row.ref);
 						if (id) addIdToNetwerk(id, row.title);
 					}}
-					inNetwerk={(row) => netwerk.ids.includes(focusOf(row.ref) ?? '')}
+					inNetwerk={(row) => kiesNetwerk.ids.includes(focusOf(row.ref) ?? '')}
 					onProposedText={(row) => (proposedRow = row)}
 					{tableHref}
-					showNetwork={network ? undefined : showNetwork}
-					onShowNetwork={network ? undefined : setShowNetwork}
+					{showNetwork}
+					onShowNetwork={setShowNetwork}
 					networkName={bronNaam(selectedNode, $instrumentMetaStore)}
-					networkHref={bronHref(
-						refOf(selectedNode.collection, selectedNode.key, selectedNode.raw?.props),
-						{ keepMode: false, mode: 'graph' }
+					networkHref={werkplekHref(
+						refOf(selectedNode.collection, selectedNode.key, selectedNode.raw?.props)
 					)}
 				/>
 			</PanelBoundary>
-			{#if card && !network}
+			{#if card}
 				<div class="panel__card">
 					<VerbindingCard
 						verbinding={card.verbinding}
@@ -1439,18 +1429,6 @@
 		onpointerup={widths.end}
 		aria-hidden="true"
 	></div>
-{/snippet}
-
-{#snippet tabs()}
-	{#each PANELS as { id, label } (id)}
-		<button
-			type="button"
-			class="mobile-tab"
-			class:is-active={mobilePanel === id}
-			aria-pressed={mobilePanel === id}
-			onclick={() => kiesPaneel(id)}>{label}</button
-		>
-	{/each}
 {/snippet}
 
 <div class="explore-shell">
@@ -1476,61 +1454,19 @@
 			{@render bronFout(loadFailure)}
 		{:else if padNotHeld && !selectedNode && !netwerkActive}
 			<p class="explore-empty stil">{padNotHeld}</p>
-		{:else if mode === 'graph' && (focus || pad) && !selectedNode && !netwerkActive && !focusNotHeld && !loadFailure}
-			<!-- A bron on its way: its place, not the empty network with its start card (UX test
-			     10 Oct, #24). -->
-			{@render bronPending()}
 		{:else if mode === 'graph'}
-			<!-- The network without a bron: its heading for a screen reader, as the title names it. -->
-			{#if !selectedNode}<h1 class="blad__titel sr-only">Netwerk</h1>{/if}
+			<!-- The werkplek: the canvas without a reader (besluit 39). Its heading for a screen
+			     reader, as the title names it. -->
+			<h1 class="blad__titel sr-only">Netwerk</h1>
 			{#if voorbeeldAan}<ExampleLine name={voorbeeld!.naam} />{/if}
-			<div
-				class="explore-graph"
-				class:explore-graph--with-reader={!!selectedNode}
-				class:is-resizing={!!widths.drag}
-				style:--graph-w={widths.css('graph')}
-				style:--panel-w={widths.css('panel')}
-			>
-				{#if selectedNode}
-					<nav class="mobile-tabs" aria-label="Panelen">{@render tabs()}</nav>
-				{/if}
-				<!-- The text and Verbonden come before the network in the page, so a screen reader
-				     reads the bron before the list of the network; the grid places them. -->
-				{#if selectedNode}
-					<div class="col col--reader" class:mobile-hidden={mobilePanel !== 'reader'}>
-						{@render reader()}
-					</div>
-					{@render handle('panel')}
-					<div
-						class="col col--panel"
-						class:mobile-hidden={mobilePanel !== 'verbonden'}
-						use:sprongDoel={{
-							id: 'verbonden',
-							label: 'Naar Verbonden',
-							naast: BESIDE
-						}}
-					>
-						{@render panel(true)}
-					</div>
-					{@render handle('graph')}
-				{/if}
-				<div
-					class="col col--graph"
-					class:mobile-hidden={selectedNode && mobilePanel !== 'graph'}
-					use:sprongDoel={{
-						id: 'netwerk',
-						label: 'Naar het netwerk',
-						aan: !!selectedNode,
-						naast: BESIDE
-					}}
-				>
+			<div class="werkplek" data-testid="werkplek">
+				<div class="col col--graph">
 					{#if graphChunk.component}
 						{@const GraphViewC = graphChunk.component}
 						<PanelBoundary what="Het netwerk" resetOn={focus}>
 							<GraphViewC
 								bind:this={graphView}
 								{store}
-								compact={!!selectedNode}
 								{filter}
 								{verbonden}
 								{depth}
@@ -1540,11 +1476,9 @@
 								inFluxMap={overlayCounts.inFlux}
 								heatMap={overlayCounts.heat}
 								{overlay}
-								onNodeClick={(n) => {
-									handleNodeClick(n);
-									mobilePanel = 'reader';
-								}}
-								onNodeDoubleClick={handleNodeReplace}
+								{kies}
+								onKies={(id) => setUrl({ [KIES]: id })}
+								onNodeClick={lees}
 								onMetGroep={(m) => (metGroep = m)}
 								onToggleChosen={toggleChosen}
 								{netwerkActive}
@@ -1628,9 +1562,6 @@
 					{/if}
 				</div>
 			</div>
-			{#if tocOpen && weergave?.contents}
-				<TocSheet always onClose={() => (tocOpen = false)}>{@render toc()}</TocSheet>
-			{/if}
 		{:else if selectedNode && tableMode}
 			<div class="explore-table">
 				{#if connectionsTable.component}
@@ -1702,7 +1633,7 @@
 						naast: READ_BESIDE
 					}}
 				>
-					{@render panel(false)}
+					{@render panel()}
 				</div>
 			</div>
 			{#if withContents && tocOpen}
@@ -1757,7 +1688,17 @@
 		-webkit-overflow-scrolling: touch;
 	}
 
-	.explore-graph,
+	/* The werkplek: the canvas over the full width, without a reader (besluit 39). */
+	.werkplek {
+		flex: 1;
+		min-height: 0;
+		display: flex;
+		overflow: hidden;
+	}
+	.werkplek .col--graph {
+		flex: 1;
+	}
+
 	.explore-read {
 		flex: 1;
 		display: grid;
@@ -1780,19 +1721,6 @@
 		z-index: var(--z-float);
 	}
 
-	.explore-graph {
-		grid-template-columns: minmax(0, 1fr);
-	}
-
-	/* The network gives way before the text does: the reader keeps 610px, enough for a
-	   measure of some 60 characters, and the canvas takes what is left up to its width.
-	   At 1280px: network 252, reader 610, Verbonden 408. */
-	.explore-graph--with-reader {
-		grid-template-columns:
-			max(200px, min(var(--graph-w, var(--graph-w-auto)), calc(100vw - var(--panel) - 620px)))
-			5px minmax(0, 1fr) 5px var(--panel);
-	}
-
 	/* The widths that follow the screen, until a column is dragged. Verbonden is as wide as
 	   a group's heading with its count and its box on one line ("Uitspraken die dit artikel
 	   aanhalen 127", Thijs 10 Oct: "het kader zelf sowieso iets breder altijd"); the room
@@ -1803,7 +1731,6 @@
 	   network (at least 328): the reader keeps some 850px (a measure of 700 in the middle),
 	   Verbonden grows a little, from 432 to at most 480 at 2080 (Thijs: "niet te veel").
 	   At 1920: network 606, reader 840, Verbonden 464; at 2560: 1220, 850, 480. */
-	.explore-graph,
 	.explore-read {
 		--nav-w-auto: 200px;
 		--graph-w-auto: 360px;
@@ -1817,14 +1744,12 @@
 		}
 	}
 	@media (min-width: 1440px) {
-		.explore-graph,
 		.explore-read {
 			--graph-w-auto: 328px;
 			--panel-w-auto: 432px;
 		}
 	}
 	@media (min-width: 1600px) {
-		.explore-graph,
 		.explore-read {
 			--panel-w-auto: clamp(432px, calc(432px + (100vw - 1600px) / 10), 480px);
 			--graph-w-auto: max(328px, calc(100vw - var(--panel) - 850px));
@@ -1835,29 +1760,6 @@
 	@media (min-width: 1280px) {
 		.explore-read {
 			--panel-w-auto: 400px;
-		}
-	}
-
-	/* In the page the text comes first (see the markup); on a wide screen the network
-	   stands left of it. */
-	@media (min-width: 1101px) {
-		.explore-graph--with-reader > * {
-			grid-row: 1;
-		}
-		.explore-graph--with-reader .col--graph {
-			grid-column: 1;
-		}
-		.explore-graph--with-reader .resize-handle--graph {
-			grid-column: 2;
-		}
-		.explore-graph--with-reader .col--reader {
-			grid-column: 3;
-		}
-		.explore-graph--with-reader .resize-handle--panel {
-			grid-column: 4;
-		}
-		.explore-graph--with-reader .col--panel {
-			grid-column: 5;
 		}
 	}
 
@@ -2086,11 +1988,6 @@
 		cursor: pointer;
 		margin-bottom: -1px;
 	}
-	.mobile-tabs .mobile-tab.is-active {
-		color: var(--ink);
-		border-bottom-color: var(--ink);
-		font-weight: 500;
-	}
 
 	.mobile-tab--toc {
 		flex: none;
@@ -2143,35 +2040,7 @@
 		}
 	}
 
-	@media (max-width: 1100px) and (min-width: 769px) {
-		/* Too narrow for graph, reader and Verbonden side by side; too wide to hide
-		   two of the three behind tabs. The network keeps the full width up top,
-		   Tekst and Verbonden split the row below it. */
-		.explore-graph--with-reader {
-			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-			grid-template-rows: minmax(220px, 38vh) minmax(0, 1fr);
-		}
-		.explore-graph--with-reader .col--graph {
-			grid-column: 1 / -1;
-			grid-row: 1;
-			border-bottom: 1px solid var(--rule);
-		}
-		.explore-graph--with-reader .col--reader {
-			grid-column: 1;
-			grid-row: 2;
-		}
-		.explore-graph--with-reader .col--panel {
-			grid-column: 2;
-			grid-row: 2;
-		}
-		.explore-graph--with-reader .resize-handle {
-			display: none;
-		}
-	}
-
 	@media (max-width: 768px) {
-		.explore-graph,
-		.explore-graph--with-reader,
 		.explore-read,
 		.explore-read--with-nav {
 			grid-template-columns: 1fr;
@@ -2186,8 +2055,7 @@
 			grid-row: 2;
 			grid-column: 1;
 		}
-		.resize-handle,
-		.mobile-hidden {
+		.resize-handle {
 			display: none;
 		}
 	}

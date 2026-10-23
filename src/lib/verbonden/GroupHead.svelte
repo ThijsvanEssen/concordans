@@ -1,23 +1,18 @@
 <script lang="ts">
 	// The head of a group of Verbonden: its heading opens and closes it (remembered per group,
-	// Sectie's rule), its count follows, and in the network its layer control stands at the
-	// right. Without `onToggle` it is the head of a group still to come, as it will stand.
-	import type { Snippet } from 'svelte';
+	// Sectie's rule), its count follows. Without `onToggle` it is the head of a group still to come, as it will stand.
 	import Caret from '$lib/components/ui/Caret.svelte';
 
 	let {
 		label,
 		count,
 		open,
-		onToggle,
-		actions
+		onToggle
 	}: {
 		label: string;
 		count: string;
 		open: boolean;
 		onToggle?: () => void;
-		/** The network control of the group, at the right of the head. */
-		actions?: Snippet;
 	} = $props();
 
 	// The last word keeps the caret with it: an SVG after text wraps alone (Thijs, 10 Oct: "de
@@ -39,9 +34,6 @@
 		>
 	</h3>
 	<span class="group__count">{count}</span>
-	{#if actions}
-		<span class="group__laag">{@render actions()}</span>
-	{/if}
 </div>
 
 <style>
@@ -94,14 +86,5 @@
 	.group__count {
 		flex: none;
 		color: var(--ink-3);
-	}
-	/* The network glyph at the right of a group's heading (RijActies). */
-	.group__laag {
-		margin-left: auto;
-		flex: none;
-		/* Outside the line: the head keeps one height with or without it, so the rows below do
-		   not move when it appears with the group's rows (UX-toets e7a2f95, #1: 9 px). */
-		align-self: center;
-		margin-block: calc(-1 * var(--s-2));
 	}
 </style>

@@ -1,0 +1,58 @@
+// The werkplek Netwerk (besluit 39): a bron of the drawing in Verbonden opens in place and
+// joins the netwerk from there; the button Netwerk counts it and opens the werkplek, the canvas
+// without a reader; Lees on a marked bron is a step of its own, and Back brings the werkplek
+// back as it was, with the same chips and the same bron marked.
+import type { Page } from '@playwright/test';
+import { expect, test } from '../support/test';
+
+const ARTICLE = '/wetten/BWBR0005289/artikel/6:163';
+
+const netwerkKnop = (page: Page) =>
+	page.getByRole('banner').getByRole('link', { name: /^Netwerk/ });
+const panel = (page: Page) => page.getByRole('region', { name: 'Netwerk' });
+/** The chips of the netwerk, the panel unfolded where a phone folds it. */
+async function chips(page: Page) {
+	const fold = panel(page).getByRole('button', { name: /^Netwerk \d+ bron/ });
+	const chosen = panel(page).getByRole('button', { pressed: true });
+	await expect(fold.or(chosen.first())).toBeVisible();
+	if (await fold.isVisible()) await fold.click();
+	await expect(chosen.first()).toBeVisible();
+	return chosen;
+}
+
+test('lezer, netwerk, Lees and Back: the same chips and the same bron marked', async ({ page }) => {
+	await page.goto(`${ARTICLE}?toon=netwerk`);
+	const sketch = page.getByTestId('network-sketch');
+	const single = sketch.locator('.single').first();
+	await expect(single).toBeVisible();
+	const name = (await single.getAttribute('aria-label'))!;
+	// One click opens the bron in place, under the drawing: no step.
+	await single.click();
+	await expect(page).toHaveURL(/6:163\?toon=netwerk$/);
+	const rij = page.locator('.schets-rij');
+	await expect(rij).toContainText(name.split(',')[0]);
+	await rij.getByRole('button', { name: /netwerk/i }).click();
+	await expect(netwerkKnop(page)).toHaveAccessibleName('Netwerk, 1 bron');
+
+	await netwerkKnop(page).click();
+	await expect(page).toHaveURL(/mode=netwerk&netwerk=/);
+	await expect(page.getByTestId('werkplek')).toBeVisible();
+	await expect(page.locator('.reader-frame')).toHaveCount(0);
+	await expect(page.locator('.mobile-tab')).toHaveCount(0);
+	const id = new URL(page.url()).searchParams.get('netwerk')!;
+
+	// The bron marked, as a click on the canvas marks it: its card with Lees.
+	await page.goto(`${page.url()}&kies=${encodeURIComponent(id)}`);
+	const gekozen = await (await chips(page)).allInnerTexts();
+	const lees = page.getByRole('link', { name: 'Tekst lezen' });
+	await expect(lees).toBeVisible();
+	await lees.click();
+	await expect(page).not.toHaveURL(/mode=netwerk/);
+	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+	await expect(netwerkKnop(page)).toHaveAccessibleName('Netwerk, 1 bron');
+
+	await page.goBack();
+	await expect.poll(() => new URL(page.url()).searchParams.get('kies')).toBe(id);
+	await expect(page.getByRole('link', { name: 'Tekst lezen' })).toBeVisible();
+	await expect(await chips(page)).toHaveText(gekozen);
+});

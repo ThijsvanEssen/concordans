@@ -200,17 +200,11 @@ test('Actueel keeps its days when the next ones fail, and says so below them wit
 
 test('a network that cannot be drawn says so on the canvas, the bron stays, Opnieuw draws it', async ({
 	page,
-	guard,
-	touch
+	guard
 }) => {
 	guard.allow(FAILED);
 	await failApi(page, /^\/api\/nodes\/articles\/bwbr0005289_162\/neighborhood/, 503);
 	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk');
-	if (touch)
-		await page
-			.getByRole('navigation', { name: 'Panelen' })
-			.getByRole('button', { name: 'Netwerk' })
-			.click();
 	const alert = page
 		.getByRole('alert')
 		.filter({ hasText: 'Het netwerk kon niet op tijd worden geladen.' });

@@ -4,13 +4,13 @@ import { BRONNEN, bron, overtreders, plek, type Uitzondering } from '$lib/test/b
 
 describe('opening a bron', () => {
 	it('opens a bron from a click by one rule, $lib/bron/href.ts openHref', () => {
-		// Every bron opens in Tekst (besluit 32). A link forced to the network is one that says
-		// so: In het netwerk, or the bron in the middle of Netwerk tonen, to Samenhang.
+		// Every bron opens in Tekst (besluit 32). A link forced to the werkplek is one that says
+		// so: In het netwerk, under the drawing of Netwerk tonen or on an opened row.
 		const netwerkLinks: Uitzondering[] = [
 			{ pad: 'lib/bron/href.ts', reden: 'the rule itself' },
 			{ pad: 'lib/verbonden/VerbondenTabel.svelte', reden: 'In het netwerk of an opened row' },
 			{ pad: 'lib/components/open/PostOpen.svelte', reden: 'In het netwerk of a bewindspersoon' },
-			{ pad: 'routes/explore/+page.svelte', reden: 'the bron in the middle of Netwerk tonen' }
+			{ pad: 'routes/explore/+page.svelte', reden: 'In het netwerk under Netwerk tonen, key L' }
 		];
 		expect(overtreders((t) => /mode: 'graph'/.test(t), netwerkLinks)).toEqual([]);
 	});

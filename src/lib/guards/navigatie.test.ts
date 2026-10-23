@@ -26,7 +26,7 @@ describe('the navigation', () => {
 				[plek('lib/nav/network.ts'), plek('lib/components/layout/NetworkButton.svelte')]
 			)
 		).toEqual([]);
-		expect(bron('lib/components/layout/NetworkButton.svelte')).toContain('aria-label="Netwerk"');
+		expect(bron('lib/components/layout/NetworkButton.svelte')).toContain("'Netwerk'");
 	});
 
 	it('draws one tab bar, in the shell, and no Samenhang in the menus', () => {

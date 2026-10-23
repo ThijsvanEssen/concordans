@@ -22,15 +22,15 @@
 				<span class="shortcut-keys"><kbd>Esc</kbd></span>
 			</div>
 			<div class="shortcut-row">
-				<span class="shortcut-desc">In het netwerk: wissel tussen netwerk en tekst</span>
+				<span class="shortcut-desc">Bij een bron: tekst of netwerk</span>
 				<span class="shortcut-keys"><kbd>L</kbd></span>
 			</div>
 			<div class="shortcut-row">
-				<span class="shortcut-desc">Bij een bron: Tekst, Netwerk of Verbonden</span>
-				<span class="shortcut-keys"><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></span>
+				<span class="shortcut-desc">Bij een bron: Tekst of Verbonden</span>
+				<span class="shortcut-keys"><kbd>1</kbd> <kbd>3</kbd></span>
 			</div>
 			<div class="shortcut-row">
-				<span class="shortcut-desc">Bij een bron: alleen de omgeving in het netwerk</span>
+				<span class="shortcut-desc">In het netwerk: alleen verbonden bronnen</span>
 				<span class="shortcut-keys"><kbd>O</kbd></span>
 			</div>
 			<div class="shortcut-row">

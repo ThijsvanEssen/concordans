@@ -3,11 +3,9 @@
 // with the rows of every group (code-eenvoud F95: before the panel is cut into parts).
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
-import { readable } from 'svelte/store';
 import { goto } from '$app/navigation';
 import { fakeApi } from '$lib/test/fakeApi';
 import { markeringVoor } from '$lib/bron/markering.svelte';
-import type { GraphStore } from '$lib/graph/store/types';
 import type { GraphNode } from '$lib/graph/types';
 import { download } from './export';
 import { buildGroups } from './groups';
@@ -89,7 +87,6 @@ function paneel(rows: Record<string, Row[]> = ROWS, extra: Record<string, unknow
 		verbonden: state(rows),
 		selection,
 		filter: EMPTY_FILTER,
-		store: { nodes: readable([]) } as unknown as GraphStore,
 		onFilter: () => {},
 		onOpenFilter: () => {},
 		tableHref: '/explore?tabel=1',
@@ -199,11 +196,31 @@ describe('Verbonden', () => {
 		expect(figuur.querySelector('figcaption')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
 			'2 afzonderlijk'
 		);
-		const namen = [...figuur.querySelectorAll('a.single title')].map((t) => t.textContent);
+		const namen = [...figuur.querySelectorAll('.single title')].map((t) => t.textContent);
 		expect(namen).toEqual([
 			'Hoge Raad, 20 december 2019',
 			'Motie van het lid Kathmann over een meldportaal'
 		]);
+		// A bron on its own is a button, no link; the middle is no link either (besluit 39).
+		expect(figuur.querySelectorAll('a')).toHaveLength(0);
+	});
+
+	it('opens a bron of the drawing in place under it, its row; the werkplek is a link below', async () => {
+		paneel(ROWS, { onShowNetwork: () => {}, showNetwork: true, networkHref: '/x?mode=netwerk' });
+		const figuur = screen.getByTestId('network-sketch');
+		const hr = figuur.querySelector<SVGElement>(
+			'.single[aria-label="Hoge Raad, 20 december 2019"]'
+		)!;
+		await klik(hr);
+		expect(goto).not.toHaveBeenCalled();
+		expect(hr.getAttribute('aria-expanded')).toBe('true');
+		const rij = document.querySelector('.schets-rij')!;
+		expect(rij.textContent).toContain('Hoge Raad, 20 december 2019');
+		expect(screen.getByRole('link', { name: 'In het netwerk' }).getAttribute('href')).toBe(
+			'/x?mode=netwerk'
+		);
+		await klik(hr);
+		expect(document.querySelector('.schets-rij')).toBeNull();
 	});
 
 	it('has no Netwerk tonen beside the canvas', () => {

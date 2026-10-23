@@ -12,10 +12,10 @@ import type { SharedParam } from '$lib/url/filters';
 export const NETWORK_MODE = 'netwerk';
 
 /**
- * Bladeren is ?mode=index, whatever else the address holds. Without a bron, or with the
- * netwerk of chosen bronnen, the Verkenner is the canvas (Samenhang); a bron is read in Tekst
- * unless the address asks for the canvas (?mode=netwerk). The table of its verbindingen is
- * read so too.
+ * Bladeren is ?mode=index, whatever else the address holds. Without a bron the Verkenner is
+ * the werkplek Netwerk; a bron is read in Tekst unless the address asks for the werkplek
+ * (?mode=netwerk), a netwerk of chosen bronnen in the address or not (besluit 39). The table
+ * of its verbindingen is read so too.
  */
 export function exploreMode(params: URLSearchParams, readable = false): Mode {
 	const mode = params.get('mode');
@@ -23,7 +23,7 @@ export function exploreMode(params: URLSearchParams, readable = false): Mode {
 	// A readable address names its bron, also while it is looked up (`readable`).
 	if (!params.get('focus') && !readable) return 'graph';
 	if (params.get('tabel') === '1') return 'read';
-	return mode === NETWORK_MODE || params.get('netwerk') ? 'graph' : 'read';
+	return mode === NETWORK_MODE ? 'graph' : 'read';
 }
 
 /** The view an address shows: null off /explore and the readable addresses of bronnen. */
@@ -134,7 +134,8 @@ export function buildBronHref(
 	if (!within && mode === 'graph') params.set('paneel', 'netwerk');
 	if (onExplorePath && current) {
 		for (const name of KEPT_PARAMS) {
-			if (!keepNetwerk && NETWERK_PARAMS.has(name)) continue;
+			// A bron read leaves the netwerk in the werkplek's address: Back brings it back.
+			if ((!keepNetwerk || reading) && NETWERK_PARAMS.has(name)) continue;
 			if (currentMode === 'index' && BRONNEN_PARAMS.has(name)) continue;
 			const value = current.searchParams.get(name);
 			if (value) params.set(name, value);

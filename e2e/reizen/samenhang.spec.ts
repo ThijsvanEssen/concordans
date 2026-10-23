@@ -8,26 +8,16 @@ const ARTICLE = '/wetten/BWBR0005289/artikel/6:162';
 const drawn = (page: import('@playwright/test').Page) =>
 	page.getByRole('list', { name: /^Bronnen in het netwerk, \d+/ });
 
-test('the network draws a bron with its neighbours and lists them', async ({ page, touch }) => {
+test('the network draws a bron with its neighbours and lists them', async ({ page }) => {
 	await page.goto(`${ARTICLE}?mode=netwerk`);
-	if (touch)
-		await page
-			.getByRole('navigation', { name: 'Panelen' })
-			.getByRole('button', { name: 'Netwerk' })
-			.click();
 	await expect(page.locator('canvas').first()).toBeAttached();
 	await expect(drawn(page)).toBeAttached();
 	await expect(drawn(page).getByRole('link', { name: 'Art. 6:162 BW, Artikel' })).toBeAttached();
 	expect(await drawn(page).getByRole('listitem').count()).toBeGreaterThan(5);
 });
 
-test('the legend switches a kind of bron off and on', async ({ page, touch }) => {
+test('the legend switches a kind of bron off and on', async ({ page }) => {
 	await page.goto(`${ARTICLE}?mode=netwerk`);
-	if (touch)
-		await page
-			.getByRole('navigation', { name: 'Panelen' })
-			.getByRole('button', { name: 'Netwerk' })
-			.click();
 	// The network fills in steps; the count is read once it has.
 	await page.waitForLoadState('networkidle');
 	await page.getByRole('button', { name: /^Legenda/ }).click();
@@ -52,16 +42,8 @@ for (const { stuk, own } of [
 	},
 	{ stuk: '/kamerstukken/37020-X/53', own: /Beslisnota bij Kamerbrief over incident/ }
 ]) {
-	test(`the network of ${stuk} draws no stemming of its indiener elsewhere`, async ({
-		page,
-		touch
-	}) => {
+	test(`the network of ${stuk} draws no stemming of its indiener elsewhere`, async ({ page }) => {
 		await page.goto(`${stuk}?mode=netwerk`);
-		if (touch)
-			await page
-				.getByRole('navigation', { name: 'Panelen' })
-				.getByRole('button', { name: 'Netwerk' })
-				.click();
 		await expect(drawn(page).getByRole('link', { name: own })).toBeAttached();
 		await page.waitForLoadState('networkidle');
 		const items = await drawn(page).getByRole('listitem').allInnerTexts();
@@ -74,13 +56,8 @@ for (const { stuk, own } of [
 
 // The Legenda counts what is drawn, with the focus selected too, open as closed (besluit 29):
 // the focus's direct verbindingen are in Verbonden, not here ("Stemmingen 0" beside 49 drawn).
-test('the open legend counts the stemmingen drawn, the focus selected', async ({ page, touch }) => {
+test('the open legend counts the stemmingen drawn, the focus selected', async ({ page }) => {
 	await page.goto('/kamerstukken/36799/31?mode=netwerk');
-	if (touch)
-		await page
-			.getByRole('navigation', { name: 'Panelen' })
-			.getByRole('button', { name: 'Netwerk' })
-			.click();
 	await page.waitForLoadState('networkidle');
 	const items = await drawn(page).getByRole('listitem').allInnerTexts();
 	const stemmingen = items.filter((t) => t.endsWith(', Stemming')).length;

@@ -1,9 +1,9 @@
 <script lang="ts">
 	// The network of the bron in Verbonden, on request (Netwerk tonen, besluit 32): the bron in
-	// the middle, each verbinding a line. A bron on its own opens on a click; a group (a count
-	// in a circle) opens its group in the panel below. The legend is one line that counts what
-	// is drawn (besluit 29.3). The bron itself leads to its network on the canvas.
-	import { openHref } from '$lib/bron/href';
+	// the middle, each verbinding a line. A bron on its own opens in place under the drawing, its
+	// row of Verbonden, the bron one step further (besluit 39); a group (a count in a circle)
+	// opens its group in the panel below. The legend is one line that counts what is drawn
+	// (besluit 29.3). The way to the werkplek is the link Open in netwerk under it.
 	import { VORMEN } from '$lib/bron/vormen';
 	import { formatCount } from '$lib/text/getal';
 	import { plural } from '$lib/text/words';
@@ -13,17 +13,26 @@
 	let {
 		sketch,
 		name,
-		networkHref,
+		open = null,
+		onSingle,
 		onGroup
 	}: {
 		sketch: Sketch;
 		/** The bron in the middle, short (LABEL_MAX). */
 		name: string;
-		/** The bron on the canvas of the Netwerk. */
-		networkHref: string;
+		/** The bron on its own opened under the drawing, by its id. */
+		open?: string | null;
+		/** A bron on its own was clicked: its row opens under the drawing, or closes. */
+		onSingle: (id: string) => void;
 		/** A group was clicked: its group in Verbonden opens. */
 		onGroup: (groupId: string) => void;
 	} = $props();
+
+	const press = (e: KeyboardEvent, act: () => void) => {
+		if (e.key !== 'Enter' && e.key !== ' ') return;
+		e.preventDefault();
+		act();
+	};
 
 	/** The colour of a kind, as the canvas draws its groups. */
 	const colour = (c: Collection | null, hue: string | null = null): string => {
@@ -78,9 +87,8 @@
 			<line x1={m.x} y1={m.y} x2={b.x} y2={b.y} class="line" stroke-width={clusterLine(b.count)} />
 		{/each}
 
-		<a href={networkHref} class="focus">
-			<title>{name} in het netwerk</title>
-			<circle cx={m.x} cy={m.y} r="22" class="hit" />
+		<g class="focus">
+			<title>{name}</title>
 			<rect x={m.x - 11} y={m.y - 11} width="22" height="22" fill="var(--ink)" />
 			<rect
 				x={m.x - 17}
@@ -95,11 +103,20 @@
 				>{#each sketch.centerLines as line, i (i)}<tspan x={m.x} dy={i ? LINE_H : 0}>{line}</tspan
 					>{/each}</text
 			>
-		</a>
+		</g>
 
 		{#each sketch.singles as l (l.id)}
 			{@const v = VORMEN[l.shape]}
-			<a href={openHref(l.ref)} class="single">
+			<g
+				class="single"
+				class:is-open={open === l.id}
+				role="button"
+				tabindex="0"
+				aria-label={l.title}
+				aria-expanded={open === l.id}
+				onclick={() => onSingle(l.id)}
+				onkeydown={(e) => press(e, () => onSingle(l.id))}
+			>
 				<title>{l.title}</title>
 				<circle cx={l.x} cy={l.y} r={l.hit} class="hit" />
 				<path
@@ -116,7 +133,7 @@
 							>{/each}</text
 					>
 				{/if}
-			</a>
+			</g>
 		{/each}
 
 		{#each sketch.clusters as b (b.id)}
@@ -126,11 +143,7 @@
 				tabindex="0"
 				aria-label="{formatCount(b.count)} {b.label}"
 				onclick={() => onGroup(b.group)}
-				onkeydown={(e) => {
-					if (e.key !== 'Enter' && e.key !== ' ') return;
-					e.preventDefault();
-					onGroup(b.group);
-				}}
+				onkeydown={(e) => press(e, () => onGroup(b.group))}
 			>
 				<circle cx={b.x} cy={b.y} r={Math.max(b.r, 22)} class="hit" />
 				<circle
@@ -219,19 +232,22 @@
 		fill: var(--ink);
 	}
 	.single,
-	.focus,
 	.cluster {
 		cursor: pointer;
 	}
 	.single:hover .name,
-	.cluster:hover .name,
-	.focus:hover .name {
+	.single.is-open .name,
+	.cluster:hover .name {
 		fill: var(--ink);
 		text-decoration: underline;
 	}
+	/* The ring is the bron's own (below), not the box of the whole group. */
+	.single:focus,
+	.cluster:focus {
+		outline: none;
+	}
 	.single:focus-visible path,
-	.cluster:focus-visible circle:not(.hit),
-	.focus:focus-visible rect {
+	.cluster:focus-visible circle:not(.hit) {
 		outline: 2px solid var(--focus);
 		outline-offset: 2px;
 	}

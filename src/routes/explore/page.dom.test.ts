@@ -151,7 +151,7 @@ function view(container: HTMLElement) {
 	if (seen.IndexOverzicht || seen.IndexView) return 'index';
 	if (container.querySelector('.explore-table')) return 'table';
 	if (container.querySelector('.explore-read')) return 'read';
-	if (container.querySelector('.explore-graph')) return 'graph';
+	if (container.querySelector('.werkplek')) return 'graph';
 	return null;
 }
 
@@ -173,12 +173,14 @@ describe('the Verkenner reads its state from the address', () => {
 		expect(view(member.container)).toBe('read');
 	});
 
-	it('shows a bron on the canvas of Samenhang with ?mode=netwerk, its text beside it', async () => {
+	it('opens the werkplek with ?mode=netwerk: the canvas, no reader, no Verbonden (besluit 39)', async () => {
 		const { container } = await openAt(`/explore?focus=${ARTICLE}&mode=netwerk`);
 		expect(view(container)).toBe('graph');
-		expect((seen.KindReader.selection as { id: string }).id).toBe(ARTICLE);
-		expect(seen.GraphView.compact).toBe(true);
-		expect(seen.Verbonden.onShowNetwork).toBeUndefined();
+		expect(seen.KindReader).toBeUndefined();
+		expect(seen.ReaderFrame).toBeUndefined();
+		expect(seen.Verbonden).toBeUndefined();
+		expect(container.querySelector('.reader, .col--reader, .mobile-tabs')).toBeNull();
+		expect(seen.GraphView.compact).toBeUndefined();
 	});
 
 	it('draws the network in Verbonden with ?toon=netwerk; Netwerk tonen and verbergen are steps', async () => {
@@ -268,15 +270,13 @@ describe('the Verkenner writes its state to the address', () => {
 		expect(view(container)).toBe('graph');
 	});
 
-	it('takes the layers with 1, 2 and 3: Netwerk the canvas, Tekst back', async () => {
+	it('takes the layers with 1 and 3, Tekst and Verbonden; 2 is no layer any more', async () => {
 		const { container } = await openAt(`/explore?focus=${ARTICLE}`);
-		await key('2');
-		expect(view(container)).toBe('graph');
-		await key('1');
-		expect(view(container)).toBe('read');
-		await key('3');
-		expect(view(container)).toBe('read');
-		expect(history().entries).toHaveLength(3);
+		for (const k of ['2', '1', '3']) {
+			await key(k);
+			expect(view(container), k).toBe('read');
+		}
+		expect(history().entries).toHaveLength(1);
 	});
 
 	it('writes the depth, the overlay and the filter in place: no step', async () => {
@@ -335,7 +335,7 @@ describe('the readable address', () => {
 		expect(address()).toBe('/wetten/BWBR0005537/artikel/3:2?diepte=3');
 		expect(history().entries).toHaveLength(1);
 		await key('l');
-		expect(address()).toBe('/wetten/BWBR0005537/artikel/3:2?diepte=3&mode=netwerk');
+		expect(address()).toBe('/wetten/BWBR0005537/artikel/3:2?mode=netwerk&diepte=3');
 		back();
 		await settle();
 		expect(address()).toBe('/wetten/BWBR0005537/artikel/3:2?diepte=3');
@@ -403,13 +403,65 @@ describe('the netwerk of chosen bronnen', () => {
 	});
 });
 
+describe('the werkplek (besluit 39)', () => {
+	const graphNode = (id: string) => {
+		const [collection, key] = id.split('/');
+		return { id, collection, key, kind: 'article', label: key, raw: { props: {} } };
+	};
+
+	it('marks a bron in place (?kies), and Lees reads it as a step Back undoes', async () => {
+		localStorage.setItem('concordans:netwerk', `netwerk=${MEMBER}`);
+		const { container } = await openAt(`/explore?focus=${ARTICLE}&mode=netwerk&netwerk=${MEMBER}`);
+		(seen.GraphView.onKies as (id: string | null) => void)(MEMBER);
+		await settle();
+		expect(param('kies')).toBe(MEMBER);
+		expect(history().entries).toHaveLength(1);
+		(seen.GraphView.onNodeClick as (n: ReturnType<typeof graphNode>) => void)(graphNode(MEMBER));
+		await settle();
+		expect(view(container)).toBe('read');
+		expect(param('focus')).toBe(MEMBER);
+		expect(param('netwerk')).toBeNull();
+		expect(param('mode')).toBeNull();
+		back();
+		await settle();
+		expect(view(container)).toBe('graph');
+		expect(param('netwerk')).toBe(MEMBER);
+		expect(seen.GraphView.kies).toBe(MEMBER);
+	});
+
+	it('opens the kept netwerk with the bron beside it, never in its place', async () => {
+		localStorage.setItem('concordans:netwerk', `netwerk=${MEMBER}`);
+		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk`);
+		expect(param('netwerk')).toBe(MEMBER);
+		expect(param('focus')).toBe(ARTICLE);
+	});
+
+	it('begins with the bron alone where no netwerk is kept', async () => {
+		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk`);
+		expect(param('netwerk')).toBeNull();
+		expect(seen.GraphView.netwerkActive).toBe(false);
+	});
+
+	it('adds a bron read to the kept netwerk, the address of the text unchanged', async () => {
+		await openAt(`/explore?focus=${ARTICLE}`);
+		const before = address();
+		(seen.Verbonden.onAddToNetwerk as (row: { ref: { collection: string; key: string } }) => void)({
+			ref: { collection: 'members', key: 'm1' }
+		});
+		await settle();
+		expect(address()).toBe(before);
+		expect(localStorage.getItem('concordans:netwerk')).toBe(
+			`netwerk=${encodeURIComponent(MEMBER)}`
+		);
+	});
+});
+
 describe('the columns', () => {
 	it('keep the widths that were dragged', async () => {
-		localStorage.setItem('concordans:panel-widths', JSON.stringify({ panelW: 300, graphW: 500 }));
-		const { container } = await openAt(`/explore?focus=${ARTICLE}&mode=netwerk`);
-		const grid = container.querySelector<HTMLElement>('.explore-graph')!;
+		localStorage.setItem('concordans:panel-widths', JSON.stringify({ panelW: 300 }));
+		const { container } = await openAt(`/explore?focus=${ARTICLE}`);
+		const grid = container.querySelector<HTMLElement>('.explore-read')!;
 		expect(grid.style.getPropertyValue('--panel-w')).toBe('300px');
-		expect(grid.style.getPropertyValue('--graph-w')).toBe('500px');
 	});
 });
 
@@ -426,27 +478,10 @@ describe('the Verkenner on a phone', () => {
 		expect(container.querySelector('.col--panel.mobile-hidden')).toBeNull();
 	});
 
-	it('shows one panel at a time on the canvas; the tab Tekst reads the text', async () => {
+	it('shows the werkplek without tabs: the canvas alone, Lees reads the text', async () => {
 		const { container } = await openAt(`/explore?focus=${ARTICLE}&mode=netwerk`);
-		const tabs = () =>
-			[...container.querySelectorAll<HTMLButtonElement>('.mobile-tab')].map((b) => [
-				b.textContent,
-				b.getAttribute('aria-pressed')
-			]);
-		expect(tabs()).toEqual([
-			['Tekst', 'true'],
-			['Netwerk', 'false'],
-			['Verbonden', 'false']
-		]);
-		const netwerk = [...container.querySelectorAll<HTMLButtonElement>('.mobile-tab')][1];
-		await fireEvent.click(netwerk);
-		await settle();
 		expect(view(container)).toBe('graph');
-		expect(tabs()[1]).toEqual(['Netwerk', 'true']);
-		const tekst = [...container.querySelectorAll<HTMLButtonElement>('.mobile-tab')][0];
-		await fireEvent.click(tekst);
-		await settle();
-		expect(view(container)).toBe('read');
-		expect(param('mode')).toBeNull();
+		expect(container.querySelectorAll('.mobile-tab')).toHaveLength(0);
+		expect(seen.KindReader).toBeUndefined();
 	});
 });

@@ -12,8 +12,6 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import BehoortBij from '$lib/bron/BehoortBij.svelte';
 	import { BEHOORT_KEY, bandAlways } from '$lib/bron/behoort';
-	import WeergaveSchakelaar from '../WeergaveSchakelaar.svelte';
-	import { WEERGAVE_KEY, type Weergave } from '../weergave';
 	import {
 		FramePending,
 		SearchState,
@@ -69,17 +67,12 @@
 	// Where the bron stands, above its text and before it loads (docs/hierarchie.md).
 	const bron = getContext<(() => GraphNode) | undefined>(BEHOORT_KEY);
 
-	// Netwerk / Tekst, top right beside the band: only for the bron the band is for, not
-	// for a document opened beside it.
-	const viewOf = getContext<(() => Weergave | null) | undefined>(WEERGAVE_KEY);
-	const w = $derived(bron ? (viewOf?.() ?? null) : null);
-
 	// Whether the band has lines, told once its light node is in: until then a kind that always
 	// has a band holds its place; a row with nothing in it (no band, no controls) is not drawn
 	// at all, no bare rule over the title.
 	const band = new BandState();
 	const bandHeld = $derived(bron ? bandAlways(bron().collection) && band.has !== false : false);
-	const rowShown = $derived(band.has === true || bandHeld || !!w);
+	const rowShown = $derived(band.has === true || bandHeld);
 
 	// The head of the reader draws the button and the field (ReaderHead): the actions of the
 	// stuk stand together, not one above the band and the others under the title (A190).
@@ -112,9 +105,9 @@
 <!-- data-klaar: the text is here; under it on a narrow screen Verbonden may come (explore). -->
 <div class="reader-frame" data-klaar={done || undefined}>
 	<div class="reader-frame__col" bind:this={search.column}>
-		<!-- The band and Netwerk/Tekst on one row, one rule under both over the full width
-		     (Thijs, 10 Oct: the rule stopped short of the toggle). -->
-		{#if w || bron}
+		<!-- The band on a row of its own, its rule over the full width. The network is a werkplek
+		     of its own, never beside the text (besluit 39). -->
+		{#if bron}
 			<div class="kop-rij" hidden={!rowShown}>
 				{#if bron}<div
 						class="kop-rij__band"
@@ -128,18 +121,6 @@
 							}}
 						/>
 					</div>{/if}
-				{#if w?.contents}
-					<div class="head-actions">
-						<button type="button" class="btn" aria-haspopup="dialog" onclick={w.contents}
-							>Inhoud</button
-						>
-					</div>
-				{/if}
-				{#if w}
-					<div class="weergave">
-						<WeergaveSchakelaar weergave={w} />
-					</div>
-				{/if}
 			</div>
 		{/if}
 		{@render head?.()}
@@ -227,16 +208,6 @@
 		padding: 0;
 		border: 0;
 	}
-	.weergave {
-		flex: none;
-		margin-left: auto;
-	}
-	/* The band takes the room; Inhoud stands at the right of it. */
-	.head-actions {
-		display: flex;
-		flex: none;
-		gap: var(--s-2);
-	}
 	/* On a phone the controls stand under the band, not squeezed beside it. */
 	@media (max-width: 768px) {
 		.kop-rij {
@@ -246,12 +217,6 @@
 		}
 		.kop-rij__band {
 			flex-basis: 100%;
-		}
-	}
-	/* On a phone the tabs (Tekst, Netwerk, Verbonden) are the one control. */
-	@media (max-width: 768px) {
-		.weergave {
-			display: none;
 		}
 	}
 </style>

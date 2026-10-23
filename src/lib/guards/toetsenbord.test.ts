@@ -83,7 +83,6 @@ describe('the keyboard', () => {
 		expect(shell).toMatch(/\$paneelSprongen as s/);
 		const explore = bron('routes/explore/+page.svelte');
 		expect(explore).toMatch(/label: 'Naar Verbonden'/);
-		expect(explore).toMatch(/label: 'Naar het netwerk'/);
 		// One main on a page: AppShell's.
 		const zonderUitleg = (t: string) =>
 			t.replace(/<!--[\s\S]*?-->/g, '').replace(/^\s*\/\/.*$/gm, '');
