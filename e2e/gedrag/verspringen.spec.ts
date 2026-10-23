@@ -37,7 +37,7 @@ const READERS = [
 
 for (const r of READERS) {
 	test(`${r.what} comes in on a phone without a shift`, async ({ page, touch }) => {
-		test.skip(!touch, 'Verbonden stands under the text on a phone');
+		test.skip(!touch, 'a phone');
 		// The text comes a moment after the rest, as on a slow line: Verbonden must not stand
 		// where it comes.
 		await page.route(/\/api\/(articles|judgments)\//, async (route) => {
@@ -57,7 +57,8 @@ for (const r of READERS) {
 		});
 		await page.goto(r.path);
 		await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-		await expect(page.getByRole('heading', { level: 2, name: 'Verbonden' })).toBeAttached();
+		// Verbonden is a tab of its own on a phone (A197-a).
+		await expect(page.getByRole('tab', { name: 'Verbonden' })).toBeVisible();
 		await page.waitForTimeout(1500);
 		const cls = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
 		expect(cls).toBeLessThanOrEqual(0.05);

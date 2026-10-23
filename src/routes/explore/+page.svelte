@@ -1522,7 +1522,13 @@
 	let readTab = $state<'tekst' | 'verbonden'>('tekst');
 	$effect(() => {
 		void selectedNode?.id;
-		readTab = 'tekst';
+		// A link that names the bronnen (?bronnen=, the start page's) comes for Verbonden (R3-I).
+		// So does the network asked in the address (?toon=netwerk): it is drawn in Verbonden.
+		readTab = untrack(
+			() => page.url.searchParams.get('bronnen') || page.url.searchParams.get('toon') === 'netwerk'
+		)
+			? 'verbonden'
+			: 'tekst';
 	});
 	// The hint of a phone's tab of before (?paneel) is dropped from the address: the werkplek
 	// has no tabs, the text and Verbonden stand under each other.

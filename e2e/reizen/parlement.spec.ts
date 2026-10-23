@@ -3,6 +3,7 @@
 // passed bill with its law, and a memorie van toelichting beside the article it explains.
 import { patchApi } from '../support/api';
 import { expect, test } from '../support/test';
+import { naarVerbonden } from '../support/navigation';
 
 test('a dossier shows where it stands and opens a stuk of its procedure in place', async ({
 	page
@@ -246,6 +247,7 @@ test('a dossier marks a toezegging it only had on the agenda of the debate', asy
 	const verbonden = page.getByRole('complementary', { name: 'Verbonden' });
 	// On a phone Verbonden stands under the text and loads once it is scrolled to (V1).
 	await page.getByRole('heading', { level: 1 }).waitFor();
+	await naarVerbonden(page);
 	await page.locator('.col--panel').scrollIntoViewIfNeeded();
 	await verbonden.getByRole('button', { name: /^Alle \d+ toezeggingen$/ }).click();
 	const groep = page.locator('section[data-group="commitments"]');

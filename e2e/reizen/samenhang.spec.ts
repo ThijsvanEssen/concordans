@@ -1,6 +1,7 @@
 // Samenhang: the network of a bron on the canvas (?mode=netwerk), its legend, the bronnen in it as a list, the Verbonden
 // table and its export.
 import { expect, test } from '../support/test';
+import { naarVerbonden } from '../support/navigation';
 
 const ARTICLE = '/wetten/BWBR0005289/artikel/6:162';
 
@@ -81,6 +82,7 @@ test('the open legend counts the stemmingen drawn, the focus selected', async ({
 
 test('Verbonden as a table, exported as CSV', async ({ page }) => {
 	await page.goto(ARTICLE);
+	await naarVerbonden(page);
 	await page.getByRole('link', { name: 'Alles in een tabel' }).click();
 	await expect(page).toHaveURL(/tabel=1/);
 	await expect(page.getByRole('heading', { name: 'Verbindingen van Art. 6:162 BW' })).toBeVisible();

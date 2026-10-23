@@ -45,3 +45,14 @@ export const mineSign = (page: Page) =>
 	isPhone(page)
 		? page.getByRole('navigation', { name: 'Hoofdmenu' }).getByRole('button', { name: /^Mijn/ })
 		: page.getByRole('button', { name: /^Mijn/ });
+
+/** On a phone Verbonden is a tab of its own (A197-a): choose it; wider, it stands beside the
+ *  text and nothing is to be done. */
+export async function naarVerbonden(page: Page) {
+	if (isPhone(page)) await page.getByRole('tab', { name: 'Verbonden' }).click();
+}
+
+/** Back to the text, on a phone its tab. */
+export async function naarTekst(page: Page) {
+	if (isPhone(page)) await page.getByRole('tab', { name: 'Tekst' }).click();
+}

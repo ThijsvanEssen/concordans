@@ -5,6 +5,7 @@
 import type { Page } from '@playwright/test';
 import { SOORTEN } from '../support/soorten';
 import { expect, test } from '../support/test';
+import { naarTekst, naarVerbonden } from '../support/navigation';
 
 /** The kinds whose status line always says something. */
 const STATUS = new Set([
@@ -35,8 +36,10 @@ for (const [soort, pad] of SOORTEN) {
 	test(`${soort}: the frame is the one of every kind`, async ({ page, touch }) => {
 		await open(page, pad);
 		const verbonden = page.getByRole('complementary', { name: 'Verbonden' });
+		await naarVerbonden(page);
 		await verbonden.scrollIntoViewIfNeeded();
 		await expect(verbonden.locator('.head__count')).toHaveText(/verbinding|Geen/);
+		await naarTekst(page);
 
 		// 1. The line of the kind: its glyph and its kind as a link to the list.
 		if (!PLAATSREGEL.has(soort)) {

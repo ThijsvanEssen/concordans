@@ -26,7 +26,7 @@
 </script>
 
 {#if isIndexCategory(lijst)}<a
-		class="soort raakvlak"
+		class="soort"
 		href={indexHref(lijst)}
 		title="Alle {categoryLabel(lijst).toLowerCase()} onder Bronnen"
 		aria-label={glyphOnly ? `Alle ${categoryLabel(lijst).toLowerCase()} onder Bronnen` : undefined}
