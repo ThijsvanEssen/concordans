@@ -1,3 +1,4 @@
+import { joinAnd } from '$lib/text/words';
 // How a judgment or conclusion ended, in the words of its status line (API 0.79.55): what a
 // conclusion proposes ("strekt tot verwerping") and what the ECHR found per article
 // ("geen schending van art. 8"). Source values only; nothing when the data says none.
@@ -40,6 +41,7 @@ export const kenmerken = (j: {
 	chamber?: string | null;
 }): string[] => {
 	const areas = (j.subject_areas ?? []).filter((a) => a.trim());
-	const area = areas.length > 1 ? `${areas.slice(0, -1).join(', ')} en ${areas.at(-1)}` : areas[0];
-	return [area, j.procedure?.trim(), j.chamber?.trim()].filter((x): x is string => !!x);
+	return [areas.length ? joinAnd(areas) : null, j.procedure?.trim(), j.chamber?.trim()].filter(
+		(x): x is string => !!x
+	);
 };
