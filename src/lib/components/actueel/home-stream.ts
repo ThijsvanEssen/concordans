@@ -1,9 +1,9 @@
-import { votesSentence } from '$lib/components/parliamentary/stemming';
-import { motionKindLabel } from '$lib/components/parliamentary/motion-kind';
+import { votesSentence } from '$lib/votes/stemming';
+import { motionKindLabel } from '$lib/text/motion-kind';
 import { capitalize, joinAnd, truncate } from '$lib/text/words';
 import { holdDatesTogether } from '$lib/text/datum';
 import { bewindspersoonVan, eersteIndiener } from '$lib/bron/submitters';
-import type { BronRef } from '$lib/bron/href';
+import type { BronRef } from '$lib/bron/ref';
 import type { Vorm } from '$lib/bron/vormen';
 import type { Teken } from '$lib/components/tijdlijn/tijdlijn';
 import type { Schema } from '$lib/api/types';

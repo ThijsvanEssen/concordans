@@ -17,7 +17,7 @@ import {
 import { dossierVanRij, type Row } from '$lib/verbonden/rows';
 import { describeBron } from '$lib/bron/describe';
 import { previewFromNode } from './preview';
-import { laagVan } from '$lib/bron/behoort-layer';
+import { layerOf } from '$lib/bron/behoort-layer';
 import { paarZin } from '$lib/verbonden/hoe';
 import { buildNodeLabel } from '$lib/graph/types';
 import { containerNames } from '$lib/graph/store/context';
@@ -143,7 +143,7 @@ describe('a dossier number in its official notation', () => {
 			...Object.values(
 				containerNames({ collection: 'dossiers', key: '36600-VIII', props } as never, 'dossier')
 			),
-			laagVan(
+			layerOf(
 				{ collection: 'dossiers', key: '36600-VIII', props } as unknown as Neighbor,
 				'Dossier'
 			).naam,

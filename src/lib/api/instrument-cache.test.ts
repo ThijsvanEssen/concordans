@@ -4,9 +4,9 @@ import {
 	getInstrumentDetail,
 	getInstrumentMeta,
 	instrumentMetaStore,
-	lawName,
 	recordInstrument
 } from './instrument-cache';
+import { lawName } from '$lib/text/instrument-meta';
 
 describe('lawName', () => {
 	it('names a law by its citation title, then its short title, then the fallback', () => {

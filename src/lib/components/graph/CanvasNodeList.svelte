@@ -4,7 +4,8 @@
 	// canvas and gets the same card as under the pointer; N adds it to the netwerk or
 	// takes it out. The canvas itself draws; this list is how it is reached without one.
 	import type { GraphNode } from '$lib/graph/types';
-	import { bronHref, refOf } from '$lib/bron/href';
+	import { bronHref } from '$lib/bron/href';
+	import { refOf } from '$lib/bron/ref';
 	import { isCollection } from '$lib/vocabulary';
 	import { bronKind } from '$lib/components/graph/bron-kind';
 	import { moveIndex } from './canvas-keys';

@@ -25,11 +25,17 @@ const BESIDE_INDEX = {
 // paints, long before the app's chunks are in. It sets the app's own classes (each
 // component's scoping class, svelte-css-hash.js) and loads the app's own stylesheets of those
 // components, the layout's first: those it is given here.
-const FIRST_PAINT = 'src/lib/first-paint/entry.ts';
+const FIRST_PAINT = {
+	'first-paint.js': 'src/lib/first-paint/entry.ts',
+	'first-paint-article.js': 'src/lib/first-paint/entry-article.ts',
+	'first-paint-judgment.js': 'src/lib/first-paint/entry-judgment.ts',
+	'first-paint-law.js': 'src/lib/first-paint/entry-law.ts',
+	'first-paint-paper.js': 'src/lib/first-paint/entry-paper.ts'
+};
 const LAYOUT = 'src/routes/+layout.svelte';
-export async function firstPaintScript(build: Build): Promise<string> {
+export async function firstPaintScript(build: Build, entry: string): Promise<string> {
 	const out = await esbuild({
-		entryPoints: [FIRST_PAINT],
+		entryPoints: [entry],
 		bundle: true,
 		write: false,
 		minify: true,
@@ -65,11 +71,8 @@ const besideIndex: Plugin = {
 			) as Classes,
 			css: stylesheetsOf(bundle, [LAYOUT, ...files])
 		};
-		this.emitFile({
-			type: 'asset',
-			fileName: 'first-paint.js',
-			source: await firstPaintScript(build)
-		});
+		for (const [fileName, entry] of Object.entries(FIRST_PAINT))
+			this.emitFile({ type: 'asset', fileName, source: await firstPaintScript(build, entry) });
 	}
 };
 

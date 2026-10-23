@@ -3,9 +3,9 @@
 // around it is Samenhang, the canvas (?mode=netwerk). A link keeps the view it stands in and
 // its overlay, so reading stays reading and the network stays the network.
 import { page } from '$app/state';
-import { parseNodeId, type Collection, type Mode } from '$lib/vocabulary';
+import { parseNodeId, type Mode } from '$lib/vocabulary';
 import { isExplorePath, exploreHref, exploreUrl } from './address';
-import { dossierNummer } from './dossier-naam';
+import type { BronRef } from './ref';
 import type { SharedParam } from '$lib/url/filters';
 
 /** The value of ?mode that shows a bron on the canvas of Samenhang. */
@@ -37,24 +37,6 @@ export const hasFocus = (url: URL): boolean =>
 	url.pathname === '/explore'
 		? Boolean(url.searchParams.get('focus'))
 		: isExplorePath(url.pathname);
-
-/**
- * A bron as the interface holds it: its node key, and for a dossier also its number
- * (`37020-XV`, the node's `label`), which the API takes and a link carries.
- */
-export type BronRef =
-	| { collection: Exclude<Collection, 'dossiers'>; key: string }
-	| { collection: 'dossiers'; key: string; number: string };
-
-/** The ref of a node the API returned; a dossier with its number (dossierNummer). */
-export const refOf = (
-	collection: Collection,
-	key: string,
-	props?: Record<string, unknown> | null
-): BronRef =>
-	collection === 'dossiers'
-		? { collection, key, number: dossierNummer(props) ?? '' }
-		: { collection, key };
 
 type BronHrefOptions = {
 	/** Position inside the text: `lid-2`, `lid-2-onder-a`, `aanhef`, `rov-5.3`. */

@@ -29,3 +29,20 @@ export const isEuCourt = (ecli: string | null | undefined): boolean =>
 /** Whether a judgment is a conclusion of the Parket bij de Hoge Raad, by its ECLI or key. */
 export const isConclusion = (ecli: string | null | undefined): boolean =>
 	courtOf(ecli).code === 'PHR';
+
+/**
+ * A judgment's node key from its ECLI, as the API makes it (`make_node_key`): every run of
+ * other characters one underscore, `ecli_nl_hr_2019_2006`, and the dot too:
+ * `ECLI:BE:CASS:2019:ARR.20190101.1` is `ecli_be_cass_2019_arr_20190101_1`.
+ */
+export const ecliKey = (ecli: string): string =>
+	ecli
+		.toLowerCase()
+		.replace(/[^a-z0-9_]+/g, '_')
+		.replace(/_{2,}/g, '_')
+		.replace(/^_+|_+$/g, '');
+/** The ECLI back from a key; null where a dot made the key ambiguous (the props have it). */
+export const keyEcli = (key: string) =>
+	/^ecli_[a-z]{2}_[a-z0-9]+_\d{4}_[a-z0-9]+$/.test(key)
+		? key.toUpperCase().replaceAll('_', ':')
+		: null;

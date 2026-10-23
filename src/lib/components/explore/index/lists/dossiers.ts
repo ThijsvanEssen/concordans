@@ -2,7 +2,7 @@
 import type { Schema } from '$lib/api/types';
 import { formatCount } from '$lib/text/getal';
 import { choiceOf, facetOptions } from '$lib/util/choice';
-import { OUTCOME_LABEL, PHASES, type Outcome } from '$lib/components/parliamentary/stages';
+import { OUTCOME_LABEL, PHASES, type Outcome } from '$lib/votes/stages';
 import { faceted } from '../faceted';
 import { OPEN_STATUS } from '../government';
 import type { FacetsOf } from '$lib/api/lists';

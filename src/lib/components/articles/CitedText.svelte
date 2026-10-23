@@ -3,7 +3,7 @@
 	// lid or onderdeel the source names. A term the regulation defines is a reference too:
 	// its card says the definition, a click opens the article that gives it (begrippen.ts).
 	import BronLink from '$lib/bron/BronLink.svelte';
-	import { refOf } from '$lib/bron/href';
+	import { refOf } from '$lib/bron/ref';
 	import { isCollection } from '$lib/vocabulary';
 	import {
 		definitieKaart,

@@ -12,34 +12,34 @@ type Keten = { replaces?: readonly Ref[] | null; replaced_by?: readonly Ref[] | 
 export type Nr = { key: string; nummer: string };
 
 /** One phrase of the status line: "Vervangt nrs. 26 en 38", "Vervangen door nr. 47". */
-export type Zin = { woord: 'Vervangt' | 'Vervangen door'; nrs: Nr[] };
+export type Replacement = { woord: 'Vervangt' | 'Vervangen door'; nrs: Nr[] };
 
 const isGenummerd = (r: unknown): r is { key: string; sequence: number } =>
 	!!r && typeof (r as Ref).key === 'string' && typeof (r as Ref).sequence === 'number';
 
 /** The numbered stukken of a list, lowest first; a stuk without a number is left out. */
-export const genummerd = (refs: unknown): Nr[] =>
+export const numbered = (refs: unknown): Nr[] =>
 	(Array.isArray(refs) ? refs : [])
 		.filter(isGenummerd)
 		.sort((a, b) => a.sequence - b.sequence)
 		.map((r) => ({ key: r.key, nummer: String(r.sequence) }));
 
 /** The phrases of the chain: what the stuk replaces, then what replaced it. */
-export function vervanging(doc: Keten): Zin[] {
-	const zinnen: Zin[] = [];
-	const vervangt = genummerd(doc.replaces);
+export function replacementsOf(doc: Keten): Replacement[] {
+	const zinnen: Replacement[] = [];
+	const vervangt = numbered(doc.replaces);
 	if (vervangt.length) zinnen.push({ woord: 'Vervangt', nrs: vervangt });
-	const door = genummerd(doc.replaced_by);
+	const door = numbered(doc.replaced_by);
 	if (door.length) zinnen.push({ woord: 'Vervangen door', nrs: door });
 	return zinnen;
 }
 
 /** "nr." before one number, "nrs." before more. */
-export const nrWoord = (nrs: readonly Nr[]) => (nrs.length > 1 ? 'nrs.' : 'nr.');
+export const numberWord = (nrs: readonly Nr[]) => (nrs.length > 1 ? 'nrs.' : 'nr.');
 
 /** The numbers as plain words: "nr. 10", "nrs. 26, 30 en 38". */
-export const nrsTekst = (nrs: readonly Nr[]) =>
-	`${nrWoord(nrs)} ${nrs.map((n, i) => separatorBefore(i, nrs.length) + n.nummer).join('')}`;
+export const numbersText = (nrs: readonly Nr[]) =>
+	`${numberWord(nrs)} ${nrs.map((n, i) => separatorBefore(i, nrs.length) + n.nummer).join('')}`;
 
 /** A replaced stuk was not voted on as itself: its vote, if any, is that of what replaced it. */
-export const eigenUitslag = (doc: Keten) => !(doc.replaced_by ?? []).length;
+export const hasOwnOutcome = (doc: Keten) => !(doc.replaced_by ?? []).length;

@@ -2,10 +2,10 @@
 // names and those whose inhoudsindicatie names it. The node response carries the sentence
 // that says so on each RELATED_TO edge (`meta.text`), as the judge wrote it.
 import { textOf } from '$lib/text/words';
-import { keyEcli } from '$lib/bron/address';
+import { keyEcli } from '$lib/text/ecli';
 import type { Neighbor } from '$lib/api/nodes';
 
-export type Zin = {
+type Zin = {
 	text: string;
 	/** Whose inhoudsindicatie: this judgment's (outbound) or the other's (inbound). */
 	van: 'deze' | 'die';

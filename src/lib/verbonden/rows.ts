@@ -6,9 +6,9 @@ import { articleRef } from '$lib/text/bw';
 import { NOT_IN_DATA } from '$lib/text/coverage';
 import { capitalize, escapeRegExp, lowerFirst, textOf } from '$lib/text/words';
 import { naamVanId } from '$lib/bron/menselijk';
-import { keyEcli } from '$lib/bron/address';
+import { keyEcli } from '$lib/text/ecli';
 import { korteDatum } from '$lib/text/datum';
-import { refOf, type BronRef } from '$lib/bron/href';
+import { refOf, type BronRef } from '$lib/bron/ref';
 import { anchorLabel } from '$lib/text/anchor';
 import { changeRelationOf, isCollection, type Relation } from '$lib/vocabulary';
 import {

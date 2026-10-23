@@ -5,20 +5,39 @@
 // index.html) and inlined by the server, so it runs before the browser paints. It shows once
 // the app's stylesheets are in; the app takes the column over when its reader stands as the
 // paint does (takeover.ts).
-import { articleColumn, paintable, type ArticlePaint } from './article';
+import { measurePlaces } from '$lib/bron/place-column';
+import type { ArticlePaint } from './article';
 import type { Build, Classes } from './classes';
+import type { JudgmentPaint } from './judgment';
+import type { LawPaint } from './law';
+import type { PaperPaint } from './paper';
 
 /** What the server gives the paint of a bron. */
-type FirstPaint = ArticlePaint;
+type FirstPaint = ArticlePaint | JudgmentPaint | LawPaint | PaperPaint;
+
+/** The reader's column of a bron and whether contents stand beside it (contents-state). */
+export type PaintedColumn = { html: string; contents: boolean };
+
+/** The column per kind of bron a script paints, null where it does not paint this one: the
+ *  build makes a script per kind (entry-*.ts), so a page carries only the code of its own. */
+type Painters = {
+	[K in FirstPaint['kind']]?: (
+		data: Extract<FirstPaint, { kind: K }>,
+		k: Classes
+	) => PaintedColumn | null;
+};
+
+/** The column of `data` by the painter of its kind. */
+export function column(data: FirstPaint, k: Classes, painters: Painters): PaintedColumn | null {
+	if (data.kind === 'article') return painters.article?.(data, k) ?? null;
+	if (data.kind === 'judgment') return painters.judgment?.(data, k) ?? null;
+	if (data.kind === 'law') return painters.law?.(data, k) ?? null;
+	if (data.kind === 'paper') return painters.paper?.(data, k) ?? null;
+	return null;
+}
 
 /** Where the widths a reader dragged are kept (explore/column-widths.svelte.ts). */
 const WIDTHS = 'concordans:panel-widths';
-
-/** The reader's column of the bron, or null where the paint does not set this one. */
-export function column(data: FirstPaint, k: Classes): string | null {
-	if (data.kind === 'article' && paintable(data.article)) return articleColumn(data, k);
-	return null;
-}
 
 /** The Verkenner reading a bron (explore/+page.svelte): its contents beside it where it has
  *  them (a column, on a narrow screen the tab Inhoud), the reader, Verbonden; only the reader's
@@ -82,7 +101,7 @@ function stylesheets(doc: Document, hrefs: string[], done: () => void) {
 /** Paints the bron of `#first-paint-data` after `#seo`. Only an address as it is shared, read
  *  as the app opens it: no view in the query, no place in the fragment (the app lands there
  *  itself). */
-export function paint(doc: Document, build: Build) {
+export function paint(doc: Document, build: Build, painters: Painters) {
 	const data = doc.getElementById('first-paint-data');
 	const seo = doc.getElementById('seo');
 	if (!data || !seo || !doc.documentElement.classList.contains('js')) return;
@@ -93,19 +112,25 @@ export function paint(doc: Document, build: Build) {
 	} catch {
 		return;
 	}
-	const col = column(read, build.classes);
+	const col = column(read, build.classes, painters);
 	if (!col) return;
 	const el = doc.createElement('div');
 	el.id = 'first-paint';
 	el.className = 'ev';
-	// Contents beside the text where its law has more than this one article (contents-state):
-	// an article its law lists alone has none; one the list leaves out (repealed) stands in a
-	// law that has.
-	const steps = read.steps;
-	const contents = !steps?.listed || steps.prev || steps.next;
-	el.innerHTML = frame(col, build.classes, contents, widths());
+	el.innerHTML = frame(col.html, build.classes, col.contents, widths());
+	// A bron without contents: the app leaves the tab Inhoud out from the start too
+	// (contents-state), so nothing moves when it takes over.
+	const focus = doc.querySelector<HTMLMetaElement>('meta[name="focus"]')?.content;
+	if (!col.contents && focus) doc.documentElement.dataset.noContents = focus;
 	seo.after(el);
 	// The letter it is painted in holds for the app's reader too (app.html, .vaste-letter).
 	doc.documentElement.classList.add('first-paint');
-	stylesheets(doc, build.css, () => el.classList.add('ev--ready'));
+	// The margin of the numbers as wide as the reader's will be, once the letters are in.
+	const places = () => el.querySelectorAll<HTMLElement>('.reader-body').forEach(measurePlaces);
+	stylesheets(doc, build.css, () => {
+		places();
+		el.classList.add('ev--ready');
+		// Measured again once the letters are in; as it stands where they never come.
+		doc.fonts?.ready.then(places, places);
+	});
 }

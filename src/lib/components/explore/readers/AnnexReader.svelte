@@ -15,7 +15,8 @@
 	import { getAnnex } from '$lib/api/documents';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronLabel } from '$lib/vocabulary';
-	import { ensureInstrumentName, instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
+	import { ensureInstrumentName, instrumentMetaStore } from '$lib/api/instrument-cache';
+	import { lawName } from '$lib/text/instrument-meta';
 	import { formatCount } from '$lib/text/getal';
 	import { annexGroups, type AnnexItem } from './annex';
 	import { load } from '$lib/util/load.svelte';

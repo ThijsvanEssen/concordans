@@ -10,7 +10,7 @@ import type { TijdGroep, TijdRegel } from '$lib/components/tijdlijn/tijdlijn';
 import { voteOf, type Inhoud, type MetInhoud } from '$lib/components/open/rij-inhoud';
 import { withoutKamerstuk } from '$lib/text/kamerstuk';
 import { citationRecord } from '$lib/text/citation-record';
-import { votesShort } from '$lib/components/parliamentary/stemming';
+import { votesShort } from '$lib/votes/stemming';
 
 type Records = Schema<'ActivityRecordsResponse'>;
 type Stuk = Schema<'ActivityPaperDTO'>;

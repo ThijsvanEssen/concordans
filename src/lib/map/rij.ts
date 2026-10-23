@@ -6,7 +6,8 @@ import { textOf } from '$lib/text/words';
 import { get } from 'svelte/store';
 import { focusOf } from '$lib/bron/href';
 import { voteCitation } from '$lib/bron/naam';
-import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
+import { instrumentMetaStore } from '$lib/api/instrument-cache';
+import { lawName } from '$lib/text/instrument-meta';
 import { lawIdOf } from '$lib/graph/types';
 import { citationRecord } from '$lib/text/citation-record';
 

@@ -3,7 +3,7 @@
 import { capitalize, count, joinAnd } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import { UNNAMED } from '$lib/bron/describe';
-import { choiceRank } from '$lib/components/parliamentary/stemming';
+import { choiceRank } from '$lib/votes/stemming';
 
 export type Voter = {
 	id: string;

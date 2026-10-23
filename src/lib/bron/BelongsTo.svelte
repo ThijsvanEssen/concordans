@@ -21,7 +21,7 @@
 	import { formatCount } from '$lib/text/getal';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { behoort, heeftIets } from './behoort';
-	import { laagVan, type Groep, type Laag } from '$lib/bron/behoort-layer';
+	import { layerOf, type Groep, type Layer } from '$lib/bron/behoort-layer';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { createLoader, type LoadState as State } from '$lib/util/load.svelte';
 
@@ -60,7 +60,7 @@
 	);
 
 	// A line that needs more than the light node: its full form once it has come.
-	let vol = $state<Record<string, Laag[]>>({});
+	let vol = $state<Record<string, Layer[]>>({});
 	// A line whose `laad` failed: it stands as the light node gives it, marked incomplete, so a
 	// procesgang cut short by a time-out does not pass for a whole one.
 	let onvolledig = $state<Record<string, boolean>>({});
@@ -98,13 +98,13 @@
 
 	// A group's rows, asked when it is opened; one list open at a time.
 	let open = $state<string | null>(null);
-	let rijen = $state<Record<string, State<Laag[]>>>({});
+	let rijen = $state<Record<string, State<Layer[]>>>({});
 	// The group whose rows are asked: one at a time, a new one aborts the last.
 	let askedId: string | null = null;
 	const groupLoader = createLoader(
 		(g: Groep, signal: AbortSignal) =>
 			getBuckets(node.collection, node.key, [g.bak], signal).then((ns) =>
-				ns.slice(0, TOON).map((n) => laagVan(n, g.label))
+				ns.slice(0, TOON).map((n) => layerOf(n, g.label))
 			),
 		(s) => {
 			if (askedId) rijen = { ...rijen, [askedId]: s };
@@ -134,7 +134,7 @@
 	// Side by side (the fracties of a lid) it folds on a phone from three on: its lines stand a
 	// finger's 44 px apart there, and the name must come first (E8, N9).
 	const phone = new MediaQuery('max-width: 768px');
-	const gevouwen = (r: { id: string; los?: boolean; lagen: Laag[] }) =>
+	const gevouwen = (r: { id: string; los?: boolean; lagen: Layer[] }) =>
 		!ontvouwd[r.id] && (r.los ? phone.current && r.lagen.length > 2 : r.lagen.length > 3);
 
 	// On a phone the band is its first line until it is opened.
@@ -156,12 +156,12 @@
 	);
 </script>
 
-{#snippet naam(laag: Laag)}<span class="vol">{laag.naam}</span>{#if laag.kort}<span class="kort"
+{#snippet naam(laag: Layer)}<span class="vol">{laag.naam}</span>{#if laag.kort}<span class="kort"
 			>{laag.kort}</span
 		>{/if}{/snippet}
 
 <!-- How an instance ended, after its name and outside its link: `, cassatie verworpen`. -->
-{#snippet uitkomst(laag: Laag)}{#if laag.uitkomst}<span class="uitkomst">, {laag.uitkomst}</span
+{#snippet uitkomst(laag: Layer)}{#if laag.uitkomst}<span class="uitkomst">, {laag.uitkomst}</span
 		>{/if}{/snippet}
 
 {#snippet crumb()}<a class="soort raakvlak" href={source.href}>{source.label}</a><span

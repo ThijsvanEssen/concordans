@@ -1,6 +1,6 @@
 import type { Schema } from '$lib/api/types';
 import { neighborsOf } from '$lib/api/nodes';
-import { instrumentContainerId } from '$lib/api/instrument-cache';
+import { instrumentContainerId } from '$lib/text/instrument-meta';
 import { between, type Between } from '$lib/selection/netwerk';
 import { get, writable } from 'svelte/store';
 import type { GraphContext } from './context';

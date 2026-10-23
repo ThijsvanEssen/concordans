@@ -6,7 +6,7 @@
 // cache: each graph store holds its own (`createContainerGroups`), `prune` keeps it in
 // step with what is still on canvas and a reset clears it.
 
-import { instrumentContainerId } from '$lib/api/instrument-cache';
+import { instrumentContainerId } from '$lib/text/instrument-meta';
 import { isCollection, nodeId, type Relation } from '$lib/vocabulary';
 import { writable, type Readable } from 'svelte/store';
 import { COLLECTION_ROLE } from './collection-role';

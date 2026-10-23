@@ -5,10 +5,10 @@
 // Tweede Kamer its votes, of the Eerste Kamer its own lists. A roll-call names members, not
 // fracties: its line has the tally alone. Source values only.
 import type { Schema } from '$lib/api/types';
-import { decisionOutcome, decisionResult, isHammer } from '../explore/index/decision-kind';
-import { ekFactionGroups } from '../explore/readers/voters';
-import { methodPhrase } from './stages';
-import { choiceRank, hasVotes } from './stemming';
+import { decisionOutcome, decisionResult, isHammer } from '$lib/votes/decision-kind';
+import { ekFactionGroups } from '$lib/votes/voters';
+import { methodPhrase } from '$lib/votes/stages';
+import { choiceRank, hasVotes } from '$lib/votes/stemming';
 
 type Decision = Schema<'DecisionDTO'>;
 

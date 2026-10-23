@@ -10,7 +10,7 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';
-	import { bodyItems, judgmentParticipants, signatureStart } from './readers/judgment-text';
+	import { bodyItems, judgmentParticipants, signatureStart } from '$lib/text/judgment-text';
 	import { keepMarkedInView } from './nav-column';
 	import { followSections } from './toc-position.svelte';
 	import { reportContents } from './contents-state.svelte';

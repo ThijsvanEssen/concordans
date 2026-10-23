@@ -13,7 +13,7 @@ import type { Schema } from '$lib/api/types';
 import { getCommittee } from '$lib/api/committees';
 import { numberOf } from '$lib/components/parliamentary/dossier-number';
 import { isInternational, parseNodeId } from '$lib/vocabulary';
-import { refOf } from '$lib/bron/href';
+import { refOf } from '$lib/bron/ref';
 import { naastHetStuk, stukkenInDezelfdeZaak } from './zaak';
 import { loadDossierHub, type DossierHub } from './dossier-hub';
 import { explanatoryDocuments } from './explanatory-documents';
@@ -45,7 +45,8 @@ import {
 import { lawArticleList } from '$lib/api/law-articles';
 import { buildGroups, ditVan, EUROPEAN, matches, type Loader, type Match } from './groups';
 import { courtOfTier, filterGroupOf, tiersOfCourt, type Court, type CutBy } from './filter';
-import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
+import { instrumentMetaStore } from '$lib/api/instrument-cache';
+import { lawName } from '$lib/text/instrument-meta';
 import { getJudgmentDetail } from '$lib/api/judgments';
 import { aanhalingIn } from './passage';
 import { legUit, overwegingVanNoot, type Uitspraak } from '$lib/bron/overweging';

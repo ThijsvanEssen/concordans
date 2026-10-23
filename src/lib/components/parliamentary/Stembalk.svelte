@@ -7,7 +7,7 @@
 	// its fracties each is a segment, in order of its seats. Read to a screen reader as one
 	// sentence ("Aangenomen, 88 voor, 62 tegen") with a table behind it. Every drawing of a
 	// vote's tally goes through here (guards/stembalk.test.ts). The model is in stembalk.ts.
-	import type { VoteBarModel, VoteSide } from './stembalk';
+	import type { VoteBarModel, VoteSide } from '$lib/votes/stembalk';
 
 	let {
 		model,

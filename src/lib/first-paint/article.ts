@@ -37,6 +37,8 @@ import { wordingsOf } from '$lib/text/version-diff';
 import { joinParts, textOf } from '$lib/text/words';
 import { uniqueBy } from '$lib/util/unique';
 import type { Classes } from './classes';
+import { running } from './markup';
+import type { PaintedColumn } from './paint';
 
 type Dossier = {
 	key: string;
@@ -115,6 +117,15 @@ export function paintable(a: ArticlePaint['article']): boolean {
 		!a.footnotes?.length &&
 		partsOf(a.text, a.parts ?? null).length > 0
 	);
+}
+
+/** The column of an article where the paint sets its text, with contents beside it where its
+ *  law has more than this one article: an article its law lists alone has none; one the list
+ *  leaves out (repealed) stands in a law that has. */
+export function articlePaint(v: ArticlePaint, k: Classes): PaintedColumn | null {
+	if (!paintable(v.article)) return null;
+	const steps = v.steps;
+	return { html: articleColumn(v, k), contents: !steps?.listed || steps.prev || steps.next };
 }
 
 /** The column of the reader of an article, in the classes `k` of its components. */
@@ -259,7 +270,7 @@ export function articleColumn(v: ArticlePaint, k: Classes): string {
 		`<div class="kop-rij__band kop-rij__band--held ${k.frame}" data-later>${belongsTo(v.law ?? undefined, node, k)}</div>` +
 		'</div>' +
 		head +
-		`<div class="reader-body ${k.reader}">${text(a, v.delegations ?? [], k)}</div>`
+		`<div class="reader-body ${k.reader}">${articleTextHtml(a, v.delegations ?? [], k)}</div>`
 	);
 }
 
@@ -306,17 +317,18 @@ type Formulas = { start: number; end: number }[];
 
 /** The words of `text[start, end)`, a formula of delegation in it as the one control it is in
  *  the reader (a button, which breaks as one). */
-function words(text: string, start: number, end: number, formulas: Formulas): string {
+function words(text: string, start: number, end: number, formulas: Formulas, k: Classes): string {
+	// A date on one line, as CitedText keeps it (markup's `running`).
 	let out = '';
 	let at = start;
 	for (const f of formulas) {
 		if (f.start < at || f.end > end) continue;
 		out +=
-			esc(text.slice(at, f.start)) +
-			`<span class="ev-formula">${esc(text.slice(f.start, f.end))}</span>`;
+			running(text.slice(at, f.start), k) +
+			`<span class="ev-formula">${running(text.slice(f.start, f.end), k)}</span>`;
 		at = f.end;
 	}
-	return out + esc(text.slice(at, end));
+	return out + running(text.slice(at, end), k);
 }
 
 /** The paragraphs and headings of `text[start, end)`, as ArticleText's `tekst` sets them. */
@@ -331,7 +343,7 @@ function paragraphs(
 	return blocksOf(text, start, end, [])
 		.flatMap((piece) => withHeadings(text, piece, headings))
 		.map((p) => {
-			const inline = words(text, p.start, p.end, formulas);
+			const inline = words(text, p.start, p.end, formulas, k);
 			return p.heading
 				? `<p class="tussenkop ${k.text}">${inline}</p>`
 				: `<p class="${k.text}">${inline}</p>`;
@@ -366,7 +378,11 @@ function part(
 }
 
 /** The text (ArticleText): its leden, their numbers in the margin, the onderdelen. */
-function text(a: ArticlePaint['article'], formulas: Formulas, k: Classes): string {
+export function articleTextHtml(
+	a: Pick<ArticlePaint['article'], 'text' | 'parts' | 'headings' | 'law_id' | 'bwb_id'>,
+	formulas: Formulas,
+	k: Classes
+): string {
 	const source = a.text ?? '';
 	const o = {
 		mark: onderdeelMark(a.law_id ?? a.bwb_id),

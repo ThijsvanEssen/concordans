@@ -2,10 +2,10 @@
 	import { lacks } from '$lib/text/coverage';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { shortKind } from '$lib/text/document-kind';
-	import { motionKindLabel } from '$lib/components/parliamentary/motion-kind';
-	import { CHOICE } from '$lib/components/parliamentary/stemming';
+	import { motionKindLabel } from '$lib/text/motion-kind';
+	import { CHOICE } from '$lib/votes/stemming';
 	import Stembalk from '$lib/components/parliamentary/Stembalk.svelte';
-	import { voteBarOf } from '$lib/components/parliamentary/stembalk';
+	import { voteBarOf } from '$lib/votes/stembalk';
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { langeDatum } from '$lib/text/datum';
 	import { joinParts } from '$lib/text/words';
@@ -17,7 +17,7 @@
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Stem from '$lib/components/parliamentary/Stem.svelte';
 	import Uitkomst from '$lib/components/parliamentary/Uitkomst.svelte';
-	import { outcomeTone } from '$lib/components/parliamentary/vote-line';
+	import { outcomeTone } from '$lib/votes/vote-line';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
@@ -29,8 +29,8 @@
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronHref } from '$lib/bron/href';
-	import { ekFactionGroups, votersOf } from './voters';
-	import { decisionMethod, decisionOutcome } from '$lib/components/explore/index/decision-kind';
+	import { ekFactionGroups, votersOf } from '$lib/votes/voters';
+	import { decisionMethod, decisionOutcome } from '$lib/votes/decision-kind';
 	import { EK_SOURCE, chamberName } from '$lib/components/parliamentary/chamber';
 	import { voteCitation } from '$lib/bron/naam';
 	import { isAdvicePaper } from './vote-paper';

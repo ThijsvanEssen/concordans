@@ -5,15 +5,15 @@
 	import { dossierLabel, dossierOwnName, officialNumber } from '$lib/bron/dossier-naam';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
 	import { inhoudVan, stemmingInhoud } from '$lib/components/open/rij-inhoud';
-	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
+	import { stemmingNaam } from '$lib/votes/stemming';
 	import Stembalk from '$lib/components/parliamentary/Stembalk.svelte';
-	import { voteBarOf } from '$lib/components/parliamentary/stembalk';
+	import { voteBarOf } from '$lib/votes/stembalk';
 	import Waarde from '$lib/components/ui/Waarde.svelte';
 	import { korteDatum, weekdag } from '$lib/text/datum';
 	import { plural } from '$lib/text/words';
 	import IndexRow from '../IndexRow.svelte';
-	import { motionKindLabel } from '$lib/components/parliamentary/motion-kind';
-	import { NO_DECISION_KIND, decisionMethod, decisionOutcome } from '../decision-kind';
+	import { motionKindLabel } from '$lib/text/motion-kind';
+	import { NO_DECISION_KIND, decisionMethod, decisionOutcome } from '$lib/votes/decision-kind';
 	import type { DecisionsState } from '../lists/decisions';
 	import type { ViewProps } from '../lists/list';
 

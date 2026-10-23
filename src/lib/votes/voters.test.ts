@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { UNNAMED } from '$lib/bron/describe';
-import { ekFactionGroups, ekVoteLine, votersOf } from './voters';
+import { ekFactionGroups, ekVoteLine, votersOf } from '$lib/votes/voters';
 
 describe('ekVoteLine', () => {
 	it('counts a fractie’s choices in the Eerste Kamer, leaving out the ones it never made', () => {

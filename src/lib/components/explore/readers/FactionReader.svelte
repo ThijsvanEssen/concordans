@@ -14,8 +14,8 @@
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import { EK_SOURCE } from '$lib/components/parliamentary/chamber';
-	import { ekVoteLine } from './voters';
-	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
+	import { ekVoteLine } from '$lib/votes/voters';
+	import { stemmingNaam } from '$lib/votes/stemming';
 	import { load } from '$lib/util/load.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 

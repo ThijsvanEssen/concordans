@@ -1,7 +1,7 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fail, fakeApi, slow, type FakeRequest } from '$lib/test/fakeApi';
-import type { BronRef } from '$lib/bron/href';
+import type { BronRef } from '$lib/bron/ref';
 import type { SearchKind } from './lanes';
 import { isSlow } from '$lib/api/errors';
 import { SearchSession } from './session.svelte';

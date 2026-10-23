@@ -13,7 +13,8 @@
 	import { uniqueBy } from '$lib/util/unique';
 	import { goto } from '$app/navigation';
 	import { FAST_MIN_CHARS, SEARCH_KINDS } from './lanes';
-	import { bronHref, focusOf, type BronRef } from '$lib/bron/href';
+	import { bronHref, focusOf } from '$lib/bron/href';
+	import type { BronRef } from '$lib/bron/ref';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { searchedLine } from '$lib/text/coverage';

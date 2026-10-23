@@ -39,16 +39,8 @@
 	import { Lazy } from '$lib/util/lazy.svelte';
 	import { getNodeCanvas, getNodeHull, once } from '$lib/api/records';
 	import { kopNode } from '$lib/bron/first-node';
-	import {
-		bronHref,
-		exploreMode,
-		focusOf,
-		modeOf,
-		openHref,
-		refId,
-		refOf,
-		type BronRef
-	} from '$lib/bron/href';
+	import { bronHref, exploreMode, focusOf, modeOf, openHref, refId } from '$lib/bron/href';
+	import { refOf, type BronRef } from '$lib/bron/ref';
 	import { getDossierKey } from '$lib/api/dossiers';
 	import { getMemberVotes } from '$lib/api/members';
 	import { createGraphStore } from '$lib/graph/graph-store';
@@ -114,14 +106,15 @@
 	import { bronNaam } from '$lib/bron/naam';
 	import { lookUp } from '$lib/bron/leesbaar';
 	import {
-		keyEcli,
 		padOfFocus,
 		parsePad,
 		remember as rememberPad,
 		exploreHref,
 		exploreUrl
 	} from '$lib/bron/address';
-	import { ensureInstrumentName, instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
+	import { ensureInstrumentName, instrumentMetaStore } from '$lib/api/instrument-cache';
+	import { lawName } from '$lib/text/instrument-meta';
+	import { keyEcli } from '$lib/text/ecli';
 	import NetwerkPanel from '$lib/selection/NetwerkPanel.svelte';
 	import NetworkOptions from '$lib/selection/NetworkOptions.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';

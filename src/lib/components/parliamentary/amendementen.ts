@@ -6,7 +6,7 @@
 import { motionOrAmendment } from '$lib/text/document-kind';
 import { getDossierAmendments } from '$lib/api/dossiers';
 import type { Schema } from '$lib/api/types';
-import { votesShort } from './stemming';
+import { votesShort } from '$lib/votes/stemming';
 
 /** A paper of an amendment: a stop in its route. `nieuw` where it replaces no other. */
 export type Stuk = {

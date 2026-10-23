@@ -6,7 +6,7 @@
 
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
-import { CHOICE } from './stemming';
+import { CHOICE } from '$lib/votes/stemming';
 
 type CoalitionVote = Schema<'CoalitionVoteDTO'>;
 type CoalitionFaction = Schema<'CoalitionFactionDTO'>;

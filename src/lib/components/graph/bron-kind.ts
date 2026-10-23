@@ -2,7 +2,7 @@
 // bronnen, the card over a bron): a regeling by its own kind, as its head names it (Wet,
 // AMvB, Beleidsregel, Richtlijn), any other bron by its collection (Stuk, Stemming). A
 // beleidsregel on the canvas read "Wet" (productcheck 0.80, punt 3).
-import { lawKind } from '$lib/components/explore/law-head';
+import { lawKind } from '$lib/text/law-head';
 import { bronLabel, type Collection } from '$lib/vocabulary';
 
 export function bronKind(

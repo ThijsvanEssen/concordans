@@ -1,34 +1,74 @@
-// An article's address painted before the app (besluit 31, src/lib/first-paint): its title
-// and text stand where the app's reader sets them, and the app takes them over without a
-// line moving, nothing shifting under the reader (CLS 0).
-import { articlePaint, serveFirstPaint, positions } from '../support/first-paint';
-import { expect, test } from '../support/test';
+// A reader's address painted before the app (besluit 31, src/lib/first-paint): its title and
+// text stand where the app's reader sets them, and the app takes them over without a line
+// moving, nothing shifting under the reader (CLS 0).
+import {
+	articlePaint,
+	judgmentPaint,
+	lawPaint,
+	paperPaint,
+	serveFirstPaint,
+	positions
+} from '../support/first-paint';
+import { expect, test, TODAY } from '../support/test';
 
-// An article of leden (Boek 6 BW) and one of an act of the EU, with onderdelen `a)`.
-const ARTICLES = [
+// An article of leden (Boek 6 BW), one of an act of the EU with onderdelen `a)`, an arrest with
+// its summary, parties, procesgang and numbered overwegingen, a law with its divisions, and a
+// motie with its indiener.
+const READERS = [
 	{
 		path: '/wetten/BWBR0005289/artikel/6:162',
-		law: 'BWBR0005289',
-		number: '162',
+		focus: 'articles/bwbr0005289_162',
+		paint: () => articlePaint('BWBR0005289', '162', 'bwbr0005289_162'),
 		title: 'Artikel 6:162 BW',
-		words: 'Hij die jegens een ander een onrechtmatige daad'
+		words: 'Hij die jegens een ander een onrechtmatige daad',
+		later: 'Geldend recht'
 	},
 	{
 		path: '/wetten/32016R0679/artikel/6',
-		law: '32016R0679',
-		number: '6',
+		focus: 'articles/32016r0679_6',
+		paint: () => articlePaint('32016R0679', '6', '32016r0679_6'),
 		title: 'Artikel 6 AVG. Rechtmatigheid van de verwerking',
-		words: 'De verwerking is alleen rechtmatig'
+		words: 'De verwerking is alleen rechtmatig',
+		later: 'Geldend recht'
+	},
+	{
+		path: '/uitspraken/ECLI:NL:HR:2019:2006',
+		focus: 'judgments/ecli_nl_hr_2019_2006',
+		paint: () => judgmentPaint('ECLI:NL:HR:2019:2006', 'ecli_nl_hr_2019_2006'),
+		title: 'HR 20 december 2019, ECLI:NL:HR:2019:2006 (Urgenda)',
+		words: 'Klimaatzaak Urgenda',
+		later: 'Arrest, 20 december 2019'
+	},
+	{
+		path: '/wetten/BWBR0005289',
+		focus: 'instruments/bwbr0005289',
+		paint: () =>
+			lawPaint(
+				'BWBR0005289',
+				'bwbr0005289',
+				TODAY.toLocaleDateString('sv-SE', { timeZone: 'Europe/Amsterdam' })
+			),
+		title: 'Burgerlijk Wetboek Boek 6',
+		words: 'Verbintenissen in het algemeen',
+		later: 'artikelen.'
+	},
+	{
+		path: '/kamerstukken/37020-XVI/60',
+		focus: 'documents/fced0aee_2383_4aac_a95d_b616b1dc7d0a',
+		paint: () => paperPaint('fced0aee_2383_4aac_a95d_b616b1dc7d0a'),
+		title:
+			'Motie van het lid Diederik van Dijk over afkeuring uitspreken over het beleid van de regering inzake de pilot die abortussen vanaf 22 weken zwangerschap bij gezonde kindjes toegankelijker maakt',
+		words: 'Ingediend door',
+		later: 'Kamerstukken II'
 	}
 ];
 
-for (const a of ARTICLES) {
-	const key = `${a.law.toLowerCase()}_${a.number}`;
+for (const a of READERS) {
 	test.describe(a.title, () => {
 		test.beforeEach(async ({ page }) => {
-			await serveFirstPaint(page, a.path, `articles/${key}`, articlePaint(a.law, a.number, key));
+			await serveFirstPaint(page, a.path, a.focus, a.paint());
 		});
-		test('the article stands before the app has come', async ({ page, guard }) => {
+		test('the bron stands before the app has come', async ({ page, guard }) => {
 			// The app's scripts held back: what shows is the paint alone.
 			guard.allow(/net::ERR_FAILED|Failed to fetch dynamically imported module|Failed to load/);
 			await page.route(/\/_app\/.*\.js$/, (route) => route.abort());
@@ -36,12 +76,12 @@ for (const a of ARTICLES) {
 			const paint = page.locator('#first-paint');
 			await expect(paint).toHaveClass(/ev--ready/);
 			await expect(paint.getByRole('heading', { level: 1 })).toHaveText(a.title);
-			await expect(paint.getByText(a.words)).toBeVisible();
+			await expect(paint.getByText(a.words).first()).toBeVisible();
 			// What the app adds when it has come takes its room, unseen.
-			await expect(paint.getByText('Geldend recht')).toBeHidden();
+			await expect(paint.getByText(a.later)).toBeHidden();
 		});
 
-		test('the app takes the article over where it stands', async ({ page }) => {
+		test('the app takes the bron over where it stands', async ({ page }) => {
 			await page.addInitScript((measure: string) => {
 				const at = new Function(`return ${measure}`)() as (paint: boolean) => number[][] | null;
 				const w = window as unknown as Record<string, unknown>;
@@ -95,7 +135,8 @@ for (const a of ARTICLES) {
 				};
 			});
 			expect(painted).toBeTruthy();
-			expect(app).toEqual(painted);
+			// The paint sets a judgment's first part; the app the whole of it.
+			expect((app as number[][]).slice(0, (painted as number[][]).length)).toEqual(painted);
 			expect(cls).toBe(0);
 		});
 	});

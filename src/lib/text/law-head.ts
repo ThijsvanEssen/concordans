@@ -4,7 +4,7 @@
 import type { Schema } from '$lib/api/types';
 import type { Validity } from '$lib/api/validity';
 import { enactedLawId, enactedLawStatus } from '$lib/text/enacted-law';
-import { lawName, type InstrumentMeta } from '$lib/api/instrument-cache';
+import { lawName, type InstrumentMeta } from '$lib/text/instrument-meta';
 import { citationRecord, type CitationRecord } from '$lib/text/citation-record';
 import { kindName } from '$lib/text/law-kind';
 

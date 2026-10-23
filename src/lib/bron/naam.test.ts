@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { InstrumentMeta } from '$lib/api/instrument-cache';
+import type { InstrumentMeta } from '$lib/text/instrument-meta';
 import type { GraphNode } from '$lib/graph/types';
 import { bronNaam, stemmingNaam } from './naam';
 

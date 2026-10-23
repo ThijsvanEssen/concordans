@@ -17,7 +17,8 @@
 	import { page } from '$app/state';
 	import type { Snippet } from 'svelte';
 	import { focusIn } from './address';
-	import { focusOf, openHref, type BronRef } from './href';
+	import { focusOf, openHref } from './href';
+	import type { BronRef } from './ref';
 	import type { Preview } from './preview';
 	import { HoverCard, cardCloser } from '$lib/actions/hover-card.svelte';
 	import { isOverwegingRef } from '$lib/text/anchor';

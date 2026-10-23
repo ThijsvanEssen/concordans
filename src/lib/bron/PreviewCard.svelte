@@ -5,7 +5,7 @@
 	// asks again.
 	import FloatingCard from '$lib/components/ui/FloatingCard.svelte';
 	import { report } from '$lib/api/errors';
-	import type { BronRef } from './href';
+	import type { BronRef } from './ref';
 	import { loadPreview, type Preview } from './preview';
 
 	let {

@@ -12,7 +12,7 @@
 	import ReaderHead from './ReaderHead.svelte';
 	import { instrumentLawId, type GraphNode } from '$lib/graph/types';
 	import WholeLawReader from '../WholeLawReader.svelte';
-	import { publicationName, publicationTitle, sourceName } from '../law-head';
+	import { publicationName, publicationTitle, sourceName } from '$lib/text/law-head';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import {
 		ensureInstrumentName,

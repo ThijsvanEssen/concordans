@@ -12,6 +12,9 @@ const WAIT_MS = 15_000;
 const COLUMN_MS = 8_000;
 /** How long, once the reader has its text, the paint waits for its head to come in full. */
 const HEAD_MS = 4_000;
+/** The text of a reader, the first of it: what stands where the paint's does once the app's
+ *  reader has it (a judgment's or an article's body, a law's first article, a Kamerstuk's). */
+const TEXT = '.reader-body, .whole-article, .r-document > .body';
 /** The keys that read the paint's text: they leave it standing. */
 const READING_KEYS = new Set([
 	'ArrowUp',
@@ -76,20 +79,21 @@ export function startTakeover(doc: Document) {
 		if (!READING_KEYS.has(e.key)) releaseFirstPaint('key');
 	};
 	const timer = setTimeout(() => releaseFirstPaint('timeout'), WAIT_MS);
-	// The reader has its text: the paint goes once the text stands where the paint's does.
+	// The reader has its text: the paint goes once the text stands where the paint's does. A
+	// reader that tells so again (a law, once its first page of articles is in) waits anew.
 	let settle = 0;
+	let headUntil = 0;
+	const body = frame.querySelector<HTMLElement>(TEXT);
+	const check = () => {
+		settle = 0;
+		const app = own(`.col--reader :is(${TEXT})`);
+		if (!body || (app && Math.abs(depth(app) - depth(body)) < 1)) releaseFirstPaint('text');
+		else if (performance.now() > headUntil) releaseFirstPaint('head');
+		else settle = requestAnimationFrame(check);
+	};
 	ready = () => {
-		ready = null;
-		const until = performance.now() + HEAD_MS;
-		const body = frame.querySelector<HTMLElement>('.reader-body');
-		const check = () => {
-			const app = own('.col--reader .reader-body');
-			const there = !body || !app || Math.abs(depth(app) - depth(body)) < 1;
-			if (there) releaseFirstPaint('text');
-			else if (performance.now() > until) releaseFirstPaint('head');
-			else settle = requestAnimationFrame(check);
-		};
-		check();
+		headUntil = performance.now() + HEAD_MS;
+		if (!settle) check();
 	};
 	doc.addEventListener('pointerdown', outside, true);
 	doc.addEventListener('keydown', key, true);
@@ -100,6 +104,7 @@ export function startTakeover(doc: Document) {
 		cancelAnimationFrame(settle);
 		clearTimeout(timer);
 		ready = null;
+		settle = 0;
 		doc.removeEventListener('pointerdown', outside, true);
 		doc.removeEventListener('keydown', key, true);
 		// Where the reader read to in the paint, the app's reader starts.
@@ -113,7 +118,8 @@ export function startTakeover(doc: Document) {
 	};
 }
 
-/** The app's reader has its text (ReaderFrame): the paint goes once it stands in its place. */
+/** The app's reader has its text (ReaderFrame; a law, its first articles): the paint goes once
+ *  it stands in its place. */
 export function readerReady() {
 	ready?.();
 }

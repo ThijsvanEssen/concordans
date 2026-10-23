@@ -3,8 +3,13 @@
 // column, the tab Inhoud and the button out for a text with one entry or none: a table of
 // contents of a single line is no navigation. Until they have told, the place is held.
 
+/** The bron the first paint of the address knew to have no Inhoud (lib/first-paint/paint.ts):
+ *  the app leaves its place out from the start, as the paint did. */
+const painted =
+	typeof document === 'undefined' ? null : (document.documentElement.dataset.noContents ?? null);
+
 /** The id of the bron whose Inhoud is empty, as the table of contents told. */
-export const contentsEmpty = $state<{ id: string | null }>({ id: null });
+export const contentsEmpty = $state<{ id: string | null }>({ id: painted });
 
 /** The fewest entries that make a table of contents. */
 const MIN_ENTRIES = 2;

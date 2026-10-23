@@ -1,5 +1,5 @@
-import { forAgainst, hasVotes } from '$lib/components/parliamentary/stemming';
-import { BILL_KINDS } from '$lib/components/parliamentary/stages';
+import { forAgainst, hasVotes } from '$lib/votes/stemming';
+import { BILL_KINDS } from '$lib/votes/stages';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
 import { count } from '$lib/text/words';
 import { citationRecord } from '$lib/text/citation-record';

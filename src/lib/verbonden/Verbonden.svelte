@@ -1,7 +1,7 @@
 <script lang="ts">
 	// The panel Verbonden: the verbindingen of the selected bron, in the groups of the table in
 	// groups.ts, under the bronfilter.
-	import { ecliKey } from '$lib/bron/address';
+	import { ecliKey } from '$lib/text/ecli';
 	import { capitalize, joinAnd, plural } from '$lib/text/words';
 	import { report } from '$lib/api/errors';
 	import { rijen } from '$lib/actions/rijen';

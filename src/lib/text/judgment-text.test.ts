@@ -119,6 +119,16 @@ const target = {
 	display_name: null
 };
 
+describe('the numbers of the overwegingen', () => {
+	it('reads a parketnummer in the text as text, not as an overweging (RBROT:2026:14484)', () => {
+		const text =
+			'2.3.2.\nDe verdachte heeft de telefoon weggenomen.\n\n10.242417.26\n\nDe verdachte is aangetroffen in de auto.\n\n2.3.3\nDe raad overweegt.';
+		const items = bodyItems([para('body', text)]);
+		expect(items.flatMap((i) => (i.kind === 'rov' ? [i.num] : []))).toEqual(['2.3.2', '2.3.3']);
+		expect(items.some((i) => 'body' in i && i.body.includes('10.242417.26'))).toBe(true);
+	});
+});
+
 describe('a citation in the text', () => {
 	it('a citation keeps pointing at its words after the paragraph is restructured', () => {
 		const text =

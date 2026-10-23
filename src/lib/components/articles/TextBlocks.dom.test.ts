@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/svelte';
 import rbzwb from '$lib/fixtures/judgment-rbzwb-2019-1062-tables.json';
 import paper33478 from '$lib/fixtures/paper-kst-33478-3-tables.json';
-import { bodyItems } from '$lib/components/explore/readers/judgment-text';
+import { bodyItems } from '$lib/text/judgment-text';
 import { paperBlocks, paperParagraphs, type PaperSource } from '$lib/text/anchor';
 import type { Schema } from '$lib/api/types';
 import type { Span } from '$lib/text/segments';

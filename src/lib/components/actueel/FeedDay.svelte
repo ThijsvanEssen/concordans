@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { outcomeWord } from '$lib/text/outcome';
-	import { votesSentence } from '$lib/components/parliamentary/stemming';
+	import { votesSentence } from '$lib/votes/stemming';
 	import Stembalk from '$lib/components/parliamentary/Stembalk.svelte';
-	import { voteBarOf } from '$lib/components/parliamentary/stembalk';
+	import { voteBarOf } from '$lib/votes/stembalk';
 	import { capitalize, count } from '$lib/text/words';
 	import { korteDatum } from '$lib/text/datum';
 	// One day of Actueel in the shared timeline, as on the homepage: the day as the heading

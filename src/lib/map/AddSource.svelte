@@ -20,7 +20,8 @@
 	import { articleCitation } from '$lib/text/cite';
 	import { citationRecord } from '$lib/text/citation-record';
 	import { BUNDLE_PARAM } from './page';
-	import { ensureInstrumentName, instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
+	import { ensureInstrumentName, instrumentMetaStore } from '$lib/api/instrument-cache';
+	import { lawName } from '$lib/text/instrument-meta';
 
 	let {
 		bundle,

@@ -9,7 +9,7 @@ import { menselijkeNaam } from '$lib/bron/menselijk';
 import type { Schema } from '$lib/api/types';
 import { kindName } from '$lib/text/law-kind';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
-import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
+import { dossierStatus, isOutcome } from '$lib/votes/stages';
 import { articleName } from '$lib/text/bw';
 import { citationRecord } from '$lib/text/citation-record';
 import { hasPassed, korteDatum, langeDatum, asOfDate } from '$lib/text/datum';

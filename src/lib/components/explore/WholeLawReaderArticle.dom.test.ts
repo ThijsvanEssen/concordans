@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
 import WholeLawReaderArticle from './WholeLawReaderArticle.svelte';
-import type { Row } from './law-list';
+import type { Row } from '$lib/text/law-article-text';
 
 const row = (r: Partial<Row>): Row => ({
 	id: 'articles/bwbr0011353_1_2',

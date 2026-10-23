@@ -1,7 +1,7 @@
 import { outcomeWord } from '$lib/text/outcome';
 import { capitalize } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
-import { OUTCOME_LABEL, type Outcome } from '$lib/components/parliamentary/stages';
+import { OUTCOME_LABEL, type Outcome } from '$lib/votes/stages';
 
 // A decision as the Tweede Kamer records it (API 0.52): `kind` the Zaak.Soort of what was
 // decided (`Motie`, `Amendement`, `Wetgeving`, …, or none), `decision_kind` the BesluitSoort

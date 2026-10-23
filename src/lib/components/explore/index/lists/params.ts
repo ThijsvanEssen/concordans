@@ -2,14 +2,9 @@
 // the URL, so a view can be shared. A value the site does not know is left out, so the list
 // shows as without it.
 import { COURT_KINDS, EUROPEAN_SOURCES, TIERS } from '$lib/vocabulary';
-import {
-	OUTCOME_LABEL,
-	isDossierKind,
-	isPhase,
-	type Outcome
-} from '$lib/components/parliamentary/stages';
+import { OUTCOME_LABEL, isDossierKind, isPhase, type Outcome } from '$lib/votes/stages';
 import { chamberFromParam } from '$lib/components/parliamentary/chamber';
-import { motionKindFromParam } from '$lib/components/parliamentary/motion-kind';
+import { motionKindFromParam } from '$lib/text/motion-kind';
 import { COMMITMENT_STATUSES, POSTS } from '../government';
 import { MINISTRY_KEYS, choiceOf } from '$lib/util/choice';
 import { PARAM } from '$lib/url/filters';

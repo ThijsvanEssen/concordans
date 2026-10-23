@@ -2,7 +2,8 @@
 // passage with the citation, betrouwbaarheid as a word with its reason, the status and
 // the source of the edge. Built from a row of the panel or from an edge of the canvas.
 import { textOf } from '$lib/text/words';
-import { refId, refOf, type BronRef } from '$lib/bron/href';
+import { refId } from '$lib/bron/href';
+import { refOf, type BronRef } from '$lib/bron/ref';
 import type { GraphEdge, GraphNode } from '$lib/graph/types';
 import { isAmendingRelation, statusLabel, type Relation } from '$lib/vocabulary';
 import { HERKOMST_REDEN, kleineLetter } from './hoe';
@@ -14,7 +15,7 @@ import { edgeKey, isDerived, plaatsVanEdge, readEdge } from './edge-meta';
 import type { Bereik } from '$lib/text/voetnoten';
 import { getNodeGraph, neighborsOf, NODE_BUCKET, type Neighbor } from '$lib/api/nodes';
 import { NODE_TYPES } from '$lib/vocabulary';
-import { keyEcli } from '$lib/bron/address';
+import { keyEcli } from '$lib/text/ecli';
 import { ifExists, report } from '$lib/api/errors';
 import { getCitedBy } from '$lib/api/verbonden';
 import { rowsOfCitedBy } from './cited-by';

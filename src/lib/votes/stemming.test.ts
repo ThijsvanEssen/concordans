@@ -6,7 +6,7 @@ import {
 	stemmingNaam,
 	votesSentence,
 	votesShort
-} from './stemming';
+} from '$lib/votes/stemming';
 
 describe('stemmingNaam', () => {
 	it('names a stemming by its subject', () => {

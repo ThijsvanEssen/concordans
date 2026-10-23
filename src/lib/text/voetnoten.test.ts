@@ -13,7 +13,7 @@ import {
 	withNotes,
 	type NootMarker
 } from './voetnoten';
-import { bodyItems } from '$lib/components/explore/readers/judgment-text';
+import { bodyItems } from '$lib/text/judgment-text';
 import { legUit, overwegingVanNoot } from '$lib/bron/overweging';
 import type { Row } from '$lib/verbonden/rows';
 import { plaatsVanEdge } from '$lib/verbonden/edge-meta';

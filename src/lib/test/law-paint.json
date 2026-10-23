@@ -1,0 +1,576 @@
+{
+	"instrument": {
+		"id": "instruments/bwbr0005537",
+		"key": "bwbr0005537",
+		"collection": "instruments",
+		"bwb_id": "BWBR0005537",
+		"celex": null,
+		"title": "Algemene wet bestuursrecht",
+		"official_title": "Wet van 4 juni 1992, houdende algemene regels van bestuursrecht (Algemene wet bestuursrecht)",
+		"citation_title": "Algemene wet bestuursrecht",
+		"short_title": "Awb",
+		"abbreviation": "Awb",
+		"aliases": ["Awb"],
+		"display_name": "Algemene wet bestuursrecht",
+		"legal_areas": [
+			{
+				"main": "Staats- en bestuursrecht",
+				"main_id": "c_da370768",
+				"main_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_da370768",
+				"main_slug": "staats-en-bestuursrecht",
+				"specific": "Bestuursrecht",
+				"specific_id": "c_052899f0",
+				"specific_uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_052899f0",
+				"specific_slug": "bestuursrecht"
+			}
+		],
+		"policy_domains": [
+			{
+				"label": "Overheid, bestuur en koninkrijk",
+				"id": "c_fd285f2b",
+				"uri": "https://identifier.overheid.nl/tooi/def/thes/bwb/c_fd285f2b",
+				"slug": "overheid-bestuur-en-koninkrijk"
+			}
+		],
+		"jurisdiction": "nl",
+		"kind": "wet",
+		"source": "bwb",
+		"labels": ["BWB"],
+		"lang": null,
+		"stub": false,
+		"article_count": 565,
+		"inbound_citation_count": 675813,
+		"amending": false,
+		"expired_on": null,
+		"validity": {
+			"state": "in_force",
+			"date": null,
+			"as_of": "2026-10-23",
+			"successors": []
+		},
+		"date_signed": "1992-06-04",
+		"date_published": "1992-06-30",
+		"date_in_force": "1994-01-01",
+		"version_date_in_force": "2026-08-15",
+		"treaty_number": null,
+		"in_force": null,
+		"status": null,
+		"official_id": null,
+		"dossier_numbers": ["21221"],
+		"official_url": "https://wetten.overheid.nl/BWBR0005537",
+		"same_treaty": [],
+		"treaty": null,
+		"completeness": null,
+		"path": "/wetten/BWBR0005537"
+	},
+	"articles": {
+		"bwb_id": "BWBR0005537",
+		"total": 565,
+		"division": null,
+		"items": [
+			{
+				"id": "articles/bwbr0005537_1_1",
+				"key": "bwbr0005537_1_1",
+				"bwb_id": "BWBR0005537",
+				"celex": null,
+				"official_id": null,
+				"article_number": "1:1",
+				"label": "Artikel 1:1",
+				"heading": null,
+				"address": "1:1",
+				"display_name": "Artikel 1:1 Algemene wet bestuursrecht",
+				"official_url": "https://wetten.overheid.nl/jci1.3:c:BWBR0005537&artikel=1:1",
+				"breadcrumb": [
+					{
+						"type": "hoofdstuk",
+						"label": "Hoofdstuk 1",
+						"title": "Inleidende bepalingen",
+						"anchor": "deel-hoofdstuk-1"
+					},
+					{
+						"type": "titeldeel",
+						"label": "Titel 1.1",
+						"title": "Definities en reikwijdte",
+						"anchor": "deel-hoofdstuk-1-titel-1.1"
+					}
+				],
+				"stub": false,
+				"repealed": false,
+				"last_article_number": null,
+				"text_preview": "1. Onder bestuursorgaan wordt verstaan:\na. een orgaan van een rechtspersoon die krachtens publiekrecht is ingesteld, of\nb. een ander persoon of college, met enig openbaar gezag bekleed.\n2. De volgende organen, personen en colleges worden niet als bestuursorgaan aangemerkt:\na. de wetgevende macht;\nb. de kamers en de verenigde vergadering der Staten-Generaal;\nc. onafhankelijke, bij de wet ingestelde organen die met rechtspraak zijn belast, alsmede de Raad voor de rechtspraak en het College van afgevaardigden;\nd. de Raad van State en zijn afdelingen;\ne. de Algemene Rekenkamer;\nf. de Nationale omb",
+				"path": "/wetten/BWBR0005537/artikel/1:1"
+			},
+			{
+				"id": "articles/bwbr0005537_1_2",
+				"key": "bwbr0005537_1_2",
+				"bwb_id": "BWBR0005537",
+				"celex": null,
+				"official_id": null,
+				"article_number": "1:2",
+				"label": "Artikel 1:2",
+				"heading": null,
+				"address": "1:2",
+				"display_name": "Artikel 1:2 Algemene wet bestuursrecht",
+				"official_url": "https://wetten.overheid.nl/jci1.3:c:BWBR0005537&artikel=1:2",
+				"breadcrumb": [
+					{
+						"type": "hoofdstuk",
+						"label": "Hoofdstuk 1",
+						"title": "Inleidende bepalingen",
+						"anchor": "deel-hoofdstuk-1"
+					},
+					{
+						"type": "titeldeel",
+						"label": "Titel 1.1",
+						"title": "Definities en reikwijdte",
+						"anchor": "deel-hoofdstuk-1-titel-1.1"
+					}
+				],
+				"stub": false,
+				"repealed": false,
+				"last_article_number": null,
+				"text_preview": "1. Onder belanghebbende wordt verstaan: degene wiens belang rechtstreeks bij een besluit is betrokken.\n2. Ten aanzien van bestuursorganen worden de hun toevertrouwde belangen als hun belangen beschouwd.\n3. Ten aanzien van rechtspersonen worden als hun belangen mede beschouwd de algemene en collectieve belangen die zij krachtens hun doelstellingen en blijkens hun feitelijke werkzaamheden in het bijzonder behartigen.",
+				"path": "/wetten/BWBR0005537/artikel/1:2"
+			},
+			{
+				"id": "articles/bwbr0005537_1_3",
+				"key": "bwbr0005537_1_3",
+				"bwb_id": "BWBR0005537",
+				"celex": null,
+				"official_id": null,
+				"article_number": "1:3",
+				"label": "Artikel 1:3",
+				"heading": null,
+				"address": "1:3",
+				"display_name": "Artikel 1:3 Algemene wet bestuursrecht",
+				"official_url": "https://wetten.overheid.nl/jci1.3:c:BWBR0005537&artikel=1:3",
+				"breadcrumb": [
+					{
+						"type": "hoofdstuk",
+						"label": "Hoofdstuk 1",
+						"title": "Inleidende bepalingen",
+						"anchor": "deel-hoofdstuk-1"
+					},
+					{
+						"type": "titeldeel",
+						"label": "Titel 1.1",
+						"title": "Definities en reikwijdte",
+						"anchor": "deel-hoofdstuk-1-titel-1.1"
+					}
+				],
+				"stub": false,
+				"repealed": false,
+				"last_article_number": null,
+				"text_preview": "1. Onder besluit wordt verstaan: een schriftelijke beslissing van een bestuursorgaan, inhoudende een publiekrechtelijke rechtshandeling.\n2. Onder beschikking wordt verstaan: een besluit dat niet van algemene strekking is, met inbegrip van de afwijzing van een aanvraag daarvan.\n3. Onder aanvraag wordt verstaan: een verzoek van een belanghebbende, een besluit te nemen.\n4. Onder beleidsregel wordt verstaan: een bij besluit vastgestelde algemene regel, niet zijnde een algemeen verbindend voorschrift, omtrent de afweging van belangen, de vaststelling van feiten of de uitleg van wettelijke voorschri",
+				"path": "/wetten/BWBR0005537/artikel/1:3"
+			},
+			{
+				"id": "articles/bwbr0005537_1_4",
+				"key": "bwbr0005537_1_4",
+				"bwb_id": "BWBR0005537",
+				"celex": null,
+				"official_id": null,
+				"article_number": "1:4",
+				"label": "Artikel 1:4",
+				"heading": null,
+				"address": "1:4",
+				"display_name": "Artikel 1:4 Algemene wet bestuursrecht",
+				"official_url": "https://wetten.overheid.nl/jci1.3:c:BWBR0005537&artikel=1:4",
+				"breadcrumb": [
+					{
+						"type": "hoofdstuk",
+						"label": "Hoofdstuk 1",
+						"title": "Inleidende bepalingen",
+						"anchor": "deel-hoofdstuk-1"
+					},
+					{
+						"type": "titeldeel",
+						"label": "Titel 1.1",
+						"title": "Definities en reikwijdte",
+						"anchor": "deel-hoofdstuk-1-titel-1.1"
+					}
+				],
+				"stub": false,
+				"repealed": false,
+				"last_article_number": null,
+				"text_preview": "1. Onder bestuursrechter wordt verstaan: een onafhankelijk, bij de wet ingesteld orgaan dat met bestuursrechtspraak is belast.\n2. Onder hogerberoepsrechter wordt verstaan: een bestuursrechter die in hoger beroep oordeelt.\n3. Een tot de rechterlijke macht behorend gerecht wordt als bestuursrechter aangemerkt voor zover hoofdstuk 8 of de Wet administratiefrechtelijke handhaving verkeersvoorschriften - met uitzondering van hoofdstuk VIII - van toepassing of van overeenkomstige toepassing is.",
+				"path": "/wetten/BWBR0005537/artikel/1:4"
+			}
+		],
+		"annexes": []
+	},
+	"at": {
+		"bwb_id": "BWBR0005537",
+		"at_date": "2026-10-23",
+		"total": 551,
+		"first_version_from": "2002-04-01",
+		"division": null,
+		"items": [
+			{
+				"key": "bwbr0005537_av_2866083_24018202",
+				"bwb_id": "BWBR0005537",
+				"article_number": "1:1",
+				"label": "Artikel 1:1",
+				"heading": null,
+				"breadcrumb": [
+					{
+						"type": "hoofdstuk",
+						"label": "Hoofdstuk 1",
+						"title": "Inleidende bepalingen",
+						"anchor": "deel-hoofdstuk-1"
+					},
+					{
+						"type": "titeldeel",
+						"label": "Titel 1.1",
+						"title": "Definities en reikwijdte",
+						"anchor": "deel-hoofdstuk-1-titel-1.1"
+					}
+				],
+				"valid_from": "2020-01-01",
+				"valid_until": null,
+				"current": true,
+				"official_url": "https://wetten.overheid.nl/jci1.3:c:BWBR0005537&artikel=1:1&g=2020-01-01",
+				"text": "1. Onder bestuursorgaan wordt verstaan:\na. een orgaan van een rechtspersoon die krachtens publiekrecht is ingesteld, of\nb. een ander persoon of college, met enig openbaar gezag bekleed.\n2. De volgende organen, personen en colleges worden niet als bestuursorgaan aangemerkt:\na. de wetgevende macht;\nb. de kamers en de verenigde vergadering der Staten-Generaal;\nc. onafhankelijke, bij de wet ingestelde organen die met rechtspraak zijn belast, alsmede de Raad voor de rechtspraak en het College van afgevaardigden;\nd. de Raad van State en zijn afdelingen;\ne. de Algemene Rekenkamer;\nf. de Nationale ombudsman en de substituut-ombudsmannen als bedoeld in artikel 9, eerste lid, van de Wet Nationale ombudsman, en ombudsmannen en ombudscommissies als bedoeld in artikel 9:17, onderdeel b;\ng. de voorzitters, leden, griffiers en secretarissen van de in de onderdelen b tot en met f bedoelde organen, de procureur-generaal, de plaatsvervangend procureur-generaal en de advocaten-generaal bij de Hoge Raad, de besturen van de in onderdeel c bedoelde organen alsmede de voorzitters van die besturen, alsmede de commissies uit het midden van de in de onderdelen b tot en met f bedoelde organen;\nh. de commissie van toezicht op de inlichtingen- en veiligheidsdiensten en haar afdelingen, bedoeld in artikel 97 van de Wet op de inlichtingen- en veiligheidsdiensten 2017;\ni. de toetsingscommissie inzet bevoegdheden, bedoeld in artikel 32 van de Wet op de inlichtingen- en veiligheidsdiensten 2017.\n3. Een ingevolge het tweede lid uitgezonderd orgaan, persoon of college wordt wel als bestuursorgaan aangemerkt voor zover het orgaan, de persoon of het college besluiten neemt of handelingen verricht ten aanzien van een persoon met betrekking tot diens in artikel 3 van de Ambtenarenwet 2017 bedoelde hoedanigheid, zijn nagelaten betrekkingen of zijn rechtverkrijgenden, met uitzondering van een voor het leven benoemde ambtenaar werkzaam bij de Raad van State en zijn afdelingen en de Algemene Rekenkamer.\n4. De vermogensrechtelijke gevolgen van een handeling van een bestuursorgaan treffen de rechtspersoon waartoe het bestuursorgaan behoort.",
+				"parts": [
+					{
+						"id": "lid-1",
+						"kind": "lid",
+						"number": "1",
+						"start": 3,
+						"end": 185,
+						"term": null
+					},
+					{
+						"id": "lid-1-aanhef",
+						"kind": "aanhef",
+						"number": null,
+						"start": 3,
+						"end": 39,
+						"term": null
+					},
+					{
+						"id": "lid-1-onder-a",
+						"kind": "onderdeel",
+						"number": "a",
+						"start": 43,
+						"end": 119,
+						"term": null
+					},
+					{
+						"id": "lid-1-onder-b",
+						"kind": "onderdeel",
+						"number": "b",
+						"start": 123,
+						"end": 185,
+						"term": null
+					},
+					{
+						"id": "lid-2",
+						"kind": "lid",
+						"number": "2",
+						"start": 189,
+						"end": 1486,
+						"term": null
+					},
+					{
+						"id": "lid-2-aanhef",
+						"kind": "aanhef",
+						"number": null,
+						"start": 189,
+						"end": 273,
+						"term": null
+					},
+					{
+						"id": "lid-2-onder-a",
+						"kind": "onderdeel",
+						"number": "a",
+						"start": 277,
+						"end": 297,
+						"term": null
+					},
+					{
+						"id": "lid-2-onder-b",
+						"kind": "onderdeel",
+						"number": "b",
+						"start": 301,
+						"end": 359,
+						"term": null
+					},
+					{
+						"id": "lid-2-onder-c",
+						"kind": "onderdeel",
+						"number": "c",
+						"start": 363,
+						"end": 512,
+						"term": null
+					},
+					{
+						"id": "lid-2-onder-d",
+						"kind": "onderdeel",
+						"number": "d",
+						"start": 516,
+						"end": 553,
+						"term": null
+					},
+					{
+						"id": "lid-2-onder-e",
+						"kind": "onderdeel",
+						"number": "e",
+						"start": 557,
+						"end": 580,
+						"term": null
+					},
+					{
+						"id": "lid-2-onder-f",
+						"kind": "onderdeel",
+						"number": "f",
+						"start": 584,
+						"end": 784,
+						"term": null
+					},
+					{
+						"id": "lid-2-onder-g",
+						"kind": "onderdeel",
+						"number": "g",
+						"start": 788,
+						"end": 1185,
+						"term": null
+					},
+					{
+						"id": "lid-2-onder-h",
+						"kind": "onderdeel",
+						"number": "h",
+						"start": 1189,
+						"end": 1359,
+						"term": null
+					},
+					{
+						"id": "lid-2-onder-i",
+						"kind": "onderdeel",
+						"number": "i",
+						"start": 1363,
+						"end": 1486,
+						"term": null
+					},
+					{
+						"id": "lid-3",
+						"kind": "lid",
+						"number": "3",
+						"start": 1490,
+						"end": 1994,
+						"term": null
+					},
+					{
+						"id": "lid-4",
+						"kind": "lid",
+						"number": "4",
+						"start": 1998,
+						"end": 2132,
+						"term": null
+					}
+				],
+				"tables": [],
+				"headings": [],
+				"footnote_marks": [],
+				"footnotes": [],
+				"text_preview": "",
+				"footnote_references": null
+			},
+			{
+				"key": "bwbr0005537_av_2866093_4410622",
+				"bwb_id": "BWBR0005537",
+				"article_number": "1:2",
+				"label": "Artikel 1:2",
+				"heading": null,
+				"breadcrumb": [
+					{
+						"type": "hoofdstuk",
+						"label": "Hoofdstuk 1",
+						"title": "Inleidende bepalingen",
+						"anchor": "deel-hoofdstuk-1"
+					},
+					{
+						"type": "titeldeel",
+						"label": "Titel 1.1",
+						"title": "Definities en reikwijdte",
+						"anchor": "deel-hoofdstuk-1-titel-1.1"
+					}
+				],
+				"valid_from": "1994-01-01",
+				"valid_until": null,
+				"current": true,
+				"official_url": "https://wetten.overheid.nl/jci1.3:c:BWBR0005537&artikel=1:2&g=1994-01-01",
+				"text": "1. Onder belanghebbende wordt verstaan: degene wiens belang rechtstreeks bij een besluit is betrokken.\n2. Ten aanzien van bestuursorganen worden de hun toevertrouwde belangen als hun belangen beschouwd.\n3. Ten aanzien van rechtspersonen worden als hun belangen mede beschouwd de algemene en collectieve belangen die zij krachtens hun doelstellingen en blijkens hun feitelijke werkzaamheden in het bijzonder behartigen.",
+				"parts": [
+					{
+						"id": "lid-1",
+						"kind": "lid",
+						"number": "1",
+						"start": 3,
+						"end": 102,
+						"term": null
+					},
+					{
+						"id": "lid-2",
+						"kind": "lid",
+						"number": "2",
+						"start": 106,
+						"end": 202,
+						"term": null
+					},
+					{
+						"id": "lid-3",
+						"kind": "lid",
+						"number": "3",
+						"start": 206,
+						"end": 418,
+						"term": null
+					}
+				],
+				"tables": [],
+				"headings": [],
+				"footnote_marks": [],
+				"footnotes": [],
+				"text_preview": "",
+				"footnote_references": null
+			},
+			{
+				"key": "bwbr0005537_av_2866103_4418342",
+				"bwb_id": "BWBR0005537",
+				"article_number": "1:3",
+				"label": "Artikel 1:3",
+				"heading": null,
+				"breadcrumb": [
+					{
+						"type": "hoofdstuk",
+						"label": "Hoofdstuk 1",
+						"title": "Inleidende bepalingen",
+						"anchor": "deel-hoofdstuk-1"
+					},
+					{
+						"type": "titeldeel",
+						"label": "Titel 1.1",
+						"title": "Definities en reikwijdte",
+						"anchor": "deel-hoofdstuk-1-titel-1.1"
+					}
+				],
+				"valid_from": "1998-01-01",
+				"valid_until": null,
+				"current": true,
+				"official_url": "https://wetten.overheid.nl/jci1.3:c:BWBR0005537&artikel=1:3&g=1998-01-01",
+				"text": "1. Onder besluit wordt verstaan: een schriftelijke beslissing van een bestuursorgaan, inhoudende een publiekrechtelijke rechtshandeling.\n2. Onder beschikking wordt verstaan: een besluit dat niet van algemene strekking is, met inbegrip van de afwijzing van een aanvraag daarvan.\n3. Onder aanvraag wordt verstaan: een verzoek van een belanghebbende, een besluit te nemen.\n4. Onder beleidsregel wordt verstaan: een bij besluit vastgestelde algemene regel, niet zijnde een algemeen verbindend voorschrift, omtrent de afweging van belangen, de vaststelling van feiten of de uitleg van wettelijke voorschriften bij het gebruik van een bevoegdheid van een bestuursorgaan.",
+				"parts": [
+					{
+						"id": "lid-1",
+						"kind": "lid",
+						"number": "1",
+						"start": 3,
+						"end": 136,
+						"term": null
+					},
+					{
+						"id": "lid-2",
+						"kind": "lid",
+						"number": "2",
+						"start": 140,
+						"end": 277,
+						"term": null
+					},
+					{
+						"id": "lid-3",
+						"kind": "lid",
+						"number": "3",
+						"start": 281,
+						"end": 369,
+						"term": null
+					},
+					{
+						"id": "lid-4",
+						"kind": "lid",
+						"number": "4",
+						"start": 373,
+						"end": 664,
+						"term": null
+					}
+				],
+				"tables": [],
+				"headings": [],
+				"footnote_marks": [],
+				"footnotes": [],
+				"text_preview": "",
+				"footnote_references": null
+			},
+			{
+				"key": "bwbr0005537_av_2866113_20000202",
+				"bwb_id": "BWBR0005537",
+				"article_number": "1:4",
+				"label": "Artikel 1:4",
+				"heading": null,
+				"breadcrumb": [
+					{
+						"type": "hoofdstuk",
+						"label": "Hoofdstuk 1",
+						"title": "Inleidende bepalingen",
+						"anchor": "deel-hoofdstuk-1"
+					},
+					{
+						"type": "titeldeel",
+						"label": "Titel 1.1",
+						"title": "Definities en reikwijdte",
+						"anchor": "deel-hoofdstuk-1-titel-1.1"
+					}
+				],
+				"valid_from": "2013-01-01",
+				"valid_until": null,
+				"current": true,
+				"official_url": "https://wetten.overheid.nl/jci1.3:c:BWBR0005537&artikel=1:4&g=2013-01-01",
+				"text": "1. Onder bestuursrechter wordt verstaan: een onafhankelijk, bij de wet ingesteld orgaan dat met bestuursrechtspraak is belast.\n2. Onder hogerberoepsrechter wordt verstaan: een bestuursrechter die in hoger beroep oordeelt.\n3. Een tot de rechterlijke macht behorend gerecht wordt als bestuursrechter aangemerkt voor zover hoofdstuk 8 of de Wet administratiefrechtelijke handhaving verkeersvoorschriften - met uitzondering van hoofdstuk VIII - van toepassing of van overeenkomstige toepassing is.",
+				"parts": [
+					{
+						"id": "lid-1",
+						"kind": "lid",
+						"number": "1",
+						"start": 3,
+						"end": 126,
+						"term": null
+					},
+					{
+						"id": "lid-2",
+						"kind": "lid",
+						"number": "2",
+						"start": 130,
+						"end": 221,
+						"term": null
+					},
+					{
+						"id": "lid-3",
+						"kind": "lid",
+						"number": "3",
+						"start": 225,
+						"end": 493,
+						"term": null
+					}
+				],
+				"tables": [],
+				"headings": [],
+				"footnote_marks": [],
+				"footnotes": [],
+				"text_preview": "",
+				"footnote_references": null
+			}
+		]
+	},
+	"basis": {
+		"bwb_id": "BWBR0005537",
+		"total": 0,
+		"items": []
+	},
+	"light": {
+		"node": {
+			"props": {}
+		},
+		"neighbors": {
+			"buckets": []
+		}
+	}
+}

@@ -4,14 +4,14 @@
 	// source's own words: "Vervangt nr. 10.", "Vervangen door nr. 47." Each number is a BronLink,
 	// so it opens in place (vervanging.ts).
 	import BronLink from '$lib/bron/BronLink.svelte';
-	import { nrWoord, type Zin } from './vervanging';
+	import { numberWord, type Replacement } from '$lib/text/vervanging';
 
-	let { zinnen }: { zinnen: Zin[] } = $props();
+	let { zinnen }: { zinnen: Replacement[] } = $props();
 </script>
 
 {#each zinnen as z (z.woord)}<span class="vervanging"
 		>{z.woord}
-		{nrWoord(z.nrs)}
+		{numberWord(z.nrs)}
 		{#each z.nrs as n, i (n.key)}{separatorBefore(i, z.nrs.length)}<BronLink
 				ref={{ collection: 'documents', key: n.key }}>{n.nummer}</BronLink
 			>{/each}.</span

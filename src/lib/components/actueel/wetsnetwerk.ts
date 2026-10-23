@@ -23,7 +23,7 @@ import {
 import { dossierName } from '$lib/bron/dossier-naam';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
-import { AMENDING_BILL_KINDS } from '$lib/components/parliamentary/stages';
+import { AMENDING_BILL_KINDS } from '$lib/votes/stages';
 
 type FeedItem = Schema<'FeedItemDTO'>;
 export type CitedBy = Schema<'ArticleCitedByResponse'>;

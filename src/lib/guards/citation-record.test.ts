@@ -47,7 +47,7 @@ describe('one citation record per bron', () => {
 			'lib/components/explore/WholeLawReader.svelte',
 			'lib/components/explore/readers/InstrumentReader.svelte',
 			'lib/components/explore/readers/JudgmentReader.svelte',
-			'lib/components/parliamentary/paper-cite.ts'
+			'lib/text/paper-record.ts'
 		])
 			expect(bron(pad), pad).toMatch(/[cC]itationRecord\(/);
 		// The name over a law's table of contents is its heading, from the same function.

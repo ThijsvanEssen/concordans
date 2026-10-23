@@ -36,7 +36,7 @@ describe('the bar of a vote', () => {
 		const reader = bron('lib/components/explore/readers/DecisionReader.svelte');
 		expect(reader).toMatch(/<Uitkomst\s+tone=\{outcomeTone\(d\)\}/);
 		expect(reader).not.toMatch(/class="uitslag"/);
-		expect(bron('lib/components/parliamentary/vote-line.ts')).toMatch(/tone: outcomeTone\(d\)/);
+		expect(bron('lib/votes/vote-line.ts')).toMatch(/tone: outcomeTone\(d\)/);
 	});
 
 	it('colours voor and tegen with the outcome tokens, and the line at the majority in ink', () => {

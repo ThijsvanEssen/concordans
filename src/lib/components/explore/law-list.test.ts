@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { lawArticleList } from '$lib/api/law-articles';
 import { fakeApi, fail, type FakeRequest } from '$lib/test/fakeApi';
-import { articleText, asksAlone, createLawList, type LawList, type Row } from './law-list';
+import { asksAlone, createLawList, type LawList } from './law-list';
+import { articleText, type Row } from '$lib/text/law-article-text';
 
 const TODAY = '2026-10-14';
 const LIST = '/api/instruments/{bwb_id}/articles';

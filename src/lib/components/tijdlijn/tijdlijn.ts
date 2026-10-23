@@ -29,7 +29,7 @@ export type TijdRegel<B = unknown> = {
 	onder?: Snippet<[string]> | null;
 	href?: string | null;
 	/** The bron the line names: a click opens it in place (BronLink), as everywhere. */
-	ref?: import('$lib/bron/href').BronRef | string | null;
+	ref?: import('$lib/bron/ref').BronRef | string | null;
 	/** Whether the text of a Kamerstuk is in the data (`has_text`): without it, it opens in
 	 *  the network (opensOnText). */
 	heeftTekst?: boolean | null;

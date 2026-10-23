@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { motionKindLabel } from '$lib/components/parliamentary/motion-kind';
+	import { motionKindLabel } from '$lib/text/motion-kind';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { ownKind } from '$lib/text/document-kind';
 	import { NL } from '$lib/text/collator';
@@ -48,9 +48,9 @@
 	import SubmitterLine from '$lib/bron/SubmitterLine.svelte';
 	import StemmingUitslag from '$lib/components/parliamentary/StemmingUitslag.svelte';
 	import VoteLine from '$lib/components/parliamentary/VoteLine.svelte';
-	import { decidingVote } from '$lib/components/parliamentary/vote-line';
+	import { decidingVote } from '$lib/votes/vote-line';
 	import Vervanging from '$lib/components/parliamentary/Vervanging.svelte';
-	import { eigenUitslag, vervanging } from '$lib/components/parliamentary/vervanging';
+	import { hasOwnOutcome, replacementsOf } from '$lib/text/vervanging';
 	import { fromDocument } from '$lib/bron/submitters';
 	import ReaderHead from './ReaderHead.svelte';
 	import DocumentAttachments from './DocumentAttachments.svelte';
@@ -363,7 +363,7 @@
 				     document's replaces and replaced_by, the direct step only) and its bijlagen. -->
 				{#snippet statusLine()}
 					{#if cite}<span>{cite}.</span>{/if}
-					<Vervanging zinnen={vervanging(doc)} />
+					<Vervanging zinnen={replacementsOf(doc)} />
 					{#if bijlagen > 0}<DocumentAttachments
 							collection="documents"
 							bronKey={doc.key}
@@ -374,7 +374,7 @@
 				{/snippet}
 				<!-- The vote that settled it, at rest: what a reader comes for (productcheck 0.80, 4).
 				     A replaced stuk was not voted on as itself. -->
-				{@const deciding = eigenUitslag(doc) ? decidingVote(doc.decisions, doc.decision) : null}
+				{@const deciding = hasOwnOutcome(doc) ? decidingVote(doc.decisions, doc.decision) : null}
 				{#if deciding}<VoteLine decision={deciding} />{/if}
 			</ReaderHead>
 
@@ -396,7 +396,7 @@
 
 			<!-- A replaced stuk has no outcome of its own: the stuk that replaced it came to the vote. -->
 			<StemmingUitslag
-				decisions={eigenUitslag(doc) ? (doc.decisions ?? []) : []}
+				decisions={hasOwnOutcome(doc) ? (doc.decisions ?? []) : []}
 				except={decidingVote(doc.decisions, doc.decision)?.key}
 			/>
 

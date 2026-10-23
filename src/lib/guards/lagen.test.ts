@@ -75,18 +75,13 @@ describe('the layers', () => {
 			'lib/bron/behoort-rules.ts',
 			'lib/bron/herkomst.ts',
 			'lib/bron/naam.ts',
-			'lib/bron/overweging.ts',
 			'lib/bron/preview.ts',
-			'lib/fixtures/coalition-votes.ts',
-			'lib/map/inhoud.ts',
 			'lib/onderwerpen/onderwerpen.ts',
 			'lib/onderwerpen/overview-load.ts',
-			'lib/onderwerpen/overzicht.ts',
 			'lib/search/kamer.ts',
 			'lib/search/present.ts',
 			'lib/verbonden/document-chamber.ts',
 			'lib/verbonden/groups.ts',
-			'lib/verbonden/hoe.ts',
 			'lib/verbonden/loaders.ts',
 			'lib/verbonden/rows.ts'
 		];

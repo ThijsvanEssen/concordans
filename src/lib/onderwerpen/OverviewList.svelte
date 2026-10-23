@@ -8,7 +8,7 @@
 	import type { FeedItem } from '$lib/components/actueel/feed';
 	import { chamberName } from '$lib/components/parliamentary/chamber';
 	import StemTeken from '$lib/components/parliamentary/Stem.svelte';
-	import { votesSentence } from '$lib/components/parliamentary/stemming';
+	import { votesSentence } from '$lib/votes/stemming';
 	import UitkomstTeken from '$lib/components/parliamentary/Uitkomst.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';

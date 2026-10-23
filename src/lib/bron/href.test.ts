@@ -12,9 +12,9 @@ import {
 	focusOf,
 	hasFocus,
 	indexHref,
-	modeOf,
-	refOf
+	modeOf
 } from './href';
+import { refOf } from './ref';
 
 const at = (path: string) => new URL(`http://localhost${path}`);
 

@@ -1,0 +1,373 @@
+{
+	"document": {
+		"chamber": "TK",
+		"source": "tk",
+		"is_explanatory": false,
+		"dictum": null,
+		"explanation": "Dit amendement strekt ertoe om wettelijk te borgen dat het bouwen en beheren van middenhuurwoningen (niet-DAEB) voor woningcorporaties ook valt onder hun volkshuisvestelijke taak.",
+		"outcome": "verworpen",
+		"decided_on": "2024-04-25",
+		"tally": { "Voor": 61, "Tegen": 89 },
+		"decision": "decision_b081b14b_b6a5_49a6_ac1a_ff8e69f59339",
+		"motion_kind": null,
+		"key": "233fcc9b_8f86_4bb1_a1c0_fb3832f1b61f",
+		"document_id": "documents/233fcc9b_8f86_4bb1_a1c0_fb3832f1b61f",
+		"title": "Amendement van het lid Paternotte c.s. ter vervanging van nr. 43 over het wettelijk borgen van bouw en beheer van middenhuurwoningen als taak van de toegelaten instellingen",
+		"kind": "Amendement (gewijzigd/nader/vervangend)",
+		"number": "53",
+		"sender": {
+			"name": "J.M. Paternotte",
+			"function": "Tweede Kamerlid",
+			"faction": "D66",
+			"capacity": "kamerlid",
+			"member_key": "2690bccc_5463_459a_b1df_cb93e222b348",
+			"ministry": null
+		},
+		"date": "2024-04-24",
+		"external_id": "233fcc9b-8f86-4bb1-a1c0-fb3832f1b61f",
+		"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2024D16981&did=2024D16981",
+		"file_url": "https://gegevensmagazijn.tweedekamer.nl/OData/v4/2.0/Document(233fcc9b-8f86-4bb1-a1c0-fb3832f1b61f)/resource",
+		"official_url": "https://zoek.officielebekendmakingen.nl/kst-36496-53.html",
+		"text": "1\nVervanging in verband met een wijziging in de ondertekening.\nDe ondergetekenden stellen het volgende amendement voor:\nNa artikel V wordt een artikel ingevoegd, luidende:\nARTIKEL Va\nAan artikel 42 van de Woningwet wordt een lid toegevoegd, luidende:\n6.\nDe toegelaten instelling draagt met haar werkzaamheden naar redelijkheid bij aan het bouwen en beheren van voldoende middeldure huurwoonruimten als bedoeld in artikel 1 van de Huisvestingswet 2014.\nToelichting\nDit amendement strekt ertoe om wettelijk te borgen dat het bouwen en beheren van middenhuurwoningen (niet-DAEB) voor woningcorporaties ook valt onder hun volkshuisvestelijke taak.\nWoningcorporaties werd het lange tijd onmogelijk gemaakt om middenhuurwoningen te bouwen. Zij moesten zich alleen richten op het bouwen en onderhouden van sociale huurwoningen. Dit kabinet heeft daar een einde aan gemaakt door afspraken te maken over de bouw van 50.000 middenhuurwoningen door de woningcorporaties en door de markttoets voor woningcorporaties eerst op te schorten en later helemaal af te schaffen. Tot nu toe ontbreekt echter de wettelijke borging die ervoor zorgt dat de bouw van middenhuurwoningen ook tot de volkshuisvestelijke taak van woningcorporaties gerekend mag worden. Dit amendement lost deze lacune op.\nDit amendement sluit daarnaast aan bij het voorliggende wetsvoorstel versterking regie volkshuisvesting waarin voor gemeenten de verplichting is opgenomen om met het gemeentelijk volkshuisvestingsprogramma te voorzien in de verwezenlijking van de woningbouwopgave voor ten minste 30% sociale huurwoningen en ten minste 37% midddenhuurwoningen of betaalbare koopwoningen of ten minste 40% middenhuurwoningen of betaalbare koopwoningen. Daarnaast is de formulering van het voorgestelde zesde lid zo gekozen dat dit wetstechnisch kloppend blijft bij eventuele samenloop met het wetsvoorstel versterking regie volkshuisvesting.",
+		"submitters": [
+			{
+				"name": "J.M. Paternotte",
+				"faction": "D66",
+				"member_key": "2690bccc_5463_459a_b1df_cb93e222b348",
+				"role": "indiener",
+				"path": "/leden/jan-paternotte"
+			},
+			{
+				"name": "P.A. Grinwis",
+				"faction": "ChristenUnie",
+				"member_key": "d38ca3cf_9803_48dc_8592_c67c4430168e",
+				"role": "medeindiener",
+				"path": "/leden/pieter-grinwis"
+			},
+			{
+				"name": "E.C. Vedder",
+				"faction": "CDA",
+				"member_key": "a4993263_317a_4c92_b844_6521aa1eaaba",
+				"role": "medeindiener",
+				"path": "/leden/eline-vedder"
+			}
+		],
+		"dossier_numbers": ["36496"],
+		"case_kinds": ["Amendement"],
+		"explains": [],
+		"sections": [
+			{
+				"id": "s-eee81b92",
+				"heading": "ARTIKEL Va",
+				"level": 1,
+				"parent": null,
+				"kind": "other",
+				"number": null,
+				"number_scheme": null,
+				"article_refs": [],
+				"law": null,
+				"char_start": 172,
+				"char_end": 1899
+			},
+			{
+				"id": "s-e6868880",
+				"heading": "Toelichting",
+				"level": 2,
+				"parent": "s-eee81b92",
+				"kind": "other",
+				"number": null,
+				"number_scheme": null,
+				"article_refs": [],
+				"law": null,
+				"char_start": 452,
+				"char_end": 1899
+			}
+		],
+		"footnotes": [],
+		"paragraphs": [
+			{ "id": "p-356a192b", "number": null, "kind": "head", "char_start": 0, "char_end": 1 },
+			{ "id": "p-966ff338", "number": null, "kind": "head", "char_start": 2, "char_end": 62 },
+			{ "id": "p-094a828f", "number": 1, "kind": "body", "char_start": 63, "char_end": 119 },
+			{ "id": "p-5202fc19", "number": 2, "kind": "body", "char_start": 120, "char_end": 171 },
+			{ "id": "p-b4873279", "number": null, "kind": "heading", "char_start": 172, "char_end": 182 },
+			{ "id": "p-641f325f", "number": 3, "kind": "body", "char_start": 183, "char_end": 250 },
+			{ "id": "p-17bad1aa", "number": 4, "kind": "body", "char_start": 251, "char_end": 253 },
+			{ "id": "p-412444ef", "number": 5, "kind": "body", "char_start": 254, "char_end": 451 },
+			{ "id": "p-c9d92b0c", "number": null, "kind": "heading", "char_start": 452, "char_end": 463 },
+			{ "id": "p-b3d4dab1", "number": 6, "kind": "body", "char_start": 464, "char_end": 643 },
+			{ "id": "p-31c18ccd", "number": 7, "kind": "body", "char_start": 644, "char_end": 1275 },
+			{ "id": "p-2e13300b", "number": 8, "kind": "body", "char_start": 1276, "char_end": 1899 }
+		],
+		"tables": [],
+		"replaces": [
+			{
+				"id": "documents/1a4ce67e_7435_4e70_889d_619140c3274f",
+				"key": "1a4ce67e_7435_4e70_889d_619140c3274f",
+				"sequence": 43
+			}
+		],
+		"replaced_by": [],
+		"decisions": [
+			{
+				"id": "decisions/decision_b081b14b_b6a5_49a6_ac1a_ff8e69f59339",
+				"key": "decision_b081b14b_b6a5_49a6_ac1a_ff8e69f59339",
+				"date": "2024-04-25",
+				"subject": "Amendement van het lid Paternotte c.s. ter vervanging van nr. 43 over het wettelijk borgen van bouw en beheer van middenhuurwoningen als taak van de toegelaten instellngen",
+				"external_id": "b081b14b-b6a5-49a6-ac1a-ff8e69f59339",
+				"passed": false,
+				"kind": "Amendement",
+				"motion_kind": null,
+				"decision_kind": "Stemmen - verworpen",
+				"primary_case_kind": "Amendement",
+				"dossier_numbers": ["36496"],
+				"dossiers": [
+					{
+						"number": "36496",
+						"short_title": "Wet betaalbare huur",
+						"title": "Wijziging van de Wet goed verhuurderschap, Boek 7 van het Burgerlijk Wetboek, de Uitvoeringswet huurprijzen woonruimte en enige andere wetten in verband met de regulering van huurprijzen en de bescherming van rechten van huurders (Wet betaalbare huur)"
+					}
+				],
+				"chamber": "TK",
+				"result": null,
+				"method": null,
+				"bill_decision": null,
+				"factions_for": [],
+				"factions_against": [],
+				"factions_noted": [],
+				"bill_url": null,
+				"source_url": null,
+				"retrieved_on": null,
+				"vote_kind": "faction",
+				"tally": { "Voor": 61, "Tegen": 89 },
+				"voters": { "Voor": 10, "Tegen": 5 },
+				"votes": [
+					{
+						"voter_id": "factions/pvv",
+						"voter_key": "pvv",
+						"name": "PVV",
+						"choice": "Tegen",
+						"seats": 37,
+						"path": "/fracties/pvv"
+					},
+					{
+						"voter_id": "factions/groenlinks_pvda",
+						"voter_key": "groenlinks_pvda",
+						"name": "GroenLinks-PvdA",
+						"choice": "Voor",
+						"seats": 25,
+						"path": "/fracties/groenlinks_pvda"
+					},
+					{
+						"voter_id": "factions/vvd",
+						"voter_key": "vvd",
+						"name": "VVD",
+						"choice": "Tegen",
+						"seats": 24,
+						"path": "/fracties/vvd"
+					},
+					{
+						"voter_id": "factions/nieuw_sociaal_contract",
+						"voter_key": "nieuw_sociaal_contract",
+						"name": "NSC",
+						"choice": "Tegen",
+						"seats": 20,
+						"path": "/fracties/nieuw_sociaal_contract"
+					},
+					{
+						"voter_id": "factions/d66",
+						"voter_key": "d66",
+						"name": "D66",
+						"choice": "Voor",
+						"seats": 9,
+						"path": "/fracties/d66"
+					},
+					{
+						"voter_id": "factions/bbb",
+						"voter_key": "bbb",
+						"name": "BBB",
+						"choice": "Tegen",
+						"seats": 7,
+						"path": "/fracties/bbb"
+					},
+					{
+						"voter_id": "factions/cda",
+						"voter_key": "cda",
+						"name": "CDA",
+						"choice": "Voor",
+						"seats": 5,
+						"path": "/fracties/cda"
+					},
+					{
+						"voter_id": "factions/sp",
+						"voter_key": "sp",
+						"name": "SP",
+						"choice": "Voor",
+						"seats": 5,
+						"path": "/fracties/sp"
+					},
+					{
+						"voter_id": "factions/christenunie",
+						"voter_key": "christenunie",
+						"name": "ChristenUnie",
+						"choice": "Voor",
+						"seats": 3,
+						"path": "/fracties/christenunie"
+					},
+					{
+						"voter_id": "factions/denk",
+						"voter_key": "denk",
+						"name": "DENK",
+						"choice": "Voor",
+						"seats": 3,
+						"path": "/fracties/denk"
+					},
+					{
+						"voter_id": "factions/fvd",
+						"voter_key": "fvd",
+						"name": "FVD",
+						"choice": "Voor",
+						"seats": 3,
+						"path": "/fracties/fvd"
+					},
+					{
+						"voter_id": "factions/pvdd",
+						"voter_key": "pvdd",
+						"name": "PvdD",
+						"choice": "Voor",
+						"seats": 3,
+						"path": "/fracties/pvdd"
+					},
+					{
+						"voter_id": "factions/sgp",
+						"voter_key": "sgp",
+						"name": "SGP",
+						"choice": "Voor",
+						"seats": 3,
+						"path": "/fracties/sgp"
+					},
+					{
+						"voter_id": "factions/volt",
+						"voter_key": "volt",
+						"name": "Volt",
+						"choice": "Voor",
+						"seats": 2,
+						"path": "/fracties/volt"
+					},
+					{
+						"voter_id": "factions/ja21",
+						"voter_key": "ja21",
+						"name": "JA21",
+						"choice": "Tegen",
+						"seats": 1,
+						"path": "/fracties/ja21"
+					}
+				],
+				"coalition": {
+					"cabinet": "rutte_iv",
+					"coalition_for": 17,
+					"coalition_against": 24,
+					"opposition_for": 44,
+					"opposition_against": 65,
+					"pattern": "split",
+					"carried": false,
+					"decisive": false
+				},
+				"dictum": null,
+				"motion": null,
+				"primary_document": null,
+				"path": "/stemmingen/decision_b081b14b_b6a5_49a6_ac1a_ff8e69f59339",
+				"kind_group": "amendement"
+			}
+		],
+		"completeness": {
+			"text": { "state": "done", "as_of": null, "missing": null, "reason": null },
+			"paragraphs": { "state": "done", "as_of": null, "missing": null, "reason": null },
+			"tables": { "state": "none", "as_of": null, "missing": null, "reason": null },
+			"references": { "state": "done", "as_of": null, "missing": null, "reason": null }
+		},
+		"kind_group": "amendement"
+	},
+	"light": {
+		"node": {
+			"key": "233fcc9b_8f86_4bb1_a1c0_fb3832f1b61f",
+			"props": {
+				"session_year": "2023-2024",
+				"dossier_number": "36496",
+				"kind": "Amendement (gewijzigd/nader/vervangend)"
+			}
+		},
+		"neighbors": {
+			"buckets": [
+				{
+					"relation": "PART_OF",
+					"direction": "outbound",
+					"collection": "cases",
+					"type": "case",
+					"total": 1,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "cases/0b2801ad_437c_4ee0_a345_54f3417e9e52",
+							"key": "0b2801ad_437c_4ee0_a345_54f3417e9e52",
+							"collection": "cases",
+							"type": "case",
+							"display_name": "Amendement van het lid Paternotte c.s. ter vervanging van nr. 43 over het wettelijk borgen van bouw en beheer van middenhuurwoningen als taak van de toegelaten instellngen",
+							"labels": ["TK"],
+							"props": {
+								"kind": "Amendement",
+								"number": "2024Z07405",
+								"title": "Amendement van het lid Paternotte c.s. ter vervanging van nr. 43 over het wettelijk borgen van bouw en beheer van middenhuurwoningen als taak van de toegelaten instellngen"
+							},
+							"kind_group": "amendement",
+							"title": "Amendement Paternotte c.s. ter vervanging van nr. 43 over het wettelijk borgen van bouw en beheer van middenhuurwoningen als taak van de toegelaten instellngen (2024Z07405)",
+							"edge_id": "5943d194ae08d56df709ca985cf693ac2dedf3e2",
+							"relation": "PART_OF",
+							"direction": "outbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/zaken/2024Z07405"
+						}
+					]
+				},
+				{
+					"relation": "PART_OF",
+					"direction": "outbound",
+					"collection": "dossiers",
+					"type": "dossier",
+					"total": 1,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "dossiers/36496",
+							"key": "36496",
+							"collection": "dossiers",
+							"type": "dossier",
+							"display_name": "Kamerstukdossier 36496: Wijziging van de Wet goed verhuurderschap, Boek 7 van het Burgerlijk Wetboek, de Uitvoeringswet huurprijzen woonruimte en enige andere wetten in verband met de regulering van huurprijzen en de bescherming van rechten van huurders (Wet betaalbare huur)",
+							"labels": ["TK"],
+							"props": {
+								"kind": "Wetgeving",
+								"label": "36496",
+								"number": "36496",
+								"title": "Wijziging van de Wet goed verhuurderschap, Boek 7 van het Burgerlijk Wetboek, de Uitvoeringswet huurprijzen woonruimte en enige andere wetten in verband met de regulering van huurprijzen en de bescherming van rechten van huurders (Wet betaalbare huur)",
+								"short_title": "Wet betaalbare huur"
+							},
+							"title": "36496 Wet betaalbare huur",
+							"edge_id": "fc1d98f62e59aff070fea8e6595c5f8ccb6c2f5f",
+							"relation": "PART_OF",
+							"direction": "outbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/dossiers/36496"
+						}
+					]
+				}
+			]
+		}
+	}
+}

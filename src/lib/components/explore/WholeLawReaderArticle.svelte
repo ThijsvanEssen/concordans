@@ -10,7 +10,8 @@
 	import type { ArticleCitation } from '$lib/text/cite';
 	import type { Schema } from '$lib/api/types';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
-	import { PREVIEW_CHARS, articleText, asksAlone, type Row } from './law-list';
+	import { asksAlone } from './law-list';
+	import { PREVIEW_CHARS, articleText, type Row } from '$lib/text/law-article-text';
 
 	let {
 		row,

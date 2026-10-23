@@ -1,0 +1,203 @@
+{
+	"document": {
+		"chamber": "TK",
+		"source": "tk",
+		"is_explanatory": false,
+		"dictum": null,
+		"explanation": "De Wet betaalbare huur zorgt ervoor dat het isoleren van woningen door verhuurders wordt gestimuleerd. De fractie van GroenLinks-PvdA is echter van mening dat een goed geïsoleerde woning de norm zou moeten zijn. De energiekosten voor huurders zijn flink hoger wanneer een woning niet goed is geïsoleerd. Het is onrechtvaardig wanneer dit niet wordt gecompenseerd met een lagere huur.",
+		"outcome": "vervangen",
+		"decided_on": null,
+		"tally": null,
+		"decision": null,
+		"motion_kind": null,
+		"key": "07c57f0c_43ff_4161_9def_8831493268e2",
+		"document_id": "documents/07c57f0c_43ff_4161_9def_8831493268e2",
+		"title": "Nader gewijzigd amendement van de leden De Hoop en Vedder ter vervanging van nr. 40 over puntenwaardering van lage energieprestatiecertificaten",
+		"kind": "Amendement (gewijzigd/nader/vervangend)",
+		"number": "46",
+		"sender": {
+			"name": "H.E. de Hoop",
+			"function": "Tweede Kamerlid",
+			"faction": "GroenLinks-PvdA",
+			"capacity": "kamerlid",
+			"member_key": "e70c3ee3_cca2_4521_abea_b124dcec0952",
+			"ministry": null
+		},
+		"date": "2024-04-24",
+		"external_id": "07c57f0c-43ff-4161-9def-8831493268e2",
+		"tk_url": "https://www.tweedekamer.nl/kamerstukken/detail?id=2024D16878&did=2024D16878",
+		"file_url": "https://gegevensmagazijn.tweedekamer.nl/OData/v4/2.0/Document(07c57f0c-43ff-4161-9def-8831493268e2)/resource",
+		"official_url": "https://zoek.officielebekendmakingen.nl/kst-36496-46.html",
+		"text": "1\nVervanging in verband met een wijziging in de ondertekening.\nDe ondergetekenden stellen het volgende amendement voor:\nNa artikel V, onderdeel J, wordt een onderdeel ingevoegd, luidende:\nJa\nNa artikel 10b wordt een artikel ingevoegd, luidende:\nArtikel 10c (energieprestatie)\nBij of krachtens de algemene maatregel van bestuur, bedoeld in artikel 10, eerste lid, wordt ten minste bepaald dat de puntenwaardering voor een zelfstandige woonruimte, niet zijnde een woonruimte die bestaat uit of deel uitmaakt van een rijksmonument als bedoeld in artikel 1.1 van de Erfgoedwet, een provinciaal monument of een gemeentelijke monument, wordt verminderd met het hieronder bij de letter die overeenkomt met de op het energieprestatiecertificaat van die woning vermelde letter vermelde puntenaantal:\n1°. E: –4;\n2°. F: –9;\n3°. G: –15.\nToelichting\nDe Wet betaalbare huur zorgt ervoor dat het isoleren van woningen door verhuurders wordt gestimuleerd. De fractie van GroenLinks-PvdA is echter van mening dat een goed geïsoleerde woning de norm zou moeten zijn. De energiekosten voor huurders zijn flink hoger wanneer een woning niet goed is geïsoleerd. Het is onrechtvaardig wanneer dit niet wordt gecompenseerd met een lagere huur. Het zou voor verhuurders dan ook niet moeten lonen om een huurwoning met een laag energielabel te verhuren. Verhuurders moeten zich maximaal inspannen om hun woning goed te isoleren. Huurders in slecht geïsoleerde woningen hebben recht op een tochtkorting om de hogere energierekening te compenseren.\nDaarom stelt de fractie van GroenLinks-PvdA de volgende aangepaste puntentelling voor labels voor in dit amendement die zowel voor eengezins- als meergezinswoningen geldt: label E (–4), label F (–9), label G (–15).",
+		"submitters": [
+			{
+				"name": "H.E. de Hoop",
+				"faction": "GroenLinks-PvdA",
+				"member_key": "e70c3ee3_cca2_4521_abea_b124dcec0952",
+				"role": "indiener",
+				"path": "/leden/habtamu-de-hoop"
+			},
+			{
+				"name": "E.C. Vedder",
+				"faction": "CDA",
+				"member_key": "a4993263_317a_4c92_b844_6521aa1eaaba",
+				"role": "medeindiener",
+				"path": "/leden/eline-vedder"
+			}
+		],
+		"dossier_numbers": ["36496"],
+		"case_kinds": ["Amendement"],
+		"explains": [],
+		"sections": [
+			{
+				"id": "s-516d2ba9",
+				"heading": "Artikel 10c (energieprestatie)",
+				"level": 1,
+				"parent": null,
+				"kind": "article",
+				"number": "10c",
+				"number_scheme": "arabic",
+				"article_refs": [{ "number": "10c", "of": "self" }],
+				"law": null,
+				"char_start": 245,
+				"char_end": 1736
+			},
+			{
+				"id": "s-5355f730",
+				"heading": "Toelichting",
+				"level": 2,
+				"parent": "s-516d2ba9",
+				"kind": "other",
+				"number": null,
+				"number_scheme": null,
+				"article_refs": [],
+				"law": null,
+				"char_start": 825,
+				"char_end": 1736
+			}
+		],
+		"footnotes": [],
+		"paragraphs": [
+			{ "id": "p-356a192b", "number": null, "kind": "head", "char_start": 0, "char_end": 1 },
+			{ "id": "p-966ff338", "number": null, "kind": "head", "char_start": 2, "char_end": 62 },
+			{ "id": "p-094a828f", "number": 1, "kind": "body", "char_start": 63, "char_end": 119 },
+			{ "id": "p-f605524a", "number": 2, "kind": "body", "char_start": 120, "char_end": 187 },
+			{ "id": "p-283c735c", "number": 3, "kind": "body", "char_start": 188, "char_end": 190 },
+			{ "id": "p-b0de719d", "number": 4, "kind": "body", "char_start": 191, "char_end": 244 },
+			{ "id": "p-7e07b2fc", "number": null, "kind": "heading", "char_start": 245, "char_end": 275 },
+			{ "id": "p-9da3c937", "number": 5, "kind": "body", "char_start": 276, "char_end": 790 },
+			{ "id": "p-d0f4e64b", "number": 6, "kind": "body", "char_start": 791, "char_end": 801 },
+			{ "id": "p-91dd79e8", "number": 7, "kind": "body", "char_start": 802, "char_end": 812 },
+			{ "id": "p-9e14fdc6", "number": 8, "kind": "body", "char_start": 813, "char_end": 824 },
+			{ "id": "p-c9d92b0c", "number": null, "kind": "heading", "char_start": 825, "char_end": 836 },
+			{ "id": "p-1d719593", "number": 9, "kind": "body", "char_start": 837, "char_end": 1521 },
+			{ "id": "p-d284a75d", "number": 10, "kind": "body", "char_start": 1522, "char_end": 1736 }
+		],
+		"tables": [],
+		"replaces": [
+			{
+				"id": "documents/2d88d33a_f0f9_4f90_aad2_348401b31397",
+				"key": "2d88d33a_f0f9_4f90_aad2_348401b31397",
+				"sequence": 40
+			}
+		],
+		"replaced_by": [
+			{
+				"id": "documents/558fe7cd_7b85_4a34_96ac_1937a7401412",
+				"key": "558fe7cd_7b85_4a34_96ac_1937a7401412",
+				"sequence": 51
+			}
+		],
+		"decisions": [],
+		"completeness": {
+			"text": { "state": "done", "as_of": null, "missing": null, "reason": null },
+			"paragraphs": { "state": "done", "as_of": null, "missing": null, "reason": null },
+			"tables": { "state": "none", "as_of": null, "missing": null, "reason": null },
+			"references": { "state": "done", "as_of": null, "missing": null, "reason": null }
+		},
+		"kind_group": "amendement"
+	},
+	"light": {
+		"node": {
+			"key": "07c57f0c_43ff_4161_9def_8831493268e2",
+			"props": {
+				"session_year": "2023-2024",
+				"dossier_number": "36496",
+				"kind": "Amendement (gewijzigd/nader/vervangend)"
+			}
+		},
+		"neighbors": {
+			"buckets": [
+				{
+					"relation": "PART_OF",
+					"direction": "outbound",
+					"collection": "cases",
+					"type": "case",
+					"total": 1,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "cases/ed4620ca_affe_4f45_be20_86e0c99fecbd",
+							"key": "ed4620ca_affe_4f45_be20_86e0c99fecbd",
+							"collection": "cases",
+							"type": "case",
+							"display_name": "Nader gewijzigd amendement van de leden De Hoop en Vedder ter vervanging van nr. 40 over puntenwaardering van lage energieprestatiecertificaten",
+							"labels": ["TK"],
+							"props": {
+								"kind": "Amendement",
+								"number": "2024Z07353",
+								"title": "Nader gewijzigd amendement van de leden De Hoop en Vedder ter vervanging van nr. 40 over puntenwaardering van lage energieprestatiecertificaten"
+							},
+							"kind_group": "amendement",
+							"title": "Nader gewijzigd amendement De Hoop en Vedder ter vervanging van nr. 40 over puntenwaardering van lage energieprestatiecertificaten (2024Z07353)",
+							"edge_id": "376e06399b2e0990d693560d3a073284c31ad8d1",
+							"relation": "PART_OF",
+							"direction": "outbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/zaken/2024Z07353"
+						}
+					]
+				},
+				{
+					"relation": "PART_OF",
+					"direction": "outbound",
+					"collection": "dossiers",
+					"type": "dossier",
+					"total": 1,
+					"next_offset": null,
+					"lid_counts": null,
+					"capacity_counts": null,
+					"items": [
+						{
+							"id": "dossiers/36496",
+							"key": "36496",
+							"collection": "dossiers",
+							"type": "dossier",
+							"display_name": "Kamerstukdossier 36496: Wijziging van de Wet goed verhuurderschap, Boek 7 van het Burgerlijk Wetboek, de Uitvoeringswet huurprijzen woonruimte en enige andere wetten in verband met de regulering van huurprijzen en de bescherming van rechten van huurders (Wet betaalbare huur)",
+							"labels": ["TK"],
+							"props": {
+								"kind": "Wetgeving",
+								"label": "36496",
+								"number": "36496",
+								"title": "Wijziging van de Wet goed verhuurderschap, Boek 7 van het Burgerlijk Wetboek, de Uitvoeringswet huurprijzen woonruimte en enige andere wetten in verband met de regulering van huurprijzen en de bescherming van rechten van huurders (Wet betaalbare huur)",
+								"short_title": "Wet betaalbare huur"
+							},
+							"title": "36496 Wet betaalbare huur",
+							"edge_id": "12ab848dcdd6fc806baa50ae1d739a8d1b835272",
+							"relation": "PART_OF",
+							"direction": "outbound",
+							"confidence": null,
+							"status": "canoniek",
+							"meta": {},
+							"path": "/dossiers/36496"
+						}
+					]
+				}
+			]
+		}
+	}
+}

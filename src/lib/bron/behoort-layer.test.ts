@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { uitkomstVan } from './behoort-layer';
+import { outcomeOf } from './outcome-words';
 import { dossierNummer } from './dossier-naam';
 
-describe('uitkomstVan', () => {
+describe('outcomeOf', () => {
 	it('names an instance of the procesgang by its remedy and outcome', () => {
-		expect(uitkomstVan('verworpen', 'Cassatie')).toBe('cassatie verworpen');
-		expect(uitkomstVan('bekrachtigd', null)).toBe('bekrachtigd');
-		expect(uitkomstVan(null, 'Cassatie')).toBeNull();
+		expect(outcomeOf('verworpen', 'Cassatie')).toBe('cassatie verworpen');
+		expect(outcomeOf('bekrachtigd', null)).toBe('bekrachtigd');
+		expect(outcomeOf(null, 'Cassatie')).toBeNull();
 	});
 });
 

@@ -614,7 +614,7 @@ function parseOnePara(text: string, chunkOffset: number): ParsedBodyPara {
 		chunkOffset + text.length - trimStart(text).length + clean.length - body.length;
 
 	// Match leading decimal number, e.g. "2.1" or "2.2.1"
-	const numMatch = clean.match(/^(\d+(?:\.\d+)*\.?)\s*\n([\s\S]*)/);
+	const numMatch = clean.match(/^(\d+(?:\.\d{1,3})*\.?)\s*\n([\s\S]*)/);
 	if (!numMatch)
 		return { kind: 'body', num: null, depth: 0, subTitle: null, body: clean, offset: at(clean) };
 
@@ -741,7 +741,7 @@ function splitBodyParagraph(
 		!normalized.endsWith(',') &&
 		!/[”’"'»]$/.test(normalized)
 	) {
-		const inlineTitle = normalized.match(/^(\d+(?:\.\d+)*\.?)\s+(\S.+)$/);
+		const inlineTitle = normalized.match(/^(\d+(?:\.\d{1,3})*\.?)\s+(\S.+)$/);
 		if (inlineTitle) {
 			const num = inlineTitle[1].replace(/\.$/, '');
 			return [{ kind: 'heading', text: `${num}. ${inlineTitle[2].trim()}` }];
@@ -765,9 +765,10 @@ function splitBodyParagraph(
 	}
 
 	// 2. Split at sub-paragraph boundaries: a blank line followed by a decimal
-	//    number with ≥2 components (e.g. \n\n2.2.1.\n or \n\n2.5.1 \n).
+	//    number with ≥2 components (e.g. \n\n2.2.1.\n or \n\n2.5.1 \n). A part after the
+	//    first has at most three digits: a parketnummer (10.242417.26) is no overweging.
 	//    Use a lookahead so the number stays in the next chunk.
-	const subParaSplitRe = /(?=\n\n\d+(?:\.\d+){1,}\.?\s*\n)/g;
+	const subParaSplitRe = /(?=\n\n\d+(?:\.\d{1,3}){1,}\.?\s*\n)/g;
 	const chunks = mainText.split(subParaSplitRe);
 
 	let chunkOffset = 0;

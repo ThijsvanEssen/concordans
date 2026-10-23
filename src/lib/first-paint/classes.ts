@@ -17,7 +17,26 @@ export const COMPONENTS: Record<Component, string> = {
 	dossierName: 'src/lib/bron/DossierNaam.svelte',
 	caret: 'src/lib/components/ui/Caret.svelte',
 	text: 'src/lib/components/articles/ArticleText.svelte',
-	facts: 'src/lib/components/ui/Feiten.svelte'
+	facts: 'src/lib/components/ui/Feiten.svelte',
+	fullTitle: 'src/lib/components/ui/FullTitle.svelte',
+	paragraphWords: 'src/lib/bron/ParagraphWords.svelte',
+	cited: 'src/lib/components/articles/CitedText.svelte',
+	judgment: 'src/lib/components/explore/readers/JudgmentReader.svelte',
+	placeNumber: 'src/lib/bron/PlaceNumber.svelte',
+	citeMenu: 'src/lib/components/ui/CiteMenu.svelte',
+	textBlocks: 'src/lib/components/articles/TextBlocks.svelte',
+	textLink: 'src/lib/components/ui/TekstLink.svelte',
+	law: 'src/lib/components/explore/WholeLawReader.svelte',
+	lawArticle: 'src/lib/components/explore/WholeLawReaderArticle.svelte',
+	paper: 'src/lib/components/explore/readers/DocumentReader.svelte',
+	submitterLine: 'src/lib/bron/SubmitterLine.svelte',
+	replaced: 'src/lib/components/parliamentary/Vervanging.svelte',
+	attachments: 'src/lib/components/explore/readers/DocumentAttachments.svelte',
+	voteLine: 'src/lib/components/parliamentary/VoteLine.svelte',
+	voteBar: 'src/lib/components/parliamentary/Stembalk.svelte',
+	outcome: 'src/lib/components/parliamentary/Uitkomst.svelte',
+	section: 'src/lib/components/ui/Sectie.svelte',
+	fold: 'src/lib/components/ui/FoldButton.svelte'
 };
 
 /** A component the paint sets elements of. */
@@ -36,7 +55,26 @@ type Component =
 	| 'dossierName'
 	| 'caret'
 	| 'text'
-	| 'facts';
+	| 'facts'
+	| 'fullTitle'
+	| 'paragraphWords'
+	| 'cited'
+	| 'judgment'
+	| 'placeNumber'
+	| 'citeMenu'
+	| 'textBlocks'
+	| 'textLink'
+	| 'law'
+	| 'lawArticle'
+	| 'paper'
+	| 'submitterLine'
+	| 'replaced'
+	| 'attachments'
+	| 'voteLine'
+	| 'voteBar'
+	| 'outcome'
+	| 'section'
+	| 'fold';
 
 /** The scoping class of each component. */
 export type Classes = Record<Component, string>;

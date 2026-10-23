@@ -7,7 +7,7 @@
 import { untrack } from 'svelte';
 import { search } from '$lib/api/search';
 import type { Schema } from '$lib/api/types';
-import type { BronRef } from '$lib/bron/href';
+import type { BronRef } from '$lib/bron/ref';
 import { EarlyEnter } from './enter.svelte';
 import { chamberOf } from './kamer';
 import {

@@ -12,7 +12,7 @@ import { getInstrumentDetail } from '$lib/api/instrument-cache';
 import { getDossier } from '$lib/api/dossiers';
 import { memberToGraphNode, syntheticNode, type GraphNode } from '$lib/graph/types';
 import type { Collection } from '$lib/vocabulary';
-import { keyEcli } from './address';
+import { keyEcli } from '$lib/text/ecli';
 
 export const headOfMember = (m: Schema<'MemberDetailDTO'>): GraphNode => memberToGraphNode(m);
 

@@ -32,7 +32,7 @@ describe('the parliamentary things said once (code-eenvoud F48–F62)', () => {
 		).toEqual([]);
 	});
 
-	it('counts and orders the choices of a stemming in $lib/components/parliamentary/stemming (F50)', () => {
+	it('counts and orders the choices of a stemming in $lib/votes/stemming (F50)', () => {
 		expect(
 			overtreders((t) =>
 				/\[['"](Voor|Tegen)['"]\]|['"]Voor['"],\s*['"]Tegen['"]|[!=]== ?['"](Voor|Tegen)['"]/.test(
@@ -58,7 +58,7 @@ describe('the parliamentary things said once (code-eenvoud F48–F62)', () => {
 		expect(
 			overtreders(
 				(t) => /\} voor(, | en )\$?\{|\}–\$?\{[^}]*tegen|\.Voor\b|\.Tegen\b/.test(t),
-				[plek('lib/components/parliamentary/stemming.ts')]
+				[plek('lib/votes/stemming.ts')]
 			)
 		).toEqual([]);
 	});
@@ -99,8 +99,8 @@ describe('the parliamentary things said once (code-eenvoud F48–F62)', () => {
 			overtreders(
 				(t) => /\bekFactionGroups\(|Map\.groupBy\([^)]*\.choice\)/.test(t),
 				[
-					plek('lib/components/parliamentary/vote-line.ts'),
-					plek('lib/components/explore/readers/voters.ts'),
+					plek('lib/votes/vote-line.ts'),
+					plek('lib/votes/voters.ts'),
 					plek('lib/components/explore/readers/DecisionReader.svelte', 'the stemming in full')
 				]
 			)

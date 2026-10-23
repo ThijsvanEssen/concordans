@@ -4,8 +4,8 @@
 import { csvText, type CsvCell } from '$lib/text/csv';
 import { buildBronHref } from '$lib/bron/href';
 import type { Schema } from '$lib/api/types';
-import { CHOICE } from '$lib/components/parliamentary/stemming';
-import { NO_DECISION_KIND } from '$lib/components/explore/index/decision-kind';
+import { CHOICE } from '$lib/votes/stemming';
+import { NO_DECISION_KIND } from '$lib/votes/decision-kind';
 
 export type Besluit = Schema<'DecisionSummaryDTO'>;
 export type Uitkomst = 'aangenomen' | 'verworpen' | 'overig';

@@ -181,7 +181,7 @@ export function uitgewerktIn(referring: unknown, bwb?: string | null): string | 
 }
 
 /** One sentence of the head of a regulation: `Op grond van` and the laws. */
-export type KopDeel = { werkwoord: string; wetten: { key: string; naam: string }[] };
+export type BasisPart = { werkwoord: string; wetten: { key: string; naam: string }[] };
 
 /**
  * The head of a regulation, from its `/basis`: the laws its Gelet op names, those that give
@@ -189,9 +189,9 @@ export type KopDeel = { werkwoord: string; wetten: { key: string; naam: string }
  * then those it only names (`Noemt in de aanhef Algemene wet bestuursrecht`). The articles
  * stand in its group Grondslag.
  */
-export function grondslagKopregel(
+export function basisHeadLines(
 	items: readonly Pick<Schema<'InstrumentBasisItem'>, 'instrument' | 'basis_kind'>[]
-): KopDeel[] {
+): BasisPart[] {
 	const wet = (i: (typeof items)[number]) => ({
 		key: i.instrument.key,
 		naam: i.instrument.citation_title ?? naamVan('instruments', i.instrument)

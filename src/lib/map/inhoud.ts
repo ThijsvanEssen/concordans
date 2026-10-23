@@ -10,7 +10,7 @@ import {
 	type PaperParagraph,
 	type PaperSource
 } from '$lib/text/anchor';
-import type { BodyItem } from '$lib/components/explore/readers/judgment-text';
+import type { BodyItem } from '$lib/text/judgment-text';
 
 /** The words a note quotes ("…", “…”), where it quotes at least a few words. */
 export function citaatUit(notitie: string | null | undefined): string | null {

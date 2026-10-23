@@ -9,7 +9,7 @@
 	import ReaderFrame from './ReaderFrame.svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import { getCommittee } from '$lib/api/committees';
-	import { OUTCOME_LABEL, type Outcome } from '$lib/components/parliamentary/stages';
+	import { OUTCOME_LABEL, type Outcome } from '$lib/votes/stages';
 	import { chamberName } from '$lib/components/parliamentary/chamber';
 	import { seatWord } from '$lib/components/parliamentary/career';
 	import { load } from '$lib/util/load.svelte';

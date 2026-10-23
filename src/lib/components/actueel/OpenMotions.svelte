@@ -8,7 +8,7 @@
 	import { dossierLabel } from '$lib/bron/dossier-naam';
 	import { korteDatum } from '$lib/text/datum';
 	import OutcomeMark from '$lib/components/parliamentary/Uitkomst.svelte';
-	import { motionKindLabel } from '$lib/components/parliamentary/motion-kind';
+	import { motionKindLabel } from '$lib/text/motion-kind';
 	import { dossierOf, loadOpenMotions } from './open-motions';
 
 	let motions = $state<Schema<'DocumentListItemDTO'>[]>([]);

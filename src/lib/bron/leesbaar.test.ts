@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fail, fakeApi } from '$lib/test/fakeApi';
 import { getExplanations } from '$lib/api/records';
 import {
-	ecliKey,
 	focusIn,
 	focusOfPad,
 	isExplorePath,
@@ -13,6 +12,7 @@ import {
 	exploreHref,
 	type Pad
 } from './address';
+import { ecliKey } from '$lib/text/ecli';
 import { focusUitPagina, lookUp } from './leesbaar';
 import { keepPaths } from './kept-paths';
 

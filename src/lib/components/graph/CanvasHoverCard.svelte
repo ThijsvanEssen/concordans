@@ -13,7 +13,8 @@
 	import { load } from '$lib/util/load.svelte';
 	import { langeDatum } from '$lib/text/datum';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { focusOf, openHref, refOf } from '$lib/bron/href';
+	import { focusOf, openHref } from '$lib/bron/href';
+	import { refOf } from '$lib/bron/ref';
 	import { bronKind } from '$lib/components/graph/bron-kind';
 	import { bronNaam } from '$lib/bron/naam';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';

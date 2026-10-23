@@ -5,7 +5,7 @@
 	// stemming; "vervangen door nr. 31", a link to that stuk. Only "verworpen" in red, as every
 	// "nee" at rest (Thijs, 10 Oct). Words from stuk-uitslag.ts.
 	import BronLink from '$lib/bron/BronLink.svelte';
-	import { nrWoord } from './vervanging';
+	import { numberWord } from '$lib/text/vervanging';
 	import { uitslagTekst, type StukUitslag } from './stuk-uitslag';
 
 	let { uitslag: u }: { uitslag: StukUitslag } = $props();
@@ -14,7 +14,7 @@
 </script>
 
 <span class="uitslag" class:uitslag--nee={u.uitkomst === 'verworpen'}
-	>{#if u.uitkomst === 'vervangen' && u.vervangers.length}vervangen door {nrWoord(u.vervangers)}
+	>{#if u.uitkomst === 'vervangen' && u.vervangers.length}vervangen door {numberWord(u.vervangers)}
 		{#each u.vervangers as v, i (v.key)}{separatorBefore(i, u.vervangers.length)}<BronLink
 				ref={{ collection: 'documents', key: v.key }}>{v.nummer}</BronLink
 			>{/each}{:else if u.besluit}<BronLink ref={{ collection: 'decisions', key: u.besluit }}

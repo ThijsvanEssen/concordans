@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { decisionMethod, decisionOutcome, decisionResult, isHammer } from './decision-kind';
+import {
+	decisionMethod,
+	decisionOutcome,
+	decisionResult,
+	isHammer
+} from '$lib/votes/decision-kind';
 
 describe('decisionOutcome', () => {
 	it('names a vote, a hamerstuk and a decision that is no vote', () => {

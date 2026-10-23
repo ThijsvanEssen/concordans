@@ -16,9 +16,7 @@ describe('the words of the Kamer said once, its state read from data (code-eenvo
 
 	it('names the kinds of bill in stages.ts (F66)', () => {
 		const own = /new Set\(\['Wetgeving'|'Initiatiefwetgeving'/;
-		expect(
-			overtreders((t) => own.test(t), [plek('lib/components/parliamentary/stages.ts')])
-		).toEqual([]);
+		expect(overtreders((t) => own.test(t), [plek('lib/votes/stages.ts')])).toEqual([]);
 	});
 
 	it('draws the state of a toezegging by commitmentTeken (F66)', () => {

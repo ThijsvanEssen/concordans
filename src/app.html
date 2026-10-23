@@ -16,10 +16,13 @@
 			window.__seoTerug = setTimeout(function () {
 				document.documentElement.classList.remove('js');
 			}, 4000);
-			// The start page's first paint keeps the letter it has: the fallback when Newsreader
-			// is not there yet (app.html, .vaste-letter).
+			// The start page's first paint keeps the letter it has: the fallback when Newsreader,
+			// or its italic (a judgment's summary), is not there yet (app.html, .vaste-letter).
 			requestAnimationFrame(function () {
-				if (!document.fonts.check("16px 'Newsreader'"))
+				if (
+					!document.fonts.check("16px 'Newsreader'") ||
+					!document.fonts.check("italic 16px 'Newsreader'")
+				)
 					document.documentElement.classList.add('vaste-letter');
 			});
 		</script>

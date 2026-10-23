@@ -5,12 +5,13 @@
 // of context").
 import { isCoverLetter, belongsToBill, motionOrAmendment } from '$lib/text/document-kind';
 import { textOf } from '$lib/text/words';
-import { findBucket, type NodeGraph, type Neighbor } from '$lib/api/nodes';
+import { findBucket } from '$lib/api/buckets';
+import type { NodeGraph, Neighbor } from '$lib/api/nodes';
 import { getActivity } from '$lib/api/records';
 import { ifExists } from '$lib/api/errors';
 import { getDossier } from '$lib/api/dossiers';
 import { CHAMBER_NAME, chamberFromParam } from '$lib/components/parliamentary/chamber';
-import { refOf } from '$lib/bron/href';
+import { refOf } from '$lib/bron/ref';
 import { dossierLabel } from './dossier-naam';
 import { artikelAnker } from '$lib/text/division';
 import { langeDatum } from '$lib/text/datum';
@@ -22,21 +23,15 @@ import type { Collection } from '$lib/vocabulary';
 import { dossierNummer } from './dossier-naam';
 import {
 	inbound,
-	laagVan,
+	layerOf,
 	outbound,
 	regel,
 	type Bak,
-	type Laag,
+	type Layer,
 	type Regel
 } from './behoort-layer';
-import {
-	ADVISED,
-	CONCLUSION,
-	EARLIER,
-	LATER,
-	procesgangLine,
-	translationLines
-} from './behoort-procesgang';
+import { procesgangLine, translationLines } from './behoort-procesgang';
+import { ADVISED, CONCLUSION, EARLIER, LATER } from './appeal-chain';
 
 /** What a line is made from: the bron's props and its light node (`limit=1`). */
 export type Context = { props: Record<string, unknown>; light: NodeGraph | null };
@@ -68,9 +63,9 @@ const TO_CASE = outbound('PART_OF', 'cases');
 const ABOUT_DOSSIER = outbound('ABOUT', 'dossiers');
 const MEMBER_OF_FACTION = outbound('MEMBER_OF', 'factions');
 
-const firstOf = (c: Context, bak: Bak, soort: string): Laag[] => {
+const firstOf = (c: Context, bak: Bak, soort: string): Layer[] => {
 	const n = findBucket(c.light, bak)?.items?.[0];
-	return n ? [laagVan(n, soort)] : [];
+	return n ? [layerOf(n, soort)] : [];
 };
 
 /**
@@ -82,8 +77,8 @@ const firstOf = (c: Context, bak: Bak, soort: string): Laag[] => {
 function lawLine(c: Context, withPlace: boolean): Regel[] {
 	const n = findBucket(c.light, TO_LAW)?.items?.[0];
 	const { term, law, divisions } = lawLineWords(n, c.props, withPlace);
-	const ref = n ? laagVan(n, term).ref : undefined;
-	const layer = ({ kind, name, short }: LawLayer, at?: string): Laag => ({
+	const ref = n ? layerOf(n, term).ref : undefined;
+	const layer = ({ kind, name, short }: LawLayer, at?: string): Layer => ({
 		soort: kind,
 		naam: name,
 		...(short ? { kort: short } : {}),
@@ -161,7 +156,7 @@ const offersLines = (c: Context): Regel[] => {
 };
 
 /** The Kamer in props, else in the bron's label (a dossier node: `TK`), a source value. */
-function chamberOf(c: Context): Laag[] {
+function chamberOf(c: Context): Layer[] {
 	const label = c.light?.node.labels?.find((l) => chamberFromParam(l));
 	const chamber = chamberFromParam(textOf(c.props.chamber) ?? label);
 	return chamber ? [{ soort: 'Kamer', naam: CHAMBER_NAME[chamber] }] : [];
@@ -172,9 +167,9 @@ function chamberOf(c: Context): Laag[] {
  * detail holds papers there (`senate.document_count`) or an outcome there (`ek_outcome`).
  */
 export function metEersteKamer(
-	kamers: Laag[],
+	kamers: Layer[],
 	d: { senate?: { document_count?: number | null } | null; ek_outcome?: unknown }
-): Laag[] {
+): Layer[] {
 	const ek = (d.senate?.document_count ?? 0) > 0 || !!d.ek_outcome;
 	if (!ek || kamers.some((k) => k.naam === CHAMBER_NAME.EK)) return kamers;
 	return kamers.some((k) => k.naam === CHAMBER_NAME.TK)
@@ -228,12 +223,12 @@ function factionLines(c: Context): Regel[] {
 	];
 }
 
-/** A dossier on an agenda as a layer, as `laagVan` names one: "Kamerstuk 36764 Cyberbeveiligingswet". */
+/** A dossier on an agenda as a layer, as `layerOf` names one: "Kamerstuk 36764 Cyberbeveiligingswet". */
 function dossierLaag(d: {
 	number: string;
 	short_title?: string | null;
 	title?: string | null;
-}): Laag {
+}): Layer {
 	return {
 		soort: 'Dossier',
 		naam: dossierLabel(d),
@@ -270,7 +265,7 @@ function activityLines(c: Context): Regel[] {
 			los: true,
 			laad: async () =>
 				((await activity()).moved_from ?? []).map(
-					(m): Laag => ({
+					(m): Layer => ({
 						soort: 'Activiteit',
 						naam: langeDatum(m.date) || 'een eerdere datum',
 						ref: { collection: 'activities', key: m.key }

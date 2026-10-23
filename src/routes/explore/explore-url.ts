@@ -8,7 +8,8 @@
 // (?bronnen, ?lid, ?rechter, ?van, ?tot, ?geldend, ?betrouwbaarheid, ?status, ?jaar, ?zoek),
 // the netwerk of chosen bronnen (?netwerk, ?uit, ?tussen), ?paneel (a phone's tab, read once)
 // and the position inside the text as the fragment.
-import { keyEcli, padHref, type Pad } from '$lib/bron/address';
+import { padHref, type Pad } from '$lib/bron/address';
+import { keyEcli } from '$lib/text/ecli';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import { citationRecord, enactedLawPlace } from '$lib/text/citation-record';
 import { isIndexCategory, type IndexCategory } from '$lib/components/explore/index/categories';

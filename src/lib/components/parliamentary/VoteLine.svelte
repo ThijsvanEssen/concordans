@@ -13,9 +13,9 @@
 	import { load } from '$lib/util/load.svelte';
 	import Stem from './Stem.svelte';
 	import Stembalk from './Stembalk.svelte';
-	import { voteBarOf } from './stembalk';
+	import { voteBarOf } from '$lib/votes/stembalk';
 	import Uitkomst from './Uitkomst.svelte';
-	import { hasSides, voteLineOf } from './vote-line';
+	import { hasSides, voteLineOf } from '$lib/votes/vote-line';
 
 	type Decision = Schema<'DecisionDTO'>;
 

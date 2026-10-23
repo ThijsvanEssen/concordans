@@ -134,7 +134,7 @@ describe('the tables in a judgment and a Kamerstuk (A55)', () => {
 
 	it('come with the paragraphs of a judgment and the alineas of a Kamerstuk', () => {
 		// A judgment's paragraph gives its tables to the body the reader lays out (bodyItems).
-		expect(bron('lib/components/explore/readers/judgment-text.ts')).toMatch(/\bp\.tables\b/);
+		expect(bron('lib/text/judgment-text.ts')).toMatch(/\bp\.tables\b/);
 		// A Kamerstuk's alinea with a table is one block (paperBlocks), in its reader and a bundel.
 		for (const path of [
 			'lib/components/explore/readers/DocumentReader.svelte',
@@ -142,9 +142,11 @@ describe('the tables in a judgment and a Kamerstuk (A55)', () => {
 		])
 			expect(bron(path), path).toMatch(/paperBlocks\(/);
 		// Neither sets the words of a Kamerstuk's line as a judgment's without its blocks.
+		// The first paint of a Kamerstuk sets them as its reader does (first-paint/paper.ts).
 		expect(filesWith(/paperBlocks\(/)).toEqual([
 			'lib/bron/PaperParagraph.svelte',
 			'lib/components/explore/readers/DocumentReader.svelte',
+			'lib/first-paint/paper.ts',
 			'lib/text/anchor.ts'
 		]);
 	});

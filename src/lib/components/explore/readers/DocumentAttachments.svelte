@@ -5,7 +5,7 @@
 	// (ACCOMPANIES inbound, one request). Verbonden has them all.
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { getBuckets } from '$lib/api/nodes';
-	import { laagVan, type Laag } from '$lib/bron/behoort-layer';
+	import { layerOf, type Layer } from '$lib/bron/behoort-layer';
 	import { bronHref } from '$lib/bron/href';
 	import { formatCount } from '$lib/text/getal';
 	import type { Collection } from '$lib/vocabulary';
@@ -18,7 +18,7 @@
 	/** The most rows listed here. */
 	const TOON = 50;
 	let open = $state(false);
-	let rijen = $state.raw<State<Laag[]> | null>(null);
+	let rijen = $state.raw<State<Layer[]> | null>(null);
 	const attachments = createLoader(
 		(key: string, signal: AbortSignal) =>
 			getBuckets(
@@ -30,7 +30,7 @@
 				// A bijlage carries the title of its bill; its own name is its subject ("Advies
 				// Politie"), as the source gives it.
 				ns.slice(0, TOON).map((n) => {
-					const l = laagVan(n, 'Bijlage');
+					const l = layerOf(n, 'Bijlage');
 					const onderwerp = textOf((n.props as Record<string, unknown> | undefined)?.subject);
 					return onderwerp ? { ...l, naam: onderwerp, vol: l.vol ?? l.naam } : l;
 				})

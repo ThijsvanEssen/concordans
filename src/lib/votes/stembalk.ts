@@ -4,7 +4,7 @@
 // drawing in Stembalk.svelte. Source values only.
 import type { Schema } from '$lib/api/types';
 import { capitalize } from '$lib/text/words';
-import { CHOICE, forAgainst } from './stemming';
+import { CHOICE, forAgainst } from '$lib/votes/stemming';
 
 /** The seats of each Kamer, the width of the whole bar. */
 const CHAMBER_SEATS = { TK: 150, EK: 75 } as const;

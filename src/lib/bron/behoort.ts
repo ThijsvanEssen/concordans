@@ -4,11 +4,12 @@
 // are a table (behoort-rules); a layer the data lacks is left out without a word.
 // Thijs, 9 Oct: "maak het consistent en klikbaar", and the conclusie and eerdere aanleg of an
 // arrest are "vrij cruciale info", not extra data.
-import { findBucket, type Bucket, type NodeGraph } from '$lib/api/nodes';
+import { findBucket } from '$lib/api/buckets';
+import type { Bucket, NodeGraph } from '$lib/api/nodes';
 import { ifExists } from '$lib/api/errors';
 import { getDossier } from '$lib/api/dossiers';
 import type { Collection } from '$lib/vocabulary';
-import { laagVan, type Behoort, type Regel } from './behoort-layer';
+import { layerOf, type Behoort, type Regel } from './behoort-layer';
 import { dossierNummer } from './dossier-naam';
 import { procesgangIds } from './behoort-procesgang';
 import { BANDS, kernOf, type BucketLine, type Context } from './behoort-rules';
@@ -18,7 +19,7 @@ function bucketLine(line: BucketLine, c: Context): Regel[] {
 	const n = findBucket(c.light, line.bak)?.items?.[0];
 	if (!n || (line.holds && !line.holds(n))) return [];
 	const label = typeof line.label === 'string' ? line.label : line.label(n);
-	return [{ id: line.id, label, lagen: [laagVan(n, line.soort)] }];
+	return [{ id: line.id, label, lagen: [layerOf(n, line.soort)] }];
 }
 
 /**

@@ -6,9 +6,7 @@
 	// menu is), where the number stands and its letter.
 	import { afterTick } from '$lib/util/after-tick';
 	import { report } from '$lib/api/errors';
-
-	/** The step of the spacing scale: a margin grows by it. */
-	const STEP = 4;
+	import { measurePlaces } from './place-column';
 
 	/**
 	 * `use:placeColumn={key}` on the text: its widest number as `--plaats-num` (rounded up to the
@@ -18,22 +16,8 @@
 	 */
 	export function placeColumn(node: HTMLElement, key?: unknown) {
 		let gone = false;
-		/** The width of a number's letters, not of the box it may be stretched to. */
-		const range = document.createRange();
-		const width = (n: HTMLElement) => {
-			if (typeof range.getBoundingClientRect !== 'function') return 0;
-			range.selectNodeContents(n);
-			return range.getBoundingClientRect().width;
-		};
 		const measure = () => {
-			if (gone) return;
-			const widest = Math.max(
-				0,
-				...[...node.querySelectorAll<HTMLElement>('.plaats-nummer')].map(width)
-			);
-			if (widest > 0)
-				node.style.setProperty('--plaats-num', `${Math.ceil(widest / STEP) * STEP}px`);
-			else node.style.removeProperty('--plaats-num');
+			if (!gone) measurePlaces(node);
 		};
 		const soon = () => {
 			afterTick(measure);

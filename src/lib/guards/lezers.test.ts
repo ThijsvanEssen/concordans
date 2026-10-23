@@ -36,7 +36,13 @@ describe('the readers', () => {
 		])
 			expect(bron(pad), pad).toMatch(/<FullTitle\b/);
 		expect(
-			overtreders((t) => />Volledige titel</.test(t), [plek('lib/components/ui/FullTitle.svelte')])
+			overtreders(
+				(t) => />Volledige titel</.test(t),
+				[
+					plek('lib/components/ui/FullTitle.svelte'),
+					plek('lib/first-paint/law.ts', 'FullTitle, painted before the app')
+				]
+			)
 		).toEqual([]);
 	});
 
@@ -123,7 +129,9 @@ describe('the readers', () => {
 				(t) => /class="[^"]*\bplaats-(?:marker|nummer)\b/.test(t),
 				[
 					plek('lib/bron/PlaceNumber.svelte'),
-					plek('lib/components/articles/ArticleText.svelte', "a lid's number, in its own layout")
+					plek('lib/components/articles/ArticleText.svelte', "a lid's number, in its own layout"),
+					plek('lib/first-paint/judgment.ts', "PlaceNumber's number, painted before the app"),
+					plek('lib/first-paint/paper.ts', "PlaceNumber's number, painted before the app")
 				]
 			)
 		).toEqual([]);
@@ -283,7 +291,7 @@ describe('the readers', () => {
 		// not a row or a section of their own, on one reader for amendementen and moties alike.
 		const lezer = bron('lib/components/explore/readers/DocumentReader.svelte');
 		const status = /\{#snippet statusLine\(\)\}([\s\S]*?)\{\/snippet\}/.exec(lezer)?.[1] ?? '';
-		expect(status).toMatch(/<Vervanging zinnen=\{vervanging\(doc\)\} \/>/);
+		expect(status).toMatch(/<Vervanging zinnen=\{replacementsOf\(doc\)\} \/>/);
 		expect(lezer.match(/<Vervanging\b/g)).toHaveLength(1);
 		expect(
 			overtreders(

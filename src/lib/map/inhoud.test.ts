@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { BodyItem } from '$lib/components/explore/readers/judgment-text';
+import type { BodyItem } from '$lib/text/judgment-text';
 import papers from '$lib/fixtures/paper-paragraphs-api.json';
 import { paperParagraphs } from '$lib/text/anchor';
 import { citaatUit, overwegingVan, paperParagraphOf, rondCitaat } from './inhoud';

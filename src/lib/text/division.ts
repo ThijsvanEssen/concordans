@@ -23,6 +23,22 @@ export function layersOf<D extends Division>(crumbs: D[], lawName: string | null
 }
 
 /**
+ * The layers that begin at an article of a law read whole (`cur`, after `prev`), each once,
+ * with its depth: a layer that is the law itself (Boek 6 of Burgerlijk Wetboek Boek 6) is no
+ * heading.
+ */
+export function newSections<D extends Division & { anchor?: string | null }>(
+	prev: { breadcrumb?: D[] | null } | undefined,
+	cur: { breadcrumb?: D[] | null },
+	lawName: string | null | undefined
+): (D & { depth: number; id: string | null | undefined })[] {
+	const before = layersOf(prev?.breadcrumb ?? [], lawName);
+	return layersOf(cur.breadcrumb ?? [], lawName)
+		.map((crumb, depth) => ({ ...crumb, depth, id: crumb.anchor }))
+		.filter((crumb, i) => before[i]?.label !== crumb.label || before[i]?.type !== crumb.type);
+}
+
+/**
  * The place of an article in one line: every layer by its designation, the innermost
  * with its heading. `Hoofdstuk 3, afdeling 3.2` and `Zorgvuldigheid en belangenafweging`.
  */

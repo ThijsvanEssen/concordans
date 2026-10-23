@@ -5,15 +5,11 @@
 import { truncate } from '$lib/text/words';
 import { getJudgmentDetail } from '$lib/api/judgments';
 import type { Schema } from '$lib/api/types';
-import {
-	bodyItems,
-	signatureStart,
-	type BodyItem
-} from '$lib/components/explore/readers/judgment-text';
+import { bodyItems, signatureStart, type BodyItem } from '$lib/text/judgment-text';
 import { overwegingVan } from '$lib/map/inhoud';
 import { uitspraakNoten, type Noot } from '$lib/text/voetnoten';
 import { paragraphAnchor } from '$lib/text/anchor';
-import { keyEcli } from './address';
+import { keyEcli } from '$lib/text/ecli';
 import { once } from '$lib/api/records';
 
 export type Uitspraak = {

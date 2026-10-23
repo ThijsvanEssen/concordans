@@ -19,7 +19,7 @@ import { describeBron, UNNAMED } from '$lib/bron/describe';
 import { activityLine, periodLabel, citedLine, rolesLine } from './lines';
 import type { Neighbor } from '$lib/api/nodes';
 import { positionsLabel } from './edge-meta';
-import { stemmingNaam } from '$lib/components/parliamentary/stemming';
+import { stemmingNaam } from '$lib/votes/stemming';
 
 describe('rowKey', () => {
 	it('tells apart two references from one article', () => {

@@ -137,7 +137,7 @@ const TEST_HOOKS: Uitzondering[] = [
 ];
 
 /** Modules tested through what they give other files, so no export only a test reads (code-eenvoud F98). */
-const NO_TEST_HOOKS = new Set(['lib/components/explore/readers/judgment-text.ts']);
+const NO_TEST_HOOKS = new Set(['lib/text/judgment-text.ts']);
 
 const EXPORT =
 	/^\s*export\s+(?:declare\s+)?(?:async\s+)?(?:const|let|function\*?|class|type|interface|enum)\s+([A-Za-z_$][\w$]*)/gm;
@@ -246,7 +246,6 @@ describe('nothing left over', () => {
 			'Row',
 			'Stuk',
 			'Uitkomst',
-			'Zin',
 			'countLine',
 			'feedQuery',
 			'kolomVan',
@@ -256,7 +255,6 @@ describe('nothing left over', () => {
 			'plekVan',
 			'soortVan',
 			'stemmingNaam',
-			'uitkomstVan',
 			'uitslagVan',
 			'vullingVan',
 			'wijzigingenVan'

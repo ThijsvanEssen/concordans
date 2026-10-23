@@ -1,7 +1,7 @@
 // Votes of the Tweede Kamer as the coalition cast them: the cases the coalition line answers,
 // for coalitie.test.ts and CoalitieRegel.test.ts.
 import type { Schema } from '$lib/api/types';
-import { CHOICE } from '$lib/components/parliamentary/stemming';
+import { CHOICE } from '$lib/votes/stemming';
 
 type Vote = Schema<'CoalitionVoteDTO'>;
 type Faction = Schema<'CoalitionFactionDTO'>;

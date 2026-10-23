@@ -2,11 +2,11 @@
 	import { articleRef } from '$lib/text/bw';
 	import { NOT_IN_DATA } from '$lib/text/coverage';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
-	import { ecliKey } from '$lib/bron/address';
+	import { ecliKey } from '$lib/text/ecli';
 	import { capitalize, textOf } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
-	import { bevindingen, kenmerken, strekking } from './judgment-outcome';
-	import { keyEcli } from '$lib/bron/address';
+	import { bevindingen, kenmerken, strekking } from '$lib/text/judgment-outcome';
+	import { keyEcli } from '$lib/text/ecli';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { citeOverwegingen, zaakNaam } from '$lib/text/judgment-cite';
 	import { citationRecord } from '$lib/text/citation-record';
@@ -36,8 +36,8 @@
 		signatureStart,
 		bodyItems,
 		splitSummary
-	} from './judgment-text';
-	import { sourceName } from '../law-head';
+	} from '$lib/text/judgment-text';
+	import { sourceName } from '$lib/text/law-head';
 	import { withdrawal } from './judgment-withdrawn';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { neighborsOf } from '$lib/api/nodes';

@@ -7,7 +7,7 @@ import {
 	publicationName,
 	sourceName,
 	treatyLink
-} from './law-head';
+} from '$lib/text/law-head';
 import { kindName } from '$lib/text/law-kind';
 
 const eu = {

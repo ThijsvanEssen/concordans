@@ -28,7 +28,7 @@
 	import type SigmaType from 'sigma';
 	import type Graph from 'graphology';
 	import { edgeKey, readEdge } from '$lib/verbonden/edge-meta';
-	import { keyEcli } from '$lib/bron/address';
+	import { keyEcli } from '$lib/text/ecli';
 	import { parseNodeId } from '$lib/vocabulary';
 	import type { GraphFilters } from '$lib/graph/store/types';
 	import type { NodeCounts } from '$lib/api/overlays';
@@ -43,7 +43,8 @@
 	import type { Collection, Relation } from '$lib/vocabulary';
 	import { relationLabel } from '$lib/verbonden/relation-words';
 	import type { FilterGroup, Rechter } from '$lib/verbonden/filter';
-	import { getInstrumentMeta, lawName } from '$lib/api/instrument-cache';
+	import { getInstrumentMeta } from '$lib/api/instrument-cache';
+	import { lawName } from '$lib/text/instrument-meta';
 	import { isDrawnGroup, type ContainerGroup, type Period } from '$lib/graph/container-membership';
 	import { untilDate, vandaag } from '$lib/text/datum';
 	import { metGroepVerborgen } from '$lib/graph/met-groep';

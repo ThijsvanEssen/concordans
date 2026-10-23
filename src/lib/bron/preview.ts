@@ -12,14 +12,14 @@ import { getNodeFirst, once } from '$lib/api/records';
 import { ifExists } from '$lib/api/errors';
 import { getNodeGraph } from '$lib/api/nodes';
 import { getArticleDetail } from '$lib/api/articles';
-import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
+import { dossierStatus, isOutcome } from '$lib/votes/stages';
 import { partsOf, partText } from '$lib/text/article-parts';
 import { courtName } from '$lib/text/court';
 import type { Cite } from '$lib/text/judgment-heading';
 import { articleTitle, citationRecord } from '$lib/text/citation-record';
 import { chamberName } from '$lib/components/parliamentary/chamber';
 import { shortDossierTitle } from '$lib/graph/types';
-import { votesSentence } from '$lib/components/parliamentary/stemming';
+import { votesSentence } from '$lib/votes/stemming';
 import { kindName } from '$lib/text/law-kind';
 import {
 	dossierLabel,
@@ -30,7 +30,8 @@ import {
 } from './dossier-naam';
 import { eersteIndiener, isEersteIndiener } from './submitters';
 import { bronLabel, isCollection, type Collection } from '$lib/vocabulary';
-import { focusOf, type BronRef } from './href';
+import { focusOf } from './href';
+import type { BronRef } from './ref';
 import { cut } from './tab-title';
 import { laadUitspraak, tekstVanOverweging } from './overweging';
 import { isOverwegingAnker } from '$lib/text/anchor';

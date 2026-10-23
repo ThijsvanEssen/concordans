@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Schema } from '$lib/api/types';
-import { decidingVote, hasSides, outcomeTone, sidesOf, voteLineOf } from './vote-line';
+import { decidingVote, hasSides, outcomeTone, sidesOf, voteLineOf } from '$lib/votes/vote-line';
 
 type Decision = Schema<'DecisionDTO'>;
 const decision = (d: Partial<Decision>): Decision => ({ key: 'k', ...d }) as Decision;

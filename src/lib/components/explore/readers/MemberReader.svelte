@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { outcomeWord } from '$lib/text/outcome';
 	import { atLeast } from '$lib/text/getal';
-	import { choiceRank } from '$lib/components/parliamentary/stemming';
+	import { choiceRank } from '$lib/votes/stemming';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { capitalize, count, textOf } from '$lib/text/words';
@@ -40,7 +40,7 @@
 	import { page } from '$app/state';
 	import BewindspersoonOverzicht from '$lib/components/parliamentary/BewindspersoonOverzicht.svelte';
 	import BewindspersoonKop from './BewindspersoonKop.svelte';
-	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
+	import { stemmingNaam } from '$lib/votes/stemming';
 	import Stem from '$lib/components/parliamentary/Stem.svelte';
 	import CoalitieRegel from '$lib/components/parliamentary/CoalitieRegel.svelte';
 	import { ambtZin } from '$lib/components/parliamentary/ambt';

@@ -4,7 +4,7 @@
 // search reads no notation itself.
 import { withBook } from '$lib/text/bw';
 import type { Schema } from '$lib/api/types';
-import type { BronRef } from '$lib/bron/href';
+import type { BronRef } from '$lib/bron/ref';
 import type { Collection } from '$lib/vocabulary';
 import { anchorOf, parseQualifier } from '$lib/text/qualifier';
 import { parsePad } from '$lib/bron/address';

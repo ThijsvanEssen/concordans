@@ -5,13 +5,13 @@
 	import { getContext, untrack } from 'svelte';
 	import { WAIT_KEY, type FrameWait } from './search-state.svelte';
 	import { getArticleDetail, getLawBasis } from '$lib/api/articles';
-	import { grondslagKopregel, type KopDeel } from '$lib/text/delegaties';
+	import { basisHeadLines, type BasisPart } from '$lib/text/delegaties';
 	import {
 		getInstrumentDetail,
 		instrumentMetaStore,
-		lawName,
 		primeInstrumentNames
 	} from '$lib/api/instrument-cache';
+	import { lawName } from '$lib/text/instrument-meta';
 	import { formatCount } from '$lib/text/getal';
 	import type { Schema } from '$lib/api/types';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
@@ -20,7 +20,7 @@
 	import { bronHref } from '$lib/bron/href';
 	import { keepInPlace, scrollInReader } from '$lib/bron/landing';
 	import { parseAnchor } from '$lib/text/anchor';
-	import { layersOf } from '$lib/text/division';
+	import { newSections } from '$lib/text/division';
 	import { page } from '$app/state';
 	import ReaderHead from './readers/ReaderHead.svelte';
 	import { citeItems } from '$lib/components/ui/cite-items';
@@ -28,7 +28,7 @@
 	import { peildatumVersions, versionOn } from './peildatum';
 	import { isDay } from '$lib/text/datum';
 	import { nog, verderLabel, type Richting } from './law-paging';
-	import { EMPTY_LIST, createLawList, isDivisionAnchor, type LawList, type Row } from './law-list';
+	import { EMPTY_LIST, createLawList, isDivisionAnchor, type LawList } from './law-list';
 	import { lawNodeKey } from '$lib/text/enacted-law';
 	import { setOwnLaw } from '$lib/text/own-article.svelte';
 	import {
@@ -38,7 +38,7 @@
 		lawKind,
 		sourceName,
 		treatyLink
-	} from './law-head';
+	} from '$lib/text/law-head';
 	import { kindName } from '$lib/text/law-kind';
 	import { navigate, withParams } from '$lib/util/address';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -54,6 +54,8 @@
 	import { statusOf } from '$lib/text/validity';
 	import { coverageLine } from '$lib/text/coverage';
 	import { followPosition } from './law-position.svelte';
+	import { afterTick } from '$lib/util/after-tick';
+	import { readerReady } from '$lib/first-paint/takeover';
 
 	let { bwbId }: { bwbId: string } = $props();
 	setOwnLaw(() => bwbId);
@@ -146,7 +148,7 @@
 	// A regulation's grondslag, under its head: the laws its Gelet op names (`/basis`), asked
 	// once its detail says it is no wet (a wet has no Gelet op); the articles stand in its
 	// group Grondslag in Verbonden, from the same answer.
-	let grondslag = $state<KopDeel[]>([]);
+	let grondslag = $state<BasisPart[]>([]);
 	/** The laws of a Gelet op named first; the rest opens in place. */
 	const GROUNDS_SHOWN = 3;
 	let allGrounds = $state(new Set<string>());
@@ -158,7 +160,7 @@
 		// Without it the head stands without its Gelet op line.
 		getLawBasis(bwb).then(
 			(b) => {
-				if (bwb === bwbId) grondslag = grondslagKopregel(b?.items ?? []);
+				if (bwb === bwbId) grondslag = basisHeadLines(b?.items ?? []);
 			},
 			(e) => report('Grondslag', e)
 		);
@@ -295,18 +297,15 @@
 		if (status === 'ready') position?.read();
 	});
 
+	// Its first articles are in: the first paint of the address gives the column to the reader
+	// once they stand where its own do (lib/first-paint/takeover.ts).
+	$effect(() => {
+		if (status === 'ready' && articles.length > 0) afterTick(readerReady);
+	});
+
 	/** The page before the first article shown: the article looked at stays in place. */
 	const previous = () =>
 		lawList.loadPrevious(() => (lawEl ? keepInPlace(lawEl, '.whole-article') : () => {}));
-
-	// The layers that begin at this article, each once; a layer that is the law itself
-	// (Boek 6 of Burgerlijk Wetboek Boek 6) is no heading.
-	function newSections(prev: Row | undefined, cur: Row) {
-		const before = layersOf(prev?.breadcrumb ?? [], lawTitle);
-		return layersOf(cur.breadcrumb ?? [], lawTitle)
-			.map((crumb, depth) => ({ ...crumb, depth, id: crumb.anchor }))
-			.filter((crumb, i) => before[i]?.label !== crumb.label || before[i]?.type !== crumb.type);
-	}
 </script>
 
 <!-- Paging on through the law, both ways: one control, the same label and count. -->
@@ -479,7 +478,7 @@
 		{/if}
 
 		{#each articles as a, i (a.id)}
-			{#each newSections(articles[i - 1], a) as section, j (j)}
+			{#each newSections(articles[i - 1], a, lawTitle) as section, j (j)}
 				<!-- The designation once (Hoofdstuk 3), the heading under it; deeper layers on one line. -->
 				<h2
 					class="whole-section whole-section--depth-{Math.min(section.depth, 2)}"

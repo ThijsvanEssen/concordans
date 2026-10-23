@@ -4,20 +4,9 @@
 import { naamVan } from '$lib/bron/menselijk';
 import { dossierLabel, dossierUitProps, type DossierNaamBron } from '$lib/bron/dossier-naam';
 import type { NodeGraph } from '$lib/api/nodes';
-import { citationRecord } from '$lib/text/citation-record';
 import { bewaarItem, type MapItem } from '$lib/map/map';
 import { ownKind } from '$lib/text/document-kind';
-import { textOf } from '$lib/text/words';
-
-/** What a document gives to cite it: its record (its light node's props apart). */
-type CitedPaper = {
-	key: string;
-	kind?: string | null;
-	title?: string | null;
-	chamber?: string | null;
-	number?: string | number | null;
-	dossier_numbers?: string[] | null;
-};
+import { paperRecord, type CitedPaper } from '$lib/text/paper-record';
 
 /**
  * The dossier of a paper with its name, from the paper's light node: its PART_OF neighbour, as
@@ -48,18 +37,7 @@ export function citePaper(
 	dossier: DossierNaamBron | null = null
 ) {
 	const kind = ownKind(doc.kind);
-	const record =
-		doc.number == null || doc.number === ''
-			? null
-			: citationRecord({
-					kind: 'kamerstuk',
-					paperKind: kind,
-					chamber: doc.chamber,
-					session_year: textOf(props.session_year),
-					dossier_number: textOf(props.dossier_number) ?? doc.dossier_numbers?.[0],
-					dossier_suffix: textOf(props.dossier_suffix),
-					number: doc.number
-				});
+	const record = paperRecord(doc, props);
 	const citation = record?.short ?? null;
 	const name = citation ?? doc.title ?? naamVan('documents', doc);
 	const full = record?.full ?? name;

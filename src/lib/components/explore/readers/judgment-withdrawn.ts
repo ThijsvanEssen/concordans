@@ -2,7 +2,7 @@
 // that name no one, without text, parties or citations of its own. The reader says why
 // instead of showing empty blocks; what cites it stays in Verbonden.
 import type { Schema } from '$lib/api/types';
-import { ecliKey } from '$lib/bron/address';
+import { ecliKey } from '$lib/text/ecli';
 
 type Judgment = Pick<
 	Schema<'JudgmentDTO'>,

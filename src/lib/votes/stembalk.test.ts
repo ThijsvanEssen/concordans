@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { voteBarOf } from './stembalk';
+import { voteBarOf } from '$lib/votes/stembalk';
 
 const stem = (name: string, choice: string, seats: number) => ({
 	voter_id: `factions/${name.toLowerCase()}`,

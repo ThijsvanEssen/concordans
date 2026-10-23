@@ -1,5 +1,5 @@
 // A judgment in a list: its name, its case number and its court, from its display name.
-import { keyEcli } from '$lib/bron/address';
+import { keyEcli } from '$lib/text/ecli';
 
 /** "Raad van State 2026-09-23 / 202406462/1/R2" in its parts: the court in full, the case number. */
 function parts(displayName: string | null | undefined) {

@@ -8,7 +8,7 @@ import {
 	dossierStatus,
 	isDossierKind,
 	isPhase
-} from './stages';
+} from '$lib/votes/stages';
 
 // The outcomes the API may send, read from the schema the types were generated from.
 const outcomes = openapi.components.schemas.DossierSummaryDTO.properties.outcome.anyOf.flatMap(

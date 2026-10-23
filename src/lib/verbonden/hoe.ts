@@ -23,7 +23,7 @@ import { officialNumber } from '$lib/bron/dossier-naam';
 import { passageOf, type Row } from './rows';
 import { uitsnede, type PassageParts } from './passage';
 import { confidenceWord } from './filter';
-import { votesSentence } from '$lib/components/parliamentary/stemming';
+import { votesSentence } from '$lib/votes/stemming';
 import { onAgendaOnly, DISCUSSED_IN_DEBATE } from '$lib/text/toezegging';
 
 /**

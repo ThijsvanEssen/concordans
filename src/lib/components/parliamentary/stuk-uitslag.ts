@@ -5,8 +5,8 @@
 // Source values only: nothing is read from a title, and a stuk without an outcome shows none.
 import { textOf } from '$lib/text/words';
 import { korteDatum } from '$lib/text/datum';
-import { genummerd, nrsTekst, type Nr } from './vervanging';
-import { votesShort } from './stemming';
+import { numbered, numbersText, type Nr } from '$lib/text/vervanging';
+import { votesShort } from '$lib/votes/stemming';
 
 const UITKOMSTEN = [
 	'aangenomen',
@@ -43,13 +43,13 @@ export function stukUitslag(p: Record<string, unknown> | null | undefined): Stuk
 		telling: votesShort(p.tally),
 		datum: korteDatum(textOf(p.decided_on)) || null,
 		besluit: textOf(p.decision),
-		vervangers: genummerd(p.replaced_by)
+		vervangers: numbered(p.replaced_by)
 	};
 }
 
 /** The outcome as plain words, for the table and the export: `aangenomen 139–11 op 15 apr. 2026`. */
 export function uitslagTekst(u: StukUitslag): string {
 	if (u.uitkomst === 'vervangen' && u.vervangers.length)
-		return `vervangen door ${nrsTekst(u.vervangers)}`;
+		return `vervangen door ${numbersText(u.vervangers)}`;
 	return [u.uitkomst, u.telling].filter(Boolean).join(' ') + (u.datum ? ` op ${u.datum}` : '');
 }

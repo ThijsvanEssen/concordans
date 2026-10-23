@@ -15,7 +15,7 @@ export type LawSource = {
 	props?: Record<string, unknown> | null;
 };
 
-/** A layer of the line in words (a `Laag` without its link): its kind, its name, the name a
+/** A layer of the line in words (a `Layer` without its link): its kind, its name, the name a
  *  phone's one line carries; `anchor` the place of a division in the whole law. */
 export type LawLayer = { kind: string; name: string; short?: string; anchor?: string };
 

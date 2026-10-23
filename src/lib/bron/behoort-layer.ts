@@ -1,10 +1,10 @@
 // The parts of the band "Behoort bij": a layer (a bron in a line), a line of the kern, a
 // group below them, and how a neighbour becomes a layer.
-import { textOf } from '$lib/text/words';
+import { outcomeOf } from './outcome-words';
 import { citationRecord } from '$lib/text/citation-record';
 import { naamVan } from '$lib/bron/menselijk';
 import type { Neighbor } from '$lib/api/nodes';
-import { refOf, type BronRef } from '$lib/bron/href';
+import { refOf, type BronRef } from './ref';
 import { dossierLabel, dossierNummer, dossierUitProps } from './dossier-naam';
 import { describeBron } from '$lib/bron/describe';
 import type { Collection, Relation } from '$lib/vocabulary';
@@ -13,7 +13,7 @@ import type { Collection, Relation } from '$lib/vocabulary';
  * One layer: a bron to open, or (in props) only a name; `vol` the full name where it is cut,
  * `kort` the name a phone's one line carries ("Awb", "Hoofdstuk 3").
  */
-export type Laag = {
+export type Layer = {
 	soort: string;
 	naam: string;
 	ref?: BronRef;
@@ -35,8 +35,8 @@ export type Laag = {
 export type Regel = {
 	id: string;
 	label: string;
-	lagen: Laag[];
-	laad?: (signal?: AbortSignal) => Promise<Laag[]>;
+	lagen: Layer[];
+	laad?: (signal?: AbortSignal) => Promise<Layer[]>;
 	/** Bronnen side by side (the fracties of a lid), not a chain: "; " in place of "›". */
 	los?: boolean;
 };
@@ -66,23 +66,11 @@ export type Groep = {
 export type Behoort = { regels: Regel[]; onder: Groep[] };
 
 /** A line where it names something. */
-export const regel = (id: string, label: string, lagen: Laag[]): Regel[] =>
+export const regel = (id: string, label: string, lagen: Layer[]): Regel[] =>
 	lagen.length > 0 ? [{ id, label, lagen }] : [];
 
-/**
- * How a judgment ended, as the band names it beside the instance: its `outcome`, after the
- * remedy that brought it there where the edge names one (`cassatie verworpen`). Null while the
- * data says none.
- */
-export function uitkomstVan(outcome: unknown, procedure?: unknown): string | null {
-	const o = textOf(outcome);
-	if (!o) return null;
-	const p = textOf(procedure)?.toLowerCase();
-	return p ? `${p} ${o}` : o;
-}
-
 /** A neighbour as a layer: its kind in the source's word, its name, its ref. */
-export function laagVan(n: Neighbor, soort: string): Laag {
+export function layerOf(n: Neighbor, soort: string): Layer {
 	const props = (n.props ?? {}) as Record<string, unknown>;
 	const ref = refOf(n.collection as Collection, n.key, props);
 	const vol = describeBron(n.collection, n.key, n.display_name, props, n.cite).title;
@@ -98,7 +86,7 @@ export function laagVan(n: Neighbor, soort: string): Laag {
 	if (n.collection === 'judgments') {
 		// An appeal against this one names its remedy on the edge (`Cassatie`); an earlier
 		// instance's own remedy is on another edge, so it has its outcome alone.
-		const uitkomst = uitkomstVan(
+		const uitkomst = outcomeOf(
 			props.outcome,
 			n.relation === 'APPEAL_OF' && n.direction === 'inbound' ? n.meta?.procedure_type : null
 		);

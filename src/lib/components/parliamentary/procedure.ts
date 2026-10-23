@@ -4,7 +4,7 @@
 // brieven en procedurevergaderingen worden geteld en staan achter één knop.
 import { outcomeWord } from '$lib/text/outcome';
 import { carriesBillTitle, motionOrAmendment, shortKind } from '$lib/text/document-kind';
-import { forAgainst } from './stemming';
+import { forAgainst } from '$lib/votes/stemming';
 import { capitalize, count, joinAnd, lowerFirst } from '$lib/text/words';
 import { noneHeld } from '$lib/text/coverage';
 import type { Schema } from '$lib/api/types';
@@ -13,7 +13,7 @@ import { parseNodeId } from '$lib/vocabulary';
 import { citationRecord } from '$lib/text/citation-record';
 import { stand } from './stand';
 import { CHAMBER_NAME } from './chamber';
-import { BILL_KINDS, INITIATIVE_BILL, methodPhrase, stepsToCome } from './stages';
+import { BILL_KINDS, INITIATIVE_BILL, methodPhrase, stepsToCome } from '$lib/votes/stages';
 import {
 	enigJaar,
 	sorteer,

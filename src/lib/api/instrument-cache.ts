@@ -2,34 +2,18 @@
 // a law name (citation formats, graph labels) reads it through
 // `instrumentMetaStore` or `getInstrumentMeta`.
 
-import { enactedLawOfKey } from '$lib/text/enacted-law';
-import { textOf } from '$lib/text/words';
-import { lawShortName } from '$lib/text/bw';
+import {
+	instrumentContainerId,
+	metaOf,
+	type InstrumentInput,
+	type InstrumentMeta
+} from '$lib/text/instrument-meta';
 import { writable, type Readable } from 'svelte/store';
 import { api, unwrap } from './client';
 import { INSTRUMENT_NAMES } from './first-pages';
 import { once } from './records';
 import type { Schema } from './types';
 import { onForget } from '$lib/util/forget';
-
-export type InstrumentMeta = {
-	/** BWB id, or the key of an instrument without one (EU). */
-	bwbId: string;
-	/** "Wetboek van Strafrecht" */
-	title: string | null;
-	/** "Sr", the abbreviation it is cited by; a book of the BW "Boek 6 BW". */
-	shortTitle: string | null;
-	citationTitle: string | null;
-	/** The abbreviation the API gives (`AVG`, where its short title is "Algemene verordening
-	 *  gegevensbescherming"), kept once known. */
-	abbreviation?: string | null;
-};
-
-/** The id a law is grouped under: its BWB id, or its own key when it has none (EU). */
-export function instrumentContainerId(input: { bwb_id?: unknown; key?: unknown }): string | null {
-	const key = textOf(input.key);
-	return textOf(input.bwb_id) ?? (key && enactedLawOfKey(key)) ?? key;
-}
 
 const cache = new Map<string, InstrumentMeta>();
 const store = writable(cache);
@@ -47,36 +31,11 @@ function flush() {
 }
 
 /** Merges what a response says about an instrument. Fields the response lacks keep their value. */
-export function recordInstrument(input: {
-	bwb_id?: unknown;
-	/** Id of an instrument without a BWB id. */
-	key?: unknown;
-	title?: unknown;
-	display_name?: unknown;
-	citation_title?: unknown;
-	short_title?: unknown;
-	abbreviation?: unknown;
-}): void {
+export function recordInstrument(input: InstrumentInput): void {
 	const bwbId = instrumentContainerId(input);
 	if (!bwbId) return;
-
 	const existing = cache.get(bwbId);
-	const title = textOf(input.title) ?? textOf(input.display_name) ?? existing?.title ?? null;
-	const citationTitle = textOf(input.citation_title) ?? existing?.citationTitle ?? null;
-	// A law is cited by its abbreviation (`AVG`), its short title only where it has none: an act
-	// of the EU's short title is a name ("Algemene verordening gegevensbescherming").
-	const abbreviation = textOf(input.abbreviation) ?? existing?.abbreviation ?? null;
-
-	const meta: InstrumentMeta = {
-		bwbId,
-		title: title ?? citationTitle,
-		shortTitle: lawShortName(
-			bwbId,
-			abbreviation ?? textOf(input.short_title) ?? existing?.shortTitle
-		),
-		citationTitle: citationTitle ?? title,
-		abbreviation
-	};
+	const meta = metaOf(bwbId, input, existing);
 	// Nothing new is no news: every drawn article records its law, and each change relabels
 	// the whole canvas.
 	if (existing && sameMeta(existing, meta)) return;
@@ -117,15 +76,6 @@ export function recordArticleLaw(
 		abbreviation: instrument.abbreviation
 	});
 }
-
-/**
- * A law by its name: its citation title (a title where it has none, see recordInstrument),
- * else its short title, else `fallback`, mostly its id.
- */
-export const lawName = <F extends string | null>(
-	meta: InstrumentMeta | null | undefined,
-	fallback: F
-): string | F => meta?.citationTitle ?? meta?.shortTitle ?? fallback;
 
 export function getInstrumentMeta(bwbId: string | null | undefined): InstrumentMeta | null {
 	return bwbId ? (cache.get(bwbId) ?? null) : null;

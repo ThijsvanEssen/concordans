@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import type { Schema } from '$lib/api/types';
 import { buildNodeLabel, type BaseNode } from '$lib/graph/types';
 import { previewFromNode } from './preview';
-import { laagVan } from './behoort-layer';
+import { layerOf } from './behoort-layer';
 import { headingCite } from '$lib/text/judgment-heading';
 
 type Cite = Schema<'JudgmentCiteDTO'>;
@@ -64,7 +64,7 @@ describe('a judgment cited one way', () => {
 			expect(headingCite(n)).toEqual(n.cite);
 			expect(previewFromNode('judgments', null, n.props!, n.cite).title).toBe(short);
 			expect(buildNodeLabel(n, 'judgment')).toBe(short);
-			const laag = laagVan(neighbor(n), 'Eerdere aanleg');
+			const laag = layerOf(neighbor(n), 'Eerdere aanleg');
 			expect([laag.naam, laag.kort]).toEqual([short, short]);
 		});
 	}
@@ -81,7 +81,7 @@ describe('a judgment cited one way', () => {
 		expect(previewFromNode('judgments', null, urgenda.props!, urgenda.cite).title).toBe(
 			'HR 20\u00a0december\u00a02019 (Urgenda)'
 		);
-		expect(laagVan(neighbor(urgenda), 'Hoger beroep of cassatie').naam).toBe(
+		expect(layerOf(neighbor(urgenda), 'Hoger beroep of cassatie').naam).toBe(
 			'HR 20\u00a0december\u00a02019 (Urgenda)'
 		);
 	});

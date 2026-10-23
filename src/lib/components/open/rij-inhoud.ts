@@ -3,7 +3,7 @@
 // a Kamerstuk in Verbonden, Bronnen and Bundels by its own (kernSoort): one core text for
 // one stuk wherever its row opens.
 import { motionOrAmendment } from '$lib/text/document-kind';
-import { hasVotes } from '$lib/components/parliamentary/stemming';
+import { hasVotes } from '$lib/votes/stemming';
 import type { FeedItem } from '$lib/components/actueel/feed';
 import { dictumUit } from '$lib/onderwerpen/strekking';
 

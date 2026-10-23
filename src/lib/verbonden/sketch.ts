@@ -4,7 +4,8 @@
 // API counts them (a judgment's court), so the drawing stays readable. Pure: the layout in
 // the coordinates of the drawing, which NetworkSketch renders. A name is never cut: it
 // wraps over lines, and a name that would cover another, or a circle, is left to its title.
-import { refId, type BronRef } from '$lib/bron/href';
+import { refId } from '$lib/bron/href';
+import type { BronRef } from '$lib/bron/ref';
 import { vormVanBron } from '$lib/bron/vormen';
 import type { Collection } from '$lib/vocabulary';
 import type { TierCount } from './tiers';

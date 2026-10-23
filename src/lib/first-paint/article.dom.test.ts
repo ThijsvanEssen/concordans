@@ -3,9 +3,15 @@ import { readFileSync } from 'node:fs';
 import { langeDatum } from '$lib/text/datum';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { ARTICLES_SOURCE, articleColumn, paintable, type ArticlePaint } from './article';
+import {
+	ARTICLES_SOURCE,
+	articleColumn,
+	articlePaint,
+	paintable,
+	type ArticlePaint
+} from './article';
 import { COMPONENTS, type Classes } from './classes';
-import { column, frame } from './paint';
+import { frame } from './paint';
 
 /** Each component's class as the build would give it, here its own name. */
 const K = Object.fromEntries(Object.keys(COMPONENTS).map((n) => [n, `K-${n}`])) as Classes;
@@ -138,7 +144,7 @@ describe('the first paint of an article', () => {
 		expect(paintable({ ...ARTICLE.article, tables: [{}] })).toBe(false);
 		expect(paintable({ ...ARTICLE.article, footnote_marks: [{}] })).toBe(false);
 		expect(paintable({ ...ARTICLE.article, text: ' ' })).toBe(false);
-		expect(column({ ...ARTICLE, article: { ...ARTICLE.article, text: '' } }, K)).toBeNull();
+		expect(articlePaint({ ...ARTICLE, article: { ...ARTICLE.article, text: '' } }, K)).toBeNull();
 	});
 
 	it('stands in the reading view: contents, the reader, Verbonden; the tab Inhoud on a phone', () => {

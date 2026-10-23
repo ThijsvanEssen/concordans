@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-	grondslagKopregel,
+	basisHeadLines,
 	grondslagWerkwoord,
 	uitgewerktIn,
 	artikelKort,
@@ -153,7 +153,7 @@ describe('the grondslag of a regulation', () => {
 
 	it('says in the head under which laws it is made, then those it only names', () => {
 		expect(
-			grondslagKopregel([
+			basisHeadLines([
 				wet('bwbr0052872', 'Cyberbeveiligingswet', 'delegates'),
 				wet('bwbr0026338', 'Drinkwaterwet', null),
 				wet('bwbr0005537', 'Algemene wet bestuursrecht', 'mentioned')
@@ -162,7 +162,7 @@ describe('the grondslag of a regulation', () => {
 			['Op grond van', ['Cyberbeveiligingswet', 'Drinkwaterwet']],
 			['Noemt in de aanhef', ['Algemene wet bestuursrecht']]
 		]);
-		expect(grondslagKopregel([])).toEqual([]);
+		expect(basisHeadLines([])).toEqual([]);
 	});
 
 	it('names the kind of what is issued, and a preamble that only names the article', () => {

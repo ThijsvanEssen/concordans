@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import Stembalk from '$lib/components/parliamentary/Stembalk.svelte';
-	import { voteBarOf } from '$lib/components/parliamentary/stembalk';
+	import { voteBarOf } from '$lib/votes/stembalk';
 	// What a row shows when it opens (Actueel, Gevolgd; a Kamerstuk in Verbonden, Bronnen and
 	// Bundels): the bron's own content, read in place, not a panel of actions (Thijs, 10 Oct: "doet niet zoveel behalve een extra klik
 	// toevoegen"). Nothing the row says already comes back. A motie its dictum, an amendement

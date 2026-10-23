@@ -9,8 +9,9 @@
 	import { artikelAnker, layersOf } from '$lib/text/division';
 	import { scrollInReader } from '$lib/bron/landing';
 	import { page } from '$app/state';
-	import { getInstrumentDetail, instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
-	import { lawCitationRecord } from './law-head';
+	import { getInstrumentDetail, instrumentMetaStore } from '$lib/api/instrument-cache';
+	import { lawName } from '$lib/text/instrument-meta';
+	import { lawCitationRecord } from '$lib/text/law-head';
 	import { instrumentLawId, lawIdOf, type GraphNode } from '$lib/graph/types';
 	import { bronHref } from '$lib/bron/href';
 	import Caret from '$lib/components/ui/Caret.svelte';

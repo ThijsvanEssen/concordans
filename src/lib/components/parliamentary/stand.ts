@@ -4,7 +4,7 @@ import { capitalize } from '$lib/text/words';
 import { korteDatum, langeDatum, onDate } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 import { CHAMBER_NAME } from './chamber';
-import { methodPhrase, phasePlace, voteMethod, type PhaseName } from './stages';
+import { methodPhrase, phasePlace, voteMethod, type PhaseName } from '$lib/votes/stages';
 
 // Where a bill stands, per body that handles it, Raad van
 // State, Tweede Kamer, Eerste Kamer, and one sentence that says it with a date. Derived from

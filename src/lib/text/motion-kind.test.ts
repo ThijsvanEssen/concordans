@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { motionKindFromParam, motionKindLabel } from './motion-kind';
+import { motionKindFromParam, motionKindLabel } from '$lib/text/motion-kind';
 
 describe('motion kinds (API 0.80, #862)', () => {
 	it('names a motion of censure and of no confidence, nothing else', () => {
