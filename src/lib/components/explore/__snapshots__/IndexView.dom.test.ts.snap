@@ -677,11 +677,29 @@ exports[`Bronnen, list by list > dossiers ? > requests 1`] = `
 
 exports[`Bronnen, list by list > dossiers ? > view 1`] = `
 {
-  "facetten": "Stand Openstaand 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Dossiersoort 1.997 zonder soort Fase 1.147 met fase Ministerie Toon 3.728 dossiers",
+  "facetten": "Stand Openstaand 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Dossiersoort 1.997 zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Toon 3.728 dossiers",
   "filters": [
     "Openstaand 3.728 (aan)",
     "Afgehandeld 4.077",
     "Alle dossiers 7.805",
+    "Begroting 716",
+    "Wetgeving 327",
+    "Initiatiefnota 248",
+    "Verdrag 236",
+    "Initiatiefwetgeving 189",
+    "Voorstel van wet 0",
+    "Memorie van toelichting 0",
+    "Advies Raad van State 104",
+    "Verslag 115",
+    "Nota n.a.v. het verslag 0",
+    "Nota van wijziging / Amendement 120",
+    "Stemmingen 315",
+    "Eindtekst 493",
+    "Buitenlandse Zaken 414",
+    "bzk 327",
+    "fin 259",
+    "ocw 182",
+    "vws 179",
   ],
   "lijst": "3.728 dossiers Geopend (nieuw → oud) Nummer Titel Fase 17050 Misbruik en oneigenlijk gebruik op het gebied van belastingen, sociale zekerheid en subsidies szw, geopend 14 apr. 2008 17257 Assemblee van de West-Europese Unie Initiatief van Kamerleden, geopend 13 jul. 1995 36600 Nota over de toestand van ’s Rijks Financiën Toevoegingen I, IIA 3van 28 dossiers › Volgende dossiers, nog 3.723",
   "openbaar": 2,
@@ -738,11 +756,29 @@ exports[`Bronnen, list by list > dossiers ?q=36600 > requests 1`] = `
 
 exports[`Bronnen, list by list > dossiers ?q=36600 > view 1`] = `
 {
-  "facetten": "Stand Openstaand 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Dossiersoort 1.997 zonder soort Fase 1.147 met fase Ministerie Toon 3.728 dossiers",
+  "facetten": "Stand Openstaand 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Dossiersoort 1.997 zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Toon 3.728 dossiers",
   "filters": [
     "Openstaand 3.728",
     "Afgehandeld 4.077",
     "Alle dossiers 7.805 (aan)",
+    "Begroting 716",
+    "Wetgeving 327",
+    "Initiatiefnota 248",
+    "Verdrag 236",
+    "Initiatiefwetgeving 189",
+    "Voorstel van wet 0",
+    "Memorie van toelichting 0",
+    "Advies Raad van State 104",
+    "Verslag 115",
+    "Nota n.a.v. het verslag 0",
+    "Nota van wijziging / Amendement 120",
+    "Stemmingen 315",
+    "Eindtekst 493",
+    "Buitenlandse Zaken 414",
+    "bzk 327",
+    "fin 259",
+    "ocw 182",
+    "vws 179",
   ],
   "lijst": "3.728 dossiers Geopend (nieuw → oud) Nummer Titel Fase 17050 Misbruik en oneigenlijk gebruik op het gebied van belastingen, sociale zekerheid en subsidies szw, geopend 14 apr. 2008 17257 Assemblee van de West-Europese Unie Initiatief van Kamerleden, geopend 13 jul. 1995 36600 Nota over de toestand van ’s Rijks Financiën Toevoegingen I, IIA 3van 28 dossiers › Volgende dossiers, nog 3.723",
   "openbaar": 2,
@@ -797,11 +833,29 @@ exports[`Bronnen, list by list > dossiers ?stand=all&sort=last_activity > reques
 
 exports[`Bronnen, list by list > dossiers ?stand=all&sort=last_activity > view 1`] = `
 {
-  "facetten": "Stand Openstaand 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Dossiersoort 1.997 zonder soort Fase 1.147 met fase Ministerie Wissen Toon 3.728 dossiers",
+  "facetten": "Stand Openstaand 3.728 Afgehandeld 4.077 Alle dossiers 7.805 Dossiersoort 1.997 zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Wissen Toon 3.728 dossiers",
   "filters": [
     "Openstaand 3.728",
     "Afgehandeld 4.077",
     "Alle dossiers 7.805 (aan)",
+    "Begroting 716",
+    "Wetgeving 327",
+    "Initiatiefnota 248",
+    "Verdrag 236",
+    "Initiatiefwetgeving 189",
+    "Voorstel van wet 0",
+    "Memorie van toelichting 0",
+    "Advies Raad van State 104",
+    "Verslag 115",
+    "Nota n.a.v. het verslag 0",
+    "Nota van wijziging / Amendement 120",
+    "Stemmingen 315",
+    "Eindtekst 493",
+    "Buitenlandse Zaken 414",
+    "bzk 327",
+    "fin 259",
+    "ocw 182",
+    "vws 179",
   ],
   "lijst": "3.728 dossiers Laatste activiteit Nummer Titel Fase 17050 Misbruik en oneigenlijk gebruik op het gebied van belastingen, sociale zekerheid en subsidies szw, laatste activiteit 24 sep. 2026 17257 Assemblee van de West-Europese Unie Initiatief van Kamerleden, laatste activiteit 6 sep. 2010 36600 Nota over de toestand van ’s Rijks Financiën Toevoegingen I, IIA 3van 28 dossiers › Volgende dossiers, nog 3.723",
   "openbaar": 2,
@@ -862,12 +916,25 @@ exports[`Bronnen, list by list > dossiers ?stand=closed&uitkomst=aangenomen&phas
 
 exports[`Bronnen, list by list > dossiers ?stand=closed&uitkomst=aangenomen&phase=Eerste+Kamer,Tweede+Kamer&has_phase=Raad+van+State&track=Wetsvoorstel&ministerie=bzk&van=2020-01-01&sort=number > view 1`] = `
 {
-  "facetten": "Stand Openstaand 3.728 Afgehandeld 4.077 Aangenomen 0 Alle dossiers 7.805 Dossiersoort 1.997 zonder soort Fase 1.147 met fase Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Wissen Toon 3.728 dossiers",
+  "facetten": "Stand Openstaand 3.728 Afgehandeld 4.077 Aangenomen 0 Alle dossiers 7.805 Dossiersoort 1.997 zonder soort Begroting 716 Wetgeving 327 Initiatiefnota 248 Verdrag 236 Initiatiefwetgeving 189 Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179 Wissen Toon 3.728 dossiers",
   "filters": [
     "Openstaand 3.728",
     "Afgehandeld 4.077",
     "Aangenomen 0 (aan)",
     "Alle dossiers 7.805",
+    "Begroting 716",
+    "Wetgeving 327",
+    "Initiatiefnota 248",
+    "Verdrag 236",
+    "Initiatiefwetgeving 189",
+    "Voorstel van wet 0",
+    "Memorie van toelichting 0",
+    "Advies Raad van State 104",
+    "Verslag 115",
+    "Nota n.a.v. het verslag 0",
+    "Nota van wijziging / Amendement 120",
+    "Stemmingen 315",
+    "Eindtekst 493",
     "Buitenlandse Zaken 414",
     "bzk 327 (aan)",
     "fin 259",
@@ -1251,13 +1318,17 @@ exports[`Bronnen, list by list > judgments ? > requests 1`] = `
 
 exports[`Bronnen, list by list > judgments ? > view 1`] = `
 {
-  "facetten": "Hoogste rechters 865 Hoge Raad 243 Parket bij de Hoge Raad 236 Raad van State 162 Centrale Raad van Beroep 217 College van Beroep voor het bedrijfsleven 7 Feitenrechtspraak 7.272 Caribisch deel 193 Europees 3.232 Overig 1 Rechtsgebied Procedure Toon 8.331 uitspraken",
+  "facetten": "Hoogste rechters 865 Hoge Raad 243 Parket bij de Hoge Raad 236 Raad van State 162 Centrale Raad van Beroep 217 College van Beroep voor het bedrijfsleven 7 Feitenrechtspraak 7.272 Caribisch deel 193 Europees 3.232 Overig 1 Rechtsgebied Civiel recht 7.243 Bestuursrecht 931 Strafrecht 164 Internationaal publiekrecht 1 Procedure Toon 8.331 uitspraken",
   "filters": [
     "Hoge Raad 243",
     "Parket bij de Hoge Raad 236",
     "Raad van State 162",
     "Centrale Raad van Beroep 217",
     "College van Beroep voor het bedrijfsleven 7",
+    "Civiel recht 7.243",
+    "Bestuursrecht 931",
+    "Strafrecht 164",
+    "Internationaal publiekrecht 1",
   ],
   "lijst": "8.331 uitspraken Datum (nieuw → oud) 20212026 Datum Uitspraak Aangehaald 14 okt. 2026 Raad van State ECLI:NL:RVS:2026:6087 Bij besluit van 21 juni 2023 heeft de raad van de gemeente Leeuwarden het bestemmingsplan "Leeuwarden - De Zuidlanden, plandeel De Hem" vastgesteld. In de toelichting bij het bestemmingsplan staat dat Leeuwarden groeit. Er is vraag naar meer woningen. Daarom wordt ten zuidoosten van het dorp Goutum een aantal buurtschappen gerealiseerd, met de overkoepelende naam "Zuidlanden". In de afgelopen jaren zijn de buurtschappen Goutum-Súd, Techum, Wiarda en De Klamp gebouwd. Buurtschap Unia is in voorbereiding. Buurtschap De Hem is het laatste te ontwikkelen buurtschap in Zuidlanden-Oost. In De Hem komen maximaal 395 woningen in verschillende typen en segmenten, variërend van rij- tot vrijstaande woningen en van dure koop tot sociale huur. De raad heeft het bestemmingsplan vastgesteld om deze ontwikkeling in juridisch-planologische zin mogelijk te maken. Dorpsbelang Goutum, [appellant sub 2] en It Fryske Gea en anderen kunnen zich alle niet verenigen met het bestemmingsplan en hebben daarom beroep ingesteld. 202304894/1/R3, Bestuursrecht 12 okt. 2026 Rechtbank Rotterdam ECLI:NL:RBROT:2026:13915 Kort geding. Huur bedrijfsruimte. Ontruimen vanwege herhaalde betalingsachterstand. 12347789 VV EXPL 26-479, Civiel recht 8 okt. 2026 Rechtbank Zeeland-West-Brabant ECLI:NL:RBZWB:2026:9751 Huur woning op terrein voormalige gasfabriek. Vordering huurder in kort geding op grond van gebreken (schimmel en vluchtige organische stoffen). Vordering afgewezen: gebreken onvoldoende onderbouwd, huurder werkt onvoldoende mee aan onderzoeken en eventueel verhelpen van gebreken door verhuuder. Huurder veroordeeld tot medewerking. 12345650 VV EXPL 26-49 (E), Civiel recht Volgende uitspraken, nog 8.328",
   "openbaar": 1,
@@ -1406,7 +1477,7 @@ exports[`Bronnen, list by list > judgments ?source=echr&subject=Huurrecht&sort=c
 
 exports[`Bronnen, list by list > judgments ?source=echr&subject=Huurrecht&sort=citation_count > view 1`] = `
 {
-  "facetten": "Hoogste rechters 296.126 Hoge Raad 57.506 Parket bij de Hoge Raad 34.665 Raad van State 100.193 Centrale Raad van Beroep 87.893 College van Beroep voor het bedrijfsleven 15.869 Feitenrechtspraak 678.574 Caribisch deel 21.094 Europees 3.527 EHRM 3.232 Hof van Justitie EU 295 Overig 1.824 Rechtsgebied Procedure Wissen Toon 8.331 uitspraken",
+  "facetten": "Hoogste rechters 296.126 Hoge Raad 57.506 Parket bij de Hoge Raad 34.665 Raad van State 100.193 Centrale Raad van Beroep 87.893 College van Beroep voor het bedrijfsleven 15.869 Feitenrechtspraak 678.574 Caribisch deel 21.094 Europees 3.527 EHRM 3.232 Hof van Justitie EU 295 Overig 1.824 Rechtsgebied Civiel recht 7.243 Bestuursrecht 931 Strafrecht 164 Internationaal publiekrecht 1 Procedure Wissen Toon 8.331 uitspraken",
   "filters": [
     "Hoge Raad 57.506",
     "Parket bij de Hoge Raad 34.665",
@@ -1415,6 +1486,10 @@ exports[`Bronnen, list by list > judgments ?source=echr&subject=Huurrecht&sort=c
     "College van Beroep voor het bedrijfsleven 15.869",
     "EHRM 3.232 (aan)",
     "Hof van Justitie EU 295",
+    "Civiel recht 7.243",
+    "Bestuursrecht 931",
+    "Strafrecht 164",
+    "Internationaal publiekrecht 1",
   ],
   "lijst": "8.331 uitspraken HUDOC wordt niet meer bijgewerkt, stand 8 oktober 2026 Meest geciteerd 20212026 Datum Uitspraak Aangehaald 14 okt. 2026 Raad van State ECLI:NL:RVS:2026:6087 Bij besluit van 21 juni 2023 heeft de raad van de gemeente Leeuwarden het bestemmingsplan "Leeuwarden - De Zuidlanden, plandeel De Hem" vastgesteld. In de toelichting bij het bestemmingsplan staat dat Leeuwarden groeit. Er is vraag naar meer woningen. Daarom wordt ten zuidoosten van het dorp Goutum een aantal buurtschappen gerealiseerd, met de overkoepelende naam "Zuidlanden". In de afgelopen jaren zijn de buurtschappen Goutum-Súd, Techum, Wiarda en De Klamp gebouwd. Buurtschap Unia is in voorbereiding. Buurtschap De Hem is het laatste te ontwikkelen buurtschap in Zuidlanden-Oost. In De Hem komen maximaal 395 woningen in verschillende typen en segmenten, variërend van rij- tot vrijstaande woningen en van dure koop tot sociale huur. De raad heeft het bestemmingsplan vastgesteld om deze ontwikkeling in juridisch-planologische zin mogelijk te maken. Dorpsbelang Goutum, [appellant sub 2] en It Fryske Gea en anderen kunnen zich alle niet verenigen met het bestemmingsplan en hebben daarom beroep ingesteld. 202304894/1/R3, Bestuursrecht 12 okt. 2026 Rechtbank Rotterdam ECLI:NL:RBROT:2026:13915 Kort geding. Huur bedrijfsruimte. Ontruimen vanwege herhaalde betalingsachterstand. 12347789 VV EXPL 26-479, Civiel recht 8 okt. 2026 Rechtbank Zeeland-West-Brabant ECLI:NL:RBZWB:2026:9751 Huur woning op terrein voormalige gasfabriek. Vordering huurder in kort geding op grond van gebreken (schimmel en vluchtige organische stoffen). Vordering afgewezen: gebreken onvoldoende onderbouwd, huurder werkt onvoldoende mee aan onderzoeken en eventueel verhelpen van gebreken door verhuuder. Huurder veroordeeld tot medewerking. 12345650 VV EXPL 26-49 (E), Civiel recht Volgende uitspraken, nog 8.328",
   "openbaar": 1,

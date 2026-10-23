@@ -52,7 +52,7 @@ export function areaTree(
 		];
 	});
 	return options.length
-		? [{ id: 'area', label: 'Rechtsgebied', kind: 'list', preview, options }]
+		? [{ id: 'area', label: 'Rechtsgebied', kind: 'list', open: true, preview, options }]
 		: [];
 }
 

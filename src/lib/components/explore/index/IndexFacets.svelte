@@ -26,6 +26,8 @@
 				/** While the first answer is on its way and there are no options yet: this many
 				 *  lines of room, so nothing under the group moves when the options come. */
 				rijen?: number;
+				/** Where a column folds its groups: this one stands open too (the rechtsgebied). */
+				open?: boolean;
 				/** A long list (the rechtsgebieden) shows this many, the chosen one too, then Alle N. */
 				preview?: number;
 		  }
@@ -164,18 +166,21 @@
 		g.preview ?? (counted(g) > LANG ? VOORPROEF : undefined);
 
 	/**
-	 * A column of this many option groups or more folds them (A192): the first stands open and
-	 * so does every group that holds a chosen option; the others show their head and total.
+	 * A column of this many option groups or more folds them (A192): the first stands open, so
+	 * does a group that says `open` and every group that holds a chosen option; the others show
+	 * their head and total.
 	 * Fewer groups all stand open. By the number of groups, not of options, so the column does
 	 * not refold when the counts or a late group come in.
 	 */
-	const FOLDS_FROM = 4;
+	const FOLDS_FROM = 5;
 	const lists = $derived(groups.filter((g) => g.kind === 'list'));
 	const folds = $derived(lists.length >= FOLDS_FROM);
 	const standsOpen = (g: FacetGroup) =>
 		!folds ||
 		g.kind !== 'list' ||
-		(g.options.some((o) => o.on && !o.default) ? true : isOpen(`facet:${g.label}`, g === lists[0]));
+		(g.options.some((o) => o.on && !o.default)
+			? true
+			: isOpen(`facet:${g.label}`, g === lists[0] || !!g.open));
 </script>
 
 <!-- While a page loads, the counts read "…" (as in the legend); the text keeps its contrast. -->
