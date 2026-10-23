@@ -22,15 +22,15 @@ A finger's 44 px (`--veld-h-raak`) stays around every one of them on a touch scr
 
 And one icon button, `ui/IconButton.svelte`, 24 px, for +, ×, zoom and ⋯; it names what it does.
 
-No chips: a choice shows in its control (in weight in the facet, as the value of the text menu). No native `select`: it is a text menu. The chips of the panel Netwerk are content (the chosen bronnen), not a filter.
+A choice shows in its control (in weight in the menu, as the value of the text menu). Chips only in two places: the filters chosen on a list page, by its count, each taking its filter off (`FilterBar`, besluit 40), and the panel Netwerk, whose chips are content (the chosen bronnen). No native `select`: it is a text menu.
 
 ## Four layers
 
 Every page and panel, from top to bottom:
 
 1. **Heading**: the title at the left, its actions at the right, at most three buttons (more in ⋯).
-2. **Choose-line**: what is shown, in `ui/Bepaalregel.svelte`: Zoeken, Periode and Kamer where the list has them, each labelled above its left edge, all 32 px on one line; on a phone under each other. Nothing else.
-3. **Refine**: on a page the facets at the left with their counts; in a narrow panel behind one text menu or Filter; on a phone behind Verfijnen (N), opened in place.
+2. **Choose-line**: what is shown, in `ui/Bepaalregel.svelte`: Zoeken and Kamer where the list has them (Periode where the page has no bar of filters), each labelled above its left edge, all 32 px on one line; on a phone under each other. Nothing else.
+3. **Refine**: on a list page (Bladeren, Actueel, Zoeken) the bar of filters over the list (`explore/index/FilterBar.svelte`, besluit 40): a framed button per dimension, Periode the third, the rest under Meer from five on; each a menu of options with their counts (0 grey, a field to find one in a long list), a choice closes it. Under it the head line: the count and the chips of the filters chosen, Wissen from two. On a phone one button, Verfijnen (N), opens them as a sheet with folded groups and Toon. In a narrow panel behind one text menu or Filter.
 4. **List**: a group's heading is its fold; at most one switch at its right (netwerk, named "Toon in het netwerk"); at most one line of controls under it (order, refine); one text link at the foot, Alle N.
 
 A row has no buttons of its own: a click on the row does it. Its actions (and a group heading's In het netwerk, for all its rows), Bewaar and In het netwerk, are icon buttons (`ui/RijActies.svelte`: a bookmark, the network with a +) that show on hover or focus of the row (`data-rij`), always on a phone at 32 px. At rest only the state shows: a filled bookmark when kept, the network when in the network. A box is for a choice in a filter, never for an action.
@@ -55,10 +55,10 @@ Two things at one level do not differ in size. In a timeline (Actueel, Onderwerp
 Two kinds of page, no third.
 
 - **Full width**: lists, overviews, timelines and text: the home page, Bladeren and each of its categories, Actueel, Onderwerpen and its Overzicht, Bundels and a bundel's page, the API reference, /docs, /over, /bronnen, /voorwaarden, /privacy.
-  - Every one sits in the frame of Bladeren: `.blad` (at most 1440 px, gutter `--s-6`; on a phone `--s-4`), with `.blad__indeling` for a facet column of 240 px, a gap of 40 px and the rest.
-  - The facet column is `.blad__facetten`: sticky, a quiet scroll bar clear of the counts, one right edge for controls and counts.
+  - Every one sits in the frame of Bladeren: `.blad` (at most 1440 px, gutter `--s-6`; on a phone `--s-4`). A list page with filters keeps the full width under its bar (`FilterBar`); a page with a left column (Onderwerpen, Bundels) has `.blad__indeling`, a column of 240 px, a gap of 40 px and the rest.
+  - The left column of Onderwerpen is `.blad__facetten`: sticky, a quiet scroll bar clear of the counts, one right edge for controls and counts.
   - The head is `.blad__kop` with the title and, at its right, the page's actions (`.blad__acties`). A page without facets lists in the list column all the same (`.blad__lijst`), on the edge of the other lists: Bundels and a bundel's page. Where the left column holds the groups of the page, a way to each, it is one component (`Inhoudsopgave`): Bronnen, Gevolgd and a bundel's page (its groups per wet of dossier; a jump on a shared bundel keeps its address). Not on a phone, not on paper.
-  - A line that sets the page runs over both columns: the choose-line of Actueel and Gevolgd (`Bepaalregel`). What belongs to the list stands in the list column: a bundel's research question, which goes with it into the citations and onto paper.
+  - A line that sets the page runs over both columns: the choose-line of Gevolgd (`Bepaalregel`). What belongs to the list stands in the list column: a bundel's research question, which goes with it into the citations and onto paper.
   - A text page keeps a reading width of 720 px inside the frame, on the same left edge (`.blad--tekst`).
   - The classes live in `src/lib/styles/frame.css`; no page sets a width of its own. The footer stands on the same edge.
 - **Panels**: the Verkenner and its readers beside Netwerk and Verbonden, each column its own measure (`--reader-*`). Unchanged.
@@ -119,7 +119,7 @@ Every series of dated lines is the one `Tijdlijn` (`src/lib/components/tijdlijn/
 
 ## Rules
 
-`src/lib/guards/bediening.test.ts`: no native `select` outside TekstMenu, no chips outside the panel Netwerk, no "meer" of its own beside AlleN, no control height but `--veld-h`, `--veld-h-raak` (and `--tik-h` for a tap target that is no button with words), no framed button but `.btn` and IconButton, no `.btn` modifier but `is-primary` and `is-text`, no `--veld-h-klein` or `--t-ui-micro`, no ink-filled control but the primary Knop, no menu item but `tekstmenu__item` (a menu of its own adds a class for its layout only), Verfijnen styled once in `basis.css`. `guards/tokens.test.ts` holds the tokens: no hex or `rgb()` in a style outside `tokens.css`, a radius only from `--r-*`, a face only through `--font-serif` or `--font-ui`. A place that keeps an older form is an `Uitzondering` with its reason (`src/lib/test/bronnen.ts`); one that no longer excepts anything fails its guard, so it comes out with the step that made it unneeded.
+`src/lib/guards/bediening.test.ts`: no native `select` outside TekstMenu, no chips outside the panel Netwerk and FilterBar, no "meer" of its own beside AlleN, no control height but `--veld-h`, `--veld-h-raak` (and `--tik-h` for a tap target that is no button with words), no framed button but `.btn` and IconButton, no `.btn` modifier but `is-primary` and `is-text`, no `--veld-h-klein` or `--t-ui-micro`, no ink-filled control but the primary Knop, no menu item but `tekstmenu__item` (a menu of its own adds a class for its layout only), Verfijnen styled once in `basis.css`. `guards/tokens.test.ts` holds the tokens: no hex or `rgb()` in a style outside `tokens.css`, a radius only from `--r-*`, a face only through `--font-serif` or `--font-ui`. A place that keeps an older form is an `Uitzondering` with its reason (`src/lib/test/bronnen.ts`); one that no longer excepts anything fails its guard, so it comes out with the step that made it unneeded.
 
 ## Zoeken
 

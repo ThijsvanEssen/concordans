@@ -12,12 +12,8 @@
 	import AllN from '$lib/components/ui/AlleN.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import TextLink from '$lib/components/ui/TekstLink.svelte';
-	import Verfijnen from '$lib/components/ui/Verfijnen.svelte';
-	import IndexFacets, {
-		selectOptions,
-		activeFilters,
-		type FacetGroup
-	} from '$lib/components/explore/index/IndexFacets.svelte';
+	import FilterBar from '$lib/components/explore/index/FilterBar.svelte';
+	import { selectOptions, type FacetGroup } from '$lib/components/explore/index/facets';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import { SEARCH_KINDS, type SearchKind } from '$lib/search/lanes';
 	import { bySection, groupLabel, sectionOf } from '$lib/search/present';
@@ -36,6 +32,7 @@
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
 	import { atLeast, formatCount } from '$lib/text/getal';
 	import { uniqueBy } from '$lib/util/unique';
+	import { plural } from '$lib/text/words';
 	import { lijstDoel as listTarget } from '$lib/stores/sprong';
 
 	// The names of the parameters in the address, which stay Dutch.
@@ -149,13 +146,20 @@
 				}
 			);
 		}
+		out.push({
+			id: 'periode',
+			label: 'Periode',
+			kind: 'range',
+			unit: 'date',
+			from,
+			to,
+			onChange: (van, tot) => patchUrl({ [P.from]: van || null, [P.to]: tot || null })
+		});
 		return out;
 	});
-	const chips = $derived(activeFilters(groupsOfFacets));
 	const clearFilters = () =>
 		patchUrl({ [P.kind]: null, [P.court]: null, [P.year]: null, [P.from]: null, [P.to]: null });
 
-	let filtersOpen = $state(false);
 	let listEl = $state<HTMLElement | null>(null);
 
 	const empty = $derived(
@@ -173,7 +177,16 @@
 
 <RouteKop />
 
-<div class="zoeken blad blad__indeling">
+<!-- How many hits, before the filters chosen. -->
+{#snippet countLine()}
+	<p class="total">
+		{#if results.done}{formatCount(total)}<span class="noun"
+				>&nbsp;{plural(total, 'resultaat', 'resultaten')}</span
+			>{:else}<span class="noun">zoeken…</span>{/if}
+	</p>
+{/snippet}
+
+<div class="zoeken blad">
 	<header class="blad__kop">
 		<div>
 			<h1 class="blad__titel">Zoeken</h1>
@@ -188,33 +201,19 @@
 				naam: 'Zoek in Concordans',
 				onInput: type
 			}}
-			periode={{
-				van: from,
-				tot: to,
-				onChange: (van, tot) => patchUrl({ [P.from]: van || null, [P.to]: tot || null })
-			}}
 		/>
 	</div>
 
-	<aside class="blad__facetten" aria-label="Verfijnen">
-		<Verfijnen
-			id="zoeken-facetten"
-			active={chips.length}
-			label={results.done ? `Toon ${formatCount(total)} resultaten` : 'Toon de resultaten'}
-			list={() => listEl}
-			bind:open={filtersOpen}
-		>
-			<IndexFacets
-				groups={groupsOfFacets}
-				pending={!results.done && all.every((g) => !g.hits.length)}
-			/>
-			{#if chips.length}
-				<p class="wis"><TextLink onclick={clearFilters}>Wissen</TextLink></p>
-			{/if}
-		</Verfijnen>
-	</aside>
-
 	<div class="lijst" aria-busy={!results.done} use:listTarget bind:this={listEl}>
+		<FilterBar
+			groups={groupsOfFacets}
+			pending={!results.done && all.every((g) => !g.hits.length)}
+			show={results.done ? `Toon ${formatCount(total)} resultaten` : 'Toon de resultaten'}
+			list={() => listEl}
+			onClear={clearFilters}
+			count={q.length >= 2 ? countLine : undefined}
+		/>
+
 		{#if q.length < 2}
 			<p class="stil">Typ een zoekterm.</p>
 		{/if}
@@ -324,12 +323,20 @@
 
 <style>
 	.regel {
-		grid-column: 1 / -1;
-		margin-bottom: var(--s-5);
+		margin-bottom: var(--s-4);
 	}
-	.wis {
-		margin: var(--s-3) 0 0;
+	/* The count over the list, as on every list page. */
+	.total {
+		margin: 0 var(--s-2) 0 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-h2);
+		font-weight: 600;
+		line-height: 1.1;
+	}
+	.noun {
 		font-size: var(--t-meta);
+		font-weight: 400;
+		color: var(--ink-3);
 	}
 	.groep {
 		margin: 0 0 var(--s-6);

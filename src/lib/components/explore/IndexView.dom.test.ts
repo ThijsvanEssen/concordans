@@ -94,6 +94,34 @@ async function sorts() {
 	return opties;
 }
 
+/** Every menu of the bar of filters, opened and closed again: per button what it holds. */
+async function menus() {
+	const out: Record<string, { opties: string[]; tekst: string }> = {};
+	for (const knop of document.querySelectorAll<HTMLElement>('.filterbar .wide .tekstmenu__knop')) {
+		await fireEvent.click(knop);
+		const menu = document.querySelector('[role="menu"]');
+		out[knop.getAttribute('aria-label') ?? text(knop)] = {
+			opties: [...(menu?.querySelectorAll('[role="menuitemcheckbox"]') ?? [])].map(
+				(o) => `${text(o)}${o.getAttribute('aria-checked') === 'true' ? ' (aan)' : ''}`
+			),
+			tekst: text(menu)
+		};
+		await fireEvent.click(knop);
+	}
+	return out;
+}
+
+/** Opens the menu of the bar that holds an option, and chooses it. */
+async function choose(name: RegExp) {
+	for (const knop of document.querySelectorAll<HTMLElement>('.filterbar .wide .tekstmenu__knop')) {
+		await fireEvent.click(knop);
+		const optie = screen.queryByRole('menuitemcheckbox', { name });
+		if (optie) return fireEvent.click(optie);
+		await fireEvent.click(knop);
+	}
+	throw new Error(`no option ${name}`);
+}
+
 /** What the reader sees: the choose-line, the filters, the list and its rows. */
 async function view() {
 	const zoek = document.querySelector<HTMLInputElement>('.regel input');
@@ -104,14 +132,13 @@ async function view() {
 			naam: zoek?.getAttribute('aria-label')
 		},
 		regel: text(document.querySelector('.regel')),
-		filters: [...document.querySelectorAll('#bladeren-facetten button[aria-pressed]')].map(
-			(b) => `${text(b)}${b.getAttribute('aria-pressed') === 'true' ? ' (aan)' : ''}`
-		),
-		facetten: text(document.getElementById('bladeren-facetten')),
+		filters: await menus(),
+		kop: text(document.querySelector('.filterbar .head')),
 		volgorde: await sorts(),
 		richting:
-			document.querySelector('.volgorde button:not([aria-haspopup])')?.getAttribute('aria-label') ??
-			null,
+			document
+				.querySelector('.filterbar .end button:not([aria-haspopup])')
+				?.getAttribute('aria-label') ?? null,
 		lijst: text(document.querySelector('.results')),
 		rijen: [...document.querySelectorAll('.results a.row-title')].map(
 			(a) => `${text(a)} -> ${a.getAttribute('href')}`
@@ -185,7 +212,7 @@ describe('the stand of a source', () => {
 	it('says under the count of the EHRM that its source is paused, and how far it goes', async () => {
 		await open('judgments', 'source=echr');
 		await waitFor(() =>
-			expect(text(document.querySelector('.result-head .dekking'))).toBe(
+			expect(text(document.querySelector('.filterbar .head .dekking'))).toBe(
 				'HUDOC wordt niet meer bijgewerkt, stand 8 oktober 2026'
 			)
 		);
@@ -247,12 +274,6 @@ describe('Bronnen, an empty list', () => {
 	});
 });
 
-/** The folded groups of the filter column, opened as a reader does (A192). */
-const openGroups = async () => {
-	for (const b of document.querySelectorAll('.facets button[aria-expanded="false"]'))
-		await fireEvent.click(b);
-};
-
 describe('Bronnen, the address', () => {
 	it('drops the filters and the open row in a tab, the Kamer kept', async () => {
 		await open('dossiers', 'kamer=EK&phase=Eerste+Kamer&q=x&sort=title&open=dossiers/1&leeg=1');
@@ -262,12 +283,11 @@ describe('Bronnen, the address', () => {
 
 	it('takes a filter on and off in one step, the open row and the sort kept', async () => {
 		const api = await open('dossiers', 'sort=title&open=dossiers/1');
-		await openGroups();
-		await fireEvent.click(screen.getByRole('button', { name: /^Begroting/ }));
+		await choose(/^Begroting/);
 		await settled();
 		expect(page.url.search).toMatchSnapshot();
 		expect(api.asked('/api/dossiers').at(-1)).toMatchObject({ query: { kind: 'Begroting' } });
-		await fireEvent.click(screen.getByText('Wissen'));
+		await fireEvent.click(screen.getByRole('button', { name: /^Begroting wissen$/ }));
 		expect(page.url.search).toMatchSnapshot();
 	});
 
@@ -286,8 +306,7 @@ describe('Bronnen, the address', () => {
 		const count = () => document.querySelector('.result-count')?.textContent?.trim();
 		const before = count();
 		expect(before).toMatch(/\d/);
-		await openGroups();
-		await fireEvent.click(screen.getByRole('button', { name: /^Begroting/ }));
+		await choose(/^Begroting/);
 		await waitFor(() => expect(count()).toBe('tellen…'));
 		failing = true;
 		answer(fail(500));

@@ -13,12 +13,9 @@ describe('list pages and the feed', () => {
 	});
 
 	it('runs a line that sets the page over both columns, and keeps what belongs to the list in its column (besluit 29)', () => {
-		// docs/bediening.md, Layout: the choose-line of Actueel and Gevolgd spans the frame; a
-		// bundel's research question is its content and stands over its groups, in the list column.
-		for (const path of [
-			'routes/(main)/actueel/+page.svelte',
-			'routes/(main)/onderwerpen/+page.svelte'
-		]) {
+		// docs/bediening.md, Layout: the choose-line of Gevolgd spans the frame; a bundel's
+		// research question is its content and stands over its groups, in the list column.
+		for (const path of ['routes/(main)/onderwerpen/+page.svelte']) {
 			const text = bron(path);
 			expect(text, path).toMatch(/class="regel"[\s\S]*?<Bepaalregel/);
 			expect(
@@ -31,6 +28,26 @@ describe('list pages and the feed', () => {
 		expect(voor).toMatch(/<Aantekening[^>]*placeholder="Onderzoeksvraag of aantekening"/);
 		expect(view).toMatch(/class="voor blad__lijst">\{@render voor\(\)\}/);
 		expect(regels(view).filter((r) => /grid-column/.test(r.body))).toEqual([]);
+	});
+
+	it('shows the filters of a list page in FilterBar alone, over the list (besluit 40)', () => {
+		// Bladeren, Actueel and Zoeken: one bar of filters, no column beside the list and no
+		// Verfijnen of their own. What a button holds (FacetMenu) is FilterBar's alone.
+		for (const path of [
+			'lib/components/explore/IndexView.svelte',
+			'routes/(main)/actueel/+page.svelte',
+			'routes/(main)/zoeken/+page.svelte'
+		]) {
+			const text = bron(path);
+			expect(text, path).toContain('<FilterBar');
+			expect(text, path).not.toMatch(/blad__facetten|blad__indeling|<Verfijnen|<FacetMenu/);
+		}
+		expect(
+			overtreders(
+				(t) => /import FacetMenu\b/.test(t),
+				[plek('lib/components/explore/index/FilterBar.svelte')]
+			)
+		).toEqual([]);
 	});
 
 	it('asks the facets of an index list by faceted, and builds its period once (code-eenvoud F47)', () => {

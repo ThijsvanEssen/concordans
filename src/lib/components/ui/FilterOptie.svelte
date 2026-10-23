@@ -20,6 +20,7 @@
 		wrap = false,
 		gedimd = false,
 		inline = false,
+		menu = false,
 		title
 	}: {
 		label: string;
@@ -43,6 +44,8 @@
 		gedimd?: boolean;
 		/** On a line with other things, as wide as its label: "netwerk" in a group's heading. */
 		inline?: boolean;
+		/** An item of a menu (FilterBar): checked as a menu item, not pressed as a button. */
+		menu?: boolean;
 		title?: string;
 	} = $props();
 </script>
@@ -55,7 +58,9 @@
 	class:is-dim={gedimd}
 	class:in={indent}
 	class:inline
-	aria-pressed={on}
+	role={menu ? 'menuitemcheckbox' : undefined}
+	aria-pressed={menu ? undefined : on}
+	aria-checked={menu ? on : undefined}
 	title={title ?? label}
 	onclick={onToggle}
 >

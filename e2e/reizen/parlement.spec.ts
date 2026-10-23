@@ -3,6 +3,7 @@
 // passed bill with its law, and a memorie van toelichting beside the article it explains.
 import { patchApi } from '../support/api';
 import { expect, test } from '../support/test';
+import { openFilter } from '../support/filters';
 import { naarVerbonden } from '../support/navigation';
 
 test('a dossier shows where it stands and opens a stuk of its procedure in place', async ({
@@ -128,11 +129,9 @@ test('the Stemmingen narrow to the motions of no confidence and say when the Kam
 	await expect(
 		page.getByText('Motie van wantrouwen', { exact: true }).filter({ visible: true }).first()
 	).toBeVisible();
-	if (touch) await page.getByRole('button', { name: /^Verfijnen/ }).click();
-	const kind = page
-		.getByRole('region', { name: 'Motie' })
-		.getByRole('button', { name: /^Motie van wantrouwen/ });
-	await expect(kind).toHaveAttribute('aria-pressed', 'true');
+	const option = await openFilter(page, touch, 'Motie', touch ? 'Motie' : 'Meer');
+	const kind = option(/^Motie van wantrouwen/);
+	await expect(kind).toHaveAttribute(touch ? 'aria-pressed' : 'aria-checked', 'true');
 	await kind.click();
 	await expect(page).not.toHaveURL(/motie=/);
 });

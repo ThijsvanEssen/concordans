@@ -69,7 +69,7 @@ describe('the hall', () => {
 		expect(bron('lib/components/explore/IndexView.svelte')).toContain('list.rowsShown');
 		// Without the rows no rule of a list under the hall; while the hall loads, its place.
 		expect(bron('lib/components/explore/IndexView.svelte')).toMatch(
-			/\{#if rowsShown\}<div class="result-head">/
+			/count=\{rowsShown && list\.Rows \? countLine : undefined\}/
 		);
 		expect(hall).toMatch(/hemi-card--loading[\s\S]*?class="sr-only" role="status">Laden…/);
 		// No name cut off; the whole row is the link, a finger's height.

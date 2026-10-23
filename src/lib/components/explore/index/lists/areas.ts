@@ -1,6 +1,6 @@
 // Rechtsgebied as a tree, for the laws (the TOOI thesaurus of the BWB) and the judgments (the
 // Rechtspraak's register), and a facet of values as the source names them.
-import type { FacetGroup } from '../IndexFacets.svelte';
+import type { FacetGroup } from '../facets';
 import type { ListContext } from './list';
 
 /** A main area with its specific areas, as a register gives them with their counts. */
@@ -24,9 +24,7 @@ export function areaTree(
 	areas: Area[],
 	chosenMain: string,
 	chosenSub: string,
-	choose: (main: string | null, sub: string | null) => void,
-	/** A long register (the 27 of the BWB) shows this many main areas, then Alle N. */
-	preview?: number
+	choose: (main: string | null, sub: string | null) => void
 ): FacetGroup[] {
 	const options = areas.flatMap((a) => {
 		const on = chosenMain === a.id;
@@ -51,9 +49,8 @@ export function areaTree(
 				: [])
 		];
 	});
-	return options.length
-		? [{ id: 'area', label: 'Rechtsgebied', kind: 'list', open: true, preview, options }]
-		: [];
+	// Without counts yet a button all the same, so the bar of filters does not shift when they come.
+	return [{ id: 'area', label: 'Rechtsgebied', kind: 'list', options }];
 }
 
 /**
@@ -84,6 +81,7 @@ export function sourceFacet(
 	);
 	if (current && !options.some((o) => o.on))
 		options.unshift({ id: current, label: current, count: 0, on: true, onClick: toggle(current) });
-	// No counts yet, or an API without the facet: no group, rather than an empty heading.
-	return options.length ? [{ id: param, label, kind: 'list', preview: 6, options }] : [];
+	// No counts yet, or an API without the facet: the group all the same, so the bar of filters
+	// keeps its buttons; its menu says it has none.
+	return [{ id: param, label, kind: 'list', options }];
 }

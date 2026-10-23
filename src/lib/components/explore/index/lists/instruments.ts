@@ -145,12 +145,8 @@ export const instruments = defineList<Row, State, ReturnType<typeof query>>({
 				p.legalArea !== '' && key === (conceptKey(legal.get(p.legalArea)) || p.legalArea);
 			const main = areas.find((a) => chosen(a.id) || a.narrower.some((n) => chosen(n.id)));
 			const sub = main?.narrower.find((n) => chosen(n.id));
-			return areaTree(
-				areas,
-				main?.id ?? '',
-				sub?.id ?? '',
-				(m, s) => patch({ legal_area: s ?? m }),
-				8
+			return areaTree(areas, main?.id ?? '', sub?.id ?? '', (m, s) =>
+				patch({ legal_area: s ?? m })
 			);
 		}
 
@@ -174,9 +170,7 @@ export const instruments = defineList<Row, State, ReturnType<typeof query>>({
 					}
 				];
 			});
-			return options.length
-				? [{ id: 'theme', label: 'Thema', kind: 'list' as const, preview: 6, options }]
-				: [];
+			return [{ id: 'theme', label: 'Thema', kind: 'list' as const, options }];
 		}
 	},
 	Rows: InstrumentRows

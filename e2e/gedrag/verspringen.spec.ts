@@ -1,5 +1,5 @@
-// Nothing under the filters of Actueel moves when their counts come in (UX-toets T5): the
-// lists of Ingediend door and Coalitie keep their room while the facets are on their way.
+// Nothing under the filters of Actueel moves when their counts come in (UX-toets T5): the bar
+// of filters keeps its buttons and the head line its height while the facets are on their way.
 import { expect, test } from '../support/test';
 
 test('Actueel: the filters keep their place while the counts come in', async ({ page, touch }) => {
@@ -12,20 +12,20 @@ test('Actueel: the filters keep their place while the counts come in', async ({ 
 		await route.fallback();
 	});
 	await page.goto('/actueel');
-	const heading = (name: string) => page.getByRole('heading', { level: 2, name, exact: true });
-	await expect(heading('Stemde')).toBeVisible();
-	const at = async (name: string) => (await heading(name).boundingBox())!.y;
-	const before = { Stemde: await at('Stemde'), Ministerie: await at('Ministerie') };
+	const meer = page.getByRole('button', { name: /^Meer(:|$)/ });
+	const head = page.locator('.filterbar .head');
+	await expect(meer).toBeVisible();
+	const at = async () => ({
+		meer: (await meer.boundingBox())!.x,
+		under: (await head.boundingBox())!.y + (await head.boundingBox())!.height
+	});
+	const before = await at();
 
 	release();
-	await expect(heading('Coalitie')).toBeVisible();
-	await expect(
-		page.getByRole('region', { name: 'Ingediend door' }).getByRole('button').first()
-	).toContainText(/\d/);
-	// A line of an option is 24 px: less than one of them.
-	expect(Math.abs((await at('Stemde')) - before.Stemde)).toBeLessThan(8);
-	// Coalitie came in beside its room, so what is under it moves by nothing either.
-	expect(Math.abs((await at('Ministerie')) - before.Ministerie)).toBeLessThan(8);
+	await expect(head).toContainText(/\d/);
+	const after = await at();
+	expect(after.meer).toBe(before.meer);
+	expect(Math.abs(after.under - before.under)).toBeLessThan(2);
 });
 
 // On a phone Verbonden stands under the text: nothing shifts while an article or a judgment comes

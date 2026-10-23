@@ -1,6 +1,6 @@
 // The register of Bronnen: per list the request an address asks, its period and its filters.
 import { describe, expect, it } from 'vitest';
-import { activeFilters } from '../IndexFacets.svelte';
+import { activeFilters } from '../facets';
 import { INDEX_CATEGORIES, type IndexCategory } from '../categories';
 import { LISTS } from '.';
 import { forParams, type ListContext } from './list';

@@ -2,7 +2,7 @@
 // (lists/<category>.ts). IndexView holds the address, the loading, the way back and the
 // frame, the same for every list.
 import type { Component, Snippet } from 'svelte';
-import type { FacetGroup } from '../IndexFacets.svelte';
+import type { FacetGroup } from '../facets';
 import type { FacetsApart } from '../faceted';
 import type { Cabinet, Ministry } from '../government';
 import type { IndexCategory } from '../categories';

@@ -17,20 +17,17 @@ describe('one fold (code-eenvoud F64)', () => {
 		expect(overtreders((t) => /'concordans:(?:legenda|netwerkpaneel)'/.test(t))).toEqual([]);
 	});
 
-	it('folds the option groups of every filter column in IndexFacets alone (A192)', () => {
-		// Uitspraken, Actueel and Zoeken all draw their filters with IndexFacets; none folds
+	it('folds the filters in FilterBar and its menus alone (A192)', () => {
+		// Uitspraken, Actueel and Zoeken all draw their filters with FilterBar; none folds
 		// groups of its own under a key `facet:`.
 		expect(
 			overtreders(
 				(t) => /['"`]facet:/.test(t),
-				[plek('lib/components/explore/index/IndexFacets.svelte')]
+				[
+					plek('lib/components/explore/index/FilterBar.svelte', 'the folds of the sheet'),
+					plek('lib/components/explore/index/FacetMenu.svelte', 'a long list folded in Meer')
+				]
 			)
 		).toEqual([]);
-		for (const page of [
-			'routes/(main)/zoeken/+page.svelte',
-			'routes/(main)/actueel/+page.svelte',
-			'lib/components/explore/IndexView.svelte'
-		])
-			expect(bron(page)).toContain('<IndexFacets');
 	});
 });

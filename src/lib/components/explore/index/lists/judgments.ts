@@ -12,7 +12,7 @@ import {
 	type EuropeanSource,
 	type Tier
 } from '$lib/vocabulary';
-import type { FacetGroup } from '../IndexFacets.svelte';
+import type { FacetGroup } from '../facets';
 import { COURT_GROUPS, MIXED_TIERS, SOURCE_OF_TIER } from '../courts';
 import { faceted } from '../faceted';
 import type { FacetsOf } from '$lib/api/lists';
@@ -162,6 +162,7 @@ function courtGroups(ctx: Context): FacetGroup[] {
 			{
 				id: `court-${g.label}`,
 				label: g.label,
+				button: 'Instantie',
 				note: count != null ? formatCount(count) : undefined,
 				kind: 'list',
 				options
@@ -207,7 +208,7 @@ export const judgments = defineList<Row, JudgmentsState, ReturnType<typeof query
 	load: (q, offset, signal, apart, set) =>
 		faceted('/api/judgments', q, apart, (f) => set({ facets: f.facets ?? null }))(offset, signal),
 	facets: (ctx) => [
-		// The groups of courts, each under its own heading; no heading Instantie above.
+		// The groups of courts under Instantie, each under its own heading in its menu.
 		...courtGroups(ctx),
 		...judgmentAreas(ctx),
 		...sourceFacet(

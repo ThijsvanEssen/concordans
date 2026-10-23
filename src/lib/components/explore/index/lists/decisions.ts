@@ -125,9 +125,6 @@ export const decisions = defineList<Row, DecisionsState, ReturnType<typeof query
 			...(kinds.length || p.kamer === 'TK'
 				? [{ id: 'soort', label: 'Stemmingsoort', kind: 'list' as const, options: kinds }]
 				: []),
-			...(motions.length
-				? [{ id: 'motie', label: 'Motie', kind: 'list' as const, options: motions }]
-				: []),
 			{
 				id: 'passed',
 				label: 'Uitslag',
@@ -149,6 +146,9 @@ export const decisions = defineList<Row, DecisionsState, ReturnType<typeof query
 					}
 				]
 			},
+			...(motions.length
+				? [{ id: 'motie', label: 'Motie', kind: 'list' as const, options: motions }]
+				: []),
 			{
 				id: 'dossier',
 				label: 'Dossier',

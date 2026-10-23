@@ -23,6 +23,8 @@
 		onder,
 		knop,
 		onClose,
+		gekozen: aan = false,
+		breed = false,
 		open = $bindable(false)
 	}: {
 		/** What the menu sets, for a screen reader: `Bronnen`, `Volgorde`. */
@@ -43,6 +45,10 @@
 		/** After it closes, however (a choice, Escape, Tab, a click outside): a menu that changed
 		 *  what it shows (a list of bundels in place of its items) goes back. */
 		onClose?: () => void;
+		/** A filter that holds a choice (FilterBar): an ink frame. */
+		gekozen?: boolean;
+		/** A menu of options with their counts: as wide as a citation in full. */
+		breed?: boolean;
 		/** Open; bound, so another control opens the menu too (Bewaard beside Bewaar's caret). */
 		open?: boolean;
 	} = $props();
@@ -60,6 +66,7 @@
 	<button
 		type="button"
 		class="btn tekstmenu__knop"
+		class:is-active={aan}
 		bind:this={button}
 		aria-haspopup="menu"
 		aria-expanded={open}
@@ -71,7 +78,7 @@
 		<!-- In the top layer (actions/top-layer.ts), so no column that scrolls on its own (the
 		     facets of Bladeren, the Overzicht) cuts it off; its keys and clicks stay the menu's. -->
 		<div
-			class="tekstmenu__lijst"
+			class="tekstmenu__lijst {breed ? 'is-breed' : ''}"
 			role="menu"
 			aria-label={label}
 			use:topLayer={{ anchor: button, close: sluit, align: rechts ? 'right' : 'left' }}
@@ -110,6 +117,9 @@
 	   button has the focus back after a choice and stays in ink at rest (Thijs, 10 Oct). */
 	.tekstmenu__knop {
 		gap: var(--s-1);
+	}
+	.tekstmenu__knop.is-active {
+		border-color: var(--ink);
 	}
 	/* Global: the one item of every menu, a step under the rule (`onder`) and the items of a
 	   menu with its own `inhoud` or of a menu of its own (a ⋯, the versions of an article). A

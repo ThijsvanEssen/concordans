@@ -6,6 +6,7 @@ import { expect, test } from '../support/test';
 import { bijlagenGelezen } from '../support/bijlagen';
 import { patchApi } from '../support/api';
 import { eigenVoetnoten, metVoetnoten } from '../support/voetnoten';
+import { chip, openFilter } from '../support/filters';
 
 test('Bronnen › Wetten: a filter narrows the list, a search finds a law that opens', async ({
 	page,
@@ -18,24 +19,18 @@ test('Bronnen › Wetten: a filter narrows the list, a search finds a law that o
 	await expect(count).toBeVisible();
 	const before = await count.textContent();
 
-	// On a phone the filters fold under Verfijnen.
-	if (touch) await page.getByRole('button', { name: 'Verfijnen' }).click();
-	const filter = page
-		.getByRole('region', { name: 'Rechtsgebied' })
-		.getByRole('button')
-		// The first button is the head of the group, the second its first option.
-		.nth(1);
+	// On a phone the filters wait in the sheet of Verfijnen.
+	const option = await openFilter(page, touch, 'Rechtsgebied');
+	const filter = option(/./).first();
+	const name = ((await filter.textContent()) ?? '').replace(/[\d.]+$/, '').trim();
 	await filter.click();
-	await expect(filter).toHaveAttribute('aria-pressed', 'true');
+	await expect(chip(page, name)).toBeAttached();
 	await expect(page).toHaveURL(/kind=instruments.*&/);
 	await expect(count).not.toHaveText(before!);
 	// Toon closes the filters on a phone and brings the list into view (besluit 30, X4).
 	if (touch) {
 		await page.getByRole('button', { name: /^Toon [\d.]+ wetten$/ }).click();
-		await expect(page.getByRole('button', { name: /^Verfijnen/ })).toHaveAttribute(
-			'aria-expanded',
-			'false'
-		);
+		await expect(page.getByRole('dialog', { name: 'Verfijnen' })).toHaveCount(0);
 		await expect(count).toBeInViewport();
 	}
 

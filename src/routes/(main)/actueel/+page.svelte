@@ -34,7 +34,6 @@
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import Verfijnen from '$lib/components/ui/Verfijnen.svelte';
 	import Follow from '$lib/components/ui/Follow.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import {
@@ -61,14 +60,15 @@
 	import { focusFirstNew } from '$lib/actions/rijen';
 	import type { Schema } from '$lib/api/types';
 	import { partyColor } from '$lib/components/explore/party-color.svelte';
-	import IndexFacets, {
+	import FilterBar from '$lib/components/explore/index/FilterBar.svelte';
+	import {
 		activeFilters,
 		selectOptions,
 		type FacetGroup
-	} from '$lib/components/explore/index/IndexFacets.svelte';
-	// Filters v2 (Thijs, 10 Oct: "ziet er goed uit"; ux-voorstel/filters/v2): the field and
-	// Periode on one line above the list, the facets with their counts on the left, a chosen
-	// option in bold where it is chosen and nowhere else; on a phone behind Verfijnen (N).
+	} from '$lib/components/explore/index/facets';
+	// The filters as on every list page (FilterBar, besluit 40): the field and the Kamer on one
+	// line, the bar of filters over the list, the filters chosen as chips by the count; on a
+	// phone behind Verfijnen (N).
 	import { type Cabinet } from '$lib/components/explore/index/government';
 	import { getCabinets } from '$lib/api/government';
 	import { ministryName } from '$lib/components/explore/index/ministries.svelte';
@@ -447,8 +447,6 @@
 	const coalitionCounts = $derived(facetMap(facets?.coalition));
 	/** Only a vote has a coalition: before the counts are in, room is kept for it where votes may be. */
 	const votesPossible = $derived(kinds.length === 0 || kinds.includes('stemming'));
-	/** The fracties of a view, about: the room the list keeps while its counts are on their way. */
-	const PENDING_FACTIONS = 9;
 	const groups = $derived.by<FacetGroup[]>(() => {
 		const kindCounts = facetMap(facets?.kind);
 		// Every fraction, as on Kamerleden; the chosen one also when this view has none of it.
@@ -463,7 +461,7 @@
 				options: FEED_KINDS.map((k) => ({
 					id: k,
 					label: KIND_LABEL[k].one,
-					// While counting, "…" beside each kind (IndexFacets `pending`).
+					// While counting, "…" beside each kind (FilterBar `pending`).
 					count: facets ? (kindCounts.get(k) ?? 0) : tellen ? 0 : undefined,
 					on: kinds.includes(k),
 					onClick: () => toggleKind(k)
@@ -475,7 +473,6 @@
 				label: 'Ingediend door',
 				chip: 'Ingediend door',
 				kind: 'list',
-				rijen: PENDING_FACTIONS,
 				options: factionCounts.map(([key, count]) => {
 					const short = factionNames[key] ?? key;
 					return {
@@ -525,7 +522,6 @@
 							id: 'coalitie',
 							label: 'Coalitie',
 							kind: 'list' as const,
-							rijen: Object.keys(COALITION).length,
 							options: (Object.keys(COALITION) as CoalitionWord[]).map((k) => ({
 								id: k,
 								label: COALITION[k].label,
@@ -598,6 +594,15 @@
 					]
 				: []),
 			{
+				id: 'periode',
+				label: 'Periode',
+				kind: 'range',
+				unit: 'date',
+				from: since,
+				to: until,
+				onChange: (van, tot) => patchUrl({ van: van || null, tot: tot || null })
+			},
+			{
 				id: 'komend',
 				label: 'Weergave',
 				kind: 'list',
@@ -614,12 +619,11 @@
 	});
 	const chips = $derived(activeFilters(groups));
 	/** Actueel as it opens, without a filter, a word or a period: what is first comes first. */
-	const unfiltered = $derived(!chips.length && !q.length && !since && !until && !chamber);
+	const unfiltered = $derived(!chips.length && !q.length && !chamber);
 	/** `Cyberbeveiligingswet`, `art. 3 Cyberbeveiligingswet`: the law chosen, as a filter names it. */
 	function wetNaamKort(w: GevolgdeWet) {
 		return w.artikel ? `${articleRef(null, w.artikel)} ${w.titel}` : w.titel;
 	}
-	let filtersOpen = $state(false);
 	let feedEl = $state<HTMLElement | null>(null);
 
 	/** The same view as an Atom feed: the filters chosen, so a subscribed feed keeps coming. */
@@ -646,7 +650,21 @@
 {/snippet}
 <svelte:window onkeydown={onKey} />
 
-<div class="actueel blad blad__indeling">
+<!-- How many events, before the filters chosen. -->
+{#snippet countLine()}
+	{#if total !== null}
+		<p class="count">
+			{formatCount(total)}
+			<span class="noun">{plural(total, 'gebeurtenis', 'gebeurtenissen')}</span>
+		</p>
+	{:else if tellen}
+		<p class="count"><span class="noun">tellen…</span></p>
+	{:else}
+		<p class="count" aria-hidden="true">&nbsp;</p>
+	{/if}
+{/snippet}
+
+<div class="actueel blad">
 	<header class="blad__kop">
 		<div>
 			<h1 class="blad__titel">Actueel</h1>
@@ -677,7 +695,7 @@
 		</div>
 	</header>
 
-	<!-- The one line above the list: the page's field and the period, nothing else. -->
+	<!-- The one line above the list: the page's field and the Kamer, nothing else. -->
 	<div class="regel">
 		<Bepaalregel
 			zoek={{
@@ -685,11 +703,6 @@
 				placeholder: 'Zoek in titels en dossiertitels',
 				naam: 'Zoek in Actueel',
 				onInput: typeQuery
-			}}
-			periode={{
-				van: since,
-				tot: until,
-				onChange: (van, tot) => patchUrl({ van: van || null, tot: tot || null })
 			}}
 			kamer={{
 				waarde: chamber || BOTH_CHAMBERS,
@@ -699,35 +712,18 @@
 		/>
 	</div>
 
-	<aside class="filters blad__facetten" aria-label="Verfijnen">
-		<Verfijnen
-			id="actueel-facetten"
-			active={chips.length}
-			label={total === null
+	<!-- A div: the page has one main, AppShell's. -->
+	<div class="feed" aria-busy={loading} use:lijstDoel bind:this={feedEl}>
+		<FilterBar
+			{groups}
+			pending={tellen}
+			show={total === null
 				? 'Toon de gebeurtenissen'
 				: `Toon ${formatCount(total)} ${plural(total, 'gebeurtenis', 'gebeurtenissen')}`}
 			list={() => feedEl}
-			bind:open={filtersOpen}
-		>
-			<IndexFacets {groups} pending={tellen} />
-			{#if chips.length}
-				<p class="wis"><TekstLink onclick={clearFilters}>Wissen</TekstLink></p>
-			{/if}
-		</Verfijnen>
-	</aside>
-
-	<!-- A div: the page has one main, AppShell's. -->
-	<div class="feed" aria-busy={loading} use:lijstDoel bind:this={feedEl}>
-		<div class="head">
-			{#if total !== null}
-				<p class="count">
-					{formatCount(total)}
-					<span class="noun">{plural(total, 'gebeurtenis', 'gebeurtenissen')}</span>
-				</p>
-			{:else if tellen}
-				<p class="count"><span class="noun">tellen…</span></p>
-			{/if}
-		</div>
+			onClear={clearFilters}
+			count={countLine}
+		/>
 		<!-- The Tweede Kamer's days without a sitting, and first the motions of censure and of no
 		     confidence not yet voted on (API 0.80): both after the first paint. -->
 		{#if chamber !== 'EK'}<NextSitting />{/if}
@@ -793,34 +789,19 @@
 </div>
 
 <style>
-	/* The frame and grid of Bladeren (lib/styles/frame.css). */
-	.regel {
-		grid-column: 1 / -1;
-	}
 	.stand {
 		margin: var(--s-1) 0 0;
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	/* The field and the period on one line, without rules around it. */
+	/* The field and the Kamer on one line, without rules around it. */
 	.regel {
-		margin-bottom: var(--s-5);
-	}
-	.wis {
-		margin: var(--s-3) 0 0;
-		font-size: var(--t-meta);
+		margin-bottom: var(--s-4);
 	}
 
-	/* The count above the list, on the ink rule that opens it. */
-	.head {
-		display: flex;
-		align-items: baseline;
-		margin: 0 0 var(--s-3);
-		padding-bottom: var(--s-2);
-		border-bottom: 2px solid var(--ink);
-	}
+	/* The count over the list, on the ink rule that opens it (FilterBar). */
 	.count {
-		margin: 0;
+		margin: 0 var(--s-2) 0 0;
 		font-size: var(--t-h2);
 		font-weight: 600;
 	}
@@ -830,6 +811,9 @@
 		font-size: var(--t-meta);
 		font-weight: 400;
 		color: var(--ink-3);
+	}
+	.noun:first-child {
+		margin-left: 0;
 	}
 
 	.days--stale {
@@ -852,12 +836,6 @@
 	@media (max-width: 768px) {
 		.regel {
 			margin-bottom: var(--s-3);
-		}
-		.filters {
-			position: static;
-			max-height: none;
-			overflow: visible;
-			margin-bottom: var(--s-4);
 		}
 	}
 </style>

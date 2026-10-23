@@ -2,6 +2,7 @@
 // follows, with the overview of one.
 import { goToSource } from '../support/navigation';
 import { expect, test } from '../support/test';
+import { chip, openFilter } from '../support/filters';
 
 test('Actueel: a period and a kind narrow the days', async ({ page, touch }) => {
 	await page.goto('/actueel');
@@ -10,22 +11,21 @@ test('Actueel: a period and a kind narrow the days', async ({ page, touch }) => 
 	const count = page.getByText(/^[\d.]+\s*gebeurtenissen$/);
 	const all = await count.textContent();
 
+	await openFilter(page, touch, 'Periode');
 	const period = page.getByRole('group', { name: 'Periode' });
 	await period.getByRole('button', { name: 'Maand' }).click();
 	await expect(period.getByRole('button', { name: 'Maand' })).toHaveAttribute(
 		'aria-pressed',
 		'true'
 	);
+	await page.keyboard.press('Escape');
 	await expect(page).toHaveURL(/\/actueel\?.+/);
 	await expect(count).not.toHaveText(all!);
 
-	if (touch) await page.getByRole('button', { name: 'Verfijnen' }).click();
-	const motie = page
-		.getByRole('region', { name: 'Gebeurtenis' })
-		.getByRole('button', { name: /^Motie/ });
-	await motie.click();
-	await expect(motie).toHaveAttribute('aria-pressed', 'true');
+	const option = await openFilter(page, touch, 'Gebeurtenis');
+	await option(/^Motie/).click();
 	if (touch) await page.keyboard.press('Escape');
+	await expect(chip(page, 'Motie')).toBeVisible();
 	// Each day then counts moties only.
 	const days = page.getByRole('heading', { level: 2, name: /\d{4}/ });
 	await expect(days.first()).toHaveText(/\d+ moties?$/);
@@ -63,11 +63,20 @@ test('Actueel: who submitted and who voted are two filters, each under its own n
 }) => {
 	await page.goto('/actueel');
 	await expect(page.getByRole('heading', { level: 2, name: /^Vandaag/ })).toBeVisible();
-	if (touch) await page.getByRole('button', { name: 'Verfijnen' }).click();
-	await expect(page.getByRole('region', { name: 'Ingediend door' })).toBeVisible();
-	await expect(page.getByRole('region', { name: 'Stemde' })).toBeVisible();
-	// How a fractie voted is asked only once a fractie is chosen.
-	await expect(page.getByRole('region', { name: 'Stem', exact: true })).toHaveCount(0);
+	// Ingediend door has a button of its own; Stemde stands under Meer, Stem only once a fractie
+	// is chosen there.
+	await openFilter(page, touch, 'Ingediend door');
+	if (touch) {
+		const sheet = page.getByRole('dialog', { name: 'Verfijnen' });
+		await expect(sheet.getByRole('button', { name: 'Stemde', exact: true })).toBeVisible();
+		await expect(sheet.getByRole('button', { name: 'Stem', exact: true })).toHaveCount(0);
+	} else {
+		await page.keyboard.press('Escape');
+		await page.getByRole('button', { name: /^Meer(:|$)/ }).click();
+		const menu = page.getByRole('menu');
+		await expect(menu.getByText('Stemde', { exact: true })).toBeVisible();
+		await expect(menu.getByText('Stem', { exact: true })).toHaveCount(0);
+	}
 });
 
 test('Actueel: the Kamer narrows to the Eerste Kamer, chosen before the days are in', async ({

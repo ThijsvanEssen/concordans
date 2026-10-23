@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { sideScroll } from '$lib/actions/side-scroll';
 	import { tick, untrack } from 'svelte';
-	// Index: browse one category at a time. Beside the list a column of filters, each
+	// Index: browse one category at a time. Over the list a bar of filters (FilterBar), each
 	// option with the number of bronnen it holds under the other filters. A row says what
 	// the bron is in its own lines; its title opens it, and at its end stand the ways on in
 	// one click (Lezen, Netwerk; Openen for a bron read beside the network). No panel
@@ -32,7 +32,8 @@
 	import { atomHref } from '$lib/components/actueel/feed';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
-	import IndexFacets, { activeFilters, type FacetGroup } from './index/IndexFacets.svelte';
+	import FilterBar from './index/FilterBar.svelte';
+	import { activeFilters, type FacetGroup } from './index/facets';
 	import type { FacetsApart } from './index/faceted';
 	import {
 		CHAMBER_OPTIONS,
@@ -49,7 +50,6 @@
 	} from './index/categories';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { formatCount } from '$lib/text/getal';
-	import Verfijnen from '$lib/components/ui/Verfijnen.svelte';
 	import { navigate, withParams } from '$lib/util/address';
 	import { LISTS } from './index/lists';
 	import { INDEX_FILTER_PARAMS, readParams, type IndexPatch } from './index/lists/params';
@@ -466,10 +466,10 @@
 				} satisfies FacetGroup)
 			: null;
 	});
-	// The period stands in the choose-line (Bepaalregel), the other groups in the facet column.
+	// The period is a button of the bar as every other filter (FilterBar).
 	const facetten = $derived(list.facets(ctx));
-	const chips = $derived(activeFilters(periode ? [...facetten, periode] : facetten));
-	let filtersOpen = $state(false);
+	const filters = $derived(periode ? [...facetten, periode] : facetten);
+	const chips = $derived(activeFilters(filters));
 
 	// The Eerste Kamer's composition as read from its site: the day of the composition shown,
 	// and the first read, before which nothing is known. Each row carries the same source,
@@ -570,11 +570,11 @@
 
 	<div class="stage">
 		<div class="stage-scroll" bind:this={scroller}>
-			<div class="page blad blad__indeling">
+			<div class="page blad">
 				<!-- The page names itself for a screen reader; the tabs above show it. -->
 				<h1 class="sr-only">Bronnen: {categoryLabel(category)}</h1>
-				<!-- The choose-line (docs/bediening.md): the field of the list and its period, over
-				     the facets and the list. -->
+				<!-- The choose-line (docs/bediening.md): the field of the list and its Kamer, over
+				     the filters and the list. -->
 				<div class="regel">
 					<Bepaalregel
 						zoek={{
@@ -583,14 +583,6 @@
 							naam: `Zoek in ${labelOf(category)}`,
 							onInput: typeQuery
 						}}
-						periode={periode
-							? {
-									label: periode.label,
-									van: periode.from,
-									tot: periode.to,
-									onChange: periode.onChange
-								}
-							: null}
 						kamer={list.chamber
 							? {
 									waarde: kamer,
@@ -600,32 +592,6 @@
 							: null}
 					/>
 				</div>
-				<aside class="facet-col blad__facetten" aria-label="Verfijnen">
-					<Verfijnen
-						id="bladeren-facetten"
-						active={chips.length}
-						label={showLabel}
-						list={() => results}
-						bind:open={filtersOpen}
-					>
-						<IndexFacets
-							groups={facetten}
-							pending={(!pages[category] && !error) || facettenLaden}
-							stale={facettenFout !== null}
-						/>
-						{#if facettenFout}
-							<LoadState
-								state={{ status: 'error', error: facettenFout }}
-								what="De tellingen"
-								plural
-								retry={facettenOpnieuw}
-							/>
-						{/if}
-						{#if chips.length}
-							<p class="wis"><TekstLink onclick={clearFilters}>Wissen</TekstLink></p>
-						{/if}
-					</Verfijnen>
-				</aside>
 
 				<div
 					class="results"
@@ -635,56 +601,18 @@
 					aria-busy={loading}
 					style:--row-aside="{columns.asideW}px"
 				>
-					{#if list.Header}<list.Header {ctx} />{/if}
-
-					<!-- How many, under which filters; a click on a filter takes it off. -->
-					{#if rowsShown}<div class="result-head">
-							{#if list.Rows && loading && pages[category]}
-								<!-- A filter on its way: the count it will have, not the one before (B24). -->
-								<p class="result-count"><span class="result-noun">tellen…</span></p>
-							{:else if list.Rows && resultTotal !== null && !error}
-								<p class="result-count">
-									{formatCount(resultTotal)}<span class="result-noun"
-										>&nbsp;{resultTotal === 1 ? noun1(category) : labelOf(category)}{#if summary},
-											{summary}{/if}</span
-									>
-								</p>
-							{:else if list.Rows}
-								<!-- The count's own height before it is known, so nothing below it moves. -->
-								<p class="result-count" aria-hidden="true">&nbsp;</p>
-							{/if}
-							{#if listSource}
-								<Coverage
-									coverage={sourceCompleteness}
-									of={SOURCE_LABEL[listSource] ?? listSource}
-								/>
-							{/if}
-							{#if follow}
-								<!-- The list as a feed: its filters in one Atom link. -->
-								<span class="volg-plek"><Follow href={atomHref(follow)} /></span>
-							{/if}
-							{#if sorts.length > 1}
-								<!-- The order of the list: one line under its count (docs/bediening.md). -->
-								<span class="volgorde">
-									<TekstMenu
-										rechts
-										label="Volgorde"
-										waarde={sortDef.id}
-										opties={sorts.map((o) => ({ waarde: o.id, label: o.label }))}
-										onSelect={(v) => patchUrl({ sort: v || null })}
-									/>
-									{#if dir}
-										<IconButton
-											label={dir === 'asc'
-												? 'Oplopend; sorteer aflopend'
-												: 'Aflopend; sorteer oplopend'}
-											onclick={() => patchUrl({ dir: dir === 'asc' ? 'desc' : 'asc' })}
-											>{dir === 'asc' ? '↑' : '↓'}</IconButton
-										>
-									{/if}
-								</span>
-							{/if}
-						</div>{/if}
+					<FilterBar
+						groups={filters}
+						pending={(!pages[category] && !error) || facettenLaden}
+						stale={facettenFout !== null}
+						show={showLabel}
+						list={() => results}
+						onClear={clearFilters}
+						end={rowsShown && sorts.length > 1 ? sortControl : undefined}
+						count={rowsShown && list.Rows ? countLine : undefined}
+						countEnd={rowsShown && (listSource || follow) ? sourceLine : undefined}
+						{between}
+					/>
 
 					<!-- A list that failed shows no figure of the one before. -->
 					{#if list.Figure && !error}<list.Figure {ctx} />{/if}
@@ -763,6 +691,66 @@
 			>
 		{/if}
 	</div>
+{/snippet}
+
+<!-- The order of the list, at the right of the bar of filters. -->
+{#snippet sortControl()}
+	<TekstMenu
+		rechts
+		label="Volgorde"
+		waarde={sortDef.id}
+		opties={sorts.map((o) => ({ waarde: o.id, label: o.label }))}
+		onSelect={(v) => patchUrl({ sort: v || null })}
+	/>
+	{#if dir}
+		<IconButton
+			label={dir === 'asc' ? 'Oplopend; sorteer aflopend' : 'Aflopend; sorteer oplopend'}
+			onclick={() => patchUrl({ dir: dir === 'asc' ? 'desc' : 'asc' })}
+			>{dir === 'asc' ? '↑' : '↓'}</IconButton
+		>
+	{/if}
+{/snippet}
+
+<!-- How many, under the filters: the count before the chips. -->
+{#snippet countLine()}
+	{#if loading && pages[category]}
+		<!-- A filter on its way: the count it will have, not the one before (B24). -->
+		<p class="result-count"><span class="result-noun">tellen…</span></p>
+	{:else if resultTotal !== null && !error}
+		<p class="result-count">
+			{formatCount(resultTotal)}<span class="result-noun"
+				>&nbsp;{resultTotal === 1 ? noun1(category) : labelOf(category)}{#if summary},
+					{summary}{/if}</span
+			>
+		</p>
+	{:else}
+		<!-- The count's own height before it is known, so nothing below it moves. -->
+		<p class="result-count" aria-hidden="true">&nbsp;</p>
+	{/if}
+{/snippet}
+
+<!-- At the right of the count: where the list comes from, and the list as a feed. -->
+{#snippet sourceLine()}
+	{#if listSource}
+		<Coverage coverage={sourceCompleteness} of={SOURCE_LABEL[listSource] ?? listSource} />
+	{/if}
+	{#if follow}
+		<!-- The list as a feed: its filters in one Atom link. -->
+		<Follow href={atomHref(follow)} />
+	{/if}
+{/snippet}
+
+<!-- Between the bar and the count: the hall of a Kamer, and counts that did not come. -->
+{#snippet between()}
+	{#if list.Header}<list.Header {ctx} />{/if}
+	{#if facettenFout}
+		<LoadState
+			state={{ status: 'error', error: facettenFout }}
+			what="De tellingen"
+			plural
+			retry={facettenOpnieuw}
+		/>
+	{/if}
 {/snippet}
 
 {#snippet loadMoreButton(loaded: AnyPage | undefined, noun: string)}
@@ -845,31 +833,14 @@
 	.stage-scroll {
 		flex: 1;
 		overflow-y: auto;
-		/* The filter column measures its height against this box, not the window. */
-		container-type: size;
 	}
-	/* The filters in a column beside the list, on a narrow screen above it: the frame and
-	   its grid are the shared .blad and .blad__indeling (lib/styles/frame.css). */
-	/* The shared .blad__facetten (lib/styles/frame.css), in this scrolling box rather than the
-	   window: no top bar over it, and as high as the box, so its last filter can be reached. */
-	.facet-col {
-		top: var(--s-6);
-		max-height: calc(100cqh - var(--s-6));
-	}
+	/* The list at the full width of the page, the bar of its filters over it. In this box
+	   that scrolls on its own, the bar of a phone stays at its top (Thijs, 9 Oct). */
 	.results {
 		min-width: 0;
+		--filterbar-top: 0;
 	}
 
-	/* Above the list: how many, then the filters that are on. */
-	.result-head {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		gap: var(--s-2) var(--s-3);
-		margin: 0 0 var(--s-3);
-		padding-bottom: var(--s-2);
-		border-bottom: 2px solid var(--ink);
-	}
 	.result-count {
 		margin: 0 var(--s-2) 0 0;
 		font-family: var(--font-serif);
@@ -1041,34 +1012,6 @@
 		.cat {
 			padding: var(--s-2) var(--s-4) var(--s-3);
 		}
-		/* The filters scroll along on a phone: their bar stays at the top of the list, so a
-		   filter is one tap away wherever one is (Thijs, 9 Oct). Open, they scroll on their own
-		   and leave the list below in sight. */
-		.facet-col {
-			position: sticky;
-			top: 0;
-			z-index: 2;
-			max-height: none;
-			overflow: visible;
-			margin: 0 calc(-1 * var(--s-4)) var(--s-4);
-			padding: 0 var(--s-4);
-			background: var(--paper);
-		}
-		/* Toon brings the list up to just under the line of Verfijnen, which stays. */
-		.results {
-			scroll-margin-top: calc(var(--veld-h-raak) + var(--s-4));
-		}
-		.facet-col :global(.verfijnen.is-open) {
-			max-height: 60dvh;
-			overflow-y: auto;
-			overscroll-behavior: contain;
-			/* Room for the scrollbar beside the counts, so it never covers a figure. */
-			scrollbar-gutter: stable;
-			scrollbar-width: thin;
-			padding-right: var(--s-2);
-			padding-bottom: var(--s-3);
-			border-bottom: 1px solid var(--rule);
-		}
 		/* The rows stack on a phone (IndexRow): the head keeps only the heads of the
 		   number columns, over the numbers at full width. */
 		.list-head {
@@ -1083,27 +1026,9 @@
 		}
 	}
 
-	/* The choose-line over both columns: the field and the period, without rules. */
+	/* The choose-line over the filters: the field and the Kamer, without rules. */
 	.regel {
-		grid-column: 1 / -1;
-		margin-bottom: var(--s-5);
-	}
-	.wis {
-		margin: var(--s-3) 0 0;
-		font-size: var(--t-meta);
-	}
-	/* The order at the right of the count, on the ink rule that opens the list. */
-	.volg-plek {
-		margin-left: auto;
-	}
-	.volg-plek + .volgorde {
-		margin-left: 0;
-	}
-	.volgorde {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-2);
-		margin-left: auto;
+		margin-bottom: var(--s-4);
 	}
 	.volgende {
 		display: flex;

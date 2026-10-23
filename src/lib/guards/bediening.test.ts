@@ -21,6 +21,10 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 			{
 				pad: 'lib/selection/NetwerkPanel.svelte',
 				reden: 'the chosen bronnen: content, not a filter'
+			},
+			{
+				pad: 'lib/components/explore/index/FilterBar.svelte',
+				reden: 'the filters chosen by the count of a list, each taking it off (besluit 40)'
 			}
 		];
 		expect(overtreders((t) => /class="[^"]*\bchip\b/.test(t), chips)).toEqual([]);

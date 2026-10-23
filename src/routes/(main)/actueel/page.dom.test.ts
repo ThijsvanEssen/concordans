@@ -156,8 +156,10 @@ describe('the votes of a fractie on Actueel (B5)', () => {
 
 	it('keeps who submitted apart from who voted, each under its own name', async () => {
 		open('/actueel');
-		const { findAllByText, getAllByText } = render(Page);
+		const { findAllByText, getAllByText, getByRole } = render(Page);
 		await findAllByText('Ingediend door');
+		// Stemde stands under Meer in the bar of filters.
+		await fireEvent.click(getByRole('button', { name: /^Meer/ }));
 		expect(getAllByText('Stemde').length).toBeGreaterThan(0);
 		// The fractie submitted-by is still `faction`.
 		open('/actueel?fractie=vvd');

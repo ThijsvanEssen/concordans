@@ -5,6 +5,7 @@
 import type { Page } from '@playwright/test';
 import { apiPath, CORS } from '../support/api';
 import { expect, test } from '../support/test';
+import { openFilter } from '../support/filters';
 
 type Body = Record<string, unknown>;
 
@@ -87,12 +88,9 @@ test('a soort and an instantie narrow the hits, in the address', async ({ page, 
 		judgments: [judgment(1, 'HR', 2019), judgment(2, 'RBAMS', 2019), judgment(3, 'HR', 2005)]
 	});
 	await page.goto('/zoeken?q=wanprestatie');
-	// On a phone the filters fold under Verfijnen.
-	if (touch) await page.getByRole('button', { name: 'Verfijnen' }).click();
-	await page
-		.getByRole('button', { name: /Uitspraken/ })
-		.first()
-		.click();
+	// On a phone the filters wait in the sheet of Verfijnen.
+	const option = await openFilter(page, touch, 'Soort');
+	await option(/Uitspraken/).click();
 	await expect(page).toHaveURL(/soort=judgments/);
 	await expect(page.getByRole('link', { name: /ECLI:NL/ })).toHaveCount(3);
 	await page.goto('/zoeken?q=wanprestatie&soort=judgments&instantie=HR');

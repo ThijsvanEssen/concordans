@@ -5,7 +5,7 @@ import { POSTS, POST_LABEL, currentCabinet, inOffice, period } from '../governme
 import { getCabinets } from '$lib/api/government';
 import MinistersView from '../rows/MinistersView.svelte';
 import { countBy, defineList, matches, type ListContext } from './list';
-import type { FacetGroup } from '../IndexFacets.svelte';
+import type { FacetGroup } from '../facets';
 import type { IndexParams } from './params';
 
 /** One post in a cabinet, with the ministry it is under. */
