@@ -1738,6 +1738,13 @@
 		}
 	}
 
+	/* Keten and Verband are a list on a phone: nothing to zoom (R3-K F12). */
+	@media (max-width: 768px) {
+		.graph-view:has(.middle-stage) .zoom {
+			display: none;
+		}
+	}
+
 	.cluster-naam {
 		display: flex;
 		align-items: center;
