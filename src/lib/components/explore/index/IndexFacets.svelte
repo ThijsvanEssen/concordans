@@ -122,6 +122,8 @@
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import FoldButton from '$lib/components/ui/FoldButton.svelte';
+	import { isOpen } from '$lib/components/ui/dicht.svelte';
 
 	let {
 		groups,
@@ -161,21 +163,40 @@
 	const voorproef = (g: FacetGroup & { kind: 'list' }) =>
 		g.preview ?? (counted(g) > LANG ? VOORPROEF : undefined);
 
-	// A year field holds `2020`; the URL holds the first or last day of it.
+	/**
+	 * A column of this many option groups or more folds them (A192): the first stands open and
+	 * so does every group that holds a chosen option; the others show their head and total.
+	 * Fewer groups all stand open. By the number of groups, not of options, so the column does
+	 * not refold when the counts or a late group come in.
+	 */
+	const FOLDS_FROM = 4;
+	const lists = $derived(groups.filter((g) => g.kind === 'list'));
+	const folds = $derived(lists.length >= FOLDS_FROM);
+	const standsOpen = (g: FacetGroup) =>
+		!folds ||
+		g.kind !== 'list' ||
+		(g.options.some((o) => o.on && !o.default) ? true : isOpen(`facet:${g.label}`, g === lists[0]));
 </script>
 
 <!-- While a page loads, the counts read "…" (as in the legend); the text keeps its contrast. -->
 <div class="facets" aria-busy={pending}>
 	<!-- The period first in every pane (Thijs, 9 Oct). -->
 	{#each [...groups.filter((g) => g.kind === 'range'), ...groups.filter((g) => g.kind !== 'range')] as g (g.id)}
+		{@const open = standsOpen(g)}
 		<section class="group" aria-labelledby="facet-{g.id}">
 			<h2 class="group-head" id="facet-{g.id}">
-				<span>{g.label}</span>
+				{#if folds && g.kind === 'list'}
+					<FoldButton sleutel="facet:{g.label}" {open} controls="facet-opties-{g.id}"
+						>{g.label}</FoldButton
+					>
+				{:else}
+					<span>{g.label}</span>
+				{/if}
 				{#if g.note && !hidden}<span class="group-note" title={g.note}>{g.note}</span>{/if}
 			</h2>
 
-			{#if g.kind === 'list'}
-				<ul class="options">
+			{#if g.kind === 'list' && open}
+				<ul class="options" id="facet-opties-{g.id}">
 					{#if pending && g.options.length === 0 && g.rijen}
 						{#each { length: g.rijen } as _, n (n)}
 							<li class="wacht" aria-hidden="true"></li>
@@ -191,6 +212,7 @@
 								loading={pending && o.count !== undefined}
 								swatch={o.swatch}
 								indent={o.indent}
+								wrap
 							/>
 						</li>
 					{/each}
@@ -251,7 +273,7 @@
 	.facets {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-6);
+		gap: var(--s-5);
 		font-family: var(--font-serif);
 	}
 	.group-head {
@@ -278,6 +300,12 @@
 		color: var(--ink-3);
 	}
 
+	/* On a touch screen an option is a finger's height; the folded groups keep the column short. */
+	@media (pointer: coarse), (max-width: 768px) {
+		.options :global(.optie) {
+			min-height: var(--veld-h-raak);
+		}
+	}
 	.options {
 		list-style: none;
 		margin: 0;

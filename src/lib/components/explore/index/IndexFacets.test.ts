@@ -49,3 +49,34 @@ describe('selectOptions', () => {
 		]);
 	});
 });
+
+describe('IndexFacets: a column of many groups folds all but the first (A192)', () => {
+	const group = (n: number, on = false): FacetGroup => ({
+		id: `g${n}`,
+		label: `Groep ${n}`,
+		kind: 'list',
+		options: [{ id: `o${n}`, label: `Optie ${n}`, on, onClick: () => {}, count: n }]
+	});
+	const four = [1, 2, 3, 4].map((n) => group(n));
+
+	it('keeps the first group and the heads of the rest, each head a button', () => {
+		const t = text({ groups: four });
+		expect(t).toContain('Optie 1');
+		expect(t).not.toMatch(/Optie [234]/);
+		expect(t).toMatch(/Groep 2.*Groep 3.*Groep 4/);
+		const html = render(IndexFacets, { props: { groups: four } }).body;
+		expect(html.match(/aria-expanded="false"/g)).toHaveLength(3);
+	});
+
+	it('opens a group that holds a chosen option', () => {
+		const t = text({ groups: [group(1), group(2), group(3), group(4, true)] });
+		expect(t).toContain('Optie 4');
+		expect(t).not.toMatch(/Optie [23]/);
+	});
+
+	it('leaves a column of fewer groups open, without buttons on the heads', () => {
+		const three = four.slice(0, 3);
+		expect(text({ groups: three })).toMatch(/Optie 1.*Optie 2.*Optie 3/);
+		expect(render(IndexFacets, { props: { groups: three } }).body).not.toContain('aria-expanded');
+	});
+});
