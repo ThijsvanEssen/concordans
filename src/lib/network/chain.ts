@@ -120,7 +120,7 @@ export const isRegulation = (kind: string | null | undefined) =>
 	REGULATION_KINDS.has((kind ?? '').toLowerCase());
 
 /** What the keten is drawn around, beside the law's own lists. */
-export type ChainOptions = {
+type ChainOptions = {
 	/** Up to this many regulations a layer are drawn (the API sorts them by title). */
 	max?: number;
 	/** A regulation drawn whatever `max`: the one marked. */

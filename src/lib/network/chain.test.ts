@@ -87,13 +87,13 @@ describe('the keten of a law', () => {
 			'instruments/a',
 			'instruments/b'
 		]);
-		const zonder = chain({ id: 'w', name: 'Arbowet' }, delegated, null, { max: 1 });
-		expect(zonder.rest.amvb).toBe(1);
+		const uncapped = chain({ id: 'w', name: 'Arbowet' }, delegated, null, { max: 1 });
+		expect(uncapped.rest.amvb).toBe(1);
 		// The rest listed, for "Alle 2", not drawn and adding no article (R3-K F4).
-		expect(zonder.more.amvb?.map((n) => n.id)).toEqual(['instruments/b']);
-		expect(zonder.layers.find((l) => l.id === 'article')!.nodes.map((a) => a.short)).not.toContain(
-			'art. 33'
-		);
+		expect(uncapped.more.amvb?.map((n) => n.id)).toEqual(['instruments/b']);
+		expect(
+			uncapped.layers.find((l) => l.id === 'article')!.nodes.map((a) => a.short)
+		).not.toContain('art. 33');
 	});
 
 	it('puts the laws a regulation is issued under above it', () => {
@@ -145,10 +145,15 @@ describe('the keten of a law', () => {
 			kind: 'AMvB'
 		});
 		expect(k.layers[0].label).toBe('AMvB');
-		const stb = chain({ id: 'instruments/stb_2018_101', name: 'Stb. 2018, 101' }, null, null, {
-			kind: 'publicatie'
-		});
-		expect(stb.layers[0].label).toBe('Publicatie');
+		const publication = chain(
+			{ id: 'instruments/stb_2018_101', name: 'Stb. 2018, 101' },
+			null,
+			null,
+			{
+				kind: 'publicatie'
+			}
+		);
+		expect(publication.layers[0].label).toBe('Publicatie');
 	});
 
 	it('draws from an article only the regulations issued under it (R3-K F5)', () => {
@@ -166,7 +171,7 @@ describe('the keten of a law', () => {
 	});
 
 	it('puts the EU act above the law that implements it, and its implementing laws below (R3-K F1)', () => {
-		const richtlijn = {
+		const directive = {
 			id: 'instruments/32015l2302',
 			key: '32015l2302',
 			bwb_id: null,
@@ -175,20 +180,20 @@ describe('the keten of a law', () => {
 			citation_title: 'Richtlijn (EU) 2015/2302',
 			kind: 'richtlijn'
 		};
-		const wet = { ...richtlijn, id: 'instruments/bwbr0040511', celex: null, kind: 'wet' };
-		const boven = chain({ id: 'instruments/bwbr0040511', name: 'Implementatiewet' }, null, null, {
-			eu: { implements: [richtlijn], implementedBy: [] }
+		const act = { ...directive, id: 'instruments/bwbr0040511', celex: null, kind: 'wet' };
+		const upward = chain({ id: 'instruments/bwbr0040511', name: 'Implementatiewet' }, null, null, {
+			eu: { implements: [directive], implementedBy: [] }
 		});
-		expect(boven.layers.map((l) => [l.id, l.label])).toEqual([
+		expect(upward.layers.map((l) => [l.id, l.label])).toEqual([
 			['eu', 'Richtlijn'],
 			['law', 'Wet']
 		]);
-		expect(boven.layers[1].nodes[0].parents).toEqual([{ id: richtlijn.id, way: 'delegates' }]);
-		const onder = chain({ id: richtlijn.id, name: 'Richtlijn (EU) 2015/2302' }, null, null, {
+		expect(upward.layers[1].nodes[0].parents).toEqual([{ id: directive.id, way: 'delegates' }]);
+		const downward = chain({ id: directive.id, name: 'Richtlijn (EU) 2015/2302' }, null, null, {
 			kind: 'richtlijn',
-			eu: { implements: [], implementedBy: [wet] }
+			eu: { implements: [], implementedBy: [act] }
 		});
-		expect(onder.layers.map((l) => [l.id, l.label])).toEqual([
+		expect(downward.layers.map((l) => [l.id, l.label])).toEqual([
 			['law', 'Richtlijn'],
 			['implementation', 'Implementatie']
 		]);

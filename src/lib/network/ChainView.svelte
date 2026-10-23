@@ -162,7 +162,7 @@
 	</li>
 {/snippet}
 
-{#snippet alle(layer: ChainLayer)}
+{#snippet allButton(layer: ChainLayer)}
 	<button
 		type="button"
 		class="btn is-text alle raakvlak-knop"
@@ -314,7 +314,7 @@
 								k
 							)}{/each}{/if}
 				</ul>
-				{#if rest[layer.id]}{@render alle(layer)}{/if}
+				{#if rest[layer.id]}{@render allButton(layer)}{/if}
 			</section>
 		{/each}
 	</div>

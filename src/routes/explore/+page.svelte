@@ -392,9 +392,9 @@
 	 */
 	const chainStart = $derived.by(() => {
 		if (mode !== 'graph' || view !== 'keten') return null;
-		const wetgeving = (n: GraphNode | null | undefined) =>
+		const isLegislation = (n: GraphNode | null | undefined) =>
 			n?.collection === 'instruments' || n?.collection === 'articles';
-		if (wetgeving(selectedNode)) return selectedNode;
+		if (isLegislation(selectedNode)) return selectedNode;
 		return (
 			composer.entries.find(
 				(e) => e.on && e.node && (e.collection === 'instruments' || e.collection === 'articles')
@@ -405,7 +405,7 @@
 	 * Whether Keten means something here: a law, a regulation or an article as the bron or among
 	 * the chosen ones; elsewhere it is offered greyed (R3-K F9, R3-I F1).
 	 */
-	const ketenKan = $derived(
+	const chainPossible = $derived(
 		mode === 'graph' &&
 			[selectedNode, ...composer.entries.filter((e) => e.on).map((e) => e.node)].some(
 				(n) => n?.collection === 'instruments' || n?.collection === 'articles'
@@ -512,17 +512,17 @@
 		if (m.missing.length)
 			return `${joinAnd(m.missing.slice(0, 2), { n: m.missing.length - 2, one: 'andere', many: 'andere' })}: grondslag ${NOT_IN_DATA}`;
 		// A regulation whose grondslag the data lacks says so, as the law above it does (F3).
-		const zonderGrondslag = isRegulation(chainKind) && !m.layers.some((l) => l.id === 'basis');
-		const geen =
+		const withoutBasis = isRegulation(chainKind) && !m.layers.some((l) => l.id === 'basis');
+		const none =
 			m.total === 0 && !m.layers.some((l) => l.id === 'implementation')
 				? noneHeld(
 						chainArticle
-							? `uitvoeringsregelingen op grond van ${articleRef(null, chainArticle)}`
+							? `uitvoeringsregelingen onder ${articleRef(null, chainArticle)}`
 							: 'uitvoeringsregelingen'
 					)
 				: null;
-		const gaten = [zonderGrondslag ? `grondslag ${NOT_IN_DATA}` : null, geen].filter(Boolean);
-		return gaten.length ? capitalize(gaten.join(', ')) : null;
+		const gaps = [withoutBasis ? `grondslag ${NOT_IN_DATA}` : null, none].filter(Boolean);
+		return gaps.length ? capitalize(gaps.join(', ')) : null;
 	});
 	/** A node of the keten as the card reads a bron. */
 	function chainNodeOf(k: ChainNode): GraphNode {
@@ -1916,7 +1916,7 @@
 											opties={VIEWS.map((w) => ({
 												waarde: w.waarde,
 												label: w.label,
-												...(w.waarde === 'keten' && !ketenKan && view !== 'keten'
+												...(w.waarde === 'keten' && !chainPossible && view !== 'keten'
 													? { uit: true, titel: 'Alleen bij een wet, een regeling of een artikel' }
 													: {})
 											}))}
