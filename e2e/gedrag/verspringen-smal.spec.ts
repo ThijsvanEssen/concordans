@@ -23,9 +23,15 @@ const watchShifts = () => {
 };
 
 // On a wide screen Verbonden stands beside the text: its soorten come in their place, in
-// their order, and nothing in it jumps when the next comes (UX-toets T9b).
-for (const path of ['/dossiers/36764', '/dossiers/36600'])
-	test(`a dossier at 1440 comes in without a shift (${path})`, async ({ page, touch }) => {
+// their order, the bar per instantie in its held room, and nothing in it jumps when the next
+// comes (UX-toets T9b, A202).
+for (const path of [
+	'/dossiers/36764',
+	'/dossiers/36600',
+	'/wetten/BWBR0052872',
+	'/wetten/BWBR0005289/artikel/6:162'
+])
+	test(`a reader at 1440 comes in without a shift (${path})`, async ({ page, touch }) => {
 		test.skip(touch, 'a wide screen');
 		await page.setViewportSize({ width: 1440, height: 900 });
 		await page.addInitScript(watchShifts);

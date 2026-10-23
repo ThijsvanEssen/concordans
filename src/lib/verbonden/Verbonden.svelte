@@ -336,12 +336,23 @@
 				if (!ac.signal.aborted) tierCounts = { id, parts };
 			},
 			(e) => {
-				if (!ac.signal.aborted) report('Verbonden tierCounts', e);
+				if (ac.signal.aborted) return;
+				report('Verbonden tierCounts', e);
+				// No bar: its held room goes (KindSummary tiersPending).
+				tierCounts = { id, parts: [] };
 			}
 		);
 		return () => ac.abort();
 	});
 	const parts = $derived(tierCounts?.id === selection.id ? tierCounts.parts : null);
+	/** The bar per instantie is asked and not in: its room is held (UX-toets T9b, A202). */
+	const tiersPending = $derived.by(() => {
+		const props = selection.raw?.props ?? {};
+		const bwb = typeof props.bwb_id === 'string';
+		const number = typeof props.article_number === 'string';
+		const isLaw = selection.collection === 'instruments';
+		return !!citingTotal && (isLaw ? bwb : bwb && number) && !parts;
+	});
 	/** The share of the largest part: the bar's parts are as wide as their counts. */
 	const SHADES = [1, 0.7, 0.45, 0.22];
 
@@ -559,6 +570,7 @@
 				{kinds}
 				{selection}
 				tiers={parts}
+				{tiersPending}
 				onOpen={openKind}
 				{onRetry}
 				{onProposedText}
