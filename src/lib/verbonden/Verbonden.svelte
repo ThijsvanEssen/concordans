@@ -278,7 +278,8 @@
 	 *  node, once it is larger than what the groups hold so far. The head and the link to the table
 	 *  say it alike (T8: 4.700 over Alle 4.701). Null where a filter or a cut-off group says otherwise. */
 	const alleVerbindingen = $derived.by(() => {
-		if (!vast || !verbonden.buckets || filtering || isAtLeast(total)) return null;
+		// The drawn network counts what is drawn (its legend), so its heading does too.
+		if (showNetwork || !vast || !verbonden.buckets || filtering || isAtLeast(total)) return null;
 		const api = [...verbonden.buckets.values()].reduce((sum, n) => sum + n, 0);
 		return Math.max(api, totalCount(vast));
 	});
