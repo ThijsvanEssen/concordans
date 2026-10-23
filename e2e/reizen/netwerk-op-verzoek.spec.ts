@@ -67,8 +67,10 @@ test('beyond 40 bronnen a group is one circle with its count, and the legend cou
 	// No name is cut: each line of a name at most 24 characters, no "…".
 	const lines = await figure.locator('text.name tspan').allTextContents();
 	expect(lines.filter((n) => n.length > 24 || n.endsWith('…'))).toEqual([]);
-	// A circle opens its soort in Verbonden, with its groups.
+	// A circle opens its soort in place in the one view of Verbonden (A208e): Minder folds it.
 	await figure.getByRole('button', { name: /Stukken$/ }).click();
-	await expect(verbonden(page).locator('[data-group="documents"]')).toBeVisible();
-	await expect(verbonden(page).getByRole('button', { name: 'Alle soorten' })).toBeVisible();
+	await expect(verbonden(page).locator('[data-kind="documents"]')).toBeVisible();
+	await expect(
+		verbonden(page).locator('[data-kind="documents"]').getByRole('button', { name: 'Minder' })
+	).toBeVisible();
 });
