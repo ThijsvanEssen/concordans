@@ -130,6 +130,8 @@
 			display: flex;
 			align-items: center;
 			min-height: var(--veld-h-raak);
+			/* The 44 px is the row: a long heading adds its lines, no padding besides. */
+			padding-block: 0;
 		}
 	}
 </style>

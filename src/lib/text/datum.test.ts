@@ -8,6 +8,7 @@ import {
 	throughDate,
 	fromDate,
 	yearsOf,
+	vasteDatums,
 	dagMaand,
 	dagVan,
 	DAY_MS,
@@ -111,5 +112,14 @@ describe('yearsOf', () => {
 		expect(yearsOf('2017-03-23', '2021-03-31')).toBe('2017–2021');
 		expect(yearsOf('2026-02-23', null)).toBe('2026–');
 		expect(yearsOf('2024-07-02', '2024-11-12')).toBe('2024');
+	});
+});
+
+describe('vasteDatums', () => {
+	it('holds a date in running text together and keeps every offset', () => {
+		const tekst = 'Besluit van 12 maart 2020 en 3 mei, niet 5 keer';
+		const vast = vasteDatums(tekst);
+		expect(vast).toBe('Besluit van 12 maart 2020 en 3 mei, niet 5 keer');
+		expect(vast.length).toBe(tekst.length);
 	});
 });

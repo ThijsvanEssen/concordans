@@ -2,7 +2,7 @@
 	// The network of the bron in Verbonden, on request (Netwerk tonen, besluit 32): the bron in
 	// the middle, each verbinding a line. A bron on its own opens on a click; a group (a count
 	// in a circle) opens its group in the panel below. The legend is one line that counts what
-	// is drawn (besluit 29.3). The bron itself leads to Samenhang, its network on the canvas.
+	// is drawn (besluit 29.3). The bron itself leads to its network on the canvas.
 	import { openHref } from '$lib/bron/href';
 	import { VORMEN } from '$lib/bron/vormen';
 	import { formatCount } from '$lib/text/getal';
@@ -19,7 +19,7 @@
 		sketch: Sketch;
 		/** The bron in the middle, short (LABEL_MAX). */
 		name: string;
-		/** The bron on the canvas of Samenhang. */
+		/** The bron on the canvas of the Netwerk. */
 		networkHref: string;
 		/** A group was clicked: its group in Verbonden opens. */
 		onGroup: (groupId: string) => void;

@@ -453,6 +453,9 @@ export class SearchSession {
 			// Nothing in the live list: the whole query in full, which also tries any word of it.
 			this.askInFull();
 			return false;
+		} else if (this.answered === this.q && this.allIn && this.#results && this.q.trim()) {
+			// Nothing even in full: the page of results says so, with the way on (T6).
+			this.#results(this.q, this.from, this.to);
 		} else return false;
 		return true;
 	}

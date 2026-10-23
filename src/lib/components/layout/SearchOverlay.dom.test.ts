@@ -21,7 +21,7 @@ describe('SearchOverlay', () => {
 		expect(screen.queryByRole('dialog')).toBeNull();
 		await rerender({ open: true, onClose: () => {} });
 		await settle();
-		expect(screen.getByRole('dialog', { name: 'Zoeken' })).toBeTruthy();
+		expect(screen.getByRole('dialog', { name: 'Zoekvenster' })).toBeTruthy();
 		expect(await screen.findByRole('combobox', {}, { timeout: 10_000 })).toBeTruthy();
 	});
 });

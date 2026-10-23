@@ -54,7 +54,7 @@
 		},
 		{
 			id: 'kabinet',
-			label: 'Kabinet',
+			label: 'Regering',
 			kinds: ['cabinets', 'members', 'commitments'],
 			marks: ['cabinets', 'members', 'commitments']
 		}
@@ -318,7 +318,7 @@
 			display: none;
 		}
 	}
-	/* Below a phone of 360: Alles for Alle bronnen, so Kabinet keeps its place in the row. */
+	/* Below a phone of 360: Alles for Alle bronnen, so Regering keeps its place in the row. */
 	@media (width < 360px) {
 		.lang {
 			display: none;

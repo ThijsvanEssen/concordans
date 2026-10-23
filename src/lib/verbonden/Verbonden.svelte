@@ -274,6 +274,15 @@
 	);
 	const total = $derived(shownLabel(vast ?? verbonden.groups, filter, wachtSet));
 
+	/** The one count of every verbinding, unfiltered: the API's, the sum of the buckets of the light
+	 *  node, once it is larger than what the groups hold so far. The head and the link to the table
+	 *  say it alike (T8: 4.700 over Alle 4.701). Null where a filter or a cut-off group says otherwise. */
+	const alleVerbindingen = $derived.by(() => {
+		if (!vast || !verbonden.buckets || filtering || isAtLeast(total)) return null;
+		const api = [...verbonden.buckets.values()].reduce((sum, n) => sum + n, 0);
+		return Math.max(api, totalCount(vast));
+	});
+
 	// ── At a glance: per soort its count and the three to read (summary.ts) ──
 	// In Tekst Verbonden opens on the soorten; "Alle N" opens one with its groups, its order and
 	// its filters; a bronfilter in the address (a lid's count, Filter) shows the groups at once.
@@ -494,13 +503,13 @@
 		     sentence of explanation (R7, UX-toets 0.79.43). -->
 		{#if !empty && (verbonden.groups.length > 0 || (!verbonden.loading && !verbonden.failed && verbonden.id))}
 			<span class="head__count"
-				>{overview
-					? kinds.length
-						? `${formatCount(kindsTotal(kinds))} ${plural(kindsTotal(kinds), 'verbinding', 'verbindingen')}`
-						: ''
-					: vast
+				>{alleVerbindingen != null
+					? `${formatCount(alleVerbindingen)} ${plural(alleVerbindingen, 'verbinding', 'verbindingen')}`
+					: vast && (!overview || kinds.length)
 						? countLine(vast, filter, wachtSet)
-						: ''}</span
+						: overview && kinds.length
+							? `${formatCount(kindsTotal(kinds))} ${plural(kindsTotal(kinds), 'verbinding', 'verbindingen')}`
+							: ''}</span
 			>
 		{/if}
 	</div>
@@ -735,7 +744,7 @@
 				<TekstLink href={tableHref}
 					>{overview
 						? 'Alles in een tabel'
-						: `${isAtLeast(total) ? 'Alle verbindingen' : `Alle ${total}`} in een tabel`}</TekstLink
+						: `${isAtLeast(total) ? 'Alle verbindingen' : `Alle ${alleVerbindingen != null ? formatCount(alleVerbindingen) : total}`} in een tabel`}</TekstLink
 				>
 				<!-- The part it exports is known once every row is in: asked on the way to the click. -->
 				<TekstLink

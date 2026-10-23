@@ -175,9 +175,9 @@
 			</p>
 			<p>
 				Het paneel Netwerk, rechtsboven, houdt bronnen vast over meerdere keuzes heen. Een klik op
-				een naam zet de bron uit of aan; × haalt haar weg. <strong>+ bron</strong> zoekt een bron om toe
-				te voegen; in Verbonden heeft elke rij een +. De gekozen bronnen staan in het adres; een gedeelde
-				link toont hetzelfde netwerk.
+				een naam zet de bron uit of aan; × haalt haar weg. <strong>Bron toevoegen</strong> zoekt een bron
+				om toe te voegen; in Verbonden heeft elke rij een +. De gekozen bronnen staan in het adres; een
+				gedeelde link toont hetzelfde netwerk.
 			</p>
 			<p>
 				Het netwerk toont de gekozen bronnen met hun onderlinge verbindingen en met de bronnen

@@ -237,6 +237,17 @@
 		if (inDeel(g) || g.items.some(isHier)) return true;
 		return g.children.some(containsSelected);
 	}
+
+	/** Space and the arrows on a division's link open and close it; Enter goes to it, and opens it. */
+	function groupKey(e: KeyboardEvent) {
+		const d = (e.currentTarget as HTMLElement).closest('details');
+		if (!d || e.altKey || e.ctrlKey || e.metaKey) return;
+		if (e.key === 'Enter') d.open = true;
+		if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+			e.preventDefault();
+			d.open = e.key === ' ' ? !d.open : e.key === 'ArrowRight';
+		}
+	}
 </script>
 
 {#snippet itemRow(item: LawArticle)}
@@ -257,8 +268,17 @@
 	{@const shouldOpen = selectedKey ? selected : depth > 0}
 	{@const level = Math.min(depth, 3)}
 	{@const href = g.id ? deelHref(g.id) : null}
-	<details class="group depth-{level}" open={shouldOpen}>
-		<!-- The division's link is the one tab stop; the summary only answers a click on the caret. -->
+	<details
+		class="group depth-{level}"
+		open={shouldOpen}
+		ontoggle={(e) =>
+			e.currentTarget
+				.querySelector(':scope > summary > a.group__label')
+				?.setAttribute('aria-expanded', String(e.currentTarget.open))}
+	>
+		<!-- The division's link is the one tab stop, and it says whether the division is open: Enter
+		     goes to the division, Space and the arrows (right opens, left closes) open and close it;
+		     the summary only answers a click on the caret. -->
 		<summary class="group__head nav-kolom__n{level + 1}" tabindex={href ? -1 : undefined}>
 			<Caret side />
 			{#if href}
@@ -266,8 +286,10 @@
 					class="group__label"
 					class:is-hier={anker === g.id}
 					aria-current={anker === g.id ? 'location' : undefined}
+					aria-expanded={shouldOpen}
 					{href}
 					data-sveltekit-noscroll
+					onkeydown={groupKey}
 					onclick={(e) => openDeel(e, g.id)}>{groupLabel(g)}</a
 				>
 			{:else}

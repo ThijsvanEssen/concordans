@@ -435,6 +435,21 @@
 		padding-left: var(--s-1);
 		border-left: 3px solid var(--party);
 	}
+	/* The stripe is the height of the name's line, not of the finger's 44 px around it. */
+	@media (pointer: coarse), (max-width: 768px) {
+		.person {
+			padding-left: 0;
+			border-left: 0;
+		}
+		.person :global(a)::before {
+			content: '';
+			align-self: center;
+			width: 2px;
+			height: 1lh;
+			margin-right: var(--s-2);
+			background: var(--party);
+		}
+	}
 	.faction,
 	.ministry {
 		color: var(--ink-3);

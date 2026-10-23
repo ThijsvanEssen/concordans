@@ -579,6 +579,25 @@ describe('Enter and the best the API names (besluit 30)', () => {
 		stop();
 	});
 
+	it('goes to the page of results where nothing is found, even in full (T6)', async () => {
+		const { of, asked } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, 'zzzzzz');
+		await answerAll(of, { instruments: [] }, { best: null, matched: 'all' }, { articles: [] });
+		const before = asked.length;
+		s.pressEnter();
+		await vi.advanceTimersByTimeAsync(150);
+		flushSync();
+		// The whole query is asked in full; a second Enter waits for that answer, which is empty too.
+		s.pressEnter();
+		await vi.advanceTimersByTimeAsync(150);
+		for (const a of asked.slice(before)) a.answer(answer({}, { best: null, matched: 'all' }));
+		await settle();
+		expect(results).toEqual(['zzzzzz']);
+		expect(opened).toEqual([]);
+		stop();
+	});
+
 	it('still opens the best the API names, with a page of results at hand', async () => {
 		const { of } = api();
 		const { s, opened, results, stop } = session(undefined, true);

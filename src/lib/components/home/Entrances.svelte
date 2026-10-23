@@ -87,7 +87,8 @@
 	/* Links at least 24 px high, as Alles in Actueel. */
 	.title,
 	.rows a {
-		display: inline-block;
+		display: inline-flex;
+		align-items: center;
 		padding: var(--s-1) 0;
 	}
 	.title {

@@ -591,8 +591,10 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	'dossier-international': async (ctx) => {
 		const { laws } = await hubOf(ctx);
 		// Their European buckets, not their whole nodes (Wetboek van Strafrecht: 2 MB).
+		// A law the dataset lacks (`missing`: named in the title, not loaded) has no node to ask.
 		const found = await Promise.all(
 			laws
+				.filter((law) => !law.missing)
 				.slice(0, MAX_LAWS)
 				.map((law) => getBuckets('instruments', law.ref.key, EUROPEAN.match ?? [], ctx.signal))
 		);

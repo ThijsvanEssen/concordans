@@ -60,7 +60,7 @@
 {#if open}
 	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 	<div class="overlay" onclick={(e) => e.target === e.currentTarget && onClose()}>
-		<div class="modal" role="dialog" aria-modal="true" aria-label="Zoeken" tabindex="-1">
+		<div class="modal" role="dialog" aria-modal="true" aria-label="Zoekvenster" tabindex="-1">
 			{#if search.component}
 				{@const Search = search.component}
 				<Search overlay initial={query} onOpen={onClose} />

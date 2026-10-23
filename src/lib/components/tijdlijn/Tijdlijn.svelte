@@ -514,5 +514,14 @@
 		.met-acties .tekst {
 			border-bottom: 0;
 		}
+		/* A line that ends in a name (a 44 px line of its own): Bewaar stands on that line, at the
+		   right, not on a band of its own under it (T7-3). */
+		.met-acties .regel:has(.tekst > :global(.meta:last-child) :global(.person)) .acties {
+			margin-top: calc(-1 * var(--veld-h-raak));
+			text-align: right;
+		}
+		.met-acties .regel:has(.tekst > :global(.meta:last-child) :global(.person)) .tekst {
+			padding-right: var(--veld-h-raak);
+		}
 	}
 </style>

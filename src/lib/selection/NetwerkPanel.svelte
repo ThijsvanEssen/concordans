@@ -118,7 +118,7 @@
 		{/if}
 	</section>
 {:else}
-	<!-- De gekozen bronnen als labels op één regel; zoeken pas na "+ bron";
+	<!-- De gekozen bronnen als labels op één regel; zoeken pas na "Bron toevoegen";
 	     één regel voor wat ertussen ligt. Wissen is één klik, en Terug zet het terug. -->
 	<CanvasKaart title="Netwerk" class="netwerk" {open} onToggle={() => kiesOpen(!open)}>
 		{#snippet samenvatting()}
@@ -223,7 +223,7 @@
 					</div>
 				{:else}
 					<button type="button" class="chip chip--plus" onclick={() => (zoeken = true)}
-						>+ bron</button
+						>Bron toevoegen</button
 					>
 				{/if}
 			</li>

@@ -13,6 +13,7 @@
 	import {
 		followDossier,
 		followsDossier,
+		ontvolgOnderwerp,
 		visitDossier,
 		type FollowedDossier
 	} from '$lib/onderwerpen/onderwerpen';
@@ -50,12 +51,27 @@
 		followDossier(dossier, today);
 		followed = followsDossier(dossier.number);
 	}
+
+	function unfollow() {
+		ontvolgOnderwerp({ termen: [], dossier });
+		followed = false;
+		newSince = null;
+	}
 </script>
 
 {#if followed}
 	<Follow href={atom} label="Gevolgd">
 		{#snippet local(close)}
 			<a role="menuitem" class="tekstmenu__item" href="/onderwerpen" onclick={close}>Open Gevolgd</a
+			>
+			<button
+				type="button"
+				role="menuitem"
+				class="tekstmenu__item"
+				onclick={() => {
+					close();
+					unfollow();
+				}}>Niet meer volgen</button
 			>
 		{/snippet}
 	</Follow>

@@ -17,7 +17,7 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { searchedLine } from '$lib/text/coverage';
-	import { resultsHref } from './results';
+	import { conceptOf, resultsHref } from './results';
 	import { groupLabel, hitName, presentHit, sectionOf } from './present';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 	import { bronLabel, nodeId } from '$lib/vocabulary';
@@ -346,6 +346,7 @@
 											>{:else}{part.text}{/if}{/each}</span
 								>
 							{/if}
+							{#if conceptOf(hit)}<span class="row-begrip">via begrip {conceptOf(hit)}</span>{/if}
 						</span>
 						{#if shown.chamber || shown.context || shown.expired}<span class="row-context"
 								>{#if shown.chamber}<abbr title={CHAMBER_NAME[shown.chamber]}>{shown.chamber}</abbr
@@ -567,6 +568,12 @@
 		white-space: nowrap;
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	.row-begrip {
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		font-style: italic;
 		color: var(--ink-3);
 	}
 	.row-snippet mark {

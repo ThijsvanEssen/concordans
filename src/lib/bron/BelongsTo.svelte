@@ -504,6 +504,20 @@
 		margin: var(--s-1) 0 0;
 		color: var(--ink-3);
 	}
+	/* Wide: a chain is one line (T6), each layer cut at its end rather than the chain wrapping;
+	   the full name is in the title. Side by side (los) it wraps, as it is a list. */
+	@media (min-width: 769px) {
+		.lagen:not(.los) {
+			flex-wrap: nowrap;
+			white-space: nowrap;
+		}
+		.lagen:not(.los) li {
+			min-width: 0;
+			overflow-x: clip;
+			overflow-y: visible;
+			text-overflow: ellipsis;
+		}
+	}
 	/* A phone: the first line, the rest once it is opened. */
 	@media (max-width: 768px) {
 		/* Without a kern line (a kabinet) a phone shows no band: its groups are in Verbonden. */

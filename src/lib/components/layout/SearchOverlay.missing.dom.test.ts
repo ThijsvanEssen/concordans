@@ -26,13 +26,13 @@ describe('SearchOverlay without its chunk', () => {
 		vi.spyOn(console, 'error').mockImplementation(() => {});
 		render(SearchOverlay, { open: true, onClose: () => {} });
 		await settle();
-		expect(screen.getByRole('dialog', { name: 'Zoeken' }).textContent).toContain(
+		expect(screen.getByRole('dialog', { name: 'Zoekvenster' }).textContent).toContain(
 			'niet worden geladen'
 		);
 		expect(reload).toHaveBeenCalled();
 
 		await fireEvent.click(screen.getByRole('button', { name: 'Opnieuw' }));
 		await settle();
-		expect(screen.getByRole('dialog', { name: 'Zoeken' }).textContent).toContain('zoekveld');
+		expect(screen.getByRole('dialog', { name: 'Zoekvenster' }).textContent).toContain('zoekveld');
 	});
 });

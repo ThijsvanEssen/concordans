@@ -5,6 +5,7 @@
 // it (`footnotes`), each marker a link to its note (ArticleText). Pure functions, no Svelte.
 import { escapeRegExp, textOf } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
+import { vasteDatums } from './datum';
 import { formatAnchor, parseAnchor } from './anchor';
 
 type Span = Schema<'ArticleCitationSpan'>;
@@ -65,7 +66,7 @@ export function uitspraakNoten(
 		if (!f.text?.trim()) continue;
 		let id = nootAnker(f.label);
 		for (let n = 2; noten.has(id); n++) id = `${nootAnker(f.label)}-${n}`;
-		noten.set(id, { id, label: f.label, text: f.text, citations: f.citations ?? [] });
+		noten.set(id, { id, label: f.label, text: vasteDatums(f.text), citations: f.citations ?? [] });
 		if (!f.paragraph_id) {
 			los.push(id);
 			continue;
@@ -107,7 +108,7 @@ export function stukNoten(
 		if (!f.text?.trim()) continue;
 		const a = parseAnchor(f.id);
 		const label = f.label?.trim() || (a?.kind === 'note' ? a.label : f.id);
-		noten.set(f.id, { id: f.id, label, text: f.text, citations: [] });
+		noten.set(f.id, { id: f.id, label, text: vasteDatums(f.text), citations: [] });
 		if (f.at != null) {
 			const i = regelVan(regels, f.at);
 			if (i >= 0) {

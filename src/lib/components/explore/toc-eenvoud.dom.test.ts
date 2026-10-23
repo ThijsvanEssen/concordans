@@ -2,7 +2,7 @@
 // table of contents (GOV.UK contents list, NN/g, W3C on landmarks): one nav called Inhoud,
 // every level reachable, one tab stop for every item, and no counts or meta in the list.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render } from '@testing-library/svelte';
+import { fireEvent, render } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { fakeApi } from '$lib/test/fakeApi';
 import { open } from '$lib/test/navigation.svelte';
@@ -119,5 +119,25 @@ describe('the contents of a law', () => {
 			expect(stops(head.parentElement!.firstElementChild!)).toHaveLength(1);
 		}
 		for (const li of container.querySelectorAll('li')) expect(stops(li)).toHaveLength(1);
+	});
+
+	it('says whether it is open, and opens with Space and the arrows on its link', async () => {
+		const boek = crumb('boek', 'Boek 1', 'deel-boek-1');
+		fakeApi({
+			'/api/instruments/{bwb_id}/articles': { items: [art(1, boek), art(2, boek)], annexes: [] }
+		});
+		const { container } = render(LezenNav, {
+			selection: node('articles', 'articles/eenvoud/1', { props: { bwb_id: 'BWBREENVOUD' } })
+		});
+		await settle();
+		const link = container.querySelector('a.group__label') as HTMLElement;
+		const details = link.closest('details')!;
+		expect(link.getAttribute('aria-expanded')).toBe(String(details.open));
+		await fireEvent.keyDown(link, { key: 'ArrowLeft' });
+		expect(details.open).toBe(false);
+		await fireEvent.keyDown(link, { key: 'ArrowRight' });
+		expect(details.open).toBe(true);
+		await fireEvent.keyDown(link, { key: ' ' });
+		expect(details.open).toBe(false);
 	});
 });
