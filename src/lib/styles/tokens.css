@@ -122,6 +122,11 @@
 	--topbar-h: 60px;
 	/* The tab bar under a phone's page (TabBalk); 0 where there is none. */
 	--tabbar-h: 0px;
+	/* The home bar and the notch of an installed app (viewport-fit=cover in app.html): the
+	   tab bar stands above the bottom one, the page keeps off the side ones. */
+	--safe-bottom: env(safe-area-inset-bottom, 0px);
+	--safe-left: env(safe-area-inset-left, 0px);
+	--safe-right: env(safe-area-inset-right, 0px);
 	--blad-max: 1440px;
 	--blad-tekst: 720px;
 	--facet-w: 240px;
@@ -168,6 +173,6 @@
 /* The phone has a tab bar under its page (TabBalk), of the height the pages leave free. */
 @media (max-width: 768px) {
 	:root {
-		--tabbar-h: 64px;
+		--tabbar-h: calc(64px + var(--safe-bottom));
 	}
 }

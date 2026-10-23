@@ -221,7 +221,7 @@
 		.topbar {
 			align-items: center;
 			gap: var(--s-3);
-			padding: 0 var(--s-4);
+			padding: 0 max(var(--s-4), var(--safe-right)) 0 max(var(--s-4), var(--safe-left));
 		}
 		.topbar-nav,
 		.search-trigger,

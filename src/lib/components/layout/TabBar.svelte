@@ -167,6 +167,8 @@
 			bottom: 0;
 			z-index: var(--z-float);
 			height: var(--tabbar-h);
+			box-sizing: border-box;
+			padding: 0 var(--safe-right) var(--safe-bottom) var(--safe-left);
 			background: var(--paper);
 			border-top: 1px solid var(--rule-strong);
 		}
