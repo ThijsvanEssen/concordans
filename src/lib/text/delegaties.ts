@@ -163,7 +163,6 @@ export function grondslagRegel(g: Grondslag): { werkwoord: string; rest: string 
 	return { werkwoord, rest };
 }
 
-
 /**
  * The articles of a regulation that work its grondslag out (`referring`): `uitgewerkt in
  * art. 2 en 3`. Null where none refers to it.
