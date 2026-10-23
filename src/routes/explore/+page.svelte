@@ -37,7 +37,8 @@
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { LoadFailure } from '$lib/util/load.svelte';
 	import { Lazy } from '$lib/util/lazy.svelte';
-	import { getNodeCanvas, getNodeHull, once } from '$lib/api/records';
+	import { getNodeCanvas, getNodeHull } from '$lib/api/records';
+	import { inPool } from '$lib/api/pool';
 	import { kopNode } from '$lib/bron/first-node';
 	import { bronHref, exploreMode, focusOf, modeOf, openHref, refId } from '$lib/bron/href';
 	import { refOf, type BronRef } from '$lib/bron/ref';
@@ -701,12 +702,15 @@
 			});
 		return ends.sort((x, y) => x.name.localeCompare(y.name, 'nl') || x.id.localeCompare(y.id));
 	});
-	const sharedKey = $derived(sharedEnds.map((e) => e.id).join(','));
-	/** What each pair of bronnen shares, asked once a pair (/api/nodes/shared, API 0.80.8). */
-	const askPair = (a: string, b: string) => {
-		const ids = [a, b].sort().join(',');
-		return once(`nodes/shared/${ids}`, () => getShared({ ids, limit: 8 }));
-	};
+	/**
+	 * The ends Verband draws: at most SHARED_ENDS, so it asks at most 15 pairs; more chosen
+	 * bronnen are said, not drawn (19:50, 23 Oct: some 50 pairs at once emptied the API's pool).
+	 */
+	const SHARED_ENDS = 6;
+	const sharedDrawn = $derived(sharedEnds.slice(0, SHARED_ENDS));
+	const sharedKey = $derived(sharedDrawn.map((e) => e.id).join(','));
+	/** What each pair shares, once a pair is in (/api/nodes/shared): asked again for none. */
+	const pairKept = new Map<string, Awaited<ReturnType<typeof getShared>>>();
 	let sharedData = $state.raw<{
 		key: string;
 		answers: NonNullable<Awaited<ReturnType<typeof getShared>>>[];
@@ -731,11 +735,22 @@
 		const ids = key ? key.split(',') : [];
 		if (ids.length < 2) return;
 		let current = true;
-		const pairs = ids.flatMap((a, i) => ids.slice(i + 1).map((b) => askPair(a, b)));
+		const ac = new AbortController();
+		const pairs = ids.flatMap((a, i) => ids.slice(i + 1).map((b) => [a, b].sort().join(',')));
+		// Two at a time, the pairs not yet in; a new choice cancels what is on its way.
+		const asked = inPool(
+			pairs,
+			async (pair) => {
+				if (!pairKept.has(pair))
+					pairKept.set(pair, await getShared({ ids: pair, limit: 8 }, ac.signal));
+				return pairKept.get(pair) ?? null;
+			},
+			{ parallel: 2 }
+		);
 		const netwerkIds = composer.entries.filter((e) => e.on && e.node).map((e) => e.id);
 		const page = untrack(() => selectedLinkId);
 		if (page && !netwerkIds.includes(page)) netwerkIds.push(page);
-		Promise.all([Promise.all(pairs), composer.directLinks(netwerkIds)])
+		Promise.all([asked, composer.directLinks(netwerkIds)])
 			.then(([answers, direct]) => {
 				if (!current) return;
 				const got = answers.filter((x): x is NonNullable<typeof x> => !!x);
@@ -754,6 +769,7 @@
 			});
 		return () => {
 			current = false;
+			ac.abort();
 		};
 	});
 	const sharedState = $derived.by(() => {
@@ -761,7 +777,7 @@
 		if (!here || here.failure) return null;
 		const byId = new Map(sharedEnds.map((e) => [e.id, e]));
 		return verbandModel(
-			sharedEnds.map((e) => e.id),
+			sharedDrawn.map((e) => e.id),
 			here.answers,
 			here.direct,
 			(id) => ({ name: byId.get(id)?.name ?? id, collection: byId.get(id)?.collection ?? null })
@@ -771,7 +787,9 @@
 	const sharedGap = $derived(
 		sharedData?.key === sharedKey && sharedData.failure === 'niet'
 			? 'gedeelde bronnen niet beschikbaar'
-			: null
+			: sharedEnds.length > SHARED_ENDS
+				? `${SHARED_ENDS} van ${sharedEnds.length} gekozen bronnen`
+				: null
 	);
 	// Soort and Relatie of a weergave of its own count what it draws, and its filter hides it.
 	let hiddenRelations = $state.raw<ReadonlySet<Relation>>(new Set());
@@ -1998,7 +2016,7 @@
 	{:else if view === 'verband'}
 		<SharedView
 			{scale}
-			ends={sharedEnds}
+			ends={sharedDrawn}
 			model={sharedState}
 			chosen={marked}
 			gap={sharedGap}

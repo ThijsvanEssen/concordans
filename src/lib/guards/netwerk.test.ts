@@ -115,3 +115,13 @@ describe('/explore and the werkplek of a bron', () => {
 		expect(markup).not.toMatch(/pathname\s*[!=]==?\s*'\/explore'/);
 	});
 });
+
+describe('Verband and the API', () => {
+	// 23 Oct, 19:50: some 50 pairs asked at once emptied the API's pool of 8.
+	const page = bron('routes/explore/+page.svelte');
+	it('asks the shared bronnen of its pairs two at a time, for the ends it draws only', () => {
+		expect(page).toMatch(/inPool\([\s\S]{0,400}getShared\([\s\S]{0,200}\{ parallel: 2 \}/);
+		expect(page).toMatch(/const SHARED_ENDS = 6;/);
+		expect(page).not.toMatch(/Promise\.all\([^)]*getShared/);
+	});
+});
