@@ -294,9 +294,10 @@ function item(it: BodyItem, k: Classes): string {
 	const id = (x: string | undefined) => (x ? ` id="${esc(x)}"` : '');
 	if (it.kind === 'subheading') return `<p class="reader-subheading ${c}">${esc(it.text)}</p>`;
 	if (it.kind === 'heading')
+		// Citeer in its sans letter, which may come after the paint: unseen until the app has come.
 		return (
 			`<div class="reader-heading ${c}"${id(it.id)}><h3 class="reader-heading__text ${c}">${esc(it.text)}</h3>` +
-			`<span class="cite ${k.citeMenu}"><button type="button" class="btn is-text reader-heading__link raakvlak-knop ${k.citeMenu}" tabindex="-1">Citeer</button></span></div>`
+			`<span class="cite ${k.citeMenu}" data-later><button type="button" class="btn is-text reader-heading__link raakvlak-knop ${k.citeMenu}" tabindex="-1">Citeer</button></span></div>`
 		);
 	if (it.kind === 'rov')
 		return (
