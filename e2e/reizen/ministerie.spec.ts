@@ -1,7 +1,6 @@
 // A ministry as a page of its own: its name and period, the name it followed, its
 // bewindspersonen per cabinet (the newest first) and, in Verbonden, what is its own.
-// The fixtures of /api/ministries/jenv and /api/nodes/ministries/jenv are written by hand
-// until the API has them (0.80.8): `npm run e2e:record` replaces them.
+import { naarVerbonden } from '../support/navigation';
 import { expect, test } from '../support/test';
 
 test('a ministry names its period, its predecessor and its bewindspersonen per cabinet', async ({
@@ -25,16 +24,18 @@ test('what is its own stands in Verbonden: laws, open dossiers and open toezeggi
 	page
 }) => {
 	await page.goto('/ministeries/jenv');
+	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+	await page.waitForLoadState('networkidle');
 	const verbonden = page.getByRole('complementary', { name: 'Verbonden' });
+	await naarVerbonden(page);
 	await verbonden.scrollIntoViewIfNeeded();
 	for (const soort of ['Wetten', 'Lopende dossiers', 'Open toezeggingen'])
 		await expect(verbonden.getByRole('heading', { name: soort })).toBeVisible();
 });
 
-test('a wet, a dossier and a toezegging name their ministry as a link to its page', async ({
-	page
-}) => {
-	for (const pad of ['/wetten/BWBR0005289', '/dossiers/36496', '/toezeggingen/TZ202603-117']) {
+test('a dossier and a toezegging name their ministry as a link to its page', async ({ page }) => {
+	// A wet joins them once the BWB's ministries are in the data (`normalize bwb`, 0.80.8).
+	for (const pad of ['/dossiers/36496', '/toezeggingen/TZ202603-117']) {
 		await page.goto(pad);
 		await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
 		await expect(page.locator('a[href^="/ministeries/"]').first(), pad).toBeVisible();
