@@ -1,6 +1,6 @@
 // What the panel, the table and the legend derive from the groups and the filter:
-// the rows that pass, the counts, the groupings and the years of the judgments.
-import { capitalize, plural } from '$lib/text/words';
+// the rows that pass, the counts and the years of the judgments.
+import { plural } from '$lib/text/words';
 import type { Collection } from '$lib/vocabulary';
 import { relationLabel } from './relation-words';
 import { sumLidCounts } from '$lib/api/nodes';
