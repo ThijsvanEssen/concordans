@@ -155,7 +155,10 @@
 		{/if}
 	</span>
 	<div class="reader-status">
-		<div class="reader-status__woorden" class:plek={statusHeld}>{@render statusLine?.()}</div>
+		<!-- The words of the status where there are any or their room is kept: no empty line. -->
+		{#if statusLine || statusHeld}<div class="reader-status__woorden" class:plek={statusHeld}>
+				{@render statusLine?.()}
+			</div>{/if}
 		{#if later || laterPlek}<div class="reader-status__later">{@render later?.()}</div>{/if}
 		{#if facts}<div class="reader-facts">{@render facts()}</div>{/if}
 	</div>

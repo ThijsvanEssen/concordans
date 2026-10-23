@@ -50,6 +50,7 @@
 	import FullTitle from '$lib/components/ui/FullTitle.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
 	import { validityOf } from '$lib/api/validity';
+	import { statusOf } from '$lib/text/validity';
 	import { coverageLine } from '$lib/text/coverage';
 	import { followPosition } from './law-position.svelte';
 
@@ -193,6 +194,16 @@
 			!isEu &&
 			(versions.length > 0 || (versionList.state.status === 'loading' && !!lawDetail))
 	);
+	const hasStatus = $derived(
+		!!statusOf(validity) ||
+			textNotRead ||
+			isEu ||
+			!!coverageLine(lawDetail?.completeness) ||
+			detail.state.status === 'error' ||
+			versionList.state.status === 'error' ||
+			grondslag.length > 0 ||
+			!!treaty
+	);
 	const withFacts = $derived(
 		headFacts.dates.length > 0 || headFacts.counts.length > 0 || peildatumShown
 	);
@@ -308,6 +319,56 @@
 	</div>
 {/snippet}
 
+<!-- What the head says besides its facts: whether the law holds, what of it is read, a
+     failure, its grondslag, a treaty. Only where it says something: no empty line (A190). -->
+{#snippet lawStatus()}
+	<Validity {validity} />
+	{#if textNotRead}
+		<p class="whole-count">
+			<Coverage noText coverage={lawDetail?.completeness} bron={officialSource} />
+		</p>
+	{:else if isEu}
+		<p class="whole-count">
+			<Coverage
+				coverage={{ versions: { state: 'not_in_source', as_of: lawDetail?.date_signed } }}
+				bron={officialSource && { ...officialSource, label: 'EUR-Lex' }}
+			/>
+		</p>
+	{:else if coverageLine(lawDetail?.completeness)}
+		<!-- A law of the Staatsblad: what of its references and definitions is read. -->
+		<p class="whole-count"><Coverage coverage={lawDetail?.completeness} /></p>
+	{/if}
+	{#if detail.state.status === 'error'}
+		<LoadState state={detail.state} what="De gegevens van de wet" retry={detail.retry} />
+	{/if}
+	{#if versionList.state.status === 'error'}
+		<LoadState state={versionList.state} what="De tekstversies" plural retry={versionList.retry} />
+	{/if}
+	{#each grondslag as deel (deel.werkwoord)}
+		<p class="whole-count">
+			{deel.werkwoord}
+			{#each deel.wetten as w, i (w.key)}{#if i > 0}{i === deel.wetten.length - 1
+						? ' en '
+						: ', '}{/if}<a
+					href={bronHref({ collection: 'instruments', key: w.key })}
+					data-sveltekit-noscroll>{w.naam}</a
+				>{/each}.
+		</p>
+	{/each}
+	{#if treaty}
+		<p class="whole-count">
+			{#if treaty.target.kind === 'bron'}
+				<a
+					href={bronHref({ collection: 'instruments', key: treaty.target.key })}
+					data-sveltekit-noscroll>{treaty.label}</a
+				>
+			{:else}
+				<a href={treaty.target.url} rel="external">{treaty.label}</a>
+			{/if}
+		</p>
+	{/if}
+{/snippet}
+
 <!-- The facts of the law, each once (E9), a strip of their own under its title (A190): its
      dates, the text of which day (the peildatum), its articles, how often it is cited. -->
 {#snippet factStrip()}
@@ -338,6 +399,7 @@
 			{kindLabel}
 			title={record.heading}
 			facts={withFacts ? factStrip : undefined}
+			statusLine={hasStatus ? lawStatus : undefined}
 			acties={{
 				bewaar: bewaarItem(
 					`instruments/${lawNodeKey(bwbId)}`,
@@ -351,59 +413,6 @@
 		>
 			{#snippet onderTitel()}
 				{#if fullTitle}<FullTitle title={fullTitle} />{/if}
-			{/snippet}
-			<!-- What is on screen and which text: the count, a treaty, the peildatum. -->
-			{#snippet statusLine()}
-				<Validity {validity} />
-				{#if textNotRead}
-					<p class="whole-count">
-						<Coverage noText coverage={lawDetail?.completeness} bron={officialSource} />
-					</p>
-				{:else if isEu}
-					<p class="whole-count">
-						<Coverage
-							coverage={{ versions: { state: 'not_in_source', as_of: lawDetail?.date_signed } }}
-							bron={officialSource && { ...officialSource, label: 'EUR-Lex' }}
-						/>
-					</p>
-				{:else if coverageLine(lawDetail?.completeness)}
-					<!-- A law of the Staatsblad: what of its references and definitions is read. -->
-					<p class="whole-count"><Coverage coverage={lawDetail?.completeness} /></p>
-				{/if}
-				{#if detail.state.status === 'error'}
-					<LoadState state={detail.state} what="De gegevens van de wet" retry={detail.retry} />
-				{/if}
-				{#if versionList.state.status === 'error'}
-					<LoadState
-						state={versionList.state}
-						what="De tekstversies"
-						plural
-						retry={versionList.retry}
-					/>
-				{/if}
-				{#each grondslag as deel (deel.werkwoord)}
-					<p class="whole-count">
-						{deel.werkwoord}
-						{#each deel.wetten as w, i (w.key)}{#if i > 0}{i === deel.wetten.length - 1
-									? ' en '
-									: ', '}{/if}<a
-								href={bronHref({ collection: 'instruments', key: w.key })}
-								data-sveltekit-noscroll>{w.naam}</a
-							>{/each}.
-					</p>
-				{/each}
-				{#if treaty}
-					<p class="whole-count">
-						{#if treaty.target.kind === 'bron'}
-							<a
-								href={bronHref({ collection: 'instruments', key: treaty.target.key })}
-								data-sveltekit-noscroll>{treaty.label}</a
-							>
-						{:else}
-							<a href={treaty.target.url} rel="external">{treaty.label}</a>
-						{/if}
-					</p>
-				{/if}
 			{/snippet}
 			{#if peildatum && !(versionsLoaded && versions.length === 0)}
 				<p class="whole-hist">
