@@ -24,7 +24,7 @@ const groupsOf = (rows: Record<string, Row[]>, totals: Record<string, number> = 
 	}));
 
 describe('the regulations issued under a law', () => {
-	const regeling = (key: string, more: Partial<Row> = {}): Row => ({
+	const regulation = (key: string, more: Partial<Row> = {}): Row => ({
 		ref: { collection: 'instruments', key },
 		title: key,
 		context: null,
@@ -35,7 +35,7 @@ describe('the regulations issued under a law', () => {
 		props: { kind: 'amvb' },
 		...more
 	});
-	const wet = (key: string): Row => ({
+	const law = (key: string): Row => ({
 		ref: { collection: 'instruments', key },
 		title: key,
 		context: null,
@@ -47,11 +47,11 @@ describe('the regulations issued under a law', () => {
 			rows:
 				g.id === 'based-on'
 					? [
-							regeling('cbb'),
-							regeling('regeling', { onder: 'cbb', props: { kind: 'ministeriele-regeling' } })
+							regulation('cbb'),
+							regulation('regeling', { ['onder']: 'cbb', props: { kind: 'ministeriele-regeling' } })
 						]
 					: g.id === 'related'
-						? [wet('nis')]
+						? [law('nis')]
 						: [],
 			total: g.id === 'based-on' ? 2 : g.id === 'related' ? 1 : 0
 		}));
@@ -71,14 +71,14 @@ describe('the regulations issued under a law', () => {
 	});
 
 	it('say their kind and day in the overview', () => {
-		expect(shortLine(regeling('cbb')).replace(/\s/g, ' ')).toBe('AMvB, 15 aug. 2026');
+		expect(shortLine(regulation('cbb')).replace(/\s/g, ' ')).toBe('AMvB, 15 aug. 2026');
 	});
 
 	it('take the buckets of the article they are based on out of the laws', () => {
 		const buckets = new Map([[bucketKey('BASED_ON', 'instruments', 'inbound'), 5]]);
 		const g = buildGroups('articles', []).map((x) => ({
 			...x,
-			rows: x.id === 'based-on' ? [regeling('cbb')] : [],
+			rows: x.id === 'based-on' ? [regulation('cbb')] : [],
 			total: x.id === 'based-on' ? 1 : 0
 		}));
 		const kinds = kindsOf(g, 'articles', buckets);

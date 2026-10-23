@@ -12,9 +12,9 @@ import { formatCount } from '$lib/text/getal';
 import { lowerFirst, plural } from '$lib/text/words';
 import type { Bucket } from '$lib/api/nodes';
 import { BRON_LABEL, type Collection } from '$lib/vocabulary';
-import { groupCount, type Group } from './groups';
+import { bucketsRead, groupCount, type Group } from './groups';
 import { byImportance } from './importance';
-import type { Row } from './rows';
+import { isNested, type Row } from './rows';
 
 export type KindId =
 	| 'judgments'
@@ -53,7 +53,7 @@ const KIND_OF: Partial<Record<Collection, KindId>> = {
  * the one list of names. Only the laws differ (a soort of wetten and artikelen); a Kamerzaak
  * keeps its capital.
  */
-const SOORT_LABEL_OF = Object.fromEntries(
+const KIND_LABELS = Object.fromEntries(
 	(Object.entries(KIND_OF) as [Collection, KindId][]).map(([collection, id]) => {
 		const [one, many] = BRON_LABEL[collection];
 		return id === 'laws'
@@ -74,11 +74,11 @@ const SOORT_LABEL_OF = Object.fromEntries(
  * before the laws it cites or is cited by: an AMvB that follows from a law is not a law that
  * names it (Thijs, 23 Oct).
  */
-export const REGELINGEN: KindId = 'regelingen';
+const REGULATIONS: KindId = 'regelingen';
 
 export const SOORT_LABEL: Record<KindId, { label: string; one: string; many: string }> = {
-	...SOORT_LABEL_OF,
-	regelingen: {
+	...KIND_LABELS,
+	['regelingen']: {
 		label: 'Uitvoeringsregelingen',
 		one: 'uitvoeringsregeling',
 		many: 'uitvoeringsregelingen'
@@ -158,7 +158,7 @@ function collectionOfGroup(g: Group): Collection | null {
 }
 
 export const kindOfGroup = (g: Group): KindId | null => {
-	if (g.id === 'based-on') return REGELINGEN;
+	if (g.id === 'based-on') return REGULATIONS;
 	const c = collectionOfGroup(g);
 	return c ? (KIND_OF[c] ?? null) : null;
 };
@@ -225,10 +225,10 @@ export function kindsOf(
 			!NOT_COUNTED.has(key.split('/')[1]) && !inBuckets(key, kern) && !inBuckets(key, hiddenBuckets)
 	);
 	// The buckets of the regulations issued under the bron count with them, not with the laws.
-	const regelingBakken = (byKind.get(REGELINGEN) ?? []).flatMap((g) => g.bakken ?? []);
-	const kindOfBucket = (key: string): KindId | undefined =>
-		inBuckets(key, regelingBakken as Bucket[])
-			? REGELINGEN
+	const regulationBuckets = bucketsRead(byKind.get(REGULATIONS) ?? []);
+	const bucketKind = (key: string): KindId | undefined =>
+		inBuckets(key, regulationBuckets as Bucket[])
+			? REGULATIONS
 			: KIND_OF[key.split('/')[1] as Collection];
 	const order = ORDER_OF[selection] ?? ORDER;
 	const ranked = [...order, ...ORDER.filter((k) => !order.includes(k))];
@@ -237,12 +237,12 @@ export function kindsOf(
 		if (!gs) return [];
 		const fromGroups = gs.reduce((sum, g) => sum + groupCount(g), 0);
 		const fromBuckets = counted
-			.filter(([key]) => kindOfBucket(key) === id)
+			.filter(([key]) => bucketKind(key) === id)
 			.reduce((sum, [, n]) => sum + n, 0);
 		const own = gs.some((g) => g.countsOwnRows) && !gs.some((g) => g.laden || g.failed);
 		const count = own ? fromGroups : Math.max(fromGroups, fromBuckets);
 		// The overview names the regulations themselves; those issued under them stand in the group.
-		const rows = kindRows(gs, id, selection).filter((r) => id !== REGELINGEN || !r.onder);
+		const rows = kindRows(gs, id, selection).filter((r) => id !== REGULATIONS || !isNested(r));
 		const failed = gs.find((g) => g.failed && g.rows.length === 0);
 		if (count === 0 && rows.length === 0 && !failed) return [];
 		const label = id === 'members' ? membersLabel(selection) : SOORT_LABEL[id];

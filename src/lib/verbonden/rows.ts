@@ -28,6 +28,9 @@ import type { Cite } from '$lib/text/judgment-heading';
 
 import type { Neighbor } from '$lib/api/nodes';
 
+/** A regulation issued under another one under the law: it stands right under it. */
+export const isNested = (row: Row): boolean => !!row.onder;
+
 export type Row = {
 	ref: BronRef;
 	title: string;

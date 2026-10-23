@@ -1111,6 +1111,9 @@ export function buildGroups(
 	return other.rows.length ? [...groups, other] : groups;
 }
 
+/** The buckets the loaders of these groups read. */
+export const bucketsRead = (groups: readonly Group[]) => groups.flatMap((g) => g.bakken ?? []);
+
 /** The number of bronnen of a group: what the API states, else what is loaded. */
 export const groupCount = (group: Pick<Group, 'rows' | 'total'>) =>
 	group.total != null && group.total >= group.rows.length ? group.total : group.rows.length;
