@@ -26,7 +26,8 @@
 	} = $props();
 
 	/** The colour of a kind, as the canvas draws its groups. */
-	const colour = (c: Collection | null): string => {
+	const colour = (c: Collection | null, soort: string | null = null): string => {
+		if (soort === 'regelingen') return 'var(--groep-regeling)';
 		switch (c) {
 			case 'instruments':
 			case 'articles':
@@ -104,8 +105,8 @@
 				<path
 					d={v.d}
 					transform="translate({l.x - 7} {l.y - 7}) scale(0.875)"
-					fill={v.wijze === 'lijn' ? 'var(--paper)' : colour(l.collection)}
-					stroke={v.wijze === 'lijn' ? colour(l.collection) : 'none'}
+					fill={v.wijze === 'lijn' ? 'var(--paper)' : colour(l.collection, l.soort)}
+					stroke={v.wijze === 'lijn' ? colour(l.collection, l.soort) : 'none'}
 					stroke-width={v.wijze === 'lijn' ? 2.4 : 0}
 					fill-rule={v.wijze === 'gat' ? 'evenodd' : 'nonzero'}
 				/>
@@ -137,7 +138,7 @@
 					cy={b.y}
 					r={b.r}
 					fill="var(--paper)"
-					stroke={colour(b.collection)}
+					stroke={colour(b.collection, b.soort)}
 					stroke-width="2.5"
 					stroke-dasharray={dashed(b.collection) ? '6 4' : undefined}
 				/>

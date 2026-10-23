@@ -23,6 +23,69 @@ const groupsOf = (rows: Record<string, Row[]>, totals: Record<string, number> = 
 		total: totals[g.id] ?? rows[g.id]?.length ?? 0
 	}));
 
+describe('the regulations issued under a law', () => {
+	const regeling = (key: string, more: Partial<Row> = {}): Row => ({
+		ref: { collection: 'instruments', key },
+		title: key,
+		context: null,
+		filterGroup: 'wetten',
+		relation: 'BASED_ON',
+		direction: 'inbound',
+		date: '2026-08-15',
+		props: { kind: 'amvb' },
+		...more
+	});
+	const wet = (key: string): Row => ({
+		ref: { collection: 'instruments', key },
+		title: key,
+		context: null,
+		filterGroup: 'wetten'
+	});
+	const groups = (): Group[] =>
+		buildGroups('instruments', []).map((g) => ({
+			...g,
+			rows:
+				g.id === 'based-on'
+					? [
+							regeling('cbb'),
+							regeling('regeling', { onder: 'cbb', props: { kind: 'ministeriele-regeling' } })
+						]
+					: g.id === 'related'
+						? [wet('nis')]
+						: [],
+			total: g.id === 'based-on' ? 2 : g.id === 'related' ? 1 : 0
+		}));
+
+	it('are a soort of their own, before the laws that cite or are cited', () => {
+		const kinds = kindsOf(groups(), 'instruments', new Map());
+		expect(kinds.map((k) => [k.id, k.label, k.count])).toEqual([
+			['regelingen', 'Uitvoeringsregelingen', 2],
+			['laws', 'Wetten', 1]
+		]);
+		expect(kinds[0].noun).toBe('uitvoeringsregelingen');
+	});
+
+	it('show those issued under another in the group, not among the first of the overview', () => {
+		const [regelingen] = kindsOf(groups(), 'instruments', new Map());
+		expect(regelingen.rows.map((r) => r.ref.key)).toEqual(['cbb']);
+	});
+
+	it('say their kind and day in the overview', () => {
+		expect(shortLine(regeling('cbb')).replace(/\s/g, ' ')).toBe('AMvB, 15 aug. 2026');
+	});
+
+	it('take the buckets of the article they are based on out of the laws', () => {
+		const buckets = new Map([[bucketKey('BASED_ON', 'instruments', 'inbound'), 5]]);
+		const g = buildGroups('articles', []).map((x) => ({
+			...x,
+			rows: x.id === 'based-on' ? [regeling('cbb')] : [],
+			total: x.id === 'based-on' ? 1 : 0
+		}));
+		const kinds = kindsOf(g, 'articles', buckets);
+		expect(kinds.map((k) => [k.id, k.count])).toEqual([['regelingen', 5]]);
+	});
+});
+
 describe('Verbonden at a glance', () => {
 	it('counts a soort over the whole, as the API counts its buckets, the kern left out', () => {
 		const groups = groupsOf(
