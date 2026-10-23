@@ -10,7 +10,7 @@ const bar = (page: import('@playwright/test').Page) =>
 const tabs = (page: import('@playwright/test').Page) =>
 	page.getByRole('navigation', { name: 'Hoofdmenu' });
 const netwerk = (page: import('@playwright/test').Page) =>
-	page.getByRole('banner').getByRole('link', { name: 'Netwerk' });
+	page.getByRole('banner').getByRole('button', { name: 'Netwerk' });
 
 test('every kind of source is an item of the navigation, and the one the page stands under is marked', async ({
 	page
@@ -107,7 +107,7 @@ test('Netwerk opens the bron of the page big, and elsewhere begins with choosing
 	await expect(netwerk(page)).toHaveAttribute('href', /mode=netwerk/);
 	await netwerk(page).click();
 	await expect(page).toHaveURL(/\/wetten\/BWBR0005289\/artikel\/6:162\?.*mode=netwerk/);
-	await expect(netwerk(page)).toHaveAttribute('aria-current', 'page');
+	await expect(netwerk(page)).toHaveAttribute('aria-pressed', 'true');
 	await expect(page.locator('canvas').first()).toBeVisible();
 
 	await page.goto('/actueel');

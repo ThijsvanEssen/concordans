@@ -1951,21 +1951,25 @@
 										: null}
 							>
 								{#snippet viewChoice()}
-									<div class="view-choice">
-										<h3 class="weergave__kop">Weergave</h3>
-										<Keuze
-											label="Weergave"
-											waarde={view}
-											opties={VIEWS.map((w) => ({
-												waarde: w.waarde,
-												label: w.label,
-												...(w.waarde === 'keten' && !chainPossible && view !== 'keten'
-													? { uit: true, titel: 'Alleen bij een wet, een regeling of een artikel' }
-													: {})
-											}))}
-											onSelect={chooseView}
-										/>
-									</div>
+									<!-- Nothing chosen, nothing to view three ways: the field Bron toevoegen alone. -->
+									{#if focus || pad || netwerkActive}<div class="view-choice">
+											<h3 class="weergave__kop">Weergave</h3>
+											<Keuze
+												label="Weergave"
+												waarde={view}
+												opties={VIEWS.map((w) => ({
+													waarde: w.waarde,
+													label: w.label,
+													...(w.waarde === 'keten' && !chainPossible && view !== 'keten'
+														? {
+																uit: true,
+																titel: 'Alleen bij een wet, een regeling of een artikel'
+															}
+														: {})
+												}))}
+												onSelect={chooseView}
+											/>
+										</div>{/if}
 								{/snippet}
 
 								{#snippet balk()}
