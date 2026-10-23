@@ -154,7 +154,7 @@
 					stroke="currentColor"
 					stroke-width="1.6"
 					aria-hidden="true"><circle cx="7" cy="7" r="4.8" /><path d="M10.6 10.6 14 14" /></svg
-				>Zoek<span class="find-rest"> in dit stuk</span></button
+				><span>Zoek<span class="find-rest"> in dit stuk</span></span></button
 			>
 		{/if}
 		{@render tools?.()}

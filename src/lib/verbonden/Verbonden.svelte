@@ -551,7 +551,10 @@
 			     does from here (besluit 36). -->
 			<p class="groot"><TekstLink href={networkHref ?? '/explore'}>In het netwerk</TekstLink></p>
 		{/if}
-		{#if overview && !verbonden.failed && kinds.length > 0}
+		<!-- The soorten once their set is in, each in its place in their order: before, the heads
+		     to come as blank rows, so no soort comes in above another and pushes it (UX-toets
+		     T9b). -->
+		{#if overview && !verbonden.failed && kinds.length > 0 && !verbonden.loading}
 			<KindSummary
 				{kinds}
 				{selection}
@@ -566,7 +569,7 @@
 			<div class="note">
 				<LoadState state={LOAD_FAILED} what="De verbindingen" plural retry={onRetry} />
 			</div>
-		{:else if verbonden.loading && verbonden.groups.length === 0}
+		{:else if verbonden.loading && (overview || verbonden.groups.length === 0)}
 			<!-- The heads of the groups to come, with their counts, and rows still being read. -->
 			<!-- Each group in its place, with blank rows as many as it will show (#1): what
 			     comes fills them in, and nothing below moves. -->

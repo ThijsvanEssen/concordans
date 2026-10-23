@@ -240,7 +240,9 @@
 			{/if}
 
 			<!-- The amendments as a timetable, asked once in view; only where the dossier counts any. -->
-			{#if aantalAmendementen(d.documents_by_kind) > 0}
+			<!-- Under the procedure once it is in: it does not stand where the procedure comes and get
+			     pushed down by it (UX-toets T9b). -->
+			{#if aantalAmendementen(d.documents_by_kind) > 0 && timeline.state.status !== 'loading'}
 				<AmendementenDienstregeling dossierNumber={d.number} />
 			{/if}
 

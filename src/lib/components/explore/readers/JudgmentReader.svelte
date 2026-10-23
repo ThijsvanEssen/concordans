@@ -781,6 +781,16 @@
 			opacity: 1;
 		}
 	}
+	/* Below 768 Citeer by a heading is a finger's 44 px itself, not only its target (UX-toets
+	   T9b: 48 by 24, some twenty a page). */
+	@media (pointer: coarse), (max-width: 768px) {
+		.reader-heading {
+			align-items: center;
+		}
+		:global(.reader-heading__link) {
+			min-height: var(--veld-h-raak);
+		}
+	}
 
 	.reader-para-subtitle {
 		font-family: var(--font-serif);
