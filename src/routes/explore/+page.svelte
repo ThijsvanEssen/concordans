@@ -2593,6 +2593,13 @@
 		margin-bottom: -1px;
 	}
 
+	/* The tab chosen: ink and a rule under it (A197-a). */
+	.mobile-tabs .mobile-tab.is-active {
+		color: var(--ink);
+		border-bottom-color: var(--ink);
+		font-weight: 500;
+	}
+
 	.mobile-tab--toc {
 		flex: none;
 		margin-left: auto;

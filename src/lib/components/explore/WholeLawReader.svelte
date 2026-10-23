@@ -365,8 +365,8 @@
 						: ', '}{/if}<a
 					href={bronHref({ collection: 'instruments', key: w.key })}
 					data-sveltekit-noscroll>{w.naam}</a
-				>{/each}{#if rest > 0}
-				en <TekstLink onclick={() => (allGrounds = new Set([...allGrounds, deel.werkwoord]))}
+				>{/each}{#if rest > 0}{' en '}<TekstLink
+					onclick={() => (allGrounds = new Set([...allGrounds, deel.werkwoord]))}
 					>{rest} andere</TekstLink
 				>{/if}.
 		</p>

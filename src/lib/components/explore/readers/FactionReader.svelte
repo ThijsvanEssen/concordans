@@ -144,22 +144,25 @@
 						{/each}
 					</dl>
 				{/if}
-				<Sectie
-					title={endedOn ? 'Laatste leden' : 'Leden'}
-					collection="members"
-					aantal={leden.state.status === 'ready' ? lijst.length : null}
-				>
-					<LoadState state={leden.state} what="De ledenlijst" retry={leden.retry}>
-						{#snippet empty()}<p class="stil">{capitalize(noneHeld('leden'))}.</p>{/snippet}
-						{#snippet children(lijst)}
-							<ul class="leden">
-								{#each lijst as m (m.key)}
-									<li><BronLink ref={`members/${m.key}`}>{m.name}</BronLink></li>
-								{/each}
-							</ul>
-						{/snippet}
-					</LoadState>
-				</Sectie>
+				<!-- A fractie that is no more has no leden now: no list of none (R3-L F6). -->
+				{#if !endedOn}
+					<Sectie
+						title="Leden"
+						collection="members"
+						aantal={leden.state.status === 'ready' ? lijst.length : null}
+					>
+						<LoadState state={leden.state} what="De ledenlijst" retry={leden.retry}>
+							{#snippet empty()}<p class="stil">{capitalize(noneHeld('leden'))}.</p>{/snippet}
+							{#snippet children(lijst)}
+								<ul class="leden">
+									{#each lijst as m (m.key)}
+										<li><BronLink ref={`members/${m.key}`}>{m.name}</BronLink></li>
+									{/each}
+								</ul>
+							{/snippet}
+						</LoadState>
+					</Sectie>
+				{/if}
 			{/if}
 
 			{#if votes.state.status === 'error'}
