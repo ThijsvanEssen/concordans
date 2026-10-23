@@ -72,6 +72,7 @@
 		netwerkActive = false,
 		hasNodes = false,
 		reach = null,
+		counting = false,
 		periode,
 		meer
 	}: {
@@ -111,6 +112,8 @@
 		hasNodes?: boolean;
 		/** How far the last neighbourhood reached, and whether the API cut it off. */
 		reach?: NeighborhoodReach | null;
+		/** The netwerk is still coming in: Soort counts once it is there, no number springs (R3-N B5). */
+		counting?: boolean;
 		/** The block Periode, after Relatie. */
 		periode?: Snippet;
 		/** First under Meer: the netwerk's own filters (NetworkOptions). */
@@ -134,9 +137,7 @@
 	// What the network shows of the focus's direct neighbours, per kind the API cut off: "32 van
 	// 1.483" as a label, not a sentence (Thijs, 10 Oct: "maak duidelijk dat we niet alles zien").
 	const uitsnede = $derived(
-		netwerkActive
-			? []
-			: (reach?.buckets ?? []).filter((b) => b.kept < b.total && isCollection(b.collection))
+		(reach?.buckets ?? []).filter((b) => b.kept < b.total && isCollection(b.collection))
 	);
 	const uitsnedeTotaal = $derived(uitsnede.reduce((n, b) => n + b.total, 0));
 	const NO_SELECTION_REASON = 'Kies eerst een bron in het netwerk.';
@@ -246,6 +247,7 @@
 								? groepen.forEach((g) => onToggleGroup?.(g))
 								: onFilter(toggleFilterGroup(filter, k))}
 						count={n}
+						loading={counting}
 						empty={n === 0}
 						gedimd={!!groepen}
 					>
@@ -256,6 +258,48 @@
 							/>{/snippet}
 					</FilterOptie>
 				{/each}
+			</section>
+		{/if}
+
+		<!-- What came of the neighbours there are, per kind the API cut off: beside Soort, not under
+		     Meer (R3-N B6, besluit 23). -->
+		{#if uitsnede.length}
+			<!-- The focus's direct neighbours the network shows, of those there are. -->
+			<section class="block">
+				<h3 class="block__title">Getoond</h3>
+				<ul class="uitsnede">
+					{#each uitsnede as b (b.collection)}
+						<li>
+							<KindGlyph collection={b.collection as Collection} size={11} /><span
+								class="uitsnede__soort">{BRON_LABEL[b.collection as Collection][1]}</span
+							><span class="uitsnede__aantal"
+								>{formatCount(b.kept)}
+								<span class="uitsnede__van">van {formatCount(b.total)}</span></span
+							>{#if onLaadSoort}<span class="uitsnede__laad"
+									>{#if laadtSoort.has(b.collection)}<span class="stil">Laden…</span
+										>{:else}<TekstLink
+											onclick={() => onLaadSoort(b.collection as Collection)}
+											aria-label="Alle {formatCount(b.total)} {BRON_LABEL[
+												b.collection as Collection
+											][1].toLowerCase()} laden">Alle laden</TekstLink
+										>{/if}</span
+								>{/if}
+						</li>
+					{/each}
+				</ul>
+				<!-- What the link loads, the API's cap in its words where the whole is more; once
+		     loaded and still cut, the cap as a label (UX-toets 0.79.44, #43). -->
+				{#if onAllesLaden}
+					<p class="uitsnede__actie">
+						<TekstLink onclick={onAllesLaden}
+							>{allesGrens && uitsnedeTotaal > allesGrens.grens
+								? `${formatCount(allesGrens.grens)} van ${formatCount(uitsnedeTotaal)} laden`
+								: `Alle ${formatCount(uitsnedeTotaal)} laden`}</TekstLink
+						>
+					</p>
+				{:else if allesGrens?.geladen}
+					<p class="uitsnede__actie stil">Grens bereikt: {formatCount(allesGrens.grens)}</p>
+				{/if}
 			</section>
 		{/if}
 
@@ -327,45 +371,6 @@
 						{/snippet}
 					</TekstMenu>
 				</section>
-				{#if uitsnede.length}
-					<!-- The focus's direct neighbours the network shows, of those there are. -->
-					<section class="block">
-						<h3 class="block__title">Getoond</h3>
-						<ul class="uitsnede">
-							{#each uitsnede as b (b.collection)}
-								<li>
-									<KindGlyph collection={b.collection as Collection} size={11} /><span
-										class="uitsnede__soort">{BRON_LABEL[b.collection as Collection][1]}</span
-									><span class="uitsnede__aantal"
-										>{formatCount(b.kept)}
-										<span class="uitsnede__van">van {formatCount(b.total)}</span></span
-									>{#if onLaadSoort}<span class="uitsnede__laad"
-											>{#if laadtSoort.has(b.collection)}<span class="stil">Laden…</span
-												>{:else}<TekstLink
-													onclick={() => onLaadSoort(b.collection as Collection)}
-													aria-label="Alle {formatCount(b.total)} {BRON_LABEL[
-														b.collection as Collection
-													][1].toLowerCase()} laden">Alle laden</TekstLink
-												>{/if}</span
-										>{/if}
-								</li>
-							{/each}
-						</ul>
-						<!-- What the link loads, the API's cap in its words where the whole is more; once
-				     loaded and still cut, the cap as a label (UX-toets 0.79.44, #43). -->
-						{#if onAllesLaden}
-							<p class="uitsnede__actie">
-								<TekstLink onclick={onAllesLaden}
-									>{allesGrens && uitsnedeTotaal > allesGrens.grens
-										? `${formatCount(allesGrens.grens)} van ${formatCount(uitsnedeTotaal)} laden`
-										: `Alle ${formatCount(uitsnedeTotaal)} laden`}</TekstLink
-								>
-							</p>
-						{:else if allesGrens?.geladen}
-							<p class="uitsnede__actie stil">Grens bereikt: {formatCount(allesGrens.grens)}</p>
-						{/if}
-					</section>
-				{/if}
 
 				<section class="block">
 					<h3 class="block__title">Groepering</h3>

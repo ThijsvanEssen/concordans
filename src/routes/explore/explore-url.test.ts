@@ -29,6 +29,9 @@ describe('the depth', () => {
 		expect(depthFor('faction', unset)).toBe(1);
 		expect(depthFor('dossier', unset)).toBe(1);
 		expect(depthFor('article', unset)).toBe(2);
+		// A stuk or a stemming: its own neighbours, not its dossier's (R3-N B13).
+		expect(depthFor('document', unset)).toBe(1);
+		expect(depthFor('activity', unset)).toBe(1);
 		expect(depthFor('faction', { explicit: 3, all: false })).toBe(3);
 		expect(depthFor('article', { explicit: 3, all: true })).toBe(1);
 	});

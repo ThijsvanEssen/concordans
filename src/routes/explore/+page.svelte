@@ -147,6 +147,7 @@
 		explicitDepth as explicitDepthOf,
 		filterQuery,
 		indexCategory,
+		lawOfPad,
 		nameOfPad,
 		netwerkQuery as netwerkQueryOf
 	} from './explore-url';
@@ -213,6 +214,11 @@
 	let padNotHeld = $state<string | null>(null);
 	/** The address names a bron the data lacks: a 404, as the server gives it. */
 	let padOnbekend = $state(false);
+	/** The law of an article or a bijlage the data lacks, named and linked on the 404 (R3-I F19). */
+	const padLaw = $derived(padOnbekend && pad ? lawOfPad(pad) : null);
+	$effect(() => {
+		if (padLaw) ensureInstrumentName(padLaw);
+	});
 	$effect(() => {
 		const p = pad;
 		void padRetries;
@@ -484,7 +490,7 @@
 		// A publication by its name (Stb. 2018, 101), never its key (R3-K F11).
 		const name =
 			start?.collection === 'instruments'
-				? bronNaam(start, $instrumentMetaStore)
+				? (lawName($instrumentMetaStore.get(bwb), null) ?? bronNaam(start, $instrumentMetaStore))
 				: lawName($instrumentMetaStore.get(bwb), bwb);
 		const eu = chainData.eu;
 		return chain({ id, name }, chainData.delegated, chainData.basis, {
@@ -583,19 +589,32 @@
 	);
 
 	/** The chosen bronnen of the netwerk that are on, as the API names them: Verband's ends. */
-	const sharedEnds = $derived(
-		mode === 'graph' && view === 'verband'
-			? composer.entries
-					.filter((e) => e.on && e.node)
-					.slice(0, 5)
-					.map((e) => ({
-						id: e.node!.id,
-						name: bronNaam(e.node!, $instrumentMetaStore),
-						collection: e.collection,
-						connections: e.connections ?? null
-					}))
-			: []
-	);
+	// The bron of the page counts as the first, chosen or not: one bron added makes two (R3-I F2).
+	const sharedEnds = $derived.by(() => {
+		if (mode !== 'graph' || view !== 'verband') return [];
+		const chosen = composer.entries
+			.filter((e) => e.on && e.node)
+			.map((e) => ({
+				id: e.node!.id,
+				name: bronNaam(e.node!, $instrumentMetaStore),
+				collection: e.collection,
+				connections: e.connections ?? null
+			}));
+		const page =
+			selectedNode &&
+			!selectedNode.id.startsWith('synth:') &&
+			!chosen.some((e) => e.id === selectedNode!.id)
+				? [
+						{
+							id: selectedNode.id,
+							name: bronNaam(selectedNode, $instrumentMetaStore),
+							collection: selectedNode.collection,
+							connections: null
+						}
+					]
+				: [];
+		return [...page, ...chosen].slice(0, 5);
+	});
 	const sharedKey = $derived(sharedEnds.map((e) => e.id).join(','));
 	let sharedData = $state.raw<{
 		key: string;
@@ -655,9 +674,14 @@
 			name: byId.get(id)?.name ?? id,
 			collection: byId.get(id)?.collection ?? null
 		}));
-		// From the netwerk itself, the judgments both cite are not known: "?", as the gap says.
-		return here?.data ? model : { ...model, judgments: null };
+		// From the netwerk itself, the judgments both cite are not known: "?", as the gap says;
+		// only where each end can be cited by a judgment at all (R3-N B7: no "?" for a Kamerlid).
+		if (here?.data) return model;
+		const citable = sharedEnds.every((e) => CITED_BY_JUDGMENTS.has(e.collection));
+		return { ...model, judgments: citable ? null : 0 };
 	});
+	/** What a judgment cites, or is cited by: the ends whose shared judgments the "?" stands for. */
+	const CITED_BY_JUDGMENTS: ReadonlySet<string> = new Set(['articles', 'instruments', 'judgments']);
 	const sharedGap = $derived(
 		sharedData?.key === sharedKey && sharedData.failure === 'niet'
 			? 'onvolledig: alleen de bronnen ertussen'
@@ -1274,8 +1298,10 @@
 			return;
 		}
 		// The first bron chosen grows out of the canvas as it is: what is there stays, as context.
-		if (!netwerkActive) composer.keepCanvas();
-		setNetwerk(withAdded(netwerk, id));
+		// The example is no netwerk of the reader's: the first bron chosen takes its place (R3-N B4).
+		if (voorbeeldAan) composer.forget();
+		else if (!netwerkActive) composer.keepCanvas();
+		setNetwerk(withAdded(voorbeeldAan ? parseNetwerk(new URLSearchParams()) : netwerk, id));
 		meldNetwerk(`${naam ?? 'De bron'} toegevoegd aan het netwerk.`, () =>
 			setNetwerk(withRemoved(netwerk, id))
 		);
@@ -1842,7 +1868,13 @@
 				</p>{/if}
 		{:else if nietGevonden}
 			<NietGevonden title="Bron niet gevonden" kop={false}>
-				<p>{padNotHeld ?? focusNotHeld}</p>
+				<p>{padNotHeld ? `${notHeld(nameOfPad(pad!, lawNameOf))}.` : focusNotHeld}</p>
+				<!-- An article the data lacks: the way to its law, by its name (R3-I F19). -->
+				{#if padLaw}<p>
+						<a href={bronHref({ collection: 'instruments', key: padLaw })}
+							>{lawNameOf(padLaw) ?? padLaw}</a
+						>
+					</p>{/if}
 				<p><a href="/bronnen#dekking">Bronnen en dekking</a></p>
 			</NietGevonden>
 		{:else if loadFailure && !selectedNode && !netwerkActive}
@@ -1865,7 +1897,16 @@
 								{filter}
 								{verbonden}
 								{depth}
-								{reach}
+								reach={netwerkActive
+									? {
+											focal: '',
+											depth: 1,
+											capped: composer.cut.length > 0,
+											cap: NEIGHBORHOOD_CAP,
+											buckets: composer.cut
+										}
+									: reach}
+								counting={netwerkActive && composer.loading}
 								selectedEdgeId={card?.edgeId ?? null}
 								{lineLids}
 								inFluxMap={overlayCounts.inFlux}
@@ -1887,7 +1928,7 @@
 								onLaadSoort={netwerkActive ? undefined : laadSoort}
 								{laadtSoort}
 								allesGrens={{ grens: ALLES_GRENS, geladen: alles }}
-								onAllesLaden={alles
+								onAllesLaden={alles || netwerkActive
 									? undefined
 									: () => setUrl({ alles: '1', diepte: null }, { push: true })}
 								onToggleHeat={toggleHeat}
@@ -1966,6 +2007,7 @@
 											: []}
 										loading={composer.loading}
 										start={!focus && !netwerkActive}
+										example={voorbeeldAan}
 										{telefoon}
 										onSelect={addIdToNetwerk}
 										onVoorbeeld={showExample}

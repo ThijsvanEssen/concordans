@@ -28,6 +28,12 @@ export function explicitDepth(params: URLSearchParams): number | null {
 }
 
 /**
+ * A stuk, a motie, a stemming, a toezegging, an activiteit, a zaak: one step, its own neighbours
+ * (indiener, dossier, wet, fracties); two steps were the whole dossier around it (R3-N B13).
+ */
+const ONE_STEP: ReadonlySet<DrawClass> = new Set(['document', 'activity']);
+
+/**
  * The steps the canvas shows around a bron of `kind`. ?alles=1 is one step with every direct
  * neighbour (Thijs, 10 Oct). Unset, a wet, fractie, commissie or dossier takes one step: its
  * own children are plenty (a fractie's members alone can be dozens); every other bron two.
@@ -37,7 +43,7 @@ export function depthFor(
 	{ explicit, all }: { explicit: number | null; all: boolean }
 ): number {
 	if (all) return 1;
-	return explicit ?? (isContainerKind(drawClass) ? 1 : DEPTH.fallback);
+	return explicit ?? (isContainerKind(drawClass) || ONE_STEP.has(drawClass) ? 1 : DEPTH.fallback);
 }
 
 /** The netwerk's own params, so that selecting a bron does not compose it again. */
@@ -98,6 +104,10 @@ export function besideJudgment(beside: ReturnType<typeof parseNodeId>): GraphNod
  * What a readable address names, as the page says it when the data lacks it or it failed: a
  * law by its name where the page knows it (`lawNameOf`), not by its BWB id.
  */
+/** The law of an address of an article or a bijlage, by its id: the way to it from a 404. */
+export const lawOfPad = (p: Pad): string | null =>
+	p.soort === 'artikel' || p.soort === 'bijlage' ? p.wet : null;
+
 export function nameOfPad(p: Pad, lawNameOf: (bwb: string) => string | null = () => null): string {
 	switch (p.soort) {
 		case 'artikel':

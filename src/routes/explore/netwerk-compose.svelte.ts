@@ -54,6 +54,21 @@ async function pathsBetween(ids: string[]): Promise<Schema<'PathsResponse'> | nu
 	return getPaths(query).catch((e) => (report('Paden tussen bronnen', e), null));
 }
 
+/** Per collection, the neighbours the nodes of `responses` hold and how many there are, where fewer came. */
+export function cutOf(
+	responses: readonly NodeResponse[]
+): { collection: string; total: number; kept: number }[] {
+	const per = new Map<string, { collection: string; total: number; kept: number }>();
+	for (const r of responses)
+		for (const b of r.neighbors?.buckets ?? []) {
+			const c = per.get(b.collection) ?? { collection: b.collection, total: 0, kept: 0 };
+			c.total += b.total;
+			c.kept += b.items.length;
+			per.set(b.collection, c);
+		}
+	return [...per.values()].filter((c) => c.kept < c.total);
+}
+
 export class NetwerkComposer {
 	/** The chosen bronnen as the panel Netwerk lists them. */
 	entries = $state<NetwerkEntry[]>([]);
@@ -62,6 +77,11 @@ export class NetwerkComposer {
 	joiningCount = $state(0);
 	/** The paths of the last composition are not all there (`partial`, API 0.79.23). */
 	partial = $state(false);
+	/**
+	 * Per kind, the neighbours of the chosen bronnen that came and how many there are, where the
+	 * API cut them off: "200 van 6.206" (R3-N B6).
+	 */
+	cut = $state.raw<{ collection: string; total: number; kept: number }[]>([]);
 	/** The weergave Omgeving: each chosen bron with all its neighbours, not only what they share. */
 	surroundings = false;
 	/** Whether the canvas is a composed netwerk now. */
@@ -189,6 +209,7 @@ export class NetwerkComposer {
 		});
 		this.composed = true;
 		this.joiningCount = joining.length;
+		this.cut = cutOf(participants.map((p) => p.response));
 		this.entries = [
 			...found.map(({ id, response }): NetwerkEntry => {
 				const node = nodeToGraphNode(response.node);

@@ -23,7 +23,7 @@
 		<span
 			>Voorbeeld: {name}. Kies een andere bron via het <TekstLink onclick={() => openSearch()}
 				>zoekveld</TekstLink
-			> (⌘K).</span
+			><span class="toets"> (⌘K)</span>.</span
 		>
 		<IconButton label="Deze regel verbergen" onclick={close}>×</IconButton>
 	</p>
@@ -40,6 +40,12 @@
 		border-bottom: 1px solid var(--rule);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
+	}
+	/* A key to press, only where there is a keyboard to press it on (R3-I F21). */
+	@media not (hover: hover) {
+		.toets {
+			display: none;
+		}
 	}
 	/* Room for the 44 px of its link (.raakvlak) inside the line, off the network under it. */
 	@media (pointer: coarse), (max-width: 768px) {

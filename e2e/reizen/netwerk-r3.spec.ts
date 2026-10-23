@@ -46,7 +46,9 @@ test('Keten on /explore with a law draws its keten (R3-N B3)', async ({ page, to
 	await expect(page.getByText(/alleen bij een wet/)).toHaveCount(0);
 	const regulation = touch
 		? page.getByRole('region', { name: 'AMvB' }).getByRole('button').first()
-		: page.getByRole('group', { name: 'Keten' }).getByRole('button', { name: 'Arbowet' });
+		: page
+				.getByRole('group', { name: 'Keten' })
+				.getByRole('button', { name: /^(Arbowet|Arbeidsomstandighedenwet)$/ });
 	await expect(regulation).toBeVisible();
 });
 
@@ -54,4 +56,60 @@ test('Keten is not offered where it means nothing (R3-K F9)', async ({ page }) =
 	await page.goto('/fracties/vvd?mode=netwerk');
 	await expect(page.getByRole('button', { name: 'Omgeving', pressed: true })).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Keten' })).toBeDisabled();
+});
+
+test('Verband counts the bron of the page as the first end (R3-I F2)', async ({ page }) => {
+	await page.goto(
+		'/wetten/BWBR0005289/artikel/6:162?mode=netwerk&weergave=verband&netwerk=articles/bwbr0005290_658'
+	);
+	await expect(page.getByRole('button', { name: 'Verband', pressed: true })).toBeVisible();
+	await expect(page.getByText('Art. 7:658 BW').first()).toBeVisible();
+	await expect(page.getByText('Voeg een tweede bron toe')).toHaveCount(0);
+});
+
+test('no "?" for judgments both cite where one end cites none (R3-N B7)', async ({ page }) => {
+	await page.goto(
+		'/leden/rob-jetten?mode=netwerk&weergave=verband&netwerk=instruments/bwbr0005537'
+	);
+	await expect(page.getByText('Rob Jetten').first()).toBeVisible();
+	await expect(page.getByText(/die beide aanhalen/)).toHaveCount(0);
+});
+
+test('a cut neighbourhood says how much of it is shown (R3-N B6)', async ({ page }) => {
+	await page.goto('/explore?netwerk=instruments/bwbr0005537');
+	const legend = await filters(page);
+	await expect(legend.getByRole('heading', { name: 'Getoond' })).toBeVisible();
+	await expect(legend.getByText(/van [\d.]+/).first()).toBeVisible();
+});
+
+test('an article the data lacks leads to its law, by name (R3-I F19)', async ({ page, guard }) => {
+	// The 404 of the lookup, as the server gives it.
+	guard.allow(/status of 404/);
+	await page.goto('/wetten/BWBR0005289/artikel/6:99999');
+	await expect(page.getByRole('link', { name: 'Burgerlijk Wetboek Boek 6' })).toHaveAttribute(
+		'href',
+		'/wetten/BWBR0005289'
+	);
+});
+
+test('the keten names a publication by its citation, its layer by its kind (R3-K F2, F11)', async ({
+	page
+}) => {
+	await page.goto('/stb/2018/101?mode=netwerk&weergave=keten');
+	await expect(page.getByRole('button', { name: 'Keten', pressed: true })).toBeVisible();
+	await expect(page.getByText('Stb. 2018, 101').first()).toBeVisible();
+	await expect(page.getByText(/STB_2018_101/)).toHaveCount(0);
+});
+
+test('Alle N lists the regulations a layer does not draw (R3-K F4)', async ({ page, touch }) => {
+	await page.goto('/wetten/BWBR0010346?mode=netwerk&weergave=keten');
+	const alle = touch
+		? page.getByRole('region', { name: 'AMvB' }).getByRole('button', { name: /^Alle \d+/ })
+		: page
+				.getByRole('group', { name: 'Keten' })
+				.getByRole('button', { name: /^Alle \d+/ })
+				.first();
+	await expect(alle).toBeVisible();
+	await alle.click();
+	await expect(page.getByRole('button', { name: 'Minder' }).first()).toBeVisible();
 });

@@ -95,6 +95,7 @@
 		| 'onToggleHeat'
 		| 'onHeatPeriodChange'
 		| 'onToggleMutatie'
+		| 'counting'
 	>;
 
 	let {
@@ -1031,10 +1032,17 @@
 	let stippenSleutel = '';
 	function telJaren() {
 		const nieuw: { jaar: number; collection: Collection }[] = [];
+		const add = (date: unknown, collection: Collection) => {
+			if (typeof date !== 'string') return;
+			const jaar = yearFraction(date);
+			if (jaar > 1000) nieuw.push({ jaar, collection });
+		};
 		g.forEachNode((id, a) => {
-			if (isClusterId(id) || typeof a.date !== 'string') return;
-			const jaar = yearFraction(a.date);
-			if (jaar > 1000) nieuw.push({ jaar, collection: a.collection as Collection });
+			// A group counts its members by their years: 143 uitspraken are 143 dots (R3-N B8).
+			if (isClusterId(id))
+				for (const m of clusterById.get(id)?.members ?? [])
+					add(store.getNodeById(m)?.raw?.props?.date, a.collection as Collection);
+			else add(a.date, a.collection as Collection);
 		});
 		const sleutel = nieuw.map((s) => `${s.jaar}${s.collection}`).join();
 		if (sleutel !== stippenSleutel) {
