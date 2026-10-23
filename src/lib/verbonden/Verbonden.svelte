@@ -8,7 +8,6 @@
 	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
-	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { page } from '$app/state';
 	import { tick, untrack } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';
@@ -155,8 +154,6 @@
 		const kind = g ? kindOfGroup(g) : null;
 		if (onShowNetwork && kind) openKind(kind);
 		expanded = new Set([...expanded, id]);
-		// A group closed in this browser opens for it.
-		zetOpen(`verbonden:${id}`, true);
 		// Once its rows are drawn: a smooth scroll is cut off while they render.
 		afterTick(() =>
 			root?.querySelector(`[data-group="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'start' })
