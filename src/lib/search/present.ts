@@ -387,7 +387,7 @@ function presentBase(hit: Hit, query: string, neighbours: readonly Hit[]): Prese
 	return { title: nameOf(hit), context: '', snippet: null };
 }
 
-/** The dossier a stuk belongs to, as its heading reads: `Kamerstuk 32621 Wet nadeelcompensatie …`. */
+/** The dossier a stuk belongs to, as its heading reads: `Dossier 32621 Wet nadeelcompensatie …`. */
 export function sectionOf(hit: Hit): string | null {
 	if (hit.collection !== 'documents') return null;
 	const number = extra(hit, 'dossier_number');

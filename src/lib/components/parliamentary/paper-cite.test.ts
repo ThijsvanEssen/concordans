@@ -97,7 +97,7 @@ describe('a passage of a memorie as it is cited and kept (A28, Thijs 20 Oct)', (
 });
 
 describe('a paper kept under its dossier by the name of the dossier (A53)', () => {
-	// The MvT of Kamerstuk 32621, nr. 3, its light node as the API gives it (live, 21 Oct): the
+	// The MvT of Dossier 32621, nr. 3, its light node as the API gives it (live, 21 Oct): the
 	// paper's props lack the dossier's name, its PART_OF neighbour has it.
 	const mvt = {
 		key: '6c33ccba',
@@ -139,13 +139,13 @@ describe('a paper kept under its dossier by the name of the dossier (A53)', () =
 		const paper = citePaper(mvt, props, dossierInLight(light));
 		const passage = paperSectionCite(paper)({ id: 's-24', heading: 'Artikel 3:4' }, '').bewaar;
 		expect(passage.groep).toBe(
-			'Kamerstuk 32621 Wet nadeelcompensatie en schadevergoeding bij onrechtmatige besluiten'
+			'Dossier 32621 Wet nadeelcompensatie en schadevergoeding bij onrechtmatige besluiten'
 		);
 		expect(passage.groupKey).toBe('dossier:32621');
 		expect(paper.item.groep).toBe(passage.groep);
 	});
 
 	it('keeps the number as the name where the dossier is not known', () => {
-		expect(citePaper(mvt, {}, dossierInLight(null)).item.groep).toBe('Kamerstuk 32621');
+		expect(citePaper(mvt, {}, dossierInLight(null)).item.groep).toBe('Dossier 32621');
 	});
 });

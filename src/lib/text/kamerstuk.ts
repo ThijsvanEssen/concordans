@@ -89,7 +89,7 @@ export function kamerstukCitation(p: Paper): string | null {
 // `Kamerstuk 36901, nr. 6.`, `Kamerstuk I 36600 VIII, AB:` (API 0.72: the Eerste Kamer's letter
 // without `nr.`), and before 0.72 `EK 36901, nr. A:`.
 const LEAD =
-	/^(?:Kamerstuk(?:\s+I{1,2})?|TK|EK)\s+[\w()-]+(?:\s+[A-Z]+)?,\s*(?:nr\.\s*)?[\w-]+\s*[.:]\s*/;
+	/^(?:(?:Kamerstuk|Dossier)(?:\s+I{1,2})?|TK|EK)\s+[\w()-]+(?:\s+[A-Z]+)?,\s*(?:nr\.\s*)?[\w-]+\s*[.:]\s*/;
 
 /** A title without the Kamerstuk the API puts before it, where that is shown on its own. */
 export const withoutKamerstuk = (title: string): string => title.replace(LEAD, '') || title;

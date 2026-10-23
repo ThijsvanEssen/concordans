@@ -218,7 +218,7 @@ describe('behoort', () => {
 			])
 		);
 		expect(stuk.regels.map((r) => r.label)).toEqual(['Ingediend bij']);
-		expect(stuk.regels[0].lagen[0].naam).toBe('Kamerstuk 36496 Wet betaalbare huur');
+		expect(stuk.regels[0].lagen[0].naam).toBe('Dossier 36496 Wet betaalbare huur');
 		expect(stuk.regels[0].lagen[0].ref).toEqual({
 			collection: 'dossiers',
 			key: '36496',

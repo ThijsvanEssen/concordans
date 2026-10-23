@@ -276,7 +276,7 @@ const HOE: Partial<Record<Relation, (c: HoeContext) => Hoe | null | undefined>> 
 			);
 		// The dossiers of a wet: the bill that made it, or a bill whose publication amended it
 		// (`via`, /api/instruments/{bwb}/dossiers). What the dossier is to the wet, in the Kamer's
-		// words; its kind and number stand under it ("Kamerstuk 36764").
+		// words; its kind and number stand under it ("Dossier 36764").
 		const pub = publicatie(textOf(edge.publication));
 		return textOf(edge.via) === 'amending_publication'
 			? regel('Wijzigt', join('deze wet', pub), null)

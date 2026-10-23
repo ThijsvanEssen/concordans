@@ -100,7 +100,7 @@ export function activiteitGroepen(r: Records): {
 				})
 			)
 		},
-		{ id: 'besluiten', titel: 'Besluiten', regels: besluiten }
+		{ id: 'besluiten', titel: 'Stemmingen', regels: besluiten }
 	].filter((g) => g.regels.length > 0);
 
 	return { groepen, inhoud };

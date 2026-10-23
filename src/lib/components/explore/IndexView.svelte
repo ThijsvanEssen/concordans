@@ -20,7 +20,6 @@
 	import { isAborted, report } from '$lib/api/errors';
 	import LoadState, { failureText } from '$lib/components/ui/LoadState.svelte';
 	import Kenmerk from '$lib/components/ui/Kenmerk.svelte';
-	import { bronLabel } from '$lib/vocabulary';
 	import { getCoverage, getStats, type Stats } from '$lib/api/stats';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { SOURCE_LABEL } from '$lib/bron/herkomst';
@@ -44,6 +43,7 @@
 	import {
 		INDEX_CATEGORIES,
 		categoryLabel,
+		categoryNoun,
 		collectionOf,
 		type IndexCategory
 	} from './index/categories';
@@ -518,7 +518,7 @@
 	const labelOf = (c: IndexCategory) =>
 		INDEX_CATEGORIES.find((cat) => cat.key === c)!.label.toLowerCase();
 	/** One bron of the list, as its count says it (a list without rows shows no count). */
-	const noun1 = (c: IndexCategory) => bronLabel(collectionOf(c)).toLowerCase();
+	const noun1 = categoryNoun;
 	/** Toon at the foot of the open filters on a phone: what the list holds under them. */
 	const showLabel = $derived(
 		resultTotal === null
@@ -622,7 +622,7 @@
 							/>
 						{/if}
 						{#if chips.length}
-							<p class="wis"><TekstLink onclick={clearFilters}>Wis alle filters</TekstLink></p>
+							<p class="wis"><TekstLink onclick={clearFilters}>Wissen</TekstLink></p>
 						{/if}
 					</Verfijnen>
 				</aside>

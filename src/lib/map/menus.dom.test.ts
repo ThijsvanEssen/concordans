@@ -1,4 +1,4 @@
-// The menus of the bundels that change what they hold: Meer › Voeg toe aan … on a shared
+// The menus of the bundels that change what they hold: Meer › Toevoegen aan … on a shared
 // bundel's page, and the ⋯ of a bundel from a file. Their list of bundels takes the focus, so
 // Escape closes it, and the menu opens again on its own items (UX-toets A14 #1).
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -50,7 +50,7 @@ beforeAll(async () => {
 	]);
 }, 60_000);
 
-describe('Meer › Voeg toe aan … on a shared bundel', () => {
+describe('Meer › Toevoegen aan … on a shared bundel', () => {
 	it('puts the focus on the first bundel, closes on Escape and opens again on its items', async () => {
 		const { default: MapView } = await import('./MapView.svelte');
 		const onShared = vi.fn();
@@ -58,7 +58,7 @@ describe('Meer › Voeg toe aan … on a shared bundel', () => {
 		const meer = screen.getByRole('button', { name: /^Meer bij Thuiswerk/ });
 		await fireEvent.click(meer);
 		await settle();
-		await fireEvent.click(screen.getByRole('menuitem', { name: 'Voeg toe aan …' }));
+		await fireEvent.click(screen.getByRole('menuitem', { name: 'Toevoegen aan …' }));
 		await settle();
 		expect(items()).toEqual(['Losse markeringen']);
 		expect(document.activeElement?.textContent).toBe('Losse markeringen');
@@ -68,7 +68,7 @@ describe('Meer › Voeg toe aan … on a shared bundel', () => {
 		await fireEvent.click(meer);
 		await settle();
 		expect(items()).toContain('Niet bewaren');
-		expect(items()).toContain('Voeg toe aan …');
+		expect(items()).toContain('Toevoegen aan …');
 	});
 });
 
@@ -86,7 +86,7 @@ describe('the ⋯ of a bundel from a file', () => {
 		const dots = screen.getByRole('button', { name: 'Thuiswerk: meer' });
 		await fireEvent.click(dots);
 		await settle();
-		await fireEvent.click(screen.getByRole('menuitem', { name: 'Voeg toe aan …' }));
+		await fireEvent.click(screen.getByRole('menuitem', { name: 'Toevoegen aan …' }));
 		await settle();
 		expect(document.activeElement?.textContent).toBe('Losse markeringen');
 		await fireEvent.keyDown(document.activeElement!, { key: 'Escape' });

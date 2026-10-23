@@ -49,7 +49,7 @@ describe('why a row is in a followed topic', () => {
 			summary: 'Iets anders.',
 			dossier: { ...DOSSIER_36875, short_title: 'Cyberbeveiliging' }
 		});
-		expect(getoondOnder(j)).toEqual(['Kamerstuk 36875 Cyberbeveiliging']);
+		expect(getoondOnder(j)).toEqual(['Dossier 36875 Cyberbeveiliging']);
 		expect(plekVan(['cyberbeveiliging'], j, [headlineOf(j).title, ...getoondOnder(j)])).toBeNull();
 	});
 

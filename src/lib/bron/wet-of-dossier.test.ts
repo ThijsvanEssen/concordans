@@ -1,7 +1,7 @@
 // A wet and the dossier of the same name are told apart by their kind, in one wording
-// everywhere (Thijs, 13 Oct): the wet as "Wet", the dossier as "Kamerstuk 36764", never its
+// everywhere (Thijs, 13 Oct): the wet as "Wet", the dossier as "Dossier 36764", never its
 // bare number. The wording lives in `kamerstukNummer` (dossier-naam.ts) and DossierNaam; a page
-// that writes its own "Dossier 36764" or "Kamerstuk 36764" beside them fails here.
+// that writes its own "Dossier 36764" or "Dossier 36764" beside them fails here.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -49,12 +49,12 @@ describe('wet and dossier of the same name', () => {
 	});
 
 	it('names a dossier by its kind and number, never the bare number', () => {
-		expect(kamerstukNummer('36764')).toBe('Kamerstuk 36764');
-		expect(kamerstukNummer('36764', 'EK')).toBe('Kamerstuk I 36764');
+		expect(kamerstukNummer('36764')).toBe('Dossier 36764');
+		expect(kamerstukNummer('36764', 'EK')).toBe('Dossier I 36764');
 		expect(dossierLabel({ number: '36764', short_title: 'Cyberbeveiligingswet' })).toBe(
-			'Kamerstuk 36764 Cyberbeveiligingswet'
+			'Dossier 36764 Cyberbeveiligingswet'
 		);
-		expect(dossierLabel({ number: '36764' })).toBe('Kamerstuk 36764');
+		expect(dossierLabel({ number: '36764' })).toBe('Dossier 36764');
 	});
 
 	it('reads a dossier from node props, the long title kept for the hover', () => {
@@ -76,10 +76,7 @@ describe('wet and dossier of the same name', () => {
 			title: LONG,
 			short_title: 'Cyberbeveiligingswet'
 		});
-		expect([dossier.title, dossier.identifier]).toEqual([
-			'Cyberbeveiligingswet',
-			'Kamerstuk 36764'
-		]);
+		expect([dossier.title, dossier.identifier]).toEqual(['Cyberbeveiligingswet', 'Dossier 36764']);
 		const wet = describeBron('instruments', 'bwbr0052872', null, {
 			bwb_id: 'BWBR0052872',
 			citation_title: 'Cyberbeveiligingswet',
@@ -103,7 +100,7 @@ describe('wet and dossier of the same name', () => {
 			short_title: 'Cyberbeveiligingswet'
 		});
 		expect([dossier.kicker, dossier.title, dossier.extra]).toEqual([
-			'Dossier, Kamerstuk 36764',
+			'Dossier, Dossier 36764',
 			'Cyberbeveiligingswet',
 			LONG
 		]);
@@ -164,8 +161,8 @@ describe('a dossier number in its official notation', () => {
 			])
 		];
 		expect(shown.filter((t) => !t || HYPHENATED_SUFFIX.test(t))).toEqual([]);
-		expect(dossierLabel(d)).toBe('Kamerstuk 36600 VIII');
-		expect(kamerstukNummer('21501-20')).toBe('Kamerstuk 21501-20');
+		expect(dossierLabel(d)).toBe('Dossier 36600 VIII');
+		expect(kamerstukNummer('21501-20')).toBe('Dossier 21501-20');
 	});
 
 	it('tells a dossier without a name of its own by dossierOwnName, not by its number', () => {

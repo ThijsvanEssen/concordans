@@ -38,7 +38,7 @@ describe('a bundel’s own page, the place to work (bundels-ux 2b)', () => {
 			'Download bestand',
 			'>PDF<',
 			'>Hernoem<',
-			'>Verwijder bundel<',
+			'>Bundel verwijderen<',
 			'>Wissen<'
 		])
 			expect(v, label).toContain(label);
@@ -156,7 +156,7 @@ describe('the overview, a list that opens in place (bundels-ux 2a, decision 20A)
 	it('shows a bundel from a file as a row, marked, with Bewaar and its ⋯', () => {
 		const o = overview();
 		expect(o).toMatch(/<BundleRow\b[^>]*mark="uit bestand"/);
-		for (const label of ['Niet openen', 'Vervang ', 'Voeg toe aan ', 'Bewaar als nieuwe bundel'])
+		for (const label of ['Niet openen', 'Vervang ', 'Toevoegen aan ', 'Bewaar als nieuwe bundel'])
 			expect(o).toContain(label);
 		// One of this browser's bundels again (its id): Vervang is the choice in sight (A14 #5).
 		expect(o).toMatch(/\{#if sameId\(f\) && target\}\s*<button[\s\S]*?>Vervang<\/button/);
@@ -164,13 +164,13 @@ describe('the overview, a list that opens in place (bundels-ux 2a, decision 20A)
 });
 
 describe('a shared link, read as a bundel’s page (bundels-ux 2c, decision 20A)', () => {
-	it('opens the bundel’s page read only, with Bewaar, Voeg toe aan … and Niet bewaren', () => {
+	it('opens the bundel’s page read only, with Bewaar, Toevoegen aan … and Niet bewaren', () => {
 		expect(bron('routes/(main)/bundels/+page.svelte')).toMatch(
 			/<MapView\b[^>]*(\{shared\}|shared=)/
 		);
 		const v = bron('lib/map/MapView.svelte');
 		expect(v).toMatch(/>Bewaar<\/button/);
-		for (const label of ['Voeg toe aan …', 'Niet bewaren']) expect(v).toContain(label);
+		for (const label of ['Toevoegen aan …', 'Niet bewaren']) expect(v).toContain(label);
 	});
 
 	it('prints a bundel as a PDF through the print view, A4 (decision 20E)', () => {

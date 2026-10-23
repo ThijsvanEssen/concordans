@@ -458,7 +458,7 @@
 		return [
 			{
 				id: 'soort',
-				label: 'Soort',
+				label: 'Gebeurtenis',
 				kind: 'list',
 				options: FEED_KINDS.map((k) => ({
 					id: k,
@@ -711,7 +711,7 @@
 		>
 			<IndexFacets {groups} pending={tellen} />
 			{#if chips.length}
-				<p class="wis"><TekstLink onclick={clearFilters}>Wis alle filters</TekstLink></p>
+				<p class="wis"><TekstLink onclick={clearFilters}>Wissen</TekstLink></p>
 			{/if}
 		</Verfijnen>
 	</aside>

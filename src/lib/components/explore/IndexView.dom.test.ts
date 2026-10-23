@@ -260,7 +260,7 @@ describe('Bronnen, the address', () => {
 		await settled();
 		expect(page.url.search).toMatchSnapshot();
 		expect(api.asked('/api/dossiers').at(-1)).toMatchObject({ query: { kind: 'Begroting' } });
-		await fireEvent.click(screen.getByText('Wis alle filters'));
+		await fireEvent.click(screen.getByText('Wissen'));
 		expect(page.url.search).toMatchSnapshot();
 	});
 

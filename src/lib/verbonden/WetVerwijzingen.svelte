@@ -59,7 +59,7 @@
 	{#if richtingen === 'laden'}
 		<p class="stil">Laden…</p>
 	{:else if richtingen === null}
-		<p class="stil">Verwijzingen niet beschikbaar</p>
+		<p class="stil">Verwijzingen nog niet beschikbaar</p>
 	{:else}
 		{#each getoond as r (r.richting)}
 			{#if r.regels.length}

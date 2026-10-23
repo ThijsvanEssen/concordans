@@ -42,7 +42,7 @@ describe('a row of Verbonden kept in the map', () => {
 		const item = itemVanRij(row)!;
 		expect(item.groupKey).toBe('dossier:34372');
 		expect(item.groupKey).toBe(lezer.groupKey);
-		expect(item.groep).toBe('Kamerstuk 34372');
+		expect(item.groep).toBe('Dossier 34372');
 	});
 
 	it('names the dossier of a Toelichting row by the name explained-by gives it (#875)', () => {
@@ -53,7 +53,7 @@ describe('a row of Verbonden kept in the map', () => {
 			}
 		]);
 		const item = itemVanRij(row)!;
-		expect(item.groep).toBe('Kamerstuk 34372 Wet gegevensverwerking');
+		expect(item.groep).toBe('Dossier 34372 Wet gegevensverwerking');
 		expect(item.groupKey).toBe('dossier:34372');
 	});
 

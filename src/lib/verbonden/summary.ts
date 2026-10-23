@@ -8,9 +8,9 @@ import { refId } from '$lib/bron/href';
 import { korteDatum } from '$lib/text/datum';
 import { ownKind, shortKind } from '$lib/text/document-kind';
 import { formatCount } from '$lib/text/getal';
-import { plural } from '$lib/text/words';
+import { lowerFirst, plural } from '$lib/text/words';
 import type { Bucket } from '$lib/api/nodes';
-import type { Collection } from '$lib/vocabulary';
+import { BRON_LABEL, type Collection } from '$lib/vocabulary';
 import { groupCount, type Group } from './groups';
 import { byImportance } from './importance';
 import type { Row } from './rows';
@@ -46,21 +46,35 @@ const KIND_OF: Partial<Record<Collection, KindId>> = {
 	cabinets: 'cabinets'
 };
 
-/** What a soort is called, as a heading and as the plural of "Alle N …". */
-const KIND_LABEL: Record<KindId, { label: string; one: string; many: string }> = {
-	judgments: { label: 'Uitspraken', one: 'uitspraak', many: 'uitspraken' },
-	documents: { label: 'Kamerstukken', one: 'Kamerstuk', many: 'Kamerstukken' },
-	laws: { label: 'Wetten', one: 'wet of artikel', many: 'wetten en artikelen' },
-	dossiers: { label: 'Dossiers', one: 'dossier', many: 'dossiers' },
-	decisions: { label: 'Besluiten', one: 'besluit', many: 'besluiten' },
-	activities: { label: 'Activiteiten', one: 'activiteit', many: 'activiteiten' },
-	commitments: { label: 'Toezeggingen', one: 'toezegging', many: 'toezeggingen' },
-	cases: { label: 'Kamerzaken', one: 'Kamerzaak', many: 'Kamerzaken' },
-	members: { label: 'Leden', one: 'lid', many: 'leden' },
-	factions: { label: 'Fracties', one: 'fractie', many: 'fracties' },
-	committees: { label: 'Commissies', one: 'commissie', many: 'commissies' },
-	cabinets: { label: 'Kabinetten', one: 'kabinet', many: 'kabinetten' }
-};
+/**
+ * What a soort is called, as a heading and as the plural of "Alle N …": read from BRON_LABEL,
+ * the one list of names. Only the laws differ (a soort of wetten and artikelen); a Kamerzaak
+ * keeps its capital.
+ */
+export const SOORT_LABEL = Object.fromEntries(
+	(Object.entries(KIND_OF) as [Collection, KindId][]).map(([collection, id]) => {
+		const [one, many] = BRON_LABEL[collection];
+		return id === 'laws'
+			? [id, { label: 'Wetten', one: 'wet of artikel', many: 'wetten en artikelen' }]
+			: [
+					id,
+					{
+						label: many,
+						one: collection === 'cases' ? one : lowerFirst(one),
+						many: lowerFirst(many)
+					}
+				];
+	})
+) as Record<KindId, { label: string; one: string; many: string }>;
+
+/** What the persons of a bron are: its Leden in a fractie or commissie, its Bewindspersonen in a kabinet. */
+function membersLabel(selection: Collection): { label: string; one: string; many: string } {
+	if (selection === 'factions' || selection === 'committees')
+		return { label: 'Leden', one: 'lid', many: 'leden' };
+	if (selection === 'cabinets')
+		return { label: 'Bewindspersonen', one: 'bewindspersoon', many: 'bewindspersonen' };
+	return SOORT_LABEL.members;
+}
 
 /** The order of the soorten: the mockups of the article, the dossier and the Kamerlid. */
 const ORDER: KindId[] = [
@@ -195,7 +209,7 @@ export function kindsOf(
 		const rows = kindRows(gs, id, selection);
 		const failed = gs.find((g) => g.failed && g.rows.length === 0);
 		if (count === 0 && rows.length === 0 && !failed) return [];
-		const label = KIND_LABEL[id];
+		const label = id === 'members' ? membersLabel(selection) : SOORT_LABEL[id];
 		const allArticles = id === 'laws' && rows.every((r) => r.ref.collection === 'articles');
 		const onlyLaws = id === 'laws' && rows.every((r) => r.ref.collection !== 'articles');
 		const noun = allArticles

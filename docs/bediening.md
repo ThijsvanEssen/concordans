@@ -10,7 +10,7 @@ How a control looks and where it stands, on every page and in every panel. The t
 | Keuze     | one of 2 to 5 visible options: Periode, Netwerk/Tekst   | `ui/Keuze.svelte`                                         | joined boxes, the chosen one filled in ink                                                                    |
 | Tekstmenu | one of many, or a setting: Alle bronnen, Nieuwste eerst | `ui/TekstMenu.svelte`                                     | a framed Knop with the word of its value and a caret; the chosen option in weight                             |
 | Vinkje    | switching a thing on or off in a list: facets, columns  | `ui/FilterOptie.svelte` (`inline` beside other things)    | the box (`ui/Vinkje.svelte`: 12 px, `--r-1`, a drawn tick), the label, a count at the right; chosen in weight |
-| Tekstlink | going somewhere: Alle 244 uitspraken, Wis alle filters  | `ui/TekstLink.svelte`, `ui/AlleN.svelte`                  | the serif in ink, underlined; red only on hover and focus                                                     |
+| Tekstlink | going somewhere: Alle 244 uitspraken, Wissen            | `ui/TekstLink.svelte`, `ui/AlleN.svelte`                  | the serif in ink, underlined; red only on hover and focus                                                     |
 
 The Knop has three forms with a fixed meaning (besluit 33, A163), one height and one letter, and no smaller size:
 
@@ -33,7 +33,7 @@ Every page and panel, from top to bottom:
 3. **Refine**: on a page the facets at the left with their counts; in a narrow panel behind one text menu or Filter; on a phone behind Verfijnen (N), opened in place.
 4. **List**: a group's heading is its fold; at most one switch at its right (netwerk, named "Toon in het netwerk"); at most one line of controls under it (order, refine); one text link at the foot, Alle N.
 
-A row has no buttons of its own: a click on the row does it. Its actions (and a group heading's In netwerk, for all its rows), Bewaar and In netwerk, are icon buttons (`ui/RijActies.svelte`: a bookmark, the network with a +) that show on hover or focus of the row (`data-rij`), always on a phone at 32 px. At rest only the state shows: a filled bookmark when kept, the network when in the network. A box is for a choice in a filter, never for an action.
+A row has no buttons of its own: a click on the row does it. Its actions (and a group heading's In het netwerk, for all its rows), Bewaar and In het netwerk, are icon buttons (`ui/RijActies.svelte`: a bookmark, the network with a +) that show on hover or focus of the row (`data-rij`), always on a phone at 32 px. At rest only the state shows: a filled bookmark when kept, the network when in the network. A box is for a choice in a filter, never for an action.
 
 This holds for Bladeren too: a row's title opens the bron in Tekst. There are no buttons at the end of the row. Every click on a bron (a BronLink, a row of Verbonden or Bladeren, a line of a tijdlijn, a number in an amendment's chain) opens it in Tekst, also at its bare address (besluit 32); its network is the step from there. One rule, `openHref` in `src/lib/bron/href.ts`; only a link that names the network (In het netwerk) builds its own.
 

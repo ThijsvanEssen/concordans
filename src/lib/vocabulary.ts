@@ -152,7 +152,7 @@ export const BRON_LABEL: Record<Collection, readonly [singular: string, plural: 
 	activities: ['Activiteit', 'Activiteiten'],
 	decisions: ['Stemming', 'Stemmingen'],
 	commitments: ['Toezegging', 'Toezeggingen'],
-	members: ['Kamerlid', 'Kamerleden'],
+	members: ['Persoon', 'Personen'],
 	factions: ['Fractie', 'Fracties'],
 	committees: ['Commissie', 'Commissies'],
 	cabinets: ['Kabinet', 'Kabinetten']

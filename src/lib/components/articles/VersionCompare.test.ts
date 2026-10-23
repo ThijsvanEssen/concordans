@@ -81,7 +81,7 @@ describe('VersionCompare: where a wording came from', () => {
 		// version came from no publication in the data.
 		const all = [...herkomsten(html('')), ...herkomsten(html('lid-1'))].filter(Boolean);
 		expect(all).toHaveLength(4);
-		expect(all[0]).toBe('Stb. 2017, 204in werking bij Stb. 2017, 300Kamerstuk 34000 Wet scholen');
+		expect(all[0]).toBe('Stb. 2017, 204in werking bij Stb. 2017, 300Dossier 34000 Wet scholen');
 		expect(new Set(all).size).toBe(1);
 	});
 

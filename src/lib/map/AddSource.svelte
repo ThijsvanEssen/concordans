@@ -144,7 +144,7 @@
 		</p>
 	{/if}
 	<p class="knoppen">
-		<button type="submit" class="btn" disabled={!citation.trim() || badUrl}>Voeg toe</button>
+		<button type="submit" class="btn" disabled={!citation.trim() || badUrl}>Toevoegen</button>
 		<TekstLink onclick={onClose}>Annuleren</TekstLink>
 	</p>
 </form>

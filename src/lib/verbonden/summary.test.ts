@@ -39,7 +39,7 @@ describe('Verbonden at a glance', () => {
 		const kinds = kindsOf(groups, 'articles', buckets);
 		expect(kinds.map((k) => [k.label, k.count])).toEqual([
 			['Uitspraken', 10394],
-			['Kamerstukken', 132]
+			['Stukken', 132]
 		]);
 		expect(kindsTotal(kinds)).toBe(10526);
 	});
@@ -53,7 +53,7 @@ describe('Verbonden at a glance', () => {
 			'dossiers',
 			null
 		);
-		expect(dossier.map((k) => k.label)).toEqual(['Wetten', 'Kamerstukken']);
+		expect(dossier.map((k) => k.label)).toEqual(['Wetten', 'Stukken']);
 	});
 
 	it('says a judgment by where and how often it is cited, a Kamerstuk by its kind and day', () => {

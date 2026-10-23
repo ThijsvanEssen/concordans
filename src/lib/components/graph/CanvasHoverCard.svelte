@@ -203,7 +203,7 @@
 				class:is-active={isChosen}
 				aria-pressed={isChosen}
 				onclick={() => onToggleChosen(node)}
-				><Picto naam="plus" size={13} />{isChosen ? 'Uit netwerk' : 'In netwerk'}</button
+				><Picto naam="plus" size={13} />{isChosen ? 'Uit het netwerk' : 'In het netwerk'}</button
 			>
 		{/if}
 	</div>

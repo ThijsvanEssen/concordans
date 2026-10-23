@@ -133,7 +133,7 @@
 			onclick={() => zetMarkering(markeringVan(v))}>{openLabel}</a
 		>
 		{#if onShowInNetwork}
-			<button type="button" class="btn" onclick={onShowInNetwork}>In netwerk</button>
+			<button type="button" class="btn" onclick={onShowInNetwork}>In het netwerk</button>
 		{/if}
 		<CiteMenu
 			items={[

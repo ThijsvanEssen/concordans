@@ -1,7 +1,7 @@
 <script lang="ts">
-	// The actions of a list row: Bewaar and In netwerk (Thijs, 10 Oct: "Vinkje en +-je zijn niet
+	// The actions of a list row: Bewaar and In het netwerk (Thijs, 10 Oct: "Vinkje en +-je zijn niet
 	// intuïtief"). One look in every state (Thijs, 10 Oct: "toch wat raar met de verschillen in
-	// hoe ze weergegeven worden"): two fixed places, Bewaar then In netwerk, so nothing moves from
+	// hoe ze weergegeven worden"): two fixed places, Bewaar then In het netwerk, so nothing moves from
 	// row to row; a glyph without a frame, open in ink-3 when off, filled in ink when on. Off they
 	// show on the row's hover or focus (always on a touch screen), on always. A hover on the glyph
 	// gives it ink and a wash behind it; the keyboard's focus the ink ring. A row with more to do
@@ -30,7 +30,7 @@
 		 * without it its place stays empty. */
 		netwerk?: { aan: boolean; voegToe: () => void; haalWeg?: () => void } | null;
 		/** What the ⋯ holds, with the function that closes it; without it no ⋯. A row with a ⋯
-		 *  alone has no places for Bewaar and In netwerk. */
+		 *  alone has no places for Bewaar and In het netwerk. */
 		menu?: Snippet<[() => void]>;
 		/** After the ⋯ closes, however: a menu that changed what it shows goes back. */
 		onClose?: () => void;

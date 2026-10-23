@@ -282,7 +282,7 @@
 										type="button"
 										role="menuitem"
 										class="tekstmenu__item"
-										onclick={act(close, () => (asking = 'delete'))}>Verwijder bundel</button
+										onclick={act(close, () => (asking = 'delete'))}>Bundel verwijderen</button
 									>
 								{/if}
 							</div>
@@ -298,7 +298,7 @@
 										onclick={() => {
 											choosing = true;
 											focusFirstItem();
-										}}>Voeg toe aan …</button
+										}}>Toevoegen aan …</button
 									>
 								{/if}
 								<button

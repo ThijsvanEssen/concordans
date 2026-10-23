@@ -11,7 +11,7 @@ describe('dossierLabel', () => {
 
 	it('puts the kind and number first and the name the API gives after it', () => {
 		expect(dossierLabel({ number: '36496', short_title: 'Wet betaalbare huur' })).toBe(
-			'Kamerstuk 36496 Wet betaalbare huur'
+			'Dossier 36496 Wet betaalbare huur'
 		);
 		expect(
 			dossierLabel({
@@ -19,7 +19,7 @@ describe('dossierLabel', () => {
 				short_title: 'Archiefwet 1995',
 				short_title_basis: 'amended_law'
 			})
-		).toBe('Kamerstuk 36889 wijziging van Archiefwet 1995');
+		).toBe('Dossier 36889 wijziging van Archiefwet 1995');
 	});
 
 	it('cuts a long title without a short one, and keeps the number alone without either', () => {
@@ -27,21 +27,21 @@ describe('dossierLabel', () => {
 		const naam = dossierName({ number: '1', title: lang });
 		expect(naam.length).toBeLessThanOrEqual(80);
 		expect(naam.endsWith('…')).toBe(true);
-		expect(dossierLabel({ number: '36600-VII' })).toBe('Kamerstuk 36600 VII');
+		expect(dossierLabel({ number: '36600-VII' })).toBe('Dossier 36600 VII');
 	});
 
 	it('uses the short title', () => {
 		expect(dossierLabel(d('Begroting JenV', 'Vaststelling van de begrotingsstaten'))).toBe(
-			'Kamerstuk 36600 Begroting JenV'
+			'Dossier 36600 Begroting JenV'
 		);
 	});
 	it('falls back to the whole title, without parsing it', () => {
 		expect(
 			dossierLabel(d(null, 'Wijziging van de Vreemdelingenwet 2000 (Wet tweestatusstelsel)'))
-		).toBe('Kamerstuk 36600 Wijziging van de Vreemdelingenwet 2000 (Wet tweestatusstelsel)');
+		).toBe('Dossier 36600 Wijziging van de Vreemdelingenwet 2000 (Wet tweestatusstelsel)');
 	});
 	it('is the number alone without any title', () => {
-		expect(dossierLabel(d(null, null))).toBe('Kamerstuk 36600');
+		expect(dossierLabel(d(null, null))).toBe('Dossier 36600');
 	});
 });
 

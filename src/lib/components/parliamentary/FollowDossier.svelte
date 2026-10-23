@@ -73,11 +73,11 @@
 				type="button"
 				role="menuitem"
 				class="tekstmenu__item"
-				title="Volg dit dossier onder Gevolgd"
+				title="Onder Gevolgd"
 				onclick={() => {
 					close();
 					follow();
-				}}>Bewaar bij Gevolgd</button
+				}}>Volg dit dossier</button
 			>
 		{/snippet}
 	</Follow>

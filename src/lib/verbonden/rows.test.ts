@@ -400,7 +400,7 @@ describe('unresolvedRows', () => {
 		const [row] = unresolvedRows([
 			{ law: 'Rv', article_number: '843a', leden: ['1'], paragraph_ids: ['rov-3.2'] }
 		]);
-		expect(row.title).toBe('Artikel 843a Rv');
+		expect(row.title).toBe('Art. 843a Rv');
 		expect(row.missing).toBe(true);
 		expect(metaParts(row).map((p) => p.text)).toEqual(['lid 1', 'niet in de gegevens']);
 	});
@@ -465,14 +465,14 @@ describe('activityLine', () => {
 	it('names the kind, a status out of the ordinary and the dossiers', () => {
 		expect(
 			activityLine({ kind: 'Commissiedebat', status: 'Uitgevoerd', dossier_numbers: ['36600'] })
-		).toBe('Commissiedebat, over Kamerstuk 36600');
+		).toBe('Commissiedebat, over Dossier 36600');
 		expect(
 			activityLine({
 				kind: 'Commissiedebat',
 				status: 'Geannuleerd',
 				dossier_numbers: ['22112', '21501-04']
 			})
-		).toBe('Commissiedebat, geannuleerd, over Kamerstuk 22112 en Kamerstuk 21501-04');
+		).toBe('Commissiedebat, geannuleerd, over Dossier 22112 en Dossier 21501-04');
 		expect(activityLine({})).toBeNull();
 	});
 
@@ -483,11 +483,11 @@ describe('activityLine', () => {
 				dossier_numbers: ['36496'],
 				dossiers: [{ number: '36496', short_title: 'Wet betaalbare huur', title: null }]
 			})
-		).toBe('Commissiedebat, over Kamerstuk 36496 Wet betaalbare huur');
+		).toBe('Commissiedebat, over Dossier 36496 Wet betaalbare huur');
 		expect(stemmingNaam(null, { number: '29665', title: 'Evaluatie Schipholbeleid' })).toBe(
-			'Stemming over Kamerstuk 29665 Evaluatie Schipholbeleid'
+			'Stemming over Dossier 29665 Evaluatie Schipholbeleid'
 		);
-		expect(stemmingNaam(null, '36496')).toBe('Stemming over Kamerstuk 36496');
+		expect(stemmingNaam(null, '36496')).toBe('Stemming over Dossier 36496');
 		const brief = describeBron('documents', 'b', null, {
 			kind: 'Brief regering',
 			title: 'Kabinetsreactie op het advies',
@@ -515,7 +515,7 @@ describe('historyRow', () => {
 		expect(row?.ref).toEqual({ collection: 'instruments', key: 'stb_2017_317' });
 		expect(row?.title).toBe('Wet op de inlichtingen- en veiligheidsdiensten 2017');
 		expect(row?.identifier).toBe('Stb. 2017, 317');
-		expect(row?.context).toBe('wijzigt, Kamerstuk 34588');
+		expect(row?.context).toBe('wijzigt, Dossier 34588');
 		expect(row?.proposed).toBe(false);
 		expect(row?.relation).toBe('AMENDS');
 	});
@@ -524,7 +524,7 @@ describe('historyRow', () => {
 		const row = historyRow({ dossier_number: '36000', change: 'repeals', status: 'voorgesteld' });
 		expect(row?.ref).toEqual({ collection: 'dossiers', key: '36000', number: '36000' });
 		expect(row?.proposed).toBe(true);
-		expect(row?.context).toBe('voorgesteld, doet vervallen, Kamerstuk 36000');
+		expect(row?.context).toBe('voorgesteld, doet vervallen, Dossier 36000');
 		expect(historyRow({})).toBeNull();
 	});
 });

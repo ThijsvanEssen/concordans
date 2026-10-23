@@ -76,7 +76,7 @@ describe('nameOfPad', () => {
 			'Stb. 2026, 94'
 		);
 		expect(nameOfPad({ soort: 'lid', slug: 'rob-jetten' })).toBe('Lid rob-jetten');
-		expect(nameOfPad({ soort: 'dossier', nummer: '37020-XVI' })).toBe('Kamerstuk 37020 XVI');
+		expect(nameOfPad({ soort: 'dossier', nummer: '37020-XVI' })).toBe('Dossier 37020 XVI');
 		expect(nameOfPad({ soort: 'uitspraak', ecli: 'ECLI:NL:HR:2005:AU3313' })).toBe(
 			'ECLI:NL:HR:2005:AU3313'
 		);

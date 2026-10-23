@@ -19,7 +19,7 @@
 		{@const count = c.active_dossier_count ?? 0}
 		{#if divided && count === 0 && i > 0 && (rows[i - 1].active_dossier_count ?? 0) > 0}
 			<li class="group-divider" aria-hidden="true">
-				<span>Zonder lopende dossiers</span>
+				<span>Zonder openstaande dossiers</span>
 			</li>
 		{/if}
 		<IndexRow {bron} title={c.name ?? naamVan('committees', c)} href={openHref(bron)} acties>
@@ -30,8 +30,8 @@
 				{#if c.chamber !== 'EK'}
 					<span class="row-sub">
 						{count > 0
-							? plural(count, 'lopend dossier', 'lopende dossiers')
-							: 'Geen lopende dossiers'}
+							? plural(count, 'openstaand dossier', 'openstaande dossiers')
+							: 'Geen openstaande dossiers'}
 					</span>
 				{/if}
 			{/snippet}

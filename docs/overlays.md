@@ -1,6 +1,6 @@
 # Overlays
 
-Two overlays paint counts on the network: **Open dossiers** (open proposed changes, per bron) and **Verwijzingen per maand** (edges created recently, per bron). At most one is active; the legend of the network offers them under Meer: Geen, Open dossiers, Verwijzingen per maand (with a period of 3 to 24 months).
+Two overlays paint counts on the network: **Openstaande dossiers** (open proposed changes, per bron) and **Verwijzingen per maand** (edges created recently, per bron). At most one is active; the legend of the network offers them under Meer: Geen, Openstaande dossiers, Verwijzingen per maand (with a period of 3 to 24 months).
 
 ## URL
 
@@ -8,7 +8,7 @@ Two overlays paint counts on the network: **Open dossiers** (open proposed chang
 
 | Value           | Overlay                                                                                                   |
 | --------------- | --------------------------------------------------------------------------------------------------------- |
-| `open`          | Open dossiers for all open dossiers                                                                       |
+| `open`          | Openstaande dossiers for all open dossiers                                                                |
 | `heat:{months}` | Verwijzingen per maand over a window of `months` (`HEAT_PERIODS`: 3, 6, 12, 24; `DEFAULT_HEAT_MONTHS` 12) |
 | absent          | none                                                                                                      |
 
@@ -21,7 +21,7 @@ The switch sets `open` or `heat:12`, or clears the active overlay. `bronHref` ca
 | Overlay                | Function in `src/lib/api/overlays.ts` | API                               |
 | ---------------------- | ------------------------------------- | --------------------------------- |
 | Verwijzingen per maand | `getHeat(months)`                     | `/api/nodes/heat` (`min_count` 2) |
-| Open dossiers          | `getInFlux()`                         | `/api/nodes/in-flux`              |
+| Openstaande dossiers   | `getInFlux()`                         | `/api/nodes/in-flux`              |
 
 Both return `NodeCounts`, a map from node id to count. `GraphView` passes the maps and the active flags to `GraphCanvas`; the sidebar shows the number of bronnen in behandeling while that overlay is active.
 
@@ -31,7 +31,7 @@ Both return `NodeCounts`, a map from node id to count. `GraphView` passes the ma
 
 **Halo (Verwijzingen per maand).** The radius grows with the rate `count / months`. `HEAT_SATURATION_RATE` (5 per month) is the rate at which it stops growing. The rate is per month, so that a different window changes the halo for the same bron.
 
-**Badge (Open dossiers).** A dot at the top right of the bron, with the count when it is above 1. It sits on the edge of the drawn vorm, offset by `badgeAxisOffset(vorm)` (`nodeSprites.ts`): where a ray at 45° leaves the vorm's path. The mark of a note stands at the same edge, top left.
+**Badge (Openstaande dossiers).** A dot at the top right of the bron, with the count when it is above 1. It sits on the edge of the drawn vorm, offset by `badgeAxisOffset(vorm)` (`nodeSprites.ts`): where a ray at 45° leaves the vorm's path. The mark of a note stands at the same edge, top left.
 
 Both need the drawn radius of a node, which is not the `size` attribute. See [`gotchas.md`](gotchas.md#node-size-on-screen).
 

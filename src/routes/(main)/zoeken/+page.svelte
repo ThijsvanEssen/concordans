@@ -209,7 +209,7 @@
 				pending={!results.done && all.every((g) => !g.hits.length)}
 			/>
 			{#if chips.length}
-				<p class="wis"><TextLink onclick={clearFilters}>Wis alle filters</TextLink></p>
+				<p class="wis"><TextLink onclick={clearFilters}>Wissen</TextLink></p>
 			{/if}
 		</Verfijnen>
 	</aside>
@@ -316,7 +316,7 @@
 		{:else if filteredAway}
 			<div class="staat stil" role="status">
 				<span>Geen resultaten met deze filters</span>
-				<span class="verder"><TextLink onclick={clearFilters}>Wis alle filters</TextLink></span>
+				<span class="verder"><TextLink onclick={clearFilters}>Wissen</TextLink></span>
 			</div>
 		{/if}
 	</div>

@@ -214,7 +214,7 @@ describe('Verbonden', () => {
 	it('opens in Tekst on the soorten: a heading with its count, three titles with one line, Alle N', async () => {
 		paneel(ROWS, { onShowNetwork: () => {}, showNetwork: false });
 		const koppen = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent?.trim());
-		expect(koppen).toEqual(['Uitspraken1', 'Kamerstukken1']);
+		expect(koppen).toEqual(['Uitspraken1', 'Stukken1']);
 		// The passage and the ECLI wait for the row to open; no order or filter at a glance.
 		expect(screen.queryByText(/ECLI:NL:HR:2019:2006/)).toBeNull();
 		expect(screen.queryByRole('button', { name: 'Filter' })).toBeNull();

@@ -15,7 +15,7 @@ const SORTS: SortDef[] = [
 const COLUMNS: Columns = {
 	lead: 'Afkorting',
 	body: 'Commissie',
-	aside: 'Lopende dossiers',
+	aside: 'Openstaande dossiers',
 	asideW: 130
 };
 
@@ -67,7 +67,7 @@ export const committees = defineList<Row, object, ReturnType<typeof query>>({
 						options: [
 							{
 								id: 'active',
-								label: 'Alleen met lopende dossiers',
+								label: 'Alleen met openstaande dossiers',
 								on: p.onlyActive,
 								onClick: flag(patch, 'only_active', p.onlyActive)
 							}

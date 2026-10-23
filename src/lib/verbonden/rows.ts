@@ -4,7 +4,7 @@
 // of the source (`snippet`, with `match` marked) appears when the row is opened.
 import { articleRef } from '$lib/text/bw';
 import { NOT_IN_DATA } from '$lib/text/coverage';
-import { escapeRegExp, lowerFirst, textOf } from '$lib/text/words';
+import { capitalize, escapeRegExp, lowerFirst, textOf } from '$lib/text/words';
 import { naamVanId } from '$lib/bron/menselijk';
 import { keyEcli } from '$lib/bron/address';
 import { korteDatum } from '$lib/text/datum';
@@ -437,13 +437,13 @@ type UnresolvedCitation = {
 	paragraph_ids?: string[];
 };
 
-/** `Artikel 843a Rv`: the article as the judgment cites it, before its law. */
+/** `Art. 843a Rv`: the article as a row of Verbonden names it, before its law. */
 const unresolvedTitle = (c: UnresolvedCitation) =>
-	`${articleRef(null, c.article_number, { form: 'Artikel' })} ${c.law}`;
+	`${capitalize(articleRef(null, c.article_number))} ${c.law}`;
 
 /**
  * The articles a judgment cites of laws outside the dataset, as rows without a link:
- * `Artikel 3 Opiumwet`, niet in de dataset.
+ * `Art. 3 Opiumwet`, niet in de dataset.
  */
 export function unresolvedRows(citations: UnresolvedCitation[]): Row[] {
 	return citations.map((c) => ({

@@ -20,7 +20,9 @@ test('Actueel: a period and a kind narrow the days', async ({ page, touch }) => 
 	await expect(count).not.toHaveText(all!);
 
 	if (touch) await page.getByRole('button', { name: 'Verfijnen' }).click();
-	const motie = page.getByRole('region', { name: 'Soort' }).getByRole('button', { name: /^Motie/ });
+	const motie = page
+		.getByRole('region', { name: 'Gebeurtenis' })
+		.getByRole('button', { name: /^Motie/ });
 	await motie.click();
 	await expect(motie).toHaveAttribute('aria-pressed', 'true');
 	if (touch) await page.keyboard.press('Escape');
@@ -144,7 +146,7 @@ test('Gevolgd: a dossier followed from its page, with what is new since the visi
 		/\/api\/feed\.atom\?dossier=36496$/
 	);
 	await page.getByRole('button', { name: 'Volg', exact: true }).click();
-	await page.getByRole('menuitem', { name: 'Bewaar bij Gevolgd' }).click();
+	await page.getByRole('menuitem', { name: 'Volg dit dossier' }).click();
 	// Followed: Volg became Gevolgd, as Bewaar becomes Bewaard, a way to Gevolgd in its menu.
 	await page.locator('#main-content').getByRole('button', { name: 'Gevolgd', exact: true }).click();
 	await expect(page.getByRole('menuitem', { name: 'Open Gevolgd' })).toHaveAttribute(
@@ -167,7 +169,7 @@ test('Gevolgd: a dossier followed from its page, with what is new since the visi
 
 	await page.goto('/onderwerpen');
 	await expect(
-		page.getByRole('heading', { level: 2, name: /^Kamerstuk 36496 Wet betaalbare huur/ })
+		page.getByRole('heading', { level: 2, name: /^Dossier 36496 Wet betaalbare huur/ })
 	).toBeVisible();
 });
 

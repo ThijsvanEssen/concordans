@@ -35,7 +35,7 @@ export const GLOSSARY = {
 	},
 	Motie: {
 		full: 'Motie',
-		plain: 'Uitspraak van een Kamer waarmee zij de regering om iets vraagt; geen bindende wet.'
+		plain: 'Verzoek van een Kamer aan de regering; geen wet.'
 	},
 	Initiatiefnota: {
 		full: 'Initiatiefnota',

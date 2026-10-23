@@ -530,7 +530,7 @@
 			/>
 			<!-- The bron big, in the network of its own page: what the Netwerk button of the bar
 			     does from here (besluit 36). -->
-			<p class="groot"><TekstLink href={networkHref ?? '/explore'}>Open groot</TekstLink></p>
+			<p class="groot"><TekstLink href={networkHref ?? '/explore'}>In het netwerk</TekstLink></p>
 		{/if}
 		{#if overview && !verbonden.failed && kinds.length > 0}
 			<KindSummary

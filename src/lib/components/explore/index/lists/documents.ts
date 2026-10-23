@@ -47,7 +47,7 @@ export const documents = defineList<Row, State, ReturnType<typeof query>>({
 	facets: ({ p, state, patch }) => [
 		{
 			id: 'soort',
-			label: 'Soort',
+			label: 'Stuksoort',
 			kind: 'list',
 			options: facetOptions(facetMap(state.facets?.kind), p.documentKind)
 				.sort((a, b) => b[1] - a[1])

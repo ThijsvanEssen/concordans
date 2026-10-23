@@ -1,7 +1,7 @@
 // Toezeggingen of bewindspersonen to the Kamer, by the day they were made or are expected.
 import type { Schema } from '$lib/api/types';
 import { choiceOf } from '$lib/util/choice';
-import { COMMITMENT_STATUSES } from '../government';
+import { COMMITMENT_STATUSES, commitmentStatusLabel } from '../government';
 import { faceted } from '../faceted';
 import type { FacetsOf } from '$lib/api/lists';
 import CommitmentRows from '../rows/CommitmentRows.svelte';
@@ -30,10 +30,10 @@ export const commitments = defineList<Row, State, ReturnType<typeof query>>({
 		{ id: 'expected_resolution', label: 'Verwachte afdoening' }
 	],
 	placeholder: 'Zoek in de tekst',
-	columns: { lead: 'Gedaan', body: 'Toezegging', aside: 'Verwacht', asideW: 130 },
+	columns: { lead: 'Toegezegd', body: 'Toezegging', aside: 'Verwacht', asideW: 130 },
 	noun: 'toezeggingen',
 	needs: ['government'],
-	period: () => ({ label: 'Gedaan', unit: 'date' }),
+	period: () => ({ label: 'Toegezegd', unit: 'date' }),
 	query,
 	follow: (p) =>
 		p.overdue || p.commitmentStatus
@@ -68,7 +68,7 @@ export const commitments = defineList<Row, State, ReturnType<typeof query>>({
 					(st) => !counts || (counts.get(st) ?? 0) > 0 || st === p.commitmentStatus
 				).map((st) => ({
 					id: st,
-					label: st,
+					label: commitmentStatusLabel(st),
 					count: counts?.get(st),
 					on: p.commitmentStatus === st,
 					onClick: toggle(patch, 'status', p.commitmentStatus, st)

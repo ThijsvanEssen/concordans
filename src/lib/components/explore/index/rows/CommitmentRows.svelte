@@ -7,7 +7,7 @@
 	import Waarde from '$lib/components/ui/Waarde.svelte';
 	import { korteDatum, vandaag } from '$lib/text/datum';
 	import IndexRow from '../IndexRow.svelte';
-	import { OPEN_STATUS } from '../government';
+	import { OPEN_STATUS, commitmentStatusLabel } from '../government';
 	import { discussedPhrase, dossiersByBasis } from '$lib/text/toezegging';
 	import type { ViewProps } from '../lists/list';
 
@@ -30,7 +30,7 @@
 			{#snippet lead()}
 				<span class="row-id-main"><Waarde value={korteDatum(t.date)} /></span>
 				{#if t.status}
-					<span class="row-id-sub">{t.status}</span>
+					<span class="row-id-sub">{commitmentStatusLabel(t.status)}</span>
 				{/if}
 			{/snippet}
 			{#snippet body()}

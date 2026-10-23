@@ -72,7 +72,7 @@ test('Citeer with the date says the day the page says (T5)', async ({ page }) =>
 test('Volg a dossier says where it went and marks Gevolgd', async ({ page }) => {
 	await page.goto('/dossiers/36496');
 	await page.getByRole('button', { name: 'Volg', exact: true }).click();
-	await page.getByRole('menuitem', { name: 'Bewaar bij Gevolgd' }).click();
+	await page.getByRole('menuitem', { name: 'Volg dit dossier' }).click();
 	const status = page.getByRole('status');
 	await expect(status).toContainText('Bewaard bij Gevolgd');
 	await expect(status.getByRole('link', { name: 'Gevolgd' })).toHaveAttribute(
@@ -85,7 +85,7 @@ test('Volg a dossier says where it went and marks Gevolgd', async ({ page }) => 
 test('Volg a dossier then stays one button, Gevolgd, and never flips back', async ({ page }) => {
 	await page.goto('/dossiers/36496');
 	await page.getByRole('button', { name: 'Volg', exact: true }).click();
-	await page.getByRole('menuitem', { name: 'Bewaar bij Gevolgd' }).click();
+	await page.getByRole('menuitem', { name: 'Volg dit dossier' }).click();
 	const kop = page.locator('.kop-acties');
 	await expect(kop.getByRole('button', { name: 'Gevolgd', exact: true })).toBeVisible();
 	// Over the next seconds: the one button, never a second one, never Volg again.

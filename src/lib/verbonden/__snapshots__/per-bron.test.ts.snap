@@ -13,8 +13,8 @@ Artikel 8:104 Awb;Artikelen;verwijst naar;;lid 5;definitie;vastgesteld;hoog;;;ht
 Amendement van het lid De Wit over het alleen buiten toepassing verklaren van uniforme openbare voorbereidingsprocedure bij wijzigingen van ondergeschikte aard;Toelichtingen;licht toe;§ Toelichting;;;vastgesteld;hoog;2009-02-12;;https://concordans.nl/kamerstukken/31352/12#s-1
 Wet aanpassing bestuursprocesrecht;Wetten;wijzigt;;;;vastgesteld;hoog;2012-12-27;Stb. 2012, 682;https://concordans.nl/stb/2012/682
 Wet bestuurlijke lus Awb;Wetten;wijzigt;;;;vastgesteld;hoog;2009-12-24;Stb. 2009, 570;https://concordans.nl/stb/2009/570
-Kamerstuk 29702;Wetten;wijzigt;;;;vastgesteld;hoog;2009-06-30;Stb. 2009, 264;https://concordans.nl/stb/2009/264
-Kamerstuk 26523;Wetten;wijzigt;;;;vastgesteld;hoog;2002-02-12;Stb. 2002, 53;https://concordans.nl/stb/2002/53
+Dossier 29702;Wetten;wijzigt;;;;vastgesteld;hoog;2009-06-30;Stb. 2009, 264;https://concordans.nl/stb/2009/264
+Dossier 26523;Wetten;wijzigt;;;;vastgesteld;hoog;2002-02-12;Stb. 2002, 53;https://concordans.nl/stb/2002/53
 Amendement van het lid Diederik van Dijk over het afschaffen van rechterlijke dwangsommen in vreemdelingenzaken;Wetsvoorstellen;noemt;;lid 4;;vastgesteld;hoog;2025-06-13;;https://concordans.nl/kamerstukken/36704/19
 Memorie van toelichting, Kamerstukken II 2010/11, 32621, nr. 3;Toelichtingen;noemt;;lid 4;;vastgesteld;hoog;2011-02-02;;https://concordans.nl/kamerstukken/32621/3
 Voorstel van wet, Kamerstukken II 2021/22, 36105, nr. 2;Wetsvoorstellen;noemt;;lid 3;;vastgesteld;hoog;2022-05-19;;https://concordans.nl/kamerstukken/36105/2
@@ -72,10 +72,10 @@ exports[`Verbonden of a 'artikel' > keeps its groups, rows, kern and export > gr
     "label": "Wijzigingen van dit artikel",
     "plaats": "verbonden",
     "rows": [
-      "instruments/stb_2012_682 | Wet aanpassing bestuursprocesrecht |  | wijzigt, Kamerstuk 32450, Stb. 2012, 682",
-      "instruments/stb_2009_570 | Wet bestuurlijke lus Awb |  | wijzigt, Kamerstuk 31352, Stb. 2009, 570",
-      "instruments/stb_2009_264 | Kamerstuk 29702 |  | wijzigt, Kamerstuk 29702, Stb. 2009, 264",
-      "instruments/stb_2002_53 | Kamerstuk 26523 |  | wijzigt, Kamerstuk 26523, Stb. 2002, 53",
+      "instruments/stb_2012_682 | Wet aanpassing bestuursprocesrecht |  | wijzigt, Dossier 32450, Stb. 2012, 682",
+      "instruments/stb_2009_570 | Wet bestuurlijke lus Awb |  | wijzigt, Dossier 31352, Stb. 2009, 570",
+      "instruments/stb_2009_264 | Dossier 29702 |  | wijzigt, Dossier 29702, Stb. 2009, 264",
+      "instruments/stb_2002_53 | Dossier 26523 |  | wijzigt, Dossier 26523, Stb. 2002, 53",
     ],
     "section": null,
   },
@@ -309,7 +309,7 @@ exports[`Verbonden of a 'dossier' > keeps its groups, rows, kern and export > gr
 
 exports[`Verbonden of a 'kamerstuk' > keeps its groups, rows, kern and export > csv 1`] = `
 "﻿bron;soort;verbinding;plaats in de bron;plaats in dit artikel;aard;status;betrouwbaarheid;datum;identificatie;link
-Cyberbeveiligingswet;Dossiers;stuk in;;;;vastgesteld;hoog;;Kamerstuk 36764;https://concordans.nl/dossiers/36764
+Cyberbeveiligingswet;Dossiers;stuk in;;;;vastgesteld;hoog;;Dossier 36764;https://concordans.nl/dossiers/36764
 Daniël van den Berg;Leden en fracties;diende in;;;;vastgesteld;hoog;;;https://concordans.nl/leden/daniel-van-den-berg
 Wet weerbaarheid kritieke entiteiten (36765) en Cyberbeveiligingswet (36764);Dossiers;ingediend in;;;;vastgesteld;hoog;2026-03-23;;https://concordans.nl/activiteiten/2026A01323"
 `;
@@ -322,7 +322,7 @@ exports[`Verbonden of a 'kamerstuk' > keeps its groups, rows, kern and export > 
     "label": "Dossier",
     "plaats": "kern",
     "rows": [
-      "dossiers/36764 | Cyberbeveiligingswet |  | Kamerstuk 36764",
+      "dossiers/36764 | Cyberbeveiligingswet |  | Dossier 36764",
     ],
     "section": null,
   },
@@ -612,10 +612,10 @@ exports[`Verbonden of a 'uitspraak' > keeps its groups, rows, kern and export > 
 
 exports[`Verbonden of a 'wet' > keeps its groups, rows, kern and export > csv 1`] = `
 "﻿bron;soort;verbinding;plaats in de bron;plaats in dit artikel;aard;status;betrouwbaarheid;datum;identificatie;link
-Wijziging van diverse wetten in verband met het overzetten van bepalingen uit d…;Dossiers;tot stand gekomen in;;;;vastgesteld;hoog;;Kamerstuk 36824;https://concordans.nl/dossiers/36824
-Verzamelwet Justitie en Veiligheid en Asiel en Migratie 20XX;Dossiers;tot stand gekomen in;;;;vastgesteld;hoog;;Kamerstuk 36638;https://concordans.nl/dossiers/36638
-versterking strafrechtelijke aanpak ondermijnende criminaliteit II;Dossiers;tot stand gekomen in;;;;vastgesteld;hoog;;Kamerstuk 36463;https://concordans.nl/dossiers/36463
-Verzamelwet Omgevingswet 20..;Dossiers;tot stand gekomen in;;;;vastgesteld;hoog;;Kamerstuk 36367;https://concordans.nl/dossiers/36367
+Wijziging van diverse wetten in verband met het overzetten van bepalingen uit d…;Dossiers;tot stand gekomen in;;;;vastgesteld;hoog;;Dossier 36824;https://concordans.nl/dossiers/36824
+Verzamelwet Justitie en Veiligheid en Asiel en Migratie 20XX;Dossiers;tot stand gekomen in;;;;vastgesteld;hoog;;Dossier 36638;https://concordans.nl/dossiers/36638
+versterking strafrechtelijke aanpak ondermijnende criminaliteit II;Dossiers;tot stand gekomen in;;;;vastgesteld;hoog;;Dossier 36463;https://concordans.nl/dossiers/36463
+Verzamelwet Omgevingswet 20..;Dossiers;tot stand gekomen in;;;;vastgesteld;hoog;;Dossier 36367;https://concordans.nl/dossiers/36367
 Artikel 1:1;Artikelen;artikel van;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/1:1
 Artikel 1:2;Artikelen;artikel van;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/1:2
 Artikel 1:3;Artikelen;artikel van;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0005537/artikel/1:3
@@ -674,10 +674,10 @@ exports[`Verbonden of a 'wet' > keeps its groups, rows, kern and export > groups
     "label": "Dossiers die deze wet raken",
     "plaats": "verbonden",
     "rows": [
-      "dossiers/36824 | Wijziging van diverse wetten in verband met het overzetten van bepalingen uit d… | Wijzigt deze wet, Stb. 2026, 94 | Kamerstuk 36824",
-      "dossiers/36638 | Verzamelwet Justitie en Veiligheid en Asiel en Migratie 20XX | Wijzigt deze wet, Stb. 2025, 124 | Kamerstuk 36638",
-      "dossiers/36463 | versterking strafrechtelijke aanpak ondermijnende criminaliteit II | Wijzigt deze wet, Stb. 2025, 333 | Kamerstuk 36463",
-      "dossiers/36367 | Verzamelwet Omgevingswet 20.. | Wijzigt deze wet, Stb. 2023, 376 | Kamerstuk 36367",
+      "dossiers/36824 | Wijziging van diverse wetten in verband met het overzetten van bepalingen uit d… | Wijzigt deze wet, Stb. 2026, 94 | Dossier 36824",
+      "dossiers/36638 | Verzamelwet Justitie en Veiligheid en Asiel en Migratie 20XX | Wijzigt deze wet, Stb. 2025, 124 | Dossier 36638",
+      "dossiers/36463 | versterking strafrechtelijke aanpak ondermijnende criminaliteit II | Wijzigt deze wet, Stb. 2025, 333 | Dossier 36463",
+      "dossiers/36367 | Verzamelwet Omgevingswet 20.. | Wijzigt deze wet, Stb. 2023, 376 | Dossier 36367",
     ],
     "section": null,
   },

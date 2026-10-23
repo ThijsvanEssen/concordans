@@ -168,7 +168,7 @@ export function describeBron(
 		}
 		case 'dossiers': {
 			// By the name it is known by, its kind and number under it: "Cyberbeveiligingswet",
-			// "Kamerstuk 36764", never the bare number or the title of three lines (Thijs, 13 Oct).
+			// "Dossier 36764", never the bare number or the title of three lines (Thijs, 13 Oct).
 			// Where the props lack the short title, the row asks it (DossierNaam).
 			const d = dossierUitProps({ display_name: name, ...props }, key);
 			return {

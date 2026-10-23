@@ -60,13 +60,13 @@ describe('sessionYearOn', () => {
 describe('kamerstukName', () => {
 	it('names a paper by its place: suffix, Eerste Kamer and a letter number', () => {
 		expect(kamerstukName({ dossier_number: '36600', dossier_suffix: 'VIII', number: 5 })).toBe(
-			'Kamerstuk 36600 VIII, nr. 5'
+			'Dossier 36600 VIII, nr. 5'
 		);
 		expect(kamerstukName({ chamber: 'TK', dossier_number: '36764', number: '31' })).toBe(
-			'Kamerstuk 36764, nr. 31'
+			'Dossier 36764, nr. 31'
 		);
 		expect(kamerstukName({ chamber: 'EK', dossier_number: '36791', number: 'C' })).toBe(
-			'Kamerstuk I 36791, C'
+			'Dossier I 36791, C'
 		);
 		expect(kamerstukLabel({ chamber: 'TK', dossier_number: '36764', number: 0 })).toBe(
 			'36764, nr. 0'
@@ -75,10 +75,10 @@ describe('kamerstukName', () => {
 
 	it('writes a suffix the data joins with a hyphen as a citation does (#84)', () => {
 		expect(kamerstukName({ dossier_number: '36600-VIII', number: 183 })).toBe(
-			'Kamerstuk 36600 VIII, nr. 183'
+			'Dossier 36600 VIII, nr. 183'
 		);
 		expect(kamerstukName({ chamber: 'EK', dossier_number: '36600-VIII', number: 'AC' })).toBe(
-			'Kamerstuk I 36600 VIII, AC'
+			'Dossier I 36600 VIII, AC'
 		);
 		expect(kamerstukLabel({ dossier_number: '23908-(R1519)', number: 2 })).toBe(
 			'23908 (R1519), nr. 2'
@@ -88,8 +88,8 @@ describe('kamerstukName', () => {
 	});
 
 	it('names the dossier alone without a number, and nothing without a dossier', () => {
-		expect(kamerstukName({ dossier_number: '36764', number: null })).toBe('Kamerstuk 36764');
-		expect(kamerstukName({ chamber: 'EK', dossier_number: '36764' })).toBe('Kamerstuk I 36764');
+		expect(kamerstukName({ dossier_number: '36764', number: null })).toBe('Dossier 36764');
+		expect(kamerstukName({ chamber: 'EK', dossier_number: '36764' })).toBe('Dossier I 36764');
 		expect(kamerstukName({ dossier_number: null, number: '5' })).toBeNull();
 	});
 });

@@ -87,7 +87,7 @@ export function laagVan(n: Neighbor, soort: string): Laag {
 	const ref = refOf(n.collection as Collection, n.key, props);
 	const vol = describeBron(n.collection, n.key, n.display_name, props, n.cite).title;
 	if (n.collection === 'dossiers') {
-		// A dossier by its kind, number and the name of its bill, "Kamerstuk 36496 Wet
+		// A dossier by its kind, number and the name of its bill, "Dossier 36496 Wet
 		// betaalbare huur" (dossier-naam); its title runs to three lines.
 		const nummer = dossierNummer(props);
 		const d = dossierUitProps({ display_name: n.display_name, ...props }, nummer ?? '');

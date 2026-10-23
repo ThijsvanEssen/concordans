@@ -93,7 +93,7 @@ describe('the dossier of a toezegging opened in place', () => {
 
 	it('links the dossier of the letter that fulfils it among its facts', () => {
 		openInPlace(NAKOMING);
-		expect(screen.getByRole('link', { name: /Kamerstuk 29389/ })).toBeTruthy();
+		expect(screen.getByRole('link', { name: /Dossier 29389/ })).toBeTruthy();
 		expect(screen.queryByText(/Besproken/)).toBeNull();
 	});
 
@@ -111,6 +111,6 @@ describe('the dossier of a toezegging opened in place', () => {
 	it('lists every dossier among its facts where the API gives no basis', () => {
 		openInPlace(withoutBasis);
 		expect(screen.queryByText(/Besproken/)).toBeNull();
-		expect(screen.getAllByRole('link', { name: /Kamerstuk/ })).toHaveLength(8);
+		expect(screen.getAllByRole('link', { name: /Dossier/ })).toHaveLength(8);
 	});
 });

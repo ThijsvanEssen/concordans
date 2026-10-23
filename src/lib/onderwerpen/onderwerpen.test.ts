@@ -173,7 +173,7 @@ describe('a dossier followed (API 0.80.1, #866)', () => {
 		expect(followsDossier('36764')).toBe(true);
 		expect(lees()).toEqual([
 			{
-				termen: ['Kamerstuk 36764 Cyberbeveiligingswet'],
+				termen: ['Dossier 36764 Cyberbeveiligingswet'],
 				dossier: cbw,
 				vorige: null,
 				gezien: '2026-10-21'

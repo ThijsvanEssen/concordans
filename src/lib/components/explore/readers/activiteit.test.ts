@@ -58,7 +58,7 @@ describe('what was made in an activity', () => {
 		expect(groepen.map((g) => g.titel)).toEqual([
 			'Verslag en stenogram',
 			'Moties ingediend in dit debat',
-			'Besluiten'
+			'Stemmingen'
 		]);
 		expect(groepen[0].regels[0].meta).toBe('Kamerstukken II, 36764, nr. 32');
 		expect(groepen[2].regels[0]).toMatchObject({ teken: 'nee', meta: '65–85' });

@@ -1,4 +1,4 @@
-import { bronPlural, type Collection } from '$lib/vocabulary';
+import { bronLabel, bronPlural, type Collection } from '$lib/vocabulary';
 
 // The index in four groups: the law and the courts; how the Kamer deals with a subject;
 // who does it in the Kamer; who does it in the government. A category is named as the bron
@@ -29,7 +29,19 @@ export const collectionOf = (category: IndexCategory): Collection =>
 
 /** The name of a category, as its tab says it. */
 export const categoryLabel = (category: IndexCategory): string =>
-	category === 'ministers' ? 'Bewindspersonen' : bronPlural(category);
+	category === 'ministers'
+		? 'Bewindspersonen'
+		: category === 'members'
+			? 'Kamerleden'
+			: bronPlural(category);
+
+/** One bron of a category, as the count of its list says it. */
+export const categoryNoun = (category: IndexCategory): string =>
+	category === 'ministers'
+		? 'bewindspersoon'
+		: category === 'members'
+			? 'kamerlid'
+			: bronLabel(collectionOf(category)).toLowerCase();
 
 const ABOUT: Record<IndexCategory, string> = {
 	instruments:

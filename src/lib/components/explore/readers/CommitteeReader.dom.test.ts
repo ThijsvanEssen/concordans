@@ -30,7 +30,7 @@ const read = async (detail: Record<string, unknown>) => {
 		'/api/cabinets': []
 	});
 	const { container } = render(CommitteeReader, { node });
-	await screen.findByText('Open dossiers');
+	await screen.findByText('Openstaande dossiers');
 	return Object.fromEntries(
 		[...container.querySelectorAll('.stats li')].map((li) => [
 			li.querySelector('.stat-label')?.textContent,
@@ -64,7 +64,7 @@ describe('the tiles of a commissie', () => {
 			dossiers: [dossier(1, null), dossier(2, null)],
 			dossier_total: 59
 		});
-		expect(tiles['Open dossiers']).toBe('41');
+		expect(tiles['Openstaande dossiers']).toBe('41');
 	});
 
 	it('leaves the outcomes out where only a page of the dossiers is loaded', async () => {

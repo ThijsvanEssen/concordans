@@ -9,6 +9,7 @@ import {
 	type Outcome
 } from '$lib/components/parliamentary/stages';
 import { faceted } from '../faceted';
+import { OPEN_STATUS } from '../government';
 import type { FacetsOf } from '$lib/api/lists';
 import { ministryName } from '../ministries.svelte';
 import DossierRows from '../rows/DossierRows.svelte';
@@ -49,7 +50,7 @@ export const dossiers = defineList<Row, State, ReturnType<typeof query>>({
 	noun: 'dossiers',
 	emptyNoun: (p) =>
 		p.dossierScope === 'open'
-			? 'lopende dossiers'
+			? 'openstaande dossiers'
 			: p.dossierScope === 'closed'
 				? 'afgehandelde dossiers'
 				: 'dossiers',
@@ -84,7 +85,7 @@ export const dossiers = defineList<Row, State, ReturnType<typeof query>>({
 				options: [
 					{
 						id: 'open',
-						label: 'Lopend',
+						label: OPEN_STATUS,
 						count: statusCounts.get('open') ?? 0,
 						on: dossierScope === 'open',
 						default: !p.dossierStatus,
@@ -119,7 +120,7 @@ export const dossiers = defineList<Row, State, ReturnType<typeof query>>({
 			},
 			{
 				id: 'track',
-				label: 'Soort',
+				label: 'Dossiersoort',
 				note: withoutKind
 					? `${formatCount(withoutKind)} ${NO_KIND_LABEL.toLowerCase()}, zonder soort`
 					: undefined,

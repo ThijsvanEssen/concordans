@@ -34,6 +34,10 @@ export const COMMITMENT_STATUSES = [
 
 type CommitmentStatus = (typeof COMMITMENT_STATUSES)[number];
 
+/** A state as the interface says it: the Kamer's `Deels Afgedaan` is `Deels afgedaan`. */
+export const commitmentStatusLabel = (status: string): string =>
+	status.replace(/ Afgedaan$/, ' afgedaan');
+
 /** The state of a toezegging not yet settled; past its date it is overdue. */
 export const OPEN_STATUS: CommitmentStatus = 'Openstaand';
 

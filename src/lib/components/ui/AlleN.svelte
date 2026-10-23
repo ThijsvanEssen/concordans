@@ -14,7 +14,7 @@
 	}: {
 		/** How many there are; without it "Alle {noun}". */
 		aantal?: number | null;
-		/** The bronnen in the plural: `uitspraken`, `stukken`. */
+		/** The bronnen in the plural: `uitspraken`, `stukken`; of one, as it is singular: `1 stuk`, never "Alle 1". */
 		noun: string;
 		/** The list stands whole: "Minder" folds it again. */
 		open?: boolean;
@@ -23,7 +23,13 @@
 	} = $props();
 
 	const woorden = $derived(
-		open ? 'Minder' : aantal != null ? `Alle ${formatCount(aantal)} ${noun}` : `Alle ${noun}`
+		open
+			? 'Minder'
+			: aantal === 1
+				? `1 ${noun}`
+				: aantal != null
+					? `Alle ${formatCount(aantal)} ${noun}`
+					: `Alle ${noun}`
 	);
 </script>
 

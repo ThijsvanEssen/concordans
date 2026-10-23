@@ -40,7 +40,7 @@ export function dossierInLight(
  * A paper as it is cited and kept: `citation` its Kamerstuk (null for a paper that is none),
  * `name` that or its title, `full` with its kind (`… nr. 57 (Motie)`), and the `item` Bewaar
  * keeps, under its dossier, named as the dossier (`dossier`, from dossierInLight) where known:
- * "Kamerstuk 32621 Wet nadeelcompensatie …", not its number alone beside one kept by its name.
+ * "Dossier 32621 Wet nadeelcompensatie …", not its number alone beside one kept by its name.
  */
 export function citePaper(
 	doc: CitedPaper,

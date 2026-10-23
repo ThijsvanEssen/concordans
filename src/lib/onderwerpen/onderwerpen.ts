@@ -92,7 +92,7 @@ const readDossier = (v: unknown): FollowedDossier | null => {
 	return { number: number.trim(), title: textOf(title) ?? number.trim() };
 };
 
-/** `Kamerstuk 36764 Cyberbeveiligingswet`: a dossier followed by its number and name. */
+/** `Dossier 36764 Cyberbeveiligingswet`: a dossier followed by its number and name. */
 export const followedDossierName = (d: FollowedDossier) =>
 	dossierLabel({ number: d.number, title: d.title === d.number ? null : d.title });
 

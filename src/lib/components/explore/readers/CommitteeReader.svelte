@@ -97,7 +97,7 @@
 					     the API's, the one of the list, not what the page of dossiers holds. -->
 					<li>
 						<span class="stat-num">{c.active_dossier_count ?? openDossiers.length}</span><span
-							class="stat-label">Open dossiers</span
+							class="stat-label">Openstaande dossiers</span
 						>
 					</li>
 				{/if}

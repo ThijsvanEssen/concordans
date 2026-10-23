@@ -257,7 +257,7 @@
 													onclick={() => {
 														choosing = f;
 														focusFirstItem();
-													}}>Voeg toe aan …</button
+													}}>Toevoegen aan …</button
 												>
 											{/if}
 											<button

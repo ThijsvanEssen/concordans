@@ -1,7 +1,7 @@
 <script lang="ts">
 	// A way in to the network on the start page (besluit 36, M2 variant c): two bronnen opened
 	// big in it, and the choosing of another. The same canvas as the Netwerk button of the bar
-	// and "Open groot" in Verbonden; the examples are those of the start page (start.json).
+	// and "In het netwerk" in Verbonden; the examples are those of the start page (start.json).
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import { NETWORK_MODE } from '$lib/bron/href';
 	import { START } from './start';

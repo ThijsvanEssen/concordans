@@ -397,7 +397,7 @@
 						{ waarde: 'geen', label: 'Geen' },
 						{
 							waarde: 'mut',
-							label: `Open dossiers${mutOn && inFluxCount > 0 ? ` (${inFluxCount})` : ''}`,
+							label: `Openstaande dossiers${mutOn && inFluxCount > 0 ? ` (${inFluxCount})` : ''}`,
 							uit: !onToggleMutatie,
 							titel: 'Een ring om de bronnen die een wetsvoorstel wil wijzigen'
 						},

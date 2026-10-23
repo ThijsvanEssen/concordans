@@ -1,6 +1,6 @@
-// A dossier by its number and the name a reader knows it by: "Kamerstuk 36496 Wet betaalbare
+// A dossier by its number and the name a reader knows it by: "Dossier 36496 Wet betaalbare
 // huur". The number stays in front, as Kamerstukken are cited by it, and never stands bare:
-// "Kamerstuk 36496" is what tells a dossier from the wet of the same name (Thijs, 13 Oct: "een
+// "Dossier 36496" is what tells a dossier from the wet of the same name (Thijs, 13 Oct: "een
 // duidelijk onderscheid tussen wet en gelijknamig dossier"). The name follows from official
 // data only (Thijs, 9 Oct: "dossiernummers zijn prima, maar ik heb liever ook human-readable
 // namen"). The responses carry the short title (API 0.79.54); without one the title, cut.
@@ -25,11 +25,11 @@ const JOINED_SUFFIX = /^(\d+)-([A-Z]+|\([A-Z0-9]+\))$/i;
 export const officialNumber = (number: string) => number.replace(JOINED_SUFFIX, '$1 $2');
 
 /**
- * The kind of a dossier with its number, the one wording for it everywhere: `Kamerstuk 36764`,
- * `Kamerstuk I 36764` for the Eerste Kamer. A stuk in it follows after a comma.
+ * The kind of a dossier with its number, the one wording for it everywhere: `Dossier 36764`,
+ * `Dossier I 36764` for the Eerste Kamer. A stuk in it follows after a comma.
  */
 export const kamerstukNummer = (number: string, kamer?: 'EK' | 'TK' | null) =>
-	`Kamerstuk${kamer === 'EK' ? ' I' : ''} ${officialNumber(number)}`;
+	`Dossier${kamer === 'EK' ? ' I' : ''} ${officialNumber(number)}`;
 
 /**
  * A dossier's number as the Kamer writes it, with its suffix: "36600-VII", the one way to read
@@ -95,7 +95,7 @@ export function dossierOwnName(d: DossierNaamBron): string | null {
 export const dossierName = (d: DossierNaamBron): string =>
 	dossierOwnName(d) ?? officialNumber(d.number);
 
-/** "Kamerstuk 36889 wijziging van Archiefwet 1995"; "Kamerstuk 36889" where no name is known. */
+/** "Dossier 36889 wijziging van Archiefwet 1995"; "Dossier 36889" where no name is known. */
 export function dossierLabel(d: DossierNaamBron): string {
 	const name = dossierOwnName(d);
 	const nummer = kamerstukNummer(d.number);

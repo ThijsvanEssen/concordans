@@ -779,8 +779,8 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		// soort of the main column in Verbonden, T5).
 		{
 			id: 'votes',
-			label: 'Besluiten waarover dit lid stemde',
-			noun: 'besluiten',
+			label: 'Stemmingen waarover dit lid stemde',
+			noun: 'stemmingen',
 			match: [{ relation: 'VOTED', direction: 'outbound', collection: 'decisions' }]
 		},
 		{

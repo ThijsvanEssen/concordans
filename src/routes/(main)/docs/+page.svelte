@@ -131,7 +131,7 @@
 				>.
 			</p>
 			<p>De soorten verbindingen:</p>
-			<LoadState state={stats.state} what="De soorten verbindingen" retry={stats.retry}>
+			<LoadState state={stats.state} what="De soorten verbindingen" plural retry={stats.retry}>
 				{#snippet children(s)}
 					<KeyList columns={2}>
 						{#each RELATIONS.filter((r) => (s.edges.by_relation[r] ?? 0) > 0) as relation (relation)}
@@ -160,11 +160,11 @@
 			<h2 class="section-title">Netwerk</h2>
 			<p>
 				Een klik op een bron in het netwerk markeert die bron: zij licht op met haar eigen
-				verbindingen, en een kaart ernaast toont Tekst lezen, Toon verbonden bronnen en In netwerk.
-				Een tweede klik, Tekst lezen of Enter opent de lezer. Toon verbonden bronnen tekent het
-				netwerk opnieuw rond die bron, tot het gekozen aantal stappen. Een klik ernaast of Escape
-				heft de markering op. Aantal stappen voegt bronnen rond de gekozen bron toe; die staan vaag
-				getekend.
+				verbindingen, en een kaart ernaast toont Tekst lezen, Toon verbonden bronnen en In het
+				netwerk. Een tweede klik, Tekst lezen of Enter opent de lezer. Toon verbonden bronnen tekent
+				het netwerk opnieuw rond die bron, tot het gekozen aantal stappen. Een klik ernaast of
+				Escape heft de markering op. Aantal stappen voegt bronnen rond de gekozen bron toe; die
+				staan vaag getekend.
 			</p>
 			<p>
 				Meer dan veertig bronnen van één soort die alleen aan de gekozen bron hangen, staan als één

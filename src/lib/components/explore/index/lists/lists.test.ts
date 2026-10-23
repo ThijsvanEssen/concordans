@@ -73,7 +73,7 @@ describe('the register of Bronnen', () => {
 			committees: 'Actief',
 			cabinets: 'Periode',
 			ministers: 'In functie',
-			commitments: 'Gedaan'
+			commitments: 'Toegezegd'
 		});
 		// Side by side the cabinets are the period (Tot en met).
 		expect(LISTS.ministers.period(params('weergave=naast'))).toBeNull();

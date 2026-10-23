@@ -18,7 +18,7 @@ import type { ParamPatch } from '$lib/util/address';
 const OUTCOMES = Object.keys(OUTCOME_LABEL) as Outcome[];
 const DOSSIER_NUMBER = /^\d{5}(-[a-z0-9()]+)?$/i;
 
-/** The parameters of the filters, the sort and the views; a tab and Wis alle filters drop them. */
+/** The parameters of the filters, the sort and the views; a tab and Wissen drop them. */
 export const INDEX_FILTER_PARAMS = [
 	PARAM.q,
 	'phase',
