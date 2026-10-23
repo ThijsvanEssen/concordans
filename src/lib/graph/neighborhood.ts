@@ -21,7 +21,13 @@ type Node = { id: string; collection: string };
 type Edge = { source: string; target: string; relation: string | null };
 
 /** The persons and bodies of parliament and government: hubs, never a way through. */
-export const ACTORS: readonly Collection[] = ['members', 'factions', 'committees', 'cabinets'];
+export const ACTORS: readonly Collection[] = [
+	'members',
+	'factions',
+	'committees',
+	'cabinets',
+	'ministries'
+];
 
 /**
  * The part of `nodes` and `edges` reachable from `focal` within `depth` steps without a

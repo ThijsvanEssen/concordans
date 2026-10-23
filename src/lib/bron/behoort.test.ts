@@ -445,6 +445,7 @@ describe('kern of context', () => {
 			  "members": [
 			    "factions",
 			  ],
+			  "ministries": [],
 			}
 		`);
 	});

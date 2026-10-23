@@ -13,6 +13,7 @@
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import BronLink from '$lib/bron/BronLink.svelte';
+	import MinistryLink from '$lib/bron/MinistryLink.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import { stand } from '$lib/components/parliamentary/stand';
 	import ReaderHead from './ReaderHead.svelte';
@@ -162,6 +163,11 @@
 					{/if}
 				{/snippet}
 				{#snippet statusLine()}
+					{#if d.ministry}
+						<p class="reading">
+							Ministerie: <MinistryLink ministry={d.ministry} name={d.ministry_name} />.
+						</p>
+					{/if}
 					{#if d.submitted_on_tk && stand(d)?.group !== 'ingediend'}
 						<!-- The day the bill reached the Kamer (API 0.75), before any stage below it; where
 						     the stand says it already ("Ingediend bij de Tweede Kamer op …"), once (R3-L F9). -->

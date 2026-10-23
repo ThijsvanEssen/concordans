@@ -25,6 +25,7 @@ const READERS: Partial<Record<Collection, () => Promise<{ default: Reader }>>> =
 	decisions: () => import('./readers/DecisionReader.svelte'),
 	activities: () => import('./readers/ActivityReader.svelte'),
 	cabinets: () => import('./readers/CabinetReader.svelte'),
+	ministries: () => import('./readers/MinistryReader.svelte'),
 	commitments: () => import('./readers/CommitmentReader.svelte'),
 	instruments: () => import('./readers/InstrumentReader.svelte'),
 	annexes: () => import('./readers/AnnexReader.svelte')
@@ -58,6 +59,7 @@ const COLLECTION_OF_PAD: Partial<Record<Pad['soort'], Collection>> = {
 	kamerstuk: 'documents',
 	lid: 'members',
 	kabinet: 'cabinets',
+	ministerie: 'ministries',
 	fractie: 'factions',
 	commissie: 'committees',
 	toezegging: 'commitments',

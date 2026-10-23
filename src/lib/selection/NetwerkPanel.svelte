@@ -58,7 +58,7 @@
 			? 'artikelen'
 			: c === 'dossiers'
 				? 'stukken'
-				: c === 'cabinets'
+				: c === 'cabinets' || c === 'ministries'
 					? 'bewindspersonen'
 					: 'leden';
 </script>

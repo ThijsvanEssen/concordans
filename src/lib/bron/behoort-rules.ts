@@ -327,6 +327,7 @@ export const BANDS: Partial<Record<Collection, Band>> = {
 	factions: { lines: [chamberLine] },
 	committees: { lines: [chamberLine] },
 	cabinets: { lines: [] },
+	ministries: { lines: [] },
 	activities: {
 		lines: [
 			{

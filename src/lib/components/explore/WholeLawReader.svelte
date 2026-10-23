@@ -45,6 +45,7 @@
 	import { load } from '$lib/util/load.svelte';
 	import WholeLawReaderArticle from './WholeLawReaderArticle.svelte';
 	import WholeLawReaderPeildatum from './WholeLawReaderPeildatum.svelte';
+	import MinistryLink from '$lib/bron/MinistryLink.svelte';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import Validity from '$lib/components/ui/Validity.svelte';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
@@ -212,6 +213,7 @@
 			detail.state.status === 'error' ||
 			versionList.state.status === 'error' ||
 			grondslag.length > 0 ||
+			!!lawDetail?.ministry ||
 			!!treaty
 	);
 	const withFacts = $derived(
@@ -330,6 +332,14 @@
      failure, its grondslag, a treaty. Only where it says something: no empty line (A190). -->
 {#snippet lawStatus()}
 	<Validity {validity} />
+	{#if lawDetail?.ministry}
+		<span
+			>Ministerie: <MinistryLink
+				ministry={lawDetail.ministry}
+				name={lawDetail.ministry_name}
+			/>.</span
+		>
+	{/if}
 	{#if textNotRead}
 		<p class="whole-count">
 			<Coverage noText coverage={lawDetail?.completeness} bron={officialSource} />

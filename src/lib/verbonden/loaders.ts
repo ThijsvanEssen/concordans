@@ -11,6 +11,11 @@ import { ifExists, report } from '$lib/api/errors';
 import { geteld } from '$lib/api/decisions';
 import type { Schema } from '$lib/api/types';
 import { getCommittee } from '$lib/api/committees';
+import { MINISTRY_KEYS, choiceOf } from '$lib/util/choice';
+import { getInstruments } from '$lib/api/instruments';
+import { getCommitments } from '$lib/api/commitments';
+import { getFacetedList } from '$lib/api/lists';
+import { OPEN_STATUS } from '$lib/components/explore/index/government';
 import { numberOf } from '$lib/components/parliamentary/dossier-number';
 import { isInternational, parseNodeId } from '$lib/vocabulary';
 import { refOf } from '$lib/bron/ref';
@@ -249,6 +254,9 @@ const DECISIONS_SHOWN = 100;
 
 /** The dossiers of a lid or fractie read at once: about 0.7 KB each. */
 const DOSSIERS_SHOWN = 100;
+
+/** The laws, open dossiers and open toezeggingen of a ministry read at once. */
+const MINISTRY_SHOWN = 50;
 
 /** The pages of `cited-by` read at most (CITED_BY_PAGE passages each). */
 const CITED_BY_PAGES = 5;
@@ -1166,6 +1174,73 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				filterGroup: filterGroupOf('activities', a.key, {}),
 				relation: 'LED_BY' as const,
 				direction: 'inbound' as const
+			}))
+		};
+	},
+
+	// What is a ministry's own, from the lists under `ministry=`: its laws (first responsible),
+	// its open dossiers and its open toezeggingen, each with the list's total.
+	'ministry-laws': async ({ node, signal }) => {
+		const ministry = choiceOf(node.key, MINISTRY_KEYS);
+		if (!ministry) return { rows: [] };
+		const found = await abortable(
+			getInstruments({ ministry, limit: MINISTRY_SHOWN, facets: false }, signal),
+			signal
+		);
+		return {
+			total: found.total,
+			rows: found.items.map((i) => {
+				const props = { citation_title: i.citation_title, title: i.title, kind: i.kind };
+				return {
+					ref: { collection: 'instruments' as const, key: i.key },
+					...describeBron('instruments', i.key, i.display_name, props),
+					filterGroup: filterGroupOf('instruments', i.key, props)
+				};
+			})
+		};
+	},
+
+	'ministry-dossiers': async ({ node, signal }) => {
+		const ministry = choiceOf(node.key, MINISTRY_KEYS);
+		if (!ministry) return { rows: [] };
+		const found = await abortable(
+			getFacetedList(
+				'/api/dossiers',
+				{ ministry, status: 'open', limit: MINISTRY_SHOWN, offset: 0, facets: false },
+				signal
+			),
+			signal
+		);
+		return {
+			total: found.total,
+			rows: found.items.map((d) => {
+				const title = d.short_title ?? d.title;
+				return {
+					ref: { collection: 'dossiers' as const, key: d.key, number: d.number },
+					...describeBron('dossiers', d.key, title, { title, label: d.number }),
+					filterGroup: 'dossiers' as const
+				};
+			})
+		};
+	},
+
+	'ministry-commitments': async ({ node, signal }) => {
+		const ministry = choiceOf(node.key, MINISTRY_KEYS);
+		if (!ministry) return { rows: [] };
+		const found = await abortable(
+			getCommitments(
+				{ ministry, status: OPEN_STATUS, limit: MINISTRY_SHOWN, facets: false },
+				signal
+			),
+			signal
+		);
+		return {
+			total: found.total,
+			rows: found.items.map((c) => ({
+				ref: { collection: 'commitments' as const, key: c.key },
+				...describeBron('commitments', c.key, c.text, { number: c.number, text: c.text }),
+				context: korteDatum(c.date),
+				filterGroup: filterGroupOf('commitments', c.key, {})
 			}))
 		};
 	},

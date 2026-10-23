@@ -289,3 +289,9 @@ export const getExplainedBy = (bwb: string, number: string) =>
 			)
 		)
 	);
+
+/** A ministry with its names, its bewindspersonen per cabinet and what is its own. */
+export const getMinistry = (key: string) =>
+	once(`ministries/${key}`, () =>
+		unwrap(api.GET('/api/ministries/{key}', { params: { path: { key } } }))
+	);

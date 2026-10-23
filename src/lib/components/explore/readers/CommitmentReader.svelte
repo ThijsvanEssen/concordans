@@ -15,7 +15,7 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import { OPEN_STATUS, POST_LABEL, type Cabinet } from '$lib/components/explore/index/government';
 	import { getCabinets } from '$lib/api/government';
-	import { ministryName } from '$lib/components/explore/index/ministries.svelte';
+	import MinistryLink from '$lib/bron/MinistryLink.svelte';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
 	import {
@@ -106,7 +106,9 @@
 					{/if}
 				</Veld>
 				<Veld label="Functie" value={c.member?.function ?? (c.post ? POST_LABEL[c.post] : null)} />
-				<Veld label="Ministerie" value={ministryName(c.ministry)} />
+				<Veld label="Ministerie" value={c.ministry}>
+					<MinistryLink ministry={c.ministry} name={c.ministry_name} />
+				</Veld>
 				<Veld label="Kabinet" value={c.cabinet}>
 					<BronLink ref={`cabinets/${c.cabinet}`}>{cabinetName(c.cabinet ?? '')}</BronLink>
 				</Veld>

@@ -9,6 +9,7 @@ const MINISTRIES: Ministry[] = [
 	{
 		abbreviation: null,
 		tooi: null,
+		path: null,
 		successor: null,
 		until: null,
 		periods: [],
@@ -19,6 +20,7 @@ const MINISTRIES: Ministry[] = [
 	{
 		abbreviation: null,
 		tooi: null,
+		path: null,
 		successor: null,
 		until: null,
 		periods: [],
@@ -29,6 +31,7 @@ const MINISTRIES: Ministry[] = [
 	{
 		abbreviation: null,
 		tooi: null,
+		path: null,
 		successor: null,
 		until: null,
 		periods: [],
@@ -39,6 +42,7 @@ const MINISTRIES: Ministry[] = [
 	{
 		abbreviation: null,
 		tooi: null,
+		path: null,
 		until: null,
 		periods: [],
 		path: null,
@@ -49,6 +53,7 @@ const MINISTRIES: Ministry[] = [
 	{
 		abbreviation: null,
 		tooi: null,
+		path: null,
 		until: null,
 		periods: [],
 		path: null,
@@ -59,6 +64,7 @@ const MINISTRIES: Ministry[] = [
 	{
 		abbreviation: null,
 		tooi: null,
+		path: null,
 		successor: null,
 		until: null,
 		periods: [],
@@ -69,6 +75,7 @@ const MINISTRIES: Ministry[] = [
 	{
 		abbreviation: null,
 		tooi: null,
+		path: null,
 		until: null,
 		periods: [],
 		path: null,
@@ -79,6 +86,7 @@ const MINISTRIES: Ministry[] = [
 	{
 		abbreviation: null,
 		tooi: null,
+		path: null,
 		until: null,
 		periods: [],
 		path: null,
@@ -89,6 +97,7 @@ const MINISTRIES: Ministry[] = [
 	{
 		abbreviation: null,
 		tooi: null,
+		path: null,
 		successor: null,
 		until: null,
 		periods: [],
@@ -99,6 +108,7 @@ const MINISTRIES: Ministry[] = [
 	{
 		abbreviation: null,
 		tooi: null,
+		path: null,
 		until: null,
 		periods: [],
 		path: null,

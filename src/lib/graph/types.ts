@@ -114,7 +114,8 @@ const CATEGORY_OF_RELATION: Record<Relation, EdgeCategory> = {
 	ACCOMPANIES: 'structural',
 	RELATED_TO: 'semantic',
 	SECOND_READING_OF: 'mutation',
-	SERVED_IN: 'structural'
+	SERVED_IN: 'structural',
+	COMMENCES: 'structural'
 };
 
 /** Line width of an edge, by relation. */
@@ -150,7 +151,8 @@ export const EDGE_WEIGHT: Record<Relation, number> = {
 	ACCOMPANIES: 0.7,
 	RELATED_TO: 0.6,
 	SECOND_READING_OF: 1.0,
-	SERVED_IN: 0.6
+	SERVED_IN: 0.6,
+	COMMENCES: 0.6
 };
 
 /**

@@ -40,6 +40,7 @@ export const KOP_ACTIES: Partial<Record<Collection, { citeer: boolean }>> = {
 	factions: { citeer: false },
 	committees: { citeer: false },
 	cabinets: { citeer: false },
+	ministries: { citeer: false },
 	commitments: { citeer: false },
 	activities: { citeer: false }
 };

@@ -60,6 +60,9 @@ export type Loader =
 	| 'instrument-judgments'
 	| 'committee-dossiers'
 	| 'committee-activities'
+	| 'ministry-laws'
+	| 'ministry-dossiers'
+	| 'ministry-commitments'
 	| 'member-instruments'
 	| 'faction-instruments'
 	| 'member-dossiers'
@@ -774,6 +777,31 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Bewindspersonen',
 			noun: 'bewindspersonen',
 			match: [{ relation: 'SERVED_IN', direction: 'inbound', collection: 'members' }]
+		}
+	],
+	// What is a ministry's own: the lists under `ministry=`, with their totals. Its
+	// bewindspersonen, voorganger and opvolger stand in its reader.
+	ministries: [
+		{
+			id: 'laws',
+			label: 'Wetten',
+			noun: 'wetten',
+			load: 'ministry-laws',
+			bakken: [{ relation: 'LED_BY', direction: 'inbound', collection: 'instruments' }]
+		},
+		{
+			id: 'dossiers',
+			label: 'Lopende dossiers',
+			noun: 'dossiers',
+			load: 'ministry-dossiers',
+			bakken: [{ relation: 'LED_BY', direction: 'inbound', collection: 'dossiers' }]
+		},
+		{
+			id: 'commitments',
+			label: 'Open toezeggingen',
+			noun: 'toezeggingen',
+			load: 'ministry-commitments',
+			bakken: [{ relation: 'LED_BY', direction: 'inbound', collection: 'commitments' }]
 		}
 	],
 	members: [

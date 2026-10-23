@@ -95,6 +95,7 @@
 				<KeyRow key="publicatie">/stb/2026/94, /stcrt/…, /trb/…</KeyRow>
 				<KeyRow key="lid">/leden/rob-jetten</KeyRow>
 				<KeyRow key="kabinet">/kabinetten/rutte_iv</KeyRow>
+				<KeyRow key="ministerie">/ministeries/jenv</KeyRow>
 				<KeyRow key="fractie">/fracties/d66</KeyRow>
 				<KeyRow key="commissie">/commissies/szw</KeyRow>
 				<KeyRow key="toezegging">/toezeggingen/TZ202609-124</KeyRow>

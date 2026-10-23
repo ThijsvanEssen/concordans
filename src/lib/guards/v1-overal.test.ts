@@ -74,6 +74,7 @@ const API_ORDER: Partial<Record<Collection, readonly string[]>> = {
 	decisions: ['subject', 'votes'],
 	activities: ['decisions', 'records', 'motions', 'commitments', 'cases'],
 	commitments: ['fulfilled-by'],
+	ministries: ['laws', 'dossiers', 'commitments'],
 	cases: ['authors', 'related'],
 	annexes: ['scoped-by']
 };

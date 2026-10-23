@@ -115,7 +115,8 @@ function membersLabel(selection: Collection): { label: string; one: string; many
  * now ("Huidige leden"), Verbonden every lid it has had.
  */
 const LABEL_ON: Partial<Record<Collection, Partial<Record<KindId, string>>>> = {
-	committees: { members: 'Leden ooit' }
+	committees: { members: 'Leden ooit' },
+	ministries: { dossiers: 'Lopende dossiers', commitments: 'Open toezeggingen' }
 };
 
 /** The order of the soorten: the mockups of the article, the dossier and the Kamerlid. */

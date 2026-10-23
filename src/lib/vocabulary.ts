@@ -62,7 +62,8 @@ const RELATION_SET: Record<Relation, true> = {
 	REVISES: true,
 	ACCOMPANIES: true,
 	SECOND_READING_OF: true,
-	VOTED: true
+	VOTED: true,
+	COMMENCES: true
 };
 
 export const RELATIONS = Object.keys(RELATION_SET) as readonly Relation[];

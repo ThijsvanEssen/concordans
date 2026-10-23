@@ -12,6 +12,7 @@
 //   /stb/2026/94                         a publication, by series, year and number
 //   /leden/rob-jetten                    a lid or bewindspersoon, by the slug the API gives
 //   /kabinetten/rutte_iv                 a cabinet, by its key
+//   /ministeries/jenv                    a ministry, by its key
 //   /fracties/d66                        a fractie, by its key (ek_democraten_1966 in the EK)
 //   /commissies/szw                      a commissie, by its slug
 //   /toezeggingen/TZ202609-124           a toezegging, by its number
@@ -44,6 +45,7 @@ export type Pad =
 	| { soort: 'publicatie'; reeks: Reeks; jaar: string; nummer: string }
 	| { soort: 'lid'; slug: string }
 	| { soort: 'kabinet'; key: string }
+	| { soort: 'ministerie'; key: string }
 	| { soort: 'fractie'; key: string }
 	| { soort: 'commissie'; slug: string }
 	| { soort: 'toezegging'; nummer: string }
@@ -213,6 +215,17 @@ const ADDRESS_RULES: { [S in AddressKind]: AddressRule<S> } = {
 		focus: (pad) => `cabinets/${pad.key}`,
 		fromKey: ({ collection, key }) =>
 			collection === 'cabinets' && KEY.test(key) ? { soort: 'kabinet', key } : null
+	},
+	ministerie: {
+		read: (p) => {
+			const key = single(p, 'ministeries', KEY);
+			return key ? { soort: 'ministerie', key } : null;
+		},
+		write: (pad) => `/ministeries/${pad.key}`,
+		lookup: (pad) => ({ kind: 'ministry', id: pad.key }),
+		focus: (pad) => `ministries/${pad.key}`,
+		fromKey: ({ collection, key }) =>
+			collection === 'ministries' && KEY.test(key) ? { soort: 'ministerie', key } : null
 	},
 	fractie: {
 		read: (p) => {

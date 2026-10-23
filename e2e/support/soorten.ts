@@ -20,5 +20,6 @@ export const SOORTEN: [soort: string, pad: string][] = [
 	['bewindspersoon', '/leden/marielle-paul'],
 	['fractie', '/fracties/d66'],
 	['commissie', '/commissies/szw'],
-	['kabinet', '/kabinetten/rutte_iv']
+	['kabinet', '/kabinetten/rutte_iv'],
+	['ministerie', '/ministeries/jenv']
 ];

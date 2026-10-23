@@ -144,7 +144,9 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 	CONTINUES: ({ van }) =>
 		van === 'activities'
 			? ['vervangt', 'vervangen door', 'verplaatsing van een activiteit']
-			: ['vervolg op', 'voortgezet in', 'vervolg in dezelfde zaak'],
+			: van === 'ministries'
+				? ['voortzetting van', 'voortgezet als', 'ministerie onder een andere naam']
+				: ['vervolg op', 'voortgezet in', 'vervolg in dezelfde zaak'],
 	REFERRED_BY: () => ['verwezen door', 'verwees naar', 'verwijzing na cassatie'],
 	// One decision, two publications; one stuk of the Staatsblad, two copies; one person.
 	SAME_AS: ({ van }) =>
@@ -172,7 +174,14 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 				: van === 'commitments'
 					? ['over', 'onderwerp van', 'toezegging in een dossier']
 					: ['over', 'onderwerp van', 'onderwerp van een debat of vergadering'],
-	LED_BY: () => ['onder leiding van', 'voortouw bij', 'voortouwcommissie'],
+	LED_BY: ({ naar }) =>
+		naar === 'ministries'
+			? [
+					'onder verantwoordelijkheid van',
+					'verantwoordelijk voor',
+					'eerstverantwoordelijk ministerie'
+				]
+			: ['onder leiding van', 'voortouw bij', 'voortouwcommissie'],
 	// A motie is `MADE_IN` the debate it was submitted in (`reason` `ingediend`), a stenogram
 	// the debate it records.
 	MADE_IN: ({ van, meta }) =>
@@ -186,7 +195,10 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 						? ['verslag van', 'verslag van', 'verslag van een debat']
 						: ['genoemd in', 'genoemd in', 'vermelding in een debat of vergadering'],
 	MEMBER_OF: () => ['lid van', 'lid', 'lidmaatschap'],
-	SERVED_IN: () => ['bewindspersoon in', 'bewindspersoon', 'ambt in een kabinet'],
+	SERVED_IN: ({ naar }) =>
+		naar === 'ministries'
+			? ['bewindspersoon bij', 'bewindspersoon', 'ambt bij een ministerie']
+			: ['bewindspersoon in', 'bewindspersoon', 'ambt in een kabinet'],
 	// The edge runs from the member to the stuk: read from there, a member diende in. One who
 	// signed as minister or for the Kamer, not as Kamerlid, ondertekende.
 	AUTHORED: ({ naar, meta }) => {
@@ -235,7 +247,13 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 							: 'door de Kamer verbonden Kamerzaken'
 					]
 				: ['hangt samen met', 'hangt samen met', 'samenhang'],
-	SECOND_READING_OF: () => ['tweede lezing van', 'tweede lezing van', 'tweede lezing']
+	SECOND_READING_OF: () => ['tweede lezing van', 'tweede lezing van', 'tweede lezing'],
+	// A publication that sets the day a law takes effect, to the publication that enacted it.
+	COMMENCES: () => [
+		'bepaalt inwerkingtreding van',
+		'inwerkingtreding bepaald bij',
+		'inwerkingtredingsbesluit'
+	]
 };
 
 /**

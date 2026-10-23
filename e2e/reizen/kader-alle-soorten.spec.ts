@@ -21,7 +21,7 @@ const STATUS = new Set([
 ]);
 
 /** The kinds Bladeren has no list of: their kind is a word beside the glyph, not a link. */
-const GEEN_LIJST = new Set(['bijlage', 'zaak', 'activiteit']);
+const GEEN_LIJST = new Set(['bijlage', 'zaak', 'activiteit', 'ministerie']);
 
 /** The kinds without a head line of the kind: the article's is its place. */
 const PLAATSREGEL = new Set(['artikel']);
