@@ -20,6 +20,7 @@
 		lidCounts = new Map(),
 		lidTellend = false,
 		billCount = 0,
+		billMore = false,
 		filter,
 		proposedRow = null,
 		onCloseProposed
@@ -34,6 +35,8 @@
 		lidCounts?: Map<string, number>;
 		lidTellend?: boolean;
 		billCount?: number;
+		/** The count is a sample: the first lading of a much changed article. */
+		billMore?: boolean;
 		filter?: VerbondenFilter;
 		/** A wetsvoorstel whose proposed text is shown next to the current one. */
 		proposedRow?: Row | null;
@@ -61,6 +64,7 @@
 		{lidCounts}
 		{lidTellend}
 		{billCount}
+		{billMore}
 		{filter}
 		{proposedRow}
 		{onCloseProposed}

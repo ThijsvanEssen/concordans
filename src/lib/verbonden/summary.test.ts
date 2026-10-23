@@ -44,6 +44,24 @@ describe('Verbonden at a glance', () => {
 		expect(kindsTotal(kinds)).toBe(10526);
 	});
 
+	it('counts the wetten of a dossier by its rows, not by the bucket that holds the Staatsblad too', () => {
+		const buckets = new Map([[bucketKey('LEGISLATED_IN', 'instruments', 'inbound'), 2]]);
+		const laws = (extra: Partial<Group>) =>
+			[
+				{
+					id: 'laws',
+					label: 'Wet',
+					rows: [row('articles', 'bwbr0049889')],
+					capped: false,
+					eigenTelling: true,
+					...extra
+				}
+			] as Group[];
+		expect(kindsOf(laws({}), 'dossiers', buckets)[0].count).toBe(1);
+		// While its loader runs, the bucket still stands for it.
+		expect(kindsOf(laws({ laden: true }), 'dossiers', buckets)[0].count).toBe(2);
+	});
+
 	it('orders the soorten as the mockup of each kind of bron does', () => {
 		const dossier = kindsOf(
 			[

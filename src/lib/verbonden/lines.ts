@@ -76,13 +76,19 @@ export function activityLine(
 /**
  * `eerste ondertekenaar, als minister van Financiën, 6 stukken`: what a lid or fractie
  * was in a dossier. The function only where it is not the plain seat of a Tweede Kamerlid:
- * an Eerste Kamerlid is named as such.
+ * an Eerste Kamerlid is named as such. With `onderscheid` (a lid who signed as more than a
+ * Kamerlid) the hoedanigheid is always said, from the capacities the API gives per dossier:
+ * `als Kamerlid`, `als minister van Financiën en Kamerlid`, `als bewindspersoon`.
  */
-export function rolesLine(d: {
-	roles?: readonly string[] | null;
-	functions?: readonly string[] | null;
-	document_count?: number | null;
-}): string | null {
+export function rolesLine(
+	d: {
+		roles?: readonly string[] | null;
+		functions?: readonly string[] | null;
+		capacities?: readonly string[] | null;
+		document_count?: number | null;
+	},
+	onderscheid = false
+): string | null {
 	const roles = d.roles ?? [];
 	const role = roles.some((r) => /^eerste/i.test(r))
 		? 'eerste ondertekenaar'
@@ -90,9 +96,14 @@ export function rolesLine(d: {
 			? roles[0].toLowerCase()
 			: null;
 	const fn = (d.functions ?? []).find((f) => !/^tweede kamerlid$/i.test(f.trim()));
+	const caps = onderscheid ? (d.capacities ?? []) : [];
+	const als = [
+		fn ?? (caps.includes('bewindspersoon') ? 'bewindspersoon' : null),
+		caps.includes('kamerlid') && !/kamerlid/i.test(fn ?? '') ? 'Kamerlid' : null
+	].filter((x): x is string => !!x);
 	const n = d.document_count ?? 0;
 	return (
-		[role, fn ? `als ${fn}` : null, n ? count(n, 'stuk', 'stukken') : null]
+		[role, als.length ? `als ${joinAnd(als)}` : null, n ? count(n, 'stuk', 'stukken') : null]
 			.filter(Boolean)
 			.join(', ') || null
 	);

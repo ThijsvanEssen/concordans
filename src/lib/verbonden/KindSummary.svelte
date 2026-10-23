@@ -11,7 +11,7 @@
 	import { formatCount } from '$lib/text/getal';
 	import type { GraphNode } from '$lib/graph/types';
 	import { PREVIEW_ROWS } from './view';
-	import { ankerVanRij, rowKey, type Row } from './rows';
+	import { ankerVanRij, caseNumberOf, repeatedTitles, rowKey, type Row } from './rows';
 	import { shortLine, type Kind } from './summary';
 	import type { TierCount } from './tiers';
 	import VerbondenRow from './VerbondenRow.svelte';
@@ -56,6 +56,8 @@
 </script>
 
 {#each kinds as k (k.id)}
+	<!-- Two judgments of one court and day: the case number tells them apart, as in the groups. -->
+	{@const zussen = repeatedTitles(k.rows.slice(0, PREVIEW_ROWS))}
 	<section class="kind" data-kind={k.id}>
 		<h3 class="kind__head">
 			<span>{k.label}</span><span class="kind__count">{formatCount(k.count)}</span>
@@ -92,6 +94,7 @@
 								{row}
 								{selection}
 								inPlace={inPlace(k, row)}
+								sister={zussen.has(row.title) ? caseNumberOf(row) : null}
 								open
 								onToggle={() => toggle(row)}
 								{onProposedText}
@@ -106,7 +109,10 @@
 							class="kind__title"
 							href={openHref(row.ref, { at: ankerVanRij(row) })}
 							aria-expanded="false"
-							onclick={(e) => terPlekke(e, () => toggle(row))}>{row.title}</a
+							onclick={(e) => terPlekke(e, () => toggle(row))}
+							>{row.title}{#if zussen.has(row.title) && caseNumberOf(row)}, {caseNumberOf(
+									row
+								)}{/if}</a
 						>
 						{#if shortLine(row)}<span class="kind__line">{shortLine(row)}</span>{/if}
 					</li>

@@ -85,6 +85,29 @@ describe('procedure: the Eerste Kamer as eerstekamer.nl shows it', () => {
 		]);
 	});
 
+	it('links the publication of the wet to its Staatsblad page, the other to eerstekamer.nl', () => {
+		const d = {
+			...base,
+			closed: true,
+			enacted: [{ key: 'stb_2024_193', published_on: '2024-06-28', path: '/stb/2024/193' }],
+			senate: senate([
+				{
+					phase: 'Afkondiging',
+					state: 'vol',
+					papers: [
+						paper('publicatie inwerkingtreding', '2024-06-28', null, 'https://ek/i.pdf'),
+						paper('publicatie wet', '2024-06-28', null, 'https://ek/w.pdf')
+					]
+				}
+			])
+		};
+		const g = ekGroup(d)!;
+		expect(g.regels.map((r) => [r.zin, r.href])).toEqual([
+			['Publicatie inwerkingtreding', 'https://ek/i.pdf'],
+			['Publicatie wet', '/stb/2024/193']
+		]);
+	});
+
 	it('names a paper or a vote the data already holds once', () => {
 		const d = {
 			...base,

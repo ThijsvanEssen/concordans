@@ -669,6 +669,14 @@ exports[`Verbonden of a 'wet' > keeps its groups, rows, kern and export > groups
     "section": null,
   },
   {
+    "count": "0",
+    "id": "explained-by",
+    "label": "Toelichting op deze publicatie",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
     "count": "47",
     "id": "dossiers",
     "label": "Dossiers die deze wet raken",

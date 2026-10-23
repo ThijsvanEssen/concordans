@@ -43,6 +43,23 @@ export const getMemberVotesInOffice = (key: string, offset = 0) =>
 		)
 	);
 
+/**
+ * The votes a member cast while holding no post of the government (`in_office=false`, API
+ * #921): as Kamerlid alone, a page as large as the API gives. An API that does not know the
+ * filter answers with all of them; the caller leaves out those with a post.
+ */
+export const getMemberVotesOutOfOffice = (key: string) =>
+	once(`votes/${key}/out-of-office`, () =>
+		unwrap(
+			slowApi.GET('/api/members/{key}/votes', {
+				params: {
+					path: { key },
+					query: { limit: volledig('/api/members/{key}/votes'), in_office: false }
+				}
+			})
+		)
+	);
+
 /** A slice of the members under `query`. */
 export const getMembers = (query: QueryOf<'/api/members'>, signal?: AbortSignal) =>
 	unwrap(api.GET('/api/members', { params: { query }, signal }));

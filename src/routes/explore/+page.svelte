@@ -391,6 +391,14 @@
 	const billCount = $derived(
 		allRows(verbonden.groups).filter((r) => r.filterGroup === 'wetsvoorstellen').length
 	);
+	// The first lading is the nodes' sample (5 of 21 on UHW 3): while the wijzigingen are on their
+	// way the count says "meer dan", so it does not spring to another number on the same page.
+	const billMore = $derived(
+		!!verbonden.wachtend?.includes('changes') ||
+			verbonden.groups.some(
+				(g) => g.capped && g.rows.some((r) => r.filterGroup === 'wetsvoorstellen')
+			)
+	);
 
 	// ── The card Verbinding ──────────────────────────────────────────────────
 	let card = $state<{ verbinding: Verbinding; edgeId: string | null; row: Row | null } | null>(
@@ -1303,6 +1311,7 @@
 						lidCounts={lidCountsOfArticle}
 						lidTellend={!geteld && !apiTellingen}
 						{billCount}
+						{billMore}
 						{filter}
 						{proposedRow}
 						onCloseProposed={() => (proposedRow = null)}

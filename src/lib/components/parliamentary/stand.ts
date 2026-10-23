@@ -93,7 +93,12 @@ export function stand(d: Dossier): Stand | null {
 		return { bodies, zin, group: 'tk', phase: place.phrase, date };
 	}
 	if (place?.stage === 'submitted') {
-		const date = dateOf(d, 'Voorstel van wet') ?? d.opened_on ?? null;
+		// The day it was submitted to the Tweede Kamer, not the day of its first paper (37033: 6 and 5 Oct).
+		const date =
+			(d as { submitted_on_tk?: string | null }).submitted_on_tk ??
+			dateOf(d, 'Voorstel van wet') ??
+			d.opened_on ??
+			null;
 		const advice = rvs === 'done' ? ', met advies van de Raad van State' : '';
 		const zin = `Ingediend bij de Tweede Kamer${on(date, ' op ')}${advice}.`;
 		return { bodies, zin, group: 'ingediend', phase: null, date };

@@ -43,7 +43,7 @@
 	import WholeLawReaderPeildatum from '../WholeLawReaderPeildatum.svelte';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { filterParams, type VerbondenFilter } from '$lib/verbonden/filter';
-	import { formatCount } from '$lib/text/getal';
+	import { atLeast, formatCount } from '$lib/text/getal';
 	import { enactedLawId, enactedLawStatus } from '$lib/text/enacted-law';
 	import { proposedTextOf, type ProposedText } from '$lib/verbonden/proposed-text';
 	import type { Row } from '$lib/verbonden/rows';
@@ -73,6 +73,7 @@
 		lidCounts = new Map(),
 		lidTellend = false,
 		billCount = 0,
+		billMore = false,
 		filter,
 		proposedRow = null,
 		onCloseProposed
@@ -86,6 +87,7 @@
 		/** The counts per lid are still on their way. */
 		lidTellend?: boolean;
 		billCount?: number;
+		billMore?: boolean;
 		filter?: VerbondenFilter;
 		proposedRow?: Row | null;
 		onCloseProposed?: () => void;
@@ -804,8 +806,10 @@
 			{#snippet later()}
 				{#if billCount > 0}
 					<a class="head__pending" href={billsHref} data-sveltekit-noscroll
-						><KindGlyph vorm="voorstel" size={12} />{billCount}
-						{plural(billCount, 'wetsvoorstel raakt', 'wetsvoorstellen raken')} dit artikel</a
+						><KindGlyph vorm="voorstel" size={12} />{atLeast(billCount, billMore)}
+						{billMore
+							? 'wetsvoorstellen raken'
+							: plural(billCount, 'wetsvoorstel raakt', 'wetsvoorstellen raken')} dit artikel</a
 					>
 				{/if}
 			{/snippet}

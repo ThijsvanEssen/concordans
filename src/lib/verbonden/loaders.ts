@@ -280,6 +280,10 @@ async function actorDossiers(
 			: getFactionDossiers(key, DOSSIERS_SHOWN),
 		signal
 	);
+	// A lid who signed as more than a Kamerlid (a bewindspersoon) has each dossier say as what.
+	const onderscheid = found.items.some((d) =>
+		((d as { capacities?: string[] }).capacities ?? []).some((c) => c !== 'kamerlid')
+	);
 	return {
 		total: found.total,
 		rows: found.items.map((d) => ({
@@ -290,7 +294,7 @@ async function actorDossiers(
 				label: d.number
 			}),
 			dossier: { number: d.number, title: d.title, short_title: d.short_title ?? null },
-			context: rolesLine(d),
+			context: rolesLine(d, onderscheid),
 			filterGroup: 'dossiers' as const,
 			relation: 'AUTHORED' as const,
 			direction: 'outbound' as const

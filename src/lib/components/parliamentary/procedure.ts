@@ -53,6 +53,14 @@ type ProcedureInhoud =
 type Inhouden = Map<string, ProcedureInhoud>;
 
 const bodyOf = (e: Entry) => (e.body ?? {}) as Body;
+const dayOf = (v: unknown) => (typeof v === 'string' && v ? v.slice(0, 10) : null);
+/**
+ * The day of a line: an advice of the Raad van State by the day of the advice (`advice_date`,
+ * not the day it was filed), an activity by the day it takes place (`effective_date`, a debat
+ * moved to another day); else the entry's own day. Null-safe: the fields come with the API.
+ */
+const dagVan = (e: Entry): string | null =>
+	dayOf(bodyOf(e).advice_date) ?? dayOf(bodyOf(e).effective_date) ?? e.date?.slice(0, 10) ?? null;
 /**
  * The number of a paper in its dossier: the Eerste Kamer's letter (`number`, API 0.73,
  * BE-2), the Tweede Kamer's number in the title or as `sequence`.
@@ -126,7 +134,7 @@ function eigenStuk(e: Entry, groep: 'rvs' | 'tk' | 'ek', dossier: string): Regel
 	const nr = nrOf(e);
 	return {
 		id: e.node_id,
-		datum: e.date?.slice(0, 10) ?? null,
+		datum: dagVan(e),
 		teken: 'stuk',
 		soort: 'documents',
 		label: eigen ? kind || null : null,
@@ -180,7 +188,7 @@ function regelsVan(
 	const docs = asc.filter((e) => e.node_type === 'document');
 	const byDay = Map.groupBy(
 		docs.filter((e) => carriesBillTitle(e.kind)),
-		(e) => e.date?.slice(0, 10) ?? ''
+		(e) => dagVan(e) ?? ''
 	);
 	for (const e of asc) {
 		// A decision on what the dossier's kind is not (a motie, an amendement) counts per day.
@@ -222,7 +230,7 @@ function regelsVan(
 			const b = bodyOf(e);
 			out.push({
 				id: e.node_id,
-				datum: e.date,
+				datum: dagVan(e),
 				teken: 'activiteit',
 				soort: 'activities',
 				// Its agenda title where that says more than its kind; the committee under it.
@@ -324,6 +332,13 @@ function ekVoortgang(d: Detail, ek: Regel[]): Regel[] | null {
 	const letters = new Set(ek.flatMap((r) => r.nummers ?? []));
 	const besluit = !!d.ek_outcome || ek.some((r) => r.soort === 'decisions');
 	const out: Regel[] = [];
+	// The publication of the wet is its Staatsblad page, where that stands (not the pdf of the
+	// Eerste Kamer): the one publication of the day the paper names.
+	const stb = (p: { kind?: string | null; date?: string | null }) => {
+		if (!/^publicatie wet$/i.test(p.kind ?? '')) return null;
+		const dag = (d.enacted ?? []).filter((e) => e.path && e.published_on === p.date);
+		return dag.length === 1 ? dag[0].path : null;
+	};
 	for (const step of steps)
 		for (const [i, p] of (step.papers ?? []).entries()) {
 			const letter = p.number?.match(/^EK, (.+)$/)?.[1] ?? null;
@@ -346,7 +361,7 @@ function ekVoortgang(d: Detail, ek: Regel[]): Regel[] | null {
 							number: letter
 						})?.short ?? null)
 					: null,
-				href: p.url ?? null
+				href: stb(p) ?? p.url ?? null
 			});
 		}
 	const nu = steps.find((s) => s.state === 'geblokt');

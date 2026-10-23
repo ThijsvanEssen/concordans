@@ -23,7 +23,11 @@
 	import type { Neighbor } from '$lib/api/nodes';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
-	import { getMemberVotes, getMemberVotesInOffice } from '$lib/api/members';
+	import {
+		getMemberVotes,
+		getMemberVotesInOffice,
+		getMemberVotesOutOfOffice
+	} from '$lib/api/members';
 	import {
 		careerOf,
 		currentTitle,
@@ -62,6 +66,8 @@
 	let showAllVotes = $state(false);
 	/** A bewindspersoon's votes in a post, asked on their own and paged (#534); null: not asked. */
 	let inOffice = $state<{ votes: Vote[]; next: number | null; laden: boolean } | null>(null);
+	/** The votes outside a post, as Kamerlid alone (`in_office=false`); null: not asked yet. */
+	let buitenAmbt = $state<Vote[] | null>(null);
 	/** The vote opened in place, by its stemming's key. */
 	let openStem = $state<string | null>(null);
 	const toggleStem = (key: string) => (openStem = openStem === key ? null : key);
@@ -87,6 +93,7 @@
 		let stale = false;
 		showAllVotes = false;
 		inOffice = null;
+		buitenAmbt = null;
 		signatures = [];
 		getMemberAuthored(key)
 			.then((authored) => {
@@ -106,6 +113,11 @@
 		const key = bronKey;
 		let weg = false;
 		inOffice = { votes: [], next: 0, laden: true };
+		getMemberVotesOutOfOffice(key)
+			.then((v) => {
+				if (!weg) buitenAmbt = v.votes.filter((x) => !x.in_office?.length);
+			})
+			.catch((e) => report('Stemmen als Kamerlid', e));
 		getMemberVotesInOffice(key)
 			.then((v) => {
 				if (!weg) inOffice = { votes: v.votes, next: v.next_offset ?? null, laden: false };
@@ -187,6 +199,85 @@
 	// The years of the bronfilter: a step of the career outside them steps back.
 	const years = $derived(parseFilter(page.url.searchParams));
 </script>
+
+{#snippet stemGroepen(groups: PartyGroup[])}
+	{#each groups as group (`${group.party}|${group.ambt}`)}
+		{#if groups.length > 1 || group.ambt}
+			<div class="party-head">
+				<span class="party-wie"
+					>{#if group.party}<NameLink
+							collection="factions"
+							name={group.party}
+							class="party-name"
+						/>{:else}<span class="party-name">Zonder fractie</span>{/if}{#if group.ambt}<span
+							class="party-ambt">, als {group.ambt} en Kamerlid</span
+						>{/if}</span
+				>
+				<span class="party-total">{atLeast(group.total, !!group.meer)} stemmen</span>
+			</div>
+		{/if}
+		{#each group.byChoice as [choice, rows] (choice)}
+			<div class="vote-group">
+				<div class="vote-group-head">
+					<Stem keuze={choice} />
+					<span class="vote-group-count">{rows.length}</span>
+				</div>
+				<ul class="vote-list">
+					{#each uniqueBy(rows, (v) => v.decision_id) as v (v.decision_id)}
+						{@const open = openStem === v.decision_key}
+						<!-- A vote opens in place with its bar, as a row of Actueel does (UX-toets
+										     10 Oct, #20); the title stays a link, the stemming one step further. -->
+						<li class="vote-row" class:vote-row--open={open}>
+							<!-- The button is the keyboard's way in; this only widens its target. -->
+							<div class="vote-link" data-rij use:blockClick={() => toggleStem(v.decision_key)}>
+								<button
+									type="button"
+									class="vote-toggle"
+									aria-expanded={open}
+									aria-label="Details van {stemmingNaam(v.subject)}"
+									onclick={() => toggleStem(v.decision_key)}
+								></button>
+								<!-- The stem beside each row as well: a long group scrolls its head away. -->
+								<span class="vote-mark"><Stem keuze={choice} woord={false} /></span>
+								<a
+									class="vote-subject"
+									href={bronHref({ collection: 'decisions', key: v.decision_key })}
+									data-sveltekit-noscroll
+									onclick={(e) => terPlekke(e, () => toggleStem(v.decision_key))}
+									>{stemmingNaam(v.subject)}</a
+								>
+								<span class="vote-meta">
+									{#if v.vote_source === 'faction'}<span class="vote-seats"
+											>stem van de fractie{v.party ? ` (${v.party})` : ''}{(v.seats ?? 0) > 1
+												? `, ${v.seats} zetels`
+												: ''}</span
+										>{:else}<span class="vote-seats">eigen stem, hoofdelijk</span>{/if}
+									{#if v.passed != null}
+										<span
+											class="vote-outcome"
+											class:vote-outcome--passed={v.passed}
+											class:vote-outcome--failed={!v.passed}
+										>
+											{v.passed ? 'Aangenomen' : 'Verworpen'}
+										</span>
+									{/if}
+									{#if v.date}<span class="vote-date">{korteDatum(v.date)}</span>{/if}
+								</span>
+								<!-- What the coalition did (API 0.79.45, #559; Thijs, 10 Oct). -->
+								{#if v.coalition}<div class="vote-coal">
+										<CoalitieRegel coalitie={v.coalition} fracties={v.coalition_factions ?? []} />
+									</div>{/if}
+							</div>
+							{#if open}
+								<div class="vote-open"><StemOpen decisionKey={v.decision_key} /></div>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			</div>
+		{/each}
+	{/each}
+{/snippet}
 
 <ReaderFrame state={member.state} what="Persoon" retry={member.retry}>
 	{#snippet children(m)}
@@ -355,124 +446,55 @@
 				     newest 50 give the rest. Until the first page is in, the 50 give both. -->
 				{@const apart = !!inOffice && !(inOffice.laden && inOffice.votes.length === 0)}
 				{@const ambt = apart ? inOffice!.votes : []}
-				{@const eigen = apart ? stemmen.votes.filter((v) => !v.in_office?.length) : stemmen.votes}
-				{@const alle = [...ambt, ...eigen]}
-				{@const groups = groupVotes(
-					showAllVotes ? alle : [...ambt.slice(0, VOTES_PREVIEW), ...eigen.slice(0, VOTES_PREVIEW)],
-					alle,
-					apart && inOffice!.next != null
-				)}
-				<!-- Their own votes on a roll-call, and their faction's while they sat in it (API
-				     0.75, BE-43); a bewindspersoon's are what they voted as a Kamerlid. -->
-				<Sectie
-					title={(m.government_functions ?? []).length > 0 ? 'Als Kamerlid' : 'Stemgeschiedenis'}
-					collection="decisions"
-					aantal={apart
-						? atLeast(alle.length, inOffice!.next != null)
-						: atLeast(stemmen.count, stemmen.next_offset != null)}
-				>
-					{#each groups as group (`${group.party}|${group.ambt}`)}
-						{#if groups.length > 1 || group.ambt}
-							<div class="party-head">
-								<span class="party-wie"
-									>{#if group.party}<NameLink
-											collection="factions"
-											name={group.party}
-											class="party-name"
-										/>{:else}<span class="party-name">Zonder fractie</span
-										>{/if}{#if group.ambt}<span class="party-ambt"
-											>, als {group.ambt} en Kamerlid</span
-										>{/if}</span
-								>
-								<span class="party-total">{atLeast(group.total, !!group.meer)} stemmen</span>
-							</div>
-						{/if}
-						{#each group.byChoice as [choice, rows] (choice)}
-							<div class="vote-group">
-								<div class="vote-group-head">
-									<Stem keuze={choice} />
-									<span class="vote-group-count">{rows.length}</span>
-								</div>
-								<ul class="vote-list">
-									{#each uniqueBy(rows, (v) => v.decision_id) as v (v.decision_id)}
-										{@const open = openStem === v.decision_key}
-										<!-- A vote opens in place with its bar, as a row of Actueel does (UX-toets
-										     10 Oct, #20); the title stays a link, the stemming one step further. -->
-										<li class="vote-row" class:vote-row--open={open}>
-											<!-- The button is the keyboard's way in; this only widens its target. -->
-											<div
-												class="vote-link"
-												data-rij
-												use:blockClick={() => toggleStem(v.decision_key)}
-											>
-												<button
-													type="button"
-													class="vote-toggle"
-													aria-expanded={open}
-													aria-label="Details van {stemmingNaam(v.subject)}"
-													onclick={() => toggleStem(v.decision_key)}
-												></button>
-												<!-- The stem beside each row as well: a long group scrolls its head away. -->
-												<span class="vote-mark"><Stem keuze={choice} woord={false} /></span>
-												<a
-													class="vote-subject"
-													href={bronHref({ collection: 'decisions', key: v.decision_key })}
-													data-sveltekit-noscroll
-													onclick={(e) => terPlekke(e, () => toggleStem(v.decision_key))}
-													>{stemmingNaam(v.subject)}</a
-												>
-												<span class="vote-meta">
-													{#if v.vote_source === 'faction'}<span class="vote-seats"
-															>stem van de fractie{v.party ? ` (${v.party})` : ''}{(v.seats ?? 0) >
-															1
-																? `, ${v.seats} zetels`
-																: ''}</span
-														>{:else}<span class="vote-seats">eigen stem, hoofdelijk</span>{/if}
-													{#if v.passed != null}
-														<span
-															class="vote-outcome"
-															class:vote-outcome--passed={v.passed}
-															class:vote-outcome--failed={!v.passed}
-														>
-															{outcomeWord(!!v.passed)}
-														</span>
-													{/if}
-													{#if v.date}<span class="vote-date">{korteDatum(v.date)}</span>{/if}
-												</span>
-												<!-- What the coalition did (API 0.79.45, #559; Thijs, 10 Oct). -->
-												{#if v.coalition}<div class="vote-coal">
-														<CoalitieRegel
-															coalitie={v.coalition}
-															fracties={v.coalition_factions ?? []}
-														/>
-													</div>{/if}
-											</div>
-											{#if open}
-												<div class="vote-open"><StemOpen decisionKey={v.decision_key} /></div>
-											{/if}
-										</li>
-									{/each}
-								</ul>
-							</div>
-						{/each}
-					{/each}
-					{#if !showAllVotes && (ambt.length > VOTES_PREVIEW || eigen.length > VOTES_PREVIEW)}
-						<p class="alle">
+				{@const eigen = apart
+					? (buitenAmbt ?? stemmen.votes.filter((v) => !v.in_office?.length))
+					: stemmen.votes}
+				{@const meer = apart && inOffice!.next != null}
+				{@const toon = (rows: Vote[]) => (showAllVotes ? rows : rows.slice(0, VOTES_PREVIEW))}
+				<!-- The votes of a bewindspersoon stand apart as such, under "Als bewindspersoon"
+				     (`in_office`); the rest are what they voted as a Kamerlid alone. Null-safe
+				     without it: a vote with no post in `in_office` is a Kamerlid's. -->
+				{#if ambt.length > 0}
+					<Sectie
+						title="Als bewindspersoon"
+						collection="decisions"
+						aantal={atLeast(ambt.length, meer)}
+					>
+						{@render stemGroepen(groupVotes(toon(ambt), ambt, meer))}
+						{#if !showAllVotes && ambt.length > VOTES_PREVIEW}
 							<!-- No number while more pages follow: the heading says "200+" (FE1, live 0.79.44). -->
-							<AlleN
-								aantal={apart && inOffice!.next != null ? null : alle.length}
-								noun="stemmen"
-								onclick={() => (showAllVotes = true)}
-							/>
-						</p>
-					{:else if showAllVotes && apart && inOffice!.next != null}
-						<p class="alle">
-							<TekstLink onclick={meerInOffice}
-								>{inOffice!.laden ? 'Laden…' : 'Meer stemmen als bewindspersoon'}</TekstLink
-							>
-						</p>
-					{/if}
-				</Sectie>
+							<p class="alle">
+								<AlleN
+									aantal={meer ? null : ambt.length}
+									noun="stemmen"
+									onclick={() => (showAllVotes = true)}
+								/>
+							</p>
+						{:else if showAllVotes && meer}
+							<p class="alle">
+								<TekstLink onclick={meerInOffice}
+									>{inOffice!.laden ? 'Laden…' : 'Meer stemmen als bewindspersoon'}</TekstLink
+								>
+							</p>
+						{/if}
+					</Sectie>
+				{/if}
+				<!-- Their own votes on a roll-call, and their faction's while they sat in it (API
+				     0.75, BE-43). -->
+				{#if eigen.length > 0 || ambt.length === 0}
+					<Sectie
+						title={(m.government_functions ?? []).length > 0 ? 'Als Kamerlid' : 'Stemgeschiedenis'}
+						collection="decisions"
+						aantal={apart ? eigen.length : atLeast(stemmen.count, stemmen.next_offset != null)}
+					>
+						{@render stemGroepen(groupVotes(toon(eigen), eigen))}
+						{#if !showAllVotes && eigen.length > VOTES_PREVIEW}
+							<p class="alle">
+								<AlleN aantal={eigen.length} noun="stemmen" onclick={() => (showAllVotes = true)} />
+							</p>
+						{/if}
+					</Sectie>
+				{/if}
 			{/if}
 		</div>
 	{/snippet}

@@ -9,6 +9,12 @@ import { TIER_LABEL, type Tier } from '$lib/vocabulary';
 /** The instanties counted on their own, highest first. */
 const COUNTED_TIERS: readonly Tier[] = ['hoge_raad', 'gerechtshof', 'rechtbank'];
 
+/**
+ * The tiers one instantie counts: the conclusions of the Parket stand with the Hoge Raad, as
+ * the filter Rechter has them (filter.ts RECHTER_OF_TIER), so the bar and the menu give one count.
+ */
+const TIERS_OF: Partial<Record<Tier, readonly Tier[]>> = { hoge_raad: ['hoge_raad', 'parket'] };
+
 export type TierCount = { tier: Tier | null; label: string; count: number };
 
 export const OTHER_TIERS = 'Overige instanties';
@@ -37,7 +43,9 @@ export async function citingTiers(
 	signal?: AbortSignal
 ): Promise<TierCount[]> {
 	const counts = await Promise.all(
-		COUNTED_TIERS.map((tier) => abortable(getCitingJudgmentsOfTier(bwb, number, tier), signal))
+		COUNTED_TIERS.map((tier) =>
+			abortable(getCitingJudgmentsOfTier(bwb, number, TIERS_OF[tier] ?? [tier]), signal)
+		)
 	);
 	return tierParts(counts, total);
 }

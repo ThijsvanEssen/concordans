@@ -438,6 +438,29 @@ describe('rolesLine', () => {
 		);
 		expect(rolesLine({})).toBeNull();
 	});
+
+	it('says the hoedanigheid per dossier of a lid who signed as more than a Kamerlid', () => {
+		const kamerlid = {
+			roles: ['Eerste ondertekenaar'],
+			capacities: ['kamerlid'],
+			document_count: 4
+		};
+		expect(rolesLine(kamerlid)).toBe('eerste ondertekenaar, 4 stukken');
+		expect(rolesLine(kamerlid, true)).toBe('eerste ondertekenaar, als Kamerlid, 4 stukken');
+		expect(
+			rolesLine(
+				{
+					roles: ['Eerste ondertekenaar'],
+					functions: ['minister van Financiën'],
+					capacities: ['bewindspersoon', 'kamerlid']
+				},
+				true
+			)
+		).toBe('eerste ondertekenaar, als minister van Financiën en Kamerlid');
+		expect(
+			rolesLine({ roles: ['Eerste ondertekenaar'], capacities: ['bewindspersoon'] }, true)
+		).toBe('eerste ondertekenaar, als bewindspersoon');
+	});
 });
 
 describe('citedLine', () => {
