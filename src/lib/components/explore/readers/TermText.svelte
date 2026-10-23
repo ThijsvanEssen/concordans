@@ -4,8 +4,8 @@
 	import { splitTerms } from '$lib/glossary';
 	import GlossaryPill from './GlossaryPill.svelte';
 
-	let { tekst }: { tekst: string } = $props();
-	const delen = $derived(splitTerms(tekst));
+	let { text }: { text: string } = $props();
+	const parts = $derived(splitTerms(text));
 </script>
 
 {#each parts as d, i (i)}{#if d.term}<GlossaryPill
