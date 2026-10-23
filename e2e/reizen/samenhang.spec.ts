@@ -96,17 +96,14 @@ test('Verbonden as a table, exported as CSV', async ({ page }) => {
 	expect((await download).suggestedFilename()).toMatch(/\.csv$/);
 });
 
-test('Samenhang opens with an example as a proposal; the first bron chosen takes its place (R3-N B4)', async ({
-	page
-}) => {
+test('an empty werkplek is empty: the field Bron toevoegen, no example', async ({ page }) => {
 	await page.goto('/explore');
-	await page.waitForLoadState('networkidle');
 	const network = page.getByRole('region', { name: 'Netwerk' });
-	// The example's bronnen are no chips of the reader's: nothing to switch, take out or clear.
-	await expect(network.locator('.chip--voorbeeld').first()).toBeVisible();
+	await expect(network.getByPlaceholder('Bron toevoegen')).toBeVisible();
 	await expect(network.getByRole('button', { pressed: true })).toHaveCount(0);
-	await expect(network.getByRole('button', { name: /^Haal .* uit netwerk$/ })).toHaveCount(0);
-	await expect(page).not.toHaveURL(/netwerk=/);
+	await page.waitForTimeout(500);
+	await expect(page).toHaveURL(/\/explore$/);
+	await expect(page.getByText(/^Voorbeeld/)).toHaveCount(0);
 });
 
 test('a bron in the network becomes the focus, and Samenhang follows it', async ({

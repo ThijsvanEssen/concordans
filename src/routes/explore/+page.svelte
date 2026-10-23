@@ -17,7 +17,6 @@
 	import { sprongDoel } from '$lib/stores/sprong';
 	import { inView } from '$lib/actions/in-view';
 	import { PHONE, READ_BESIDE } from '$lib/util/breakpoints';
-	import { laadWetsnetwerk } from '$lib/components/actueel/wetsnetwerk';
 	import { vandaag, yearFraction } from '$lib/text/datum';
 	import { meldNetwerk, showNetworkFailure } from '$lib/stores/netwerk-melding';
 	import {
@@ -131,7 +130,6 @@
 	import { focusStap } from '$lib/graph/focus-stap';
 	import {
 		onlyAround,
-		EXAMPLE_NETWERK,
 		netwerkParams,
 		parseNetwerk,
 		withAdded,
@@ -160,7 +158,6 @@
 	import TocSheet from './TocSheet.svelte';
 	import BronFailure from '$lib/components/explore/BronFailure.svelte';
 	import { contentsTold, contentsEmpty } from '$lib/components/explore/contents-state.svelte';
-	import ExampleLine from './ExampleLine.svelte';
 
 	// One store for the lifetime of this page, so it survives mode switches.
 	const store = createGraphStore();
@@ -337,29 +334,8 @@
 	const telefoon = typeof window !== 'undefined' && window.matchMedia(PHONE).matches;
 	// "Bronnen ertussen" is on by default, on a phone too (Thijs, 9 Oct, from an iPhone): the
 	// clusters, the faint bronnen between and the cap of 100 keep it light there.
-	// ── The example, where nothing is chosen ─────────────────────────────────
-	// The Verkenner without a focus, a netwerk or one remembered opens on the home page's
-	// own example (Thijs, 10 Oct: "marked dan het voorbeeld dat van de homepage komt"): the
-	// network of the newest passed bill, as laadWetsnetwerk gives it there. Shown, not
-	// written: the address stays /explore. A line above says it is an example.
-	let voorbeeld = $state<{ query: string; naam: string } | null>(null);
-	const zonderKeuze = $derived(!focus && !pad && !netwerkQuery && mode !== 'index');
-	$effect(() => {
-		if (!zonderKeuze || voorbeeld || bewaardNetwerk()) return;
-		const ac = new AbortController();
-		laadWetsnetwerk([], vandaag(), ac.signal)
-			.then((schets) => {
-				if (!schets || ac.signal.aborted) return;
-				const query = new URL(schets.exploreHref, location.origin).searchParams.toString();
-				voorbeeld = { query, naam: schets.kandidaat.naam };
-			})
-			.catch((e) => report('Verkenner voorbeeld', e));
-		return () => ac.abort();
-	});
-	const voorbeeldAan = $derived(zonderKeuze && !!voorbeeld);
-	const netwerk = $derived<Netwerk>(
-		parseNetwerk(new URLSearchParams(netwerkQuery || (voorbeeldAan ? voorbeeld!.query : '')))
-	);
+	// Nothing chosen, the canvas is empty: the field Bron toevoegen is all (Thijs, 23 Oct).
+	const netwerk = $derived<Netwerk>(parseNetwerk(new URLSearchParams(netwerkQuery)));
 	// "Alleen verbonden bronnen" is a filter on the netwerk, not a replacement: ?omgeving names
 	// the bron whose surroundings alone are drawn; the chosen bronnen stay in the address, greyed,
 	// and come back when the filter goes off.
@@ -1298,10 +1274,8 @@
 			return;
 		}
 		// The first bron chosen grows out of the canvas as it is: what is there stays, as context.
-		// The example is no netwerk of the reader's: the first bron chosen takes its place (R3-N B4).
-		if (voorbeeldAan) composer.forget();
-		else if (!netwerkActive) composer.keepCanvas();
-		setNetwerk(withAdded(voorbeeldAan ? parseNetwerk(new URLSearchParams()) : netwerk, id));
+		if (!netwerkActive) composer.keepCanvas();
+		setNetwerk(withAdded(netwerk, id));
 		meldNetwerk(`${naam ?? 'De bron'} toegevoegd aan het netwerk.`, () =>
 			setNetwerk(withRemoved(netwerk, id))
 		);
@@ -1315,11 +1289,6 @@
 		if (!id) return;
 		if (netwerk.ids.includes(id)) setNetwerk(withRemoved(netwerk, id));
 		else addToNetwerk(node);
-	}
-
-	function showExample() {
-		composer.keepCanvas();
-		setNetwerk(withAdded(netwerk, ...EXAMPLE_NETWERK));
 	}
 
 	// Wissen leaves nothing: no chosen bronnen, no focus, no canvas, nothing remembered for
@@ -1922,7 +1891,6 @@
 			<!-- The werkplek: the canvas without a reader (besluit 39). Its heading for a screen
 			     reader, as the title names it. -->
 			<h1 class="blad__titel sr-only">Netwerk</h1>
-			{#if voorbeeldAan}<ExampleLine name={voorbeeld!.naam} />{/if}
 			<div class="werkplek" data-testid="werkplek">
 				<div class="col col--graph">
 					{#if graphChunk.component}
@@ -1999,18 +1967,7 @@
 										/>
 									</div>
 								{/snippet}
-								{#snippet links()}
-									<!-- The way back to the bron the werkplek began with: read, a step of its own. -->
-									{#if selectedNode && !selectedNode.id.startsWith('synth:')}
-										<p class="terug">
-											<a
-												href={openHref(
-													refOf(selectedNode.collection, selectedNode.key, selectedNode.raw?.props)
-												)}>← {bronNaam(selectedNode, $instrumentMetaStore)}</a
-											>
-										</p>
-									{/if}
-								{/snippet}
+
 								{#snippet balk()}
 									<button type="button" class="btn raakvlak-knop" onclick={handleShareView}
 										>{shareCopier.label('share', 'Deel')}</button
@@ -2041,10 +1998,8 @@
 											: []}
 										loading={composer.loading}
 										start={!focus && !netwerkActive}
-										example={voorbeeldAan}
 										{telefoon}
 										onSelect={addIdToNetwerk}
-										onVoorbeeld={showExample}
 										selection={selectedNode &&
 										selectedLinkId &&
 										!netwerk.ids.includes(selectedLinkId)
@@ -2242,9 +2197,6 @@
 	.werkplek .col--graph {
 		flex: 1;
 	}
-	.terug {
-		margin: 0 0 var(--s-4);
-	}
 	/* Weergave, a block of the strip at the left (mockup A197-b). */
 	.view-choice {
 		padding: var(--s-4) 0;
@@ -2279,25 +2231,6 @@
 		}
 	}
 	@media (max-width: 768px) {
-		.terug {
-			margin: var(--s-1) 0;
-		}
-		.terug a {
-			display: inline-flex;
-			align-items: center;
-			min-height: var(--veld-h-raak);
-		}
-	}
-	.terug {
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		line-height: 20px;
-	}
-	.terug a {
-		color: var(--ink-2);
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: var(--underline-offset-tight);
 	}
 
 	.explore-read {

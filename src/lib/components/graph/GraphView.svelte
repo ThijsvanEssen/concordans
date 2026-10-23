@@ -117,7 +117,6 @@
 		onBack,
 		onGoForward,
 		canvasOverlay,
-		links,
 		balk,
 		viewChoice,
 		meer,
@@ -158,8 +157,6 @@
 		onGoForward?: () => void;
 		/** The panel Netwerk, in the strip at the left. */
 		canvasOverlay?: Snippet;
-		/** What heads the strip at the left: the way back to the bron, the Weergave. */
-		links?: Snippet;
 		/** At the top right of the canvas: Deel. */
 		balk?: Snippet;
 		/** After the chosen bronnen: the Weergave (Omgeving, Verband, Keten). */
@@ -1170,7 +1167,6 @@
 	     then the legend that is the filter and the period. First in the page, so a Tab reaches
 	     them before the canvas and its zoom (keyboard audit, 10 Oct). -->
 	<aside class="strook strook--links" aria-label="Bronnen en filters">
-		{@render links?.()}
 		{@render canvasOverlay?.()}
 		{@render viewChoice?.()}
 		<!-- Whatever the filter leaves drawn: the filters stay, so a kind switched off comes back. -->

@@ -48,10 +48,15 @@ describe('the Netwerk button', () => {
 		const article = '/wetten/BWBR0005289/artikel/6:162';
 		expect(networkHref(at(article))).toBe(`${article}?mode=netwerk`);
 		expect(networkHref(at(`${article}?toon=netwerk&lid=2`))).toBe(`${article}?lid=2&mode=netwerk`);
-		// On the werkplek it stays where it is.
-		expect(networkHref(at(`${article}?mode=netwerk&netwerk=articles/a`))).toBe(
-			`${article}?mode=netwerk&netwerk=articles/a`
+		// A switch: from the werkplek back to the text, the place in it kept (Thijs, 23 Oct).
+		expect(networkHref(at(`${article}?mode=netwerk&netwerk=articles/a&kies=x#lid-2`))).toBe(
+			`${article}#lid-2`
 		);
+		expect(networkHref(at('/explore?netwerk=articles/a,articles/b&kies=articles/b'))).toBe(
+			'/explore?focus=articles%2Fb'
+		);
+		expect(networkHref(at('/explore?netwerk=articles/a'))).toBe('/explore?focus=articles%2Fa');
+		expect(networkHref(at('/explore'))).toBe('/');
 		expect(networkHref(at('/'))).toBe('/explore');
 		expect(networkHref(at('/explore?mode=index&kind=instruments'))).toBe('/explore');
 		expect(networkHref(at('/actueel'))).toBe('/explore');

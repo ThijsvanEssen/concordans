@@ -1,6 +1,7 @@
 <script lang="ts">
-	// Netwerk, the tool beside the search field (besluit 36, 39): on a bron it opens the werkplek
-	// with that bron, elsewhere it begins with choosing one. The word, the icon and how many
+	// Netwerk, the tool beside the search field (besluit 36, 39), a switch: on a bron it opens the
+	// werkplek with that bron, elsewhere it begins with choosing one; in the werkplek it stands
+	// pressed and leads back to the text. The word, the icon and how many
 	// bronnen the netwerk holds while there is one ("Netwerk 2"): the way back to it stays in
 	// view. On a phone the icon with its count, 44 px, the word for a screen reader.
 	import { page } from '$app/state';
@@ -21,8 +22,13 @@
 	class:is-active={pressed}
 	href={networkHref(url)}
 	aria-label={aantal ? `Netwerk, ${count(aantal, 'bron', 'bronnen')}` : 'Netwerk'}
-	aria-current={pressed ? 'page' : undefined}
-	title={onBron ? 'Deze bron in het netwerk' : 'Kies een bron in het netwerk'}
+	aria-pressed={pressed}
+	role="button"
+	title={pressed
+		? 'Terug naar de tekst'
+		: onBron
+			? 'Deze bron in het netwerk'
+			: 'Kies een bron in het netwerk'}
 	><Picto naam="netwerk-o" size={16} /><span class="netwerk-knop__woord">Netwerk</span
 	>{#if aantal}<span class="netwerk-knop__aantal">{aantal}</span>{/if}</a
 >

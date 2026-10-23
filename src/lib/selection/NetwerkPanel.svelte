@@ -24,8 +24,6 @@
 		onAdd,
 		onClearContext,
 		onClear,
-		onVoorbeeld,
-		example = false,
 		telefoon = false
 	}: {
 		entries: NetwerkEntry[];
@@ -43,13 +41,6 @@
 		onAdd: () => void;
 		onClearContext: () => void;
 		onClear: () => void;
-		/** Een voorbeeldnetwerk met één klik. */
-		onVoorbeeld?: () => void;
-		/**
-		 * The bronnen are the example's, not chosen: shown as a proposal, without × or Wissen; the
-		 * first bron added takes their place (R3-N B4).
-		 */
-		example?: boolean;
 		/** A phone: the chosen bronnen on one line that scrolls, the field behind Bron toevoegen. */
 		telefoon?: boolean;
 	} = $props();
@@ -83,12 +74,6 @@
 		<div class="zoek zoek--start">
 			<Search compact picker placeholder="Bron toevoegen" {onSelect} />
 		</div>
-		{#if onVoorbeeld}
-			<button type="button" class="voorbeeld" onclick={onVoorbeeld}>
-				<span class="voorbeeld-kop">Voorbeeld</span>
-				<span>Art. 3:2 en 3:4 Awb, en de uitspraken die beide aanhalen</span>
-			</button>
-		{/if}
 	</section>
 {:else}
 	<!-- De gekozen bronnen als labels op één regel; zoeken pas na "Bron toevoegen";
@@ -100,7 +85,7 @@
 				></span>{/if}
 		{/snippet}
 		{#snippet actie()}
-			{#if entries.length > 0 && !telefoon && !example}
+			{#if entries.length > 0 && !telefoon}
 				<TekstLink onclick={onClear} title="Leeg het netwerk en het canvas; Terug zet het terug"
 					>Wissen</TekstLink
 				>
@@ -122,47 +107,41 @@
 		{/snippet}
 		<ul class="chips">
 			{#each getoond as e (e.id)}
-				{#if example}
-					<li class="chip chip--voorbeeld" title={e.titel ?? e.label}>
-						<KindGlyph collection={e.collection} size={11} /><span>{e.label}</span>
-					</li>
-				{:else}
-					<li class="chip" class:uit={!e.on} class:mist={e.missing} class:is-dim={!!e.verborgenMet}>
-						<button
-							type="button"
-							class="chip-naam"
-							aria-pressed={e.on}
-							disabled={e.missing}
-							title={e.missing
-								? 'Niet gevonden'
-								: e.verborgenMet
-									? `Aan met ${GROUP_LABEL[e.verborgenMet]}`
-									: e.on
-										? `${e.titel ?? e.label}: verbergen`
-										: `${e.titel ?? e.label}: tonen`}
-							onclick={() => (e.verborgenMet ? onGroepAan?.(e.verborgenMet) : onToggle(e.id))}
-							><KindGlyph collection={e.collection} size={11} /><span
-								>{e.label}{#if e.alone}<span
-										class="los"
-										title="Geen verbinding met de andere gekozen bronnen">, zonder verbinding</span
-									>{:else if e.via}<span
-										class="los"
-										title="De verbindingen lopen via de eerste {formatCount(e.via.used)} {ledenVan(
-											e.collection
-										)}"
-										>, via {formatCount(e.via.used)} van {formatCount(e.via.total)}
-										{ledenVan(e.collection)}</span
-									>{/if}</span
-							></button
-						>
-						<button
-							type="button"
-							class="chip-weg"
-							onclick={() => onRemove(e.id)}
-							aria-label="Haal {e.label} uit netwerk">×</button
-						>
-					</li>
-				{/if}
+				<li class="chip" class:uit={!e.on} class:mist={e.missing} class:is-dim={!!e.verborgenMet}>
+					<button
+						type="button"
+						class="chip-naam"
+						aria-pressed={e.on}
+						disabled={e.missing}
+						title={e.missing
+							? 'Niet gevonden'
+							: e.verborgenMet
+								? `Aan met ${GROUP_LABEL[e.verborgenMet]}`
+								: e.on
+									? `${e.titel ?? e.label}: verbergen`
+									: `${e.titel ?? e.label}: tonen`}
+						onclick={() => (e.verborgenMet ? onGroepAan?.(e.verborgenMet) : onToggle(e.id))}
+						><KindGlyph collection={e.collection} size={11} /><span
+							>{e.label}{#if e.alone}<span
+									class="los"
+									title="Geen verbinding met de andere gekozen bronnen">, zonder verbinding</span
+								>{:else if e.via}<span
+									class="los"
+									title="De verbindingen lopen via de eerste {formatCount(e.via.used)} {ledenVan(
+										e.collection
+									)}"
+									>, via {formatCount(e.via.used)} van {formatCount(e.via.total)}
+									{ledenVan(e.collection)}</span
+								>{/if}</span
+						></button
+					>
+					<button
+						type="button"
+						class="chip-weg"
+						onclick={() => onRemove(e.id)}
+						aria-label="Haal {e.label} uit netwerk">×</button
+					>
+				</li>
 			{/each}
 			{#if gevouwen}
 				<li class="verder">
@@ -205,7 +184,7 @@
 				/>
 			</div>
 		{/if}
-		{#if telefoon && entries.length > 0 && !example}
+		{#if telefoon && entries.length > 0}
 			<!-- On a phone under Filter, with the netwerk's own filters (GraphView). -->
 			<p class="netwerk-acties">
 				<TekstLink onclick={onClear} title="Leeg het netwerk en het canvas; Terug zet het terug"
@@ -346,19 +325,6 @@
 	.los {
 		color: var(--ink-3);
 	}
-	/* The example's bronnen: a proposal, dashed, nothing to press (R3-N B4). */
-	.chip--voorbeeld {
-		gap: var(--s-2);
-		max-width: 100%;
-		padding: 0 var(--s-3);
-		border-style: dashed;
-		color: var(--ink-2);
-	}
-	.chip--voorbeeld span {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
 	.chip--voorstel,
 	.chip--plus {
 		padding: var(--s-1) var(--s-2);
@@ -381,32 +347,6 @@
 	}
 	.zoek--start {
 		margin-top: var(--s-3);
-	}
-	.voorbeeld {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		gap: var(--s-1);
-		width: 100%;
-		margin-top: var(--s-4);
-		padding: var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		background: var(--paper);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		line-height: 1.4;
-		color: var(--ink-2);
-		text-align: left;
-		cursor: pointer;
-	}
-	.voorbeeld:hover {
-		border-color: var(--ink);
-		color: var(--ink);
-	}
-	.voorbeeld-kop {
-		font-weight: 600;
-		color: var(--ink);
 	}
 
 	.start__title {

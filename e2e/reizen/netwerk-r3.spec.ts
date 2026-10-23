@@ -36,7 +36,7 @@ test('the last bron on /explore leaves with × and stays gone (R3-N B2)', async 
 	await page.waitForTimeout(500);
 	await expect(page).not.toHaveURL(/netwerk=/);
 	await expect(
-		page.getByRole('banner').getByRole('link', { name: /^Netwerk/ })
+		page.getByRole('banner').getByRole('button', { name: /^Netwerk/ })
 	).toHaveAccessibleName('Netwerk');
 });
 

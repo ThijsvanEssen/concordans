@@ -48,10 +48,6 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 			{
 				pad: 'lib/components/layout/TopBar.svelte',
 				reden: 'the search in the bar looks as the field it opens'
-			},
-			{
-				pad: 'lib/selection/NetwerkPanel.svelte',
-				reden: 'the example in an empty netwerk is a card, not a button'
 			}
 		];
 		expect(overtreders((t) => regels(t).some(knop), eigen)).toEqual([]);

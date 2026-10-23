@@ -8,7 +8,7 @@ import { expect, test } from '../support/test';
 const ARTICLE = '/wetten/BWBR0005289/artikel/6:163';
 
 const netwerkKnop = (page: Page) =>
-	page.getByRole('banner').getByRole('link', { name: /^Netwerk/ });
+	page.getByRole('banner').getByRole('button', { name: /^Netwerk/ });
 const panel = (page: Page) => page.getByRole('region', { name: 'Netwerk' });
 /** The chips of the netwerk, the panel unfolded where a phone folds it. */
 async function chips(page: Page) {
@@ -72,4 +72,24 @@ test('the keten of a law: its regulations in layers, a click opens the card with
 	await regeling.click();
 	await expect(page).toHaveURL(/kies=/);
 	await expect(page.getByRole('link', { name: 'Lees', exact: true })).toBeVisible();
+});
+
+test('Netwerk is a switch: on opens the werkplek, off brings the same text back', async ({
+	page
+}) => {
+	await page.goto(`${ARTICLE}#lid-2`);
+	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+	const knop = netwerkKnop(page);
+	await expect(knop).toHaveAttribute('aria-pressed', 'false');
+	await knop.click();
+	await expect(page).toHaveURL(/mode=netwerk/);
+	await expect(page.getByTestId('werkplek')).toBeVisible();
+	await expect(knop).toHaveAttribute('aria-pressed', 'true');
+	// No way back of its own in the strip: the switch is it.
+	await expect(page.getByRole('link', { name: /^← / })).toHaveCount(0);
+	await knop.click();
+	await expect(page).toHaveURL(new RegExp(`${ARTICLE.replace(/[.:]/g, '\\$&')}#lid-2$`));
+	await expect(page.getByTestId('werkplek')).toHaveCount(0);
+	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+	await expect(knop).toHaveAttribute('aria-pressed', 'false');
 });
