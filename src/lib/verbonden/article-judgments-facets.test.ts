@@ -70,7 +70,7 @@ describe('the judgments that cite an article, over the whole group', () => {
 		]);
 		// The Hoge Raad with the Parket; a tier no rechter names is left out.
 		expect(found.courts).toEqual({ hr: 750, rechtbank: 300 });
-		expect(found.cutBy).toEqual(['jaar', 'rechter']);
+		expect(found.cutBy).toEqual(['jaar', 'rechter', 'rechtsgebied']);
 	});
 
 	it('asks the year and the rechter of the API, the tiers as a list', async () => {
@@ -82,6 +82,30 @@ describe('the judgments that cite an article, over the whole group', () => {
 			year: '2020',
 			tier: ['hoge_raad', 'parket']
 		});
+	});
+
+	it('takes the main areas of law from the facets and asks the one chosen of the API', async () => {
+		const api = fakeApi({
+			[ROUTE]: {
+				total: 3,
+				judgment_total: 3,
+				echr_judgment_total: 0,
+				items: [],
+				facets: {
+					...FACETS,
+					subject_area: [
+						{ value: 'Strafrecht', count: 2 },
+						{ value: 'Civiel recht', count: 1 }
+					]
+				}
+			}
+		});
+		const found = await run({ area: 'Strafrecht' });
+		expect(found.areas).toEqual([
+			{ area: 'Strafrecht', count: 2 },
+			{ area: 'Civiel recht', count: 1 }
+		]);
+		expect(api.asked(ROUTE)[0].query).toMatchObject({ subject_area: 'Strafrecht' });
 	});
 
 	it('leaves the cutting to the rows on an API without facets', async () => {
@@ -106,9 +130,14 @@ describe('the judgments that cite an article, over the whole group', () => {
 			rows: rowsOfCitedBy([item('a', 3) as never]),
 			total: 750,
 			capped: false,
-			cutBy: ['jaar', 'rechter']
+			cutBy: ['jaar', 'rechter', 'rechtsgebied']
 		};
-		const asked = { ...EMPTY_FILTER, jaar: 2020, rechter: 'hr' as const };
+		const asked = {
+			...EMPTY_FILTER,
+			jaar: 2020,
+			rechter: 'hr' as const,
+			rechtsgebied: 'Strafrecht'
+		};
 		expect(filterGroups([group], asked)[0].total).toBe(750);
 		expect(filterGroups([group], { ...asked, zoek: 'x' })[0]?.total).toBeUndefined();
 		expect(filterGroups([{ ...group, cutBy: undefined }], asked)[0].total).toBeUndefined();

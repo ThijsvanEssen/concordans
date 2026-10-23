@@ -13,6 +13,7 @@
 		onOrder,
 		years,
 		courts,
+		areas,
 		filter,
 		onFilter
 	}: {
@@ -24,6 +25,8 @@
 		years: { year: number; count: number }[];
 		/** The judgments per rechter over the whole group, where the API counts them. */
 		courts?: Partial<Record<Court, number>>;
+		/** The judgments per main area of law over the whole group, where the API counts them. */
+		areas?: { area: string; count: number }[];
 		filter: VerbondenFilter;
 		onFilter: (f: VerbondenFilter) => void;
 	} = $props();
@@ -92,6 +95,29 @@
 							>
 						{/each}
 					</div>
+				</div>
+			{/snippet}
+		</TekstMenu>
+	{/if}
+	{#if areas?.length || filter.rechtsgebied}
+		<TekstMenu rechts label="Rechtsgebied" tekst={filter.rechtsgebied ?? 'Alle rechtsgebieden'}>
+			{#snippet inhoud(sluit)}
+				<div class="jaar-rechter__lijst" role="group" aria-label="Rechtsgebied">
+					{#each [{ area: null, count: null }, ...(areas ?? [])] as a (a.area ?? 'alle')}
+						<button
+							type="button"
+							role="menuitemradio"
+							class="tekstmenu__item jaar-rechter__item"
+							aria-checked={(filter.rechtsgebied ?? null) === a.area}
+							onclick={() => {
+								sluit();
+								onFilter({ ...filter, rechtsgebied: a.area });
+							}}
+							>{a.area ?? 'Alle rechtsgebieden'}{#if a.count}<span class="jaar-rechter__tel"
+									>{formatCount(a.count)}</span
+								>{/if}</button
+						>
+					{/each}
 				</div>
 			{/snippet}
 		</TekstMenu>

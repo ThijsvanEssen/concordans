@@ -104,6 +104,9 @@ export type Rechter = (typeof RECHTERS)[number]['id'];
 /** A rechter as the code names it. */
 export type Court = Rechter;
 
+/** What a loader asked of the API itself, so that its total holds under the filter. */
+export type CutBy = 'jaar' | 'rechter' | 'rechtsgebied';
+
 export type Betrouwbaarheid = 'bron' | 'afgeleid';
 export type Status = 'vastgesteld' | 'voorgesteld';
 
@@ -113,6 +116,8 @@ export type VerbondenFilter = {
 	/** `2`, or `geen` for verbindingen that name no lid. */
 	lid: string | null;
 	rechter: Rechter | null;
+	/** A main area of law of the judgments, as the API writes it (`Strafrecht`). */
+	rechtsgebied: string | null;
 	/** The period, in days (YYYY-MM-DD) as every list with dates has it ($lib/text/periode). */
 	van: string | null;
 	tot: string | null;
@@ -130,6 +135,7 @@ export const EMPTY_FILTER: VerbondenFilter = {
 	bronnen: null,
 	lid: null,
 	rechter: null,
+	rechtsgebied: null,
 	van: null,
 	tot: null,
 	geldendOp: null,
@@ -168,6 +174,7 @@ export function parseFilter(params: URLSearchParams): VerbondenFilter {
 		bronnen: kinds.length > 0 ? new Set(kinds) : null,
 		lid: params.get('lid') || null,
 		rechter: isRechter(rechter) ? rechter : null,
+		rechtsgebied: params.get('rechtsgebied')?.trim() || null,
 		van: alsDag(params.get(PARAM.since)),
 		tot: alsDag(params.get(PARAM.until)),
 		geldendOp: isDay(geldendOp) ? geldendOp : null,
@@ -185,6 +192,7 @@ export function filterParams(f: VerbondenFilter): Record<string, string | null> 
 		bronnen: f.bronnen ? FILTER_GROUPS.filter((k) => f.bronnen!.has(k)).join(',') : null,
 		lid: f.lid,
 		rechter: f.rechter,
+		rechtsgebied: f.rechtsgebied,
 		[PARAM.since]: f.van,
 		[PARAM.until]: f.tot,
 		geldend: f.geldendOp,
@@ -425,12 +433,14 @@ export function hiddenByGroup(
 
 /**
  * What the bronfilter asks of the API for a group of judgments, by the bron selected: the year
- * of a wet's and an article's judgments (BE-51), the rechter of an article's. Null for the rest.
+ * of a wet's and an article's judgments (BE-51), the rechter of an article's, and the main area
+ * of law of both (API 0.80.7). Null for the rest.
  */
 export const askedOfApi = (
 	f: VerbondenFilter,
 	collection: string
-): { year: number | null; court: Court | null } => ({
+): { year: number | null; court: Court | null; area: string | null } => ({
 	year: collection === 'instruments' || collection === 'articles' ? (f.jaar ?? null) : null,
-	court: collection === 'articles' ? (f.rechter ?? null) : null
+	court: collection === 'articles' ? (f.rechter ?? null) : null,
+	area: collection === 'instruments' || collection === 'articles' ? (f.rechtsgebied ?? null) : null
 });

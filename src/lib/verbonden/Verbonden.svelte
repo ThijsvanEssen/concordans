@@ -166,7 +166,7 @@
 	$effect(() => {
 		const asked = askedOfApi(filter, selection.collection);
 		const now = untrack(() => verbonden.options);
-		if (asked.year === now.year && asked.court === now.court) return;
+		if (asked.year === now.year && asked.court === now.court && asked.area === now.area) return;
 		onReloadGroup?.('judgments', asked);
 	});
 
@@ -607,13 +607,14 @@
 						     (A208c); under a year or a court the heading counts those, the bar would not. -->
 						<div class="tiers-plek"><TierBar {parts} pending={tiersPending} /></div>
 					{/if}
-					{#if g.orders || bars.length > 0}
+					{#if g.orders || bars.length > 0 || g.areas?.length}
 						<JudgmentOrderLine
 							orders={g.orders}
 							order={verbonden.options.order}
 							onOrder={(order) => onReloadGroup?.(g.id, { order })}
 							years={bars}
 							courts={g.courts}
+							areas={g.areas}
 							{filter}
 							{onFilter}
 						/>

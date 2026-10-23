@@ -43,7 +43,7 @@ export const getCitedBy = (
 	query: QueryOf<'/api/articles/{bwb_id}/{article_number}/cited-by'>
 ) =>
 	once(
-		`articles/${bwbId}/${articleNumber}/cited-by/${query.sort ?? ''}/${query.offset ?? 0}/${query.limit ?? ''}/${query.court ?? ''}/${(query.tier ?? []).join(',')}/${query.year ?? ''}`,
+		`articles/${bwbId}/${articleNumber}/cited-by/${query.sort ?? ''}/${query.offset ?? 0}/${query.limit ?? ''}/${query.court ?? ''}/${(query.tier ?? []).join(',')}/${query.year ?? ''}/${query.subject_area ?? ''}`,
 		() =>
 			unwrap(
 				api.GET('/api/articles/{bwb_id}/{article_number}/cited-by', {
@@ -109,7 +109,7 @@ export const getInstrumentJudgments = (
 	query: QueryOf<'/api/instruments/{bwb_id}/judgments'>
 ) =>
 	once(
-		`instruments/${bwbId}/judgments/${query.limit ?? ''}/${query.sort ?? ''}/${query.year ?? ''}`,
+		`instruments/${bwbId}/judgments/${query.limit ?? ''}/${query.sort ?? ''}/${query.year ?? ''}/${query.subject_area ?? ''}`,
 		() =>
 			unwrap(
 				api.GET('/api/instruments/{bwb_id}/judgments', {

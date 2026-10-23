@@ -188,6 +188,13 @@ describe('the request of a list', () => {
 		});
 	});
 
+	it('asks the artikel 100-brieven of the stukken by their letter kind', () => {
+		expect(query('documents', 'brief=artikel-100')).toMatchObject({
+			chamber: 'TK',
+			letter_kind: 'article_100'
+		});
+	});
+
 	it('asks the toezeggingen by their filters, the government lists by the cabinet', () => {
 		expect(
 			query('commitments', 'status=Openstaand&overdue=1&persoon=x&sort=expected_resolution')

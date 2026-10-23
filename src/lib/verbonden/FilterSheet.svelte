@@ -105,6 +105,16 @@
 	const total = $derived(totalCount(groups));
 	const count = $derived(shownCount(groups, draft));
 
+	// The main areas of law of the judgments, where the API counts them (a wet's or an article's);
+	// the one chosen stays to be undone.
+	const gebieden = $derived.by(() => {
+		const counted = groups.flatMap((g) => g.areas ?? []);
+		const chosen = draft.rechtsgebied;
+		return chosen && !counted.some((a) => a.area === chosen)
+			? [...counted, { area: chosen, count: 0 }]
+			: counted;
+	});
+
 	const isOn = (k: (typeof FILTER_GROUPS)[number]) =>
 		draft.bronnen === null || draft.bronnen.has(k);
 
@@ -289,6 +299,21 @@
 					/>
 				{/each}
 			</div>
+
+			{#if gebieden.length > 0}
+				<div class="block">
+					<div class="block__label">Rechtsgebied</div>
+					{#each gebieden as a (a.area)}
+						<FilterOptie
+							label={a.area}
+							count={a.count}
+							on={draft.rechtsgebied === a.area}
+							onToggle={() =>
+								(draft = { ...draft, rechtsgebied: draft.rechtsgebied === a.area ? null : a.area })}
+						/>
+					{/each}
+				</div>
+			{/if}
 
 			<div class="block">
 				<div class="block__label">Betrouwbaarheid</div>

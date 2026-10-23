@@ -44,7 +44,7 @@ import {
 } from '$lib/api/verbonden';
 import { lawArticleList } from '$lib/api/law-articles';
 import { buildGroups, ditVan, EUROPEAN, matches, type Loader, type Match } from './groups';
-import { courtOfTier, filterGroupOf, tiersOfCourt, type Court } from './filter';
+import { courtOfTier, filterGroupOf, tiersOfCourt, type Court, type CutBy } from './filter';
 import { instrumentMetaStore, lawName } from '$lib/api/instrument-cache';
 import { getJudgmentDetail } from '$lib/api/judgments';
 import { aanhalingIn } from './passage';
@@ -110,9 +110,26 @@ export function implementationLine(
 export type JudgmentOrder = 'date' | 'cited';
 
 /** What the reader chose for a loader: the order of the judgments, and of a law one year (BE-51). */
-export type LoaderOptions = { order: JudgmentOrder; year: number | null; court: Court | null };
+export type LoaderOptions = {
+	order: JudgmentOrder;
+	year: number | null;
+	court: Court | null;
+	/** A main area of law (API 0.80.7). */
+	area: string | null;
+};
 
-export const DEFAULT_LOADER_OPTIONS: LoaderOptions = { order: 'date', year: null, court: null };
+export const DEFAULT_LOADER_OPTIONS: LoaderOptions = {
+	order: 'date',
+	year: null,
+	court: null,
+	area: null
+};
+
+/** The main areas of law an API counts, most first, without the judgments that name none. */
+const areasOf = (
+	facet: readonly { value?: string | null; count: number }[] | null | undefined
+): { area: string; count: number }[] =>
+	(facet ?? []).flatMap((f) => (f.value ? [{ area: f.value, count: f.count }] : []));
 
 /**
  * The order a bron's groups start in: the judgments that cite an article the most cited first,
@@ -150,8 +167,10 @@ export type Loaded = {
 	years?: { year: number; count: number }[];
 	/** The judgments per rechter, where the API counts them over the whole group. */
 	courts?: Partial<Record<Court, number>>;
+	/** The judgments per main area of law, where the API counts them over the whole group. */
+	areas?: { area: string; count: number }[];
 	/** The criteria of the filter the loader asked of the API: its total holds under them. */
-	cutBy?: ('jaar' | 'rechter')[];
+	cutBy?: CutBy[];
 	/** The rest of the rows, asked when the group is opened, the table or an export. */
 	meer?: () => Promise<Loaded>;
 	/** Rows are missing that the API has (a further page failed): no total, shown as `12+`. */
@@ -635,6 +654,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			limit: CITED_BY_PAGE,
 			sort,
 			...(options.year ? { year: String(options.year) } : {}),
+			...(options.area ? { subject_area: options.area } : {}),
 			...(tier?.length ? { tier: tier as Schema<'Tier'>[] } : {})
 		};
 		const page = (offset: number) =>
@@ -652,7 +672,12 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			if (c) courts[c] = (courts[c] ?? 0) + f.count;
 		}
 		const facets = counted
-			? { years, courts, cutBy: ['jaar', 'rechter'] as ('jaar' | 'rechter')[] }
+			? {
+					years,
+					courts,
+					areas: areasOf(data.facets?.subject_area),
+					cutBy: ['jaar', 'rechter', 'rechtsgebied'] as CutBy[]
+				}
 			: {};
 		// The ECHR judgments are no passage (HUDOC names the article, not the place): they
 		// stand in Europees en internationaal, not here (BE-9).
@@ -1217,7 +1242,8 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				getInstrumentJudgments(bwb, {
 					limit: JUDGMENTS_SHOWN,
 					sort: options.order,
-					year: options.year ? String(options.year) : undefined
+					year: options.year ? String(options.year) : undefined,
+					subject_area: options.area ?? undefined
 				}),
 				signal
 			)
@@ -1229,7 +1255,8 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			years: (found.facets?.year ?? [])
 				.filter((f) => f.value)
 				.map((f) => ({ year: Number(f.value), count: f.count })),
-			cutBy: found.facets?.year?.length ? ['jaar'] : undefined,
+			areas: areasOf(found.facets?.subject_area),
+			cutBy: found.facets?.year?.length ? ['jaar', 'rechtsgebied'] : undefined,
 			rows: found.items
 				.filter((j) => !isInternational({ key: j.key, props: {} }))
 				.map((j) => ({

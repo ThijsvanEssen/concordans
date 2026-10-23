@@ -16,6 +16,7 @@ export const PREVIEW_ROWS = 3;
 const cutsRows = (f: VerbondenFilter) =>
 	f.lid !== null ||
 	f.rechter !== null ||
+	f.rechtsgebied !== null ||
 	f.van !== null ||
 	f.tot !== null ||
 	f.geldendOp !== null ||
@@ -51,7 +52,8 @@ export function filterGroups(
 					!cutsRows({
 						...f,
 						jaar: g.cutBy.includes('jaar') ? null : f.jaar,
-						rechter: g.cutBy.includes('rechter') ? null : f.rechter
+						rechter: g.cutBy.includes('rechter') ? null : f.rechter,
+						rechtsgebied: g.cutBy.includes('rechtsgebied') ? null : f.rechtsgebied
 					}));
 			return {
 				...g,

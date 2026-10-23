@@ -148,10 +148,12 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		vervolg.delete(id);
 		const b = basis;
 		return meer()
-			.then(({ rows, total, mentions, years, courts, cutBy, capped }) => {
+			.then(({ rows, total, mentions, years, courts, areas, cutBy, capped }) => {
 				if (b !== basis) return;
 				groups = groups.map((g) =>
-					g.id === id ? { ...g, rows, total, mentions, years, courts, cutBy, capped: !!capped } : g
+					g.id === id
+						? { ...g, rows, total, mentions, years, courts, areas, cutBy, capped: !!capped }
+						: g
 				);
 				put({ ...get(state), groups });
 			})
@@ -351,36 +353,50 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 					runs.set(id, n);
 					const stale = () => ac.signal.aborted || runs.get(id) !== n;
 					void LOADERS[load]({ ...ctx, options })
-						.then(({ rows, total, mentions, years, courts, cutBy, judgmentsOf, meer, capped }) => {
-							if (stale()) return;
-							if (meer) vervolg.set(id, meer);
-							groups = groups.map((g) => {
-								if (g.id === id)
+						.then(
+							({
+								rows,
+								total,
+								mentions,
+								years,
+								courts,
+								areas,
+								cutBy,
+								judgmentsOf,
+								meer,
+								capped
+							}) => {
+								if (stale()) return;
+								if (meer) vervolg.set(id, meer);
+								groups = groups.map((g) => {
+									if (g.id === id)
+										return {
+											...g,
+											rows,
+											total,
+											mentions,
+											years,
+											courts,
+											areas,
+											cutBy,
+											capped: !!capped
+										};
+									const judgments = judgmentsOf?.[g.id];
+									if (judgments == null) return g;
+									// Its other bronnen as counted, and the judgments as the API counts them.
+									const others = g.rows.filter((r) => r.ref.collection !== 'judgments');
+									const loaded = judgments.rows.length
+										? judgments.rows
+										: g.rows.filter((r) => r.ref.collection === 'judgments');
 									return {
 										...g,
-										rows,
-										total,
-										mentions,
-										years,
-										courts,
-										cutBy,
-										capped: !!capped
+										rows: [...others, ...loaded],
+										total: (g.total ?? others.length) + judgments.total,
+										capped: false
 									};
-								const judgments = judgmentsOf?.[g.id];
-								if (judgments == null) return g;
-								// Its other bronnen as counted, and the judgments as the API counts them.
-								const others = g.rows.filter((r) => r.ref.collection !== 'judgments');
-								const loaded = judgments.rows.length
-									? judgments.rows
-									: g.rows.filter((r) => r.ref.collection === 'judgments');
-								return {
-									...g,
-									rows: [...others, ...loaded],
-									total: (g.total ?? others.length) + judgments.total,
-									capped: false
-								};
-							});
-						})
+								});
+							}
+						)
 						.catch((e) => {
 							// Broken off is no failure: the group then has no rows, not "kon niet laden".
 							if (stale() || isAborted(e)) return;

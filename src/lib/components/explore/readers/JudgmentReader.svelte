@@ -5,7 +5,7 @@
 	import { ecliKey } from '$lib/bron/address';
 	import { capitalize, textOf } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
-	import { bevindingen, strekking } from './judgment-outcome';
+	import { bevindingen, kenmerken, strekking } from './judgment-outcome';
 	import { keyEcli } from '$lib/bron/address';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { citeOverwegingen, zaakNaam } from '$lib/text/judgment-cite';
@@ -168,7 +168,10 @@
 		{@const statusWoorden = [
 			j.decision_kind && !conclusion ? capitalize(j.decision_kind) : null,
 			judgmentDate,
-			caseNumber
+			caseNumber,
+			// What the Rechtspraak gives of its field (API 0.80.7): the area of law, the procedure,
+			// and the chamber the kop names; nothing where the data names none.
+			...kenmerken(j)
 		].filter(Boolean)}
 		<!-- The conclusies as the API cites them (Conclusie P-G Langemeijer en Wissink 13
 		     september 2019), from the judgment's own detail, so they stand with the text. -->

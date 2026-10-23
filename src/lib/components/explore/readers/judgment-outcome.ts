@@ -28,3 +28,18 @@ export const bevindingen = (bs: readonly Bevinding[] | null | undefined): string
 	(bs ?? []).map(bevinding).join('; ') || null;
 
 /** The first letter up, for the start of a sentence. */
+
+/**
+ * What the Rechtspraak gives of the field a judgment is in, for its status line (API 0.80.7): the
+ * main areas of law (`Strafrecht`, two as `Strafrecht en Civiel recht`), the procedure
+ * (`Cassatie`) and the chamber the kop names (`Strafkamer`). Each only where the data has it.
+ */
+export const kenmerken = (j: {
+	subject_areas?: readonly string[] | null;
+	procedure?: string | null;
+	chamber?: string | null;
+}): string[] => {
+	const areas = (j.subject_areas ?? []).filter((a) => a.trim());
+	const area = areas.length > 1 ? `${areas.slice(0, -1).join(', ')} en ${areas.at(-1)}` : areas[0];
+	return [area, j.procedure?.trim(), j.chamber?.trim()].filter((x): x is string => !!x);
+};

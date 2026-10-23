@@ -13,6 +13,7 @@ type State = { facets: FacetsOf<'/api/documents'> };
 const query = (p: IndexParams) => ({
 	chamber: p.kamer,
 	kind: p.documentKind || undefined,
+	letter_kind: p.letterKind ? ('article_100' as const) : undefined,
 	dossier: p.q || undefined,
 	from: p.from || undefined,
 	to: p.to || undefined,
@@ -58,6 +59,21 @@ export const documents = defineList<Row, State, ReturnType<typeof query>>({
 					on: p.documentKind === k,
 					onClick: toggle(patch, 'soort', p.documentKind, k)
 				}))
+		},
+		// The letters by which the government informs the Kamer of a deployment of the armed
+		// forces (artikel 100 Grondwet): no kind of their own in the source, so not in the facets.
+		{
+			id: 'brief',
+			label: 'Inzet krijgsmacht',
+			kind: 'list',
+			options: [
+				{
+					id: 'artikel-100',
+					label: 'Artikel 100-brieven',
+					on: p.letterKind === 'artikel-100',
+					onClick: toggle(patch, 'brief', p.letterKind, 'artikel-100')
+				}
+			]
 		}
 	],
 	Rows: DocumentRows

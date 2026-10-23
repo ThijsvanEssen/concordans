@@ -27,6 +27,7 @@ export const INDEX_FILTER_PARAMS = [
 	PARAM.kind,
 	'passed',
 	'motie',
+	'brief',
 	PARAM.since,
 	PARAM.until,
 	PARAM.dossier,
@@ -105,6 +106,8 @@ export function readParams(params: URLSearchParams) {
 		passed: choiceOf(params.get('passed'), ['true', 'false'] as const),
 		/** A motion of censure or of no confidence (`?motie=wantrouwen`, API 0.80). */
 		motionKind: motionKindFromParam(params.get('motie')),
+		/** The artikel 100-brieven of the government (`?brief=artikel-100`, API 0.80.7). */
+		letterKind: choiceOf(params.get('brief'), ['artikel-100'] as const),
 		from: get(PARAM.since),
 		to: get(PARAM.until),
 		dossier: get(PARAM.dossier),
