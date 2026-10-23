@@ -788,7 +788,7 @@
 		sharedData?.key === sharedKey && sharedData.failure === 'niet'
 			? 'gedeelde bronnen niet beschikbaar'
 			: sharedEnds.length > SHARED_ENDS
-				? `${SHARED_ENDS} van ${sharedEnds.length} gekozen bronnen`
+				? `${formatCount(SHARED_ENDS)} van ${formatCount(sharedEnds.length)} gekozen bronnen`
 				: null
 	);
 	// Soort and Relatie of a weergave of its own count what it draws, and its filter hides it.
