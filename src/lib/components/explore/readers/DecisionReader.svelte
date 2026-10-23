@@ -33,7 +33,7 @@
 	import { decisionMethod, decisionOutcome } from '$lib/components/explore/index/decision-kind';
 	import { EK_SOURCE, chamberName } from '$lib/components/parliamentary/chamber';
 	import { voteCitation } from '$lib/bron/naam';
-	import { isAdviesStuk } from './stemming-stuk';
+	import { isAdvicePaper } from './vote-paper';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -49,7 +49,7 @@
 	// The text of what was voted on, only where the decision gives no dictum (an amendment, a
 	// bill): asked after the first paint, which the decision alone makes.
 	const zonderDictum = $derived(
-		!!loaded && !loaded.dictum?.trim() && !isAdviesStuk(loaded.primary_document)
+		!!loaded && !loaded.dictum?.trim() && !isAdvicePaper(loaded.primary_document)
 	);
 	const tekst = load(
 		() => (zonderDictum ? node.key : null),
@@ -160,7 +160,7 @@
 
 			<!-- What was voted on (`primary_document`), its dictum under it: the stuk itself is one
 			     step further, by its link or its card on hover. -->
-			{#if d.primary_document && !isAdviesStuk(d.primary_document)}
+			{#if d.primary_document && !isAdvicePaper(d.primary_document)}
 				{@const p = d.primary_document}
 				<div class="over">
 					<p class="over__regel">

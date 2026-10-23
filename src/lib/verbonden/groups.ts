@@ -79,7 +79,7 @@ type GroupDef = {
 	 * Its loader's rows are its count: the buckets of its soort add nothing (the Staatsblad of a
 	 * law is in the dossier's bucket of instruments, not a wet of its own).
 	 */
-	eigenTelling?: boolean;
+	countsOwnRows?: boolean;
 	/**
 	 * The buckets a loader reads, where the light node counts them: a group whose buckets are
 	 * empty keeps no place while its loader runs, one that may have rows does (`wachtend`).
@@ -203,7 +203,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Wet uit dit dossier',
 			noun: 'wetten',
 			load: 'dossier-laws',
-			eigenTelling: true
+			countsOwnRows: true
 		},
 		{
 			id: 'same-number',

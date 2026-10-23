@@ -57,7 +57,7 @@
 
 {#each kinds as k (k.id)}
 	<!-- Two judgments of one court and day: the case number tells them apart, as in the groups. -->
-	{@const zussen = repeatedTitles(k.rows.slice(0, PREVIEW_ROWS))}
+	{@const repeated = repeatedTitles(k.rows.slice(0, PREVIEW_ROWS))}
 	<section class="kind" data-kind={k.id}>
 		<h3 class="kind__head">
 			<span>{k.label}</span><span class="kind__count">{formatCount(k.count)}</span>
@@ -94,7 +94,7 @@
 								{row}
 								{selection}
 								inPlace={inPlace(k, row)}
-								sister={zussen.has(row.title) ? caseNumberOf(row) : null}
+								sister={repeated.has(row.title) ? caseNumberOf(row) : null}
 								open
 								onToggle={() => toggle(row)}
 								{onProposedText}
@@ -110,7 +110,7 @@
 							href={openHref(row.ref, { at: ankerVanRij(row) })}
 							aria-expanded="false"
 							onclick={(e) => terPlekke(e, () => toggle(row))}
-							>{row.title}{#if zussen.has(row.title) && caseNumberOf(row)}, {caseNumberOf(
+							>{row.title}{#if repeated.has(row.title) && caseNumberOf(row)}, {caseNumberOf(
 									row
 								)}{/if}</a
 						>

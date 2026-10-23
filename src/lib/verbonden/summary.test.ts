@@ -53,7 +53,7 @@ describe('Verbonden at a glance', () => {
 					label: 'Wet',
 					rows: [row('articles', 'bwbr0049889')],
 					capped: false,
-					eigenTelling: true,
+					countsOwnRows: true,
 					...extra
 				}
 			] as Group[];

@@ -3,5 +3,5 @@
 // advisering Raad van State"); the advice is not what was voted on, so it is not named as such.
 import type { Schema } from '$lib/api/types';
 
-export const isAdviesStuk = (p: Pick<Schema<'DecisionPaperDTO'>, 'kind'> | null | undefined) =>
+export const isAdvicePaper = (p: Pick<Schema<'DecisionPaperDTO'>, 'kind'> | null | undefined) =>
 	/^advies afdeling advisering/i.test(p?.kind ?? '');

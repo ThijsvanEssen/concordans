@@ -67,7 +67,7 @@
 	/** A bewindspersoon's votes in a post, asked on their own and paged (#534); null: not asked. */
 	let inOffice = $state<{ votes: Vote[]; next: number | null; laden: boolean } | null>(null);
 	/** The votes outside a post, as Kamerlid alone (`in_office=false`); null: not asked yet. */
-	let buitenAmbt = $state<Vote[] | null>(null);
+	let outOfOffice = $state<Vote[] | null>(null);
 	/** The vote opened in place, by its stemming's key. */
 	let openStem = $state<string | null>(null);
 	const toggleStem = (key: string) => (openStem = openStem === key ? null : key);
@@ -93,7 +93,7 @@
 		let stale = false;
 		showAllVotes = false;
 		inOffice = null;
-		buitenAmbt = null;
+		outOfOffice = null;
 		signatures = [];
 		getMemberAuthored(key)
 			.then((authored) => {
@@ -115,7 +115,7 @@
 		inOffice = { votes: [], next: 0, laden: true };
 		getMemberVotesOutOfOffice(key)
 			.then((v) => {
-				if (!weg) buitenAmbt = v.votes.filter((x) => !x.in_office?.length);
+				if (!weg) outOfOffice = v.votes.filter((x) => !x.in_office?.length);
 			})
 			.catch((e) => report('Stemmen als Kamerlid', e));
 		getMemberVotesInOffice(key)
@@ -200,7 +200,7 @@
 	const years = $derived(parseFilter(page.url.searchParams));
 </script>
 
-{#snippet stemGroepen(groups: PartyGroup[])}
+{#snippet voteGroups(groups: PartyGroup[])}
 	{#each groups as group (`${group.party}|${group.ambt}`)}
 		{#if groups.length > 1 || group.ambt}
 			<div class="party-head">
@@ -447,10 +447,10 @@
 				{@const apart = !!inOffice && !(inOffice.laden && inOffice.votes.length === 0)}
 				{@const ambt = apart ? inOffice!.votes : []}
 				{@const eigen = apart
-					? (buitenAmbt ?? stemmen.votes.filter((v) => !v.in_office?.length))
+					? (outOfOffice ?? stemmen.votes.filter((v) => !v.in_office?.length))
 					: stemmen.votes}
 				{@const meer = apart && inOffice!.next != null}
-				{@const toon = (rows: Vote[]) => (showAllVotes ? rows : rows.slice(0, VOTES_PREVIEW))}
+				{@const shown = (rows: Vote[]) => (showAllVotes ? rows : rows.slice(0, VOTES_PREVIEW))}
 				<!-- The votes of a bewindspersoon stand apart as such, under "Als bewindspersoon"
 				     (`in_office`); the rest are what they voted as a Kamerlid alone. Null-safe
 				     without it: a vote with no post in `in_office` is a Kamerlid's. -->
@@ -460,7 +460,7 @@
 						collection="decisions"
 						aantal={atLeast(ambt.length, meer)}
 					>
-						{@render stemGroepen(groupVotes(toon(ambt), ambt, meer))}
+						{@render voteGroups(groupVotes(shown(ambt), ambt, meer))}
 						{#if !showAllVotes && ambt.length > VOTES_PREVIEW}
 							<!-- No number while more pages follow: the heading says "200+" (FE1, live 0.79.44). -->
 							<p class="alle">
@@ -487,7 +487,7 @@
 						collection="decisions"
 						aantal={apart ? eigen.length : atLeast(stemmen.count, stemmen.next_offset != null)}
 					>
-						{@render stemGroepen(groupVotes(toon(eigen), eigen))}
+						{@render voteGroups(groupVotes(shown(eigen), eigen))}
 						{#if !showAllVotes && eigen.length > VOTES_PREVIEW}
 							<p class="alle">
 								<AlleN aantal={eigen.length} noun="stemmen" onclick={() => (showAllVotes = true)} />

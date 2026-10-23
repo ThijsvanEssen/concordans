@@ -213,7 +213,7 @@ export function kindsOf(
 		const fromBuckets = counted
 			.filter(([key]) => KIND_OF[key.split('/')[1] as Collection] === id)
 			.reduce((sum, [, n]) => sum + n, 0);
-		const own = gs.some((g) => g.eigenTelling) && !gs.some((g) => g.laden || g.failed);
+		const own = gs.some((g) => g.countsOwnRows) && !gs.some((g) => g.laden || g.failed);
 		const count = own ? fromGroups : Math.max(fromGroups, fromBuckets);
 		const rows = kindRows(gs, id, selection);
 		const failed = gs.find((g) => g.failed && g.rows.length === 0);
