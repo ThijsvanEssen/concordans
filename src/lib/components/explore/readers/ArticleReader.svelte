@@ -761,6 +761,10 @@
 					choose={choosePeildatum}
 					verlopen={expired}
 				/>
+			{:else if !euAct && lawVersions.state.status === 'loading'}
+				<!-- The line of the peildatum keeps its room while the law's versions are asked
+				     (/versions is slow): the text under it does not move when it comes (T9). -->
+				<div class="peil-plek" aria-hidden="true"></div>
 			{/if}
 			<!-- Where the text came from: the wet that made it, its toelichting, the
 				     earlier texts. -->
@@ -926,6 +930,11 @@
 <style>
 	/* Under the status (ReaderHead): where the text came from, what is coming, each quieter
 	   than the one before. */
+	/* The room of the line of the peildatum (WholeLawReaderPeildatum: its margin, a control). */
+	.peil-plek {
+		margin-top: var(--s-3);
+		min-height: var(--veld-h);
+	}
 	.head__origin {
 		position: relative;
 		display: flex;

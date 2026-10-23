@@ -63,3 +63,18 @@ for (const r of READERS) {
 		expect(cls).toBeLessThanOrEqual(0.05);
 	});
 }
+
+// The line of the peildatum comes with the law's versions, which the API answers last (T9): the
+// text under it keeps its place, on a phone and on a wide screen.
+test('the text of an article keeps its place when the peildatum comes', async ({ page }) => {
+	await page.route(/\/api\/instruments\/[^/]+\/versions/, async (route) => {
+		await new Promise((done) => setTimeout(done, 1500));
+		await route.fallback();
+	});
+	await page.goto('/wetten/BWBR0005289/artikel/6:162');
+	const text = page.locator('.col--reader .article-text').first();
+	await expect(text).toBeVisible();
+	const before = (await text.boundingBox())!.y;
+	await expect(page.getByText('Tekst geldend op')).toBeVisible();
+	expect((await text.boundingBox())!.y).toBe(before);
+});
