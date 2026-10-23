@@ -155,7 +155,8 @@ test('a law lists its bijlagen after its articles; a bijlage reads its table', a
 	]);
 	await expect(table.getByRole('cell', { name: 'Energie', exact: true })).toBeVisible();
 	// The table takes the text's whole width: beside the contents that of a lid's text, on a
-	// phone the column's, from under the numbers (A110). It fits: nothing pans.
+	// phone the column's, from under the numbers (A110). Beside the contents it fits; on a
+	// phone three columns pan in their own box (A212), never the page.
 	const box = page.locator('.text-table').first();
 	const width = (sel: string) =>
 		page
@@ -164,7 +165,12 @@ test('a law lists its bijlagen after its articles; a bijlage reads its table', a
 			.evaluate((e) => e.clientWidth);
 	const column = await width(touch ? '.article-text' : '.lid__text');
 	expect(await width('.text-table')).toBeGreaterThanOrEqual(column - 1);
-	await expect(box).not.toHaveAttribute('data-more-right');
+	if (touch) {
+		await expect(box).toHaveAttribute('data-more-right');
+		expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+			true
+		);
+	} else await expect(box).not.toHaveAttribute('data-more-right');
 });
 
 test('a footnote of a bijlage: its marker goes to the note, the note back (#875)', async ({
