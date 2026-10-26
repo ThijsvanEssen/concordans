@@ -6,7 +6,6 @@ import {
 	dienstregeling,
 	inStemming,
 	kolomVan,
-	maandagVan,
 	stappen
 } from './amendementen';
 
@@ -174,7 +173,6 @@ describe('the timetable of the amendementen', () => {
 			'2024-04-23',
 			'2024-04-24'
 		]);
-		expect(maandagVan('2024-04-25')).toBe('2024-04-22');
 		expect(kolomVan(d, '2024-04-22')).toBe('2024-04-22');
 	});
 

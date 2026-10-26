@@ -168,6 +168,13 @@ const AMSTERDAM = new Intl.DateTimeFormat('en-CA', {
 /** Today as an ISO day, in Europe/Amsterdam: the day the page, a citation and a peildatum say. */
 export const vandaag = (now = new Date()): string => AMSTERDAM.format(now);
 
+/** The Monday of the week of an ISO day, as an ISO day. */
+export function maandagVan(dag: string): string {
+	const d = new Date(`${dag}T12:00:00Z`);
+	d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+	return d.toISOString().slice(0, 10);
+}
+
 /** Whether the ISO day has come: today or before (in Europe/Amsterdam). */
 export const hasPassed = (iso: string, now = new Date()): boolean => iso <= vandaag(now);
 
