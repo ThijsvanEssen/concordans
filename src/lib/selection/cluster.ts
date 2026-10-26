@@ -163,7 +163,7 @@ export function tussenClustersOf(
  * API's total), since it asks for one capped neighbourhood.
  */
 export function clusterZinnen(
-	c: Pick<Cluster, 'members' | 'neighbours' | 'ends' | 'onderling'>,
+	c: Pick<Cluster, 'members' | 'neighbours' | 'ends' | 'alsoTied'>,
 	group: { label: string; total?: number } | null,
 	namen: string[] = []
 ): string[] {
