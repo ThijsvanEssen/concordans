@@ -86,4 +86,14 @@ describe('the tiles of a commissie', () => {
 		});
 		expect(all.Aangenomen).toBe('1');
 	});
+
+	it('shows the tiles as figures: no link or button, for the lists stand in the panel', async () => {
+		fakeApi({
+			'/api/committees/{slug}': { key: 'c1', chamber: 'TK', active_dossier_count: 41, members: [] },
+			'/api/cabinets': []
+		});
+		const { container } = render(CommitteeReader, { node });
+		await screen.findByText('Openstaande dossiers');
+		expect(container.querySelectorAll('.stats a, .stats button')).toHaveLength(0);
+	});
 });

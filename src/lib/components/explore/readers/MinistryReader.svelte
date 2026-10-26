@@ -3,7 +3,7 @@
 	// and the one that followed it, and the bewindspersonen per cabinet, the newest cabinet first.
 	// What is its own (laws, open dossiers, open toezeggingen) is in Verbonden, as the
 	// verbindingen of any other bron.
-	import { textOf } from '$lib/text/words';
+	import { capitalize, textOf } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
 	import { getMinistry } from '$lib/api/records';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -82,7 +82,7 @@
 					{#each m.cabinets as c (c.key)}
 						<div class="cabinet">
 							<h4 class="cabinet__name">
-								<BronLink ref={`cabinets/${c.key}`}>{c.name}</BronLink>
+								<BronLink ref={`cabinets/${c.key}`}>{capitalize(c.name ?? '')}</BronLink>
 							</h4>
 							<Feiten klein>
 								{#each c.posts as post, i (i)}
