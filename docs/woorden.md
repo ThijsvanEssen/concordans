@@ -79,9 +79,7 @@ fails on a label of a button that is not in this table.
 | `Klaar`                              | naam      |
 | `Filter`                             | naam      |
 | `Netwerk`                            | naam      |
-| `In het netwerk`                     | naam      |
 | `Open in netwerk`                    | gebiedend |
-| `Zet in het netwerk`                 | gebiedend |
 | `In de lezer`                        | naam      |
 | `Open bundel`                        | naam      |
 | `Geldende tekst`                     | naam      |

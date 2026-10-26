@@ -63,7 +63,7 @@
 		<a class="btn is-primary" href={lezen}
 			>{#if netwerk}<Picto naam="tekst" size={13} />{/if}{lezenLabel}</a
 		>
-		{#if netwerk}<a class="btn" href={netwerk}><Picto naam="netwerk" size={13} />In het netwerk</a
+		{#if netwerk}<a class="btn" href={netwerk}><Picto naam="netwerk" size={13} />Open in netwerk</a
 			>{/if}
 	</div>
 </div>

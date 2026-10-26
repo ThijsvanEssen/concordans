@@ -128,6 +128,7 @@
 		depth,
 		onDepth,
 		meer,
+		view = 'omgeving',
 		midden,
 		surroundings = false,
 		externCounts = null,
@@ -178,6 +179,8 @@
 		 * A weergave of its own in the canvas's place (Keten, Verband): the card at the right is
 		 * then `extern`'s, the tijdstrook `externStippen`.
 		 */
+		/** The weergave chosen; `midden` and `middenZoom` follow it. */
+		view?: 'omgeving' | 'verband' | 'keten';
 		midden?: Snippet<[number]>;
 		extern?: ExternalCard | null;
 		externStippen?: readonly { jaar: number; collection: Collection }[] | null;
@@ -1279,7 +1282,7 @@
 	<aside class="strook strook--links" aria-label="Bronnen en filters">
 		{@render canvasOverlay?.()}
 		<NetworkChoice
-			view={!midden ? 'omgeving' : middenZoom ? 'verband' : 'keten'}
+			{view}
 			viewSlot={viewChoice}
 			{depth}
 			{onDepth}

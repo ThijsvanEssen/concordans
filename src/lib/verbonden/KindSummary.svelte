@@ -8,7 +8,6 @@
 	import { openHref, refId } from '$lib/bron/href';
 	import { terPlekke } from '$lib/actions/klik';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
-	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { formatCount } from '$lib/text/getal';
 	import type { GraphNode } from '$lib/graph/types';
@@ -157,12 +156,16 @@
 				{/each}
 			{/each}
 		</ul>
-		<!-- Opened, the rows come a page at a time: how many of how many stand, and the next
-		     page one click further, never the whole at once (T11). -->
+		<!-- Opened, the rows come a page at a time: the next page one click further, with how
+		     many still wait, never the whole at once (T11). -->
 		{#if open.has(k.id) && hasMore(k.id)}
 			<p class="kind__all kind__vervolg">
-				<span class="kind__stand">{formatCount(k.rows.length)} van {formatCount(k.count)}</span>
-				<TekstLink onclick={() => onMore?.(k.id)}>Meer laden</TekstLink>
+				<AlleN
+					volgende
+					noun={k.noun}
+					rest={k.count > k.rows.length ? k.count - k.rows.length : null}
+					onclick={() => onMore?.(k.id)}
+				/>
 			</p>
 		{/if}
 		<!-- Alle N is the way to the rest: with nothing more than the rows above it opens nothing. -->
@@ -201,9 +204,6 @@
 		display: flex;
 		gap: var(--s-4);
 		align-items: baseline;
-	}
-	.kind__stand {
-		color: var(--ink-3);
 	}
 	.kind__count {
 		font-weight: 400;

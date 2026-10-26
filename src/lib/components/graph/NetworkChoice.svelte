@@ -158,10 +158,6 @@
 		font-weight: 600;
 		color: var(--ink-3);
 	}
-	/* The page's own heading over its choice: the label of this block says it. */
-	.view-slot :global(.weergave__kop) {
-		display: none;
-	}
 	.kinds,
 	.lijnen {
 		list-style: none;

@@ -363,7 +363,12 @@
 	});
 	const sketched = $derived(
 		showNetwork
-			? drawSketch(sketchGroups, centerName, phone ? PHONE_SKETCH_LIMIT : undefined)
+			? drawSketch(
+					sketchGroups,
+					centerName,
+					phone ? PHONE_SKETCH_LIMIT : undefined,
+					selection.drawClass
+				)
 			: null
 	);
 	/** The bron on its own opened under the drawing. */
