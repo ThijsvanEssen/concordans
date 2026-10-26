@@ -121,7 +121,7 @@ A bron's own content is neither kern nor context: a law's articles are its table
 
 A relation in the kern does not come back as a group in Verbonden. `KERN` in `src/lib/bron/behoort.ts` lists the buckets the kern lines read, per kind of bron. `isKernGroep` tells Verbonden which of its groups read only those, and it leaves them out of its list and its count. The table keeps every connection.
 
-- Its switch "toon in netwerk" goes with the group. A uitspraak's eerdere aanleg, conclusie and hoger beroep are on the network by default. The wet of an artikel, the dossier of a stuk and the fractie of a lid have their switch under Groepering in the legend.
+- Its switch "toon in netwerk" goes with the group. A uitspraak's eerdere aanleg, conclusie and hoger beroep are on the network by default. The wet of an artikel, the dossier of a stuk and the fractie of a lid have their switch under Indeling in the legend.
 - A bron in the kern is not listed again by another relation. Take the Rechtbank in the procesgang of HR Urgenda: the arrest also cites it (`REFERS_TO`), but it is not under "Uitspraken die hier worden aangehaald". This also covers the instances before the eerdere aanleg (`procesgangIds`), and a translation of a uitspraak in the kern (`translation_of`, e.g. HR 2019:2007, the English version of HR 2019:2006). A translation elsewhere says "Engelse vertaling". The table keeps every connection.
 - An eerdere aanleg the data lacks (`unresolved_appeal_targets`) stands in the procesgang as text, without a link.
 

@@ -3,7 +3,7 @@
 // (YYYY-MM-DD), a few periods back from today to choose at once, and a van and tot.
 import { isDay } from './datum';
 
-export type Voorkeuze = { id: string; label: string; titel: string; maanden: number };
+type Voorkeuze = { id: string; label: string; titel: string; maanden: number };
 
 export const VOORKEUZEN: readonly Voorkeuze[] = [
 	{ id: 'maand', label: 'Maand', titel: 'De afgelopen maand', maanden: 1 },

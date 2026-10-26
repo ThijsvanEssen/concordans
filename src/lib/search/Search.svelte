@@ -25,17 +25,19 @@
 	import { NOTATION_COLLECTION } from './resolve-query';
 	import { SearchSession } from './session.svelte';
 	import SearchOption from './SearchOption.svelte';
+	import type { Snippet } from 'svelte';
 
 	let {
 		overlay = false,
-		compact = false,
 		picker = false,
 		placeholder = 'Zoek een wet, uitspraak of dossier',
 		initial = '',
 		onOpen,
 		onSelect,
 		onWiden,
-		scope = null
+		scope = null,
+		chosen = [],
+		belowField
 	}: {
 		/** Alleen deze soorten doorzoeken (een ingang op de startpagina). */
 		scope?: readonly string[] | null;
@@ -43,8 +45,6 @@
 		initial?: string;
 		/** Inside the overlay the field takes focus and the list scrolls within the dialog. */
 		overlay?: boolean;
-		/** A narrow field and list, for a panel. */
-		compact?: boolean;
 		/** A field that picks one bron (Bron toevoegen): no period and no line of what is searched. */
 		picker?: boolean;
 		placeholder?: string;
@@ -54,6 +54,10 @@
 		onSelect?: (id: string) => void;
 		/** Given with a scope: where nothing is found, the same query in every kind. */
 		onWiden?: () => void;
+		/** A picker: the bronnen already chosen, by the name a link uses; their rows say so. */
+		chosen?: readonly string[];
+		/** Between the field and the list (the kind filters of Bron toevoegen). */
+		belowField?: Snippet;
 	} = $props();
 
 	// A result chosen here starts a network of its own, as a double click does (Thijs, 8 Oct);
@@ -133,7 +137,7 @@
 
 <svelte:window onpointermove={(e) => (pointerAt = placeOf(e))} />
 
-<div class="search" class:search--overlay={overlay} class:search--compact={compact}>
+<div class="search" class:search--overlay={overlay} class:search--picker={picker}>
 	<div class="field">
 		{#if search.spinning}
 			<span class="spinner" aria-hidden="true"></span>
@@ -174,6 +178,8 @@
 		/>
 		{#if overlay}<span class="kbd" aria-hidden="true">esc</span>{/if}
 	</div>
+
+	{@render belowField?.()}
 
 	{#if search.q.length >= FAST_MIN_CHARS && !picker}
 		<!-- The same period as every list with dates (Periode). -->
@@ -233,7 +239,6 @@
 						id={rowId(i)}
 						active={search.isActive(i)}
 						citation
-						{compact}
 						href={bronHref(choice.ref, { at: choice.at, keepNetwerk: false })}
 						onchoose={() => open(choice.ref, choice.at)}
 						onpoint={pointAt(i)}
@@ -265,7 +270,6 @@
 				id={rowId(0)}
 				active={search.active === 0}
 				citation
-				{compact}
 				onchoose={() => search.openCitation()}
 				onpoint={pointAt(0)}
 			>
@@ -284,7 +288,6 @@
 				id={rowId(0)}
 				active={search.active === 0}
 				citation
-				{compact}
 				href={bronHref(bare.ref, { at: bare.at, keepNetwerk: false })}
 				onchoose={() => open(bare.ref, bare.at)}
 				onpoint={pointAt(0)}
@@ -337,7 +340,6 @@
 					<SearchOption
 						id={rowId(i)}
 						active={search.isActive(i)}
-						{compact}
 						href={bronHref(hitName(hit), { keepNetwerk: false })}
 						onchoose={() => open(hitName(hit), null)}
 						onpoint={pointAt(i)}
@@ -352,7 +354,9 @@
 							{/if}
 							{#if conceptOf(hit)}<span class="row-begrip">via begrip {conceptOf(hit)}</span>{/if}
 						</span>
-						{#if shown.chamber || shown.context || shown.expired}<span class="row-context"
+						{#if picker && chosen.includes(focusOf(hitName(hit)) ?? '')}<span class="row-al"
+								>al in het netwerk</span
+							>{:else if shown.chamber || shown.context || shown.expired}<span class="row-context"
 								>{#if shown.chamber}<abbr title={CHAMBER_NAME[shown.chamber]}>{shown.chamber}</abbr
 									>{/if}{shown.chamber && shown.context
 									? ` ${shown.context}`
@@ -644,31 +648,23 @@
 		padding-top: 0;
 	}
 
-	.search--compact .field {
-		gap: var(--s-2);
-		padding: var(--s-1) var(--s-3);
-	}
-	.search--compact input {
-		font-size: var(--t-body-2);
-	}
-	.search--compact .list--filled {
-		max-height: 320px;
-		overflow-y: auto;
-	}
-	.search--compact .group-label {
-		padding: var(--s-1) var(--s-3) 0;
-	}
 	.row-expired {
 		color: var(--uitkomst-nee);
 	}
+	/* A picker marks the words found with the wash, as the text of a bron does. */
+	.search--picker .row-snippet mark {
+		background: var(--wassing);
+		color: var(--ink);
+		font-weight: inherit;
+	}
+	.row-al {
+		flex: none;
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+		white-space: nowrap;
+	}
 	.row-context abbr {
 		text-decoration: none;
-	}
-	.search--compact .row-context {
-		max-width: none;
-	}
-	.search--compact .state {
-		padding: var(--s-2) var(--s-3);
 	}
 
 	@media (max-width: 640px) {

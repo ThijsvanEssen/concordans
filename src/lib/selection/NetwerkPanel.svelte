@@ -2,15 +2,18 @@
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import CanvasKaart from '$lib/components/graph/CanvasKaart.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	// The netwerk of chosen bronnen, in the strip at the left of the werkplek: a search that adds a bron, the
-	// selected bron added, each chosen one on or off, taken out, or opened, the bronnen
-	// that join them shown or not, and the context around them cleared. On an empty
-	// Verkenner it is the same panel, empty: the field Bron toevoegen (one werkplek, one panel).
+	// The netwerk of chosen bronnen, in the strip at the left of the werkplek, in three blocks:
+	// Gekozen (each bron on or off, or taken out), Aangeklikt op het canvas (the selected bron,
+	// added with Toevoegen) and the button Bron toevoegen, which opens the search. The context
+	// around them is cleared from the head. On an empty Verkenner it is the same panel, empty
+	// (one werkplek, one panel).
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import Search from '$lib/search/Search.svelte';
+	import BronToevoegen from './BronToevoegen.svelte';
+	import Vinkje from '$lib/components/ui/Vinkje.svelte';
 	import { GROUP_LABEL } from '$lib/graph/collection-role';
 	import type { NetwerkEntry } from './netwerk';
 	import { formatCount } from '$lib/text/getal';
+	import { bronLabel } from '$lib/vocabulary';
 
 	let {
 		entries,
@@ -38,22 +41,23 @@
 		onAdd: () => void;
 		onClearContext: () => void;
 		onClear: () => void;
-		/** A phone: the chosen bronnen on one line that scrolls, the field behind Bron toevoegen. */
+		/** A phone: Gekozen folds after two, Wissen and Meer stand under the list. */
 		telefoon?: boolean;
 	} = $props();
 
-	let zoeken = $state(false);
+	let searching = $state(false);
+	const shownCount = $derived(entries.filter((e) => e.on && !e.missing).length);
 
 	// A long netwerk (the start page's band opens with fifteen) folds after a few, so it
 	// does not cover the canvas.
 	// On a phone two, so the werkplek keeps its room for the drawing.
-	const KORT = $derived(telefoon ? 2 : 5);
-	let alles = $state(false);
-	const gevouwen = $derived(!alles && entries.length > KORT + 1);
-	const getoond = $derived(gevouwen ? entries.slice(0, KORT) : entries);
+	const FOLD_AT = $derived(telefoon ? 2 : 5);
+	let showAll = $state(false);
+	const folded = $derived(!showAll && entries.length > FOLD_AT + 1);
+	const shown = $derived(folded ? entries.slice(0, FOLD_AT) : entries);
 
 	/** What a group's members are called: a wet's artikelen, a fractie's leden. */
-	const ledenVan = (c: NetwerkEntry['collection']) =>
+	const membersOf = (c: NetwerkEntry['collection']) =>
 		c === 'instruments'
 			? 'artikelen'
 			: c === 'dossiers'
@@ -63,11 +67,11 @@
 					: 'leden';
 </script>
 
-<!-- De gekozen bronnen als labels op één regel; zoeken pas na "Bron toevoegen";
-	     één regel voor wat ertussen ligt. Wissen is één klik, en Terug zet het terug. -->
-<!-- Bronnen, the first block of the strip at the left (mockup A197-b). -->
+<!-- Three blocks under a rule, one task each (NetwerkPaneel in the design system): Gekozen,
+	     Aangeklikt op het canvas, Bron toevoegen. Wissen is one click, and Terug sets it back. -->
 <CanvasKaart title="Bronnen" label="Netwerk" class="netwerk">
 	{#snippet samenvatting()}
+		{#if entries.length > 0}<span class="tel">{entries.length}, {shownCount} getoond</span>{/if}
 		{#if loading}<span class="laden punt" role="status" aria-label="Laden" title="Laden"
 			></span>{/if}
 	{/snippet}
@@ -92,85 +96,91 @@
 			</TekstMenu>
 		{/if}
 	{/snippet}
-	<ul class="chips">
-		{#each getoond as e (e.id)}
-			<li class="chip" class:uit={!e.on} class:mist={e.missing} class:is-dim={!!e.verborgenMet}>
-				<button
-					type="button"
-					class="chip-naam"
-					aria-pressed={e.on}
-					disabled={e.missing}
-					title={e.missing
-						? 'Niet gevonden'
-						: e.verborgenMet
-							? `Aan met ${GROUP_LABEL[e.verborgenMet]}`
-							: e.on
-								? `${e.titel ?? e.label}: verbergen`
-								: `${e.titel ?? e.label}: tonen`}
-					onclick={() => (e.verborgenMet ? onGroepAan?.(e.verborgenMet) : onToggle(e.id))}
-					><KindGlyph collection={e.collection} size={11} /><span
-						>{e.label}{#if e.alone}<span
-								class="los"
-								title="Geen verbinding met de andere gekozen bronnen">, zonder verbinding</span
-							>{:else if e.via}<span
-								class="los"
-								title="De verbindingen lopen via de eerste {formatCount(e.via.used)} {ledenVan(
-									e.collection
-								)}"
-								>, via {formatCount(e.via.used)} van {formatCount(e.via.total)}
-								{ledenVan(e.collection)}</span
-							>{/if}</span
-					></button
-				>
-				<button
-					type="button"
-					class="chip-weg"
-					onclick={() => onRemove(e.id)}
-					aria-label="Haal {e.label} uit netwerk">×</button
-				>
-			</li>
-		{/each}
-		{#if gevouwen}
-			<li class="verder">
-				<TekstLink onclick={() => (alles = true)}>en {entries.length - KORT} andere</TekstLink>
-			</li>
-		{:else if entries.length > KORT + 1}
-			<li class="verder">
-				<TekstLink onclick={() => (alles = false)}>minder</TekstLink>
-			</li>
-		{/if}
-		{#if selection}
-			<li>
-				<button
-					type="button"
-					class="chip chip--voorstel"
-					onclick={onAdd}
-					aria-label="Voeg {selection.label} toe aan netwerk">+ {selection.label}</button
-				>
-			</li>
-		{/if}
-		{#if telefoon && !zoeken}
-			<li>
-				<button type="button" class="chip chip--plus" onclick={() => (zoeken = true)}
-					>Bron toevoegen</button
-				>
-			</li>
-		{/if}
-	</ul>
-	{#if !telefoon || zoeken}
-		<!-- The field itself (mockup A197-b); on a phone behind Bron toevoegen. -->
-		<div class="zoek">
-			<Search
-				compact
-				picker
-				placeholder="Bron toevoegen"
-				onSelect={(id) => {
-					onSelect(id);
-					zoeken = false;
-				}}
-			/>
-		</div>
+	{#if entries.length > 0}
+		<section class="blok" aria-labelledby="netwerk-gekozen">
+			<h3 class="blok__label" id="netwerk-gekozen">Gekozen</h3>
+			<ul class="rijen">
+				{#each shown as e (e.id)}
+					<li class="rij" class:uit={!e.on} class:mist={e.missing} class:is-dim={!!e.verborgenMet}>
+						<button
+							type="button"
+							class="rij__naam"
+							aria-pressed={e.on}
+							disabled={e.missing}
+							title={e.missing
+								? 'Niet gevonden'
+								: e.verborgenMet
+									? `Aan met ${GROUP_LABEL[e.verborgenMet]}`
+									: e.on
+										? `${e.titel ?? e.label}: verbergen`
+										: `${e.titel ?? e.label}: tonen`}
+							onclick={() => (e.verborgenMet ? onGroepAan?.(e.verborgenMet) : onToggle(e.id))}
+						>
+							<span class="rij__vink"
+								><Vinkje aan={e.on && !e.verborgenMet} gedimd={!!e.verborgenMet} /></span
+							>
+							<span class="rij__glyph"><KindGlyph collection={e.collection} size={11} /></span>
+							<span class="rij__tekst">
+								<span class="rij__label">{e.label}</span>
+								{#if e.alone}
+									<span class="rij__staat" title="Geen verbinding met de andere gekozen bronnen"
+										>{bronLabel(e.collection).toLowerCase()}, zonder verbinding</span
+									>
+								{:else if e.via}
+									<span
+										class="rij__staat"
+										title="De verbindingen lopen via de eerste {formatCount(e.via.used)} {membersOf(
+											e.collection
+										)}"
+										>{bronLabel(e.collection).toLowerCase()}, via {formatCount(e.via.used)} van {formatCount(
+											e.via.total
+										)}
+										{membersOf(e.collection)}</span
+									>
+								{:else}
+									<span class="rij__staat">{bronLabel(e.collection).toLowerCase()}</span>
+								{/if}
+							</span>
+						</button>
+						<button
+							type="button"
+							class="rij__weg"
+							onclick={() => onRemove(e.id)}
+							aria-label="Haal {e.label} uit netwerk">×</button
+						>
+					</li>
+				{/each}
+			</ul>
+			{#if folded}
+				<p class="verder">
+					<TekstLink onclick={() => (showAll = true)}
+						>en {entries.length - FOLD_AT} andere</TekstLink
+					>
+				</p>
+			{:else if entries.length > FOLD_AT + 1}
+				<p class="verder"><TekstLink onclick={() => (showAll = false)}>minder</TekstLink></p>
+			{/if}
+		</section>
 	{/if}
+	{#if selection}
+		<section class="blok" aria-labelledby="netwerk-aangeklikt">
+			<h3 class="blok__label" id="netwerk-aangeklikt">Aangeklikt op het canvas</h3>
+			<div class="aangeklikt">
+				<span class="aangeklikt__naam">{selection.label}</span>
+				<button
+					type="button"
+					class="btn"
+					onclick={onAdd}
+					aria-label="Voeg {selection.label} toe aan netwerk">Toevoegen</button
+				>
+			</div>
+		</section>
+	{/if}
+	<section class="blok blok--toevoegen">
+		<button type="button" class="btn toevoegen" onclick={() => (searching = true)}
+			>+ Bron toevoegen</button
+		>
+	</section>
 	{#if telefoon && entries.length > 0}
 		<!-- On a phone under Filter, with the netwerk's own filters (GraphView). -->
 		<p class="netwerk-acties">
@@ -181,6 +191,9 @@
 		</p>
 	{/if}
 </CanvasKaart>
+{#if searching}
+	<BronToevoegen chosen={entries.map((e) => e.id)} {onSelect} onClose={() => (searching = false)} />
+{/if}
 
 <style>
 	.netwerk-acties {
@@ -188,6 +201,12 @@
 		flex-wrap: wrap;
 		gap: var(--s-2) var(--s-4);
 		margin: var(--s-3) 0 0;
+	}
+	.tel {
+		font-size: var(--t-micro);
+		font-weight: 400;
+		color: var(--ink-3);
+		white-space: nowrap;
 	}
 	.laden {
 		flex: none;
@@ -216,109 +235,130 @@
 			animation: none;
 		}
 	}
-	.chips {
-		list-style: none;
+
+	/* Blocks under a rule, each with a label in the sans. */
+	.blok {
+		padding: var(--s-2) 0 var(--s-3);
+		border-top: 1px solid var(--rule);
+	}
+	.blok:first-child {
+		border-top: 0;
+		padding-top: 0;
+	}
+	.blok:last-child {
+		padding-bottom: 0;
+	}
+	.blok__label {
 		margin: 0 0 var(--s-2);
+		font-size: var(--t-micro);
+		font-weight: 600;
+		color: var(--ink-3);
+	}
+	.rijen {
+		list-style: none;
+		margin: 0;
 		padding: 0;
 		display: flex;
 		flex-direction: column;
-		align-items: flex-start;
-		gap: var(--s-2);
 	}
-	.chip {
-		display: inline-flex;
-		align-items: center;
-		min-height: var(--veld-h);
-		box-sizing: border-box;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-rond);
-		background: var(--paper);
+	.rij {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--s-1);
+		padding: var(--s-1) 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink);
 	}
-	.chips > li {
-		max-width: 100%;
+	.rij + .rij {
+		border-top: 1px solid var(--paper-2);
+	}
+	.rij__naam {
+		flex: 1;
 		min-width: 0;
-	}
-	.chip--voorstel {
-		display: inline-block;
-		max-width: 100%;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-	.chip-naam {
-		display: inline-flex;
-		align-items: center;
+		display: grid;
+		grid-template-columns: var(--s-3) var(--s-3) 1fr;
+		align-items: start;
 		gap: var(--s-2);
-		max-width: 100%;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		padding: 0 var(--s-1) 0 var(--s-3);
+		padding: 0;
 		border: 0;
 		background: none;
 		font: inherit;
 		color: inherit;
+		text-align: left;
 		cursor: pointer;
 	}
-	.chip-weg {
-		padding: 0 var(--s-2) 0 var(--s-1);
+	.rij__naam:disabled {
+		cursor: default;
+	}
+	.rij__vink,
+	.rij__glyph {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		height: var(--s-5);
+	}
+	.rij__tekst {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+	}
+	.rij__label {
+		font-weight: 600;
+		line-height: var(--s-5);
+		overflow-wrap: anywhere;
+	}
+	.rij__staat {
+		font-size: var(--t-micro);
+		line-height: var(--s-4);
+		color: var(--ink-3);
+	}
+	.rij.uit .rij__label,
+	.rij.mist .rij__label,
+	.rij.is-dim .rij__label {
+		color: var(--ink-3);
+	}
+	.rij.uit .rij__label,
+	.rij.mist .rij__label {
+		font-weight: 400;
+	}
+	.rij.is-dim .rij__glyph {
+		opacity: 0.5;
+	}
+	.rij__weg {
+		flex: none;
+		width: var(--s-6);
+		height: var(--s-6);
+		padding: 0;
 		border: 0;
 		background: none;
 		font: inherit;
 		color: var(--ink-3);
 		cursor: pointer;
 	}
-	.chip-weg:hover {
-		color: var(--ink);
-	}
-	.chip.is-dim {
-		color: var(--ink-3);
-		border-color: var(--rule-strong);
-	}
-	.chip.is-dim :global(svg) {
-		opacity: 0.5;
-	}
-	.chip.uit {
-		border-style: dashed;
-		color: var(--ink-3);
-	}
-	.chip.mist {
-		border-color: var(--rule-strong);
-		color: var(--ink-3);
-	}
-	.los {
-		color: var(--ink-3);
-	}
-	.chip--voorstel,
-	.chip--plus {
-		padding: var(--s-1) var(--s-2);
-		border-style: dashed;
-		border-color: var(--rule-strong);
-		color: var(--ink-2);
-		cursor: pointer;
-	}
-	.chip--plus:hover,
-	.chip--voorstel:hover {
-		border-color: var(--ink);
+	.rij__weg:hover {
 		color: var(--ink);
 	}
 	.verder {
-		align-self: center;
+		margin: var(--s-1) 0 0;
 		font-size: var(--t-micro);
 	}
-	.zoek {
+	.aangeklikt {
+		display: flex;
+		align-items: center;
+		gap: var(--s-2);
+		font-size: var(--t-meta);
+	}
+	.aangeklikt__naam {
+		flex: 1;
+		min-width: 0;
+		overflow-wrap: anywhere;
+	}
+	.btn.toevoegen {
 		width: 100%;
 	}
 
-	/* A phone: the chosen bronnen side by side, on as many lines as they need. */
 	@media (max-width: 768px) {
-		.chips {
-			flex-direction: row;
-			flex-wrap: wrap;
-		}
 		.netwerk-acties :global(.tekstlink) {
 			display: inline-flex;
 			align-items: center;
@@ -326,12 +366,16 @@
 		}
 	}
 	@media (pointer: coarse), (max-width: 768px) {
-		.chip {
+		.rij__naam {
 			min-height: var(--veld-h-raak);
 		}
-		.chip-weg {
+		.rij__weg {
 			align-self: stretch;
-			min-width: var(--veld-h-raak);
+			width: var(--veld-h-raak);
+			height: auto;
+		}
+		.btn {
+			min-height: var(--veld-h-raak);
 		}
 	}
 </style>
