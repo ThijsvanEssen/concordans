@@ -6,7 +6,7 @@
 	// from passed-law.ts.
 	import type { Schema } from '$lib/api/types';
 	import BronLink from '$lib/bron/BronLink.svelte';
-	import { langeDatum, onDate } from '$lib/text/datum';
+	import { langeDatum, onDate, sinceDate } from '$lib/text/datum';
 	import { separatorBefore } from '$lib/text/words';
 	import { inForceWords, lawsMade, enactments } from './passed-law';
 
@@ -47,7 +47,7 @@
 {#if dossier.in_force_since}
 	<!-- The dossier's end: the day its law came into force, once (the line of a law that came
 	     that day does not say it again). -->
-	<p class="passed-law">Afgerond: in werking sinds {langeDatum(dossier.in_force_since)}.</p>
+	<p class="passed-law">Afgerond: in werking {sinceDate(dossier.in_force_since)}.</p>
 {/if}
 {#if laws.length}
 	<p class="passed-law">

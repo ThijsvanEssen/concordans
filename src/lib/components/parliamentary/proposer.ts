@@ -6,7 +6,7 @@ import type { Schema } from '$lib/api/types';
 type Proposer = Schema<'DossierProposerDTO'>;
 
 /** The words before the person, and the person's name and function where the source gives them. */
-export type Proposal = {
+type Proposal = {
 	lead: string;
 	name: string | null;
 	memberKey: string | null;
