@@ -263,9 +263,11 @@ export function kindsOf(
 			.reduce((sum, [, n]) => sum + n, 0);
 		// Once its groups are in, a soort counts what they hold: what "Alle" opens (T11: 184
 		// counted over a list of 56, the law's own articles and every edge to an act of the EU
-		// in the buckets). Until then the buckets stand for it.
+		// in the buckets). Until then the buckets stand for it, unless its groups list only what is
+		// open: the buckets count the finished ones too (A195: 249 counted, 39 lopend).
 		const settled = !gs.some((g) => g.laden || g.failed);
-		const count = settled ? fromGroups : Math.max(fromGroups, fromBuckets);
+		const openOnly = gs.every((g) => g.countsOpenOnly);
+		const count = settled || openOnly ? fromGroups : Math.max(fromGroups, fromBuckets);
 		// A regulation issued under another stands right under it; the overview names the
 		// regulations themselves (KindSummary), the opened soort all of them (T11: 13 counted, 7 shown).
 		const rows = kindRows(gs, id, selection);

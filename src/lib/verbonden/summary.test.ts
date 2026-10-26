@@ -133,6 +133,26 @@ describe('Verbonden at a glance', () => {
 		expect(kindsOf(laws({ laden: true }), 'dossiers', buckets)[0].count).toBe(2);
 	});
 
+	it('counts the dossiers of a ministry by the open ones its loader lists, not by every edge', () => {
+		const buckets = new Map([[bucketKey('LED_BY', 'dossiers', 'inbound'), 249]]);
+		const open = (extra: Partial<Group>) =>
+			[
+				{
+					id: 'dossiers',
+					label: 'Lopende dossiers',
+					rows: [{ ...row('documents', 'd1'), ref: { collection: 'dossiers', key: 'd1' } } as Row],
+					total: 39,
+					capped: false,
+					countsOpenOnly: true,
+					...extra
+				}
+			] as Group[];
+		expect(kindsOf(open({}), 'ministries', buckets)[0].count).toBe(39);
+		// While it loads the buckets, which hold the finished dossiers too, do not stand for it: no number yet.
+		const laden = kindsOf(open({ laden: true, rows: [], total: undefined }), 'ministries', buckets);
+		expect(laden).toEqual([]);
+	});
+
 	it('orders the soorten as the mockup of each kind of bron does', () => {
 		const dossier = kindsOf(
 			[

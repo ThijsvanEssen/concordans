@@ -80,6 +80,11 @@ type GroupDef = {
 	/** A row opens beside the selected bron instead of replacing it. */
 	inPlace?: boolean;
 	/**
+	 * Its loader lists only what is open (lopend, openstaand): the buckets count every edge,
+	 * the finished ones too, so they never stand for its count, not even while it loads.
+	 */
+	countsOpenOnly?: boolean;
+	/**
 	 * The buckets a loader reads, where the light node counts them: a group whose buckets are
 	 * empty keeps no place while its loader runs, one that may have rows does (`wachtend`).
 	 */
@@ -794,14 +799,14 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Lopende dossiers',
 			noun: 'dossiers',
 			load: 'ministry-dossiers',
-			bakken: [{ relation: 'LED_BY', direction: 'inbound', collection: 'dossiers' }]
+			countsOpenOnly: true
 		},
 		{
 			id: 'commitments',
 			label: 'Open toezeggingen',
 			noun: 'toezeggingen',
 			load: 'ministry-commitments',
-			bakken: [{ relation: 'LED_BY', direction: 'inbound', collection: 'commitments' }]
+			countsOpenOnly: true
 		}
 	],
 	members: [
