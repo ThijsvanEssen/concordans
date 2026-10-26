@@ -546,7 +546,12 @@
 				<!-- The page at the Tweede Kamer is in Citeer; the file the text came from here. -->
 				<footer class="foot">
 					{#if doc.file_url}
-						<a href={doc.file_url} target="_blank" rel="noopener noreferrer" class="full-link">
+						<a
+							href={doc.file_url}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="full-link raakvlak"
+						>
 							Origineel bestand ↗
 						</a>
 					{/if}

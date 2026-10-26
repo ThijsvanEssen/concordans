@@ -405,16 +405,13 @@
 		color: var(--ink);
 		text-decoration: underline;
 	}
-	/* The links in a line's meta a finger can hit: the shared target (.raakvlak, lib/styles/basis.css),
-	   on a touch screen and below 768. */
+	/* The links in a line's meta are a line of a finger's 44 px of their own (.raak-rij,
+	   lib/styles/basis.css), on a touch screen and below 768. */
 	@media (pointer: coarse), (max-width: 768px) {
 		.meta :global(a) {
-			position: relative;
-		}
-		.meta :global(a::after) {
-			content: '';
-			position: absolute;
-			inset: calc(-1 * var(--s-2)) calc(-1 * var(--s-1));
+			display: inline-flex;
+			align-items: center;
+			min-height: var(--veld-h-raak);
 		}
 	}
 	/* Why the row is in a followed topic, where its line does not show the words: a line

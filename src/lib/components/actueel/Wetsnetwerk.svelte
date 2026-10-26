@@ -343,8 +343,10 @@
 			background: var(--rule-strong);
 		}
 		.toon {
-			display: inline-block;
-			padding: var(--s-2) var(--s-3);
+			display: inline-flex;
+			align-items: center;
+			min-height: var(--veld-h-raak);
+			padding: 0 var(--s-3);
 			border: 1px solid var(--rule-strong);
 			border-radius: var(--r-1);
 			background: var(--paper);

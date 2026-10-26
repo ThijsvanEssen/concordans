@@ -43,6 +43,13 @@
 		cursor: pointer;
 		text-align: left;
 	}
+	/* On a touch screen its target (.raakvlak) reaches past the heading: over the row under it,
+	   not under it. */
+	@media (pointer: coarse), (max-width: 768px) {
+		.fold-knop {
+			z-index: 1;
+		}
+	}
 	.fold-knop:hover {
 		color: var(--ink);
 		text-decoration-line: underline;

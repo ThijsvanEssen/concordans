@@ -328,12 +328,22 @@
 	.kan-open .tekst {
 		cursor: pointer;
 	}
-	/* On a phone a row that opens or acts is a finger's target high (48 px, the scale's step above 44). */
+	/* On a phone a row that opens or acts is a finger's target high (48 px, the scale's step above
+	   44). */
 	@media (pointer: coarse), (max-width: 768px) {
 		.kan-open .tekst,
 		.tekst:has(.zin--actie) {
 			min-height: var(--s-7);
 			justify-content: center;
+		}
+	}
+	/* A line that leads somewhere without opening: its link is a finger's 44 px high itself, so
+	   the label above it and the meta under it are not in its way. */
+	@media (pointer: coarse), (max-width: 768px) {
+		.regel:not(.kan-open) .tekst :global(a.zin) {
+			display: flex;
+			align-items: center;
+			min-height: var(--veld-h-raak);
 		}
 	}
 	.kan-open .tekst:hover .zin {

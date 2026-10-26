@@ -21,7 +21,7 @@
 	<ul>
 		{#each entries as entry (entry.href)}
 			<li>
-				<Picto naam="netwerk-o" size={14} /><a class="raakvlak" href={entry.href}>{entry.label}</a>
+				<Picto naam="netwerk-o" size={14} /><a class="raak-rij" href={entry.href}>{entry.label}</a>
 			</li>
 		{/each}
 	</ul>

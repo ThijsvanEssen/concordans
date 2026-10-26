@@ -140,8 +140,18 @@
 	// A motie or amendement says how the Kamer decided, on every list (StukUitslag); the day of
 	// the vote then stands for the stuk's own.
 	const uitslag = $derived(row.ref.collection === 'documents' ? stukUitslag(row.props) : null);
+	// An open row of another bron shows the passage in its glance until the glance's own text has
+	// come, which then stands in its place: the passage is never shown twice (RowGlance).
+	const glimpInGlance = $derived(open && !wetVerband && row.ref.collection !== 'documents');
 	const delen = $derived(metaParts(uitslag?.datum ? { ...row, date: null } : row, !!hoe));
 </script>
+
+{#snippet glimp(opened: boolean)}
+	{#if hoe?.citaat}
+		<span class="row__citaat" class:is-open={opened}><Aanhaling passage={hoe.citaat} /></span>
+	{/if}
+{/snippet}
+{#snippet glimpOpen()}{@render glimp(true)}{/snippet}
 
 <li class="row" class:row--onder={!!row.onder} style:--row-glyph="{ROW_GLYPH}px">
 	<!-- The row is the way to its bron: a click anywhere on it opens the bron in Netwerk, as its
@@ -200,8 +210,8 @@
 						/>{/if}</span
 				>
 			{/if}
-			{#if hoe?.citaat}
-				<span class="row__citaat" class:is-open={open}><Aanhaling passage={hoe.citaat} /></span>
+			{#if hoe?.citaat && !glimpInGlance}
+				{@render glimp(open)}
 			{/if}
 			<span class="row__meta">
 				<!-- Where the verbinding comes from, in the line's own words (Thijs, 10 Oct: the box
@@ -242,6 +252,7 @@
 					at={row.at ?? null}
 					{href}
 					onRead={() => zetMarkering(rijMarkering)}
+					glimp={hoe?.citaat ? glimpOpen : undefined}
 				/>
 			{:else}
 				<RijInhoud
@@ -358,6 +369,26 @@
 	.row__hoe :global(a.row__plaats:focus-visible),
 	.row__hoe :global(a.row__plaats[aria-expanded='true']) {
 		text-decoration-color: currentColor;
+	}
+
+	/* On a touch screen the place is a line of a finger's 44 px of its own, under the title and
+	   not over it. */
+	@media (pointer: coarse), (max-width: 768px) {
+		/* The title as high as the closed row's (KindSummary): opening moves nothing under the
+		   finger. */
+		a.row__title {
+			display: flex;
+			align-items: center;
+			min-height: var(--veld-h-raak);
+		}
+		.row__hoe :global(a.row__plaats) {
+			display: inline-flex;
+			align-items: center;
+			min-height: var(--veld-h-raak);
+		}
+		.row__hoe :global(a.row__plaats)::after {
+			display: none;
+		}
 	}
 
 	/* The passage that carries the verbinding, the words that name the bron marked. */

@@ -215,7 +215,7 @@
 					label="Zoek in"
 					vol
 					opties={[
-						// Its words in `voor`: Alles below a phone of 360 (CSS, from the first paint).
+						// Its words in `voor`: Alles where the row is too narrow (CSS, from the first paint).
 						{ waarde: 'alles', label: '' },
 						...SCOPES.map((sc) => ({ waarde: sc.id, label: sc.label }))
 					]}
@@ -298,6 +298,7 @@
 	}
 	.scopes {
 		max-width: 100%;
+		container-type: inline-size;
 	}
 	/* The field is the first aim of the page, so it is the heaviest frame on it: 2 px of ink
 	   (a border and an inset line, so the height stays as the server's page has it). */
@@ -322,8 +323,10 @@
 			display: none;
 		}
 	}
-	/* Below a phone of 360: Alles for Alle bronnen, so Regering keeps its place in the row. */
-	@media (width < 360px) {
+	/* Where "Alle bronnen" and the four words after it no longer fit the row (350 px wide with
+	   them, at the letter of a phone): Alles for Alle bronnen, so nothing is cut off and
+	   Regering keeps its place. */
+	@container (width < 352px) {
 		.lang {
 			display: none;
 		}

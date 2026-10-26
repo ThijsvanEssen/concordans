@@ -224,8 +224,10 @@
 	.kind__open:first-child {
 		border-top: 0;
 	}
+	/* The row opens on the line its title stood on: the row has the padding of the closed one. */
 	.kind__open {
 		margin: 0 calc(-1 * var(--s-4));
+		padding-block: 0;
 	}
 	/* A regulation issued under the one above it. */
 	.kind__onder {
@@ -276,10 +278,12 @@
 	.pending--short {
 		width: 45%;
 	}
-	/* A finger's 44 px: a title's place to tap is its line and the one under it. */
+	/* A finger's 44 px: a title is a line of its own that high. */
 	@media (pointer: coarse), (max-width: 768px) {
 		.kind__title {
-			padding-block: var(--s-1);
+			display: flex;
+			align-items: center;
+			min-height: var(--veld-h-raak);
 		}
 	}
 </style>

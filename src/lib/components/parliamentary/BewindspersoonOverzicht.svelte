@@ -61,10 +61,11 @@
 	<Sectie title="Toezeggingen" id="toezeggingen">
 		<div class="ov" class:ruim>
 			<p class="zin">
-				<a href={href()}>{commitments.total} toezeggingen</a>:
+				<a class="raak-rij" href={href()}>{commitments.total} toezeggingen</a>:
 				{#each statusCounts as s, i (s.value)}{#if i > 0}{i === statusCounts.length - 1
 							? ' en '
-							: ', '}{/if}<a href={href(s.value ?? undefined)}>{s.count} {lower(s.value ?? '')}</a
+							: ', '}{/if}<a class="raak-rij" href={href(s.value ?? undefined)}
+						>{s.count} {lower(s.value ?? '')}</a
 					>{/each}.
 			</p>
 			{#if openCommitments.state.status === 'error'}
@@ -188,6 +189,7 @@
 		line-height: var(--lh-snug);
 	}
 	.items li > :global(a) {
+		min-height: var(--veld-h-raak);
 		text-decoration: none;
 		display: -webkit-box;
 		-webkit-box-orient: vertical;

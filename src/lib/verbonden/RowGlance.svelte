@@ -11,12 +11,14 @@
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { load } from '$lib/util/load.svelte';
+	import type { Snippet } from 'svelte';
 
 	let {
 		bron,
 		at = null,
 		href,
-		onRead
+		onRead,
+		glimp
 	}: {
 		bron: BronRef;
 		/** The place in the bron the row names: `rov-3.4`, `lid-2`. */
@@ -24,6 +26,9 @@
 		/** The bron one step further: its reader, or beside the text in an in-place group. */
 		href: string;
 		onRead?: () => void;
+		/** The passage the row already has: shown until the glance's own text has come, then
+		 *  replaced by it, so the same words are never there twice. */
+		glimp?: Snippet;
 	} = $props();
 
 	const preview = load(
@@ -31,16 +36,19 @@
 		() => loadPreview(bron, at),
 		'Rij'
 	);
+	const geladen = $derived(preview.state.status === 'ready' ? preview.state.data : null);
+	const heeftTekst = $derived(!!(geladen?.lines || geladen?.uitslag || geladen?.dossier));
 </script>
 
 <div class="inhoud">
+	{#if glimp && !heeftTekst}{@render glimp()}{/if}
 	<LoadState state={preview.state} what="De inhoud" retry={preview.retry}>
 		{#snippet children(p)}
 			{#if p?.lines || p?.uitslag || p?.dossier}
 				{#if p.dossier}<p class="stil">{p.dossier}</p>{/if}
 				{#if p.lines}<p class="tekst">{p.lines}</p>{/if}
 				{#if p.uitslag}<p class="tekst">{p.uitslag}</p>{/if}
-			{:else}
+			{:else if !glimp}
 				<p class="stil"><Coverage noText /></p>
 			{/if}
 		{/snippet}
