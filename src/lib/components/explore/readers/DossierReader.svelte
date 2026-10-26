@@ -169,7 +169,7 @@
 							Ministerie: <MinistryLink ministry={d.ministry} name={d.ministry_name} />.
 						</p>
 					{/if}
-					<ProposedBy proposer={d.proposed_by} title={d.title} />
+					<ProposedBy proposer={d.proposed_by} documentKinds={d.documents_by_kind} />
 					{#if d.submitted_on_tk && stand(d)?.group !== 'ingediend'}
 						<!-- The day the bill reached the Kamer (API 0.75), before any stage below it; where
 						     the stand says it already ("Ingediend bij de Tweede Kamer op …"), once (R3-L F9). -->

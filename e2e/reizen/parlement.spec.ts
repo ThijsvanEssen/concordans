@@ -306,8 +306,8 @@ test('a burgerinitiatief is not called the initiative bill of the Kamerlid who h
 	page
 }) => {
 	await page.goto('/dossiers/37041');
-	await expect(page.getByText('Burgerinitiatief, ingediend door')).toHaveText(
-		/^Burgerinitiatief, ingediend door Mohammed Mohandis, voorzitter van de vaste commissie/
+	await expect(page.getByText('Burgerinitiatief, door de vaste commissie')).toHaveText(
+		'Burgerinitiatief, door de vaste commissie voor Volksgezondheid, Welzijn en Sport (voorzitter Mohammed Mohandis) voorgesteld in behandeling te nemen.'
 	);
 	await expect(page.getByText('Initiatiefvoorstel van')).toHaveCount(0);
 });

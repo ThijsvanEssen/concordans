@@ -14,20 +14,20 @@ const who = (p: Partial<Schema<'DossierProposerDTO'>>) =>
 describe('proposal', () => {
 	it('names the government and the minister who signed', () => {
 		expect(proposal(who({ capacity: 'bewindspersoon' }))).toEqual({
-			lead: 'Voorstel van de regering, ingediend door',
+			before: 'Voorstel van de regering, ingediend door ',
 			name: 'A. Jansen',
 			memberKey: 'm1',
-			function: 'minister van Justitie'
+			after: ', minister van Justitie.'
 		});
 	});
 	it('names the Kamerlid of an initiative bill, without a function', () => {
 		expect(proposal(who({ capacity: 'kamerlid' }))).toMatchObject({
-			lead: 'Initiatiefvoorstel van',
-			function: null
+			before: 'Initiatiefvoorstel van ',
+			after: '.'
 		});
 	});
 	it('says the government alone where the source gives no name', () => {
-		expect(proposal(who({ name: null, capacity: 'bewindspersoon' }))?.lead).toBe(
+		expect(proposal(who({ name: null, capacity: 'bewindspersoon' }))?.before).toBe(
 			'Voorstel van de regering'
 		);
 	});
@@ -35,14 +35,18 @@ describe('proposal', () => {
 		expect(proposal(null)).toBeNull();
 		expect(proposal(who({ name: null, capacity: 'overig' }))).toBeNull();
 	});
-	it('names a burgerinitiatief handed over by a committee chair as such', () => {
+	it('words a Brief commissie of a committee chair as a burgerinitiatief, else as plain submission', () => {
 		const chair = who({
 			capacity: 'kamerlid',
 			function: 'voorzitter van de vaste commissie voor X'
 		});
-		expect(proposal(chair, 'Burgerinitiatief “Levenseinderegie”')?.lead).toBe(
-			'Burgerinitiatief, ingediend door'
-		);
-		expect(proposal(chair, 'Wet X')?.lead).toBe('Ingediend door');
+		expect(proposal(chair, { 'Brief commissie': 1 })).toEqual({
+			before: 'Burgerinitiatief, door de vaste commissie voor X (voorzitter ',
+			name: 'A. Jansen',
+			memberKey: 'm1',
+			after: ') voorgesteld in behandeling te nemen.'
+		});
+		expect(proposal(chair, { Motie: 2 })?.before).toBe('Ingediend door ');
+		expect(proposal(chair)?.before).toBe('Ingediend door ');
 	});
 });

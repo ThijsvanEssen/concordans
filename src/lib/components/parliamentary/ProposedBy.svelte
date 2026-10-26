@@ -7,15 +7,18 @@
 
 	let {
 		proposer,
-		title = null
-	}: { proposer: Schema<'DossierProposerDTO'> | null; title?: string | null } = $props();
-	const v = $derived(proposal(proposer, title));
+		documentKinds = null
+	}: {
+		proposer: Schema<'DossierProposerDTO'> | null;
+		documentKinds?: Record<string, number> | null;
+	} = $props();
+	const v = $derived(proposal(proposer, documentKinds));
 </script>
 
 {#if v}
 	<p class="reading">
-		{v.name ? `${v.lead} ` : v.lead}{#if v.name}{#if v.memberKey}<BronLink
+		{v.before}{#if v.name}{#if v.memberKey}<BronLink
 					ref={{ collection: 'members', key: v.memberKey }}>{v.name}</BronLink
-				>{:else}{v.name}{/if}{/if}{v.function ? `, ${v.function}` : ''}.
+				>{:else}{v.name}{/if}{/if}{v.after}
 	</p>
 {/if}

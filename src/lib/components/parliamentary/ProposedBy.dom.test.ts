@@ -12,8 +12,10 @@ const who = (p: Partial<Schema<'DossierProposerDTO'>>) =>
 		capacity: 'bewindspersoon',
 		...p
 	}) as Schema<'DossierProposerDTO'>;
-const sentence = (proposer: Schema<'DossierProposerDTO'>, title?: string) =>
-	render(ProposedBy, { proposer, title }).container.textContent?.replace(/\s+/g, ' ').trim();
+const sentence = (proposer: Schema<'DossierProposerDTO'>, documentKinds?: Record<string, number>) =>
+	render(ProposedBy, { proposer, documentKinds })
+		.container.textContent?.replace(/\s+/g, ' ')
+		.trim();
 
 describe('ProposedBy', () => {
 	it('writes the whole sentence, with a space before the name', () => {
@@ -26,17 +28,17 @@ describe('ProposedBy', () => {
 			'Initiatiefvoorstel van H.M. de Jonge.'
 		);
 	});
-	it('does not call a burgerinitiatief the Kamerlid’s own bill', () => {
+	it('names a burgerinitiatief as the committee proposes to treat it, not as the chair’s bill', () => {
 		expect(
 			sentence(
 				who({
 					capacity: 'kamerlid',
 					function: 'voorzitter van de vaste commissie voor Volksgezondheid, Welzijn en Sport'
 				}),
-				'Burgerinitiatief “Levenseinderegie”'
+				{ 'Brief commissie': 1 }
 			)
 		).toBe(
-			'Burgerinitiatief, ingediend door H.M. de Jonge, voorzitter van de vaste commissie voor Volksgezondheid, Welzijn en Sport.'
+			'Burgerinitiatief, door de vaste commissie voor Volksgezondheid, Welzijn en Sport (voorzitter H.M. de Jonge) voorgesteld in behandeling te nemen.'
 		);
 	});
 });
