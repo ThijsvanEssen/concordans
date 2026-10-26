@@ -215,14 +215,14 @@ export function hullDashFor(kind: ContainerKind): string | undefined {
  * only names the other; `dotted` belongs to; `dashdot` explains; `lid` dotted and without an
  * arrow, as Lid van has no direction.
  */
-export type EdgeStyle = 'solid' | 'dashed' | 'dotted' | 'dashdot' | 'lid';
+type EdgeStyle = 'solid' | 'dashed' | 'dotted' | 'dashdot' | 'lid';
 
 /** The relations a line of a lid draws: a person of a fractie, a commissie, a kabinet. */
-const LID_VAN = new Set<Relation>(['MEMBER_OF', 'LED_BY', 'SERVED_IN']);
+const MEMBERSHIP = new Set<Relation>(['MEMBER_OF', 'LED_BY', 'SERVED_IN']);
 /** The relations that belong to a whole (Deel van). */
-const DEEL_VAN = new Set<Relation>(['PART_OF', 'VERSION_OF']);
+const PART_OF_WHOLE = new Set<Relation>(['PART_OF', 'VERSION_OF']);
 /** The relations a bron makes by naming another (Aanhaling), besides a citation by REFERS_TO. */
-const AANHALING = new Set<Relation>([
+const CITATIONS = new Set<Relation>([
 	'APPEAL_OF',
 	'ADVISES_ON',
 	'ANSWERS',
@@ -242,10 +242,10 @@ export function edgeStyleFor(
 	status: string | null | undefined,
 	sourceClass: DrawClass = 'article'
 ): EdgeStyle {
-	if (LID_VAN.has(relation)) return 'lid';
-	if (DEEL_VAN.has(relation)) return 'dotted';
+	if (MEMBERSHIP.has(relation)) return 'lid';
+	if (PART_OF_WHOLE.has(relation)) return 'dotted';
 	if (relation === 'EXPLAINS') return 'dashdot';
-	if (relation === 'VOTED' || AANHALING.has(relation)) return 'dashed';
+	if (relation === 'VOTED' || CITATIONS.has(relation)) return 'dashed';
 	if (relation === 'REFERS_TO' && sourceClass !== 'article') return 'dashed';
 	if (isAmendingRelation(relation) && status === 'voorgesteld') return 'dashed';
 	return 'solid';

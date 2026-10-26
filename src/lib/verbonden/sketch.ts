@@ -38,7 +38,7 @@ export type SketchGroup = {
 	name: string;
 	/** The kind of most of its bronnen, for its colour. */
 	collection: Collection | null;
-	/** The soort that has a colour of its own besides its collection's (the regulations). */
+	/** The kind that has a colour of its own besides its collection's (the regulations). */
 	hue?: string | null;
 	count: number;
 	rows: Row[];
@@ -115,22 +115,22 @@ const radius = (count: number): number =>
 export const SKETCH_LINE = 0.8;
 
 /**
- * The points of an arrowhead at (x2, y2) on the line from (x1, y1): `lengte` long and
- * `breed` wide at its foot, the tip at the end of the line.
+ * The points of an arrowhead at (x2, y2) on the line from (x1, y1): `length` long and
+ * `wide` wide at its foot, the tip at the end of the line.
  */
 export function arrowhead(
 	x1: number,
 	y1: number,
 	x2: number,
 	y2: number,
-	lengte: number,
-	breed: number
+	length: number,
+	wide: number
 ): string {
-	const hoek = Math.atan2(y2 - y1, x2 - x1);
-	const bx = x2 - lengte * Math.cos(hoek);
-	const by = y2 - lengte * Math.sin(hoek);
-	const nx = (-Math.sin(hoek) * breed) / 2;
-	const ny = (Math.cos(hoek) * breed) / 2;
+	const angle = Math.atan2(y2 - y1, x2 - x1);
+	const bx = x2 - length * Math.cos(angle);
+	const by = y2 - length * Math.sin(angle);
+	const nx = (-Math.sin(angle) * wide) / 2;
+	const ny = (Math.cos(angle) * wide) / 2;
 	return `${bx + nx},${by + ny} ${x2},${y2} ${bx - nx},${by - ny}`;
 }
 
@@ -176,15 +176,15 @@ export function divide(
 		const own = g.parts?.length
 			? g.parts.map((d) => ({ id: `${g.id}:${d.tier ?? 'other'}`, label: d.label, count: d.count }))
 			: [{ id: g.id, label: g.name, count: g.count }];
-		const lijn = g.rows.find((r) => r.relation);
+		const line = g.rows.find((r) => r.relation);
 		for (const p of own)
 			clusters.push({
 				...p,
 				group: g.id,
 				collection: g.collection,
 				hue: g.hue ?? null,
-				relation: lijn?.relation ?? null,
-				direction: lijn?.direction ?? null
+				relation: line?.relation ?? null,
+				direction: line?.direction ?? null
 			});
 		room -= own.length;
 	});
@@ -359,18 +359,18 @@ function rank(i: number, n: number): number {
  * The one line under the drawing that counts what is drawn: `7 bronnen, 1 groep van 38 uitspraken`.
  * Groups of one kind say what they hold; groups of several say `bronnen`.
  */
-export function telregel(s: Pick<Sketch, 'singles' | 'clusters' | 'inClusters'>): string {
-	const delen: string[] = [];
+export function drawnCount(s: Pick<Sketch, 'singles' | 'clusters' | 'inClusters'>): string {
+	const parts: string[] = [];
 	const n = s.singles.length;
-	if (n > 0) delen.push(`${formatCount(n)} ${plural(n, 'bron', 'bronnen')}`);
+	if (n > 0) parts.push(`${formatCount(n)} ${plural(n, 'bron', 'bronnen')}`);
 	const g = s.clusters.length;
 	if (g > 0) {
-		const soorten = new Set(s.clusters.map((c) => c.collection));
-		const soort = soorten.size === 1 && s.clusters[0].collection;
-		const wat = soort ? bronPlural(soort).toLowerCase() : 'bronnen';
-		delen.push(
-			`${formatCount(g)} ${plural(g, 'groep', 'groepen')} van ${formatCount(s.inClusters)} ${wat}`
+		const kinds = new Set(s.clusters.map((c) => c.collection));
+		const kind = kinds.size === 1 && s.clusters[0].collection;
+		const noun = kind ? bronPlural(kind).toLowerCase() : 'bronnen';
+		parts.push(
+			`${formatCount(g)} ${plural(g, 'groep', 'groepen')} van ${formatCount(s.inClusters)} ${noun}`
 		);
 	}
-	return delen.join(', ');
+	return parts.join(', ');
 }

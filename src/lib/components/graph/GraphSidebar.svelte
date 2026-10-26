@@ -31,7 +31,7 @@
 	import { drawClassOf } from '$lib/graph/types';
 	import { GROUP_LABEL, inLegend } from '$lib/graph/collection-role';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import LijnMonster from './LijnMonster.svelte';
+	import LineSample from './LineSample.svelte';
 	import { BRON_LABEL } from '$lib/vocabulary';
 	import { kindCuts } from './kind-cut';
 	import { formatCount } from '$lib/text/getal';
@@ -338,7 +338,7 @@
 					{@const rel = r.relation as Relation}
 					{@const on = !hiddenRelations.has(rel)}
 					<FilterOptie label={r.label} wrap {on} onToggle={() => onToggleRelation(rel)}>
-						{#snippet voor()}<LijnMonster relation={rel} van={sourceKind(rel)} />{/snippet}
+						{#snippet voor()}<LineSample relation={rel} from={sourceKind(rel)} />{/snippet}
 					</FilterOptie>
 				{/each}
 			</section>

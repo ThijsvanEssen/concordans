@@ -6,7 +6,7 @@ import {
 	arrowhead,
 	sketch,
 	divide,
-	telregel,
+	drawnCount,
 	wrap,
 	type SketchGroup
 } from './sketch';
@@ -155,16 +155,16 @@ describe('the line under the drawing', () => {
 			'x',
 			10
 		);
-		expect(telregel(s)).toBe('7 bronnen, 1 groep van 38 uitspraken');
+		expect(drawnCount(s)).toBe('7 bronnen, 1 groep van 38 uitspraken');
 	});
 	it('says bron at one, and bronnen of groups of several kinds', () => {
-		expect(telregel(sketch([group('a', 1, 'articles')]))).toBe('1 bron');
+		expect(drawnCount(sketch([group('a', 1, 'articles')]))).toBe('1 bron');
 		const s = sketch(
 			[group('u', 300, 'judgments', 25), group('k', 200, 'documents', 25)],
 			'x',
 			SKETCH_LIMIT
 		);
-		expect(telregel(s)).toBe('2 groepen van 500 bronnen');
+		expect(drawnCount(s)).toBe('2 groepen van 500 bronnen');
 	});
 });
 

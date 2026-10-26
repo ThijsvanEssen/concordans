@@ -13,37 +13,36 @@
 		PIJL_BREED
 	} from './nodeSprites';
 
+	const WIDTH = 28;
 	let {
 		relation,
-		van = 'article',
-		breedte = 28
+		from = 'article'
 	}: {
 		relation: Relation;
 		/** The kind the line comes from: a citation by an article is structural, otherwise not. */
-		van?: DrawClass;
-		breedte?: number;
+		from?: DrawClass;
 	} = $props();
 
-	const stijl = $derived(edgeStyleFor(relation, null, van));
-	const kleur = $derived(edgeColorFor(relation, van));
-	const dik = $derived(Math.max(lijnDikte(EDGE_WEIGHT[relation]), 1.4));
-	const kop = $derived(stijl === 'lid' ? 0 : dik * pijlLengte());
-	const eind = $derived(breedte - 1);
+	const style = $derived(edgeStyleFor(relation, null, from));
+	const colour = $derived(edgeColorFor(relation, from));
+	const thick = $derived(Math.max(lijnDikte(EDGE_WEIGHT[relation]), 1.4));
+	const head = $derived(style === 'lid' ? 0 : thick * pijlLengte());
+	const end = $derived(WIDTH - 1);
 </script>
 
-<svg width={breedte} height="12" viewBox="0 0 {breedte} 12" aria-hidden="true" class="lm"
+<svg width={WIDTH} height="12" viewBox="0 0 {WIDTH} 12" aria-hidden="true" class="lm"
 	><line
 		x1="1"
 		y1="6"
-		x2={eind - kop}
+		x2={end - head}
 		y2="6"
-		stroke={kleur}
-		stroke-width={dik}
-		stroke-dasharray={edgeDashFor(stijl)}
-	/>{#if kop > 0}<polygon
-			points="{eind - kop},{6 - (kop * PIJL_BREED) / 2} {eind},6 {eind - kop},{6 +
-				(kop * PIJL_BREED) / 2}"
-			fill={kleur}
+		stroke={colour}
+		stroke-width={thick}
+		stroke-dasharray={edgeDashFor(style)}
+	/>{#if head > 0}<polygon
+			points="{end - head},{6 - (head * PIJL_BREED) / 2} {end},6 {end - head},{6 +
+				(head * PIJL_BREED) / 2}"
+			fill={colour}
 		/>{/if}</svg
 >
 
