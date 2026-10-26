@@ -263,7 +263,9 @@
 		</div>
 		{#if model && model.rest > 0}
 			<!-- What the drawing leaves out is counted (Principe 7). -->
-			<p class="rest stil">en {formatCount(model.rest)} andere</p>
+			<p class="rest stil">
+				{formatCount(model.rows.length)} van {formatCount(model.rows.length + model.rest)} gedeelde bronnen
+			</p>
 		{/if}
 	{/if}
 </div>
