@@ -5,6 +5,7 @@ import type { GraphStore } from '$lib/graph/store/types';
 import type { GraphNode } from '$lib/graph/types';
 import { get, writable, type Readable } from 'svelte/store';
 import { getNodeFirst, getNodeVerbonden } from '$lib/api/records';
+import { withoutHeaderDupes } from './header-dupes';
 import { isAborted, report } from '$lib/api/errors';
 import {
 	bucketKey,
@@ -124,7 +125,13 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 	/** The groups with a further page: kept with every state. */
 	let meer = new Set<string>();
 	const put = (st: Omit<VerbondenState, 'options' | 'buckets' | 'meer'>) =>
-		state.set({ ...st, options, buckets, meer });
+		state.set({
+			...st,
+			groups: basis ? withoutHeaderDupes(st.groups, basis) : st.groups,
+			options,
+			buckets,
+			meer
+		});
 	/** Runs the loader of a group of the current bron again; null before its groups stand. */
 	let rerun: ((id: string) => void) | null = null;
 	let controller: AbortController | null = null;
