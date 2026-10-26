@@ -24,7 +24,6 @@
 	// tekstversies: the BWB versions with one wording, folded together. With ?versies
 	// (two tekstversies, `van..tot`, or one lid, `lid-4`) the text gives way to the
 	// comparison; a lid changed since the oldest tekstversie says so in the margin.
-	import { menu } from '$lib/actions/menu';
 	import { getDocumentPassages } from '$lib/api/documents';
 	import { getArticleVersion, getDelegated } from '$lib/api/articles';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
@@ -42,6 +41,8 @@
 	import { inForceOn, peildatumVersions } from '../peildatum';
 	import WholeLawReaderPeildatum from '../WholeLawReaderPeildatum.svelte';
 	import Caret from '$lib/components/ui/Caret.svelte';
+	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import { filterParams, type VerbondenFilter } from '$lib/verbonden/filter';
 	import { atLeast, formatCount } from '$lib/text/getal';
 	import { proposedTextOf, type ProposedText } from '$lib/verbonden/proposed-text';
@@ -115,7 +116,6 @@
 
 	/** The tekstversie on screen, when it is not geldend recht. */
 	let shownIndex = $state<number | null>(null);
-	let versionMenu = $state(false);
 
 	// The toelichting (MvT) that explains this article, if any: a quick popup here, so
 	// the panel on the right can stay reserved for verwijzingen (Verbonden). Its own
@@ -692,23 +692,11 @@
 					<div class="field">
 						<dt>Tekstversies</dt>
 						<dd class="versies">
-							<span
-								class="menu"
-								use:menu={{ open: versionMenu, close: () => (versionMenu = false) }}
-							>
-								<button
-									type="button"
-									class="btn"
-									aria-haspopup="menu"
-									aria-expanded={versionMenu}
-									onclick={() => (versionMenu = !versionMenu)}
-									aria-label="{formatCount(wordings.length)} tekstversies"
-									>{formatCount(wordings.length)}<Caret open={versionMenu} /></button
-								>
-								{#if versionMenu}
+							<TekstMenu label="Tekstversies" tekst={formatCount(wordings.length)}>
+								{#snippet inhoud(sluit)}
 									<!-- One place for the versions: a row reads that text, its change
-				     opens the comparison with the text before it. -->
-									<div class="pop pop--versions" role="menu" aria-label="Tekstversies">
+									     opens the comparison with the text before it. -->
+									<div class="pop--versions">
 										<div class="pop__cols" aria-hidden="true">
 											<span>Lezen</span><span>Wat veranderde</span>
 										</div>
@@ -721,7 +709,7 @@
 													class="tekstmenu__item"
 													onclick={() => {
 														shownIndex = w === current || w === lapse ? null : w.index;
-														versionMenu = false;
+														sluit();
 														// Reading one text folds the comparison away; a text chosen here
 														// is no longer that of the peildatum.
 														if (comparing || crossComparing || peildatum)
@@ -743,7 +731,7 @@
 														href={compareHref(w.index - 1, w.index)}
 														data-sveltekit-noscroll
 														title="Vergelijk met de tekst ervoor"
-														onclick={() => (versionMenu = false)}>{w.summary} →</a
+														onclick={sluit}>{w.summary} →</a
 													>
 												{:else}
 													<span class="pop__change pop__change--none">oudste tekst</span>
@@ -751,8 +739,8 @@
 											</div>
 										{/each}
 									</div>
-								{/if}
-							</span>
+								{/snippet}
+							</TekstMenu>
 						</dd>
 					</div>
 				{/if}
@@ -853,8 +841,7 @@
 		{#if proposedMissing && proposedRow}
 			<p class="note">
 				{notHeld(`De voorgestelde tekst van ${proposedRow.title}`)}.
-				{#if onCloseProposed}<button type="button" class="note__close" onclick={onCloseProposed}
-						>Sluiten</button
+				{#if onCloseProposed}<IconButton label="Sluiten" onclick={onCloseProposed}>×</IconButton
 					>{/if}
 			</p>
 		{/if}
@@ -1082,27 +1069,11 @@
 		align-items: center;
 		gap: var(--s-2);
 	}
-	/* A popup hangs under its row, from the row's start, so it never runs off the reader. */
-	/* The versions' popup hangs from the status line (ReaderHead), not from its words. */
-	.menu {
-		position: static;
-	}
-	.pop {
-		position: absolute;
-		left: 0;
-		max-width: 100%;
-		top: calc(100% + 6px);
-		z-index: var(--z-float);
-		width: 340px;
-		padding: var(--s-2) 0;
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		box-shadow: var(--shadow-modal);
-		font-size: var(--t-micro);
-	}
+	/* The versions in the menu's list: two columns, the text and its change. */
 	.pop--versions {
 		width: 440px;
+		max-width: 100%;
+		font-size: var(--t-micro);
 	}
 	.pop__cols {
 		display: flex;

@@ -642,7 +642,8 @@
 						<div class="shown" class:shown--stale={loading}>
 							{#if list.Rows && rowsShown && rows}
 								{#if rows.length === 0}
-									{@render empty(list.emptyNoun?.(p) ?? list.noun)}
+									<!-- Not while counting: the empty page of the filters before is stale. -->
+									{#if !loading}{@render empty(list.emptyNoun?.(p) ?? list.noun)}{/if}
 								{:else}
 									<div class="list-head" aria-hidden="true">
 										<span>{columns.lead}</span>

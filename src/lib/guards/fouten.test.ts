@@ -51,10 +51,6 @@ describe('errors that are not swallowed', () => {
 				[
 					plek('lib/components/ui/copy.svelte.ts', 'a clipboard that refuses, on its button'),
 					plek(
-						'routes/(main)/onderwerpen/overzicht/+page.svelte',
-						'a CSV made here, not loaded; its button asks again'
-					),
-					plek(
 						'lib/components/explore/BronFailure.svelte',
 						'the heading of the page of a bron that could not be loaded'
 					),

@@ -17,6 +17,10 @@
 	import { readingOrder } from './canvas-keys';
 	import { countCanvas, NO_COUNTS, sameIds, type CanvasCounts } from './canvas-count';
 	import GraphSidebar from './GraphSidebar.svelte';
+	import { kindRows, lightBuckets, kindFocus, type DrawnBron } from './kind-rows';
+	import { contextGroups, panelSettled, panelKinds } from '$lib/verbonden/view';
+	import { lazeKernIds } from '$lib/bron/behoort';
+	import { parseNodeId } from '$lib/vocabulary';
 	import Tijdstrook from './Tijdstrook.svelte';
 	import type { ComponentProps, Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/store/types';
@@ -25,6 +29,7 @@
 	import { isDrawn } from '$lib/graph/collection-role';
 	import {
 		CLUSTER_MAX_LOOSE,
+		clusterHeading,
 		clusterLabel,
 		clustersOf,
 		tussenClustersOf,
@@ -37,6 +42,7 @@
 	import { spriteForVorm, IMAGE_SIZE_BUMP } from './nodeSprites';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { bronNaam } from '$lib/bron/naam';
+	import { dossierOfBron, withDossier, distinctNames } from './canvas-names';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import IconButtonPaar from '$lib/components/ui/IconButtonPaar.svelte';
@@ -44,6 +50,7 @@
 	import { kindColour } from '$lib/bron/kleur';
 	import {
 		containerIdFor,
+		formerMembers,
 		momentOf,
 		type Period,
 		isContainerKind,
@@ -64,7 +71,7 @@
 		type FilterGroup,
 		type VerbondenFilter
 	} from '$lib/verbonden/filter';
-	import { listedGroups, type VerbondenState } from '$lib/verbonden/data-source';
+	import type { VerbondenState } from '$lib/verbonden/data-source';
 	import { CLUSTER_CARD, clusterCardAt, placeCard } from '$lib/selection/card-place';
 	import { relationWords } from '$lib/verbonden/relation-words';
 	import { sentence } from '$lib/network/shared';
@@ -229,6 +236,71 @@
 	// What the canvas draws, as it says it (GraphCanvas `onDrawn`), counted for the Legenda,
 	// the sidebar and the keyboard's list.
 	let drawn: ReadonlySet<string> = new Set();
+	/** The bronnen drawn, a cluster's members each, the anchors and the focus left out. */
+	let drawnBronnen = $state<DrawnBron[]>([]);
+	function drawnBronnenOf(ids: readonly string[]): DrawnBron[] {
+		const focal = (reach?.focal ?? verbonden.id ?? '').toLowerCase();
+		// A focus drawn as a hull (a wet, a dossier, a fractie) holds what it draws: one step.
+		const focus = g.findNode(
+			(id, a) =>
+				id.toLowerCase() === focal &&
+				!a.anchor &&
+				!isContainerKind(lookup.get(id)?.drawClass ?? 'other')
+		);
+		const out: DrawnBron[] = [];
+		const take = (n: GraphNode | undefined, direct: boolean) => {
+			if (!n || n.anchor || n.id.toLowerCase() === focal) return;
+			const props = n.raw?.props ?? undefined;
+			const filterGroup = filterGroupOf(n.collection, n.key, props ?? null);
+			out.push({ id: n.id, collection: n.collection, key: n.key, props, filterGroup, direct });
+		};
+		for (const id of ids) {
+			const c = isClusterId(id) ? clusterById.get(id) : undefined;
+			// A cluster's members hang on the focus alone.
+			if (c) for (const m of c.members) take(store.getNodeById(m) ?? lookup.get(m), true);
+			else take(lookup.get(id), !focus || g.areNeighbors(focus, id));
+		}
+		return out;
+	}
+
+	// Soort around one bron reads Verbonden (kind-rows.ts, N1): its soorten, its words, its counts.
+	let chain = $state<{ id: string; ids: ReadonlySet<string> } | null>(null);
+	$effect(() => {
+		const id = verbonden.id;
+		const bron = id ? parseNodeId(id) : null;
+		if (!id || !bron || chain?.id === id) return;
+		lazeKernIds(bron.collection, bron.key, {}).then(
+			(ids) => {
+				if (verbonden.id === id) chain = { id, ids: new Set(ids) };
+			},
+			() => (chain = { id, ids: new Set() })
+		);
+	});
+	const kindFocusOf = $derived(
+		kindFocus({ netwerkActive, extern: !!externCounts, reach, panelId: verbonden.id })
+	);
+	const kindRowsShown = $derived.by(() => {
+		const bron = kindFocusOf ? parseNodeId(kindFocusOf.id) : null;
+		// Around one bron Soort is Verbonden's from the start: no counts of the canvas before it.
+		if (!kindFocusOf || !bron) return netwerkActive || externCounts ? null : [];
+		// Verbonden of another bron says nothing of this one: its soorten wait.
+		const v = kindFocusOf.own ? verbonden : { groups: [], buckets: null };
+		const ids = kindFocusOf.own && chain?.id === verbonden.id ? chain.ids : new Set<string>();
+		return kindRows({
+			focus: bron,
+			kinds: panelKinds(v, bron.collection, ids),
+			groups: v.groups,
+			chain: ids,
+			drawn: drawnBronnen,
+			buckets: reach?.buckets ?? lightBuckets(v.buckets)
+		});
+	});
+	/** A focus whose leden are drawn filled while current, an outline once gone (N13). */
+	const withCurrentMember = $derived(
+		!!focusContainerId &&
+			formerMembers(containerGroups.get(focusContainerId), vandaag()).size > 0 &&
+			(selection?.collection === 'factions' || selection?.collection === 'committees')
+	);
 	function telCanvas() {
 		const verborgen = metGroepVerborgen({
 			groups: containerGroups.values(),
@@ -246,6 +318,7 @@
 			hiddenRelations: filters.hiddenRelations
 		});
 		canvasCounts = geteld.counts;
+		drawnBronnen = drawnBronnenOf(geteld.drawnIds);
 		telJaren();
 		// The keyboard's list sorts what is drawn: only a change sorts it again.
 		if (
@@ -341,6 +414,11 @@
 	let hoverNode = $state<GraphNode | null>(null);
 	// The bronnen drawn on the canvas, for the keyboard's list of them, and the one in its focus.
 	let drawnIds = $state<string[]>([]);
+	// Its counts once Verbonden is in, the slower of the two, and the canvas has drawn: no
+	// number springs (F5).
+	const kindsSettled = $derived(
+		!!kindFocusOf?.own && panelSettled(verbonden) && drawnIds.length > 0
+	);
 	let keyNode = $state<GraphNode | null>(null);
 	const listNodes = $derived(
 		readingOrder(
@@ -500,6 +578,7 @@
 	$effect(() => {
 		void $instrumentMetaStore;
 		if (g.order === 0) return;
+		untrack(() => nameAll([...lookup.values()].filter((n) => g.hasNode(n.id))));
 		g.forEachNode((id) => {
 			const n = lookup.get(id);
 			if (n) g.setNodeAttribute(id, 'label', nodeLabel(n));
@@ -538,11 +617,31 @@
 	}
 
 	// Node label: the name of the bron (bron/naam.ts), short enough for the canvas; a
-	// Kamerstuk by its kind and number (`stukLabel`). The full name is in the panel and the card.
-	const nodeLabel = (n: GraphNode) =>
-		isClusterId(n.id) || n.drawClass === 'document'
+	// Kamerstuk by its kind, its dossier and its number (`stukLabel`, `metDossier`). The full
+	// name is in the panel and the card.
+	const baseName = (n: GraphNode, eigen = ownDossiers()) =>
+		isClusterId(n.id)
 			? n.label
-			: kort(bronNaam(n, $instrumentMetaStore));
+			: n.drawClass === 'document'
+				? withDossier(n.label, n.raw?.props, eigen)
+				: kort(bronNaam(n, $instrumentMetaStore));
+	/** The dossiers in focus or chosen: their stukken stand in their hull without the number. */
+	const ownDossiers = () =>
+		new Set(
+			[selection?.id, ...pinnedIds]
+				.filter((id): id is string => !!id && id.startsWith('dossiers/'))
+				.map((id) =>
+					dossierOfBron(lookup.get(id) ?? { id, collection: 'dossiers', key: id.slice(9) })
+				)
+				.filter((d): d is string => !!d)
+		);
+	/** The names of the canvas, each its own (`onderscheiden`): set before the nodes are drawn. */
+	let canvasNames = new Map<string, string>();
+	const nameAll = (nodes: GraphNode[]) => {
+		const eigen = ownDossiers();
+		canvasNames = distinctNames(nodes, (n) => baseName(n, eigen));
+	};
+	const nodeLabel = (n: GraphNode) => canvasNames.get(n.id) ?? baseName(n);
 
 	// A container (a wet, fractie, commissie or dossier) is never a canvas node: its
 	// children carry it as a hull instead (`syncContainerAnchors`, GraphCanvas). Nor
@@ -660,10 +759,9 @@
 			clusterById.set(c.id, c);
 			for (const id of c.members) folded.add(id);
 		}
-		drawNodes([
-			...rawNodes.filter((n) => !folded.has(n.id)),
-			...clusters.map((c) => clusterNode(c))
-		]);
+		const toDraw = [...rawNodes.filter((n) => !folded.has(n.id)), ...clusters.map(clusterNode)];
+		nameAll(toDraw.filter(isCanvasNode));
+		drawNodes(toDraw);
 		drawEdges([
 			...rawEdges.filter((e) => !folded.has(e.source) && !folded.has(e.target)),
 			...clusters.flatMap((c) =>
@@ -765,7 +863,20 @@
 	const groupOf = (c: Cluster) => {
 		// The groups Verbonden shows: its kern and inhoud stand elsewhere.
 		const own = verbonden.id?.split('/')[0] ?? '';
-		return groupFor(listedGroups(own as Collection, verbonden.groups), c.collection);
+		return groupFor(contextGroups(verbonden.groups, own as Collection), c.collection);
+	};
+	/**
+	 * Of how many a cluster's kind there are, as Soort says it: the row of the legend that draws
+	 * most of that kind, else the API's whole of its collection (N2). Null when all are there.
+	 */
+	const clusterTotal = (c: Cluster): number | null => {
+		if (c.ends) return null;
+		const row = (kindRowsShown ?? [])
+			.filter((r) => r.collection === c.collection)
+			.sort((a, b) => b.drawn - a.drawn)[0];
+		if (row) return row.total;
+		const buckets = reach?.buckets ?? lightBuckets(verbonden.buckets);
+		return buckets.find((b) => b.collection === c.collection)?.total ?? null;
 	};
 	/** What floats over the canvas and stays readable: the panel Netwerk, zoom, legenda. */
 	const FLOATING = '.canvas-overlay > *, .zoom, .legenda, .vouw';
@@ -1116,8 +1227,9 @@
 
 <!-- Deel and the zoom, the same over the canvas and over a weergave of its own. -->
 {#snippet controls(zoomIn: () => void, zoomOut: () => void, all: () => void, zoomen = true)}
-	{#if balk}<div class="doek-balk">{@render balk()}</div>{/if}
-	{#if zoomen}<div class="zoom">
+	<!-- data-over-doek: what stands over the canvas, kept free by a fit (GraphCanvas). -->
+	{#if balk}<div class="doek-balk" data-over-doek>{@render balk()}</div>{/if}
+	{#if zoomen}<div class="zoom" data-over-doek>
 			<IconButtonPaar
 				name="Zoom"
 				first={{ label: 'Uitzoomen', onclick: zoomOut, sign: '−' }}
@@ -1170,6 +1282,9 @@
 		inFluxCount={inFluxMap.size}
 		{netwerkActive}
 		{hasNodes}
+		{kindRowsShown}
+		{kindsSettled}
+		{withCurrentMember}
 	/>
 {/snippet}
 
@@ -1331,7 +1446,7 @@
 					{@const c = clusterCard.cluster}
 					<CanvasKaart
 						class="cluster-kaart"
-						title={clusterLabel(c)}
+						title={clusterHeading(c, clusterTotal(c))}
 						role="dialog"
 						tabindex="-1"
 						style="left:{clusterCard.x}px; top:{clusterCard.y}px"
@@ -1344,10 +1459,13 @@
 					>
 						{#snippet kop()}
 							<p class="cluster-naam">
-								<KindGlyph collection={c.collection} size={14} />{clusterLabel(c)}
+								<KindGlyph collection={c.collection} size={14} />{clusterHeading(
+									c,
+									clusterTotal(c)
+								)}
 							</p>
 						{/snippet}
-						{#each clusterZinnen( c, c.ends ? null : groupOf(c), (c.ends ?? []).flatMap((e) => {
+						{#each clusterZinnen( c, (c.ends ?? []).flatMap((e) => {
 								const n = lookup.get(e.id);
 								return n ? [kort(bronNaam(n, $instrumentMetaStore))] : [];
 							}) ) as zin (zin)}

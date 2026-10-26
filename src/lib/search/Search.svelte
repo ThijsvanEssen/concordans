@@ -35,6 +35,7 @@
 		onOpen,
 		onSelect,
 		onWiden,
+		onQuery,
 		scope = null,
 		chosen = [],
 		belowField
@@ -58,6 +59,8 @@
 		chosen?: readonly string[];
 		/** Between the field and the list (the kind filters of Bron toevoegen). */
 		belowField?: Snippet;
+		/** Told what stands in the field, as it changes: the start page makes room for the results. */
+		onQuery?: (query: string) => void;
 	} = $props();
 
 	// A result chosen here starts a network of its own, as a double click does (Thijs, 8 Oct);
@@ -90,6 +93,7 @@
 		if (initial) search.query = initial;
 	});
 	search.connect();
+	$effect(() => onQuery?.(search.query.trim()));
 
 	const uid = $props.id();
 	const rowId = (row: number) => `${uid}-row-${row}`;

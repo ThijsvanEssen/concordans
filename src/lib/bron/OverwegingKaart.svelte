@@ -7,6 +7,7 @@
 	// letter of a line in italics runs into it); it scrolls within itself where it is long.
 	// The overweging as a bundel opens a kept one (Overweging), from the detail the reader
 	// shares.
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { afterTick } from '$lib/util/after-tick';
 	import { EDGE } from '$lib/actions/top-layer';
@@ -50,7 +51,6 @@
 		/** Closes the card: its link has scrolled out of view. */
 		onclose: () => void;
 	} = $props();
-
 	let u = $state<Uitspraak | null | 'laden'>('laden');
 	$effect(() => {
 		const p = laadUitspraak(judgment);
@@ -97,7 +97,7 @@
 >
 	<p class="kop">{kop ? `${kop}, ${plaats}` : plaats}</p>
 	{#if u === 'laden'}
-		<p class="stil">Laden…</p>
+		<LoadState state={{ status: 'loading' }} what="De overweging" />
 	{:else if u && heeftOverweging(u, at)}
 		<div class="tekst"><Overweging uitspraak={u} {at} {doel} {noot} /></div>
 	{:else}

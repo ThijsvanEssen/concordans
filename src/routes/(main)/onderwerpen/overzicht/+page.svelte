@@ -894,7 +894,7 @@
 		{/if}
 	</header>
 	{#if exportFout}
-		<p class="stil" role="alert">De CSV kon niet worden gemaakt.</p>
+		<LoadState state={{ status: 'error', error: exportFout }} what="De CSV" retry={exporteer} />
 	{/if}
 
 	{#if !termen.length}

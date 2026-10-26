@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Schema } from '$lib/api/types';
 	import { formatCount } from '$lib/text/getal';
-	import { korteDatum } from '$lib/text/datum';
+	import { korteDatum, vandaag } from '$lib/text/datum';
 	import { axisLabels } from '../years-axis';
 	import type { ViewProps } from '../lists/list';
 	import type { JudgmentsState } from '../lists/judgments';
@@ -17,9 +17,9 @@
 			.slice(-40)
 	);
 	/** The running year is not whole: dashed, with the day it runs to in its title. */
-	const today = new Date();
-	const running = String(today.getFullYear());
-	const upTo = `t/m ${korteDatum(today.toISOString().slice(0, 10))}`;
+	const today = vandaag();
+	const running = today.slice(0, 4);
+	const upTo = `t/m ${korteDatum(today)}`;
 	const nameOf = (year: string, count: number) =>
 		`${year}${year === running ? `, ${upTo}` : ''}: ${formatCount(count)} uitspraken`;
 	/** The width of the year axis, for the labels that fit (`axisLabels`). */
