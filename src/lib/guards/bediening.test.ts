@@ -19,10 +19,6 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 	it('shows a choice in the control itself, without chips', () => {
 		const chips: Uitzondering[] = [
 			{
-				pad: 'lib/selection/NetwerkPanel.svelte',
-				reden: 'the chosen bronnen: content, not a filter'
-			},
-			{
 				pad: 'lib/components/explore/index/FilterBar.svelte',
 				reden: 'the filters chosen by the count of a list, each taking it off (besluit 40)'
 			}

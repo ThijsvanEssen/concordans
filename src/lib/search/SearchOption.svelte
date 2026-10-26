@@ -9,7 +9,6 @@
 		active,
 		href,
 		citation = false,
-		compact = false,
 		onchoose,
 		onpoint,
 		children
@@ -20,8 +19,6 @@
 		href?: string;
 		/** A row for what the query cites: its kind and title on one line. */
 		citation?: boolean;
-		/** A narrow list, for a panel. */
-		compact?: boolean;
 		onchoose: () => void;
 		onpoint: (e: PointerEvent) => void;
 		children: Snippet;
@@ -33,7 +30,6 @@
 		{id}
 		class="row"
 		class:row--citation={citation}
-		class:row--compact={compact}
 		class:is-active={active}
 		role="option"
 		tabindex="-1"
@@ -52,7 +48,6 @@
 		{id}
 		class="row"
 		class:row--citation={citation}
-		class:row--compact={compact}
 		class:is-active={active}
 		role="option"
 		tabindex="-1"
@@ -80,17 +75,6 @@
 	}
 	.row.is-active {
 		background: var(--paper-2);
-	}
-	.row--compact {
-		flex-direction: column;
-		align-items: stretch;
-		gap: 0;
-		padding: var(--s-1) var(--s-3);
-	}
-	.row--compact.row--citation {
-		flex-direction: row;
-		align-items: baseline;
-		gap: var(--s-2);
 	}
 
 	@media (max-width: 640px) {

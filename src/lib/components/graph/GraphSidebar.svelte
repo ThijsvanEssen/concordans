@@ -300,10 +300,10 @@
 			<div class="verder__inhoud" id="netwerk-meer">
 				{#if meer}<section class="block">{@render meer()}</section>{/if}
 				<section class="block">
-					<div class="block__label">Voorkeuze</div>
+					<div class="block__label">Beperk tot</div>
 					<TekstMenu
-						label="Voorkeuze"
-						tekst="Voorkeuze"
+						label="Beperk tot"
+						tekst="Beperk tot"
 						waarde={activePreset(filter)?.id ?? null}
 						opties={PRESETS.map((p) => ({ waarde: p.id, label: p.label }))}
 						onSelect={(id) => {
@@ -326,7 +326,7 @@
 				</section>
 
 				<section class="block">
-					<h3 class="block__title">Groepering</h3>
+					<h3 class="block__title">Indeling</h3>
 					{#each Object.keys(GROUP_LABEL) as ck (ck)}
 						{@const kind = ck as ContainerKind}
 						<FilterOptie
@@ -367,10 +367,10 @@
 							? 'De verbonden bronnen van de gekozen bron erbij; het netwerk blijft'
 							: `Stappen vanaf de bron, per stap hooguit ${grens} bronnen`}
 					>
-						{netwerkActive ? 'Verbonden bronnen' : 'Aantal stappen'}
+						Aantal stappen
 					</div>
 					<Keuze
-						label={netwerkActive ? 'Verbonden bronnen' : 'Aantal stappen'}
+						label="Aantal stappen"
 						waarde={netwerkActive ? null : String(depth)}
 						opties={DEPTHS.map((d) => {
 							const reden =
@@ -407,10 +407,10 @@
 				{/if}
 
 				<section class="block">
-					<div class="block__label">Toon erbij</div>
+					<div class="block__label">Markering</div>
 					<div class="block">
 						<TekstMenu
-							label="Toon erbij"
+							label="Markering"
 							waarde={mutOn ? 'mut' : heatOn ? 'heat' : 'geen'}
 							opties={[
 								{ waarde: 'geen', label: 'Geen' },
