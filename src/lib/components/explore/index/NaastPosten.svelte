@@ -201,6 +201,8 @@
 
 {#if ministries.state.status === 'error'}
 	<LoadState state={ministries.state} what="De ministeries" plural retry={ministries.retry} />
+{:else if scherm.smal && !binnen && groepen.length === 0}
+	<LoadState state={{ status: 'loading' }} what="De kabinetten" plural />
 {:else if scherm.smal}
 	<Tijdlijn
 		{groepen}
@@ -208,7 +210,7 @@
 		volgorde="aflopend"
 		{openId}
 		{onToggle}
-		leeg={binnen ? 'Geen ministers met deze naam.' : 'Laden…'}
+		leeg="Geen ministers met deze naam."
 	/>
 {:else}
 	<div class="matrix" style:--kol={kabinetten.length} data-zijscroll>
@@ -266,7 +268,11 @@
 				<div class="open">{@render postOpen(geopend.p, geopend.c)}</div>
 			{/if}
 		{:else}
-			<p class="stil">{binnen ? 'Geen ministers met deze naam.' : 'Laden…'}</p>
+			{#if binnen}<p class="stil">Geen ministers met deze naam.</p>{:else}<LoadState
+					state={{ status: 'loading' }}
+					what="De kabinetten"
+					plural
+				/>{/if}
 		{/each}
 	</div>
 {/if}

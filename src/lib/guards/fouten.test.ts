@@ -51,10 +51,6 @@ describe('errors that are not swallowed', () => {
 				[
 					plek('lib/components/ui/copy.svelte.ts', 'a clipboard that refuses, on its button'),
 					plek(
-						'routes/(main)/onderwerpen/overzicht/+page.svelte',
-						'a CSV made here, not loaded; its button asks again'
-					),
-					plek(
 						'lib/components/explore/BronFailure.svelte',
 						'the heading of the page of a bron that could not be loaded'
 					),
@@ -95,7 +91,7 @@ describe('errors that are not swallowed', () => {
 				[
 					plek('lib/components/ui/LoadState.svelte'),
 					plek(
-						'lib/components/explore/IndexView.svelte',
+						'lib/components/ui/AlleN.svelte',
 						'Volgende becomes Opnieuw in its own place under the rows loaded'
 					)
 				]

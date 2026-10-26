@@ -185,14 +185,14 @@ test('Actueel keeps its days when the next ones fail, and says so below them wit
 	page.on('request', (r) => {
 		if (/\/api\/feed\?.*cursor=/.test(r.url())) asked++;
 	});
-	await page.getByRole('button', { name: 'Eerdere dagen' }).click();
+	await page.getByRole('button', { name: 'Volgende dagen' }).click();
 	const alert = page
 		.getByRole('alert')
 		.filter({ hasText: 'De eerdere dagen konden niet op tijd worden geladen.' });
 	await expect(alert).toBeVisible();
 	await expect(days).toBeVisible();
-	// Opnieuw takes the place of Eerdere dagen: one way to ask again.
-	await expect(page.getByRole('button', { name: 'Eerdere dagen' })).toHaveCount(0);
+	// Opnieuw takes the place of Volgende dagen: one way to ask again.
+	await expect(page.getByRole('button', { name: 'Volgende dagen' })).toHaveCount(0);
 	await alert.getByRole('button', { name: 'Opnieuw' }).click();
 	await expect.poll(() => asked).toBe(2);
 	await expect(alert).toBeVisible();

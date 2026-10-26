@@ -3,7 +3,7 @@
 	// day it reached (0.79.28): that day, and further back as the same question up to the day
 	// before. One line on Actueel and on Gevolgd alike.
 	import { fromDate } from '$lib/text/datum';
-	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import AlleN from '$lib/components/ui/AlleN.svelte';
 
 	let {
 		vanaf,
@@ -19,9 +19,7 @@
 
 <p class="doorzocht">
 	Doorzocht {fromDate(vanaf)}.
-	<TekstLink disabled={loading} onclick={onVerder}
-		>{loading ? 'Laden…' : 'Zoek verder terug'}</TekstLink
-	>
+	<AlleN volgende noun="dagen" laden={loading} onclick={onVerder} />
 </p>
 
 <style>

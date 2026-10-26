@@ -20,6 +20,7 @@
 	import type { Citation } from '$lib/text/cite';
 	import { citationRecord } from '$lib/text/citation-record';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
+	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import IconButtonPaar from '$lib/components/ui/IconButtonPaar.svelte';
 	import Badge from './Badge.svelte';
@@ -207,6 +208,8 @@
 	// A line wider than its track (a phone, or beside the network) opens on A and B, not on
 	// the oldest text: the track scrolls itself, never the page, to centre A to B.
 	let lineEl = $state<HTMLOListElement | null>(null);
+	/** Every BWB version stands under the comparison (AlleN, "Minder"). */
+	let bwbOpen = $state(false);
 	$effect(() => {
 		const track = lineEl;
 		const marks = [older.index, newer.index];
@@ -525,48 +528,57 @@
 	{/if}
 
 	<!-- ── Every BWB version, for the record ── -->
-	<details class="bwb">
-		<summary>Alle BWB-versies ({versions.length})</summary>
-		<p class="bwb__note">
-			Het BWB maakt een nieuwe versie van een artikel bij elke wijziging van de regeling. Versies
-			zonder tekstwijziging vallen in de vergelijking samen met de tekstversie ervoor.
-		</p>
-		<table class="table">
-			<thead>
-				<tr>
-					<th scope="col">Geldig</th>
-					<th scope="col">Tekst</th>
-					<th scope="col">Publicatie</th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each versions as v, k (v.key)}
-					{@const changed = k === 0 || v.text_changed}
-					{@const w = wordingOf(wordings, v.valid_from ?? v.key)}
-					<tr class:is-quiet={!changed}>
-						<td class="table__when"
-							>{capitalize(
-								period({
-									from: v.valid_from ?? null,
-									until: v === versions.at(-1) && !v.valid_until ? null : (v.valid_until ?? null)
-								})
-							)}</td
-						>
-						<td>
-							{#if !changed}
-								<span title={effectOf(v) ? `BWB: ${effectOf(v)}` : undefined}
-									>Geen tekstwijziging</span
-								>
-							{:else if w}
-								{capitalize(w.summary)}
-							{/if}
-						</td>
-						<td class="table__source">{@render herkomst(v)}</td>
+	<div class="bwb">
+		<div hidden={!bwbOpen}>
+			<p class="bwb__note">
+				Het BWB maakt een nieuwe versie van een artikel bij elke wijziging van de regeling. Versies
+				zonder tekstwijziging vallen in de vergelijking samen met de tekstversie ervoor.
+			</p>
+			<table class="table">
+				<thead>
+					<tr>
+						<th scope="col">Geldig</th>
+						<th scope="col">Tekst</th>
+						<th scope="col">Publicatie</th>
 					</tr>
-				{/each}
-			</tbody>
-		</table>
-	</details>
+				</thead>
+				<tbody>
+					{#each versions as v, k (v.key)}
+						{@const changed = k === 0 || v.text_changed}
+						{@const w = wordingOf(wordings, v.valid_from ?? v.key)}
+						<tr class:is-quiet={!changed}>
+							<td class="table__when"
+								>{capitalize(
+									period({
+										from: v.valid_from ?? null,
+										until: v === versions.at(-1) && !v.valid_until ? null : (v.valid_until ?? null)
+									})
+								)}</td
+							>
+							<td>
+								{#if !changed}
+									<span title={effectOf(v) ? `BWB: ${effectOf(v)}` : undefined}
+										>Geen tekstwijziging</span
+									>
+								{:else if w}
+									{capitalize(w.summary)}
+								{/if}
+							</td>
+							<td class="table__source">{@render herkomst(v)}</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+		<p class="bwb__alle">
+			<AlleN
+				aantal={versions.length}
+				noun="BWB-versies"
+				open={bwbOpen}
+				onclick={() => (bwbOpen = !bwbOpen)}
+			/>
+		</p>
+	</div>
 </section>
 
 <style>
@@ -888,18 +900,11 @@
 		margin-top: var(--s-7);
 		border-top: 1px solid var(--rule);
 	}
-	.bwb summary {
-		padding: var(--s-3) 0;
-		color: var(--ink-2);
-		cursor: pointer;
-	}
-	.bwb summary:hover {
-		color: var(--ink);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
+	.bwb__alle {
+		margin: var(--s-3) 0;
 	}
 	.bwb__note {
-		margin: 0 0 var(--s-3);
+		margin: var(--s-3) 0;
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
