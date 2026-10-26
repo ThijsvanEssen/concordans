@@ -114,7 +114,9 @@ test('an empty werkplek is empty: the field Bron toevoegen, no example', async (
 			.or(network.getByRole('button', { name: 'Bron toevoegen' }))
 	).toBeVisible();
 	await expect(network.getByRole('button', { pressed: true })).toHaveCount(0);
-	await page.waitForTimeout(500);
+	// The werkplek has drawn its empty canvas: the heading is there, and no bron on the list.
+	await expect(page.getByTestId('werkplek')).toBeVisible();
+	await expect(page.locator('.canvas-node-list li')).toHaveCount(0);
 	await expect(page).toHaveURL(/\/explore$/);
 	await expect(page.getByText(/^Voorbeeld/)).toHaveCount(0);
 });

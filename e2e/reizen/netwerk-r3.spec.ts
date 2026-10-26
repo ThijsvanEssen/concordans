@@ -32,12 +32,11 @@ test('Soort off for the kind of the chosen bronnen leaves them and the filters s
 test('the last bron on /explore leaves with × and stays gone (R3-N B2)', async ({ page }) => {
 	await page.goto('/explore?netwerk=instruments/bwbr0005537');
 	await page.getByRole('button', { name: /^Haal .* uit netwerk$/ }).click();
-	await expect(page).not.toHaveURL(/netwerk=/);
-	await page.waitForTimeout(500);
-	await expect(page).not.toHaveURL(/netwerk=/);
+	// The top bar counting no bron is the signal that the page has taken it out and settled.
 	await expect(
 		page.getByRole('banner').getByRole('button', { name: /^Netwerk/ })
 	).toHaveAccessibleName('Netwerk');
+	await expect(page).not.toHaveURL(/netwerk=/);
 });
 
 test('Keten on /explore with a law draws its keten (R3-N B3)', async ({ page, touch }) => {
@@ -85,6 +84,15 @@ test('no "?" for judgments both cite where one end cites none (R3-N B7)', async 
 		'/leden/rob-jetten?mode=netwerk&weergave=verband&netwerk=instruments/bwbr0005537'
 	);
 	await expect(page.getByText('Rob Jetten').first()).toBeVisible();
+	// Absence counts only once Verband has answered: its drawing, its list or its empty line.
+	const shared = page.locator('.shared');
+	await expect(
+		shared
+			.getByRole('group', { name: 'Verband' })
+			.or(shared.locator('.ladder, .gap, .empty'))
+			.first()
+	).toBeVisible();
+	await expect(shared.getByText('Verband zoeken')).toHaveCount(0);
 	await expect(page.getByText(/die beide aanhalen/)).toHaveCount(0);
 });
 
