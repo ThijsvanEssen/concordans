@@ -67,7 +67,8 @@
 			<h2 class="section-title">Delen</h2>
 			<p>
 				Een bundel of de gevolgde onderwerpen gaan mee als bestand of als link. Een link draagt ze
-				in het deel na het hekje, dat de browser niet naar de server stuurt.
+				in het deel na het hekje, dat de browser niet naar de server stuurt. Een oudere link met ze
+				achter het vraagteken wordt bij het openen omgezet; die ene keer ziet de server ze wel.
 			</p>
 		</div>
 

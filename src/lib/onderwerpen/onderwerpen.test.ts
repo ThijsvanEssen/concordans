@@ -4,6 +4,7 @@ import {
 	deelAdres,
 	dossiersFromParams,
 	gedeeldeParams,
+	naarFragment,
 	followDossier,
 	followsDossier,
 	haalTermWeg,
@@ -154,6 +155,19 @@ describe('onderwerpen', () => {
 		expect(wettenUitParams(new URLSearchParams('wet=BWBR0005289/6:162&wet=onzin'))).toEqual([
 			{ bwb: 'BWBR0005289', titel: 'BWBR0005289', artikel: '6:162' }
 		]);
+	});
+
+	it('moves the topics of a link of before from the query to the fragment', () => {
+		const oud = new URL('https://x/onderwerpen?wet=BWBR0052872/3&onderwerp=stikstof&q=1');
+		expect(naarFragment(oud)).toBe('/onderwerpen?q=1#onderwerp=stikstof&wet=BWBR0052872%2F3');
+		const nieuw = new URL(deelAdres([{ termen: ['stikstof'] }]), 'https://x');
+		expect(naarFragment(nieuw)).toBeNull();
+		// Moved, the address still reads the same.
+		const naar = new URL(naarFragment(oud)!, 'https://x');
+		expect(wettenUitParams(gedeeldeParams(naar))).toEqual([
+			{ bwb: 'BWBR0052872', titel: 'BWBR0052872', artikel: '3' }
+		]);
+		expect(topicsOf(gedeeldeParams(naar))).toEqual([['stikstof']]);
 	});
 
 	it('follows a treaty as a law: its BWB id is a BWBV', () => {

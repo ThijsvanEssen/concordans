@@ -316,7 +316,25 @@ export function gedeeldeParams(url: URL): URLSearchParams {
 	return p;
 }
 
-// `?wet=BWBR0052872` a law, `?wet=BWBR0052872/3` an article of it (a number may hold a `:`).
+const GEDEELD = ['onderwerp', 'wet', 'dossier'];
+
+/**
+ * The address a link of before opens at: its shared topics moved from the query to the fragment,
+ * the rest of the query kept. Null when the query holds none.
+ */
+export function naarFragment(url: URL): string | null {
+	const q = new URLSearchParams(url.search);
+	if (!GEDEELD.some((k) => q.has(k))) return null;
+	const frag = new URLSearchParams(url.hash.slice(1));
+	for (const k of GEDEELD) {
+		for (const v of q.getAll(k)) frag.append(k, v);
+		q.delete(k);
+	}
+	const rest = q.size ? `?${q}` : '';
+	return `${url.pathname}${rest}#${frag}`;
+}
+
+// `#wet=BWBR0052872` a law, `#wet=BWBR0052872/3` an article of it (a number may hold a `:`).
 const naarWetParam = (w: GevolgdeWet) =>
 	`${w.bwb.toUpperCase()}${w.artikel ? `/${w.artikel}` : ''}`;
 

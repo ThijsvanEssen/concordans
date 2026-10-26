@@ -32,6 +32,7 @@
 		deelAdres,
 		dossiersFromParams,
 		gedeeldeParams,
+		naarFragment,
 		followedDossierName,
 		isNieuw,
 		isWords,
@@ -83,6 +84,11 @@
 			gezien: null
 		}))
 	]);
+	// A link of before holds its topics in the query: the same page, now with them in the fragment.
+	$effect(() => {
+		const adres = naarFragment(page.url);
+		if (adres) history.replaceState(history.state, '', adres);
+	});
 	let eigen = $state<Onderwerp[]>([]);
 	let geladen = $state(false);
 	$effect(() => {
