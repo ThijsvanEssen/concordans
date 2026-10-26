@@ -115,4 +115,22 @@ describe('buildDossierHub: the wet from the dossier', () => {
 		const zonder = buildDossierHub({ instruments: [cbw] } as never, null);
 		expect(zonder.laws[0].identifier).toBe('BWBR0052872');
 	});
+
+	it('counts the documents past its page with the Tweede Kamer (N1: 100 said, 146 there)', () => {
+		const doc = (key: string, chamber: string) => ({ key, chamber, display_name: key });
+		const documents = {
+			total: 146,
+			items: [
+				...Array.from({ length: 98 }, (_, i) => doc(`tk_${i}`, 'TK')),
+				doc('ek_1', 'EK'),
+				doc('ek_2', 'EK')
+			]
+		};
+		const hub = buildDossierHub(null, documents as never);
+		expect(hub.tweedeKamer).toHaveLength(98);
+		expect(hub.tkTotal).toBe(144);
+		expect(
+			buildDossierHub(null, { total: 2, items: documents.items.slice(0, 2) } as never).tkTotal
+		).toBeUndefined();
+	});
 });

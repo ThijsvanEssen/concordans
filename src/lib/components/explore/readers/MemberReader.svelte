@@ -12,7 +12,6 @@
 	import { formatCount } from '$lib/text/getal';
 	import { korteDatum, vandaag, yearsOf } from '$lib/text/datum';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
-	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { getMember, getMemberAuthored } from '$lib/api/records';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
@@ -471,9 +470,7 @@
 							</p>
 						{:else if showAllVotes && meer}
 							<p class="alle">
-								<TekstLink onclick={meerInOffice}
-									>{inOffice!.laden ? 'Laden…' : 'Meer stemmen als bewindspersoon'}</TekstLink
-								>
+								<AlleN volgende noun="stemmen" laden={inOffice!.laden} onclick={meerInOffice} />
 							</p>
 						{/if}
 					</Sectie>

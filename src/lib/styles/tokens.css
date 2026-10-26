@@ -32,7 +32,7 @@
 
 	/* An outcome, always with its shape or word beside it: passed, done, yes; rejected,
 	   withdrawn, no. Dashed is open or expected and needs no colour. */
-	--uitkomst-ja: #2f7d3a;
+	--uitkomst-ja: #2c7737;
 	--uitkomst-nee: var(--accent);
 
 	/* The kinds of bron in the network, in four colours (and ink): lines and areas, a hull
@@ -146,7 +146,7 @@
 	--veld-h-raak: calc(var(--s-6) + var(--s-3));
 	/* An underline: how far below the text it runs; tight under small text in a row. */
 	--onderstreping: 3px;
-	--underline-offset-tight: 2px;
+	--onderstreping-krap: 2px;
 
 	/* Radii */
 	--r-1: 3px; /* buttons, inputs */

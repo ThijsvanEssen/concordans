@@ -6,6 +6,7 @@
 import { motionOrAmendment } from '$lib/text/document-kind';
 import { getDossierAmendments } from '$lib/api/dossiers';
 import type { Schema } from '$lib/api/types';
+import { maandagVan } from '$lib/text/datum';
 import { votesShort } from '$lib/votes/stemming';
 
 /** A paper of an amendment: a stop in its route. `nieuw` where it replaces no other. */
@@ -83,13 +84,6 @@ export function besluitSoort(kind: string | null | undefined): string | null {
 
 /** Above this many days the columns are weeks, so a long dossier stays one screen wide. */
 const MAX_DAGEN = 14;
-
-/** The Monday of the week of a day, as YYYY-MM-DD. */
-export function maandagVan(dag: string): string {
-	const d = new Date(`${dag}T12:00:00Z`);
-	d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
-	return d.toISOString().slice(0, 10);
-}
 
 /** Without a vote the word of the decision: the API's outcome, else the BesluitSoort. */
 function uitslagVan(b: Keten['decision']): Uitslag | null {

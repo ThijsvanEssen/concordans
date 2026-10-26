@@ -83,7 +83,7 @@ describe('the days counted on Actueel', () => {
 		open('/actueel');
 		const { getByText } = render(Page);
 		await settle();
-		await fireEvent.click(getByText('Eerdere dagen'));
+		await fireEvent.click(getByText('Volgende dagen'));
 		await settle();
 		// The day held back, with the days the page added.
 		expect(summaries()).toEqual([
@@ -94,11 +94,11 @@ describe('the days counted on Actueel', () => {
 });
 
 describe('Back to Actueel', () => {
-	it('finds the days as they stood, Eerdere dagen included, without asking them again', async () => {
+	it('finds the days as they stood, Volgende dagen included, without asking them again', async () => {
 		open('/actueel?soort=Motie');
 		const first = render(Page);
 		await settle();
-		await fireEvent.click(first.getByText('Eerdere dagen'));
+		await fireEvent.click(first.getByText('Volgende dagen'));
 		await settle();
 		expect(first.getByText('d')).toBeTruthy();
 		const asked = api.asked('/api/feed').filter(({ query }) => !query?.facets).length;

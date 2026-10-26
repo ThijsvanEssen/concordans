@@ -30,7 +30,7 @@
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import Follow from '$lib/components/ui/Follow.svelte';
 	import { atomHref } from '$lib/components/actueel/feed';
-	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import FilterBar from './index/FilterBar.svelte';
 	import { activeFilters, type FacetGroup } from './index/facets';
@@ -205,6 +205,8 @@
 	/** Loads the page from `offset` of the list asked last; a newer load aborts `signal`. */
 	let fetchPage: (offset: number, signal: AbortSignal) => Promise<void> = async () => {};
 
+	/** The rows the next page brings: the list's own limit, else a page. */
+	let pageSize = $state(PAGE);
 	let loadMoreAbort: AbortController | null = null;
 	/** The load in progress, which a list kept from before replaces (see Coming back). */
 	let loadAbort: AbortController | null = null;
@@ -218,6 +220,7 @@
 		// The rows asked at a time: the list's own limit, else a page.
 		const limit = (query as { limit?: unknown } | null)?.limit;
 		const size = typeof limit === 'number' ? limit : PAGE;
+		pageSize = size;
 		// A first page sets its state while this effect runs: read without depending on it.
 		const set = (patch: Record<string, unknown>) =>
 			untrack(() => {
@@ -639,7 +642,8 @@
 						<div class="shown" class:shown--stale={loading}>
 							{#if list.Rows && rowsShown && rows}
 								{#if rows.length === 0}
-									{@render empty(list.emptyNoun?.(p) ?? list.noun)}
+									<!-- Not while counting: the empty page of the filters before is stale. -->
+									{#if !loading}{@render empty(list.emptyNoun?.(p) ?? list.noun)}{/if}
 								{:else}
 									<div class="list-head" aria-hidden="true">
 										<span>{columns.lead}</span>
@@ -763,11 +767,15 @@
 					<Kenmerk error={loadMoreError.error} />
 				</p>
 			{/if}
-			{#if loadingMore}<span>Laden…</span>{:else}<TekstLink onclick={loadMore}
-					>{loadMoreError
-						? 'Opnieuw'
-						: `Volgende ${noun}${remaining > 0 ? `, nog ${formatCount(remaining)}` : ''}`}</TekstLink
-				>{/if}
+			<AlleN
+				volgende
+				{noun}
+				stap={pageSize}
+				rest={remaining > 0 ? remaining : null}
+				laden={loadingMore}
+				opnieuw={!!loadMoreError}
+				onclick={loadMore}
+			/>
 		</div>
 	{/if}
 {/snippet}

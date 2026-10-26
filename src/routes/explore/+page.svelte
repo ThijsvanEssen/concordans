@@ -860,7 +860,7 @@
 		const node = mode === 'index' ? null : selectedNode;
 		// In Tekst on a phone Verbonden stands under the text: it loads once it comes in view.
 		const panel = mode === 'read' && panelSeen ? 'verbonden' : mobilePanel;
-		const view = { phone: telefoon, table: tableMode, panel };
+		const view = { phone: telefoon, table: tableMode, panel, canvasOnly: mode === 'graph' };
 		if (node && !verbondenInView(node.collection, view)) return;
 		source.load(node);
 	});

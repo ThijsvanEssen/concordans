@@ -17,6 +17,12 @@ type Role = {
 	 */
 	neighbour: boolean;
 	column: 0 | 1 | 2;
+	/**
+	 * The hull it is drawn as when it is the focus or chosen, where it has none as a neighbour:
+	 * a ministerie holds its bewindspersonen and toezeggingen then (UX review N5), but a wet or
+	 * a dossier it leads does not go into a hull of it.
+	 */
+	focusHull?: ContainerKind;
 };
 
 export const COLLECTION_ROLE: Record<Collection, Role> = {
@@ -36,7 +42,13 @@ export const COLLECTION_ROLE: Record<Collection, Role> = {
 	factions: { drawClass: 'faction', hull: 'faction', neighbour: true, column: 0 },
 	committees: { drawClass: 'committee', hull: 'committee', neighbour: true, column: 0 },
 	cabinets: { drawClass: 'committee', hull: 'committee', neighbour: true, column: 0 },
-	ministries: { drawClass: 'committee', hull: null, neighbour: true, column: 0 }
+	ministries: {
+		drawClass: 'committee',
+		hull: null,
+		focusHull: 'committee',
+		neighbour: true,
+		column: 0
+	}
 };
 
 /**

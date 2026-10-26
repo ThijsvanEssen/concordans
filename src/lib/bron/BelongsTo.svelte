@@ -318,7 +318,7 @@
 		color: var(--ink-2);
 		text-decoration: underline;
 		text-decoration-color: var(--rule-strong);
-		text-underline-offset: var(--underline-offset-tight);
+		text-underline-offset: var(--onderstreping-krap);
 	}
 	.soort:hover {
 		text-decoration-color: var(--ink);
@@ -446,7 +446,7 @@
 		color: var(--ink-2);
 		text-decoration: underline;
 		text-decoration-color: var(--rule-strong);
-		text-underline-offset: var(--underline-offset-tight);
+		text-underline-offset: var(--onderstreping-krap);
 		overflow-wrap: anywhere;
 	}
 	.rijen a:hover {
