@@ -28,6 +28,7 @@
 	import { LOAD_FAILED, type VerbondenState } from './data-source';
 	import PendingRows, { pendingKind } from './PendingRows.svelte';
 	import PendingGroup from './PendingGroup.svelte';
+	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import GroupHead from './GroupHead.svelte';
 	import TierBar from './TierBar.svelte';
 	import JudgmentOrderLine from './JudgmentOrderLine.svelte';
@@ -523,7 +524,7 @@
 				{/if}
 				<PendingGroup group={p} collection={selection.collection} />
 			{/each}
-			<p class="sr-only" role="status">Verbindingen laden</p>
+			<SlowLoad label="Verbindingen laden" />
 		{/if}
 
 		{#each overview ? [] : shown as g, i (g.id)}
