@@ -3,7 +3,7 @@
 // passed bill with its law, and a memorie van toelichting beside the article it explains.
 import { patchApi } from '../support/api';
 import { expect, test } from '../support/test';
-import { openFilter } from '../support/filters';
+import { chip, openFilter } from '../support/filters';
 import { naarVerbonden } from '../support/navigation';
 
 test('a dossier shows where it stands and opens a stuk of its procedure in place', async ({
@@ -130,22 +130,43 @@ test('a motion of censure is named so in its head', async ({ page }) => {
 	await expect(page.getByRole('button', { name: /^Motie van afkeuring/ })).toBeVisible();
 });
 
-test('the Stemmingen narrow to the motions of no confidence and say when the Kamer meets', async ({
+test('the Stemmingen narrow to the motions of no confidence, chosen under Stemmingsoort', async ({
 	page,
 	touch
 }) => {
-	await page.goto('/explore?mode=index&kind=decisions&motie=wantrouwen');
-	await expect(
-		page.getByText(/^Volgende vergadering en stemmingen: dinsdag 27\soktober\s2026$/)
-	).toBeVisible();
+	const motion = page.waitForRequest(
+		(r) => r.url().includes('/api/decisions') && r.url().includes('motion_kind=no_confidence')
+	);
+	await page.goto('/explore?mode=index&kind=decisions');
+	const option = await openFilter(page, touch, 'Stemmingsoort');
+	await option(/^Motie van wantrouwen/).click();
+	await expect(page).toHaveURL(/motie=wantrouwen/);
+	await motion;
+	// The rows say the same word as the filter.
 	await expect(
 		page.getByText('Motie van wantrouwen', { exact: true }).filter({ visible: true }).first()
 	).toBeVisible();
-	const option = await openFilter(page, touch, 'Motie', touch ? 'Motie' : 'Meer');
-	const kind = option(/^Motie van wantrouwen/);
-	await expect(kind).toHaveAttribute(touch ? 'aria-pressed' : 'aria-checked', 'true');
-	await kind.click();
+	// On a phone the sheet is still open: the option undoes itself; on a wide screen the chip.
+	await (
+		touch ? option(/^Motie van wantrouwen/) : chip(page, /Motie van wantrouwen wissen/)
+	).click();
 	await expect(page).not.toHaveURL(/motie=/);
+});
+
+test('the Stemmingen say when the Kamer meets', async ({ page }) => {
+	await page.goto('/explore?mode=index&kind=decisions');
+	await expect(
+		page.getByText(/^Volgende vergadering en stemmingen: dinsdag 27\soktober\s2026$/)
+	).toBeVisible();
+});
+
+test('a search of several words goes to the API as one q', async ({ page }) => {
+	const asked = page.waitForRequest(
+		(r) => r.url().includes('/api/decisions') && r.url().includes('q=')
+	);
+	await page.goto('/explore?mode=index&kind=decisions&q=vertrouwen+opzeggen');
+	const url = new URL((await asked).url());
+	expect(url.searchParams.getAll('q')).toEqual(['vertrouwen opzeggen']);
 });
 
 test('a vote gives its outcome and the vote of each fractie', async ({ page }) => {

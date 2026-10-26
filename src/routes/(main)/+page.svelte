@@ -6,6 +6,7 @@
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import Search from '$lib/search/Search.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import { getFeedSummary } from '$lib/api/feed';
 	import { bronHref } from '$lib/bron/href';
 	import type { Collection } from '$lib/vocabulary';
@@ -99,6 +100,8 @@
 
 	const today = vandaag();
 
+	/** Something stands in the search field: the results come before the band of the law network. */
+	let typing = $state(!!query);
 	let lines = $state<TimelineLine[]>([]);
 	/** Actueel's first answer: under way, in, or failed. A phone waits seconds for it. */
 	let feedState = $state<'laden' | 'klaar' | 'fout'>('laden');
@@ -234,13 +237,14 @@
 				scope={chosen?.kinds ?? null}
 				onWiden={() => (scope = null)}
 				initial={query}
+				onQuery={(q) => (typing = q.length > 0)}
 				placeholder={chosen ? `Zoek in ${chosen.label.toLowerCase()}` : START.placeholder}
 			/>
 		</div>
-		{#if lawNetwork}<Wetsnetwerk schets={lawNetwork} />{:else if networkLoading}<div
-				class="wetsnetwerk-plek"
-				aria-hidden="true"
-			></div>{/if}
+		<!-- Under typing the results are the page: no band, and no grey place held for one. -->
+		{#if typing}{:else if lawNetwork}<Wetsnetwerk
+				schets={lawNetwork}
+			/>{:else if networkLoading}<div class="wetsnetwerk-plek" aria-hidden="true"></div>{/if}
 		<Entrances />
 		<NetworkEntry />
 		<section class="actueel" aria-labelledby="actueel-heading">
@@ -257,7 +261,7 @@
 						</div>
 					{/each}
 				</div>
-				<p class="sr-only" role="status">Actueel laden</p>
+				<SlowLoad label="Actueel laden" />
 			{:else if feedState === 'fout'}
 				<LoadState
 					state={{ status: 'error', error: feedError }}

@@ -31,6 +31,16 @@ export function containerKindOf(collection: string): ContainerKind | null {
 }
 
 /**
+ * The container kind of a bron in focus or chosen: its hull, or the hull it has only then (a
+ * ministerie around its bewindspersonen, `focusHull`).
+ */
+export function focusKindOf(collection: string): ContainerKind | null {
+	if (!isCollection(collection)) return null;
+	const role = COLLECTION_ROLE[collection];
+	return role.hull ?? role.focusHull ?? null;
+}
+
+/**
  * Whether an edge to a container kind means the other side belongs in its hull.
  * A wet's members are its articles alone (PART_OF): a stuk that AMENDS or
  * REFERS_TO the wet directly relates to it without being part of it, the same
@@ -246,4 +256,25 @@ export function createContainerGroups() {
 			flush();
 		}
 	};
+}
+
+/**
+ * The members of a group who left before it ended, with the day they left: drawn as an
+ * outline without a name, a current member filled and named (the one marking, N13). A cabinet
+ * that has ended does not make all its bewindspersonen former ones, only those who left before.
+ */
+export function formerMembers(
+	group: Pick<ContainerGroup, 'periods'> | undefined,
+	today: string
+): Map<string, string> {
+	const seats = [...(group?.periods ?? [])];
+	const end = seats.some(([, p]) => p.to === null)
+		? today
+		: (seats
+				.map(([, p]) => p.to as string)
+				.sort()
+				.at(-1) ?? '');
+	return new Map(
+		seats.filter(([, p]) => p.to !== null && p.to < end).map(([id, p]) => [id, p.to as string])
+	);
 }

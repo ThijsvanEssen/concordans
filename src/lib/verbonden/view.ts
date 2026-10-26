@@ -15,6 +15,11 @@ import {
 import { atLeast, formatCount } from '$lib/text/getal';
 import { groupCount, type Group } from './groups';
 import type { Row } from './rows';
+import { refId } from '$lib/bron/href';
+import { ecliKey } from '$lib/text/ecli';
+import { isInhoudGroep, isKernGroep } from '$lib/bron/behoort';
+import { byImportance, importanceOf } from './importance';
+import { kindsOf, type Kind } from './summary';
 
 /** The rows a closed group of the panel shows, and holds the place of while they come. */
 export const PREVIEW_ROWS = 3;
@@ -302,3 +307,83 @@ export function courtCounts(groups: Group[]): Partial<Record<Court, number>> {
 	}
 	return counts;
 }
+
+// ── The one count of Verbonden (N1): the panel, its head and the legend of the werkplek ──
+
+/** Whether a group of a bron is its kern or its own content, which its reader shows itself. */
+export const isOwnGroup = (collection: Collection, g: Group) =>
+	isKernGroep(collection, g) || isInhoudGroep(collection, g);
+
+/** The judgment a translation renders (`translation_of`, an ECLI), as an id. */
+const translationOf = (r: Row) => {
+	const ecli = r.props?.translation_of;
+	return typeof ecli === 'string' && ecli.trim() ? `judgments/${ecliKey(ecli)}` : null;
+};
+
+/**
+ * The ids of the bronnen the reader names itself: the rows of its kern and its own content, and
+ * the bronnen its band's lazy lines name (`keten`, lazeKernIds).
+ */
+const ownIds = (
+	groups: readonly Group[],
+	collection: Collection,
+	chain: ReadonlySet<string> = new Set()
+): Set<string> =>
+	new Set([
+		...groups
+			.filter((g) => isKernGroep(collection, g))
+			.flatMap((g) => g.rows.map((r) => refId(r.ref))),
+		...chain
+	]);
+
+/**
+ * The groups of Verbonden: the context of a bron, without its kern and its own content (the
+ * reader shows those), without a bron the band names already, the most important first where
+ * the API does not rank them (importance.ts).
+ */
+export function contextGroups(
+	groups: readonly Group[],
+	collection: Collection,
+	chain: ReadonlySet<string> = new Set()
+): Group[] {
+	const theirs = ownIds(groups, collection, chain);
+	return groups
+		.filter((g) => !isOwnGroup(collection, g))
+		.map((g) => {
+			const own = g.rows.filter(
+				(r) => !theirs.has(refId(r.ref)) && !theirs.has(translationOf(r) ?? '')
+			);
+			const gone = g.rows.length - own.length;
+			const rank = g.orders ? null : importanceOf(collection, g.id);
+			const rows = rank ? byImportance(own, rank) : own;
+			return gone || rank ? { ...g, rows, total: g.total != null ? g.total - gone : g.total } : g;
+		});
+}
+
+/**
+ * The soorten of Verbonden with their counts: what the panel heads and the legend of the
+ * werkplek both say, so they name the same kinds with the same words and numbers (N1).
+ */
+export function panelKinds(
+	v: { groups: readonly Group[]; buckets?: ReadonlyMap<string, number> | null },
+	collection: Collection,
+	chain: ReadonlySet<string> = new Set()
+): Kind[] {
+	return kindsOf(
+		contextGroups(v.groups, collection, chain),
+		collection,
+		v.buckets,
+		v.groups.filter((g) => isOwnGroup(collection, g))
+	);
+}
+
+/**
+ * Whether the counts of Verbonden are final: nothing loads any more, so no number shown springs
+ * (F5: 267, 583, 4.003). A group that failed is done too: it says so in its place.
+ */
+export const panelSettled = (v: {
+	id?: string | null;
+	loading: boolean;
+	groups: readonly Group[];
+	wachtend?: readonly string[];
+}) => !!v.id && !v.loading && (v.wachtend?.length ?? 0) === 0 && v.groups.every((g) => !g.laden);

@@ -38,6 +38,7 @@
 	import { FILTER_GROUP_VORM } from '$lib/bron/vormen';
 	import type { ContainerKind } from '$lib/graph/container-membership';
 	import { NEIGHBORHOOD_CAP, type NeighborhoodReach } from '$lib/graph/store/types';
+	import { kindRowCount, type KindRow } from './kind-rows';
 
 	let {
 		verbonden,
@@ -64,7 +65,10 @@
 		reach = null,
 		counting = false,
 		periode,
-		meer
+		meer,
+		kindRowsShown = null,
+		kindsSettled = true,
+		withCurrentMember = false
 	}: {
 		verbonden: VerbondenState;
 		filter: VerbondenFilter;
@@ -106,6 +110,12 @@
 		periode?: Snippet;
 		/** First under Meer: the netwerk's own filters (NetworkOptions). */
 		meer?: Snippet;
+		/** Soort around one bron: the soorten of Verbonden, drawn of their whole (kind-rows.ts, N1). */
+		kindRowsShown?: KindRow[] | null;
+		/** Verbonden's counts are in: before that Soort holds their place (F5). */
+		kindsSettled?: boolean;
+		/** Leden drawn filled while current, as an outline once gone: the key says so (N13). */
+		withCurrentMember?: boolean;
 	} = $props();
 
 	const MEER = 'netwerk:meer';
@@ -179,6 +189,20 @@
 	);
 	const isOn = (k: (typeof FILTER_GROUPS)[number]) =>
 		filter.bronnen === null || filter.bronnen.has(k);
+	/** A row of Soort is on while every kind of the bronfilter it holds is. */
+	const rowOn = (r: KindRow) => r.filterGroups.every(isOn);
+	/** Its switch: all its kinds off, or all on again. */
+	function toggleRow(r: KindRow) {
+		const on = rowOn(r);
+		const next = new Set(filter.bronnen ?? FILTER_GROUPS);
+		for (const k of r.filterGroups) {
+			if (on) next.delete(k);
+			else next.add(k);
+		}
+		onFilter({ ...filter, bronnen: next.size === FILTER_GROUPS.length ? null : next });
+	}
+	const rowGroupsOff = (r: KindRow) =>
+		r.filterGroups.map(metGroepUit).find((g): g is ContainerKind[] => !!g) ?? null;
 
 	// A kind whose bronnen all went with a grouping switched off stays, greyed: a click
 	// switches that grouping on again (Thijs, 9 Oct). Partly hidden, the row is as ever.
@@ -205,8 +229,65 @@
 	{#if !hasNodes}
 		<p class="empty stil">Nog geen bronnen in het netwerk.</p>
 	{:else}
-		<!-- The kinds drawn, and one switched off: no rows of nothing, no heading without rows. -->
-		{#if kinds.length > 0}
+		<!-- Around one bron: the soorten of Verbonden, how many drawn of how many (N1, N2). -->
+		{#if kindRowsShown}{#if kindRowsShown.length > 0}
+				<section class="block">
+					<h3 class="block__title">Soort</h3>
+					{#each kindRowsShown as r, i (r.id)}
+						{@const on = rowOn(r)}
+						{#if r.further && !kindRowsShown[i - 1]?.further}
+							<h4 class="block__sub">Een stap verder</h4>
+						{/if}
+						{@const off = rowGroupsOff(r)}
+						<FilterOptie
+							label={r.label}
+							title={off ? `Aan met ${off.map((g) => GROUP_LABEL[g]).join(' en ')}` : undefined}
+							wrap
+							{on}
+							onToggle={() => (off ? off.forEach((g) => onToggleGroup?.(g)) : toggleRow(r))}
+							count={kindRowCount(r, on)}
+							loading={counting || !kindsSettled}
+							empty={r.drawn === 0}
+							gedimd={!!off}
+						>
+							{#snippet voor()}<KindGlyph
+									collection={r.collection ?? undefined}
+									size={11}
+									colour={r.collection ? kindColour(r.collection) : undefined}
+								/>{/snippet}
+						</FilterOptie>
+						{#if r.load && onLaadSoort && kindsSettled}
+							{@const c = r.load}
+							<p class="laad">
+								{#if laadtSoort.has(c)}<span class="stil">Laden…</span>{:else}<TekstLink
+										onclick={() => onLaadSoort(c)}
+										aria-label="Alle {formatCount(r.total ?? 0)} {r.label.toLowerCase()} laden"
+										>Alle laden</TekstLink
+									>{/if}
+							</p>
+						{/if}
+						{#if withCurrentMember && r.collection === 'members'}
+							<!-- The one marking of a current lid, as the canvas draws it (N13). -->
+							<p class="sleutel">
+								<span class="sleutel__item"
+									><KindGlyph collection="members" size={11} colour={kindColour('members')} />Huidig
+									lid</span
+								>
+								<span class="sleutel__item"
+									><KindGlyph
+										collection="members"
+										size={11}
+										open
+										colour={kindColour('members')}
+									/>Oud-lid</span
+								>
+							</p>
+						{/if}
+					{/each}
+				</section>
+			{/if}
+			<!-- The kinds drawn, and one switched off: no rows of nothing, no heading without rows. -->
+		{:else if kinds.length > 0}
 			<section class="block">
 				<h3 class="block__title">Soort</h3>
 				{#each kinds as k (k)}
@@ -466,6 +547,27 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-4);
+	}
+	/* The bronnen one step further, under the soorten of Verbonden. */
+	.block__sub {
+		margin: var(--s-3) 0 var(--s-2);
+		font-size: var(--t-micro);
+		font-weight: 600;
+		color: var(--ink-3);
+	}
+	/* Under the leden: what filled and outline mean on the canvas. */
+	.sleutel {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--s-1) var(--s-4);
+		margin: 0;
+		padding-left: var(--optie-voor);
+		color: var(--ink-3);
+	}
+	.sleutel__item {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-2);
 	}
 	/* Under the count, in its column: the one step of a kind cut off. */
 	.laad {

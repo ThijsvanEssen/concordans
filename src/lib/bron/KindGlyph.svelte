@@ -9,9 +9,18 @@
 		collection,
 		vorm,
 		size = 12,
-		colour
-	}: { collection?: Collection; vorm?: Vorm; size?: number; colour?: string } = $props();
+		colour,
+		open = false
+	}: {
+		collection?: Collection;
+		vorm?: Vorm;
+		size?: number;
+		colour?: string;
+		/** As an outline, as the canvas draws a lid that is gone (N13). */
+		open?: boolean;
+	} = $props();
 	const v = $derived(VORMEN[vorm ?? (collection ? VORM_VAN[collection] : undefined) ?? 'overig']);
+	const lijn = $derived(open || v.wijze === 'lijn');
 </script>
 
 <svg
@@ -21,9 +30,9 @@
 	viewBox="0 0 16 16"
 	aria-hidden="true"
 	style:color={colour}
-	fill={v.wijze === 'lijn' ? 'none' : 'currentColor'}
-	stroke={v.wijze === 'lijn' ? 'currentColor' : 'none'}
-	stroke-width={v.wijze === 'lijn' ? 2 : 0}
+	fill={lijn ? 'none' : 'currentColor'}
+	stroke={lijn ? 'currentColor' : 'none'}
+	stroke-width={lijn ? (open ? 1.25 : 2) : 0}
 	fill-rule={v.wijze === 'gat' ? 'evenodd' : 'nonzero'}
 >
 	<path d={v.d} />

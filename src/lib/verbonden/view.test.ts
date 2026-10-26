@@ -2,7 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { EMPTY_FILTER, hiddenByGroup } from './filter';
 import type { Group } from './groups';
 import type { Row } from './rows';
-import { countLine, filterGroups, memberCountsUnder, fixedGroups, yearHistogram } from './view';
+import {
+	contextGroups,
+	countLine,
+	filterGroups,
+	memberCountsUnder,
+	fixedGroups,
+	panelSettled,
+	panelKinds,
+	yearHistogram
+} from './view';
 
 const row = (over: Partial<Row>): Row => ({
 	ref: { collection: 'judgments', key: 'j' },
@@ -143,5 +152,53 @@ describe('the panel under the filter', () => {
 		const bars = yearHistogram(groups[0].rows, 3);
 		expect(bars.map((b) => b.year)).toEqual([2022, 2023, 2024]);
 		expect(bars.map((b) => b.count)).toEqual([0, 1, 1]);
+	});
+});
+
+describe('the one count of Verbonden (N1)', () => {
+	const g = (over: Partial<Group>): Group => ({
+		id: 'x',
+		label: 'X',
+		rows: [],
+		capped: false,
+		...over
+	});
+	const faction: Group[] = [
+		// Its own content: the reader lists its leden itself.
+		g({
+			id: 'members',
+			label: 'Leden van deze fractie',
+			rows: [row({ ref: { collection: 'members', key: 'a' }, filterGroup: 'leden' })],
+			total: 175
+		}),
+		g({
+			id: 'authored',
+			label: 'Stukken die deze fractie indiende',
+			rows: [
+				row({ ref: { collection: 'documents', key: 'd1' }, filterGroup: 'dossiers' }),
+				row({ ref: { collection: 'documents', key: 'd2' }, filterGroup: 'dossiers' })
+			],
+			total: 40
+		})
+	];
+
+	it('counts the context alone, by soort, the totals of the API', () => {
+		const soorten = panelKinds({ groups: faction }, 'factions');
+		expect(soorten.map((k) => [k.id, k.count])).toEqual([['documents', 40]]);
+		expect(contextGroups(faction, 'factions').map((x) => x.id)).toEqual(['authored']);
+	});
+
+	it('leaves out what the band names already, and takes it off the total', () => {
+		const [k] = panelKinds({ groups: faction }, 'factions', new Set(['documents/d1']));
+		expect(k.count).toBe(39);
+		expect(k.rows.map((r) => r.ref.key)).toEqual(['d2']);
+	});
+
+	it('is final only once nothing loads any more (F5)', () => {
+		const base = { id: 'factions/vvd', loading: false, groups: faction };
+		expect(panelSettled(base)).toBe(true);
+		expect(panelSettled({ ...base, loading: true })).toBe(false);
+		expect(panelSettled({ ...base, wachtend: ['authored'] })).toBe(false);
+		expect(panelSettled({ ...base, id: null })).toBe(false);
 	});
 });
