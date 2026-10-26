@@ -100,26 +100,31 @@ export const decisions = defineList<Row, DecisionsState, ReturnType<typeof query
 			on: p.decisionKind === k,
 			onClick: toggle(patch, 'soort', p.decisionKind, k)
 		}));
-		// The motions of censure and of no confidence, where the votes under the filters hold
-		// one; a chosen kind stays to be undone.
+		// The motions of censure and of no confidence stand in the same filter, as the column
+		// Soort names them: both always, counted where the facet has them.
 		const motionKinds = facetMap(state.facets?.motion_kind);
-		const motions = MOTION_KINDS.filter((k) => motionKinds.has(k) || p.motionKind === k).map(
-			(k) => ({
-				id: k,
-				label: MOTION_KIND_LABEL[k],
-				count: motionKinds.get(k) ?? 0,
-				on: p.motionKind === k,
-				onClick: toggle(
-					patch,
-					'motie',
-					p.motionKind && MOTION_KIND_PARAM[p.motionKind],
-					MOTION_KIND_PARAM[k]
-				)
-			})
-		);
+		const motions = MOTION_KINDS.map((k) => ({
+			id: k,
+			label: MOTION_KIND_LABEL[k],
+			count: motionKinds.get(k) ?? 0,
+			on: p.motionKind === k,
+			onClick: toggle(
+				patch,
+				'motie',
+				p.motionKind && MOTION_KIND_PARAM[p.motionKind],
+				MOTION_KIND_PARAM[k]
+			)
+		}));
 		return [
 			...(kinds.length || p.kamer === 'TK'
-				? [{ id: 'soort', label: 'Stemmingsoort', kind: 'list' as const, options: kinds }]
+				? [
+						{
+							id: 'soort',
+							label: 'Stemmingsoort',
+							kind: 'list' as const,
+							options: [...kinds, ...motions]
+						}
+					]
 				: []),
 			{
 				id: 'passed',
@@ -142,9 +147,6 @@ export const decisions = defineList<Row, DecisionsState, ReturnType<typeof query
 					}
 				]
 			},
-			...(motions.length
-				? [{ id: 'motie', label: 'Motie', kind: 'list' as const, options: motions }]
-				: []),
 			{
 				id: 'dossier',
 				label: 'Dossier',
