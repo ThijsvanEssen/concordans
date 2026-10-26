@@ -1567,11 +1567,19 @@
 	.graph-view {
 		position: relative;
 		display: grid;
-		grid-template-columns: 300px minmax(0, 1fr) 360px;
+		grid-template-columns: var(--strook) minmax(0, 1fr) var(--strook);
+		--strook: calc(var(--zijkolom) + 2 * var(--s-4));
 		width: 100%;
 		height: 100%;
 		overflow: hidden;
 		isolation: isolate;
+	}
+	/* The strip of the card takes room only while a bron is marked. */
+	.graph-view:not(:has(.strook--kaart.is-open)) {
+		grid-template-columns: var(--strook) minmax(0, 1fr);
+	}
+	.strook--kaart:not(.is-open) {
+		display: none;
 	}
 	.strook {
 		min-height: 0;
@@ -1580,11 +1588,11 @@
 		background: var(--paper);
 	}
 	.strook--links {
-		padding: var(--s-4) var(--s-5);
+		padding: var(--s-4);
 		border-right: 1px solid var(--rule);
 	}
 	.strook--kaart {
-		padding: var(--s-5);
+		padding: var(--s-4);
 		border-left: 1px solid var(--rule);
 	}
 	.strook__kop {
@@ -1633,11 +1641,11 @@
 	   between them; the card's strip only while a bron is marked. */
 	@media (min-width: 769px) and (max-width: 1100px) {
 		.graph-view {
-			grid-template-columns: 240px minmax(0, 1fr);
+			grid-template-columns: var(--strook) minmax(0, 1fr);
 		}
 		/* A card marked: a strip of its own, the canvas narrower, nothing covered (T10b). */
 		.graph-view:has(.strook--kaart.is-open) {
-			grid-template-columns: 240px minmax(0, 1fr) 300px;
+			grid-template-columns: var(--strook) minmax(0, 1fr) var(--strook);
 		}
 		.strook--links {
 			padding: var(--s-4);

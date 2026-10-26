@@ -57,9 +57,7 @@
 		{ label: 'Rechtspraak', collection: 'judgments' }
 	];
 
-	// Open on a wide screen; folded on a phone, where the strip heads the drawing.
-	const phone = typeof matchMedia === 'function' && matchMedia('(max-width: 768px)').matches;
-	const open = $derived(isOpen(KEY, !phone));
+	const open = $derived(isOpen(KEY, true));
 	const withDepth = $derived(view !== 'keten' && !empty);
 	const chosen = $derived(
 		empty ? '' : withDepth && !netwerkActive ? `${WORDS[view]}, ${stepsWord(depth)}` : WORDS[view]
@@ -91,7 +89,6 @@
 		</section>
 	{:else}
 		<section class="block">
-			<h3 class="blok__label">Weergave</h3>
 			<div class="view-slot">{@render viewSlot?.()}</div>
 		</section>
 		{#if withDepth}
