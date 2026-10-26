@@ -12,8 +12,10 @@
 
 	let {
 		dossier
-	}: { dossier: Pick<Schema<'DossierDetailResponse'>, 'instruments' | 'enacted' | 'outcome'> } =
-		$props();
+	}: {
+		dossier: Pick<Schema<'DossierDetailResponse'>, 'instruments' | 'enacted' | 'outcome'> &
+			Partial<Pick<Schema<'DossierDetailResponse'>, 'in_force_since'>>;
+	} = $props();
 
 	/** The words before the law, or before the Staatsblad of a publication without one. */
 	const LEAD = { law: 'Vastgesteld als ', cite: 'Bekendgemaakt in ' };
@@ -33,9 +35,20 @@
 				ref={{ collection: 'instruments', key: v.cite.key }}
 				href={v.cite.href}
 				title={v.issued ? `Uitgegeven ${onDate(v.issued)}` : undefined}>{v.cite.text}</BronLink
-			>{/if}{#if v.inForce}{`; ${inForceWords(v.inForce)} ${langeDatum(v.inForce)}`}{/if}.
+			>{/if}{#if v.inForce && v.inForce !== dossier.in_force_since}{`; ${inForceWords(v.inForce)} ${langeDatum(v.inForce)}`}{/if}{#if v.commencement}{v.inForce &&
+			v.inForce !== dossier.in_force_since
+				? ', bij '
+				: '; inwerkingtreding bij '}<BronLink
+				ref={{ collection: 'instruments', key: v.commencement.key }}
+				href={v.commencement.href}>{v.commencement.text}</BronLink
+			>{/if}.
 	</p>
 {/each}
+{#if dossier.in_force_since}
+	<!-- The dossier's end: the day its law came into force, once (the line of a law that came
+	     that day does not say it again). -->
+	<p class="passed-law">Afgerond: in werking sinds {langeDatum(dossier.in_force_since)}.</p>
+{/if}
 {#if laws.length}
 	<p class="passed-law">
 		Vastgesteld als {#each laws as l, i (l.key)}{separatorBefore(i, laws.length)}<BronLink

@@ -55,4 +55,34 @@ describe('PassedLaw', () => {
 		});
 		expect(container.querySelector('p')).toBeNull();
 	});
+
+	it('closes a dossier in force: Afgerond, and the commencement per law without saying the day twice', () => {
+		const { container } = render(PassedLaw, {
+			dossier: {
+				instruments: [],
+				outcome: 'aangenomen',
+				in_force_since: '2024-07-01',
+				enacted: [
+					pub({
+						commencement: {
+							key: 'stb_2024_197',
+							cite: 'Stb. 2024, 197',
+							path: '/stb/2024/197'
+						} as never
+					})
+				]
+			}
+		});
+		expect([...container.querySelectorAll('p')].map(text)).toEqual([
+			'Vastgesteld als Wet betaalbare huur, Stb. 2024, 193; inwerkingtreding bij Stb. 2024, 197.',
+			'Afgerond: in werking sinds 1 juli 2024.'
+		]);
+	});
+
+	it('says no Afgerond where the dossier is not in force', () => {
+		const { container } = render(PassedLaw, {
+			dossier: { instruments: [], outcome: 'aangenomen', in_force_since: null, enacted: [pub({})] }
+		});
+		expect(container.textContent).not.toContain('Afgerond');
+	});
 });

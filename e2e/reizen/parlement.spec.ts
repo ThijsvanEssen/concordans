@@ -73,7 +73,7 @@ test('a passed bill names the law it made, its Staatsblad and the day it came in
 	await page.goto('/dossiers/36496');
 	await expect(
 		page.getByText(
-			'Vastgesteld als Wet betaalbare huur, Stb. 2024, 193; in werking getreden op 1 juli 2024.'
+			'Vastgesteld als Wet betaalbare huur, Stb. 2024, 193; inwerkingtreding bij Stb. 2024, 197.'
 		)
 	).toBeVisible();
 	await expect(page.getByRole('link', { name: 'Stb. 2024, 193' })).toHaveAttribute(
@@ -83,6 +83,15 @@ test('a passed bill names the law it made, its Staatsblad and the day it came in
 	await expect(
 		page.getByRole('link', { name: 'Wet betaalbare huur', exact: true }).first()
 	).toHaveAttribute('href', /\/wetten\/BWBR0049889/);
+	// The chain's ends: who brought the bill in, and the day it was finished.
+	await expect(page.getByText('Voorstel van de regering, ingediend door')).toContainText(
+		'H.M. de Jonge, minister van Binnenlandse Zaken en Koninkrijksrelaties'
+	);
+	await expect(page.getByText('Afgerond: in werking sinds 1 juli 2024.')).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Stb. 2024, 197' })).toHaveAttribute(
+		'href',
+		'/stb/2024/197'
+	);
 });
 
 test('a withdrawn bill says so in its stand, with the letter that withdrew it', async ({

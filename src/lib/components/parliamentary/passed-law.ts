@@ -44,6 +44,8 @@ type Enactment = {
 	issued: string | null;
 	/** The first day in force (ISO); null where the source gives none. */
 	inForce: string | null;
+	/** The inwerkingtredingsbesluit (`Stb. 2024, 197`), where the BWB names one. */
+	commencement: { key: string; text: string; href: string | null } | null;
 };
 
 /** The publications of `enacted`, the earliest first, as the API gives them. */
@@ -58,5 +60,8 @@ export const enactments = (d: { enacted?: Enacted[] | null }): Enactment[] =>
 			: null,
 		cite: e.cite ? { key: e.key, text: e.cite, href: e.path ?? null } : null,
 		issued: e.published_on ?? null,
-		inForce: e.first_effective_date ?? null
+		inForce: e.first_effective_date ?? null,
+		commencement: e.commencement?.cite
+			? { key: e.commencement.key, text: e.commencement.cite, href: e.commencement.path ?? null }
+			: null
 	}));
