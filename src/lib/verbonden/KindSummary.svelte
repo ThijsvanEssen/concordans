@@ -32,7 +32,8 @@
 		onRetry,
 		onProposedText,
 		onAddToNetwerk,
-		inNetwerk
+		inNetwerk,
+		telt = true
 	}: {
 		kinds: Kind[];
 		selection: GraphNode;
@@ -55,6 +56,8 @@
 		onProposedText?: (row: Row) => void;
 		onAddToNetwerk?: (row: Row) => void;
 		inNetwerk?: (row: Row) => boolean;
+		/** Every group in: a heading counts only then, its place kept until (F5). */
+		telt?: boolean;
 	} = $props();
 
 	/** The row opened in place: one at a time. */
@@ -85,7 +88,7 @@
 	{@const repeated = repeatedTitles(k.rows.slice(0, PREVIEW_ROWS))}
 	<section class="kind" data-kind={k.id}>
 		<h3 class="kind__head">
-			<span>{k.label}</span><span class="kind__count">{formatCount(countOf(k))}</span>
+			<span>{k.label}</span><span class="kind__count">{telt ? formatCount(countOf(k)) : ''}</span>
 		</h3>
 		{#if k.id === 'judgments' && (tiers?.length || tiersPending)}
 			<TierBar parts={tiers} pending={tiersPending} />

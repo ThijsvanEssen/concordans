@@ -260,7 +260,8 @@ export function buildNodeLabel(node: BaseNode, drawClass: DrawClass): string {
 			collection: node.collection,
 			key: node.key,
 			display_name: node.display_name,
-			props
+			props,
+			title: node.title
 		});
 	switch (drawClass) {
 		case 'dossier': {

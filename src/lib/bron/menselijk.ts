@@ -34,6 +34,8 @@ export type Bron = {
 	key?: string | null;
 	display_name?: string | null;
 	props?: Record<string, unknown> | null;
+	/** The API's title of the bron (`Toezegging TZ202410-172: De minister …`). */
+	title?: string | null;
 };
 
 /**
@@ -84,7 +86,10 @@ export function menselijkeNaam(b: Bron, wet?: (bwb: string) => string | null | u
 				.join(', ');
 		}
 		case 'commitments': {
-			const eigen = naam(b.display_name) ?? naam(p.display_name);
+			// What was promised, from the API's title where the light node has no name
+			// (`props=canvas`): never its number alone (UX review N4).
+			const onderwerp = naam(b.title?.replace(/^Toezegging\s+[^:]+:\s*/, ''));
+			const eigen = naam(b.display_name) ?? naam(p.display_name) ?? onderwerp;
 			if (eigen) return eigen;
 			const nummer = naam(p.number);
 			return nummer ? `Toezegging ${nummer}` : withDay(soort, p);
