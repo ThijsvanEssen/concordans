@@ -17,10 +17,10 @@ test('a ministry names its period, its predecessor and its bewindspersonen per c
 	);
 	const kabinetten = page.getByRole('heading', { level: 4 });
 	await expect(kabinetten).toHaveText([
-		'kabinet-Jetten',
-		'kabinet-Schoof',
-		'kabinet-Rutte IV',
-		'kabinet-Rutte III'
+		'Kabinet-Jetten',
+		'Kabinet-Schoof',
+		'Kabinet-Rutte IV',
+		'Kabinet-Rutte III'
 	]);
 	await expect(page.getByRole('link', { name: 'Eric van der Burg' })).toBeVisible();
 });
@@ -34,7 +34,7 @@ test('what is its own stands in Verbonden: laws, open dossiers and open toezeggi
 	const verbonden = page.getByRole('complementary', { name: 'Verbonden' });
 	await naarVerbonden(page);
 	await verbonden.scrollIntoViewIfNeeded();
-	for (const soort of ['Wetten', 'Lopende dossiers', 'Open toezeggingen'])
+	for (const soort of ['Wetten', 'Openstaande dossiers', 'Open toezeggingen'])
 		await expect(verbonden.getByRole('heading', { name: soort })).toBeVisible();
 });
 

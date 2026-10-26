@@ -26,7 +26,7 @@ exports[`Bronnen, an empty list > judgments ?tier=hoge_raad 1`] = `"Instantie Re
 
 exports[`Bronnen, an empty list > members ? 1`] = `"Tweede KamerEerste Kamer Fractie Weergave Periode Verfijnen Achternaam 0 kamerleden Geen kamerleden."`;
 
-exports[`Bronnen, an empty list > ministers ?q=zzz 1`] = `"Weergave Kabinet Periode Meer Verfijnen kabinet-Jetten sinds 2026, minister-president Rob Jetten, 28 bewindspersonen Geen bewindspersonen met deze filters. Zoek "zzz" in alle bronnen"`;
+exports[`Bronnen, an empty list > ministers ?q=zzz 1`] = `"Weergave Kabinet Periode Meer Verfijnen Kabinet-Jetten sinds 2026, minister-president Rob Jetten, 28 bewindspersonen Geen bewindspersonen met deze filters. Zoek "zzz" in alle bronnen"`;
 
 exports[`Bronnen, list by list > cabinets ? > requests 1`] = `
 {
@@ -60,15 +60,15 @@ exports[`Bronnen, list by list > cabinets ? > view 1`] = `
     },
   },
   "kop": "4 kabinetten",
-  "lijst": "In de coalitie Periode Verfijnen Aantreden ↓ 4 kabinetten − + Rutte III Rutte IV Schoof Jetten 2017 nu Periode Kabinet Bewindspersonen sinds 2026 In functie kabinet-Jetten Minister-president Rob Jetten D66VVDCDA 28bewindspersonen 2024–2026 kabinet-Schoof Minister-president H.W.M. Schoof PVVVVDNSCBBB 45bewindspersonen 2022–2024 kabinet-Rutte IV Minister-president Mark Rutte VVDD66CDAChristenUnie 35bewindspersonen 2017–2022 kabinet-Rutte III Minister-president Mark Rutte VVDCDAD66ChristenUnie 36bewindspersonen",
+  "lijst": "In de coalitie Periode Verfijnen Aantreden ↓ 4 kabinetten − + Rutte III Rutte IV Schoof Jetten 2017 nu Periode Kabinet Bewindspersonen sinds 2026 In functie Kabinet-Jetten Minister-president Rob Jetten D66VVDCDA 28bewindspersonen 2024–2026 Kabinet-Schoof Minister-president H.W.M. Schoof PVVVVDNSCBBB 45bewindspersonen 2022–2024 Kabinet-Rutte IV Minister-president Mark Rutte VVDD66CDAChristenUnie 35bewindspersonen 2017–2022 Kabinet-Rutte III Minister-president Mark Rutte VVDCDAD66ChristenUnie 36bewindspersonen",
   "openbaar": 8,
   "regel": "Zoeken",
   "richting": "Aflopend; sorteer oplopend",
   "rijen": [
-    "kabinet-Jetten -> /kabinetten/jetten",
-    "kabinet-Schoof -> /kabinetten/schoof",
-    "kabinet-Rutte IV -> /kabinetten/rutte_iv",
-    "kabinet-Rutte III -> /kabinetten/rutte_iii",
+    "Kabinet-Jetten -> /kabinetten/jetten",
+    "Kabinet-Schoof -> /kabinetten/schoof",
+    "Kabinet-Rutte IV -> /kabinetten/rutte_iv",
+    "Kabinet-Rutte III -> /kabinetten/rutte_iii",
   ],
   "volgorde": [
     "Aantreden (gekozen)",
@@ -115,13 +115,13 @@ exports[`Bronnen, list by list > cabinets ?coalitie=VVD&van=2010-01-01&q=rutte&s
     },
   },
   "kop": "2 kabinetten VVD×Periode: 2010 tot nu× Wissen",
-  "lijst": "In de coalitie Periode Verfijnen (2) Naam ↑ 2 kabinetten VVD×Periode: 2010 tot nu× Wissen Periode Kabinet Bewindspersonen 2017–2022 kabinet-Rutte III Minister-president Mark Rutte VVDCDAD66ChristenUnie 36bewindspersonen 2022–2024 kabinet-Rutte IV Minister-president Mark Rutte VVDD66CDAChristenUnie 35bewindspersonen",
+  "lijst": "In de coalitie Periode Verfijnen (2) Naam ↑ 2 kabinetten VVD×Periode: 2010 tot nu× Wissen Periode Kabinet Bewindspersonen 2017–2022 Kabinet-Rutte III Minister-president Mark Rutte VVDCDAD66ChristenUnie 36bewindspersonen 2022–2024 Kabinet-Rutte IV Minister-president Mark Rutte VVDD66CDAChristenUnie 35bewindspersonen",
   "openbaar": 4,
   "regel": "Zoeken",
   "richting": "Oplopend; sorteer aflopend",
   "rijen": [
-    "kabinet-Rutte III -> /kabinetten/rutte_iii",
-    "kabinet-Rutte IV -> /kabinetten/rutte_iv",
+    "Kabinet-Rutte III -> /kabinetten/rutte_iii",
+    "Kabinet-Rutte IV -> /kabinetten/rutte_iv",
   ],
   "volgorde": [
     "Aantreden",
@@ -2245,7 +2245,7 @@ exports[`Bronnen, list by list > ministers ? > view 1`] = `
     },
   },
   "kop": "",
-  "lijst": "Weergave Kabinet Periode Meer Verfijnen kabinet-Jetten sinds 2026, minister-president Rob Jetten, 28 bewindspersonen 23 feb. 2026 nu Algemene Zaken Minister-president Rob Jetten Buitenlandse Zaken Minister Buitenlandse Handel en Ontwikkelingssamenwerking Sjoerd Sjoerdsma Minister T.B.W. Berendsen Justitie en Veiligheid Minister D.M. van Weel Staatssecretaris K.T. van Bruggen",
+  "lijst": "Weergave Kabinet Periode Meer Verfijnen Kabinet-Jetten sinds 2026, minister-president Rob Jetten, 28 bewindspersonen 23 feb. 2026 nu Algemene Zaken Minister-president Rob Jetten Buitenlandse Zaken Minister Buitenlandse Handel en Ontwikkelingssamenwerking Sjoerd Sjoerdsma Minister T.B.W. Berendsen Justitie en Veiligheid Minister D.M. van Weel Staatssecretaris K.T. van Bruggen",
   "openbaar": 10,
   "regel": "Zoeken",
   "richting": null,
@@ -2307,7 +2307,7 @@ exports[`Bronnen, list by list > ministers ?kabinet=jetten&post=minister&q=a&van
     },
   },
   "kop": "Minister×In functie: 1 jan. 2026 tot nu× Wissen",
-  "lijst": "Weergave Kabinet Periode Meer Verfijnen (2) Minister×In functie: 1 jan. 2026 tot nu× Wissen kabinet-Jetten sinds 2026, minister-president Rob Jetten, 28 bewindspersonen 23 feb. 2026 nu Buitenlandse Zaken Minister Buitenlandse Handel en Ontwikkelingssamenwerking Sjoerd Sjoerdsma Justitie en Veiligheid Minister D.M. van Weel",
+  "lijst": "Weergave Kabinet Periode Meer Verfijnen (2) Minister×In functie: 1 jan. 2026 tot nu× Wissen Kabinet-Jetten sinds 2026, minister-president Rob Jetten, 28 bewindspersonen 23 feb. 2026 nu Buitenlandse Zaken Minister Buitenlandse Handel en Ontwikkelingssamenwerking Sjoerd Sjoerdsma Justitie en Veiligheid Minister D.M. van Weel",
   "openbaar": 7,
   "regel": "Zoeken",
   "richting": null,

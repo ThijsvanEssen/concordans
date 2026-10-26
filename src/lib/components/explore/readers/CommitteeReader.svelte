@@ -185,15 +185,12 @@
 		grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
 		gap: var(--s-2);
 	}
+	/* Figures, not buttons: no box, for the lists stand in the panel and a tile would ask a click. */
 	.stats li {
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
-		gap: 2px;
-		padding: var(--s-2);
-		background: var(--paper-2);
-		border: 1px solid var(--rule);
-		border-radius: var(--r-1);
+		gap: var(--s-1);
 	}
 	.stat-num {
 		font-family: var(--font-serif);
