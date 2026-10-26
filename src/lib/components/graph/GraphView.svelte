@@ -32,7 +32,8 @@
 		isClusterId,
 		type Cluster
 	} from '$lib/selection/cluster';
-	import { openGroup } from '$lib/verbonden/open-group';
+	import { groupFor, openGroup } from '$lib/verbonden/open-group';
+	import { isInhoudGroep, isKernGroep } from '$lib/bron/behoort';
 	import { bronPlural } from '$lib/vocabulary';
 	import { spriteForVorm, IMAGE_SIZE_BUMP } from './nodeSprites';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
@@ -762,10 +763,12 @@
 	}
 	/** The group in Verbonden that lists the cluster's kind, as "Bekijk in Verbonden" opens it. */
 	const groupOf = (c: Cluster) => {
-		const count = (g: (typeof verbonden.groups)[number]) =>
-			g.rows.filter((row) => row.ref.collection === c.collection).length;
-		const best = [...verbonden.groups].sort((a, b) => count(b) - count(a))[0];
-		return best && count(best) > 0 ? best : null;
+		// The groups Verbonden shows: its kern and inhoud stand elsewhere.
+		const own = verbonden.id?.split('/')[0] ?? '';
+		return groupFor(
+			verbonden.groups.filter((g) => !isKernGroep(own, g) && !isInhoudGroep(own, g)),
+			c.collection
+		);
 	};
 	/** What floats over the canvas and stays readable: the panel Netwerk, zoom, legenda. */
 	const FLOATING = '.canvas-overlay > *, .zoom, .legenda, .vouw';
@@ -1355,7 +1358,7 @@
 							<button type="button" class="btn is-text" onclick={() => showCluster(c)}
 								>Toon alle {formatCount(c.members.length)} in het netwerk</button
 							>
-							{#if !c.ends}
+							{#if !c.ends && groupOf(c)}
 								<button
 									type="button"
 									class="btn is-text"

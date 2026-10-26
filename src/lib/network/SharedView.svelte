@@ -13,7 +13,7 @@
 	import { joinAnd, plural } from '$lib/text/words';
 	import { kindColour } from '$lib/bron/kleur';
 	import { VORMEN, vormVanBron } from '$lib/bron/vormen';
-	import type { SharedRow, VerbandModel } from './shared';
+	import { VERBAND_STEPS, type SharedRow, type VerbandModel } from './shared';
 
 	let {
 		ends,
@@ -50,6 +50,14 @@
 		| { soort: 'row'; id: string; row: SharedRow; at: readonly string[] }
 		| { soort: 'judgments'; id: string; total: number; at: readonly string[] };
 
+	/** Nothing joins the chosen bronnen: no verbinding, no shared bron, no judgment they cite. */
+	const empty = $derived(
+		!!model &&
+			model.direct.length === 0 &&
+			model.rows.length === 0 &&
+			model.judgments.length === 0 &&
+			model.rest === 0
+	);
 	const nameOf = (id: string) => ends.find((e) => e.id === id)?.name ?? id;
 	const items = $derived.by((): Item[] => {
 		if (!model) return [];
@@ -113,6 +121,10 @@
 	{:else if gap}<p class="gap">{gap}</p>{/if}
 	{#if ends.length < 2}
 		<p class="empty stil">Voeg een tweede bron toe</p>
+	{:else if loading}
+		<p class="empty stil" role="status">Verband zoeken</p>
+	{:else if empty && !failure && !gap}
+		<p class="empty stil">Geen verband gevonden binnen {VERBAND_STEPS} stappen</p>
 	{:else}
 		<svg
 			class="drawing"
@@ -250,7 +262,6 @@
 			</ul>
 		</div>
 	{/if}
-	{#if loading}<p class="sr-only" role="status">Laden…</p>{/if}
 </div>
 
 <style>

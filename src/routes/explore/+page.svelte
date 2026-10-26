@@ -33,6 +33,7 @@
 	import { titelVan } from '$lib/bron/titels.svelte';
 	import { ignore, isAborted, isNotFound, report } from '$lib/api/errors';
 	import { bewaardNetwerk, bewaarNetwerk, leesBewaard } from '$lib/selection/bewaard.svelte';
+	import { offOf, offValue, sameSet } from '$lib/selection/off';
 	import PanelBoundary from '$lib/components/ui/PanelBoundary.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { LoadFailure } from '$lib/util/load.svelte';
@@ -40,7 +41,7 @@
 	import { getNodeCanvas, getNodeHull } from '$lib/api/records';
 	import { inPool } from '$lib/api/pool';
 	import { kopNode } from '$lib/bron/first-node';
-	import { bronHref, exploreMode, focusOf, modeOf, openHref, refId } from '$lib/bron/href';
+	import { bronHref, exploreMode, focusOf, openHref, refId } from '$lib/bron/href';
 	import { refOf, type BronRef } from '$lib/bron/ref';
 	import { getDossierKey } from '$lib/api/dossiers';
 	import { getMemberVotes } from '$lib/api/members';
@@ -315,25 +316,12 @@
 	// ── The netwerk of chosen bronnen ─────────────────────────────────────────
 	// Parsed from its own three params only, so selecting a bron does not compose again.
 	//
-	// Arriving in the werkplek from a bron (the button Netwerk, In het netwerk, a link with
-	// ?mode=netwerk), the netwerk kept in this browser opens with the bron as a proposal beside
-	// it (+ bron in the panel Netwerk), never replaced without a word; without one the bron is
-	// the beginning, its surroundings drawn around it (besluit 39). Only on arrival, never on
-	// Back: a netwerk emptied in the werkplek stays empty, an address comes back as it was.
+	// The address is the state: a link with ?mode=netwerk draws the same in every browser. The
+	// netwerk kept in this browser (bewaard) is what the reader last chose; it is offered only
+	// where the address names no bron at all (the button Netwerk on a page without one), never
+	// laid over a bron that is named.
 	leesBewaard();
-	let beginNodig = $state(false);
-	const beginQuery = $derived(
-		beginNodig && focus && mode === 'graph' && !netwerkQueryOf(params) ? bewaardNetwerk() : null
-	);
-	const netwerkQuery = $derived(beginQuery ?? netwerkQueryOf(params));
-	$effect(() => {
-		const q = beginQuery;
-		if (q) untrack(() => setUrl(Object.fromEntries(new URLSearchParams(q))));
-	});
-	$effect(() => {
-		if (beginNodig && (mode !== 'graph' || netwerkQueryOf(params) || (focus && !bewaardNetwerk())))
-			beginNodig = false;
-	});
+	const netwerkQuery = $derived(netwerkQueryOf(params));
 	const telefoon = typeof window !== 'undefined' && window.matchMedia(PHONE).matches;
 	// "Bronnen ertussen" is on by default, on a phone too (Thijs, 9 Oct, from an iPhone): the
 	// clusters, the faint bronnen between and the cap of 100 keep it light there.
@@ -819,6 +807,11 @@
 			refersFrom: ['instruments' as const]
 		} satisfies Pick<CanvasCounts, 'kinds' | 'relations' | 'refersFrom'>;
 	});
+	/** Verband without content (on its way, nothing shared): Soort holds no rows, not the canvas's. */
+	const NO_COUNTS = { kinds: {}, relations: {} } satisfies Pick<
+		CanvasCounts,
+		'kinds' | 'relations'
+	>;
 	const sharedCounts = $derived.by(() => {
 		if (!sharedState) return null;
 		const kinds: Partial<Record<FilterGroup, number>> = {};
@@ -1371,16 +1364,50 @@
 	}
 
 	function setNetwerk(n: Netwerk) {
-		if (n.ids.length === 0) bewaarNetwerk(null);
+		// What the reader composes is kept for the next visit; a link's netwerk is not.
+		bewaarNetwerk(
+			n.ids.length > 0 ? new URLSearchParams(netwerkClean(netwerkParams(n))).toString() : null
+		);
 		// Clearing the netwerk or removing a bron is undone with Back.
 		const shrinks = n.ids.length < netwerk.ids.length;
-		setUrl(netwerkParams(n), { push: shrinks });
+		const next = netwerkParams(n);
+		setUrl(
+			{
+				...next,
+				[OFF]: offValue({ ...filtersOff, chosen: offOf(next.uit ?? null).chosen })
+			},
+			{ push: shrinks }
+		);
 	}
 
-	// The werkplek opens on the last netwerk until it is cleared: a bron read does not forget it.
+	// What the legend switched off (a relation, a grouping) is in ?uit beside the chosen bronnen
+	// that are off: a reload or a link draws the same canvas, also with one bron.
+	const OFF = 'uit';
+	const filtersOff = $derived(offOf(params.get(OFF)));
 	$effect(() => {
-		if (mode === 'graph' && netwerkQuery && netwerk.ids.length > 0) bewaarNetwerk(netwerkQuery);
+		const { relations, groups } = filtersOff;
+		untrack(() => {
+			const now = get(store.filters);
+			if (sameSet(relations, now.hiddenRelations) && sameSet(groups, now.hiddenGroups)) return;
+			store.setFilters({ hiddenRelations: new Set(relations), hiddenGroups: new Set(groups) });
+		});
 	});
+	let filtersStart = true;
+	store.filters.subscribe((f) => {
+		// The first call is the store as it begins: the address has not been read into it yet.
+		if (filtersStart) {
+			filtersStart = false;
+			return;
+		}
+		const off = untrack(() => filtersOff);
+		if (sameSet(off.relations, f.hiddenRelations) && sameSet(off.groups, f.hiddenGroups)) return;
+		untrack(() =>
+			setUrl({
+				[OFF]: offValue({ ...off, relations: [...f.hiddenRelations], groups: [...f.hiddenGroups] })
+			})
+		);
+	});
+
 	$effect(() => {
 		// A readable address names its bron, also while it is looked up (a Kamerstuk, an
 		// article): the remembered netwerk does not take its place.
@@ -1503,17 +1530,6 @@
 		const changed = (name: string) => (from?.get(name) ?? null) !== (to?.get(name) ?? null);
 		if (nav.type === 'link' || nav.type === 'popstate' || changed('focus') || changed('mode'))
 			steppedIn = true;
-		// Into the werkplek with a bron and no netwerk in the address: it begins (beginQuery).
-		if (
-			nav.type !== 'popstate' &&
-			naar &&
-			to &&
-			modeOf(naar) === 'graph' &&
-			(!van || modeOf(van) !== 'graph') &&
-			!netwerkQueryOf(to) &&
-			(to.get('focus') || naar.pathname !== '/explore')
-		)
-			beginNodig = true;
 	});
 	const goBack = () => (steppedIn ? history.back() : goto('/'));
 
@@ -2112,7 +2128,7 @@
 								externCounts={view === 'keten'
 									? chainCounts
 									: view === 'verband'
-										? sharedCounts
+										? (sharedCounts ?? NO_COUNTS)
 										: null}
 								extern={view === 'keten' ? chainCard : view === 'verband' ? sharedCard : null}
 								externRelations={view === 'keten'

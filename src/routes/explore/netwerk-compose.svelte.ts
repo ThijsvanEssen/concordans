@@ -3,7 +3,7 @@
 // the canvas before the neighbours of the others (art. 3:2 Awb: 651 kB, 3.8 s on prod). The
 // paths between them need only their ids, so they are asked beside the full nodes.
 import { getPaths } from '$lib/api/nodes';
-import { isAborted, report } from '$lib/api/errors';
+import { isAborted, isNotFound, report } from '$lib/api/errors';
 import { getNodeFirst } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
@@ -198,7 +198,7 @@ export class NetwerkComposer {
 			this.drawsPaths && n.tussen && onIds.length > 1 && onIds.length <= PATHS_MAX
 				? pathsBetween(onIds)
 				: Promise.resolve(null);
-		if (pending) this.#draw(n, lights, null);
+		if (pending) this.#draw(n, lights, null, new Map(), false);
 		const [results, route] = await Promise.all([fullRequests, paths]);
 		if (epoch !== this.#epoch) return;
 		const onPaths = route ? await this.#store.mergePaths(route) : { onPath: [], tied: [] };
@@ -214,14 +214,22 @@ export class NetwerkComposer {
 		n: Netwerk,
 		results: Settled[],
 		paths: Paths | null,
-		widened: Map<string, { used: number; total: number }> = new Map()
+		widened: Map<string, { used: number; total: number }> = new Map(),
+		final = true
 	) {
 		const participants: { response: NodeResponse }[] = [];
 		const found: { id: string; response: NodeResponse }[] = [];
 		const missing: string[] = [];
+		let failed: unknown = null;
+		const failedIds = new Set<string>();
 		results.forEach((r, i) => {
 			if (r.status !== 'fulfilled') {
 				missing.push(n.ids[i]);
+				// Unknown to the API is a gap; any other answer (a 502) may be asked again.
+				if (!isNotFound(r.reason) && !isAborted(r.reason)) {
+					failed = r.reason;
+					failedIds.add(n.ids[i]);
+				}
 				return;
 			}
 			found.push({ id: n.ids[i], response: r.value });
@@ -264,7 +272,8 @@ export class NetwerkComposer {
 					? [
 							{
 								id,
-								label: ref.key,
+								// Never the raw key (`bwbr0005289`): the name is not there yet.
+								label: failedIds.has(id) ? 'Bron laden' : 'Bron onbekend',
 								collection: ref.collection as NetwerkEntry['collection'],
 								on: false,
 								alone: false,
@@ -274,5 +283,10 @@ export class NetwerkComposer {
 					: [];
 			})
 		];
+		// A bron that did not come is asked again with Opnieuw, the others with it.
+		if (failed && final) {
+			report('Netwerk samenstellen', failed);
+			showNetworkFailure({ what: 'Het netwerk', error: failed, retry: () => this.compose(n) });
+		}
 	}
 }

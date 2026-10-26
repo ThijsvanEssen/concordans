@@ -419,11 +419,18 @@ describe('the werkplek (besluit 39)', () => {
 		expect(seen.GraphView.marked).toBe(MEMBER);
 	});
 
-	it('opens the kept netwerk with the bron beside it, never in its place', async () => {
+	it('draws a clean link as it says, whatever is kept in this browser (N7)', async () => {
 		localStorage.setItem('concordans:netwerk', `netwerk=${MEMBER}`);
 		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk`);
-		expect(param('netwerk')).toBe(MEMBER);
+		expect(param('netwerk')).toBeNull();
 		expect(param('focus')).toBe(ARTICLE);
+		expect(seen.GraphView.netwerkActive).toBe(false);
+		expect(localStorage.getItem('concordans:netwerk')).toBe(`netwerk=${MEMBER}`);
+	});
+
+	it('keeps a netwerk of a link only once the reader chooses', async () => {
+		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk&netwerk=${MEMBER}`);
+		expect(localStorage.getItem('concordans:netwerk')).toBeNull();
 	});
 
 	it('begins with the bron alone where no netwerk is kept', async () => {
