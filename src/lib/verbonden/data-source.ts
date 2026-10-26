@@ -54,7 +54,7 @@ export const luiTeLaden = (collection: Collection, first: NodeGraph | null): boo
 const neighborKey = (n: Neighbor) => `${n.relation}|${n.direction}|${n.collection}/${n.key}`;
 
 /** The groups Verbonden lists: what its kern and its inhoud show elsewhere is left out. */
-export const listedGroups = <G extends { id: string }>(collection: Collection, groups: G[]): G[] =>
+export const listedGroups = <G extends Group>(collection: Collection, groups: G[]): G[] =>
 	groups.filter((g) => !isKernGroep(collection, g) && !isInhoudGroep(collection, g));
 
 export type VerbondenState = {
