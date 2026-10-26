@@ -83,7 +83,7 @@
 	button + button {
 		border-left: 1px solid var(--rule-strong);
 	}
-	/* The ends follow the frame's corners: no overflow to clip them,  */
+	/* The ends follow the frame's corners: no overflow to clip them. */
 	button:first-child {
 		border-radius: var(--r-1) 0 0 var(--r-1);
 	}
@@ -130,6 +130,11 @@
 		}
 		button[aria-pressed='true'] {
 			box-shadow: inset 0 -3px 0 var(--ink);
+		}
+		/* A row the width of its column keeps the desktop letter, so its words still fit
+		   (six scopes on the start page at 375). */
+		.vol button {
+			font-size: var(--t-ui);
 		}
 	}
 </style>
