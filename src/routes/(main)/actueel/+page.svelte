@@ -640,7 +640,7 @@
 <!-- Earlier days that did not come: Opnieuw under the days takes the link's place, as in Bladeren. -->
 {#snippet volgende()}
 	{#if loadingMore || error?.retry !== loadMore}
-		<AlleN volgende noun="dagen" laden={loadingMore} onclick={loadMore} />
+		<AlleN volgende woord="Eerdere" noun="dagen" laden={loadingMore} onclick={loadMore} />
 	{/if}
 {/snippet}
 {#snippet verder()}

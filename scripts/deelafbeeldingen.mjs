@@ -167,3 +167,17 @@ for (const [file, px] of [
 	await page.close();
 }
 await browser.close();
+
+// /favicon.ico: een browser vraagt er ongevraagd om (zonder bestand een 404). Een ICO met het
+// 192-pixel-icoon als PNG erin.
+const png = readFileSync(`${STATIC}/icon-192.png`);
+const kop = Buffer.alloc(22);
+kop.writeUInt16LE(1, 2); // type: pictogram
+kop.writeUInt16LE(1, 4); // één afbeelding
+kop[6] = 192;
+kop[7] = 192;
+kop.writeUInt16LE(1, 10); // vlakken
+kop.writeUInt16LE(32, 12); // bits per pixel
+kop.writeUInt32LE(png.length, 14);
+kop.writeUInt32LE(22, 18);
+writeFileSync(`${STATIC}/favicon.ico`, Buffer.concat([kop, png]));

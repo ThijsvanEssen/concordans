@@ -190,7 +190,7 @@
 	   icon, and the links draw closer. */
 	@media (max-width: 1439px) {
 		.search-trigger {
-			width: 240px;
+			width: var(--zijkolom);
 		}
 		.kbd {
 			display: none;
