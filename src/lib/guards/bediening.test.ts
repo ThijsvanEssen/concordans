@@ -69,7 +69,6 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 					plek('lib/components/ui/Tekstveld.svelte', 'the one text field'),
 					nog('lib/search/Search.svelte', 'the search overlay (P2)'),
 					nog('lib/verbonden/FilterSheet.svelte', 'the filter sheet of Verbonden (A255)'),
-					nog('lib/components/graph/GraphView.svelte', 'the work place (A254)'),
 					nog('lib/components/ui/Periode.svelte', 'the dates of Periode (A250)')
 				]
 			)
