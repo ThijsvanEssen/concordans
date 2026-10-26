@@ -139,11 +139,12 @@ export function edgeColorFor(relation: Relation, sourceClass: DrawClass): string
 }
 
 /** The thickness of a verbinding at rest: its weight (EDGE_WEIGHT) times --netwerk-lijn. */
-export const lijnDikte = (gewicht: number): number => gewicht * (parseFloat(tokens().lijn) || 3);
+export const lineThickness = (gewicht: number): number =>
+	gewicht * (parseFloat(tokens().lijn) || 3);
 /** An arrowhead's length in thicknesses of its line (--netwerk-pijl). */
-export const pijlLengte = (): number => parseFloat(tokens().pijl) || 3.2;
+export const arrowLength = (): number => parseFloat(tokens().pijl) || 3.2;
 /** An arrowhead's width to its length. */
-export const PIJL_BREED = 0.8;
+export const ARROW_WIDTH = 0.8;
 
 const HEX = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i;
 
@@ -210,14 +211,60 @@ export function hullDashFor(kind: ContainerKind): string | undefined {
 	}
 }
 
-type EdgeStyle = 'solid' | 'dashed' | 'dotted';
+/**
+ * How a line is drawn (Netwerkcanvas, Lijnen): `solid` the band is straight; `dashed` a bron
+ * only names the other; `dotted` belongs to; `dashdot` explains; `lid` dotted and without an
+ * arrow, as Lid van has no direction.
+ */
+type EdgeStyle = 'solid' | 'dashed' | 'dotted' | 'dashdot' | 'lid';
 
-/** PART_OF and LED_BY are dotted; a change that is proposed, and a vote, are dashed. */
-export function edgeStyleFor(relation: Relation, status: string | null | undefined): EdgeStyle {
-	if (relation === 'PART_OF' || relation === 'LED_BY') return 'dotted';
-	if (relation === 'VOTED') return 'dashed';
+/** The relations a line of a lid draws: a person of a fractie, a commissie, a kabinet. */
+const MEMBERSHIP = new Set<Relation>(['MEMBER_OF', 'LED_BY', 'SERVED_IN']);
+/** The relations that belong to a whole (Deel van). */
+const PART_OF_WHOLE = new Set<Relation>(['PART_OF', 'VERSION_OF']);
+/** The relations a bron makes by naming another (Aanhaling), besides a citation by REFERS_TO. */
+const CITATIONS = new Set<Relation>([
+	'APPEAL_OF',
+	'ADVISES_ON',
+	'ANSWERS',
+	'CONTINUES',
+	'REFERRED_BY',
+	'SAME_AS',
+	'MADE_IN'
+]);
+
+/**
+ * The style of a line by its relation. A citation (REFERS_TO from anything but an article), an
+ * appeal and an advice are dashed; a part is dotted; an explanation dash-dot; a membership dotted
+ * without an arrow; a vote, and a change that is only proposed, dashed. The rest is solid.
+ */
+export function edgeStyleFor(
+	relation: Relation,
+	status: string | null | undefined,
+	sourceClass: DrawClass = 'article'
+): EdgeStyle {
+	if (MEMBERSHIP.has(relation)) return 'lid';
+	if (PART_OF_WHOLE.has(relation)) return 'dotted';
+	if (relation === 'EXPLAINS') return 'dashdot';
+	if (relation === 'VOTED' || CITATIONS.has(relation)) return 'dashed';
+	if (relation === 'REFERS_TO' && sourceClass !== 'article') return 'dashed';
 	if (isAmendingRelation(relation) && status === 'voorgesteld') return 'dashed';
 	return 'solid';
+}
+
+/** The line of a style as an SVG dash array: the legend's sample and the key's. */
+export function edgeDashFor(style: EdgeStyle): string | undefined {
+	switch (style) {
+		case 'dashed':
+			return '4 3';
+		case 'dotted':
+		case 'lid':
+			return '1.5 3.5';
+		case 'dashdot':
+			return '9 3 1.5 3';
+		case 'solid':
+			return undefined;
+	}
 }
 
 // A sprite is drawn in a 32×32 box onto a canvas of SPRITE_PX and handed over as a PNG. Not

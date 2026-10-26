@@ -27,7 +27,7 @@
 	title={pressed
 		? 'Terug naar de tekst'
 		: onBron
-			? 'Deze bron in het netwerk'
+			? 'Open deze bron in netwerk'
 			: 'Kies een bron in het netwerk'}
 	><Picto naam="netwerk-o" size={16} /><span class="netwerk-knop__woord">Netwerk</span
 	>{#if aantal}<span class="netwerk-knop__aantal">{aantal}</span>{/if}</a

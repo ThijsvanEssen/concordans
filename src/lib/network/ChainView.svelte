@@ -11,7 +11,7 @@
 	import { plural } from '$lib/text/words';
 	import { kindColour } from '$lib/bron/kleur';
 	import { VORMEN, vormVanBron } from '$lib/bron/vormen';
-	import { edgeColorFor, lijnDikte } from '$lib/components/graph/nodeSprites';
+	import { edgeColorFor, lineThickness } from '$lib/components/graph/nodeSprites';
 	import { EDGE_WEIGHT } from '$lib/graph/types';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import type { ChainNode, ChainLayer } from '$lib/network/chain';
@@ -338,7 +338,7 @@
 				x2={l.b.x}
 				y2={l.b.y - 8}
 				stroke={edgeColorFor(l.relation, 'article')}
-				stroke-width={lijnDikte(EDGE_WEIGHT[l.relation]) * (l.lit ? 1.6 : 1)}
+				stroke-width={lineThickness(EDGE_WEIGHT[l.relation]) * (l.lit ? 1.6 : 1)}
 			/>
 		{/each}
 		{#each shown as layer (layer.id)}

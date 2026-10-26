@@ -9,7 +9,7 @@ const ARTICLE = '/wetten/BWBR0005289/artikel/6:162';
 async function openFilters(page: import('@playwright/test').Page) {
 	const filter = page.getByRole('button', { name: 'Filter', exact: true });
 	await filter
-		.or(page.getByRole('region', { name: 'Legenda' }))
+		.or(page.getByRole('region', { name: 'Filters' }))
 		.first()
 		.waitFor();
 	if (await filter.isVisible()) await filter.click();
@@ -32,7 +32,7 @@ test('the legend switches a kind of bron off and on', async ({ page }) => {
 	// The network fills in steps; the count is read once it has.
 	await page.waitForLoadState('networkidle');
 	await openFilters(page);
-	const legend = page.getByRole('region', { name: 'Legenda' });
+	const legend = page.getByRole('region', { name: 'Filters' });
 	const judgments = legend.getByRole('button', { name: /^Uitspraken [\d.]+( van [\d.]+)?$/ });
 	await expect(judgments).toHaveAttribute('aria-pressed', 'true');
 	const before = await drawn(page).getAttribute('aria-label');
@@ -76,7 +76,7 @@ test('the open legend counts the stemmingen drawn, the focus selected', async ({
 	const stemmingen = items.filter((t) => t.endsWith(', Stemming')).length;
 	expect(stemmingen).toBeGreaterThan(0);
 	await openFilters(page);
-	const legend = page.getByRole('region', { name: 'Legenda' });
+	const legend = page.getByRole('region', { name: 'Filters' });
 	const rows = legend.getByRole('button', {
 		name: /^(Overige s|S)temmingen [\d.]+( van [\d.]+)?$/
 	});

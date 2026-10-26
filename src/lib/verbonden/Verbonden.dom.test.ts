@@ -133,15 +133,19 @@ describe('Verbonden', () => {
 		expect(meta).toEqual(['HR:2019:2006']);
 	});
 
-	it('opens a judgment with one click on its row, at the note, the citation marked', async () => {
+	it('opens a judgment in place on one click on its row, the bron one step further', async () => {
 		paneel();
-		await klik(
-			screen.getByText('Hoge Raad, 20 december 2019').closest('li')!.querySelector('.row__meta')!
-		);
-		expect(goto).toHaveBeenCalledTimes(1);
-		const href = String(vi.mocked(goto).mock.calls[0][0]);
+		const li = screen.getByText('Hoge Raad, 20 december 2019').closest('li')!;
+		await klik(li.querySelector('.row__meta')!);
+		expect(goto).not.toHaveBeenCalled();
+		expect(li.querySelector('.row__title')!.getAttribute('aria-expanded')).toBe('true');
+		const verder = within(li.querySelector('.row__inhoud')! as HTMLElement).getByRole('link', {
+			name: 'Lees verder'
+		});
+		const href = verder.getAttribute('href')!;
 		expect(href).toContain('ecli_nl_hr_2019_2006');
 		expect(href).toContain('#fn-35');
+		await klik(verder);
 		expect(markeringVoor('judgments/ecli_nl_hr_2019_2006', 'fn-35')).toMatchObject({
 			doel: 'bwbr0005289_6_162'
 		});
@@ -191,12 +195,12 @@ describe('Verbonden', () => {
 		expect(screen.queryByTestId('network-sketch')).toBeNull();
 	});
 
-	it('draws each bron on its own up to forty, counted in the legend', () => {
+	it('draws each bron on its own up to forty, counted under the drawing', () => {
 		paneel(ROWS, { onShowNetwork: () => {}, showNetwork: true, networkHref: '/x' });
 		expect(screen.getByRole('button', { name: 'Netwerk verbergen' })).toBeTruthy();
 		const figuur = screen.getByTestId('network-sketch');
 		expect(figuur.querySelector('figcaption')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-			'2 afzonderlijk'
+			'2 bronnen'
 		);
 		const namen = [...figuur.querySelectorAll('.single title')].map((t) => t.textContent);
 		expect(namen).toEqual([

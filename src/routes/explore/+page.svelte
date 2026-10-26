@@ -987,7 +987,7 @@
 			lids.set(edgeKey(edge.source, edge.target, edge.relation), card.verbinding.lid);
 		return lids;
 	});
-	/** Zet in het netwerk from the card Verbinding: the row's bron joins the netwerk. */
+	/** Aan het netwerk toevoegen from the card Verbinding: the row's bron joins the netwerk. */
 	function showInNetwork(row: Row) {
 		const id = focusOf(row.ref);
 		if (id) addIdToNetwerk(id, row.title);
@@ -2030,12 +2030,11 @@
 				<div class="index-rol"><IndexOverzicht /></div>
 			{:else if indexChunk.component}{@const IndexViewC = indexChunk.component}<IndexViewC
 					category={indexKind}
-				/>{:else if indexChunk.error}{@render chunkMissing(indexChunk, 'De lijst')}{:else}<p
-					class="explore-empty stil"
-					role="status"
+				/>{:else if indexChunk.error}{@render chunkMissing(indexChunk, 'De lijst')}{:else}<div
+					class="explore-empty"
 				>
-					Laden…
-				</p>{/if}
+					<LoadState state={{ status: 'loading' }} what="De lijst" />
+				</div>{/if}
 		{:else if nietGevonden}
 			<NietGevonden title="Bron niet gevonden" kop={false}>
 				<p>{padNotHeld ? `${notHeld(nameOfPad(pad!, lawNameOf))}.` : focusNotHeld}</p>
@@ -2097,6 +2096,7 @@
 								onToggleHeat={toggleHeat}
 								onHeatPeriodChange={setHeatPeriod}
 								onToggleMutatie={toggleMutatie}
+								{view}
 								midden={view === 'omgeving' ? undefined : viewMiddle}
 								middenZoom={view !== 'keten'}
 								surroundings={view === 'omgeving'}
@@ -2124,7 +2124,6 @@
 								{#snippet viewChoice()}
 									<!-- Nothing chosen, nothing to view three ways: the field Bron toevoegen alone. -->
 									{#if focus || pad || netwerkActive}<div class="view-choice">
-											<h3 class="weergave__kop">Weergave</h3>
 											<Keuze
 												label="Weergave"
 												waarde={view}
@@ -2218,12 +2217,11 @@
 						onRow={openRowCard}
 						backHref={readHref}
 					/>
-				{:else if connectionsTable.error}{@render chunkMissing(connectionsTable)}{:else}<p
-						class="explore-empty stil"
-						role="status"
+				{:else if connectionsTable.error}{@render chunkMissing(connectionsTable)}{:else}<div
+						class="explore-empty"
 					>
-						Laden…
-					</p>{/if}
+						<LoadState state={{ status: 'loading' }} what="De tabel" />
+					</div>{/if}
 				{#if card}
 					<div class="explore-table__card">
 						<VerbindingCard
@@ -2369,19 +2367,10 @@
 		padding: var(--s-4) 0;
 		border-top: 1px solid var(--rule);
 	}
-	.weergave__kop {
-		margin: 0 0 var(--s-3);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-	}
 	@media (max-width: 768px) {
 		.view-choice {
 			padding: 0;
 			border-top: 0;
-		}
-		.weergave__kop {
-			display: none;
 		}
 		/* The three over the row's width, as the mockup's 390. */
 		.view-choice :global(.keuze) {

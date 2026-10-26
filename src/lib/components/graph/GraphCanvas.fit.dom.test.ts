@@ -58,7 +58,12 @@ vi.mock('sigma', () => ({
 vi.mock('sigma/rendering', () => ({ createEdgeArrowProgram: () => class {} }));
 vi.mock('@sigma/node-image', () => ({ createNodeImageProgram: () => class {} }));
 vi.mock('./DashedEdgeProgram', () => ({
-	stippelProgrammas: () => ({ dashed: class {}, dotted: class {} })
+	stippelProgrammas: () => ({
+		dashed: class {},
+		dotted: class {},
+		dashdot: class {},
+		lid: class {}
+	})
 }));
 
 /** Three bronnen in a square of 100: the box a fit frames grows beyond it. */

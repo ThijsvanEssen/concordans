@@ -7,9 +7,26 @@
 	import { VORMEN } from '$lib/bron/vormen';
 	import { kindColour } from '$lib/bron/kleur';
 	import { formatCount } from '$lib/text/getal';
-	import { plural } from '$lib/text/words';
 	import type { Collection } from '$lib/vocabulary';
-	import { LINE_H, WIDTH, clusterLine, type Sketch } from './sketch';
+	import { EDGE_WEIGHT } from '$lib/graph/types';
+	import {
+		edgeColorFor,
+		edgeDashFor,
+		edgeStyleFor,
+		lineThickness,
+		arrowLength,
+		ARROW_WIDTH,
+		towardPaper
+	} from '$lib/components/graph/nodeSprites';
+	import {
+		LINE_H,
+		SKETCH_LINE,
+		WIDTH,
+		arrowhead,
+		drawnCount,
+		type Sketch,
+		type SketchLine
+	} from './sketch';
 
 	let {
 		sketch,
@@ -40,51 +57,126 @@
 	const dashed = (c: Collection | null) => c === 'documents' || c === 'dossiers';
 
 	const m = $derived(sketch.center);
-	const groups = $derived(sketch.clusters.length);
-	const description = $derived(
-		[
-			sketch.singles.length ? `${formatCount(sketch.singles.length)} afzonderlijk` : null,
-			groups
-				? `${formatCount(groups)} ${plural(groups, 'groep', 'groepen')}, ${formatCount(sketch.inClusters)} in totaal`
-				: null
-		]
-			.filter(Boolean)
-			.join(', ')
+	/** The focus: 18 px of ink on a halo of paper (Netwerkcanvas, Maten). */
+	const FOCUS = 18;
+	const HALO = 4.5;
+	/** The radius of a bron the line stops at, and of the ring round the chosen one. */
+	const NODE = 6.5;
+	const RING = 11;
+
+	// A line rests in the colour of its kind, mixed toward the paper as there are more of them
+	// (3/√n, from 0.35 to 1); the chosen one in ink, 1.3 times as thick, the rest at half.
+	const total = $derived(sketch.singles.length + sketch.clusters.length);
+	const strength = $derived(Math.min(1, Math.max(0.35, 3 / Math.sqrt(Math.max(total, 1)))));
+	const chosen = $derived(open !== null);
+
+	type StrokeLine = {
+		x1: number;
+		y1: number;
+		x2: number;
+		y2: number;
+		colour: string;
+		width: number;
+		dash: string | undefined;
+		head: string | null;
+		open: boolean;
+		dimmed: boolean;
+	};
+	/**
+	 * A line from the bron in the middle to a neighbour at (x, y), of `radiusStop` radius: in the style of
+	 * its kind (Netwerkcanvas, Lijnen), the arrowhead at the end it points to.
+	 */
+	function lineTo(
+		l: SketchLine,
+		x: number,
+		y: number,
+		radiusStop: number,
+		weight: number,
+		pick: boolean
+	): StrokeLine {
+		const rel = l.relation;
+		const style = rel ? edgeStyleFor(rel, null, l.source) : 'lid';
+		const width = (rel ? lineThickness(EDGE_WEIGHT[rel]) : lineThickness(weight)) * SKETCH_LINE;
+		const base = rel ? edgeColorFor(rel, l.source) : 'var(--rule-strong)';
+		const colour = pick ? 'var(--ink)' : rel ? towardPaper(base, strength) : base;
+		const towards = l.direction === 'inbound' ? 'bron' : 'knoop';
+		const points = rel !== null && style !== 'lid' && l.direction !== null;
+		const length = Math.max(width * arrowLength(), 5.5);
+		// Both ends radiusStop at the edge of their bron.
+		const dx = x - m.x;
+		const dy = y - m.y;
+		const d = Math.hypot(dx, dy) || 1;
+		const ux = dx / d;
+		const uy = dy / d;
+		const gap = FOCUS / 2 + HALO;
+		const x1 = m.x + ux * gap;
+		const y1 = m.y + uy * gap;
+		const x2 = x - ux * radiusStop;
+		const y2 = y - uy * radiusStop;
+		const head = !points
+			? null
+			: towards === 'knoop'
+				? arrowhead(x1, y1, x2, y2, length, length * ARROW_WIDTH)
+				: arrowhead(x2, y2, x1, y1, length, length * ARROW_WIDTH);
+		const thick = pick ? width * 1.3 : width;
+		return {
+			x1: points && towards === 'bron' ? x1 + ux * length : x1,
+			y1: points && towards === 'bron' ? y1 + uy * length : y1,
+			x2: points && towards === 'knoop' ? x2 - ux * length : x2,
+			y2: points && towards === 'knoop' ? y2 - uy * length : y2,
+			colour,
+			width: thick,
+			dash: edgeDashFor(style),
+			head,
+			open: pick,
+			dimmed: chosen && !pick
+		};
+	}
+	const lines = $derived(
+		sketch.singles.map((l) => ({ id: l.id, ...lineTo(l, l.x, l.y, NODE, 0.7, open === l.id) }))
 	);
+	const groupLines = $derived(
+		sketch.clusters.map((b) => ({ id: b.id, ...lineTo(b, b.x, b.y, Math.max(b.r, 14), 1, false) }))
+	);
+	const caption = $derived(drawnCount(sketch));
 </script>
 
 <figure class="sketch" data-testid="network-sketch">
 	<svg
 		viewBox="0 0 {WIDTH} {sketch.height}"
 		role="group"
-		aria-label="Netwerk rond {name}: {description}"
+		aria-label="Netwerk rond {name}: {caption}"
 	>
-		{#each sketch.singles as l (l.id)}
-			<line
-				x1={m.x}
-				y1={m.y}
-				x2={l.x}
-				y2={l.y}
-				class="line"
-				class:is-open={open === l.id}
-				stroke-width={open === l.id ? 2 : 1.5}
-			/>
-		{/each}
-		{#each sketch.clusters as b (b.id)}
-			<line x1={m.x} y1={m.y} x2={b.x} y2={b.y} class="line" stroke-width={clusterLine(b.count)} />
+		{#each [...lines, ...groupLines] as t (t.id)}
+			<g class="line" class:is-dim={t.dimmed}>
+				<line
+					x1={t.x1}
+					y1={t.y1}
+					x2={t.x2}
+					y2={t.y2}
+					stroke={t.colour}
+					stroke-width={t.width}
+					stroke-dasharray={t.dash}
+				/>
+				{#if t.head}<polygon points={t.head} fill={t.colour} />{/if}
+			</g>
 		{/each}
 
 		<g class="focus">
 			<title>{name}</title>
-			<rect x={m.x - 11} y={m.y - 11} width="22" height="22" fill="var(--ink)" />
 			<rect
-				x={m.x - 17}
-				y={m.y - 17}
-				width="34"
-				height="34"
-				fill="none"
-				stroke="var(--ink)"
-				stroke-width="1.5"
+				x={m.x - FOCUS / 2 - HALO}
+				y={m.y - FOCUS / 2 - HALO}
+				width={FOCUS + 2 * HALO}
+				height={FOCUS + 2 * HALO}
+				fill="var(--paper)"
+			/>
+			<rect
+				x={m.x - FOCUS / 2}
+				y={m.y - FOCUS / 2}
+				width={FOCUS}
+				height={FOCUS}
+				fill="var(--ink)"
 			/>
 			<text x={m.x} y={m.y + 34} text-anchor="middle" class="name name--focus"
 				>{#each sketch.centerLines as line, i (i)}<tspan x={m.x} dy={i ? LINE_H : 0}>{line}</tspan
@@ -106,17 +198,11 @@
 			>
 				<title>{l.title}</title>
 				<circle cx={l.x} cy={l.y} r={l.hit} class="hit" />
-				{#if open === l.id}<rect
-						class="sel"
-						x={l.x - 12}
-						y={l.y - 12}
-						width="24"
-						height="24"
-						rx="2"
-					/>{/if}
+				<circle cx={l.x} cy={l.y} r={NODE + 3} fill="var(--paper)" />
+				{#if open === l.id}<circle class="sel" cx={l.x} cy={l.y} r={RING} />{/if}
 				<path
 					d={v.d}
-					transform="translate({l.x - 7} {l.y - 7}) scale(0.875)"
+					transform="translate({l.x - 6.4} {l.y - 6.4}) scale(0.8)"
 					fill={v.wijze === 'lijn' ? 'var(--paper)' : colour(l.collection, l.hue)}
 					stroke={v.wijze === 'lijn' ? colour(l.collection, l.hue) : 'none'}
 					stroke-width={v.wijze === 'lijn' ? 2.4 : 0}
@@ -158,30 +244,8 @@
 			</g>
 		{/each}
 	</svg>
-	<figcaption class="legend">
-		{#if sketch.singles.length}
-			<span class="legend__part"
-				><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"
-					><rect width="10" height="10" fill="var(--ink-2)" /></svg
-				>{formatCount(sketch.singles.length)} afzonderlijk</span
-			>
-		{/if}
-		{#if groups}
-			<span class="legend__part"
-				><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"
-					><circle
-						cx="6"
-						cy="6"
-						r="4.8"
-						fill="none"
-						stroke="var(--ink-2)"
-						stroke-width="1.6"
-					/></svg
-				>{formatCount(groups)}
-				{plural(groups, 'groep', 'groepen')}, {formatCount(sketch.inClusters)} in totaal</span
-			>
-		{/if}
-	</figcaption>
+	<!-- One line that counts what is drawn (Netwerkschets, Tekst). -->
+	<figcaption class="caption">{caption}</figcaption>
 </figure>
 
 <style>
@@ -198,14 +262,9 @@
 		margin: 0 auto;
 		overflow: visible;
 	}
-	.line {
-		stroke: var(--rule-strong);
-		opacity: 0.55;
-	}
-	/* The bron opened under the drawing: its line in ink, a frame around it. */
-	.line.is-open {
-		stroke: var(--ink);
-		opacity: 1;
+	/* A chosen neighbour: its line in ink, the rest at half. */
+	.line.is-dim {
+		opacity: 0.5;
 	}
 	.sel {
 		fill: none;
@@ -256,22 +315,13 @@
 		outline: 2px solid var(--focus);
 		outline-offset: 2px;
 	}
-	/* One line that counts what is drawn (besluit 29.3). */
-	.legend {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: center;
-		gap: 0 var(--s-4);
+	/* One line that counts what is drawn. */
+	.caption {
 		margin: var(--s-2) 0 0;
 		font-family: var(--font-serif);
-		font-size: var(--t-ui);
-		line-height: 20px;
-		color: var(--ink-2);
-	}
-	.legend__part {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-1);
-		white-space: nowrap;
+		font-size: var(--t-micro);
+		line-height: 18px;
+		text-align: center;
+		color: var(--ink-3);
 	}
 </style>

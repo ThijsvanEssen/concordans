@@ -21,7 +21,7 @@ with it.
 | ingetrokken, vervallen        | Ingetrokken for a wet or a voorstel; vervallen for an artikel or a toezegging (Aanwijzingen voor de regelgeving).                                                                                                                                                                                                                      |
 | op, sinds, per                | The word before a date. `op`: a day on which something happened (ondertekend op, gepubliceerd op, aangenomen op). `sinds`: what still lasts (in werking sinds, fractie sinds). `per`: a change that takes effect on that day (vervallen per, gewijzigd per). The forms of the date itself (lang, kort) are in `src/lib/text/datum.ts`. |
 | Exporteer                     | A file out of Concordans: the verbindingen under the filter as CSV, in Verbonden and in tables; a bundel as CSV, CSL-JSON or bestand; alle bundels. Never Download.                                                                                                                                                                    |
-| Toevoegen                     | `Toevoegen`, `Toevoegen aan …`; never `Voeg toe`.                                                                                                                                                                                                                                                                                      |
+| Toevoegen, Weghalen           | A bron into the netwerk and out of it, one verb each. On the werkplek `Toevoegen` and `Weghalen`; where the netwerk is not the page (Verbonden, a list row) `Aan het netwerk toevoegen` and `Uit het netwerk weghalen`; `Toevoegen aan …` for a bundel; never `Voeg toe`, `Zet in het netwerk`, `Uit het netwerk` as a button.         |
 | Alle N                        | `Alle 244 uitspraken`. Never at N = 1: then `1 stuk`.                                                                                                                                                                                                                                                                                  |
 | uit de bron                   | A verbinding the publisher records itself: an article of a law, a Kamerstuk in its dossier, a reference in the XML of wetten.overheid.nl.                                                                                                                                                                                              |
 | staat letterlijk in de tekst  | A verbinding read from a reference with a number in the text: ‘artikel 6:162 BW’, an ECLI.                                                                                                                                                                                                                                             |
@@ -40,7 +40,7 @@ with it.
 | Verwijderen                   | Removes a thing for good: a bundel.                                                                                                                                                                                                                                                                                                    |
 | Annuleren                     | Breaks off an input.                                                                                                                                                                                                                                                                                                                   |
 | Sluiten                       | Closes a panel or a card.                                                                                                                                                                                                                                                                                                              |
-| In het netwerk                | Opens a bron or a set of bronnen in the network.                                                                                                                                                                                                                                                                                       |
+| In het netwerk                | A state, never the action: the bron stands in the netwerk (`al in het netwerk`). Opening a bron or a set of bronnen there is `Open in netwerk`.                                                                                                                                                                                        |
 | Volgende stappen              | What a bill can still go through, in the procedure.                                                                                                                                                                                                                                                                                    |
 | nog niet in stemming gebracht | A motion that has not been voted on.                                                                                                                                                                                                                                                                                                   |
 | Stemverdeling per fractie     | The section of a stemming with the votes per fractie, in the Tweede and the Eerste Kamer alike.                                                                                                                                                                                                                                        |
@@ -70,6 +70,9 @@ fails on a label of a button that is not in this table.
 | `Annuleren`                          | onbepaald |
 | `Sluiten`                            | onbepaald |
 | `Toevoegen`                          | onbepaald |
+| `Weghalen`                           | onbepaald |
+| `Aan het netwerk toevoegen`          | onbepaald |
+| `Uit het netwerk weghalen`           | onbepaald |
 | `Wissen`                             | onbepaald |
 | `Toepassen`                          | onbepaald |
 | `Selectie wissen`                    | onbepaald |
@@ -79,9 +82,7 @@ fails on a label of a button that is not in this table.
 | `Klaar`                              | naam      |
 | `Filter`                             | naam      |
 | `Netwerk`                            | naam      |
-| `In het netwerk`                     | naam      |
 | `Open in netwerk`                    | gebiedend |
-| `Zet in het netwerk`                 | gebiedend |
 | `In de lezer`                        | naam      |
 | `Open bundel`                        | naam      |
 | `Geldende tekst`                     | naam      |

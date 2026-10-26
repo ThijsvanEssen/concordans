@@ -17,6 +17,7 @@
 	import { readingOrder, stepPointer } from './canvas-keys';
 	import { countCanvas, NO_COUNTS, sameIds, type CanvasCounts } from './canvas-count';
 	import GraphSidebar from './GraphSidebar.svelte';
+	import NetworkChoice from './NetworkChoice.svelte';
 	import { kindRows, lightBuckets, kindFocus, type DrawnBron } from './kind-rows';
 	import { contextGroups, panelSettled, panelKinds } from '$lib/verbonden/view';
 	import { lazeKernIds } from '$lib/bron/behoort';
@@ -76,6 +77,7 @@
 	import { relationWords } from '$lib/verbonden/relation-words';
 	import { sentence } from '$lib/network/shared';
 	import { netwerkMelding } from '$lib/stores/netwerk-melding';
+	import Periode from '$lib/components/ui/Periode.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { kaart } from '$lib/map/map.svelte';
 	import { gemerkt, notesOfBundels } from '$lib/map/notities';
@@ -94,8 +96,6 @@
 		ComponentProps<typeof GraphSidebar>,
 		| 'onFilter'
 		| 'onOpenFilter'
-		| 'depth'
-		| 'onDepth'
 		| 'onLaadSoort'
 		| 'laadtSoort'
 		| 'onToggleHeat'
@@ -125,7 +125,10 @@
 		canvasOverlay,
 		balk,
 		viewChoice,
+		depth,
+		onDepth,
 		meer,
+		view = 'omgeving',
 		midden,
 		surroundings = false,
 		externCounts = null,
@@ -176,6 +179,8 @@
 		 * A weergave of its own in the canvas's place (Keten, Verband): the card at the right is
 		 * then `extern`'s, the tijdstrook `externStippen`.
 		 */
+		/** The weergave chosen; `midden` and `middenZoom` follow it. */
+		view?: 'omgeving' | 'verband' | 'keten';
 		midden?: Snippet<[number]>;
 		extern?: ExternalCard | null;
 		externStippen?: readonly { jaar: number; collection: Collection }[] | null;
@@ -186,6 +191,9 @@
 			hidden: ReadonlySet<Relation>;
 			toggle: (r: Relation) => void;
 		} | null;
+		/** The steps of the neighbourhood, chosen in Netwerkkeuze. */
+		depth: number;
+		onDepth: (d: number) => void;
 	} & LegendProps = $props();
 
 	// ── graphology (data + layout, no sigma) ─────────────────────────────────
@@ -1181,11 +1189,6 @@
 			tot: tot === null ? null : `${tot}-12-31`
 		});
 	}
-	function veldJaar(e: Event): number | null {
-		const v = (e.currentTarget as HTMLInputElement).value.trim();
-		const n = Number(v);
-		return v && Number.isInteger(n) && n > 1000 && n < 3000 ? n : null;
-	}
 
 	// ── How the bron of the card is tied to the chosen bronnen ─────────────────
 	// Read from the lines on the canvas: "Haalt Art. 6:162 BW aan", "Art. 6:162 BW noemt deze
@@ -1241,25 +1244,11 @@
 {#snippet periode()}
 	<section class="block" aria-labelledby="werkplek-periode">
 		<h3 class="strook__kop" id="werkplek-periode">Periode</h3>
-		<p class="periode">
-			<input
-				class="veld"
-				inputmode="numeric"
-				aria-label="Van het jaar"
-				placeholder={eersteJaar}
-				value={jaarVan(filter.van) ?? ''}
-				onchange={(e) => kiesPeriode(veldJaar(e), jaarVan(filter.tot))}
-			/>
-			<span>tot</span>
-			<input
-				class="veld"
-				inputmode="numeric"
-				aria-label="Tot en met het jaar"
-				placeholder={laatsteJaar}
-				value={jaarVan(filter.tot) ?? ''}
-				onchange={(e) => kiesPeriode(jaarVan(filter.van), veldJaar(e))}
-			/>
-		</p>
+		<Periode
+			from={filter.van ?? ''}
+			to={filter.tot ?? ''}
+			onChange={(van, tot) => legend.onFilter({ ...filter, van: van || null, tot: tot || null })}
+		/>
 	</section>
 {/snippet}
 
@@ -1279,7 +1268,6 @@
 		canvasCounts={externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts}
 		{overlay}
 		inFluxCount={inFluxMap.size}
-		{netwerkActive}
 		{hasNodes}
 		{kindRowsShown}
 		{kindsSettled}
@@ -1293,7 +1281,18 @@
 	     them before the canvas and its zoom (keyboard audit, 10 Oct). -->
 	<aside class="strook strook--links" aria-label="Bronnen en filters">
 		{@render canvasOverlay?.()}
-		{@render viewChoice?.()}
+		<NetworkChoice
+			{view}
+			viewSlot={viewChoice}
+			{depth}
+			{onDepth}
+			networkOn={netwerkActive}
+			hasSelection={!!selection}
+			reach={externCounts ? null : reach}
+			empty={!hasNodes && !midden}
+			relations={(externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts).relations}
+			refersFrom={(externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts).refersFrom}
+		/>
 		<!-- Whatever the filter leaves drawn: the filters stay, so a kind switched off comes back. -->
 		{#if hasNodes || midden}
 			<button
@@ -1304,7 +1303,7 @@
 				onclick={() => (filtersOpen = !filtersOpen)}>Filter</button
 			>
 			<div class="strook__filters" class:is-open={filtersOpen} id="werkplek-filters">
-				<section class="legenda-inhoud" aria-label="Legenda">
+				<section class="legenda-inhoud" aria-label="Filters">
 					{@render sidebar()}
 				</section>
 			</div>
@@ -1577,11 +1576,19 @@
 	.graph-view {
 		position: relative;
 		display: grid;
-		grid-template-columns: 300px minmax(0, 1fr) 360px;
+		grid-template-columns: var(--strook) minmax(0, 1fr) var(--strook);
+		--strook: calc(var(--zijkolom) + 2 * var(--s-4));
 		width: 100%;
 		height: 100%;
 		overflow: hidden;
 		isolation: isolate;
+	}
+	/* The strip of the card takes room only while a bron is marked. */
+	.graph-view:not(:has(.strook--kaart.is-open)) {
+		grid-template-columns: var(--strook) minmax(0, 1fr);
+	}
+	.strook--kaart:not(.is-open) {
+		display: none;
 	}
 	.strook {
 		min-height: 0;
@@ -1590,11 +1597,11 @@
 		background: var(--paper);
 	}
 	.strook--links {
-		padding: var(--s-4) var(--s-5);
+		padding: var(--s-4);
 		border-right: 1px solid var(--rule);
 	}
 	.strook--kaart {
-		padding: var(--s-5);
+		padding: var(--s-4);
 		border-left: 1px solid var(--rule);
 	}
 	.strook__kop {
@@ -1639,35 +1646,15 @@
 	.filterknop {
 		display: none;
 	}
-	.periode {
-		display: flex;
-		align-items: center;
-		gap: var(--s-2);
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-	}
-	.veld {
-		box-sizing: border-box;
-		width: 84px;
-		height: var(--veld-h);
-		padding: 0 var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-serif);
-		font-size: var(--t-input);
-		color: var(--ink);
-	}
 	/* Between a phone and three strips (1024): the strips narrower, the canvas and its tijdstrook
 	   between them; the card's strip only while a bron is marked. */
 	@media (min-width: 769px) and (max-width: 1100px) {
 		.graph-view {
-			grid-template-columns: 240px minmax(0, 1fr);
+			grid-template-columns: var(--strook) minmax(0, 1fr);
 		}
 		/* A card marked: a strip of its own, the canvas narrower, nothing covered (T10b). */
 		.graph-view:has(.strook--kaart.is-open) {
-			grid-template-columns: 240px minmax(0, 1fr) 300px;
+			grid-template-columns: var(--strook) minmax(0, 1fr) var(--strook);
 		}
 		.strook--links {
 			padding: var(--s-4);
@@ -1793,9 +1780,6 @@
 	}
 	@media (pointer: coarse), (max-width: 768px) {
 		.filterknop {
-			height: var(--veld-h-raak);
-		}
-		.veld {
 			height: var(--veld-h-raak);
 		}
 	}

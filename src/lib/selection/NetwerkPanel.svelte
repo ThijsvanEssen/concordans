@@ -146,7 +146,7 @@
 							type="button"
 							class="rij__weg"
 							onclick={() => onRemove(e.id)}
-							aria-label="Haal {e.label} uit netwerk">×</button
+							aria-label="Haal {e.label} uit het netwerk">×</button
 						>
 					</li>
 				{/each}
@@ -171,7 +171,7 @@
 					type="button"
 					class="btn"
 					onclick={onAdd}
-					aria-label="Voeg {selection.label} toe aan netwerk">Toevoegen</button
+					aria-label="{selection.label} toevoegen aan het netwerk">Toevoegen</button
 				>
 			</div>
 		</section>

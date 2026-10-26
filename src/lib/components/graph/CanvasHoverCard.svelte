@@ -219,7 +219,7 @@
 		{/if}
 		{#if onToggleChosen && !node.stub}
 			<button type="button" class="btn" aria-pressed={isChosen} onclick={() => onToggleChosen(node)}
-				>{isChosen ? 'Uit het netwerk' : 'Toevoegen'}</button
+				>{isChosen ? 'Weghalen' : 'Toevoegen'}</button
 			>
 		{/if}
 		{#if bewaar}<Bewaar item={bewaar} />{/if}
@@ -269,7 +269,7 @@
 	/* Datum and its kind's line, as the mockup's: a column of terms, 96 px. */
 	.facts {
 		display: grid;
-		grid-template-columns: 96px minmax(0, 1fr);
+		grid-template-columns: calc(var(--s-8) + var(--s-6)) minmax(0, 1fr);
 		gap: var(--s-2) var(--s-3);
 		margin: var(--s-2) 0 0;
 	}

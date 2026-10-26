@@ -8,9 +8,11 @@ const strip = (page: Page) => page.getByRole('complementary', { name: 'Bronnen e
 /** The filters of the strip, behind Filter on a narrow screen. */
 async function filters(page: Page) {
 	const toggle = strip(page).getByRole('button', { name: 'Filter', exact: true });
-	await expect(strip(page).getByRole('heading', { name: 'Weergave' }).or(toggle)).toBeVisible();
+	await expect(
+		strip(page).getByRole('region', { name: 'Weergave en legenda' }).or(toggle).first()
+	).toBeVisible();
 	if (await toggle.isVisible()) await toggle.click();
-	return strip(page).getByRole('region', { name: 'Legenda' });
+	return strip(page).getByRole('region', { name: 'Filters' });
 }
 
 test('Soort off for the kind of the chosen bronnen leaves them and the filters standing (R3-N B1)', async ({
@@ -31,7 +33,7 @@ test('Soort off for the kind of the chosen bronnen leaves them and the filters s
 
 test('the last bron on /explore leaves with × and stays gone (R3-N B2)', async ({ page }) => {
 	await page.goto('/explore?netwerk=instruments/bwbr0005537');
-	await page.getByRole('button', { name: /^Haal .* uit netwerk$/ }).click();
+	await page.getByRole('button', { name: /^Haal .* uit het netwerk$/ }).click();
 	// The top bar counting no bron is the signal that the page has taken it out and settled.
 	await expect(
 		page.getByRole('banner').getByRole('button', { name: /^Netwerk/ })

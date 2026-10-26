@@ -261,6 +261,12 @@
 				{/each}
 			</ul>
 		</div>
+		{#if model && model.rest > 0}
+			<!-- What the drawing leaves out is counted (Principe 7). -->
+			<p class="rest stil">
+				{formatCount(model.rows.length)} van {formatCount(model.rows.length + model.rest)} gedeelde bronnen
+			</p>
+		{/if}
 	{/if}
 </div>
 
@@ -287,6 +293,10 @@
 	}
 	.empty {
 		margin: var(--s-8) var(--s-5);
+		font-size: var(--t-meta);
+	}
+	.rest {
+		margin: var(--s-2) var(--s-5) var(--s-4);
 		font-size: var(--t-meta);
 	}
 	.failure {

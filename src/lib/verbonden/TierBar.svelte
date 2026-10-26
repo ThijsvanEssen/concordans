@@ -1,43 +1,45 @@
 <script lang="ts">
-	// The judgments per instantie as one bar and its legend (A202, A208c): the one form on an
-	// article and on a law, in the summary and in the group. The legend is a table: the name at
-	// the left, its count at the right in one column of figures; two columns where the panel
-	// has the room, one on a phone. Its room stands while the counts come (`pending`).
+	// The judgments per instantie as one bar and its legend (A202, A208c, A255): the one form on
+	// an article and on a law, in the summary and in the group. The legend is a table: the name
+	// at the left, its count at the right in one column of figures; two columns where the panel
+	// has the room, one on a phone. Where one instantie is all there is, no bar: one line. Its
+	// room stands while the counts come (`pending`).
 	import { formatCount } from '$lib/text/getal';
-	import type { TierCount } from './tiers';
+	import TierSwatch from './TierSwatch.svelte';
+	import { singleTierLine, type TierCount } from './tiers';
 
 	let { parts, pending = false }: { parts: TierCount[] | null; pending?: boolean } = $props();
 
-	/** The step of soort-rechtspraak of each instantie (Design System, Strook per instantie);
-	 *  the rest, Overige instanties, stands in rule-strong. */
-	const TRAP: Partial<Record<string, string>> = {
-		hoge_raad: 'var(--rechtspraak-1)',
-		parket: 'var(--rechtspraak-1)',
-		raad_van_state: 'var(--rechtspraak-2)',
-		centrale_raad_van_beroep: 'var(--rechtspraak-2)',
-		college_van_beroep_bedrijfsleven: 'var(--rechtspraak-2)',
-		gerechtshof: 'var(--rechtspraak-3)',
-		rechtbank: 'var(--rechtspraak-4)'
-	};
-	const kleur = (t: TierCount) => (t.tier && TRAP[t.tier]) || 'var(--rule-strong)';
 	/** While the counts come: four rows of the legend, unseen. */
-	const HELD = [0, 1, 2, 3].map((i) => ({ tier: null, label: `…${i}`, count: 0 }));
+	const HELD: TierCount[] = [0, 1, 2, 3].map((i) => ({
+		tier: null,
+		label: `…${i}`,
+		count: 0,
+		trap: null,
+		europa: false,
+		phrase: ''
+	}));
 	const rows = $derived(parts?.length ? parts : pending ? HELD : []);
+	const singleLine = $derived(singleTierLine(parts));
 </script>
 
-{#if rows.length}
+{#if singleLine}
+	<p class="tiers__een">{singleLine}</p>
+{:else if rows.length}
 	<div class="tiers" class:is-quiet={!parts?.length} aria-hidden={!parts?.length}>
-		<div class="tiers__bar">
+		<div class="tiers__bar" aria-hidden="true">
 			{#each rows as t (t.label)}
-				<i style:flex="{t.count || 1} 1 0" style:background={kleur(t)}></i>
+				<span class="tiers__deel" style:flex="{t.count || 1} 1 0"
+					><TierSwatch shape={t} balk /></span
+				>
 			{/each}
 		</div>
 		<ul class="tiers__legend" aria-label="Per instantie">
 			{#each rows as t (t.label)}
 				<li>
-					<span class="tiers__swatch" style:background={kleur(t)}></span><span class="tiers__name"
-						>{t.label}</span
-					><span class="tiers__count">{formatCount(t.count)}</span>
+					<TierSwatch shape={t} /><span class="tiers__name">{t.label}</span><span
+						class="tiers__count">{formatCount(t.count)}</span
+					>
 				</li>
 			{/each}
 		</ul>
@@ -48,16 +50,23 @@
 	.tiers__bar {
 		display: flex;
 		gap: 2px;
-		height: var(--s-2);
+		height: var(--s-3);
 		margin: 0 0 var(--s-2);
 	}
-	.tiers__bar i {
+	.tiers__deel {
 		display: block;
-		height: 100%;
+		min-width: 0;
 	}
 	/* While the counts come: the room, no figures. */
 	.is-quiet {
 		visibility: hidden;
+	}
+	.tiers__een {
+		margin: 0 0 var(--s-2);
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		line-height: var(--s-5);
+		color: var(--ink-3);
 	}
 	.tiers__legend {
 		display: grid;
@@ -66,7 +75,7 @@
 			minmax(min(100%, calc(2 * var(--s-8) + var(--s-6) + var(--s-4))), 1fr)
 		);
 		gap: 0 var(--s-4);
-		margin: 0;
+		margin: 0 0 var(--s-2);
 		padding: 0;
 		list-style: none;
 		font-family: var(--font-serif);
@@ -76,19 +85,16 @@
 	}
 	.tiers__legend li {
 		display: grid;
-		grid-template-columns: var(--s-2) minmax(0, 1fr) auto;
+		grid-template-columns: var(--s-3) minmax(0, 1fr) auto;
 		align-items: center;
 		gap: var(--s-2);
-	}
-	.tiers__swatch {
-		width: var(--s-2);
-		height: var(--s-2);
 	}
 	.tiers__name {
 		min-width: 0;
 		overflow: hidden;
 		white-space: nowrap;
 		text-overflow: ellipsis;
+		color: var(--ink-2);
 	}
 	.tiers__count {
 		color: var(--ink);

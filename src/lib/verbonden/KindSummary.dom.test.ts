@@ -81,6 +81,6 @@ describe('KindSummary', () => {
 			hasMore: () => true
 		});
 		expect(container.querySelector('.kind__count')?.textContent).toBe('10');
-		expect(screen.getByText('Meer laden')).toBeTruthy();
+		expect(screen.getByText('Volgende wetten en artikelen, nog 7')).toBeTruthy();
 	});
 });
