@@ -20,7 +20,9 @@ const html = (state: State<string[]>, extra: Record<string, unknown> = {}) =>
 
 describe('LoadState', () => {
 	it('says Laden… in a quiet line, or holds the place with a skeleton', () => {
-		expect(html({ status: 'loading' })).toMatch(/<p class="stil[^"]*">Laden…(?:<!---->)?<\/p>/);
+		expect(html({ status: 'loading' })).toMatch(
+			/<p class="stil[^"]*"[^>]*>Laden…(?:<!---->)?<\/p>/
+		);
 		const block = html({ status: 'loading' }, { form: 'block' });
 		expect(block).toContain('skeleton');
 		expect(block).not.toContain('Laden…');
