@@ -6,7 +6,7 @@
 	// room stands while the counts come (`pending`).
 	import { formatCount } from '$lib/text/getal';
 	import TierSwatch from './TierSwatch.svelte';
-	import { eenInstantie, type TierCount } from './tiers';
+	import { singleTierLine, type TierCount } from './tiers';
 
 	let { parts, pending = false }: { parts: TierCount[] | null; pending?: boolean } = $props();
 
@@ -17,26 +17,27 @@
 		count: 0,
 		trap: null,
 		europa: false,
-		van: ''
+		phrase: ''
 	}));
 	const rows = $derived(parts?.length ? parts : pending ? HELD : []);
-	const eenRegel = $derived(eenInstantie(parts));
+	const singleLine = $derived(singleTierLine(parts));
 </script>
 
-{#if eenRegel}
-	<p class="tiers__een">{eenRegel}</p>
+{#if singleLine}
+	<p class="tiers__een">{singleLine}</p>
 {:else if rows.length}
 	<div class="tiers" class:is-quiet={!parts?.length} aria-hidden={!parts?.length}>
 		<div class="tiers__bar" aria-hidden="true">
 			{#each rows as t (t.label)}
-				<span class="tiers__deel" style:flex="{t.count || 1} 1 0"><TierSwatch vorm={t} balk /></span
+				<span class="tiers__deel" style:flex="{t.count || 1} 1 0"
+					><TierSwatch shape={t} balk /></span
 				>
 			{/each}
 		</div>
 		<ul class="tiers__legend" aria-label="Per instantie">
 			{#each rows as t (t.label)}
 				<li>
-					<TierSwatch vorm={t} /><span class="tiers__name">{t.label}</span><span
+					<TierSwatch shape={t} /><span class="tiers__name">{t.label}</span><span
 						class="tiers__count">{formatCount(t.count)}</span
 					>
 				</li>

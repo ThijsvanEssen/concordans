@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { OTHER_TIERS, citingTiers, eenInstantie, lawTiers, tierParts, vormVanTier } from './tiers';
+import {
+	OTHER_TIERS,
+	citingTiers,
+	singleTierLine,
+	lawTiers,
+	tierParts,
+	shapeOfTier
+} from './tiers';
 
 const facet = [
 	{ value: 'rechtbank', count: 60 },
@@ -65,18 +72,20 @@ describe('the judgments per instantie', () => {
 	});
 
 	it('knows the vlak of a judgment by its tier', () => {
-		expect(vormVanTier('rechtbank')).toEqual({ trap: 4, europa: false });
-		expect(vormVanTier('hvj_eu')).toEqual({ trap: 2, europa: true });
-		expect(vormVanTier('kantongerecht')).toEqual({ trap: null, europa: false });
-		expect(vormVanTier(undefined)).toEqual({ trap: null, europa: false });
+		expect(shapeOfTier('rechtbank')).toEqual({ trap: 4, europa: false });
+		expect(shapeOfTier('hvj_eu')).toEqual({ trap: 2, europa: true });
+		expect(shapeOfTier('kantongerecht')).toEqual({ trap: null, europa: false });
+		expect(shapeOfTier(undefined)).toEqual({ trap: null, europa: false });
 	});
 
 	it('says in a line where one instantie is all there is', () => {
-		expect(eenInstantie(tierParts([{ value: 'hoge_raad', count: 3 }], 3))).toBe(
+		expect(singleTierLine(tierParts([{ value: 'hoge_raad', count: 3 }], 3))).toBe(
 			'Alle drie van de Hoge Raad'
 		);
-		expect(eenInstantie(tierParts([{ value: 'ehrm', count: 1 }], 1))).toBe('De enige van het EHRM');
-		expect(eenInstantie(tierParts(facet, 105))).toBeNull();
-		expect(eenInstantie(null)).toBeNull();
+		expect(singleTierLine(tierParts([{ value: 'ehrm', count: 1 }], 1))).toBe(
+			'De enige van het EHRM'
+		);
+		expect(singleTierLine(tierParts(facet, 105))).toBeNull();
+		expect(singleTierLine(null)).toBeNull();
 	});
 });

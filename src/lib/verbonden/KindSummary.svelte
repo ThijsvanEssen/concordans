@@ -19,7 +19,7 @@
 	import VerbondenRow from './VerbondenRow.svelte';
 	import TierBar from './TierBar.svelte';
 	import TierSwatch from './TierSwatch.svelte';
-	import { vormVanTier } from './tiers';
+	import { shapeOfTier } from './tiers';
 
 	let {
 		kinds,
@@ -69,9 +69,9 @@
 		opened = null;
 	});
 	/** The vlak of the instantie of a judgment's row; none for another bron. */
-	const instantieVan = (row: Row) =>
+	const tierShapeOf = (row: Row) =>
 		row.ref.collection === 'judgments' && typeof row.props?.tier === 'string'
-			? vormVanTier(row.props.tier)
+			? shapeOfTier(row.props.tier)
 			: null;
 	const toggle = (row: Row) => (opened = opened === rowKey(row) ? null : rowKey(row));
 
@@ -130,10 +130,10 @@
 						</ul>
 					</li>
 				{:else}
-					{@const vorm = instantieVan(row)}
+					{@const shape = tierShapeOf(row)}
 					<li class="kind__row" class:kind__onder={isNested(row)}>
 						<div class="kind__kop">
-							{#if vorm}<span class="kind__vlak"><TierSwatch {vorm} /></span>{/if}
+							{#if shape}<span class="kind__vlak"><TierSwatch {shape} /></span>{/if}
 							<a
 								class="kind__title"
 								href={openHref(row.ref, { at: ankerVanRij(row) })}
@@ -144,7 +144,7 @@
 									)}{/if}</a
 							>
 						</div>
-						{#if shortLine(row)}<span class="kind__line" class:kind__line--vlak={!!vorm}
+						{#if shortLine(row)}<span class="kind__line" class:kind__line--vlak={!!shape}
 								>{shortLine(row)}</span
 							>{/if}
 					</li>

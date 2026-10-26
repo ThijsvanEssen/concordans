@@ -2,13 +2,20 @@
 	// The vlak of an instantie (Design System, VerbondenGroep): a step of soort-rechtspraak, the
 	// Europese hoven hatched in the step of their rank, Overige instanties in rule-strong. In the
 	// strook, its legend and in front of the title of a judgment's row: one form.
-	import type { Instantievorm } from './tiers';
+	import type { TierShape } from './tiers';
 
+	/** The tokens by name, so each is read where it is written. */
+	const TRAP_COLOUR = {
+		1: 'var(--rechtspraak-1)',
+		2: 'var(--rechtspraak-2)',
+		3: 'var(--rechtspraak-3)',
+		4: 'var(--rechtspraak-4)'
+	} as const;
 	let {
-		vorm,
+		shape,
 		balk = false
 	}: {
-		vorm: Instantievorm;
+		shape: TierShape;
 		/** A segment of the strook: it takes the room its figure says. */
 		balk?: boolean;
 	} = $props();
@@ -16,9 +23,9 @@
 
 <i
 	class="vlak"
-	data-europa={vorm.europa || undefined}
+	data-europa={shape.europa || undefined}
 	data-balk={balk || undefined}
-	style:--trap={vorm.trap ? `var(--rechtspraak-${vorm.trap})` : 'var(--rule-strong)'}
+	style:--trap={shape.trap ? TRAP_COLOUR[shape.trap] : 'var(--rule-strong)'}
 	aria-hidden="true"
 ></i>
 

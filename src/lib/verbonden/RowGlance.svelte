@@ -16,14 +16,14 @@
 		bron,
 		at = null,
 		href,
-		onLees
+		onRead
 	}: {
 		bron: BronRef;
 		/** The place in the bron the row names: `rov-3.4`, `lid-2`. */
 		at?: string | null;
 		/** The bron one step further: its reader, or beside the text in an in-place group. */
 		href: string;
-		onLees?: () => void;
+		onRead?: () => void;
 	} = $props();
 
 	const preview = load(
@@ -45,7 +45,7 @@
 			{/if}
 		{/snippet}
 	</LoadState>
-	<p class="verder"><TekstLink {href} onclick={onLees}>Lees verder</TekstLink></p>
+	<p class="verder"><TekstLink {href} onclick={onRead}>Lees verder</TekstLink></p>
 </div>
 
 <style>

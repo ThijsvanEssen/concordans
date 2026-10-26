@@ -12,38 +12,38 @@ import { TIER_LABEL, type Tier } from '$lib/vocabulary';
 /** The step of soort-rechtspraak an instantie stands in (Design System, VerbondenGroep). */
 type Trap = 1 | 2 | 3 | 4;
 
-type Instantie = {
+type CourtGroup = {
 	/** The tiers the API counts as this instantie: the Parket stands with the Hoge Raad, as the filter Rechter has it. */
 	tiers: readonly Tier[];
 	trap: Trap;
 	/** The Europese hoven stand hatched, after the Dutch ones. */
 	europa?: true;
 	/** In a sentence: `Alle drie van de Hoge Raad`. */
-	van: string;
+	phrase: string;
 };
 
 /** The instanties counted on their own, in the order of the strook: the highest rechter first,
  *  then the Europese hoven; Overige instanties last. */
-const INSTANTIES: readonly Instantie[] = [
-	{ tiers: ['hoge_raad', 'parket'], trap: 1, van: 'de Hoge Raad' },
-	{ tiers: ['raad_van_state'], trap: 2, van: 'de Raad van State' },
-	{ tiers: ['centrale_raad_van_beroep'], trap: 2, van: 'de Centrale Raad van Beroep' },
+const INSTANTIES: readonly CourtGroup[] = [
+	{ tiers: ['hoge_raad', 'parket'], trap: 1, phrase: 'de Hoge Raad' },
+	{ tiers: ['raad_van_state'], trap: 2, phrase: 'de Raad van State' },
+	{ tiers: ['centrale_raad_van_beroep'], trap: 2, phrase: 'de Centrale Raad van Beroep' },
 	{
 		tiers: ['college_van_beroep_bedrijfsleven'],
 		trap: 2,
-		van: 'het College van Beroep voor het bedrijfsleven'
+		phrase: 'het College van Beroep voor het bedrijfsleven'
 	},
-	{ tiers: ['gerechtshof'], trap: 3, van: 'de gerechtshoven' },
-	{ tiers: ['rechtbank'], trap: 4, van: 'de rechtbanken' },
-	{ tiers: ['ehrm'], trap: 1, europa: true, van: 'het EHRM' },
-	{ tiers: ['hvj_eu'], trap: 2, europa: true, van: 'het Hof van Justitie EU' }
+	{ tiers: ['gerechtshof'], trap: 3, phrase: 'de gerechtshoven' },
+	{ tiers: ['rechtbank'], trap: 4, phrase: 'de rechtbanken' },
+	{ tiers: ['ehrm'], trap: 1, europa: true, phrase: 'het EHRM' },
+	{ tiers: ['hvj_eu'], trap: 2, europa: true, phrase: 'het Hof van Justitie EU' }
 ];
 
 /** What a vlak needs of an instantie: its trap (null: Overige instanties) and whether it is a Europees hof. */
-export type Instantievorm = { trap: Trap | null; europa: boolean };
+export type TierShape = { trap: Trap | null; europa: boolean };
 
 /** The vlak of the instantie a judgment's tier belongs to. */
-export function vormVanTier(tier: string | null | undefined): Instantievorm {
+export function shapeOfTier(tier: string | null | undefined): TierShape {
 	const i = INSTANTIES.find((x) => (x.tiers as readonly string[]).includes(tier ?? ''));
 	return { trap: i?.trap ?? null, europa: !!i?.europa };
 }
@@ -54,7 +54,7 @@ export type TierCount = {
 	count: number;
 	trap: Trap | null;
 	europa: boolean;
-	van: string;
+	phrase: string;
 };
 
 export const OTHER_TIERS = 'Overige instanties';
@@ -79,7 +79,7 @@ export function tierParts(
 		count: of(i.tiers),
 		trap: i.trap,
 		europa: !!i.europa,
-		van: i.van
+		phrase: i.phrase
 	}));
 	const rest = total - parts.reduce((sum, p) => sum + p.count, 0);
 	if (rest > 0)
@@ -89,12 +89,12 @@ export function tierParts(
 			count: rest,
 			trap: null,
 			europa: false,
-			van: 'overige instanties'
+			phrase: 'overige instanties'
 		});
 	return parts.filter((p) => p.count > 0);
 }
 
-const WOORDEN = [
+const NUMBER_WORDS = [
 	'twee',
 	'drie',
 	'vier',
@@ -109,11 +109,11 @@ const WOORDEN = [
 ];
 
 /** Where one instantie is all there is, no strook: `Alle drie van de Hoge Raad`; else null. */
-export function eenInstantie(parts: readonly TierCount[] | null): string | null {
+export function singleTierLine(parts: readonly TierCount[] | null): string | null {
 	if (!parts || parts.length !== 1) return null;
-	const { count, van } = parts[0];
-	if (count === 1) return `De enige van ${van}`;
-	return `Alle ${WOORDEN[count - 2] ?? formatCount(count)} van ${van}`;
+	const { count, phrase } = parts[0];
+	if (count === 1) return `De enige van ${phrase}`;
+	return `Alle ${NUMBER_WORDS[count - 2] ?? formatCount(count)} van ${phrase}`;
 }
 
 /** The judgments that cite the article per instantie, out of `total`. */

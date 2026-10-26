@@ -27,7 +27,7 @@
 	import { betrouwbaarheid } from './verbinding';
 	import WetVerwijzingen from './WetVerwijzingen.svelte';
 	import TierSwatch from './TierSwatch.svelte';
-	import { vormVanTier } from './tiers';
+	import { shapeOfTier } from './tiers';
 	import { hoeVan, kleineLetter } from './hoe';
 	import { ankerVanRij, dossierVanRij, metaParts, type Row } from './rows';
 
@@ -118,11 +118,11 @@
 			: null;
 	});
 
-	// A judgment carries the vlak of its instantie where the soortteken would stand (Design System,
+	// A judgment carries the vlak of its tierShape where the soortteken would stand (Design System,
 	// VerbondenGroep): the strook above the group and its rows read as one.
-	const instantie = $derived(
+	const tierShape = $derived(
 		row.ref.collection === 'judgments' && typeof row.props?.tier === 'string'
-			? vormVanTier(row.props.tier)
+			? shapeOfTier(row.props.tier)
 			: null
 	);
 
@@ -152,8 +152,8 @@
 		class:is-open={open}
 		use:blockClick={row.missing ? null : onToggle}
 	>
-		{#if instantie}
-			<span class="row__vlak"><TierSwatch vorm={instantie} /></span>
+		{#if tierShape}
+			<span class="row__vlak"><TierSwatch shape={tierShape} /></span>
 		{:else}
 			<KindGlyph
 				collection={row.ref.collection}
@@ -241,7 +241,7 @@
 					bron={row.ref}
 					at={row.at ?? null}
 					{href}
-					onLees={() => zetMarkering(rijMarkering)}
+					onRead={() => zetMarkering(rijMarkering)}
 				/>
 			{:else}
 				<RijInhoud

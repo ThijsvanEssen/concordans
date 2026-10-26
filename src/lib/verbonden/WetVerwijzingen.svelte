@@ -27,15 +27,13 @@
 	/** Referring articles shown before Alle. */
 	const GETOOND = 8;
 
-	const verwijzingen = load(
+	const loaded = load(
 		() => `${van} ${naar}`,
 		() => getLawReferences(van, naar).then((r) => verwijzingenPerRichting(r.items ?? [])),
 		'Wetverwijzingen'
 	);
 	let alle = $state(false);
-	const richtingen = $derived<Richting[]>(
-		verwijzingen.state.status === 'ready' ? verwijzingen.state.data : []
-	);
+	const richtingen = $derived<Richting[]>(loaded.state.status === 'ready' ? loaded.state.data : []);
 
 	const aantal = $derived(richtingen.reduce((n, r) => n + r.regels.length, 0));
 	const getoond = $derived.by(() => {
@@ -49,7 +47,7 @@
 </script>
 
 <div class="verwijzingen">
-	<LoadState state={verwijzingen.state} what="De verwijzingen" plural retry={verwijzingen.retry}>
+	<LoadState state={loaded.state} what="De verwijzingen" plural retry={loaded.retry}>
 		{#each getoond as r (r.richting)}
 			{#if r.regels.length}
 				{#if getoond.length > 1}<p class="kop">{richtingKop(r.richting, dit)}</p>{/if}
