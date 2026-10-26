@@ -7,9 +7,26 @@
 	import { VORMEN } from '$lib/bron/vormen';
 	import { kindColour } from '$lib/bron/kleur';
 	import { formatCount } from '$lib/text/getal';
-	import { plural } from '$lib/text/words';
 	import type { Collection } from '$lib/vocabulary';
-	import { LINE_H, WIDTH, clusterLine, type Sketch } from './sketch';
+	import { EDGE_WEIGHT } from '$lib/graph/types';
+	import {
+		edgeColorFor,
+		edgeDashFor,
+		edgeStyleFor,
+		lijnDikte,
+		pijlLengte,
+		PIJL_BREED,
+		towardPaper
+	} from '$lib/components/graph/nodeSprites';
+	import {
+		LINE_H,
+		SKETCH_LINE,
+		WIDTH,
+		arrowhead,
+		telregel,
+		type Sketch,
+		type SketchLine
+	} from './sketch';
 
 	let {
 		sketch,
@@ -40,51 +57,122 @@
 	const dashed = (c: Collection | null) => c === 'documents' || c === 'dossiers';
 
 	const m = $derived(sketch.center);
-	const groups = $derived(sketch.clusters.length);
-	const description = $derived(
-		[
-			sketch.singles.length ? `${formatCount(sketch.singles.length)} afzonderlijk` : null,
-			groups
-				? `${formatCount(groups)} ${plural(groups, 'groep', 'groepen')}, ${formatCount(sketch.inClusters)} in totaal`
-				: null
-		]
-			.filter(Boolean)
-			.join(', ')
+	/** The focus: 18 px of ink on a halo of paper (Netwerkcanvas, Maten). */
+	const FOCUS = 18;
+	const HALO = 4.5;
+	/** The radius of a bron the line stops at, and of the ring round the chosen one. */
+	const KNOOP = 6.5;
+	const RING = 11;
+
+	// A line rests in the colour of its kind, mixed toward the paper as there are more of them
+	// (3/√n, from 0.35 to 1); the chosen one in ink, 1.3 times as thick, the rest at half.
+	const aantal = $derived(sketch.singles.length + sketch.clusters.length);
+	const sterkte = $derived(Math.min(1, Math.max(0.35, 3 / Math.sqrt(Math.max(aantal, 1)))));
+	const gekozen = $derived(open !== null);
+
+	type Lijn = {
+		x1: number;
+		y1: number;
+		x2: number;
+		y2: number;
+		kleur: string;
+		dik: number;
+		streep: string | undefined;
+		kop: string | null;
+		open: boolean;
+		gedimd: boolean;
+	};
+	/**
+	 * A line from the bron in the middle to a neighbour at (x, y), of `stop` radius: in the style of
+	 * its kind (Netwerkcanvas, Lijnen), the arrowhead at the end it points to.
+	 */
+	function lijn(
+		l: SketchLine,
+		x: number,
+		y: number,
+		stop: number,
+		gewicht: number,
+		kies: boolean
+	): Lijn {
+		const rel = l.relation;
+		const stijl = rel ? edgeStyleFor(rel, null, l.van) : 'lid';
+		const dik = (rel ? lijnDikte(EDGE_WEIGHT[rel]) : lijnDikte(gewicht)) * SKETCH_LINE;
+		const basis = rel ? edgeColorFor(rel, l.van) : 'var(--rule-strong)';
+		const kleur = kies ? 'var(--ink)' : rel ? towardPaper(basis, sterkte) : basis;
+		const naar = l.direction === 'inbound' ? 'bron' : 'knoop';
+		const wijst = rel !== null && stijl !== 'lid' && l.direction !== null;
+		const lengte = Math.max(dik * pijlLengte(), 5.5);
+		// Both ends stop at the edge of their bron.
+		const dx = x - m.x;
+		const dy = y - m.y;
+		const d = Math.hypot(dx, dy) || 1;
+		const ux = dx / d;
+		const uy = dy / d;
+		const van = FOCUS / 2 + HALO;
+		const x1 = m.x + ux * van;
+		const y1 = m.y + uy * van;
+		const x2 = x - ux * stop;
+		const y2 = y - uy * stop;
+		const kop = !wijst
+			? null
+			: naar === 'knoop'
+				? arrowhead(x1, y1, x2, y2, lengte, lengte * PIJL_BREED)
+				: arrowhead(x2, y2, x1, y1, lengte, lengte * PIJL_BREED);
+		const scherp = kies ? dik * 1.3 : dik;
+		return {
+			x1: wijst && naar === 'bron' ? x1 + ux * lengte : x1,
+			y1: wijst && naar === 'bron' ? y1 + uy * lengte : y1,
+			x2: wijst && naar === 'knoop' ? x2 - ux * lengte : x2,
+			y2: wijst && naar === 'knoop' ? y2 - uy * lengte : y2,
+			kleur,
+			dik: scherp,
+			streep: edgeDashFor(stijl),
+			kop,
+			open: kies,
+			gedimd: gekozen && !kies
+		};
+	}
+	const lijnen = $derived(
+		sketch.singles.map((l) => ({ id: l.id, ...lijn(l, l.x, l.y, KNOOP, 0.7, open === l.id) }))
 	);
+	const groepLijnen = $derived(
+		sketch.clusters.map((b) => ({ id: b.id, ...lijn(b, b.x, b.y, Math.max(b.r, 14), 1, false) }))
+	);
+	const regel = $derived(telregel(sketch));
 </script>
 
 <figure class="sketch" data-testid="network-sketch">
-	<svg
-		viewBox="0 0 {WIDTH} {sketch.height}"
-		role="group"
-		aria-label="Netwerk rond {name}: {description}"
-	>
-		{#each sketch.singles as l (l.id)}
-			<line
-				x1={m.x}
-				y1={m.y}
-				x2={l.x}
-				y2={l.y}
-				class="line"
-				class:is-open={open === l.id}
-				stroke-width={open === l.id ? 2 : 1.5}
-			/>
-		{/each}
-		{#each sketch.clusters as b (b.id)}
-			<line x1={m.x} y1={m.y} x2={b.x} y2={b.y} class="line" stroke-width={clusterLine(b.count)} />
+	<svg viewBox="0 0 {WIDTH} {sketch.height}" role="group" aria-label="Netwerk rond {name}: {regel}">
+		{#each [...lijnen, ...groepLijnen] as t (t.id)}
+			<g class="line" class:is-gedimd={t.gedimd}>
+				<line
+					x1={t.x1}
+					y1={t.y1}
+					x2={t.x2}
+					y2={t.y2}
+					stroke={t.kleur}
+					stroke-width={t.dik}
+					stroke-dasharray={t.streep}
+				/>
+				{#if t.kop}<polygon points={t.kop} fill={t.kleur} />{/if}
+			</g>
 		{/each}
 
 		<g class="focus">
 			<title>{name}</title>
-			<rect x={m.x - 11} y={m.y - 11} width="22" height="22" fill="var(--ink)" />
 			<rect
-				x={m.x - 17}
-				y={m.y - 17}
-				width="34"
-				height="34"
-				fill="none"
-				stroke="var(--ink)"
-				stroke-width="1.5"
+				x={m.x - FOCUS / 2 - HALO}
+				y={m.y - FOCUS / 2 - HALO}
+				width={FOCUS + 2 * HALO}
+				height={FOCUS + 2 * HALO}
+				fill="var(--paper)"
+			/>
+			<rect
+				x={m.x - FOCUS / 2}
+				y={m.y - FOCUS / 2}
+				width={FOCUS}
+				height={FOCUS}
+				fill="var(--ink)"
 			/>
 			<text x={m.x} y={m.y + 34} text-anchor="middle" class="name name--focus"
 				>{#each sketch.centerLines as line, i (i)}<tspan x={m.x} dy={i ? LINE_H : 0}>{line}</tspan
@@ -106,17 +194,11 @@
 			>
 				<title>{l.title}</title>
 				<circle cx={l.x} cy={l.y} r={l.hit} class="hit" />
-				{#if open === l.id}<rect
-						class="sel"
-						x={l.x - 12}
-						y={l.y - 12}
-						width="24"
-						height="24"
-						rx="2"
-					/>{/if}
+				<circle cx={l.x} cy={l.y} r={KNOOP + 3} fill="var(--paper)" />
+				{#if open === l.id}<circle class="sel" cx={l.x} cy={l.y} r={RING} />{/if}
 				<path
 					d={v.d}
-					transform="translate({l.x - 7} {l.y - 7}) scale(0.875)"
+					transform="translate({l.x - 6.4} {l.y - 6.4}) scale(0.8)"
 					fill={v.wijze === 'lijn' ? 'var(--paper)' : colour(l.collection, l.hue)}
 					stroke={v.wijze === 'lijn' ? colour(l.collection, l.hue) : 'none'}
 					stroke-width={v.wijze === 'lijn' ? 2.4 : 0}
@@ -158,30 +240,8 @@
 			</g>
 		{/each}
 	</svg>
-	<figcaption class="legend">
-		{#if sketch.singles.length}
-			<span class="legend__part"
-				><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"
-					><rect width="10" height="10" fill="var(--ink-2)" /></svg
-				>{formatCount(sketch.singles.length)} afzonderlijk</span
-			>
-		{/if}
-		{#if groups}
-			<span class="legend__part"
-				><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"
-					><circle
-						cx="6"
-						cy="6"
-						r="4.8"
-						fill="none"
-						stroke="var(--ink-2)"
-						stroke-width="1.6"
-					/></svg
-				>{formatCount(groups)}
-				{plural(groups, 'groep', 'groepen')}, {formatCount(sketch.inClusters)} in totaal</span
-			>
-		{/if}
-	</figcaption>
+	<!-- One line that counts what is drawn (Netwerkschets, Tekst). -->
+	<figcaption class="telregel">{regel}</figcaption>
 </figure>
 
 <style>
@@ -198,14 +258,9 @@
 		margin: 0 auto;
 		overflow: visible;
 	}
-	.line {
-		stroke: var(--rule-strong);
-		opacity: 0.55;
-	}
-	/* The bron opened under the drawing: its line in ink, a frame around it. */
-	.line.is-open {
-		stroke: var(--ink);
-		opacity: 1;
+	/* A chosen neighbour: its line in ink, the rest at half. */
+	.line.is-gedimd {
+		opacity: 0.5;
 	}
 	.sel {
 		fill: none;
@@ -256,22 +311,13 @@
 		outline: 2px solid var(--focus);
 		outline-offset: 2px;
 	}
-	/* One line that counts what is drawn (besluit 29.3). */
-	.legend {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: center;
-		gap: 0 var(--s-4);
+	/* One line that counts what is drawn. */
+	.telregel {
 		margin: var(--s-2) 0 0;
 		font-family: var(--font-serif);
-		font-size: var(--t-ui);
-		line-height: 20px;
-		color: var(--ink-2);
-	}
-	.legend__part {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-1);
-		white-space: nowrap;
+		font-size: var(--t-micro);
+		line-height: 18px;
+		text-align: center;
+		color: var(--ink-3);
 	}
 </style>

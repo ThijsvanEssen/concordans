@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { WIDTH, LABEL_MAX, SKETCH_LIMIT, sketch, divide, wrap, type SketchGroup } from './sketch';
+import {
+	WIDTH,
+	LABEL_MAX,
+	SKETCH_LIMIT,
+	arrowhead,
+	sketch,
+	divide,
+	telregel,
+	wrap,
+	type SketchGroup
+} from './sketch';
 import type { Row } from './rows';
 
 const row = (
@@ -135,5 +145,50 @@ describe('the network on request', () => {
 			expect(p.y).toBeGreaterThan(0);
 			expect(p.y).toBeLessThan(s.height);
 		}
+	});
+});
+
+describe('the line under the drawing', () => {
+	it('counts the bronnen on their own and the groups with what they hold', () => {
+		const s = sketch(
+			[group('a', 7, 'articles'), group('uitspraken', 38, 'judgments', 25)],
+			'x',
+			10
+		);
+		expect(telregel(s)).toBe('7 bronnen, 1 groep van 38 uitspraken');
+	});
+	it('says bron at one, and bronnen of groups of several kinds', () => {
+		expect(telregel(sketch([group('a', 1, 'articles')]))).toBe('1 bron');
+		const s = sketch(
+			[group('u', 300, 'judgments', 25), group('k', 200, 'documents', 25)],
+			'x',
+			SKETCH_LIMIT
+		);
+		expect(telregel(s)).toBe('2 groepen van 500 bronnen');
+	});
+});
+
+describe('a line of the drawing', () => {
+	it('knows whom it comes from: the other bron when it names the one in the middle', () => {
+		const inkomend: Row = {
+			...row('judgments', 'j1'),
+			relation: 'REFERS_TO',
+			direction: 'inbound'
+		};
+		const s = sketch([{ ...group('u', 1, 'judgments'), rows: [inkomend] }], 'x');
+		expect(s.singles[0]).toMatchObject({ relation: 'REFERS_TO', van: 'judgment' });
+		const uitgaand: Row = { ...inkomend, direction: 'outbound' };
+		const t = sketch(
+			[{ ...group('u', 1, 'judgments'), rows: [uitgaand] }],
+			'x',
+			SKETCH_LIMIT,
+			'judgment'
+		);
+		expect(t.singles[0].van).toBe('judgment');
+	});
+	it('puts the tip of an arrowhead at the end of the line', () => {
+		const punten = arrowhead(0, 0, 100, 0, 6, 5).split(' ');
+		expect(punten[1]).toBe('100,0');
+		expect(punten[0]).toBe('94,2.5');
 	});
 });

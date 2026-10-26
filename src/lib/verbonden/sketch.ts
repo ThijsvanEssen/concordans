@@ -7,7 +7,10 @@
 import { refId } from '$lib/bron/href';
 import type { BronRef } from '$lib/bron/ref';
 import { vormVanBron } from '$lib/bron/vormen';
-import type { Collection } from '$lib/vocabulary';
+import { drawClassOf, type DrawClass } from '$lib/graph/types';
+import { plural } from '$lib/text/words';
+import { formatCount } from '$lib/text/getal';
+import { bronPlural, type Collection, type Relation } from '$lib/vocabulary';
 import type { TierCount } from './tiers';
 import type { Row } from './rows';
 
@@ -45,7 +48,16 @@ export type SketchGroup = {
 	parts?: readonly TierCount[] | null;
 };
 
-type Single = {
+/** How a line of the drawing runs: its relation, whom it comes from, and to whom it points. */
+export type SketchLine = {
+	relation: Relation | null;
+	/** `inbound`: the other bron names the one in the middle; `outbound`: the other way. */
+	direction: 'inbound' | 'outbound' | null;
+	/** The kind of the bron the line comes from: a citation by an article is structural. */
+	van: DrawClass;
+};
+
+type Single = SketchLine & {
 	id: string;
 	ref: BronRef;
 	title: string;
@@ -65,7 +77,7 @@ type Single = {
 	hit: number;
 };
 
-type Circle = {
+type Circle = SketchLine & {
 	id: string;
 	/** The group of Verbonden it stands for. */
 	group: string;
@@ -99,8 +111,28 @@ export type Sketch = {
 const radius = (count: number): number =>
 	Math.min(32, Math.max(14, 8 + 6 * Math.log10(Math.max(count, 1))));
 
-/** The width of the line to a group: thicker with more bronnen behind it. */
-export const clusterLine = (count: number): number => 1.5 + 0.4 * Math.log10(Math.max(count, 1));
+/** The width of a line in the drawing: 0.8 of the canvas's (Netwerkschets, Maten). */
+export const SKETCH_LINE = 0.8;
+
+/**
+ * The points of an arrowhead at (x2, y2) on the line from (x1, y1): `lengte` long and
+ * `breed` wide at its foot, the tip at the end of the line.
+ */
+export function arrowhead(
+	x1: number,
+	y1: number,
+	x2: number,
+	y2: number,
+	lengte: number,
+	breed: number
+): string {
+	const hoek = Math.atan2(y2 - y1, x2 - x1);
+	const bx = x2 - lengte * Math.cos(hoek);
+	const by = y2 - lengte * Math.sin(hoek);
+	const nx = (-Math.sin(hoek) * breed) / 2;
+	const ny = (Math.cos(hoek) * breed) / 2;
+	return `${bx + nx},${by + ny} ${x2},${y2} ${bx - nx},${by - ny}`;
+}
 
 /** `n` angles spread over [from, to] (degrees), at the middle where there is one. */
 function angles(n: number, from: number, to: number): number[] {
@@ -120,13 +152,13 @@ export function divide(
 	limit = SKETCH_LIMIT
 ): {
 	singles: { row: Row; hue: string | null }[];
-	clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx' | 'ly'>[];
+	clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx' | 'ly' | 'van'>[];
 } {
 	const withCount = groups.filter((g) => g.count > 0);
 	const smallestFirst = [...withCount].sort((a, b) => a.count - b.count);
 	const singles: { row: Row; hue: string | null }[] = [];
 	const seen = new Set<string>();
-	const clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx' | 'ly'>[] = [];
+	const clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx' | 'ly' | 'van'>[] = [];
 	let room = limit;
 	smallestFirst.forEach((g, i) => {
 		const toGo = smallestFirst.length - 1 - i;
@@ -144,8 +176,16 @@ export function divide(
 		const own = g.parts?.length
 			? g.parts.map((d) => ({ id: `${g.id}:${d.tier ?? 'other'}`, label: d.label, count: d.count }))
 			: [{ id: g.id, label: g.name, count: g.count }];
+		const lijn = g.rows.find((r) => r.relation);
 		for (const p of own)
-			clusters.push({ ...p, group: g.id, collection: g.collection, hue: g.hue ?? null });
+			clusters.push({
+				...p,
+				group: g.id,
+				collection: g.collection,
+				hue: g.hue ?? null,
+				relation: lijn?.relation ?? null,
+				direction: lijn?.direction ?? null
+			});
 		room -= own.length;
 	});
 	// In the order of the panel, not by size.
@@ -189,7 +229,9 @@ const boxOf = (x: number, y: number, lines: string[]): Box => {
 export function sketch(
 	groups: readonly SketchGroup[],
 	centerName = '',
-	limit = SKETCH_LIMIT
+	limit = SKETCH_LIMIT,
+	/** The kind of the bron in the middle, whom an outbound line comes from. */
+	centerClass: DrawClass = 'article'
 ): Sketch {
 	const { singles: single, clusters: clu } = divide(groups, limit);
 	const cx = WIDTH / 2;
@@ -204,7 +246,8 @@ export function sketch(
 		const lines = wrap(b.label, CIRCLE_LINE);
 		const y = R_CLUSTER * Math.sin(a);
 		const r = radius(b.count);
-		return { ...b, lines, lx: inside(x, lines), ly: y + r + 16, x, y, r };
+		const van = b.direction === 'outbound' ? centerClass : drawClassOf(b.collection ?? 'documents');
+		return { ...b, van, lines, lx: inside(x, lines), ly: y + r + 16, x, y, r };
 	});
 	// A circle's name never lies over another's: under its circle where that is free, else
 	// above it, else none (its title and the list name it).
@@ -252,6 +295,9 @@ export function sketch(
 			shape: vormVanBron(row.ref.collection, row.props, row.ref.key),
 			collection: row.ref.collection,
 			hue,
+			relation: row.relation ?? null,
+			direction: row.direction ?? null,
+			van: row.direction === 'outbound' ? centerClass : drawClassOf(row.ref.collection),
 			x,
 			y,
 			lx: inside(x, lines),
@@ -307,4 +353,24 @@ export function sketch(
 function rank(i: number, n: number): number {
 	if (i === 0 || i === n - 1) return -1;
 	return Math.abs(i - (n - 1) / 2);
+}
+
+/**
+ * The one line under the drawing that counts what is drawn: `7 bronnen, 1 groep van 38 uitspraken`.
+ * Groups of one kind say what they hold; groups of several say `bronnen`.
+ */
+export function telregel(s: Pick<Sketch, 'singles' | 'clusters' | 'inClusters'>): string {
+	const delen: string[] = [];
+	const n = s.singles.length;
+	if (n > 0) delen.push(`${formatCount(n)} ${plural(n, 'bron', 'bronnen')}`);
+	const g = s.clusters.length;
+	if (g > 0) {
+		const soorten = new Set(s.clusters.map((c) => c.collection));
+		const soort = soorten.size === 1 && s.clusters[0].collection;
+		const wat = soort ? bronPlural(soort).toLowerCase() : 'bronnen';
+		delen.push(
+			`${formatCount(g)} ${plural(g, 'groep', 'groepen')} van ${formatCount(s.inClusters)} ${wat}`
+		);
+	}
+	return delen.join(', ');
 }

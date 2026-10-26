@@ -190,12 +190,12 @@ describe('Verbonden', () => {
 		expect(screen.queryByTestId('network-sketch')).toBeNull();
 	});
 
-	it('draws each bron on its own up to forty, counted in the legend', () => {
+	it('draws each bron on its own up to forty, counted under the drawing', () => {
 		paneel(ROWS, { onShowNetwork: () => {}, showNetwork: true, networkHref: '/x' });
 		expect(screen.getByRole('button', { name: 'Netwerk verbergen' })).toBeTruthy();
 		const figuur = screen.getByTestId('network-sketch');
 		expect(figuur.querySelector('figcaption')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-			'2 afzonderlijk'
+			'2 bronnen'
 		);
 		const namen = [...figuur.querySelectorAll('.single title')].map((t) => t.textContent);
 		expect(namen).toEqual([
