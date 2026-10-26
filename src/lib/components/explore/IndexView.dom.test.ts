@@ -318,7 +318,7 @@ describe('Bronnen, the address', () => {
 
 	it('asks the next page from the rows it has', async () => {
 		const api = await open('instruments');
-		await fireEvent.click(screen.getByText(/^Volgende wetten/));
+		await fireEvent.click(screen.getByText(/^Volgende \d+ wetten/));
 		await settled();
 		expect(api.asked('/api/instruments').at(-1)).toMatchObject({
 			query: { offset: 3, facets: false }
@@ -334,7 +334,7 @@ describe('Bronnen, the address', () => {
 		}));
 		await open('members', '', { ...ROUTES, '/api/members': seated });
 		expect(document.querySelectorAll('.results a.row-title')).toHaveLength(150);
-		expect(screen.queryByText(/^Volgende kamerleden/)).toBeNull();
+		expect(screen.queryByText(/^Volgende (\d+ )?kamerleden/)).toBeNull();
 	});
 
 	it('puts the text searched for in the address once the typing pauses', async () => {
