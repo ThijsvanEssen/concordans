@@ -8,9 +8,9 @@
 		edgeColorFor,
 		edgeDashFor,
 		edgeStyleFor,
-		lijnDikte,
-		pijlLengte,
-		PIJL_BREED
+		lineThickness,
+		arrowLength,
+		ARROW_WIDTH
 	} from './nodeSprites';
 
 	const WIDTH = 28;
@@ -25,8 +25,8 @@
 
 	const style = $derived(edgeStyleFor(relation, null, from));
 	const colour = $derived(edgeColorFor(relation, from));
-	const thick = $derived(Math.max(lijnDikte(EDGE_WEIGHT[relation]), 1.4));
-	const head = $derived(style === 'lid' ? 0 : thick * pijlLengte());
+	const thick = $derived(Math.max(lineThickness(EDGE_WEIGHT[relation]), 1.4));
+	const head = $derived(style === 'lid' ? 0 : thick * arrowLength());
 	const end = $derived(WIDTH - 1);
 </script>
 
@@ -40,8 +40,8 @@
 		stroke-width={thick}
 		stroke-dasharray={edgeDashFor(style)}
 	/>{#if head > 0}<polygon
-			points="{end - head},{6 - (head * PIJL_BREED) / 2} {end},6 {end - head},{6 +
-				(head * PIJL_BREED) / 2}"
+			points="{end - head},{6 - (head * ARROW_WIDTH) / 2} {end},6 {end - head},{6 +
+				(head * ARROW_WIDTH) / 2}"
 			fill={colour}
 		/>{/if}</svg
 >

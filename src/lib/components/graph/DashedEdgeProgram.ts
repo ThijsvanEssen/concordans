@@ -10,7 +10,7 @@ import {
 	createEdgeCompoundProgram
 } from 'sigma/rendering';
 import { floatColor } from 'sigma/utils';
-import { PIJL_BREED } from './nodeSprites';
+import { ARROW_WIDTH } from './nodeSprites';
 import type { RenderParams } from 'sigma/types';
 import type { NodeDisplayData, EdgeDisplayData } from 'sigma/types';
 
@@ -81,10 +81,10 @@ void main() {
 }
 `;
 
-// Fragment shader with a dash pattern: `perioden` repeats per edge, and `aan` the stretches of
+// Fragment shader with a dash pattern: `repeats` repeats per edge, and `lit` the stretches of
 // one repeat (0 to 1) that are lit. A 75/25 split keeps thin edges readable; 1-pixel-stair edges
 // are the price of hard-edge rendering, which keeps the colour on screen exactly the colour passed.
-const fragment = (perioden: number, aan: readonly (readonly [number, number])[]) => /* glsl */ `
+const fragment = (repeats: number, lit: readonly (readonly [number, number])[]) => /* glsl */ `
 precision mediump float;
 
 varying vec4 v_color;
@@ -96,8 +96,8 @@ void main(void) {
   #ifdef PICKING_MODE
   gl_FragColor = v_color;
   #else
-  float pos = fract(v_positionCoef * ${perioden.toFixed(1)});
-  if (!(${aan.map(([van, tot]) => `(pos >= ${van.toFixed(3)} && pos < ${tot.toFixed(3)})`).join(' || ')})) discard;
+  float pos = fract(v_positionCoef * ${repeats.toFixed(1)});
+  if (!(${lit.map(([a, b]) => `(pos >= ${a.toFixed(3)} && pos < ${b.toFixed(3)})`).join(' || ')})) discard;
 
   float dist = length(v_normal) * v_thickness;
   if (dist > v_thickness) discard;
@@ -121,8 +121,8 @@ type Uniform = (typeof UNIFORMS)[number];
 
 // ── Program class ─────────────────────────────────────────────────────────────
 function createBodyProgram(
-	perioden: number,
-	aan: readonly (readonly [number, number])[],
+	repeats: number,
+	lit: readonly (readonly [number, number])[],
 	pijl: number
 ) {
 	return class DashedEdgeBodyProgram extends EdgeProgram<Uniform> {
@@ -130,7 +130,7 @@ function createBodyProgram(
 			return {
 				VERTICES: 6,
 				VERTEX_SHADER_SOURCE: VERTEX,
-				FRAGMENT_SHADER_SOURCE: fragment(perioden, aan),
+				FRAGMENT_SHADER_SOURCE: fragment(repeats, lit),
 				METHOD: WebGLRenderingContext.TRIANGLES,
 				UNIFORMS,
 				ATTRIBUTES: [
@@ -223,11 +223,11 @@ function createBodyProgram(
 export function stippelProgrammas(pijl: number) {
 	const kop = createEdgeArrowHeadProgram({
 		lengthToThicknessRatio: pijl,
-		widenessToThicknessRatio: pijl * PIJL_BREED
+		widenessToThicknessRatio: pijl * ARROW_WIDTH
 	});
-	const gestreept = createBodyProgram(6, [[0, 4 / 7]], pijl);
-	const gestippeld = createBodyProgram(16, [[0, 0.3]], pijl);
-	const streepPunt = createBodyProgram(
+	const dashes = createBodyProgram(6, [[0, 4 / 7]], pijl);
+	const dots = createBodyProgram(16, [[0, 0.3]], pijl);
+	const dashDot = createBodyProgram(
 		6,
 		[
 			[0, 9 / 16.5],
@@ -236,9 +236,9 @@ export function stippelProgrammas(pijl: number) {
 		pijl
 	);
 	return {
-		dashed: createEdgeCompoundProgram([gestreept as never, kop]),
-		dotted: createEdgeCompoundProgram([gestippeld as never, kop]),
-		dashdot: createEdgeCompoundProgram([streepPunt as never, kop]),
-		lid: createEdgeCompoundProgram([gestippeld as never])
+		dashed: createEdgeCompoundProgram([dashes as never, kop]),
+		dotted: createEdgeCompoundProgram([dots as never, kop]),
+		dashdot: createEdgeCompoundProgram([dashDot as never, kop]),
+		lid: createEdgeCompoundProgram([dots as never])
 	};
 }

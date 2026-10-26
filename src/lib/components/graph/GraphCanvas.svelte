@@ -64,9 +64,9 @@
 		towardPaper,
 		withAlpha,
 		tokens,
-		lijnDikte,
-		pijlLengte,
-		PIJL_BREED
+		lineThickness,
+		arrowLength,
+		ARROW_WIDTH
 	} from './nodeSprites';
 
 	export type GraphCanvasApi = {
@@ -854,7 +854,7 @@
 			padding: 0
 		});
 
-		const stippel = stippelProgrammas(pijlLengte());
+		const stippel = stippelProgrammas(arrowLength());
 		renderer = new Sigma(graph, wrap, {
 			// Every node is its vorm, a sprite (nodeSprites): the image program alone, which reads
 			// `color` as the ground behind the sprite.
@@ -862,8 +862,8 @@
 			edgeProgramClasses: {
 				arrow: metLijnLabel(
 					createEdgeArrowProgram({
-						lengthToThicknessRatio: pijlLengte(),
-						widenessToThicknessRatio: pijlLengte() * PIJL_BREED
+						lengthToThicknessRatio: arrowLength(),
+						widenessToThicknessRatio: arrowLength() * ARROW_WIDTH
 					}) as never
 				),
 				dashed: metLijnLabel(stippel.dashed as never),
@@ -1062,7 +1062,9 @@
 				const style = edgeStyleFor(relation, data.status as string | null, sourceClass);
 				const renderColor = edgeColorFor(relation, sourceClass);
 				const edgeType = style === 'solid' ? 'arrow' : style;
-				const restSize = lijnDikte(Math.max(EDGE_WEIGHT[relation], style === 'dashed' ? 0.7 : 0));
+				const restSize = lineThickness(
+					Math.max(EDGE_WEIGHT[relation], style === 'dashed' ? 0.7 : 0)
+				);
 				const sourceCollection = srcAttrs.collection as Collection;
 
 				if (edge === latestSelectedEdge) {

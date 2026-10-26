@@ -139,11 +139,12 @@ export function edgeColorFor(relation: Relation, sourceClass: DrawClass): string
 }
 
 /** The thickness of a verbinding at rest: its weight (EDGE_WEIGHT) times --netwerk-lijn. */
-export const lijnDikte = (gewicht: number): number => gewicht * (parseFloat(tokens().lijn) || 3);
+export const lineThickness = (gewicht: number): number =>
+	gewicht * (parseFloat(tokens().lijn) || 3);
 /** An arrowhead's length in thicknesses of its line (--netwerk-pijl). */
-export const pijlLengte = (): number => parseFloat(tokens().pijl) || 3.2;
+export const arrowLength = (): number => parseFloat(tokens().pijl) || 3.2;
 /** An arrowhead's width to its length. */
-export const PIJL_BREED = 0.8;
+export const ARROW_WIDTH = 0.8;
 
 const HEX = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i;
 

@@ -22,7 +22,7 @@
 		viewSlot,
 		depth,
 		onDepth,
-		netwerkActive = false,
+		networkOn = false,
 		hasSelection = false,
 		reach = null,
 		empty = false,
@@ -35,7 +35,7 @@
 		depth: number;
 		onDepth: (d: number) => void;
 		/** With a netwerk, a depth adds context around the selection instead of setting the view. */
-		netwerkActive?: boolean;
+		networkOn?: boolean;
 		hasSelection?: boolean;
 		/** How far the last neighbourhood reached, and whether the API cut it off. */
 		reach?: NeighborhoodReach | null;
@@ -60,15 +60,15 @@
 	const open = $derived(isOpen(KEY, true));
 	const withDepth = $derived(view !== 'keten' && !empty);
 	const chosen = $derived(
-		empty ? '' : withDepth && !netwerkActive ? `${WORDS[view]}, ${stepsWord(depth)}` : WORDS[view]
+		empty ? '' : withDepth && !networkOn ? `${WORDS[view]}, ${stepsWord(depth)}` : WORDS[view]
 	);
 	const lines = $derived(drawnLineKinds(relations, refersFrom));
 
 	// Steps that add nothing, as the API cut the neighbourhood off at its cap.
 	const cap = $derived(reach?.cap ?? NEIGHBORHOOD_CAP);
-	const beyondCap = (d: number) => !netwerkActive && !!reach?.capped && d > reach.depth;
+	const beyondCap = (d: number) => !networkOn && !!reach?.capped && d > reach.depth;
 	const reason = (d: number) =>
-		netwerkActive && !hasSelection
+		networkOn && !hasSelection
 			? 'Kies eerst een bron in het netwerk.'
 			: beyondCap(d)
 				? `Maximaal ${cap} bronnen getoond; een stap verder voegt niets toe.`
@@ -97,7 +97,7 @@
 				<Keuze
 					label="Aantal stappen"
 					vol
-					waarde={netwerkActive ? null : String(depth)}
+					waarde={networkOn ? null : String(depth)}
 					opties={STEPS.map((d) => ({
 						waarde: String(d),
 						label: stepsWord(d),

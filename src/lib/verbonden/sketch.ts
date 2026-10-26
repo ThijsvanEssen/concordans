@@ -54,7 +54,7 @@ export type SketchLine = {
 	/** `inbound`: the other bron names the one in the middle; `outbound`: the other way. */
 	direction: 'inbound' | 'outbound' | null;
 	/** The kind of the bron the line comes from: a citation by an article is structural. */
-	van: DrawClass;
+	source: DrawClass;
 };
 
 type Single = SketchLine & {
@@ -152,13 +152,13 @@ export function divide(
 	limit = SKETCH_LIMIT
 ): {
 	singles: { row: Row; hue: string | null }[];
-	clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx' | 'ly' | 'van'>[];
+	clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx' | 'ly' | 'source'>[];
 } {
 	const withCount = groups.filter((g) => g.count > 0);
 	const smallestFirst = [...withCount].sort((a, b) => a.count - b.count);
 	const singles: { row: Row; hue: string | null }[] = [];
 	const seen = new Set<string>();
-	const clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx' | 'ly' | 'van'>[] = [];
+	const clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx' | 'ly' | 'source'>[] = [];
 	let room = limit;
 	smallestFirst.forEach((g, i) => {
 		const toGo = smallestFirst.length - 1 - i;
@@ -246,8 +246,9 @@ export function sketch(
 		const lines = wrap(b.label, CIRCLE_LINE);
 		const y = R_CLUSTER * Math.sin(a);
 		const r = radius(b.count);
-		const van = b.direction === 'outbound' ? centerClass : drawClassOf(b.collection ?? 'documents');
-		return { ...b, van, lines, lx: inside(x, lines), ly: y + r + 16, x, y, r };
+		const source =
+			b.direction === 'outbound' ? centerClass : drawClassOf(b.collection ?? 'documents');
+		return { ...b, source, lines, lx: inside(x, lines), ly: y + r + 16, x, y, r };
 	});
 	// A circle's name never lies over another's: under its circle where that is free, else
 	// above it, else none (its title and the list name it).
@@ -297,7 +298,7 @@ export function sketch(
 			hue,
 			relation: row.relation ?? null,
 			direction: row.direction ?? null,
-			van: row.direction === 'outbound' ? centerClass : drawClassOf(row.ref.collection),
+			source: row.direction === 'outbound' ? centerClass : drawClassOf(row.ref.collection),
 			x,
 			y,
 			lx: inside(x, lines),

@@ -1283,7 +1283,7 @@
 			viewSlot={viewChoice}
 			{depth}
 			{onDepth}
-			{netwerkActive}
+			networkOn={netwerkActive}
 			hasSelection={!!selection}
 			reach={externCounts ? null : reach}
 			empty={!hasNodes && !midden}

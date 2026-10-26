@@ -13,9 +13,9 @@
 		edgeColorFor,
 		edgeDashFor,
 		edgeStyleFor,
-		lijnDikte,
-		pijlLengte,
-		PIJL_BREED,
+		lineThickness,
+		arrowLength,
+		ARROW_WIDTH,
 		towardPaper
 	} from '$lib/components/graph/nodeSprites';
 	import {
@@ -70,13 +70,13 @@
 	const strength = $derived(Math.min(1, Math.max(0.35, 3 / Math.sqrt(Math.max(total, 1)))));
 	const chosen = $derived(open !== null);
 
-	type Lijn = {
+	type StrokeLine = {
 		x1: number;
 		y1: number;
 		x2: number;
 		y2: number;
 		colour: string;
-		dik: number;
+		width: number;
 		dash: string | undefined;
 		head: string | null;
 		open: boolean;
@@ -93,39 +93,39 @@
 		radiusStop: number,
 		weight: number,
 		pick: boolean
-	): Lijn {
+	): StrokeLine {
 		const rel = l.relation;
-		const style = rel ? edgeStyleFor(rel, null, l.van) : 'lid';
-		const dik = (rel ? lijnDikte(EDGE_WEIGHT[rel]) : lijnDikte(weight)) * SKETCH_LINE;
-		const base = rel ? edgeColorFor(rel, l.van) : 'var(--rule-strong)';
+		const style = rel ? edgeStyleFor(rel, null, l.source) : 'lid';
+		const width = (rel ? lineThickness(EDGE_WEIGHT[rel]) : lineThickness(weight)) * SKETCH_LINE;
+		const base = rel ? edgeColorFor(rel, l.source) : 'var(--rule-strong)';
 		const colour = pick ? 'var(--ink)' : rel ? towardPaper(base, strength) : base;
 		const towards = l.direction === 'inbound' ? 'bron' : 'knoop';
 		const points = rel !== null && style !== 'lid' && l.direction !== null;
-		const length = Math.max(dik * pijlLengte(), 5.5);
+		const length = Math.max(width * arrowLength(), 5.5);
 		// Both ends radiusStop at the edge of their bron.
 		const dx = x - m.x;
 		const dy = y - m.y;
 		const d = Math.hypot(dx, dy) || 1;
 		const ux = dx / d;
 		const uy = dy / d;
-		const van = FOCUS / 2 + HALO;
-		const x1 = m.x + ux * van;
-		const y1 = m.y + uy * van;
+		const gap = FOCUS / 2 + HALO;
+		const x1 = m.x + ux * gap;
+		const y1 = m.y + uy * gap;
 		const x2 = x - ux * radiusStop;
 		const y2 = y - uy * radiusStop;
 		const head = !points
 			? null
 			: towards === 'knoop'
-				? arrowhead(x1, y1, x2, y2, length, length * PIJL_BREED)
-				: arrowhead(x2, y2, x1, y1, length, length * PIJL_BREED);
-		const thick = pick ? dik * 1.3 : dik;
+				? arrowhead(x1, y1, x2, y2, length, length * ARROW_WIDTH)
+				: arrowhead(x2, y2, x1, y1, length, length * ARROW_WIDTH);
+		const thick = pick ? width * 1.3 : width;
 		return {
 			x1: points && towards === 'bron' ? x1 + ux * length : x1,
 			y1: points && towards === 'bron' ? y1 + uy * length : y1,
 			x2: points && towards === 'knoop' ? x2 - ux * length : x2,
 			y2: points && towards === 'knoop' ? y2 - uy * length : y2,
 			colour,
-			dik: thick,
+			width: thick,
 			dash: edgeDashFor(style),
 			head,
 			open: pick,
@@ -155,7 +155,7 @@
 					x2={t.x2}
 					y2={t.y2}
 					stroke={t.colour}
-					stroke-width={t.dik}
+					stroke-width={t.width}
 					stroke-dasharray={t.dash}
 				/>
 				{#if t.head}<polygon points={t.head} fill={t.colour} />{/if}

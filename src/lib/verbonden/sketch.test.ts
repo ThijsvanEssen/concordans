@@ -176,7 +176,7 @@ describe('a line of the drawing', () => {
 			direction: 'inbound'
 		};
 		const s = sketch([{ ...group('u', 1, 'judgments'), rows: [inkomend] }], 'x');
-		expect(s.singles[0]).toMatchObject({ relation: 'REFERS_TO', van: 'judgment' });
+		expect(s.singles[0]).toMatchObject({ relation: 'REFERS_TO', source: 'judgment' });
 		const uitgaand: Row = { ...inkomend, direction: 'outbound' };
 		const t = sketch(
 			[{ ...group('u', 1, 'judgments'), rows: [uitgaand] }],
@@ -184,7 +184,7 @@ describe('a line of the drawing', () => {
 			SKETCH_LIMIT,
 			'judgment'
 		);
-		expect(t.singles[0].van).toBe('judgment');
+		expect(t.singles[0].source).toBe('judgment');
 	});
 	it('puts the tip of an arrowhead at the end of the line', () => {
 		const punten = arrowhead(0, 0, 100, 0, 6, 5).split(' ');
