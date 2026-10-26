@@ -76,6 +76,7 @@
 	import { relationWords } from '$lib/verbonden/relation-words';
 	import { sentence } from '$lib/network/shared';
 	import { netwerkMelding } from '$lib/stores/netwerk-melding';
+	import Periode from '$lib/components/ui/Periode.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { kaart } from '$lib/map/map.svelte';
 	import { gemerkt, notesOfBundels } from '$lib/map/notities';
@@ -1182,11 +1183,6 @@
 			tot: tot === null ? null : `${tot}-12-31`
 		});
 	}
-	function veldJaar(e: Event): number | null {
-		const v = (e.currentTarget as HTMLInputElement).value.trim();
-		const n = Number(v);
-		return v && Number.isInteger(n) && n > 1000 && n < 3000 ? n : null;
-	}
 
 	// ── How the bron of the card is tied to the chosen bronnen ─────────────────
 	// Read from the lines on the canvas: "Haalt Art. 6:162 BW aan", "Art. 6:162 BW noemt deze
@@ -1242,25 +1238,11 @@
 {#snippet periode()}
 	<section class="block" aria-labelledby="werkplek-periode">
 		<h3 class="strook__kop" id="werkplek-periode">Periode</h3>
-		<p class="periode">
-			<input
-				class="veld"
-				inputmode="numeric"
-				aria-label="Van het jaar"
-				placeholder={eersteJaar}
-				value={jaarVan(filter.van) ?? ''}
-				onchange={(e) => kiesPeriode(veldJaar(e), jaarVan(filter.tot))}
-			/>
-			<span>tot</span>
-			<input
-				class="veld"
-				inputmode="numeric"
-				aria-label="Tot en met het jaar"
-				placeholder={laatsteJaar}
-				value={jaarVan(filter.tot) ?? ''}
-				onchange={(e) => kiesPeriode(jaarVan(filter.van), veldJaar(e))}
-			/>
-		</p>
+		<Periode
+			from={filter.van ?? ''}
+			to={filter.tot ?? ''}
+			onChange={(van, tot) => legend.onFilter({ ...filter, van: van || null, tot: tot || null })}
+		/>
 	</section>
 {/snippet}
 
@@ -1633,26 +1615,6 @@
 	.filterknop {
 		display: none;
 	}
-	.periode {
-		display: flex;
-		align-items: center;
-		gap: var(--s-2);
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-	}
-	.veld {
-		box-sizing: border-box;
-		width: 84px;
-		height: var(--veld-h);
-		padding: 0 var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-serif);
-		font-size: var(--t-input);
-		color: var(--ink);
-	}
 	/* Between a phone and three strips (1024): the strips narrower, the canvas and its tijdstrook
 	   between them; the card's strip only while a bron is marked. */
 	@media (min-width: 769px) and (max-width: 1100px) {
@@ -1787,9 +1749,6 @@
 	}
 	@media (pointer: coarse), (max-width: 768px) {
 		.filterknop {
-			height: var(--veld-h-raak);
-		}
-		.veld {
 			height: var(--veld-h-raak);
 		}
 	}

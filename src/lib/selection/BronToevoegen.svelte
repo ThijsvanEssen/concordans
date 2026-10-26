@@ -5,6 +5,7 @@
 	// already chosen says so on its row.
 	import { onMount } from 'svelte';
 	import Search from '$lib/search/Search.svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import type { SearchKind } from '$lib/search/lanes';
 
@@ -67,7 +68,7 @@
 	<div class="toevoegen__kader">
 		<div class="toevoegen__kop">
 			<span class="toevoegen__titel">Bron toevoegen</span>
-			<button type="button" class="btn is-text" onclick={onClose}>Sluiten</button>
+			<IconButton label="Sluiten" onclick={onClose}>×</IconButton>
 		</div>
 		<Search
 			overlay
