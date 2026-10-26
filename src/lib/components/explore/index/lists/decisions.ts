@@ -101,20 +101,22 @@ export const decisions = defineList<Row, DecisionsState, ReturnType<typeof query
 			onClick: toggle(patch, 'soort', p.decisionKind, k)
 		}));
 		// The motions of censure and of no confidence stand in the same filter, as the column
-		// Soort names them: both always, counted where the facet has them.
+		// Soort names them: those the votes under the filters hold, and a chosen one to be undone.
 		const motionKinds = facetMap(state.facets?.motion_kind);
-		const motions = MOTION_KINDS.map((k) => ({
-			id: k,
-			label: MOTION_KIND_LABEL[k],
-			count: motionKinds.get(k) ?? 0,
-			on: p.motionKind === k,
-			onClick: toggle(
-				patch,
-				'motie',
-				p.motionKind && MOTION_KIND_PARAM[p.motionKind],
-				MOTION_KIND_PARAM[k]
-			)
-		}));
+		const motions = MOTION_KINDS.filter((k) => motionKinds.has(k) || p.motionKind === k).map(
+			(k) => ({
+				id: k,
+				label: MOTION_KIND_LABEL[k],
+				count: motionKinds.get(k) ?? 0,
+				on: p.motionKind === k,
+				onClick: toggle(
+					patch,
+					'motie',
+					p.motionKind && MOTION_KIND_PARAM[p.motionKind],
+					MOTION_KIND_PARAM[k]
+				)
+			})
+		);
 		return [
 			...(kinds.length || p.kamer === 'TK'
 				? [
