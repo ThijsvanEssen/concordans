@@ -1,7 +1,6 @@
 <script lang="ts">
 	import MinistryLink from '$lib/bron/MinistryLink.svelte';
 	import { openHref } from '$lib/bron/href';
-	import Waarde from '$lib/components/ui/Waarde.svelte';
 	import IndexRow from '../IndexRow.svelte';
 	import type { Ministry } from '../government';
 	import { isCurrent } from '../lists/ministries';
@@ -36,7 +35,7 @@
 				{/if}
 			{/snippet}
 			{#snippet aside()}
-				<span class="num-strong"><Waarde value={m.abbreviation} /></span>
+				<span class="num-strong">{m.abbreviation ?? ''}</span>
 			{/snippet}
 		</IndexRow>
 	{/each}
