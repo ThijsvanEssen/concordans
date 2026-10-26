@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildNodeLabel } from '$lib/graph/types';
 import { maandJaar } from '$lib/text/datum';
-import { ecliStaart, metDossier, onderscheiden, stukDossier } from './canvas-naam';
+import { ecliTail, withDossier, distinctNames, paperDossier } from './canvas-names';
 
 /** A Memorie van toelichting of dossier `d`, as a neighbourhood with `props=canvas` gives it. */
 const mvt = (d: string, suffix: string | null = null) => ({
@@ -22,7 +22,8 @@ const uitspraak = (key: string, short: string) => ({
 	id: `judgments/${key}`,
 	collection: 'judgments',
 	key,
-	raw: { props: {}, cite: { full: `${short}, ${key.toUpperCase().replace(/_/g, ':')}` } }
+	raw: { props: {} },
+	short
 });
 
 describe('metDossier', () => {
@@ -31,7 +32,7 @@ describe('metDossier', () => {
 			mvt(d)
 		);
 		const namen = stukken.map((s) =>
-			metDossier('Memorie van toelichting, nr. 3', s.raw.props, new Set())
+			withDossier('Memorie van toelichting, nr. 3', s.raw.props, new Set())
 		);
 		expect(namen[0]).toBe('Memorie van toelichting, 34710, nr. 3');
 		expect(new Set(namen).size).toBe(stukken.length);
@@ -39,15 +40,15 @@ describe('metDossier', () => {
 
 	it('writes a dossier with its suffix as a citation does', () => {
 		const s = mvt('33000', 'VI');
-		expect(stukDossier(s.raw.props)).toBe('33000 VI');
-		expect(metDossier('Memorie van toelichting, nr. 3', s.raw.props, new Set())).toBe(
+		expect(paperDossier(s.raw.props)).toBe('33000 VI');
+		expect(withDossier('Memorie van toelichting, nr. 3', s.raw.props, new Set())).toBe(
 			'Memorie van toelichting, 33000 VI, nr. 3'
 		);
 	});
 
 	it('leaves the number out for a stuk of the dossier in focus: its hull names it', () => {
 		const s = mvt('36410');
-		expect(metDossier('Amendement Verkuijlen, nr. 3', s.raw.props, new Set(['36410']))).toBe(
+		expect(withDossier('Amendement Verkuijlen, nr. 3', s.raw.props, new Set(['36410']))).toBe(
 			'Amendement Verkuijlen, nr. 3'
 		);
 	});
@@ -55,25 +56,25 @@ describe('metDossier', () => {
 	it('puts the dossier before the month of a stuk without a number', () => {
 		const props = { dossier_number: '28684', date: '2020-03-12' };
 		const maand = maandJaar('2020-03-12');
-		expect(metDossier(`Brief, ${maand}`, props, new Set())).toBe(`Brief, 28684, ${maand}`);
+		expect(withDossier(`Brief, ${maand}`, props, new Set())).toBe(`Brief, 28684, ${maand}`);
 	});
 });
 
 describe('onderscheiden', () => {
 	it('tells seven judgments of one court on one day apart by their ECLI (BH2815, N4)', () => {
-		const zelfde = [816, 817, 830, 831, 832, 833, 837].map((n) =>
+		const sameDay = [816, 817, 830, 831, 832, 833, 837].map((n) =>
 			uitspraak(`ecli_nl_ghams_2024_${n}`, 'Hof Amsterdam 2 april 2024')
 		);
-		const ander = uitspraak('ecli_nl_hr_2015_1198', 'HR 1 mei 2015');
-		const namen = onderscheiden([...zelfde, ander], (b) => b.raw.cite.full.split(', ECLI')[0]);
-		expect(namen.get(zelfde[0].id)).toBe('Hof Amsterdam 2 april 2024, GHAMS:2024:816');
+		const other_ = uitspraak('ecli_nl_hr_2015_1198', 'HR 1 mei 2015');
+		const namen = distinctNames([...sameDay, other_], (b) => b.short);
+		expect(namen.get(sameDay[0].id)).toBe('Hof Amsterdam 2 april 2024, GHAMS:2024:816');
 		expect(new Set(namen.values()).size).toBe(8);
 		// A name that is its own stays as it is.
-		expect(namen.get(ander.id)).toBe('HR 1 mei 2015');
+		expect(namen.get(other_.id)).toBe('HR 1 mei 2015');
 	});
 
 	it('reads the ECLI from the key where the node carries no cite', () => {
-		expect(ecliStaart({ id: 'j', collection: 'judgments', key: 'ecli_nl_gharl_2019_317' })).toBe(
+		expect(ecliTail({ id: 'j', collection: 'judgments', key: 'ecli_nl_gharl_2019_317' })).toBe(
 			'GHARL:2019:317'
 		);
 	});
@@ -81,7 +82,7 @@ describe('onderscheiden', () => {
 	it('tells two stukken of one name apart by their dossier', () => {
 		const a = mvt('34710');
 		const b = mvt('34071');
-		const namen = onderscheiden([a, b], () => 'Memorie van toelichting, nr. 3');
+		const namen = distinctNames([a, b], () => 'Memorie van toelichting, nr. 3');
 		expect([namen.get(a.id), namen.get(b.id)]).toEqual([
 			'Memorie van toelichting, nr. 3, 34710',
 			'Memorie van toelichting, nr. 3, 34071'

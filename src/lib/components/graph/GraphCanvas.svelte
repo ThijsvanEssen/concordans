@@ -37,10 +37,10 @@
 		hoverPlaats,
 		lijnLabelPlaats,
 		planLabels,
-		type LabelKandidaat,
+		type LabelCandidate,
 		type Rect as LabelRect
 	} from './label-place';
-	import { fitBox, inzetVan, ONDER_NAAM, type Inzet } from './fit-box';
+	import { fitBox, insetsOf, NAME_BELOW, type Insets } from './fit-box';
 	import type { Collection, Relation } from '$lib/vocabulary';
 	import { relationLabel } from '$lib/verbonden/relation-words';
 	import type { FilterGroup, Rechter } from '$lib/verbonden/filter';
@@ -157,12 +157,12 @@
 	/** A phone's width, where the canvas names only the bronnen that matter most. */
 	const narrow = typeof window === 'undefined' ? null : window.matchMedia('(max-width: 768px)');
 	/** The hulls' names as they stand: a bron's name keeps clear of them. Set before a frame. */
-	let hullNamen: LabelRect[] = [];
+	let hullNames: LabelRect[] = [];
 	/** Where the names of this frame stand (`planLabels`), made at its first name. */
 	let labelPlan: Map<string, LabelRect> | null = null;
 	/** The signs of the bronnen in this frame: a hull's name keeps clear of them. */
 	let glyphRects: LabelRect[] = [];
-	const naamBreedte = new Map<string, number>();
+	const labelWidths = new Map<string, number>();
 	/**
 	 * The places taken before the names are drawn (UX test 10 Oct, #25: names over one another):
 	 * the hulls' labels, a layer of their own drawn after sigma's names, as they stand.
@@ -179,7 +179,7 @@
 		return taken;
 	}
 	/** Higher goes first: the focus, the chosen bronnen, a cluster, the bronnen in the hover. */
-	const rangVan = (id: string, cluster: boolean) =>
+	const rankOf = (id: string, cluster: boolean) =>
 		latestPinnedIds.has(id)
 			? 4
 			: cluster
@@ -193,12 +193,12 @@
 	 * The names of this frame and where they stand (UX review N4): every bron drawn, its sign;
 	 * every bron with a name, a candidate for `planLabels`, in the order of its rank.
 	 */
-	function maakLabelPlan(
+	function makeLabelPlan(
 		view: SigmaType,
 		context: CanvasRenderingContext2D,
 		settings: { labelSize: number; labelRenderedSizeThreshold: number }
 	): Map<string, LabelRect> {
-		const kandidaten: LabelKandidaat[] = [];
+		const candidates: LabelCandidate[] = [];
 		const glyphs: LabelRect[] = [];
 		const h = settings.labelSize + 4;
 		graph.forEachNode((id) => {
@@ -208,24 +208,24 @@
 			const size = view.scaleSize(d.size);
 			glyphs.push({ x: x - size, y: y - size, w: 2 * size, h: 2 * size });
 			if (!d.label || (!d.forceLabel && size < settings.labelRenderedSizeThreshold)) return;
-			let w = naamBreedte.get(d.label);
-			if (w === undefined) naamBreedte.set(d.label, (w = context.measureText(d.label).width + 4));
+			let w = labelWidths.get(d.label);
+			if (w === undefined) labelWidths.set(d.label, (w = context.measureText(d.label).width + 4));
 			const cluster = !!(d as { cluster?: boolean }).cluster;
-			kandidaten.push({
+			candidates.push({
 				id,
 				x,
 				y,
 				size,
 				w,
 				h,
-				rang: rangVan(id, cluster),
-				altijd: id === focusedId
+				rank: rankOf(id, cluster),
+				always: id === focusedId
 			});
 		});
 		glyphRects = glyphs;
 		const dpr = window.devicePixelRatio || 1;
 		const room = { width: context.canvas.width / dpr, height: context.canvas.height / dpr };
-		return planLabels(kandidaten, room, hullNamen, glyphs);
+		return planLabels(candidates, room, hullNames, glyphs);
 	}
 	/** Zoomed in past this camera ratio, a hull of a netwerk without a chosen bron is named. */
 	const HULL_LABEL_ZOOM = 0.6;
@@ -460,25 +460,25 @@
 	const LABEL_ROOM = LABEL_GAP + LABEL_HEIGHT + EDGE_GAP - 6;
 
 	/** Between what stands over the canvas and the nearest bron's sign. */
-	const RAND_LUCHT = 16;
+	const EDGE_AIR = 16;
 	/**
 	 * What a fit keeps free on each side, beyond STAGE_PADDING: a hull's name above, a bron's
 	 * name below, and what stands over the canvas (`[data-over-doek]`: the zoom) with a little air.
 	 */
-	function vrijeRand(): Inzet {
+	function freeEdges(): Insets {
 		const over = wrap?.parentElement
 			? [...wrap.parentElement.querySelectorAll<HTMLElement>(':scope > [data-over-doek]')].map(
 					(el) => el.getBoundingClientRect()
 				)
 			: [];
-		const boven = wrap ? inzetVan(wrap.getBoundingClientRect(), over) : null;
-		const voorbij = (px: number | undefined) =>
-			px ? Math.max(0, px - STAGE_PADDING + RAND_LUCHT) : 0;
+		const covered = wrap ? insetsOf(wrap.getBoundingClientRect(), over) : null;
+		const beyond = (px: number | undefined) =>
+			px ? Math.max(0, px - STAGE_PADDING + EDGE_AIR) : 0;
 		return {
-			top: Math.max(LABEL_ROOM, voorbij(boven?.top)),
-			right: voorbij(boven?.right),
-			bottom: Math.max(ONDER_NAAM, voorbij(boven?.bottom)),
-			left: voorbij(boven?.left)
+			top: Math.max(LABEL_ROOM, beyond(covered?.top)),
+			right: beyond(covered?.right),
+			bottom: Math.max(NAME_BELOW, beyond(covered?.bottom)),
+			left: beyond(covered?.left)
 		};
 	}
 
@@ -747,7 +747,7 @@
 					{ x: maxX, y: maxY },
 					renderer.getDimensions(),
 					STAGE_PADDING,
-					vrijeRand()
+					freeEdges()
 				)
 			);
 		} else {
@@ -914,7 +914,7 @@
 				// with no free place, or past the frame's sixty, waits for a hover.
 				// Sigma draws its first frame before `new Sigma` returns: no plan without it.
 				if (!renderer) return;
-				labelPlan ??= maakLabelPlan(renderer, context, settings);
+				labelPlan ??= makeLabelPlan(renderer, context, settings);
 				const key = (data as { key?: string }).key ?? '';
 				const at = labelPlan.get(key);
 				if (!at) return;
@@ -1218,7 +1218,7 @@
 		});
 
 		renderer.on('beforeRender', () => {
-			hullNamen = voorbehouden();
+			hullNames = voorbehouden();
 			labelPlan = null;
 			labelsAt = new Map();
 		});

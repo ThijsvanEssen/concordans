@@ -6,14 +6,14 @@ import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
 
 const lijst = (page: Page) => page.locator('.canvas-node-list a');
-const hullNamen = (page: Page) => page.locator('.hull-label');
+const hullNames = (page: Page) => page.locator('.hull-label');
 
 test('a ministerie in focus stands on its canvas, its name on its hull (N5)', async ({ page }) => {
 	await page.goto('/ministeries/bzk?mode=netwerk');
 	await expect(lijst(page).first()).toHaveText(
 		'Binnenlandse Zaken en Koninkrijksrelaties, Ministerie'
 	);
-	await expect(hullNamen(page).filter({ hasText: /^BZK$/ })).toHaveCount(1);
+	await expect(hullNames(page).filter({ hasText: /^BZK$/ })).toHaveCount(1);
 	// A toezegging by what was promised, never by its number alone.
 	await expect(
 		lijst(page)
@@ -27,8 +27,8 @@ test('every wet drawn as its anchor alone carries its name (N8)', async ({ page 
 	await page.goto('/wetten/BWBR0005416?mode=netwerk&netwerk=instruments/bwbr0005289&tussen=0');
 	await expect(lijst(page).filter({ hasText: /, Wet$/ })).toHaveCount(2);
 	for (const naam of ['Gemw', 'Boek 6 BW'])
-		await expect(hullNamen(page).filter({ hasText: new RegExp(`^${naam}$`) })).toHaveCount(1);
-	await expect(hullNamen(page).filter({ hasText: /^\s*$/ })).toHaveCount(0);
+		await expect(hullNames(page).filter({ hasText: new RegExp(`^${naam}$`) })).toHaveCount(1);
+	await expect(hullNames(page).filter({ hasText: /^\s*$/ })).toHaveCount(0);
 });
 
 test('each bron of the canvas has a name of its own, the uitspraken folded (N4)', async ({

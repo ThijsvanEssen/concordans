@@ -2,7 +2,7 @@ import Graph from 'graphology';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/svelte';
 import GraphCanvas from './GraphCanvas.svelte';
-import { ONDER_NAAM } from './fit-box';
+import { NAME_BELOW } from './fit-box';
 
 // A sigma that keeps the box a fit frames (`setCustomBBox`).
 const sigma = vi.hoisted(() => ({
@@ -86,7 +86,7 @@ const box = (left: number, top: number, width: number, height: number) => () =>
 	}) as DOMRect;
 
 /** The canvas of 800 × 600 in the stage, with `over` beside it (a zoom, a strip at the foot). */
-async function fitMet(over: { left: number; top: number; width: number; height: number }[]) {
+async function fitWith(over: { left: number; top: number; width: number; height: number }[]) {
 	const stage = document.createElement('div');
 	document.body.append(stage);
 	for (const r of over) {
@@ -110,19 +110,19 @@ async function fitMet(over: { left: number; top: number; width: number; height: 
 
 describe('GraphCanvas, the camera after a fit (UX review N8)', () => {
 	it('keeps a name of room under the lowest bron, a hull’s name above the highest', async () => {
-		const b = await fitMet([]);
+		const b = await fitWith([]);
 		// Graph y points up: the low end grows for the foot, the high end for the top.
 		expect(b.y[0]).toBeLessThan(0);
 		expect(b.y[1]).toBeGreaterThan(100);
 		expect(b.x).toEqual([0, 100]);
-		expect(ONDER_NAAM).toBeGreaterThan(0);
+		expect(NAME_BELOW).toBeGreaterThan(0);
 	});
 
 	it('counts a strip over the foot of the canvas (a tijdstrook) and the zoom at its side', async () => {
-		const zonder = await fitMet([]);
-		const strook = await fitMet([{ left: 0, top: 540, width: 800, height: 60 }]);
-		expect(strook.y[0]).toBeLessThan(zonder.y[0]);
-		const zoom = await fitMet([{ left: 764, top: 500, width: 24, height: 80 }]);
+		const without = await fitWith([]);
+		const strip = await fitWith([{ left: 0, top: 540, width: 800, height: 60 }]);
+		expect(strip.y[0]).toBeLessThan(without.y[0]);
+		const zoom = await fitWith([{ left: 764, top: 500, width: 24, height: 80 }]);
 		expect(zoom.x[1]).toBeGreaterThan(100);
 		expect(zoom.x[0]).toBe(0);
 	});

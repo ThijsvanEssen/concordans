@@ -66,7 +66,7 @@ describe('clustersOf', () => {
 		const [c, ...rest] = clustersOf([...nodes(137), art], edges, focus, new Set(), new Set());
 		expect(rest).toEqual([]);
 		expect(clusterLabel(c)).toBe('137 uitspraken');
-		expect(c.onderling).toBe(true);
+		expect(c.alsoTied).toBe(true);
 		// Its card no longer says they hang on the focus alone.
 		expect(clusterZinnen(c, null)[0]).toBe('Met deze bron verbonden.');
 	});

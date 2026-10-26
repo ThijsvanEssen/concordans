@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fitBox, inzetVan, ONDER_NAAM } from './fit-box';
+import { fitBox, insetsOf, NAME_BELOW } from './fit-box';
 
 const rect = (left: number, top: number, width: number, height: number) =>
 	({
@@ -31,10 +31,10 @@ describe('fitBox', () => {
 	it('keeps the foot free: the lowest bron stands its name above the lower edge (N8)', () => {
 		const box = fitBox({ x: 0, y: 0 }, { x: 100, y: 100 }, dims, 20, {
 			...none,
-			bottom: ONDER_NAAM
+			bottom: NAME_BELOW
 		});
-		// The lowest bron (y 0) stands ONDER_NAAM px above the padding at the foot.
-		expect(screenY(0, box, 800, 20)).toBeCloseTo(800 - 20 - ONDER_NAAM);
+		// The lowest bron (y 0) stands NAME_BELOW px above the padding at the foot.
+		expect(screenY(0, box, 800, 20)).toBeCloseTo(800 - 20 - NAME_BELOW);
 		// The highest stays at the top.
 		expect(screenY(100, box, 800, 20)).toBeCloseTo(20);
 	});
@@ -66,7 +66,7 @@ describe('inzetVan', () => {
 	const canvas = rect(300, 60, 780, 779);
 
 	it('keeps the side of the zoom free, a column at the lower right', () => {
-		expect(inzetVan(canvas, [rect(1044, 747, 24, 80)])).toEqual({
+		expect(insetsOf(canvas, [rect(1044, 747, 24, 80)])).toEqual({
 			top: 0,
 			right: 36,
 			bottom: 0,
@@ -75,12 +75,12 @@ describe('inzetVan', () => {
 	});
 
 	it('keeps the foot free for a strip over the lower edge (a tijdstrook over the canvas)', () => {
-		expect(inzetVan(canvas, [rect(300, 778, 780, 61)]).bottom).toBe(61);
+		expect(insetsOf(canvas, [rect(300, 778, 780, 61)]).bottom).toBe(61);
 	});
 
 	it('leaves what is not over the canvas or not shown', () => {
 		// The tijdstrook under the canvas, and the zoom on a phone (display: none).
-		expect(inzetVan(canvas, [rect(300, 839, 780, 61), rect(0, 0, 0, 0)])).toEqual({
+		expect(insetsOf(canvas, [rect(300, 839, 780, 61), rect(0, 0, 0, 0)])).toEqual({
 			top: 0,
 			right: 0,
 			bottom: 0,

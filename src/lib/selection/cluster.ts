@@ -25,7 +25,7 @@ export type Cluster = {
 	/** The neighbours of this kind on the canvas, in the cluster or loose beside it. */
 	neighbours: number;
 	/** Some members tie to another neighbour of the focus too (an uitspraak that cites an article beside it). */
-	onderling?: boolean;
+	alsoTied?: boolean;
 	/**
 	 * Between the chosen bronnen of a netwerk (`tussenClustersOf`): the chosen bronnen each
 	 * member ties, with the verbinding most members have with each. Without: around a focus.
@@ -65,7 +65,7 @@ export function clustersOf(
 	level1.delete(focus);
 
 	const byKind = new Map<Collection, string[]>();
-	const onderling = new Set<Collection>();
+	const alsoTied = new Set<Collection>();
 	for (const id of level1) {
 		const collection = collectionOf.get(id);
 		if (!collection || keep.has(id) || expanded.has(clusterId(collection, of))) continue;
@@ -74,7 +74,7 @@ export function clustersOf(
 		if (!others.every((o) => o === focus || level1.has(o))) continue;
 		pushTo(byKind, collection, id);
 		if (others.some((o) => o !== focus && collectionOf.get(o) !== collection))
-			onderling.add(collection);
+			alsoTied.add(collection);
 	}
 
 	const clusters: Cluster[] = [];
@@ -88,7 +88,7 @@ export function clustersOf(
 			relation,
 			toFocus: toEnd,
 			neighbours: [...level1].filter((id) => collectionOf.get(id) === collection).length,
-			onderling: onderling.has(collection)
+			alsoTied: alsoTied.has(collection)
 		});
 	}
 	return clusters;
@@ -174,7 +174,7 @@ export function clusterZinnen(
 				? `Elk alleen verbonden met ${joinAnd(namen)}.`
 				: 'Elk alleen verbonden met dezelfde gekozen bronnen.'
 		];
-	const zinnen = [c.onderling ? 'Met deze bron verbonden.' : 'Alleen met deze bron verbonden.'];
+	const zinnen = [c.alsoTied ? 'Met deze bron verbonden.' : 'Alleen met deze bron verbonden.'];
 	const loose = c.neighbours - c.members.length;
 	if (loose > 0)
 		zinnen.push(

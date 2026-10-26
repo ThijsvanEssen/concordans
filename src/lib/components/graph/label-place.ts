@@ -34,60 +34,59 @@ export function plaatsLabel(
 	w: number,
 	h: number,
 	room: number,
-	taken: readonly Rect[] | Bezet,
+	taken: readonly Rect[] | Taken,
 	always = false,
 	/** The height of the canvas: a name below the lowest bron is not cut off at its foot. */
-	hoogte = Infinity
+	height = Infinity
 ): { x: number; y: number } | null {
 	const side = { x: labelX(x, size, w, room), y: y - h / 2 };
 	const mid = Math.min(Math.max(EDGE, x - w / 2), Math.max(EDGE, room - w - EDGE));
-	const botst = (r: Rect) =>
-		taken instanceof Bezet ? taken.botst(r) : taken.some((t) => overlaps(r, t));
+	const hits = (r: Rect) =>
+		taken instanceof Taken ? taken.hits(r) : taken.some((t) => overlaps(r, t));
 	const candidates = [
 		side,
 		{ x: x - size - GAP - w, y: y - h / 2 },
 		{ x: mid, y: y - size - GAP - h },
 		{ x: mid, y: y + size + GAP }
 	].filter(
-		(c) => c.x >= EDGE && c.x + w <= room - EDGE + 0.5 && c.y >= EDGE && c.y + h <= hoogte - EDGE
+		(c) => c.x >= EDGE && c.x + w <= room - EDGE + 0.5 && c.y >= EDGE && c.y + h <= height - EDGE
 	);
-	const free = candidates.find((c) => !botst({ ...c, w, h }));
+	const free = candidates.find((c) => !hits({ ...c, w, h }));
 	return free ?? (always ? side : null);
 }
 
 /** The places taken in a frame, by the cells of a grid: a few thousand bronnen stay quick. */
-export class Bezet {
-	private readonly cellen = new Map<string, Rect[]>();
+class Taken {
+	private readonly cells = new Map<string, Rect[]>();
 	constructor(
 		rects: Iterable<Rect> = [],
 		private readonly cel = 48
 	) {
-		for (const r of rects) this.voeg(r);
+		for (const r of rects) this.add(r);
 	}
-	private *sleutels(r: Rect) {
+	private *keysOf(r: Rect) {
 		for (let i = Math.floor(r.x / this.cel); i <= Math.floor((r.x + r.w) / this.cel); i++)
 			for (let j = Math.floor(r.y / this.cel); j <= Math.floor((r.y + r.h) / this.cel); j++)
 				yield `${i},${j}`;
 	}
-	voeg(r: Rect): void {
-		for (const k of this.sleutels(r)) {
-			const cel = this.cellen.get(k);
+	add(r: Rect): void {
+		for (const k of this.keysOf(r)) {
+			const cel = this.cells.get(k);
 			if (cel) cel.push(r);
-			else this.cellen.set(k, [r]);
+			else this.cells.set(k, [r]);
 		}
 	}
-	botst(r: Rect): boolean {
-		for (const k of this.sleutels(r))
-			if (this.cellen.get(k)?.some((t) => overlaps(r, t))) return true;
+	hits(r: Rect): boolean {
+		for (const k of this.keysOf(r)) if (this.cells.get(k)?.some((t) => overlaps(r, t))) return true;
 		return false;
 	}
 }
 
 /** Past this many names in a frame, a bron of lower rank waits for a hover (UX review N4). */
-export const LABEL_MAX = 60;
+export const NAMES_PER_FRAME = 60;
 
 /** A bron whose name the frame may draw: where it stands, its name's size, and its rank. */
-export type LabelKandidaat = {
+export type LabelCandidate = {
 	id: string;
 	x: number;
 	y: number;
@@ -95,9 +94,9 @@ export type LabelKandidaat = {
 	w: number;
 	h: number;
 	/** Higher goes first: the focus, the chosen bronnen, a cluster, the bronnen in the hover. */
-	rang: number;
+	rank: number;
 	/** Drawn whatever stands there (the focus). */
-	altijd?: boolean;
+	always?: boolean;
 };
 
 /**
@@ -108,24 +107,24 @@ export type LabelKandidaat = {
  * the bronnen (UX review N4: BH2815 and its 137 uitspraken).
  */
 export function planLabels(
-	kandidaten: readonly LabelKandidaat[],
+	candidates: readonly LabelCandidate[],
 	room: { width: number; height: number },
 	vast: readonly Rect[],
 	glyphs: readonly Rect[],
-	max = LABEL_MAX
+	max = NAMES_PER_FRAME
 ): Map<string, Rect> {
-	const bezet = new Bezet([...vast, ...glyphs]);
+	const occupied = new Taken([...vast, ...glyphs]);
 	const plan = new Map<string, Rect>();
-	const volgorde = [...kandidaten].sort(
-		(a, b) => Number(!!b.altijd) - Number(!!a.altijd) || b.rang - a.rang || b.size - a.size
+	const order = [...candidates].sort(
+		(a, b) => Number(!!b.always) - Number(!!a.always) || b.rank - a.rank || b.size - a.size
 	);
-	for (const k of volgorde) {
-		if (!k.altijd && plan.size >= max) break;
+	for (const k of order) {
+		if (!k.always && plan.size >= max) break;
 		// The places beside its own sign keep clear of it (GAP).
-		const at = plaatsLabel(k.x, k.y, k.size, k.w, k.h, room.width, bezet, k.altijd, room.height);
+		const at = plaatsLabel(k.x, k.y, k.size, k.w, k.h, room.width, occupied, k.always, room.height);
 		if (!at) continue;
 		const r = { x: at.x, y: at.y, w: k.w, h: k.h };
-		bezet.voeg(r);
+		occupied.add(r);
 		plan.set(k.id, r);
 	}
 	return plan;

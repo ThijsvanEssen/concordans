@@ -214,11 +214,11 @@ describe('the names of the hulls (UX review N4, N8)', () => {
 	});
 
 	it('keeps a hull’s name off the signs of the bronnen', () => {
-		const vrij = layoutHulls(scene()).hulls.find((h) => h.id === 'D')!;
+		const free = layoutHulls(scene()).hulls.find((h) => h.id === 'D')!;
 		// A sign where the name would stand: it steps down into its hull, clear of it.
-		const sign = { x: vrij.labelX - 5, y: vrij.labelY - 15, w: 10, h: 10 };
-		const opzij = layoutHulls(scene({ glyphs: [sign] })).hulls.find((h) => h.id === 'D')!;
-		expect(opzij.labelY).toBeGreaterThan(vrij.labelY);
+		const sign = { x: free.labelX - 5, y: free.labelY - 15, w: 10, h: 10 };
+		const aside = layoutHulls(scene({ glyphs: [sign] })).hulls.find((h) => h.id === 'D')!;
+		expect(aside.labelY).toBeGreaterThan(free.labelY);
 	});
 
 	it('says the words of lines that stand on one another once (Gemeentewet, noemt)', () => {

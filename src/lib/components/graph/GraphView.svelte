@@ -37,7 +37,7 @@
 	import { spriteForVorm, IMAGE_SIZE_BUMP } from './nodeSprites';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { bronNaam } from '$lib/bron/naam';
-	import { dossierVan, metDossier, onderscheiden } from './canvas-naam';
+	import { dossierOfBron, withDossier, distinctNames } from './canvas-names';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import IconButtonPaar from '$lib/components/ui/IconButtonPaar.svelte';
@@ -501,7 +501,7 @@
 	$effect(() => {
 		void $instrumentMetaStore;
 		if (g.order === 0) return;
-		untrack(() => benoem([...lookup.values()].filter((n) => g.hasNode(n.id))));
+		untrack(() => nameAll([...lookup.values()].filter((n) => g.hasNode(n.id))));
 		g.forEachNode((id) => {
 			const n = lookup.get(id);
 			if (n) g.setNodeAttribute(id, 'label', nodeLabel(n));
@@ -542,27 +542,29 @@
 	// Node label: the name of the bron (bron/naam.ts), short enough for the canvas; a
 	// Kamerstuk by its kind, its dossier and its number (`stukLabel`, `metDossier`). The full
 	// name is in the panel and the card.
-	const basisNaam = (n: GraphNode, eigen = eigenDossiers()) =>
+	const baseName = (n: GraphNode, eigen = ownDossiers()) =>
 		isClusterId(n.id)
 			? n.label
 			: n.drawClass === 'document'
-				? metDossier(n.label, n.raw?.props, eigen)
+				? withDossier(n.label, n.raw?.props, eigen)
 				: kort(bronNaam(n, $instrumentMetaStore));
 	/** The dossiers in focus or chosen: their stukken stand in their hull without the number. */
-	const eigenDossiers = () =>
+	const ownDossiers = () =>
 		new Set(
 			[selection?.id, ...pinnedIds]
 				.filter((id): id is string => !!id && id.startsWith('dossiers/'))
-				.map((id) => dossierVan(lookup.get(id) ?? { id, collection: 'dossiers', key: id.slice(9) }))
+				.map((id) =>
+					dossierOfBron(lookup.get(id) ?? { id, collection: 'dossiers', key: id.slice(9) })
+				)
 				.filter((d): d is string => !!d)
 		);
 	/** The names of the canvas, each its own (`onderscheiden`): set before the nodes are drawn. */
-	let namen = new Map<string, string>();
-	const benoem = (nodes: GraphNode[]) => {
-		const eigen = eigenDossiers();
-		namen = onderscheiden(nodes, (n) => basisNaam(n, eigen));
+	let canvasNames = new Map<string, string>();
+	const nameAll = (nodes: GraphNode[]) => {
+		const eigen = ownDossiers();
+		canvasNames = distinctNames(nodes, (n) => baseName(n, eigen));
 	};
-	const nodeLabel = (n: GraphNode) => namen.get(n.id) ?? basisNaam(n);
+	const nodeLabel = (n: GraphNode) => canvasNames.get(n.id) ?? baseName(n);
 
 	// A container (a wet, fractie, commissie or dossier) is never a canvas node: its
 	// children carry it as a hull instead (`syncContainerAnchors`, GraphCanvas). Nor
@@ -680,9 +682,9 @@
 			clusterById.set(c.id, c);
 			for (const id of c.members) folded.add(id);
 		}
-		const teken = [...rawNodes.filter((n) => !folded.has(n.id)), ...clusters.map(clusterNode)];
-		benoem(teken.filter(isCanvasNode));
-		drawNodes(teken);
+		const toDraw = [...rawNodes.filter((n) => !folded.has(n.id)), ...clusters.map(clusterNode)];
+		nameAll(toDraw.filter(isCanvasNode));
+		drawNodes(toDraw);
 		drawEdges([
 			...rawEdges.filter((e) => !folded.has(e.source) && !folded.has(e.target)),
 			...clusters.flatMap((c) =>

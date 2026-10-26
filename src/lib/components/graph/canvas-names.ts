@@ -13,87 +13,86 @@ type Bron = {
 	key: string;
 	raw?: {
 		props?: Record<string, unknown> | null;
-		cite?: { full?: string | null } | null;
 	} | null;
 };
 
 /** `36600 VIII`: the dossier of a stuk as a citation writes it, or null. */
-export function stukDossier(props: Record<string, unknown> | null | undefined): string | null {
+export function paperDossier(props: Record<string, unknown> | null | undefined): string | null {
 	const number = textOf(props?.dossier_number);
 	return number ? dossierNumberText(number, textOf(props?.dossier_suffix)) : null;
 }
 
-/** `36600 VIII`: the number of a dossier bron, as `stukDossier` writes a stuk's. */
-export const dossierVan = (b: Bron): string | null => {
-	const nummer = dossierNummer(b.raw?.props, b.key);
-	return nummer ? officialNumber(nummer) : null;
+/** `36600 VIII`: the number of a dossier bron, as `paperDossier` writes a stuk's. */
+export const dossierOfBron = (b: Bron): string | null => {
+	const num = dossierNummer(b.raw?.props, b.key);
+	return num ? officialNumber(num) : null;
 };
 
 /**
  * A Kamerstuk's short name with its dossier before its number: `Memorie van toelichting, nr. 3`
  * becomes `Memorie van toelichting, 34710, nr. 3`. Not for a stuk of a dossier that is itself
- * the focus or chosen (`eigen`): its hull names it.
+ * the focus or chosen (`own`): its hull names it.
  */
-export function metDossier(
-	naam: string,
+export function withDossier(
+	name: string,
 	props: Record<string, unknown> | null | undefined,
-	eigen: ReadonlySet<string>
+	own: ReadonlySet<string>
 ): string {
-	const dossier = stukDossier(props);
-	if (!dossier || eigen.has(dossier) || naam.includes(dossier)) return naam;
+	const dossier = paperDossier(props);
+	if (!dossier || own.has(dossier) || name.includes(dossier)) return name;
 	// Its place in the dossier as `stukLabel` writes it: its number, else its month.
 	const number =
 		textOf(props?.number) ?? (props?.sequence != null ? textOf(String(props.sequence)) : null);
 	const nr = number ? (/^\d/.test(number) ? `nr. ${number}` : number) : null;
-	const datum = textOf(props?.date);
-	const waar = nr ?? (datum ? maandJaar(datum) : null);
-	const tail = waar ? `, ${waar}` : null;
-	return tail && naam.endsWith(tail)
-		? `${naam.slice(0, -tail.length)}, ${dossier}${tail}`
-		: `${naam}, ${dossier}`;
+	const date = textOf(props?.date);
+	const place = nr ?? (date ? maandJaar(date) : null);
+	const tail = place ? `, ${place}` : null;
+	return tail && name.endsWith(tail)
+		? `${name.slice(0, -tail.length)}, ${dossier}${tail}`
+		: `${name}, ${dossier}`;
 }
 
 const ECLI = /ECLI:[A-Z]{2}:([A-Z0-9]+):(\d{4}):([A-Z0-9.]+)/i;
 
-/** `GHAMS:2024:812`: the part of a judgment's ECLI after its country, from its cite or key. */
-export function ecliStaart(b: Bron): string | null {
-	const ecli = textOf(b.raw?.props?.ecli) ?? textOf(b.raw?.cite?.full) ?? b.key.replace(/_/g, ':');
+/** `GHAMS:2024:812`: the part of a judgment's ECLI after its country, from its props or its key. */
+export function ecliTail(b: Bron): string | null {
+	const ecli = textOf(b.raw?.props?.ecli) ?? b.key.replace(/_/g, ':');
 	const m = ecli.match(ECLI);
 	return m ? `${m[1]}:${m[2]}:${m[3]}`.toUpperCase() : null;
 }
 
 /** What tells a bron apart from another of the same name: its ECLI, its dossier, its day. */
-function onderscheid(b: Bron): string | null {
-	if (b.collection === 'judgments') return ecliStaart(b);
-	if (b.collection === 'documents') return stukDossier(b.raw?.props);
-	const datum = textOf(b.raw?.props?.date);
-	return datum ? langeDatum(datum) : null;
+function distinction(b: Bron): string | null {
+	if (b.collection === 'judgments') return ecliTail(b);
+	if (b.collection === 'documents') return paperDossier(b.raw?.props);
+	const date = textOf(b.raw?.props?.date);
+	return date ? langeDatum(date) : null;
 }
 
 /**
- * The names of `bronnen`, each one its own: where `naam` gives two or more the same name, each
+ * The names of `bronnen`, each one its own: where `name` gives two or more the same name, each
  * of them gets what tells it apart after a comma. A name that stays the same (two bronnen
  * with nothing in the data to tell them apart) stays as it is.
  */
-export function onderscheiden<B extends Bron>(
+export function distinctNames<B extends Bron>(
 	bronnen: readonly B[],
-	naam: (b: B) => string
+	name: (b: B) => string
 ): Map<string, string> {
-	const namen = new Map<string, string>();
-	const perNaam = new Map<string, B[]>();
+	const names = new Map<string, string>();
+	const byName = new Map<string, B[]>();
 	for (const b of bronnen) {
-		const n = naam(b);
-		namen.set(b.id, n);
-		const al = perNaam.get(n);
-		if (al) al.push(b);
-		else perNaam.set(n, [b]);
+		const n = name(b);
+		names.set(b.id, n);
+		const list = byName.get(n);
+		if (list) list.push(b);
+		else byName.set(n, [b]);
 	}
-	for (const [n, groep] of perNaam) {
-		if (groep.length < 2 || !n) continue;
-		for (const b of groep) {
-			const extra = onderscheid(b);
-			if (extra && !n.includes(extra)) namen.set(b.id, `${n}, ${extra}`);
+	for (const [n, group] of byName) {
+		if (group.length < 2 || !n) continue;
+		for (const b of group) {
+			const extra = distinction(b);
+			if (extra && !n.includes(extra)) names.set(b.id, `${n}, ${extra}`);
 		}
 	}
-	return namen;
+	return names;
 }
