@@ -28,6 +28,7 @@ const soort = (count: number): Kind => ({
 	rows: Array.from({ length: Math.min(count, 3) }, (_, n) => rij(n)),
 	groups: [],
 	partial: count > 3,
+	settled: true,
 	failed: null,
 	collection: 'articles'
 });
@@ -58,5 +59,28 @@ describe('KindSummary', () => {
 	it('offers Alle N from the fourth on', () => {
 		toon(4);
 		expect(screen.getByRole('button', { name: 'Alle 4 wetten en artikelen' })).toBeTruthy();
+	});
+
+	it('opened, counts the rows it lists once every page is in (Alle N pages up to N)', () => {
+		const kind = soort(10);
+		const { container } = render(KindSummary, {
+			kinds: [kind],
+			selection: selectie,
+			onOpen: () => {},
+			open: new Set(['laws'])
+		});
+		expect(container.querySelector('.kind__count')?.textContent).toBe('3');
+	});
+
+	it('opened with a page more, keeps the count and offers Meer laden', () => {
+		const { container } = render(KindSummary, {
+			kinds: [soort(10)],
+			selection: selectie,
+			onOpen: () => {},
+			open: new Set(['laws']),
+			hasMore: () => true
+		});
+		expect(container.querySelector('.kind__count')?.textContent).toBe('10');
+		expect(screen.getByText('Meer laden')).toBeTruthy();
 	});
 });

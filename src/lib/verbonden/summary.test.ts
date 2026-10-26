@@ -60,7 +60,7 @@ describe('the regulations issued under a law', () => {
 		const kinds = kindsOf(groups(), 'instruments', new Map());
 		expect(kinds.map((k) => [k.id, k.label, k.count])).toEqual([
 			['regelingen', 'Uitvoeringsregelingen', 2],
-			['laws', 'Wetten en regelingen', 1]
+			['laws', 'Wetten', 1]
 		]);
 		expect(kinds[0].noun).toBe('uitvoeringsregelingen');
 	});
@@ -148,7 +148,7 @@ describe('Verbonden at a glance', () => {
 			'dossiers',
 			null
 		);
-		expect(dossier.map((k) => k.label)).toEqual(['Wetten en regelingen', 'Stukken']);
+		expect(dossier.map((k) => k.label)).toEqual(['Wetten', 'Stukken']);
 	});
 
 	it('says a judgment by where and how often it is cited, a Kamerstuk by its kind and day', () => {
@@ -224,10 +224,10 @@ describe('the laws of a bron, each in its soort (T11)', () => {
 			total: g.id === 'international' ? 71 : g.id === 'amended-by' ? 1 : g.id === 'related' ? 2 : 0
 		}));
 
-	it('splits the laws into Wetten en regelingen, Artikelen, Europees en internationaal and Publicaties', () => {
+	it('splits the laws into Wetten, Artikelen, Europees en internationaal and Publicaties', () => {
 		const kinds = kindsOf(groups(), 'instruments', new Map());
 		expect(kinds.map((k) => [k.label, k.count])).toEqual([
-			['Wetten en regelingen', 1],
+			['Wetten', 1],
 			['Artikelen', 1],
 			['Europees en internationaal', 71],
 			['Publicaties', 1]

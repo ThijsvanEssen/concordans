@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { EMPTY_FILTER, hiddenByGroup } from './filter';
 import type { Group } from './groups';
 import type { Row } from './rows';
-import { countLine, filterGroups, lidTellingenOnder, vasteGroepen, yearHistogram } from './view';
+import { countLine, filterGroups, memberCountsUnder, fixedGroups, yearHistogram } from './view';
 
 const row = (over: Partial<Row>): Row => ({
 	ref: { collection: 'judgments', key: 'j' },
@@ -39,20 +39,20 @@ const per = new Map([
 	]
 ]);
 
-describe('lidTellingenOnder', () => {
+describe('memberCountsUnder', () => {
 	it('adds every bucket without a bronfilter', () => {
-		expect(lidTellingenOnder(per, null)?.get('2')).toBe(3344);
+		expect(memberCountsUnder(per, null)?.get('2')).toBe(3344);
 	});
 
 	it('adds the buckets of the kinds that are on', () => {
-		const counts = lidTellingenOnder(per, new Set(['uitspraken']));
+		const counts = memberCountsUnder(per, new Set(['uitspraken']));
 		expect([counts?.get('1'), counts?.get('2')]).toEqual([874, 3321]);
-		expect(lidTellingenOnder(per, new Set(['uitspraken', 'artikelen']))?.get('2')).toBe(3325);
+		expect(memberCountsUnder(per, new Set(['uitspraken', 'artikelen']))?.get('2')).toBe(3325);
 	});
 
 	it('leaves it to the rows where the filter splits the stukken of one bucket', () => {
-		expect(lidTellingenOnder(per, new Set(['toelichtingen']))).toBeNull();
-		const stukken = lidTellingenOnder(
+		expect(memberCountsUnder(per, new Set(['toelichtingen']))).toBeNull();
+		const stukken = memberCountsUnder(
 			per,
 			new Set(['toelichtingen', 'wetsvoorstellen', 'dossiers'])
 		);
@@ -111,15 +111,15 @@ describe('the panel under the filter', () => {
 		const activiteiten = { id: 'activities', label: 'Activiteiten', rows: [], capped: false };
 		const alle = [leden, dossiers, activiteiten];
 		// A waiting group the node cannot foretell: no count yet.
-		expect(vasteGroepen(alle, ['dossiers', 'activities'], { activities: 4493 })).toBeNull();
+		expect(fixedGroups(alle, ['dossiers', 'activities'], { activities: 4493 })).toBeNull();
 		// Dossiers in, the activities foretold: the count it will have.
 		const binnen = [leden, { ...dossiers, rows: [groups[1].rows[0]], total: 611 }, activiteiten];
-		const vast = vasteGroepen(binnen, ['activities'], { activities: 4493 })!;
+		const vast = fixedGroups(binnen, ['activities'], { activities: 4493 })!;
 		const wacht = new Set(['activities']);
 		expect(countLine(vast, EMPTY_FILTER, wacht)).toBe('5.404 verbindingen');
 		// The same once the activities are in.
 		const klaar = [...binnen.slice(0, 2), { ...activiteiten, rows: [row({})], total: 4493 }];
-		expect(countLine(vasteGroepen(klaar)!, EMPTY_FILTER)).toBe('5.404 verbindingen');
+		expect(countLine(fixedGroups(klaar)!, EMPTY_FILTER)).toBe('5.404 verbindingen');
 	});
 
 	it('keeps a group whose loader is still under way in its place, unless a filter cuts rows', () => {

@@ -113,7 +113,7 @@ export const shownCount = (
  * waiting group has no forecast: its count is not known, and the head waits for it rather than
  * jump ("4.793 verbindingen", then "5.404").
  */
-export function vasteGroepen(
+export function fixedGroups(
 	groups: Group[],
 	wachtend: readonly string[] = [],
 	verwacht: Readonly<Record<string, number>> = {}
@@ -237,7 +237,7 @@ const GROUPS_OF_BUCKET: Record<string, FilterGroup[]> = {
  * the buckets of the kinds that are on. Null where the filter splits what one bucket holds
  * (toelichtingen without wetsvoorstellen): then the rows count.
  */
-export function lidTellingenOnder(
+export function memberCountsUnder(
 	per: Map<string, Map<string, number>>,
 	bronnen: ReadonlySet<FilterGroup> | null
 ): Map<string, number> | null {
@@ -287,7 +287,7 @@ export function yearHistogram(
  * The judgments per rechter: as the API counts them over a group where it does (`courts`),
  * else its rows. What the Filter offers: a rechter without judgments is no choice.
  */
-export function rechterCounts(groups: Group[]): Partial<Record<Court, number>> {
+export function courtCounts(groups: Group[]): Partial<Record<Court, number>> {
 	const counts: Partial<Record<Court, number>> = {};
 	for (const g of groups) {
 		if (g.courts) {

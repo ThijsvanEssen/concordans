@@ -33,7 +33,7 @@
 		allRows,
 		groupTotals,
 		lidCounts,
-		rechterCounts,
+		courtCounts,
 		relationCounts,
 		shownCount,
 		totalCount
@@ -104,21 +104,21 @@
 	}
 
 	const totals = $derived(groupTotals(groups));
-	const perRechter = $derived(rechterCounts(groups));
+	const perCourt = $derived(courtCounts(groups));
 	// Only what holds anything is offered (T11); what is chosen stays, to be undone.
-	const bronnenTeKiezen = $derived(
+	const sourcesToChoose = $derived(
 		FILTER_GROUPS.filter((k) => (totals[k] ?? 0) > 0 || !!draft.bronnen?.has(k))
 	);
-	const rechtersTeKiezen = $derived(
-		RECHTERS.filter((r) => (perRechter[r.id] ?? 0) > 0 || draft.rechter === r.id)
+	const courtsToChoose = $derived(
+		RECHTERS.filter((r) => (perCourt[r.id] ?? 0) > 0 || draft.rechter === r.id)
 	);
-	const presetsTeKiezen = $derived(
+	const presetsToChoose = $derived(
 		PRESETS.filter(
 			(p) =>
 				activePreset(draft)?.id === p.id ||
 				p.bronnen === null ||
 				(p.rechter
-					? (perRechter[p.rechter] ?? 0) > 0
+					? (perCourt[p.rechter] ?? 0) > 0
 					: p.bronnen.some((k) => (totals[k] ?? 0) > 0) &&
 						// Not the same as Alles: a preset that leaves nothing out is no choice.
 						FILTER_GROUPS.some((k) => (totals[k] ?? 0) > 0 && !p.bronnen?.includes(k)))
@@ -251,7 +251,7 @@
 
 			<div class="block">
 				<div class="block__label">Snel</div>
-				{#each presetsTeKiezen as p (p.id)}
+				{#each presetsToChoose as p (p.id)}
 					<FilterOptie
 						label={p.label}
 						on={activePreset(draft)?.id === p.id}
@@ -262,7 +262,7 @@
 
 			<div class="block">
 				<div class="block__label">Bronnen</div>
-				{#each bronnenTeKiezen as k (k)}
+				{#each sourcesToChoose as k (k)}
 					{@const n = totals[k] ?? 0}
 					<FilterOptie
 						label={FILTER_GROUP_LABEL[k]}
@@ -316,13 +316,13 @@
 				</div>
 			{/if}
 
-			{#if rechtersTeKiezen.length > 0}
+			{#if courtsToChoose.length > 0}
 				<div class="block">
 					<div class="block__label">Rechter</div>
-					{#each rechtersTeKiezen as r (r.id)}
+					{#each courtsToChoose as r (r.id)}
 						<FilterOptie
 							label={r.label}
-							count={perRechter[r.id] ?? 0}
+							count={perCourt[r.id] ?? 0}
 							on={draft.rechter === r.id}
 							onToggle={() => (draft = { ...draft, rechter: draft.rechter === r.id ? null : r.id })}
 						/>

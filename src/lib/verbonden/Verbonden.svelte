@@ -53,7 +53,7 @@
 		hiddenLine,
 		shownLabel,
 		totalCount,
-		vasteGroepen,
+		fixedGroups,
 		yearHistogram
 	} from './view';
 
@@ -256,7 +256,7 @@
 	// One count, written once it holds (#56): a group still loading counts what the node
 	// foretells for it; while one cannot be foretold, the head waits.
 	const vast = $derived(
-		vasteGroepen(verbonden.groups, verbonden.wachtend ?? [], verbonden.verwacht ?? {})
+		fixedGroups(verbonden.groups, verbonden.wachtend ?? [], verbonden.verwacht ?? {})
 	);
 	const wachtSet = $derived(new Set(verbonden.wachtend ?? []));
 	// A bron with no verbinding at all, every group in: one line says so, and nothing offers to

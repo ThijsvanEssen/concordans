@@ -22,7 +22,7 @@ type KindId =
 	| 'documents'
 	| 'regelingen'
 	| 'laws'
-	| 'artikelen'
+	| 'lawArticles'
 	| 'europees'
 	| 'publicaties'
 	| 'dossiers'
@@ -61,10 +61,7 @@ const KIND_LABELS = Object.fromEntries(
 	(Object.entries(KIND_OF) as [Collection, KindId][]).map(([collection, id]) => {
 		const [one, many] = BRON_LABEL[collection];
 		return id === 'laws'
-			? [
-					id,
-					{ label: 'Wetten en regelingen', one: 'wet of regeling', many: 'wetten en regelingen' }
-				]
+			? [id, { label: 'Wetten', one: 'wet', many: 'wetten' }]
 			: [
 					id,
 					{
@@ -75,7 +72,7 @@ const KIND_LABELS = Object.fromEntries(
 				];
 	})
 ) as Record<
-	Exclude<KindId, 'regelingen' | 'artikelen' | 'europees' | 'publicaties'>,
+	Exclude<KindId, 'regelingen' | 'lawArticles' | 'europees' | 'publicaties'>,
 	{ label: string; one: string; many: string }
 >;
 
@@ -95,7 +92,7 @@ export const SOORT_LABEL: Record<KindId, { label: string; one: string; many: str
 	},
 	// What the laws of a bron are, each a soort of its own (T11: one group held Staatsbladen,
 	// regulations, acts of the EU and articles alike).
-	artikelen: { label: 'Artikelen', one: 'artikel', many: 'artikelen' },
+	lawArticles: { label: 'Artikelen', one: 'artikel', many: 'artikelen' },
 	europees: {
 		label: 'Europees en internationaal',
 		one: 'Europese of internationale bron',
@@ -127,7 +124,7 @@ const ORDER: KindId[] = [
 	'documents',
 	'regelingen',
 	'laws',
-	'artikelen',
+	'lawArticles',
 	'europees',
 	'publicaties',
 	'dossiers',
@@ -162,6 +159,8 @@ export type Kind = {
 	groups: Group[];
 	/** Its rows are not all there are. */
 	partial: boolean;
+	/** Every group of it is in: its count is what its rows add up to. */
+	settled: boolean;
 	/** A group of it whose rows did not come: said in its place, with Opnieuw. */
 	failed: { error: unknown; noun: string | null } | null;
 	/** The collection most of its rows are of, for the network's colour. */
@@ -288,6 +287,7 @@ export function kindsOf(
 				rows,
 				groups: gs,
 				partial: rows.length < count || gs.some((g) => g.capped),
+				settled,
 				failed: failed ? { error: failed.error, noun: failed.noun ?? null } : null,
 				collection: rows[0]?.ref.collection ?? collectionOfGroup(gs[0])
 			}
@@ -301,7 +301,7 @@ export function kindsOf(
  *  of the Staatsblad or Staatscourant, else a law or a regulation. */
 function lawClass(row: Row): KindId {
 	const c = row.ref.collection;
-	if (c === 'articles' || c === 'annexes') return 'artikelen';
+	if (c === 'articles' || c === 'annexes') return 'lawArticles';
 	const p = (row.props ?? {}) as Record<string, unknown>;
 	if (p.publication_kind || /^(stb|stcrt|trb)[_-]/i.test(row.ref.key)) return 'publicaties';
 	if (p.celex || p.jurisdiction === 'eu' || /^celex|^\d{5}[a-z]\d{4}/i.test(row.ref.key))
@@ -338,7 +338,7 @@ function splitLaws(k: Kind): Kind[] {
 	const loaded = k.groups.reduce((sum, g) => sum + groupCount(g), 0);
 	const beyond = Math.max(0, k.count - Math.max(loaded, k.rows.length));
 	if (beyond) rest.set('laws', (rest.get('laws') ?? 0) + beyond);
-	const ids: KindId[] = ['laws', 'artikelen', 'europees', 'publicaties'];
+	const ids: KindId[] = ['laws', 'lawArticles', 'europees', 'publicaties'];
 	return ids.flatMap((id): Kind[] => {
 		const rows0 = byClass.get(id) ?? [];
 		const count = rows0.length + (rest.get(id) ?? 0);
@@ -367,6 +367,7 @@ function splitLaws(k: Kind): Kind[] {
 				rows,
 				groups,
 				partial: rows.length < count || groups.some((g) => g.capped),
+				settled: k.settled,
 				collection: rows[0]?.ref.collection ?? k.collection
 			}
 		];

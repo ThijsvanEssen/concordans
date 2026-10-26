@@ -175,7 +175,7 @@ export type Loaded = {
 	/** The rest of the rows, asked when the group is opened, the table or an export. */
 	meer?: () => Promise<Loaded>;
 	/** The rows with a page more, asked by "Meer laden" only: where the API holds more. */
-	pagina?: () => Promise<Loaded>;
+	page?: () => Promise<Loaded>;
 	/** Rows are missing that the API has (a further page failed): no total, shown as `12+`. */
 	capped?: boolean;
 };
@@ -709,13 +709,13 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			...facets,
 			// A page of passages more by "Meer laden", where the API has judgments still (T11:
 			// 3.556 counted, 705 shown).
-			pagina:
+			page:
 				items.length < data.total && judgments(items) < data.judgment_total
 					? async () => {
 							const next = await page(items.length);
 							return next.items.length
 								? loaded([...items, ...next.items])
-								: { ...loaded(items), pagina: undefined };
+								: { ...loaded(items), page: undefined };
 						}
 					: undefined
 		});
@@ -1269,7 +1269,7 @@ async function euLinks(
 	return {
 		rows: shown,
 		total,
-		pagina:
+		page:
 			shown.length < total && limit < EU_LINKS_MAX
 				? () => euLinks(node, signal, Math.min(limit + EU_LINKS_SHOWN, EU_LINKS_MAX))
 				: undefined
@@ -1293,7 +1293,7 @@ async function relatedLaws(
 	return {
 		total: found.total - (found.items.length - items.length),
 		rows: items.map((i) => wetRijVanRelated(i, bwb, dit)),
-		pagina:
+		page:
 			found.items.length < found.total && limit < RELATED_MAX
 				? () => relatedLaws(node, signal, Math.min(limit + RELATED_SHOWN, RELATED_MAX))
 				: undefined
@@ -1316,7 +1316,7 @@ async function amendingPublications(
 	const found = await abortable(getAmendedBy(bwb), signal);
 	return {
 		total: found.total,
-		pagina:
+		page:
 			found.items.length > shown
 				? () => amendingPublications(node, signal, shown + AMENDED_SHOWN)
 				: undefined,
@@ -1397,7 +1397,7 @@ async function lawJudgments(
 	return {
 		total: found.total,
 		// The next page by "Meer laden", never the whole at once (T11).
-		pagina:
+		page:
 			found.items.length > 0 && next < found.total
 				? () => lawJudgments(node, signal, options, rows, next)
 				: undefined,

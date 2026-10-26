@@ -76,7 +76,7 @@ export type VerbondenState = {
 	}[];
 	/** The verbindingen per lid of an article, as the API counts them (`lid_counts`). */
 	lidTellingen?: Map<string, number> | null;
-	/** The same per collection of the buckets, for the bronfilter (`lidTellingenOnder`). */
+	/** The same per collection of the buckets, for the bronfilter (`memberCountsUnder`). */
 	lidPerBak?: Map<string, Map<string, number>> | null;
 	/** Whether the groups hold every row, not the first five per bucket. */
 	volledig?: boolean;
@@ -151,43 +151,43 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		volledig: boolean;
 		geopend: Map<string, Promise<void>>;
 		/** Per group, where the next page of each of its buckets starts (null: at the end). */
-		paginas: Map<string, (number | null)[]>;
+		pages: Map<string, (number | null)[]>;
 	} | null = null;
 	let groups: Group[] = [];
 	// A loader's rest, asked when its group is opened, the table or an export (`Loaded.meer`).
 	const vervolg = new Map<string, () => Promise<Loaded>>();
-	// A loader's next page, asked by "Meer laden" (`Loaded.pagina`): never all at once (T11).
-	const paginaVan = new Map<string, () => Promise<Loaded>>();
-	const nogEen = (id: string, pagina: (() => Promise<Loaded>) | undefined) => {
-		if (pagina) paginaVan.set(id, pagina);
-		else paginaVan.delete(id);
-		if (pagina ? meer.has(id) : !meer.has(id)) return;
+	// A loader's next page, asked by "Meer laden" (`Loaded.page`): never all at once (T11).
+	const pageOf = new Map<string, () => Promise<Loaded>>();
+	const setNextPage = (id: string, page: (() => Promise<Loaded>) | undefined) => {
+		if (page) pageOf.set(id, page);
+		else pageOf.delete(id);
+		if (page ? meer.has(id) : !meer.has(id)) return;
 		meer = new Set(meer);
-		if (pagina) meer.add(id);
+		if (page) meer.add(id);
 		else meer.delete(id);
 	};
-	const neemOver = (id: string, loaded: Loaded) => {
+	const takeOver = (id: string, loaded: Loaded) => {
 		const { rows, total, mentions, years, courts, areas, cutBy, capped } = loaded;
 		groups = groups.map((g) =>
 			g.id === id
 				? { ...g, rows, total, mentions, years, courts, areas, cutBy, capped: !!capped }
 				: g
 		);
-		nogEen(id, loaded.pagina);
+		setNextPage(id, loaded.page);
 		put({ ...get(state), groups });
 	};
-	const volgendePagina = (id: string): Promise<void> => {
-		const pagina = paginaVan.get(id);
-		if (!pagina) return Promise.resolve();
-		paginaVan.delete(id);
+	const nextPage = (id: string): Promise<void> => {
+		const page = pageOf.get(id);
+		if (!page) return Promise.resolve();
+		pageOf.delete(id);
 		const b = basis;
-		return pagina()
+		return page()
 			.then((loaded) => {
-				if (b === basis) neemOver(id, loaded);
+				if (b === basis) takeOver(id, loaded);
 			})
 			.catch((e) => {
-				report(`Verbonden ${id}, volgende pagina`, e);
-				if (b === basis) paginaVan.set(id, pagina);
+				report(`Verbonden ${id}, following page`, e);
+				if (b === basis) pageOf.set(id, page);
 			});
 	};
 	const vervolgVan = (id: string): Promise<void> => {
@@ -197,7 +197,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		const b = basis;
 		return meer()
 			.then((loaded) => {
-				if (b === basis) neemOver(id, loaded);
+				if (b === basis) takeOver(id, loaded);
 			})
 			.catch((e) => {
 				report(`Verbonden ${id}, de rest`, e);
@@ -297,7 +297,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		wilVolledig = false;
 		groups = [];
 		vervolg.clear();
-		paginaVan.clear();
+		pageOf.clear();
 		let lui = true;
 		// An article waits for its light node, to see whether the API counts its leden.
 		// Without it, from the full node.
@@ -331,7 +331,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 					signal: ac.signal,
 					volledig: !lui,
 					geopend: new Map(),
-					paginas: new Map()
+					pages: new Map()
 				};
 				meer = new Set();
 				groups = bouw(basis);
@@ -409,12 +409,12 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 								cutBy,
 								judgmentsOf,
 								meer: rest,
-								pagina,
+								page,
 								capped
 							}) => {
 								if (stale()) return;
 								if (rest) vervolg.set(id, rest);
-								nogEen(id, pagina);
+								setNextPage(id, page);
 								groups = groups.map((g) => {
 									if (g.id === id)
 										return {
@@ -464,7 +464,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 					const load = groups.find((g) => g.id === id)?.load;
 					if (!load) return;
 					vervolg.delete(id);
-					nogEen(id, undefined);
+					setNextPage(id, undefined);
 					pending.add(id);
 					groups = groups.map((g) => (g.id === id ? { ...g, rows: [], failed: false } : g));
 					zet();
@@ -524,16 +524,16 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 	 */
 	function groep(id: string, zelfsVolledig = false): Promise<void> {
 		if (vervolg.has(id)) return vervolgVan(id);
-		if (paginaVan.has(id)) return volgendePagina(id);
+		if (pageOf.has(id)) return nextPage(id);
 		const b = basis;
 		if (!b || (b.volledig && !zelfsVolledig)) return Promise.resolve();
 		const bezig = b.geopend.get(id);
 		if (bezig) return bezig;
 		const def = (GROUPS[b.collection] ?? []).find((d) => d.id === id);
 		if (!def?.match) return Promise.resolve();
-		const vanaf = b.paginas.get(id) ?? def.match.map(() => 0);
+		const startAt = b.pages.get(id) ?? def.match.map(() => 0);
 		const asks = def.match
-			.map((bucket, i) => ({ bucket, offset: vanaf[i], i }))
+			.map((bucket, i) => ({ bucket, offset: startAt[i], i }))
 			.filter((a): a is { bucket: typeof a.bucket; offset: number; i: number } => a.offset != null);
 		if (asks.length === 0) return Promise.resolve();
 		const klaar = getBucketPages(
@@ -545,11 +545,11 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		)
 			.then(({ items, next }) => {
 				if (b !== basis) return;
-				const volgende = [...vanaf];
-				asks.forEach((a, j) => (volgende[a.i] = next[j]));
-				b.paginas.set(id, volgende);
+				const following = [...startAt];
+				asks.forEach((a, j) => (following[a.i] = next[j]));
+				b.pages.set(id, following);
 				meer = new Set(meer);
-				if (volgende.some((o) => o != null)) meer.add(id);
+				if (following.some((o) => o != null)) meer.add(id);
 				else meer.delete(id);
 				const seen = new Map(b.neighbors.map((n, i) => [neighborKey(n), i]));
 				for (const n of items) {

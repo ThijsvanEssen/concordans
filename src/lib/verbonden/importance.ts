@@ -35,6 +35,7 @@ const IMPORTANCE: Partial<Record<Collection, Record<string, Importance>>> = {
 		related: 'cited',
 		'implemented-by': 'cited',
 		changes: 'newest',
+		documents: 'papers',
 		'explained-by': 'papers'
 	},
 	judgments: { articles: 'cited', judgments: 'cited', 'cited-by': 'cited' },

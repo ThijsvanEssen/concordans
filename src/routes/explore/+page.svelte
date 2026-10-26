@@ -85,7 +85,7 @@
 		withRow,
 		type Verbinding
 	} from '$lib/verbonden/verbinding';
-	import { allRows, filterGroups, lidCounts, lidTellingenOnder } from '$lib/verbonden/view';
+	import { allRows, filterGroups, lidCounts, memberCountsUnder } from '$lib/verbonden/view';
 	import { perfStart } from '$lib/dev/perf';
 	import type { GraphEdge, GraphNode, DrawClass } from '$lib/graph/types';
 	import { containerKindOf, type ContainerKind } from '$lib/graph/container-membership';
@@ -889,7 +889,7 @@
 			// buckets holds (toelichtingen without wetsvoorstellen) are counted from its rows.
 			(f.bronnen &&
 				selectedNode?.collection === 'articles' &&
-				!(verbonden.lidPerBak && lidTellingenOnder(verbonden.lidPerBak, f.bronnen)));
+				!(verbonden.lidPerBak && memberCountsUnder(verbonden.lidPerBak, f.bronnen)));
 		// Asked again for each bron Verbonden starts on: a readable address names it later.
 		void verbonden.id;
 		if (tableMode || opRijen) source.volledig().catch((e) => report('Verbonden volledig', e));
@@ -915,7 +915,7 @@
 			!filter.status &&
 			!filter.betrouwbaarheid &&
 			!filter.jaar
-			? lidTellingenOnder(verbonden.lidPerBak, filter.bronnen)
+			? memberCountsUnder(verbonden.lidPerBak, filter.bronnen)
 			: null
 	);
 	// Else counted from the rows, once they are all in or where the API counts no lid.

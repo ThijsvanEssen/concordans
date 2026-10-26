@@ -91,7 +91,7 @@ export const getBuckets = (
 	).then((results) => results.flatMap(neighborsOf));
 
 /** A page of a group's rows: fifty a bucket, never the whole at once (T11, A216). */
-export const BUCKET_PAGE = 50;
+const BUCKET_PAGE = 50;
 
 /**
  * The next page of each of `buckets`, from its offset: the rows and where the next page

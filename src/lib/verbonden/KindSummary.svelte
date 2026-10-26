@@ -71,7 +71,7 @@
 	 * count: its pages are its own.
 	 */
 	const countOf = (k: Kind) =>
-		open.has(k.id) && !hasMore(k.id) && k.groups.every((g) => !g.load && !g.laden)
+		open.has(k.id) && !hasMore(k.id) && k.groups.every((g) => !g.load) && k.settled
 			? k.rows.length
 			: k.count;
 
@@ -144,7 +144,7 @@
 		<!-- Opened, the rows come a page at a time: how many of how many stand, and the next
 		     page one click further, never the whole at once (T11). -->
 		{#if open.has(k.id) && hasMore(k.id)}
-			<p class="kind__all kind__meer">
+			<p class="kind__all kind__vervolg">
 				<span class="kind__stand">{formatCount(k.rows.length)} van {formatCount(k.count)}</span>
 				<TekstLink onclick={() => onMore?.(k.id)}>Meer laden</TekstLink>
 			</p>
@@ -181,7 +181,7 @@
 		line-height: 24px;
 		color: var(--ink);
 	}
-	.kind__meer {
+	.kind__vervolg {
 		display: flex;
 		gap: var(--s-4);
 		align-items: baseline;

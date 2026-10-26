@@ -41,6 +41,6 @@ export function withoutHeaderDupes(groups: Group[], bron: Bron): Group[] {
 		if (gone === 0) return [g];
 		const total = g.total == null ? g.total : Math.max(0, g.total - gone);
 		const next = { ...g, rows, total };
-		return groupCount(next) === 0 && !g.laden && !g.load ? [] : [next];
+		return groupCount(next) === 0 && !g.load ? [] : [next];
 	});
 }
