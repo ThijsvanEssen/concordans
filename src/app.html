@@ -41,7 +41,7 @@
 		<meta property="og:type" content="website" />
 		<meta property="og:locale" content="nl_NL" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="theme-color" content="#faf8f3" />
+		<meta name="theme-color" content="#fdfdfb" />
 		<!-- The content the server puts in main#seo for a readable address, readable
 		     before the app starts; the root layout removes it as the app mounts. Set as the
 		     app sets a page, so the step to the app is barely seen: the paper, the serif, the
@@ -138,14 +138,15 @@
 					U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 			}
 			:root:has(#seo) {
-				--paper: #faf8f3;
-				--paper-2: #ece7dc;
-				--rule: #b9b1a0;
-				--rule-strong: #6f6859;
-				--ink: #161513;
-				--ink-2: #3b3834;
-				--ink-3: #5d5951;
-				--accent: #8c2f28;
+				--paper: #fdfdfb;
+				--paper-2: #f0efeb;
+				--rule: #c6c4be;
+				--rule-strong: #6a6965;
+				--ink: #1f2125;
+				--ink-2: #3d4045;
+				--ink-3: #5f6267;
+				--merk: #b5483d;
+				--accent: var(--merk);
 				--moss: #456247;
 				--uitkomst-ja: #2f7d3a;
 				--uitkomst-nee: var(--accent);
@@ -168,7 +169,7 @@
 				--s-5: 24px;
 				--s-6: 32px;
 				--s-8: 64px;
-				--topbar-h: 60px;
+				--balk-h: 64px;
 				--blad-max: 1440px;
 				--blad-tekst: 720px;
 				--veld-h: 32px;
@@ -192,7 +193,7 @@
 				content: '';
 				display: block;
 				box-sizing: border-box;
-				height: var(--topbar-h);
+				height: var(--balk-h);
 				border-bottom: 1px solid var(--rule);
 			}
 			.js #seo:not(:has(> .entrances)) {
@@ -518,7 +519,7 @@
 			}
 			.ev {
 				position: fixed;
-				inset: var(--topbar-h) 0 0;
+				inset: var(--balk-h) 0 0;
 				z-index: var(--z-float);
 				background: var(--paper);
 			}

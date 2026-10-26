@@ -716,7 +716,7 @@
 
 <style>
 	.verbonden {
-		scroll-margin-top: var(--topbar-h);
+		scroll-margin-top: var(--balk-h);
 		display: flex;
 		flex-direction: column;
 		height: 100%;

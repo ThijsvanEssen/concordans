@@ -537,7 +537,7 @@
 		margin: 0 0 var(--s-5);
 		padding: var(--s-4) var(--s-5);
 		background: var(--paper-2);
-		border-left: 3px solid var(--indigo);
+		border-left: 3px solid var(--soort-rechtspraak);
 	}
 
 	.reader-summary-para {
@@ -572,7 +572,7 @@
 		vertical-align: baseline;
 		/* The role in the term column (ReaderFrame), like the terms of Behoort bij. */
 		box-sizing: border-box;
-		width: var(--reader-term);
+		width: var(--voorkolom);
 	}
 
 	.reader-parties-name {

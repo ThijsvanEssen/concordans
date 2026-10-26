@@ -76,7 +76,7 @@
 		min-width: 0;
 		padding: 0;
 		border: 0;
-		background: var(--indigo);
+		background: var(--soort-rechtspraak);
 		opacity: 0.55;
 		cursor: pointer;
 		transition: opacity var(--dur-1) var(--ease);
@@ -90,7 +90,11 @@
 		opacity: 1;
 	}
 	.years-bar--running {
-		background: repeating-linear-gradient(135deg, var(--indigo) 0 2px, transparent 2px 4px);
+		background: repeating-linear-gradient(
+			135deg,
+			var(--soort-rechtspraak) 0 2px,
+			transparent 2px 4px
+		);
 		opacity: 1;
 	}
 	.years-bar:focus-visible {

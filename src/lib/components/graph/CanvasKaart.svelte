@@ -1,7 +1,7 @@
 <script lang="ts">
 	// A card over the network: Netwerk, the Legenda, a cluster's card (Thijs, 10 Oct: "Deze
 	// mogen even breed zijn en hetzelfde soort component zijn"). One frame, one width in every
-	// state (--paneel-breed, folded or open), a head row (the title, what it holds while folded,
+	// state (--zijkolom, folded or open), a head row (the title, what it holds while folded,
 	// the caret, an action at the right) and its content. Where it stands is its user's
 	// (`class`, `style`); what it looks like is this.
 	import type { Snippet } from 'svelte';
@@ -78,8 +78,8 @@
 		position: absolute;
 		z-index: var(--z-float);
 		box-sizing: border-box;
-		width: var(--paneel-breed);
-		max-width: calc(100% - 2 * var(--paneel-rand));
+		width: var(--zijkolom);
+		max-width: calc(100% - 2 * var(--s-3));
 		display: flex;
 		flex-direction: column;
 		background: var(--paper);

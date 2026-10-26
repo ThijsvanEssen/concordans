@@ -8,25 +8,35 @@
 
 	let { parts, pending = false }: { parts: TierCount[] | null; pending?: boolean } = $props();
 
-	/** The share of each part of the bar, the largest darkest. */
-	const SHADES = [1, 0.7, 0.45, 0.22];
+	/** The step of soort-rechtspraak of each instantie (Design System, Strook per instantie);
+	 *  the rest, Overige instanties, stands in rule-strong. */
+	const TRAP: Partial<Record<string, string>> = {
+		hoge_raad: 'var(--rechtspraak-1)',
+		parket: 'var(--rechtspraak-1)',
+		raad_van_state: 'var(--rechtspraak-2)',
+		centrale_raad_van_beroep: 'var(--rechtspraak-2)',
+		college_van_beroep_bedrijfsleven: 'var(--rechtspraak-2)',
+		gerechtshof: 'var(--rechtspraak-3)',
+		rechtbank: 'var(--rechtspraak-4)'
+	};
+	const kleur = (t: TierCount) => (t.tier && TRAP[t.tier]) || 'var(--rule-strong)';
 	/** While the counts come: four rows of the legend, unseen. */
-	const HELD = [0, 1, 2, 3].map((i) => ({ label: `…${i}`, count: 0 }));
+	const HELD = [0, 1, 2, 3].map((i) => ({ tier: null, label: `…${i}`, count: 0 }));
 	const rows = $derived(parts?.length ? parts : pending ? HELD : []);
 </script>
 
 {#if rows.length}
 	<div class="tiers" class:is-quiet={!parts?.length} aria-hidden={!parts?.length}>
 		<div class="tiers__bar">
-			{#each rows as t, j (t.label)}
-				<i style:flex="{t.count || 1} 1 0" style:opacity={SHADES[j] ?? 0.22}></i>
+			{#each rows as t (t.label)}
+				<i style:flex="{t.count || 1} 1 0" style:background={kleur(t)}></i>
 			{/each}
 		</div>
 		<ul class="tiers__legend" aria-label="Per instantie">
-			{#each rows as t, j (t.label)}
+			{#each rows as t (t.label)}
 				<li>
-					<span class="tiers__swatch" style:opacity={SHADES[j] ?? 0.22}></span><span
-						class="tiers__name">{t.label}</span
+					<span class="tiers__swatch" style:background={kleur(t)}></span><span class="tiers__name"
+						>{t.label}</span
 					><span class="tiers__count">{formatCount(t.count)}</span>
 				</li>
 			{/each}
@@ -44,7 +54,6 @@
 	.tiers__bar i {
 		display: block;
 		height: 100%;
-		background: var(--indigo);
 	}
 	/* While the counts come: the room, no figures. */
 	.is-quiet {
@@ -74,7 +83,6 @@
 	.tiers__swatch {
 		width: var(--s-2);
 		height: var(--s-2);
-		background: var(--indigo);
 	}
 	.tiers__name {
 		min-width: 0;

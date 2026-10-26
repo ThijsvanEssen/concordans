@@ -364,7 +364,7 @@
 	}
 	.voter-row {
 		display: grid;
-		grid-template-columns: max(calc(var(--reader-term, 0px) - var(--s-2)), 50px) 1fr auto;
+		grid-template-columns: max(calc(var(--voorkolom) - var(--s-2)), 50px) 1fr auto;
 		gap: var(--s-2);
 		padding: var(--s-1) var(--s-1);
 		margin: 0 calc(-1 * var(--s-1));
@@ -393,7 +393,7 @@
 	}
 	/* Coalitie or oppositie: a column of its own, as quiet as the seats beside it. */
 	.met-kabinet .voter-row {
-		grid-template-columns: max(calc(var(--reader-term, 0px) - var(--s-2)), 50px) 1fr auto 3.5em;
+		grid-template-columns: max(calc(var(--voorkolom) - var(--s-2)), 50px) 1fr auto 3.5em;
 	}
 	.voter-kabinet {
 		font-family: var(--font-serif);

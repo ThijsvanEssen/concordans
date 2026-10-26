@@ -900,7 +900,7 @@
 					h
 				};
 				context.save();
-				context.shadowColor = 'rgba(0, 0, 0, 0.18)';
+				context.shadowColor = withAlpha(t.ink, 0.18);
 				context.shadowBlur = 6;
 				context.fillStyle = t.paper;
 				context.beginPath();

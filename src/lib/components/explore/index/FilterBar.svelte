@@ -367,7 +367,7 @@
 			align-items: center;
 			gap: var(--s-2);
 			position: sticky;
-			top: var(--filterbar-top, var(--topbar-h));
+			top: var(--filterbar-top, var(--balk-h));
 			z-index: var(--z-raised);
 			margin: 0 calc(-1 * var(--s-4)) var(--s-3);
 			padding: var(--s-2) var(--s-4);

@@ -97,7 +97,7 @@
 		position: sticky;
 		top: 0;
 		z-index: var(--z-topbar);
-		height: var(--topbar-h);
+		height: var(--balk-h);
 		background: var(--paper);
 		border-bottom: 1px solid var(--rule);
 		display: flex;

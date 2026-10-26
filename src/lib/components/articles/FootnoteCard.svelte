@@ -88,7 +88,7 @@
 		color: var(--ink);
 		text-decoration: underline;
 		text-decoration-color: var(--rule-strong);
-		text-underline-offset: var(--underline-offset);
+		text-underline-offset: var(--onderstreping);
 	}
 	.onward a:hover,
 	.onward a:focus-visible {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	// The one wordmark: § plus the name. Every measure is in em, so `size` scales
-	// the whole mark and the proportions between glyph and name stay fixed.
+	// the whole mark and the proportions between glyph and name stay fixed. The § is merk, the
+	// name ink. Sizes: 20 in the top bar, 28 in the footer (the § is never under 26 px).
 	let { size = 20 }: { size?: number } = $props();
 </script>
 
@@ -28,7 +29,7 @@
 		font-style: italic;
 		font-weight: 800;
 		font-size: 1.3em;
-		color: var(--accent);
+		color: var(--merk);
 	}
 
 	.name {
