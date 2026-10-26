@@ -33,7 +33,6 @@
 		type Cluster
 	} from '$lib/selection/cluster';
 	import { groupFor, openGroup } from '$lib/verbonden/open-group';
-	import { isInhoudGroep, isKernGroep } from '$lib/bron/behoort';
 	import { bronPlural } from '$lib/vocabulary';
 	import { spriteForVorm, IMAGE_SIZE_BUMP } from './nodeSprites';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
@@ -64,7 +63,7 @@
 		type FilterGroup,
 		type VerbondenFilter
 	} from '$lib/verbonden/filter';
-	import type { VerbondenState } from '$lib/verbonden/data-source';
+	import { listedGroups, type VerbondenState } from '$lib/verbonden/data-source';
 	import { CLUSTER_CARD, clusterCardAt, placeCard } from '$lib/selection/card-place';
 	import { relationWords } from '$lib/verbonden/relation-words';
 	import { sentence } from '$lib/network/shared';
@@ -765,10 +764,7 @@
 	const groupOf = (c: Cluster) => {
 		// The groups Verbonden shows: its kern and inhoud stand elsewhere.
 		const own = verbonden.id?.split('/')[0] ?? '';
-		return groupFor(
-			verbonden.groups.filter((g) => !isKernGroep(own, g) && !isInhoudGroep(own, g)),
-			c.collection
-		);
+		return groupFor(listedGroups(own as Collection, verbonden.groups), c.collection);
 	};
 	/** What floats over the canvas and stays readable: the panel Netwerk, zoom, legenda. */
 	const FLOATING = '.canvas-overlay > *, .zoom, .legenda, .vouw';

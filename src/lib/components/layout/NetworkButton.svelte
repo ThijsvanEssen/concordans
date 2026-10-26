@@ -9,7 +9,7 @@
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import { count } from '$lib/text/words';
 	import { networkCount, networkHref, onNetwork } from '$lib/nav/network';
-	import { bewaardAantal, bewaardNetwerk } from '$lib/selection/bewaard.svelte';
+	import { bewaardAantal, keptNetwerk } from '$lib/selection/bewaard.svelte';
 
 	const url = $derived(page.url);
 	const onBron = $derived(hasFocus(url));
@@ -20,7 +20,7 @@
 <a
 	class="btn netwerk-knop raakvlak-knop"
 	class:is-active={pressed}
-	href={networkHref(url, bewaardNetwerk())}
+	href={networkHref(url, keptNetwerk())}
 	aria-label={aantal ? `Netwerk, ${count(aantal, 'bron', 'bronnen')}` : 'Netwerk'}
 	aria-pressed={pressed}
 	role="button"

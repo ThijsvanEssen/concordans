@@ -4,7 +4,7 @@
 import { isContainerKind, type ContainerKind } from '$lib/graph/container-membership';
 import { parseNodeId, RELATIONS, type Relation } from '$lib/vocabulary';
 
-export type Off = {
+type Off = {
 	chosen: string[];
 	relations: Relation[];
 	groups: ContainerKind[];

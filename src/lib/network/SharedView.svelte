@@ -13,7 +13,7 @@
 	import { joinAnd, plural } from '$lib/text/words';
 	import { kindColour } from '$lib/bron/kleur';
 	import { VORMEN, vormVanBron } from '$lib/bron/vormen';
-	import { VERBAND_STEPS, type SharedRow, type VerbandModel } from './shared';
+	import { SHARED_STEPS, type SharedRow, type VerbandModel } from './shared';
 
 	let {
 		ends,
@@ -124,7 +124,7 @@
 	{:else if loading}
 		<p class="empty stil" role="status">Verband zoeken</p>
 	{:else if empty && !failure && !gap}
-		<p class="empty stil">Geen verband gevonden binnen {VERBAND_STEPS} stappen</p>
+		<p class="empty stil">Geen verband gevonden binnen {SHARED_STEPS} stappen</p>
 	{:else}
 		<svg
 			class="drawing"

@@ -32,7 +32,7 @@
 	import { pageName } from '$lib/bron/tab-title';
 	import { titelVan } from '$lib/bron/titels.svelte';
 	import { ignore, isAborted, isNotFound, report } from '$lib/api/errors';
-	import { bewaardNetwerk, bewaarNetwerk, leesBewaard } from '$lib/selection/bewaard.svelte';
+	import { keptNetwerk, bewaarNetwerk, leesBewaard } from '$lib/selection/bewaard.svelte';
 	import { offOf, offValue, sameSet } from '$lib/selection/off';
 	import PanelBoundary from '$lib/components/ui/PanelBoundary.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -335,7 +335,7 @@
 	const shownNetwork = $derived(aroundId ? onlyAround(netwerk, aroundId) : netwerk);
 	const netwerkActive = $derived(shownNetwork.ids.length > 0);
 	/** Outside the werkplek, the netwerk kept in this browser: a bron read is added to it. */
-	const bewaard = $derived(parseNetwerk(new URLSearchParams(bewaardNetwerk() ?? '')));
+	const bewaard = $derived(parseNetwerk(new URLSearchParams(keptNetwerk() ?? '')));
 	/** The netwerk a bron is added to: the werkplek's, or the kept one while reading. */
 	const kiesNetwerk = $derived(mode === 'graph' ? netwerk : bewaard);
 	/** The bron marked in the werkplek, its card open (?marked): Back after Lees finds it again. */
@@ -1412,7 +1412,7 @@
 		// A readable address names its bron, also while it is looked up (a Kamerstuk, an
 		// article): the remembered netwerk does not take its place.
 		if (focus || pad || netwerkQuery || mode === 'index') return;
-		const saved = bewaardNetwerk();
+		const saved = keptNetwerk();
 		if (!saved) return;
 		// The bronnen between start shown, whatever the last netwerk had (Thijs, 9 Oct:
 		// "standaard aan"); only a link that says ?tussen=0 keeps them off.
