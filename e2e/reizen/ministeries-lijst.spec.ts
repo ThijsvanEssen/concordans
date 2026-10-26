@@ -40,6 +40,20 @@ test('a ministry without a TOOI code is abolished, with no year invented', async
 	expect(rows[shipping]).not.toContain('tot ');
 });
 
+test('a long abbreviation keeps the row as high as a short one', async ({ page }) => {
+	await page.goto('/explore?mode=index&kind=ministries');
+	const height = async (name: string) =>
+		(await page.locator('ul.list > li').filter({ hasText: name }).first().boundingBox())!.height;
+	await expect(page.getByText('MinJus', { exact: true })).toBeVisible();
+	expect(await height('MinJus')).toBe(await height('VenJ'));
+});
+
+test('an abolished row says so itself, also when searched alone', async ({ page }) => {
+	await page.goto('/explore?mode=index&kind=ministries&q=Scheepvaart');
+	const row = page.locator('ul.list > li').filter({ hasText: 'Scheepvaart' });
+	await expect(row).toContainText('Opgeheven');
+});
+
 test('a row leads to the page of the ministry', async ({ page }) => {
 	await page.goto('/explore?mode=index&kind=ministries');
 	await page.getByRole('link', { name: 'Justitie en Veiligheid', exact: true }).first().click();

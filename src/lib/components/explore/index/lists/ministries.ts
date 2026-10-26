@@ -13,7 +13,7 @@ export const ministries = defineList<Ministry, object, null>({
 		{ id: 'name', label: 'Naam', dir: 'asc' }
 	],
 	placeholder: 'Zoek op naam of afkorting',
-	columns: { lead: 'Periode', body: 'Ministerie', aside: 'Afkorting', asideW: 100 },
+	columns: { lead: 'Periode', body: 'Ministerie', aside: 'Afkorting', asideW: 160 },
 	noun: 'ministeries',
 	needs: ['government'],
 	period: () => null,

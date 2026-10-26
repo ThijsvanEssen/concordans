@@ -15,19 +15,18 @@
 	{#each rows as m, i (m.key)}
 		{@const bron = `ministries/${m.key}`}
 		{#if !isCurrent(m) && i > 0 && isCurrent(rows[i - 1])}
-			<li class="group-divider" aria-hidden="true">
-				<span>Opgeheven ministeries</span>
+			<li class="group-divider">
+				<h3>Opgeheven ministeries</h3>
 			</li>
 		{/if}
 		<IndexRow {bron} title={m.name} href={openHref(bron)} acties>
 			{#snippet lead()}
-				<span class="row-id-main">
-					{#if m.until}
-						tot {m.until.slice(0, 4)}
-					{:else if since(m)}
-						sinds {since(m)}
-					{/if}
-				</span>
+				{#if isCurrent(m)}
+					<span class="row-id-main">{since(m) ? `sinds ${since(m)}` : ''}</span>
+				{:else}
+					<span class="row-id-main">Opgeheven</span>
+					{#if m.until}<span class="row-id-sub">tot {m.until.slice(0, 4)}</span>{/if}
+				{/if}
 			{/snippet}
 			{#snippet body()}
 				{#if m.successor}
@@ -43,6 +42,14 @@
 
 <style>
 	/* Where the abolished ministeries begin. */
+	.group-divider h3 {
+		margin: 0;
+		font: inherit;
+	}
+	.row-sub :global(a) {
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
 	.group-divider {
 		list-style: none;
 		padding: var(--s-4) var(--s-2) var(--s-3);
