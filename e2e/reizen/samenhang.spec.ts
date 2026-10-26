@@ -119,13 +119,15 @@ test('a bron in the network becomes the focus, and Samenhang follows it', async 
 }) => {
 	test.skip(touch, 'the list of the network is the keyboard way at 1440');
 	await page.goto(`${ARTICLE}?mode=netwerk`);
-	const stuk = drawn(page)
-		.getByRole('link', { name: /, Stuk$/ })
-		.first();
-	const name = (await stuk.getAttribute('aria-label')) ?? (await stuk.textContent())!;
-	await stuk.focus();
+	// Past forty, the stukken of 6:162 stand as one cluster (UX review N4): an article beside it.
+	const artikel = drawn(page)
+		.getByRole('link', { name: /, Artikel$/ })
+		.nth(1);
+	const name = (await artikel.getAttribute('aria-label')) ?? (await artikel.textContent())!;
+	await artikel.focus();
 	await page.keyboard.press('Enter');
-	await expect(page).toHaveURL(/\/kamerstukken\//);
+	await expect(page).toHaveURL(/\/artikel\//);
+	await expect(page).not.toHaveURL(/6:162/);
 	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-	expect(name).toMatch(/, Stuk$/);
+	expect(name).toMatch(/, Artikel$/);
 });

@@ -31,6 +31,16 @@ export function containerKindOf(collection: string): ContainerKind | null {
 }
 
 /**
+ * The container kind of a bron in focus or chosen: its hull, or the hull it has only then (a
+ * ministerie around its bewindspersonen, `focusHull`).
+ */
+export function focusKindOf(collection: string): ContainerKind | null {
+	if (!isCollection(collection)) return null;
+	const role = COLLECTION_ROLE[collection];
+	return role.hull ?? role.focusHull ?? null;
+}
+
+/**
  * Whether an edge to a container kind means the other side belongs in its hull.
  * A wet's members are its articles alone (PART_OF): a stuk that AMENDS or
  * REFERS_TO the wet directly relates to it without being part of it, the same
