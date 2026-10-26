@@ -56,19 +56,27 @@ const lijn = (a, b, kleur = C.rule, w = 2.5, dash = '') =>
 // Omhulling: doorgetrokken (wet), gestreept (parlement), gestippeld (personen).
 const hul = (x, y, w, h, kleur, soort, naam) => {
 	const dash = { wet: '', parl: '10 7', pers: '2 7' }[soort];
-	return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${Math.min(w, h) / 2}" fill="${kleur}" fill-opacity="0.07" stroke="${kleur}" stroke-width="2.5"${dash ? ` stroke-dasharray="${dash}"` : ''} stroke-linecap="round"/>` +
-		(naam ? `<g><rect x="${x + w / 2 - naam.length * 5.2 - 10}" y="${y - 13}" width="${naam.length * 10.4 + 20}" height="26" rx="13" fill="${C.paper}" stroke="${kleur}" stroke-width="2"/><text x="${x + w / 2}" y="${y + 5}" text-anchor="middle" font-family="Newsreader" font-weight="600" font-size="16" fill="${C.ink}">${naam}</text></g>` : '');
+	return (
+		`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${Math.min(w, h) / 2}" fill="${kleur}" fill-opacity="0.07" stroke="${kleur}" stroke-width="2.5"${dash ? ` stroke-dasharray="${dash}"` : ''} stroke-linecap="round"/>` +
+		(naam
+			? `<g><rect x="${x + w / 2 - naam.length * 5.2 - 10}" y="${y - 13}" width="${naam.length * 10.4 + 20}" height="26" rx="13" fill="${C.paper}" stroke="${kleur}" stroke-width="2"/><text x="${x + w / 2}" y="${y + 5}" text-anchor="middle" font-family="Newsreader" font-weight="600" font-size="16" fill="${C.ink}">${naam}</text></g>`
+			: '')
+	);
 };
 
 // Elk bord één motief, zoals Kamerstuk: de bron boven, drie verbonden bronnen eronder.
-const LAAG_BOVEN = 150, LAAG_ONDER = 365;
+const LAAG_BOVEN = 150,
+	LAAG_ONDER = 365;
 const onder = (kleur, soort, naam) => {
 	const xs = [130, 210, 290];
-	const leden = xs.map((x) => (soort === 'recht' ? vol(x, LAAG_ONDER, kleur, 10) : knoop(x, LAAG_ONDER, kleur)));
+	const leden = xs.map((x) =>
+		soort === 'recht' ? vol(x, LAAG_ONDER, kleur, 10) : knoop(x, LAAG_ONDER, kleur)
+	);
 	const lijnen = xs.map((x) => lijn([210, LAAG_BOVEN], [x, LAAG_ONDER], kleur));
-	const omhulling = soort === 'recht'
-		? `<text x="210" y="${LAAG_ONDER + 44}" text-anchor="middle" font-family="Newsreader" font-weight="600" font-size="16" fill="${C.ink3}">${naam}</text>`
-		: hul(70, 320, 280, 90, kleur, soort, naam);
+	const omhulling =
+		soort === 'recht'
+			? `<text x="210" y="${LAAG_ONDER + 44}" text-anchor="middle" font-family="Newsreader" font-weight="600" font-size="16" fill="${C.ink3}">${naam}</text>`
+			: hul(70, 320, 280, 90, kleur, soort, naam);
 	return { lijnen: lijnen.join(''), rest: omhulling + leden.join('') };
 };
 const boven = (kleur, soort, naam, buren = true) =>
@@ -76,10 +84,16 @@ const boven = (kleur, soort, naam, buren = true) =>
 	(buren ? knoop(140, LAAG_BOVEN, kleur) + knoop(280, LAAG_BOVEN, kleur) : '');
 const bord = (top, bodem) => bodem.lijnen + top + bodem.rest + focus(210, LAAG_BOVEN);
 const mix = () => {
-	const xs = [[130, C.wet, 'k'], [210, C.recht, 'v'], [290, C.parl, 'k']];
+	const xs = [
+		[130, C.wet, 'k'],
+		[210, C.recht, 'v'],
+		[290, C.parl, 'k']
+	];
 	return {
 		lijnen: xs.map(([x, k]) => lijn([210, LAAG_BOVEN], [x, LAAG_ONDER], k)).join(''),
-		rest: xs.map(([x, k, t]) => (t === 'v' ? vol(x, LAAG_ONDER, k, 10) : knoop(x, LAAG_ONDER, k))).join('')
+		rest: xs
+			.map(([x, k, t]) => (t === 'v' ? vol(x, LAAG_ONDER, k, 10) : knoop(x, LAAG_ONDER, k)))
+			.join('')
 	};
 };
 
@@ -91,7 +105,9 @@ const schets = {
 	kamerstuk: () => bord(boven(C.parl, 'parl', 'Dossier'), onder(C.pers, 'pers', 'Indieners')),
 	uitspraak: () =>
 		bord(
-			lijn([140, LAAG_BOVEN], [280, LAAG_BOVEN], C.recht, 3) + vol(140, LAAG_BOVEN, C.recht, 10) + vol(280, LAAG_BOVEN, C.recht, 10),
+			lijn([140, LAAG_BOVEN], [280, LAAG_BOVEN], C.recht, 3) +
+				vol(140, LAAG_BOVEN, C.recht, 10) +
+				vol(280, LAAG_BOVEN, C.recht, 10),
 			onder(C.wet, 'wet', 'Wet')
 		)
 };
@@ -99,7 +115,10 @@ const schets = {
 const KAART = {
 	concordans: ['', 'Wetten, uitspraken en Kamerstukken, met de verbindingen ertussen.'],
 	wet: ['Wet', 'De tekst en de artikelen, met de uitspraken en Kamerstukken die ernaar verwijzen.'],
-	artikel: ['Artikel', 'Met de uitspraken, Kamerstukken en wetsgeschiedenis die naar het artikel verwijzen.'],
+	artikel: [
+		'Artikel',
+		'Met de uitspraken, Kamerstukken en wetsgeschiedenis die naar het artikel verwijzen.'
+	],
 	dossier: ['Dossier', 'De stukken, moties, amendementen en stemmingen van een wetsvoorstel.'],
 	kamerstuk: ['Kamerstuk', 'Met de indieners, de stemming per fractie en het dossier.'],
 	uitspraak: ['Uitspraak', 'Met de wetsartikelen en uitspraken waarnaar de uitspraak verwijst.']
@@ -136,7 +155,11 @@ for (const naam of Object.keys(KAART)) {
 	await page.screenshot({ path: `${STATIC}/og/${naam}.png` });
 	await page.close();
 }
-for (const [file, px] of [['apple-touch-icon.png', 180], ['icon-192.png', 192], ['icon-512.png', 512]]) {
+for (const [file, px] of [
+	['apple-touch-icon.png', 180],
+	['icon-192.png', 192],
+	['icon-512.png', 512]
+]) {
 	const page = await browser.newPage({ viewport: { width: px, height: px } });
 	writeFileSync(`${TMP}/icoon.html`, icoon(px));
 	await page.goto(`file://${TMP}/icoon.html`);
