@@ -614,7 +614,7 @@
 	.pick__steps {
 		display: flex;
 		gap: var(--s-1);
-		margin-bottom: -11px;
+		margin-bottom: -15px;
 	}
 	/* The comparison's own panel: set apart from the text like a sheet, closed by the
 	   same Vergelijken that opened it. */

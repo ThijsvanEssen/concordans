@@ -119,7 +119,14 @@
 			height: var(--veld-h-raak);
 		}
 		button {
+			position: relative;
 			font-size: var(--t-ui-raak);
+		}
+		/* The frame counts in the 44 px: the segment's target reaches over its two lines. */
+		button::after {
+			content: '';
+			position: absolute;
+			inset: -1px 0;
 		}
 		button[aria-pressed='true'] {
 			box-shadow: inset 0 -3px 0 var(--ink);
