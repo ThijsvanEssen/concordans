@@ -30,7 +30,6 @@
 	{#each opties as o (o.waarde)}
 		<button
 			type="button"
-			class="raakvlak-knop"
 			aria-pressed={waarde === o.waarde}
 			disabled={o.uit}
 			title={o.titel}
@@ -84,8 +83,7 @@
 	button + button {
 		border-left: 1px solid var(--rule-strong);
 	}
-	/* The ends follow the frame's corners: no overflow to clip them, so a finger's target
-	   (.raakvlak-knop) reaches out of the frame. */
+	/* The ends follow the frame's corners: no overflow to clip them,  */
 	button:first-child {
 		border-radius: var(--r-1) 0 0 var(--r-1);
 	}
@@ -114,5 +112,24 @@
 	button:focus-visible {
 		outline: 2px solid var(--ink);
 		outline-offset: 2px;
+	}
+	/* On a touch screen the segments are a finger's 44 px themselves, no hidden target. */
+	@media (pointer: coarse), (max-width: 768px) {
+		.keuze {
+			height: var(--veld-h-raak);
+		}
+		button {
+			position: relative;
+			font-size: var(--t-ui-raak);
+		}
+		/* The frame counts in the 44 px: the segment's target reaches over its two lines. */
+		button::after {
+			content: '';
+			position: absolute;
+			inset: -1px 0;
+		}
+		button[aria-pressed='true'] {
+			box-shadow: inset 0 -3px 0 var(--ink);
+		}
 	}
 </style>

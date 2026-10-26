@@ -33,11 +33,25 @@ describe('the touch target', () => {
 		expect(coarse).toContain('.plaats-marker::before');
 	});
 
-	it('is 44 px around a framed button and a menu’s button, on a touch screen (A14 #11)', () => {
+	it('is 44 px visible on a Knop in all three forms, a Keuze and an IconButton, on a touch screen', () => {
 		const basis = read('lib/styles/basis.css');
 		const coarse = basis.slice(basis.indexOf('@media (pointer: coarse)'));
 		expect(coarse).toMatch(
-			/\.btn::after,\s*\.tekstmenu__knop::after,\s*\.raakvlak-knop::after \{[^}]*inset: min\(0px, calc\(50% - \(var\(--s-6\) \+ var\(--s-3\)\) \/ 2\)\)/
+			/\.btn,\s*\.btn\.is-text \{\s*height: var\(--veld-h-raak\);\s*font-size: var\(--t-ui-raak\)/
+		);
+		expect(coarse).not.toMatch(/\.btn::after/);
+		for (const f of ['Keuze', 'IconButton', 'IconButtonPaar']) {
+			const src = read(`lib/components/ui/${f}.svelte`);
+			expect(src).not.toContain('raakvlak-knop');
+			expect(src.slice(src.indexOf('@media (pointer: coarse)'))).toContain('var(--veld-h-raak)');
+		}
+	});
+
+	it('is 44 px around a menu’s button, on a touch screen (A14 #11)', () => {
+		const basis = read('lib/styles/basis.css');
+		const coarse = basis.slice(basis.indexOf('@media (pointer: coarse)'));
+		expect(coarse).toMatch(
+			/\.tekstmenu__knop::after,\s*\.raakvlak-knop::after \{[^}]*inset: min\(0px, calc\(50% - \(var\(--s-6\) \+ var\(--s-3\)\) \/ 2\)\)/
 		);
 	});
 

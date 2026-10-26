@@ -46,7 +46,7 @@ a:hover {
 	text-underline-offset: 3px;
 }
 
-/* The three forms of a Knop (docs/bediening.md, besluit 33), one height (--veld-h, 32 px):
+/* The three forms of a Knop (docs/bediening.md, besluit 33), one height (--veld-h, 32 px; a finger's 44 px, --veld-h-raak, on a touch screen):
    `.btn is-primary` is filled in ink, the one action of a screen; `.btn` is framed
    (--rule-strong), an action or a menu; `.btn is-text` is bare text, a link beside the
    text. A segment (Keuze) wears the frame of `.btn`. No fourth form and no smaller size.
@@ -169,8 +169,18 @@ a:hover {
 	   (.raakvlak-knop: a tab, a segment, a zoom button): a finger's 44 px around them,
 	   whatever their size (UX-toets A14 #11). Without weight, so a button placed otherwise
 	   keeps its place. */
-	:where(.btn, .tekstmenu__knop, .raakvlak-knop) {
+	:where(.tekstmenu__knop, .raakvlak-knop) {
 		position: relative;
+	}
+	/* A Knop is a finger's 44 px itself, in all three forms: no hidden target around it. */
+	.btn,
+	.btn.is-text {
+		height: var(--veld-h-raak);
+		font-size: var(--t-ui-raak);
+		padding-inline: var(--s-4);
+	}
+	.btn.is-text {
+		padding-inline: var(--s-2);
 	}
 	/* A link that stands in a list (a footer's, a start page's entrance, a name in a row):
 	   a line of its own 44 px high, where a finger would otherwise meet its neighbours. */
@@ -179,7 +189,6 @@ a:hover {
 		align-items: center;
 		min-height: var(--veld-h-raak);
 	}
-	.btn::after,
 	.tekstmenu__knop::after,
 	.raakvlak-knop::after {
 		content: '';

@@ -37,7 +37,7 @@
 
 	/* An outcome, always with its shape or word beside it: passed, done, yes; rejected,
 	   withdrawn, no. Dashed is open or expected and needs no colour. */
-	--uitkomst-ja: var(--moss);
+	--uitkomst-ja: #2f7d3a;
 	--uitkomst-nee: var(--accent);
 
 	/* The groups in the network (a hull around their members), each told apart by hue,
@@ -88,6 +88,9 @@
 	--t-meta: 14px; /* a group, meta: one pixel over the sans, for the serif's x-height */
 	--t-micro: 13px; /* captions and counts, in --ink-3 */
 	--t-ui: 13px; /* a control's text, in the sans */
+	--t-ui-raak: 15px; /* the same on a touch screen, where a control is 44 px */
+	--t-teken: 15px; /* the sign of an icon button; 17px on a touch screen (--t-teken-raak) */
+	--t-teken-raak: 17px;
 	--t-label: 11px; /* labels over a group: the sans at 500, as written, without spacing */
 	--t-glyph: 10px; /* a mark inside a box: a tick, a caret, a badge */
 	--t-input: 16px; /* text fields: below 16px a phone zooms in on focus */
@@ -141,6 +144,8 @@
 	/* A tap target on a desktop (A147): an icon button, a row's glyph, a text link's box. It
 	   is not a height for a button with words. */
 	--tik-h: 24px;
+	/* The tick of a choice (Vinkje): its column is this wide, on or off. */
+	--vink: 14px;
 	/* A finger's target on a touch screen: a control that has no wider target of its own
 	   (.raakvlak) is this high there. */
 	--veld-h-raak: calc(var(--s-6) + var(--s-3));

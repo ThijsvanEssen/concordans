@@ -131,7 +131,6 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 		// A tap target of 24 px is an icon, a glyph, a cell or a bare text link, never a button
 		// with words in a frame.
 		const tikken: Uitzondering[] = [
-			{ pad: 'lib/components/ui/IconButton.svelte', reden: 'the icon button is a 24 px target' },
 			{ pad: 'lib/styles/basis.css', reden: 'the bare Knop (is-text) is a text link' },
 			{ pad: 'lib/onderwerpen/Kruiswoord.svelte', reden: 'a total is a cell of a table' }
 		];

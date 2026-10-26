@@ -137,7 +137,7 @@
 		border-radius: 50%;
 	}
 	.optie > :global(.vinkje) {
-		margin-top: calc((var(--regel) - var(--s-3)) / 2);
+		margin-top: calc((var(--regel) - var(--vink)) / 2);
 	}
 	.is-active .kleur {
 		box-shadow:
