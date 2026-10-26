@@ -1,7 +1,7 @@
 <script lang="ts">
-	// The one way on from a short list to all of it: "Alle 244 uitspraken", and "Minder" once
-	// open (docs/bediening.md). A text link in ink under the list; the count in the words, not
-	// in a sentence beside them.
+	// The one way on from a short list: "Alle 244 uitspraken" and "Minder" once open, and
+	// "Volgende 25 uitspraken, nog 219" where the list goes on page by page (docs/bediening.md).
+	// A text link in ink under the list; the count in the words, not in a sentence beside them.
 	import TekstLink from './TekstLink.svelte';
 	import { formatCount } from '$lib/text/getal';
 
@@ -9,6 +9,11 @@
 		aantal = null,
 		noun,
 		open = false,
+		volgende = false,
+		stap = null,
+		rest = null,
+		laden = false,
+		opnieuw = false,
 		href,
 		onclick
 	}: {
@@ -18,21 +23,59 @@
 		noun: string;
 		/** The list stands whole: "Minder" folds it again. */
 		open?: boolean;
+		/** The list goes on in pages: "Volgende {stap} {noun}, nog {rest}" loads the next one in place. */
+		volgende?: boolean;
+		/** `volgende`: how many the next page brings; without it "Volgende {noun}". */
+		stap?: number | null;
+		/** `volgende`: how many are still to come, this page included; without it no "nog". */
+		rest?: number | null;
+		/** `volgende`: the next page is on its way: "Laden…", no link. */
+		laden?: boolean;
+		/** `volgende`: the last ask failed; "Opnieuw" asks it again. */
+		opnieuw?: boolean;
 		href?: string;
 		onclick?: (e: MouseEvent) => void;
 	} = $props();
 
 	// One item is already on show: "Alle 1 besluit" says nothing and is no way on (E9 D).
-	const toon = $derived(open || aantal == null || aantal > 1);
+	const toon = $derived(volgende || open || aantal == null || aantal > 1);
+	const volgendeWoorden = $derived.by(() => {
+		const aantalNu = rest != null && stap != null ? Math.min(stap, rest) : stap;
+		const eerst =
+			aantalNu != null ? `Volgende ${formatCount(aantalNu)} ${noun}` : `Volgende ${noun}`;
+		return rest != null && (stap == null || rest > stap)
+			? `${eerst}, nog ${formatCount(rest)}`
+			: eerst;
+	});
 	const woorden = $derived(
-		open
-			? 'Minder'
-			: aantal === 1
-				? `1 ${noun}`
-				: aantal != null
-					? `Alle ${formatCount(aantal)} ${noun}`
-					: `Alle ${noun}`
+		volgende
+			? opnieuw
+				? 'Opnieuw'
+				: volgendeWoorden
+			: open
+				? 'Minder'
+				: aantal === 1
+					? `1 ${noun}`
+					: aantal != null
+						? `Alle ${formatCount(aantal)} ${noun}`
+						: `Alle ${noun}`
 	);
 </script>
 
-{#if toon}<TekstLink class="alle-n" {href} {onclick}>{woorden}</TekstLink>{/if}
+{#if volgende && laden}
+	<span class="alle-n alle-n--laden" role="status">Laden…</span>
+{:else if toon}
+	<TekstLink
+		class="alle-n"
+		{href}
+		{onclick}
+		aria-expanded={!volgende && !href && onclick ? open : undefined}>{woorden}</TekstLink
+	>
+{/if}
+
+<style>
+	.alle-n--laden {
+		font-family: var(--font-serif);
+		color: var(--ink-3);
+	}
+</style>

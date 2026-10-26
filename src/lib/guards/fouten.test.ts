@@ -95,7 +95,7 @@ describe('errors that are not swallowed', () => {
 				[
 					plek('lib/components/ui/LoadState.svelte'),
 					plek(
-						'lib/components/explore/IndexView.svelte',
+						'lib/components/ui/AlleN.svelte',
 						'Volgende becomes Opnieuw in its own place under the rows loaded'
 					)
 				]
