@@ -1,4 +1,5 @@
-// Custom sigma programs for dashed and dotted edges (a proposed change, a vote; PART_OF).
+// Custom sigma programs for dashed, dotted and dash-dot edges (Netwerkcanvas, Lijnen: Aanhaling,
+// Deel van and Lid van, Toelichting; a proposed change; a vote).
 // Extends sigma's EdgeClampedProgram body with a dash pattern in the fragment
 // shader, then compounds it with EdgeArrowHeadProgram for the arrowhead.
 // The `v_positionCoef` varying (0 = source, 1 = target) drives the dash logic.
@@ -80,10 +81,10 @@ void main() {
 }
 `;
 
-// Fragment shader with a dash pattern: `dashes` per edge, `on` the lit fraction.
-// A 75/25 split keeps thin edges readable; 1-pixel-stair edges are the price of
-// hard-edge rendering, which keeps the colour on screen exactly the colour passed.
-const fragment = (dashes: number, on: number) => /* glsl */ `
+// Fragment shader with a dash pattern: `perioden` repeats per edge, and `aan` the stretches of
+// one repeat (0 to 1) that are lit. A 75/25 split keeps thin edges readable; 1-pixel-stair edges
+// are the price of hard-edge rendering, which keeps the colour on screen exactly the colour passed.
+const fragment = (perioden: number, aan: readonly (readonly [number, number])[]) => /* glsl */ `
 precision mediump float;
 
 varying vec4 v_color;
@@ -95,8 +96,8 @@ void main(void) {
   #ifdef PICKING_MODE
   gl_FragColor = v_color;
   #else
-  float pos = fract(v_positionCoef * ${dashes.toFixed(1)});
-  if (pos > ${on.toFixed(2)}) discard;
+  float pos = fract(v_positionCoef * ${perioden.toFixed(1)});
+  if (!(${aan.map(([van, tot]) => `(pos >= ${van.toFixed(3)} && pos < ${tot.toFixed(3)})`).join(' || ')})) discard;
 
   float dist = length(v_normal) * v_thickness;
   if (dist > v_thickness) discard;
@@ -119,13 +120,17 @@ const UNIFORMS = [
 type Uniform = (typeof UNIFORMS)[number];
 
 // ── Program class ─────────────────────────────────────────────────────────────
-function createBodyProgram(dashes: number, on: number, pijl: number) {
+function createBodyProgram(
+	perioden: number,
+	aan: readonly (readonly [number, number])[],
+	pijl: number
+) {
 	return class DashedEdgeBodyProgram extends EdgeProgram<Uniform> {
 		getDefinition() {
 			return {
 				VERTICES: 6,
 				VERTEX_SHADER_SOURCE: VERTEX,
-				FRAGMENT_SHADER_SOURCE: fragment(dashes, on),
+				FRAGMENT_SHADER_SOURCE: fragment(perioden, aan),
 				METHOD: WebGLRenderingContext.TRIANGLES,
 				UNIFORMS,
 				ATTRIBUTES: [
@@ -210,17 +215,30 @@ function createBodyProgram(dashes: number, on: number, pijl: number) {
 }
 
 /**
- * The dashed and dotted programs with an arrowhead of `pijl` times the line's thickness
- * long (--netwerk-pijl), as the solid one (GraphCanvas): six dashes for a proposed change
- * or a vote, sixteen short ones for PART_OF.
+ * The programs of the broken lines, each with an arrowhead of `pijl` times the line's thickness
+ * long (--netwerk-pijl) as the solid one (GraphCanvas), except `lid`, which has none (Lid van has
+ * no direction). The patterns are those of Netwerkcanvas, Lijnen, as fractions of one repeat:
+ * `dashed` a stroke of 4 and a gap of 3, `dotted` 1.5 and 3.5, `dashdot` 9, 3, 1.5, 3.
  */
 export function stippelProgrammas(pijl: number) {
 	const kop = createEdgeArrowHeadProgram({
 		lengthToThicknessRatio: pijl,
 		widenessToThicknessRatio: pijl * PIJL_BREED
 	});
+	const gestreept = createBodyProgram(6, [[0, 4 / 7]], pijl);
+	const gestippeld = createBodyProgram(16, [[0, 0.3]], pijl);
+	const streepPunt = createBodyProgram(
+		6,
+		[
+			[0, 9 / 16.5],
+			[12 / 16.5, 13.5 / 16.5]
+		],
+		pijl
+	);
 	return {
-		dashed: createEdgeCompoundProgram([createBodyProgram(6, 0.75, pijl) as never, kop]),
-		dotted: createEdgeCompoundProgram([createBodyProgram(16, 0.4, pijl) as never, kop])
+		dashed: createEdgeCompoundProgram([gestreept as never, kop]),
+		dotted: createEdgeCompoundProgram([gestippeld as never, kop]),
+		dashdot: createEdgeCompoundProgram([streepPunt as never, kop]),
+		lid: createEdgeCompoundProgram([gestippeld as never])
 	};
 }

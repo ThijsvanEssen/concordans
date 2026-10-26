@@ -813,7 +813,9 @@
 					}) as never
 				),
 				dashed: metLijnLabel(stippel.dashed as never),
-				dotted: metLijnLabel(stippel.dotted as never)
+				dotted: metLijnLabel(stippel.dotted as never),
+				dashdot: metLijnLabel(stippel.dashdot as never),
+				lid: metLijnLabel(stippel.lid as never)
 			},
 			defaultDrawEdgeLabel: tekenLijnLabel as never,
 			// The thinnest a line gets, dimmed or zoomed out: its arrowhead stays 4.5 px long.
@@ -1014,7 +1016,7 @@
 					return { ...data, hidden: true };
 
 				const sourceClass = srcAttrs.drawClass as DrawClass;
-				const style = edgeStyleFor(relation, data.status as string | null);
+				const style = edgeStyleFor(relation, data.status as string | null, sourceClass);
 				const renderColor = edgeColorFor(relation, sourceClass);
 				const edgeType = style === 'solid' ? 'arrow' : style;
 				const restSize = lijnDikte(Math.max(EDGE_WEIGHT[relation], style === 'dashed' ? 0.7 : 0));

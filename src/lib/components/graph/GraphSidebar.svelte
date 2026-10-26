@@ -27,19 +27,11 @@
 	import { allRows, lidCounts } from '$lib/verbonden/view';
 	import { lineName } from '$lib/verbonden/relation-words';
 	import { kindColour } from '$lib/bron/kleur';
-	import {
-		edgeColorFor,
-		edgeStyleFor,
-		hullColorFor,
-		hullDashFor,
-		lijnDikte,
-		pijlLengte,
-		PIJL_BREED
-	} from './nodeSprites';
-	import { EDGE_WEIGHT } from '$lib/graph/types';
+	import { hullColorFor, hullDashFor } from './nodeSprites';
 	import { drawClassOf } from '$lib/graph/types';
 	import { GROUP_LABEL, inLegend } from '$lib/graph/collection-role';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import LijnMonster from './LijnMonster.svelte';
 	import { BRON_LABEL } from '$lib/vocabulary';
 	import { kindCuts } from './kind-cut';
 	import { formatCount } from '$lib/text/getal';
@@ -206,10 +198,6 @@
 				? 'judgments'
 				: (selectionCollection ?? 'articles')
 		);
-	const dash = (relation: Relation) => {
-		const style = edgeStyleFor(relation, null);
-		return style === 'dotted' ? '1 3' : style === 'dashed' ? '4 3' : undefined;
-	};
 </script>
 
 <aside class="legend">
@@ -269,25 +257,7 @@
 					{@const rel = r.relation as Relation}
 					{@const on = !hiddenRelations.has(rel)}
 					<FilterOptie label={r.label} wrap {on} onToggle={() => onToggleRelation(rel)}>
-						{#snippet voor()}
-							<!-- As thick as on the canvas at the default zoom, with its arrowhead. -->
-							{@const dik = Math.max(lijnDikte(EDGE_WEIGHT[rel]), 1.4)}
-							{@const kop = dik * pijlLengte()}
-							<svg width="28" height="12" viewBox="0 0 28 12" aria-hidden="true"
-								><line
-									x1="1"
-									y1="6"
-									x2={27 - kop}
-									y2="6"
-									stroke={edgeColorFor(rel, sourceKind(rel))}
-									stroke-width={dik}
-									stroke-dasharray={dash(rel)}
-								/><polygon
-									points="{27 - kop},{6 - (kop * PIJL_BREED) / 2} 27,6 {27 - kop},{6 +
-										(kop * PIJL_BREED) / 2}"
-									fill={edgeColorFor(rel, sourceKind(rel))}
-								/></svg
-							>{/snippet}
+						{#snippet voor()}<LijnMonster relation={rel} van={sourceKind(rel)} />{/snippet}
 					</FilterOptie>
 				{/each}
 			</section>
