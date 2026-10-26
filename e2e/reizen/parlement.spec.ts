@@ -84,9 +84,12 @@ test('a passed bill names the law it made, its Staatsblad and the day it came in
 		page.getByRole('link', { name: 'Wet betaalbare huur', exact: true }).first()
 	).toHaveAttribute('href', /\/wetten\/BWBR0049889/);
 	// The chain's ends: who brought the bill in, and the day it was finished.
-	await expect(page.getByText('Voorstel van de regering, ingediend door')).toContainText(
-		'H.M. de Jonge, minister van Binnenlandse Zaken en Koninkrijksrelaties'
+	const indiener = page.getByText('Voorstel van de regering, ingediend door');
+	await expect(indiener).toHaveText(
+		'Voorstel van de regering, ingediend door H.M. de Jonge, minister van Binnenlandse Zaken en Koninkrijksrelaties.'
 	);
+	// A link in the line runs with it, as the ministerie's does: at 375 it stays a sentence.
+	expect((await indiener.boundingBox())!.height).toBeLessThan(80);
 	await expect(page.getByText('Afgerond: in werking sinds 1 juli 2024.')).toBeVisible();
 	await expect(page.getByRole('link', { name: 'Stb. 2024, 197' })).toHaveAttribute(
 		'href',
@@ -297,4 +300,14 @@ test('a toezegging in the list names the debate its agenda came from, opened in 
 	await expect(
 		rij.getByRole('link', { name: 'Arbitrage, mediation en herstelrecht' })
 	).toBeVisible();
+});
+
+test('a burgerinitiatief is not called the initiative bill of the Kamerlid who handed it over', async ({
+	page
+}) => {
+	await page.goto('/dossiers/37041');
+	await expect(page.getByText('Burgerinitiatief, ingediend door')).toHaveText(
+		/^Burgerinitiatief, ingediend door Mohammed Mohandis, voorzitter van de vaste commissie/
+	);
+	await expect(page.getByText('Initiatiefvoorstel van')).toHaveCount(0);
 });

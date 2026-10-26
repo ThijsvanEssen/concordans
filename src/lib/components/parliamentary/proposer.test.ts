@@ -35,4 +35,14 @@ describe('proposal', () => {
 		expect(proposal(null)).toBeNull();
 		expect(proposal(who({ name: null, capacity: 'overig' }))).toBeNull();
 	});
+	it('names a burgerinitiatief handed over by a committee chair as such', () => {
+		const chair = who({
+			capacity: 'kamerlid',
+			function: 'voorzitter van de vaste commissie voor X'
+		});
+		expect(proposal(chair, 'Burgerinitiatief “Levenseinderegie”')?.lead).toBe(
+			'Burgerinitiatief, ingediend door'
+		);
+		expect(proposal(chair, 'Wet X')?.lead).toBe('Ingediend door');
+	});
 });

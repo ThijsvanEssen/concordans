@@ -27,8 +27,7 @@
 	import { getDossier } from '$lib/api/dossiers';
 
 	import StandBalk from '$lib/components/parliamentary/StandBalk.svelte';
-	import NameLink from '$lib/bron/NameLink.svelte';
-	import { proposal } from '$lib/components/parliamentary/proposer';
+	import ProposedBy from '$lib/components/parliamentary/ProposedBy.svelte';
 	import PassedLaw from '$lib/components/parliamentary/PassedLaw.svelte';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
 	import CoalitieRegel from '$lib/components/parliamentary/CoalitieRegel.svelte';
@@ -170,17 +169,7 @@
 							Ministerie: <MinistryLink ministry={d.ministry} name={d.ministry_name} />.
 						</p>
 					{/if}
-					{@const v = proposal(d.proposed_by)}
-					{#if v}
-						<!-- Who brought the bill in: the government or a Kamerlid (API 0.80.7). -->
-						<p class="reading">
-							{v.lead}{#if v.name}<NameLink
-									collection="members"
-									name={v.name}
-									key={v.memberKey}
-								/>{/if}{v.function ? `, ${v.function}` : ''}.
-						</p>
-					{/if}
+					<ProposedBy proposer={d.proposed_by} title={d.title} />
 					{#if d.submitted_on_tk && stand(d)?.group !== 'ingediend'}
 						<!-- The day the bill reached the Kamer (API 0.75), before any stage below it; where
 						     the stand says it already ("Ingediend bij de Tweede Kamer op …"), once (R3-L F9). -->

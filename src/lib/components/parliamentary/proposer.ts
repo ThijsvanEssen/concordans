@@ -13,24 +13,39 @@ type Proposal = {
 	function: string | null;
 };
 
-export function proposal(p: Proposer | null | undefined): Proposal | null {
+/**
+ * A Kamerlid who signed as chair of a committee brought no bill of their own in: a
+ * burgerinitiatief (its title says so) is handed over by the committee, so neither is called
+ * an initiatiefvoorstel of the Kamerlid.
+ */
+const forCommittee = (p: Proposer, title: string | null | undefined) =>
+	p.capacity === 'kamerlid' &&
+	(/^burgerinitiatief/i.test(title?.trim() ?? '') ||
+		/^voorzitter van de .*commissie/i.test(p.function ?? ''));
+
+export function proposal(p: Proposer | null | undefined, title?: string | null): Proposal | null {
 	if (!p) return null;
 	const name = p.name?.trim() || null;
+	const committee = forCommittee(p, title);
 	const lead =
 		p.capacity === 'bewindspersoon'
 			? name
 				? 'Voorstel van de regering, ingediend door'
 				: 'Voorstel van de regering'
-			: p.capacity === 'kamerlid'
-				? 'Initiatiefvoorstel van'
-				: name
-					? 'Ingediend door'
-					: '';
+			: committee
+				? /^burgerinitiatief/i.test(title?.trim() ?? '')
+					? 'Burgerinitiatief, ingediend door'
+					: 'Ingediend door'
+				: p.capacity === 'kamerlid'
+					? 'Initiatiefvoorstel van'
+					: name
+						? 'Ingediend door'
+						: '';
 	if (!lead) return null;
 	return {
 		lead,
 		name,
 		memberKey: p.member_key ?? null,
-		function: p.capacity === 'kamerlid' ? null : p.function?.trim() || null
+		function: p.capacity === 'kamerlid' && !committee ? null : p.function?.trim() || null
 	};
 }
