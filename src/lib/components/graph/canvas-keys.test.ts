@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { moveIndex, readingOrder } from './canvas-keys';
+import { moveIndex, readingOrder, stepPointer } from './canvas-keys';
 
 describe('moveIndex', () => {
 	it('steps with the arrows and jumps with Home and End, without wrapping', () => {
@@ -35,5 +35,31 @@ describe('readingOrder', () => {
 			'Artikel 2a',
 			'Artikel 10'
 		]);
+	});
+});
+
+describe('stepPointer', () => {
+	const ids = ['s', 'a', 'b'];
+	it('starts at the first with → and at the last with ←', () => {
+		expect(stepPointer('ArrowRight', null, ids)).toBe('s');
+		expect(stepPointer('ArrowLeft', null, ids)).toBe('b');
+	});
+	it('steps in the order of the list, the ends felt', () => {
+		expect(stepPointer('ArrowRight', 's', ids)).toBe('a');
+		expect(stepPointer('ArrowRight', 'b', ids)).toBe('b');
+		expect(stepPointer('ArrowLeft', 'a', ids)).toBe('s');
+		expect(stepPointer('ArrowLeft', 's', ids)).toBe('s');
+	});
+	it('jumps with Home and End', () => {
+		expect(stepPointer('End', 's', ids)).toBe('b');
+		expect(stepPointer('Home', 'b', ids)).toBe('s');
+	});
+	it('starts afresh from a bron no longer drawn', () => {
+		expect(stepPointer('ArrowRight', 'weg', ids)).toBe('s');
+	});
+	it('leaves other keys and an empty canvas alone', () => {
+		expect(stepPointer('Enter', 's', ids)).toBeUndefined();
+		expect(stepPointer('ArrowDown', 's', ids)).toBeUndefined();
+		expect(stepPointer('ArrowRight', null, [])).toBeUndefined();
 	});
 });

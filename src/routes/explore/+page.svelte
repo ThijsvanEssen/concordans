@@ -12,7 +12,7 @@
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import { get } from 'svelte/store';
 	import { page } from '$app/state';
-	import { afterNavigate, goto } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import type { Collection, Relation } from '$lib/vocabulary';
 	import { sprongDoel } from '$lib/stores/sprong';
 	import { inView } from '$lib/actions/in-view';
@@ -1514,25 +1514,6 @@
 		return routeKop('/explore').title;
 	});
 
-	// The ← of the network goes back inside Concordans; a bron opened from a link
-	// elsewhere (a new tab, a shared link) has no step to go back to, so it goes home.
-	let steppedIn = $state(false);
-	// A replaced entry (a filter) is no step; a link, Back itself, or a change of bron or
-	// of reading mode is.
-	// On the first page `from` can be there without a url: reading it threw, the first
-	// navigation never ended and SvelteKit never took over the links (every click a full
-	// load, 10 Oct 2026).
-	afterNavigate((nav) => {
-		const van = nav.from?.url;
-		const naar = nav.to?.url;
-		const from = van ? exploreUrl(van).searchParams : null;
-		const to = naar ? exploreUrl(naar).searchParams : null;
-		const changed = (name: string) => (from?.get(name) ?? null) !== (to?.get(name) ?? null);
-		if (nav.type === 'link' || nav.type === 'popstate' || changed('focus') || changed('mode'))
-			steppedIn = true;
-	});
-	const goBack = () => (steppedIn ? history.back() : goto('/'));
-
 	/**
 	 * A change of view that Back should undo (reading at full width, clearing the netwerk)
 	 * takes a history entry; a filter or a toggle replaces the current one.
@@ -2112,8 +2093,6 @@
 								{netwerkActive}
 								onEdgeClick={openEdgeCard}
 								onClear={() => (card = null)}
-								onBack={goBack}
-								onGoForward={() => history.forward()}
 								onFilter={applyFilter}
 								onOpenFilter={() => (filterOpen = true)}
 								onDepth={setDepth}
