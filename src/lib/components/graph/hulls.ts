@@ -128,11 +128,19 @@ export type HullScene = HullGroups & {
 	pinnedIds: ReadonlySet<string>;
 	/** Where the focus's name stands: a hull's name stands elsewhere. */
 	focusName: Rect | undefined;
+	/** The signs of the bronnen drawn: a hull's name does not cover them (UX review N4). */
+	glyphs?: readonly Rect[];
 };
 
 type HullLayout = { hulls: Hull[]; links: HullLink[]; hitAreas: HullHitArea[] };
 
-type Drawn = Hull & { polygon: Point[]; center: Point; members: ReadonlySet<string> };
+type Drawn = Hull & {
+	polygon: Point[];
+	center: Point;
+	members: ReadonlySet<string>;
+	/** Only its anchor drawn: its name is all there is of it. */
+	alone: boolean;
+};
 
 /**
  * A label pill (centred on x, its bottom at y) moved clear of the floating panel: to the
@@ -172,7 +180,7 @@ function drawHulls(s: HullScene): { drawn: Map<string, Drawn>; anchorHull: Map<s
 	// The labels placed so far, and the focus's name: a hull's label takes a free place
 	// (UX test 10 Oct, #25: "Verdrag tot bescherming…" over "Richtlijn (EU) 2019/1023", the
 	// focus's name covered). The labels lie over the canvas, so they decide.
-	const taken: Rect[] = s.focusName ? [s.focusName] : [];
+	const taken: Rect[] = [...(s.focusName ? [s.focusName] : []), ...(s.glyphs ?? [])];
 	/** Per anchor, the hull drawn for it. */
 	const anchorHull = new Map<string, Drawn>();
 	for (const group of s.groups.values()) {
@@ -204,9 +212,13 @@ function drawHulls(s: HullScene): { drawn: Map<string, Drawn>; anchorHull: Map<s
 		// The full name while the hull, or a bron in it, is under the pointer.
 		const inHover =
 			s.hoveredHullId === group.id || (s.hoveredId !== null && group.members.has(s.hoveredId));
+		// An anchor alone (a wet with nothing of it drawn) is its name: without it an empty
+		// circle (UX review N8). It is named whatever stands around it.
+		const alone = !!anchor && points.length === 1 && points[0] === anchorPoint;
 		// In a netwerk, a hull of only bronnen between the chosen ones names itself on a hover or
 		// zoomed in; zoomed out its name would cover the chosen bronnen (6e).
 		const quiet =
+			!alone &&
 			s.pinnedIds.size > 0 &&
 			!inHover &&
 			s.zoomedOut &&
@@ -245,7 +257,7 @@ function drawHulls(s: HullScene): { drawn: Map<string, Drawn>; anchorHull: Map<s
 				break;
 			}
 		}
-		if (!place && inHover) place = at;
+		if (!place && (inHover || alone)) place = at;
 		const hull: Drawn = {
 			id: group.id,
 			path,
@@ -258,7 +270,8 @@ function drawHulls(s: HullScene): { drawn: Map<string, Drawn>; anchorHull: Map<s
 			dim: false,
 			polygon,
 			center: centroid(points),
-			members: group.members
+			members: group.members,
+			alone
 		};
 		drawn.set(group.id, hull);
 		if (anchor) anchorHull.set(anchor, hull);
@@ -349,11 +362,12 @@ export function layoutHulls(s: HullScene): HullLayout {
 		});
 	}
 	links.push(...anchorLines(s, anchorHull, active));
+	unstacked(links, s.labelWidth);
 
 	const hulls = [...drawn.values()];
 	hideCrowdedNames(s, hulls);
 	return {
-		hulls: hulls.map(({ polygon: _p, center: _c, members: _m, ...hull }) => hull),
+		hulls: hulls.map(({ polygon: _p, center: _c, members: _m, alone: _a, ...hull }) => hull),
 		links,
 		hitAreas: hulls.map((h) => {
 			const w = s.labelWidth(h.label);
@@ -438,7 +452,9 @@ function anchorLines(
  */
 function hideCrowdedNames(s: HullScene, hulls: Drawn[]) {
 	const precedence = (h: Drawn) =>
-		(s.hoveredHullId === h.id || (s.hoveredId !== null && h.members.has(s.hoveredId)) ? 4 : 0) +
+		(h.alone || s.hoveredHullId === h.id || (s.hoveredId !== null && h.members.has(s.hoveredId))
+			? 4
+			: 0) +
 		(s.focusedId !== null && h.members.has(s.focusedId) ? 2 : 0) +
 		([...h.members].some((id) => s.pinnedIds.has(id)) ? 1 : 0);
 	const placed: Rect[] = [];
@@ -453,5 +469,22 @@ function hideCrowdedNames(s: HullScene, hulls: Drawn[]) {
 			continue;
 		}
 		placed.push(r);
+	}
+}
+
+/**
+ * The words of the lines of a hull in the hover stand where no other line's words stand: the
+ * six lines "noemt" from the Gemeentewet's hull to the bronnen under it said it six times over
+ * one another (UX review N4). A label that would cover one placed before is left out; its
+ * line stays.
+ */
+export function unstacked(links: HullLink[], labelWidth: (text: string) => number): void {
+	const placed: Rect[] = [];
+	for (const link of links) {
+		if (!link.label) continue;
+		const w = labelWidth(link.label);
+		const r = { x: link.labelX - w / 2, y: link.labelY - LABEL_HEIGHT / 2, w, h: LABEL_HEIGHT };
+		if (placed.some((o) => overlaps(r, o))) link.label = null;
+		else placed.push(r);
 	}
 }

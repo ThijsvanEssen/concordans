@@ -1,6 +1,6 @@
 import type { QueryOf, Schema } from '$lib/api/types';
 import { NODE_TYPES, type Collection, type Relation } from '$lib/vocabulary';
-import { ApiError, api, clientFor, unwrap } from './client';
+import { ApiError, api, clientFor, slowApi, unwrap } from './client';
 import { isNotFound } from './errors';
 import { once } from './records';
 
@@ -182,7 +182,7 @@ export function sumLidCounts(
 	return counts;
 }
 
-/** Every node and edge within `depth` hops, in one traversal. */
+/** Every node and edge within `depth` hops, in one traversal; cold it takes 10 s (`slowApi`). */
 export const getNodeNeighborhood = (
 	collection: Collection,
 	key: string,
@@ -200,7 +200,7 @@ export const getNodeNeighborhood = (
 	} = {}
 ) =>
 	unwrap(
-		api.GET('/api/nodes/{collection}/{key}/neighborhood', {
+		slowApi.GET('/api/nodes/{collection}/{key}/neighborhood', {
 			params: {
 				path: path(collection, key),
 				query: {
