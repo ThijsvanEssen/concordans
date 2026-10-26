@@ -1366,7 +1366,9 @@ async function relatedLaws(
 	const items = found.items.filter((i) => !i.basis);
 	const dit = ditVan(node.props);
 	return {
-		total: found.total - (found.items.length - items.length),
+		// Those issued under the other counted over every page (`based_on_total`, API 0.80.11),
+		// not those of this page alone (B3: Boek 6 BW counted 184 over a list of 182).
+		total: found.total - (found.based_on_total ?? found.items.length - items.length),
 		rows: items.map((i) => wetRijVanRelated(i, bwb, dit)),
 		page:
 			found.items.length < found.total && limit < RELATED_MAX

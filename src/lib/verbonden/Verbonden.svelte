@@ -488,17 +488,18 @@
 					(!verbonden.loading && !verbonden.failed && verbonden.id)
 				)
 					? ''
-					: overview && kinds.length && !verbonden.loading
+					: overview
 						? // The sum of the soorten shown under it, so the head and the soorten agree (R3-L
-							// F7); a group that waits on its rows says its own count.
-							`${formatCount(kindsTotal(kinds))} ${plural(kindsTotal(kinds), 'verbinding', 'verbindingen')}`
+							// F7), once every group is in: the buckets count otherwise, and the head
+							// would change as the groups come (B3). A group that waits says its own count.
+							kinds.length && !verbonden.loading
+							? `${formatCount(kindsTotal(kinds))} ${plural(kindsTotal(kinds), 'verbinding', 'verbindingen')}`
+							: ''
 						: alleVerbindingen != null
 							? `${formatCount(alleVerbindingen)} ${plural(alleVerbindingen, 'verbinding', 'verbindingen')}`
-							: vast && (!overview || kinds.length)
+							: vast
 								? countLine(vast, filter, wachtSet)
-								: overview && kinds.length
-									? `${formatCount(kindsTotal(kinds))} ${plural(kindsTotal(kinds), 'verbinding', 'verbindingen')}`
-									: ''}</span
+								: ''}</span
 			>
 		{/if}
 	</div>

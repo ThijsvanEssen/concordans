@@ -377,7 +377,7 @@ export interface paths {
         };
         /**
          * Instruments referring to this one, or referred to by it
-         * @description The other laws whose articles in force refer to articles in force of this law, or the other way (`REFERS_TO` between articles), the most articles first. Each carries its `kind` and `date_in_force`, the `direction`, the articles at both ends (`outbound_count` articles of this law refer to `outbound_cited_count` of it; `inbound_count` of its articles refer to `inbound_cited_count` of this law) and `basis`: whether one is issued under the other as well (`BASED_ON`), with the articles its preamble names. ``total`` is the absolute count, independent of ``limit``. The articles between the two: `.../references/{other}`.
+         * @description The other laws in force whose articles in force refer to articles in force of this law, or the other way (`REFERS_TO` between articles), the most articles first; an expired law (`date_expired` passed) is left out. Each carries its `kind` and `date_in_force`, the `direction`, the articles at both ends (`outbound_count` articles of this law refer to `outbound_cited_count` of it; `inbound_count` of its articles refer to `inbound_cited_count` of this law) and `basis`: whether one is issued under the other as well (`BASED_ON`), with the articles its preamble names. ``total`` is the absolute count, independent of ``limit``; ``based_on_total`` how many of those have a `basis`. The articles between the two: `.../references/{other}`.
          */
         get: operations["get_instrument_related_route_api_instruments__bwb_id__related_instruments_get"];
         put?: never;
@@ -10103,6 +10103,12 @@ export interface components {
              * @description Absolute number of related instruments (independent of ``limit``).
              */
             total: number;
+            /**
+             * Based On Total
+             * @description How many of ``total`` are one of a delegation with this law (`based_on`), on any page: ``total`` minus this counts the others.
+             * @default 0
+             */
+            based_on_total: number;
             /** Items */
             items: components["schemas"]["InstrumentRelatedItem"][];
         };

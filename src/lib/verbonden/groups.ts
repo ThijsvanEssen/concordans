@@ -80,8 +80,9 @@ type GroupDef = {
 	/** A row opens beside the selected bron instead of replacing it. */
 	inPlace?: boolean;
 	/**
-	 * Its loader lists only what is open (lopend, openstaand): the buckets count every edge,
-	 * the finished ones too, so they never stand for its count, not even while it loads.
+	 * Its loader lists part of what its buckets count: what is open (lopend, openstaand), the
+	 * laws in force of a ministry. The buckets count every edge, so they never stand for its
+	 * count, not even while it loads.
 	 */
 	countsOpenOnly?: boolean;
 	/**
@@ -792,7 +793,9 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Wetten',
 			noun: 'wetten',
 			load: 'ministry-laws',
-			bakken: [{ relation: 'LED_BY', direction: 'inbound', collection: 'instruments' }]
+			bakken: [{ relation: 'LED_BY', direction: 'inbound', collection: 'instruments' }],
+			// The list of laws in force that change no other (B3: JenV 5.551 edges, 2.433 laws).
+			countsOpenOnly: true
 		},
 		{
 			id: 'dossiers',
