@@ -93,7 +93,7 @@ test('an earlier text of an article says so, and leads back to the law in force'
 	page
 }) => {
 	await page.goto('/wetten/BWBR0001840/artikel/23');
-	await page.getByRole('button', { name: '3 tekstversies' }).click();
+	await page.getByRole('button', { name: 'Tekstversies: 3' }).click();
 	const versions = page.getByRole('menu', { name: 'Tekstversies' });
 	await expect(versions.getByRole('menuitemradio', { checked: true })).toHaveText(
 		/Geldend, sinds 17\snovember\s2017/

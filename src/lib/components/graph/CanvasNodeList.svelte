@@ -1,8 +1,9 @@
 <script lang="ts">
 	// The bronnen on the canvas for the keyboard: one tab stop, ↑ and ↓ to step through
-	// them (Home, End), each a link (Enter opens it). The bron in focus lights up on the
-	// canvas and gets the same card as under the pointer; N adds it to the netwerk or
-	// takes it out. The canvas itself draws; this list is how it is reached without one.
+	// them (Home, End), each a link. The bron in focus lights up on the canvas and nothing
+	// more (WCAG 3.2.1, R9): Enter chooses it as a click does, its card open and the address
+	// marking it; Enter again reads it. N adds it to the netwerk or takes it out. The
+	// canvas itself draws; this list is how it is reached without one.
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronHref } from '$lib/bron/href';
 	import { refOf } from '$lib/bron/ref';
@@ -14,12 +15,15 @@
 	import { bronNaam, stemmingNaam } from '$lib/bron/naam';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { isClusterId } from '$lib/selection/cluster';
+	import { untrack } from 'svelte';
 	import { distinctNames } from './canvas-names';
 
 	let {
 		nodes,
 		isChosen,
 		onFocusNode,
+		onKies,
+		aangewezen = null,
 		onToggleChosen,
 		onOpenCluster,
 		onTab,
@@ -31,6 +35,10 @@
 		isChosen: (id: string) => boolean;
 		/** The bron in focus, or null when the focus leaves the list. */
 		onFocusNode: (node: GraphNode | null) => void;
+		/** Enter (or a click) on a bron: chosen as a click on the canvas chooses it. */
+		onKies?: (node: GraphNode) => void;
+		/** The bron the arrows point at on the canvas: its link holds the tab stop, its line is read. */
+		aangewezen?: GraphNode | null;
 		onToggleChosen?: (node: GraphNode) => void;
 		/** A cluster bron ("250 uitspraken"): Enter opens its card, as a click does. */
 		onOpenCluster?: (node: GraphNode, opener: HTMLElement) => void;
@@ -81,6 +89,18 @@
 	/** Each its own name: eight judgments of one court on one day by their ECLI (UX review N4). */
 	const names = $derived(distinctNames(nodes, fullName));
 	const nameOf = (n: GraphNode) => names.get(n.id) ?? fullName(n);
+
+	// The arrows on the canvas move the bron pointed at: the list follows (its tab stop) and
+	// the one line reads its name and kind.
+	$effect(() => {
+		const n = aangewezen;
+		const i = n ? nodes.findIndex((x) => x.id === n.id) : -1;
+		untrack(() => {
+			if (!n) return;
+			if (i >= 0) active = i;
+			said = `${nameOf(n)}, ${kindOf(n)}`;
+		});
+	});
 
 	function focusAt(i: number) {
 		active = i;
@@ -146,7 +166,7 @@
 	<ul
 		class="sr-only nodes canvas-node-list"
 		bind:this={list}
-		aria-label="Bronnen in het netwerk, {nodes.length}. Pijl omhoog en omlaag: volgende bron. Enter: openen.{onToggleChosen
+		aria-label="Bronnen in het netwerk, {nodes.length}. Pijl omhoog en omlaag: volgende bron. Enter: kiezen.{onToggleChosen
 			? ' N: voeg toe aan of haal uit netwerk.'
 			: ''}"
 		{onfocusin}
@@ -157,10 +177,12 @@
 				<a
 					href={isClusterId(n.id) ? '#' : bronHref(refOf(n.collection, n.key, n.raw?.props))}
 					aria-haspopup={isClusterId(n.id) ? 'dialog' : undefined}
+					aria-current={aangewezen?.id === n.id ? 'true' : undefined}
 					onclick={(e) => {
-						if (!isClusterId(n.id)) return;
+						if (!isClusterId(n.id) && !onKies) return;
 						e.preventDefault();
-						onOpenCluster?.(n, e.currentTarget);
+						if (isClusterId(n.id)) onOpenCluster?.(n, e.currentTarget);
+						else onKies?.(n);
 					}}
 					data-sveltekit-noscroll
 					data-index={i}

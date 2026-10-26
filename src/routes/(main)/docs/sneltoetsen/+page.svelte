@@ -27,7 +27,7 @@
 			</div>
 			<div class="shortcut-row">
 				<span class="shortcut-desc">Bij een bron: Tekst of Verbonden</span>
-				<span class="shortcut-keys"><kbd>1</kbd> <kbd>3</kbd></span>
+				<span class="shortcut-keys"><kbd>1</kbd> <kbd>2</kbd></span>
 			</div>
 			<div class="shortcut-row">
 				<span class="shortcut-desc">In het netwerk: alleen verbonden bronnen</span>

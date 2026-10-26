@@ -38,7 +38,7 @@ const MENUS: Case[] = [
 	{
 		name: 'the versions of an article',
 		url: '/wetten/BWBR0001840/artikel/23',
-		opener: '3 tekstversies',
+		opener: 'Tekstversies: 3',
 		menu: /^Tekstversies$/
 	},
 	{

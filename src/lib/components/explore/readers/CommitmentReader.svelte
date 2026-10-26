@@ -4,7 +4,7 @@
 	import { naamVan } from '$lib/bron/menselijk';
 	import ReaderHead from './ReaderHead.svelte';
 	import { langeDatum, vandaag } from '$lib/text/datum';
-	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import { getCommitment } from '$lib/api/records';
 	import { uniqueBy } from '$lib/util/unique';
 	// Reader for a toezegging: its text, who made it in which post, the ministry and cabinet,
@@ -150,9 +150,10 @@
 
 			{#if c.member}
 				<p class="alle">
-					<TekstLink href={indexHref('commitments', { persoon: c.member.key })}
-						>Alle toezeggingen van {c.member.name}</TekstLink
-					>
+					<AlleN
+						noun="toezeggingen van {c.member.name}"
+						href={indexHref('commitments', { persoon: c.member.key })}
+					/>
 				</p>
 			{/if}
 		</div>

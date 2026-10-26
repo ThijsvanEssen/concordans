@@ -40,7 +40,7 @@ test('Actueel: Back finds the earlier days loaded and the place read', async ({ 
 	await telling;
 	const first = await days.count();
 	telling = counted();
-	await page.getByRole('button', { name: 'Eerdere dagen' }).click();
+	await page.getByRole('button', { name: 'Volgende dagen' }).click();
 	await expect.poll(() => days.count()).toBeGreaterThan(first);
 	await telling;
 	const loaded = await days.count();

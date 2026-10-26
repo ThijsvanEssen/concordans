@@ -12,7 +12,7 @@
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import { get } from 'svelte/store';
 	import { page } from '$app/state';
-	import { afterNavigate, goto } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import type { Collection, Relation } from '$lib/vocabulary';
 	import { sprongDoel } from '$lib/stores/sprong';
 	import { inView } from '$lib/actions/in-view';
@@ -859,7 +859,7 @@
 	$effect(() => {
 		const node = mode === 'index' ? null : selectedNode;
 		// In Tekst on a phone Verbonden stands under the text: it loads once it comes in view.
-		const panel = mode === 'read' && panelSeen ? 'verbonden' : mobilePanel;
+		const panel = mode === 'read' && panelSeen ? 'verbonden' : readTab;
 		const view = { phone: telefoon, table: tableMode, panel, canvasOnly: mode === 'graph' };
 		if (node && !verbondenInView(node.collection, view)) return;
 		source.load(node);
@@ -1514,25 +1514,6 @@
 		return routeKop('/explore').title;
 	});
 
-	// The ← of the network goes back inside Concordans; a bron opened from a link
-	// elsewhere (a new tab, a shared link) has no step to go back to, so it goes home.
-	let steppedIn = $state(false);
-	// A replaced entry (a filter) is no step; a link, Back itself, or a change of bron or
-	// of reading mode is.
-	// On the first page `from` can be there without a url: reading it threw, the first
-	// navigation never ended and SvelteKit never took over the links (every click a full
-	// load, 10 Oct 2026).
-	afterNavigate((nav) => {
-		const van = nav.from?.url;
-		const naar = nav.to?.url;
-		const from = van ? exploreUrl(van).searchParams : null;
-		const to = naar ? exploreUrl(naar).searchParams : null;
-		const changed = (name: string) => (from?.get(name) ?? null) !== (to?.get(name) ?? null);
-		if (nav.type === 'link' || nav.type === 'popstate' || changed('focus') || changed('mode'))
-			steppedIn = true;
-	});
-	const goBack = () => (steppedIn ? history.back() : goto('/'));
-
 	/**
 	 * A change of view that Back should undo (reading at full width, clearing the netwerk)
 	 * takes a history entry; a filter or a toggle replaces the current one.
@@ -1653,10 +1634,8 @@
 	const shareCopier = createCopier();
 	const handleShareView = () => shareCopier.copy(page.url.toString(), 'share');
 
-	// On a phone Verbonden stands under the text; the key 3 brings it forward.
-	let mobilePanel = $state<Panel>('reader');
 	/** On a phone the tab of the read view: the text or Verbonden (A197-a, R3-L F4). */
-	let readTab = $state<'tekst' | 'verbonden'>('tekst');
+	let readTab = $state<Panel>('tekst');
 	$effect(() => {
 		void selectedNode?.id;
 		// A link that names the bronnen (?bronnen=, the start page's) comes for Verbonden (R3-I).
@@ -1748,12 +1727,12 @@
 			);
 			return;
 		}
-		// 1 and 3: the layers of a bron, Tekst and Verbonden (Thijs, 10 Oct); 3 puts the focus on
-		// Verbonden's first row, for J and K.
+		// 1 and 2: the layers of a bron, Tekst and Verbonden; 2 puts the focus on Verbonden's
+		// first row, for J and K.
 		const panel = panelOfKey(e.key);
 		if (panel && selectedNode && mode === 'read') {
 			e.preventDefault();
-			kiesPaneel(panel);
+			readTab = panel;
 			if (panel === 'verbonden')
 				requestAnimationFrame(() =>
 					document.querySelector<HTMLElement>('.verbonden a.row__title')?.focus()
@@ -1770,8 +1749,6 @@
 		e.preventDefault();
 		setReading(readAction === 'read');
 	}
-
-	const kiesPaneel = (id: Panel) => (mobilePanel = id);
 
 	/** What the key L does: read the bron, or open the werkplek with it. */
 	const readAction = $derived<'read' | 'network' | null>(
@@ -2111,8 +2088,6 @@
 								{netwerkActive}
 								onEdgeClick={openEdgeCard}
 								onClear={() => (card = null)}
-								onBack={goBack}
-								onGoForward={() => history.forward()}
 								onFilter={applyFilter}
 								onOpenFilter={() => (filterOpen = true)}
 								onDepth={setDepth}

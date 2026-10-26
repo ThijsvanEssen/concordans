@@ -19,6 +19,7 @@ import {
 	langeDatum,
 	maandJaar,
 	vandaag,
+	maandagVan,
 	weekdag
 } from './datum';
 
@@ -131,5 +132,13 @@ describe('splitDates', () => {
 		const parts = splitDates(text);
 		expect(parts.map((d) => d.text).join('')).toBe(text);
 		expect(parts.filter((d) => d.date).map((d) => d.text)).toEqual(['22 april 1998', '3 mei']);
+	});
+});
+
+describe('maandagVan', () => {
+	it('is the Monday of the week of a day', () => {
+		expect(maandagVan('2024-04-25')).toBe('2024-04-22');
+		expect(maandagVan('2024-04-22')).toBe('2024-04-22');
+		expect(maandagVan('2024-04-28')).toBe('2024-04-22');
 	});
 });

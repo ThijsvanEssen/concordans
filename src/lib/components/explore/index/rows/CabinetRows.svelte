@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { openHref } from '$lib/bron/href';
+	import { capitalize } from '$lib/text/words';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import { partyColor } from '$lib/components/explore/party-color.svelte';
 	import IndexRow from '../IndexRow.svelte';
@@ -15,7 +16,7 @@
 	{#each ctx.rows ?? [] as c (c.key)}
 		{@const bron = `cabinets/${c.key}`}
 		{@const parties = c.parties ?? []}
-		<IndexRow {bron} title={c.name} href={openHref(bron)} acties>
+		<IndexRow {bron} title={capitalize(c.name)} href={openHref(bron)} acties>
 			{#snippet lead()}
 				<span class="row-id-main">{period(c.from_date, c.to_date, isOpen(c))}</span>
 				{#if isOpen(c)}
