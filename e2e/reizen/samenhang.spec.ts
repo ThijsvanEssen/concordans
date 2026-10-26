@@ -67,8 +67,8 @@ for (const { stuk, own, votes } of [
 	});
 }
 
-// The Legenda counts what is drawn, with the focus selected too, open as closed (besluit 29):
-// the focus's direct verbindingen are in Verbonden, not here ("Stemmingen 0" beside 49 drawn).
+// Soort names the soorten of Verbonden and how many of each are drawn (N1): the stemmingen
+// drawn are counted, "N" or "N van M", in Stemmingen and, past its count, Overige stemmingen.
 test('the open legend counts the stemmingen drawn, the focus selected', async ({ page }) => {
 	await page.goto('/kamerstukken/36799/31?mode=netwerk');
 	await page.waitForLoadState('networkidle');
@@ -77,9 +77,15 @@ test('the open legend counts the stemmingen drawn, the focus selected', async ({
 	expect(stemmingen).toBeGreaterThan(0);
 	await openFilters(page);
 	const legend = page.getByRole('region', { name: 'Legenda' });
-	await expect(legend.getByRole('button', { name: /^Stemmingen [\d.]+$/ })).toHaveAccessibleName(
-		`Stemmingen ${stemmingen}`
+	const rows = legend.getByRole('button', {
+		name: /^(Overige s|S)temmingen [\d.]+( van [\d.]+)?$/
+	});
+	await expect(rows.first()).toBeVisible();
+	await expect(legend.locator('[aria-label="wordt geteld"]')).toHaveCount(0);
+	const getekend = (await rows.allInnerTexts()).map((t) =>
+		Number(/(?:^|\s)([\d.]+)(?: van |$)/.exec(t.replace('\n', ' '))![1].replace(/\./g, ''))
 	);
+	expect(getekend.reduce((a, b) => a + b, 0)).toBe(stemmingen);
 });
 
 test('Verbonden as a table, exported as CSV', async ({ page }) => {

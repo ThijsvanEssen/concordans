@@ -45,7 +45,12 @@
 	import type { FilterGroup, Rechter } from '$lib/verbonden/filter';
 	import { getInstrumentMeta } from '$lib/api/instrument-cache';
 	import { lawName } from '$lib/text/instrument-meta';
-	import { isDrawnGroup, type ContainerGroup, type Period } from '$lib/graph/container-membership';
+	import {
+		formerMembers,
+		isDrawnGroup,
+		type ContainerGroup,
+		type Period
+	} from '$lib/graph/container-membership';
 	import { untilDate, vandaag } from '$lib/text/datum';
 	import { metGroepVerborgen } from '$lib/graph/met-groep';
 	import { pointInPolygon } from '$lib/graph/hull';
@@ -331,18 +336,7 @@
 
 	$effect(() => {
 		const focusGroup = focusContainerId ? containerGroups.get(focusContainerId) : undefined;
-		// Ended before the hull's own last day: a cabinet that has ended does not make all its
-		// bewindspersonen former ones, only those who left before it did.
-		const zetels = [...(focusGroup?.periods ?? [])];
-		const eind = zetels.some(([, p]) => p.to === null)
-			? vandaag()
-			: (zetels
-					.map(([, p]) => p.to as string)
-					.sort()
-					.at(-1) ?? '');
-		latestGewezen = new Map(
-			zetels.filter(([, p]) => p.to !== null && p.to < eind).map(([id, p]) => [id, p.to as string])
-		);
+		latestGewezen = formerMembers(focusGroup, vandaag());
 		redrawInFrame();
 	});
 
