@@ -57,6 +57,10 @@ describe('the Netwerk button', () => {
 		);
 		expect(networkHref(at('/explore?netwerk=articles/a'))).toBe('/explore?focus=articles%2Fa');
 		expect(networkHref(at('/explore'))).toBe('/');
+		// The netwerk the reader composed stands in the address; a bron alone stays alone.
+		expect(networkHref(at(article), 'netwerk=articles%2Fa&uit=members%2Fx')).toBe(
+			`${article}?mode=netwerk&netwerk=articles%2Fa&uit=members%2Fx`
+		);
 		expect(networkHref(at('/'))).toBe('/explore');
 		expect(networkHref(at('/explore?mode=index&kind=instruments'))).toBe('/explore');
 		expect(networkHref(at('/actueel'))).toBe('/explore');

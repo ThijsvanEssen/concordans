@@ -1,7 +1,7 @@
 // The Netwerk button of the top bar (besluit 36, 39): a tool, not a soort bron. On a bron it
-// opens the werkplek with that bron as its beginning, or the netwerk kept in this browser with
-// the bron as a proposal beside it (the page decides, it knows the bron's id); anywhere else
-// it opens the werkplek, which begins with choosing a bron.
+// opens the werkplek with that bron as its beginning, or with the netwerk the reader composed
+// (kept in this browser) written into the address beside it; anywhere else it opens the
+// werkplek, which begins with choosing a bron.
 import { exploreUrl } from '$lib/bron/address';
 import { hasFocus, modeOf, NETWORK_MODE } from '$lib/bron/href';
 import { parseNetwerk } from '$lib/selection/netwerk';
@@ -29,11 +29,15 @@ function textHref(url: URL): string {
  * of a bron it opens the werkplek with it; from the werkplek it goes back to the text, and the
  * netwerk kept in this browser opens again with it.
  */
-export function networkHref(url: URL): string {
+export function networkHref(url: URL, kept: string | null = null): string {
 	if (onNetwork(url)) return textHref(url);
 	if (!hasFocus(url)) return '/explore';
 	const to = new URL(url);
 	to.searchParams.set('mode', NETWORK_MODE);
+	// The netwerk the reader composed stands in the address the button leads to: a shared link
+	// to a bron alone draws the bron alone.
+	if (!parseNetwerk(to.searchParams).ids.length)
+		for (const [name, value] of new URLSearchParams(kept ?? '')) to.searchParams.set(name, value);
 	for (const name of ['tabel', 'toon', 'naast', 'paneel']) to.searchParams.delete(name);
 	return `${to.pathname}${to.search}${to.hash}`;
 }

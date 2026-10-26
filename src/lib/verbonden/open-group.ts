@@ -7,3 +7,17 @@ export const groupRequest = writable<{ collection: Collection; at: number } | nu
 
 export const openGroup = (collection: Collection) =>
 	groupRequest.set({ collection, at: Date.now() });
+
+/**
+ * The group of `groups` that lists the most bronnen of `collection`, or null where none lists
+ * one. The one answer for both ends: the canvas offers "Bekijk in Verbonden" only where
+ * Verbonden has a group to open.
+ */
+export function groupFor<G extends { rows: readonly { ref: { collection: string } }[] }>(
+	groups: readonly G[],
+	collection: string
+): G | null {
+	const count = (g: G) => g.rows.filter((row) => row.ref.collection === collection).length;
+	const best = [...groups].sort((a, b) => count(b) - count(a))[0];
+	return best && count(best) > 0 ? best : null;
+}

@@ -17,6 +17,7 @@ import { isContainerKind } from '$lib/graph/container-membership';
 import type { GraphNode, DrawClass } from '$lib/graph/types';
 import { filterParams, parseFilter } from '$lib/verbonden/filter';
 import { parseNodeId } from '$lib/vocabulary';
+import { offOf } from '$lib/selection/off';
 
 /** The steps from the focus the canvas can show, and what an unreadable ?diepte means. */
 export const DEPTH = { min: 1, max: 3, fallback: 2 } as const;
@@ -41,12 +42,15 @@ export function depthFor(
 	return explicit ?? (isContainerKind(drawClass) ? 1 : DEPTH.fallback);
 }
 
-/** The netwerk's own params, so that selecting a bron does not compose it again. */
+/**
+ * The netwerk's own params, so that selecting a bron does not compose it again. Of ?uit only
+ * the chosen bronnen: a relation switched off in the legend does not compose it again.
+ */
 export function netwerkQuery(params: URLSearchParams): string {
 	const own = new URLSearchParams();
 	for (const name of ['netwerk', 'uit', 'tussen', 'omgeving']) {
-		const value = params.get(name);
-		if (value !== null) own.set(name, value);
+		const value = name === 'uit' ? offOf(params.get(name)).chosen.join(',') : params.get(name);
+		if (value !== null && (value || name !== 'uit')) own.set(name, value);
 	}
 	return own.toString();
 }

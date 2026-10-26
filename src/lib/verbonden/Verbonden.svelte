@@ -35,7 +35,7 @@
 	import JudgmentOrderLine from './JudgmentOrderLine.svelte';
 	import VerbondenRow from './VerbondenRow.svelte';
 	import { VERBONDEN_BUCKET } from '$lib/api/records';
-	import { groupRequest } from './open-group';
+	import { groupFor, groupRequest } from './open-group';
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import NetworkSketch from './NetworkSketch.svelte';
 	import SchetsKaart from './SchetsKaart.svelte';
@@ -117,11 +117,9 @@
 	$effect(() =>
 		groupRequest.subscribe((r) => {
 			if (!r) return;
-			const count = (g: (typeof shown)[number]) =>
-				g.rows.filter((row) => row.ref.collection === r.collection).length;
-			const best = [...shown].sort((a, b) => count(b) - count(a))[0];
 			groupRequest.set(null);
-			if (!best || count(best) === 0) return;
+			const best = groupFor(shown, r.collection);
+			if (!best) return;
 			showGroup(best.id);
 		})
 	);

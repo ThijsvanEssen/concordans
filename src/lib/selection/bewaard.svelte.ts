@@ -17,7 +17,7 @@ export function leesBewaard(): void {
 }
 
 /** The kept netwerk as its query (`netwerk=…&uit=…`), or null. */
-export const bewaardNetwerk = (): string | null => kept.query;
+export const keptNetwerk = (): string | null => kept.query;
 
 /**
  * Keep the netwerk of `query`; null forgets it. Untracked: an effect that keeps the netwerk of

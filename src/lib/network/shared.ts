@@ -74,6 +74,12 @@ const nameOf = (n: Neighbor) => naamVanId(n.id, n.display_name);
 /** A verbinding between two chosen bronnen themselves: `Dilan Yeşilgöz lid van VVD`. */
 export type DirectLink = { from: string; to: string; relation: Relation };
 
+/**
+ * How far Verband looks: a verbinding between two chosen bronnen, or one bron both are tied to
+ * (/api/nodes/shared). The paths of Omgeving go further (four steps); Verband does not.
+ */
+export const SHARED_STEPS = 2;
+
 export type VerbandModel = {
 	/** What chosen bronnen share, each once with every chosen bron it hangs at. */
 	rows: SharedRow[];
