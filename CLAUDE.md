@@ -1,63 +1,23 @@
-# Schrijfstijl voor Concordans-documentatie
+# Concordans (lawgraph-explorer)
 
-## Platform en doelgroep
+@~/Development/lawgraph/docs/claude/werkruimte.md
 
-Concordans is het artikel, en de uitspraken en Kamerstukken die ernaar verwijzen: de relaties tussen wetten, artikelen en uitspraken die officiële bronnen verbergen. De documentatie bedient juridische wetenschappers, studenten, onderzoekers en journalisten. Ze zijn niet op zoek naar uitleg van vanzelfsprekende dingen. Ze willen weten wat er is en hoe het werkt.
+SvelteKit + TypeScript, API-client uit OpenAPI (`openapi-fetch`). Uitleg: `docs/README.md`, `docs/architecture.md`, `docs/gotchas.md`, `docs/api-contract.md`.
 
-## Toon en stem
+## Commando's
 
-- Precies, beknopt en zakelijk — geen warme of aanmoedigende toon
-- Schrijf alsof je een instrument beschrijft, niet een dienst verkoopt
-- Technisch jargon alleen als er geen juridisch equivalent bestaat; kies anders altijd de juridische term
-- Geen enthousiasme, geen aanmoediging, geen retorische vragen
+- `npm run dev`; contract: `npm run sync:api` (na een lawgraph-wijziging), `npm run check:api`.
+- Vóór een merge: `npm run gates` (lichte gates, daarna de zware onder een machine-lock). Lokaal liever `npm run lint:changed` en `npm run test:related`; volledige suites in CI.
+- Push naar `main` = deploy van de site. Vóór de push: `git diff --stat origin/main` en controleren dat geen ander werk teruggedraaid wordt; daarna een `ux-toets`.
 
-## Aanspreekvorm
+## Huisregels
 
-Schrijf onpersoonlijk waar mogelijk. Vermijd "u" en "je". Gebruik de actieve vorm zonder subject: "Klik op het artikel", niet "U klikt op het artikel" of "Je klikt op het artikel".
-
-## Koppen en labels
-
-- Beschrijf de inhoud, niet de leeservaring
-- Geen tijdsindicaties ("leest u in vijf minuten"), geen beloofde uitkomsten
-- Fout: "Een korte rondleiding voor wie nog niet eerder met Concordans heeft gewerkt"
-- Goed: "Eerste gebruik" of "Basisnavigatie"
-
-## Proza
-
-- Één gedachte per zin
-- Geen overbodige inleiding die de zin herhaalt of aankondigt
-- Fout: "Kopieer hem om iemand precies dezelfde graaf met dezelfde instellingen te tonen."
-- Goed: "Kopieer de link om een graaf met instellingen te delen."
-- Geen uitleggende haakjes bij correcte termen; als een term correct is, gebruik hem
-
-## Verboden patronen
-
-Gebruik deze zinnen, constructies en woorden nooit:
-
-- "Leest u", "weet u", "klikt u" — elke "u"-vorm
-- "Een korte...", "even...", "snel..." — bagatelliserende voorzetsels
-- "Hiermee kunt u...", "zo kunt u..." — overbodige omschrijvingen van wat een actie doet
-- "Het is belangrijk om te weten dat...", "Let op:..." tenzij het echt kritiek is
-- "Eenvoudig", "intuïtief", "gebruiksvriendelijk" — zeg wat het doet, niet hoe makkelijk het is
-- Slogans, marketingtaal, of zinnen die beter in een persbericht thuishoren
-- Em-dashes (—) of streepjes als parenthetisch koppelteken — een klassieke AI-tic. Gebruik een punt, komma, dubbele punt of haakjes
-
-## Woordkeuze
-
-- Gebruik juridische taal, niet wiskundige of technische termen
-- Nederlands tenzij een term geen goede vertaling heeft (dan de Engelse term onvertaald)
-- Korte woorden boven lange als de betekenis gelijk is
-
-### Vaste terminologie
-
-| Vermijd               | Gebruik                                              |
-| --------------------- | ---------------------------------------------------- |
-| knoop / node          | bron                                                 |
-| relatie / edge / link | verbinding                                           |
-| graaf                 | netwerk (of: het geheel van bronnen en verbindingen) |
-
-## Structuur
-
-- Koppen zijn navigatie, geen marketing
-- Gebruik opsommingen alleen als er werkelijk meerdere gelijkwaardige elementen zijn — niet om één gedachte op te splitsen
-- Proza en labels wisselen af waar de context dat vraagt; dwing geen format af
+- UI- en doc-tekst: `docs/schrijfstijl.md` (lees vóór je tekst schrijft). Woorden: `docs/woorden.md`; typografie: `docs/typografie.md`.
+- Toon van een rechtsgeleerde: juridische termen (dossier, debat, bijlage bij), geen monospace voor wetsnummering, elke indeling één keer getoond.
+- Geen "·" als scheidingsteken (komma). Rood in rust alleen voor "nee" en fouten.
+- De UI legt zichzelf uit: labels, placeholders en markeringen, geen uitlegalinea's of tellingen in panelen.
+- Eén klik opent een rij of item op zijn plaats; de bron is één stap verder. Lees op de plek zelf (definities, aangehaalde tekst).
+- Gelijke pagina's, gelijke ervaring: een verschil tussen gelijksoortige pagina's los je op in één gedeeld component + guard-test.
+- Aangeraakte code gaat naar tokens en de 4px-schaal. Eerste weergave op de goedkoopste call; laad zo lui mogelijk.
+- Eerlijk over gaten: één volledigheidssignaal uit de API, één marker in de UI.
+- Frontend-wijziging: eerst een ontwerp (design-artifact) om op te reageren, dan bouwen. Telefoon eerst.
