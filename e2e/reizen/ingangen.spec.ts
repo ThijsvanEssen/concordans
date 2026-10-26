@@ -4,7 +4,7 @@
 import { expect, test } from '../support/test';
 
 test('an address of the old network is carried over, in place', async ({ page }) => {
-	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=graph&diepte=3');
+	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=graph');
 	await expect(page).toHaveURL(/\/artikel\/6:162\?mode=netwerk$/);
 	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=text');
 	await expect(page).toHaveURL(/\/artikel\/6:162$/);
