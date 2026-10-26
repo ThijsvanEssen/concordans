@@ -1,12 +1,11 @@
 <script lang="ts">
-	import BronLink from '$lib/bron/BronLink.svelte';
+	import MinistryLink from '$lib/bron/MinistryLink.svelte';
 	import { openHref } from '$lib/bron/href';
 	import Waarde from '$lib/components/ui/Waarde.svelte';
 	import IndexRow from '../IndexRow.svelte';
 	import type { Ministry } from '../government';
 	import { isCurrent } from '../lists/ministries';
 	import type { ViewProps } from '../lists/list';
-	import { ministryName } from '../ministries.svelte';
 
 	let { ctx }: ViewProps<Ministry, object> = $props();
 	const rows = $derived(ctx.rows ?? []);
@@ -33,11 +32,7 @@
 			{/snippet}
 			{#snippet body()}
 				{#if m.successor}
-					<span class="row-sub"
-						>Opvolger <BronLink ref={`ministries/${m.successor}`}
-							>{ministryName(m.successor)}</BronLink
-						></span
-					>
+					<span class="row-sub">Opvolger <MinistryLink ministry={m.successor} /></span>
 				{/if}
 			{/snippet}
 			{#snippet aside()}

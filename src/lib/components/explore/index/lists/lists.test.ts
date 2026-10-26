@@ -72,6 +72,7 @@ describe('the register of Bronnen', () => {
 			factions: 'Actief',
 			committees: 'Actief',
 			cabinets: 'Periode',
+			ministries: null,
 			ministers: 'In functie',
 			commitments: 'Toegezegd'
 		});
