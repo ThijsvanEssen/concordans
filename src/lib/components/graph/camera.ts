@@ -1,30 +1,28 @@
 // The camera of the netwerk, kept in this module: GraphView is unmounted when the mode leaves
-// Netwerk and mounted again on return, and the view should not re-fit then. The canvas is
-// narrower beside a reader (`compact`), so each width keeps its own camera.
+// Netwerk and mounted again on return, and the view should not re-fit then.
 import { onForget } from '$lib/util/forget';
 
 type Camera = { x: number; y: number; ratio: number };
-type CameraWidth = 'full' | 'compact';
 
-const cameras = new Map<CameraWidth, Camera>();
-const drawn = new Map<CameraWidth, ReadonlySet<string>>();
+let camera: Camera | null = null;
+let drawn: ReadonlySet<string> | undefined;
 onForget(() => {
-	cameras.clear();
-	drawn.clear();
+	camera = null;
+	drawn = undefined;
 });
 
 /**
- * The canvas of this width now draws these bronnen. True when the view keeps its camera:
- * the bronnen drawn before are all still there. Otherwise the kept camera is dropped.
+ * The canvas now draws these bronnen. True when the view keeps its camera: the bronnen drawn
+ * before are all still there. Otherwise the kept camera is dropped.
  */
-export function keepsCamera(width: CameraWidth, ids: ReadonlySet<string>): boolean {
-	const before = drawn.get(width);
-	drawn.set(width, ids);
+export function keepsCamera(ids: ReadonlySet<string>): boolean {
+	const before = drawn;
+	drawn = ids;
 	if (before && before.size > 0 && [...before].every((id) => ids.has(id))) return true;
-	cameras.delete(width);
+	camera = null;
 	return false;
 }
 
-export const savedCamera = (width: CameraWidth): Camera | null => cameras.get(width) ?? null;
+export const savedCamera = (): Camera | null => camera;
 
-export const saveCamera = (width: CameraWidth, camera: Camera) => void cameras.set(width, camera);
+export const saveCamera = (next: Camera) => void (camera = next);

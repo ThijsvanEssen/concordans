@@ -886,7 +886,7 @@
 
 	function drawNodes(nodes: GraphNode[]) {
 		const newIds = new Set(nodes.map((n) => n.id));
-		skipNextFit = keepsCamera('full', newIds);
+		skipNextFit = keepsCamera(newIds);
 
 		let changed = false;
 		const addedThisSync = new Set<string>();
@@ -1435,7 +1435,7 @@
 					onReady={(api) => {
 						canvas = api;
 						canvas.refresh();
-						const camera = skipNextFit && savedCamera('full');
+						const camera = skipNextFit && savedCamera();
 						if (camera) {
 							canvas.restoreCamera(camera);
 							skipNextFit = false;
@@ -1444,7 +1444,7 @@
 						}
 					}}
 					onCameraChange={(state) => {
-						saveCamera('full', state);
+						saveCamera(state);
 					}}
 				/>
 

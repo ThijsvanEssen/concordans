@@ -859,7 +859,7 @@
 	$effect(() => {
 		const node = mode === 'index' ? null : selectedNode;
 		// In Tekst on a phone Verbonden stands under the text: it loads once it comes in view.
-		const panel = mode === 'read' && panelSeen ? 'verbonden' : mobilePanel;
+		const panel = mode === 'read' && panelSeen ? 'verbonden' : readTab;
 		const view = { phone: telefoon, table: tableMode, panel, canvasOnly: mode === 'graph' };
 		if (node && !verbondenInView(node.collection, view)) return;
 		source.load(node);
@@ -1634,10 +1634,8 @@
 	const shareCopier = createCopier();
 	const handleShareView = () => shareCopier.copy(page.url.toString(), 'share');
 
-	// On a phone Verbonden stands under the text; the key 3 brings it forward.
-	let mobilePanel = $state<Panel>('reader');
 	/** On a phone the tab of the read view: the text or Verbonden (A197-a, R3-L F4). */
-	let readTab = $state<'tekst' | 'verbonden'>('tekst');
+	let readTab = $state<Panel>('tekst');
 	$effect(() => {
 		void selectedNode?.id;
 		// A link that names the bronnen (?bronnen=, the start page's) comes for Verbonden (R3-I).
@@ -1729,12 +1727,12 @@
 			);
 			return;
 		}
-		// 1 and 3: the layers of a bron, Tekst and Verbonden (Thijs, 10 Oct); 3 puts the focus on
-		// Verbonden's first row, for J and K.
+		// 1 and 2: the layers of a bron, Tekst and Verbonden; 2 puts the focus on Verbonden's
+		// first row, for J and K.
 		const panel = panelOfKey(e.key);
 		if (panel && selectedNode && mode === 'read') {
 			e.preventDefault();
-			kiesPaneel(panel);
+			readTab = panel;
 			if (panel === 'verbonden')
 				requestAnimationFrame(() =>
 					document.querySelector<HTMLElement>('.verbonden a.row__title')?.focus()
@@ -1751,8 +1749,6 @@
 		e.preventDefault();
 		setReading(readAction === 'read');
 	}
-
-	const kiesPaneel = (id: Panel) => (mobilePanel = id);
 
 	/** What the key L does: read the bron, or open the werkplek with it. */
 	const readAction = $derived<'read' | 'network' | null>(
