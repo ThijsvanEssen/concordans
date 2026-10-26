@@ -16,6 +16,7 @@
 	} from './verbinding';
 	import { passageOf } from './rows';
 	import Aanhaling from './Aanhaling.svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import ConfidenceDot from './ConfidenceDot.svelte';
 	import { zetMarkering } from '$lib/bron/markering.svelte';
 
@@ -79,9 +80,7 @@
 		<h2 class="card__title">Verbinding</h2>
 		<span class="card__kind">{v.kind}</span>
 		<span class="card__space"></span>
-		<button type="button" class="btn is-text card__close" aria-label="Sluiten" onclick={onClose}
-			>×</button
-		>
+		<IconButton label="Sluiten" onclick={onClose}>×</IconButton>
 	</div>
 
 	<div class="ends">
@@ -185,11 +184,6 @@
 	}
 	.card__space {
 		flex: 1;
-	}
-	.card__close {
-		font-size: var(--t-body-2);
-		line-height: 1;
-		padding: 0 var(--s-1);
 	}
 	.ends {
 		display: grid;

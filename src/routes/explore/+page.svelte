@@ -2053,12 +2053,11 @@
 				<div class="index-rol"><IndexOverzicht /></div>
 			{:else if indexChunk.component}{@const IndexViewC = indexChunk.component}<IndexViewC
 					category={indexKind}
-				/>{:else if indexChunk.error}{@render chunkMissing(indexChunk, 'De lijst')}{:else}<p
-					class="explore-empty stil"
-					role="status"
+				/>{:else if indexChunk.error}{@render chunkMissing(indexChunk, 'De lijst')}{:else}<div
+					class="explore-empty"
 				>
-					Laden…
-				</p>{/if}
+					<LoadState state={{ status: 'loading' }} what="De lijst" />
+				</div>{/if}
 		{:else if nietGevonden}
 			<NietGevonden title="Bron niet gevonden" kop={false}>
 				<p>{padNotHeld ? `${notHeld(nameOfPad(pad!, lawNameOf))}.` : focusNotHeld}</p>
@@ -2243,12 +2242,11 @@
 						onRow={openRowCard}
 						backHref={readHref}
 					/>
-				{:else if connectionsTable.error}{@render chunkMissing(connectionsTable)}{:else}<p
-						class="explore-empty stil"
-						role="status"
+				{:else if connectionsTable.error}{@render chunkMissing(connectionsTable)}{:else}<div
+						class="explore-empty"
 					>
-						Laden…
-					</p>{/if}
+						<LoadState state={{ status: 'loading' }} what="De tabel" />
+					</div>{/if}
 				{#if card}
 					<div class="explore-table__card">
 						<VerbindingCard

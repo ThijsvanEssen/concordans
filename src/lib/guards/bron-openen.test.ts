@@ -19,15 +19,17 @@ describe('opening a bron', () => {
 		// A row whose title is a link to the bron (Actueel, the table) takes the click through
 		// terPlekke ($lib/actions/klik), so a plain click opens the row and a cmd-click goes to
 		// the bron. A row of Verbonden has no panel of actions (Thijs, 10 Oct): its title and the
-		// row itself go to the bron in Netwerk; only a Kamerstuk opens in place, on its core text
-		// (RijInhoud, as in Actueel and Bronnen; pakket C, 14 Oct).
+		// row itself open it in place, every kind of bron (principe 5, A255): a Kamerstuk on its
+		// core text (RijInhoud, as in Actueel and Bronnen), any other on its glance
+		// (RowGlance); the bron is one step further.
 		const rows = BRONNEN.filter(({ text }) =>
 			/class="(row-title|row__title)"[\s\S]{0,240}(href=|\{href\})/.test(text)
 		);
 		expect(rows.length).toBeGreaterThan(0);
 		expect(rows.filter(({ text }) => !text.includes('terPlekke')).map((s) => s.path)).toEqual([]);
 		const verbonden = rows.find(({ path }) => path.endsWith('verbonden/VerbondenRow.svelte'))!;
-		expect(verbonden.text).toMatch(/opentTerPlekke && terPlekke\(/);
+		expect(verbonden.text).toMatch(/terPlekke\(e, onToggle\)/);
+		expect(verbonden.text).not.toContain('goto(');
 	});
 
 	it('opens a row of a list on the bron’s content, with Bewaar on the row (Thijs, 10 Oct)', () => {
