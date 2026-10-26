@@ -113,7 +113,7 @@ describe('the touch target', () => {
 		);
 		// The tab bar of a phone is 64 px high and its items fill it.
 		expect(read('lib/styles/tokens.css')).toMatch(
-			/--tabbar-h: calc\(64px \+ var\(--safe-bottom\)\)/
+			/--tabbar-h: calc\(var\(--balk-h\) \+ var\(--safe-bottom\)\)/
 		);
 		// ... above the home bar of an installed app, with the viewport covering the screen.
 		expect(read('lib/components/layout/TabBar.svelte')).toContain('var(--safe-bottom)');

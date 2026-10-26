@@ -90,6 +90,6 @@ describe('the breakpoints', () => {
 	it('keeps the sticky facet column under the top bar', () => {
 		const frame = readFileSync(join(ROOT, 'lib/styles/frame.css'), 'utf8');
 		const facets = frame.match(/\.blad__facetten\s*\{[^}]*\}/)?.[0] ?? '';
-		expect(facets).toMatch(/top:\s*calc\(var\(--topbar-h\)/);
+		expect(facets).toMatch(/top:\s*calc\(var\(--balk-h\)/);
 	});
 });

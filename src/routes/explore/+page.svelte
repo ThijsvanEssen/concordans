@@ -2361,8 +2361,8 @@
 	.explore-shell {
 		display: flex;
 		flex-direction: column;
-		height: calc(100vh - var(--topbar-h) - var(--tabbar-h));
-		height: calc(100dvh - var(--topbar-h) - var(--tabbar-h));
+		height: calc(100vh - var(--balk-h) - var(--tabbar-h));
+		height: calc(100dvh - var(--balk-h) - var(--tabbar-h));
 		overflow: hidden;
 	}
 

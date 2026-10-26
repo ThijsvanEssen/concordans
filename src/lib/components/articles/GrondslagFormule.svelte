@@ -173,7 +173,7 @@
 		text-decoration: underline;
 		text-decoration-style: dotted;
 		text-decoration-color: var(--ink-3);
-		text-underline-offset: var(--underline-offset);
+		text-underline-offset: var(--onderstreping);
 	}
 	.grondslag:hover,
 	.grondslag:focus-visible,
@@ -211,7 +211,7 @@
 	.kaart__regeling :global(a.kaart__naam:hover),
 	.kaart__artikelen :global(a.kaart__artikel:hover) {
 		text-decoration-line: underline;
-		text-underline-offset: var(--underline-offset);
+		text-underline-offset: var(--onderstreping);
 	}
 	.kaart__regel,
 	.kaart__artikelen {

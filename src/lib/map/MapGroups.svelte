@@ -245,7 +245,7 @@
 	/* A law, dossier or Rechtspraak over its rows, as a day over Actueel's; its ⋯ at the right. */
 	.groep-kop {
 		/* A jump from the column of groups lands under the sticky bar. */
-		scroll-margin-top: calc(var(--topbar-h) + var(--s-4));
+		scroll-margin-top: calc(var(--balk-h) + var(--s-4));
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -341,7 +341,7 @@
 			break-inside: avoid;
 		}
 		.rijen :global(.row) {
-			grid-template-columns: var(--row-lead) minmax(0, 1fr);
+			grid-template-columns: var(--voorkolom) minmax(0, 1fr);
 			background: none;
 		}
 		.rijen :global(.row-aside) {

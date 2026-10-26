@@ -36,7 +36,7 @@ describe('the server HTML before the app', () => {
 	});
 
 	it('takes the frame from the tokens: the top bar, the width of a page and of its text', () => {
-		for (const name of ['--topbar-h', '--blad-max', '--blad-tekst'])
+		for (const name of ['--balk-h', '--blad-max', '--blad-tekst'])
 			expect(style.replace(vooraf, '')).toContain(`var(${name})`);
 		expect(style.replace(vooraf, '')).not.toMatch(/\b(60|720|1440)px\b/);
 	});

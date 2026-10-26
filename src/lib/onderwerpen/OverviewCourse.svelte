@@ -107,18 +107,31 @@
 
 	@media (max-width: 640px) {
 		/* The Strekking on a phone: its name over it, its options in words only and a step
-		   closer, so the five fit the width. */
+		   closer, so the five fit the width of the page. */
+		.schakels,
+		.as {
+			width: 100%;
+		}
 		.as {
 			flex-direction: column;
-			align-items: flex-start;
+			align-items: stretch;
 			gap: var(--s-1);
 		}
 		.as :global(.st) {
 			display: none;
 		}
+		/* The width of the page, in the desktop letter as Keuze vol: Niet beoordeeld on two
+		   lines. */
+		.as :global(.keuze) {
+			display: flex;
+		}
 		.as :global(.keuze button) {
+			flex: 1 1 auto;
+			justify-content: center;
 			padding: 0 var(--s-1);
-			white-space: nowrap;
+			font-size: var(--t-ui);
+			line-height: 1.15;
+			text-align: center;
 		}
 	}
 </style>

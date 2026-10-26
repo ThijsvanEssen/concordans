@@ -19,14 +19,14 @@
 			{#if p.patroon === 'arcering'}
 				<path
 					d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2"
-					stroke="#fff"
+					stroke="var(--paper)"
 					stroke-opacity="0.75"
 					stroke-width="1"
 				/>
 			{:else if p.patroon === 'stippen'}
-				<circle cx="2" cy="2" r="0.9" fill="#fff" fill-opacity="0.85" />
+				<circle cx="2" cy="2" r="0.9" fill="var(--paper)" fill-opacity="0.85" />
 			{:else}
-				<path d="M0,2 h4" stroke="#fff" stroke-opacity="0.75" stroke-width="1" />
+				<path d="M0,2 h4" stroke="var(--paper)" stroke-opacity="0.75" stroke-width="1" />
 			{/if}
 		</pattern>
 	{/each}

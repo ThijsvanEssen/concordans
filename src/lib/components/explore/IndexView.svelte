@@ -862,7 +862,7 @@
 	/* The heads of the columns, over the rows in the same grid. */
 	.list-head {
 		display: grid;
-		grid-template-columns: var(--row-lead) minmax(0, 1fr) var(--row-aside);
+		grid-template-columns: var(--voorkolom) minmax(0, 1fr) var(--row-aside);
 		gap: var(--s-5);
 		padding: 0 var(--s-2) var(--s-1);
 		border-bottom: 1px solid var(--rule-strong);
@@ -904,7 +904,7 @@
 	/* ── List and row ────────────────────────────────────────────────── */
 	.skelet-rij {
 		display: grid;
-		grid-template-columns: var(--row-lead) minmax(0, 1fr);
+		grid-template-columns: var(--voorkolom) minmax(0, 1fr);
 		gap: var(--s-5);
 		align-items: center;
 		height: var(--s-8);

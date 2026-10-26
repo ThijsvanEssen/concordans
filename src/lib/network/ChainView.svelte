@@ -123,7 +123,9 @@
 					x: at.length ? at.reduce((a, b) => a + b, 0) / at.length : left + (j + 0.5) * gap
 				};
 			});
-			wish.sort((a, b) => a.x - b.x);
+			// The articles of one wet stay together (their omhulling); within it, by place.
+			const rank = (k: ChainNode) => layer.nodes.findIndex((q) => q.home === k.home);
+			wish.sort((a, b) => rank(a.k) - rank(b.k) || a.x - b.x);
 			// Apart by a gap from the left, then back within the right edge.
 			const xs: number[] = [];
 			wish.forEach((w, j) => xs.push(Math.max(w.x, j ? xs[j - 1] + gap : left + gap / 2)));
@@ -132,6 +134,28 @@
 			wish.forEach((w, j) => m.set(w.k.id, { x: xs[j], y: TOP + i * ROW + 30 }));
 		});
 		return m;
+	});
+	/** The articles of each wet in an omhulling, when the layer holds those of more than one. */
+	const hulls = $derived.by(() => {
+		const out: { id: string; label: string; x: number; y: number; w: number }[] = [];
+		const row = shown.findIndex((l) => l.id === 'article');
+		const nodes = row < 0 ? [] : shown[row].nodes;
+		const homes = [...new Set(nodes.map((k) => k.home))];
+		if (homes.length < 2) return out;
+		for (const h of homes) {
+			const xs = nodes.filter((k) => k.home === h).flatMap((k) => place.get(k.id)?.x ?? []);
+			const wet = shown.flatMap((l) => l.nodes).find((k) => k.id === h);
+			if (!xs.length || !wet) continue;
+			const x = Math.min(...xs) - 30;
+			out.push({
+				id: h ?? '',
+				label: wet.instrument?.abbreviation ?? wet.short,
+				x,
+				y: TOP + row * ROW - 4,
+				w: Math.max(...xs) + 30 - x
+			});
+		}
+		return out;
 	});
 	const lines = $derived(
 		shown.flatMap((l) =>
@@ -301,6 +325,10 @@
 				</g>
 			{/if}
 		{/each}
+		{#each hulls as h (h.id)}
+			<rect class="hull" x={h.x} y={h.y} width={h.w} height="84" rx="22" />
+			<text class="hull-label" x={h.x + 14} y={h.y + 4}>{h.label}</text>
+		{/each}
 		{#each lines as l (l.id)}
 			<line
 				class="line"
@@ -413,6 +441,18 @@
 </div>
 
 <style>
+	.hull {
+		fill: color-mix(in srgb, var(--ink) 5%, transparent);
+		stroke: var(--rule-strong);
+		stroke-width: 1.6;
+	}
+	.hull-label {
+		font: 600 11px var(--sans);
+		fill: var(--ink-3);
+		paint-order: stroke;
+		stroke: var(--paper);
+		stroke-width: 4px;
+	}
 	.chain {
 		position: relative;
 		flex: 1;

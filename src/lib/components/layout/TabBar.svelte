@@ -208,7 +208,7 @@
 			right: 0;
 			bottom: var(--tabbar-h);
 			z-index: var(--z-float);
-			max-height: calc(100dvh - var(--tabbar-h) - var(--topbar-h));
+			max-height: calc(100dvh - var(--tabbar-h) - var(--balk-h));
 			overflow-y: auto;
 			padding: var(--s-3) var(--s-4) var(--s-4);
 			background: var(--paper);

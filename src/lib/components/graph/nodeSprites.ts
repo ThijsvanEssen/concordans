@@ -20,47 +20,39 @@ type Tokens = {
 	ink: string;
 	ink2: string;
 	ink3: string;
-	stuk: string;
-	dossier: string;
-	wijziging: string;
 	focus: string;
 	lijn: string;
 	pijl: string;
-	indigo: string;
 	moss: string;
 	plum: string;
 	slate: string;
-	groepWet: string;
-	groepFractie: string;
-	groepCommissie: string;
-	groepDossier: string;
+	soortWet: string;
+	soortParlement: string;
+	soortPersonen: string;
+	soortRechtspraak: string;
 	fontSerif: string;
 	fontLabel: string;
 };
 
 // The values of $lib/styles/tokens.css, for a page without them and for the tests (tokens.test).
 export const FALLBACK: Tokens = {
-	paper: '#faf8f3',
-	paper2: '#ece7dc',
-	rule: '#b9b1a0',
-	ruleStrong: '#6f6859',
-	ink: '#161513',
-	ink2: '#3b3834',
-	ink3: '#5d5951',
-	stuk: '#d3762d',
-	dossier: '#d3762d',
-	wijziging: '#00487c',
-	focus: '#161513',
+	paper: '#fdfdfb',
+	paper2: '#f0efeb',
+	rule: '#c6c4be',
+	ruleStrong: '#6a6965',
+	ink: '#1f2125',
+	ink2: '#3d4045',
+	ink3: '#5f6267',
+	focus: '#1f2125',
 	lijn: '3',
 	pijl: '3.2',
-	indigo: '#2f3e5e',
 	moss: '#456247',
 	plum: '#5e3a55',
 	slate: '#4b5563',
-	groepWet: '#00487c',
-	groepFractie: '#944078',
-	groepCommissie: '#438365',
-	groepDossier: '#d3762d',
+	soortWet: '#00487c',
+	soortParlement: '#d3762d',
+	soortPersonen: '#944078',
+	soortRechtspraak: '#438365',
 	fontSerif:
 		"'Newsreader', 'Newsreader Fallback', 'Newsreader Fallback Noto', 'Newsreader Fallback DejaVu', Georgia, serif",
 	fontLabel:
@@ -75,20 +67,16 @@ export const TOKEN_NAMES: Record<keyof Tokens, string> = {
 	ink: '--ink',
 	ink2: '--ink-2',
 	ink3: '--ink-3',
-	stuk: '--netwerk-stuk',
-	dossier: '--netwerk-dossier',
-	wijziging: '--netwerk-wijziging',
 	focus: '--netwerk-focus',
 	lijn: '--netwerk-lijn',
 	pijl: '--netwerk-pijl',
-	indigo: '--indigo',
 	moss: '--moss',
 	plum: '--plum',
 	slate: '--slate',
-	groepWet: '--groep-wet',
-	groepFractie: '--groep-fractie',
-	groepCommissie: '--groep-commissie',
-	groepDossier: '--groep-dossier',
+	soortWet: '--soort-wet',
+	soortParlement: '--soort-parlement',
+	soortPersonen: '--soort-personen',
+	soortRechtspraak: '--soort-rechtspraak',
 	fontSerif: '--font-serif',
 	// The labels on the canvas are text: the serif, since the sans is for controls only
 	// (docs/typografie.md).
@@ -136,7 +124,7 @@ export function edgeColorFor(relation: Relation, sourceClass: DrawClass): string
 		case 'AMENDS':
 		case 'INTRODUCES':
 		case 'REPEALS':
-			return t.wijziging;
+			return t.soortWet;
 		case 'APPEAL_OF':
 		case 'ADVISES_ON':
 		case 'ANSWERS':
@@ -190,18 +178,18 @@ export function dimColor(strength = 0.4): string {
 	return towardPaper(tokens().ink3, strength);
 }
 
-/** The colour of a group's hull (`--groep-*`): Wet, Fractie, Commissie, Dossier. */
+/** The colour of a group's hull (`--soort-*`): Wet, Fractie, Commissie, Dossier. */
 export function hullColorFor(kind: ContainerKind): string {
 	const t = tokens();
 	switch (kind) {
 		case 'instrument':
-			return t.groepWet;
+			return t.soortWet;
 		case 'faction':
-			return t.groepFractie;
+			return t.soortPersonen;
 		case 'committee':
-			return t.groepCommissie;
+			return t.soortParlement;
 		case 'dossier':
-			return t.groepDossier;
+			return t.soortParlement;
 	}
 }
 
@@ -245,7 +233,7 @@ const VORM_SCALE = 1.5;
 // Een sprite per vorm (vormen.ts), in inkt. Een bron buiten de gegevens is de
 // omtrek van zijn vorm; de gekozen bron krijgt een rand in inkt en een papieren halo.
 const vormCache: Map<string, string> = new Map();
-/** A colour token (`var(--groep-wet)`) as the canvas paints it. */
+/** A colour token (`var(--soort-wet)`) as the canvas paints it. */
 function kleurUit(waarde: string | undefined, fallback: string): string {
 	const naam = waarde?.match(/^var\((--[\w-]+)\)$/)?.[1];
 	if (!naam) return waarde || fallback;

@@ -340,7 +340,9 @@
 			display: inline-flex;
 		}
 		/* On a phone the Kamer stands on its own line, the width of the page; the row under it
-		   stays at the top while the list scrolls. */
+		   stays at the top while the list scrolls. Without a box of the bar's own, the row's
+		   sticky reaches as far as the box of the list, not the bar's 200 px. */
+		.filterbar,
 		.line {
 			display: contents;
 		}
@@ -348,14 +350,16 @@
 			display: block;
 			margin-bottom: var(--s-3);
 		}
-		/* The width of the page, every option as wide; a finger's 44 px, as Verfijnen. */
+		/* The width of the page, every option as wide and a step closer, so Tweede Kamer stays
+		   on one line (Keuze vol). */
 		.chamber :global(.keuze) {
 			display: flex;
-			height: var(--veld-h-raak);
 		}
 		.chamber :global(.keuze button) {
 			flex: 1 1 0;
+			min-width: max-content;
 			justify-content: center;
+			padding: 0 var(--s-1);
 		}
 		.row {
 			display: flex;
@@ -363,7 +367,7 @@
 			align-items: center;
 			gap: var(--s-2);
 			position: sticky;
-			top: var(--filterbar-top, var(--topbar-h));
+			top: var(--filterbar-top, var(--balk-h));
 			z-index: var(--z-raised);
 			margin: 0 calc(-1 * var(--s-4)) var(--s-3);
 			padding: var(--s-2) var(--s-4);

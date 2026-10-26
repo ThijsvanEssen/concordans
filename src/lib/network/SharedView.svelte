@@ -330,7 +330,7 @@
 	}
 	.group {
 		fill: var(--paper);
-		stroke: var(--indigo);
+		stroke: var(--soort-rechtspraak);
 		stroke-width: 2;
 		stroke-dasharray: 3 2;
 	}
@@ -423,7 +423,7 @@
 	}
 	.mark--round {
 		border-radius: var(--r-rond);
-		border: 2px dashed var(--indigo);
+		border: 2px dashed var(--soort-rechtspraak);
 	}
 	.ladder__how {
 		font-family: var(--font-serif);

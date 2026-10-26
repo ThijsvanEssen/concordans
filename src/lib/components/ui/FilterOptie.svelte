@@ -81,7 +81,7 @@
 	   small part centred on the label's first line, so a label of two lines moves nothing beside
 	   it (Thijs, 23 Oct: "checkboxes die niet zo goed uitlijnen"). */
 	.optie {
-		--regel: calc(var(--lh-snug) * 1em);
+		--optie-h: calc(var(--lh-snug) * 1em);
 		display: grid;
 		grid-template-columns: auto auto minmax(0, 1fr) auto;
 		align-items: start;
@@ -133,11 +133,11 @@
 	.kleur {
 		width: var(--s-3);
 		height: var(--s-3);
-		margin-top: calc((var(--regel) - var(--s-3)) / 2);
+		margin-top: calc((var(--optie-h) - var(--s-3)) / 2);
 		border-radius: 50%;
 	}
 	.optie > :global(.vinkje) {
-		margin-top: calc((var(--regel) - var(--vink)) / 2);
+		margin-top: calc((var(--optie-h) - var(--vink)) / 2);
 	}
 	.is-active .kleur {
 		box-shadow:
@@ -151,7 +151,7 @@
 		align-items: center;
 		justify-content: center;
 		min-width: var(--optie-voor, 0);
-		height: var(--regel);
+		height: var(--optie-h);
 		color: var(--ink);
 	}
 	/* Without a mark, the label takes its column: no empty track. */
@@ -172,7 +172,7 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: flex-end;
-		height: var(--regel);
+		height: var(--optie-h);
 		font-size: var(--t-micro);
 		font-weight: 400;
 		font-variant-numeric: tabular-nums;

@@ -118,7 +118,7 @@
 	/* Voor and Tegen in the margin column, the fracties at the text edge, wrapping there. */
 	.side {
 		display: grid;
-		grid-template-columns: minmax(var(--reader-term, var(--s-8)), max-content) minmax(0, 1fr);
+		grid-template-columns: minmax(var(--voorkolom), max-content) minmax(0, 1fr);
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
