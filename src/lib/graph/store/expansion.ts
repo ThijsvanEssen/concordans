@@ -11,7 +11,7 @@ import {
 	getNodeHull
 } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
-import { containerIdFor, containerKindOf } from '../container-membership';
+import { containerIdFor, containerKindOf, focusKindOf } from '../container-membership';
 import { foldVersions } from '../paths';
 import { ACTORS, withoutDetours } from '../neighborhood';
 import {
@@ -128,7 +128,7 @@ export function createExpansion(
 			const id = nodeId(node.collection, node.key);
 			const anchored = id === focalId || !!chosen?.has(id);
 			const graphNode =
-				anchored && containerKindOf(node.collection)
+				anchored && focusKindOf(node.collection)
 					? anchorContainer(node)
 					: id === focalId
 						? nodeToGraphNode(node)
@@ -142,8 +142,13 @@ export function createExpansion(
 		// recorded in its hull rather than drawn (a stuk that merely AMENDS or REFERS_TO a wet
 		// is not one of its articles and stays off), a wet a drawn stuk changes is drawn as its
 		// anchor, and on a path a step to a container ends at its anchor.
+		// The focus and the chosen bronnen are the hull they are drawn as then (`focusKindOf`).
+		const kindOf = (id: string, node: SubNode) =>
+			id === focalId || chosen?.has(id)
+				? focusKindOf(node.collection)
+				: containerKindOf(node.collection);
 		const endOf = (id: string, node: SubNode | undefined): End => ({
-			hull: node ? containerKindOf(node.collection) : null,
+			hull: node ? kindOf(id, node) : null,
 			drawn: drawn.has(id),
 			drawClass: nodes.get(id)?.drawClass ?? 'other',
 			ties: !!chosen && !chosen.has(id)
@@ -170,7 +175,7 @@ export function createExpansion(
 				const hull = ends[placement.hull]!;
 				const member = placement.hull === 'source' ? id.target : id.source;
 				containers.recordMember(
-					containerKindOf(hull.collection)!,
+					kindOf(e[placement.hull], hull)!,
 					containerIdFor(hull),
 					member,
 					relation,
@@ -374,7 +379,7 @@ export function createExpansion(
 			// out entirely. The earlier, per-bucket bron response has no such ceiling;
 			// keep what it already recorded as this container's members.
 			const focalNode = byId.get(response.focal_id);
-			const focalContainerKind = focalNode && containerKindOf(focalNode.collection);
+			const focalContainerKind = focalNode && focusKindOf(focalNode.collection);
 			if (focalContainerKind) {
 				const group = containers.get(containerIdFor(focalNode!) ?? '');
 				if (group) for (const id of group.members) keep.add(id);

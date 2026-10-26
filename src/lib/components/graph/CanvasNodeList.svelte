@@ -14,6 +14,7 @@
 	import { bronNaam, stemmingNaam } from '$lib/bron/naam';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { isClusterId } from '$lib/selection/cluster';
+	import { onderscheiden } from './canvas-naam';
 
 	let {
 		nodes,
@@ -69,7 +70,7 @@
 	 * law, UX test 10 Oct, #23); a BW article as cited (Artikel 6:162 BW); a vote as the
 	 * dossier's text names it.
 	 */
-	const nameOf = (n: GraphNode) =>
+	const volleNaam = (n: GraphNode) =>
 		isClusterId(n.id)
 			? n.label
 			: n.collection === 'decisions'
@@ -77,6 +78,9 @@
 				: n.collection === 'articles' && n.raw?.props?.instrument_abbreviation
 					? articleTitle(n.raw?.display_name ?? n.label, n.raw.props)
 					: bronNaam(n, $instrumentMetaStore);
+	/** Each its own name: eight judgments of one court on one day by their ECLI (UX review N4). */
+	const namen = $derived(onderscheiden(nodes, volleNaam));
+	const nameOf = (n: GraphNode) => namen.get(n.id) ?? volleNaam(n);
 
 	function focusAt(i: number) {
 		active = i;

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { NODE_TYPES, RELATIONS, type Collection } from '$lib/vocabulary';
 import { kolomVan } from '$lib/selection/kolommen';
 import { COLLECTION_ROLE, GROUP_LABEL, inLegend, isDrawn } from './collection-role';
-import { containerKindOf } from './container-membership';
+import { containerKindOf, focusKindOf } from './container-membership';
 import { drawClassOf } from './types';
 
 // The role of every collection, as the canvas has it: its kind, the hull it is drawn as
@@ -35,6 +35,13 @@ describe('the role of a collection', () => {
 			expect([drawClassOf(c), containerKindOf(c), kolomVan(c)], c).toEqual([kind, hull, column]);
 			expect(COLLECTION_ROLE[c].neighbour, c).toBe(neighbour);
 		}
+	});
+
+	it('draws a ministerie in focus as the hull of its bewindspersonen, as a neighbour as none (N5)', () => {
+		expect(focusKindOf('ministries')).toBe('committee');
+		expect(containerKindOf('ministries')).toBeNull();
+		for (const c of Object.keys(NODE_TYPES) as Collection[])
+			if (c !== 'ministries') expect(focusKindOf(c), c).toBe(containerKindOf(c));
 	});
 
 	it('names a hull as its collection is named', () => {

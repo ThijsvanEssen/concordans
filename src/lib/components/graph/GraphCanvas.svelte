@@ -35,11 +35,12 @@
 	import { EDGE_WEIGHT, type DrawClass } from '$lib/graph/types';
 	import {
 		hoverPlaats,
-		labelX,
 		lijnLabelPlaats,
-		plaatsLabel,
+		planLabels,
+		type LabelKandidaat,
 		type Rect as LabelRect
 	} from './label-place';
+	import { fitBox, inzetVan, ONDER_NAAM, type Inzet } from './fit-box';
 	import type { Collection, Relation } from '$lib/vocabulary';
 	import { relationLabel } from '$lib/verbonden/relation-words';
 	import type { FilterGroup, Rechter } from '$lib/verbonden/filter';
@@ -151,23 +152,23 @@
 
 	let wrap: HTMLDivElement;
 	let destroyed = false;
-	/** The names drawn in this frame, so the next one stands beside them, not over them. */
-	let labelsTaken: LabelRect[] = [];
 	/** Where each name stands in this frame: its hover stands there too, not beside it. */
 	let labelsAt = new Map<string, LabelRect>();
-	/** Where the focus's name stands this frame, reserved before the others (voorbehouden). */
 	/** A phone's width, where the canvas names only the bronnen that matter most. */
 	const narrow = typeof window === 'undefined' ? null : window.matchMedia('(max-width: 768px)');
-	let focusPlek: { x: number; y: number } | null = null;
+	/** The hulls' names as they stand: a bron's name keeps clear of them. Set before a frame. */
+	let hullNamen: LabelRect[] = [];
+	/** Where the names of this frame stand (`planLabels`), made at its first name. */
+	let labelPlan: Map<string, LabelRect> | null = null;
+	/** The signs of the bronnen in this frame: a hull's name keeps clear of them. */
+	let glyphRects: LabelRect[] = [];
+	const naamBreedte = new Map<string, number>();
 	/**
 	 * The places taken before the names are drawn (UX test 10 Oct, #25: names over one another):
-	 * the hulls' labels, a layer of their own drawn after sigma's names, as they stand, and the
-	 * focus's name, which always stands beside its bron. The other names find a free place
-	 * around them.
+	 * the hulls' labels, a layer of their own drawn after sigma's names, as they stand.
 	 */
 	function voorbehouden(): LabelRect[] {
 		const taken: LabelRect[] = [];
-		focusPlek = null;
 		if (!renderer || !wrap) return taken;
 		const box = wrap.getBoundingClientRect();
 		for (const el of wrap.querySelectorAll<HTMLElement>('.hull-label, .hull-link-label')) {
@@ -175,25 +176,56 @@
 			if (r.width > 0)
 				taken.push({ x: r.left - box.left, y: r.top - box.top, w: r.width, h: r.height });
 		}
-		if (focusedId && graph.hasNode(focusedId)) {
-			// The name as drawn, after the reducers (short on the canvas).
-			const data = renderer.getNodeDisplayData(focusedId);
-			const label = data?.label ?? '';
-			if (label && data && !data.hidden) {
-				const { x, y } = renderer.framedGraphToViewport(data);
-				const size = renderer.getSetting('labelSize');
-				labelMeasure ??= document.createElement('canvas').getContext('2d');
-				if (labelMeasure) {
-					labelMeasure.font = `${renderer.getSetting('labelWeight')} ${size}px ${renderer.getSetting('labelFont')}`;
-					const w = labelMeasure.measureText(label).width + 4;
-					const h = size + 4;
-					const grootte = renderer.scaleSize(data.size);
-					focusPlek = { x: labelX(x, grootte, w, box.width), y: y - h / 2 };
-					taken.push({ ...focusPlek, w, h });
-				}
-			}
-		}
 		return taken;
+	}
+	/** Higher goes first: the focus, the chosen bronnen, a cluster, the bronnen in the hover. */
+	const rangVan = (id: string, cluster: boolean) =>
+		latestPinnedIds.has(id)
+			? 4
+			: cluster
+				? 3
+				: id === hoveredId
+					? 2
+					: hoveredNeighbours.has(id)
+						? 1
+						: 0;
+	/**
+	 * The names of this frame and where they stand (UX review N4): every bron drawn, its sign;
+	 * every bron with a name, a candidate for `planLabels`, in the order of its rank.
+	 */
+	function maakLabelPlan(
+		view: SigmaType,
+		context: CanvasRenderingContext2D,
+		settings: { labelSize: number; labelRenderedSizeThreshold: number }
+	): Map<string, LabelRect> {
+		const kandidaten: LabelKandidaat[] = [];
+		const glyphs: LabelRect[] = [];
+		const h = settings.labelSize + 4;
+		graph.forEachNode((id) => {
+			const d = view.getNodeDisplayData(id);
+			if (!d || d.hidden) return;
+			const { x, y } = view.framedGraphToViewport(d);
+			const size = view.scaleSize(d.size);
+			glyphs.push({ x: x - size, y: y - size, w: 2 * size, h: 2 * size });
+			if (!d.label || (!d.forceLabel && size < settings.labelRenderedSizeThreshold)) return;
+			let w = naamBreedte.get(d.label);
+			if (w === undefined) naamBreedte.set(d.label, (w = context.measureText(d.label).width + 4));
+			const cluster = !!(d as { cluster?: boolean }).cluster;
+			kandidaten.push({
+				id,
+				x,
+				y,
+				size,
+				w,
+				h,
+				rang: rangVan(id, cluster),
+				altijd: id === focusedId
+			});
+		});
+		glyphRects = glyphs;
+		const dpr = window.devicePixelRatio || 1;
+		const room = { width: context.canvas.width / dpr, height: context.canvas.height / dpr };
+		return planLabels(kandidaten, room, hullNamen, glyphs);
 	}
 	/** Zoomed in past this camera ratio, a hull of a netwerk without a chosen bron is named. */
 	const HULL_LABEL_ZOOM = 0.6;
@@ -427,6 +459,29 @@
 	// STAGE_PADDING already holds the hull margin and 6 px of it.
 	const LABEL_ROOM = LABEL_GAP + LABEL_HEIGHT + EDGE_GAP - 6;
 
+	/** Between what stands over the canvas and the nearest bron's sign. */
+	const RAND_LUCHT = 16;
+	/**
+	 * What a fit keeps free on each side, beyond STAGE_PADDING: a hull's name above, a bron's
+	 * name below, and what stands over the canvas (`[data-over-doek]`: the zoom) with a little air.
+	 */
+	function vrijeRand(): Inzet {
+		const over = wrap?.parentElement
+			? [...wrap.parentElement.querySelectorAll<HTMLElement>(':scope > [data-over-doek]')].map(
+					(el) => el.getBoundingClientRect()
+				)
+			: [];
+		const boven = wrap ? inzetVan(wrap.getBoundingClientRect(), over) : null;
+		const voorbij = (px: number | undefined) =>
+			px ? Math.max(0, px - STAGE_PADDING + RAND_LUCHT) : 0;
+		return {
+			top: Math.max(LABEL_ROOM, voorbij(boven?.top)),
+			right: voorbij(boven?.right),
+			bottom: Math.max(ONDER_NAAM, voorbij(boven?.bottom)),
+			left: voorbij(boven?.left)
+		};
+	}
+
 	// The width of a hull label, to keep it on the canvas: its text in the pill's face
 	// (.hull-label), plus the padding and border.
 	let labelMeasure: CanvasRenderingContext2D | null = null;
@@ -465,7 +520,8 @@
 			hoveredNeighbours,
 			focusedId,
 			pinnedIds: latestPinnedIds,
-			focusName: focusedId ? labelsAt.get(focusedId) : undefined
+			focusName: focusedId ? labelsAt.get(focusedId) : undefined,
+			glyphs: glyphRects
 		});
 		hulls = layout.hulls;
 		hullLinks = layout.links;
@@ -580,10 +636,13 @@
 			);
 			if (!shown) next.add(id);
 		});
-		// A container's anchor that only repeats its hull: the bronnen it ties are in it.
+		// A container's anchor that only repeats its hull: the bronnen it ties are in it. Not the
+		// focus's own: it is the bron the canvas is about, in the list for the keyboard too (N5).
 		const anchors: string[] = [];
 		graph.forEachNode((id, attrs) => {
-			if (attrs.anchor && id !== focusedId) anchors.push(id);
+			if (!attrs.anchor || id === focusedId) return;
+			if (focusContainerId && nodeGroupIds.get(id)?.has(focusContainerId)) return;
+			anchors.push(id);
 		});
 		const leftOut = redundantAnchors({
 			anchors,
@@ -679,17 +738,18 @@
 			// One bron (the first of a netwerk) spans no box: centre it in one.
 			if (maxX - minX < 1) [minX, maxX] = [minX - 50, maxX + 50];
 			if (maxY - minY < 1) [minY, maxY] = [minY - 50, maxY + 50];
-			// The nodes fill the canvas up to STAGE_PADDING px, which holds a hull's own
-			// margin. Above, a hull's label pill needs LABEL_ROOM px more: the box grows
-			// upward (graph y points up) by the share of the height those pixels take.
-			const height = maxY - minY || 1;
-			const dims = renderer.getDimensions();
-			const usable = dims.height - 2 * STAGE_PADDING;
-			const top = usable > LABEL_ROOM * 2 ? (height * LABEL_ROOM) / (usable - LABEL_ROOM) : 0;
-			renderer.setCustomBBox({
-				x: [minX, maxX > minX ? maxX : minX + 1],
-				y: [minY, minY + height + top]
-			});
+			// The nodes fill the canvas up to STAGE_PADDING px, which holds a hull's own margin;
+			// each side keeps more free (fitBox): a hull's name pill above, a bron's name below the
+			// lowest bron, the zoom at the side (UX review N8).
+			renderer.setCustomBBox(
+				fitBox(
+					{ x: minX, y: minY },
+					{ x: maxX, y: maxY },
+					renderer.getDimensions(),
+					STAGE_PADDING,
+					vrijeRand()
+				)
+			);
 		} else {
 			renderer.setCustomBBox(null);
 		}
@@ -831,7 +891,8 @@
 			edgeLabelColor: { color: t.ink },
 			edgeLabelFont: t.fontLabel,
 			edgeLabelSize: 11.5,
-			labelDensity: 1.4,
+			// Every name is asked for: which stand is the plan's to say (planLabels).
+			labelDensity: 1000,
 			labelGridCellSize: 60,
 			labelRenderedSizeThreshold: 3,
 
@@ -848,34 +909,22 @@
 				if (!data.label) return;
 				const size = settings.labelSize;
 				context.font = `${settings.labelWeight} ${size}px ${settings.labelFont}`;
-				const w = context.measureText(data.label).width;
-				// Right of the bron, left, above or below it, where no other name stands; the
-				// focus always ($lib label-place). A name with no free place waits for a hover.
-				const room = context.canvas.width / (window.devicePixelRatio || 1);
-				const focus = ((data as { zIndex?: number }).zIndex ?? 0) >= 2;
-				// The focus's name beside it where it stands in this frame: the place reserved before the
-				// frame can be the one before the order moved it (a name alone in a corner, T10).
-				const eigen =
-					(data as { key?: string }).key === focusedId && focusPlek
-						? { x: labelX(data.x, data.size, w + 4, room), y: data.y - (size + 4) / 2 }
-						: null;
-				const at =
-					eigen ??
-					plaatsLabel(data.x, data.y, data.size, w + 4, size + 4, room, labelsTaken, focus);
+				// Where the plan of this frame puts it: right of the bron, left, above or below it,
+				// where no other name or bron stands; the focus always ($lib label-place). A name
+				// with no free place, or past the frame's sixty, waits for a hover.
+				// Sigma draws its first frame before `new Sigma` returns: no plan without it.
+				if (!renderer) return;
+				labelPlan ??= maakLabelPlan(renderer, context, settings);
+				const key = (data as { key?: string }).key ?? '';
+				const at = labelPlan.get(key);
 				if (!at) return;
-				if (!eigen) labelsTaken.push({ x: at.x, y: at.y, w: w + 4, h: size + 4 });
-				labelsAt.set((data as { key?: string }).key ?? '', {
-					x: at.x,
-					y: at.y,
-					w: w + 4,
-					h: size + 4
-				});
+				labelsAt.set(key, at);
 				const x = at.x + 2;
 				const y = at.y + 2 + size / 2;
 				context.save();
 				context.globalAlpha = 1;
 				context.fillStyle = t.paper;
-				context.fillRect(x - 2, y - size / 2 - 2, w + 4, size + 4);
+				context.fillRect(at.x, at.y, at.w, at.h);
 				context.restore();
 				context.fillStyle = settings.labelColor.attribute
 					? (((data as Record<string, unknown>)[settings.labelColor.attribute] as string) ??
@@ -1169,7 +1218,8 @@
 		});
 
 		renderer.on('beforeRender', () => {
-			labelsTaken = voorbehouden();
+			hullNamen = voorbehouden();
+			labelPlan = null;
 			labelsAt = new Map();
 		});
 		renderer.on('afterRender', updateViewportLabels);

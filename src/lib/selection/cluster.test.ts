@@ -54,6 +54,23 @@ describe('clustersOf', () => {
 		).toEqual([]);
 	});
 
+	it('folds uitspraken that also cite an article beside the focus (BH2815, N4)', () => {
+		// 137 uitspraken cite HR BH2815 and most of them an article the focus cites too.
+		const js = judgments(137);
+		const art = { id: 'articles/6_162', collection: 'articles' as const };
+		const edges = [
+			...citing(js),
+			{ source: focus, target: art.id, relation: 'REFERS_TO' },
+			...js.slice(0, 126).map((j) => ({ source: j.id, target: art.id, relation: 'REFERS_TO' }))
+		];
+		const [c, ...rest] = clustersOf([...nodes(137), art], edges, focus, new Set(), new Set());
+		expect(rest).toEqual([]);
+		expect(clusterLabel(c)).toBe('137 uitspraken');
+		expect(c.onderling).toBe(true);
+		// Its card no longer says they hang on the focus alone.
+		expect(clusterZinnen(c, null)[0]).toBe('Met deze bron verbonden.');
+	});
+
 	it('makes no cluster without a focus', () => {
 		const js = judgments(50);
 		expect(clustersOf(nodes(50), citing(js), null, new Set(), new Set())).toEqual([]);

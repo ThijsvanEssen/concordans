@@ -1,7 +1,14 @@
 import Graph from 'graphology';
 import { describe, expect, it } from 'vitest';
 import type { ContainerGroup } from '$lib/graph/container-membership';
-import { anchorWithHull, hullLinkOf, layoutHulls, type HullGroups, type HullScene } from './hulls';
+import {
+	anchorWithHull,
+	hullLinkOf,
+	layoutHulls,
+	unstacked,
+	type HullGroups,
+	type HullScene
+} from './hulls';
 
 const group = (
 	id: string,
@@ -191,5 +198,43 @@ describe('the lines to an anchor', () => {
 		expect(anchorWithHull('wet', h())).toBe(true);
 		expect(anchorWithHull('wet', { ...h(), hiddenKinds: new Set(['instrument']) })).toBe(false);
 		expect(anchorWithHull('j', h())).toBe(false);
+	});
+});
+
+describe('the names of the hulls (UX review N4, N8)', () => {
+	it('names a wet whose anchor stands alone, in a netwerk zoomed out (Gemw, tussen=0)', () => {
+		// Only the anchor of W drawn; a chosen bron elsewhere and zoomed out: still named.
+		const s = scene({
+			pinnedIds: new Set(['s1']),
+			zoomedOut: true,
+			isHidden: (id) => id === 'art'
+		});
+		const w = layoutHulls(s).hulls.find((h) => h.id === 'W');
+		expect(w?.label).toBe('Awb');
+	});
+
+	it('keeps a hull’s name off the signs of the bronnen', () => {
+		const vrij = layoutHulls(scene()).hulls.find((h) => h.id === 'D')!;
+		// A sign where the name would stand: it steps down into its hull, clear of it.
+		const sign = { x: vrij.labelX - 5, y: vrij.labelY - 15, w: 10, h: 10 };
+		const opzij = layoutHulls(scene({ glyphs: [sign] })).hulls.find((h) => h.id === 'D')!;
+		expect(opzij.labelY).toBeGreaterThan(vrij.labelY);
+	});
+
+	it('says the words of lines that stand on one another once (Gemeentewet, noemt)', () => {
+		const link = (id: string, x: number, y: number) => ({
+			id,
+			d: '',
+			arrow: '',
+			color: '',
+			dashed: false,
+			dim: false,
+			label: 'noemt',
+			labelX: x,
+			labelY: y
+		});
+		const links = [link('a', 100, 100), link('b', 104, 106), link('c', 400, 100)];
+		unstacked(links, (t) => t.length * 6 + 18);
+		expect(links.map((l) => l.label)).toEqual(['noemt', null, 'noemt']);
 	});
 });
