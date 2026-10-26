@@ -221,6 +221,8 @@ function status(v: LawPaint, k: Classes): string | null {
 		const name = next ? (next.citation_title ?? next.title) : null;
 		out += `<span class="validity ${k.validity}"><span class="${s.negative ? 'validity__no' : 'validity__status'} ${k.validity}">${esc(s.text)}</span>${next && name ? `, opvolger: <a>${esc(name)}</a>` : ''}</span>`;
 	}
+	const ministry = d.ministry_name ?? d.ministry;
+	if (d.ministry && ministry) out += `<span>Ministerie: <a>${esc(ministry)}</a>.</span>`;
 	if (coverageLine(d.completeness))
 		out += `<p class="whole-count ${k.law}">${coverage(d.completeness, k)}</p>`;
 	const kind = kindName(d.kind);
