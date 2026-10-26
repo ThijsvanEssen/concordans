@@ -5,6 +5,7 @@
 	import { permalink } from '$lib/bron/landing';
 	import { citeItems } from '$lib/components/ui/cite-items';
 	import ReaderHead from './ReaderHead.svelte';
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	// Reader for a bijlage: its title, the law it belongs to, the articles that refer to it and
 	// its text as the text of an article reads (ArticleText: its tables, headings and links).
@@ -111,10 +112,10 @@
 			{/if}
 
 			{#if refs.length}
-				<section class="refs">
-					<h2>Aangehaald in</h2>
-					<ul>
-						{#each uniqueBy(refs, (r) => r.article.id) as r (r.article.id)}
+				{@const aangehaald = uniqueBy(refs, (r) => r.article.id)}
+				<Sectie title="Aangehaald in" aantal={aangehaald.length}>
+					<ul class="refs">
+						{#each aangehaald as r (r.article.id)}
 							<li>
 								<BronLink ref={{ collection: 'articles', key: r.article.key }}
 									>{naamVan('articles', r.article)}</BronLink
@@ -122,7 +123,7 @@
 							</li>
 						{/each}
 					</ul>
-				</section>
+				</Sectie>
 			{/if}
 
 			{#if a.text}
@@ -229,8 +230,7 @@
 		font-weight: 600;
 		color: var(--ink-2);
 	}
-	.entries summary,
-	.refs h2 {
+	.entries summary {
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
@@ -238,14 +238,11 @@
 		color: var(--ink-2);
 		cursor: pointer;
 	}
-	.refs h2 {
-		cursor: default;
-	}
-	.refs ul {
+	.refs {
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-1);
-		margin: var(--s-2) 0 0;
+		margin: 0;
 		padding: 0;
 		list-style: none;
 		max-width: 68ch;

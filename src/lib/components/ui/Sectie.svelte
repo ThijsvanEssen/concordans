@@ -1,62 +1,61 @@
 <script lang="ts">
-	// A section of a reader under one heading: a rule in ink, the title in the serif with
-	// the glyph of what it lists, and its count. The one form for every section (Loopbaan,
-	// Toezeggingen, Dossiers, Stemgeschiedenis). The heading opens and closes it (Thijs, 10
-	// Oct), remembered per kind of section; closed, its content is not drawn, so what it
-	// would load is not asked. docs/typografie.md.
+	// A section of a reader under one heading: a hairline, the title in the serif and its
+	// count. The one form for every section (Loopbaan, Toezeggingen, Dossiers,
+	// Stemgeschiedenis) and, a level lower, for the groups in it (the years of a timeline, a
+	// law in the changed articles). Open until the reader closes it (Thijs, 10 Oct), kept per
+	// kind of section; closed, its content is not drawn, so what it would load is not asked.
+	// The DS: Sectie en Tijdlijn. docs/typografie.md.
 	import { formatCount } from '$lib/text/getal';
 	import type { Snippet } from 'svelte';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import FoldButton from './FoldButton.svelte';
 	import { isOpen as staatOpen } from './dicht.svelte';
-	import type { Collection } from '$lib/vocabulary';
 
 	let {
 		title,
-		collection,
 		aantal,
 		id,
 		naast,
-		niveau = 3,
+		niveau = 2,
 		inklapbaar = true,
 		sleutel,
-		standaardOpen = false,
 		children
 	}: {
 		title: string;
-		/** The glyph before the title: what the section lists. */
-		collection?: Collection;
-		/** The count beside the heading; a string as given (`25+`). */
+		/** The count beside the heading; a string as given (`25+`, `2019–2022`). */
 		aantal?: number | string | null;
 		id?: string;
-		/** Beside the title, at the right: a link or a control. */
+		/** Beside the title, at the right: a link or a control. Only while it stands open. */
 		naast?: Snippet;
-		/** The level of the heading: 3 in a reader under its title, 2 on a page of sections. */
-		niveau?: 2 | 3;
+		/** The level of the heading. 2: a section of a reader or a page, under a hairline.
+		 *  3: a group in a section (a year), 4: a group in that (a law), both without a line. */
+		niveau?: 2 | 3 | 4;
 		/** Whether the heading opens and closes it; off for a page of sections (Bladeren). */
 		inklapbaar?: boolean;
-		/** The kind of section whose state it shares; its title where none is given. A section
-		 *  that something else opens has its key in FOLD (dicht.svelte.ts). */
+		/** The kind of section whose state it shares; its title where none is given. A group
+		 *  inside a section keeps its own: `subKey(name)` (dicht.svelte.ts). A section that
+		 *  something else opens has its key in FOLD. */
 		sleutel?: string;
-		/** Open until closed: a page of groups (Gevolgd), not a reader's section, which starts
-		 *  closed. */
-		standaardOpen?: boolean;
 		children: Snippet;
 	} = $props();
 
 	const foldKey = $derived(sleutel ?? title);
 	/** Drawn from the first paint as it was left: a closed section never draws its content. */
-	const isOpen = $derived(!inklapbaar || staatOpen(foldKey, standaardOpen));
+	const isOpen = $derived(!inklapbaar || staatOpen(foldKey, true));
 	const uid = $props.id();
 </script>
 
 {#snippet kop()}
-	{#if collection}<KindGlyph {collection} size={14} />{/if}{title}{#if aantal != null}<span
-			class="aantal">{typeof aantal === 'number' ? formatCount(aantal) : aantal}</span
+	{title}{#if aantal != null}<span class="aantal"
+			>{typeof aantal === 'number' ? formatCount(aantal) : aantal}</span
 		>{/if}
 {/snippet}
 
-<section class="sectie section-block" class:is-dicht={!isOpen} {id}>
+<section
+	class="sectie niveau-{niveau}"
+	class:section-block={niveau === 2}
+	class:is-dicht={!isOpen}
+	{id}
+>
 	<svelte:element this={`h${niveau}`} class="kop">
 		{#if inklapbaar}
 			<FoldButton sleutel={foldKey} open={isOpen} controls="{uid}-inhoud"
@@ -64,8 +63,7 @@
 			>
 		{:else}
 			{@render kop()}
-		{/if}
-		{#if naast && isOpen}<span class="naast">{@render naast()}</span>{/if}
+		{/if}{#if naast && isOpen}<span class="naast">{@render naast()}</span>{/if}
 	</svelte:element>
 	{#if isOpen}<div class="inhoud" id="{uid}-inhoud">{@render children()}</div>{/if}
 </section>
@@ -79,8 +77,18 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-3);
+	}
+	.niveau-2 {
 		padding-top: var(--s-3);
-		border-top: 2px solid var(--ink);
+		border-top: 1px solid var(--rule);
+	}
+	/* A group inside a section: no line, the next one follows at the step of its parent. */
+	.niveau-3,
+	.niveau-4 {
+		gap: var(--s-2);
+	}
+	:global(.sectie.niveau-4 + .sectie.niveau-4) {
+		margin-top: var(--s-3);
 	}
 	/* Global: the section before is another instance, which this one cannot see. */
 	:global(.section-block + .section-block) {
@@ -88,21 +96,40 @@
 	}
 	.kop {
 		display: flex;
-		align-items: center;
+		align-items: baseline;
 		gap: var(--s-2);
+		/* The heading is a --tik-h high (a finger's height on a phone): the words stand in the
+		   middle of it. */
+		--kop-h: var(--tik-h);
+		--kop-lh: 28px;
+		padding-block: max(0px, calc((var(--kop-h) - var(--kop-lh)) / 2));
 		margin: 0;
 		font: var(--niveau-1-sectie);
 		color: var(--ink);
+	}
+	.niveau-3 .kop {
+		--kop-lh: 20px;
+		font-size: var(--t-meta);
+		line-height: var(--kop-lh);
+	}
+	.niveau-4 .kop {
+		--kop-lh: 22px;
+		font-size: var(--t-body-2);
+		line-height: var(--kop-lh);
 	}
 	.inhoud {
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-2);
 	}
-	/* Under a folding heading another one may follow at once (a group of a timeline): the two
+	/* A phone: the heading is a finger high, and a step of --s-5 under a section's. Under a
+	   folding heading another one may follow at once (a group of a timeline): the two
 	   targets of a finger (.raakvlak, up to 12 px past each) meet instead of overlapping. */
 	@media (pointer: coarse), (max-width: 768px) {
-		.sectie {
+		.kop {
+			--kop-h: var(--veld-h-raak);
+		}
+		.niveau-2 {
 			gap: var(--s-5);
 		}
 	}
@@ -110,6 +137,7 @@
 		padding-bottom: var(--s-1);
 	}
 	.aantal {
+		line-height: 1;
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-weight: 400;

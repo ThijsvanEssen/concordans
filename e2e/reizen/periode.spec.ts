@@ -28,6 +28,10 @@ test('Periode: the line opens a chooser, a typed year narrows the list, Escape g
 			expect((await target.boundingBox())!.height).toBeGreaterThanOrEqual(44);
 		}
 		expect((await dialog.getByLabel('van').boundingBox())!.height).toBeGreaterThanOrEqual(44);
+		// The page behind stands still while the sheet is open.
+		await expect(page.locator('body')).toHaveCSS('position', 'fixed');
+		await page.mouse.wheel(0, 600);
+		expect(await page.evaluate(() => window.scrollY)).toBe(0);
 	} else {
 		// A popover of 320 px under the line.
 		const box = (await dialog.boundingBox())!;

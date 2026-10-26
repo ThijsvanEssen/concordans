@@ -4,6 +4,7 @@
 	// it the distribution per year with two handles (Design System, Periode). A popover under
 	// the line on a wide screen, a sheet from below on a phone. The same in every filter pane
 	// and first in it. Days as the URL and the API hold them; the rule is in docs/README.md.
+	import { scrollLock } from '$lib/actions/scroll-lock';
 	import { clickOutside, topLayer } from '$lib/actions/top-layer';
 	import { vandaag } from '$lib/text/datum';
 	import { formatCount } from '$lib/text/getal';
@@ -116,7 +117,7 @@
 	}
 	function close(back: boolean) {
 		open = false;
-		if (back) afterTick(() => button?.focus());
+		if (back) afterTick(() => button?.focus({ preventScroll: true }));
 	}
 	$effect(() => {
 		if (!open) return;
@@ -349,7 +350,7 @@
 		</div>
 	{/if}
 	{#if open && sheet}
-		<div class="scherm">
+		<div class="scherm" use:scrollLock>
 			<div
 				class="sheet"
 				role="dialog"
@@ -559,12 +560,14 @@
 		display: flex;
 		flex-direction: column;
 		justify-content: flex-end;
+		overscroll-behavior: contain;
 		background: var(--scherm);
 	}
 	.sheet {
 		box-sizing: border-box;
 		max-height: 100%;
 		overflow-y: auto;
+		overscroll-behavior: contain;
 		padding: var(--s-2) var(--s-4) var(--s-4);
 		background: var(--paper);
 		border-radius: var(--r-2) var(--r-2) 0 0;

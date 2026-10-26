@@ -113,7 +113,7 @@
 		position: absolute;
 		top: 0;
 		left: calc(100% + var(--s-6));
-		width: var(--kantlijn-w, 240px);
+		width: var(--kantlijn-w, var(--zijkolom));
 		margin: 0;
 		padding: 0;
 		border-top: 0;

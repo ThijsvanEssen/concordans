@@ -8,6 +8,7 @@
 	// control high, so nothing moves when the counts come. On a phone the row is one button,
 	// Verfijnen (n), that opens the filters as a sheet, its groups folded (A192), ending in Toon.
 	// The Kamer is a choice, not a filter: the first of the row, on a phone its own line over it, never a chip.
+	import { scrollLock } from '$lib/actions/scroll-lock';
 	import type { Snippet } from 'svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
@@ -210,6 +211,7 @@
 		aria-labelledby="{uid}-title"
 		tabindex="-1"
 		bind:this={sheet}
+		use:scrollLock
 		onkeydown={onKey}
 	>
 		<div class="sheet-head">

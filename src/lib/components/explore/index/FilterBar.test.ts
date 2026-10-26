@@ -68,7 +68,7 @@ describe('FilterBar', () => {
 		const html = render(FilterBar, { props: { ...props, groups } }).body;
 		expect(html.match(/class="mark[^"]*is-active/g)).toHaveLength(2);
 		expect(text(html)).toContain('Rechtsgebied een');
-		expect(text(html)).toMatch(/In werking getreden: 1 jan\. 2020 tot nu/);
+		expect(text(html)).toMatch(/In werking getreden: Sinds 2020/);
 		expect(html).toContain('aria-label="Rechtsgebied een wissen"');
 		// Two chips: Wissen; Verfijnen (2) on a phone.
 		expect(text(html)).toContain('Wissen');

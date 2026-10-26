@@ -160,23 +160,22 @@ export function glyph(collection: Collection, size: number, k: Classes): string 
 /** The storage of what headings a reader opened (dicht.svelte.ts). */
 const FOLDS = 'concordans:kopjes';
 
-/** Whether a section of a reader, by its key, stands open in this browser (dicht.svelte.ts). */
+/** Whether a section of a reader, by its key, stands open in this browser: until closed
+ *  (dicht.svelte.ts). */
 export function sectionOpen(key: string): boolean {
 	try {
-		return JSON.parse(localStorage.getItem(FOLDS) ?? '{}')?.[key] === true;
+		return JSON.parse(localStorage.getItem(FOLDS) ?? '{}')?.[key] !== false;
 	} catch {
-		return false;
+		return true;
 	}
 }
 
-/** A section of a reader as it stands closed (Sectie): its heading, its glyph and count. */
-export const closedSection = (
-	title: string,
-	collection: Collection,
-	count: number | null,
-	k: Classes
-) =>
-	`<section class="sectie section-block is-dicht ${k.section}"><h3 class="kop ${k.section}">` +
-	`<button type="button" class="fold-knop raakvlak ${k.fold}" tabindex="-1">${glyph(collection, 14, k)}${esc(title)}` +
+/**
+ * A section of a reader as the first paint draws it (Sectie): its heading and count, open or
+ * closed as this browser left it. The rows are the app's; the heading stands where it will.
+ */
+export const sectionHead = (title: string, count: number | null, open: boolean, k: Classes) =>
+	`<section class="sectie niveau-2 section-block ${open ? '' : 'is-dicht '}${k.section}"><h2 class="kop ${k.section}">` +
+	`<button type="button" class="fold-knop raakvlak ${k.fold}" tabindex="-1">${esc(title)}` +
 	(count === null ? '' : `<span class="aantal ${k.section}">${formatCount(count)}</span>`) +
-	`<svg class="caret is-side ${k.caret}" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true" focusable="false"><path d="M2 3.75 5 6.75 8 3.75"></path></svg></button></h3></section>`;
+	`<svg class="caret ${open ? '' : 'is-side '}${k.caret}" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true" focusable="false"><path d="M2 3.75 5 6.75 8 3.75"></path></svg></button></h2></section>`;
