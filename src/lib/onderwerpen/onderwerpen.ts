@@ -316,17 +316,17 @@ export function gedeeldeParams(url: URL): URLSearchParams {
 	return p;
 }
 
-const GEDEELD = ['onderwerp', 'wet', 'dossier'];
+const SHARED_KEYS = ['onderwerp', 'wet', 'dossier'];
 
 /**
  * The address a link of before opens at: its shared topics moved from the query to the fragment,
  * the rest of the query kept. Null when the query holds none.
  */
-export function naarFragment(url: URL): string | null {
+export function toFragment(url: URL): string | null {
 	const q = new URLSearchParams(url.search);
-	if (!GEDEELD.some((k) => q.has(k))) return null;
+	if (!SHARED_KEYS.some((k) => q.has(k))) return null;
 	const frag = new URLSearchParams(url.hash.slice(1));
-	for (const k of GEDEELD) {
+	for (const k of SHARED_KEYS) {
 		for (const v of q.getAll(k)) frag.append(k, v);
 		q.delete(k);
 	}

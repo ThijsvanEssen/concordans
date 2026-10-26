@@ -4,7 +4,7 @@ import {
 	deelAdres,
 	dossiersFromParams,
 	gedeeldeParams,
-	naarFragment,
+	toFragment,
 	followDossier,
 	followsDossier,
 	haalTermWeg,
@@ -159,11 +159,11 @@ describe('onderwerpen', () => {
 
 	it('moves the topics of a link of before from the query to the fragment', () => {
 		const oud = new URL('https://x/onderwerpen?wet=BWBR0052872/3&onderwerp=stikstof&q=1');
-		expect(naarFragment(oud)).toBe('/onderwerpen?q=1#onderwerp=stikstof&wet=BWBR0052872%2F3');
+		expect(toFragment(oud)).toBe('/onderwerpen?q=1#onderwerp=stikstof&wet=BWBR0052872%2F3');
 		const nieuw = new URL(deelAdres([{ termen: ['stikstof'] }]), 'https://x');
-		expect(naarFragment(nieuw)).toBeNull();
+		expect(toFragment(nieuw)).toBeNull();
 		// Moved, the address still reads the same.
-		const naar = new URL(naarFragment(oud)!, 'https://x');
+		const naar = new URL(toFragment(oud)!, 'https://x');
 		expect(wettenUitParams(gedeeldeParams(naar))).toEqual([
 			{ bwb: 'BWBR0052872', titel: 'BWBR0052872', artikel: '3' }
 		]);

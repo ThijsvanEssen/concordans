@@ -32,7 +32,7 @@
 		deelAdres,
 		dossiersFromParams,
 		gedeeldeParams,
-		naarFragment,
+		toFragment,
 		followedDossierName,
 		isNieuw,
 		isWords,
@@ -86,8 +86,8 @@
 	]);
 	// A link of before holds its topics in the query: the same page, now with them in the fragment.
 	$effect(() => {
-		const adres = naarFragment(page.url);
-		if (adres) history.replaceState(history.state, '', adres);
+		const moved = toFragment(page.url);
+		if (moved) history.replaceState(history.state, '', moved);
 	});
 	let eigen = $state<Onderwerp[]>([]);
 	let geladen = $state(false);
