@@ -2,7 +2,7 @@
 // drawn as hundreds of signs: past CLUSTER_MAX_LOOSE, the bronnen of a kind that hang on the
 // focus alone stand on the canvas as one cluster bron, "250 uitspraken". One click on it
 // opens a card that shows them all, or the group in Verbonden; shown, they fold back.
-import { joinAnd, lowerFirst, plural } from '$lib/text/words';
+import { joinAnd, plural } from '$lib/text/words';
 import { formatCount } from '$lib/text/getal';
 import { bronPlural, type Collection } from '$lib/vocabulary';
 import { edgesByNode, mostCommonRelation, pushTo } from '$lib/graph/adjacency';
@@ -39,6 +39,18 @@ type Edge = { source: string; target: string; relation: string };
 /** "250 uitspraken": the count and the kind, as the cluster is named. */
 export const clusterLabel = (c: Pick<Cluster, 'collection' | 'members'>) =>
 	`${formatCount(c.members.length)} ${bronPlural(c.collection).toLowerCase()}`;
+
+/**
+ * The heading of a cluster's card: of how many it holds where there are more (N2): "200 van
+ * 63.600 stemmingen", the whole as the legend counts it.
+ */
+export const clusterHeading = (
+	c: Pick<Cluster, 'collection' | 'members'>,
+	totaal: number | null
+) =>
+	totaal != null && totaal > c.members.length
+		? `${formatCount(c.members.length)} van ${formatCount(totaal)} ${bronPlural(c.collection).toLowerCase()}`
+		: clusterLabel(c);
 
 /**
  * The clusters around `focus`: per kind, the neighbours tied to nothing but the focus and its
@@ -157,14 +169,12 @@ export function tussenClustersOf(
 }
 
 /**
- * What the count of a cluster stands for, in sentences for its card. The cluster holds
- * the neighbours of its kind tied to the focus alone; the others of that kind stand loose
- * beside it; the network may hold fewer than the group in Verbonden counts (`group`, the
- * API's total), since it asks for one capped neighbourhood.
+ * What the count of a cluster stands for, in sentences for its card. The cluster holds the
+ * neighbours of its kind tied to the focus alone; the others of that kind stand loose beside it.
+ * Of how many there are its heading says (`clusterHeading`).
  */
 export function clusterZinnen(
 	c: Pick<Cluster, 'members' | 'neighbours' | 'ends' | 'alsoTied'>,
-	group: { label: string; total?: number } | null,
 	namen: string[] = []
 ): string[] {
 	const n = formatCount;
@@ -179,10 +189,6 @@ export function clusterZinnen(
 	if (loose > 0)
 		zinnen.push(
 			`${n(loose)} ${plural(loose, 'andere staat', 'andere staan')} los: ook met een andere bron verbonden.`
-		);
-	if (group?.total && group.total > c.neighbours)
-		zinnen.push(
-			`In het netwerk: ${n(c.neighbours)} van de ${n(group.total)} ${lowerFirst(group.label)}.`
 		);
 	return zinnen;
 }

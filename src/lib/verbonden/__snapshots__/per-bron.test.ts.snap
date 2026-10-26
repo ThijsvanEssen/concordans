@@ -231,7 +231,7 @@ exports[`Verbonden of a 'dossier' > keeps its groups, rows, kern and export > gr
     "section": "Tweede Kamer",
   },
   {
-    "count": "2",
+    "count": "41",
     "id": "documents-tk",
     "label": "Kamerstukken in de Tweede Kamer",
     "plaats": "verbonden",

@@ -4,6 +4,7 @@ import {
 	clusterLabel,
 	clustersOf,
 	clusterZinnen,
+	clusterHeading,
 	TUSSEN_MAX_LOOSE,
 	tussenClustersOf
 } from './cluster';
@@ -68,7 +69,7 @@ describe('clustersOf', () => {
 		expect(clusterLabel(c)).toBe('137 uitspraken');
 		expect(c.alsoTied).toBe(true);
 		// Its card no longer says they hang on the focus alone.
-		expect(clusterZinnen(c, null)[0]).toBe('Met deze bron verbonden.');
+		expect(clusterZinnen(c)[0]).toBe('Met deze bron verbonden.');
 	});
 
 	it('makes no cluster without a focus', () => {
@@ -80,18 +81,30 @@ describe('clustersOf', () => {
 describe('clusterZinnen', () => {
 	const c = { members: Array.from({ length: 172 }, (_, i) => `j${i}`), neighbours: 174 };
 
-	it('explains the count against the loose ones and the total of Verbonden (art. 6:162)', () => {
-		expect(clusterZinnen(c, { label: 'Uitspraken die dit artikel aanhalen', total: 250 })).toEqual([
+	it('says what the count holds against the loose ones (art. 6:162)', () => {
+		expect(clusterZinnen(c)).toEqual([
 			'Alleen met deze bron verbonden.',
-			'2 andere staan los: ook met een andere bron verbonden.',
-			'In het netwerk: 174 van de 250 uitspraken die dit artikel aanhalen.'
+			'2 andere staan los: ook met een andere bron verbonden.'
 		]);
 	});
 
-	it('says no more where the network holds them all', () => {
-		expect(
-			clusterZinnen({ members: c.members, neighbours: 172 }, { label: 'X', total: 172 })
-		).toEqual(['Alleen met deze bron verbonden.']);
+	it('says no more where none stands loose', () => {
+		expect(clusterZinnen({ members: c.members, neighbours: 172 })).toEqual([
+			'Alleen met deze bron verbonden.'
+		]);
+	});
+});
+
+describe('clusterHeading', () => {
+	const c = { collection: 'decisions' as const, members: Array.from({ length: 200 }, String) };
+
+	it('names the whole where there are more than it holds (N2: VVD)', () => {
+		expect(clusterHeading(c, 63600)).toBe('200 van 63.600 stemmingen');
+	});
+
+	it('is its label where it holds them all', () => {
+		expect(clusterHeading(c, 200)).toBe(clusterLabel(c));
+		expect(clusterHeading(c, null)).toBe(clusterLabel(c));
 	});
 });
 
@@ -133,7 +146,7 @@ describe('tussenClustersOf', () => {
 
 	it('names the chosen bronnen on its card', () => {
 		const [c] = tussenClustersOf(nodes, edges, chosen, new Set(), new Set());
-		expect(clusterZinnen(c, null, ['Art. 273f Sr', 'HR 24\u00a0november\u00a02015'])).toEqual([
+		expect(clusterZinnen(c, ['Art. 273f Sr', 'HR 24\u00a0november\u00a02015'])).toEqual([
 			'Elk alleen verbonden met Art. 273f Sr en HR 24\u00a0november\u00a02015.'
 		]);
 	});

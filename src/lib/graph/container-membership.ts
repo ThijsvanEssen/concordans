@@ -257,3 +257,24 @@ export function createContainerGroups() {
 		}
 	};
 }
+
+/**
+ * The members of a group who left before it ended, with the day they left: drawn as an
+ * outline without a name, a current member filled and named (the one marking, N13). A cabinet
+ * that has ended does not make all its bewindspersonen former ones, only those who left before.
+ */
+export function formerMembers(
+	group: Pick<ContainerGroup, 'periods'> | undefined,
+	today: string
+): Map<string, string> {
+	const seats = [...(group?.periods ?? [])];
+	const end = seats.some(([, p]) => p.to === null)
+		? today
+		: (seats
+				.map(([, p]) => p.to as string)
+				.sort()
+				.at(-1) ?? '');
+	return new Map(
+		seats.filter(([, p]) => p.to !== null && p.to < end).map(([id, p]) => [id, p.to as string])
+	);
+}
