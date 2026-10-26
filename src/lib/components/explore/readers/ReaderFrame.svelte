@@ -182,7 +182,7 @@
 		/* On a phone a term takes only the room it needs; a number stands inside the text
 		   column (no margin to hang in). */
 		.reader-frame .reader-frame__col {
-			--reader-term: 0px;
+			--voorkolom: 0px;
 		}
 	}
 	/* Left in Lezen, beside the table of contents; centred where the column says so. */
@@ -190,13 +190,12 @@
 	   "de ruimte goed benut"): the title, the meta line, a heading and all running text start
 	   at the column's edge; a number (rechtsoverweging, lid) hangs in the frame's margin
 	   (`.hangt`, desktop only); a term and what it names (Behoort bij, partijen, Voor and
-	   Tegen, a career) share one term column (`--reader-term`), wide enough for the longest
+	   Tegen, a career) share one term column (`--voorkolom`, 120px), wide enough for the longest
 	   term at rung 6 ("Bij wetsvoorstel"). One right edge: the column's. */
 	.reader-frame__col[data-wacht] {
 		visibility: hidden;
 	}
 	.reader-frame__col {
-		--reader-term: calc(var(--s-8) + var(--s-6));
 		max-width: var(--reader-max, 760px);
 		min-height: 100%;
 		margin-left: var(--reader-col-left, 0);

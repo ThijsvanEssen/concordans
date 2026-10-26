@@ -92,7 +92,7 @@
 		gap: var(--s-2);
 		margin: 0;
 		font: var(--niveau-1-sectie);
-		color: var(--kleur-1);
+		color: var(--ink);
 	}
 	.inhoud {
 		display: flex;

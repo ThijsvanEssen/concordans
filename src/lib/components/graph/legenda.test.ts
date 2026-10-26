@@ -39,9 +39,9 @@ describe('an option of a filter', () => {
 	});
 	it('centres the box, the mark and the count on the first line of the label', () => {
 		for (const part of ['.voor', '.aantal'])
-			expect(optie).toMatch(new RegExp(`\\n\\t\\${part} \\{[^}]*height: var\\(--regel\\);`));
+			expect(optie).toMatch(new RegExp(`\\n\\t\\${part} \\{[^}]*height: var\\(--optie-h\\);`));
 		expect(optie).toMatch(
-			/\.vinkje\) \{\s*margin-top: calc\(\(var\(--regel\) - var\(--vink\)\) \/ 2\);/
+			/\.vinkje\) \{\s*margin-top: calc\(\(var\(--optie-h\) - var\(--vink\)\) \/ 2\);/
 		);
 	});
 });

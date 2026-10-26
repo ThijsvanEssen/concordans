@@ -12,7 +12,7 @@
 }
 .blad__indeling {
 	display: grid;
-	grid-template-columns: var(--facet-w) minmax(0, 1fr);
+	grid-template-columns: var(--zijkolom) minmax(0, 1fr);
 	column-gap: 40px;
 	align-items: start;
 }
@@ -52,7 +52,7 @@
 }
 /* The list beside the filters, brought into view by Toon (Verfijnen): just under the top bar. */
 .blad__indeling > :not(.blad__facetten) {
-	scroll-margin-top: calc(var(--topbar-h) + var(--s-4));
+	scroll-margin-top: calc(var(--balk-h) + var(--s-4));
 }
 /* A state where content would be: loading, nothing, could not. One quiet line everywhere
    (round 2 of the consistency pass: italic in the readers, roman on the pages); a row's
@@ -68,7 +68,7 @@
 .blad__titel {
 	margin: 0;
 	font: var(--niveau-1-pagina);
-	color: var(--kleur-1);
+	color: var(--ink);
 	overflow-wrap: anywhere;
 }
 /* The parts of a text page (/over, /bronnen, /privacy, /voorwaarden, /docs and its pages):
@@ -112,7 +112,7 @@
 .blad--tekst .section-title {
 	margin: 0 0 var(--s-3);
 	font: var(--niveau-1-sectie);
-	color: var(--kleur-1);
+	color: var(--ink);
 }
 .blad--tekst .cite {
 	text-decoration: underline;
@@ -148,8 +148,8 @@
    keeps clear of the counts, and leaves room for a focus ring. */
 .blad__facetten {
 	position: sticky;
-	top: calc(var(--topbar-h) + var(--s-6));
-	max-height: calc(100vh - var(--topbar-h) - var(--s-6));
+	top: calc(var(--balk-h) + var(--s-6));
+	max-height: calc(100vh - var(--balk-h) - var(--s-6));
 	overflow-y: auto;
 	scrollbar-gutter: stable;
 	scrollbar-width: thin;

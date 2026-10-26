@@ -65,6 +65,7 @@ fails on a label of a button that is not in this table.
 | `Sluiten`                            | onbepaald |
 | `Toevoegen`                          | onbepaald |
 | `Wissen`                             | onbepaald |
+| `Toepassen`                          | onbepaald |
 | `Selectie wissen`                    | onbepaald |
 | `Alleen de gekozen bronnen tonen`    | onbepaald |
 | `Bundel verwijderen`                 | onbepaald |

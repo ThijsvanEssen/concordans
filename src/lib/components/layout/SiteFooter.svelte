@@ -20,7 +20,7 @@
 	<div class="container foot-grid">
 		<div class="foot-blurb">
 			<a href="/" class="foot-logo no-underline raak-rij" aria-label="Concordans home">
-				<Wordmark size={17} />
+				<Wordmark size={28} />
 			</a>
 			<p>
 				Het artikel, en de uitspraken en Kamerstukken die ernaar verwijzen. Zonder account, zonder

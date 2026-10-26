@@ -8,8 +8,7 @@ describe('colour', () => {
 		// focus ring and a wash are ink or neutral; a TekstMenu button that has the focus back
 		// after a choice too (the Legenda's Bronnen stood red at rest, Thijs, 10 Oct).
 		const eigen: Uitzondering[] = [
-			{ pad: 'lib/styles/tokens.css', reden: 'the tokens: --accent and --uitkomst-nee' },
-			{ pad: 'lib/components/layout/Wordmark.svelte', reden: 'the § of the name' }
+			{ pad: 'lib/styles/tokens.css', reden: 'the tokens: --accent and --uitkomst-nee' }
 		];
 		expect(overtreders((t) => /var\(--accent\)|--accent-soft/.test(t), eigen)).toEqual([]);
 		expect(bron('lib/styles/tokens.css').match(/var\(--accent\)/g)).toHaveLength(1);

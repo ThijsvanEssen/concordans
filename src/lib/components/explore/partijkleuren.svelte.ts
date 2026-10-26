@@ -165,9 +165,11 @@ export const patroonVan = (naam: string): Patroon => {
 const CSS_PATROON: Record<Patroon, string | null> = {
 	vol: null,
 	arcering:
-		'repeating-linear-gradient(135deg, transparent 0 2px, rgba(255,255,255,0.75) 2px 3.5px)',
-	stippen: 'radial-gradient(circle, rgba(255,255,255,0.85) 0 1px, transparent 1.3px) 0 0 / 4px 4px',
-	strepen: 'repeating-linear-gradient(0deg, transparent 0 2px, rgba(255,255,255,0.75) 2px 3.5px)'
+		'repeating-linear-gradient(135deg, transparent 0 2px, color-mix(in srgb, var(--paper) 75%, transparent) 2px 3.5px)',
+	stippen:
+		'radial-gradient(circle, color-mix(in srgb, var(--paper) 85%, transparent) 0 1px, transparent 1.3px) 0 0 / 4px 4px',
+	strepen:
+		'repeating-linear-gradient(0deg, transparent 0 2px, color-mix(in srgb, var(--paper) 75%, transparent) 2px 3.5px)'
 };
 /**
  * De kleuren van een fractie: die van een Kamer, dan de kleur die de zetels zelf meegeven,

@@ -12,12 +12,11 @@ test('Actueel: a period and a kind narrow the days', async ({ page, touch }) => 
 	const all = await count.textContent();
 
 	await openFilter(page, touch, 'Periode');
-	const period = page.getByRole('group', { name: 'Periode' });
-	await period.getByRole('button', { name: 'Maand' }).click();
-	await expect(period.getByRole('button', { name: 'Maand' })).toHaveAttribute(
-		'aria-pressed',
-		'true'
-	);
+	await page.getByRole('button', { name: /Wijzig$/ }).click();
+	const period = page.getByRole('dialog', { name: 'Periode' });
+	await period.getByRole('radio', { name: 'Afgelopen maand' }).click();
+	await period.getByRole('button', { name: 'Toepassen' }).click();
+	await expect(page.getByRole('button', { name: 'Afgelopen maand Wijzig' })).toBeVisible();
 	await page.keyboard.press('Escape');
 	await expect(page).toHaveURL(/\/actueel\?.+/);
 	await expect(count).not.toHaveText(all!);

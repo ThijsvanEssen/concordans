@@ -56,7 +56,7 @@ exports[`Bronnen, list by list > cabinets ? > view 1`] = `
     },
     "Periode": {
       "opties": [],
-      "tekst": "AllesMaandKwartaalJaarEigen",
+      "tekst": "Alle jarenWijzig",
     },
   },
   "kop": "4 kabinetten",
@@ -111,7 +111,7 @@ exports[`Bronnen, list by list > cabinets ?coalitie=VVD&van=2010-01-01&q=rutte&s
     },
     "Periode: 2010 tot nu": {
       "opties": [],
-      "tekst": "AllesMaandKwartaalJaarEigen van tot",
+      "tekst": "Sinds 2010Wijzig",
     },
   },
   "kop": "2 kabinetten VVD×Periode: 2010 tot nu× Wissen",
@@ -177,7 +177,7 @@ exports[`Bronnen, list by list > commitments ? > view 1`] = `
     },
     "Periode": {
       "opties": [],
-      "tekst": "Toegezegd AllesMaandKwartaalJaarEigen",
+      "tekst": "Toegezegd Alle jarenWijzig",
     },
     "Stand": {
       "opties": [
@@ -273,7 +273,7 @@ exports[`Bronnen, list by list > commitments ?status=Openstaand&overdue=1&kabine
     },
     "Periode: 1 jan. 2026 tot nu": {
       "opties": [],
-      "tekst": "Toegezegd AllesMaandKwartaalJaarEigen van tot",
+      "tekst": "Toegezegd Sinds 2026Wijzig",
     },
     "Stand: Openstaand": {
       "opties": [
@@ -328,7 +328,7 @@ exports[`Bronnen, list by list > committees ? > view 1`] = `
   "filters": {
     "Periode": {
       "opties": [],
-      "tekst": "Actief AllesMaandKwartaalJaarEigen",
+      "tekst": "Actief Alle jarenWijzig",
     },
     "Weergave": {
       "opties": [
@@ -378,7 +378,7 @@ exports[`Bronnen, list by list > committees ?kamer=EK > view 1`] = `
   "filters": {
     "Periode": {
       "opties": [],
-      "tekst": "Actief AllesMaandKwartaalJaarEigen",
+      "tekst": "Actief Alle jarenWijzig",
     },
   },
   "kop": "6 commissies",
@@ -421,7 +421,7 @@ exports[`Bronnen, list by list > committees ?only_active=1&q=wonen&sort=name&dir
   "filters": {
     "Periode": {
       "opties": [],
-      "tekst": "Actief AllesMaandKwartaalJaarEigen",
+      "tekst": "Actief Alle jarenWijzig",
     },
     "Weergave: Alleen met openstaande dossiers": {
       "opties": [
@@ -485,7 +485,7 @@ exports[`Bronnen, list by list > decisions ? > view 1`] = `
     },
     "Periode": {
       "opties": [],
-      "tekst": "Datum AllesMaandKwartaalJaarEigen",
+      "tekst": "Datum Alle jarenWijzig",
     },
     "Stemmingsoort": {
       "opties": [
@@ -555,7 +555,7 @@ exports[`Bronnen, list by list > decisions ?kamer=EK&sort=subject > view 1`] = `
     },
     "Periode": {
       "opties": [],
-      "tekst": "Datum AllesMaandKwartaalJaarEigen",
+      "tekst": "Datum Alle jarenWijzig",
     },
     "Stemmingsoort": {
       "opties": [
@@ -647,7 +647,7 @@ exports[`Bronnen, list by list > decisions ?soort=Motie&passed=false&dossier=366
     },
     "Periode: 1 jan. 2026 tot nu": {
       "opties": [],
-      "tekst": "Datum AllesMaandKwartaalJaarEigen van tot",
+      "tekst": "Datum Sinds 2026Wijzig",
     },
     "Stemmingsoort: Motie": {
       "opties": [
@@ -719,7 +719,7 @@ exports[`Bronnen, list by list > documents ? > view 1`] = `
     },
     "Periode": {
       "opties": [],
-      "tekst": "Datum AllesMaandKwartaalJaarEigen",
+      "tekst": "Datum Alle jarenWijzig",
     },
     "Stuksoort": {
       "opties": [
@@ -790,7 +790,7 @@ exports[`Bronnen, list by list > documents ?kamer=EK&soort=Motie&q=36600&van=202
     },
     "Periode: 1 jan. 2026 tot 30 jun. 2026": {
       "opties": [],
-      "tekst": "Datum AllesMaandKwartaalJaarEigen van tot",
+      "tekst": "Datum 1 jan 2026 tot 30 jun 2026Wijzig",
     },
     "Stuksoort: Motie": {
       "opties": [
@@ -883,7 +883,7 @@ exports[`Bronnen, list by list > dossiers ? > view 1`] = `
     },
     "Periode": {
       "opties": [],
-      "tekst": "Geopend AllesMaandKwartaalJaarEigen",
+      "tekst": "Geopend Alle jarenWijzig",
     },
     "Stand": {
       "opties": [
@@ -981,7 +981,7 @@ exports[`Bronnen, list by list > dossiers ?q=36600 > view 1`] = `
     },
     "Periode": {
       "opties": [],
-      "tekst": "Geopend AllesMaandKwartaalJaarEigen",
+      "tekst": "Geopend Alle jarenWijzig",
     },
     "Stand": {
       "opties": [
@@ -1077,7 +1077,7 @@ exports[`Bronnen, list by list > dossiers ?stand=all&sort=last_activity > view 1
     },
     "Periode": {
       "opties": [],
-      "tekst": "Geopend AllesMaandKwartaalJaarEigen",
+      "tekst": "Geopend Alle jarenWijzig",
     },
     "Stand: Alle dossiers": {
       "opties": [
@@ -1179,7 +1179,7 @@ exports[`Bronnen, list by list > dossiers ?stand=closed&uitkomst=aangenomen&phas
     },
     "Periode: 1 jan. 2020 tot nu": {
       "opties": [],
-      "tekst": "Geopend AllesMaandKwartaalJaarEigen van tot",
+      "tekst": "Geopend Sinds 2020Wijzig",
     },
     "Stand: Aangenomen": {
       "opties": [
@@ -1237,7 +1237,7 @@ exports[`Bronnen, list by list > factions ? > view 1`] = `
   "filters": {
     "Periode": {
       "opties": [],
-      "tekst": "Actief AllesMaandKwartaalJaarEigen",
+      "tekst": "Actief Alle jarenWijzig",
     },
     "Weergave": {
       "opties": [
@@ -1285,7 +1285,7 @@ exports[`Bronnen, list by list > factions ?include_inactive=1&q=pvv&sort=abbrevi
   "filters": {
     "Periode": {
       "opties": [],
-      "tekst": "Actief AllesMaandKwartaalJaarEigen",
+      "tekst": "Actief Alle jarenWijzig",
     },
     "Weergave: Ook opgeheven fracties": {
       "opties": [
@@ -1352,7 +1352,7 @@ exports[`Bronnen, list by list > factions ?kamer=EK > view 1`] = `
   "filters": {
     "Periode": {
       "opties": [],
-      "tekst": "Actief AllesMaandKwartaalJaarEigen",
+      "tekst": "Actief Alle jarenWijzig",
     },
   },
   "kop": "",
@@ -1413,7 +1413,7 @@ exports[`Bronnen, list by list > instruments ? > view 1`] = `
     },
     "Periode": {
       "opties": [],
-      "tekst": "In werking getreden AllesMaandKwartaalJaarEigen",
+      "tekst": "In werking getreden Alle jarenWijzig",
     },
     "Rechtsgebied": {
       "opties": [
@@ -1510,7 +1510,7 @@ exports[`Bronnen, list by list > instruments ?q=huur&sort=article_count&legal_ar
     },
     "Periode": {
       "opties": [],
-      "tekst": "In werking getreden AllesMaandKwartaalJaarEigen",
+      "tekst": "In werking getreden Alle jarenWijzig",
     },
     "Rechtsgebied: bouwen-en-wonen": {
       "opties": [
@@ -1598,7 +1598,7 @@ exports[`Bronnen, list by list > instruments ?soort=verdrag&jurisdiction=eu&leeg
     },
     "Periode: 1 jan. 2020 tot 31 dec. 2024": {
       "opties": [],
-      "tekst": "In werking getreden AllesMaandKwartaalJaarEigen van tot",
+      "tekst": "In werking getreden 2020 tot 2024Wijzig",
     },
     "Rechtsgebied": {
       "opties": [
@@ -1700,7 +1700,7 @@ exports[`Bronnen, list by list > judgments ? > view 1`] = `
     },
     "Periode": {
       "opties": [],
-      "tekst": "AllesMaandKwartaalJaarEigen",
+      "tekst": "Alle jarenWijzig",
     },
     "Rechtsgebied": {
       "opties": [
@@ -1810,7 +1810,7 @@ exports[`Bronnen, list by list > judgments ?q=huur&tier=rechtbank&court_kind=rec
     },
     "Periode: 2020": {
       "opties": [],
-      "tekst": "AllesMaandKwartaalJaarEigen van tot",
+      "tekst": "2020 tot 2020Wijzig",
     },
     "Rechtsgebied: Civiel recht": {
       "opties": [
@@ -1919,7 +1919,7 @@ exports[`Bronnen, list by list > judgments ?source=echr&subject=Huurrecht&sort=c
     },
     "Periode": {
       "opties": [],
-      "tekst": "AllesMaandKwartaalJaarEigen",
+      "tekst": "Alle jarenWijzig",
     },
     "Rechtsgebied": {
       "opties": [
@@ -2006,7 +2006,7 @@ exports[`Bronnen, list by list > members ? > view 1`] = `
     },
     "Periode": {
       "opties": [],
-      "tekst": "Actief AllesMaandKwartaalJaarEigen",
+      "tekst": "Actief Alle jarenWijzig",
     },
     "Weergave": {
       "opties": [
@@ -2089,7 +2089,7 @@ exports[`Bronnen, list by list > members ?include_inactive=1&fractie=VVD&q=kops&
     },
     "Periode": {
       "opties": [],
-      "tekst": "Actief AllesMaandKwartaalJaarEigen",
+      "tekst": "Actief Alle jarenWijzig",
     },
     "Weergave: Ook historische leden": {
       "opties": [
@@ -2172,7 +2172,7 @@ exports[`Bronnen, list by list > members ?kamer=EK&van=2020-01-01 > view 1`] = `
     },
     "Periode: 1 jan. 2020 tot nu": {
       "opties": [],
-      "tekst": "Actief AllesMaandKwartaalJaarEigen van tot",
+      "tekst": "Actief Sinds 2020Wijzig",
     },
   },
   "kop": "3 kamerleden Actief: 1 jan. 2020 tot nu×",
@@ -2237,7 +2237,7 @@ exports[`Bronnen, list by list > ministers ? > view 1`] = `
     },
     "Periode": {
       "opties": [],
-      "tekst": "In functie AllesMaandKwartaalJaarEigen",
+      "tekst": "In functie Alle jarenWijzig",
     },
     "Weergave": {
       "opties": [],
@@ -2299,7 +2299,7 @@ exports[`Bronnen, list by list > ministers ?kabinet=jetten&post=minister&q=a&van
     },
     "Periode: 1 jan. 2026 tot nu": {
       "opties": [],
-      "tekst": "In functie AllesMaandKwartaalJaarEigen van tot",
+      "tekst": "In functie Sinds 2026Wijzig",
     },
     "Weergave": {
       "opties": [],

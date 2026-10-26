@@ -481,7 +481,7 @@
 	}
 	/* Perioden: the years in the reader's term column (96px; on a phone as wide as "2023–2026"), no line, no teken. */
 	.perioden {
-		--tl-datum: max(var(--reader-term, 0px), calc(var(--s-8) + var(--s-2)));
+		--tl-datum: max(var(--voorkolom), calc(var(--s-8) + var(--s-2)));
 		--tl-teken: 0px;
 		--tl-voor: calc(var(--tl-datum) + var(--s-4));
 	}

@@ -403,7 +403,7 @@
 	.vouw button:focus-visible {
 		color: var(--ink);
 		text-decoration-line: underline;
-		text-underline-offset: var(--underline-offset);
+		text-underline-offset: var(--onderstreping);
 	}
 	.lagen li + li::before {
 		content: '›';
@@ -440,7 +440,7 @@
 	.lagen a:hover,
 	.lagen a:focus-visible {
 		text-decoration-line: underline;
-		text-underline-offset: var(--underline-offset);
+		text-underline-offset: var(--onderstreping);
 	}
 	.rijen a {
 		color: var(--ink-2);

@@ -228,7 +228,7 @@
 	.kind__title:hover,
 	.kind__title:focus-visible {
 		text-decoration: underline;
-		text-underline-offset: var(--underline-offset);
+		text-underline-offset: var(--onderstreping);
 	}
 	.kind__line {
 		display: block;

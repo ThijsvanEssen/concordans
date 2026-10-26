@@ -8,7 +8,7 @@ describe('the network and its cards', () => {
 	it('draws the panel Netwerk and a cluster with CanvasKaart: one frame, one width', () => {
 		// Thijs, 10 Oct: "Deze mogen even breed zijn en hetzelfde soort component zijn". The
 		// folded Netwerk took its content's width (`width: auto`). Width and right edge are
-		// --paneel-breed and --paneel-rand, CanvasKaart's.
+		// --zijkolom and --s-3, CanvasKaart's.
 		const kaart = /^\.(netwerk|legenda|cluster-kaart)$/;
 		expect(
 			overtreders((t) =>
@@ -46,7 +46,7 @@ describe('the network and its cards', () => {
 			BRONNEN.filter(
 				(s) =>
 					/^lib\/(components\/graph|netwerk|graph)\//.test(s.path) &&
-					/--accent|\baccent\b|accentSoft|#8c2f28/i.test(s.text)
+					/--accent|\baccent\b|accentSoft|#b5483d/i.test(s.text)
 			).map((s) => s.path)
 		).toEqual([]);
 	});

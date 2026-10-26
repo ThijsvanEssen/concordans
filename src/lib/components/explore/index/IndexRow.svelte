@@ -132,11 +132,11 @@
 		flex-direction: column;
 	}
 	/* A row of a table: a hairline under each, the columns as the list sets them
-	   (--row-lead, --row-aside), so the heads above the list stand over them. */
+	   (--voorkolom, --row-aside), so the heads above the list stand over them. */
 	.row {
 		position: relative;
 		display: grid;
-		grid-template-columns: var(--row-lead) minmax(0, 1fr) var(--row-aside);
+		grid-template-columns: var(--voorkolom) minmax(0, 1fr) var(--row-aside);
 		gap: var(--s-5);
 		padding: var(--s-3) var(--s-2);
 		border-bottom: 1px solid var(--rule);
@@ -217,7 +217,7 @@
 	.detail {
 		background: var(--paper-2);
 		border-bottom: 1px solid var(--rule);
-		padding: 0 var(--s-2) 0 calc(var(--row-lead) + var(--s-5) + var(--s-2));
+		padding: 0 var(--s-2) 0 calc(var(--voorkolom) + var(--s-5) + var(--s-2));
 	}
 
 	/* Dossiers under one number: the rows of the opened number stand indented beneath it. */
