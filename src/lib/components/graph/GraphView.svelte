@@ -18,6 +18,7 @@
 	import { countCanvas, NO_COUNTS, sameIds, type CanvasCounts } from './canvas-count';
 	import GraphSidebar from './GraphSidebar.svelte';
 	import NetworkChoice from './NetworkChoice.svelte';
+	import ViewSheet from './ViewSheet.svelte';
 	import { kindRows, lightBuckets, kindFocus, type DrawnBron } from './kind-rows';
 	import { contextGroups, panelSettled, panelKinds } from '$lib/verbonden/view';
 	import { lazeKernIds } from '$lib/bron/behoort';
@@ -1146,6 +1147,15 @@
 
 	// Below 1101 px the filters of the strip open under a button Filter, over the canvas.
 	let filtersOpen = $state(false);
+	/** A phone: the bronnen and filters in a sheet behind the button at the foot of the canvas. */
+	let sheetOpen = $state(false);
+	let sheetOpener = $state<HTMLButtonElement | null>(null);
+	/** The card of a bron marked is a sheet at the foot on a phone: the button stands above it. */
+	let cardHeight = $state(0);
+	function closeSheet() {
+		sheetOpen = false;
+		sheetOpener?.focus();
+	}
 
 	// ── The tijdstrook ──────────────────────────────────────────────────────────
 	// Every bron on the canvas with a date, whatever the period: the strip shows what lies
@@ -1252,6 +1262,19 @@
 	</section>
 {/snippet}
 
+<!-- A phone: at the foot of the canvas, left; the zoom is in the bar above it. -->
+{#snippet sheetButton()}
+	<button
+		type="button"
+		class="btn sheet-button"
+		style:--kaart-h="{cardHeight}px"
+		aria-haspopup="dialog"
+		aria-expanded={sheetOpen}
+		bind:this={sheetOpener}
+		onclick={() => (sheetOpen = !sheetOpen)}>Weergave en legenda</button
+	>
+{/snippet}
+
 {#snippet sidebar()}
 	<GraphSidebar
 		periode={filter.van || filter.tot || eersteJaar !== laatsteJaar ? periode : undefined}
@@ -1279,36 +1302,38 @@
 	<!-- The strip at the left (besluit 39): the way back and the Weergave, the chosen bronnen,
 	     then the legend that is the filter and the period. First in the page, so a Tab reaches
 	     them before the canvas and its zoom (keyboard audit, 10 Oct). -->
-	<aside class="strook strook--links" aria-label="Bronnen en filters">
-		{@render canvasOverlay?.()}
-		<NetworkChoice
-			{view}
-			viewSlot={viewChoice}
-			{depth}
-			{onDepth}
-			networkOn={netwerkActive}
-			hasSelection={!!selection}
-			reach={externCounts ? null : reach}
-			empty={!hasNodes && !midden}
-			relations={(externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts).relations}
-			refersFrom={(externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts).refersFrom}
-		/>
-		<!-- Whatever the filter leaves drawn: the filters stay, so a kind switched off comes back. -->
-		{#if hasNodes || midden}
-			<button
-				type="button"
-				class="btn filterknop raakvlak-knop"
-				aria-expanded={filtersOpen}
-				aria-controls="werkplek-filters"
-				onclick={() => (filtersOpen = !filtersOpen)}>Filter</button
-			>
-			<div class="strook__filters" class:is-open={filtersOpen} id="werkplek-filters">
-				<section class="legenda-inhoud" aria-label="Filters">
-					{@render sidebar()}
-				</section>
-			</div>
-		{/if}
-	</aside>
+	<ViewSheet open={sheetOpen} onClose={closeSheet} opener={() => sheetOpener}>
+		<aside class="strook strook--links" aria-label="Bronnen en filters">
+			{@render canvasOverlay?.()}
+			<NetworkChoice
+				{view}
+				viewSlot={viewChoice}
+				{depth}
+				{onDepth}
+				networkOn={netwerkActive}
+				hasSelection={!!selection}
+				reach={externCounts ? null : reach}
+				empty={!hasNodes && !midden}
+				relations={(externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts).relations}
+				refersFrom={(externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts).refersFrom}
+			/>
+			<!-- Whatever the filter leaves drawn: the filters stay, so a kind switched off comes back. -->
+			{#if hasNodes || midden}
+				<button
+					type="button"
+					class="btn filterknop raakvlak-knop"
+					aria-expanded={filtersOpen}
+					aria-controls="werkplek-filters"
+					onclick={() => (filtersOpen = !filtersOpen)}>Filter</button
+				>
+				<div class="strook__filters" class:is-open={filtersOpen} id="werkplek-filters">
+					<section class="legenda-inhoud" aria-label="Filters">
+						{@render sidebar()}
+					</section>
+				</div>
+			{/if}
+		</aside>
+	</ViewSheet>
 	<div class="graph-main">
 		<!-- On a phone Deel and the zoom in a bar of their own above the drawing: over it they
 		     covered its bronnen (UX-toets T10b). -->
@@ -1540,11 +1565,13 @@
 			onPeriode={kiesPeriode}
 		/>
 	</div>
+	{@render sheetButton()}
 	<!-- The strip at the right: the card of the bron marked; on a phone a sheet under the canvas. -->
 	<aside
 		class="strook strook--kaart"
 		class:is-open={!!(midden ? extern : hoverNode)}
 		aria-label="Kaart"
+		bind:clientHeight={cardHeight}
 	>
 		{#if midden ? extern : hoverNode}
 			{@const kaartNode = midden ? extern!.node : hoverNode!}
@@ -1643,7 +1670,8 @@
 		padding-left: 0;
 		padding-right: 0;
 	}
-	.filterknop {
+	.filterknop,
+	.sheet-button {
 		display: none;
 	}
 	/* Between a phone and three strips (1024): the strips narrower, the canvas and its tijdstrook
@@ -1679,10 +1707,8 @@
 			flex-wrap: wrap;
 			align-items: flex-start;
 			gap: 0 var(--s-3);
-			max-height: 60%;
-			padding: var(--s-2) var(--s-4);
+			padding: var(--s-2) var(--s-4) var(--s-4);
 			border-right: 0;
-			border-bottom: 1px solid var(--rule);
 		}
 		.strook--links > :global(*) {
 			flex-basis: 100%;
@@ -1703,6 +1729,17 @@
 
 		.filterknop {
 			display: inline-flex;
+		}
+		/* Weergave en legenda: at the foot of the canvas, left, a finger high; the sheet is its own. */
+		.sheet-button {
+			position: absolute;
+			left: var(--s-3);
+			bottom: calc(var(--s-3) + var(--kaart-h, 0px));
+			z-index: var(--z-float);
+			display: inline-flex;
+			align-items: center;
+			min-height: var(--veld-h-raak);
+			box-shadow: var(--shadow-pop);
 		}
 		.strook__filters:not(.is-open) {
 			display: none;

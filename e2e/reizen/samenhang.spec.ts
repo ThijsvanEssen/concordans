@@ -1,12 +1,14 @@
 // Samenhang: the network of a bron on the canvas (?mode=netwerk), its legend, the bronnen in it as a list, the Verbonden
 // table and its export.
 import { expect, test } from '../support/test';
+import { openSheet } from '../support/sheet';
 import { naarVerbonden } from '../support/navigation';
 
 const ARTICLE = '/wetten/BWBR0005289/artikel/6:162';
 
 /** The legend stands in the strip at the left; narrower, under the button Filter. */
 async function openFilters(page: import('@playwright/test').Page) {
+	await openSheet(page);
 	const filter = page.getByRole('button', { name: 'Filter', exact: true });
 	await filter
 		.or(page.getByRole('region', { name: 'Filters' }))
@@ -106,6 +108,7 @@ test('Verbonden as a table, exported as CSV', async ({ page }) => {
 
 test('an empty werkplek is empty: the field Bron toevoegen, no example', async ({ page }) => {
 	await page.goto('/explore');
+	await openSheet(page);
 	const network = page.getByRole('region', { name: 'Netwerk' });
 	// The field, or on a phone the button that opens it.
 	await expect(

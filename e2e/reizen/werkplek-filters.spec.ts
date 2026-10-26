@@ -2,6 +2,7 @@
 // not only ?omgeving in the address), and a bundel opens in the werkplek with its bronnen.
 import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
+import { openSheet } from '../support/sheet';
 import { keepArticle } from '../support/bundels';
 
 const CHOSEN = ['instruments/bwbr0005537', 'instruments/bwbr0010346'];
@@ -13,6 +14,7 @@ test('Alleen verbonden bronnen draws only the bron of the page with its surround
 	page
 }) => {
 	await page.goto(`/wetten/BWBR0010346?mode=netwerk&netwerk=${CHOSEN.join(',')}`);
+	await openSheet(page);
 	const strip = page.getByRole('complementary', { name: 'Bronnen en filters' });
 	// The filters of the strip, behind Filter on a narrow screen, and the option under Meer.
 	const toggle = strip.getByRole('button', { name: 'Filter', exact: true });

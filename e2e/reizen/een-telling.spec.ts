@@ -3,6 +3,7 @@
 // a cluster's card says of how many too; the head of Verbonden counts once, when all is in.
 import type { Locator, Page } from '@playwright/test';
 import { expect, test } from '../support/test';
+import { openSheet } from '../support/sheet';
 import { naarVerbonden } from '../support/navigation';
 
 const BRONNEN: [string, string][] = [
@@ -18,6 +19,7 @@ const strip = (page: Page) => page.getByRole('complementary', { name: 'Bronnen e
 
 /** The legend, behind Filter on a narrow screen. */
 async function legenda(page: Page): Promise<Locator> {
+	await openSheet(page);
 	const toggle = strip(page).getByRole('button', { name: 'Filter', exact: true });
 	await expect(
 		strip(page).getByRole('region', { name: 'Weergave en legenda' }).or(toggle).first()
@@ -33,7 +35,7 @@ async function soort(page: Page): Promise<[string, string][]> {
 	const legend = await legenda(page);
 	const block = legend
 		.locator('section')
-		.filter({ has: page.getByRole('heading', { name: 'Soort' }) });
+		.filter({ has: page.getByRole('heading', { name: 'Tonen' }) });
 	await expect(block.getByRole('button').first()).toBeVisible();
 	await expect(block.locator('[aria-label="wordt geteld"]')).toHaveCount(0, { timeout: 30_000 });
 	// The soorten of the bron itself: those one step further stand under a heading of their own.

@@ -3,10 +3,12 @@
 // netwerk, not the route; where it can mean nothing it is not offered.
 import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
+import { openSheet } from '../support/sheet';
 
 const strip = (page: Page) => page.getByRole('complementary', { name: 'Bronnen en filters' });
 /** The filters of the strip, behind Filter on a narrow screen. */
 async function filters(page: Page) {
+	await openSheet(page);
 	const toggle = strip(page).getByRole('button', { name: 'Filter', exact: true });
 	await expect(
 		strip(page).getByRole('region', { name: 'Weergave en legenda' }).or(toggle).first()
@@ -19,6 +21,7 @@ test('Soort off for the kind of the chosen bronnen leaves them and the filters s
 	page
 }) => {
 	await page.goto('/explore?netwerk=articles/bwbr0005289_162');
+	await openSheet(page);
 	const legend = await filters(page);
 	const articles = legend.getByRole('button', { name: /^Artikelen/ });
 	await expect(articles).toHaveAttribute('aria-pressed', 'true');
@@ -33,6 +36,7 @@ test('Soort off for the kind of the chosen bronnen leaves them and the filters s
 
 test('the last bron on /explore leaves with × and stays gone (R3-N B2)', async ({ page }) => {
 	await page.goto('/explore?netwerk=instruments/bwbr0005537');
+	await openSheet(page);
 	await page.getByRole('button', { name: /^Haal .* uit het netwerk$/ }).click();
 	// The top bar counting no bron is the signal that the page has taken it out and settled.
 	await expect(
@@ -43,6 +47,7 @@ test('the last bron on /explore leaves with × and stays gone (R3-N B2)', async 
 
 test('Keten on /explore with a law draws its keten (R3-N B3)', async ({ page, touch }) => {
 	await page.goto('/explore?netwerk=instruments/bwbr0010346&weergave=keten');
+	await openSheet(page);
 	await expect(page.getByRole('button', { name: 'Keten', pressed: true })).toBeVisible();
 	await expect(page.getByText(/alleen bij een wet/)).toHaveCount(0);
 	const regulation = touch
@@ -55,6 +60,7 @@ test('Keten on /explore with a law draws its keten (R3-N B3)', async ({ page, to
 
 test('Keten is not offered where there is none (R3-K F9, besluit 41)', async ({ page }) => {
 	await page.goto('/dossiers/36496?mode=netwerk');
+	await openSheet(page);
 	await expect(page.getByRole('button', { name: 'Omgeving', pressed: true })).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Keten' })).toHaveCount(0);
 });
@@ -62,6 +68,7 @@ test('Keten is not offered where there is none (R3-K F9, besluit 41)', async ({ 
 // A keten per kind, with layers of its own (besluit 41): a judgment through its instances.
 test('the keten of a judgment stands in its instances', async ({ page, touch }) => {
 	await page.goto('/uitspraken/ECLI:NL:HR:2019:2006?mode=netwerk&weergave=keten');
+	await openSheet(page);
 	await expect(page.getByRole('button', { name: 'Keten', pressed: true })).toBeVisible();
 	if (touch) {
 		for (const laag of ['Rechtbank', 'Gerechtshof', 'Hoge Raad'])
@@ -76,6 +83,7 @@ test('Verband counts the bron of the page as the first end (R3-I F2)', async ({ 
 	await page.goto(
 		'/wetten/BWBR0005289/artikel/6:162?mode=netwerk&weergave=verband&netwerk=articles/bwbr0005290_658'
 	);
+	await openSheet(page);
 	await expect(page.getByRole('button', { name: 'Verband', pressed: true })).toBeVisible();
 	await expect(page.getByText('Art. 7:658 BW').first()).toBeVisible();
 	await expect(page.getByText('Voeg een tweede bron toe')).toHaveCount(0);
@@ -85,6 +93,7 @@ test('no "?" for judgments both cite where one end cites none (R3-N B7)', async 
 	await page.goto(
 		'/leden/rob-jetten?mode=netwerk&weergave=verband&netwerk=instruments/bwbr0005537'
 	);
+	await openSheet(page);
 	await expect(page.getByText('Rob Jetten').first()).toBeVisible();
 	// Absence counts only once Verband has answered: its drawing, its list or its empty line.
 	const shared = page.locator('.shared');
@@ -100,6 +109,7 @@ test('no "?" for judgments both cite where one end cites none (R3-N B7)', async 
 
 test('a cut neighbourhood says how much of it is shown (R3-N B6)', async ({ page }) => {
 	await page.goto('/explore?netwerk=instruments/bwbr0005537');
+	await openSheet(page);
 	const legend = await filters(page);
 	// In Soort's own column of counts, no block of its own.
 	await expect(legend.getByRole('button', { name: /^Artikelen [\d.]+ van [\d.]+$/ })).toBeVisible();
@@ -120,6 +130,7 @@ test('the keten names a publication by its citation, its layer by its kind (R3-K
 	page
 }) => {
 	await page.goto('/stb/2018/101?mode=netwerk&weergave=keten');
+	await openSheet(page);
 	await expect(page.getByRole('button', { name: 'Keten', pressed: true })).toBeVisible();
 	await expect(page.getByText('Stb. 2018, 101').first()).toBeVisible();
 	await expect(page.getByText(/STB_2018_101/)).toHaveCount(0);
@@ -140,6 +151,7 @@ test('Alle N lists the regulations a layer does not draw (R3-K F4)', async ({ pa
 
 test('Keten fits its width: no zoom, Deel stays', async ({ page }) => {
 	await page.goto('/wetten/BWBR0010346?mode=netwerk&weergave=keten');
+	await openSheet(page);
 	await expect(page.getByRole('button', { name: 'Keten', pressed: true })).toBeVisible();
 	await expect(page.getByRole('button', { name: /^Deel/ }).first()).toBeAttached();
 	await expect(page.getByRole('button', { name: 'Inzoomen' })).toHaveCount(0);

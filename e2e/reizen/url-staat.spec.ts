@@ -5,6 +5,7 @@
 import type { Page } from '@playwright/test';
 import { CORS } from '../support/api';
 import { expect, test } from '../support/test';
+import { openSheet, closeSheet } from '../support/sheet';
 
 const ARTICLE = '/wetten/BWBR0005289/artikel/6:162';
 const KEPT = 'netwerk=instruments%2Fbwbr0005289&tussen=0';
@@ -12,12 +13,14 @@ const KEPT = 'netwerk=instruments%2Fbwbr0005289&tussen=0';
 const panel = (page: Page) => page.getByRole('region', { name: 'Netwerk' });
 /** The text of the panel Netwerk, unfolded where a phone folds it. */
 async function panelText(page: Page) {
+	await openSheet(page);
 	const fold = panel(page).getByRole('button', { name: /^Netwerk \d+ bron/ });
 	if (await fold.isVisible()) await fold.click();
 	return panel(page).innerText();
 }
 const strip = (page: Page) => page.getByRole('complementary', { name: 'Bronnen en filters' });
 async function legend(page: Page) {
+	await openSheet(page);
 	const toggle = strip(page).getByRole('button', { name: 'Filter', exact: true });
 	await expect(
 		strip(page).getByRole('region', { name: 'Weergave en legenda' }).or(toggle).first()
@@ -66,6 +69,7 @@ test('no chosen bron shows its key, after a 502 and Opnieuw either (N6)', async 
 	const failed = await panelText(page);
 	expect(failed).toContain('Bron laden');
 	expect(failed).not.toMatch(/bwbr\d+/i);
+	await closeSheet(page);
 
 	broken = false;
 	await page.getByRole('button', { name: 'Opnieuw' }).click();
@@ -112,10 +116,10 @@ test('Verband says it is looking, then that nothing joins the bronnen (N9)', asy
 		'/explore?netwerk=instruments/bwbr0005289,instruments/bwbr0005537&weergave=verband'
 	);
 	await expect(page.getByText('Verband zoeken', { exact: true })).toBeVisible();
-	// Nothing to filter by yet: the legend holds no Soort.
-	await expect((await legend(page)).getByRole('heading', { name: 'Soort' })).toHaveCount(0);
+	// Nothing to filter by yet: the legend holds no Tonen.
+	await expect((await legend(page)).getByRole('heading', { name: 'Tonen' })).toHaveCount(0);
 	answer();
 	await expect(page.getByText('Geen verband gevonden binnen 2 stappen')).toBeVisible();
 	await expect(page.getByText('Verband zoeken', { exact: true })).toHaveCount(0);
-	await expect((await legend(page)).getByRole('heading', { name: 'Soort' })).toHaveCount(0);
+	await expect((await legend(page)).getByRole('heading', { name: 'Tonen' })).toHaveCount(0);
 });
